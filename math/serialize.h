@@ -5,22 +5,22 @@
 #include <config.h>
 #endif
 
-#include <Eigen/Core>
+#include "eigen.h"
 
 namespace boost {
   namespace serialization {
 
     //! Serializes atat real vectors.
     template<class Archive>
-    void serialize(Archive & ar, LaDa::Eigen::Vector3d & g, const unsigned int version)
+    void serialize(Archive & ar, LaDa::math::rVector3d & g, const unsigned int version)
      { ar & g.x(); ar & g.y(); ar & g.z(); }
      //! Serializes atat integer vectors.
     template<class Archive>
-    void serialize(Archive & ar, LaDa::Eigen::Vector3i & g, const unsigned int version)
+    void serialize(Archive & ar, LaDa::math::iVector3d & g, const unsigned int version)
      { ar & g.x(); ar & g.y(); ar & g.z(); }
     //! Serializes atat real matrices.
     template<class Archive>
-    void serialize(Archive & ar, LaDa::Eigen::Matrix3d & g, const unsigned int version)
+    void serialize(Archive & ar, LaDa::math::rMatrix3d & g, const unsigned int version)
     {
       for(size_t i(0); i < 3; ++i)
         for(size_t j(0); j < 3; ++j)
@@ -28,7 +28,7 @@ namespace boost {
     }
     //! Serializes atat integer matrices.
     template<class Archive>
-    void serialize(Archive & ar, LaDa::Eigen::Matrix3i & g, const unsigned int version)
+    void serialize(Archive & ar, LaDa::math::iMatrix3d & g, const unsigned int version)
     {
       for(size_t i(0); i < 3; ++i)
         for(size_t j(0); j < 3; ++j)

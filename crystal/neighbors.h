@@ -14,10 +14,6 @@
 
 #include <boost/lambda/lambda.hpp>
 
-#include <Eigen/Geometry> 
-#include <Eigen/LU> 
-
-
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <math/fuzzy.h>
@@ -46,7 +42,7 @@ namespace LaDa
        //! Index to atom in structure.
        size_t index;
        //! Position with respect to atom.
-       Eigen::Vector3d pos;
+       math::rVector3d pos;
        //! Distance from atom.
        types::t_real distance;
      };
@@ -67,10 +63,10 @@ namespace LaDa
          //! The number of first neighbors to compute.
          size_t nmax;
          //! The origin from which to compute neighbors.
-         Eigen::Vector3d origin;
+         math::rVector3d origin;
 
          //! Constructor.
-         Neighbors   (size_t _nmax = 0, Eigen::Vector3d const &_vec = Eigen::Vector3d(0,0,0) )
+         Neighbors   (size_t _nmax = 0, math::rVector3d const &_vec = math::rVector3d(0,0,0) )
                    : nmax(_nmax), origin(_vec) {};
          //! returns iterator to first neighbor list.
          const_iterator begin() const { return neighbors_.begin(); }
@@ -116,7 +112,7 @@ namespace LaDa
          const types::t_int N( _structure.atoms.size() );
          neighbors_.clear();
          
-         Eigen::Matrix3d const inv_cell( !_structure.cell );
+         math::rMatrix3d const inv_cell( !_structure.cell );
          typedef Crystal::TStructure<T_TYPE> t_Structure;
          Neighbor neighbor;
          types::t_real const volume( std::abs(_structure.cell.determinant()) );
@@ -125,9 +121,9 @@ retry:
          size_t size(0);
          neighbor.index = 0;
          // Finds out how far to look.
-         Eigen::Vector3d const a0( _structure.cell.col(0) );
-         Eigen::Vector3d const a1( _structure.cell.col(1) );
-         Eigen::Vector3d const a2( _structure.cell.col(2) );
+         math::rVector3d const a0( _structure.cell.col(0) );
+         math::rVector3d const a1( _structure.cell.col(1) );
+         math::rVector3d const a2( _structure.cell.col(2) );
          types::t_real const max_norm
            = std::max( a0.norm(), std::max(a1.norm(), a2.norm()) );
          types::t_real const r
@@ -148,8 +144,8 @@ retry:
          typename t_Structure::t_Atoms::const_iterator i_atom_end = _structure.atoms.end();
          for(; i_atom != i_atom_end; ++i_atom, ++neighbor.index ) 
          {
-           Eigen::Vector3d const frac( inv_cell * (i_atom->pos - origin) );
-           Eigen::Vector3d const centered
+           math::rVector3d const frac( inv_cell * (i_atom->pos - origin) );
+           math::rVector3d const centered
            ( 
              frac(0) - std::floor( frac(0) + 0.500000001e0 ),
              frac(1) - std::floor( frac(1) + 0.500000001e0 ),
@@ -159,7 +155,7 @@ retry:
              for( types::t_int y(-n1); y <= n1; ++y )
                for( types::t_int z(-n2); z <= n2; ++z )
                {
-                  neighbor.pos = _structure.cell * ( centered + Eigen::Vector3d(x,y,z) );
+                  neighbor.pos = _structure.cell * ( centered + math::rVector3d(x,y,z) );
                   neighbor.distance = neighbor.pos.norm();
                   if( math::is_zero( neighbor.distance ) ) continue;
        

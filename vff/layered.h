@@ -16,8 +16,8 @@ namespace LaDa
   namespace Vff
   {
     //! Computes in-plane stress from stress matrix \a _stress and plane \a _dir.
-    types::t_real inplane_stress( const Eigen::Matrix3d &_stress,
-                                  const Eigen::Vector3d &_dir );
+    types::t_real inplane_stress( const math::rMatrix3d &_stress,
+                                  const math::rVector3d &_dir );
 
 
     //! \brief Valence Force Field for "layered" structures
@@ -59,13 +59,13 @@ namespace LaDa
 
       protected:
         //! Direction in which to allow lattice-cell relaxation
-        Eigen::Vector3d direction; 
+        math::rVector3d direction; 
         //! Direction in which to allow lattice-cell relaxation, normalized
-        Eigen::Vector3d u; 
+        math::rVector3d u; 
         /** \brief The Strain \f$\hat{S}\f$, as defined in Vff::Functional is
          * \f$\hat{S} = \hat{1}+\epsilon \hat{S}'\f$, with
          * \f$\hat{S}'\f$ the template strain. */
-        Eigen::Matrix3d  template_strain; 
+        math::rMatrix3d  template_strain; 
         //! Wether epitaxial direction if fixed by input or  structure cell
         bool is_fixed_by_input;
         
@@ -103,7 +103,7 @@ namespace LaDa
         //! Prints functional to \a stream.
         void print_out( std::ostream &stream ) const;
         //! Sets epitaxial direction.
-        void set_direction( const Eigen::Vector3d& _direction)
+        void set_direction( const math::rVector3d& _direction)
         {
           is_fixed_by_input = true;
           direction = _direction;
@@ -114,16 +114,16 @@ namespace LaDa
         //! \brief packs variables from minimizer
         //! \details Functional knows about Functional::Structure, whereas minizers now
         //! about function::Base, this function does the interface between the two
-        void pack_variables( t_Arg& _arg, const Eigen::Matrix3d& _strain ) const;
+        void pack_variables( t_Arg& _arg, const math::rMatrix3d& _strain ) const;
         //! \brief unpacks variables from minimizer
         //! \details Functional knows about Functional::Structure, whereas minizers now
         //! about function::Base, this function does the interface between the two
-        void unpack_variables(const t_Arg& _arg, Eigen::Matrix3d& strain) const;
+        void unpack_variables(const t_Arg& _arg, math::rMatrix3d& strain) const;
         //! \brief packs variables from minimizer
         //! \details Functional knows about Functional::Structure, whereas
         //! minizers now about function::Base, this function does the interface
         //! between the two
-        void pack_gradients(const Eigen::Matrix3d& _stress, t_GradientArg _grad) const;
+        void pack_gradients(const math::rMatrix3d& _stress, t_GradientArg _grad) const;
 
 
         //! Initializes Layered::u and Layered::template_strain
@@ -138,8 +138,8 @@ namespace LaDa
     };
 
 
-    inline types::t_real inplane_stress( const Eigen::Matrix3d &_stress,
-                                         const Eigen::Vector3d &_dir     )
+    inline types::t_real inplane_stress( const math::rMatrix3d &_stress,
+                                         const math::rVector3d &_dir     )
     {
       types::t_real norm = _dir.squaredNorm();
       types::t_real trace = _stress(0,0) + _stress(1,1) + _stress(2,2);

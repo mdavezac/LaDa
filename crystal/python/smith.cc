@@ -22,8 +22,8 @@ namespace LaDa
   {
 
     
-    boost::python::tuple get_smith_transform( Eigen::Matrix3d const &_lat_cell,
-                                              Eigen::Matrix3d const &_str_cell )
+    boost::python::tuple get_smith_transform( math::rMatrix3d const &_lat_cell,
+                                              math::rMatrix3d const &_str_cell )
     {
       namespace bt = boost::tuples;
       namespace bp = boost::python;
@@ -68,7 +68,7 @@ namespace LaDa
     
     //! Computes smith indices of position \a _pos.
     boost::python::tuple get_smith_index( boost::python::tuple const & _transform,
-                                          Eigen::Vector3d  const &_pos )
+                                          math::rVector3d  const &_pos )
     {
       namespace bt = boost::tuples;
       namespace bp = boost::python;
@@ -85,7 +85,7 @@ namespace LaDa
       try
       {
         Crystal::t_SmithTransform transform;
-        try{  bt::get<0>( transform ) = bp::extract< Eigen::Matrix3d >( _transform[0] ); }
+        try{  bt::get<0>( transform ) = bp::extract< math::rMatrix3d >( _transform[0] ); }
         catch(...)
         {
           PyErr_SetString
@@ -96,7 +96,7 @@ namespace LaDa
           bp::throw_error_already_set();
           return bp::make_tuple(-1,-1,-1);
         }
-        try{  bt::get<1>( transform ) = bp::extract< Eigen::Vector3i >( _transform[1] ); }
+        try{  bt::get<1>( transform ) = bp::extract< math::iVector3d >( _transform[1] ); }
         catch(...)
         {
           PyErr_SetString
@@ -107,7 +107,7 @@ namespace LaDa
           bp::throw_error_already_set();
           return bp::make_tuple(-1,-1,-1);
         }
-        Eigen::Vector3i const vec( Crystal::get_smith_index( transform, _pos ) );
+        math::iVector3d const vec( Crystal::get_smith_index( transform, _pos ) );
         return bp::make_tuple( vec(0), vec(1), vec(2) );
       }
       catch(...)
@@ -124,7 +124,7 @@ namespace LaDa
 
     //! Computes smith indices of position \a _pos.
     size_t get_linear_smith_index( boost::python::tuple const & _transform,
-                                   Eigen::Vector3d  const &_pos )
+                                   math::rVector3d  const &_pos )
     {
       namespace bt = boost::tuples;
       namespace bp = boost::python;
@@ -141,7 +141,7 @@ namespace LaDa
       try
       {
         Crystal::t_SmithTransform transform;
-        try{  bt::get<0>( transform ) = bp::extract< Eigen::Matrix3d >( _transform[0] ); }
+        try{  bt::get<0>( transform ) = bp::extract< math::rMatrix3d >( _transform[0] ); }
         catch(...)
         {
           PyErr_SetString
@@ -152,7 +152,7 @@ namespace LaDa
           bp::throw_error_already_set();
           return -1;
         }
-        try{  bt::get<1>( transform ) = bp::extract< Eigen::Vector3i >( _transform[1] ); }
+        try{  bt::get<1>( transform ) = bp::extract< math::iVector3d >( _transform[1] ); }
         catch(...)
         {
           PyErr_SetString

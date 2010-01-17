@@ -29,7 +29,7 @@ namespace LaDa
   namespace enumeration
   {
     //! \brief Finds all inequivalent supercells of size \a _nmax.
-    boost::shared_ptr< std::vector<Eigen::Matrix3d> >
+    boost::shared_ptr< std::vector<math::rMatrix3d> >
       find_all_cells( Crystal::Lattice const &_lattice, size_t _nmax);
 
     struct SmithGroup
@@ -38,13 +38,13 @@ namespace LaDa
       struct Supercell
       {
         //! left tranform;
-        Eigen::Matrix3d transform;
+        math::rMatrix3d transform;
         //! Hermite form;
-        Eigen::Matrix3d hermite;
+        math::rMatrix3d hermite;
         //! Constructor.
         Supercell () { transform.zero(); hermite.zero(); }
         //! Constructor.
-        Supercell   ( Eigen::Matrix3d const & _transform, Eigen::Matrix3d const & _hermite )
+        Supercell   ( math::rMatrix3d const & _transform, math::rMatrix3d const & _hermite )
                   : transform(_transform), hermite(_hermite) {}
         //! Copy Constructor.
         Supercell   (Supercell const &_c)
@@ -62,12 +62,12 @@ namespace LaDa
       typedef std::vector<Supercell> t_Supercells;
  
       //! Constructor
-      SmithGroup( Eigen::Vector3i const &_id = Eigen::Vector3i(0,0,0) ) : smith(_id) {}
+      SmithGroup( math::iVector3d const &_id = math::iVector3d(0,0,0) ) : smith(_id) {}
       //! Copy constructor
       SmithGroup( SmithGroup const &_c ) : smith(_c.smith), supercells(_c.supercells) {}
  
       //! Compare smith group by id.
-      bool operator==( Eigen::Vector3i const &_vec ) const { return smith == _vec; }
+      bool operator==( math::iVector3d const &_vec ) const { return smith == _vec; }
       //! Compare smith group by id.
       bool operator==( SmithGroup const &_sg ) const
       {
@@ -76,7 +76,7 @@ namespace LaDa
       }
  
       //! Quotient group.
-      Eigen::Vector3i smith;
+      math::iVector3d smith;
       //! left transform and hermite normal form.
       std::vector<Supercell> supercells;
     };
@@ -97,7 +97,7 @@ namespace LaDa
     //! Creates a vector of supercells structure according to their Smith normal form.
     boost::shared_ptr< std::vector<SmithGroup> >
       create_smith_groups( Crystal::Lattice const &_lattice,
-                           boost::shared_ptr< std::vector<Eigen::Matrix3d> > const & _s );
+                           boost::shared_ptr< std::vector<math::rMatrix3d> > const & _s );
  
     //! Creates a vector of supercells structure according to their Smith normal form.
     inline boost::shared_ptr< std::vector<SmithGroup> >

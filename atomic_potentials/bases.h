@@ -25,13 +25,13 @@ namespace LaDa
       //! Index of the origin in structure for which a representation is built.
       size_t index;
       //! Cartesian coordinates of the origin.
-      Eigen::Vector3d origin;
+      math::rVector3d origin;
       //! Cartesian coordinates of the abscissa.
-      Eigen::Vector3d x;
+      math::rVector3d x;
       //! Cartesian coordinates of the ordinate.
-      Eigen::Vector3d y;
+      math::rVector3d y;
       //! Cartesian coordinates of the cote.
-      Eigen::Vector3d z;
+      math::rVector3d z;
       //! Weight of the basis in the representation.
       types::t_real weight;
     };
@@ -81,9 +81,9 @@ namespace LaDa
         friend class Ycoord;
         public:
           //! Return on deref.
-          typedef Eigen::Vector3d const& value_type;
+          typedef math::rVector3d const& value_type;
           //! Return on deref.
-          typedef Eigen::Vector3d const* pointer_type;
+          typedef math::rVector3d const* pointer_type;
           //! Constructor.
           Origin() {}
           //! Copy Constructor.
@@ -131,10 +131,10 @@ namespace LaDa
       {
         friend class Ycoord;
         //! Type of the vector of neighbors.
-        typedef std::vector< Eigen::Vector3d > t_Neighs;
+        typedef std::vector< math::rVector3d > t_Neighs;
         public:
-          typedef Eigen::Vector3d const& value_type;
-          typedef Eigen::Vector3d const* pointer_type;
+          typedef math::rVector3d const& value_type;
+          typedef math::rVector3d const* pointer_type;
       
           //! Constructor.
           Xcoord() {}
@@ -177,15 +177,15 @@ namespace LaDa
           //! The current iterator.
           t_Neighs::const_iterator iterator_;
           //! Normalized x vector.
-          Eigen::Vector3d val_;
+          math::rVector3d val_;
       };
 
     template<class T_STRUCTURE>
       class Bases<T_STRUCTURE> :: Ycoord
       {
         public:
-          typedef Eigen::Vector3d const& value_type;
-          typedef Eigen::Vector3d const* pointer_type;
+          typedef math::rVector3d const& value_type;
+          typedef math::rVector3d const* pointer_type;
       
           //! Constructor.
           Ycoord() {}
@@ -228,13 +228,13 @@ namespace LaDa
           //! Creates list of equivalent y-positions.
           void create_equiv_ys( Xcoord const &_x );
           //! list of equivalent ys.
-          boost::shared_ptr< std::list<Eigen::Vector3d> > equivs_;
+          boost::shared_ptr< std::list<math::rVector3d> > equivs_;
           //! Current iterator.
-          std::list<Eigen::Vector3d> :: const_iterator iterator_;
+          std::list<math::rVector3d> :: const_iterator iterator_;
           //! Holds current dereference value.
-          Eigen::Vector3d val_;
+          math::rVector3d val_;
           //! Holds current x coordinate.
-          Eigen::Vector3d xval_;
+          math::rVector3d xval_;
       };
       
     template<class T_STRUCTURE>

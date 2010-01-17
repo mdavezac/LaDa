@@ -23,7 +23,7 @@ namespace LaDa
     {
       Neighbors   ( Crystal::TStructure<std::string> const &_str,
                      size_t _nmax = 0, 
-                     Eigen::Vector3d const &_orig = Eigen::Vector3d(0,0,0) )
+                     math::rVector3d const &_orig = math::rVector3d(0,0,0) )
                  : neighs_(_nmax, _orig), first_(true)
         { cit_ = neighs_.begin(_str); cit_end_ = neighs_.end(); }
       Neighbors   ( Neighbors const &_c )
@@ -73,7 +73,7 @@ namespace LaDa
         "Neighbors", 
         "Iterator over first neighbors.", 
         bp::init<Crystal::TStructure<std::string> const &>()
-      ).def(bp::init<Crystal::TStructure<std::string> const &, size_t, Eigen::Vector3d>())
+      ).def(bp::init<Crystal::TStructure<std::string> const &, size_t, math::rVector3d>())
        .def("__iter__", &Neighbors::iter, bp::return_internal_reference<1>())
        .def("next", &Neighbors::next, bp::return_internal_reference<1>());
     }

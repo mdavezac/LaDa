@@ -375,7 +375,7 @@ AC_SUBST(NUMPY_CXXFLAGS)
 AC_SUBST(MINUIT_LIBS)
 AC_SUBST(MINUIT_CFLAGS)
 
-AC_OUTPUT(Makefile math/Makefile physics/Makefile physics/python/Makefile
+AC_OUTPUT(Makefile math/Makefile math/python/Makefile physics/Makefile physics/python/Makefile
           opt/Makefile opt/python/Makefile crystal/Makefile crystal/python/Makefile
           vff/Makefile vff/python/Makefile mpi/Makefile pescan_interface/Makefile darwin/Makefile 
           pescan_interface/python/Makefile

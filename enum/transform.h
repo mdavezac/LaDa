@@ -26,7 +26,7 @@ namespace LaDa
     class Transform : public Crystal::SymmetryOperator
     {
       //! Type of the container of supercell-independent elements.
-      typedef std::pair<types::t_int, Eigen::Vector3d> t_Independent;
+      typedef std::pair<types::t_int, math::rVector3d> t_Independent;
       //! Type of the container of supercell-independent elements.
       typedef std::vector<t_Independent> t_Independents;
       public:
@@ -41,7 +41,7 @@ namespace LaDa
                      nsites_(_c.nsites_),
                      card_(_c.card_), is_trivial_(_c.is_trivial_) {}
         //! Initializes transform for specific supercell.
-        void init(Eigen::Matrix3d const &_left, Eigen::Vector3i const &_smith);
+        void init(math::rMatrix3d const &_left, math::iVector3d const &_smith);
         //! Initializes transform for specific supercell.
         void init( Crystal::t_SmithTransform const &_t )
           { return init(boost::tuples::get<0>(_t), boost::tuples::get<1>(_t)); }

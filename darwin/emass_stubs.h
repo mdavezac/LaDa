@@ -44,7 +44,7 @@ namespace LaDA
       //! \endcond
 #  endif
       types::t_real cbm; //!< Conduction Band Minimum
-      Eigen::Matrix3d emass;
+      math::rMatrix3d emass;
 
       //! Constructor
       Keeper() : cbm(0) { emass.zero(); }

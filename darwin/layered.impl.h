@@ -350,8 +350,8 @@ namespace LaDa
         std::cerr << "Either cell direction or multiplicity is missing on input\n";
         return false;
       }
-      Eigen::Vector3d cdir;
-      Eigen::Matrix3d &cell = structure.cell;
+      math::rVector3d cdir;
+      math::rMatrix3d &cell = structure.cell;
       
       // First, Load Attributes 
       bool couldload = true;
@@ -420,7 +420,7 @@ namespace LaDa
       // Makes sure the triad is direct
       if ( det(cell) < 0 )
       {
-        Eigen::Vector3d d = cell.col(2);
+        math::rVector3d d = cell.col(2);
         cell.set_column(2, cell.col(1) );
         cell.set_column(1, d);
       }
@@ -483,7 +483,7 @@ namespace LaDa
       inline std::string Evaluator<T_INDIVIDUAL> :: print() const
       {
         std::ostringstream sstr;
-        Eigen::Vector3d dir = lattice.cell * direction;
+        math::rVector3d dir = lattice.cell * direction;
         sstr << concentration.print() << "\n"
              << "Structure: " << multiplicity
              << " (" << dir(0) << ", " << dir(1) << ", " << dir(2)
@@ -564,8 +564,8 @@ namespace LaDa
     }
 
 
-    inline bool Depth::operator()( const Eigen::Vector3d &_1,
-                                   const Eigen::Vector3d &_2 )
+    inline bool Depth::operator()( const math::rVector3d &_1,
+                                   const math::rVector3d &_2 )
     {
       types::t_real a =   _1 * a0;
       types::t_real b =   _2 * a0;

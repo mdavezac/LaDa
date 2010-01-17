@@ -28,7 +28,7 @@ namespace LaDa
     bool Lattice :: Load( const TiXmlElement &_element )
     {
       const TiXmlElement *child, *parent;
-      double d; Eigen::Vector3d vec;
+      double d; math::rVector3d vec;
       int i;
 
       std::string str = _element.Value();
@@ -103,9 +103,9 @@ namespace LaDa
       space_group = *syms;
     }
 
-    types::t_int Lattice :: get_atom_site_index( const Eigen::Vector3d &_at ) const
+    types::t_int Lattice :: get_atom_site_index( const math::rVector3d &_at ) const
     {
-      const Eigen::Matrix3d inv_cell = cell.inverse();
+      const math::rMatrix3d inv_cell = cell.inverse();
       std::vector< t_Site > :: const_iterator i_site = sites.begin(); 
       std::vector< t_Site > :: const_iterator i_end = sites.end(); 
       
@@ -136,7 +136,7 @@ namespace LaDa
 
     types::t_int Lattice :: get_atom_type_index( const Crystal :: Atom &_at ) const
     {
-      const Eigen::Matrix3d inv_cell = cell.inverse();
+      const math::rMatrix3d inv_cell = cell.inverse();
       std::vector< t_Site > :: const_iterator i_site = sites.begin(); 
       std::vector< t_Site > :: const_iterator i_end = sites.end(); 
       

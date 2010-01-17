@@ -15,7 +15,7 @@ cubic_CPPFLAGS =  $(AM_CPPFLAGS) -D _CUBIC_CE_
 cubic_LDFLAGS =  $(AM_LDFLAGS)
 cubic_LDADD = libseparable.la \
               $(top_builddir)/crystal/libcrystal.la \
-              $(top_builddir)/atat/libmath.la \
+              $(top_builddir)/math/libmath.la \
               $(top_builddir)/opt/libopt.la \
               $(top_builddir)/mpi/libmpiobject.la \
               $(top_builddir)/physics/libphysics.la \

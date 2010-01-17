@@ -13,7 +13,7 @@ cubic_LDFLAGS =  $(AM_LDFLAGS)  @BOOST_LDFLAGS@ \
 		 @BOOST_SYSTEM@ @BOOST_REGEX@ 
 cubic_LDADD =   libce.la \
                 $(top_builddir)/crystal/libcrystal.la \
-		$(top_builddir)/atat/libmath.la \
+		$(top_builddir)/math/libmath.la \
 		$(top_builddir)/physics/libphysics.la \
 		@MPI_ADDLIB@ \
 		$(top_builddir)/print/libprint.la \
@@ -28,7 +28,7 @@ regular_CPPFLAGS =  $(AM_CPPFLAGS)  -D_CUBIC_CE_ @GSL_CFLAGS@ @MINUIT_CFLAGS@
 regular_LDFLAGS = $(cubic_LDFLAGS) @GSL_LIBS@ @MINUIT_LIBS@
 regular_LDADD = libce.la \
                 $(top_builddir)/crystal/libcrystal.la \
-		$(top_builddir)/atat/libmath.la \
+		$(top_builddir)/math/libmath.la \
 		$(top_builddir)/physics/libphysics.la \
 		$(top_builddir)/print/libprint.la \
                 $(top_builddir)/opt/libopt.la \

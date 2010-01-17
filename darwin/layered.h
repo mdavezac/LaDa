@@ -288,7 +288,7 @@ namespace LaDa
         //! The structure (cell-shape) for which decoration search is done
         Crystal :: Structure structure;
         //! The epitaxial growth direction
-        Eigen::Vector3d direction;
+        math::rVector3d direction;
         //! The number of independent layers
         types::t_unsigned multiplicity;
         //! \brief A concentration instance as define by
@@ -352,15 +352,15 @@ namespace LaDa
     class Depth
     {
       protected:
-        Eigen::Vector3d a0; //!< First ordering direction
-        Eigen::Vector3d a1; //!< Second ordering direction
-        Eigen::Vector3d a2; //!< Third ordering direction
+        math::rVector3d a0; //!< First ordering direction
+        math::rVector3d a1; //!< Second ordering direction
+        math::rVector3d a2; //!< Third ordering direction
 
       public:
         //! \brief Constructor and Initializer
         //! \param _mat Depth::a0 is set to the first column of this matrix,
         //!             Depth::a1 to the second, and Depth::a2 to the third.
-        Depth   ( const Eigen::Matrix3d &_mat )
+        Depth   ( const math::rMatrix3d &_mat )
               : a0(_mat.col(0)), a1(_mat.col(1)),
                 a2(_mat.col(2)) {}
         //! Copy Constructor.
@@ -369,7 +369,7 @@ namespace LaDa
         virtual ~Depth() {}
 
         //! Strict weak ordering operator.
-        bool operator()(const Eigen::Vector3d& _1, const Eigen::Vector3d& _2 );
+        bool operator()(const math::rVector3d& _1, const math::rVector3d& _2 );
     };
 
 

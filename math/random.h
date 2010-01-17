@@ -15,7 +15,7 @@ namespace LaDa
   namespace math
   {
     //! Starts the radom number generator
-    types::t_unsigned create( types::t_unsigned _seed = 0 );
+    types::t_unsigned start_random( types::t_unsigned _seed = 0 );
     //! Starts the radom number generator
     types::t_unsigned seed( types::t_unsigned _seed = 0 );
     //! Flips a coin, retuns true or false.

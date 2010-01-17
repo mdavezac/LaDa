@@ -3,11 +3,11 @@
 #
 
 math_cc = random.cc smith_normal_form.cc 
-math_h  = compare_norms.h  fuzzy.h  lambda.impl.h  misc.h  random.h  serialize.h \
+math_h  = compare_norms.h lambda.impl.h  misc.h  random.h  serialize.h \
           smith_normal_form.h traits.h fuzzy.h modifiers.h 
 math_f90 = rational_mathematics.f90
-# math_python_h = atat.impl.hpp atatintrospection.hpp atatoperators.hpp
-# math_python_cc = atat.cc 
+math_python_h = avogadro.hpp matrix.hpp 
+math_python_cc = avogadro.cc matrix.cc python.cc 
 
 ap_cc = representation.cc functions.cc
 ap_h  = bases.h  bases.impl.h  functions.h  functions.iterator.h  numeric_types.h\

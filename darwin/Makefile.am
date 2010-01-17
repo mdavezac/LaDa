@@ -27,7 +27,7 @@ ce_opt_LDADD = libdarwin.la \
 	       $(top_builddir)/ce/libce.la \
 	       $(top_builddir)/crystal/libcrystal.la \
 	       $(top_builddir)/physics/libphysics.la \
-	       $(top_builddir)/atat/libmath.la \
+	       $(top_builddir)/math/libmath.la \
 	       $(top_builddir)/print/libprint.la \
 	       $(top_builddir)/mpi/libmpiobject.la \
 	       $(top_builddir)/opt/libopt.la \
@@ -45,7 +45,7 @@ alloylayers_opt_LDADD = libdarwin.la \
 			$(top_builddir)/pescan_interface/libescan.la \
 	                $(top_builddir)/crystal/libcrystal.la \
 	                $(top_builddir)/physics/libphysics.la \
-	                $(top_builddir)/atat/libmath.la \
+	                $(top_builddir)/math/libmath.la \
 	                $(top_builddir)/print/libprint.la \
 	                $(top_builddir)/mpi/libmpiobject.la \
 	                $(top_builddir)/opt/libopt.la \

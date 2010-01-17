@@ -19,8 +19,8 @@ namespace LaDa
   namespace math
   {
     
-    void smith_normal_form( Eigen::Matrix3i& _S, Eigen::Matrix3i & _L,
-                            const Eigen::Matrix3i& _M, Eigen::Matrix3i &_R )
+    void smith_normal_form( math::iMatrix3d& _S, math::iMatrix3d & _L,
+                            const math::iMatrix3d& _M, math::iMatrix3d &_R )
     {
       types::t_int s[9], l[9], m[9], r[9];
       for( size_t i(0); i < 3; ++i )

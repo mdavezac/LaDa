@@ -118,7 +118,7 @@ namespace LaDa
         //!          norm of the reciprocal-space vector, but not the cubic haromic proper.
         //!          That particular implementation is left to the derived classes.
         //!          Derived classes must contain the following members
-        //!             - types::t_real operator()(const Eigen::Vector3d& _k ) const
+        //!             - types::t_real operator()(const math::rVector3d& _k ) const
         //!               returning the harmonic in direction \e _k.
         //!             - const static std::string type describing with one word
         //!               the type of harmonic. This variable is used when
@@ -155,7 +155,7 @@ namespace LaDa
             //!    traitsgaussian atternuation at \a _k , and of the cubic harmonic at \a _k.
             //! \param [in] _x concentration.
             //! \param [in] _k reciprocal-space vector.
-            types::t_real evaluate(const types::t_real _x, const Eigen::Vector3d &_k) const;
+            types::t_real evaluate(const types::t_real _x, const math::rVector3d &_k) const;
             //! \brief Returns the interpolated value at \a _x.
             //! \param [in] _x concentration.
             types::t_real evaluate(const types::t_real _x) const
@@ -163,13 +163,13 @@ namespace LaDa
             //! \brief Computes the product of a gaussian attenuation at \a _k and of
             //!        the cubic harmonic at \a _k.
             //! \param [in] _k reciprocal-space vector.
-            types::t_real evaluate(const Eigen::Vector3d &_k) const;
+            types::t_real evaluate(const math::rVector3d &_k) const;
             //! \brief returns the gradient of the product of the interpolation at \a _x, of a
             //!        gaussian atternuation at \a _k , and of the cubic harmonic at \a _k.
             //! \param [in] _x concentration.
             //! \param [in] _k reciprocal-space vector.
             types::t_real evaluate_gradient(const types::t_real _x,
-                                            const Eigen::Vector3d &_k) const;
+                                            const math::rVector3d &_k) const;
             //! \brief Returns the interpolated gradient at \a _x.
             //! \param [in] _x concentration.
             types::t_real evaluate_gradient(const types::t_real _x) const
@@ -181,7 +181,7 @@ namespace LaDa
             //! \param [in] _k reciprocal-space vector.
             //! \param [in, out] _grad stores the computed gradient.
             types::t_real evaluate_with_gradient(const types::t_real _x,
-                                                 const Eigen::Vector3d &_k, 
+                                                 const math::rVector3d &_k, 
                                                  types::t_real &_grad) const;
             //! \brief Returns the interpolated value and computes the gradient at \a _x.
             //! \param [in] _x concentration.
@@ -248,7 +248,7 @@ namespace LaDa
           public:
             //! \brief Returns the value \a _k of the cubic harmonic.
             //! \param [in] _k reciprocal-space vector.
-            types::t_real operator()(const Eigen::Vector3d &_k) const;
+            types::t_real operator()(const math::rVector3d &_k) const;
             
           public:
             //! Names the Type of this harmonic
@@ -276,7 +276,7 @@ namespace LaDa
           public:
             //! \brief Returns the value \a _k of the cubic harmonic.
             //! \param [in] _k reciprocal-space vector.
-            types::t_real operator()(const Eigen::Vector3d &_k) const;
+            types::t_real operator()(const math::rVector3d &_k) const;
             
           public:
             //! Names the Type of this harmonic

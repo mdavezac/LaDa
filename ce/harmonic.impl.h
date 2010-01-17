@@ -12,7 +12,7 @@ namespace LaDa
       {
 
         template< class T_DERIVED > inline 
-          types::t_real Base<T_DERIVED> :: evaluate(const Eigen::Vector3d &_k) const
+          types::t_real Base<T_DERIVED> :: evaluate(const math::rVector3d &_k) const
           {
             return (  exp( -norm2(_k) * attenuation ) * 
                    (*static_cast<const t_Derived*>(this))( _k ) ); 
@@ -20,7 +20,7 @@ namespace LaDa
 
         template< class T_DERIVED > inline 
         types::t_real Base<T_DERIVED> :: evaluate(const types::t_real _x,
-                                                  const Eigen::Vector3d &_k) const
+                                                  const math::rVector3d &_k) const
         {
           return (   interpolation.evaluate(_x) 
                    * exp( -norm2(_k) * attenuation )
@@ -28,7 +28,7 @@ namespace LaDa
         }
         template< class T_DERIVED > inline 
         types::t_real Base<T_DERIVED> :: evaluate_gradient(const types::t_real _x,
-                                                           const Eigen::Vector3d &_k) const
+                                                           const math::rVector3d &_k) const
         {
           return (   interpolation.evaluate_gradient(_x) 
                    * exp( -norm2(_k) *  attenuation )
@@ -36,7 +36,7 @@ namespace LaDa
         }
         template< class T_DERIVED > inline 
         types::t_real Base<T_DERIVED> :: evaluate_with_gradient(const types::t_real _x, 
-                                                                const Eigen::Vector3d &_k,
+                                                                const math::rVector3d &_k,
                                                                 types::t_real &_grad) const
         {
           types::t_real factor = exp( -norm2(_k) * attenuation )

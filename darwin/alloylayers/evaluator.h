@@ -152,7 +152,7 @@ namespace LaDa
           bool initialize( t_Individual &_indiv ) const; 
 
           //! Returns direction.
-          const Eigen::Vector3d& get_direction() const { return direction; }
+          const math::rVector3d& get_direction() const { return direction; }
 
           //! Returns a constant reference to a structure.
           const Crystal::Structure& get_structure() const { return structure; }
@@ -162,7 +162,7 @@ namespace LaDa
           mutable Crystal :: Structure structure;
 
           //! The growth direction.
-          Eigen::Vector3d direction;
+          math::rVector3d direction;
           //! A (static) pointer to a lattice object.
           static boost::shared_ptr< Crystal::Lattice > lattice;
       };
@@ -236,7 +236,7 @@ namespace LaDa
             //! Computes effective mass, given an effective mass object and a reference.
             types::t_real effmass( const Pescan::eMass& _functor,
                                    types::t_real _ref,
-                                   const Eigen::Matrix3d &_ocell ) const;
+                                   const math::rMatrix3d &_ocell ) const;
 
             using t_Base :: structure;
 

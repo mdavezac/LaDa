@@ -7,18 +7,18 @@
 #   error Macros __VTYPE__, __STYPE__, or __MTYPE__ already defined.
 #  endif
 #  define LADA_MATH_LAMBDA_IMPL_H 0
-#  define __VTYPE__ Eigen::Vector3d
+#  define __VTYPE__ math::rVector3d
 #  define __STYPE__ types::t_real
-#  define __MTYPE__ Eigen::Matrix3d
+#  define __MTYPE__ math::rMatrix3d
 #elif LADA_MATH_LAMBDA_IMPL_H == 0
 #  undef LADA_MATH_LAMBDA_IMPL_H
 #  undef __VTYPE__ 
 #  undef __STYPE__ 
 #  undef __MTYPE__ 
 #  define LADA_MATH_LAMBDA_IMPL_H 1
-#  define __VTYPE__ LaDa::Eigen::Vector3i
+#  define __VTYPE__ LaDa::math::iVector3d
 #  define __STYPE__ LaDa::types::t_int
-#  define __MTYPE__ LaDa::Eigen::Matrix3i
+#  define __MTYPE__ LaDa::math::iMatrix3d
 #elif LADA_MATH_LAMBDA_IMPL_H == 1
 #  define LADA_MATH_LAMBDA_IMPL_H 2
 #  undef __VTYPE__ 

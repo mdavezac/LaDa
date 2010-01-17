@@ -20,6 +20,7 @@
 #include <boost/python/operators.hpp>
 #include <boost/python/make_constructor.hpp>
 #include <boost/python/return_value_policy.hpp>
+#include <boost/python/return_by_value.hpp>
 #include <boost/python/reference_existing_object.hpp>
 #include <boost/python/register_ptr_to_python.hpp>
 #ifdef _MPI
@@ -155,6 +156,55 @@ namespace LaDa
       return result;
     }
 
+    template< class T>
+      math::rMatrix3d get_cell( T const &_str ) { return _str.cell; }
+    template< class T>
+      void set_cell( T &_str, math::rMatrix3d const &_cell) {_str.cell = _cell; }
+
+    template<class T_STRUCTURE>
+      bp::class_<T_STRUCTURE>   expose( std::string const &_name,
+                                        std::string const &_desc, 
+                                        std::string const &_type ) 
+    {
+      return bp::class_<T_STRUCTURE>( _name.c_str(), _desc.c_str() )
+        .def( bp::init<T_STRUCTURE const&>() )
+        .add_property
+        (
+          "cell",
+          bp::make_function(&get_cell<T_STRUCTURE>, bp::return_value_policy<bp::return_by_value>()),
+          &set_cell<T_STRUCTURE>, 
+          ("A 3x3 numpy array representing the lattice vector in cartesian units, "
+           "in units of self.L{scale<lada.crystal." + _name + ".scale>}.").c_str()
+        )
+        .def_readwrite( "atoms",   &T_STRUCTURE::atoms,
+                        (   "The list of atoms of type L{" + _type
+                          + "}, in units of self.{scale<" + _name + "}.").c_str() )
+        .def_readwrite( "energy",  &T_STRUCTURE::energy, "Holds a real value." )
+        .def_readwrite( "weight",  &T_STRUCTURE::weight,
+                        "Optional weight for fitting purposes." )
+        .def_readwrite( "scale",   &T_STRUCTURE::scale,
+                        "A scaling factor for atomic-positions and cell-vectors." )
+        .def_readwrite( "name", &T_STRUCTURE::name, "Holds a string." )
+        .def( "__str__",  &print< T_STRUCTURE > ) 
+        .def( "fromXML",  &XML::from< T_STRUCTURE >, bp::arg("file"),
+              "Loads a structure from an XML file." )
+        .def( "toXML",  &XML::to< T_STRUCTURE >, bp::arg("file"),
+              "Adds a tag to an XML file describing this structure."  )
+        .def( "xcrysden", &xcrysden_str, "Outputs in XCrysden format." )
+        .add_property
+        ( 
+          "lattice",
+          bp::make_function
+          (
+            &return_crystal_lattice< T_STRUCTURE >,
+            bp::return_value_policy<bp::reference_existing_object>()
+          ),
+          "References the lattice within which this structure is defined."
+          " Read, but do not write to this object." 
+        ) 
+        .def_pickle( pickle_structure< T_STRUCTURE >() );
+    }
+
     void expose_structure()
     {
       typedef Crystal::Structure::t_FreezeCell t_FreezeCell;
@@ -169,80 +219,26 @@ namespace LaDa
         .value(  "all", Crystal::Structure::FREEZE_ALL )
         .export_values();
 
-      bp::class_< Crystal::Structure >( "Structure", "Defines a structure.\n"
-                                        "Generally, it is a super-cell of a LaDa.Lattice object." )
-        .def( "__init__", bp::make_constructor( copy<Crystal::Structure> ) )
-        .def( "__init__", bp::make_constructor( empty<Crystal::Structure> ) )
-        .def( "__init__", bp::make_constructor( string_to_real ) )
-        .def_readwrite( "cell",    &Crystal::Structure::cell,
-                        "The cell in cartesian coordinates (in units of LaDa.Structure.scale)." )
-        .def_readwrite( "freeze", &Crystal::Structure::freeze,
+      expose< Crystal::Structure >
+      (
+        "Structure", 
+        "Defines a structure.\n\nGenerally, it is a super-cell of a L{Lattice} object.",
+        "Atom"
+      ).def( "__init__", bp::make_constructor( string_to_real ) )
+       .def_readwrite( "freeze", &Crystal::Structure::freeze,
                         "Tags to freeze coordinates when relaxing structure.\n" )
-        .def_readwrite( "atoms",   &Crystal::Structure::atoms,
-                        "The list of atoms of type LaDa.details_Atom. "
-                        "Coordinates are in units of LaDa.Structure.Scale" )
-        .def_readwrite( "k_vecs",  &Crystal::Structure::k_vecs,
-                        "The list of reciprocal-space vectors."
-                        " It is constructure with respected to a LaDa.Lattice object.\n"  ) 
-        .def_readwrite( "energy",  &Crystal::Structure::energy, "Holds a real value." )
-        .def_readwrite( "weight",  &Crystal::Structure::weight,
-                        "Optional weight for fitting purposes." )
-        .def_readwrite( "scale",   &Crystal::Structure::scale,
-                        "A scaling factor for atomic-positions and cell-vectors." )
-        .def_readwrite( "name", &Crystal::Structure::name, "Holds a string.\n" )
-        .def( "__str__",  &print<Crystal::Structure> ) 
-        .def( "fromXML",  &XML::from<Crystal::Structure>, bp::arg("file"),
-              "Loads a structure from an XML file." )
-        .def( "toXML",  &XML::to<Crystal::Structure>, bp::arg("file"),
-              "Adds a tag to an XML file describing this structure."  )
-        .add_property
-        ( 
-          "lattice",
-          bp::make_function
-          (
-            &return_crystal_lattice< Crystal::Structure >,
-            bp::return_value_policy<bp::reference_existing_object>()
-          ),
-          "References the lattice within which this structure is defined."
-          " Read, but do not write to this object." 
-        )
-        .def( "concentration", &Crystal::Structure::get_concentration, "Returns concentration." )
-        .def( bp::self == bp::other<Crystal::Structure>() )
-        .def( "xcrysden", &xcrysden, "Outputs in XCrysden format." )
-        .def_pickle( pickle_structure< Crystal::Structure >() );
-      bp::class_< Crystal::TStructure<std::string> >( "sStructure" )
-        .def( "__init__", bp::make_constructor( copy< Crystal::TStructure<std::string> > ) )
-        .def( "__init__", bp::make_constructor( empty< Crystal::TStructure<std::string> > ) )
-        .def( "__init__", bp::make_constructor( real_to_string ) )
-        .def_readwrite( "cell",    &Crystal::TStructure<std::string>::cell,
-                        "The cell in cartesian coordinates (in units of LaDa.Structure.scale)." )
-        .def_readwrite( "atoms",   &Crystal::TStructure<std::string>::atoms,
-                        "The list of atoms of type LaDa.details_Atom. "
-                        "Coordinates are in units of LaDa.Structure.Scale" )
-        .def_readwrite( "energy",  &Crystal::TStructure<std::string>::energy, "Holds a real value." )
-        .def_readwrite( "weight",  &Crystal::TStructure<std::string>::weight,
-                        "Optional weight for fitting purposes." )
-        .def_readwrite( "scale",   &Crystal::TStructure<std::string>::scale,
-                        "A scaling factor for atomic-positions and cell-vectors." )
-        .def_readwrite( "name", &Crystal::TStructure<std::string>::name, "Holds a string." )
-        .def( "__str__",  &print< Crystal::TStructure<std::string> > ) 
-        .def( "fromXML",  &XML::from< Crystal::TStructure<std::string> >, bp::arg("file"),
-              "Loads a structure from an XML file." )
-        .def( "toXML",  &XML::to< Crystal::TStructure<std::string> >, bp::arg("file"),
-              "Adds a tag to an XML file describing this structure."  )
-        .def( "xcrysden", &xcrysden_str, "Outputs in XCrysden format." )
-        .add_property
-        ( 
-          "lattice",
-          bp::make_function
-          (
-            &return_crystal_lattice< Crystal::TStructure<std::string> >,
-            bp::return_value_policy<bp::reference_existing_object>()
-          ),
-          "References the lattice within which this structure is defined."
-          " Read, but do not write to this object." 
-        )
-        .def_pickle( pickle_structure< Crystal::TStructure<std::string> >() );
+       .def_readwrite( "k_vecs",  &Crystal::Structure::k_vecs,
+                       "The list of reciprocal-space vectors."
+                       " It is constructure with respected to a LaDa.Lattice object.\n"  ) 
+       .def( "concentration", &Crystal::Structure::get_concentration, "Returns concentration." )
+       .def( bp::self == bp::other<Crystal::Structure>() );
+      expose< Crystal::TStructure<std::string> >
+      (
+        "sStructure", 
+        "Defines a structure.\n\nGenerally, it is a super-cell of a L{Lattice} object.",
+        "StrAtom"
+      ).def( "__init__", bp::make_constructor( real_to_string ) );
+
       bp::def("to_cartesian", &Crystal::to_cartesian<std::string>,
               "Transforms a structure from cartesian to fractional coordinates.\n" );
       bp::def("to_fractional", &Crystal::to_fractional<std::string>,

@@ -20,11 +20,11 @@ namespace LaDa
 {
   namespace Crystal 
   {
-    Eigen::Vector3d into_cell( Eigen::Vector3d const &_vec, 
-                               Eigen::Matrix3d const &_cell, 
-                               Eigen::Matrix3d const &_inv)
+    math::rVector3d into_cell( math::rVector3d const &_vec, 
+                               math::rMatrix3d const &_cell, 
+                               math::rMatrix3d const &_inv)
     {
-      Eigen::Vector3d result( _inv * _vec );
+      math::rVector3d result( _inv * _vec );
       result(0) -= std::floor(result(0));
       result(1) -= std::floor(result(1));
       result(2) -= std::floor(result(2));
@@ -44,11 +44,11 @@ namespace LaDa
       bool is_primitive = true;
 
       // moves sites into unit-cell.
-      Eigen::Matrix3d const inv(cell.inverse());
+      math::rMatrix3d const inv(cell.inverse());
       foreach(t_Site &_site, copy.sites) _site.pos = into_cell(_site.pos, cell, inv);
 
       // Then compares fractional translations from site 0 to sites of same type.
-      std::vector<Eigen::Vector3d> translations;
+      std::vector<math::rVector3d> translations;
       CompareSites compsites(copy.sites.front(), _tolerance);
       t_Sites :: const_iterator i_site = copy.sites.begin();
       t_Sites :: const_iterator const i_site_end = copy.sites.end();
@@ -58,7 +58,7 @@ namespace LaDa
         if( not compsites(i_site->type) ) continue;
 
         // creates translation.
-        Eigen::Vector3d const translation( into_cell(i_site->pos - compsites.pos, cell, inv) );
+        math::rVector3d const translation( into_cell(i_site->pos - compsites.pos, cell, inv) );
         
         // loop on null translation.
         if(     math::is_zero(translation(0))
@@ -95,10 +95,10 @@ namespace LaDa
       translations.push_back( cell.col(2) );
 
       // Loops over possible primitive cells.
-      typedef std::vector<Eigen::Vector3d> :: const_iterator t_cit;
+      typedef std::vector<math::rVector3d> :: const_iterator t_cit;
       t_cit const i_vec_begin( translations.begin() );
       t_cit const i_vec_end( translations.end() );
-      Eigen::Matrix3d new_cell = cell;
+      math::rMatrix3d new_cell = cell;
       types::t_real volume = std::abs(new_cell.determinant());
       for( t_cit i_first(i_vec_begin); i_first != i_vec_end; ++i_first )
         for( t_cit i_second(i_vec_begin); i_second != i_vec_end; ++i_second )
@@ -108,10 +108,10 @@ namespace LaDa
           {
             if( i_first == i_third or i_second == i_third ) continue;
             // construct new cell.
-            Eigen::Matrix3d trial;
-            trial.set_column(0, *i_first);
-            trial.set_column(1, *i_second);
-            trial.set_column(2, *i_third);
+            math::rMatrix3d trial;
+            trial.col(0) = *i_first;
+            trial.col(1) = *i_second;
+            trial.col(2) = *i_third;
 
             // singular matrix?
             types::t_real const det(trial.determinant());
@@ -121,8 +121,8 @@ namespace LaDa
             // Direct matrix?
             if( det < 0e0 )
             {
-              trial.set_column(2, *i_second);
-              trial.set_column(1, *i_third);
+              trial.col(2) = *i_second;
+              trial.col(1) = *i_third;
               LADA_ASSERT(trial.determinant() > 0, "Shouldn't happen.\n");
             }
             // Checks that original cell is a supercell.
@@ -144,7 +144,7 @@ namespace LaDa
       // now creates new lattice.
       sites.clear();
       cell = new_cell;
-      Eigen::Matrix3d const inv_cell(cell.inverse());
+      math::rMatrix3d const inv_cell(cell.inverse());
       foreach(t_Site &s, copy.sites) s.pos = into_cell(s.pos, cell, inv_cell);
       sites.push_back(copy.sites.front());
       for(i_site = copy.sites.begin(); i_site != i_site_end; ++i_site)

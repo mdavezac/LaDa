@@ -44,7 +44,7 @@ namespace LaDa
                         bool _check_lattice = false )
       {
         __TRYBEGIN
-        Eigen::Matrix3d inv_cell;
+        math::rMatrix3d inv_cell;
         if( _check_lattice and (not _structure.lattice) )
         {
           std::cerr << "Requested for structure to be checked against, but lattice not set.\n";

@@ -18,11 +18,11 @@ namespace LaDa
   namespace Crystal 
   {
     //! The type holding the smith transform.
-    typedef boost::tuples::tuple<Eigen::Matrix3d, Eigen::Vector3i> t_SmithTransform;
+    typedef boost::tuples::tuple<math::rMatrix3d, math::iVector3d> t_SmithTransform;
 
     //! Returns smith transform.
-    t_SmithTransform get_smith_transform( Eigen::Matrix3d const &_lat_cell,
-                                          Eigen::Matrix3d const &_str_cell );
+    t_SmithTransform get_smith_transform( math::rMatrix3d const &_lat_cell,
+                                          math::rMatrix3d const &_str_cell );
     //! Returns smith transform.
     template< class T_TYPE >
       t_SmithTransform get_smith_transform( Crystal::TStructure<T_TYPE> const &_structure )
@@ -32,23 +32,23 @@ namespace LaDa
       }
 
     //! Computes smith indices of position \a _pos.
-    Eigen::Vector3i get_smith_index( t_SmithTransform const &_transformation,
-                                     Eigen::Vector3d  const &_pos );
+    math::iVector3d get_smith_index( t_SmithTransform const &_transformation,
+                                     math::rVector3d  const &_pos );
 
     //! Computes linear smith index from non-linear smith index.
-    inline size_t get_linear_smith_index( Eigen::Vector3i const &_extent,
-                                          Eigen::Vector3i  const &_index )
+    inline size_t get_linear_smith_index( math::iVector3d const &_extent,
+                                          math::iVector3d  const &_index )
       { return _index(2) + _extent(2) * ( _index(1) + _index(0) * _extent(1) ); }
 
     //! Computes linear smith index from non-linear smith index, including sites.
-    inline size_t get_linear_smith_index( Eigen::Vector3i const &_extent,
+    inline size_t get_linear_smith_index( math::iVector3d const &_extent,
                                           size_t const &_site_index,
-                                          Eigen::Vector3i  const &_index )
+                                          math::iVector3d  const &_index )
       { return _index(2)+_extent(2)*(_index(1)+_extent(1)*(_index(0)+_site_index*_extent(0))); }
 
     //! Computes linear smith index of position \a _pos.
     inline size_t get_linear_smith_index( t_SmithTransform const &_transformation,
-                                          Eigen::Vector3d  const &_pos )
+                                          math::rVector3d  const &_pos )
     {
       return get_linear_smith_index
              (
@@ -59,7 +59,7 @@ namespace LaDa
     //! Computes linear smith index of position \a _pos.
     inline size_t get_linear_smith_index( t_SmithTransform const &_transformation,
                                           size_t const &_site_index,
-                                          Eigen::Vector3d  const &_pos )
+                                          math::rVector3d  const &_pos )
     {
       return get_linear_smith_index
              (
@@ -83,8 +83,8 @@ namespace LaDa
       }
 
     inline bool are_periodic_images( t_SmithTransform const &_transformation, 
-                                     Eigen::Vector3d const &_a, Eigen::Vector3d const &_b )
-      { return get_smith_index(_transformation, _a - _b) == Eigen::Vector3i(0,0,0); }
+                                     math::rVector3d const &_a, math::rVector3d const &_b )
+      { return get_smith_index(_transformation, _a - _b) == math::iVector3d(0,0,0); }
 
     //! Computes map of smith indices.
     void get_smith_map( Crystal::Structure const &_str, std::vector< std::vector<size_t> > &_out);

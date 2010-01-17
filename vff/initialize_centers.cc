@@ -16,11 +16,11 @@ namespace LaDa
 {
   namespace Vff
   { 
-    void Vff :: first_neighbors_( std::vector< std::vector< Eigen::Vector3d > >& _fn )
+    void Vff :: first_neighbors_( std::vector< std::vector< math::rVector3d > >& _fn )
     {
       const size_t Nsites( structure.lattice->sites.size() );
       __DOASSERT( Nsites != 2, "Expected two sites for VFF.\n" )
-      typedef std::vector< std::vector< Eigen::Vector3d > > t_FirstNeighbors;
+      typedef std::vector< std::vector< math::rVector3d > > t_FirstNeighbors;
       _fn.resize( structure.lattice->sites.size() );
       foreach( const Crystal::Lattice::t_Site &site, structure.lattice->sites )
         _fn[0].push_back( site.pos );
@@ -45,7 +45,7 @@ namespace LaDa
       first_neighbors_( fn );
 
       // Checks if ideal structure. In which case use smith normal tree building.
-      const Eigen::Matrix3d inv_str( (!structure.lattice->cell) * structure.cell );
+      const math::rMatrix3d inv_str( (!structure.lattice->cell) * structure.cell );
       bool is_ideal = true;
       for( size_t i(0); is_ideal and i < 3; ++i )
         for( size_t j(0); is_ideal and j < 3; ++j )
@@ -93,7 +93,7 @@ namespace LaDa
                      "divide-and-conquer algorithm.\n";
       )
       // Tries to guess size of divide and conquer.
-      const Eigen::Vector3i nboxes( Crystal::guess_dnc_params( structure, 30 ) );
+      const math::iVector3d nboxes( Crystal::guess_dnc_params( structure, 30 ) );
       types::t_real n(   structure.atoms.size()
                        / types::t_real( nboxes(0) * nboxes(1) * nboxes(2) ) );
       __ROOTCODE

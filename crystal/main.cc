@@ -15,7 +15,7 @@
 #include <opt/debug.h>
 #include <opt/bpo_macros.h>
 #include <opt/tuple_io.h>
-#include <opt/random.h>
+#include <math/random.h>
 #include <mpi/mpi_object.h>
 #ifdef _MPI
 # include <boost/mpi/environment.hpp>
@@ -49,10 +49,10 @@ boost::shared_ptr<Crystal::Lattice>
 
 void randomize( Crystal::Structure &_structure )
 {
-  LaDa::opt::math::create();
+  LaDa::math::start_random();
   foreach( Crystal::Structure::t_Atom& atom, _structure.atoms )
     if( _structure.lattice->sites[ atom.site ].type.size() > 1 )
-      atom.type = LaDa::opt::math::flip() ? -1e0: 1e0;
+      atom.type = LaDa::math::flip() ? -1e0: 1e0;
 }
 
 void printstructure( const Crystal::Structure &_structure, 

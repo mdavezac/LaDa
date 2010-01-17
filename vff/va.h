@@ -128,7 +128,7 @@ namespace LaDa
 
           //! \brief Returns a reference to the computed stress
           //! \sa Functional::stress
-          const Eigen::Matrix3d& get_stress() const { return t_VffBase::stress; }
+          const math::rMatrix3d& get_stress() const { return t_VffBase::stress; }
 
 #         ifdef _MPI
             //! Sets mpi pointer.

@@ -84,7 +84,7 @@ namespace LaDa
             if( line[0] == '#' ) continue;
             if( line.size() == 0 ) continue;
             std::istringstream input( line );
-            structure.cell.zero();
+            structure.cell = Eigen::Matrix3d::Zero();
             types::t_int dummy;
             input >> structure.name;
             for( size_t i(0); i < 6; ++i ) input >> dummy;
@@ -101,10 +101,10 @@ namespace LaDa
             Crystal::t_SmithTransform const transform = get_smith_transform( structure );
             Crystal::Structure::t_Atoms::iterator i_atom = structure.atoms.begin();
             Crystal::Structure::t_Atoms::iterator i_atom_end = structure.atoms.end();
-            Eigen::Vector3i const &smith( boost::tuples::get<1>(transform) );
+            math::iVector3d const &smith( boost::tuples::get<1>(transform) );
             for(; i_atom != i_atom_end; ++i_atom )
             {
-              Eigen::Vector3i indices( Crystal::get_smith_index(transform, i_atom->pos) );
+              math::iVector3d indices( Crystal::get_smith_index(transform, i_atom->pos) );
               const size_t index
               ( 
                 indices[2] + smith(2) * ( indices[1] + smith(1) * indices[0] )

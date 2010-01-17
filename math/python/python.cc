@@ -1,0 +1,34 @@
+//
+//  Version: $Id$
+//
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+
+#include <boost/python/module.hpp>
+#include <boost/python/def.hpp>
+#include <boost/python/docstring_options.hpp>
+#include <boost/python/scope.hpp>
+#include <boost/python/return_by_value.hpp>
+#include <boost/python/return_value_policy.hpp>
+
+#include "avogadro.hpp"
+#include "matrix.hpp"
+#include "../eigen.h"
+
+  LaDa::math::rMatrix3d id() { LaDa::math::rMatrix3d m = Eigen::Matrix3d::Identity(); return m;}
+  void printt(LaDa::math::rMatrix3d const &_mat) { std::cout << "p: " << _mat << "\n"; }
+BOOST_PYTHON_MODULE(math)
+{
+  namespace bp = boost::python;
+  bp::scope scope;
+  scope.attr("__doc__") = "This namespace defines mathematical types\n\nIt "
+   "imports automatic conversions between numpy arrays and 3d-vectors and "
+   "matrices.";
+
+  LaDa::Python::expose_eigen_vectors();
+  LaDa::Python::expose_eigen_matrices();
+  namespace bp = boost::python;
+  boost::python::def("id", &id, bp::return_value_policy<bp::return_by_value>());
+  boost::python::def("printt", &printt);
+}

@@ -34,22 +34,22 @@ namespace LaDa
                                                    boost::uniform_real<> > > rng;
     }
  
-    types::t_unsigned create( types::t_unsigned _seed )
+    types::t_unsigned start_random( types::t_unsigned _seed )
     {
       boost::shared_ptr< boost::mt11213b > a( new boost::mt11213b(42u) );
-      __DOASSERT( not a.get(), "Could not create random number generator boost::mt11213b.\n" )
+      __DOASSERT( not a.get(), "Could not start_random random number generator boost::mt11213b.\n" )
       details::generator = a;
       if( not _seed ) _seed = (types::t_unsigned) std::time(0);
       details::generator->seed( static_cast<unsigned int>(_seed) );
  
       boost::shared_ptr< boost::uniform_real<> > b( new boost::uniform_real<>(0,1) );
-      __DOASSERT( not a.get(), "Could not create uniform distribution.\n" )
+      __DOASSERT( not a.get(), "Could not start_random uniform distribution.\n" )
       details::uni_dist = b;
       
       typedef boost::variate_generator< boost::mt11213b&, 
                                         boost::uniform_real<> > t_Shit;
       boost::shared_ptr< t_Shit > c( new t_Shit( *details::generator, *details::uni_dist ) );
-      __DOASSERT( not a.get(), "Could not create random number "
+      __DOASSERT( not a.get(), "Could not start_random random number "
                                "generator with uniform distribution.\n" )
       details::rng = c; 
                                                  
@@ -58,7 +58,7 @@ namespace LaDa
  
     types::t_unsigned seed( types::t_unsigned _seed )
     {
-      if( not details::generator.get() ) return create( _seed );
+      if( not details::generator.get() ) return start_random( _seed );
  
       __ASSERT( not details::generator.get(), "random number generator was not created" );
       if( not _seed ) _seed = (types::t_unsigned) std::time(0);

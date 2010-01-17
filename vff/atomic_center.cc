@@ -61,7 +61,7 @@ namespace LaDa
       do // goes over periodic image
       {
         // constructs perdiodic image of atom *i_bond
-        Eigen::Vector3d frac_image, image;
+        math::rVector3d frac_image, image;
         frac_image[0] =  (types::t_real) period.access(0);
         frac_image[1] =  (types::t_real) period.access(1);
         frac_image[2] =  (types::t_real) period.access(2);

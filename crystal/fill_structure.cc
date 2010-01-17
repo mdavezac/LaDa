@@ -7,7 +7,7 @@
 
 #include <functional>
 
-#include <opt/smith_normal_form.h>
+#include <math/smith_normal_form.h>
 #include <opt/debug.h>
 
 #include "lattice.h"
@@ -31,19 +31,19 @@ namespace LaDa
           t_SmithTransform transform
             = get_smith_transform( _structure.lattice->cell, _structure.cell);
         
-          Eigen::Vector3i &smith = bt::get<1>(transform);
-          const Eigen::Matrix3d factor
+          math::iVector3d &smith = bt::get<1>(transform);
+          const math::rMatrix3d factor
           ( 
              (!bt::get<0>(transform))
           );
-          Eigen::Matrix3d inv_cell( _structure.cell.inverse() );
+          math::rMatrix3d inv_cell( _structure.cell.inverse() );
           typename TStructure<T_TYPE>::t_Atom atom;
           for( size_t i(0); i < smith(0); ++i )
             for( size_t j(0); j < smith(1); ++j )
               for( size_t k(0); k < smith(2); ++k )
               {
                 // in cartesian.
-                const Eigen::Vector3d vec( factor * Eigen::Vector3d(i,j,k) );
+                const math::rVector3d vec( factor * math::rVector3d(i,j,k) );
               
                 // adds all lattice sites.
                 typedef Crystal::Lattice::t_Site t_Site;
@@ -51,9 +51,9 @@ namespace LaDa
                 foreach( const t_Site &site, _structure.lattice->sites ) 
                 {
                   // in supercell fractional.
-                  Eigen::Vector3d frac( inv_cell * ( vec + site.pos ) );
+                  math::rVector3d frac( inv_cell * ( vec + site.pos ) );
                   // in supercell fractional and in supercell parallelogram
-                  const Eigen::Vector3d inside
+                  const math::rVector3d inside
                   (
                     frac(0) - std::floor( frac(0) + 0.0000001 ),
                     frac(1) - std::floor( frac(1) + 0.0000001 ),

@@ -50,7 +50,7 @@ namespace LaDa
           const Bond &bond( bonds.find( bondtype )->second );
           const types::t_real rcut_squared( rcut_ * rcut_ );
 
-          const Eigen::Vector3d dfractional
+          const math::rVector3d dfractional
                                 ( 
                                   details::range01( i_atom1->pos[0] - i_atom2->pos[0] ),
                                   details::range01( i_atom1->pos[1] - i_atom2->pos[1] ),
@@ -62,8 +62,8 @@ namespace LaDa
               {
                 if ( i_atom1 == i_atom2 and i == 0 and j == 0 and k == 0 ) continue;
                 // computes distance.
-                const Eigen::Vector3d fdistance( dfractional + Eigen::Vector3d(i,j,k) );
-                const Eigen::Vector3d distance( _in.cell * fdistance * _in.scale );
+                const math::rVector3d fdistance( dfractional + math::rVector3d(i,j,k) );
+                const math::rVector3d distance( _in.cell * fdistance * _in.scale );
                 const types::t_real normd( distance.squaredNorm() );
                 if( normd > rcut_squared ) continue;
 
@@ -86,7 +86,7 @@ namespace LaDa
                       6e0 * squared
                     * ( 2.e0 * bond.hard_sphere * twelfth - bond.van_der_walls * sixth )
                   );
-                  const Eigen::Vector3d force( ffactor * distance );
+                  const math::rVector3d force( ffactor * distance );
                   i_force1->pos += force;
                   i_force2->pos -= force;
 

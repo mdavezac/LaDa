@@ -66,7 +66,7 @@ namespace LaDa
         std::vector< t_Bond > bonds; 
         //! \brief Allow to relate origin pointer of Atomic_center::bonds to the correct
         //! periodic image with which the bond is made
-        std::vector< Eigen::Vector3d > translations;
+        std::vector< math::rVector3d > translations;
         //! \brief A switch to say wether a bond is made directely or with a periodic
         //! image of an AtomicCenter
         std::vector< bool > do_translates;
@@ -78,7 +78,7 @@ namespace LaDa
         types::t_unsigned index;
 
       public:
-        mutable Eigen::Vector3d gradient; //!< place holder to compute gradient
+        mutable math::rVector3d gradient; //!< place holder to compute gradient
 
         //! \brief Default Constructor. 
         //! \param _str structure in which \a _e can be found
@@ -119,21 +119,21 @@ namespace LaDa
           { return bonds.size(); }
 
         //! Sets the atomic position of the origin
-        Eigen::Vector3d& operator=(Eigen::Vector3d& _vec)
+        math::rVector3d& operator=(math::rVector3d& _vec)
           { origin->pos = _vec; return _vec; }
         //! Translates the atomic position of the origin by _vec
         //! \param _vec Translation
-        void operator+=(const Eigen::Vector3d& _vec)
+        void operator+=(const math::rVector3d& _vec)
           { origin->pos += _vec; }
         //! Translates the atomic position of the origin by -_vec
         //! \param _vec "Negative" Translation
-        void operator-=(const Eigen::Vector3d& _vec)
+        void operator-=(const math::rVector3d& _vec)
           { origin->pos -= _vec; }
         //! Returns the atomic position of the origin
-        operator Eigen::Vector3d& ()
+        operator math::rVector3d& ()
           { return origin->pos; }
         //! Returns the atomic position of the origin, constant format
-        operator const Eigen::Vector3d& () const
+        operator const math::rVector3d& () const
           { return origin->pos; }
         //! Returns the atom at the origin
         t_Atom& Origin()
@@ -184,7 +184,7 @@ namespace LaDa
         //! current bond being iterated
         std::vector< t_Bond > :: const_iterator i_bond;
         //! tranlation, if current bond is an atomic image
-        std::vector< Eigen::Vector3d > :: const_iterator i_translation;
+        std::vector< math::rVector3d > :: const_iterator i_translation;
         //! swtich for doing periodic imeage translation or not
         std::vector< bool > :: const_iterator i_do_translate;
       
@@ -260,7 +260,7 @@ namespace LaDa
                    - parent->structure->cell * (*i_translation) ).squaredNorm();
         }
         //! \brief Returns bond vector
-        Eigen::Vector3d& vector( Eigen::Vector3d &_hold )
+        math::rVector3d& vector( math::rVector3d &_hold )
         {
           _hold = (*i_bond)->origin->pos - parent->origin->pos ;
           if ( *i_do_translate )
@@ -270,7 +270,7 @@ namespace LaDa
         //! \brief Returns scalar product between bond vector and _b
         types::t_real scalar_product( const const_iterator &_b ) const
         {
-          Eigen::Vector3d a, b;
+          math::rVector3d a, b;
           if ( *i_do_translate )
             a =   (*i_bond)->origin->pos - parent->origin->pos 
                 + parent->structure->cell * (*i_translation);
@@ -296,11 +296,11 @@ namespace LaDa
         //! \param _v vector to translate
         //! \param _cell unit-cell defining periodic image (can be different from
         //! AtomicCenter::structure by amount of minimized strain)
-        void translate( Eigen::Vector3d &_v, const Eigen::Matrix3d &_cell )
+        void translate( math::rVector3d &_v, const math::rMatrix3d &_cell )
           { if( *i_do_translate ) _v += _cell * ( *i_translation ); }
         //! \brief Translates a vector _v by periodic image of enpoint of bond
         //! \param _v vector to translate
-        void translate( Eigen::Vector3d &_v )
+        void translate( math::rVector3d &_v )
           { if( *i_do_translate ) _v += parent->structure->cell * ( *i_translation ); }
 #       ifdef _LADADEBUG
           void check() const;

@@ -31,14 +31,14 @@ namespace LaDa
     void Cluster :: apply_symmetry( Crystal::SymmetryOperator const &_op )
     {
       if ( vectors.size() < 1 ) return;
-      std::vector<Eigen::Vector3d> :: iterator i_vec = vectors.begin();
-      std::vector<Eigen::Vector3d> :: iterator const i_last = vectors.end();
+      std::vector<math::rVector3d> :: iterator i_vec = vectors.begin();
+      std::vector<math::rVector3d> :: iterator const i_last = vectors.end();
       for(; i_vec != i_last; ++i_vec) *i_vec = _op(*i_vec);
 
       if( Crystal::Structure::lattice == NULL ) return;
 
       i_vec = vectors.begin();
-      Eigen::Vector3d shift( (!Crystal::Structure::lattice->cell) * (*i_vec) );
+      math::rVector3d shift( (!Crystal::Structure::lattice->cell) * (*i_vec) );
       shift(0) -= std::floor(shift(0)); if( math::is_zero(shift(0)-1e0) ) shift(0) = 0e0;
       shift(1) -= std::floor(shift(1)); if( math::is_zero(shift(1)-1e0) ) shift(1) = 0e0;
       shift(2) -= std::floor(shift(2)); if( math::is_zero(shift(2)-1e0) ) shift(2) = 0e0;
@@ -47,22 +47,22 @@ namespace LaDa
       for(; i_vec != i_last; ++i_vec ) *i_vec -= shift; 
     }
 
-    bool Cluster :: are_periodic_images( Cluster &_cluster, const Eigen::Matrix3d &_icell) 
+    bool Cluster :: are_periodic_images( Cluster &_cluster, const math::rMatrix3d &_icell) 
     {
       if ( vectors.size() != _cluster.vectors.size() ) return false;
       if ( vectors.size() == 0 ) return true;
       
-      std::vector<Eigen::Vector3d> :: iterator i_vec = vectors.begin();
-      std::vector<Eigen::Vector3d> :: iterator i_vec_last = vectors.end();
+      std::vector<math::rVector3d> :: iterator i_vec = vectors.begin();
+      std::vector<math::rVector3d> :: iterator i_vec_last = vectors.end();
       for (; i_vec != i_vec_last; ++i_vec)
       {
         if ( not math::are_periodic_images( *_cluster.vectors.begin(), *i_vec, _icell) ) continue;
       
-        Eigen::Vector3d shift = (*i_vec) - *(_cluster.vectors.begin());
-        std::vector<Eigen::Vector3d> :: iterator is_found;
+        math::rVector3d shift = (*i_vec) - *(_cluster.vectors.begin());
+        std::vector<math::rVector3d> :: iterator is_found;
         
         // search for _cluster  vector such that|| (*i_vec-shift) - *i_equiv ||  > zero_tolerance
-        std::vector<Eigen::Vector3d> :: iterator i2_vec = vectors.begin();
+        std::vector<math::rVector3d> :: iterator i2_vec = vectors.begin();
         for(; i2_vec != i_vec_last; ++i2_vec)
         {
           is_found  = std::find_if( _cluster.vectors.begin(),
@@ -90,8 +90,8 @@ namespace LaDa
         return;
       }
 
-      std::vector<Eigen::Vector3d> :: const_iterator i_vec = vectors.begin();
-      std::vector<Eigen::Vector3d> :: const_iterator i_last = vectors.end();
+      std::vector<math::rVector3d> :: const_iterator i_vec = vectors.begin();
+      std::vector<math::rVector3d> :: const_iterator i_last = vectors.end();
       
       for ( ; i_vec != i_last; ++i_vec)
         stream << " " << ( *i_vec )(0) 
@@ -103,7 +103,7 @@ namespace LaDa
     bool Cluster :: Load( const TiXmlElement &_node )
     {
       const TiXmlElement *child;
-      types::t_real d; Eigen::Vector3d vec;
+      types::t_real d; math::rVector3d vec;
 
       _node.Attribute("eci", &eci);
       vectors.clear();
@@ -122,8 +122,8 @@ namespace LaDa
     // returns true if second position in cluster is equal to pos.
     struct CompPairs
     {
-      Eigen::Vector3d const pos;
-      CompPairs( Eigen::Vector3d const &_a ) : pos(_a) {}
+      math::rVector3d const pos;
+      CompPairs( math::rVector3d const &_a ) : pos(_a) {}
       CompPairs( CompPairs const &_a ) : pos(_a.pos) {}
       bool operator()(Cluster const& _a) const
         { return math::is_zero( (_a.vectors[1]-pos).squaredNorm() ); }
@@ -218,7 +218,7 @@ namespace LaDa
         std::istringstream sstr(line);
         types::t_real x, y, z;
         sstr >> x >> y >> z;
-        cluster.vectors.push_back( Eigen::Vector3d( x * 5e-1, y * 5e-1, z * 5e-1 ) );
+        cluster.vectors.push_back( math::rVector3d( x * 5e-1, y * 5e-1, z * 5e-1 ) );
       }
       _out = cluster;
       return true;
@@ -229,8 +229,8 @@ namespace LaDa
                                    std::vector< Cluster > &_out )
     {
       typedef std::vector< Cluster > t_Clusters;
-      Eigen::Matrix3d const &cell    = _lat.cell;
-      Eigen::Matrix3d const inv_cell = cell.inverse();
+      math::rMatrix3d const &cell    = _lat.cell;
+      math::rMatrix3d const inv_cell = cell.inverse();
       // new clusters will be added directly to _out
       t_Clusters old_cluster_list = _out;
     
@@ -264,25 +264,25 @@ namespace LaDa
       }
     }
     
-    // == for Eigen::Vector3d
+    // == for math::rVector3d
     struct cmp
     {
-      cmp(Eigen::Vector3d const &_c) : pos(_c) {}
+      cmp(math::rVector3d const &_c) : pos(_c) {}
       cmp(cmp const &_c): pos(_c.pos) {}
-      bool operator()(Eigen::Vector3d const &_a) const
+      bool operator()(math::rVector3d const &_a) const
       {
         if( not math::is_zero( pos[0] - _a[0] ) ) return false;
         if( not math::is_zero( pos[1] - _a[1] ) ) return false;
         return  math::is_zero( pos[2] - _a[2] );
       }
-      Eigen::Vector3d const &pos;
+      math::rVector3d const &pos;
     };
 
     bool Cluster::operator==( Cluster const & _c ) const
     {
       if( vectors.size() != _c.vectors.size() ) return false;
 
-      foreach( Eigen::Vector3d const &pos, _c.vectors )
+      foreach( math::rVector3d const &pos, _c.vectors )
         if( vectors.end() == std::find_if(vectors.begin(), vectors.end(), cmp(pos)) ) 
           return false;
       return true;

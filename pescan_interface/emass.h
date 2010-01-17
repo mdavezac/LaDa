@@ -41,9 +41,9 @@ namespace LaDa
         //! Stepsize for interpolation points.
         types::t_real stepsize;
         //! k-vector for which to compute effective mass.
-        Eigen::Vector3d kpoint;
+        math::rVector3d kpoint;
         //! Direction for which to compute effective mass.
-        Eigen::Vector3d direction;
+        math::rVector3d direction;
         //! Number of states for which to compute effective mass.
         size_t nbstates;
 
@@ -66,7 +66,7 @@ namespace LaDa
         void operator()
         (
           const Interface& _interface,
-          const Eigen::Matrix3d &_ocell, 
+          const math::rMatrix3d &_ocell, 
           const Crystal::Structure &_structure,
           const types::t_real &_eref,
           t_Output &_out 
@@ -77,13 +77,13 @@ namespace LaDa
 
       protected:
         //! Computes kpoint in distorted structure from original lattice point.
-        Eigen::Vector3d distort_kpoint( const Eigen::Matrix3d &_ocell, 
-                                        const Eigen::Matrix3d &_dcell,
-                                        const Eigen::Vector3d &_kpoint ) const
+        math::rVector3d distort_kpoint( const math::rMatrix3d &_ocell, 
+                                        const math::rMatrix3d &_dcell,
+                                        const math::rVector3d &_kpoint ) const
           { return ( !(~_dcell) ) * (~_ocell) * _kpoint; }
         //! Computes eigenvalues for single kpoint.
         void compute_( Interface& _interface,
-                       const Eigen::Vector3d &_kpoints ) const;
+                       const math::rVector3d &_kpoints ) const;
 
         //! Adds a weight to interpolation points.
         types::t_real weight_( size_t _i, size_t j ) const;

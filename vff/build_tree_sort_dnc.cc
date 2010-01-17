@@ -49,28 +49,28 @@ namespace LaDa
           const t_Center &bond( centers[ bond_index ] );
           if( site == bond.site_one() ? 0: 1 ) continue;
           
-          std::vector<Eigen::Vector3d> :: const_iterator i_neigh = _fn[site].begin();
-          const std::vector<Eigen::Vector3d> :: const_iterator i_neigh_end = _fn[site].end();
+          std::vector<math::rVector3d> :: const_iterator i_neigh = _fn[site].begin();
+          const std::vector<math::rVector3d> :: const_iterator i_neigh_end = _fn[site].end();
           for(; i_neigh != i_neigh_end; ++i_neigh )
           {
-            const Eigen::Vector3d image
+            const math::rVector3d image
             ( 
               center.origin->pos + *i_neigh - bond.origin->pos
             );
-            const Eigen::Vector3d frac_image( (!structure.cell) * image );
-            const Eigen::Vector3d frac_centered
+            const math::rVector3d frac_image( (!structure.cell) * image );
+            const math::rVector3d frac_centered
             ( 
               frac_image[0] - rint( frac_image[0] ),
               frac_image[1] - rint( frac_image[1] ),
               frac_image[2] - rint( frac_image[2] )
             );
-            const Eigen::Vector3d cut( structure.cell * frac_centered );
+            const math::rVector3d cut( structure.cell * frac_centered );
 
             if( cut.squaredNorm() > cutoff ) continue;
             
             t_Centers :: iterator ii_bond( centers.begin() + bond_index );
             center.bonds.push_back( t_Center ::__make__iterator__( ii_bond ) );
-            const Eigen::Vector3d trans
+            const math::rVector3d trans
             (
               rint( frac_image[0] ),
               rint( frac_image[1] ),

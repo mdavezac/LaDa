@@ -36,7 +36,7 @@ namespace LaDa
     typedef Database :: size_type t_uint;
 
     //! Type of the elements DxG.
-    typedef std::pair<size_t, Eigen::Vector3i> t_Element;
+    typedef std::pair<size_t, math::iVector3d> t_Element;
 
     //! A base of nflavor^m.
     typedef std::vector<t_uint> FlavorBase;
@@ -45,8 +45,8 @@ namespace LaDa
     //! Create a flavor basis.
     boost::shared_ptr<FlavorBase> create_flavor_base( size_t _card, size_t _nflavor );
 
-    inline t_uint get_index(size_t const &_d, Eigen::Vector3i const &_g, 
-                            Eigen::Vector3i const &_smith, size_t const &_card) throw()
+    inline t_uint get_index(size_t const &_d, math::iVector3d const &_g, 
+                            math::iVector3d const &_smith, size_t const &_card) throw()
       { return _card-1- Crystal::get_linear_smith_index(_smith, _d, _g); }
 
     //! Throws when supercell is too large for t_uint integer type.

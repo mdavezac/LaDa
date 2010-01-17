@@ -344,7 +344,7 @@ namespace LaDa
       if ( math::is_zero( escan.kpoint.squareNorm() ) ) file << "11 0 0 0 0 0 # kpoint=Gamma\n";
       else
       {
-        Eigen::Vector3d k = escan.kpoint;
+        math::rVector3d k = escan.kpoint;
         file << "11 1 " << k << " " 
                         << std::setw(12) << std::setprecision(8) 
                         << escan.scale / Physics::a0("A") <<  " # kpoint\n";

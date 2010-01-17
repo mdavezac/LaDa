@@ -240,7 +240,7 @@ namespace LaDa
       boost::shared_ptr<t_MLClusterClasses> result(new t_MLClusterClasses);
       MLCluster cluster;
       MLClusters clusters;
-      cluster.origin.pos = Eigen::Vector3d(0,0,0);
+      cluster.origin.pos = math::rVector3d(0,0,0);
       cluster.origin.site = 0;
       for(; cluster_node; cluster_node = cluster_node->NextSiblingElement("Cluster") )
       {
@@ -262,7 +262,7 @@ namespace LaDa
           MLCluster::Spin const spin = 
           {
             0,
-            Eigen::Vector3d
+            math::rVector3d
             (
               boost::lexical_cast<types::t_real>(vec_node->Attribute("x")), 
               boost::lexical_cast<types::t_real>(vec_node->Attribute("y")), 

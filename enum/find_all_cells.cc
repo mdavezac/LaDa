@@ -20,7 +20,7 @@ namespace LaDa
 
   namespace enumeration
   {
-    typedef std::vector<Eigen::Matrix3d> t_Container;
+    typedef std::vector<math::rMatrix3d> t_Container;
 
     void unique_add( t_Container::value_type const &_supercell, 
                      t_Container::value_type const &_cell, 

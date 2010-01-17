@@ -10,6 +10,8 @@
 #include <boost/python/register_ptr_to_python.hpp>
 #include <boost/python/make_constructor.hpp>
 #include <boost/python/errors.hpp>
+#include <boost/python/return_value_policy.hpp>
+#include <boost/python/return_by_value.hpp>
 
 #include <opt/types.h>
 #include <crystal/structure.h>
@@ -127,7 +129,14 @@ namespace LaDa
       bp::class_< Crystal::Lattice >( "Lattice" )
         .def(bp::init< Crystal::Lattice >() )
         .def("__init__", bp::make_constructor(&details::init), "Construct lattice form xml file.\n")
-        .def_readwrite("cell",  &Crystal::Lattice::cell )
+        .add_property
+        (
+          "cell",
+          make_getter(&Crystal::Lattice::cell, bp::return_value_policy<bp::return_by_value>()),
+          make_setter(&Crystal::Lattice::cell, bp::return_value_policy<bp::return_by_value>()),
+          "A 3x3 numpy array representing the lattice vector in cartesian units, "
+          "in units of self.L{scale<lada.crystal.Lattice.scale>}."
+        )
         .def_readwrite("sites", &Crystal::Lattice::sites )
         .def_readwrite("scale", &Crystal::Lattice::scale )
         .def_readwrite("space_group", &Crystal::Lattice::space_group )

@@ -60,12 +60,12 @@ namespace LaDa
       std::list< Crystal::Structure::t_Atom > :: iterator i_0 = sites0.begin();
       std::list< Crystal::Structure::t_Atom > :: iterator i_end = sites0.end();
       std::list< Crystal::Structure::t_Atom > :: iterator i_1;
-      Eigen::Vector3d translation =   _str.lattice->sites[1].pos
+      math::rVector3d translation =   _str.lattice->sites[1].pos
                                     - _str.lattice->sites[0].pos; 
       _str.atoms.clear();
       for(; i_0 != i_end; ++i_0 )
       {
-        Eigen::Vector3d atom = i_0->pos + translation;
+        math::rVector3d atom = i_0->pos + translation;
         i_1 = std::min_element( sites1.begin(), sites1.end(), math::compare_norms( atom ) );
         _str.atoms.push_back( *i_0 ); 
         _str.atoms.push_back( *i_1 ); 

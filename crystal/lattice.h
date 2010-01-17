@@ -33,9 +33,9 @@ namespace LaDa
   namespace Crystal 
   {
     //! Refolds a periodic vector into the unit cell.
-    Eigen::Vector3d into_cell( Eigen::Vector3d const &_vec, 
-                               Eigen::Matrix3d const &_cell, 
-                               Eigen::Matrix3d const &_inv);
+    math::rVector3d into_cell( math::rVector3d const &_vec, 
+                               math::rMatrix3d const &_cell, 
+                               math::rMatrix3d const &_inv);
     
 
     //! \brief Defines a lattice.
@@ -72,7 +72,7 @@ namespace LaDa
 
       public:
         //! The unit-cell of the lattice in cartesian coordinates.
-        Eigen::Matrix3d cell;
+        math::rMatrix3d cell;
         //! The collection of sites.
         t_Sites sites;
         //! The space-group operations of the lattice.
@@ -116,7 +116,7 @@ namespace LaDa
         }
         //! \brief Returns the site index of an atom at position \a _at.
         //! \details \a _at can be given modulo the unit-cell of the lattice.
-        types::t_int get_atom_site_index( const Eigen::Vector3d &_at ) const;
+        types::t_int get_atom_site_index( const math::rVector3d &_at ) const;
         //! \brief Returns the site index of an atom with atomic symbol \a _at.
         //! \details Mores specifically, the first site in Lattice::sites which
         //!          accomodate \a _at is returned. This may not be the only site...

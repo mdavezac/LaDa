@@ -127,7 +127,7 @@ namespace CE
       }
 
 
-      types::t_real Cubic :: operator()( const Eigen::Vector3d &_k ) const
+      types::t_real Cubic :: operator()( const math::rVector3d &_k ) const
       {
         types::t_real r2=norm2(_k);
         types::t_real A=sqrt(1./(4.*M_PI));
@@ -177,7 +177,7 @@ namespace CE
         return 0.;
       }
 
-      types::t_real Tetragonal :: operator()( const Eigen::Vector3d &_k ) const
+      types::t_real Tetragonal :: operator()( const math::rVector3d &_k ) const
       {
         typedef types::t_real t_real;
         if( rank == 0 ) return t_real(1);

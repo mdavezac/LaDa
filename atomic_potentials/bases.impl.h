@@ -88,7 +88,7 @@ namespace LaDa
           types::t_real const d( (*i_pos) * (*_x) );
           if( d > maxx or maxx < 0e0 ) maxx = d;
         }
-        equivs_.reset( new std::list<Eigen::Vector3d> );
+        equivs_.reset( new std::list<math::rVector3d> );
         for(i_pos = neighs->begin(); i_pos != i_pos_end; ++i_pos)
           if( math::eq( (*i_pos) * (*_x), maxx ) ) equivs_->push_back( *i_pos );
       } 

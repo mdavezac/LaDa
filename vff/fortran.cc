@@ -38,9 +38,9 @@ namespace LaDa
     
       Crystal::Lattice::t_Site site;
       site.site = 0; site.freeze = Crystal::Lattice::t_Site::FREEZE_NONE;
-      site.pos = Eigen::Vector3d(0,0,0);
+      site.pos = math::rVector3d(0,0,0);
       lattice.sites.push_back(site);
-      site.pos = Eigen::Vector3d(0.25,0.25,0.25);
+      site.pos = math::rVector3d(0.25,0.25,0.25);
       lattice.sites.push_back(site);
     }
     void Fortran::set_cell( types::t_real *_array )

@@ -25,7 +25,7 @@ namespace LaDa
     template<class T_TYPE> 
       void to_fractional( TStructure<T_TYPE> &_structure )
       {
-        const Eigen::Matrix3d inv( _structure.cell.inverse() );
+        const math::rMatrix3d inv( _structure.cell.inverse() );
         typename TStructure<T_TYPE>::t_Atoms::iterator i_atom = _structure.atoms.begin();
         typename TStructure<T_TYPE>::t_Atoms::iterator i_atom_end = _structure.atoms.end();
         for(; i_atom != i_atom_end; ++i_atom )
@@ -34,7 +34,7 @@ namespace LaDa
     template<class T_TYPE> 
       void to_cartesian( TStructure<T_TYPE> &_structure )
       {
-        const Eigen::Matrix3d &cell( _structure.cell );
+        const math::rMatrix3d &cell( _structure.cell );
         typename TStructure<T_TYPE>::t_Atoms::iterator i_atom = _structure.atoms.begin();
         typename TStructure<T_TYPE>::t_Atoms::iterator i_atom_end = _structure.atoms.end();
         for(; i_atom != i_atom_end; ++i_atom )

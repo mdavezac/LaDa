@@ -18,6 +18,7 @@
 #include <tinyxml/tinyxml.h>
 
 #include <opt/types.h>
+#include <math/eigen.h>
 #include <math/traits.h>
 #include <math/fuzzy.h>
 
@@ -74,7 +75,7 @@ namespace LaDa
 
       public:
         //! The atomic position in cartesian coordinate.
-        Eigen::Vector3d pos;
+        math::rVector3d pos;
         //! The atomic occupation.
         t_Type  type;
         //! The frozen status
@@ -83,11 +84,11 @@ namespace LaDa
         types::t_int site;
         
         //! Constructor
-        Atom_Type() : pos(Eigen::Vector3d(0,0,0)),
+        Atom_Type() : pos(math::rVector3d(0,0,0)),
                       freeze(FREEZE_NONE), site(-1) {};
         //! Constructor and Initializer
         explicit 
-          Atom_Type   ( const Eigen::Vector3d &_pos, t_Type _type) 
+          Atom_Type   ( const math::rVector3d &_pos, t_Type _type) 
                     : pos(_pos), type(_type), freeze(FREEZE_NONE),
                       site(-1) {};
         //! Copy Constructor
@@ -100,11 +101,11 @@ namespace LaDa
         //! Compares both occupation and type.
         bool equal (const Atom_Type<t_Type> &_atom) const;
         //! Returns a constant reference to the atomic position.
-        operator const Eigen::Vector3d& () const { return pos; }
+        operator const math::rVector3d& () const { return pos; }
         //! Returns a constant reference to the atomic occupation.
         operator const t_Type& () const { return type; } 
         //! Sets the atomic position.
-        void operator=( const Eigen::Vector3d &_pos ) { pos = _pos; }
+        void operator=( const math::rVector3d &_pos ) { pos = _pos; }
         //! Sets the occupation.
         void operator=( const t_Type &_type ) { type = _type; }
 
@@ -193,7 +194,7 @@ namespace LaDa
         ss.clear(); ss.str( str );
         ss >> z;
 
-        pos = Eigen::Vector3d(x,y,z);
+        pos = math::rVector3d(x,y,z);
 
         ss.clear(); ss.str("");
         if ( _element.Attribute("type") )

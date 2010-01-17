@@ -130,7 +130,7 @@ namespace LaDa
         //! The vff object for minimizing and computing strain/stress.
         Vff::Darwin<Vff::Layered> vff;
         //! Directions for which to optimize electronic effective mass
-        std::vector< Eigen::Vector3d > directions;
+        std::vector< math::rVector3d > directions;
 
       public:
         //! Constructor

@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
   LaDa::Crystal::Structure::lattice = lattice.get();
   size_t N( vm["n"].as<size_t>() );
 
-  boost::shared_ptr< std::vector<LaDa::Eigen::Matrix3d> > cells
+  boost::shared_ptr< std::vector<LaDa::math::rMatrix3d> > cells
     = LaDa::enumeration::find_all_cells(*lattice, N);
 
   __BPO_CATCH__( __MPICODE( MPI_Finalize() ) )

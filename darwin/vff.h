@@ -39,7 +39,7 @@ namespace LaDa
     struct Keeper 
     {
       types::t_real energy; //!< The strain energy computed by %Vff.
-      Eigen::Matrix3d stress; //!< The stress computed by %Vff.
+      math::rMatrix3d stress; //!< The stress computed by %Vff.
 
       //! Constructor
       Keeper() : energy(0) { stress.zero(); }

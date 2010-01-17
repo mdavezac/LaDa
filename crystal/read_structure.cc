@@ -42,7 +42,7 @@ namespace LaDa
                          bool _check_lattice)
     {
       __TRYBEGIN
-      Eigen::Matrix3d inv_cell;
+      math::rMatrix3d inv_cell;
       if( _check_lattice and (not _struct.lattice) )
       {
         std::cerr << "Requested for structure to be checked against, but lattice not set.\n";
@@ -71,9 +71,9 @@ namespace LaDa
                   "Reached unexpected end of file: " << _path << ".\n" )
         std::getline( file, line );
         sstr.str( line ); sstr.seekg (0, std::ios::beg); sstr.clear();
-        sstr >> _struct.cell.x[0][i]
-             >> _struct.cell.x[1][i]
-             >> _struct.cell.x[2][i];
+        sstr >> _struct.cell(0, i)
+             >> _struct.cell(1, i)
+             >> _struct.cell(2, i);
       }
       _struct.freeze = Crystal::Structure::FREEZE_NONE;
       if( _check_lattice )
@@ -93,7 +93,7 @@ namespace LaDa
         ++nfound;
         if( type != 1 and type != 2 ) continue;
         a.type = ( type == 1 ) ? -1.e0: 1.e0;
-        sstr >> a.pos.x[0] >> a.pos.x[1]  >> a.pos.x[2];
+        sstr >> a.pos[0] >> a.pos[1]  >> a.pos[2];
         a.freeze = Structure::t_Atom::FREEZE_NONE;
         a.site = 0;
         if( _check_lattice )
@@ -151,7 +151,7 @@ namespace LaDa
       __DEBUGTRYBEGIN
       LADA_ASSERT(_structure.lattice, "Lattice not set.") 
 #     ifdef LADA_DEBUG
-        Eigen::Matrix3d const inv_cell(!_structure.lattice->cell);
+        math::rMatrix3d const inv_cell(!_structure.lattice->cell);
 #     endif
       // finds first line for structure.
       std::string line;

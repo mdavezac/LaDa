@@ -22,7 +22,7 @@ EXTRA_DIST = $(fc_models_clj_h)
 librelaxer_la_SOURCES = $(fc_models_clj_cc)
 librelaxer_la_CPPFLAGS = $(AM_CPPFLAGS) 
 librelaxer_la_LIBADD = $(top_builddir)/crystal/libcrystal.la \
-                       $(top_builddir)/atat/libmath.la \
+                       $(top_builddir)/math/libmath.la \
                        $(top_builddir)/minimizer/libminimizer.la \
                        $(top_builddir)/opt/libopt.la \
                        $(top_builddir)/print/libprint.la \
@@ -34,7 +34,7 @@ clj_LDADD = libmodels.la librelaxer.la  @BOOST_PROGOP@
 coollj_SOURCES =  main.cc
 coollj_LDADD = @BOOST_PROGOP@ libmodels.la \
                $(top_builddir)/crystal/libcrystal.la \
-               $(top_builddir)/atat/libmath.la \
+               $(top_builddir)/math/libmath.la \
                $(top_builddir)/minimizer/libminimizer.la \
                $(top_builddir)/opt/libopt.la \
                $(top_builddir)/print/libprint.la \

@@ -136,13 +136,13 @@ namespace LaDa
         // print cartesian coord.
         foreach( std::string const sp, species )
         {
-          Eigen::Matrix3d const inv( !_structure.cell );
+          math::rMatrix3d const inv( !_structure.cell );
           t_Structure::t_Atoms::const_iterator i_first( _structure.atoms.begin() );
           t_Structure::t_Atoms::const_iterator const i_end( _structure.atoms.end() );
           for( size_t N(0); i_first != i_end; ++i_first )
             if( i_first->type == sp )
             {
-              Eigen::Vector3d const vec(inv * i_first->pos); 
+              math::rVector3d const vec(inv * i_first->pos); 
               file << boost::format("  %25.18f %25.18f %25.18f\n") % vec(0) % vec(1) %vec(2);
             }
         }

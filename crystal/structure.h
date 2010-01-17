@@ -18,13 +18,13 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/serialization/serialization.hpp>
 
-#include <Eigen/Core>
 
 #include <tinyxml/tinyxml.h>
 #include <exception>
 
 #include <opt/types.h>
 #include <opt/tinyxml.h>
+#include <math/eigen.h>
 
 #include "atom.h"
 #include "lattice.h"
@@ -93,7 +93,7 @@ namespace LaDa
       };
 
       //! The unit-cell of the structure in cartesian coordinate.
-      Eigen::Matrix3d cell;
+      math::rMatrix3d cell;
       //! The atomic position in cartesian unit and their occupation.
       std::vector< Atom_Type<T_TYPE> > atoms;
       //! Just an old variable with the number of the structure in those NREL PI files.
@@ -200,7 +200,7 @@ namespace LaDa
 
       //! \brief Copies the reciprocal-space vectors to a container.
       //! \details Since Atom_Type automatically returns reference to a
-      //!          Eigen::Vector3d and its type, this routien can copy the full
+      //!          math::rVector3d and its type, this routien can copy the full
       //!          reciprocal space vector, the positions only, or the
       //!          intensities only, depending on the type of
       //!          t_container::value_type.
@@ -254,16 +254,16 @@ namespace LaDa
     };
 
     //! Returns true if \a _a and \a _b are periodic equivalents of the unit-cell \a _cell.
-    bool are_equivalent( const Eigen::Vector3d &_a,
-                         const Eigen::Vector3d &_b,
-                         const Eigen::Matrix3d &_cell);
+    bool are_equivalent( const math::rVector3d &_a,
+                         const math::rVector3d &_b,
+                         const math::rMatrix3d &_cell);
     //! Dumps a structure to a stream.
     template< class T_TYPE >
       std::ostream& operator<<( std::ostream& _stream, const Crystal::TStructure<T_TYPE>& _struc )
         { _struc.print_out(_stream); return _stream; }
 
     //! compares two kvectors according to length and position.
-    bool sort_kvec( const Eigen::Vector3d &_vec1, const Eigen::Vector3d &_vec2 );
+    bool sort_kvec( const math::rVector3d &_vec1, const math::rVector3d &_vec2 );
 
     //! \brief Creates an epitaxial structure.
     //! \param[out] _structure the structure on output. The atoms are ordered
@@ -275,8 +275,8 @@ namespace LaDa
     //!                    cell is strictly positive. The first vector in the
     //!                    unit-cell is the growth direction.
     bool create_epitaxial_structure( Structure& _structure,
-                                     Eigen::Vector3d &_direction,
-                                     Eigen::Vector3i &_extent );
+                                     math::rVector3d &_direction,
+                                     math::iVector3d &_extent );
 
     //! Returns concentration over set site.
     types::t_real concentration( const Structure& _structure, const size_t i );

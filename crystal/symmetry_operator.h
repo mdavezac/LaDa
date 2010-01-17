@@ -31,27 +31,27 @@ namespace LaDa
     struct SymmetryOperator
     {
       //! Constructor.
-      SymmetryOperator() : trans(Eigen::Vector3d::Zero()), op(Eigen::Matrix3d::Identity()) {}
+      SymmetryOperator() : trans(math::rVector3d::Zero()), op(math::rMatrix3d::Identity()) {}
       //! Constructor.
-      SymmetryOperator   ( Eigen::Matrix3d const &_op,
-                           Eigen::Vector3d const& _t = Eigen::Vector3d(0,0,0) )
+      SymmetryOperator   ( math::rMatrix3d const &_op,
+                           math::rVector3d const& _t = math::rVector3d(0,0,0) )
                        : op(_op), trans(_t) {}
       //! Constructor.
-      SymmetryOperator   ( Eigen::Vector3d const& _t)
-                       : trans(_t), op(Eigen::Matrix3d::Identity()) {}
+      SymmetryOperator   ( math::rVector3d const& _t)
+                       : trans(_t), op(math::rMatrix3d::Identity()) {}
       //! Copy Constructor.
       SymmetryOperator( SymmetryOperator const& _c ) : op(_c.op), trans(_c.trans) {}
 
       //! Matrix operator.
-      Eigen::Matrix3d op;
+      math::rMatrix3d op;
       //! Vector translation
-      Eigen::Vector3d trans;
+      math::rVector3d trans;
       //! Applies operator.
-      Eigen::Vector3d operator()( Eigen::Vector3d const &_a ) const
+      math::rVector3d operator()( math::rVector3d const &_a ) const
         { return op*_a + trans; }
 
       //! True if the matrix is invariant by this operator.
-      bool invariant(Eigen::Matrix3d const &_mat, types::t_real _tolerance = types::tolerance) const;
+      bool invariant(math::rMatrix3d const &_mat, types::t_real _tolerance = types::tolerance) const;
       //! Comparison.
       bool operator==(SymmetryOperator const &_sym)
       {
@@ -86,7 +86,7 @@ namespace LaDa
     //!          norm as the unit-cell vectors.
     //! \see Taken from Enum code, PRB 77, 224115 (2008).
     boost::shared_ptr< std::vector<SymmetryOperator> >
-      get_point_group_symmetries( Eigen::Matrix3d const &_cell, types::t_real _tolerance = -1e0 );
+      get_point_group_symmetries( math::rMatrix3d const &_cell, types::t_real _tolerance = -1e0 );
 
     //! \brief returns space-group symmetries of a lattice.
     //! \warning Works for primitive lattices only.

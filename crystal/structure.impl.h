@@ -23,10 +23,10 @@ namespace LaDa
       }
 
     //! \cond
-    void  find_range( const Eigen::Matrix3d &A, Eigen::Vector3i &kvec );
+    void  find_range( const math::rMatrix3d &A, math::iVector3d &kvec );
 
     template <class CONTAINER>
-    void remove_equivalents( CONTAINER &_cont, const Eigen::Matrix3d &_cell)
+    void remove_equivalents( CONTAINER &_cont, const math::rMatrix3d &_cell)
     {
       typename CONTAINER :: iterator i_vec = _cont.begin();
       typename CONTAINER :: iterator i_end = _cont.end();
@@ -115,7 +115,7 @@ namespace LaDa
       bool TStructure<T_TYPE> :: Load( const TiXmlElement &_element )
       {
         const TiXmlElement *child, *parent;
-        double d; Eigen::Vector3d vec;
+        double d; math::rVector3d vec;
         int i;
    
         // Find first XML "Structure" node (may be _element from start, or a child of _element)

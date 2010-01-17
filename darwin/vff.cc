@@ -14,7 +14,7 @@ namespace LaDa
     bool Keeper :: Load( const TiXmlElement &_node )
     {
       const TiXmlElement *vffxml = _node.FirstChildElement( "VffResult" );
-      Eigen::Vector3d vec;
+      math::rVector3d vec;
       double d;
 
       if ( not vffxml ) goto errorout;

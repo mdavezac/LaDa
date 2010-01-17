@@ -8,6 +8,8 @@
 #include <boost/python.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <boost/python/errors.hpp>
+#include <boost/python/return_value_policy.hpp>
+#include <boost/python/return_by_value.hpp>
 #include <sstream>
 
 #include <opt/types.h>
@@ -47,10 +49,15 @@ namespace LaDa
         bp::class_< t_Atom >( _name.c_str(), _ds.c_str() )
           .def( "__init__", bp::make_constructor( default_constructor< T_TYPE > ) )
           .def( "__init__", bp::make_constructor( copy_constructor< T_TYPE > ) )
-          .def( "__init__", bp::make_constructor( object_constructor< T_TYPE > ) )
-          .def_readwrite( "pos",    &t_Atom::pos,
-                          "a LaDa.rVector3d object containing the"
-                          " atomic position in cartesian units." )
+          .def( bp::init<math::rVector3d const &, T_TYPE>())
+          .def( bp::init<math::rVector3d const &, T_TYPE>())
+          .add_property
+          (
+            "pos",
+            make_getter(&t_Atom::pos, bp::return_value_policy<bp::return_by_value>()),
+            make_setter(&t_Atom::pos, bp::return_value_policy<bp::return_by_value>()),
+            "A 1-dimensional numpy array of length 3 containing atomic position in cartesian units."
+          )
           .def_readwrite( "site",   &t_Atom::site,
                           "index of the \"site\" as referenced by a LaDa.Lattice object." )
           .def_readwrite( "type",   &t_Atom::type, _typeds.c_str() )
@@ -156,44 +163,6 @@ namespace LaDa
     template< class T_TYPE >
       Crystal::Atom_Type<T_TYPE>* copy_constructor( const Crystal::Atom_Type<T_TYPE>& _ob )
         { return new Crystal::Atom_Type<T_TYPE>( _ob ); }
-    template< class T_TYPE >
-      Crystal::Atom_Type<T_TYPE>* object_constructor( const boost::python::tuple& _ob )
-      {
-        using namespace boost::python;
-        typedef Crystal::Atom_Type<T_TYPE> t_Atom;
-        t_Atom *result = NULL;
-        try
-        { 
-          result = new t_Atom;
-          types::t_unsigned length = len(_ob);
-          if( length < 3 ) return result;
-        
-          result->pos.x[0] = extract< types::t_real >( _ob[0] );
-          result->pos.x[1] = extract< types::t_real >( _ob[1] );
-          result->pos.x[2] = extract< types::t_real >( _ob[2] );
-          if( length == 3 ) return result;
-          construct_type( *result, _ob );
-          if( length == 4 ) return result;
-          result->site = extract< types::t_int >( _ob[4] );
-          return result;
-        }
-        catch( std::exception &_e )
-        {
-          if( result ) delete result;
-          std::ostringstream sstr;
-          sstr << "Object cannot be converted to an atom: \n"
-               << _e.what() << "\n";
-          PyErr_SetString(PyExc_RuntimeError, sstr.str().c_str());
-          boost::python::throw_error_already_set();
-        }
-        catch( ... )
-        {
-          if( result ) delete result;
-          PyErr_SetString(PyExc_RuntimeError, "Could not convert object to Atom." );
-          boost::python::throw_error_already_set();
-        }
-        return NULL;
-      }
 
     types::t_real toReal(std::string _str )
     { 

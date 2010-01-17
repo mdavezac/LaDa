@@ -43,7 +43,7 @@ namespace LaDa
                     const std::string &basis_type = "cube");
         //! Constructor.
         Separables( types::t_unsigned _rank,
-                    const Eigen::Matrix3d &_cell, 
+                    const math::rMatrix3d &_cell, 
                     const std::string &basis_type = "parallelepiped");
 
         //! Sets the rank of the separable function.
@@ -51,7 +51,7 @@ namespace LaDa
         //! Sets the basis of the separable function.
         void set_basis( types::t_unsigned _size, const std::string &_type = "cube" );
         //! Sets the basis of the separable function.
-        void set_basis( const Eigen::Matrix3d& _cell, const std::string &_type = "cell" );
+        void set_basis( const math::rMatrix3d& _cell, const std::string &_type = "cell" );
         //! Returns the rank of the separable function.
         types::t_unsigned rank() const  { return basis.size(); }
         //! Returns the type of the basis.
@@ -67,7 +67,7 @@ namespace LaDa
         //! Type of the basis.
         std::string basis_type;
         //! A vector of positions used in creating the basis.
-        std::vector< Eigen::Vector3d > positions;
+        std::vector< math::rVector3d > positions;
         //! Name of this function.
         std::string name;
     };
@@ -78,9 +78,9 @@ namespace LaDa
     {
       public:
         //! Type of the container of positions.
-        typedef std::vector< Eigen::Vector3d > t_Basis;
+        typedef std::vector< math::rVector3d > t_Basis;
         //! Type of the container of symmetry operations.
-        typedef std::vector< Eigen::Matrix3d > t_SymOps;
+        typedef std::vector< math::rMatrix3d > t_SymOps;
         //! Type of the pure bitset representing a configuration for a set symmetry.
         typedef std::vector< bool > t_Bitset;
         //! Type  containing a pure bitset and an attached coefficient.

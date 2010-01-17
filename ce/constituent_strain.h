@@ -69,9 +69,9 @@ namespace LaDa
         protected: 
           using t_Base::variables;
           //! Real-space cartesian coordinates of the structure.
-          std::vector<Eigen::Vector3d> r_vecs;
+          std::vector<math::rVector3d> r_vecs;
           //! Reciprocal-space cartesian coordinates of the structure.
-          std::vector<Eigen::Vector3d> k_vecs;
+          std::vector<math::rVector3d> k_vecs;
           //! Harmonics functions.
           static t_Harmonics harmonics;
           __MPICODE(
@@ -119,7 +119,7 @@ namespace LaDa
           void print_xml( TiXmlElement& _node ) const;
 
           //! Returns a constatn reference to the reciprocal-space vector collection.
-          const std::vector<Eigen::Vector3d>& get_kvectors() const
+          const std::vector<math::rVector3d>& get_kvectors() const
               { return k_vecs; }
 
 #         ifdef _LADADEBUG

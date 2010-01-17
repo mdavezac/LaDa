@@ -9,15 +9,15 @@
 #include <config.h>
 #endif
 
-#include <Eigen/Core> 
+#include "eigen.h"
 
 namespace LaDa 
 {
   namespace math
   {
     //! Computes smith normal form of a matrix \a  _S = \a _L \a _M \a _R.
-    void smith_normal_form( Eigen::Matrix3i& _S, Eigen::Matrix3i & _L,
-                            const Eigen::Matrix3i& _M, Eigen::Matrix3i &_R );
+    void smith_normal_form( math::iMatrix3d& _S, math::iMatrix3d & _L,
+                            const math::iMatrix3d& _M, math::iMatrix3d &_R );
   } // namespace opt
 
 } // namespace LaDa

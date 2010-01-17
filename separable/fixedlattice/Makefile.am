@@ -16,7 +16,7 @@ AM_LDFLAGS = @TINYXML_LIBS@ @BOOST_LDFLAGS@ @BOOST_PROGOP@ \
 # cubic_LDADD = libfxseparable.la \
 # 	      ../libseparable.la \
 # 	      ../../crystal/libcrystal.la \
-# 	      ../../atat/libmath.la \
+# 	      ../../math/libmath.la \
 # 	      ../../physics/libphysics.la \
 # 	      ../../print/libprint.la \
 # 	      ../../opt/libopt.la  
@@ -33,7 +33,7 @@ mixed_LDADD = libfxseparable.la \
               $(top_builddir)/separable/libseparable.la \
               $(top_builddir)/ce/libce.la \
               $(top_builddir)/crystal/libcrystal.la \
-              $(top_builddir)/atat/libmath.la \
+              $(top_builddir)/math/libmath.la \
               $(top_builddir)/physics/libphysics.la \
               $(top_builddir)/print/libprint.la \
               $(top_builddir)/opt/libopt.la  \

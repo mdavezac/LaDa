@@ -1,6 +1,3 @@
-//
-//  Version: $Id$
-//
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -34,7 +31,7 @@ namespace LaDa
       Crystal::Lattice* Structure :: lattice = NULL;
     }
 
-    bool sort_kvec( const Eigen::Vector3d &_vec1, const Eigen::Vector3d &_vec2 )
+    bool sort_kvec( const math::rVector3d &_vec1, const math::rVector3d &_vec2 )
     {
       types::t_real a = _vec1.squaredNorm();
       types::t_real b = _vec2.squaredNorm();
@@ -274,8 +271,8 @@ namespace LaDa
         return false;
       }
 
-      Eigen::Vector3d direction;
-      Eigen::Vector3i extent;
+      math::rVector3d direction;
+      math::iVector3d extent;
       
       // First, Load Attributes 
       __TRYBEGIN
@@ -458,12 +455,12 @@ namespace LaDa
 
     }
 
-    void refold( Eigen::Vector3d &vec, const Eigen::Matrix3d &lat )
+    void refold( math::rVector3d &vec, const math::rMatrix3d &lat )
     {
       opt::NDimIterator<types::t_int, std::less_equal<types::t_int> > i_cell;
-      Eigen::Vector3d hold = vec;
-      Eigen::Vector3d compute;
-      Eigen::Vector3d current = vec;
+      math::rVector3d hold = vec;
+      math::rVector3d compute;
+      math::rVector3d current = vec;
       types::t_real norm_c = vec.squaredNorm();
 
       i_cell.add(-1,1);
@@ -493,27 +490,27 @@ namespace LaDa
        if ( not lattice ) return;
       
        k_vecs.clear();
-       Eigen::Matrix3d const kcell( cell.inverse().transpose() );
-       Eigen::Matrix3d const klat( lattice->cell.inverse().transpose() );
+       math::rMatrix3d const kcell( cell.inverse().transpose() );
+       math::rMatrix3d const klat( lattice->cell.inverse().transpose() );
        t_SmithTransform transform = get_smith_transform( kcell, klat );
        
-       Eigen::Vector3i &smith = bt::get<1>(transform);
-       const Eigen::Matrix3d factor(lattice->cell.transpose() * bt::get<0>(transform).inverse());
+       math::iVector3d &smith = bt::get<1>(transform);
+       const math::rMatrix3d factor(lattice->cell.transpose() * bt::get<0>(transform).inverse());
        for( size_t i(0); i < smith(0); ++i )
          for( size_t j(0); j < smith(1); ++j )
            for( size_t k(0); k < smith(2); ++k )
            {
              // in supercell fractional
-             const Eigen::Vector3d vec1( factor * Eigen::Vector3d(i,j,k) );
+             const math::rVector3d vec1( factor * math::rVector3d(i,j,k) );
              // in supercell fractional and c entered.
-             const Eigen::Vector3d vec2       
+             const math::rVector3d vec2       
              (                                
                vec1(0) - std::floor( vec1(0) + 0.5 ),
                vec1(1) - std::floor( vec1(1) + 0.5 ),
                vec1(2) - std::floor( vec1(2) + 0.5 )
              );
              // in cartesian
-             Eigen::Vector3d vec( klat * vec2 );
+             math::rVector3d vec( klat * vec2 );
              refold(vec, klat);
            
              k_vecs.push_back( t_kAtom(vec,0) );
@@ -524,9 +521,9 @@ namespace LaDa
      }
 
 
-    void  find_range( const Eigen::Matrix3d &A, Eigen::Vector3i &kvec )
+    void  find_range( const math::rMatrix3d &A, math::iVector3d &kvec )
     {
-      Eigen::Vector3d a = A.row(0), b;
+      math::rVector3d a = A.row(0), b;
       types::t_int n = 1;
       b = a;
       while( not math::is_integer(b) )

@@ -124,7 +124,7 @@ namespace LaDa
           if( _class.front().size() == 0 ) { isfound = true; break; }
         if( isfound ) clusterclasses().push_back( std::vector<CE::Cluster>(1, cluster) ); 
       }
-      cluster.Vectors().resize(1, Eigen::Vector3d(0,0,0) );
+      cluster.Vectors().resize(1, math::rVector3d(0,0,0) );
       if( _addJ1 )
       {
         bool isfound = false;
