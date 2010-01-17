@@ -245,7 +245,7 @@ namespace LaDa
         (
           MPI_Allreduce,
           (
-            MPI_IN_PLACE, &(stress.x[0][0]), 9u,
+            MPI_IN_PLACE, stress.data(), stress.stride()*3,
             boost::mpi::get_mpi_datatype<types::t_real>(stress(0,0)),
             boost::mpi::is_mpi_op< std::plus<types::t_real>, types::t_real>::op(),
             (MPI_Comm) MPI_COMM

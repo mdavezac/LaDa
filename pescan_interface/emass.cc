@@ -69,7 +69,7 @@ namespace LaDa
       interface.set_reference( _eref );
 
       // setup kpoints.
-      const bool is_gamma( kpoint.squareNorm() < 1e-8 );
+      const bool is_gamma( kpoint.squaredNorm() < 1e-8 );
       const types::t_int nfirst( 1-npoints );
       const types::t_int nlast( is_gamma ? 1: npoints );
       std::vector< math::rVector3d > kpoints;
@@ -93,7 +93,7 @@ namespace LaDa
         (
           t_Eig
           (
-            (interface.escan.kpoint - korigin ) * ndir,
+            (interface.escan.kpoint - korigin).dot(ndir),
             interface.eigenvalues
           )
         );
