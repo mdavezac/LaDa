@@ -43,14 +43,14 @@ namespace LaDa
                        Crystal::Neighbor const * const _b ) const
       {
         if( math::neq( _a->distance, _b->distance ) ) return _a->distance < _b->distance;
-        const types::t_real ax = _a->pos * basis.x;
-        const types::t_real bx = _b->pos * basis.x;
+        const types::t_real ax = _a->pos.dot(basis.x);
+        const types::t_real bx = _b->pos.dot(basis.x);
         if( math::neq( ax, bx ) ) return ax > bx;
-        const types::t_real ay = _a->pos * basis.y;
-        const types::t_real by = _b->pos * basis.y;
+        const types::t_real ay = _a->pos.dot(basis.y);
+        const types::t_real by = _b->pos.dot(basis.y);
         if( math::neq( ay, by ) ) return ay > by;
-        const types::t_real az = _a->pos * basis.z;
-        const types::t_real bz = _b->pos * basis.z;
+        const types::t_real az = _a->pos.dot(basis.z);
+        const types::t_real bz = _b->pos.dot(basis.z);
         if( math::neq( az, bz ) ) return az > bz;
         return false;
       }
@@ -177,25 +177,25 @@ namespace LaDa
         {
           math::rVector3d const vec((*i_first)->pos); 
           // always include x.
-          _vars.variables.push_back( VariableSet::t_Variable(vec * _basis.x, type) );
+          _vars.variables.push_back( VariableSet::t_Variable(vec.dot(_basis.x), type) );
 
           size_t const N(_vars.variables.size());
           if( N > 1 ) // avoid y for first atom.
-            _vars.variables.push_back( VariableSet::t_Variable(vec * _basis.y, type) );
+            _vars.variables.push_back( VariableSet::t_Variable(vec.dot(_basis.y), type) );
           if( N > 2 ) // avoid z for first and second atom.
-            _vars.variables.push_back( VariableSet::t_Variable(vec * _basis.z, type) );
+            _vars.variables.push_back( VariableSet::t_Variable(vec.dot(_basis.z), type) );
         }
         else // spherical coordinates
         {
           math::rVector3d const vec( to_spherical((*i_first)->pos) );
           // always include x (rho).
-          _vars.variables.push_back( VariableSet::t_Variable(vec.x[0], type) );
+          _vars.variables.push_back( VariableSet::t_Variable(vec(0), type) );
 
           size_t const N(_vars.variables.size());
           if( N > 1 ) // avoid y(theta) for first atom.
-            _vars.variables.push_back( VariableSet::t_Variable(vec.x[1], type) );
+            _vars.variables.push_back( VariableSet::t_Variable(vec(1), type) );
           if( N > 2 ) // avoid z(phi) for first and second atom.
-            _vars.variables.push_back( VariableSet::t_Variable(vec.x[2], type) );
+            _vars.variables.push_back( VariableSet::t_Variable(vec(2), type) );
         }
       }
     }
