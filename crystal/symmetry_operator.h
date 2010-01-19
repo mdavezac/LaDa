@@ -16,6 +16,7 @@
 #include <opt/debug.h>
 #include <opt/types.h>
 #include <math/fuzzy.h>
+#include <math/misc.h>
 
 
 namespace LaDa
@@ -72,7 +73,7 @@ namespace LaDa
 
     inline std::ostream& operator<<( std::ostream& _stream, SymmetryOperator const &_sym )
     {
-      return _stream << "Trans: " << _sym.trans << "\n" << _sym.op << "\n"; 
+      return _stream << "Trans: " << _sym.trans.transpose() << "\n" << _sym.op << "\n"; 
     }
     //! \brief Composes two symmetry operations.
     //! \details \a _out.op = \a _a.op * _\a b.op, \a _out.trans = _a.trans + _a.op * _b.trans.

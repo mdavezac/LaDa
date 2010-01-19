@@ -12,6 +12,8 @@
 #include <boost/python/def.hpp>
 #include <boost/python/scope.hpp>
 #include <boost/python/errors.hpp>
+#include <boost/python/return_value_policy.hpp>
+#include <boost/python/return_by_value.hpp>
 
 #include <python/std_vector.hpp>
 #include <python/misc.hpp>
@@ -79,13 +81,26 @@ namespace LaDa
         "operations for which the Bravais lattice is invariant.\n"
       );
 
+      typedef Crystal::SymmetryOperator t_SOp;
       bp::scope scope = bp::class_<Crystal::SymmetryOperator>
         ( "SymmetryOperator", "SymmetryOperator" )
         .def(bp::init<math::rMatrix3d const&>())
         .def(bp::init<math::rVector3d const&>())
         .def(bp::init<math::rMatrix3d const&, math::rVector3d const&>())
-        .def_readwrite("op", &Crystal::SymmetryOperator::op)
-        .def_readwrite("trans", &Crystal::SymmetryOperator::trans)
+        .add_property
+        (
+          "op",
+          make_getter(&t_SOp::op, bp::return_value_policy<bp::return_by_value>()),
+          make_setter(&t_SOp::op, bp::return_value_policy<bp::return_by_value>()),
+          "Pure rotation matrix.\n\nNumpy float64 3x3 array."
+        ) 
+        .add_property
+        (
+          "trans",
+          make_getter(&t_SOp::trans, bp::return_value_policy<bp::return_by_value>()),
+          make_setter(&t_SOp::trans, bp::return_value_policy<bp::return_by_value>()),
+          "Pure rotation matrix.\n\nNumpy float64 3x1 array."
+        ) 
         .def("invariant", &Crystal::SymmetryOperator::invariant, 
              (bp::arg("matrix"), bp::arg("tolerance")=types::tolerance),
              "Returns true if the matrix is invariant through this rotation.")

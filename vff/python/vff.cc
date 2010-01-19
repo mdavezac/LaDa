@@ -6,10 +6,13 @@
 #endif
 
 
-#include <boost/python.hpp>
+#include <boost/python/class.hpp>
+#include <boost/python/def.hpp>
 #include <boost/python/tuple.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits/is_same.hpp>
+#include <boost/python/return_value_policy.hpp>
+#include <boost/python/return_by_value.hpp>
 
 #include "../functional.h"
 #include "../layered.h"
@@ -308,8 +311,13 @@ namespace LaDa
         "Prior to use, the parameters must be loaded from an XML file, "
         "The structure must be itself initialized, and LaDa.Vff.init() must be called."
         "Order does count :)."
-      ).add_property( "direction",  &t_Vff::get_direction, &t_Vff::set_direction,
-                      "Defines the direction of growth." );
+      ).add_property
+       (
+         "direction",
+         bp::make_getter(&t_Vff::get_direction, bp::return_value_policy<bp::return_by_value>()),
+         bp::make_setter(&t_Vff::set_direction, bp::return_value_policy<bp::return_by_value>()),
+         "Growth/Epitaxial direction.\n\n3x1 float64 numpy array.\n" 
+       ); 
     }
 
 #   undef EXPOSEVFF

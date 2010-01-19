@@ -5,6 +5,8 @@
 #include <boost/python/tuple.hpp>
 
 #include <Eigen/Geometry>
+
+#include <python/std_vector.hpp>
 #include "../eigen.h"
 
 #include <iostream>
@@ -291,9 +293,13 @@ void expose_eigen_matrices()
 {
   import_array(); // needed for NumPy 
 
+  
   Matrix3x_to_python_array<math::rMatrix3d>();
   Matrix3x_from_python_array<math::rMatrix3d>();
   Matrix3x_to_python_array<math::iMatrix3d>();
   Matrix3x_from_python_array<math::iMatrix3d>();
+
+  expose_vector<math::rMatrix3d>("_rMatrix3dVector", "Exposes std::vector<math::rMatrix3d>.");
+  expose_vector<math::iMatrix3d>("_iMatrix3dVector", "Exposes std::vector<math::rMatrix3d>.");
 }
 }}

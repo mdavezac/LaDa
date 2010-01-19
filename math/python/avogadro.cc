@@ -1,15 +1,19 @@
 // Last update: timvdm 19 June 2009
-// Adapted from Avogadro open source molecular editor from the kde project. (libavogadro/src/python/eigen.cpp)
+// Adapted from Avogadro open source molecular editor from the kde project.
+// (libavogadro/src/python/eigen.cpp)
+#include <iostream>
+
 #include <boost/python/detail/wrap_python.hpp>
 #include <numpy/arrayobject.h> 
 #include <boost/python.hpp>
 #include <boost/python/tuple.hpp>
 
 #include <Eigen/Geometry>
+
+#include <python/std_vector.hpp>
 #include "../eigen.h"
 #include "avogadro.hpp"
 
-#include <iostream>
 
 namespace LaDa { namespace Python {
 using namespace boost::python;
@@ -160,7 +164,6 @@ template <> struct ScalarTraits<double>
 
     static void* convert(PyObject *obj_ptr)
     {
-      std::cout << "am here\n";
       if (!PyArray_Check(obj_ptr)) throw_error_already_set();
 
       // only accept int, long, float and double
@@ -176,11 +179,13 @@ template <> struct ScalarTraits<double>
       }
 
       // do some type checking
-      if ((PyArray_ObjectType(obj_ptr, 0) == NPY_FLOAT) || (PyArray_ObjectType(obj_ptr, 0) == NPY_DOUBLE))
+      if (    (PyArray_ObjectType(obj_ptr, 0) == NPY_FLOAT) 
+           || (PyArray_ObjectType(obj_ptr, 0) == NPY_DOUBLE) )
         if (ScalarTraits<Scalar>::isInt)
           return 0;
 
-      if ((PyArray_ObjectType(obj_ptr, 0) == NPY_INT) || (PyArray_ObjectType(obj_ptr, 0) == NPY_LONG))
+      if (    (PyArray_ObjectType(obj_ptr, 0) == NPY_INT) 
+           || (PyArray_ObjectType(obj_ptr, 0) == NPY_LONG) )
         if (ScalarTraits<Scalar>::isFloat || ScalarTraits<Scalar>::isDouble)
           return 0;
       
@@ -291,14 +296,16 @@ template <> struct ScalarTraits<double>
     }
   };
 
-void expose_vecstr()
+void expose_eigen_vectors()
 {
   import_array(); // needed for NumPy 
-
   
   Vector3x_to_python_array<math::rVector3d>();
   Vector3x_from_python_array<math::rVector3d>();
   Vector3x_to_python_array<math::iVector3d>();
   Vector3x_from_python_array<math::iVector3d>();
+
+  expose_vector<math::rVector3d>("_rVector3dVector", "Exposes std::vector<math::rVector3d>.");
+  expose_vector<math::iVector3d>("_iVector3dVector", "Exposes std::vector<math::iVector3d>.");
 }
 }}

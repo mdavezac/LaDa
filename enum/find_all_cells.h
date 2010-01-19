@@ -83,7 +83,7 @@ namespace LaDa
 
     inline std::ostream& operator<<(std::ostream &_stream, SmithGroup const& _sg)
     {
-      return _stream << "Smith Group (" << _sg.smith << ") of "
+      return _stream << "Smith Group (" << _sg.smith.transpose() << ") of "
                      << _sg.supercells.size() << " Matrices.";
     }
     inline std::ostream& operator<<(std::ostream &_stream, SmithGroup::Supercell const& _sg)

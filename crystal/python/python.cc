@@ -5,7 +5,9 @@
 # include <config.h>
 #endif
 
-#include <boost/python.hpp>
+#include <boost/python/module.hpp>
+#include <boost/python/handle.hpp>
+#include <boost/python/borrowed.hpp>
 
 #include "lattice.hpp"
 #include "structure.hpp"
@@ -20,6 +22,10 @@
 
 BOOST_PYTHON_MODULE(_crystal)
 {
+  // loads lada.math first
+  namespace bp = boost::python;
+  bp::handle<> math( bp::borrowed(PyImport_ImportModule("lada.math")) );
+
   LaDa::Python::expose_atom();
   LaDa::Python::expose_structure();
   LaDa::Python::expose_lattice();

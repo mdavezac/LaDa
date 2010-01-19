@@ -14,6 +14,8 @@
 #include <boost/python/register_ptr_to_python.hpp>
 #include <boost/python/def.hpp>
 #include <boost/python/errors.hpp>
+#include <boost/python/return_value_policy.hpp>
+#include <boost/python/return_by_value.hpp>
 
 #include <python/std_vector.hpp>
 #include <crystal/lattice.h>
@@ -92,13 +94,20 @@ namespace LaDa
         )
       );
 
+      typedef enumeration::SmithGroup t_SG;
       bp::scope scope = bp::class_<enumeration::SmithGroup>
       (
         "SmithGroup", 
         "A group of supercells with equivalent translational symmetries",
         bp::init<math::iVector3d const&>()
       ).def(bp::init<enumeration::SmithGroup const &>())
-       .def_readwrite("smith", &enumeration::SmithGroup::smith)
+       .add_property
+       (
+         "smith",
+         make_getter(&t_SG::smith, bp::return_value_policy<bp::return_by_value>()),
+         make_setter(&t_SG::smith, bp::return_value_policy<bp::return_by_value>()),
+         "Smith translational group.\n\nNumpy integer 3x1 array."
+       ) 
        .def_readwrite("supercells", &enumeration::SmithGroup::supercells)
        .def("__str__", &tostream<enumeration::SmithGroup>);
 
@@ -109,8 +118,21 @@ namespace LaDa
         bp::init<math::rMatrix3d const&, math::rMatrix3d const&>()
       ).def(bp::init<enumeration::SmithGroup::Supercell const&>())
        .def( "__init__", bp::make_constructor( &create ) )
-       .def_readwrite("transform", &enumeration::SmithGroup::Supercell::transform)
-       .def_readwrite("hermite", &enumeration::SmithGroup::Supercell::hermite)
+       .add_property
+       (
+         "transform",
+         make_getter(&t_SG::Supercell::transform, bp::return_value_policy<bp::return_by_value>()),
+         make_setter(&t_SG::Supercell::transform, bp::return_value_policy<bp::return_by_value>()),
+         "Transform matrix between Smith representation and hermite representation.\n\n"
+         "Numpy float64 3x3 array."
+       ) 
+       .add_property
+       (
+         "hermite",
+         make_getter(&t_SG::Supercell::hermite, bp::return_value_policy<bp::return_by_value>()),
+         make_setter(&t_SG::Supercell::hermite, bp::return_value_policy<bp::return_by_value>()),
+         "Hermite matrix.\n\nNumpy float64 3x3 array."
+       ) 
        .def("__str__", &tostream<enumeration::SmithGroup::Supercell>);
 
       
