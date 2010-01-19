@@ -17,7 +17,7 @@ bin_PROGRAMS = vff layered_vff
 noinst_LTLIBRARIES = libvff.la
 libvff_la_SOURCES = $(vff_cc) $(fortranSOURCE)
 libvff_ladir = $(includedir)/LaDa/vff
-nobase_libvff_la_HEADERS = $(vff_h) $(vff_impl_h) $(fortranHEADER)
+nobase_libvff_la_HEADERS = $(vff_h) $(fortranHEADER)
 libvff_la_CPPFLAGS = $(AM_CPPFLAGS) 
 
 vff_SOURCES = main.cc 

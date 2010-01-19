@@ -314,8 +314,8 @@ namespace LaDa
       ).add_property
        (
          "direction",
-         bp::make_getter(&t_Vff::get_direction, bp::return_value_policy<bp::return_by_value>()),
-         bp::make_setter(&t_Vff::set_direction, bp::return_value_policy<bp::return_by_value>()),
+         bp::make_function(&t_Vff::get_direction, bp::return_value_policy<bp::return_by_value>()),
+         bp::make_function(&t_Vff::set_direction, bp::return_value_policy<bp::return_by_value>()),
          "Growth/Epitaxial direction.\n\n3x1 float64 numpy array.\n" 
        ); 
     }
