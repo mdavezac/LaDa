@@ -1,7 +1,7 @@
 """ Class to handle creation/destruction of temporary directories. 
    
-    >> with Tempdir(path) as tempdir:
-    >>   ...
+    >>> with Tempdir(path) as tempdir:
+    >>>   ...
 """
 class Tempdir:
   """ Works with "with" statement to create/destroy a temporary directory 
