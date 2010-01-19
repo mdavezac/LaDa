@@ -21,11 +21,7 @@ namespace LaDa
          if(_flavorbase.size() != card_)
            BOOST_THROW_EXCEPTION( internal() << error_string("_flavorbase size is incorrect.") );
          if(_flavorbase.size() != card_) BOOST_THROW_EXCEPTION( argument_error());
-         if(_x >= _flavorbase.back() * _flavorbase[1])
-         {
-           std::cout << " 2 " << _x << " " << _flavorbase.back() << " " << _flavorbase[1] << "\n";
-           BOOST_THROW_EXCEPTION( integer_too_large() );
-         }
+         if(_x >= _flavorbase.back() * _flavorbase[1]) BOOST_THROW_EXCEPTION( integer_too_large() );
 #      endif
        t_uint result(0);
        FlavorBase::const_reverse_iterator i_flavor = _flavorbase.rbegin();

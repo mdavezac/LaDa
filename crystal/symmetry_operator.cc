@@ -23,7 +23,6 @@ namespace LaDa
     
     bool SymmetryOperator::invariant(math::rMatrix3d const &_mat, types::t_real _tolerance) const
     {
-      std::cout << "!_mat * op * _mat\n" << (!_mat) << "\n" << op << "\n" << _mat << "\n";
       math::rMatrix3d const mat(_mat.inverse() * op * _mat);
       for(size_t i(0); i < 3; ++i)
         for(size_t j(0); j < 3; ++j)

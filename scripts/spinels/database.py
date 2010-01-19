@@ -17,9 +17,10 @@ def is_valid(flavorbase, x):
   
 
 def enum( n, lattice ):
-  from lada import enumeration, math, crystal
   from math import pow
   import time
+  import numpy as np
+  from lada import enumeration, math, crystal
 
   supercells = enumeration.find_all_cells(lattice, n)
   smiths = enumeration.create_smith_groups(lattice, supercells)
@@ -56,7 +57,7 @@ def enum( n, lattice ):
     for nsupercell, supercell in enumerate(smith.supercells):
       mine = []
       # creates list of transformation which leave the supercell invariant.
-      cell = lattice.cell * supercell.hermite
+      cell = np.dot(lattice.cell, supercell.hermite)
       specialized = []
       for transform in transforms:
         if not transform.invariant(cell): continue
@@ -90,7 +91,7 @@ def enum( n, lattice ):
         if specialized_database[x]: yield x, smith, supercell, flavorbase
 
 def create_database(lattice, n0=1, n1=4):
-  from lada import enumeration, math, crystal
+  from lada import enumeration, crystal
   from math import pow
 
   # prints lattice
@@ -158,7 +159,7 @@ def create_database(lattice, n0=1, n1=4):
 def read_database(filename, withperms=True):
   import re
   import numpy as np
-  from lada import crystal, math, enumeration
+  from lada import crystal, enumeration
 
   lattice = crystal.Lattice()
   with open(filename, "r") as file:
@@ -212,7 +213,7 @@ def read_database(filename, withperms=True):
       elif data[0] == "smith:":
         smith = np.array( [int(data[1]), int(data[2]), int(data[3])] )
         translations = enumeration.Translation(smith, nsites)
-        cell = lattice.cell * hermite
+        cell = np.dot(lattice.cell, hermite)
         structure.cell = cell
         structure.atoms.clear()
         crystal.fill_structure(structure)

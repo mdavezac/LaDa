@@ -1,26 +1,22 @@
 #! /usr/bin/python
 def enum( _n, _lattice ):
+  import numpy as np
   from lada import enumeration, crystal
   from math import pow
   import time
 
   supercells = enumeration.find_all_cells(_lattice, _n)
-  print "len(supercells): ", len(supercells)
   smiths = enumeration.create_smith_groups(_lattice, supercells)
   nflavors = enumeration.count_flavors(_lattice)
   nsites = len(_lattice.sites)
-  print "Here"
   transforms = enumeration.create_transforms(_lattice)
-  print "There"
   for smith in smiths:
     card = int(smith.smith[0]*smith.smith[1]*smith.smith[2]*nsites)
-    print "card, nflavors: ", card, nflavors
     label_exchange=enumeration.LabelExchange( card, nflavors )
     flavorbase = enumeration.create_flavorbase(card, nflavors)
     translations = enumeration.Translation(smith.smith, nsites)
     database = enumeration.Database(card, nflavors)
     maxterm = 0
-    print "max: ", int(pow(nflavors, card))-1
     for x in xrange(1, int(pow(nflavors, card))-1):
       if not database[x]: continue
       maxterm = x
@@ -41,37 +37,25 @@ def enum( _n, _lattice ):
     for nsupercell, supercell in enumerate(smith.supercells):
       mine = []
       # creates list of transformation which leave the supercell invariant.
-      print _lattice.cell
-      print supercell.hermite
-      cell = _lattice.cell * supercell.hermite
-      print cell
+      cell = np.dot(_lattice.cell,  supercell.hermite)
       specialized = []
-      print " len(transforms): ", len(transforms)
       for transform in transforms:
-        transform.init(supercell.transform, smith.smith)
-        print transform.invariant(cell)
         if not transform.invariant(cell): continue
-#       print "invariant: ", supercell.transform, smith.smith
-#       transform.init(supercell.transform, smith.smith)
+        transform.init(supercell.transform, smith.smith)
         if not transform.is_trivial:
           specialized.append( transform )
 
       specialized_database = enumeration.Database(database)
-      print "maxterm: ", maxterm 
       for x in xrange(1, maxterm+1):
         if not database[x]: continue
         maxterm = x
         
-        print "transforms"
         for transform in specialized:
-          print "trans: ", x
           t = transform(x, flavorbase)
-          print x, t
           if t == x: continue
           specialized_database[t] = False
 
           for labelperm in label_exchange:
-            print "t ", t, _n
             u = labelperm(t, flavorbase)
             if u == x: continue
             specialized_database[u] = False
@@ -114,6 +98,7 @@ def choose_structures( _howmany, _min = 2, _max = 9 ):
   import os
   import shutil
   import random
+  import numpy as np
   from lada import crystal, enumeration
 
   lattice, str_list = list_all_structures( _min, _max )
@@ -131,7 +116,7 @@ def choose_structures( _howmany, _min = 2, _max = 9 ):
 
     # creates structure
     structure = crystal.sStructure()
-    structure.cell = lattice.cell * supercell.hermite
+    structure.cell = np.dot(lattice.cell, supercell.hermite)
     crystal.fill_structure(structure)
     structure.scale = lattice.scale
     enumeration.as_structure(structure, x, flavorbase)
@@ -211,22 +196,21 @@ def main():
             ("000001110000", -74.377010), 
             ("010000000001", -55.269849) ] 
 
-# for test in tests:
-#   for i, atom in enumerate(structure.atoms):
-#     if test[0][i] == "0": atom.type = -1e0
-#     else:               atom.type = 1e0
-#   e = mlclasses(structure) 
-#   c = functional.chemical(structure) 
-#   if not e == 0e0:
-#     print "check %f, test %f, diff %f " \
-#           % ( e, c, c/e )
-  for structure in choose_structures(60, 4, 5):
-    return
+  for test in tests:
+    for i, atom in enumerate(structure.atoms):
+      if test[0][i] == "0": atom.type = -1e0
+      else:               atom.type = 1e0
     e = mlclasses(structure) 
     c = functional.chemical(structure) 
     if not e == 0e0:
       print "check %f, test %f, diff %f " \
-            % ( e, c, fabs(c-e) )
+            % ( c, e, c-e )
+# for structure in choose_structures(15, 1, 12):
+#   e = mlclasses(structure) 
+#   c = functional.chemical(structure) 
+#   if not e == 0e0:
+#     print "check %f, test %f, diff %f " \
+#           % ( e, c, fabs(c-e) )
 
 #         % ( c, test[1], fabs(c-test[1]) )
 

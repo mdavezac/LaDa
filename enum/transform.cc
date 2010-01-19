@@ -78,13 +78,11 @@ namespace LaDa
 
                size_t const index(get_index(permutated_site, translation, _smith, card_));
                permutations_.push_back(index);
-               std::cout << index << " ";
                non_trivial |= (u!=index);
              } // over k
            } // over j
          } // over i
        } // over d
-       std::cout << "\n";
        is_trivial_ = not non_trivial;
      }
 
@@ -116,7 +114,6 @@ namespace LaDa
        }
 
        math::rMatrix3d const inv_cell(_lat.cell.inverse());
-       std::cout << inv_cell << "\n\n";
        std::vector<Crystal::Lattice::t_Site> sites; sites.reserve( nsites );
        { // construct list of centered sites.
          Crystal::Lattice::t_Sites::const_iterator i_site = _lat.sites.begin();
@@ -174,7 +171,6 @@ namespace LaDa
            // computes translation vector t_{N,d} (in the centered lattice).
            math::rVector3d const
              t_nd( SymmetryOperator::operator()(_lat.cell*i_site->pos) - _lat.cell * centered );
-           std::cout << d_nd << " " << t_nd.transpose() << "\n";
 
            // pushes into 
            independents_.push_back( t_Independent(d_nd, t_nd) );
