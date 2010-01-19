@@ -75,7 +75,7 @@ namespace LaDa
           std::for_each
           ( 
             ecis.begin(), ecis.end(),
-            bl::_1 =  bl::bind( &opt::random::rng ) * range - range * 0.5e0
+            bl::_1 =  bl::bind( &math::rng ) * range - range * 0.5e0
           );
           // Fitting Error
           opt::ErrorTuple fitnoreg = _reg.fit( ecis, &zero_vec[0] );
@@ -94,7 +94,7 @@ namespace LaDa
               std::for_each
               ( 
                 solution.begin(), solution.end(),
-                bl::_1 =  bl::bind( &opt::random::rng ) * wrange - wrange * 0.5e0
+                bl::_1 =  bl::bind( &math::rng ) * wrange - wrange * 0.5e0
               );
               cvw = _minimizer( _reg, solution ); 
               ++iter;

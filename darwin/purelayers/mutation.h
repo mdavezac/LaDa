@@ -45,7 +45,7 @@ namespace LaDa
             types::t_real rate(5e-1);
             if( _node.Attribute( "rate" ) )
               rate = boost::lexical_cast<types::t_real>( _node.Attribute("rate") );
-            if( Fuzzy::leq( rate, 0e0 ) or Fuzzy::geq( rate, 1e0 ) ) rate = 5e-1;
+            if( math::leq( rate, 0e0 ) or math::geq( rate, 1e0 ) ) rate = 5e-1;
             Operator::MakePopulator<t_Individual, t_Populator>::transform_unary
             ( 
               boost::bind( &PureLayers::mutation<t_Individual>, _1, rate,

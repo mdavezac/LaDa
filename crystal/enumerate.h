@@ -25,8 +25,8 @@
 
 namespace LaDa 
 {
-  namespace Crystal {
-
+  namespace Crystal
+  {
     //! Reads structure in NREL format.
     void read_structure( Structure &_struct, const boost::filesystem::path &_path );
 
@@ -60,7 +60,7 @@ namespace LaDa
                     << structure.get_concentration()
                     << " " << _op( structure ) << "\n";
           foreach( Crystal::Structure::t_Atom &atom, structure.atoms )
-            atom.type = Fuzzy::gt( atom.type, 0e0 ) ? -1e0: 1e0;
+            atom.type = math::gt( atom.type, 0e0 ) ? -1e0: 1e0;
           std::cout << "    @-" << structure.name << " " 
                     << structure.get_concentration()
                     << " " << _op( structure ) << "\n";
@@ -91,7 +91,7 @@ namespace LaDa
           if( line[0] == '#' ) continue;
           if( line.size() == 0 ) continue;
           std::istringstream input( line );
-          structure.cell.zero();
+          structure.cell = Eigen::Matrix3d::Zero();
           types::t_int dummy;
           input >> structure.name;
           for( size_t i(0); i < 6; ++i ) input >> dummy;
@@ -108,10 +108,10 @@ namespace LaDa
           t_SmithTransform const transform = get_smith_transform( structure );
           Structure::t_Atoms::iterator i_atom = structure.atoms.begin();
           Structure::t_Atoms::iterator i_atom_end = structure.atoms.end();
-          atat::iVector3d const &smith( boost::tuples::get<1>(transform) );
+          math::iVector3d const &smith( boost::tuples::get<1>(transform) );
           for(; i_atom != i_atom_end; ++i_atom )
           {
-            atat::iVector3d indices( get_smith_index(transform, i_atom->pos) );
+            math::iVector3d indices( get_smith_index(transform, i_atom->pos) );
             const size_t index
             ( 
               indices[2] + smith(2) * ( indices[1] + smith(1) * indices[0] )

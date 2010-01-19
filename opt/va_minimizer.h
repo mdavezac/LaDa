@@ -265,7 +265,7 @@ namespace LaDa
               types::t_real grad =   current_func->evaluate_one_gradient( *i_dir ) 
                                    * ( *i_var > t_Type(0) ? -1e0: 1e0 );
               
-              if ( Fuzzy::gt<t_Type>(grad, 0) ) continue;
+              if ( math::gt<t_Type>(grad, 0) ) continue;
             }
 
             if( save_state ) save_state->save();
@@ -287,7 +287,7 @@ namespace LaDa
               save_new_state->reset();
             }
 
-            if ( Fuzzy::gt(current_e, next_e) )
+            if ( math::gt(current_e, next_e) )
             {
               is_not_converged = true;
               current_e = next_e;

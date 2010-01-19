@@ -12,7 +12,7 @@
 #include <print/stdout.h>
 #include <crystal/structure.h>
 #include <crystal/atom.h>
-#include <opt/fuzzy.h>
+#include <math/fuzzy.h>
 #include <opt/debug.h>
 #include <mpi/mpi_object.h>
 #include "../call_init.h"

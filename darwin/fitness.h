@@ -272,7 +272,7 @@ namespace LaDa
                \f]
                     For generality, the static ordering operators of
                     t_ScalarQuantityTraits are use in the implementation (eg
-                    fuzzy math for reals). Note however that it is Fuzzy::gt
+                    fuzzy math for reals). Note however that it is math::gt
                     which is called, since minimization is the default.
         */
         bool operator<(const t_This & _f) const;
@@ -285,7 +285,7 @@ namespace LaDa
                \f]
                     For generality, the static ordering operators of
                     t_ScalarQuantityTraits are use in the implementation (eg
-                    fuzzy math for reals). Note however that it is Fuzzy::gt
+                    fuzzy math for reals). Note however that it is math::gt
                     which is called, since minimization is the default.
         */
         bool operator>(const t_This & _f) const;

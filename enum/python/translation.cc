@@ -31,7 +31,7 @@ namespace LaDa
     namespace bp = boost::python;
     struct Translation : enumeration::Translation
     {
-      Translation   (atat::iVector3d const &_smith, size_t _nsites)
+      Translation   (math::iVector3d const &_smith, size_t _nsites)
                   : enumeration::Translation(_smith, _nsites), first_(true) {}
       Translation   (const Translation &_c)
                   : enumeration::Translation(_c), first_(_c.first_) {}
@@ -65,7 +65,7 @@ namespace LaDa
       (
         "Translation", 
         "Rotation + translation.", 
-        bp::init<atat::iVector3d const &, size_t>()
+        bp::init<math::iVector3d const &, size_t>()
       ).def( bp::init<Translation const&>() )
        .def("__call__", &Translation::operator())
        .def("__len__", &Translation::size)

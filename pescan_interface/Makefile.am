@@ -39,7 +39,7 @@ escan_LDFLAGS =  $(AM_LDFLAGS)
 escan_LDADD = libescan.la \
 	      $(top_builddir)/vff/libvff.la \
 	      $(top_builddir)/crystal/libcrystal.la \
-	      $(top_builddir)/atat/libatat.la \
+	      $(top_builddir)/math/libmath.la \
 	      $(top_builddir)/minimizer/libminimizer.la \
               $(top_builddir)/physics/libphysics.la \
 	      $(top_builddir)/print/libprint.la \

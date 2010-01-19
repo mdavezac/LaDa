@@ -156,12 +156,12 @@ namespace LaDa
 
       protected:
         //! Holds ideal first neighbor positions.
-        typedef std::vector< std::vector< atat::rVector3d > > t_FirstNeighbors;
+        typedef std::vector< std::vector< math::rVector3d > > t_FirstNeighbors;
         //! Type of the smith normal transformation.
         typedef boost::tuples::tuple
                 < 
-                  atat::rMatrix3d, 
-                  atat::iVector3d 
+                  math::rMatrix3d, 
+                  math::iVector3d 
                 > t_Transformation;
         
         //! \brief Loads Functional for one or two site lattices.
@@ -184,12 +184,12 @@ namespace LaDa
         //! \brief computes smith index.
         //! \details Defined in build_tree.cc.
         void smith_index_( const t_Transformation &_transformation,
-                           const atat::rVector3d &_pos,
-                           atat::iVector3d &_index );
+                           const math::rVector3d &_pos,
+                           math::iVector3d &_index );
         //! \brief Computes matrix to get to smith index.
         //! \details Defined in build_tree.cc.
-        t_Transformation to_smith_matrix( const atat::rMatrix3d &_lat_cell,
-                                          const atat::rMatrix3d &_str_cell );
+        t_Transformation to_smith_matrix( const math::rMatrix3d &_lat_cell,
+                                          const math::rMatrix3d &_str_cell );
 
         //! Type of the atomic centers
         typedef AtomicCenter t_Center;  

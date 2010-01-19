@@ -5,7 +5,7 @@
 #ifndef _GAOPERATORS_IMPL_H_
 #define _GAOPERATORS_IMPL_H_
 
-#include <opt/fuzzy.h>
+#include <math/fuzzy.h>
 
 #include "debug.h"
 
@@ -297,8 +297,8 @@ namespace LaDa
     bool xTaboo<T_INDIVIDUAL> :: operator()( const t_Individual& _indiv )
     {
       concentration.get( _indiv.Object() );
-      return    Fuzzy::le(concentration.x, lessthan)
-             or Fuzzy::gt(concentration.x, morethan);
+      return    math::le(concentration.x, lessthan)
+             or math::gt(concentration.x, morethan);
     }
     template< class T_INDIVIDUAL >
     bool xTaboo<T_INDIVIDUAL> :: Load( const TiXmlElement &_el ) 
@@ -314,14 +314,14 @@ namespace LaDa
       if ( child->Attribute( "lessthan" ) )
       {
         child->Attribute( "lessthan", &d );
-        lessthan = ( Fuzzy::gt( d, 0e0) and Fuzzy::le( d, 1e0 ) ) ? 2.0*d-1.0: 1.0;
+        lessthan = ( math::gt( d, 0e0) and math::le( d, 1e0 ) ) ? 2.0*d-1.0: 1.0;
       }
       if ( child->Attribute( "morethan" ) )
       {
         child->Attribute( "morethan", &d );
-        morethan = ( Fuzzy::gt( d, 0e0 ) and Fuzzy::le( d, 1e0 ) )? 2.0*d-1.0: 1.0;
+        morethan = ( math::gt( d, 0e0 ) and math::le( d, 1e0 ) )? 2.0*d-1.0: 1.0;
       }
-      if ( Fuzzy::geq( lessthan, morethan ) ) return false;
+      if ( math::geq( lessthan, morethan ) ) return false;
      
       Print::xmg << Print::Xmg::comment << Print::fixed << Print::setprecision(3) 
                  << "Allowed individuals: x in [ " << 0.5*(lessthan+1.0)

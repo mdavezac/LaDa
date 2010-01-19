@@ -2,13 +2,12 @@
 #  Version: $Id$
 #
 
-atat_cc = findsym.cc integer.cc xtalutil.cc 
-atat_h  = findsym.h  integer.h  xtalutil.h lambda.impl.h \
-          array.h  arraylist.h   fixagg.h  fxvector.h \
-	  linklist.h  machdep.h  misc.h  vectmac.h serialize.h \
-          is_int.h
-atat_python_h = atat.impl.hpp atatintrospection.hpp atatoperators.hpp
-atat_python_cc = atat.cc 
+math_cc = random.cc smith_normal_form.cc 
+math_h  = compare_norms.h  eigen.h  fuzzy.h  lambda.impl.h  misc.h  modifiers.h \
+          random.h  serialize.h  smith_normal_form.h  traits.h
+math_f90 = rational_mathematics.f90
+math_python_h = avogadro.hpp matrix.hpp 
+math_python_cc = avogadro.cc matrix.cc python.cc 
 
 ap_cc = representation.cc functions.cc
 ap_h  = bases.h  bases.impl.h  functions.h  functions.iterator.h  numeric_types.h\
@@ -142,10 +141,10 @@ crystal_h  = lattice.h  structure.h structure.impl.h atom.h  confsplit.h layerde
 crystal_doc = $(crystal_h) $(crystal_cc) 
 crystal_python_h = structure.hpp atom.hpp lattice.hpp read_structure.hpp \
                    smith.hpp enumerate.hpp layerdepth.hpp neighbors.hpp \
-                   symmetry_operator.hpp which_site.hpp
+                   symmetry_operator.hpp which_site.hpp 
 crystal_python_cc = structure.cc atom.cc lattice.cc read_structure.cc \
                     python.cc smith.cc enumerate.cc layerdepth.cc neighbors.cc \
-                    symmetry_operator.cc which_site.cc
+                    symmetry_operator.cc which_site.cc 
 
 ce_cc     = cluster.cc harmonic.cc  polynome.cc regularization.cc fit.cc create_pairs.cc \
             create_clusters.cc mlcluster.cc mlclusters.cc
@@ -193,18 +192,17 @@ mpi_doc    = $(mpi_h) $(mpi_cc)
 
 opt_h = ndim_iterator.h minimize_base.h polynome.h \
         types.h function_base.h pow.h \
-	va_minimizer.h fitness_function.h  function_functors.h monome.h traits.h \
-        fuzzy.h atat.h debug.h va_function.h random.h algorithms.h \
-        bpo_macros.h modifiers.h tuple_io.h  leave_many_out.h 
-opt_cc = random.cc leave_many_out.cc 
+	va_minimizer.h fitness_function.h  function_functors.h monome.h \
+        va_function.h algorithms.h \
+        bpo_macros.h tuple_io.h  leave_many_out.h 
+opt_cc = leave_many_out.cc 
 opt_python_convenience_h =  convex_hull.h errors.h convex_hull.impl.h \
-                            tinyxml.h initial_path.h fortran_dirio.h smith_normal_form.h
+                            tinyxml.h initial_path.h fortran_dirio.h 
 opt_python_convenience_cc = convex_hull.cc errors.cc tinyxml.cc \
-                            initial_path.cc fortran_dirio.cc smith_normal_form.cc
+                            initial_path.cc fortran_dirio.cc 
 opt_doc = $(opt_h) $(opt_cc) $(opt_python_convenience_cc) $(opt_python_convenience_h)
-opt_python_cc = errortuple.cc python.cc
-opt_python_c = errortuple.hpp convexhull.impl.hpp
-opt_f90 = rational_mathematics.f90
+opt_python_cc = errortuple.cc python.cc 
+opt_python_c = errortuple.hpp convexhull.impl.hpp 
 
 EMASS_CC = emass.cc
 EMASS_H  = emass.h
@@ -270,9 +268,7 @@ vff_python_h = vff.hpp
 docs_h = revision.h
 docs =  beginners  crystal  fortran  functionals  ga  \
         input  mainpage  mpi  xmltagindex gainput executables
-SCRIPT_FILES = atat.pl  CE_to_ATAT_MC.pl  convert_from_atat.pl  escan_to_xml.pl\
-               input_template.xml  max_revision.pl  nxnxn.pl  send_all.pl
-
+SCRIPT_FILES =  
 ALL_DOCS = $(top_srcdir)/doxy.conf $(top_srcdir)/$(docs_h) \
            $(addprefix $(top_srcdir)/docsource/, $(docs)) \
            $(addprefix $(top_srcdir)/darwin/, $(darwin_lib_doc)) \
@@ -384,9 +380,9 @@ $(top_builddir)/physics/libphysics.la: $(addprefix $(top_srcdir)/physics/, $(phy
                                        $(addprefix $(top_srcdir)/physics/, $(physics_cc) ) 
 	@cd $(top_builddir)/physics; $(MAKE) libphysics.la
 
-$(top_builddir)/atat/libatat.la: $(addprefix $(top_srcdir)/atat/, $(atat_h) )\
-                                 $(addprefix $(top_srcdir)/atat/, $(atat_cc) ) 
-	@cd $(top_builddir)/atat; $(MAKE) libatat.la
+$(top_builddir)/math/libmath.la: $(addprefix $(top_srcdir)/math/, $(math_h) )\
+                                 $(addprefix $(top_srcdir)/math/, $(math_cc) ) 
+	@cd $(top_builddir)/math; $(MAKE) libmath.la
 
 $(top_builddir)/mpi/libmpiobject.la: $(addprefix $(top_srcdir)/mpi/, $(mpi_h) )\
                                      $(addprefix $(top_srcdir)/mpi/, $(mpi_cc) ) 

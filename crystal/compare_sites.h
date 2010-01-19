@@ -45,7 +45,7 @@ namespace LaDa
       }
 
       std::set<Lattice::t_Site::t_Type::value_type> set_;
-      atat::rVector3d pos;
+      math::rVector3d pos;
       types::t_real tolerance;
     };
 

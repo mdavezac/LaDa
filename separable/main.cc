@@ -21,8 +21,9 @@
 
 #include <minimizer/allsq.h>
 #include <minimizer/cgs.h>
+#include <math/fuzzy.h>
+#include <math/random.h>
 #include <opt/types.h>
-#include <opt/fuzzy.h>
 #include <opt/debug.h>
 #include <opt/errors.h>
 
@@ -139,7 +140,7 @@ int main(int argc, char *argv[])
 
     LaDa::types::t_unsigned verbose = vm["verbose"].as<LaDa::types::t_unsigned>();
     LaDa::types::t_unsigned seed = vm["seed"].as<LaDa::types::t_unsigned>();
-    seed = LaDa::opt::random::seed( seed );
+    seed = LaDa::math::seed( seed );
     LaDa::types::t_unsigned reruns(1);
     if( vm.count("reruns") ) reruns = vm["reruns"].as< LaDa::types::t_unsigned >();
     __DOASSERT( reruns == 0, "0 number of runs performed... As required on input.\n" )
@@ -154,7 +155,7 @@ int main(int argc, char *argv[])
     bool doupdate = not vm.count("noupdate");
     bool convcell = vm.count("conv");
     LaDa::types::t_real offset ( vm["offset"].as< LaDa::types::t_real >() );
-    if( LaDa::Fuzzy::eq( offset, LaDa::types::t_real(0) ) ) offset = LaDa::types::t_real(0);
+    if( LaDa::math::eq( offset, LaDa::types::t_real(0) ) ) offset = LaDa::types::t_real(0);
     bool prerun ( vm.count("prerun") != 0 );
     LaDa::types::t_real howrandom( vm["random"].as<LaDa::types::t_real>() );
     std::string bdesc("");
@@ -202,8 +203,8 @@ int main(int argc, char *argv[])
         // Other expect a "cubic" lattice wich is implicitely tetragonal...
         // Historical bullshit from input structure files @ nrel.
         for( LaDa::types::t_int i=0; i < 3; ++i ) 
-          if( LaDa::Fuzzy::eq( lattice->cell.x[i][2], 0.5e0 ) )
-            lattice->cell.x[i][2] = 0.6e0;
+          if( LaDa::math::eq( lattice->cell(i,2), 0.5e0 ) )
+            lattice->cell(i,2) = 0.6e0;
 #     endif
       lattice->find_space_group();
 #     if defined (_TETRAGONAL_CE_)
@@ -212,8 +213,8 @@ int main(int argc, char *argv[])
         // Other expect a "cubic" lattice wich is implicitely tetragonal...
         // Historical bullshit from input structure files @ nrel.
         for( LaDa::types::t_int i=0; i < 3; ++i ) 
-          if( LaDa::Fuzzy::eq( lattice->cell.x[i][2], 0.6e0 ) )
-            lattice->cell.x[i][2] = 0.5e0;
+          if( LaDa::math::eq( lattice->cell(i,2), 0.6e0 ) )
+            lattice->cell(i,2) = 0.5e0;
 #     endif
     }
 
@@ -242,11 +243,13 @@ int main(int argc, char *argv[])
       boost::match_results<std::string::const_iterator> what;
       __DOASSERT( not boost::regex_search( bdesc, what, re ),
                   "Could not parse --basis input: " << bdesc << "\n" )
-      LaDa::atat::rMatrix3d cell;
-      cell.set_diagonal( boost::lexical_cast<LaDa::types::t_real>(what.str(1)),
-                         boost::lexical_cast<LaDa::types::t_real>(what.str(2)),
-                         boost::lexical_cast<LaDa::types::t_real>(what.str(3)) );
-      separables.set_basis( cell );
+      LaDa::math::rVector3d cell
+      (
+        boost::lexical_cast<LaDa::types::t_real>(what.str(1)),
+        boost::lexical_cast<LaDa::types::t_real>(what.str(2)),
+        boost::lexical_cast<LaDa::types::t_real>(what.str(3)) 
+      );
+      separables.set_basis( cell.asDiagonal() );
     }
     
     // Initializes cum-symmetry separable function.
@@ -268,8 +271,8 @@ int main(int argc, char *argv[])
 #   if defined (_TETRAGONAL_CE_)
       // From here on, lattice should be explicitely tetragonal.
       for( LaDa::types::t_int i=0; i < 3; ++i ) 
-        if( LaDa::Fuzzy::eq( lattice->cell.x[i][2], 0.5e0 ) )
-          lattice->cell.x[i][2] = 0.6e0;
+        if( LaDa::math::eq( lattice->cell(i,2), 0.5e0 ) )
+          lattice->cell(i,2) = 0.6e0;
 #   endif
 
     // extract leave-many-out commandline
@@ -311,14 +314,14 @@ int main(int argc, char *argv[])
      std::cout << "Performing prerun.\n";
     std::cout << "Random Seed: " << seed << "\n";
 #   ifdef __DOHALFHALF__
-      if( LaDa::Fuzzy::gt( lambda, 0e0 ) )
+      if( LaDa::math::gt( lambda, 0e0 ) )
         std::cout << "Regularizing with factor: " << lambda << "\n";
       std::cout << "Using True/False and True/True inner basis.\n"; 
 #   else
       std::cout << "Using True/False and False/True inner basis.\n"; 
 #   endif
 
-    if( LaDa::Fuzzy :: neq( offset, 0e0 ) ) std::cout << "Offset: " << offset << "\n";
+    if( not LaDa::math::is_zero(offset) ) std::cout << "Offset: " << offset << "\n";
 
     // fitting.
     if( leavemanyout.do_perform )

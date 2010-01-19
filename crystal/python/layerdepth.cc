@@ -11,7 +11,7 @@
 #include <boost/python.hpp>
 #include <boost/python/enum.hpp>
 
-#include <opt/fuzzy.h>
+#include <math/fuzzy.h>
 #include "../atom.h"
 #include "../structure.h"
 #include "../layerdepth.h"
@@ -24,8 +24,8 @@ namespace LaDa
   namespace Python
   {
     types::t_int call( Crystal::LayerDepth const& _l,
-                       atat::rVector3d const &_a,
-                       atat::rVector3d const &_b )
+                       math::rVector3d const &_a,
+                       math::rVector3d const &_b )
     {
       bool const sup( _l(_a,_b) );
       bool const inf( _l(_b,_a) );
@@ -33,7 +33,7 @@ namespace LaDa
       return sup ? -1: 1;
     }
     types::t_real call_single( Crystal::LayerDepth const &_l,
-                               atat::rVector3d const &_a)
+                               math::rVector3d const &_a)
       { return _l(_a); }
     template<class T> types::t_real call_single_atom( Crystal::LayerDepth const &_l,
                                                       Crystal::Atom_Type<T> const &_a )
@@ -55,7 +55,7 @@ namespace LaDa
     {
       namespace bp = boost::python;
       bp::class_<Crystal::LayerDepth>( "LayerDepth", bp::no_init )
-        .def( bp::init<atat::rMatrix3d const&>() )
+        .def( bp::init<math::rMatrix3d const&>() )
         .def( bp::init<Crystal::LayerDepth const&>() )
         .def( "__call__", &call_single )
         .def( "__call__", &call_single_atom<std::string> )

@@ -14,8 +14,7 @@
 
 #include <opt/debug.h>
 #include <opt/types.h>
-#include <opt/fuzzy.h>
-#include <atat/vectmac.h>
+#include <math/fuzzy.h>
 
 
 namespace LaDa
@@ -30,7 +29,7 @@ namespace LaDa
   namespace enumeration
   {
     //! \brief Finds all inequivalent supercells of size \a _nmax.
-    boost::shared_ptr< std::vector<atat::rMatrix3d> >
+    boost::shared_ptr< std::vector<math::rMatrix3d> >
       find_all_cells( Crystal::Lattice const &_lattice, size_t _nmax);
 
     struct SmithGroup
@@ -39,13 +38,13 @@ namespace LaDa
       struct Supercell
       {
         //! left tranform;
-        atat::rMatrix3d transform;
+        math::rMatrix3d transform;
         //! Hermite form;
-        atat::rMatrix3d hermite;
+        math::rMatrix3d hermite;
         //! Constructor.
-        Supercell () { transform.zero(); hermite.zero(); }
+        Supercell () { transform = math::rMatrix3d::Zero(); hermite = math::rMatrix3d::Zero(); }
         //! Constructor.
-        Supercell   ( atat::rMatrix3d const & _transform, atat::rMatrix3d const & _hermite )
+        Supercell   ( math::rMatrix3d const & _transform, math::rMatrix3d const & _hermite )
                   : transform(_transform), hermite(_hermite) {}
         //! Copy Constructor.
         Supercell   (Supercell const &_c)
@@ -55,7 +54,7 @@ namespace LaDa
         {
           for( size_t i(0); i < 3; ++i )
             for( size_t j(0); j < 3; ++j )
-              if( not Fuzzy::is_zero(hermite(i,j)-_a.hermite(i,j)) ) return false;
+              if( not math::is_zero(hermite(i,j)-_a.hermite(i,j)) ) return false;
           return true;
         }
       };
@@ -63,12 +62,12 @@ namespace LaDa
       typedef std::vector<Supercell> t_Supercells;
  
       //! Constructor
-      SmithGroup( atat::iVector3d const &_id = atat::iVector3d(0,0,0) ) : smith(_id) {}
+      SmithGroup( math::iVector3d const &_id = math::iVector3d(0,0,0) ) : smith(_id) {}
       //! Copy constructor
       SmithGroup( SmithGroup const &_c ) : smith(_c.smith), supercells(_c.supercells) {}
  
       //! Compare smith group by id.
-      bool operator==( atat::iVector3d const &_vec ) const { return smith == _vec; }
+      bool operator==( math::iVector3d const &_vec ) const { return smith == _vec; }
       //! Compare smith group by id.
       bool operator==( SmithGroup const &_sg ) const
       {
@@ -77,14 +76,14 @@ namespace LaDa
       }
  
       //! Quotient group.
-      atat::iVector3d smith;
+      math::iVector3d smith;
       //! left transform and hermite normal form.
       std::vector<Supercell> supercells;
     };
 
     inline std::ostream& operator<<(std::ostream &_stream, SmithGroup const& _sg)
     {
-      return _stream << "Smith Group (" << _sg.smith << ") of "
+      return _stream << "Smith Group (" << _sg.smith.transpose() << ") of "
                      << _sg.supercells.size() << " Matrices.";
     }
     inline std::ostream& operator<<(std::ostream &_stream, SmithGroup::Supercell const& _sg)
@@ -98,7 +97,7 @@ namespace LaDa
     //! Creates a vector of supercells structure according to their Smith normal form.
     boost::shared_ptr< std::vector<SmithGroup> >
       create_smith_groups( Crystal::Lattice const &_lattice,
-                           boost::shared_ptr< std::vector<atat::rMatrix3d> > const & _s );
+                           boost::shared_ptr< std::vector<math::rMatrix3d> > const & _s );
  
     //! Creates a vector of supercells structure according to their Smith normal form.
     inline boost::shared_ptr< std::vector<SmithGroup> >

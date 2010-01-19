@@ -16,7 +16,7 @@ namespace LaDa
       if( not t_eMassSLBase::Load(_node) )  return false;
 
       types::t_real eigs[3];
-      atat::rMatrix3d vecs;
+      math::rMatrix3d vecs;
       Lapack::eigen( emass, vecs, eigs );
 
       n = 2;
@@ -34,7 +34,7 @@ namespace LaDa
       if( not t_eMassSLBase::Save(_node) )  return false;
 
       types::t_real eigs[3];
-      atat::rMatrix3d vecs_;
+      math::rMatrix3d vecs_;
       Lapack::eigen( emass, vecs_, eigs );
 
       std::ostringstream dir; 
@@ -69,7 +69,7 @@ namespace LaDa
     
       // get best Q
       types::t_real eigs[3];
-      atat::rMatrix3d vecs;
+      math::rMatrix3d vecs;
       Lapack::eigen( current_object->emass, vecs, eigs );
 
       current_object->n = 2;
@@ -90,10 +90,10 @@ namespace LaDa
                                                   "eMassSL::Darwin::Continue"         );     
     }
 
-    inline types::t_real inplane_stress( const atat::rMatrix3d &_stress,
-                                         const atat::rVector3d &_dir     )
+    inline types::t_real inplane_stress( const math::rMatrix3d &_stress,
+                                         const math::rVector3d &_dir     )
     {
-      types::t_real norm = atat::norm2(_dir);
+      types::t_real norm = _dir->squaredNorm();
       types::t_real trace = _stress(0,0) + _stress(1,1) + _stress(2,2);
       types::t_real axial = (_dir * (_stress * _dir) ) / norm;
       return ( trace - axial ) * 0.5;
@@ -105,7 +105,7 @@ namespace LaDa
     {
 
       types::t_real eigs[3];
-      atat::rMatrix3d vecs;
+      math::rMatrix3d vecs;
       Lapack::eigen( _o.emass, vecs, eigs );
 
       return _stream << (const Layered::Object<>&) _o << " "

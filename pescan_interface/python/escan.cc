@@ -61,7 +61,7 @@ namespace LaDa
       LADA_PARAMS(types::t_int, nlines)
       LADA_PARAMS(types::t_real, tolerance)
       LADA_PARAMS(types::t_real, rcut)
-      LADA_PARAMS(atat::rVector3d, kpoint)
+      LADA_PARAMS(math::rVector3d, kpoint)
       LADA_PARAMS(Pescan::Interface::t_method, method)
       LADA_PARAMS(Pescan::Interface::Escan::t_potential, potential)
       LADA_PARAMS(types::t_real, kinscal)
@@ -191,13 +191,19 @@ namespace LaDa
           .add_property(#name, &get_ ## name, &set_ ## name, docstring)
           LADA_PARAMS(vff_inputfile, "Structure input file.")
           LADA_PARAMS(nbstates, "Number of states to compute.")
-          LADA_PARAMS(kpoint, "K-point, in units of M{2S{pi}/a}, at which to perform calculation.")
           LADA_PARAMS(method, "Diagonalization method: L{folded} or L{full_diagonalization}")
           LADA_PARAMS(potential, "Hamiltonian method: L{local}, L{spinorbit}, or L{nonlocal}.")
           LADA_PARAMS(reference, "Reference energy for folded spectrum method." )
           LADA_PARAMS(nlines, "Maximum number of line optimizations in conjugate-gradient.")
           LADA_PARAMS(tolerance, "Tolerance of the diagonalisation procedure.")
 #       undef LADA_PARAMS
+        .add_property
+        (
+          "kpoint", 
+           bp::make_function(&get_kpoint, bp::return_value_policy<bp::return_by_value>()),
+           bp::make_function(&set_kpoint, bp::return_value_policy<bp::return_by_value>()),
+           "K-point, in units of M{2S{pi}/a}, at which to perform calculation."
+        )
         .def_readwrite( "destroy_directory", &t_Escan::do_destroy_dir,
                         "If true, directory where calculations are carried out is destroyed "
                         "at the end of a calculation." )

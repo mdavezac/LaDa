@@ -11,7 +11,7 @@
 #include <print/manip.h>
 #include <crystal/structure.h>
 #include <crystal/atom.h>
-#include <opt/fuzzy.h>
+#include <math/fuzzy.h>
 #include <opt/debug.h>
 #include <mpi/mpi_object.h>
 
@@ -206,7 +206,7 @@ namespace LaDa
 
       types::t_real to_change = ((types::t_real) N) * ( x0  - x );
       // inline with non-use of fzzy math below...
-      if ( Fuzzy::gt(to_change, -1.0) and Fuzzy::leq(to_change, 1.0) ) return;
+      if ( math::gt(to_change, -1.0) and math::leq(to_change, 1.0) ) return;
 
       // Puts the positions which can be changed into a list
       std::vector<types::t_unsigned> pos;
@@ -232,10 +232,10 @@ namespace LaDa
         BitString::flip<typename T_CONT::value_type>(_obj.bitstring[*i_pos]);
         ( to_change > 0 ) ? to_change -= 2: to_change += 2;
 
-        if ( Fuzzy::gt(to_change, -1.0) and Fuzzy::leq(to_change, 1.0) ) break;
+        if ( math::gt(to_change, -1.0) and math::leq(to_change, 1.0) ) break;
       }
         
-      __DOASSERT( Fuzzy::leq(to_change, -1.0) or Fuzzy::gt(to_change, 1.0),
+      __DOASSERT( math::leq(to_change, -1.0) or math::gt(to_change, 1.0),
                      "Concentration could not be set\n"
                   << "Incompatibility between required x/y and frozen atoms?\n"; )
     }
@@ -350,8 +350,8 @@ namespace LaDa
         std::cerr << "Either cell direction or multiplicity is missing on input\n";
         return false;
       }
-      atat::rVector3d cdir;
-      atat::rMatrix3d &cell = structure.cell;
+      math::rVector3d cdir;
+      math::rMatrix3d &cell = structure.cell;
       
       // First, Load Attributes 
       bool couldload = true;
@@ -360,7 +360,7 @@ namespace LaDa
       sstr >> direction[1]; if ( sstr.fail() ) couldload = false;
       sstr >> direction[2]; if ( sstr.fail() ) couldload = false;
 
-      if ( atat::norm2( direction ) < types::tolerance ) couldload = false;
+      if ( direction.squaredNorm() < types::tolerance ) couldload = false;
 
       if ( not couldload )
       {
@@ -408,9 +408,9 @@ namespace LaDa
 
       // Checks that cell is not singular
       if ( std::abs( det(cell) ) < types::tolerance )
-        cell.set_column(1, lattice.cell.get_column( 0 ) );
+        cell.set_column(1, lattice.cell.col( 0 ) );
       if ( std::abs( det(cell) ) < types::tolerance )
-        cell.set_column(2, lattice.cell.get_column( 1 ) );
+        cell.set_column(2, lattice.cell.col( 1 ) );
       if ( std::abs( det(cell) ) < types::tolerance )
       {
         std::cerr << "Could not construct unit-cell\n" << cell << std::endl;
@@ -420,8 +420,8 @@ namespace LaDa
       // Makes sure the triad is direct
       if ( det(cell) < 0 )
       {
-        atat::rVector3d d = cell.get_column(2);
-        cell.set_column(2, cell.get_column(1) );
+        math::rVector3d d = cell.col(2);
+        cell.set_column(2, cell.col(1) );
         cell.set_column(1, d);
       }
 
@@ -483,7 +483,7 @@ namespace LaDa
       inline std::string Evaluator<T_INDIVIDUAL> :: print() const
       {
         std::ostringstream sstr;
-        atat::rVector3d dir = lattice.cell * direction;
+        math::rVector3d dir = lattice.cell * direction;
         sstr << concentration.print() << "\n"
              << "Structure: " << multiplicity
              << " (" << dir(0) << ", " << dir(1) << ", " << dir(2)
@@ -564,22 +564,22 @@ namespace LaDa
     }
 
 
-    inline bool Depth::operator()( const atat::rVector3d &_1,
-                                   const atat::rVector3d &_2 )
+    inline bool Depth::operator()( const math::rVector3d &_1,
+                                   const math::rVector3d &_2 )
     {
       types::t_real a =   _1 * a0;
       types::t_real b =   _2 * a0;
-      if ( not Fuzzy::eq( a, b ) )
-        return Fuzzy::le( a, b );
+      if ( not math::eq( a, b ) )
+        return math::le( a, b );
 
       a =   _1 * a1;
       b =   _2 * a1;
-      if ( not Fuzzy::eq( a, b ) )
-        return Fuzzy::le( a, b );
+      if ( not math::eq( a, b ) )
+        return math::le( a, b );
       
       a =   _1 * a2;
       b =   _2 * a2;
-      return Fuzzy::le( a, b );
+      return math::le( a, b );
     }
 
 

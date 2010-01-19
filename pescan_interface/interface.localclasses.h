@@ -50,7 +50,7 @@
     //! Tolerance for diagonalization convergence.
     types::t_real tolerance;
     //! Reciprocal-space vector for which to compute eigenvalue.
-    atat::rVector3d kpoint;
+    math::rVector3d kpoint;
     //! \brief Reciprocal-Space scale \f$\frac{2\pi}{a}\f$, with \e a the lattice
     //! constant Crystal::Structure::scale
     types::t_real scale;

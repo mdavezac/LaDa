@@ -1,6 +1,3 @@
-//
-//  Version: $Id$
-//
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -10,20 +7,18 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/tuple/tuple_io.hpp>
 
+#include <Eigen/LU>
+
 #include <opt/tinyxml.h>
 #include <opt/ndim_iterator.h>
-
-#include <atat/misc.h>
 #include <physics/physics.h>
+#include <math/misc.h>
 
 #include "structure.h"
 #include "fill_structure.h"
 #include "epi_structure.h"
 #include "fourier.h"
 #include "smith.h"
-
-#include <opt/smith_normal_form.h>
-
 
 namespace LaDa
 {
@@ -36,10 +31,10 @@ namespace LaDa
       Crystal::Lattice* Structure :: lattice = NULL;
     }
 
-    bool sort_kvec( const atat::rVector3d &_vec1, const atat::rVector3d &_vec2 )
+    bool sort_kvec( const math::rVector3d &_vec1, const math::rVector3d &_vec2 )
     {
-      types::t_real a = atat::norm2( _vec1 );
-      types::t_real b = atat::norm2( _vec2 );
+      types::t_real a = _vec1.squaredNorm();
+      types::t_real b = _vec2.squaredNorm();
       if ( std::abs( a - b ) > types::tolerance ) return a < b;
       a = _vec1[0]; b = _vec2[0];
       if ( std::abs( a - b ) > types::tolerance ) return a < b;
@@ -50,20 +45,10 @@ namespace LaDa
       return false;
     }
 
-    using atat::rndseed;
-
-    void Structure :: convert_from_ATAT ( const Atat_Structure &atat  )
-    {
-      cell = atat.cell;
-      for ( types::t_int i = 0; i < atat.atom_pos.get_size(); i++ )
-        atoms.push_back( Atom_Type<types::t_real>( atat.atom_pos[i],
-                               static_cast<types::t_real>(atat.atom_type[i]) ) );
-    }
-                                                                   
     void Structure :: print_out (std::ostream &stream) const
     {
       stream << "\n Structure, scale: " << scale << ", Volume: "
-             << atat::det( cell )
+             << cell.determinant()
              << ", Cell\n"
              << std::fixed << std::setprecision(5)
              << "   " << std::setw(9) << cell(0,0)
@@ -286,8 +271,8 @@ namespace LaDa
         return false;
       }
 
-      atat::rVector3d direction;
-      atat::iVector3d extent;
+      math::rVector3d direction;
+      math::iVector3d extent;
       
       // First, Load Attributes 
       __TRYBEGIN
@@ -297,18 +282,16 @@ namespace LaDa
         sstr >> boost::tuples::set_open('(')
              >> boost::tuples::set_close(')')
              >> tupledir;
-        __DOASSERT( atat::norm2( direction ) < types::tolerance,
-                    "direction cannot be null.\n" )
+        __DOASSERT( direction.squaredNorm() < types::tolerance, "direction cannot be null.\n" )
         sstr.str( _node.Attribute("extent") );
         boost::tuple< types::t_int&, types::t_int&, types::t_int& >
                    tupleext( extent[0], extent[1], extent[2] );
         sstr >> boost::tuples::set_open('(')
              >> boost::tuples::set_close(')')
              >> tupleext;
-        __DOASSERT( atat::norm2( direction ) < types::tolerance,
-                    "extent cannot be null.\n" )
+        __DOASSERT( direction.squaredNorm() < types::tolerance, "extent cannot be null.\n" )
     
-        direction = (!lattice->cell) * direction;
+        direction = lattice->cell.inverse() * direction;
         
       __TRYEND(,"Error while loading superlattice description.\n" )
     
@@ -373,9 +356,9 @@ namespace LaDa
       parent = new TiXmlElement( "Cell" );
       structure->LinkEndChild( parent );
       structure->SetAttribute("N", atoms.size() );
-      if( Fuzzy::neq( energy, 666.666 ) ) 
+      if( math::neq( energy, 666.666 ) ) 
         structure->SetDoubleAttribute("energy", energy );
-      if( Fuzzy::neq( weight, 1e0 ) )
+      if( math::neq( weight, 1e0 ) )
         structure->SetDoubleAttribute("weight", weight );
       structure->SetAttribute("name", name);
       structure->SetDoubleAttribute("scale", scale);
@@ -383,9 +366,9 @@ namespace LaDa
       for (int i=0; i < 3; ++i)
       {
         child = new TiXmlElement( "row" );
-        child->SetDoubleAttribute( "x", cell.get_row(i)(0) );
-        child->SetDoubleAttribute( "y", cell.get_row(i)(1) );
-        child->SetDoubleAttribute( "z", cell.get_row(i)(2) );
+        child->SetDoubleAttribute( "x", cell.row(i)(0) );
+        child->SetDoubleAttribute( "y", cell.row(i)(1) );
+        child->SetDoubleAttribute( "z", cell.row(i)(2) );
         parent->LinkEndChild(child);
         if ( i == 0 and
              freeze & FREEZE_XX or 
@@ -472,13 +455,13 @@ namespace LaDa
 
     }
 
-    void refold( atat::rVector3d &vec, const atat::rMatrix3d &lat )
+    void refold( math::rVector3d &vec, const math::rMatrix3d &lat )
     {
       opt::NDimIterator<types::t_int, std::less_equal<types::t_int> > i_cell;
-      atat::rVector3d hold = vec;
-      atat::rVector3d compute;
-      atat::rVector3d current = vec;
-      types::t_real norm_c = norm2(vec);
+      math::rVector3d hold = vec;
+      math::rVector3d compute;
+      math::rVector3d current = vec;
+      types::t_real norm_c = vec.squaredNorm();
 
       i_cell.add(-1,1);
       i_cell.add(-1,1);
@@ -491,10 +474,10 @@ namespace LaDa
         compute(2) = (types::t_real) i_cell.access(2);
 
         vec = hold + lat*compute;
-        if ( norm2( vec ) < norm_c ) 
+        if ( vec.squaredNorm() < norm_c ) 
         {
           current = vec;
-          norm_c = norm2(vec);
+          norm_c = vec.squaredNorm();
         }
 
       } while ( (++i_cell) );
@@ -507,30 +490,27 @@ namespace LaDa
        if ( not lattice ) return;
       
        k_vecs.clear();
-       atat::rMatrix3d const kcell( !(~cell) );
-       atat::rMatrix3d const klat( !(~lattice->cell) );
+       math::rMatrix3d const kcell( cell.inverse().transpose() );
+       math::rMatrix3d const klat( lattice->cell.inverse().transpose() );
        t_SmithTransform transform = get_smith_transform( kcell, klat );
        
-       atat::iVector3d &smith = bt::get<1>(transform);
-       const atat::rMatrix3d factor
-       ( 
-          (~lattice->cell) * (!bt::get<0>(transform))
-       );
+       math::iVector3d &smith = bt::get<1>(transform);
+       const math::rMatrix3d factor(lattice->cell.transpose() * bt::get<0>(transform).inverse());
        for( size_t i(0); i < smith(0); ++i )
          for( size_t j(0); j < smith(1); ++j )
            for( size_t k(0); k < smith(2); ++k )
            {
              // in supercell fractional
-             const atat::rVector3d vec1( factor * atat::rVector3d(i,j,k) );
+             const math::rVector3d vec1( factor * math::rVector3d(i,j,k) );
              // in supercell fractional and c entered.
-             const atat::rVector3d vec2       
+             const math::rVector3d vec2       
              (                                
                vec1(0) - std::floor( vec1(0) + 0.5 ),
                vec1(1) - std::floor( vec1(1) + 0.5 ),
                vec1(2) - std::floor( vec1(2) + 0.5 )
              );
              // in cartesian
-             atat::rVector3d vec( klat * vec2 );
+             math::rVector3d vec( klat * vec2 );
              refold(vec, klat);
            
              k_vecs.push_back( t_kAtom(vec,0) );
@@ -541,24 +521,24 @@ namespace LaDa
      }
 
 
-    void  find_range( const atat::rMatrix3d &A, atat::iVector3d &kvec )
+    void  find_range( const math::rMatrix3d &A, math::iVector3d &kvec )
     {
-      atat::rVector3d a = A.get_row(0), b;
+      math::rVector3d a = A.row(0), b;
       types::t_int n = 1;
       b = a;
-      while( not is_int(b) )
+      while( not math::is_integer(b) )
         { b += a; n++;  }
       kvec[0] = n;
 
-      a = A.get_row(1);
+      a = A.row(1);
       b = a; n = 1;
-      while( not is_int(b) )
+      while( not math::is_integer(b) )
         { b += a; n++;  }
       kvec[1] = n;
       
-      a = A.get_row(2);
+      a = A.row(2);
       b = a; n = 1;
-      while( not is_int(b) )
+      while( not math::is_integer(b) )
         { b += a; n++;  }
       kvec[2] = n;
     }
@@ -566,7 +546,7 @@ namespace LaDa
     std::ostream& Structure :: print_xcrysden( std::ostream &_stream ) const
     {
       if( not lattice ) return _stream;
-      _stream << "CRYSTAL\nPRIMVEC\n" << ( (~cell) * scale ) << "\nPRIMCOORD\n" 
+      _stream << "CRYSTAL\nPRIMVEC\n" << (scale*cell.transpose()) << "\nPRIMCOORD\n" 
                 << atoms.size() << " 1 \n";  
       t_Atoms :: const_iterator i_atom = atoms.begin();
       t_Atoms :: const_iterator i_atom_end = atoms.end();

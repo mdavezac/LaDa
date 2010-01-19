@@ -47,7 +47,7 @@ namespace LaDa
         //! \param _str structure for which to compute energy and stress
         Functional   ( Crystal :: Structure &_str )
                    : Vff( _str ), structure0(_str), fixed_index(-1,-1,-1)
-          { stress.zero(); }
+          { stress = math::rMatrix3d::Zero(); }
         //! \brief Copy Constructor
         Functional   ( const Functional &_c )
                    : Vff( _c ), structure0( _c.structure0 ), stress( _c.stress ),
@@ -73,7 +73,7 @@ namespace LaDa
         bool init( t_Arg& _arg );
         //! \brief Returns a reference to the computed stress
         //! \sa Functional::stress
-        const atat::rMatrix3d& get_stress() const { return stress; }
+        const math::rMatrix3d& get_stress() const { return stress; }
 
         //! Sets the bond parameters.
         template< class T_TUPLE >
@@ -101,13 +101,13 @@ namespace LaDa
         //! \brief unpacks variables from minimizer
         //! \details Functional knows about Functional::Structure, whereas minizers now
         //! about function::Base, this function does the interface between the two
-        void unpack_variables(const t_Arg& _arg, atat::rMatrix3d& strain) const;
+        void unpack_variables(const t_Arg& _arg, math::rMatrix3d& strain) const;
         //! Unpacks position variables only.
-        void unpack_positions( t_Arg::const_iterator& _i_x, atat::rMatrix3d& strain) const;
+        void unpack_positions( t_Arg::const_iterator& _i_x, math::rMatrix3d& strain) const;
         //! \brief packs variables from minimizer
         //! \details Functional knows about Functional::Structure, whereas minizers now
         //! about function::Base, this function does the interface between the two
-        void pack_variables( t_Arg& _arg, const atat::rMatrix3d& _strain ) const;
+        void pack_variables( t_Arg& _arg, const math::rMatrix3d& _strain ) const;
         //! Packs position variables only.
         void pack_positions( t_Arg :: iterator & _i_x) const;
         //! Counts positional degrees of freedom.
@@ -116,15 +116,15 @@ namespace LaDa
         //! \details Functional knows about Functional::Structure, whereas
         //! minizers now about function::Base, this function does the interface
         //! between the two
-        void pack_gradients( const atat::rMatrix3d& _stress,
+        void pack_gradients( const math::rMatrix3d& _stress,
                              t_GradientArg _grad) const;
       
         //! original structure,  needed for gradients
         Crystal :: Structure structure0;
         //! stores stress in Functional::structure after computation
-        mutable atat::rMatrix3d stress;
+        mutable math::rMatrix3d stress;
         //! Index of the first atoms with fixed x, y, z;
-        atat::iVector3d fixed_index; 
+        math::iVector3d fixed_index; 
     };
 
   } // namespace vff 

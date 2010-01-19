@@ -39,7 +39,7 @@ namespace LaDa
     {
       _out.cell.zero();
       foreach( t_Arg :: t_Atom &atom, _out.atoms )
-        atom.pos = atat::rVector3d(0,0,0);
+        atom.pos = math::rVector3d(0,0,0);
 
       _out.energy = 0e0;
       if( _which & 1 ) _out.energy += LennardJones::operator()( _in, _out );
@@ -53,7 +53,7 @@ namespace LaDa
       _out.cell = -_out.cell * (~(!_in.cell));
       t_Arg :: t_Atoms :: iterator i_force = _out.atoms.begin();
       const t_Arg :: t_Atoms :: iterator i_force_end = _out.atoms.end();
-      const atat::rMatrix3d matrix( -_in.scale * (~_in.cell) );
+      const math::rMatrix3d matrix( -_in.scale * (~_in.cell) );
       for(; i_force != i_force_end; ++i_force )
         i_force->pos = matrix * i_force->pos;
       return _out.energy;

@@ -732,12 +732,19 @@ class Vasp:
     # reads (last) energy.
     filename = os.path.join( self.indir, "OSZICAR" )
     file = open( filename, 'r')
-    found = 0
+    found = -1
+    E0 = re.compile(r"""(\d+)\s+
+                        F   \s*=\s* (?:(?:-|\+)?\d*\.?\d+(?:(?:e|E|d|D)(?:-|\+)?\d+)?) \s+
+                        E0  \s*=\s* (  (?:-|\+)?\d*\.?\d+(?:(?:e|E|d|D)(?:-|\+)?\d+)?) \s+
+                        d\sE \s*=\s* (?:(?:-|\+)?\d*\.?\d+(?:(?:e|E|d|D)(?:-|\+)?\d+)?) \s+""",
+                     re.VERBOSE)
     for line in file:
-      if re.search("E0", line) == None: continue;
-      found = 1
-      result.energy = float(line.split()[4])
-    if not found:
+      match = re.search(E0, line)
+      if match == None: continue;
+      if int(match.group(1)) <= found: continue
+      found = int(match.group(1))
+      result.energy = float(match.group(2))
+    if found == -1:
       raise RuntimeError, "Could not find energy.\n";
 
     return result

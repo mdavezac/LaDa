@@ -288,7 +288,7 @@ namespace LaDa
         //! The structure (cell-shape) for which decoration search is done
         Crystal :: Structure structure;
         //! The epitaxial growth direction
-        atat::rVector3d direction;
+        math::rVector3d direction;
         //! The number of independent layers
         types::t_unsigned multiplicity;
         //! \brief A concentration instance as define by
@@ -343,7 +343,7 @@ namespace LaDa
     //!        direction
     //! \details Two vectors are compared by using the value of their scalar
     //           product with Depth::a0. If these scalar product are equal (as
-    //           defined by Fuzzy::eq()), then their
+    //           defined by math::eq()), then their
     //           scalar product with Depth::a1 are compared. If again these are
     //           equal, then the scalar porducts with Depth::a2 are compared and
     //           the result return. Depth::a0 is the first column of the matrix
@@ -352,24 +352,24 @@ namespace LaDa
     class Depth
     {
       protected:
-        atat::rVector3d a0; //!< First ordering direction
-        atat::rVector3d a1; //!< Second ordering direction
-        atat::rVector3d a2; //!< Third ordering direction
+        math::rVector3d a0; //!< First ordering direction
+        math::rVector3d a1; //!< Second ordering direction
+        math::rVector3d a2; //!< Third ordering direction
 
       public:
         //! \brief Constructor and Initializer
         //! \param _mat Depth::a0 is set to the first column of this matrix,
         //!             Depth::a1 to the second, and Depth::a2 to the third.
-        Depth   ( const atat::rMatrix3d &_mat )
-              : a0(_mat.get_column(0)), a1(_mat.get_column(1)),
-                a2(_mat.get_column(2)) {}
+        Depth   ( const math::rMatrix3d &_mat )
+              : a0(_mat.col(0)), a1(_mat.col(1)),
+                a2(_mat.col(2)) {}
         //! Copy Constructor.
         Depth( const Depth &_c) : a0(_c.a1), a1(_c.a1), a2(_c.a2) {}
         //! Destructor.
         virtual ~Depth() {}
 
         //! Strict weak ordering operator.
-        bool operator()(const atat::rVector3d& _1, const atat::rVector3d& _2 );
+        bool operator()(const math::rVector3d& _1, const math::rVector3d& _2 );
     };
 
 

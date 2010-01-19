@@ -9,11 +9,12 @@
 #include <config.h>
 #endif
 
-#include <atat/vectmac.h>
 
 #include <opt/debug.h>
-#include <opt/fuzzy.h>
+#include <math/fuzzy.h>
 #include <boost/tuple/tuple.hpp>
+
+#include <math/eigen.h>
 
 namespace LaDa
 {
@@ -24,7 +25,7 @@ namespace LaDa
     //!        direction
     //! \details Two vectors are compared by using the value of their scalar
     //!          product with Depth::a0 (mod |a1|). If these scalar product are equal (as
-    //!          defined by Fuzzy::eq()), then their
+    //!          defined by math::eq()), then their
     //!          scalar product with Depth::a1 are compared. If again these are
     //!          equal, then the scalar porducts with Depth::a2 are compared and
     //!          the result return. Depth::a0 is the first column of the matrix
@@ -33,9 +34,9 @@ namespace LaDa
     class LayerDepth
     {
       protected:
-        atat::rVector3d a0; //!< First ordering direction
-        atat::rVector3d a1; //!< Second ordering direction
-        atat::rVector3d a2; //!< Third ordering direction
+        math::rVector3d a0; //!< First ordering direction
+        math::rVector3d a1; //!< Second ordering direction
+        math::rVector3d a2; //!< Third ordering direction
         __DODEBUGCODE( bool isset; ) 
     
       public:
@@ -48,11 +49,11 @@ namespace LaDa
         //! \brief Constructor and Initializer
         //! \param _mat Depth::a0 is set to this vector.
         //!             Depth::a1 and Depth::a2 are constructed.
-        LayerDepth   ( const atat::rVector3d &_vec ) { set( _vec); }
+        LayerDepth   ( const math::rVector3d &_vec ) { set( _vec); }
         //! \brief Constructor and Initializer
         //! \param _mat Depth::a0 is set to the (normalized) first column of this matrix,
         //!             Depth::a1 to the second, and Depth::a2 to the third.
-        LayerDepth   ( const atat::rMatrix3d &_mat ) { set( _mat); }
+        LayerDepth   ( const math::rMatrix3d &_mat ) { set( _mat); }
         //! \brief Constructor and Initializer
         //! \param _mat Depth::a0 is set to this vector.
         //!             Depth::a1 and Depth::a2 are constructed.
@@ -61,18 +62,18 @@ namespace LaDa
         //! Destructor.
         virtual ~LayerDepth() {}
         //! Sets reference vectors.
-        void set( const atat::rMatrix3d &_mat );
+        void set( const math::rMatrix3d &_mat );
         //! Sets and constructs reference vectors.
-        void set( const atat::rVector3d &_mat );
+        void set( const math::rVector3d &_mat );
         //! Sets and constructs reference vectors.
         void set( const boost::tuple<types::t_real, types::t_real, types::t_real> &_vec ) 
-          { set( atat::rVector3d( _vec.get<0>(), _vec.get<1>(), _vec.get<2>() ) ); }
+          { set( math::rVector3d( _vec.get<0>(), _vec.get<1>(), _vec.get<2>() ) ); }
     
         //! Strict weak ordering operator.
-        bool operator()( const atat::rVector3d& _first,
-                         const atat::rVector3d& _second ) const;
+        bool operator()( const math::rVector3d& _first,
+                         const math::rVector3d& _second ) const;
         //! Returns the depth.
-        types::t_real operator()( const atat::rVector3d& _first ) const;
+        types::t_real operator()( const math::rVector3d& _first ) const;
     };
 
   } // namespace Crystal

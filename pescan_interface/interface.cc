@@ -342,10 +342,10 @@ namespace LaDa
       file << "10 " << escan.rspace_output << " "
                     << " 1 1 1 " << escan.rspace_wfn << " # real-space output \n";
 
-      if ( Fuzzy::is_zero( atat::norm2( escan.kpoint ) ) ) file << "11 0 0 0 0 0 # kpoint=Gamma\n";
+      if ( math::is_zero( escan.kpoint.squaredNorm() ) ) file << "11 0 0 0 0 0 # kpoint=Gamma\n";
       else
       {
-        atat::rVector3d k = escan.kpoint;
+        math::rVector3d k = escan.kpoint;
         file << "11 1 " << k << " " 
                         << std::setw(12) << std::setprecision(8) 
                         << escan.scale / Physics::a0("A") <<  " # kpoint\n";

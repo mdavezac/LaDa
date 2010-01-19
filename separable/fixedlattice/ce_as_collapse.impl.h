@@ -67,7 +67,7 @@ namespace LaDa
           typename t_Matrix :: iterator1 i_c_end = coefficients().end1();
           typedef typename t_Matrix :: value_type t_Type;
           for(; i_c != i_c_end; ++i_c )
-            *i_c = t_Type( opt::random::rng() - 5e-1 ) * _howrandom;
+            *i_c = t_Type( opt::math::rng() - 5e-1 ) * _howrandom;
         }
     template< class T_TRAITS > template< class T_CLUSTERS >
       void CEasCollapse<T_TRAITS> :: init( const T_CLUSTERS &_clusters )

@@ -22,9 +22,6 @@
 #include <opt/debug.h>
 #include <opt/types.h>
 #include <opt/tinyxml.h>
-#include <atat/vectmac.h>
-#include <atat/machdep.h>
-
 #include <print/stdout.h>
 
 #include "atom.h"
@@ -36,9 +33,9 @@ namespace LaDa
   namespace Crystal 
   {
     //! Refolds a periodic vector into the unit cell.
-    atat::rVector3d into_cell( atat::rVector3d const &_vec, 
-                               atat::rMatrix3d const &_cell, 
-                               atat::rMatrix3d const &_inv);
+    math::rVector3d into_cell( math::rVector3d const &_vec, 
+                               math::rMatrix3d const &_cell, 
+                               math::rMatrix3d const &_inv);
     
 
     //! \brief Defines a lattice.
@@ -75,7 +72,7 @@ namespace LaDa
 
       public:
         //! The unit-cell of the lattice in cartesian coordinates.
-        atat::rMatrix3d cell;
+        math::rMatrix3d cell;
         //! The collection of sites.
         t_Sites sites;
         //! The space-group operations of the lattice.
@@ -119,7 +116,7 @@ namespace LaDa
         }
         //! \brief Returns the site index of an atom at position \a _at.
         //! \details \a _at can be given modulo the unit-cell of the lattice.
-        types::t_int get_atom_site_index( const atat::rVector3d &_at ) const;
+        types::t_int get_atom_site_index( const math::rVector3d &_at ) const;
         //! \brief Returns the site index of an atom with atomic symbol \a _at.
         //! \details Mores specifically, the first site in Lattice::sites which
         //!          accomodate \a _at is returned. This may not be the only site...
@@ -193,7 +190,7 @@ namespace LaDa
              "Caught error while converting string to numerical atom\n" )
       if ( i == -1 ) return "error";
       if ( get_nb_types(i) == 1 ) return sites[i].type[0];
-      return ( std::abs( _at.type - 1.0 ) < atat::zero_tolerance ) ? 
+      return ( std::abs( _at.type - 1.0 ) < types::tolerance ) ? 
           sites[i].type[0] : sites[i].type[1];  
     }
 
@@ -260,8 +257,8 @@ namespace LaDa
         // Other expect a "cubic" lattice wich is implicitely tetragonal...
         // Historical bullshit from input structure files @ nrel.
         for( types::t_int i=0; i < 3; ++i ) 
-          if( Fuzzy::eq( result->cell.x[2][i], 0.5e0 ) )
-            result->cell.x[2][i] = 0.6e0;
+          if( math::eq( result->cell(2,i), 0.5e0 ) )
+            result->cell(2,i) = 0.6e0;
 #     endif
       result->find_space_group();
 #     if defined (_TETRAGONAL_CE_)
@@ -270,8 +267,8 @@ namespace LaDa
         // Other expect a "cubic" lattice wich is implicitely tetragonal...
         // Historical bullshit from input structure files @ nrel.
         for( types::t_int i=0; i < 3; ++i ) 
-          if( Fuzzy::eq( result->cell.x[2][i], 0.6e0 ) )
-            result->cell.x[2][i] = 0.5e0;
+          if( math::eq( result->cell(2,i), 0.6e0 ) )
+            result->cell(2,i) = 0.5e0;
 #     endif
       return result;
       __TRYEND(, "Could not read lattice from input.\n" )

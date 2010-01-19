@@ -10,10 +10,11 @@
 #include<iterator> 
 #include<algorithm> 
 
-#include <atat/array.h>
-#include <atat/misc.h>
+#include <Eigen/LU>
+
 #include <print/manip.h>
 #include <opt/tinyxml.h>
+#include <math/misc.h>
 
 #include "lattice.h"
 #include "symmetry_operator.h"
@@ -27,7 +28,7 @@ namespace LaDa
     bool Lattice :: Load( const TiXmlElement &_element )
     {
       const TiXmlElement *child, *parent;
-      double d; atat::rVector3d vec;
+      double d; math::rVector3d vec;
       int i;
 
       std::string str = _element.Value();
@@ -43,7 +44,7 @@ namespace LaDa
         child->Attribute("x", &d); vec(0) = d;
         child->Attribute("y", &d); vec(1) = d;
         child->Attribute("z", &d); vec(2) = d;
-        cell.set_row(i, vec);
+        cell.row(i) = vec;
       }
       LADA_DOASSERT( i == 3, "Incorrect cell in lattice tag on input: " << i << *parent << "\n"; )
 
@@ -102,14 +103,14 @@ namespace LaDa
       space_group = *syms;
     }
 
-    types::t_int Lattice :: get_atom_site_index( const atat::rVector3d &_at ) const
+    types::t_int Lattice :: get_atom_site_index( const math::rVector3d &_at ) const
     {
-      const atat::rMatrix3d inv_cell = !cell;
+      const math::rMatrix3d inv_cell = cell.inverse();
       std::vector< t_Site > :: const_iterator i_site = sites.begin(); 
       std::vector< t_Site > :: const_iterator i_end = sites.end(); 
       
       for (; i_site != i_end; ++i_site )
-        if ( atat::equivalent_mod_cell(_at, i_site->pos,inv_cell) ) 
+        if ( math::are_periodic_images(_at, i_site->pos, inv_cell) ) 
           return i_site - sites.begin();
 
       __THROW_ERROR("Could not find atomic site index!! " << _at << "\n" )
@@ -135,12 +136,12 @@ namespace LaDa
 
     types::t_int Lattice :: get_atom_type_index( const Crystal :: Atom &_at ) const
     {
-      const atat::rMatrix3d inv_cell = !cell;
+      const math::rMatrix3d inv_cell = cell.inverse();
       std::vector< t_Site > :: const_iterator i_site = sites.begin(); 
       std::vector< t_Site > :: const_iterator i_end = sites.end(); 
       
       for (; i_site != i_end; ++i_site )
-        if ( atat::equivalent_mod_cell(_at.pos, i_site->pos,inv_cell) ) 
+        if (math::are_periodic_images(_at.pos, i_site->pos, inv_cell) ) 
         {
           if ( i_site->type.size() == 1 ) return 0;
           return convert_real_to_type_index( _at.type );
