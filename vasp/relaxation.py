@@ -1,6 +1,4 @@
-#
-#  Version: $Id$
-#
+#! /usr/bin/python
 
 def relaxation( _structure, _vasp, tolerance=1e-3 ):
   from math import fabs as abs
@@ -40,21 +38,17 @@ def relaxation( _structure, _vasp, tolerance=1e-3 ):
 
 
 def main():
-  from lada import atat, crystal
   import os.path
   import shutil
   import subprocess
+  from numpy import array as np_array
+  from lada import crystal
   from lada.vasp import Vasp, Specie
 
   structure = crystal.sStructure()
-  structure.cell = atat.rMatrix3d( [[1,0,0],[0,1,0],[0,0,1]] )
-  atom = crystal.StrAtom()
-  atom.type = "Rb"
-  atom.pos = atat.rVector3d([0,0,0])
-  structure.atoms.append( crystal.StrAtom(atom) )
-  atom.type = "K"
-  atom.pos = atat.rVector3d([0.5,0.5,0.5])
-  structure.atoms.append( crystal.StrAtom(atom) )
+  structure.cell = np_array( [[1.0,0,0],[0,1,0],[0,0,1]] )
+  structure.atoms.append( crystal.StrAtom(np_array([0.0,0,0]), "Rb") )
+  structure.atoms.append( crystal.StrAtom(np_array([0.5,0.5,0.5]), "K") )
   structure.name = "KRb_nosym"
   structure.scale = 6
 

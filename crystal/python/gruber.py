@@ -27,7 +27,6 @@ class Reduction(object):
     from copy import deepcopy
     from numpy import matrix
     from numpy.linalg import inv
-    from lada import atat
 
     cell = None 
     if hasattr(structure, "cell"):
@@ -59,7 +58,7 @@ class Reduction(object):
 
     if hasattr(structure, "cell"):
       new_structure = deepcopy(structure)
-      new_structure.cell = atat.rMatrix3d( [[cell[i,j] for j in range(3)] for i in range(3)] )
+      new_structure.cell = cell
       return new_structure
     else: return cell
 

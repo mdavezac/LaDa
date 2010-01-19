@@ -18,7 +18,6 @@ class Density(object):
 
   def __call__(self, vasp):
     """ Returns a string which is the text of the KPOINTS file """
-    from lada import atat
     from lada.crystal.gruber import Reduction
     from lada.crystal import get_point_group_symmetries as point_group
     import numpy as np
@@ -34,11 +33,7 @@ class Density(object):
     # gets Niggli reciprocal cell
     cell = reduction(cell)
     # gets original point-group symmetries
-    cell = atat.rMatrix3d( [[ cell[i,j] for j in range(3)] for i in range(3)] )
     pointgroup = point_group(cell)
-
-    cell = np.matrix( [[ cell[i,j] for j in range(3)] for i in range(3)], dtype="float64" )
-
 
     # creates trial-grid
     n = [[0, 1+int(floor(max([1e0, np.linalg.norm(cell[:,0]) * float(self.length)])))],

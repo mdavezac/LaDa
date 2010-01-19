@@ -15,16 +15,16 @@ class Mesh:
     crystal.to_fractional( self.end )
 
   def generate( self ):
-    from lada import crystal, atat
+    from numpy import array as np_array, dot as np_dot
+    from lada import crystal
     
-    id = atat.rMatrix3d( [[1,0,0], [0,1,0], [0,0,1]] )
+    id = np_array( [[1,0,0], [0,1,0], [0,0,1]], dtype="float64" )
     deformation = self.get_deformation()
     for n in range(0, self.steps+1):
       for a in range(n-self.bandwidth, n+self.bandwidth+1 ):
 
         structure = crystal.sStructure( self.start )
-        structure.cell =   ( id + float(n) * deformation.cell ) \
-                         * self.start.cell
+        structure.cell = np_dot(id + float(n) * deformation.cell, self.start.cell)
         for i, atom in enumerate(structure.atoms):
           atom.pos += deformation.atoms[i].pos * float(a) 
 
@@ -34,11 +34,12 @@ class Mesh:
         yield structure
 
   def get_deformation( self ):
-    from lada import crystal, atat
+    from numpy import array as np_array, dot as np_dot
+    from lada import crystal
 
-    id = atat.rMatrix3d( [[1,0,0], [0,1,0], [0,0,1]] )
+    id = np_array( [[1,0,0], [0,1,0], [0,0,1]], dtype="float64" )
     result = crystal.sStructure(self.end) 
-    result.cell = ( self.end.cell * atat.inverse(self.start.cell) - id ) / float(self.steps)
+    result.cell = ( np_dot(self.end.cell, self.start.cell.I) - id ) / float(self.steps)
     for i, atom in enumerate(result.atoms):
       atom.pos = ( self.end.atoms[i].pos - self.start.atoms[i].pos ) / float(self.steps)
 
@@ -49,18 +50,17 @@ def main():
   from lada import crystal
 
   def create_lattice():
-
-    from lada import crystal, atat
+    from numpy import array as np_array
+    from lada import crystal
 
     lattice = crystal.Lattice()
 
-    lattice.cell = atat.rMatrix3d( [ [ -1,  1,  1 ], \
-                                     [  1, -1,  1 ], \
-                                     [  1,  1, -1 ] ] )
+    lattice.cell = np_array( [[ -1,  1,  1 ], \
+                              [  1, -1,  1 ], \
+                              [  1,  1, -1 ]], dtype="float64" )
     lattice.scale = 4.42
 
-    lattice.sites.append( crystal.Site( (0, 0, 0) ) )
-    lattice.sites[0].type = crystal.StringVector( [ "K", "Rb" ] );
+    lattice.sites.append( crystal.Site(np_array([0.0, 0, 0], [ "K", "Rb" ])) )
 
     return lattice
 
