@@ -212,7 +212,7 @@ namespace LaDa
         return result;
       }
     boost::shared_ptr< Crystal::TStructure<std::string> >
-      fill_atatcell(atat::rMatrix3d const& _cell)
+      fill_cell(math::rMatrix3d const& _cell)
       {
         typedef Crystal::TStructure<std::string> t_structure;
         t_structure str;
@@ -221,15 +221,6 @@ namespace LaDa
         if( not result ) return result;
         result->scale = result->lattice->scale;
         return result;
-      }
-    boost::shared_ptr< Crystal::TStructure<std::string> >
-      fill_numpycell(pyublas::numpy_matrix<types::t_real> const& _cell)
-      {
-        atat::rMatrix3d cell;
-        for( size_t i(0); i < 3; ++i ) 
-          for( size_t j(0); j < 3; ++j ) 
-            cell(i,j) = _cell(i,j);
-        return fill_atatcell(cell);
       }
       
 
@@ -326,15 +317,14 @@ namespace LaDa
               "Transforms a structure from fractional to cartesian coordinates.\n" );
 
       bp::def("fill_structure", &fill_structure<Crystal::Structure>);
-      bp::def("fill_structure", &fill_atatcell);
-      bp::def("fill_structure", &fill_numpycell);
+      bp::def("fill_structure", &fill_cell);
       bp::def
       (
         "fill_structure", 
         &fill_structure< Crystal::TStructure<std::string> >,
         "Returns a structure from knowledge of cell and lattice.\n\n"
         "The argument can be of type L{Structure}, L{sStructure}, "
-        "L{atat.rMatrix3d}, or a numpy matrix. In the first case, the return is "
+        "or a numpy 3x3 float64 array. In the first case, the return is "
         "also a L{Structure}. In all other cases, the return is an L{sStructure}.\n"
         "@raise RuntimeError: If the filled structure could not be created.\n" 
       );

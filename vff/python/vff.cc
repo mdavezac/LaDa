@@ -366,10 +366,11 @@ namespace LaDa
         ">>> vff.set_mpi(boost.mpi.world) # if compiled with mpi only!\n"
         ">>> vff.fromXML(\"input.xml\")\n"
         ">>> vff.structure.fromXML(\"input.xml\")\n"
-        ">>> vff.direction = lada.atat.rVector3d(0,0,1) # uses vff.structure[:,0] by default.\n" 
+        ">>> # if next line commented out, uses vff.structure[:,0] by default.\n" 
+        ">>> vff.direction = numpy.array([0,0,1], dtype=\"float64\")"
         ">>> vff.init()\n"
         ">>> vff.evaluate()\n\n"
-        "For deep copy, one may use the default constructor: >>> vff2 = lada.vff.Vff(vff1)\n"
+        "For deep copy, one may use the default constructor: C{vff2 = lada.vff.Vff(vff1)}\n"
       ).add_property
        (
          "direction",

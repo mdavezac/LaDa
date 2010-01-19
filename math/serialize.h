@@ -10,15 +10,15 @@
 namespace boost {
   namespace serialization {
 
-    //! Serializes atat real vectors.
+    //! Serializes eigen real vectors.
     template<class Archive>
     void serialize(Archive & ar, LaDa::math::rVector3d & g, const unsigned int version)
      { ar & g.x(); ar & g.y(); ar & g.z(); }
-     //! Serializes atat integer vectors.
+     //! Serializes eigen integer vectors.
     template<class Archive>
     void serialize(Archive & ar, LaDa::math::iVector3d & g, const unsigned int version)
      { ar & g.x(); ar & g.y(); ar & g.z(); }
-    //! Serializes atat real matrices.
+    //! Serializes eigen real matrices.
     template<class Archive>
     void serialize(Archive & ar, LaDa::math::rMatrix3d & g, const unsigned int version)
     {
@@ -26,7 +26,7 @@ namespace boost {
         for(size_t j(0); j < 3; ++j)
           ar & g(i,j);
     }
-    //! Serializes atat integer matrices.
+    //! Serializes eigen integer matrices.
     template<class Archive>
     void serialize(Archive & ar, LaDa::math::iMatrix3d & g, const unsigned int version)
     {

@@ -46,7 +46,6 @@ namespace LaDa
       {
         if( not math::is_zero(_lat.space_group[i].trans) ) continue;
         math::rMatrix3d &op = _lat.space_group[i].op;
-  //     if( not math::eq( atat::det( op ), 1e0 ) ) continue;
         syms.push_back( op );
       }
     }

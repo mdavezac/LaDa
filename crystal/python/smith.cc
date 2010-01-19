@@ -203,7 +203,7 @@ namespace LaDa
         "Returns the indices of the position in the smith normal form.\n\n" 
         "@param transform: transformation tuple yielded by L{smith_normal_transform}\n"
         "@param position: cartesian coordinates on the lattice.\n"
-        "@type position: L{atat.rVector3d}.\n"
+        "@type position: numpy 3x1 float64 array.\n"
       );
       bp::def
       ( 

@@ -68,9 +68,9 @@ namespace LaDa
         "This function can take either three (pos, invcell, sites) or two "
         "arguments (pos, structure), or (pos, lattice).\n"
         "@param pos: A position to match modulo the supercell.\n"
-        "@type pos: L{atat.rVector3d}\n"
+        "@type pos: numpy 3x1 float64 array\n"
         "@param invcell: the inverse of the supercell.\n"
-        "@type invcell: L{atat.rMatrix3d}\n"
+        "@type invcell: numpy 3x3 float64 array\n"
         "@param sites: A list of sites.\n"
         "@type sites: L{Lattice.sites}, L{Structure.atoms}, L{sStructure.atoms}\n"
         // other implementation,

@@ -124,8 +124,8 @@ namespace LaDa
 
     }
 
-    atat::rVector3d into_cell2(atat::rVector3d const &_vec, atat::rMatrix3d const &_cell)
-      { return Crystal::into_cell(_vec, _cell, !_cell); }
+    math::rVector3d into_cell2(math::rVector3d const &_vec, math::rMatrix3d const &_cell)
+      { return Crystal::into_cell(_vec, _cell, _cell.inverse()); }
 
     void expose_lattice()
     {
@@ -164,12 +164,12 @@ namespace LaDa
         (bp::arg("vector"), bp::arg("cell"), bp::arg("inverse")),
         "Returns the vector folded into the given cell.\n\n"
         "@param vector: the vector to be folded.\n"
-        "@type vector: L{atat.rVector3d}\n"
+        "@type vector: numpy 3x3 float64 array.\n"
         "@param cell: the cell for which to fold.\n"
-        "@type cell: L{atat.rMatrix3d}\n"
+        "@type cell: numpy 3x3 float64 array.\n"
         "@param inv: the inverse of the cell for which to fold. Computed from "
         "cell if not given on input.\n"
-        "@type inv: L{atat.rMatrix3d}\n"
+        "@type inv: numpy 3x3 float64 array.\n"
       );
     }
 

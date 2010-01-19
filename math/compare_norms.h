@@ -11,7 +11,7 @@ namespace LaDa
 {
   namespace math
   { 
-    //! Functor for sorting atat real vectors
+    //! Functor for sorting eigen real vectors
     class CompareNorms
     {
       //! Vector to which to compare
