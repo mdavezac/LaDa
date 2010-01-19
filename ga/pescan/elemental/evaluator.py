@@ -1,5 +1,5 @@
 """ Contains evaluators for Pescan properties """
-from lada import atat
+from numpy import array as np_array
 class Bandgap(object):
   """ An evaluator function for bandgaps at S{Gamma}. """
   def __init__(self, converter, input = "input.xml", lattice = None):
@@ -17,7 +17,7 @@ class Bandgap(object):
     """
     from lada.vff import LayeredVff
     from lada.pescan import BandGap
-    from lada import crystal, atat
+    from lada import crystal
     import boost.mpi as mpi
 
     self.converter = converter 
@@ -31,7 +31,7 @@ class Bandgap(object):
     """ Vff functional """
     self.vff.set_mpi(mpi.world) # sets up mpi group for vff.
     self.vff.fromXML(input) # load vff parameters.
-    vff.direction = atat.rVector3d(converter.cell[0,0], converter.cell[1,0], converter.cell[2,0])
+    vff.direction = converter.cell[:,0]
 
     self.escan = BandGap() # creates bandgap functional
     """ Bandgap functional """
@@ -142,10 +142,10 @@ class Dipole(Bandgap):
 
 class Directness(pescan.elemental.evaluator.Bandgap):
   """ Objective function for quasi-direct bandgaps. """
-  X = atat.rVector3d( [0,0,1] )
-  G = atat.rVector3d( [0,0,0] )
-  L = atat.rVector3d( [0.5,0.5,0.5] )
-  W = atat.rVector3d( [1, 0.5,0] )
+  X = np_array( [0,0,1], dtype="float64" )
+  G = np_array( [0,0,0], dtype="float64" )
+  L = np_array( [0.5,0.5,0.5], dtype="float64" )
+  W = np_array( [1, 0.5,0], dtype="float64" )
 
   def __init__(self, which = [(Gamma, "Gamma")], *args, **kwargs): 
     super(Eval, self).__init__(self, args, kwargs)
@@ -153,6 +153,7 @@ class Directness(pescan.elemental.evaluator.Bandgap):
     
   def __call__(self, indiv):
     """ Evaluates differences between kpoints. """
+    from numpy import dot as np_dot
     from lada.escan import Bands
 
     self.nbcalc += 1
@@ -164,7 +165,7 @@ class Directness(pescan.elemental.evaluator.Bandgap):
     self.vff.init()
     indiv.epi_energy = self.vff.evaluate()
     # computes deformation of reciprocal lattice
-    deformation = self.vff.structure.I.T * structure.cell.T
+    deformation = np_dot(self.vff.structure.cell.I.T, structure.cell.T)
     # vff input file
     self.escan.vff_inputfile = "atom_input." + str( mpi.world.rank )
 
@@ -184,7 +185,7 @@ class Directness(pescan.elemental.evaluator.Bandgap):
         # computes ideal folded kpoint.
         self.escan.kpoint = crystal.fold_vector(kpoint, structure.cell.I.T)
         # computes kpoint in deformed structure.
-        self.escan.kpoint = deformation * self.escan.kpoint
+        self.escan.kpoint = np_dot(deformation, self.escan.kpoint)
         # prints escan input
         self.vff.print_escan_input(self.escan.vff_inputfile)
         #  computes bandgap.

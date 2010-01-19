@@ -1,3 +1,4 @@
+obsolete ~~
 import clj_module 
 
 class Functional( clj_module.StructuresFunctional ):

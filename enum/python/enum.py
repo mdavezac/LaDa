@@ -44,27 +44,26 @@ def find_smith_set( _n, _hermite ):
 
 def create_lattice():
 
-  from lada import crystal, atat
-  from math import sqrt
+  from numpy import array as np_array
+  from math import sqrt         
+  from lada import crystal      
 
   lattice = crystal.Lattice()
 
-  cell1 = atat.rMatrix3d( [ [  1.0,  0.5,  0.0 ], \
-                            [  0.0,  0.5*sqrt(3.0),  0.0 ], \
-                            [  0.0,  0.0,  1.0 ] ] )
-  cell2 = atat.rMatrix3d( [ [  0.5,  0.5,  0.0 ], \
-                            [  -0.5*sqrt(3.0),  0.5*sqrt(3.0),  0.0 ], \
-                            [  0.0,  0.0,  1 ] ] )
+  cell1 = np_array( [ [  1.0,  0.5,  0.0 ], \
+                      [  0.0,  0.5*sqrt(3.0),  0.0 ], \
+                      [  0.0,  0.0,  1.0 ] ], dtype="float64" )
+  cell2 = np_array( [ [  0.5,  0.5,  0.0 ], \
+                      [  -0.5*sqrt(3.0),  0.5*sqrt(3.0),  0.0 ], \
+                      [  0.0,  0.0,  1 ] ], dtype="float64" )
   lattice.cell = cell1
   lattice.scale = 4.42
 
-  lattice.sites.append( crystal.Site( (0., 0, 0) ) )
-  lattice.sites[0].type = crystal.StringVector( [ "K", "Rb" ] );
-  lattice.sites.append( crystal.Site( (0.5, sqrt(3)/6.0, 0.5) ) )
-  lattice.sites[1].type = crystal.StringVector( [ "K", "Rb" ] );
+  site = crystal.Site(np_array([0.5, 0.5/sqrt(3), 0.25], dtype="float64"), [ "K", "Rb" ])
+  lattice.sites.append( site )
+  site.pos = np_array( [0.5, -0.5/sqrt(3.0), 0.75] )
+  lattice.sites.append( site )
 
-  lattice.sites[0].pos = atat.rVector3d(0.5,  0.5/sqrt(3.0), 0.25)
-  lattice.sites[1].pos = atat.rVector3d(0.5,  -0.5/sqrt(3.0), 0.75)
   lattice.find_space_group()
 
   return lattice
@@ -85,9 +84,10 @@ def all_symmetrics( _x, _trans, _label, _rotations, _fl ):
     for u in all_smith(t): yield u
 
 def enum( _n, _lattice ):
-  from lada import enumeration, atat, crystal
-  from math import pow
   import time
+  from math import pow
+  from numpy import dot as np_dot
+  from lada import enumeration, crystal
 
   supercells = enumeration.find_all_cells(_lattice, _n)
   smiths = enumeration.create_smith_groups(_lattice, supercells)
@@ -121,7 +121,7 @@ def enum( _n, _lattice ):
     for nsupercell, supercell in enumerate(smith.supercells):
       mine = []
       # creates list of transformation which leave the supercell invariant.
-      cell = _lattice.cell * supercell.hermite
+      cell = np_dot(_lattice.cell, supercell.hermite)
       specialized = []
       for transform in transforms:
         if not transform.invariant(cell): continue
@@ -155,7 +155,7 @@ def enum( _n, _lattice ):
         if specialized_database[x]: yield x, smith, supercell, flavorbase
 
 def main():
-  from lada import enumeration, atat, crystal
+  from lada import enumeration, crystal
   from math import pow
   import time
 

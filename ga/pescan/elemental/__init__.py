@@ -71,7 +71,7 @@ class Converter(object):
         @param cell: are the lattice-vectors of the supercell making up the
           elemental superlattice. The epitaxial direction must be given by the
           first column vector.
-        @type cell: lada.atat.rMatrix3d
+        @type cell: 3x3 float64 numpy array.
 
 
 
@@ -130,7 +130,7 @@ class BandgapEvaluator(object):
     """
     from lada.vff import LayeredVff
     from lada.pescan import BandGap
-    from lada import crystal, atat
+    from lada import crystal
     import boost.mpi as mpi
 
     self.converter = converter 
@@ -144,7 +144,7 @@ class BandgapEvaluator(object):
     """ Vff functional """
     self.vff.set_mpi(mpi.world) # sets up mpi group for vff.
     self.vff.fromXML(input) # load vff parameters.
-    vff.direction = atat.rVector3d(converter.cell[0,0], converter.cell[1,0], converter.cell[2,0])
+    vff.direction = converter.cell[:,0]
 
     self.escan = BandGap() # creates bandgap functional
     """ Bandgap functional """

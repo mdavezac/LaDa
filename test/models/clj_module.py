@@ -1,5 +1,6 @@
 #! /usr/bin/python
 
+obsolete !!
 def structure_to_array( _structure, _args ):
 
   from lada import atat, models

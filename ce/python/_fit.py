@@ -188,7 +188,7 @@ class PairRegulatedFit(Fit):
 
   def __init__(self, clusters, alpha = 2, tcoef = 1, type="laks"):
     """ alpha and tcoef are the regularization coefficients. """
-    from lada import atat
+    from numpy.linalg.basic import norm as np_norm
 
     # constructs from base.
     Fit.__init__(self, clusters)
@@ -202,7 +202,7 @@ class PairRegulatedFit(Fit):
     self._norms = []
     for i, class_ in enumerate(self._classes): 
       if class_.order != 2: continue
-      self._norms.append( (i,atat.norm2( class_[0].origin.pos - class_[0][0].pos)) )
+      self._norms.append( (i,np_norm(class_[0].origin.pos - class_[0][0].pos)**2) )
       
   def reset_clusterclasses(self, classes):
     """ Recompute pis from known structures.
@@ -210,13 +210,12 @@ class PairRegulatedFit(Fit):
         The weights and energies remain the same after and before call.
         Bookkeeping for regulated pairs is re-initialized.
     """
-    from lada.atat import norm2
-    
+    from numpy.linalg.basic import norm as np_norm
     Fit.reset_clusterclasses(self, classes)
     self._norms = []
     for i, class_ in enumerate(self._classes): 
       if class_.order != 2: continue
-      self._norms.append( (i,norm2( class_[0].origin.pos - class_[0][0].pos)) )
+      self._norms.append( (i,np_norm( class_[0].origin.pos - class_[0][0].pos)) )
       
 
   def _compute_weights(self, A):

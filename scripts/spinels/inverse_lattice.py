@@ -1,6 +1,6 @@
 
 def lattice():
-  from lada import crystal, atat
+  from lada import crystal
 
   lattice = crystal.Lattice()
 
@@ -15,7 +15,8 @@ def lattice():
   lattice.sites[1].pos = numpy.array( [0.25, 0.25, 0.25], dtype="float64" )
 
   # Aluminum - Octahedral
-  lattice.sites.append( crystal.Site(numpy.array([5.0/8.0, 5.0/8.0, 5.0/8.0], dtype="float64"), ["Al", "Mg"]) )
+  lattice.sites.append( crystal.Site(numpy.array([5.0/8.0, 5.0/8.0, 5.0/8.0], dtype="float64"),\
+                        ["Al", "Mg"]) )
   lattice.sites.extend( [ lattice.sites[2] for u in range(0,3) ] )
   lattice.sites[2].pos = numpy.array( [5.0/8.0, 5.0/8.0, 5.0/8.0], dtype="float64")
   lattice.sites[3].pos = numpy.array( [5.0/8.0, 7.0/8.0, 7.0/8.0], dtype="float64")
