@@ -13,7 +13,6 @@
 #include <utility>
 
 #include <opt/types.h>
-#include <atat/vectmac.h>
 #include <crystal/lattice.h>
 #include <crystal/structure.h>
 
@@ -27,9 +26,9 @@ namespace LaDa
     {
       public:
         //! Type of the container of positions.
-        typedef std::vector< atat::rVector3d > t_Positions;
+        typedef std::vector< math::rVector3d > t_Positions;
         //! Type of the container of symmetry operations.
-        typedef std::vector< atat::rMatrix3d > t_SymOps;
+        typedef std::vector< math::rMatrix3d > t_SymOps;
         //! Type of the pure bitset representing a configuration for a set symmetry.
         typedef std::vector< types::t_unsigned > t_Bitset;
         //! Type  containing a pure bitset and an attached coefficient.

@@ -50,7 +50,7 @@ namespace LaDa
           const Bond &bond( bonds.find( bondtype )->second );
           const types::t_real rcut_squared( rcut_ * rcut_ );
 
-          const atat::rVector3d dfractional
+          const math::rVector3d dfractional
                                 ( 
                                   details::range01( i_atom1->pos[0] - i_atom2->pos[0] ),
                                   details::range01( i_atom1->pos[1] - i_atom2->pos[1] ),
@@ -62,9 +62,9 @@ namespace LaDa
               {
                 if ( i_atom1 == i_atom2 and i == 0 and j == 0 and k == 0 ) continue;
                 // computes distance.
-                const atat::rVector3d fdistance( dfractional + atat::rVector3d(i,j,k) );
-                const atat::rVector3d distance( _in.cell * fdistance * _in.scale );
-                const types::t_real normd( atat::norm2(distance) );
+                const math::rVector3d fdistance( dfractional + math::rVector3d(i,j,k) );
+                const math::rVector3d distance( _in.cell * fdistance * _in.scale );
+                const types::t_real normd( distance.squaredNorm() );
                 if( normd > rcut_squared ) continue;
 
                 // result -= 4.0 * scale * lj_pot( sigma_squared / rcut_squared )
@@ -86,7 +86,7 @@ namespace LaDa
                       6e0 * squared
                     * ( 2.e0 * bond.hard_sphere * twelfth - bond.van_der_walls * sixth )
                   );
-                  const atat::rVector3d force( ffactor * distance );
+                  const math::rVector3d force( ffactor * distance );
                   i_force1->pos += force;
                   i_force2->pos -= force;
 

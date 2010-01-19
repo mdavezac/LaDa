@@ -16,7 +16,7 @@
 #include<boost/lambda/lambda.hpp>
 #include<boost/lambda/bind.hpp>
 
-#include <opt/random.h>
+#include <math/random.h>
 #include <opt/algorithms.h>
 #include <minimizer/interpolated_gradient.h>
 

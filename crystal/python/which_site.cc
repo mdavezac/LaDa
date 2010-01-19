@@ -20,11 +20,11 @@ namespace LaDa
 {
   namespace Python
   {
-    types::t_int which_site1( atat::rVector3d const &_pos, Crystal::Lattice const &_lat )
+    types::t_int which_site1( math::rVector3d const &_pos, Crystal::Lattice const &_lat )
       { return Crystal::which_site( _pos, !_lat.cell, _lat.sites ); }
-    types::t_int which_site2( atat::rVector3d const &_pos, Crystal::Structure const &_lat )
+    types::t_int which_site2( math::rVector3d const &_pos, Crystal::Structure const &_lat )
       { return Crystal::which_site( _pos, !_lat.cell, _lat.atoms ); }
-    types::t_int which_site3( atat::rVector3d const &_pos,
+    types::t_int which_site3( math::rVector3d const &_pos,
                               Crystal::TStructure<std::string> const &_lat )
       { return Crystal::which_site( _pos, !_lat.cell, _lat.atoms ); }
     void expose_which_site()

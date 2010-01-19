@@ -13,12 +13,13 @@
 #include <vector> 
 #include <algorithm> 
 
+#include <Eigen/LU>
+
 #include <crystal/lattice.h>
 #include <crystal/structure.h>
 #include <crystal/which_site.h>
 #include <crystal/smith.h>
-
-
+#include <math/misc.h>
 
 #include "cluster.h"
 #include "mlclusters.h"
@@ -46,7 +47,7 @@ namespace LaDa
         std::vector< std::vector<size_t> > atomic_map;
         Crystal::get_smith_map( _str, atomic_map );
         bool const dosite( _str.lattice->sites.size() != 1 );
-        atat::rMatrix3d const inv_cell( !_str.lattice->cell );
+        math::rMatrix3d const inv_cell( _str.lattice->cell.inverse() );
         Crystal::Lattice::t_Sites const &sites(_str.lattice->sites);
         Crystal::t_SmithTransform const
           transform( Crystal::get_smith_transform(_str.lattice->cell, _str.cell) );
@@ -87,7 +88,7 @@ namespace LaDa
         Crystal::get_smith_map( _str, atomic_map );
         bool const dosite( _str.lattice->sites.size() != 1 );
         size_t const Npersite( _str.atoms.size() / _str.lattice->sites.size() );
-        atat::rMatrix3d const inv_cell( !_str.lattice->cell );
+        math::rMatrix3d const inv_cell( _str.lattice->cell.inverse() );
         Crystal::Lattice::t_Sites const &sites(_str.lattice->sites);
       
         Crystal::t_SmithTransform const
@@ -116,19 +117,19 @@ namespace LaDa
             types::t_real pi(0);
             for(; i_cluster != i_cluster_end; ++i_cluster ) // loop over equivalent clusters.
             {
-              typedef std::vector<atat::rVector3d> :: const_iterator t_cit;
+              typedef std::vector<math::rVector3d> :: const_iterator t_cit;
               t_cit i_vec_begin = i_cluster->vectors.begin();
               t_cit const i_vec_end = i_cluster->vectors.end();
               t_cit i_center = i_vec_begin;
               for(; i_center != i_vec_end; ++i_center ) // loop over cluster centers.
               {
                 types::t_real fig(1);
-                std::vector<atat::rVector3d> :: const_iterator i_vec = i_vec_begin;
-                atat::rVector3d const shift( i_first->pos - *i_center);
-                if ( not is_int( (!_str.lattice->cell)*shift) ) continue;
+                std::vector<math::rVector3d> :: const_iterator i_vec = i_vec_begin;
+                math::rVector3d const shift( i_first->pos - *i_center);
+                if ( not math::is_integer( _str.lattice->cell.inverse()*shift) ) continue;
                 for(; i_vec != i_vec_end; ++i_vec) // loop over cluster spins.
                 {
-                  atat::rVector3d const site_pos(*i_vec + shift);
+                  math::rVector3d const site_pos(*i_vec + shift);
                   types::t_int const sindex
                   ( 
                     dosite ? Crystal::which_site(site_pos, inv_cell, sites): 0
@@ -136,7 +137,7 @@ namespace LaDa
                   LADA_DOASSERT( sindex != -1, "Site not found.\n" )
                   LADA_DOASSERT( sindex < _str.lattice->sites.size(), "Index out of range.\n" );
                   size_t const site_index(sindex);
-                  atat::rVector3d const pos( site_pos - sites[site_index].pos );
+                  math::rVector3d const pos( site_pos - sites[site_index].pos );
                   size_t const smith_index = Crystal::get_linear_smith_index(transform, pos);
                   fig *= _str.atoms[ atomic_map[site_index][smith_index] ].type;
                 } // end of loop over spins.
@@ -148,7 +149,7 @@ namespace LaDa
           } // loop over classes of clusters.
         } // loop over atomic positions.
 #       ifdef LADA_DEBUG
-          foreach(types::t_real &o, _out) if( Fuzzy::is_zero(o) ) o = 0e0;
+          foreach(types::t_real &o, _out) if( math::is_zero(o) ) o = 0e0;
 #       endif
       }
 
@@ -185,7 +186,7 @@ namespace LaDa
       _pis.resize( _clusters.size() );
       std::fill( _pis.begin(), _pis.end(), 0 );
 
-      atat::rMatrix3d inv_cell = !(_str.cell);
+      math::rMatrix3d inv_cell = _str.cell.inverse();
       Crystal :: Structure :: t_Atoms :: const_iterator i_atom = _str.atoms.begin();
       Crystal :: Structure :: t_Atoms :: const_iterator i_atom_end = _str.atoms.end();
       for(; i_atom != i_atom_end; ++i_atom) // loop over atoms
@@ -208,7 +209,7 @@ namespace LaDa
           for( ; i_cluster != i_cluster_end; ++i_cluster )
           {
             // loop over cluster origin.
-            typedef std::vector<atat::rVector3d> :: const_iterator vec_iterator;
+            typedef std::vector<math::rVector3d> :: const_iterator vec_iterator;
             vec_iterator i_cpos_begin = i_cluster->vectors.begin();
             vec_iterator i_cpos_center = i_cluster->vectors.begin();
             vec_iterator i_cpos_end = i_cluster->vectors.end();
@@ -219,14 +220,14 @@ namespace LaDa
               types::t_real result(1);
               for ( i_cpos = i_cpos_begin; i_cpos != i_cpos_end; ++i_cpos )
               {
-                atat::rVector3d shift = i_atom->pos - *i_cpos_center;
+                math::rVector3d shift = i_atom->pos - *i_cpos_center;
                 
-                if ( not is_int( (!_str.lattice->cell)*shift) ) continue;
+                if ( not math::is_integer( _str.lattice->cell.inverse()*shift) ) continue;
                 
                 // finds atom to which lattice site is equivalent
                 Crystal::Structure::t_Atoms::const_iterator i_equiv = _str.atoms.begin();
                 for (; i_equiv != i_atom_end; ++i_equiv)  
-                  if ( atat::equivalent_mod_cell( *i_cpos + shift, i_equiv->pos,inv_cell) ) 
+                  if ( math::are_periodic_images(*i_cpos + shift, i_equiv->pos, inv_cell) ) 
                     break;
 
                 __ASSERT( i_equiv == i_atom_end,

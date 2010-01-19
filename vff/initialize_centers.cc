@@ -7,7 +7,6 @@
 
 #include <cmath>
 
-#include <opt/atat.h>
 #include <crystal/ideal_lattice.h>
 #include <crystal/divide_and_conquer.h>
 
@@ -17,11 +16,11 @@ namespace LaDa
 {
   namespace Vff
   { 
-    void Vff :: first_neighbors_( std::vector< std::vector< atat::rVector3d > >& _fn )
+    void Vff :: first_neighbors_( std::vector< std::vector< math::rVector3d > >& _fn )
     {
       const size_t Nsites( structure.lattice->sites.size() );
       __DOASSERT( Nsites != 2, "Expected two sites for VFF.\n" )
-      typedef std::vector< std::vector< atat::rVector3d > > t_FirstNeighbors;
+      typedef std::vector< std::vector< math::rVector3d > > t_FirstNeighbors;
       _fn.resize( structure.lattice->sites.size() );
       foreach( const Crystal::Lattice::t_Site &site, structure.lattice->sites )
         _fn[0].push_back( site.pos );
@@ -46,11 +45,11 @@ namespace LaDa
       first_neighbors_( fn );
 
       // Checks if ideal structure. In which case use smith normal tree building.
-      const atat::rMatrix3d inv_str( (!structure.lattice->cell) * structure.cell );
+      const math::rMatrix3d inv_str( (!structure.lattice->cell) * structure.cell );
       bool is_ideal = true;
       for( size_t i(0); is_ideal and i < 3; ++i )
         for( size_t j(0); is_ideal and j < 3; ++j )
-          if( Fuzzy::neq( inv_str(i,j), rint( inv_str(i,j) ) ) ) is_ideal = false;
+          if( math::neq( inv_str(i,j), rint( inv_str(i,j) ) ) ) is_ideal = false;
       if( is_ideal )
       {
         __ROOTCODE
@@ -94,7 +93,7 @@ namespace LaDa
                      "divide-and-conquer algorithm.\n";
       )
       // Tries to guess size of divide and conquer.
-      const atat::iVector3d nboxes( Crystal::guess_dnc_params( structure, 30 ) );
+      const math::iVector3d nboxes( Crystal::guess_dnc_params( structure, 30 ) );
       types::t_real n(   structure.atoms.size()
                        / types::t_real( nboxes(0) * nboxes(1) * nboxes(2) ) );
       __ROOTCODE
@@ -105,7 +104,7 @@ namespace LaDa
                   << " boxes of " << n << " atoms each.\n";
       )
       // Then creates boxes.
-      const types::t_real odist( 1.5e0 * std::sqrt( atat::norm2( fn[0].front() ) ) );
+      const types::t_real odist( 1.5e0 * std::sqrt( fn[0].front().squaredNorm() ) );
       Crystal::t_ConquerBoxes<types::t_real> :: shared_ptr boxes
       (
         Crystal :: divide_and_conquer_boxes( structure, nboxes, odist )

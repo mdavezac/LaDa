@@ -12,7 +12,7 @@
 
 #include <opt/types.h>
 #include <opt/debug.h>
-#include <opt/fuzzy.h>
+#include <math/fuzzy.h>
 
 namespace LaDa
 {
@@ -56,10 +56,10 @@ namespace LaDa
                                    typename T_ITCOEF::value_type _range )
             {
               typedef typename T_ITCOEF :: value_type t_Type;
-              *_coef = t_Type( opt::random::rng() - 0.5e0 ) * _range + t_Type(1);
-              *(_coef + 1) = t_Type( opt::random::rng() - 0.5e0 ) * _range + t_Type(1);
+              *_coef = t_Type( math::rng() - 0.5e0 ) * _range + t_Type(1);
+              *(_coef + 1) = t_Type( math::rng() - 0.5e0 ) * _range + t_Type(1);
               for( size_t i(2); i < D; ++i )
-                *(_coef + i) = t_Type( opt::random::rng() - 0.5e0 ) * _range + t_Type(1);
+                *(_coef + i) = t_Type( math::rng() - 0.5e0 ) * _range + t_Type(1);
             }
 
           //! Normalizes vector.
@@ -69,7 +69,7 @@ namespace LaDa
               namespace bl = boost::lambda;
               T_NORM norm(0);
               std::for_each( _coef, _coef + D, bl::var(norm) += bl::_1 * bl::_1 );
-              if( Fuzzy::is_zero( norm) )
+              if( math::is_zero( norm) )
               {
                 std::fill( _coef, _coef + D, 1e0 );
                 return;
@@ -98,7 +98,7 @@ namespace LaDa
             {
               typedef typename T_ITCOEF::difference_type t_size_t;
               typename T_ITCOEF::value_type coef( *_coef );
-              if( not Fuzzy::is_zero( _conf ) )
+              if( not math::is_zero( _conf ) )
                 coef += *( _coef + t_size_t( _conf ) );
               _op( _out, coef );
             }
@@ -118,7 +118,7 @@ namespace LaDa
                                            = typename T_OUT::value_type(1) )
             {
               _out[0] += typename T_OUT::value_type(_s);
-              if( Fuzzy::is_zero( _conf ) ) return;
+              if( math::is_zero( _conf ) ) return;
               _out[ size_t( _conf ) ] +=  typename T_OUT::value_type(_s); 
             }
           template< class T_ITCOEF >
@@ -126,10 +126,10 @@ namespace LaDa
                                    typename T_ITCOEF::value_type _range )
             {
               typedef typename T_ITCOEF :: value_type t_Type;
-              *_coef = t_Type( opt::random::rng() - 0.5e0 ) * _range + t_Type(1);
-              *( _coef + 1 ) = t_Type( opt::random::rng() - 0.5e0 ) * _range;
+              *_coef = t_Type( math::rng() - 0.5e0 ) * _range + t_Type(1);
+              *( _coef + 1 ) = t_Type( math::rng() - 0.5e0 ) * _range;
               for( size_t i(2); i < D; ++i )
-                *(_coef + i) = t_Type( opt::random::rng() - 0.5e0 ) * _range;
+                *(_coef + i) = t_Type( math::rng() - 0.5e0 ) * _range;
             }
 
           //! Normalizes vector.
@@ -138,7 +138,7 @@ namespace LaDa
             {
               namespace bl = boost::lambda;
               types::t_real norm( *_coef );
-              if( Fuzzy::is_zero( norm) ) return;
+              if( math::is_zero( norm) ) return;
               norm = std::abs( norm );
               _out *= norm;
               norm = T_NORM(1) / norm;

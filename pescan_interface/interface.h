@@ -22,7 +22,6 @@
 
 #include <physics/physics.h>
 #include <opt/types.h>
-#include <atat/vectmac.h>
 #include <crystal/structure.h>
 #include <mpi/mpi_object.h>
 #include <print/stdout.h>

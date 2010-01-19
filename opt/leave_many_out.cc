@@ -18,7 +18,7 @@
 #include <boost/lambda/bind.hpp>
 
 
-#include <opt/random.h>
+#include <math/random.h>
 #include<boost/tokenizer.hpp>
 
 #include "leave_many_out.h"
@@ -168,7 +168,7 @@ namespace LaDa
 //       for(types::t_unsigned j(nb_perset); j > 0; --j )
 //       {
 //         types::t_unsigned r;
-//         do { r = opt::random::range(0, _tsize ); }
+//         do { r = opt::math::range(0, _tsize ); }
 //         while(     except.size() != 0
 //                and except.end() != std::find( except.begin(), except.end(), r ) );
 //         set.push_back( r );
@@ -190,7 +190,7 @@ namespace LaDa
       __DOASSERT( nb_perset >= _tsize,
                   "Input error: sets too large.\n" )
 
-      types::t_unsigned (*ptr_to_rng)( types::t_unsigned ) = &opt::random::range;
+      types::t_unsigned (*ptr_to_rng)( types::t_unsigned ) = &math::range;
       fs::path fullpath = filename;
       std::ofstream setfile( fullpath.string().c_str(),
                              std::ofstream::out | std::ofstream::trunc );

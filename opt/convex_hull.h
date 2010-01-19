@@ -1,6 +1,3 @@
-//
-//  Version: $Id$
-//
 #ifndef _CONVEX_HULL_BASE_H_
 #define _CONVEX_HULL_BASE_H_
 
@@ -13,19 +10,18 @@
 #include <iostream>
 #include <iomanip>
 
+#include <boost/serialization/serialization.hpp>
+#include <boost/lambda/lambda.hpp>
+#include <boost/lambda/bind.hpp>
+
 #include <tinyxml/tinyxml.h>
 
+#include <math/fuzzy.h>
 #include <mpi/mpi_object.h>
 
 #include "types.h"
 #include "function_functors.h"
-#include "fuzzy.h"
 
-#include <mpi/mpi_object.h>
-
-#include <boost/serialization/serialization.hpp>
-#include <boost/lambda/lambda.hpp>
-#include <boost/lambda/bind.hpp>
 
 namespace LaDa
 {
@@ -272,7 +268,7 @@ namespace LaDa
           { return _x < x_end; }
         //! returns \a _x <= Vertex::x_end 
         bool x_greatereq(const types::t_real _x) const
-          { return _x < x_end or Fuzzy::eq( _x, x_end); }
+          { return _x < x_end or math::eq( _x, x_end); }
         private:
           //! Serializes a vertex.
           template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)

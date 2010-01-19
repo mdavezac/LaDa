@@ -9,7 +9,10 @@
 #include <boost/lambda/lambda.hpp>
 #include <boost/lambda/bind.hpp>
 
+#include <Eigen/LU>
+
 #include <crystal/fill_structure.h>
+#include <math/lambda.impl.h>
 
 #include "ce.h"
 
@@ -20,12 +23,12 @@ namespace LaDa
     // Forward declarations.
     namespace details
     {
-      void cubic_basis( types::t_unsigned _n, const atat::rMatrix3d &_cell,
-                        std::vector< atat::rVector3d >& _positions );
-      void supercell_basis( types::t_unsigned _n, const atat::rMatrix3d &_cell,
-                            std::vector< atat::rVector3d >& _positions );
+      void cubic_basis( types::t_unsigned _n, const math::rMatrix3d &_cell,
+                        std::vector< math::rVector3d >& _positions );
+      void supercell_basis( types::t_unsigned _n, const math::rMatrix3d &_cell,
+                            std::vector< math::rVector3d >& _positions );
       void convcell_basis( types::t_unsigned _n,
-                           std::vector< atat::rVector3d >& _positions );
+                           std::vector< math::rVector3d >& _positions );
     }
     
     Separables :: Separables   ( types::t_unsigned _rank,
@@ -38,7 +41,7 @@ namespace LaDa
       set_basis( _size, _type );
     }
     Separables :: Separables   ( types::t_unsigned _rank,
-                                 const atat::rMatrix3d &_cell,
+                                 const math::rMatrix3d &_cell,
                                  const std::string &_type )
                              : t_Base(), basis_type( _type ), 
                                name("Sum of Separables")
@@ -47,7 +50,7 @@ namespace LaDa
       set_basis( _cell, _type );
     }
 
-    void Separables :: set_basis( const atat::rMatrix3d &_cell, const std::string &_type )
+    void Separables :: set_basis( const math::rMatrix3d &_cell, const std::string &_type )
     {
       __ASSERT( Crystal::Structure::lattice == NULL,
                 "Lattice type has not been set.\n" )
@@ -128,9 +131,9 @@ namespace LaDa
       syms.reserve( N );
       for( types::t_int i(0); i < N; ++i )
       {
-        if( not Fuzzy::eq( atat::norm2( _lat.space_group[i].trans ), 0e0 ) ) continue;
-        atat::rMatrix3d &op = _lat.space_group[i].op;
-        if( not Fuzzy::eq( atat::det( op ), 1e0 ) ) continue;
+        if( not math::is_zero(_lat.space_group[i].trans.squaredNorm()) ) continue;
+        math::rMatrix3d &op = _lat.space_group[i].op;
+        if( not math::is_zero(op.determinant() - 1e0) ) continue;
         syms.push_back( op );
       }
     }
@@ -151,12 +154,12 @@ namespace LaDa
         std::transform
         ( 
           _structure.atoms.begin(), _structure.atoms.end(), fractionals.begin(),
-               ret<atat::rMatrix3d>(constant( !(~_structure.cell) ))
+               ret<math::rMatrix3d>(constant( !(~_structure.cell) ))
              * bind(&Crystal::Structure::t_Atom::pos, _1) 
         );
 
         // Loops over shifts.
-        typedef std::vector<atat::rVector3d> :: const_iterator t_shift_iterator;
+        typedef std::vector<math::rVector3d> :: const_iterator t_shift_iterator;
         t_shift_iterator i_shift( fractionals.begin() );
         t_shift_iterator i_shift_end( fractionals.end() );
         for(; i_shift != i_shift_end; ++i_shift )
@@ -174,7 +177,7 @@ namespace LaDa
                  _1 - constant( *i_shift )
             );
 
-            atat::rMatrix3d inv = !( (*i_op) * (~_structure.cell)  );
+            math::rMatrix3d inv = ( (*i_op) * (~_structure.cell)  ).inverse();
 
             // For each basis position, finds closest atomic-position modulo
             // structure-periodicity.
@@ -183,21 +186,21 @@ namespace LaDa
             t_Basis :: const_iterator i_pos_end( basis.end() );
             for(types::t_int i=0; i_pos != i_pos_end; ++i_pos, ++i )
             {
-              atat::rVector3d pos = inv * (*i_pos);
+              math::rVector3d pos = inv * (*i_pos);
               t_Basis::const_iterator i_found( shifted_fracs.begin() );
               t_Basis::const_iterator i_end( shifted_fracs.end() );
               types::t_int j(0);
               for(; i_found != i_end; ++i_found, ++j )
               {
-                atat::rVector3d a = pos - (*i_found);
+                math::rVector3d a = pos - (*i_found);
                 a[0] += 0.05e0; a[0] -= std::floor(a[0]); a[0] -= 0.05e0;
                 a[1] += 0.05e0; a[1] -= std::floor(a[1]); a[1] -= 0.05e0;
                 a[2] += 0.05e0; a[2] -= std::floor(a[2]); a[2] -= 0.05e0;
-                if( Fuzzy::eq( atat::norm2( a ), 0e0 ) ) break; 
+                if( math::is_zero(a) ) break; 
               }
               __DOASSERT( i_found == shifted_fracs.end(), "Could not find equivalent position.\n" ) 
               // Found the position in atomic structure.
-              bitset[ i ] = Fuzzy::eq( _structure.atoms[j].type, -1e0 );
+              bitset[ i ] = math::eq( _structure.atoms[j].type, -1e0 );
             }
             // adds to configurations if similar bitset cannot be found.
             // otherwise increase weight of similar structure.
@@ -238,8 +241,8 @@ namespace LaDa
 
     namespace details
     {
-      void cubic_basis( types::t_unsigned _n, const atat::rMatrix3d &_cell,
-                        std::vector< atat::rVector3d >& _positions )
+      void cubic_basis( types::t_unsigned _n, const math::rMatrix3d &_cell,
+                        std::vector< math::rVector3d >& _positions )
       {
         _positions.clear();
         _positions.reserve( _n*_n*_n );
@@ -247,26 +250,26 @@ namespace LaDa
           for( types::t_unsigned j = 0; j < _n; ++j )
             for( types::t_unsigned k = 0; k < _n; ++k )
             {
-              atat::rVector3d pos( i, j, k );
+              math::rVector3d pos( i, j, k );
               _positions.push_back( _cell * pos );
             }
         namespace bl = boost::lambda;
         std::sort
         ( 
           _positions.begin(), _positions.end(),
-           bl::_1 * bl::_1  > bl::_2 * bl::_2
+          bl::bind(&math::rVector3d::squaredNorm, bl::_1)
+            > bl::bind(&math::rVector3d::squaredNorm, bl::_2)
         );
       }
-      void supercell_basis( types::t_unsigned _n, const atat::rMatrix3d &_cell,
-                            std::vector< atat::rVector3d >& _positions )
+      void supercell_basis( types::t_unsigned _n, const math::rMatrix3d &_cell,
+                            std::vector< math::rVector3d >& _positions )
       {
         __DEBUGTRYBEGIN
         namespace bl = boost::lambda;
 
         Crystal::Structure structure;
-        atat::rMatrix3d mat;
-        mat.identity(); mat =  mat * (types::t_real)_n;
-        structure.cell = _cell * mat;
+        math::rMatrix3d mat;
+        structure.cell = _cell * (types::t_real)_n;
         __ASSERT( not Crystal::Structure::lattice,
                   "Lattice of structure has not beens set.\n" )
         Crystal :: fill_structure( structure );
@@ -289,29 +292,30 @@ namespace LaDa
         std::sort
         ( 
           _positions.begin(), _positions.end(),
-           bl::_1 * bl::_1  > bl::_2 * bl::_2
+          bl::bind(&math::rVector3d::squaredNorm, bl::_1)
+            > bl::bind(&math::rVector3d::squaredNorm, bl::_2)
         );
         __DEBUGTRYEND(, "Error while creating super-cell basis.\n" )
       }
       void convcell_basis( types::t_unsigned _n, 
-                           std::vector< atat::rVector3d >& _positions )
+                           std::vector< math::rVector3d >& _positions )
       {
         __DEBUGTRYBEGIN
         __ASSERT( not Crystal::Structure::lattice, 
                   "Lattice has not been set.\n" )
-        atat::rMatrix3d mult;
+        math::rMatrix3d mult;
         // assume fcc
-        if( Fuzzy::eq( Crystal::Structure::lattice->cell.x[0][0], 0e0 ) ) 
+        if( math::eq( Crystal::Structure::lattice->cell(0,0), 0e0 ) ) 
         {
-          mult.x[0][0] = -1e0; mult.x[1][0] =  1e0; mult.x[2][0] =  1e0; 
-          mult.x[0][1] =  1e0; mult.x[1][1] = -1e0; mult.x[2][1] =  1e0; 
-          mult.x[0][2] =  1e0; mult.x[1][2] =  1e0; mult.x[2][2] = -1e0; 
+          mult(0,0) = -1e0; mult(1,0) =  1e0; mult(2,0) =  1e0; 
+          mult(0,1) =  1e0; mult(1,1) = -1e0; mult(2,1) =  1e0; 
+          mult(0,2) =  1e0; mult(1,2) =  1e0; mult(2,2) = -1e0; 
         }
         else // assume bcc
         {
-          mult.x[0][0] = 0e0; mult.x[1][0] = 1e0; mult.x[2][0] = 1e0; 
-          mult.x[0][1] = 1e0; mult.x[1][1] = 0e0; mult.x[2][1] = 1e0; 
-          mult.x[0][2] = 1e0; mult.x[1][2] = 1e0; mult.x[2][2] = 0e0; 
+          mult(0,0) = 0e0; mult(1,0) = 1e0; mult(2,0) = 1e0; 
+          mult(0,1) = 1e0; mult(1,1) = 0e0; mult(2,1) = 1e0; 
+          mult(0,2) = 1e0; mult(1,2) = 1e0; mult(2,2) = 0e0; 
         }
         mult = Crystal::Structure::lattice->cell * mult;
         supercell_basis( _n, mult, _positions );

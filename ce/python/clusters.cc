@@ -56,7 +56,7 @@ namespace LaDa
       Rot( Crystal::SymmetryOperator const &_op ) : op(_op) {}
       Rot( Rot const &_op ) : op(_op.op) {} 
       Crystal::SymmetryOperator const & op;
-      void operator()( atat::rVector3d &_vec ) const { _vec = op.op * _vec; }
+      void operator()( math::rVector3d &_vec ) const { _vec = op.op * _vec; }
       void operator()( CE::Cluster &_cls ) const
         { std::for_each(_cls.vectors.begin(), _cls.vectors.end(), *this); }
       void operator()( CE::t_Clusters &_cls ) const

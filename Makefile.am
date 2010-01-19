@@ -23,9 +23,6 @@ endif
 if DOPESCAN
   PESCANSUBDIR = pescan_interface
 endif 
-if DOLAPACK
-  LAPACKDIR = lapack
-endif
 if DOSEPARABLE
   SEPARABLEDIR = separable
   CEDIR = ce
@@ -45,9 +42,9 @@ endif
 if DOENUM
   ENUMDIR = enum
 endif
-SUBDIRS = atat physics opt minimizer crystal print $(CEDIR) $(VFFSUBDIR) \
-	  $(PESCANSUBDIR) $(LAPACKDIR) $(DARWINSUBDIR) $(SEPARABLEDIR) \
-	  factory $(MODELSDIR) $(POTENTIALSDIR) $(ENUMDIR) $(MPISUBDIR) $(PYTHONDIR) 
+SUBDIRS = $(PYTHONDIR) math physics opt minimizer crystal print $(CEDIR) $(VFFSUBDIR) \
+	  $(PESCANSUBDIR) $(DARWINSUBDIR) $(SEPARABLEDIR) \
+	  factory $(MODELSDIR) $(POTENTIALSDIR) $(ENUMDIR) $(MPISUBDIR) 
 # revision.h: force
 # 	@cd $(top_srcdir); scripts/max_revision.pl
 # force: ;

@@ -35,7 +35,7 @@ namespace LaDa
     (
       eMass& _emass,
       const Pescan::Interface& _interface,
-      const atat::rMatrix3d &_ocell, 
+      const math::rMatrix3d &_ocell, 
       const Crystal::Structure &_structure,
       const types::t_real &_eref
     )

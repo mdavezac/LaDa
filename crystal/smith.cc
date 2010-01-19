@@ -6,7 +6,7 @@
 #endif
 
 
-#include <opt/smith_normal_form.h>
+#include <math/smith_normal_form.h>
 #include <opt/debug.h>
 
 #include "smith.h"
@@ -15,13 +15,13 @@ namespace LaDa
 {
   namespace Crystal
   { 
-    atat::iVector3d get_smith_index( t_SmithTransform const &_transformation,
-                                     atat::rVector3d  const &_pos )
+    math::iVector3d get_smith_index( t_SmithTransform const &_transformation,
+                                     math::rVector3d  const &_pos )
     {
       namespace bt = boost::tuples;
-      atat::iVector3d result;
-      const atat::rVector3d pos( bt::get<0>( _transformation ) * _pos );
-      const atat::iVector3d int_pos
+      math::iVector3d result;
+      const math::rVector3d pos( bt::get<0>( _transformation ) * _pos );
+      const math::iVector3d int_pos
       (
         types::t_int( rint( pos(0) ) ),
         types::t_int( rint( pos(1) ) ),
@@ -40,15 +40,15 @@ namespace LaDa
       return result;
     }
 
-    t_SmithTransform get_smith_transform( atat::rMatrix3d const &_lat_cell,
-                                          atat::rMatrix3d const &_str_cell )
+    t_SmithTransform get_smith_transform( math::rMatrix3d const &_lat_cell,
+                                          math::rMatrix3d const &_str_cell )
     {
       namespace bt = boost::tuples;
       t_SmithTransform result;
-      atat::iMatrix3d left, right, smith;
-      const atat::rMatrix3d inv_lat( !_lat_cell );
-      const atat::rMatrix3d inv_lat_cell( inv_lat * _str_cell );
-      atat::iMatrix3d int_cell;
+      math::iMatrix3d left, right, smith;
+      const math::rMatrix3d inv_lat( !_lat_cell );
+      const math::rMatrix3d inv_lat_cell( inv_lat * _str_cell );
+      math::iMatrix3d int_cell;
       for( size_t i(0); i < 3; ++i )
         for( size_t j(0); j < 3; ++j )
         {
@@ -60,7 +60,7 @@ namespace LaDa
             << int_cell << "\n != \n" << inv_lat_cell << "\n\n"
           )
         }
-      opt::smith_normal_form( smith, left, int_cell, right );
+      math::smith_normal_form( smith, left, int_cell, right );
       for( size_t i(0); i < 3; ++i )
       {
         for( size_t j(0); j < 3; ++j )
@@ -92,7 +92,7 @@ namespace LaDa
         LADA_ASSERT( i_first->site >= 0 and i_first->site < _str.lattice->sites.size(),
                      "Atoms in structure are not indexed with respect to sites.\n" );
         
-        atat::rVector3d const pos( i_first->pos - _str.lattice->sites[i_first->site].pos );
+        math::rVector3d const pos( i_first->pos - _str.lattice->sites[i_first->site].pos );
         size_t const smith( Crystal::get_linear_smith_index(transform, pos) );
         LADA_ASSERT( smith < N, "Incoherent number of atoms per site." );
         LADA_ASSERT( _out[i_first->site][smith] == Nat, "Duplicate site." );

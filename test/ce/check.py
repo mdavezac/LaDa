@@ -1,6 +1,7 @@
 #! /usr/bin/python
 def enum( _n, _lattice ):
-  from lada import enumeration, atat, crystal
+  import numpy as np
+  from lada import enumeration, crystal
   from math import pow
   import time
 
@@ -10,7 +11,7 @@ def enum( _n, _lattice ):
   nsites = len(_lattice.sites)
   transforms = enumeration.create_transforms(_lattice)
   for smith in smiths:
-    card = smith.smith[0]*smith.smith[1]*smith.smith[2]*nsites
+    card = int(smith.smith[0]*smith.smith[1]*smith.smith[2]*nsites)
     label_exchange=enumeration.LabelExchange( card, nflavors )
     flavorbase = enumeration.create_flavorbase(card, nflavors)
     translations = enumeration.Translation(smith.smith, nsites)
@@ -36,7 +37,7 @@ def enum( _n, _lattice ):
     for nsupercell, supercell in enumerate(smith.supercells):
       mine = []
       # creates list of transformation which leave the supercell invariant.
-      cell = _lattice.cell * supercell.hermite
+      cell = np.dot(_lattice.cell,  supercell.hermite)
       specialized = []
       for transform in transforms:
         if not transform.invariant(cell): continue
@@ -71,7 +72,7 @@ def enum( _n, _lattice ):
 
 def list_all_structures( _n0, _n1 ):
 
-  from lada import enumeration, atat, crystal
+  from lada import enumeration, crystal
   from math import pow
   import time
 
@@ -97,6 +98,7 @@ def choose_structures( _howmany, _min = 2, _max = 9 ):
   import os
   import shutil
   import random
+  import numpy as np
   from lada import crystal, enumeration
 
   lattice, str_list = list_all_structures( _min, _max )
@@ -114,7 +116,7 @@ def choose_structures( _howmany, _min = 2, _max = 9 ):
 
     # creates structure
     structure = crystal.sStructure()
-    structure.cell = lattice.cell * supercell.hermite
+    structure.cell = np.dot(lattice.cell, supercell.hermite)
     crystal.fill_structure(structure)
     structure.scale = lattice.scale
     enumeration.as_structure(structure, x, flavorbase)
@@ -194,21 +196,21 @@ def main():
             ("000001110000", -74.377010), 
             ("010000000001", -55.269849) ] 
 
-# for test in tests:
-#   for i, atom in enumerate(structure.atoms):
-#     if test[0][i] == "0": atom.type = -1e0
-#     else:               atom.type = 1e0
-#   e = mlclasses(structure) 
-#   c = functional.chemical(structure) 
-#   if not e == 0e0:
-#     print "check %f, test %f, diff %f " \
-#           % ( e, c, c/e )
-  for structure in choose_structures(60, 2, 12):
+  for test in tests:
+    for i, atom in enumerate(structure.atoms):
+      if test[0][i] == "0": atom.type = -1e0
+      else:               atom.type = 1e0
     e = mlclasses(structure) 
     c = functional.chemical(structure) 
     if not e == 0e0:
       print "check %f, test %f, diff %f " \
-            % ( e, c, fabs(c-e) )
+            % ( c, e, c-e )
+# for structure in choose_structures(15, 1, 12):
+#   e = mlclasses(structure) 
+#   c = functional.chemical(structure) 
+#   if not e == 0e0:
+#     print "check %f, test %f, diff %f " \
+#           % ( e, c, fabs(c-e) )
 
 #         % ( c, test[1], fabs(c-test[1]) )
 

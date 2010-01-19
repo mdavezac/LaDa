@@ -24,9 +24,11 @@
 #include <boost/spirit/include/classic_kleene_star.hpp>
 #include <boost/spirit/include/classic_actions.hpp>
 
+#include <Eigen/LU>
+
 #include <print/manip.h>
 #include <opt/types.h>
-#include <atat/is_int.h>
+#include <math/misc.h>
 
 #include "structure.h"
 
@@ -42,13 +44,13 @@ namespace LaDa
                         bool _check_lattice = false )
       {
         __TRYBEGIN
-        atat::rMatrix3d inv_cell;
+        math::rMatrix3d inv_cell;
         if( _check_lattice and (not _structure.lattice) )
         {
           std::cerr << "Requested for structure to be checked against, but lattice not set.\n";
           _check_lattice = false; 
         }
-        if( _check_lattice ) inv_cell = !_structure.lattice->cell;
+        if( _check_lattice ) inv_cell = _structure.lattice->cell.inverse();
         
         namespace bsc = boost::spirit::classic;
         namespace fs = boost::filesystem;  
@@ -95,7 +97,7 @@ namespace LaDa
           )
         }
         if( _check_lattice )
-          LADA_DOASSERT( atat::is_int(inv_cell * _structure.cell),
+          LADA_DOASSERT( math::is_integer(inv_cell * _structure.cell),
                          "Structure cell is not supercell of lattice." );
         // number of atoms
         std::vector< size_t > nbatoms;
@@ -152,7 +154,8 @@ namespace LaDa
           )
           if( direct ) atom.pos = _structure.cell * atom.pos; 
           if( _check_lattice )
-            LADA_DOASSERT(atat::is_int(inv_cell * atom.pos), "Atomic position is not on lattice.")
+            LADA_DOASSERT(math::is_integer(inv_cell * atom.pos),
+                          "Atomic position is not on lattice.")
           atom.type = *i_type;
           _structure.atoms.push_back( atom );
           if( j != *i_nb ) continue;

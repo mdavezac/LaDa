@@ -22,7 +22,7 @@ namespace LaDa
     template<class T_INDIVTRAITS>
     bool Base<T_INDIVTRAITS> :: operator==( const t_This &_indiv ) const
     {
-      if ( Fuzzy::neq(get_concentration(), _indiv.get_concentration() ) )
+      if ( math::neq(get_concentration(), _indiv.get_concentration() ) )
         return false;
       if ( invalid() or _indiv.invalid() )
         return object == _indiv.object; 

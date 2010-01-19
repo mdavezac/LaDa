@@ -16,9 +16,7 @@
 #endif
 
 #include <physics/physics.h>
-#include <opt/atat.h>
 #include <opt/debug.h>
-#include <opt/atat.h>
 #include <opt/tinyxml.h>
 
 #include "functional.h"
@@ -29,13 +27,13 @@ namespace LaDa
   { 
     Functional :: t_Return Functional :: operator()( const t_Arg& _arg ) const
     {
-      atat::rMatrix3d strain;
+      math::rMatrix3d strain;
       unpack_variables( _arg, strain );
       return Vff::energy();
     }
 
     // Unpacks opt::Function_Base::variables into Vff::Functional format
-    void Functional :: unpack_variables(const t_Arg& _arg, atat::rMatrix3d& _strain) const
+    void Functional :: unpack_variables(const t_Arg& _arg, math::rMatrix3d& _strain) const
     {
       t_Arg :: const_iterator i_x = _arg.begin();
 
@@ -58,7 +56,7 @@ namespace LaDa
     }
 
     void Functional :: unpack_positions( t_Arg :: const_iterator &_i_x, 
-                                         atat::rMatrix3d& _strain ) const
+                                         math::rMatrix3d& _strain ) const
     {
       // then computes positions
       t_Atoms :: iterator i_atom = structure.atoms.begin();
@@ -66,7 +64,7 @@ namespace LaDa
       t_Atoms :: const_iterator i_atom0 = structure0.atoms.begin();
       for(; i_atom != i_atom_end; ++i_atom, ++i_atom0 )
       {
-        atat::rVector3d pos;
+        math::rVector3d pos;
         if ( not (i_atom->freeze & t_Atom::FREEZE_X ) )
           { pos[0] = types::t_real(2.0) * (*_i_x ); ++_i_x; }
         else pos[0] = i_atom0->pos[0];
@@ -97,7 +95,7 @@ namespace LaDa
       types::t_real z =   structure0.atoms[fixed_index[2]].pos[2] 
                         - structure.atoms [fixed_index[2]].pos[2];
 
-      if ( Fuzzy::eq(x, 0e0) and Fuzzy::eq(y, 0e0) and Fuzzy::eq(z, 0e0) ) return;
+      if ( math::eq(x, 0e0) and math::eq(y, 0e0) and math::eq(z, 0e0) ) return;
       for(i_atom = structure.atoms.begin(); i_atom != i_atom_end; ++i_atom )
         { i_atom->pos[0] += x; i_atom->pos[1] += y; i_atom->pos[2] += z; }
     }
@@ -123,11 +121,8 @@ namespace LaDa
      
       _arg.resize( dof );
 
-      atat::rMatrix3d strain;
-      strain.zero(); 
-      strain(0,0) = types::t_real(1.0);
-      strain(1,1) = types::t_real(1.0);
-      strain(2,2) = types::t_real(1.0);
+      math::rMatrix3d strain;
+      strain = math::rMatrix3d::Identity();
 
       pack_variables( _arg, strain);
       
@@ -159,7 +154,7 @@ namespace LaDa
 
     // variables is expected to be of sufficient size!!
     // call init() first
-    void Functional :: pack_variables( t_Arg& _arg, const atat::rMatrix3d& _strain ) const
+    void Functional :: pack_variables( t_Arg& _arg, const math::rMatrix3d& _strain ) const
     {
       // finally, packs vff format into function::Base format
       t_Arg :: iterator i_var = _arg.begin();
@@ -194,7 +189,7 @@ namespace LaDa
        }
     }
 
-    void Functional :: pack_gradients( const atat::rMatrix3d& _stress, 
+    void Functional :: pack_gradients( const math::rMatrix3d& _stress, 
                                        t_GradientArg _grad) const
     {
       t_GradientArg i_grad(_grad);
@@ -220,7 +215,7 @@ namespace LaDa
       i_center = centers.begin();
       for (; i_center != i_end; ++i_center, ++i_atom0)
       {
-        const atat::rVector3d& gradient = i_center->gradient;
+        const math::rVector3d& gradient = i_center->gradient;
         if ( not (i_atom0->freeze & t_Atom::FREEZE_X) ) 
           *i_grad = gradient[0], ++i_grad;
         if ( not (i_atom0->freeze & t_Atom::FREEZE_Y) ) 
@@ -249,18 +244,18 @@ namespace LaDa
 
     void Functional :: gradient( const t_Arg& _arg, t_GradientArg _i_grad ) const
     {
-      atat::rMatrix3d strain; strain.zero();
+      math::rMatrix3d strain = math::rMatrix3d::Zero();
       t_Return energy(0);
-      foreach( const t_Center& center, centers ) center.gradient = atat::rVector3d(0,0,0);
+      foreach( const t_Center& center, centers ) center.gradient = math::rVector3d(0,0,0);
 
       // unpacks variables into vff atomic_center and strain format
       unpack_variables( _arg, strain);
 
       // computes K0
-      atat::rMatrix3d K0 = (!(~strain));
+      math::rMatrix3d K0 = (!(~strain));
 
       // computes energy and gradient
-      stress.zero();
+      stress = math::rMatrix3d::Zero();
       LADA_MPI_SPLIT_LOOP( t_Centers :: const_iterator, center, centers, MPI_COMM )
       for (; i_center != i_center_end; ++i_center)
         energy += functionals[i_center->kind()].
@@ -272,7 +267,7 @@ namespace LaDa
         (
           MPI_Allreduce,
           (
-            MPI_IN_PLACE, &(stress.x[0][0]), 9u,
+            MPI_IN_PLACE, stress.data(), stress.stride()*3,
             boost::mpi::get_mpi_datatype<types::t_real>(stress(0,0)),
             boost::mpi::is_mpi_op< std::plus<types::t_real>, types::t_real>::op(),
             (MPI_Comm) MPI_COMM

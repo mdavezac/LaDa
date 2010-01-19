@@ -60,7 +60,7 @@ namespace LaDa
       {
         //! Checks if this atom/center has moved appreciably
         typedef t_Atom t_atom;
-        atat::rVector3d vec = ( i_center->Origin().pos - i_atom->pos ) * deriv_amplitude;
+        math::rVector3d vec = ( i_center->Origin().pos - i_atom->pos ) * deriv_amplitude;
         // then computes microscopic strain
         types::t_real msstrain = functionals[i_center->kind()].MicroStrain( *i_center,
                                                                             structure0 );
@@ -68,9 +68,9 @@ namespace LaDa
         if ( i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_X ) vec[0] = 0.0;
         if ( i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_Y ) vec[1] = 0.0;
         if ( i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_Z ) vec[2] = 0.0;
-        if(     ( not Fuzzy::eq( vec[0], 0e0 ) )  
-            and ( not Fuzzy::eq( vec[1], 0e0 ) )  
-            and ( not Fuzzy::eq( vec[2], 0e0 ) )  ) continue;
+        if(     ( not math::eq( vec[0], 0e0 ) )  
+            and ( not math::eq( vec[1], 0e0 ) )  
+            and ( not math::eq( vec[2], 0e0 ) )  ) continue;
 
         // It has, hence it is printed out to the pseudo list.
         // First, we must find the type of empirical pseudo 
@@ -89,8 +89,8 @@ namespace LaDa
         t_pseudos::const_iterator i_pseudo_end = pseudos.end();
         for( ; i_pseudo != i_pseudo_end; ++i_pseudo )
         {
-          atat::rVector3d newpos = (!t_VA::structure.cell) * i_center->Origin().pos;
-          atat::rVector3d oldpos = (!t_VA::structure.cell) * i_atom->pos;
+          math::rVector3d newpos = (!t_VA::structure.cell) * i_center->Origin().pos;
+          math::rVector3d oldpos = (!t_VA::structure.cell) * i_atom->pos;
           nb_pseudos += 2;
                  // old position and microstrain
           stream << std::fixed    << std::setprecision(7)
@@ -180,7 +180,7 @@ namespace LaDa
 
 
       //! central position
-      atat::rVector3d centralpos = (!t_VA::structure.cell) * center.Origin().pos;
+      math::rVector3d centralpos = (!t_VA::structure.cell) * center.Origin().pos;
 
       // then goes over bonds and prints pseudos
       AtomicCenter :: const_iterator i_bond = center.begin();
@@ -191,7 +191,7 @@ namespace LaDa
                                                           stratom );
         types::t_unsigned Z = Physics::Atomic::Z( stratom.type );
 
-        atat::rVector3d bondpos = (!t_VA::structure.cell) * i_bond->Origin().pos;
+        math::rVector3d bondpos = (!t_VA::structure.cell) * i_bond->Origin().pos;
 
         nb_pseudos += 4;
         // central "original" atom 

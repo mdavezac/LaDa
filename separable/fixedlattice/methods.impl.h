@@ -25,9 +25,9 @@ namespace LaDa
             if( _verb >= 1 ) std::cout << "  trial " << nbrestarts
                                        << " " << intermed << "\n";
             if(    nbrestarts == 0 
-                or ( which == 0 and Fuzzy::gt( best.variance(), intermed.variance() )  )
-                or ( which == 1 and Fuzzy::gt( best.mean(), intermed.mean() )  )
-                or ( which == 2 and Fuzzy::gt( best.max(), intermed.max() )  ) )
+                or ( which == 0 and math::gt( best.variance(), intermed.variance() )  )
+                or ( which == 1 and math::gt( best.mean(), intermed.mean() )  )
+                or ( which == 2 and math::gt( best.max(), intermed.max() )  ) )
             {
               best = intermed;
               state = _col;

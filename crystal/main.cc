@@ -15,7 +15,7 @@
 #include <opt/debug.h>
 #include <opt/bpo_macros.h>
 #include <opt/tuple_io.h>
-#include <opt/random.h>
+#include <math/random.h>
 #include <mpi/mpi_object.h>
 #ifdef _MPI
 # include <boost/mpi/environment.hpp>
@@ -49,10 +49,10 @@ boost::shared_ptr<Crystal::Lattice>
 
 void randomize( Crystal::Structure &_structure )
 {
-  LaDa::opt::random::create();
+  LaDa::math::start_random();
   foreach( Crystal::Structure::t_Atom& atom, _structure.atoms )
     if( _structure.lattice->sites[ atom.site ].type.size() > 1 )
-      atom.type = LaDa::opt::random::flip() ? -1e0: 1e0;
+      atom.type = LaDa::math::flip() ? -1e0: 1e0;
 }
 
 void printstructure( const Crystal::Structure &_structure, 
@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
       ++i_atom;
       new_depth = depth(i_atom->pos);
     }
-    while( LaDa::Fuzzy::eq( last_depth, new_depth ) and i_atom != i_atom_end );
+    while( LaDa::math::eq( last_depth, new_depth ) and i_atom != i_atom_end );
     ++nb_layers;
 
     sstr << "  _ layer at depth "
@@ -204,7 +204,7 @@ int main(int argc, char *argv[])
   if( vm.count("direction") )
     std::cout << "Growth direction: " << vm["direction"].as<std::string>() << "\n";
   else 
-    std::cout << "Growth direction: " << structure.cell.get_column(0) << "\n";
+    std::cout << "Growth direction: " << structure.cell.col(0) << "\n";
   std::cout << "Number of layers: " << nb_layers << "\n"
             << sstr.str() << "\n";
 

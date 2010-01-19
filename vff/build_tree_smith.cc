@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <functional>
 
-#include <opt/smith_normal_form.h>
+#include <math/smith_normal_form.h>
 #include <crystal/ideal_lattice.h>
 #include <crystal/divide_and_conquer.h>
 
@@ -50,7 +50,7 @@ namespace LaDa
         bool error = false;
         foreach( const Crystal::Structure::t_Atom &atom, structure.atoms )
         {
-          atat::iVector3d sindex;
+          math::iVector3d sindex;
           __ASSERT( atom.site < 0, "site indexing is incorrect.\n" );
           __ASSERT( atom.site > structure.lattice->sites.size(),
                     "site indexing is incorrect.\n" );
@@ -95,17 +95,17 @@ namespace LaDa
         centers.push_back( AtomicCenter( structure, *i_atom, index ) );
 
       // finally builds tree.
-      typedef std::vector< atat::rVector3d > :: const_iterator t_cit;
+      typedef std::vector< math::rVector3d > :: const_iterator t_cit;
 
       t_Centers :: iterator i_center = centers.begin();
       t_Centers :: iterator i_center_end = centers.end();
-      const atat::rMatrix3d inv_cell( !structure.cell );
+      const math::rMatrix3d inv_cell( structure.cell.inverse() );
       i_atom = structure.atoms.begin();
       for(; i_center != i_center_end; ++i_center, ++i_atom )
       {
         const unsigned center_site( i_atom->site );
         const unsigned neighbor_site( neighbors_site[center_site] );
-        const atat::rVector3d pos
+        const math::rVector3d pos
         ( 
           i_atom->pos - structure.lattice->sites[neighbor_site].pos 
         );
@@ -114,7 +114,7 @@ namespace LaDa
         for(; i_neigh != i_neigh_end; ++i_neigh )
         {
           // computes index of nearest neighbor.
-          atat::iVector3d sindex;
+          math::iVector3d sindex;
           smith_index_
           (
             transformation,
@@ -127,26 +127,23 @@ namespace LaDa
           // now creates branch in tree.
           t_Centers :: iterator i_bond( centers.begin() + cindex );
           i_center->bonds.push_back( t_Center::__make__iterator__( i_bond ) );
-          const atat::rVector3d dfrac
+          const math::rVector3d dfrac
           ( 
               inv_cell 
             * ( 
-                  (const atat::rVector3d) *i_center 
-                - (const atat::rVector3d) *i_bond
+                  (const math::rVector3d) *i_center 
+                - (const math::rVector3d) *i_bond
                 + (*i_neigh)
               )
            ); 
-          const atat::rVector3d frac
+          const math::rVector3d frac
           (
             rint( dfrac(0) ),
             rint( dfrac(1) ),
             rint( dfrac(2) )
           );
           i_center->translations.push_back( frac );
-          i_center->do_translates.push_back
-          ( 
-            atat::norm2(frac) > atat::zero_tolerance 
-          );
+          i_center->do_translates.push_back( not math::is_zero(frac.squaredNorm()) );
         }
       }
       __ENDGROUP__
@@ -159,12 +156,12 @@ namespace LaDa
     }
 
     void Vff :: smith_index_( const t_Transformation &_transformation,
-                              const atat::rVector3d &_pos,
-                              atat::iVector3d &_index )
+                              const math::rVector3d &_pos,
+                              math::iVector3d &_index )
     {
       namespace bt = boost::tuples;
-      const atat::rVector3d pos( bt::get<0>( _transformation ) * _pos );
-      const atat::iVector3d int_pos
+      const math::rVector3d pos( bt::get<0>( _transformation ) * _pos );
+      const math::iVector3d int_pos
       (
         types::t_int( rint( pos(0) ) ),
         types::t_int( rint( pos(1) ) ),
@@ -183,15 +180,15 @@ namespace LaDa
     }
 
     Vff :: t_Transformation 
-      Vff :: to_smith_matrix( const atat::rMatrix3d &_lat_cell,
-                              const atat::rMatrix3d &_str_cell )
+      Vff :: to_smith_matrix( const math::rMatrix3d &_lat_cell,
+                              const math::rMatrix3d &_str_cell )
       {
         namespace bt = boost::tuples;
         t_Transformation result;
-        atat::iMatrix3d left, right, smith;
-        const atat::rMatrix3d inv_lat( !_lat_cell );
-        const atat::rMatrix3d inv_lat_cell( inv_lat * _str_cell );
-        atat::iMatrix3d int_cell;
+        math::iMatrix3d left, right, smith;
+        const math::rMatrix3d inv_lat( _lat_cell.inverse() );
+        const math::rMatrix3d inv_lat_cell( inv_lat * _str_cell );
+        math::iMatrix3d int_cell;
         for( size_t i(0); i < 3; ++i )
           for( size_t j(0); j < 3; ++j )
           {
@@ -203,7 +200,7 @@ namespace LaDa
               << int_cell << "\n != \n" << inv_lat_cell << "\n\n"
             )
           }
-        opt::smith_normal_form( smith, left, int_cell, right );
+        math::smith_normal_form( smith, left, int_cell, right );
         for( size_t i(0); i < 3; ++i )
         {
           for( size_t j(0); j < 3; ++j )

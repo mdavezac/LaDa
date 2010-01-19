@@ -3,7 +3,7 @@
 //
 
 #include <boost/lambda/bind.hpp>
-#include <opt/random.h>
+#include <math/random.h>
 
 namespace LaDa
 {
@@ -151,8 +151,7 @@ namespace LaDa
             if( i_clusters->front().size() != 2 ) continue;
     
             types::t_real D( i_clusters->size() );
-            types::t_real R( atat::norm2(   i_clusters->front()[0] 
-                                          - i_clusters->front()[1] ) );
+            types::t_real R( (i_clusters->front()[0] - i_clusters->front()[1]).squaredNorm() );
     
             types::t_real weight = std::pow( R, alpha ) / D;
             normalization += laksreg ?
@@ -241,7 +240,7 @@ namespace LaDa
           std::for_each
           ( 
             x.begin(), x.end(),
-            bl::_1 =   ( bl::bind( &opt::random::rng ) - bl::constant(5e-1) )
+            bl::_1 =   ( bl::bind( &math::rng ) - bl::constant(5e-1) )
                      * bl::constant(range)
           );
           { // fitting.

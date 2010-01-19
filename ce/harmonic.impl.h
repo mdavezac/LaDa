@@ -12,34 +12,34 @@ namespace LaDa
       {
 
         template< class T_DERIVED > inline 
-          types::t_real Base<T_DERIVED> :: evaluate(const atat::rVector3d &_k) const
+          types::t_real Base<T_DERIVED> :: evaluate(const math::rVector3d &_k) const
           {
-            return (  exp( -norm2(_k) * attenuation ) * 
+            return (  exp( -_k.squaredNorm() * attenuation ) * 
                    (*static_cast<const t_Derived*>(this))( _k ) ); 
           }
 
         template< class T_DERIVED > inline 
         types::t_real Base<T_DERIVED> :: evaluate(const types::t_real _x,
-                                                  const atat::rVector3d &_k) const
+                                                  const math::rVector3d &_k) const
         {
           return (   interpolation.evaluate(_x) 
-                   * exp( -norm2(_k) * attenuation )
+                   * exp( -_k.squaredNorm() * attenuation )
                    * (*static_cast<const t_Derived*>(this))( _k ) );
         }
         template< class T_DERIVED > inline 
         types::t_real Base<T_DERIVED> :: evaluate_gradient(const types::t_real _x,
-                                                           const atat::rVector3d &_k) const
+                                                           const math::rVector3d &_k) const
         {
           return (   interpolation.evaluate_gradient(_x) 
-                   * exp( -norm2(_k) *  attenuation )
+                   * exp( -_k.squaredNorm() *  attenuation )
                    * (*static_cast<const t_Derived*>(this))( _k ) );
         }
         template< class T_DERIVED > inline 
         types::t_real Base<T_DERIVED> :: evaluate_with_gradient(const types::t_real _x, 
-                                                                const atat::rVector3d &_k,
+                                                                const math::rVector3d &_k,
                                                                 types::t_real &_grad) const
         {
-          types::t_real factor = exp( -norm2(_k) * attenuation )
+          types::t_real factor = exp( -_k.squaredNorm() * attenuation )
                           * (*static_cast<const t_Derived*>(this))( _k );
           types::t_real result =   interpolation.evaluate_with_gradient(_x, _grad) 
                           * factor ;

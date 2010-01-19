@@ -1,7 +1,3 @@
-//
-//  Version: $Id$
-//
-
 namespace LaDa
 {
   namespace opt
@@ -38,9 +34,9 @@ namespace LaDa
          // the convex hull yet
          if ( vertices.size() == 1 )
          {
-           if ( Fuzzy::eq(i_begin->x, vertex.x) )
+           if ( math::eq(i_begin->x, vertex.x) )
            { 
-             if ( Fuzzy::gt(i_begin->y, vertex.y) )
+             if ( math::gt(i_begin->y, vertex.y) )
                *i_begin = vertex;
              return false; // only one point, no convexhull yet!
            }
@@ -54,16 +50,16 @@ namespace LaDa
                                    const types::t_real> func(&t_Vertex::x_geq );
          
          // does not change convex hull if this is true
-         if ( Fuzzy::gt(vertex.y, evaluate(vertex.x) ) )
+         if ( math::gt(vertex.y, evaluate(vertex.x) ) )
            return false; 
          
          // first finds where to insert new vertex
          i_insert = std::find_if( i_begin, i_end, std::bind2nd(func, vertex.x) );
          if ( i_insert == i_end ) // outside of range
            vertices.push_back(vertex);
-         else if( Fuzzy::eq(i_insert->x, vertex.x ) )
+         else if( math::eq(i_insert->x, vertex.x ) )
          {  // point already exists at same concentration
-           if (  Fuzzy::eq(i_insert->y, vertex.y ) ) return false;
+           if (  math::eq(i_insert->y, vertex.y ) ) return false;
            *i_insert = vertex;
          }
          else // otherwise, inserts new vertex
@@ -245,7 +241,7 @@ namespace LaDa
 
         // exception case ...
         if ( i_which == i_end ) --i_which; 
-        else if ( Fuzzy::eq( i_which->x_end, _x ) )
+        else if ( math::eq( i_which->x_end, _x ) )
           return 0e0;
 
         return i_which->a;
@@ -283,7 +279,7 @@ namespace LaDa
         if ( i_which == i_end ) --i_which;
         else
         {
-          if ( Fuzzy::eq( i_which->x_end, _x ) ) ++i_which;
+          if ( math::eq( i_which->x_end, _x ) ) ++i_which;
           if ( i_which == i_end ) --i_which;
         }
 

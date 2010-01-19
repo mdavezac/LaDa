@@ -17,7 +17,7 @@ bin_PROGRAMS = vff layered_vff
 noinst_LTLIBRARIES = libvff.la
 libvff_la_SOURCES = $(vff_cc) $(fortranSOURCE)
 libvff_ladir = $(includedir)/LaDa/vff
-nobase_libvff_la_HEADERS = $(vff_h) $(vff_impl_h) $(fortranHEADER)
+nobase_libvff_la_HEADERS = $(vff_h) $(fortranHEADER)
 libvff_la_CPPFLAGS = $(AM_CPPFLAGS) 
 
 vff_SOURCES = main.cc 
@@ -25,7 +25,7 @@ vff_CPPFLAGS =  $(AM_CPPFLAGS)
 vff_LDFLAGS =  $(AM_LDFLAGS) @BOOST_PROGOP@ 
 vff_LDADD = libvff.la \
             $(top_builddir)/crystal/libcrystal.la \
-	    $(top_builddir)/atat/libatat.la \
+	    $(top_builddir)/math/libmath.la \
             $(top_builddir)/physics/libphysics.la \
             $(top_builddir)/print/libprint.la \
             $(top_builddir)/opt/libopt.la \

@@ -107,7 +107,7 @@ namespace LaDa
           typename bblas::matrix_column< t_Matrix > :: iterator i_c = column0.begin();
           typename bblas::matrix_column< t_Matrix > :: iterator i_c_end = column0.end();
           for( i_c += collapse().dof(); i_c != i_c_end; ++i_c )
-            *i_c = t_Type( opt::random::rng() - 5e-1 ) * _howrandom;
+            *i_c = t_Type( math::rng() - 5e-1 ) * _howrandom;
           for( size_t i(1); i < coefficients().size2(); ++i )
           {
             bblas::matrix_column< t_Matrix > columnd( coefficients(), i );
@@ -271,12 +271,12 @@ namespace LaDa
             size_t n(0);
             for(; n < size_t(i_cluster->size()); ++n ) 
             {
-              const atat::rVector3d &pos( (*i_cluster)[n] );
-              if( Fuzzy::is_zero( atat::norm2( pos ) ) ) continue;
+              const math::rVector3d &pos( (*i_cluster)[n] );
+              if( math::is_zero(pos) ) continue;
               typename T_POSITIONS :: const_iterator i_pos = _positions.begin();
               typename T_POSITIONS :: const_iterator i_pos_end = _positions.end();
               for(; i_pos != i_pos_end; ++i_pos )
-                if( Fuzzy::is_zero( atat::norm2( *i_pos - pos ) ) ) break;
+                if( math::is_zero((*i_pos - pos).eval()) ) break;
               if( i_pos == i_pos_end ) break;
             }
             if( n == size_t( i_cluster->size() ) ) break;

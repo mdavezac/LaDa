@@ -15,7 +15,7 @@
 #include <opt/debug.h>
 
 #include "numeric_types.h"
-#include <opt/fuzzy.h>
+#include <math/fuzzy.h>
 
 namespace LaDa
 {
@@ -47,7 +47,7 @@ namespace LaDa
 
     //! Dumps a variable to a stream.
     inline std::ostream& operator<<( std::ostream& _stream, VariableSet::t_Variable const &_var )
-      { return _stream << "(" << (Fuzzy::is_zero(_var.first) ? 0: _var.first)
+      { return _stream << "(" << (math::is_zero(_var.first) ? 0: _var.first)
                        << ", " << _var.second << ")"; }
 
     //! Compares to variable sets.

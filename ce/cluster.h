@@ -14,8 +14,6 @@
 #include <tinyxml/tinyxml.h>
 
 #include <opt/types.h>
-#include <atat/machdep.h>
-#include <atat/vectmac.h>
 #include <mpi/mpi_object.h>
 
 #include <crystal/lattice.h>
@@ -69,7 +67,7 @@ namespace LaDa
       
       public:
         //! Vectors linking sites which interact through this cluster.
-        std::vector<atat::rVector3d> vectors;
+        std::vector<math::rVector3d> vectors;
 
         //! Interaction energy of the cluster.
         types::t_real eci;
@@ -96,16 +94,16 @@ namespace LaDa
         //!          the inverse of \a _icell.
         //! \param _cluster some cluster
         //! \param _icell if \f$\Omega\f$ is the cell-shape, then \a _icell = \f$\Omega^{-1}\f$.
-        bool equivalent_mod_cell( Cluster &_cluster, const atat::rMatrix3d &_icell);
+        bool are_periodic_images( Cluster &_cluster, const math::rMatrix3d &_icell);
 
         //! Returns a constant reference to  vector \a _i of the cluster.
-        const atat::rVector3d& access(types::t_int _i) const { return vectors[_i]; }
+        const math::rVector3d& access(types::t_int _i) const { return vectors[_i]; }
         //! Returns a reference to  vector \a _i of the cluster.
-        atat::rVector3d& access(types::t_int _i) { return vectors[_i]; }
+        math::rVector3d& access(types::t_int _i) { return vectors[_i]; }
         //! Returns a constant reference to  vector \a _i of the cluster.
-        const atat::rVector3d& operator[](types::t_int _i) const { return vectors[_i]; }
+        const math::rVector3d& operator[](types::t_int _i) const { return vectors[_i]; }
         //! Returns a reference to  vector \a _i of the cluster.
-        atat::rVector3d& operator[](types::t_int _i) { return vectors[_i]; }
+        math::rVector3d& operator[](types::t_int _i) { return vectors[_i]; }
 
         //! Returns the number of vectors in the cluster (eg order of the interaction)
         types::t_int size() const { return vectors.size(); };
@@ -115,9 +113,9 @@ namespace LaDa
         //! Load a cluster from XML.
         bool Load(const TiXmlElement &_node);
         //! Returns  a constant reference to the vectors.
-        const std::vector< atat::rVector3d >& Vectors() const { return vectors; }
+        const std::vector< math::rVector3d >& Vectors() const { return vectors; }
         //! Returns  a reference to the vectors.
-        std::vector< atat::rVector3d >& Vectors() { return vectors; }
+        std::vector< math::rVector3d >& Vectors() { return vectors; }
         //! True if involves same positions.
         bool operator==( Cluster const & _c ) const;
         //! True if involves same positions.

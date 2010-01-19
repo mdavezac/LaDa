@@ -14,7 +14,7 @@ namespace LaDa
     bool Keeper :: Load( const TiXmlElement &_node )
     {
       const TiXmlElement *vffxml = _node.FirstChildElement( "VffResult" );
-      atat::rVector3d vec;
+      math::rVector3d vec;
       double d;
 
       if ( not vffxml ) goto errorout;
@@ -57,15 +57,15 @@ namespace LaDa
         return false;
       }
       vffxml->SetDoubleAttribute("energy", energy );
-      vffxml->SetDoubleAttribute("xx", stress.get_column(0)(0));
-      vffxml->SetDoubleAttribute("xy", stress.get_column(0)(1));
-      vffxml->SetDoubleAttribute("xz", stress.get_column(0)(2));
-      vffxml->SetDoubleAttribute("yx", stress.get_column(1)(0));
-      vffxml->SetDoubleAttribute("yy", stress.get_column(1)(1));
-      vffxml->SetDoubleAttribute("yz", stress.get_column(1)(2));
-      vffxml->SetDoubleAttribute("zx", stress.get_column(2)(0));
-      vffxml->SetDoubleAttribute("zy", stress.get_column(2)(1));
-      vffxml->SetDoubleAttribute("zz", stress.get_column(2)(2));
+      vffxml->SetDoubleAttribute("xx", stress.col(0)(0));
+      vffxml->SetDoubleAttribute("xy", stress.col(0)(1));
+      vffxml->SetDoubleAttribute("xz", stress.col(0)(2));
+      vffxml->SetDoubleAttribute("yx", stress.col(1)(0));
+      vffxml->SetDoubleAttribute("yy", stress.col(1)(1));
+      vffxml->SetDoubleAttribute("yz", stress.col(1)(2));
+      vffxml->SetDoubleAttribute("zx", stress.col(2)(0));
+      vffxml->SetDoubleAttribute("zy", stress.col(2)(1));
+      vffxml->SetDoubleAttribute("zz", stress.col(2)(2));
 
       _node.LinkEndChild( vffxml );
 

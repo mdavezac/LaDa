@@ -6,10 +6,13 @@
 #endif
 
 
-#include <boost/python.hpp>
+#include <boost/python/class.hpp>
+#include <boost/python/def.hpp>
 #include <boost/python/tuple.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits/is_same.hpp>
+#include <boost/python/return_value_policy.hpp>
+#include <boost/python/return_by_value.hpp>
 
 #include "../functional.h"
 #include "../layered.h"
@@ -103,7 +106,7 @@ namespace LaDa
         //! fast evaluation with no reinitialization.
         types::t_real operator()() const { return functional_->evaluate() / 16.0217733; }
         //! Returns the stress.
-        atat::rMatrix3d get_stress() const { return functional_->get_stress(); }
+        math::rMatrix3d get_stress() const { return functional_->get_stress(); }
 
         //! Loads from an XML input file.
         bool Load( const TiXmlElement &_node ) { return functional_->Load( _node ); }
@@ -254,9 +257,9 @@ namespace LaDa
         //! Constructor.
         LVff( LaDa::Crystal::Structure& _str ) : LaDa::Vff::Layered( _str ) {}
         //! Exposes direction setters.
-        atat::rVector3d get_direction() const { return direction; } 
+        math::rVector3d get_direction() const { return direction; } 
         //! Returns direction.
-        void set_direction( const atat::rVector3d& _direction)
+        void set_direction( const math::rVector3d& _direction)
         {
           is_fixed_by_input = true;
           direction = _direction;
@@ -268,10 +271,10 @@ namespace LaDa
     {
       public:
         //! Exposes direction setters.
-        atat::rVector3d get_direction() const
+        math::rVector3d get_direction() const
           { return functional_->Vff().get_direction(); } 
         //! Returns direction.
-        void set_direction( const atat::rVector3d& _direction)
+        void set_direction( const math::rVector3d& _direction)
           { functional_->Vff().set_direction( _direction ); } 
     };
 
@@ -367,8 +370,12 @@ namespace LaDa
         ">>> vff.init()\n"
         ">>> vff.evaluate()\n\n"
         "For deep copy, one may use the default constructor: >>> vff2 = lada.vff.Vff(vff1)\n"
-      ).add_property( "direction",  &t_Vff::get_direction, &t_Vff::set_direction,
-                      "Defines the direction of growth." );
+      ).add_property
+       (
+         "direction",
+         bp::make_function(&t_Vff::get_direction, bp::return_value_policy<bp::return_by_value>()),
+         &t_Vff::set_direction, "Growth/Epitaxial direction.\n\n3x1 float64 numpy array.\n" 
+       ); 
     }
 
 #   undef EXPOSEVFF

@@ -5,6 +5,7 @@
 def  main():
   from lada.ga import darwin as dd, bitstring, standard, ce
   from lada import crystal
+  import boost.mpi
   import numpy
   import copy
 

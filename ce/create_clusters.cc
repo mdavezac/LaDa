@@ -14,7 +14,7 @@
 #include <crystal/which_site.h>
 #include <crystal/neighbors.h>
 #include <opt/ndim_iterator.h>
-#include <opt/fuzzy.h>
+#include <math/fuzzy.h>
 #include <opt/pow.h>
 
 #include "create_pairs.h"
@@ -73,9 +73,9 @@ namespace LaDa
         t_uint i(0);
         for(; i_neigh != i_neigh_end; ++i_neigh, ++i)
         {
-          if( not Fuzzy::is_zero(i_neigh->pos(0) - i_vec->pos(0)) ) continue;
-          if( not Fuzzy::is_zero(i_neigh->pos(1) - i_vec->pos(1)) ) continue;
-          if( Fuzzy::is_zero(i_neigh->pos(2) - i_vec->pos(2)) ) break;
+          if( not math::is_zero(i_neigh->pos(0) - i_vec->pos(0)) ) continue;
+          if( not math::is_zero(i_neigh->pos(1) - i_vec->pos(1)) ) continue;
+          if( math::is_zero(i_neigh->pos(2) - i_vec->pos(2)) ) break;
         }
         // returns "false" if could not find vector.
         if( i_neigh == i_neigh_end )
@@ -177,7 +177,7 @@ namespace LaDa
         for(; i_first != i_end; ++i_first, ++n)
         {
           if( _lat.sites[i_first->index].type.size() < 2 ) continue;
-          if( Fuzzy::is_zero(current_norm - i_first->distance) ) continue;
+          if( math::is_zero(current_norm - i_first->distance) ) continue;
           if( s == _neighbor ) break;
           current_norm = i_first->distance;
           ++s;

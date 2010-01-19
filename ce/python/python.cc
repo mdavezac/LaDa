@@ -17,6 +17,9 @@
 
 BOOST_PYTHON_MODULE(_ce)
 {
+  // loads lada.math first
+  PyObject const * const math = PyImport_ImportModule("..math");
+
   LaDa::Python::expose_ce();
   LaDa::Python::expose_clusters();
   LaDa::Python::expose_create_pairs();

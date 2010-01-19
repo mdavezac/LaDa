@@ -20,7 +20,7 @@ namespace LaDa
 
   namespace enumeration
   {
-    typedef std::vector<atat::rMatrix3d> t_Container;
+    typedef std::vector<math::rMatrix3d> t_Container;
 
     void unique_add( t_Container::value_type const &_supercell, 
                      t_Container::value_type const &_cell, 
@@ -30,7 +30,7 @@ namespace LaDa
     boost::shared_ptr<t_Container> find_all_cells(Crystal::Lattice const &_lattice, size_t _nmax)
     {
       boost::shared_ptr< t_Container > result(new t_Container);
-      t_Container::value_type cell; cell.zero();
+      t_Container::value_type cell(t_Container::value_type::Zero());
 
       boost::shared_ptr< std::vector<Crystal::SymmetryOperator> > symops
         = Crystal::get_space_group_symmetries(_lattice);
@@ -81,7 +81,7 @@ namespace LaDa
             types::t_real a(0);
             for(size_t k(0); k < 3; ++k)
               a += op(i,k) * _mat(k,j);
-            if( not Fuzzy::is_zero(std::floor(a+0.1) - a) ) return false;
+            if( not math::is_zero(std::floor(a+0.1) - a) ) return false;
           }
         return true;
       }
@@ -95,7 +95,7 @@ namespace LaDa
     {
       std::vector<Crystal::SymmetryOperator>::const_iterator i_sym = _symops->begin();
       std::vector<Crystal::SymmetryOperator>::const_iterator const i_sym_end = _symops->end();
-      t_Container::value_type const inv(!(_cell*_supercell));
+      t_Container::value_type const inv((_cell*_supercell).inverse());
       for(; i_sym != i_sym_end; ++i_sym)
         if( _out.end() != std::find_if(_out.begin(), _out.end(), IsInt(inv*i_sym->op*_cell)) ) 
           break;

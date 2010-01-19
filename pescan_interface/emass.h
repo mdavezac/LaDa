@@ -16,7 +16,6 @@
 
 #include <minimizer/cgs.h>
 #include <crystal/structure.h>
-#include <atat/vectmac.h>
 #include <opt/types.h>
 
 #include "interface.h"
@@ -42,9 +41,9 @@ namespace LaDa
         //! Stepsize for interpolation points.
         types::t_real stepsize;
         //! k-vector for which to compute effective mass.
-        atat::rVector3d kpoint;
+        math::rVector3d kpoint;
         //! Direction for which to compute effective mass.
-        atat::rVector3d direction;
+        math::rVector3d direction;
         //! Number of states for which to compute effective mass.
         size_t nbstates;
 
@@ -67,7 +66,7 @@ namespace LaDa
         void operator()
         (
           const Interface& _interface,
-          const atat::rMatrix3d &_ocell, 
+          const math::rMatrix3d &_ocell, 
           const Crystal::Structure &_structure,
           const types::t_real &_eref,
           t_Output &_out 
@@ -78,13 +77,13 @@ namespace LaDa
 
       protected:
         //! Computes kpoint in distorted structure from original lattice point.
-        atat::rVector3d distort_kpoint( const atat::rMatrix3d &_ocell, 
-                                        const atat::rMatrix3d &_dcell,
-                                        const atat::rVector3d &_kpoint ) const
+        math::rVector3d distort_kpoint( const math::rMatrix3d &_ocell, 
+                                        const math::rMatrix3d &_dcell,
+                                        const math::rVector3d &_kpoint ) const
           { return ( !(~_dcell) ) * (~_ocell) * _kpoint; }
         //! Computes eigenvalues for single kpoint.
         void compute_( Interface& _interface,
-                       const atat::rVector3d &_kpoints ) const;
+                       const math::rVector3d &_kpoints ) const;
 
         //! Adds a weight to interpolation points.
         types::t_real weight_( size_t _i, size_t j ) const;

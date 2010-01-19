@@ -35,7 +35,8 @@ namespace LaDa
         //! Returns the transformed integer.
         t_uint operator()(t_uint _x, FlavorBase const &_flavorbase) const;
         //! Performs next permutation.
-        bool operator++() { std::next_permutation( permutation_.begin(), permutation_.end() ); }
+        bool operator++()
+          { return std::next_permutation(permutation_.begin(), permutation_.end()); }
 
       private:
         //! Cardinality.
