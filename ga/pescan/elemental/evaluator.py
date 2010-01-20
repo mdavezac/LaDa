@@ -140,14 +140,14 @@ class Dipole(Bandgap):
     return result
 
 
-class Directness(pescan.elemental.evaluator.Bandgap):
+class Directness(Bandgap):
   """ Objective function for quasi-direct bandgaps. """
   X = np_array( [0,0,1], dtype="float64" )
   G = np_array( [0,0,0], dtype="float64" )
   L = np_array( [0.5,0.5,0.5], dtype="float64" )
   W = np_array( [1, 0.5,0], dtype="float64" )
 
-  def __init__(self, which = [(Gamma, "Gamma")], *args, **kwargs): 
+  def __init__(self, which = [(G, "Gamma")], *args, **kwargs): 
     super(Eval, self).__init__(self, args, kwargs)
     self.which = which
     
