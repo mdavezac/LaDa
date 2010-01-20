@@ -23,6 +23,7 @@ BOOST_PYTHON_MODULE(math)
   scope.attr("__doc__") = "This namespace defines mathematical types\n\nIt "
    "imports automatic conversions between numpy arrays and 3d-vectors and "
    "matrices.";
+  bp::docstring_options doc_options(true, false);
 
   LaDa::Python::expose_eigen_vectors();
   LaDa::Python::expose_eigen_matrices();

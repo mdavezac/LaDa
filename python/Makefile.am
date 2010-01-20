@@ -66,10 +66,10 @@ libpython_lada_la_LIBADD +=  $(top_builddir)/crystal/libcrystal.la \
 pkgpyexec_PYTHON = __init__.py
 force: ;
 __init__.py: force
-	@rm -f __init__.py; \
-	 list='$(pythonextensions)'; \
+	@list='$(pythonextensions)'; \
+	 echo "\"\"\" Lamarck-Darwin extension library.\"\"\"" > __init__.py;\
 	 for library in $$list; do \
-	   echo "import $$library"  >> __init__.py; \
+	   echo "import $$library" >> __init__.py; \
 	 done
 clean-local:
 	-rm -f __init__.py
