@@ -16,8 +16,6 @@
 #include "matrix.hpp"
 #include "../eigen.h"
 
-  LaDa::math::rMatrix3d id() { LaDa::math::rMatrix3d m = Eigen::Matrix3d::Identity(); return m;}
-  void printt(LaDa::math::rMatrix3d const &_mat) { std::cout << "p: " << _mat << "\n"; }
 BOOST_PYTHON_MODULE(math)
 {
   namespace bp = boost::python;
@@ -28,7 +26,4 @@ BOOST_PYTHON_MODULE(math)
 
   LaDa::Python::expose_eigen_vectors();
   LaDa::Python::expose_eigen_matrices();
-  namespace bp = boost::python;
-  boost::python::def("id", &id, bp::return_value_policy<bp::return_by_value>());
-  boost::python::def("printt", &printt);
 }
