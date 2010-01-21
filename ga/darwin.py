@@ -1,5 +1,6 @@
-def run( self ):
-  """ Runs a GA algorithm """
+""" Holds a single function for running a ga algorithm """
+def run(self):
+  """ Performs a Genetic Algorithm search """
   import standard
  
   # runs the checkpoints

@@ -158,10 +158,6 @@ class Directness(Bandgap):
       del kwargs["which"]
 
     super(Directness, self).__init__(*args, **kwargs)
-   #if len(args) == 0 and len(kwargs) == 0:   super(Directness, self).__init__()
-   #elif len(args) != 0 and len(kwargs) != 0: super(Directness, self).__init__(*args, **kwargs)
-   #elif len(args) != 0:                      super(Directness, self).__init__(*args)
-   #else:                                     super(Directness, self).__init__(**kwargs)
 
     
   def __call__(self, indiv):
