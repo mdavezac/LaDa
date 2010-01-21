@@ -203,8 +203,8 @@ class Directness(Bandgap):
         self.bandgap.kpoint = np_dot(deformation, self.bandgap.kpoint)
         # prints bandgap input
         self.vff.print_escan_input(self.bandgap.vff_inputfile)
-        # #  computes bandgap.
-        # self.bandgap(self.vff.structure)
+        #  computes bandgap.
+        self.bandgap(self.vff.structure)
         # saves bandgap result in individual
         setattr(indiv, name, Bands(self.bandgap.bands) )
         
