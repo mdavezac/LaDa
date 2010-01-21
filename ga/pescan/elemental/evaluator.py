@@ -2,7 +2,7 @@
 from numpy import array as np_array
 class Bandgap(object):
   """ An evaluator function for bandgaps at S{Gamma}. """
-  def __init__(self, converter, input = "input.xml", lattice = None):
+  def __init__(self, converter, input = "input.xml", lattice = None, mpi=None):
     """ Initializes the bandgap object. 
 
         @param converter: is a functor which converts between a bitstring and a
@@ -15,10 +15,14 @@ class Bandgap(object):
           input file.
         @type lattice: None or lada.crystal.Lattice
     """
-    import boost.mpi as mpi
+    from boost.mpi import world
     from lada.vff import LayeredVff
     from lada.escan import BandGap as BGFunctional
     from lada import crystal
+
+    self.world = mpi
+    """ MPI Communicator. Defaults to boost.mpi.world. """
+    if self.world == None: self.world = world
 
     self.converter = converter 
     """ Conversion functor between structures and bitstrings. """
@@ -28,12 +32,12 @@ class Bandgap(object):
     if self.lattice == None: self.lattice = crystal.Lattice(input)
     self.lattice.set_as_crystal_lattice()
 
-    self.vff = LayeredVff(input, mpi.world) # Creates vff functional
+    self.vff = LayeredVff(input, self.world) # Creates vff functional
     """ Vff functional """
     self.vff.direction = converter.structure.cell[:,0]
     self.vff.structure.scale = self.lattice.scale
 
-    self.bandgap = BGFunctional(input, mpi.world) # creates bandgap functional
+    self.bandgap = BGFunctional(input, self.world) # creates bandgap functional
     """ Bandgap functional """
     self.bandgap.scale = self.vff.structure
 
@@ -58,7 +62,6 @@ class Bandgap(object):
     from os.path import exists
     from os import makedirs
     from shutil import rmtree
-    from boost import mpi
     from lada import crystal
     from lada.opt.changedir import Changedir
  
@@ -77,7 +80,7 @@ class Bandgap(object):
       indiv.epi_energy = self.vff.evaluate()
      
       # Computes bandgap
-      self.bandgap.vff_inputfile = "atom_input." + str( mpi.world.rank )
+      self.bandgap.vff_inputfile = "atom_input." + str( self.world.rank )
       self.vff.print_escan_input(self.bandgap.vff_inputfile)
       self.bandgap(self.vff.structure)
       indiv.bands = self.bandgap.bands
@@ -166,7 +169,6 @@ class Directness(Bandgap):
     from os import makedirs
     from shutil import rmtree
     from numpy import dot as np_dot, matrix as np_matrix
-    from boost import mpi
     from lada.escan import Bands
     from lada import crystal
     from lada.opt.changedir import Changedir
@@ -182,7 +184,7 @@ class Directness(Bandgap):
     # computes deformation of reciprocal lattice
     deformation = np_dot(np_matrix(self.vff.structure.cell).I.T, structure.cell.T)
     # vff input file
-    self.bandgap.vff_inputfile = "atom_input." + str( mpi.world.rank )
+    self.bandgap.vff_inputfile = "atom_input." + str( self.world.rank )
 
     # create and change directory.
     basedir = self.directory_prefix + "_" + str(self.nbcalc)

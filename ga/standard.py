@@ -63,6 +63,7 @@ def cmp_indiv( a, b, tolerance = 1e-12 ):
 
 def average_fitness(self):
   """ Prints out average fitness. """
+  if not self.world.do_print: return True;
   result = 0e0
   for indiv in self.population:
     result += indiv.fitness
@@ -71,6 +72,7 @@ def average_fitness(self):
 
 def best(self):
   """ Checkpoint which prints out the best individual. """
+  if not self.world.do_print: return True
   best = None
   for indiv in self.population:
     if best == None or  self.cmp_indiv( best, indiv ) == 1: 
@@ -79,12 +81,14 @@ def best(self):
   return True
 
 def print_population(self):
+  if not self.world.do_print: return True
   print "  Population: "
   for indiv in self.population:
     print "    ", indiv, indiv.fitness
   return True
 
 def print_offspring(self):
+  if not self.world.do_print: return True
   print "  Offspring: "
   for indiv in self.population:
     if indiv.birth == self.current_gen - 1: 

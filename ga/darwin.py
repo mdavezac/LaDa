@@ -20,7 +20,6 @@ def run(self):
   assert hasattr(self, "popsize"), "No popsize attribute.\n"
   assert hasattr(self, "current_gen"), "No current_gen attribute.\n"
   assert hasattr(self, "evaluation"), "No evaluation operation.\n"
-  assert hasattr(self, "checkpoints"), "No checkpoints attribute.\n"
   assert hasattr(self, "rate"), "No rate attribute.\n"
   assert hasattr(self, "mating"), "No mating functor.\n"
   assert hasattr(self, "offspring"), "No offspring attribute.\n"
@@ -46,7 +45,8 @@ def run(self):
 
   # generational loop
   while checkpoints(): 
-    print "Starting generation ", self.current_gen
+    if self.world.do_print:
+      print "Starting generation ", self.current_gen
 
     # tries and creates offspring.
     while len(self.offspring) < nboffspring:
@@ -73,6 +73,6 @@ def run(self):
 
   # final stuff before exiting.
   if hasattr(self, "final"): self.final()
-  else: print "done"
+  elif self.world.do_print: print "done"
   
 
