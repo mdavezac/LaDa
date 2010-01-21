@@ -109,7 +109,7 @@ class Converter(object):
       if len(object) != len(self.structure.atoms): 
         raise ValueError, "Bitstring and epitaxial structure are not compatible.\n"
       result = sStructure(self.structure)
-      for i, atom in enumerate(result):
+      for i, atom in enumerate(result.atoms):
         atom.type = self.structure.lattice.sites[atom.site].type[object[i]]
       return Structure(result)
 

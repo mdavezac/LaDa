@@ -165,19 +165,19 @@ class Directness(Bandgap):
     
   def __call__(self, indiv):
     """ Evaluates differences between kpoints. """
-    from numpy import dot as np_dot
+    from numpy import dot as np_dot, matrix as np_matrix
     from lada.escan import Bands
 
     self.nbcalc += 1
     results = []
 
     # relax structure.
-    structure = converter(indiv)
+    structure = self.converter(indiv.genes)
     self.vff.structure = crystal.Structure(structure)
     self.vff.init()
     indiv.epi_energy = self.vff.evaluate()
     # computes deformation of reciprocal lattice
-    deformation = np_dot(self.vff.structure.cell.I.T, structure.cell.T)
+    deformation = np_dot(np_matrix(self.vff.structure.cell).I.T, structure.cell.T)
     # vff input file
     self.escan.vff_inputfile = "atom_input." + str( mpi.world.rank )
 
@@ -200,8 +200,8 @@ class Directness(Bandgap):
         self.escan.kpoint = np_dot(deformation, self.escan.kpoint)
         # prints escan input
         self.vff.print_escan_input(self.escan.vff_inputfile)
-        #  computes bandgap.
-        self.bandgap(self.vff.structure)
+        # #  computes bandgap.
+        # self.bandgap(self.vff.structure)
         # saves bandgap result in individual
         setattr(indiv, name, Bands(self.bandgap.bands) )
         

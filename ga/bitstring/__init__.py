@@ -12,7 +12,7 @@ class Individual(object):
     from random import randint
     import numpy
 
-    self.genes = numpy.array([ randint(0,1) for i in xrange(Individual.size) ])
+    self.genes = numpy.array([ randint(0,1) for i in xrange(self.size) ])
   
   def __eq__(self, a): 
     from math import fabs
