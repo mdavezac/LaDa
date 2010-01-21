@@ -30,7 +30,7 @@ namespace LaDa
         Crystal::find_first_neighbors( _fn[i], structure.lattice->cell, 4 );
     }
 
-    bool Vff :: initialize_centers()
+    bool Vff :: initialize_centers(bool _verbose)
     {
       centers.clear();
       { // Creates a list of centers
@@ -52,17 +52,23 @@ namespace LaDa
           if( math::neq( inv_str(i,j), rint( inv_str(i,j) ) ) ) is_ideal = false;
       if( is_ideal )
       {
-        __ROOTCODE
-        ( 
-          MPI_COMM,
-          std::cout << "Trying to create first neighbor tree "
-                       "using smith normal form algorithm.\n";
-        )
+        if( _verbose ) 
+        { 
+          __ROOTCODE
+          ( 
+            MPI_COMM,
+            std::cout << "Trying to create first neighbor tree "
+                         "using smith normal form algorithm.\n";
+          )
+        }
         if( build_tree_smith_( fn ) )
         {
           __DODEBUGCODE( check_tree(); )
-          __ROOTCODE( MPI_COMM,
-                      std::cout << "First Neighbor tree successfully created.\n"; ) 
+          if( _verbose )
+          { 
+            __ROOTCODE( MPI_COMM,
+                        std::cout << "First Neighbor tree successfully created.\n"; ) 
+          }
           return true;
         }
         __ROOTCODE( MPI_COMM, std::cout << "Failed.\n"; )
@@ -86,23 +92,29 @@ namespace LaDa
 //       return true;
 //     }
 //      
-      __ROOTCODE
-      (
-        MPI_COMM,
-        std::cout << "Creating first neighbor tree using "
-                     "divide-and-conquer algorithm.\n";
-      )
+      if( _verbose )
+      {
+        __ROOTCODE
+        (
+          MPI_COMM,
+          std::cout << "Creating first neighbor tree using "
+                       "divide-and-conquer algorithm.\n";
+        )
+      }
       // Tries to guess size of divide and conquer.
       const math::iVector3d nboxes( Crystal::guess_dnc_params( structure, 30 ) );
       types::t_real n(   structure.atoms.size()
                        / types::t_real( nboxes(0) * nboxes(1) * nboxes(2) ) );
-      __ROOTCODE
-      (
-        MPI_COMM,
-        std::cout << "Will divide into " << nboxes(0) << "x"
-                  << nboxes(1) << "x" << nboxes(2)
-                  << " boxes of " << n << " atoms each.\n";
-      )
+      if( _verbose )
+      {
+        __ROOTCODE
+        (
+          MPI_COMM,
+          std::cout << "Will divide into " << nboxes(0) << "x"
+                    << nboxes(1) << "x" << nboxes(2)
+                    << " boxes of " << n << " atoms each.\n";
+        )
+      }
       // Then creates boxes.
       const types::t_real odist( 1.5e0 * std::sqrt( fn[0].front().squaredNorm() ) );
       Crystal::t_ConquerBoxes<types::t_real> :: shared_ptr boxes
@@ -120,7 +132,10 @@ namespace LaDa
       
 
       __DODEBUGCODE( check_tree(); )
-      __ROOTCODE( MPI_COMM, std::cout << "First Neighbor tree successfully created.\n"; )
+      if( _verbose ) 
+      {
+        __ROOTCODE( MPI_COMM, std::cout << "First Neighbor tree successfully created.\n"; )
+      }
       return true;
     } // Vff :: construct_bond_list
 

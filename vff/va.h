@@ -116,7 +116,7 @@ namespace LaDa
          //!          capabilities expected by Minimizer objects, while adding
          //!          the capacity for recomputing the first-neighbor tree of
          //!          vff.
-         bool init( bool _redocenters = false );
+         bool init( bool _redocenters = false, bool _verbose = false );
          //! Returns reference to the Vff base class
          t_VffBase& Vff() { return *static_cast<t_VffBase*>(this); }
          //! Returns constant reference to the Vff base class

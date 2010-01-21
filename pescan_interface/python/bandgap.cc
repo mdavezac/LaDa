@@ -29,7 +29,7 @@ namespace LaDa
         PyErr_SetString
         (
           PyExc_RuntimeError,
-          (   "Could not parse xml file" + _filename + ".\n" 
+          (   "Could not parse xml file " + _filename + ".\n" 
             + doc.ErrorDesc() + "\n" ).c_str()
         );
         bp::throw_error_already_set();
@@ -39,7 +39,7 @@ namespace LaDa
         PyErr_SetString
         (
           PyExc_RuntimeError,
-          ("Could not find <Job> in xml file" + _filename + ".\n").c_str()
+          ("Could not find <Job> in xml file " + _filename + ".\n").c_str()
         );
         bp::throw_error_already_set();
       }
@@ -52,7 +52,7 @@ namespace LaDa
             PyErr_SetString
             (
               PyExc_RuntimeError,
-              ("Could not load VFF functional from xml file" + _filename + ".\n").c_str()
+              ("Could not load VFF functional from xml file " + _filename + ".\n").c_str()
             );
             bp::throw_error_already_set();
           }
@@ -63,7 +63,7 @@ namespace LaDa
           (
             PyExc_RuntimeError,
             (
-                 "Encountered error while loading bandgap functional from xml file"
+                 "Encountered error while loading bandgap functional from xml file "
                + _filename + ".\n"
                + _e.what() + "\n"
             ).c_str()

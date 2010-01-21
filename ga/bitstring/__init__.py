@@ -12,6 +12,7 @@ class Individual(object):
     from random import randint
     import numpy
 
+    super(Individual, self).__init__()
     self.genes = numpy.array([ randint(0,1) for i in xrange(self.size) ])
   
   def __eq__(self, a): 

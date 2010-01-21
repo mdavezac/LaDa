@@ -130,9 +130,9 @@ namespace LaDa
         //! \brief Prints atom.config type input to escan
         //! \param _f optional filename to which to direct the output
         void print_escan_input( const t_Path &_f = "atom.config") const;
-        //! \deprecated Constructs the mesh of AtomicCenter
-        //! Defined in initialize_centers.cc.
-        bool initialize_centers();
+        //! \brief Constructs the mesh of AtomicCenter
+        //! \details Defined in initialize_centers.cc.
+        bool initialize_centers(bool _verbose = false);
         //! Prints out all parameters
         void print_out( std::ostream &stream ) const;
 

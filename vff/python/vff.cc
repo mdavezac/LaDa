@@ -39,7 +39,7 @@ namespace LaDa
             PyErr_SetString
             (
               PyExc_RuntimeError,
-              (   "Could not parse xml file" + _filename + ".\n" 
+              (   "Could not parse xml file " + _filename + ".\n" 
                 + doc.ErrorDesc() + "\n" ).c_str()
             );
             bp::throw_error_already_set();
@@ -49,7 +49,7 @@ namespace LaDa
             PyErr_SetString
             (
               PyExc_RuntimeError,
-              ("Could not find <Job> in xml file" + _filename + ".\n").c_str()
+              ("Could not find <Job> in xml file " + _filename + ".\n").c_str()
             );
             bp::throw_error_already_set();
           }
@@ -62,7 +62,7 @@ namespace LaDa
                 PyErr_SetString
                 (
                   PyExc_RuntimeError,
-                  ("Could not load VFF functional from xml file" + _filename + ".\n").c_str()
+                  ("Could not load VFF functional from xml file " + _filename + ".\n").c_str()
                 );
                 bp::throw_error_already_set();
               }
@@ -73,7 +73,7 @@ namespace LaDa
               (
                 PyExc_RuntimeError,
                 (
-                     "Encountered error while loading  VFF functional from xml file"
+                     "Encountered error while loading  VFF functional from xml file "
                    + _filename + ".\n"
                    + _e.what() + "\n"
                 ).c_str()
@@ -206,7 +206,7 @@ namespace LaDa
           { functional_.reset( new t_Functional( structure ) ); }
 
         //! Redo initialization of vff from scratch.
-        void init() { functional_->init( true ); }
+        void init(bool _redo, bool _verbose) { functional_->init( _redo, _verbose ); }
 
         //! fast evaluation with no reinitialization.
         types::t_real operator()() const { return functional_->evaluate() / 16.0217733; }
@@ -415,7 +415,8 @@ namespace LaDa
               "Loads the vff parameters from an XML file." ) \
         .def( "evaluate",  &b::operator(), \
               "Minimizes the current structure and returns the energy in eV." ) \
-        .def( "init",  &b::init, "Initializes the functional for the current structure." ) \
+        .def( "init",  &b::init, (bp::arg("redo_tree") = true, bp::arg("verbose")=false), \
+              "Initializes the functional for the current structure." ) \
         .def( "print_escan_input",  &b::print_escan_input, bp::arg("file"), \
               "Outputs the current structure in a format suitable for pescan." ) \
         .def( "set_bond",  &b::set_bond, ( bp::arg("bond"), bp::arg("params") ), \

@@ -18,7 +18,6 @@ namespace LaDa
      bool LayerDepth :: operator()( const math::rVector3d& _first, 
                                     const math::rVector3d& _second ) const
      {
-       __ASSERT( not isset, "Crystal::LayerDepth has not been set.\n" )
        math::rVector3d a = matrix_.inverse() * _first;
        math::rVector3d b = matrix_.inverse() * _second;
        a(0) = a(0) - std::floor(a(0) + types::tolerance);
@@ -34,7 +33,6 @@ namespace LaDa
      //! Returns the depth.
      types::t_real LayerDepth :: operator()( const math::rVector3d& _first ) const
      {
-       __ASSERT( not isset, "Crystal::LayerDepth has not been set.\n" )
        math::rVector3d a = matrix_.inverse() * _first;
        a(0) = a(0) - std::floor(a(0) + types::tolerance);
        return ( math::eq( a(0), 1e0 ) ) ? a(0) - 1e0: a(0);

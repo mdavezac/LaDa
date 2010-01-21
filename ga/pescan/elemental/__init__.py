@@ -10,7 +10,13 @@ class Individual(BitstringIndividual):
       Comparison between two individuals expect that a bitstring represents an
       elemental superlattice, with translation and inversion symmetries.
   """
-  def __init__(self): BitstringIndividual.__init__(self)
+  def __init__(self): 
+    """ Initializes a bitstring individual randomly. """
+    from random import randint
+    import numpy
+
+    super(Individual, self).__init__()
+    self.genes = numpy.array([ int(randint(0,1)) for i in xrange(self.size) ], dtype="int")
   
   def __eq__(self, a): 
     """ Compares two elemental superlattices. """
@@ -110,7 +116,9 @@ class Converter(object):
         raise ValueError, "Bitstring and epitaxial structure are not compatible.\n"
       result = sStructure(self.structure)
       for i, atom in enumerate(result.atoms):
-        atom.type = self.structure.lattice.sites[atom.site].type[object[i]]
+        atom.type = self.structure.lattice.sites[atom.site].type[int(object[i])]
+      assert result.lattice.scale > 0e0
+      result.scale = result.lattice.scale
       return Structure(result)
 
 class BandgapEvaluator(object):

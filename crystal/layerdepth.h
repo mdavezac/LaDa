@@ -33,16 +33,11 @@ namespace LaDa
     {
       protected:
         math::rMatrix3d matrix_; //!< Ordering directions.
-        __DODEBUGCODE( bool isset; ) 
-    
       public:
-        //! Constructor.
-        LayerDepth() __DODEBUGCODE( : isset(false) ) {}
         //! Copy Constructor
-        LayerDepth   ( const LayerDepth &_c ) 
-                   : matrix_(_c.matrix_) __DODEBUGCODE( __COMMA__ isset( _c.isset ) ) {}
+        LayerDepth( const LayerDepth &_c ) : matrix_(_c.matrix_) {}
         //! Constructor and Initializer
-        LayerDepth   ( const math::rVector3d &_vec ) 
+        LayerDepth( const math::rVector3d &_vec ) 
         {
           matrix_.col(0) = _vec;
           matrix_.col(1) = math::eq( _vec(0), 0e0 ) ? 

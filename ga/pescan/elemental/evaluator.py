@@ -33,9 +33,9 @@ class Bandgap(object):
     self.vff.direction = converter.structure.cell[:,0]
     self.vff.structure.scale = self.lattice.scale
 
-    self.escan = BGFunctional(input, mpi.world) # creates bandgap functional
+    self.bandgap = BGFunctional(input, mpi.world) # creates bandgap functional
     """ Bandgap functional """
-    self.escan.scale = self.vff.structure
+    self.bandgap.scale = self.vff.structure
 
     self.directory_prefix = "indiv"
     """ Directory prefix """
@@ -55,16 +55,17 @@ class Bandgap(object):
         The VBM and CBM are stored in indiv.bands
         returns the bandgap.
     """
+    from os.path import exists
+    from os import makedirs
+    from shutil import rmtree
     from boost import mpi
     from lada import crystal
     from lada.opt.changedir import Changedir
-    import os
-    import shutil
  
     # moves to new calculation directory
     self.bandgap.directory = self.directory_prefix + "_" + str(self.nbcalc)
-    if exists(self.bandgap.directory): shutil.rmtree( self.bandgap.directory)
-    os.makedirs(self.bandgap.directory)
+    if exists(self.bandgap.directory): rmtree( self.bandgap.directory)
+    makedirs(self.bandgap.directory)
  
     # moves to calculation directory
     with Changedir(self.bandgap.directory) as pwd:
@@ -76,13 +77,13 @@ class Bandgap(object):
       indiv.epi_energy = self.vff.evaluate()
      
       # Computes bandgap
-      self.escan.vff_inputfile = "atom_input." + str( mpi.world.rank )
-      self.vff.print_escan_input(self.escan.vff_inputfile)
+      self.bandgap.vff_inputfile = "atom_input." + str( mpi.world.rank )
+      self.vff.print_escan_input(self.bandgap.vff_inputfile)
       self.bandgap(self.vff.structure)
       indiv.bands = self.bandgap.bands
  
     # destroy directory if requested.
-    if self.bandgap.destroy_directory: shutil.rmtree(self.bandgap.directory)
+    if self.bandgap.destroy_directory: rmtree(self.bandgap.directory)
     
     return indiv.bands.gap
 
@@ -115,7 +116,7 @@ class Dipole(Bandgap):
     from lada.opt.changedir import Changedir
 
     # keeps track of directory destruction
-    dodestroy = self.bandgap.escan.destroy_directory 
+    dodestroy = self.bandgap.destroy_directory 
     self.bandgap.destroy_directory = False
     
     # calls original evaluation function
@@ -127,7 +128,7 @@ class Dipole(Bandgap):
       indiv.dipoles = dipole_elements(self.bandgap, self.degeneracy)
 
     # destroy calculation directory if requested
-    self.bandgap.escan.destroy_directory = dodestroy
+    self.bandgap.destroy_directory = dodestroy
     if dodestroy: shutil.rmtree(self.bandgap.directory)
 
     # return average dipole element.
@@ -165,8 +166,14 @@ class Directness(Bandgap):
     
   def __call__(self, indiv):
     """ Evaluates differences between kpoints. """
+    from os.path import exists, join
+    from os import makedirs
+    from shutil import rmtree
     from numpy import dot as np_dot, matrix as np_matrix
+    from boost import mpi
     from lada.escan import Bands
+    from lada import crystal
+    from lada.opt.changedir import Changedir
 
     self.nbcalc += 1
     results = []
@@ -179,27 +186,27 @@ class Directness(Bandgap):
     # computes deformation of reciprocal lattice
     deformation = np_dot(np_matrix(self.vff.structure.cell).I.T, structure.cell.T)
     # vff input file
-    self.escan.vff_inputfile = "atom_input." + str( mpi.world.rank )
+    self.bandgap.vff_inputfile = "atom_input." + str( mpi.world.rank )
 
     # create and change directory.
     basedir = self.directory_prefix + "_" + str(self.nbcalc)
-    if exists(basedir): shutil.rmtree(basedir)
+    if exists(basedir): rmtree(basedir)
 
     for kpoint, name in self.which:
       # create new calc directory
       self.bandgap.directory = join(basedir, name)
-      os.makedirs(self.bandgap.directory)
+      makedirs(self.bandgap.directory)
 
       
       # change to calc directory
       with Changedir(self.bandgap.directory) as pwd:
 
         # computes ideal folded kpoint.
-        self.escan.kpoint = crystal.fold_vector(kpoint, structure.cell.I.T)
+        self.bandgap.kpoint = crystal.fold_vector(kpoint, np_matrix(structure.cell).I.T)
         # computes kpoint in deformed structure.
-        self.escan.kpoint = np_dot(deformation, self.escan.kpoint)
-        # prints escan input
-        self.vff.print_escan_input(self.escan.vff_inputfile)
+        self.bandgap.kpoint = np_dot(deformation, self.bandgap.kpoint)
+        # prints bandgap input
+        self.vff.print_escan_input(self.bandgap.vff_inputfile)
         # #  computes bandgap.
         # self.bandgap(self.vff.structure)
         # saves bandgap result in individual
@@ -208,11 +215,11 @@ class Directness(Bandgap):
         results.append( Bands(self.bandgap.bands) )
 
     # destroy directory if requested.
-    if self.bandgap.destroy_directory: shutil.rmtree(self.bandgap.directory)
+    if self.bandgap.destroy_directory: rmtree(self.bandgap.directory)
 
     # returns maximum offset from gamma 
     result = results[0].cbm - results[1].cbm
     if len(results) > 2: 
       for bands in  results[2:]:
-        result = max( result, result[0].cbm - bands.cbm )
+        result = max( result, results[0].cbm - bands.cbm )
     return result
