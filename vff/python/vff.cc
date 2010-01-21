@@ -9,10 +9,11 @@
 #include <boost/python/class.hpp>
 #include <boost/python/def.hpp>
 #include <boost/python/tuple.hpp>
-#include <boost/utility/enable_if.hpp>
-#include <boost/type_traits/is_same.hpp>
 #include <boost/python/return_value_policy.hpp>
 #include <boost/python/return_by_value.hpp>
+#include <boost/python/make_constructor.hpp>
+#include <boost/utility/enable_if.hpp>
+#include <boost/type_traits/is_same.hpp>
 
 #include "../functional.h"
 #include "../layered.h"
@@ -22,6 +23,7 @@
 
 namespace LaDa
 {
+  namespace bp = boost::python;
   namespace Python
   {
     namespace XML
@@ -32,15 +34,53 @@ namespace LaDa
           TiXmlDocument doc( _filename ); 
           TiXmlHandle docHandle( &doc ); 
         
-          __DOASSERT( not doc.LoadFile(), 
-                         doc.ErrorDesc() << "\n"  
-                      << "Could not load input file " << _filename  
-                      << ".\nAborting.\n" ) 
-          __DOASSERT( not docHandle.FirstChild("Job").Element(),
-                      "Could not find <Job> tag in " << _filename << ".\n" )
-         
-          __DOASSERT( not _type.Load( *docHandle.FirstChild("Job").Element() ),
-                         "Could not load Vff functional from " + _filename + ".\n" )
+          if( not doc.LoadFile() )
+          {
+            PyErr_SetString
+            (
+              PyExc_RuntimeError,
+              (   "Could not parse xml file " + _filename + ".\n" 
+                + doc.ErrorDesc() + "\n" ).c_str()
+            );
+            bp::throw_error_already_set();
+          }
+          else if( not docHandle.FirstChild("Job").Element() )
+          {
+            PyErr_SetString
+            (
+              PyExc_RuntimeError,
+              ("Could not find <Job> in xml file " + _filename + ".\n").c_str()
+            );
+            bp::throw_error_already_set();
+          }
+          else
+          {
+            try
+            {
+              if(not _type.Load( *docHandle.FirstChild("Job").Element() ) )
+              {
+                PyErr_SetString
+                (
+                  PyExc_RuntimeError,
+                  ("Could not load VFF functional from xml file " + _filename + ".\n").c_str()
+                );
+                bp::throw_error_already_set();
+              }
+            }
+            catch(std::exception &_e)
+            {
+              PyErr_SetString
+              (
+                PyExc_RuntimeError,
+                (
+                     "Encountered error while loading  VFF functional from xml file "
+                   + _filename + ".\n"
+                   + _e.what() + "\n"
+                ).c_str()
+              );
+              bp::throw_error_already_set();
+            }
+          }
         }
     }
 
@@ -87,6 +127,71 @@ namespace LaDa
 // #         endif
 //       };
 
+    template<class T> T* cload(std::string const &_filename) 
+    {
+      T* result(new T);
+      if( not result )
+      {
+        PyErr_SetString(PyExc_RuntimeError, "Memory error.\n");
+        bp::throw_error_already_set();
+        return NULL;
+      }
+      XML::Vff_from_XML(*result, _filename); 
+      if( PyErr_Occurred() != NULL ) 
+      {
+        delete result;
+        return NULL;
+      }
+      return result;
+    }
+#   ifdef _MPI
+      template<class T> T* mpi_create(boost::mpi::communicator *_c)
+      {
+        T* result(new T);
+        if( not result )
+        {
+          PyErr_SetString(PyExc_RuntimeError, "Memory error.\n");
+          bp::throw_error_already_set();
+          return NULL;
+        }
+        result->set_mpi(_c);
+        return result;
+      }
+      template<class T> T* mpi_create2( std::string const &_filename,
+                                        boost::mpi::communicator *_c )
+                                       
+      {
+        T* result(new T);
+        if( not result )
+        {
+          PyErr_SetString(PyExc_RuntimeError, "Memory error.\n");
+          bp::throw_error_already_set();
+          return NULL;
+        }
+        result->set_mpi(_c);
+        XML::Vff_from_XML(*result, _filename); 
+        if( PyErr_Occurred() != NULL ) 
+        {
+          delete result;
+          return NULL;
+        }
+        return result;
+      }
+#   else 
+      template<class T> T* mpi_create(bp::object const &)
+      {
+        T* result(new T);
+        if( not result )
+        {
+          PyErr_SetString(PyExc_RuntimeError, "Memory error.\n");
+          bp::throw_error_already_set();
+          return NULL;
+        }
+        return result;
+      }
+      template<class T> T* mpi_create2(bp::object const &, std::string const &_filename)
+        { return cload(_filename); }
+#   endif
 
     //! Assumes ownership of the Crystal::Structure object needed by vff.
     template< class T_VFF > class Vff 
@@ -101,7 +206,7 @@ namespace LaDa
           { functional_.reset( new t_Functional( structure ) ); }
 
         //! Redo initialization of vff from scratch.
-        void init() { functional_->init( true ); }
+        void init(bool _redo, bool _verbose) { functional_->init( _redo, _verbose ); }
 
         //! fast evaluation with no reinitialization.
         types::t_real operator()() const { return functional_->evaluate() / 16.0217733; }
@@ -123,10 +228,10 @@ namespace LaDa
             { functional_->set_mpi( _c ); }
 #       endif
 
-        boost::python::tuple get_bond( const std::string& _bond ) const;
-        void set_bond( const std::string& _bond, const boost::python::tuple& _t );
-        boost::python::tuple get_angle( const std::string& _bond ) const;
-        void set_angle( const std::string& _bond, const boost::python::tuple& _t );
+        bp::tuple get_bond( const std::string& _bond ) const;
+        void set_bond( const std::string& _bond, const bp::tuple& _t );
+        bp::tuple get_angle( const std::string& _bond ) const;
+        void set_angle( const std::string& _bond, const bp::tuple& _t );
 
 
 
@@ -136,7 +241,7 @@ namespace LaDa
     };
 
     template< class T_VFF >
-      boost::python::tuple Vff<T_VFF>::get_bond( const std::string &_str ) const 
+      bp::tuple Vff<T_VFF>::get_bond( const std::string &_str ) const 
       {
         try
         {
@@ -147,7 +252,7 @@ namespace LaDa
             const types::t_real&, const types::t_real& 
           > t_Tuple;
           const t_Tuple result( functional_->get_bond( _str ) );
-          return boost::python::make_tuple
+          return bp::make_tuple
           (
             boost::tuples::get<0>( result ), boost::tuples::get<1>( result ), 
             boost::tuples::get<2>( result ), boost::tuples::get<3>( result ), 
@@ -158,11 +263,11 @@ namespace LaDa
         {
           PyErr_SetString(PyExc_RuntimeError,
                           ("could not find parameters of bond " + _str).c_str() );
-          boost::python::throw_error_already_set();
+          bp::throw_error_already_set();
         }
       };
     template< class T_VFF >
-      boost::python::tuple Vff<T_VFF>::get_angle( const std::string &_str ) const 
+      bp::tuple Vff<T_VFF>::get_angle( const std::string &_str ) const 
       {
         try
         {
@@ -174,7 +279,7 @@ namespace LaDa
             const types::t_real&
           > t_Tuple;
           const t_Tuple result( functional_->get_angle( _str ) );
-          return boost::python::make_tuple
+          return bp::make_tuple
           (
             boost::tuples::get<0>( result ), boost::tuples::get<1>( result ), 
             boost::tuples::get<2>( result ), boost::tuples::get<3>( result ), 
@@ -186,13 +291,13 @@ namespace LaDa
         {
           PyErr_SetString(PyExc_RuntimeError,
                           ("could not find parameters of angle " + _str).c_str() );
-          boost::python::throw_error_already_set();
+          bp::throw_error_already_set();
         }
       };
     template< class T_VFF >
-      void Vff<T_VFF>::set_bond( const std::string &_str, const boost::python::tuple &_t ) 
+      void Vff<T_VFF>::set_bond( const std::string &_str, const bp::tuple &_t ) 
       {
-        namespace bp = boost::python;
+        namespace bp = bp;
         const size_t N(bp::len( _t )); 
         if( N == 0 or bp::len( _t ) > 6 )
         {
@@ -220,9 +325,8 @@ namespace LaDa
         }
       };
     template< class T_VFF >
-      void Vff<T_VFF>::set_angle( const std::string &_str, const boost::python::tuple &_t )
+      void Vff<T_VFF>::set_angle( const std::string &_str, const bp::tuple &_t )
       {
-        namespace bp = boost::python;
         const size_t N(bp::len( _t )); 
         if( N == 0 or bp::len( _t ) > 7 )
         {
@@ -291,15 +395,28 @@ namespace LaDa
 #     define SETMPI(b)
 #   endif
 #   define EXPOSEVFF( a, b, c ) \
-      bp::class_< b >( a, c ) \
-        .def( bp::init< b >() ) \
+      bp::class_< b >\
+      ( \
+        a,\
+        (std::string(c) + "\n\nThis object can be created with: \n"\
+            "  - No argument.\n"\
+            "  - A single string argument representing the path to an XML input file.\n" \
+            "  - A single boost.mpi communicator.\n"\
+            "  - A string argument (see above), followed by a boost.mpi communicator.\n\n" \
+            "If compiled without mpi, including the communicator will have no effect.\n").c_str()\
+       ) \
+        .def( bp::init< b const &>() ) \
+        .def( "__init__", bp::make_constructor(&cload<b>) )\
+        .def( "__init__", bp::make_constructor(&mpi_create<b>) )\
+        .def( "__init__", bp::make_constructor(&mpi_create2<b>) )\
         .def_readwrite( "structure",    &b::structure, \
                         "The structure to minimize. Input and Output to the functional." ) \
         .def( "fromXML",  &XML::Vff_from_XML<b>, bp::arg("file"),\
               "Loads the vff parameters from an XML file." ) \
         .def( "evaluate",  &b::operator(), \
               "Minimizes the current structure and returns the energy in eV." ) \
-        .def( "init",  &b::init, "Initializes the functional for the current structure." ) \
+        .def( "init",  &b::init, (bp::arg("redo_tree") = true, bp::arg("verbose")=false), \
+              "Initializes the functional for the current structure." ) \
         .def( "print_escan_input",  &b::print_escan_input, bp::arg("file"), \
               "Outputs the current structure in a format suitable for pescan." ) \
         .def( "set_bond",  &b::set_bond, ( bp::arg("bond"), bp::arg("params") ), \
@@ -330,7 +447,6 @@ namespace LaDa
     void expose_vff()
     {
       typedef Vff< LaDa::Vff::Functional > t_Vff;
-      namespace bp = boost::python;
       EXPOSEVFF
       ( 
         "Vff", 
@@ -339,9 +455,7 @@ namespace LaDa
         "Prior to use, the parameters must be loaded from an XML file, "
         "The structure must be itself initialized, and LaDa.Vff.init() must be called."
         "Order does count :).\n\n"
-        ">>> vff = lada.vff.Vff()\n"
-        ">>> vff.set_mpi(boost.mpi.world) # if compiled with mpi only!\n"
-        ">>> vff.fromXML(\"input.xml\")\n"
+        ">>> vff = lada.vff.Vff(\"input.xml\", boost.mpi.world)\n"
         ">>> vff.structure.fromXML(\"input.xml\")\n"
         ">>> vff.init()\n"
         ">>> vff.evaluate()\n\n"
@@ -353,7 +467,6 @@ namespace LaDa
     void expose_layeredvff()
     {
       typedef LayeredVff t_Vff;
-      namespace bp = boost::python;
       EXPOSEVFF
       ( 
         "LayeredVff", 

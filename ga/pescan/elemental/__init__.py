@@ -1,15 +1,22 @@
 """ A GA subpackage defining standard genetic operator for elemental alloys. """
-
+__all__ = [ "evaluator" ]
 from lada.ga.bitstring import Individual as BitstringIndividual, \
                               Crossover as BitstringCrossover, \
                               Mutation
+import evaluator
 class Individual(BitstringIndividual):
   """ An individual for elemental superlattices. 
       
       Comparison between two individuals expect that a bitstring represents an
       elemental superlattice, with translation and inversion symmetries.
   """
-  def __init__(self): BitstringIndividual.__init__(self)
+  def __init__(self): 
+    """ Initializes a bitstring individual randomly. """
+    from random import randint
+    import numpy
+
+    super(Individual, self).__init__()
+    self.genes = numpy.array([ int(randint(0,1)) for i in xrange(self.size) ], dtype="int")
   
   def __eq__(self, a): 
     """ Compares two elemental superlattices. """
@@ -50,15 +57,19 @@ class Crossover(BitstringCrossover):
     """
     from random import uniform
 
-    b = b.copy()
-    if uniform(0,1) < 0.5: b = b[::-1]
-    trans = int( uniform(0,1) * len(b) )
+    class Dummy: 
+      def __init__(self, genes):
+        self.genes = b.genes.copy()
+
+    b = Dummy(b)
+    if uniform(0,1) < 0.5: b.genes = b.genes[::-1]
+    trans = int( uniform(0,1) * len(b.genes) )
     if trans != 0:  
-      c = b.copy()
-      b[:trans:] = c[len(b)-trans:]
-      b[trans:] = c[:len(b)-trans]
+      c = b.genes.copy()
+      b.genes[:trans:] = c[len(b.genes)-trans:]
+      b.genes[trans:] = c[:len(b.genes)-trans]
     
-    return BitstringCrossover.__call__(self, a,b)
+    return super(Crossover, self).__call__(a,b)
 
 
 class Converter(object):
@@ -72,20 +83,15 @@ class Converter(object):
           elemental superlattice. The epitaxial direction must be given by the
           first column vector.
         @type cell: 3x3 float64 numpy array.
-
-
-
-
     """
     from lada.crystal import LayerDepth, sort_layers, sStructure, fill_structure
     
     # creates epitaxial structure
     self.structure = sStructure()
     self.structure.cell = cell
-    fill_structure(self.structure)
-    sort_structure(self.structure)
+    self.structure = sort_layers( fill_structure(self.structure.cell) )
 
-    ld = LayerDepth(self.structure.cell)
+    ld = LayerDepth(self.structure.cell[:,0])
     for i in range(1, len(self.structure.atoms)): 
       if not ld(self.structure.atoms[i-1].pos, self.structure.atoms[i].pos): 
         raise ValueError, "Input structure is not an elemental superlattice."
@@ -109,8 +115,10 @@ class Converter(object):
       if len(object) != len(self.structure.atoms): 
         raise ValueError, "Bitstring and epitaxial structure are not compatible.\n"
       result = sStructure(self.structure)
-      for i, atom in enumerate(result):
-        atom.type = self.structure.lattice.sites[atom.site].type[object[i]]
+      for i, atom in enumerate(result.atoms):
+        atom.type = self.structure.lattice.sites[atom.site].type[int(object[i])]
+      assert result.lattice.scale > 0e0
+      result.scale = result.lattice.scale
       return Structure(result)
 
 class BandgapEvaluator(object):

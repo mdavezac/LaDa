@@ -16,10 +16,10 @@ class Changedir:
     from os import getcwd, chdir
     from os.path import exists, isdir
     
-    self.oldpwd = os.getcwd()
+    self.oldpwd = getcwd()
 
     assert exists(self.pwd) and isdir(self.pwd), "Could not find working directory."
-    os.chdir(self.pwd)
+    chdir(self.pwd)
 
     return self.pwd
 
@@ -29,4 +29,4 @@ class Changedir:
     from os.path import exists, isdir
 
     assert exists(self.oldpwd) and isdir(self.oldpwd), "Old directory does not exist anymore."
-    os.chdir(self.oldpwd)
+    chdir(self.oldpwd)

@@ -24,50 +24,33 @@ namespace LaDa
     //! \brief Strict Weak Ordering functor according to depth along eptiaxial
     //!        direction
     //! \details Two vectors are compared by using the value of their scalar
-    //!          product with Depth::a0 (mod |a1|). If these scalar product are equal (as
-    //!          defined by math::eq()), then their
-    //!          scalar product with Depth::a1 are compared. If again these are
-    //!          equal, then the scalar porducts with Depth::a2 are compared and
-    //!          the result return. Depth::a0 is the first column of the matrix
-    //!          given in the constructor argument. Depth::a2 is the second
-    //!          column, and Depth::a3 the third. 
+    //!          product with Depth::matrix.col(0) (mod |matrix.col(0)|). If
+    //!          these scalar product are equal (as defined by math::eq()),
+    //!          then their scalar product with Depth::a1 are compared. If
+    //!          again these are equal, then the scalar porducts with Depth::a2
+    //!          are compared and the result return.
     class LayerDepth
     {
       protected:
-        math::rVector3d a0; //!< First ordering direction
-        math::rVector3d a1; //!< Second ordering direction
-        math::rVector3d a2; //!< Third ordering direction
-        __DODEBUGCODE( bool isset; ) 
-    
+        math::rMatrix3d matrix_; //!< Ordering directions.
       public:
-        //! Constructor.
-        LayerDepth() __DODEBUGCODE( : isset(false) ) {}
         //! Copy Constructor
-        LayerDepth   ( const LayerDepth &_c )
-                   : a0( _c.a0 ), a1( _c.a1 ), a2( _c.a2 )
-                     __DODEBUGCODE( __COMMA__ isset( _c.isset ) ) {}
-        //! \brief Constructor and Initializer
-        //! \param _mat Depth::a0 is set to this vector.
-        //!             Depth::a1 and Depth::a2 are constructed.
-        LayerDepth   ( const math::rVector3d &_vec ) { set( _vec); }
-        //! \brief Constructor and Initializer
-        //! \param _mat Depth::a0 is set to the (normalized) first column of this matrix,
-        //!             Depth::a1 to the second, and Depth::a2 to the third.
-        LayerDepth   ( const math::rMatrix3d &_mat ) { set( _mat); }
-        //! \brief Constructor and Initializer
-        //! \param _mat Depth::a0 is set to this vector.
-        //!             Depth::a1 and Depth::a2 are constructed.
-        LayerDepth   ( const boost::tuple<types::t_real, types::t_real, types::t_real> &_vec ) 
-         { set( _vec ); }
+        LayerDepth( const LayerDepth &_c ) : matrix_(_c.matrix_) {}
+        //! Constructor and Initializer
+        LayerDepth( const math::rVector3d &_vec ) 
+        {
+          matrix_.col(0) = _vec;
+          matrix_.col(1) = math::eq( _vec(0), 0e0 ) ? 
+                               ( math::eq( _vec(1), 0e0 ) ? 
+                                  math::rVector3d(1, 0, 0):
+                                  math::rVector3d(0, _vec(2), -_vec(1) )  ): 
+                               math::rVector3d( -_vec(2) -_vec(1), _vec(0), _vec(0) );
+          matrix_.col(1).normalize();
+          matrix_.col(2) = matrix_.col(0).cross(matrix_.col(1));
+          matrix_.col(2).normalize();
+        }
         //! Destructor.
         virtual ~LayerDepth() {}
-        //! Sets reference vectors.
-        void set( const math::rMatrix3d &_mat );
-        //! Sets and constructs reference vectors.
-        void set( const math::rVector3d &_mat );
-        //! Sets and constructs reference vectors.
-        void set( const boost::tuple<types::t_real, types::t_real, types::t_real> &_vec ) 
-          { set( math::rVector3d( _vec.get<0>(), _vec.get<1>(), _vec.get<2>() ) ); }
     
         //! Strict weak ordering operator.
         bool operator()( const math::rVector3d& _first,

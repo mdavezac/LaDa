@@ -129,7 +129,7 @@ namespace LaDa
 
     void expose_lattice()
     {
-      bp::class_< Crystal::Lattice >( "Lattice" )
+      bp::class_< Crystal::Lattice >( "Lattice", "Defines back-bone lattice." )
         .def(bp::init< Crystal::Lattice >() )
         .def("__init__", bp::make_constructor(&details::init), "Construct lattice form xml file.\n")
         .add_property
