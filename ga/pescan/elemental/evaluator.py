@@ -188,12 +188,15 @@ class Directness(Bandgap):
 
     # create and change directory.
     basedir = self.directory_prefix + "_" + str(self.nbcalc)
-    if exists(basedir): rmtree(basedir)
+    self.world.barrier()
+    if self.world.do_print:
+      if exists(basedir): rmtree(basedir)
 
     for kpoint, name in self.which:
       # create new calc directory
       self.bandgap.directory = join(basedir, name)
-      makedirs(self.bandgap.directory)
+      if self.world.do_print: makedirs(self.bandgap.directory)
+      self.world.barrier()
 
       
       # change to calc directory
