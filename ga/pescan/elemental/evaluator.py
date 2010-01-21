@@ -2,7 +2,7 @@
 from numpy import array as np_array
 class Bandgap(object):
   """ An evaluator function for bandgaps at S{Gamma}. """
-  def __init__(self, converter, input = "input.xml", lattice = None, mpi=None):
+  def __init__(self, converter, input = "input.xml", lattice = None, mpi = None):
     """ Initializes the bandgap object. 
 
         @param converter: is a functor which converts between a bitstring and a
