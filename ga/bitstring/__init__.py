@@ -1,6 +1,6 @@
 """ A GA subpackage defining standard genetic operator for bitstrings. """
 
-class Individual:
+class Individual(object):
   """ An individual for bitstrings.
       The size of the individual is given statically by Individual.size
   """
@@ -24,7 +24,7 @@ class Individual:
   def __str__(self): return "%s" % (self.genes)
 
 
-class Crossover:
+class Crossover(object):
   """ A crossover operation. """
 
   def __init__(self, rate = 0.5):
@@ -45,7 +45,7 @@ class Crossover:
     if hasattr(a, "fitness"): delattr(a, "fitness")
     return a
 
-class Mutation:
+class Mutation(object):
   """ A mutation operation. """
 
   def __init__(self, rate = 0.10):

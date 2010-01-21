@@ -304,12 +304,14 @@ namespace LaDa
                        " It is constructure with respected to a LaDa.Lattice object.\n"  ) 
        .def( "concentration", &Crystal::Structure::get_concentration, "Returns concentration." )
        .def( bp::self == bp::other<Crystal::Structure>() );
+      bp::register_ptr_to_python< boost::shared_ptr<Crystal::Structure> >();
       expose< Crystal::TStructure<std::string> >
       (
         "sStructure", 
         "Defines a structure.\n\nGenerally, it is a super-cell of a L{Lattice} object.",
         "StrAtom"
       ).def( "__init__", bp::make_constructor( real_to_string ) );
+      bp::register_ptr_to_python< boost::shared_ptr< Crystal::TStructure<std::string> > >();
 
       bp::def("to_cartesian", &Crystal::to_cartesian<std::string>,
               "Transforms a structure from cartesian to fractional coordinates.\n" );

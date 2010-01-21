@@ -15,10 +15,10 @@ class Bandgap(object):
           input file.
         @type lattice: None or lada.crystal.Lattice
     """
-    from lada.vff import LayeredVff
-    from lada.pescan import BandGap
-    from lada import crystal
     import boost.mpi as mpi
+    from lada.vff import LayeredVff
+    from lada.escan import BandGap as BGFunctional
+    from lada import crystal
 
     self.converter = converter 
     """ Conversion functor between structures and bitstrings. """
@@ -26,18 +26,16 @@ class Bandgap(object):
     self.lattice = lattice
     """ Zinc-blend lattice. """
     if self.lattice == None: self.lattice = crystal.Lattice(input)
+    self.lattice.set_as_crystal_lattice()
 
-    self.vff = LayeredVff() # Creates vff functional
+    self.vff = LayeredVff(input, mpi.world) # Creates vff functional
     """ Vff functional """
-    self.vff.set_mpi(mpi.world) # sets up mpi group for vff.
-    self.vff.fromXML(input) # load vff parameters.
-    vff.direction = converter.cell[:,0]
+    self.vff.direction = converter.structure.cell[:,0]
+    self.vff.structure.scale = self.lattice.scale
 
-    self.escan = BandGap() # creates bandgap functional
+    self.escan = BGFunctional(input, mpi.world) # creates bandgap functional
     """ Bandgap functional """
-    self.escan.set_mpi(mpi.world) # sets mpi group
-    self.escan.fromXML(input) # loads escan parameters.
-    self.escan.scale = self.lattice.scale
+    self.escan.scale = self.vff.structure
 
     self.directory_prefix = "indiv"
     """ Directory prefix """
@@ -45,7 +43,7 @@ class Bandgap(object):
     """ Number of calculations. """
 
 
-  def __len__(sefl):
+  def __len__(self):
     """ Returns length of bitstring. """
     return len(self.converter.structure.atoms)
 
@@ -121,7 +119,7 @@ class Dipole(Bandgap):
     self.bandgap.destroy_directory = False
     
     # calls original evaluation function
-    super(DipoleEvaluator, self).__call__(self, indiv)
+    super(DipoleEvaluator, self).__call__(indiv)
 
     # moves to calculation directory
     with Changedir(self.bandgap.directory) as pwd:
@@ -143,13 +141,27 @@ class Dipole(Bandgap):
 class Directness(Bandgap):
   """ Objective function for quasi-direct bandgaps. """
   X = np_array( [0,0,1], dtype="float64" )
+  """ An X point of the reciprocal zinc-blend lattice. """
   G = np_array( [0,0,0], dtype="float64" )
+  """ The S{Gamma} point of the reciprocal zinc-blend lattice. """
   L = np_array( [0.5,0.5,0.5], dtype="float64" )
+  """ An L point of the reciprocal zinc-blend lattice. """
   W = np_array( [1, 0.5,0], dtype="float64" )
+  """ A W point of the reciprocal zinc-blend lattice. """
 
-  def __init__(self, which = [(G, "Gamma")], *args, **kwargs): 
-    super(Eval, self).__init__(self, args, kwargs)
-    self.which = which
+  def __init__(self, *args, **kwargs): 
+    from copy import deepcopy
+    self.which = (self.G, "Gamma")
+    if "which" in kwargs.keys():
+      self.which = deepcopy(kwargs["which"])
+      del kwargs["which"]
+
+    super(Directness, self).__init__(*args, **kwargs)
+   #if len(args) == 0 and len(kwargs) == 0:   super(Directness, self).__init__()
+   #elif len(args) != 0 and len(kwargs) != 0: super(Directness, self).__init__(*args, **kwargs)
+   #elif len(args) != 0:                      super(Directness, self).__init__(*args)
+   #else:                                     super(Directness, self).__init__(**kwargs)
+
     
   def __call__(self, indiv):
     """ Evaluates differences between kpoints. """

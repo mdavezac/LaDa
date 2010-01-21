@@ -1,6 +1,3 @@
-#
-#  Version: $Id$
-#
 def run( self ):
   """ Runs a GA algorithm """
   import standard
@@ -16,6 +13,17 @@ def run( self ):
   # Checks that self is complete and fills in where possible
   if hasattr(self, "fill_attributes"): self = self.fill_attributes()
   else: self = standard.fill_attributes(self)
+  assert hasattr(self, "Individual"), "No Individual type.\n"
+  assert hasattr(self, "taboo"), "No taboo operation.\n"
+  assert hasattr(self, "population"), "No population attribute.\n"
+  assert hasattr(self, "popsize"), "No popsize attribute.\n"
+  assert hasattr(self, "current_gen"), "No current_gen attribute.\n"
+  assert hasattr(self, "evaluation"), "No evaluation operation.\n"
+  assert hasattr(self, "checkpoints"), "No checkpoints attribute.\n"
+  assert hasattr(self, "rate"), "No rate attribute.\n"
+  assert hasattr(self, "mating"), "No mating functor.\n"
+  assert hasattr(self, "offspring"), "No offspring attribute.\n"
+  assert hasattr(self, "cmp_indiv"), "No cmp_indiv operation.\n"
 
   # creates population if it does not exist.
   while len(self.population) < self.popsize:

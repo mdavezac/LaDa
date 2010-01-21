@@ -16,7 +16,7 @@ class Taboo(object):
           Taboo container. Otherwise the container is empty on initialization.
         @type diversity: Boolean
     """
-    super(Taboo, self).__init__(self)
+    super(Taboo, self).__init__()
     def diversity_taboo(self, _indiv):
       """ taboo makes sure that no two individuals in the population and the
           offspring are the same. """

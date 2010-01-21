@@ -154,7 +154,7 @@ namespace LaDa
     {
       if( bp::len(_object) == 2 )
       {
-        PyErr_SetString( PyExc_ValueError, "Object is not a complex value.\n");
+        PyErr_SetString( PyExc_TypeError, "Object is not a complex value.\n");
         bp::throw_error_already_set();
         return; 
       }
@@ -167,9 +167,38 @@ namespace LaDa
     void construct_type( Crystal::Atom_Type< std::vector<std::string> >& _atm,
                          const boost::python::object& _object )
     {
-      const boost::python::list o( _object );
-      for( size_t i(0), n( boost::python::len( o ) ); i < n; ++n )
-        _atm.type.push_back( boost::python::extract<std::string>( o[i]) );
+      namespace bp = boost::python;
+      PyObject * const obj_ptr( _object.ptr() );
+      if( PyString_Check(obj_ptr) )
+      {
+        _atm.type.push_back( bp::extract<std::string>(_object) );
+        return;
+      }
+      else if( PySequence_Check(obj_ptr) )
+      {
+        size_t const N = PySequence_Length(obj_ptr);
+        for( size_t i(0); i < N; ++i )
+        {
+          PyObject * const item_ptr( PySequence_GetItem(obj_ptr, i) );
+          if( not PyString_Check(item_ptr) )
+          {
+            PyErr_SetString(PyExc_TypeError, "Object in input sequence is not a string.\n");
+            bp::throw_error_already_set();
+            return;
+          }
+          _atm.type.push_back( PyString_AsString(item_ptr) );
+        }
+      }
+      else
+      {
+        PyErr_SetString
+        (
+          PyExc_TypeError, 
+          "Input object is neither a string nor a sequence of strings.\n"
+        );
+        bp::throw_error_already_set();
+        return;
+      }
     }
 
     template< class T_TYPE >
