@@ -107,13 +107,13 @@ namespace LaDa
       write_genpot_input();
       
       const t_Path newatom( opt::InitialPath::path()/dirname/atom_input.filename() );
-      __ASSERT( not bfs::exists( atom_input ), atom_input << " does not exist.\n" );
-      if( newatom != atom_input )
+      LADA_DOASSERT( bfs::exists( atom_input ), atom_input << " does not exist.\n" );
+      if( newatom != boost::filesystem::current_path()/atom_input )
       { 
         if( bfs::exists( newatom ) ) bfs::remove( newatom );
         bfs::copy_file( atom_input, newatom );
       }
-      __ASSERT( not bfs::exists( newatom ), newatom << " does not exist.\n" );
+      LADA_ASSERT( bfs::exists( newatom ), newatom << " does not exist.\n" );
 
   #   ifndef _NOLAUNCH
         __IIAGA
