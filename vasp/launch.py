@@ -94,7 +94,7 @@ class Launch(Incar):
 
     # set up
     if structure != None: self._system = structure
-    elif not hasattr(self, "_system"): 
+    elif not hasattr(self, "_system"): raise RuntimeError, "Internal bug.\n"
     if outdir == None: outdir = self.indir
     if outdir == None: outdir = getcwd()
 

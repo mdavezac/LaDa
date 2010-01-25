@@ -31,7 +31,7 @@ minimal = [OUTCAR, STDOUT, STDERR]
     minimal = [L{OUTCAR}, L{STDOUT}, L{STDERR}]
 """
 output = minimal + [CONTCAR, OSZICAR, EIGENVALUES] 
-""" L{Repatriation}.minimal + extra output file. 
+""" L{minimal} + extra output file. 
 
     output = minimal + [L{CONTCAR}, L{OSZICAR}, L{EIGENVALUES}] 
 """
@@ -41,17 +41,17 @@ input = [INCAR, KPOINTS, POSCAR, POTCAR]
     L{restart} = [ L{INCAR}, L{KPOINTS}, L{POSCAR}, L{POTCAR}]
 """
 restart = [CHGCAR, WAVECAR]
-""" L{Repatriation.safe} + CHGCAR  
+""" L{safe} + CHGCAR  
 
     L{restart} = [ L{CHGCAR} + L{WAVECAR} ]
 """
 safe = output + input
 """ All files to make sense of a run.
 
-    L{safe} = L{Repatriation.output} + L{Repatriation.output} + L{Repatriation.restart} 
+    L{safe} = L{output} + L{output} + L{restart} 
 """
 all = output + input + restart
-""" L{Repatriation.output} + L{Repatriation.output} + L{Repatriation.restart} """
+""" L{output} + L{output} + L{restart} """
 
 def has_minimal(input):
   """ Checks that the minimum number of files is in repatriation set. """

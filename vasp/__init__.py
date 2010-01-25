@@ -88,3 +88,16 @@ class Vasp(Launch):
 
     return extract
 
+def return_final(looper, *args, **keywords):
+  """ Function to pass through a loop, returning final result only. 
+
+      Many methods in this module should be of the form: 
+      >>> extract = None
+      >>> for extract in method(vasp):
+      >>>   # do something
+      This function goes through the loop returning only the final result.
+      >>> extract = return_final(relaxation.relaxation, structure, vasp, outdir)
+  """ 
+  result = None
+  for result in looper(*args, **keywords): pass
+  return result

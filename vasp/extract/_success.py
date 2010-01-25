@@ -16,13 +16,11 @@ class Success(object):
     if len(owner.directory): path = join(owner.directory, path)
 
     with open(path, "r") as file:
-      regex = re.compile(r"""General\s+timing\s+and\s+accounting\s+informations\s+for\s+this\s+job""")
+      regex = re.compile(r"""General\s+timing\s+and\s+accounting
+                             \s+informations\s+for\s+this\s+job""", re.X)
       for line in file:
         if regex.search(line) != None: return True
     return False
 
   def __set__(self, owner, value):
     raise TypeError, "Success cannot be set. It is a result only.\n"
-
-
-

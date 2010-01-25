@@ -1,4 +1,5 @@
 #! /usr/bin/python
+""" Method for strain relaxation. """
 
 def relaxation( structure, vasp, outdir, repat = [], tolerance = 1e-3, \
                 relaxation="volume ionic cellshape",  noyield = False, **kwargs ):
@@ -34,7 +35,7 @@ def relaxation( structure, vasp, outdir, repat = [], tolerance = 1e-3, \
       @param tolerance: Total energy convergence criteria. Default: 1e-3. 
       @type tolerance: float
       @param relaxation: Which degrees of freedom to relax. Default: \"volume
-        ionic cellshape\". @see L{incar.relaxation}.
+        ionic cellshape\". @see L{incar.Incar.relaxation}.
       @type relaxation: string. 
       @param noyield: whether to use this as a function or a generator. Default: False.
       @type noyield: boolean.
@@ -65,7 +66,7 @@ def relaxation( structure, vasp, outdir, repat = [], tolerance = 1e-3, \
   outdirs = ["%s/step_%i" % (outdir, nb_steps)]
   output = vasp(structure, outdirs[-1], repat, **kwargs)
   # yields output for whatnot
-  if not noyield: yield output
+  yield output
 
   structure = crystal.sStructure(output.structure)
   # makes sure we don't accidentally converge to early.
@@ -81,7 +82,7 @@ def relaxation( structure, vasp, outdir, repat = [], tolerance = 1e-3, \
     outdirs.append("%s/step_%i" % (outdir, nb_steps))
     output = vasp(structure, outdirs[-1], repat, **kwargs)
     # yields output for whatnot.
-    if not noyield: yield output
+    yield output
 
     # keeps track of energy.
     oldenergy = float(structure.energy)
@@ -92,7 +93,7 @@ def relaxation( structure, vasp, outdir, repat = [], tolerance = 1e-3, \
   vasp.relaxation = "static"
   outdirs.append("%s/final_static" % (outdir))
   output = vasp(structure, outdirs[-1], repat, **kwargs)
-  if not noyield: yield output
+  yield output
 
   # cleanup -- deletes unwanted files from previous output directory
   for dir in outdirs:
@@ -100,8 +101,6 @@ def relaxation( structure, vasp, outdir, repat = [], tolerance = 1e-3, \
       filename = join(dir, file)
       if exists(filename): remove(filename)
   
-  if noyield: return output
-
 def main():
   import os.path
   import shutil
@@ -120,7 +119,7 @@ def main():
   K = Specie( "K", "~/AtomicPotentials/pseudos/K_s" )
   Rb = Specie( "Rb", "~/AtomicPotentials/pseudos/Rb_s" )
 
-  vasp = Vasp(species=(K, Rb), workdir)
+  vasp = Vasp(species=(K, Rb))
   vasp.indir = str(structure.name)
   if os.path.exists(vasp.indir):  shutil.rmtree( vasp.indir )
 
