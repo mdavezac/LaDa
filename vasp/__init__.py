@@ -16,6 +16,7 @@ from launch import Launch
 from extract import Extract
 from incar import Incar
 from kpoints import Density, Gamma
+from specie import Specie
     
 class Vasp(Launch):
   """ Interface to VASP code.

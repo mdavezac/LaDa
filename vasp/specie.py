@@ -1,14 +1,13 @@
+""" Defines specie methods. """
 class Specie:
-  """ Holds atomic specie information: 
-       - symbol is the atomic symbol
-       - file is the path to the potcar directory.
-         it will be assumed to be zipped.
-  """
-
+  """ Holds atomic specie information:  """
   def __init__(self, symbol, path ):
     """ Initializes a specie.
-        _ symbol is the atomic sumbol
-        _ path is the path to the potcar directory.
+        @param symbol: is the atomic symbol
+        @type symbol: str
+        @param path: to the directory with the potcar for this particular atomic types.
+          This directory should contain a POTCAR or POTCAR.Z file.
+        @type path: str
     """
     import os.path
 
