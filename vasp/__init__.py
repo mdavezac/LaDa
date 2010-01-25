@@ -57,8 +57,11 @@ class Vasp(Launch):
         calculations are not repeated. Instead, an extraction object for the
         stored results are given.
 
-        raise RuntimeError: when computations do not complete.
-        raise IOError: when outdir exists but is not a directory.
+        @note: This functor is stateless as long as self and structure can be
+               deepcopied correctly.  
+
+        @raise RuntimeError: when computations do not complete.
+        @raise IOError: when outdir exists but is not a directory.
     """ 
     from copy import deepcopy
     from os.path import exists, isdir
@@ -73,6 +76,12 @@ class Vasp(Launch):
       this(structure, outdir, repat)
     # if no keyword arguments are present, keep going with normal routine.
 
+    # make this functor stateless.
+    this = deepcopy(self)
+    structure = deepcopy(self)
+    outdir = deepcopy(outdir)
+    repat = deepcopy(repat)
+
     # First checks if directory outdir exists (and is a directory).
     if exists(outdir):
       if not isdir(outdir): raise IOError, "%s exists but is not a directory.\n" % (outdir)
@@ -81,7 +90,7 @@ class Vasp(Launch):
       if extract.successful: return extract # in which case, returns extraction object.
     
     # Otherwise, performs calculation by calling base class functor.
-    Launch.__call__(self, structure, outdir, repat)
+    Launch.__call__(this, structure, outdir, repat)
     
     # checks if result was successful
     extract = Extract(outdir)
@@ -97,7 +106,7 @@ def return_final(looper, *args, **keywords):
       >>> for extract in method(vasp):
       >>>   # do something
       This function goes through the loop returning only the final result.
-      >>> extract = return_final(relaxation.relaxation, structure, vasp, outdir)
+      >>> extract = return_final(method.relaxation, structure, vasp, outdir)
   """ 
   result = None
   for result in looper(*args, **keywords): pass
