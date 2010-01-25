@@ -5,13 +5,13 @@ class Extract(object):
   """ Main class for extracting VASP output as python objects.
 
       This class should contain attributes (eg fermi_energy) which can extract
-      their values from the vasp output files located in self.indir.  
+      their values from the vasp output files located in self.directory.  
 
       >>> result = Extract("./")
       >>> print result.fermi_energy * 13.26
   """
 
-  def __init__(self, indir = ""): self.indir = indir
+  def __init__(self, directory = ""): self.directory = directory
 
   success = Success()
   r""" Checks for success of vasp calculation """
@@ -23,7 +23,7 @@ class Extract(object):
     from lada.vasp import Launch
 
     path = Launch.OUTCAR 
-    if len(self.indir): path = join(self.indir, path)
+    if len(self.directory): path = join(self.directory, path)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = None
@@ -45,7 +45,7 @@ class Extract(object):
     from lada.vasp import Launch
 
     path = Launch.OUTCAR 
-    if len(self.indir): path = join(self.indir, path)
+    if len(self.directory): path = join(self.directory, path)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = None
@@ -58,7 +58,15 @@ class Extract(object):
     if result == None: raise RuntimeError, "File %s is incomplete.\n" % (path)
     return result
   energy = property(_get_energy)
-  r""" Gets total energy from vasp run """
+  """ Gets total energy from vasp run 
+     
+      same as self.L{total_energy}
+  """
+  total_energy = property(_get_energy)
+  """ Gets total energy from vasp run
+     
+      same as self.L{energy}
+  """
 
   def _get_free_energy(self):
     """ Gets total free energy from vasp run """
@@ -67,7 +75,7 @@ class Extract(object):
     from lada.vasp import Launch
 
     path = Launch.OUTCAR 
-    if len(self.indir): path = join(self.indir, path)
+    if len(self.directory): path = join(self.directory, path)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = None
@@ -89,7 +97,7 @@ class Extract(object):
     from lada.vasp import Launch
 
     path = Launch.OUTCAR 
-    if len(self.indir): path = join(self.indir, path)
+    if len(self.directory): path = join(self.directory, path)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = None
@@ -111,7 +119,7 @@ class Extract(object):
     from lada.vasp import Launch
 
     path = Launch.CONTCAR 
-    if len(self.indir): path = join(self.indir, path)
+    if len(self.directory): path = join(self.directory, path)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = crystal.read_poscar(tuple(self.species), self.CONTCAR)
@@ -128,7 +136,7 @@ class Extract(object):
     from lada.vasp import Launch
 
     path = Launch.OUTCAR 
-    if len(self.indir): path = join(self.indir, path)
+    if len(self.directory): path = join(self.directory, path)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = None
@@ -203,7 +211,7 @@ class Extract(object):
 #   import re
 
 #   path = Launch.OUTCAR 
-#   if self.indir != "": path = join(self.indir, path)
+#   if self.directory != "": path = join(self.directory, path)
 #   assert exists(path), "File %s does not exist.\n" % (path)
 #   
 #   with open(path, "r") as file:

@@ -81,7 +81,7 @@ class EdiffValue(Standard):
   def __init__(self, value = 1e-4):
     Standard.__init__(self, "EDIFF", value, validity = lambda x: x > 0e0)
   def incar_string(self, vasp):
-    return "%s = %f " % (self.key, self.value / float(len(vasp.system.atoms)))
+    return "%s = %f " % (self.key, self.value / float(len(vasp._system.atoms)))
 
 
 class EncutValue(object):
@@ -266,21 +266,23 @@ class FFTValue(object):
 
       if self._value != None: return self._value
 
-      _vasp = deepcopy(vasp)
-      with Tempdir(_vasp.workdir) as _vasp.indir:
-        _vasp.kpoints = kpoints.Gamma()
-        _vasp.relaxation = None
-        del _vasp.fft # simply remove attribute to get VASP default
+      vasp = deepcopy(vasp)
+      workdir = self.workdir
+      if workdir == None: workdir = getcwd()
+      with Tempdir(workdir) as vasp._tempdir:
+        vasp.kpoints = kpoints.Gamma()
+        vasp.relaxation = None
+        del vasp.fft # simply remove attribute to get VASP default
         # makes sure we do nothing during this run
-        _vasp.nelmdl = Standard("NELMDL",  0)
-        _vasp.nelm   = Standard("NELM",  0)
-        _vasp.nelmin = Standard("NELMIN",  0)
+        vasp.nelmdl = Standard("NELMDL",  0)
+        vasp.nelm   = Standard("NELM",  0)
+        vasp.nelmin = Standard("NELMIN",  0)
 
         # Now runs vasp. OUTCAR should be in temp indir
-        Run.__call__(vasp) 
+        Launch.__call__(vasp) 
 
         # finally extracts from OUTCAR.
-        vasp.fft = Extract(_vasp.indir).fft
+        vasp.fft = Extract(vasp._tempdir).fft
 
 
 

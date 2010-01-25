@@ -1,7 +1,7 @@
 """ Module providing an interface to VASP code.
 
     The interface is separated into 4 conceptual areas:
-      - VASP parameterization: mostly contained within incar.py and incar_params.py
+      - VASP parameterization: mostly contained within incar.
       - Launching vasp: a single-shot run is performed with launch.py 
       - Extracting data from vasp output: to be found in extract.py
       - Methods: such as k-mesh or energy cutoff convergence, strain relaxation....
@@ -15,7 +15,6 @@
 from launch import Launch
 from extract import Extract
 from incar import Incar
-from incar_params import *
 from kpoints import Density, Gamma
     
 class Vasp(Launch):
@@ -36,11 +35,33 @@ class Vasp(Launch):
       data. 
   """
 
-  def __init__(self):
-    """ Initializes vasp class. """
-    Launch.__init__(self)
+  def __init__(self, *args, **kwargs):
+    """ Initializes vasp class.
+    
+        @see L{Launch.__init__}(...).
+    """
+    Launch.__init__(self, *args, **kwargs)
 
   def __call__(self, structure, outdir, repat = [], **kwargs):
+    """ Performs a vasp calculation 
+     
+        The structure is whatever is given on input. The results are stored in
+        directory outdir. The files in L{files.minimal} are copied there, as
+        well as any other file named in repat. Other keyword arguements are
+        assigned as attributes to a (deepcopy) copy of self prior to actual
+        performing the calculation. This way, input parameters can be change
+        upon call, while keeping this functor call stateless.
+
+        The return is an L{extract.Extract} object initialized to outdir.
+
+        If successfull results (see L{extract.Extract.success} and/or
+        L{Success<extract._success.Success>}) already exist in outdir,
+        calculations are not repeated. Instead, an extraction object for the
+        stored results are given.
+
+        raise RuntimeError: when computations do not complete.
+        raise IOError: when outdir exists but is not a directory.
+    """ 
     from copy import deepcopy
     from os.path import exists, isdir
 
@@ -50,9 +71,7 @@ class Vasp(Launch):
     # and then called.
     if len(kwargs) != 0: 
       this = deepcopy(self)
-      for key in kwargs.keys():
-        if not hasattr(this, key): raise AttributeError, "Unknown keyword %s.\n" % (key)
-        setattr(key, this, kwargs[key]) 
+      for key in kwargs.keys(): setattr(key, this, kwargs[key]) 
       this(structure, outdir, repat)
     # if no keyword arguments are present, keep going with normal routine.
 
@@ -71,27 +90,4 @@ class Vasp(Launch):
     if not extract.successful: raise RuntimeError, "VASP calculation did not complete.\n" % (outdir)
 
     return extract
-
-if __name__ == "__main__":
-  from numpy import array as np_array
-  from lada import crystal
-  from specie import Specie
-  
-  vasp = Vasp() 
-  vasp.species = [Specie("Al", "~/AtomicPotentials/pseudos/K_s")]
-  vasp.fftgrid.value = (10,10,10)
-  structure = crystal.sStructure()
-  structure.scale = 1e0
-  structure.cell = np_array([[2,0.5,0.5],[0.0,0,0.5],[0.0,0.5,0]])
-  structure.atoms.append( crystal.StrAtom(np_array([0,0,0.0]), "Al") )
-
-  print structure
-
-  vasp(structure)
-
-
-
-
-
-
 

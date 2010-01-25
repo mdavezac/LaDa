@@ -1,41 +1,107 @@
 #! /usr/bin/python
 
-def relaxation( _structure, _vasp, tolerance=1e-3 ):
+def relaxation( structure, vasp, outdir, repat = [], tolerance = 1e-3, \
+                relaxation="volume ionic cellshape",  noyield = False, **kwargs ):
+  """ Performs a vasp relaxation
+
+      This can be called as a generator which yields a output extraction object
+      after each vasp calculation:
+        >>> for extract in relaxation(structure, vasp)
+        >>>   print extract.total_energy
+      Or it can be called as a function which yields only a final output extraction object.
+        >>> extract = relaxation(structure, vasp, noyield=True).
+
+      Note that this function will not recompute the result if an appropriate
+      output directory is found. In other words, this function can be called
+      once to perform calculation, and then to perform output extractions.
+        >>> # First compute results (if not yet computed).
+        >>> relaxation(structure, vasp, "relaxation", noyield = True).
+        >>>  ... # do something
+        >>> # Then  analyze relaxation steps.
+        >>> for extract in relaxation(structure, "relaxation", vasp):
+        >>>   print "Where: ", extract.indir
+        >>>   print extract.total_energy
+      The output extraction object is the output the vasp callable.
+
+      @param structure: A structure to relax.
+      @type structure: L{lada.crystal.sStructure} or L{lada.crystal.Structure}.
+      @param vasp: The vasp functional.
+      @type vasp: L{Vasp}
+      @param outdir: Directory where to repatriate files.
+      @type outdir: str
+      @param repat: File to repatriate, other than L{files.minimal}. Default: [].
+      @type repat: list or set
+      @param tolerance: Total energy convergence criteria. Default: 1e-3. 
+      @type tolerance: float
+      @param relaxation: Which degrees of freedom to relax. Default: \"volume
+        ionic cellshape\". @see L{incar.relaxation}.
+      @type relaxation: string. 
+      @param noyield: whether to use this as a function or a generator. Default: False.
+      @type noyield: boolean.
+      @param **kwargs: keywords passed on to funtional instance L{vasp}.
+  """
+  from copy import deepcopy
   from math import fabs as abs
-  import os
+  from os.path import join, exists, remove
+  import files
 
-  indir = str(_vasp.indir)
-  assert os.path.exists(indir) and os.path.isdir(indir),\
-        "%s does not exist or is not a directory.\n" % (indir)
-  index = 1
-  _vasp.indir  = "%s/step_%i" % ( indir, 0 )
-  _vasp.relaxation = "global volume ionic cellshape"
-  if not os.path.exists(_vasp.indir): 
-    os.makedirs(_vasp.indir)
-  else: assert os.path.isdir(_vasp.indir), "%s exists and is not a directory.\n" % (_vasp.indir)
-  
-  oldenergy = float( _structure.energy )
-  yield _structure
-  structure = _vasp.final()
+  # make this function stateless.
+  vasp = deepcopy(vasp)
+  structure = deepcopy(structure)
+  repat = set(repat) + files.minimal
+  tolerance = float(tolerance)
+  vasp.relaxation = str(relaxation)
 
-  tol = tolerance * float( len(_structure.atoms) )
+  # number of restarts.
+  nb_steps = 0 
+
+  # we may want to include restart file to speed up calculations. However,
+  # these files should be deleted afterwards.
+  other_repat = []
+  for file in files.restart: 
+    if file not in repat: other_repat.append(file)
+  repat += set(other_repat) 
+
+  # performs initial calculation.
+  outdirs = ["%s/step_%i" % (outdir, nb_steps)]
+  output = vasp(structure, outdirs[-1], repat, **kwargs)
+  # yields output for whatnot
+  if not noyield: yield output
+
+  structure = crystal.sStructure(output.structure)
+  # makes sure we don't accidentally converge to early.
+  oldenergy = -structure.energy
+
+  tol = tolerance * float( len(structure.atoms) )
   while( abs(oldenergy - structure.energy) > tol ):
-    _vasp.restart = str( _vasp.indir )
-    _vasp.indir  = "%s/step_%i" % ( indir, index )
-    if not os.path.exists(_vasp.indir): 
-      os.makedirs(_vasp.indir)
-    yield structure
-    index += 1
-    structure = _vasp.final()
+    # restart + new directory
+    vasp.indir = outdirs[-1]
+    nb_steps += 1
+
+    # launch calculations 
+    outdirs.append("%s/step_%i" % (outdir, nb_steps))
+    output = vasp(structure, outdirs[-1], repat, **kwargs)
+    # yields output for whatnot.
+    if not noyield: yield output
+
+    # keeps track of energy.
     oldenergy = float(structure.energy)
+    # gets new structure and iterate.
+    structure = crystal.sStructure(output.structure)
 
-  _vasp.indir  = "%s/final_static" % ( indir )
-  if not os.path.exists(_vasp.indir): 
-    os.makedirs(_vasp.indir)
-  _vasp.relaxation = "static"
-  yield structure
-  structure = _vasp.final()
+  # final calculation.
+  vasp.relaxation = "static"
+  outdirs.append("%s/final_static" % (outdir))
+  output = vasp(structure, outdirs[-1], repat, **kwargs)
+  if not noyield: yield output
 
+  # cleanup -- deletes unwanted files from previous output directory
+  for dir in outdirs:
+    for file in other_repat:
+      filename = join(dir, file)
+      if exists(filename): remove(filename)
+  
+  if noyield: return output
 
 def main():
   import os.path
@@ -55,26 +121,13 @@ def main():
   K = Specie( "K", "~/AtomicPotentials/pseudos/K_s" )
   Rb = Specie( "Rb", "~/AtomicPotentials/pseudos/Rb_s" )
 
-  vasp = Vasp()
-  vasp.isym = "off"
+  vasp = Vasp(species=(K, Rb), workdir)
   vasp.indir = str(structure.name)
-  if os.path.exists( vasp.indir ):  shutil.rmtree( vasp.indir )
-  script = vasp.prepare( structure, wpath="KRb" )
-  file = open( os.path.join( vasp.indir, 'script' ), 'w' )
-  print >>file, script
-  file.close()
-  subprocess.call( ["bash", os.path.join(vasp.indir, "script") ] )
+  if os.path.exists(vasp.indir):  shutil.rmtree( vasp.indir )
 
-  for structure in relaxation( structure, vasp ):
+  for extract in relaxation( structure, vasp ):
+    structure = extract.structure
     print structure.name, structure.energy, "\n", structure
-    if os.path.exists( vasp.indir ): continue
-    script = vasp.prepare( structure, wpath=vasp.indir )
-    file = open( os.path.join( vasp.indir, 'script' ), 'w' )
-    print >>file, script
-    print script
-    file.close()
-    subprocess.call( ["bash", os.path.join(vasp.indir, "script") ] )
-  
 
 if __name__ == "__main__":
   main()

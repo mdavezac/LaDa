@@ -9,11 +9,11 @@ class Success(object):
     import re
 
     for path in [Launch.OUTCAR, Launch.CONTCAR]:
-      if self.indir != "": path = join(self.indir, path)
+      if owner.directory != "": path = join(owner.directory, path)
       if not exists(path): return False
       
     path = Launch.OUTCAR 
-    if len(self.indir): path = join(self.indir, path)
+    if len(owner.directory): path = join(owner.directory, path)
 
     with open(path, "r") as file:
       regex = re.compile(r"""General\s+timing\s+and\s+accounting\s+informations\s+for\s+this\s+job""")

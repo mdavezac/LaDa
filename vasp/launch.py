@@ -4,42 +4,44 @@ from kpoints import Density
 
 
 class Launch(Incar):
-  """ A class to launch vasp """
+  """ A class to launch a single vasp calculation """
 
   program = "vasp.mpi"
-  """ shell command to launch vasp """
+  """ shell command to launch vasp. """
 
-  POSCAR  = "POSCAR"
-  """ Name of the input structure file """
-  KPOINTS = "KPOINTS"
-  """ Name of the kpoints file """
-  INCAR   = "INCAR"
-  """ Name of the input parameters file """
-  POTCAR  = "POTCAR"
-  """ Name of the pseudopotential file """
-  WAVECAR = "WAVECAR"
-  """ Name of the wavefunction file """
-  CONTCAR = "CONTCAR"
-  """ Name of the output structure file """
-  CHGCAR  = "CHGCAR"
-  """ Name of the output charge file """
-  OSZICAR = "OSZICAR"
-  """ Name of the energy minimization file """
-  STDOUT  = "stdout"
-  """ Name of the standard output file """
-  STDERR  = "stderr"
-  """ Name of the standard error file """
-  EIGENVALUE = "EIGENVALUE"
+  def __init__(self, workdir = None, indir = None, species = None, kpoints = Density(), **kwargs ):
+    """ Initializes Launch instance.
 
-  def __init__(self):
+        The initializer can take any number of keyword arguments. Those other
+        than kpoints and species will be set as attributes: C{launch =
+        Launch(whatnot = something)} is equivalent to
+          >> launch = Launch()
+          >> launch.whatnot = something
+        This behavior is useful to pass non-standard incar arguments directly
+        in initialization.
+        @param workdir: working directory. Defaults to current directory at
+           time of calculation.
+        @param indir: input directory.
+        @param species: Species in the system. 
+        @type species: list of L{Specie}
+        @param kpoints: Kpoint behavior.
+        @type kpoints: see L{kpoints.Density} and L{kpoints.Gamma}
+        @param **kwargs: any other keyword arguments.
+    """
     Incar.__init__(self) 
 
-    self.indir = ""
-    self.workdir = ""
-    self.kpoints = Density()
+    self.workdir = workdir
+    self.indir = indir
+    # sets species
+    if species != None: self.species = species
+    self.kpoints =  kpoints
+
+    # sets all other keywords as attributes.
+    for key in kwargs.keys(): setattr(key, this, kwargs[key]) 
 
   def _prerun(self):
     from os.path import join, exists
+    from os import getcwd
     import shutil
 
 #   for param in self:
@@ -58,7 +60,7 @@ class Launch(Incar):
       kpoints.close()
 
     # creates poscar file
-    print_poscar(self.system, self.species, self._tmpdir)
+    print_poscar(self._system, self.species, self._tmpdir)
 
     # creates POTCAR file
     with open(join(self._tempdir, self.POTCAR), 'w') as potcar:
@@ -73,28 +75,34 @@ class Launch(Incar):
       potcar.close()
 
     # checks for CHGCAR
-    with join(self.indir, self.CHGCAR) as chgcar:
+    indir = self.indir
+    if indir == None: indir = getcwd()
+    with join(indir, self.CHGCAR) as chgcar:
       if exists(chgcar): shutil.copy(chgcar, self._tempdir)
 
     # checks for WAVECAR
-    with join(self.indir, self.WAVECAR) as wavecar:
+    with join(indir, self.WAVECAR) as wavecar:
       if exists(chgcar): shutil.copy(chgcar, self._tempdir)
 
     # checks for EIGENVALUE
-    with join(self.indir, self.EIGENVALUE) as eigenvalue:
+    with join(indir, self.EIGENVALUE) as eigenvalue:
       if exists(eigenvalue): shutil.copy(eigenvalue, self._tempdir)
 
-  def __call__(self, structure, outdir = None, repat = []):
+  def __call__(self, structure=None, outdir = None, repat = []):
     from lada.opt import Tempdir, Changedir
     from os.path import exists, join
     from shutil import copy2 as copy
 
     # set up
-    self.system = structure
+    if structure != None: self._system = structure
+    elif not hasattr(self, "_system"): 
     if outdir == None: outdir = self.indir
+    if outdir == None: outdir = getcwd()
 
     # creates temporary working directory
-    with Tempdir(self.workdir) as self._tempdir: 
+    workdir = self.workdir
+    if workdir == None: workdir = getcwd()
+    with Tempdir(workdir) as self._tempdir: 
 
       # creates INCAR and KPOINTS.
       # copies POSCAR, POTCAR, possibly WAVECAR and CHGCAR from indir
@@ -112,6 +120,9 @@ class Launch(Incar):
       # now copies data back
       self._postrun(repat, outdir)
 
+      # deletes system attribute.
+      del self._system
+
   def _postrun(self, repat, outdir):
      """ Copies files back to outdir """
      from os.path import exists, join, isdir
@@ -121,10 +132,8 @@ class Launch(Incar):
      if not exists(outdir): raise IOError, "%s directory does not exist." % (outdir)
      if not isdir(outdir):  raise IOError, "%s is not a directory." % (outdir)
 
-     repat.extend( [self.OUTCAR, self.INCAR, self.POSCAR, self.CONTCAR, \
-                    self.STDOUT, self.STDERR, self.OSZICAR, self.EIGENVALUE ] )
      notfound = []
-     for filename in set(repat):
+     for filename in set(repat+files.minimal):
        if not exists(self._tempdir, filename):
          notfound.append(filename)
          continue

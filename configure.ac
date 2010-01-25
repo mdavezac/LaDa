@@ -43,6 +43,14 @@ AC_ARG_ENABLE(models,
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-models) ;;
      esac],[models=false])
 
+AC_ARG_ENABLE(vasp,
+     [  --enable-vasp               Compiles Coulom + Lennard-Jhones wrappers.],
+     [case "${enableval}" in
+       yes) vasp=true ;;
+       no)  vasp=false ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-vasp) ;;
+     esac],[vasp=false])
+
 AC_ARG_ENABLE(potentials,
      [  --enable-potentials           Compiles generalized atomic potentials.],
      [case "${enableval}" in
@@ -159,6 +167,9 @@ AC_ARG_ENABLE(nolaunch,
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-nolaunch) ;;
      esac],[nolaunch=false])
 AH_TEMPLATE([_NOLAUNCH])
+if test x$vasp = xtrue; then
+  python=true
+fi
 if test x$nolaunch = xtrue; then
   AC_DEFINE([_NOLAUNCH],[],[])
 fi
@@ -290,6 +301,7 @@ AM_CONDITIONAL(DOPYTHONPESCAN, test x$python$pescan$direct_iaga = xtruetruetrue)
 AM_CONDITIONAL(DOPYTHON, test x$python = xtrue)
 AM_CONDITIONAL(DOSEPARABLE, test x$separable = xtrue)
 AM_CONDITIONAL(DOMODELS, test x$models = xtrue)
+AM_CONDITIONAL(DOVASP, test x$vasp = xtrue)
 AM_CONDITIONAL(DOENUM, test x$enum = xtrue)
 AM_CONDITIONAL(DOPOTENTIALS, test x$potentials = xtrue)
 AM_CONDITIONAL(DOMINIMIZER, test xtrue = xtrue)
@@ -385,7 +397,7 @@ AC_OUTPUT(Makefile math/Makefile math/python/Makefile physics/Makefile physics/p
           atomic_potentials/Makefile atomic_potentials/python/Makefile 
           atomic_potentials/collapse/Makefile enum/Makefile enum/python/Makefile 
           ga/Makefile ga/ce/Makefile ga/bitstring/Makefile ga/pescan/Makefile
-          ga/pescan/elemental/Makefile vasp/Makefile )
+          ga/pescan/elemental/Makefile vasp/Makefile vasp/incar/Makefile vasp/extract/Makefile)
 
 echo ""; echo ""
 echo "Will Compile following modules: "

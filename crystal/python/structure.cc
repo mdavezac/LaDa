@@ -250,7 +250,7 @@ namespace LaDa
           )
           .def_readwrite( "atoms",   &T_STRUCTURE::atoms,
                           (   "The list of atoms of type L{" + _type
-                            + "}, in units of self.{scale<" + _name + "}.").c_str() )
+                            + "}, in units of self.{scale<" + _name + ">}.").c_str() )
           .def_readwrite( "energy",  &T_STRUCTURE::energy, "Holds a real value." )
           .def_readwrite( "weight",  &T_STRUCTURE::weight,
                           "Optional weight for fitting purposes." )
