@@ -192,38 +192,28 @@ template <> struct ScalarTraits<double>
       PyArrayObject *array = reinterpret_cast<PyArrayObject*>(obj_ptr);
 
       // check the dimensions
-      if (array->nd != 1)
+      if (array->nd == 1 and array->dimensions[0] != 3)
       {
-        PyErr_SetString(PyExc_ValueError, "Numpy array is not 1d.\n");
+        PyErr_SetString(PyExc_ValueError, "Numpy array is 1d, but longer than 3.\n");
         throw_error_already_set(); // the array has at least two dimensions (matrix)
+        return NULL;
       }
-  
-      if (array->dimensions[0] != 3)
+      else if(     array->nd ==  2
+               and (    (array->dimensions[0] == 1 and array->dimensions[1] != 3)
+                     or (array->dimensions[0] == 3 and array->dimensions[1] != 1) ) )
       {
-        PyErr_SetString(PyExc_ValueError, "Numpy array is not of length 3.\n");
+        PyErr_SetString(PyExc_ValueError, "Numpy array should be 3, 3x1, or 1x3.\n");
         throw_error_already_set(); // the 1D array does not have exactly 3 elements
+        return NULL;
       }
 
-      int u = PyArray_ObjectType(obj_ptr, 0);
-      if( u == NPY_INT )
+      switch (PyArray_ObjectType(obj_ptr, 0)) 
       {
-        int *values = reinterpret_cast<int*>(array->data);
-        return new Vector3x(values[0], values[1], values[2]);
-      }
-      if( u == NPY_LONG )
-      {
-        long *values = reinterpret_cast<long*>(array->data);
-        return new Vector3x(values[0], values[1], values[2]);      
-      }
-      if( u == NPY_FLOAT )
-      {
-        float *values = reinterpret_cast<float*>(array->data);
-        return new Vector3x(values[0], values[1], values[2]);
-      }
-      if( u == NPY_DOUBLE )
-      {
-        double *values = reinterpret_cast<double*>(array->data);
-        return new Vector3x(values[0], values[1], values[2]);
+        case NPY_INT: return create_vector<int>( array, new Vector3x );
+        case NPY_LONG: return create_vector<long>( array, new Vector3x );
+        case NPY_FLOAT: return create_vector<float>( array, new Vector3x );
+        case NPY_DOUBLE: return create_vector<double>( array, new Vector3x );
+        default: break;
       }
       return NULL;
     }
@@ -244,17 +234,24 @@ template <> struct ScalarTraits<double>
       }
       
       // do some type checking
-      if ((PyArray_ObjectType(obj_ptr, 0) == NPY_FLOAT) || (PyArray_ObjectType(obj_ptr, 0) == NPY_DOUBLE)) 
+      if(    (PyArray_ObjectType(obj_ptr, 0) == NPY_FLOAT)
+          or (PyArray_ObjectType(obj_ptr, 0) == NPY_DOUBLE) ) 
         if (ScalarTraits<Scalar>::isInt) return 0;
 
-      if ((PyArray_ObjectType(obj_ptr, 0) == NPY_INT) || (PyArray_ObjectType(obj_ptr, 0) == NPY_LONG))
-        if (ScalarTraits<Scalar>::isFloat || ScalarTraits<Scalar>::isDouble) return 0;
+      if(    (PyArray_ObjectType(obj_ptr, 0) == NPY_INT) 
+          or (PyArray_ObjectType(obj_ptr, 0) == NPY_LONG) )
+        if (ScalarTraits<Scalar>::isFloat or ScalarTraits<Scalar>::isDouble) return 0;
       
       PyArrayObject *array = reinterpret_cast<PyArrayObject*>(obj_ptr);
 
       // check the dimensions
-      if (array->nd != 1 and array->dimensions[0] != 3) return 0; 
- 
+      if(array->nd < 1) return NULL;
+      else if(array->nd == 1) { if( array->dimensions[0] != 3 ) return NULL; }
+      else if(array->nd == 2)
+      { 
+        if( array->dimensions[0] == 1 and array->dimensions[1] != 3 ) return NULL; 
+        else if( array->dimensions[0] == 3 and array->dimensions[1] != 1 ) return NULL; 
+      }
       return obj_ptr;
     }
 
@@ -263,37 +260,35 @@ template <> struct ScalarTraits<double>
       PyArrayObject *array = reinterpret_cast<PyArrayObject*>(obj_ptr);
       void *storage = ((converter::rvalue_from_python_storage<Vector3x>*)data)->storage.bytes;
 
-      switch (PyArray_ObjectType(obj_ptr, 0)) {
-        case NPY_INT:
-          {
-            int *values = reinterpret_cast<int*>(array->data);
-            new (storage) Vector3x(values[0], values[1], values[2]);
-          }
-          break;
-        case NPY_LONG:
-          {
-            long *values = reinterpret_cast<long*>(array->data);
-            new (storage) Vector3x(values[0], values[1], values[2]);
-          }
-          break;
-        case NPY_FLOAT:
-          {
-            float *values = reinterpret_cast<float*>(array->data);
-            new (storage) Vector3x(values[0], values[1], values[2]);
-          }
-          break;
-        case NPY_DOUBLE:
-          {
-            double *values = reinterpret_cast<double*>(array->data);
-            new (storage) Vector3x(values[0], values[1], values[2]);
-          }
-          break;
-        default:
-          return;
+      switch (PyArray_ObjectType(obj_ptr, 0)) 
+      {
+        case NPY_INT: create_vector<int>( array, new (storage) Vector3x ); break;
+        case NPY_LONG: create_vector<long>( array, new (storage) Vector3x ); break;
+        case NPY_FLOAT: create_vector<float>( array, new (storage) Vector3x ); break;
+        case NPY_DOUBLE: create_vector<double>( array, new (storage) Vector3x ); break;
+        default: return;
       }
-
       data->convertible = storage;
     }
+
+    template<typename T2> 
+      static void* create_vector( PyArrayObject* array, Vector3x *result )
+      {
+        T2 *values = reinterpret_cast<T2*>(array->data);
+        size_t const strides = array->strides[array->dimensions[0] == 3 ? 0: 1] / sizeof(T2);
+#       ifdef _LADADEBUG
+          if( array->strides[array->dimensions[0] == 3 ? 0: 1] % sizeof(T2) != 0 )
+          {
+            PyErr_SetString(PyExc_RuntimeError, "Incoherent numpy array.\n");
+            bp::throw_error_already_set();
+            return NULL;
+          }
+#       endif
+        (*result)(0) = (Scalar) (*values);
+        (*result)(1) = (Scalar) ( *(values + strides) );
+        (*result)(2) = (Scalar) ( *(values + 2*strides) );
+        return (void*)result;
+      }
   };
 
 void expose_eigen_vectors()
