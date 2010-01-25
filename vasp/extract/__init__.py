@@ -9,6 +9,9 @@ class Extract(object):
 
       >>> result = Extract("./")
       >>> print result.fermi_energy * 13.26
+
+      It would be preferable to limit these output files to L{files.OUTCAR}, as
+      much as possible.
   """
 
   def __init__(self, directory = ""): self.directory = directory
@@ -20,9 +23,9 @@ class Extract(object):
     """ Gets total energy extrapolated to $\sigma=0$ from vasp run """
     from os.path import exists, join
     import re
-    from lada.vasp import Launch
+    from lada.vasp.files import OUTCAR
 
-    path = Launch.OUTCAR 
+    path = OUTCAR 
     if len(self.directory): path = join(self.directory, path)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
@@ -42,9 +45,9 @@ class Extract(object):
     """ Gets total energy from vasp run """
     from os.path import exists, join
     import re
-    from lada.vasp import Launch
+    from lada.vasp.files import OUTCAR
 
-    path = Launch.OUTCAR 
+    path = OUTCAR 
     if len(self.directory): path = join(self.directory, path)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
@@ -72,9 +75,9 @@ class Extract(object):
     """ Gets total free energy from vasp run """
     from os.path import exists, join
     import re
-    from lada.vasp import Launch
+    from lada.vasp.files import OUTCAR
 
-    path = Launch.OUTCAR 
+    path = OUTCAR 
     if len(self.directory): path = join(self.directory, path)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
@@ -94,9 +97,9 @@ class Extract(object):
     """ Gets total free energy from vasp run """
     from os.path import exists, join
     import re
-    from lada.vasp import Launch
+    from lada.vasp.files import OUTCAR
 
-    path = Launch.OUTCAR 
+    path = OUTCAR 
     if len(self.directory): path = join(self.directory, path)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
@@ -116,9 +119,9 @@ class Extract(object):
     """ Gets structure from CONTCAR file and total energy from OUTCAR """
     from os.path import exists, join
     import re
-    from lada.vasp import Launch
+    from lada.vasp.files import CONTCAR
 
-    path = Launch.CONTCAR 
+    path = CONTCAR 
     if len(self.directory): path = join(self.directory, path)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
@@ -133,9 +136,9 @@ class Extract(object):
     """ Returns recommended or actual fft setting """
     from os.path import exists, join
     import re
-    from lada.vasp import Launch
+    from lada.vasp.files import OUTCAR
 
-    path = Launch.OUTCAR 
+    path = OUTCAR 
     if len(self.directory): path = join(self.directory, path)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
