@@ -127,7 +127,7 @@ namespace LaDa
           bp::arg("verbosity") = false
         ),
         "Solves the equation A*x=b, with A an input matrix, b an input vector, "
-        "and x the starting guess vector.\n The number of rows of A and the size "
+        "and x the starting guess vector.\n\nThe number of rows of A and the size "
         "of the vectors x and b must match. A is encoded like a C matrix.\nReturns "
         "a tuple (residual, iteration)."
       );
@@ -135,6 +135,7 @@ namespace LaDa
     void expose_llsq()
     {
       namespace bp = boost::python;
+      std::ostringstream sst; sst << types::tolerance;
       bp::def
       ( 
         "linear_lsq", 
@@ -147,10 +148,20 @@ namespace LaDa
           bp::arg("itermax") = 50,
           bp::arg("verbosity") = false
         ),
-        "Solves the linear least-square problem, with A a matrix of measurement"
-        " parameters, x a vector of coefficents, and b a vector of measurements.\n"
-        "Returns a tuple (residual, iteration). This method uses "
-        "LaDa.cgs to obtain the solution."
+        ( "Solves the linear least-square problem\n\n"
+          "Returns a tuple (residual, iteration).\n"
+          "@param A: matrix of measurement\n"
+          "@type A: numpy 2d-array.\n"
+          "@param x: output parameters.\n"
+          "@type x: numpy 1d-array.\n"
+          "@param b: vector of measurements.\n"
+          "@type b: numpy 1d-array.\n"
+          "@param tolerance: tolerance of the function. Defaults to " + sst.str() + "\n."
+          "@type tolerance: float\n" 
+          "@param itermax: Maximum number of cgs iterations. Defaults to 50\n."
+          "@type itermax: int\n" 
+          "@param verbosity: chattiness. Defaults to False.\n"
+          "@type itermax: bool\n" ).c_str()
       );
     }
   } // namespace Python
