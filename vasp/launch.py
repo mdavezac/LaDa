@@ -15,8 +15,8 @@ class Launch(Incar):
         The initializer can take any number of keyword arguments. Those other
         than kpoints and species will be set as attributes: C{launch =
         Launch(whatnot = something)} is equivalent to
-          >> launch = Launch()
-          >> launch.whatnot = something
+        >> launch = Launch()
+        >> launch.whatnot = something
         This behavior is useful to pass non-standard incar arguments directly
         in initialization.
         @param workdir: working directory. Defaults to current directory at
@@ -26,7 +26,6 @@ class Launch(Incar):
         @type species: list of L{Specie}
         @param kpoints: Kpoint behavior.
         @type kpoints: see L{kpoints.Density} and L{kpoints.Gamma}
-        @param **kwargs: any other keyword arguments.
     """
     Incar.__init__(self) 
 

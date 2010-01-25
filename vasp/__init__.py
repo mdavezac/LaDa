@@ -36,10 +36,7 @@ class Vasp(Launch):
   """
 
   def __init__(self, *args, **kwargs):
-    """ Initializes vasp class.
-    
-        @see L{Launch.__init__}(...).
-    """
+    """ Initializes vasp class. """
     Launch.__init__(self, *args, **kwargs)
 
   def __call__(self, structure, outdir, repat = [], **kwargs):

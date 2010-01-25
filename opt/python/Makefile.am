@@ -18,8 +18,8 @@ _opt_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS)
 _opt_la_SOURCES = $(opt_python_cc) 
 _opt_la_LDFLAGS = $(AM_LDFLAGS) -module
 _opt_la_LIBADD =  $(top_builddir)/python/libpython_lada.la 
-__init__.py: 
-	@echo "from _opt import *"  > __init__.py; 
-	@echo "from tempdir import Tempdir"  > __init__.py; 
-	@echo "from changedir import Changedir"  > __init__.py; 
+__init__.py: force
+	@echo "\"\"\"Miscellaneous\"\"\""  > __init__.py; \
+	 echo "from _opt import *"  >> __init__.py; 
+force: ;
 endif

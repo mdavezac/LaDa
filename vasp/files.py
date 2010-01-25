@@ -20,30 +20,30 @@ STDOUT  = "stdout"
 """ Name of the standard output file. """
 STDERR  = "stderr"
 """ Name of the standard error file. """
-EIGENVALUE = "EIGENVALUE"
+EIGENVALUES = "EIGENVALUE"
 """ Name of the file with eigenvalues. """
 OUTCAR = "OUTCAR"
 """ Name of the output file. """
 
-minimal = [LAUNCH.OUTCAR, Launch.STDOUT, Launch.STDERR]
+minimal = [OUTCAR, STDOUT, STDERR]
 """ The minimum number of files to still have the results of the run.
 
-    minimal = [L{LAUNCH.OUTCAR}, L{Launch.STDOUT}, L{Launch.STDERR}]
+    minimal = [L{OUTCAR}, L{STDOUT}, L{STDERR}]
 """
-output = minimal + [Launch.CONTCAR, Launch.OSZICAR, Launch.EIGENVALUES] 
+output = minimal + [CONTCAR, OSZICAR, EIGENVALUES] 
 """ L{Repatriation}.minimal + extra output file. 
 
-    output = minimal + [L{Launch.CONTCAR}, L{Launch.OSZICAR}, L{Launch.EIGENVALUES}] 
+    output = minimal + [L{CONTCAR}, L{OSZICAR}, L{EIGENVALUES}] 
 """
-input = [Launch.INCAR, Launch.KPOINTS, Launch.POSCAR, Launch.POTCAR] 
+input = [INCAR, KPOINTS, POSCAR, POTCAR] 
 """ input files. 
 
-    L{restart} = [ L{Launch.INCAR}, L{Launch.KPOINTS}, L{Launch.POSCAR}, L{Launch.POTCAR}]
+    L{restart} = [ L{INCAR}, L{KPOINTS}, L{POSCAR}, L{POTCAR}]
 """
-restart = [Launch.CHGCAR, Launch.WAVECAR]
+restart = [CHGCAR, WAVECAR]
 """ L{Repatriation.safe} + CHGCAR  
 
-    L{restart} = [ L{Launch.CHGCAR} + L{Launch.WAVECAR} ]
+    L{restart} = [ L{CHGCAR} + L{WAVECAR} ]
 """
 safe = output + input
 """ All files to make sense of a run.

@@ -6,21 +6,21 @@ def relaxation( structure, vasp, outdir, repat = [], tolerance = 1e-3, \
 
       This can be called as a generator which yields a output extraction object
       after each vasp calculation:
-        >>> for extract in relaxation(structure, vasp)
-        >>>   print extract.total_energy
+      >>> for extract in relaxation(structure, vasp)
+      >>>   print extract.total_energy
       Or it can be called as a function which yields only a final output extraction object.
-        >>> extract = relaxation(structure, vasp, noyield=True).
+      >>> extract = relaxation(structure, vasp, noyield=True).
 
       Note that this function will not recompute the result if an appropriate
       output directory is found. In other words, this function can be called
       once to perform calculation, and then to perform output extractions.
-        >>> # First compute results (if not yet computed).
-        >>> relaxation(structure, vasp, "relaxation", noyield = True).
-        >>>  ... # do something
-        >>> # Then  analyze relaxation steps.
-        >>> for extract in relaxation(structure, "relaxation", vasp):
-        >>>   print "Where: ", extract.indir
-        >>>   print extract.total_energy
+      >>> # First compute results (if not yet computed).
+      >>> relaxation(structure, vasp, "relaxation", noyield = True).
+      >>>  ... # do something
+      >>> # Then  analyze relaxation steps.
+      >>> for extract in relaxation(structure, "relaxation", vasp):
+      >>>   print "Where: ", extract.indir
+      >>>   print extract.total_energy
       The output extraction object is the output the vasp callable.
 
       @param structure: A structure to relax.
@@ -38,7 +38,6 @@ def relaxation( structure, vasp, outdir, repat = [], tolerance = 1e-3, \
       @type relaxation: string. 
       @param noyield: whether to use this as a function or a generator. Default: False.
       @type noyield: boolean.
-      @param **kwargs: keywords passed on to funtional instance L{vasp}.
   """
   from copy import deepcopy
   from math import fabs as abs
