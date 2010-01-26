@@ -398,7 +398,7 @@ AC_OUTPUT(Makefile math/Makefile math/python/Makefile physics/Makefile physics/p
           atomic_potentials/collapse/Makefile enum/Makefile enum/python/Makefile 
           ga/Makefile ga/ce/Makefile ga/bitstring/Makefile ga/pescan/Makefile
           ga/pescan/elemental/Makefile vasp/Makefile vasp/incar/Makefile vasp/extract/Makefile 
-          vasp/methods/Makefile.am)
+          vasp/methods/Makefile)
 
 echo ""; echo ""
 echo "Will Compile following modules: "
