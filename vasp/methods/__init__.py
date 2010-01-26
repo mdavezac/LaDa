@@ -128,9 +128,6 @@ def kpoint_convergence(structure, vasp, outdir="kconv", start=1, steps=None, \
       @type repat: list or set
       @param tolerance: Total energy convergence criteria. Default: 1e-3. 
       @type tolerance: float
-      @param relaxation: Which degrees of freedom to relax. Default: \"volume
-        ionic cellshape\". @see L{incar.Incar.relaxation}.
-      @type relaxation: string. 
   """
   from copy import deepcopy
   from math import fabs as abs
@@ -146,7 +143,7 @@ def kpoint_convergence(structure, vasp, outdir="kconv", start=1, steps=None, \
 
   # keywords arguments cannot include kpoints.
   if "kpoints" in kwargs:
-    raise SyntaxError,
+    raise SyntaxError,\
           "Cannot have kpoints as a keyword argument when performing kpoints convergence.\n"
 
   # we may want to include restart file to speed up calculations. However,
@@ -158,9 +155,9 @@ def kpoint_convergence(structure, vasp, outdir="kconv", start=1, steps=None, \
 
   # performs initial calculation.
   outdirs = ["%s/density:%i" % (outdir, density)]
-  output = vasp(deepcopy(structure, outdirs[-1], repat, kpoints=density, **kwargs)
+  output = vasp(structure, outdirs[-1], repat, kpoints=density, **kwargs)
   # yields output for whatnot
-  yield output
+  yield output 
   # makes sure we don't accidentally converge to early.
   oldenergy = -output.total_energy
 
