@@ -261,28 +261,30 @@ class FFTValue(object):
 
     def __call__(self, vasp):
       from copy import deepcopy
-      from lada.opt import Tempdir
-      from lada.vasp import kpoints, Run, Extract
+      from os import getcwd
+      from .. import kpoints
+      from ...opt.tempdir import Tempdir
+      from ..extract import Extract
 
       if self._value != None: return self._value
 
       vasp = deepcopy(vasp)
-      workdir = self.workdir
-      if workdir == None: workdir = getcwd()
-      with Tempdir(workdir) as vasp._tempdir:
+      with Tempdir(getcwd(), keep=True) as vasp._tempdir:
         vasp.kpoints = kpoints.Gamma()
         vasp.relaxation = None
-        del vasp.fft # simply remove attribute to get VASP default
+        vasp.fft = None # simply remove attribute to get VASP default
         # makes sure we do nothing during this run
         vasp.nelmdl = Standard("NELMDL",  0)
         vasp.nelm   = Standard("NELM",  0)
         vasp.nelmin = Standard("NELMIN",  0)
 
         # Now runs vasp. OUTCAR should be in temp indir
-        Launch.__call__(vasp) 
+        vasp._prerun()
+        vasp._run()
+        # no need for postrun
 
         # finally extracts from OUTCAR.
-        vasp.fft = Extract(vasp._tempdir).fft
+        return Extract(vasp._tempdir).fft
 
 
 

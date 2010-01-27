@@ -42,13 +42,14 @@ def relaxation( structure, vasp, outdir="relaxation", repat = [], tolerance = 1e
   """
   from copy import deepcopy
   from math import fabs as abs
-  from os.path import join, exists, remove
-  import files
+  from os.path import join, exists
+  from os import remove
+  from .. import files
 
   # make this function stateless.
   vasp = deepcopy(vasp)
   structure = deepcopy(structure)
-  repat = set(repat) + files.minimal
+  repat = set(repat).union(files.minimal)
   tolerance = float(tolerance)
   vasp.relaxation = str(relaxation)
 
@@ -60,7 +61,7 @@ def relaxation( structure, vasp, outdir="relaxation", repat = [], tolerance = 1e
   other_repat = []
   for file in files.restart: 
     if file not in repat: other_repat.append(file)
-  repat += set(other_repat) 
+  repat.union(other_repat)
 
   # performs initial calculation.
   outdirs = ["%s/step_%i" % (outdir, nb_steps)]
@@ -133,13 +134,14 @@ def kpoint_convergence(structure, vasp, outdir="kconv", start=1, steps=None, \
   """
   from copy import deepcopy
   from math import fabs as abs
-  from os.path import join, exists, remove
+  from os.path import join, exists
+  from os import remove
   from ..kpoints import Density
-  import files
+  from .. import files
 
   # make this function stateless.
   vasp = deepcopy(vasp)
-  repat = set(repat) + files.minimal
+  repat = set(repat).union(files.minimal)
   tolerance = float(tolerance)
   vasp.relaxation = "static" # what else could it be?
   density = deepcopy(start)
@@ -154,7 +156,7 @@ def kpoint_convergence(structure, vasp, outdir="kconv", start=1, steps=None, \
   other_repat = []
   for file in files.restart: 
     if file not in repat: other_repat.append(file)
-  repat += set(other_repat) 
+  repat.union(other_repat)
 
   # performs initial calculation.
   outdirs = ["%s/density:%i" % (outdir, density)]

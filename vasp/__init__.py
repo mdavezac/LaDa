@@ -72,7 +72,7 @@ class Vasp(Launch):
     # and then called.
     if len(kwargs) != 0: 
       this = deepcopy(self)
-      for key in kwargs.keys(): setattr(key, this, kwargs[key]) 
+      for key in kwargs.keys(): setattr(this, key, kwargs[key]) 
       this(structure, outdir, repat)
     # if no keyword arguments are present, keep going with normal routine.
 
