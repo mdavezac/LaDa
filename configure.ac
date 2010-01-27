@@ -434,7 +434,7 @@ fi
 if test "$enum" = true; then
   echo " _ Enumeration library"
 fi
-if test "$vasp" = true; tehn
+if test "$vasp" = true; then
   echo " _ VASP interface library"
 fi
 # if test x$emassopt = xtrue; then
