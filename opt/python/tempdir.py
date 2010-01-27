@@ -29,5 +29,5 @@ class Tempdir:
   def __exit__(self, type, value, traceback):
     """ Deletes temporary directory """
     from shutil import rmtree
-    if exists(self._tempdir) and isdir(self._tempdir):
-      rmtree(self._tempfile)
+    from os.path import exists, isdir
+    if exists(self._tempdir) and isdir(self._tempdir): rmtree(self._tempdir)
