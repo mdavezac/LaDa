@@ -190,7 +190,7 @@ namespace LaDa
         return result;
       }
       template<class T> T* mpi_create2(bp::object const &, std::string const &_filename)
-        { return cload(_filename); }
+        { return cload<T>(_filename); }
 #   endif
 
     //! Assumes ownership of the Crystal::Structure object needed by vff.

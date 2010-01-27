@@ -43,6 +43,14 @@ AC_ARG_ENABLE(models,
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-models) ;;
      esac],[models=false])
 
+AC_ARG_ENABLE(vasp,
+     [  --enable-vasp               Compiles Coulom + Lennard-Jhones wrappers.],
+     [case "${enableval}" in
+       yes) vasp=true ;;
+       no)  vasp=false ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-vasp) ;;
+     esac],[vasp=false])
+
 AC_ARG_ENABLE(potentials,
      [  --enable-potentials           Compiles generalized atomic potentials.],
      [case "${enableval}" in
@@ -290,6 +298,7 @@ AM_CONDITIONAL(DOPYTHONPESCAN, test x$python$pescan$direct_iaga = xtruetruetrue)
 AM_CONDITIONAL(DOPYTHON, test x$python = xtrue)
 AM_CONDITIONAL(DOSEPARABLE, test x$separable = xtrue)
 AM_CONDITIONAL(DOMODELS, test x$models = xtrue)
+AM_CONDITIONAL(DOVASP, test x$vasp = xtrue)
 AM_CONDITIONAL(DOENUM, test x$enum = xtrue)
 AM_CONDITIONAL(DOPOTENTIALS, test x$potentials = xtrue)
 AM_CONDITIONAL(DOMINIMIZER, test xtrue = xtrue)

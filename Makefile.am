@@ -28,7 +28,10 @@ if DOSEPARABLE
   CEDIR = ce
 endif
 if DOPYTHON
-  PYTHONDIR = python ga vasp
+  PYTHONDIR = python ga 
+if DOVASP
+  PYTHONDIR += vasp
+endif 
 endif
 if DOCE
   CEDIR = ce

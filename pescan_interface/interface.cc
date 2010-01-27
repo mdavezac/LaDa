@@ -343,13 +343,9 @@ namespace LaDa
                     << " 1 1 1 " << escan.rspace_wfn << " # real-space output \n";
 
       if ( math::is_zero( escan.kpoint.squaredNorm() ) ) file << "11 0 0 0 0 0 # kpoint=Gamma\n";
-      else
-      {
-        math::rVector3d k = escan.kpoint;
-        file << "11 1 " << k << " " 
-                        << std::setw(12) << std::setprecision(8) 
-                        << escan.scale / Physics::a0("A") <<  " # kpoint\n";
-      }
+      else file << "11 1 " << escan.kpoint.transpose() << " " 
+                           << std::setw(12) << std::setprecision(8) 
+                           << escan.scale / Physics::a0("A") <<  " # kpoint\n";
       file << "12 " << escan.potential << " # potential:";
       switch( escan.potential )
       {
