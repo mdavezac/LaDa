@@ -6,30 +6,32 @@
 #PBS -m n 
 #PBS -e err
 #PBS -o out
-import os
 
-def create_structure_dir(structure):
-    # create structure name
-    nAl = len([ 0 for v in structure.atoms if v.type == "Al" ])
-    nMg = len([ 0 for v in structure.atoms if v.type == "Mg" ])
-    nO = len([ 0 for v in structure.atoms if v.type == "O" ])
-    structure.name = "Al%iMg%iO%i" % ( nAl, nMg, nO )
+def create_structure_dir(structure, prefix=None):
+  from os import makedirs
+  from os.path import join, exists
 
-    # create directory
-    dirname = structure.name
-    u = 1
-    while os.path.exists(dirname) :
-      dirname = "%s-%i" % (structure.name, u) 
-      u += 1
+  # create structure name
+  nAl = len([ 0 for v in structure.atoms if v.type == "Al" ])
+  nMg = len([ 0 for v in structure.atoms if v.type == "Mg" ])
+  nO = len([ 0 for v in structure.atoms if v.type == "O" ])
+  structure.name = "Al%iMg%iO%i" % ( nAl, nMg, nO )
 
-    # create directory, POSCAR, and sendme 
-    os.mkdir(dirname)
-    return dirname
+  # create directory
+  dirname = structure.name
+  if prefix != None: dirname = join(prefix, dirname)
+  u = 1
+  while exists(dirname) :
+    dirname = "%s-%i" % (structure.name, u) 
+    if prefix != None: dirname = join(prefix, dirname)
+    u += 1
 
-def choose_structures( howmany, filename="database" ):
-  import os
-  import shutil
-  import random
+  # create directory, POSCAR, and sendme 
+  makedirs(dirname)
+  return dirname
+
+def choose_structures( howmany, filename="database", prefix=None ):
+  from random import randint
   from lada import crystal, enumeration
   import database
 
@@ -37,15 +39,14 @@ def choose_structures( howmany, filename="database" ):
   for structure in database.read_database(filename, withperms=True): N  += 1
 
   which = set([])
-  while len(which) != howmany:
-    which.add(random.randint(0,N-1))
+  while len(which) != howmany: which.add(randint(0,N-1))
   which = sorted(list(which))
   for n, structure in enumerate(database.read_database(filename, withperms=True)):
     if n != which[0]: continue
 
     which.pop(0)
 
-    dirname = create_structure_dir(structure)
+    dirname = create_structure_dir(structure, prefix)
     structure.name += ", database %s, structure %i" % (filename, n)
     crystal.print_poscar(structure, ("Al", "Mg", "O"), dirname )
 

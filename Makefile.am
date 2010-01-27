@@ -29,10 +29,10 @@ if DOSEPARABLE
 endif
 if DOPYTHON
   PYTHONDIR = python ga 
-endif
 if DOVASP
   PYTHONDIR += vasp
 endif 
+endif
 if DOCE
   CEDIR = ce
 endif

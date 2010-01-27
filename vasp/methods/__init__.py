@@ -1,12 +1,12 @@
 #! /usr/bin/python
 """ Module with different methods for vasp 
 
-    Most of the generators in this modile will not recompute the result if an
+    Most of the generators in this module will not recompute the result if an
     appropriate output directory is found. In other words, this function can be
     called once to perform calculation, and then to perform output extractions.
     >>> # First compute results (if not yet computed).
-    >>> relaxation(structure, vasp, "relaxation", noyield = True).
-    >>>  ... # do something
+    >>> for extract in relaxation(structure, vasp, "relaxation"): pass
+    >>> # do something else
     >>> # Then  analyze relaxation steps.
     >>> for extract in relaxation(structure, "relaxation", vasp):
     >>>   print "Where: ", extract.indir
@@ -14,7 +14,7 @@
     The output extraction object will be the output the vasp callable.
 """
 def relaxation( structure, vasp, outdir="relaxation", repat = [], tolerance = 1e-3, \
-                relaxation="volume ionic cellshape",  noyield = False, **kwargs ):
+                relaxation="volume ionic cellshape", **kwargs ):
   """ Performs a vasp relaxation
 
       This is a generator which yields a output extraction object
@@ -103,8 +103,8 @@ def relaxation( structure, vasp, outdir="relaxation", repat = [], tolerance = 1e
 
 
 def kpoint_convergence(structure, vasp, outdir="kconv", start=1, steps=None, \
-                       repat=[], tolerance=1e-3, **kwargs):
-  """ Performs a convergence test for kpoints.
+                       offset=(0.5,0.5,0.5), repat=[], tolerance=1e-3, **kwargs):
+  """ Performs a convergence test for kpoints using kpoints.Density object.
 
       This is a generator which yields a output extraction object after each
       vasp calculation:
@@ -124,6 +124,8 @@ def kpoint_convergence(structure, vasp, outdir="kconv", start=1, steps=None, \
       @type outdir: str
       @param start: Starting density. Default = 1.
       @param steps: End density. Default = 1.
+      @param offset: Offset from L{Gamma} of reciprocal mesh. Default = (0.5,0.5,0.5). 
+      @param type: 3-tuple.
       @param repat: File to repatriate, other than L{files.minimal}. Default: [].
       @type repat: list or set
       @param tolerance: Total energy convergence criteria. Default: 1e-3. 
@@ -132,6 +134,7 @@ def kpoint_convergence(structure, vasp, outdir="kconv", start=1, steps=None, \
   from copy import deepcopy
   from math import fabs as abs
   from os.path import join, exists, remove
+  from ..kpoints import Density
   import files
 
   # make this function stateless.
@@ -155,7 +158,7 @@ def kpoint_convergence(structure, vasp, outdir="kconv", start=1, steps=None, \
 
   # performs initial calculation.
   outdirs = ["%s/density:%i" % (outdir, density)]
-  output = vasp(structure, outdirs[-1], repat, kpoints=density, **kwargs)
+  output = vasp(structure, outdirs[-1], repat, kpoints=Density(offset, density), **kwargs)
   # yields output for whatnot
   yield output 
   # makes sure we don't accidentally converge to early.
@@ -169,7 +172,7 @@ def kpoint_convergence(structure, vasp, outdir="kconv", start=1, steps=None, \
 
     # launch calculations 
     outdirs.append("%s/density:%i" % (outdir, density))
-    output = vasp(structure, outdirs[-1], repat, kpoints=density, **kwargs)
+    output = vasp(structure, outdirs[-1], repat, kpoints=Density(offset, density), **kwargs)
     # yields output for whatnot.
     yield output
 

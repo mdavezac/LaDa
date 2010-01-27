@@ -434,6 +434,9 @@ fi
 if test "$enum" = true; then
   echo " _ Enumeration library"
 fi
+if test "$vasp" = true; tehn
+  echo " _ VASP interface library"
+fi
 # if test x$emassopt = xtrue; then
 #   echo " _ Genetic Algorithm for Electronic Mass Optimization"
 # fi
