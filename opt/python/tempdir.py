@@ -8,19 +8,25 @@ class Tempdir:
    
       >>> with Tempdir(path) as tempdir:
       >>>   ...
+      @param workdir: working directory where to create a directory. 
+      @param keep: when True, does not destroy directory on exit, eg for debug
+         purposes.
   """
-  def __init__(self, workdir): self.workdir = workdir
+  def __init__(self, workdir = None, keep = False):
+    self.workdir = workdir
+    self.keep = keep
 
   def __enter__(self):
     """ Creates temporary directory """
-    from os import makedirs
+    from os import makedirs, environ
     from os.path import exists, isdir
     from tempfile import mkdtemp
     from shutil import rmtree 
 
-    if not exists(self.workdir): makedirs(self.workdir)
-    assert exists(self.workdir) and isdir(self.workdir),\
-           "Could not create working directory."
+    if self.workdir != None:
+      if not exists(self.workdir): makedirs(self.workdir)
+      assert exists(self.workdir) and isdir(self.workdir),\
+             "Could not create working directory."
     self._tempdir = mkdtemp(dir=self.workdir)
     assert exists(self._tempdir) and isdir(self._tempdir),\
            "Could not create temporary working directory."
@@ -29,5 +35,6 @@ class Tempdir:
   def __exit__(self, type, value, traceback):
     """ Deletes temporary directory """
     from shutil import rmtree
-    if exists(self._tempdir) and isdir(self._tempdir):
-      rmtree(self._tempfile)
+    from os.path import exists, isdir
+    if self.keep: return
+    if exists(self._tempdir) and isdir(self._tempdir): rmtree(self._tempdir)
