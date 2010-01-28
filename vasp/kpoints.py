@@ -18,29 +18,29 @@ class Density(object):
 
   def __call__(self, vasp):
     """ Returns a string which is the text of the KPOINTS file """
-    from lada.crystal.gruber import Reduction
-    from lada.crystal import get_point_group_symmetries as point_group
-    import numpy as np
     from math import fabs, floor
-    result = "Automatic k-mesh generation\n0\nGamma\n"
+    from numpy import matrix as Matrix
+    from numpy.linalg import norm, det
+    from ..crystal.gruber import Reduction
+    from ..crystal import get_point_group_symmetries as point_group
+    result = "Automatic k-mesh generation\n0\nCartesian\n"
 
     reduction = Reduction()
-    cell = np.matrix( [[ vasp.system.cell[j,i] for j in range(3)] for i in range(3)],
-                      dtype="float64" )
-    assert fabs(np.linalg.det(cell)) > 1e-12, ValueError
+    cell = Matrix(vasp._system.cell).copy().T 
+    assert fabs(det(cell)) > 1e-12, ValueError
     # gets reciprocal cell
     cell = cell.I
     # gets Niggli reciprocal cell
-    cell = reduction(cell)
+    cell = reduction(cell) / vasp._system.scale
     # gets original point-group symmetries
     pointgroup = point_group(cell)
 
     # creates trial-grid
-    n = [[0, 1+int(floor(max([1e0, np.linalg.norm(cell[:,0]) * float(self.length)])))],
-         [1, 1+int(floor(max([1e0, np.linalg.norm(cell[:,1]) * float(self.length)])))], 
-         [2, 1+int(floor(max([1e0, np.linalg.norm(cell[:,2]) * float(self.length)])))] ]
+    n = [[0, 1+int(max([1e0, norm(cell[:,0]) * float(self.length)+0.5]))],
+         [1, 1+int(max([1e0, norm(cell[:,1]) * float(self.length)+0.5]))], 
+         [2, 1+int(max([1e0, norm(cell[:,2]) * float(self.length)+0.5]))] ]
 
-    grid  = cell.copy()
+    grid  = cell.copy() * vasp._system.scale
     for i in range(3): grid[:,n[i][0]] *= 1e0 / float(n[i][1] )
     if vasp.isym == "off" or Density._goodsyms(grid, pointgroup): # if symmetry are preserved. 
       for i in range(3): result += "%18.12f %18.12f %18.12f\n" % tuple(grid[:,i])
@@ -72,7 +72,7 @@ class Density(object):
           if not Density._goodsyms(grid, pointgroup): continue
 
           if m ==  None: m = grid.copy()
-          if np.linalg.det(grid) < np.linalg.det(m):  m = grid.copy()
+          if det(grid) < det(m):  m = grid.copy()
 
         n[2][1] = original[1]
       n[1][1] = original[0]
@@ -88,12 +88,13 @@ class Density(object):
   @staticmethod
   def _goodsyms(grid, pointgroup):
     """ Checks if grid has all symmetries of pointgroup """
-    import numpy as np
+    from numpy.linalg import det, norm
+    from numpy import matrix as Matrix
 
     def is_unimodular(matrix):
       from math import fabs, floor
 
-      d = np.linalg.det(matrix)
+      d = det(matrix)
       if not (fabs(d-1e0) < 1e-12 or fabs(d+1e0) < 1e-12): return False
       for i in range(3):
         for i in range(3):
@@ -103,8 +104,8 @@ class Density(object):
 
 
     for transform in pointgroup:
-      assert np.linalg.norm(transform.trans) < 1e-12
-      op = np.matrix( [[transform.op[j,i] for j in range(3)] for i in range(3)] )
+      assert norm(transform.trans) < 1e-12
+      op = matrix( [[transform.op[j,i] for j in range(3)] for i in range(3)] )
       if not is_unimodular( grid.I * op * grid ): return False
     return True
 

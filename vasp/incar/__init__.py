@@ -1,8 +1,8 @@
 """ Subpackage defining vasp incar parameters. """
-from _params import Standard, NoPrintStandard, AlgoValue, \
-                    PrecValue, EdiffValue, EncutValue, \
-                    SmearingValue, SymValue, FFTValue, \
-                    RestartValue, RelaxationValue
+from _params import Standard, NoPrintStandard, Algo, \
+                    Precision, Ediff, Encut, \
+                    Smearing, Isym, FFTGrid, \
+                    Restart, Relaxation, Iniwave
 
 class Incar(object):
   """ Contains vasp Incar parameters. 
@@ -15,7 +15,7 @@ class Incar(object):
   def __init__(self): 
     object.__init__(self) # calls base class.
 
-    self.iniwave = Standard("INIWAV", "random", validity = lambda x: x=="random" or x=="jellium")
+    self.iniwave = Iniwave("random")
     """ Initializes wave functions with \"random\"(default) or \"jellium\" """ 
     self.nelect = NoPrintStandard("NELECT", 0 , validity = lambda x: x >= 0)
     """ Sets number of electrons in calculation.
@@ -25,32 +25,30 @@ class Incar(object):
     """ Sets number of bands to include in calculation.
         0(default) lets VASP decide.
     """ 
-    self.potim = Standard( "POTIM", 0.5, validity = lambda x: float(x) > 0e0)
-    """ Sets ionic motion time step. """ 
+#   self.potim = Standard( "POTIM", 0.5, validity = lambda x: float(x) > 0e0)
+#   """ Sets ionic motion time step. """ 
     self.nspins = Standard( "ISPIN", 1, 
                             validity = lambda x: int(x) == float(x) and (int(x)==1 or int(x)==2) )
     """ Sets number of spins. Must be either 1 or 2. """
-    self.algo = AlgoValue()
+    self.algo = Algo()
     """ Electronic minimization. 
         Can be \"very fast\", \"fast\", or \"normal\" (default). 
     """ 
-    self.precision = PrecValue()
+    self.precision = Precision()
     """ Sets accuracy of calculation. 
         Can be \"accurate\" (default), \"low\", \"medium\", \"high\".
     """
-    self.prec = EdiffValue()
+    self.ediff = Ediff()
     """ Sets the convergence criteria for electronic minimization.
 
         This tolerance is divided by the number of atoms in the system.  For
         this reason, printing to incar is doned via the return to __call__.
     """
-    self.nsw = Standard("NSW", 0, validity = lambda x: int(x) == float(x) and int(x) >= 0)
-    """ Maximum number of ionic steps. \n """ 
-    self.encut = EncutValue(safety=1.25)
+    self.encut = Encut(safety=1.25)
     """ Gets maximum cutoff from POTCAR.
         Actual printed value is that times the safety. 
     """
-    self.smearing = SmearingValue()
+    self.smearing = Smearing()
     """ Value of the smearing used in the calculation. 
         It can be specified as a string: "type x", where type is any of fermi,
         gaussian, mp, tetra, metal or insulator, and x is the energy scale in eV.
@@ -64,14 +62,14 @@ class Incar(object):
             - insulator is equivalent to "tetra bloechl".
             - if x is omitted a default value of 0.2eV is used.
     """
-    self.isym = SymValue()
+    self.isym = Isym()
     """ Type of symmetry used in the calculation.
         Can be "off" or a float corresponding to the tolerance used to determine
         symmetry operation.  By default, it is 1e-5.
     """
-    self.fftgrid = FFTValue(grid = None)
+    self.fftgrid = FFTGrid(grid = None)
     """ Computes fft grid using VASP. Or if grid is given, computes using that grid. """
-    self.relaxation = RelaxationValue()
+    self.relaxation = Relaxation()
     """ Sets ISIF in incar depending on type relaxation required. 
     
           - if set to None or empty string, then no relaxation.
@@ -83,7 +81,7 @@ class Incar(object):
         Can also be set using an integer between 0 and 7. See VASP manual. 
     """
 
-  restart = RestartValue(None)
+  restart = Restart(None)
   """
       Directory where to restart, or None.
       

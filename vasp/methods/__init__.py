@@ -13,7 +13,7 @@
     >>>   print extract.total_energy
     The output extraction object will be the output the vasp callable.
 """
-def relaxation( structure, vasp, outdir="relaxation", repat = [], tolerance = 1e-3, \
+def relaxation( vasp, structure, outdir="relaxation", repat = [], tolerance = 1e-3, \
                 relaxation="volume ionic cellshape", **kwargs ):
   """ Performs a vasp relaxation
 
@@ -50,8 +50,8 @@ def relaxation( structure, vasp, outdir="relaxation", repat = [], tolerance = 1e
   vasp = deepcopy(vasp)
   structure = deepcopy(structure)
   repat = set(repat).union(files.minimal)
-  tolerance = float(tolerance)
-  vasp.relaxation = str(relaxation)
+  tolerance = float(tolerance) * float( len(structure.atoms) )
+  vasp.relaxation.value = str(relaxation)
 
   # number of restarts.
   nb_steps = 0 
@@ -73,8 +73,7 @@ def relaxation( structure, vasp, outdir="relaxation", repat = [], tolerance = 1e
   # makes sure we don't accidentally converge to early.
   oldenergy = -structure.energy
 
-  tol = tolerance * float( len(structure.atoms) )
-  while( abs(oldenergy - structure.energy) > tol ):
+  while( abs(oldenergy - structure.energy) > tolerance ):
     # restart + new directory
     vasp.indir = outdirs[-1]
     nb_steps += 1
@@ -91,7 +90,7 @@ def relaxation( structure, vasp, outdir="relaxation", repat = [], tolerance = 1e
     structure = crystal.sStructure(output.structure)
 
   # final calculation.
-  vasp.relaxation = "static"
+  vasp.relaxation.value = "static"
   outdirs.append("%s/final_static" % (outdir))
   output = vasp(structure, outdirs[-1], repat, **kwargs)
   yield output
@@ -103,7 +102,7 @@ def relaxation( structure, vasp, outdir="relaxation", repat = [], tolerance = 1e
       if exists(filename): remove(filename)
 
 
-def kpoint_convergence(structure, vasp, outdir="kconv", start=1, steps=None, \
+def kpoint_convergence(vasp, structure, outdir="kconv", start=1, steps=None, \
                        offset=(0.5,0.5,0.5), repat=[], tolerance=1e-3, **kwargs):
   """ Performs a convergence test for kpoints using kpoints.Density object.
 
@@ -129,7 +128,7 @@ def kpoint_convergence(structure, vasp, outdir="kconv", start=1, steps=None, \
       @param type: 3-tuple.
       @param repat: File to repatriate, other than L{files.minimal}. Default: [].
       @type repat: list or set
-      @param tolerance: Total energy convergence criteria. Default: 1e-3. 
+      @param tolerance: Total energy convergence criteria (per atom). Default: 1e-3. 
       @type tolerance: float
   """
   from copy import deepcopy
@@ -142,8 +141,8 @@ def kpoint_convergence(structure, vasp, outdir="kconv", start=1, steps=None, \
   # make this function stateless.
   vasp = deepcopy(vasp)
   repat = set(repat).union(files.minimal)
-  tolerance = float(tolerance)
-  vasp.relaxation = "static" # what else could it be?
+  tolerance = float(tolerance) * float( len(structure.atoms) )
+  vasp.relaxation.value = "static" # what else could it be?
   density = deepcopy(start)
 
   # keywords arguments cannot include kpoints.
@@ -166,8 +165,7 @@ def kpoint_convergence(structure, vasp, outdir="kconv", start=1, steps=None, \
   # makes sure we don't accidentally converge to early.
   oldenergy = -output.total_energy
 
-  tol = tolerance * float( len(structure.atoms) )
-  while( abs(oldenergy - output.total_energy) > tol ):
+  while( abs(oldenergy - output.total_energy) > tolerance ):
     # restart + new directory
     vasp.indir = outdirs[-1]
     density += steps

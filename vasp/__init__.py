@@ -66,35 +66,31 @@ class Vasp(Launch):
     from copy import deepcopy
     from os.path import exists, isdir
 
-    # if other keyword arguments are present, then they are assumed to be
-    # attributes of self, with value their expected value before launch. 
-    # A temporary functor object is created, with these attributes modified,
-    # and then called.
-    if len(kwargs) != 0: 
-      this = deepcopy(self)
-      for key in kwargs.keys(): setattr(this, key, kwargs[key]) 
-      this(structure, outdir, repat)
-    # if no keyword arguments are present, keep going with normal routine.
-
     # make this functor stateless.
     this = deepcopy(self)
-    structure = deepcopy(self)
+    structure = deepcopy(structure)
     outdir = deepcopy(outdir)
     repat = deepcopy(repat)
+
+    # if other keyword arguments are present, then they are assumed to be
+    # attributes of self, with value their expected value before launch. 
+    if len(kwargs) != 0: 
+      for key in kwargs.keys(): getattr(this, key).value = kwargs[key]
 
     # First checks if directory outdir exists (and is a directory).
     if exists(outdir):
       if not isdir(outdir): raise IOError, "%s exists but is not a directory.\n" % (outdir)
       # checks if it contains a successful run.
       extract = Extract(outdir)
-      if extract.successful: return extract # in which case, returns extraction object.
+      if extract.success: return extract # in which case, returns extraction object.
     
     # Otherwise, performs calculation by calling base class functor.
-    Launch.__call__(this, structure, outdir, repat)
+    super(Vasp, this).__call__(structure=structure, outdir=outdir, repat=repat)
     
     # checks if result was successful
     extract = Extract(outdir)
-    if not extract.successful: raise RuntimeError, "VASP calculation did not complete.\n" % (outdir)
+    if not extract.success:
+      raise RuntimeError, "VASP calculation did not complete in %s.\n" % (outdir)
 
     return extract
 

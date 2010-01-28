@@ -5,14 +5,14 @@ class Success(object):
 
   def __get__(self, owner, type=None):
     from os.path import exists, join
-    from ...launch import Launch
+    from .. import files
     import re
 
-    for path in [Launch.OUTCAR, Launch.CONTCAR]:
+    for path in [files.OUTCAR, files.CONTCAR]:
       if owner.directory != "": path = join(owner.directory, path)
       if not exists(path): return False
       
-    path = Launch.OUTCAR 
+    path = files.OUTCAR 
     if len(owner.directory): path = join(owner.directory, path)
 
     with open(path, "r") as file:

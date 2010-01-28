@@ -5,8 +5,10 @@ class Standard(object):
       
       In practice, the key should be an INCAR tag, and the value something
       which makes sense for that key.
+      C{print self.incar_string()} outputs self.key = self.value.
   """
   def __init__(self, key, value, validity=None):
+    super(Standard, self).__init__()
 
     self.key = key
     """ Any string """
@@ -22,6 +24,11 @@ class Standard(object):
     self.value = value
 
   value = property(_getvalue, _setvalue)
+  """ Actual property 
+  
+      It takes a meaningful value when set (eg a string), and
+      returns its  "VASP" equivalent when gotten.
+  """
 
   def incar_string(self, vasp):
     """ Prints the key/value as key = value """
@@ -31,19 +38,43 @@ class Standard(object):
 class NoPrintStandard(Standard):
   """ Does not print if value is the default given on initialization. """
   def __init__(self, *args, **kwargs):
-    Standard.__init__(self, *args, **kwargs)
+    super(NoPrintStandard, self).__init__(*args, **kwargs)
     self.default = self.value
   def incar_string(self, vasp):
     if self.default == self.value: 
       return "# %s = VASP default." % (self.key)
     return super(NoPrintStandard, self).incar_string(vasp)
 
-class AlgoValue(Standard): 
+class Iniwave(Standard):
+  """ Iniwave variable 
+
+      self.value can be either "random" or "jellium".
+  """
+  def __init__(self, default = "random"):
+    validity = lambda x: x=="random" or x=="jellium"
+    super(Iniwave, self).__init__("INIWAVE", default, validity)
+
+  def _getvalue(self): 
+    if self._value == "random": return 1
+    elif self._value == "jellium": return 0
+    else: raise RuntimeError, "Internal bug."
+
+  value = property(_getvalue, Standard._setvalue)
+  """ Iniwave property
+  
+      It takes a meaningful value when set (C{self.value = random})
+        - random: wavefunctions are initalized with random number. Safest. 
+        - jellium: wavefunctions are initalized a jelliums. Not so safe.
+      returns its  "VASP" equivalent when gotten (C{print self.value} outputs 0 or 1).
+  """
+
+
+class Algo(Standard): 
   """ Electronic minimization. 
       Can be \"very fast\", \"fast\", or \"normal\" (default). 
   """ 
   def __init__(self):
-    Standard.__init__(self, "ALGO", "normal") 
+    super(Algo, self).__init__("ALGO", "normal") 
   def _getvalue(self):
     if self._value not in ["Very_Fast", "Fast", "Normal"]:
       self.value = self._value
@@ -57,11 +88,12 @@ class AlgoValue(Standard):
     else: raise ValueError, "%s = %s is invalid.\n%s\n" % (self.key, value, self.__doc__)
   value = property(_getvalue, _setvalue)
 
-class PrecValue(Standard):
+class Precision(Standard):
   """ Sets accuracy of calculation. 
       Can be \"accurate\" (default), \"low\", \"medium\", \"high\".
   """
-  def __init__(self): Standard.__init__( self, "PREC", "accurate") 
+  def __init__(self): 
+    super(Precision, self).__init__("PREC", "accurate") 
   def _getvalue(self):
     if self._value not in ["accurate", "lower", "medium", "high"]:
       self.value = self._value
@@ -72,26 +104,25 @@ class PrecValue(Standard):
       raise ValueError, "%s = %s is invalid.\n%s\n" % (self.key, value, self.__doc__)
   value = property(_getvalue, _setvalue)
 
-class EdiffValue(Standard):
-  """ Sets the convergence criteria for electronic minimization.
+class Ediff(Standard):
+  """ Sets the convergence criteria (per atom) for electronic minimization.
 
-      This tolerance is divided by the number of atoms in the system.  For this
-      reason, printing to incar is doned via the return to __call__.
+      This tolerance is divided by the number of atoms in the system. This
+      makes tolerance consistent from one system to the next.
   """
   def __init__(self, value = 1e-4):
-    Standard.__init__(self, "EDIFF", value, validity = lambda x: x > 0e0)
+    super(Ediff, self).__init__("EDIFF", value, validity = lambda x: x > 0e0)
   def incar_string(self, vasp):
-    return "%s = %f " % (self.key, self.value / float(len(vasp._system.atoms)))
+    return "%s = %f " % (self.key, self.value * float(len(vasp._system.atoms)))
 
 
-class EncutValue(object):
+class Encut(object):
   """ Defines energy cutoff for calculation. 
       The base cutoff is obtained from the species of the owner specified in
       __init__. The actual cutoff is that times the safety (also specified in __init__).
   """
   class Safety(object):
-    def __init__(self, value):
-      self.value = value
+    def __init__(self, value): self.value = value
     def __set__(self, owner, value):
       assert value > 0, "Ecut safety must be larger than 0.\n"
       self._value = value
@@ -100,7 +131,9 @@ class EncutValue(object):
   safety = Safety(1.25)
   """ A safety upon the largest ENMAX """
 
-  def __init__(self, safety = 1.25): self.safety = safety
+  def __init__(self, safety = 1.25):
+    super(Encut, self).__init__()
+    self.safety = safety
 
   def _getvalue(self):
     raise ValueError, "Value of encut cannot be obtained directly. use enmax method instead.\n"
@@ -142,7 +175,7 @@ class EncutValue(object):
 
     return ceil(result)
 
-class SmearingValue(object):
+class Smearing(object):
   """ Value of the smearing used in the calculation. 
       It can be specified as a string: "type x", where type is any of fermi,
       gaussian, mp, tetra, metal or insulator, and x is the energy scale in eV.
@@ -152,11 +185,12 @@ class SmearingValue(object):
             where N is the order the mp method.
           - tetra tetrahedron method without Bloechl correction.
           - bloechl means tetrahedron method with Bloechl correction.
-          - metal is equivalent to "mp 1"
+          - "metal x" is equivalent to "mp 1 x"
           - insulator is equivalent to "tetra bloechl".
           - if x is omitted a default value of 0.2eV is used.
   """
   def __init__(self, string = "insulator 0.2"):
+    super(Smearing, self).__init__()
     self.value = "insulator 0.2"
     self.value = string
 
@@ -188,6 +222,9 @@ class SmearingValue(object):
     elif first == "gaussian" or first == "0":
       self.type == 0
       if second != None: self.smearing = float(second)
+    elif first == "metal":
+      self.type = 1
+      if second != None: self.smearing = float(second)
     elif first == "mp" or first == "metal":
       if third != None:
         self.type = int(second)
@@ -218,29 +255,37 @@ class SmearingValue(object):
     return "ISMEAR  = %s\nSIGMA   = %f\n" % self.value
 
   
-class SymValue(object):
+class Isym(object):
   """ Type of symmetry used in the calculation.
       Can be "off" or a float corresponding to the tolerance used to determine
       symmetry operation.  By default, it is 1e-5.
   """
   def __init__(self, value = 1e-5):
+    super(Isym, self).__init__()
     self.value = value
 
   def _getvalue(self):
-    if self._tol <= 0e0: return "off"
-    return self._tol
+    if self._value <= 0e0: return "off"
+    return self._value
   def _setvalue(self, value):
     strval = str(value)
-    if strval == "off": self._tol = -1e0
-    else: self._tol = float(value) 
+    if strval == "off": self._value = -1e0
+    else: self._value = float(value) 
   value = property(_getvalue, _setvalue)
   def incar_string(self, vasp):
-    if self._tol <= 0e0: return "ISYM = 0\n" 
-    return "SYMPREC = %8.6e" % (self._tol)
+    if self._value <= 0e0: return "ISYM = 0\n" 
+    return "SYMPREC = %8.6e" % (self._value)
+
+  def __eq__(self, other):
+    if isinstance(other, Isym):
+      return self._value == self._value
+    return self == Isym(other)
   
-class FFTValue(object):
+class FFTGrid(object):
     """ Computes fft grid using VASP. Or if grid is given, computes using that grid. """
-    def __init__(self, grid = None): self._value = grid
+    def __init__(self, grid = None): 
+      super(FFTGrid, self).__init__()
+      self._value = grid
 
     def _getvalue(self):
       if self._value == None:
@@ -271,8 +316,11 @@ class FFTValue(object):
       vasp = deepcopy(vasp)
       with Tempdir(getcwd(), keep=True) as vasp._tempdir:
         vasp.kpoints = kpoints.Gamma()
-        vasp.relaxation = None
-        vasp.fft = None # simply remove attribute to get VASP default
+        vasp.relaxation.value = None
+        # may need to do some checking here... will run into infinit recursion
+        # if attribute is not fftgrid. Can we access vasp.__dict__ and remove
+        # reference to self?
+        del vasp.fftgrid # simply remove attribute to get VASP default
         # makes sure we do nothing during this run
         vasp.nelmdl = Standard("NELMDL",  0)
         vasp.nelm   = Standard("NELM",  0)
@@ -290,7 +338,7 @@ class FFTValue(object):
 
       
 
-class RestartValue(object):
+class Restart(object):
   """
       Directory where to restart, or None.
       
@@ -299,7 +347,10 @@ class RestartValue(object):
       wavefunctions or charge. If this directory does not exist, issue an
       error.
   """
-  def __init__(self, directory = None):  self._value = directory
+  def __init__(self, directory = None):  
+    super(Restart, self).__init__()
+    self._value = directory
+
   def __get__(self, owner, ownertype=None): return self
   def __set__(self, owner, value): self._setvalue(self, value)
   def _getvalue(self): return self._value
@@ -328,7 +379,7 @@ class RestartValue(object):
 
     return  "ISTART = %s\nICHARG = %s" % (istart, icharg)
 
-class RelaxationValue(object):
+class Relaxation(object):
   """ Sets ISIF in incar depending on type relaxation required. 
 
         - if set to None or empty string, then no relaxation.
@@ -339,7 +390,10 @@ class RelaxationValue(object):
        Makes sure that the parameters make sense together. 
        Can also be set using an integer between 0 and 7. See VASP manual. 
   """
-  def __init__(self, value = None): self.value = value
+  def __init__(self, value = None, nsw=40):
+    super(Relaxation, self).__init__()
+    self.value = value
+    self.nsw = 40
 
   @property
   def key(self): return "ISIF"
@@ -356,7 +410,7 @@ class RelaxationValue(object):
       self._value = int(object) 
       assert self._value >= 0
       return 
-    except TypeError: pass
+    except ValueError: pass
 
     if object.lower() == "static": 
       self._value = 0
@@ -382,18 +436,25 @@ class RelaxationValue(object):
     if isif == 0:  
       return "ISIF = 0     # static calculation " 
     elif isif == 1:       
-      return "ISIF = 2     # relaxing atomic positions. Only trace of strain is correct."
+      return "ISIF = 2     # relaxing atomic positions. Only trace of strain is correct.\n"\
+             "NSW = %i     # number of ionic steps." % (self.nsw)
     elif isif == 2:       
-      return "ISIF = 2     # relaxing atomic positions only."
+      return "ISIF = 2     # relaxing atomic positions only.\n"\
+             "NSW = %i     # number of ionic steps." % (self.nsw)
     elif isif == 3:       
-      return "ISIF = 3     # relaxing all structural degrees of freedom."
+      return "ISIF = 3     # relaxing all structural degrees of freedom.\n"\
+             "NSW = %i     # number of ionic steps." % (self.nsw)
     elif isif == 4:       
-      return "ISIF = 4     # relaxing atomic positions and cell-shape at constant volume."
+      return "ISIF = 4     # relaxing atomic positions and cell-shape at constant volume.\n"\
+             "NSW = %i     # number of ionic steps." % (self.nsw)
     elif isif == 5:       
-      return "ISIF = 5     # relaxing cell-shape at constant atomic-positions and volume."
+      return "ISIF = 5     # relaxing cell-shape at constant atomic-positions and volume.\n"\
+             "NSW = %i     # number of ionic steps." % (self.nsw)
     elif isif == 6:       
-      return "ISIF = 6     # relaxing volume and cell-shape at constant atomic-positions."
+      return "ISIF = 6     # relaxing volume and cell-shape at constant atomic-positions.\n"\
+             "NSW = %i     # number of ionic steps." % (self.nsw)
     elif isif == 7:       
-      return "ISIF = 7     # relaxing volume only."
+      return "ISIF = 7     # relaxing volume only.\n"\
+             "NSW = %i     # number of ionic steps." % (self.nsw)
     raise RuntimeError, "Internal bug."
 

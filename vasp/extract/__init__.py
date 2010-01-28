@@ -22,8 +22,8 @@ class Extract(object):
   def _get_energy_sigma0(self):
     """ Gets total energy extrapolated to $\sigma=0$ from vasp run """
     from os.path import exists, join
-    import re
-    from lada.vasp.files import OUTCAR
+    from re import compile, X as re_X
+    from ..files import OUTCAR
 
     path = OUTCAR 
     if len(self.directory): path = join(self.directory, path)
@@ -31,8 +31,8 @@ class Extract(object):
 
     result = None
     with open(path, "r") as file:
-      regex = re.compile( r"""energy\s+without\s+entropy\s*=\s*(\S+)\s+
-                              energy(sigma->0)\s+=\s+(\S+)""", re.X)
+      regex = compile( r"""energy\s+without\s+entropy\s*=\s*(\S+)\s+
+                           energy\(sigma->0\)\s+=\s+(\S+)""", re_X)
       for line in file:
         match = regex.search(line)
         if match != None: result = float(match.group(2))
@@ -44,8 +44,8 @@ class Extract(object):
   def _get_energy(self):
     """ Gets total energy from vasp run """
     from os.path import exists, join
-    import re
-    from lada.vasp.files import OUTCAR
+    from re import compile, X as re_X
+    from ..files import OUTCAR
 
     path = OUTCAR 
     if len(self.directory): path = join(self.directory, path)
@@ -53,8 +53,8 @@ class Extract(object):
 
     result = None
     with open(path, "r") as file:
-      regex = re.compile( r"""energy\s+without\s+entropy\s*=\s*(\S+)\s+
-                              energy(sigma->0)\s+=\s+(\S+)""", re.X)
+      regex = compile( r"""energy\s+without\s+entropy\s*=\s*(\S+)\s+
+                           energy\(sigma->0\)\s+=\s+(\S+)""", re_X)
       for line in file:
         match = regex.search(line)
         if match != None: result = float(match.group(1))
@@ -74,8 +74,8 @@ class Extract(object):
   def _get_free_energy(self):
     """ Gets total free energy from vasp run """
     from os.path import exists, join
-    import re
-    from lada.vasp.files import OUTCAR
+    from re import compile
+    from ..files import OUTCAR
 
     path = OUTCAR 
     if len(self.directory): path = join(self.directory, path)
@@ -83,7 +83,7 @@ class Extract(object):
 
     result = None
     with open(path, "r") as file:
-      regex = re.compile( r"""free\s+energy\s+TOTEN\s*=\s*(\S+)\s+eV""" )
+      regex = compile( r"""free\s+energy\s+TOTEN\s*=\s*(\S+)\s+eV""" )
       for line in file:
         match = regex.search(line)
         if match != None: result = float(match.group(1))
@@ -96,8 +96,8 @@ class Extract(object):
   def _get_fermi_energy(self):
     """ Gets total free energy from vasp run """
     from os.path import exists, join
-    import re
-    from lada.vasp.files import OUTCAR
+    from re import compile
+    from ..files import OUTCAR
 
     path = OUTCAR 
     if len(self.directory): path = join(self.directory, path)
@@ -105,7 +105,7 @@ class Extract(object):
 
     result = None
     with open(path, "r") as file:
-      regex = re.compile( r"""E-fermi\s*:\s*(\S+)""" )
+      regex = compile( r"""E-fermi\s*:\s*(\S+)""" )
       for line in file:
         match = regex.search(line)
         if match != None: result = float(match.group(1))
@@ -118,25 +118,51 @@ class Extract(object):
   def _get_structure(self):
     """ Gets structure from CONTCAR file and total energy from OUTCAR """
     from os.path import exists, join
-    import re
-    from lada.vasp.files import CONTCAR
+    from ..files import CONTCAR
+    from ...crystal import read_poscar
+
+    species_in = self.species
 
     path = CONTCAR 
     if len(self.directory): path = join(self.directory, path)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
-    result = crystal.read_poscar(tuple(self.species), self.CONTCAR)
+    result = read_poscar(species_in, path)
     result.energy = self.energy
 
     return result
   system = property(_get_structure)
-  r""" Fills a crystal.sStructure from CONTCAR and free energy in OUTCAR. """
+  r""" Fills a L{crystal.sStructure} from L{files.CONTCAR} and free energy in L{files.OUTCAR}. """
+  structure = property(_get_structure)
+  r""" Alias for self.L{system}. """
+
+  def _get_species(self):
+    """ Gets species from L{files.OUTCAR}. """
+    from os.path import exists, join
+    from re import compile, X as re_X
+    from ..files import OUTCAR
+
+    path = OUTCAR 
+    if len(self.directory): path = join(self.directory, path)
+    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
+
+    result = []
+    with open(path, "r") as file:
+      regex = compile(r"""VRHFIN\s*=\s*(\S+)\s*:""")
+      for line in file:
+        match = regex.search(line)
+        if match == None: continue
+        assert match.group(1) not in result, "Found the same element twice.\n" 
+        result.append( match.group(1) )
+    return tuple(result)
+  species = property(_get_species)
+  """ Atomic species in system. """
 
   def _get_fft(self):
     """ Returns recommended or actual fft setting """
     from os.path import exists, join
-    import re
-    from lada.vasp.files import OUTCAR
+    from re import compile, search, X as re_X
+    from ..files import OUTCAR
 
     path = OUTCAR 
     if len(self.directory): path = join(self.directory, path)
@@ -147,17 +173,17 @@ class Extract(object):
 
       # find start
       for line in file:
-        if re.search("I would recommend the setting", line): break;
-      ng_regex = re.compile(r"""WARNING:\s+wrap\s+around\s+error\s+
-                                must\s+be\s+expected\s+set\s+NG(X|Y|Z)\s+to\s+(\d+)""", re.X)
-      g_regex = re.compile(r"""NG(X|Y|Z)\s+is\s+ok\s+and\s+might\s+be\s+reduce\s+to\s+(\d+)""", re.X)
-      found_regex = re.compile(r"""dimension\s+x,y,z\s+
+        if search("I would recommend the setting", line): break;
+      ng_regex = compile(r"""WARNING:\s+wrap\s+around\s+error\s+
+                                must\s+be\s+expected\s+set\s+NG(X|Y|Z)\s+to\s+(\d+)""", re_X)
+      g_regex = compile(r"""NG(X|Y|Z)\s+is\s+ok\s+and\s+might\s+be\s+reduce\s+to\s+(\d+)""", re_X)
+      found_regex = compile(r"""dimension\s+x,y,z\s+
                                    NGX\s+=\s+(\d+)\s+
                                    NGY\s+=\s+(\d+)\s+
-                                   NGZ\s+=\s+(\d+)""", re.X)
+                                   NGZ\s+=\s+(\d+)""", re_X)
 
       allset = 0
-      fft = None, None, None
+      fft = [None, None, None]
       for line in file:
         p = ng_regex.search(line)
         if p != None:
@@ -187,7 +213,7 @@ class Extract(object):
           continue
         p = found_regex.search(line)
         if p != None:
-          fft = ( int(p.group(1)), int(p.group(2)), int(p.group(3)) )
+          fft = [ int(p.group(1)), int(p.group(2)), int(p.group(3)) ]
           break;
 
       assert fft[0] != None, "File %s is incomplete or incoherent.\n" % (path)
@@ -197,7 +223,7 @@ class Extract(object):
       multiple = 8
       for i in range(3):
         if fft[i] % multiple: fft[i] += multiple - fft[i] % multiple
-      return fft
+      return tuple(fft)
     raise RuntimeError, "File %s could not be opened.\n" % (path)
   fft = property(_get_fft)
   r""" Gets recommended fft grid (for wavefunctions). """
