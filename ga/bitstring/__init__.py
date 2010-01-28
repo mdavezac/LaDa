@@ -2,18 +2,25 @@
 
 class Individual(object):
   """ An individual for bitstrings.
-      The size of the individual is given statically by Individual.size
+
+      The size of the individual is given statically by Individual.size.
+      @attention: This class does handle mpi at all. Created instances will
+        differ from one process to the next.
   """
 
   size = 10
 
   def __init__(self):
-    """ Initializes a bitstring individual randomly. """
+    """ Initializes a bitstring individual randomly. 
+
+      @attention: This class does handle mpi at all. Created instances will
+        differ from one process to the next.
+    """
     from random import randint
-    import numpy
+    from numpy import array
 
     super(Individual, self).__init__()
-    self.genes = numpy.array([ randint(0,1) for i in xrange(self.size) ])
+    self.genes = array([ randint(0,1) for i in xrange(self.size) ])
   
   def __eq__(self, a): 
     from math import fabs
