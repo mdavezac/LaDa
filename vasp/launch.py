@@ -154,7 +154,7 @@ class Launch(Incar):
     # creates temporary working directory
     workdir = self.workdir
     if workdir == None: workdir = getcwd()
-    with Tempdir(workdir, keep = True) as self._tempdir: 
+    with Tempdir(workdir) as self._tempdir: 
       print "tempdir = ", self._tempdir
       # creates INCAR and KPOINTS.
       # copies POSCAR, POTCAR, possibly WAVECAR and CHGCAR from indir

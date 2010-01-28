@@ -314,7 +314,7 @@ class FFTGrid(object):
       if self._value != None: return self._value
 
       vasp = deepcopy(vasp)
-      with Tempdir(getcwd(), keep=True) as vasp._tempdir:
+      with Tempdir(getcwd()) as vasp._tempdir:
         vasp.kpoints = kpoints.Gamma()
         vasp.relaxation.value = None
         # may need to do some checking here... will run into infinit recursion
@@ -390,10 +390,12 @@ class Relaxation(object):
        Makes sure that the parameters make sense together. 
        Can also be set using an integer between 0 and 7. See VASP manual. 
   """
-  def __init__(self, value = None, nsw=40):
+  def __init__(self, value = None, nsw=40, ibrion=2, potim=0.5):
     super(Relaxation, self).__init__()
     self.value = value
     self.nsw = 40
+    self.ibrion = 2
+    self.potim = 0.5
 
   @property
   def key(self): return "ISIF"
@@ -433,28 +435,23 @@ class Relaxation(object):
 
   def incar_string(self, vasp):
     isif = self.value
-    if isif == 0:  
-      return "ISIF = 0     # static calculation " 
+    result = "NSW    = %3i   # number of ionic steps.\n"\
+             "IBRION =   %1i # ionic-relaxation minimization method.\n"\
+             "POTIM  = %7.4f # ionic-relaxation step \n" % (self.nsw, self.ibrion, self.potim)
+    if isif == 0: return "ISIF = 0     # static calculation " 
     elif isif == 1:       
-      return "ISIF = 2     # relaxing atomic positions. Only trace of strain is correct.\n"\
-             "NSW = %i     # number of ionic steps." % (self.nsw)
-    elif isif == 2:       
-      return "ISIF = 2     # relaxing atomic positions only.\n"\
-             "NSW = %i     # number of ionic steps." % (self.nsw)
-    elif isif == 3:       
-      return "ISIF = 3     # relaxing all structural degrees of freedom.\n"\
-             "NSW = %i     # number of ionic steps." % (self.nsw)
-    elif isif == 4:       
-      return "ISIF = 4     # relaxing atomic positions and cell-shape at constant volume.\n"\
-             "NSW = %i     # number of ionic steps." % (self.nsw)
-    elif isif == 5:       
-      return "ISIF = 5     # relaxing cell-shape at constant atomic-positions and volume.\n"\
-             "NSW = %i     # number of ionic steps." % (self.nsw)
-    elif isif == 6:       
-      return "ISIF = 6     # relaxing volume and cell-shape at constant atomic-positions.\n"\
-             "NSW = %i     # number of ionic steps." % (self.nsw)
-    elif isif == 7:       
-      return "ISIF = 7     # relaxing volume only.\n"\
-             "NSW = %i     # number of ionic steps." % (self.nsw)
+      return result + "ISIF   = 2     # relaxing atomic positions. Only tr(strain) is correct."
+    elif isif == 2:           
+      return result + "ISIF   = 2     # relaxing atomic positions."
+    elif isif == 3:           
+      return result + "ISIF   = 3     # relaxing all structural degrees of freedom."
+    elif isif == 4:           
+      return result + "ISIF   = 4     # relaxing atom. pos. and cell-shape at constant V."
+    elif isif == 5:           
+      return result + "ISIF   = 5     # relaxing cell-shape at constant atom.-pos. and V."
+    elif isif == 6:           
+      return result + "ISIF   = 6     # relaxing V. and cell-shape at constant atom.-pos."
+    elif isif == 7:           
+      return result + "ISIF   = 7     # relaxing V. only."
     raise RuntimeError, "Internal bug."
 
