@@ -67,8 +67,10 @@ class Bandgap(object):
  
     # moves to new calculation directory
     self.bandgap.directory = self.directory_prefix + "_" + str(self.nbcalc)
-    if exists(self.bandgap.directory): rmtree( self.bandgap.directory)
-    makedirs(self.bandgap.directory)
+    if self.world.do_print: 
+      if exists(self.bandgap.directory): rmtree( self.bandgap.directory)
+      makedirs(self.bandgap.directory)
+    self.world.barrier()
  
     # moves to calculation directory
     with Changedir(self.bandgap.directory) as pwd:

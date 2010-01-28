@@ -1,13 +1,13 @@
 """ A GA subpackage to select figures for a cluster expansion. """
 def _equivalent_sites(lattice):
   """ Returns a list containing only one site index per inequivalent sub-lattice. """
-  from lada import crystal
+  from ...crystal import which_site
 
   result = set( i for i in range(len(lattice.sites)) ) 
   for i, site in enumerate(lattice.sites):
     if i not in result: continue
     for op in lattice.space_group:
-      j = crystal.which_site( op(site.pos), lattice )
+      j = which_site( op(site.pos), lattice )
       if j != i and j in result: result.remove(j)
   return result
 
@@ -15,13 +15,14 @@ class Eval:
 
   def __init__( self, lattice, path="data", alpha=2, tcoef=10, lmo_ratio = 0.333333, **keywords):
     """ Creates an evaluation function for a multi-site cluster expansion.
+
         Requires on input the lattice, a path towards a directory of structure data,
         and the a short form for the allowed clusters.
     """
-    from lada import ce 
-    import os
-    import re
-    import random
+    from os.path import exists, join
+    from re import compile, match
+    from random import shuffle
+    from ...ce import import create_clusters as Clusters, PairRegulatedFit
 
     self.lattice = lattice
 
@@ -29,9 +30,9 @@ class Eval:
     self.alpha, self.tcoef = alpha, tcoef
 
     # checks that keywords are well formed.
-    key_regex = re.compile("B(\d+)")
+    key_regex = compile("B(\d+)")
     for key in keywords.keys(): 
-      a_re = re.match(key_regex, key)
+      a_re = match(key_regex, key)
       assert a_re != None, "Keyword %s is not of the form B(\d+)" % (key)
       assert a_re.end() == len(key), "Keyword %s is not of the form B(\d+)" % (key)
       assert int(a_re.group(1)) > 1, "Cannot understand keyword %s" % (key)
@@ -44,28 +45,28 @@ class Eval:
 
 
     # now creates multi-lattice clusters, along with index bookkeeping.
-    self._mlclasses = ce.create_clusters(lattice, nth_shell=0, order=0, site=0) # J0
+    self._mlclasses = Clusters(lattice, nth_shell=0, order=0, site=0) # J0
     # creates J1 for these sites.
     for site in _equivalent_sites(self.lattice):
-      self._mlclasses.extend(ce.create_clusters(lattice, nth_shell=0, order=1, site=site))
+      self._mlclasses.extend(Clusters(lattice, nth_shell=0, order=1, site=site))
     # creates many bodies.
     self._fixed = len(self._mlclasses)
     for site in _equivalent_sites(self.lattice):
       for key in keys:
-        regex = re.match(key_regex, key)
+        regex = match(key_regex, key)
         order = int(regex.group(1))
         shell = keywords[key]
-        self._mlclasses.extend(ce.create_clusters(lattice, nth_shell=shell, order=order, site=site))
+        self._mlclasses.extend(Clusters(lattice, nth_shell=shell, order=order, site=site))
 
     # creates fitting function 
-    self.fitter = ce.PairRegulatedFit(self._mlclasses, alpha=self.alpha, tcoef=self.tcoef)
+    self.fitter = PairRegulatedFit(self._mlclasses, alpha=self.alpha, tcoef=self.tcoef)
     self.fitter.read_directory(path)
 
     # now reads/creates set.
-    set_path = os.path.join(path, "set")
+    set_path = join(path, "set")
     self._sets = []
     ncls, nstr = self.fitter.size()
-    if os.path.exists(set_path):
+    if exists(set_path):
       # reads path 
       print "Found input set %s:\n" % (set_path)
       file = open(set_path, "r")
@@ -85,7 +86,7 @@ class Eval:
         for i in xrange(size):
           if len(full_set) < size:
             full_set = [ j for j in range(nstr) ]
-            random.shuffle(full_set)
+            shuffle(full_set)
           self._sets.append( full_set[:size] )
           full_set = full_set[size:]
           print "  ", self._sets[-1]
@@ -101,12 +102,12 @@ class Eval:
         Optimizes cv score with respect to pairs, and pair regularization.
     """
     from math import sqrt
+    from numpy import arange, zeros, average
     from .. import ce
-    import numpy
 
     assert len(self._mlclasses) - self._fixed == len(indiv.genes),\
            "Individual is of incorrect size.\n"
-    onoffs = numpy.zeros((len(self._mlclasses),), dtype=bool)
+    onoffs = zeros((len(self._mlclasses),), dtype=bool)
     onoffs[:self._fixed] = True
     onoffs[self._fixed:] = indiv.genes
 
@@ -117,8 +118,8 @@ class Eval:
     if len(self._sets) == 0:
       errors = ce.leave_one_out(self.fitter)
       npreds, nstr = errors.shape
-      prediction = errors[ numpy.arange(errors.shape[0]), numpy.arange(errors.shape[0]) ]
-      return sqrt(numpy.average(prediction*prediction))
+      prediction = errors[ arange(errors.shape[0]), arange(errors.shape[0]) ]
+      return sqrt(average(prediction*prediction))
     else:
       errors = ce.leave_many_out(self.fitter, self._sets)
       npred, prediction = 0, 0e0
@@ -137,8 +138,8 @@ class EvalFitPairs(Eval):
   max_pow = 15
 
   def __init__(self, pairs=(10, 20), *args, **kwarg):
-    from lada import ce
     from math import fabs
+    from ...ce import create_clusters as Clusters
 
     assert "B2" not in kwarg.keys(), "Cannot use B2 to initialize EvalFitPairs. Use pairs=(?,?).\n"
 
@@ -158,13 +159,12 @@ class EvalFitPairs(Eval):
     classes = None
     for site in _equivalent_sites(self.lattice):
       if classes == None:
-        classes = ce.create_clusters(self.lattice, nth_shell=self.pairs[1], order=2, site=site)
+        classes = Clusters(self.lattice, nth_shell=self.pairs[1], order=2, site=site)
         self._pairindex = [0]
         pairs = len(classes)
       else:
         self._pairindex.append(len(classes))
-        classes.extend(ce.create_clusters(lself.attice, nth_shell=self.pairs[1],
-                                          order=2, site=site))
+        classes.extend(Clusters(lself.attice, nth_shell=self.pairs[1], order=2, site=site))
         if len(classes) - self._pairindex[-1] > pairs: pairs = len(classes) - self._pairindex[-1]
     # adds pair terms.
     self.pairs = (self.pairs[0], pairs, self.pairs[2])
@@ -177,10 +177,10 @@ class EvalFitPairs(Eval):
 
 
   def __call__(self, indiv):
-    import numpy
+    from numpy import arange, average, arrays, zeros
     from scipy.optimize import fmin as simplex
 #   from scipy.optimize import fmin_powell as simplex
-    from lada.ce import leave_many_out, leave_one_out
+    from ...ce import leave_many_out, leave_one_out
 
     assert len(self._mlclasses) - self._fixed == len(indiv.genes),\
            "Individual is of incorrect size.\n"
@@ -196,8 +196,8 @@ class EvalFitPairs(Eval):
       self.fitter.tcoef = 100*exp(x[1])
       errors = leave_one_out(self.fitter)
       npreds, nstr = errors.shape
-      prediction = errors[ numpy.arange(errors.shape[0]), numpy.arange(errors.shape[0]) ]
-      return sqrt(numpy.average(prediction*prediction))
+      prediction = errors[ arange(errors.shape[0]), arange(errors.shape[0]) ]
+      return sqrt(average(prediction*prediction))
     def callable_lmo(x):
       from math import sqrt, log as ln, fabs, exp
       if self.nfun > EvalFitPairs.max_nfuncs: raise StopIteration
@@ -223,10 +223,10 @@ class EvalFitPairs(Eval):
       pairs.append( pairs[-1] + self.pairs[2] )
     if pairs[-1] != self.pairs[1]: pairs.append( self.pairs[1] )
 
-    x0 = numpy.array([1.1,1.0])
+    x0 = array([1.1,1.0])
     minvals = None
     for p in pairs:
-      onoffs = numpy.zeros((len(self._mlclasses),), dtype=bool)
+      onoffs = zeros((len(self._mlclasses),), dtype=bool)
       for i, index in enumerate(self._pairindex[:-1]):
         nbpairs = min(i+p, self._pairindex[index+1])
         onoffs[i:nbpairs] = True
@@ -241,9 +241,9 @@ class EvalFitPairs(Eval):
             simplex(which_callable, x0, ftol=0.1, xtol=0.1, full_output=True, 
                     disp=False, maxfun=20, maxiter=20)
       except StopIteration:
-        fopt = 1e12; x0 = numpy.array([1.1,1.0])
+        fopt = 1e12; x0 = array([1.1,1.0])
       except ValueError:
-        fopt = 1e12; x0 = numpy.array([1.1,1.0])
+        fopt = 1e12; x0 = array([1.1,1.0])
       if minvals == None or minvals[0] > fopt:  minvals = (fopt, iter)
 
     return minvals[0]
@@ -302,21 +302,28 @@ class Taboo(object):
 
     
 
-class Individual:
+class Individual(object):
   """ An individual for boolean bitstrings.
+
       The size of the individual is given statically by Individual.size
+      @attention: This class does handle mpi at all. Created instances will
+        differ from one process to the next.
   """
 
   size = 10
   max_mbs_oninit = -1
 
-  def __init__(self):
+  def __init__(self, darwin):
     """ Initializes a boolean bitstring individual randomly.
+
+        @attention: This class does handle mpi at all. Created instances will
+          differ from one process to the next.
     """
     from random import choice, shuffle, randint
-    import numpy
+    from numpy import array
 
-    self.genes = numpy.array([ choice([True,False]) for i in xrange(Individual.size) ], dtype=bool)
+    super(Individual, self).__init__()
+    self.genes = array([ choice([True,False]) for i in xrange(Individual.size) ], dtype=bool)
 
     if self.max_mbs_oninit > 0:
       list_ = [i for i in xrange(len(self.genes))]
