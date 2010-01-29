@@ -22,7 +22,7 @@ class Eval:
     from os.path import exists, join
     from re import compile, match
     from random import shuffle
-    from ...ce import import create_clusters as Clusters, PairRegulatedFit
+    from ...ce import create_clusters as Clusters, PairRegulatedFit
 
     self.lattice = lattice
 
