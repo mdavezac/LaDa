@@ -167,6 +167,9 @@ AC_ARG_ENABLE(nolaunch,
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-nolaunch) ;;
      esac],[nolaunch=false])
 AH_TEMPLATE([_NOLAUNCH])
+if test x$vasp = xtrue; then
+  python=true
+fi
 if test x$nolaunch = xtrue; then
   AC_DEFINE([_NOLAUNCH],[],[])
 fi
@@ -394,7 +397,8 @@ AC_OUTPUT(Makefile math/Makefile math/python/Makefile physics/Makefile physics/p
           atomic_potentials/Makefile atomic_potentials/python/Makefile 
           atomic_potentials/collapse/Makefile enum/Makefile enum/python/Makefile 
           ga/Makefile ga/ce/Makefile ga/bitstring/Makefile ga/pescan/Makefile
-          ga/pescan/elemental/Makefile vasp/Makefile )
+          ga/pescan/elemental/Makefile vasp/Makefile vasp/incar/Makefile vasp/extract/Makefile 
+          vasp/methods/Makefile)
 
 echo ""; echo ""
 echo "Will Compile following modules: "
@@ -429,6 +433,9 @@ if test "$potentials" = true; then
 fi
 if test "$enum" = true; then
   echo " _ Enumeration library"
+fi
+if test "$vasp" = true; then
+  echo " _ VASP interface library"
 fi
 # if test x$emassopt = xtrue; then
 #   echo " _ Genetic Algorithm for Electronic Mass Optimization"
