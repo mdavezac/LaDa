@@ -1,7 +1,7 @@
 #
 #  Version: $Id$
 #
-AC_INIT([LaDa],[3.30])
+AC_INIT([LaDa],[4.00])
 AM_INIT_AUTOMAKE([-Wno-portability])
 
 AC_CONFIG_MACRO_DIR([m4])
