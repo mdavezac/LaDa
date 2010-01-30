@@ -45,6 +45,7 @@ def relaxation( vasp, structure, outdir="relaxation", repat = [], tolerance = 1e
   from os.path import join, exists
   from os import remove
   from .. import files
+  from ...crystal import sStructure
 
   # make this function stateless.
   vasp = deepcopy(vasp)
@@ -69,7 +70,7 @@ def relaxation( vasp, structure, outdir="relaxation", repat = [], tolerance = 1e
   # yields output for whatnot
   yield output
 
-  structure = crystal.sStructure(output.structure)
+  structure = sStructure(output.structure)
   # makes sure we don't accidentally converge to early.
   oldenergy = -structure.energy
 
@@ -87,7 +88,7 @@ def relaxation( vasp, structure, outdir="relaxation", repat = [], tolerance = 1e
     # keeps track of energy.
     oldenergy = float(structure.energy)
     # gets new structure and iterate.
-    structure = crystal.sStructure(output.structure)
+    structure = sStructure(output.structure)
 
   # final calculation.
   vasp.relaxation.value = "static"
