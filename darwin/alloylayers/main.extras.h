@@ -11,7 +11,7 @@
     // includes some more files 
     // defines individual and evaluator.
 #   define _MAIN_ALLOY_LAYERS_EXTRAS_ 0
-#   include <atat/serialize.h>
+#   include <math/serialize.h>
 #   include <eo/eoPopulator.h>
 #   include <boost/lambda/bind.hpp>
 #   include <boost/bind.hpp>

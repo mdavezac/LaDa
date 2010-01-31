@@ -24,11 +24,11 @@
 
 #include <mpi/macros.h>
 #include <minimizer/cgs.h>
+#include <math/fuzzy.h>
+#include <math/random.h>
 #include <opt/types.h>
-#include <opt/fuzzy.h>
 #include <opt/debug.h>
 #include <opt/errors.h>
-#include <opt/random.h>
 #include <opt/bpo_macros.h>
 #include <crystal/lattice.h>
 #include <crystal/structure.h>
@@ -225,7 +225,7 @@ int main(int argc, char *argv[])
   const bool doloo( vm.count("loo") != 0 );
   const LaDa::types::t_unsigned verbosity = vm["verbose"].as<LaDa::types::t_unsigned>();
   LaDa::types::t_unsigned seed = vm["seed"].as<LaDa::types::t_unsigned>();
-  seed = LaDa::opt::random::seed( seed );
+  seed = LaDa::math::seed( seed );
   const LaDa::types::t_unsigned rank( vm["rank"].as< LaDa::types::t_unsigned >() );
   const std::string bdesc( vm["basis"].as<std::string>() );
   const LaDa::types::t_real tolerance( vm["tolerance"].as< LaDa::types::t_real >() );
@@ -241,7 +241,7 @@ int main(int argc, char *argv[])
   const bool J1( vm.count("J1") > 0 );
   const bool gusfile( vm.count("gus") > 0 );
   const bool rmpairs( vm.count("rm") > 0 );
-  __ASSERT( LaDa::Fuzzy::le(tcoef, 0e0), "Coefficient \"t\" cannot negative.\n" )
+  __ASSERT( LaDa::math::le(tcoef, 0e0), "Coefficient \"t\" cannot negative.\n" )
   const LaDa::types::t_unsigned bestof( vm["bestof"].as<LaDa::types::t_unsigned>() );
   __DOASSERT( bestof == 0, "0 jobs to be performed..." )
   const LaDa::types::t_unsigned which( vm["which"].as<LaDa::types::t_unsigned>() );
@@ -280,7 +280,7 @@ int main(int argc, char *argv[])
       if( _class.front().size() == 0 ) { isfound = true; break; }
     if( isfound ) clusters.push_back( std::vector<LaDa::CE::Cluster>(1, cluster) ); 
   }
-  cluster.Vectors().resize(1, LaDa::atat::rVector3d(0,0,0) );
+  cluster.Vectors().resize(1, LaDa::math::rVector3d(0,0,0) );
   if( J1 )
   {
     bool isfound = false;
@@ -333,7 +333,7 @@ int main(int argc, char *argv[])
     );
   mixed.cefit().alpha = alpha;
   mixed.cefit().tcoef = tcoef;
-  mixed.cefit().do_pairreg = ( not LaDa::Fuzzy::is_zero( alpha ) and maxpairs );
+  mixed.cefit().do_pairreg = ( not LaDa::math::is_zero( alpha ) and maxpairs );
   mixed.cefit().laksreg = not volkerreg;
   mixed.cefit().verbose = verbosity >= print_checks;
   // initializes collapse part.

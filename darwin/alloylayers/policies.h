@@ -101,7 +101,7 @@ namespace LaDa
               ++i_atom;
               new_depth = Translate<T_OBJECT>::layerdepth( i_atom->pos );
             }
-            while( Fuzzy::eq( last_depth, new_depth ) and i_atom != i_atom_end );
+            while( math::eq( last_depth, new_depth ) and i_atom != i_atom_end );
 
             // New layer has been reached
             container.push_back( c / (types::t_real) layer_size );
@@ -137,7 +137,7 @@ namespace LaDa
               ++i_atom;
               new_depth = Translate<T_OBJECT>::layerdepth( i_atom->pos );
             }
-            while( Fuzzy::eq( last_depth, new_depth ) and i_atom != i_atom_end );
+            while( math::eq( last_depth, new_depth ) and i_atom != i_atom_end );
 
             // New layer has been reached
             // Creates an array with approximate concentration, shuffles, then

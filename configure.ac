@@ -1,7 +1,7 @@
 #
 #  Version: $Id$
 #
-AC_INIT([LaDa],[3.30])
+AC_INIT([LaDa],[4.00])
 AM_INIT_AUTOMAKE([-Wno-portability])
 
 AC_CONFIG_MACRO_DIR([m4])
@@ -42,6 +42,14 @@ AC_ARG_ENABLE(models,
        no)  models=false ;;
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-models) ;;
      esac],[models=false])
+
+AC_ARG_ENABLE(vasp,
+     [  --enable-vasp               Compiles Coulom + Lennard-Jhones wrappers.],
+     [case "${enableval}" in
+       yes) vasp=true ;;
+       no)  vasp=false ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-vasp) ;;
+     esac],[vasp=false])
 
 AC_ARG_ENABLE(potentials,
      [  --enable-potentials           Compiles generalized atomic potentials.],
@@ -159,6 +167,9 @@ AC_ARG_ENABLE(nolaunch,
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-nolaunch) ;;
      esac],[nolaunch=false])
 AH_TEMPLATE([_NOLAUNCH])
+if test x$vasp = xtrue; then
+  python=true
+fi
 if test x$nolaunch = xtrue; then
   AC_DEFINE([_NOLAUNCH],[],[])
 fi
@@ -290,6 +301,7 @@ AM_CONDITIONAL(DOPYTHONPESCAN, test x$python$pescan$direct_iaga = xtruetruetrue)
 AM_CONDITIONAL(DOPYTHON, test x$python = xtrue)
 AM_CONDITIONAL(DOSEPARABLE, test x$separable = xtrue)
 AM_CONDITIONAL(DOMODELS, test x$models = xtrue)
+AM_CONDITIONAL(DOVASP, test x$vasp = xtrue)
 AM_CONDITIONAL(DOENUM, test x$enum = xtrue)
 AM_CONDITIONAL(DOPOTENTIALS, test x$potentials = xtrue)
 AM_CONDITIONAL(DOMINIMIZER, test xtrue = xtrue)
@@ -375,7 +387,7 @@ AC_SUBST(NUMPY_CXXFLAGS)
 AC_SUBST(MINUIT_LIBS)
 AC_SUBST(MINUIT_CFLAGS)
 
-AC_OUTPUT(Makefile atat/Makefile atat/python/Makefile physics/Makefile physics/python/Makefile
+AC_OUTPUT(Makefile math/Makefile math/python/Makefile physics/Makefile physics/python/Makefile
           opt/Makefile opt/python/Makefile crystal/Makefile crystal/python/Makefile
           vff/Makefile vff/python/Makefile mpi/Makefile pescan_interface/Makefile darwin/Makefile 
           pescan_interface/python/Makefile
@@ -384,7 +396,9 @@ AC_OUTPUT(Makefile atat/Makefile atat/python/Makefile physics/Makefile physics/p
           minimizer/Makefile minimizer/python/Makefile models/Makefile models/python/Makefile 
           atomic_potentials/Makefile atomic_potentials/python/Makefile 
           atomic_potentials/collapse/Makefile enum/Makefile enum/python/Makefile 
-          ga/Makefile vasp/Makefile )
+          ga/Makefile ga/ce/Makefile ga/bitstring/Makefile ga/pescan/Makefile
+          ga/pescan/elemental/Makefile vasp/Makefile vasp/incar/Makefile vasp/extract/Makefile 
+          vasp/methods/Makefile)
 
 echo ""; echo ""
 echo "Will Compile following modules: "
@@ -419,6 +433,9 @@ if test "$potentials" = true; then
 fi
 if test "$enum" = true; then
   echo " _ Enumeration library"
+fi
+if test "$vasp" = true; then
+  echo " _ VASP interface library"
 fi
 # if test x$emassopt = xtrue; then
 #   echo " _ Genetic Algorithm for Electronic Mass Optimization"

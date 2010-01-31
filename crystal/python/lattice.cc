@@ -10,6 +10,8 @@
 #include <boost/python/register_ptr_to_python.hpp>
 #include <boost/python/make_constructor.hpp>
 #include <boost/python/errors.hpp>
+#include <boost/python/return_value_policy.hpp>
+#include <boost/python/return_by_value.hpp>
 
 #include <opt/types.h>
 #include <crystal/structure.h>
@@ -122,12 +124,22 @@ namespace LaDa
 
     }
 
+    math::rVector3d into_cell2(math::rVector3d const &_vec, math::rMatrix3d const &_cell)
+      { return Crystal::into_cell(_vec, _cell, _cell.inverse()); }
+
     void expose_lattice()
     {
-      bp::class_< Crystal::Lattice >( "Lattice" )
+      bp::class_< Crystal::Lattice >( "Lattice", "Defines back-bone lattice." )
         .def(bp::init< Crystal::Lattice >() )
         .def("__init__", bp::make_constructor(&details::init), "Construct lattice form xml file.\n")
-        .def_readwrite("cell",  &Crystal::Lattice::cell )
+        .add_property
+        (
+          "cell",
+          make_getter(&Crystal::Lattice::cell, bp::return_value_policy<bp::return_by_value>()),
+          make_setter(&Crystal::Lattice::cell, bp::return_value_policy<bp::return_by_value>()),
+          "A 3x3 numpy array representing the lattice vector in cartesian units, "
+          "in units of self.L{scale<lada.crystal.Lattice.scale>}."
+        )
         .def_readwrite("sites", &Crystal::Lattice::sites )
         .def_readwrite("scale", &Crystal::Lattice::scale )
         .def_readwrite("space_group", &Crystal::Lattice::space_group )
@@ -145,8 +157,20 @@ namespace LaDa
           "Finds space-group operations (for a given tolerance), stores them in self.space_group."
         );
       bp::register_ptr_to_python< boost::shared_ptr<Crystal::Lattice> >();
-      bp::def( "into_cell", &Crystal::into_cell,
-               (bp::arg("vector"), bp::arg("cell"), bp::arg("inverse")) );
+      bp::def("fold_vector", &into_cell2, (bp::arg("vector"), bp::arg("cell")));
+      bp::def
+      (
+        "fold_vector", &Crystal::into_cell,
+        (bp::arg("vector"), bp::arg("cell"), bp::arg("inverse")),
+        "Returns the vector folded into the given cell.\n\n"
+        "@param vector: the vector to be folded.\n"
+        "@type vector: numpy 3x3 float64 array.\n"
+        "@param cell: the cell for which to fold.\n"
+        "@type cell: numpy 3x3 float64 array.\n"
+        "@param inv: the inverse of the cell for which to fold. Computed from "
+        "cell if not given on input.\n"
+        "@type inv: numpy 3x3 float64 array.\n"
+      );
     }
 
   }

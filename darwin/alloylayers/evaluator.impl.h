@@ -13,7 +13,7 @@
 #include <crystal/structure.h>
 #include <crystal/atom.h>
 #include <opt/tinyxml.h>
-#include <opt/fuzzy.h>
+#include <math/fuzzy.h>
 #include <opt/debug.h>
 #include <mpi/mpi_object.h>
 #include <crystal/layerdepth.h>
@@ -57,7 +57,7 @@ namespace LaDa
         std::sort( structure.atoms.begin(), structure.atoms.end(), 
                    Crystal::LayerDepth( structure.cell ) );
  
-        direction = structure.cell.get_column(0);
+        direction = structure.cell.col(0);
  
         //! now calls init member of policies.
         CallInit< t_Translate, t_This >::call( *this );
@@ -69,7 +69,7 @@ namespace LaDa
       INEVALBASE( inline std::string ) :: print() const
       {
         std::ostringstream sstr;
-        atat::rVector3d dir = lattice->cell * direction;
+        math::rVector3d dir = lattice->cell * direction;
         sstr << "Structure: G=" << direction  << "\n"
              << structure << "\n";
         return sstr.str();
@@ -176,7 +176,7 @@ namespace LaDa
     
       INEVAL(types::t_real) :: effmass( const Pescan::eMass& _functor,
                                         types::t_real _ref,
-                                        const atat::rMatrix3d &_ocell ) const
+                                        const math::rMatrix3d &_ocell ) const
       {
         types::t_real result = 0e0;
         Pescan::eMass::t_Output masses;

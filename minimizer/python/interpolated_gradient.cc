@@ -64,17 +64,24 @@ namespace LaDa
           bp::arg("stepsize") = 1e-3,
           bp::arg("itermax") = 50,
           bp::arg("tolerance") = 1e-12,
-          bp::arg("verbosity") = false
+          bp::arg("verbose") = false
         ),
-        "Interpolates gradient from calls to self.\n"
-        "self should be callable.\n"
-        "arg should be convertible to a (c++) vector of reals.\n"
-        "gradient should be a list of reals.\n"
-        "n is the order of the interpolation.\n"
-        "stepsize are the steps taken for the interpolation.\n"
-        "itermax is the maximum number of iterations when performing the fit.\n"
-        "tolerance is the tolerance of the fit.\n"
-        "If verbosity is true, outputs fitting stuff.\n"
+        "Interpolates gradient using numerical derivatives.\n"
+        "@param self: callable object taking arg on input and returning a scalar.\n"
+        "@param arg: a vector of real numbers.\n"
+        "@type arg: c++ vector\n"
+        "@param gradient: list of gradients.\n"
+        "@type gradient: c++ vector\n"
+        "@param n:  order of the interpolation.\n"
+        "@type n: integer\n"
+        "@param stepsize: size of the steps taken for the interpolation (default: 1e-3).\n"
+        "@type stepsize: float\n"
+        "@param itermax:  maximum number of iterations when performing the fit (default: 50).\n"
+        "@type itermax: integer\n"
+        "@param tolerance: tolerance of the fit (default: 1e-12).\n"
+        "@type tolerance: float\n"
+        "@param verbose: True gets you more output (default: False).\n"
+        "@type verbose: Boolean\n"
       );
     }
   } // namespace Python

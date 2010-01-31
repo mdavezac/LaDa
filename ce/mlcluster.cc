@@ -14,7 +14,7 @@
 
 #include <crystal/which_site.h>
 #include <opt/types.h>
-#include <opt/fuzzy.h>
+#include <math/fuzzy.h>
 
 #include "mlcluster.h"
 
@@ -33,10 +33,10 @@ namespace LaDa
     {
       LADA_ASSERT(Crystal::Structure::lattice != NULL, "No lattice is set.\n");
       Crystal::Lattice const &lattice = *Crystal::Structure::lattice;
-      atat::rMatrix3d const inv_cell( !lattice.cell );
+      math::rMatrix3d const inv_cell( lattice.cell.inverse() );
 
       // finds new origin.
-      atat::rVector3d const transformed_pos(_op(origin.pos)); 
+      math::rVector3d const transformed_pos(_op(origin.pos)); 
       origin.site = size_t_cast(which_site(transformed_pos, inv_cell, lattice.sites));
       origin.pos = lattice.sites[origin.site].pos;
 
@@ -71,7 +71,7 @@ namespace LaDa
         LADA_ASSERT( child->Attribute("site"), "Could not find site attribute.\n" );
         Spin const spin = {
                             boost::lexical_cast<size_t>( child->Attribute("site") ),
-                            atat::rVector3d
+                            math::rVector3d
                             (
                               boost::lexical_cast<types::t_real>( child->Attribute("x") ),
                               boost::lexical_cast<types::t_real>( child->Attribute("y") ),
@@ -87,16 +87,16 @@ namespace LaDa
     bool operator==(MLCluster::Spin const &_a, MLCluster::Spin const &_b) 
     {
       if( _a.site != _b.site ) return false;
-      if( not Fuzzy::is_zero(_a.pos(0)-_b.pos(0)) ) return false;
-      if( not Fuzzy::is_zero(_a.pos(1)-_b.pos(1)) ) return false;
-      return  Fuzzy::is_zero(_a.pos(2)-_b.pos(2));
+      if( not math::is_zero(_a.pos(0)-_b.pos(0)) ) return false;
+      if( not math::is_zero(_a.pos(1)-_b.pos(1)) ) return false;
+      return  math::is_zero(_a.pos(2)-_b.pos(2));
     }
     
     // Compares for same origin.
     bool compare( MLCluster const &_a, MLCluster const &_b )
     {
       if( _a.origin.site != _b.origin.site ) return false;
-      LADA_ASSERT( Fuzzy::is_zero( atat::norm2(_a.origin.pos-_b.origin.pos) ), 
+      LADA_ASSERT( math::is_zero( (_a.origin.pos-_b.origin.pos).squaredNorm() ), 
                    "Inconsistent origin positions.\n" )
 
       MLCluster::t_Spins :: const_iterator i_spin = _a.begin();
@@ -156,7 +156,7 @@ namespace LaDa
     }
 
     // Finds spin for a given position.
-    types::t_real find_spin( atat::rVector3d const &_vec, 
+    types::t_real find_spin( math::rVector3d const &_vec, 
                              size_t _site, Crystal::Structure const &_str, 
                              std::vector< std::vector<size_t> > const &_map,
                              Crystal::t_SmithTransform const &_transform )
@@ -198,7 +198,7 @@ namespace LaDa
       for(; i_spin != i_spin_end; ++i_spin)
       {
         LADA_ASSERT(i_spin->site < lattice.sites.size(), "Index out-of-range.\n");
-        atat::rVector3d const vec(_atom.pos+i_spin->pos-lattice.sites[i_spin->site].pos);
+        math::rVector3d const vec(_atom.pos+i_spin->pos-lattice.sites[i_spin->site].pos);
         result *= find_spin(vec, i_spin->site, _str, _map, _transform);
       }
       

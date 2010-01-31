@@ -120,16 +120,16 @@ namespace LaDa
       types::t_real u = 1.0 / ( 2.0 * a );  
       types::t_real r0 =  (-b + det ) * u;
       types::t_real r1 =  (-b - det ) * u;
-      if ( Fuzzy::eq(r0, 1.0 ) )  r0 =  1.0;
-      if ( Fuzzy::eq(r0, -1.0 ) ) r0 = -1.0;
-      if ( Fuzzy::eq(r1, 1.0 ) )  r1 =  1.0;
-      if ( Fuzzy::eq(r1, -1.0 ) ) r1 = -1.0;
-      __DOASSERT(     ( Fuzzy::le(r0, -1.0) or Fuzzy::gt(r0, 1.0 ) )
-                  and ( Fuzzy::le(r1, -1.0) or Fuzzy::gt(r1, 1.0 ) ),
+      if ( math::eq(r0, 1.0 ) )  r0 =  1.0;
+      if ( math::eq(r0, -1.0 ) ) r0 = -1.0;
+      if ( math::eq(r1, 1.0 ) )  r1 =  1.0;
+      if ( math::eq(r1, -1.0 ) ) r1 = -1.0;
+      __DOASSERT(     ( math::le(r0, -1.0) or math::gt(r0, 1.0 ) )
+                  and ( math::le(r1, -1.0) or math::gt(r1, 1.0 ) ),
                      a + b +c << " " << a - b + c
                   << "\nError when using Concentration::get_y(" << _x << ")\n" 
                   << " r0= " << r0  << " and r1= " << r1 << "\n" )
-      if ( Fuzzy::geq(r1, -1.0) and Fuzzy::leq(r1, 1.0) )   return r1; 
+      if ( math::geq(r1, -1.0) and math::leq(r1, 1.0) )   return r1; 
       return r0;
     }
   //! \deprecated normalizes the concentration of  a structure.

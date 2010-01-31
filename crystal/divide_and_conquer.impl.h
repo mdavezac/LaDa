@@ -11,23 +11,23 @@ namespace LaDa
   {
     namespace details
     {
-      inline size_t box_index( const atat::rMatrix3d &_inv_str,
-                               const atat::rMatrix3d &_str,
-                               const atat::rMatrix3d &_inv_cell,
-                               const atat::rVector3d &_pos,
-                               const atat::iVector3d &_n )
+      inline size_t box_index( const math::rMatrix3d &_inv_str,
+                               const math::rMatrix3d &_str,
+                               const math::rMatrix3d &_inv_cell,
+                               const math::rVector3d &_pos,
+                               const math::iVector3d &_n )
       {
         // Puts atom back into parallelogram.
-        const atat::rVector3d rfrac( _inv_str * _pos );
-        const atat::rVector3d ifrac
+        const math::rVector3d rfrac( _inv_str * _pos );
+        const math::rVector3d ifrac
         (
           rfrac(0) - std::floor( rfrac(0) ),
           rfrac(1) - std::floor( rfrac(1) ),
           rfrac(2) - std::floor( rfrac(2) )
         );
-        const atat::rVector3d in_para( _str * ifrac );
+        const math::rVector3d in_para( _str * ifrac );
         // Then finds out which box it belongs to.
-        const atat::rVector3d frac( _inv_cell * in_para );
+        const math::rVector3d frac( _inv_cell * in_para );
         const types::t_int i( frac(0)  );
         const types::t_int j( frac(1)  );
         const types::t_int k( frac(2)  );
@@ -37,7 +37,7 @@ namespace LaDa
 
     template< class T_TYPE > typename t_ConquerBoxes<T_TYPE>::shared_ptr  
       divide_and_conquer_boxes( const Crystal::TStructure<T_TYPE> &_structure, 
-                                const atat::iVector3d &_n,
+                                const math::iVector3d &_n,
                                 const types::t_real _overlap_distance )
       {
         namespace bt = boost::tuples;
@@ -47,15 +47,14 @@ namespace LaDa
         typedef typename t_ConquerBoxes<T_TYPE>::shared_ptr t_result_ptr;
 
         // constructs cell of small small box
-        atat::rMatrix3d cell( _structure.cell );
-        for( size_t i(0); i < 3; ++i )
-          cell.set_column(i, cell.get_column(i) * ( 1e0 / types::t_real( _n(i) ) ) );
+        math::rMatrix3d cell( _structure.cell );
+        for( size_t i(0); i < 3; ++i ) cell.col(i) *= 1e0 / types::t_real( _n(i) );
         // constructs cell of large box.
-        atat::rVector3d odist;
+        math::rVector3d odist;
         for( size_t i(0); i < 3; ++i )
         {
-          const atat::rVector3d column( cell.get_column(i) );
-          const types::t_real a( std::sqrt( atat::norm2( column ) ) );
+          const math::rVector3d column( cell.col(i) );
+          const types::t_real a( std::sqrt( column.squaredNorm() ) );
           odist(i) = _overlap_distance/a;
         }
 
@@ -73,8 +72,8 @@ namespace LaDa
           for( size_t j(0); j < _n(1); ++j )
             for( size_t k(0); k < _n(2); ++k, ++i_box )
             {
-              const atat::iVector3d ivec( i, j, k );
-              const atat::rVector3d rvec
+              const math::iVector3d ivec( i, j, k );
+              const math::rVector3d rvec
               ( 
                 types::t_real(i) + 0.5,
                 types::t_real(j) + 0.5,
@@ -87,10 +86,10 @@ namespace LaDa
         // box is not larger than the cell. Otherwise, when looping over all
         // states, we would go over the same state twice. The following defines
         // the direction for which we can look for periodic images.
-        const atat::iVector3d extent( _n(0)>1 ? 1:0, _n(1)>1 ? 1:0, _n(2)>1 ? 1:0 );
+        const math::iVector3d extent( _n(0)>1 ? 1:0, _n(1)>1 ? 1:0, _n(2)>1 ? 1:0 );
         // adds atoms to each box.
-        const atat::rMatrix3d inv_str( !_structure.cell );
-        const atat::rMatrix3d inv_cell( !cell );
+        const math::rMatrix3d inv_str( _structure.cell.inverse() );
+        const math::rMatrix3d inv_cell( cell.inverse() );
         typename t_Atoms :: const_iterator i_atom = _structure.atoms.begin();
         typename t_Atoms :: const_iterator i_atom_end = _structure.atoms.end();
         for( size_t index(0); i_atom != i_atom_end; ++i_atom, ++index )
@@ -113,7 +112,7 @@ namespace LaDa
               for( types::t_int k(-extent(0) ); k <= extent(0); ++k )
               {
                 if( i == 0 and j == 0 and k == 0 ) continue;
-                const atat::rVector3d displaced
+                const math::rVector3d displaced
                 (
                   i_atom->pos(0) + types::t_real(i) * odist(0),
                   i_atom->pos(1) + types::t_real(j) * odist(1),
@@ -144,12 +143,12 @@ namespace LaDa
       }
    
     template< class T_TYPE >
-      atat::iVector3d guess_dnc_params( const Crystal::TStructure<T_TYPE> &_structure, 
+      math::iVector3d guess_dnc_params( const Crystal::TStructure<T_TYPE> &_structure, 
                                         size_t _nperbox ) 
       {
-        const types::t_real c1 = std::sqrt( atat::norm2( _structure.cell.get_column(0) ) );
-        const types::t_real c2 = std::sqrt( atat::norm2( _structure.cell.get_column(1) ) );
-        const types::t_real c3 = std::sqrt( atat::norm2( _structure.cell.get_column(2) ) );
+        const types::t_real c1 = std::sqrt( _structure.cell.col(0).squaredNorm() );
+        const types::t_real c2 = std::sqrt( _structure.cell.col(1).squaredNorm() );
+        const types::t_real c3 = std::sqrt( _structure.cell.col(2).squaredNorm() );
         const types::t_real Natoms( _structure.atoms.size() );
         const types::t_real Nperbox( _nperbox );
 
@@ -160,7 +159,7 @@ namespace LaDa
         if( n1 <= 0.5 ) n1 == 1;
         if( n2 <= 0.5 ) n2 == 1;
         if( n3 <= 0.5 ) n3 == 1;
-        return atat::iVector3d( rint( n1 ), rint( n2 ), rint( n3 ) );
+        return math::iVector3d( rint( n1 ), rint( n2 ), rint( n3 ) );
       }
 
   } // namespace Crystal

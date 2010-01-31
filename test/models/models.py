@@ -1,5 +1,6 @@
 #! /usr/bin/python
 
+obsolete !!
 def create_functional():
 
   from math import pow

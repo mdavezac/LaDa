@@ -23,10 +23,10 @@ namespace LaDa
     {
       struct Basis 
       {
-        atat::rVector3d origin;
-        atat::rVector3d x;
-        atat::rVector3d y;
-        atat::rVector3d z;
+        math::rVector3d origin;
+        math::rVector3d x;
+        math::rVector3d y;
+        math::rVector3d z;
         types::t_real weight;
       };
       inline std::ostream& operator<<( std::ostream &_stream, Basis const &_basis )
@@ -77,9 +77,9 @@ namespace LaDa
         friend bool operator==( Origin const&, Origin const& );
         public:
           //! Return on deref.
-          typedef atat::rVector3d const& value_type;
+          typedef math::rVector3d const& value_type;
           //! Return on deref.
-          typedef atat::rVector3d const* pointer_type;
+          typedef math::rVector3d const* pointer_type;
           //! Constructor.
           Origin() {}
           //! Copy Constructor.
@@ -121,10 +121,10 @@ namespace LaDa
         friend class Ycoord;
         friend bool operator==( Xcoord const&, Xcoord const& );
         //! Type of the vector of neighbors.
-        typedef std::vector< atat::rVector3d > t_Neighs;
+        typedef std::vector< math::rVector3d > t_Neighs;
         public:
-          typedef atat::rVector3d const& value_type;
-          typedef atat::rVector3d const* pointer_type;
+          typedef math::rVector3d const& value_type;
+          typedef math::rVector3d const* pointer_type;
       
           //! Constructor.
           Xcoord() {}
@@ -141,7 +141,7 @@ namespace LaDa
           pointer_type operator->() const { return &val_; }
           //! Pre-increment operator.
           Xcoord &operator++()
-            { ++iterator_; val_ = *iterator_/atat::norm(*iterator_); return *this; }
+            { ++iterator_; val_ = iterator_->normalized(); return *this; }
           //! Post-increment operator.
           Xcoord operator++(int) { return Xcoord( ++(*this) ); }
 
@@ -162,7 +162,7 @@ namespace LaDa
           //! The current iterator.
           t_Neighs::const_iterator iterator_;
           //! Normalized x vector.
-          atat::rVector3d val_;
+          math::rVector3d val_;
       };
 
       inline bool operator==( Bases::Xcoord const& _a, Bases::Xcoord const& _b )
@@ -177,8 +177,8 @@ namespace LaDa
       {
         friend bool operator==( Ycoord const&, Ycoord const& );
         public:
-          typedef atat::rVector3d const& value_type;
-          typedef atat::rVector3d const* pointer_type;
+          typedef math::rVector3d const& value_type;
+          typedef math::rVector3d const* pointer_type;
 
           //! Constructor.
           Ycoord() {}
@@ -197,8 +197,7 @@ namespace LaDa
           Ycoord &operator++()
           {
             ++iterator_;
-            val_ = (*iterator_) - ( (*iterator_) * xval_ ) * xval_;
-            val_ = val_ / atat::norm(val_); 
+            val_ = ( (*iterator_) - iterator_->dot(xval_) * xval_ ).normalized();
             return *this; 
           }
           //! Post-increment operator.
@@ -215,13 +214,13 @@ namespace LaDa
           //! Creates list of equivalent y-positions.
           void create_equiv_ys( Xcoord const &_x );
           //! list of equivalent ys.
-          boost::shared_ptr< std::list<atat::rVector3d> > equivs_;
+          boost::shared_ptr< std::list<math::rVector3d> > equivs_;
           //! Current iterator.
-          std::list<atat::rVector3d> :: const_iterator iterator_;
+          std::list<math::rVector3d> :: const_iterator iterator_;
           //! Holds current dereference value.
-          atat::rVector3d val_;
+          math::rVector3d val_;
           //! Holds current x coordinate.
-          atat::rVector3d xval_;
+          math::rVector3d xval_;
       };
 
       inline bool operator==( Bases::Ycoord const& _a, Bases::Ycoord const& _b )

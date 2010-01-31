@@ -16,12 +16,13 @@
 #include <cmath>
 #include <math.h>
 
+
 #include "function_base.h"
 #include "monome.h"
-#include "fuzzy.h"
 #include <iomanip>
 
 #include <mpi/mpi_object.h>
+#include <math/fuzzy.h>
 #ifdef _MPI
 #include <boost/lambda/lambda.hpp>
 #include <boost/mpi/collectives.hpp>
@@ -160,7 +161,7 @@ namespace LaDa
         else if ( *i_monome == _monome )    // equivalent monome already exists
         {
           *i_monome += _monome;
-          if ( Fuzzy::eq(i_monome->coefficient, 0e0) )
+          if ( math::eq(i_monome->coefficient, 0e0) )
             monomes.erase(i_monome);
         }
         else       // places _monome in the sorted list, before i_monome

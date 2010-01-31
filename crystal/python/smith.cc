@@ -22,8 +22,8 @@ namespace LaDa
   {
 
     
-    boost::python::tuple get_smith_transform( atat::rMatrix3d const &_lat_cell,
-                                              atat::rMatrix3d const &_str_cell )
+    boost::python::tuple get_smith_transform( math::rMatrix3d const &_lat_cell,
+                                              math::rMatrix3d const &_str_cell )
     {
       namespace bt = boost::tuples;
       namespace bp = boost::python;
@@ -68,7 +68,7 @@ namespace LaDa
     
     //! Computes smith indices of position \a _pos.
     boost::python::tuple get_smith_index( boost::python::tuple const & _transform,
-                                          atat::rVector3d  const &_pos )
+                                          math::rVector3d  const &_pos )
     {
       namespace bt = boost::tuples;
       namespace bp = boost::python;
@@ -85,7 +85,7 @@ namespace LaDa
       try
       {
         Crystal::t_SmithTransform transform;
-        try{  bt::get<0>( transform ) = bp::extract< atat::rMatrix3d >( _transform[0] ); }
+        try{  bt::get<0>( transform ) = bp::extract< math::rMatrix3d >( _transform[0] ); }
         catch(...)
         {
           PyErr_SetString
@@ -96,7 +96,7 @@ namespace LaDa
           bp::throw_error_already_set();
           return bp::make_tuple(-1,-1,-1);
         }
-        try{  bt::get<1>( transform ) = bp::extract< atat::iVector3d >( _transform[1] ); }
+        try{  bt::get<1>( transform ) = bp::extract< math::iVector3d >( _transform[1] ); }
         catch(...)
         {
           PyErr_SetString
@@ -107,7 +107,7 @@ namespace LaDa
           bp::throw_error_already_set();
           return bp::make_tuple(-1,-1,-1);
         }
-        atat::iVector3d const vec( Crystal::get_smith_index( transform, _pos ) );
+        math::iVector3d const vec( Crystal::get_smith_index( transform, _pos ) );
         return bp::make_tuple( vec(0), vec(1), vec(2) );
       }
       catch(...)
@@ -124,7 +124,7 @@ namespace LaDa
 
     //! Computes smith indices of position \a _pos.
     size_t get_linear_smith_index( boost::python::tuple const & _transform,
-                                   atat::rVector3d  const &_pos )
+                                   math::rVector3d  const &_pos )
     {
       namespace bt = boost::tuples;
       namespace bp = boost::python;
@@ -141,7 +141,7 @@ namespace LaDa
       try
       {
         Crystal::t_SmithTransform transform;
-        try{  bt::get<0>( transform ) = bp::extract< atat::rMatrix3d >( _transform[0] ); }
+        try{  bt::get<0>( transform ) = bp::extract< math::rMatrix3d >( _transform[0] ); }
         catch(...)
         {
           PyErr_SetString
@@ -152,7 +152,7 @@ namespace LaDa
           bp::throw_error_already_set();
           return -1;
         }
-        try{  bt::get<1>( transform ) = bp::extract< atat::iVector3d >( _transform[1] ); }
+        try{  bt::get<1>( transform ) = bp::extract< math::iVector3d >( _transform[1] ); }
         catch(...)
         {
           PyErr_SetString
@@ -180,29 +180,30 @@ namespace LaDa
     void expose_smith()
     {
       namespace bp = boost::python;
-      bp::def
-      ( 
-        "smith_normal_transform", &get_smith_transform_str<std::string>,
-        bp::arg("structure"), 
-        "Returns a tuple allowing a stransformation to the smith normal form." 
-      );
-      bp::def
-      ( 
-        "smith_normal_transform", &get_smith_transform_str<types::t_real>,
-        bp::arg("structure"), 
-        "Returns a tuple allowing a stransformation to the smith normal form." 
-      );
+      bp::def("smith_normal_transform", &get_smith_transform_str<std::string>);
+      bp::def("smith_normal_transform", &get_smith_transform_str<types::t_real>);
       bp::def
       ( 
         "smith_normal_transform", &get_smith_transform,
-        ( bp::arg("lattice_cell"), bp::arg("structure_cell") ),
-        "Returns a tuple allowing a stransformation to the smith normal form." 
+        "Returns a tuple allowing a stransformation to the smith normal form.\n\n" 
+        "The input can have one or two arguments depending on their types:\n"
+        "  - if one argument is given, it must be of type L{Structure} or a"
+             " L{sStructure}, with L{Structure.lattice} set.\n"
+        "  - if two argument are given, the first one is the cell of the"
+             " structure, and the second the cell of the lattice.\n" 
+        "In any case, the cell of structure must be exactly commensurate with "
+        "the lattice, eg no relaxation.\n"
+        "@see: U{G. Hart and R. Forcade, I{Phys. Rev. B.} B{80}, 014120 (2009)"
+        "<dx.doi.org/10.1103/PhysRevB.80.014120>}\n"
       );
       bp::def
       ( 
         "smith_indices", &get_smith_index,
         ( bp::arg("transform"), bp::arg("position") ),
-        "Returns the indices of the position in the smith normal form." 
+        "Returns the indices of the position in the smith normal form.\n\n" 
+        "@param transform: transformation tuple yielded by L{smith_normal_transform}\n"
+        "@param position: cartesian coordinates on the lattice.\n"
+        "@type position: numpy 3x1 float64 array.\n"
       );
       bp::def
       ( 

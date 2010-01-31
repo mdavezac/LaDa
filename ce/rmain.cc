@@ -22,7 +22,7 @@
 # include <mpi/macros.h>
 #include <opt/types.h>
 #include <opt/debug.h>
-#include <opt/random.h>
+#include <math/random.h>
 #include <opt/bpo_macros.h>
 #include <minimizer/minuit2.h>
 #include <minimizer/frprmn.h>
@@ -166,7 +166,7 @@ int main(int argc, char *argv[])
   const LaDa::types::t_unsigned maxpairs = vm["maxpairs"].as<LaDa::types::t_unsigned>();
   const LaDa::types::t_int verbosity = vm["verbose"].as<LaDa::types::t_int>();
   LaDa::types::t_unsigned seed = vm["seed"].as<LaDa::types::t_unsigned>();
-  seed = LaDa::opt::random::seed( seed );
+  seed = LaDa::math::seed( seed );
   const LaDa::types::t_real tolerance( vm["tolerance"].as< LaDa::types::t_real >() );
   const LaDa::types::t_real linetol( vm["linetol"].as< LaDa::types::t_real >() );
   const LaDa::types::t_real linestep( vm["linestep"].as< LaDa::types::t_real >() );
@@ -206,7 +206,7 @@ int main(int argc, char *argv[])
   std::cout << "\n";
 
   // consistency checks.
-  __ASSERT( LaDa::Fuzzy::le(pairreg.second, 0e0), "Coefficient \"t\" cannot negative.\n" )
+  __ASSERT( LaDa::math::le(pairreg.second, 0e0), "Coefficient \"t\" cannot negative.\n" )
 
   // Loads lattice
   boost::shared_ptr< LaDa::Crystal::Lattice >
@@ -254,7 +254,7 @@ int main(int argc, char *argv[])
     LaDa::CE::Fit< LaDa::CE::FittingPolicy::PairReg<> > fit;
     fit.alpha = pairreg.first;
     fit.tcoef = pairreg.second;
-    fit.do_pairreg = ( not LaDa::Fuzzy::is_zero( pairreg.second ) and maxpairs );
+    fit.do_pairreg = ( not LaDa::math::is_zero( pairreg.second ) and maxpairs );
     fit.laksreg = not volkerreg;
     fit.verbose = verbosity >= detailederrors;
     reg.cgs.verbose = verbosity >= outermin;

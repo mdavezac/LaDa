@@ -26,7 +26,7 @@ class LADA_CONST_(rank_iterator)
     numeric_type other() const
     {
       numeric_type const coord_rank_value( *i_coord_rank_value_ );
-      if( Fuzzy::is_zero(coord_rank_value) ) 
+      if( math::is_zero(coord_rank_value) ) 
       {
         numeric_type result(1);
         t_CoordRankValues::const_iterator i_cr = coord_rank_values_.begin();

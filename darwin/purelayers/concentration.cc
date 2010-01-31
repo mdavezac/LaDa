@@ -7,9 +7,8 @@
 
 #include <algorithm>
 
-#include <opt/fuzzy.h>
+#include <math/fuzzy.h>
 #include <opt/debug.h> 
-#include <opt/atat.h>
 
 #include "concentration.h"
 #include "fourier.h"

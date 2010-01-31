@@ -35,7 +35,7 @@ namespace LaDa
     (
       eMass& _emass,
       const Pescan::Interface& _interface,
-      const atat::rMatrix3d &_ocell, 
+      const math::rMatrix3d &_ocell, 
       const Crystal::Structure &_structure,
       const types::t_real &_eref
     )
@@ -84,11 +84,14 @@ namespace LaDa
             bp::arg("structure"),
             bp::arg("ref")
           ),
-          "Computes and returns tuples ( eigenvalue at kpoint, effective mass at kpoint ).\n"
-          "escan = the escan functional for computing eigenvalues.\n"
-          "ocell = original (unrelaxed) structure.\n"
-          "structure = relaxed structure.\n"
-          "ref = reference energy at which to compute bands.\n"
+          "Computes and returns tuples ( eigenvalue at kpoint, effective mass at kpoint ).\n\n"
+          "@param escan: the escan functional for computing eigenvalues.\n"
+          "@type escan: L{Escan}\n"
+          "@param ocell: original (unrelaxed) structure.\n"
+          "@type ocell: 3x3 numpy array\n"
+          "@param structure: relaxed structure.\n"
+          "@type structure: L{lada.crystal.Structure}\n"
+          "@param ref: reference energy at which to compute bands.\n"
         );
     }
 

@@ -12,6 +12,8 @@
 #include <boost/python/def.hpp>
 #include <boost/python/scope.hpp>
 #include <boost/python/errors.hpp>
+#include <boost/python/return_value_policy.hpp>
+#include <boost/python/return_by_value.hpp>
 
 #include <python/std_vector.hpp>
 #include <python/misc.hpp>
@@ -30,7 +32,7 @@ namespace LaDa
     namespace bp = boost::python;
 
     boost::shared_ptr< std::vector<Crystal::SymmetryOperator> >
-      get_point_group_symmetries( atat::rMatrix3d const &_cell, types::t_real _tolerance = -1e0 )
+      get_point_group_symmetries( math::rMatrix3d const &_cell, types::t_real _tolerance = -1e0 )
       {
         boost::shared_ptr< std::vector<Crystal::SymmetryOperator> > 
           result = Crystal::get_point_group_symmetries( _cell, _tolerance );
@@ -79,13 +81,26 @@ namespace LaDa
         "operations for which the Bravais lattice is invariant.\n"
       );
 
+      typedef Crystal::SymmetryOperator t_SOp;
       bp::scope scope = bp::class_<Crystal::SymmetryOperator>
         ( "SymmetryOperator", "SymmetryOperator" )
-        .def(bp::init<atat::rMatrix3d const&>())
-        .def(bp::init<atat::rVector3d const&>())
-        .def(bp::init<atat::rMatrix3d const&, atat::rVector3d const&>())
-        .def_readwrite("op", &Crystal::SymmetryOperator::op)
-        .def_readwrite("trans", &Crystal::SymmetryOperator::trans)
+        .def(bp::init<math::rMatrix3d const&>())
+        .def(bp::init<math::rVector3d const&>())
+        .def(bp::init<math::rMatrix3d const&, math::rVector3d const&>())
+        .add_property
+        (
+          "op",
+          make_getter(&t_SOp::op, bp::return_value_policy<bp::return_by_value>()),
+          make_setter(&t_SOp::op, bp::return_value_policy<bp::return_by_value>()),
+          "Pure rotation matrix.\n\nNumpy float64 3x3 array."
+        ) 
+        .add_property
+        (
+          "trans",
+          make_getter(&t_SOp::trans, bp::return_value_policy<bp::return_by_value>()),
+          make_setter(&t_SOp::trans, bp::return_value_policy<bp::return_by_value>()),
+          "Pure rotation matrix.\n\nNumpy float64 3x1 array."
+        ) 
         .def("invariant", &Crystal::SymmetryOperator::invariant, 
              (bp::arg("matrix"), bp::arg("tolerance")=types::tolerance),
              "Returns true if the matrix is invariant through this rotation.")

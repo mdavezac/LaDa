@@ -15,7 +15,6 @@
 #include <opt/debug.h>
 #include <opt/bpo_macros.h>
 #include <opt/tuple_io.h>
-#include <opt/random.h>
 #include <mpi/mpi_object.h>
 #ifdef _MPI
 # include <boost/mpi/environment.hpp>
@@ -64,7 +63,7 @@ int main(int argc, char *argv[])
   LaDa::Crystal::Structure::lattice = lattice.get();
   size_t N( vm["n"].as<size_t>() );
 
-  boost::shared_ptr< std::vector<LaDa::atat::rMatrix3d> > cells
+  boost::shared_ptr< std::vector<LaDa::math::rMatrix3d> > cells
     = LaDa::enumeration::find_all_cells(*lattice, N);
 
   __BPO_CATCH__( __MPICODE( MPI_Finalize() ) )

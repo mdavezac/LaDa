@@ -9,7 +9,7 @@
 #include <config.h>
 #endif
 
-#include <atat/vectmac.h>
+#include <math/eigen.h>
 
 namespace LaDa 
 {
@@ -29,8 +29,8 @@ namespace LaDa
     //!                    cell is strictly positive. The first vector in the
     //!                    unit-cell is the growth direction.
     bool create_epitaxial_structure( Structure& _structure,
-                                     atat::rVector3d &_direction,
-                                     atat::iVector3d &_extent );
+                                     math::rVector3d &_direction,
+                                     math::iVector3d &_extent );
 
   } // namespace Crystal
 

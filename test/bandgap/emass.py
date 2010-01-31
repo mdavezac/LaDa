@@ -2,6 +2,9 @@
 #
 # Version: $Id$
 #
+
+obsolete!!
+
 def compute_bandgap( _bandgap, _Evbm, _Ecbm ):
   from lada import atat
 

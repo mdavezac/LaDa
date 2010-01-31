@@ -13,6 +13,8 @@
 #include <boost/python/class.hpp>
 #include <boost/python/return_internal_reference.hpp>
 #include <boost/python/errors.hpp>
+#include <boost/python/return_value_policy.hpp>
+#include <boost/python/return_by_value.hpp>
 
 #include "mlcluster.hpp"
 #include "../mlcluster.h"
@@ -70,7 +72,13 @@ namespace LaDa
           .def("__setitem__", &setvecitem);
       bp::class_<CE::MLCluster::Spin>("Spin", "A spin.")
         .add_property("site", &CE::MLCluster::Spin::site, "Site index in lattice.")
-        .add_property("pos", &CE::MLCluster::Spin::pos, "Relative position from origin.");
+        .add_property
+        (
+          "pos",
+          make_getter(&CE::MLCluster::Spin::pos, bp::return_value_policy<bp::return_by_value>()),
+          make_setter(&CE::MLCluster::Spin::pos, bp::return_value_policy<bp::return_by_value>()),
+          "Relative position from origin. Numpy vector. Cartesian units." 
+        );
     }
 
   }

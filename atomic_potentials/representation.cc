@@ -17,12 +17,12 @@ namespace LaDa
 {
   namespace atomic_potential
   {
-    atat::rVector3d to_spherical( atat::rVector3d const &_a )
+    math::rVector3d to_spherical( math::rVector3d const &_a )
     {
       types::t_real const  rho = std::sqrt( _a[0]*_a[0] + _a[1]*_a[1] + _a[2]*_a[2] );
-      return Fuzzy::is_zero(rho) ? 
-               atat::rVector3d(0,0,0):
-               atat::rVector3d
+      return math::is_zero(rho) ? 
+               math::rVector3d(0,0,0):
+               math::rVector3d
                (
                  rho,
                  std::atan2( _a[1], _a[0] ),
@@ -42,16 +42,16 @@ namespace LaDa
       bool operator()( Crystal::Neighbor const * const _a,
                        Crystal::Neighbor const * const _b ) const
       {
-        if( Fuzzy::neq( _a->distance, _b->distance ) ) return _a->distance < _b->distance;
-        const types::t_real ax = _a->pos * basis.x;
-        const types::t_real bx = _b->pos * basis.x;
-        if( Fuzzy::neq( ax, bx ) ) return ax > bx;
-        const types::t_real ay = _a->pos * basis.y;
-        const types::t_real by = _b->pos * basis.y;
-        if( Fuzzy::neq( ay, by ) ) return ay > by;
-        const types::t_real az = _a->pos * basis.z;
-        const types::t_real bz = _b->pos * basis.z;
-        if( Fuzzy::neq( az, bz ) ) return az > bz;
+        if( math::neq( _a->distance, _b->distance ) ) return _a->distance < _b->distance;
+        const types::t_real ax = _a->pos.dot(basis.x);
+        const types::t_real bx = _b->pos.dot(basis.x);
+        if( math::neq( ax, bx ) ) return ax > bx;
+        const types::t_real ay = _a->pos.dot(basis.y);
+        const types::t_real by = _b->pos.dot(basis.y);
+        if( math::neq( ay, by ) ) return ay > by;
+        const types::t_real az = _a->pos.dot(basis.z);
+        const types::t_real bz = _b->pos.dot(basis.z);
+        if( math::neq( az, bz ) ) return az > bz;
         return false;
       }
     }; 
@@ -84,7 +84,7 @@ namespace LaDa
 
       // first neighbor containor.
       Crystal :: Neighbors neighbors( _natoms );
-      neighbors.origin = i_basis->origin + atat::rVector3d(1,0,0);
+      neighbors.origin = i_basis->origin + math::rVector3d(1,0,0);
       size_t index(1);
       
       // sorting container.
@@ -175,27 +175,27 @@ namespace LaDa
                      "Could not find type: " << atom.type << "\n"  << *_structure.lattice << "\n" ) 
         if( Representation::coord_system == Representation::cartesian )
         {
-          atat::rVector3d const vec((*i_first)->pos); 
+          math::rVector3d const vec((*i_first)->pos); 
           // always include x.
-          _vars.variables.push_back( VariableSet::t_Variable(vec * _basis.x, type) );
+          _vars.variables.push_back( VariableSet::t_Variable(vec.dot(_basis.x), type) );
 
           size_t const N(_vars.variables.size());
           if( N > 1 ) // avoid y for first atom.
-            _vars.variables.push_back( VariableSet::t_Variable(vec * _basis.y, type) );
+            _vars.variables.push_back( VariableSet::t_Variable(vec.dot(_basis.y), type) );
           if( N > 2 ) // avoid z for first and second atom.
-            _vars.variables.push_back( VariableSet::t_Variable(vec * _basis.z, type) );
+            _vars.variables.push_back( VariableSet::t_Variable(vec.dot(_basis.z), type) );
         }
         else // spherical coordinates
         {
-          atat::rVector3d const vec( to_spherical((*i_first)->pos) );
+          math::rVector3d const vec( to_spherical((*i_first)->pos) );
           // always include x (rho).
-          _vars.variables.push_back( VariableSet::t_Variable(vec.x[0], type) );
+          _vars.variables.push_back( VariableSet::t_Variable(vec(0), type) );
 
           size_t const N(_vars.variables.size());
           if( N > 1 ) // avoid y(theta) for first atom.
-            _vars.variables.push_back( VariableSet::t_Variable(vec.x[1], type) );
+            _vars.variables.push_back( VariableSet::t_Variable(vec(1), type) );
           if( N > 2 ) // avoid z(phi) for first and second atom.
-            _vars.variables.push_back( VariableSet::t_Variable(vec.x[2], type) );
+            _vars.variables.push_back( VariableSet::t_Variable(vec(2), type) );
         }
       }
     }

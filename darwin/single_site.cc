@@ -104,7 +104,7 @@ namespace LaDa
         for (; i_atom != i_atom_end; ++i_atom, ++i_hold)
           if ( not ( i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_T ) )
           {
-            if ( Fuzzy::eq( std::real(*i_hold), 0.0 ) )
+            if ( math::eq( std::real(*i_hold), 0.0 ) )
                   i_atom->type = rng.flip() ? 1.0: -1.0;
             else  i_atom->type = std::real(*i_hold) > 0.0 ? 1.0: -1.0;
           }
@@ -116,7 +116,7 @@ namespace LaDa
       {
         if ( not ( i_atom->freeze & Crystal::Structure::t_Atom::FREEZE_T ) )
         {
-          if ( Fuzzy::eq( std::real(*i_hold), 0.0 ) )
+          if ( math::eq( std::real(*i_hold), 0.0 ) )
             i_atom->type = rng.flip() ? 10.0*types::tolerance: -10.0*types::tolerance;
           else i_atom->type = std::real( *i_hold );
         }

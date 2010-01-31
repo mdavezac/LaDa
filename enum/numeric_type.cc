@@ -112,7 +112,7 @@ namespace LaDa
           if( site_index_map[i_atom->site] == N ) continue;
   
           size_t const enum_index = site_index_map[i_atom->site];
-          atat::rVector3d const pos( i_atom->pos - _out.lattice->sites[i_atom->site].pos );
+          math::rVector3d const pos( i_atom->pos - _out.lattice->sites[i_atom->site].pos );
           size_t const index = Crystal::get_linear_smith_index(transform, enum_index, pos);
           LADA_ASSERT
           (

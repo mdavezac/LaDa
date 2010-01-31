@@ -1,8 +1,6 @@
-#
-#  Version: $Id$
-#
-def run( self ):
-  """ Runs a GA algorithm """
+""" Holds a single function for running a ga algorithm """
+def run(self):
+  """ Performs a Genetic Algorithm search """
   import standard
  
   # runs the checkpoints
@@ -16,6 +14,16 @@ def run( self ):
   # Checks that self is complete and fills in where possible
   if hasattr(self, "fill_attributes"): self = self.fill_attributes()
   else: self = standard.fill_attributes(self)
+  assert hasattr(self, "Individual"), "No Individual type.\n"
+  assert hasattr(self, "taboo"), "No taboo operation.\n"
+  assert hasattr(self, "population"), "No population attribute.\n"
+  assert hasattr(self, "popsize"), "No popsize attribute.\n"
+  assert hasattr(self, "current_gen"), "No current_gen attribute.\n"
+  assert hasattr(self, "evaluation"), "No evaluation operation.\n"
+  assert hasattr(self, "rate"), "No rate attribute.\n"
+  assert hasattr(self, "mating"), "No mating functor.\n"
+  assert hasattr(self, "offspring"), "No offspring attribute.\n"
+  assert hasattr(self, "cmp_indiv"), "No cmp_indiv operation.\n"
 
   # creates population if it does not exist.
   while len(self.population) < self.popsize:
@@ -37,7 +45,8 @@ def run( self ):
 
   # generational loop
   while checkpoints(): 
-    print "Starting generation ", self.current_gen
+    if self.world.do_print:
+      print "Starting generation ", self.current_gen
 
     # tries and creates offspring.
     while len(self.offspring) < nboffspring:
@@ -64,6 +73,6 @@ def run( self ):
 
   # final stuff before exiting.
   if hasattr(self, "final"): self.final()
-  else: print "done"
+  elif self.world.do_print: print "done"
   
 

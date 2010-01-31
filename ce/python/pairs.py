@@ -1,17 +1,17 @@
 #! /usr/bin/python
 def create_lattice():
 
-  from lada import crystal, atat
+  from numpy import array as np_array
+  from lada import crystal
 
   lattice = crystal.Lattice()
 
-  lattice.cell = atat.rMatrix3d( [ [    0,  0.5,  0.5 ], \
-                                   [  0.5,    0,  0.5 ], \
-                                   [  0.5,  0.5,    0 ] ] )
+  lattice.cell = np_array( [ [    0,  0.5,  0.5 ], \
+                             [  0.5,    0,  0.5 ], \
+                             [  0.5,  0.5,    0 ] ], dtype="float64" )
   lattice.scale = 4.42
 
-  lattice.sites.append( crystal.Site( (0, 0, 0) ) )
-  lattice.sites[0].type = crystal.StringVector( [ "K", "Rb" ] );
+  lattice.sites.append( crystal.Site( np_array([0, 0, 0], dtype="float64"), ["K", "Rb"]) )
   lattice.find_space_group()
 
   return lattice

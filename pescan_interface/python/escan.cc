@@ -10,112 +10,189 @@
 #include <boost/python/def.hpp>
 #include <boost/python/str.hpp>
 #include <boost/python/enum.hpp>
+#include <boost/python/data_members.hpp>
+#include <boost/python/return_value_policy.hpp>
+#include <boost/python/return_internal_reference.hpp>
+#include <boost/python/copy_const_reference.hpp>
+
+#include <pyublas/numpy.hpp>
 
 #include <opt/initial_path.h>
 
 #include "../interface.h"
 #include "escan.hpp"
 
+
 namespace LaDa
 {
+  namespace bp = boost::python;
   namespace Python
   {
-    namespace XML
-    {
-      template<class T_TYPE>
-        void Escan_from_XML(T_TYPE &_type, const std::string &_filename )
-        {
-          TiXmlDocument doc( _filename ); 
-          TiXmlHandle docHandle( &doc ); 
-          if( not opt::InitialPath::is_initialized() )
-            opt::InitialPath::init();
-        
-          __DOASSERT( not doc.LoadFile(), 
-                         doc.ErrorDesc() << "\n"  
-                      << "Could not load input file " << _filename  
-                      << ".\nAborting.\n" ) 
-          __DOASSERT( not docHandle.FirstChild("Job").Element(),
-                      "Could not find <Job> tag in " << _filename << ".\n" )
-         
-          __DOASSERT( not _type.Load( *docHandle.FirstChild("Job").Element() ),
-                         "Could not load Pescan functional from " + _filename + ".\n" )
-        }
-    }
+    template<class T_TYPE>
+      void Escan_from_XML(T_TYPE &_type, const std::string &_filename )
+      {
+        if( not opt::InitialPath::is_initialized() ) opt::InitialPath::init();
 
-    namespace details
-    {
-
-#     ifdef FILETOPATH_GETSETTERS
-#       error Macro FILETOPATH_GETSETTERS already exists.
-#     endif
-#     define FILETOPATH_GETSETTERS( _C_, _A_, _B_ ) \
-        const std::string get_ ## _B_ ( const _C_ &_a )  { return _a._A_.string(); } \
-        void set_ ## _B_ ( _C_ &_a, const std::string &_b )  { _a._A_ = _b; }
-#     ifdef EXPOSE_FILENAME
-#       error Macro EXPOSE_FILENAME already exists.
-#     endif
+        TiXmlDocument doc( _filename ); 
+        TiXmlHandle docHandle( &doc ); 
       
-      FILETOPATH_GETSETTERS( LaDa::Pescan::Interface::Escan, filename, input_filename )
-      FILETOPATH_GETSETTERS( LaDa::Pescan::Interface::Escan, output, output_filename )
-      FILETOPATH_GETSETTERS( LaDa::Pescan::Interface, atom_input, vff_inputfile )
-      const std::string get_directory ( const LaDa::Pescan::Interface &_a ) 
-        { return _a.get_dirname().string(); } 
-      void set_directory ( LaDa::Pescan::Interface &_a, const std::string &_b ) 
-        { _a.set_dirname( _b ); }
-
-    } // namespace details
-
-#   undef FILETOPATH_GETSETTERS
-#   define EXPOSE_FILENAME( _B_ ) \
-     #_B_,  &details::get_ ## _B_, &details::set_ ## _B_
-
-    void expose_escan_parameters()
+        if( not doc.LoadFile() )
+        {
+          PyErr_SetString
+          (
+            PyExc_RuntimeError,
+            (   "Could not parse xml file " + _filename + ".\n" 
+              + doc.ErrorDesc() + "\n" ).c_str()
+          );
+          bp::throw_error_already_set();
+        }
+        else if( not docHandle.FirstChild("Job").Element() )
+        {
+          PyErr_SetString
+          (
+            PyExc_RuntimeError,
+            ("Could not find <Job> in xml file " + _filename + ".\n").c_str()
+          );
+          bp::throw_error_already_set();
+        }
+        else
+        {
+          try
+          {
+            if(not _type.Load( *docHandle.FirstChild("Job").Element() ) )
+            {
+              PyErr_SetString
+              (
+                PyExc_RuntimeError,
+                ("Could not load VFF functional from xml file " + _filename + ".\n").c_str()
+              );
+              bp::throw_error_already_set();
+            }
+          }
+          catch(std::exception &_e)
+          {
+            PyErr_SetString
+            (
+              PyExc_RuntimeError,
+              (
+                   "Encountered error while loading  VFF functional from xml file "
+                 + _filename + ".\n"
+                 + _e.what() + "\n"
+              ).c_str()
+            );
+            bp::throw_error_already_set();
+          }
+        }
+      }
+    template<class T> T* cload(std::string const &_filename) 
     {
-      typedef LaDa::Pescan::Interface t_Escan;
-      typedef LaDa::Pescan::Interface::Escan t_Parameters;
-      namespace bp = boost::python;
-      bp::enum_< t_Escan::t_method >( "method" )
-        .value( "folded", t_Escan::FOLDED_SPECTRUM )
-        .value( "full_diagonalization", t_Escan::ALL_ELECTRON )
-        .export_values();
-      bp::enum_< t_Parameters::t_potential >( "potential" )
-        .value( "local", t_Parameters::LOCAL )
-        .value( "nonlocal", t_Parameters::NONLOCAL )
-        .value( "spinorbit", t_Parameters::SPINORBIT )
-        .export_values();
-
-      bp::class_< t_Parameters >( "EscanParameters", bp::init< t_Parameters&>() ) 
-        .add_property( EXPOSE_FILENAME( input_filename ), 
-                       "Filename where to write the input of nanopse-escan input." 
-                       "You should not need to touch this." )
-        .add_property( EXPOSE_FILENAME( output_filename ),
-                       "Filename of the output of nanopse-escan."
-                       "You should not need to touch this." )
-        .def_readwrite( "Eref", &t_Parameters::Eref,
-                        "Reference energy for folded-spectrum calculation." )
-        .def_readwrite( "nbstates", &t_Parameters::nbstates,
-                        "Number of states to compute." )
-        .def_readwrite( "kpoint", &t_Parameters::kpoint,
-                        "kpoint in units of 2pi/a, where a is the unit-cell parameter."
-                        "If a cell is not cubic, then check nanopse-escan documentation." )
-        .def_readwrite( "method", &t_Parameters::method,
-                        "Calculation method: \"folded\" or \"full_diagonalization\"." )
-        .def_readonly( "potential", &t_Parameters::potential,
-                       "Type of potential: \"local\", \"nonlocal\", or \"spinorbit\"." );
+      T* result(new T);
+      if( not result )
+      {
+        PyErr_SetString(PyExc_RuntimeError, "Memory error.\n");
+        bp::throw_error_already_set();
+        return NULL;
+      }
+      Escan_from_XML(*result, _filename); 
+      if( PyErr_Occurred() != NULL ) 
+      {
+        delete result;
+        return NULL;
+      }
+      return result;
     }
-
+#   ifdef _MPI
+      template<class T> T* mpi_create(boost::mpi::communicator *_c)
+      {
+        T* result(new T);
+        if( not result )
+        {
+          PyErr_SetString(PyExc_RuntimeError, "Memory error.\n");
+          bp::throw_error_already_set();
+          return NULL;
+        }
+        result->set_mpi(_c);
+        return result;
+      }
+      template<class T> T* mpi_create2( std::string const &_filename,
+                                        boost::mpi::communicator *_c )
+                                       
+      {
+        T* result(new T);
+        if( not result )
+        {
+          PyErr_SetString(PyExc_RuntimeError, "Memory error.\n");
+          bp::throw_error_already_set();
+          return NULL;
+        }
+        result->set_mpi(_c);
+        Escan_from_XML(*result, _filename); 
+        if( PyErr_Occurred() != NULL ) 
+        {
+          delete result;
+          return NULL;
+        }
+        return result;
+      }
+#   else 
+      template<class T> T* mpi_create(bp::object const &)
+      {
+        T* result(new T);
+        if( not result )
+        {
+          PyErr_SetString(PyExc_RuntimeError, "Memory error.\n");
+          bp::throw_error_already_set();
+          return NULL;
+        }
+        return result;
+      }
+      template<class T> T* mpi_create2(bp::object const &, std::string const &_filename)
+        { return cload(_filename); }
+#   endif
+   
+#   ifdef LADA_PARAMS
+#     error LADA_PARAMS already exists.
+#   endif
+#   define LADA_PARAMS(type, name) \
+      type get_ ## name (Pescan::Interface const &_interface) \
+        { return _interface.escan.name; } \
+      void set_ ## name(Pescan::Interface &_interface, type const &_value) \
+        { _interface.escan.name = _value; }
+      LADA_PARAMS(types::t_int, nbstates)
+      LADA_PARAMS(types::t_int, nlines)
+      LADA_PARAMS(types::t_real, tolerance)
+      LADA_PARAMS(types::t_real, rcut)
+      LADA_PARAMS(math::rVector3d, kpoint)
+      LADA_PARAMS(Pescan::Interface::t_method, method)
+      LADA_PARAMS(Pescan::Interface::Escan::t_potential, potential)
+      LADA_PARAMS(types::t_real, kinscal)
+#   undef LADA_PARAMS
+#   define LADA_PARAMS(type, name, var) \
+      type get_ ## name(Pescan::Interface const &_interface) \
+        { return _interface.escan.var; } \
+      void set_ ## name(Pescan::Interface &_interface, type const &_value) \
+        { _interface.escan.var = _value; }
+      LADA_PARAMS(types::t_real, reference, Eref)
+      LADA_PARAMS(types::t_real, smoothness, smooth)
+#   undef LADA_PARAMS
+#   define LADA_PARAMS(_A_, _B_) \
+      std::string get_ ## _B_ (LaDa::Pescan::Interface const &_a) {return _a._A_.string();} \
+      void set_ ## _B_ (LaDa::Pescan::Interface &_a, const std::string &_b)  {_a._A_ = _b;} 
+      LADA_PARAMS(escan.filename, input_filename)
+      LADA_PARAMS(escan.output, output_filename)
+      LADA_PARAMS(atom_input, vff_inputfile)
+#   undef LADA_PARAMS
+   
     typedef LaDa::Pescan::Interface::GenPot::t_MeshTuple t_MeshTuple;
     
-    boost::python::tuple get_impl( t_MeshTuple const& _mesh )
+    bp::tuple get_impl( t_MeshTuple const& _mesh )
     {
       namespace bt = boost::tuples;
-      namespace bp = boost::python;
       return bp::make_tuple( bt::get<0>(_mesh), bt::get<1>(_mesh), bt::get<2>(_mesh) );
     }
-    void set_impl( boost::python::tuple const &_tuple, t_MeshTuple & _mesh )
+    void set_impl( bp::tuple const &_tuple, t_MeshTuple & _mesh )
     {
       namespace bt = boost::tuples;
-      namespace bp = boost::python;
       try
       {
         if( bp::len(_tuple) != 3 )
@@ -135,9 +212,9 @@ namespace LaDa
       }
     }
     
-    boost::python::tuple get_mesh( LaDa::Pescan::Interface::GenPot const &_genpot )
+    bp::tuple get_mesh( LaDa::Pescan::Interface::GenPot const &_genpot )
       { return get_impl(_genpot.mesh); }
-    void set_mesh( LaDa::Pescan::Interface::GenPot &_genpot, boost::python::tuple const &_t )
+    void set_mesh( LaDa::Pescan::Interface::GenPot &_genpot, bp::tuple const &_t )
     {
       namespace bt = boost::tuples;
       bool const change_multcell
@@ -149,49 +226,104 @@ namespace LaDa
       set_impl(_t, _genpot.mesh); 
       if( change_multcell ) _genpot.multiple_cell = _genpot.mesh;
     }
-    boost::python::tuple get_mcell( LaDa::Pescan::Interface::GenPot const &_genpot )
+    bp::tuple get_mcell( LaDa::Pescan::Interface::GenPot const &_genpot )
       { return get_impl(_genpot.multiple_cell); }
-    void set_mcell( LaDa::Pescan::Interface::GenPot &_genpot, boost::python::tuple const &_t )
+    void set_mcell( LaDa::Pescan::Interface::GenPot &_genpot, bp::tuple const &_t )
       { set_impl(_t, _genpot.multiple_cell); }
-    boost::python::tuple get_sbox( LaDa::Pescan::Interface::GenPot const &_genpot )
+    bp::tuple get_sbox( LaDa::Pescan::Interface::GenPot const &_genpot )
       { return get_impl(_genpot.small_box); }
-    void set_sbox( LaDa::Pescan::Interface::GenPot &_genpot, boost::python::tuple const &_t )
+    void set_sbox( LaDa::Pescan::Interface::GenPot &_genpot, bp::tuple const &_t )
       { set_impl(_t, _genpot.small_box); }
-
-    boost::python::str get_directory( LaDa::Pescan::Interface const &_self )
-      { return boost::python::str( _self.get_dirname().string() ); }
-    void set_directory( LaDa::Pescan::Interface &_self, boost::python::str const &_str )
+   
+    bp::str get_dir( LaDa::Pescan::Interface const &_self )
+      { return bp::str( _self.get_dirname().string() ); }
+    void set_dir( LaDa::Pescan::Interface &_self, bp::str const &_str )
     {
-      std::string const string = boost::python::extract<std::string>(_str);
+      std::string const string = bp::extract<std::string>(_str);
       return _self.set_dirname(string); 
+    }
+   
+    pyublas::numpy_vector<types::t_real> get_eigenvalues(Pescan::Interface const& _interface)
+    {
+      pyublas::numpy_vector<types::t_real> a(_interface.eigenvalues.size());
+      std::copy(_interface.eigenvalues.begin(), _interface.eigenvalues.end(), a.begin());
+      return a;
     }
 
     void expose_escan()
     {
       typedef LaDa::Pescan::Interface t_Escan;
-      namespace bp = boost::python;
-      bp::class_< t_Escan >( "Escan", "Wrapper around the nanopse-escan functional." ) 
-        .def( bp::init< t_Escan& >() )
-        .add_property( EXPOSE_FILENAME( vff_inputfile ), "Structure input file." )
-        .add_property( EXPOSE_FILENAME( directory ), "Directory where to perform calculations." )
-        .add_property( "scale", &t_Escan::get_scale, &t_Escan::set_scale,
-                       "Internal escan scale. Prior to calculation, "
-                       "set as \"escan.scale = structure\" "
-                       "where \"structure\" is a LaDa.Structure object." )
-        .def_readwrite( "parameters", &t_Escan::escan,
-                        "EscanParameters object." )
+      bp::enum_<t_Escan::t_method>( "method", "Diagonalisation method." )
+        .value( "folded", t_Escan::FOLDED_SPECTRUM )
+        .value( "full_diagonalization", t_Escan::ALL_ELECTRON )
+        .export_values();
+      bp::enum_<t_Escan::Escan::t_potential>( "potential", "Type of the hamiltonian" )
+        .value( "local", t_Escan::Escan::LOCAL )
+        .value( "nonlocal", t_Escan::Escan::NONLOCAL )
+        .value( "spinorbit", t_Escan::Escan::SPINORBIT )
+        .export_values();
+
+      bp::class_< t_Escan >
+      ( 
+        "Escan", 
+        "Wrapper around the nanopse-escan functional.\n\n"
+        "Initialization can take:\n"
+         "  - No argument.\n"
+         "  - A single string argument representing the path to an XML input file.\n" 
+         "  - A single boost.mpi communicator.\n"
+         "  - A string argument (see above), followed by a boost.mpi communicator.\n\n" 
+         "If compiled without mpi, including the communicator will have no effect.\n"
+      ) .def( bp::init< t_Escan const& >() )
+        .def( "__init__", bp::make_constructor(&cload<t_Escan>) )\
+        .def( "__init__", bp::make_constructor(&mpi_create<t_Escan>) )\
+        .def( "__init__", bp::make_constructor(&mpi_create2<t_Escan>) )\
+        .add_property
+        (
+           "directory", &get_dir, &set_dir, 
+           "Directory where calculations are performed.\n"
+        )
+        .add_property
+        ( 
+          "scale", &t_Escan::get_scale, &t_Escan::set_scale,
+          "Internal escan scale.\n\n"
+          "Prior to calculation, set as C{escan.scale = structure} where \"structure\" is a "
+          "L{sStructure<lada.crystal.sStructure>} or L{Structure<lada.crystal.Structure>} object.\n"
+        )
+#       define LADA_PARAMS(name, docstring)\
+          .add_property(#name, &get ## name, &set ## name, docstring)
+#       undef LADA_PARAMS
+#       define LADA_PARAMS(name, docstring) \
+          .add_property(#name, &get_ ## name, &set_ ## name, docstring)
+          LADA_PARAMS(input_filename, "Input filename for pescan.")
+          LADA_PARAMS(output_filename, "Output filename for pescan.")
+          LADA_PARAMS(rcut, "Real-space cutoff.")
+          LADA_PARAMS(smoothness, "Smoothness factor of plane-wave cutoff.")
+          LADA_PARAMS(kinscal, "Kinetic scaling parameter.")
+          LADA_PARAMS(vff_inputfile, "Structure input file.")
+          LADA_PARAMS(nbstates, "Number of states to compute.")
+          LADA_PARAMS(method, "Diagonalization method: L{folded} or L{full_diagonalization}")
+          LADA_PARAMS(potential, "Hamiltonian method: L{local}, L{spinorbit}, or L{nonlocal}.")
+          LADA_PARAMS(reference, "Reference energy for folded spectrum method." )
+          LADA_PARAMS(nlines, "Maximum number of line optimizations in conjugate-gradient.")
+          LADA_PARAMS(tolerance, "Tolerance of the diagonalisation procedure.")
+#       undef LADA_PARAMS
+        .add_property
+        (
+          "kpoint", 
+           bp::make_function(&get_kpoint, bp::return_value_policy<bp::return_by_value>()),
+           &set_kpoint, "K-point, in units of M{2S{pi}/a}, at which to perform calculation."
+        )
         .def_readwrite( "destroy_directory", &t_Escan::do_destroy_dir,
                         "If true, directory where calculations are carried out is destroyed "
                         "at the end of a calculation." )
-        .add_property("directory", &get_directory, &set_directory, 
-                      "Directory where calculations are carried out.\n")
-        .def_readonly( "eigenvalues", &t_Escan::eigenvalues,
-                       "Computed eigenvalues." )
-        .def_readwrite("genpot", &t_Escan::genpot)
+        .add_property( "eigenvalues", &get_eigenvalues, 
+                       "Computed eigenvalues as a read-only numpy array of real values." )
+        .def_readwrite("genpot", &t_Escan::genpot, "(L{GenPot}) Parameters of the atomic "
+            "potentials.\n")
         .def_readwrite("verbose", &t_Escan::verbose, "Verbose pescan output on true.")
-        .def( "fromXML",  &XML::Escan_from_XML<t_Escan>, bp::arg("file"),
+        .def( "fromXML",  &Escan_from_XML<t_Escan>, bp::arg("file"),
               "Loads escan parameters from an XML file." )
-        .def( "run", &t_Escan::operator(), "Performs a calculation." )
+        .def( "__call__", &t_Escan::operator(), "Performs a calculation." )
         .def( "set_mpi", &t_Escan::set_mpi, "Sets the boost.mpi communicator." );
 
       bp::def( "nb_valence_states", &LaDa::Pescan::nb_valence_states, bp::arg("structure"),
@@ -203,14 +335,15 @@ namespace LaDa
     {
 
       typedef LaDa::Pescan::Interface::GenPot t_GenPot;
-      namespace bp = boost::python;
       bp::class_< t_GenPot >( "GenPot", "Wrapper around genpot parameters.", bp::no_init ) 
-        .add_property( "mesh", &get_mesh, &set_mesh ) 
-        .add_property( "multiple_cell", &get_mcell, &set_mcell ) 
-        .add_property( "small_box", &get_sbox, &set_sbox )
-        .def_readonly("cutoff", &t_GenPot::cutoff);
+        .add_property( "mesh", &get_mesh, &set_mesh, "Tuple defining the FFT mesh.\n" ) 
+        .add_property( "multiple_cell", &get_mcell, &set_mcell,
+                       "Tuple defining the cell-grid for large computations.\n" ) 
+        .add_property( "small_box", &get_sbox, &set_sbox,
+                       "Tuple defining the overlap between cell grids for large computations.\n" )
+        .def_readonly("cutoff", &t_GenPot::cutoff, "Cutoff of the potential.\n");
     }
 
-#   undef EXPOSE_FILENAME
+
   } // namespace Python
 } // namespace LaDa

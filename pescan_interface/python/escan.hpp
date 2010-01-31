@@ -13,7 +13,6 @@ namespace LaDa
 {
   namespace Python
   {
-    void expose_escan_parameters();
     void expose_escan();
     void expose_genpot();
   }

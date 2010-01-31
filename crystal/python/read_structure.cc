@@ -136,13 +136,13 @@ namespace LaDa
         // print cartesian coord.
         foreach( std::string const sp, species )
         {
-          atat::rMatrix3d const inv( !_structure.cell );
+          math::rMatrix3d const inv( !_structure.cell );
           t_Structure::t_Atoms::const_iterator i_first( _structure.atoms.begin() );
           t_Structure::t_Atoms::const_iterator const i_end( _structure.atoms.end() );
           for( size_t N(0); i_first != i_end; ++i_first )
             if( i_first->type == sp )
             {
-              atat::rVector3d const vec(inv * i_first->pos); 
+              math::rVector3d const vec(inv * i_first->pos); 
               file << boost::format("  %25.18f %25.18f %25.18f\n") % vec(0) % vec(1) %vec(2);
             }
         }
@@ -293,29 +293,26 @@ namespace LaDa
         ( bp::arg("structure"), bp::arg("species"), bp::arg("path") = "./"),
         "Prints out a poscar to file." 
       );
-      boost::python::def
-      (
-        "read_poscar", 
-        &details::read_poscar_one_specie<std::string>,
-        (
-          bp::arg("types"),
-          bp::arg("path"),
-          bp::arg("check_lattice") = false
-        ),
-        "Tries to read a VASP POSCAR. Needs a tuple of species on input (first argument).\n"
-        "Returns a structure on success" 
-      );
+
+      boost::python::def("read_poscar", &details::read_poscar_one_specie<std::string>);
       boost::python::def
       (
         "read_poscar", 
         &details::read_poscar<std::string>,
         (
-          bp::arg("path"),
           bp::arg("types"),
+          bp::arg("path"),
           bp::arg("check_lattice") = false
         ),
-        "Tries to read a VASP POSCAR. This is the case of a single atomic specie."
-        "Returns a structure on success" 
+        "Tries to read a VASP POSCAR file, Returns a"
+           "(L{lada.crystal.sStructure}) structure on success.\n\n" 
+        "@param types: tuple consisting of the atomic symbols of the species in the POSCAR.\n"
+        "@type types: tuple of strings\n"
+        "@param path: path to the POSCAR file.\n"
+        "@type path: string\n"
+        "@param check_lattice: if true, then checks that the cell in the POSCAR "
+           "is commensurate with the lattice (L{crystal.sStructure.lattice} must be set).\n"
+        "@type check_lattice: Boolean\n"
       );
       boost::python::def
       (

@@ -24,6 +24,7 @@ class Reduction(object):
         the same but within a reduced Niggli unit-cell.
     """
 
+    from copy import deepcopy
     from numpy import matrix
     from numpy.linalg import inv
 
@@ -56,7 +57,7 @@ class Reduction(object):
     if recip: cell = inv(cell).T
 
     if hasattr(structure, "cell"):
-      new_structure = structure.__class__(structure)
+      new_structure = deepcopy(structure)
       new_structure.cell = cell
       return new_structure
     else: return cell
@@ -232,7 +233,7 @@ def main():
   from numpy import matrix
   from numpy.linalg import inv, det 
   import cellsym
-  from lada import crystal, atat
+  from lada import crystal, eigen
   import pyublas
 
  #file = open("POSCAR", "w")
