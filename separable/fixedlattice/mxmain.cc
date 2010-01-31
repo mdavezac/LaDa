@@ -138,8 +138,7 @@ int main(int argc, char *argv[])
   po::notify(vm);
  
   std::cout << "\n" << __PROGNAME__ \
-            << " from the " << PACKAGE_STRING << " package.\n" \
-            << "Subversion Revision: " << LaDa::SVN::Revision << "\n\n"; \
+            << " from the " << PACKAGE_STRING << " package.\n";
   if ( vm.count("version") ) return 1;
   if ( vm.count("help") )
   {
