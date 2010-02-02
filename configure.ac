@@ -271,7 +271,7 @@ AC_SUBST(CPP_DEBUG_FLAGS)
 #  MPI libs
 if test x$mpi = xtrue; then
   AC_DEFINE([_MPI],[1],[])
-  MPI_ADDLIB="../mpi/libmpiobject.la"
+  MPI_ADDLIB="\${top_builddir}/mpi/libmpiobject.la"
   MPI_CFLAGS="-D _OPENMPI_MPI_"
 else
   MPI_CFLAGS=""
