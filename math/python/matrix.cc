@@ -1,18 +1,18 @@
 // Adapted from Avogadro open source molecular editor from the kde project. (libavogadro/src/python/eigen.cpp)
 #include <iostream>
 
+#include <boost/type_traits/is_integral.hpp> 
+#include <boost/type_traits/is_floating_point.hpp>
 #include <boost/python/detail/wrap_python.hpp>
-#include <numpy/arrayobject.h> 
-#include <boost/python.hpp>
 #include <boost/python/tuple.hpp>
+#include <boost/python/errors.hpp>
 
 #include <Eigen/Geometry>
 
 #include <python/std_vector.hpp>
+#include <python/numpy_types.h>
+
 #include "../eigen.h"
-
-
-#include "numpy_types.h"
 
 
 namespace LaDa
@@ -20,6 +20,7 @@ namespace LaDa
   namespace python
   {
     using namespace boost::python;
+    namespace numpy = LaDa::math::numpy;
 
     template <class Matrix3x>
       struct Matrix3x_to_python_array
@@ -212,7 +213,7 @@ namespace LaDa
                 if( array->strides[0] % sizeof(T2) != 0 )
                 {
                   PyErr_SetString(PyExc_RuntimeError, "Incoherent numpy array.\n");
-                  bp::throw_error_already_set();
+                  throw_error_already_set();
                   return NULL;
                 }
     #         endif
@@ -227,7 +228,7 @@ namespace LaDa
                 if( array->strides[0] % sizeof(T2) != 0 or array->strides[1] % sizeof(T2) )
                 {
                   PyErr_SetString(PyExc_RuntimeError, "Incoherent numpy array.\n");
-                  bp::throw_error_already_set();
+                  throw_error_already_set();
                   return NULL;
                 }
     #         endif
@@ -243,6 +244,7 @@ namespace LaDa
 
     void expose_eigen_matrices()
     {
+      using namespace LaDa::Python;
       import_array(); // needed for NumPy 
 
       

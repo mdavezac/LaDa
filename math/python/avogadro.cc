@@ -6,15 +6,16 @@
 #include <boost/type_traits/is_integral.hpp> 
 #include <boost/type_traits/is_floating_point.hpp>
 #include <boost/python/detail/wrap_python.hpp>
-#include <numpy/arrayobject.h> 
+#include <boost/python/errors.hpp>
 #include <boost/python.hpp>
 #include <boost/python/tuple.hpp>
 
 #include <Eigen/Geometry>
 
 #include <python/std_vector.hpp>
+#include <python/numpy_types.h>
+
 #include "../eigen.h"
-#include "numpy_types.h"
 #include "avogadro.hpp"
 
 
@@ -23,6 +24,7 @@ namespace LaDa
   namespace python
   {
     using namespace boost::python;
+    namespace numpy = math::numpy;
 
 
     /***********************************************************************
@@ -234,7 +236,7 @@ namespace LaDa
             if( array->strides[array->dimensions[0] == 3 ? 0: 1] % sizeof(T2) != 0 )
             {
               PyErr_SetString(PyExc_RuntimeError, "Incoherent numpy array.\n");
-              bp::throw_error_already_set();
+              throw_error_already_set();
               return NULL;
             }
 #         endif
@@ -247,6 +249,7 @@ namespace LaDa
 
     void expose_eigen_vectors()
     {
+      using namespace LaDa::Python;
       import_array(); // needed for NumPy 
       
       Vector3x_to_python_array<math::rVector3d>();
