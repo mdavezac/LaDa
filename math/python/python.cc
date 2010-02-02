@@ -25,6 +25,6 @@ BOOST_PYTHON_MODULE(math)
    "matrices.";
   bp::docstring_options doc_options(true, false);
 
-  LaDa::Python::expose_eigen_vectors();
-  LaDa::Python::expose_eigen_matrices();
+  LaDa::python::expose_eigen_vectors();
+  LaDa::python::expose_eigen_matrices();
 }

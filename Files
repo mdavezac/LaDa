@@ -1,12 +1,8 @@
-#
-#  Version: $Id$
-#
-
 math_cc = random.cc smith_normal_form.cc 
 math_h  = compare_norms.h  eigen.h  fuzzy.h  lambda.impl.h  misc.h  modifiers.h \
           random.h  serialize.h  smith_normal_form.h  traits.h
 math_f90 = rational_mathematics.f90
-math_python_h = avogadro.hpp matrix.hpp 
+math_python_h = avogadro.hpp matrix.hpp  numpy_types.h
 math_python_cc = avogadro.cc matrix.cc python.cc 
 
 ap_cc = representation.cc functions.cc
