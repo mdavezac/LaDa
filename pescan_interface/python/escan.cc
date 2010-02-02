@@ -6,6 +6,7 @@
 #endif
 
 #include <boost/python/class.hpp>
+#include <boost/python/object.hpp>
 #include <boost/python/tuple.hpp>
 #include <boost/python/def.hpp>
 #include <boost/python/str.hpp>
@@ -15,8 +16,11 @@
 #include <boost/python/return_internal_reference.hpp>
 #include <boost/python/with_custodian_and_ward.hpp>
 #include <boost/python/copy_const_reference.hpp>
+#include <boost/python/make_constructor.hpp>
 
 #include <opt/initial_path.h>
+
+#include <python/numpy_types.h>
 
 #include "../interface.h"
 #include "escan.hpp"
@@ -244,13 +248,14 @@ namespace LaDa
    
     bp::object get_eigenvalues(Pescan::Interface const& _interface)
     {
-      int dims[1] = {_interface.eigenvalues.size()};
+      namespace numpy = LaDa::math::numpy;
+      npy_intp dims[1] = {_interface.eigenvalues.size()};
 
       PyObject *eigs = PyArray_SimpleNewFromData( 1, dims, numpy::type<types::t_real>::value,
                                                   (void*)&(_interface.eigenvalues[0]) );
-      return bp::object( bp::handle(bp::borrowed(eigs)) );
+      return bp::object( bp::handle<>(bp::borrowed(eigs)) );
     }
-    bp::object __call__(Pescan::interface &_interface) 
+    bp::object __call__(Pescan::Interface &_interface) 
     {
       if( not _interface() )
       {
@@ -326,16 +331,41 @@ namespace LaDa
         .def_readwrite( "destroy_directory", &t_Escan::do_destroy_dir,
                         "If true, directory where calculations are carried out is destroyed "
                         "at the end of a calculation." )
-        .add_property( "eigenvalues", &get_eigenvalues, 
-                       "Computed eigenvalues as a read-only numpy array of real values.",
-                       bp::with_custodian_and_ward_postcall<1,0>() )
+        .add_property
+        ( 
+          "eigenvalues", 
+          bp::make_function(&get_eigenvalues, bp::with_custodian_and_ward_postcall<1,0>()),
+          "Computed eigenvalues as a read-only numpy array of real values." 
+        )
         .def_readwrite("genpot", &t_Escan::genpot, "(L{GenPot}) Parameters of the atomic "
             "potentials.\n")
         .def_readwrite("verbose", &t_Escan::verbose, "Verbose pescan output on true.")
         .def( "fromXML",  &Escan_from_XML<t_Escan>, bp::arg("file"),
               "Loads escan parameters from an XML file." )
-        .def( "__call__", &__call__, "Performs a calculation." 
-              bp::with_custodian_and_ward_postcall<1,0>() )
+        .def
+        ( 
+          "__call__", &__call__,
+          "Performs a calculation.\n\n" 
+          "The usual sequence of call is as follows:\n\n"
+          ">>> # First initialize escan and vff"
+          ">>> escan = lada.escan.Escan(\"input.xml\", boost.mpi.world)\n"
+          ">>> vff = lada.vff.Vff(\"input.xml\", boost.mpi.world)\n"
+          ">>> # Sets structure to input to vff and escan."
+          ">>> vff.structure = ...\n"
+          ">>> # Sets filename to which to print escan input.\n"
+          ">>> escan.vff_inputfile = \"atomic_config.\" + str(boost.mpi.world.rank)\n"
+          ">>> # Prints to file\n"
+          ">>> vff.print_escan_input(escan.vff_inputfile)\n"
+          ">>> # sets unit length of escan calculations.\n" 
+          ">>> escan.scale = vff.structure\n"
+          ">>> # Finally, calls escan functional. \n"
+          ">>> # Other parameters (reference, kpoint...) can be changed prior to call.\n"
+          ">>> eigenvalues = escan()\n\n"
+          "@return: numpy vector also available as self.L{eigenvalues}. As "
+          "such, it will change from one calculation to the other. Copy if you "
+          "want to store the results.\n",
+          bp::with_custodian_and_ward_postcall<1,0>() 
+        )
         .def( "set_mpi", &t_Escan::set_mpi, "Sets the boost.mpi communicator." );
 
       bp::def( "nb_valence_states", &LaDa::Pescan::nb_valence_states, bp::arg("structure"),

@@ -11,7 +11,7 @@
 
 namespace LaDa
 {
-  namespace Python
+  namespace python
   {
     void expose_escan();
     void expose_genpot();
