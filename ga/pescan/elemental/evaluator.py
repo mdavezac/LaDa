@@ -6,7 +6,7 @@ class Bandgap(object):
     """ Initializes the bandgap object. 
 
         @param converter: is a functor which converts between a bitstring and a
-          lada.crystal.sStructure, and vice versa.
+          lada.crystal.Structure, and vice versa.
         @type  converter: duck-typed to L{Converter}
         @param input: is the XML input file for the vff, pescan, 
           (optionally) lattice parameters.
@@ -39,7 +39,7 @@ class Bandgap(object):
 
     self.bandgap = BGFunctional(input, self.world) # creates bandgap functional
     """ Bandgap functional """
-    self.bandgap.scale = self.vff.structure
+    self.bandgap.scale = converter.structure
 
     self.directory_prefix = "indiv"
     """ Directory prefix """
@@ -74,17 +74,14 @@ class Bandgap(object):
  
     # moves to calculation directory
     with Changedir(self.bandgap.directory) as pwd:
-      # creates structure from bitstring
-      self.vff.structure = self.converter(indiv.genes)
-      self.vff.init()
-     
-      # Computes epitaxial structure
-      indiv.epi_energy = self.vff.evaluate()
+      # Relax structure
+      structure = self.vff( self.converter(indiv.genes) )
+      indiv.epi_energy = structure.energy
      
       # Computes bandgap
       self.bandgap.vff_inputfile = "atom_input." + str( self.world.rank )
       self.vff.print_escan_input(self.bandgap.vff_inputfile)
-      self.bandgap(self.vff.structure)
+      self.bandgap(structure)
       indiv.bands = self.bandgap.bands
  
     # destroy directory if requested.
@@ -180,11 +177,10 @@ class Directness(Bandgap):
 
     # relax structure.
     structure = self.converter(indiv.genes)
-    self.vff.structure = crystal.Structure(structure)
-    self.vff.init()
-    indiv.epi_energy = self.vff.evaluate()
+    relaxed = self.vff(structure)
+    indiv.epi_energy = relaxed.energy
     # computes deformation of reciprocal lattice
-    deformation = np_dot(np_matrix(self.vff.structure.cell).I.T, structure.cell.T)
+    deformation = np_dot(np_matrix(relaxed.cell).I.T, structure.cell.T)
     # vff input file
     self.bandgap.vff_inputfile = "atom_input." + str( self.world.rank )
 
@@ -211,7 +207,7 @@ class Directness(Bandgap):
         # prints bandgap input
         self.vff.print_escan_input(self.bandgap.vff_inputfile)
         #  computes bandgap.
-        self.bandgap(self.vff.structure)
+        self.bandgap(relaxed)
         # saves bandgap result in individual
         setattr(indiv, name, Bands(self.bandgap.bands) )
         

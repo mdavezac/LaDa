@@ -132,7 +132,7 @@ class Extract(object):
 
     return result
   system = property(_get_structure)
-  r""" Fills a L{crystal.sStructure} from L{files.CONTCAR} and free energy in L{files.OUTCAR}. """
+  r""" Fills a L{crystal.Structure} from L{files.CONTCAR} and free energy in L{files.OUTCAR}. """
   structure = property(_get_structure)
   r""" Alias for self.L{system}. """
 

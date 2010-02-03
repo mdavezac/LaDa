@@ -188,7 +188,7 @@ namespace LaDa
         "Returns a tuple allowing a stransformation to the smith normal form.\n\n" 
         "The input can have one or two arguments depending on their types:\n"
         "  - if one argument is given, it must be of type L{Structure} or a"
-             " L{sStructure}, with L{Structure.lattice} set.\n"
+             " L{rStructure}, with L{rStructure.lattice} set.\n"
         "  - if two argument are given, the first one is the cell of the"
              " structure, and the second the cell of the lattice.\n" 
         "In any case, the cell of structure must be exactly commensurate with "

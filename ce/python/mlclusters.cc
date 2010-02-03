@@ -97,10 +97,13 @@ namespace LaDa
       return _stream;
     }
 
-    types::t_real call( CE::t_MLClusterClasses const &_cls, Crystal::Structure const &_str )
+    types::t_real call( CE::t_MLClusterClasses const &_cls,
+                        Crystal::TStructure<std::string> const &_str )
     {
       std::vector<types::t_real> pis;
-      CE::find_pis(_cls, _str, pis);
+      Crystal::Structure str;
+      Crystal::convert_string_to_real_structure(_str, str);
+      CE::find_pis(_cls, str, pis);
       types::t_real result(0);
       LADA_ASSERT( _cls.size() == pis.size(), "Inconsistent sizes.\n")
       std::vector<types::t_real> :: const_iterator i_pi = pis.begin();
@@ -112,10 +115,12 @@ namespace LaDa
     }
      
     pyublas::numpy_vector<types::t_real>  pis( CE::t_MLClusterClasses const &_cls,
-                                                  Crystal::Structure const &_str )
+                                               Crystal::TStructure<std::string> const &_str )
     {
       pyublas::numpy_vector<types::t_real> pis_;
-      CE::find_pis(_cls, _str, pis_);
+      Crystal::Structure str;
+      Crystal::convert_string_to_real_structure(_str, str);
+      CE::find_pis(_cls, str, pis_);
       return pis_;
     }
 

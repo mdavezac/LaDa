@@ -207,16 +207,21 @@ namespace LaDa
       bp::def
       (
         "as_structure", 
-        &as_structure<Crystal::Structure>,
-        ( bp::arg("structure"), bp::arg("x"), bp::arg("flavorbase") ),
-        "Fills structure sites using index x. Structure must have correct number of atoms."
+        &as_structure< Crystal::TStructure<std::string> >,
+        ( bp::arg("structure"), bp::arg("x"), bp::arg("flavorbase") )
       );
       bp::def
       (
         "as_structure", 
-        &as_structure< Crystal::TStructure<std::string> >,
+        &as_structure<Crystal::Structure>,
         ( bp::arg("structure"), bp::arg("x"), bp::arg("flavorbase") ),
-        "Fills structure sites using index x. Structure must have correct number of atoms."
+        "Fills structure sites using index x.\n\n"
+        "@param structure: a crystal structure with correct number of atoms.\n"
+        "@type structure: L{crystal.Structure} or L{crystal.rStructure}.\n"
+        "@param x: index.\n"
+        "@type x: integer\n"
+        "@base flavorbase: the return from L{create_flavorbase}.\n"
+        "@type flavorbase: FlavorBase\n"
       );
       
       typedef boost::make_signed<enumeration::t_uint>::type t_int;

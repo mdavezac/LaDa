@@ -92,8 +92,8 @@ class Fit():
 
   def extinguish_structure(self, n = None, on = "all"):
     """ Extinguishes structure at index n (n can be a list of indices).
-        Structure at index 0 is the first structure added to the set.
-        Structure at index 1 is the second structure added to the set.
+        L{Structure} at index 0 is the first structure added to the set.
+        L{Structure} at index 1 is the second structure added to the set.
         And so on...
         If on == "all", then turns all other structures on.
         If n is None and on == all, then  all structures are turned on.

@@ -58,6 +58,19 @@ namespace LaDa
         result.append( boost::python::make_tuple( r.first, r.second ) );
       return result;
     }
+    boost::python::list get_masses2
+    (
+      eMass& _emass,
+      const Pescan::Interface& _interface,
+      const math::rMatrix3d &_ocell, 
+      const Crystal::TStructure<std::string> &_structure,
+      const types::t_real &_eref
+    )
+    {
+      Crystal::Structure structure;
+      Crystal::convert_string_to_real_structure( _structure, structure );     
+      return get_masses(_emass, _interface, _ocell, structure, _eref);
+    }
 
 
     void expose_emass()
@@ -74,6 +87,17 @@ namespace LaDa
         .def_readwrite( "kpoint", &t_eMass::kpoint, "Kpoint at which to compute emass." )
         .def_readwrite( "direction", &t_eMass::direction, "Direction of emass." )
         .def_readwrite( "nbstates", &t_eMass::nbstates, "Number of emasses to compute." )
+        .def
+        ( 
+          "__call__", &get_masses2,
+          (
+            bp::arg("self"),
+            bp::arg("escan"),
+            bp::arg("ocell"),
+            bp::arg("structure"),
+            bp::arg("ref")
+          ) 
+        ) 
         .def
         ( 
           "__call__", &get_masses,

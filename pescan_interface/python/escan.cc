@@ -265,6 +265,9 @@ namespace LaDa
       return get_eigenvalues(_interface);
     }
 
+    void set_scale(Pescan::Interface &_interface, Crystal::TStructure<std::string> const &_str)
+      {  _interface.escan.scale = _str.scale; }
+
     void expose_escan()
     {
       typedef LaDa::Pescan::Interface t_Escan;
@@ -299,10 +302,10 @@ namespace LaDa
         )
         .add_property
         ( 
-          "scale", &t_Escan::get_scale, &t_Escan::set_scale,
+          "scale", &t_Escan::get_scale, &set_scale,
           "Internal escan scale.\n\n"
           "Prior to calculation, set as C{escan.scale = structure} where \"structure\" is a "
-          "L{sStructure<lada.crystal.sStructure>} or L{Structure<lada.crystal.Structure>} object.\n"
+          "L{Structure<lada.crystal.Structure>}.\n"
         )
 #       define LADA_PARAMS(name, docstring)\
           .add_property(#name, &get ## name, &set ## name, docstring)

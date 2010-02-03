@@ -101,7 +101,7 @@ def square_enum( _n, _lattice ):
   import time
   from lada import enumeration, crystal, math
 
-  structure = crystal.sStructure()
+  structure = crystal.Structure()
   structure.cell = np.array( [[_n, 0, 0], [0, _n, 0], [0, 0, _n]], dtype="float64" )
   crystal.fill_structure(structure);
   smith = crystal.smith_normal_transform(structure) 

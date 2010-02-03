@@ -209,7 +209,19 @@ namespace LaDa
         void init(bool _redo, bool _verbose) { functional_->init( _redo, _verbose ); }
 
         //! fast evaluation with no reinitialization.
-        types::t_real operator()() const { return functional_->evaluate() / 16.0217733; }
+        boost::shared_ptr< Crystal::TStructure<std::string> >
+          operator()(Crystal::TStructure<std::string> const& _str, bool _doinit) 
+          { 
+            Crystal::convert_string_to_real_structure(_str, structure);     
+            functional_->init(_doinit, false);
+            types::t_real const energy = functional_->evaluate() / 16.0217733;
+
+            boost::shared_ptr< Crystal::TStructure<std::string> >
+              result( new Crystal::TStructure<std::string> );
+            Crystal::convert_real_to_string_structure(structure, *result);     
+            result->energy = energy;
+            return result;
+          }
         //! Returns the stress.
         math::rMatrix3d get_stress() const { return functional_->get_stress(); }
 
@@ -217,8 +229,12 @@ namespace LaDa
         bool Load( const TiXmlElement &_node ) { return functional_->Load( _node ); }
 
         //! Prints escan input.
-        void print_escan_input( const std::string &_path ) const
-          { functional_->print_escan_input( _path ); }
+        void print_escan_input( const std::string &_path,
+                                Crystal::TStructure<std::string> const &_str) 
+        {
+          Crystal::convert_string_to_real_structure(_str, structure);     
+          functional_->print_escan_input( _path ); 
+        }
           
         //! The owned structure.
         Crystal::Structure structure;
@@ -232,8 +248,6 @@ namespace LaDa
         void set_bond( const std::string& _bond, const bp::tuple& _t );
         bp::tuple get_angle( const std::string& _bond ) const;
         void set_angle( const std::string& _bond, const bp::tuple& _t );
-
-
 
       protected:
         //! The functional.
@@ -383,112 +397,103 @@ namespace LaDa
     };
 
 
-#   ifdef EXPOSEVFF 
-#     error Macro EXPOSEVFF already exists.
-#   endif 
-#   ifdef _MPI
-#     ifdef SETMPI
-#       error Macro SETMPI already exists.
-#     endif 
-#     define SETMPI(b) .def("set_mpi", &b::set_mpi, "Sets the boost.mpi communicator.")
-#   else
-#     define SETMPI(b)
-#   endif
-#   define EXPOSEVFF( a, b, c ) \
-      bp::class_< b >\
-      ( \
-        a,\
-        (std::string(c) + "\n\nThis object can be created with: \n"\
-            "  - No argument.\n"\
-            "  - A single string argument representing the path to an XML input file.\n" \
-            "  - A single boost.mpi communicator.\n"\
-            "  - A string argument (see above), followed by a boost.mpi communicator.\n\n" \
-            "If compiled without mpi, including the communicator will have no effect.\n").c_str()\
-       ) \
-        .def( bp::init< b const &>() ) \
-        .def( "__init__", bp::make_constructor(&cload<b>) )\
-        .def( "__init__", bp::make_constructor(&mpi_create<b>) )\
-        .def( "__init__", bp::make_constructor(&mpi_create2<b>) )\
-        .def_readwrite( "structure",    &b::structure, \
-                        "The structure to minimize. Input and Output to the functional." ) \
-        .def( "fromXML",  &XML::Vff_from_XML<b>, bp::arg("file"),\
-              "Loads the vff parameters from an XML file." ) \
-        .def( "evaluate",  &b::operator(), \
-              "Minimizes the current structure and returns the energy in eV." ) \
-        .def( "init",  &b::init, (bp::arg("redo_tree") = true, bp::arg("verbose")=false), \
-              "Initializes the functional for the current structure." ) \
-        .def( "print_escan_input",  &b::print_escan_input, bp::arg("file"), \
-              "Outputs the current structure in a format suitable for pescan." ) \
-        .def( "set_bond",  &b::set_bond, ( bp::arg("bond"), bp::arg("params") ), \
-              "Sets the parameters of bond from a tuple where:\n" \
-              "  - the first component is the bond length.\n" \
-              "  - the second to sixth components are the gammas at order 2-6.\n" \
-              "The tuple can be shortened to include only the first few parameters.\n" ) \
-        .def( "get_bond",  &b::get_bond, bp::arg("angle"), \
-              "Returns the parameters of bond in form of a tuple.\n" \
-              "  - the first component is the bond length.\n" \
-              "  - the second to sixth components are the gammas at order 2-6.\n" ) \
-        .def( "set_angle",  &b::set_angle, ( bp::arg("angle"), bp::arg("params") ), \
-              "Sets the parameters of angle from a tuple where:\n" \
-              "  - the first component is gamma.\n" \
-              "  - the second component is sigma.\n" \
-              "  - the third to seventh components are the betas at order 2-6.\n" \
-              "The tuple can be shortened to include only the first few parameters.\n" ) \
-        .def( "get_angle",  &b::get_angle, bp::arg("angle"), \
-              "Returns the parameters of angle in form of a tuple.\n" \
-              "  - the first component is gamma.\n" \
-              "  - the second component is sigma.\n" \
-              "  - the third to seventh components are the betas at order 2-6.\n" ) \
-        .add_property( "stress",  &b::get_stress, \
-                       "Returns the stress. Meaningfull only "\
-                       "following a call to Vff.evaluate()." ) \
-        SETMPI(b)
+    template<class T> bp::class_<T> expose_vff_(std::string const &_name, std::string const &_doc)
+    {
+      return bp::class_< T >
+      ( 
+        _name.c_str(),
+        (
+          _doc
+          + "\n\nThis object can be created with: \n"
+            "  - No argument.\n"
+            "  - A single string argument representing the path to an XML input file.\n" 
+            "  - A single boost.mpi communicator.\n"
+            "  - A string argument (see above), followed by a boost.mpi communicator.\n\n" 
+            "If compiled without mpi, including the communicator will have no effect.\n"
+        ).c_str()
+      ).def( bp::init< T const &>() ) 
+       .def( "__init__", bp::make_constructor(&cload<T>) )
+       .def( "__init__", bp::make_constructor(&mpi_create<T>) )
+       .def( "__init__", bp::make_constructor(&mpi_create2<T>) )
+       .def( "fromXML",  &XML::Vff_from_XML<T>, bp::arg("file"),
+             "Loads the vff parameters from an XML file." ) 
+       .def
+       ( 
+         "__call__",  
+         &T::operator(), 
+         (bp::arg("structure"), bp::arg("doinit") = true),
+         "Minimizes structure.\n\n"
+         "@param structure: structure to evaluate.\n"
+         "@type structure: L{crystal.Structure}.\n"
+         "@param doinit: If true, reconstructs first-neighbor tree. Default: true.\n"
+         "@return: the relaxed structure. The energy is in "
+         "structure.L{energy<crystal.Structure.energy>}.\n"
+       )
+       .def( "_init",  &T::init, (bp::arg("redo_tree") = true, bp::arg("verbose")=false), 
+             "Initializes the functional for the current structure." ) 
+       .def( "print_escan_input",  &T::print_escan_input, (bp::arg("file"), bp::arg("structure")), 
+             "Outputs the current structure in a format suitable for pescan." ) 
+       .def( "set_bond",  &T::set_bond, ( bp::arg("bond"), bp::arg("params") ), 
+             "Sets the parameters of bond from a tuple where:\n" 
+             "  - the first component is the bond length.\n" 
+             "  - the second to sixth components are the gammas at order 2-6.\n" 
+             "The tuple can be shortened to include only the first few parameters.\n" ) 
+       .def( "get_bond",  &T::get_bond, bp::arg("angle"), 
+             "Returns the parameters of bond in form of a tuple.\n" 
+             "  - the first component is the bond length.\n" 
+             "  - the second to sixth components are the gammas at order 2-6.\n" ) 
+       .def( "set_angle",  &T::set_angle, ( bp::arg("angle"), bp::arg("params") ), 
+             "Sets the parameters of angle from a tuple where:\n" 
+             "  - the first component is gamma.\n" 
+             "  - the second component is sigma.\n" 
+             "  - the third to seventh components are the betas at order 2-6.\n" 
+             "The tuple can be shortened to include only the first few parameters.\n" ) 
+       .def( "get_angle",  &T::get_angle, bp::arg("angle"), 
+             "Returns the parameters of angle in form of a tuple.\n" 
+             "  - the first component is gamma.\n" 
+             "  - the second component is sigma.\n" 
+             "  - the third to seventh components are the betas at order 2-6.\n" ) 
+#      ifdef _MPI
+         .def("set_mpi", &T::set_mpi, "Sets the boost.mpi communicator.")
+#      endif
+       .add_property( "stress",  &T::get_stress, 
+                      "Returns the stress. Meaningfull only "
+                      "following a call to Vff.evaluate()." );
+    }
 
     void expose_vff()
     {
-      typedef Vff< LaDa::Vff::Functional > t_Vff;
-      EXPOSEVFF
+      expose_vff_< Vff<LaDa::Vff::Functional> > 
       ( 
         "Vff", 
-        t_Vff, 
         "A Valence Force Field Functional.\n\n"
-        "Prior to use, the parameters must be loaded from an XML file, "
-        "The structure must be itself initialized, and LaDa.Vff.init() must be called."
-        "Order does count :).\n\n"
+        "Usage:\n"
         ">>> vff = lada.vff.Vff(\"input.xml\", boost.mpi.world)\n"
-        ">>> vff.structure.fromXML(\"input.xml\")\n"
-        ">>> vff.init()\n"
-        ">>> vff.evaluate()\n\n"
-        "For deep copy, one may use the default constructor: >>> vff2 = lada.vff.Vff(vff1)\n"
-
+        ">>> structure = crystal.Structure(\"input.xml\")\n"
+        ">>> relaxed_structure = vff(structure)\n\n"
       );
     }
 
     void expose_layeredvff()
     {
-      typedef LayeredVff t_Vff;
-      EXPOSEVFF
+      expose_vff_<LayeredVff>
       ( 
         "LayeredVff", 
-        t_Vff,
         "A Valence Force Field Functional with epitaxial constraints.\n\n"
-        "Prior to use, the parameters must be loaded from an XML file, "
-        "The structure must be itself initialized, and LaDa.Vff.init() must be called."
-        "Order does count :).\n\n"
-        ">>> vff = lada.vff.Vff()\n"
-        ">>> vff.set_mpi(boost.mpi.world) # if compiled with mpi only!\n"
-        ">>> vff.fromXML(\"input.xml\")\n"
-        ">>> vff.structure.fromXML(\"input.xml\")\n"
-        ">>> # if next line commented out, uses vff.structure[:,0] by default.\n" 
+        "Usage:\n"
+        ">>> vff = lada.vff.LayeredVff(\"input.xml\", boost.mpi.world)\n"
         ">>> vff.direction = numpy.array([0,0,1], dtype=\"float64\")"
-        ">>> vff.init()\n"
-        ">>> vff.evaluate()\n\n"
-        "For deep copy, one may use the default constructor: C{vff2 = lada.vff.Vff(vff1)}\n"
+        ">>> structure = crystal.Structure(\"input.xml\")\n"
+        ">>> relaxed_structure = vff(structure)\n\n"
       ).add_property
        (
          "direction",
-         bp::make_function(&t_Vff::get_direction, bp::return_value_policy<bp::return_by_value>()),
-         &t_Vff::set_direction, "Growth/Epitaxial direction.\n\n3x1 float64 numpy array.\n" 
+         bp::make_function
+         (
+           &LayeredVff::get_direction, 
+           bp::return_value_policy<bp::return_by_value>()
+         ),
+         &LayeredVff::set_direction, "Growth/Epitaxial direction.\n\n3x1 float64 numpy array.\n" 
        ); 
     }
 

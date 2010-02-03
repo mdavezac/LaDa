@@ -33,11 +33,14 @@ namespace LaDa
           do
           {
             if( not Crystal :: read_pifile_structure( file, structure ) ) continue;
-            _callable( structure );
+            Crystal::TStructure<std::string> str;
+            Crystal::convert_real_to_string_structure(structure, str);
+            _callable( str );
             foreach( Crystal::Structure::t_Atom &atom, structure.atoms )
               atom.type = math::gt( atom.type, 0e0 ) ? -1e0: 1e0;
             structure.name = "-" + structure.name;
-            _callable( structure );
+            Crystal::convert_real_to_string_structure(structure, str);
+            _callable( str );
           }
           while( not file.eof() );
         }
@@ -111,12 +114,15 @@ namespace LaDa
               );
               i_atom->type = line[index] == '0' ? -1.0: 1.0; 
             }
-            _callable( structure );
+            Crystal::TStructure<std::string> str;
+            Crystal::convert_real_to_string_structure(structure, str);
+            _callable( str );
             
             for(i_atom = structure.atoms.begin(); i_atom != i_atom_end; ++i_atom )
               i_atom->type = i_atom->type > 0e0 ? -1e0: 1e0;
             structure.name = '-' + structure.name;
-            _callable( structure );
+            Crystal::convert_real_to_string_structure(structure, str);
+            _callable( str );
           }
           while( (not file.eof()) and file.good() );
         }
@@ -140,16 +146,18 @@ namespace LaDa
         "enum_pifile",
         &details::enumerate_pifile,
         ( boost::python::arg("filename"), boost::python::arg("callable") ),
-        "Reads a pi-file and calls a "
-        "\"callable( const LaDa::Crystal::Structure )->types::t_real\" for each structure."
+        "Performs a function on each member of a S{Pi}-file.\n\n"
+        "@params filename: Filename to S{Pi}-file.\n"
+        "@params callable: A callable taking a L{crystal.Structure} as argument.\n"
       );
       boost::python::def
       ( 
         "enum_gusfile",
         &details::enumerate_gusfile,
         ( boost::python::arg("filename"), boost::python::arg("callable") ),
-        "Reads a gus-file and calls a "
-        "\"callable( const LaDa::Crystal::Structure )->types::t_real\" for each structure."
+        "Performs a function on each member of a gus-file.\n\n"
+        "@params filename: Filename to gus-file.\n"
+        "@params callable: A callable taking a L{crystal.Structure} as argument.\n"
       );
     }
 

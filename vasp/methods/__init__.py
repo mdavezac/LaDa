@@ -27,7 +27,7 @@ def relaxation( vasp, structure, outdir="relaxation", repat = [], tolerance = 1e
              deepcopied correctly.  
 
       @param structure: A structure to relax.
-      @type structure: L{lada.crystal.sStructure} or L{lada.crystal.Structure}.
+      @type structure: L{lada.crystal.Structure}
       @param vasp: The vasp functional.
       @type vasp: L{Vasp}
       @param outdir: Directory where to repatriate files. Default = "relaxation"
@@ -45,7 +45,7 @@ def relaxation( vasp, structure, outdir="relaxation", repat = [], tolerance = 1e
   from os.path import join, exists
   from os import remove
   from .. import files
-  from ...crystal import sStructure
+  from ...crystal import Structure
 
   # make this function stateless.
   vasp = deepcopy(vasp)
@@ -70,7 +70,7 @@ def relaxation( vasp, structure, outdir="relaxation", repat = [], tolerance = 1e
   # yields output for whatnot
   yield output
 
-  structure = sStructure(output.structure)
+  structure = Structure(output.structure)
   # makes sure we don't accidentally converge to early.
   oldenergy = -structure.energy
 
@@ -88,7 +88,7 @@ def relaxation( vasp, structure, outdir="relaxation", repat = [], tolerance = 1e
     # keeps track of energy.
     oldenergy = float(structure.energy)
     # gets new structure and iterate.
-    structure = sStructure(output.structure)
+    structure = Structure(output.structure)
 
   # final calculation.
   vasp.relaxation.value = "static"
@@ -118,7 +118,7 @@ def kpoint_convergence(vasp, structure, outdir="kconv", start=1, steps=None, \
              deepcopied correctly.  
 
       @param structure: A structure to relax.
-      @type structure: L{lada.crystal.sStructure} or L{lada.crystal.Structure}.
+      @type structure: L{lada.crystal.Structure} 
       @param vasp: The vasp functional.
       @type vasp: L{Vasp}
       @param outdir: Directory where to repatriate files. Default = kconv.
@@ -194,7 +194,7 @@ def main():
   from lada import crystal
   from lada.vasp import Vasp, Specie
 
-  structure = crystal.sStructure()
+  structure = crystal.Structure()
   structure.cell = np_array( [[1.0,0,0],[0,1,0],[0,0,1]] )
   structure.atoms.append( crystal.StrAtom(np_array([0.0,0,0]), "Rb") )
   structure.atoms.append( crystal.StrAtom(np_array([0.5,0.5,0.5]), "K") )

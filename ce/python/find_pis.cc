@@ -24,23 +24,27 @@ namespace LaDa
   {
     namespace bp = boost::python;
     pyublas::numpy_vector<types::t_real> find_pis( CE::t_ClusterClasses const &_cls,
-                                                   Crystal::Structure const &_str,
+                                                   Crystal::TStructure<std::string> const &_str,
                                                    size_t _site )
     {
+      Crystal::Structure str;
+      Crystal::convert_string_to_real_structure(_str, str);
       pyublas::numpy_vector<types::t_real> vec; 
-      CE::find_pis(_cls, _str, vec, _site);
+      CE::find_pis(_cls, str, vec, _site);
       return vec;
     }
     pyublas::numpy_vector<types::t_real> find_pis3( CE::t_ClusterClasses const &_cls,
-                                                   Crystal::Structure const &_str)
+                                                   Crystal::TStructure<std::string> const &_str)
     {
+      Crystal::Structure str;
+      Crystal::convert_string_to_real_structure(_str, str);
       pyublas::numpy_vector<types::t_real> vec; 
-      CE::find_pis2(_cls, _str, vec);
+      CE::find_pis2(_cls, str, vec);
       return vec;
     }
 
     pyublas::numpy_vector<types::t_real> find_pis2( bp::list const &_cls,
-                                                    Crystal::Structure const &_str,
+                                                    Crystal::TStructure<std::string> const &_str,
                                                     size_t _site )
     {
       CE::t_ClusterClasses cls(bp::len(_cls));
@@ -52,30 +56,31 @@ namespace LaDa
     void expose_find_pis()
     {
 
-      bp::def
-      (
-        "find_pis",
-        &find_pis,
-        ( bp::arg("classes"), bp::arg("structure"), bp::arg("site")=0 ),
-        "Returns pis of a given structure for a given array of classes of equivalent figures,\n"
-        "with site the site index of the origin of the figure."
-      );
-
+      bp::def( "find_pis", &find_pis, 
+               (bp::arg("classes"), bp::arg("structure"), bp::arg("site")=0) );
       bp::def
       (
         "find_pis",
         &find_pis2,
         ( bp::arg("classes"), bp::arg("structure"), bp::arg("site")=0 ),
-        "Returns pis of a given structure for a given array of classes of equivalent figures,\n"
-        "with site the site index of the origin of the figure."
+        "Computes S{Pi}s.\n\n"
+        "@return: S{Pi}s for given structure and cluster classes.\n"
+        "@param classes: classes of quivalents cluster classes.\n"
+        "@param structure: structure for which to compute S{Pi}s.\n"
+        "@type structure: L{crystal.Structure}.\n"
+        "@param site: Which site to compute S{Pi}s for. Default 0.\n"
       );
       bp::def
       (
         "find_pis2",
         &find_pis3,
         ( bp::arg("classes"), bp::arg("structure") ),
-        "Returns pis of a given structure for a given array of classes of equivalent figures,\n"
-        "with site the site index of the origin of the figure."
+        "Computes S{Pi}s.\n\n"
+        "@return: S{Pi}s for given structure and cluster classes.\n"
+        "@param classes: classes of quivalents cluster classes.\n"
+        "@param structure: structure for which to compute S{Pi}s.\n"
+        "@type structure: L{crystal.Structure}.\n"
+        "@param site: Which site to compute S{Pi}s for. Default 0.\n"
       );
     }
 
