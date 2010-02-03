@@ -1,12 +1,8 @@
-#
-#  Version: $Id$
-#
-
 math_cc = random.cc smith_normal_form.cc 
 math_h  = compare_norms.h  eigen.h  fuzzy.h  lambda.impl.h  misc.h  modifiers.h \
           random.h  serialize.h  smith_normal_form.h  traits.h
 math_f90 = rational_mathematics.f90
-math_python_h = avogadro.hpp matrix.hpp 
+math_python_h = avogadro.hpp matrix.hpp  numpy_types.h
 math_python_cc = avogadro.cc matrix.cc python.cc 
 
 ap_cc = representation.cc functions.cc
@@ -225,7 +221,7 @@ print_cc = manip.cc xmg.cc stdout.cc base.cc columns.cc
 print_h  = manip.h  xmg.h  stdout.h  base.h  operations.h columns.h
 print_doc = $(print_h) $(print_cc) 
 
-python_h = xml.hpp misc.hpp std_vector.hpp std_map.hpp std_map.impl.hpp debug.hpp
+python_h = xml.hpp misc.hpp std_vector.hpp std_map.hpp std_map.impl.hpp debug.hpp numpy_types.h
 
 minimizer_h =  allsq.h  cgs.h  decoupled.h  frprmn.h  function_wrapper.h  gsl.h \
                gsl_lsq.h  gsl_mins.h  gsl_nllsq.h  gsl_simplex.h  minuit2.h \

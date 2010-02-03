@@ -293,7 +293,7 @@ namespace LaDa
 
       expose< Crystal::Structure >
       (
-        "Structure", 
+        "rStructure", 
         "Defines a structure.\n\nGenerally, it is a super-cell of a L{Lattice} object.",
         "Atom"
       ).def( "__init__", bp::make_constructor( string_to_real ) )
@@ -307,7 +307,7 @@ namespace LaDa
       bp::register_ptr_to_python< boost::shared_ptr<Crystal::Structure> >();
       expose< Crystal::TStructure<std::string> >
       (
-        "sStructure", 
+        "Structure", 
         "Defines a structure.\n\nGenerally, it is a super-cell of a L{Lattice} object.",
         "StrAtom"
       ).def( "__init__", bp::make_constructor( real_to_string ) );

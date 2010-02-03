@@ -102,13 +102,13 @@ namespace LaDa
 
       expose_typed_atom< t_Atom :: t_Type >
       (
-        "Atom", 
+        "rAtom", 
         "Atom for which the type is specified as a real number",
         "Atomic specie as a real number (usually -1.0 and 1.0)."
       );
       expose_typed_atom< t_StrAtom :: t_Type >
       (
-        "StrAtom", 
+        "Atom", 
         "Atom for which the type is specified as a string",
         "Atomic specie as a string."
       );

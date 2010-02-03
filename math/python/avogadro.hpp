@@ -7,7 +7,7 @@
 
 namespace LaDa
 {
-  namespace Python
+  namespace python
   {
     void expose_eigen_vectors();
   }

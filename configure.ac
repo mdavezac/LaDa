@@ -271,7 +271,7 @@ AC_SUBST(CPP_DEBUG_FLAGS)
 #  MPI libs
 if test x$mpi = xtrue; then
   AC_DEFINE([_MPI],[1],[])
-  MPI_ADDLIB="../mpi/libmpiobject.la"
+  MPI_ADDLIB="\${top_builddir}/mpi/libmpiobject.la"
   MPI_CFLAGS="-D _OPENMPI_MPI_"
 else
   MPI_CFLAGS=""
@@ -365,13 +365,13 @@ if test "$mpi" != true; then
 fi
 if test "$python" = true; then
   if test "x$PYTHON_INCLUDE_DIR$PYTHON_LIB" = "x"; then
-    AX_PYTHON
+    AX_PYTHON_DEVEL
   fi
 else
   BOOST_PYTHON=""
+  AC_SUBST(PYTHON_INCLUDE_DIR)
+  AC_SUBST(PYTHON_LIB)
 fi
-AC_SUBST(PYTHON_INCLUDE_DIR)
-AC_SUBST(PYTHON_LIB)
 AC_SUBST(BOOST_LDFLAGS)
 AC_SUBST(BOOST_MPI)
 AC_SUBST(BOOST_SERIALIZATION)

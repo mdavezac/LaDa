@@ -1,7 +1,3 @@
-#
-#  Version: $Id$
-#
-
 class Mesh:
 
   def __init__( self, _start, _end, steps = 10, bandwidth = 2 ):
@@ -9,8 +5,8 @@ class Mesh:
     
     self.steps = steps
     self.bandwidth = bandwidth
-    self.start = crystal.sStructure(_start)
-    self.end = crystal.sStructure(_end)
+    self.start = crystal.Structure(_start)
+    self.end = crystal.Structure(_end)
     crystal.to_fractional( self.start )
     crystal.to_fractional( self.end )
 
@@ -23,7 +19,7 @@ class Mesh:
     for n in range(0, self.steps+1):
       for a in range(n-self.bandwidth, n+self.bandwidth+1 ):
 
-        structure = crystal.sStructure( self.start )
+        structure = crystal.Structure( self.start )
         structure.cell = np_dot(id + float(n) * deformation.cell, self.start.cell)
         for i, atom in enumerate(structure.atoms):
           atom.pos += deformation.atoms[i].pos * float(a) 
@@ -38,40 +34,10 @@ class Mesh:
     from lada import crystal
 
     id = np_array( [[1,0,0], [0,1,0], [0,0,1]], dtype="float64" )
-    result = crystal.sStructure(self.end) 
+    result = crystal.Structure(self.end) 
     result.cell = ( np_dot(self.end.cell, self.start.cell.I) - id ) / float(self.steps)
     for i, atom in enumerate(result.atoms):
       atom.pos = ( self.end.atoms[i].pos - self.start.atoms[i].pos ) / float(self.steps)
 
 
     return result;
-
-def main():
-  from lada import crystal
-
-  def create_lattice():
-    from numpy import array as np_array
-    from lada import crystal
-
-    lattice = crystal.Lattice()
-
-    lattice.cell = np_array( [[ -1,  1,  1 ], \
-                              [  1, -1,  1 ], \
-                              [  1,  1, -1 ]], dtype="float64" )
-    lattice.scale = 4.42
-
-    lattice.sites.append( crystal.Site(np_array([0.0, 0, 0], [ "K", "Rb" ])) )
-
-    return lattice
-
-  lattice = create_lattice()
-  lattice.set_as_crystal_lattice()
-  species = ("K", "Rb")
-  start = crystal.read_poscar( species, "START" )
-  end = crystal.read_poscar( species, "END" )
-
-  for structure in Mesh(start, end, 4, 4).generate():
-    print structure
-
-if __name__ == "__main__":
-  main()

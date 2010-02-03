@@ -6,6 +6,7 @@
 #endif
 
 #include <boost/python/class.hpp>
+#include <boost/python/object.hpp>
 #include <boost/python/tuple.hpp>
 #include <boost/python/def.hpp>
 #include <boost/python/str.hpp>
@@ -13,11 +14,13 @@
 #include <boost/python/data_members.hpp>
 #include <boost/python/return_value_policy.hpp>
 #include <boost/python/return_internal_reference.hpp>
+#include <boost/python/with_custodian_and_ward.hpp>
 #include <boost/python/copy_const_reference.hpp>
-
-#include <pyublas/numpy.hpp>
+#include <boost/python/make_constructor.hpp>
 
 #include <opt/initial_path.h>
+
+#include <python/numpy_types.h>
 
 #include "../interface.h"
 #include "escan.hpp"
@@ -26,7 +29,7 @@
 namespace LaDa
 {
   namespace bp = boost::python;
-  namespace Python
+  namespace python
   {
     template<class T_TYPE>
       void Escan_from_XML(T_TYPE &_type, const std::string &_filename )
@@ -243,12 +246,27 @@ namespace LaDa
       return _self.set_dirname(string); 
     }
    
-    pyublas::numpy_vector<types::t_real> get_eigenvalues(Pescan::Interface const& _interface)
+    bp::object get_eigenvalues(Pescan::Interface const& _interface)
     {
-      pyublas::numpy_vector<types::t_real> a(_interface.eigenvalues.size());
-      std::copy(_interface.eigenvalues.begin(), _interface.eigenvalues.end(), a.begin());
-      return a;
+      namespace numpy = LaDa::math::numpy;
+      npy_intp dims[1] = {_interface.eigenvalues.size()};
+
+      PyObject *eigs = PyArray_SimpleNewFromData( 1, dims, numpy::type<types::t_real>::value,
+                                                  (void*)&(_interface.eigenvalues[0]) );
+      return bp::object( bp::handle<>(bp::borrowed(eigs)) );
     }
+    bp::object __call__(Pescan::Interface &_interface) 
+    {
+      if( not _interface() )
+      {
+        PyErr_SetString(PyExc_RuntimeError, "Something went wrong in escan.\n");
+        bp::throw_error_already_set();
+      }
+      return get_eigenvalues(_interface);
+    }
+
+    void set_scale(Pescan::Interface &_interface, Crystal::TStructure<std::string> const &_str)
+      {  _interface.escan.scale = _str.scale; }
 
     void expose_escan()
     {
@@ -284,10 +302,10 @@ namespace LaDa
         )
         .add_property
         ( 
-          "scale", &t_Escan::get_scale, &t_Escan::set_scale,
+          "scale", &t_Escan::get_scale, &set_scale,
           "Internal escan scale.\n\n"
           "Prior to calculation, set as C{escan.scale = structure} where \"structure\" is a "
-          "L{sStructure<lada.crystal.sStructure>} or L{Structure<lada.crystal.Structure>} object.\n"
+          "L{Structure<lada.crystal.Structure>}.\n"
         )
 #       define LADA_PARAMS(name, docstring)\
           .add_property(#name, &get ## name, &set ## name, docstring)
@@ -316,14 +334,41 @@ namespace LaDa
         .def_readwrite( "destroy_directory", &t_Escan::do_destroy_dir,
                         "If true, directory where calculations are carried out is destroyed "
                         "at the end of a calculation." )
-        .add_property( "eigenvalues", &get_eigenvalues, 
-                       "Computed eigenvalues as a read-only numpy array of real values." )
+        .add_property
+        ( 
+          "eigenvalues", 
+          bp::make_function(&get_eigenvalues, bp::with_custodian_and_ward_postcall<1,0>()),
+          "Computed eigenvalues as a read-only numpy array of real values." 
+        )
         .def_readwrite("genpot", &t_Escan::genpot, "(L{GenPot}) Parameters of the atomic "
             "potentials.\n")
         .def_readwrite("verbose", &t_Escan::verbose, "Verbose pescan output on true.")
         .def( "fromXML",  &Escan_from_XML<t_Escan>, bp::arg("file"),
               "Loads escan parameters from an XML file." )
-        .def( "__call__", &t_Escan::operator(), "Performs a calculation." )
+        .def
+        ( 
+          "__call__", &__call__,
+          "Performs a calculation.\n\n" 
+          "The usual sequence of call is as follows:\n\n"
+          ">>> # First initialize escan and vff"
+          ">>> escan = lada.escan.Escan(\"input.xml\", boost.mpi.world)\n"
+          ">>> vff = lada.vff.Vff(\"input.xml\", boost.mpi.world)\n"
+          ">>> # Sets structure to input to vff and escan."
+          ">>> vff.structure = ...\n"
+          ">>> # Sets filename to which to print escan input.\n"
+          ">>> escan.vff_inputfile = \"atomic_config.\" + str(boost.mpi.world.rank)\n"
+          ">>> # Prints to file\n"
+          ">>> vff.print_escan_input(escan.vff_inputfile)\n"
+          ">>> # sets unit length of escan calculations.\n" 
+          ">>> escan.scale = vff.structure\n"
+          ">>> # Finally, calls escan functional. \n"
+          ">>> # Other parameters (reference, kpoint...) can be changed prior to call.\n"
+          ">>> eigenvalues = escan()\n\n"
+          "@return: numpy vector also available as self.L{eigenvalues}. As "
+          "such, it will change from one calculation to the other. Copy if you "
+          "want to store the results.\n",
+          bp::with_custodian_and_ward_postcall<1,0>() 
+        )
         .def( "set_mpi", &t_Escan::set_mpi, "Sets the boost.mpi communicator." );
 
       bp::def( "nb_valence_states", &LaDa::Pescan::nb_valence_states, bp::arg("structure"),
@@ -345,5 +390,5 @@ namespace LaDa
     }
 
 
-  } // namespace Python
+  } // namespace python
 } // namespace LaDa

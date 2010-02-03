@@ -49,8 +49,6 @@ namespace LaDa
 
     void expose_layerdepth()
     {
-      typedef Crystal::Structure::t_Atom t_real;
-      typedef Crystal::TStructure<std::string>::t_Atom t_str;
       typedef math::rVector3d t_vec;
       typedef bp::return_value_policy<bp::return_by_value> t_repol;
       bp::class_<Crystal::LayerDepth>

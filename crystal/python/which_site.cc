@@ -72,13 +72,13 @@ namespace LaDa
         "@param invcell: the inverse of the supercell.\n"
         "@type invcell: numpy 3x3 float64 array\n"
         "@param sites: A list of sites.\n"
-        "@type sites: L{Lattice.sites}, L{Structure.atoms}, L{sStructure.atoms}\n"
+        "@type sites: L{Lattice.sites}, L{Structure.atoms}, L{rStructure.atoms}\n"
         // other implementation,
         "@param lattice: match pos to the sites in lattice, modulo the lattice vectors.\n"
         "@type lattice: L{Lattice}\n"
         // other implementation,
         "@param structure: match pos to the atoms in structure, modulo the cell-vectors.\n"
-        "@type structure: L{Structure} or L{sStructure}\n"
+        "@type structure: L{Structure} or L{rStructure}\n"
       );
     }
 

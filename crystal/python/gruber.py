@@ -5,7 +5,7 @@
 
 class Reduction(object):
   """ Functor for unit-cell reduction.
-      Takes a numpy.array type object, or a lada.crystal.(s)Structure, returns
+      Takes a numpy.array type object, or a L{lada.crystal.Structure}, returns
       the same but within a reduced Niggli unit-cell.
   """
 
@@ -20,7 +20,7 @@ class Reduction(object):
 
   def __call__(self, structure, recip=False):
     """ Functor for unit-cell reduction.
-        Takes a numpy.array type object, or a lada.crystal.(s)Structure, returns
+        Takes a numpy.array type object, or a L{lada.crystal.Structure}, returns
         the same but within a reduced Niggli unit-cell.
     """
 
