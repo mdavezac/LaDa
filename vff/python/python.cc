@@ -24,6 +24,6 @@ BOOST_PYTHON_MODULE(vff)
   namespace bp = boost::python;
   bp::handle<> math( bp::borrowed(PyImport_ImportModule("lada.math")) );
 
-  LaDa::Python::expose_vff();
-  LaDa::Python::expose_layeredvff();
+  LaDa::python::expose_vff();
+  LaDa::python::expose_layeredvff();
 }

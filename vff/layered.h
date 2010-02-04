@@ -109,6 +109,8 @@ namespace LaDa
           direction = _direction;
           create_template_strain();
         } 
+        //! Returns epitaxial direction.
+        math::rVector3d const& get_direction() const { return direction; }
         
       protected:
         //! \brief packs variables from minimizer

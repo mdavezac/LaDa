@@ -252,7 +252,7 @@ namespace LaDa
       unpack_variables( _arg, strain);
 
       // computes K0
-      math::rMatrix3d K0 = (!(~strain));
+      math::rMatrix3d K0 = strain.transpose().inverse();
 
       // computes energy and gradient
       stress = math::rMatrix3d::Zero();

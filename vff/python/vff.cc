@@ -1,6 +1,3 @@
-//
-//  Version: $Id$
-//
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
@@ -12,250 +9,124 @@
 #include <boost/python/return_value_policy.hpp>
 #include <boost/python/return_by_value.hpp>
 #include <boost/python/make_constructor.hpp>
+#include <boost/python/data_members.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits/is_same.hpp>
+#include <boost/python/register_ptr_to_python.hpp>
 
-#include "../functional.h"
-#include "../layered.h"
-#include "../va.h"
 
 #include "vff.hpp"
 
 namespace LaDa
 {
   namespace bp = boost::python;
-  namespace Python
+  namespace python
   {
-    namespace XML
-    {
-      template<class T_TYPE>
-        void Vff_from_XML(T_TYPE &_type, const std::string &_filename )
+    template<class T> 
+      boost::shared_ptr<T> create()
+      {
+        typename T::second_type second;
+        return boost::shared_ptr<T>(new T( typename T::first_type(second), second )); 
+      }
+    template<class T> 
+#     ifndef _MPI
+        boost::shared_ptr<T> create_mpi(bp::object const&) { return create<T>(); }
+#     else
+        boost::shared_ptr<T> create(boost::mpi::communicator *_c )
         {
-          TiXmlDocument doc( _filename ); 
-          TiXmlHandle docHandle( &doc ); 
-        
-          if( not doc.LoadFile() )
+          boost::shared_ptr<T> result = create<T>();
+          result->first.set_mpi(_c);
+          return result;
+        }
+#     endif
+    template<class T> 
+      boost::shared_ptr<T> create_input(std::string const &_filename ) 
+      {
+        boost::shared_ptr<T> result = create<T>();
+        typename T::first_type &_type = result->first;
+        TiXmlDocument doc( _filename ); 
+        TiXmlHandle docHandle( &doc ); 
+      
+        if( not doc.LoadFile() )
+        {
+          PyErr_SetString
+          (
+            PyExc_RuntimeError,
+            (   "Could not parse xml file " + _filename + ".\n" 
+              + doc.ErrorDesc() + "\n" ).c_str()
+          );
+          bp::throw_error_already_set();
+        }
+        else if( not docHandle.FirstChild("Job").Element() )
+        {
+          PyErr_SetString
+          (
+            PyExc_RuntimeError,
+            ("Could not find <Job> in xml file " + _filename + ".\n").c_str()
+          );
+          bp::throw_error_already_set();
+        }
+        else
+        {
+          try
           {
-            PyErr_SetString
-            (
-              PyExc_RuntimeError,
-              (   "Could not parse xml file " + _filename + ".\n" 
-                + doc.ErrorDesc() + "\n" ).c_str()
-            );
-            bp::throw_error_already_set();
-          }
-          else if( not docHandle.FirstChild("Job").Element() )
-          {
-            PyErr_SetString
-            (
-              PyExc_RuntimeError,
-              ("Could not find <Job> in xml file " + _filename + ".\n").c_str()
-            );
-            bp::throw_error_already_set();
-          }
-          else
-          {
-            try
-            {
-              if(not _type.Load( *docHandle.FirstChild("Job").Element() ) )
-              {
-                PyErr_SetString
-                (
-                  PyExc_RuntimeError,
-                  ("Could not load VFF functional from xml file " + _filename + ".\n").c_str()
-                );
-                bp::throw_error_already_set();
-              }
-            }
-            catch(std::exception &_e)
+            if(not _type.Load( *docHandle.FirstChild("Job").Element() ) )
             {
               PyErr_SetString
               (
                 PyExc_RuntimeError,
-                (
-                     "Encountered error while loading  VFF functional from xml file "
-                   + _filename + ".\n"
-                   + _e.what() + "\n"
-                ).c_str()
+                ("Could not load VFF functional from xml file " + _filename + ".\n").c_str()
               );
               bp::throw_error_already_set();
             }
           }
-        }
-    }
-
-//     struct center_iterator
-//     {
-//       typedef Vff::AtomicCenter::t_Centers::const_iterator type;
-//
-//       type first_;
-//       type end_;
-//       bool is_first;
-//
-//       center_iterator   (type const &_f, type const &_end)
-//                       : first_(_f), end_(_end), is_first(true) {}
-//       center_iterator   (center_iterator const &_c)
-//                       : first_(_c.first_), end_(_c.end_), is_first(_c.is_first_) {}
-//
-//       center_iterator iter() const { return *this; }
-//       Value next() const 
-//       {
-//         if( first_ == end_ ) 
-//         {
-//           Py
-//         }
-//         if( is_first ) 
-//       };
-//     };
-//
-//     template<class T_VFF>
-//       struct WithIterators : public T_VFF
-//       {
-//         WithIterator(Crystal::Structure &_str) : T_VFF(_str) {}
-//         WithIterator(WithIterators const &_c) : T_VFF(_c) {}
-//         virtual ~WithIterator() {}
-//         //! iterator over first neighbor tree.
-//         center_iterator iter() const { return center_iterator( centers_.begin(), centers_.end() ); }
-//
-//         protected:
-//           using T_VFF::centers_;
-//           using T_VFF::operator();
-//           using T_VFF::print_escan_input;
-//           using T_VFF::init;
-// #         ifdef _MPI
-//             using T_VFF::set_mpi;
-// #         endif
-//       };
-
-    template<class T> T* cload(std::string const &_filename) 
-    {
-      T* result(new T);
-      if( not result )
-      {
-        PyErr_SetString(PyExc_RuntimeError, "Memory error.\n");
-        bp::throw_error_already_set();
-        return NULL;
-      }
-      XML::Vff_from_XML(*result, _filename); 
-      if( PyErr_Occurred() != NULL ) 
-      {
-        delete result;
-        return NULL;
-      }
-      return result;
-    }
-#   ifdef _MPI
-      template<class T> T* mpi_create(boost::mpi::communicator *_c)
-      {
-        T* result(new T);
-        if( not result )
-        {
-          PyErr_SetString(PyExc_RuntimeError, "Memory error.\n");
-          bp::throw_error_already_set();
-          return NULL;
-        }
-        result->set_mpi(_c);
-        return result;
-      }
-      template<class T> T* mpi_create2( std::string const &_filename,
-                                        boost::mpi::communicator *_c )
-                                       
-      {
-        T* result(new T);
-        if( not result )
-        {
-          PyErr_SetString(PyExc_RuntimeError, "Memory error.\n");
-          bp::throw_error_already_set();
-          return NULL;
-        }
-        result->set_mpi(_c);
-        XML::Vff_from_XML(*result, _filename); 
-        if( PyErr_Occurred() != NULL ) 
-        {
-          delete result;
-          return NULL;
-        }
-        return result;
-      }
-#   else 
-      template<class T> T* mpi_create(bp::object const &)
-      {
-        T* result(new T);
-        if( not result )
-        {
-          PyErr_SetString(PyExc_RuntimeError, "Memory error.\n");
-          bp::throw_error_already_set();
-          return NULL;
-        }
-        return result;
-      }
-      template<class T> T* mpi_create2(bp::object const &, std::string const &_filename)
-        { return cload<T>(_filename); }
-#   endif
-
-    //! Assumes ownership of the Crystal::Structure object needed by vff.
-    template< class T_VFF > class Vff 
-    {
-      public:
-        //! Type of the functional.
-        typedef LaDa::Vff::VABase< T_VFF > t_Functional;
-        //! Constructor.
-        Vff() { functional_.reset( new t_Functional( structure ) ); }
-        //! Copy Constructor.
-        Vff( const Vff& _c ) : structure( _c.structure )
-          { functional_.reset( new t_Functional( structure ) ); }
-
-        //! Redo initialization of vff from scratch.
-        void init(bool _redo, bool _verbose) { functional_->init( _redo, _verbose ); }
-
-        //! fast evaluation with no reinitialization.
-        boost::shared_ptr< Crystal::TStructure<std::string> >
-          operator()(Crystal::TStructure<std::string> const& _str, bool _doinit) 
-          { 
-            Crystal::convert_string_to_real_structure(_str, structure);     
-            functional_->init(_doinit, false);
-            types::t_real const energy = functional_->evaluate() / 16.0217733;
-
-            boost::shared_ptr< Crystal::TStructure<std::string> >
-              result( new Crystal::TStructure<std::string> );
-            Crystal::convert_real_to_string_structure(structure, *result);     
-            result->energy = energy;
-            return result;
+          catch(std::exception &_e)
+          {
+            PyErr_SetString
+            (
+              PyExc_RuntimeError,
+              (
+                   "Encountered error while loading  VFF functional from xml file "
+                 + _filename + ".\n"
+                 + _e.what() + "\n"
+              ).c_str()
+            );
+            bp::throw_error_already_set();
           }
-        //! Returns the stress.
-        math::rMatrix3d get_stress() const { return functional_->get_stress(); }
-
-        //! Loads from an XML input file.
-        bool Load( const TiXmlElement &_node ) { return functional_->Load( _node ); }
-
-        //! Prints escan input.
-        void print_escan_input( const std::string &_path,
-                                Crystal::TStructure<std::string> const &_str) 
-        {
-          Crystal::convert_string_to_real_structure(_str, structure);     
-          functional_->print_escan_input( _path ); 
         }
-          
-        //! The owned structure.
-        Crystal::Structure structure;
-#       ifdef _MPI
-          //! Sets mpi pointer.
-          void set_mpi( boost::mpi::communicator* _c )
-            { functional_->set_mpi( _c ); }
-#       endif
+      }
+      template<class T>
+#     ifndef _MPI
+        boost::shared_ptr<T> create_inputmpi(std::string const& _f, bp::object const&) 
+          { return create_input(_f); }
+#     else
+        boost::shared_ptr<T> create_inputmpi(std::string const& _f, boost::mpi::communicator *_c )
+        {
+          boost::shared_ptr<T> result = create_input<T>(_f);
+          result->first.set_mpi(_c);
+          return result;
+        }
+#     endif
 
-        bp::tuple get_bond( const std::string& _bond ) const;
-        void set_bond( const std::string& _bond, const bp::tuple& _t );
-        bp::tuple get_angle( const std::string& _bond ) const;
-        void set_angle( const std::string& _bond, const bp::tuple& _t );
+    template<class T>  
+        boost::shared_ptr<T> create_copy(T const &_f) { return boost::shared_ptr<T>( new T(_f) ); }
+    template<class T> 
+      void init( T &_self, bool _redo, bool _verbose ) { _self.first.init(_redo, _verbose); }
+    template<class T> 
+      bp::tuple __call__( T &_self, Crystal::TStructure<std::string> const &_str, bool _doinit )
+      { 
+        Crystal::convert_string_to_real_structure(_str, _self.second);     
+        init(_self, _doinit, false);
+        types::t_real const energy = _self.first.evaluate() / 16.0217733;
 
-      protected:
-        //! The functional.
-        boost::shared_ptr< LaDa::Vff::VABase< T_VFF > > functional_;
-    };
-
-    template< class T_VFF >
-      bp::tuple Vff<T_VFF>::get_bond( const std::string &_str ) const 
+        boost::shared_ptr< Crystal::TStructure<std::string> >
+          result( new Crystal::TStructure<std::string> );
+        Crystal::convert_real_to_string_structure(_self.second, *result);     
+        result->energy = energy;
+        return bp::make_tuple(result, math::rMatrix3d(_self.first.get_stress()));
+      }
+    template<class T>
+      bp::tuple get_bond(T const &_self, const std::string &_str ) 
       {
         try
         {
@@ -265,7 +136,7 @@ namespace LaDa
             const types::t_real&, const types::t_real&,
             const types::t_real&, const types::t_real& 
           > t_Tuple;
-          const t_Tuple result( functional_->get_bond( _str ) );
+          const t_Tuple result( _self.first.get_bond( _str ) );
           return bp::make_tuple
           (
             boost::tuples::get<0>( result ), boost::tuples::get<1>( result ), 
@@ -280,8 +151,8 @@ namespace LaDa
           bp::throw_error_already_set();
         }
       };
-    template< class T_VFF >
-      bp::tuple Vff<T_VFF>::get_angle( const std::string &_str ) const 
+    template<class T>
+      bp::tuple get_angle(T const &_self, const std::string &_str ) 
       {
         try
         {
@@ -292,7 +163,7 @@ namespace LaDa
             const types::t_real&, const types::t_real&,
             const types::t_real&
           > t_Tuple;
-          const t_Tuple result( functional_->get_angle( _str ) );
+          const t_Tuple result( _self.first.get_angle( _str ) );
           return bp::make_tuple
           (
             boost::tuples::get<0>( result ), boost::tuples::get<1>( result ), 
@@ -308,8 +179,8 @@ namespace LaDa
           bp::throw_error_already_set();
         }
       };
-    template< class T_VFF >
-      void Vff<T_VFF>::set_bond( const std::string &_str, const bp::tuple &_t ) 
+    template<class T>
+      void set_bond(T &_self, const std::string &_str, const bp::tuple &_t ) 
       {
         namespace bp = bp;
         const size_t N(bp::len( _t )); 
@@ -329,7 +200,7 @@ namespace LaDa
             d = N > 3 ? (types::t_real) (bp::extract<types::t_real>( _t[3] ) ): 0e0,
             e = N > 4 ? (types::t_real) (bp::extract<types::t_real>( _t[4] ) ): 0e0,
             f = N > 5 ? (types::t_real) (bp::extract<types::t_real>( _t[5] ) ): 0e0;
-          functional_->set_bond( _str, boost::tuples::make_tuple( a, b, c, d, e, f ) );
+          _self.first.set_bond( _str, boost::tuples::make_tuple( a, b, c, d, e, f ) );
         }
         catch(...)
         {
@@ -338,8 +209,8 @@ namespace LaDa
           bp::throw_error_already_set();
         }
       };
-    template< class T_VFF >
-      void Vff<T_VFF>::set_angle( const std::string &_str, const bp::tuple &_t )
+    template<class T>
+      void set_angle(T &_self, const std::string &_str, const bp::tuple &_t )
       {
         const size_t N(bp::len( _t )); 
         if( N == 0 or bp::len( _t ) > 7 )
@@ -359,7 +230,7 @@ namespace LaDa
             e = N > 4 ? (types::t_real) (bp::extract<types::t_real>( _t[4] ) ): 0e0,
             f = N > 5 ? (types::t_real) (bp::extract<types::t_real>( _t[5] ) ): 0e0,
             g = N > 6 ? (types::t_real) (bp::extract<types::t_real>( _t[6] ) ): 0e0;
-          functional_->set_angle( _str, boost::tuples::make_tuple( a, b, c, d, e, f, g ) );
+          _self.first.set_angle( _str, boost::tuples::make_tuple( a, b, c, d, e, f, g ) );
         }
         catch(...)
         {
@@ -369,32 +240,17 @@ namespace LaDa
         }
       };
 
-    class LVff : public LaDa::Vff::Layered
-    {
-      public:
-        //! Constructor.
-        LVff( LaDa::Crystal::Structure& _str ) : LaDa::Vff::Layered( _str ) {}
-        //! Exposes direction setters.
-        math::rVector3d get_direction() const { return direction; } 
-        //! Returns direction.
-        void set_direction( const math::rVector3d& _direction)
-        {
-          is_fixed_by_input = true;
-          direction = _direction;
-          create_template_strain();
-        } 
-    };
+#   ifdef _MPI
+      template<class T> boost::mpi::communicator const &
+         get_mpi(T const &_self) { return _self.first.comm(); }
+      template<class T> void set_mpi(T &_self, boost::mpi::communicator * _c)
+        { _self.first.set_mpi(_c); }
+#   endif
 
-    class LayeredVff : public Vff< LVff >
-    {
-      public:
-        //! Exposes direction setters.
-        math::rVector3d get_direction() const
-          { return functional_->Vff().get_direction(); } 
-        //! Returns direction.
-        void set_direction( const math::rVector3d& _direction)
-          { functional_->Vff().set_direction( _direction ); } 
-    };
+    math::rVector3d get_direction(t_LayeredVff const &_self)
+      { return _self.first.Vff().get_direction(); } 
+    void set_direction(t_LayeredVff &_self, math::rVector3d const &_dir)
+      { _self.first.Vff().set_direction(_dir); } 
 
 
     template<class T> bp::class_<T> expose_vff_(std::string const &_name, std::string const &_doc)
@@ -410,60 +266,60 @@ namespace LaDa
             "  - A single boost.mpi communicator.\n"
             "  - A string argument (see above), followed by a boost.mpi communicator.\n\n" 
             "If compiled without mpi, including the communicator will have no effect.\n"
-        ).c_str()
-      ).def( bp::init< T const &>() ) 
-       .def( "__init__", bp::make_constructor(&cload<T>) )
-       .def( "__init__", bp::make_constructor(&mpi_create<T>) )
-       .def( "__init__", bp::make_constructor(&mpi_create2<T>) )
-       .def( "fromXML",  &XML::Vff_from_XML<T>, bp::arg("file"),
-             "Loads the vff parameters from an XML file." ) 
+        ).c_str(),
+        bp::no_init
+      ).def( "__init__", bp::make_constructor(&create_inputmpi<T>) )
        .def
        ( 
          "__call__",  
-         &T::operator(), 
+         &__call__<T>,
          (bp::arg("structure"), bp::arg("doinit") = true),
          "Minimizes structure.\n\n"
          "@param structure: structure to evaluate.\n"
          "@type structure: L{crystal.Structure}.\n"
          "@param doinit: If true, reconstructs first-neighbor tree. Default: true.\n"
-         "@return: the relaxed structure. The energy is in "
+         "@return: A 2-tuple (structure, stress) where the first is the relaxed "
+         "structure, and the second a matrix with the stress. The energy is in "
          "structure.L{energy<crystal.Structure.energy>}.\n"
        )
-       .def( "_init",  &T::init, (bp::arg("redo_tree") = true, bp::arg("verbose")=false), 
+#      ifdef _MPI
+         .add_property
+         (
+           "mpi", 
+           bp::make_function(&get_mpi<T>, bp::return_internal_reference<>()),
+           &set_mpi<T>, 
+           "Sets the boost.mpi communicator."
+         )
+#      endif
+       .def( "_init",  &init<T>, (bp::arg("redo_tree") = true, bp::arg("verbose")=false), 
              "Initializes the functional for the current structure." ) 
-       .def( "print_escan_input",  &T::print_escan_input, (bp::arg("file"), bp::arg("structure")), 
+       .def( "print_escan_input",  &print_escan_input<T>, (bp::arg("file"), bp::arg("structure")), 
              "Outputs the current structure in a format suitable for pescan." ) 
-       .def( "set_bond",  &T::set_bond, ( bp::arg("bond"), bp::arg("params") ), 
+       .def( "set_bond",  &set_bond<T>, ( bp::arg("bond"), bp::arg("params") ), 
              "Sets the parameters of bond from a tuple where:\n" 
              "  - the first component is the bond length.\n" 
              "  - the second to sixth components are the gammas at order 2-6.\n" 
              "The tuple can be shortened to include only the first few parameters.\n" ) 
-       .def( "get_bond",  &T::get_bond, bp::arg("angle"), 
+       .def( "get_bond",  &get_bond<T>, bp::arg("angle"), 
              "Returns the parameters of bond in form of a tuple.\n" 
              "  - the first component is the bond length.\n" 
              "  - the second to sixth components are the gammas at order 2-6.\n" ) 
-       .def( "set_angle",  &T::set_angle, ( bp::arg("angle"), bp::arg("params") ), 
+       .def( "set_angle",  &set_angle<T>, ( bp::arg("angle"), bp::arg("params") ), 
              "Sets the parameters of angle from a tuple where:\n" 
              "  - the first component is gamma.\n" 
              "  - the second component is sigma.\n" 
              "  - the third to seventh components are the betas at order 2-6.\n" 
              "The tuple can be shortened to include only the first few parameters.\n" ) 
-       .def( "get_angle",  &T::get_angle, bp::arg("angle"), 
+       .def( "get_angle",  &get_angle<T>, bp::arg("angle"), 
              "Returns the parameters of angle in form of a tuple.\n" 
              "  - the first component is gamma.\n" 
              "  - the second component is sigma.\n" 
-             "  - the third to seventh components are the betas at order 2-6.\n" ) 
-#      ifdef _MPI
-         .def("set_mpi", &T::set_mpi, "Sets the boost.mpi communicator.")
-#      endif
-       .add_property( "stress",  &T::get_stress, 
-                      "Returns the stress. Meaningfull only "
-                      "following a call to Vff.evaluate()." );
+             "  - the third to seventh components are the betas at order 2-6.\n" );
     }
 
     void expose_vff()
     {
-      expose_vff_< Vff<LaDa::Vff::Functional> > 
+      expose_vff_<t_Vff>
       ( 
         "Vff", 
         "A Valence Force Field Functional.\n\n"
@@ -472,11 +328,12 @@ namespace LaDa
         ">>> structure = crystal.Structure(\"input.xml\")\n"
         ">>> relaxed_structure = vff(structure)\n\n"
       );
+      bp::register_ptr_to_python< boost::shared_ptr<t_Vff> >();
     }
 
     void expose_layeredvff()
     {
-      expose_vff_<LayeredVff>
+      expose_vff_<t_LayeredVff>
       ( 
         "LayeredVff", 
         "A Valence Force Field Functional with epitaxial constraints.\n\n"
@@ -490,15 +347,13 @@ namespace LaDa
          "direction",
          bp::make_function
          (
-           &LayeredVff::get_direction, 
+           &get_direction, 
            bp::return_value_policy<bp::return_by_value>()
          ),
-         &LayeredVff::set_direction, "Growth/Epitaxial direction.\n\n3x1 float64 numpy array.\n" 
+         &set_direction, "Growth/Epitaxial direction.\n\n3x1 float64 numpy array.\n" 
        ); 
+      bp::register_ptr_to_python< boost::shared_ptr<t_LayeredVff> >();
     }
-
-#   undef EXPOSEVFF
-#   undef SETMPI
 
   }
 } // namespace LaDa
