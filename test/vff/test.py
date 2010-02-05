@@ -81,7 +81,7 @@ if world.rank == 0:
     assert a.site == b.site
     diff += dot(a.pos-b.pos, a.pos-b.pos)
 
-  assert diff / float(len(structure.atoms)) < 1e-4, diff 
-  assert abs(relaxed.energy - result.energy) < 1e-8 
+  assert diff / float(len(structure.atoms)) < 1e-8, diff 
+  assert abs(relaxed.energy - result.energy) < 1e-8, abs(relaxed.energy - result.energy) 
 
 
