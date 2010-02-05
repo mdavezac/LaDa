@@ -94,6 +94,7 @@ namespace LaDa
             bp::throw_error_already_set();
           }
         }
+        return result;
       }
       template<class T>
 #     ifndef _MPI
@@ -261,14 +262,16 @@ namespace LaDa
         (
           _doc
           + "\n\nThis object can be created with: \n"
-            "  - No argument.\n"
-            "  - A single string argument representing the path to an XML input file.\n" 
-            "  - A single boost.mpi communicator.\n"
+           //"  - No argument.\n"
+           //"  - A single string argument representing the path to an XML input file.\n" 
+           //"  - A single boost.mpi communicator.\n"
+            "  - Another functional, eg deepcopy.\n" 
             "  - A string argument (see above), followed by a boost.mpi communicator.\n\n" 
             "If compiled without mpi, including the communicator will have no effect.\n"
         ).c_str(),
         bp::no_init
       ).def( "__init__", bp::make_constructor(&create_inputmpi<T>) )
+       .def( "__init__", bp::make_constructor(&create_copy<T>) )
        .def
        ( 
          "__call__",  
@@ -293,7 +296,8 @@ namespace LaDa
 #      endif
        .def( "_init",  &init<T>, (bp::arg("redo_tree") = true, bp::arg("verbose")=false), 
              "Initializes the functional for the current structure." ) 
-       .def( "print_escan_input",  &print_escan_input<T>, (bp::arg("file"), bp::arg("structure")), 
+       .def( "print_escan_input",  &print_escan_input<typename T::first_type>,
+             (bp::arg("file"), bp::arg("structure")), 
              "Outputs the current structure in a format suitable for pescan." ) 
        .def( "set_bond",  &set_bond<T>, ( bp::arg("bond"), bp::arg("params") ), 
              "Sets the parameters of bond from a tuple where:\n" 

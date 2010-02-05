@@ -77,9 +77,9 @@ namespace LaDa
                 {
                   typedef typename boost::mpl::deref<T_FIRST> :: type t_Type;
                   if( not _func.Load( _node ) ) return false;
-                  std::cerr <<   "Successfuly loaded "
-                               + MinimizerVariantType<t_Type>::name
-                               + " minimizer.\n";
+                // std::cerr <<   "Successfuly loaded "
+                //              + MinimizerVariantType<t_Type>::name
+                //              + " minimizer.\n";
                   return true;
                 }
             };

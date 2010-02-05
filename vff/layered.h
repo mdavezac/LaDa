@@ -111,6 +111,9 @@ namespace LaDa
         } 
         //! Returns epitaxial direction.
         math::rVector3d const& get_direction() const { return direction; }
+
+        //! Copies parameters from argument.
+        void copy_parameters(Layered const &_f) { Vff::copy_parameters(_f); direction = _f.direction; }
         
       protected:
         //! \brief packs variables from minimizer
