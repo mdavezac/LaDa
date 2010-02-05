@@ -97,6 +97,9 @@ namespace LaDa
           get_angle( const std::string &_type ) const
             { return Vff::get_angle( _type ); }
 
+        //! Copies parameters from argument.
+        void copy_parameters(Functional const &_f) { Vff::copy_parameters(_f); }
+
       protected:
         //! \brief unpacks variables from minimizer
         //! \details Functional knows about Functional::Structure, whereas minizers now

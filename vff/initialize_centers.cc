@@ -32,6 +32,8 @@ namespace LaDa
 
     bool Vff :: initialize_centers(bool _verbose)
     {
+      LADA_ASSERT(structure.atoms.size() != 0, "Structure has no atoms.\n" )
+      LADA_ASSERT(not math::is_zero(structure.cell.determinant()), "Structure with zero volume.\n")
       centers.clear();
       { // Creates a list of centers
         t_Atoms :: iterator i_atom = structure.atoms.begin();
