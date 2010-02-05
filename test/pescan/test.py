@@ -17,16 +17,17 @@ def create_structure():
   from numpy import matrix
   from lada.crystal import fill_structure
 
-  cell = matrix(lattice.cell) * matrix( [ [4,  0, 0.5],
-                                          [0,  1,   0],
-                                          [0,  0, 0.5] ] )
+  cell = matrix( [ [4,  0, 0.5],
+                   [0,  1,   0],
+                   [0,  0, 0.5] ] )
   structure = fill_structure(cell)
   N = len(structure.atoms)
-  for atom in structure.atoms[:N/2]:
-    atom.type = structure.lattice.sites[atom.site].type[0]
-  for atom in structure.atoms[N/2:]:
-    atom.type = structure.lattice.sites[atom.site].type[1]
-  structure.atoms[0], structure.atoms[-1] = structure.atoms[1], structure.atoms[0]
+  for i in range(N/2):
+    site = structure.atoms[i].site
+    structure.atoms[i].type = structure.lattice.sites[site].type[0]
+  for i in range(N/2, N):
+    site = structure.atoms[i].site
+    structure.atoms[i].type = structure.lattice.sites[site].type[1]
 
   return structure
 
@@ -42,6 +43,7 @@ def deformed_kpoint(ocell, dcell, lcell, kpoint):
 
 
 from math import ceil, sqrt
+from sys import exit
 from os.path import join, exists
 from numpy import array as np_array, matrix
 from boost.mpi import world
@@ -55,6 +57,7 @@ lattice = create_zb_lattice()
 
 # Creates structure
 structure = create_structure()
+if world.rank == 0: print structure
 
 # some kpoints
 X = np_array( [0,0,1], dtype="float64" )
@@ -69,7 +72,10 @@ escan = Escan(input, world)
 
 # launch vff and prints output.
 relaxed = vff(structure)
-print relaxed
+if world.rank == 0:
+  print relaxed
+  print "energy: ", structure.energy
+exit(0)
 
 # launch pescan for different kpoints.
 for kpoint in [G, X, L, W]:
