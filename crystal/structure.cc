@@ -648,9 +648,12 @@ namespace LaDa
       TStructure<std::string>::t_Atoms:: const_iterator i_string = _string.atoms.begin();
       for(; i_real != i_real_end; ++i_string, ++i_real )
         _string.lattice->convert_StrAtom_to_Atom( *i_string, *i_real );
-      _real.find_k_vectors();
-      Fourier::Fourier( _real.atoms.begin(), _real.atoms.end(),
-                        _real.k_vecs.begin(), _real.k_vecs.end() );
+      if( math::is_integer(_real.lattice->cell.inverse() * _real.cell) )
+      {
+        _real.find_k_vectors();
+        Fourier::Fourier( _real.atoms.begin(), _real.atoms.end(),
+                          _real.k_vecs.begin(), _real.k_vecs.end() );
+      }
     }
 
   } // namespace Crystal

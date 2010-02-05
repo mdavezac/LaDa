@@ -37,7 +37,8 @@ namespace LaDa
         //! Initialization.
         Pair() : second(), first(second) {}
         //! Initialization.
-        Pair(first_type const &_f, second_type &_s) : second(_s), first(second) { first.copy_parameters(_f); }
+        Pair(first_type const &_f, second_type &_s) : second(_s), first(second)
+          { first.copy_parameters(_f); }
         //! Copy.
         Pair(Pair const &_c) : second(_c.second), first(second) {}
       };
