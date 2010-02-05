@@ -116,7 +116,7 @@ namespace LaDa
  
         //! Constructor
         Interface()
-          : atom_input("atom.config"), genpot(), escan(),
+          : atom_input("atom_config"), genpot(), escan(),
             maskr("maskr"), dirname("ESCAN"), do_destroy_dir(true), verbose(true) {}
         //! Copy Constructor
         Interface   ( const Interface &_c )
