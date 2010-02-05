@@ -158,13 +158,9 @@ namespace LaDa
    
        void check_existence() const;
  
-       __DIAGA
-       (
+#      ifdef _DIRECTIAGA
          //! Allows derived classes to have access to ::mpi::AddCommunicator members. 
          void set_mpi( boost::mpi::communicator* _c );
-       )
- 
-#      ifdef _DIRECTIAGA
          //! Allows derived classes to have access to ::mpi::AddCommunicator members. 
          const boost::mpi::communicator &comm() const { return MPI_COMMDEC::comm(); } 
 #      endif

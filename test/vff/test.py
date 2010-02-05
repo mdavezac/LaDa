@@ -53,13 +53,11 @@ def create_structure():
 
   return structure, result
 
-from math import ceil, sqrt
 from sys import exit
 from os.path import join, exists
-from numpy import array as np_array, matrix, dot
+from numpy import dot
 from boost.mpi import world
 from lada.vff import Vff
-from lada.escan import Escan, method
 
 input = "input.xml"
 
