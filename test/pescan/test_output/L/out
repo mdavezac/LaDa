@@ -1,0 +1,166 @@
+ n1,n2,n3          80          20          15
+ nb1,nb2,nb3          80          20          15
+ nsh1,nsh2,nsh3           0           0           0
+ assume the vq in the file is in Hartree
+ opening potential file vq.Si                                   
+ opening potential file vq.Ge                                   
+ opening potential file vq.SiGe.Si                              
+ opening potential file vq.SiGe.Ge                              
+ Vavg =  -0.38498024909973538     
+  nnodes =            2  inode =            0  comm =            0
+ escan start runing
+ ia,isp,scale_input,scale           1           1   0.0000000000000000        0.0000000000000000     
+ ia,isp,scale_input,scale           1           2   0.0000000000000000        0.0000000000000000     
+ ia,isp,scale_input,scale           1           3   0.0000000000000000        0.0000000000000000     
+ ia,isp,scale_input,scale           1           4  8.00000000000000017E-002  0.50834854321301093     
+ ia,isp,scale_input,scale           1           5   0.0000000000000000        0.0000000000000000     
+ ia,isp,scale_input,scale           2           1   0.0000000000000000        0.0000000000000000     
+ ia,isp,scale_input,scale           2           2   0.0000000000000000        0.0000000000000000     
+ ia,isp,scale_input,scale           2           3   0.0000000000000000        0.0000000000000000     
+ ia,isp,scale_input,scale           2           4  0.27739999999999998       0.50834854321301093     
+ ia,isp,scale_input,scale           2           5   0.0000000000000000        0.0000000000000000     
+ ia,isp,scale_input,scale           3           1   0.0000000000000000        0.0000000000000000     
+ ia,isp,scale_input,scale           3           2   0.0000000000000000        0.0000000000000000     
+ ia,isp,scale_input,scale           3           3   0.0000000000000000        0.0000000000000000     
+ ia,isp,scale_input,scale           3           4  8.00000000000000017E-002  0.50834854321301093     
+ ia,isp,scale_input,scale           3           5   0.0000000000000000        0.0000000000000000     
+ ia,isp,scale_input,scale           4           1   0.0000000000000000        0.0000000000000000     
+ ia,isp,scale_input,scale           4           2   0.0000000000000000        0.0000000000000000     
+ ia,isp,scale_input,scale           4           3   0.0000000000000000        0.0000000000000000     
+ ia,isp,scale_input,scale           4           4  0.27739999999999998       0.50834854321301093     
+ ia,isp,scale_input,scale           4           5   0.0000000000000000        0.0000000000000000     
+ filepot=pot.output.0        
+ filewg_out=wavefunction        
+ imthd=           1
+ Eref,Ecut,Smth,scalkin=  0.40000000000000002        8.1999999999999993        1.0000000000000000        1.0000000000000000     
+ mx=           4
+ ikpt,akx,aky,akz           1  8.22383536012557680E-004  0.30070685823485876       0.59946147068689837     
+ niter,nline,tol=          10          50  9.99999999999999980E-013
+ ilocal,mref           3           3
+ input wavefunc. number nwg_in=           0
+ ratio=   1.0000000000000000     
+ n1,n2,n3=          80          20          15
+ AL1,AL2,AL3 in (x,y,z) components and A.U 
+ Each line is one supercell edge vector
+   41.9245929    -0.0000000    -0.0575191
+   -0.0000000    10.4480875     0.0000000
+    5.2333842     0.0000000     5.2333842
+  load balancing info 
+ pe.  g's. cols. 
+           1         460          24
+           2         436          24
+
+ minimum possible value of mgz =            4
+ optimal (and used) value of mgz =            4
+ nr3 and mgz =           15           4
+ Vavg,Ek= -0.38498024909973538       0.33908560270407401     
+ number of nonlocal atom=          24
+ di_r,dj_r,dk_r          40          20          15
+ n1_r,n2_r,n3_r           2           1           1
+ nmap_max,ave_nmap,mrb2        5486   2993.2500000000000             5486
+ mrb2,matom_node=        5486          22
+ di_r,dj_r,dk_r          40          20          15
+ n1_r,n2_r,n3_r           2           1           1
+ nmap_max,ave_nmap,mrb2        5486   2993.2500000000000             5486
+ the trial nr_node=           3
+ ishift_min,ishift_max=           1           1
+ Initialisation complete!
+ *********************************
+ report for iteration            1
+ the number of line minimization used
+    50           50           50           50
+ the err of each states, A.U
+0.5182E-04   0.7868E-04   0.1308E-03   0.1291E-02
+ the eigen energies, in eV
+  0.72847483   0.73059331   0.72996138   0.72997631
+ *********************************
+ *********************************
+ report for iteration            2
+ the number of line minimization used
+    50           50           50           50
+ the err of each states, A.U
+0.9383E-06   0.3172E-04   0.8881E-08   0.1088E-06
+ the eigen energies, in eV
+  0.72789198   0.72789205   0.73165765   0.73165764
+ *********************************
+ *********************************
+ report for iteration            3
+ the number of line minimization used
+    50           50           50           50
+ the err of each states, A.U
+0.1140E-10   0.3366E-09   0.1157E-09   0.1025E-09
+ the eigen energies, in eV
+  0.72789198   0.72789198   0.73165765   0.73165765
+ *********************************
+ *********************************
+ report for iteration            4
+ the number of line minimization used
+    23           26            1            1
+ the err of each states, A.U
+0.9157E-12   0.8119E-12   0.6305E-13   0.1562E-12
+ the eigen energies, in eV
+  0.72789198   0.72789198   0.73165765   0.73165765
+ *********************************
+ *********************************
+ report for iteration            5
+ the number of line minimization used
+     1            1            1            1
+ the err of each states, A.U
+0.9157E-12   0.8119E-12   0.6305E-13   0.1562E-12
+ the eigen energies, in eV
+  0.72789198   0.72789198   0.73165765   0.73165765
+ *********************************
+ *********************************
+ report for iteration            6
+ the number of line minimization used
+     1            1            1            1
+ the err of each states, A.U
+0.9157E-12   0.8119E-12   0.6305E-13   0.1562E-12
+ the eigen energies, in eV
+  0.72789198   0.72789198   0.73165765   0.73165765
+ *********************************
+ *********************************
+ report for iteration            7
+ the number of line minimization used
+     1            1            1            1
+ the err of each states, A.U
+0.9157E-12   0.8119E-12   0.6305E-13   0.1562E-12
+ the eigen energies, in eV
+  0.72789198   0.72789198   0.73165765   0.73165765
+ *********************************
+ *********************************
+ report for iteration            8
+ the number of line minimization used
+     1            1            1            1
+ the err of each states, A.U
+0.9157E-12   0.8119E-12   0.6304E-13   0.1562E-12
+ the eigen energies, in eV
+  0.72789198   0.72789198   0.73165765   0.73165765
+ *********************************
+ *********************************
+ report for iteration            9
+ the number of line minimization used
+     1            1            1            1
+ the err of each states, A.U
+0.9157E-12   0.8119E-12   0.6305E-13   0.1562E-12
+ the eigen energies, in eV
+  0.72789198   0.72789198   0.73165765   0.73165765
+ *********************************
+ *********************************
+ report for iteration           10
+ the number of line minimization used
+     1            1            1            1
+ the err of each states, A.U
+0.9157E-12   0.8119E-12   0.6305E-13   0.1562E-12
+ the eigen energies, in eV
+  0.72789198   0.72789198   0.73165765   0.73165765
+ *********************************
+ *********************************
+ FINAL REPORT
+ FINAL err of each states, A.U
+0.9157E-12   0.8119E-12   0.6305E-13   0.1562E-12
+ FINAL eigen energies, in eV
+  0.72789198   0.72789198   0.73165765   0.73165765
+ *********************************
+ nb matvecs =         1310
+  time for Eigensolver =    5.8235569000244141     

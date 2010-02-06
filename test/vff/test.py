@@ -17,6 +17,7 @@ def create_structure():
   from numpy import matrix, array
   from lada.crystal import fill_structure, Structure, Atom
 
+  # creating unrelaxed structure.
   cell = matrix( [ [4,  0, 0.5],
                    [0,  1,   0],
                    [0,  0, 0.5] ] )
@@ -29,6 +30,7 @@ def create_structure():
     site = structure.atoms[i].site
     structure.atoms[i].type = structure.lattice.sites[site].type[1]
 
+  # The relaxed structure should look like this.
   result = Structure()
   result.cell = matrix( [ [ 4.07074, -0.00000,  0.50814],  
                           [-0.00000,  1.01448,  0.00000],  
@@ -67,7 +69,8 @@ lattice = create_zb_lattice()
 # Creates structure and test result
 structure, result = create_structure()
 
-# creates vff 
+# creates vff using parameters in input file. 
+# vff will run on all processes (world).
 vff = Vff(input, world)
 
 # launch vff and prints output.

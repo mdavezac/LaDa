@@ -17,6 +17,7 @@ def create_structure():
   from numpy import matrix, array
   from lada.crystal import fill_structure, Structure, Atom
 
+  # creating unrelaxed structure.
   cell = matrix( [ [4,  0, 0.5],
                    [0,  1,   0],
                    [0,  0, 0.5] ] )
@@ -29,6 +30,7 @@ def create_structure():
     site = structure.atoms[i].site
     structure.atoms[i].type = structure.lattice.sites[site].type[1]
 
+  # The relaxed structure should look like this.
   result = Structure()
   result.cell = matrix( [ [ 4.07074, -0.00000,  0.50814],  
                           [-0.00000,  1.01448,  0.00000],  
@@ -67,9 +69,10 @@ from sys import exit
 from math import ceil, sqrt
 from os.path import join, exists
 from numpy import dot, array, matrix
+from numpy.linalg import norm
 from boost.mpi import world
 from lada.vff import Vff
-from lada.escan import Escan, method, nb_valence_states as nbstates
+from lada.escan import Escan, method, nb_valence_states as nbstates, potential
 
 # file with escan and vff parameters.
 input = "input.xml"
@@ -80,7 +83,8 @@ lattice = create_zb_lattice()
 # Creates unrelaxed structure and  known relaxed structure (for testing).
 structure, result = create_structure()
 
-# creates vff 
+# creates vff using parameters in input file. 
+# vff will run on all processes (world).
 vff = Vff(input, world)
 
 # launch vff and checks output.
@@ -95,12 +99,15 @@ if world.rank == 0:
   assert diff / float(len(structure.atoms)) < 1e-8, diff 
   assert abs(relaxed.energy - result.energy) < 1e-8, abs(relaxed.energy - result.energy) 
 
-# creates escan input. 
+# creates escan functional using parameters in input file.
+# escan will work on all processes.
 escan = Escan(input, world)
 # sets the FFT mesh
 escan.genpot.mesh = (4*20, 20, int(ceil(sqrt(0.5) * 20)))  
 # makes sure we keep output directories.
 escan.destroy_directory = False
+# calculations are performed using the folded-spectrum method
+escan.method = method.folded
 
 # some kpoints
 X = array( [0,0,1], dtype="float64" ) # cartesian 2pi/a
@@ -110,19 +117,33 @@ W0 = array( [1, 0.5,0], dtype="float64" )
 W1 = array( [1, 0,0.5], dtype="float64" ) 
 W2 = array( [0, 1,0.5], dtype="float64" ) 
 
-# launch pescan for different kpoints.
-for kpoint, name in [ (X, "X"), (L, "L"), (G, "Gamma"), ("L", "L"), (W0, "W0"),
-                      (W1, "W1"), (W2, "W2") ]:
+# Each job is performed for a given kpoint (first argument), at a given
+# reference energy (third argument). Results are stored in a specific directory
+# (second arguement). The expected eigenvalues are given in the fourth argument.
+jobs = [\
+         (G,   "VBM", -0.4, array([-0.47992312, -0.67148097])), # at gamma, code uses Krammer degeneracy
+         (G, "Gamma",  0.4, array([ 0.47368306,  0.49199994])), # at gamma, code uses Krammer degeneracy
+         (X,     "X",  0.4, array([ 0.51468608,  0.51479076, 0.5148467 , 0.5149207 ])),
+         (L,     "L",  0.4, array([ 0.72789198,  0.72789198, 0.73165765, 0.73165765])),
+         (W1,   "W1",  0.4, array([ 0.89170814,  0.89170822, 0.96097565, 0.96097601])),
+         (W2,   "W2",  0.4, array([ 0.89174454,  0.89174462, 0.9608853 , 0.96088566]))
+       ]
+# launch pescan for different jobs.
+for kpoint, name, ref, expected_eigs in jobs:
   # will save output to directory "name".
   escan.directory = name
   # computes at kpoint of deformed structure.
   escan.kpoint = deformed_kpoint(structure.cell, relaxed.cell, kpoint)
-  # full diagonalisation
-  escan.method = method.full_diagonalization
-  # computing all valence states  + 4 conduction (spin polarized) states.
-  escan.nbstates = nbstates(relaxed) + 4 
+  # computing 4 (spin polarized) states.
+  escan.nbstates = 4 # + nbtates(relaxed)  would be all valence states + 4
+  # divides by two if calculations are not spin polarized.
+  if norm(escan.kpoint) < 1e-6 or escan.potential != potential.spinorbit: escan.nbstates /= 2
+  # sets folded method's energy reference
+  escan.reference = ref
   # Now just do it.
   eigenvalues = escan(vff, relaxed)
+  # checks expected are as expected. 
+  assert norm( eigenvalues - expected_eigs ) < 1e-6
   # And print.
-  if world.rank == 0: print kpoint, " -> ", escan.kpoint, ": ", eigenvalues
+  if world.rank == 0: print "Ok - %s: %s -> %s: %s" % (name, kpoint, escan.kpoint, eigenvalues)
   

@@ -1,0 +1,19 @@
+1 pot.output.0  # generated atomic potential
+2 wavefunction # output G-space wavefunctions
+3 1  # escan method:  1 = folded-spectrum
+4 0.4 8.2 1 1 # Eref, cutoff, smooth, kinetic energy scaling
+5 4 # number of states
+6 10 50 1e-12 # nb iterations, nlines, tolerance 
+7 0 # nb of wfns read on input 
+8 0 # unused 
+9 dummy # unused 
+10 0  1 1 1 rzerowfn # real-space output 
+11 1 0.001348 -1.963e-17 0.9826    10.299007 # kpoint
+12 3 # potential: non-local potential with spin-orbit coupling
+13 atom_config.0 # atomic configuration filename
+14 5 # real-space projector cut-off
+15 4 # number of spin-orbit potentials
+16 vwr.pso 14014 0 0 0 0.08 0 # filename, type, s, p, d, p-nonlocal, d-nonlocal.
+17 vwr.pso 32032 0 0 0 0.2774 0 # filename, type, s, p, d, p-nonlocal, d-nonlocal.
+18 vwr.pso 14032 0 0 0 0.08 0 # filename, type, s, p, d, p-nonlocal, d-nonlocal.
+19 vwr.pso 32014 0 0 0 0.2774 0 # filename, type, s, p, d, p-nonlocal, d-nonlocal.
