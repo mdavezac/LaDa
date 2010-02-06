@@ -220,8 +220,8 @@ namespace LaDa
         "@type structure: L{crystal.Structure} or L{crystal.rStructure}.\n"
         "@param x: index.\n"
         "@type x: integer\n"
-        "@base flavorbase: the return from L{create_flavorbase}.\n"
-        "@type flavorbase: FlavorBase\n"
+        "@param flavorbase: the return from L{create_flavorbase}.\n"
+        "@type flavorbase: L{FlavorBase}\n"
       );
       
       typedef boost::make_signed<enumeration::t_uint>::type t_int;

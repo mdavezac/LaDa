@@ -18,7 +18,7 @@ libpython_lada_la_LIBADD =
 pythonextensions = opt physics math crystal ga
 if DOCE
   pythonextensions += ce
-  libpython_lada_la_LIBADD += ../ce/libce.la 
+  libpython_lada_la_LIBADD += $(top_builddir)/ce/libce.la 
 endif 
 if DOVFF
   pythonextensions += vff

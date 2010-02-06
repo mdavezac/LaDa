@@ -147,8 +147,8 @@ namespace LaDa
         &details::enumerate_pifile,
         ( boost::python::arg("filename"), boost::python::arg("callable") ),
         "Performs a function on each member of a S{Pi}-file.\n\n"
-        "@params filename: Filename to S{Pi}-file.\n"
-        "@params callable: A callable taking a L{crystal.Structure} as argument.\n"
+        "@param filename: Filename to S{Pi}-file.\n"
+        "@param callable: A callable taking a L{crystal.Structure} as argument.\n"
       );
       boost::python::def
       ( 
@@ -156,8 +156,8 @@ namespace LaDa
         &details::enumerate_gusfile,
         ( boost::python::arg("filename"), boost::python::arg("callable") ),
         "Performs a function on each member of a gus-file.\n\n"
-        "@params filename: Filename to gus-file.\n"
-        "@params callable: A callable taking a L{crystal.Structure} as argument.\n"
+        "@param filename: Filename to gus-file.\n"
+        "@param callable: A callable taking a L{crystal.Structure} as argument.\n"
       );
     }
 

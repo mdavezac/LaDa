@@ -64,11 +64,11 @@ namespace LaDa
         &find_pis2,
         ( bp::arg("classes"), bp::arg("structure"), bp::arg("site")=0 ),
         "Computes S{Pi}s.\n\n"
-        "@return: S{Pi}s for given structure and cluster classes.\n"
         "@param classes: classes of quivalents cluster classes.\n"
         "@param structure: structure for which to compute S{Pi}s.\n"
-        "@type structure: L{crystal.Structure}.\n"
+        "@type structure: L{crystal.Structure}\n"
         "@param site: Which site to compute S{Pi}s for. Default 0.\n"
+        "@return: S{Pi}s for given structure and cluster classes.\n"
       );
       bp::def
       (
@@ -76,11 +76,11 @@ namespace LaDa
         &find_pis3,
         ( bp::arg("classes"), bp::arg("structure") ),
         "Computes S{Pi}s.\n\n"
-        "@return: S{Pi}s for given structure and cluster classes.\n"
         "@param classes: classes of quivalents cluster classes.\n"
         "@param structure: structure for which to compute S{Pi}s.\n"
-        "@type structure: L{crystal.Structure}.\n"
+        "@type structure: L{crystal.Structure}\n"
         "@param site: Which site to compute S{Pi}s for. Default 0.\n"
+        "@return: S{Pi}s for given structure and cluster classes.\n"
       );
     }
 

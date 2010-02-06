@@ -5,7 +5,11 @@
 # include <config.h>
 #endif
 
-#include <boost/python.hpp>
+#include <boost/python/module.hpp>
+#include <boost/python/docstring_options.hpp>
+#include <boost/python/scope.hpp>
+#include <boost/python/handle.hpp>
+#include <boost/python/borrowed.hpp>
 
 #include "ce.hpp"
 #include "clusters.hpp"
@@ -18,7 +22,11 @@
 BOOST_PYTHON_MODULE(_ce)
 {
   // loads lada.math first
-  PyObject const * const math = PyImport_ImportModule("..math");
+  namespace bp = boost::python;
+  bp::scope scope;
+  scope.attr("__doc__") = "This namespace is imported into lada.crystal.\n";
+  bp::docstring_options doc_options(true, false);
+  bp::handle<> math( bp::borrowed(PyImport_ImportModule("lada.math")) );
 
   LaDa::Python::expose_ce();
   LaDa::Python::expose_clusters();

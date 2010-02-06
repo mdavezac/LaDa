@@ -295,7 +295,7 @@ namespace LaDa
       (
         "rStructure", 
         "Defines a structure.\n\nGenerally, it is a super-cell of a L{Lattice} object.",
-        "Atom"
+        "rAtom"
       ).def( "__init__", bp::make_constructor( string_to_real ) )
        .def_readwrite( "freeze", &Crystal::Structure::freeze,
                         "Tags to freeze coordinates when relaxing structure.\n" )
@@ -309,7 +309,7 @@ namespace LaDa
       (
         "Structure", 
         "Defines a structure.\n\nGenerally, it is a super-cell of a L{Lattice} object.",
-        "StrAtom"
+        "Atom"
       ).def( "__init__", bp::make_constructor( real_to_string ) );
       bp::register_ptr_to_python< boost::shared_ptr< Crystal::TStructure<std::string> > >();
 
@@ -325,9 +325,9 @@ namespace LaDa
         "fill_structure", 
         &fill_structure< Crystal::TStructure<std::string> >,
         "Returns a structure from knowledge of cell and lattice.\n\n"
-        "The argument can be of type L{Structure}, L{sStructure}, "
-        "or a numpy 3x3 float64 array. In the first case, the return is "
-        "also a L{Structure}. In all other cases, the return is an L{sStructure}.\n"
+        "The argument can be of type L{Structure}, L{rStructure}, "
+        "or a numpy 3x3 float64 array. In the second case, the return is "
+        "also a L{rStructure}. In all other cases, the return is an L{Structure}.\n"
         "@raise RuntimeError: If the filled structure could not be created.\n" 
       );
     }

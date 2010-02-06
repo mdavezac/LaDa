@@ -26,7 +26,7 @@ def enum( n, lattice ):
   nsites = len([0 for i in lattice.sites if len(i.type) > 1])
   transforms = enumeration.create_transforms(lattice)
   for smith in smiths:
-    card = smith.smith[0]*smith.smith[1]*smith.smith[2]*nsites
+    card = int(smith.smith[0]*smith.smith[1]*smith.smith[2]*nsites)
     label_exchange=enumeration.LabelExchange( card, nflavors )
     flavorbase = enumeration.create_flavorbase(card, nflavors)
     translations = enumeration.Translation(smith.smith, nsites)
@@ -186,7 +186,7 @@ def read_database(filename, withperms=True):
     hermite = None
     flavorbase = None
     transform = None
-    structure = crystal.sStructure()
+    structure = crystal.Structure()
     structure.scale = lattice.scale
     for line in file:
       data = line.split()
@@ -201,9 +201,7 @@ def read_database(filename, withperms=True):
         smith = np_array( data[1:], dtype = "int64" )
         translations = enumeration.Translation(smith, nsites)
         cell = np_dot(lattice.cell, hermite)
-        structure.cell = cell
-        structure.atoms.clear()
-        crystal.fill_structure(structure)
+        structure = crystal.fill_structure(cell)
         for transformation in transforms:
           if not transformation.invariant(cell): continue
           transformation.init(transform, smith)
@@ -249,8 +247,8 @@ if __name__ == "__main__":
   import inverse_lattice
 
   lattice = inverse_lattice.lattice()
-  lattice.sites[0].type = lattice.sites[2].type
-  lattice.sites[1].type = lattice.sites[2].type
+# lattice.sites[0].type = lattice.sites[2].type
+# lattice.sites[1].type = lattice.sites[2].type
   create_database(lattice, 1, 5) 
 
 # N = 0

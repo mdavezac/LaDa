@@ -45,9 +45,9 @@ endif
 if DOENUM
   ENUMDIR = enum
 endif
-SUBDIRS = $(PYTHONDIR) math physics opt minimizer crystal print $(CEDIR) $(VFFSUBDIR) \
-	  $(PESCANSUBDIR) $(DARWINSUBDIR) $(SEPARABLEDIR) \
-	  factory $(MODELSDIR) $(POTENTIALSDIR) $(ENUMDIR) $(MPISUBDIR) 
+SUBDIRS = $(PYTHONDIR) $(MPISUBDIR) math physics opt minimizer crystal print $(CEDIR) $(VFFSUBDIR) \
+	  $(PESCANSUBDIR) $(DARWINSUBDIR) $(SEPARABLEDIR) factory \
+	  $(MODELSDIR) $(POTENTIALSDIR) $(ENUMDIR) 
 # revision.h: force
 # 	@cd $(top_srcdir); scripts/max_revision.pl
 # force: ;

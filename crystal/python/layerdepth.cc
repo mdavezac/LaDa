@@ -76,7 +76,7 @@ namespace LaDa
         bp::arg("structure"),
         "Returns a structure with the atoms sorted by layer.\n\n"
         "@param structure: An input structure. Not modified on output.\n"
-        "@type structure: L{Structure} or L{sStructure}\n"
+        "@type structure: L{Structure} or L{rStructure}\n"
       );
     }
 
