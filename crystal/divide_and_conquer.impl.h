@@ -102,7 +102,7 @@ namespace LaDa
               inv_cell, i_atom->pos, _n 
             ) 
           );
-          __ASSERT( u >= Nboxes, "Index out-of-range.\n" )
+          LADA_ASSERT( u < Nboxes, "Index out-of-range.\n" )
           (*result)[u].states_.push_back( bt::make_tuple( index, true ) );
 
           // Finds out which large box it is contained in.

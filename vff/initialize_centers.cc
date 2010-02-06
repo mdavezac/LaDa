@@ -9,6 +9,7 @@
 
 #include <crystal/ideal_lattice.h>
 #include <crystal/divide_and_conquer.h>
+#include <math/misc.h>
 
 #include "vff.h"
   
@@ -32,6 +33,8 @@ namespace LaDa
 
     bool Vff :: initialize_centers(bool _verbose)
     {
+      LADA_ASSERT(structure.atoms.size() != 0, "Structure has no atoms.\n" )
+      LADA_ASSERT(not math::is_zero(structure.cell.determinant()), "Structure with zero volume.\n")
       centers.clear();
       { // Creates a list of centers
         t_Atoms :: iterator i_atom = structure.atoms.begin();
@@ -45,12 +48,7 @@ namespace LaDa
       first_neighbors_( fn );
 
       // Checks if ideal structure. In which case use smith normal tree building.
-      const math::rMatrix3d inv_str( (!structure.lattice->cell) * structure.cell );
-      bool is_ideal = true;
-      for( size_t i(0); is_ideal and i < 3; ++i )
-        for( size_t j(0); is_ideal and j < 3; ++j )
-          if( math::neq( inv_str(i,j), rint( inv_str(i,j) ) ) ) is_ideal = false;
-      if( is_ideal )
+      if( math::is_integer(structure.lattice->cell.inverse() * structure.cell) )
       {
         if( _verbose ) 
         { 
@@ -78,20 +76,26 @@ namespace LaDa
       } 
 
       const size_t Nperbox( 30 );
-//     if( structure.atoms.size() < Nperbox )
-//     {
-//       __ROOTCODE
-//       ( 
-//         MPI_COMM,
-//         std::cout << "Creating first neighbor tree using standard algorithm.\n";
-//       )
-//       if( not build_tree_sort_( fn ) ) return false;
-//       __DODEBUGCODE( check_tree(); )
-//       __ROOTCODE( MPI_COMM,
-//                   std::cout << "First Neighbor tree successfully created.\n"; )
-//       return true;
-//     }
-//      
+      if( structure.atoms.size() < Nperbox )
+      {
+        if( _verbose )
+        {
+          __ROOTCODE
+          ( 
+            MPI_COMM,
+            std::cout << "Creating first neighbor tree using standard algorithm.\n";
+          )
+        }
+        if( not build_tree_sort_( fn ) ) return false;
+        __DODEBUGCODE( check_tree(); )
+        if( _verbose )
+        {
+          __ROOTCODE( MPI_COMM,
+                      std::cout << "First Neighbor tree successfully created.\n"; )
+        }
+        return true;
+      }
+       
       if( _verbose )
       {
         __ROOTCODE

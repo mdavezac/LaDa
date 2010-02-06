@@ -236,9 +236,6 @@ namespace LaDa
             boost::mpi::is_mpi_op< std::plus<t_Type>, t_Type>::op(), (MPI_Comm) MPI_COMM
           )
         );
-//       MPI_Comm __commC = (MPI_Comm) ( MPI_COMM ) ;
-//       boost::mpi::all_reduce( MPI_COMM, _grad, size_t(i_grad - _grad),
-//                               std::plus<types::t_real>());
       )
     }
 
@@ -252,7 +249,7 @@ namespace LaDa
       unpack_variables( _arg, strain);
 
       // computes K0
-      math::rMatrix3d K0 = (!(~strain));
+      math::rMatrix3d K0 = strain.transpose().inverse();
 
       // computes energy and gradient
       stress = math::rMatrix3d::Zero();
@@ -260,6 +257,10 @@ namespace LaDa
       for (; i_center != i_center_end; ++i_center)
         energy += functionals[i_center->kind()].
                        evaluate_with_gradient( *i_center, strain, stress, K0 );
+
+      // First repacks into function::Base format
+      pack_gradients(stress, _i_grad);
+      // Then sums actual results.
 #     ifdef _MPI
         energy = boost::mpi::all_reduce( MPI_COMM, energy, std::plus<types::t_real>() ); 
         // boost does not do in-place reduction.
@@ -274,9 +275,6 @@ namespace LaDa
           )
         );
 #     endif
-
-      // now repacks into function::Base format
-      pack_gradients(stress, _i_grad);
     }
 
   } // namespace vff

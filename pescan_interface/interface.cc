@@ -7,10 +7,10 @@
 
 #include <sstream>
 #include <fstream>
+#include <iostream>
 #include <stdexcept>       // std::runtime_error
 
 #ifdef _DIRECTIAGA
-# include <unistd.h>
 # include <boost/mpi/collectives.hpp>
 #endif
 
@@ -27,6 +27,7 @@
 #include <opt/initial_path.h>
 #include <opt/tuple_io.h>
 #include <opt/tinyxml.h>
+#include <opt/redirect.h>
 #include <crystal/lattice.h>
 #include <print/manip.h>
 #include <mpi/macros.h>
@@ -52,6 +53,21 @@ namespace LaDa
 {
   namespace Pescan
   {
+    Pescan::Interface::t_Path make_mpi_file(Pescan::Interface const &_e,
+                                            Pescan::Interface::t_Path const &_p )
+    {
+      if( _p.empty() ) return "";
+      Pescan::Interface::t_Path result = opt::InitialPath::path()/_e.get_dirname()/_p;
+#     ifdef _MPI
+        if( _e.comm().size() > 1 and _e.comm().rank() > 0 )
+        {
+          std::ostringstream sstr; sstr << _e.comm().rank();
+          result.replace_extension(sstr.str());
+        }
+#     endif
+      return result;
+    }
+
 #   ifdef _DIRECTIAGA
       void Interface :: set_mpi( boost::mpi::communicator* _c )
       {
@@ -115,13 +131,13 @@ namespace LaDa
       }
       LADA_ASSERT( bfs::exists( newatom ), newatom << " does not exist.\n" );
 
-  #   ifndef _NOLAUNCH
+#     ifndef _NOLAUNCH
         __IIAGA
         ( 
           const t_Path newgenpot( opt::InitialPath::path()/dirname/genpot.launch.filename() );
           if( not bfs::exists( newgenpot ) ) bfs::copy_file( genpot.launch, newgenpot ); 
         )
-  #   endif
+#     endif
       __DIAGA( for( types::t_int i( 0 ); i < MPI_COMM.size(); ++i ) )
       {
         __DIAGA
@@ -135,13 +151,17 @@ namespace LaDa
           if( not bfs::exists( newstr ) ) bfs::copy_file( ppath, newstr );
         }
       }
-
+  
       
       chdir( ( opt::InitialPath::path() / dirname ).string().c_str() );
-  #   ifndef _NOLAUNCH
+#     ifndef _NOLAUNCH
         __IIAGA(  system( "./" + genpot.launch.filename().string() ) );
-        __DIAGA( FC_FUNC_(getvlarg, GETVLARG)(); )
-  #   endif
+#       ifdef _DIRECTIAGA
+         opt::Redirect out(STDOUT_FILENO, make_mpi_file(*this, stdout_file), false);
+         opt::Redirect err(STDERR_FILENO, make_mpi_file(*this, stderr_file), false);
+         FC_FUNC_(getvlarg, GETVLARG)();
+#       endif 
+#     endif
       chdir( opt::InitialPath::path().string().c_str() );
     }
     types::t_real Interface :: launch_pescan()
@@ -159,13 +179,13 @@ namespace LaDa
         const t_Path newmaskr( opt::InitialPath::path()/dirname/maskr.filename() );
         if( not bfs::exists( newmaskr ) ) bfs::copy_file( maskr, newmaskr );
       }
-  #   ifndef _NOLAUNCH
+#     ifndef _NOLAUNCH
         __IIAGA
         (
           const t_Path newescan( opt::InitialPath::path()/dirname/escan.launch.filename() );
           if( not bfs::exists( newescan ) ) bfs::copy_file( escan.launch, newescan );
         )
-  #   endif
+#     endif
       foreach( const SpinOrbit &sp, escan.spinorbit )
         __DIAGA( for( types::t_int i( 0 ); i < MPI_COMM.size(); ++i ) )
         {
@@ -179,11 +199,15 @@ namespace LaDa
         }
            
       chdir( ( opt::InitialPath::path() / dirname ).string().c_str() );
-  #   ifndef _NOLAUNCH
+#     ifndef _NOLAUNCH
         __IIAGA(  system( "./" + escan.launch.filename().string() ) );
         int verb( verbose ? 1: 0);
-        __DIAGA( FC_FUNC_(iaga_call_escan, IAGA_CALL_ESCAN)( &escan.nbstates, &verb ); )
-  #   endif
+#       ifdef _DIRECTIAGA
+          opt::Redirect out(STDOUT_FILENO, make_mpi_file(*this, stdout_file), true);
+          opt::Redirect err(STDERR_FILENO, make_mpi_file(*this, stderr_file), true);
+          FC_FUNC_(iaga_call_escan, IAGA_CALL_ESCAN)( &escan.nbstates, &verb );
+#       endif
+#     endif
       chdir( opt::InitialPath::path().string().c_str() );
       return 0.0;
     }
@@ -680,6 +704,15 @@ namespace LaDa
         _str.lattice->convert_Atom_to_StrAtom( *i_atom, atom );
         bgstates += Physics::Atomic::Charge( atom.type );
       }
+      return bgstates;
+    }
+    size_t nb_valence_states( Crystal::TStructure<std::string> const &_str ) 
+    {
+      Crystal::TStructure<std::string>::t_Atoms::const_iterator i_atom = _str.atoms.begin();
+      Crystal::TStructure<std::string>::t_Atoms::const_iterator i_atom_end = _str.atoms.end();
+      types::t_unsigned bgstates = 0;
+      for(; i_atom != i_atom_end; ++i_atom)
+        bgstates += Physics::Atomic::Charge( i_atom->type );
       return bgstates;
     }
   }

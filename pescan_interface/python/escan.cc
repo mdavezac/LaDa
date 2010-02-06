@@ -21,6 +21,7 @@
 #include <opt/initial_path.h>
 
 #include <python/numpy_types.h>
+#include <vff/python/vff.hpp>
 
 #include "../interface.h"
 #include "escan.hpp"
@@ -184,6 +185,8 @@ namespace LaDa
       LADA_PARAMS(escan.filename, input_filename)
       LADA_PARAMS(escan.output, output_filename)
       LADA_PARAMS(atom_input, vff_inputfile)
+      LADA_PARAMS(stdout_file, stdout)
+      LADA_PARAMS(stderr_file, stderr)
 #   undef LADA_PARAMS
    
     typedef LaDa::Pescan::Interface::GenPot::t_MeshTuple t_MeshTuple;
@@ -249,6 +252,7 @@ namespace LaDa
     bp::object get_eigenvalues(Pescan::Interface const& _interface)
     {
       namespace numpy = LaDa::math::numpy;
+      import_array1( bp::object( bp::handle<>(bp::borrowed(Py_None)) ) );
       npy_intp dims[1] = {_interface.eigenvalues.size()};
 
       PyObject *eigs = PyArray_SimpleNewFromData( 1, dims, numpy::type<types::t_real>::value,
@@ -264,9 +268,40 @@ namespace LaDa
       }
       return get_eigenvalues(_interface);
     }
-
     void set_scale(Pescan::Interface &_interface, Crystal::TStructure<std::string> const &_str)
       {  _interface.escan.scale = _str.scale; }
+    template<class T>
+      bp::object __call2__(Pescan::Interface &_interface,
+                           T &_vff, Crystal::TStructure<std::string> const &_str)
+      {
+#       ifdef _MPI
+          Pescan::Interface::t_Path const path = _interface.atom_input;
+          Pescan::Interface::t_Path rootdir = path.root_path();
+          Pescan::Interface::t_Path filename = path.filename();
+          if( filename.empty() ) filename = "atom_input";
+          boost::mpi::communicator world;
+          std::ostringstream sstr; sstr << world.rank();
+          _interface.atom_input = rootdir / filename.replace_extension(sstr.str());
+          print_escan_input(_vff, _interface.atom_input.string(), _str);
+#       else
+          if( _interface.atom_input.empty() ) _interface.atom_input` = "atom_input";
+          print_escan_input(_vff, _interface.atom_input.string(), _str);
+#       endif
+        set_scale(_interface, _str);
+        if( not _interface() )
+        {
+          PyErr_SetString(PyExc_RuntimeError, "Something went wrong in escan.\n");
+          bp::throw_error_already_set();
+        }
+#       ifdef _MPI
+          _interface.atom_input = path;
+#       endif
+        return get_eigenvalues(_interface);
+      }
+
+    template<class T> size_t nb_valence_states( T const &_str ) 
+      { return Pescan::nb_valence_states( _str ); }
+
 
     void expose_escan()
     {
@@ -318,6 +353,10 @@ namespace LaDa
           LADA_PARAMS(smoothness, "Smoothness factor of plane-wave cutoff.")
           LADA_PARAMS(kinscal, "Kinetic scaling parameter.")
           LADA_PARAMS(vff_inputfile, "Structure input file.")
+          LADA_PARAMS(stdout, "Filename of the standard output.\n\n"
+                      "If empty, then stdout is not redirected.")
+          LADA_PARAMS(stderr, "Filename of the standard error.\n\n"
+                      "If empty, then stderr is not redirected.")
           LADA_PARAMS(nbstates, "Number of states to compute.")
           LADA_PARAMS(method, "Diagonalization method: L{folded} or L{full_diagonalization}")
           LADA_PARAMS(potential, "Hamiltonian method: L{local}, L{spinorbit}, or L{nonlocal}.")
@@ -346,24 +385,28 @@ namespace LaDa
         .def( "fromXML",  &Escan_from_XML<t_Escan>, bp::arg("file"),
               "Loads escan parameters from an XML file." )
         .def
+        (
+          "__call__", &__call2__<t_Vff>, 
+          (bp::arg("vff"), bp::arg("structure")),
+          bp::with_custodian_and_ward_postcall<1,0>() 
+        )
+        .def
         ( 
-          "__call__", &__call__,
+          "__call__", &__call2__<t_LayeredVff>,
+          (bp::arg("vff"), bp::arg("structure")),
           "Performs a calculation.\n\n" 
           "The usual sequence of call is as follows:\n\n"
           ">>> # First initialize escan and vff"
           ">>> escan = lada.escan.Escan(\"input.xml\", boost.mpi.world)\n"
           ">>> vff = lada.vff.Vff(\"input.xml\", boost.mpi.world)\n"
-          ">>> # Sets structure to input to vff and escan."
-          ">>> vff.structure = ...\n"
-          ">>> # Sets filename to which to print escan input.\n"
-          ">>> escan.vff_inputfile = \"atomic_config.\" + str(boost.mpi.world.rank)\n"
-          ">>> # Prints to file\n"
-          ">>> vff.print_escan_input(escan.vff_inputfile)\n"
-          ">>> # sets unit length of escan calculations.\n" 
-          ">>> escan.scale = vff.structure\n"
           ">>> # Finally, calls escan functional. \n"
           ">>> # Other parameters (reference, kpoint...) can be changed prior to call.\n"
-          ">>> eigenvalues = escan()\n\n"
+          ">>> eigenvalues = escan(vff, structure)\n\n"
+          "Escan needs to be passed a valid vff structure to compute the microstrain.\n\n"
+          "@param vff: A vff functional.\n"
+          "@type vff: L{vff.Vff} or L{vff.LayeredVff}\n"
+          "@param structure: The structure for which to perform calculations.\n"
+          "@type structure: L{crystal.Structure}\n"
           "@return: numpy vector also available as self.L{eigenvalues}. As "
           "such, it will change from one calculation to the other. Copy if you "
           "want to store the results.\n",
@@ -371,10 +414,9 @@ namespace LaDa
         )
         .def( "set_mpi", &t_Escan::set_mpi, "Sets the boost.mpi communicator." );
 
-      bp::def( "nb_valence_states", &LaDa::Pescan::nb_valence_states, bp::arg("structure"),
-               "Returns the number of valence states in a structure." );
+      bp::def( "nb_valence_states", &nb_valence_states<Crystal::TStructure<std::string> >,
+               bp::arg("structure"), "Returns the number of valence states in a structure." );
     }
-
 
     void expose_genpot()
     {

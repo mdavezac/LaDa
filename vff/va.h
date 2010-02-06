@@ -162,6 +162,10 @@ namespace LaDa
             get_angle( const std::string &_type ) const
               { return t_VffBase::get_angle( _type ); }
 
+          //! Copies parameters from argument.
+          template<class T> 
+            void copy_parameters(VABase<T> const &_f) { t_VffBase::copy_parameters(_f.Vff()); }
+
        protected:
          //! Type of the minimizer for minimizing strain
          typedef Minimizer::Variant

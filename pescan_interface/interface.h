@@ -72,6 +72,8 @@ namespace LaDa
 
     //! Number of valence states in crystal structures.
     size_t nb_valence_states( const Crystal::Structure &_str );
+    //! Number of valence states in crystal structures.
+    size_t nb_valence_states( const Crystal::TStructure<std::string> &_str );
 
     //! \brief Defines an interface for the nanopse pescan program.
     //! \details Mostly, this class writes the input and recovers the output eigenvalues.
@@ -101,6 +103,10 @@ namespace LaDa
         // Now includes declaration of Genpot, SpinOrbit, Escan classes.
 #       include "interface.localclasses.h"
     
+        //! Standard output filename
+        t_Path stdout_file;
+        //! Standard error filename
+        t_Path stderr_file;
         //! Filename of the atomic configuation input
         t_Path atom_input;
         //! All potential generation parameters
@@ -116,11 +122,12 @@ namespace LaDa
  
         //! Constructor
         Interface()
-          : atom_input("atom.config"), genpot(), escan(),
+          : stdout_file("out"), stderr_file("err"), atom_input("atom_config"), genpot(), escan(),
             maskr("maskr"), dirname("ESCAN"), do_destroy_dir(true), verbose(true) {}
         //! Copy Constructor
         Interface   ( const Interface &_c )
                   : __DIAGA( MPI_COMMCOPY( _c ) __COMMA__ )
+                    stdout_file(_c.stdout_file), stderr_file(_c.stderr_file),
                     atom_input( _c.atom_input ), genpot( _c.genpot ),
                     escan( _c.escan ), maskr( _c.maskr ), eigenvalues( _c.eigenvalues ),
                     dirname( _c.dirname ), do_destroy_dir( _c.do_destroy_dir ), verbose(false) {}
@@ -158,13 +165,9 @@ namespace LaDa
    
        void check_existence() const;
  
-       __DIAGA
-       (
+#      ifdef _DIRECTIAGA
          //! Allows derived classes to have access to ::mpi::AddCommunicator members. 
          void set_mpi( boost::mpi::communicator* _c );
-       )
- 
-#      ifdef _DIRECTIAGA
          //! Allows derived classes to have access to ::mpi::AddCommunicator members. 
          const boost::mpi::communicator &comm() const { return MPI_COMMDEC::comm(); } 
 #      endif

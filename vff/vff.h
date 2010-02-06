@@ -154,6 +154,9 @@ namespace LaDa
                               const types::t_real& >
           get_angle( const std::string &_type ) const;
 
+        //! Copies parameters from argument.
+        void copy_parameters(Vff const &_f) { functionals = _f.functionals; bond_cutoff = _f.bond_cutoff; }
+
       protected:
         //! Holds ideal first neighbor positions.
         typedef std::vector< std::vector< math::rVector3d > > t_FirstNeighbors;
