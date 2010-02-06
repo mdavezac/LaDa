@@ -71,12 +71,13 @@ from boost.mpi import world
 from lada.vff import Vff
 from lada.escan import Escan, method, nb_valence_states as nbstates
 
+# file with escan and vff parameters.
 input = "input.xml"
 
 # creates lattice
 lattice = create_zb_lattice()
 
-# Creates structure and test result
+# Creates unrelaxed structure and  known relaxed structure (for testing).
 structure, result = create_structure()
 
 # creates vff 
@@ -121,5 +122,7 @@ for kpoint, name in [ (X, "X"), (L, "L"), (G, "Gamma"), ("L", "L"), (W0, "W0"),
   # computing all valence states  + 4 conduction (spin polarized) states.
   escan.nbstates = nbstates(relaxed) + 4 
   # Now just do it.
-  print kpoint, " -> ", escan.kpoint, ": ", escan(vff, relaxed)
+  eigenvalues = escan(vff, relaxed)
+  # And print.
+  if world.rank == 0: print kpoint, " -> ", escan.kpoint, ": ", eigenvalues
   
