@@ -185,6 +185,8 @@ namespace LaDa
       LADA_PARAMS(escan.filename, input_filename)
       LADA_PARAMS(escan.output, output_filename)
       LADA_PARAMS(atom_input, vff_inputfile)
+      LADA_PARAMS(stdout_file, stdout)
+      LADA_PARAMS(stderr_file, stderr)
 #   undef LADA_PARAMS
    
     typedef LaDa::Pescan::Interface::GenPot::t_MeshTuple t_MeshTuple;
@@ -250,6 +252,7 @@ namespace LaDa
     bp::object get_eigenvalues(Pescan::Interface const& _interface)
     {
       namespace numpy = LaDa::math::numpy;
+      import_array1( bp::object( bp::handle<>(bp::borrowed(Py_None)) ) );
       npy_intp dims[1] = {_interface.eigenvalues.size()};
 
       PyObject *eigs = PyArray_SimpleNewFromData( 1, dims, numpy::type<types::t_real>::value,
@@ -272,13 +275,16 @@ namespace LaDa
                            T &_vff, Crystal::TStructure<std::string> const &_str)
       {
 #       ifdef _MPI
-          std::ostringstream sstr( _interface.atom_input.string() );
-          Pescan::Interface const & c = _interface;
-          sstr << "." << c.comm().rank();
           Pescan::Interface::t_Path const path = _interface.atom_input;
-          _interface.atom_input = sstr.str();
+          Pescan::Interface::t_Path rootdir = path.root_path();
+          Pescan::Interface::t_Path filename = path.filename();
+          if( filename.empty() ) filename = "atom_input";
+          Pescan::Interface const & c = _interface;
+          std::ostringstream sstr; sstr << c.comm().rank();
+          _interface.atom_input = rootdir / filename.replace_extension(sstr.str());
           print_escan_input(_vff, _interface.atom_input.string(), _str);
 #       else
+          if( _interface.atom_input.empty() ) _interface.atom_input` = "atom_input";
           print_escan_input(_vff, _interface.atom_input.string(), _str);
 #       endif
         set_scale(_interface, _str);
@@ -292,6 +298,9 @@ namespace LaDa
 #       endif
         return get_eigenvalues(_interface);
       }
+
+    template<class T> size_t nb_valence_states( T const &_str ) 
+      { return Pescan::nb_valence_states( _str ); }
 
 
     void expose_escan()
@@ -344,6 +353,10 @@ namespace LaDa
           LADA_PARAMS(smoothness, "Smoothness factor of plane-wave cutoff.")
           LADA_PARAMS(kinscal, "Kinetic scaling parameter.")
           LADA_PARAMS(vff_inputfile, "Structure input file.")
+          LADA_PARAMS(stdout, "Filename of the standard output.\n\n"
+                      "If empty, then stdout is not redirected.")
+          LADA_PARAMS(stderr, "Filename of the standard error.\n\n"
+                      "If empty, then stderr is not redirected.")
           LADA_PARAMS(nbstates, "Number of states to compute.")
           LADA_PARAMS(method, "Diagonalization method: L{folded} or L{full_diagonalization}")
           LADA_PARAMS(potential, "Hamiltonian method: L{local}, L{spinorbit}, or L{nonlocal}.")
@@ -401,10 +414,9 @@ namespace LaDa
         )
         .def( "set_mpi", &t_Escan::set_mpi, "Sets the boost.mpi communicator." );
 
-      bp::def( "nb_valence_states", &LaDa::Pescan::nb_valence_states, bp::arg("structure"),
-               "Returns the number of valence states in a structure." );
+      bp::def( "nb_valence_states", &nb_valence_states<Crystal::TStructure<std::string> >,
+               bp::arg("structure"), "Returns the number of valence states in a structure." );
     }
-
 
     void expose_genpot()
     {

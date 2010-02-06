@@ -53,22 +53,23 @@ def create_structure():
 
   return structure, result
 
-def deformed_kpoint(ocell, dcell, lcell, kpoint):
+def deformed_kpoint(ocell, dcell, kpoint):
   from numpy import dot, matrix
-  k = dot( dot(ocell.T,  matrix(lcell).I.T), kpoint)[0,:]
+  k = dot(ocell.T, kpoint)
   for i in range(3):
-    k[0,i] = float(k[0,i]) - float( int(k[0,i]) )
-    if k[0,i] < 0e0: k[0,i] += 1e0
-    if k[0,i] > 1e0-1e-6: k[0,i] = 0e0
-  return dot(dcell, k.T)
+    k[i] = float(k[i]) - float( int(k[i]) )
+    if k[i] < 0e0: k[i] += 1e0
+    if k[i] > 1e0-1e-6: k[i] = 0e0
+  return matrix(dcell.T).I * matrix(k).T
   
 
 from sys import exit
+from math import ceil, sqrt
 from os.path import join, exists
-from numpy import dot, array
+from numpy import dot, array, matrix
 from boost.mpi import world
 from lada.vff import Vff
-from lada.escan import Escan, method
+from lada.escan import Escan, method, nb_valence_states as nbstates
 
 input = "input.xml"
 
@@ -81,7 +82,7 @@ structure, result = create_structure()
 # creates vff 
 vff = Vff(input, world)
 
-# launch vff and prints output.
+# launch vff and checks output.
 relaxed, stress = vff(structure)
 if world.rank == 0:
   diff = 0e0
@@ -95,17 +96,30 @@ if world.rank == 0:
 
 # creates escan input. 
 escan = Escan(input, world)
+# sets the FFT mesh
+escan.genpot.mesh = (4*20, 20, int(ceil(sqrt(0.5) * 20)))  
+# makes sure we keep output directories.
+escan.destroy_directory = False
 
 # some kpoints
-X = array( [0,0,1], dtype="float64" )
+X = array( [0,0,1], dtype="float64" ) # cartesian 2pi/a
 G = array( [0,0,0], dtype="float64" )
-L = array( [0.5,0.5,0.5], dtype="float64" )
-W = array( [1, 0.5,0], dtype="float64" )
+L = array( [0.5,0.5,0.5], dtype="float64" ) 
+W0 = array( [1, 0.5,0], dtype="float64" ) 
+W1 = array( [1, 0,0.5], dtype="float64" ) 
+W2 = array( [0, 1,0.5], dtype="float64" ) 
 
 # launch pescan for different kpoints.
-for kpoint in [X, L, W, G]:
-  escan.kpoint = deformed_kpoint(structure.cell, relaxed.cell, lattice.cell, kpoint)
-  print kpoint, " -> ", escan.kpoint
+for kpoint, name in [ (X, "X"), (L, "L"), (G, "Gamma"), ("L", "L"), (W0, "W0"),
+                      (W1, "W1"), (W2, "W2") ]:
+  # will save output to directory "name".
+  escan.directory = name
+  # computes at kpoint of deformed structure.
+  escan.kpoint = deformed_kpoint(structure.cell, relaxed.cell, kpoint)
+  # full diagonalisation
   escan.method = method.full_diagonalization
-  print escan(vff, relaxed)
+  # computing all valence states  + 4 conduction (spin polarized) states.
+  escan.nbstates = nbstates(relaxed) + 4 
+  # Now just do it.
+  print kpoint, " -> ", escan.kpoint, ": ", escan(vff, relaxed)
   
