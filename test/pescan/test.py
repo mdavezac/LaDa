@@ -143,7 +143,7 @@ for kpoint, name, ref, expected_eigs in jobs:
   # Now just do it.
   eigenvalues = escan(vff, relaxed)
   # checks expected are as expected. 
-  assert norm( eigenvalues - expected_eigs ) < 1e-6
+  assert norm( eigenvalues - expected_eigs ) < 1e-6, "%s\n%s" % (eigenvalues, expected_eigs)
   # And print.
   if world.rank == 0: print "Ok - %s: %s -> %s: %s" % (name, kpoint, escan.kpoint, eigenvalues)
   
