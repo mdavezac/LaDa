@@ -279,8 +279,8 @@ namespace LaDa
           Pescan::Interface::t_Path rootdir = path.root_path();
           Pescan::Interface::t_Path filename = path.filename();
           if( filename.empty() ) filename = "atom_input";
-          Pescan::Interface const & c = _interface;
-          std::ostringstream sstr; sstr << c.comm().rank();
+          boost::mpi::communicator world;
+          std::ostringstream sstr; sstr << world.rank();
           _interface.atom_input = rootdir / filename.replace_extension(sstr.str());
           print_escan_input(_vff, _interface.atom_input.string(), _str);
 #       else
