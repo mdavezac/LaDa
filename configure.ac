@@ -1,4 +1,4 @@
-AC_INIT([LaDa],[4.10])
+AC_INIT([LaDa],[4.2])
 AM_INIT_AUTOMAKE([-Wno-portability])
 
 AC_CONFIG_MACRO_DIR([m4])
