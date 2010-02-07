@@ -190,6 +190,7 @@ opt_h = ndim_iterator.h minimize_base.h polynome.h types.h \
         function_base.h pow.h redirect.h va_minimizer.h \
 	fitness_function.h  function_functors.h monome.h va_function.h \
         algorithms.h bpo_macros.h tuple_io.h  leave_many_out.h 
+opt_f90 = fortran_redirect.f90
 opt_cc = leave_many_out.cc 
 opt_python_convenience_h =  convex_hull.h errors.h convex_hull.impl.h \
                             tinyxml.h initial_path.h fortran_dirio.h 

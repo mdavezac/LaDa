@@ -157,8 +157,9 @@ namespace LaDa
 #     ifndef _NOLAUNCH
         __IIAGA(  system( "./" + genpot.launch.filename().string() ) );
 #       ifdef _DIRECTIAGA
-         opt::Redirect out(STDOUT_FILENO, make_mpi_file(*this, stdout_file), false);
-         opt::Redirect err(STDERR_FILENO, make_mpi_file(*this, stderr_file), false);
+         typedef opt::FortranRedirect FRedirect;
+         FRedirect out(FRedirect::input, make_mpi_file(*this, stdout_file), false);
+         FRedirect err(FRedirect::output, make_mpi_file(*this, stderr_file), false);
          FC_FUNC_(getvlarg, GETVLARG)();
 #       endif 
 #     endif
@@ -203,8 +204,9 @@ namespace LaDa
         __IIAGA(  system( "./" + escan.launch.filename().string() ) );
         int verb( verbose ? 1: 0);
 #       ifdef _DIRECTIAGA
-          opt::Redirect out(STDOUT_FILENO, make_mpi_file(*this, stdout_file), true);
-          opt::Redirect err(STDERR_FILENO, make_mpi_file(*this, stderr_file), true);
+          typedef opt::FortranRedirect FRedirect;
+          FRedirect out(FRedirect::output, make_mpi_file(*this, stdout_file), true);
+          FRedirect err(FRedirect::input, make_mpi_file(*this, stderr_file), true);
           FC_FUNC_(iaga_call_escan, IAGA_CALL_ESCAN)( &escan.nbstates, &verb );
 #       endif
 #     endif
