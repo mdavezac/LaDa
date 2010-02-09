@@ -55,16 +55,6 @@ def create_structure():
 
   return structure, result
 
-def deformed_kpoint(ocell, dcell, kpoint):
-  from numpy import dot, matrix
-  k = dot(ocell.T, kpoint)
-  for i in range(3):
-    k[i] = float(k[i]) - float( int(k[i]) )
-    if k[i] < 0e0: k[i] += 1e0
-    if k[i] > 1e0-1e-6: k[i] = 0e0
-  return matrix(dcell.T).I * matrix(k).T
-  
-
 from sys import exit
 from math import ceil, sqrt
 from os.path import join, exists
@@ -73,6 +63,7 @@ from numpy.linalg import norm
 from boost.mpi import world
 from lada.vff import Vff
 from lada.escan import Escan, method, nb_valence_states as nbstates, potential
+from lada.crystal import deform_kpoint
 
 # file with escan and vff parameters.
 input = "input.xml"
@@ -121,8 +112,9 @@ W2 = array( [0, 1,0.5], dtype="float64" )
 # reference energy (third argument). Results are stored in a specific directory
 # (second arguement). The expected eigenvalues are given in the fourth argument.
 jobs = [\
-         (G,   "VBM", -0.4, array([-0.47992312, -0.67148097])), # at gamma, code uses Krammer degeneracy
-         (G, "Gamma",  0.4, array([ 0.47368306,  0.49199994])), # at gamma, code uses Krammer degeneracy
+         # at gamma, code uses Krammer degeneracy
+         (G,   "VBM", -0.4, array([-0.47992312, -0.67148097])), 
+         (G, "Gamma",  0.4, array([ 0.47368306,  0.49199994])), 
          (X,     "X",  0.4, array([ 0.51468608,  0.51479076, 0.5148467 , 0.5149207 ])),
          (L,     "L",  0.4, array([ 0.72789198,  0.72789198, 0.73165765, 0.73165765])),
          (W1,   "W1",  0.4, array([ 0.89170814,  0.89170822, 0.96097565, 0.96097601])),
@@ -133,7 +125,7 @@ for kpoint, name, ref, expected_eigs in jobs:
   # will save output to directory "name".
   escan.directory = name
   # computes at kpoint of deformed structure.
-  escan.kpoint = deformed_kpoint(structure.cell, relaxed.cell, kpoint)
+  escan.kpoint = deform_kpoint(kpoint, structure.cell, relaxed.cell)
   # computing 4 (spin polarized) states.
   escan.nbstates = 4 # + nbtates(relaxed)  would be all valence states + 4
   # divides by two if calculations are not spin polarized.
