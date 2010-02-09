@@ -197,8 +197,8 @@ opt_python_convenience_h =  convex_hull.h errors.h convex_hull.impl.h \
 opt_python_convenience_cc = convex_hull.cc errors.cc tinyxml.cc \
                             initial_path.cc fortran_dirio.cc 
 opt_doc = $(opt_h) $(opt_cc) $(opt_python_convenience_cc) $(opt_python_convenience_h)
-opt_python_cc = errortuple.cc python.cc 
-opt_python_c = errortuple.hpp convexhull.impl.hpp 
+opt_python_cc = errortuple.cc python.cc redirect.cc
+opt_python_c = errortuple.hpp convexhull.impl.hpp redirect.hpp
 
 EMASS_CC = emass.cc
 EMASS_H  = emass.h

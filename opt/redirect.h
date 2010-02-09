@@ -84,14 +84,16 @@ namespace LaDa
           error  = 0  //! redirects input unit.
         };
         //! Construction
-        FortranRedirect( Unit const _which, boost::filesystem::path const &_out, bool _append = false)
+        FortranRedirect( Unit const _which, boost::filesystem::path const &_out,
+                         bool _append = false)
         {
           std::string const path = _out.string().size() ? _out.string(): "/dev/null";
           int const N = path.size();
           which_ = _which;
           int isopen = 1;
           int const append = _append ? 1: 0;
-          FC_FUNC_(lada_redirect_open, LADA_REDIRECT_OPEN)(&which_, &N, path.c_str(), &isopen, &append);
+          FC_FUNC_(lada_redirect_open, LADA_REDIRECT_OPEN)
+            (&which_, &N, path.c_str(), &isopen, &append);
           isopen_ = isopen == 1;
         }
         //! Destruction;

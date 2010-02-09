@@ -14,6 +14,7 @@
 
 #include "convexhull.impl.hpp"
 #include "errortuple.hpp"
+#include "redirect.hpp"
 
 BOOST_PYTHON_MODULE(_opt)
 {
@@ -25,4 +26,5 @@ BOOST_PYTHON_MODULE(_opt)
   LaDa::Python::expose_errors();
   LaDa::Python::exposeConvexHull<boost::python::object>( "ConvexHull" );
   LaDa::Python::expose_vector<LaDa::types::t_real>( "cReals", "A stl container of real values." );
+  LaDa::python::expose_redirect();
 }
