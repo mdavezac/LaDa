@@ -2,7 +2,8 @@
 # Version: $Id$
 #
 include $(top_srcdir)/Files
-AM_CPPFLAGS = -I $(top_srcdir) @CPP_DEBUG_FLAGS@ @MPI_CFLAGS@ @BOOST_CXXFLAGS@ @TINYXML_CFLAGS@
+AM_CPPFLAGS = -I $(top_srcdir) @CPP_DEBUG_FLAGS@ @MPI_CFLAGS@ @BOOST_CXXFLAGS@ \
+	      @TINYXML_CFLAGS@ @EIGEN_CXXFLAGS@
 AM_LDFLAGS = @TINYXML_LIBS@ @FCLIBS@
 noinst_LTLIBRARIES = libopt.la libpythonconvenience.la 
 libpythonconvenience_ladir = $(includedir)/LaDa/opt
