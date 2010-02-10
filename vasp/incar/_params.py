@@ -21,9 +21,9 @@ class Standard(object):
   def _getvalue(self): return self._value
   def _setvalue(self, value): 
     if self.validity != None:
-      assert self.validity(value), \
-             "Value %s = %s is invalid.\n%s\n"  % (self.key, value, self.__doc__)
-    self.value = value
+      if not self.validity(value):
+        raise ValueError, "Value %s = %s is invalid.\n%s\n"  % (self.key, value, self.__doc__)
+    self._value = value
 
   value = property(_getvalue, _setvalue)
   """ Actual property 
@@ -36,8 +36,19 @@ class Standard(object):
     """ Prints the key/value as key = value """
     return "%s = %s" % (self.key, str(self.value))
 
-  def __getinitargs__(self):
-    return self.key, self._value, self.validity
+  def __getstate__(self):
+    from marshal import dumps
+    if self.validity == None: return self.key, self._value
+    return self.key, self._value, dumps(self.validity.func_code)
+  def __setstate__(self, arg):
+    from marshal import loads
+    if len(arg) == 2:
+      self.key, self._value = arg
+      self.validity = None
+    else:
+      self.validity = lambda x: x
+      self.key, self._value = arg[:2]
+      self.validity.func_code  = loads(arg[2])
 
 
 class NoPrintStandard(Standard):
@@ -49,15 +60,18 @@ class NoPrintStandard(Standard):
     if self.default == self.value: 
       return "# %s = VASP default." % (self.key)
     return super(NoPrintStandard, self).incar_string(vasp)
+  def __setstate__(self, arg): 
+    super(NoPrintStandard, self).__setstate__(arg)
+    self.default = self.value
 
 class Iniwave(Standard):
   """ Iniwave variable 
 
       self.value can be either "random" or "jellium".
   """
-  def __init__(self, default = "random"):
+  def __init__(self, value = "random"):
     validity = lambda x: x=="random" or x=="jellium"
-    super(Iniwave, self).__init__("INIWAVE", default, validity)
+    super(Iniwave, self).__init__("INIWAVE", value, validity)
 
   def _getvalue(self): 
     if self._value == "random": return 1
@@ -74,9 +88,6 @@ class Iniwave(Standard):
   """
 
 
-  def __getinitargs__(self): return self._value 
-
-
 class Algo(Standard): 
   """ Electronic minimization. 
       Can be \"very fast\", \"fast\", or \"normal\" (default). 
@@ -88,16 +99,14 @@ class Algo(Standard):
       self.value = self._value
     return self._value
   def _setvalue(self, value):
-    lower = value.lower()
+    lower = value.lower().rstrip().lstrip()
     lower = lower.replace("_", " ")
+    lower = lower.replace("-", " ")
     if lower == "very fast": self._value = "Very_Fast"
     elif lower == "fast": self._value = "Fast"
     elif lower == "normal": self._value = "Normal"
     else: raise ValueError, "%s = %s is invalid.\n%s\n" % (self.key, value, self.__doc__)
   value = property(_getvalue, _setvalue)
-  def __getinitargs__(self): return ()
-  def __getstate__(self): return self._value
-  def __setstate__(self, arg): self.value = arg
 
 class Precision(Standard):
   """ Sets accuracy of calculation. 
@@ -114,9 +123,6 @@ class Precision(Standard):
     if self._value not in ["accurate", "lower", "medium", "high"]:
       raise ValueError, "%s = %s is invalid.\n%s\n" % (self.key, value, self.__doc__)
   value = property(_getvalue, _setvalue)
-  def __getinitargs__(self): return ()
-  def __getstate__(self): return self._value
-  def __setstate__(self, arg): self.value = arg
 
 class Ediff(Standard):
   """ Sets the convergence criteria (per atom) for electronic minimization.
@@ -128,7 +134,6 @@ class Ediff(Standard):
     super(Ediff, self).__init__("EDIFF", value, validity = lambda x: x > 0e0)
   def incar_string(self, vasp):
     return "%s = %f " % (self.key, self.value * float(len(vasp._system.atoms)))
-  def __getinitargs__(self): return self._value
 
 
 class Encut(object):
@@ -149,7 +154,8 @@ class Encut(object):
   def __init__(self, safety = 1.25):
     super(Encut, self).__init__()
     self.safety = safety
-  def __getinitargs__(self): return self.safety
+  def __getstate__(self): return self.safety
+  def __setstate__(self, safety): self.safety = Safety(safety)
 
   def _getvalue(self):
     raise ValueError, "Value of encut cannot be obtained directly. use enmax method instead.\n"
@@ -208,7 +214,8 @@ class Smearing(object):
   def __init__(self, string = "insulator 0.2"):
     super(Smearing, self).__init__()
     self.value = string
-  def __getinitargs__(self): return "%s %s" % (self.type, self.smearing)
+  def __getstate__(self): return "%s %s" % (self.type, self.smearing)
+  def __setstate__(self, arg): self.value = arg
 
   def _getvalue(self): return (self.type, self.smearing)
   def _setvalue(self, value):
@@ -265,21 +272,18 @@ class Smearing(object):
       If "gotten", this decorator returns a tuple containing the type and the energy scale.
       It can be set using a similar tuple, or a string input with keywords. 
   """
-      
-
   def incar_string(self, vasp):
     return "ISMEAR  = %s\nSIGMA   = %f\n" % self.value
 
   
-class Isym(object):
+class Isym(Standard):
   """ Type of symmetry used in the calculation.
       Can be "off" or a float corresponding to the tolerance used to determine
       symmetry operation.  By default, it is 1e-5.
   """
   def __init__(self, value = 1e-5):
-    super(Isym, self).__init__()
+    super(Isym, self).__init__("SYMPREC", value, None)
     self._value = value
-  def __getinitargs__(self): return self._value
 
   def _getvalue(self):
     if self._value <= 0e0: return "off"
@@ -291,7 +295,7 @@ class Isym(object):
   value = property(_getvalue, _setvalue)
   def incar_string(self, vasp):
     if self._value <= 0e0: return "ISYM = 0\n" 
-    return "SYMPREC = %8.6e" % (self._value)
+    return super(Isym,self).incar_string(self,vasp)
 
   def __eq__(self, other):
     if isinstance(other, Isym):
@@ -303,7 +307,8 @@ class FFTGrid(object):
   def __init__(self, grid = None): 
     super(FFTGrid, self).__init__()
     self._value = grid
-  def __getinitargs__(self): return self._value
+  def __getstate__(self): return self._value
+  def __setstate__(self, arg): self._value = arg
 
   def _getvalue(self):
     if self._value == None:
@@ -368,7 +373,8 @@ class Restart(object):
   def __init__(self, directory = None):  
     super(Restart, self).__init__()
     self._value = directory
-  def __getinitargs__(self): return self._value
+  def __getstate__(self): return self._value
+  def __setstate__(self, arg): self._value = arg
 
   def __get__(self, owner, ownertype=None): return self
   def __set__(self, owner, value): self._setvalue(self, value)
@@ -418,7 +424,8 @@ class Relaxation(object):
     self.nsw = 40
     self.ibrion = 2
     self.potim = 0.5
-  def __getinitargs__(self): return self.value, self.nsw, self.ibrion, self.potim
+  def __getstate__(self): return self._value, self.nsw, self.ibrion, self.potim
+  def __setstate__(self, arg): self._value, self.nsw, self.ibrion, self.potim = arg
 
   @property
   def key(self): return "ISIF"
