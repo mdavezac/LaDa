@@ -14,6 +14,8 @@ class Standard(object):
     """ Any string """
     self._value = value
     """ Any value """
+    self.validity = validity
+    """ Functor returning true if the value is valid. """
 
   # getter setter functions for value.
   def _getvalue(self): return self._value
@@ -33,6 +35,9 @@ class Standard(object):
   def incar_string(self, vasp):
     """ Prints the key/value as key = value """
     return "%s = %s" % (self.key, str(self.value))
+
+  def __getinitargs__(self):
+    return self.key, self._value, self.validity
 
 
 class NoPrintStandard(Standard):
@@ -69,6 +74,9 @@ class Iniwave(Standard):
   """
 
 
+  def __getinitargs__(self): return self._value 
+
+
 class Algo(Standard): 
   """ Electronic minimization. 
       Can be \"very fast\", \"fast\", or \"normal\" (default). 
@@ -87,6 +95,9 @@ class Algo(Standard):
     elif lower == "normal": self._value = "Normal"
     else: raise ValueError, "%s = %s is invalid.\n%s\n" % (self.key, value, self.__doc__)
   value = property(_getvalue, _setvalue)
+  def __getinitargs__(self): return ()
+  def __getstate__(self): return self._value
+  def __setstate__(self, arg): self.value = arg
 
 class Precision(Standard):
   """ Sets accuracy of calculation. 
@@ -103,6 +114,9 @@ class Precision(Standard):
     if self._value not in ["accurate", "lower", "medium", "high"]:
       raise ValueError, "%s = %s is invalid.\n%s\n" % (self.key, value, self.__doc__)
   value = property(_getvalue, _setvalue)
+  def __getinitargs__(self): return ()
+  def __getstate__(self): return self._value
+  def __setstate__(self, arg): self.value = arg
 
 class Ediff(Standard):
   """ Sets the convergence criteria (per atom) for electronic minimization.
@@ -114,6 +128,7 @@ class Ediff(Standard):
     super(Ediff, self).__init__("EDIFF", value, validity = lambda x: x > 0e0)
   def incar_string(self, vasp):
     return "%s = %f " % (self.key, self.value * float(len(vasp._system.atoms)))
+  def __getinitargs__(self): return self._value
 
 
 class Encut(object):
@@ -134,6 +149,7 @@ class Encut(object):
   def __init__(self, safety = 1.25):
     super(Encut, self).__init__()
     self.safety = safety
+  def __getinitargs__(self): return self.safety
 
   def _getvalue(self):
     raise ValueError, "Value of encut cannot be obtained directly. use enmax method instead.\n"
@@ -191,8 +207,8 @@ class Smearing(object):
   """
   def __init__(self, string = "insulator 0.2"):
     super(Smearing, self).__init__()
-    self.value = "insulator 0.2"
     self.value = string
+  def __getinitargs__(self): return "%s %s" % (self.type, self.smearing)
 
   def _getvalue(self): return (self.type, self.smearing)
   def _setvalue(self, value):
@@ -262,7 +278,8 @@ class Isym(object):
   """
   def __init__(self, value = 1e-5):
     super(Isym, self).__init__()
-    self.value = value
+    self._value = value
+  def __getinitargs__(self): return self._value
 
   def _getvalue(self):
     if self._value <= 0e0: return "off"
@@ -282,57 +299,58 @@ class Isym(object):
     return self == Isym(other)
   
 class FFTGrid(object):
-    """ Computes fft grid using VASP. Or if grid is given, computes using that grid. """
-    def __init__(self, grid = None): 
-      super(FFTGrid, self).__init__()
-      self._value = grid
+  """ Computes fft grid using VASP. Or if grid is given, computes using that grid. """
+  def __init__(self, grid = None): 
+    super(FFTGrid, self).__init__()
+    self._value = grid
+  def __getinitargs__(self): return self._value
 
-    def _getvalue(self):
-      if self._value == None:
-        raise "Value is computed from VASP. Call self.__call__(vasp) instead.\n"
-      return self._value
+  def _getvalue(self):
+    if self._value == None:
+      raise "Value is computed from VASP. Call self.__call__(vasp) instead.\n"
+    return self._value
 
-    def _setvalue(self, value):
-      self._value = value
-      if self._value != None: 
-        assert len(self._value) == 3, "FFT grid should be none or a 3-tuple.\n"
-        assert self._value[0] > 0, "FFT grid components should be positive.\n"
-        assert self._value[1] > 0, "FFT grid components should be positive.\n"
-        assert self._value[2] > 0, "FFT grid components should be positive.\n"
-    value = property(_getvalue, _setvalue)
+  def _setvalue(self, value):
+    self._value = value
+    if self._value != None: 
+      assert len(self._value) == 3, "FFT grid should be none or a 3-tuple.\n"
+      assert self._value[0] > 0, "FFT grid components should be positive.\n"
+      assert self._value[1] > 0, "FFT grid components should be positive.\n"
+      assert self._value[2] > 0, "FFT grid components should be positive.\n"
+  value = property(_getvalue, _setvalue)
 
-    def incar_string(self, vasp):
-      return "NGX = %i\nNGY = %i\nNGZ = %i" % self(vasp)
+  def incar_string(self, vasp):
+    return "NGX = %i\nNGY = %i\nNGZ = %i" % self(vasp)
 
-    def __call__(self, vasp):
-      from copy import deepcopy
-      from os import getcwd
-      from .. import kpoints
-      from ...opt.tempdir import Tempdir
-      from ..extract import Extract
+  def __call__(self, vasp):
+    from copy import deepcopy
+    from os import getcwd
+    from .. import kpoints
+    from ...opt.tempdir import Tempdir
+    from ..extract import Extract
 
-      if self._value != None: return self._value
+    if self._value != None: return self._value
 
-      vasp = deepcopy(vasp)
-      with Tempdir(getcwd()) as vasp._tempdir:
-        vasp.kpoints = kpoints.Gamma()
-        vasp.relaxation.value = None
-        # may need to do some checking here... will run into infinit recursion
-        # if attribute is not fftgrid. Can we access vasp.__dict__ and remove
-        # reference to self?
-        del vasp.fftgrid # simply remove attribute to get VASP default
-        # makes sure we do nothing during this run
-        vasp.nelmdl = Standard("NELMDL",  0)
-        vasp.nelm   = Standard("NELM",  0)
-        vasp.nelmin = Standard("NELMIN",  0)
+    vasp = deepcopy(vasp)
+    with Tempdir(getcwd()) as vasp._tempdir:
+      vasp.kpoints = kpoints.Gamma()
+      vasp.relaxation.value = None
+      # may need to do some checking here... will run into infinit recursion
+      # if attribute is not fftgrid. Can we access vasp.__dict__ and remove
+      # reference to self?
+      del vasp.fftgrid # simply remove attribute to get VASP default
+      # makes sure we do nothing during this run
+      vasp.nelmdl = Standard("NELMDL",  0)
+      vasp.nelm   = Standard("NELM",  0)
+      vasp.nelmin = Standard("NELMIN",  0)
 
-        # Now runs vasp. OUTCAR should be in temp indir
-        vasp._prerun()
-        vasp._run()
-        # no need for postrun
+      # Now runs vasp. OUTCAR should be in temp indir
+      vasp._prerun()
+      vasp._run()
+      # no need for postrun
 
-        # finally extracts from OUTCAR.
-        return Extract(vasp._tempdir).fft
+      # finally extracts from OUTCAR.
+      return Extract(vasp._tempdir).fft
 
 
 
@@ -350,6 +368,7 @@ class Restart(object):
   def __init__(self, directory = None):  
     super(Restart, self).__init__()
     self._value = directory
+  def __getinitargs__(self): return self._value
 
   def __get__(self, owner, ownertype=None): return self
   def __set__(self, owner, value): self._setvalue(self, value)
@@ -382,20 +401,24 @@ class Restart(object):
 class Relaxation(object):
   """ Sets ISIF in incar depending on type relaxation required. 
 
+      @param value: Specifies the type of relaxation. Defaults to None. 
         - if set to None or empty string, then no relaxation.
         - if ionic is in string, then includes ionic relaxation.
         - if cellshape is in string, then includes cell relaxation.
         - if volume is in string, then includes volume relaxation.
-
-       Makes sure that the parameters make sense together. 
-       Can also be set using an integer between 0 and 7. See VASP manual. 
+        Makes sure that the parameters make sense together. 
+        Can also be set using an integer between 0 and 7. See VASP manual. 
+      @param nsw: the number of ionic steps to perform. Defaults to 40.
+      @param ibrion: the type of ionic relaxation algorithm. Defaults to 2.
+      @param potim: ionic-time step during relaxation. Defaults to 0.5.
   """
   def __init__(self, value = None, nsw=40, ibrion=2, potim=0.5):
     super(Relaxation, self).__init__()
-    self.value = value
+    self._value = value
     self.nsw = 40
     self.ibrion = 2
     self.potim = 0.5
+  def __getinitargs__(self): return self.value, self.nsw, self.ibrion, self.potim
 
   @property
   def key(self): return "ISIF"
