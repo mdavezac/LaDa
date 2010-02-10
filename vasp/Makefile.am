@@ -6,7 +6,7 @@ AM_LDFLAGS = @BOOST_LDFLAGS@  @BOOST_PYTHON@
 SUBDIRS = extract incar methods
 
 subpkgpyexec_LTLIBRARIES = _vasp.la 
-subpkgpyexec_PYTHON = __init__.py mesh.py launch.py kpoints.py specie.py files.py specie.py
+subpkgpyexec_PYTHON = __init__.py mesh.py launch.py kpoints.py specie.py files.py 
 subpkgpyexecdir = $(pkgpyexecdir)/vasp
 
 _vasp_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) 
