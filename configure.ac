@@ -188,6 +188,7 @@ if test x$ceopt = xtrue; then
 fi
 direct_iaga=true;
 
+AC_SUBST(VASP_LDFLAGS)
 AC_SUBST(GSL_CFLAGS)
 AC_SUBST(GSL_LIBS)
 AH_TEMPLATE([__DOCE])

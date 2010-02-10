@@ -7,7 +7,7 @@
 #include <boost/python/docstring_options.hpp>
 #include <boost/python/scope.hpp>
 
-extern "C" { FC_FUNC(vasplib, vasplib)(MPI_Comm *); }
+extern "C" { FC_FUNC(vasplib, vasplib)(int *); }
 
 BOOST_PYTHON_MODULE(_vasp)
 {
