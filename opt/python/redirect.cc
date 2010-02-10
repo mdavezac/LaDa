@@ -35,7 +35,7 @@ namespace LaDa
       return result;
     }
 
-    void expose_errors()
+    void expose_redirect()
     {
       using namespace boost::python;
       bp::scope scope = class_< opt::FortranRedirect, boost::noncopyable >
