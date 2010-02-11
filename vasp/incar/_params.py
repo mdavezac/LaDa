@@ -155,7 +155,7 @@ class Encut(object):
     super(Encut, self).__init__()
     self.safety = safety
   def __getstate__(self): return self.safety
-  def __setstate__(self, safety): self.safety = Safety(safety)
+  def __setstate__(self, safety): self.safety = Encut.Safety(safety)
 
   def _getvalue(self):
     raise ValueError, "Value of encut cannot be obtained directly. use enmax method instead.\n"
