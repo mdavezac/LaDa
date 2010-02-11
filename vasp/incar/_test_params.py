@@ -1,16 +1,10 @@
-from _params import Standard, NoPrintStandard, Iniwave, Algo
-class Test(object):
+from . import Incar, Standard, NoPrintStandard
+class Test(Incar):
 
-  standard = Standard("KEY", 1.5, validity = lambda x: x > 1 and x < 5)
-  noprint = NoPrintStandard("KEY", 1.5, validity = lambda x: x > 1 and x < 5)
-  iniwave = Iniwave()
-  algo = Algo()
-
-  def __getstate__(self): return self.standard, self.noprint, self.iniwave, self.algo
-  def __setstate__(self, arg): 
-    self.standard, self.noprint, self.iniwave, self.algo = arg
-
-  def __init__(self): pass
+  def __init__(self):
+    super(Test, self).__init__()
+    self.standard = Standard("KEY", 1.5, validity = lambda x: x > 1 and x < 5)
+    self.noprint = NoPrintStandard("KEY", 1.5, validity = lambda x: x > 1 and x < 5)
 
   def test_serial(self):
     def check(self, name, other):
