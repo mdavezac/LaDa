@@ -169,3 +169,8 @@ class Launch(Incar):
     # deletes system attribute.
     del self._system
 
+
+  def __getstate__(self):
+    """ Saves current state """
+    return self.__dict__, self.species, self.incar, self.kpoints
+

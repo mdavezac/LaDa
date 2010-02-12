@@ -114,10 +114,9 @@ class Incar(object):
         l.append( (name, attr) ) 
         del l[0][name]
     return tuple(l)
+
   def __setstate__(self, arg):
     """ Restores state """
-    for key in  arg[0]:
-      if key not in self.__dict__:
-        self.__dict__[key] = arg[0][key]
+    self.__dict__.update(arg[0])
     for name, attr in arg[1:]: setattr(self, name, attr)
 
