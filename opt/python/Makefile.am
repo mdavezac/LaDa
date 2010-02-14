@@ -11,7 +11,7 @@ subpkgpyexec_PYTHON = __init__.py secant.py tempdir.py changedir.py
 subpkgpyexec_LTLIBRARIES = _opt.la 
 subpkgpyexecdir = $(pkgpyexecdir)/opt
 _opt_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) 
-_opt_la_SOURCES = $(opt_python_cc) 
+_opt_la_SOURCES = $(opt_python_cc) ../fortran_redirect.f90
 _opt_la_LDFLAGS = $(AM_LDFLAGS) -module
 _opt_la_LIBADD =  $(top_builddir)/python/libpython_lada.la 
 __init__.py: force
