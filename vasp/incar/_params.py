@@ -5,7 +5,8 @@ class Standard(object):
       
       In practice, the key should be an INCAR tag, and the value something
       which makes sense for that key.
-      C{print self.incar_string()} outputs self.key = self.value.
+      C{print self.incar_string(vasp, mpicomm)} outputs C{print
+      str(self.key), "=", str(self.value)}.
   """
   def __init__(self, key, value, validity=None):
     super(Standard, self).__init__()
@@ -32,23 +33,23 @@ class Standard(object):
       returns its  "VASP" equivalent when gotten.
   """
 
-  def incar_string(self, vasp):
+  def incar_string(self, vasp, mpicomm):
     """ Prints the key/value as key = value """
     return "%s = %s" % (self.key, str(self.value))
 
   def __getstate__(self):
     from marshal import dumps
-    if self.validity == None: return self.key, self._value
-    return self.key, self._value, dumps(self.validity.func_code)
+    d = self.__dict__.copy()
+    del d["validity"]
+    if self.validity == None: return d, None
+    return d, dumps(self.validity.func_code)
   def __setstate__(self, arg):
     from marshal import loads
-    if len(arg) == 2:
-      self.key, self._value = arg
-      self.validity = None
-    else:
+    self.__dict__.update(arg[0])
+    self.validity = None
+    if arg[1] != None: 
       self.validity = lambda x: x
-      self.key, self._value = arg[:2]
-      self.validity.func_code  = loads(arg[2])
+      self.validity.func_code  = loads(arg[1])
 
 
 class NoPrintStandard(Standard):
@@ -56,10 +57,10 @@ class NoPrintStandard(Standard):
   def __init__(self, *args, **kwargs):
     super(NoPrintStandard, self).__init__(*args, **kwargs)
     self.default = self.value
-  def incar_string(self, vasp):
+  def incar_string(self, vasp, mpicomm):
     if self.default == self.value: 
       return "# %s = VASP default." % (self.key)
-    return super(NoPrintStandard, self).incar_string(vasp)
+    return super(NoPrintStandard, self).incar_string(vasp, mpicomm)
   def __setstate__(self, arg): 
     super(NoPrintStandard, self).__setstate__(arg)
     self.default = self.value
@@ -132,7 +133,7 @@ class Ediff(Standard):
   """
   def __init__(self, value = 1e-4):
     super(Ediff, self).__init__("EDIFF", value, validity = lambda x: x > 0e0)
-  def incar_string(self, vasp):
+  def incar_string(self, vasp, mpicomm):
     return "%s = %f " % (self.key, self.value * float(len(vasp._system.atoms)))
 
 
@@ -154,15 +155,13 @@ class Encut(object):
   def __init__(self, safety = 1.25):
     super(Encut, self).__init__()
     self.safety = safety
-  def __getstate__(self): return self.safety
-  def __setstate__(self, safety): self.safety = Encut.Safety(safety)
 
   def _getvalue(self):
     raise ValueError, "Value of encut cannot be obtained directly. use enmax method instead.\n"
   def _setvalue(self, value):
     raise ValueError, "Value of encut cannot be set manually. Change safety instead.\n"
   x = property(_getvalue, _setvalue)
-  def incar_string(self, vasp):
+  def incar_string(self, vasp, mpicomm):
     return "ENCUT = %f " % (self.enmax(vasp.species) * self.safety)
 
   @staticmethod
@@ -214,8 +213,6 @@ class Smearing(object):
   def __init__(self, string = "insulator 0.2"):
     super(Smearing, self).__init__()
     self.value = string
-  def __getstate__(self): return "%s %s" % (self.type, self.smearing)
-  def __setstate__(self, arg): self.value = arg
 
   def _getvalue(self): return (self.type, self.smearing)
   def _setvalue(self, value):
@@ -272,7 +269,7 @@ class Smearing(object):
       If "gotten", this decorator returns a tuple containing the type and the energy scale.
       It can be set using a similar tuple, or a string input with keywords. 
   """
-  def incar_string(self, vasp):
+  def incar_string(self, vasp, mpicomm):
     return "ISMEAR  = %s\nSIGMA   = %f\n" % self.value
 
   
@@ -293,9 +290,9 @@ class Isym(Standard):
     if strval == "off": self._value = -1e0
     else: self._value = float(value) 
   value = property(_getvalue, _setvalue)
-  def incar_string(self, vasp):
+  def incar_string(self, vasp, mpicomm):
     if self._value <= 0e0: return "ISYM = 0\n" 
-    return super(Isym,self).incar_string(self,vasp)
+    return super(Isym,self).incar_string(vasp, mpicomm)
 
   def __eq__(self, other):
     if isinstance(other, Isym):
@@ -307,8 +304,6 @@ class FFTGrid(object):
   def __init__(self, grid = None): 
     super(FFTGrid, self).__init__()
     self._value = grid
-  def __getstate__(self): return self._value
-  def __setstate__(self, arg): self._value = arg
 
   def _getvalue(self):
     if self._value == None:
@@ -324,10 +319,10 @@ class FFTGrid(object):
       assert self._value[2] > 0, "FFT grid components should be positive.\n"
   value = property(_getvalue, _setvalue)
 
-  def incar_string(self, vasp):
-    return "NGX = %i\nNGY = %i\nNGZ = %i" % self(vasp)
+  def incar_string(self, vasp, mpicomm):
+    return "NGX = %i\nNGY = %i\nNGZ = %i" % self(vasp, mpicomm)
 
-  def __call__(self, vasp):
+  def __call__(self, vasp, mpicomm):
     from copy import deepcopy
     from os import getcwd
     from .. import kpoints
@@ -337,7 +332,7 @@ class FFTGrid(object):
     if self._value != None: return self._value
 
     vasp = deepcopy(vasp)
-    with Tempdir(getcwd()) as vasp._tempdir:
+    with Tempdir(vasp._tempdir, comm=mpicomm) as vasp._tempdir:
       vasp.kpoints = kpoints.Gamma()
       vasp.relaxation.value = None
       # may need to do some checking here... will run into infinit recursion
@@ -350,8 +345,8 @@ class FFTGrid(object):
       vasp.nelmin = Standard("NELMIN",  0)
 
       # Now runs vasp. OUTCAR should be in temp indir
-      vasp._prerun()
-      vasp._run()
+      vasp._prerun(mpicomm)
+      vasp._run(mpicomm)
       # no need for postrun
 
       # finally extracts from OUTCAR.
@@ -373,8 +368,6 @@ class Restart(object):
   def __init__(self, directory = None):  
     super(Restart, self).__init__()
     self._value = directory
-  def __getstate__(self): return self._value
-  def __setstate__(self, arg): self._value = arg
 
   def __get__(self, owner, ownertype=None): return self
   def __set__(self, owner, value): self._setvalue(self, value)
@@ -382,7 +375,7 @@ class Restart(object):
   def _setvalue(self, object): self._value = object
   value = property(_getvalue, _setvalue)
 
-  def incar_string(self, vasp):
+  def incar_string(self, vasp, mpicomm):
     istart = "0   # start from scratch"
     icharg = "2   # superpositions of atomic densities"
     if self.value == None or len(self.value) == 0:
@@ -424,8 +417,6 @@ class Relaxation(object):
     self.nsw = 40
     self.ibrion = 2
     self.potim = 0.5
-  def __getstate__(self): return self._value, self.nsw, self.ibrion, self.potim
-  def __setstate__(self, arg): self._value, self.nsw, self.ibrion, self.potim = arg
 
   @property
   def key(self): return "ISIF"
@@ -463,7 +454,7 @@ class Relaxation(object):
                           "and volume at constant cell-shape.\n"
   value = property(_getvalue, _setvalue)
 
-  def incar_string(self, vasp):
+  def incar_string(self, vasp, mpicomm):
     isif = self.value
     result = "NSW    = %3i   # number of ionic steps.\n"\
              "IBRION =   %1i # ionic-relaxation minimization method.\n"\

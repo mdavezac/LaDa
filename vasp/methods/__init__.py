@@ -13,7 +13,8 @@
     >>>   print extract.total_energy
     The output extraction object will be the output the vasp callable.
 """
-def relaxation( vasp, structure, outdir="relaxation", repat = [], tolerance = 1e-3, \
+def relaxation( vasp, structure, mpicomm = None, outdir="relaxation", 
+                repat = [], tolerance = 1e-3, \
                 relaxation="volume ionic cellshape", **kwargs ):
   """ Performs a vasp relaxation
 
@@ -66,7 +67,7 @@ def relaxation( vasp, structure, outdir="relaxation", repat = [], tolerance = 1e
 
   # performs initial calculation.
   outdirs = ["%s/step_%i" % (outdir, nb_steps)]
-  output = vasp(structure, outdirs[-1], repat, **kwargs)
+  output = vasp(structure, outdirs[-1], mpicomm=mpicomm, repat=repat, **kwargs)
   # yields output for whatnot
   yield output
 
@@ -81,7 +82,7 @@ def relaxation( vasp, structure, outdir="relaxation", repat = [], tolerance = 1e
 
     # launch calculations 
     outdirs.append("%s/step_%i" % (outdir, nb_steps))
-    output = vasp(structure, outdirs[-1], repat, **kwargs)
+    output = vasp(structure, outdirs[-1], mpicomm = mpicomm, repat = repat, **kwargs)
     # yields output for whatnot.
     yield output
 
