@@ -113,9 +113,16 @@ class Launch(Incar):
      from ..opt import Redirect
      from ..opt.changedir import Changedir
      # moves to working dir only now.
+     stdout = join(self._tempdir, files.STDOUT) 
+     stderr = join(self._tempdir, files.STDERR) 
+     if mpicomm.rank != None:
+       if mpicomm.rank != 0:
+         stdout += str(mpicomm.rank)
+         stderr += str(mpicomm.rank)
      with Changedir(self._tempdir):
-       with Redirect(Redirect.fortran.output, join(self._tempdir, files.STDOUT)) as stdout:
-         with Redirect(Redirect.fortran.error, join(self._tempdir, files.STDERR)) as stderr:
+       with Redirect(Redirect.fortran.output, stdout) as stdout:
+         with Redirect(Redirect.fortran.error, stderr) as stderr:
+           if mpicomm != None: mpicomm.barrier()
            vasp_as_library(mpicomm)
              
 #    with open(join(self._tempdir, files.STDOUT), "w") as stdout:
