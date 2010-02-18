@@ -25,11 +25,16 @@ def _extract_which_is_self(which, method, *args, **kwargs):
   mpicomm = args[which].mpicomm
   if mpicomm == None: return method(*args, **kwargs)
   if mpicomm.size == which: return method(*args, **kwargs)
-  if mpicomm.rank != 0: return broadcast(mpicomm, root = 0)
+  if mpicomm.rank != 0:
+    result = broadcast(mpicomm, root = 0)
+    assert broadcast(mpicomm, root = 0) == "Am in sync", "Processes not in sync"
+    return result
 
   args[which].mpicomm = None
   result = method(*args, **kwargs)
   args[which].mpicomm = mpicomm
   assert mpicomm != None
   assert args[which].mpicomm != None
-  return broadcast(mpicomm, result, root = 0)
+  broadcast(mpicomm, result, root = 0)
+  assert broadcast(mpicomm, "Am in sync", root = 0) == "Am in sync", "Processes not in sync"
+  return result
