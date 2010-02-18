@@ -19,7 +19,7 @@ class Tempdir:
 
   def __enter__(self):
     """ Creates temporary directory """
-    from os import mkdir, listdir
+    from os import mkdir, listdir, makedirs
     from os.path import exists, isdir
     from tempfile import mkdtemp
     from shutil import rmtree 
@@ -34,11 +34,12 @@ class Tempdir:
     if is_root: self._tempdir = mkdtemp(dir=self.workdir)
     else: self._tempdir  = None
     if self.comm != None:
+      assert broadcast(self.comm, "Tempdir: am in sync", root = 0) == "Tempdir: am in sync", \
+             "Processes not in sync"
       self._tempdir = broadcast(self.comm, value=self._tempdir, root=0)
       for i in range(1, self.comm.size):
         self.comm.barrier()
         if i != self.comm.rank: continue
-        print "wtf ", self._tempdir, i
         if not exists(self._tempdir): mkdir(self._tempdir)
     assert exists(self._tempdir) and isdir(self._tempdir),\
            "Could not create temporary working directory."
