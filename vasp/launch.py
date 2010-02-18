@@ -50,9 +50,7 @@ class Launch(Incar):
       for s in self.species:
         if s.symbol == atom.type and not(s in results):
           results.append( s )
-          a = join( s.path, "POTCAR" )
-          b = join( s.path, "POTCAR.Z" )
-          if not (exists(a) or exists(b)):
+          if not exists(join( s.path, "POTCAR" )):
             raise AssertionError, "Could not find potcar in " + s.path
     return results
 
@@ -83,12 +81,9 @@ class Launch(Incar):
     # creates POTCAR file
     with open(join(self._tempdir, files.POTCAR), 'w') as potcar:
       for s in self._find_species(self._system):
-        cat, filename = "", ""
-        if exists(join(s.path, "POTCAR")): cat, filename = "cat", join(s.path, "POTCAR")
-        elif exists(join(s.path, "POTCAR.Z" )): cat, filename = "zcat", join(s.path, "POTCAR.Z")
-        else: raise AssertionError, "Could not find potcar in " + s.path
-        cmd = Popen( [cat, join(s.path, filename) ], stdout = PIPE )
-        for line in cmd.stdout: print >>potcar, line[:len(line)-1]
+        if not exists(join(s.path, "POTCAR")):  
+          raise AssertionError, "Could not find potcar in " + s.path
+        with open(join(s.path, "POTCAR"), "r") as infile: potcar.writelines(infile)
 
     # checks for CHGCAR
     indir = self.indir

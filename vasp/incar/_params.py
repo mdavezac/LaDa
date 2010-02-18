@@ -174,25 +174,13 @@ class Encut(object):
 
     result = 0
     for s in species: 
-      stdout = ""
-      if os.path.exists( os.path.join(s.path, "POTCAR") ):
-        filename = os.path.join(s.path, "POTCAR")
-        cmd = subprocess.Popen(["grep", "ENMAX", s.path + "POTCAR"], \
-                               stdout=subprocess.PIPE)
-        stdout = cmd.stdout.readline()
-      elif os.path.exists( os.path.join(s.path, "POTCAR.Z") ):
-        filename = os.path.join(s.path, "POTCAR.Z")
-        cmd0 = subprocess.Popen(["zcat", filename], \
-                                stdout=subprocess.PIPE)
-        cmd = subprocess.Popen(["grep", "ENMAX"], \
-                               stdin=cmd0.stdout, stdout=subprocess.PIPE)
-        stdout = cmd.communicate()[0]
-      else: raise AssertionError, "Could not find potcar in " + s.path
-  
-      r = re.compile("ENMAX\s+=\s+(\S+);\s+ENMIN")
-      p = r.search(stdout)
-      if p == None: raise AssertionError, "Could not retrieve ENMAX from " + s.path
-      if result < float( p.group(1) ): result = float( p.group(1) )
+      if not os.path.exists( os.path.join(s.path, "POTCAR") ):
+        raise AssertionError, "Could not find potcar in " + s.path
+      with open(os.path.join(s.path, "POTCAR"), "r") as potcar: 
+        r = re.compile("ENMAX\s+=\s+(\S+);\s+ENMIN")
+        p = r.search(potcar.read())
+        if p == None: raise AssertionError, "Could not retrieve ENMAX from " + s.path
+        if result < float( p.group(1) ): result = float( p.group(1) )
 
     return ceil(result)
 
