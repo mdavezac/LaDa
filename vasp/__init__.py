@@ -92,7 +92,6 @@ class Vasp(Launch):
     if not extract.success:
       raise RuntimeError, "VASP calculation did not complete in %s.\n" % (outdir)
 
-    print "Still here ", mpicomm.rank
     return extract
 
 def return_final(looper, *args, **keywords):

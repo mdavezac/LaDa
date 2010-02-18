@@ -152,9 +152,7 @@ class Launch(Incar):
      notfound = []
      for filename in set(repat).union(files.minimal):
        if not is_root: filename = str("%s.%i" % (filename, mpicomm.rank))
-       if exists( join(self._tempdir, filename) ):
-         print "cp %s %s" % ( join(self._tempdir, filename), outdir )
-         copy( join(self._tempdir, filename), outdir )
+       if exists( join(self._tempdir, filename) ): copy( join(self._tempdir, filename), outdir )
        elif is_root: notfound.append(filename)
 
      if len(notfound) != 0: raise IOError, "Files %s were not found.\n" % (notfound)
@@ -178,9 +176,8 @@ class Launch(Incar):
     workdir = self.workdir
     if workdir == None: workdir = getcwd()
     with Tempdir(workdir=workdir, comm=mpicomm, keep=True) as self._tempdir: 
-      # We do not move to working directory to make copying of files from
-      # indir or outdir (as relative paths) possible.
-      print "tempdir = ", self._tempdir
+      # We do not move to working directory to make copying of files from indir
+      # or outdir (as relative paths) possible.
       # creates INCAR and KPOINTS.
       # copies POSCAR, POTCAR, possibly WAVECAR and CHGCAR from indir
       self._prerun(mpicomm)

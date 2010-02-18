@@ -84,7 +84,7 @@ def relaxation( vasp, structure, mpicomm = None, outdir="relaxation",
 
     # launch calculations 
     outdirs.append("%s/step_%i" % (outdir, nb_steps))
-    output = vasp(structure, outdirs[-1], mpicomm = mpicomm, repat = repat, **kwargs)
+    output = vasp(structure, outdirs[-1], mpicomm=mpicomm, repat=repat, **kwargs)
     # yields output for whatnot.
     yield output
 
