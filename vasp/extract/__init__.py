@@ -32,6 +32,17 @@ class Extract(object):
   success = Success()
   r""" Checks for success of vasp calculation """
 
+  def solo(self):
+    """ Extraction on a single process.
+
+        Sometimes, it is practical to perform extractions on a single process
+        only. C{self.L{solo}()} returns an extractor for a single process:
+        
+        >>> # prints only on proc 0.
+        >>> if boost.mpi.world.rank == 0: print extract.solor.structure
+    """
+    if self.mpicomm == None: return self
+    return Extract(directory = self.directory, mpicomm = None)
         
 
   @_bound_mpi_extraction
