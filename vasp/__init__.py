@@ -81,17 +81,18 @@ class Vasp(Launch):
     if exists(outdir):
       if not isdir(outdir): raise IOError, "%s exists but is not a directory.\n" % (outdir)
       # checks if it contains a successful run.
-      extract = Extract(outdir)
+      extract = Extract(mpicomm = mpicomm, directory = outdir)
       if extract.success: return extract # in which case, returns extraction object.
     
     # Otherwise, performs calculation by calling base class functor.
     super(Vasp, this).__call__(structure=structure, outdir=outdir, repat=repat, mpicomm=mpicomm)
     
     # checks if result was successful
-    extract = Extract(outdir)
+    extract = Extract(mpicomm = mpicomm, directory = outdir)
     if not extract.success:
       raise RuntimeError, "VASP calculation did not complete in %s.\n" % (outdir)
 
+    print "Still here ", mpicomm.rank
     return extract
 
 def return_final(looper, *args, **keywords):

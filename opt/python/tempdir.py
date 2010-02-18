@@ -34,9 +34,11 @@ class Tempdir:
     if is_root: self._tempdir = mkdtemp(dir=self.workdir)
     else: self._tempdir  = None
     if self.comm != None:
-      self._tempdir = broadcast(self.comm, self._tempdir, 0)
+      self._tempdir = broadcast(self.comm, value=self._tempdir, root=0)
       for i in range(1, self.comm.size):
         self.comm.barrier()
+        if i != self.comm.rank: continue
+        print "wtf ", self._tempdir, i
         if not exists(self._tempdir): mkdir(self._tempdir)
     assert exists(self._tempdir) and isdir(self._tempdir),\
            "Could not create temporary working directory."

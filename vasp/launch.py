@@ -117,8 +117,8 @@ class Launch(Incar):
      stderr = join(self._tempdir, files.STDERR) 
      if mpicomm.rank != None:
        if mpicomm.rank != 0:
-         stdout += str(mpicomm.rank)
-         stderr += str(mpicomm.rank)
+         stdout += ".%i" % (mpicomm.rank)
+         stderr += ".%i" % (mpicomm.rank)
      with Changedir(self._tempdir):
        with Redirect(Redirect.fortran.output, stdout) as stdout:
          with Redirect(Redirect.fortran.error, stderr) as stderr:
@@ -131,23 +131,31 @@ class Launch(Incar):
 #                           stdout = stdout, stderr = stderr, shell = True )
 #        vasp_proc.wait() # Wait for completion. Could set a timer here.
 
-  def _postrun(self, repat, outdir):
+  def _postrun(self, repat, outdir,  mpicomm):
      """ Copies files back to outdir """
      from os.path import exists, join, isdir
      from os import makedirs
      from shutil import copy
      from . import files
 
-     if not exists(outdir): makedirs(outdir)
-     if not exists(outdir): raise IOError, "%s directory does not exist." % (outdir)
-     if not isdir(outdir):  raise IOError, "%s is not a directory." % (outdir)
+     is_root = mpicomm == None
+     if mpicomm != None: is_root = mpicomm.rank == 0
+
+     if is_root: 
+       if not exists(outdir): makedirs(outdir)
+       if not exists(outdir): raise IOError, "%s directory does not exist." % (outdir)
+       if not isdir(outdir):  raise IOError, "%s is not a directory." % (outdir)
+     
+     if mpicomm != None: mpicomm.barrier()
+
 
      notfound = []
      for filename in set(repat).union(files.minimal):
-       if not exists( join(self._tempdir, filename) ):
-         notfound.append(filename)
-         continue
-       copy( join(self._tempdir, filename), outdir )
+       if not is_root: filename = str("%s.%i" % (filename, mpicomm.rank))
+       if exists( join(self._tempdir, filename) ):
+         print "cp %s %s" % ( join(self._tempdir, filename), outdir )
+         copy( join(self._tempdir, filename), outdir )
+       elif is_root: notfound.append(filename)
 
      if len(notfound) != 0: raise IOError, "Files %s were not found.\n" % (notfound)
 
@@ -169,7 +177,7 @@ class Launch(Incar):
     # creates temporary working directory
     workdir = self.workdir
     if workdir == None: workdir = getcwd()
-    with Tempdir(workdir, mpicomm, keep=True) as self._tempdir: 
+    with Tempdir(workdir=workdir, comm=mpicomm, keep=True) as self._tempdir: 
       # We do not move to working directory to make copying of files from
       # indir or outdir (as relative paths) possible.
       print "tempdir = ", self._tempdir
@@ -181,7 +189,7 @@ class Launch(Incar):
       self._run(mpicomm)
 
       # now copies data back
-      if is_root: self._postrun(repat, outdir)
+      self._postrun(repat, outdir, mpicomm)
 
     # deletes system attribute.
     del self._system

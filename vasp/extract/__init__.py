@@ -1,24 +1,40 @@
 """ Subpackage containing extraction methods for vasp parameters from vasp output. """
 from _success import Success
-
+from _mpi import _bound_mpi_extraction
 class Extract(object):
   """ Main class for extracting VASP output as python objects.
 
       This class should contain attributes (eg fermi_energy) which can extract
       their values from the vasp output files located in self.directory.  
 
-      >>> result = Extract("./")
+      >>> result = Extract(directory = "./", mpicomm = boost.mpi.world)
       >>> print result.fermi_energy * 13.26
 
       It would be preferable to limit these output files to L{files.OUTCAR}, as
       much as possible.
   """
 
-  def __init__(self, directory = ""): self.directory = directory
+  def __init__(self, mpicomm = None, directory = ""): 
+    """ Initializes the extraction class. 
+
+        @param mpicomm: MPI group communicator. Extraction will be performed
+                        for all procs in the group. In serial mode, mpicomm can
+                        be None.
+        @param mpicomm: boost.mpi.Communicator
+        @param directory: path to the directory where the VASP output is located.
+        @type directory: str
+    """
+    self.directory = directory
+    """ path to the directory where the VASP output is located. """
+    self.mpicomm = mpicomm
+    """ MPI group communicator. """
 
   success = Success()
   r""" Checks for success of vasp calculation """
 
+        
+
+  @_bound_mpi_extraction
   def _get_energy_sigma0(self):
     """ Gets total energy extrapolated to $\sigma=0$ from vasp run """
     from os.path import exists, join
@@ -41,6 +57,7 @@ class Extract(object):
   energy_sigma0 = property(_get_energy_sigma0)
   r""" Gets total energy extrapolated to $\sigma=0$ from vasp run """
 
+  @_bound_mpi_extraction
   def _get_energy(self):
     """ Gets total energy from vasp run """
     from os.path import exists, join
@@ -71,6 +88,7 @@ class Extract(object):
       same as self.L{energy}
   """
 
+  @_bound_mpi_extraction
   def _get_free_energy(self):
     """ Gets total free energy from vasp run """
     from os.path import exists, join
@@ -93,6 +111,7 @@ class Extract(object):
   free_energy = property(_get_free_energy)
   r""" Gets total free energy from vasp run """
 
+  @_bound_mpi_extraction
   def _get_fermi_energy(self):
     """ Gets total free energy from vasp run """
     from os.path import exists, join
@@ -115,6 +134,7 @@ class Extract(object):
   fermi_energy = property(_get_fermi_energy)
   r""" Gets fermi energy from vasp run """
 
+  @_bound_mpi_extraction
   def _get_structure(self):
     """ Gets structure from CONTCAR file and total energy from OUTCAR """
     from os.path import exists, join
@@ -126,16 +146,15 @@ class Extract(object):
     path = CONTCAR 
     if len(self.directory): path = join(self.directory, path)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
-
     result = read_poscar(species_in, path)
     result.energy = self.energy
-
     return result
   system = property(_get_structure)
-  r""" Fills a L{crystal.Structure} from L{files.CONTCAR} and free energy in L{files.OUTCAR}. """
+  r""" Returns the relaxed structure (L{lada.crystal.Structure}) as obtained from the CONTCAR. """
   structure = property(_get_structure)
   r""" Alias for self.L{system}. """
 
+  @_bound_mpi_extraction
   def _get_species(self):
     """ Gets species from L{files.OUTCAR}. """
     from os.path import exists, join
@@ -158,6 +177,7 @@ class Extract(object):
   species = property(_get_species)
   """ Atomic species in system. """
 
+  @_bound_mpi_extraction
   def _get_fft(self):
     """ Returns recommended or actual fft setting """
     from os.path import exists, join

@@ -332,7 +332,7 @@ class FFTGrid(object):
     if self._value != None: return self._value
 
     vasp = deepcopy(vasp)
-    with Tempdir(vasp._tempdir, comm=mpicomm) as vasp._tempdir:
+    with Tempdir(workdir=vasp._tempdir, keep=True, comm=mpicomm) as vasp._tempdir:
       vasp.kpoints = kpoints.Gamma()
       vasp.relaxation.value = None
       # may need to do some checking here... will run into infinit recursion
@@ -350,7 +350,7 @@ class FFTGrid(object):
       # no need for postrun
 
       # finally extracts from OUTCAR.
-      return Extract(vasp._tempdir).fft
+      return Extract(directory = vasp._tempdir, mpicomm = mpicomm).fft
 
 
 
