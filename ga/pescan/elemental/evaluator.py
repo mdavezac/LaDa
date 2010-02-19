@@ -173,7 +173,7 @@ class Directness(object):
     from copy import deepcopy
     from numpy.linalg import norm
     from ....vff import LayeredVff
-    from ....escan import Escan
+    from ....escan import Escan, method
 
     self.converter = converter 
     """ Conversion functor between structures and bitstrings. """
@@ -199,7 +199,10 @@ class Directness(object):
 
     self.escan = Escan(input, self.world) # creates an escan functional
     """ Bandgap functional """
-    self.escan.nbstates = 1 # only one state computed.
+    # only one state computed.
+    self.escan.nbstates = 1 
+    # only folded spectrum calculations
+    self.escan.method = method.folded
 
 
   def __call__(self, indiv):
@@ -208,9 +211,12 @@ class Directness(object):
     from os import makedirs
     from shutil import rmtree
     from numpy import dot as np_dot, matrix as np_matrix
-    from ....escan import Bands
+    from ....escan import Bands, method
     from ....crystal import deform_kpoint
     from ....opt.changedir import Changedir
+
+    assert self.escan.method == method.folded
+    assert self.escan.nbstates == 1
 
     self.nbcalc += 1
     results = []
