@@ -63,15 +63,20 @@ subroutine iaga_get_eigenvalues( states_, n_ )
   implicit none
   include "mpif.h"
 
-  integer, intent(in) :: n_
+  integer, intent(inout) :: n_
   real*8, intent(out), dimension(n_) :: states_
   integer i
 
-  if( .not. allocated( zebn ) ) stop "Storage for eigenergies was never allocated."
+  if( .not. allocated( zebn ) ) then
+    n_ = 0
+    return 
+  endif 
 
-  do i = 1, n_, 1
-    states_(i) = zebn(i)*27.211396d0 ! goes to eV from Hartree units.
-  enddo
+  if( n_ .ne. 0 ) then
+    i = min(n_, size(zebn))
+    states_(1:i) = zebn(1:i)*27.211396d0 ! goes to eV from Hartree units.
+  endif 
+  n_ = size(zebn)
 
   deallocate( zebn )
 
