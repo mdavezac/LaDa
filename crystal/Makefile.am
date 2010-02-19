@@ -6,7 +6,7 @@ include $(top_srcdir)/Files
 #   pythonlib = libcrystalpy.la
 # endif
 AM_CPPFLAGS = @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@\
-	      @BOOST_CXXFLAGS@ -I $(top_srcdir) 
+	      @BOOST_CXXFLAGS@ @EIGEN_CXXFLAGS@  -I $(top_srcdir) 
 AM_LDFLAGS = @BOOST_REGEX@ @BOOST_FS@ @BOOST_SYSTEM@ \
              @BOOST_MPI@ @BOOST_SERIALIZATION@
 

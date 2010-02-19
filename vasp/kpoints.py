@@ -108,8 +108,3 @@ class Density(object):
       op = matrix( [[transform.op[j,i] for j in range(3)] for i in range(3)] )
       if not is_unimodular( grid.I * op * grid ): return False
     return True
-
-   
-
-
-

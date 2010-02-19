@@ -1,8 +1,11 @@
 """ Checks for sucess of vasp calculation """
+from _mpi import _attribute_mpi_extraction
+
 class Success(object):
   """ Checks for success of vasp calculation """
   def __init__(self): object.__init__(self)
 
+  @_attribute_mpi_extraction
   def __get__(self, owner, type=None):
     from os.path import exists, join
     from .. import files

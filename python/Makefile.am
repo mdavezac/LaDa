@@ -56,6 +56,9 @@ if DOMINIMIZER
   libpython_lada_la_LDFLAGS += @GSL_LIBS@  @MINUIT_LIBS@
   libpython_lada_la_CPPFLAGS += @GSL_CFLAGS@ @MINUIT_CFLAGS@ @FCLIBS@
 endif
+if DOVASP
+  pythonextensions += vasp
+endif
 libpython_lada_la_LIBADD +=  $(top_builddir)/crystal/libcrystal.la \
                              $(top_builddir)/math/libmath.la \
                              $(top_builddir)/opt/libpythonconvenience.la \
