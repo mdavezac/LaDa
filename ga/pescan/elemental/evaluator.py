@@ -200,7 +200,7 @@ class Directness(object):
     self.escan = Escan(input, self.world) # creates an escan functional
     """ Bandgap functional """
     # only one state computed.
-    self.escan.nbstates = 1 
+    self.escan.nbstates = 4 
     # only folded spectrum calculations
     self.escan.method = method.folded
 
@@ -216,7 +216,7 @@ class Directness(object):
     from ....opt.changedir import Changedir
 
     assert self.escan.method == method.folded
-    assert self.escan.nbstates == 1
+    assert self.escan.nbstates >= 1
 
     self.nbcalc += 1
     results = []
@@ -248,10 +248,22 @@ class Directness(object):
         self.escan.reference = reference(relaxed)
         #  computes energy
         eigenvalues = self.escan(self.vff, relaxed)
+        # Finds eigenvalue closes to reference
+        mini = eigenvalues[0]
+        for eig in eigenvalues[1:]:
+          if abs(mini - self.escan.reference) > abs(eig - self.escan.reference):
+            mini = eig
+        # makes sure all eigenvalues are either above or below references.
+        for eig in eigenvalues[1:]:
+          if    (mini - self.escan.reference > 0 and eig - self.escan.reference < 0) \
+             or (mini - self.escan.reference < 0 and eig - self.escan.reference > 0):
+            raise RuntimeError, "eigenvalues around reference: %s, %s"\
+                  % (self.escan.reference, eigenvalues)
         # saves eigenvalue result in individual
-        setattr(indiv, name, eigenvalues[0] )
+        setattr(indiv, name + "_eigs", eigenvalues )
+        setattr(indiv, name, mini )
         # stores result.
-        results.append( eigenvalues[0] )
+        results.append(mini)
 
     # destroy directory if requested.
     if self.escan.destroy_directory: rmtree(self.escan.directory)
