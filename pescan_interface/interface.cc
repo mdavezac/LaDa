@@ -397,8 +397,8 @@ namespace LaDa
 
     bool Interface :: read_result()
     {
-  #   ifndef _NOLAUNCH
-  #     ifndef _DIRECTIAGA
+#     ifndef _NOLAUNCH
+#       ifndef _DIRECTIAGA
           std::ifstream file;
           const t_Path orig( opt::InitialPath::path() / dirname / escan.output );
           std::string name = orig.string();
@@ -427,23 +427,26 @@ namespace LaDa
             file >> eig;
             eigenvalues.push_back( eig );
           }
-  #     endif
-       
-        __DIAGA(
+          LADA_DOASSERT( u == escan.nbstates,
+                            "Found " << u << " eigenvalues in " << name
+                         << " where " << escan.nbstates
+                         << " were expected.\n" );
+        
+#       else 
+
+          LADA_DOASSERT(escan.nbstates != 0, "Zero eigenstates requested?\n");
+          int n(0);
+          double d; // gets number of eigenvalues.
+          FC_FUNC_(iaga_get_eigenvalues, IAGA_GET_EIGENVALUES)(&d,&n);
+          LADA_DOASSERT(n == int(escan.nbstates), "Number of states and eigenvalues do not match.");
+          FC_FUNC_(iaga_get_eigenvalues, IAGA_GET_EIGENVALUES)(&eigenvalues[0],&escan.nbstates);
           eigenvalues.resize( escan.nbstates );
           std::fill( eigenvalues.begin(), eigenvalues.end(), 0 );
-          FC_FUNC_
-          ( 
-            iaga_get_eigenvalues, IAGA_GET_EIGENVALUES
-          )(&eigenvalues[0],&escan.nbstates);
           boost::mpi::broadcast( MPI_COMM, eigenvalues, 0 );
-        )
+
+#       endif
        
-        __IIAGA( __DOASSERT( u != escan.nbstates,
-                                "Found " << u << " eigenvalues in " << name
-                             << " where " << escan.nbstates
-                             << " were expected.\n" ) )
-  #   endif
+#     endif
       return true;
     }
                  
