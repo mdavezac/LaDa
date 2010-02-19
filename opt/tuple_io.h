@@ -1,6 +1,3 @@
-//
-//  Version: $Id$
-//
 #ifndef _OPT_TUPLES_H_
 #define _OPT_TUPLES_H_
 
@@ -46,4 +43,5 @@ namespace LaDa
     }
   }
 } // namespace LaDa
+
 #endif
