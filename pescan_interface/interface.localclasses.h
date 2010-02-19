@@ -96,6 +96,14 @@
     bool load_reference( const TiXmlElement &_node );
     //! loads minimizer parameters from XML.
     bool load_minimizer( const TiXmlElement &_node );
+    //! Serializes potential parameters.
+    template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
+    {
+      _ar & output; _ar & wavefunction_out; _ar & wavefunction_in; _ar & read_in;
+      _ar & method; _ar & Eref; _ar & smooth; _ar & kinscal; _ar & nbstates; _ar & niter;
+      _ar & nlines; _ar & tolerance; _ar & kpoint; _ar & scale; _ar & potential; _ar & rcut;
+      _ar & spinorbit; _ar & rspace_output; _ar & rspace_wfn; 
+    }
   };
 
   struct GenPot
@@ -129,6 +137,12 @@
     void check();
     //! load from XML.
     bool Load( const TiXmlElement& _node );
+    //! Serializes potential parameters.
+    template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
+    {
+       _ar & filename; _ar & mesh; _ar & multiple_cell; _ar & small_box;
+       _ar & cutoff; _ar & output; _ar & pseudos; 
+    }
   };
   //! Contains spin-orbit related data.
   struct SpinOrbit
@@ -147,6 +161,9 @@
     SpinOrbit   ( const SpinOrbit &_c)
               : filename(_c.filename), izz(_c.izz), s(_c.s), 
                 p(_c.p), d(_c.d), pnl(_c.pnl), dnl(_c.dnl) {};
+    //! Serializes spin-orbit parameters.
+    template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
+      { _ar & filename; _ar & izz; _ar & s; _ar & p; _ar & d; _ar & pnl; _ar & dnl; }
   };
 
 

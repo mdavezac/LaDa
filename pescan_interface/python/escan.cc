@@ -17,21 +17,75 @@
 #include <boost/python/with_custodian_and_ward.hpp>
 #include <boost/python/copy_const_reference.hpp>
 #include <boost/python/make_constructor.hpp>
+#include <boost/serialization/serialization.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
 
 #include <opt/initial_path.h>
 
 #include <python/numpy_types.h>
 #include <vff/python/vff.hpp>
+#include <opt/tuple_serialize.h>
 
 #include "../interface.h"
 #include "escan.hpp"
 
+//! \cond
+extern "C"
+{
+  void FC_FUNC_(iaga_set_mpi, IAGA_SET_MPI)( MPI_Fint * );
+  void FC_FUNC_(getvlarg, GETVLARG)();
+  void FC_FUNC_(iaga_just_call_escan, IAGA_JUST_CALL_ESCAN)();
+}
+//! \endcond
+void just_call_escan(boost::mpi::communicator const &_c)
+{
+  MPI_Comm __commC = (MPI_Comm) ( _c ) ;
+  MPI_Fint __commF = MPI_Comm_c2f( __commC );
+  FC_FUNC_(iaga_set_mpi, IAGA_SET_MPI)( &__commF );
+
+  FC_FUNC_(getvlarg, GETVLARG)();
+  FC_FUNC_(iaga_just_call_escan, IAGA_just_CALL_ESCAN)();
+}
 
 namespace LaDa
 {
   namespace bp = boost::python;
   namespace python
   {
+    template<class T> 
+      struct pickle_escan : boost::python::pickle_suite
+      {
+        static  bp::tuple getinitargs(const T&) { return bp::tuple(); }
+
+        static bp::tuple getstate(T const &_escan)
+        {
+          std::ostringstream ss;
+          boost::archive::text_oarchive oa( ss );
+          oa << _escan;
+
+          return bp::make_tuple( ss.str() );
+        }
+        static void setstate(T &_escan, bp::tuple _state)
+        {
+          if( bp::len( _state ) != 1 )
+          {
+            PyErr_SetObject(PyExc_ValueError,
+                            ("expected 1-item tuple in call to __setstate__; got %s"
+                             % _state).ptr()
+                );
+            bp::throw_error_already_set();
+          }
+          const std::string str = bp::extract< std::string >( _state[0] );
+          std::istringstream ss( str.c_str() );
+          boost::archive::text_iarchive ia( ss );
+          ia >> _escan;
+        }
+      };
+
+
+
     template<class T_TYPE>
       void Escan_from_XML(T_TYPE &_type, const std::string &_filename )
       {
@@ -412,7 +466,10 @@ namespace LaDa
           "want to store the results.\n",
           bp::with_custodian_and_ward_postcall<1,0>() 
         )
-        .def( "set_mpi", &t_Escan::set_mpi, "Sets the boost.mpi communicator." );
+        .def( "set_mpi", &t_Escan::set_mpi, "Sets the boost.mpi communicator." )
+        .def_pickle( pickle_escan< t_Escan >() );
+
+      bp::def("call_escan", &just_call_escan);
 
       bp::def( "nb_valence_states", &nb_valence_states<Crystal::TStructure<std::string> >,
                bp::arg("structure"), "Returns the number of valence states in a structure." );

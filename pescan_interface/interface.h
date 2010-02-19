@@ -22,9 +22,11 @@
 
 #include <physics/physics.h>
 #include <opt/types.h>
+#include <opt/tuple_serialize.h>
 #include <crystal/structure.h>
 #include <mpi/mpi_object.h>
 #include <print/stdout.h>
+#include <math/serialize.h>
 
 #ifdef _DIRECTIAGA
 # define __DIAGA( code ) code
@@ -79,6 +81,7 @@ namespace LaDa
     //! \details Mostly, this class writes the input and recovers the output eigenvalues.
     class Interface __DIAGA( : public MPI_COMMDEC )
     {
+      friend class boost::serialization::access;
       public:
         //! Path type.
         typedef boost::filesystem::path t_Path;
@@ -200,6 +203,14 @@ namespace LaDa
       //! Directory where to perform computations.
       boost::filesystem::path dirname;
  
+      private:
+        //! Serializes escan functional.
+        template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
+        {
+          _ar & verbose; _ar & stdout_file; _ar & stderr_file; _ar & atom_input; 
+          _ar & genpot; _ar & escan; _ar & maskr; _ar & eigenvalues; 
+          _ar & do_destroy_dir; _ar & dirname;
+        }
     };
       
     //! Prints out the genpot input file.
