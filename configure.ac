@@ -188,6 +188,21 @@ if test x$ceopt = xtrue; then
 fi
 direct_iaga=true;
 
+
+VASP_CPPFLAGS=""
+if test x$vasp$VASP4$VASP5 = xtruetruetrue; then
+  AC_MSG_ERROR([With --enable-vasp, please specify either VASP4=true or VASP5=true])
+fi
+if test x$VASP4 = xtrue; then 
+  VASP_CPPFLAGS="-DLADA_VASP_FOUR"
+fi
+if test x$VASP5 = xtrue; then 
+  VASP_CPPFLAGS="$VASP_CPPFLAGS -DLADA_VASP_FIVE"
+fi
+if test "$VASP_CPPFLAGS" = ""; then
+  AC_MSG_ERROR([With --enable-vasp, please specify either VASP4=true or VASP5=true])
+fi
+AC_SUBST(VASP_CPPFLAGS)
 AC_SUBST(EIGEN_CXXFLAGS)
 AC_SUBST(VASP_LDFLAGS)
 AC_SUBST(GSL_CFLAGS)
