@@ -97,12 +97,13 @@ subroutine iaga_get_eigenvalues( states_, n_ )
     return 
   endif 
 
-  if( n_ .ne. 0 ) then
-    i = min(n_, size(zebn))
-    states_(1:i) = zebn(1:i)*27.211396d0 ! goes to eV from Hartree units.
+  if( n_ .eq. 0 ) then
+    n_ = size(zebn)
+    return
   endif 
-  n_ = size(zebn)
 
+  i = min(n_, size(zebn))
+  states_(1:i) = zebn(1:i)*27.211396d0 ! goes to eV from Hartree units.
   deallocate( zebn )
 
 end subroutine

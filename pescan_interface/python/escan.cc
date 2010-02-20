@@ -328,28 +328,21 @@ namespace LaDa
       bp::object __call2__(Pescan::Interface &_interface,
                            T &_vff, Crystal::TStructure<std::string> const &_str)
       {
-#       ifdef _MPI
-          Pescan::Interface::t_Path const path = _interface.atom_input;
-          Pescan::Interface::t_Path rootdir = path.root_path();
-          Pescan::Interface::t_Path filename = path.filename();
-          if( filename.empty() ) filename = "atom_input";
-          boost::mpi::communicator world;
-          std::ostringstream sstr; sstr << world.rank();
-          _interface.atom_input = rootdir / filename.replace_extension(sstr.str());
-          print_escan_input(_vff, _interface.atom_input.string(), _str);
-#       else
-          if( _interface.atom_input.empty() ) _interface.atom_input` = "atom_input";
-          print_escan_input(_vff, _interface.atom_input.string(), _str);
-#       endif
+        Pescan::Interface::t_Path const path = _interface.atom_input;
+        Pescan::Interface::t_Path rootdir = path.root_path();
+        Pescan::Interface::t_Path filename = path.filename();
+        if( filename.empty() ) filename = "atom_input";
+        boost::mpi::communicator world;
+        std::ostringstream sstr; sstr << world.rank();
+        _interface.atom_input = rootdir / filename.replace_extension(sstr.str());
+        print_escan_input(_vff, _interface.atom_input.string(), _str);
         set_scale(_interface, _str);
         if( not _interface() )
         {
           PyErr_SetString(PyExc_RuntimeError, "Something went wrong in escan.\n");
           bp::throw_error_already_set();
         }
-#       ifdef _MPI
-          _interface.atom_input = path;
-#       endif
+        _interface.atom_input = path;
         return get_eigenvalues(_interface);
       }
 
