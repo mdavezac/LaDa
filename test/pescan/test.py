@@ -64,9 +64,10 @@ from boost.mpi import world
 from lada.vff import Vff
 from lada.escan import Escan, method, nb_valence_states as nbstates, potential
 from lada.crystal import deform_kpoint
+from lada.opt.tempdir import Tempdir
 
 # file with escan and vff parameters.
-input = "input.xml"
+input = "test_input/input.xml"
 
 # creates lattice
 lattice = create_zb_lattice()
@@ -122,20 +123,21 @@ jobs = [\
        ]
 # launch pescan for different jobs.
 for kpoint, name, ref, expected_eigs in jobs:
-  # will save output to directory "name".
-  escan.directory = name
-  # computes at kpoint of deformed structure.
-  escan.kpoint = deform_kpoint(kpoint, structure.cell, relaxed.cell)
-  # computing 4 (spin polarized) states.
-  escan.nbstates = 4 # + nbtates(relaxed)  would be all valence states + 4
-  # divides by two if calculations are not spin polarized.
-  if norm(escan.kpoint) < 1e-6 or escan.potential != potential.spinorbit: escan.nbstates /= 2
-  # sets folded method's energy reference
-  escan.reference = ref
-  # Now just do it.
-  eigenvalues = escan(vff, relaxed)
-  # checks expected are as expected. 
-  assert norm( eigenvalues - expected_eigs ) < 1e-6, "%s\n%s" % (eigenvalues, expected_eigs)
-  # And print.
-  if world.rank == 0: print "Ok - %s: %s -> %s: %s" % (name, kpoint, escan.kpoint, eigenvalues)
+  with Tempdir() as tempdir:
+    # will save output to directory "name".
+    escan.directory = name
+    # computes at kpoint of deformed structure.
+    escan.kpoint = deform_kpoint(kpoint, structure.cell, relaxed.cell)
+    # computing 4 (spin polarized) states.
+    escan.nbstates = 4 # + nbtates(relaxed)  would be all valence states + 4
+    # divides by two if calculations are not spin polarized.
+    if norm(escan.kpoint) < 1e-6 or escan.potential != potential.spinorbit: escan.nbstates /= 2
+    # sets folded method's energy reference
+    escan.reference = ref
+    # Now just do it.
+    eigenvalues = escan(vff, relaxed)
+    # checks expected are as expected. 
+    assert norm( eigenvalues - expected_eigs ) < 1e-6, "%s\n%s" % (eigenvalues, expected_eigs)
+    # And print.
+    if world.rank == 0: print "Ok - %s: %s -> %s: %s" % (name, kpoint, escan.kpoint, eigenvalues)
   
