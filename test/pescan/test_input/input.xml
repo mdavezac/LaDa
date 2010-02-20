@@ -15,18 +15,18 @@
 
 
   <Functional type="escan" method="full" keepdirs="true" >
-    <Maskr filename="pseudos/maskr"/>
+    <Maskr filename="test_input/pseudos/maskr"/>
     <GenPot  x="72" y="9" z="18"  cutoff="8.2">
-      <Pseudo filename="pseudos/vq.Si" />
-      <Pseudo filename="pseudos/vq.Ge" />
-      <Pseudo filename="pseudos/vq.SiGe.Si" />
-      <Pseudo filename="pseudos/vq.SiGe.Ge" />
+      <Pseudo filename="test_input/pseudos/vq.Si" />
+      <Pseudo filename="test_input/pseudos/vq.Ge" />
+      <Pseudo filename="test_input/pseudos/vq.SiGe.Si" />
+      <Pseudo filename="test_input/pseudos/vq.SiGe.Ge" />
     </GenPot>
     <Hamiltonian kinscal="1.0" smooth="1.0" potential="3" realcutoff="5" nbstates="1">
-      <SpinOrbit filename="pseudos/vwr.pso" izz="14014" pnl="0.08" />
-      <SpinOrbit filename="pseudos/vwr.pso" izz="32032" pnl="0.2774" />
-      <SpinOrbit filename="pseudos/vwr.pso" izz="14032" pnl="0.08" />
-      <SpinOrbit filename="pseudos/vwr.pso" izz="32014" pnl="0.2774" />
+      <SpinOrbit filename="test_input/pseudos/vwr.pso" izz="14014" pnl="0.08" />
+      <SpinOrbit filename="test_input/pseudos/vwr.pso" izz="32032" pnl="0.2774" />
+      <SpinOrbit filename="test_input/pseudos/vwr.pso" izz="14032" pnl="0.08" />
+      <SpinOrbit filename="test_input/pseudos/vwr.pso" izz="32014" pnl="0.2774" />
     </Hamiltonian>
   </Functional>
 </Job>
