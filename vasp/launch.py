@@ -104,7 +104,7 @@ class Launch(Incar):
      from os.path import join
      from subprocess import Popen
      from . import files
-     from ._vasp import vasp as vasp_as_library
+     from . import call_vasp
      from ..opt import Redirect
      from ..opt.changedir import Changedir
      # moves to working dir only now.
@@ -118,7 +118,7 @@ class Launch(Incar):
        with Redirect(Redirect.fortran.output, stdout) as stdout:
          with Redirect(Redirect.fortran.error, stderr) as stderr:
            if mpicomm != None: mpicomm.barrier()
-           vasp_as_library(mpicomm)
+           call_vasp(mpicomm)
              
 #    with open(join(self._tempdir, files.STDOUT), "w") as stdout:
 #      with open(join(self._tempdir, files.STDERR), "w") as stderr:
