@@ -212,7 +212,7 @@ class Directness(object):
     from shutil import rmtree
     from numpy import dot as np_dot, matrix as np_matrix
     from numpy.linalg import norm
-    from ....escan import Bands, method
+    from ....escan import Bands, method, nb_valence_states
     from ....crystal import deform_kpoint
     from ....opt.changedir import Changedir
 
@@ -268,14 +268,14 @@ class Directness(object):
         if not is_good: 
           self.escan.method = method.full_diagonalization
           nbvalence = nb_valence_states(structure)
-          self.escan.nbstates = nbval + 4
+          self.escan.nbstates = nbvalence + 4
           if norm(self.escan.kpoint) < 1e-6:
             self.escan.nbstates /= 2 
             nbvalence /= 2
           eigenvalues = self.escan(self.vff, relaxed)
           self.escan.nbstates = oldnbstates
           self.escan.method = method.folded
-          mini = eig[nbvalence+1]
+          mini = eigenvalues[nbvalence+1]
 
         # saves eigenvalue result in individual
         setattr(indiv, name + "_eigs", eigenvalues )
