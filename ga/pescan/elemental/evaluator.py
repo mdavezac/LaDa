@@ -259,11 +259,24 @@ class Directness(object):
           if abs(mini - self.escan.reference) > abs(eig - self.escan.reference):
             mini = eig
         # makes sure all eigenvalues are either above or below references.
+        is_good = True
         for eig in eigenvalues[1:]:
           if    (mini - self.escan.reference > 0 and eig - self.escan.reference < 0) \
              or (mini - self.escan.reference < 0 and eig - self.escan.reference > 0):
-            raise RuntimeError, "%s: eigenvalues around reference: %s, %s"\
-                  % (name, self.escan.reference, eigenvalues)
+               is_good = False
+               break
+        if not is_good: 
+          self.escan.method = method.full_diagonalization
+          nbvalence = nb_valence_states(structure)
+          self.escan.nbstates = nbval + 4
+          if norm(self.escan.kpoint) < 1e-6:
+            self.escan.nbstates /= 2 
+            nbvalence /= 2
+          eigenvalues = self.escan(self.vff, relaxed)
+          self.escan.nbstates = oldnbstates
+          self.escan.method = method.folded
+          mini = eig[nbvalence+1]
+
         # saves eigenvalue result in individual
         setattr(indiv, name + "_eigs", eigenvalues )
         setattr(indiv, name, mini )
