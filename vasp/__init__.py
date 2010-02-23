@@ -11,12 +11,21 @@
     checks for errors and avoids running the same job twice. Hence data
     retrieval and vasp calculations can be performed using the same class and
     script). 
+
+    L{version<_vasp.version>} tells for which version of VASP these bindings
+    have been compiled.
+
+    L{call_vasp<_vasp.vasp>} allows for direct calls to VASP, with a
+    boost.mpi.Communicator as the only argument. VASP input files are expected
+    to be found in the current working directory. For an example, see the code
+    of L{launch.Launch._run}.
 """
 from launch import Launch
 from extract import Extract
 from incar import Incar
 from kpoints import Density, Gamma
 from specie import Specie
+from _vasp import version, vasp as call_vasp
     
 class Vasp(Launch):
   """ Interface to VASP code.

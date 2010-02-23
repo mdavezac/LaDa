@@ -1,0 +1,55 @@
+NELECT = 431
+ISPIN = 2
+ISYM = 0 
+MAGMOM = 8*0 1 15*0 32*0 
+NUPDOWN = 1
+
+# Internal Relaxation.
+NSW     = 40
+IBRION  = 2 # Conjugate Gradient Algorithm
+ISIF    = 2  # Calculate Force, stress tensor  perform ionic relaxation
+EDIFFG  = 1E-3 # Break condition of the ionic relaxation.
+
+# CONTROL
+ENCUT   = 300 eV
+LMAXMIX = 4     # L channel mixing for the mixing charge and wavefunction
+ISTART =  1      #  startjob: no WAVECAR file  
+PREC   = Accurate
+LORBIT = 11
+
+#Others variable 
+ADDGRID = .TRUE.
+LREAL   = A
+ROPT    = 1E-4 1E-4 1E-4
+RWIGS   = 2.4 2.46 1.55 
+SYMPREC = 1E-4
+
+# Few more
+
+EDIFF   = 1E-5 #  Tolerance for the energy  
+ISMEAR = 0 # Gaussian Smearing of the Fermi function 
+SIGMA = 0.05  # Width of the the gaussian smearing ( -2 read the occupancies formt the incar or potcar file and keep it constant) 
+
+# Parallization
+ALGO = FAST 
+WEIMIN = 0 # Maximum Wight for the band to be considered empty.  
+NPAR   = 8  # for the etherenet connected system it has to be equal to number of nodes. 
+# NLEP parameters                                              
+LDAU     = .TRUE.                                              
+LDAUPRINT= 1                                                   
+LDAUTYPE = 1                                                   
+                                                               
+LDUL1    =  -1  2        1                                     
+LDUU1    = 0.0  4.166667 1.255  ! Co d and O p orbital               
+LDUJ1    = 0.0  0.0      0.0                                   
+LDUO1    = 1    2        2                                     
+                                                               
+LDUL2    = -1    2      1                                      
+LDUU2    =  0.0 1.666667 6.493   ! Co d  nad O p orbital             
+LDUJ2    =  0.0 0.0     0.0                                    
+LDUO2    =  1   1       1         ! 1 means LDAU, 2 means NLEP 
+                                                               
+LDUL3    =  2    2      -1                                     
+LDUU3    =  6.0 3.0     0.0   ! d orbital                      
+LDUJ3    =  0.0 1.0     0.0                                    
+LDUO3    =  1  1  1         ! 1 means LDAU, 2 means NLEP       
