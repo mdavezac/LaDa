@@ -211,6 +211,7 @@ class Directness(object):
     from os import makedirs
     from shutil import rmtree
     from numpy import dot as np_dot, matrix as np_matrix
+    from numpy.linalg import norm
     from ....escan import Bands, method
     from ....crystal import deform_kpoint
     from ....opt.changedir import Changedir
@@ -247,7 +248,11 @@ class Directness(object):
         # gets reference energy from input function.
         self.escan.reference = reference(relaxed)
         #  computes energy
+        oldnbstates = self.escan.nbstates 
+        if norm(self.escan.kpoint) < 1e-6: self.escan.nbstates /= 2 
         eigenvalues = self.escan(self.vff, relaxed)
+        self.escan.nbstates = oldnbstates
+
         # Finds eigenvalue closes to reference
         mini = eigenvalues[0]
         for eig in eigenvalues[1:]:
@@ -257,8 +262,8 @@ class Directness(object):
         for eig in eigenvalues[1:]:
           if    (mini - self.escan.reference > 0 and eig - self.escan.reference < 0) \
              or (mini - self.escan.reference < 0 and eig - self.escan.reference > 0):
-            raise RuntimeError, "eigenvalues around reference: %s, %s"\
-                  % (self.escan.reference, eigenvalues)
+            raise RuntimeError, "%s: eigenvalues around reference: %s, %s"\
+                  % (name, self.escan.reference, eigenvalues)
         # saves eigenvalue result in individual
         setattr(indiv, name + "_eigs", eigenvalues )
         setattr(indiv, name, mini )

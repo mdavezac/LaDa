@@ -437,10 +437,14 @@ namespace LaDa
           LADA_DOASSERT(escan.nbstates != 0, "Zero eigenstates requested?\n");
           int n(0);
           double d; // gets number of eigenvalues.
-          FC_FUNC_(iaga_get_eigenvalues, IAGA_GET_EIGENVALUES)(&d,&n);
-          LADA_DOASSERT(n == int(escan.nbstates), "Number of states and eigenvalues do not match.");
-          eigenvalues.resize( escan.nbstates );
-          FC_FUNC_(iaga_get_eigenvalues, IAGA_GET_EIGENVALUES)(&eigenvalues[0],&n);
+          if(MPI_COMM.rank() == 0)
+          {
+            FC_FUNC_(iaga_get_eigenvalues, IAGA_GET_EIGENVALUES)(&d,&n);
+            LADA_DOASSERT(n == int(escan.nbstates), "Number of states and eigenvalues do not match.");
+            eigenvalues.resize( escan.nbstates );
+            FC_FUNC_(iaga_get_eigenvalues, IAGA_GET_EIGENVALUES)(&eigenvalues[0],&n);
+            std::cout << "eoigs: " << eigenvalues.size();
+          }
           boost::mpi::broadcast( MPI_COMM, eigenvalues, 0 );
 
 #       endif
