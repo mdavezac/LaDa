@@ -24,7 +24,6 @@
 #include <boost/python/str.hpp>
 
 #include <opt/debug.h>
-#include <python/iterator.hpp>
 
 namespace LaDa
 {
