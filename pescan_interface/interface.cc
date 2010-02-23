@@ -443,7 +443,6 @@ namespace LaDa
             LADA_DOASSERT(n == int(escan.nbstates), "Number of states and eigenvalues do not match.");
             eigenvalues.resize( escan.nbstates );
             FC_FUNC_(iaga_get_eigenvalues, IAGA_GET_EIGENVALUES)(&eigenvalues[0],&n);
-            std::cout << "eoigs: " << eigenvalues.size();
           }
           boost::mpi::broadcast( MPI_COMM, eigenvalues, 0 );
 
