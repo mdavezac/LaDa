@@ -358,6 +358,12 @@ namespace LaDa
     template<class T> size_t nb_valence_states( T const &_str ) 
       { return Pescan::nb_valence_states( _str ); }
 
+#   ifdef _MPI
+      template<class T> boost::mpi::communicator const &
+         get_mpi(T const &_self) { return _self.comm(); }
+      template<class T> void set_mpi(T &_self, boost::mpi::communicator * _c)
+        { _self.set_mpi(_c); }
+#   endif
 
     void expose_escan()
     {
@@ -468,7 +474,15 @@ namespace LaDa
           "want to store the results.\n",
           bp::with_custodian_and_ward_postcall<1,0>() 
         )
-        .def( "set_mpi", &t_Escan::set_mpi, "Sets the boost.mpi communicator." )
+#      ifdef _MPI
+         .add_property
+         (
+           "mpicomm", 
+           bp::make_function(&get_mpi<t_Escan>, bp::return_internal_reference<>()),
+           &set_mpi<t_Escan>, 
+           "Sets the boost.mpi communicator."
+         )
+#      endif
         .def_pickle( pickle_escan< t_Escan >() );
 
       bp::def("_call_escan", &just_call_escan);
