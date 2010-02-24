@@ -41,7 +41,7 @@ def reciprocal( structure, escan, vff, direction, order = 1, \
   # some sanity checks.
   order = int(order)
   if order <= 0: raise ValueError, "order should be at least one (%i)." % ( order )
-  if nbpoints = None: nbpoints = order + 1
+  if nbpoints == None: nbpoints = order + 1
   else: nbpoints = int(nbpoints)
   if nbpoints < order + 1: raise ValueError, "The number of points shoule be at least order+1."
   if norm(direction) < 1e-12: "Direction cannot be 0."
@@ -60,10 +60,12 @@ def reciprocal( structure, escan, vff, direction, order = 1, \
   escan.method = method.folded
 
   # sets other parameters.
+  popthese = []
   for key in kwargs:
     if not hasattr(escan, key): continue
     setattr(escan, key, kwargs[key])
-    del kwargs[key]
+    popthese.append(key)
+  for key in popthese: del kwargs[key]
 
   # number of states for which to perform calculations.
   nbstates = escan.nbstates

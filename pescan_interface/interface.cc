@@ -434,6 +434,7 @@ namespace LaDa
         
 #       else 
 
+          std::cout << "nbstates: " << escan.nbstates << "\n";
           LADA_DOASSERT(escan.nbstates != 0, "Zero eigenstates requested?\n");
           int n(0);
           double d; // gets number of eigenvalues.

@@ -55,6 +55,47 @@ def create_structure():
 
   return structure, result
 
+def check_emass( structure, escan, vff, direction, order = 1, \
+                 nbpoints = None, stepsize = 1e-2, **kwargs ):
+  from os import makedirs
+  from copy import deepcopy
+  from numpy import array
+  from lada.escan import eMass
+  from lada.opt.changedir import Changedir
+
+  mpicomm = escan.mpicomm
+  escan = deepcopy(escan)
+  escan.mpicomm = mpicomm
+  popthese = []
+  for key in kwargs:
+    if not hasattr(escan, key): continue
+    setattr(escan, key, kwargs[key])
+    popthese.append(key)
+  for key in popthese: del kwargs[key]
+
+  emass  = eMass()
+  emass.order = order
+  if nbpoints == None: nbpoints = order+1
+  emass.nbpoints = nbpoints
+  emass.stepsize = stepsize
+  emass.direction = array(direction, dtype="float64")
+  emass.nbstates = escan.nbstates
+  print emass.nbstates 
+  print escan.nbstates 
+  emass.kpoint = escan.kpoint
+  cell = structure.cell.copy()
+
+  escan.scale = structure
+  escan.mpicomm.barrier()
+  original = deepcopy(escan.vff_inputfile)
+  escan.vff_inputfile = "%s.%i" % (original, escan.mpicomm.rank)
+  vff.print_escan_input( escan.vff_inputfile, structure )
+  result = emass(escan, cell, structure, escan.reference)
+  escan.vff_inputfile = original
+  return [ r[1] for r in result ], [r[0] for r in result]
+  
+
+
 from sys import exit
 from math import ceil, sqrt
 from os.path import join, exists
@@ -62,7 +103,7 @@ from numpy import dot, array, matrix
 from numpy.linalg import norm
 from boost.mpi import world
 from lada.vff import Vff
-from lada.escan import Escan, method, nb_valence_states as nbstates, potential
+from lada.escan import Escan, method, nb_valence_states as nbstates, potential, derivatives
 from lada.crystal import deform_kpoint
 from lada.opt.tempdir import Tempdir
 
@@ -122,12 +163,11 @@ jobs = [\
          (W2,   "W2",   0.4, 4, array([ 0.89174454,  0.89174462, 0.9608853 , 0.96088566]))
        ]
 # launch pescan for different jobs.
-for (kpoint, direction), name, nbstates, ref, expected in jobs:
-  with Tempdir(world, keep=True) as tempdir:
-
+for (kpoint, direction), name, ref, nbstates, expected in jobs:
+  with Tempdir(comm=world, keep=True) as tempdir:
     # Just do it!
-    for i, callme in enumerate([check_emass, derivative.reciprocal]):
-      result = callme
+    for i, callme in enumerate([check_emass, derivatives.reciprocal]):
+      result = callme\
                (
                  structure, escan, vff, direction,
                  order = 2,
