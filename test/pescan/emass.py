@@ -76,7 +76,7 @@ def check_emass( structure, escan, vff, direction, order = 1, \
   emass  = eMass()
   emass.order = order
   if nbpoints == None: nbpoints = order+1
-  emass.nbpoints = nbpoints
+  emass.nbpoints = nbpoints + 1
   emass.stepsize = stepsize
   emass.direction = array(direction, dtype="float64")
   emass.nbstates = escan.nbstates
@@ -92,6 +92,7 @@ def check_emass( structure, escan, vff, direction, order = 1, \
   vff.print_escan_input( escan.vff_inputfile, structure )
   result = emass(escan, cell, structure, escan.reference)
   escan.vff_inputfile = original
+  print "s: ", [r[0] for r in result]
   return [ r[1] for r in result ], [r[0] for r in result]
   
 
@@ -161,9 +162,9 @@ W2 = array( [0, 1,0.5], dtype="float64" ),   (2,0,1)
 # (second arguement). The expected eigenvalues are given in the fourth argument.
 jobs = [\
          # at gamma, code uses Krammer degeneracy
+         (X,     "X",   0.4, 8, array([ 0.51468608,  0.51479076, 0.5148467 , 0.5149207 ])),
          (G,   "VBM",  -0.4, 2, array([-0.47992312, -0.67148097])), 
          (G, "Gamma",   0.4, 4, array([ 0.47368306,  0.49199994])), 
-         (X,     "X",   0.4, 8, array([ 0.51468608,  0.51479076, 0.5148467 , 0.5149207 ])),
          (L,     "L",   0.4, 4, array([ 0.72789198,  0.72789198, 0.73165765, 0.73165765])),
          (W1,   "W1",   0.4, 4, array([ 0.89170814,  0.89170822, 0.96097565, 0.96097601])),
          (W2,   "W2",   0.4, 4, array([ 0.89174454,  0.89174462, 0.9608853 , 0.96088566]))
@@ -171,7 +172,7 @@ jobs = [\
 # launch pescan for different jobs.
 for (kpoint, direction), name, ref, nbstates, expected in jobs:
   # Just do it!
-  for i, callme in enumerate([derivatives.reciprocal, check_emass]):
+  for i, callme in enumerate([derivatives.reciprocal]): #, check_emass]):
     result = callme\
              (
                structure, escan, vff, direction,

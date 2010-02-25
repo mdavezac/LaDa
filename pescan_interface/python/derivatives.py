@@ -34,10 +34,10 @@ def reciprocal( structure, escan, vff, direction, order = 1, \
   from os.path import join
   from copy import deepcopy
   from math import pow, pi, factorial
-  from numpy import zeros, array
+  from numpy import zeros, array, dot
   from numpy.linalg import norm, lstsq as np_lstsq
   from ._escan import method, potential
-  from ..physics import a0
+  from ..physics import a0, Hartree
 
   # some sanity checks.
   order = int(order)
@@ -74,22 +74,22 @@ def reciprocal( structure, escan, vff, direction, order = 1, \
   # creates parameters matrix.
   parameters = zeros(shape=(nbpoints, order+1), dtype="float64") 
   parameters[:,0] = 1 # zero order terms are all 1.
-  start = stepsize 
-  if nbpoints % 2 == 0: start *= 0.5
+  start = 0e0 
+  if nbpoints % 2 == 0: start = 0.5 * stepsize
   units = 2e0 * pi * a0("A") / structure.scale 
   for i in range(0, (nbpoints-nbpoints%2) / 2):
-    s = ( stepsize * float(i) + start ) * units
+    s = ( stepsize * float(i+1) + start ) * units
     parameters[2*i,   1:] = array([pow( s, n)/float(factorial(n)) for n in range(1, order+1)])
     parameters[2*i+1, 1:] = parameters[2*i,   1:]
     for j in range(1, order+1): 
       if j % 2 == 1: parameters[2*i+1, j] *= -1e0
-  print parameters
 
 
   # now performs all calculations.
   measurements = zeros(shape=(nbpoints, nbstates), dtype="float64")
   kpoint = escan.kpoint.copy()
-  for i in range(nbpoints): 
+
+  for i in range(0, nbpoints): 
     # computes kpoint
     escan.kpoint = kpoint + direction * parameters[i, 1] / units
     # checks for double/krammer mad degeneracy touble
@@ -102,11 +102,12 @@ def reciprocal( structure, escan, vff, direction, order = 1, \
     result = escan(vff, structure)
     result.sort() # sorted eigs!
     if double_trouble: # in case escan tries to screw us up again.
-      result = array([u for i in range(2) for u in result])
+      result = array([u for j in range(2) for u in result])
       escan.nbstates = nbstates
     # finally stores these results.
-    measurements[i,:] = result
+    measurements[i,:] = result / Hartree("eV")
 
   # finally, performs least-square fit and returns evrything.
-  return lstsq( parameters, measurements )
+  result = lstsq( parameters, measurements )
+  return result
 
