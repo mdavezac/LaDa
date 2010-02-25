@@ -322,30 +322,69 @@ namespace LaDa
                                                   (void*)&(_interface.eigenvalues[0]) );
       return bp::object( bp::handle<>(bp::borrowed(eigs)) );
     }
-    bp::object __call__(Pescan::Interface &_interface) 
+    bp::object __call__(Pescan::Interface &_interface, bp::object const &_path) 
     {
+      Pescan::Interface::t_Path const atom_input = _interface.atom_input;
+      if( _path.ptr() != Py_None ) _interface.atom_input = bp::extract<std::string>(_path);
       if( not _interface() )
       {
         PyErr_SetString(PyExc_RuntimeError, "Something went wrong in escan.\n");
         bp::throw_error_already_set();
       }
+      _interface.atom_input = atom_input;
       return get_eigenvalues(_interface);
     }
     void set_scale(Pescan::Interface &_interface, Crystal::TStructure<std::string> const &_str)
       {  _interface.escan.scale = _str.scale; }
+
+    bool create_directory(Pescan::Interface::t_Path const &_path)
+    {
+      namespace bfs = boost::filesystem;
+      if( bfs::exists(_path) )
+      {
+        if( bfs::is_directory(_path) ) return true;
+        
+        PyErr_SetString
+        (
+           PyExc_IOError, 
+           ("Found a leaf which is not a directory: " + _path.string()).c_str()
+        );
+        bp::throw_error_already_set();
+        return false;
+      }
+      if( _path.has_parent_path() )
+        if(not python::create_directory(_path.parent_path())) return false;
+      // creates directory.
+      bfs::create_directory(_path);
+      return bfs::exists(_path) and bfs::is_directory(_path);
+    }
+
     template<class T>
       bp::object __call2__(Pescan::Interface &_interface,
                            T &_vff, Crystal::TStructure<std::string> const &_str)
       {
+        // Checks that directory exists.
+        namespace bfs = boost::filesystem;
+        Pescan::Interface::t_Path rootdir = opt::InitialPath::path()/_interface.get_dirname();
+        if( _interface.comm().rank() == 0 and (not python::create_directory(rootdir)) )
+        {
+          PyErr_SetString( PyExc_IOError,  
+                           ("Could not find/create directory: " + rootdir.string()).c_str() );
+          bp::throw_error_already_set();
+          return bp::object();
+        }
+        _interface.comm().barrier();
+        // creates atom input
         Pescan::Interface::t_Path const path = _interface.atom_input;
-        Pescan::Interface::t_Path rootdir = path.root_path();
         Pescan::Interface::t_Path filename = path.filename();
         if( filename.empty() ) filename = "atom_input";
         boost::mpi::communicator world;
         std::ostringstream sstr; sstr << world.rank();
         _interface.atom_input = rootdir / filename.replace_extension(sstr.str());
         print_escan_input(_vff, _interface.atom_input.string(), _str);
+        // sets scale argument.
         set_scale(_interface, _str);
+        // finally, computes.
         if( not _interface() )
         {
           PyErr_SetString(PyExc_RuntimeError, "Something went wrong in escan.\n");
@@ -446,6 +485,7 @@ namespace LaDa
         .def_readwrite("verbose", &t_Escan::verbose, "Verbose pescan output on true.")
         .def( "fromXML",  &Escan_from_XML<t_Escan>, bp::arg("file"),
               "Loads escan parameters from an XML file." )
+        .def("__call__", &__call__, bp::arg("atominput"))
         .def
         (
           "__call__", &__call2__<t_Vff>, 

@@ -58,6 +58,7 @@ def create_structure():
 from sys import exit
 from math import ceil, sqrt
 from os.path import join, exists
+from os import getcwd
 from numpy import dot, array, matrix
 from numpy.linalg import norm
 from boost.mpi import world
@@ -123,7 +124,7 @@ jobs = [\
        ]
 # launch pescan for different jobs.
 for kpoint, name, ref, expected_eigs in jobs:
-  with Tempdir() as tempdir:
+  with Tempdir(comm=world, kee=False, workdir=getcwd()) as tempdir:
     # will save output to directory "name".
     escan.directory = name
     # computes at kpoint of deformed structure.

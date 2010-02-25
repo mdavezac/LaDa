@@ -31,12 +31,13 @@ def reciprocal( structure, escan, vff, direction, order = 1, \
          parameters. Defaults to numpy.linalg.lstsq.
       @return: Same as return from lstsq.
   """
+  from os.path import join
   from copy import deepcopy
   from math import pow, pi, factorial
-  from numpy import zeros
+  from numpy import zeros, array
   from numpy.linalg import norm, lstsq as np_lstsq
-  from .._escan import method
-  from ...physics import a0
+  from ._escan import method, potential
+  from ..physics import a0
 
   # some sanity checks.
   order = int(order)
@@ -45,11 +46,10 @@ def reciprocal( structure, escan, vff, direction, order = 1, \
   else: nbpoints = int(nbpoints)
   if nbpoints < order + 1: raise ValueError, "The number of points shoule be at least order+1."
   if norm(direction) < 1e-12: "Direction cannot be 0."
-  direction = array(direction)
+  direction = array(direction, dtype="float64")
   direction /= norm(direction)
   if lstsq == None: lstsq = np_lstsq
 
-  directory = escan.directory
   # saves mpicomm if necessary.
   mpicomm = escan.mpicomm
   # now copies escan
@@ -66,6 +66,7 @@ def reciprocal( structure, escan, vff, direction, order = 1, \
     setattr(escan, key, kwargs[key])
     popthese.append(key)
   for key in popthese: del kwargs[key]
+  directory = escan.directory
 
   # number of states for which to perform calculations.
   nbstates = escan.nbstates
@@ -78,28 +79,30 @@ def reciprocal( structure, escan, vff, direction, order = 1, \
   units = 2e0 * pi * a0("A") / structure.scale 
   for i in range(0, (nbpoints-nbpoints%2) / 2):
     s = ( stepsize * float(i) + start ) * units
-    parameters[2*i,   1:] = array(pow( s, n)/float(factorial(n)) for n in range(1, order+1))
+    parameters[2*i,   1:] = array([pow( s, n)/float(factorial(n)) for n in range(1, order+1)])
     parameters[2*i+1, 1:] = parameters[2*i,   1:]
     for j in range(1, order+1): 
       if j % 2 == 1: parameters[2*i+1, j] *= -1e0
+  print parameters
 
 
   # now performs all calculations.
-  measurements = zeros(shape=(npoints, nbstates), dtype="float64")
+  measurements = zeros(shape=(nbpoints, nbstates), dtype="float64")
   kpoint = escan.kpoint.copy()
   for i in range(nbpoints): 
     # computes kpoint
-    escan.kpoint = kpoint + direction * parameter[1, i] / units
+    escan.kpoint = kpoint + direction * parameters[i, 1] / units
     # checks for double/krammer mad degeneracy touble
     double_trouble = escan.potential != potential.spinorbit or norm(escan.kpoint) < 1e-12
     # in which case only half the eigenvalues are computed.
     if double_trouble: escan.nbstates = nbstates / 2
     # sets directory.
-    escan.directory = join(join(directory, "recip_deriv"), "%i-s=%f" % (i, measurements[i,1] ))
+    escan.directory = join(join(directory, "recip_deriv"), "%i-s=%f" % (i, parameters[i,1] ))
     # actually computes stuff.
-    result = escan(vff, structure).sort() # sorted eigs!
+    result = escan(vff, structure)
+    result.sort() # sorted eigs!
     if double_trouble: # in case escan tries to screw us up again.
-      result = array(u for i in range(2) for u in result)
+      result = array([u for i in range(2) for u in result])
       escan.nbstates = nbstates
     # finally stores these results.
     measurements[i,:] = result

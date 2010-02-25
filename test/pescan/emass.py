@@ -99,6 +99,7 @@ def check_emass( structure, escan, vff, direction, order = 1, \
 from sys import exit
 from math import ceil, sqrt
 from os.path import join, exists
+from os import getcwd
 from numpy import dot, array, matrix
 from numpy.linalg import norm
 from boost.mpi import world
@@ -106,6 +107,8 @@ from lada.vff import Vff
 from lada.escan import Escan, method, nb_valence_states as nbstates, potential, derivatives
 from lada.crystal import deform_kpoint
 from lada.opt.tempdir import Tempdir
+from lada.crystal import Atoms, Atom
+from sys import exit
 
 # file with escan and vff parameters.
 input = "test_input/input.xml"
@@ -115,6 +118,9 @@ lattice = create_zb_lattice()
 
 # Creates unrelaxed structure and  known relaxed structure (for testing).
 structure, result = create_structure()
+structure.cell = lattice.cell
+structure.atoms = Atoms( [Atom(lattice.sites[0].pos, lattice.sites[0].type[0]),\
+                          Atom(lattice.sites[1].pos, lattice.sites[1].type[0])] )
 
 # creates vff using parameters in input file. 
 # vff will run on all processes (world).
@@ -122,7 +128,7 @@ vff = Vff(input, world)
 
 # launch vff and checks output.
 relaxed, stress = vff(structure)
-if world.rank == 0:
+if world.rank == -1:
   diff = 0e0
   for a, b in zip(relaxed.atoms, result.atoms):
     assert a.type == b.type
@@ -164,26 +170,26 @@ jobs = [\
        ]
 # launch pescan for different jobs.
 for (kpoint, direction), name, ref, nbstates, expected in jobs:
-  with Tempdir(comm=world, keep=True) as tempdir:
-    # Just do it!
-    for i, callme in enumerate([check_emass, derivatives.reciprocal]):
-      result = callme\
-               (
-                 structure, escan, vff, direction,
-                 order = 2,
-                 nbpoints = 3,
-                 # will save output to directory "name".
-                 directory = "emass:%i_%s" % (i, name),
-                 # computes at kpoint of deformed structure.
-                 kpoint = deform_kpoint(kpoint, structure.cell, relaxed.cell),
-                 # number of states 
-                 nbstates = nbstates,
-                 # sets folded method's energy reference
-                 reference = ref,
-               )
-      # checks expected are as expected. 
-#     assert norm( result[0] - expected ) < 1e-6, "%s\n%s" % (result[0], expected)
-      # And print.
-      if world.rank == 0:
-        print "Ok - %s(%s): %s -> %s: %s" % (name, direction, kpoint, escan.kpoint, result[0])
+  # Just do it!
+  for i, callme in enumerate([derivatives.reciprocal, check_emass]):
+    result = callme\
+             (
+               structure, escan, vff, direction,
+               order = 2,
+               nbpoints = 3,
+               # will save output to directory "name".
+               directory = "Emass_%i_%s" % (i, name),
+               # computes at kpoint of deformed structure.
+               kpoint = deform_kpoint(kpoint, structure.cell, relaxed.cell),
+               # number of states 
+               nbstates = nbstates,
+               # sets folded method's energy reference
+               reference = ref,
+             )
+    # checks expected are as expected. 
+#   assert norm( result[0] - expected ) < 1e-6, "%s\n%s" % (result[0], expected)
+    # And print.
+    if world.rank == 0:
+      print "Ok - %s(%s): %s -> %s: %s" % (name, direction, kpoint, escan.kpoint, result[0])
+  exit(0)
   
