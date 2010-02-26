@@ -32,6 +32,7 @@ def reciprocal( structure, escan, vff, direction, order = 1, \
       @return: Same as return from lstsq.
   """
   from os.path import join
+  from shutil import rmtree
   from copy import deepcopy
   from math import pow, pi, factorial
   from numpy import zeros, array, dot
@@ -52,6 +53,9 @@ def reciprocal( structure, escan, vff, direction, order = 1, \
 
   # saves mpicomm if necessary.
   mpicomm = escan.mpicomm
+  if "mpicomm" in kwargs:
+    mpicomm = kwargs["mpicomm"] 
+    del kwargs["mpicomm"]
   # now copies escan
   escan = deepcopy(escan)
   # resets mpicomm 
@@ -109,5 +113,8 @@ def reciprocal( structure, escan, vff, direction, order = 1, \
 
   # finally, performs least-square fit and returns evrything.
   result = lstsq( parameters, measurements )
+
+  if escan.destroy_directory == True: rmtree( join(directory, "recip_deriv") )
+
   return result
 
