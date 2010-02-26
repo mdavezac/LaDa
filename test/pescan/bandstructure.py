@@ -33,7 +33,7 @@ from numpy import dot, array, matrix
 from numpy.linalg import norm
 from boost.mpi import world
 from lada.vff import Vff
-from lada.escan import Escan, method, nb_valence_states as nbstates, potential, derivatives
+from lada.escan import Escan, method, band_structure, nb_valence_states
 from lada.crystal import deform_kpoint
 from lada.opt.tempdir import Tempdir
 from lada.crystal import Atoms, Atom
@@ -60,29 +60,31 @@ Ge_relaxed, stress = vff(Ge)
 # escan will work on all processes.
 escan = Escan(input, world)
 # sets the FFT mesh
-escan.genpot.mesh = tuple(int(ceil(sqrt(0.5) * 20)) for u in range(3))  
+escan.genpot.mesh = 16, 16, 16  
 
 # some kpoints + associated emass direction.
 X = array( [0,0,1], dtype="float64" ), "X"
 G = array( [0,0,0], dtype="float64" ), "Gamma"
-L = array( [0.5,0.5,0.5], dtype="float64" ) "L"
+L = array( [0.5,0.5,0.5], dtype="float64" ), "L"
 W = array( [1, 0.5,0], dtype="float64" ), "W"
 
 # Each job is performed for a given kpoint (first argument), at a given
 # reference energy (third argument). Results are stored in a specific directory
 # (second arguement). The expected eigenvalues are given in the fourth argument.
-jobs = [ (G, X), (X, L), (L, G), (G, W) ]
+jobs = [ (G[0], X[0]), (X[0], L[0]) ] #, (L, G), (G, W) ]
 density = 10 / norm(X[0]) 
 
-Si_bandstructure = BandStructure( Si_relaxed, escan, vff, jobs, density, 
-                                  directory = join("work", "Si"),
-                                  method = method.full_diagonalization,
-                                  destroy_directory = False )
-Ge_bandstructure = BandStructure( Ge_relaxed, escan, vff, jobs, density, 
-                                  directory = join("work", "Si"),
-                                  method = method.full_diagonalization,
-                                  destroy_directory = False )
+Si_bandstructure = band_structure( Si_relaxed, escan, vff, jobs, density, 
+                                   directory = join("work", "Si"),
+                                   method = method.full_diagonalization,
+                                   nbstates = nb_valence_states(Si_relaxed), 
+                                   destroy_directory = False )
+Ge_bandstructure = band_structure( Ge_relaxed, escan, vff, jobs, density, 
+                                   directory = join("work", "Ge"),
+                                   method = method.full_diagonalization,
+                                   nbstates = nb_valence_states(Ge_relaxed), 
+                                   destroy_directory = False )
 
 
-with open(join("work", "pickled_sige"), "r") as file:
+with open(join("work", "pickled_sige"), "w") as file:
   cPickle.dump((Si_bandstructure, Ge_bandstructure), file) 

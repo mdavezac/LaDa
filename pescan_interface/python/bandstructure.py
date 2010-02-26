@@ -6,13 +6,14 @@ def _line(start, end, density):
   from numpy.linalg import norm
 
   distance = norm(end - start) 
-  nbkpt = max(1, density * distance - 1)
-  stepsize = 1e0/nbkpt
-  kpoints: = [ float(i) * stepsize for i in range(1, nbkpt+1) ]
+  nbkpt = int(max(1, density * distance - 1))
+  stepsize = 1e0/float(nbkpt)
+  kpoints = [ float(i) * stepsize for i in range(1, nbkpt+1) ]
   for k in kpoints: yield start + k * (end-start) 
 
-def _lines( density, endpoints ):
+def _lines(endpoints, density):
   """ Generator for creating segments. """
+  from numpy.linalg import norm
   
   assert len(endpoints) > 0, ValueError
   assert len(endpoints[0]) == 2, ValueError
@@ -21,12 +22,12 @@ def _lines( density, endpoints ):
   yield pos, endpoints[0][0]
   for start, end in endpoints:
     for kpoint in _line(start, end, density):
-      x += norm(kpoint - start) 
-      yield x, kpoint
+      yield pos+norm(kpoint-start), kpoint
+    pos += norm(end-start) 
 
   
 
-def BandStructure(structure, escan, vff, kpoints, density, **kwargs ):
+def band_structure(structure, escan, vff, kpoints, density, **kwargs ):
   """ Returns eigenvalues for plotting bandstructure. """
   from os.path import join
   from copy import deepcopy
@@ -65,12 +66,12 @@ def BandStructure(structure, escan, vff, kpoints, density, **kwargs ):
     # in which case only half the eigenvalues are computed.
     if double_trouble: escan.nbstates = nbstates / 2
     # sets directory.
-    escan.directory = join(join(directory, "band_structure"), "%i-%s" % (i, escan.kpoint)
+    escan.directory = join(join(directory, "band_structure"), "%i-%s" % (i, escan.kpoint))
     # actually computes stuff.
     eigenvalues = escan(vff, structure)
     eigenvalues.sort()
     if double_trouble: # in case escan tries to screw us up again.
-      eigenvalues = array([u for j in range(2) for u in result])
+      eigenvalues = array([u for j in range(2) for u in eigenvalues])
       escan.nbstates = nbstates
-    results.append( x, escan.kpoint, eigenvalues )
+    results.append( (x, escan.kpoint, eigenvalues) )
   return results

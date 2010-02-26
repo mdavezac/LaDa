@@ -1,5 +1,6 @@
 """ Interface module for pescan. """
 from _escan import *
+from bandstructure import band_structure
 
 def call_escan(comm, atom="atom_input", pot="pot_input", escan="escan_input"):
   """ Calls escan functional in current directory.
