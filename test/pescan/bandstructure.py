@@ -24,14 +24,14 @@ def create_structure():
   for atom in Ge.atoms: atom.type = "Ge"
   return Si, Ge
 
-import cPickle
+import pickle
 from sys import exit
 from math import ceil, sqrt
 from os.path import join, exists
-from os import getcwd
+from os import getcwd, makedirs
 from numpy import dot, array, matrix
 from numpy.linalg import norm
-from boost.mpi import world
+from boost.mpi import world, broadcast
 from lada.vff import Vff
 from lada.escan import Escan, method, band_structure, nb_valence_states
 from lada.crystal import deform_kpoint
@@ -71,20 +71,38 @@ W = array( [1, 0.5,0], dtype="float64" ), "W"
 # Each job is performed for a given kpoint (first argument), at a given
 # reference energy (third argument). Results are stored in a specific directory
 # (second arguement). The expected eigenvalues are given in the fourth argument.
-jobs = [ (G[0], X[0]), (X[0], L[0]) ] #, (L, G), (G, W) ]
-density = 10 / norm(X[0]) 
+jobs = [ (0.1*L[0], G[0]), (G[0], 0.1*X[0]), (0.1*W[0], G[0]), (G[0], 0.1*(W[0]+L[0])) ]
+density = 10 / min( norm(0.1*X[0]), norm(0.1*L[0]) )
 
-Si_bandstructure = band_structure( Si_relaxed, escan, vff, jobs, density, 
-                                   directory = join("work", "Si"),
-                                   method = method.full_diagonalization,
-                                   nbstates = nb_valence_states(Si_relaxed), 
-                                   destroy_directory = False )
-Ge_bandstructure = band_structure( Ge_relaxed, escan, vff, jobs, density, 
-                                   directory = join("work", "Ge"),
-                                   method = method.full_diagonalization,
-                                   nbstates = nb_valence_states(Ge_relaxed), 
-                                   destroy_directory = False )
-
+N=2
+assert world.size >= N
+color = world.size % N
+mpicomm = world.split(color)
+escan.mpicomm = mpicomm
+if world.rank == 0 and not exists("work"): makedirs("work")
+world.barrier()
 
 with open(join("work", "pickled_sige"), "w") as file:
-  cPickle.dump((Si_bandstructure, Ge_bandstructure), file) 
+  Si_bandstructure, Ge_bandstructure = None, None
+  if color == 0:
+    Si_bandstructure = band_structure( Si_relaxed, escan, vff, jobs, density, 
+                                       directory = join("work", "Si"),
+                                       method = method.full_diagonalization,
+                                       nbstates = nb_valence_states(Si_relaxed) + 4, 
+                                       destroy_directory = False )
+    
+  if color == 1:
+    Ge_bandstructure = band_structure( Ge_relaxed, escan, vff, jobs, density, 
+                                       directory = join("work", "Ge"),
+                                       method = method.full_diagonalization,
+                                       nbstates = nb_valence_states(Ge_relaxed) + 4, 
+                                       destroy_directory = False )
+    print "Wtf ", Ge_bandstructure
+  world.barrier()
+  Si_bandstructure = broadcast(world, Si_bandstructure, 0)
+  Ge_bandstructure = broadcast(world, Ge_bandstructure, 1)
+  print Ge_bandstructure
+  if world.rank == 0:
+    pickle.dump(Si_bandstructure, file) 
+    pickle.dump(Ge_bandstructure, file) 
+

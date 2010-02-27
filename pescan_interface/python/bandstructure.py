@@ -72,6 +72,7 @@ def band_structure(structure, escan, vff, kpoints, density, **kwargs ):
     eigenvalues.sort()
     if double_trouble: # in case escan tries to screw us up again.
       eigenvalues = array([u for j in range(2) for u in eigenvalues])
+      eigenvalues.sort()
       escan.nbstates = nbstates
-    results.append( (x, escan.kpoint, eigenvalues) )
+    results.append( (x, escan.kpoint, eigenvalues.copy()) )
   return results
