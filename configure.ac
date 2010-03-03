@@ -209,6 +209,12 @@ AH_TEMPLATE([__DOPYTHONESCAN])
 if test x$pescan$python$direct_iaga = xtruetruetrue; then
   AC_DEFINE([__DOPYTHONESCAN],[],[])
 fi
+AH_TEMPLATE([LADA_GLOBAL_LOAD])
+if test x$global_load = xTrue; then
+  AC_DEFINE([LADA_GLOBAL_LOAD],[true],[])
+else
+  AC_DEFINE([LADA_GLOBAL_LOAD],[false],[])
+fi
 
 # ************************************
 # ****** Checks compiler compliances

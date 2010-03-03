@@ -1,5 +1,13 @@
 """ Interface module for pescan. """
-from _escan import *
+from ..opt import __load_pescan_in_global_namespace__
+if __load_pescan_in_global_namespace__:
+  from DLFCN import RTLD_NOW as _RTLD_NOW, RTLD_GLOBAL as _RTLD_GLOBAL
+  from sys import getdlopenflags as _getdlopenflags, setdlopenflags as _setdlopenflags
+  flags = _getdlopenflags()
+  _setdlopenflags(_RTLD_NOW|_RTLD_GLOBAL)
+  from _escan import *
+  _setdlopenflags(flags)
+else: from _escan import *
 
 def call_escan(comm, atom="atom_input", pot="pot_input", escan="escan_input"):
   """ Calls escan functional in current directory.

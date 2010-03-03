@@ -16,11 +16,14 @@
 #include "errortuple.hpp"
 #include "redirect.hpp"
 
+
 BOOST_PYTHON_MODULE(_opt)
 {
   namespace bp = boost::python;
   bp::scope scope;
   scope.attr("__doc__") = "imported into L{opt} namespace.";
+  scope.attr("__load_vasp_in_global_namespace__") = LADA_GLOBAL_LOAD;
+  scope.attr("__load_pescan_in_global_namespace__") = LADA_GLOBAL_LOAD;
   bp::docstring_options doc_options(true, false);
 
   LaDa::Python::expose_errors();
