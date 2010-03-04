@@ -204,13 +204,13 @@ opt_python_c = errortuple.hpp convexhull.impl.hpp redirect.hpp
 EMASS_CC = emass.cc
 EMASS_H  = emass.h
 EMASS_DOC = $(EMASS_H) $(EMASS_CC) 
-pescan_f90 = momentum.f90 fortran.f90 
+pescan_f90 = momentum.f90  escan_types.f90 wavefunctions.f90 fortran.f90 
 pescan_cc = interface.cc bandgap.cc dipole_elements.cc emass.cc
 pescan_h  = interface.h  bandgap.h  va.h dipole_elements.h emass.h
 pescan_impl_h  = interface.localclasses.h va.impl.h
 pescan_doc = $(pescan_h) $(pescan_cc) $(pescan_f90) $(pescan_impl_h)
-pescan_python_cc = escan.cc bandgap.cc python.cc emass.cc dipole_elements.cc
-pescan_python_h = escan.hpp bandgap.hpp emass.hpp dipole_elements.hpp
+pescan_python_cc = escan.cc bandgap.cc python.cc emass.cc dipole_elements.cc wavefunctions.cc
+pescan_python_h = escan.hpp bandgap.hpp emass.hpp dipole_elements.hpp wavefunctions.hpp
 
 physics_cc = physics.cc
 physics_h  = physics.h

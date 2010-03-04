@@ -1,7 +1,3 @@
-!
-! Version: $Id$
-!
-
 subroutine iaga_set_mpi( in_comm_handle )
  
   use mpigroup, only : comm_handle, irank, arank
@@ -123,15 +119,15 @@ subroutine momentum( in_inputfilename, in_fsize, &
   ! input filename. For folded spectrum calculations, only one input is
   ! needed, wether vbm or cbm. It is implicit that these calculations differ
   ! only by the reference energy. 
-  character( len= in_fsize ), intent(in) :: in_inputfilename
+  character(len= in_fsize), intent(in) :: in_inputfilename
   ! size of directory filename A.
   integer, intent(in) :: in_dsizeA
   ! wfn filename A. 
-  character( len= in_dsizeA ), intent(in) :: in_dirvalence
+  character(len= in_dsizeA), intent(in) :: in_dirvalence
   ! size of directory filename B.
   integer, intent(in) :: in_dsizeB
   ! wfn filename B.
-  character( len= in_dsizeB ), intent(in) :: in_dirconduction
+  character(len= in_dsizeB), intent(in) :: in_dirconduction
 
   ! number of bands A.
   integer, intent(in) :: in_bandsA
@@ -157,3 +153,49 @@ subroutine momentum( in_inputfilename, in_fsize, &
 
 
 end subroutine
+
+! Reads wavefunction with given index
+subroutine escan_read_wfns(nf, filename, ni, indices, mpicomm)
+  use Wfns_module
+  implicit none
+
+  integer, intent(in) :: nf                           ! length of filename
+  character(len=nf), intent(in) :: filename           ! filename of escan input
+  integer, intent(in) :: ni                           ! number of indices
+  integer, dimension(ni), intent(in) :: indices       ! indices to wavefunctions.
+  integer, intent(in) :: mpicomm                      ! mpi communicator
+
+  call read_wavefunctions(filename, indices, mpicomm)
+
+end subroutine escan_read_wfns
+! gets dimension of wavefunctions
+subroutine escan_getwfn_datadims( n0, n1, n2 )
+  use Wfns_module
+  implicit none
+
+  integer, intent(out) :: n0 
+  integer, intent(out) :: n1 
+  integer, intent(out) :: n2 
+
+  n0 = size(wavefunctions%gpoints, 1)
+  n1 = size(wavefunctions%values, 2)
+  n2 = size(wavefunctions%values, 3)
+end subroutine escan_getwfn_datadims
+
+! Copies wavefunctions and gpoints
+subroutine escan_copy_wfndata( wfns, gpoints, n0, n1, n2 )
+  use Wfns_module, only: destroy_wavefunctions, wavefunctions
+  use Escan, only: cleanup_fft
+  implicit none
+
+  complex(kind=8), dimension(n0, n1,  n2), intent(inout) :: wfns
+  real(kind=8), dimension(n0, 3), intent(inout) :: gpoints
+  integer, intent(in) :: n0 
+  integer, intent(in) :: n1 
+  integer, intent(in) :: n2 
+
+  wfns(:,:,:) = wavefunctions%values(:n0, :n1, :n2)
+  gpoints(:,:) = wavefunctions%gpoints(:, :)
+  call destroy_wavefunctions
+  call cleanup_fft
+end subroutine escan_copy_wfndata

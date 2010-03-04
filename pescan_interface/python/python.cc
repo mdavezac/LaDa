@@ -15,6 +15,7 @@
 #include "bandgap.hpp"
 #include "emass.hpp"
 #include "dipole_elements.hpp"
+#include "wavefunctions.hpp"
 
 BOOST_PYTHON_MODULE(_escan)
 {
@@ -34,4 +35,5 @@ BOOST_PYTHON_MODULE(_escan)
   LaDa::python::expose_genpot();
   LaDa::Python::expose_emass();
   LaDa::Python::expose_dipoles();
+  LaDa::python::expose_wfns();
 }
