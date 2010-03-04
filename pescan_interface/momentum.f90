@@ -1,7 +1,3 @@
-!
-! Version: $Id$
-!
-
 module MomentumDipole
 
   use escan_comp_api
