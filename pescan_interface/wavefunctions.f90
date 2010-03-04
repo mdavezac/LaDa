@@ -37,16 +37,23 @@ module Wfns_module
       integer(kind=8), dimension(3) :: int_gpoints
  
       ! Read parameters from file and sets common blocks
+      write(*,*) 0
       call read_escaninput(filename, params, mpicomm)
+      write(*,*) 1
       call read_potentialinput(params, lattice)
+      write(*,*) 2
       call set_common_blocks(params, lattice)
+      write(*,*) 3
       ! Sets number of spins
       nb_spins = 1
       if( params%with_spinorbit .eqv. .true. ) nb_spins = 2;
       ! first kills current wavefunctions.
+      write(*,*) 4
       call destroy_wavefunctions
+      write(*,*) 5
       ! prepares wavefunctions.
       call prepare_fft_and_allocate_arrays(params, lattice)
+      write(*,*) 6
  
       ! now reads actual data.
       if( params%with_spinorbit ) then
@@ -64,6 +71,7 @@ module Wfns_module
                            params%ecp%filewg_out, size( indices ), &
                            indices, 0 )
       endif
+      write(*,*) 7
 
       nb_gpoints = ngtotnod( inode )
       allocate( wavefunctions%gpoints( nb_gpoints, 3 ) )
@@ -85,6 +93,7 @@ module Wfns_module
         wavefunctions%gpoints(ig, 3) & 
           = 2.d0 * pi * sum( lattice%kcell(3,:) * int_gpoints ) * wg_n(ig) * wg_n(ig)
       enddo ! ig
+      write(*,*) 8
  
     end subroutine read_wavefunctions
     

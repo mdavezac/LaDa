@@ -34,6 +34,7 @@ namespace LaDa
   {
     namespace bp = boost::python;
     namespace bfs = boost::filesystem;
+    namespace bm = boost::mpi;
  
     bp::tuple get_wavefunctions(Pescan::Interface const &_interface, bp::object const &_object)
     {
@@ -76,18 +77,24 @@ namespace LaDa
       }
  
       // change working directory.
-      Pescan::Interface::t_Path rootpath = opt::InitialPath::path();
+      Pescan::Interface::t_Path rootpath = opt::InitialPath::path()/_interface.get_dirname();
       Pescan::Interface::t_Path origpath = bfs::current_path();
       chdir(rootpath.string().c_str());
       // reads wavefunctions
-      int a(_interface.escan.filename.string().size()), b(indices.size());
+      std::string const orig =   _interface.escan.filename.string()
+                               + "."
+                               + boost::lexical_cast<std::string>(bm::communicator().rank());
+      int a(orig.size()), b(indices.size());
       MPI_Comm __commC = (MPI_Comm) ( _interface.comm() ) ;
       MPI_Fint __commF = MPI_Comm_c2f( __commC );
-      char const* fname = _interface.escan.filename.string().c_str();
-      FC_FUNC_(escan_read_wfns, ESCAN_READ_WFNS)(&a, fname, &b, &(indices[0]), &__commF);
+      std::cout << "reading\n";
+      FC_FUNC_(escan_read_wfns, ESCAN_READ_WFNS)(&a, orig.c_str(), &b, &(indices[0]), &__commF);
+      std::cout << "read\n";
       // gets dimensions.
       int n0, n1, n2;
+      std::cout << "getting dims\n";
       FC_FUNC_(escan_getwfn_datadims, ESCAN_GETWFN_DATADIMS)(&n0, &n1, &n2);
+      std::cout << "gotten\n";
       // Creates numpy objects.
       npy_intp wfn_stride[3] = { n2, n1, n0 }; // fortran dims.
       npy_intp gpoint_stride[2] = { 3, n0 };   // fortran dims
@@ -98,7 +105,9 @@ namespace LaDa
       char * const cptr_gps( reinterpret_cast<PyArrayObject*>(gpoints)->data );
       double * const ptr_wfns( reinterpret_cast<double*>(cptr_wfns) );
       double * const ptr_gps( reinterpret_cast<double*>(cptr_gps) );
+      std::cout << "copying\n";
       FC_FUNC_(escan_copy_wfndata, ESCAN_COPY_WFNDATA)(ptr_wfns, ptr_gps, &n0, &n1, &n2);
+      std::cout << "copied\n";
       
       // returns to original working directory.
       chdir(origpath.string().c_str());

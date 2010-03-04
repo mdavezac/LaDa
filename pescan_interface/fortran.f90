@@ -47,7 +47,7 @@ subroutine iaga_just_call_escan()
 
 end subroutine
 
-subroutine iaga_call_escan( in_nbstates, in_verbose )
+subroutine iaga_call_escan( in_nbstates, in_verbose, n, filename )
   use escan_comp_api, only: escancomp
   use eigenenergy
   use mpigroup
@@ -56,13 +56,15 @@ subroutine iaga_call_escan( in_nbstates, in_verbose )
 
   integer, intent(in) :: in_nbstates
   integer, intent(in) :: in_verbose
+  integer, intent(in) :: n ! size of filename string
+  character(len=n), intent(in) :: filename
   type ( escancomp ) ecp
 
   if( allocated( zebn ) )  deallocate( zebn )
   allocate( zebn( in_nbstates ) )
 
   ecp%comm_handle = comm_handle
-  ecp%fileescaninput= trim("escan_input.")//arank(1:len_trim(arank))
+  ecp%fileescaninput= filename
   ecp%escanfileonly=.TRUE.
   ecp%escandefaultprint=.true.
   if( in_verbose == 0 ) ecp%escandefaultprint=.false.

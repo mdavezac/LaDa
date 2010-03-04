@@ -76,9 +76,9 @@ W = array( [1, 0.5,0], dtype="float64" ), "W"
 
 # launch pescan for different jobs.
 for (kpoint, name), structure, relaxed in [ (G, Si, Si_relaxed) ]:
-  with Tempdir(keep=True) as tempdir:
+  with Tempdir(workdir="work", keep=True) as tempdir:
     # will save output to directory "name".
-    escan.directory = name
+    escan.directory = tempdir
     # computes at kpoint of deformed structure.
     escan.kpoint = deform_kpoint(kpoint, structure.cell, relaxed.cell)
     # computing 4 (spin polarized) states.

@@ -142,6 +142,7 @@ Module Escan
 
       call mpi_comm_size(escan_input%ecp%comm_handle, nnodes, ierr)
       call mpi_comm_rank(escan_input%ecp%comm_handle, inode, ierr)
+      inode = inode + 1
 
       ! Read in lattice and mesh information from potential input.
       if (inode .eq. 1) then
@@ -177,7 +178,8 @@ Module Escan
  
       call mpi_comm_rank( escan_input%ecp%comm_handle,inode,ierr)
       call mpi_comm_size( escan_input%ecp%comm_handle,nnodes,ierr)
-      inode = inode+1
+      inode = inode + 1
+
       Ecut = escan_input%Ecutoff
       AL(:,:) = lattice%rcell(:,:)
       n1 = escan_input%mesh(1)
