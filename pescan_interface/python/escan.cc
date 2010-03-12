@@ -315,7 +315,6 @@ namespace LaDa
     bp::object get_eigenvalues(Pescan::Interface const& _interface)
     {
       namespace numpy = LaDa::math::numpy;
-      import_array1( bp::object( bp::handle<>(bp::borrowed(Py_None)) ) );
       npy_intp dims[1] = {_interface.eigenvalues.size()};
 
       PyObject *eigs = PyArray_SimpleNewFromData( 1, dims, numpy::type<types::t_real>::value,
@@ -482,6 +481,7 @@ namespace LaDa
     {
 
       typedef LaDa::Pescan::Interface::GenPot t_GenPot;
+      import_array();
       bp::class_< t_GenPot >( "GenPot", "Wrapper around genpot parameters.", bp::no_init ) 
         .add_property( "mesh", &get_mesh, &set_mesh, "Tuple defining the FFT mesh.\n" ) 
         .add_property( "multiple_cell", &get_mcell, &set_mcell,

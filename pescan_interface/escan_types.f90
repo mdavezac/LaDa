@@ -79,7 +79,7 @@ Module Escan
                                          escan_input%Ecutoff,&
                                          escan_input%Gsmooth,&
                                          escan_input%KineticScaling
-          read(unitnumber,*) ! linenumber, escan_input%ecp%mx
+          read(unitnumber,*) linenumber, escan_input%ecp%mx
           read(unitnumber,*) ! Minimizer parameters,.
           read(unitnumber,*) ! input wavefunctions.
           read(unitnumber,*) ! input wavefunctions.
@@ -192,6 +192,11 @@ Module Escan
       delta_k=(2*pi)**3/vol
       totg=(0.5d0*4.0d0/3.0d0*pi*(sqrt(2.0d0*Ecut))**3)/delta_k
       mg_nx=2*(int(1.1*totg/nnodes)+100)    ! now we have the whole sphere
+      mx = escan_input%ecp%mx
+
+      nr=n1*n2*n3
+      mr=n1*n2*(n3+2)
+      mr_n=2*mr/nnodes    
  
     end subroutine set_common_blocks
 

@@ -26,6 +26,9 @@ extern "C"
   void FC_FUNC_(escan_getwfn_datadims, ESCAN_GETWFN_DATADIMS)(int*, int*, int*);
   void FC_FUNC_(escan_copy_wfndata, ESCAN_COPY_WFNDATA)(double*, double*, int*, int*, int*);
   void FC_FUNC_(escan_read_wfns, ESCAN_COPY_WFNDATA)(int*, char const*, int*, int*, MPI_Fint*);
+  void FC_FUNC_(escan_real_space_dimension, ESCAN_REAL_SPACE_DIMENSION)(int *);
+  void FC_FUNC_(escan_reciprocal_space_dimension, ESCAN_RECIPROCAL_SPACE_DIMENSION)(int *);
+  void FC_FUNC_(escan_get_nr, ESCAN_GET_NR)(int *);
 }
 
 namespace LaDa
@@ -87,14 +90,10 @@ namespace LaDa
       int a(orig.size()), b(indices.size());
       MPI_Comm __commC = (MPI_Comm) ( _interface.comm() ) ;
       MPI_Fint __commF = MPI_Comm_c2f( __commC );
-      std::cout << "reading\n";
       FC_FUNC_(escan_read_wfns, ESCAN_READ_WFNS)(&a, orig.c_str(), &b, &(indices[0]), &__commF);
-      std::cout << "read\n";
       // gets dimensions.
       int n0, n1, n2;
-      std::cout << "getting dims\n";
       FC_FUNC_(escan_getwfn_datadims, ESCAN_GETWFN_DATADIMS)(&n0, &n1, &n2);
-      std::cout << "gotten\n";
       // Creates numpy objects.
       npy_intp wfn_stride[3] = { n2, n1, n0 }; // fortran dims.
       npy_intp gpoint_stride[2] = { 3, n0 };   // fortran dims
@@ -105,9 +104,7 @@ namespace LaDa
       char * const cptr_gps( reinterpret_cast<PyArrayObject*>(gpoints)->data );
       double * const ptr_wfns( reinterpret_cast<double*>(cptr_wfns) );
       double * const ptr_gps( reinterpret_cast<double*>(cptr_gps) );
-      std::cout << "copying\n";
       FC_FUNC_(escan_copy_wfndata, ESCAN_COPY_WFNDATA)(ptr_wfns, ptr_gps, &n0, &n1, &n2);
-      std::cout << "copied\n";
       
       // returns to original working directory.
       chdir(origpath.string().c_str());
@@ -116,9 +113,168 @@ namespace LaDa
       return bp::make_tuple( bp::object(bp::handle<>(bp::borrowed(gpoints))), 
                              bp::object(bp::handle<>(bp::borrowed(wfns))) );
     }
+
+    class Position
+    {
+      public:
+        Position(bm::communicator const &_comm) : comm_(_comm) 
+        {
+          types::t_real data[9];
+          FC_FUNC_(escan_get_lattice, escan_get_lattice)(data);
+          for(size_t i(0); i < 0; ++i)
+            for(size_t j(0); j < 0; ++j) mesh_(i,j) = data[i*3+j];
+          npy_intp dims[0] = {3};
+          PyObject *ob = PyArray_SimpleNew(1, dims, math::numpy::types<types::t_real>::value);
+          if( ob != NULL and Py_None !=  PyErr_Occured() )  ob->flag |= NPY_CARRAY_RO;
+          numpy_array_ = bp::object( bp::handle<>(bp::borrowed(ob)) );
+          FC_FUNC_(escan_get_nr, ESCAN_GET_NR)(&nr_);
+          FC_FUNC_(escan_getwfn_datadims, ESCAN_GETWFN_DATADIMS)(&n1_, &n2_, &n3_);
+          max_ = nr_ / comm_.size();
+          index_ = -1;
+        }
+        int __len__() const { return nr_ / comm_.size(); }
+        bp::object __getitem__( int _i )
+        {
+          if( _i < 0 ) _i += max_;
+          if( _i < 0 or _i >= max_ )
+          {
+            PyErr_SetString(PyExc_IndexError, "index out-of-range.\n");
+            bp::throw_error_already_set();
+            return bp::object();
+          }
+          if( numpy_array_.ptr() == Py_None )
+          {
+            PyErr_SetString(PyExc_RuntimeError, "Could not create numpy array.\n");
+            bp::throw_error_already_set();
+            return bp::object();
+          }
+          PyArray_Object * const array = reinterpret_cast<PyArray_Object*>(numpy_array_.ptr());
+          double * const data = (double*) array->data;
+          int const u( (_i + 1) * comm_.rank() * nr_ / comm_.size() - 1);
+          math::rVector3d const a(u/(n3_*n2_), (u%(n3_*n2_)) / n3, (u%(n3_*n2_)) % n3);
+          math::rVector3d const b( mesh_ * a ); 
+          data[0] = b(0);
+          data[1] = b(1);
+          data[2] = b(2);
+          return numpy_array_;
+        }
+        void iter() const {};
+        bp::object next()
+        { 
+          ++index_;
+          if( index_ < max_ ) return __getitem__(index_);
+          
+          PyErr_SetString(PyExc_StopIteration, "end of range.");
+          bp::throw_error_already_set();
+          return bp::object();
+        }
+
+      private:
+        bm::communicator comm_;
+        bp::object numpy_array_;
+        math::rVector3d pos;
+        math::rMatrix3d mesh_;
+        int index_;
+        int max_;
+        int nr_;
+        int n3_, n2_, n1_;
+    };
+
+    bp::tuple to_realspace( bp::object const &_gwfns, bm::communicator const &_comm )
+    {
+      // sanity checks
+      if( not PyArray_Check(_gwfns.ptr()) ) 
+      {
+        PyErr_SetString(PyExc_ValueError, "Argument is not a numpy array.\n");
+        bp::throw_error_already_set();
+        return bp::tuple();
+      }
+      if(not numpy::is_complex(obj_ptr))
+      {
+        PyErr_SetString(PyExc_ValueError, "Argument is not a numpy array.\n");
+        bp::throw_error_already_set();
+        return bp::tuple();
+      }
+      PyArrayObject *array = reinterpret_cast<PyArrayObject*>(obj_ptr);
+      if(array->strides[array->nd-1] != 1) 
+      {
+        PyErr_SetString(PyExc_ValueError, "Argument is not a contiguous numpy array. \n");
+        bp::throw_error_already_set();
+        return bp::tuple();
+      }
+      int n;
+      FC_FUNC_(escan_reciprocal_space_dimension, ESCAN_RECIPROCAL_SPACE_DIMENSION)(n);
+      if( array->dimensions != n ) 
+      {
+        PyErr_SetString(PyExc_ValueError, "Unexpected array size. \n");
+        bp::throw_error_already_set();
+        return bp::tuple();
+      }
+     
+      // creates output array
+      std::vector<npy_intp> dims;
+      for(int i(0); i < array->nd-2; ++i) dims.push_back(i);
+      dims.push_back(0);
+      FC_FUNC_(escan_real_space_dimension, ESCAN_REAL_SPACE_DIMENSION)(&dims.back());
+      if(dims.back() % 2 != 0) 
+      {
+        PyExc_SetString(PyExc_RuntimeError, "Wrong array dimension in pescan.");
+        bp::throw_error_already_set();
+        return bp::tuple();
+      }
+      dims.back() >>= 1;
+      PyObject *result = PyArray_SimpleNew(dims.size(), &dims[0], NPY_CDOUBLE);
+      if( PyErr_Occured() != Py_None )
+      {
+        bp::throw_error_already_set();
+        return bp::tuple();
+      }
+      bp::object object( bp::handle<>(bp::borrowed(result)) );
+
+      // now loops through arrays and perform fft
+      if( array->nd == 1 ) 
+      {
+        int sign = -1;
+        FC_FUNC_(d3fft_comp, D3FFT_COMP)((double*)array->data, (double*)result->data, sign);
+      } 
+      else
+      {
+        int dim = array->nd-1;
+        PyArrayIterObject *real_iter 
+          = reinterpret_cast<PyArrayIterObject*>(PyArray_IterAllButAxis(result, dim));
+        if( not real_iter )
+        {
+          PyErr_SetString(PyExc_RuntimeError, "Could not iterate.\n");
+          bp::throw_error_already_set();
+          return bp::tuple();
+        }
+        PyArrayIterObject *recip_iter 
+          = reinterpret_cast<PyArrayIterObject*>(PyArray_IterAllButAxis(array, dim));
+        bp::object dummyA( bp::handle<>(bp::borrowed(real_iter)) );
+        if( not recip_iter )
+        {
+          PyErr_SetString(PyExc_RuntimeError, "Could not iterate.\n");
+          bp::throw_error_already_set();
+          return bp::tuple();
+        }
+        bp::object dummyB( bp::handle<>(bp::borrowed(recip_iter)) );
+        while (real_iter->index < real_iter->size and recip_iter < recip_iter->size)  
+        {
+          int sign = -1;
+          FC_FUNC_(d3fft_comp, D3FFT_COMP)( (double*)recip_iter->dataptr,
+                                            (double*)real_iter->dataptr, sign);
+          PyArray_ITER_NEXT(real_iter);
+          PyArray_ITER_NEXT(recip_iter);
+        }
+      }
+      
+      // finally creates real space position data.
+      return bp::tuple(object, Position(_comm));
+    }
  
     void expose_wfns()
     {
+      import_array();
       bp::def( "wavefunctions", &get_wavefunctions, 
                (bp::arg("escan"), bp::arg("indices")), 
                "Returns wavefunctions/G-points for a given indices.\n\n"

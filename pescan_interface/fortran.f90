@@ -201,3 +201,16 @@ subroutine escan_copy_wfndata( wfns, gpoints, n0, n1, n2 )
   call destroy_wavefunctions
   call cleanup_fft
 end subroutine escan_copy_wfndata
+
+! gets dimension for real space wavefunctions.
+subroutine escan_real_space_dimension(n)
+  use data, only: mr
+  integer, intent(out) :: n
+  n = mr
+end subroutine
+! gets dimension for real space wavefunctions.
+subroutine escan_reciprocal_space_dimension(n)
+  use data, only: mr
+  integer, intent(out) :: n
+  n = mr
+end subroutine

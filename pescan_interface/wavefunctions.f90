@@ -16,7 +16,7 @@ module Wfns_module
     subroutine read_wavefunctions(filename, indices, mpicomm)
       use Escan, only: read_escaninput, read_potentialinput, set_common_blocks, &
                        prepare_fft_and_allocate_arrays, t_Lattice, t_Escan
-      use data, only : mg_nx, wg_n
+      use data, only : mg_nx
       use load_data, only : ngtotnod, n1p_n, n2p_n, n3p_n
       ! Filename of escan input (not wavefunction input!)
       character(len=*), intent(in) :: filename
@@ -37,23 +37,16 @@ module Wfns_module
       integer(kind=8), dimension(3) :: int_gpoints
  
       ! Read parameters from file and sets common blocks
-      write(*,*) 0
       call read_escaninput(filename, params, mpicomm)
-      write(*,*) 1
       call read_potentialinput(params, lattice)
-      write(*,*) 2
       call set_common_blocks(params, lattice)
-      write(*,*) 3
       ! Sets number of spins
       nb_spins = 1
       if( params%with_spinorbit .eqv. .true. ) nb_spins = 2;
       ! first kills current wavefunctions.
-      write(*,*) 4
       call destroy_wavefunctions
-      write(*,*) 5
       ! prepares wavefunctions.
       call prepare_fft_and_allocate_arrays(params, lattice)
-      write(*,*) 6
  
       ! now reads actual data.
       if( params%with_spinorbit ) then
@@ -71,7 +64,6 @@ module Wfns_module
                            params%ecp%filewg_out, size( indices ), &
                            indices, 0 )
       endif
-      write(*,*) 7
 
       nb_gpoints = ngtotnod( inode )
       allocate( wavefunctions%gpoints( nb_gpoints, 3 ) )
@@ -87,13 +79,12 @@ module Wfns_module
         if( int_gpoints(3) .gt. n3 / 2 ) int_gpoints(3) = int_gpoints(3) - n3
       
         wavefunctions%gpoints(ig, 1) &
-          = 2.d0 * pi * sum( lattice%kcell(1,:) * int_gpoints ) * wg_n(ig) * wg_n(ig)
+          = 2.d0 * pi * sum( lattice%kcell(1,:) * int_gpoints )
         wavefunctions%gpoints(ig, 2) &
-          = 2.d0 * pi * sum( lattice%kcell(2,:) * int_gpoints ) * wg_n(ig) * wg_n(ig)
+          = 2.d0 * pi * sum( lattice%kcell(2,:) * int_gpoints )
         wavefunctions%gpoints(ig, 3) & 
-          = 2.d0 * pi * sum( lattice%kcell(3,:) * int_gpoints ) * wg_n(ig) * wg_n(ig)
+          = 2.d0 * pi * sum( lattice%kcell(3,:) * int_gpoints )
       enddo ! ig
-      write(*,*) 8
  
     end subroutine read_wavefunctions
     

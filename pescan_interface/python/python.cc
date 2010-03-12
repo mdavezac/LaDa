@@ -11,6 +11,8 @@
 #include <boost/python/handle.hpp>
 #include <boost/python/borrowed.hpp>
 
+#include <numpy/ndarrayobject.h>
+
 #include "escan.hpp"
 #include "bandgap.hpp"
 #include "emass.hpp"

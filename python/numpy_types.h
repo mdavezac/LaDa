@@ -108,6 +108,12 @@ namespace LaDa
                or nptype ==  NPY_LONGDOUBLE;
       }
       
+      //! Returns true if object is complex.
+      inline bool is_complex(PyObject *_obj_ptr)
+      {
+        int const nptype = PyArray_ObjectType(_obj_ptr, 0);
+        return    nptype ==  NPY_CDOUBLE; 
+      };
       //! Returns true if object is integer.
       inline bool is_integer(PyObject *_obj_ptr)
       {
