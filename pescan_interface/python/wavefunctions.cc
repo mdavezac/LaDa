@@ -26,15 +26,22 @@ extern "C"
   void FC_FUNC_(escan_getwfn_datadims, ESCAN_GETWFN_DATADIMS)(int*, int*, int*);
   void FC_FUNC_(escan_copy_wfndata, ESCAN_COPY_WFNDATA)(double*, double*, int*, int*, int*);
   void FC_FUNC_(escan_read_wfns, ESCAN_COPY_WFNDATA)(int*, char const*, int*, int*, MPI_Fint*);
-  void FC_FUNC_(escan_real_space_dimension, ESCAN_REAL_SPACE_DIMENSION)(int *);
-  void FC_FUNC_(escan_reciprocal_space_dimension, ESCAN_RECIPROCAL_SPACE_DIMENSION)(int *);
   void FC_FUNC_(escan_get_nr, ESCAN_GET_NR)(int *);
+  void FC_FUNC_(escan_get_mr, ESCAN_GET_MR)(int *);
+  void FC_FUNC_(escan_get_cell, ESCAN_GET_CELL)(double *, double *, double *);
 }
 
 namespace LaDa
 {
   namespace python
   {
+    void escan_get_cell( math::rMatrix3d &_cell )
+    {
+      double a[9], *b;
+      FC_FUNC_(escan_get_cell, ESCAN_GET_CELL)(a, a+3, a+6);
+      for(size_t i(0); i < 9; ++i, ++b) _cell(i%3, i/3) = *b;
+    }
+
     namespace bp = boost::python;
     namespace bfs = boost::filesystem;
     namespace bm = boost::mpi;
@@ -90,8 +97,8 @@ namespace LaDa
       int a(orig.size()), b(indices.size());
       MPI_Comm __commC = (MPI_Comm) ( _interface.comm() ) ;
       MPI_Fint __commF = MPI_Comm_c2f( __commC );
-      FC_FUNC_(escan_read_wfns, ESCAN_READ_WFNS)(&a, orig.c_str(), &b, &(indices[0]), &__commF);
       // gets dimensions.
+      FC_FUNC_(escan_prepare_params, ESCAN_PREPARE_PARAMS)(&n0, &n1, &n2);
       int n0, n1, n2;
       FC_FUNC_(escan_getwfn_datadims, ESCAN_GETWFN_DATADIMS)(&n0, &n1, &n2);
       // Creates numpy objects.
@@ -104,7 +111,14 @@ namespace LaDa
       char * const cptr_gps( reinterpret_cast<PyArrayObject*>(gpoints)->data );
       double * const ptr_wfns( reinterpret_cast<double*>(cptr_wfns) );
       double * const ptr_gps( reinterpret_cast<double*>(cptr_gps) );
-      FC_FUNC_(escan_copy_wfndata, ESCAN_COPY_WFNDATA)(ptr_wfns, ptr_gps, &n0, &n1, &n2);
+      FC_FUNC_(escan_read_wfns, ESCAN_READ_WFNS)
+              ( 
+                &a, orig.c_str(), 
+                &b, &(indices[0]), 
+                ptr_wfns, n0, n1, n2,
+                ptr_gps, n0, 3,
+                &__commF
+              );
       
       // returns to original working directory.
       chdir(origpath.string().c_str());
@@ -120,12 +134,11 @@ namespace LaDa
         Position(bm::communicator const &_comm) : comm_(_comm) 
         {
           types::t_real data[9];
-          FC_FUNC_(escan_get_lattice, escan_get_lattice)(data);
-          for(size_t i(0); i < 0; ++i)
-            for(size_t j(0); j < 0; ++j) mesh_(i,j) = data[i*3+j];
-          npy_intp dims[0] = {3};
-          PyObject *ob = PyArray_SimpleNew(1, dims, math::numpy::types<types::t_real>::value);
-          if( ob != NULL and Py_None !=  PyErr_Occured() )  ob->flag |= NPY_CARRAY_RO;
+          escan_get_cell(mesh_);
+          npy_intp dims[1] = {3};
+          PyObject *ob = PyArray_SimpleNew(1, dims, math::numpy::type<types::t_real>::value);
+          if( ob != NULL and Py_None !=  PyErr_Occurred() ) 
+            reinterpret_cast<PyArrayObject*>(ob)->flags |= NPY_CARRAY_RO;
           numpy_array_ = bp::object( bp::handle<>(bp::borrowed(ob)) );
           FC_FUNC_(escan_get_nr, ESCAN_GET_NR)(&nr_);
           FC_FUNC_(escan_getwfn_datadims, ESCAN_GETWFN_DATADIMS)(&n1_, &n2_, &n3_);
@@ -148,10 +161,10 @@ namespace LaDa
             bp::throw_error_already_set();
             return bp::object();
           }
-          PyArray_Object * const array = reinterpret_cast<PyArray_Object*>(numpy_array_.ptr());
+          PyArrayObject * const array = reinterpret_cast<PyArrayObject*>(numpy_array_.ptr());
           double * const data = (double*) array->data;
           int const u( (_i + 1) * comm_.rank() * nr_ / comm_.size() - 1);
-          math::rVector3d const a(u/(n3_*n2_), (u%(n3_*n2_)) / n3, (u%(n3_*n2_)) % n3);
+          math::rVector3d const a(u/(n3_*n2_), (u%(n3_*n2_)) / n3_, (u%(n3_*n2_)) % n3_);
           math::rVector3d const b( mesh_ * a ); 
           data[0] = b(0);
           data[1] = b(1);
@@ -172,7 +185,6 @@ namespace LaDa
       private:
         bm::communicator comm_;
         bp::object numpy_array_;
-        math::rVector3d pos;
         math::rMatrix3d mesh_;
         int index_;
         int max_;
@@ -182,6 +194,7 @@ namespace LaDa
 
     bp::tuple to_realspace( bp::object const &_gwfns, bm::communicator const &_comm )
     {
+      PyObject *const obj_ptr = _gwfns.ptr();
       // sanity checks
       if( not PyArray_Check(_gwfns.ptr()) ) 
       {
@@ -189,7 +202,7 @@ namespace LaDa
         bp::throw_error_already_set();
         return bp::tuple();
       }
-      if(not numpy::is_complex(obj_ptr))
+      if(not math::numpy::is_complex(obj_ptr))
       {
         PyErr_SetString(PyExc_ValueError, "Argument is not a numpy array.\n");
         bp::throw_error_already_set();
@@ -203,7 +216,7 @@ namespace LaDa
         return bp::tuple();
       }
       int n;
-      FC_FUNC_(escan_reciprocal_space_dimension, ESCAN_RECIPROCAL_SPACE_DIMENSION)(n);
+      FC_FUNC_(escan_get_mr, ESCAN_GET_MR)(&n);
       if( array->dimensions != n ) 
       {
         PyErr_SetString(PyExc_ValueError, "Unexpected array size. \n");
@@ -215,7 +228,7 @@ namespace LaDa
       std::vector<npy_intp> dims;
       for(int i(0); i < array->nd-2; ++i) dims.push_back(i);
       dims.push_back(0);
-      FC_FUNC_(escan_real_space_dimension, ESCAN_REAL_SPACE_DIMENSION)(&dims.back());
+      FC_FUNC_(escan_get_nr, ESCAN_GET_NR)(&dims.back());
       if(dims.back() % 2 != 0) 
       {
         PyExc_SetString(PyExc_RuntimeError, "Wrong array dimension in pescan.");

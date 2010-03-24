@@ -157,17 +157,14 @@ subroutine momentum( in_inputfilename, in_fsize, &
 end subroutine
 
 ! Reads wavefunction with given index
-subroutine escan_read_wfns(nf, filename, ni, indices, mpicomm)
+subroutine escan_read_wfns(ni, indices)
   use Wfns_module
   implicit none
 
-  integer, intent(in) :: nf                           ! length of filename
-  character(len=nf), intent(in) :: filename           ! filename of escan input
   integer, intent(in) :: ni                           ! number of indices
   integer, dimension(ni), intent(in) :: indices       ! indices to wavefunctions.
-  integer, intent(in) :: mpicomm                      ! mpi communicator
 
-  call read_wavefunctions(filename, indices, mpicomm)
+  call read_wavefunctions(indices, mpicomm)
 
 end subroutine escan_read_wfns
 ! gets dimension of wavefunctions
@@ -203,14 +200,28 @@ subroutine escan_copy_wfndata( wfns, gpoints, n0, n1, n2 )
 end subroutine escan_copy_wfndata
 
 ! gets dimension for real space wavefunctions.
-subroutine escan_real_space_dimension(n)
-  use data, only: mr
+subroutine escan_get_nr(n)
+  use data, only: nr
   integer, intent(out) :: n
-  n = mr
+  n = nr
 end subroutine
 ! gets dimension for real space wavefunctions.
-subroutine escan_reciprocal_space_dimension(n)
+subroutine escan_get_mr(n)
   use data, only: mr
   integer, intent(out) :: n
   n = mr
 end subroutine
+
+! gets cell vectors
+subroutine escan_get_cell(a0, a1, a2)
+  real(kind=8, len=3), intent(inout) :: a0
+  real(kind=8, len=3), intent(inout) :: a1
+  real(kind=8, len=3), intent(inout) :: a2
+  real(kind=8) ::  AL(3,3)
+  common /comAD/AL
+
+  a0 = AL(:,1)
+  a1 = AL(:,2)
+  a2 = AL(:,3)
+end subroutine
+

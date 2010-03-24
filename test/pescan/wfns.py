@@ -86,7 +86,9 @@ for (kpoint, name), structure, relaxed in [ (G, Si, Si_relaxed) ]:
     # divides by two if calculations are not spin polarized.
     if norm(escan.kpoint) < 1e-6 or escan.potential != potential.spinorbit: escan.nbstates /= 2
     # Now just do it.
+    print "wtd"
     eigenvalues = escan(vff, relaxed)
+    print "wtf"
     # checks expected are as expected. 
     if world.rank == 0: print "Ok - %s: %s -> %s: %s" % (name, kpoint, escan.kpoint, eigenvalues)
 
