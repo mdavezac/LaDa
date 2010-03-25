@@ -2,7 +2,7 @@
 from numpy import array as np_array
 class Bandgap(object):
   """ An evaluator function for bandgaps at S{Gamma}. """
-  def __init__(self, converter, input = "input.xml", lattice = None, mpi = None):
+  def __init__(self, converter, input = "input.xml", lattice = None, comm = None):
     """ Initializes the bandgap object. 
 
         @param converter: is a functor which converts between a bitstring and a
@@ -20,9 +20,9 @@ class Bandgap(object):
     from ....escan import BandGap as BGFunctional
     from ... import crystal
 
-    self.world = mpi
+    self.comm = comm
     """ MPI Communicator. Defaults to boost.mpi.world. """
-    if self.world == None: self.world = world
+    if self.comm == None: self.comm = world
 
     self.converter = converter 
     """ Conversion functor between structures and bitstrings. """
@@ -32,12 +32,12 @@ class Bandgap(object):
     if self.lattice == None: self.lattice = crystal.Lattice(input)
     self.lattice.set_as_crystal_lattice()
 
-    self.vff = LayeredVff(input, self.world) # Creates vff functional
+    self.vff = LayeredVff(input, self.comm) # Creates vff functional
     """ Vff functional """
     self.vff.direction = converter.structure.cell[:,0]
     self.vff.structure.scale = self.lattice.scale
 
-    self.bandgap = BGFunctional(input, self.world) # creates bandgap functional
+    self.bandgap = BGFunctional(input, self.comm) # creates bandgap functional
     """ Bandgap functional """
     self.bandgap.scale = converter.structure
 
@@ -67,10 +67,10 @@ class Bandgap(object):
  
     # moves to new calculation directory
     self.bandgap.directory = self.directory_prefix + "_" + str(self.nbcalc)
-    if self.world.do_print: 
+    if self.comm.do_print: 
       if exists(self.bandgap.directory): rmtree( self.bandgap.directory)
       makedirs(self.bandgap.directory)
-    self.world.barrier()
+    self.comm.barrier()
  
     # moves to calculation directory
     with Changedir(self.bandgap.directory) as pwd:
@@ -79,7 +79,7 @@ class Bandgap(object):
       indiv.epi_energy = structure.energy
      
       # Computes bandgap
-      self.bandgap.vff_inputfile = "atom_input." + str( self.world.rank )
+      self.bandgap.vff_inputfile = "atom_input." + str( self.comm.rank )
       self.vff.print_escan_input(self.bandgap.vff_inputfile)
       self.bandgap(structure)
       indiv.bands = self.bandgap.bands
@@ -152,7 +152,7 @@ class Directness(object):
   W = np_array( [1, 0.5,0], dtype="float64" )
   """ A W point of the reciprocal zinc-blend lattice. """
 
-  def __init__( self, converter, which, input = "input.xml", lattice = None, mpi = None):
+  def __init__( self, converter, which, input = "input.xml", lattice = None, comm = None):
     """ Initializes the Directness object. 
 
         @param converter: is a functor which converts between a bitstring and a
@@ -189,15 +189,15 @@ class Directness(object):
     if self.lattice == None: self.lattice = crystal.Lattice(input)
     self.lattice.set_as_crystal_lattice()
 
-    self.world = mpi
+    self.comm = comm
     """ MPI Communicator. Defaults to boost.mpi.world. """
-    if self.world == None: self.world = world
+    if self.comm == None: self.comm = world
 
-    self.vff = LayeredVff(input, self.world) # Creates vff functional
+    self.vff = LayeredVff(input, self.comm) # Creates vff functional
     """ Vff functional """
     self.vff.direction = converter.structure.cell[:,0]
 
-    self.escan = Escan(input, self.world) # creates an escan functional
+    self.escan = Escan(input, self.comm) # creates an escan functional
     """ Bandgap functional """
     # only one state computed.
     self.escan.nbstates = 4 
@@ -230,15 +230,15 @@ class Directness(object):
 
     # create and change directory.
     basedir = self.directory_prefix + "_" + str(self.nbcalc)
-    self.world.barrier()
-    if self.world.do_print:
+    self.comm.barrier()
+    if self.comm.do_print:
       if exists(basedir): rmtree(basedir)
 
     for kpoint, name, reference in self.which:
       # create new calc directory
       self.escan.directory = join(basedir, name)
-      if self.world.do_print: makedirs(self.escan.directory)
-      self.world.barrier()
+      if self.comm.do_print: makedirs(self.escan.directory)
+      self.comm.barrier()
 
       # change to calc directory
       with Changedir(self.escan.directory) as pwd:
