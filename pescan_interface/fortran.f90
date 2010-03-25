@@ -156,72 +156,41 @@ subroutine momentum( in_inputfilename, in_fsize, &
 
 end subroutine
 
+
+! prepares to read wavefunctions
+subroutine escan_wfns_init(n, filename, mpicomm)
+  use wfns_module, only: init
+  integer, intent(in) :: n                           ! length of filename
+  character(len=n), intent(in) :: filename           ! filename of escan input
+  integer, intent(in) :: mpicomm                     ! mpi communicator
+  call init(filename, mpicomm)
+end subroutine escan_wfns_init
+! cleanup module
+subroutine escan_wfns_cleanup
+  use wfns_module, only: wfns_cleanup
+  call wfns_cleanup
+end subroutine escan_wfns_cleanup
+
+! gets array dimensions
+subroutine escan_wfns_get_array_dimensions( n0, n2, g0 )
+  use wfns_module, only: get_array_dimensions
+  integer, intent(out) :: n0, n2, g0
+  call get_array_dimensions(n0, n2, g0)
+end subroutine escan_wfns_get_array_dimensions
+
 ! Reads wavefunction with given index
-subroutine escan_read_wfns(ni, indices)
-  use Wfns_module
+subroutine escan_wfns_read(n0, n1, n2, g0, indices, wfns, gvecs )
+  use wfns_module, only: read_wavefunctions
   implicit none
 
-  integer, intent(in) :: ni                           ! number of indices
-  integer, dimension(ni), intent(in) :: indices       ! indices to wavefunctions.
+  integer, intent(in) :: n0, n1, n2, g0               ! all dimensions.
+  integer, dimension(n1), intent(in) :: indices       ! indices to wavefunctions
+  ! output wavefunctions
+  complex(kind=8), dimension(n0, n1, n2), intent(out) :: wfns
+  ! output g vectors.
+  real(kind=8), dimension(g0,3), intent(out) :: gvecs
 
-  call read_wavefunctions(indices, mpicomm)
+  call read_wavefunctions(indices, wfns, gvecs)
 
-end subroutine escan_read_wfns
-! gets dimension of wavefunctions
-subroutine escan_getwfn_datadims( n0, n1, n2 )
-  use Wfns_module
-  implicit none
-
-  integer, intent(out) :: n0 
-  integer, intent(out) :: n1 
-  integer, intent(out) :: n2 
-
-  n0 = size(wavefunctions%gpoints, 1)
-  n1 = size(wavefunctions%values, 2)
-  n2 = size(wavefunctions%values, 3)
-end subroutine escan_getwfn_datadims
-
-! Copies wavefunctions and gpoints
-subroutine escan_copy_wfndata( wfns, gpoints, n0, n1, n2 )
-  use Wfns_module, only: destroy_wavefunctions, wavefunctions
-  use Escan, only: cleanup_fft
-  implicit none
-
-  complex(kind=8), dimension(n0, n1,  n2), intent(inout) :: wfns
-  real(kind=8), dimension(n0, 3), intent(inout) :: gpoints
-  integer, intent(in) :: n0 
-  integer, intent(in) :: n1 
-  integer, intent(in) :: n2 
-
-  wfns(:,:,:) = wavefunctions%values(:n0, :n1, :n2)
-  gpoints(:,:) = wavefunctions%gpoints(:, :)
-  call destroy_wavefunctions
-  call cleanup_fft
-end subroutine escan_copy_wfndata
-
-! gets dimension for real space wavefunctions.
-subroutine escan_get_nr(n)
-  use data, only: nr
-  integer, intent(out) :: n
-  n = nr
-end subroutine
-! gets dimension for real space wavefunctions.
-subroutine escan_get_mr(n)
-  use data, only: mr
-  integer, intent(out) :: n
-  n = mr
-end subroutine
-
-! gets cell vectors
-subroutine escan_get_cell(a0, a1, a2)
-  real(kind=8, len=3), intent(inout) :: a0
-  real(kind=8, len=3), intent(inout) :: a1
-  real(kind=8, len=3), intent(inout) :: a2
-  real(kind=8) ::  AL(3,3)
-  common /comAD/AL
-
-  a0 = AL(:,1)
-  a1 = AL(:,2)
-  a2 = AL(:,3)
-end subroutine
+end subroutine escan_wfns_read
 

@@ -8,11 +8,13 @@
 
 #include <boost/python/def.hpp>
 #include <boost/python/object.hpp>
+#include <boost/python/class.hpp>
 #include <boost/python/tuple.hpp>
 #include <boost/python/borrowed.hpp>
 #include <boost/python/handle.hpp>
 #include <boost/python/extract.hpp>
 #include <boost/python/errors.hpp>
+#include <boost/python/return_arg.hpp>
 
 #include <python/numpy_types.h>
 #include <opt/initial_path.h>
@@ -23,12 +25,15 @@
 
 extern "C"
 {
-  void FC_FUNC_(escan_getwfn_datadims, ESCAN_GETWFN_DATADIMS)(int*, int*, int*);
-  void FC_FUNC_(escan_copy_wfndata, ESCAN_COPY_WFNDATA)(double*, double*, int*, int*, int*);
-  void FC_FUNC_(escan_read_wfns, ESCAN_COPY_WFNDATA)(int*, char const*, int*, int*, MPI_Fint*);
+  void FC_FUNC_(escan_wfns_init, ESCAN_WFNS_INIT)(int*, char const*, MPI_Fint*);
+  void FC_FUNC_(escan_wfns_get_array_dimensions, ESCAN_WFNS_GET_ARRAY_DIMENSIONS)(int*, int*, int*);
+  void FC_FUNC_(escan_wfns_read, ESCAN_WFNS_READ)(int*, int*, int*, int*, int const*, double*, double*);
   void FC_FUNC_(escan_get_nr, ESCAN_GET_NR)(int *);
-  void FC_FUNC_(escan_get_mr, ESCAN_GET_MR)(int *);
+  void FC_FUNC_(escan_get_mr_n, ESCAN_GET_MR_N)(int *);
+  void FC_FUNC_(escan_get_n2_n3, ESCAN_GET_N2_N3)(int*, int*);
   void FC_FUNC_(escan_get_cell, ESCAN_GET_CELL)(double *, double *, double *);
+  void FC_FUNC_(d3fft_comp, D3FFT_COMP)(double*, double*, int*);
+  void FC_FUNC_(escan_wfns_cleanup, ESCAN_WFNS_CLEANUP)();
 }
 
 namespace LaDa
@@ -46,86 +51,109 @@ namespace LaDa
     namespace bfs = boost::filesystem;
     namespace bm = boost::mpi;
  
-    bp::tuple get_wavefunctions(Pescan::Interface const &_interface, bp::object const &_object)
+    class Wfns
     {
-      std::vector<int> indices;
+      public:
+        Wfns(Pescan::Interface const &_pescan, bp::object const &_object);
+         
+        bp::tuple __enter__() const;
+        void __exit__(bp::object const&, bp::object const&, bp::object const&) const 
+          { FC_FUNC_(escan_wfns_cleanup, ESCAN_WFNS_CLEANUP)(); }
+
+      private:
+        Pescan::Interface interface_;
+        std::vector<int> indices_;
+    };
+
+    Wfns :: Wfns   (Pescan::Interface const &_pescan, bp::object const &_object) 
+                 : interface_(_pescan)
+    {
       // extract indices.
       if( bp::len(_object) == 0 )
       {
-        try { indices.push_back( bp::extract<int>(_object) ); }
+        try { indices_.push_back( bp::extract<int>(_object) ); }
         catch (...) 
         {
           PyErr_SetString(PyExc_ValueError, "Second argument should integer or sequence.\n");
           bp::throw_error_already_set();
-          return bp::tuple();
+          return;
         }
       }
       else 
       {
         for(size_t i(0); i < bp::len(_object); ++i)
-          try { indices.push_back( bp::extract<int>(_object[i]) ); }
+          try { indices_.push_back( bp::extract<int>(_object[i]) ); }
           catch (...) 
           {
             PyErr_SetString( PyExc_ValueError, 
                              "Second argument should integer or sequence of integers.\n" );
             bp::throw_error_already_set();
-            return bp::tuple();
+            return;
           }
       }
       //! Makes sure indices are in 1 ... 
-      int N = _interface.escan.nbstates;
-      foreach(int &i, indices)
+      int N = interface_.escan.nbstates;
+      foreach(int &i, indices_)
       {
-        if( i < 0 ) i += _interface.escan.nbstates;
-        if( i < 0 or i >= _interface.escan.nbstates)
+        if( i < 0 ) i += interface_.escan.nbstates;
+        if( i < 0 or i >= interface_.escan.nbstates)
         {
           PyErr_SetString(PyExc_IndexError, "Wavefunction index out-of-range.\n");
           bp::throw_error_already_set();
-          return bp::tuple();
+          return;
         }
         i += 1; // fortran index.
       }
- 
+    } 
+    bp::tuple Wfns::__enter__() const 
+    {
       // change working directory.
-      Pescan::Interface::t_Path rootpath = opt::InitialPath::path()/_interface.get_dirname();
+      Pescan::Interface::t_Path rootpath = opt::InitialPath::path()/interface_.get_dirname();
       Pescan::Interface::t_Path origpath = bfs::current_path();
       chdir(rootpath.string().c_str());
-      // reads wavefunctions
-      std::string const orig =   _interface.escan.filename.string()
+      // prepares to read wavefinctions
+      std::string const orig =   interface_.escan.filename.string()
                                + "."
                                + boost::lexical_cast<std::string>(bm::communicator().rank());
-      int a(orig.size()), b(indices.size());
-      MPI_Comm __commC = (MPI_Comm) ( _interface.comm() ) ;
+      int a(orig.size()), b(indices_.size());
+      MPI_Comm __commC = (MPI_Comm) ( interface_.comm() ) ;
       MPI_Fint __commF = MPI_Comm_c2f( __commC );
+      FC_FUNC_(escan_wfns_init, ESCAN_WFNS_INIT)(&a, orig.c_str(), &__commF);
       // gets dimensions.
-      FC_FUNC_(escan_prepare_params, ESCAN_PREPARE_PARAMS)(&n0, &n1, &n2);
-      int n0, n1, n2;
-      FC_FUNC_(escan_getwfn_datadims, ESCAN_GETWFN_DATADIMS)(&n0, &n1, &n2);
+      int n0, n1(indices_.size()), n2, g0, g1(3);
+      FC_FUNC_(escan_wfns_get_array_dimensions, ESCAN_WFNS_GET_ARRAY_dimensions)(&n0, &n2, &g0);
+      
       // Creates numpy objects.
-      npy_intp wfn_stride[3] = { n2, n1, n0 }; // fortran dims.
-      npy_intp gpoint_stride[2] = { 3, n0 };   // fortran dims
-      PyObject *wfns = PyArray_SimpleNew(3, wfn_stride, NPY_CDOUBLE);
+      npy_intp wfn_dims[3] = { n0, n1, n2 }; // fortran dims.
+      npy_intp gpoint_dims[2] = { g0, g1 };   // fortran dims
+      PyObject *wfns = PyArray_ZEROS(3, wfn_dims, NPY_CDOUBLE, 1);
       PyObject *gpoints 
-         = PyArray_SimpleNew(2, gpoint_stride, math::numpy::type<types::t_real>::value);
+         = PyArray_ZEROS(2, gpoint_dims, math::numpy::type<types::t_real>::value, 1);
       char * const cptr_wfns( reinterpret_cast<PyArrayObject*>(wfns)->data );
       char * const cptr_gps( reinterpret_cast<PyArrayObject*>(gpoints)->data );
       double * const ptr_wfns( reinterpret_cast<double*>(cptr_wfns) );
       double * const ptr_gps( reinterpret_cast<double*>(cptr_gps) );
-      FC_FUNC_(escan_read_wfns, ESCAN_READ_WFNS)
+      
+      reinterpret_cast<PyArrayObject*>(wfns)->dimensions[0]
+        = reinterpret_cast<PyArrayObject*>(gpoints)->dimensions[0];
+
+      // finally reads wavefunctions
+      FC_FUNC_(escan_wfns_read, ESCAN_WFNS_READ)
               ( 
-                &a, orig.c_str(), 
-                &b, &(indices[0]), 
-                ptr_wfns, n0, n1, n2,
-                ptr_gps, n0, 3,
-                &__commF
+                &n0, &n1, &n2, &g0,  // dimensions
+                &(indices_[0]),       // indices_ to wavefunctions
+                ptr_wfns,            // pointer to wavefunctions data
+                ptr_gps              // pointer to gpoint  data
               );
       
+
       // returns to original working directory.
       chdir(origpath.string().c_str());
       
+      
       // returns a 2-tuple.
-      return bp::make_tuple( bp::object(bp::handle<>(bp::borrowed(gpoints))), 
-                             bp::object(bp::handle<>(bp::borrowed(wfns))) );
+      return bp::make_tuple( bp::object(bp::handle<>(wfns)), 
+                             bp::object(bp::handle<>(gpoints)) );
     }
 
     class Position
@@ -137,15 +165,15 @@ namespace LaDa
           escan_get_cell(mesh_);
           npy_intp dims[1] = {3};
           PyObject *ob = PyArray_SimpleNew(1, dims, math::numpy::type<types::t_real>::value);
-          if( ob != NULL and Py_None !=  PyErr_Occurred() ) 
+          if( ob != NULL and PyErr_Occurred() != NULL ) 
             reinterpret_cast<PyArrayObject*>(ob)->flags |= NPY_CARRAY_RO;
-          numpy_array_ = bp::object( bp::handle<>(bp::borrowed(ob)) );
+          numpy_array_ = bp::object( bp::handle<>(ob) );
           FC_FUNC_(escan_get_nr, ESCAN_GET_NR)(&nr_);
-          FC_FUNC_(escan_getwfn_datadims, ESCAN_GETWFN_DATADIMS)(&n1_, &n2_, &n3_);
+          FC_FUNC_(escan_get_n2_n3, ESCAN_GET_N2_n3)(&n2_, &n3_);
           max_ = nr_ / comm_.size();
           index_ = -1;
         }
-        int __len__() const { return nr_ / comm_.size(); }
+        int __len__() const { return max_; }
         bp::object __getitem__( int _i )
         {
           if( _i < 0 ) _i += max_;
@@ -189,14 +217,14 @@ namespace LaDa
         int index_;
         int max_;
         int nr_;
-        int n3_, n2_, n1_;
+        int n3_, n2_;
     };
 
     bp::tuple to_realspace( bp::object const &_gwfns, bm::communicator const &_comm )
     {
       PyObject *const obj_ptr = _gwfns.ptr();
       // sanity checks
-      if( not PyArray_Check(_gwfns.ptr()) ) 
+      if( not PyArray_Check(obj_ptr) ) 
       {
         PyErr_SetString(PyExc_ValueError, "Argument is not a numpy array.\n");
         bp::throw_error_already_set();
@@ -209,52 +237,64 @@ namespace LaDa
         return bp::tuple();
       }
       PyArrayObject *array = reinterpret_cast<PyArrayObject*>(obj_ptr);
-      if(array->strides[array->nd-1] != 1) 
+      if(array->strides[0] != 16) 
       {
-        PyErr_SetString(PyExc_ValueError, "Argument is not a contiguous numpy array. \n");
+        PyErr_SetString(PyExc_ValueError, "Argument is not a contiguous numpy array of complexes. \n");
         bp::throw_error_already_set();
         return bp::tuple();
       }
-      int n;
-      FC_FUNC_(escan_get_mr, ESCAN_GET_MR)(&n);
-      if( array->dimensions != n ) 
+      int n0, n2, g0;
+      FC_FUNC_(escan_wfns_get_array_dimensions, ESCAN_WFNS_GET_ARRAY_DIMENSIONS)(&n0, &n2, &g0);
+      if( array->nd == 1 )
       {
-        PyErr_SetString(PyExc_ValueError, "Unexpected array size. \n");
+        if(array->dimensions[0] != n0)
+        {
+          PyErr_SetString(PyExc_ValueError, "Unexpected array size. \n");
+          bp::throw_error_already_set();
+          return bp::tuple();
+        }
+      }
+      else if( array->strides[0] * n0 < array->strides[1] ) 
+      {
+        PyErr_SetString(PyExc_ValueError, "Unexpected array size along first dimension. \n");
         bp::throw_error_already_set();
         return bp::tuple();
       }
      
       // creates output array
-      std::vector<npy_intp> dims;
-      for(int i(0); i < array->nd-2; ++i) dims.push_back(i);
-      dims.push_back(0);
-      FC_FUNC_(escan_get_nr, ESCAN_GET_NR)(&dims.back());
-      if(dims.back() % 2 != 0) 
+      FC_FUNC_(escan_get_mr_n, ESCAN_GET_MR_N)(&n0);
+      if(n0 % 2 != 0) 
       {
-        PyExc_SetString(PyExc_RuntimeError, "Wrong array dimension in pescan.");
+        PyErr_SetString(PyExc_RuntimeError, "Wrong array dimension in pescan.");
         bp::throw_error_already_set();
         return bp::tuple();
       }
-      dims.back() >>= 1;
-      PyObject *result = PyArray_SimpleNew(dims.size(), &dims[0], NPY_CDOUBLE);
-      if( PyErr_Occured() != Py_None )
+      std::vector<npy_intp> dims(1, n0>>1);
+      for(int i(1); i < array->nd; ++i) dims.push_back(array->dimensions[i]);
+      PyObject *result = PyArray_ZEROS(dims.size(), &dims[0], NPY_CDOUBLE, 1);
+      if( PyErr_Occurred() != NULL )
       {
         bp::throw_error_already_set();
         return bp::tuple();
       }
-      bp::object object( bp::handle<>(bp::borrowed(result)) );
+      bp::object resob = bp::object(bp::handle<>(result));
 
       // now loops through arrays and perform fft
       if( array->nd == 1 ) 
       {
         int sign = -1;
-        FC_FUNC_(d3fft_comp, D3FFT_COMP)((double*)array->data, (double*)result->data, sign);
+        FC_FUNC_(d3fft_comp, D3FFT_COMP)
+        (
+          (double*)array->data, 
+          (double*)reinterpret_cast<PyArrayObject*>(result)->data,
+          &sign
+        );
       } 
       else
       {
-        int dim = array->nd-1;
+        int dim = 0;
         PyArrayIterObject *real_iter 
-          = reinterpret_cast<PyArrayIterObject*>(PyArray_IterAllButAxis(result, dim));
+          = reinterpret_cast<PyArrayIterObject*>(PyArray_IterAllButAxis(result, &dim));
         if( not real_iter )
         {
           PyErr_SetString(PyExc_RuntimeError, "Could not iterate.\n");
@@ -262,42 +302,66 @@ namespace LaDa
           return bp::tuple();
         }
         PyArrayIterObject *recip_iter 
-          = reinterpret_cast<PyArrayIterObject*>(PyArray_IterAllButAxis(array, dim));
-        bp::object dummyA( bp::handle<>(bp::borrowed(real_iter)) );
+          = reinterpret_cast<PyArrayIterObject*>
+            (
+              PyArray_IterAllButAxis(reinterpret_cast<PyObject*>(array), &dim)
+            );
+        // object should release on destruction
+        bp::object dummyA = bp::object(bp::handle<>(bp::borrowed(reinterpret_cast<PyObject*>(real_iter))));
         if( not recip_iter )
         {
           PyErr_SetString(PyExc_RuntimeError, "Could not iterate.\n");
           bp::throw_error_already_set();
           return bp::tuple();
         }
-        bp::object dummyB( bp::handle<>(bp::borrowed(recip_iter)) );
-        while (real_iter->index < real_iter->size and recip_iter < recip_iter->size)  
+        // object should release on destruction
+        bp::object dummyB = bp::object(bp::handle<>(bp::borrowed(reinterpret_cast<PyObject*>(recip_iter))));
+        while (real_iter->index < real_iter->size and recip_iter->index < recip_iter->size)  
         {
           int sign = -1;
           FC_FUNC_(d3fft_comp, D3FFT_COMP)( (double*)recip_iter->dataptr,
-                                            (double*)real_iter->dataptr, sign);
+                                            (double*)real_iter->dataptr, &sign);
           PyArray_ITER_NEXT(real_iter);
           PyArray_ITER_NEXT(recip_iter);
         }
       }
       
+      int nr;
+      FC_FUNC_(escan_get_nr, ESCAN_GET_NR)(&nr);
+      reinterpret_cast<PyArrayObject*>(result)->dimensions[0] = nr / _comm.size();
       // finally creates real space position data.
-      return bp::tuple(object, Position(_comm));
+      return bp::make_tuple(resob, Position(_comm));
     }
  
     void expose_wfns()
     {
       import_array();
-      bp::def( "wavefunctions", &get_wavefunctions, 
-               (bp::arg("escan"), bp::arg("indices")), 
-               "Returns wavefunctions/G-points for a given indices.\n\n"
-               "@param escan: Escan functional with which calculation were performed.\n"
-               "@param indices: index or indices for which to recover the wavefunctions. "
-                 "Indices of wavefunctions correspond to the eigenvalues "
-                 "returned by the functional during calculation.\n"
-               "@result: (G-points, wavefunctions). The first item corresponds to "
-                 "a 3 by x matrix with each row a G-vector. The second item is an "
-                 "spin by N by x matrix holding the N wavefuntions/spinor.\n" );
+      bp::class_<Wfns>
+      (
+        "Wavefunctions", 
+        "Context with temporary arrays to wavefunctions and corresponding g-vectors.\n\n"
+        "@param escan: Escan functional with which calculation were performed.\n"
+        "@param indices: index or indices for which to recover the wavefunctions. "
+          "Indices of wavefunctions correspond to the eigenvalues "
+          "returned by the functional during calculation.\n"
+        "@return: (wavefunctions, g-vectors). The second item corresponds to "
+          "a 3 by x matrix with each row a G-vector. The first item is an "
+          "spin by N by x matrix holding the N wavefuntions/spinor.\n",
+        bp::init<Pescan::Interface const&, bp::object const>()
+      ).def("__enter__", &Wfns::__enter__)
+       .def("__exit__", &Wfns::__exit__);
+      bp::class_<Position>("Position", "Real-space wavefunction vectors.", bp::no_init)
+        .def("__getitem__", &Position::__getitem__)
+        .def("__len__", &Position::__len__)
+        .def("__iter__", &Position::iter, bp::return_self<>())
+        .def("next", &Position::next);
+      bp::def( "to_realspace", &to_realspace, (bp::arg("wfns"), bp::arg("comm")),
+               "Returns wavefunctions in real-space.\n\n"
+               "@param wfns: Array of reciprocal-space wavefunctions.\n"
+               "@type wfns: numpy array\n"
+               "@param mpicomm: mpi communicator.\n"
+               "@type mpicomm: boost\n"
+               "@return: (numpy array real-space wfns, generator/array of positions\n");
     }
 
 

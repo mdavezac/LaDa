@@ -163,7 +163,8 @@ Module Escan
 
     ! Sets common block parameters using input arguments.
     subroutine set_common_blocks(escan_input, lattice)
-      use data, only : mg_nx
+      use data, only: mg_nx, mr_n
+      use load_data, only: nr1x, nr2x, nr3x
       ! Input parameters to set to common block
       type(t_Escan), intent(out) :: escan_input
       ! Lattice parameters to set to common block
@@ -185,6 +186,9 @@ Module Escan
       n1 = escan_input%mesh(1)
       n2 = escan_input%mesh(2)
       n3 = escan_input%mesh(3)
+      nr1x=n1
+      nr2x=n2
+      nr3x=n3+2
       vol =   al(3,1) * ( al(1,2)*al(2,3) - al(1,3)*al(2,2) ) &
             + al(3,2) * ( al(1,3)*al(2,1) - al(1,1)*al(2,3) ) &
             + al(3,3) * ( al(1,1)*al(2,2) - al(1,2)*al(2,1) )
@@ -195,8 +199,7 @@ Module Escan
       mx = escan_input%ecp%mx
 
       nr=n1*n2*n3
-      mr=n1*n2*(n3+2)
-      mr_n=2*mr/nnodes    
+      mr_n=2*n1*n2*(n3+2)/nnodes    
  
     end subroutine set_common_blocks
 
@@ -251,7 +254,7 @@ Module Escan
 
     end subroutine ! prepare_fft_and_allocate_arrays
 
-    subroutine cleanup_fft
+    subroutine escan_cleanup
       use fft_data, only: fft_deallocate
       use load_data, only: load_deallocate
       use data, only: gkk_n, wg_n, inv_n
@@ -262,6 +265,44 @@ Module Escan
       if( allocated(wg_n) )  deallocate(wg_n)
       if( allocated(inv_n) ) deallocate(inv_n)
 
-    end subroutine cleanup_fft
+    end subroutine escan_cleanup
 
 end Module Escan
+
+! gets dimension for real space wavefunctions.
+subroutine escan_get_nr(n)
+  integer, intent(out) :: n
+  integer n1,n2,n3,ng,ng_n,nr,mx
+  real*8 vol
+  common /com123/n1,n2,n3,ng,ng_n,nr,mx,vol
+  n = n1*n2*n3
+end subroutine
+! gets dimension for real space wavefunctions.
+subroutine escan_get_n2_n3(a2, a3)
+  integer, intent(out) :: a2, a3
+  real*8 vol
+  integer n1,n2,n3,ng,ng_n,nr,mx
+  common /com123/n1,n2,n3,ng,ng_n,nr,mx,vol
+  a2 = n2
+  a3 = n3
+end subroutine
+! gets dimension for real space wavefunctions.
+subroutine escan_get_mr_n(n)
+  use data, only: mr_n
+  integer, intent(out) :: n
+  n = mr_n
+end subroutine
+
+! gets cell vectors
+subroutine escan_get_cell(a0, a1, a2)
+  real(kind=8),dimension(3), intent(inout) :: a0
+  real(kind=8),dimension(3), intent(inout) :: a1
+  real(kind=8),dimension(3), intent(inout) :: a2
+  real(kind=8) ::  AL(3,3)
+  common /comAD/AL
+
+  a0 = AL(:,1)
+  a1 = AL(:,2)
+  a2 = AL(:,3)
+end subroutine
+

@@ -36,10 +36,11 @@ from numpy import dot, array, matrix
 from numpy.linalg import norm
 from boost.mpi import world
 from lada.vff import Vff
-from lada.escan import Escan, method, nb_valence_states as nbstates, potential, wavefunctions
+from lada.escan import Escan, method, nb_valence_states as nbstates, potential, Wavefunctions, to_realspace
 from lada.crystal import deform_kpoint
 from lada.opt.tempdir import Tempdir
 
+from numpy import array
 # file with escan and vff parameters.
 input = "test_input/input.xml"
 
@@ -63,6 +64,7 @@ escan = Escan(input, world)
 # sets the FFT mesh
 escan.genpot.mesh = (4*20, 20, int(ceil(sqrt(0.5) * 20)))  
 escan.genpot.mesh = tuple([int(ceil(sqrt(0.5) * 20)) for i in range(3)])  
+escan.genpot.mesh = (16,16,16)
 # makes sure we keep output directories.
 escan.destroy_directory = False
 # calculations are performed using the folded-spectrum method
@@ -76,7 +78,7 @@ W = array( [1, 0.5,0], dtype="float64" ), "W"
 
 # launch pescan for different jobs.
 for (kpoint, name), structure, relaxed in [ (G, Si, Si_relaxed) ]:
-  with Tempdir(workdir="work", keep=True) as tempdir:
+  with Tempdir(workdir="work", comm=world, keep=True, debug="debug") as tempdir:
     # will save output to directory "name".
     escan.directory = tempdir
     # computes at kpoint of deformed structure.
@@ -86,11 +88,12 @@ for (kpoint, name), structure, relaxed in [ (G, Si, Si_relaxed) ]:
     # divides by two if calculations are not spin polarized.
     if norm(escan.kpoint) < 1e-6 or escan.potential != potential.spinorbit: escan.nbstates /= 2
     # Now just do it.
-    print "wtd"
-    eigenvalues = escan(vff, relaxed)
-    print "wtf"
+#   eigenvalues = escan(vff, relaxed)
+    eigenvalues = array([-0.91784761, -0.91784761, -0.99130073, 2.42593931])
     # checks expected are as expected. 
     if world.rank == 0: print "Ok - %s: %s -> %s: %s" % (name, kpoint, escan.kpoint, eigenvalues)
 
-    gpoints, wfns = wavefunctions(escan, [i for i in range(len(eigenvalues))])
-    print wfns.shape
+    with Wavefunctions(escan, [i for i in range(len(eigenvalues))]) as (wfns, gvectors):
+      print wfns.shape, gvectors.shape
+      rspace, rvectors = to_realspace(wfns, escan.comm)
+      print rspace.shape, len(rvectors)
