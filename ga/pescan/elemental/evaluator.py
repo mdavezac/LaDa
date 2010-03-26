@@ -343,6 +343,6 @@ class EffectiveMass(Directness):
                      order     = 2,
                      nbpoints  = nbpoints, 
                      stepsize  = stepsize )
-    indiv.emass = 1e0 / derivatives[2]
+    indiv.emass = 1e0 / indiv.derivatives[2]
                          
     return indiv.emass
