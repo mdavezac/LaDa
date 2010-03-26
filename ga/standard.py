@@ -154,7 +154,7 @@ class Mating(object):
   
   def __call__(self, darwin):
 
-    from random import random
+    import random
 
     def call_function(function, n, indiv = None):
       """ Calls functions/functors mating operations. """
@@ -187,13 +187,13 @@ class Mating(object):
     if self.sequential: # choose any operator depending on rate.
       while indiv == None: # makes sure we don't bypass all mating operations
         for function, rate, n in self.operators:
-          if random() < rate: indiv = call_function( function, n, indiv )
+          if random.random() < rate: indiv = call_function( function, n, indiv )
     else: # choose only one operator.
       max = 0e0
       for function, rate, n in self.operators: max += rate
       assert rate > 0e0;
       last = 0e0
-      r = random() * max
+      r = random.random() * max
       for function, rate, n in self.operators:
         if r <= last + rate:
           indiv = call_function( function, n )
