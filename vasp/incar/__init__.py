@@ -2,7 +2,7 @@
 from _params import Standard, NoPrintStandard, Algo, \
                     Precision, Ediff, Encut, \
                     Smearing, Isym, FFTGrid, \
-                    Restart, Relaxation, Iniwave
+                    Restart, Relaxation, Iniwave, NElect
 
 class Incar(object):
   """ Contains vasp Incar parameters. 
@@ -25,8 +25,6 @@ class Incar(object):
     """ Sets number of bands to include in calculation.
         0(default) lets VASP decide.
     """ 
-#   self.potim = Standard( "POTIM", 0.5, validity = lambda x: float(x) > 0e0)
-#   """ Sets ionic motion time step. """ 
     self.nspins = Standard( "ISPIN", 1, 
                             validity = lambda x: int(x) == float(x) and (int(x)==1 or int(x)==2) )
     """ Sets number of spins. Must be either 1 or 2. """
@@ -80,6 +78,9 @@ class Incar(object):
         Makes sure that the parameters make sense together. 
         Can also be set using an integer between 0 and 7. See VASP manual. 
     """
+    self.nelect = NElect(0) 
+    """ Sets number of electrons in system relative to charge neutral system. """
+
 
   restart = Restart(None)
   """

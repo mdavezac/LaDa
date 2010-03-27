@@ -151,6 +151,8 @@ class Encut(object):
 
   safety = Safety(1.25)
   """ A safety upon the largest ENMAX """
+  key = "ENCUT"
+  """ INCAR key """
 
   def __init__(self, safety = 1.25):
     super(Encut, self).__init__()
@@ -162,27 +164,19 @@ class Encut(object):
     raise ValueError, "Value of encut cannot be set manually. Change safety instead.\n"
   x = property(_getvalue, _setvalue)
   def incar_string(self, vasp, mpicomm):
-    return "ENCUT = %f " % (self.enmax(vasp.species) * self.safety)
+    from boost.mpi import broadcast
+    n = 0
+    if mpicomm == None: n = self.enmax(vasp.species)
+    elif mpicomm.rank == 0:
+      n = self.enmax(vasp.species)
+      broadcast(mpicomm, value=n, root=0)
+    else: n = broadcast(mpicomm, root=0)
+    return "%s = %f " % (self.key, float(n) * self.safety)
 
   @staticmethod
   def enmax(species):
     """ Retrieves max ENMAX from list of species. """
-    import os.path
-    import subprocess
-    import re
-    from math import ceil
-
-    result = 0
-    for s in species: 
-      if not os.path.exists( os.path.join(s.path, "POTCAR") ):
-        raise AssertionError, "Could not find potcar in " + s.path
-      with open(os.path.join(s.path, "POTCAR"), "r") as potcar: 
-        r = re.compile("ENMAX\s+=\s+(\S+);\s+ENMIN")
-        p = r.search(potcar.read())
-        if p == None: raise AssertionError, "Could not retrieve ENMAX from " + s.path
-        if result < float( p.group(1) ): result = float( p.group(1) )
-
-    return ceil(result)
+    return ceil( max(s.enmax for s in species) )
 
 class Smearing(object):
   """ Value of the smearing used in the calculation. 
@@ -399,15 +393,15 @@ class Relaxation(object):
       @param ibrion: the type of ionic relaxation algorithm. Defaults to 2.
       @param potim: ionic-time step during relaxation. Defaults to 0.5.
   """
+  key = "ISIF"
+  """ INCAR key """
+
   def __init__(self, value = None, nsw=40, ibrion=2, potim=0.5):
     super(Relaxation, self).__init__()
     self._value = value
     self.nsw = 40
     self.ibrion = 2
     self.potim = 0.5
-
-  @property
-  def key(self): return "ISIF"
 
   def _getvalue(self): return self._value
   def _setvalue(self, object):
@@ -464,3 +458,91 @@ class Relaxation(object):
       return result + "ISIF   = 7     # relaxing V. only."
     raise RuntimeError, "Internal bug."
 
+class NElect(object):
+  """ Sets number of electrons relative to neutral system.
+      
+      Gets the number of electrons in the (neutral) system. Then adds value to
+      it and computes with the resulting number of electrons.
+      >>> nelect = NElect(0) # charge neutral system
+      >>> nelect.value = 1   # charge -1 (1 extra electron)
+      >>> nelect.value -= 2  # charge +1 (1 less electron)
+
+      @param value: (default:0) number of electrons to add to charge neutral
+                    system.
+  """
+  key = "NELECT"
+  """ INCAR Key """
+
+  def __init__(self, value = 0):
+    super(NElect, self).__init__()
+    self.value = value
+
+  def nelectrons(self, vasp):
+    """ Total number of electrons in the system """
+    from math import fsum
+    # constructs dictionnary of valence charge
+    valence = {}
+    for s in vasp.species:
+      valence[s.symbol] = s.valence
+    # sums up charge.
+    return fsum( s[atom.type] for atom in vasp.system.atoms )
+    
+
+  def incar_string(self, vasp, mpicomm):
+    from boost.mpi import broadcast
+    # gets number of electrons from root process.
+    charge_neutral = 0
+    if mpicomm == None: charge_neutral = self.nelectrons(vasp)
+    elif mpicomm.rank == 0:
+      charge_neutral = self.nelectrons(vasp)
+      broadcast(mpicomm, value=charge_neutral, root=0)
+    else: charge_neutral = broadcast(mpicomm, root=0)
+    # then prints incar string.
+    if self.value = 0: return "# %s = %s. Charge neutral system" % (self.key, charge_neutral)
+    elif self.value > 0:
+      return "%s = %s  # negatively charged system (%i) "\
+             % (self.key, charge_neutral + self.value, -self.value)
+    else: 
+      return "%s = %s  # positively charged system (+%i) "\
+             % (self.key, charge_neutral + self.value, -self.value)
+          
+class NBands(object):
+  """ Sets number of bands to compute relative to number of electrons. 
+      
+      Three types of input are accepted:
+  """
+  default = -1
+  """ Use vasp default """
+  nunit = 0
+  """ Adds n bands, with n=self.value. """
+  nions = 1
+  """ Adds n bands, with n=self.value * \"number of atoms in system\". """
+  nelec = 2
+  """ Adds n bands, with n=self.value * \"number of electrons in system\". """
+  def __init__(self, value = 0, unit = NBands.default):
+    super(NElect, self).__init__()
+    self.value = value
+    self.unit = unit
+
+  key = "NBANDS"
+  """ INCAR key """
+
+  def incar_string(self, vasp, mpicomm):
+    from boost.mpi import broadcast
+    # gets number of electrons.
+    ne = 0
+    if mpicomm == None: ne = self.nelectrons(vasp)
+    elif mpicomm.rank == 0:
+      ne = self.nelectrons(vasp)
+      broadcast(mpicomm, value=ne, root=0)
+    else: ne = broadcast(mpicomm, root=0)
+
+    if self.unit == NBands.default: return "# %s = VASP default " % (self.key)
+    elif self.unit == NBands.nunit:
+      return "%s = %s" % (self.key, self.value + float(ne))
+    elif self.unit == NBands.nions:
+      return "%s = %s" % (self.key, int(ne + ceil(self.value * float(len(vasp.system.atoms)))) )
+    elif self.unit == NBands.nelec:
+      return "%s = %s" % (self.key, int(ne + ceil(self.value * float(ne))) )
+    else: raise "Unknown method in NBands"
+      
