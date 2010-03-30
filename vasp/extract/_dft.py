@@ -14,7 +14,7 @@ class _ExtractImpl(object):
         @param directory: path to the directory where the VASP output is located.
         @type directory: str
     """
-    from ..file import OUTCAR, CONTCAR
+    from ..files import OUTCAR, CONTCAR
     self.directory = directory
     """ path to the directory where the VASP output is located. """
     self.mpicomm = mpicomm

@@ -5,7 +5,7 @@ class _ExtractGWImpl(_ExtractImpl):
   """ Implementation of GW extractor. """
   def __init__(self, *args, **kwargs):
     """ Same as L{_ExtractImpl} """
-    super(_ExtractImpl, self).__init__(*args, **kwargs)
+    super(_ExtractGWImpl, self).__init__(*args, **kwargs)
 
   def _get_eigocc(self,which):
     """ Implementation of _get_eigenvalues and _get_occupations """
@@ -25,7 +25,7 @@ class _ExtractGWImpl(_ExtractImpl):
       for line in file:
         if in_kpoint > 1: 
           data = line.split()
-          if len(data) == 3: kp_result.append(float(data[which]))
+          if len(data) == 8: kp_result.append(float(data[which]))
           else: 
             result.append(kp_result)
             kp_result = []
