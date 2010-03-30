@@ -14,20 +14,30 @@ class _ExtractImpl(object):
         @param directory: path to the directory where the VASP output is located.
         @type directory: str
     """
+    from ..file import OUTCAR, CONTCAR
     self.directory = directory
     """ path to the directory where the VASP output is located. """
     self.mpicomm = mpicomm
     """ MPI group communicator. """
-
+    self.OUTCAR = OUTCAR
+    """ Filename of the OUTCAR file from VASP.
+     
+        Data will be read from directory/OUTCAR. 
+    """
+    self.CONTCAR = CONTCAR
+    """ Filename of the CONTCAR file from VASP.
+     
+        Data will be read from directory/CONTCAR. 
+    """
+    
 
   @_bound_mpi_extraction
   def _get_energy_sigma0(self):
     """ Gets total energy extrapolated to $\sigma=0$ from vasp run """
     from os.path import exists, join
     from re import compile, X as re_X
-    from ..files import OUTCAR
 
-    path = OUTCAR 
+    path = self.OUTCAR 
     if len(self.directory): path = join(self.directory, path)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
@@ -46,9 +56,8 @@ class _ExtractImpl(object):
     """ Gets total energy from vasp run """
     from os.path import exists, join
     from re import compile, X as re_X
-    from ..files import OUTCAR
 
-    path = OUTCAR 
+    path = self.OUTCAR 
     if len(self.directory): path = join(self.directory, path)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
@@ -67,9 +76,8 @@ class _ExtractImpl(object):
     """ Gets total free energy from vasp run """
     from os.path import exists, join
     from re import compile
-    from ..files import OUTCAR
 
-    path = OUTCAR 
+    path = self.OUTCAR 
     if len(self.directory): path = join(self.directory, path)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
@@ -88,9 +96,8 @@ class _ExtractImpl(object):
     """ Gets total free energy from vasp run """
     from os.path import exists, join
     from re import compile
-    from ..files import OUTCAR
 
-    path = OUTCAR 
+    path = self.OUTCAR 
     if len(self.directory): path = join(self.directory, path)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
@@ -106,14 +113,13 @@ class _ExtractImpl(object):
 
   @_bound_mpi_extraction
   def _get_structure(self):
-    """ Gets structure from CONTCAR file and total energy from OUTCAR """
+    """ Gets structure from L{CONTCAR} file and total energy from L{OUTCAR} """
     from os.path import exists, join
-    from ..files import CONTCAR
     from ...crystal import read_poscar
 
     species_in = self.species
 
-    path = CONTCAR 
+    path = self.CONTCAR 
     if len(self.directory): path = join(self.directory, path)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
     result = read_poscar(species_in, path)
@@ -122,12 +128,11 @@ class _ExtractImpl(object):
 
   @_bound_mpi_extraction
   def _get_species(self):
-    """ Gets species from L{files.OUTCAR}. """
+    """ Gets species from L{OUTCAR}. """
     from os.path import exists, join
     from re import compile, X as re_X
-    from ..files import OUTCAR
 
-    path = OUTCAR 
+    path = self.OUTCAR 
     if len(self.directory): path = join(self.directory, path)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
@@ -146,9 +151,8 @@ class _ExtractImpl(object):
     """ Returns recommended or actual fft setting """
     from os.path import exists, join
     from re import compile, search, X as re_X
-    from ..files import OUTCAR
 
-    path = OUTCAR 
+    path = self.OUTCAR 
     if len(self.directory): path = join(self.directory, path)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
@@ -218,9 +222,8 @@ class _ExtractImpl(object):
     from os.path import exists, join
     from re import compile, search 
     from numpy import array
-    from ..files import OUTCAR
 
-    path = OUTCAR 
+    path = self.OUTCAR 
     if len(self.directory): path = join(self.directory, path)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
@@ -244,10 +247,9 @@ class _ExtractImpl(object):
     """ Returns multiplicity """
     from os.path import exists, join
     from re import compile, search 
-    from ..files import OUTCAR
     from numpy import array
 
-    path = OUTCAR 
+    path = self.OUTCAR 
     if len(self.directory): path = join(self.directory, path)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
@@ -272,9 +274,8 @@ class _ExtractImpl(object):
     import re 
     from os.path import exists, join
     from numpy import array
-    from ..files import OUTCAR
 
-    path = OUTCAR 
+    path = self.OUTCAR 
     if len(self.directory): path = join(self.directory, path)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
@@ -318,12 +319,11 @@ class _ExtractImpl(object):
     return self._get_eigocc(2)
 
   def _get_pressures(self, which):
-    """ Returns pressure from OUTCAR """
+    """ Returns pressure from L{OUTCAR} """
     import re 
     from os.path import exists, join
-    from ..files import OUTCAR
 
-    path = OUTCAR 
+    path = self.OUTCAR 
     if len(self.directory): path = join(self.directory, path)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
@@ -338,22 +338,21 @@ class _ExtractImpl(object):
 
   @_bound_mpi_extraction
   def _get_pressure(self):
-    """ Returns pressure from OUTCAR """
+    """ Returns pressure from L{OUTCAR} """
     return self._get_pressures(1)
   @_bound_mpi_extraction
   def _get_pulay_pressure(self):
-    """ Returns pulay pressure from OUTCAR """
+    """ Returns pulay pressure from L{OUTCAR} """
     return self._get_pressures(2)
 
   @_bound_mpi_extraction
   def _get_partial_charges(self):
-    """ Returns partial charges from OUTCAR """
+    """ Returns partial charges from L{OUTCAR} """
     import re 
     from os.path import exists, join
     from numpy import array
-    from ..files import OUTCAR
 
-    path = OUTCAR 
+    path = self.OUTCAR 
     if len(self.directory): path = join(self.directory, path)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
@@ -372,100 +371,4 @@ class _ExtractImpl(object):
         result.append( data[1:len(data)-1] )
     return array(result, dtype="float64")
     
-
-class Extract(_ExtractImpl):
-  """ Main class for extracting VASP output as python objects.
-
-      This class should contain attributes (eg fermi_energy) which can extract
-      their values from the vasp output files located in self.directory.  
-
-      >>> result = Extract(directory = "./", mpicomm = boost.mpi.world)
-      >>> print result.fermi_energy * 13.26
-
-      It would be preferable to limit these output files to L{files.OUTCAR}, as
-      much as possible. Results are cached. To delete cache (and re-read results
-      from output files), call C{self.uncache()}.
-  """
-
-  success = Success()
-  r""" Checks for success of vasp calculation """
-  energy_sigma0 = property(_ExtractImpl._get_energy_sigma0)
-  r""" Gets total energy extrapolated to $\sigma=0$ from vasp run """
-  energy = property(_ExtractImpl._get_energy)
-  """ Gets total energy from vasp run 
-     
-      same as self.L{total_energy}
-  """
-  total_energy = property(_ExtractImpl._get_energy)
-  """ Gets total energy from vasp run
-     
-      same as self.L{energy}
-  """
-  free_energy = property(_ExtractImpl._get_free_energy)
-  r""" Gets total free energy from vasp run """
-  fermi_energy = property(_ExtractImpl._get_fermi_energy)
-  r""" Gets fermi energy from vasp run """
-  system = property(_ExtractImpl._get_structure)
-  r""" Returns the relaxed structure (L{lada.crystal.Structure}) as obtained from the CONTCAR. """
-  structure = property(_ExtractImpl._get_structure)
-  r""" Alias for self.L{system}. """
-  species = property(_ExtractImpl._get_species)
-  """ Atomic species in system. """
-  fft = property(_ExtractImpl._get_fft)
-  r""" Gets recommended fft grid (for wavefunctions). """
-  kpoints = property(_ExtractImpl._get_kpoints)
-  r""" A mx3 matrix where each row corresponds to a kpoint.
-  
-       kpoints are in cartesian units.
-   """
-  multiplicity = property(_ExtractImpl._get_multiplicity)
-  r""" A mx1 matrix where each correspond to a k-point multiplicity """
-  eigenvalues = property(_ExtractImpl._get_eigenvalues)
-  r""" A matrix of eigenvalues where each row contains eigenvalues of a single kpoint. """
-  occupations = property(_ExtractImpl._get_occupations)
-  r""" A matrix of eigenvalues where each row contains band occupations of a single kpoint. """
-  pressure = property(_ExtractImpl._get_pressure)
-  """ External pressure at end of calculation. """
-  pulay_pressure = property(_ExtractImpl._get_pulay_pressure)
-  """ Pulay pressure at end of calculation. """
-  partial_charges = property(_ExtractImpl._get_partial_charges)
-  """ Partial charges.
-
-      This is a numpy array where the first dimension is the ion (eg one row
-      per ion), and the second the partial charges for each angular momentum.
-      The total is not included.
-  """
-
-  def __init__(self, directory = "", mpicomm = None): 
-    """ Initializes the extraction class. 
-
-        @param mpicomm: MPI group communicator. Extraction will be performed
-                        for all procs in the group. In serial mode, mpicomm can
-                        be None.
-        @param mpicomm: boost.mpi.Communicator
-        @param directory: path to the directory where the VASP output is located.
-        @type directory: str
-    """
-    super(Extract, self).__init__(directory, mpicomm)
-
-  def solo(self):
-    """ Extraction on a single process.
-
-        Sometimes, it is practical to perform extractions on a single process
-        only, eg without blocking mpi calls. C{self.L{solo}()} returns an
-        extractor for a single process:
-        
-        >>> # prints only on proc 0.
-        >>> if boost.mpi.world.rank == 0: print extract.solo().structure
-    """
-    if self.mpicomm == None: return self
-    return Extract(directory = self.directory, mpicomm = None)
-
-  def uncache(self): 
-    """ Removes cached results.
-
-        After this outputs are re-read from file.
-    """
-    from _mpi import _uncache
-    _uncache(self)
 

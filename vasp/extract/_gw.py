@@ -12,9 +12,8 @@ class _ExtractGWImpl(_ExtractImpl):
     import re 
     from os.path import exists, join
     from numpy import array
-    from ..files import OUTCAR
 
-    path = OUTCAR 
+    path = self.OUTCAR 
     if len(self.directory): path = join(self.directory, path)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
