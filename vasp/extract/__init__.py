@@ -117,6 +117,28 @@ class ExtractGW(_ExtractGWImpl):
    """
   multiplicity = property(_ExtractImpl._get_multiplicity)
   r""" A mx1 matrix where each correspond to a k-point multiplicity """
+  dft_eigenvalues = property(_ExtractGWImpl._get_dft_eigenvalues)
+  r""" A matrix of DFT eigenvalues.
+  
+       Each row corresponds to a k-point and each column to a band.
+   """
+  qp_eigenvalues = property(_ExtractGWImpl._get_qp_eigenvalues)
+  r""" A matrix of qasi-particle eigenvalues.
+  
+       Each row corresponds to a k-point and each column to a band.
+   """
+  eigenvalues = property(_ExtractGWImpl._get_qp_eigenvalues)
+  r""" Alias for L{qp_eigenvalues}. """
+  self_energies = property(_ExtractGWImpl._get_self_energies)
+  r""" A matrix of qasi-particle self-energies.
+  
+       Each row corresponds to a k-point and each column to a band.
+   """
+  occupations = property(_ExtractGWImpl._get_occupations)
+  r""" A matrix of occupations.
+  
+       Each row corresponds to a k-point and each column to a band.
+   """
 
   def __init__(self, directory = "", mpicomm = None): 
     """ Initializes the extraction class. 
