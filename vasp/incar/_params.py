@@ -546,3 +546,57 @@ class NBands(object):
       return "%s = %s" % (self.key, int(ne + ceil(self.value * float(ne))) )
     else: raise "Unknown method in NBands"
       
+class UParams(object): 
+  """ Prints U parameters if any found in species settings """
+  def __init__(self, verbose=None, **kwargs):
+    import re
+    
+    if verbose == None: self.value = 0
+    elif hasattr(verbose, "lower"): 
+      verbose = verbose.lower() 
+      if verbose == "off": verbose = 0
+      elif verbose == "on": verbose = 1
+      elif None != re.match(r"\s*occ(upancy)?\s*", verbose): verbose = 1
+      elif None != re.match(r"\s*(all|pot(ential)?)\s*", verbose): verbose = 2
+
+    self.value = int(verbose)
+    super(UParams, self).__init__(**kwargs)
+  def incar_string(self, vasp, mpicomm):
+    # existence and sanity check
+    has_U, which_type = False, None 
+    for specie in vasp.species:
+      if len(specie.U) != 0: continue
+      if len(specie.U) > 4: 
+        raise AssertionError, "More than 4 channels for U/NLEP parameters"
+      has_U = True
+      for l in specie: 
+        if which_type == None: which_type = l.type
+        elif which_type != l.type: 
+          raise AssertionError, "LDA+U/NLEP types are not consistent across species."
+    if not has_U: return "# no LDA+U/NLEP parameters ";
+
+    result = "LDAU = .TRUE.\nLDAUPRINT = %i\nLDAUTYPE = %i\n" % (self.value, which_type)
+
+    for i in range( max(len(specie.U) for specie in vasp.species) ):
+      lines = "LDUL%i" % (i+1), "LDUU%i" % (i+1), "LDUJ%i" % (i+1), "LDUO%i" % (i+1)
+      for specie in vasp.species:
+        if len(specie) < i:
+          line = line[0].join(-1), line[1].join(0.0), line[2].join(0.0), line[3].join(1)
+        elif specie[i]["func"] == "U": 
+          line = line[0].join(specie[i]["l"]), line[1].join(specie[i]["U"]), \
+                 line[2].join(specie[i]["J"]), line[3].join(1)
+        elif specie[i]["func"] == "nlep": 
+          line = line[0].join(specie[i]["l"]), line[1].join(specie[i]["U"]), \
+                 line[2].join(0.0), line[3].join(2)
+        elif specie[i]["func"] == "enlep": 
+          line = line[0].join(specie[i]["l"]), line[1].join(specie[i]["U"]), \
+                 line[2].join(specie[i]["Eref"]), line[3].join(3)
+        else: raise RuntimeError, "Debug Error."
+    result.join( "\n%s\n%s\n%s\n%s\n" % line )
+    return result
+
+
+
+
+
+    

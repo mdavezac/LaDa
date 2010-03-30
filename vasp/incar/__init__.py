@@ -2,7 +2,7 @@
 from _params import Standard, NoPrintStandard, Algo, \
                     Precision, Ediff, Encut, \
                     Smearing, Isym, FFTGrid, \
-                    Restart, Relaxation, Iniwave, NElect
+                    Restart, Relaxation, Iniwave, NElect, UParams
 
 class Incar(object):
   """ Contains vasp Incar parameters. 
@@ -80,6 +80,7 @@ class Incar(object):
     """
     self.nelect = NElect(0) 
     """ Sets number of electrons in system relative to charge neutral system. """
+    self.U_verbosity = UParams(verbose="occupancy")
 
 
   restart = Restart(None)
