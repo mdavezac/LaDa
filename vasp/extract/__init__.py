@@ -11,10 +11,11 @@ class Extract(object):
       >>> print result.fermi_energy * 13.26
 
       It would be preferable to limit these output files to L{files.OUTCAR}, as
-      much as possible.
+      much as possible. Results are cached. To delete cache (and re-read results
+      from output files), call C{self.uncache()}.
   """
 
-  def __init__(self, mpicomm = None, directory = ""): 
+  def __init__(self, directory = "", mpicomm = None): 
     """ Initializes the extraction class. 
 
         @param mpicomm: MPI group communicator. Extraction will be performed
@@ -32,14 +33,19 @@ class Extract(object):
   success = Success()
   r""" Checks for success of vasp calculation """
 
+  def uncache(self): 
+    from _mpi import _uncache
+    _uncache(self)
+
   def solo(self):
     """ Extraction on a single process.
 
         Sometimes, it is practical to perform extractions on a single process
-        only. C{self.L{solo}()} returns an extractor for a single process:
+        only, eg without blocking mpi calls. C{self.L{solo}()} returns an
+        extractor for a single process:
         
         >>> # prints only on proc 0.
-        >>> if boost.mpi.world.rank == 0: print extract.solor.structure
+        >>> if boost.mpi.world.rank == 0: print extract.solo().structure
     """
     if self.mpicomm == None: return self
     return Extract(directory = self.directory, mpicomm = None)
@@ -261,59 +267,118 @@ class Extract(object):
 
 
       
+  @_bound_mpi_extraction
+  def _get_kpoints(self):
+    """ Returns kpoints. """
+    from os.path import exists, join
+    from re import compile, search 
+    from numpy import array
+    from ..files import OUTCAR
 
-# def _get_eigenvalues(self):
-#   """ Gets eigenvalues from OUTCAR.
+    path = OUTCAR 
+    if len(self.directory): path = join(self.directory, path)
+    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
-#       Returns a list of Kpoints objects. 
-#   """
-#   from os.path import exists, join
-#   import re
+    result = []
+    with open(path, "r") as file:
+      found = compile(r"""Found\s+(\d+)\s+irreducible\s+k-points""")
+      for line in file:
+        if found.search(line) != None: break
+      found = compile(r"""Following\s+cartesian\s+coordinates:""")
+      for line in file:
+        if found.search(line) != None: break
+      file.next()
+      for line in file:
+        data = line.split()
+        if len(data) != 4: break;
+        result.append( data[:3] )
+    return array(result, dtype="float64")
+  kpoints = property(_get_kpoints)
+  r""" A mx3 matrix where each row corresponds to a kpoint.
+  
+       kpoints are in cartesian units.
+   """
 
-#   path = Launch.OUTCAR 
-#   if self.directory != "": path = join(self.directory, path)
-#   assert exists(path), "File %s does not exist.\n" % (path)
-#   
-#   with open(path, "r") as file:
-#     # first gets number of kpoints and bands.
-#     regex = re.compile( r"""k-Points\s+NKPTS\s*=\s*(\d+)\s*
-#                             number\s+of\s+bands\s+NBANDS\s+=\s+(\d+)""", re.X )
-#     nkpt, nbands = None, None
-#     for line in file:
-#       match = regex.search(line)
-#       if match != None: 
-#         nkpt, nbands = float(match.group(1)), float(match.group(2))
-#         break
-#     if nkpt == None: raise RuntimeError, "File %s is incomplete.\n" % (path)
+  @_bound_mpi_extraction
+  def _get_multiplicity(self):
+    """ Returns multiplicity """
+    from os.path import exists, join
+    from re import compile, search 
+    from ..files import OUTCAR
+    from numpy import array
 
-#     # now reads kpoints 
-#     results = []
-#     file.seek(0)
-#     regex = re.compile( r"""k-point\s+(\d+)\s+:\s+(\S+)\s+(\S+)\s+(\S+)""")
-#     eigregex = re.compile( r"""\s+(\d+)\s+(\S+)\s+(\S+)""" )
-#     last_read = -1 
-#     is_reading = None
-#     kpoint = None
-#     for line in file:
-#       if is_reading != None
-#         if is_reading == 0: is_reading +=1 
-#         elif is_reading <= nbands:
-#           match = eigregex.search(line)
-#           assert match != None, "File %s is incomplete or incoherent" % (path)
-#           assert int(match.group(1)) == is_reading, "File %s is incomplete or incoherent" % (path)
-#           result[kpoint].eigenvalues[is_reading-1, 0] =  float(match.group(2))
-#           result[kpoint].eigenvalues[is_reading-1, 1] =  float(match.group(3))
-#         else: 
-#           assert is_reading == nbands + 1, "File %s is incomplete or incoherent" % (path) 
-#           is_reading = None
-#           last_read = kpoint
-#           continue
-#         is_reading +=1
-#       else:
-#         match = regex.search(line)
-#         if match == None: continue
-#         kpoint = int(match.group(1)) - 1
-#         is_reading = 0
-#         if last_read == nkpts-1: last_read = -1
-#         assert last_read + 1 == kpoint, "File %s is incomplete or incoherent" % (path) 
-            
+    path = OUTCAR 
+    if len(self.directory): path = join(self.directory, path)
+    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
+
+    result = []
+    with open(path, "r") as file:
+      found = compile(r"""Found\s+(\d+)\s+irreducible\s+k-points""")
+      for line in file:
+        if found.search(line) != None: break
+      found = compile(r"""Following\s+cartesian\s+coordinates:""")
+      for line in file:
+        if found.search(line) != None: break
+      file.next()
+      for line in file:
+        data = line.split()
+        if len(data) != 4: break;
+        result.append( float(data[3]) )
+    return array(result, dtype="float64")
+  multiplicity = property(_get_multiplicity)
+  r""" A mx1 matrix where each correspond to a k-point multiplicity """
+
+  def _get_eigocc(self,which):
+    """ Implementation of _get_eigenvalues and _get_occupations """
+    import re 
+    from os.path import exists, join
+    from numpy import array
+    from ..files import OUTCAR
+
+    path = OUTCAR 
+    if len(self.directory): path = join(self.directory, path)
+    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
+
+    result = []
+    with open(path, "r") as file:
+      found = re.compile(r"""k-point\s+(\d+)\s*:\s*(\S+)\s+(\S+)\s+(\S+)$""")
+      in_kpoint = -1
+      kp_result = []
+      for line in file:
+        if in_kpoint > 0: 
+          data = line.split()
+          if len(data) == 3: kp_result.append(float(data[which]))
+          else: 
+            result.append(kp_result)
+            kp_result = []
+            in_kpoint = -1
+        elif in_kpoint == 0: in_kpoint = 1
+        else:
+          match = found.search(line)
+          if match != None:  
+            if int(match.group(1)) == 1: result = []
+            in_kpoint = 0
+    return array(result, dtype="float64")
+
+  @_bound_mpi_extraction
+  def _get_eigenvalues(self):
+    """ Returns eigenvalues 
+
+        @return: a two-dimension numpy nxm array of eigenvalues, with n the
+                 number of kpoints and m the number of bands.
+    """
+    return self._get_eigocc(1)
+  eigenvalues = property(_get_eigenvalues)
+  r""" A matrix of eigenvalues where each row contains eigenvalues of a single kpoint. """
+
+  @_bound_mpi_extraction
+  def _get_occupations(self):
+    """ Returns band-occupations 
+
+        @return: a two-dimension numpy nxm array of occupations, with n the
+                 number of kpoints and m the number of bands.
+    """
+    return self._get_eigocc(2)
+  occupations = property(_get_occupations)
+  r""" A matrix of eigenvalues where each row contains band occupations of a single kpoint. """
+
