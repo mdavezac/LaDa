@@ -1,0 +1,24 @@
+System = ZnO
+
+ISTART = 0
+PREC    = accurate
+ADDGRID = .TRUE.
+EDIFF   = 1E-5
+#LREAL   = A
+#ROPT    = 1E-4 1E-4 1E-4
+RWIGS   = 1.2  1.2 1.2
+LMAXMIX = 4
+LORBIT = 10
+
+ALGO   = FAST
+WEIMIN  = 0
+NPAR    = 2
+LPLANE  = .TRUE.
+
+ISMEAR  = -5
+
+#NGX = 18
+#NGY = 18
+#NGZ = 32
+
+NBANDS = 128
