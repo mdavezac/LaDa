@@ -21,7 +21,7 @@
     of L{launch.Launch._run}.
 """
 from launch import Launch
-from extract import Extract
+from extract import Extract, ExtractGW
 from incar import Incar
 from kpoints import Density, Gamma
 from specie import Specie
