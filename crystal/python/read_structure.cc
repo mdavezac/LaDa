@@ -294,26 +294,26 @@ namespace LaDa
         "Prints out a poscar to file." 
       );
 
-      boost::python::def("read_poscar", &details::read_poscar_one_specie<std::string>);
-      boost::python::def
-      (
-        "read_poscar", 
-        &details::read_poscar<std::string>,
-        (
-          bp::arg("types"),
-          bp::arg("path"),
-          bp::arg("check_lattice") = false
-        ),
-        "Tries to read a VASP POSCAR file, Returns a"
-           "(L{lada.crystal.Structure}) structure on success.\n\n" 
-        "@param types: tuple consisting of the atomic symbols of the species in the POSCAR.\n"
-        "@type types: tuple of strings\n"
-        "@param path: path to the POSCAR file.\n"
-        "@type path: string\n"
-        "@param check_lattice: if true, then checks that the cell in the POSCAR "
-           "is commensurate with the lattice (L{crystal.Structure.lattice} must be set).\n"
-        "@type check_lattice: Boolean\n"
-      );
+//     boost::python::def("read_poscar", &details::read_poscar_one_specie<std::string>);
+//     boost::python::def
+//     (
+//       "read_poscar", 
+//       &details::read_poscar<std::string>,
+//       (
+//         bp::arg("types"),
+//         bp::arg("path"),
+//         bp::arg("check_lattice") = false
+//       ),
+//       "Tries to read a VASP POSCAR file, Returns a"
+//          "(L{lada.crystal.Structure}) structure on success.\n\n" 
+//       "@param types: tuple consisting of the atomic symbols of the species in the POSCAR.\n"
+//       "@type types: tuple of strings\n"
+//       "@param path: path to the POSCAR file.\n"
+//       "@type path: string\n"
+//       "@param check_lattice: if true, then checks that the cell in the POSCAR "
+//          "is commensurate with the lattice (L{crystal.Structure.lattice} must be set).\n"
+//       "@type check_lattice: Boolean\n"
+//     );
       boost::python::def
       (
         "read_structure", 
