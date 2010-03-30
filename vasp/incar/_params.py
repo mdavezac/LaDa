@@ -498,7 +498,7 @@ class NElect(object):
       broadcast(mpicomm, value=charge_neutral, root=0)
     else: charge_neutral = broadcast(mpicomm, root=0)
     # then prints incar string.
-    if self.value = 0: return "# %s = %s. Charge neutral system" % (self.key, charge_neutral)
+    if self.value == 0: return "# %s = %s. Charge neutral system" % (self.key, charge_neutral)
     elif self.value > 0:
       return "%s = %s  # negatively charged system (%i) "\
              % (self.key, charge_neutral + self.value, -self.value)
@@ -519,10 +519,11 @@ class NBands(object):
   """ Adds n bands, with n=self.value * \"number of atoms in system\". """
   nelec = 2
   """ Adds n bands, with n=self.value * \"number of electrons in system\". """
-  def __init__(self, value = 0, unit = NBands.default):
+  def __init__(self, value = 0, unit = None):
     super(NElect, self).__init__()
     self.value = value
-    self.unit = unit
+    if unit == None: self.unit = default
+    else:            self.unit = unit
 
   key = "NBANDS"
   """ INCAR key """

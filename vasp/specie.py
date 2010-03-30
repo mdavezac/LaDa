@@ -75,7 +75,7 @@ class Specie(object):
   def enmax(self):
     """ Maximum recommended cutoff """
     import re
-    import os.path import exists
+    from os.path import exists
     if not exists(os.path.join(self.path, "POTCAR")):
       raise IOError, "Could not find potcar in " + self.path
     with open(os.path.join(self.path, "POTCAR"), "r") as potcar:
@@ -88,7 +88,7 @@ class Specie(object):
   def valence(self):
     """ Number of valence electrons specified by pseudo-potential """ 
     import re
-    import os.path import exists
+    from os.path import exists
     if not exists(os.path.join(self.path, "POTCAR")):
       raise IOError, "Could not find potcar in " + self.path
     with open(os.path.join(self.path, "POTCAR"), "r") as potcar:
