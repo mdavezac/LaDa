@@ -12,41 +12,44 @@ def U(type = 1, l=2, U=0e0, J=0e0 ):
   if hasattr(type, "lower"):
     type = type.lower()
     if type == "liechtenstein": type = 1
-    elif type == "dudarev": type == 2
+    elif type == "dudarev": type = 2
   if hasattr(l, "lower"):
     l = l.lower()
-    if l == "s": l = 0
-    elif l == "p": l == 1
-    elif l == "d": l == 2
+    assert len(l) == 1, "Uknown input %s." % (l)
+    if   l[0] == 's': l = 0
+    elif l[0] == 'p': l = 1
+    elif l[0] == 'd': l = 2
   try: l = int(l)
   except: raise ValueError, "Moment l should be 0|1|2|s|p|d." 
   if l < 1 or l > 2: raise ValueError, "Moment l should be 0|1|2|s|p|d." 
   return { "type": int(type), "l": l, "U": U, "J": J, "func": "U" }
 
-def nlep(type = 1, l=2, U=0e0, Eref=None ):
+def nlep(type = 1, l=2, U0=0e0, U1=None ):
   """ Creates nlep parameters 
 
       LDA+U is always LSDA+U here. 
       @param type: (1|2|"liechtenstein"|"dudarev")
-      @param Eref: (float|None) reference energy for E-nlep, if specified.
+      @param J: (float|None) second E-nlep parameter, if specified. Otherwise reverts to nlep.
         Default:None.
       @param l: (0|1|2|"s"|"p"|"d") channel for which to apply U. Default: 2.
   """
   if hasattr(type, "lower"):
-    if type.lower() == "liechtenstein": type = 1
-    elif type.lower() == "dudarev": type == 2
-  if Eref == None: 
-    return { "type": int(type), "l": l, "U": U, "func": "nlep" }
+    type = type.lower()
+    if type == "liechtenstein": type = 1
+    elif type == "dudarev": type = 2
   if hasattr(l, "lower"):
     l = l.lower()
-    if l == "s": l = 0
-    elif l == "p": l == 1
-    elif l == "d": l == 2
+    assert len(l) == 1, "Uknown input %s." % (l)
+    if   l[0] == 's': l = 0
+    elif l[0] == 'p': l = 1
+    elif l[0] == 'd': l = 2
   try: l = int(l)
   except: raise ValueError, "Moment l should be 0|1|2|s|p|d." 
-  if l < 1 or l > 2: raise ValueError, "Moment l should be 0|1|2|s|p|d." 
+  if l < 0 or l > 2: raise ValueError, "Moment l should be 0|1|2|s|p|d." 
+  elif U1 == None: 
+    return { "type": int(type), "l": l, "U": U0, "func": "nlep" }
   else: 
-    return { "type": int(type), "l": l, "U": U, "ref": Eref, "func": "enlep" }
+    return { "type": int(type), "l": l, "U0": U0, "U1": U1, "func": "enlep" }
 
 
 class Specie(object):
@@ -65,7 +68,7 @@ class Specie(object):
     import os.path
 
     self.symbol = symbol
-    self.path = os.path.expanduser( path )
+    self.path = os.path.abspath(os.path.expanduser(path))
     if U == None: self.U = []
     else: self.U = U
 
@@ -75,10 +78,10 @@ class Specie(object):
   def enmax(self):
     """ Maximum recommended cutoff """
     import re
-    from os.path import exists
-    if not exists(os.path.join(self.path, "POTCAR")):
+    from os.path import exists, join
+    if not exists(join(self.path, "POTCAR")):
       raise IOError, "Could not find potcar in " + self.path
-    with open(os.path.join(self.path, "POTCAR"), "r") as potcar:
+    with open(join(self.path, "POTCAR"), "r") as potcar:
       r = re.compile("ENMAX\s+=\s+(\S+);\s+ENMIN")
       p = r.search(potcar.read())
       if p == None: raise AssertionError, "Could not retrieve ENMAX from " + self.path
@@ -88,9 +91,9 @@ class Specie(object):
   def valence(self):
     """ Number of valence electrons specified by pseudo-potential """ 
     import re
-    from os.path import exists
-    if not exists(os.path.join(self.path, "POTCAR")):
+    from os.path import exists, join
+    if not exists(join(self.path, "POTCAR")):
       raise IOError, "Could not find potcar in " + self.path
-    with open(os.path.join(self.path, "POTCAR"), "r") as potcar:
-      file.readline()
-      return float(file.readline().split()[0]) # shoud be number on second line
+    with open(join(self.path, "POTCAR"), "r") as potcar:
+      potcar.readline()
+      return float(potcar.readline().split()[0]) # shoud be number on second line

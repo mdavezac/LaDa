@@ -5,7 +5,7 @@ class Standard(object):
       
       In practice, the key should be an INCAR tag, and the value something
       which makes sense for that key.
-      C{print self.incar_string(vasp, mpicomm)} outputs C{print
+      C{print self.incar_string(vasp, comm)} outputs C{print
       str(self.key), "=", str(self.value)}.
   """
   def __init__(self, key, value, validity=None):
@@ -33,7 +33,7 @@ class Standard(object):
       returns its  "VASP" equivalent when gotten.
   """
 
-  def incar_string(self, vasp, mpicomm):
+  def incar_string(self, vasp, comm):
     """ Prints the key/value as key = value """
     return "%s = %s" % (self.key, str(self.value))
 
@@ -57,10 +57,10 @@ class NoPrintStandard(Standard):
   def __init__(self, *args, **kwargs):
     super(NoPrintStandard, self).__init__(*args, **kwargs)
     self.default = self.value
-  def incar_string(self, vasp, mpicomm):
+  def incar_string(self, vasp, comm):
     if self.default == self.value: 
       return "# %s = VASP default." % (self.key)
-    return super(NoPrintStandard, self).incar_string(vasp, mpicomm)
+    return super(NoPrintStandard, self).incar_string(vasp, comm)
   def __setstate__(self, arg): 
     super(NoPrintStandard, self).__setstate__(arg)
     self.default = self.value
@@ -133,7 +133,7 @@ class Ediff(Standard):
   """
   def __init__(self, value = 1e-4):
     super(Ediff, self).__init__("EDIFF", value, validity = lambda x: x > 0e0)
-  def incar_string(self, vasp, mpicomm):
+  def incar_string(self, vasp, comm):
     return "%s = %f " % (self.key, self.value * float(len(vasp._system.atoms)))
 
 
@@ -163,19 +163,20 @@ class Encut(object):
   def _setvalue(self, value):
     raise ValueError, "Value of encut cannot be set manually. Change safety instead.\n"
   x = property(_getvalue, _setvalue)
-  def incar_string(self, vasp, mpicomm):
+  def incar_string(self, vasp, comm):
     from boost.mpi import broadcast
     n = 0
-    if mpicomm == None: n = self.enmax(vasp.species)
-    elif mpicomm.rank == 0:
+    if comm == None: n = self.enmax(vasp.species)
+    elif comm.rank == 0:
       n = self.enmax(vasp.species)
-      broadcast(mpicomm, value=n, root=0)
-    else: n = broadcast(mpicomm, root=0)
+      broadcast(comm, value=n, root=0)
+    else: n = broadcast(comm, root=0)
     return "%s = %f " % (self.key, float(n) * self.safety)
 
   @staticmethod
   def enmax(species):
     """ Retrieves max ENMAX from list of species. """
+    from math import ceil
     return ceil( max(s.enmax for s in species) )
 
 class Smearing(object):
@@ -251,7 +252,7 @@ class Smearing(object):
       If "gotten", this decorator returns a tuple containing the type and the energy scale.
       It can be set using a similar tuple, or a string input with keywords. 
   """
-  def incar_string(self, vasp, mpicomm):
+  def incar_string(self, vasp, comm):
     return "ISMEAR  = %s\nSIGMA   = %f\n" % self.value
 
   
@@ -272,9 +273,9 @@ class Isym(Standard):
     if strval == "off": self._value = -1e0
     else: self._value = float(value) 
   value = property(_getvalue, _setvalue)
-  def incar_string(self, vasp, mpicomm):
+  def incar_string(self, vasp, comm):
     if self._value <= 0e0: return "ISYM = 0\n" 
-    return super(Isym,self).incar_string(vasp, mpicomm)
+    return super(Isym,self).incar_string(vasp, comm)
 
   def __eq__(self, other):
     if isinstance(other, Isym):
@@ -301,10 +302,10 @@ class FFTGrid(object):
       assert self._value[2] > 0, "FFT grid components should be positive.\n"
   value = property(_getvalue, _setvalue)
 
-  def incar_string(self, vasp, mpicomm):
-    return "NGX = %i\nNGY = %i\nNGZ = %i" % self(vasp, mpicomm)
+  def incar_string(self, vasp, comm):
+    return "NGX = %i\nNGY = %i\nNGZ = %i" % self(vasp, comm)
 
-  def __call__(self, vasp, mpicomm):
+  def __call__(self, vasp, comm):
     from copy import deepcopy
     from os import getcwd
     from .. import kpoints
@@ -314,7 +315,7 @@ class FFTGrid(object):
     if self._value != None: return self._value
 
     vasp = deepcopy(vasp)
-    with Tempdir(workdir=vasp._tempdir, keep=True, comm=mpicomm) as vasp._tempdir:
+    with Tempdir(workdir=vasp._tempdir, keep=True, comm=comm) as vasp._tempdir:
       vasp.kpoints = kpoints.Gamma()
       vasp.relaxation.value = None
       # may need to do some checking here... will run into infinit recursion
@@ -327,12 +328,12 @@ class FFTGrid(object):
       vasp.nelmin = Standard("NELMIN",  0)
 
       # Now runs vasp. OUTCAR should be in temp indir
-      vasp._prerun(mpicomm)
-      vasp._run(mpicomm)
+      vasp._prerun(comm)
+      vasp._run(comm)
       # no need for postrun
 
       # finally extracts from OUTCAR.
-      return Extract(directory = vasp._tempdir, mpicomm = mpicomm).fft
+      return Extract(directory = vasp._tempdir, comm = comm).fft
 
 
 
@@ -357,7 +358,7 @@ class Restart(object):
   def _setvalue(self, object): self._value = object
   value = property(_getvalue, _setvalue)
 
-  def incar_string(self, vasp, mpicomm):
+  def incar_string(self, vasp, comm):
     istart = "0   # start from scratch"
     icharg = "2   # superpositions of atomic densities"
     if self.value == None or len(self.value) == 0:
@@ -436,7 +437,7 @@ class Relaxation(object):
                           "and volume at constant cell-shape.\n"
   value = property(_getvalue, _setvalue)
 
-  def incar_string(self, vasp, mpicomm):
+  def incar_string(self, vasp, comm):
     isif = self.value
     result = "NSW    = %3i   # number of ionic steps.\n"\
              "IBRION =   %1i # ionic-relaxation minimization method.\n"\
@@ -485,18 +486,18 @@ class NElect(object):
     for s in vasp.species:
       valence[s.symbol] = s.valence
     # sums up charge.
-    return fsum( s[atom.type] for atom in vasp.system.atoms )
+    return fsum( valence[atom.type] for atom in vasp._system.atoms )
     
 
-  def incar_string(self, vasp, mpicomm):
+  def incar_string(self, vasp, comm):
     from boost.mpi import broadcast
     # gets number of electrons from root process.
     charge_neutral = 0
-    if mpicomm == None: charge_neutral = self.nelectrons(vasp)
-    elif mpicomm.rank == 0:
+    if comm == None: charge_neutral = self.nelectrons(vasp)
+    elif comm.rank == 0:
       charge_neutral = self.nelectrons(vasp)
-      broadcast(mpicomm, value=charge_neutral, root=0)
-    else: charge_neutral = broadcast(mpicomm, root=0)
+      broadcast(comm, value=charge_neutral, root=0)
+    else: charge_neutral = broadcast(comm, root=0)
     # then prints incar string.
     if self.value == 0: return "# %s = %s. Charge neutral system" % (self.key, charge_neutral)
     elif self.value > 0:
@@ -506,7 +507,7 @@ class NElect(object):
       return "%s = %s  # positively charged system (+%i) "\
              % (self.key, charge_neutral + self.value, -self.value)
           
-class NBands(object):
+class NBands(NElect):
   """ Sets number of bands to compute relative to number of electrons. 
       
       Three types of input are accepted:
@@ -520,29 +521,28 @@ class NBands(object):
   nelec = 2
   """ Adds n bands, with n=self.value * \"number of electrons in system\". """
   def __init__(self, value = 0, unit = None):
-    super(NElect, self).__init__()
-    self.value = value
+    super(NBands, self).__init__(value)
     if unit == None: self.unit = default
     else:            self.unit = unit
 
   key = "NBANDS"
   """ INCAR key """
 
-  def incar_string(self, vasp, mpicomm):
+  def incar_string(self, vasp, comm):
     from boost.mpi import broadcast
     # gets number of electrons.
     ne = 0
-    if mpicomm == None: ne = self.nelectrons(vasp)
-    elif mpicomm.rank == 0:
+    if comm == None: ne = self.nelectrons(vasp)
+    elif comm.rank == 0:
       ne = self.nelectrons(vasp)
-      broadcast(mpicomm, value=ne, root=0)
-    else: ne = broadcast(mpicomm, root=0)
+      broadcast(comm, value=ne, root=0)
+    else: ne = broadcast(comm, root=0)
 
     if self.unit == NBands.default: return "# %s = VASP default " % (self.key)
     elif self.unit == NBands.nunit:
       return "%s = %s" % (self.key, self.value + float(ne))
     elif self.unit == NBands.nions:
-      return "%s = %s" % (self.key, int(ne + ceil(self.value * float(len(vasp.system.atoms)))) )
+      return "%s = %s" % (self.key, int(ne + ceil(self.value * float(len(vasp._system.atoms)))) )
     elif self.unit == NBands.nelec:
       return "%s = %s" % (self.key, int(ne + ceil(self.value * float(ne))) )
     else: raise "Unknown method in NBands"
@@ -562,38 +562,37 @@ class UParams(object):
 
     self.value = int(verbose)
     super(UParams, self).__init__(**kwargs)
-  def incar_string(self, vasp, mpicomm):
+  def incar_string(self, vasp, comm):
     # existence and sanity check
     has_U, which_type = False, None 
     for specie in vasp.species:
-      if len(specie.U) != 0: continue
+      if len(specie.U) == 0: continue
       if len(specie.U) > 4: 
         raise AssertionError, "More than 4 channels for U/NLEP parameters"
       has_U = True
-      for l in specie: 
-        if which_type == None: which_type = l.type
-        elif which_type != l.type: 
+      for l in specie.U: 
+        if which_type == None:
+          which_type = l["type"]
+        elif which_type != l["type"]:
           raise AssertionError, "LDA+U/NLEP types are not consistent across species."
     if not has_U: return "# no LDA+U/NLEP parameters ";
 
     result = "LDAU = .TRUE.\nLDAUPRINT = %i\nLDAUTYPE = %i\n" % (self.value, which_type)
 
     for i in range( max(len(specie.U) for specie in vasp.species) ):
-      lines = "LDUL%i" % (i+1), "LDUU%i" % (i+1), "LDUJ%i" % (i+1), "LDUO%i" % (i+1)
+      line = "LDUL%i" % (i+1), "LDUU%i" % (i+1), "LDUJ%i" % (i+1), "LDUO%i" % (i+1)
       for specie in vasp.species:
-        if len(specie) < i:
-          line = line[0].join(-1), line[1].join(0.0), line[2].join(0.0), line[3].join(1)
-        elif specie[i]["func"] == "U": 
-          line = line[0].join(specie[i]["l"]), line[1].join(specie[i]["U"]), \
-                 line[2].join(specie[i]["J"]), line[3].join(1)
-        elif specie[i]["func"] == "nlep": 
-          line = line[0].join(specie[i]["l"]), line[1].join(specie[i]["U"]), \
-                 line[2].join(0.0), line[3].join(2)
-        elif specie[i]["func"] == "enlep": 
-          line = line[0].join(specie[i]["l"]), line[1].join(specie[i]["U"]), \
-                 line[2].join(specie[i]["Eref"]), line[3].join(3)
+        a = -1, 0e0, 0e0, 1
+        if len(specie.U) <= i: pass
+        elif specie.U[i]["func"] == "U":     a = specie.U[i]["l"], specie.U[i]["U"], specie.U[i]["J"], 1
+        elif specie.U[i]["func"] == "nlep":  a = specie.U[i]["l"], specie.U[i]["U"], 0e0, 2
+        elif specie.U[i]["func"] == "enlep": a = specie.U[i]["l"], specie.U[i]["U0"], specie.U[i]["U1"], 3
         else: raise RuntimeError, "Debug Error."
-    result.join( "\n%s\n%s\n%s\n%s\n" % line )
+        line = "%s %i"      % (line[0], a[0]),\
+               "%s %18.10e" % (line[1], a[1]),\
+               "%s %18.10e" % (line[2], a[2]),\
+               "%s %i"      % (line[3], a[3])
+      result = result.join( "\n%s\n%s\n%s\n%s\n" % line )
     return result
 
 

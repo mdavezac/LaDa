@@ -4,20 +4,21 @@ from ._mpi import _bound_mpi_extraction
 class _ExtractImpl(object):
   """ Implementation class for extracting data from VASP output """
 
-  def __init__(self, directory = "", mpicomm = None): 
+  def __init__(self, directory = "", comm = None): 
     """ Initializes the extraction class. 
 
-        @param mpicomm: MPI group communicator. Extraction will be performed
-                        for all procs in the group. In serial mode, mpicomm can
+        @param comm: MPI group communicator. Extraction will be performed
+                        for all procs in the group. In serial mode, comm can
                         be None.
-        @param mpicomm: boost.mpi.Communicator
+        @param comm: boost.mpi.Communicator
         @param directory: path to the directory where the VASP output is located.
         @type directory: str
     """
+    from os.path import abspath, expanduser
     from ..files import OUTCAR, CONTCAR
-    self.directory = directory
+    self.directory = abspath(expanduser(directory))
     """ path to the directory where the VASP output is located. """
-    self.mpicomm = mpicomm
+    self.comm = comm
     """ MPI group communicator. """
     self.OUTCAR = OUTCAR
     """ Filename of the OUTCAR file from VASP.

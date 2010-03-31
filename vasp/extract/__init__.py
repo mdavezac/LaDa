@@ -9,7 +9,7 @@ class Extract(_ExtractImpl):
       This class should contain attributes (eg fermi_energy) which can extract
       their values from the vasp output files located in self.directory.  
 
-      >>> result = Extract(directory = "./", mpicomm = boost.mpi.world)
+      >>> result = Extract(directory = "./", comm = boost.mpi.world)
       >>> print result.fermi_energy * 13.26
 
       It would be preferable to limit these output files to L{files.OUTCAR}, as
@@ -66,17 +66,17 @@ class Extract(_ExtractImpl):
       The total is not included.
   """
 
-  def __init__(self, directory = "", mpicomm = None): 
+  def __init__(self, directory = "", comm = None): 
     """ Initializes the extraction class. 
 
-        @param mpicomm: MPI group communicator. Extraction will be performed
-                        for all procs in the group. In serial mode, mpicomm can
+        @param comm: MPI group communicator. Extraction will be performed
+                        for all procs in the group. In serial mode, comm can
                         be None.
-        @param mpicomm: boost.mpi.Communicator
+        @param comm: boost.mpi.Communicator
         @param directory: path to the directory where the VASP output is located.
         @type directory: str
     """
-    super(Extract, self).__init__(directory, mpicomm)
+    super(Extract, self).__init__(directory, comm)
 
   def solo(self):
     """ Extraction on a single process.
@@ -88,8 +88,8 @@ class Extract(_ExtractImpl):
         >>> # prints only on proc 0.
         >>> if boost.mpi.world.rank == 0: print extract.solo().structure
     """
-    if self.mpicomm == None: return self
-    return Extract(directory = self.directory, mpicomm = None)
+    if self.comm == None: return self
+    return Extract(directory = self.directory, comm = None)
 
   def uncache(self): 
     """ Removes cached results.
@@ -140,17 +140,17 @@ class ExtractGW(_ExtractGWImpl):
        Each row corresponds to a k-point and each column to a band.
    """
 
-  def __init__(self, directory = "", mpicomm = None): 
+  def __init__(self, directory = "", comm = None): 
     """ Initializes the extraction class. 
 
-        @param mpicomm: MPI group communicator. Extraction will be performed
-                        for all procs in the group. In serial mode, mpicomm can
+        @param comm: MPI group communicator. Extraction will be performed
+                        for all procs in the group. In serial mode, comm can
                         be None.
-        @param mpicomm: boost.mpi.Communicator
+        @param comm: boost.mpi.Communicator
         @param directory: path to the directory where the VASP output is located.
         @type directory: str
     """
-    super(ExtractGW, self).__init__(directory, mpicomm)
+    super(ExtractGW, self).__init__(directory, comm)
 
   def solo(self):
     """ Extraction on a single process.
@@ -162,8 +162,8 @@ class ExtractGW(_ExtractGWImpl):
         >>> # prints only on proc 0.
         >>> if boost.mpi.world.rank == 0: print extract.solo().structure
     """
-    if self.mpicomm == None: return self
-    return ExtractGW(directory = self.directory, mpicomm = None)
+    if self.comm == None: return self
+    return ExtractGW(directory = self.directory, comm = None)
 
   def uncache(self): 
     """ Removes cached results.

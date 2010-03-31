@@ -2,7 +2,8 @@
 from _params import Standard, NoPrintStandard, Algo, \
                     Precision, Ediff, Encut, \
                     Smearing, Isym, FFTGrid, \
-                    Restart, Relaxation, Iniwave, NElect, UParams
+                    Restart, Relaxation, Iniwave, \
+                    NElect, UParams, NBands
 
 class Incar(object):
   """ Contains vasp Incar parameters. 

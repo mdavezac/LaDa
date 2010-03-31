@@ -33,19 +33,19 @@ def _uncache(ob):
 def _extract_which_is_self(which, method, *args, **kwargs):
   from boost.mpi import broadcast
   
-  mpicomm = args[which].mpicomm
-  if mpicomm == None: return method(*args, **kwargs)
-  if mpicomm.size == which: return method(*args, **kwargs)
-  if mpicomm.rank != 0:
-    result = broadcast(mpicomm, root = 0)
-    assert broadcast(mpicomm, root = 0) == "Am in sync", "Processes not in sync"
+  comm = args[which].comm
+  if comm == None: return method(*args, **kwargs)
+  if comm.size == which: return method(*args, **kwargs)
+  if comm.rank != 0:
+    result = broadcast(comm, root = 0)
+    assert broadcast(comm, root = 0) == "Am in sync", "Processes not in sync"
     return result
 
-  args[which].mpicomm = None
+  args[which].comm = None
   result = method(*args, **kwargs)
-  args[which].mpicomm = mpicomm
-  assert mpicomm != None
-  assert args[which].mpicomm != None
-  broadcast(mpicomm, result, root = 0)
-  assert broadcast(mpicomm, "Am in sync", root = 0) == "Am in sync", "Processes not in sync"
+  args[which].comm = comm
+  assert comm != None
+  assert args[which].comm != None
+  broadcast(comm, result, root = 0)
+  assert broadcast(comm, "Am in sync", root = 0) == "Am in sync", "Processes not in sync"
   return result

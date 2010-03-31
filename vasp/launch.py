@@ -54,7 +54,7 @@ class Launch(Incar):
             raise AssertionError, "Could not find potcar in " + s.path
     return results
 
-  def _prerun(self, mpicomm):
+  def _prerun(self, comm):
     from os.path import join, exists
     from os import getcwd
     from shutil import copy
@@ -65,9 +65,9 @@ class Launch(Incar):
 
     # creates incar file
     with Changedir(self._tempdir) as tmpdir:
-      incar_string = "".join((param.incar_string(self, mpicomm) + "\n") for param in self)
-    if mpicomm != None:
-      if mpicomm.rank != 0: return # don't have any more business here.
+      incar_string = "".join((param.incar_string(self, comm) + "\n") for param in self)
+    if comm != None:
+      if comm.rank != 0: return # don't have any more business here.
     with open(join(self._tempdir, files.INCAR), "w") as incar_file: 
       incar_file.write(incar_string)
   
@@ -99,7 +99,7 @@ class Launch(Incar):
     eigenvalue = join(indir, files.EIGENVALUES) 
     if exists(eigenvalue): copy(eigenvalue, self._tempdir)
 
-  def _run(self, mpicomm):
+  def _run(self, comm):
      """ Isolates calls to vasp itself """
      from os.path import join
      from subprocess import Popen
@@ -110,15 +110,15 @@ class Launch(Incar):
      # moves to working dir only now.
      stdout = join(self._tempdir, files.STDOUT) 
      stderr = join(self._tempdir, files.STDERR) 
-     if mpicomm.rank != None:
-       if mpicomm.rank != 0:
-         stdout += ".%i" % (mpicomm.rank)
-         stderr += ".%i" % (mpicomm.rank)
+     if comm.rank != None:
+       if comm.rank != 0:
+         stdout += ".%i" % (comm.rank)
+         stderr += ".%i" % (comm.rank)
      with Changedir(self._tempdir):
        with Redirect(Redirect.fortran.output, stdout) as stdout:
          with Redirect(Redirect.fortran.error, stderr) as stderr:
-           if mpicomm != None: mpicomm.barrier()
-           call_vasp(mpicomm)
+           if comm != None: comm.barrier()
+           call_vasp(comm)
              
 #    with open(join(self._tempdir, files.STDOUT), "w") as stdout:
 #      with open(join(self._tempdir, files.STDERR), "w") as stderr:
@@ -126,33 +126,33 @@ class Launch(Incar):
 #                           stdout = stdout, stderr = stderr, shell = True )
 #        vasp_proc.wait() # Wait for completion. Could set a timer here.
 
-  def _postrun(self, repat, outdir,  mpicomm):
+  def _postrun(self, repat, outdir,  comm):
      """ Copies files back to outdir """
      from os.path import exists, join, isdir
      from os import makedirs
      from shutil import copy
      from . import files
 
-     is_root = mpicomm == None
-     if mpicomm != None: is_root = mpicomm.rank == 0
+     is_root = comm == None
+     if comm != None: is_root = comm.rank == 0
 
      if is_root: 
        if not exists(outdir): makedirs(outdir)
        if not exists(outdir): raise IOError, "%s directory does not exist." % (outdir)
        if not isdir(outdir):  raise IOError, "%s is not a directory." % (outdir)
      
-     if mpicomm != None: mpicomm.barrier()
+     if comm != None: comm.barrier()
 
 
      notfound = []
      for filename in set(repat).union(files.minimal):
-       if not is_root: filename = str("%s.%i" % (filename, mpicomm.rank))
+       if not is_root: filename = str("%s.%i" % (filename, comm.rank))
        if exists( join(self._tempdir, filename) ): copy( join(self._tempdir, filename), outdir )
        elif is_root: notfound.append(filename)
 
      if len(notfound) != 0: raise IOError, "Files %s were not found.\n" % (notfound)
 
-  def __call__(self, structure=None, outdir = None, mpicomm = None, repat = []):
+  def __call__(self, structure=None, outdir = None, comm = None, repat = []):
     from os.path import exists, join
     from os import getcwd
     from shutil import copy2 as copy
@@ -164,24 +164,24 @@ class Launch(Incar):
     if outdir == None: outdir = self.indir
     if outdir == None: outdir = getcwd()
 
-    is_root = mpicomm == None
-    if mpicomm != None: is_root = mpicomm.rank == 0 
+    is_root = comm == None
+    if comm != None: is_root = comm.rank == 0 
 
     # creates temporary working directory
     workdir = self.workdir
     if workdir == None: workdir = getcwd()
-    with Tempdir(workdir=workdir, comm=mpicomm, keep=True) as self._tempdir: 
+    with Tempdir(workdir=workdir, comm=comm) as self._tempdir: 
       # We do not move to working directory to make copying of files from indir
       # or outdir (as relative paths) possible.
       # creates INCAR and KPOINTS.
       # copies POSCAR, POTCAR, possibly WAVECAR and CHGCAR from indir
-      self._prerun(mpicomm)
+      self._prerun(comm)
 
       # runs vasp.
-      self._run(mpicomm)
+      self._run(comm)
 
       # now copies data back
-      self._postrun(repat, outdir, mpicomm)
+      self._postrun(repat, outdir, comm)
 
     # deletes system attribute.
     del self._system
