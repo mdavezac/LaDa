@@ -171,6 +171,7 @@ class Launch(Incar):
     # creates temporary working directory
     workdir = self.workdir
     if workdir == None: workdir = getcwd()
+    workdir = abspath(expanduser(workdir))
     with Tempdir(workdir=workdir, comm=comm) as self._tempdir: 
       # We do not move to working directory to make copying of files from indir
       # or outdir (as relative paths) possible.
