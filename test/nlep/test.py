@@ -133,7 +133,7 @@ def main():
            species    = species
          )
   # adds some extra parameters.
-  vasp.nbands     = Standard("NBANDS", 60)
+  vasp.nbands     = Standard("NBANDS", 128)
   vasp.lorbit     = Standard("LORBIT", 10)
   vasp.npar       = Standard("NPAR", 1)
   vasp.lplane     = Standard("LPLANE", ".TRUE.")
