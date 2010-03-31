@@ -153,7 +153,7 @@ class Launch(Incar):
      if len(notfound) != 0: raise IOError, "Files %s were not found.\n" % (notfound)
 
   def __call__(self, structure=None, outdir = None, comm = None, repat = []):
-    from os.path import exists, join
+    from os.path import exists, join, abspath, expanduser
     from os import getcwd
     from shutil import copy2 as copy
     from ..opt.tempdir import Tempdir
@@ -163,6 +163,7 @@ class Launch(Incar):
     elif not hasattr(self, "_system"): raise RuntimeError, "Internal bug.\n"
     if outdir == None: outdir = self.indir
     if outdir == None: outdir = getcwd()
+    outdir = abspath(expanduser(outdir))
 
     is_root = comm == None
     if comm != None: is_root = comm.rank == 0 
