@@ -17,6 +17,7 @@
 #include <boost/serialization/access.hpp>
 
 #include <gsl/gsl_multimin.h>
+#include <gsl/gsl_vector_double.h>
 #include <tinyxml/tinyxml.h>
 
 #include "gsl.h"
@@ -223,7 +224,7 @@ namespace LaDa
           typename T_CONTAINER :: iterator i_arg = _arg.begin();
           typename T_CONTAINER :: iterator i_arg_end = _arg.end();
           for( size_t i(0); i_arg != i_arg_end; ++i_arg, ++i )
-            *i_arg = gsl_vector_get(minx, i);
+            *i_arg = minx->data[i * minx->stride];
 
           gsl_multimin_fdfminimizer_free (solver);
 

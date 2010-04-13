@@ -21,7 +21,7 @@ nobase_libvff_la_HEADERS = $(vff_h) $(fortranHEADER)
 libvff_la_CPPFLAGS = $(AM_CPPFLAGS) 
 
 vff_SOURCES = main.cc 
-vff_CPPFLAGS =  $(AM_CPPFLAGS) 
+vff_CPPFLAGS =  $(AM_CPPFLAGS)  @GSL_CFLAGS@
 vff_LDFLAGS =  $(AM_LDFLAGS) @BOOST_PROGOP@ 
 vff_LDADD = libvff.la \
             $(top_builddir)/crystal/libcrystal.la \

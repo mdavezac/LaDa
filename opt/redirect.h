@@ -17,7 +17,11 @@ extern "C"
 {
   void FC_FUNC_(lada_redirect_open,  LADA_REDIRECT_OPEN )( const int *, const int *,
                                                            const char *, int *, const int *);
-  void FC_FUNC_(lada_redirect_close, LADA_REDIRECT_CLOSE)(int *);
+# ifdef FUCKING_CRAY
+    void FC_FUNC_(fucking_cray, FUCKING_CRAY)(int *);
+# else
+    void FC_FUNC_(lada_redirect_close, LADA_REDIRECT_CLOSE)(int *);
+# endif
 }
 //! \endcond
 
@@ -104,7 +108,11 @@ namespace LaDa
         {
           if( isopen_ < 0 ) return;
           isopen_ = false;
-          FC_FUNC_(lada_redirect_close, LADA_REDIRECT_CLISE)(&which_);
+#         ifdef FUCKING_CRAY
+            FC_FUNC_(fucking_cray, FUCKING_CRAY)(&which_);
+#         else
+            FC_FUNC_(lada_redirect_close, LADA_REDIRECT_CLISE)(&which_);
+#         endif
         }
         //! True if a pipe is open.
         bool is_open() const { return isopen_; }
