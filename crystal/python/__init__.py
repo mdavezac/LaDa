@@ -3,6 +3,7 @@
     module L{_crystal}.
 """
 from _crystal import *
+import lada.opt.decorators
 
 def deform_kpoint(kpoint, ideal, relaxed):
   """ Deform kpoints from ideal cell to relaxed cell. 
@@ -26,6 +27,7 @@ def deform_kpoint(kpoint, ideal, relaxed):
   return dot(inv(relaxed.T), k.T)
   
 
+@lada.opt.decorators.broadcast_result
 def read_poscar(types=None, path=None, check_lattice=False):
   """ Tries to read a VASP POSCAR file,
       
@@ -46,7 +48,7 @@ def read_poscar(types=None, path=None, check_lattice=False):
   if path == None: path = "POSCAR"
   assert exists(path), "Could not find path %s." % (path)
   if isdir(path):
-    assert exists(join(path, POSCAR)), "Could not find POSCAR in %s." % (path)
+    assert exists(join(path, "POSCAR")), "Could not find POSCAR in %s." % (path)
     path = join(path, "POSCAR")
   result = Structure()
   with open(path, "r") as poscar:

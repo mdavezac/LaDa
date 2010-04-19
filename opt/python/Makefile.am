@@ -7,7 +7,7 @@ AM_LDFLAGS =
 install-exec-local: ../../python/libpython_lada.la
 
 EXTRA_DIST = $(opt_python_h) 
-subpkgpyexec_PYTHON = __init__.py secant.py tempdir.py changedir.py
+subpkgpyexec_PYTHON = __init__.py secant.py tempdir.py changedir.py decorators.py
 subpkgpyexec_LTLIBRARIES = _opt.la 
 subpkgpyexecdir = $(pkgpyexecdir)/opt
 _opt_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) 
