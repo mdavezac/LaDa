@@ -80,8 +80,8 @@ def read_poscar(types=None, path=None, check_lattice=False):
         break
     if is_vasp_5:
       text_types = deepcopy(line)
-      if set(text_types) not in set(types):
-        raise IOError, "Unknown species in poscar: %s not in %s." % (set(text_types), set(types))
+      assert set(text_types) in set(types) or set(text_types) == set(types), \
+             IOError("Unknown species in poscar: %s not in %s." % (set(text_types), set(types)))
       types = text_types
       line = poscar.readline().split()
     assert types != None, "No atomic species given in POSCAR or input."
