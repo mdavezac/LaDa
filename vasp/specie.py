@@ -97,3 +97,7 @@ class Specie(object):
     with open(join(self.path, "POTCAR"), "r") as potcar:
       potcar.readline()
       return float(potcar.readline().split()[0]) # shoud be number on second line
+
+  def __str__(self):
+    """ Prints atomic symbol only. """
+    return str(self.symbol)
