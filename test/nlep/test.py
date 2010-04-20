@@ -118,7 +118,7 @@ def main():
             (
               "Sn", 
               path="pseudos/Sn", 
-              U=[nlep_parameters(type="Dudarev", l=i, U0=1e0) for i in ["s", "p", "d"]]
+              U=[nlep_parameters(type="Dudarev", l=i, U0=0e0) for i in ["s", "p", "d"]]
             ),\
             Specie("O", path="pseudos/O")
   # add U to Sn atoms.
@@ -131,16 +131,17 @@ def main():
            smearing   = "bloechl",
            ediff      = 1e-5,
            relaxation = "ionic",
-           encut      = 1, # uses max ENMAX * 1
+           encut      = 1, # uses ENMAX * 1, which is VASP default
            species    = species
          )
   # adds some extra parameters.
-  vasp.nbands     = Standard("NBANDS", 128)
+  vasp.nbands     = Standard("NBANDS", 60)
   vasp.lorbit     = Standard("LORBIT", 10)
-  vasp.npar       = Standard("NPAR", 1)
+  vasp.npar       = Standard("NPAR", 2)
   vasp.lplane     = Standard("LPLANE", ".TRUE.")
   vasp.addgrid    = Standard("ADDGRID", ".TRUE.")
   del vasp.fftgrid
+  vasp.encut    = Standard("ENCUT", 300)
 
   # creates objective function.
   objective = Objective(vasp, dft_in, gw_in)

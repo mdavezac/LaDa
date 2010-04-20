@@ -1,11 +1,12 @@
 """ Standard parameter types for use as attributes in Incar """
+from ...opt.decorators import broadcast_result as _bcastresult
 class Standard(object):
   """
       A standard parameter in the form of key/value pair. 
       
       In practice, the key should be an INCAR tag, and the value something
       which makes sense for that key.
-      C{print self.incar_string(vasp, comm)} outputs C{print
+      C{print self.incar_string(vasp, comm=comm)} outputs C{print
       str(self.key), "=", str(self.value)}.
   """
   def __init__(self, key, value, validity=None):
@@ -33,7 +34,8 @@ class Standard(object):
       returns its  "VASP" equivalent when gotten.
   """
 
-  def incar_string(self, vasp, comm):
+  @_bcastresult
+  def incar_string(self, vasp):
     """ Prints the key/value as key = value """
     return "%s = %s" % (self.key, str(self.value))
 
@@ -57,10 +59,13 @@ class NoPrintStandard(Standard):
   def __init__(self, *args, **kwargs):
     super(NoPrintStandard, self).__init__(*args, **kwargs)
     self.default = self.value
-  def incar_string(self, vasp, comm):
+
+  @_bcastresult
+  def incar_string(self, vasp):
     if self.default == self.value: 
       return "# %s = VASP default." % (self.key)
-    return super(NoPrintStandard, self).incar_string(vasp, comm)
+    return super(NoPrintStandard, self).incar_string(vasp)
+  
   def __setstate__(self, arg): 
     super(NoPrintStandard, self).__setstate__(arg)
     self.default = self.value
@@ -133,7 +138,9 @@ class Ediff(Standard):
   """
   def __init__(self, value = 1e-4):
     super(Ediff, self).__init__("EDIFF", value, validity = lambda x: x > 0e0)
-  def incar_string(self, vasp, comm):
+
+  @_bcastresult
+  def incar_string(self, vasp):
     return "%s = %f " % (self.key, self.value * float(len(vasp._system.atoms)))
 
 
@@ -163,15 +170,12 @@ class Encut(object):
   def _setvalue(self, value):
     raise ValueError, "Value of encut cannot be set manually. Change safety instead.\n"
   x = property(_getvalue, _setvalue)
-  def incar_string(self, vasp, comm):
-    from boost.mpi import broadcast
-    n = 0
-    if comm == None: n = self.enmax(vasp.species)
-    elif comm.rank == 0:
-      n = self.enmax(vasp.species)
-      broadcast(comm, value=n, root=0)
-    else: n = broadcast(comm, root=0)
-    return "%s = %f " % (self.key, float(n) * self.safety)
+
+  @_bcastresult
+  def incar_string(self, vasp):
+    from math import fabs
+    if fabs(self.safety - 1e0) < 1e-12: return "# ENCUT = VASP default"
+    return "%s = %f " % (self.key, float(self.enmax(vasp.species)) * self.safety)
 
   @staticmethod
   def enmax(species):
@@ -252,7 +256,8 @@ class Smearing(object):
       If "gotten", this decorator returns a tuple containing the type and the energy scale.
       It can be set using a similar tuple, or a string input with keywords. 
   """
-  def incar_string(self, vasp, comm):
+  @_bcastresult
+  def incar_string(self, vasp):
     return "ISMEAR  = %s\nSIGMA   = %f\n" % self.value
 
   
@@ -273,9 +278,11 @@ class Isym(Standard):
     if strval == "off": self._value = -1e0
     else: self._value = float(value) 
   value = property(_getvalue, _setvalue)
-  def incar_string(self, vasp, comm):
+
+  @_bcastresult
+  def incar_string(self, vasp):
     if self._value <= 0e0: return "ISYM = 0\n" 
-    return super(Isym,self).incar_string(vasp, comm)
+    return super(Isym,self).incar_string(vasp)
 
   def __eq__(self, other):
     if isinstance(other, Isym):
@@ -302,7 +309,7 @@ class FFTGrid(object):
       assert self._value[2] > 0, "FFT grid components should be positive.\n"
   value = property(_getvalue, _setvalue)
 
-  def incar_string(self, vasp, comm):
+  def incar_string(self, vasp, comm=None):
     return "NGX = %i\nNGY = %i\nNGZ = %i" % self(vasp, comm)
 
   def __call__(self, vasp, comm):
@@ -358,7 +365,8 @@ class Restart(object):
   def _setvalue(self, object): self._value = object
   value = property(_getvalue, _setvalue)
 
-  def incar_string(self, vasp, comm):
+  @_bcastresult
+  def incar_string(self, vasp):
     istart = "0   # start from scratch"
     icharg = "2   # superpositions of atomic densities"
     if self.value == None or len(self.value) == 0:
@@ -437,7 +445,8 @@ class Relaxation(object):
                           "and volume at constant cell-shape.\n"
   value = property(_getvalue, _setvalue)
 
-  def incar_string(self, vasp, comm):
+  @_bcastresult
+  def incar_string(self, vasp):
     isif = self.value
     result = "NSW    = %3i   # number of ionic steps.\n"\
              "IBRION =   %1i # ionic-relaxation minimization method.\n"\
@@ -457,7 +466,7 @@ class Relaxation(object):
       return result + "ISIF   = 6     # relaxing V. and cell-shape at constant atom.-pos."
     elif isif == 7:           
       return result + "ISIF   = 7     # relaxing V. only."
-    raise RuntimeError, "Internal bug."
+    raise RuntimeError("Internal bug.")
 
 class NElect(object):
   """ Sets number of electrons relative to neutral system.
@@ -488,18 +497,14 @@ class NElect(object):
     # sums up charge.
     return fsum( valence[atom.type] for atom in vasp._system.atoms )
     
-
-  def incar_string(self, vasp, comm):
+  @_bcastresult
+  def incar_string(self, vasp):
     from boost.mpi import broadcast
-    # gets number of electrons from root process.
-    charge_neutral = 0
-    if comm == None: charge_neutral = self.nelectrons(vasp)
-    elif comm.rank == 0:
-      charge_neutral = self.nelectrons(vasp)
-      broadcast(comm, value=charge_neutral, root=0)
-    else: charge_neutral = broadcast(comm, root=0)
+    # gets number of electrons.
+    charge_neutral = self.nelectrons(vasp)
     # then prints incar string.
-    if self.value == 0: return "# %s = %s. Charge neutral system" % (self.key, charge_neutral)
+    if self.value == 0:
+      return "# %s = %s. Charge neutral system" % (self.key, charge_neutral)
     elif self.value > 0:
       return "%s = %s  # negatively charged system (%i) "\
              % (self.key, charge_neutral + self.value, -self.value)
@@ -528,17 +533,14 @@ class NBands(NElect):
   key = "NBANDS"
   """ INCAR key """
 
-  def incar_string(self, vasp, comm):
+  @_bcastresult
+  def incar_string(self, vasp):
     from boost.mpi import broadcast
     # gets number of electrons.
-    ne = 0
-    if comm == None: ne = self.nelectrons(vasp)
-    elif comm.rank == 0:
-      ne = self.nelectrons(vasp)
-      broadcast(comm, value=ne, root=0)
-    else: ne = broadcast(comm, root=0)
-
-    if self.unit == NBands.default: return "# %s = VASP default " % (self.key)
+    ne = self.nelectrons(vasp)
+    # returns adequate string.
+    if self.unit == NBands.default:
+      return "# %s = VASP default " % (self.key)
     elif self.unit == NBands.nunit:
       return "%s = %s" % (self.key, self.value + float(ne))
     elif self.unit == NBands.nions:
@@ -562,7 +564,9 @@ class UParams(object):
 
     self.value = int(verbose)
     super(UParams, self).__init__(**kwargs)
-  def incar_string(self, vasp, comm):
+
+  @_bcastresult
+  def incar_string(self, vasp):
     # existence and sanity check
     has_U, which_type = False, None 
     for specie in vasp.species:
