@@ -580,19 +580,22 @@ class UParams(object):
     result = "LDAU = .TRUE.\nLDAUPRINT = %i\nLDAUTYPE = %i\n" % (self.value, which_type)
 
     for i in range( max(len(specie.U) for specie in vasp.species) ):
-      line = "LDUL%i" % (i+1), "LDUU%i" % (i+1), "LDUJ%i" % (i+1), "LDUO%i" % (i+1)
+      line = "LDUL%i=" % (i+1), "LDUU%i=" % (i+1), "LDUJ%i=" % (i+1), "LDUO%i=" % (i+1)
       for specie in vasp.species:
         a = -1, 0e0, 0e0, 1
         if len(specie.U) <= i: pass
-        elif specie.U[i]["func"] == "U":     a = specie.U[i]["l"], specie.U[i]["U"], specie.U[i]["J"], 1
-        elif specie.U[i]["func"] == "nlep":  a = specie.U[i]["l"], specie.U[i]["U"], 0e0, 2
-        elif specie.U[i]["func"] == "enlep": a = specie.U[i]["l"], specie.U[i]["U0"], specie.U[i]["U1"], 3
+        elif specie.U[i]["func"] == "U":    
+          a = specie.U[i]["l"], specie.U[i]["U"], specie.U[i]["J"], 1
+        elif specie.U[i]["func"] == "nlep": 
+          a = specie.U[i]["l"], specie.U[i]["U"], 0e0, 2
+        elif specie.U[i]["func"] == "enlep":
+          a = specie.U[i]["l"], specie.U[i]["U0"], specie.U[i]["U1"], 3
         else: raise RuntimeError, "Debug Error."
         line = "%s %i"      % (line[0], a[0]),\
                "%s %18.10e" % (line[1], a[1]),\
                "%s %18.10e" % (line[2], a[2]),\
                "%s %i"      % (line[3], a[3])
-      result = result.join( "\n%s\n%s\n%s\n%s\n" % line )
+      result += "\n%s\n%s\n%s\n%s\n" % (line)
     return result
 
 
