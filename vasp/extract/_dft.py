@@ -112,7 +112,6 @@ class _ExtractImpl(object):
     if result == None: raise RuntimeError, "File %s is incomplete.\n" % (path)
     return result
 
-  @_bound_mpi_extraction
   def _get_structure(self):
     """ Gets structure from L{CONTCAR} file and total energy from L{OUTCAR} """
     from os.path import exists, join
@@ -123,7 +122,7 @@ class _ExtractImpl(object):
     path = self.CONTCAR 
     if len(self.directory): path = join(self.directory, path)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
-    result = read_poscar(species_in, path)
+    result = read_poscar(species_in, path, comm=self.comm)
     result.energy = self.energy
     return result
 
