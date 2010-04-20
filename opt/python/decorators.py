@@ -26,9 +26,13 @@ def broadcast_result(method, *args, **kwargs):
   error, result = False, None
   if comm.rank == 0: # root process
     try: result = method(*args, **kwargs)
-    except Exception as inst: error, result = True, inst
+    except Exception as inst: error, result = True, (inst, boost.mpi.world.rank)
     boost.mpi.broadcast(comm, (error, result), root=0)
-  else: error, result = boost.mpi.broadcast(comm, root=0)
-  if error: raise result
+    if error: raise result
+  else:
+    error, result = boost.mpi.broadcast(comm, root=0)
+    if error:
+      raise RuntimeError,\
+            "Process %i reports an error: %s"  % (result[1], result[0])
   return result
   

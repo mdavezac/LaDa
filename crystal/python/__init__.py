@@ -31,8 +31,8 @@ def deform_kpoint(kpoint, ideal, relaxed):
 def read_poscar(types=None, path=None, check_lattice=False):
   """ Tries to read a VASP POSCAR file,
       
-      @param types: tuple consisting of the atomic symbols of the species in the POSCAR.
-      @type types: tuple of strings
+      @param types: species in the POSCAR.
+      @type types: none, or sequence of objects convertible to str 
       @param path: path to the POSCAR file.
       @type path: string
       @param check_lattice: not implemented.
@@ -44,7 +44,14 @@ def read_poscar(types=None, path=None, check_lattice=False):
   from copy import deepcopy
   from numpy import array, dot
   from . import Structure, Atom
+  # checks input
   if check_lattice == True: raise AssertionError, "Not implemented."
+  # if types is not none, converts to a list of strings.
+  if types != None:
+    if isinstance(types, str): types = [types] # can't see another way of doing this...
+    elif not hasattr(types, "__getitem__"): types = [str(types)] # single lone vasp.specie.Specie
+    else: types = [str(s) for s in types]
+      
   if path == None: path = "POSCAR"
   assert exists(path), "Could not find path %s." % (path)
   if isdir(path):
@@ -72,7 +79,10 @@ def read_poscar(types=None, path=None, check_lattice=False):
         is_vasp_5 = False
         break
     if is_vasp_5:
-      types = deepcopy(line)
+      text_types = deepcopy(line)
+      if set(text_types) not in set(types):
+        raise IOError, "Unknown species in poscar: %s not in %s." % (set(text_types), set(types))
+      types = text_types
       line = poscar.readline().split()
     assert types != None, "No atomic species given in POSCAR or input."
     #  checks/reads for number of each specie
