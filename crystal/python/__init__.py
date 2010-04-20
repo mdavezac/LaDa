@@ -32,7 +32,7 @@ def read_poscar(types=None, path=None, check_lattice=False):
   """ Tries to read a VASP POSCAR file,
       
       @param types: species in the POSCAR.
-      @type types: sequence of strings or L{lada.vasp.species} or none
+      @type types: none, or sequence of objects convertible to str 
       @param path: path to the POSCAR file.
       @type path: string
       @param check_lattice: not implemented.
@@ -48,19 +48,9 @@ def read_poscar(types=None, path=None, check_lattice=False):
   if check_lattice == True: raise AssertionError, "Not implemented."
   # if types is not none, converts to a list of strings.
   if types != None:
-    if not hasattr(types, "__getitem__"): # probably a lone vasp.specie.Specie instance.
-      assert hasattr(types, "symbol"), ValueError("Not sure what argument types is.")
-      types = [types.symbol] # makes a list of strings.
-    elif isinstance(types, str): types = [types]
-    else:
-      new_types = []
-      for specie in types:
-        if hasattr(specie, "symbol"):  # assumes is a vasp.specie.Specie
-          new_types.append(specie.symbol) 
-        else: new_types.append(specie) # assumes will work as a string.
-      types = new_types
-      if len(types) == 0: types = None # nothing in sequence
-
+    if isinstance(types, str): types = [types] # can't see another way of doing this...
+    elif not hasattr(types, "__getitem__"): types = [str(types)] # single lone vasp.specie.Specie
+    else: types = [str(s) for s in types]
       
   if path == None: path = "POSCAR"
   assert exists(path), "Could not find path %s." % (path)
