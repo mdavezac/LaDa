@@ -1,14 +1,14 @@
 #! /usr/bin/env python
 def compare_eigenvalues(dft, gw):
   """ Average sum of squares of eigenvalues """
-  from numpy import multiply
+  from numpy import multiply, sum
   mat = dft.eigenvalues - gw.eigenvalues
   return sum( multiply(mat, mat) ) / float(mat.shape[0] * mat.shape[0])
 
 def compare_partial_charges(new, old):
   """ Average sum of squares of partial charges """
-  from numpy import multiply
-  mat = new.partial_charges - gw.partial_charges
+  from numpy import multiply, sum
+  mat = new.partial_charges - old.partial_charges
   return sum( multiply(mat, mat) ) / float(mat.shape[0] * mat.shape[0])
 
 def compare_pressure(new):
@@ -75,6 +75,8 @@ class Objective(object):
   def __call__(self, args):
     from sys import exit
     from lada.opt.changedir import Changedir
+    from lada.vasp import files
+    from lada.vasp.extract import Extract
     # transfers parameters to vasp object
     x = args
     # performs calculation in new directory
@@ -82,16 +84,16 @@ class Objective(object):
          (
            self.system,
            outdir = "%s_%i" % (self.outdir, self._nbcalc),
-           comm = self.comm
+           comm = self.comm,
+           repat = files.minimal + files.input
          )
+    out = Extract("nlep_fit_0")
     assert out.success, "VASP calculation in %s_%i did not complete." % (self.outdir, self._nbcalc)
     # computes squares
     eigs = compare_eigenvalues(out, self.gw)
     pc = compare_partial_charges(out, self.dft)
     pressure = compare_pressure(out)
-    print eigs, pc, pressure
-    exit(0)
-    return eigs + pc + pressure
+    return eigs / 5e0 + pc * 300e0 + pressure / 500e0
 
   def final(self):
     from lada.vasp import Extract
@@ -135,13 +137,12 @@ def main():
            species    = species
          )
   # adds some extra parameters.
-  vasp.nbands     = Standard("NBANDS", 60)
+  vasp.nbands     = Standard("NBANDS", 64)
   vasp.lorbit     = Standard("LORBIT", 10)
   vasp.npar       = Standard("NPAR", 2)
   vasp.lplane     = Standard("LPLANE", ".TRUE.")
   vasp.addgrid    = Standard("ADDGRID", ".TRUE.")
   del vasp.fftgrid
-  vasp.encut    = Standard("ENCUT", 300)
 
   # creates objective function.
   objective = Objective(vasp, dft_in, gw_in)
