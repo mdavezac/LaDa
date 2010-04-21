@@ -183,7 +183,9 @@ namespace LaDa
           case NPY_UBYTE     : return create_vector<npy_ubyte     >(array, new Vector3x);
           case NPY_SHORT     : return create_vector<npy_short     >(array, new Vector3x);
           case NPY_USHORT    : return create_vector<npy_ushort    >(array, new Vector3x);
-          default: break;
+          default:
+            PyErr_SetString(PyExc_RuntimeError, "Unknown scalar type in numpy array.\n");
+            throw_error_already_set();
         }
         return NULL;
       }
@@ -229,7 +231,10 @@ namespace LaDa
           case NPY_UBYTE     : create_vector<npy_ubyte     >(array, new (storage) Vector3x); break;
           case NPY_SHORT     : create_vector<npy_short     >(array, new (storage) Vector3x); break;
           case NPY_USHORT    : create_vector<npy_ushort    >(array, new (storage) Vector3x); break;
-          default: return;
+          default:
+               PyErr_SetString(PyExc_RuntimeError, "Unknown scalar type in numpy array.\n");
+               throw_error_already_set();
+               return;
         }
         data->convertible = storage;
       }
