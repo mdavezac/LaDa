@@ -1,6 +1,5 @@
 """ Subpackage containing extraction methods for VASP-DFT data from output. """
 from ._success import Success
-from ._mpi import _bound_mpi_extraction
 from .decorators import bound_broadcast_result 
 from ...opt.decorators import make_cached
 class _ExtractImpl(object):
