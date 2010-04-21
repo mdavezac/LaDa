@@ -1,6 +1,8 @@
 """ Subpackage containing extraction methods for VASP-DFT data from output. """
 from ._success import Success
 from ._mpi import _bound_mpi_extraction
+from .decorators import bound_broadcast_result 
+from ...opt.decorators import make_cached
 class _ExtractImpl(object):
   """ Implementation class for extracting data from VASP output """
 
@@ -32,7 +34,8 @@ class _ExtractImpl(object):
     """
     
 
-  @_bound_mpi_extraction
+  @make_cached
+  @bound_broadcast_result
   def _get_energy_sigma0(self):
     """ Gets total energy extrapolated to $\sigma=0$ from vasp run """
     from os.path import exists, join
@@ -52,7 +55,8 @@ class _ExtractImpl(object):
     if result == None: raise RuntimeError, "File %s is incomplete.\n" % (path)
     return result
 
-  @_bound_mpi_extraction
+  @make_cached
+  @bound_broadcast_result
   def _get_energy(self):
     """ Gets total energy from vasp run """
     from os.path import exists, join
@@ -72,7 +76,8 @@ class _ExtractImpl(object):
     if result == None: raise RuntimeError, "File %s is incomplete.\n" % (path)
     return result
 
-  @_bound_mpi_extraction
+  @make_cached
+  @bound_broadcast_result
   def _get_free_energy(self):
     """ Gets total free energy from vasp run """
     from os.path import exists, join
@@ -92,7 +97,8 @@ class _ExtractImpl(object):
     if result == None: raise RuntimeError, "File %s is incomplete.\n" % (path)
     return result
 
-  @_bound_mpi_extraction
+  @make_cached
+  @bound_broadcast_result
   def _get_fermi_energy(self):
     """ Gets total free energy from vasp run """
     from os.path import exists, join
@@ -112,6 +118,7 @@ class _ExtractImpl(object):
     if result == None: raise RuntimeError, "File %s is incomplete.\n" % (path)
     return result
 
+  @make_cached
   def _get_structure(self):
     """ Gets structure from L{CONTCAR} file and total energy from L{OUTCAR} """
     from os.path import exists, join
@@ -126,7 +133,8 @@ class _ExtractImpl(object):
     result.energy = self.energy
     return result
 
-  @_bound_mpi_extraction
+  @make_cached
+  @bound_broadcast_result
   def _get_species(self):
     """ Gets species from L{OUTCAR}. """
     from os.path import exists, join
@@ -146,7 +154,8 @@ class _ExtractImpl(object):
         result.append( match.group(1) )
     return tuple(result)
 
-  @_bound_mpi_extraction
+  @make_cached
+  @bound_broadcast_result
   def _get_fft(self):
     """ Returns recommended or actual fft setting """
     from os.path import exists, join
@@ -216,7 +225,8 @@ class _ExtractImpl(object):
 
 
       
-  @_bound_mpi_extraction
+  @make_cached
+  @bound_broadcast_result
   def _get_kpoints(self):
     """ Returns kpoints. """
     from os.path import exists, join
@@ -242,7 +252,8 @@ class _ExtractImpl(object):
         result.append( data[:3] )
     return array(result, dtype="float64")
 
-  @_bound_mpi_extraction
+  @make_cached
+  @bound_broadcast_result
   def _get_multiplicity(self):
     """ Returns multiplicity """
     from os.path import exists, join
@@ -300,7 +311,8 @@ class _ExtractImpl(object):
             in_kpoint = 0
     return array(result, dtype="float64")
 
-  @_bound_mpi_extraction
+  @make_cached
+  @bound_broadcast_result
   def _get_eigenvalues(self):
     """ Returns eigenvalues 
 
@@ -309,7 +321,8 @@ class _ExtractImpl(object):
     """
     return self._get_eigocc(1)
 
-  @_bound_mpi_extraction
+  @make_cached
+  @bound_broadcast_result
   def _get_occupations(self):
     """ Returns band-occupations 
 
@@ -336,16 +349,20 @@ class _ExtractImpl(object):
         if match != None: result = float(match.group(which))
     return result
 
-  @_bound_mpi_extraction
+  @make_cached
+  @bound_broadcast_result
   def _get_pressure(self):
     """ Returns pressure from L{OUTCAR} """
     return self._get_pressures(1)
-  @_bound_mpi_extraction
+
+  @make_cached
+  @bound_broadcast_result
   def _get_pulay_pressure(self):
     """ Returns pulay pressure from L{OUTCAR} """
     return self._get_pressures(2)
 
-  @_bound_mpi_extraction
+  @make_cached
+  @bound_broadcast_result
   def _get_partial_charges(self):
     """ Returns partial charges from L{OUTCAR} """
     import re 
@@ -371,4 +388,23 @@ class _ExtractImpl(object):
         result.append( data[1:len(data)-1] )
     return array(result, dtype="float64")
     
+  @make_cached
+  @bound_broadcast_result
+  def _get_success(self):
+    from os.path import exists, join
+    from .. import files
+    import re
 
+    for path in [files.OUTCAR, files.CONTCAR]:
+      if self.directory != "": path = join(self.directory, path)
+      if not exists(path): return False
+      
+    path = files.OUTCAR 
+    if len(self.directory): path = join(self.directory, path)
+
+    with open(path, "r") as file:
+      regex = re.compile(r"""General\s+timing\s+and\s+accounting
+                             \s+informations\s+for\s+this\s+job""", re.X)
+      for line in file:
+        if regex.search(line) != None: return True
+    return False

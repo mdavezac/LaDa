@@ -39,4 +39,24 @@ def broadcast_result(method):
   wrapped.__module__ = method.__module__
   wrapped.__dict__.update(method.__dict__)
   return wrapped
-  
+ 
+def make_cached(method):
+  """ Caches the result of a method. """
+
+  def wrapped(*args, **kwargs):
+    assert len(args) > 0, "expected bound method."
+    cache_name = "_cached_attr%s" % (method.__name__)
+    if not hasattr(args[0], cache_name): 
+      setattr(args[0], cache_name, method(*args, **kwargs))
+    return getattr(args[0], cache_name)
+
+  wrapped.__name__ = method.__name__
+  wrapped.__doc__ = method.__doc__
+  wrapped.__module__ = method.__module__
+  wrapped.__dict__.update(method.__dict__)
+  return wrapped
+
+def uncache(ob):
+  """ Uncaches results cached by @make_cached. """ 
+  for key in ob.__dict__.keys():
+    if key[:len("_cached_attr")] == "_cached_attr": del ob.__dict__[key]
