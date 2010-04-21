@@ -170,10 +170,19 @@ namespace LaDa
   
         switch (PyArray_ObjectType(obj_ptr, 0)) 
         {
-          case NPY_INT: return create_vector<int>( array, new Vector3x );
-          case NPY_LONG: return create_vector<long>( array, new Vector3x );
-          case NPY_FLOAT: return create_vector<float>( array, new Vector3x );
-          case NPY_DOUBLE: return create_vector<double>( array, new Vector3x );
+          case NPY_FLOAT     : return create_vector<npy_float     >(array, new Vector3x);
+          case NPY_DOUBLE    : return create_vector<npy_double    >(array, new Vector3x);
+          case NPY_LONGDOUBLE: return create_vector<npy_longdouble>(array, new Vector3x);
+          case NPY_INT       : return create_vector<npy_int       >(array, new Vector3x);
+          case NPY_UINT      : return create_vector<npy_uint      >(array, new Vector3x);
+          case NPY_LONG      : return create_vector<npy_long      >(array, new Vector3x);
+          case NPY_ULONG     : return create_vector<npy_ulong     >(array, new Vector3x);
+          case NPY_LONGLONG  : return create_vector<npy_longlong  >(array, new Vector3x);
+          case NPY_ULONGLONG : return create_vector<npy_ulonglong >(array, new Vector3x);
+          case NPY_BYTE      : return create_vector<npy_byte      >(array, new Vector3x);
+          case NPY_UBYTE     : return create_vector<npy_ubyte     >(array, new Vector3x);
+          case NPY_SHORT     : return create_vector<npy_short     >(array, new Vector3x);
+          case NPY_USHORT    : return create_vector<npy_ushort    >(array, new Vector3x);
           default: break;
         }
         return NULL;
@@ -183,17 +192,6 @@ namespace LaDa
       {
         if (!PyArray_Check(obj_ptr)) return 0;
   
-        // only accept int, long, float and double
-        switch (PyArray_ObjectType(obj_ptr, 0)) {
-          case NPY_INT:
-          case NPY_LONG:
-          case NPY_FLOAT:
-          case NPY_DOUBLE:
-            break;
-          default:
-            return 0;
-        }
-        
         // do some type checking
         if( boost::is_integral<Scalar>::value and not numpy::is_integer(obj_ptr) ) return NULL;
         if( boost::is_floating_point<Scalar>::value and not numpy::is_float(obj_ptr) ) return NULL;
@@ -218,10 +216,19 @@ namespace LaDa
   
         switch (PyArray_ObjectType(obj_ptr, 0)) 
         {
-          case NPY_INT: create_vector<int>( array, new (storage) Vector3x ); break;
-          case NPY_LONG: create_vector<long>( array, new (storage) Vector3x ); break;
-          case NPY_FLOAT: create_vector<float>( array, new (storage) Vector3x ); break;
-          case NPY_DOUBLE: create_vector<double>( array, new (storage) Vector3x ); break;
+          case NPY_FLOAT     : create_vector<npy_float     >(array, new (storage) Vector3x); break;
+          case NPY_DOUBLE    : create_vector<npy_double    >(array, new (storage) Vector3x); break;
+          case NPY_LONGDOUBLE: create_vector<npy_longdouble>(array, new (storage) Vector3x); break;
+          case NPY_INT       : create_vector<npy_int       >(array, new (storage) Vector3x); break;
+          case NPY_UINT      : create_vector<npy_uint      >(array, new (storage) Vector3x); break;
+          case NPY_LONG      : create_vector<npy_long      >(array, new (storage) Vector3x); break;
+          case NPY_ULONG     : create_vector<npy_ulong     >(array, new (storage) Vector3x); break;
+          case NPY_LONGLONG  : create_vector<npy_longlong  >(array, new (storage) Vector3x); break;
+          case NPY_ULONGLONG : create_vector<npy_ulonglong >(array, new (storage) Vector3x); break;
+          case NPY_BYTE      : create_vector<npy_byte      >(array, new (storage) Vector3x); break;
+          case NPY_UBYTE     : create_vector<npy_ubyte     >(array, new (storage) Vector3x); break;
+          case NPY_SHORT     : create_vector<npy_short     >(array, new (storage) Vector3x); break;
+          case NPY_USHORT    : create_vector<npy_ushort    >(array, new (storage) Vector3x); break;
           default: return;
         }
         data->convertible = storage;
