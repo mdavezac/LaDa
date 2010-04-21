@@ -390,14 +390,13 @@ class _ExtractImpl(object):
   @bound_broadcast_result
   def _get_success(self):
     from os.path import exists, join
-    from .. import files
     import re
 
-    for path in [files.OUTCAR, files.CONTCAR]:
+    for path in [self.OUTCAR, self.CONTCAR]:
       if self.directory != "": path = join(self.directory, path)
       if not exists(path): return False
       
-    path = files.OUTCAR 
+    path = self.OUTCAR 
     if len(self.directory): path = join(self.directory, path)
 
     with open(path, "r") as file:
