@@ -1,6 +1,7 @@
 """ Extracts VASP-GW output """
 from . import _ExtractImpl
-from ._mpi import _bound_mpi_extraction
+from .decorators import bound_broadcast_result 
+from ...opt.decorators import make_cached
 class _ExtractGWImpl(_ExtractImpl):
   """ Implementation of GW extractor. """
   def __init__(self, *args, **kwargs):
@@ -38,7 +39,8 @@ class _ExtractGWImpl(_ExtractImpl):
             in_kpoint = 0
     return array(result, dtype="float64")
 
-  @_bound_mpi_extraction
+  @make_cached
+  @bound_broadcast_result
   def _get_dft_eigenvalues(self):
     """ Returns DFT eigenvalues 
 
@@ -46,7 +48,9 @@ class _ExtractGWImpl(_ExtractImpl):
                  number of kpoints and m the number of bands.
     """
     return self._get_eigocc(1)
-  @_bound_mpi_extraction
+  
+  @make_cached
+  @bound_broadcast_result
   def _get_qp_eigenvalues(self):
     """ Returns Quasi-Particle eigenvalues 
 
@@ -54,7 +58,9 @@ class _ExtractGWImpl(_ExtractImpl):
                  number of kpoints and m the number of bands.
     """
     return self._get_eigocc(2)
-  @_bound_mpi_extraction
+  
+  @make_cached
+  @bound_broadcast_result
   def _get_self_energies(self):
     """ Returns self-energies for each eigenvalue
 
@@ -62,7 +68,9 @@ class _ExtractGWImpl(_ExtractImpl):
                  number of kpoints and m the number of bands.
     """
     return self._get_eigocc(3)
-  @_bound_mpi_extraction
+  
+  @make_cached
+  @bound_broadcast_result
   def _get_occupations(self):
     """ Returns occupation for each eigenvalue
 

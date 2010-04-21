@@ -65,7 +65,7 @@ class Launch(Incar):
 
     # creates incar file
     with Changedir(self._tempdir) as tmpdir:
-      incar_string = "".join((param.incar_string(self, comm) + "\n") for param in self)
+      incar_string = "".join((param.incar_string(self, comm=comm) + "\n") for param in self)
     if comm != None:
       if comm.rank != 0: return # don't have any more business here.
     with open(join(self._tempdir, files.INCAR), "w") as incar_file: 

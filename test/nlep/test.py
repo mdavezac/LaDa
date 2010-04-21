@@ -22,24 +22,25 @@ class Objective(object):
       The vasp object is the one to make actual VASP calls and should be set up
       prior to minimization.
   """
-  def __init__(self, vasp, dft, gw, system, outdir="nlep_fit", comm = None):
+  def __init__(self, vasp, dft, gw, outdir="nlep_fit", comm = None):
     from os import makedirs
     from os.path import exists
     from shutil import rmtree
     from boost.mpi import world
+    from lada.crystal import Structure
 
     self.gw = gw
     self.dft = dft
     self.vasp = vasp
-    self.system = system
+    self.system = Structure(dft.structure)
     self._nbcalc = 0
     self.outdir = outdir
-    if exists(self.outdir):
-      rmtree(self.outdir) 
-      # raise IOError, "Director %s already exists." % (self.outdir)
-    makedirs(self.outdir)
     self.comm = comm
     if self.comm == None: self.comm = world
+    if self.comm.rank == 0:
+      if exists(self.outdir): rmtree(self.outdir)
+      makedirs(self.outdir)
+    self.comm.barrier()
 
   def _get_x0(self):
     """ Returns vector of parameters from L{vasp} attribute. """
@@ -96,20 +97,21 @@ class Objective(object):
     from lada.vasp import Extract
     return Extract("%s_%i" % (self.outdir, self._nbcalc)), self.dft, self.gw
       
-
 def main():
   from boost.mpi import world
   from scipy.optimize import fmin as scipy_simplex
   from lada.vasp import Extract, ExtractGW, Vasp, Specie
   from lada.vasp.specie import nlep as nlep_parameters, U as u_parameters
   from lada.vasp.incar import Standard, NBands
+  from sys import exit
 
   indir = "SnO2"
-  dft = Extract(directory=indir, comm=world)
-  dft.OUTCAR = "OUTCAR_pbe"
-  dft.CONTCAR = "POSCAR"
-  gw = ExtractGW(directory=indir, comm=world)
-  gw.CONTCAR = "POSCAR"
+  dft_in = Extract(directory=indir, comm=world)
+  dft_in.OUTCAR = "OUTCAR_pbe"
+  dft_in.CONTCAR = "POSCAR"
+  gw_in = ExtractGW(directory=indir, comm=world)
+  gw_in.OUTCAR = "OUTCAR_gw"
+  gw_in.CONTCAR = "POSCAR"
 
   # Creates species with nlep parameters to optimize
   species = Specie\
@@ -129,18 +131,20 @@ def main():
            smearing   = "bloechl",
            ediff      = 1e-5,
            relaxation = "ionic",
-           encut      = 1, # uses max ENMAX * 1
+           encut      = 1, # uses ENMAX * 1, which is VASP default
            species    = species
          )
   # adds some extra parameters.
-  vasp.nbands     = Standard("NBANDS", 128)
+  vasp.nbands     = Standard("NBANDS", 60)
   vasp.lorbit     = Standard("LORBIT", 10)
-  vasp.npar       = Standard("NPAR", 1)
+  vasp.npar       = Standard("NPAR", 2)
   vasp.lplane     = Standard("LPLANE", ".TRUE.")
   vasp.addgrid    = Standard("ADDGRID", ".TRUE.")
   del vasp.fftgrid
+  vasp.encut    = Standard("ENCUT", 300)
+
   # creates objective function.
-  objective = Objective(vasp, dft, gw, dft.structure)
+  objective = Objective(vasp, dft_in, gw_in)
 
   x, squares, iter, funccalls, = scipy_simplex(objective, objective.x)
   print "minimum value:", squares

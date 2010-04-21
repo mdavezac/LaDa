@@ -1,7 +1,6 @@
 """ Subpackage containing extraction methods for vasp parameters from vasp output. """
 from ._dft import _ExtractImpl
 from ._gw import _ExtractGWImpl
-from ._success import Success
 
 class Extract(_ExtractImpl):
   """ Main class for extracting VASP output as python objects.
@@ -17,7 +16,7 @@ class Extract(_ExtractImpl):
       from output files), call C{self.uncache()}.
   """
 
-  success = Success()
+  success = property(_ExtractImpl._get_success)
   r""" Checks for success of vasp calculation """
   energy_sigma0 = property(_ExtractImpl._get_energy_sigma0)
   r""" Gets total energy extrapolated to $\sigma=0$ from vasp run """
@@ -96,13 +95,13 @@ class Extract(_ExtractImpl):
 
         After this outputs are re-read from file.
     """
-    from _mpi import _uncache
-    _uncache(self)
+    from ...opt.decorators import uncache
+    uncache(self)
 
 class ExtractGW(_ExtractGWImpl):
   """ Extract data from VASP-GW output. """
 
-  success = Success()
+  success = property(_ExtractImpl._get_success)
   r""" Checks for success of vasp calculation """
   system = property(_ExtractImpl._get_structure)
   r""" Returns the relaxed structure (L{lada.crystal.Structure}) as obtained from the CONTCAR. """
@@ -170,7 +169,7 @@ class ExtractGW(_ExtractGWImpl):
 
         After this outputs are re-read from file.
     """
-    from _mpi import _uncache
-    _uncache(self)
+    from decorators import uncache
+    uncache(self)
 
 
