@@ -87,8 +87,14 @@ class Extract(_ExtractImpl):
         >>> # prints only on proc 0.
         >>> if boost.mpi.world.rank == 0: print extract.solo().structure
     """
+    from copy import deepcopy
+    
     if self.comm == None: return self
-    return Extract(directory = self.directory, comm = None)
+    comm = self.comm 
+    self.comm = None
+    copy = deepcopy(self)
+    self.comm = comm
+    return copy
 
   def uncache(self): 
     """ Removes cached results.
@@ -161,8 +167,14 @@ class ExtractGW(_ExtractGWImpl):
         >>> # prints only on proc 0.
         >>> if boost.mpi.world.rank == 0: print extract.solo().structure
     """
+    from copy import deepcopy
+    
     if self.comm == None: return self
-    return ExtractGW(directory = self.directory, comm = None)
+    comm = self.comm 
+    self.comm = None
+    copy = deepcopy(self)
+    self.comm = comm
+    return copy
 
   def uncache(self): 
     """ Removes cached results.

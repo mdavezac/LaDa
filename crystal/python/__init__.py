@@ -61,7 +61,8 @@ def read_poscar(types=None, path=None, check_lattice=False):
   with open(path, "r") as poscar:
     # gets name of structure
     result.name = poscar.readline().strip()
-    if result.name[0] == "#": result.name = result.name[1:].strip()
+    if len(result.name) > 0:
+      if result.name[0] == "#": result.name = result.name[1:].strip()
     # reads scale
     result.scale = float(poscar.readline().split()[0])
     # gets cell vectors.
