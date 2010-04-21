@@ -19,6 +19,8 @@ def broadcast_result(method):
     # removes comm argument
     comm = kwargs["comm"]
     del kwargs["comm"]
+    # nonetype case: each proc performs same action. 
+    if comm == None: return method(*args, **kwargs)
     # not an mpi process.
     if comm.size == 1: return method(*args, **kwargs)
     # is an mpi process.
