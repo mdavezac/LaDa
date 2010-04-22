@@ -30,7 +30,7 @@ extern "C"
   void FC_FUNC_(escan_wfns_read, ESCAN_WFNS_READ)(int*, int*, int*, int*, int const*, double*, double*);
   void FC_FUNC_(escan_get_nr, ESCAN_GET_NR)(int *);
   void FC_FUNC_(escan_get_mr_n, ESCAN_GET_MR_N)(int *);
-  void FC_FUNC_(escan_get_n2_n3, ESCAN_GET_N2_N3)(int*, int*);
+  void FC_FUNC_(escan_get_n1_n2_n3, ESCAN_GET_N1_N2_N3)(int*, int*, int*);
   void FC_FUNC_(escan_get_cell, ESCAN_GET_CELL)(double *, double *, double *);
   void FC_FUNC_(d3fft_comp, D3FFT_COMP)(double*, double*, int*);
   void FC_FUNC_(escan_wfns_cleanup, ESCAN_WFNS_CLEANUP)();
@@ -42,9 +42,9 @@ namespace LaDa
   {
     void escan_get_cell( math::rMatrix3d &_cell )
     {
-      double a[9], *b;
+      double a[9];
       FC_FUNC_(escan_get_cell, ESCAN_GET_CELL)(a, a+3, a+6);
-      for(size_t i(0); i < 9; ++i, ++b) _cell(i%3, i/3) = *b;
+      for(size_t i(0); i < 9; ++i) _cell(i%3, i/3) = a[i];
     }
 
     namespace bp = boost::python;
@@ -169,7 +169,11 @@ namespace LaDa
             reinterpret_cast<PyArrayObject*>(ob)->flags |= NPY_CARRAY_RO;
           numpy_array_ = bp::object( bp::handle<>(ob) );
           FC_FUNC_(escan_get_nr, ESCAN_GET_NR)(&nr_);
-          FC_FUNC_(escan_get_n2_n3, ESCAN_GET_N2_n3)(&n2_, &n3_);
+          int n1;
+          FC_FUNC_(escan_get_n1_n2_n3, ESCAN_GET_N1_N2_N3)(&n1, &n2_, &n3_);
+          mesh_.col(0) /= types::t_real(n1);
+          mesh_.col(1) /= types::t_real(n2_);
+          mesh_.col(2) /= types::t_real(n3_);
           max_ = nr_ / comm_.size();
           index_ = -1;
         }
@@ -191,9 +195,11 @@ namespace LaDa
           }
           PyArrayObject * const array = reinterpret_cast<PyArrayObject*>(numpy_array_.ptr());
           double * const data = (double*) array->data;
-          int const u( (_i + 1) * comm_.rank() * nr_ / comm_.size() - 1);
+          int const u( _i + comm_.rank()*(nr_/comm_.size()) );
           math::rVector3d const a(u/(n3_*n2_), (u%(n3_*n2_)) / n3_, (u%(n3_*n2_)) % n3_);
           math::rVector3d const b( mesh_ * a ); 
+//         std::cout << "i: " << _i << " " << comm_.rank() << " " << comm_.size() << " " << nr_ << "\n";
+//         std::cout << "u: " << u << " " << n3_ << " " << n2_ << "\n" <<  a  << "\n" << b << "\n" << mesh_ << "\n";
           data[0] = b(0);
           data[1] = b(1);
           data[2] = b(2);

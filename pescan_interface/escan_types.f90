@@ -278,11 +278,12 @@ subroutine escan_get_nr(n)
   n = n1*n2*n3
 end subroutine
 ! gets dimension for real space wavefunctions.
-subroutine escan_get_n2_n3(a2, a3)
-  integer, intent(out) :: a2, a3
+subroutine escan_get_n1_n2_n3(a1, a2, a3)
+  integer, intent(out) :: a1, a2, a3
   real*8 vol
   integer n1,n2,n3,ng,ng_n,nr,mx
   common /com123/n1,n2,n3,ng,ng_n,nr,mx,vol
+  a1 = n1
   a2 = n2
   a3 = n3
 end subroutine
