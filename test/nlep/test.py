@@ -66,20 +66,20 @@ class Objective(object):
     return array(result, dtype="float64")
   def _set_x0(self, args):
     """ Sets L{vasp} attribute from input vector. """
-    from numpy import array
+    from numpy import array, multiply, sum
     i = 0
     for specie in self.vasp.species:
       for nlep_params in specie.U:
         if nlep_params["func"] == "nlep": 
-          assert args.shape[0] > i+1
+          assert args.shape[0] > i, RuntimeError("%i > %i\n" % (args.shape[0], i))
           nlep_params["U"] = args[i]
           i += 1
         elif nlep_params["func"] == "enlep": 
-          assert args.shape[0] > i+1
+          assert args.shape[0] > i+1, RuntimeError("%i > %i\n" % (args.shape[0], i+1))
           nlep_params["U"] = args[i] # first energy
           nlep_params["J"] = args[i+1] # second energy
           i += 2
-    assert self.x == args
+    assert sum(multiply(self.x - args,self.x-args)) < 1e-12 * float(len(args))
   x = property(_get_x0, _set_x0)
   """ Vector of parameters. """
 
@@ -92,8 +92,6 @@ class Objective(object):
     from lada.vasp.extract import Extract
     # transfers parameters to vasp object
     self.x = args
-    if world.rank == 0: 
-      print join(self.outdir, str(self._nbcalls)), args, self.x
     # performs calculation in new directory
     out = self.vasp\
          (
