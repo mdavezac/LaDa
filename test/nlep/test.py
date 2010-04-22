@@ -43,7 +43,7 @@ class Objective(object):
     self.dft = dft
     self.vasp = vasp
     self.system = Structure(dft.structure)
-    self._nbcalc = 0
+    self._nbcalls = 0
     self.outdir = outdir
     self.comm = comm
     if self.comm == None: self.comm = world
@@ -79,26 +79,30 @@ class Objective(object):
           nlep_params["U"] = args[i] # first energy
           nlep_params["J"] = args[i+1] # second energy
           i += 2
+    assert self.x == args
   x = property(_get_x0, _set_x0)
   """ Vector of parameters. """
 
   @count_calls
   def __call__(self, args):
     from os.path import join
+    from boost.mpi import world
     from lada.opt.changedir import Changedir
     from lada.vasp import files
     from lada.vasp.extract import Extract
     # transfers parameters to vasp object
-    x = args
+    self.x = args
+    if world.rank == 0: 
+      print join(self.outdir, str(self._nbcalls)), args, self.x
     # performs calculation in new directory
     out = self.vasp\
          (
            self.system,
-           outdir = join(self.outdir, str(self._nbcalc)),
+           outdir = join(self.outdir, str(self._nbcalls)),
            comm = self.comm,
            repat = files.minimal + files.input
          )
-    assert out.success, "VASP calculation in %s_%i did not complete." % (self.outdir, self._nbcalc)
+    assert out.success, "VASP calculation in %s_%i did not complete." % (self.outdir, self._nbcalls)
     # computes squares
     eigs = compare_eigenvalues(out, self.gw)
     pc = compare_partial_charges(out, self.dft)
@@ -108,7 +112,7 @@ class Objective(object):
   def final(self):
     from os.path import join
     from lada.vasp import Extract
-    return Extract(join(self.outdir, str(self._nbcalc))), self.dft, self.gw
+    return Extract(join(self.outdir, str(self._nbcalls))), self.dft, self.gw
       
 def main():
   from boost.mpi import world
@@ -158,11 +162,13 @@ def main():
   # creates objective function.
   objective = Objective(vasp, dft_in, gw_in)
 
-  print scipy_simplex(objective, objective.x)
-# x, squares, iter, funccalls, = scipy_simplex(objective, objective.x)
-# print "minimum value:", squares
-# print "for: ", x
-# print "after %i iterations and %i function calls." % (iter, funccalls)
+  x0, f0, iter, funcalls, warnflag = scipy_simplex(objective, objective.x, maxfun=5, full_output=1)
+  world.barrier()
+  if world.rank == 0:
+    print "minimum value:", f0
+    print "for: ", x0
+    print "after %i iterations and %i function calls." % (iter, funcalls)
+    print "with warning flag: ", warnflag 
 
 if __name__ == "__main__": main()
 
