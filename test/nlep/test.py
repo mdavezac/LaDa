@@ -1,4 +1,14 @@
 #! /usr/bin/env python
+from decorator import decorator
+
+@decorator
+def count_calls(method, *args, **kwargs):
+  """ Adds call counting to a method. """
+  result = method(*args, **kwargs)
+  args[0]._nbcalls += 1
+  return result
+
+
 def compare_eigenvalues(dft, gw):
   """ Average sum of squares of eigenvalues """
   from numpy import multiply, sum
@@ -72,8 +82,9 @@ class Objective(object):
   x = property(_get_x0, _set_x0)
   """ Vector of parameters. """
 
+  @count_calls
   def __call__(self, args):
-    from sys import exit
+    from os.path import join
     from lada.opt.changedir import Changedir
     from lada.vasp import files
     from lada.vasp.extract import Extract
@@ -83,11 +94,10 @@ class Objective(object):
     out = self.vasp\
          (
            self.system,
-           outdir = "%s_%i" % (self.outdir, self._nbcalc),
+           outdir = join(self.outdir, str(self._nbcalc)),
            comm = self.comm,
            repat = files.minimal + files.input
          )
-    out = Extract("nlep_fit_0")
     assert out.success, "VASP calculation in %s_%i did not complete." % (self.outdir, self._nbcalc)
     # computes squares
     eigs = compare_eigenvalues(out, self.gw)
@@ -96,8 +106,9 @@ class Objective(object):
     return eigs / 5e0 + pc * 300e0 + pressure / 500e0
 
   def final(self):
+    from os.path import join
     from lada.vasp import Extract
-    return Extract("%s_%i" % (self.outdir, self._nbcalc)), self.dft, self.gw
+    return Extract(join(self.outdir, str(self._nbcalc))), self.dft, self.gw
       
 def main():
   from boost.mpi import world
@@ -147,10 +158,11 @@ def main():
   # creates objective function.
   objective = Objective(vasp, dft_in, gw_in)
 
-  x, squares, iter, funccalls, = scipy_simplex(objective, objective.x)
-  print "minimum value:", squares
-  print "for: ", x
-  print "after %i iterations and %i function calls." % (iter, funccalls)
+  print scipy_simplex(objective, objective.x)
+# x, squares, iter, funccalls, = scipy_simplex(objective, objective.x)
+# print "minimum value:", squares
+# print "for: ", x
+# print "after %i iterations and %i function calls." % (iter, funccalls)
 
 if __name__ == "__main__": main()
 
