@@ -192,7 +192,7 @@ subroutine escan_wfns_read(n0, n1, n2, g0, indices, wfns, gvecs, projs)
   ! output projects (g-space smooth cutoff)
   real(kind=8), dimension(g0), intent(out) :: projs
 
-  call read_wavefunctions(indices, wfns, gvecs)
+  call read_wavefunctions(indices, wfns, gvecs, projs)
 
 end subroutine escan_wfns_read
 

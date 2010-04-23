@@ -160,7 +160,7 @@ namespace LaDa
       // returns a 2-tuple.
       return bp::make_tuple( bp::object(bp::handle<>(wfns)), 
                              bp::object(bp::handle<>(gpoints)),
-                             bp::object(bp::handle<>(projs)) );
+                             bp::object(bp::handle<>(proj)) );
     }
 
     class Position
