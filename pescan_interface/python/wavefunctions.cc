@@ -27,7 +27,8 @@ extern "C"
 {
   void FC_FUNC_(escan_wfns_init, ESCAN_WFNS_INIT)(int*, char const*, MPI_Fint*);
   void FC_FUNC_(escan_wfns_get_array_dimensions, ESCAN_WFNS_GET_ARRAY_DIMENSIONS)(int*, int*, int*);
-  void FC_FUNC_(escan_wfns_read, ESCAN_WFNS_READ)(int*, int*, int*, int*, int const*, double*, double*);
+  void FC_FUNC_(escan_wfns_read, ESCAN_WFNS_READ)
+    (int*, int*, int*, int*, int const*, double*, double*, double*);
   void FC_FUNC_(escan_get_nr, ESCAN_GET_NR)(int *);
   void FC_FUNC_(escan_get_mr_n, ESCAN_GET_MR_N)(int *);
   void FC_FUNC_(escan_get_n1_n2_n3, ESCAN_GET_N1_N2_N3)(int*, int*, int*);
@@ -126,13 +127,18 @@ namespace LaDa
       // Creates numpy objects.
       npy_intp wfn_dims[3] = { n0, n1, n2 }; // fortran dims.
       npy_intp gpoint_dims[2] = { g0, g1 };   // fortran dims
+      npy_intp proj_dims[1] = { g0 };   // fortran dims
       PyObject *wfns = PyArray_ZEROS(3, wfn_dims, NPY_CDOUBLE, 1);
       PyObject *gpoints 
          = PyArray_ZEROS(2, gpoint_dims, math::numpy::type<types::t_real>::value, 1);
+      PyObject *proj 
+         = PyArray_ZEROS(1, proj_dims, math::numpy::type<types::t_real>::value, 1);
       char * const cptr_wfns( reinterpret_cast<PyArrayObject*>(wfns)->data );
       char * const cptr_gps( reinterpret_cast<PyArrayObject*>(gpoints)->data );
+      char * const cptr_proj( reinterpret_cast<PyArrayObject*>(proj)->data );
       double * const ptr_wfns( reinterpret_cast<double*>(cptr_wfns) );
       double * const ptr_gps( reinterpret_cast<double*>(cptr_gps) );
+      double * const ptr_proj( reinterpret_cast<double*>(cptr_proj) );
       
       reinterpret_cast<PyArrayObject*>(wfns)->dimensions[0]
         = reinterpret_cast<PyArrayObject*>(gpoints)->dimensions[0];
@@ -141,11 +147,11 @@ namespace LaDa
       FC_FUNC_(escan_wfns_read, ESCAN_WFNS_READ)
               ( 
                 &n0, &n1, &n2, &g0,  // dimensions
-                &(indices_[0]),       // indices_ to wavefunctions
+                &(indices_[0]),      // indices_ to wavefunctions
                 ptr_wfns,            // pointer to wavefunctions data
-                ptr_gps              // pointer to gpoint  data
+                ptr_gps,             // pointer to gpoint  data
+                ptr_proj             // pointer to projector data (smooth cutoff)
               );
-      
 
       // returns to original working directory.
       chdir(origpath.string().c_str());
@@ -153,7 +159,8 @@ namespace LaDa
       
       // returns a 2-tuple.
       return bp::make_tuple( bp::object(bp::handle<>(wfns)), 
-                             bp::object(bp::handle<>(gpoints)) );
+                             bp::object(bp::handle<>(gpoints)),
+                             bp::object(bp::handle<>(projs)) );
     }
 
     class Position
@@ -245,7 +252,8 @@ namespace LaDa
       PyArrayObject *array = reinterpret_cast<PyArrayObject*>(obj_ptr);
       if(array->strides[0] != 16) 
       {
-        PyErr_SetString(PyExc_ValueError, "Argument is not a contiguous numpy array of complexes. \n");
+        PyErr_SetString(PyExc_ValueError, "Argument is not a contiguous "
+                                          "numpy array of complexes. \n");
         bp::throw_error_already_set();
         return bp::tuple();
       }
@@ -313,7 +321,8 @@ namespace LaDa
               PyArray_IterAllButAxis(reinterpret_cast<PyObject*>(array), &dim)
             );
         // object should release on destruction
-        bp::object dummyA = bp::object(bp::handle<>(bp::borrowed(reinterpret_cast<PyObject*>(real_iter))));
+        bp::object dummyA
+          = bp::object(bp::handle<>(bp::borrowed(reinterpret_cast<PyObject*>(real_iter))));
         if( not recip_iter )
         {
           PyErr_SetString(PyExc_RuntimeError, "Could not iterate.\n");
@@ -321,7 +330,8 @@ namespace LaDa
           return bp::tuple();
         }
         // object should release on destruction
-        bp::object dummyB = bp::object(bp::handle<>(bp::borrowed(reinterpret_cast<PyObject*>(recip_iter))));
+        bp::object dummyB = bp::object
+          (bp::handle<>(bp::borrowed(reinterpret_cast<PyObject*>(recip_iter))));
         while (real_iter->index < real_iter->size and recip_iter->index < recip_iter->size)  
         {
           int sign = -1;
@@ -350,9 +360,12 @@ namespace LaDa
         "@param indices: index or indices for which to recover the wavefunctions. "
           "Indices of wavefunctions correspond to the eigenvalues "
           "returned by the functional during calculation.\n"
-        "@return: (wavefunctions, g-vectors). The second item corresponds to "
-          "a 3 by x matrix with each row a G-vector. The first item is an "
-          "spin by N by x matrix holding the N wavefuntions/spinor.\n",
+        "@return: (wavefunctions, g-vectors, projs). The third item corresponds "
+          "to the coefficients used to smooth higher energy g-vectors. "
+          "It is a one dimensional array. "
+          "The second item corresponds to a 3 by x matrix with each row a "
+          "G-vector. The first item is an spin by N by x matrix holding the N "
+          "wavefuntions/spinor.\n",
         bp::init<Pescan::Interface const&, bp::object const>()
       ).def("__enter__", &Wfns::__enter__)
        .def("__exit__", &Wfns::__exit__);

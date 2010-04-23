@@ -179,7 +179,7 @@ subroutine escan_wfns_get_array_dimensions( n0, n2, g0 )
 end subroutine escan_wfns_get_array_dimensions
 
 ! Reads wavefunction with given index
-subroutine escan_wfns_read(n0, n1, n2, g0, indices, wfns, gvecs )
+subroutine escan_wfns_read(n0, n1, n2, g0, indices, wfns, gvecs, projs)
   use wfns_module, only: read_wavefunctions
   implicit none
 
@@ -189,6 +189,8 @@ subroutine escan_wfns_read(n0, n1, n2, g0, indices, wfns, gvecs )
   complex(kind=8), dimension(n0, n1, n2), intent(out) :: wfns
   ! output g vectors.
   real(kind=8), dimension(g0,3), intent(out) :: gvecs
+  ! output projects (g-space smooth cutoff)
+  real(kind=8), dimension(g0), intent(out) :: projs
 
   call read_wavefunctions(indices, wfns, gvecs)
 

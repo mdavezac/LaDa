@@ -26,10 +26,10 @@ module Wfns_module
     end subroutine init
 
     ! Reads wavefunctions from current directory.
-    subroutine read_wavefunctions(indices, wfns, gvecs)
+    subroutine read_wavefunctions(indices, wfns, gvecs, projs)
       use Escan, only: read_escaninput, read_potentialinput, set_common_blocks, &
                        prepare_fft_and_allocate_arrays, pi
-      use data, only : mg_nx
+      use data, only : mg_nx, wg_n
       use load_data, only : ngtotnod, n1p_n, n2p_n, n3p_n
       ! indices of the wavefunctions.
       integer, dimension(:), intent(in) :: indices
@@ -37,6 +37,8 @@ module Wfns_module
       complex(kind=8), dimension(:,:,:), intent(out) :: wfns
       ! output g vectors.
       real(kind=8), dimension(:,:), intent(out) :: gvecs
+      ! output projectors (smooth cutoff)
+      real(kind=8), dimension(:), intent(out) :: projs
      
       
       real(kind=8) ::  vol
@@ -63,6 +65,7 @@ module Wfns_module
       endif
 
       nb_gpoints = ngtotnod( inode )
+      projs = wg_n(1:nb_gpoints) ! copy projector data
       ! Computes all gpoints.
       do ig = 1, nb_gpoints
         ! compute G point.

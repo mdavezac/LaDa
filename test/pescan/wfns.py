@@ -93,7 +93,7 @@ for (kpoint, name), structure, relaxed in [ (G, Si, Si_relaxed) ]:
     # checks expected are as expected. 
     if world.rank == 0: print "Ok - %s: %s -> %s: %s" % (name, kpoint, escan.kpoint, eigenvalues)
 
-    with Wavefunctions(escan, [i for i in range(len(eigenvalues))]) as (wfns, gvectors):
-      print wfns.shape, gvectors.shape
+    with Wavefunctions(escan, [i for i in range(len(eigenvalues))]) as (wfns, gvectors, projs):
+      print wfns.shape, gvectors.shape, projs.shape
       rspace, rvectors = to_realspace(wfns, escan.comm)
       print rspace.shape, len(rvectors)
