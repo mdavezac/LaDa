@@ -48,6 +48,8 @@ module Wfns_module
       common /mpi_data/inode,nnodes
       integer(kind=8), dimension(3) :: int_gpoints
       integer :: ig, nb_gpoints
+      real(kind=8) a
+      integer ierr
  
       ! now reads actual data.
       if( params%with_spinorbit ) then
@@ -63,6 +65,10 @@ module Wfns_module
                            params%ecp%filewg_out, size( indices ), &
                            indices, 0 )
       endif
+      a = dot_product(wfns(:, 1, 2), wfns(:, 1, 2))
+      call mpi_allreduce(MPI_IN_PLACE, a, 1, MPI_REAL8, MPI_SUM, &
+                         mpi_comm_world, ierr)
+      write(*,*) 'all reduce ', a
 
       nb_gpoints = ngtotnod( inode )
       projs = wg_n(1:nb_gpoints) ! copy projector data

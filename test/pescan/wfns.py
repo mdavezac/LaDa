@@ -34,13 +34,15 @@ from math import ceil, sqrt
 from os.path import join, exists
 from numpy import dot, array, matrix
 from numpy.linalg import norm
-from boost.mpi import world
+from boost.mpi import world, all_reduce
 from lada.vff import Vff
 from lada.escan import Escan, method, nb_valence_states as nbstates, potential, Wavefunctions, to_realspace
 from lada.crystal import deform_kpoint
 from lada.opt.tempdir import Tempdir
+from lada.physics import a0
 
 from numpy import array
+import numpy as np
 # file with escan and vff parameters.
 input = "test_input/input.xml"
 
@@ -93,7 +95,22 @@ for (kpoint, name), structure, relaxed in [ (G, Si, Si_relaxed) ]:
     # checks expected are as expected. 
     if world.rank == 0: print "Ok - %s: %s -> %s: %s" % (name, kpoint, escan.kpoint, eigenvalues)
 
+    volume = structure.scale / a0("A")
+    volume = np.linalg.det(np.matrix(Si_relaxed.cell) * volume)
     with Wavefunctions(escan, [i for i in range(len(eigenvalues))]) as (wfns, gvectors, projs):
       print wfns.shape, gvectors.shape, projs.shape
       rspace, rvectors = to_realspace(wfns, escan.comm)
-      print rspace.shape, len(rvectors)
+      print rspace.shape, rvectors.shape
+      for i in range(wfns.shape[1]):
+        a = np.matrix(rspace[:,i,0]) # np.multiply(wfns[:,i,j], projs))
+        c = all_reduce(world, a*a.T.conjugate(), lambda x,y: x+y)
+        a = np.matrix(rspace[:,i,1]) # np.multiply(wfns[:,i,j], projs))
+        c += all_reduce(world, a*a.T.conjugate(), lambda x,y: x+y)
+        s = all_reduce(world, rspace.shape[0], lambda x,y: x+y)
+        if world.rank == 0: print c * volume/s, volume
+        u = 0e0 + 0e0*1j
+        for k in range(wfns.shape[0]):
+          u += np.exp(- 1j *np.dot(rvectors[10,:], gvectors[k, :])) * wfns[k,i,0] * projs[k]
+        u = all_reduce(world, u, lambda x,y:x+y)
+        if world.rank == 0: print u, rspace[10,i,0]*s
+
