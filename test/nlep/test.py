@@ -1,6 +1,8 @@
 #! /usr/bin/env python
 from decorator import decorator
 
+units = 5e3
+
 @decorator
 def count_calls(method, *args, **kwargs):
   """ Adds call counting to a method. """
@@ -63,7 +65,7 @@ class Objective(object):
         elif nlep_params["func"] == "enlep": 
           result.append(nlep_params["U0"]) # first energy
           result.append(nlep_params["U1"]) # second energy
-    return array(result, dtype="float64")
+    return array(result, dtype="float64") / units
   def _set_x0(self, args):
     """ Sets L{vasp} attribute from input vector. """
     from numpy import array, multiply, sum
@@ -72,12 +74,12 @@ class Objective(object):
       for nlep_params in specie.U:
         if nlep_params["func"] == "nlep": 
           assert args.shape[0] > i, RuntimeError("%i > %i\n" % (args.shape[0], i))
-          nlep_params["U"] = args[i]
+          nlep_params["U"] = args[i] * units
           i += 1
         elif nlep_params["func"] == "enlep": 
           assert args.shape[0] > i+1, RuntimeError("%i > %i\n" % (args.shape[0], i+1))
-          nlep_params["U"] = args[i] # first energy
-          nlep_params["J"] = args[i+1] # second energy
+          nlep_params["U"] = args[i] * units # first energy
+          nlep_params["J"] = args[i+1] * units # second energy
           i += 2
     assert sum(multiply(self.x - args,self.x-args)) < 1e-12 * float(len(args))
   x = property(_get_x0, _set_x0)
@@ -107,10 +109,14 @@ class Objective(object):
     pressure = compare_pressure(out)
     return eigs / 5e0 + pc * 300e0 + pressure / 500e0
 
-  def final(self):
-    from os.path import join
-    from lada.vasp import Extract
-    return Extract(join(self.outdir, str(self._nbcalls))), self.dft, self.gw
+  def final(self, args):
+    self(args)
+    out = Extract(join(self.outdir, str(self._nbcalls)))
+    eigs = compare_eigenvalues(out, self.gw)
+    pc = compare_partial_charges(out, self.dft)
+    pressure = compare_pressure(out)
+    return eigs, pc, pressure
+
       
 def main():
   from boost.mpi import world
@@ -135,7 +141,12 @@ def main():
               path="pseudos/Sn", 
               U=[nlep_parameters(type="Dudarev", l=i, U0=0e0) for i in ["s", "p", "d"]]
             ),\
-            Specie("O", path="pseudos/O")
+            Specie
+            (
+              "O", 
+              path="pseudos/O",
+              U=[nlep_parameters(type="Dudarev", l=i, U0=0e0) for i in ["s", "p"]]
+            )
   # add U to Sn atoms.
   species[0].U.append( u_parameters(type="Dudarev", U=2e0, l=2) )
   # creates vasp launcher
@@ -160,13 +171,14 @@ def main():
   # creates objective function.
   objective = Objective(vasp, dft_in, gw_in)
 
-  x0, f0, iter, funcalls, warnflag = scipy_simplex(objective, objective.x, maxfun=5, full_output=1)
+  x0, f0, iter, funcalls, warnflag = scipy_simplex(objective, objective.x, maxfun=150, full_output=1, xtol=0.2)
   world.barrier()
   if world.rank == 0:
     print "minimum value:", f0
-    print "for: ", x0
+    print "for: ", x0 * units
     print "after %i iterations and %i function calls." % (iter, funcalls)
     print "with warning flag: ", warnflag 
+    print final(x0)
 
 if __name__ == "__main__": main()
 
