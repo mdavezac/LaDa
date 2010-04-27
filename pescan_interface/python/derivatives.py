@@ -51,15 +51,15 @@ def reciprocal( structure, escan, vff, direction, order = 1, \
   direction /= norm(direction)
   if lstsq == None: lstsq = np_lstsq
 
-  # saves mpicomm if necessary.
-  mpicomm = escan.mpicomm
-  if "mpicomm" in kwargs:
-    mpicomm = kwargs["mpicomm"] 
-    del kwargs["mpicomm"]
+  # saves comm if necessary.
+  comm = escan.comm
+  if "comm" in kwargs:
+    comm = kwargs["comm"] 
+    del kwargs["comm"]
   # now copies escan
   escan = deepcopy(escan)
-  # resets mpicomm 
-  escan.mpicomm = mpicomm
+  # resets comm 
+  escan.comm = comm
   # sets to folded spectra
   escan.method = method.folded
 

@@ -1,6 +1,3 @@
-//
-//  Version: $Id$
-//
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
@@ -280,6 +277,13 @@ namespace LaDa
         bp::throw_error_already_set();
       }
     }
+
+#   ifdef _MPI
+      template<class T> boost::mpi::communicator const &
+         get_mpi(T const &_self) { return _self.comm(); }
+      template<class T> void set_mpi(T &_self, boost::mpi::communicator * _c)
+        { _self.set_mpi(_c); }
+#   endif
     
     bp::tuple get_mesh( LaDa::Pescan::Interface::GenPot const &_genpot )
       { return get_impl(_genpot.mesh); }
@@ -315,7 +319,6 @@ namespace LaDa
     bp::object get_eigenvalues(Pescan::Interface const& _interface)
     {
       namespace numpy = LaDa::math::numpy;
-      import_array1( bp::object( bp::handle<>(bp::borrowed(Py_None)) ) );
       npy_intp dims[1] = {_interface.eigenvalues.size()};
 
       PyObject *eigs = PyArray_SimpleNewFromData( 1, dims, numpy::type<types::t_real>::value,
@@ -514,15 +517,15 @@ namespace LaDa
           "want to store the results.\n",
           bp::with_custodian_and_ward_postcall<1,0>() 
         )
-#      ifdef _MPI
-         .add_property
-         (
-           "mpicomm", 
-           bp::make_function(&get_mpi<t_Escan>, bp::return_internal_reference<>()),
-           &set_mpi<t_Escan>, 
-           "Sets the boost.mpi communicator."
-         )
-#      endif
+#       ifdef _MPI
+          .add_property
+          (
+            "comm", 
+            bp::make_function(&get_mpi<t_Escan>, bp::return_internal_reference<>()),
+            &set_mpi<t_Escan>, 
+            "Sets the boost.mpi communicator."
+          )
+#       endif
         .def_pickle( pickle_escan< t_Escan >() );
 
       bp::def("_call_escan", &just_call_escan);
@@ -536,6 +539,7 @@ namespace LaDa
     {
 
       typedef LaDa::Pescan::Interface::GenPot t_GenPot;
+      import_array();
       bp::class_< t_GenPot >( "GenPot", "Wrapper around genpot parameters.", bp::no_init ) 
         .add_property( "mesh", &get_mesh, &set_mesh, "Tuple defining the FFT mesh.\n" ) 
         .add_property( "multiple_cell", &get_mcell, &set_mcell,

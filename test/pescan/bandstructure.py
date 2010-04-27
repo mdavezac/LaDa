@@ -77,8 +77,8 @@ density = 10 / min( norm(0.1*X[0]), norm(0.1*L[0]) )
 N=2
 assert world.size >= N
 color = world.rank % N
-mpicomm = world.split(color)
-escan.mpicomm = mpicomm
+comm = world.split(color)
+escan.comm = comm
 if world.rank == 0 and not exists("work"): makedirs("work")
 world.barrier()
 

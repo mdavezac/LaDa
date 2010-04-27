@@ -13,7 +13,7 @@
     >>>   print extract.total_energy
     The output extraction object will be the output the vasp callable.
 """
-def relaxation( vasp, structure, mpicomm = None, outdir="relaxation", 
+def relaxation( vasp, structure, comm = None, outdir="relaxation", 
                 repat = [], tolerance = 1e-3, \
                 relaxation="volume ionic cellshape", **kwargs ):
   """ Performs a vasp relaxation
@@ -67,7 +67,7 @@ def relaxation( vasp, structure, mpicomm = None, outdir="relaxation",
 
   # performs initial calculation.
   outdirs = ["%s/step_%i" % (outdir, nb_steps)]
-  output = vasp(structure, outdirs[-1], mpicomm=mpicomm, repat=repat, **kwargs)
+  output = vasp(structure, outdirs[-1], comm=comm, repat=repat, **kwargs)
 
   # yields output for whatnot
   yield output
@@ -84,7 +84,7 @@ def relaxation( vasp, structure, mpicomm = None, outdir="relaxation",
 
     # launch calculations 
     outdirs.append("%s/step_%i" % (outdir, nb_steps))
-    output = vasp(structure, outdirs[-1], mpicomm=mpicomm, repat=repat, **kwargs)
+    output = vasp(structure, outdirs[-1], comm=comm, repat=repat, **kwargs)
     # yields output for whatnot.
     yield output
 
@@ -96,7 +96,7 @@ def relaxation( vasp, structure, mpicomm = None, outdir="relaxation",
   # final calculation.
   vasp.relaxation.value = "static"
   outdirs.append("%s/final_static" % (outdir))
-  output = vasp(structure, outdirs[-1], mpicomm = mpicomm, repat = repat, **kwargs)
+  output = vasp(structure, outdirs[-1], comm = comm, repat = repat, **kwargs)
   yield output
 
   # cleanup -- deletes unwanted files from previous output directory
@@ -106,7 +106,7 @@ def relaxation( vasp, structure, mpicomm = None, outdir="relaxation",
       if exists(filename): remove(filename)
 
 
-def kpoint_convergence(vasp, structure, outdir="kconv", mpicomm = None, start=1, steps=None, \
+def kpoint_convergence(vasp, structure, outdir="kconv", comm = None, start=1, steps=None, \
                        offset=(0.5,0.5,0.5), repat=[], tolerance=1e-3, **kwargs):
   """ Performs a convergence test for kpoints using kpoints.Density object.
 
@@ -126,8 +126,8 @@ def kpoint_convergence(vasp, structure, outdir="kconv", mpicomm = None, start=1,
       @type vasp: L{Vasp}
       @param outdir: Directory where to repatriate files. Default = kconv.
       @type outdir: str
-      @param mpicomm: Groups of processes for which to call vasp.
-      @type mpicomm: None or boost.mpi.Communicator 
+      @param comm: Groups of processes for which to call vasp.
+      @type comm: None or boost.mpi.Communicator 
       @param start: Starting density. Default = 1.
       @param steps: End density. Default = 1.
       @param offset: Offset from L{Gamma} of reciprocal mesh. Default = (0.5,0.5,0.5). 
@@ -165,7 +165,7 @@ def kpoint_convergence(vasp, structure, outdir="kconv", mpicomm = None, start=1,
 
   # performs initial calculation.
   outdirs = ["%s/density:%i" % (outdir, density)]
-  output = vasp( structure, outdirs[-1], mpicomm = mpicomm, repat = repat,\
+  output = vasp( structure, outdirs[-1], comm = comm, repat = repat,\
                  kpoints=Density(offset, density), **kwargs )
   # yields output for whatnot
   yield output 
@@ -179,7 +179,7 @@ def kpoint_convergence(vasp, structure, outdir="kconv", mpicomm = None, start=1,
 
     # launch calculations 
     outdirs.append("%s/density:%i" % (outdir, density))
-    output = vasp( structure, outdirs[-1], mpicomm = mpicomm, repat = repat,\
+    output = vasp( structure, outdirs[-1], comm = comm, repat = repat,\
                    kpoints=Density(offset, density), **kwargs )
     # yields output for whatnot.
     yield output
@@ -214,7 +214,7 @@ def main():
   vasp = Vasp(species=(K, Rb))
   if os.path.exists(vasp.indir):  shutil.rmtree( vasp.indir )
 
-  for output in relaxation( structure, vasp, outdir = "test", mpicomm = world ):
+  for output in relaxation( structure, vasp, outdir = "test", comm = world ):
     structure = output.structure
     print structure.name, structure.energy, "\n", structure
 

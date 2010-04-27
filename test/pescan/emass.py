@@ -63,9 +63,9 @@ def check_emass( structure, escan, vff, direction, order = 1, \
   from lada.escan import eMass
   from lada.opt.changedir import Changedir
 
-  mpicomm = escan.mpicomm
+  comm = escan.comm
   escan = deepcopy(escan)
-  escan.mpicomm = mpicomm
+  escan.comm = comm
   popthese = []
   for key in kwargs:
     if not hasattr(escan, key): continue
@@ -86,9 +86,9 @@ def check_emass( structure, escan, vff, direction, order = 1, \
   cell = structure.cell.copy()
 
   escan.scale = structure
-  escan.mpicomm.barrier()
+  escan.comm.barrier()
   original = deepcopy(escan.vff_inputfile)
-  escan.vff_inputfile = "%s.%i" % (original, escan.mpicomm.rank)
+  escan.vff_inputfile = "%s.%i" % (original, escan.comm.rank)
   vff.print_escan_input( escan.vff_inputfile, structure )
   result = emass(escan, cell, structure, escan.reference)
   escan.vff_inputfile = original

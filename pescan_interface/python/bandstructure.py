@@ -37,15 +37,15 @@ def band_structure(structure, escan, vff, kpoints, density, **kwargs ):
   from ._escan import method, potential
   from ..physics import a0, Hartree
 
-  # saves mpicomm if necessary.
-  mpicomm = escan.mpicomm
-  if "mpicomm" in kwargs:
-    mpicomm = kwargs["mpicomm"] 
-    del kwargs["mpicomm"]
+  # saves comm if necessary.
+  comm = escan.comm
+  if "comm" in kwargs:
+    comm = kwargs["comm"] 
+    del kwargs["comm"]
   # now copies escan
   escan = deepcopy(escan)
-  # resets mpicomm to whatever it should be
-  escan.mpicomm = mpicomm
+  # resets comm to whatever it should be
+  escan.comm = comm
   # sets to folded spectra
   escan.method = method.folded
   
