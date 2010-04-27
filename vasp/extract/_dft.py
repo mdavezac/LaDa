@@ -14,10 +14,8 @@ class _ExtractImpl(object):
         @param directory: path to the directory where the VASP output is located.
         @type directory: str
     """
-    from os.path import abspath, expanduser
     from ..files import OUTCAR, CONTCAR
-    self.directory = abspath(expanduser(directory))
-    """ path to the directory where the VASP output is located. """
+    self.directory = directory
     self.comm = comm
     """ MPI group communicator. """
     self.OUTCAR = OUTCAR
@@ -31,6 +29,26 @@ class _ExtractImpl(object):
         Data will be read from directory/CONTCAR. 
     """
     
+  def _get_directory(self):
+    """ Directory with VASP output files """
+    return self._directory
+  def _set_directory(self, dir):
+    from os.path import abspath, expanduser
+    dir = abspath(expanduser(dir))
+    if hasattr(self, "_directory"): 
+      if dir != self._directory: self.uncache()
+    self._directory = dir
+  directory = property(_get_directory, _set_directory)
+  """ Directory with VASP output files """
+
+  def uncache(self): 
+    """ Removes cached results.
+
+        After this outputs are re-read from file.
+    """
+    from decorators import uncache
+    uncache(self)
+
 
   @make_cached
   @bound_broadcast_result

@@ -176,12 +176,3 @@ class ExtractGW(_ExtractGWImpl):
     self.comm = comm
     return copy
 
-  def uncache(self): 
-    """ Removes cached results.
-
-        After this outputs are re-read from file.
-    """
-    from decorators import uncache
-    uncache(self)
-
-
