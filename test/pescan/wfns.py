@@ -155,7 +155,7 @@ L = array( [0.5,0.5,0.5], dtype="float64" ), "L"
 W = array( [1, 0.5,0], dtype="float64" ), "W"
 
 # launch pescan for different jobs.
-for (kpoint, name), structure, relaxed in [(G, Si, Si_relaxed)]: #, (G, Ge, Ge_relaxed) ]:
+for (kpoint, name), structure, relaxed in [(G, Si, Si_relaxed), (G, Ge, Ge_relaxed) ]:
   with Tempdir(workdir="work", comm=world, keep=True, debug="debug") as tempdir:
     # will save output to directory "name".
     escan.directory = tempdir
