@@ -1,3 +1,4 @@
+
 def create_zb_lattice():
   from numpy import array as np_array
   from lada.crystal import Lattice, Site
@@ -12,6 +13,24 @@ def create_zb_lattice():
   lattice.find_space_group()
   lattice.set_as_crystal_lattice() 
   return lattice
+
+def gtor_fourrier(wavefunctions, rvectors, gvectors, comm, axis=0):
+  import numpy as np
+  from boost.mpi import broadcast, reduce
+
+  result = None
+  for node in range(comm.size):
+    # sends rvectors from node to all
+    r = broadcast(world, rvectors, node)
+    # computes all exponentials exp(-i r.g), with r in first dim, and g in second.
+    v = np.exp(-1j * np.tensordot(r, gvectors, ((1),(1))))
+    # computes fourrier transform for all wavefunctions simultaneously.
+    dummy = np.tensordot(v, wfns, ((1),(axis)))
+    # reduce across processes
+    if node == comm.rank: result = reduce(comm, dummy, lambda x,y: x+y, node)
+    else: reduce(comm, dummy, lambda x,y: x+y, node)
+
+  return result
 
 def create_structure():
   from numpy import matrix, array
@@ -108,6 +127,7 @@ for (kpoint, name), structure, relaxed in [ (G, Si, Si_relaxed) ]:
         kcell = cell.I.T
         print gvec, np.dot(kcell, array([2e0*pi, 0, 0])) 
         print rvec, (cell * matrix([0,0, 1e0/escan.genpot.mesh[0]]).T).T
+
       for i in range(wfns.shape[1]):
         a = np.matrix(rspace[:,i,0]) # np.multiply(wfns[:,i,j], projs))
         c = all_reduce(world, a*a.T.conjugate(), lambda x,y: x+y)
@@ -116,41 +136,22 @@ for (kpoint, name), structure, relaxed in [ (G, Si, Si_relaxed) ]:
         s = all_reduce(world, rspace.shape[0], lambda x,y: x+y)
         if world.rank == 0: print c * volume/s, volume
         u = 0e0 + 0e0*1j
-        for k in range(wfns.shape[0]):
-          u += np.exp(-1j *np.dot(rvec, gvectors[k, :])) * wfns[k,i,0] # * projs[k]
+        v = np.exp(-1j * np.dot(gvectors, rvec) )
+        u = np.dot(wfns[:,i,0], v)
+#       for k in range(wfns.shape[0]):
+#         u += np.exp(-1j *np.dot(rvec, gvectors[k, :])) * wfns[k,i,0] # * projs[k]
         u = all_reduce(world, u, lambda x,y:x+y)
         if world.rank == 0: print u, rspace[1,i,0], u.real/rspace[1,i,0].real
 
+      v = np.exp(-1j * np.dot(gvectors, rvec))
+      u = np.tensordot(wfns, v, ((0), (0)))
+      u = all_reduce(world, u, lambda x,y:x+y)
+      if world.rank == 0:
+        for test, ref in zip(u.flat, rspace[1,:,:].flat):
+          print abs(test - ref) < 1e-12
 
-def gtor_fourrier(wavefunctions, rvectors, gvectors, comm):
-  import numpy as np
-  rshape = [ u for u in wavefunctions ]
-  rshape[0] = gvectors.shap[0]
-  result = np.zeros(rshape)
-
-  def iterate(axis, first, second):
-    assert first.ndims == second.ndims
-    for i in range(first.ndims):
-      if i == axis: 
-      assert first
-    if first.ndims == 1:
-      yield first, second
-      return
-    # makes axis the last dimension
-    if axis != first.ndims:
-      fswapped = np.swapaxes(first, axis, first.ndims-1)
-    # generator for iterating over all other dimensions.
-    def all_but_last(iterated):
-      if iterated.ndims == 1: yield iterated
-      for next_ in iterated: yield(next_)
-    yield all_but_last(swapped)
-
-
-
-
-    for node in range(comm.size):
-      for r in rvectors.shape[0]:
-        rvec = broadcast(world, rvectors[r], node)
-        v = zeros((gvectors.shape[0],), dtype="float64")
-        for g in range(gvectors.shape[0]): v[g] = np.exp(np.dot(rvec, gvectors[g])) 
-        result[r,:,:] = np.dot( 
+      r = gtor_fourrier(wfns, rvectors, gvectors, escan.comm)
+      assert len(r.flat) == len(rspace.flat)
+      for rtest, rtrue in zip(r.flat, rspace.flat):
+        assert abs(rtest-rtrue) < 1e-12,\
+               RuntimeError("Did not checkout %e != %e" %(rtest, rtrue))
