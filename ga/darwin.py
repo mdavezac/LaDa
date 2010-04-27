@@ -41,7 +41,7 @@ def run(self):
   # evaluates population if need be.
   self.evaluation(self) 
 
-  nboffspring = int( "%.0f" % (float(self.popsize)*self.rate) )
+  nboffspring = max(int(float(self.popsize)*self.rate), 1)
 
   # generational loop
   while checkpoints(): 

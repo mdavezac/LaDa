@@ -169,10 +169,12 @@ namespace LaDa
        void check_existence() const;
  
 #      ifdef _DIRECTIAGA
-         //! Allows derived classes to have access to ::mpi::AddCommunicator members. 
+         //! Gives access to ::mpi::AddCommunicator members. 
          void set_mpi( boost::mpi::communicator* _c );
-         //! Allows derived classes to have access to ::mpi::AddCommunicator members. 
+         //! Gives access to ::mpi::AddCommunicator members. 
          const boost::mpi::communicator &comm() const { return MPI_COMMDEC::comm(); } 
+         //! Gives access to ::mpi::AddCommunicator members. 
+         boost::mpi::communicator &comm() { return MPI_COMMDEC::comm(); } 
 #      endif
  
       //! Launches a calculation 
@@ -195,10 +197,6 @@ namespace LaDa
       bool read_result();
       //! Loads functional directly from \a _node
       bool Load_( const TiXmlElement &_node );
-#     ifdef _DIRECTIAGA
-        //! Allows derived classes to have access to ::mpi::AddCommunicator members. 
-        boost::mpi::communicator &comm() { return MPI_COMMDEC::comm(); } 
-#     endif
  
       //! Directory where to perform computations.
       boost::filesystem::path dirname;

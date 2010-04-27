@@ -38,6 +38,8 @@ namespace LaDa
         static bool is_initialized_;
     };
 
+    //! Emulates "mkdir -p" behavior.
+    bool create_directory(boost::filesystem::path const &_path);
   }
 } // namespace LaDa
 

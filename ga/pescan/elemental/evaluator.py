@@ -179,7 +179,6 @@ class Directness(object):
     """ Conversion functor between structures and bitstrings. """
     self.which = which
     """ Parameters for computation. """
-    assert len(self.which) > 1 
     self.directory_prefix = "indiv"
     """ Directory prefix """
     self.nbcalc = 0
@@ -216,6 +215,7 @@ class Directness(object):
     from ....crystal import deform_kpoint
     from ....opt.changedir import Changedir
 
+    assert len(self.which) > 1 
     assert self.escan.method == method.folded
     assert self.escan.nbstates >= 1
 
@@ -296,3 +296,53 @@ class Directness(object):
     """ Returns length of bitstring. """
     return len(self.converter.structure.atoms)
 
+class EffectiveMass(Directness):
+  """ Objective functions for optimizing effective masses. """
+
+  def __init__(self, converter, which, direction, **kwargs):
+    """ Initializes the Effective mass evaluator. 
+
+        Same parameters as Directness.
+    """
+    super(EffectiveMass, self).__init__(converter, which, **kwargs)
+    self.direction = direction
+    """ Direction of the effective mass """
+
+  def __call__(self, indiv):
+    """ Evaluates directness of the gap """
+    from os.path import exists, join
+    from shutil import rmtree
+    from ....crystal import deform_kpoint
+    from ....escan.derivatives import reciprocal as recip_deriv
+
+    self.nbcalc += 1
+    results = []
+
+    # relax structure.
+    structure = self.converter(indiv.genes)
+    relaxed, stress = self.vff(structure)
+    indiv.epi_energy = relaxed.energy
+    indiv.epi_stress = stress
+
+    # create and change directory.
+    basedir = self.directory_prefix + "_" + str(self.nbcalc)
+    if self.world.do_print:
+      if exists(basedir): rmtree(basedir)
+
+    stepsize = 1e-2
+    if hasattr(self, "stepsize"): stepsize = self.stepsize
+    nbpoints = 3
+    if hasattr(self, "nbpoints"): stepsize = self.nbpoints
+
+    self.world.barrier()
+    indiv.derivatives = \
+        recip_deriv( structure, self.escan, self.vff, self.direction,
+                     directory = basedir,
+                     kpoint    = deform_kpoint(self.which[0], structure.cell, relaxed.cell),
+                     reference = self.which[2](relaxed),
+                     order     = 2,
+                     nbpoints  = nbpoints, 
+                     stepsize  = stepsize )
+    indiv.emass = 1e0 / indiv.derivatives[2]
+                         
+    return indiv.emass

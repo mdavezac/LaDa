@@ -124,7 +124,7 @@ namespace LaDa
       
       const t_Path newatom( opt::InitialPath::path()/dirname/atom_input.filename() );
       LADA_DOASSERT( bfs::exists( atom_input ), atom_input << " does not exist.\n" );
-      if( newatom != boost::filesystem::current_path()/atom_input )
+      if( newatom != atom_input )
       { 
         if( bfs::exists( newatom ) ) bfs::remove( newatom );
         bfs::copy_file( atom_input, newatom );
@@ -369,7 +369,7 @@ namespace LaDa
                     << " 1 1 1 " << escan.rspace_wfn << " # real-space output \n";
 
       if ( math::is_zero( escan.kpoint.squaredNorm() ) ) file << "11 0 0 0 0 0 # kpoint=Gamma\n";
-      else file << "11 1 " << escan.kpoint.transpose() << " " 
+      else file << "11 1 " << escan.kpoint.transpose().format(Eigen::IOFormat(12)) << " " 
                            << std::setw(12) << std::setprecision(8) 
                            << escan.scale / Physics::a0("A") <<  " # kpoint\n";
       file << "12 " << escan.potential << " # potential:";
