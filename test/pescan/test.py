@@ -124,7 +124,7 @@ jobs = [\
        ]
 # launch pescan for different jobs.
 for kpoint, name, ref, expected_eigs in jobs:
-  with Tempdir(comm=world, kee=False, workdir=getcwd()) as tempdir:
+  with Tempdir(comm=world, workdir=getcwd()) as tempdir:
     # will save output to directory "name".
     escan.directory = name
     # computes at kpoint of deformed structure.
@@ -138,7 +138,7 @@ for kpoint, name, ref, expected_eigs in jobs:
     # Now just do it.
     eigenvalues = escan(vff, relaxed)
     # checks expected are as expected. 
-    assert norm( eigenvalues - expected_eigs ) < 1e-6, "%s\n%s" % (eigenvalues, expected_eigs)
+    assert norm( eigenvalues - expected_eigs ) < 1e-3, "%s\n%s" % (eigenvalues, expected_eigs)
     # And print.
     if world.rank == 0: print "Ok - %s: %s -> %s: %s" % (name, kpoint, escan.kpoint, eigenvalues)
   
