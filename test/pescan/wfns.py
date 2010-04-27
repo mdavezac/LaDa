@@ -15,6 +15,25 @@ def create_zb_lattice():
   return lattice
 
 def gtor_fourrier(wavefunctions, rvectors, gvectors, comm, axis=0):
+  """ g-space to r-space fourrier transform of wavefunctions.
+  
+      @param wavefunctions: an numpy array of wavefunctions.
+      @param rvectors: a two-dimensional array of r-space vectors, with each
+        row a position. The return r-space wavefunctions will be given with
+        respect to these points. Each process should have different r-space
+        vectors. Otherwise use another implementation.
+      @param gvectors: a two-dimensional array of g-space vectors, with each
+        row a (g-)position. The input wavefunctions should be given with
+        respect to these points, in the same order, etc.
+      @param comm: communicator over which the wavefunctions are distributed.
+        The return wavefunctions will also be dirstributed over these
+        processes.
+      @params axis: axis over which the wavefunctions are deployed, eg axis
+        of L{wavefunctions} which corresponds to L{gvectors}. Independent
+        (though simultaneous, implementation wise) fourrier transform will be
+        performed over this axis for all other axis. 0 by default.
+      @type axis: integer
+  """
   import numpy as np
   from boost.mpi import broadcast, reduce
 
@@ -25,9 +44,47 @@ def gtor_fourrier(wavefunctions, rvectors, gvectors, comm, axis=0):
     # computes all exponentials exp(-i r.g), with r in first dim, and g in second.
     v = np.exp(-1j * np.tensordot(r, gvectors, ((1),(1))))
     # computes fourrier transform for all wavefunctions simultaneously.
-    dummy = np.tensordot(v, wfns, ((1),(axis)))
+    dummy = np.tensordot(v, wavefunctions, ((1),(axis)))
     # reduce across processes
-    if node == comm.rank: result = reduce(comm, dummy, lambda x,y: x+y, node)
+    if node == comm.rank: result = reduce(comm, dummy, lambda x,y: x+y, node).copy()
+    else: reduce(comm, dummy, lambda x,y: x+y, node)
+
+  return result
+def rtog_fourrier(wavefunctions, rvectors, gvectors, comm, axis=0):
+  """ r-space to g-space fourrier transform of wavefunctions.
+  
+      @param wavefunctions: an numpy array of wavefunctions.
+      @param rvectors: a two-dimensional array of r-space vectors, with each
+        row a position. The return r-space wavefunctions will be given with
+        respect to these points. Each process should have different r-space
+        vectors. Otherwise use another implementation.
+      @param gvectors: a two-dimensional array of g-space vectors, with each
+        row a (g-)position. The input wavefunctions should be given with
+        respect to these points, in the same order, etc.
+      @param comm: communicator over which the wavefunctions are distributed.
+        The return wavefunctions will also be dirstributed over these
+        processes.
+      @params axis: axis over which the wavefunctions are deployed, eg axis
+        of L{wavefunctions} which corresponds to L{gvectors}. Independent
+        (though simultaneous, implementation wise) fourrier transform will be
+        performed over this axis for all other axis. 0 by default.
+      @type axis: integer
+  """
+  import numpy as np
+  from boost.mpi import broadcast, reduce, all_reduce
+
+  result = None
+  for node in range(comm.size):
+    # sends rvectors from node to all
+    g = broadcast(world, gvectors, node)
+    # computes all exponentials exp(-i r.g), with g in first dim, and r in second.
+    v = np.exp(1j * np.tensordot(g, rvectors, ((1),(1))))
+    # gets normalization factor.
+    norm = all_reduce(comm, rvectors.shape[0], lambda x,y:x+y)
+    # computes fourrier transform for all wavefunctions simultaneously.
+    dummy = np.tensordot(v, wavefunctions, ((1),(axis))) / float(norm)
+    # reduce across processes
+    if node == comm.rank: result = reduce(comm, dummy, lambda x,y: x+y, node).copy()
     else: reduce(comm, dummy, lambda x,y: x+y, node)
 
   return result
@@ -98,7 +155,7 @@ L = array( [0.5,0.5,0.5], dtype="float64" ), "L"
 W = array( [1, 0.5,0], dtype="float64" ), "W"
 
 # launch pescan for different jobs.
-for (kpoint, name), structure, relaxed in [ (G, Si, Si_relaxed) ]:
+for (kpoint, name), structure, relaxed in [(G, Si, Si_relaxed)]: #, (G, Ge, Ge_relaxed) ]:
   with Tempdir(workdir="work", comm=world, keep=True, debug="debug") as tempdir:
     # will save output to directory "name".
     escan.directory = tempdir
@@ -109,49 +166,27 @@ for (kpoint, name), structure, relaxed in [ (G, Si, Si_relaxed) ]:
     # divides by two if calculations are not spin polarized.
     if norm(escan.kpoint) < 1e-6 or escan.potential != potential.spinorbit: escan.nbstates /= 2
     # Now just do it.
-#   eigenvalues = escan(vff, relaxed)
-    eigenvalues = array([-0.91784761, -0.91784761, -0.99130073, 2.42593931])
+    eigenvalues = escan(vff, relaxed)
+#   eigenvalues = array([-0.94213329, -0.94213329, -0.94213329, 2.46059562])
     # checks expected are as expected. 
     if world.rank == 0: print "Ok - %s: %s -> %s: %s" % (name, kpoint, escan.kpoint, eigenvalues)
 
     volume = structure.scale / a0("A")
     volume = np.linalg.det(np.matrix(Si_relaxed.cell) * volume)
     with Wavefunctions(escan, [i for i in range(len(eigenvalues))]) as (wfns, gvectors, projs):
-      print wfns.shape, gvectors.shape, projs.shape
       rspace, rvectors = to_realspace(wfns, escan.comm)
-      print rspace.shape, rvectors.shape
-      rvec = broadcast(world, rvectors[1], 0) 
-      gvec = broadcast(world, gvectors[1], 0)
-      if world.rank == 0: 
-        cell = matrix(Si_relaxed.cell* structure.scale /a0("A"))
-        kcell = cell.I.T
-        print gvec, np.dot(kcell, array([2e0*pi, 0, 0])) 
-        print rvec, (cell * matrix([0,0, 1e0/escan.genpot.mesh[0]]).T).T
 
-      for i in range(wfns.shape[1]):
-        a = np.matrix(rspace[:,i,0]) # np.multiply(wfns[:,i,j], projs))
-        c = all_reduce(world, a*a.T.conjugate(), lambda x,y: x+y)
-        a = np.matrix(rspace[:,i,1]) # np.multiply(wfns[:,i,j], projs))
-        c += all_reduce(world, a*a.T.conjugate(), lambda x,y: x+y)
-        s = all_reduce(world, rspace.shape[0], lambda x,y: x+y)
-        if world.rank == 0: print c * volume/s, volume
-        u = 0e0 + 0e0*1j
-        v = np.exp(-1j * np.dot(gvectors, rvec) )
-        u = np.dot(wfns[:,i,0], v)
-#       for k in range(wfns.shape[0]):
-#         u += np.exp(-1j *np.dot(rvec, gvectors[k, :])) * wfns[k,i,0] # * projs[k]
-        u = all_reduce(world, u, lambda x,y:x+y)
-        if world.rank == 0: print u, rspace[1,i,0], u.real/rspace[1,i,0].real
+      other = rtog_fourrier(rspace, rvectors, gvectors, escan.comm)
+      assert len(other.flat) == len(wfns.flat)
+      for gtest, gtrue in zip(other.flat, wfns.flat):
+        assert abs(gtest-gtrue) < 1e-12,\
+               RuntimeError("Did not checkout %e != %e" %(gtest, gtrue))
+      print "rtog passed", escan.comm.rank
 
-      v = np.exp(-1j * np.dot(gvectors, rvec))
-      u = np.tensordot(wfns, v, ((0), (0)))
-      u = all_reduce(world, u, lambda x,y:x+y)
-      if world.rank == 0:
-        for test, ref in zip(u.flat, rspace[1,:,:].flat):
-          print abs(test - ref) < 1e-12
-
-      r = gtor_fourrier(wfns, rvectors, gvectors, escan.comm)
-      assert len(r.flat) == len(rspace.flat)
-      for rtest, rtrue in zip(r.flat, rspace.flat):
+      other = gtor_fourrier(wfns, rvectors, gvectors, escan.comm)
+      assert len(other.flat) == len(rspace.flat)
+      for rtest, rtrue in zip(other.flat, rspace.flat):
         assert abs(rtest-rtrue) < 1e-12,\
                RuntimeError("Did not checkout %e != %e" %(rtest, rtrue))
+      print "gtor passed", escan.comm.rank
+
