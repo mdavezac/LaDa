@@ -57,3 +57,16 @@ subroutine lada_redirect_close(which)
      ! Open (Unit=6, File="stdout") ! Open Standard Output on Unit 6
      ! Open (Unit=0, File="stderr") ! Open Standard Error on Unit 0
 end subroutine
+
+! permissions are incorrect when using aprun.
+subroutine fucking_cray(which) 
+     integer, intent(in) :: which ! 0 => stderr, 5 => stdin, 6 => stdout
+     
+     if( which == 0 ) then 
+       close(0)
+     else if( which == 5 ) then 
+       close(5)
+     else if( which == 6 ) then 
+       close(6)
+     endif
+end subroutine

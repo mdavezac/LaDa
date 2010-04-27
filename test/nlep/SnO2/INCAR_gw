@@ -1,0 +1,27 @@
+System = ZnO
+
+PREC    = accurate
+ADDGRID = .TRUE.
+EDIFF   = 1E-4
+#LREAL   = A
+#ROPT    = 1E-4 1E-4 1E-4
+RWIGS   = 1.2  1.2 1.2
+LMAXMIX = 4
+LORBIT = 10
+
+ISMEAR  = 0
+SIGMA = 0.01
+
+#NGX = 28
+#NGY = 28
+#NGZ = 18
+
+ALGO   = gw0
+LWAVE= .TRUE.
+NPAR    = 8
+NBANDS  = 320
+LMAXFOCKAE=4
+NOMEGA = 64
+NKRED = 2
+ENCUTGW = 200
+NELM =1

@@ -159,11 +159,22 @@ namespace LaDa
 
           switch (PyArray_ObjectType(obj_ptr, 0)) 
           {
-            case NPY_INT: return create_matrix<int>( array, new Matrix3x );
-            case NPY_LONG: return create_matrix<long>( array, new Matrix3x );
-            case NPY_FLOAT: return create_matrix<float>( array, new Matrix3x );
-            case NPY_DOUBLE: return create_matrix<double>( array, new Matrix3x );
-            default: break;
+            case NPY_FLOAT     : return create_matrix<npy_float     >(array, new Matrix3x);
+            case NPY_DOUBLE    : return create_matrix<npy_double    >(array, new Matrix3x);
+            case NPY_LONGDOUBLE: return create_matrix<npy_longdouble>(array, new Matrix3x);
+            case NPY_INT       : return create_matrix<npy_int       >(array, new Matrix3x);
+            case NPY_UINT      : return create_matrix<npy_uint      >(array, new Matrix3x);
+            case NPY_LONG      : return create_matrix<npy_long      >(array, new Matrix3x);
+            case NPY_ULONG     : return create_matrix<npy_ulong     >(array, new Matrix3x);
+            case NPY_LONGLONG  : return create_matrix<npy_longlong  >(array, new Matrix3x);
+            case NPY_ULONGLONG : return create_matrix<npy_ulonglong >(array, new Matrix3x);
+            case NPY_BYTE      : return create_matrix<npy_byte      >(array, new Matrix3x);
+            case NPY_UBYTE     : return create_matrix<npy_ubyte     >(array, new Matrix3x);
+            case NPY_SHORT     : return create_matrix<npy_short     >(array, new Matrix3x);
+            case NPY_USHORT    : return create_matrix<npy_ushort    >(array, new Matrix3x);
+            default: 
+              PyErr_SetString(PyExc_RuntimeError, "Unknown scalar type in numpy array.\n");
+              throw_error_already_set();
           }
           return NULL;
         }
@@ -194,11 +205,23 @@ namespace LaDa
 
           switch (PyArray_ObjectType(obj_ptr, 0)) 
           {
-            case NPY_INT: create_matrix<int>( array, new (storage) Matrix3x ); break;
-            case NPY_LONG: create_matrix<long>( array, new (storage) Matrix3x ); break;
-            case NPY_FLOAT: create_matrix<float>( array, new (storage) Matrix3x ); break;
-            case NPY_DOUBLE: create_matrix<double>( array, new (storage) Matrix3x ); break;
-            default: return;
+            case NPY_FLOAT     : create_matrix<npy_float     >(array, new (storage) Matrix3x); break;
+            case NPY_DOUBLE    : create_matrix<npy_double    >(array, new (storage) Matrix3x); break;
+            case NPY_LONGDOUBLE: create_matrix<npy_longdouble>(array, new (storage) Matrix3x); break;
+            case NPY_INT       : create_matrix<npy_int       >(array, new (storage) Matrix3x); break;
+            case NPY_UINT      : create_matrix<npy_uint      >(array, new (storage) Matrix3x); break;
+            case NPY_LONG      : create_matrix<npy_long      >(array, new (storage) Matrix3x); break;
+            case NPY_ULONG     : create_matrix<npy_ulong     >(array, new (storage) Matrix3x); break;
+            case NPY_LONGLONG  : create_matrix<npy_longlong  >(array, new (storage) Matrix3x); break;
+            case NPY_ULONGLONG : create_matrix<npy_ulonglong >(array, new (storage) Matrix3x); break;
+            case NPY_BYTE      : create_matrix<npy_byte      >(array, new (storage) Matrix3x); break;
+            case NPY_UBYTE     : create_matrix<npy_ubyte     >(array, new (storage) Matrix3x); break;
+            case NPY_SHORT     : create_matrix<npy_short     >(array, new (storage) Matrix3x); break;
+            case NPY_USHORT    : create_matrix<npy_ushort    >(array, new (storage) Matrix3x); break;
+            default: 
+              PyErr_SetString(PyExc_RuntimeError, "Unknown scalar type in numpy array.\n");
+              throw_error_already_set();
+              return;
           }
           data->convertible = storage;
         }

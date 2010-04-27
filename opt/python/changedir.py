@@ -9,7 +9,9 @@ class Changedir:
       >>> with Changedir(path) as pwd:
       >>>   ...
   """
-  def __init__(self, pwd): self.pwd = pwd
+  def __init__(self, pwd, comm = None): 
+    self.pwd = pwd
+    self.comm = comm
 
   def __enter__(self):
     """ Changes working directory """
@@ -18,6 +20,10 @@ class Changedir:
     
     self.oldpwd = getcwd()
 
+    is_root = self.comm == None
+    if not is_root: is_root = self.comm.rank == 0
+    if is_root: # creates directory if does not exist.
+      if not exists(self.pwd): makedirs(self.pwd)
     assert exists(self.pwd) and isdir(self.pwd), "Could not find working directory."
     chdir(self.pwd)
 

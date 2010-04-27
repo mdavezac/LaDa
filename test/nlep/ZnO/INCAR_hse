@@ -1,0 +1,32 @@
+System = ZnO
+
+ISTART  = 1
+PREC    = accurate
+ADDGRID = .TRUE.
+EDIFF   = 1E-4
+#LREAL   = A
+#ROPT    = 1E-4 1E-4 1E-4
+RWIGS   = 1.2  1.2 1.2
+LMAXMIX = 4
+LORBIT = 10
+
+LHFCALC = .TRUE.
+ALGO   = ALL
+TIME = 0.4
+NPAR    = 8
+
+AEXX = 0.25
+HFSCREEN = 0.2
+ENCUTFOCK = 120
+NKRED = 2
+
+ISMEAR  = 0
+SIGMA = 0.01
+
+#NGX = 18
+#NGY = 18
+#NGZ = 32
+
+NBANDS = 200
+LOPTICS = T
+

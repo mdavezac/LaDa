@@ -1,11 +1,12 @@
 """ Standard parameter types for use as attributes in Incar """
+from ...opt.decorators import broadcast_result as _bcastresult
 class Standard(object):
   """
       A standard parameter in the form of key/value pair. 
       
       In practice, the key should be an INCAR tag, and the value something
       which makes sense for that key.
-      C{print self.incar_string(vasp, mpicomm)} outputs C{print
+      C{print self.incar_string(vasp, comm=comm)} outputs C{print
       str(self.key), "=", str(self.value)}.
   """
   def __init__(self, key, value, validity=None):
@@ -33,7 +34,8 @@ class Standard(object):
       returns its  "VASP" equivalent when gotten.
   """
 
-  def incar_string(self, vasp, mpicomm):
+  @_bcastresult
+  def incar_string(self, vasp):
     """ Prints the key/value as key = value """
     return "%s = %s" % (self.key, str(self.value))
 
@@ -57,10 +59,13 @@ class NoPrintStandard(Standard):
   def __init__(self, *args, **kwargs):
     super(NoPrintStandard, self).__init__(*args, **kwargs)
     self.default = self.value
-  def incar_string(self, vasp, mpicomm):
+
+  @_bcastresult
+  def incar_string(self, vasp):
     if self.default == self.value: 
       return "# %s = VASP default." % (self.key)
-    return super(NoPrintStandard, self).incar_string(vasp, mpicomm)
+    return super(NoPrintStandard, self).incar_string(vasp)
+  
   def __setstate__(self, arg): 
     super(NoPrintStandard, self).__setstate__(arg)
     self.default = self.value
@@ -133,7 +138,9 @@ class Ediff(Standard):
   """
   def __init__(self, value = 1e-4):
     super(Ediff, self).__init__("EDIFF", value, validity = lambda x: x > 0e0)
-  def incar_string(self, vasp, mpicomm):
+
+  @_bcastresult
+  def incar_string(self, vasp):
     return "%s = %f " % (self.key, self.value * float(len(vasp._system.atoms)))
 
 
@@ -151,6 +158,8 @@ class Encut(object):
 
   safety = Safety(1.25)
   """ A safety upon the largest ENMAX """
+  key = "ENCUT"
+  """ INCAR key """
 
   def __init__(self, safety = 1.25):
     super(Encut, self).__init__()
@@ -161,28 +170,18 @@ class Encut(object):
   def _setvalue(self, value):
     raise ValueError, "Value of encut cannot be set manually. Change safety instead.\n"
   x = property(_getvalue, _setvalue)
-  def incar_string(self, vasp, mpicomm):
-    return "ENCUT = %f " % (self.enmax(vasp.species) * self.safety)
+
+  @_bcastresult
+  def incar_string(self, vasp):
+    from math import fabs
+    if fabs(self.safety - 1e0) < 1e-12: return "# ENCUT = VASP default"
+    return "%s = %f " % (self.key, float(self.enmax(vasp.species)) * self.safety)
 
   @staticmethod
   def enmax(species):
     """ Retrieves max ENMAX from list of species. """
-    import os.path
-    import subprocess
-    import re
     from math import ceil
-
-    result = 0
-    for s in species: 
-      if not os.path.exists( os.path.join(s.path, "POTCAR") ):
-        raise AssertionError, "Could not find potcar in " + s.path
-      with open(os.path.join(s.path, "POTCAR"), "r") as potcar: 
-        r = re.compile("ENMAX\s+=\s+(\S+);\s+ENMIN")
-        p = r.search(potcar.read())
-        if p == None: raise AssertionError, "Could not retrieve ENMAX from " + s.path
-        if result < float( p.group(1) ): result = float( p.group(1) )
-
-    return ceil(result)
+    return ceil( max(s.enmax for s in species) )
 
 class Smearing(object):
   """ Value of the smearing used in the calculation. 
@@ -257,7 +256,8 @@ class Smearing(object):
       If "gotten", this decorator returns a tuple containing the type and the energy scale.
       It can be set using a similar tuple, or a string input with keywords. 
   """
-  def incar_string(self, vasp, mpicomm):
+  @_bcastresult
+  def incar_string(self, vasp):
     return "ISMEAR  = %s\nSIGMA   = %f\n" % self.value
 
   
@@ -278,9 +278,11 @@ class Isym(Standard):
     if strval == "off": self._value = -1e0
     else: self._value = float(value) 
   value = property(_getvalue, _setvalue)
-  def incar_string(self, vasp, mpicomm):
+
+  @_bcastresult
+  def incar_string(self, vasp):
     if self._value <= 0e0: return "ISYM = 0\n" 
-    return super(Isym,self).incar_string(vasp, mpicomm)
+    return super(Isym,self).incar_string(vasp)
 
   def __eq__(self, other):
     if isinstance(other, Isym):
@@ -307,10 +309,10 @@ class FFTGrid(object):
       assert self._value[2] > 0, "FFT grid components should be positive.\n"
   value = property(_getvalue, _setvalue)
 
-  def incar_string(self, vasp, mpicomm):
-    return "NGX = %i\nNGY = %i\nNGZ = %i" % self(vasp, mpicomm)
+  def incar_string(self, vasp, comm=None):
+    return "NGX = %i\nNGY = %i\nNGZ = %i" % self(vasp, comm)
 
-  def __call__(self, vasp, mpicomm):
+  def __call__(self, vasp, comm):
     from copy import deepcopy
     from os import getcwd
     from .. import kpoints
@@ -320,7 +322,7 @@ class FFTGrid(object):
     if self._value != None: return self._value
 
     vasp = deepcopy(vasp)
-    with Tempdir(workdir=vasp._tempdir, keep=True, comm=mpicomm) as vasp._tempdir:
+    with Tempdir(workdir=vasp._tempdir, keep=True, comm=comm) as vasp._tempdir:
       vasp.kpoints = kpoints.Gamma()
       vasp.relaxation.value = None
       # may need to do some checking here... will run into infinit recursion
@@ -333,12 +335,12 @@ class FFTGrid(object):
       vasp.nelmin = Standard("NELMIN",  0)
 
       # Now runs vasp. OUTCAR should be in temp indir
-      vasp._prerun(mpicomm)
-      vasp._run(mpicomm)
+      vasp._prerun(comm)
+      vasp._run(comm)
       # no need for postrun
 
       # finally extracts from OUTCAR.
-      return Extract(directory = vasp._tempdir, mpicomm = mpicomm).fft
+      return Extract(directory = vasp._tempdir, comm = comm).fft
 
 
 
@@ -363,7 +365,8 @@ class Restart(object):
   def _setvalue(self, object): self._value = object
   value = property(_getvalue, _setvalue)
 
-  def incar_string(self, vasp, mpicomm):
+  @_bcastresult
+  def incar_string(self, vasp):
     istart = "0   # start from scratch"
     icharg = "2   # superpositions of atomic densities"
     if self.value == None or len(self.value) == 0:
@@ -399,15 +402,15 @@ class Relaxation(object):
       @param ibrion: the type of ionic relaxation algorithm. Defaults to 2.
       @param potim: ionic-time step during relaxation. Defaults to 0.5.
   """
+  key = "ISIF"
+  """ INCAR key """
+
   def __init__(self, value = None, nsw=40, ibrion=2, potim=0.5):
     super(Relaxation, self).__init__()
     self._value = value
     self.nsw = 40
     self.ibrion = 2
     self.potim = 0.5
-
-  @property
-  def key(self): return "ISIF"
 
   def _getvalue(self): return self._value
   def _setvalue(self, object):
@@ -442,7 +445,8 @@ class Relaxation(object):
                           "and volume at constant cell-shape.\n"
   value = property(_getvalue, _setvalue)
 
-  def incar_string(self, vasp, mpicomm):
+  @_bcastresult
+  def incar_string(self, vasp):
     isif = self.value
     result = "NSW    = %3i   # number of ionic steps.\n"\
              "IBRION =   %1i # ionic-relaxation minimization method.\n"\
@@ -462,5 +466,144 @@ class Relaxation(object):
       return result + "ISIF   = 6     # relaxing V. and cell-shape at constant atom.-pos."
     elif isif == 7:           
       return result + "ISIF   = 7     # relaxing V. only."
-    raise RuntimeError, "Internal bug."
+    raise RuntimeError("Internal bug.")
 
+class NElect(object):
+  """ Sets number of electrons relative to neutral system.
+      
+      Gets the number of electrons in the (neutral) system. Then adds value to
+      it and computes with the resulting number of electrons.
+      >>> nelect = NElect(0) # charge neutral system
+      >>> nelect.value = 1   # charge -1 (1 extra electron)
+      >>> nelect.value -= 2  # charge +1 (1 less electron)
+
+      @param value: (default:0) number of electrons to add to charge neutral
+                    system.
+  """
+  key = "NELECT"
+  """ INCAR Key """
+
+  def __init__(self, value = 0):
+    super(NElect, self).__init__()
+    self.value = value
+
+  def nelectrons(self, vasp):
+    """ Total number of electrons in the system """
+    from math import fsum
+    # constructs dictionnary of valence charge
+    valence = {}
+    for s in vasp.species:
+      valence[s.symbol] = s.valence
+    # sums up charge.
+    return fsum( valence[atom.type] for atom in vasp._system.atoms )
+    
+  @_bcastresult
+  def incar_string(self, vasp):
+    from boost.mpi import broadcast
+    # gets number of electrons.
+    charge_neutral = self.nelectrons(vasp)
+    # then prints incar string.
+    if self.value == 0:
+      return "# %s = %s. Charge neutral system" % (self.key, charge_neutral)
+    elif self.value > 0:
+      return "%s = %s  # negatively charged system (%i) "\
+             % (self.key, charge_neutral + self.value, -self.value)
+    else: 
+      return "%s = %s  # positively charged system (+%i) "\
+             % (self.key, charge_neutral + self.value, -self.value)
+          
+class NBands(NElect):
+  """ Sets number of bands to compute relative to number of electrons. 
+      
+      Three types of input are accepted:
+  """
+  default = -1
+  """ Use vasp default """
+  nunit = 0
+  """ Adds n bands, with n=self.value. """
+  nions = 1
+  """ Adds n bands, with n=self.value * \"number of atoms in system\". """
+  nelec = 2
+  """ Adds n bands, with n=self.value * \"number of electrons in system\". """
+  def __init__(self, value = 0, unit = None):
+    super(NBands, self).__init__(value)
+    if unit == None: self.unit = default
+    else:            self.unit = unit
+
+  key = "NBANDS"
+  """ INCAR key """
+
+  @_bcastresult
+  def incar_string(self, vasp):
+    from boost.mpi import broadcast
+    # gets number of electrons.
+    ne = self.nelectrons(vasp)
+    # returns adequate string.
+    if self.unit == NBands.default:
+      return "# %s = VASP default " % (self.key)
+    elif self.unit == NBands.nunit:
+      return "%s = %s" % (self.key, self.value + float(ne))
+    elif self.unit == NBands.nions:
+      return "%s = %s" % (self.key, int(ne + ceil(self.value * float(len(vasp._system.atoms)))) )
+    elif self.unit == NBands.nelec:
+      return "%s = %s" % (self.key, int(ne + ceil(self.value * float(ne))) )
+    else: raise "Unknown method in NBands"
+      
+class UParams(object): 
+  """ Prints U parameters if any found in species settings """
+  def __init__(self, verbose=None, **kwargs):
+    import re
+    
+    if verbose == None: self.value = 0
+    elif hasattr(verbose, "lower"): 
+      verbose = verbose.lower() 
+      if verbose == "off": verbose = 0
+      elif verbose == "on": verbose = 1
+      elif None != re.match(r"\s*occ(upancy)?\s*", verbose): verbose = 1
+      elif None != re.match(r"\s*(all|pot(ential)?)\s*", verbose): verbose = 2
+
+    self.value = int(verbose)
+    super(UParams, self).__init__(**kwargs)
+
+  @_bcastresult
+  def incar_string(self, vasp):
+    # existence and sanity check
+    has_U, which_type = False, None 
+    for specie in vasp.species:
+      if len(specie.U) == 0: continue
+      if len(specie.U) > 4: 
+        raise AssertionError, "More than 4 channels for U/NLEP parameters"
+      has_U = True
+      for l in specie.U: 
+        if which_type == None:
+          which_type = l["type"]
+        elif which_type != l["type"]:
+          raise AssertionError, "LDA+U/NLEP types are not consistent across species."
+    if not has_U: return "# no LDA+U/NLEP parameters ";
+
+    result = "LDAU = .TRUE.\nLDAUPRINT = %i\nLDAUTYPE = %i\n" % (self.value, which_type)
+
+    for i in range( max(len(specie.U) for specie in vasp.species) ):
+      line = "LDUL%i=" % (i+1), "LDUU%i=" % (i+1), "LDUJ%i=" % (i+1), "LDUO%i=" % (i+1)
+      for specie in vasp.species:
+        a = -1, 0e0, 0e0, 1
+        if len(specie.U) <= i: pass
+        elif specie.U[i]["func"] == "U":    
+          a = specie.U[i]["l"], specie.U[i]["U"], specie.U[i]["J"], 1
+        elif specie.U[i]["func"] == "nlep": 
+          a = specie.U[i]["l"], specie.U[i]["U"], 0e0, 2
+        elif specie.U[i]["func"] == "enlep":
+          a = specie.U[i]["l"], specie.U[i]["U0"], specie.U[i]["U1"], 3
+        else: raise RuntimeError, "Debug Error."
+        line = "%s %i"      % (line[0], a[0]),\
+               "%s %18.10e" % (line[1], a[1]),\
+               "%s %18.10e" % (line[2], a[2]),\
+               "%s %i"      % (line[3], a[3])
+      result += "\n%s\n%s\n%s\n%s\n" % (line)
+    return result
+
+
+
+
+
+    

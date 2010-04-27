@@ -20,12 +20,14 @@ namespace LaDa
         //! Original type.
         typedef npy_longdouble np_type;
       };
-      //! numpy identifier for doubles.
-      template<> struct type<npy_double> : public boost::mpl::int_<NPY_DOUBLE> 
-      {
-        //! Original type.
-        typedef npy_double np_type;
-      };
+#     ifndef LADA_NPY_DOUBLE_EQ_NPY_LONG_DOUBLE
+        //! numpy identifier for doubles.
+        template<> struct type<npy_double> : public boost::mpl::int_<NPY_DOUBLE> 
+        {
+          //! Original type.
+          typedef npy_double np_type;
+        };
+#     endif
       //! numpy identifier for float.
       template<> struct type<npy_float> : public boost::mpl::int_<NPY_FLOAT> 
       {
@@ -92,12 +94,14 @@ namespace LaDa
         //! Original type.
         typedef npy_ubyte np_type;
       };
-//     //! numpy identifier for bool.
-//     template<> struct type<npy_bool> : public boost::mpl::int_<NPY_BOOL> 
-//     {
-//       //! Original type.
-//       typedef npy_bool np_type;
-//     };
+#     ifndef LADA_NPY_UBYTE_EQ_NPY_BOOL
+        //! numpy identifier for bool.
+        template<> struct type<npy_bool> : public boost::mpl::int_<NPY_BOOL> 
+        {
+          //! Original type.
+          typedef npy_bool np_type;
+        };
+#     endif 
       
       //! Returns true if object is float.
       inline bool is_float(PyObject *_obj_ptr)
