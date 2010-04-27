@@ -147,13 +147,14 @@ Module Escan
       ! Read in lattice and mesh information from potential input.
       if (inode .eq. 1) then
          open(unit=inputunit,file=escan_input%ecp%filepot,form='unformatted',status='old')
-         rewind(inputunit)
-         read(inputunit) escan_input%mesh, ierr ! number of nodes when written
-         if( ierr .ne. nnodes ) then
-           write (*,*) ierr, nnodes 
-           stop "Number of nodes used to write potential different from when reading it." 
-         endif
-         read(inputunit) lattice%rcell
+           rewind(inputunit)
+           read(inputunit) escan_input%mesh, ierr ! number of nodes when written
+           if( ierr .ne. nnodes ) then
+             write (*,*) ierr, nnodes 
+             stop "Number of nodes used to write potential different from when reading it." 
+           endif
+           read(inputunit) lattice%rcell
+         close(inputunit)
       end if
 
       call mpi_bcast(escan_input%mesh(1),3,MPI_INTEGER,0, escan_input%ecp%comm_handle,ierr)
