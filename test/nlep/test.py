@@ -141,7 +141,7 @@ def main():
               path="pseudos/Sn", 
               U=[nlep_parameters(type="Dudarev", l=i, U0=0e0) for i in ["s", "p", "d"]]
             ),\
-            Specie
+            Specie\
             (
               "O", 
               path="pseudos/O",
