@@ -3,6 +3,28 @@
     @group Checkpoints: best, print_population, print_offspring,
                         average_fitness, _check_generation
 """
+from decorator import decorator
+
+@decorator
+def _mpi_to_single(method, *args, **kwargs):
+  """ Perform method on one proc and broadcasts the return.
+  
+      Second argumnent should have world attribute.
+  """
+  from boost.mpi import broadcast
+  if args[1].world == None:
+    return method(*args, **kwargs)
+  elif args[1].world.rank == 0:
+    return broadcast(args[1].world, method(*args, **kwargs), 0)
+  return broadcast(args[1].world, root = 0)
+
+def _bound_mpi_extraction(method, *args, **kwargs): 
+  """ Reads from root, and broadcasts to all 
+  
+      Decorator for bound methods.
+  """
+  assert len(args) >= 1, "Decorator for bound methods only.\n"
+  return _extract_which_is_self(0, method, *args, **kwargs)
 
 class Taboo(object):
   """ A container of taboo operators.
@@ -136,13 +158,12 @@ class Mating(object):
       
 
   def __init__(self, sequential=False): 
-
+    """ Initializes the container of mating operator. """
     self.operators = []
     self.sequential = sequential
 
   def add(self, function, rate=1):
-
-
+    """ Adds a mating operator, with a given rate, to the current list. """
     # checks for number of arguments to function.
     nb_args = -1
     if hasattr(function, "__class__") and issubclass(function.__class__, Mating): pass
@@ -152,9 +173,11 @@ class Mating(object):
     if rate <= 0e0: raise ValueError, "rate argument cannot be negative (%s)." % (rate)
     self.operators.append( (function, rate, nb_args) )
   
-  def __call__(self, darwin):
 
-    from random import random
+  @_mpi_to_single
+  def __call__(self, darwin):
+    """ Creates an offspring. """
+    import random
 
     def call_function(function, n, indiv = None):
       """ Calls functions/functors mating operations. """
@@ -187,13 +210,13 @@ class Mating(object):
     if self.sequential: # choose any operator depending on rate.
       while indiv == None: # makes sure we don't bypass all mating operations
         for function, rate, n in self.operators:
-          if random() < rate: indiv = call_function( function, n, indiv )
+          if random.random() < rate: indiv = call_function( function, n, indiv )
     else: # choose only one operator.
       max = 0e0
       for function, rate, n in self.operators: max += rate
       assert rate > 0e0;
       last = 0e0
-      r = random() * max
+      r = random.random() * max
       for function, rate, n in self.operators:
         if r <= last + rate:
           indiv = call_function( function, n )

@@ -42,7 +42,7 @@
   {
     void FC_FUNC_(getvlarg, GETVLARG)();
     void FC_FUNC_(iaga_set_mpi, IAGA_SET_MPI)( MPI_Fint * );
-    void FC_FUNC_(iaga_call_escan, IAGA_CALL_ESCAN)( int*, int* );
+    void FC_FUNC_(iaga_call_escan, IAGA_CALL_ESCAN)( int*, int*, int*, char const* );
     void FC_FUNC_(iaga_get_eigenvalues, IAGA_GET_EIGENVALUES)( double*, int* );
   }
   //! \endcond
@@ -124,7 +124,7 @@ namespace LaDa
       
       const t_Path newatom( opt::InitialPath::path()/dirname/atom_input.filename() );
       LADA_DOASSERT( bfs::exists( atom_input ), atom_input << " does not exist.\n" );
-      if( newatom != boost::filesystem::current_path()/atom_input )
+      if( newatom != atom_input )
       { 
         if( bfs::exists( newatom ) ) bfs::remove( newatom );
         bfs::copy_file( atom_input, newatom );
@@ -165,6 +165,7 @@ namespace LaDa
 #     endif
       chdir( opt::InitialPath::path().string().c_str() );
     }
+
     types::t_real Interface :: launch_pescan()
     {
       namespace bfs = boost::filesystem;
@@ -207,7 +208,10 @@ namespace LaDa
           typedef opt::FortranRedirect FRedirect;
           FRedirect out(FRedirect::output, make_mpi_file(*this, stdout_file), true);
           FRedirect err(FRedirect::input, make_mpi_file(*this, stderr_file), true);
-          FC_FUNC_(iaga_call_escan, IAGA_CALL_ESCAN)( &escan.nbstates, &verb );
+          std::string const orig(__DIAGASUFFIX(escan.filename).string());
+          int n(orig.size());
+          char const * const fname = orig.c_str();
+          FC_FUNC_(iaga_call_escan, IAGA_CALL_ESCAN)( &escan.nbstates, &verb, &n, fname );
 #       endif
 #     endif
       chdir( opt::InitialPath::path().string().c_str() );
@@ -335,7 +339,7 @@ namespace LaDa
       ( 
           opt::InitialPath::path() / dirname 
         / __IIAGA( "escan.input" )
-          __DIAGA( __DIAGASUFFIX( t_Path("escan_input") ) )
+          __DIAGA( __DIAGASUFFIX( escan.filename ) )
       );
       file.open( orig.string().c_str(), std::ios_base::out|std::ios_base::trunc ); 
 
@@ -369,7 +373,7 @@ namespace LaDa
                     << " 1 1 1 " << escan.rspace_wfn << " # real-space output \n";
 
       if ( math::is_zero( escan.kpoint.squaredNorm() ) ) file << "11 0 0 0 0 0 # kpoint=Gamma\n";
-      else file << "11 1 " << escan.kpoint.transpose() << " " 
+      else file << "11 1 " << escan.kpoint.transpose().format(Eigen::IOFormat(12)) << " " 
                            << std::setw(12) << std::setprecision(8) 
                            << escan.scale / Physics::a0("A") <<  " # kpoint\n";
       file << "12 " << escan.potential << " # potential:";

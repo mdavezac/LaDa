@@ -288,7 +288,7 @@ namespace LaDa
 #      ifdef _MPI
          .add_property
          (
-           "mpi", 
+           "comm", 
            bp::make_function(&get_mpi<T>, bp::return_internal_reference<>()),
            &set_mpi<T>, 
            "Sets the boost.mpi communicator."

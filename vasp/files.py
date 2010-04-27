@@ -25,12 +25,12 @@ EIGENVALUES = "EIGENVAL"
 OUTCAR = "OUTCAR"
 """ Name of the output file. """
 
-minimal = [OUTCAR, STDOUT, STDERR]
+minimal = [OUTCAR, CONTCAR, STDOUT, STDERR]
 """ The minimum number of files to still have the results of the run.
 
     minimal = [L{OUTCAR}, L{STDOUT}, L{STDERR}]
 """
-output = minimal + [CONTCAR, OSZICAR, EIGENVALUES] 
+output = minimal + [OSZICAR, EIGENVALUES] 
 """ L{minimal} + extra output file. 
 
     output = minimal + [L{CONTCAR}, L{OSZICAR}, L{EIGENVALUES}] 

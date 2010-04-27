@@ -29,8 +29,13 @@ namespace LaDa
               tolerance( _c.tolerance ),
               itermax( _c.itermax ),
               verbose( _c.verbose ) {}
+      math::rVector3d get_direction() const { return direction; }
+      void set_direction(math::rVector3d const &_direction) { direction = _direction; }
+      math::rVector3d get_kpoint() const { return kpoint; }
+      void set_kpoint(math::rVector3d const &_kpoint) { kpoint = _kpoint; }
     };
 
+    
     boost::python::list get_masses
     (
       eMass& _emass,
@@ -72,21 +77,31 @@ namespace LaDa
       return get_masses(_emass, _interface, _ocell, structure, _eref);
     }
 
-
     void expose_emass()
     {
       namespace bp = boost::python;
-      typedef eMass t_eMass;
-      bp::class_< t_eMass >( "eMass", "Functor for computing effective masses" )
-        .def_readwrite( "order", &t_eMass::order, "Order of interpolation." )
-        .def_readwrite( "npoints", &t_eMass::npoints, "Number of points in interpolation." )
-        .def_readwrite( "stepsize", &t_eMass::stepsize, "Distance between interpolation points." )
-        .def_readwrite( "convergence", &t_eMass::tolerance, "Convergence criteria for cgs." )
-        .def_readwrite( "verbose", &t_eMass::verbose, "Verbosity of cgs." )
-        .def_readwrite( "itermax", &t_eMass::itermax, "Maximum number of iterations for cgs." )
-        .def_readwrite( "kpoint", &t_eMass::kpoint, "Kpoint at which to compute emass." )
-        .def_readwrite( "direction", &t_eMass::direction, "Direction of emass." )
-        .def_readwrite( "nbstates", &t_eMass::nbstates, "Number of emasses to compute." )
+      bp::class_< eMass >( "eMass", "Functor for computing effective masses" )
+        .def_readwrite( "order", &eMass::order, "Order of interpolation." )
+        .def_readwrite( "npoints", &eMass::npoints, "Number of points in interpolation." )
+        .def_readwrite( "stepsize", &eMass::stepsize, "Distance between interpolation points." )
+        .def_readwrite( "convergence", &eMass::tolerance, "Convergence criteria for cgs." )
+        .def_readwrite( "verbose", &eMass::verbose, "Verbosity of cgs." )
+        .def_readwrite( "itermax", &eMass::itermax, "Maximum number of iterations for cgs." )
+        .add_property
+         ( 
+           "kpoint",
+           bp::make_function(&eMass::get_kpoint, bp::return_value_policy<bp::return_by_value>()),
+          &eMass::set_kpoint,
+           "Kpoint at which to compute emass." 
+         )
+        .add_property
+         ( 
+           "direction",
+           bp::make_function(&eMass::get_direction, bp::return_value_policy<bp::return_by_value>()),
+          &eMass::set_direction,
+           "Direction of emass." 
+         )
+        .def_readwrite( "nbstates", &eMass::nbstates, "Number of emasses to compute." )
         .def
         ( 
           "__call__", &get_masses2,
