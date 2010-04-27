@@ -278,13 +278,6 @@ namespace LaDa
       }
     }
 
-#   ifdef _MPI
-      template<class T> boost::mpi::communicator const &
-         get_mpi(T const &_self) { return _self.comm(); }
-      template<class T> void set_mpi(T &_self, boost::mpi::communicator * _c)
-        { _self.set_mpi(_c); }
-#   endif
-    
     bp::tuple get_mesh( LaDa::Pescan::Interface::GenPot const &_genpot )
       { return get_impl(_genpot.mesh); }
     void set_mesh( LaDa::Pescan::Interface::GenPot &_genpot, bp::tuple const &_t )
