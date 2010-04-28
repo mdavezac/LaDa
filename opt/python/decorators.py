@@ -2,16 +2,12 @@
 import boost.mpi
 
 def broadcast_result(method):
-  """ Performs operation on one proc and broadcasts to others. 
+  """ Decorator to wrap method such that its result is broadcasted to all nodes.
        
-      method is called on the root processor only. Any exception raised there
-      will be propagated to other processors.
-      @param method: The method to decorate.
-      @param args: The arguments to the method.
-      @param **kwargs: keyword arguments to the method. A comm keyword will be
-         extracted from the list if it exists. It is expected to be an mpi
-         communicator and will not be passed on to the method. If no comm
-         keyword is found, then boost.mpi.communicator is used instead.
+      The method is performed on on the root node and the results broadcasted to all.
+      The returned method accepts a communicator via the keyword argument comm.
+      If comm is not present or comm is None, then all processes call the
+      original method, and the results are not broadcasted.
   """
   def wrapped(*args, **kwargs):
     # no comm provided, performs on all procs
@@ -43,7 +39,7 @@ def broadcast_result(method):
   return wrapped
  
 def make_cached(method):
-  """ Caches the result of a method. """
+  """ Caches the result of a method for futur calls. """
 
   def wrapped(*args, **kwargs):
     assert len(args) > 0, "expected bound method."

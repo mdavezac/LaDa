@@ -1,18 +1,14 @@
 """ General decorators to use in extraction routines. """
 
 def bound_broadcast_result(method):
-  """ Performs operation on root node, then broadcast results. 
-       
-      The method will be called  on the root process only. Any exception raised
-      there will be propagated to other processes.
-      @param self: The bound method to make mpi-aware. The first argurment to
-         the bound method(self) should have a "comm" attribute. If it doesn't,
-         then the method is called for each process.
-      @param args: The arguments to the method.
-      @param **kwargs: keyword arguments to the method. A comm keyword will be
-         extracted from the list if it exists. It is expected to be an mpi
-         communicator and will not be passed on to the method. If no comm
-         keyword is found, then boost.mpi.communicator is used instead.
+  """ Decorator to wrap method such that its result is broadcasted to all nodes.
+  
+      The method should be a bound method. Some constraints are imposed on the
+      method. Use with care.
+      The method is performed on on the root node and the results broadcasted to all.
+      The returned method accepts a communicator via the keyword argument comm.
+      If comm is not present or comm is None, then all processes call the
+      original method, and the results are not broadcasted.
   """
   def wrapped(*args, **kwargs):
     from boost.mpi import broadcast, world

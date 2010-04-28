@@ -29,7 +29,7 @@ def deform_kpoint(kpoint, ideal, relaxed):
 
 @lada.opt.decorators.broadcast_result
 def read_poscar(types=None, path=None, check_lattice=False):
-  """ Tries to read a VASP POSCAR file,
+  """ Tries to read a VASP POSCAR file.
       
       @param types: species in the POSCAR.
       @type types: none, or sequence of objects convertible to str 

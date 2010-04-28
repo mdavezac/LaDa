@@ -29,8 +29,9 @@ def nlep(type = 1, l=2, U0=0e0, U1=None ):
 
       LDA+U is always LSDA+U here. 
       @param type: (1|2|"liechtenstein"|"dudarev")
-      @param J: (float|None) second E-nlep parameter, if specified. Otherwise reverts to nlep.
-        Default:None.
+      @param U0: (float) first E-nlep parameter. Defaults to 0e0.
+      @param U1: (float|None) second E-nlep parameter, if specified. Otherwise
+                 reverts to nlep. Default:None.
       @param l: (0|1|2|"s"|"p"|"d") channel for which to apply U. Default: 2.
   """
   if hasattr(type, "lower"):

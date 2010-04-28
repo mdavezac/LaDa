@@ -28,12 +28,12 @@ OUTCAR = "OUTCAR"
 minimal = [OUTCAR, CONTCAR, STDOUT, STDERR]
 """ The minimum number of files to still have the results of the run.
 
-    minimal = [L{OUTCAR}, L{STDOUT}, L{STDERR}]
+    minimal = [L{OUTCAR}, L{CONTCAR}, L{STDOUT}, L{STDERR}]
 """
 output = minimal + [OSZICAR, EIGENVALUES] 
 """ L{minimal} + extra output file. 
 
-    output = minimal + [L{CONTCAR}, L{OSZICAR}, L{EIGENVALUES}] 
+    output = L{minimal} + [L{OSZICAR}, L{EIGENVALUES}] 
 """
 input = [INCAR, KPOINTS, POSCAR, POTCAR] 
 """ input files. 
@@ -41,21 +41,21 @@ input = [INCAR, KPOINTS, POSCAR, POTCAR]
     L{restart} = [ L{INCAR}, L{KPOINTS}, L{POSCAR}, L{POTCAR}]
 """
 restart = [CHGCAR, WAVECAR]
-""" L{safe} + CHGCAR  
+""" L{safe} + L{CHGCAR}
 
     L{restart} = [ L{CHGCAR} + L{WAVECAR} ]
 """
 safe = output + input
 """ All files to make sense of a run.
 
-    L{safe} = L{output} + L{output} + L{restart} 
+    L{safe} = L{output} + L{input} 
 """
 all = output + input + restart
-""" L{output} + L{output} + L{restart} """
+""" L{output} + L{input} + L{restart} """
 
-def has_minimal(input):
+def has_minimal(files):
   """ Checks that the minimum number of files is in repatriation set. """
   for f in minimal:
-    if f not in input: return False
+    if f not in files: return False
   return True
 

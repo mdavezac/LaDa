@@ -1,12 +1,12 @@
 """ Module providing an interface to VASP code.
 
     The interface is separated into 4 conceptual areas:
-      - VASP parameterization: mostly contained within incar.
-      - Launching vasp: a single-shot run is performed with launch.py 
-      - Extracting data from vasp output: to be found in extract.py
+      - VASP parameterization: mostly contained within L{incar} subpackage.
+      - Launching vasp: a single-shot run is performed with L{launch} subpackage.
+      - Extracting data from vasp output: to be found in L{extract} subpackage.
       - Methods: such as k-mesh or energy cutoff convergence, strain relaxation....
 
-    The Vasp class (in __init__.py) combines the first three concepts together.
+    The L{Vasp} class  combines the first three concepts together.
     It allows us to launch vasp and retrieve information from the output. It
     checks for errors and avoids running the same job twice. Hence data
     retrieval and vasp calculations can be performed using the same class and
@@ -72,10 +72,9 @@ class Vasp(Launch):
 
         The return is an L{extract.Extract} object initialized to outdir.
 
-        If successfull results (see L{extract.Extract.success} and/or
-        L{Success<extract._success.Success>}) already exist in outdir,
-        calculations are not repeated. Instead, an extraction object for the
-        stored results are given.
+        If successfull results (see L{extract.Extract.success}) already exist
+        in outdir, calculations are not repeated. Instead, an extraction object
+        for the stored results are given.
 
         @note: This functor is stateless as long as self and structure can be
                deepcopied correctly.  

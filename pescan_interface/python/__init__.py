@@ -13,7 +13,6 @@ from bandstructure import band_structure
 def call_escan(comm, atom="atom_input", pot="pot_input", escan="escan_input"):
   """ Calls escan functional in current directory.
 
-
       Before calling the functional, the files are propagated such that each
       proc can read its own. What is more, the inputs are modified such that
       L{pot} does refer to L{atom}, and L{escan} to both atomic config and
@@ -23,7 +22,6 @@ def call_escan(comm, atom="atom_input", pot="pot_input", escan="escan_input"):
       @param atom: file with atomic input (from vff). 
       @param pot: file with input to potential generation.
       @param escan: file with input to escan itself.
-      @param others: files to be copied as is to current directory.
   """
   from os import remove
   from boost.mpi import world, broadcast

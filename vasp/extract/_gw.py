@@ -42,40 +42,40 @@ class _ExtractGWImpl(_ExtractImpl):
   @make_cached
   @bound_broadcast_result
   def _get_dft_eigenvalues(self):
-    """ Returns DFT eigenvalues 
+    """ Greps DFT eigenvalues from L{OUTCAR}.
 
-        @return: a two-dimension numpy nxm array of eigenvalues, with n the
-                 number of kpoints and m the number of bands.
+        Returns a two-dimension numpy nxm array of eigenvalues, with n the
+        number of kpoints and m the number of bands.
     """
     return self._get_eigocc(1)
   
   @make_cached
   @bound_broadcast_result
   def _get_qp_eigenvalues(self):
-    """ Returns Quasi-Particle eigenvalues 
+    """ Greps Quasi-Particle eigenvalues from L{OUTCAR}.
 
-        @return: a two-dimension numpy nxm array of eigenvalues, with n the
-                 number of kpoints and m the number of bands.
+        Returns a two-dimension numpy nxm array of eigenvalues, with n the
+        number of kpoints and m the number of bands.
     """
     return self._get_eigocc(2)
   
   @make_cached
   @bound_broadcast_result
   def _get_self_energies(self):
-    """ Returns self-energies for each eigenvalue
+    """ Greps self-energies for each eigenvalue from L{OUTCAR}.
 
-        @return: a two-dimension numpy nxm array of eigenvalues, with n the
-                 number of kpoints and m the number of bands.
+        Returns a two-dimension numpy nxm array of eigenvalues, with n the
+        number of kpoints and m the number of bands.
     """
     return self._get_eigocc(3)
   
   @make_cached
   @bound_broadcast_result
   def _get_occupations(self):
-    """ Returns occupation for each eigenvalue
+    """ Greps occupation for each eigenvalue from L{OUTCAR}.
 
-        @return: a two-dimension numpy nxm array of eigenvalues, with n the
-                 number of kpoints and m the number of bands.
+        Returns a two-dimension numpy nxm array of eigenvalues, with n the
+        number of kpoints and m the number of bands.
     """
     return self._get_eigocc(7)
 

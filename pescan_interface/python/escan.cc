@@ -503,13 +503,13 @@ namespace LaDa
           ">>> # Other parameters (reference, kpoint...) can be changed prior to call.\n"
           ">>> eigenvalues = escan(vff, structure)\n\n"
           "Escan needs to be passed a valid vff structure to compute the microstrain.\n\n"
+          "Returns a numpy vector also available as self.L{eigenvalues}. As "
+          "such, it will change from one calculation to the other. Copy if you "
+          "want to store the results.\n" 
           "@param vff: A vff functional.\n"
           "@type vff: L{vff.Vff} or L{vff.LayeredVff}\n"
           "@param structure: The structure for which to perform calculations.\n"
-          "@type structure: L{crystal.Structure}\n"
-          "@return: numpy vector also available as self.L{eigenvalues}. As "
-          "such, it will change from one calculation to the other. Copy if you "
-          "want to store the results.\n",
+          "@type structure: L{crystal.Structure}\n",
           bp::with_custodian_and_ward_postcall<1,0>() 
         )
 #       ifdef _MPI
