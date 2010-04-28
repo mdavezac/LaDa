@@ -224,6 +224,7 @@ namespace LaDa
         { _interface.escan.name = _value; }
       LADA_PARAMS(types::t_int, nbstates)
       LADA_PARAMS(types::t_int, nlines)
+      LADA_PARAMS(types::t_int, niter)
       LADA_PARAMS(types::t_real, tolerance)
       LADA_PARAMS(types::t_real, rcut)
       LADA_PARAMS(math::rVector3d, kpoint)
@@ -459,6 +460,7 @@ namespace LaDa
           LADA_PARAMS(potential, "Hamiltonian method: L{local}, L{spinorbit}, or L{nonlocal}.")
           LADA_PARAMS(reference, "Reference energy for folded spectrum method." )
           LADA_PARAMS(nlines, "Maximum number of line optimizations in conjugate-gradient.")
+          LADA_PARAMS(niter, "Maximum number of iterations in conjugate-gradient.")
           LADA_PARAMS(tolerance, "Tolerance of the diagonalisation procedure.")
 #       undef LADA_PARAMS
         .add_property
