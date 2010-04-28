@@ -1,4 +1,4 @@
-
+from numpy import any, isnan
 def create_zb_lattice():
   from numpy import array as np_array
   from lada.crystal import Lattice, Site
@@ -34,6 +34,7 @@ def gtor_fourrier(wavefunctions, rvectors, gvectors, comm, axis=0):
         performed over this axis for all other axis. 0 by default.
       @type axis: integer
   """
+  from sys import getrefcount
   import numpy as np
   from boost.mpi import broadcast, reduce
 
@@ -46,9 +47,10 @@ def gtor_fourrier(wavefunctions, rvectors, gvectors, comm, axis=0):
     # computes fourrier transform for all wavefunctions simultaneously.
     dummy = np.tensordot(v, wavefunctions, ((1),(axis)))
     # reduce across processes
-    if node == comm.rank: result = reduce(comm, dummy, lambda x,y: x+y, node).copy()
+    if node == comm.rank: result = reduce(comm, dummy, lambda x,y: x+y, node)
     else: reduce(comm, dummy, lambda x,y: x+y, node)
 
+  assert not any(isnan(result))
   return result
 def rtog_fourrier(wavefunctions, rvectors, gvectors, comm, axis=0):
   """ r-space to g-space fourrier transform of wavefunctions.
@@ -70,24 +72,35 @@ def rtog_fourrier(wavefunctions, rvectors, gvectors, comm, axis=0):
         performed over this axis for all other axis. 0 by default.
       @type axis: integer
   """
+  from sys import getrefcount
   import numpy as np
   from boost.mpi import broadcast, reduce, all_reduce
 
+  assert not any(isnan(wavefunctions))
+  assert not any(isnan(gvectors))
+  assert not any(isnan(rvectors))
   result = None
   for node in range(comm.size):
     # sends rvectors from node to all
     g = broadcast(world, gvectors, node)
     # computes all exponentials exp(-i r.g), with g in first dim, and r in second.
-    v = np.exp(1j * np.tensordot(g, rvectors, ((1),(1))))
-    # gets normalization factor.
-    norm = all_reduce(comm, rvectors.shape[0], lambda x,y:x+y)
+    v = np.exp(1j * np.tensordot(rvectors, g, ((1),(1))))
     # computes fourrier transform for all wavefunctions simultaneously.
-    dummy = np.tensordot(v, wavefunctions, ((1),(axis))) / float(norm)
+    # somehow, there is a problem with tensordot leading to nan numbers...
+    assert not any(isnan(v))
+    last = wavefunctions.ndim-1
+    dummy = np.dot(wavefunctions.swapaxes(axis, last), v).swapaxes(last, axis)
     # reduce across processes
-    if node == comm.rank: result = reduce(comm, dummy, lambda x,y: x+y, node).copy()
+    assert not any(isnan(dummy))
+    if node == comm.rank: result = reduce(comm, dummy, lambda x,y: x+y, node)
     else: reduce(comm, dummy, lambda x,y: x+y, node)
 
-  return result
+
+  assert not any(isnan(result))
+  # gets normalization factor.
+  norm = all_reduce(comm, rvectors.shape[0], lambda x,y:x+y)
+  assert norm != 0
+  return result/ float(norm)
 
 def create_structure():
   from numpy import matrix, array
@@ -105,7 +118,7 @@ def create_structure():
 
   return Si, Ge
 
-from sys import exit
+from sys import exit, getrefcount
 from math import ceil, sqrt, pi
 from os.path import join, exists
 from numpy import dot, array, matrix
@@ -177,16 +190,20 @@ for (kpoint, name), structure, relaxed in [(G, Si, Si_relaxed), (G, Ge, Ge_relax
       rspace, rvectors = to_realspace(wfns, escan.comm)
 
       other = rtog_fourrier(rspace, rvectors, gvectors, escan.comm)
-      assert len(other.flat) == len(wfns.flat)
+      assert not any(isnan(other))
+      assert len(other.flat) == len(wfns.flat), RuntimeError("%i != %i" %(len(other.flat), len(wfns.flat)))
       for gtest, gtrue in zip(other.flat, wfns.flat):
         assert abs(gtest-gtrue) < 1e-12,\
-               RuntimeError("Did not checkout %e != %e" %(gtest, gtrue))
+               RuntimeError("Did not checkout %s != %s" %(gtest, gtrue))
       print "rtog passed", escan.comm.rank
+      world.barrier()
 
       other = gtor_fourrier(wfns, rvectors, gvectors, escan.comm)
+      assert not any(isnan(other))
       assert len(other.flat) == len(rspace.flat)
       for rtest, rtrue in zip(other.flat, rspace.flat):
         assert abs(rtest-rtrue) < 1e-12,\
-               RuntimeError("Did not checkout %e != %e" %(rtest, rtrue))
+               RuntimeError("Did not checkout %s != %s" %(rtest, rtrue))
       print "gtor passed", escan.comm.rank
+      world.barrier()
 

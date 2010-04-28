@@ -168,7 +168,7 @@ namespace LaDa
           PyObject *result = PyArray_ZEROS(ndims, dims, T_TYPE, is_fortran ? 1: 0);
           if( result == NULL or PyErr_Occurred() != NULL ) 
           {
-            PyErr_SetString(PyExc_RuntimeError, "Could not create numpy array");
+            if(PyErr_Occurred() == NULL) PyErr_SetString(PyExc_RuntimeError, "Could not create numpy array");
             boost::python::throw_error_already_set();
             return boost::python::object();
           }
@@ -189,7 +189,7 @@ namespace LaDa
           { npy_intp a[4] = {n0, n1, n2, n3}; return _create_array<T_TYPE>(4, a, is_fortran); }
      
       inline PyArrayObject* get_pyarray_pointer(boost::python::object const &_object)
-         { reinterpret_cast<PyArrayObject*>(_object.ptr()); }
+         { return reinterpret_cast<PyArrayObject*>(_object.ptr()); }
       template<class T_TYPE>
         inline T_TYPE get_data_pointer(boost::python::object const &_object)
           { return reinterpret_cast<T_TYPE>( reinterpret_cast<PyArrayObject*>(_object.ptr())->data ); }

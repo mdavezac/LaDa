@@ -10,7 +10,6 @@
 #include <boost/python/object.hpp>
 #include <boost/python/class.hpp>
 #include <boost/python/tuple.hpp>
-#include <boost/python/borrowed.hpp>
 #include <boost/python/handle.hpp>
 #include <boost/python/extract.hpp>
 #include <boost/python/errors.hpp>
@@ -146,7 +145,7 @@ namespace LaDa
       chdir(origpath.string().c_str());
       
       
-      // returns a 2-tuple.
+      // returns a 3-tuple.
       return bp::make_tuple(wfns, gpoints, projs);
     }
 
@@ -221,7 +220,7 @@ namespace LaDa
       std::vector<npy_intp> dims(1, n0>>1);
       for(int i(1); i < array->nd; ++i) dims.push_back(array->dimensions[i]);
       PyObject *result = PyArray_ZEROS(dims.size(), &dims[0], NPY_CDOUBLE, 1);
-      if( PyErr_Occurred() != NULL )
+      if( result == NULL or PyErr_Occurred() != NULL )
       {
         bp::throw_error_already_set();
         return bp::tuple();
@@ -256,8 +255,7 @@ namespace LaDa
               PyArray_IterAllButAxis(reinterpret_cast<PyObject*>(array), &dim)
             );
         // object should release on destruction
-        bp::object dummyA
-          = bp::object(bp::handle<>(bp::borrowed(reinterpret_cast<PyObject*>(real_iter))));
+        bp::object dummyA(bp::handle<>(reinterpret_cast<PyObject*>(real_iter)));
         if( not recip_iter )
         {
           PyErr_SetString(PyExc_RuntimeError, "Could not iterate.\n");
@@ -265,8 +263,7 @@ namespace LaDa
           return bp::tuple();
         }
         // object should release on destruction
-        bp::object dummyB = bp::object
-          (bp::handle<>(bp::borrowed(reinterpret_cast<PyObject*>(recip_iter))));
+        bp::object dummyB(bp::handle<>(reinterpret_cast<PyObject*>(recip_iter)));
         while (real_iter->index < real_iter->size and recip_iter->index < recip_iter->size)  
         {
           int sign = -1;
