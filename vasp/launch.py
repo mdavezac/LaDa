@@ -63,7 +63,8 @@ class Launch(Incar):
     from ..crystal import print_poscar
     from ..opt.changedir import Changedir
 
-    # creates incar file
+    # creates incar file. Changedir makes sure that any calculations done to
+    # obtain incar will happen in the tempdir.
     with Changedir(self._tempdir) as tmpdir:
       incar_string = "".join((param.incar_string(self, comm=comm) + "\n") for param in self)
     if comm != None:

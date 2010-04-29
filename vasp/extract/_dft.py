@@ -39,14 +39,13 @@ class _ExtractImpl(object):
       if dir != self._directory: self.uncache()
     self._directory = dir
   directory = property(_get_directory, _set_directory)
-  """ Directory with VASP output files """
 
   def uncache(self): 
     """ Removes cached results.
 
         After this outputs are re-read from file.
     """
-    from decorators import uncache
+    from ...opt.decorators import uncache
     uncache(self)
 
 
