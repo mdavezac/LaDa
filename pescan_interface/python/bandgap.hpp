@@ -11,7 +11,7 @@
 
 namespace LaDa
 {
-  namespace Python
+  namespace python
   {
     void expose_bands();
     void expose_bandgap();

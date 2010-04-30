@@ -31,9 +31,9 @@ BOOST_PYTHON_MODULE(_escan)
   bp::handle<> math( bp::borrowed(PyImport_ImportModule("lada.math")) );
 
   LaDa::python::expose_escan();
-  LaDa::Python::expose_bands();
-  LaDa::Python::expose_bandgap();
-  LaDa::Python::expose_oscillator_strength();
+  LaDa::python::expose_bands();
+  LaDa::python::expose_bandgap();
+  LaDa::python::expose_oscillator_strength();
   LaDa::python::expose_genpot();
   LaDa::Python::expose_emass();
   LaDa::Python::expose_dipoles();

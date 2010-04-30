@@ -16,7 +16,7 @@
 
 namespace LaDa
 {
-  namespace Python
+  namespace python
   {
     namespace bp = boost::python;
     void Bandgap_from_XML(LaDa::Pescan::BandGap &_type, const std::string &_filename )

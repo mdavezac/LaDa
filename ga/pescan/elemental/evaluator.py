@@ -18,7 +18,7 @@ class Bandgap(object):
     from boost.mpi import world
     from ....vff import LayeredVff
     from ....escan import BandGap as BGFunctional
-    from ... import crystal
+    from .... import crystal
 
     self.comm = comm
     """ MPI Communicator. Defaults to boost.mpi.world. """
@@ -96,17 +96,22 @@ class Dipole(Bandgap):
       On top of those quantities saved by base class BandgapEvaluator,
       this class stores the dipole elements in indiv.dipoles.
   """
-  def __init__(self, degeneracy = 1e-3, *args, **kwargs): 
+  def __init__(self, *args, **kwargs): 
     """ Initializes the dipole element evaluator. 
 
         Dipole elements are evaluated between the VBM and the CBM.
         Bands making up the VBM (CBM) are identified as degenerate if they are
         within "degeneracy" of each other.
     """
-    self.degeneracy = degeneracy
-    """ Bands making up the VBM (CBM) are identified as degenerate if they are 
-        within "degeneracy" of each other. """
-    BandgapEvaluator.__init__(self, *args, **kwargs)
+    self.degeneracy = 1e-3
+    """ Bands making up the VBM (CBM) are identified as degenerate if they are \
+        within "degeneracy" of each other. 
+    """
+    if "degeneracy" in kwargs:
+      self.degeneracy = kwargs["degeneracy"]
+      del kwargs["degeneracy"]
+
+    super(Dipole, self).__init__(*args, **kwargs)
 
 
   def __call__(self, indiv):
@@ -122,7 +127,7 @@ class Dipole(Bandgap):
     self.bandgap.destroy_directory = False
     
     # calls original evaluation function
-    super(DipoleEvaluator, self).__call__(indiv)
+    super(Dipole, self).__call__(indiv)
 
     # moves to calculation directory
     with Changedir(self.bandgap.directory) as pwd:
@@ -326,7 +331,7 @@ class EffectiveMass(Directness):
 
     # create and change directory.
     basedir = self.directory_prefix + "_" + str(self.nbcalc)
-    if self.world.do_print:
+    if self.comm.do_print:
       if exists(basedir): rmtree(basedir)
 
     stepsize = 1e-2
@@ -334,7 +339,7 @@ class EffectiveMass(Directness):
     nbpoints = 3
     if hasattr(self, "nbpoints"): stepsize = self.nbpoints
 
-    self.world.barrier()
+    self.comm.barrier()
     indiv.derivatives = \
         recip_deriv( structure, self.escan, self.vff, self.direction,
                      directory = basedir,

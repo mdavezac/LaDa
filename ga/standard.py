@@ -9,14 +9,14 @@ from decorator import decorator
 def _mpi_to_single(method, *args, **kwargs):
   """ Perform method on one proc and broadcasts the return.
   
-      Second argumnent should have world attribute.
+      Second argumnent should have comm attribute.
   """
   from boost.mpi import broadcast
-  if args[1].world == None:
+  if args[1].comm == None:
     return method(*args, **kwargs)
-  elif args[1].world.rank == 0:
-    return broadcast(args[1].world, method(*args, **kwargs), 0)
-  return broadcast(args[1].world, root = 0)
+  elif args[1].comm.rank == 0:
+    return broadcast(args[1].comm, method(*args, **kwargs), 0)
+  return broadcast(args[1].comm, root = 0)
 
 def _bound_mpi_extraction(method, *args, **kwargs): 
   """ Reads from root, and broadcasts to all 
@@ -85,7 +85,7 @@ def cmp_indiv( a, b, tolerance = 1e-12 ):
 
 def average_fitness(self):
   """ Prints out average fitness. """
-  if not self.world.do_print: return True;
+  if not self.comm.do_print: return True;
   result = 0e0
   for indiv in self.population:
     result += indiv.fitness
@@ -94,7 +94,7 @@ def average_fitness(self):
 
 def best(self):
   """ Checkpoint which prints out the best individual. """
-  if not self.world.do_print: return True
+  if not self.comm.do_print: return True
   best = None
   for indiv in self.population:
     if best == None or  self.cmp_indiv( best, indiv ) == 1: 
@@ -103,14 +103,14 @@ def best(self):
   return True
 
 def print_population(self):
-  if not self.world.do_print: return True
+  if not self.comm.do_print: return True
   print "  Population: "
   for indiv in self.population:
     print "    ", indiv, indiv.fitness
   return True
 
 def print_offspring(self):
-  if not self.world.do_print: return True
+  if not self.comm.do_print: return True
   print "  Offspring: "
   for indiv in self.population:
     if indiv.birth == self.current_gen - 1: 

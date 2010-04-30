@@ -1,5 +1,5 @@
 """ Standard parameter types for use as attributes in Incar """
-from ...opt.decorators import broadcast_result as _bcastresult
+from ...opt.decorators import broadcast_result
 class Standard(object):
   """
       A standard parameter in the form of key/value pair. 
@@ -34,7 +34,7 @@ class Standard(object):
       returns its  "VASP" equivalent when gotten.
   """
 
-  @_bcastresult
+  @broadcast_result(key=True)
   def incar_string(self, vasp):
     """ Prints the key/value as key = value """
     return "%s = %s" % (self.key, str(self.value))
@@ -60,7 +60,7 @@ class NoPrintStandard(Standard):
     super(NoPrintStandard, self).__init__(*args, **kwargs)
     self.default = self.value
 
-  @_bcastresult
+  @broadcast_result(key=True)
   def incar_string(self, vasp):
     if self.default == self.value: 
       return "# %s = VASP default." % (self.key)
@@ -139,7 +139,7 @@ class Ediff(Standard):
   def __init__(self, value = 1e-4):
     super(Ediff, self).__init__("EDIFF", value, validity = lambda x: x > 0e0)
 
-  @_bcastresult
+  @broadcast_result(key=True)
   def incar_string(self, vasp):
     return "%s = %f " % (self.key, self.value * float(len(vasp._system.atoms)))
 
@@ -171,7 +171,7 @@ class Encut(object):
     raise ValueError, "Value of encut cannot be set manually. Change safety instead.\n"
   x = property(_getvalue, _setvalue)
 
-  @_bcastresult
+  @broadcast_result(key=True)
   def incar_string(self, vasp):
     from math import fabs
     if fabs(self.safety - 1e0) < 1e-12: return "# ENCUT = VASP default"
@@ -256,7 +256,7 @@ class Smearing(object):
       If "gotten", this decorator returns a tuple containing the type and the energy scale.
       It can be set using a similar tuple, or a string input with keywords. 
   """
-  @_bcastresult
+  @broadcast_result(key=True)
   def incar_string(self, vasp):
     return "ISMEAR  = %s\nSIGMA   = %f\n" % self.value
 
@@ -279,7 +279,7 @@ class Isym(Standard):
     else: self._value = float(value) 
   value = property(_getvalue, _setvalue)
 
-  @_bcastresult
+  @broadcast_result(key=True)
   def incar_string(self, vasp):
     if self._value <= 0e0: return "ISYM = 0\n" 
     return super(Isym,self).incar_string(vasp)
@@ -365,7 +365,7 @@ class Restart(object):
   def _setvalue(self, object): self._value = object
   value = property(_getvalue, _setvalue)
 
-  @_bcastresult
+  @broadcast_result(key=True)
   def incar_string(self, vasp):
     istart = "0   # start from scratch"
     icharg = "2   # superpositions of atomic densities"
@@ -445,7 +445,7 @@ class Relaxation(object):
                           "and volume at constant cell-shape.\n"
   value = property(_getvalue, _setvalue)
 
-  @_bcastresult
+  @broadcast_result(key=True)
   def incar_string(self, vasp):
     isif = self.value
     result = "NSW    = %3i   # number of ionic steps.\n"\
@@ -497,7 +497,7 @@ class NElect(object):
     # sums up charge.
     return fsum( valence[atom.type] for atom in vasp._system.atoms )
     
-  @_bcastresult
+  @broadcast_result(key=True)
   def incar_string(self, vasp):
     from boost.mpi import broadcast
     # gets number of electrons.
@@ -533,7 +533,7 @@ class NBands(NElect):
   key = "NBANDS"
   """ INCAR key """
 
-  @_bcastresult
+  @broadcast_result(key=True)
   def incar_string(self, vasp):
     from boost.mpi import broadcast
     # gets number of electrons.
@@ -565,7 +565,7 @@ class UParams(object):
     self.value = int(verbose)
     super(UParams, self).__init__(**kwargs)
 
-  @_bcastresult
+  @broadcast_result(key=True)
   def incar_string(self, vasp):
     # existence and sanity check
     has_U, which_type = False, None 

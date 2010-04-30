@@ -3,7 +3,7 @@
     module L{_crystal}.
 """
 from _crystal import *
-import lada.opt.decorators
+from lada.opt.decorators import broadcast_result
 
 def deform_kpoint(kpoint, ideal, relaxed):
   """ Deform kpoints from ideal cell to relaxed cell. 
@@ -27,7 +27,7 @@ def deform_kpoint(kpoint, ideal, relaxed):
   return dot(inv(relaxed.T), k.T)
   
 
-@lada.opt.decorators.broadcast_result
+@broadcast_result(key=True)
 def read_poscar(types=None, path=None, check_lattice=False):
   """ Tries to read a VASP POSCAR file.
       

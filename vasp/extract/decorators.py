@@ -20,17 +20,15 @@ def bound_broadcast_result(method):
     if comm == None: return method(*args, **kwargs)
     if comm.size == 1: return method(*args, **kwargs)
     # is an mpi process.
-    error, result = False, None
+    error, result, exception = False, None, None
     if comm.rank == 0: # root process
       try: result = method(*args, **kwargs)
-      except Exception as inst: error, result = True, (inst, world.rank)
+      except Exception as exception: error, result = True, (str(exception), world.rank)
       broadcast(comm, (error, result), root=0)
-      if error: raise result
+      assert not error, exception
     else:
       error, result = broadcast(comm, root=0)
-      if error:
-        raise RuntimeError,\
-              "Process %i reports an error: %s"  % (result[1], result[0])
+      assert not error, RuntimeError("Process %i reports an error: %s"  % (result[1], result[0]))
     return result
   wrapped.__name__ = method.__name__
   wrapped.__doc__ = method.__doc__

@@ -317,7 +317,7 @@ namespace LaDa
 
       PyObject *eigs = PyArray_SimpleNewFromData( 1, dims, numpy::type<types::t_real>::value,
                                                   (void*)&(_interface.eigenvalues[0]) );
-      return bp::object( bp::handle<>(bp::borrowed(eigs)) );
+      return bp::object( bp::handle<>(eigs) );
     }
     bp::object __call__(Pescan::Interface &_interface, bp::object const &_path) 
     {
@@ -327,6 +327,7 @@ namespace LaDa
       {
         PyErr_SetString(PyExc_RuntimeError, "Something went wrong in escan.\n");
         bp::throw_error_already_set();
+        return bp::object();
       }
       _interface.atom_input = atom_input;
       return get_eigenvalues(_interface);
@@ -386,6 +387,7 @@ namespace LaDa
         {
           PyErr_SetString(PyExc_RuntimeError, "Something went wrong in escan.\n");
           bp::throw_error_already_set();
+          return bp::object();
         }
         _interface.atom_input = path;
         return get_eigenvalues(_interface);

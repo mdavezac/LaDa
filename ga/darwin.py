@@ -45,7 +45,7 @@ def run(self):
 
   # generational loop
   while checkpoints(): 
-    if self.world.do_print:
+    if self.comm.do_print:
       print "Starting generation ", self.current_gen
 
     # tries and creates offspring.
@@ -73,6 +73,6 @@ def run(self):
 
   # final stuff before exiting.
   if hasattr(self, "final"): self.final()
-  elif self.world.do_print: print "done"
+  elif self.comm.do_print: print "done"
   
 
