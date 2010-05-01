@@ -100,3 +100,8 @@ def uncache(ob):
   """ Uncaches results cached by @make_cached. """ 
   for key in ob.__dict__.keys():
     if key[:len("_cached_attr")] == "_cached_attr": del ob.__dict__[key]
+
+def add_setter(method, docstring): 
+  """ Adds an input-like setter property. """
+  def _not_available(self): raise RuntimeError("Error: No cheese available.")
+  return property(_not_available, method, docstring)

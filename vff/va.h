@@ -53,6 +53,17 @@ namespace LaDa
        //! Type from which the VA functional is derived
        typedef function::VirtualAtom t_VABase;
 
+       //! Type of the minimizer for minimizing strain
+       typedef Minimizer::Variant
+               < 
+                 boost::mpl::vector
+                 <
+                   Minimizer::Frpr, 
+                   Minimizer::Gsl, 
+                   Minimizer::Minuit2
+                 > 
+               > t_Minimizer;
+
       protected:
        //! The type of the atom container
        typedef Crystal :: Structure :: t_Atoms   t_Atoms;
@@ -166,18 +177,10 @@ namespace LaDa
           template<class T> 
             void copy_parameters(VABase<T> const &_f) { t_VffBase::copy_parameters(_f.Vff()); }
 
-       protected:
-         //! Type of the minimizer for minimizing strain
-         typedef Minimizer::Variant
-                 < 
-                   boost::mpl::vector
-                   <
-                     Minimizer::Frpr, 
-                     Minimizer::Gsl, 
-                     Minimizer::Minuit2
-                   > 
-                 > t_Minimizer;
+          //! Sets minimizer. For python mostly.
+          void set_minimizer(t_Minimizer const &_minimizer) { minimizer = _minimizer; }
 
+       protected:
          //! The minimizer with which vff is minimized
          t_Minimizer minimizer;
     };

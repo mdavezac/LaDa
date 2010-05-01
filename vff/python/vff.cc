@@ -253,6 +253,8 @@ namespace LaDa
     void set_direction(t_LayeredVff &_self, math::rVector3d const &_dir)
       { _self.first.Vff().set_direction(_dir); } 
 
+    template<class T> void set_minimizer(T &_self, typename T::first_type::t_Minimizer const &_minimizer)
+      { _self.first.set_minimizer(_minimizer); }
 
     template<class T> bp::class_<T> expose_vff_(std::string const &_name, std::string const &_doc)
     {
@@ -285,6 +287,7 @@ namespace LaDa
          "structure, and the second a matrix with the stress. The energy is in "
          "structure.L{energy<crystal.Structure.energy>}.\n"
        )
+       .def("set_minimizer", &set_minimizer<T>)
 #      ifdef _MPI
          .add_property
          (
