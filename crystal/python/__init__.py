@@ -104,80 +104,107 @@ def read_poscar(types=None, path=None, check_lattice=False):
 
 # Adds setter like propertie for easy input 
 def _add_atom(which, container):
-  """ Defines a property which adds atoms/sites easily. """
-  def _add_atom(self, args):
-    """ Setter function for the property. """
+  """Adds an atom/site to the structure/lattice. 
+
+     >>> structure.add_atom = (0.25,0,0), "Au", 0, FreezeAtom.none
+     >>> lattice.add_site = (0.25,0,0), ("Au", "Pd"), 0, FreezeAtom.none
+    
+     Only the first two arguments are necessary.
+     None can be used as a place-holder for the last two arguments.
+       - first argument: sequence of three numbers indicating position.
+       - second argument: atomic type (or tuple of types for lattices).
+       - third argument: index of the site as existing in L{Structure.lattice}
+       - fourth argument: whether to freeze
+             positional and/or type degrees of freedom.
+  """ 
+  def _fun(self, args):
     from numpy import array
     args = [x for x in args]
     assert len(args) > 0, RuntimeError("Nothing to set")
 
-    result = which()
-    if len(args) == 3 and  (not hasattr(args[0], "__iter__")): # assume numpy array only
-      result.pos = array(args, dtype="float64") 
-    else: # assume that first second argument is position, second is type, etc...
-      result.pos = array([x for x in args[0]], dtype="float64")
-      if len(args) > 1:
-        if args[1] != None: result.type = args[1]
-      if len(args) > 2: 
-        if args[2] != None: result.site = args[2]
-      if len(args) > 3:
-        if args[2] != None: result.freeze = args[3]
+    # some skipping around to make sure we parse argument tuple correctly and
+    # initialize sites well if type argument is None, or single string.
+    if hasattr(args[0], "__iter__"): # assume first argument is a sequence of 3.
+      pos = array([x for x in args[0]], dtype="float64")
+    else: 
+      assert len(args) == 3, RuntimeError("Not sure how to parse these arguments." % (args))
+      pos = array([x for x in args], dtype="float64")
+      args = args,
+    assert pos.size == 3, RuntimeError("First argument is not a sequence of 3." % (args))
+    type = None
+    if len(args) > 1: type = args[1]
+    if type == None:
+      result = which()
+      result.pos = pos
+    else: result = which(pos, type)
+
+    # now everything should be well behaved.
+    if len(args) > 2: 
+      if args[2] != None: result.site = args[2]
+    if len(args) > 3:
+      if args[2] != None: result.freeze = args[3]
     getattr(self, container).append(result)
-  return _add_atom
+  return _fun
 
-Structure.add_atom = add_setter( _add_atom(Atom, "atoms"), 
-                                 """Adds an atom to the structure. 
-
-                                    >>> structure.add_atom = (0.25,0,0), "Au", 0, FreezeAtom.none
-                                   
-                                    Only the first two arguments are necessary.
-                                    None can be used as a place-holder for the last two arguments.
-                                      - first argument: sequence of three numbers indicating position.
-                                      - second argument: atomic type
-                                      - third argument: index of the site as existing in L{Structure.lattice}
-                                      - fourth argument: whether to freeze
-                                            positional and/or type degrees of freedom.
-                                 """ )
-rStructure.add_k_vec = add_setter( _add_atom(kAtom, "k_vecs"), 
-                                   """Adds a k-vector to the structure. 
+Structure.add_atom = add_setter( _add_atom(Atom, "atoms"), _add_atom.__doc__ )
+rStructure.add_k_vec = add_setter( _add_atom(kAtom, "k_vecs"), _add_atom.__doc__ )
+rStructure.add_atom = add_setter( _add_atom(rAtom, "atoms"), _add_atom.__doc__ )
+Lattice.add_site = add_setter( _add_atom(Site, "sites"), _add_atom.__doc__ )
+def _add_atoms(which):
+  """ Adds a list of atoms/sites to structure/lattice. 
   
-                                      >>> structure.add_atom = (0.25,0,0), "Au", 0+5e0*1j, FreezeAtom.none
-                                     
-                                      Only the first two arguments are necessary.
-                                      None can be used as a place-holder for the last two arguments.
-                                        - first argument: sequence of three numbers indicating position.
-                                        - second argument: atomic type
-                                        - third argument: index of the site as existing in L{Structure.lattice}
-                                        - fourth argument: whether to freeze
-                                              positional and/or type degrees of freedom.
-                                   """ )
-rStructure.add_atom = add_setter( _add_atom(rAtom, "atoms"), 
-                                 """Adds an atom to the structure. 
+      The argument is a sequence, each item of which could be used with
+      L{Structure.add_atom} (or L{Lattice.add_site} when appropriate).
+      >>> structure.add_atoms = ((0,0,0), "A"),\
+                                ((0.25,0,0), "B"),\
+      Note that the argument must be a sequence of at least 2.
+      >>> structure.add_atoms = ((0,0,0), "A") # wrong!
+      >>> structure.add_atoms = ((0,0,0), "A"), # Ok
+      Items which are None are ignored.
+  """
+  def _func(self, args):
+    for arg in args:
+      if arg != None:   setattr(self, which, arg)
+  return _func
+Structure.add_atoms = add_setter( _add_atoms("add_atom"), _add_atoms.__doc__)
+rStructure.add_atoms = add_setter( _add_atoms("add_atom"), _add_atoms.__doc__)
+Lattice.add_sites = add_setter( _add_atoms("add_site"), _add_atoms.__doc__)
 
-                                    >>> structure.add_atom = (0.25,0,0), 1e0, 0, FreezeAtom.none
-                                   
-                                    Only the first two arguments are necessary.
-                                    None can be used as a place-holder for the last two arguments.
-                                      - first argument: sequence of three numbers indicating position.
-                                      - second argument: atomic type
-                                      - third argument: index of the site as existing in L{Structure.lattice}
-                                      - fourth argument: whether to freeze
-                                            positional and/or type degrees of freedom.
-                                 """ )
+def _set_types(self, args):
+  """ Sets species types in lattice. 
 
-Lattice.add_site = add_setter( _add_atom(Site, "sites"), 
-                               """Adds a site to the lattice. 
+      Sets the species in the lattice using a n-tuple, each item of which is a
+      tuple of atomic symbols. The types in each atomic site is set to the
+      corresponding item. 
+      >>> lattice.set_type = ("In", "Ga"), ("As", "P")
+      If an item is None, then that site is unchanged:
+      >>> lattice.set_type = ("In", "Ga"), None 
+      or 
+      >>> lattice.set_type = ("In", "Ga"), 
+      will only change the types of the first site.
+      Note:
+      >>> lattice.set_type = ("In", "Ga")
+      The line above is most likely an error. It will result in setting the
+      first site to "In" and second to "Ga".
+      >>> lattice.set_type = "In"
+      The line above is also an error. It will result in setting the
+      first site to "I" and second to "n".
+      Similarly, each item must be at least a 2-tuple:
+      >>> lattice.set_type = ("In",), # Ok
+      >>> lattice.set_type = ("In"), #  Not Okay.
+      Finally, the line below, with an empty 2-tuple will change only the second site.
+      >>> lattice.set_type = (,), ("As", "P")
+      
+  """
+  assert len(args) <= len(self.sites), RuntimeError("More tuples of types than sites: %s" % (args))
+  for types, site in zip(args, self.sites):
+    if types == None: continue
+    types = [u for u in types if u != None]
+    if len(types) == 0: continue
+    site.type.clear()
+    for type in types: site.type.append(type)
 
-                                  >>> structure.add_atom = (0.25,0,0), ("Au", "Pd"), 0, FreezeAtom.none
-                                 
-                                  Only the first two arguments are necessary.
-                                  None can be used as a place-holder for the last two arguments.
-                                    - first argument: sequence of three numbers indicating position.
-                                    - second argument: atomic type
-                                    - third argument: index of the site as existing in L{Structure.lattice}
-                                    - fourth argument: whether to freeze
-                                          positional and/or type degrees of freedom.
-                               """ )
+Lattice.set_types = add_setter(_set_types, _set_types.__doc__)
 
 
 def _set_cell(self, sequence):
@@ -216,6 +243,7 @@ def _print_structure(self):
   for atom in self.atoms:
     result += "structure.add_atom = (%e, %e, %e), \"%s\", " \
               % (atom.pos[0], atom.pos[1], atom.pos[2], str(atom.type))
+    if atom.site < 0 and atom.freeze == FreezeAtom.none: result += "\n"; continue
     if atom.site < 0: result += "None, "
     else: result += "%i, " % (atom.site)
     result += " %i\n" % (atom.freeze)
@@ -233,13 +261,14 @@ def _print_lattice(self):
             % tuple([x for x in self.cell.flat])
   result += "lattice.name = \"%s\"\n" % (self.name)
   for site in self.sites:
-    result += "lattice.add_site = (%e, %e, %e) "  % tuple( x for x in site.pos )
+    result += "lattice.add_site = (%e, %e, %e)"  % tuple( x for x in site.pos )
     if len(site.type) == 0: result += "\n"; continue
     if len(site.type) == 1: result += ", \"%s\", " % (site.type[0])
     else:
       result += ", (\"%s\"" % (site.type[0])
       for type in site.type[1:]:  result += ", \"%s\"" % (type)
       result += "), "
+    if site.site < 0 and site.freeze == FreezeAtom.none: result += "\n"; continue
     if site.site < 0: result += "None, "
     else: result += "%i, " % (site.site)
     result += " %i\n" % (site.freeze)

@@ -109,18 +109,18 @@ class Vff(object):
         @type args: "type1", "type2", numpy array
     """
     assert len(args) == 3, RuntimeError("Bonds should be set with 3 parameters: %s." % (args))
-    assert args[0] in [ u for u in site.type for site in self.lattice.sites ],\
+    assert args[0] in [ u for site in self.lattice.sites for u in site.type ],\
            RuntimeError( "Type %s is not in lattice." % (args[0]))
-    assert args[1] in [ u for u in site.type for site in self.lattice.sites ],\
+    assert args[1] in [ u for site in self.lattice.sites for u in site.type ],\
            RuntimeError( "Type %s is not in lattice." % (args[1]))
 
     name = "%s-%s" % (args[0], args[1])
     if args[0] > args[1]: name = "%s-%s" % (args[1], args[0])
 
-    params = [u for u in args]
+    params = [u for u in args[2]]
     assert len(params) <= 5 and len(params) > 0, RuntimeError("To few or too many parameters: %s." % (params))
-    if name in self.bond_stretching: # replaces none value with known value
-      for old, new in zip(self.bond_stretching[name], params):
+    if name in self.bonds: # replaces none value with known value
+      for old, new in zip(self.bonds[name], params):
         if old == None: old = new
     if len(params) < 5: params.extend( 0 for u in range(5-len(params)) )
     
@@ -162,20 +162,21 @@ class Vff(object):
         @type args: "type1", "type2", numpy array
     """
     assert len(args) == 4, RuntimeError("Angle should be set with 4 parameters: %s." % (args))
-    assert args[0] in [ u for u in site.type for site in self.lattice.sites ],\
+    assert args[0] in [ u for site in self.lattice.sites for u in site.type ],\
            RuntimeError( "Type %s is not in lattice." % (args[0]))
-    assert args[1] in [ u for u in site.type for site in self.lattice.sites ],\
+    assert args[1] in [ u for site in self.lattice.sites for u in site.type ],\
            RuntimeError( "Type %s is not in lattice." % (args[1]))
-    assert args[2] in [ u for u in site.type for site in self.lattice.sites ],\
+    assert args[2] in [ u for site in self.lattice.sites for u in site.type ],\
            RuntimeError( "Type %s is not in lattice." % (args[2]))
 
     name = "%s-%s-%s" % (args[0], args[1], args[2])
     if args[0] > args[2]: name = "%s-%s" % (args[2], args[1], args[0])
 
-    params = tuple([u for u in args])
+    params = [u for u in args[3]]
+    print params
     assert len(params) <= 7 and len(params) > 0, RuntimeError("To few or too many parameters: %s." % (params))
-    if name in self.bond_bending: # replaces none value with known value
-      for old, new in zip(self.bond_bending[name], params):
+    if name in self.angles: # replaces none value with known value
+      for old, new in zip(self.angles[name], params):
         if old == None: old = new
     if str(params[0]).lower()[:3] == "tet": params[0] = -1e0/3e0
     if len(params) < 7: params.extend( 0e0 for u in range(7-len(params)) )
@@ -204,23 +205,33 @@ class Vff(object):
   add_angle = add_setter(_add_angle, _add_angle.__doc__)
 
   def __str__(self):
-    result  = "# Lattice definition: \n%s\n" % (self.lattice)
-    result += "# VFF definition:\n vff = Vff()\n vff.lattice = lattice"
+    result  = "%s\n" % (self.lattice)
+    result += "# VFF definition:\n"
+    result += "vff = Vff()\n"
     result += "vff.lattice = lattice\n"
-    result += "vff.OUTCAR = %s\n" % (self.OUTCAR)
-    result += "vff.ERRCAR = %s\n" % (self.ERRCAR)
+    result += "vff.OUTCAR = \"%s\"\n" % (self.OUTCAR)
+    result += "vff.ERRCAR = \"%s\"\n" % (self.ERRCAR)
+    result += "vff.ESCANCAR = \"%s\"\n" % (self.ESCANCAR)
+    result += "vff.SCRIPTCAR = \"%s\"\n" % (self.SCRIPTCAR)
     result += "vff.direction = %s\n" % (self.direction)
-    result += "vff.relax = %s\n" % (self.relax)
+    result += "vff.relax = %s\n" % ("True" if self.relax else "False")
     for name, params in self.bonds.items():
       A, B = name.split("-")
-      result += "vff.add_bond = %s, %s, %s" % (A, B)
-      for u in params: result += ", %s" % (u)
-      result += "\n"
+      result += "vff.add_bond = %s, %s, (%e" % (A, B, params[0])
+      for i, u in enumerate(params[1:]): 
+        if sum([abs(j) for j in params[i+1:]]) / float(len(params)-i-1) < 1e-12: break;
+        result += ", %e" % (u)
+      result += ")\n"
     for name, params in self.angles.items():
       A, B, C = name.split("-")
-      result += "vff.add_angle = %s, %s, %s" % (A, B, C)
-      for u in params: result += ", %s" % (u)
-      result += "\n"
+      result += "vff.add_angle = %s, %s, %s, " % (A, B, C)
+      if abs(params[0] + 1e0/3e0) < 1e-12: result += "(\"tet\""
+      else: result += "(%e" % (params[0])
+      for i, u in enumerate(params[1:]):
+        if sum([abs(j) for j in params[i+1:]]) / float(len(params)-i-1) < 1e-12: break;
+        result += ", %e" % (u)
+      result += ")\n"
+    result += "%s\n" % (self.minimizer)
     return result
 
 
