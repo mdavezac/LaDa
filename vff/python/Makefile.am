@@ -11,7 +11,9 @@ AM_LDFLAGS =
 install-exec-local: ../../python/libpython_lada.la
 
 EXTRA_DIST = $(vff_python_h) 
-pkgpyexec_LTLIBRARIES = vff.la 
+subpkgpyexec_PYTHON = __init__.py
+subpkgpyexec_LTLIBRARIES = vff.la
+subpkgpyexecdir = $(pkgpyexecdir)/vff
 vff_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) 
 vff_la_SOURCES = $(vff_python_cc) 
 vff_la_LDFLAGS = $(AM_LDFLAGS) -module

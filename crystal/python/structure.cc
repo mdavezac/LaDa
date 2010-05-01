@@ -245,7 +245,7 @@ namespace LaDa
               &get_cell<T_STRUCTURE>, 
               bp::return_value_policy<bp::return_by_value>()
             ), &set_cell<T_STRUCTURE>, 
-            ("A 3x3 numpy array representing the lattice vector in cartesian units, "
+            ("A 3x3 numpy array representing the cell vector in cartesian units, "
              "in units of self.L{scale<lada.crystal." + _name + ".scale>}.").c_str()
           )
           .def_readwrite( "atoms",   &T_STRUCTURE::atoms,
