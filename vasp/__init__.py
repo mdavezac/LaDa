@@ -93,23 +93,22 @@ class Vasp(Launch):
 
     # if other keyword arguments are present, then they are assumed to be
     # attributes of self, with value their expected value before launch. 
-    if len(kwargs) != 0: 
-      for key in kwargs.keys(): getattr(this, key).value = kwargs[key]
+    for key in kwargs.keys(): getattr(this, key).value = kwargs[key]
 
     # First checks if directory outdir exists (and is a directory).
     if exists(outdir):
       if not isdir(outdir): raise IOError, "%s exists but is not a directory.\n" % (outdir)
       # checks if it contains a successful run.
-      extract = Extract(comm = comm, directory = outdir)
+      extract = Extract(comm = comm, directory = outdir, vasp = this)
       if extract.success: return extract # in which case, returns extraction object.
     
     # Otherwise, performs calculation by calling base class functor.
     super(Vasp, this).__call__(structure=structure, outdir=outdir, repat=repat, comm=comm)
     
     # checks if result was successful
-    extract = Extract(comm = comm, directory = outdir)
+    extract = Extract(comm = comm, directory = outdir, vasp = this)
     if not extract.success:
-      raise RuntimeError, "VASP calculation did not complete in %s.\n" % (outdir)
+      raise RuntimeError("VASP calculation did not complete in %s.\n" % (outdir))
 
     return extract
 

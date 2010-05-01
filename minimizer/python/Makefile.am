@@ -8,7 +8,9 @@ AM_LDFLAGS =
 install-exec-local: ../../python/libpython_lada.la
 
 EXTRA_DIST = $(minimizer_python_h) 
-pkgpyexec_LTLIBRARIES = minimizer.la 
+subpkgpyexec_PYTHON = __init__.py
+subpkgpyexec_LTLIBRARIES = minimizer.la
+subpkgpyexecdir = $(pkgpyexecdir)/minimizer
 minimizer_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) 
 minimizer_la_SOURCES = $(minimizer_python_cc) 
 minimizer_la_LDFLAGS = $(AM_LDFLAGS) -module

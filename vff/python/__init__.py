@@ -1,7 +1,7 @@
 """ Valence Force Field functional for zinc-blende materials """
 
 # imports C++ extension
-import vff
+from ..opt.decorators import add_setter
 
 def zinc_blend_lattice():
   """ Defines a default zinc-blende lattice (InGaNP). """
@@ -9,201 +9,320 @@ def zinc_blend_lattice():
   from numpy import array
 
   lattice = Lattice()
-  lattice.cell = array( [[0,0.5,0.5], [0.5,0,0.5], [0.5,0.5,0]], dtype="float64")
+  lattice.set_cell = (0,0.5,0.5), (0.5,0,0.5), (0.5,0.5,0)
   lattice.scale = 1e0
-  lattice.sites.append( Site(array([0,0,0]), ["None"]) )
-  lattice.sites.append( Site(array([0.25,0.25,0.25]), ["None"]) )
+  lattice.add_site = (0,0,0)
+  lattice.add_site = (0.25,0.25,0.25)
   return lattice
 
-# class Vff(Object): 
-#   """ Valence Force Field functional for zinc-blende materials """
-#   def __init__(self):
-#     """ Initializes a valence force field functional. """
-#     from ..minimizer import Minimizer
+class Extract(object):
+  def __init__(self, directory = "", comm = None, vff = None):
+    self.directory = directory
+    """ Directory where to check for output. """
+    self.comm = comm
+    """ Mpi group communicator. """
+    self.OUTCAR = OUTCAR
+    """ Filename of the OUTCAR file from VASP.
+     
+        Data will be read from directory/OUTCAR. 
+    """
+    if vff != None: self.OUTCAR, self.CONTCAR = vff.OUTCAR, vff.CONTCAR
 
-#     super(Minimizer, self).__init__()
-#     self.lattice = zinc_blende_lattice()
-#     """ Lattice for which to perform calculations.
-#     
-#         In practice, zinc-blende lattices can be defined for any number of parameterizations.
-#         The one chosen here is such that atomic site 0 is at the origin of the
-#         unit cell, and atomic site 1 at 0.25, 0.25, 0.25. The scale is
-#         arbitrary at this point, and set to 4.5. The unit cell is [[0,0.5,0.5],
-#         [0.5,0,0.5], [0.5,0.5,0]]. 
-#     """
+    
+  def _get_directory(self):
+    """ Directory with VASP output files """
+    return self._directory
+  def _set_directory(self, dir):
+    from os.path import abspath, expanduser
+    dir = abspath(expanduser(dir))
+    if hasattr(self, "_directory"): 
+      if dir != self._directory: self.uncache()
+    self._directory = dir
+  directory = property(_get_directory, _set_directory)
 
-#     self.relax = True
-#     """ Whether to relax strain or just get energy. """
-#     self.direction = None
-#     """ Epitaxial direction if any.
-#     
-#         If set, it should be a vector. In that case, relaxation will only
-#         happen in that direction. Otherwise, everything will be relaxed. 
-#     """
-#     self.minimizer = Minimizer()
-#     """ Minimizer to use with VFF """
-#     self.bonds = {}
-#     """ Bond parameters. """
-#     self.angles = {}
-#     """ Angle parameters. """
-#     self.OUTCAR = "vffout" 
-#     """ File where to redirect output. """
-#     self.ERRCAR = "vfferr" 
-#     """ File where to redirect errors. """
 
-#   def _not_available(self): raise RuntimeError("Property cannot be gotten.")
+  def _get_success(self):
+    """ Checks for VFF success.
+        
+        At this point, checks for files and 
+    """
+    from path import isdir, exists 
+    path = self.OUTCAR
+    if len(self.directory): path = join(self.directory, self.OUTCAR)
+    if not exists(path): return False
 
-#   def _add_bond(self, args):
-#     """ Adds/Modifies the bond parameter dictionary.
-#     
-#         @param args: - the first element of arg is one endpoint of the bond (say "In"), 
-#                      - the second element is another endpoint (say "N"),
-#                      - the last element is a sequence with at most 5 elements
-#                        defining the bond-stretching parameters (order 2 through 6).
-#         @type args: "type1", "type2", numpy array
-#     """
-#     assert len(args) == 3, RuntimeError("Bonds should be set with 3 parameters: %s." % (args))
-#     assert args[0] in [ u for u in site.type for site in self.lattice.sites ],\
-#            RuntimeError( "Type %s is not in lattice." % (args[0]))
-#     assert args[1] in [ u for u in site.type for site in self.lattice.sites ],\
-#            RuntimeError( "Type %s is not in lattice." % (args[1]))
-
-#     name = "%s-%s" % (args[0], args[1])
-#     if args[0] > args[1]: name = "%s-%s" % (args[1], args[0])
-
-#     params = [u for u in args]
-#     assert len(params) <= 5 and len(params) > 0, RuntimeError("To few or too many parameters: %s." % (params))
-#     if name in self.bond_stretching: # replaces none value with known value
-#       for old, new in zip(self.bond_stretching[name], params):
-#         if old == None: old = new
-#     if len(params) < 5: params.extend( 0 for u in range(5-len(params)) )
-#     
-#     self.bonds[name] = params
-
-#   def set_bond(self, A, B, d0 = None, a2 = None, a3 = None, a4 = None, a5 = None, a6 = None):
-#     """ Adds/Modifies the bond parameter dictionary.
-#     
-#         @param A: Endpoint specie.
-#         @type A: str
-#         @param B: Middle specie.
-#         @type B: str
-#         @param C: Endpoint specie.
-#         @type C: str
-#         @param gamma: S{gamma} parameter. Can be a number or a string starting with "tet".
-#         @param sigma: S{sigma} parameter.
-#         @param a2: 2nd order bond-angle parameter.
-#         @param a3: 3rd order bond-angle parameter.
-#         @param a4: 4rd order bond-angle parameter.
-#         @param a5: 5rd order bond-angle parameter.
-#         @param a6: 6rd order bond-angle parameter.
-#     """
-#     self._add_bond( (A,B, d0, a2, a3, a4, a5, a6) )
-
-#   add_bond = property(_not_available, _add_bond, _add_bond.__doc__)
+    with open(path, "r") as file:
+      regex = re.compile(r"""Computed in:""", re.X)
+      for line in file:
+        if regex.search(line) != None: return True
+    return False
 
 
 
-#   def _add_angle(self, args):
-#     """ Adds/Modifies the angle parameter dictionary.
-#     
-#         @param args: - the first element of arg is one endpoint of the angle (say "In"), 
-#                      - the second element is middle of the angle (say "N"),
-#                      - the third element is the other endpoint (say "Ga"),
-#                      - the last element is a sequence with at most 7 elements
-#                        defining the bond-angle parameters. The first is the
-#                        gamma parameter, the second the sigma, and the others
-#                        the bond bending proper.
-#         @type args: "type1", "type2", numpy array
-#     """
-#     assert len(args) == 4, RuntimeError("Angle should be set with 4 parameters: %s." % (args))
-#     assert args[0] in [ u for u in site.type for site in self.lattice.sites ],\
-#            RuntimeError( "Type %s is not in lattice." % (args[0]))
-#     assert args[1] in [ u for u in site.type for site in self.lattice.sites ],\
-#            RuntimeError( "Type %s is not in lattice." % (args[1]))
-#     assert args[2] in [ u for u in site.type for site in self.lattice.sites ],\
-#            RuntimeError( "Type %s is not in lattice." % (args[2]))
+class Vff(object): 
+  """ Valence Force Field functional for zinc-blende materials """
+  def __init__(self):
+    """ Initializes a valence force field functional. """
+    from ..minimizer import Minimizer
 
-#     name = "%s-%s-%s" % (args[0], args[1], args[2])
-#     if args[0] > args[2]: name = "%s-%s" % (args[2], args[1], args[0])
+    super(Vff, self).__init__()
+    self.lattice = zinc_blend_lattice()
+    """ Lattice for which to perform calculations.
+    
+        In practice, zinc-blende lattices can be defined for any number of parameterizations.
+        The one chosen here is such that atomic site 0 is at the origin of the
+        unit cell, and atomic site 1 at 0.25, 0.25, 0.25. The scale is
+        arbitrary at this point, and set to 4.5. The unit cell is [[0,0.5,0.5],
+        [0.5,0,0.5], [0.5,0.5,0]]. 
+    """
 
-#     params = tuple([u for u in args])
-#     assert len(params) <= 7 and len(params) > 0, RuntimeError("To few or too many parameters: %s." % (params))
-#     if name in self.bond_bending: # replaces none value with known value
-#       for old, new in zip(self.bond_bending[name], params):
-#         if old == None: old = new
-#     if str(params[0]).lower()[:3] == "tet": params[0] = -1e0/3e0
-#     if len(params) < 7: params.extend( 0e0 for u in range(7-len(params)) )
+    self.relax = True
+    """ Whether to relax strain or just get energy. """
+    self.direction = None
+    """ Epitaxial direction if any.
+    
+        If set, it should be a vector. In that case, relaxation will only
+        happen in that direction. Otherwise, everything will be relaxed. 
+    """
+    self.minimizer = Minimizer()
+    """ Minimizer to use with VFF """
+    self.bonds = {}
+    """ Bond parameters. """
+    self.angles = {}
+    """ Angle parameters. """
+    self.OUTCAR = "vffout" 
+    """ File where to redirect output. """
+    self.ERRCAR = "vfferr" 
+    """ File where to redirect errors. """
+    self.ESCANCAR = "atomic_input"
+    """ File where to print atomic inputs for escan. """
+    self.SCRIPTCAR = "vff_script.py"
+    """ VFF script file for easy reruns. """
 
-#     self.angles[name] = params
-#     
-#   def set_angle(self, A, B, gamma = None, sigma = None, a2 = None, a3 = None, a4 = None, a5 = None, a6 = None):
-#     """ Adds/Modifies the angle parameter dictionary.
-#     
-#         @param A: Endpoint specie.
-#         @type A: str
-#         @param B: Middle specie.
-#         @type B: str
-#         @param C: Endpoint specie.
-#         @type C: str
-#         @param gamma: S{gamma} parameter. Can be a number or a string starting with "tet".
-#         @param sigma: S{sigma} parameter.
-#         @param a2: 2nd order bond-angle parameter.
-#         @param a3: 3rd order bond-angle parameter.
-#         @param a4: 4rd order bond-angle parameter.
-#         @param a5: 5rd order bond-angle parameter.
-#         @param a6: 6rd order bond-angle parameter.
-#     """
-#     self._add_angle( (A,B, C, gamma, sigma, a2, a3, a4, a5, a6) )
+  def _add_bond(self, args):
+    """ Adds/Modifies the bond parameter dictionary.
+    
+        @param args: - the first element of arg is one endpoint of the bond (say "In"), 
+                     - the second element is another endpoint (say "N"),
+                     - the last element is a sequence with at most 5 elements
+                       defining the bond-stretching parameters (order 2 through 6).
+        @type args: "type1", "type2", numpy array
+    """
+    assert len(args) == 3, RuntimeError("Bonds should be set with 3 parameters: %s." % (args))
+    assert args[0] in [ u for u in site.type for site in self.lattice.sites ],\
+           RuntimeError( "Type %s is not in lattice." % (args[0]))
+    assert args[1] in [ u for u in site.type for site in self.lattice.sites ],\
+           RuntimeError( "Type %s is not in lattice." % (args[1]))
 
-#   add_angle = property(_not_available, _add_angle, _add_angle.__doc__)
+    name = "%s-%s" % (args[0], args[1])
+    if args[0] > args[1]: name = "%s-%s" % (args[1], args[0])
 
-#   def __str__(self):
-#     result  = "# Lattice definition: \n%s\n" % (self.lattice)
-#     result += "# VFF definition:\n vff = Vff()\n vff.lattice = lattice"
-#     result += "vff.lattice = lattice\n"
-#     result += "vff.OUTCAR = %s\n" % (self.OUTCAR)
-#     result += "vff.ERRCAR = %s\n" % (self.ERRCAR)
-#     result += "vff.direction = %s\n" % (self.direction)
-#     result += "vff.relax = %s\n" % (self.relax)
-#     for name, params in self.bonds.items():
-#       A, B = name.split("-")
-#       result += "vff.add_bond = %s, %s, %s" % (A, B)
-#       for u in params: result += ", %s" % (u)
-#       result += "\n"
-#     for name, params in self.angles.items():
-#       A, B, C = name.split("-")
-#       result += "vff.add_angle = %s, %s, %s" % (A, B, C)
-#       for u in params: result += ", %s" % (u)
-#       result += "\n"
-#     return result
+    params = [u for u in args]
+    assert len(params) <= 5 and len(params) > 0, RuntimeError("To few or too many parameters: %s." % (params))
+    if name in self.bond_stretching: # replaces none value with known value
+      for old, new in zip(self.bond_stretching[name], params):
+        if old == None: old = new
+    if len(params) < 5: params.extend( 0 for u in range(5-len(params)) )
+    
+    self.bonds[name] = params
+
+  def set_bond(self, A, B, d0 = None, a2 = None, a3 = None, a4 = None, a5 = None, a6 = None):
+    """ Adds/Modifies the bond parameter dictionary.
+    
+        @param A: Endpoint specie.
+        @type A: str
+        @param B: Middle specie.
+        @type B: str
+        @param C: Endpoint specie.
+        @type C: str
+        @param gamma: S{gamma} parameter. Can be a number or a string starting with "tet".
+        @param sigma: S{sigma} parameter.
+        @param a2: 2nd order bond-angle parameter.
+        @param a3: 3rd order bond-angle parameter.
+        @param a4: 4rd order bond-angle parameter.
+        @param a5: 5rd order bond-angle parameter.
+        @param a6: 6rd order bond-angle parameter.
+    """
+    self._add_bond( (A,B, d0, a2, a3, a4, a5, a6) )
+
+  add_bond = add_setter(_add_bond, _add_bond.__doc__)
 
 
-#   def __call__(self, structure, outdir, comm = None ):
-#     """ Performs calculation """
-#     from copy import deepcopy
-#     from os.path import exists, isdir
-#     
-#     # make this functor stateless.
-#     this      = deepcopy(self)
-#     outdir    = deepcopy(outdir)
 
-#     # if other keyword arguments are present, then they are assumed to be
-#     # attributes of self, with value their expected value before launch. 
-#     if len(kwargs) != 0: 
-#       for key in kwargs.keys(): getattr(this, key).value = kwargs[key]
+  def _add_angle(self, args):
+    """ Adds/Modifies the angle parameter dictionary.
+    
+        @param args: - the first element of arg is one endpoint of the angle (say "In"), 
+                     - the second element is middle of the angle (say "N"),
+                     - the third element is the other endpoint (say "Ga"),
+                     - the last element is a sequence with at most 7 elements
+                       defining the bond-angle parameters. The first is the
+                       gamma parameter, the second the sigma, and the others
+                       the bond bending proper.
+        @type args: "type1", "type2", numpy array
+    """
+    assert len(args) == 4, RuntimeError("Angle should be set with 4 parameters: %s." % (args))
+    assert args[0] in [ u for u in site.type for site in self.lattice.sites ],\
+           RuntimeError( "Type %s is not in lattice." % (args[0]))
+    assert args[1] in [ u for u in site.type for site in self.lattice.sites ],\
+           RuntimeError( "Type %s is not in lattice." % (args[1]))
+    assert args[2] in [ u for u in site.type for site in self.lattice.sites ],\
+           RuntimeError( "Type %s is not in lattice." % (args[2]))
 
-#     # First checks if directory outdir exists (and is a directory).
-#     if exists(outdir):
-#       if not isdir(outdir): raise IOError, "%s exists but is not a directory.\n" % (outdir)
-#       # checks if it contains a successful run.
-#       extract = Extract(comm = comm, directory = outdir)
-#       if extract.success: return extract # in which case, returns extraction object.
-#     
-#     # Otherwise, performs calculation by calling base class functor.
-#     
-#     # checks if result was successful
-#     extract = Extract(comm = comm, directory = outdir)
-#     if not extract.success:
-#       raise RuntimeError, "VASP calculation did not complete in %s.\n" % (outdir)
+    name = "%s-%s-%s" % (args[0], args[1], args[2])
+    if args[0] > args[2]: name = "%s-%s" % (args[2], args[1], args[0])
 
-#     return extract
+    params = tuple([u for u in args])
+    assert len(params) <= 7 and len(params) > 0, RuntimeError("To few or too many parameters: %s." % (params))
+    if name in self.bond_bending: # replaces none value with known value
+      for old, new in zip(self.bond_bending[name], params):
+        if old == None: old = new
+    if str(params[0]).lower()[:3] == "tet": params[0] = -1e0/3e0
+    if len(params) < 7: params.extend( 0e0 for u in range(7-len(params)) )
+
+    self.angles[name] = params
+    
+  def set_angle(self, A, B, gamma = None, sigma = None, a2 = None, a3 = None, a4 = None, a5 = None, a6 = None):
+    """ Adds/Modifies the angle parameter dictionary.
+    
+        @param A: Endpoint specie.
+        @type A: str
+        @param B: Middle specie.
+        @type B: str
+        @param C: Endpoint specie.
+        @type C: str
+        @param gamma: S{gamma} parameter. Can be a number or a string starting with "tet".
+        @param sigma: S{sigma} parameter.
+        @param a2: 2nd order bond-angle parameter.
+        @param a3: 3rd order bond-angle parameter.
+        @param a4: 4rd order bond-angle parameter.
+        @param a5: 5rd order bond-angle parameter.
+        @param a6: 6rd order bond-angle parameter.
+    """
+    self._add_angle( (A,B, C, gamma, sigma, a2, a3, a4, a5, a6) )
+
+  add_angle = add_setter(_add_angle, _add_angle.__doc__)
+
+  def __str__(self):
+    result  = "# Lattice definition: \n%s\n" % (self.lattice)
+    result += "# VFF definition:\n vff = Vff()\n vff.lattice = lattice"
+    result += "vff.lattice = lattice\n"
+    result += "vff.OUTCAR = %s\n" % (self.OUTCAR)
+    result += "vff.ERRCAR = %s\n" % (self.ERRCAR)
+    result += "vff.direction = %s\n" % (self.direction)
+    result += "vff.relax = %s\n" % (self.relax)
+    for name, params in self.bonds.items():
+      A, B = name.split("-")
+      result += "vff.add_bond = %s, %s, %s" % (A, B)
+      for u in params: result += ", %s" % (u)
+      result += "\n"
+    for name, params in self.angles.items():
+      A, B, C = name.split("-")
+      result += "vff.add_angle = %s, %s, %s" % (A, B, C)
+      for u in params: result += ", %s" % (u)
+      result += "\n"
+    return result
+
+
+  def __call__(self, structure, outdir, comm = None, **kwargs):
+    """ Performs calculation """
+    import time
+    from copy import deepcopy
+    from os.path import exists, isdir, abspath
+    from boost.mpi import world
+    from ..opt import redirect
+    from ..opt.changedir import Changedir
+
+    start_time = time.localtime() 
+
+    # gets absolute path.
+    outdir = abspath(outdir)
+
+    # make this functor stateless.
+    this      = deepcopy(self)
+    outdir    = deepcopy(outdir)
+
+    # if other keyword arguments are present, then they are assumed to be
+    # attributes of self, with value to use for calculations launch. 
+    # For added simplicity, minimizer attributes are also directly available.
+    for key in kwargs.keys():
+      if hasattr(this, key): getattr(this, key).value = kwargs[key]
+      elif hasattr(this.minimizer, key): getattr(this.minimizer, key).value = kwargs[key]
+      else: raise NameError( "%s attribute unknown of vff or vff.minimizer." % (key) )
+
+    # First checks if directory outdir exists (and is a directory).
+    if exists(outdir):
+      if not isdir(outdir): raise IOError, "%s exists but is not a directory.\n" % (outdir)
+      # checks if it contains a successful run.
+      extract = Extract(comm = comm, directory = outdir, vff = this)
+      if extract.success: return extract # in which case, returns extraction object.
+    
+    # Otherwise, performs calculations.
+    with Changedir(outdir) as current_dir:
+      
+      if comm.rank == 0: # a simple script to rerun things.
+        with open(this.SCRIPTCAR, "w") as script:
+          print >> script, "from boost.mpi import world"
+          print >> script, "from lada.vff import Vff"
+          print >> script, "from lada.crystal import Structure, Lattice, Atom\n"
+          print >> script, this.lattice
+          print >> script, "lattice.find_space_group()"
+          print >> script, this
+          print >> script, structure
+          print >> script, "\n# calls vff."
+          print >> script, "vff.comm = world"
+          print >> script, "vff(structure)"
+
+      # redirects C/C++/fortran streams
+      cout = this.OUTCAR if (comm.rank > 0 and len(cout)) else this.OUTCAR + "." + str(comm.rank)
+      cerr = this.ERRCAR if (comm.rank > 0 and len(cerr)) else this.ERRCAR + "." + str(comm.rank)
+      with redirect(cout=cout, cerr=cerr, fout=cout, ferr=ferr) as oestreams:
+        # now for some input variables
+        print "# VFF calculation on ", time.strftime("%m/%d/%y", start_time),\
+              " at ", time.strftime("%I:%M:%S %p", start_time)
+        if len(structure.name) != 0: print "# Structure named ", structure.name 
+        print this.lattice
+        print this.vff
+        print "# Performing calculations. "
+        # then calculations
+        result, stress = this._run(structure, comm)
+        # finally, the dam results.
+        print "# Result of vff calculations. "
+        print result
+        print "stress: (%e, %e, %e),\\\n        (%e, %e, %e),\\\n        (%e, %e, %e)"\
+              % tuple(stress.flat)
+        print "# Computed in: ", time.strftime("%I:%M:%S %p", time.localtime() - start_time), "."
+
+    # checks if result was successful
+    extract = Extract(comm = comm, directory = outdir, vff = this)
+    assert extract.success, RuntimeError("VASP calculation did not complete in %s.\n" % (outdir))
+
+    return extract
+
+  def _run(self, structure, comm):
+    """ Performs actual calculation. """
+    from vff import Vff, LayeredVff
+
+    # Saves global lattice if set.
+    old_lattice = None
+    try: old_lattice = structure.lattice
+    except RuntimeError: pass
+    self.lattice.set_as_crystal_lattice()
+    
+
+    # creates functional and sets parameters.
+    functional = Vff(comm) if self.direction == None else LayeredVff(comm)
+    if self.direction != None: functional.direction = self.direction
+    types = [u.type for u in atoms]
+    for name, params in self.bonds.items():
+      if name.split('-') not in types: continue
+      functional.set_bond(name, params)
+    for name, params in self.bonds.items():
+      if name.split('-') not in types: continue
+      functional.set_bond(name, params)
+
+    # now performs call
+    result, stress = functional(structure)
+    
+    # unsets lattice.
+    if old_lattice != None: old_lattice.set_as_crystal_lattice()

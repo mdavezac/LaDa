@@ -4,7 +4,7 @@ from ...opt.decorators import make_cached
 class _ExtractImpl(object):
   """ Implementation class for extracting data from VASP output """
 
-  def __init__(self, directory = "", comm = None): 
+  def __init__(self, directory = "", comm = None, vasp = None): 
     """ Initializes the extraction class. 
 
         @param comm: MPI group communicator. Extraction will be performed
@@ -14,8 +14,8 @@ class _ExtractImpl(object):
         @param directory: path to the directory where the VASP output is located.
         @type directory: str
     """
-    from ..files import OUTCAR, CONTCAR
     self.directory = directory
+    """ Directory where to check for output. """
     self.comm = comm
     """ MPI group communicator. """
     self.OUTCAR = OUTCAR
@@ -28,6 +28,7 @@ class _ExtractImpl(object):
      
         Data will be read from directory/CONTCAR. 
     """
+    if vasp != None: self.OUTCAR, self.CONTCAR = vasp.OUTCAR, vasp.CONTCAR
     
   def _get_directory(self):
     """ Directory with VASP output files """

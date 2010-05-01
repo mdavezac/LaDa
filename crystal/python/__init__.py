@@ -108,13 +108,20 @@ def _add_atom(which, container):
   def _add_atom(self, args):
     """ Setter function for the property. """
     from numpy import array
-    assert len(args) > 1, RuntimeError("Nothing to set")
     args = [x for x in args]
-    result = which(array([x for x in args[0]], dtype="float64"), args[1])
-    if len(args) > 2: 
-      if args[2] != None: result.site = args[2]
-    if len(args) > 3:
-      if args[2] != None: result.freeze = args[3]
+    assert len(args) > 0, RuntimeError("Nothing to set")
+
+    result = which()
+    if len(args) == 3 and  (not hasattr(args[0], "__iter__")): # assume numpy array only
+      result.pos = array(args, dtype="float64") 
+    else: # assume that first second argument is position, second is type, etc...
+      result.pos = array([x for x in args[0]], dtype="float64")
+      if len(args) > 1:
+        if args[1] != None: result.type = args[1]
+      if len(args) > 2: 
+        if args[2] != None: result.site = args[2]
+      if len(args) > 3:
+        if args[2] != None: result.freeze = args[3]
     getattr(self, container).append(result)
   return _add_atom
 
@@ -226,10 +233,11 @@ def _print_lattice(self):
             % tuple([x for x in self.cell.flat])
   result += "lattice.name = \"%s\"\n" % (self.name)
   for site in self.sites:
-    result += "lattice.add_site = (%e, %e, %e), "  % tuple( x for x in site.pos )
-    if len(site.type) == 1: result += "\"%s\", " % (site.type[0])
+    result += "lattice.add_site = (%e, %e, %e) "  % tuple( x for x in site.pos )
+    if len(site.type) == 0: result += "\n"; continue
+    if len(site.type) == 1: result += ", \"%s\", " % (site.type[0])
     else:
-      result += "(\"%s\"" % (site.type[0])
+      result += ", (\"%s\"" % (site.type[0])
       for type in site.type[1:]:  result += ", \"%s\"" % (type)
       result += "), "
     if site.site < 0: result += "None, "
