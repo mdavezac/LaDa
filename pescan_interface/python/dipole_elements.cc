@@ -15,7 +15,7 @@
 
 namespace LaDa
 {
-  namespace Python
+  namespace python
   {
     namespace bp=boost::python;
 
@@ -108,9 +108,9 @@ namespace LaDa
           "2-Tuple giving the indices of the transition bands."
         );
 
-      expose_vector<Pescan::Dipole>("DipoleVector", "List of dipole elements.");
+      Python::expose_vector<Pescan::Dipole>("DipoleVector", "List of dipole elements.");
       bp::register_ptr_to_python< boost::shared_ptr< std::vector<Pescan::Dipole> > >();
     }
 
-  } // namespace Python
+  } // namespace python
 } // namespace LaDa

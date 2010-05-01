@@ -9,8 +9,6 @@ if __load_pescan_in_global_namespace__:
   _setdlopenflags(flags)
 else: from _escan import *
 from bandstructure import band_structure
-from _bandgap import band_gap, all_electron_band_gap, folded_band_gap
-from _dipole import dipoles, oscillator_strength
 
 def call_escan(comm, atom="atom_input", pot="pot_input", escan="escan_input"):
   """ Calls escan functional in current directory.
