@@ -15,7 +15,7 @@ class Changedir:
 
   def __enter__(self):
     """ Changes working directory """
-    from os import getcwd, chdir
+    from os import getcwd, chdir, makedirs
     from os.path import exists, isdir
     
     self.oldpwd = getcwd()
