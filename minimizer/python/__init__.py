@@ -21,3 +21,4 @@ def _print_minimizer(self):
              self.linestep, self.strategy, "True" if self.verbose else "False", \
              self.uncertainties, self.up, "True" if self.use_gradient else "False" )
 Minimizer.__str__ = _print_minimizer
+

@@ -16,6 +16,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
+#include <boost/serialization/serialization.hpp>
 
 #include <tinyxml/tinyxml.h>
 
@@ -65,6 +66,7 @@ namespace LaDa
     //!          won't work for sites which are not unaries or binaries...
     class Lattice
     {
+      friend class boost::serialization::access;
       public:
         //! The type of each site.
         typedef Atom_Type< std::vector<std::string> > t_Site;
@@ -181,6 +183,9 @@ namespace LaDa
                    0: convert_real_to_type_index( _r ); }
         //! Dumps the lattice to a stream. 
         void print_out (std::ostream &stream) const;
+      private:
+        //! Serializes a lattice.
+        template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version);
     };
 
     inline std::string Lattice::get_atom_string( const Crystal::Atom &_at ) const
@@ -274,6 +279,15 @@ namespace LaDa
       return result;
       __TRYEND(, "Could not read lattice from input.\n" )
     }
+
+    template< class ARCHIVE >
+      void Lattice :: serialize( ARCHIVE & _ar, const unsigned int _version)
+      {
+        _ar & cell;
+        _ar & sites;
+        _ar & scale;
+        _ar & space_group;
+      }
 
   } // namespace Crystal
 } // namespace LaDa

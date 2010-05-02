@@ -7,6 +7,12 @@
 
 
 #include <boost/mpl/vector.hpp>
+#include <boost/python/tuple.hpp>
+#include <boost/serialization/serialization.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/complex.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
 
 
 #include "minimizer.hpp"
@@ -32,6 +38,36 @@ namespace LaDa
       fakexml.SetAttribute( "gradient", use_gradient_ ? "true": "false" );
       __DOASSERT( not minimizer_.Load( fakexml ), "Could not load minimizer " << type_ << ".\n" )
     }
+    struct pickle_minimizer : boost::python::pickle_suite
+    {
+      static boost::python::tuple getinitargs( Minimizer const& _w)  
+      {
+        return boost::python::tuple();
+      }
+      static boost::python::tuple getstate(const Minimizer& _in)
+      {
+        std::ostringstream ss;
+        boost::archive::text_oarchive oa( ss );
+        oa << _in;
+
+        return boost::python::make_tuple( ss.str() );
+      }
+      static void setstate( Minimizer& _out, boost::python::tuple state)
+      {
+        if( boost::python::len( state ) != 1 )
+        {
+          PyErr_SetObject(PyExc_ValueError,
+                          ("expected 1-item tuple in call to __setstate__; got %s"
+                           % state).ptr()
+              );
+          boost::python::throw_error_already_set();
+        }
+        const std::string str = boost::python::extract< std::string >( state[0] );
+        std::istringstream ss( str.c_str() );
+        boost::archive::text_iarchive ia( ss );
+        ia >> _out;
+      }
+    };
 
     void expose_minimizer()
     {
@@ -73,7 +109,8 @@ namespace LaDa
               ),
               "Sets parameters for the optimizers. "
               "Not all parameters are needed by all optimizers."
-            );
+            )
+        .def_pickle( pickle_minimizer() );
     }
   } // namespace Python
 } // namespace LaDa

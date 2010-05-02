@@ -7,16 +7,24 @@
 
 #include <boost/python/def.hpp>
 #include <boost/python/class.hpp>
+#include <boost/python/tuple.hpp>
 #include <boost/python/register_ptr_to_python.hpp>
 #include <boost/python/make_constructor.hpp>
 #include <boost/python/errors.hpp>
 #include <boost/python/return_value_policy.hpp>
 #include <boost/python/return_by_value.hpp>
 
+#include <boost/serialization/serialization.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/complex.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+
 #include <opt/types.h>
+#include <opt/debug.h>
 #include <crystal/structure.h>
 #include <crystal/lattice.h>
-#include <opt/debug.h>
+#include <math/serialize.h>
 
 #include <python/xml.hpp>
 #include <python/misc.hpp>
@@ -127,6 +135,38 @@ namespace LaDa
     math::rVector3d into_cell2(math::rVector3d const &_vec, math::rMatrix3d const &_cell)
       { return Crystal::into_cell(_vec, _cell, _cell.inverse()); }
 
+    template< class T_STRUCTURE >
+      struct pickle_lattice : bp::pickle_suite
+      {
+        static bp::tuple getinitargs( T_STRUCTURE const& _w)  
+        {
+          return bp::tuple();
+        }
+        static bp::tuple getstate(const T_STRUCTURE& _in)
+        {
+          std::ostringstream ss;
+          boost::archive::text_oarchive oa( ss );
+          oa << _in;
+
+          return bp::make_tuple( ss.str() );
+        }
+        static void setstate( T_STRUCTURE& _out, bp::tuple state)
+        {
+          if( bp::len( state ) != 1 )
+          {
+            PyErr_SetObject(PyExc_ValueError,
+                            ("expected 1-item tuple in call to __setstate__; got %s"
+                             % state).ptr()
+                );
+            bp::throw_error_already_set();
+          }
+          const std::string str = bp::extract< std::string >( state[0] );
+          std::istringstream ss( str.c_str() );
+          boost::archive::text_iarchive ia( ss );
+          ia >> _out;
+        }
+      };
+
     void expose_lattice()
     {
       bp::class_< Crystal::Lattice >( "Lattice", "Defines back-bone lattice." )
@@ -149,6 +189,7 @@ namespace LaDa
         .def("make_primitive", &Crystal::Lattice::make_primitive,
              (bp::arg("self"), bp::arg("tolerance")=-1e0),
              "Makes lattice primitive, e.g. reduces to smallest unit-cell." )
+        .def_pickle( pickle_lattice< Crystal::Lattice >() )
         .def
         ( 
           "find_space_group", 

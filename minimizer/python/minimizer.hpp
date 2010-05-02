@@ -9,6 +9,8 @@
 #include <config.h>
 #endif
 
+#include <boost/serialization/serialization.hpp>
+
 #include <opt/debug.h>
 
 #include "../variant.h"
@@ -26,6 +28,7 @@ namespace LaDa
     //! Declaration for the python minimizer.
     class Minimizer
     {
+      friend class boost::serialization::access;
       public:
         Minimizer() : type_( "gsl_bfgs2" ),
                       tolerance_( 1e-6 ),
@@ -143,6 +146,14 @@ namespace LaDa
                   > 
                 > t_Minimizer;
         t_Minimizer minimizer_;
+
+        //! Serializes a lattice.
+        template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
+        {
+           _ar & type_; _ar & tolerance_; _ar & itermax_; _ar & linetolerance_;
+           _ar & linestep_; _ar & strategy_; _ar & verbose_; _ar & uncertainties_;
+           _ar & up_; _ar & use_gradient_;
+        }
     };
   }
 } // namespace LaDa
