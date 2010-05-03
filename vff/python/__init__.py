@@ -2,6 +2,8 @@
 
 # imports C++ extension
 from ..opt.decorators import add_setter
+from sys import exit
+import sys
 
 def zinc_blend_lattice():
   """ Defines a default zinc-blende lattice (InGaNP). """
@@ -21,12 +23,12 @@ class Extract(object):
     """ Directory where to check for output. """
     self.comm = comm
     """ Mpi group communicator. """
-    self.OUTCAR = OUTCAR
+    self.OUTCAR = vff.OUTCAR
     """ Filename of the OUTCAR file from VASP.
      
         Data will be read from directory/OUTCAR. 
     """
-    if vff != None: self.OUTCAR, self.CONTCAR = vff.OUTCAR, vff.CONTCAR
+    if vff != None: self.OUTCAR = vff.OUTCAR
 
     
   def _get_directory(self):
@@ -41,12 +43,14 @@ class Extract(object):
   directory = property(_get_directory, _set_directory)
 
 
-  def _get_success(self):
+  @property
+  def success(self):
     """ Checks for VFF success.
         
         At this point, checks for files and 
     """
-    from path import isdir, exists 
+    from os.path import isdir, exists, join
+    import re
     path = self.OUTCAR
     if len(self.directory): path = join(self.directory, self.OUTCAR)
     if not exists(path): return False
@@ -61,7 +65,7 @@ class Extract(object):
 
 class Vff(object): 
   """ Valence Force Field functional for zinc-blende materials """
-  def __init__(self):
+  def __init__(self, workdir = None):
     """ Initializes a valence force field functional. """
     from ..minimizer import Minimizer
 
@@ -98,6 +102,8 @@ class Vff(object):
     """ File where to print atomic inputs for escan. """
     self.SCRIPTCAR = "vff_script.py"
     """ VFF script file for easy reruns. """
+    self.workdir = workdir
+    """ Working directory. """
 
   def _add_bond(self, args):
     """ Adds/Modifies the bond parameter dictionary.
@@ -118,11 +124,11 @@ class Vff(object):
     if args[0] > args[1]: name = "%s-%s" % (args[1], args[0])
 
     params = [u for u in args[2]]
-    assert len(params) <= 5 and len(params) > 0, RuntimeError("To few or too many parameters: %s." % (params))
+    assert len(params) < 7 and len(params) > 0, RuntimeError("To few or too many parameters: %s." % (params))
     if name in self.bonds: # replaces none value with known value
       for old, new in zip(self.bonds[name], params):
         if old == None: old = new
-    if len(params) < 5: params.extend( 0 for u in range(5-len(params)) )
+    if len(params) < 6: params.extend( 0 for u in range(6-len(params)) )
     
     self.bonds[name] = params
 
@@ -173,7 +179,6 @@ class Vff(object):
     if args[0] > args[2]: name = "%s-%s" % (args[2], args[1], args[0])
 
     params = [u for u in args[3]]
-    print params
     assert len(params) <= 7 and len(params) > 0, RuntimeError("To few or too many parameters: %s." % (params))
     if name in self.angles: # replaces none value with known value
       for old, new in zip(self.angles[name], params):
@@ -244,7 +249,17 @@ class Vff(object):
     from ..opt import redirect
     from ..opt.changedir import Changedir
 
-    start_time = time.localtime() 
+    # bull shit. 
+    assert len(self.lattice.sites) == 2, RuntimeError("Lattice is not zinc-blend")
+    assert len(self.lattice.sites[0].type) > 0, RuntimeError("No atomic species given in lattice site 0.")
+    assert len(self.lattice.sites[1].type) > 0, RuntimeError("No atomic species given in lattice site 1.")
+    assert len(self.lattice.sites[1].type) < 3, RuntimeError("Lattice is not binary, pseudo-binary or quaternary.")
+    assert len(self.lattice.sites[0].type) < 3, RuntimeError("Lattice is not binary, pseudo-binary or quaternary.")
+    assert len(self.lattice.sites[1].type) < 3, RuntimeError("Lattice is not binary, pseudo-binary or quaternary.")
+    assert len(self.lattice.sites[0].type) != 1 or  len(self.lattice.sites[1].type) != 2
+
+    timing = time.time() 
+    local_time = time.localtime() 
 
     # gets absolute path.
     outdir = abspath(outdir)
@@ -285,15 +300,14 @@ class Vff(object):
           print >> script, "vff(structure)"
 
       # redirects C/C++/fortran streams
-      cout = this.OUTCAR if (comm.rank > 0 and len(cout)) else this.OUTCAR + "." + str(comm.rank)
-      cerr = this.ERRCAR if (comm.rank > 0 and len(cerr)) else this.ERRCAR + "." + str(comm.rank)
-      with redirect(cout=cout, cerr=cerr, fout=cout, ferr=ferr) as oestreams:
+      cout = this.OUTCAR if (comm.rank == 0 and len(this.OUTCAR)) else this.OUTCAR + "." + str(comm.rank)
+      cerr = this.ERRCAR if (comm.rank == 0 and len(this.ERRCAR)) else this.ERRCAR + "." + str(comm.rank)
+      with redirect(cout=cout, cerr=cerr, fout=cout, ferr=cerr) as oestreams:
         # now for some input variables
-        print "# VFF calculation on ", time.strftime("%m/%d/%y", start_time),\
-              " at ", time.strftime("%I:%M:%S %p", start_time)
+        print "# VFF calculation on ", time.strftime("%m/%d/%y", local_time),\
+              " at ", time.strftime("%I:%M:%S %p", local_time)
         if len(structure.name) != 0: print "# Structure named ", structure.name 
-        print this.lattice
-        print this.vff
+        print this
         print "# Performing calculations. "
         # then calculations
         result, stress = this._run(structure, comm)
@@ -302,17 +316,24 @@ class Vff(object):
         print result
         print "stress: (%e, %e, %e),\\\n        (%e, %e, %e),\\\n        (%e, %e, %e)"\
               % tuple(stress.flat)
-        print "# Computed in: ", time.strftime("%I:%M:%S %p", time.localtime() - start_time), "."
+        timing = time.time() - timing
+        hour = timing/3600
+        minute = (timing - hour*3600)/60
+        second = (timing - hour*3600-minute*60)
+        print "# Computed in: %i:%i:%f."  % (int(hour), int(minute), second) 
 
     # checks if result was successful
     extract = Extract(comm = comm, directory = outdir, vff = this)
-    assert extract.success, RuntimeError("VASP calculation did not complete in %s.\n" % (outdir))
+    assert extract.success, RuntimeError("VFF calculation did not complete in %s.\n" % (outdir))
 
     return extract
+
 
   def _run(self, structure, comm):
     """ Performs actual calculation. """
     from vff import Vff, LayeredVff
+    from tempfile import NamedTemporaryFile
+    from os import remove
 
     # Saves global lattice if set.
     old_lattice = None
@@ -320,20 +341,54 @@ class Vff(object):
     except RuntimeError: pass
     self.lattice.set_as_crystal_lattice()
     
+    # Creates temporary input file and creates functional
+    functional = None
+    if comm.rank == 0:
+      with NamedTemporaryFile(dir=self.workdir, delete=False) as file: 
+        file.write(self._create_input(structure, comm))
+    comm.barrier() # syncs all procs to make sure we are reading from same file.
+    functional = Vff(file.name, comm) if self.direction == None else LayeredVff(file.name, comm)
+    if comm.rank == 0: remove(file.name)
 
-    # creates functional and sets parameters.
-    functional = Vff(comm) if self.direction == None else LayeredVff(comm)
-    if self.direction != None: functional.direction = self.direction
-    types = [u.type for u in atoms]
-    for name, params in self.bonds.items():
-      if name.split('-') not in types: continue
-      functional.set_bond(name, params)
-    for name, params in self.bonds.items():
-      if name.split('-') not in types: continue
-      functional.set_bond(name, params)
 
     # now performs call
-    result, stress = functional(structure)
+    result, stress = functional(structure, doinit=True)
     
     # unsets lattice.
     if old_lattice != None: old_lattice.set_as_crystal_lattice()
+    return result, stress
+
+  def _create_input(self, structure, comm):
+    """ Creates a temporary file with input to vff. """
+
+    result = "<?xml version=\"1.0\" standalone=\"no\" ?>\n"\
+             "<Job>\n<Functional type=\"vff\""
+    if self.direction != None: result += " direction=\"%s %s %s\"" % tuple(self.direction.flat)
+    result += ">\n"
+    result += "<Minimizer type=\"%s\" tolerance=%e itermax=%i linetolerance=%e\n"\
+              "           linestep=%e strategy=\"%s\" verbose=\"%s\" uncertainties=%e\n"\
+              "           zeps=%e up=%i gradient=\"%s\"/>\n"\
+              % ( self.minimizer.type, self.minimizer.tolerance, self.minimizer.itermax,\
+                  self.minimizer.linetolerance, self.minimizer.linestep, self.minimizer.strategy,\
+                  "true" if self.minimizer.verbose else "false", self.minimizer.uncertainties,\
+                  self.minimizer.uncertainties, self.minimizer.up, \
+                  "true" if self.minimizer.use_gradient else "false" )
+    types = set(u.type for u in structure.atoms)
+    bonds = set(u for name in self.bonds.keys() for u in name.split('-'))
+    assert types <= bonds, "Species in structure and vff-input do not match."
+    for name, params in self.bonds.items():
+      if set(name.split('-')) <= types:
+        p = name.split('-')
+        p.extend([u for u in params])
+        result += "<Bond A=\"%s\" B=\"%s\" d0=%e alpha=%e alpha3=%e alpha4=%e alpha5=%e alpha6=%e />\n"\
+                  % tuple(p) 
+    for name, params in self.angles.items():
+      if set(name.split('-')) <= types:
+        p = name.split('-')
+        p.extend([u for u in params])
+        result += "<Angle A=\"%s\" B=\"%s\" C=\"%s\" gamma=\"%s\" sigma=\"%s\" \n"\
+                  "       beta=%e beta3=%e beta4=%e beta5=%e beta6=%e />\n"\
+                  % tuple(p) 
+    result += "</Functional>\n</Job>"
+    return result
+

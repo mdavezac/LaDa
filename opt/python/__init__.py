@@ -13,20 +13,24 @@ class _RedirectC:
     self.filename = filename
     self.append = append
   def __enter__(self):
-    from sys import stdout, stderr, stdin
-    if self.unit == streams.input: self.old = stdout
-    elif self.unit == streams.error: self.old = stderr
-    elif self.unit == streams.output: self.old = stdin
+    import sys
+    if self.unit == streams.input:    self.old = sys.stdin
+    elif self.unit == streams.error:  self.old = sys.stderr
+    elif self.unit == streams.output: self.old = sys.stdout
     else: raise RuntimeError("Unknown redirection unit.")
     self.file = open(self.filename if len(self.filename) else "/dev/null", "a" if self.append else "w")
+    if self.unit == streams.input:    sys.stdin  = self.file
+    elif self.unit == streams.error:  sys.stderr = self.file
+    elif self.unit == streams.output: sys.stdout = self.file
+    else: raise RuntimeError("Unknown redirection unit.")
     return self
   def __exit__(self, *wargs):
-    from sys import stdout, stderr, stdin
-    self.file.close()
-    if self.unit == streams.input:    stdout = self.old 
-    elif self.unit == streams.error: stderr = self.old 
-    elif self.unit == streams.output: stdin  = self.old 
+    import sys 
+    if self.unit == streams.input:    sys.stdin  = self.old 
+    elif self.unit == streams.error:  sys.stderr = self.old 
+    elif self.unit == streams.output: sys.stdout = self.old 
     else: raise RuntimeError("Unknown redirection unit.")
+    self.file.close()
       
 
 def redirect(fout=None, ferr=None, fin=None, cout=None, cerr=None, cin=None, append = False):

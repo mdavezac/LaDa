@@ -1,6 +1,9 @@
 from boost.mpi import world
 from lada.vff import Vff
+from lada.vff.vff import Vff as orig
 from lada.crystal import Structure
+import sys 
+
 vff = Vff()
 vff.lattice.set_types = ("In", "Ga"), ("As",)
 vff.lattice.scale = 6.5
@@ -11,7 +14,11 @@ vff.add_angle = "Ga", "As", "Ga", ("tet", -4.099, 9.3703)
 vff.add_angle = "In", "As", "In", ("tet", -5.753, 5.7599)
 vff.add_angle = "As", "In", "As", ("tet", -5.753, 5.7599)
 vff.add_angle = "Ga", "As", "In", (-0.35016, -4.926, 7.5651)
-
+vff.minimizer.verbose = True
+vff.minimizer.type = "gsl_bfgs2"
+vff.minimizer.itermax = 4000
+vff.minimizer.tolerance = 1e-5
+vff.minimizer.uncertainties = 1e-3
 
 structure = Structure()
 structure.set_cell = (10.0, 0.5, 0.5),\
@@ -37,5 +44,15 @@ structure.add_atoms = ((0.00, 0.00, 0.00), "Ga"),\
                       ((8.25, 0.25, 0.25), "As"),\
                       ((9.00, 0.00, 0.00), "Ga"),\
                       ((9.25, 0.25, 0.25), "As"), 
-print vff
-print structure
+
+vff.lattice.set_as_crystal_lattice()
+vff = orig("ternary.xml", world)
+print vff(structure)
+sys.exit(0)
+
+
+
+# print vff
+# print structure
+
+relaxed. cell = vff(structure, outdir = "work", comm = world)

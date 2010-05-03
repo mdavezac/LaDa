@@ -30,9 +30,18 @@ namespace LaDa
       }
     template<class T> 
 #     ifndef _MPI
-        boost::shared_ptr<T> create_mpi(bp::object const&) { return create<T>(); }
+        boost::shared_ptr<T> create_mpi(bp::object const& _object)
+        { 
+          try
+          {
+            std::string const filename = bp::extract<std::string>(_object);
+            return create_input(filename);
+          }
+          catch(...){}
+          return create<T>(); 
+        }
 #     else
-        boost::shared_ptr<T> create(boost::mpi::communicator *_c )
+        boost::shared_ptr<T> create_mpi(boost::mpi::communicator *_c )
         {
           boost::shared_ptr<T> result = create<T>();
           result->first.set_mpi(_c);
@@ -264,15 +273,17 @@ namespace LaDa
         (
           _doc
           + "\n\nThis object can be created with: \n"
-           //"  - No argument.\n"
+            "  - No argument.\n"
            //"  - A single string argument representing the path to an XML input file.\n" 
-           //"  - A single boost.mpi communicator.\n"
+            "  - A single boost.mpi communicator.\n"
             "  - Another functional, eg deepcopy.\n" 
             "  - A string argument (see above), followed by a boost.mpi communicator.\n\n" 
             "If compiled without mpi, including the communicator will have no effect.\n"
         ).c_str(),
         bp::no_init
-      ).def( "__init__", bp::make_constructor(&create_inputmpi<T>) )
+      ).def( "__init__", bp::make_constructor(&create<T>) )
+       .def( "__init__", bp::make_constructor(&create_mpi<T>) )
+       .def( "__init__", bp::make_constructor(&create_inputmpi<T>) )
        .def( "__init__", bp::make_constructor(&create_copy<T>) )
        .def
        ( 
