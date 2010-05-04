@@ -51,7 +51,7 @@ def  main():
   evaluation.target = numpy.array([1 for u in xrange(bitstring.Individual.size)])
   print "Target: ", evaluation.target
 
-  darwin = standard.add_population_evaluation( darwin, evaluation )
+  darwin.evaluation = standard.population_evaluation( darwin, evaluation )
   darwin.checkpoints = [ standard.print_offspring, 
                          standard.average_fitness,
                          standard.best,
@@ -62,11 +62,11 @@ def  main():
   mating.add( bitstring.Crossover(rate=0.25), rate=0.8 )
   mating.add( bitstring.Mutation(rate=3e0/float(bitstring.Individual.size)), rate=0.2 )
 
-  darwin.mating = standard.Mating(sequential=True)
+  darwin.mating = standard.bound_method(darwin, standard.Mating(sequential=True))
   darwin.mating.add( mating, rate=0.8 )
   darwin.mating.add( bitstring.LocalSearch(evaluation, darwin, itermax=10), rate=0.8 )
 
-  darwin.taboo = standard.Taboo(diversity=True)
+  darwin.taboo = standard.bound_method(darwin, standard.Taboo(diversity=True))
   darwin.taboo.add( ce.Taboo(maxmbs=15) ) # constrains to less than maxmbs+1 manybodies
 
   darwin.rate   = 0.2

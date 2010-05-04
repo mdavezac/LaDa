@@ -32,14 +32,14 @@ def run(self):
     loop = True
     while loop:
       indiv = self.Individual()
-      loop = self.taboo(self, indiv)
+      loop = self.taboo(indiv)
       j += 1
       assert j < max(50*self.popsize, 100), "Could not create offspring.\n"
     indiv.birth = self.current_gen
     self.population.append(indiv)
 
   # evaluates population if need be.
-  self.evaluation(self) 
+  self.evaluation() 
 
   nboffspring = max(int(float(self.popsize)*self.rate), 1)
 
@@ -53,15 +53,15 @@ def run(self):
       j = 0
       loop = True
       while loop:
-        indiv = self.mating(self)
-        loop = self.taboo(self, indiv)
+        indiv = self.mating()
+        loop = self.taboo(indiv)
         j += 1
         assert j < max(10*self.popsize, 100), "Could not create offspring.\n"
       indiv.birth = self.current_gen
       self.offspring.append(indiv)
 
     # now evaluates population.
-    self.evaluation(self)
+    self.evaluation()
 
     # finally, sort and replace.
     self.population = sorted( self.population, self.cmp_indiv )[:len(self.population)-nboffspring]

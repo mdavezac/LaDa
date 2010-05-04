@@ -23,11 +23,11 @@ def run(self):
     loop = True
     while loop:
       indiv = self.Individual()
-      loop = self.taboo(self, indiv)
+      loop = self.taboo(indiv)
       j += 1
       assert j < max(50*self.popsize, 100), "Could not create offspring.\n"
     indiv.birth = self.current_gen
     self.population = [indiv]
-    self.evaluation(self) 
+    self.evaluation() 
 
     self.current_gen += 1

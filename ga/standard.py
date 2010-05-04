@@ -3,28 +3,7 @@
     @group Checkpoints: best, print_population, print_offspring,
                         average_fitness, _check_generation
 """
-from decorator import decorator
-
-@decorator
-def _mpi_to_single(method, *args, **kwargs):
-  """ Perform method on one proc and broadcasts the return.
-  
-      Second argumnent should have comm attribute.
-  """
-  from boost.mpi import broadcast
-  if args[1].comm == None:
-    return method(*args, **kwargs)
-  elif args[1].comm.rank == 0:
-    return broadcast(args[1].comm, method(*args, **kwargs), 0)
-  return broadcast(args[1].comm, root = 0)
-
-def _bound_mpi_extraction(method, *args, **kwargs): 
-  """ Reads from root, and broadcasts to all 
-  
-      Decorator for bound methods.
-  """
-  assert len(args) >= 1, "Decorator for bound methods only.\n"
-  return _extract_which_is_self(0, method, *args, **kwargs)
+from ...opt.decorators import broadcast_result
 
 class Taboo(object):
   """ A container of taboo operators.
@@ -125,12 +104,14 @@ def _check_generation( self ):
   if self.max_gen < 0: return True
   return self.current_gen < self.max_gen
   
-def add_population_evaluation(self, evaluation):
+def population_evaluation(self, evaluation):
   """ Standard population evaluation. 
       Evaluates individual only if fitness attribute does not exist. 
       Fitness is the return of evaluation subroutine given on input.
       evaluation subroutine should take an individual at its only argument.
   """
+  from new import instancemethod
+
   def popeval(self):
     for indiv in self.population:
       if not hasattr(indiv, "fitness" ): 
@@ -138,9 +119,9 @@ def add_population_evaluation(self, evaluation):
     for indiv in self.offspring:
       if not hasattr(indiv, "fitness" ): 
         indiv.fitness = self.indiv_evaluation(indiv)
+
   self.indiv_evaluation = evaluation
-  self.evaluation = popeval
-  return self
+  return instancemethod(popeval, self, self.__class__)
 
 
 class Mating(object):
@@ -174,7 +155,7 @@ class Mating(object):
     self.operators.append( (function, rate, nb_args) )
   
 
-  @_mpi_to_single
+  @broadcast_result(attr=True, which=1) 
   def __call__(self, darwin):
     """ Creates an offspring. """
     import random
@@ -226,6 +207,10 @@ class Mating(object):
     assert indiv != None, "%s" % (self.sequential)
     return indiv
 
+def bound_method(self, method):
+  """ Returns a method bound to self. """
+  from new import instancemethod
+  return instancemethod(method, self, self.__class__) 
 
 def add_checkpoint(self, _chk):
   """ Adds a checkpoint to self.checkpoints. """
@@ -257,7 +242,7 @@ def fill_attributes(self):
     self.Individual = Individual
 
   # Checks whether self has a taboo object.
-  if not hasattr(self, "taboo"): self.taboo = Taboo()
+  if not hasattr(self, "taboo"): self.taboo = bound_method(self, Taboo())
 
   # Checks whether self has a selection object.
   if not hasattr(self, "selection"): self.selection = tournament
