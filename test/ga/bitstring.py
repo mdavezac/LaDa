@@ -1,8 +1,3 @@
-#
-#  Version: $Id$
-#
-
-
 class Eval:
 
   def __init__(self, size=10):
@@ -32,9 +27,10 @@ class PrintNbEvals:
 
     
 def  main():
-  from lada.ga import darwin as dd, bitstring, standard, ce
-  import numpy
   import copy
+  from boost.mpi import world
+  import numpy
+  from lada.ga import darwin as dd, bitstring, standard, ce
 
   class Darwin: pass
 
@@ -44,14 +40,14 @@ def  main():
       if indiv.fitness == 0e0: return False
     return True
 
-  bitstring.Individual.size =50
+  bitstring.Individual.size =60
   darwin = Darwin()
 
   evaluation = Eval()
   evaluation.target = numpy.array([1 for u in xrange(bitstring.Individual.size)])
   print "Target: ", evaluation.target
 
-  darwin.evaluation = standard.population_evaluation( darwin, evaluation )
+  darwin.evaluation = standard.mpi_population_evaluation( darwin, evaluation )
   darwin.checkpoints = [ standard.print_offspring, 
                          standard.average_fitness,
                          standard.best,
@@ -64,14 +60,14 @@ def  main():
 
   darwin.mating = standard.bound_method(darwin, standard.Mating(sequential=True))
   darwin.mating.add( mating, rate=0.8 )
-  darwin.mating.add( bitstring.LocalSearch(evaluation, darwin, itermax=10), rate=0.8 )
 
   darwin.taboo = standard.bound_method(darwin, standard.Taboo(diversity=True))
-  darwin.taboo.add( ce.Taboo(maxmbs=15) ) # constrains to less than maxmbs+1 manybodies
 
-  darwin.rate   = 0.2
+  darwin.rate   = 1
   darwin.popsize = 100
   darwin.max_gen = 300
+  darwin.comm = world
+  darwin.comm.do_print = darwin.comm.rank == 0
 
   dd.run(darwin)
 

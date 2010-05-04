@@ -3,7 +3,12 @@
     @group Checkpoints: best, print_population, print_offspring,
                         average_fitness, _check_generation
 """
-from ...opt.decorators import broadcast_result
+from ..opt.decorators import broadcast_result
+
+def bound_method(self, method):
+  """ Returns a method bound to self. """
+  from new import instancemethod
+  return instancemethod(method, self, self.__class__) 
 
 class Taboo(object):
   """ A container of taboo operators.
@@ -35,6 +40,7 @@ class Taboo(object):
 
   def __call__(self, darwin, indiv):
     """ Returns true if any one operator returns true. """
+    import sys
     for taboo in self.taboos:
       if taboo(darwin, indiv): return True
 
@@ -120,9 +126,42 @@ def population_evaluation(self, evaluation):
       if not hasattr(indiv, "fitness" ): 
         indiv.fitness = self.indiv_evaluation(indiv)
 
-  self.indiv_evaluation = evaluation
-  return instancemethod(popeval, self, self.__class__)
+  popeval = bound_method(self, popeval)
+  popeval.__doc__ = population_evaluation.__doc__
+  return popeval
 
+def mpi_population_evaluation(self, evaluator):
+  """ Population and offspring evaluation are splitted across processors.
+  
+      Usage:
+      >>> darwin.evaluation = standard.mpi_population_evaluation
+  """
+  def evaluation(self):
+    from boost.mpi import scatter, all_gather
+    eval_these = None
+    if self.comm.rank == 0:
+      eval_these = [(u, True) for u in self.population if not hasattr(u, "fitness")]
+      eval_these.extend([(u, False) for u in self.offspring if not hasattr(u, "fitness")])
+      eval_these = [ [u for i, u in enumerate(eval_these) if i % self.comm.size == j]\
+                     for j in range(self.comm.size) ]
+      print "eval_these: ", [ len(u) for u in eval_these]
+    self.comm.barrier()
+    dummy = scatter(self.comm, values=eval_these, root=0)
+    eval_these = dummy
+    print "3 eval_these: ", self.comm.size, self.comm.rank
+    self.comm.barrier()
+    # remove those individuals without fitness from populations.
+    self.population = [u for u in self.population if hasattr(u, "fitness")]
+    self.offspring = [u for u in self.offspring if hasattr(u, "fitness")]
+    # now evaluates individuals.
+    for u in eval_these: u[0].fitness = evaluator(u[0])
+    # finally, add individuals to each population.
+    eval_these = [ u for v in all_gather(self.comm, eval_these) for u in v ]
+    self.population.extend( u[0] for u in eval_these if u[1] )
+    self.offspring.extend( u[0] for u in eval_these if not u[1] )
+  evaluation.__doc__ = mpi_population_evaluation.__doc__
+  evaluation = bound_method(self, evaluation)
+  return evaluation
 
 class Mating(object):
   """ Aggregator of mating operators. 
@@ -151,7 +190,7 @@ class Mating(object):
     elif hasattr(function, "func_code"): nb_args = function.func_code.co_argcount
     else: nb_args = function.__call__.im_func.func_code.co_argcount - 1
 
-    if rate <= 0e0: raise ValueError, "rate argument cannot be negative (%s)." % (rate)
+    assert rate > 0e0, ValueError("rate argument cannot be negative (%s)." % (rate))
     self.operators.append( (function, rate, nb_args) )
   
 
@@ -207,10 +246,6 @@ class Mating(object):
     assert indiv != None, "%s" % (self.sequential)
     return indiv
 
-def bound_method(self, method):
-  """ Returns a method bound to self. """
-  from new import instancemethod
-  return instancemethod(method, self, self.__class__) 
 
 def add_checkpoint(self, _chk):
   """ Adds a checkpoint to self.checkpoints. """

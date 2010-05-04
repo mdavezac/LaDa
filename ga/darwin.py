@@ -1,6 +1,7 @@
 """ Holds a single function for running a ga algorithm """
 def run(self):
   """ Performs a Genetic Algorithm search """
+  from boost.mpi import broadcast
   import standard
  
   # runs the checkpoints
@@ -64,8 +65,10 @@ def run(self):
     self.evaluation()
 
     # finally, sort and replace.
-    self.population = sorted( self.population, self.cmp_indiv )[:len(self.population)-nboffspring]
-    self.population.extend( self.offspring )
+    if self.comm.rank == 0:
+      self.population = sorted( self.population, self.cmp_indiv )[:len(self.population)-nboffspring]
+      self.population.extend( self.offspring )
+    self.population = broadcast(self.comm, self.population, 0)
     
     self.offspring = []
     self.current_gen += 1 
