@@ -17,12 +17,6 @@ class Eval:
       result += fabs(r)
     return float(result) / float(len(indiv.genes))
 
-class PrintNbEvals:
-  def __init__(self, evaluation): 
-    self.evaluation = evaluation
-  def __call__(self, darwin):
-    print "Number of functional evaluations: ", self.evaluation.nbevals
-    return True
 
 
     
@@ -40,18 +34,26 @@ def  main():
       if indiv.fitness == 0e0: return False
     return True
 
-  bitstring.Individual.size =60
+  bitstring.Individual.size = 80
   darwin = Darwin()
+  darwin.comm = world
+  darwin.comm.do_print = darwin.comm.rank == 0
 
   evaluation = Eval()
   evaluation.target = numpy.array([1 for u in xrange(bitstring.Individual.size)])
-  print "Target: ", evaluation.target
+  if darwin.comm.do_print: print "Target: ", evaluation.target
 
   darwin.evaluation = standard.mpi_population_evaluation( darwin, evaluation )
+
+  def print_nb_eval(darwin):
+    if not darwin.comm.do_print: return True
+    print "Number of functional evaluations: ", evaluation.nbevals
+    return True
+
   darwin.checkpoints = [ standard.print_offspring, 
                          standard.average_fitness,
-                         standard.best,
-                         PrintNbEvals(evaluation),
+                         standard.best, 
+                         print_nb_eval,
                          stop_at_zero ]
 
   mating = standard.Mating(sequential=False)
@@ -63,11 +65,9 @@ def  main():
 
   darwin.taboo = standard.bound_method(darwin, standard.Taboo(diversity=True))
 
-  darwin.rate   = 1
+  darwin.rate   = 0.1
   darwin.popsize = 100
   darwin.max_gen = 300
-  darwin.comm = world
-  darwin.comm.do_print = darwin.comm.rank == 0
 
   dd.run(darwin)
 

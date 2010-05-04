@@ -3,8 +3,6 @@
     @group Checkpoints: best, print_population, print_offspring,
                         average_fitness, _check_generation
 """
-from ..opt.decorators import broadcast_result
-
 def bound_method(self, method):
   """ Returns a method bound to self. """
   from new import instancemethod
@@ -126,39 +124,74 @@ def population_evaluation(self, evaluation):
       if not hasattr(indiv, "fitness" ): 
         indiv.fitness = self.indiv_evaluation(indiv)
 
-  popeval = bound_method(self, popeval)
   popeval.__doc__ = population_evaluation.__doc__
+  popeval = bound_method(self, popeval)
   return popeval
 
-def mpi_population_evaluation(self, evaluator):
+def mpi_population_evaluation(self, evaluator, pools = None):
   """ Population and offspring evaluation are splitted across processors.
   
       Usage:
-      >>> darwin.evaluation = standard.mpi_population_evaluation
+      >>> darwin.evaluation = standard.mpi_population_evaluation(darwin, evaluator, pools)
   """
-  def evaluation(self):
+  from boost.mpi import broadcast
+  # split communicator along number of pools
+  if pools == None: pools = self.comm.size
+  color = self.comm.rank % pools
+  local_comm = self.comm.split(color)
+  heads_comm = self.comm.split(1 if local_comm.rank == 0 else 2)
+
+  def check_pops(this, population):
+    if not __debug__: return
+    new_pop = broadcast(this.comm, population, 0)
+    assert len(new_pop) == len(population),\
+           RuntimeError("Populations across processes have different lengths.")
+    for a, b in zip(new_pop, population):
+      assert a == b, RuntimeError("Populations are not equivalent across processes.")
+      ahas, bhas = hasattr(a, "fitness"), hasattr(b, "fitness")
+      assert (ahas and bhas) or not (ahas or bhas),\
+            RuntimeError("Populations do not have equivalently evaluated invidiuals")
+      if ahas and bhas:
+        assert a.fitness == b.fitness,\
+        RuntimeError("Fitness are not equivalent across processes.")
+    this.comm.barrier()
+
+  def evaluation(this):
     from boost.mpi import scatter, all_gather
-    eval_these = None
-    if self.comm.rank == 0:
-      eval_these = [(u, True) for u in self.population if not hasattr(u, "fitness")]
-      eval_these.extend([(u, False) for u in self.offspring if not hasattr(u, "fitness")])
-      eval_these = [ [u for i, u in enumerate(eval_these) if i % self.comm.size == j]\
-                     for j in range(self.comm.size) ]
-      print "eval_these: ", [ len(u) for u in eval_these]
+
+    gather_these = []
+    def iterpops(*pops):  # goes through both populations, one after the other.
+      for pop in pops:
+        for u in pop:
+          if not hasattr(u, "fitness"): yield u
+
+    # Now goes throught individuals which need be evaluated
+    for index, indiv in enumerate(iterpops(this.population, this.offspring)):
+      if index % pools == color: 
+        evaluator.comm = local_comm
+        fitness = evaluator(indiv)
+        if local_comm.rank == 0: gather_these.append( (indiv, fitness) )
+
+    # gathers all newly computed individuals. 
+    if local_comm.rank == 0:
+      gather_these = all_gather(heads_comm, gather_these)
+    gather_these = broadcast(local_comm, gather_these, 0)
+
+    # now reinserts them into populations.
+    for index, indiv in enumerate(iterpops(this.population, this.offspring)):
+      assert len(gather_these) > index % pools
+      assert len(gather_these[index % pools]) != 0
+      a, fitness = gather_these[index % pools].pop(0)
+      indiv.fitness = fitness
+      indiv = a
     self.comm.barrier()
-    dummy = scatter(self.comm, values=eval_these, root=0)
-    eval_these = dummy
-    print "3 eval_these: ", self.comm.size, self.comm.rank
-    self.comm.barrier()
-    # remove those individuals without fitness from populations.
-    self.population = [u for u in self.population if hasattr(u, "fitness")]
-    self.offspring = [u for u in self.offspring if hasattr(u, "fitness")]
-    # now evaluates individuals.
-    for u in eval_these: u[0].fitness = evaluator(u[0])
-    # finally, add individuals to each population.
-    eval_these = [ u for v in all_gather(self.comm, eval_these) for u in v ]
-    self.population.extend( u[0] for u in eval_these if u[1] )
-    self.offspring.extend( u[0] for u in eval_these if not u[1] )
+    for index, indiv in enumerate(iterpops(this.population, this.offspring)):
+      assert False, "should not be here"
+    this.comm.barrier()
+
+    check_pops(this, this.population)
+    check_pops(this, this.offspring)
+    
   evaluation.__doc__ = mpi_population_evaluation.__doc__
   evaluation = bound_method(self, evaluation)
   return evaluation
@@ -194,7 +227,6 @@ class Mating(object):
     self.operators.append( (function, rate, nb_args) )
   
 
-  @broadcast_result(attr=True, which=1) 
   def __call__(self, darwin):
     """ Creates an offspring. """
     import random

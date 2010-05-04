@@ -1,8 +1,33 @@
 """ Holds a single function for running a ga algorithm """
+
+def is_synced(comm):
+  if not __debug__: return
+
+  from boost.mpi import broadcast
+  result = broadcast(comm, "Checking if processes are synced.", 0)
+  assert result == "Checking if processes are synced.", \
+         RuntimeError("Processes are not synced: %s " % result) 
+
+def _check_population(self, population):
+  from boost.mpi import broadcast
+  if not __debug__: return
+  new_pop = broadcast(self.comm, population, 0)
+  for a, b in zip(new_pop, population):
+    assert a == b, RuntimeError("Populations are not equivalent across processes.")
+    ahas, bhas = hasattr(a, "fitness"), hasattr(b, "fitness")
+    assert (ahas and bhas) or not (ahas or bhas),\
+          RuntimeError("Populations do not have equivalently evaluated invidiuals")
+    if ahas and bhas:
+      assert a.fitness == b.fitness,\
+      RuntimeError("Fitness are not equivalent across processes.")
+  self.comm.barrier()
+
+
 def run(self):
   """ Performs a Genetic Algorithm search """
   from boost.mpi import broadcast
   import standard
+  import sys
  
   # runs the checkpoints
   def checkpoints():
@@ -28,11 +53,10 @@ def run(self):
 
   # creates population if it does not exist.
   while len(self.population) < self.popsize:
-    indiv = self.Individual()
     j = 0
     loop = True
     while loop:
-      indiv = self.Individual()
+      indiv = broadcast(self.comm, self.Individual() if self.comm.rank == 0 else None, 0)
       loop = self.taboo(indiv)
       j += 1
       assert j < max(50*self.popsize, 100), "Could not create offspring.\n"
@@ -42,6 +66,7 @@ def run(self):
   # evaluates population if need be.
   self.evaluation() 
 
+  # Number of offspring per generation.
   nboffspring = max(int(float(self.popsize)*self.rate), 1)
 
   # generational loop
@@ -50,16 +75,20 @@ def run(self):
       print "Starting generation ", self.current_gen
 
     # tries and creates offspring.
-    while len(self.offspring) < nboffspring:
-      j = 0
-      loop = True
-      while loop:
-        indiv = self.mating()
-        loop = self.taboo(indiv)
-        j += 1
-        assert j < max(10*self.popsize, 100), "Could not create offspring.\n"
-      indiv.birth = self.current_gen
-      self.offspring.append(indiv)
+    if self.comm.rank == 0:
+      while len(self.offspring) < nboffspring:
+        j = 0
+        loop = True
+        while loop:
+          indiv = self.mating()
+          loop = self.taboo(indiv)
+          j += 1
+          assert j < max(10*self.popsize, 100), "Could not create offspring.\n"
+        indiv.birth = self.current_gen
+        self.offspring.append(indiv)
+      broadcast(self.comm, self.offspring, 0)
+    else: self.offspring = broadcast(self.comm, self.offspring, 0)
+
 
     # now evaluates population.
     self.evaluation()
@@ -69,6 +98,7 @@ def run(self):
       self.population = sorted( self.population, self.cmp_indiv )[:len(self.population)-nboffspring]
       self.population.extend( self.offspring )
     self.population = broadcast(self.comm, self.population, 0)
+
     
     self.offspring = []
     self.current_gen += 1 
