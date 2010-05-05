@@ -419,7 +419,7 @@ class Vff(object):
     from copy import deepcopy
     from os.path import exists, isdir, abspath
     from boost.mpi import world
-    from ..opt import redirect
+    from ..opt import redirect_all, redirect
     from ..opt.changedir import Changedir
 
     # bull shit. 
@@ -478,15 +478,20 @@ class Vff(object):
       # redirects C/C++/fortran streams
       cout = this.OUTCAR if (comm.rank == 0 and len(this.OUTCAR)) else this.OUTCAR + "." + str(comm.rank)
       cerr = this.ERRCAR if (comm.rank == 0 and len(this.ERRCAR)) else this.ERRCAR + "." + str(comm.rank)
-      with redirect(cout=cout, cerr=cerr, fout=cout, ferr=cerr) as oestreams:
+      with redirect(pyout=cout, pyerr=cerr) as oestream:
         # now for some input variables
         print "# VFF calculation on ", time.strftime("%m/%d/%y", local_time),\
               " at ", time.strftime("%I:%M:%S %p", local_time)
         if len(structure.name) != 0: print "# Structure named ", structure.name 
         print this
         print "# Performing calculations. "
+      # must close/reopen redirection context, otherwise it seem that they 
+      # are closed anyhow on exiting from the Cpp function call. The following context
+      # should redirect the terminals itself, eg fortran, c, c++, python.
+      with redirect_all(output=cout, error=cerr, append=True) as oestreams:
         # then calculations
         result, stress = this._run(structure, comm)
+      with redirect(pyout=cout, pyerr=cerr, append=True) as oestream:
         # finally, the dam results.
         print "# Result of vff calculations. "
         print result
