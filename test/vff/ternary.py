@@ -20,6 +20,7 @@ vff.minimizer.itermax = 4000
 vff.minimizer.tolerance = 1e-5
 vff.minimizer.uncertainties = 1e-3
 
+vff.lattice.set_as_crystal_lattice()
 structure = Structure()
 structure.set_cell = (10.0, 0.5, 0.5),\
                      (0.00, 0.0, 0.5),\
@@ -45,14 +46,9 @@ structure.add_atoms = ((0.00, 0.00, 0.00), "Ga"),\
                       ((9.00, 0.00, 0.00), "Ga"),\
                       ((9.25, 0.25, 0.25), "As"), 
 
-vff.lattice.set_as_crystal_lattice()
-vff = orig("ternary.xml", world)
-print vff(structure)
-sys.exit(0)
-
-
-
 # print vff
 # print structure
 
-relaxed. cell = vff(structure, outdir = "work", comm = world)
+out = vff(structure, outdir = "work", comm = world)
+print out.success
+print out.stress

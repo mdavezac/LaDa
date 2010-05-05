@@ -1,7 +1,7 @@
 """ Valence Force Field functional for zinc-blende materials """
 
 # imports C++ extension
-from ..opt.decorators import add_setter
+from ..opt.decorators import add_setter, broadcast_result, make_cached
 from sys import exit
 import sys
 
@@ -44,23 +44,196 @@ class Extract(object):
 
 
   @property
+  @broadcast_result(attr=True, which=0)
   def success(self):
     """ Checks for VFF success.
         
         At this point, checks for files and 
     """
-    from os.path import isdir, exists, join
-    import re
+    from os.path import exists, join
     path = self.OUTCAR
     if len(self.directory): path = join(self.directory, self.OUTCAR)
     if not exists(path): return False
 
     with open(path, "r") as file:
-      regex = re.compile(r"""Computed in:""", re.X)
       for line in file:
-        if regex.search(line) != None: return True
+        if line.find("# Computed in:") != -1: return True
     return False
+ 
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def structure(self):
+    """ Gets structure from self.L{OUTCAR}. """
+    from os.path import exists, join
+    path = self.OUTCAR
+    if len(self.directory): path = join(self.directory, self.OUTCAR)
+    assert exists(path), RuntimeError("Could not find file %s:" % (file))
 
+    lines = "from lada.crystal import Structure\n"
+    with open(path, "r") as file:
+      # find start of calculations.
+      for line in file:
+        if line.find("# Result of vff calculations.") != -1: break
+      # find start of structure definition.
+      for line in file:
+        if line.find("# structure definition.") != -1: break;
+      # read until end of structure definition
+      for line in file:
+        lines += line
+        if line.find("structure.add_atom") != -1: break
+      for line in file:
+        if line.find("structure.add_atom") == -1: break
+        lines += line
+    local_dict = {}
+    exec lines in globals(), local_dict
+    return local_dict["structure"]
+
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def energy(self):
+    """ Gets energy from self.L{OUTCAR}. """
+    from os.path import exists, join
+    path = self.OUTCAR
+    if len(self.directory): path = join(self.directory, self.OUTCAR)
+    assert exists(path), RuntimeError("Could not find file %s:" % (file))
+
+    with open(path, "r") as file:
+      # find start of calculations.
+      for line in file:
+        if line.find("# Result of vff calculations.") != -1: break
+      for line in file:
+        if line.find("# structure definition.") != -1: break;
+      for line in file:
+        if line.find("structure.energy") != -1:
+          return float(line.split()[2])
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def stress(self):
+    """ Gets minimizer from self.L{OUTCAR}. """
+    from os.path import exists, join
+    from numpy import array
+    path = self.OUTCAR
+    if len(self.directory): path = join(self.directory, self.OUTCAR)
+    assert exists(path), RuntimeError("Could not find file %s:" % (file))
+
+    result = []
+    with open(path, "r") as file:
+      # find start of calculations.
+      for line in file:
+        if line.find("# Result of vff calculations.") != -1: break
+      lines = []
+      for line in file:
+        if line.find("stress: ") != -1: lines.append(line); break
+      for i, line in zip(range(2), file):
+        lines.append(line)
+      for line in lines:
+        line = line.replace("stress:",'')
+        line = line.replace('(','')
+        line = line.replace(')','')
+        line = line.replace(',','')
+        line = line.replace('\\','')
+        result.append( [ float(u) for u in line.split() ] )
+    return array(result, dtype="float64")
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def lattice(self):
+    """ Gets lattice from self.L{OUTCAR}. """
+    from os.path import exists, join
+    path = self.OUTCAR
+    if len(self.directory): path = join(self.directory, self.OUTCAR)
+    assert exists(path), RuntimeError("Could not find file %s:" % (file))
+    lines = "from lada.crystal import Lattice\n"
+    with open(path, "r") as file:
+      # find start of lattice definition.
+      for line in file:
+        if line.find("# lattice definition.") != -1: break;
+      # read until end of lattice definition
+      for line in file:
+        lines += line
+        if line.find("lattice.add_site") != -1: break
+      for line in file:
+        if line.find("lattice.add_site") == -1: break
+        lines += line
+    local_dict = {}
+    exec lines in globals(), local_dict
+    return local_dict["lattice"]
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def minimizer(self):
+    """ Gets minimizer from self.L{OUTCAR}. """
+    from os.path import exists, join
+    path = self.OUTCAR
+    if len(self.directory): path = join(self.directory, self.OUTCAR)
+    assert exists(path), RuntimeError("Could not find file %s:" % (file))
+    lines = "from lada.minimizer import Minimizer\n"
+    with open(path, "r") as file:
+      # find start of lattice definition.
+      for line in file:
+        if line.find("# Minimizer definition.") != -1: break;
+      # read until end of structure definition
+      for line in file:
+        if line.find("minimizer") == -1: break
+        lines += line
+    local_dict = {}
+    exec lines in globals(), local_dict
+    return local_dict["minimizer"]
+
+  @property
+  @make_cached
+  def vff(self):
+    """ Gets structure from self.L{OUTCAR}. """
+    from os.path import exists, join
+    lattice = self.lattice
+    minimizer = self.minimizer
+    
+    path = self.OUTCAR
+    if len(self.directory): path = join(self.directory, self.OUTCAR)
+    assert exists(path), RuntimeError("Could not find file %s:" % (file))
+
+    @broadcast_result(attr=True, which=0)
+    def get_vff(this):
+      lines = "from lada.vff import Vff\n"
+      with open(path, "r") as file:
+        # find start of lattice definition.
+        for line in file:
+          if line.find(" VFF definition:") != -1: break;
+        # read until end of structure definition
+        for line in file:
+          if line.find("vff") == -1: break
+          lines += line
+      return lines
+
+    local_dict = {"lattice": lattice, "minimizer": minimizer}
+    exec get_vff(self) in globals(), local_dict
+    return local_dict["vff"]
+
+  def solo(self):
+    """ Extraction on a single process.
+
+        Sometimes, it is practical to perform extractions on a single process
+        only, eg without blocking mpi calls. C{self.L{solo}()} returns an
+        extractor for a single process:
+        
+        >>> # prints only on proc 0.
+        >>> if boost.mpi.world.rank == 0: print extract.solo().structure
+    """
+    from copy import deepcopy
+    
+    if self.comm == None: return self
+    comm = self.comm 
+    self.comm = None
+    copy = deepcopy(self)
+    self.comm = comm
+    return copy
 
 
 class Vff(object): 
@@ -222,14 +395,14 @@ class Vff(object):
     result += "vff.relax = %s\n" % ("True" if self.relax else "False")
     for name, params in self.bonds.items():
       A, B = name.split("-")
-      result += "vff.add_bond = %s, %s, (%e" % (A, B, params[0])
+      result += "vff.add_bond = \"%s\", \"%s\", (%e" % (A, B, params[0])
       for i, u in enumerate(params[1:]): 
         if sum([abs(j) for j in params[i+1:]]) / float(len(params)-i-1) < 1e-12: break;
         result += ", %e" % (u)
       result += ")\n"
     for name, params in self.angles.items():
       A, B, C = name.split("-")
-      result += "vff.add_angle = %s, %s, %s, " % (A, B, C)
+      result += "vff.add_angle = \"%s\", \"%s\", \"%s\", " % (A, B, C)
       if abs(params[0] + 1e0/3e0) < 1e-12: result += "(\"tet\""
       else: result += "(%e" % (params[0])
       for i, u in enumerate(params[1:]):
@@ -267,6 +440,9 @@ class Vff(object):
     # make this functor stateless.
     this      = deepcopy(self)
     outdir    = deepcopy(outdir)
+    assert abs(structure.scale) > 1e-12 or abs(self.lattice.scale) > 1e-12,\
+           RuntimeError("Scales in input structure and lattice are both zero.")
+    if abs(structure.scale) < 1e-12: structure.scale = self.lattice.scale
 
     # if other keyword arguments are present, then they are assumed to be
     # attributes of self, with value to use for calculations launch. 

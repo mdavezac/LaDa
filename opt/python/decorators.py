@@ -55,13 +55,13 @@ def broadcast_result(key=False, attr=False, which=0):
       assert hasattr(args[which], "comm"),\
              RuntimeError("Argument %i does not have communicator." %(which))
       # nonetype case: each proc performs same action. 
-      if args[which].comm == None: return method(args[which], *args, **kwargs)
+      if args[which].comm == None: return method(*args, **kwargs)
       # not an mpi process.
-      if args[which].comm.size == 1: return method(args[which], *args, **kwargs)
+      if args[which].comm.size == 1: return method(*args, **kwargs)
       # is an mpi process.
       error, result, exception = False, None, None
       if args[which].comm.rank == 0: # root process
-        try: result = method(args[which], *args, **kwargs)
+        try: result = method(*args, **kwargs)
         except Exception as exception: error, result = True, (str(exception), world.rank)
         broadcast(args[which].comm, (error, result), root=0)
         assert not error, exception
