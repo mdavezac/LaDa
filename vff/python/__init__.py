@@ -267,16 +267,26 @@ class Vff(object):
     """ Bond parameters. """
     self.angles = {}
     """ Angle parameters. """
-    self.OUTCAR = "vffout" 
+    self.OUTCAR = "vff_out" 
     """ File where to redirect output. """
-    self.ERRCAR = "vfferr" 
+    self.ERRCAR = "vff_err" 
     """ File where to redirect errors. """
     self.ESCANCAR = "atomic_input"
     """ File where to print atomic inputs for escan. """
     self.SCRIPTCAR = "vff_script.py"
     """ VFF script file for easy reruns. """
-    self.workdir = workdir
-    """ Working directory. """
+    self._workdir = workdir
+    """ Private reference to the working directory. """
+
+  def _get_workdir(self): return self._workdir
+  def _set_workdir(self, workdir):
+    from os.path import abspath
+    self._workdir = abspath(workdir) if workdir != None else None
+  workdir = property( _get_workdir, _set_workdir, 
+                      """ Working directory where calculations are performed. 
+                      
+                          Absolute path is determined when workdir is set.
+                      """ )
 
   def _add_bond(self, args):
     """ Adds/Modifies the bond parameter dictionary.
