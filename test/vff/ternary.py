@@ -46,9 +46,11 @@ structure.add_atoms = ((0.00, 0.00, 0.00), "Ga"),\
                       ((9.00, 0.00, 0.00), "Ga"),\
                       ((9.25, 0.25, 0.25), "As"), 
 
+vff.direction = structure.cell[:,0]
+
 # print vff
 # print structure
 
 out = vff(structure, outdir = "work", comm = world)
 print out.success
-print out.stress
+print out.structure.cell
