@@ -108,7 +108,7 @@ def _check_generation( self ):
   if self.max_gen < 0: return True
   return self.current_gen < self.max_gen
   
-def population_evaluation(self, evaluation):
+def population_evaluation(self, evaluator):
   """ Standard population evaluation. 
       Evaluates individual only if fitness attribute does not exist. 
       Fitness is the return of evaluation subroutine given on input.
@@ -119,10 +119,10 @@ def population_evaluation(self, evaluation):
   def popeval(self):
     for indiv in self.population:
       if not hasattr(indiv, "fitness" ): 
-        indiv.fitness = self.indiv_evaluation(indiv)
+        indiv.fitness = evaluator(indiv)
     for indiv in self.offspring:
       if not hasattr(indiv, "fitness" ): 
-        indiv.fitness = self.indiv_evaluation(indiv)
+        indiv.fitness = evaluator(indiv)
 
   popeval.__doc__ = population_evaluation.__doc__
   popeval = bound_method(self, popeval)
