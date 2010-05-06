@@ -13,11 +13,6 @@
 
 namespace LaDa
 {
-  namespace Crystal 
-  {
-    class Structure;
-  }
-
   namespace Pescan
   {
     class BandGap;

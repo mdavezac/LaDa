@@ -115,6 +115,9 @@ class Converter(object):
       return array([ which(u) for u in self.structure.atoms ])
     else:  # bitstring.
       if len(object) != len(self.structure.atoms): 
+        print object
+        print len(self.structure.atoms)
+        print self.structure
         raise ValueError, "Bitstring and epitaxial structure are not compatible.\n"
       result = Structure(self.structure)
       for i, atom in enumerate(result.atoms):

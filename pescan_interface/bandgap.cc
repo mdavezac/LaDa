@@ -32,7 +32,7 @@ namespace LaDa
       void nolaunch_functional( const Crystal::Structure &_str, Bands &bands );
 #   endif
 
-    types::t_real BandGap::folded_spectrum(const Crystal::Structure &_str)
+    types::t_real BandGap::folded_spectrum(types::t_unsigned _bgstates)
     {
       const t_Path olddirname( dirname );
       create_directory();
@@ -84,7 +84,7 @@ namespace LaDa
         escan.method = ALL_ELECTRON;
         Print :: out << "Failed to find non-metallic band gap.\n"
                      << "Will try an all-electron calculation." << Print::endl;
-        all_electron( _str );
+        all_electron( _bgstates );
       }
   #else
       nolaunch_functional( _str, bands );
@@ -156,23 +156,14 @@ namespace LaDa
       Eref  = keeprefs;
     }
     
-    types::t_real BandGap::all_electron( const Crystal::Structure &_str ) 
+    types::t_real BandGap::all_electron(types::t_unsigned _bgstates)
     {
-      Crystal::Structure::t_Atoms::const_iterator i_atom = _str.atoms.begin();
-      Crystal::Structure::t_Atoms::const_iterator i_atom_end = _str.atoms.end();
+
       types::t_unsigned oldnbstates = escan.nbstates;
-      types::t_unsigned bgstates = 0;
-      for(; i_atom != i_atom_end; ++i_atom)
-      {
-        Crystal::StrAtom atom; 
-        _str.lattice->convert_Atom_to_StrAtom( *i_atom, atom );
-        bgstates += Physics::Atomic::Charge( atom.type );
-      }
-      escan.nbstates += bgstates + 2;
+      escan.nbstates += _bgstates + 2;
       if (    escan.potential != Escan::SPINORBIT
            or math::is_zero( escan.kpoint.squaredNorm() ) )
-       { escan.nbstates >>= 1; bgstates >>= 1; }
-
+       { escan.nbstates >>= 1; _bgstates >>= 1; }
       __TRYCODE( Interface::operator()();,
                  "All-electron calculation failed.\n" )
 
@@ -181,13 +172,13 @@ namespace LaDa
   #ifndef _NOLAUNCH
       foreach( types::t_real ei, eigenvalues )
         std::cout << " " << ei;
-      std::cout << " " << bgstates << "\n";
-      bands.cbm = eigenvalues[ bgstates ];
-      bands.vbm = eigenvalues[ bgstates - 1 ];
+      std::cout << " " << _bgstates << "\n";
+      bands.cbm = eigenvalues[ _bgstates ];
+      bands.vbm = eigenvalues[ _bgstates - 1 ];
       std::cout << "BandGap: " << bands.gap() << " = " 
                 << bands.cbm << " - " << bands.vbm << std::endl;
   #else
-      nolaunch_functional( _str, bands );
+      LADA_DOASSERT(true, "not implemented")
   #endif // _NOLAUNCH
 
       destroy_directory_();

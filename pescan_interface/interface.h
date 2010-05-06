@@ -73,9 +73,9 @@ namespace LaDa
   {
 
     //! Number of valence states in crystal structures.
-    size_t nb_valence_states( const Crystal::Structure &_str );
+    types::t_unsigned nb_valence_states( const Crystal::Structure &_str );
     //! Number of valence states in crystal structures.
-    size_t nb_valence_states( const Crystal::TStructure<std::string> &_str );
+    types::t_unsigned nb_valence_states( const Crystal::TStructure<std::string> &_str );
 
     //! \brief Defines an interface for the nanopse pescan program.
     //! \details Mostly, this class writes the input and recovers the output eigenvalues.

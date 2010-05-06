@@ -704,7 +704,7 @@ namespace LaDa
       return true;
     }
     
-    size_t nb_valence_states( const Crystal::Structure &_str ) 
+    types::t_unsigned nb_valence_states( const Crystal::Structure &_str ) 
     {
       Crystal::Structure::t_Atoms::const_iterator i_atom = _str.atoms.begin();
       Crystal::Structure::t_Atoms::const_iterator i_atom_end = _str.atoms.end();
@@ -717,7 +717,7 @@ namespace LaDa
       }
       return bgstates;
     }
-    size_t nb_valence_states( Crystal::TStructure<std::string> const &_str ) 
+    types::t_unsigned nb_valence_states( Crystal::TStructure<std::string> const &_str ) 
     {
       Crystal::TStructure<std::string>::t_Atoms::const_iterator i_atom = _str.atoms.begin();
       Crystal::TStructure<std::string>::t_Atoms::const_iterator i_atom_end = _str.atoms.end();
