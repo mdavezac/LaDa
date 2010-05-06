@@ -15,7 +15,7 @@
 
 namespace LaDa
 {
-  namespace Python 
+  namespace python 
   {
     struct eMass : public LaDa::Pescan::eMass
     {
@@ -134,5 +134,5 @@ namespace LaDa
         );
     }
 
-  } // namespace Python
+  } // namespace python
 } // namespace LaDa

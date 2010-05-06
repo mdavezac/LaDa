@@ -35,7 +35,7 @@ BOOST_PYTHON_MODULE(_escan)
   LaDa::python::expose_bandgap();
   LaDa::python::expose_oscillator_strength();
   LaDa::python::expose_genpot();
-  LaDa::Python::expose_emass();
-  LaDa::Python::expose_dipoles();
+  LaDa::python::expose_emass();
+  LaDa::python::expose_dipoles();
   LaDa::python::expose_wfns();
 }
