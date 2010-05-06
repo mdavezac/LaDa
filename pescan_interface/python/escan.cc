@@ -43,7 +43,6 @@ void just_call_escan(boost::mpi::communicator const &_c)
   MPI_Fint __commF = MPI_Comm_c2f( __commC );
   FC_FUNC_(iaga_set_mpi, IAGA_SET_MPI)( &__commF );
 
-  FC_FUNC_(getvlarg, GETVLARG)();
   FC_FUNC_(iaga_just_call_escan, IAGA_just_CALL_ESCAN)();
 }
 void just_call_escan2(MPI_Comm &_comm)
@@ -51,8 +50,22 @@ void just_call_escan2(MPI_Comm &_comm)
   MPI_Fint __commF = MPI_Comm_c2f( _comm );
   FC_FUNC_(iaga_set_mpi, IAGA_SET_MPI)( &__commF );
 
-  FC_FUNC_(getvlarg, GETVLARG)();
   FC_FUNC_(iaga_just_call_escan, IAGA_just_CALL_ESCAN)();
+}
+void just_call_genpot(boost::mpi::communicator const &_c)
+{
+  MPI_Comm __commC = (MPI_Comm) ( _c ) ;
+  MPI_Fint __commF = MPI_Comm_c2f( __commC );
+  FC_FUNC_(iaga_set_mpi, IAGA_SET_MPI)( &__commF );
+
+  FC_FUNC_(getvlarg, GETVLARG)();
+}
+void just_call_genpot(MPI_Comm &_comm)
+{
+  MPI_Fint __commF = MPI_Comm_c2f( _comm );
+  FC_FUNC_(iaga_set_mpi, IAGA_SET_MPI)( &__commF );
+
+  FC_FUNC_(getvlarg, GETVLARG)();
 }
 
 namespace LaDa
@@ -526,7 +539,9 @@ namespace LaDa
         .def_pickle( pickle_escan< t_Escan >() );
 
       bp::def("_call_escan", &just_call_escan);
-      bp::def("_call_escan2", &just_call_escan, "Private interface. @see lada.escan.call_escan.");
+      bp::def("_call_escan", &just_call_escan2, "Private interface. @see lada.escan.call_escan.");
+      bp::def("_call_genpot", &just_call_genpot);
+      bp::def("_call_genpot", &just_call_genpot2, "Private interface. @see lada.escan.call_escan.");
 
       bp::def( "nb_valence_states", &nb_valence_states<Crystal::TStructure<std::string> >,
                bp::arg("structure"), "Returns the number of valence states in a structure." );
