@@ -82,14 +82,20 @@ namespace LaDa
       //! Tags to freeze cell coordinates.
       enum t_FreezeCell
       {
-        FREEZE_NONE =  0, //!< Freeze no coordinate of the unit-cell
-        FREEZE_XX   =  1, //!< Freeze (0,0)
-        FREEZE_XY   =  2, //!< Freeze (0,1) and (1,0)
-        FREEZE_XZ   =  4, //!< Freeze (0,2) and (2,0)
-        FREEZE_YY   =  8, //!< Freeze (1,1) 
-        FREEZE_YZ   = 16, //!< Freeze (1,2) and (2,1)
-        FREEZE_ZZ   = 32, //!< Freeze (2,2)
-        FREEZE_ALL  = 63  //!< Freeze all coordinates 
+        FREEZE_NONE =   0, //!< Freeze no coordinate of the unit-cell
+        FREEZE_XX   =   1, //!< Freeze (0,0)
+        FREEZE_XY   =   2, //!< Freeze (0,1) 
+        FREEZE_XZ   =   4, //!< Freeze (0,2)
+        FREEZE_YX   =   8, //!< Freeze (0,1) 
+        FREEZE_YY   =  16, //!< Freeze (1,1) 
+        FREEZE_YZ   =  32, //!< Freeze (1,2) 
+        FREEZE_ZX   =  64, //!< Freeze (2,2)
+        FREEZE_ZY   = 128, //!< Freeze (2,2)
+        FREEZE_ZZ   = 256, //!< Freeze (2,2)
+        FREEZE_ALL  = 511, //!< Freeze all coordinates 
+        FREEZE_A0   =  73, //!< Freeze all coordinates 
+        FREEZE_A1   = 146, //!< Freeze all coordinates 
+        FREEZE_A2   = 292, //!< Freeze all coordinates 
       };
 
       //! The unit-cell of the structure in cartesian coordinate.

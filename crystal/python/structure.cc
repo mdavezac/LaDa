@@ -289,10 +289,16 @@ namespace LaDa
         .value(   "xx", Crystal::Structure::FREEZE_XX )
         .value(   "xy", Crystal::Structure::FREEZE_XY )
         .value(   "xz", Crystal::Structure::FREEZE_XZ )
+        .value(   "yx", Crystal::Structure::FREEZE_YX )
         .value(   "yy", Crystal::Structure::FREEZE_YY )
         .value(   "yz", Crystal::Structure::FREEZE_YZ )
+        .value(   "zx", Crystal::Structure::FREEZE_ZX )
+        .value(   "zy", Crystal::Structure::FREEZE_ZY )
         .value(   "zz", Crystal::Structure::FREEZE_ZZ )
         .value(  "all", Crystal::Structure::FREEZE_ALL )
+        .value(  "a0", Crystal::Structure::FREEZE_A0 )
+        .value(  "a1", Crystal::Structure::FREEZE_A1 )
+        .value(  "a2", Crystal::Structure::FREEZE_A2 )
         .export_values();
 
       expose< Crystal::Structure >
