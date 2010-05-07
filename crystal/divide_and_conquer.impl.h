@@ -86,7 +86,7 @@ namespace LaDa
         // box is not larger than the cell. Otherwise, when looping over all
         // states, we would go over the same state twice. The following defines
         // the direction for which we can look for periodic images.
-        const math::iVector3d extent( _n(0)>1 ? 1:0, _n(1)>1 ? 1:0, _n(2)>1 ? 1:0 );
+        const math::iVector3d extent( _n(0)>1 ? 0:1, _n(1)>1 ? 0:1, _n(2)>1 ? 0:1 );
         // adds atoms to each box.
         const math::rMatrix3d inv_str( _structure.cell.inverse() );
         const math::rMatrix3d inv_cell( cell.inverse() );
@@ -102,7 +102,7 @@ namespace LaDa
               inv_cell, i_atom->pos, _n 
             ) 
           );
-          LADA_ASSERT( u < Nboxes, "Index out-of-range.\n" )
+          LADA_ASSERT( u < Nboxes, "Index out-of-range.\n" << u << " >= " << Nboxes << "\n" )
           (*result)[u].states_.push_back( bt::make_tuple( index, true ) );
 
           // Finds out which large box it is contained in.
@@ -156,9 +156,9 @@ namespace LaDa
         n1 =  std::pow( Natoms / Nperbox * c1*c1/c2/c3, 1e0/3e0 );
         n2 =  n1 * c2 / c1;
         n3 =  n1 * c3 / c1;
-        if( n1 <= 0.5 ) n1 == 1;
-        if( n2 <= 0.5 ) n2 == 1;
-        if( n3 <= 0.5 ) n3 == 1;
+        if( n1 <= 0.5 ) n1 = 1;
+        if( n2 <= 0.5 ) n2 = 1;
+        if( n3 <= 0.5 ) n3 = 1;
         return math::iVector3d( rint( n1 ), rint( n2 ), rint( n3 ) );
       }
 
