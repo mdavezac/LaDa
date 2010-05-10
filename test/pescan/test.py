@@ -112,12 +112,12 @@ jobs = [\
 # end of input 
 
 
-print "starting job"
 # computes vff results and checks
 if exists("work") and world.rank == 0: rmtree("work")
 vff_out = vff(structure, outdir = "work", comm = world)
 if world.rank == 0:
   solo = vff_out.solo()
+  print vff_out.structure
   diff = 0e0
   for a, b in zip(solo.structure.atoms, result_str.atoms):
     assert a.type == b.type
@@ -126,8 +126,6 @@ if world.rank == 0:
 
   assert diff / float(len(structure.atoms)) < 1e-8, diff 
   assert abs(solo.energy - result_str.energy) < 1e-8, abs(solo.energy - result_str.energy) 
-print "wtf", world.rank
-assert _is_in_sync(world)
 
 # some kpoints
 # launch pescan for different jobs.

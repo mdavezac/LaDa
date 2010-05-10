@@ -36,7 +36,5 @@ class Changedir:
     from os import chdir
     from os.path import exists, isdir
 
-    if self.comm != None: self.comm.barrier()
     assert exists(self.oldpwd) and isdir(self.oldpwd), "Old directory does not exist anymore."
     chdir(self.oldpwd)
-    if self.comm != None: self.comm.barrier()

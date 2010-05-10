@@ -483,7 +483,6 @@ class Vff(object):
         print >> file, "# Performing VFF calculations. "
         # then calculations
       result, stress = this._run(structure, comm)
-      if comm.rank == 1: print "6"
       # must close/reopen redirection context, otherwise it seem that they 
       # are closed anyhow on exiting from the Cpp function call. The following context
       with open(cout, "a") as file:
@@ -540,6 +539,7 @@ class Vff(object):
     self.lattice.set_as_crystal_lattice()
     
     cout, cerr = self._cout(comm), self._cerr(comm)
+    with open(cerr, "w") as file: pass # file has not yet been opened
     with redirect_all(output=cout, error=cerr, append="True") as oestream:
       functional = self._create_functional(structure, comm)
       # now performs call

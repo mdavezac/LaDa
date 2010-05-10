@@ -42,26 +42,29 @@ class _RedirectAll:
     self.append = append
   def __enter__(self):
     import os
+    import sys
     from boost.mpi import world as comm
-    if self.unit == streams.input:    self.old = os.dup(0)
-    elif self.unit == streams.output: self.old = os.dup(1)
-    elif self.unit == streams.error:  self.old = os.dup(2)
+    if self.unit == streams.input:    self.old = os.dup(sys.__stdin__.fileno())
+    elif self.unit == streams.output: self.old = os.dup(sys.__stdout__.fileno())
+    elif self.unit == streams.error:  self.old = os.dup(sys.__stderr__.fileno())
     else: raise RuntimeError("Unknown redirection unit.")
-    self.file = os.open(self.filename if len(self.filename) else os.devnull,\
-                        os.O_CREAT | (os.O_APPEND if self.append else os.O_WRONLY))
-    if comm.rank == 1: print "5"
-    if self.unit == streams.input:    os.dup2(self.file, 0)
-    elif self.unit == streams.output: os.dup2(self.file, 1)
-    elif self.unit == streams.error:  os.dup2(self.file, 2)
+    self.filefd = os.open(self.filename if len(self.filename) else os.devnull,\
+        (os.O_RDWR | os.O_APPEND) if self.append else (os.O_CREAT | os.O_WRONLY | os.O_EXCL))
+    if self.append: self.file = os.fdopen(self.filefd, 'a')
+    else: self.file = os.fdopen(self.filefd, 'w')
+    if self.unit == streams.input:    os.dup2(self.file.fileno(), sys.__stdin__.fileno())
+    elif self.unit == streams.output: os.dup2(self.file.fileno(), sys.__stdout__.fileno())
+    elif self.unit == streams.error:  os.dup2(self.file.fileno(), sys.__stderr__.fileno())
     else: raise RuntimeError("Unknown redirection unit.")
     return self
   def __exit__(self, *wargs):
     import os
-    try: os.close(self.file)
+    import sys
+    try: self.file.close()
     except: print "Am here"
-    if self.unit == streams.input:    os.dup2(self.old, 0) 
-    elif self.unit == streams.output: os.dup2(self.old, 1)
-    elif self.unit == streams.error:  os.dup2(self.old, 2)
+    if self.unit == streams.input:    os.dup2(self.old, sys.__stdin__.fileno()) 
+    elif self.unit == streams.output: os.dup2(self.old, sys.__stdout__.fileno())
+    elif self.unit == streams.error:  os.dup2(self.old, sys.__stderr__.fileno())
     else: raise RuntimeError("Unknown redirection unit.")
 
 def redirect_all(output=None, error=None, input=None, append = False):

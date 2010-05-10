@@ -323,9 +323,7 @@ class Escan(object):
       if extract.success: return extract # in which case, returns extraction object.
       comm.barrier() # makes sure directory is not created by other proc!
 
-    print "running"
     this._run(structure, outdir, comm)
-    print "ran"
 
     with Changedir(outdir) as cwd:
       for file in  [ this._POSCAR + "." + str(comm.rank),\
@@ -371,9 +369,7 @@ class Escan(object):
         print >>file, "# Performing calculations. "
       
       # makes calls to run
-      print "vff"
       self._run_vff(structure, "", comm, cout)
-      print "genpot"
       if not (self.do_genpot and self.do_escan): return None 
       self._run_genpot(comm, cout, cerr)
       if not self.do_escan: return None
@@ -394,19 +390,13 @@ class Escan(object):
     from os.path import join, samefile
 
     poscar = self._POSCAR + "." + str(comm.rank)
-    print "relax"
     if not self.do_relax:
       if exists(join(outdir, poscar)):
         copyfile(join(outdir, poscar), join(self.workdir, poscar))
       vff.write_escan_input(poscar, structure)
-      print "end relax"
       return 
-    print "then call vff"
 
     out = self.vff(structure, outdir=outdir, comm=comm)
-    print "after call vff"
-    if comm.rank == 1: print out.structure
-    exit(0)
     assert out.success, RuntimeError("VFF relaxation did not succeed.")
     out.write_escan_input(poscar, out.structure)
 
