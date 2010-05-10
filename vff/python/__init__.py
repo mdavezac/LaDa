@@ -2,8 +2,6 @@
 
 # imports C++ extension
 from ..opt.decorators import add_setter, broadcast_result, make_cached
-from sys import exit
-import sys
 
 def zinc_blend_lattice():
   """ Defines a default zinc-blende lattice (InGaNP). """
@@ -17,18 +15,30 @@ def zinc_blend_lattice():
   lattice.add_site = (0.25,0.25,0.25)
   return lattice
 
+def _get_script_text(file, name):
+  string = "# " + name + " definition."
+  for line in file:
+    if line.find(string) != -1: break;
+  lines = ""
+  string = "# End of " + name.lower() + " definition."
+  for line in file:
+    if line.find(string) != -1: break;
+    lines += line
+  return lines
+
 class Extract(object):
-  def __init__(self, directory = "", comm = None, vff = None):
-    self.directory = directory
+  def __init__(self, directory = None, comm = None, vff = None):
+    from os.path import abspath
+    super(Extract, self).__init__()
+    self.directory = directory if directory != None else getcwd()
     """ Directory where to check for output. """
     self.comm = comm
     """ Mpi group communicator. """
-    self.OUTCAR = vff.OUTCAR
+    self.OUTCAR = vff.OUTCAR if vff != None else Vff().OUTCAR
     """ Filename of the OUTCAR file from VASP.
      
         Data will be read from directory/OUTCAR. 
     """
-    if vff != None: self.OUTCAR = vff.OUTCAR
 
     
   def _get_directory(self):
@@ -57,7 +67,7 @@ class Extract(object):
 
     with open(path, "r") as file:
       for line in file:
-        if line.find("# Computed in:") != -1: return True
+        if line.find("# Computed VFF in:") != -1: return True
     return False
  
   @property
@@ -66,27 +76,18 @@ class Extract(object):
   def structure(self):
     """ Gets structure from self.L{OUTCAR}. """
     from os.path import exists, join
+    from ..crystal import Structure
     path = self.OUTCAR
     if len(self.directory): path = join(self.directory, self.OUTCAR)
     assert exists(path), RuntimeError("Could not find file %s:" % (file))
 
-    lines = "from lada.crystal import Structure\n"
     with open(path, "r") as file:
       # find start of calculations.
       for line in file:
-        if line.find("# Result of vff calculations.") != -1: break
-      # find start of structure definition.
-      for line in file:
-        if line.find("# structure definition.") != -1: break;
-      # read until end of structure definition
-      for line in file:
-        lines += line
-        if line.find("structure.add_atom") != -1: break
-      for line in file:
-        if line.find("structure.add_atom") == -1: break
-        lines += line
-    local_dict = {}
-    exec lines in globals(), local_dict
+        if line.find("# Result of VFF calculations.") != -1: break
+      script = _get_script_text(file, "Structure")
+    local_dict = {"Structure": Structure}
+    exec script in globals(), local_dict
     return local_dict["structure"]
 
 
@@ -103,9 +104,9 @@ class Extract(object):
     with open(path, "r") as file:
       # find start of calculations.
       for line in file:
-        if line.find("# Result of vff calculations.") != -1: break
+        if line.find("# Result of VFF calculations.") != -1: break
       for line in file:
-        if line.find("# structure definition.") != -1: break;
+        if line.find("# Structure definition.") != -1: break;
       for line in file:
         if line.find("structure.energy") != -1:
           return float(line.split()[2])
@@ -114,7 +115,7 @@ class Extract(object):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def stress(self):
-    """ Gets minimizer from self.L{OUTCAR}. """
+    """ Gets stress from self.L{OUTCAR}. """
     from os.path import exists, join
     from numpy import array
     path = self.OUTCAR
@@ -125,7 +126,7 @@ class Extract(object):
     with open(path, "r") as file:
       # find start of calculations.
       for line in file:
-        if line.find("# Result of vff calculations.") != -1: break
+        if line.find("# Result of VFF calculations.") != -1: break
       lines = []
       for line in file:
         if line.find("stress: ") != -1: lines.append(line); break
@@ -146,23 +147,14 @@ class Extract(object):
   def lattice(self):
     """ Gets lattice from self.L{OUTCAR}. """
     from os.path import exists, join
+    from lada.crystal import Lattice
+
     path = self.OUTCAR
     if len(self.directory): path = join(self.directory, self.OUTCAR)
     assert exists(path), RuntimeError("Could not find file %s:" % (file))
-    lines = "from lada.crystal import Lattice\n"
-    with open(path, "r") as file:
-      # find start of lattice definition.
-      for line in file:
-        if line.find("# lattice definition.") != -1: break;
-      # read until end of lattice definition
-      for line in file:
-        lines += line
-        if line.find("lattice.add_site") != -1: break
-      for line in file:
-        if line.find("lattice.add_site") == -1: break
-        lines += line
-    local_dict = {}
-    exec lines in globals(), local_dict
+    with open(path, "r") as file: script = _get_script_text(file, "Lattice")
+    local_dict = {"Lattice": Lattice}
+    exec script in globals(), local_dict
     return local_dict["lattice"]
 
   @property
@@ -171,50 +163,46 @@ class Extract(object):
   def minimizer(self):
     """ Gets minimizer from self.L{OUTCAR}. """
     from os.path import exists, join
+    from ..minimizer import Minimizer
     path = self.OUTCAR
     if len(self.directory): path = join(self.directory, self.OUTCAR)
     assert exists(path), RuntimeError("Could not find file %s:" % (file))
-    lines = "from lada.minimizer import Minimizer\n"
-    with open(path, "r") as file:
-      # find start of lattice definition.
-      for line in file:
-        if line.find("# Minimizer definition.") != -1: break;
-      # read until end of structure definition
-      for line in file:
-        if line.find("minimizer") == -1: break
-        lines += line
-    local_dict = {}
-    exec lines in globals(), local_dict
+    with open(path, "r") as file: script = _get_script_text(file, "Minimizer")
+    local_dict = {"Minimizer": Minimizer}
+    exec script in globals(), local_dict
     return local_dict["minimizer"]
 
   @property
   @make_cached
   def vff(self):
-    """ Gets structure from self.L{OUTCAR}. """
+    """ Gets vff functional from self.L{OUTCAR}. """
     from os.path import exists, join
-    lattice = self.lattice
-    minimizer = self.minimizer
-    
     path = self.OUTCAR
     if len(self.directory): path = join(self.directory, self.OUTCAR)
     assert exists(path), RuntimeError("Could not find file %s:" % (file))
 
-    @broadcast_result(attr=True, which=0)
+    @broadcast_result(attr=True, which=0) # easier to broadcast this way.
     def get_vff(this):
-      lines = "from lada.vff import Vff\n"
-      with open(path, "r") as file:
-        # find start of lattice definition.
-        for line in file:
-          if line.find(" VFF definition:") != -1: break;
-        # read until end of structure definition
-        for line in file:
-          if line.find("vff") == -1: break
-          lines += line
-      return lines
+      with open(path, "r") as file: return _get_script_text(file, "Vff")
 
-    local_dict = {"lattice": lattice, "minimizer": minimizer}
+    local_dict = {"lattice": self.lattice, "minimizer": self.minimizer, "Vff": Vff}
     exec get_vff(self) in globals(), local_dict
     return local_dict["vff"]
+
+  def write_escan_input(self, filepath, structure = None):
+    """ Prints escan input to file. """
+    if structure == None: structure = self.structure
+
+    # Saves global lattice if set.
+    old_lattice = None
+    try: old_lattice = structure.lattice
+    except RuntimeError: pass
+    self.lattice.set_as_crystal_lattice()
+
+    functional = self.vff._create_functional(structure, self.comm)
+    functional.print_escan_input(filepath, structure)
+
+    if old_lattice != None: old_lattice.set_as_crystal_lattice()
 
   def solo(self):
     """ Extraction on a single process.
@@ -271,10 +259,6 @@ class Vff(object):
     """ File where to redirect output. """
     self.ERRCAR = "vff_err" 
     """ File where to redirect errors. """
-    self.ESCANCAR = "atomic_input"
-    """ File where to print atomic inputs for escan. """
-    self.SCRIPTCAR = "vff_script.py"
-    """ VFF script file for easy reruns. """
     self._workdir = workdir
     """ Private reference to the working directory. """
 
@@ -359,7 +343,7 @@ class Vff(object):
            RuntimeError( "Type %s is not in lattice." % (args[2]))
 
     name = "%s-%s-%s" % (args[0], args[1], args[2])
-    if args[0] > args[2]: name = "%s-%s" % (args[2], args[1], args[0])
+    if args[0] > args[2]: name = "%s-%s-%s" % (args[2], args[1], args[0])
 
     params = [u for u in args[3]]
     assert len(params) <= 7 and len(params) > 0, RuntimeError("To few or too many parameters: %s." % (params))
@@ -392,15 +376,15 @@ class Vff(object):
 
   add_angle = add_setter(_add_angle, _add_angle.__doc__)
 
-  def __str__(self):
-    result  = "%s\n" % (self.lattice)
-    result += "# VFF definition:\n"
+  def __repr__(self):
+    result  = repr(self.lattice)
+    result += repr(self.minimizer)
+    result += "# Vff definition.\n"
     result += "vff = Vff()\n"
+    result += "vff.minimizer = minimizer\n"
     result += "vff.lattice = lattice\n"
     result += "vff.OUTCAR = \"%s\"\n" % (self.OUTCAR)
     result += "vff.ERRCAR = \"%s\"\n" % (self.ERRCAR)
-    result += "vff.ESCANCAR = \"%s\"\n" % (self.ESCANCAR)
-    result += "vff.SCRIPTCAR = \"%s\"\n" % (self.SCRIPTCAR)
     result += "vff.direction = %s\n" % (self.direction)
     result += "vff.relax = %s\n" % ("True" if self.relax else "False")
     for name, params in self.bonds.items():
@@ -419,9 +403,17 @@ class Vff(object):
         if sum([abs(j) for j in params[i+1:]]) / float(len(params)-i-1) < 1e-12: break;
         result += ", %e" % (u)
       result += ")\n"
-    result += "%s\n" % (self.minimizer)
+    result += "# End of vff definition.\n"
     return result
 
+  def _cout(self, comm):
+    """ Creates output name. """
+    if self.OUTCAR == None: return "/dev/null"
+    return self.OUTCAR if comm.rank == 0 else self.OUTCAR + "." + str(comm.rank)
+  def _cerr(self, comm):
+    """ Creates error name. """
+    if self.ERRCAR == None: return "/dev/null"
+    return self.ERRCAR if comm.rank == 0 else self.ERRCAR + "." + str(comm.rank)
 
   def __call__(self, structure, outdir, comm = None, **kwargs):
     """ Performs calculation """
@@ -431,6 +423,7 @@ class Vff(object):
     from boost.mpi import world
     from ..opt import redirect_all, redirect
     from ..opt.changedir import Changedir
+    from boost.mpi import world
 
     # bull shit. 
     assert len(self.lattice.sites) == 2, RuntimeError("Lattice is not zinc-blend")
@@ -449,7 +442,6 @@ class Vff(object):
 
     # make this functor stateless.
     this      = deepcopy(self)
-    outdir    = deepcopy(outdir)
     assert abs(structure.scale) > 1e-12 or abs(self.lattice.scale) > 1e-12,\
            RuntimeError("Scales in input structure and lattice are both zero.")
     if abs(structure.scale) < 1e-12: structure.scale = self.lattice.scale
@@ -458,9 +450,13 @@ class Vff(object):
     # attributes of self, with value to use for calculations launch. 
     # For added simplicity, minimizer attributes are also directly available.
     for key in kwargs.keys():
-      if hasattr(this, key): getattr(this, key).value = kwargs[key]
-      elif hasattr(this.minimizer, key): getattr(this.minimizer, key).value = kwargs[key]
+      if hasattr(this, key): setattr(this, key, kwargs[key])
+      elif hasattr(this.minimizer, key): setattr(this.minimizer, key, kwargs[key])
       else: raise NameError( "%s attribute unknown of vff or vff.minimizer." % (key) )
+
+
+    if comm == None: comm = world
+    comm.barrier() # sync procs.
 
     # First checks if directory outdir exists (and is a directory).
     if exists(outdir):
@@ -469,49 +465,34 @@ class Vff(object):
       extract = Extract(comm = comm, directory = outdir, vff = this)
       if extract.success: return extract # in which case, returns extraction object.
     
-    # Otherwise, performs calculations.
-    with Changedir(outdir) as current_dir:
+    with Changedir(outdir, comm) as current_dir:
       
-      if comm.rank == 0: # a simple script to rerun things.
-        with open(this.SCRIPTCAR, "w") as script:
-          print >> script, "from boost.mpi import world"
-          print >> script, "from lada.vff import Vff"
-          print >> script, "from lada.crystal import Structure, Lattice, Atom\n"
-          print >> script, this.lattice
-          print >> script, "lattice.find_space_group()"
-          print >> script, this
-          print >> script, structure
-          print >> script, "\n# calls vff."
-          print >> script, "vff.comm = world"
-          print >> script, "vff(structure)"
-
       # redirects C/C++/fortran streams
-      cout = this.OUTCAR if (comm.rank == 0 and len(this.OUTCAR)) else this.OUTCAR + "." + str(comm.rank)
-      cerr = this.ERRCAR if (comm.rank == 0 and len(this.ERRCAR)) else this.ERRCAR + "." + str(comm.rank)
-      with redirect(pyout=cout, pyerr=cerr) as oestream:
+      cout, cerr = this._cout(comm), this._cerr(comm)
+      # should redirect the terminals itself, eg fortran, c, c++, python.
+      with redirect_all(output=cout, error=cerr) as oestream:
         # now for some input variables
         print "# VFF calculation on ", time.strftime("%m/%d/%y", local_time),\
               " at ", time.strftime("%I:%M:%S %p", local_time)
         if len(structure.name) != 0: print "# Structure named ", structure.name 
-        print this
-        print "# Performing calculations. "
-      # must close/reopen redirection context, otherwise it seem that they 
-      # are closed anyhow on exiting from the Cpp function call. The following context
-      # should redirect the terminals itself, eg fortran, c, c++, python.
-      with redirect_all(output=cout, error=cerr, append=True) as oestreams:
+        print repr(this)
+        print "# Performing VFF calculations. "
         # then calculations
         result, stress = this._run(structure, comm)
+      # must close/reopen redirection context, otherwise it seem that they 
+      # are closed anyhow on exiting from the Cpp function call. The following context
       with redirect(pyout=cout, pyerr=cerr, append=True) as oestream:
         # finally, the dam results.
-        print "# Result of vff calculations. "
-        print result
+        print "# Result of VFF calculations. "
+        print repr(result)
         print "stress: (%e, %e, %e),\\\n        (%e, %e, %e),\\\n        (%e, %e, %e)"\
               % tuple(stress.flat)
         timing = time.time() - timing
-        hour = timing/3600
-        minute = (timing - hour*3600)/60
+        hour = int(float(timing/3600e0))
+        minute = int(float((timing - hour*3600)/60e0))
         second = (timing - hour*3600-minute*60)
-        print "# Computed in: %i:%i:%f."  % (int(hour), int(minute), second) 
+        print "# Computed VFF in: %i:%i:%f."  % (hour, minute, second) 
+
 
     # checks if result was successful
     extract = Extract(comm = comm, directory = outdir, vff = this)
@@ -520,11 +501,32 @@ class Vff(object):
     return extract
 
 
+  def _create_functional(self, structure, comm):
+    """ Creates the vff functional using cpp extension. """
+    from tempfile import NamedTemporaryFile
+    from os import remove
+    from boost.mpi import broadcast
+    from vff import Vff, LayeredVff
+
+    # Creates temporary input file and creates functional
+    functional = None
+    if comm.rank == 0:
+      with NamedTemporaryFile(dir=self.workdir, delete=False) as file: 
+        file.write(self._create_input(structure, comm))
+      name = broadcast(comm, file.name, root=0)
+    else: name = broadcast(comm, root=0) # syncs all procs to make sure we are reading from same file.
+
+    
+    functional = Vff(name, comm) if self.direction == None else LayeredVff(name, comm)
+
+    if comm.rank == 0: remove(file.name)
+
+    return functional
+     
   def _run(self, structure, comm):
     """ Performs actual calculation. """
     from vff import Vff, LayeredVff
     from tempfile import NamedTemporaryFile
-    from os import remove
 
     # Saves global lattice if set.
     old_lattice = None
@@ -532,16 +534,7 @@ class Vff(object):
     except RuntimeError: pass
     self.lattice.set_as_crystal_lattice()
     
-    # Creates temporary input file and creates functional
-    functional = None
-    if comm.rank == 0:
-      with NamedTemporaryFile(dir=self.workdir, delete=False) as file: 
-        file.write(self._create_input(structure, comm))
-    comm.barrier() # syncs all procs to make sure we are reading from same file.
-    functional = Vff(file.name, comm) if self.direction == None else LayeredVff(file.name, comm)
-    if comm.rank == 0: remove(file.name)
-
-
+    functional = self._create_functional(structure, comm)
     # now performs call
     result, stress = functional(structure, doinit=True)
     
@@ -564,7 +557,7 @@ class Vff(object):
                   "true" if self.minimizer.verbose else "false", self.minimizer.uncertainties,\
                   self.minimizer.uncertainties, self.minimizer.up, \
                   "true" if self.minimizer.use_gradient else "false" )
-    types = set(u.type for u in structure.atoms)
+    types = set(u for site in self.lattice.sites for u in site.type)
     bonds = set(u for name in self.bonds.keys() for u in name.split('-'))
     assert types <= bonds, "Species in structure and vff-input do not match."
     for name, params in self.bonds.items():

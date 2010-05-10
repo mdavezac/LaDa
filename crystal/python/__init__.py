@@ -228,9 +228,9 @@ Structure.set_cell = add_setter(_set_cell, _set_cell.__doc__)
 rStructure.set_cell = add_setter(_set_cell, _set_cell.__doc__)
 Lattice.set_cell = add_setter(_set_cell, _set_cell.__doc__)
 
-# changes __str__ behavior
+# changes __repr__ behavior
 def _print_structure(self):
-  result  = "# structure definition.\n"
+  result  = "# Structure definition.\n"
   result += "structure = %s()\n" % (self.__class__.__name__)
   result += "structure.scale = %e\n" % (self.scale)
   result += "structure.set_cell = (%e, %e, %e),\\\n"\
@@ -247,12 +247,13 @@ def _print_structure(self):
     if atom.site < 0: result += "None, "
     else: result += "%i, " % (atom.site)
     result += " %i\n" % (atom.freeze)
+  result += "# End of structure definition.\n"
   return result
 _print_structure.__doc__ = Structure.__str__.__doc__
-Structure.__str__ = _print_structure
+Structure.__repr__ = _print_structure
 
 def _print_lattice(self):
-  result  = "# lattice definition.\n"
+  result  = "# Lattice definition.\n"
   result += "lattice = %s()\n" % (self.__class__.__name__)
   result += "lattice.scale = %e\n" % (self.scale)
   result += "lattice.set_cell = (%e, %e, %e),\\\n"\
@@ -272,7 +273,8 @@ def _print_lattice(self):
     if site.site < 0: result += "None, "
     else: result += "%i, " % (site.site)
     result += " %i\n" % (site.freeze)
+  result += "# End of lattice definition.\n"
   return result
 _print_lattice.__doc__ = Lattice.__str__.__doc__
-Lattice.__str__ = _print_lattice
+Lattice.__repr__ = _print_lattice
 Lattice.name = ""

@@ -53,11 +53,12 @@ class _RedirectAll:
     return self
   def __exit__(self, *wargs):
     import os
+    try: os.close(self.file)
+    except: print "Am here"
     if self.unit == streams.input:    os.dup2(self.old, 0) 
     elif self.unit == streams.output: os.dup2(self.old, 1)
     elif self.unit == streams.error:  os.dup2(self.old, 2)
     else: raise RuntimeError("Unknown redirection unit.")
-    os.close(self.file)
 
 def redirect_all(output=None, error=None, input=None, append = False):
   """ A context manager to redirect inputs, outputs, and errors. 

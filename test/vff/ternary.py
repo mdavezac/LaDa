@@ -1,8 +1,8 @@
+import sys 
 from boost.mpi import world
 from lada.vff import Vff
 from lada.vff.vff import Vff as orig
 from lada.crystal import Structure
-import sys 
 
 vff = Vff()
 vff.lattice.set_types = ("In", "Ga"), ("As",)

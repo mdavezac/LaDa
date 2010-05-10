@@ -24,6 +24,7 @@ class Changedir:
     if not is_root: is_root = self.comm.rank == 0
     if is_root: # creates directory if does not exist.
       if not exists(self.pwd): makedirs(self.pwd)
+    if self.comm != None: self.comm.barrier()
     assert exists(self.pwd) and isdir(self.pwd), "Could not find working directory."
     chdir(self.pwd)
 
@@ -34,5 +35,6 @@ class Changedir:
     from os import chdir
     from os.path import exists, isdir
 
+    if self.comm != None: self.comm.barrier()
     assert exists(self.oldpwd) and isdir(self.oldpwd), "Old directory does not exist anymore."
     chdir(self.oldpwd)
