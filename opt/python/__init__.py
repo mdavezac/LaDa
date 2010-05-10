@@ -37,15 +37,19 @@ class _RedirectAll:
   def __init__(self, unit, filename, append):
     self.unit = unit
     self.filename = filename
+    if self.filename == None: self.filename = ""
+    if self.filename == "/dev/null": self.filename = ""
     self.append = append
   def __enter__(self):
     import os
+    from boost.mpi import world as comm
     if self.unit == streams.input:    self.old = os.dup(0)
     elif self.unit == streams.output: self.old = os.dup(1)
     elif self.unit == streams.error:  self.old = os.dup(2)
     else: raise RuntimeError("Unknown redirection unit.")
     self.file = os.open(self.filename if len(self.filename) else os.devnull,\
                         os.O_CREAT | (os.O_APPEND if self.append else os.O_WRONLY))
+    if comm.rank == 1: print "5"
     if self.unit == streams.input:    os.dup2(self.file, 0)
     elif self.unit == streams.output: os.dup2(self.file, 1)
     elif self.unit == streams.error:  os.dup2(self.file, 2)

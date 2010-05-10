@@ -27,6 +27,7 @@ class Changedir:
     if self.comm != None: self.comm.barrier()
     assert exists(self.pwd) and isdir(self.pwd), "Could not find working directory."
     chdir(self.pwd)
+    if self.comm != None: self.comm.barrier()
 
     return self.pwd
 
@@ -38,3 +39,4 @@ class Changedir:
     if self.comm != None: self.comm.barrier()
     assert exists(self.oldpwd) and isdir(self.oldpwd), "Old directory does not exist anymore."
     chdir(self.oldpwd)
+    if self.comm != None: self.comm.barrier()

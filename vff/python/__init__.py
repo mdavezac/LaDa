@@ -3,6 +3,14 @@
 # imports C++ extension
 from ..opt.decorators import add_setter, broadcast_result, make_cached
 
+def _is_in_sync(comm, which = [0]):
+  from boost.mpi import broadcast
+  if comm == None: return 
+  print "sync ", comm.rank, which[0]
+  which[0] += 1
+  m = broadcast(comm, "666" if comm.rank == 0 else None, 0)
+  return m == "666"
+
 def zinc_blend_lattice():
   """ Defines a default zinc-blende lattice (InGaNP). """
   from ..crystal import Lattice, Site
@@ -421,9 +429,8 @@ class Vff(object):
     from copy import deepcopy
     from os.path import exists, isdir, abspath
     from boost.mpi import world
-    from ..opt import redirect_all, redirect
     from ..opt.changedir import Changedir
-    from boost.mpi import world
+    from boost.mpi import world, broadcast
 
     # bull shit. 
     assert len(self.lattice.sites) == 2, RuntimeError("Lattice is not zinc-blend")
@@ -456,42 +463,40 @@ class Vff(object):
 
 
     if comm == None: comm = world
-    comm.barrier() # sync procs.
 
-    # First checks if directory outdir exists (and is a directory).
-    if exists(outdir):
-      if not isdir(outdir): raise IOError, "%s exists but is not a directory.\n" % (outdir)
-      # checks if it contains a successful run.
+    # checks if outdir contains a successful run.
+    if broadcast(comm, exists(outdir) if comm.rank == 0 else None, 0):
       extract = Extract(comm = comm, directory = outdir, vff = this)
       if extract.success: return extract # in which case, returns extraction object.
+      comm.barrier() # makes sure directory is not created by other proc!
     
-    with Changedir(outdir, comm) as current_dir:
-      
+    with Changedir(outdir, comm = comm) as current_dir:
       # redirects C/C++/fortran streams
       cout, cerr = this._cout(comm), this._cerr(comm)
-      # should redirect the terminals itself, eg fortran, c, c++, python.
-      with redirect_all(output=cout, error=cerr) as oestream:
+      # write stuff to output file
+      with open(cout, "w") as file:
         # now for some input variables
-        print "# VFF calculation on ", time.strftime("%m/%d/%y", local_time),\
-              " at ", time.strftime("%I:%M:%S %p", local_time)
+        print >> file, "# VFF calculation on ", time.strftime("%m/%d/%y", local_time),\
+                       " at ", time.strftime("%I:%M:%S %p", local_time)
         if len(structure.name) != 0: print "# Structure named ", structure.name 
-        print repr(this)
-        print "# Performing VFF calculations. "
+        print >> file, repr(this)
+        print >> file, "# Performing VFF calculations. "
         # then calculations
-        result, stress = this._run(structure, comm)
+      result, stress = this._run(structure, comm)
+      if comm.rank == 1: print "6"
       # must close/reopen redirection context, otherwise it seem that they 
       # are closed anyhow on exiting from the Cpp function call. The following context
-      with redirect(pyout=cout, pyerr=cerr, append=True) as oestream:
+      with open(cout, "a") as file:
         # finally, the dam results.
-        print "# Result of VFF calculations. "
-        print repr(result)
-        print "stress: (%e, %e, %e),\\\n        (%e, %e, %e),\\\n        (%e, %e, %e)"\
-              % tuple(stress.flat)
+        print >> file, "# Result of VFF calculations. "
+        print >> file, repr(result)
+        print >> file, "stress: (%e, %e, %e),\\\n        (%e, %e, %e),\\\n        (%e, %e, %e)"\
+                       % tuple(stress.flat)
         timing = time.time() - timing
         hour = int(float(timing/3600e0))
         minute = int(float((timing - hour*3600)/60e0))
         second = (timing - hour*3600-minute*60)
-        print "# Computed VFF in: %i:%i:%f."  % (hour, minute, second) 
+        print >> file, "# Computed VFF in: %i:%i:%f."  % (hour, minute, second) 
 
 
     # checks if result was successful
@@ -526,7 +531,7 @@ class Vff(object):
   def _run(self, structure, comm):
     """ Performs actual calculation. """
     from vff import Vff, LayeredVff
-    from tempfile import NamedTemporaryFile
+    from ..opt import redirect_all
 
     # Saves global lattice if set.
     old_lattice = None
@@ -534,9 +539,11 @@ class Vff(object):
     except RuntimeError: pass
     self.lattice.set_as_crystal_lattice()
     
-    functional = self._create_functional(structure, comm)
-    # now performs call
-    result, stress = functional(structure, doinit=True)
+    cout, cerr = self._cout(comm), self._cerr(comm)
+    with redirect_all(output=cout, error=cerr, append="True") as oestream:
+      functional = self._create_functional(structure, comm)
+      # now performs call
+      result, stress = functional(structure, doinit=True)
     
     # unsets lattice.
     if old_lattice != None: old_lattice.set_as_crystal_lattice()

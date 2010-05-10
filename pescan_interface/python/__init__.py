@@ -14,6 +14,15 @@ from bandstructure import band_structure
 import _extract
 Extract = _extract.Extract
 
+def _is_in_sync(comm, which = [0]):
+  from boost.mpi import broadcast
+  if comm == None: return 
+  print "sync ", comm.rank, which[0]
+  which[0] += 1
+  m = broadcast(comm, "666" if comm.rank == 0 else None, 0)
+  return m == "666"
+
+
 def call_escan(comm, atom="atom_input", pot="pot_input", escan="escan_input"):
   """ Calls escan functional in current directory.
 
@@ -176,16 +185,18 @@ class Escan(object):
      
         Set to None if no divide and conquer is required. 
     """
-    self.do_genpot = True
-    """ If true, the potential is generated.
-          
-        Otherwise, the file L{_POTCAR} from the output directory is used. 
-    """
     self.do_relax = True
     """ If true, the structure is relaxed using vff.
           
         Otherwise, the file L{_POSCAR} from the output directory is used. 
     """
+    self.do_genpot = True
+    """ If true, the potential is generated.
+          
+        Otherwise, the file L{_POTCAR} from the output directory is used. 
+    """
+    self.do_escan = True
+    """ If true, calculations are performed. """
 
     self._POSCAR = "atomic_input"
     """ Private reference to the atomic input file. """
@@ -259,6 +270,7 @@ class Escan(object):
     result += "escan.rspace_cutoff         = %f\n" % (self.rspace_cutoff)
     result += "escan.fft_mesh              = %i, %i, %i\n" % self.fft_mesh
     result += "escan.do_genpot             = %s\n" % ("True" if self.do_genpot else "False")
+    result += "escan.do_escan              = %s\n" % ("True" if self.do_escan else "False")
     result += "escan.do_relax              = %s\n" % ("True" if self.do_relax else "False")
     result += "escan.input_wavefunctions   = %s\n" % (repr(self.input_wavefunctions))
     result += "escan.kpoint                = %s\n" % (repr(self.kpoint))
@@ -289,7 +301,7 @@ class Escan(object):
     from copy import deepcopy
     from os.path import exists, isdir, abspath, basename, join
     from shutil import copyfile
-    from boost.mpi import world
+    from boost.mpi import world, broadcast
     from ..opt.changedir import Changedir
 
     if comm == None: comm = world
@@ -305,16 +317,15 @@ class Escan(object):
       if hasattr(this, key): setattr(this, key, kwargs[key])
       else: raise NameError( "Escan does not have an %s attribute." % (key) )
 
-    comm.barrier() # sync procs.
-
-    # First checks if directory outdir exists (and is a directory).
-    if exists(outdir):
-      if not isdir(outdir): raise IOError, "%s exists but is not a directory.\n" % (outdir)
-      # checks if it contains a successful run.
-      extract = Extract(comm = comm, directory = outdir, escan = this)
+    # checks if outdir contains a successful run.
+    if broadcast(comm, exists(outdir) if comm.rank == 0 else None, 0):
+      extract = Extract(comm = comm, directory = outdir, vff = this)
       if extract.success: return extract # in which case, returns extraction object.
+      comm.barrier() # makes sure directory is not created by other proc!
 
+    print "running"
     this._run(structure, outdir, comm)
+    print "ran"
 
     with Changedir(outdir) as cwd:
       for file in  [ this._POSCAR + "." + str(comm.rank),\
@@ -343,25 +354,29 @@ class Escan(object):
     from os.path import join
     from ..opt.changedir import Changedir
 
+    if self.do_genpot == False and self.do_relax == False and self.do_escan == False:
+      print "Nothing to do? no relaxation, no genpot, no escan?" 
+      return None
     timing = time.time() 
     local_time = time.localtime() 
 
     # prints some output first
     cout, cerr = self._cout(comm), self._cerr(comm)
     with Changedir(self.workdir) as cwd:
-      comm.barrier()
       with open(cout, "w") as file: 
         print >>file, "# Escan calculation on ", time.strftime("%m/%d/%y", local_time),\
                       " at ", time.strftime("%I:%M:%S %p", local_time)
         if len(structure.name) != 0: print "# Structure named ", structure.name 
         print >>file, repr(self)
         print >>file, "# Performing calculations. "
-      comm.barrier()
       
-      # gets atomic input ready.
+      # makes calls to run
+      print "vff"
       self._run_vff(structure, "", comm, cout)
-
+      print "genpot"
+      if not (self.do_genpot and self.do_escan): return None 
       self._run_genpot(comm, cout, cerr)
+      if not self.do_escan: return None
       self._run_escan(comm, structure.scale, cout, cerr)
      
       with open(cout, "a") as file: 
@@ -379,13 +394,19 @@ class Escan(object):
     from os.path import join, samefile
 
     poscar = self._POSCAR + "." + str(comm.rank)
+    print "relax"
     if not self.do_relax:
       if exists(join(outdir, poscar)):
         copyfile(join(outdir, poscar), join(self.workdir, poscar))
       vff.write_escan_input(poscar, structure)
+      print "end relax"
       return 
+    print "then call vff"
 
     out = self.vff(structure, outdir=outdir, comm=comm)
+    print "after call vff"
+    if comm.rank == 1: print out.structure
+    exit(0)
     assert out.success, RuntimeError("VFF relaxation did not succeed.")
     out.write_escan_input(poscar, out.structure)
 
@@ -439,7 +460,7 @@ class Escan(object):
           copyfile(pot.nonlocal, basename(pot.nonlocal))
     if comm.rank == 0: copyfile(self.maskr, basename(self.maskr))
 
-    comm.barrier() # syncs all procs to make sure we are reading from same file.
+    comm.barrier() # syncs all procs
     with redirect(fout=cout, ferr=cerr, append=True) as oestreams: 
       _call_genpot(comm)
 

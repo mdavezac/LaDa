@@ -7,7 +7,7 @@ from numpy.linalg import norm
 from boost.mpi import world
 from lada.vff import Vff
 from lada.crystal import Structure, Lattice, fill_structure, deform_kpoint
-from lada.escan import Escan, soH
+from lada.escan import Escan, soH, _is_in_sync
 
 # sets up input stuff
 vff = Vff()
@@ -62,6 +62,7 @@ structure = fill_structure(structure.cell)
 for i, atom in enumerate(structure.atoms):
   atom.type = "Si" if i < len(structure.atoms)/2 else "Ge"
 
+
 result_str = Structure()
 result_str.scale = 5.450000e+00
 result_str.set_cell = (4.068890e+00, -4.235770e-18, 5.083297e-01),\
@@ -111,18 +112,22 @@ jobs = [\
 # end of input 
 
 
+print "starting job"
 # computes vff results and checks
 if exists("work") and world.rank == 0: rmtree("work")
 vff_out = vff(structure, outdir = "work", comm = world)
 if world.rank == 0:
+  solo = vff_out.solo()
   diff = 0e0
-  for a, b in zip(vff_out.structure.atoms, result_str.atoms):
+  for a, b in zip(solo.structure.atoms, result_str.atoms):
     assert a.type == b.type
     assert a.site == b.site
     diff += dot(a.pos-b.pos, a.pos-b.pos)
 
   assert diff / float(len(structure.atoms)) < 1e-8, diff 
-  assert abs(vff_out.energy - result_str.energy) < 1e-8, abs(vff_out.energy - result_str.energy) 
+  assert abs(solo.energy - result_str.energy) < 1e-8, abs(solo.energy - result_str.energy) 
+print "wtf", world.rank
+assert _is_in_sync(world)
 
 # some kpoints
 # launch pescan for different jobs.
