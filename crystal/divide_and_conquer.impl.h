@@ -86,7 +86,7 @@ namespace LaDa
         // box is not larger than the cell. Otherwise, when looping over all
         // states, we would go over the same state twice. The following defines
         // the direction for which we can look for periodic images.
-        const math::iVector3d extent( _n(0)>1 ? 0:1, _n(1)>1 ? 0:1, _n(2)>1 ? 0:1 );
+        const math::iVector3d extent( _n(0)==1 ? 0:1, _n(1)==1 ? 0:1, _n(2)==1 ? 0:1 );
         // adds atoms to each box.
         const math::rMatrix3d inv_str( _structure.cell.inverse() );
         const math::rMatrix3d inv_cell( cell.inverse() );
@@ -108,8 +108,8 @@ namespace LaDa
           // Finds out which large box it is contained in.
           std::set< size_t > lb_set;
           for( types::t_int i(-extent(0) ); i <= extent(0); ++i )
-            for( types::t_int j(-extent(0) ); j <= extent(0); ++j )
-              for( types::t_int k(-extent(0) ); k <= extent(0); ++k )
+            for( types::t_int j(-extent(1) ); j <= extent(1); ++j )
+              for( types::t_int k(-extent(2) ); k <= extent(2); ++k )
               {
                 if( i == 0 and j == 0 and k == 0 ) continue;
                 const math::rVector3d displaced

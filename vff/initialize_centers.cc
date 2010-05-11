@@ -47,33 +47,33 @@ namespace LaDa
       t_FirstNeighbors fn;
       first_neighbors_( fn );
 
-//     // Checks if ideal structure. In which case use smith normal tree building.
-//     if( math::is_integer(structure.lattice->cell.inverse() * structure.cell) )
-//     {
-//       if( _verbose ) 
-//       { 
-//         __ROOTCODE
-//         ( 
-//           MPI_COMM,
-//           std::cout << "Trying to create first neighbor tree "
-//                        "using smith normal form algorithm.\n";
-//         )
-//       }
-//       if( build_tree_smith_( fn ) )
-//       {
-//         __DODEBUGCODE( check_tree(); )
-//         if( _verbose )
-//         { 
-//           __ROOTCODE( MPI_COMM,
-//                       std::cout << "First Neighbor tree successfully created.\n"; ) 
-//         }
-//         return true;
-//       }
-//       __ROOTCODE( MPI_COMM, std::cout << "Failed.\n"; )
-//       t_Centers :: iterator i_center = centers.begin();
-//       t_Centers :: iterator i_center_end = centers.end();
-//       for(; i_center != i_center_end; ++i_center ) i_center->bonds.clear();
-//     } 
+//    // Checks if ideal structure. In which case use smith normal tree building.
+//    if( math::is_integer(structure.lattice->cell.inverse() * structure.cell) )
+//    {
+//      if( _verbose ) 
+//      { 
+//        __ROOTCODE
+//        ( 
+//          MPI_COMM,
+//          std::cout << "Trying to create first neighbor tree "
+//                       "using smith normal form algorithm.\n";
+//        )
+//      }
+//      if( build_tree_smith_( fn ) )
+//      {
+//        __DODEBUGCODE( check_tree(); )
+//        if( _verbose )
+//        { 
+//          __ROOTCODE( MPI_COMM,
+//                      std::cout << "First Neighbor tree successfully created.\n"; ) 
+//        }
+//        return true;
+//      }
+//      __ROOTCODE( MPI_COMM, std::cout << "Failed.\n"; )
+//      t_Centers :: iterator i_center = centers.begin();
+//      t_Centers :: iterator i_center_end = centers.end();
+//      for(; i_center != i_center_end; ++i_center ) i_center->bonds.clear();
+//    } 
 //
 //     const size_t Nperbox( 10 );
 //     if( structure.atoms.size() < Nperbox )
