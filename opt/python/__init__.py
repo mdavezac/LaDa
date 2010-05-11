@@ -13,20 +13,20 @@ class _RedirectC:
     self.append = append
   def __enter__(self):
     from sys import stdout, stderr, stdin
-    from _opt.fortran import input as uin, outout as uout, error as uerr
-    if self.unit == uin: self.old = stdout
-    elif self.unit == uerr: self.old = stderr
-    elif self.unit == uout: self.old = stdin
+    from _opt import Redirect as r
+    if self.unit   == r.fortran.input:  self.old = stdin
+    elif self.unit == r.fortran.error:  self.old = stderr
+    elif self.unit == r.fortran.output: self.old = stdout
     else: raise RuntimeError("Unknown redirection unit.")
     self.file = open(filename, "a" if append else "w")
     return self
   def __exit__(self, **kwargs):
     from sys import stdout, stderr, stdin
-    from _opt.fortran import input as uin, outout as uout, error as uerr
+    from _opt import Redirect as r
     self.file.close()
-    if self.unit == uin:    stdout = self.old 
-    elif self.unit == uerr: stderr = self.old 
-    elif self.unit == uout: stdin  = self.old 
+    if self.unit   == r.fortran.input:  stdin = self.old 
+    elif self.unit == r.fortran.error:  stderr = self.old 
+    elif self.unit == r.fortran.output: stdout  = self.old 
     else: raise RuntimeError("Unknown redirection unit.")
       
 
@@ -41,12 +41,12 @@ def redirect(fout=None, ferr=None, cout=None, cerr=None, append = False):
       @param append: If true, will append to files. All or nothing.
   """
   from contextlib import nested
-  from _opt.fortran import input as uin, outout as uout, error as uerr
+  from _opt import Redirect as r
   result = []
-  for value, unit in [ (fout, uout), (ferr, uerr), (ferr, uerr) ]:
+  for value, unit in [ (fout, r.fortran.output), (ferr, r.fortran.error), (fin, r.fortran.input) ]:
     if value == None: continue
     result.append( _RedirectFortran(unit=unit, filename=value, append=append) )
-  for value, unit in [ (cout, uout), (cerr, uerr), (cerr, uerr) ]:
+  for value, unit in [ (cout, r.fortran.output), (cerr, r.fortran.error), (cin, r.fortran.input) ]:
     if value == None: continue
     result.append( _RedirectC(unit=unit, filename=value, append=append) )
   return nested(*result)
