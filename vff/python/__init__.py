@@ -82,7 +82,7 @@ class Extract(object):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def structure(self):
-    """ Gets structure from self.L{OUTCAR}. """
+    """ Greps structure from self.L{OUTCAR}. """
     from os.path import exists, join
     from ..crystal import Structure
     path = self.OUTCAR
@@ -103,7 +103,7 @@ class Extract(object):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def energy(self):
-    """ Gets energy from self.L{OUTCAR}. """
+    """ Greps energy from self.L{OUTCAR}. """
     from os.path import exists, join
     path = self.OUTCAR
     if len(self.directory): path = join(self.directory, self.OUTCAR)
@@ -123,7 +123,7 @@ class Extract(object):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def stress(self):
-    """ Gets stress from self.L{OUTCAR}. """
+    """ Greps stress from self.L{OUTCAR}. """
     from os.path import exists, join
     from numpy import array
     path = self.OUTCAR
@@ -153,7 +153,7 @@ class Extract(object):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def lattice(self):
-    """ Gets lattice from self.L{OUTCAR}. """
+    """ Greps lattice from self.L{OUTCAR}. """
     from os.path import exists, join
     from lada.crystal import Lattice
 
@@ -169,7 +169,7 @@ class Extract(object):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def minimizer(self):
-    """ Gets minimizer from self.L{OUTCAR}. """
+    """ Greps minimizer from self.L{OUTCAR}. """
     from os.path import exists, join
     from ..minimizer import Minimizer
     path = self.OUTCAR
@@ -183,7 +183,7 @@ class Extract(object):
   @property
   @make_cached
   def vff(self):
-    """ Gets vff functional from self.L{OUTCAR}. """
+    """ Greps vff functional from self.L{OUTCAR}. """
     from os.path import exists, join
     path = self.OUTCAR
     if len(self.directory): path = join(self.directory, self.OUTCAR)
@@ -388,7 +388,7 @@ class Vff(object):
     result  = repr(self.lattice)
     result += repr(self.minimizer)
     result += "# Vff definition.\n"
-    result += "vff = Vff()\n"
+    result += "vff = %s()\n" % (self.__class__.__name__)
     result += "vff.minimizer = minimizer\n"
     result += "vff.lattice = lattice\n"
     result += "vff.OUTCAR = \"%s\"\n" % (self.OUTCAR)

@@ -113,11 +113,10 @@ jobs = [\
 
 
 # computes vff results and checks
-if exists("work") and world.rank == 0: rmtree("work")
+# if exists("work") and world.rank == 0: rmtree("work")
 vff_out = vff(structure, outdir = "work", comm = world)
 if world.rank == 0:
   solo = vff_out.solo()
-  print vff_out.structure
   diff = 0e0
   for a, b in zip(solo.structure.atoms, result_str.atoms):
     assert a.type == b.type
@@ -132,9 +131,14 @@ if world.rank == 0:
 for kpoint, name, ref, expected_eigs in jobs:
   out = escan( structure, join("work", name), comm = world,\
                kpoint = kpoint, #deform_kpoint(kpoint, structure.cell, vff_out.structure.cell),\
-               eref = ref,\
-               nbstates = 4,\
+               eref = None,\
+               nbstates = 26,\
                workdir="work")
+  if world.rank == 0:
+    solo = out.solo()
+    print solo.success, solo.nnodes
+    print solo.eigenvalues
+    print solo.convergence
   break;
   # if world.rank == 0: print "Ok - %s: %s -> %s: %s" % (name, kpoint, escan.kpoint, eigenvalues)
   

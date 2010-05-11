@@ -259,7 +259,9 @@ class Escan(object):
   def __repr__(self):
     result  = str(self.vff)
     result += "# Escan definition.\n"
-    result += "escan.eref                  = %s\n" % ( "None" if self.eref == None else str(self.eref) )
+    result += "escan = %s()\n" % (self.__class__.__name__)
+    result += "escan.eref                  = %s\n"\
+              % ( "None" if self.eref == None else str(self.eref) )
     result += "escan.cutoff                = %f\n" % (self.cutoff)
     result += "escan.smooth                = %f\n" % (self.smooth)
     result += "escan.kinetic_scaling       = %f\n" % (self.kinetic_scaling)
@@ -319,7 +321,7 @@ class Escan(object):
 
     # checks if outdir contains a successful run.
     if broadcast(comm, exists(outdir) if comm.rank == 0 else None, 0):
-      extract = Extract(comm = comm, directory = outdir, vff = this)
+      extract = Extract(comm = comm, directory = outdir, escan = this)
       if extract.success: return extract # in which case, returns extraction object.
       comm.barrier() # makes sure directory is not created by other proc!
 
@@ -334,6 +336,8 @@ class Escan(object):
                      this._WAVECAR if comm.rank == 0  else None ]:
         if file == None: continue
         copyfile( join(this.workdir, basename(file)), basename(file) )
+
+    return Extract(comm = comm, directory = outdir, escan = this)
 
   def _cout(self, comm):
     """ Creates output name. """
