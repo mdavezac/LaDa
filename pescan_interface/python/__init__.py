@@ -299,6 +299,7 @@ class Escan(object):
   def __call__(self, structure, outdir = None, comm = None, **kwargs):
     """ Performs calculation """
     from copy import deepcopy
+    from os import getcwd
     from os.path import exists, isdir, abspath, basename, join
     from shutil import copyfile
     from boost.mpi import world, broadcast
