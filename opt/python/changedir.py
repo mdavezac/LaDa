@@ -20,10 +20,8 @@ class Changedir:
     
     self.oldpwd = getcwd()
 
-    is_root = self.comm == None
-    if not is_root: is_root = self.comm.rank == 0
-    if is_root: # creates directory if does not exist.
-      if not exists(self.pwd): makedirs(self.pwd)
+    is_root = True if self.comm == None else self.comm.rank == 0
+    if is_root and not exists(self.pwd): makedirs(self.pwd)
     if self.comm != None: self.comm.barrier()
     assert exists(self.pwd) and isdir(self.pwd), "Could not find working directory."
     chdir(self.pwd)
