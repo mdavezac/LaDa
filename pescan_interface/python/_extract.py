@@ -106,11 +106,24 @@ class Extract(object):
     exec get_functional(self) in globals(), local_dict
     return local_dict["escan"]
 
+
+  def _double_trouble(self):
+    """ Returns true, if non-spin polarized or Kammer calculations. """
+    from numpy.linalg import norm
+    from . import soH
+    potential = self.solo().escan.potential
+    if potential != soH: return True
+    return norm(self.solo().escan.kpoint) < 1e-12
+
+
   @property 
   @make_cached
   @broadcast_result(attr=True, which=0)
   def eigenvalues(self):
-    """ Greps eigenvalues from self.L{OUTCAR}. """
+    """ Greps eigenvalues from self.L{OUTCAR}. 
+    
+        Always returns "spin-polarized" number of eigenvalues.
+    """
     from os.path import exists, join
     from numpy import array
     path = self.OUTCAR
@@ -125,13 +138,18 @@ class Extract(object):
         if line.find("*********************************") != -1: break
         result.extend( float(u) for u in line.split() )
       else: raise IOError("Unexpected end of file when grepping for eigenvectors.")
-    return array(result, dtype="float64")
+
+    return array(result, dtype="float64") if not self._double_trouble()\
+           else array([result[i/2] for i in range(2*len(result))], dtype="float64")
 
   @property 
   @make_cached
   @broadcast_result(attr=True, which=0)
   def convergence(self):
-    """ Greps eigenvalue convergence errors from self.L{OUTCAR}. """
+    """ Greps eigenvalue convergence errors from self.L{OUTCAR}. 
+    
+        Always returns "spin-polarized" number of eigenvalues.
+    """
     from os.path import exists, join
     from numpy import array
     path = self.OUTCAR
@@ -146,7 +164,9 @@ class Extract(object):
         if line.find(" FINAL eigen energies, in eV") != -1: break
         result.extend( float(u) for u in line.split() )
       else: raise IOError("Unexpected end of file when grepping for eigenvectors.")
-    return array(result, dtype="float64")
+
+    return array(result, dtype="float64") if not self._double_trouble()\
+           else array([result[i/2] for i in range(2*len(result))], dtype="float64")
 
   @property
   @make_cached
