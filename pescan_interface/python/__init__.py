@@ -10,9 +10,10 @@ if __load_pescan_in_global_namespace__:
   _setdlopenflags(flags)
 else: import _escan
 from ..opt.decorators import add_setter, broadcast_result
-from bandstructure import band_structure
+import band_structure as bs
 import _extract
 Extract = _extract.Extract
+band_structure = bs.band_structure
 
 def _is_in_sync(comm, which = [0]):
   from boost.mpi import broadcast
