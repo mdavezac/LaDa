@@ -37,18 +37,9 @@ namespace LaDa
     {
       t_Arg :: const_iterator i_x = _arg.begin();
 
-      _strain(0,0) = ( structure.freeze & Crystal::Structure::FREEZE_XX ) ?
-                       types::t_real(1.0) : (*i_x++);
-      _strain(1,1) = ( structure.freeze & Crystal::Structure::FREEZE_YY ) ?
-                       types::t_real(1.0) : (*i_x++);
-      _strain(2,2) = ( structure.freeze & Crystal::Structure::FREEZE_ZZ ) ?
-                       types::t_real(1.0) : (*i_x++);
-      _strain(0,1) = _strain (1,0) = (structure.freeze & Crystal::Structure::FREEZE_XY) ?
-                                       types::t_real(0.0) : (*i_x++);
-      _strain(0,2) = _strain (2,0) = (structure.freeze & Crystal::Structure::FREEZE_XZ) ?
-                                       types::t_real(0.0) : (*i_x++);
-      _strain(2,1) = _strain (1,2) = (structure.freeze & Crystal::Structure::FREEZE_YZ) ?
-                                       types::t_real(0.0) : (*i_x++);
+      for(size_t i(0), freeze(1); i < 3; ++i)
+        for(size_t j(0); j < 3; ++j, freeze <<= 1)
+          _strain(i,j) = structure.freeze & freeze ? (i==j ? 1:0): (*i_x++);
 
       // compute resulting cell vectors
       structure.cell = _strain * structure0.cell;
@@ -109,12 +100,8 @@ namespace LaDa
 
       // Now counts the degrees of freedom
       types::t_unsigned dof = 0;
-      if ( not (structure0.freeze & Crystal::Structure::FREEZE_XX ) ) ++dof;
-      if ( not (structure0.freeze & Crystal::Structure::FREEZE_XY ) ) ++dof;
-      if ( not (structure0.freeze & Crystal::Structure::FREEZE_XZ ) ) ++dof;
-      if ( not (structure0.freeze & Crystal::Structure::FREEZE_YY ) ) ++dof;
-      if ( not (structure0.freeze & Crystal::Structure::FREEZE_YZ ) ) ++dof;
-      if ( not (structure0.freeze & Crystal::Structure::FREEZE_ZZ ) ) ++dof;
+      for(size_t freeze(1); freeze < 512; freeze <<= 1)
+        if( not (structure0.freeze & freeze) ) ++ dof;
       dof += posdofs();
 
       if( not dof ) return false;
@@ -158,19 +145,13 @@ namespace LaDa
     {
       // finally, packs vff format into function::Base format
       t_Arg :: iterator i_var = _arg.begin();
-      if ( not (structure0.freeze & Crystal::Structure::FREEZE_XX ) )
-        { *i_var = _strain(0,0); ++i_var; }
-      if ( not (structure0.freeze & Crystal::Structure::FREEZE_YY ) )
-        { *i_var = _strain(1,1); ++i_var; }
-      if ( not (structure0.freeze & Crystal::Structure::FREEZE_ZZ ) )
-        { *i_var = _strain(2,2); ++i_var; }
-      if ( not (structure0.freeze & Crystal::Structure::FREEZE_XY ) )
-        { *i_var = 0.5*(_strain(1,0) + _strain(0,1)); ++i_var; }
-      if ( not (structure0.freeze & Crystal::Structure::FREEZE_XZ ) )
-        { *i_var = 0.5*(_strain(2,0) + _strain(0,2)); ++i_var; }
-      if ( not (structure0.freeze & Crystal::Structure::FREEZE_YZ ) )
-        { *i_var = 0.5*(_strain(2,1) + _strain(1,2)); ++i_var; }
-
+      for(size_t i(0), freeze(1); i < 3; ++i)
+        for(size_t j(0); j < 3; ++j, freeze <<= 1)
+        {
+          if(structure0.freeze & freeze) continue;
+          *i_var = _strain(i,j);
+          ++i_var;
+        }
       pack_positions( i_var );
     }
 
@@ -195,18 +176,13 @@ namespace LaDa
       t_GradientArg i_grad(_grad);
 
       // first, external stuff
-      if ( not (structure.freeze & Crystal::Structure::FREEZE_XX) )
-        *i_grad = _stress(0,0), ++i_grad;
-      if ( not (structure.freeze & Crystal::Structure::FREEZE_YY) ) 
-        *i_grad = _stress(1,1), ++i_grad;
-      if ( not (structure.freeze & Crystal::Structure::FREEZE_ZZ) ) 
-        *i_grad = _stress(2,2), ++i_grad;
-      if ( not (structure.freeze & Crystal::Structure::FREEZE_XY) ) 
-        *i_grad = 0.5 * (_stress(0,1) + _stress(1,0)), ++i_grad;
-      if ( not (structure.freeze & Crystal::Structure::FREEZE_XZ) ) 
-        *i_grad = 0.5 * (_stress(0,2) + _stress(2,0)), ++i_grad;
-      if ( not (structure.freeze & Crystal::Structure::FREEZE_YZ) ) 
-        *i_grad = 0.5 * (_stress(1,2) + _stress(2,1)), ++i_grad;
+      for(size_t i(0), freeze(1); i < 3; ++i)
+        for(size_t j(0); j < 3; ++j, freeze <<= 1)
+        {
+          if(structure.freeze & freeze) continue;
+          *i_grad = _stress(i,j);
+          ++i_grad;
+        }
 
       // then atomic position stuff
       t_Centers :: const_iterator i_center = centers.begin();

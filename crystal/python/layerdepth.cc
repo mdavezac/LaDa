@@ -39,13 +39,15 @@ namespace LaDa
       { return _l(get_pos(_a)); }
 
     template<class T_TYPE>
-      boost::shared_ptr< T_TYPE > sort_structure( T_TYPE &_structure )
+      boost::shared_ptr< T_TYPE > sort_structure2( T_TYPE &_structure, math::rVector3d const &_dir )
       {
         boost::shared_ptr< T_TYPE > result(new T_TYPE(_structure));
-        std::sort( result->atoms.begin(), result->atoms.end(), 
-                   Crystal::LayerDepth(result->cell.col(0)) );
+        std::sort( result->atoms.begin(), result->atoms.end(), Crystal::LayerDepth(_dir) );
         return result;
       }
+    template<class T_TYPE>
+      boost::shared_ptr< T_TYPE > sort_structure( T_TYPE &_structure )
+        { return sort_structure2(_structure, _structure.cell.col(0)); }
 
     void expose_layerdepth()
     {
@@ -69,14 +71,22 @@ namespace LaDa
          "Arguments are numpy 3x1 float arrays."
        );
       bp::def( "sort_layers", &sort_structure<Crystal::Structure>, bp::arg("structure") );
+      bp::def( "sort_layers", &sort_structure< Crystal::TStructure<std::string> >,
+                bp::arg("structure") );
+      bp::def( "sort_layers", &sort_structure2<Crystal::Structure>,
+               (bp::arg("structure"), bp::arg("direction")) );
       bp::def
       ( 
         "sort_layers", 
-        &sort_structure< Crystal::TStructure<std::string> >,
-        bp::arg("structure"),
+        &sort_structure2< Crystal::TStructure<std::string> >,
+        (bp::arg("structure"), bp::arg("direction")), 
         "Returns a structure with the atoms sorted by layer.\n\n"
         "@param structure: An input structure. Not modified on output.\n"
         "@type structure: L{Structure} or L{rStructure}\n"
+        "@param direction: Optional argument giving the direction and length of "
+        "repetitions. When not given, this is the firstr cell vector of the structure, "
+        "C{structure.cell[:,0]}.\n"
+        "@type direction: numpy array\n"
       );
     }
 

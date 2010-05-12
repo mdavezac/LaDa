@@ -3,28 +3,10 @@
     @group Checkpoints: best, print_population, print_offspring,
                         average_fitness, _check_generation
 """
-from decorator import decorator
-
-@decorator
-def _mpi_to_single(method, *args, **kwargs):
-  """ Perform method on one proc and broadcasts the return.
-  
-      Second argumnent should have comm attribute.
-  """
-  from boost.mpi import broadcast
-  if args[1].comm == None:
-    return method(*args, **kwargs)
-  elif args[1].comm.rank == 0:
-    return broadcast(args[1].comm, method(*args, **kwargs), 0)
-  return broadcast(args[1].comm, root = 0)
-
-def _bound_mpi_extraction(method, *args, **kwargs): 
-  """ Reads from root, and broadcasts to all 
-  
-      Decorator for bound methods.
-  """
-  assert len(args) >= 1, "Decorator for bound methods only.\n"
-  return _extract_which_is_self(0, method, *args, **kwargs)
+def bound_method(self, method):
+  """ Returns a method bound to self. """
+  from new import instancemethod
+  return instancemethod(method, self, self.__class__) 
 
 class Taboo(object):
   """ A container of taboo operators.
@@ -56,6 +38,7 @@ class Taboo(object):
 
   def __call__(self, darwin, indiv):
     """ Returns true if any one operator returns true. """
+    import sys
     for taboo in self.taboos:
       if taboo(darwin, indiv): return True
 
@@ -125,23 +108,93 @@ def _check_generation( self ):
   if self.max_gen < 0: return True
   return self.current_gen < self.max_gen
   
-def add_population_evaluation(self, evaluation):
+def population_evaluation(self, evaluator):
   """ Standard population evaluation. 
       Evaluates individual only if fitness attribute does not exist. 
       Fitness is the return of evaluation subroutine given on input.
       evaluation subroutine should take an individual at its only argument.
   """
+  from new import instancemethod
+
   def popeval(self):
     for indiv in self.population:
       if not hasattr(indiv, "fitness" ): 
-        indiv.fitness = self.indiv_evaluation(indiv)
+        indiv.fitness = evaluator(indiv)
     for indiv in self.offspring:
       if not hasattr(indiv, "fitness" ): 
-        indiv.fitness = self.indiv_evaluation(indiv)
-  self.indiv_evaluation = evaluation
-  self.evaluation = popeval
-  return self
+        indiv.fitness = evaluator(indiv)
 
+  popeval.__doc__ = population_evaluation.__doc__
+  popeval = bound_method(self, popeval)
+  return popeval
+
+def mpi_population_evaluation(self, evaluator, pools = None):
+  """ Population and offspring evaluation are splitted across processors.
+  
+      Usage:
+      >>> darwin.evaluation = standard.mpi_population_evaluation(darwin, evaluator, pools)
+  """
+  from boost.mpi import broadcast
+  # split communicator along number of pools
+  if pools == None: pools = self.comm.size
+  color = self.comm.rank % pools
+  local_comm = self.comm.split(color)
+  heads_comm = self.comm.split(1 if local_comm.rank == 0 else 2)
+
+  def check_pops(this, population):
+    if not __debug__: return
+    new_pop = broadcast(this.comm, population, 0)
+    assert len(new_pop) == len(population),\
+           RuntimeError("Populations across processes have different lengths.")
+    for a, b in zip(new_pop, population):
+      assert a == b, RuntimeError("Populations are not equivalent across processes.")
+      ahas, bhas = hasattr(a, "fitness"), hasattr(b, "fitness")
+      assert (ahas and bhas) or not (ahas or bhas),\
+            RuntimeError("Populations do not have equivalently evaluated invidiuals")
+      if ahas and bhas:
+        assert a.fitness == b.fitness,\
+        RuntimeError("Fitness are not equivalent across processes.")
+    this.comm.barrier()
+
+  def evaluation(this):
+    from boost.mpi import scatter, all_gather
+
+    gather_these = []
+    def iterpops(*pops):  # goes through both populations, one after the other.
+      for pop in pops:
+        for u in pop:
+          if not hasattr(u, "fitness"): yield u
+
+    # Now goes throught individuals which need be evaluated
+    for index, indiv in enumerate(iterpops(this.population, this.offspring)):
+      if index % pools == color: 
+        evaluator.comm = local_comm
+        fitness = evaluator(indiv)
+        if local_comm.rank == 0: gather_these.append( (indiv, fitness) )
+
+    # gathers all newly computed individuals. 
+    if local_comm.rank == 0:
+      gather_these = all_gather(heads_comm, gather_these)
+    gather_these = broadcast(local_comm, gather_these, 0)
+
+    # now reinserts them into populations.
+    for index, indiv in enumerate(iterpops(this.population, this.offspring)):
+      assert len(gather_these) > index % pools
+      assert len(gather_these[index % pools]) != 0
+      a, fitness = gather_these[index % pools].pop(0)
+      indiv.fitness = fitness
+      indiv = a
+    self.comm.barrier()
+    for index, indiv in enumerate(iterpops(this.population, this.offspring)):
+      assert False, "should not be here"
+    this.comm.barrier()
+
+    check_pops(this, this.population)
+    check_pops(this, this.offspring)
+    
+  evaluation.__doc__ = mpi_population_evaluation.__doc__
+  evaluation = bound_method(self, evaluation)
+  return evaluation
 
 class Mating(object):
   """ Aggregator of mating operators. 
@@ -170,11 +223,10 @@ class Mating(object):
     elif hasattr(function, "func_code"): nb_args = function.func_code.co_argcount
     else: nb_args = function.__call__.im_func.func_code.co_argcount - 1
 
-    if rate <= 0e0: raise ValueError, "rate argument cannot be negative (%s)." % (rate)
+    assert rate > 0e0, ValueError("rate argument cannot be negative (%s)." % (rate))
     self.operators.append( (function, rate, nb_args) )
   
 
-  @_mpi_to_single
   def __call__(self, darwin):
     """ Creates an offspring. """
     import random
@@ -257,7 +309,7 @@ def fill_attributes(self):
     self.Individual = Individual
 
   # Checks whether self has a taboo object.
-  if not hasattr(self, "taboo"): self.taboo = Taboo()
+  if not hasattr(self, "taboo"): self.taboo = bound_method(self, Taboo())
 
   # Checks whether self has a selection object.
   if not hasattr(self, "selection"): self.selection = tournament

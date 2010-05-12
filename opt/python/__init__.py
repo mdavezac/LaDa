@@ -18,7 +18,8 @@ class _RedirectPy:
     elif self.unit == streams.error:  self.old = sys.stderr
     elif self.unit == streams.output: self.old = sys.stdout
     else: raise RuntimeError("Unknown redirection unit.")
-    self.file = open(self.filename if len(self.filename) else "/dev/null", "a" if self.append else "w")
+    self.file = open(self.filename if len(self.filename)\
+                else "/dev/null", "a" if self.append else "w")
     if self.unit == streams.input:    sys.stdin  = self.file
     elif self.unit == streams.error:  sys.stderr = self.file
     elif self.unit == streams.output: sys.stdout = self.file

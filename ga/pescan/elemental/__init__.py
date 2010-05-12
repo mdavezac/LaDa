@@ -104,6 +104,7 @@ class Converter(object):
         to a bitstring.  Otherwise, expects a bitstring which is converted to
         an L{crystal.Structure<lada.crystal.Structure>}.
     """
+    from numpy import array
     from lada.crystal import Structure
 
     if hasattr(object, "cell"): # crystal structure
@@ -111,9 +112,12 @@ class Converter(object):
         if u.type == self.structure.lattice.sites[u.site].type[0]: 
           return 0
         return 1
-      return [ which(u) for u in self.structure.atoms ]
+      return array([ which(u) for u in self.structure.atoms ])
     else:  # bitstring.
       if len(object) != len(self.structure.atoms): 
+        print object
+        print len(self.structure.atoms)
+        print self.structure
         raise ValueError, "Bitstring and epitaxial structure are not compatible.\n"
       result = Structure(self.structure)
       for i, atom in enumerate(result.atoms):

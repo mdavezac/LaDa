@@ -263,6 +263,10 @@ namespace LaDa
           .def( "toXML",  &XML::to< T_STRUCTURE >, bp::arg("file"),
                 "Adds a tag to an XML file describing this structure."  )
           .def( "xcrysden", &xcrysden_str, "Outputs in XCrysden format." )
+          .def_readwrite( "freeze", &T_STRUCTURE::freeze,
+                           "Tags to freeze coordinates when relaxing structure.\n\n" 
+                           "@see L{FreezeCell} for possible values." 
+                        )
           .add_property
           ( 
             "lattice",
@@ -285,10 +289,16 @@ namespace LaDa
         .value(   "xx", Crystal::Structure::FREEZE_XX )
         .value(   "xy", Crystal::Structure::FREEZE_XY )
         .value(   "xz", Crystal::Structure::FREEZE_XZ )
+        .value(   "yx", Crystal::Structure::FREEZE_YX )
         .value(   "yy", Crystal::Structure::FREEZE_YY )
         .value(   "yz", Crystal::Structure::FREEZE_YZ )
+        .value(   "zx", Crystal::Structure::FREEZE_ZX )
+        .value(   "zy", Crystal::Structure::FREEZE_ZY )
         .value(   "zz", Crystal::Structure::FREEZE_ZZ )
         .value(  "all", Crystal::Structure::FREEZE_ALL )
+        .value(  "a0", Crystal::Structure::FREEZE_A0 )
+        .value(  "a1", Crystal::Structure::FREEZE_A1 )
+        .value(  "a2", Crystal::Structure::FREEZE_A2 )
         .export_values();
 
       expose< Crystal::Structure >
@@ -297,8 +307,6 @@ namespace LaDa
         "Defines a structure.\n\nGenerally, it is a super-cell of a L{Lattice} object.",
         "rAtom"
       ).def( "__init__", bp::make_constructor( string_to_real ) )
-       .def_readwrite( "freeze", &Crystal::Structure::freeze,
-                        "Tags to freeze coordinates when relaxing structure.\n" )
        .def_readwrite( "k_vecs",  &Crystal::Structure::k_vecs,
                        "The list of reciprocal-space vectors."
                        " It is constructure with respected to a LaDa.Lattice object.\n"  ) 

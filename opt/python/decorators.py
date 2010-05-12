@@ -68,6 +68,7 @@ def broadcast_result(key=False, attr=False, which=0):
       else:
         error, result = broadcast(args[which].comm, root=0)
         assert not error, RuntimeError("Process %i reports an error: %s"  % (result[1], result[0]))
+      if __debug__: args[which].comm.barrier()
       return result
     wrapped.__name__ = method.__name__
     wrapped.__doc__ = method.__doc__

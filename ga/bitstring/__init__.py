@@ -81,6 +81,7 @@ class LocalSearch(object):
           - itermax is the maximum number of evaluation. 
     """
 
+    assert True, "Not implemented correctly for mpi."
     self.evaluation = evaluation
     self.darwin = darwin
     self.itermax = itermax
@@ -109,7 +110,7 @@ class LocalSearch(object):
       moved = False
       for j, i in enumerate(indices): 
         indiv.genes[i] = not indiv.genes[i]
-        if self.darwin.taboo(self.darwin, indiv ):
+        if self.darwin.taboo(indiv ):
           indiv.genes[i] = not indiv.genes[i]
           continue
 

@@ -47,7 +47,7 @@ for i, dir in enumerate(jobs):
     stderr = "stderr"
     if local_comm.rank != 0: 
       stdout = "%s.%i" % (stdout, local_comm.rank)
-      stderr = "%s.%i" % (stdout, local_comm.rank)
+      stderr = "%s.%i" % (stderr, local_comm.rank)
     with Redirect(Redirect.fortran.output, stdout) as stdout:
       with Redirect(Redirect.fortran.error, stderr) as stderr:
         # finally calls escan.
