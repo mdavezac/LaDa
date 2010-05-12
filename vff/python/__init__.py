@@ -36,7 +36,6 @@ def _get_script_text(file, name):
 
 class Extract(object):
   def __init__(self, directory = None, comm = None, vff = None):
-    from os.path import abspath
     super(Extract, self).__init__()
     self.directory = directory if directory != None else getcwd()
     """ Directory where to check for output. """
@@ -272,8 +271,8 @@ class Vff(object):
 
   def _get_workdir(self): return self._workdir
   def _set_workdir(self, workdir):
-    from os.path import abspath
-    self._workdir = abspath(workdir) if workdir != None else None
+    from os.path import abspath, expanduser
+    self._workdir = abspath(expanduser(workdir)) if workdir != None else None
   workdir = property( _get_workdir, _set_workdir, 
                       """ Working directory where calculations are performed. 
                       
@@ -427,25 +426,30 @@ class Vff(object):
     """ Performs calculation """
     import time
     from copy import deepcopy
-    from os.path import exists, isdir, abspath
+    from os.path import exists, isdir, abspath, expanduser
     from boost.mpi import world
     from ..opt.changedir import Changedir
     from boost.mpi import world, broadcast
 
     # bull shit. 
     assert len(self.lattice.sites) == 2, RuntimeError("Lattice is not zinc-blend")
-    assert len(self.lattice.sites[0].type) > 0, RuntimeError("No atomic species given in lattice site 0.")
-    assert len(self.lattice.sites[1].type) > 0, RuntimeError("No atomic species given in lattice site 1.")
-    assert len(self.lattice.sites[1].type) < 3, RuntimeError("Lattice is not binary, pseudo-binary or quaternary.")
-    assert len(self.lattice.sites[0].type) < 3, RuntimeError("Lattice is not binary, pseudo-binary or quaternary.")
-    assert len(self.lattice.sites[1].type) < 3, RuntimeError("Lattice is not binary, pseudo-binary or quaternary.")
+    assert len(self.lattice.sites[0].type) > 0,\
+           RuntimeError("No atomic species given in lattice site 0.")
+    assert len(self.lattice.sites[1].type) > 0,\
+           RuntimeError("No atomic species given in lattice site 1.")
+    assert len(self.lattice.sites[1].type) < 3,\
+           RuntimeError("Lattice is not binary, pseudo-binary or quaternary.")
+    assert len(self.lattice.sites[0].type) < 3,\
+           RuntimeError("Lattice is not binary, pseudo-binary or quaternary.")
+    assert len(self.lattice.sites[1].type) < 3,\
+           RuntimeError("Lattice is not binary, pseudo-binary or quaternary.")
     assert len(self.lattice.sites[0].type) != 1 or  len(self.lattice.sites[1].type) != 2
 
     timing = time.time() 
     local_time = time.localtime() 
 
     # gets absolute path.
-    outdir = abspath(outdir)
+    outdir = abspath(expanduser(outdir))
 
     # make this functor stateless.
     this      = deepcopy(self)

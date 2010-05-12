@@ -114,7 +114,7 @@ jobs = [\
 
 # computes vff results and checks
 # if exists("work") and world.rank == 0: rmtree("work")
-vff_out = vff(structure, outdir = "work", comm = world)
+vff_out = vff(structure, outdir = "results", comm = world)
 if world.rank == 0:
   solo = vff_out.solo()
   diff = 0e0
@@ -129,7 +129,7 @@ if world.rank == 0:
 # some kpoints
 # launch pescan for different jobs.
 for kpoint, name, ref, expected_eigs in jobs:
-  out = escan( structure, join("work", name), comm = world,\
+  out = escan( structure, join("results", name), comm = world,\
                kpoint = kpoint, #deform_kpoint(kpoint, structure.cell, vff_out.structure.cell),\
                eref = None,\
                nbstates = 26,\

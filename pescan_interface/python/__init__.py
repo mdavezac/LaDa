@@ -93,11 +93,11 @@ soH = 2
 class AtomicPotential(object):
   """ Holds parameters to atomic potentials. """
   def __init__(self, filepath, nonlocal=None, s=None, p=None, d=None, pnl=None, dnl=None):
-    from os.path import abspath
+    from os.path import abspath, expanduser
 
-    self.filepath = abspath(filepath)
+    self.filepath = abspath(expanduser(filepath))
     """ Path to pseudopotential file. """
-    self.nonlocal = None if nonlocal == None else abspath(nonlocal)
+    self.nonlocal = None if nonlocal == None else abspath(expanduser(nonlocal))
     """ Path to non-local part, or None. """
     self.s =  s if s != None else 0
     """ s parameter """
@@ -214,8 +214,8 @@ class Escan(object):
 
   def _get_workdir(self): return self._workdir
   def _set_workdir(self, workdir):
-    from os.path import abspath
-    self._workdir = abspath(workdir) if workdir != None else None
+    from os.path import abspath, expanduser
+    self._workdir = abspath(expanduser(workdir)) if workdir != None else None
   workdir = property( _get_workdir, _set_workdir, 
                       """ Working directory where calculations are performed. 
                       
@@ -224,8 +224,8 @@ class Escan(object):
 
   def _get_maskr(self): return self._maskr
   def _set_maskr(self, workdir): 
-    from os.path import abspath
-    self._maskr = abspath(workdir) if workdir != None else None
+    from os.path import abspath, expanduser
+    self._maskr = abspath(expanduser(workdir)) if workdir != None else None
   maskr = property( _get_maskr, _set_maskr, 
                       """ maskr file for projectors.
                       
@@ -300,23 +300,28 @@ class Escan(object):
     """ Performs calculation """
     from copy import deepcopy
     from os import getcwd
-    from os.path import exists, isdir, abspath, basename, join
+    from os.path import exists, isdir, abspath, basename, join, expanduser
     from shutil import copyfile
     from boost.mpi import world, broadcast
     from ..opt.changedir import Changedir
+    from ..opt.tempdir import Tempdir
 
     if comm == None: comm = world
     if outdir == None: outdir = getcwd()
 
     # make this functor stateless.
     this      = deepcopy(self)
-    outdir    = abspath(outdir)
+    outdir    = abspath(expanduser(outdir))
 
     # if other keyword arguments are present, then they are assumed to be
     # attributes of self, with value to use for calculations launch. 
+    # If an attribute cannot be found to exist in escan, then vff attributes
+    # are checked, and lastly vff.minimizer attributes.
     for key in kwargs.keys():
       if hasattr(this, key): setattr(this, key, kwargs[key])
-      else: raise NameError( "Escan does not have an %s attribute." % (key) )
+      elif hasattr(this.vff, key): setattr(this.vff, key, kwargs[key])
+      elif hasattr(this.vff.minimizer, key): setattr(this.vff.minimizer, key, kwargs[key])
+      else: raise NameError( "%s attribute unknown of escan." % (key) )
 
     # checks if outdir contains a successful run.
     if broadcast(comm, exists(outdir) if comm.rank == 0 else None, 0):
@@ -324,17 +329,24 @@ class Escan(object):
       if extract.success: return extract # in which case, returns extraction object.
       comm.barrier() # makes sure directory is not created by other proc!
 
-    this._run(structure, outdir, comm)
-
-    with Changedir(outdir) as cwd:
-      for file in  [ this._POSCAR + "." + str(comm.rank),\
-                     this._cout(comm) if this._cout(comm) != "/dev/null" else None,\
-                     this._cerr(comm) if this._cerr(comm) != "/dev/null" else None,\
-                     this.vff._cout(comm) if this.vff._cout(comm) != "/dev/null" else None,\
-                     this.vff._cerr(comm) if this.vff._cerr(comm) != "/dev/null" else None,\
-                     this.WAVECAR if comm.rank == 0  else None ]:
-        if file == None: continue
-        copyfile( join(this.workdir, basename(file)), basename(file) )
+    # changes to temporary working directory
+    workdir = abspath(expanduser(this.workdir)) if this.workdir != None\
+              else getcwd()
+    with Tempdir(workdir=workdir, comm=comm) as this.workdir: 
+  
+      # performs calculation.
+      this._run(structure, outdir, comm)
+  
+      # copies output files.
+      with Changedir(outdir, comm = comm) as cwd:
+        for file in  [ this._POSCAR + "." + str(comm.rank),\
+                       this._cout(comm) if this._cout(comm) != "/dev/null" else None,\
+                       this._cerr(comm) if this._cerr(comm) != "/dev/null" else None,\
+                       this.vff._cout(comm) if this.vff._cout(comm) != "/dev/null" else None,\
+                       this.vff._cerr(comm) if this.vff._cerr(comm) != "/dev/null" else None,\
+                       this.WAVECAR if comm.rank == 0  else None ]:
+          if file == None: continue
+          copyfile( join(this.workdir, basename(file)), basename(file) )
 
     return Extract(comm = comm, directory = outdir, escan = this)
 
@@ -363,7 +375,7 @@ class Escan(object):
 
     # prints some output first
     cout, cerr = self._cout(comm), self._cerr(comm)
-    with Changedir(self.workdir) as cwd:
+    with Changedir(self.workdir, comm = comm) as cwd:
       with open(cout, "w") as file: 
         print >>file, "# Escan calculation on ", time.strftime("%m/%d/%y", local_time),\
                       " at ", time.strftime("%I:%M:%S %p", local_time)
@@ -471,7 +483,8 @@ class Escan(object):
     with open(self._INCAR + "." + str(comm.rank), "w") as file:
       print >> file, "1 %s.%i" % (self._POTCAR, comm.rank) 
       print >> file, "2 %s" % (self.WAVECAR) 
-      print >> file, "3 %i # %s" % ((1, "folded spectrum") if self.eref != None else (2, "all electron"))
+      print >> file, "3 %i # %s"\
+                     % ((1, "folded spectrum") if self.eref != None else (2, "all electron"))
       print >> file, "4 %f %f %f %f # Eref, cutoff, smooth, kinetic scaling"\
                      % ( self.eref if self.eref != None else 0,\
                          self.cutoff, self.smooth, self.kinetic_scaling )
@@ -479,7 +492,8 @@ class Escan(object):
         print >> file, "5 %i # number of states" % (self.nbstates/2)
       else: print >> file, "5 %i # number of states" % (self.nbstates)
 
-      print >> file, "6 %i %i %e # itermax, nllines, tolerance" % (self.itermax, self.nlines, self.tolerance)
+      print >> file, "6 %i %i %e # itermax, nllines, tolerance"\
+                     % (self.itermax, self.nlines, self.tolerance)
       nowfns = self.input_wavefunctions == None
       if not nowfns: nowfns = len(self.input_wavefunctions) == 0
       if nowfns: print >> file, "7 0 # no input wfns\n8 0 # wfns indices"
@@ -509,7 +523,8 @@ class Escan(object):
         print >> file, "15 ", len(self.atomic_potentials), "# Number of spin-orbit potentials"
         for i, pot in enumerate(self.atomic_potentials):
           filepath = basename(pot.nonlocal)
-          print >> file, i + 16, filepath, pot.get_izz(comm), pot.s , pot.p, pot.d, pot.pnl, pot.dnl
+          print >> file, i + 16, filepath, pot.get_izz(comm),\
+                         pot.s , pot.p, pot.d, pot.pnl, pot.dnl
 
     comm.barrier() # syncs all procs to make sure we are reading from same file.
     if comm.rank == 0: copyfile(self.maskr, basename(self.maskr))
