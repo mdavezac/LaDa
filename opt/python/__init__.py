@@ -43,7 +43,6 @@ class _RedirectAll:
   def __enter__(self):
     import os
     import sys
-    from boost.mpi import world as comm
     if self.unit == streams.input:    self.old = os.dup(sys.__stdin__.fileno())
     elif self.unit == streams.output: self.old = os.dup(sys.__stdout__.fileno())
     elif self.unit == streams.error:  self.old = os.dup(sys.__stderr__.fileno())
