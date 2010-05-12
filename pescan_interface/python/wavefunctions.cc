@@ -27,7 +27,7 @@ extern "C"
   void FC_FUNC_(escan_wfns_init, ESCAN_WFNS_INIT)(int*, char const*, MPI_Fint*);
   void FC_FUNC_(escan_wfns_get_array_dimensions, ESCAN_WFNS_GET_ARRAY_DIMENSIONS)(int*, int*, int*);
   void FC_FUNC_(escan_wfns_read, ESCAN_WFNS_READ)
-    (int*, int*, int*, int*, int const*, double*, double*, double*);
+    (int*, int*, int*, int*, int const*, double*, double*, double*, int*);
   void FC_FUNC_(escan_get_nr, ESCAN_GET_NR)(int *);
   void FC_FUNC_(escan_get_mr_n, ESCAN_GET_MR_N)(int *);
   void FC_FUNC_(escan_get_n1_n2_n3, ESCAN_GET_N1_N2_N3)(int*, int*, int*);
@@ -51,82 +51,75 @@ namespace LaDa
     namespace bfs = boost::filesystem;
     namespace bm = boost::mpi;
  
-    class Wfns
+    bp::tuple read_wavefunctions( bp::object const &_escan, 
+                                  bp::object const &_indices, 
+                                  bm::communicator const &_comm)
     {
-      public:
-        Wfns(Pescan::Interface const &_pescan, bp::object const &_object);
-         
-        bp::tuple __enter__() const;
-        void __exit__(bp::object const&, bp::object const&, bp::object const&) const 
-          { FC_FUNC_(escan_wfns_cleanup, ESCAN_WFNS_CLEANUP)(); }
-
-      private:
-        Pescan::Interface interface_;
-        std::vector<int> indices_;
-    };
-
-    Wfns :: Wfns   (Pescan::Interface const &_pescan, bp::object const &_object) 
-                 : interface_(_pescan)
-    {
+      int const N = bp::extract<int>( _escan.attr("nbstates") );
+      std::vector<int> indices;
       // extract indices.
-      if( bp::len(_object) == 0 )
+      if( bp::len(_indices) == 0 )
       {
-        try { indices_.push_back( bp::extract<int>(_object) ); }
+        try
+        {
+          int j = bp::extract<int>(_indices);
+          if( j < 0 ) j += N;
+          if( j < 0 or j >= N)
+          {
+            PyErr_SetString(PyExc_IndexError, "Wavefunction index out-of-range.\n");
+            bp::throw_error_already_set();
+            return bp::tuple();
+          }
+          indices.push_back(j + 1); // fortran indices.
+        }
         catch (...) 
         {
           PyErr_SetString(PyExc_ValueError, "Second argument should integer or sequence.\n");
           bp::throw_error_already_set();
-          return;
+          return bp::tuple();
         }
       }
       else 
       {
-        for(size_t i(0); i < bp::len(_object); ++i)
-          try { indices_.push_back( bp::extract<int>(_object[i]) ); }
+        for(size_t i(0); i < bp::len(_indices); ++i)
+          try
+          { 
+            int j = bp::extract<int>(_indices[i]);
+            if( j < 0 ) j += N;
+            if( j < 0 or j >= N)
+            {
+              PyErr_SetString(PyExc_IndexError, "Wavefunction index out-of-range.\n");
+              bp::throw_error_already_set();
+              return bp::tuple();
+            }
+            indices.push_back(j + 1); // fortran indices.
+          }
           catch (...) 
           {
             PyErr_SetString( PyExc_ValueError, 
                              "Second argument should integer or sequence of integers.\n" );
             bp::throw_error_already_set();
-            return;
+            return bp::tuple();
           }
       }
-      //! Makes sure indices are in 1 ... 
-      int N = interface_.escan.nbstates;
-      foreach(int &i, indices_)
-      {
-        if( i < 0 ) i += interface_.escan.nbstates;
-        if( i < 0 or i >= interface_.escan.nbstates)
-        {
-          PyErr_SetString(PyExc_IndexError, "Wavefunction index out-of-range.\n");
-          bp::throw_error_already_set();
-          return;
-        }
-        i += 1; // fortran index.
-      }
-    } 
-    bp::tuple Wfns::__enter__() const 
-    {
-      // change working directory.
-      Pescan::Interface::t_Path rootpath = opt::InitialPath::path()/interface_.get_dirname();
-      Pescan::Interface::t_Path origpath = bfs::current_path();
-      chdir(rootpath.string().c_str());
-      // prepares to read wavefinctions
-      std::string const orig =   interface_.escan.filename.string()
+
+      // prepares to read wavefunctions
+      std::string const orig = bp::extract<std::string>(_escan.attr("_POSCAR"))()
                                + "."
-                               + boost::lexical_cast<std::string>(bm::communicator().rank());
-      int a(orig.size()), b(indices_.size());
-      MPI_Comm __commC = (MPI_Comm) ( interface_.comm() ) ;
+                               + boost::lexical_cast<std::string>(_comm.rank());
+      int a(orig.size()), b(indices.size());
+      MPI_Comm __commC = (MPI_Comm) ( _comm ) ;
       MPI_Fint __commF = MPI_Comm_c2f( __commC );
       FC_FUNC_(escan_wfns_init, ESCAN_WFNS_INIT)(&a, orig.c_str(), &__commF);
       // gets dimensions.
-      int n0, n1(indices_.size()), n2, g0, g1(3);
+      int n0, n1(indices.size()), n2, g0, g1(3);
       FC_FUNC_(escan_wfns_get_array_dimensions, ESCAN_WFNS_GET_ARRAY_dimensions)(&n0, &n2, &g0);
       
       // Creates numpy objects.
       bp::object wfns = math::numpy::create_array<NPY_CDOUBLE>(n0, n1, n2, true);
       bp::object gpoints = math::numpy::create_array<NPY_DOUBLE>(g0, g1, true);
       bp::object projs = math::numpy::create_array<NPY_CDOUBLE>(g0, true);
+      bp::object inverse = math::numpy::create_array<NPY_INT>(g0, true);
       
       math::numpy::get_pyarray_pointer(wfns)->dimensions[0]
         = math::numpy::get_pyarray_pointer(gpoints)->dimensions[0];
@@ -135,19 +128,22 @@ namespace LaDa
       FC_FUNC_(escan_wfns_read, ESCAN_WFNS_READ)
               ( 
                 &n0, &n1, &n2, &g0,  // dimensions
-                &(indices_[0]),      // indices_ to wavefunctions
-                math::numpy::get_data_pointer<double *const>(wfns),    // pointer to wavefunctions data
-                math::numpy::get_data_pointer<double *const>(gpoints), // pointer to gpoint  data
-                math::numpy::get_data_pointer<double *const>(projs)    // pointer to projector data (smooth cutoff)
+                &(indices[0]),      // indices_ to wavefunctions
+                // pointer to wavefunctions data
+                math::numpy::get_data_pointer<double *const>(wfns),    
+                // pointer to gpoint  data
+                math::numpy::get_data_pointer<double *const>(gpoints), 
+                // pointer to projector data (smooth cutoff)
+                math::numpy::get_data_pointer<double *const>(projs),   
+                // pointer to -G indices
+                math::numpy::get_data_pointer<int* const>(inverse)            
               );
-
-      // returns to original working directory.
-      chdir(origpath.string().c_str());
-      
-      
-      // returns a 3-tuple.
-      return bp::make_tuple(wfns, gpoints, projs);
+      // and cleanup fortran arrays.
+      FC_FUNC_(escan_wfns_cleanup, ESCAN_WFNS_CLEANUP)(); 
+      // returns a 4-tuple.
+      return bp::make_tuple(wfns, gpoints, projs, inverse);
     }
+
 
     bp::object positions(bm::communicator const &_comm)
     {
@@ -284,23 +280,23 @@ namespace LaDa
     void expose_wfns()
     {
       import_array();
-      bp::class_<Wfns>
+      bp::def
       (
         "Wavefunctions", 
+        &read_wavefunctions,
+        (bp::arg("escan"), bp::arg("indices"), bp::arg("comm")),
         "Context with temporary arrays to wavefunctions and corresponding g-vectors.\n\n"
         "@param escan: Escan functional with which calculation were performed.\n"
         "@param indices: index or indices for which to recover the wavefunctions. "
           "Indices of wavefunctions correspond to the eigenvalues "
           "returned by the functional during calculation.\n"
-        "@return: (wavefunctions, g-vectors, projs). The third item corresponds "
-          "to the coefficients used to smooth higher energy g-vectors. "
-          "It is a one dimensional array. "
-          "The second item corresponds to a 3 by x matrix with each row a "
-          "G-vector. The first item is an spin by N by x matrix holding the N "
-          "wavefuntions/spinor.\n",
-        bp::init<Pescan::Interface const&, bp::object const>()
-      ).def("__enter__", &Wfns::__enter__)
-       .def("__exit__", &Wfns::__exit__);
+        "@param comm: Communicator of same size as for calculations.\n"
+        "@return: (wavefunctions, g-vectors, projs, inverse).\n"
+          "  - an spin by N by x matrix holding the N wavefuntions/spinor.\n",
+          "  - a 3 by x matrix with each row a G-vector.\n"
+          "  - one-dimensional array of real coefficients to smooth higher energy G-vectors.\n"
+          "  - one-dimensional array of integer indices to map G-vectors to -G.\n"
+      );
       bp::def( "to_realspace", &to_realspace, (bp::arg("wfns"), bp::arg("comm")),
                "Returns wavefunctions in real-space.\n\n"
                "@param wfns: Array of reciprocal-space wavefunctions.\n"
