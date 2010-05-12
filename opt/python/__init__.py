@@ -104,3 +104,38 @@ def redirect(fout=None, ferr=None, fin=None, pyout=None, pyerr=None, pyin=None, 
   return nested(*result)
 
 
+
+def read_input(filename, global_dict=None, local_dict = None, paths=None, comm = None):
+  """ Executes input script and returns local dictionary (as class instance). """
+  # stuff to import into script.
+  from os import environ
+  from os.path import abspath, expanduser
+  from math import pi
+  from numpy import array, matrix, dot, sqrt, abs, ceil
+  from numpy.linalg import norm, det
+  from lada.crystal import Lattice, Site, Atom, Structure, fill_structure
+  from lada import physics
+  from boost.mpi import world
+  
+  # Add some names to execution environment.
+  if global_dict == None: global_dict = {}
+  global_dict.update( { "environ": environ, "pi": pi, "array": array, "matrix": matrix, "dot": dot,\
+                        "norm": norm, "sqrt": sqrt, "ceil": ceil, "abs": abs, "Lattice": Lattice, \
+                        "Structure": Structure, "Atom": Atom, "Site": Site, "physics": physics,\
+                        "fill_structure": fill_structure, "world": world });
+  local_dict = {}
+  # Executes input script.
+  execfile(filename, global_dict, local_dict)
+
+  # Makes sure expected paths are absolute.
+  if paths != None:
+    for path in paths:
+      if path not in local_dict: continue
+      local_dict[path] = abspath(expanduser(local_dict[path]))
+    
+  # Fake class which will be updated with the local dictionary.
+  class Dummy: pass
+  result = Dummy()
+  result.__dict__.update(local_dict)
+  return result
+

@@ -14,6 +14,7 @@ import band_structure as bs
 import _extract
 Extract = _extract.Extract
 band_structure = bs.band_structure
+nb_valence_states = _escan.nb_valence_states
 
 def _is_in_sync(comm, which = [0]):
   from boost.mpi import broadcast
@@ -167,7 +168,14 @@ class Escan(object):
     self.INWAVECAR = "input_escan_wavefunctions"
     """ Filename of input wavefunctions. """
     self.kpoint = zeros((3,1), dtype="float64")
-    """ k-point at which to perform calculations. """
+    """ k-point at which to perform calculations.
+    
+        By default, k-points are given in cartesian coordinates, and units of
+        2pi/structure.scale. However, since relaxation will deform the BZ, the
+        kpoint given to escan is the one deformed to the relaxed BZ. E.g, the
+        meaning of [1,0,0] stays [1,0,0], despite possible relaxation. To turn
+        this behavior off, use self.L{_dont_deform_kpoint}.
+    """
     self.potential = soH
     """ Type of hamiltonian to use. """
     self.rspace_cutoff = 5
@@ -211,6 +219,11 @@ class Escan(object):
     """ Private reference to the escan input file. """
     self._GENCAR = "pot.input"
     """ Private reference to the genpot input file. """
+    self._dont_deform_kpoint = False
+    """ Whether *not* to deform kpoints from input cell to relaxed cell.
+
+        Default is True. Relaxed cell is taken from self.L{_POSCAR}
+    """
 
 
   def _get_workdir(self): return self._workdir
@@ -275,6 +288,7 @@ class Escan(object):
     result += "escan.do_relax              = %s\n" % ("True" if self.do_relax else "False")
     result += "escan.input_wavefunctions   = %s\n" % (repr(self.input_wavefunctions))
     result += "escan.kpoint                = %s\n" % (repr(self.kpoint))
+    result += "escan._dont_deform_kpoint   = %s\n" % (repr(self._dont_deform_kpoint))
     result += "escan.dnc_mesh              = %s\n" % (repr(self.dnc_mesh))
     result += "escan.overlap_mesh          = %s\n" % (repr(self.overlap_mesh))
     if self.potential == localH:
@@ -470,6 +484,8 @@ class Escan(object):
     with redirect(fout=cout, ferr=cerr, append=True) as oestreams: 
       _call_genpot(comm)
 
+
+
   def _run_escan(self, comm, scale, cout, cerr):
     """ Runs escan only """
     from shutil import copyfile
@@ -477,7 +493,6 @@ class Escan(object):
     from numpy.linalg import norm
     from ._escan import _call_escan
     from ..opt import redirect
-    from ..physics import a0
 
     assert self.atomic_potentials != None, RuntimeError("Atomic potentials are not set.")
     # Creates temporary input file and creates functional
@@ -508,7 +523,7 @@ class Escan(object):
       print >> file, "10 0 1 1 1 0"
 
       if norm(self.kpoint) < 1e-12: print >> file, "11 0 0 0 0 0"
-      else: print >> file, "11 1 %i %i %i" % tuple((self.kpoint * scale / a0("A")).flat)
+      else: print >> file, "11 1 %i %i %i" % self.get_kpoint(structure)
       
       if   self.potential == localH: print >> file, "12 1 # local hamiltonian" 
       elif self.potential == nonlocalH: print >> file, "12 2 # non-local hamiltonian" 
@@ -531,3 +546,23 @@ class Escan(object):
     if comm.rank == 0: copyfile(self.maskr, basename(self.maskr))
     with redirect(fout=cout, ferr=cerr, append=True) as oestreams: 
       _call_escan(comm)
+
+  def _get_kpoint(self, structure):
+    """ Returns deformed or undeformed kpoint. """
+    from numpy import abs, sum
+    from ..crystal import deform_kpoint
+    from ..physics import a0
+    if self._dont_deform_kpoint: return tuple(self.kpoint * structure.scale / a0("A")).flat
+    # first get relaxed cell
+    relaxed = zeros((3,3), dtype="float64")
+    with open(self._POSCAR, "r") as file:
+      file.readline() # number of atoms.
+      # lattice vector by lattice vector
+      for i in range(3): 
+        cell[i,0] = array([float(u) for u in file.readline().split()[:3]])
+    input = structure.cell * structure.scale / a0("A")
+    # no relaxation.
+    if sum( abs(input - cell) ) < 1e-11: return tuple(self.kpoint * structure.scale / a0("A")).flat
+    return deform_kpoint(self.kpoint, input, relaxed)
+
+

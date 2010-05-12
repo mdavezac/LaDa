@@ -1,78 +1,84 @@
 #! python
 """ Bandstructure plotting tools """
 
-def _line(start, end, density):
-  """ Generator for creating points between two kpoints. """
-  from numpy.linalg import norm
-
-  distance = norm(end - start) 
-  nbkpt = int(max(1, density * distance - 1))
-  stepsize = 1e0/float(nbkpt)
-  kpoints = [ float(i) * stepsize for i in range(1, nbkpt+1) ]
-  for k in kpoints: yield start + k * (end-start) 
-
-def _lines(endpoints, density):
-  """ Generator for creating segments. """
-  from numpy.linalg import norm
-  
-  assert len(endpoints) > 0, ValueError
-  assert len(endpoints[0]) == 2, ValueError
-
-  pos = 0
-  yield pos, endpoints[0][0]
-  for start, end in endpoints:
-    for kpoint in _line(start, end, density):
-      yield pos+norm(kpoint-start), kpoint
-    pos += norm(end-start) 
-
-  
-
-def band_structure(structure, escan, vff, kpoints, density, **kwargs ):
+def band_structure(escan, _structure, kpoints, density, outdir=None, comm=None,\
+                   do_relax=None, pools = 1, **kwargs):
   """ Returns eigenvalues for plotting bandstructure. """
-  from os.path import join
-  from copy import deepcopy
-  from math import pow, pi, factorial
-  from numpy import zeros, array, dot
-  from numpy.linalg import norm, lstsq as np_lstsq
-  from ._escan import method, potential
-  from ..physics import a0, Hartree
+  from os import getcwd
+  from os.path import join, expanduser, abspath
+  from shutil import copyfile
+  from boost.mpi import world, all_gather
+  from numpy.linalg import norm
+  from numpy import abs, sum
+  from ..crystal import deform_kpoint
 
-  # saves comm if necessary.
-  comm = escan.comm
-  if "comm" in kwargs:
-    comm = kwargs["comm"] 
-    del kwargs["comm"]
-  # now copies escan
-  escan = deepcopy(escan)
-  # resets comm to whatever it should be
-  escan.comm = comm
-  # sets to folded spectra
-  escan.method = method.folded
+  # check/correct input arguments
+  assert "do_genpot" not in kwargs,\
+         ValueError("\"do_genpot\" is not an admissible argument of band_structure.")
+  assert "do_escan" not in kwargs,\
+         ValueError("\"do_escan\" is not an admissible argument of band_structure.")
+  outdir = abspath(expanduser(outdir)) if outdir != None else getcwd()
+  if do_relax == None: do_relax = self.do_relax 
+  if comm == None: comm = world
+  if pools > comm.size: pools = comm.size
+
+  # first computes vff and genpot.
+  potdir = join(outdir, "band_structure")
+  vffout = escan( structure, outdir=potdir, do_escan=False, do_genpot=True,\
+                  do_relax=do_relax, comm = comm, **kwargs )
   
-  # sets other parameters.
-  popthese = []
-  for key in kwargs:
-    if not hasattr(escan, key): continue
-    setattr(escan, key, kwargs[key])
-    popthese.append(key)
-  for key in popthese: del kwargs[key]
-  directory = escan.directory
-  nbstates = escan.nbstates
+  # two functions required to continue.
+  def _get_kpoint(kpoint):
+    """ Deforms kpoint to new lattice, if required. """
+    if vffout.escan._dont_deform_kpoint: return kpoint
+    input, relaxed = structure.cell, vffout.cell
+    if sum(abs(input-relaxed)) < 1e-11: return kpoint
+    return deform_kpoint(kpoint, input, relaxed)
 
+  def _lines(endpoints, density):
+    """ Generator for creating segments. """
+    from numpy.linalg import norm
+    assert len(endpoints) > 0, ValueError
+    assert len(endpoints[0]) == 2, ValueError
+    pos = 0
+    yield pos, endpoints[0][0]
+    for start, end in endpoints:
+      for kpoint in _line(start, end, density):
+        yield pos+norm(_get_kpoint(kpoint-start)), kpoint
+      pos += norm(end-start) 
+
+  # splits local communicator.
+  color = comm.rank % pools
+  local_comm = comm.split(color)
+  # then computes different kpoints.
   results = []
-  for i, (x, escan.kpoint) in enumerate(_lines(kpoints, density)):
-    # checks for double/krammer mad degeneracy touble
-    double_trouble = escan.potential != potential.spinorbit or norm(escan.kpoint) < 1e-12
-    # in which case only half the eigenvalues are computed.
-    if double_trouble: escan.nbstates = nbstates / 2
+  for i, (x, kpoint) in enumerate(_lines(kpoints, density)):
+    # separates jobs into pools.
+    if i % pools != color: continue
+
     # sets directory.
-    escan.directory = join(join(directory, "band_structure"), "%i-%s" % (i, escan.kpoint))
+    directory = join(join(outdir, "band_structure"), "%i-%s" % (i, escan.kpoint))
+    # copies POSCAR and POTCAR for reuse.
+    with Changedir(directory, comm = local_comm) as cwd:
+      POSCAR = self._POSCAR + "." + str(local_comm.rank)
+      copyfile(join(potdir, POSCAR), POSCAR)
+      POTCAR = self._POTCAR + "." + str(local_comm.rank)
+      copyfile(join(potdir, POTCAR), POTCAR)
+
     # actually computes stuff.
-    eigenvalues = escan(vff, structure)
+    out = escan( structure, outdir=directory, kpoint=kpoint, do_relax=False,\
+                 do_genpot=False, do_escan=True, comm = local_comm, **kwargs )
+    # saves stuff
+    eigenvalues = out.eigenvalues.copy()
     eigenvalues.sort()
-    if double_trouble: # in case escan tries to screw us up again.
-      eigenvalues = array([u for j in range(2) for u in eigenvalues])
-      eigenvalues.sort()
-      escan.nbstates = nbstates
-    results.append( (x, escan.kpoint, eigenvalues.copy()) )
+    results.append( (x, kpoint, eigenvalues) )
+
+  if comm.size > 1: # gathers and orders results.
+    head_comm = comm.split(0 if local_comm.rank == 0 else 1)
+    if local_comm.rank == 0:
+      results = all_gather(head_comm, results)
+      results = sorted((j for i in results for j in i), lambda a,b: a[0] < b[0])
+      broadcast(local_comm, results, 0)
+    else: results = broadcast(local_comm, None, 0) 
   return results
+
