@@ -39,7 +39,7 @@ def band_structure(escan, structure, kpoints, density, outdir=None, comm=None,\
     """ Generator for creating points between two kpoints. """
     from numpy.linalg import norm
 
-    distance = norm(end - start) 
+    distance = norm(_get_kpoint(end - start))
     nbkpt = int(max(1, density * distance - 1))
     stepsize = 1e0/float(nbkpt)
     _kpoints = [ float(i) * stepsize for i in range(1, nbkpt+1) ]
