@@ -392,7 +392,7 @@ class Vff(object):
     result += "vff.lattice = lattice\n"
     result += "vff.OUTCAR = \"%s\"\n" % (self.OUTCAR)
     result += "vff.ERRCAR = \"%s\"\n" % (self.ERRCAR)
-    result += "vff.direction = %s\n" % (self.direction)
+    result += "vff.direction = %s\n" % (repr(self.direction))
     result += "vff.relax = %s\n" % ("True" if self.relax else "False")
     for name, params in self.bonds.items():
       A, B = name.split("-")
