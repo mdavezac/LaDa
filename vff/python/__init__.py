@@ -86,7 +86,7 @@ class Extract(object):
     from ..crystal import Structure
     path = self.OUTCAR
     if len(self.directory): path = join(self.directory, self.OUTCAR)
-    assert exists(path), RuntimeError("Could not find file %s:" % (file))
+    assert exists(path), RuntimeError("Could not find file %s:" % (path))
 
     with open(path, "r") as file:
       # find start of calculations.
@@ -106,7 +106,7 @@ class Extract(object):
     from os.path import exists, join
     path = self.OUTCAR
     if len(self.directory): path = join(self.directory, self.OUTCAR)
-    assert exists(path), RuntimeError("Could not find file %s:" % (file))
+    assert exists(path), RuntimeError("Could not find file %s:" % (path))
 
     with open(path, "r") as file:
       # find start of calculations.
@@ -127,7 +127,7 @@ class Extract(object):
     from numpy import array
     path = self.OUTCAR
     if len(self.directory): path = join(self.directory, self.OUTCAR)
-    assert exists(path), RuntimeError("Could not find file %s:" % (file))
+    assert exists(path), RuntimeError("Could not find file %s:" % (path))
 
     result = []
     with open(path, "r") as file:
@@ -158,7 +158,7 @@ class Extract(object):
 
     path = self.OUTCAR
     if len(self.directory): path = join(self.directory, self.OUTCAR)
-    assert exists(path), RuntimeError("Could not find file %s:" % (file))
+    assert exists(path), RuntimeError("Could not find file %s:" % (path))
     with open(path, "r") as file: script = _get_script_text(file, "Lattice")
     local_dict = {"Lattice": Lattice}
     exec script in globals(), local_dict
@@ -173,7 +173,7 @@ class Extract(object):
     from ..minimizer import Minimizer
     path = self.OUTCAR
     if len(self.directory): path = join(self.directory, self.OUTCAR)
-    assert exists(path), RuntimeError("Could not find file %s:" % (file))
+    assert exists(path), RuntimeError("Could not find file %s:" % (path))
     with open(path, "r") as file: script = _get_script_text(file, "Minimizer")
     local_dict = {"Minimizer": Minimizer}
     exec script in globals(), local_dict
@@ -186,7 +186,7 @@ class Extract(object):
     from os.path import exists, join
     path = self.OUTCAR
     if len(self.directory): path = join(self.directory, self.OUTCAR)
-    assert exists(path), RuntimeError("Could not find file %s:" % (file))
+    assert exists(path), RuntimeError("Could not find file %s:" % (path))
 
     @broadcast_result(attr=True, which=0) # easier to broadcast this way.
     def get_vff(this):
@@ -545,7 +545,9 @@ class Vff(object):
     cout, cerr = self._cout(comm), self._cerr(comm)
     with open(cerr, "w") as file: pass # file has not yet been opened
     with redirect_all(output=cout, error=cerr, append="True") as oestream:
+      print 0
       functional = self._create_functional(structure, comm)
+      print 1
       # now performs call
       result, stress = functional(structure, doinit=True)
     

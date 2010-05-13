@@ -24,18 +24,26 @@ def band_structure(escan, structure, kpoints, density, outdir=None, comm=None,\
   if pools > comm.size: pools = comm.size
 
   # first computes vff and genpot.
-  print outdir
   potdir = join(outdir, "band_structure")
   vffout = escan( structure, outdir=potdir, do_escan=False, do_genpot=True,\
                   do_relax=do_relax, comm = comm, **kwargs )
   
   # two functions required to continue.
-  def _get_kpoint(kpoint):
+  def _get_kpoint(_kpoint):
     """ Deforms kpoint to new lattice, if required. """
-    if vffout.escan._dont_deform_kpoint: return kpoint
-    input, relaxed = structure.cell, vffout.cell
-    if sum(abs(input-relaxed)) < 1e-11: return kpoint
-    return deform_kpoint(kpoint, input, relaxed)
+    if vffout.escan._dont_deform_kpoint: return _kpoint
+    input, relaxed = structure.cell, vffout.structure.cell
+    if sum(abs(input-relaxed)) < 1e-11: return _kpoint
+    return deform_kpoint(_kpoint, input, relaxed)
+  def _line(start, end, density):
+    """ Generator for creating points between two kpoints. """
+    from numpy.linalg import norm
+
+    distance = norm(end - start) 
+    nbkpt = int(max(1, density * distance - 1))
+    stepsize = 1e0/float(nbkpt)
+    _kpoints = [ float(i) * stepsize for i in range(1, nbkpt+1) ]
+    for k in _kpoints: yield start + k * (end-start) 
 
   def _lines(endpoints, density):
     """ Generator for creating segments. """
@@ -45,9 +53,10 @@ def band_structure(escan, structure, kpoints, density, outdir=None, comm=None,\
     pos = 0
     yield pos, endpoints[0][0]
     for start, end in endpoints:
-      for kpoint in _line(start, end, density):
-        yield pos+norm(_get_kpoint(kpoint-start)), kpoint
+      for _kpoint in _line(start, end, density):
+        yield pos+norm(_get_kpoint(_kpoint-start)), _kpoint
       pos += norm(end-start) 
+
 
   # splits local communicator.
   color = comm.rank % pools
@@ -59,13 +68,15 @@ def band_structure(escan, structure, kpoints, density, outdir=None, comm=None,\
     if i % pools != color: continue
 
     # sets directory.
-    directory = join(join(outdir, "band_structure"), "%i-%s" % (i, escan.kpoint))
+    directory = join(join(outdir, "band_structure"), "%i-%s" % (i, kpoint))
     # copies POSCAR and POTCAR for reuse.
     with Changedir(directory, comm = local_comm) as cwd:
       POSCAR = escan._POSCAR + "." + str(local_comm.rank)
       if exists(join(potdir, POSCAR)): copyfile(join(potdir, POSCAR), POSCAR)
       POTCAR = escan._POTCAR + "." + str(local_comm.rank)
       if exists(join(potdir, POTCAR)): copyfile(join(potdir, POTCAR), POTCAR)
+      cout = escan.vff._cout(comm)
+      if exists(join(potdir, cout)): copyfile(join(potdir, cout), cout)
 
     # actually computes stuff.
     out = escan( structure, outdir=directory, kpoint=kpoint, do_relax=False,\

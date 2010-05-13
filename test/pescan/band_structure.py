@@ -19,6 +19,7 @@ cell = matrix([[0.5,-0.5,0],[0.5,0.5,0.5],[0,0,2.5]])
 structure = sort_layers(fill_structure(cell), array([0,0,2.5]))
 for i, atom in enumerate(structure.atoms):
   atom.type = "Si" if i % 10 < 6 else "Ge"
+input.escan.fft_mesh  = 20, 20, 60
 
 # some kpoints + associated name
 X = array( [0,0,1], dtype="float64" )
