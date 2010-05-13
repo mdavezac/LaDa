@@ -86,7 +86,7 @@ namespace LaDa
         // box is not larger than the cell. Otherwise, when looping over all
         // states, we would go over the same state twice. The following defines
         // the direction for which we can look for periodic images.
-        const math::iVector3d extent( _n(0)==1 ? 0:1, _n(1)==1 ? 0:1, _n(2)==1 ? 0:1 );
+        const math::iVector3d extent( 1, 1, 1); //_n(0)==1 ? 0:1, _n(1)==1 ? 0:1, _n(2)==1 ? 0:1 );
         // adds atoms to each box.
         const math::rMatrix3d inv_str( _structure.cell.inverse() );
         const math::rMatrix3d inv_cell( cell.inverse() );
@@ -103,6 +103,7 @@ namespace LaDa
             ) 
           );
           LADA_ASSERT( u < Nboxes, "Index out-of-range.\n" << u << " >= " << Nboxes << "\n" )
+          LADA_ASSERT( not (*result)[u].is_counted(index), "Already counted.\n" )
           (*result)[u].states_.push_back( bt::make_tuple( index, true ) );
 
           // Finds out which large box it is contained in.
@@ -136,6 +137,7 @@ namespace LaDa
           for(; i_lb != i_lb_end; ++i_lb )
           {
             __DOASSERT( *i_lb >= result->size(), "Index out of range.\n" )
+            LADA_ASSERT( not (*result)[*i_lb].is_counted(index), "Already counted.\n" )
             (*result)[*i_lb].states_.push_back( t_State( index, false ) );
           }
         }

@@ -104,6 +104,13 @@ namespace LaDa
           typename t_States::const_iterator end() const { states_.end(); }
           //! Number of states in the (large) box.
           size_t size() const { states_.size(); }
+          //! checks whether a state is already counted
+          bool is_counted(size_t i) const
+          {
+            foreach(t_State const &state, states_)
+              if( boost::tuples::get<0>(state) == i ) return true;
+            return false;
+          }
 
         protected:
           //! Holds boxes sizes and position.
