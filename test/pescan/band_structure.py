@@ -2,9 +2,10 @@ import pickle
 from sys import exit
 from os.path import join
 from numpy import matrix, array
+from numpy.linalg import norm
 from boost.mpi import world
 from lada.opt import read_input
-from lada.escan import Escan, nb_valence_states, soH
+from lada.escan import Escan, nb_valence_states, soH, band_structure
 from lada.vff import Vff
 from lada.crystal import fill_structure, sort_layers
 
@@ -13,6 +14,7 @@ global_dict={"Vff": Vff, "Escan": Escan, "nb_valence_states": nb_valence_states,
 input = read_input("input.py", global_dict=global_dict)
 
 # creating unrelaxed structure.
+input.vff.lattice.set_as_crystal_lattice()
 cell = matrix([[0.5,-0.5,0],[0.5,0.5,0.5],[0,0,2.5]])
 structure = sort_layers(fill_structure(cell), array([0,0,2.5]))
 for i, atom in enumerate(structure.atoms):
@@ -31,7 +33,7 @@ kpoints = [ (X, G), (G, L) ]
 density = 15 / min( norm(X), norm(L), norm(W) )
 
 result = band_structure( input.escan, structure, kpoints, density, 
-                         outdir = join("results", "Si"),
+                         outdir = "results",
                          eref   = None, 
                          nbstates = nb_valence_states(structure) + 4 )
   

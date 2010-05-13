@@ -1,16 +1,17 @@
 #! python
 """ Bandstructure plotting tools """
 
-def band_structure(escan, _structure, kpoints, density, outdir=None, comm=None,\
+def band_structure(escan, structure, kpoints, density, outdir=None, comm=None,\
                    do_relax=None, pools = 1, **kwargs):
   """ Returns eigenvalues for plotting bandstructure. """
   from os import getcwd
-  from os.path import join, expanduser, abspath
+  from os.path import join, expanduser, abspath, exists
   from shutil import copyfile
   from boost.mpi import world, all_gather
   from numpy.linalg import norm
   from numpy import abs, sum
   from ..crystal import deform_kpoint
+  from ..opt.changedir import Changedir
 
   # check/correct input arguments
   assert "do_genpot" not in kwargs,\
@@ -18,11 +19,12 @@ def band_structure(escan, _structure, kpoints, density, outdir=None, comm=None,\
   assert "do_escan" not in kwargs,\
          ValueError("\"do_escan\" is not an admissible argument of band_structure.")
   outdir = abspath(expanduser(outdir)) if outdir != None else getcwd()
-  if do_relax == None: do_relax = self.do_relax 
+  if do_relax == None: do_relax = escan.do_relax 
   if comm == None: comm = world
   if pools > comm.size: pools = comm.size
 
   # first computes vff and genpot.
+  print outdir
   potdir = join(outdir, "band_structure")
   vffout = escan( structure, outdir=potdir, do_escan=False, do_genpot=True,\
                   do_relax=do_relax, comm = comm, **kwargs )
@@ -60,10 +62,10 @@ def band_structure(escan, _structure, kpoints, density, outdir=None, comm=None,\
     directory = join(join(outdir, "band_structure"), "%i-%s" % (i, escan.kpoint))
     # copies POSCAR and POTCAR for reuse.
     with Changedir(directory, comm = local_comm) as cwd:
-      POSCAR = self._POSCAR + "." + str(local_comm.rank)
-      copyfile(join(potdir, POSCAR), POSCAR)
-      POTCAR = self._POTCAR + "." + str(local_comm.rank)
-      copyfile(join(potdir, POTCAR), POTCAR)
+      POSCAR = escan._POSCAR + "." + str(local_comm.rank)
+      if exists(join(potdir, POSCAR)): copyfile(join(potdir, POSCAR), POSCAR)
+      POTCAR = escan._POTCAR + "." + str(local_comm.rank)
+      if exists(join(potdir, POTCAR)): copyfile(join(potdir, POTCAR), POTCAR)
 
     # actually computes stuff.
     out = escan( structure, outdir=directory, kpoint=kpoint, do_relax=False,\

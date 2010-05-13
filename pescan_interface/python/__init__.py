@@ -10,10 +10,9 @@ if __load_pescan_in_global_namespace__:
   _setdlopenflags(flags)
 else: import _escan
 from ..opt.decorators import add_setter, broadcast_result
-import band_structure as bs
+from band_structure import band_structure
 import _extract
 Extract = _extract.Extract
-band_structure = bs.band_structure
 nb_valence_states = _escan.nb_valence_states
 
 def _is_in_sync(comm, which = [0]):
@@ -347,7 +346,7 @@ class Escan(object):
     # changes to temporary working directory
     workdir = abspath(expanduser(this.workdir)) if this.workdir != None\
               else getcwd()
-    with Tempdir(workdir=workdir, comm=comm) as this.workdir: 
+    with Tempdir(workdir=workdir, comm=comm, keep=True, debug="debug") as this.workdir: 
   
       # performs calculation.
       this._run(structure, outdir, comm)
@@ -355,13 +354,15 @@ class Escan(object):
       # copies output files.
       with Changedir(outdir, comm = comm) as cwd:
         for file in  [ this._POSCAR + "." + str(comm.rank),\
+                       this._POTCAR + "." + str(comm.rank),\
                        this._cout(comm) if this._cout(comm) != "/dev/null" else None,\
                        this._cerr(comm) if this._cerr(comm) != "/dev/null" else None,\
                        this.vff._cout(comm) if this.vff._cout(comm) != "/dev/null" else None,\
                        this.vff._cerr(comm) if this.vff._cerr(comm) != "/dev/null" else None,\
                        this.WAVECAR if comm.rank == 0  else None ]:
           if file == None: continue
-          copyfile( join(this.workdir, basename(file)), basename(file) )
+          destination, origin = basename(file), join(this.workdir, basename(file))
+          if exists(origin): copyfile(origin, destination)
 
     return Extract(comm = comm, directory = outdir, escan = this)
 
@@ -399,11 +400,11 @@ class Escan(object):
         print >>file, "# Performing calculations. "
       
       # makes calls to run
-      self._run_vff(structure, "", comm, cout)
-      if not (self.do_genpot and self.do_escan): return None 
-      self._run_genpot(comm, cout, cerr)
+      self._run_vff(structure, outdir, comm, cout)
+      if not (self.do_genpot or self.do_escan): return None 
+      self._run_genpot(comm, outdir)
       if not self.do_escan: return None
-      self._run_escan(comm, structure.scale, cout, cerr)
+      self._run_escan(comm, structure)
      
       with open(cout, "a") as file: 
         timing = time.time() - timing
@@ -417,23 +418,28 @@ class Escan(object):
   def _run_vff(self, structure, outdir, comm, cout):
     """ Gets atomic input ready, with or without relaxation. """
     from shutil import copyfile
-    from os.path import join, samefile
+    from os.path import join, samefile, exists
+    from ..vff import Extract as ExtractVff
 
     poscar = self._POSCAR + "." + str(comm.rank)
     if not self.do_relax:
       if exists(join(outdir, poscar)):
-        copyfile(join(outdir, poscar), join(self.workdir, poscar))
-      vff.write_escan_input(poscar, structure)
-      return 
+        if not samefile(outdir, self.workdir):
+          copyfile(join(outdir, poscar), join(self.workdir, poscar))
+        return 
+      out = ExtractVff(outdir, comm = comm, vff=self.vff)
+      if out.success:
+        out.write_escan_input(poscar, structure)
+        return
 
     out = self.vff(structure, outdir=outdir, comm=comm)
     assert out.success, RuntimeError("VFF relaxation did not succeed.")
     out.write_escan_input(poscar, out.structure)
 
     # copies vff output to stdout. This way, only one outcar.
-    if comm.rank == 0 and samefile(out.OUTCAR, cout):
-      with open(out.OUTCAR) as file_in: 
-        with open(cout) as file_out: 
+    if comm.rank == 0 and out.OUTCAR != self.OUTCAR:
+      with open(join(out.directory, out.OUTCAR)) as file_in: 
+        with open(cout, "aw") as file_out: 
           for line in file_in:
             if line.find("# VFF calculation on ") != -1: print >>file_out, line[:-1]
             if line == "# Performing VFF calculations. ": break
@@ -444,21 +450,23 @@ class Escan(object):
           print >>file_out, line[:-1]
 
 
-  def _run_genpot(self, comm, cout, cerr):
+  def _run_genpot(self, comm, outdir):
     """ Runs genpot only """
     from ._escan import _call_genpot
     from shutil import copyfile
-    from os.path import basename
+    from os.path import basename, exists, join, samefile
     from ..opt import redirect
 
     if not self.do_genpot: 
-      if exists(join(outdir, self._GENCAR)):
-        copyfile(join(outdir, self._GENCAR), join(self.workdir, self._GENCAR))
+      POTCAR = self._POTCAR + "." + str(comm.rank)
+      if exists(join(outdir, POTCAR)):
+        if not samefile(outdir, self.workdir): 
+          copyfile(join(outdir, POTCAR), join(self.workdir, POTCAR))
         return
       else:
-        with open(cout, "a") as file:
+        with open(self._cout(comm), "a") as file:
           print >> file, "Could not find genpot potential %s."\
-                         "Recomputing." % (join(outdir, self._GENCAR))
+                         "Recomputing." % (join(outdir, POTCAR))
 
     assert self.atomic_potentials != None, RuntimeError("Atomic potentials are not set.")
     # Creates temporary input file and creates functional
@@ -481,12 +489,12 @@ class Escan(object):
     if comm.rank == 0: copyfile(self.maskr, basename(self.maskr))
 
     comm.barrier() # syncs all procs
-    with redirect(fout=cout, ferr=cerr, append=True) as oestreams: 
+    with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 
       _call_genpot(comm)
 
 
 
-  def _run_escan(self, comm, scale, cout, cerr):
+  def _run_escan(self, comm, structure):
     """ Runs escan only """
     from shutil import copyfile
     from os.path import basename
@@ -523,7 +531,7 @@ class Escan(object):
       print >> file, "10 0 1 1 1 0"
 
       if norm(self.kpoint) < 1e-12: print >> file, "11 0 0 0 0 0"
-      else: print >> file, "11 1 %i %i %i" % self.get_kpoint(structure)
+      else: print >> file, "11 1 %f %f %f %f" % self._get_kpoint(structure, comm)
       
       if   self.potential == localH: print >> file, "12 1 # local hamiltonian" 
       elif self.potential == nonlocalH: print >> file, "12 2 # non-local hamiltonian" 
@@ -544,25 +552,31 @@ class Escan(object):
 
     comm.barrier() # syncs all procs to make sure we are reading from same file.
     if comm.rank == 0: copyfile(self.maskr, basename(self.maskr))
-    with redirect(fout=cout, ferr=cerr, append=True) as oestreams: 
+    with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 
       _call_escan(comm)
 
-  def _get_kpoint(self, structure):
+  def _get_kpoint(self, structure, comm):
     """ Returns deformed or undeformed kpoint. """
-    from numpy import abs, sum
+    from numpy import abs, sum, zeros, array
+    from boost.mpi import broadcast
     from ..crystal import deform_kpoint
     from ..physics import a0
-    if self._dont_deform_kpoint: return tuple(self.kpoint * structure.scale / a0("A")).flat
+    if self._dont_deform_kpoint:
+      return self.kpoint[0], self.kpoint[1], self.kpoint[2], structure.scale / a0("A")
     # first get relaxed cell
     relaxed = zeros((3,3), dtype="float64")
-    with open(self._POSCAR, "r") as file:
-      file.readline() # number of atoms.
-      # lattice vector by lattice vector
-      for i in range(3): 
-        cell[i,0] = array([float(u) for u in file.readline().split()[:3]])
-    input = structure.cell * structure.scale / a0("A")
+    if comm.rank == 0:
+      with open(self._POSCAR + "." + str(comm.rank), "r") as file:
+        file.readline() # number of atoms.
+        # lattice vector by lattice vector
+        for i in range(3): 
+          relaxed[:,i] = array([float(u) for u in file.readline().split()[:3]])
+    relaxed = broadcast(comm, relaxed, 0) / structure.scale * a0("A")
+    input = structure.cell 
     # no relaxation.
-    if sum( abs(input - cell) ) < 1e-11: return tuple(self.kpoint * structure.scale / a0("A")).flat
-    return deform_kpoint(self.kpoint, input, relaxed)
+    if sum( abs(input - relaxed) ) < 1e-11:
+      return self.kpoint[0], self.kpoint[1], self.kpoint[2], structure.scale / a0("A")
+    kpoint = deform_kpoint(self.kpoint, input, relaxed)
+    return kpoint[0], kpoint[1], kpoint[2], structure.scale / a0("A")
 
 
