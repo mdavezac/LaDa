@@ -346,7 +346,7 @@ class Escan(object):
     # changes to temporary working directory
     workdir = abspath(expanduser(this.workdir)) if this.workdir != None\
               else getcwd()
-    with Tempdir(workdir=workdir, comm=comm, keep=True, debug="debug") as this.workdir: 
+    with Tempdir(workdir=workdir, comm=comm) as this.workdir: 
   
       # performs calculation.
       this._run(structure, outdir, comm)
@@ -462,6 +462,10 @@ class Escan(object):
       if exists(join(outdir, POTCAR)):
         if not samefile(outdir, self.workdir): 
           copyfile(join(outdir, POTCAR), join(self.workdir, POTCAR))
+        if comm.rank == 0:
+          copyfile(self.maskr, basename(self.maskr))
+          for pot in self.atomic_potentials:
+            if pot.nonlocal != None: copyfile(pot.nonlocal, basename(pot.nonlocal))
         return
       else:
         with open(self._cout(comm), "a") as file:
