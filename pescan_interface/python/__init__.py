@@ -452,6 +452,7 @@ class Escan(object):
 
   def _run_genpot(self, comm, outdir):
     """ Runs genpot only """
+    from boost.mpi import broadcast
     from ._escan import _call_genpot
     from shutil import copyfile
     from os.path import basename, exists, join, samefile
@@ -459,8 +460,8 @@ class Escan(object):
 
     if not self.do_genpot: 
       POTCAR = self._POTCAR + "." + str(comm.rank)
-      if exists(join(outdir, POTCAR)):
-        if not samefile(outdir, self.workdir): 
+      if broadcast(comm, exists(join(outdir, POTCAR)), 0):
+        if exists(join(outdir, POTCAR)) and not samefile(outdir, self.workdir): 
           copyfile(join(outdir, POTCAR), join(self.workdir, POTCAR))
         if comm.rank == 0:
           copyfile(self.maskr, basename(self.maskr))
@@ -508,6 +509,7 @@ class Escan(object):
 
     assert self.atomic_potentials != None, RuntimeError("Atomic potentials are not set.")
     # Creates temporary input file and creates functional
+    kpoint = (0,0,0,0) if norm(self.kpoint) < 1e-12 else self._get_kpoint(structure, comm)
     with open(self._INCAR + "." + str(comm.rank), "w") as file:
       print >> file, "1 %s.%i" % (self._POTCAR, comm.rank) 
       print >> file, "2 %s" % (self.WAVECAR) 
@@ -533,9 +535,7 @@ class Escan(object):
       print >> file, "9 %s # input wavefunction filename" % (self.INWAVECAR)
 
       print >> file, "10 0 1 1 1 0"
-
-      if norm(self.kpoint) < 1e-12: print >> file, "11 0 0 0 0 0"
-      else: print >> file, "11 1 %f %f %f %f" % self._get_kpoint(structure, comm)
+      print >> file, "11 1 %f %f %f %f" % kpoint
       
       if   self.potential == localH: print >> file, "12 1 # local hamiltonian" 
       elif self.potential == nonlocalH: print >> file, "12 2 # non-local hamiltonian" 
