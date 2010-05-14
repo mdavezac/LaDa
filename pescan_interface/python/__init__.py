@@ -504,13 +504,14 @@ class Escan(object):
     from shutil import copyfile
     from os.path import basename
     from numpy.linalg import norm
+    from boost.mpi import world
     from ._escan import _call_escan
     from ..opt import redirect
 
     assert self.atomic_potentials != None, RuntimeError("Atomic potentials are not set.")
     # Creates temporary input file and creates functional
     kpoint = (0,0,0,0) if norm(self.kpoint) < 1e-12 else self._get_kpoint(structure, comm)
-    with open(self._INCAR + "." + str(comm.rank), "w") as file:
+    with open(self._INCAR + "." + str(world.rank), "w") as file:
       print >> file, "1 %s.%i" % (self._POTCAR, comm.rank) 
       print >> file, "2 %s" % (self.WAVECAR) 
       print >> file, "3 %i # %s"\
