@@ -8,7 +8,7 @@ def band_structure(escan, structure, kpoints, density, outdir=None, comm=None,\
   from os import getcwd
   from os.path import join, expanduser, abspath, exists
   from shutil import copyfile
-  from boost.mpi import world, all_gather
+  from boost.mpi import world, all_gather, broadcast
   from numpy.linalg import norm
   from numpy import abs, sum
   from ..crystal import deform_kpoint
@@ -94,7 +94,11 @@ def band_structure(escan, structure, kpoints, density, outdir=None, comm=None,\
     head_comm = comm.split(0 if local_comm.rank == 0 else 1)
     if local_comm.rank == 0:
       results = all_gather(head_comm, results)
-      results = sorted((j for i in results for j in i), lambda a,b: a[0] < b[0])
+      def comp(a,b):
+        if a[0] < b[0]: return -1
+        if a[0] ==  b[0]: return 0
+        return 1
+      results = sorted((j for i in results for j in i), comp)
       broadcast(local_comm, results, 0)
     else: results = broadcast(local_comm, None, 0) 
   return results
