@@ -184,6 +184,7 @@ class Extract(object):
   def vff(self):
     """ Greps vff functional from self.L{OUTCAR}. """
     from os.path import exists, join
+    from numpy import array
     from . import Vff
     path = self.OUTCAR
     if len(self.directory): path = join(self.directory, self.OUTCAR)
@@ -193,7 +194,7 @@ class Extract(object):
     def get_vff(this):
       with open(path, "r") as file: return _get_script_text(file, "Vff")
 
-    local_dict = {"lattice": self.lattice, "minimizer": self.minimizer, "Vff": Vff}
+    local_dict = {"lattice": self.lattice, "array:": array, "minimizer": self.minimizer, "Vff": Vff}
     exec get_vff(self) in globals(), local_dict
     return local_dict["vff"]
 
