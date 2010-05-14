@@ -510,7 +510,7 @@ class Escan(object):
 
     assert self.atomic_potentials != None, RuntimeError("Atomic potentials are not set.")
     # Creates temporary input file and creates functional
-    kpoint = (0,0,0,0) if norm(self.kpoint) < 1e-12 else self._get_kpoint(structure, comm)
+    kpoint = (0,0,0,0,0) if norm(self.kpoint) < 1e-12 else self._get_kpoint(structure, comm)
     with open(self._INCAR + "." + str(world.rank), "w") as file:
       print >> file, "1 %s.%i" % (self._POTCAR, comm.rank) 
       print >> file, "2 %s" % (self.WAVECAR) 
@@ -536,7 +536,7 @@ class Escan(object):
       print >> file, "9 %s # input wavefunction filename" % (self.INWAVECAR)
 
       print >> file, "10 0 1 1 1 0"
-      print >> file, "11 1 %f %f %f %f" % kpoint
+      print >> file, "11 %i %f %f %f %f" % kpoint
       
       if   self.potential == localH: print >> file, "12 1 # local hamiltonian" 
       elif self.potential == nonlocalH: print >> file, "12 2 # non-local hamiltonian" 
@@ -567,7 +567,7 @@ class Escan(object):
     from ..crystal import deform_kpoint
     from ..physics import a0
     if self._dont_deform_kpoint:
-      return self.kpoint[0], self.kpoint[1], self.kpoint[2], structure.scale / a0("A")
+      return 1, self.kpoint[0], self.kpoint[1], self.kpoint[2], structure.scale / a0("A")
     # first get relaxed cell
     relaxed = zeros((3,3), dtype="float64")
     if comm.rank == 0:
@@ -580,8 +580,8 @@ class Escan(object):
     input = structure.cell 
     # no relaxation.
     if sum( abs(input - relaxed) ) < 1e-11:
-      return self.kpoint[0], self.kpoint[1], self.kpoint[2], structure.scale / a0("A")
+      return 1, self.kpoint[0], self.kpoint[1], self.kpoint[2], structure.scale / a0("A")
     kpoint = deform_kpoint(self.kpoint, input, relaxed)
-    return kpoint[0], kpoint[1], kpoint[2], structure.scale / a0("A")
+    return 1, kpoint[0], kpoint[1], kpoint[2], structure.scale / a0("A")
 
 
