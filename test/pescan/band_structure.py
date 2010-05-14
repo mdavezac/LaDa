@@ -7,7 +7,7 @@ from boost.mpi import world
 from lada.opt import read_input
 from lada.escan import Escan, nb_valence_states, soH, band_structure
 from lada.vff import Vff
-from lada.crystal import fill_structure, sort_layers
+from lada.crystal import fill_structure, sort_layers, FreezeCell
 
 # reads input file.
 global_dict={"Vff": Vff, "Escan": Escan, "nb_valence_states": nb_valence_states, "soH": soH}
@@ -19,14 +19,16 @@ cell = matrix([[0.5,-0.5,0],[0.5,0.5,0.5],[0,0,2.5]])
 structure = sort_layers(fill_structure(cell), array([0,0,2.5]))
 for i, atom in enumerate(structure.atoms):
   atom.type = "Si" if i % 10 < 6 else "Ge"
+structure.scale = 5.65
+structure.freeze = FreezeCell.a0 | FreezeCell.a1
 input.escan.fft_mesh  = 14, 14, 50
-input.escan.vff.direction = array([0,0,2.5])
+##  input.escan.vff.direction = array([0,0,2.5])
 
 # some kpoints + associated name
-X = array( [0,0,1], dtype="float64" )
+X = array( [1,0,0], dtype="float64" )
 G = array( [0,0,0], dtype="float64" )
 L = array( [0.5,0.5,0.5], dtype="float64" )
-W = array( [1, 0.5,0], dtype="float64" )
+W = array( [0, 0.5,1], dtype="float64" )
 
 # Each job is performed for a given kpoint (first argument), at a given
 # reference energy (third argument). Results are stored in a specific directory
