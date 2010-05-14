@@ -194,7 +194,7 @@ class Extract(object):
     def get_vff(this):
       with open(path, "r") as file: return _get_script_text(file, "Vff")
 
-    local_dict = {"lattice": self.lattice, "array:": array, "minimizer": self.minimizer, "Vff": Vff}
+    local_dict = {"lattice": self.lattice, "array": array, "minimizer": self.minimizer, "Vff": Vff}
     exec get_vff(self) in globals(), local_dict
     return local_dict["vff"]
 
@@ -547,9 +547,7 @@ class Vff(object):
     cout, cerr = self._cout(comm), self._cerr(comm)
     with open(cerr, "w") as file: pass # file has not yet been opened
     with redirect_all(output=cout, error=cerr, append="True") as oestream:
-      print 0
       functional = self._create_functional(structure, comm)
-      print 1
       # now performs call
       result, stress = functional(structure, doinit=True)
     
