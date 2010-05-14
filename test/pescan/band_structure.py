@@ -39,7 +39,8 @@ density = 15 / min( norm(X), norm(L), norm(W) )
 result = band_structure( input.escan, structure, kpoints, density, 
                          outdir = "results",
                          eref   = None, 
-                         nbstates = nb_valence_states(structure) + 4 )
+                         nbstates = nb_valence_states(structure) + 4,
+                         pools = 2)
   
 if world.rank == 0:
   with open(join("results", "pickle"), "w") as file:

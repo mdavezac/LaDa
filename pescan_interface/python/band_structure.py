@@ -30,10 +30,11 @@ def band_structure(escan, structure, kpoints, density, outdir=None, comm=None,\
                   do_relax=do_relax, comm = comm, **kwargs )
   
   # two functions required to continue.
+  input, relaxed = structure.cell.copy(), vffout.structure.cell.copy()
+  dont_deform_kpoint = vffout.escan._dont_deform_kpoint
   def _get_kpoint(_kpoint):
     """ Deforms kpoint to new lattice, if required. """
-    if vffout.escan._dont_deform_kpoint: return _kpoint
-    input, relaxed = structure.cell, vffout.structure.cell
+    if dont_deform_kpoint: return _kpoint
     if sum(abs(input-relaxed)) < 1e-11: return _kpoint
     return deform_kpoint(_kpoint, input, relaxed)
   def _line(start, end, density):
@@ -78,7 +79,7 @@ def band_structure(escan, structure, kpoints, density, outdir=None, comm=None,\
       if exists(join(potdir, POSCAR)): copyfile(join(potdir, POSCAR), POSCAR)
       POTCAR = escan._POTCAR + "." + str(local_comm.rank)
       if exists(join(potdir, POTCAR)): copyfile(join(potdir, POTCAR), POTCAR)
-      cout = escan.vff._cout(comm)
+      cout = escan.vff._cout(local_comm)
       if exists(join(potdir, cout)): copyfile(join(potdir, cout), cout)
 
     # actually computes stuff.
@@ -89,7 +90,7 @@ def band_structure(escan, structure, kpoints, density, outdir=None, comm=None,\
     eigenvalues.sort()
     results.append( (x, kpoint, eigenvalues) )
 
-  if comm.size > 1: # gathers and orders results.
+  if comm.size > 1 and pools > 1: # gathers and orders results.
     head_comm = comm.split(0 if local_comm.rank == 0 else 1)
     if local_comm.rank == 0:
       results = all_gather(head_comm, results)
