@@ -1,5 +1,6 @@
 #! python
 """ Bandstructure plotting tools """
+from sys import exit
 
 def band_structure(escan, structure, kpoints, density, outdir=None, comm=None,\
                    do_relax=None, pools = 1, **kwargs):
@@ -53,9 +54,11 @@ def band_structure(escan, structure, kpoints, density, outdir=None, comm=None,\
     pos = 0
     yield pos, endpoints[0][0]
     for start, end in endpoints:
+      last = start.copy()
       for _kpoint in _line(start, end, density):
-        yield pos+norm(_get_kpoint(_kpoint-start)), _kpoint
-      pos += norm(end-start) 
+        pos += norm(_get_kpoint(_kpoint-last))
+        last = _kpoint.copy()
+        yield pos, _kpoint
 
 
   # splits local communicator.
