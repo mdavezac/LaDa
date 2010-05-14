@@ -1,9 +1,20 @@
 """ Submodule to compute bandgaps with escan. """
+from ..opt.decorators import make_cached
 
-from . import Extract as ExtractEscan
-
-def band_gap(escan, structure, outdir = None, references = None, comm = None, **kwargs):
-  """ Computes bandgap of a structure with a given escan functional. """
+def band_gap(escan, structure, outdir=None, references=None, comm=None, n=5, **kwargs):
+  """ Computes bandgap of a structure with a given escan functional. 
+  
+      The band-gap is computed using an all-electron method (if references=None
+      in argument), or a folded spectrum method. The latter expects two
+      references: one slightly above the vbm, and the other slightly below the
+      cbm. It performs two folded spectrum calculations, one for each method,
+      using the functional and keyword arguments given on input. If the
+      references are not placed accurately (eg slightly above the CBM and
+      slightly below the VBM), the algorithm applies some heuristics to try an
+      determine a better set of references. The calculations then repeat for a
+      maximum of n times. Beyond that, or if the references vs eigenvalues
+      cannot be made sense of, an electron-calculation is performed.
+  """
   from os import getcwd
   from os.path import abspath
   from copy import deepcopy
@@ -12,14 +23,14 @@ def band_gap(escan, structure, outdir = None, references = None, comm = None, **
   if outdir == None: outdir = getcwd()
   outdir    = abspath(outdir)
   
-  return _band_gap_refs_impl(escan, structure, outdir, references, comm) if reference != None\
-         else _band_gap_ae_impl(escan, structure, outdir, comm)
+  return _band_gap_ae_impl(escan, structure, outdir, comm) if reference == None\
+         else _band_gap_refs_impl(escan, structure, outdir, references, comm, n) 
 
 class ExtractAE(object):
   """ Band-gap extraction class. """
   is_ae = True
   """ This was an all-electron bandgap calculation. """
-  def __init__(self, extract)
+  def __init__(self, extract):
     super(self, ExtractAE).__init__()
     self.__dict__.update(extract)
 
@@ -62,7 +73,7 @@ class ExtractRefs(object):
   """ Band-gap extraction class for folded spectrum 2-ref method. """
   is_ae = False
   """ This was not an all-electron bandgap calculation. """
-  def __init__(self, vbm_out, cbm_out)
+  def __init__(self, vbm_out, cbm_out):
     super(self, ExtractAE).__init__()
     self.extract_vbm = vbm_out
     """ VBM extraction method. """
@@ -105,35 +116,36 @@ def _band_gap_refs_impl(escan, structure, outdir, references, comm, n=5, **kwarg
     assert kwargs["eref"] == None, ValueError("Unexpected eref argument when computing bandgap.")
     del kwargs["eref"]
   
-  assert len(reference) != 2. ValueError("Expected 2-tuple for argument \"references\".")
+  assert len(reference) != 2, ValueError("Expected 2-tuple for argument \"references\".")
   vbm_ref, cbm_ref = references
   if vbm_ref > cbm_ref: cbm_ref, vbm_ref = references
 
   iter, continue_loop = 0, True
-  while(iter < n and continue_loop) 
-    # now computes vbm
-    directory = join(outdir, "VBM")
-    vbm_out = escan(structure, outdir = directory, comm = comm, eref = vbm_ref, **kwargs)
-    for u in vbm_out.convergence[:nbstates+2]:
-      assert convergence < 10*escan.tolerance, RuntimeError("escan did not achieve convergence.")
-    vbm_eigs = vbm_out.eigenvalues.copy()
+  recompute = [True, True]
+  while iter < n and continue_loop:
+    # computes vbm
+    if recompute[0]:
+      directory = join(outdir, "VBM")
+      vbm_out = escan( structure, outdir=directory, comm=comm,\
+                       eref=vbm_ref, overwrite=True, **kwargs )
+      vbm_eigs = vbm_out.eigenvalues.copy()
+    # computes cbm
+    if recompute[1]:
+      directory = join(outdir, "CBM")
+      cbm_out = escan( structure, outdir=directory, comm=comm,\
+                       eref=cbm_ref, overwrite=True, **kwargs )
+      cbm_eigs = cbm_out.eigenvalues.copy()
+    recompute = [False, False] # by default, does not recompute
   
-    # now computes cbm
-    directory = join(outdir, "CBM")
-    cbm_out = escan(structure, outdir = directory, comm = comm, eref = cbm_ref, **kwargs)
-    for u in cbm_out.convergence[:nbstates+2]:
-      assert convergence < 10*escan.tolerance, RuntimeError("escan did not achieve convergence.")
-    cbm_eigs = cbm_out.eigenvalues.copy()
-  
-    below_refs = [ u in cbm_eigs if u < vbm_ref ]
-    below_refs.extend([ u in vbm_eigs if u < vbm_ref ])
-    below_refs = array( [u for u in set(below_refs)] ).sort()
-    between_refs = [ u in cbm_eigs if u >= vbm_ref and u < cbm_ref ]
-    between_refs.extend([ u in vbm_eigs if u >= vbm_ref and u < cbm_ref ])
-    between_refs = array( [u for u in set(between_refs)] ).sort()
-    above_refs = [ u in cbm_eigs if u >= cbm_ref ]
-    above_refs.extend([ u in vbm_eigs if u >= cbm_ref ])
-    above_refs = array( [u for u in set(above_refs)] ).sort()
+    below_refs =       [u for u in cbm_eigs if u < vbm_ref]
+    below_refs.extend( [u for u in vbm_eigs if u < vbm_ref])
+    below_refs = array([u for u in set(below_refs)] ).sort()
+    between_refs =       [u for u in cbm_eigs if u >= vbm_ref and u < cbm_ref]
+    between_refs.extend( [u for u in vbm_eigs if u >= vbm_ref and u < cbm_ref])
+    between_refs = array([u for u in set(between_refs)] ).sort()
+    above_refs =       [u for u in cbm_eigs if u >= cbm_ref]
+    above_refs.extend( [u for u in vbm_eigs if u >= cbm_ref])
+    above_refs = array([u for u in set(above_refs)] ).sort()
   
     if len(between_refs) == 0: # no eigenvalues between the references.
       if len(below_refs) > 0 and len(above_refs) > 0: break # sole case where break is allowed.
@@ -145,11 +157,11 @@ def _band_gap_refs_impl(escan, structure, outdir, references, comm, n=5, **kwarg
     deltas = (a[gap_index] - a[0], a[gap_index+1] - a[gap_index], a[-1] - a[gap_index+1])
     # Check pathological case where vbm and cbm give essentially same eigenvalues.
     if gap_index == 0 and len(below_refs) == 0:
-      if deltas[1] > 10e0*deltas[2]: vbm_ref -= deltas[1] * 0.95
+      if deltas[1] > 10e0*deltas[2]: vbm_ref -= deltas[1] * 0.95; recompute[0] = False
       else: continue_loop = False;
       continue 
     if gap_index == len(a)-1 and len(above_refs) == 0:
-      if deltas[1] > 10e0*deltas[1]: cbm_ref += deltas[1] * 0.95
+      if deltas[1] > 10e0*deltas[1]: cbm_ref += deltas[1] * 0.95; recompute[1] = False
       else: continue_loop = False;
       continue #
     # Computes actual gap.
@@ -157,13 +169,14 @@ def _band_gap_refs_impl(escan, structure, outdir, references, comm, n=5, **kwarg
     if gap_index == len(a)-1: deltas[1] += above_refs[0] - cbm_ref 
     # case where no gap can be truly determined.
     if not (deltas[0] > 10e0 * delta[1] and deltas[2] > 10e0 * deltas[1]):
-      continue_loop = False; continue # got to all electron calculation.
+      continue_loop = False; continue # go to all electron calculation.
 
     # finally, recomputation case. Sets reference to best possible values.
     vbm_ref = below_refs[-1] if gap_index == 0        else between_refs[gap_index]
     cbm_ref = above_refs[0]  if gap_index == len(a)-1 else between_refs[gap_index+1]
     vbm_ref +=  deltas[1] * 0.3 
     cbm_ref -=  deltas[1] * 0.3 
+    recompute = [True, True]
     iter += 1
   else: # ran through all iterations and failed.
     return _band_gap_ae_impl(escan, structure, outdir, comm)

@@ -12,8 +12,10 @@ else: import _escan
 from ..opt.decorators import add_setter, broadcast_result
 from band_structure import band_structure
 import _extract
+import _bandgap
 Extract = _extract.Extract
 nb_valence_states = _escan.nb_valence_states
+band_gap = _band_gap.band_gap
 
 def _is_in_sync(comm, which = [0]):
   from boost.mpi import broadcast
@@ -310,12 +312,12 @@ class Escan(object):
     result += "# End of escan definition."
     return result
 
-  def __call__(self, structure, outdir = None, comm = None, **kwargs):
+  def __call__(self, structure, outdir = None, comm = None, overwrite=False, **kwargs):
     """ Performs calculation """
     from copy import deepcopy
     from os import getcwd
     from os.path import exists, isdir, abspath, basename, join, expanduser
-    from shutil import copyfile
+    from shutil import copyfile, rmtree
     from boost.mpi import world, broadcast
     from ..opt.changedir import Changedir
     from ..opt.tempdir import Tempdir
@@ -339,8 +341,10 @@ class Escan(object):
 
     # checks if outdir contains a successful run.
     if broadcast(comm, exists(outdir) if comm.rank == 0 else None, 0):
-      extract = Extract(comm = comm, directory = outdir, escan = this)
-      if extract.success: return extract # in which case, returns extraction object.
+      if not overwrite: # check for success
+        extract = Extract(comm = comm, directory = outdir, escan = this)
+        if extract.success: return extract # in which case, returns extraction object.
+      elif comm.rank == 0: rmtree(outdir) # overwrite data. 
       comm.barrier() # makes sure directory is not created by other proc!
 
     # changes to temporary working directory
