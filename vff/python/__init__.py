@@ -184,6 +184,7 @@ class Extract(object):
   def vff(self):
     """ Greps vff functional from self.L{OUTCAR}. """
     from os.path import exists, join
+    from . import Vff
     path = self.OUTCAR
     if len(self.directory): path = join(self.directory, self.OUTCAR)
     assert exists(path), RuntimeError("Could not find file %s:" % (path))
