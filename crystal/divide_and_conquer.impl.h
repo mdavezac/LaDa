@@ -2,6 +2,7 @@
 //  Version: $Id$
 //
 
+#include <limits>
 #include <boost/tuple/tuple_io.hpp>
 #include <set>
 
@@ -18,12 +19,13 @@ namespace LaDa
                                const math::iVector3d &_n )
       {
         // Puts atom back into parallelogram.
+        const types::t_real roundoff = 1e1 * std::numeric_limits<types::t_real>::epsilon();
         const math::rVector3d rfrac( _inv_str * _pos );
         const math::rVector3d ifrac
         (
-          rfrac(0) - std::floor( rfrac(0) + 1e-12 ),
-          rfrac(1) - std::floor( rfrac(1) + 1e-12 ),
-          rfrac(2) - std::floor( rfrac(2) + 1e-12 )
+          rfrac(0) - std::floor(rfrac(0) + roundoff),
+          rfrac(1) - std::floor(rfrac(1) + roundoff),
+          rfrac(2) - std::floor(rfrac(2) + roundoff) 
         );
         const math::rVector3d in_para( _str * ifrac );
         // Then finds out which box it belongs to.
