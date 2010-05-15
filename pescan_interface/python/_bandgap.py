@@ -1,5 +1,6 @@
 """ Submodule to compute bandgaps with escan. """
 from ..opt.decorators import make_cached
+from _extract import Extract as ExtractVasp
 
 def band_gap(escan, structure, outdir=None, references=None, comm=None, n=5, **kwargs):
   """ Computes bandgap of a structure with a given escan functional. 
@@ -18,21 +19,27 @@ def band_gap(escan, structure, outdir=None, references=None, comm=None, n=5, **k
   from os import getcwd
   from os.path import abspath
   from copy import deepcopy
-  escan = deepcopy(escan)
 
+  assert "do_genpot" not in kwargs,\
+         ValueError("\"do_genpot\" is not an admissible argument of bandgap.")
+  assert "do_escan" not in kwargs,\
+         ValueError("\"do_escan\" is not an admissible argument of bandgap.")
+
+  escan = deepcopy(escan)
+         
   if outdir == None: outdir = getcwd()
   outdir    = abspath(outdir)
   
-  return _band_gap_ae_impl(escan, structure, outdir, comm) if reference == None\
+  return _band_gap_ae_impl(escan, structure, outdir, comm) if references == None\
          else _band_gap_refs_impl(escan, structure, outdir, references, comm, n) 
 
-class ExtractAE(object):
+class ExtractAE(ExtractVasp):
   """ Band-gap extraction class. """
   is_ae = True
   """ This was an all-electron bandgap calculation. """
   def __init__(self, extract):
-    super(self, ExtractAE).__init__()
-    self.__dict__.update(extract)
+    super(ExtractAE, self).__init__(directory=extract.directory, comm=extract.comm)
+    self.OUTCAR = extract.OUTCAR
 
   @property
   def bandgap(self):
@@ -45,7 +52,7 @@ class ExtractAE(object):
     """ Greps VBM from calculations. """
     eigenvalues = self.eigenvalues.copy()
     eigenvalues.sort()
-    return self.eigenvalues[-4]
+    return self.eigenvalues[-5]
 
   @property
   @make_cached
@@ -53,7 +60,7 @@ class ExtractAE(object):
     """ Greps CBM from calculations. """
     eigenvalues = self.eigenvalues.copy()
     eigenvalues.sort()
-    return self.eigenvalues[-3]
+    return self.eigenvalues[-4]
 
 def _band_gap_ae_impl(escan, structure, outdir, comm, **kwargs):
   """ Computes bandgap of a structure using all-electron method. """
@@ -65,7 +72,7 @@ def _band_gap_ae_impl(escan, structure, outdir, comm, **kwargs):
     del kwargs["eref"]
   outdir = join(outdir, "AE")
   nbstates = nb_valence_states(structure)
-  extract = escan( structure, outdir = directory, comm = comm, eref = None,\
+  extract = escan( structure, outdir = outdir, comm = comm, eref = None,\
                    nbstates = nbstates + 4, **kwargs)
   return ExtractAE(extract)
 
@@ -74,7 +81,7 @@ class ExtractRefs(object):
   is_ae = False
   """ This was not an all-electron bandgap calculation. """
   def __init__(self, vbm_out, cbm_out):
-    super(self, ExtractAE).__init__()
+    super(ExtractRefs, self).__init__()
     self.extract_vbm = vbm_out
     """ VBM extraction method. """
     self.extract_cbm = cbm_out
@@ -99,12 +106,15 @@ class ExtractRefs(object):
     """ Greps CBM from calculations. """
     from numpy import amin
     cbm_eigs = self.extract_cbm.eigenvalues.copy()
-    return amin(vbm_eigs)
+    return amin(cbm_eigs)
+
 
 def _band_gap_refs_impl(escan, structure, outdir, references, comm, n=5, **kwargs):
   """ Computes band-gap using two references. """
-  from os.path import join
+  from os.path import join, exists
+  from shutil import copyfile
   from numpy import array, argmax
+  from ..opt.changedir import Changedir
   
   # some sanity checks.
   nbstates = escan.nbstates
@@ -115,65 +125,97 @@ def _band_gap_refs_impl(escan, structure, outdir, references, comm, n=5, **kwarg
   if "eref" in kwargs:
     assert kwargs["eref"] == None, ValueError("Unexpected eref argument when computing bandgap.")
     del kwargs["eref"]
+  # check/correct input arguments
+  do_relax = escan.do_relax
+  if do_relax in kwargs:
+    do_relax = kwargs["do_relax"]
+    del kwargs["do_relax"]
   
-  assert len(reference) != 2, ValueError("Expected 2-tuple for argument \"references\".")
+  assert len(references) == 2, ValueError("Expected 2-tuple for argument \"references\".")
   vbm_ref, cbm_ref = references
   if vbm_ref > cbm_ref: cbm_ref, vbm_ref = references
+
+  # first computes vff and genpot.
+  vffout = escan( structure, outdir=outdir, do_escan=False, do_genpot=True,\
+                  do_relax=do_relax, comm = comm, **kwargs )
+  
+  def _copy_files(directory):
+    with Changedir(join(outdir, directory), comm = comm) as cwd:
+      POSCAR = escan._POSCAR + "." + str(comm.rank)
+      if exists(join(outdir, POSCAR)): copyfile(join(outdir, POSCAR), POSCAR)
+      POTCAR = escan._POTCAR + "." + str(comm.rank)
+      if exists(join(outdir, POTCAR)): copyfile(join(outdir, POTCAR), POTCAR)
+      cout = escan.vff._cout(comm)
+      if exists(join(outdir, cout)): copyfile(join(outdir, cout), cout)
 
   iter, continue_loop = 0, True
   recompute = [True, True]
   while iter < n and continue_loop:
+    print "recompute: ", recompute
+    print "refs: ", vbm_ref, cbm_ref
     # computes vbm
     if recompute[0]:
       directory = join(outdir, "VBM")
+      _copy_files(directory)
       vbm_out = escan( structure, outdir=directory, comm=comm,\
-                       eref=vbm_ref, overwrite=True, **kwargs )
+                       eref=vbm_ref, overwrite=True, do_relax=False,\
+                       do_genpot=False, **kwargs )
       vbm_eigs = vbm_out.eigenvalues.copy()
     # computes cbm
     if recompute[1]:
       directory = join(outdir, "CBM")
+      _copy_files(directory)
       cbm_out = escan( structure, outdir=directory, comm=comm,\
-                       eref=cbm_ref, overwrite=True, **kwargs )
+                       eref=cbm_ref, overwrite=True, do_relax=False,
+                       do_genpot=False, **kwargs )
       cbm_eigs = cbm_out.eigenvalues.copy()
     recompute = [False, False] # by default, does not recompute
   
     below_refs =       [u for u in cbm_eigs if u < vbm_ref]
     below_refs.extend( [u for u in vbm_eigs if u < vbm_ref])
-    below_refs = array([u for u in set(below_refs)] ).sort()
+    below_refs = array([u for u in set(below_refs)] )
+    below_refs.sort()
     between_refs =       [u for u in cbm_eigs if u >= vbm_ref and u < cbm_ref]
     between_refs.extend( [u for u in vbm_eigs if u >= vbm_ref and u < cbm_ref])
-    between_refs = array([u for u in set(between_refs)] ).sort()
+    between_refs = array([u for u in set(between_refs)] );
+    between_refs.sort()
     above_refs =       [u for u in cbm_eigs if u >= cbm_ref]
     above_refs.extend( [u for u in vbm_eigs if u >= cbm_ref])
-    above_refs = array([u for u in set(above_refs)] ).sort()
+    above_refs = array([u for u in set(above_refs)] )
+    above_refs.sort()
   
-    if len(between_refs) == 0: # no eigenvalues between the references.
-      if len(below_refs) > 0 and len(above_refs) > 0: break # sole case where break is allowed.
+    if between_refs.size == 0: # no eigenvalues between the references.
+      if below_refs.size > 0 and above_refs.size > 0: break # sole case where break is allowed.
       continue_loop = False; continue # got to all electron calculation.
 
     # there are eigenvalues between the references. Determines the largest "gap"
     a = [ vbm_ref ]; a.extend(u for u in between_refs.flat); a.append(cbm_ref)
     gap_index = argmax(array(a[1:]) - array(a[:-1])) # computes all differences.
-    deltas = (a[gap_index] - a[0], a[gap_index+1] - a[gap_index], a[-1] - a[gap_index+1])
+    deltas = [a[gap_index] - a[0], a[gap_index+1] - a[gap_index], a[-1] - a[gap_index+1]]
+    print "deltas: ", deltas
+    print "gap_index: ", gap_index
     # Check pathological case where vbm and cbm give essentially same eigenvalues.
-    if gap_index == 0 and len(below_refs) == 0:
+    if gap_index == 0 and below_refs.size == 0:
       if deltas[1] > 10e0*deltas[2]: vbm_ref -= deltas[1] * 0.95; recompute[0] = False
       else: continue_loop = False;
       continue 
-    if gap_index == len(a)-1 and len(above_refs) == 0:
+    if gap_index == len(a)-1 and above_refs.size == 0:
       if deltas[1] > 10e0*deltas[1]: cbm_ref += deltas[1] * 0.95; recompute[1] = False
       else: continue_loop = False;
       continue #
     # Computes actual gap.
     if gap_index == 0: deltas[1] += vbm_ref - below_refs[-1]
     if gap_index == len(a)-1: deltas[1] += above_refs[0] - cbm_ref 
+    print "new deltas: ", deltas
     # case where no gap can be truly determined.
-    if not (deltas[0] > 10e0 * delta[1] and deltas[2] > 10e0 * deltas[1]):
+    if not (deltas[1] > 10e0 * deltas[0] and deltas[1] > 10e0 * deltas[2]):
       continue_loop = False; continue # go to all electron calculation.
 
     # finally, recomputation case. Sets reference to best possible values.
-    vbm_ref = below_refs[-1] if gap_index == 0        else between_refs[gap_index]
-    cbm_ref = above_refs[0]  if gap_index == len(a)-1 else between_refs[gap_index+1]
+    vbm_ref = below_refs[-1] if gap_index == 0        else a[gap_index]
+    cbm_ref = above_refs[0]  if gap_index == len(a)-1 else a[gap_index+1]
+    print between_refs
+    print a
     vbm_ref +=  deltas[1] * 0.3 
     cbm_ref -=  deltas[1] * 0.3 
     recompute = [True, True]

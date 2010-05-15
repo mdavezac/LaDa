@@ -5,7 +5,7 @@ from numpy import matrix, array
 from numpy.linalg import norm
 from boost.mpi import world
 from lada.opt import read_input
-from lada.escan import Escan, nb_valence_states, soH, band_structure
+from lada.escan import Escan, nb_valence_states, soH, bandgap
 from lada.vff import Vff
 from lada.crystal import fill_structure, sort_layers, FreezeCell
 
@@ -25,5 +25,5 @@ input.escan.fft_mesh  = 14, 14, 50
 
 out = bandgap( input.escan, structure,\
                outdir=join("results", "BG"),\
-               comm=comm )
-print "%f - %f = %f " % (out.cbm, out.vbm, out.gap)
+               comm=world, references = (0.2, -0.5 ) )
+print "%f - %f = %f " % (out.cbm, out.vbm, out.bandgap)

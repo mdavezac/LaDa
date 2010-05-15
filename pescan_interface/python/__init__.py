@@ -15,7 +15,7 @@ import _extract
 import _bandgap
 Extract = _extract.Extract
 nb_valence_states = _escan.nb_valence_states
-band_gap = _band_gap.band_gap
+bandgap = _bandgap.band_gap
 
 def _is_in_sync(comm, which = [0]):
   from boost.mpi import broadcast
