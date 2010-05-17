@@ -92,21 +92,32 @@ class ExtractRefs(object):
     """ Greps band-gap from calculation. """
     return self.cbm - self.vbm
 
-  @property
+  @prperty
   @make_cached
+  def _raw(self):
+    vbm_eigs = self.extract_vbm.eigenvalues.copy()
+    cbm_eigs = self.extract_cbm.eigenvalues.copy()
+
+    between_refs =       [u for u in cbm_eigs if u >= vbm_ref and u < cbm_ref]
+    between_refs.extend( [u for u in vbm_eigs if u >= vbm_ref and u < cbm_ref])
+    between_refs = array([u for u in set(between_refs)] );
+    between_refs.sort()
+
+    return between_refs[0], between_refs[1]
+
+  @property
   def vbm(self):
     """ Greps VBM from calculations. """
     from numpy import amax
     vbm_eigs = self.extract_vbm.eigenvalues.copy()
-    return amax(vbm_eigs)
+    return _raw[0]
 
   @property
-  @make_cached
   def cbm(self):
     """ Greps CBM from calculations. """
     from numpy import amin
     cbm_eigs = self.extract_cbm.eigenvalues.copy()
-    return amin(cbm_eigs)
+    return _raw[1]
 
 
 def _band_gap_refs_impl(escan, structure, outdir, references, comm, n=5, **kwargs):
