@@ -24,7 +24,8 @@ def rWavefunction(Object):
     from numpy import conjugate, dot, multiply
     result = dot( conjugate(self.up), multiply(operator, self.up) if operator != None else self.up)
     if down != None: 
-      result += dot( conjugate(self.down), multiply(operator, self.down) if operator != None else self.down)
+      result += dot( conjugate(self.down), multiply(operator, self.down)\
+                                           if operator != None else self.down)
     return result
 
   def braket(operator, ket):
@@ -36,7 +37,8 @@ def rWavefunction(Object):
     from numpy import conjugate, dot, multiply
     result = dot(conjugate(self.up), multiply(operator, ket.up) if operator != None else ket.up)
     if down != None: 
-      result += dot(conjugate(self.down), multiply(operator, ket.down) if operator != None else ket.down)
+      result += dot(conjugate(self.down), multiply(operator, ket.down)\
+                                          if operator != None else ket.down)
     return result
 
 def Wavefunction(rWavefunction):
@@ -76,127 +78,97 @@ def Wavefunction(rWavefunction):
     result = dot(conjugate(bra), multiply(operator, ket_) if operator != None else ket_)
     if down != None: 
       u = multiply(down, self.attenuation) 
-      ket_ = multiply(ket.down, self.attenuation) i
+      ket_ = multiply(ket.down, self.attenuation)  
       result += dot(conjugate(bra), multiply(operator, ket_) if operator != None else ket_)
     return result
 
 
-class Wavefunctions(Extract):
-  """ G-space wavefunctions. """
-  is_gspace = True
-  """ True if the wavefunctions are in gspace, False if  in realspace. """
-  def __init__(self, *args, **kwargs)
-    super(Wavefunctions, self).__init__(self, *args, **kwargs)
+def gtor_fourrier(wavefunctions, rvectors, gvectors, comm, axis=0):
+  """ g-space to r-space fourrier transform of wavefunctions.
+  
+      @param wavefunctions: an numpy array of wavefunctions.
+      @param rvectors: a two-dimensional array of r-space vectors, with each
+        row a position. The return r-space wavefunctions will be given with
+        respect to these points. Each process should have different r-space
+        vectors. Otherwise use another implementation.
+      param gvectors: a two-dimensional array of g-space vectors, with each
+        row a (g-)position. The input wavefunctions should be given with
+        respect to these points, in the same order, etc.
+      @param comm: communicator over which the wavefunctions are distributed.
+        The return wavefunctions will also be dirstributed over these
+        processes.
+      @params axis: axis over which the wavefunctions are deployed, eg axis
+        of L{wavefunctions} which corresponds to L{gvectors}. Independent
+        (though simultaneous, implementation wise) fourrier transform will be
+        performed over this axis for all other axis. 0 by default.
+      @type axis: integer
+  """
+  from sys import getrefcount
+  import numpy as np
+  from boost.mpi import broadcast, reduce
+
+  result = None
+  for node in range(comm.size):
+    # sends rvectors from node to all
+    r = broadcast(world, rvectors, node)
+    # computes all exponentials exp(-i r.g), with r in first dim, and g in second.
+    v = np.exp(-1j * np.tensordot(r, gvectors, ((1),(1))))
+    # computes fourrier transform for all wavefunctions simultaneously.
+    dummy = np.tensordot(v, wavefunctions, ((1),(axis)))
+    # reduce across processes
+    if node == comm.rank: result = reduce(comm, dummy, lambda x,y: x+y, node)
+    else: reduce(comm, dummy, lambda x,y: x+y, node)
+
+  assert not any(isnan(result))
+  return result
 
 
-  def __getitem__(self, index): return self._wavefunction.__getitem(index)
-  def __setitem__(self, index): raise RuntimeError("Wavefunctions cannot be modified.")
-  def __len__(self): return self._wavefunctions.__len__(self)
+def rtog_fourrier(wavefunctions, rvectors, gvectors, comm, axis=0):
+  """ r-space to g-space fourrier transform of wavefunctions.
+  
+      @param wavefunctions: an numpy array of wavefunctions.
+      @param rvectors: a two-dimensional array of r-space vectors, with each
+        row a position. The return r-space wavefunctions will be given with
+        respect to these points. Each process should have different r-space
+        vectors. Otherwise use another implementation.
+      @param gvectors: a two-dimensional array of g-space vectors, with each
+        row a (g-)position. The input wavefunctions should be given with
+        respect to these points, in the same order, etc.
+      @param comm: communicator over which the wavefunctions are distributed.
+        The return wavefunctions will also be dirstributed over these
+        processes.
+      @params axis: axis over which the wavefunctions are deployed, eg axis
+        of L{wavefunctions} which corresponds to L{gvectors}. Independent
+        (though simultaneous, implementation wise) fourrier transform will be
+        performed over this axis for all other axis. 0 by default.
+      @type axis: integer
+  """
+  from sys import getrefcount
+  import numpy as np
+  from boost.mpi import broadcast, reduce, all_reduce
 
-  @property
-  @make_cached
-  def _wavefunctions(self):
-    """ Creates list of Wavefuntion objects.
+  assert not any(isnan(wavefunctions))
+  assert not any(isnan(gvectors))
+  assert not any(isnan(rvectors))
+  result = None
+  for node in range(comm.size):
+    # sends rvectors from node to all
+    g = broadcast(world, gvectors, node)
+    # computes all exponentials exp(-i r.g), with g in first dim, and r in second.
+    v = np.exp(1j * np.tensordot(rvectors, g, ((1),(1))))
+    # computes fourrier transform for all wavefunctions simultaneously.
+    # somehow, there is a problem with tensordot leading to nan numbers...
+    assert not any(isnan(v))
+    last = wavefunctions.ndim-1
+    dummy = np.dot(wavefunctions.swapaxes(axis, last), v).swapaxes(last, axis)
+    # reduce across processes
+    assert not any(isnan(dummy))
+    if node == comm.rank: result = reduce(comm, dummy, lambda x,y: x+y, node)
+    else: reduce(comm, dummy, lambda x,y: x+y, node)
 
-        This is makes instantiations "lazy", in that wavefunctions are
-        resolved, eg read from disk, only when truly needed, not a
-        instantiation per say.
-    """
-    result = []
-    if self.is_spinor:
-      if self.is_krammer:
-        for i, eig in enumerate(self.eigenvalues):
-          if i % 2 == 0: # normal
-            result.append( Wavefunction(i, eig, self.raw_wfns[:,i,0],\
-                                        self.raw_wfns[:,i,1], self.attenuation) )
-          else:  # inverted
-            result.append( Wavefunction(i, eig, self.raw_wfns[self.inverse_indices,i,0],\
-                                        self.raw_wfns[self.inverse_indices,i,1], self.attenuation) )
-      else: # no krammer degeneracy
-        for i, eig in enumerate(self.eigenvalues):
-          result.append( Wavefunction(i, eig, self.raw_wfns[:,i,0],\
-                                      self.raw_wfns[:,i,1], self.attenuation) )
-    else: # no spin polarization.
-      if self.is_krammer:
-        for i, eig in enumerate(self.eigenvalues):
-          if i % 2 == 0: # normal
-            result.append( Wavefunction(i, eig, self.raw_wfns[:,i,0],\
-                                        None, self.attenuation) )
-          else:  # inverted
-            result.append( Wavefunction(i, eig, self.raw_wfns[self.inverse_indices,i,0], \
-                                        None, self.attenuation) )
-          result.append(result[-1])
-      else: # no krammer degeneracy
-        for i, eig in enumerate(self.eigenvalues):
-          result.append( Wavefunction(i, eig, self.raw_wfns[:,i,0],None, self.attenuation) )
-          result.append(result[-1])
 
-  @property
-  @make_cached
-  def _raw(self):
-    """ Reads and caches g-space wavefunction data. 
-    
-        This is a tuple described making up the return of
-        L{read_wavefunctions<lada.escan._escan.read_wavefunctions>}
-    """
-    from ._escan import read_wavefunctions
-
-    assert self.comm.size >= self.nnodes,\
-           RuntimeError("Must read wavefunctions with at least "\
-                        "as many nodes as they were written to disk.")
-    if self.comm.size > self.nnodes:
-      color = 0 if self.comm.rank < self.nnodes else 1
-      local_comm = self.comm.split(color)
-    else: color, local_comm = 0, self.comm
-    if color == 1: return (,,,)
-    return read_wavefunctions(self.escan, [i for i in range(self.nbstates)], local_comm)
-
-  @property
-  def raw_wfns(self):
-    """ Raw wavefunction data. """
-    return self._raw[0]
-
-  @property
-  def gvectors(self):
-    """ G-vector values. """
-    return self._raw[1]
-
-  @property
-  def attenuation(self):
-    """ G-vector attenuation values. """
-    return self._raw[2]
-
-  @property
-  def inverse_indices(self):
-    """ Indices to -G vectors. """
-    return self._raw[3]
-
-  @property
-  @make_cached
-  @broadcast_result(attr=True, which=0)
-  def _wavefunction_path(self): return self.solo().escan.WAVECAR
-
-  @property
-  def is_spinor(self):
-    """ True if wavefunction is a spinor. """
-    from . import soH
-    return self.escan.potential == soH
-
-  @property
-  def is_krammer(self):
-    """ True if wavefunction is a spinor. """
-    from numpy.linalg import norm
-    from . import soH
-    return norm(self.escan.kpoint) < 1e-12
-
-class rWavefunctions(Wavefunctions, rawdata):
-  """ R-space wavefunctions. """
-  is_gspace = False
-  """ False since this is r-space wavefunctions. """
-  def __init__(self, *args, **kwargs)
-    super(rWavefunctions, self).__init__(self, *args, **kwargs)
-    self._data = rawdata[0]
-    """ Contains the raw data for r-space wavefunctions. """
-    self.rvectors = rawdata[1]
-    """ R-space vectors. """
-
+  assert not any(isnan(result))
+  # gets normalization factor.
+  norm = all_reduce(comm, rvectors.shape[0], lambda x,y:x+y)
+  assert norm != 0
+  return result/ float(norm)

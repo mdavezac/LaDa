@@ -40,6 +40,10 @@ namespace LaDa
 {
   namespace python
   {
+    namespace bp = boost::python;
+    namespace bfs = boost::filesystem;
+    namespace bm = boost::mpi;
+ 
     void escan_get_cell( math::rMatrix3d &_cell )
     {
       double a[9];
@@ -47,10 +51,35 @@ namespace LaDa
       for(size_t i(0); i < 9; ++i) _cell(i%3, i/3) = a[i];
     }
 
-    namespace bp = boost::python;
-    namespace bfs = boost::filesystem;
-    namespace bm = boost::mpi;
- 
+    bp::object positions(bm::communicator const &_comm)
+    {
+      math::rMatrix3d mesh_;
+      int max_, nr_, n1, n3_, n2_;
+      escan_get_cell(mesh_);
+      FC_FUNC_(escan_get_nr, ESCAN_GET_NR)(&nr_);
+      FC_FUNC_(escan_get_n1_n2_n3, ESCAN_GET_N1_N2_N3)(&n1, &n2_, &n3_);
+      mesh_.col(0) /= types::t_real(n1);
+      mesh_.col(1) /= types::t_real(n2_);
+      mesh_.col(2) /= types::t_real(n3_);
+      max_ = nr_ / _comm.size();
+
+      bp::object result = math::numpy::create_array<NPY_DOUBLE>(max_, 3, true);
+      npy_intp *strides = math::numpy::get_strides_pointer(result);
+      double * array_data = math::numpy::get_data_pointer<double*>(result);
+      for(size_t i(0); i < max_; ++i)
+      {
+        int u(i + _comm.rank()*(nr_/_comm.size()));
+        math::rVector3d const a(u/(n3_*n2_), (u%(n3_*n2_)) / n3_, (u%(n3_*n2_)) % n3_);
+        math::rVector3d const b( mesh_ * a ); 
+        for(size_t j(0); j < 3; ++j)
+        {
+          char *where = reinterpret_cast<char*>(array_data) + i*strides[0]+j*strides[1];
+          *reinterpret_cast<double*>(where) = b(j);
+        }
+      }
+      return result;
+    }
+
     bp::tuple read_wavefunctions( bp::object const &_escan, 
                                   bp::object const &_indices, 
                                   bm::communicator const &_comm)
@@ -104,7 +133,7 @@ namespace LaDa
       }
 
       // prepares to read wavefunctions
-      std::string const orig = bp::extract<std::string>(_escan.attr("_POSCAR"))()
+      std::string const orig = bp::extract<std::string>(_escan.attr("_INCAR"))()
                                + "."
                                + boost::lexical_cast<std::string>(_comm.rank());
       int a(orig.size()), b(indices.size());
@@ -141,41 +170,21 @@ namespace LaDa
       // and cleanup fortran arrays.
       FC_FUNC_(escan_wfns_cleanup, ESCAN_WFNS_CLEANUP)(); 
       // returns a 4-tuple.
-      return bp::make_tuple(wfns, gpoints, projs, inverse);
+      return bp::make_tuple(wfns, gpoints, positions(_comm), projs, inverse);
     }
 
 
-    bp::object positions(bm::communicator const &_comm)
-    {
-      math::rMatrix3d mesh_;
-      int max_, nr_, n1, n3_, n2_;
-      escan_get_cell(mesh_);
-      FC_FUNC_(escan_get_nr, ESCAN_GET_NR)(&nr_);
-      FC_FUNC_(escan_get_n1_n2_n3, ESCAN_GET_N1_N2_N3)(&n1, &n2_, &n3_);
-      mesh_.col(0) /= types::t_real(n1);
-      mesh_.col(1) /= types::t_real(n2_);
-      mesh_.col(2) /= types::t_real(n3_);
-      max_ = nr_ / _comm.size();
 
-      bp::object result = math::numpy::create_array<NPY_DOUBLE>(max_, 3, true);
-      npy_intp *strides = math::numpy::get_strides_pointer(result);
-      double * array_data = math::numpy::get_data_pointer<double*>(result);
-      for(size_t i(0); i < max_; ++i)
-      {
-        int u(i + _comm.rank()*(nr_/_comm.size()));
-        math::rVector3d const a(u/(n3_*n2_), (u%(n3_*n2_)) / n3_, (u%(n3_*n2_)) % n3_);
-        math::rVector3d const b( mesh_ * a ); 
-        for(size_t j(0); j < 3; ++j)
-        {
-          char *where = reinterpret_cast<char*>(array_data) + i*strides[0]+j*strides[1];
-          *reinterpret_cast<double*>(where) = b(j);
-        }
-      }
-      return result;
-    }
-
-    bp::tuple to_realspace( bp::object const &_gwfns, bm::communicator const &_comm )
+    bp::tuple to_realspace( bp::object const &_escan, bp::object const &_gwfns,
+                            bm::communicator const &_comm )
     {
+      MPI_Comm __commC = (MPI_Comm) ( _comm ) ;
+      MPI_Fint __commF = MPI_Comm_c2f( __commC );
+      std::string const orig = bp::extract<std::string>(_escan.attr("_INCAR"))()
+                               + "."
+                               + boost::lexical_cast<std::string>(_comm.rank());
+      int a(orig.size());
+      FC_FUNC_(escan_wfns_init, ESCAN_WFNS_INIT)(&a, orig.c_str(), &__commF);
       // sanity checks
       if(not math::numpy::check_is_complex_array(_gwfns)) return bp::tuple();
 
@@ -195,6 +204,7 @@ namespace LaDa
         {
           PyErr_SetString(PyExc_ValueError, "Unexpected array size. \n");
           bp::throw_error_already_set();
+          FC_FUNC_(escan_wfns_cleanup, ESCAN_WFNS_CLEANUP)(); 
           return bp::tuple();
         }
       }
@@ -202,6 +212,7 @@ namespace LaDa
       {
         PyErr_SetString(PyExc_ValueError, "Unexpected array size along first dimension. \n");
         bp::throw_error_already_set();
+        FC_FUNC_(escan_wfns_cleanup, ESCAN_WFNS_CLEANUP)(); 
         return bp::tuple();
       }
      
@@ -211,6 +222,7 @@ namespace LaDa
       {
         PyErr_SetString(PyExc_RuntimeError, "Wrong array dimension in pescan.");
         bp::throw_error_already_set();
+        FC_FUNC_(escan_wfns_cleanup, ESCAN_WFNS_CLEANUP)(); 
         return bp::tuple();
       }
       std::vector<npy_intp> dims(1, n0>>1);
@@ -219,6 +231,7 @@ namespace LaDa
       if( result == NULL or PyErr_Occurred() != NULL )
       {
         bp::throw_error_already_set();
+        FC_FUNC_(escan_wfns_cleanup, ESCAN_WFNS_CLEANUP)(); 
         return bp::tuple();
       }
       bp::object resob = bp::object(bp::handle<>(result));
@@ -243,6 +256,7 @@ namespace LaDa
         {
           PyErr_SetString(PyExc_RuntimeError, "Could not iterate.\n");
           bp::throw_error_already_set();
+          FC_FUNC_(escan_wfns_cleanup, ESCAN_WFNS_CLEANUP)(); 
           return bp::tuple();
         }
         PyArrayIterObject *recip_iter 
@@ -256,6 +270,7 @@ namespace LaDa
         {
           PyErr_SetString(PyExc_RuntimeError, "Could not iterate.\n");
           bp::throw_error_already_set();
+          FC_FUNC_(escan_wfns_cleanup, ESCAN_WFNS_CLEANUP)(); 
           return bp::tuple();
         }
         // object should release on destruction
@@ -273,6 +288,7 @@ namespace LaDa
       int nr;
       FC_FUNC_(escan_get_nr, ESCAN_GET_NR)(&nr);
       reinterpret_cast<PyArrayObject*>(result)->dimensions[0] = nr / _comm.size();
+      FC_FUNC_(escan_wfns_cleanup, ESCAN_WFNS_CLEANUP)(); 
       // finally creates real space position data.
       return bp::make_tuple(resob, positions(_comm));
     }
@@ -294,15 +310,16 @@ namespace LaDa
         "@return: (wavefunctions, g-vectors, projs, inverse).\n"
           "  - an spin by N by x matrix holding the N wavefuntions/spinor.\n",
           "  - a 3 by x matrix with each row a G-vector.\n"
+          "  - a 3 by x matrix with each row a R-vector.\n"
           "  - one-dimensional array of real coefficients to smooth higher energy G-vectors.\n"
           "  - one-dimensional array of integer indices to map G-vectors to -G.\n"
       );
-      bp::def( "to_realspace", &to_realspace, (bp::arg("wfns"), bp::arg("comm")),
-               "Returns wavefunctions in real-space.\n\n"
-               "@param wfns: Array of reciprocal-space wavefunctions.\n"
-               "@type wfns: numpy array\n"
-               "@param comm: boost mpi communicator.\n"
-               "@return: (numpy array real-space wfns, generator/array of positions\n");
+//     bp::def( "to_realspace", &to_realspace, (bp::arg("wfns"), bp::arg("comm")),
+//              "Returns wavefunctions in real-space.\n\n"
+//              "@param wfns: Array of reciprocal-space wavefunctions.\n"
+//              "@type wfns: numpy array\n"
+//              "@param comm: boost mpi communicator.\n"
+//              "@return: (numpy array real-space wfns, generator/array of positions\n");
     }
 
 

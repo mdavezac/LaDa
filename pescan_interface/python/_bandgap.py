@@ -92,7 +92,7 @@ class ExtractRefs(object):
     """ Greps band-gap from calculation. """
     return self.cbm - self.vbm
 
-  @prperty
+  @property
   @make_cached
   def _raw(self):
     vbm_eigs = self.extract_vbm.eigenvalues.copy()

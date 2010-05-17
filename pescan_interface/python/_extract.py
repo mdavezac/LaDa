@@ -185,7 +185,145 @@ class Extract(object):
     return int(line.split()[2])
 
 
+  @property
+  @make_cached
+  def gwfns(self):
+    """ Creates list of Wavefuntion objects. """
+    from _wfns import Wavefunction
+    if self._raw_wfns_data == None: return None
+    result = []
+    if self.is_spinor:
+      if self.is_krammer:
+        for i, eig in enumerate(self.eigenvalues):
+          if i % 2 == 0: # normal
+            result.append( Wavefunction(i, eig, self.raw_wfns[:,i,0],\
+                                        self.raw_wfns[:,i,1], self.attenuation) )
+          else:  # inverted
+            result.append( Wavefunction(i, eig, self.raw_wfns[self.inverse_indices,i,0],\
+                                        self.raw_wfns[self.inverse_indices,i,1], self.attenuation) )
+      else: # no krammer degeneracy
+        for i, eig in enumerate(self.eigenvalues):
+          result.append( Wavefunction(i, eig, self.raw_wfns[:,i,0],\
+                                      self.raw_wfns[:,i,1], self.attenuation) )
+    else: # no spin polarization.
+      if self.is_krammer:
+        for i, eig in enumerate(self.eigenvalues):
+          if i % 2 == 0: # normal
+            result.append( Wavefunction(i, eig, self.raw_wfns[:,i,0],\
+                                        None, self.attenuation) )
+          else:  # inverted
+            result.append( Wavefunction(i, eig, self.raw_wfns[self.inverse_indices,i,0], \
+                                        None, self.attenuation) )
+          result.append(result[-1])
+      else: # no krammer degeneracy
+        for i, eig in enumerate(self.eigenvalues):
+          result.append( Wavefunction(i, eig, self.raw_wfns[:,i,0],None, self.attenuation) )
+          result.append(result[-1])
+    return result
 
+  @property
+  @make_cached
+  def rwfns(self):
+    """ Creates list of rWavefuntion objects. """
+    from _wfns import rWavefunction, gtor_fourrier
+    result = []
+    if self.is_spinor:
+      if self.is_krammer:
+        self._raw_rwfns[0] = \
+            gtor_fourrier(self.raw_wfns, self.rvectors, self.gvectors, 0), \
+            gtor_fourrier(self.raw_wfns[self.inverse_indices,:,:], self.rvectors, self.gvectors, 0)
+        for i, eig in enumerate(self.eigenvalues):
+          result.append( rWavefunction(i, eig, self._raw_rwfns[i%2][:,i,0], self._raw[i%2][:,i,1]) )
+      else: # no krammer degeneracy
+        self._raw_rwfns[0] = \
+            gtor_fourrier(self.raw_wfns, self.rvectors, self.gvectors, 0)
+        for i, eig in enumerate(self.eigenvalues):
+          result.append( rWavefunction(i, eig, self._raw_rwfns[:,i,0], self._raw_rwfns[:,i,1]) )
+    else: # no spin polarization.
+      if self.is_krammer:
+        self._raw_rwfns[0] = \
+            gtor_fourrier(self.raw_wfns, self.rvectors, self.gvectors, 0), \
+            gtor_fourrier(self.raw_wfns[self.inverse_indices,:,:], self.rvectors, self.gvectors, 0)
+        for i, eig in enumerate(self.eigenvalues):
+          result.append( rWavefunction(i, eig, self._raw_rwfns[i%2][:,i,0]) )
+      else: # no krammer degeneracy
+        self._raw_rwfns[0] = \
+            gtor_fourrier(self.raw_wfns, self.rvectors, self.gvectors, 0)
+        for i, eig in enumerate(self.eigenvalues):
+          result.append( rWavefunction(i, eig, self._raw_rwfns[:,i,0]) )
+    return result
+
+  @property
+  @make_cached
+  def _raw_wfns_data(self):
+    """ Reads and caches g-space wavefunction data. 
+    
+        This is a tuple described making up the return of
+        L{read_wavefunctions<lada.escan._escan.read_wavefunctions>}
+    """
+    from ._escan import read_wavefunctions
+
+    if self._raw_wfns_data == None: return None
+
+    assert self.comm.size >= self.nnodes,\
+           RuntimeError("Must read wavefunctions with at least "\
+                        "as many nodes as they were written to disk.")
+    if self.comm.size > self.nnodes:
+      color = 0 if self.comm.rank < self.nnodes else 1
+      local_comm = self.comm.split(color)
+    else: color, local_comm = 0, self.comm
+    if color == 1: return None
+    return read_wavefunctions(self.escan, [i for i in range(self.nbstates)], local_comm)
+
+  @property
+  def raw_wfns(self):
+    """ Raw wavefunction data. """
+    return self._raw_gwfns_data[0]
+
+  @property
+  def gvectors(self):
+    """ G-vector values of wavefuntions. """
+    return self._raw_gwfns_data[1]
+
+  @property
+  def rvectors(self):
+    """ R-vector values of wavefuntions. """
+    return self._raw_gwfns_data[2]
+
+  @property
+  def attenuation(self):
+    """ G-vector attenuation values of wavefuntions. """
+    return self._raw_gwfns_data[3]
+
+  @property
+  def inverse_indices(self):
+    """ Indices to -G vectors of wavefuntions. """
+    return self._raw_gwfns_data[4]
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def _wavefunction_path(self): return self.solo().escan.WAVECAR
+
+  @property
+  def is_spinor(self):
+    """ True if wavefunction is a spinor. """
+    from . import soH
+    return self.escan.potential == soH
+
+  @property
+  def is_krammer(self):
+    """ True if wavefunction is a spinor. """
+    from numpy.linalg import norm
+    from . import soH
+    return norm(self.escan.kpoint) < 1e-12
+
+  @property
+  @make_carched
+  def rspace(self):
+    """ Returns r-space wavefunctions. """
+    from 
+    return rWavefunctions(self)
 
   def solo(self):
     """ Extraction on a single process.
