@@ -74,6 +74,8 @@ namespace LaDa
         typedef std::vector<t_Site> t_Sites;
 
       public:
+        //! Name of the lattice.
+        std::string name;
         //! The unit-cell of the lattice in cartesian coordinates.
         math::rMatrix3d cell;
         //! The collection of sites.
@@ -89,7 +91,8 @@ namespace LaDa
         Lattice() {};
         //! Copy Constructor.
         Lattice   ( Lattice const &_c ) 
-                : cell(_c.cell), sites(_c.sites), space_group(_c.space_group), scale(_c.scale) {}
+                : name(_c.name), cell(_c.cell), sites(_c.sites),
+                  space_group(_c.space_group), scale(_c.scale) {}
                      
         //! Destructor.
         ~Lattice () {};
@@ -283,6 +286,7 @@ namespace LaDa
     template< class ARCHIVE >
       void Lattice :: serialize( ARCHIVE & _ar, const unsigned int _version)
       {
+        _ar & name;
         _ar & cell;
         _ar & sites;
         _ar & scale;
