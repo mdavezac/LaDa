@@ -277,4 +277,3 @@ def _print_lattice(self):
   return result
 _print_lattice.__doc__ = Lattice.__str__.__doc__
 Lattice.__repr__ = _print_lattice
-Lattice.name = ""
