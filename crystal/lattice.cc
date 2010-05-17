@@ -37,6 +37,8 @@ namespace LaDa
       else parent = &_element;
       __DOASSERT( not parent, "Could not find lattice tag on input.\n" )
 
+      if( parent->Attribute("name") ) name = parent->Attribute("name");
+
       // reads cell first
       child = parent->FirstChildElement( "row" );
       for (i=0 ; child; ++i, child = child->NextSiblingElement("row") )

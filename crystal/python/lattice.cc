@@ -191,6 +191,7 @@ namespace LaDa
         .def_readwrite("sites", &Crystal::Lattice::sites )
         .def_readwrite("scale", &Crystal::Lattice::scale )
         .def_readwrite("space_group", &Crystal::Lattice::space_group )
+        .def_readwrite("name", &Crystal::Lattice::name )
         .def("__str__",  &print<Crystal::Lattice> )
         .def("fromXML",  &details::fromXML<Crystal::Lattice> )
         .def("set_as_crystal_lattice", &details::set_as_crystal_lattice )
