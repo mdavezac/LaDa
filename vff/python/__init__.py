@@ -21,6 +21,7 @@ def zinc_blend_lattice():
   lattice.scale = 1e0
   lattice.add_site = (0,0,0)
   lattice.add_site = (0.25,0.25,0.25)
+  lattice.name = "Zinc-Blende"
   return lattice
 
 def _get_script_text(file, name):
