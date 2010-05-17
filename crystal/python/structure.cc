@@ -267,6 +267,7 @@ namespace LaDa
                            "Tags to freeze coordinates when relaxing structure.\n\n" 
                            "@see L{FreezeCell} for possible values." 
                         )
+          .def(bp::self == bp::other<T_STRUCTURE>())
           .add_property
           ( 
             "lattice",
