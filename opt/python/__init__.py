@@ -48,8 +48,11 @@ class _RedirectAll:
     elif self.unit == streams.output: self.old = os.dup(sys.__stdout__.fileno())
     elif self.unit == streams.error:  self.old = os.dup(sys.__stderr__.fileno())
     else: raise RuntimeError("Unknown redirection unit.")
-    self.filefd = os.open(self.filename if len(self.filename) else os.devnull,\
-        (os.O_RDWR | os.O_APPEND) if self.append else (os.O_CREAT | os.O_WRONLY | os.O_EXCL))
+    if len(self.filename) == 0:
+      self.filefd = os.open(os.devnull, os.O_RDWR | os.O_APPEND)
+    else:
+      self.filefd = os.open(self.filename, (os.O_RDWR | os.O_APPEND) if self.append\
+                                           else (os.O_CREAT | os.O_WRONLY | os.O_EXCL))
     if self.append: self.file = os.fdopen(self.filefd, 'a')
     else: self.file = os.fdopen(self.filefd, 'w')
     if self.unit == streams.input:    os.dup2(self.file.fileno(), sys.__stdin__.fileno())
