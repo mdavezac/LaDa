@@ -4,7 +4,7 @@
 from ..opt.decorators import broadcast_result, make_cached
 from ._extract import Extract
 
-def rWavefunction(Object):
+class rWavefunction(object):
   is_gspace = False
   """ False since this is a r-space wavefunction. """
 
@@ -41,14 +41,16 @@ def rWavefunction(Object):
                                           if operator != None else ket.down)
     return result
 
-def Wavefunction(rWavefunction):
+class Wavefunction(rWavefunction):
   is_gspace = True
   """ True since this is a g-space wavefunction. """
 
-  def __init__(self, index, eigenvalue, up, down = None, attenuation=None):
+  def __init__(self, *args, **kwargs):
     """ Initializes a spinor. """
-    super(Wavefunction, self).__init__(index, eigenvalue, up, down)
-    self.attenuation = attenuation
+    self.attenuation = kwargs["attenuation"] if "attenuation" in kwargs else None
+    """ Attenuation coefficients of high-energy G-vectors. """
+    if "attenuation" in kwargs: del kwargs["attenuation"]
+    super(Wavefunction, self).__init__(*args, **kwargs)
 
   def expectation_value(operator, attenuate = True):
     """ Returns expectation value of this operator. 
@@ -110,7 +112,7 @@ def gtor_fourrier(wavefunctions, rvectors, gvectors, comm, axis=0):
   result = None
   for node in range(comm.size):
     # sends rvectors from node to all
-    r = broadcast(world, rvectors, node)
+    r = broadcast(comm, rvectors, node)
     # computes all exponentials exp(-i r.g), with r in first dim, and g in second.
     v = np.exp(-1j * np.tensordot(r, gvectors, ((1),(1))))
     # computes fourrier transform for all wavefunctions simultaneously.
@@ -119,7 +121,7 @@ def gtor_fourrier(wavefunctions, rvectors, gvectors, comm, axis=0):
     if node == comm.rank: result = reduce(comm, dummy, lambda x,y: x+y, node)
     else: reduce(comm, dummy, lambda x,y: x+y, node)
 
-  assert not any(isnan(result))
+  assert not np.any(np.isnan(result))
   return result
 
 
@@ -147,27 +149,27 @@ def rtog_fourrier(wavefunctions, rvectors, gvectors, comm, axis=0):
   import numpy as np
   from boost.mpi import broadcast, reduce, all_reduce
 
-  assert not any(isnan(wavefunctions))
-  assert not any(isnan(gvectors))
-  assert not any(isnan(rvectors))
+  assert not np.any(np.isnan(wavefunctions))
+  assert not np.any(np.isnan(gvectors))
+  assert not np.any(np.isnan(rvectors))
   result = None
   for node in range(comm.size):
     # sends rvectors from node to all
-    g = broadcast(world, gvectors, node)
+    g = broadcast(comm, gvectors, node)
     # computes all exponentials exp(-i r.g), with g in first dim, and r in second.
     v = np.exp(1j * np.tensordot(rvectors, g, ((1),(1))))
     # computes fourrier transform for all wavefunctions simultaneously.
     # somehow, there is a problem with tensordot leading to nan numbers...
-    assert not any(isnan(v))
+    assert not np.any(np.isnan(v))
     last = wavefunctions.ndim-1
     dummy = np.dot(wavefunctions.swapaxes(axis, last), v).swapaxes(last, axis)
     # reduce across processes
-    assert not any(isnan(dummy))
+    assert not np.any(np.isnan(dummy))
     if node == comm.rank: result = reduce(comm, dummy, lambda x,y: x+y, node)
     else: reduce(comm, dummy, lambda x,y: x+y, node)
 
 
-  assert not any(isnan(result))
+  assert not np.any(np.isnan(result))
   # gets normalization factor.
   norm = all_reduce(comm, rvectors.shape[0], lambda x,y:x+y)
   assert norm != 0

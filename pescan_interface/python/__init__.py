@@ -502,16 +502,11 @@ class Escan(object):
       _call_genpot(comm)
 
 
-
-  def _run_escan(self, comm, structure):
-    """ Runs escan only """
-    from shutil import copyfile
+  def _write_incar(self, comm, structure):
+    """ Writes escan input to file. """
     from os.path import basename
     from numpy.linalg import norm
     from boost.mpi import world
-    from ._escan import _call_escan
-    from ..opt import redirect
-
     assert self.atomic_potentials != None, RuntimeError("Atomic potentials are not set.")
     # Creates temporary input file and creates functional
     kpoint = (0,0,0,0,0) if norm(self.kpoint) < 1e-12 else self._get_kpoint(structure, comm)
@@ -559,6 +554,15 @@ class Escan(object):
           print >> file, i + 16, filepath, pot.get_izz(comm),\
                          pot.s , pot.p, pot.d, pot.pnl, pot.dnl
 
+  def _run_escan(self, comm, structure):
+    """ Runs escan only """
+    from shutil import copyfile
+    from os.path import basename
+    from ._escan import _call_escan
+    from ..opt import redirect
+
+
+    self._write_incar(comm, structure)
     comm.barrier() # syncs all procs to make sure we are reading from same file.
     if comm.rank == 0: copyfile(self.maskr, basename(self.maskr))
     with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 

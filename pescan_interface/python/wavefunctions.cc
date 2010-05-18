@@ -178,11 +178,12 @@ namespace LaDa
     bp::tuple to_realspace( bp::object const &_escan, bp::object const &_gwfns,
                             bm::communicator const &_comm )
     {
+      boost::mpi::communicator world;
       MPI_Comm __commC = (MPI_Comm) ( _comm ) ;
       MPI_Fint __commF = MPI_Comm_c2f( __commC );
       std::string const orig = bp::extract<std::string>(_escan.attr("_INCAR"))()
                                + "."
-                               + boost::lexical_cast<std::string>(_comm.rank());
+                               + boost::lexical_cast<std::string>(world.rank());
       int a(orig.size());
       FC_FUNC_(escan_wfns_init, ESCAN_WFNS_INIT)(&a, orig.c_str(), &__commF);
       // sanity checks
@@ -298,7 +299,7 @@ namespace LaDa
       import_array();
       bp::def
       (
-        "Wavefunctions", 
+        "read_wavefunctions", 
         &read_wavefunctions,
         (bp::arg("escan"), bp::arg("indices"), bp::arg("comm")),
         "Context with temporary arrays to wavefunctions and corresponding g-vectors.\n\n"
@@ -314,12 +315,13 @@ namespace LaDa
           "  - one-dimensional array of real coefficients to smooth higher energy G-vectors.\n"
           "  - one-dimensional array of integer indices to map G-vectors to -G.\n"
       );
-//     bp::def( "to_realspace", &to_realspace, (bp::arg("wfns"), bp::arg("comm")),
-//              "Returns wavefunctions in real-space.\n\n"
-//              "@param wfns: Array of reciprocal-space wavefunctions.\n"
-//              "@type wfns: numpy array\n"
-//              "@param comm: boost mpi communicator.\n"
-//              "@return: (numpy array real-space wfns, generator/array of positions\n");
+      bp::def( "to_realspace", &to_realspace, (bp::arg("escan"), bp::arg("wfns"), bp::arg("comm")),
+               "Returns wavefunctions in real-space.\n\n"
+               "@param escan: Escan funtional.\n"
+               "@param wfns: Array of reciprocal-space wavefunctions.\n"
+               "@type wfns: numpy array\n"
+               "@param comm: boost mpi communicator.\n"
+               "@return: (numpy array real-space wfns, generator/array of positions\n");
     }
 
 
