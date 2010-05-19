@@ -13,9 +13,11 @@ from ..opt.decorators import add_setter, broadcast_result
 from band_structure import band_structure
 import _extract
 import _bandgap
+import _methods
 Extract = _extract.Extract
 nb_valence_states = _escan.nb_valence_states
 bandgap = _bandgap.band_gap
+dipole_matrix_elements = _methods.dipole_matrix_elements
 
 def _is_in_sync(comm, which = [0]):
   from boost.mpi import broadcast

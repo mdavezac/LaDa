@@ -62,6 +62,20 @@ class ExtractAE(ExtractVasp):
     eigenvalues.sort()
     return self.eigenvalues[-4]
 
+  def oscillator_strength(degeneracy=1e-3):
+    """ Computes oscillator strength between vbm and cbm. """
+    from numpy import numpy
+    from . import dipole_matrix_elements
+    dme = dipole_matrix_elements(self) # computes all dmes.
+    result = 0e0
+    for i, vbm in enumerate(self.eigenvalues):
+      if abs(vbm - self.vbm) > degeneracy: continue
+      for j, cbm in enumerate(self.eigenvalues): 
+        if abs(cbm - self.cbm) > degeneracy: continue
+        result += 2e0/3e0 / (cbm - vbm) * norm(result[i,j,:])
+    return result
+    
+
 def _band_gap_ae_impl(escan, structure, outdir, comm, **kwargs):
   """ Computes bandgap of a structure using all-electron method. """
   from os.path import join
@@ -119,6 +133,18 @@ class ExtractRefs(object):
     cbm_eigs = self.extract_cbm.eigenvalues.copy()
     return _raw[1]
 
+  def oscillator_strength(degeneracy=1e-3):
+    """ Computes oscillator strength between vbm and cbm. """
+    from numpy import numpy
+    from . import dipole_matrix_elements
+    dme = dipole_matrix_elements(vbm_out, cbm_out) # computes all dmes.
+    result = 0e0
+    for i, vbm in enumerate(vbm_out.eigenvalues):
+      if abs(vbm - self.vbm) > degeneracy: continue
+      for j, cbm in enumerate(cbm_out.eigenvalues): 
+        if abs(cbm - self.cbm) > degeneracy: continue
+        result += 2e0/3e0 / (cbm - vbm) * norm(result[i,j,:])
+    return result
 
 def _band_gap_refs_impl(escan, structure, outdir, references, comm, n=5, **kwargs):
   """ Computes band-gap using two references. """
