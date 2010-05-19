@@ -10,7 +10,7 @@ def dipole_matrix_elements(*args):
       All calculations are performed in g-space, within the approximation that
       [r, H] ~ ip.
   """
-  from numpy import zeros, all
+  from numpy import zeros, all, transpose
 
   if len(args) == 1:  outA, outB = args[0], args[0]
   elif len(args) == 2:
@@ -23,7 +23,7 @@ def dipole_matrix_elements(*args):
   
   for i, awfn in enumerate(outA.gwfns):
     for j, bwfn in enumerate(outB.gwfns):
-      result[i,j,:] = awfn.braket(outA.gvectors, bwfn, attenuate=True)
+      result[i,j,:] = awfn.braket(transpose(outA.gvectors), bwfn, attenuate=True)
 
   return -1e0j * result
 

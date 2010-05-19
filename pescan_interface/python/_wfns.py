@@ -8,14 +8,20 @@ class rWavefunction(object):
   is_gspace = False
   """ False since this is a r-space wavefunction. """
 
-  def __init__(self, index, eigenvalue, up, down = None):
+  def __init__(self, comm, index, eigenvalue, up, down = None):
     """ Initializes a spinor. """
+    self.comm = comm
+    """ Communicator over which wavefunctions are spread. """
     self.index = index
+    """ Escan index of the wavefunction. """
     self.eigenvalue = eigenvalue
+    """ Eigenvalue corresponding to this eigenvector. """
     self.up = up
+    """ Up component (or unpolarized component) of the spinor. """
     self.down = down
+    """ Down component of the spinor. None if not a spinor. """
 
-  def expectation_value(operator):
+  def expectation_value(self, operator):
     """ Returns expectation value of this operator. 
     
         The operator is applied to the ket. If operator is None, then simply
@@ -23,7 +29,7 @@ class rWavefunction(object):
     """
     return self.braket(operator, self)
 
-  def braket(operator, ket):
+  def braket(self, operator, ket):
     """ Returns <this wavefunction|operator|ket wavefuntion>.
     
         The operator is applied to the ket. If operator is None, then simply
@@ -33,11 +39,11 @@ class rWavefunction(object):
     from boost.mpi import reduce
     a = conjugate(self.up)
     b = multiply(operator, ket.up) if operator != None else ket.up
-    result = tensordot(a,b, ((0),(0)))
-    if down != None: 
+    result = dot(b, a)
+    if self.down != None: 
       a = conjugate(self.down)
       b = multiply(operator, ket.down) if operator != None else ket.down
-      result += tensordot(a,b, ((0),(0)))
+      result += dot(b, a)
     return reduce(self.comm, result, lambda x,y: x+y, 0)
 
 class Wavefunction(rWavefunction):
@@ -51,7 +57,7 @@ class Wavefunction(rWavefunction):
     if "attenuation" in kwargs: del kwargs["attenuation"]
     super(Wavefunction, self).__init__(*args, **kwargs)
 
-  def expectation_value(operator, attenuate = True):
+  def expectation_value(self, operator, attenuate = True):
     """ Returns expectation value of this operator. 
     
         The operator is applied to the ket. If operator is None, then simply
@@ -59,15 +65,16 @@ class Wavefunction(rWavefunction):
     """
     return self.braket(self, attenuate)
 
-  def braket(operator, ket, attenuate = True):
+  def braket(self, operator, ket, attenuate = True):
     """ Returns <this wavefunction|operator|ket wavefuntion>.
     
         The operator is applied to the ket. If operator is None, then simply
         perform scalar product.
     """
     from numpy import multiply
-    a = multiply(multiply(operator, self.attenuation), self.attenuation)\
-        if attenuate else operator
+    if attenuate == None:  a = operator
+    elif operator == None: a = multiply(self.attenuation, self.attenuation)
+    else: a = multiply(operator, multiply(self.attenuation, self.attenuation))
     return super(Wavefunction, self).braket(a, ket)
 
 

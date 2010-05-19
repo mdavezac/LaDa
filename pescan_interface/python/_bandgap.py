@@ -62,18 +62,22 @@ class ExtractAE(ExtractVasp):
     eigenvalues.sort()
     return self.eigenvalues[-4]
 
-  def oscillator_strength(degeneracy=1e-3):
+  def oscillator_strength(self, degeneracy=1e-3):
     """ Computes oscillator strength between vbm and cbm. """
-    from numpy import numpy
+    from numpy import transpose
+    from numpy.linalg import norm, det
+    from ..physics import a0, Rydberg
     from . import dipole_matrix_elements
-    dme = dipole_matrix_elements(self) # computes all dmes.
-    result = 0e0
+    result, nstates = 0e0, 0
     for i, vbm in enumerate(self.eigenvalues):
       if abs(vbm - self.vbm) > degeneracy: continue
       for j, cbm in enumerate(self.eigenvalues): 
         if abs(cbm - self.cbm) > degeneracy: continue
-        result += 2e0/3e0 / (cbm - vbm) * norm(result[i,j,:])
-    return result
+        nstates += 1
+        dme = self.gwfns[i].braket(transpose(self.gvectors), self.gwfns[j], attenuate=True)\
+              * det(self.structure.cell * self.structure.scale / a0("A") )
+        result += 2e0/3e0 * Rydberg("eV") / (cbm - vbm) * norm(dme)
+    return result, nstates
     
 
 def _band_gap_ae_impl(escan, structure, outdir, comm, **kwargs):
@@ -133,18 +137,26 @@ class ExtractRefs(object):
     cbm_eigs = self.extract_cbm.eigenvalues.copy()
     return _raw[1]
 
-  def oscillator_strength(degeneracy=1e-3):
+  def oscillator_strength(self, degeneracy=1e-3):
     """ Computes oscillator strength between vbm and cbm. """
-    from numpy import numpy
+    from numpy import transpose, all, abs
+    from numpy.linalg import norm, det
+    from ..physics import a0, Rydberg
     from . import dipole_matrix_elements
-    dme = dipole_matrix_elements(vbm_out, cbm_out) # computes all dmes.
-    result = 0e0
-    for i, vbm in enumerate(vbm_out.eigenvalues):
+    assert self.vbm_out.gvectors.shape == self.cmb_out.gvectors.shape
+    assert all( abs(self.vbm_out.gvectors - self.cmb_out.gvectors) < 1e-12 )
+
+    result, nstates = 0e0, 0
+    for i, vbm in enumerate(self.vbm_out.eigenvalues):
       if abs(vbm - self.vbm) > degeneracy: continue
-      for j, cbm in enumerate(cbm_out.eigenvalues): 
+      for j, cbm in enumerate(self.cbm_out.eigenvalues): 
         if abs(cbm - self.cbm) > degeneracy: continue
-        result += 2e0/3e0 / (cbm - vbm) * norm(result[i,j,:])
-    return result
+        nstates += 1
+        dme = self.vbm_out.gwfns[i].braket( transpose(self.vbm_out.gvectors),\
+                                            self.cbm_out.gwfns[j], attenuate=True )\
+              * det(self.structure.cell * self.structure.scale / a0("A") )
+        result += 2e0/3e0 * Rydberg("eV") / (cbm - vbm) * norm(dme)
+    return result, nstates
 
 def _band_gap_refs_impl(escan, structure, outdir, references, comm, n=5, **kwargs):
   """ Computes band-gap using two references. """
@@ -188,8 +200,6 @@ def _band_gap_refs_impl(escan, structure, outdir, references, comm, n=5, **kwarg
   iter, continue_loop = 0, True
   recompute = [True, True]
   while iter < n and continue_loop:
-    print "recompute: ", recompute
-    print "refs: ", vbm_ref, cbm_ref
     # computes vbm
     if recompute[0]:
       directory = join(outdir, "VBM")
@@ -229,8 +239,6 @@ def _band_gap_refs_impl(escan, structure, outdir, references, comm, n=5, **kwarg
     a = [ vbm_ref ]; a.extend(u for u in between_refs.flat); a.append(cbm_ref)
     gap_index = argmax(array(a[1:]) - array(a[:-1])) # computes all differences.
     deltas = [a[gap_index] - a[0], a[gap_index+1] - a[gap_index], a[-1] - a[gap_index+1]]
-    print "deltas: ", deltas
-    print "gap_index: ", gap_index
     # Check pathological case where vbm and cbm give essentially same eigenvalues.
     if gap_index == 0 and below_refs.size == 0:
       if deltas[1] > 10e0*deltas[2]: vbm_ref -= deltas[1] * 0.95; recompute[0] = False
@@ -243,7 +251,6 @@ def _band_gap_refs_impl(escan, structure, outdir, references, comm, n=5, **kwarg
     # Computes actual gap.
     if gap_index == 0: deltas[1] += vbm_ref - below_refs[-1]
     if gap_index == len(a)-1: deltas[1] += above_refs[0] - cbm_ref 
-    print "new deltas: ", deltas
     # case where no gap can be truly determined.
     if not (deltas[1] > 10e0 * deltas[0] and deltas[1] > 10e0 * deltas[2]):
       continue_loop = False; continue # go to all electron calculation.
@@ -251,8 +258,6 @@ def _band_gap_refs_impl(escan, structure, outdir, references, comm, n=5, **kwarg
     # finally, recomputation case. Sets reference to best possible values.
     vbm_ref = below_refs[-1] if gap_index == 0        else a[gap_index]
     cbm_ref = above_refs[0]  if gap_index == len(a)-1 else a[gap_index+1]
-    print between_refs
-    print a
     vbm_ref +=  deltas[1] * 0.3 
     cbm_ref -=  deltas[1] * 0.3 
     recompute = [True, True]

@@ -196,29 +196,32 @@ class Extract(object):
       if self.is_krammer:
         for i, eig in enumerate(self.eigenvalues):
           if i % 2 == 0: # normal
-            result.append( Wavefunction(i, eig, self.raw_gwfns[:,i/2,0],\
+            result.append( Wavefunction(self.comm, i, eig, self.raw_gwfns[:,i/2,0],\
                                         self.raw_gwfns[:,i/2,1], attenuation = self.attenuation) )
           else:  # inverted
-            result.append( Wavefunction(i, eig, self.raw_gwfns[self.inverse_indices,i/2,0],\
-                                        self.raw_gwfns[self.inverse_indices,i/2,1], \
+            result.append( Wavefunction(self.comm, i, eig,\
+                                        -self.raw_gwfns[self.inverse_indices,i/2,1].conjugate(),\
+                                         self.raw_gwfns[self.inverse_indices,i/2,0].conjugate(), \
                                         attenuation = self.attenuation) )
       else: # no krammer degeneracy
         for i, eig in enumerate(self.eigenvalues):
-          result.append( Wavefunction(i, eig, self.raw_gwfns[:,i,0],\
+          result.append( Wavefunction(self.comm, i, eig, self.raw_gwfns[:,i,0],\
                                       self.raw_gwfns[:,i,1], attenuation = self.attenuation) )
     else: # no spin polarization.
       if self.is_krammer:
         for i, eig in enumerate(self.eigenvalues):
           if i % 2 == 0: # normal
-            result.append( Wavefunction(i, eig, self.raw_gwfns[:,i/2,0],\
+            result.append( Wavefunction(self.comm, i, eig, self.raw_gwfns[:,i/2,0],\
                                         attenuation = self.attenuation) )
           else:  # inverted
-            result.append( Wavefunction(i, eig, self.raw_gwfns[self.inverse_indices,i/2,0], \
+            result.append( Wavefunction(self.comm, i, eig, \
+                                        self.raw_gwfns[self.inverse_indices,i/2,0], \
                                         attenuation = self.attenuation) )
           result.append(result[-1])
       else: # no krammer degeneracy
         for i, eig in enumerate(self.eigenvalues):
-          result.append( Wavefunction(i, eig, self.raw_gwfns[:,i,0],None, self.attenuation) )
+          result.append( Wavefunction(self.comm, i, eig, self.raw_gwfns[:,i,0],\
+                                      None, self.attenuation) )
           result.append(result[-1])
     return result
 
@@ -236,13 +239,17 @@ class Extract(object):
             gtor_fourrier( self.raw_gwfns[self.inverse_indices,:,:],\
                            self.rvectors, self.gvectors, self.comm )
         for i, eig in enumerate(self.eigenvalues):
-          rwfn = rWavefunction(i, eig, self._raw_rwfns[i%2][:,i/2,0], self._raw_rwfns[i%2][:,i/2,1])
+          if i%2 == 0:
+            rwfn = rWavefunction(i, eig, self._raw_rwfns[0][:,i/2,0], self._raw_rwfns[0][:,i/2,1])
+          else: 
+            rwfn = rWavefunction(i, eig, -self._raw_rwfns[1][:,i/2,1].conjugate(),\
+                                 self._raw_rwfns[0][:,i/2,0].conjugate())
           result.append(rwfn)
       else: # no krammer degeneracy
         self._raw_rwfns = \
             gtor_fourrier(self.raw_gwfns, self.rvectors, self.gvectors, self.comm)
         for i, eig in enumerate(self.eigenvalues):
-          rwfn = rWavefunction(i, eig, self._raw_rwfns[i%2][:,i,0], self._raw_rwfns[i%2][:,i,1])
+          rwfn = rWavefunction(i, eig, self._raw_rwfns[:,i,0], self._raw_rwfns[:,i,1])
           result.append(rwfn)
     else: # no spin polarization.
       if self.is_krammer:

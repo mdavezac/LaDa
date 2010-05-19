@@ -147,7 +147,7 @@ namespace LaDa
       // Creates numpy objects.
       bp::object wfns = math::numpy::create_array<NPY_CDOUBLE>(n0, n1, n2, true);
       bp::object gpoints = math::numpy::create_array<NPY_DOUBLE>(g0, g1, true);
-      bp::object projs = math::numpy::create_array<NPY_CDOUBLE>(g0, true);
+      bp::object projs = math::numpy::create_array<NPY_DOUBLE>(g0, true);
       bp::object inverse = math::numpy::create_array<NPY_INT>(g0, true);
       
       math::numpy::get_pyarray_pointer(wfns)->dimensions[0]
