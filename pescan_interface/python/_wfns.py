@@ -21,12 +21,7 @@ class rWavefunction(object):
         The operator is applied to the ket. If operator is None, then simply
         perform scalar product.
     """
-    from numpy import conjugate, dot, multiply
-    result = dot( conjugate(self.up), multiply(operator, self.up) if operator != None else self.up)
-    if down != None: 
-      result += dot( conjugate(self.down), multiply(operator, self.down)\
-                                           if operator != None else self.down)
-    return result
+    return self.braket(operator, self)
 
   def braket(operator, ket):
     """ Returns <this wavefunction|operator|ket wavefuntion>.
@@ -35,11 +30,15 @@ class rWavefunction(object):
         perform scalar product.
     """
     from numpy import conjugate, dot, multiply
-    result = dot(conjugate(self.up), multiply(operator, ket.up) if operator != None else ket.up)
+    from boost.mpi import reduce
+    a = conjugate(self.up)
+    b = multiply(operator, ket.up) if operator != None else ket.up
+    result = tensordot(a,b, ((0),(0)))
     if down != None: 
-      result += dot(conjugate(self.down), multiply(operator, ket.down)\
-                                          if operator != None else ket.down)
-    return result
+      a = conjugate(self.down)
+      b = multiply(operator, ket.down) if operator != None else ket.down
+      result += tensordot(a,b, ((0),(0)))
+    return reduce(self.comm, result, lambda x,y: x+y, 0)
 
 class Wavefunction(rWavefunction):
   is_gspace = True
@@ -58,14 +57,7 @@ class Wavefunction(rWavefunction):
         The operator is applied to the ket. If operator is None, then simply
         perform scalar product.
     """
-    from numpy import conjugate, dot, multiply
-    if not attenuate: return super(Wavefunction, self).expectation_value(operator)
-    u = multiply(self.up, self.attenuation) 
-    result = dot( conjugate(u), multiply(operator, u) if operator != None else u)
-    if down != None: 
-      u = multiply(down, self.attenuation) 
-      result += dot( conjugate(u), multiply(operator, u) if operator != None else u)
-    return result
+    return self.braket(self, attenuate)
 
   def braket(operator, ket, attenuate = True):
     """ Returns <this wavefunction|operator|ket wavefuntion>.
@@ -73,16 +65,10 @@ class Wavefunction(rWavefunction):
         The operator is applied to the ket. If operator is None, then simply
         perform scalar product.
     """
-    from numpy import conjugate, dot, multiply
-    if not attenuate: return super(Wavefunction, self).braket(operator, ket)
-    bra = multiply(self.up, self.attenuation)
-    ket_ = multiply(ket.up, self.attenuation)
-    result = dot(conjugate(bra), multiply(operator, ket_) if operator != None else ket_)
-    if down != None: 
-      u = multiply(down, self.attenuation) 
-      ket_ = multiply(ket.down, self.attenuation)  
-      result += dot(conjugate(bra), multiply(operator, ket_) if operator != None else ket_)
-    return result
+    from numpy import multiply
+    a = multiply(multiply(operator, self.attenuation), self.attenuation)\
+        if attenuate else operator
+    return super(Wavefunction, self).braket(a, ket)
 
 
 def gtor_fourrier(wavefunctions, rvectors, gvectors, comm, axis=0):
