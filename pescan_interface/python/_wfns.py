@@ -98,7 +98,6 @@ def gtor_fourrier(wavefunctions, rvectors, gvectors, comm, axis=0):
         performed over this axis for all other axis. 0 by default.
       @type axis: integer
   """
-  from sys import getrefcount
   import numpy as np
   from boost.mpi import broadcast, reduce
 
@@ -138,7 +137,6 @@ def rtog_fourrier(wavefunctions, rvectors, gvectors, comm, axis=0):
         performed over this axis for all other axis. 0 by default.
       @type axis: integer
   """
-  from sys import getrefcount
   import numpy as np
   from boost.mpi import broadcast, reduce, all_reduce
 
