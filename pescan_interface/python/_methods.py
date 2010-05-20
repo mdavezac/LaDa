@@ -44,7 +44,7 @@ def LDOS(extract, positions):
     rspace2 = rspace 
     rspace = zeros( (rspace.shape[0], rspace.shape[1]*2, rspace.shape[2]), dtype="complex64")
     rspace[:,::2,:] = rspace2
-    rspace2 = np.tensordot(v, extract.raw_wfns,[extract.inverse_indices,:,:].conjugate() ((1),(0)))
+    rspace2 = np.tensordot(v, extract.raw_wfns[extract.inverse_indices,:,:].conjugate(), ((1),(0)))
     rspace2 = reduce(comm, result, lambda x,y: x+y, 0)
     rspace[:,1::2,:] = rspace2
   rspace = np.multiply(rspace, np.conjugate(rspace))
