@@ -28,8 +28,8 @@ def band_gap(escan, structure, outdir=None, references=None, comm=None, n=5, **k
   if outdir == None: outdir = getcwd()
   outdir    = abspath(outdir)
   
-  return _band_gap_ae_impl(escan, structure, outdir, comm) if references == None\
-         else _band_gap_refs_impl(escan, structure, outdir, references, comm, n) 
+  return _band_gap_ae_impl(escan, structure, outdir, comm, **kwargs) if references == None\
+         else _band_gap_refs_impl(escan, structure, outdir, references, comm, n, **kwargs) 
 
 class ExtractAE(ExtractVasp):
   """ Band-gap extraction class. """
@@ -192,7 +192,7 @@ def _band_gap_refs_impl(escan, structure, outdir, references, comm, n=5, **kwarg
                 (
                   structure, outdir=join(outdir,"VBM"), comm=comm,\
                   eref=vbm_ref, overwrite=True, vffrun=vffrun,\
-                  genpotrun=genpotrun, **kwargs 
+                  genpotrun=genpotrun, nbstates=nbstates, **kwargs 
                 )
       vbm_eigs = vbm_out.eigenvalues.copy()
     # computes cbm
@@ -201,7 +201,7 @@ def _band_gap_refs_impl(escan, structure, outdir, references, comm, n=5, **kwarg
                 (
                   structure, outdir=join(outdir, "CBM"), comm=comm,\
                   eref=cbm_ref, overwrite=True, vffrun=vffrun,
-                  genpotrun=genpotrun, **kwargs
+                  genpotrun=genpotrun, nbstates=nbstates, **kwargs
                 )
       cbm_eigs = cbm_out.eigenvalues.copy()
     recompute = [False, False] # by default, does not recompute
