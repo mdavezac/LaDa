@@ -112,7 +112,7 @@ namespace LaDa
          
          //! \brief Evaluated the strain after copying the occupations from
          //!        VirtualAtom::va_vars.
-         t_Type evaluate();
+         t_Type evaluate(bool relax=true);
       //  //! Returns the \e virtual gradient in direction \a _pos
       //  t_Type evaluate_one_gradient( types::t_unsigned _pos );
       //  //! Computes the \e virtual gradients and returns the energy

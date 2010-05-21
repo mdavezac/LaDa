@@ -4,7 +4,7 @@ from sys import exit
 from os import getcwd
 from os.path import join
 from numpy import matrix, array
-from numpy.linalg import norm
+from numpy.linalg import norm, det
 from boost.mpi import world
 from lada.opt import read_input, redirect
 from lada.opt.changedir import Changedir
@@ -13,6 +13,7 @@ from lada.escan._escan import to_realspace
 from lada.escan._wfns import rtog_fourrier
 from lada.vff import Vff
 from lada.crystal import fill_structure, sort_layers, FreezeCell
+from lada.physics import a0
 
 # reads input file.
 global_dict={"Vff": Vff, "Escan": Escan, "nb_valence_states": nb_valence_states, "soH": soH}
@@ -34,5 +35,5 @@ out = bandgap( input.escan, structure,\
                outdir=join("results", "osc"),\
                comm=world )
 
-results = dipole_matrix_elements(out)
+results = dipole_matrix_elements(out) * det(out.structure.cell * out.structure.scale / a0("A"))
 # print  results

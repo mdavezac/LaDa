@@ -20,14 +20,18 @@ def band_structure(escan, structure, kpoints, density, outdir=None, comm=None,\
   assert "do_escan" not in kwargs,\
          ValueError("\"do_escan\" is not an admissible argument of band_structure.")
   outdir = abspath(expanduser(outdir)) if outdir != None else getcwd()
-  if do_relax == None: do_relax = escan.do_relax 
+  outdir = join(outdir, "band_structure")
   if comm == None: comm = world
   if pools > comm.size: pools = comm.size
+  vffrun = kwargs.pop("vffrun", escan.vffrun)
+  genpotrun = kwargs.pop("genpotrun", escan.genpotrun)
 
-  # first computes vff and genpot.
-  potdir = join(outdir, "band_structure")
-  vffout = escan( structure, outdir=potdir, do_escan=False, do_genpot=True,\
-                  do_relax=do_relax, comm = comm, **kwargs )
+  # first computes vff and genpot unless given.
+  if genpotrun == None or vffrun == None: 
+    vffout = escan( structure, outdir=outdir, do_escan=False, genpotrun=genpotrun,\
+                    vffrun=vffrun, comm = comm, **kwargs )
+    if genpotrun == None: genpotrun = vffout
+    if vffrun == None: vffrun = vffout
   
   # two functions required to continue.
   input, relaxed = structure.cell.copy(), vffout.structure.cell.copy()
@@ -73,18 +77,9 @@ def band_structure(escan, structure, kpoints, density, outdir=None, comm=None,\
 
     # sets directory.
     directory = join(join(outdir, "band_structure"), "%i-%s" % (i, kpoint))
-    # copies POSCAR and POTCAR for reuse.
-    with Changedir(directory, comm = local_comm) as cwd:
-      POSCAR = escan._POSCAR + "." + str(local_comm.rank)
-      if exists(join(potdir, POSCAR)): copyfile(join(potdir, POSCAR), POSCAR)
-      POTCAR = escan._POTCAR + "." + str(local_comm.rank)
-      if exists(join(potdir, POTCAR)): copyfile(join(potdir, POTCAR), POTCAR)
-      cout = escan.vff._cout(local_comm)
-      if exists(join(potdir, cout)): copyfile(join(potdir, cout), cout)
-
     # actually computes stuff.
-    out = escan( structure, outdir=directory, kpoint=kpoint, do_relax=False,\
-                 do_genpot=False, do_escan=True, comm = local_comm, **kwargs )
+    out = escan( structure, outdir=directory, kpoint=kpoint, vffrun=vffrun,\
+                 genpotrun=genpotrun, do_escan=True, comm = local_comm, **kwargs )
     # saves stuff
     eigenvalues = out.eigenvalues.copy()
     eigenvalues.sort()

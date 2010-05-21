@@ -188,19 +188,21 @@ def _band_gap_refs_impl(escan, structure, outdir, references, comm, n=5, **kwarg
   while iter < n and continue_loop:
     # computes vbm
     if recompute[0]:
-      directory = join(outdir, "VBM")
-      _copy_files(directory)
-      vbm_out = escan( structure, outdir=directory, comm=comm,\
-                       eref=vbm_ref, overwrite=True, vffrun=vffrun,\
-                       genpotrun=genpotrun, **kwargs )
+      vbm_out = escan\
+                (
+                  structure, outdir=join(outdir,"VBM"), comm=comm,\
+                  eref=vbm_ref, overwrite=True, vffrun=vffrun,\
+                  genpotrun=genpotrun, **kwargs 
+                )
       vbm_eigs = vbm_out.eigenvalues.copy()
     # computes cbm
     if recompute[1]:
-      directory = join(outdir, "CBM")
-      _copy_files(directory)
-      cbm_out = escan( structure, outdir=directory, comm=comm,\
-                       eref=cbm_ref, overwrite=True, vffrun=vffrun,
-                       genpotrun=genpotrun, **kwargs )
+      cbm_out = escan\
+                (
+                  structure, outdir=join(outdir, "CBM"), comm=comm,\
+                  eref=cbm_ref, overwrite=True, vffrun=vffrun,
+                  genpotrun=genpotrun, **kwargs
+                )
       cbm_eigs = cbm_out.eigenvalues.copy()
     recompute = [False, False] # by default, does not recompute
   

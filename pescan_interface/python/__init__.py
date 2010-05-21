@@ -80,6 +80,7 @@ def call_escan(comm, atom="atom_input", pot="pot_input", escan="escan_input"):
   _call_genpot(comm)
   _call_escan(comm)
 
+  comm.barrier()
   remove(atominput)
   remove(potinput)
   remove(escaninput)
@@ -346,7 +347,7 @@ class Escan(object):
     # checks if outdir contains a successful run.
     if broadcast(comm, exists(outdir) if comm.rank == 0 else None, 0):
       if not overwrite: # check for success
-        extract = Extract(comm = comm, directory = outdir, OUTCAR = this.OUTCAR)
+        extract = Extract(comm = comm, directory = outdir, escan = this)
         if extract.success: return extract # in which case, returns extraction object.
       elif comm.rank == 0: rmtree(outdir) # overwrite data. 
       comm.barrier() # makes sure directory is not created by other proc!
@@ -357,7 +358,7 @@ class Escan(object):
     with Tempdir(workdir=workdir, comm=comm) as this.workdir: 
   
       # performs calculation.
-      this._run(structure, outdir, comm)
+      this._run(structure, outdir, comm, overwrite)
   
       # copies output files.
       with Changedir(outdir, comm = comm) as cwd:
@@ -372,7 +373,7 @@ class Escan(object):
           destination, origin = basename(file), join(this.workdir, basename(file))
           if exists(origin): copyfile(origin, destination)
 
-    return Extract(comm = comm, directory = outdir, OUTCAR = this.OUTCAR)
+    return Extract(comm = comm, directory = outdir, escan = this)
 
   def _cout(self, comm):
     """ Creates output name. """
@@ -385,7 +386,7 @@ class Escan(object):
     return self.ERRCAR if comm.rank == 0 else self.ERRCAR + "." + str(comm.rank)
 
 
-  def _run(self, structure, outdir, comm):
+  def _run(self, structure, outdir, comm, overwrite):
     """ Performs escan calculation. """
     import time
     from os.path import join
@@ -433,9 +434,10 @@ class Escan(object):
     if self.vffrun != None:
       POSCAR = self.vffrun.escan._POSCAR + "." + str(comm.rank)
       rstr = self.vffrun.structure
+      print POSCAR, exists(join(self.vffrun.directory, POSCAR))
       if exists(join(self.vffrun.directory, POSCAR)):
         copyfile(join(self.vffrun.directory, POSCAR), poscar)
-      else: out.write_escan_input(poscar, rstr)
+      else: out.solo().write_escan_input(poscar, rstr)
       VFFCOUT = self.vffrun.escan.vff._cout(comm)
       vffcout = self.vff._cout(comm)
       if exists(join(self.vffrun.directory, VFFCOUT)):

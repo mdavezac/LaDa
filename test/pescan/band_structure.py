@@ -22,7 +22,11 @@ for i, atom in enumerate(structure.atoms):
 structure.scale = 5.65
 structure.freeze = FreezeCell.a0 | FreezeCell.a1
 input.escan.fft_mesh  = 14, 14, 50
-##  input.escan.vff.direction = array([0,0,2.5])
+
+structure = fill_structure(input.vff.lattice.cell)
+structure.atoms[0].type = "Si"
+input.escan.fft_mesh  = 14, 14, 14
+structure.scale = 5.45
 
 # some kpoints + associated name
 X = array( [1,0,0], dtype="float64" )
@@ -34,13 +38,13 @@ W = array( [0, 0.5,1], dtype="float64" )
 # reference energy (third argument). Results are stored in a specific directory
 # (second arguement). The expected eigenvalues are given in the fourth argument.
 kpoints = [ (X, G), (G, L) ]
-density = 15 / min( norm(X), norm(L), norm(W) )
+density = 20 / min( norm(X), norm(L), norm(W) )
 
 result = band_structure( input.escan, structure, kpoints, density, 
                          outdir = "results",
                          eref   = None, 
                          nbstates = nb_valence_states(structure) + 4,
-                         pools = 2)
+                         pools = 4)
   
 if world.rank == 0:
   with open(join("results", "pickle"), "w") as file:

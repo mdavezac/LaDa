@@ -532,8 +532,9 @@ class Vff(object):
     else: name = broadcast(comm, root=0) # syncs all procs to make sure we are reading from same file.
 
     
+    comm.barrier() # required before reading file (?).
     functional = Vff(name, comm) if self.direction == None else LayeredVff(name, comm)
-
+    comm.barrier() # required before removing file.
     if comm.rank == 0: remove(file.name)
 
     return functional
@@ -555,10 +556,7 @@ class Vff(object):
     with redirect_all(output=cout, error=cerr, append="True") as oestream:
       functional = self._create_functional(structure, comm)
       # now performs call
-      if self.relax: result, stress = functional(structure, doinit=True)
-      else: 
-        result = deepcopy(structure)
-        result.energy, stress = functional.energy(structure, doinit=True)
+      result, stress = functional(structure, doinit=True, relax=self.relax)
     
     # unsets lattice.
     if old_lattice != None: old_lattice.set_as_crystal_lattice()
