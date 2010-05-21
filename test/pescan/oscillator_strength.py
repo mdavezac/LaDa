@@ -33,7 +33,10 @@ input.escan.fft_mesh  = 14, 14, 50
 
 out = bandgap( input.escan, structure,\
                outdir=join("results", "osc"),\
+               references=(0.1, -0.4),\
+               nbstates = 4,\
                comm=world )
 
-results = dipole_matrix_elements(out) * det(out.structure.cell * out.structure.scale / a0("A"))
+results =   dipole_matrix_elements(out.extract_vbm, out.extract_cbm) \
+          * det(out.extract_vbm.structure.cell * out.extract_vbm.structure.scale / a0("A"))
 # print  results

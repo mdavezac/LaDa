@@ -23,9 +23,9 @@ escan.cutoff                = 8.2
 escan.smooth                = 1.0
 escan.kinetic_scaling       = 1.0
 escan.nbstates              = 10
-escan.itermax               = 10
-escan.nlines                = 50
-escan.tolerance             = 1e-12
+escan.itermax               = 20
+escan.nlines                = 200
+escan.tolerance             = 1e-6
 escan.rspace_cutoff         = 3.75
 escan.fft_mesh              = 4*20, 20, int(ceil(sqrt(0.5) * 20))
 escan.do_genpot             = True
@@ -36,11 +36,11 @@ escan.dnc_mesh              = None
 escan.overlap_mesh          = None
 escan.potential             = soH
 escan.add_potential         = "test_input/pseudos/vq.Si", "test_input/pseudos/vwr.pso",\
-                              0,0,0,0.08
+                              0,0,0,0.0495
 escan.add_potential         = "test_input/pseudos/vq.Ge", "test_input/pseudos/vwr.pso",\
                               0,0,0,0.2774
 escan.add_potential         = "test_input/pseudos/vq.SiGe.Si", "test_input/pseudos/vwr.pso",\
-                              0,0,0,0.08
+                              0,0,0,0.0495
 escan.add_potential         = "test_input/pseudos/vq.SiGe.Ge", "test_input/pseudos/vwr.pso",\
                               0,0,0,0.2774
 escan.maskr                 = "test_input/pseudos/maskr"
