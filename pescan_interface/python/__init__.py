@@ -434,7 +434,6 @@ class Escan(object):
     if self.vffrun != None:
       POSCAR = self.vffrun.escan._POSCAR + "." + str(comm.rank)
       rstr = self.vffrun.structure
-      print POSCAR, exists(join(self.vffrun.directory, POSCAR))
       if exists(join(self.vffrun.directory, POSCAR)):
         copyfile(join(self.vffrun.directory, POSCAR), poscar)
       else: out.solo().write_escan_input(poscar, rstr)
