@@ -197,15 +197,17 @@ class Escan(object):
      
         Set to None if no divide and conquer is required. 
     """
-    self.do_relax = True
-    """ If true, the structure is relaxed using vff.
+    self.vffrun = None
+    """ If None, the structure is relaxed using vff.
           
-        Otherwise, the file L{_POSCAR} from the output directory is used. 
+        Otherwise, it should be an extraction object returned from a previous
+        run where vff was computed.
     """
-    self.do_genpot = True
-    """ If true, the potential is generated.
+    self.genpotrun = None
+    """ If None, the potential is generated.
           
-        Otherwise, the file L{_POTCAR} from the output directory is used. 
+        Otherwise, it should be the extraction object returned by a previous
+        run which computed the potential.
     """
     self.do_escan = True
     """ If true, calculations are performed. """
@@ -286,9 +288,9 @@ class Escan(object):
     result += "escan.tolerance             = %e\n" % (self.tolerance)
     result += "escan.rspace_cutoff         = %f\n" % (self.rspace_cutoff)
     result += "escan.fft_mesh              = %i, %i, %i\n" % self.fft_mesh
-    result += "escan.do_genpot             = %s\n" % ("True" if self.do_genpot else "False")
-    result += "escan.do_escan              = %s\n" % ("True" if self.do_escan else "False")
-    result += "escan.do_relax              = %s\n" % ("True" if self.do_relax else "False")
+    result += "escan.genpotrun             = %s\n" % (repr(self.genpotrun))
+    result += "escan.do_escan              = %s\n" % (repr(self.do_escan))
+    result += "escan.vffrun                = %s\n" % (repr(self.vffrun))
     result += "escan.input_wavefunctions   = %s\n" % (repr(self.input_wavefunctions))
     result += "escan.kpoint                = %s\n" % (repr(self.kpoint))
     result += "escan._dont_deform_kpoint   = %s\n" % (repr(self._dont_deform_kpoint))
@@ -344,7 +346,7 @@ class Escan(object):
     # checks if outdir contains a successful run.
     if broadcast(comm, exists(outdir) if comm.rank == 0 else None, 0):
       if not overwrite: # check for success
-        extract = Extract(comm = comm, directory = outdir, escan = this)
+        extract = Extract(comm = comm, directory = outdir, OUTCAR = this.OUTCAR)
         if extract.success: return extract # in which case, returns extraction object.
       elif comm.rank == 0: rmtree(outdir) # overwrite data. 
       comm.barrier() # makes sure directory is not created by other proc!
@@ -370,7 +372,7 @@ class Escan(object):
           destination, origin = basename(file), join(this.workdir, basename(file))
           if exists(origin): copyfile(origin, destination)
 
-    return Extract(comm = comm, directory = outdir, escan = this)
+    return Extract(comm = comm, directory = outdir, OUTCAR = this.OUTCAR)
 
   def _cout(self, comm):
     """ Creates output name. """
@@ -389,7 +391,7 @@ class Escan(object):
     from os.path import join
     from ..opt.changedir import Changedir
 
-    if self.do_genpot == False and self.do_relax == False and self.do_escan == False:
+    if self.genpotrun != None and self.vffrun != None and self.do_escan == False:
       print "Nothing to do? no relaxation, no genpot, no escan?" 
       return None
     timing = time.time() 
@@ -406,10 +408,10 @@ class Escan(object):
         print >>file, "# Performing calculations. "
       
       # makes calls to run
-      self._run_vff(structure, outdir, comm, cout)
-      if not (self.do_genpot or self.do_escan): return None 
+      self._run_vff(structure, outdir, comm, cout, overwrite)
+      if self.genpotrun != None and self.do_escan == False: return None 
       self._run_genpot(comm, outdir)
-      if not self.do_escan: return None
+      if self.do_escan == False: return None
       self._run_escan(comm, structure)
      
       with open(cout, "a") as file: 
@@ -421,24 +423,26 @@ class Escan(object):
         assert not extract.success, RuntimeError("Escan calculations did not complete.")
         print >> file, "# Computed ESCAN in: %i:%i:%f."  % (hour, minute, second) 
 
-  def _run_vff(self, structure, outdir, comm, cout):
+  def _run_vff(self, structure, outdir, comm, cout, overwrite):
     """ Gets atomic input ready, with or without relaxation. """
     from shutil import copyfile
     from os.path import join, samefile, exists
     from ..vff import Extract as ExtractVff
 
     poscar = self._POSCAR + "." + str(comm.rank)
-    if not self.do_relax:
-      if exists(join(outdir, poscar)):
-        if not samefile(outdir, self.workdir):
-          copyfile(join(outdir, poscar), join(self.workdir, poscar))
-        return 
-      out = ExtractVff(outdir, comm = comm, vff=self.vff)
-      if out.success:
-        out.write_escan_input(poscar, structure)
-        return
+    if self.vffrun != None:
+      POSCAR = self.vffrun.escan._POSCAR + "." + str(comm.rank)
+      rstr = self.vffrun.structure
+      if exists(join(self.vffrun.directory, POSCAR)):
+        copyfile(join(self.vffrun.directory, POSCAR), poscar)
+      else: out.write_escan_input(poscar, rstr)
+      VFFCOUT = self.vffrun.escan.vff._cout(comm)
+      vffcout = self.vff._cout(comm)
+      if exists(join(self.vffrun.directory, VFFCOUT)):
+        copyfile(join(self.vffrun.directory, VFFCOUT), vffcout)
+      return
 
-    out = self.vff(structure, outdir=outdir, comm=comm)
+    out = self.vff(structure, outdir=outdir, comm=comm, overwrite=overwrite)
     assert out.success, RuntimeError("VFF relaxation did not succeed.")
     out.write_escan_input(poscar, out.structure)
 
@@ -464,20 +468,17 @@ class Escan(object):
     from os.path import basename, exists, join, samefile
     from ..opt import redirect
 
-    if not self.do_genpot: 
-      POTCAR = self._POTCAR + "." + str(comm.rank)
-      if broadcast(comm, exists(join(outdir, POTCAR)), 0):
-        if exists(join(outdir, POTCAR)) and not samefile(outdir, self.workdir): 
-          copyfile(join(outdir, POTCAR), join(self.workdir, POTCAR))
-        if comm.rank == 0:
-          copyfile(self.maskr, basename(self.maskr))
-          for pot in self.atomic_potentials:
-            if pot.nonlocal != None: copyfile(pot.nonlocal, basename(pot.nonlocal))
-        return
-      else:
-        with open(self._cout(comm), "a") as file:
-          print >> file, "Could not find genpot potential %s."\
-                         "Recomputing." % (join(outdir, POTCAR))
+    # using genpot from previous run
+    if self.genpotrun != None:
+      POTCAR = self.genpotrun.escan._POTCAR + "." + str(comm.rank)
+      potcar = self._POTCAR + "." + str(comm.rank)
+      if exists(join(self.genpotrun.directory, POTCAR)):
+        copyfile(join(self.genpotrun.directory, POTCAR), potcar)
+      if comm.rank == 0:
+        copyfile(self.maskr, basename(self.maskr))
+        for pot in self.atomic_potentials:
+          if pot.nonlocal != None: copyfile(pot.nonlocal, basename(pot.nonlocal))
+      return
 
     assert self.atomic_potentials != None, RuntimeError("Atomic potentials are not set.")
     # Creates temporary input file and creates functional
