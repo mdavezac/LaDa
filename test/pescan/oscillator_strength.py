@@ -8,7 +8,7 @@ from numpy.linalg import norm
 from boost.mpi import world
 from lada.opt import read_input, redirect
 from lada.opt.changedir import Changedir
-from lada.escan import Escan, nb_valence_states, soH, bandgap
+from lada.escan import Escan, nb_valence_states, soH, bandgap, dipole_matrix_elements
 from lada.escan._escan import to_realspace
 from lada.escan._wfns import rtog_fourrier
 from lada.vff import Vff
@@ -34,4 +34,5 @@ out = bandgap( input.escan, structure,\
                outdir=join("results", "osc"),\
                comm=world )
 
-print out.oscillator_strength()
+results = dipole_matrix_elements(out)
+# print  results
