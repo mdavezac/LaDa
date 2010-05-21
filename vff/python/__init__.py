@@ -233,6 +233,10 @@ class Extract(object):
     self.comm = comm
     return copy
 
+  def __repr__(self):
+    return "%s(\"%s\")" % (self.__class__.__name__, self.directory)
+
+
 
 class Vff(object): 
   """ Valence Force Field functional for zinc-blende materials """
@@ -425,7 +429,7 @@ class Vff(object):
     if self.ERRCAR == None: return "/dev/null"
     return self.ERRCAR if comm.rank == 0 else self.ERRCAR + "." + str(comm.rank)
 
-  def __call__(self, structure, outdir, comm = None, **kwargs):
+  def __call__(self, structure, outdir, comm = None, overwrite=False, **kwargs):
     """ Performs calculation """
     import time
     from copy import deepcopy
@@ -471,8 +475,8 @@ class Vff(object):
 
     if comm == None: comm = world
 
-    # checks if outdir contains a successful run.
-    if broadcast(comm, exists(outdir) if comm.rank == 0 else None, 0):
+    # checks if outdir contains a (wanted) successful run.
+    if broadcast(comm, exists(outdir) if comm.rank == 0 else None, 0) and overwrite==False:
       extract = Extract(comm = comm, directory = outdir, vff = this)
       if extract.success: return extract # in which case, returns extraction object.
       comm.barrier() # makes sure directory is not created by other proc!
@@ -536,6 +540,7 @@ class Vff(object):
      
   def _run(self, structure, comm):
     """ Performs actual calculation. """
+    from copy import deepcopy
     from vff import Vff, LayeredVff
     from ..opt import redirect_all
 
@@ -550,7 +555,10 @@ class Vff(object):
     with redirect_all(output=cout, error=cerr, append="True") as oestream:
       functional = self._create_functional(structure, comm)
       # now performs call
-      result, stress = functional(structure, doinit=True)
+      if self.relax: result, stress = functional(structure, doinit=True)
+      else: 
+        result = deepcopy(structure)
+        result.energy, stress = functional.energy(structure, doinit=True)
     
     # unsets lattice.
     if old_lattice != None: old_lattice.set_as_crystal_lattice()
@@ -589,4 +597,3 @@ class Vff(object):
                   % tuple(p) 
     result += "</Functional>\n</Job>"
     return result
-

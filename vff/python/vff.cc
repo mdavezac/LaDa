@@ -136,6 +136,14 @@ namespace LaDa
         return bp::make_tuple(result, math::rMatrix3d(_self.first.get_stress()));
       }
     template<class T>
+      types::t_real energy( T &_self, Crystal::TStructure<std::string> const &_str, bool _doinit )
+      { 
+        Crystal::convert_string_to_real_structure(_str, _self.second);     
+        init(_self, _doinit, false);
+        types::t_real const energy = _self.first.Vff().energy() / 16.0217733;
+        return bp::make_tuple(energy, math::rMatrix3d(_self.first.get_stress()));
+      }
+    template<class T>
       bp::tuple get_bond(T const &_self, const std::string &_str ) 
       {
         try
@@ -310,6 +318,17 @@ namespace LaDa
 #      endif
        .def( "_init",  &init<T>, (bp::arg("redo_tree") = true, bp::arg("verbose")=false), 
              "Initializes the functional for the current structure." ) 
+       .def(
+         "energy", 
+         &energy<T>, 
+         (bp::arg("structure"), bp::arg("doinit") = true),
+         "Energy of structure without relaxation.\n\n"
+         "@param structure: structure to evaluate.\n"
+         "@type structure: L{crystal.Structure}.\n"
+         "@param doinit: If true, reconstructs first-neighbor tree. Default: true.\n"
+         "@return: A 2-tuple (energy, stress) where the first is the energy in eV, "
+         "and the second a matrix with the stress. "
+       )
        .def( "print_escan_input",  &print_escan_input<typename T::first_type>,
              (bp::arg("file"), bp::arg("structure")), 
              "Outputs the current structure in a format suitable for pescan." ) 
