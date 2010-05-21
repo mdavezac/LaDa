@@ -20,8 +20,6 @@ def band_gap(escan, structure, outdir=None, references=None, comm=None, n=5, **k
   from os.path import abspath
   from copy import deepcopy
 
-  assert "do_genpot" not in kwargs,\
-         ValueError("\"do_genpot\" is not an admissible argument of bandgap.")
   assert "do_escan" not in kwargs,\
          ValueError("\"do_escan\" is not an admissible argument of bandgap.")
 
@@ -165,37 +163,25 @@ def _band_gap_refs_impl(escan, structure, outdir, references, comm, n=5, **kwarg
   from numpy import array, argmax
   from ..opt.changedir import Changedir
   
-  # some sanity checks.
-  nbstates = escan.nbstates
-  if "nbstates" in kwargs:
-    nbstates = kwargs["nbstates"]
-    del kwargs["nbstates"]
+  # check/correct input arguments
+  nbstates = kwargs.pop("nbstates", escan.nbstates)
   if nbstates < 2: nbstates = 2
   if "eref" in kwargs:
     assert kwargs["eref"] == None, ValueError("Unexpected eref argument when computing bandgap.")
     del kwargs["eref"]
-  # check/correct input arguments
-  do_relax = escan.do_relax
-  if do_relax in kwargs:
-    do_relax = kwargs["do_relax"]
-    del kwargs["do_relax"]
+  vffrun = kwargs.pop("vffrun", escan.vffrun)
+  genpotrun = kwargs.pop("genpotrun", escan.genpotrun)
   
   assert len(references) == 2, ValueError("Expected 2-tuple for argument \"references\".")
   vbm_ref, cbm_ref = references
   if vbm_ref > cbm_ref: cbm_ref, vbm_ref = references
 
-  # first computes vff and genpot.
-  vffout = escan( structure, outdir=outdir, do_escan=False, do_genpot=True,\
-                  do_relax=do_relax, comm = comm, **kwargs )
-  
-  def _copy_files(directory):
-    with Changedir(join(outdir, directory), comm = comm) as cwd:
-      POSCAR = escan._POSCAR + "." + str(comm.rank)
-      if exists(join(outdir, POSCAR)): copyfile(join(outdir, POSCAR), POSCAR)
-      POTCAR = escan._POTCAR + "." + str(comm.rank)
-      if exists(join(outdir, POTCAR)): copyfile(join(outdir, POTCAR), POTCAR)
-      cout = escan.vff._cout(comm)
-      if exists(join(outdir, cout)): copyfile(join(outdir, cout), cout)
+  # first computes vff and genpot unless given.
+  if genpotrun == None or vffrun == None: 
+    vffout = escan( structure, outdir=outdir, do_escan=False, genpotrun=genpotrun,\
+                    vffrun=vffrun, comm = comm, **kwargs )
+    if genpotrun == None: genpotrun = vffout
+    if vffrun == None: vffrun = vffout
 
   iter, continue_loop = 0, True
   recompute = [True, True]
@@ -205,16 +191,16 @@ def _band_gap_refs_impl(escan, structure, outdir, references, comm, n=5, **kwarg
       directory = join(outdir, "VBM")
       _copy_files(directory)
       vbm_out = escan( structure, outdir=directory, comm=comm,\
-                       eref=vbm_ref, overwrite=True, do_relax=False,\
-                       do_genpot=False, **kwargs )
+                       eref=vbm_ref, overwrite=True, vffrun=vffrun,\
+                       genpotrun=genpotrun, **kwargs )
       vbm_eigs = vbm_out.eigenvalues.copy()
     # computes cbm
     if recompute[1]:
       directory = join(outdir, "CBM")
       _copy_files(directory)
       cbm_out = escan( structure, outdir=directory, comm=comm,\
-                       eref=cbm_ref, overwrite=True, do_relax=False,
-                       do_genpot=False, **kwargs )
+                       eref=cbm_ref, overwrite=True, vffrun=vffrun,
+                       genpotrun=genpotrun, **kwargs )
       cbm_eigs = cbm_out.eigenvalues.copy()
     recompute = [False, False] # by default, does not recompute
   

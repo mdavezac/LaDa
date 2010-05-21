@@ -381,3 +381,6 @@ class Extract(object):
     copy.OUTCAR = self.OUTCAR
     copy._vffout = self._vffout.solo()
     return copy
+
+  def __repr__(self):
+    return "%s(\"%s\")" % (self.__class__.__name__, self.directory)

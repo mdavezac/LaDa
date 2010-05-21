@@ -1,6 +1,6 @@
 """ Numerical energy derivatives. """
 
-def reciprocal( structure, escan, vff, direction, order = 1, \
+def reciprocal( escan, structure, direction, outdir, comm = None, order = 1, \
                 nbpoints = None, stepsize = 1e-2, lstsq = None, **kwargs ):
   """ Computes effective mass for a given direction.
 
@@ -10,8 +10,6 @@ def reciprocal( structure, escan, vff, direction, order = 1, \
       @type  structure: crystal.Structure
       @param escan: Emiprical pseudo-potential functional.
       @type  escan: Escan
-      @param vff: Valence Force Field method.
-      @type  vff: vff.Vff or vff.LayeredVff
       @param direction: direction for which to compute derivatives.
       @type  direction: 3-tuple 
       @param order: Highest order derivative to perform. Defaults to 1.
@@ -37,43 +35,23 @@ def reciprocal( structure, escan, vff, direction, order = 1, \
   from math import pow, pi, factorial
   from numpy import zeros, array, dot
   from numpy.linalg import norm, lstsq as np_lstsq
+  from boost.mpi import world
   from ._escan import method, potential
   from ..physics import a0, Hartree
 
-  # some sanity checks.
+  # check input arguments
   order = int(order)
   if order <= 0: raise ValueError, "order should be at least one (%i)." % ( order )
   if nbpoints == None: nbpoints = order + 1
   else: nbpoints = int(nbpoints)
   if nbpoints < order + 1: raise ValueError, "The number of points shoule be at least order+1."
-  if norm(direction) < 1e-12: "Direction cannot be 0."
   direction = array(direction, dtype="float64")
+  if norm(direction) < 1e-12: "Direction cannot be 0."
   direction /= norm(direction)
   if lstsq == None: lstsq = np_lstsq
-
-  # saves comm if necessary.
-  comm = escan.comm
-  if "comm" in kwargs:
-    comm = kwargs["comm"] 
-    del kwargs["comm"]
-  # now copies escan
-  escan = deepcopy(escan)
-  # resets comm 
-  escan.comm = comm
-  # sets to folded spectra
-  escan.method = method.folded
-
-  # sets other parameters.
-  popthese = []
-  for key in kwargs:
-    if not hasattr(escan, key): continue
-    setattr(escan, key, kwargs[key])
-    popthese.append(key)
-  for key in popthese: del kwargs[key]
-  directory = escan.directory
-
-  # number of states for which to perform calculations.
-  nbstates = escan.nbstates
+  if comm == None: comm = world
+  vffrun = kwargs.pop("vffrun", escan.vffrun)
+  genpotrun = kwargs.pop("genpotrun", escan.genpotrun)
 
   # creates parameters matrix.
   parameters = zeros(shape=(nbpoints, order+1), dtype="float64") 
@@ -88,33 +66,33 @@ def reciprocal( structure, escan, vff, direction, order = 1, \
     for j in range(1, order+1): 
       if j % 2 == 1: parameters[2*i+1, j] *= -1e0
 
+  # first computes vff and genpot unless given.
+  if genpotrun == None or vffrun == None: 
+    vffout = escan( structure, outdir=outdir, do_escan=False, genpotrun=genpotrun,\
+                    vffrun=vffrun, comm = comm, **kwargs )
+    if genpotrun == None: genpotrun = vffout
+    if vffrun == None: vffrun = vffout
 
   # now performs all calculations.
-  measurements = zeros(shape=(nbpoints, nbstates), dtype="float64")
-  kpoint = escan.kpoint.copy()
-
+  measurements = None
   for i in range(0, nbpoints): 
-    # computes kpoint
-    escan.kpoint = kpoint + direction * parameters[i, 1] / units
-    # checks for double/krammer mad degeneracy touble
-    double_trouble = escan.potential != potential.spinorbit or norm(escan.kpoint) < 1e-12
-    # in which case only half the eigenvalues are computed.
-    if double_trouble: escan.nbstates = nbstates / 2
-    # sets directory.
-    escan.directory = join(join(directory, "recip_deriv"), "%i-s=%f" % (i, parameters[i,1] ))
-    # actually computes stuff.
-    result = escan(vff, structure)
-    result.sort() # sorted eigs!
-    if double_trouble: # in case escan tries to screw us up again.
-      result = array([u for j in range(2) for u in result])
-      escan.nbstates = nbstates
-    # finally stores these results.
-    measurements[i,:] = result / Hartree("eV")
-
+    directory = 
+    _copy_files(directory)
+    out = escan\
+          (\
+            structure,\
+            outdir = join(outdir, "%i-s=%f" % (i, parameters[i,1] )),
+            vffrun = vffrun, genpotrun = genpotrun, do_escan = True,\
+            kpoint = escan.kpoint + direction * parameters[i, 1] / units 
+          )
+    eigenvalues = out.eigenvalues.copy()
+    eigenvalues.sort()
+    if measurements == None: 
+      measurements = zeros(shape=(nbpoints, eigenvalues.size), dtype="float64")
+    measurements[i,:] = eigenvalues / Hartree("eV")
+    
   # finally, performs least-square fit and returns evrything.
   result = lstsq( parameters, measurements )
-
-  if escan.destroy_directory == True: rmtree( join(directory, "recip_deriv") )
 
   return result
 
