@@ -53,7 +53,7 @@ class Standard(object):
       self.validity = lambda x: x
       self.validity.func_code  = loads(arg[1])
 
-  def repr(self):
+  def __repr__(self):
     return "%s(%s,%s)" % (self.__class__.__name__, repr(self.key), repr(self.value))
 
 
@@ -96,7 +96,7 @@ class Iniwave(Standard):
       returns its  "VASP" equivalent when gotten (C{print self.value} outputs 0 or 1).
   """
 
-  def repr(self): return "%s(%s)" % (self.__class__.__name__, repr(self.value))
+  def __repr__(self): return "%s(%s)" % (self.__class__.__name__, repr(self.value))
 
 
 class Algo(Standard): 
@@ -118,7 +118,7 @@ class Algo(Standard):
     elif lower == "normal": self._value = "Normal"
     else: raise ValueError, "%s = %s is invalid.\n%s\n" % (self.key, value, self.__doc__)
   value = property(_getvalue, _setvalue)
-  def repr(self): return "%s()" % (self.__class__.__name__)
+  def __repr__(self): return "%s()" % (self.__class__.__name__)
 
 class Precision(Standard):
   """ Sets accuracy of calculation. 
@@ -135,7 +135,7 @@ class Precision(Standard):
     if self._value not in ["accurate", "lower", "medium", "high"]:
       raise ValueError, "%s = %s is invalid.\n%s\n" % (self.key, value, self.__doc__)
   value = property(_getvalue, _setvalue)
-  def repr(self): return "%s()" % (self.__class__.__name__)
+  def __repr__(self): return "%s()" % (self.__class__.__name__)
 
 class Ediff(Standard):
   """ Sets the convergence criteria (per atom) for electronic minimization.
@@ -149,7 +149,7 @@ class Ediff(Standard):
   @broadcast_result(key=True)
   def incar_string(self, vasp):
     return "%s = %f " % (self.key, self.value * float(len(vasp._system.atoms)))
-  def repr(self): return "%s(%s)" % (self.__class__.__name__, repr(self.value))
+  def __repr__(self): return "%s(%s)" % (self.__class__.__name__, repr(self.value))
 
 
 class Encut(object):
@@ -190,7 +190,7 @@ class Encut(object):
     """ Retrieves max ENMAX from list of species. """
     from math import ceil
     return ceil( max(s.enmax for s in species) )
-  def repr(self): return "%s(%s)" % (self.__class__.__name__, repr(self.safety))
+  def __repr__(self): return "%s(%s)" % (self.__class__.__name__, repr(self.safety))
 
 class Smearing(object):
   """ Value of the smearing used in the calculation. 
@@ -268,7 +268,7 @@ class Smearing(object):
   @broadcast_result(key=True)
   def incar_string(self, vasp):
     return "ISMEAR  = %s\nSIGMA   = %f\n" % self.value
-  def repr(self): return "%s(%s)" % (self.__class__.__name__, repr(self.value))
+  def __repr__(self): return "%s(%s)" % (self.__class__.__name__, repr(self.value))
 
   
 class Isym(Standard):
@@ -298,7 +298,7 @@ class Isym(Standard):
     if isinstance(other, Isym):
       return self._value == self._value
     return self == Isym(other)
-  def repr(self): return "%s(%s)" % (self.__class__.__name__, repr(self.value))
+  def __repr__(self): return "%s(%s)" % (self.__class__.__name__, repr(self.value))
   
 class FFTGrid(object):
   """ Computes fft grid using VASP. Or if grid is given, computes using that grid. """
@@ -352,7 +352,7 @@ class FFTGrid(object):
 
       # finally extracts from OUTCAR.
       return Extract(directory = vasp._tempdir, comm = comm).fft
-  def repr(self):
+  def __repr__(self):
     if self._value == None: return "%s(None)" % (self.__class__.__name__)
     return "%s(%s)" % (self.__class__.__name__, repr(self.value))
 
@@ -371,6 +371,7 @@ class Restart(object):
 
   @broadcast_result(key=True)
   def incar_string(self, vasp):
+    import files
     istart = "0   # start from scratch"
     icharg = "2   # superpositions of atomic densities"
     if self.value == None or len(self.value) == 0:
@@ -378,20 +379,37 @@ class Restart(object):
     elif not self.value.success:
       raise RuntimeError("Could not find successful run in directory %s.\n"%(self.value.directory));
     else:
-      ewave = os.path.exists( os.path.join( self.value, 'WAVECAR' ) )
-      echarge = os.path.exists( os.path.join( self.value, 'CHGCAR' ) )
+      ewave = os.path.exists( os.path.join( self.value.directory, files.WAVECAR ) )
+      echarge = os.path.exists( os.path.join( self.value.directory, files.CHGCAR ) )
       if ewave:
         istart = "1  # restart"
-        icharg = "0   # from wavefunctions " + os.path.join( self.value, 'WAVECAR' )
+        icharg = "0   # from wavefunctions " + os.path.join( self.value, files.WAVECAR )
       elif echarge:
         istart = "1  # restart"
-        icharg = "1   # from charge " + os.path.join( self.value, 'CHGCAR' )
+        icharg = "1   # from charge " + os.path.join( self.value, files.CHGCAR )
       else: 
         istart = "0   # start from scratch"
         icharg = "2   # superpositions of atomic densities"
 
     return  "ISTART = %s\nICHARG = %s" % (istart, icharg)
-  def repr(self): return "%s(%s)" % (self.__class__.__name__, repr(self.value))
+
+  def copyfiles(workdir):
+    """ Copy restart files from input run. """
+    # checks for CHGCAR
+    indir = self.directory
+    if indir == None: indir = getcwd()
+    chgcar = join(indir, files.CHGCAR)
+    if exists(chgcar): copy(chgcar, workdir)
+
+    # checks for WAVECAR
+    wavecar = join(indir, files.WAVECAR) 
+    if exists(chgcar): copy(chgcar, workdir)
+
+    # checks for EIGENVALUE
+    eigenvalue = join(indir, files.EIGENVALUES) 
+    if exists(eigenvalue): copy(eigenvalue, workdir)
+
+  def __repr__(self): return "%s(%s)" % (self.__class__.__name__, repr(self.value))
 
 class Relaxation(object):
   """ Sets ISIF in incar depending on type relaxation required. 
@@ -472,7 +490,7 @@ class Relaxation(object):
     elif isif == 7:           
       return result + "ISIF   = 7     # relaxing V. only."
     raise RuntimeError("Internal bug.")
-  def repr(self):
+  def __repr__(self):
     return "%s(nsw=%i, ibrion=%i, potim=%f)"\
            % (self.__class__.__name__, self.nsw, self.ibrion, self.potim)
 
@@ -519,7 +537,7 @@ class NElect(object):
     else: 
       return "%s = %s  # positively charged system (+%i) "\
              % (self.key, charge_neutral + self.value, -self.value)
-  def repr(self):
+  def __repr__(self):
     return "%s(%f)" % (self.__class__.__name__, self.value)
           
 class NBands(NElect):

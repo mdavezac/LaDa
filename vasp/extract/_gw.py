@@ -1,7 +1,6 @@
 """ Extracts VASP-GW output """
 from . import _ExtractImpl
-from .decorators import bound_broadcast_result 
-from ...opt.decorators import make_cached
+from ...opt.decorators import make_cached, broadcast_result
 class _ExtractGWImpl(_ExtractImpl):
   """ Implementation of GW extractor. """
   def __init__(self, *args, **kwargs):
@@ -40,7 +39,7 @@ class _ExtractGWImpl(_ExtractImpl):
     return array(result, dtype="float64")
 
   @make_cached
-  @bound_broadcast_result
+  @broadcast_result(attr=True, which=0)
   def _get_dft_eigenvalues(self):
     """ Greps DFT eigenvalues from L{OUTCAR}.
 
@@ -50,7 +49,7 @@ class _ExtractGWImpl(_ExtractImpl):
     return self._get_eigocc(1)
   
   @make_cached
-  @bound_broadcast_result
+  @broadcast_result(attr=True, which=0)
   def _get_qp_eigenvalues(self):
     """ Greps Quasi-Particle eigenvalues from L{OUTCAR}.
 
@@ -60,7 +59,7 @@ class _ExtractGWImpl(_ExtractImpl):
     return self._get_eigocc(2)
   
   @make_cached
-  @bound_broadcast_result
+  @broadcast_result(attr=True, which=0)
   def _get_self_energies(self):
     """ Greps self-energies for each eigenvalue from L{OUTCAR}.
 
@@ -70,7 +69,7 @@ class _ExtractGWImpl(_ExtractImpl):
     return self._get_eigocc(3)
   
   @make_cached
-  @bound_broadcast_result
+  @broadcast_result(attr=True, which=0)
   def _get_occupations(self):
     """ Greps occupation for each eigenvalue from L{OUTCAR}.
 

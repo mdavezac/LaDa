@@ -60,7 +60,7 @@ class Vasp(Launch):
     """ Initializes vasp class. """
     Launch.__init__(self, *args, **kwargs)
 
-  def __call__(self, structure, outdir, comm = None, repat = [], **kwargs):
+  def __call__(self, structure, outdir, comm = None, repat = [], overwrite=True, **kwargs):
     """ Performs a vasp calculation 
      
         The structure is whatever is given on input. The results are stored in
@@ -96,17 +96,18 @@ class Vasp(Launch):
     for key in kwargs.keys(): getattr(this, key).value = kwargs[key]
 
     # First checks if directory outdir exists (and is a directory).
-    if exists(outdir):
-      if not isdir(outdir): raise IOError, "%s exists but is not a directory.\n" % (outdir)
-      # checks if it contains a successful run.
-      extract = Extract(comm = comm, directory = outdir, vasp = this)
-      if extract.success: return extract # in which case, returns extraction object.
+    if broadcast(comm, exists(outdir) if comm.rank == 0 else None, 0):
+      if not overwrite: # check for success
+        extract = Extract(comm = comm, directory = outdir)
+        if extract.success: return extract # in which case, returns extraction object.
+      elif comm.rank == 0: rmtree(outdir) # overwrite data. 
+      comm.barrier() # makes sure directory is not created by other proc!
     
     # Otherwise, performs calculation by calling base class functor.
     super(Vasp, this).__call__(structure=structure, outdir=outdir, repat=repat, comm=comm)
     
     # checks if result was successful
-    extract = Extract(comm = comm, directory = outdir, vasp = this)
+    extract = Extract(comm = comm, directory = outdir)
     if not extract.success:
       raise RuntimeError("VASP calculation did not complete in %s.\n" % (outdir))
 

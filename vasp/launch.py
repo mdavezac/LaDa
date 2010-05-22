@@ -9,7 +9,7 @@ class Launch(Incar):
   # program = "vasp.mpi"
   # """ shell command to launch vasp. """
 
-  def __init__(self, workdir = None, indir = None, species = None, kpoints = Density(), **kwargs ):
+  def __init__(self, workdir = None, species = None, kpoints = Density(), **kwargs ):
     """ Initializes Launch instance.
 
         The initializer can take any number of keyword arguments. Those other
@@ -21,16 +21,16 @@ class Launch(Incar):
         in initialization.
         @param workdir: working directory. Defaults to current directory at
            time of calculation.
-        @param indir: input directory.
         @param species: Species in the system. 
         @type species: list of L{Specie}
         @param kpoints: Kpoint behavior.
         @type kpoints: see L{kpoints.Density} and L{kpoints.Gamma}
     """
+    from os import getcwd
     Incar.__init__(self) 
 
-    self.workdir = workdir
-    self.indir = indir
+    self.workdir = abspath(expanduser(this.workdir)) if this.workdir != None\
+                   else getcwd()
     # sets species
     if species != None: self.species = species
     self.kpoints =  kpoints
@@ -54,7 +54,7 @@ class Launch(Incar):
             raise AssertionError, "Could not find potcar in " + s.path
     return results
 
-  def _prerun(self, comm):
+  def _prerun(self, comm, outdir):
     from os.path import join, exists
     from os import getcwd
     from shutil import copy
@@ -82,23 +82,16 @@ class Launch(Incar):
     # creates POTCAR file
     with open(join(self._tempdir, files.POTCAR), 'w') as potcar:
       for s in self._find_species(self._system):
-        if not exists(join(s.path, "POTCAR")):  
+        if not exists(join(s.path, files.POTCAR)):  
           raise AssertionError, "Could not find potcar in " + s.path
-        with open(join(s.path, "POTCAR"), "r") as infile: potcar.writelines(infile)
+        with open(join(s.path, files.POTCAR), "r") as infile: potcar.writelines(infile)
 
-    # checks for CHGCAR
-    indir = self.indir
-    if indir == None: indir = getcwd()
-    chgcar = join(indir, files.CHGCAR)
-    if exists(chgcar): copy(chgcar, self._tempdir)
+    with Changedir(outdir) as outdir: # allows relative paths.
+      with open(join(self._tempdir, files.FUNCCAR), 'w') as file: cPickle.dump(self, file)
 
-    # checks for WAVECAR
-    wavecar = join(indir, files.WAVECAR) 
-    if exists(chgcar): copy(chgcar, self._tempdir)
+    if hasattr(self, "restart"):
+      if hasattr(self.restart, "copyfiles"): self.restart.copyfiles(self._tempdir)
 
-    # checks for EIGENVALUE
-    eigenvalue = join(indir, files.EIGENVALUES) 
-    if exists(eigenvalue): copy(eigenvalue, self._tempdir)
 
   def _run(self, comm):
      """ Isolates calls to vasp itself """
@@ -106,7 +99,7 @@ class Launch(Incar):
      from subprocess import Popen
      from . import files
      from . import call_vasp
-     from ..opt import Redirect
+     from ..opt import redirect
      from ..opt.changedir import Changedir
      # moves to working dir only now.
      stdout = join(self._tempdir, files.STDOUT) 
@@ -116,10 +109,9 @@ class Launch(Incar):
          stdout += ".%i" % (comm.rank)
          stderr += ".%i" % (comm.rank)
      with Changedir(self._tempdir):
-       with Redirect(Redirect.fortran.output, stdout) as stdout:
-         with Redirect(Redirect.fortran.error, stderr) as stderr:
-           if comm != None: comm.barrier()
-           call_vasp(comm)
+       with redirect(fout=stdout, ferr=stderr) as streams:
+         if comm != None: comm.barrier()
+         call_vasp(comm)
              
 #    with open(join(self._tempdir, files.STDOUT), "w") as stdout:
 #      with open(join(self._tempdir, files.STDERR), "w") as stderr:
@@ -134,8 +126,7 @@ class Launch(Incar):
      from shutil import copy
      from . import files
 
-     is_root = comm == None
-     if comm != None: is_root = comm.rank == 0
+     is_root = True if comm == None else comm.rank == 0
 
      if is_root: 
        if not exists(outdir): makedirs(outdir)
@@ -162,12 +153,9 @@ class Launch(Incar):
     # set up
     if structure != None: self._system = structure
     elif not hasattr(self, "_system"): raise RuntimeError, "Internal bug.\n"
-    if outdir == None: outdir = self.indir
-    if outdir == None: outdir = getcwd()
-    outdir = abspath(expanduser(outdir))
+    outdir = getcwd() if outdir == None else abspath(expanduser(outdir))
 
-    is_root = comm == None
-    if comm != None: is_root = comm.rank == 0 
+    is_root = True if comm == None else comm.rank == 0
 
     # creates temporary working directory
     workdir = self.workdir
@@ -178,7 +166,7 @@ class Launch(Incar):
       # or outdir (as relative paths) possible.
       # creates INCAR and KPOINTS.
       # copies POSCAR, POTCAR, possibly WAVECAR and CHGCAR from indir
-      self._prerun(comm)
+      self._prerun(comm, outdir)
 
       # runs vasp.
       self._run(comm)
