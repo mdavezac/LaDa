@@ -111,29 +111,36 @@ class ExtractRefs(object):
   @property
   @make_cached
   def _raw(self):
+    from numpy import array
     vbm_eigs = self.extract_vbm.eigenvalues.copy()
     cbm_eigs = self.extract_cbm.eigenvalues.copy()
 
-    between_refs =       [u for u in cbm_eigs if u >= vbm_ref and u < cbm_ref]
-    between_refs.extend( [u for u in vbm_eigs if u >= vbm_ref and u < cbm_ref])
-    between_refs = array([u for u in set(between_refs)] );
-    between_refs.sort()
+    vbm_ref = self.extract_vbm.escan.eref
+    cbm_ref = self.extract_cbm.escan.eref
+    above_refs =       [u for u in cbm_eigs if u >= cbm_ref]
+    above_refs.extend( [u for u in vbm_eigs if u >= cbm_ref])
+    above_refs = array([u for u in set(above_refs)] );
+    above_refs.sort()
+    below_refs =       [u for u in cbm_eigs if u <= vbm_ref]
+    below_refs.extend( [u for u in vbm_eigs if u <= vbm_ref])
+    below_refs = array([u for u in set(below_refs)] );
+    below_refs.sort()
 
-    return between_refs[0], between_refs[1]
+    return below_refs[-1], above_refs[0]
 
   @property
   def vbm(self):
     """ Greps VBM from calculations. """
     from numpy import amax
     vbm_eigs = self.extract_vbm.eigenvalues.copy()
-    return _raw[0]
+    return self._raw[0]
 
   @property
   def cbm(self):
     """ Greps CBM from calculations. """
     from numpy import amin
     cbm_eigs = self.extract_cbm.eigenvalues.copy()
-    return _raw[1]
+    return self._raw[1]
 
   def oscillator_strength(self, degeneracy=1e-3):
     """ Computes oscillator strength between vbm and cbm. """
