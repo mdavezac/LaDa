@@ -51,6 +51,7 @@ class Tempdir:
            "Could not create temporary working directory."
     assert self.debug != None or len(listdir(self._tempdir)) == 0,\
            "Could not create temporary working directory."
+    if self.comm != None: self.comm.barrier() # syncs procs.
     return self._tempdir
 
   def __exit__(self, type, value, traceback):
