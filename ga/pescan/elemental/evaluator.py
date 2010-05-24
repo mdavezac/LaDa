@@ -49,7 +49,7 @@ class Bandgap(object):
           ( 
             self.escan,\
             structure,\
-            outdir = join(self.outdir, str(self.nbcalc),\
+            outdir = join(self.outdir, str(self.nbcalc)),\
             references=self.references(structure),\
             overwrite = True,\
             comm = comm if comm != None else world 
@@ -85,5 +85,5 @@ class Dipole(Bandgap):
   def __call__(self, indiv, comm = None):
     """ Computes the oscillator strength. """
     out = super(Dipole, self).run(indiv, comm)
-    indiv.oscillator_strength = out.oscillator_strength
-    return out.oscillator_strength
+    indiv.oscillator_strength, indiv.osc_nbstates = out.oscillator_strength
+    return indiv.oscillator_strength
