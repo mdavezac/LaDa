@@ -114,10 +114,10 @@ def read_input(filename, global_dict=None, local_dict = None, paths=None, comm =
   # stuff to import into script.
   from os import environ
   from os.path import abspath, expanduser
-  from math import pi
+  from math import pi 
   from numpy import array, matrix, dot, sqrt, abs, ceil
   from numpy.linalg import norm, det
-  from lada.crystal import Lattice, Site, Atom, Structure, fill_structure
+  from lada.crystal import Lattice, Site, Atom, Structure, fill_structure, FreezeCell, FreezeAtom
   from lada import physics
   from boost.mpi import world
   
@@ -126,7 +126,8 @@ def read_input(filename, global_dict=None, local_dict = None, paths=None, comm =
   global_dict.update( { "environ": environ, "pi": pi, "array": array, "matrix": matrix, "dot": dot,\
                         "norm": norm, "sqrt": sqrt, "ceil": ceil, "abs": abs, "Lattice": Lattice, \
                         "Structure": Structure, "Atom": Atom, "Site": Site, "physics": physics,\
-                        "fill_structure": fill_structure, "world": world });
+                        "fill_structure": fill_structure, "world": world, "FreezeCell": FreezeCell, \
+                        "FreezeAtom": FreezeAtom })
   local_dict = {}
   # Executes input script.
   execfile(filename, global_dict, local_dict)
@@ -138,8 +139,12 @@ def read_input(filename, global_dict=None, local_dict = None, paths=None, comm =
       local_dict[path] = abspath(expanduser(local_dict[path]))
     
   # Fake class which will be updated with the local dictionary.
-  class Dummy: pass
-  result = Dummy()
+  class Input:
+    def __init__(self): self._inputfilepath = filename
+    def __getattr__(self, name):
+      raise AttributeError( "All out of cheese!\nRequired input parameter \"%s\" not found in %s." \
+                            % (name, self._inputfilepath) )
+  result = Input()
   result.__dict__.update(local_dict)
   return result
 

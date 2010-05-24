@@ -168,8 +168,7 @@ def mpi_population_evaluation(self, evaluator, pools = None):
     # Now goes throught individuals which need be evaluated
     for index, indiv in enumerate(iterpops(this.population, this.offspring)):
       if index % pools == color: 
-        evaluator.comm = local_comm
-        fitness = evaluator(indiv)
+        fitness = evaluator(indiv, comm = local_comm)
         if local_comm.rank == 0: gather_these.append( (indiv, fitness) )
 
     # gathers all newly computed individuals. 
