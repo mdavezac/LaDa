@@ -29,7 +29,7 @@ class Individual(object):
       if fabs( self.genes[i] - u ) > 1e-18: return False
     return True
 
-  def __str__(self): return "%s" % (self.genes)
+  def __str__(self): return repr(self.genes)
 
 
 class Crossover(object):
