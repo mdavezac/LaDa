@@ -41,25 +41,25 @@ class Extract(object):
   directory = property(_get_directory, _set_directory)
 
   def __getattr__(self, name):
-    """ Passes on to vff extractor. """
-    if name[0] != '_' and hasattr(self._vffout, name):
-      return getattr(self._vffout, name)
+    """ Passes on public attributes to vff extractor, then to escan functional. """
+    if name[0] != '_':
+      if hasattr(self._vffout, name): return getattr(self._vffout, name)
+      elif hasattr(self.escan, name): return getattr(self.escan, name)
     raise AttributeError("Unknown attribute %s" % (name))
 
   @property
   @broadcast_result(attr=True, which=0)
   def success(self):
-    """ Checks for VFF success.
+    """ Checks for Escan success.
         
         At this point, checks for files and 
     """
     from os.path import exists, join
-    path = self.OUTCAR
-    if len(self.directory): path = join(self.directory, self.OUTCAR)
+    path = join(self.directory, self.OUTCAR) if len(self.directory) else self.OUTCAR
     if not exists(path): return False
 
     with open(path, "r") as file:
-      good = 0
+      good = 0 if self.solo().do_escan == True else 1
       for line in file:
         if line.find("FINAL eigen energies, in eV") != -1: good += 1
         if line.find("# Computed ESCAN in:") != -1 and good == 1: good += 1; break
@@ -70,8 +70,9 @@ class Extract(object):
   def escan(self):
     """ Greps escan functional from self.L{OUTCAR}. """
     from os.path import exists, join
-    from . import Escan, localH, nonlocalH, soH, AtomicPotential
     from numpy import array
+    from ..opt.changedir import Changedir
+    from . import Escan, localH, nonlocalH, soH, AtomicPotential
     
     path = self.OUTCAR
     if len(self.directory): path = join(self.directory, self.OUTCAR)
@@ -84,7 +85,9 @@ class Extract(object):
                    "vff": self.vff, "Escan": Escan, "localH": localH,\
                    "nonlocalH": nonlocalH, "soH": soH, "AtomicPotential":AtomicPotential,\
                    "array": array }
-    exec get_functional(self) in globals(), local_dict
+    # moves to output directory to get relative paths right.
+    with Changedir(self.directory) as cwd:
+      exec get_functional(self) in globals(), local_dict
     return local_dict["escan"]
 
 
@@ -357,4 +360,6 @@ class Extract(object):
     return copy
 
   def __repr__(self):
-    return "%s(\"%s\")" % (self.__class__.__name__, self.directory)
+    from os.path import relpath
+    return "%s(\"%s\")" % (self.__class__.__name__, relpath(self.directory))
+

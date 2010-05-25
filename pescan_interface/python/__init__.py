@@ -118,9 +118,10 @@ class AtomicPotential(object):
 
   def __repr__(self):
     """ Tuple representation of self. """
-    result = "\"%s\"" % (self.filepath)
+    from os.path import relpath
+    result = "\"%s\"" % (relpath(self.filepath))
     if self.nonlocal == None: result += ", None"
-    else: result += ", \"%s\"" % (self.nonlocal)
+    else: result += ", \"%s\"" % (relpath(self.nonlocal))
     result += ", %f, %f, %f, %f, %f" % (self.s, self.p, self.d, self.pnl, self.dnl)
     return result
 
@@ -275,6 +276,7 @@ class Escan(object):
                               """ )
 
   def __repr__(self):
+    from os.path import relpath
     result  = str(self.vff)
     result += "# Escan definition.\n"
     result += "escan = %s()\n" % (self.__class__.__name__)
@@ -310,7 +312,7 @@ class Escan(object):
     result += "escan.ERRCAR = \"%s\"\n" % (self.ERRCAR)
     result += "escan.WAVECAR = \"%s\"\n" % (self.WAVECAR)
     result += "escan.workdir = \"%s\"\n" % (self.workdir)
-    result += "escan.maskr = \"%s\"\n" % (self.maskr)
+    result += "escan.maskr = \"%s\"\n" % (relpath(self.maskr))
     result += "escan._INCAR = \"%s\"\n" % (self._INCAR)
     result += "escan._POTCAR = \"%s\"\n" % (self._POTCAR)
     result += "escan._GENCAR = \"%s\"\n" % (self._GENCAR)
@@ -405,23 +407,24 @@ class Escan(object):
         print >>file, "# Escan calculation on ", time.strftime("%m/%d/%y", local_time),\
                       " at ", time.strftime("%I:%M:%S %p", local_time)
         if len(structure.name) != 0: print "# Structure named ", structure.name 
-        print >>file, repr(self)
+        # changes directory to get relative paths.
+        with Changedir(outdir, comm = comm) as outdir_wd:
+          print >>file, repr(self)
         print >>file, "# Performing calculations. "
       
       # makes calls to run
       self._run_vff(structure, outdir, comm, cout, overwrite)
-      if self.genpotrun != None and self.do_escan == False: return None 
       self._run_genpot(comm, outdir)
-      if self.do_escan == False: return None
-      self._run_escan(comm, structure)
+      if self.do_escan == True:
+        self._run_escan(comm, structure)
+        extract = Extract(comm = comm, directory = outdir, escan = self)
+        assert not extract.success, RuntimeError("Escan calculations did not complete.")
      
       with open(cout, "a") as file: 
         timing = time.time() - timing
         hour = int(float(timing/3600e0))
         minute = int(float((timing - hour*3600)/60e0))
         second = (timing - hour*3600-minute*60)
-        extract = Extract(comm = comm, directory = outdir, escan = self)
-        assert not extract.success, RuntimeError("Escan calculations did not complete.")
         print >> file, "# Computed ESCAN in: %i:%i:%f."  % (hour, minute, second) 
 
   def _run_vff(self, structure, outdir, comm, cout, overwrite):

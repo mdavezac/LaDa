@@ -2,7 +2,7 @@
 from ..opt.decorators import make_cached
 from _extract import Extract as ExtractVasp
 
-def band_gap(escan, structure, outdir=None, references=None, comm=None, n=5, **kwargs):
+def band_gap(escan, structure, outdir=None, references=None, n=5, overwrite = False, **kwargs):
   """ Computes bandgap of a structure with a given escan functional. 
   
       The band-gap is computed using an all-electron method (if references=None
@@ -17,8 +17,9 @@ def band_gap(escan, structure, outdir=None, references=None, comm=None, n=5, **k
       cannot be made sense of, an electron-calculation is performed.
   """
   from os import getcwd
-  from os.path import abspath
+  from os.path import abspath, exists, join
   from copy import deepcopy
+  from boost.mpi import world, broadcast
 
   assert "do_escan" not in kwargs,\
          ValueError("\"do_escan\" is not an admissible argument of bandgap.")
@@ -27,9 +28,25 @@ def band_gap(escan, structure, outdir=None, references=None, comm=None, n=5, **k
          
   if outdir == None: outdir = getcwd()
   outdir    = abspath(outdir)
+
+  comm = kwargs.pop("comm", world)
+  if not overwrite:  # check for previous results.
+    paths = join(outdir, "AE"), join(outdir, "VBM"), join(outdir, "CBM")
+    if broadcast(comm, exists(paths[0]) if comm.rank == 0 else None, 0): 
+      result = ExtractAE( ExtractVasp(paths[0], comm = comm) )
+      if result.success: return result
+    elif broadcast(comm, exists(paths[1]) if comm.rank == 0 else None, 0): 
+      if broadcast(comm, exists(paths[2]) if comm.rank == 0 else None, 0): 
+        result = ExtractRefs( ExtractVasp(paths[1], comm = comm),\
+                              ExtractVasp(paths[2], comm = comm),
+                              ExtractVasp(outdir, comm = comm) )
+        if result.success: return result
+
   
-  return _band_gap_ae_impl(escan, structure, outdir, comm, **kwargs) if references == None\
-         else _band_gap_refs_impl(escan, structure, outdir, references, comm, n, **kwargs) 
+  kwargs["overwrite"] = overwrite
+  kwargs["comm"] = comm
+  return _band_gap_ae_impl(escan, structure, outdir, **kwargs) if references == None\
+         else _band_gap_refs_impl(escan, structure, outdir, references, n, **kwargs) 
 
 class ExtractAE(ExtractVasp):
   """ Band-gap extraction class. """
@@ -62,14 +79,13 @@ class ExtractAE(ExtractVasp):
 
   def oscillator_strength(self, degeneracy=1e-3, attenuate=False):
     """ Computes oscillator strength between vbm and cbm. """
-    from numpy import transpose
-    from numpy.linalg import norm, det
+    from numpy import transpose, dot
+    from numpy.linalg import det
     from ..physics import a0, Rydberg
     from . import dipole_matrix_elements
     result, nstates = 0e0, 0
-    units = det(self.structure.cell * self.structure.scale / a0("A") )  \
-            * det(self.structure.cell * self.structure.scale / a0("A") )\
-            * 2e0/3e0 * Rydberg("eV") 
+    units = det(self.structure.cell * self.structure.scale / a0("A") )  
+    units *= units * 2e0/3e0 * Rydberg("eV") 
     gvectors = transpose(self.gvectors)
     for wfnA in self.gwfns:
       if abs(wfnA.eigenvalue - self.cbm) > degeneracy: continue
@@ -77,11 +93,11 @@ class ExtractAE(ExtractVasp):
         if abs(wfnB.eigenvalue - self.vbm) > degeneracy: continue
         nstates += 1
         dme = wfnA.braket(gvectors, wfnB, attenuate=attenuate)
-        result += 1e0 / (wfnA.eigenvalue - wfnB.eigenvalue) * norm(dme).real
+        result += dot(dme, dme.conjugate()).real / (wfnA.eigenvalue - wfnB.eigenvalue) 
     return units * result, nstates
     
 
-def _band_gap_ae_impl(escan, structure, outdir, comm, **kwargs):
+def _band_gap_ae_impl(escan, structure, outdir, **kwargs):
   """ Computes bandgap of a structure using all-electron method. """
   from os.path import join
   from lada.escan._escan import nb_valence_states
@@ -91,8 +107,8 @@ def _band_gap_ae_impl(escan, structure, outdir, comm, **kwargs):
     del kwargs["eref"]
   outdir = join(outdir, "AE")
   nbstates = nb_valence_states(structure)
-  extract = escan( structure, outdir = outdir, comm = comm, eref = None,\
-                   nbstates = nbstates + 4, **kwargs)
+  extract = escan( structure, outdir = outdir, eref = None,\
+                   nbstates = nbstates + escan.nbstates, **kwargs)
   return ExtractAE(extract)
 
 class ExtractRefs(object):
@@ -149,17 +165,16 @@ class ExtractRefs(object):
 
   def oscillator_strength(self, degeneracy=1e-3, attenuate=False):
     """ Computes oscillator strength between vbm and cbm. """
-    from numpy import transpose, all, abs
-    from numpy.linalg import norm, det
+    from numpy import transpose, all, abs, dot
+    from numpy.linalg import det
     from ..physics import a0, Rydberg
     from . import dipole_matrix_elements
 
     assert self.extract_vbm.comm == self.extract_cbm.comm
     assert self.extract_vbm.gvectors.shape == self.extract_cbm.gvectors.shape
     assert all( abs(self.extract_vbm.gvectors - self.extract_cbm.gvectors) < 1e-12 )
-    units = det(self.structure.cell * self.structure.scale / a0("A") )  \
-            * det(self.structure.cell * self.structure.scale / a0("A") )\
-            * 2e0/3e0 * Rydberg("eV") 
+    units = det(self.structure.cell * self.structure.scale / a0("A") )  
+    units *= units * 2e0/3e0 * Rydberg("eV") 
     result, nstates = 0e0, 0
     gvectors = transpose(self.extract_vbm.gvectors)
     for wfnA in self.extract_cbm.gwfns:
@@ -168,15 +183,20 @@ class ExtractRefs(object):
         if abs(wfnB.eigenvalue - self.vbm) > degeneracy: continue
         nstates += 1
         dme = wfnA.braket(gvectors, wfnB, attenuate=attenuate)
-        result += 1e0 / (wfnA.eigenvalue - wfnB.eigenvalue) * norm(dme).real
+        result += dot(dme, dme.conjugate()).real / (wfnA.eigenvalue - wfnB.eigenvalue) 
     return units * result, nstates
+
+  @property
+  def success(self):
+    """ True if all calculations were successfull. """
+    return self.extract_vff.success and self.extract_vbm.success and self.extract_cbm.success
 
   def __getattr__(self, name): 
     """ Sends to vff output. """
     if hasattr(self.extract_vff, name): return getattr(self.extract_vff, name)
     raise AttributeError("Unknown attribute %s." % (name))
 
-def _band_gap_refs_impl( escan, structure, outdir, references, comm, n=5,\
+def _band_gap_refs_impl( escan, structure, outdir, references, n=5,\
                          overlap_factor=10e0, **kwargs):
   """ Computes band-gap using two references. """
   from os.path import join, exists
@@ -201,7 +221,7 @@ def _band_gap_refs_impl( escan, structure, outdir, references, comm, n=5,\
   # first computes vff and genpot unless given.
   if genpotrun == None or vffrun == None: 
     vffout = escan( structure, outdir=outdir, do_escan=False, genpotrun=genpotrun,\
-                    vffrun=vffrun, comm = comm, **kwargs )
+                    vffrun=vffrun, **kwargs )
     if genpotrun == None: genpotrun = vffout
     if vffrun == None: vffrun = vffout
   else: vffout = vffrun
@@ -213,7 +233,7 @@ def _band_gap_refs_impl( escan, structure, outdir, references, comm, n=5,\
     if recompute[0]:
       vbm_out = escan\
                 (
-                  structure, outdir=join(outdir,"VBM"), comm=comm,\
+                  structure, outdir=join(outdir,"VBM"), \
                   eref=vbm_ref, overwrite=True, vffrun=vffrun,\
                   genpotrun=genpotrun, nbstates=nbstates, **kwargs 
                 )
@@ -222,7 +242,7 @@ def _band_gap_refs_impl( escan, structure, outdir, references, comm, n=5,\
     if recompute[1]:
       cbm_out = escan\
                 (
-                  structure, outdir=join(outdir, "CBM"), comm=comm,\
+                  structure, outdir=join(outdir, "CBM"), \
                   eref=cbm_ref, overwrite=True, vffrun=vffrun,
                   genpotrun=genpotrun, nbstates=nbstates, **kwargs
                 )
@@ -274,7 +294,7 @@ def _band_gap_refs_impl( escan, structure, outdir, references, comm, n=5,\
     recompute = [True, True]
     iter += 1
   else: # ran through all iterations and failed.
-    return _band_gap_ae_impl(escan, structure, outdir, comm)
+    return _band_gap_ae_impl(escan, structure, outdir, **kwargs)
   return ExtractRefs(vbm_out, cbm_out, vffout)
 
 
