@@ -84,6 +84,7 @@ class Vasp(Launch):
     """ 
     from copy import deepcopy
     from os.path import exists, isdir
+    from boost.mpi import broadcast
 
     # make this functor stateless.
     this = deepcopy(self)

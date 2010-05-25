@@ -371,7 +371,7 @@ class Restart(object):
 
   @broadcast_result(key=True)
   def incar_string(self, vasp):
-    import files
+    from .. import files
     istart = "0   # start from scratch"
     icharg = "2   # superpositions of atomic densities"
     if self.value == None or len(self.value) == 0:
@@ -393,10 +393,11 @@ class Restart(object):
 
     return  "ISTART = %s\nICHARG = %s" % (istart, icharg)
 
-  def copyfiles(workdir):
+  def copyfiles(self, workdir):
     """ Copy restart files from input run. """
+    if self.value == None: return
     # checks for CHGCAR
-    indir = self.directory
+    indir = self.value.directory
     if indir == None: indir = getcwd()
     chgcar = join(indir, files.CHGCAR)
     if exists(chgcar): copy(chgcar, workdir)

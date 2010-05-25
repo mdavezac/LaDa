@@ -27,10 +27,10 @@ class Launch(Incar):
         @type kpoints: see L{kpoints.Density} and L{kpoints.Gamma}
     """
     from os import getcwd
+    from os.path import abspath, expanduser
     Incar.__init__(self) 
 
-    self.workdir = abspath(expanduser(this.workdir)) if this.workdir != None\
-                   else getcwd()
+    self.workdir = abspath(expanduser(workdir)) if workdir != None else getcwd()
     # sets species
     if species != None: self.species = species
     self.kpoints =  kpoints
@@ -55,7 +55,8 @@ class Launch(Incar):
     return results
 
   def _prerun(self, comm, outdir):
-    from os.path import join, exists
+    import cPickle
+    from os.path import join, exists, abspath
     from os import getcwd
     from shutil import copy
     from subprocess import Popen, PIPE
@@ -86,8 +87,10 @@ class Launch(Incar):
           raise AssertionError, "Could not find potcar in " + s.path
         with open(join(s.path, files.POTCAR), "r") as infile: potcar.writelines(infile)
 
+    print self._tempdir, files.FUNCCAR
+    path = join(abspath(self._tempdir), files.FUNCCAR)
     with Changedir(outdir) as outdir: # allows relative paths.
-      with open(join(self._tempdir, files.FUNCCAR), 'w') as file: cPickle.dump(self, file)
+      with open(path, 'w') as file: cPickle.dump((self), file)
 
     if hasattr(self, "restart"):
       if hasattr(self.restart, "copyfiles"): self.restart.copyfiles(self._tempdir)
@@ -161,7 +164,7 @@ class Launch(Incar):
     workdir = self.workdir
     if workdir == None: workdir = getcwd()
     workdir = abspath(expanduser(workdir))
-    with Tempdir(workdir=workdir, comm=comm) as self._tempdir: 
+    with Tempdir(workdir=workdir, comm=comm, keep=True) as self._tempdir: 
       # We do not move to working directory to make copying of files from indir
       # or outdir (as relative paths) possible.
       # creates INCAR and KPOINTS.

@@ -4,6 +4,7 @@ class _ExtractImpl(object):
   """ Implementation class for extracting data from VASP output """
 
   def __init__(self, directory = "", comm = None):
+    from .. import files
     """ Initializes the extraction class. 
 
         @param comm: MPI group communicator. Extraction will be performed
@@ -51,7 +52,7 @@ class _ExtractImpl(object):
     from os.path import exists, join
     from re import compile, X as re_X
 
-    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, path)
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = None
@@ -71,7 +72,7 @@ class _ExtractImpl(object):
     from os.path import exists, join
     from re import compile, X as re_X
 
-    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, path)
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = None
@@ -91,7 +92,7 @@ class _ExtractImpl(object):
     from os.path import exists, join
     from re import compile
 
-    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, path)
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = None
@@ -111,8 +112,7 @@ class _ExtractImpl(object):
     from os.path import exists, join
     from re import compile
 
-    path = self.OUTCAR 
-    if len(self.directory): path = join(self.directory, path)
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = None
@@ -133,8 +133,7 @@ class _ExtractImpl(object):
 
     species_in = self.species
 
-    path = self.CONTCAR 
-    if len(self.directory): path = join(self.directory, path)
+    path = self.CONTCAR if len(self.directory) == 0 else join(self.directory, self.CONTCAR)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
     result = read_poscar(species_in, path, comm=self.comm)
     result.energy = self.energy
@@ -147,8 +146,7 @@ class _ExtractImpl(object):
     from os.path import exists, join
     from re import compile, X as re_X
 
-    path = self.OUTCAR 
-    if len(self.directory): path = join(self.directory, path)
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = []
@@ -168,8 +166,7 @@ class _ExtractImpl(object):
     from os.path import exists, join
     from re import compile, search, X as re_X
 
-    path = self.OUTCAR 
-    if len(self.directory): path = join(self.directory, path)
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = None
@@ -243,8 +240,7 @@ class _ExtractImpl(object):
     from re import compile, search 
     from numpy import array
 
-    path = self.OUTCAR 
-    if len(self.directory): path = join(self.directory, path)
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = []
@@ -270,8 +266,7 @@ class _ExtractImpl(object):
     from re import compile, search 
     from numpy import array
 
-    path = self.OUTCAR 
-    if len(self.directory): path = join(self.directory, path)
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = []
@@ -296,8 +291,7 @@ class _ExtractImpl(object):
     from os.path import exists, join
     from numpy import array
 
-    path = self.OUTCAR 
-    if len(self.directory): path = join(self.directory, path)
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = []
@@ -347,8 +341,7 @@ class _ExtractImpl(object):
     import re 
     from os.path import exists, join
 
-    path = self.OUTCAR 
-    if len(self.directory): path = join(self.directory, path)
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = None
@@ -385,7 +378,7 @@ class _ExtractImpl(object):
     from os.path import exists, join
     from numpy import array
 
-    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, path)
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = []
@@ -420,8 +413,7 @@ class _ExtractImpl(object):
       if self.directory != "": path = join(self.directory, path)
       if not exists(path): return False
       
-    path = self.OUTCAR 
-    if len(self.directory): path = join(self.directory, path)
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
 
     with open(path, "r") as file:
       regex = re.compile(r"""General\s+timing\s+and\s+accounting
