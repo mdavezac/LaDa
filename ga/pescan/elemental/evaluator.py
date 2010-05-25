@@ -99,7 +99,6 @@ class Dipole(Bandgap):
   @count_calls
   def __call__(self, indiv, comm = None):
     """ Computes the oscillator strength. """
-    print "nbcalc: ", self.nbcalc
     out = super(Dipole, self).run(indiv, comm)
     indiv.oscillator_strength, indiv.osc_nbstates = out.oscillator_strength()
     return indiv.oscillator_strength
