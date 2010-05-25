@@ -70,10 +70,11 @@ class ExtractAE(ExtractVasp):
     units = det(self.structure.cell * self.structure.scale / a0("A") )  \
             * det(self.structure.cell * self.structure.scale / a0("A") )\
             * 2e0/3e0 * Rydberg("eV") 
+    gvectors = transpose(self.gvectors)
     for wfnA in self.gwfns:
-      if abs(wfnA.eigenvalue - self.vbm) > degeneracy: continue
+      if abs(wfnA.eigenvalue - self.cbm) > degeneracy: continue
       for wfnB in self.gwfns:
-        if abs(wfnB.eigenvalue - self.cbm) > degeneracy: continue
+        if abs(wfnB.eigenvalue - self.vbm) > degeneracy: continue
         nstates += 1
         dme = wfnA.braket(gvectors, wfnB, attenuate=attenuate)
         result += 1e0 / (wfnA.eigenvalue - wfnB.eigenvalue) * norm(dme).real
@@ -98,12 +99,14 @@ class ExtractRefs(object):
   """ Band-gap extraction class for folded spectrum 2-ref method. """
   is_ae = False
   """ This was not an all-electron bandgap calculation. """
-  def __init__(self, vbm_out, cbm_out):
+  def __init__(self, vbm_out, cbm_out, vff_out):
     super(ExtractRefs, self).__init__()
     self.extract_vbm = vbm_out
     """ VBM extraction method. """
     self.extract_cbm = cbm_out
     """ CBM extraction method. """
+    self.extract_vff = vff_out
+    """ VFF extraction method. """
 
   @property
   def bandgap(self):
@@ -150,24 +153,31 @@ class ExtractRefs(object):
     from numpy.linalg import norm, det
     from ..physics import a0, Rydberg
     from . import dipole_matrix_elements
-    assert self.vbm_out.gvectors.shape == self.cmb_out.gvectors.shape
-    assert all( abs(self.vbm_out.gvectors - self.cmb_out.gvectors) < 1e-12 )
 
+    assert self.extract_vbm.comm == self.extract_cbm.comm
+    assert self.extract_vbm.gvectors.shape == self.extract_cbm.gvectors.shape
+    assert all( abs(self.extract_vbm.gvectors - self.extract_cbm.gvectors) < 1e-12 )
     units = det(self.structure.cell * self.structure.scale / a0("A") )  \
             * det(self.structure.cell * self.structure.scale / a0("A") )\
             * 2e0/3e0 * Rydberg("eV") 
     result, nstates = 0e0, 0
-    gvectors = transpose(self.vbm_out.gvectors)
-    for wfnA in self.cbm_out.gwfns:
-      if abs(wfnA.eigenvalue - self.vbm) > degeneracy: continue
-      for wfnB in self.vbm_out.gwfns:
-        if abs(wfnB.eigenvalue - self.cbm) > degeneracy: continue
+    gvectors = transpose(self.extract_vbm.gvectors)
+    for wfnA in self.extract_cbm.gwfns:
+      if abs(wfnA.eigenvalue - self.cbm) > degeneracy: continue
+      for wfnB in self.extract_vbm.gwfns:
+        if abs(wfnB.eigenvalue - self.vbm) > degeneracy: continue
         nstates += 1
         dme = wfnA.braket(gvectors, wfnB, attenuate=attenuate)
         result += 1e0 / (wfnA.eigenvalue - wfnB.eigenvalue) * norm(dme).real
     return units * result, nstates
 
-def _band_gap_refs_impl(escan, structure, outdir, references, comm, n=5, **kwargs):
+  def __getattr__(self, name): 
+    """ Sends to vff output. """
+    if hasattr(self.extract_vff, name): return getattr(self.extract_vff, name)
+    raise AttributeError("Unknown attribute %s." % (name))
+
+def _band_gap_refs_impl( escan, structure, outdir, references, comm, n=5,\
+                         overlap_factor=10e0, **kwargs):
   """ Computes band-gap using two references. """
   from os.path import join, exists
   from shutil import copyfile
@@ -175,6 +185,7 @@ def _band_gap_refs_impl(escan, structure, outdir, references, comm, n=5, **kwarg
   from ..opt.changedir import Changedir
   
   # check/correct input arguments
+  if "overwrite" in kwargs: del kwargs["overwrite"]
   nbstates = kwargs.pop("nbstates", escan.nbstates)
   if nbstates < 2: nbstates = 2
   if "eref" in kwargs:
@@ -193,6 +204,7 @@ def _band_gap_refs_impl(escan, structure, outdir, references, comm, n=5, **kwarg
                     vffrun=vffrun, comm = comm, **kwargs )
     if genpotrun == None: genpotrun = vffout
     if vffrun == None: vffrun = vffout
+  else: vffout = vffrun
 
   iter, continue_loop = 0, True
   recompute = [True, True]
@@ -240,18 +252,18 @@ def _band_gap_refs_impl(escan, structure, outdir, references, comm, n=5, **kwarg
     deltas = [a[gap_index] - a[0], a[gap_index+1] - a[gap_index], a[-1] - a[gap_index+1]]
     # Check pathological case where vbm and cbm give essentially same eigenvalues.
     if gap_index == 0 and below_refs.size == 0:
-      if deltas[1] > 10e0*deltas[2]: vbm_ref -= deltas[1] * 0.95; recompute[0] = False
+      if deltas[1] > overlap_factor * deltas[2]: vbm_ref -= deltas[1] * 0.95; recompute[0] = False
       else: continue_loop = False;
       continue 
     if gap_index == len(a)-1 and above_refs.size == 0:
-      if deltas[1] > 10e0*deltas[1]: cbm_ref += deltas[1] * 0.95; recompute[1] = False
+      if deltas[1] > overlap_factor * deltas[1]: cbm_ref += deltas[1] * 0.95; recompute[1] = False
       else: continue_loop = False;
       continue #
     # Computes actual gap.
     if gap_index == 0: deltas[1] += vbm_ref - below_refs[-1]
     if gap_index == len(a)-1: deltas[1] += above_refs[0] - cbm_ref 
     # case where no gap can be truly determined.
-    if not (deltas[1] > 10e0 * deltas[0] and deltas[1] > 10e0 * deltas[2]):
+    if not (deltas[1] > overlap_factor * deltas[0] and deltas[1] > overlap_factor * deltas[2]):
       continue_loop = False; continue # go to all electron calculation.
 
     # finally, recomputation case. Sets reference to best possible values.
@@ -263,7 +275,7 @@ def _band_gap_refs_impl(escan, structure, outdir, references, comm, n=5, **kwarg
     iter += 1
   else: # ran through all iterations and failed.
     return _band_gap_ae_impl(escan, structure, outdir, comm)
-  return ExtractRefs(vbm_out, cbm_out)
+  return ExtractRefs(vbm_out, cbm_out, vffout)
 
 
 

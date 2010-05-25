@@ -40,30 +40,11 @@ class Extract(object):
     self._directory = dir
   directory = property(_get_directory, _set_directory)
 
-  @property
-  def structure(self): 
-    """ Greps structure from self.L{vff}.L{OUTCAR} """
-    return self._vffout.structure
-  @property
-  def vff(self): 
-    """ Greps vff functional from self.L{vff}.L{OUTCAR} """
-    return self._vffout.vff
-  @property
-  def lattice(self): 
-    """ Greps lattice from self.L{vff}.L{OUTCAR} """
-    return self._vffout.lattice
-  @property
-  def minimizer(self): 
-    """ Greps minimizer from self.L{vff}.L{OUTCAR} """
-    return self._vffout.minimizer
-  @property
-  def energy(self): 
-    """ Greps strain energy from self.L{vff}.L{OUTCAR} """
-    return self._vffout.energy
-  @property
-  def stress(self): 
-    """ Greps stress from self.L{vff}.L{OUTCAR} """
-    return self._vffout.stess
+  def __getattr__(self, name):
+    """ Passes on to vff extractor. """
+    if name[0] != '_' and hasattr(self._vffout, name):
+      return getattr(self._vffout, name)
+    raise AttributeError("Unknown attribute %s" % (name))
 
   @property
   @broadcast_result(attr=True, which=0)
@@ -190,7 +171,6 @@ class Extract(object):
   def gwfns(self):
     """ Creates list of Wavefuntion objects. """
     from _wfns import Wavefunction
-    if self._raw_gwfns_data == None: return None
     result = []
     if self.is_spinor:
       if self.is_krammer:
@@ -230,7 +210,6 @@ class Extract(object):
   def rwfns(self):
     """ Creates list of rWavefuntion objects. """
     from ._wfns import rWavefunction, gtor_fourrier
-    if self._raw_gwfns_data == None: return
     result = []
     if self.is_spinor:
       if self.is_krammer:
@@ -240,16 +219,17 @@ class Extract(object):
                            self.rvectors, self.gvectors, self.comm )
         for i, eig in enumerate(self.eigenvalues):
           if i%2 == 0:
-            rwfn = rWavefunction(i, eig, self._raw_rwfns[0][:,i/2,0], self._raw_rwfns[0][:,i/2,1])
+            rwfn = rWavefunction( self.comm, i, eig, self._raw_rwfns[0][:,i/2,0],\
+                                  self._raw_rwfns[0][:,i/2,1])
           else: 
-            rwfn = rWavefunction(i, eig, -self._raw_rwfns[1][:,i/2,1].conjugate(),\
+            rwfn = rWavefunction(self.comm, i, eig, -self._raw_rwfns[1][:,i/2,1].conjugate(),\
                                  self._raw_rwfns[0][:,i/2,0].conjugate())
           result.append(rwfn)
       else: # no krammer degeneracy
         self._raw_rwfns = \
             gtor_fourrier(self.raw_gwfns, self.rvectors, self.gvectors, self.comm)
         for i, eig in enumerate(self.eigenvalues):
-          rwfn = rWavefunction(i, eig, self._raw_rwfns[:,i,0], self._raw_rwfns[:,i,1])
+          rwfn = rWavefunction(self.comm, i, eig, self._raw_rwfns[:,i,0], self._raw_rwfns[:,i,1])
           result.append(rwfn)
     else: # no spin polarization.
       if self.is_krammer:
@@ -258,12 +238,12 @@ class Extract(object):
             gtor_fourrier( self.raw_gwfns[self.inverse_indices,:,:],\
                            self.rvectors, self.gvectors, self.comm )
         for i, eig in enumerate(self.eigenvalues):
-          result.append( rWavefunction(i, eig, self._raw_rwfns[i%2][:,i/2,0]) )
+          result.append( rWavefunction(self.comm, i, eig, self._raw_rwfns[i%2][:,i/2,0]) )
       else: # no krammer degeneracy
         self._raw_rwfns = \
             gtor_fourrier(self.raw_gwfns, self.rvectors, self.gvectors, self.comm)
         for i, eig in enumerate(self.eigenvalues):
-          result.append( rWavefunction(i, eig, self._raw_rwfns[:,i,0]) )
+          result.append( rWavefunction(self.comm, i, eig, self._raw_rwfns[:,i,0]) )
     return result
 
   @property
@@ -289,14 +269,8 @@ class Extract(object):
     from ._escan import read_wavefunctions
     from . import soH
 
-    assert self.comm.size >= self.nnodes,\
-           RuntimeError("Must read wavefunctions with at least "\
-                        "as many nodes as they were written to disk.")
-    if self.comm.size > self.nnodes:
-      color = 0 if self.comm.rank < self.nnodes else 1
-      local_comm = self.comm.split(color)
-    else: color, local_comm = 0, self.comm
-    if color == 1: return None
+    assert self.comm.size == self.nnodes,\
+           RuntimeError("Must read wavefunctions with as many nodes as they were written to disk.")
     with redirect(fout="") as streams:
       with Changedir(self.directory) as directory:
         assert exists(self.escan.WAVECAR),\
@@ -304,7 +278,7 @@ class Extract(object):
         self.escan._write_incar(self.comm, self.structure)
         nbstates = self.escan.nbstates if self.escan.potential == soH and norm(self.escan.kpoint)\
                    else self.escan.nbstates / 2
-        result = read_wavefunctions(self.escan, range(nbstates), local_comm)
+        result = read_wavefunctions(self.escan, range(nbstates), self.comm)
         remove(self.escan._INCAR + "." + str(world.rank))
     return result
 

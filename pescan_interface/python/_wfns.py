@@ -36,7 +36,7 @@ class rWavefunction(object):
         perform scalar product.
     """
     from numpy import conjugate, dot, multiply
-    from boost.mpi import reduce
+    from boost.mpi import all_reduce
     a = conjugate(self.up)
     b = multiply(operator, ket.up) if operator != None else ket.up
     result = dot(b, a)
@@ -44,7 +44,7 @@ class rWavefunction(object):
       a = conjugate(self.down)
       b = multiply(operator, ket.down) if operator != None else ket.down
       result += dot(b, a)
-    return reduce(self.comm, result, lambda x,y: x+y, 0)
+    return all_reduce(self.comm, result, lambda x,y: x+y) 
 
 class Wavefunction(rWavefunction):
   is_gspace = True

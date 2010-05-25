@@ -1,5 +1,19 @@
 """ Contains evaluators for Pescan properties """
 from numpy import array as np_array
+def count_calls(method):
+  """ Increments calls at each call. """
+  def wrapped(*args, **kwargs):
+    if not hasattr(args[0], "nbcalc"): args[0].nbcalc = 0
+    result = method(*args, **kwargs)
+    args[0].nbcalc += 1
+    return result
+  wrapped.__name__ = method.__name__
+  wrapped.__doc__  = method.__doc__
+  wrapped.__module__ = method.__module__
+  wrapped.__dict__.update(method.__dict__)
+  return wrapped
+
+  
 class Bandgap(object):
   """ An evaluator function for bandgaps at S{Gamma}. """
   def __init__(self, converter, escan, outdir = None, references = None, **kwargs):
@@ -44,14 +58,13 @@ class Bandgap(object):
     from ....escan import bandgap
  
     # performs calculation.
-    structure = selfconverter(indiv.genes)
+    structure = self.converter(indiv.genes)
     out = bandgap\
           ( 
             self.escan,\
             structure,\
             outdir = join(self.outdir, str(self.nbcalc)),\
             references=self.references(structure),\
-            overwrite = True,\
             comm = comm if comm != None else world 
           )
 
@@ -65,6 +78,7 @@ class Bandgap(object):
     # returns extractor
     return out
 
+  @count_calls
   def __call__(self, indiv, comm = None):
     """ Computes and returns bandgap. 
     
@@ -82,8 +96,10 @@ class Dipole(Bandgap):
     """ Initializes the dipole element evaluator.  """
     super(Dipole, self).__init__(*args, **kwargs)
 
+  @count_calls
   def __call__(self, indiv, comm = None):
     """ Computes the oscillator strength. """
+    print "nbcalc: ", self.nbcalc
     out = super(Dipole, self).run(indiv, comm)
-    indiv.oscillator_strength, indiv.osc_nbstates = out.oscillator_strength
+    indiv.oscillator_strength, indiv.osc_nbstates = out.oscillator_strength()
     return indiv.oscillator_strength

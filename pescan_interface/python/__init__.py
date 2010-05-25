@@ -567,9 +567,9 @@ class Escan(object):
 
 
     self._write_incar(comm, structure)
-    comm.barrier() # syncs all procs to make sure we are reading from same file.
     if comm.rank == 0: copyfile(self.maskr, basename(self.maskr))
     with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 
+      comm.barrier() 
       _call_escan(comm)
 
   def _get_kpoint(self, structure, comm):

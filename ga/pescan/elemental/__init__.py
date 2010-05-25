@@ -117,7 +117,7 @@ class Converter(object):
 
     if hasattr(object, "cell"): # crystal structure
       def which(u): # finds type
-        return  if u.type == self.structure.lattice.sites[u.site].type[0] else 1: 
+        return 0 if u.type == self.structure.lattice.sites[u.site].type[0] else 1
       return array([ which(u) for u in self.structure.atoms ])
     else:  # bitstring.
       if len(object) != len(self.structure.atoms): 

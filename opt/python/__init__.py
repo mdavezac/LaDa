@@ -113,7 +113,7 @@ def read_input(filename, global_dict=None, local_dict = None, paths=None, comm =
   """ Executes input script and returns local dictionary (as class instance). """
   # stuff to import into script.
   from os import environ
-  from os.path import abspath, expanduser
+  from os.path import abspath, expanduser, join
   from math import pi 
   from numpy import array, matrix, dot, sqrt, abs, ceil
   from numpy.linalg import norm, det
@@ -127,7 +127,8 @@ def read_input(filename, global_dict=None, local_dict = None, paths=None, comm =
                         "norm": norm, "sqrt": sqrt, "ceil": ceil, "abs": abs, "Lattice": Lattice, \
                         "Structure": Structure, "Atom": Atom, "Site": Site, "physics": physics,\
                         "fill_structure": fill_structure, "world": world, "FreezeCell": FreezeCell, \
-                        "FreezeAtom": FreezeAtom })
+                        "FreezeAtom": FreezeAtom, "join": join, "abspath": abspath, \
+                        "expanduser": expanduser})
   local_dict = {}
   # Executes input script.
   execfile(filename, global_dict, local_dict)
