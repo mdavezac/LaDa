@@ -101,6 +101,43 @@ def read_poscar(types=None, path=None, check_lattice=False):
         result.atoms.append( Atom(pos, type) )
   return result
     
+def write_poscar(structure, file, vasp5=False, substitute=None):
+  """ Writes a poscar to file. 
+  
+      >>> with open("POSCAR", "w") as file: write_poscar(structure, file, vasp5=True)
+
+      Species in structures can be substituted for others (when using vasp5 format).
+      Below, aluminum atoms are replaced by cadmium atoms. Other atoms are left unchanged.
+
+      >>> with open("POSCAR", "w") as file:
+      >>>   write_poscar(structure, file, vasp5=True, substitute={"Al":"Cd"})
+
+      @param structure: The structure to print out.
+      @param file: a stream (open file) to which to write.
+      @param vasp5: if true, include species in poscar, vasp-5 style.
+        Otherwise, does not print specie types.
+      @param substitute: if present, will substitute the atom type in the
+        structure. Can be incomplete. Only works with vasp5 = True.
+      @type substitute: dict
+  """
+  from numpy import matrix, dot
+  file.write(structure.name + "\n")
+  file.write(str(structure.scale)+ "\n")
+  for i in range(3): file.write("  %f %f %f\n" % tuple(structure.cell[:,i].flat))
+  species = set( [a.type for a in structure.atoms] )
+  if vasp5: 
+    if substitute != None:
+      for s in species: file.write(" "+ substitute.pop(s,s) +" ")
+    else: 
+      for s in species: file.write(" "+s+" ")
+    file.write("\n")
+  for s in species: 
+    file.write(" %i " % (len([0 for atom in structure.atoms if atom.type == s])))
+  file.write("\nDirect\n")
+  inv_cell = matrix(structure.cell).I
+  for atom in structure.atoms:
+    file.write( "  %f %f %f\n" % tuple(dot(inv_cell, atom.pos).flat))
+  
 
 # Adds setter like propertie for easy input 
 def _add_atom(which, container):
