@@ -75,7 +75,7 @@ class Launch(Incar):
   
     # creates kpoints file
     with open(join(self._tempdir, files.KPOINTS), "w") as kpoints: 
-      kpoints.write( self.kpoints(self) )
+      kpoints.write( self.kpoints(self) if hasattr(self.kpoints, "__call__") else self.kpoint )
   
     # creates poscar file
     print_poscar(self._system, tuple(u.symbol for u in self.species), self._tempdir)
