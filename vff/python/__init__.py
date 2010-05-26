@@ -399,7 +399,9 @@ class Vff(object):
     result += "vff.lattice = lattice\n"
     result += "vff.OUTCAR = \"%s\"\n" % (self.OUTCAR)
     result += "vff.ERRCAR = \"%s\"\n" % (self.ERRCAR)
-    result += "vff.direction = %s\n" % (repr(self.direction))
+    if self.direction == None or hasattr(self.direction, "__len__"):
+      result += "vff.direction = %s\n" % (repr(self.direction))
+    else: result += "vff.direction = %i\n" % (int(self.direction))
     result += "vff.relax = %s\n" % ("True" if self.relax else "False")
     for name, params in self.bonds.items():
       A, B = name.split("-")
@@ -533,7 +535,7 @@ class Vff(object):
 
     
     comm.barrier() # required before reading file (?).
-    functional = Vff(name, comm) if self.direction == None else LayeredVff(name, comm)
+    functional = LayeredVff(name, comm) if hasattre(self.direction, "__len__") else Vff(name, comm)
     comm.barrier() # required before removing file.
     if comm.rank == 0: remove(file.name)
 
@@ -550,6 +552,11 @@ class Vff(object):
     try: old_lattice = structure.lattice
     except RuntimeError: pass
     self.lattice.set_as_crystal_lattice()
+    # if direction is not None and not an array, then should be a combination
+    # of FreezeCell integers.
+    if self.direction != None and not hasattr(self.direction, "__len__"):
+      oldfreeze = structure.freeze
+      structure.freeze = self.direction
     
     cout, cerr = self._cout(comm), self._cerr(comm)
     with open(cerr, "w") as file: pass # file has not yet been opened
@@ -560,6 +567,8 @@ class Vff(object):
     
     # unsets lattice.
     if old_lattice != None: old_lattice.set_as_crystal_lattice()
+    if self.direction != None and not hasattr(self.direction, "__len__"):
+      structure.freeze = oldfreeze
     return result, stress
 
   def _create_input(self, structure, comm):
@@ -567,7 +576,8 @@ class Vff(object):
 
     result = "<?xml version=\"1.0\" standalone=\"no\" ?>\n"\
              "<Job>\n<Functional type=\"vff\""
-    if self.direction != None: result += " direction=\"%s %s %s\"" % tuple(self.direction.flat)
+    if hasattr(self.direction, "__len__"):
+      result += " direction=\"%s %s %s\"" % tuple(self.direction.flat)
     result += ">\n"
     result += "<Minimizer type=\"%s\" tolerance=%e itermax=%i linetolerance=%e\n"\
               "           linestep=%e strategy=\"%s\" verbose=\"%s\" uncertainties=%e\n"\
