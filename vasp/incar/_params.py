@@ -90,7 +90,7 @@ class Iniwave(Standard):
   value = property(_getvalue, Standard._setvalue)
   """ Iniwave property
   
-      It takes a meaningful value when set (C{self.value = random})
+      It takes a meaningful value when set (C{self.value = \"random\"})
         - random: wavefunctions are initalized with random number. Safest. 
         - jellium: wavefunctions are initalized a jelliums. Not so safe.
       returns its  "VASP" equivalent when gotten (C{print self.value} outputs 0 or 1).
