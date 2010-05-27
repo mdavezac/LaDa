@@ -535,7 +535,7 @@ class Vff(object):
 
     
     comm.barrier() # required before reading file (?).
-    functional = LayeredVff(name, comm) if hasattre(self.direction, "__len__") else Vff(name, comm)
+    functional = LayeredVff(name, comm) if hasattr(self.direction, "__len__") else Vff(name, comm)
     comm.barrier() # required before removing file.
     if comm.rank == 0: remove(file.name)
 
