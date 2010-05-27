@@ -65,9 +65,6 @@ Module Escan
 
       escan_input%ecp%comm_handle    = comm
       escan_input%ecp%fileescaninput = filename;
-      call mpi_bcast( escan_input%ecp%fileescaninput, &
-                      len(escan_input%ecp%fileescaninput), &
-                      MPI_CHARACTER,0, comm,ierr )
       call mpi_comm_rank(comm, rank, ierr)
       if( rank == 0 ) then
         open(unitnumber,file=escan_input%ecp%fileescaninput, status='OLD')        
