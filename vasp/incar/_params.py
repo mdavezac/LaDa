@@ -35,7 +35,7 @@ class Standard(object):
   """
 
   @broadcast_result(key=True)
-  def incar_string(self, vasp):
+  def incar_string(self, vasp, comm = None):
     """ Prints the key/value as key = value """
     return "%s = %s" % (self.key, str(self.value))
 
@@ -64,10 +64,10 @@ class NoPrintStandard(Standard):
     self.default = self.value
 
   @broadcast_result(key=True)
-  def incar_string(self, vasp):
+  def incar_string(self, vasp, comm = None):
     if self.default == self.value: 
       return "# %s = VASP default." % (self.key)
-    return super(NoPrintStandard, self).incar_string(vasp)
+    return super(NoPrintStandard, self).incar_string(vasp, comm = None)
   
   def __setstate__(self, arg): 
     super(NoPrintStandard, self).__setstate__(arg)
@@ -147,7 +147,7 @@ class Ediff(Standard):
     super(Ediff, self).__init__("EDIFF", value, validity = lambda x: x > 0e0)
 
   @broadcast_result(key=True)
-  def incar_string(self, vasp):
+  def incar_string(self, vasp, comm = None):
     return "%s = %f " % (self.key, self.value * float(len(vasp._system.atoms)))
   def __repr__(self): return "%s(%s)" % (self.__class__.__name__, repr(self.value))
 
@@ -180,7 +180,7 @@ class Encut(object):
   x = property(_getvalue, _setvalue)
 
   @broadcast_result(key=True)
-  def incar_string(self, vasp):
+  def incar_string(self, vasp, comm = None):
     from math import fabs
     if fabs(self.safety - 1e0) < 1e-12: return "# ENCUT = VASP default"
     return "%s = %f " % (self.key, float(self.enmax(vasp.species)) * self.safety)
@@ -266,7 +266,7 @@ class Smearing(object):
       It can be set using a similar tuple, or a string input with keywords. 
   """
   @broadcast_result(key=True)
-  def incar_string(self, vasp):
+  def incar_string(self, vasp, comm = None):
     return "ISMEAR  = %s\nSIGMA   = %f\n" % self.value
   def __repr__(self): return "%s(%s)" % (self.__class__.__name__, repr(self.value))
 
@@ -290,9 +290,9 @@ class Isym(Standard):
   value = property(_getvalue, _setvalue)
 
   @broadcast_result(key=True)
-  def incar_string(self, vasp):
+  def incar_string(self, vasp, comm = None):
     if self._value <= 0e0: return "ISYM = 0\n" 
-    return super(Isym,self).incar_string(vasp)
+    return super(Isym,self).incar_string(vasp, comm = None)
 
   def __eq__(self, other):
     if isinstance(other, Isym):
@@ -370,8 +370,10 @@ class Restart(object):
     self.value = extraction
 
   @broadcast_result(key=True)
-  def incar_string(self, vasp):
+  def incar_string(self, vasp, comm=None):
+    from os.path import join, exists
     from .. import files
+    is_root = comm.rank == 0 if comm != None else True
     istart = "0   # start from scratch"
     icharg = "2   # superpositions of atomic densities"
     if self.value == None or len(self.value) == 0:
@@ -379,36 +381,26 @@ class Restart(object):
     elif not self.value.success:
       raise RuntimeError("Could not find successful run in directory %s.\n"%(self.value.directory));
     else:
-      ewave = os.path.exists( os.path.join( self.value.directory, files.WAVECAR ) )
-      echarge = os.path.exists( os.path.join( self.value.directory, files.CHGCAR ) )
+      ewave = exists( join(self.value.directory, files.WAVECAR) )
+      echarge = exists( join(self.value.directory, files.CHGCAR) )
       if ewave:
+        path = join(self.value.directory, files.WAVECAR)
         istart = "1  # restart"
-        icharg = "0   # from wavefunctions " + os.path.join( self.value, files.WAVECAR )
+        icharg = "0   # from wavefunctions " + path
+        if is_root: copy(path, ".")
       elif echarge:
+        path = join(self.value.directory, files.CHGCAR)
         istart = "1  # restart"
-        icharg = "1   # from charge " + os.path.join( self.value, files.CHGCAR )
+        icharg = "1   # from charge " + path
+        if is_root: copy(path, ".")
       else: 
         istart = "0   # start from scratch"
         icharg = "2   # superpositions of atomic densities"
+      if is_root and exists( join(self.value.directory, files.EIGENVALUES) ):
+        copy(join(self.value.directory, files.EIGENVALUES), ".") 
+
 
     return  "ISTART = %s\nICHARG = %s" % (istart, icharg)
-
-  def copyfiles(self, workdir):
-    """ Copy restart files from input run. """
-    if self.value == None: return
-    # checks for CHGCAR
-    indir = self.value.directory
-    if indir == None: indir = getcwd()
-    chgcar = join(indir, files.CHGCAR)
-    if exists(chgcar): copy(chgcar, workdir)
-
-    # checks for WAVECAR
-    wavecar = join(indir, files.WAVECAR) 
-    if exists(chgcar): copy(chgcar, workdir)
-
-    # checks for EIGENVALUE
-    eigenvalue = join(indir, files.EIGENVALUES) 
-    if exists(eigenvalue): copy(eigenvalue, workdir)
 
   def __repr__(self): return "%s(%s)" % (self.__class__.__name__, repr(self.value))
 
@@ -470,7 +462,7 @@ class Relaxation(object):
   value = property(_getvalue, _setvalue)
 
   @broadcast_result(key=True)
-  def incar_string(self, vasp):
+  def incar_string(self, vasp, comm = None):
     isif = self.value
     result = "NSW    = %3i   # number of ionic steps.\n"\
              "IBRION =   %1i # ionic-relaxation minimization method.\n"\
@@ -525,7 +517,7 @@ class NElect(object):
     return fsum( valence[atom.type] for atom in vasp._system.atoms )
     
   @broadcast_result(key=True)
-  def incar_string(self, vasp):
+  def incar_string(self, vasp, comm = None):
     from boost.mpi import broadcast
     # gets number of electrons.
     charge_neutral = self.nelectrons(vasp)
@@ -563,7 +555,7 @@ class NBands(NElect):
   """ INCAR key """
 
   @broadcast_result(key=True)
-  def incar_string(self, vasp):
+  def incar_string(self, vasp, comm = None):
     from boost.mpi import broadcast
     # gets number of electrons.
     ne = self.nelectrons(vasp)
@@ -597,7 +589,7 @@ class UParams(object):
     super(UParams, self).__init__(**kwargs)
 
   @broadcast_result(key=True)
-  def incar_string(self, vasp):
+  def incar_string(self, vasp, comm = None):
     # existence and sanity check
     has_U, which_type = False, None 
     for specie in vasp.species:

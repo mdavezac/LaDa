@@ -67,15 +67,16 @@ class Launch(Incar):
     # creates incar file. Changedir makes sure that any calculations done to
     # obtain incar will happen in the tempdir.
     with Changedir(self._tempdir) as tmpdir:
-      incar_string = "".join((param.incar_string(self, comm=comm) + "\n") for param in self)
-    if comm != None:
-      if comm.rank != 0: return # don't have any more business here.
+      incar_string = [param.incar_string(self, comm=comm) + "\n" for param in self]
+
+    if comm.rank != 0: return # don't have any more business here.
+
     with open(join(self._tempdir, files.INCAR), "w") as incar_file: 
-      incar_file.write(incar_string)
+      incar_file.writelines(incar_string)
   
     # creates kpoints file
     with open(join(self._tempdir, files.KPOINTS), "w") as kpoints: 
-      kpoints.write( self.kpoints(self) if hasattr(self.kpoints, "__call__") else self.kpoint )
+      kpoints.write( self.kpoints(self) if hasattr(self.kpoints, "__call__") else self.kpoints )
   
     # creates poscar file
     print_poscar(self._system, tuple(u.symbol for u in self.species), self._tempdir)
@@ -87,14 +88,9 @@ class Launch(Incar):
           raise AssertionError, "Could not find potcar in " + s.path
         with open(join(s.path, files.POTCAR), "r") as infile: potcar.writelines(infile)
 
-    print self._tempdir, files.FUNCCAR
     path = join(abspath(self._tempdir), files.FUNCCAR)
     with Changedir(outdir) as outdir: # allows relative paths.
       with open(path, 'w') as file: cPickle.dump((self), file)
-
-    if hasattr(self, "restart"):
-      if hasattr(self.restart, "copyfiles"): self.restart.copyfiles(self._tempdir)
-
 
   def _run(self, comm):
      """ Isolates calls to vasp itself """
@@ -151,14 +147,16 @@ class Launch(Incar):
     from os.path import exists, join, abspath, expanduser
     from os import getcwd
     from shutil import copy2 as copy
+    from boost.mpi import world
     from ..opt.tempdir import Tempdir
 
     # set up
     if structure != None: self._system = structure
     elif not hasattr(self, "_system"): raise RuntimeError, "Internal bug.\n"
     outdir = getcwd() if outdir == None else abspath(expanduser(outdir))
+    if comm == None: comm = world
 
-    is_root = True if comm == None else comm.rank == 0
+    is_root = comm.rank == 0
 
     # creates temporary working directory
     workdir = self.workdir
