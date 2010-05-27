@@ -124,7 +124,7 @@ def write_poscar(structure, file, vasp5=False, substitute=None):
   file.write(structure.name + "\n")
   file.write(str(structure.scale)+ "\n")
   for i in range(3): file.write("  %f %f %f\n" % tuple(structure.cell[:,i].flat))
-  species = set( [a.type for a in structure.atoms] )
+  species = tuple(set( [a.type for a in structure.atoms] ))
   if vasp5: 
     if substitute != None:
       for s in species: file.write(" "+ substitute.pop(s,s) +" ")
@@ -135,8 +135,10 @@ def write_poscar(structure, file, vasp5=False, substitute=None):
     file.write(" %i " % (len([0 for atom in structure.atoms if atom.type == s])))
   file.write("\nDirect\n")
   inv_cell = matrix(structure.cell).I
-  for atom in structure.atoms:
-    file.write( "  %f %f %f\n" % tuple(dot(inv_cell, atom.pos).flat))
+  for s in species: 
+    for atom in structure.atoms:
+      if atom.type != s: continue
+      file.write( "  %f %f %f\n" % tuple(dot(inv_cell, atom.pos).flat))
   
 
 # Adds setter like propertie for easy input 
