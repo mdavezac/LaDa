@@ -60,7 +60,7 @@ class Vasp(Launch):
     """ Initializes vasp class. """
     Launch.__init__(self, *args, **kwargs)
 
-  def __call__(self, structure, outdir, comm = None, repat = [], overwrite=True, **kwargs):
+  def __call__(self, structure, outdir, comm = None, repat = [], overwrite=False, **kwargs):
     """ Performs a vasp calculation 
      
         The structure is whatever is given on input. The results are stored in
@@ -84,6 +84,7 @@ class Vasp(Launch):
     """ 
     from copy import deepcopy
     from os.path import exists, isdir
+    from shutil import rmtree
     from boost.mpi import broadcast
 
     # make this functor stateless.

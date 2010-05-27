@@ -376,10 +376,11 @@ class Restart(object):
     is_root = comm.rank == 0 if comm != None else True
     istart = "0   # start from scratch"
     icharg = "2   # superpositions of atomic densities"
-    if self.value == None or len(self.value) == 0:
-      istart = "0   # start from scratch"
+    if self.value == None: istart = "0   # start from scratch"
     elif not self.value.success:
-      raise RuntimeError("Could not find successful run in directory %s.\n"%(self.value.directory));
+      print "Could not find successful run in directory %s." % (self.value.directory)
+      print "Restarting from scratch."
+      istart = "0   # start from scratch"
     else:
       ewave = exists( join(self.value.directory, files.WAVECAR) )
       echarge = exists( join(self.value.directory, files.CHGCAR) )
