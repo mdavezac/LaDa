@@ -133,9 +133,10 @@ namespace LaDa
       }
 
       // prepares to read wavefunctions
+      boost::mpi::communicator world;
       std::string const orig = bp::extract<std::string>(_escan.attr("_INCAR"))()
                                + "."
-                               + boost::lexical_cast<std::string>(_comm.rank());
+                               + boost::lexical_cast<std::string>(world.rank());
       int a(orig.size()), b(indices.size());
       MPI_Comm __commC = (MPI_Comm) ( _comm ) ;
       MPI_Fint __commF = MPI_Comm_c2f( __commC );

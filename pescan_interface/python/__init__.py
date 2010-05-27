@@ -365,7 +365,7 @@ class Escan(object):
       # copies output files.
       with Changedir(outdir, comm = comm) as cwd:
         for file in  [ this._POSCAR + "." + str(comm.rank),\
-                       this._POTCAR + "." + str(comm.rank),\
+                       this._POTCAR + "." + str(world.rank),\
                        this._cout(comm) if this._cout(comm) != "/dev/null" else None,\
                        this._cerr(comm) if this._cerr(comm) != "/dev/null" else None,\
                        this.vff._cout(comm) if this.vff._cout(comm) != "/dev/null" else None,\
@@ -466,7 +466,7 @@ class Escan(object):
 
   def _run_genpot(self, comm, outdir):
     """ Runs genpot only """
-    from boost.mpi import broadcast
+    from boost.mpi import broadcast, world
     from ._escan import _call_genpot
     from shutil import copyfile
     from os.path import basename, exists, join, samefile
@@ -474,8 +474,8 @@ class Escan(object):
 
     # using genpot from previous run
     if self.genpotrun != None:
-      POTCAR = self.genpotrun.escan._POTCAR + "." + str(comm.rank)
-      potcar = self._POTCAR + "." + str(comm.rank)
+      POTCAR = self.genpotrun.escan._POTCAR + "." + str(world.rank)
+      potcar = self._POTCAR + "." + str(world.rank)
       if exists(join(self.genpotrun.directory, POTCAR)):
         copyfile(join(self.genpotrun.directory, POTCAR), potcar)
       if comm.rank == 0:
@@ -518,7 +518,7 @@ class Escan(object):
     # Creates temporary input file and creates functional
     kpoint = (0,0,0,0,0) if norm(self.kpoint) < 1e-12 else self._get_kpoint(structure, comm)
     with open(self._INCAR + "." + str(world.rank), "w") as file:
-      print >> file, "1 %s.%i" % (self._POTCAR, comm.rank) 
+      print >> file, "1 %s.%i" % (self._POTCAR, world.rank) 
       print >> file, "2 %s" % (self.WAVECAR) 
       print >> file, "3 %i # %s"\
                      % ((1, "folded spectrum") if self.eref != None else (2, "all electron"))
