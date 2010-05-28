@@ -58,7 +58,7 @@ namespace LaDa
       // true if an all electron calculation.
       const std::string filename
       (
-           "escan_input."
+           _bandgap.escan.filename.string() + "." 
          + boost::lexical_cast<std::string>(boost::mpi::communicator().rank()) 
       ); 
       const bfs::path path

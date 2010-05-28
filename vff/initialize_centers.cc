@@ -47,70 +47,70 @@ namespace LaDa
       t_FirstNeighbors fn;
       first_neighbors_( fn );
 
-      // Checks if ideal structure. In which case use smith normal tree building.
-      if( math::is_integer(structure.lattice->cell.inverse() * structure.cell) )
-      {
-        if( _verbose ) 
-        { 
-          __ROOTCODE
-          ( 
-            MPI_COMM,
-            std::cout << "Trying to create first neighbor tree "
-                         "using smith normal form algorithm.\n";
-          )
-        }
-        if( build_tree_smith_( fn ) )
-        {
-          __DODEBUGCODE( check_tree(); )
-          if( _verbose )
-          { 
-            __ROOTCODE( MPI_COMM,
-                        std::cout << "First Neighbor tree successfully created.\n"; ) 
-          }
-          return true;
-        }
-        __ROOTCODE( MPI_COMM, std::cout << "Failed.\n"; )
-        t_Centers :: iterator i_center = centers.begin();
-        t_Centers :: iterator i_center_end = centers.end();
-        for(; i_center != i_center_end; ++i_center ) i_center->bonds.clear();
-      } 
-
-      const size_t Nperbox( 30 );
-      if( structure.atoms.size() < Nperbox )
-      {
-        if( _verbose )
-        {
-          __ROOTCODE
-          ( 
-            MPI_COMM,
-            std::cout << "Creating first neighbor tree using standard algorithm.\n";
-          )
-        }
-        if( not build_tree_sort_( fn ) ) return false;
-        __DODEBUGCODE( check_tree(); )
-        if( _verbose )
-        {
-          __ROOTCODE( MPI_COMM,
-                      std::cout << "First Neighbor tree successfully created.\n"; )
-        }
-        return true;
-      }
-       
-      if( _verbose )
-      {
-        __ROOTCODE
-        (
-          MPI_COMM,
-          std::cout << "Creating first neighbor tree using "
-                       "divide-and-conquer algorithm.\n";
-        )
-      }
+//    // Checks if ideal structure. In which case use smith normal tree building.
+//    if( math::is_integer(structure.lattice->cell.inverse() * structure.cell) )
+//    {
+//      if( _verbose ) 
+//      { 
+//        __ROOTCODE
+//        ( 
+//          MPI_COMM,
+//          std::cout << "Trying to create first neighbor tree "
+//                       "using smith normal form algorithm.\n";
+//        )
+//      }
+//      if( build_tree_smith_( fn ) )
+//      {
+//        __DODEBUGCODE( check_tree(); )
+//        if( _verbose )
+//        { 
+//          __ROOTCODE( MPI_COMM,
+//                      std::cout << "First Neighbor tree successfully created.\n"; ) 
+//        }
+//        return true;
+//      }
+//      __ROOTCODE( MPI_COMM, std::cout << "Failed.\n"; )
+//      t_Centers :: iterator i_center = centers.begin();
+//      t_Centers :: iterator i_center_end = centers.end();
+//      for(; i_center != i_center_end; ++i_center ) i_center->bonds.clear();
+//    } 
+//
+//     const size_t Nperbox( 10 );
+//     if( structure.atoms.size() < Nperbox )
+//     {
+//       if( _verbose )
+//       {
+//         __ROOTCODE
+//         ( 
+//           MPI_COMM,
+//           std::cout << "Creating first neighbor tree using standard algorithm.\n";
+//         )
+//       }
+//       if( not build_tree_sort_( fn ) ) return false;
+//       __DODEBUGCODE( check_tree(); )
+//       if( _verbose )
+//       {
+//         __ROOTCODE( MPI_COMM,
+//                     std::cout << "First Neighbor tree successfully created.\n"; )
+//       }
+//       return true;
+//     }
+//      
+//     if( _verbose )
+//     {
+//       __ROOTCODE
+//       (
+//         MPI_COMM,
+//         std::cout << "Creating first neighbor tree using "
+//                      "divide-and-conquer algorithm.\n";
+//       )
+//     }
       // Tries to guess size of divide and conquer.
       const math::iVector3d nboxes( Crystal::guess_dnc_params( structure, 30 ) );
       types::t_real n(   structure.atoms.size()
                        / types::t_real( nboxes(0) * nboxes(1) * nboxes(2) ) );
-      if( _verbose )
-      {
+       if( _verbose )
+       {
         __ROOTCODE
         (
           MPI_COMM,
@@ -118,7 +118,7 @@ namespace LaDa
                     << nboxes(1) << "x" << nboxes(2)
                     << " boxes of " << n << " atoms each.\n";
         )
-      }
+       }
       // Then creates boxes.
       const types::t_real odist( 1.5e0 * std::sqrt( fn[0].front().squaredNorm() ) );
       Crystal::t_ConquerBoxes<types::t_real> :: shared_ptr boxes

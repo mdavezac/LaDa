@@ -2,6 +2,7 @@
 //  Version: $Id$
 //
 
+#include <limits>
 #include <boost/tuple/tuple_io.hpp>
 #include <set>
 
@@ -18,12 +19,13 @@ namespace LaDa
                                const math::iVector3d &_n )
       {
         // Puts atom back into parallelogram.
+        const types::t_real roundoff = 1e1 * std::numeric_limits<types::t_real>::epsilon();
         const math::rVector3d rfrac( _inv_str * _pos );
         const math::rVector3d ifrac
         (
-          rfrac(0) - std::floor( rfrac(0) ),
-          rfrac(1) - std::floor( rfrac(1) ),
-          rfrac(2) - std::floor( rfrac(2) )
+          rfrac(0) - std::floor(rfrac(0) + roundoff),
+          rfrac(1) - std::floor(rfrac(1) + roundoff),
+          rfrac(2) - std::floor(rfrac(2) + roundoff) 
         );
         const math::rVector3d in_para( _str * ifrac );
         // Then finds out which box it belongs to.
@@ -86,7 +88,7 @@ namespace LaDa
         // box is not larger than the cell. Otherwise, when looping over all
         // states, we would go over the same state twice. The following defines
         // the direction for which we can look for periodic images.
-        const math::iVector3d extent( _n(0)>1 ? 1:0, _n(1)>1 ? 1:0, _n(2)>1 ? 1:0 );
+        const math::iVector3d extent( 1, 1, 1); //_n(0)==1 ? 0:1, _n(1)==1 ? 0:1, _n(2)==1 ? 0:1 );
         // adds atoms to each box.
         const math::rMatrix3d inv_str( _structure.cell.inverse() );
         const math::rMatrix3d inv_cell( cell.inverse() );
@@ -102,14 +104,15 @@ namespace LaDa
               inv_cell, i_atom->pos, _n 
             ) 
           );
-          LADA_ASSERT( u < Nboxes, "Index out-of-range.\n" )
+          LADA_ASSERT( u < Nboxes, "Index out-of-range.\n" << u << " >= " << Nboxes << "\n" )
+          LADA_ASSERT( not (*result)[u].is_counted(index), "Already counted.\n" )
           (*result)[u].states_.push_back( bt::make_tuple( index, true ) );
 
           // Finds out which large box it is contained in.
           std::set< size_t > lb_set;
           for( types::t_int i(-extent(0) ); i <= extent(0); ++i )
-            for( types::t_int j(-extent(0) ); j <= extent(0); ++j )
-              for( types::t_int k(-extent(0) ); k <= extent(0); ++k )
+            for( types::t_int j(-extent(1) ); j <= extent(1); ++j )
+              for( types::t_int k(-extent(2) ); k <= extent(2); ++k )
               {
                 if( i == 0 and j == 0 and k == 0 ) continue;
                 const math::rVector3d displaced
@@ -136,6 +139,7 @@ namespace LaDa
           for(; i_lb != i_lb_end; ++i_lb )
           {
             __DOASSERT( *i_lb >= result->size(), "Index out of range.\n" )
+            LADA_ASSERT( not (*result)[*i_lb].is_counted(index), "Already counted.\n" )
             (*result)[*i_lb].states_.push_back( t_State( index, false ) );
           }
         }
@@ -156,9 +160,9 @@ namespace LaDa
         n1 =  std::pow( Natoms / Nperbox * c1*c1/c2/c3, 1e0/3e0 );
         n2 =  n1 * c2 / c1;
         n3 =  n1 * c3 / c1;
-        if( n1 <= 0.5 ) n1 == 1;
-        if( n2 <= 0.5 ) n2 == 1;
-        if( n3 <= 0.5 ) n3 == 1;
+        if( n1 <= 0.5 ) n1 = 1;
+        if( n2 <= 0.5 ) n2 = 1;
+        if( n3 <= 0.5 ) n3 = 1;
         return math::iVector3d( rint( n1 ), rint( n2 ), rint( n3 ) );
       }
 

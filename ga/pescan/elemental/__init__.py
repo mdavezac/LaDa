@@ -75,7 +75,7 @@ class Crossover(BitstringCrossover):
 class Converter(object):
   """ Converts a bitstring into an actual superlattice structure, and vice-versa. """
 
-  def __init__(self, cell):
+  def __init__(self, cell, lattice = None):
     """ Initializes a functor for bitstring to crystal structure conversion. 
 
         Structure().L{lattice<crystal.Structure.lattice>} must be set. 
@@ -83,9 +83,15 @@ class Converter(object):
           elemental superlattice. The epitaxial direction must be given by the
           first column vector.
         @type cell: 3x3 float64 numpy array.
+        @param lattice: lattice from which to create supercell.
     """
     from lada.crystal import LayerDepth, sort_layers, Structure, fill_structure
     
+    if lattice != None:
+      oldlattice = None
+      try: oldlattice = Structure().lattice
+      except RuntimeError: pass
+      lattice.set_as_crystal_lattice()
     # creates epitaxial tructure
     self.structure = Structure()
     self.structure.cell = cell
@@ -96,6 +102,8 @@ class Converter(object):
       if not ld(self.structure.atoms[i-1].pos, self.structure.atoms[i].pos): 
         raise ValueError, "Input structure is not an elemental superlattice."
 
+    if lattice != None:
+      if oldlattice != None: oldlattice.set_as_crystal_lattice()
     
   def __call__(self, object):
     """ Conversion function for structures and bitstring. 
@@ -104,16 +112,18 @@ class Converter(object):
         to a bitstring.  Otherwise, expects a bitstring which is converted to
         an L{crystal.Structure<lada.crystal.Structure>}.
     """
+    from numpy import array
     from lada.crystal import Structure
 
     if hasattr(object, "cell"): # crystal structure
       def which(u): # finds type
-        if u.type == self.structure.lattice.sites[u.site].type[0]: 
-          return 0
-        return 1
-      return [ which(u) for u in self.structure.atoms ]
+        return 0 if u.type == self.structure.lattice.sites[u.site].type[0] else 1
+      return array([ which(u) for u in self.structure.atoms ])
     else:  # bitstring.
       if len(object) != len(self.structure.atoms): 
+        print object
+        print len(self.structure.atoms)
+        print self.structure
         raise ValueError, "Bitstring and epitaxial structure are not compatible.\n"
       result = Structure(self.structure)
       for i, atom in enumerate(result.atoms):

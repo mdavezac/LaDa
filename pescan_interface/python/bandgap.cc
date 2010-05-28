@@ -13,6 +13,8 @@
 #include "../bandgap.h"
 #include "../dipole_elements.h"
 #include "bandgap.hpp"
+#include "escan.hpp"
+#include <vff/python/vff.hpp>
 
 namespace LaDa
 {
@@ -156,7 +158,43 @@ namespace LaDa
         return sstr.str();
       }
 
+
     } // namespace details
+
+    template<class T>
+      Pescan::Bands __call2__(Pescan::BandGap &_interface,
+                              T &_vff, Crystal::TStructure<std::string> const &_str)
+      {
+        // Checks that directory exists.
+        namespace bfs = boost::filesystem;
+        Pescan::Interface::t_Path rootdir = opt::InitialPath::path()/_interface.get_dirname();
+        if( _interface.comm().rank() == 0 and (not python::create_directory(rootdir)) )
+        {
+          PyErr_SetString( PyExc_IOError,  
+                           ("Could not find/create directory: " + rootdir.string()).c_str() );
+          bp::throw_error_already_set();
+          return _interface.bands;
+        }
+        _interface.comm().barrier();
+        // creates atom input
+        Pescan::Interface::t_Path const path = _interface.atom_input;
+        Pescan::Interface::t_Path filename = path.filename();
+        if( filename.empty() ) filename = "atom_input";
+        boost::mpi::communicator world;
+        std::ostringstream sstr; sstr << world.rank();
+        _interface.atom_input = rootdir / filename.replace_extension(sstr.str());
+        print_escan_input(_vff, _interface.atom_input.string(), _str);
+        // finally, computes.
+        try { _interface(_str); }
+        catch(...)
+        {
+          PyErr_SetString(PyExc_RuntimeError, "Something went wrong in escan.\n");
+          bp::throw_error_already_set();
+          return _interface.bands;
+        }
+        _interface.atom_input = path;
+        return _interface.bands;
+      }
 
     void expose_bands()
     {
@@ -197,7 +235,34 @@ namespace LaDa
                         "and output when performing Full-Diagonalization calculations." )
         .def( "fromXML",  &Bandgap_from_XML, bp::arg("file"),
               "Loads bandgap parameters from an XML file." )
-        .def( "__call__", &t_BandGap::operator(), "Performs a calculation." );
+        .def
+        (
+          "__call__", &__call2__<t_Vff>, 
+          (bp::arg("vff"), bp::arg("structure")),
+          bp::with_custodian_and_ward_postcall<1,0>() 
+        )
+        .def
+        ( 
+          "__call__", &__call2__<t_LayeredVff>,
+          (bp::arg("vff"), bp::arg("structure")),
+          "Performs a calculation.\n\n" 
+          "The usual sequence of call is as follows:\n\n"
+          ">>> # First initialize escan and vff"
+          ">>> escan = lada.escan.Escan(\"input.xml\", boost.mpi.world)\n"
+          ">>> vff = lada.vff.Vff(\"input.xml\", boost.mpi.world)\n"
+          ">>> # Finally, calls escan functional. \n"
+          ">>> # Other parameters (reference, kpoint...) can be changed prior to call.\n"
+          ">>> eigenvalues = escan(vff, structure)\n\n"
+          "Escan needs to be passed a valid vff structure to compute the microstrain.\n\n"
+          "Returns a numpy vector also available as self.L{eigenvalues}. As "
+          "such, it will change from one calculation to the other. Copy if you "
+          "want to store the results.\n" 
+          "@param vff: A vff functional.\n"
+          "@type vff: L{vff.Vff} or L{vff.LayeredVff}\n"
+          "@param structure: The structure for which to perform calculations.\n"
+          "@type structure: L{crystal.Structure}\n",
+          bp::with_custodian_and_ward_postcall<1,0>() 
+        );
     }
   } // namespace Python
 } // namespace LaDa

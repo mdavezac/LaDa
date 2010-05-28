@@ -66,7 +66,7 @@ namespace LaDa
       using namespace boost::python;
       bp::scope scope = class_< Redirect, boost::noncopyable >
         ( 
-           "Redirect", 
+           "_RedirectFortran", 
            "Redirects fortran pre-connected units to file.\n\n"
            "Should be used with \"with\" context statements:\n\n"
            ">>> with Redirected(Redirected.fortran.ouput, \"stdout\") as redirected:\n"

@@ -30,9 +30,18 @@ namespace LaDa
       }
     template<class T> 
 #     ifndef _MPI
-        boost::shared_ptr<T> create_mpi(bp::object const&) { return create<T>(); }
+        boost::shared_ptr<T> create_mpi(bp::object const& _object)
+        { 
+          try
+          {
+            std::string const filename = bp::extract<std::string>(_object);
+            return create_input(filename);
+          }
+          catch(...){}
+          return create<T>(); 
+        }
 #     else
-        boost::shared_ptr<T> create(boost::mpi::communicator *_c )
+        boost::shared_ptr<T> create_mpi(boost::mpi::communicator *_c )
         {
           boost::shared_ptr<T> result = create<T>();
           result->first.set_mpi(_c);
@@ -114,11 +123,11 @@ namespace LaDa
     template<class T> 
       void init( T &_self, bool _redo, bool _verbose ) { _self.first.init(_redo, _verbose); }
     template<class T> 
-      bp::tuple __call__( T &_self, Crystal::TStructure<std::string> const &_str, bool _doinit )
+      bp::tuple __call__( T &_self, Crystal::TStructure<std::string> const &_str, bool _doinit, bool relax )
       { 
         Crystal::convert_string_to_real_structure(_str, _self.second);     
         init(_self, _doinit, false);
-        types::t_real const energy = _self.first.evaluate() / 16.0217733;
+        types::t_real const energy = _self.first.evaluate(relax) / 16.0217733;
 
         boost::shared_ptr< Crystal::TStructure<std::string> >
           result( new Crystal::TStructure<std::string> );
@@ -264,21 +273,23 @@ namespace LaDa
         (
           _doc
           + "\n\nThis object can be created with: \n"
-           //"  - No argument.\n"
+            "  - No argument.\n"
            //"  - A single string argument representing the path to an XML input file.\n" 
-           //"  - A single boost.mpi communicator.\n"
+            "  - A single boost.mpi communicator.\n"
             "  - Another functional, eg deepcopy.\n" 
             "  - A string argument (see above), followed by a boost.mpi communicator.\n\n" 
             "If compiled without mpi, including the communicator will have no effect.\n"
         ).c_str(),
         bp::no_init
-      ).def( "__init__", bp::make_constructor(&create_inputmpi<T>) )
+      ).def( "__init__", bp::make_constructor(&create<T>) )
+       .def( "__init__", bp::make_constructor(&create_mpi<T>) )
+       .def( "__init__", bp::make_constructor(&create_inputmpi<T>) )
        .def( "__init__", bp::make_constructor(&create_copy<T>) )
        .def
        ( 
          "__call__",  
          &__call__<T>,
-         (bp::arg("structure"), bp::arg("doinit") = true),
+         (bp::arg("structure"), bp::arg("doinit") = true, bp::arg("relax")=true),
          "Minimizes structure.\n\n"
          "@param structure: structure to evaluate.\n"
          "@type structure: L{crystal.Structure}.\n"

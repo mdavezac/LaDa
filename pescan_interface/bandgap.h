@@ -73,16 +73,16 @@ namespace LaDa
         bool Load( const TiXmlElement &_node );
 
         //! Launches a calculation for structure \a _str
-        types::t_real operator()( const Crystal::Structure &_str ); 
+        template<class T_STRUCTURE> types::t_real operator()( T_STRUCTURE const &_str ); 
 
         // Forwards mpi::AddCommunicator members.
         MPI_FORWARD_MEMBERS( Interface )
 
       protected:
         //! Folded spectrum computation
-        types::t_real folded_spectrum(const Crystal::Structure& );
+        types::t_real folded_spectrum(types::t_unsigned _bgstates);
         //! All-electron spectrum computation
-        types::t_real all_electron( const Crystal::Structure &_str );
+        types::t_real all_electron(types::t_unsigned _bgstates);
         //! Returns the closest eigenvalue to \a _ref
         types::t_real find_closest_eig( types::t_real _ref );
         //! \brief Makes sure that a non-metallic bandgap has been obtained.
@@ -109,12 +109,14 @@ namespace LaDa
     };
 
     //! \cond
-    inline types::t_real BandGap :: operator()( const Crystal::Structure &_str )
+    template< class T_STRUCTURE > types::t_real BandGap :: operator()( T_STRUCTURE const &_str )
     {
-      set_scale( _str );
+      escan.scale = _str.scale;
 
-      return escan.method == ALL_ELECTRON ? all_electron( _str ):
-                                            folded_spectrum( _str );
+      types::t_unsigned bgstates = nb_valence_states(_str);
+
+      return escan.method == ALL_ELECTRON ? all_electron( bgstates ):
+                                            folded_spectrum( bgstates );
     }
 
     inline types::t_real BandGap :: find_closest_eig( types::t_real _ref )

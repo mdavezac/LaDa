@@ -12,11 +12,13 @@
 #include <iostream>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/serialization/serialization.hpp>
 
 #include <opt/debug.h>
 #include <opt/types.h>
 #include <math/fuzzy.h>
 #include <math/misc.h>
+#include <math/serialize.h>
 
 
 namespace LaDa
@@ -69,6 +71,9 @@ namespace LaDa
                     or math::neq(trans(1), _sym.trans(1)) 
                     or math::neq(trans(2), _sym.trans(2)) );
       }
+      //! Serializes a symmetry operator.
+      template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
+        { _ar & op; _ar & trans; }
     };
 
     inline std::ostream& operator<<( std::ostream& _stream, SymmetryOperator const &_sym )

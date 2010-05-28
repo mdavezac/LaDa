@@ -17,20 +17,20 @@ namespace LaDa
       //! An mpl integer defining the type.
       template<class T> class type;
       
-      //! numpy identifier for long doubles.
-      template<> struct type<npy_longdouble> : public boost::mpl::int_<NPY_LONGDOUBLE> 
-      {
-        //! Original type.
-        typedef npy_longdouble np_type;
-      };
 #     ifndef LADA_NPY_DOUBLE_EQ_NPY_LONG_DOUBLE
-        //! numpy identifier for doubles.
-        template<> struct type<npy_double> : public boost::mpl::int_<NPY_DOUBLE> 
+        //! numpy identifier for long doubles.
+        template<> struct type<npy_longdouble> : public boost::mpl::int_<NPY_LONGDOUBLE> 
         {
           //! Original type.
-          typedef npy_double np_type;
+          typedef npy_longdouble np_type;
         };
 #     endif
+      //! numpy identifier for doubles.
+      template<> struct type<npy_double> : public boost::mpl::int_<NPY_DOUBLE> 
+      {
+        //! Original type.
+        typedef npy_double np_type;
+      };
       //! numpy identifier for float.
       template<> struct type<npy_float> : public boost::mpl::int_<NPY_FLOAT> 
       {

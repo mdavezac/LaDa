@@ -43,13 +43,13 @@ namespace LaDa
 
 
     template< class T_VFFBASE > typename VABase<T_VFFBASE> :: t_Type 
-      VABase<T_VFFBASE> :: evaluate()
+      VABase<T_VFFBASE> :: evaluate(bool relax)
       {
         // no minimization required if variables is empty.
         typename t_VffBase :: t_Arg arg;
         t_VffBase :: init( arg );
           
-        if( arg.size() ) minimizer( *( (t_VffBase*) this), arg );
+        if(arg.size() and relax) minimizer( *( (t_VffBase*) this), arg );
      
         t_VffBase :: structure.energy = t_VffBase::energy();
 

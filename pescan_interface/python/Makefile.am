@@ -7,7 +7,8 @@ AM_LDFLAGS = @BOOST_LDFLAGS@ @BOOST_PYTHON@
 install-exec-local: ../../python/libpython_lada.la
 
 EXTRA_DIST = $(pescan_python_h) 
-subpkgpyexec_PYTHON = __init__.py va.py derivatives.py bandstructure.py
+subpkgpyexec_PYTHON = __init__.py va.py derivatives.py band_structure.py _extract.py \
+		      _bandgap.py _wfns.py _methods.py
 subpkgpyexecdir = $(pkgpyexecdir)/escan
 subpkgpyexec_LTLIBRARIES = _escan.la 
 _escan_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) 

@@ -1,8 +1,3 @@
-#
-#  Version: $Id$
-#
-
-
 class Eval:
 
   def __init__(self, size=10):
@@ -22,19 +17,14 @@ class Eval:
       result += fabs(r)
     return float(result) / float(len(indiv.genes))
 
-class PrintNbEvals:
-  def __init__(self, evaluation): 
-    self.evaluation = evaluation
-  def __call__(self, darwin):
-    print "Number of functional evaluations: ", self.evaluation.nbevals
-    return True
 
 
     
 def  main():
-  from lada.ga import darwin as dd, bitstring, standard, ce
-  import numpy
   import copy
+  from boost.mpi import world
+  import numpy
+  from lada.ga import darwin as dd, bitstring, standard, ce
 
   class Darwin: pass
 
@@ -44,32 +34,38 @@ def  main():
       if indiv.fitness == 0e0: return False
     return True
 
-  bitstring.Individual.size =50
+  bitstring.Individual.size = 80
   darwin = Darwin()
+  darwin.comm = world
+  darwin.comm.do_print = darwin.comm.rank == 0
 
   evaluation = Eval()
   evaluation.target = numpy.array([1 for u in xrange(bitstring.Individual.size)])
-  print "Target: ", evaluation.target
+  if darwin.comm.do_print: print "Target: ", evaluation.target
 
-  darwin = standard.add_population_evaluation( darwin, evaluation )
+  darwin.evaluation = standard.mpi_population_evaluation( darwin, evaluation )
+
+  def print_nb_eval(darwin):
+    if not darwin.comm.do_print: return True
+    print "Number of functional evaluations: ", evaluation.nbevals
+    return True
+
   darwin.checkpoints = [ standard.print_offspring, 
                          standard.average_fitness,
-                         standard.best,
-                         PrintNbEvals(evaluation),
+                         standard.best, 
+                         print_nb_eval,
                          stop_at_zero ]
 
   mating = standard.Mating(sequential=False)
   mating.add( bitstring.Crossover(rate=0.25), rate=0.8 )
   mating.add( bitstring.Mutation(rate=3e0/float(bitstring.Individual.size)), rate=0.2 )
 
-  darwin.mating = standard.Mating(sequential=True)
+  darwin.mating = standard.bound_method(darwin, standard.Mating(sequential=True))
   darwin.mating.add( mating, rate=0.8 )
-  darwin.mating.add( bitstring.LocalSearch(evaluation, darwin, itermax=10), rate=0.8 )
 
-  darwin.taboo = standard.Taboo(diversity=True)
-  darwin.taboo.add( ce.Taboo(maxmbs=15) ) # constrains to less than maxmbs+1 manybodies
+  darwin.taboo = standard.bound_method(darwin, standard.Taboo(diversity=True))
 
-  darwin.rate   = 0.2
+  darwin.rate   = 0.1
   darwin.popsize = 100
   darwin.max_gen = 300
 
