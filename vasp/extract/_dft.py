@@ -1,10 +1,10 @@
 """ Subpackage containing extraction methods for VASP-DFT data from output. """
-from .decorators import bound_broadcast_result 
-from ...opt.decorators import make_cached
+from ...opt.decorators import make_cached, broadcast_result
 class _ExtractImpl(object):
   """ Implementation class for extracting data from VASP output """
 
-  def __init__(self, directory = "", comm = None, vasp = None): 
+  def __init__(self, directory = "", comm = None):
+    from .. import files
     """ Initializes the extraction class. 
 
         @param comm: MPI group communicator. Extraction will be performed
@@ -18,17 +18,12 @@ class _ExtractImpl(object):
     """ Directory where to check for output. """
     self.comm = comm
     """ MPI group communicator. """
-    self.OUTCAR = OUTCAR
-    """ Filename of the OUTCAR file from VASP.
-     
-        Data will be read from directory/OUTCAR. 
-    """
-    self.CONTCAR = CONTCAR
-    """ Filename of the CONTCAR file from VASP.
-     
-        Data will be read from directory/CONTCAR. 
-    """
-    if vasp != None: self.OUTCAR, self.CONTCAR = vasp.OUTCAR, vasp.CONTCAR
+    self.OUTCAR = files.OUTCAR
+    """ Filename of the OUTCAR file from VASP. """
+    self.CONTCAR = files.CONTCAR
+    """ Filename of the CONTCAR file from VASP. """
+    self.FUNCCAR = files.FUNCCAR
+    """ Filename of the FUNCCAR file containing the pickled functional. """
     
   def _get_directory(self):
     """ Directory with VASP output files """
@@ -51,14 +46,13 @@ class _ExtractImpl(object):
 
 
   @make_cached
-  @bound_broadcast_result
+  @broadcast_result(attr=True, which=0)
   def _get_energy_sigma0(self):
     """ Greps total energy extrapolated to $\sigma=0$ from L{OUTCAR}. """
     from os.path import exists, join
     from re import compile, X as re_X
 
-    path = self.OUTCAR 
-    if len(self.directory): path = join(self.directory, path)
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = None
@@ -72,14 +66,13 @@ class _ExtractImpl(object):
     return result
 
   @make_cached
-  @bound_broadcast_result
+  @broadcast_result(attr=True, which=0)
   def _get_energy(self):
     """ Greps total energy from L{OUTCAR}."""
     from os.path import exists, join
     from re import compile, X as re_X
 
-    path = self.OUTCAR 
-    if len(self.directory): path = join(self.directory, path)
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = None
@@ -93,14 +86,13 @@ class _ExtractImpl(object):
     return result
 
   @make_cached
-  @bound_broadcast_result
+  @broadcast_result(attr=True, which=0)
   def _get_free_energy(self):
     """ Greps total free energy from L{OUTCAR}. """
     from os.path import exists, join
     from re import compile
 
-    path = self.OUTCAR 
-    if len(self.directory): path = join(self.directory, path)
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = None
@@ -114,14 +106,13 @@ class _ExtractImpl(object):
     return result
 
   @make_cached
-  @bound_broadcast_result
+  @broadcast_result(attr=True, which=0)
   def _get_fermi_energy(self):
     """ Greps fermi energy from L{OUTCAR}. """
     from os.path import exists, join
     from re import compile
 
-    path = self.OUTCAR 
-    if len(self.directory): path = join(self.directory, path)
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = None
@@ -142,22 +133,20 @@ class _ExtractImpl(object):
 
     species_in = self.species
 
-    path = self.CONTCAR 
-    if len(self.directory): path = join(self.directory, path)
+    path = self.CONTCAR if len(self.directory) == 0 else join(self.directory, self.CONTCAR)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
     result = read_poscar(species_in, path, comm=self.comm)
     result.energy = self.energy
     return result
 
   @make_cached
-  @bound_broadcast_result
+  @broadcast_result(attr=True, which=0)
   def _get_species(self):
     """ Greps species from L{OUTCAR}. """
     from os.path import exists, join
     from re import compile, X as re_X
 
-    path = self.OUTCAR 
-    if len(self.directory): path = join(self.directory, path)
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = []
@@ -171,14 +160,13 @@ class _ExtractImpl(object):
     return tuple(result)
 
   @make_cached
-  @bound_broadcast_result
+  @broadcast_result(attr=True, which=0)
   def _get_fft(self):
     """ Greps recommended or actual fft setting from L{OUTCAR}. """
     from os.path import exists, join
     from re import compile, search, X as re_X
 
-    path = self.OUTCAR 
-    if len(self.directory): path = join(self.directory, path)
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = None
@@ -242,7 +230,7 @@ class _ExtractImpl(object):
 
       
   @make_cached
-  @bound_broadcast_result
+  @broadcast_result(attr=True, which=0)
   def _get_kpoints(self):
     """ Greps k-points from L{OUTCAR}. 
     
@@ -252,8 +240,7 @@ class _ExtractImpl(object):
     from re import compile, search 
     from numpy import array
 
-    path = self.OUTCAR 
-    if len(self.directory): path = join(self.directory, path)
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = []
@@ -272,15 +259,14 @@ class _ExtractImpl(object):
     return array(result, dtype="float64")
 
   @make_cached
-  @bound_broadcast_result
+  @broadcast_result(attr=True, which=0)
   def _get_multiplicity(self):
     """ Greps multiplicity of each k-point from L{OUTCAR}. """
     from os.path import exists, join
     from re import compile, search 
     from numpy import array
 
-    path = self.OUTCAR 
-    if len(self.directory): path = join(self.directory, path)
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = []
@@ -305,8 +291,7 @@ class _ExtractImpl(object):
     from os.path import exists, join
     from numpy import array
 
-    path = self.OUTCAR 
-    if len(self.directory): path = join(self.directory, path)
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = []
@@ -331,7 +316,7 @@ class _ExtractImpl(object):
     return array(result, dtype="float64")
 
   @make_cached
-  @bound_broadcast_result
+  @broadcast_result(attr=True, which=0)
   def _get_eigenvalues(self):
     """ Greps eigenvalues of each band and kpoint from L{OUTCAR}.
 
@@ -341,7 +326,7 @@ class _ExtractImpl(object):
     return self._get_eigocc(1)
 
   @make_cached
-  @bound_broadcast_result
+  @broadcast_result(attr=True, which=0)
   def _get_occupations(self):
     """ Greps occupations according to k-point and\
         band index from L{OUTCAR}.
@@ -356,8 +341,7 @@ class _ExtractImpl(object):
     import re 
     from os.path import exists, join
 
-    path = self.OUTCAR 
-    if len(self.directory): path = join(self.directory, path)
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = None
@@ -370,19 +354,19 @@ class _ExtractImpl(object):
     return result
 
   @make_cached
-  @bound_broadcast_result
+  @broadcast_result(attr=True, which=0)
   def _get_pressure(self):
     """ Greps pressure from L{OUTCAR}. """
     return self._get_pressures(1)
 
   @make_cached
-  @bound_broadcast_result
+  @broadcast_result(attr=True, which=0)
   def _get_pulay_pressure(self):
     """ Greps pulay pressure from L{OUTCAR} """
     return self._get_pressures(2)
 
   @make_cached
-  @bound_broadcast_result
+  @broadcast_result(attr=True, which=0)
   def _get_partial_charges(self):
     """ Greps partial charges from L{OUTCAR} 
 
@@ -394,8 +378,7 @@ class _ExtractImpl(object):
     from os.path import exists, join
     from numpy import array
 
-    path = self.OUTCAR 
-    if len(self.directory): path = join(self.directory, path)
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = []
@@ -414,7 +397,7 @@ class _ExtractImpl(object):
     return array(result, dtype="float64")
     
   @make_cached
-  @bound_broadcast_result
+  @broadcast_result(attr=True, which=0)
   def _get_success(self):
     """ Checks that VASP run has completed. 
 
@@ -430,8 +413,7 @@ class _ExtractImpl(object):
       if self.directory != "": path = join(self.directory, path)
       if not exists(path): return False
       
-    path = self.OUTCAR 
-    if len(self.directory): path = join(self.directory, path)
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
 
     with open(path, "r") as file:
       regex = re.compile(r"""General\s+timing\s+and\s+accounting
@@ -439,3 +421,27 @@ class _ExtractImpl(object):
       for line in file:
         if regex.search(line) != None: return True
     return False
+
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def _get_functional(self):
+    """ Returns vasp functional used for calculation. 
+
+        Requires the L{FUNCCAR} file to be present.
+    """
+    from os.path import exists, join
+    from cPickle import load
+    path = self.FUNCCAR if len(self.directory) == 0 else join(self.directory, self.FUNCCAR)
+    if not exists(path): return None
+    with open(path, "r") as file: return load(file)
+
+  def __getstate__(self):
+    from os.path import relpath
+    d = self.__dict__.copy()
+    if "comm" in d: del d["comm"]
+    if "directory" in d: d["directory"] = relpath(d["directory"])
+    return d
+  def __setstate__(self, arg):
+    self.__dict__.update(arg)
+    self.comm = None
+

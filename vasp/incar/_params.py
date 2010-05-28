@@ -35,7 +35,7 @@ class Standard(object):
   """
 
   @broadcast_result(key=True)
-  def incar_string(self, vasp):
+  def incar_string(self, vasp, comm = None):
     """ Prints the key/value as key = value """
     return "%s = %s" % (self.key, str(self.value))
 
@@ -53,6 +53,9 @@ class Standard(object):
       self.validity = lambda x: x
       self.validity.func_code  = loads(arg[1])
 
+  def __repr__(self):
+    return "%s(%s,%s)" % (self.__class__.__name__, repr(self.key), repr(self.value))
+
 
 class NoPrintStandard(Standard):
   """ Does not print if value is the default given on initialization. """
@@ -61,10 +64,10 @@ class NoPrintStandard(Standard):
     self.default = self.value
 
   @broadcast_result(key=True)
-  def incar_string(self, vasp):
+  def incar_string(self, vasp, comm = None):
     if self.default == self.value: 
       return "# %s = VASP default." % (self.key)
-    return super(NoPrintStandard, self).incar_string(vasp)
+    return super(NoPrintStandard, self).incar_string(vasp, comm = None)
   
   def __setstate__(self, arg): 
     super(NoPrintStandard, self).__setstate__(arg)
@@ -87,11 +90,13 @@ class Iniwave(Standard):
   value = property(_getvalue, Standard._setvalue)
   """ Iniwave property
   
-      It takes a meaningful value when set (C{self.value = random})
+      It takes a meaningful value when set (C{self.value = \"random\"})
         - random: wavefunctions are initalized with random number. Safest. 
         - jellium: wavefunctions are initalized a jelliums. Not so safe.
       returns its  "VASP" equivalent when gotten (C{print self.value} outputs 0 or 1).
   """
+
+  def __repr__(self): return "%s(%s)" % (self.__class__.__name__, repr(self.value))
 
 
 class Algo(Standard): 
@@ -113,6 +118,7 @@ class Algo(Standard):
     elif lower == "normal": self._value = "Normal"
     else: raise ValueError, "%s = %s is invalid.\n%s\n" % (self.key, value, self.__doc__)
   value = property(_getvalue, _setvalue)
+  def __repr__(self): return "%s()" % (self.__class__.__name__)
 
 class Precision(Standard):
   """ Sets accuracy of calculation. 
@@ -129,6 +135,7 @@ class Precision(Standard):
     if self._value not in ["accurate", "lower", "medium", "high"]:
       raise ValueError, "%s = %s is invalid.\n%s\n" % (self.key, value, self.__doc__)
   value = property(_getvalue, _setvalue)
+  def __repr__(self): return "%s()" % (self.__class__.__name__)
 
 class Ediff(Standard):
   """ Sets the convergence criteria (per atom) for electronic minimization.
@@ -140,8 +147,9 @@ class Ediff(Standard):
     super(Ediff, self).__init__("EDIFF", value, validity = lambda x: x > 0e0)
 
   @broadcast_result(key=True)
-  def incar_string(self, vasp):
+  def incar_string(self, vasp, comm = None):
     return "%s = %f " % (self.key, self.value * float(len(vasp._system.atoms)))
+  def __repr__(self): return "%s(%s)" % (self.__class__.__name__, repr(self.value))
 
 
 class Encut(object):
@@ -172,7 +180,7 @@ class Encut(object):
   x = property(_getvalue, _setvalue)
 
   @broadcast_result(key=True)
-  def incar_string(self, vasp):
+  def incar_string(self, vasp, comm = None):
     from math import fabs
     if fabs(self.safety - 1e0) < 1e-12: return "# ENCUT = VASP default"
     return "%s = %f " % (self.key, float(self.enmax(vasp.species)) * self.safety)
@@ -182,6 +190,7 @@ class Encut(object):
     """ Retrieves max ENMAX from list of species. """
     from math import ceil
     return ceil( max(s.enmax for s in species) )
+  def __repr__(self): return "%s(%s)" % (self.__class__.__name__, repr(self.safety))
 
 class Smearing(object):
   """ Value of the smearing used in the calculation. 
@@ -257,8 +266,9 @@ class Smearing(object):
       It can be set using a similar tuple, or a string input with keywords. 
   """
   @broadcast_result(key=True)
-  def incar_string(self, vasp):
+  def incar_string(self, vasp, comm = None):
     return "ISMEAR  = %s\nSIGMA   = %f\n" % self.value
+  def __repr__(self): return "%s(%s)" % (self.__class__.__name__, repr(self.value))
 
   
 class Isym(Standard):
@@ -280,14 +290,15 @@ class Isym(Standard):
   value = property(_getvalue, _setvalue)
 
   @broadcast_result(key=True)
-  def incar_string(self, vasp):
+  def incar_string(self, vasp, comm = None):
     if self._value <= 0e0: return "ISYM = 0\n" 
-    return super(Isym,self).incar_string(vasp)
+    return super(Isym,self).incar_string(vasp, comm = None)
 
   def __eq__(self, other):
     if isinstance(other, Isym):
       return self._value == self._value
     return self == Isym(other)
+  def __repr__(self): return "%s(%s)" % (self.__class__.__name__, repr(self.value))
   
 class FFTGrid(object):
   """ Computes fft grid using VASP. Or if grid is given, computes using that grid. """
@@ -341,52 +352,58 @@ class FFTGrid(object):
 
       # finally extracts from OUTCAR.
       return Extract(directory = vasp._tempdir, comm = comm).fft
+  def __repr__(self):
+    if self._value == None: return "%s(None)" % (self.__class__.__name__)
+    return "%s(%s)" % (self.__class__.__name__, repr(self.value))
 
 
 
       
 
 class Restart(object):
-  """
-      Directory where to restart, or None.
+  """ Return from previous run from which to restart.
       
       If None, then starts from scratch.
-      If this directory contains WAVECAR or CHGCAR, then restarts from
-      wavefunctions or charge. If this directory does not exist, issue an
-      error.
   """
-  def __init__(self, directory = None):  
+  def __init__(self, extraction = None):  
     super(Restart, self).__init__()
-    self._value = directory
-
-  def __get__(self, owner, ownertype=None): return self
-  def __set__(self, owner, value): self._setvalue(self, value)
-  def _getvalue(self): return self._value
-  def _setvalue(self, object): self._value = object
-  value = property(_getvalue, _setvalue)
+    self.value = extraction
 
   @broadcast_result(key=True)
-  def incar_string(self, vasp):
+  def incar_string(self, vasp, comm=None):
+    from os.path import join, exists
+    from .. import files
+    is_root = comm.rank == 0 if comm != None else True
     istart = "0   # start from scratch"
     icharg = "2   # superpositions of atomic densities"
-    if self.value == None or len(self.value) == 0:
+    if self.value == None: istart = "0   # start from scratch"
+    elif not self.value.success:
+      print "Could not find successful run in directory %s." % (self.value.directory)
+      print "Restarting from scratch."
       istart = "0   # start from scratch"
-    elif not os.path.exists( self.value ):
-      raise RuntimeError, "Could not find restart directory " + self.value + "\n";
     else:
-      ewave = os.path.exists( os.path.join( self.value, 'WAVECAR' ) )
-      echarge = os.path.exists( os.path.join( self.value, 'CHGCAR' ) )
+      ewave = exists( join(self.value.directory, files.WAVECAR) )
+      echarge = exists( join(self.value.directory, files.CHGCAR) )
       if ewave:
+        path = join(self.value.directory, files.WAVECAR)
         istart = "1  # restart"
-        icharg = "0   # from wavefunctions " + os.path.join( self.value, 'WAVECAR' )
+        icharg = "0   # from wavefunctions " + path
+        if is_root: copy(path, ".")
       elif echarge:
+        path = join(self.value.directory, files.CHGCAR)
         istart = "1  # restart"
-        icharg = "1   # from charge " + os.path.join( self.value, 'CHGCAR' )
+        icharg = "1   # from charge " + path
+        if is_root: copy(path, ".")
       else: 
         istart = "0   # start from scratch"
         icharg = "2   # superpositions of atomic densities"
+      if is_root and exists( join(self.value.directory, files.EIGENVALUES) ):
+        copy(join(self.value.directory, files.EIGENVALUES), ".") 
+
 
     return  "ISTART = %s\nICHARG = %s" % (istart, icharg)
+
+  def __repr__(self): return "%s(%s)" % (self.__class__.__name__, repr(self.value))
 
 class Relaxation(object):
   """ Sets ISIF in incar depending on type relaxation required. 
@@ -446,7 +463,7 @@ class Relaxation(object):
   value = property(_getvalue, _setvalue)
 
   @broadcast_result(key=True)
-  def incar_string(self, vasp):
+  def incar_string(self, vasp, comm = None):
     isif = self.value
     result = "NSW    = %3i   # number of ionic steps.\n"\
              "IBRION =   %1i # ionic-relaxation minimization method.\n"\
@@ -467,6 +484,9 @@ class Relaxation(object):
     elif isif == 7:           
       return result + "ISIF   = 7     # relaxing V. only."
     raise RuntimeError("Internal bug.")
+  def __repr__(self):
+    return "%s(nsw=%i, ibrion=%i, potim=%f)"\
+           % (self.__class__.__name__, self.nsw, self.ibrion, self.potim)
 
 class NElect(object):
   """ Sets number of electrons relative to neutral system.
@@ -498,7 +518,7 @@ class NElect(object):
     return fsum( valence[atom.type] for atom in vasp._system.atoms )
     
   @broadcast_result(key=True)
-  def incar_string(self, vasp):
+  def incar_string(self, vasp, comm = None):
     from boost.mpi import broadcast
     # gets number of electrons.
     charge_neutral = self.nelectrons(vasp)
@@ -511,6 +531,8 @@ class NElect(object):
     else: 
       return "%s = %s  # positively charged system (+%i) "\
              % (self.key, charge_neutral + self.value, -self.value)
+  def __repr__(self):
+    return "%s(%f)" % (self.__class__.__name__, self.value)
           
 class NBands(NElect):
   """ Sets number of bands to compute relative to number of electrons. 
@@ -534,7 +556,7 @@ class NBands(NElect):
   """ INCAR key """
 
   @broadcast_result(key=True)
-  def incar_string(self, vasp):
+  def incar_string(self, vasp, comm = None):
     from boost.mpi import broadcast
     # gets number of electrons.
     ne = self.nelectrons(vasp)
@@ -548,6 +570,8 @@ class NBands(NElect):
     elif self.unit == NBands.nelec:
       return "%s = %s" % (self.key, int(ne + ceil(self.value * float(ne))) )
     else: raise "Unknown method in NBands"
+  def repr(self):
+    return "%s(value=%i, unit=%i)" % (self.__class__.__name__, self.value, self.unit)
       
 class UParams(object): 
   """ Prints U parameters if any found in species settings """
@@ -566,7 +590,7 @@ class UParams(object):
     super(UParams, self).__init__(**kwargs)
 
   @broadcast_result(key=True)
-  def incar_string(self, vasp):
+  def incar_string(self, vasp, comm = None):
     # existence and sanity check
     has_U, which_type = False, None 
     for specie in vasp.species:

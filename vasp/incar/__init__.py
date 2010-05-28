@@ -107,19 +107,20 @@ class Incar(object):
       attr = getattr(self, name)
       if hasattr(attr, "incar_string"): yield attr
 
-  def __getstate__(self):
-    """ Saves state """
-    l = [dict(self.__dict__)]
-    for name in l[0].keys():
-      if name[0] == '_': continue
-      attr = getattr(self, name)
-      if hasattr(attr, "incar_string"): 
-        l.append( (name, attr) ) 
-        del l[0][name]
-    return tuple(l)
+# def __getstate__(self):
+#   """ Saves state """
+#   l = [dict(self.__dict__)]
+#   for name in l[0].keys():
+#     if name[0] == '_': continue
+#     attr = getattr(self, name)
+#     if hasattr(attr, "incar_string"): 
+#       l.append( (name, attr) ) 
+#       del l[0][name]
+#   print "Am here"
+#   return tuple(l)
 
-  def __setstate__(self, arg):
-    """ Restores state """
-    self.__dict__.update(arg[0])
-    for name, attr in arg[1:]: setattr(self, name, attr)
+# def __setstate__(self, arg):
+#   """ Restores state """
+#   self.__dict__.update(arg[0])
+#   for name, attr in arg[1:]: setattr(self, name, attr)
 

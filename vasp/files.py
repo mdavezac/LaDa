@@ -24,8 +24,10 @@ EIGENVALUES = "EIGENVAL"
 """ Name of the file with eigenvalues. """
 OUTCAR = "OUTCAR"
 """ Name of the output file. """
+FUNCCAR = "FUNCCAR"
+""" Name of the pickled functional. """
 
-minimal = [OUTCAR, CONTCAR, STDOUT, STDERR]
+minimal = [OUTCAR, CONTCAR, STDOUT, STDERR, FUNCCAR]
 """ The minimum number of files to still have the results of the run.
 
     minimal = [L{OUTCAR}, L{CONTCAR}, L{STDOUT}, L{STDERR}]

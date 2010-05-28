@@ -33,6 +33,8 @@ class Extract(_dft._ExtractImpl):
   pressure        = property(_ExtractImpl._get_pressure)
   pulay_pressure  = property(_ExtractImpl._get_pulay_pressure)
   partial_charges = property(_ExtractImpl._get_partial_charges)
+  vasp            = property(_ExtractImpl._get_functional)
+  functional      = property(_ExtractImpl._get_functional)
 
   def __init__(self, directory = "", comm = None): 
     """ Initializes the extraction class. 
