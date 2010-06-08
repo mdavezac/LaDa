@@ -20,6 +20,7 @@ namespace LaDa
   {
      void Transform :: init(math::rMatrix3d const &_left, math::iVector3d const &_smith)
      {
+       const types::t_real roundoff = 1e1 * std::numeric_limits<types::t_real>::epsilon();
        namespace bt = boost::tuples;
        nsites_ = independents_.size();
        card_ = nsites_*_smith(0)*_smith(1)*_smith(2);
@@ -68,9 +69,9 @@ namespace LaDa
 #              endif
                math::iVector3d translation
                (
-                 types::t_int(std::floor(transformed(0)+0.001)) % _smith(0),
-                 types::t_int(std::floor(transformed(1)+0.001)) % _smith(1), 
-                 types::t_int(std::floor(transformed(2)+0.001)) % _smith(2)  
+                 types::t_int(std::floor(transformed(0)+roundoff)) % _smith(0),
+                 types::t_int(std::floor(transformed(1)+roundoff)) % _smith(1), 
+                 types::t_int(std::floor(transformed(2)+roundoff)) % _smith(2)  
                );
                if( translation(0) < 0 ) translation(0) += _smith(0);
                if( translation(1) < 0 ) translation(1) += _smith(1);
@@ -213,5 +214,11 @@ namespace LaDa
           result->push_back(Transform(symop, _lat));
         return result;
       }
+
+    std::ostream& operator<<(std::ostream & _stream, Transform const &_transform)
+    {
+      foreach(size_t t, _transform.permutations_) _stream << t << " ";
+      return _stream;
+    }
   } // namespace Crystal
 } // namespace LaDa

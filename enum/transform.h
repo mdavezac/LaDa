@@ -21,10 +21,17 @@ namespace LaDa
 {
   namespace enumeration
   {
+    // forward declaration.
+    class Transform;
+    
+    //! Dumps a transform to a stream.
+    std::ostream& operator<<(std::ostream &, Transform const &);
+
     //! \brief Symmetry operation of the lattice operating on an integer structure.
     //! \see Transform an integer structure to another. Appendix of PRB 80, 014120.
     class Transform : public Crystal::SymmetryOperator
     {
+      friend std::ostream& operator<<(std::ostream &, Transform const &);
       //! Type of the container of supercell-independent elements.
       typedef std::pair<types::t_int, math::rVector3d> t_Independent;
       //! Type of the container of supercell-independent elements.

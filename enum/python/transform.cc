@@ -192,6 +192,7 @@ namespace LaDa
             " - left is the left transform matrix from the Hermite to the Smith normal form.\n"
             " - smith is the diagonal of the Smith normal form as an integer 3x1 numpy array.\n")
        .def("__call__", &call)
+       .def("__str__", Python::tostream<enumeration::Transform>)
        .add_property("is_trivial", &enumeration::Transform::is_trivial,
                      "True if the permutation is trivial.");
 
