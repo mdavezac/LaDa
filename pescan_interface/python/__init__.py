@@ -364,7 +364,7 @@ class Escan(object):
   
       # copies output files.
       with Changedir(outdir, comm = comm) as cwd:
-        for file in  [ this._POSCAR + "." + str(comm.rank),\
+        for file in  [ this._POSCAR + "." + str(world.rank),\
                        this._POTCAR + "." + str(world.rank),\
                        this._cout(comm) if this._cout(comm) != "/dev/null" else None,\
                        this._cerr(comm) if this._cerr(comm) != "/dev/null" else None,\
@@ -432,10 +432,11 @@ class Escan(object):
     from shutil import copyfile
     from os.path import join, samefile, exists
     from ..vff import Extract as ExtractVff
+    from boost.mpi import world
 
-    poscar = self._POSCAR + "." + str(comm.rank)
+    poscar = self._POSCAR + "." + str(world.rank)
     if self.vffrun != None:
-      POSCAR = self.vffrun.escan._POSCAR + "." + str(comm.rank)
+      POSCAR = self.vffrun.escan._POSCAR + "." + str(world.rank)
       rstr = self.vffrun.structure
       if exists(join(self.vffrun.directory, POSCAR)):
         copyfile(join(self.vffrun.directory, POSCAR), poscar)
@@ -488,7 +489,7 @@ class Escan(object):
     # Creates temporary input file and creates functional
     dnc_mesh = self.dnc_mesh if self.dnc_mesh != None else self.fft_mesh
     overlap_mesh = self.overlap_mesh if self.overlap_mesh != None else (0,0,0)
-    with open(self._GENCAR + "." + str(comm.rank), "w") as file:
+    with open(self._GENCAR + "." + str(world.rank), "w") as file:
       file.write( "%s\n%i %i %i\n%i %i %i\n%i %i %i\n%f\n%i\n"\
                   % ( self._POSCAR, self.fft_mesh[0], self.fft_mesh[1], self.fft_mesh[2], \
                       dnc_mesh[0], dnc_mesh[1], dnc_mesh[2],\
@@ -549,7 +550,7 @@ class Escan(object):
       elif self.potential == soH: print >> file, "12 3 # spin orbit hamiltonian" 
       else: raise RuntimeError("Unknown potential requested.")
       
-      print >> file, "13 ", self._POSCAR + "." + str(comm.rank)
+      print >> file, "13 ", self._POSCAR + "." + str(world.rank)
       print >> file, "14 ", self.rspace_cutoff, "# real-space cutoff" 
 
       if self.potential != soH:
@@ -586,7 +587,7 @@ class Escan(object):
     # first get relaxed cell
     relaxed = zeros((3,3), dtype="float64")
     if comm.rank == 0:
-      with open(self._POSCAR + "." + str(comm.rank), "r") as file:
+      with open(self._POSCAR + "." + str(world.rank), "r") as file:
         file.readline() # number of atoms.
         # lattice vector by lattice vector
         for i in range(3): 
