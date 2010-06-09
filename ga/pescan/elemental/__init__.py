@@ -1,4 +1,5 @@
 """ A GA subpackage defining standard genetic operator for elemental alloys. """
+
 __all__ = [ "evaluator" ]
 from lada.ga.bitstring import Individual as BitstringIndividual, \
                               Crossover as BitstringCrossover, \
@@ -192,7 +193,7 @@ class LayeredConverter(object):
         return 0 if u.type == self.structure.lattice.sites[u.site].type[0] else 1
       return array([ which(u) for i, u in generator(object.atoms, False) ])
     else:  # bitstring.
-      if len(object) != len([0 for i, u in generator(self.structure.atoms)])
+      if len(object) != len([0 for i, u in generator(self.structure.atoms)]):
         print object
         print len(self.structure.atoms), len([0 for i, u in generator(self.structure.atoms)])
         print self.structure
