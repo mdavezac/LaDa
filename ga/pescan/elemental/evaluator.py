@@ -35,8 +35,12 @@ class Bandgap(object):
     """ Output directory.  """
     self.nbcalc = 0
     """ Number of calculations. """
-    self.references = references if references != None else lambda x: None
-    """ None, or a callback which takes a structure as argument and returns the references. """
+    self.references = references 
+    """ References to compute bandgap.
+    
+        Can be None (all-electron method), a 2-tuple of reference values
+        (folded-spectrum), or a callable returnin a 2-tuple when given a structure.
+    """
     self.kwargs = deepcopy(kwargs)
     """ Additional arguments to be passed to the bandgap functional. """
 
@@ -45,7 +49,8 @@ class Bandgap(object):
     """ Returns length of bitstring. """
     return len(self.converter.structure.atoms)
 
-  def run(self, indiv, comm = None):
+  def run( self, indiv, outdir = None, comm = None, converter = None, \
+           references = None, escan = None, **kwargs ):
     """ Computes bandgap of an individual. 
     
         The epitaxial energy is stored in indiv.epi_energy
@@ -54,19 +59,27 @@ class Bandgap(object):
         returns an extractor to the bandgap. 
     """
     from os.path import join
+    from copy import deepcopy
     from boost.mpi import world
     from ....escan import bandgap
+
+    # takes into account input arguments.
+    if references == None: references = self.references
+    if converter == None:  converter  = self.converter
+    if escan == None:      escan      = self.escan
+    if outdir == None:     outdir     = join(self.outdir, str(self.nbcalc))
+    if comm == None:       comm       = world
  
+    # creates argument dictonary to pass on to calculations.
+    dictionary = deepcopy(self.kwargs)
+    dictionary.update(kwargs) 
+    dictionary["comm"]       = comm 
+    dictionary["outdir"]     = outdir
+    dictionary["references"] = self.references(structure) if hasattr(references, "__call__")\
+                               else references
     # performs calculation.
-    structure = self.converter(indiv.genes)
-    out = bandgap\
-          ( 
-            self.escan,\
-            structure,\
-            outdir = join(self.outdir, str(self.nbcalc)),\
-            references=self.references(structure),\
-            comm = comm if comm != None else world 
-          )
+    structure = converter(indiv.genes)
+    out = bandgap(escan, structure, **dictionary)
 
     # saves some stuff
     indiv.epi_energy = out.energy
@@ -79,12 +92,32 @@ class Bandgap(object):
     return out
 
   @count_calls
-  def __call__(self, indiv, comm = None):
+  def __call__(self, *args, **kwargs):
     """ Computes and returns bandgap. 
     
         see self.run(...) for more details.
     """
-    return self.run(indiv, comm).bandgap
+    return self.run(*args, **kwargs).bandgap
+
+  def __getstate__(self):
+    from marshal import dumps
+    d = self.__dict__.copy()
+    references = self.references
+    del d["references"]
+    if hasattr(references, "__name__"):
+      if references.__name__ == '<lambda>':
+        s = dumps(self.references.func_code)
+        return d, True, s
+    return d, False, references
+  def __setstate__(self, arg):
+    from marshal import loads
+    self.__dict__.update(arg[0])
+    self.validity = None
+    if arg[1]: # lambda
+      self.references = lambda x: x
+      self.references.func_code  = loads(arg[2])
+    else: # other pickleable
+      self.references = arg[2]
 
 class Dipole(Bandgap):
   """ Evaluates the oscillator strength.
@@ -97,8 +130,8 @@ class Dipole(Bandgap):
     super(Dipole, self).__init__(*args, **kwargs)
 
   @count_calls
-  def __call__(self, indiv, comm = None):
+  def __call__(self, *args, **kwargs):
     """ Computes the oscillator strength. """
-    out = super(Dipole, self).run(indiv, comm)
+    out = super(Dipole, self).run(*args, **kwargs)
     indiv.oscillator_strength, indiv.osc_nbstates = out.oscillator_strength()
     return indiv.oscillator_strength
