@@ -431,10 +431,11 @@ class Vff(object):
     if self.ERRCAR == None: return "/dev/null"
     return self.ERRCAR if comm.rank == 0 else self.ERRCAR + "." + str(comm.rank)
 
-  def __call__(self, structure, outdir, comm = None, overwrite=False, **kwargs):
+  def __call__(self, structure, outdir = None, comm = None, overwrite=False, **kwargs):
     """ Performs calculation """
     import time
     from copy import deepcopy
+    from os import getcwd
     from os.path import exists, isdir, abspath, expanduser
     from boost.mpi import world
     from ..opt.changedir import Changedir
@@ -458,7 +459,7 @@ class Vff(object):
     local_time = time.localtime() 
 
     # gets absolute path.
-    outdir = abspath(expanduser(outdir))
+    outdir = abspath(expanduser(outdir)) if outdir != None else getcwd()
 
     # make this functor stateless.
     this      = deepcopy(self)
