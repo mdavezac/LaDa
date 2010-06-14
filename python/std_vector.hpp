@@ -75,7 +75,7 @@ namespace LaDa
           return result;
         }
       template<class T>
-        void insert( std::vector<T> &_self, T const &_t, size_t _i )
+        void insert( std::vector<T> &_self, int _i, T const &_t )
         {
           if( _i < 0 ) _i += _self.size();
           if( _i < 0 or _i >= _self.size() )
@@ -116,7 +116,7 @@ namespace LaDa
           .def( "extend", &details::extend<T_TYPE> ) 
           .def( "pop", &details::pop_last<T_TYPE> ) 
           .def( "pop", &details::pop<T_TYPE> ) 
-          .def( "insert", &details::insert<T_TYPE>, bp::with_custodian_and_ward<1,2>() ) 
+          .def( "insert", &details::insert<T_TYPE> ) 
           .def( "clear", &std::vector<T_TYPE> :: clear );
         return result;
       }
