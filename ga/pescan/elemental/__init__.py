@@ -107,6 +107,10 @@ class Converter(object):
     if lattice != None:
       if oldlattice != None: oldlattice.set_as_crystal_lattice()
     
+  def __len__(self):
+    """ Returns length of bitstring. """
+    return len(self.structure.atoms)
+
   def __call__(self, object):
     """ Conversion function for structures and bitstring. 
 
@@ -167,6 +171,20 @@ class LayeredConverter(object):
 
     if lattice != None:
       if oldlattice != None: oldlattice.set_as_crystal_lattice()
+
+  def __len__(self):
+    """ Returns length of bitstring. """
+    from lada.crystal import LayerDepth
+    def generator(struct, all = True):
+      layer_depth = LayerDepth(struct.cell[:,0])
+      depth, l = None, 0
+      for atom in struct.atoms:
+        m = layer_depth(atom.pos)
+        if depth == None: depth = m  
+        elif abs(depth - m) > 1e-12: depth, l = m, l+1
+        elif all == False: continue
+        yield l, atom
+    return len([0 for u in generator(self.structure, all=False)]) 
     
   def __call__(self, object):
     """ Conversion function for structures and bitstring. 
@@ -193,7 +211,7 @@ class LayeredConverter(object):
         return 0 if u.type == self.structure.lattice.sites[u.site].type[0] else 1
       return array([ which(u) for i, u in generator(object, False) ])
     else:  # bitstring.
-      if len(object) != len([0 for i, u in generator(self.structure)]):
+      if len(object) != len([0 for i, u in generator(self.structure, False)]):
         print object
         print len(self.structure.atoms), len([0 for i, u in generator(self.structure)])
         print self.structure

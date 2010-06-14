@@ -47,7 +47,7 @@ class Bandgap(object):
 
   def __len__(self):
     """ Returns length of bitstring. """
-    return len(self.converter.structure.atoms)
+    return len(self.converter)
 
   def run( self, indiv, outdir = None, comm = None, converter = None, \
            references = None, escan = None, **kwargs ):
@@ -130,8 +130,8 @@ class Dipole(Bandgap):
     super(Dipole, self).__init__(*args, **kwargs)
 
   @count_calls
-  def __call__(self, *args, **kwargs):
+  def __call__(self, indiv, *args, **kwargs):
     """ Computes the oscillator strength. """
-    out = super(Dipole, self).run(*args, **kwargs)
+    out = super(Dipole, self).run(indiv, *args, **kwargs)
     indiv.oscillator_strength, indiv.osc_nbstates = out.oscillator_strength()
     return indiv.oscillator_strength
