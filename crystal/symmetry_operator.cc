@@ -140,9 +140,6 @@ namespace LaDa
         Lattice::t_Sites sites(_lattice.sites);
         math::rVector3d translation(sites.front().pos);
         math::rMatrix3d const invcell(!_lattice.cell);
-        foreach( Lattice::t_Site &site, sites )
-          if( translation.squaredNorm() > site.pos.squaredNorm() )
-            translation = site.pos;
         // Creates a list of sites centered in the cell.
         foreach( Lattice::t_Site &site, sites )
           site.pos = into_cell(site.pos-translation, _lattice.cell, invcell);
