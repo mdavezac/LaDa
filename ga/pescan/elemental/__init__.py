@@ -191,15 +191,15 @@ class LayeredConverter(object):
     if hasattr(object, "cell"): # crystal structure
       def which(u): # finds type
         return 0 if u.type == self.structure.lattice.sites[u.site].type[0] else 1
-      return array([ which(u) for i, u in generator(object.atoms, False) ])
+      return array([ which(u) for i, u in generator(object, False) ])
     else:  # bitstring.
-      if len(object) != len([0 for i, u in generator(self.structure.atoms)]):
+      if len(object) != len([0 for i, u in generator(self.structure)]):
         print object
-        print len(self.structure.atoms), len([0 for i, u in generator(self.structure.atoms)])
+        print len(self.structure.atoms), len([0 for i, u in generator(self.structure)])
         print self.structure
         raise ValueError, "Bitstring and epitaxial structure are not compatible.\n"
       result = Structure(self.structure)
-      for i, atom in generator(result.atoms, True):
+      for i, atom in generator(result, True):
         atom.type = self.structure.lattice.sites[atom.site].type[int(object[i])]
       assert result.lattice.scale > 0e0
       result.scale = result.lattice.scale
