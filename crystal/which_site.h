@@ -34,7 +34,6 @@ namespace LaDa
           if( not math::is_zero(pos(0)-std::floor(pos(0)+roundoff)) ) continue;
           if( not math::is_zero(pos(1)-std::floor(pos(1)+roundoff)) ) continue;
           if( math::is_zero(pos(2)-std::floor(pos(2)+roundoff)) ) return i;
-          if( math::is_zero(pos(2)) ) return i;
         }
         return -1;
       };
