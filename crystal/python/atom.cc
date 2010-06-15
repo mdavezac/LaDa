@@ -76,6 +76,7 @@ namespace LaDa
                          "index of the \"site\" as referenced by a LaDa.Lattice object." )
          .def_readwrite( "type",   &t_Atom::type, _typeds.c_str() )
          .def_readwrite( "freeze", &t_Atom::freeze )
+         .def_pickle( Python::pickle< t_Atom >() )
          .def( "__str__",  &print<t_Atom> );
 
         expose_vector< t_Atom >( ( _name + "s" ).c_str(), ("A list of " + _name ).c_str() );
