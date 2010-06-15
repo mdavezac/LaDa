@@ -55,7 +55,7 @@ def nlep(type = 1, l=2, U0=0e0, U1=None ):
 
 class Specie(object):
   """ Holds atomic specie information:  """
-  def __init__(self, symbol, path, U=None):
+  def __init__(self, symbol, path, U=None, oxidation=None):
     """ Initializes a specie.
         @param symbol: is the atomic symbol
         @type symbol: str
@@ -70,7 +70,9 @@ class Specie(object):
 
     self.symbol = symbol
     self.path = os.path.abspath(os.path.expanduser(path))
+    if oxidation != None: self.oxidation = oxidation
     if U == None: self.U = []
+    elif isinstance(U, dict): self.U = [U]
     else: self.U = U
 
 
