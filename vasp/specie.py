@@ -65,6 +65,7 @@ class Specie(object):
         @param U: LDA+U parameters. It should a list of dictionaries, one entry
                   per momentum channel. The simplest approach is to use
                   >>> Species(..., U=[U(l=1, U=1.5), U(l=2, U=2.5)],...)
+        @param oxidation: Maximum oxidation state (or minimum if negative).
     """
     import os.path
 
