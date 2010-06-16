@@ -195,7 +195,7 @@ namespace LaDa
         if( i_xpositions->size() == 1 ) ++i_ypositions; 
         // Pointers are defined explicitely as a workaround for commercial
         // compilers, such as pgi.
-        bool (*ptr_is_zero)( types::t_real ) = &math::is_zero<types::t_real>;
+        bool (*ptr_is_zero)( types::t_real const & ) = &math::is_zero<types::t_real>;
         const t_Positions :: value_type :: const_iterator 
           max_x_element = details::max_element
                           (
