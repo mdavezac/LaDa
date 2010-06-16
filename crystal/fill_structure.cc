@@ -37,10 +37,14 @@ namespace LaDa
              (!bt::get<0>(transform))
           );
           math::rMatrix3d inv_cell( _structure.cell.inverse() );
-          typename TStructure<T_TYPE>::t_Atom atom;
+          _structure.atoms.resize(smith(0)*smith(1)*smith(2));
+          typename Crystal::TStructure<T_TYPE>::t_Atoms::iterator i_atom = _structure.atoms.begin();
+          Crystal::Lattice::t_Sites::iterator const i_site_begin = _structure.lattice->sites.begin();
+          Crystal::Lattice::t_Sites::iterator const i_site_end = _structure.lattice->sites.end();
+          
           for( size_t i(0); i < smith(0); ++i )
             for( size_t j(0); j < smith(1); ++j )
-              for( size_t k(0); k < smith(2); ++k )
+              for( size_t k(0); k < smith(2); ++k, ++i_atom )
               {
                 // in cartesian.
                 const math::rVector3d vec( factor * math::rVector3d(i,j,k) );
@@ -49,9 +53,11 @@ namespace LaDa
                 typedef Crystal::Lattice::t_Site t_Site;
                 size_t i(0);
                 foreach( const t_Site &site, _structure.lattice->sites ) 
+                for( Crystal::Lattice::t_Sites::iterator i_site(i_site_begin);
+                     i_site != i_site_end; ++i_site )
                 {
                   // in supercell fractional.
-                  math::rVector3d frac( inv_cell * ( vec + site.pos ) );
+                  math::rVector3d frac( inv_cell * ( vec + i_site->pos ) );
                   // in supercell fractional and in supercell parallelogram
                   const math::rVector3d inside
                   (
@@ -60,10 +66,9 @@ namespace LaDa
                     frac(2) - std::floor( frac(2) + 0.0000001 )
                   );
                   // back to cartesian.
-                  atom.pos = _structure.cell * inside;
-                  atom.site = i;
-                  atom.freeze = site.freeze;
-                  _structure.atoms.push_back(atom);
+                  i_atom->pos = _structure.cell * inside;
+                  i_atom->site = i;
+                  i_atom->freeze = i_site->freeze;
                   ++i;
                 }
               }

@@ -91,20 +91,19 @@ namespace LaDa
           if( line[0] == '#' ) continue;
           if( line.size() == 0 ) continue;
           std::istringstream input( line );
-          structure.cell = Eigen::Matrix3d::Zero();
           types::t_int dummy;
           input >> structure.name;
           for( size_t i(0); i < 6; ++i ) input >> dummy;
+          structure.cell = Eigen::Matrix3d::Zero();
           input >> structure.cell(0,0) 
                 >> structure.cell(1,0) >> structure.cell(1,1)
                 >> structure.cell(2,0) >> structure.cell(2,1) >> structure.cell(2,2);
           for( size_t i(0); i < 9; ++i ) input >> dummy;
           input >> line;
           structure.cell = structure.lattice->cell * structure.cell;
-          structure.atoms.clear();
           fill_structure( structure );
-          __DOASSERT( line.size() != structure.atoms.size(),
-                      "labels and structure have different sizes.\n" )
+          __ASSERT( line.size() != structure.atoms.size(),
+                    "labels and structure have different sizes.\n" )
           t_SmithTransform const transform = get_smith_transform( structure );
           Structure::t_Atoms::iterator i_atom = structure.atoms.begin();
           Structure::t_Atoms::iterator i_atom_end = structure.atoms.end();

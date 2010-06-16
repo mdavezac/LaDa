@@ -49,8 +49,7 @@ namespace LaDa
     //! \brief returns true if \a _a  == 0.
     //! \details if \a T_ARG is a types::real, return true if 
     //!          \a _a < types::tolerance.
-    template< class T_ARG >
-    inline bool is_zero( const T_ARG _a ) { return math::eq( _a, T_ARG(0) ); }
+    template< class T_ARG > bool is_zero( T_ARG const &_a );
 
     //! Is a vector zero.
     template<> inline bool is_zero( rVector3d const &_a ) { return is_zero( _a.squaredNorm() );  }
@@ -69,6 +68,7 @@ namespace LaDa
           if( not is_zero(_a(i,j)) ) return false;
       return true;
     }
+    template<class T> inline bool is_zero(T const &_a ) { return math::eq( _a, T(0) ); }
 
     //! \cond
     template<>
