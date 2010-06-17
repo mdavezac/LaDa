@@ -36,7 +36,7 @@ class Launch(Incar):
     self.kpoints =  kpoints
 
     # sets all other keywords as attributes.
-    for key in kwargs.keys(): getattr(self, key).value = kwargs[key]
+    for key in kwargs.keys(): setattr(self, key, kwargs[key])
 
   def _find_species( self, structure ):
     """ Returns a list of species in the structure. 
@@ -67,7 +67,7 @@ class Launch(Incar):
     # creates incar file. Changedir makes sure that any calculations done to
     # obtain incar will happen in the tempdir.
     with Changedir(self._tempdir) as tmpdir:
-      incar_string = [param.incar_string(self, comm=comm) + "\n" for param in self]
+      with open(files.INCAR, "w") as incar_file: self.print_to_incar(incar_file, comm)
 
     if comm.rank != 0: return # don't have any more business here.
 
