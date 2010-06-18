@@ -189,10 +189,10 @@ def _add_atom(which, container):
     getattr(self, container).append(result)
   return _fun
 
-Structure.add_atom = add_setter( _add_atom(Atom, "atoms"), _add_atom.__doc__ )
-rStructure.add_k_vec = add_setter( _add_atom(kAtom, "k_vecs"), _add_atom.__doc__ )
-rStructure.add_atom = add_setter( _add_atom(rAtom, "atoms"), _add_atom.__doc__ )
-Lattice.add_site = add_setter( _add_atom(Site, "sites"), _add_atom.__doc__ )
+Structure.add_atom = add_setter( _add_atom(Atom, "atoms") )
+rStructure.add_k_vec = add_setter( _add_atom(kAtom, "k_vecs") )
+rStructure.add_atom = add_setter( _add_atom(rAtom, "atoms") )
+Lattice.add_site = add_setter( _add_atom(Site, "sites") )
 def _add_atoms(which):
   """ Adds a list of atoms/sites to structure/lattice. 
   
@@ -209,9 +209,9 @@ def _add_atoms(which):
     for arg in args:
       if arg != None:   setattr(self, which, arg)
   return _func
-Structure.add_atoms = add_setter( _add_atoms("add_atom"), _add_atoms.__doc__)
-rStructure.add_atoms = add_setter( _add_atoms("add_atom"), _add_atoms.__doc__)
-Lattice.add_sites = add_setter( _add_atoms("add_site"), _add_atoms.__doc__)
+Structure.add_atoms = add_setter( _add_atoms("add_atom") )
+rStructure.add_atoms = add_setter( _add_atoms("add_atom") )
+Lattice.add_sites = add_setter( _add_atoms("add_site") )
 
 def _set_types(self, args):
   """ Sets species types in lattice. 
@@ -247,7 +247,7 @@ def _set_types(self, args):
     site.type.clear()
     for type in types: site.type.append(type)
 
-Lattice.set_types = add_setter(_set_types, _set_types.__doc__)
+Lattice.set_types = add_setter(_set_types)
 
 
 def _set_cell(self, sequence):
@@ -267,9 +267,9 @@ def _set_cell(self, sequence):
   else: raise RuntimeError("Don't know how to deal with this much cheese: %s" % (sequence))
   self.cell = array( [a0, a1, a2] )
 
-Structure.set_cell = add_setter(_set_cell, _set_cell.__doc__)
-rStructure.set_cell = add_setter(_set_cell, _set_cell.__doc__)
-Lattice.set_cell = add_setter(_set_cell, _set_cell.__doc__)
+Structure.set_cell = add_setter(_set_cell)
+rStructure.set_cell = add_setter(_set_cell)
+Lattice.set_cell = add_setter(_set_cell)
 
 # changes __repr__ behavior
 def _print_structure(self):

@@ -286,14 +286,16 @@ class Vff(object):
                           Absolute path is determined when workdir is set.
                       """ )
 
-  def _add_bond(self, args):
+  @add_setter
+  def add_bond(self, args):
     """ Adds/Modifies the bond parameter dictionary.
     
+        >>> vff.add_bond = "A", "B", [d0, a2, a3, a4, a5, a6]
         @param args: - the first element of arg is one endpoint of the bond (say "In"), 
                      - the second element is another endpoint (say "N"),
                      - the last element is a sequence with at most 5 elements
                        defining the bond-stretching parameters (order 2 through 6).
-        @type args: "type1", "type2", numpy array
+        @type args: "type1", "type2", sequence
     """
     assert len(args) == 3, RuntimeError("Bonds should be set with 3 parameters: %s." % (args))
     assert args[0] in [ u for site in self.lattice.sites for u in site.type ],\
@@ -330,15 +332,16 @@ class Vff(object):
         @param a5: 5rd order bond-angle parameter.
         @param a6: 6rd order bond-angle parameter.
     """
-    self._add_bond( (A,B, d0, a2, a3, a4, a5, a6) )
-
-  add_bond = add_setter(_add_bond, _add_bond.__doc__)
+    self.add_bond = A, B, [d0, a2, a3, a4, a5, a6]
 
 
 
-  def _add_angle(self, args):
+
+  @add_setter
+  def add_angle(self, args):
     """ Adds/Modifies the angle parameter dictionary.
     
+        >>> vff.add_angle = "A", "B", "C", [gamma, sigma, a2, a3, a4, a5, a6]
         @param args: - the first element of arg is one endpoint of the angle (say "In"), 
                      - the second element is middle of the angle (say "N"),
                      - the third element is the other endpoint (say "Ga"),
@@ -346,7 +349,7 @@ class Vff(object):
                        defining the bond-angle parameters. The first is the
                        gamma parameter, the second the sigma, and the others
                        the bond bending proper.
-        @type args: "type1", "type2", numpy array
+        @type args: "type1", "type2", "type3", sequence
     """
     assert len(args) == 4, RuntimeError("Angle should be set with 4 parameters: %s." % (args))
     assert args[0] in [ u for site in self.lattice.sites for u in site.type ],\
@@ -386,9 +389,8 @@ class Vff(object):
         @param a5: 5rd order bond-angle parameter.
         @param a6: 6rd order bond-angle parameter.
     """
-    self._add_angle( (A,B, C, gamma, sigma, a2, a3, a4, a5, a6) )
+    self.add_angle = A,B, C, [gamma, sigma, a2, a3, a4, a5, a6]
 
-  add_angle = add_setter(_add_angle, _add_angle.__doc__)
 
   def __repr__(self):
     result  = repr(self.lattice)

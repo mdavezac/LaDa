@@ -257,23 +257,22 @@ class Escan(object):
   def _set_lattice(self, arg): self.vff.lattice = arg
   lattice = property( _get_lattice, _set_lattice, "Lattice to use with escan and vff.")
 
-  def _add_potential(self, args):
-    """ Adds an atomic potential to escan. """
+  @add_setter
+  def add_potential(self, args):
+    """ Adds atomic potential to escan.
+        
+        - first argument is the path to the atomic potential. 
+          The absolute path is deduced when set.
+        - second argument is the path to the non-local potential file. 
+          If None, then no non-local argument is added. Defaults to None.
+        - third trough seventh arguments are the
+          non-local potential parameters s, p, d,
+          pnl, dnl. Defaults to None (eg 0).
+    """ 
     assert len(args) > 2, RuntimeError("Atomic  potentials need at least two parameters.")
     assert len(args) < 9, RuntimeError("Too many parameters when setting atomic potentials.")
     if self.atomic_potentials == None: self.atomic_potentials = []
     self.atomic_potentials.append( AtomicPotential(*args) )
-  add_potential = add_setter( _add_potential,\
-                              """ Adds atomic potential to escan.
-                                  
-                                  - first argument is the path to the atomic potential. 
-                                    The absolute path is deduced when set.
-                                  - second argument is the path to the non-local potential file. 
-                                    If None, then no non-local argument is added. Defaults to None.
-                                  - third trough seventh arguments are the
-                                    non-local potential parameters s, p, d,
-                                    pnl, dnl. Defaults to None (eg 0).
-                              """ )
 
   def __repr__(self):
     from os.path import relpath

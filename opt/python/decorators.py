@@ -102,7 +102,10 @@ def uncache(ob):
   for key in ob.__dict__.keys():
     if key[:len("_cached_attr")] == "_cached_attr": del ob.__dict__[key]
 
-def add_setter(method, docstring): 
+def add_setter(method, docstring = None): 
   """ Adds an input-like setter property. """
   def _not_available(self): raise RuntimeError("Error: No cheese available.")
-  return property(_not_available, method, docstring)
+  if docstring == None and hasattr(method, "__doc__"): 
+    print method.__doc__
+    docstring = method.__doc__
+  return property(fget=_not_available, fset=method,  doc=docstring)
