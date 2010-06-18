@@ -101,6 +101,10 @@ def read_poscar(types=None, path=None, check_lattice=False):
         result.atoms.append( Atom(pos, type) )
   return result
     
+def specie_list(structure):
+  """ Returns minimal list of species in alphabetical order. """
+  return sorted(list(set([a.type for a in structure.atoms])))
+
 def write_poscar(structure, file, vasp5=False, substitute=None):
   """ Writes a poscar to file. 
   
@@ -124,7 +128,7 @@ def write_poscar(structure, file, vasp5=False, substitute=None):
   file.write(structure.name + "\n")
   file.write(str(structure.scale)+ "\n")
   for i in range(3): file.write("  %f %f %f\n" % tuple(structure.cell[:,i].flat))
-  species = tuple(set( [a.type for a in structure.atoms] ))
+  species = specie_list
   if vasp5: 
     if substitute != None:
       for s in species: file.write(" "+ substitute.pop(s,s) +" ")
