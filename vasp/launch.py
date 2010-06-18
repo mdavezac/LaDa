@@ -22,7 +22,7 @@ class Launch(Incar):
         @param workdir: working directory. Defaults to current directory at
            time of calculation.
         @param species: Species in the system. 
-        @type species: list of L{Specie}
+        @type species: dictionary of L{Specie}
         @param kpoints: Kpoint behavior.
         @type kpoints: see L{kpoints.Density} and L{kpoints.Gamma}
     """
@@ -38,30 +38,23 @@ class Launch(Incar):
     # sets all other keywords as attributes.
     for key in kwargs.keys(): setattr(self, key, kwargs[key])
 
-  def _find_species( self, structure ):
-    """ Returns a list of species in the structure. 
-
-        @raise AssertionError: when appropriate POTCAR or POTCAR.Z cannot be found.
-    """
-    from os.path import exists, join
-
-    results = []
-    for atom in structure.atoms:
-      for s in self.species:
-        if s.symbol == atom.type and not(s in results):
-          results.append( s )
-          if not exists(join( s.path, "POTCAR" )):
-            raise AssertionError, "Could not find potcar in " + s.path
-    return results
-
   def _prerun(self, comm, outdir):
+    """ Sets things up prior to calling VASP. 
+
+          - Writes INCAR file
+          - Writes KPOINTS file
+          - Writes POSCAR file
+          - Creates POTCAR file
+          - Saves pickle of self.
+        @raise: AssertionError.
+    """
     import cPickle
     from os.path import join, exists, abspath
     from os import getcwd
     from shutil import copy
     from subprocess import Popen, PIPE
-    from . import files
-    from ..crystal import print_poscar
+    from . import files, is_vasp_5
+    from ..crystal import print_poscar, specie_list
     from ..opt.changedir import Changedir
 
     # creates incar file. Changedir makes sure that any calculations done to
@@ -79,14 +72,15 @@ class Launch(Incar):
       kpoints.write( self.kpoints(self) if hasattr(self.kpoints, "__call__") else self.kpoints )
   
     # creates poscar file
-    print_poscar(self._system, tuple(u.symbol for u in self.species), self._tempdir)
+    with open(join(self._tempdir, files.POSCAR), "w") as poscar: 
+      write_poscar(self._system, file, is_vasp_5)
   
     # creates POTCAR file
     with open(join(self._tempdir, files.POTCAR), 'w') as potcar:
-      for s in self._find_species(self._system):
-        if not exists(join(s.path, files.POTCAR)):  
-          raise AssertionError, "Could not find potcar in " + s.path
-        with open(join(s.path, files.POTCAR), "r") as infile: potcar.writelines(infile)
+      for s in specie_list(self._system):
+        assert exists(join(self.species[s].path, files.POTCAR)), \
+               AssertionError, "Could not find potcar in " + s.path
+        with open(join(self.species[s].path, files.POTCAR), "r") as infile: potcar.writelines(infile)
 
     path = join(abspath(self._tempdir), files.FUNCCAR)
     with Changedir(outdir) as outdir: # allows relative paths.

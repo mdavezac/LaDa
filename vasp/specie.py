@@ -55,10 +55,8 @@ def nlep(type = 1, l=2, U0=0e0, U1=None ):
 
 class Specie(object):
   """ Holds atomic specie information:  """
-  def __init__(self, symbol, path, U=None, oxidation=None):
+  def __init__(self, path, U=None, oxidation=None):
     """ Initializes a specie.
-        @param symbol: is the atomic symbol
-        @type symbol: str
         @param path: to the directory with the potcar for this particular atomic types.
           This directory should contain a POTCAR or POTCAR.Z file.
         @type path: str
@@ -69,7 +67,6 @@ class Specie(object):
     """
     import os.path
 
-    self.symbol = symbol
     self.path = os.path.abspath(os.path.expanduser(path))
     if oxidation != None: self.oxidation = oxidation
     if U == None: self.U = []
@@ -101,7 +98,3 @@ class Specie(object):
     with open(join(self.path, "POTCAR"), "r") as potcar:
       potcar.readline()
       return float(potcar.readline().split()[0]) # shoud be number on second line
-
-  def __str__(self):
-    """ Prints atomic symbol only. """
-    return str(self.symbol)
