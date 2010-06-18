@@ -27,8 +27,8 @@ class NElect(SpecialVaspParam):
     from math import fsum
     # constructs dictionnary of valence charge
     valence = {}
-    for s in vasp.species:
-      valence[s.symbol] = s.valence
+    for key, value in vasp.species.items():
+      valence[key] = value.valence
     # sums up charge.
     return fsum( valence[atom.type] for atom in vasp._system.atoms )
     
@@ -99,15 +99,13 @@ class Encut(object):
 
   @broadcast_result(key=True)
   def incar_string(self, vasp, *args, **kwargs):
+    """ Prints ENCUT parameter. """
     from math import fabs
+    from ..crystal import specie_list
     if fabs(self.value) < 1e-12: return "# ENCUT = VASP default"
-    return "ENCUT = %f " % (float(self.enmax(vasp.species)) * self.value)
-
-  @staticmethod
-  def enmax(species):
-    """ Retrieves max ENMAX from list of species. """
-    from math import ceil
-    return ceil( max(s.enmax for s in species) )
+    types = specie_list(vasp._system)
+    encut = max(vasp.species[type].enmax for type in types)
+    return "ENCUT = %f " % (float(encut) * self.value)
 
 class FFTGrid(SpecialVaspParam):
   """ Computes fft grid using VASP. Or if grid is given, computes using that grid. """
@@ -204,25 +202,30 @@ class UParams(SpecialVaspParam):
 
   @broadcast_result(key=True)
   def incar_string(self, vasp, *args, **kwargs):
+    """ Prints LDA+U INCAR parameters. """
+    types = specie_list(vasp._system)
     # existence and sanity check
     has_U, which_type = False, None 
-    for specie in vasp.species:
+    for type in types:
+      specie = vasp.species[type]
       if len(specie.U) == 0: continue
       if len(specie.U) > 4: 
         raise AssertionError, "More than 4 channels for U/NLEP parameters"
       has_U = True
-      for l in specie.U: 
-        if which_type == None:
-          which_type = l["type"]
-        elif which_type != l["type"]:
-          raise AssertionError, "LDA+U/NLEP types are not consistent across species."
+      # checks consistency.
+      which_type = specie.U[0]["type"]
+      for l in specie.U[1:]: 
+        assert which_type == l["type"], 
+               AssertionError("LDA+U/NLEP types are not consistent across species.")
     if not has_U: return "# no LDA+U/NLEP parameters ";
 
+    # Prints LDA + U parameters
     result = "LDAU = .TRUE.\nLDAUPRINT = %i\nLDAUTYPE = %i\n" % (self.value, which_type)
 
-    for i in range( max(len(specie.U) for specie in vasp.species) ):
+    for i in range( max(len(vasp.species[type].U) for type in types) ):
       line = "LDUL%i=" % (i+1), "LDUU%i=" % (i+1), "LDUJ%i=" % (i+1), "LDUO%i=" % (i+1)
-      for specie in vasp.species:
+      for type in types:
+        specie = vasp.species[type]
         a = -1, 0e0, 0e0, 1
         if len(specie.U) <= i: pass
         elif specie.U[i]["func"] == "U":    
