@@ -71,9 +71,7 @@ class Specie(object):
     if oxidation != None: self.oxidation = oxidation
     if U == None: self.U = []
     elif isinstance(U, dict): self.U = [U]
-    else: self.U = U
-
-
+    else: self.U = [u for u in U] # takes care of any kind of iterator.
 
   @property
   def enmax(self):

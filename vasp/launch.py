@@ -1,6 +1,9 @@
 """ A class for single-shot VASP calculation """
+import incar
+print dir(incar)
 from incar import Incar
 from kpoints import Density
+from ..opt.decorators import add_setter
 
 
 class Launch(Incar):
@@ -58,14 +61,14 @@ class Launch(Incar):
     from ..opt.changedir import Changedir
 
     # creates incar file. Changedir makes sure that any calculations done to
-    # obtain incar will happen in the tempdir.
+    # obtain incar will happen in the tempdir. Only head node actually writes.
     with Changedir(self._tempdir) as tmpdir:
-      with open(files.INCAR, "w") as incar_file: self.print_to_incar(incar_file, comm)
+      incar_lines = self.incar_lines(comm = comm)
 
     if comm.rank != 0: return # don't have any more business here.
 
     with open(join(self._tempdir, files.INCAR), "w") as incar_file: 
-      incar_file.writelines(incar_string)
+      incar_file.writelines(incar_lines)
   
     # creates kpoints file
     with open(join(self._tempdir, files.KPOINTS), "w") as kpoints: 
@@ -79,7 +82,7 @@ class Launch(Incar):
     with open(join(self._tempdir, files.POTCAR), 'w') as potcar:
       for s in specie_list(self._system):
         assert exists(join(self.species[s].path, files.POTCAR)), \
-               AssertionError, "Could not find potcar in " + s.path
+               AssertionError("Could not find potcar in " + s.path)
         with open(join(self.species[s].path, files.POTCAR), "r") as infile: potcar.writelines(infile)
 
     path = join(abspath(self._tempdir), files.FUNCCAR)
@@ -171,4 +174,24 @@ class Launch(Incar):
 
     # deletes system attribute.
     del self._system
+
+
+  @add_setter
+  def add_specie(self, args):
+    """ Adds a specie to current functional. 
+     
+        The argument is a tuple containing the following.
+          - Symbol (str).
+          - Directory where POTCAR resides (str).
+          - List of U parameters (optional, see module vasp.specie).
+          - Maximum (or minimum) oxidation state (optional, int).
+          - ... Any other argument in order of vasp.specie.Specie.init.
+        @raise ValueError
+    """
+    from .specie import Specie
+    assert len(args) > 1, ValueError("Too few arguments.")
+    self.species[args[0]] = Specie(*args[1:])
+    
+
+       
 

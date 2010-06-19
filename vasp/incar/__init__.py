@@ -1,6 +1,7 @@
 """ Subpackage defining vasp incar parameters. """
-from _params import SpecialVaspParam, NElect, Algo, Precision, Ediff, Encut, FFTGrid, Restart, UParams
-from ..opt.decorators import add_setter
+from _params import SpecialVaspParam, NElect, Algo, Precision, Ediff,\
+                    Encut, FFTGrid, Restart, UParams
+from ...opt.decorators import add_setter
 
 class Incar(object):
   """ Contains vasp Incar parameters. 
@@ -40,9 +41,10 @@ class Incar(object):
              >> # make a second vasp using WAVECAR and whatnot from above call
              >> vasp(other parameters, ..., restart = save_this_object) 
 
-         - C{relaxation}: sets degrees of freedom to relax. Easier to use than isif, nsw, and friends.
-         - C{smearing}: to easily set isigma and ismear.
-         - C{symmetries}: to easily set isym and symprec.
+         - C{set_relaxation}: sets degrees of freedom to relax. Easier to use
+             than isif, nsw, and friends.
+         - C{set_smearing}: to easily set isigma and ismear.
+         - C{set_symmetries}: to easily set isym and symprec.
 
       These parameters can be modified as in C{vasp.ispin = 2} and so forth.
       In the special case that None is given (e.g. C{vasp.ispin = None}), then
@@ -87,40 +89,59 @@ class Incar(object):
     """ 
 
     self.iniwave = "random"
-    self.add_param = "ispin", 1 
-    self.add_param = "ismear", -5
-    self.add_param = "sigma", 0.2
-    self.add_param = "isif", 0
-    self.add_param = "nsw", None
-    self.add_param = "ibrion", None
-    self.add_param = "potim", None
-    self.add_param = "nelect", NElect(0)
-    self.add_param = "algo", Algo("normal")
-    self.add_param = "precision", Precision("accurate")
-    self.add_param = "ediff", Ediff(1e-4)
-    self.add_param = "encut", Encut(safety=1.25)
-    self.add_param = "fftgrid", FFTGrid(grid = None)
-    self.add_param = "restart", Restart(None)
+    self.add_param = "ispin",       1 
+    self.add_param = "isif",        0
+    self.add_param = "ismear",      None
+    self.add_param = "sigma",       None
+    self.add_param = "nsw",         None
+    self.add_param = "ibrion",      None
+    self.add_param = "potim",       None
+    vasp.add_param = "nbands",      None
+    vasp.add_param = "lorbit",      None
+    vasp.add_param = "npar",        None
+    vasp.add_param = "lplane",      None
+    vasp.add_param = "addgrid",     None
+    vasp.add_param = "isym",        None
+    vasp.add_param = "symprec",     None
+    vasp.add_param = "lcorr",       None
+    self.add_param = "nelect",      NElect(0)
+    self.add_param = "algo",        Algo("normal")
+    self.add_param = "precision",   Precision("accurate")
+    self.add_param = "ediff",       Ediff(1e-4)
+    self.add_param = "encut",       Encut(safety=1.25)
+    self.add_param = "fftgrid",     FFTGrid(grid = None)
+    self.add_param = "restart",     Restart(None)
     self.add_param = "U_verbosity", UParams(verbose="occupancy")
 
 
 
-  def print_to_incar(self, file, *args, **kwargs):
-    """ Iterates over vasp incar parameters.
+  def incar_lines(self, *args, **kwargs):
+    """ List of incar lines. """
 
-        To be identified as an incar parameter, an attribute should have an
-        incar_string function. In this way, the Incar class can be subclassed
-        while retaining this method.
-    """
-
-    for key, value in self.params:
-      if value == None: continue
-      file.writeline( key.upper() + " = " + str(value) )
+    # prints system name. This is not an option!
+    result = []
+    if hasattr(self._system, "name"):
+      if len(self._system.name) != 0:
+        result.append("SYSTEM = \"%s\"\n" % (self._system.name)))
+    # gathers special parameters.
+    # Calls them first in case they change normal key/value pairs.
+    specials = []
     for key, value in self.special:
       if value.value == None: continue
-      file.writeline( value.incar_string(self, *args) )
+      line = value.incar_string(self, *args, **kwargs)
+      if line != None: specials.append(line + "\n")
+    # prints key/value pairs
+    for key, value in self.params:
+      if value == None: continue
+      if isinstance(value, bool): 
+        result.append(key.upper() + " = .TRUE.\n" if value else " = .FALSE.\n") 
+      else: result.append( key.upper() + " = " + str(value) )
+    # adds special parameter lines.
+    result.extend(lines)
+    return result
 
-  def _add_param(self, args)
+  @add_setter
+  def add_param(self, args):
     """ Adds/sets a vasp parameter.
     
         Consists of a key value pair. 
@@ -136,7 +157,6 @@ class Incar(object):
     key, value = args
     if isinstance(value, SpecialVaspParam): self.special[key] = value
     else: self.params[key] = value
-  add_parameter = add_setter(Incar._add_param, Incar._add_param.__doc__)
 
   def __getattr__(self, name): 
     """ Gets a VASP parameter from standard and special dictionaries. """
@@ -146,8 +166,8 @@ class Incar(object):
 
   def __setattr__(self, name, value):
     """ Sets a VASP parameter to standard and special dictionaries. """
-    if name in self.params: return self.params[name] = value
-    elif name in self.params: return self.special[name].value = value
+    if   name in self.params: self.params[name] = value
+    elif name in self.params: self.special[name].value = value
     raise AttributeError("Cannot set unknown parameter " + name + ".")
 
   def __delattr__(self, name): 
@@ -166,25 +186,23 @@ class Incar(object):
     else: raise ValueError("iniwave cannot be set to " + value + ".")
   iniwave = property(_get_iniwave, _set_iniwave)
 
-  def _get_symmetries(self):
-  """ Type of symmetry used in the calculation.
-
-      This sets isym and symprec vasp tags.
-      Can be "off" or a float corresponding to the tolerance used to determine
-      symmetry operation. 
-  """
-    isym = None if "isym" not in self.params else self.params["isym"]
-    prec = None if "symprec" not in self.params else self.params["symprec"]
-    return isym, prec
-  def _set_symmetries(self, value):
+  @add_setter
+  def set_symmetries(self, value):
+    """ Type of symmetry used in the calculation.
+  
+        This sets isym and symprec vasp tags.
+        Can be "off" or a float corresponding to the tolerance used to determine
+        symmetry operation. 
+    """
+    if value == None: self.isym = None
     if str(value).lower() == "off" or str(value) == "0": self.params["isym"] = 0
     elif "isym" in self.params:
-      if self.params["isym"] == 0: del self.params["isym"]
-      self.params["symprec"] = value
-    else: self.params["symprec"] = value
-  symmetries = property(Incar._get_symmetries, Incar._set_symmetries)
+      if self.isym == 0: self.isym = None
+      self.symprec = value
+    else: self.symprec = value
 
-  def _get_smearing(self, value):
+  @add_setter
+  def set_smearing(self, args):
     """ Value of the smearing used in the calculation. 
   
         It can be specified as a string L{vasp.smearing = "type", x}, where type
@@ -200,42 +218,48 @@ class Incar(object):
             - insulator is equivalent to "tetra bloechl".
             - if x is omitted a default value of 0.2eV is used.
     """
-    return self.ismear, self.sigma
-  def _set_smearing(self, value):
-    first = str(args[0]).split()
-    second = str(args[1]).split() if len(args) > 1 else None
-    third = str(args[2]).split() if len(args) > 2 else None
+    if args == None: 
+      self.ismear, self.isigma = None
+      return
 
-    if first == "fermi" or first == "-1":    
+    first = args[0]
+    has_second = len(args) > 1
+    second = args[1] if len(args) > 1 else None
+    has_third = len(args) > 2
+    third = args[2] if len(args) > 2 else None
+
+    if first == None:
+      self.ismear = None
+      if has_second: self.isigma = None
+    elif first == "fermi" or first == "-1":    
       self.ismear == -1
-      if second != None: self.sigma = float(second)
+      if has_second: self.sigma = second
     elif first == "gaussian" or first == "0":
       self.ismear == 0
-      if second != None: self.sigma = float(second)
+      if has_second: self.sigma = second
     elif first == "metal":
       self.ismear = 1
-      if second != None: self.sigma = float(second)
+      if has_second: self.sigma = second
     elif first == "mp" or first == "metal":
-      if third != None:
-        self.ismear = int(second)
-        self.sigma = float(third)
-      elif second != None:
-        self.ismear = int(second)
+      if has_third:
+        self.ismear = second
+        self.sigma = third
+      elif has_second: self.sigma = second
       else: self.ismear = 1
       assert self.ismear >= 1, "Mehtfessel-Paxton order must be at least 1."
     elif first == "bloechl" or first == "-5" or first == "insulator":
       self.ismear = -5
-      if second != None: self.sigma = float(second)
+      if has_second: self.sigma = second
     elif first == "tetra" or first == "-4":
       self.ismear = -4
-      if second != None: self.sigma = float(second)
+      if has_second: self.sigma = second
     else: 
       try: self._value = int(first)
       except: raise ValueError, "Unknown smearing value %s.\n" % (value)
       assert self._value >= 1, "Unknown smearing value %s.\n" % (value)
-  smearing = property(Incar._get_smearing, Incar._set_smearing)
 
-  def _set_relaxation(self.*args): 
+  @add_setter
+  def set_relaxation(self, *args): 
     """ Sets type of relaxation.
     
           - first argument can be "static", or a combination of "ion(ic|s)",
@@ -246,27 +270,28 @@ class Incar(object):
           - fourth (optional) argument is potim.
     """
     import re
-    isif = str(args[0).lower()
-    try: isif = int(isif) 
-    except ValueError: 
-      ionic = re.search( "ion(ic|s)?", isif.lower() ) != None
-      cellshape = re.search( "cell(\s+|-|_)?(?:shape)?", isif.lower() ) != None
-      volume = re.search( "volume", isif.lower() ) != None
-      if (not ionic) and (not cellshape) and (not volume): isif = 0
-      elif ionic and (not cellshape) and (not volume):     isif = 2
-      elif ionic and cellshape and volume:                 isif = 3
-      elif ionic and cellshape and (not volume):           isif = 4
-      elif(not ionic) and  cellshape and (not volume):     isif = 5
-      elif(not ionic) and  cellshape and volume:           isif = 6
-      elif(not ionic) and (not cellshape) and volume:      isif = 7
-      elif ionic and (not cellshape) and volume:
-        raise RuntimeError, "VASP does not allow relaxation of atomic position"\
-                            "and volume at constant cell-shape.\n"
+    if args[0] == None: isif = None
+    else:
+      try: isif = int(args[0]) 
+      except ValueError: 
+        isif = str(args[0]).lower()
+        ionic = re.search( "ion(ic|s)?", isif.lower() ) != None
+        cellshape = re.search( "cell(\s+|-|_)?(?:shape)?", isif.lower() ) != None
+        volume = re.search( "volume", isif.lower() ) != None
+        if (not ionic) and (not cellshape) and (not volume): isif = 0
+        elif ionic and (not cellshape) and (not volume):     isif = 2
+        elif ionic and cellshape and volume:                 isif = 3
+        elif ionic and cellshape and (not volume):           isif = 4
+        elif(not ionic) and  cellshape and (not volume):     isif = 5
+        elif(not ionic) and  cellshape and volume:           isif = 6
+        elif(not ionic) and (not cellshape) and volume:      isif = 7
+        elif ionic and (not cellshape) and volume:
+          raise RuntimeError, "VASP does not allow relaxation of atomic position"\
+                              "and volume at constant cell-shape.\n"
     self.params["isif"] = isif
     if len(args) > 1: self.params["nsw"] = args[1]
     if len(args) > 2: self.params["ibrion"] = args[2]
     if len(args) > 3: self.params["potim"] = args[3]
-  relaxation = add_setter(Incar._set_relaxation, Incar._set_relaxation.__doc__)
 
   def __iter__(self):
     """ Iterates over attribute names and values. """

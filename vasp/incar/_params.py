@@ -92,7 +92,11 @@ class Ediff(SpecialVaspParam):
 class Encut(object):
   """ Defines cutoff factor for calculation. 
 
-      Actual cutoff is self.value * ENMAX of the species in the system.
+      There are three ways to set this parameter:
+        - if 0 < value <= 3, then the cutoff is value * ENMAX, where ENMAX is
+          the maximum recommended cutoff for the species in the system.
+        - if value > 3, then prints encut is exactly value.
+        - if 0 or None, does not print anything to INCAR
       If 0 or None, uses VASP default.
   """
   def __init__(self, value): super(Ediff, self).__init__(value)
@@ -102,7 +106,9 @@ class Encut(object):
     """ Prints ENCUT parameter. """
     from math import fabs
     from ..crystal import specie_list
+    assert self.value < -1e-12, ValueError("Wrong value for cutoff.")
     if fabs(self.value) < 1e-12: return "# ENCUT = VASP default"
+    if self.value > 3e0 + 1e-12: return "ENCUT = %f" % (self.value)
     types = specie_list(vasp._system)
     encut = max(vasp.species[type].enmax for type in types)
     return "ENCUT = %f " % (float(encut) * self.value)
@@ -215,7 +221,7 @@ class UParams(SpecialVaspParam):
       # checks consistency.
       which_type = specie.U[0]["type"]
       for l in specie.U[1:]: 
-        assert which_type == l["type"], 
+        assert which_type == l["type"], \
                AssertionError("LDA+U/NLEP types are not consistent across species.")
     if not has_U: return "# no LDA+U/NLEP parameters ";
 
