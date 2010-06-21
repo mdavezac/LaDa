@@ -128,7 +128,7 @@ def write_poscar(structure, file, vasp5=False, substitute=None):
   file.write(structure.name + "\n")
   file.write(str(structure.scale)+ "\n")
   for i in range(3): file.write("  %f %f %f\n" % tuple(structure.cell[:,i].flat))
-  species = specie_list
+  species = specie_list(structure)
   if vasp5: 
     if substitute != None:
       for s in species: file.write(" "+ substitute.pop(s,s) +" ")
