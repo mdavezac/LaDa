@@ -19,14 +19,14 @@ class Density(object):
   def __call__(self, vasp):
     """ Returns a string which is the text of the KPOINTS file """
     from math import fabs, floor
-    from numpy import matrix as Matrix
+    from numpy import matrix 
     from numpy.linalg import norm, det
     from ..crystal.gruber import Reduction
     from ..crystal import get_point_group_symmetries as point_group
     result = "Automatic k-mesh generation\n0\nCartesian\n"
 
     reduction = Reduction()
-    cell = Matrix(vasp._system.cell).copy().T 
+    cell = matrix(vasp._system.cell).copy().T 
     assert fabs(det(cell)) > 1e-12, ValueError
     # gets reciprocal cell
     cell = cell.I
@@ -89,16 +89,16 @@ class Density(object):
   def _goodsyms(grid, pointgroup):
     """ Checks if grid has all symmetries of pointgroup """
     from numpy.linalg import det, norm
-    from numpy import matrix as Matrix
+    from numpy import matrix 
 
-    def is_unimodular(matrix):
+    def is_unimodular(mat):
       from math import fabs, floor
 
-      d = det(matrix)
+      d = det(mat)
       if not (fabs(d-1e0) < 1e-12 or fabs(d+1e0) < 1e-12): return False
       for i in range(3):
         for i in range(3):
-          if fabs( matrix[i,j] - float(floor(matrix[i,j]+0.1)) ) > 1e-12: 
+          if fabs( mat[i,j] - float(floor(mat[i,j]+0.1)) ) > 1e-12: 
             return False
       return True
 
@@ -108,3 +108,4 @@ class Density(object):
       op = matrix( [[transform.op[j,i] for j in range(3)] for i in range(3)] )
       if not is_unimodular( grid.I * op * grid ): return False
     return True
+

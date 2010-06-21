@@ -34,9 +34,17 @@ if __load_vasp_in_global_namespace__:
   flags = _getdlopenflags()
   _setdlopenflags(_RTLD_NOW|_RTLD_GLOBAL)
   from _vasp import version, vasp as call_vasp
+  import _vasp
   _setdlopenflags(flags)
 else:
-  from _vasp import version, vasp as call_vasp
+  import _vasp
+call_vasp = _vasp.vasp
+version = _vasp.version
+""" Vasp version. """
+is_vasp_5 = int(version[0]) == 5
+""" True if using vasp 5. """
+is_vasp_4 = int(version[0]) == 4
+""" True if using vasp 4. """
     
 class Vasp(Launch):
   """ Interface to VASP code.
@@ -95,7 +103,7 @@ class Vasp(Launch):
 
     # if other keyword arguments are present, then they are assumed to be
     # attributes of self, with value their expected value before launch. 
-    for key in kwargs.keys(): getattr(this, key).value = kwargs[key]
+    for key in kwargs.keys(): setattr(this, key, kwargs[key])
 
     # First checks if directory outdir exists (and is a directory).
     if broadcast(comm, exists(outdir) if comm.rank == 0 else None, 0):

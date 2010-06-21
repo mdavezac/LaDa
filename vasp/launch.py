@@ -1,6 +1,5 @@
 """ A class for single-shot VASP calculation """
 import incar
-print dir(incar)
 from incar import Incar
 from kpoints import Density
 from ..opt.decorators import add_setter
@@ -31,12 +30,12 @@ class Launch(Incar):
     """
     from os import getcwd
     from os.path import abspath, expanduser
-    Incar.__init__(self) 
+    super(Launch, self).__init__() 
 
     self.workdir = abspath(expanduser(workdir)) if workdir != None else getcwd()
     # sets species
-    if species != None: self.species = species
-    self.kpoints =  kpoints
+    self.species = species if species != None else {}
+    self.kpoints = kpoints
 
     # sets all other keywords as attributes.
     for key in kwargs.keys(): setattr(self, key, kwargs[key])
@@ -57,7 +56,7 @@ class Launch(Incar):
     from shutil import copy
     from subprocess import Popen, PIPE
     from . import files, is_vasp_5
-    from ..crystal import print_poscar, specie_list
+    from ..crystal import write_poscar, specie_list
     from ..opt.changedir import Changedir
 
     # creates incar file. Changedir makes sure that any calculations done to
@@ -71,12 +70,12 @@ class Launch(Incar):
       incar_file.writelines(incar_lines)
   
     # creates kpoints file
-    with open(join(self._tempdir, files.KPOINTS), "w") as kpoints: 
-      kpoints.write( self.kpoints(self) if hasattr(self.kpoints, "__call__") else self.kpoints )
+    with open(join(self._tempdir, files.KPOINTS), "w") as kp_file: 
+      kp_file.write( self.kpoints(self) if hasattr(self.kpoints, "__call__") else self.kpoints )
   
     # creates poscar file
     with open(join(self._tempdir, files.POSCAR), "w") as poscar: 
-      write_poscar(self._system, file, is_vasp_5)
+      write_poscar(self._system, poscar, is_vasp_5)
   
     # creates POTCAR file
     with open(join(self._tempdir, files.POTCAR), 'w') as potcar:

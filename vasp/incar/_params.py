@@ -3,7 +3,7 @@ from ...opt.decorators import broadcast_result
 class SpecialVaspParam(object): 
   """ Type checking class. """
   def __init__(self, value): 
-    super(SpecialVaspParams, self).__init__()
+    super(SpecialVaspParam, self).__init__()
     self.value = value
   def __repr__(self): return "%s(%s)" % (self.__class__.__name__, self.value)
 
@@ -85,11 +85,11 @@ class Ediff(SpecialVaspParam):
   """
   def __init__(self, value): super(Ediff, self).__init__(value)
   def incar_string(self, vasp, *args, **kwargs):
-    return "%s = %f " % (self.key, self.value * float(len(vasp._system.atoms)))
+    return "EDIFF = %f " % (self.value * float(len(vasp._system.atoms)))
   def __repr__(self): return "%s(%e)" % (self.__class__.__name__, repr(self.value))
 
 
-class Encut(object):
+class Encut(SpecialVaspParam):
   """ Defines cutoff factor for calculation. 
 
       There are three ways to set this parameter:
@@ -99,14 +99,14 @@ class Encut(object):
         - if 0 or None, does not print anything to INCAR
       If 0 or None, uses VASP default.
   """
-  def __init__(self, value): super(Ediff, self).__init__(value)
+  def __init__(self, value): super(Encut, self).__init__(value)
 
   @broadcast_result(key=True)
   def incar_string(self, vasp, *args, **kwargs):
     """ Prints ENCUT parameter. """
     from math import fabs
-    from ..crystal import specie_list
-    assert self.value < -1e-12, ValueError("Wrong value for cutoff.")
+    from ...crystal import specie_list
+    assert self.value > -1e-12, ValueError("Wrong value for cutoff.")
     if fabs(self.value) < 1e-12: return "# ENCUT = VASP default"
     if self.value > 3e0 + 1e-12: return "ENCUT = %f" % (self.value)
     types = specie_list(vasp._system)
@@ -193,22 +193,23 @@ class Restart(SpecialVaspParam):
 
 class UParams(SpecialVaspParam): 
   """ Prints U parameters if any found in species settings """
-  def __init__(self, *args):
+  def __init__(self, value):
     import re
     
-    if verbose == None: value = None
-    elif hasattr(verbose, "lower"): 
-      verbose = verbose.lower() 
-      if verbose == "off": verbose = 0
-      elif verbose == "on": verbose = 1
-      elif None != re.match(r"\s*occ(upancy)?\s*", verbose): verbose = 1
-      elif None != re.match(r"\s*(all|pot(ential)?)\s*", verbose): verbose = 2
+    if value == None: value = None
+    elif hasattr(value, "lower"): 
+      value = value.lower() 
+      if value == "off": value = 0
+      elif value == "on": value = 1
+      elif None != re.match(r"\s*occ(upancy)?\s*", value): value = 1
+      elif None != re.match(r"\s*(all|pot(ential)?)\s*", value): value = 2
 
-    super(UParams, self).__init__(*args)
+    super(UParams, self).__init__(value)
 
   @broadcast_result(key=True)
   def incar_string(self, vasp, *args, **kwargs):
     """ Prints LDA+U INCAR parameters. """
+    from ...crystal import specie_list
     types = specie_list(vasp._system)
     # existence and sanity check
     has_U, which_type = False, None 

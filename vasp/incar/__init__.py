@@ -14,7 +14,7 @@ class Incar(object):
       Parameters(attributes) which are present by default are the following:
          - ispin: Sets number of spins. Must be either 1 or 2. 
          - ismear: Smearing function. Can be set with property L{smearing}. 
-         - isigma: Smearing parameter. Can be set with property L{smearing}.
+         - sigma: Smearing parameter. Can be set with property L{smearing}.
          - isif: Degrees of freedom to relax. Can be set using L{self.relaxation}. 
          - nsw: Number of ionic steps. Can be set using L{self.relaxation}. 
          - ibrion: ionic-relaxation method. Can be set using L{self.relaxation}. 
@@ -43,7 +43,7 @@ class Incar(object):
 
          - C{set_relaxation}: sets degrees of freedom to relax. Easier to use
              than isif, nsw, and friends.
-         - C{set_smearing}: to easily set isigma and ismear.
+         - C{set_smearing}: to easily set sigma and ismear.
          - C{set_symmetries}: to easily set isym and symprec.
 
       These parameters can be modified as in C{vasp.ispin = 2} and so forth.
@@ -75,18 +75,22 @@ class Incar(object):
   def __init__(self): 
     super(Incar, self).__init__()
 
-    self.params = {}
-    """ Key/Value vasp pairs.
-
-        The vasp key is the uppercase of the dictionary key.
-        In other words C{self.params["ispin"] = 2} will print as "ISPIN = 2".
-    """
-    self.special = {}
-    """ Special vasp parameters.
-    
-        These parameters need to know about other vasp parameters and/or the
-        system of interest to print INCAR string. 
-    """ 
+    # first, actually sets these two variables by hand, since they are used in __setattr__.
+    super(Incar, self).__setattr__("params", {})
+    super(Incar, self).__setattr__("special", {})
+#    # Then makes sure epydoc reads this right.
+#   self.params = {} 
+#   """ Key/Value vasp pairs.
+#   
+#       The vasp key is the uppercase of the dictionary key.
+#       In other words C{self.params["ispin"] = 2} will print as "ISPIN = 2".
+#   """
+#   self.special = {} 
+#   """ Special vasp parameters.
+#   
+#       These parameters need to know about other vasp parameters and/or the
+#       system of interest to print INCAR string. 
+#   """ 
 
     self.iniwave = "random"
     self.add_param = "ispin",       1 
@@ -96,22 +100,22 @@ class Incar(object):
     self.add_param = "nsw",         None
     self.add_param = "ibrion",      None
     self.add_param = "potim",       None
-    vasp.add_param = "nbands",      None
-    vasp.add_param = "lorbit",      None
-    vasp.add_param = "npar",        None
-    vasp.add_param = "lplane",      None
-    vasp.add_param = "addgrid",     None
-    vasp.add_param = "isym",        None
-    vasp.add_param = "symprec",     None
-    vasp.add_param = "lcorr",       None
+    self.add_param = "nbands",      None
+    self.add_param = "lorbit",      None
+    self.add_param = "npar",        None
+    self.add_param = "lplane",      None
+    self.add_param = "addgrid",     None
+    self.add_param = "isym",        None
+    self.add_param = "symprec",     None
+    self.add_param = "lcorr",       None
     self.add_param = "nelect",      NElect(0)
     self.add_param = "algo",        Algo("normal")
     self.add_param = "precision",   Precision("accurate")
     self.add_param = "ediff",       Ediff(1e-4)
-    self.add_param = "encut",       Encut(safety=1.25)
-    self.add_param = "fftgrid",     FFTGrid(grid = None)
+    self.add_param = "encut",       Encut(None)
+    self.add_param = "fftgrid",     FFTGrid(None)
     self.add_param = "restart",     Restart(None)
-    self.add_param = "U_verbosity", UParams(verbose="occupancy")
+    self.add_param = "U_verbosity", UParams("occupancy")
 
 
 
@@ -122,22 +126,26 @@ class Incar(object):
     result = []
     if hasattr(self._system, "name"):
       if len(self._system.name) != 0:
-        result.append("SYSTEM = \"%s\"\n" % (self._system.name)))
+        result.append("SYSTEM = \"%s\"\n" % (self._system.name))
     # gathers special parameters.
     # Calls them first in case they change normal key/value pairs.
     specials = []
-    for key, value in self.special:
+    for key, value in self.special.items():
       if value.value == None: continue
       line = value.incar_string(self, *args, **kwargs)
       if line != None: specials.append(line + "\n")
     # prints key/value pairs
-    for key, value in self.params:
+    for key, value in self.params.items():
       if value == None: continue
-      if isinstance(value, bool): 
-        result.append(key.upper() + " = .TRUE.\n" if value else " = .FALSE.\n") 
-      else: result.append( key.upper() + " = " + str(value) )
+      if isinstance(value, bool):  value = ".TRUE." if value else ".FALSE."
+      else: 
+        try: value = str(value)
+        except ValueError: 
+          print "Could not convert vasp parameter %s to string: " % (key), value, "."
+          raise
+      result.append( "%18s = %s\n" % (key.upper(), value))
     # adds special parameter lines.
-    result.extend(lines)
+    result.extend(specials)
     return result
 
   @add_setter
@@ -161,20 +169,20 @@ class Incar(object):
   def __getattr__(self, name): 
     """ Gets a VASP parameter from standard and special dictionaries. """
     if name in self.params: return self.params[name]
-    elif name in self.params: return self.special[name].value
+    elif name in self.special: return self.special[name].value
     raise AttributeError("Unknown parameter " + name)
 
   def __setattr__(self, name, value):
     """ Sets a VASP parameter to standard and special dictionaries. """
     if   name in self.params: self.params[name] = value
-    elif name in self.params: self.special[name].value = value
-    raise AttributeError("Cannot set unknown parameter " + name + ".")
+    elif name in self.special: self.special[name].value = value
+    else: super(Incar, self).__setattr__(name, value)
 
   def __delattr__(self, name): 
     """ Deletes a VASP parameter from standard and special dictionaries. """
     if name in self.params: return self.params.pop(name)
     elif name in self.params: return self.special.pop(name).value
-    raise AttributeError("Unknown parameter " + name)
+    else: super(Incar, self).__detattr__(name)
 
   def _get_iniwave(self):
     """ Initializes wave functions with \"random\" or 1(default), \"jellium\" or 2. """ 
@@ -219,7 +227,7 @@ class Incar(object):
             - if x is omitted a default value of 0.2eV is used.
     """
     if args == None: 
-      self.ismear, self.isigma = None
+      self.ismear, self.sigma = None, None
       return
 
     first = args[0]
@@ -230,7 +238,7 @@ class Incar(object):
 
     if first == None:
       self.ismear = None
-      if has_second: self.isigma = None
+      if has_second: self.sigma = None
     elif first == "fermi" or first == "-1":    
       self.ismear == -1
       if has_second: self.sigma = second
@@ -297,3 +305,13 @@ class Incar(object):
     """ Iterates over attribute names and values. """
     for key, value in self.params: yield key, value
     for key, value in self.special: yield key, value.value
+
+  def __getstate__(self):
+    d = self.__dict__.copy()
+    params = d.pop("params")
+    special = d.pop("special")
+    return d, params, special
+  def __setstate__(self, args):
+    super(Incar, self).__setattr__("params", args[1])
+    super(Incar, self).__setattr__("special", args[2])
+    d = self.__dict__.update(args[0])
