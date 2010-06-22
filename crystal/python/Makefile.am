@@ -11,7 +11,7 @@ AM_LDFLAGS = @BOOST_LDFLAGS@  @BOOST_PYTHON@ @BOOST_SERIALIZATION@
 install-exec-local: ../../python/libpython_lada.la
 
 EXTRA_DIST = $(crystal_python_h) 
-subpkgpyexec_PYTHON = __init__.py cellsym.py gruber.py
+subpkgpyexec_PYTHON = __init__.py cellsym.py gruber.py point_defects.py
 subpkgpyexec_LTLIBRARIES = _crystal.la 
 subpkgpyexecdir = $(pkgpyexecdir)/crystal
 _crystal_la_CPPFLAGS = $(AM_CPPFLAGS)  $(AM_CXXFLAGS) 
