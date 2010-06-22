@@ -28,7 +28,7 @@ if DOSEPARABLE
   CEDIR = ce
 endif
 if DOPYTHON
-  PYTHONDIR = python ga 
+  PYTHONDIR = python ga jobs
 if DOVASP
   PYTHONDIR += vasp
 endif 
