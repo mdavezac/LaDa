@@ -108,6 +108,7 @@ class Incar(object):
     self.add_param = "isym",        None
     self.add_param = "symprec",     None
     self.add_param = "lcorr",       None
+    self.add_param = "magmom",      None
     self.add_param = "nelect",      NElect(0)
     self.add_param = "algo",        Algo("normal")
     self.add_param = "precision",   Precision("accurate")

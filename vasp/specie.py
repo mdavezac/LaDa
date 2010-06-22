@@ -55,7 +55,7 @@ def nlep(type = 1, l=2, U0=0e0, U1=None ):
 
 class Specie(object):
   """ Holds atomic specie information:  """
-  def __init__(self, path, U=None, oxidation=None):
+  def __init__(self, path, U=None, oxidation=None, magnetic=False):
     """ Initializes a specie.
         @param path: to the directory with the potcar for this particular atomic types.
           This directory should contain a POTCAR or POTCAR.Z file.
@@ -72,6 +72,7 @@ class Specie(object):
     if U == None: self.U = []
     elif isinstance(U, dict): self.U = [U]
     else: self.U = [u for u in U] # takes care of any kind of iterator.
+    self.magnetic = magnetic
 
   @property
   def enmax(self):
