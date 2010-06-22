@@ -10,7 +10,7 @@
     It allows us to launch vasp and retrieve information from the output. It
     checks for errors and avoids running the same job twice. Hence data
     retrieval and vasp calculations can be performed using the same class and
-    script). 
+    script. 
 
     L{version<_vasp.version>} tells for which version of VASP these bindings
     have been compiled.
@@ -68,7 +68,7 @@ class Vasp(Launch):
     """ Initializes vasp class. """
     Launch.__init__(self, *args, **kwargs)
 
-  def __call__(self, structure, outdir, comm = None, repat = [], overwrite=False, **kwargs):
+  def __call__(self, structure, outdir = None, comm = None, repat = None, overwrite=False, **kwargs):
     """ Performs a vasp calculation 
      
         The structure is whatever is given on input. The results are stored in
@@ -91,18 +91,19 @@ class Vasp(Launch):
         @raise IOError: when outdir exists but is not a directory.
     """ 
     from copy import deepcopy
+    from os import getcwd
     from os.path import exists, isdir
     from shutil import rmtree
     from boost.mpi import broadcast
 
     # make this functor stateless.
-    this = deepcopy(self)
+    this      = deepcopy(self)
     structure = deepcopy(structure)
-    outdir = deepcopy(outdir)
-    repat = deepcopy(repat)
+    outdir    = deepcopy(outdir) if outdir != None else getcwd()
+    repat     = deepcopy(repat)  if repat  != None else []
 
     # if other keyword arguments are present, then they are assumed to be
-    # attributes of self, with value their expected value before launch. 
+    # attributes of self, with value to be changed before launch. 
     for key in kwargs.keys(): setattr(this, key, kwargs[key])
 
     # First checks if directory outdir exists (and is a directory).
@@ -118,8 +119,7 @@ class Vasp(Launch):
     
     # checks if result was successful
     extract = Extract(comm = comm, directory = outdir)
-    if not extract.success:
-      raise RuntimeError("VASP calculation did not complete in %s.\n" % (outdir))
+    assert extract.success, RuntimeError("VASP calculation did not complete in %s.\n" % (outdir))
 
     return extract
 
