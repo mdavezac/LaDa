@@ -1,2 +1,6 @@
-subpkgpyexecdir = $(pkgpyexecdir)/jobs
-subpkgpyexec_PYTHON = __init__.py 
+SUBDIRS = ce bitstring
+if DOPESCAN
+  SUBDIRS += pescan
+endif 
+subpkgpyexecdir = $(pkgpyexecdir)/ga
+subpkgpyexec_PYTHON = __init__.py darwin.py standard.py random_search.py
