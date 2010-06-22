@@ -36,26 +36,30 @@ namespace LaDa
           ( 
              (!bt::get<0>(transform))
           );
-          math::rMatrix3d inv_cell( _structure.cell.inverse() );
-          _structure.atoms.resize(smith(0)*smith(1)*smith(2));
-          typename Crystal::TStructure<T_TYPE>::t_Atoms::iterator i_atom = _structure.atoms.begin();
+          math::rMatrix3d inv_cell( _structure.cell.inverse() ); 
+          _structure.atoms.resize(smith(0)*smith(1)*smith(2)*_structure.lattice->sites.size());
+          typedef typename Crystal::TStructure<T_TYPE>::t_Atoms::iterator t_iterator;
+          t_iterator i_atom = _structure.atoms.begin();
+#         ifdef LADA_DEBUG
+             t_iterator const i_atom_end = _structure.atoms.end();
+#         endif
           Crystal::Lattice::t_Sites::iterator const i_site_begin = _structure.lattice->sites.begin();
           Crystal::Lattice::t_Sites::iterator const i_site_end = _structure.lattice->sites.end();
           
           for( size_t i(0); i < smith(0); ++i )
             for( size_t j(0); j < smith(1); ++j )
-              for( size_t k(0); k < smith(2); ++k, ++i_atom )
+              for( size_t k(0); k < smith(2); ++k )
               {
                 // in cartesian.
                 const math::rVector3d vec( factor * math::rVector3d(i,j,k) );
               
                 // adds all lattice sites.
                 typedef Crystal::Lattice::t_Site t_Site;
-                size_t i(0);
-                foreach( const t_Site &site, _structure.lattice->sites ) 
+                size_t l(0);
                 for( Crystal::Lattice::t_Sites::iterator i_site(i_site_begin);
-                     i_site != i_site_end; ++i_site )
+                     i_site != i_site_end; ++i_site, ++i_atom )
                 {
+                  LADA_ASSERT(i_atom != i_atom_end, "out of range.")
                   // in supercell fractional.
                   math::rVector3d frac( inv_cell * ( vec + i_site->pos ) );
                   // in supercell fractional and in supercell parallelogram
@@ -67,9 +71,9 @@ namespace LaDa
                   );
                   // back to cartesian.
                   i_atom->pos = _structure.cell * inside;
-                  i_atom->site = i;
+                  i_atom->site = l;
                   i_atom->freeze = i_site->freeze;
-                  ++i;
+                  ++l;
                 }
               }
         
