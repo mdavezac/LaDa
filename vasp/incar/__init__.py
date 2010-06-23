@@ -1,6 +1,6 @@
 """ Subpackage defining vasp incar parameters. """
 from _params import SpecialVaspParam, NElect, Algo, Precision, Ediff,\
-                    Encut, FFTGrid, Restart, UParams
+                    Encut, FFTGrid, Restart, UParams, Magmom
 from ...opt.decorators import add_setter
 
 class Incar(object):
@@ -108,7 +108,6 @@ class Incar(object):
     self.add_param = "isym",        None
     self.add_param = "symprec",     None
     self.add_param = "lcorr",       None
-    self.add_param = "magmom",      None
     self.add_param = "nelect",      NElect(0)
     self.add_param = "algo",        Algo("normal")
     self.add_param = "precision",   Precision("accurate")
@@ -117,6 +116,7 @@ class Incar(object):
     self.add_param = "fftgrid",     FFTGrid(None)
     self.add_param = "restart",     Restart(None)
     self.add_param = "U_verbosity", UParams("occupancy")
+    self.add_param = "magmom",      Magmom(None)
 
 
 
@@ -183,7 +183,7 @@ class Incar(object):
     """ Deletes a VASP parameter from standard and special dictionaries. """
     if name in self.params: return self.params.pop(name)
     elif name in self.params: return self.special.pop(name).value
-    else: super(Incar, self).__detattr__(name)
+    else: super(Incar, self).__delattr__(name)
 
   def _get_iniwave(self):
     """ Initializes wave functions with \"random\" or 1(default), \"jellium\" or 2. """ 

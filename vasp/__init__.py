@@ -68,7 +68,8 @@ class Vasp(Launch):
     """ Initializes vasp class. """
     Launch.__init__(self, *args, **kwargs)
 
-  def __call__(self, structure, outdir = None, comm = None, repat = None, overwrite=False, **kwargs):
+  def __call__( self, structure, outdir = None, comm = None, repat = None,\
+                overwrite=False, **kwargs ):
     """ Performs a vasp calculation 
      
         The structure is whatever is given on input. The results are stored in
@@ -101,25 +102,33 @@ class Vasp(Launch):
     structure = deepcopy(structure)
     outdir    = deepcopy(outdir) if outdir != None else getcwd()
     repat     = deepcopy(repat)  if repat  != None else []
+    norun     = kwargs.pop("norun", False)
+
+    is_root = True if comm == None else comm.rank == 0
 
     # if other keyword arguments are present, then they are assumed to be
     # attributes of self, with value to be changed before launch. 
     for key in kwargs.keys(): setattr(this, key, kwargs[key])
 
     # First checks if directory outdir exists (and is a directory).
-    if broadcast(comm, exists(outdir) if comm.rank == 0 else None, 0):
+    exists_outdir = broadcast(comm, exists(outdir) if comm.rank == 0 else None, 0) \
+                    if comm != None \
+                    else exists(outdir)
+    if exists_outdir:
       if not overwrite: # check for success
         extract = Extract(comm = comm, directory = outdir)
         if extract.success: return extract # in which case, returns extraction object.
-      elif comm.rank == 0: rmtree(outdir) # overwrite data. 
-      comm.barrier() # makes sure directory is not created by other proc!
+      elif is_root: rmtree(outdir) # overwrite data. 
+      if comm != None: comm.barrier() # makes sure directory is not created by other proc!
     
     # Otherwise, performs calculation by calling base class functor.
-    super(Vasp, this).__call__(structure=structure, outdir=outdir, repat=repat, comm=comm)
+    super(Vasp, this).__call__( structure=structure, outdir=outdir,\
+                                repat=repat, comm=comm, norun=norun )
     
     # checks if result was successful
     extract = Extract(comm = comm, directory = outdir)
-    assert extract.success, RuntimeError("VASP calculation did not complete in %s.\n" % (outdir))
+    if not norun:
+      assert extract.success, RuntimeError("VASP calculation did not complete in %s.\n" % (outdir))
 
     return extract
 

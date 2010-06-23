@@ -114,7 +114,7 @@ class Launch(Incar):
 #                           stdout = stdout, stderr = stderr, shell = True )
 #        vasp_proc.wait() # Wait for completion. Could set a timer here.
 
-  def _postrun(self, repat, outdir,  comm):
+  def _postrun(self, repat, outdir, comm, norun):
      """ Copies files back to outdir """
      from os.path import exists, join, isdir
      from os import makedirs
@@ -137,9 +137,10 @@ class Launch(Incar):
        if exists( join(self._tempdir, filename) ): copy( join(self._tempdir, filename), outdir )
        elif is_root: notfound.append(filename)
 
-     if len(notfound) != 0: raise IOError, "Files %s were not found.\n" % (notfound)
+     if not norun: assert len(notfound) == 0, IOError("Files %s were not found.\n" % (notfound))
 
-  def __call__(self, structure=None, outdir = None, comm = None, repat = []):
+  def __call__( self, structure=None, outdir = None, comm = None, repat = [], \
+                norun = False, keep_tempdir=False):
     from os.path import exists, join, abspath, expanduser
     from os import getcwd
     from shutil import copy2 as copy
@@ -158,7 +159,7 @@ class Launch(Incar):
     workdir = self.workdir
     if workdir == None: workdir = getcwd()
     workdir = abspath(expanduser(workdir))
-    with Tempdir(workdir=workdir, comm=comm, keep=True) as self._tempdir: 
+    with Tempdir(workdir=workdir, comm=comm, keep=keep_tempdir) as self._tempdir: 
       # We do not move to working directory to make copying of files from indir
       # or outdir (as relative paths) possible.
       # creates INCAR and KPOINTS.
@@ -166,10 +167,10 @@ class Launch(Incar):
       self._prerun(comm, outdir)
 
       # runs vasp.
-      self._run(comm)
+      if not norun: self._run(comm)
 
       # now copies data back
-      self._postrun(repat, outdir, comm)
+      self._postrun(repat, outdir, comm, norun)
 
     # deletes system attribute.
     del self._system

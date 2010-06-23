@@ -2,11 +2,18 @@
 from os.path import join, abspath
 import spinel
 
-
-workdir = None  #join(environ["SCRATCH"], environ["PBS_JOBNAME"])
+outdir = abspath("results")
+""" Root output directory. """
+workdir = join(outdir, "tempdir")
+""" Temporary calculation directory. """
 
 lattice = spinel.lattice()
-""" Sets back-bone lattice. """
+""" Back-bone lattice. """
+# changes species in lattice.
+for site in lattice.sites:
+  if   "A" in site.type: site.type[0] = "Rh"
+  elif "B" in site.type: site.type[0] = "Zn"
+  elif "X" in site.type: site.type[0] =  "O"
 
 supercell = array([[1, 0, 0],\
                    [0, 1, 0],\
@@ -21,17 +28,14 @@ vasp.smearing   = "bloechl"
 vasp.ediff      = 1e-5
 vasp.relaxation = "ionic"
 vasp.encut      = 1.3
-vasp.species    = species
 vasp.workdir    = workdir
 vasp.lorbit     = 10
 vasp.npar       = 2
 vasp.lplane     = True
 vasp.addgrid    = True
-
+ 
 #                Symbol, directory of POTCAR, U parameters, max/min oxidation state, is magnetic
-vasp.add_specie = "Rh", "pseudos/Rh", U=U("liechtenstein", "d", 3.3), 3, True
-vasp.add_specie = "Zn", "pseudos/Zn", U=U("liechtenstein", "d", 6.0), 2, False
+vasp.add_specie = "Rh", "pseudos/Rh", U("liechtenstein", "d", 3.3), 3, True
+vasp.add_specie = "Zn", "pseudos/Zn", U("liechtenstein", "d", 6.0), 2, False
 vasp.add_specie =  "O",  "pseudos/O", None, -2, False
 
-# name of root output directories
-outdir = "%s2%s%s4" % tuple([u for u in vasp.species.keys()])

@@ -250,7 +250,75 @@ class UParams(SpecialVaspParam):
     return result
 
 
+class Magmom(SpecialVaspParam):
+  """ Creates a magmom configuration, whether low-spin or high-spin. """
+  def __init__(self, value):
+    self._config, self._indices = None, None
+    super(Magmom, self).__init__(value)
 
+  def _get_value(self):
+    if self._config == None: return None
+    if self._indices == None: return None
+    elif len(self._indices) == 0: return None
+    return self._config, self._indices
+
+  def _set_value(self, value): 
+    if value == None: self._indices, self._config = None, None
+    elif isinstance(value, str):
+      if value.lower() == "high":  self._config = value.lower()
+      elif value.lower() == "low": self._config = value.lower()
+      else: raise ValueError("Unkown value for magmom: " + str(value) + ".")
+    elif hasattr(value, "__len__"): # sequence.
+      if isinstance(value[0], str):
+        self._config = value[0]
+        value = value[1]
+      if len(value) > 0: self._indices = sorted(u for u in value)
+    else: raise ValueError("Unkown value for magmom: " + str(value) + ".")
+  value = property( _get_value, _set_value, \
+                    doc = """ ("low|high", [indices]") """ )
+  
+  @broadcast_result(key=True)
+  def incar_string(self, vasp, *args, **kwargs):
+    from ...crystal import specie_list
+
+    magmom = ""
+    all_types = [atom.type for atom in vasp._system.atoms]
+    for specie in specie_list(vasp._system): # do this per specie.
+      indices = [n for n in self._indices if vasp._system.atoms[n].type == specie]
+      enum_indices = [i for i, n in enumerate(self._indices) if vasp._system.atoms[n].type == specie]
+      if len(indices) == 0: # case where there are no magnetic species of this kind
+        magmom += "%i*0 " % (all_types.count(specie))
+        continue
+      species = [vasp.species[ vasp._system.atoms[n].type ] for n in indices]
+      extra_elecs = -vasp.nelect if vasp.nelect != None else 0
+  
+      # computes low or high spin configurations. 
+      # Assumes that magnetic species are s^2 d^n p^0!
+      per_d = extra_elecs / len(self._indices) # number of electrons added by oxidation per atom
+      leftovers = extra_elecs % len(self._indices) # special occupations...
+      d_elecs = [int(s.valence-2+0.5) for s in species] # d occupation.
+      d_elecs = [  s + per_d + (0 if i < leftovers else 1)\
+                   for i, s in zip(enum_indices, d_elecs) ] # adds extra e-/h+
+      d_elecs = [0 if s > 10 else s for s in d_elecs] # checks for d^n with n > 10
+      mag = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0] if self._config == "low" \
+            else [0, 1, 2, 3, 4, 5, 4, 3, 2, 1, 0]
+      d_elecs = [mag[d] for d in d_elecs] # d occupation.
+  
+      # now constructs magmom
+      last_index = -1
+      for index, valence in zip(indices, d_elecs):
+        index = all_types[:index].count(specie)
+        if index - last_index == 1:   magmom += "%f " % (valence)
+        elif index - last_index == 2: magmom += "0 %f " % (valence)
+        else:                         magmom += "%i*0 %f " % (index-last_index-1, valence)
+        last_index = index
+      # adds last memebers of specie.
+      index = all_types.count(specie)
+      if index - last_index == 1: pass
+      elif index - last_index == 2: magmom += "0 "
+      else:                         magmom += "%i*0 " % (index - last_index - 1)
+  
+    return "MAGMOM = %s" % (magmom)
 
 
     

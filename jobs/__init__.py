@@ -90,16 +90,22 @@ class JobDict(object):
     self.children.update(other.children)
     self.job.update(other.job)
 
+  def __str__(self): 
+    result = "Jobs: \n"
+    for dummy, name in walk_through(jobdict=self):
+      result += "  " + name + "\n"
+    return result
+
+
 current = JobDict()
 """ Global with current joblist. """
 
 def walk_through(jobdict = None, outdir = None):
   """ Generator to iterate over actual calculations. """
-  from os import getcwd
   from os.path import join
   from copy import deepcopy
 
-  if outdir == None: outdir = getcwd()
+  if outdir == None: outdir = ""
   if jobdict == None: jobdict = current
   # Yield this job if it exists.
   if jobdict.has_job():
@@ -131,3 +137,36 @@ def load(path = None):
     return
   print "Loading job list from", path, "."
   with open(path, "r") as file: return load(file)
+
+
+def pbs_scripts( outdir = None, jobdict = None, template = None, \
+                 pbspools = 1, pickle = None, **kwargs):
+  from os import getcwd, makedirs
+  from os.path import abspath, join, exists
+  from ..opt.changedir import Changedir
+  from templates import default_pbs 
+ 
+  if jobdict == None: jobdict = current
+  if template == None: template = default_pbs
+  outdir = getcwd() if outdir == None else abspath(outdir)
+  if pickle == None: pickle = "job_pickle"
+
+  # creates result dictionary.
+  if not exists(outdir): makedirs(outdir)
+  # pickle jobs.
+  save(jobdict = jobdict, path = join(outdir, pickle))
+  if pbspools <= 1:
+    filpath = join(outdir, "automatic_pbs_job")
+    with open(filepath, "w") as file:
+      template(file, pbspools=pbspools, pickle=join(outdir, pickle), **kwargs)
+    return [filepath]
+  else:
+    result = []
+    for p in  range(pbspools+1):
+      filepath = join(outdir, "automatic_pbs_job_%i" % (p))
+      with open(filepath, "w") as file:
+        template(file, pbspools=pbspools, pickle=join(outdir, pickle), **kwargs)
+      result.append(filepath)
+
+  return result
+
