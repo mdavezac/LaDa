@@ -72,7 +72,7 @@ def vacancy(structure, lattice, type):
     # creates vacancy
     atom = result.atoms.pop(which)
     # returns structure with vacancy.
-    yield deepcopy(result), deepcopy(atom)
+    yield deepcopy(result), deepcopy(atom), "vacancy_" + atom.type
     # removes vacancy
     result.atoms.insert(which, atom)
 
@@ -99,12 +99,37 @@ def substitution(structure, lattice, type, subs):
     # creates substitution
     orig = result.atoms[which].type
     result.atoms[which].type = subs
+    substituted = deepcopy(result.atoms[which])
+    substituted.index = which
     # returns structure with vacancy.
-    yield deepcopy(result), deepcopy(result.atoms[which])
+    yield deepcopy(result), substituted, orig + "_on_" + subs
     # removes substitution
     result.atoms[which].type = orig
 
+def oxidation(A=None, B=None):
 
+  if A == None: A, B = B, A
+  if A == None: # no oxidation
+    yield None, "neutral"
+    return
+  if B == None:
+    # max/min oxidation state
+    max_oxidation = -A.oxidation if hasattr(A, "oxidation") else 0
+    min_oxidation = 0
+    if max_oxidation < min_oxidation: max_oxidation, min_oxidation = min_oxidation, max_oxidation
+  else:
+    # Finds maximum range of oxidation.
+    maxA_oxidation = -A.oxidation if hasattr(A, "oxidation") else 0
+    maxB_oxidation = -B.oxidation if hasattr(B, "oxidation") else 0
+    max_oxidation = max(maxA_oxidation, maxA_oxidation - maxB_oxidation, 0)
+    min_oxidation = min(maxA_oxidation, maxA_oxidation - maxB_oxidation, 0)
+
+  for oxidation in range(min_oxidation, max_oxidation+1):
+    # directory
+    if   oxidation == 0:   oxdir = "neutral"
+    elif oxidation > 0:    oxdir = "+" + str(oxidation) 
+    elif oxidation < 0:    oxdir = str(oxidation) 
+    yield oxidation, oxdir
 
 
 if __name__ == '__main__':

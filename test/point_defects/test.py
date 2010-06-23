@@ -19,19 +19,10 @@ supercell = fill_structure(input.supercell)
 # loop over specie vacancy
 for symbol, specie in input.vasp.species.items(): 
   # loop over types of vacancies for given specie (eg symmetrically inequivalent sites).
-  for structure, vacancy in ptd.vacancy(supercell, input.lattice, symbol):
-    vacdir = "vacancy_" + symbol
-    # max/min oxidation state
-    max_oxidation = specie.oxidation if hasattr(specie, "oxidation") else 0
-    # sign of oxidation state
-    sign_oxidation = 1 if max_oxidation > 0 else -1
+  for structure, vacancy, vacdir in ptd.vacancy(supercell, input.lattice, symbol):
     # loop over oxidation states.
-    for oxidation in range(0, max_oxidation + sign_oxidation, sign_oxidation): 
-      # directory
-      if max_oxidation == 0: oxdir = vacdir
-      elif oxidation == 0:   oxdir = join(vacdir, "neutral")
-      elif oxidation > 0:    oxdir = join(vacdir, "+" + str(oxidation) )
-      elif oxidation < 0:    oxdir = join(vacdir, str(oxidation) )
+    for oxidation, name in ptd.oxidation(specie):
+      oxdir = join(vacdir, name)
 
       # now finds first neighbors. 12 is the highest coordination number, so
       # this should include the first shell.
@@ -56,20 +47,46 @@ for symbol, specie in input.vasp.species.items():
           jobs.current[spindir].job["magmom"] = spin, neighbors
           jobs.current[spindir].job["vasp"] = input.vasp
 
-# for job, name in jobs.walk_through(outdir="results"):
-#   print name
-#   job.compute(norun=True, repat=files.input, outdir=name)
+# loop substitutions.
+for A, B in [("Rh", "Zn"), ("Zn", "Rh") ]:
+  # loop over inequivalent substitution sites.
+  for structure, substitution, directory in ptd.substitution(supercell, input.lattice, A, B):
+    # loop over oxidations.
+    for oxidation, name in ptd.oxidation(input.vasp.species[A], input.vasp.species[B]):
+      oxdir = join(directory, name)
+
+      # now finds first neighbors. 12 is the highest coordination number, so
+      # this should include the first shell.
+      neighbors = [n for n in Neighbors(structure, 12, vacancy.pos)]
+      # only take the first shell and keep indices (to atom in structure) only.
+      neighbors = [n.index for n in neighbors if n.distance < neighbors[0].distance + 1e-1]
+      # adds origin.
+      neighbors.insert(substitution.index, 0)
+      # reduce to those which are magnetic.
+      neighbors = [n for n in neighbors if input.vasp.species[ structure.atoms[n].type ].magnetic]
+
+      if len(neighbors) == 0: # no magnetic neighbors.
+        jobs.current[oxdir].job["structure"] = structure
+        jobs.current[oxdir].job["nelect"] = -oxidation
+        jobs.current[oxdir].job["vasp"] = input.vasp
+      else: # has magnetic neighbors
+        # Creates low spin and high-spin *ferro* configurations.
+        # The current implementation assumes that magnetic species are s^2 d^n p^0!
+        # loops over high and low spin configurations.
+        for spin in ["low", "high"]:
+          spindir = join(oxdir, spin + "-spin")
+          jobs.current[spindir].job["structure"] = structure
+          jobs.current[spindir].job["nelect"] = -oxidation
+          jobs.current[spindir].job["magmom"] = spin, neighbors
+          jobs.current[spindir].job["vasp"] = input.vasp
+
+for job, name in jobs.walk_through(outdir="results"):
+  print name
+  job.compute(norun=True, repat=files.input, outdir=name)
 # jobs.current.update(jobs.load())
 # for job in jobs.walk_through():
 #   print job.job["outdir"]
 #   if "nelect" in job.job: print job.job["nelect"]
 
-# # substitutions.
-# subs = [(input.species[0].symbol, input.species[1].symbol),\
-#         (input.species[1].symbol, input.species[0].symbol)]
-# for A, B in subs:
-#  for structure in substitution(supercell, input.lattice, A, B):
-#    directory = join(outdir, "%s_on_%s" % (A, B))
-#    print directory, len([0 for atom in structure.atoms if atom.type == B])
 
 
