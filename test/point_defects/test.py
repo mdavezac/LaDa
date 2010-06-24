@@ -96,4 +96,4 @@ string = cPickle.dumps(jobs.current)
 reloaded = cPickle.loads(string)
 for job, name in reloaded.walk_through("results"):
   print name
-  job.compute(norun=True, repat=files.input, outdir=name)
+# job.compute(norun=True, repat=files.input, outdir=name)
