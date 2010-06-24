@@ -11,6 +11,8 @@
 def main():
   import cPickle
   import re 
+  from os import getcwd, environ
+  from os.path import expanduser, abspath
   from optparse import OptionParser
   from boost.mpi import world
   from lada import jobs
@@ -24,12 +26,22 @@ def main():
   parser.add_option( "--npbs", dest="npbs", help="Which pbs script is this", metavar="N",\
                      type="int", default=0)
   parser.add_option( "--procpools", dest="procpools", default=1, \
-                     help="Number of process pools per job", metavar="N", type="int" )
+                     help="Number of mpi pools per job", metavar="N", type="int" )
+  parser.add_option( "--relative", dest="relative", default=None, \
+                     help="Perform calculations in a directory relative "
+                          "current, but starting at RELATIVE, rather than HOME.",
+                     metavar="RELATIVE" )
 
   # below would go additional program options.
 
   (options, args) = parser.parse_args()
   assert options.pbspools > options.npbs
+  if options.relative != None: 
+    # get path relative to home.
+    if options.relative not in environ:
+      print "Error: could not find environment variable", options.relative, "."
+      print "Will work on default dir instead."
+      options.relative = None
 
   if isinstance(args, str): jobpickle = [args]
   elif len(args) == 0:
@@ -40,8 +52,8 @@ def main():
   # below would go additional out-of-loop code.
     
   # create jobs.
-  jobs.current = jobs.JobDict()
-  for file in jobpickle: jobs.current.update( jobs.load(path=file) )
+  jobtree = jobs.JobDict()
+  for file in jobpickle: jobtree.update( jobs.load(path=file) )
 
   # makes sure that the number of pools is not too large.
   if world.size < options.procpools: options.procpools = world.size
@@ -54,9 +66,13 @@ def main():
   # index in total number of pools
   n = options.npbs * options.procpools + color
   # loop over all jobs
-  for i, (job, outdir) in enumerate(jobs.walk_through()):
+  for i, (job, outdir) in enumerate(jobtree.walk_through()):
     # bypasses those jobs not done here.
     if i % totpools != n: continue
-    out = job.compute(comm = local_comm, outdir = outdir)
+    if options.relative != None: 
+      out = job.compute(comm=local_comm, outdir=outdir)
+    else: 
+      workdir = join(environ[options.relative], relpath(outdir, expanduser("~/")))
+      out = job.compute(comm=local_comm, outdir=outdir, workdir=workdir)
     # below would go additional inner loop code.
 if __name__ == "__main__": main()
