@@ -217,8 +217,6 @@ class JobDict(object):
   def __div__(self, other): 
     """ Adds other as a subtree of self. """
     if other == "" or other == None: return self
-    self.children[other] = JobDict()
-    self.children[other].parent = self
     return self.children[other]
  
   def __delattr__(self, name):
