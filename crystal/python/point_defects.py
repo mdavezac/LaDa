@@ -1,11 +1,4 @@
-# will be params:
-#Aatoms = ["Ir", "Rh"]
-#Batoms = ["Mg", "Zn"]
-#defect_types = ["VA", "VB", "VX", "AonB", "BonA"]
-
-Aatoms = ["Li"]
-Batoms = ["Mg"]
-defect_types = ["VA", "AonB"]
+""" Point-defect helper functions. """
 
 def inequivalent_sites(lattice, type):
   """ Yields sites occupied by type which are inequivalent.
@@ -53,15 +46,23 @@ def inequivalent_sites(lattice, type):
 def vacancy(structure, lattice, type):
   """ Yields all inequivalent vacancies. 
   
-      Loops over all equivalent vacancies.
+      Loops over all symmetrically inequivalent vacancies of given type.
       @param structure: structure on which to operate
       @param lattice: back-bone lattice of the structure.
       @param type: type of atoms for which to create vacancy.
+      @return: a 3-tuple consisting of:
+        - the structure with a vacancy.
+        - the vacancy atom from the original structure. It is given an
+          additional attribute, C{index}, referring to list of atoms of the
+          original structure.
+        - A suggested name for the vacancy: site_i, where i is the index of the
+          vacancy in the original list of atoms.
   """
   from copy import deepcopy
   
-  result = deepcopy(structure)
-  for i in inequivalent_sites(lattice, type):
+  structure = deepcopy(structure)
+  inequivs = inequivalent_sites(lattice, type)
+  for i in inequivs:
 
     # finds first qualifying atom
     for which, atom in enumerate(structure.atoms):
@@ -69,12 +70,18 @@ def vacancy(structure, lattice, type):
 
     assert which < len(structure.atoms), RuntimeError("Site index not found.")
 
-    # creates vacancy
-    atom = result.atoms.pop(which)
+    # name of this vacancy
+    name = ("site_" + str(i)) if len(inequivs) > 1 else ""
+    # creates vacancy and keeps atom for record
+    atom = deepcopy(structure.atoms.pop(which))
+    atom.index = i
+    # structure 
+    result = deepcopy(structure)
+    result.name = structure.name + " %s vacancy on site %i" % (atom.type, i)
     # returns structure with vacancy.
-    yield deepcopy(result), deepcopy(atom)
+    yield structure, atom, name
     # removes vacancy
-    result.atoms.insert(which, atom)
+    structure.atoms.insert(which, atom)
 
 def substitution(structure, lattice, type, subs):
   """ Yields all inequivalent vacancies. 
@@ -84,11 +91,19 @@ def substitution(structure, lattice, type, subs):
       @param lattice: back-bone lattice of the structure.
       @param type: type of atoms for which to create vacancy.
       @param subs: substitution type
+      @return: a 3-tuple consisting of:
+        - the structure with a substitution.
+        - the substituted atom in the structure above. The atom is given an
+          additional attribute, C{index}, referring to list of atoms in the
+          structure.
+        - A suggested name for the substitution: site_i, where i is the index
+          of the substitution in the list of atoms.
   """
   from copy import deepcopy
   
   result = deepcopy(structure)
-  for i in inequivalent_sites(lattice, type):
+  inequivs = inequivalent_sites(lattice, type)
+  for i in inequivs:
 
     # finds first qualifying atom
     for which, atom in enumerate(structure.atoms):
@@ -96,17 +111,37 @@ def substitution(structure, lattice, type, subs):
 
     assert which < len(structure.atoms), RuntimeError("Site index not found.")
 
+    # name of this substitution
+    name = ("site_" + str(i)) if len(inequivs) > 1 else ""
     # creates substitution
     orig = result.atoms[which].type
     result.atoms[which].type = subs
+    # substituted atom.
     substituted = deepcopy(result.atoms[which])
     substituted.index = which
     # returns structure with vacancy.
-    yield deepcopy(result), substituted
+    yield result, substituted, name
     # removes substitution
     result.atoms[which].type = orig
 
-def oxidation(A=None, B=None):
+def charged_states(A=None, B=None):
+  """ Loops over charged systems. 
+
+      The parameters C{A} and C{B} are either None or an L{Specie
+      <lada.vasp.specie.Specie>} instance:
+         - if only one of C{A} and C{B} is not None, then the accepted charge
+           states are anything between 0 and C{-A.oxidation} included. This
+           works both for negative and positive oxidation numbers. The "-" sign
+           comes from the rational that an ion C{A} with oxidation
+           C{A.oxidation} is removed from the system.
+         - if both C{A} and C{B} are not None, than reviewed chared states are between
+           C{max(-A.oxidation, B.oxidation-A.oxidation)} and
+           C{min(-A.oxidation, B.oxidation-A.oxidation)}. 
+
+      @return: Yields a 2-tuple:
+        - Number of electrons to add to the system (not charge). 
+        - a suggested name for the charge state calculation.
+  """
 
   if A == None: A, B = B, A
   if A == None: # no oxidation
@@ -114,77 +149,19 @@ def oxidation(A=None, B=None):
     return
   if B == None:
     # max/min oxidation state
-    max_oxidation = -A.oxidation if hasattr(A, "oxidation") else 0
-    min_oxidation = 0
-    if max_oxidation < min_oxidation: max_oxidation, min_oxidation = min_oxidation, max_oxidation
+    max_charge = -A.oxidation if hasattr(A, "oxidation") else 0
+    min_charge = 0
+    if max_charge < min_charge: max_charge, min_charge = min_charge, max_charge
   else:
     # Finds maximum range of oxidation.
-    maxA_oxidation = -A.oxidation if hasattr(A, "oxidation") else 0
-    maxB_oxidation = -B.oxidation if hasattr(B, "oxidation") else 0
-    max_oxidation = max(maxA_oxidation, maxA_oxidation - maxB_oxidation, 0)
-    min_oxidation = min(maxA_oxidation, maxA_oxidation - maxB_oxidation, 0)
+    maxA_oxidation = A.oxidation if hasattr(A, "oxidation") else 0
+    maxB_oxidation = B.oxidation if hasattr(B, "oxidation") else 0
+    max_charge = max(-maxA_oxidation, maxB_oxidation - maxA_oxidation, 0)
+    min_charge = min(-maxA_oxidation, maxB_oxidation - maxA_oxidation, 0)
 
-  for oxidation in range(min_oxidation, max_oxidation+1):
+  for charge in range(min_charge, max_charge+1):
     # directory
-    if   oxidation == 0:   oxdir = "neutral"
-    elif oxidation > 0:    oxdir = "+" + str(oxidation) 
-    elif oxidation < 0:    oxdir = str(oxidation) 
-    yield oxidation, oxdir
-
-
-if __name__ == '__main__':
-  from sys import exit
-  from os.path import join
-  from lada.opt import read_input
-  from lada.vasp import Vasp, Specie, specie
-  from lada.vasp.incar import Standard, NElect
-  from lada.crystal import fill_structure
-  import jobs
-
-  input_dict = {
-                 "Specie": Specie, "Vasp":Vasp, "Standard":Standard,
-                 "U": specie.U, "nlep": specie.nlep
-               }
-  input = read_input("input.py", input_dict)
-  input.lattice.set_as_crystal_lattice()
-  for site in input.lattice.sites:
-    if   "A" in site.type: site.type[0] = input.species[0].symbol
-    elif "B" in site.type: site.type[0] = input.species[1].symbol
-    elif "X" in site.type: site.type[0] = input.species[2].symbol
-
-# print "# input lattice. \n", input.lattice
-
-  supercell = fill_structure(input.supercell)
-# print "# supercell structure. \n", supercell
-
-  # name of output directories
-  outdir = "%s2%s%s4" % tuple([u.symbol for u in input.species])
-
-  # vacancy
-# for vac in input.species[:2]: # not doing oxygen right now.
-#   for structure, atom in vacancy(supercell, input.lattice, vac.symbol):
-#     vacdir = join(outdir, "vacancy_" + vac.symbol)
-#     if not hasattr(vac, "oxidation"): 
-#       jobs.current[vacdir].job["structure"] = structure
-#       jobs.current[vacdir].job["vasp"] = input.vasp
-#     else:
-#       for i in range(0, vac.oxidation, 1 if vac.oxidation > 0 else -1): 
-#         directory = join(vacdir, str(i) + "-" if vac.oxidation > 0 else "+")
-#         jobs.current[directory].job["structure"] = structure
-#         jobs.current[directory].job["nelect"] = NElect(-i)
-#         jobs.current[directory].job["vasp"] = input.vasp
-  
-  jobs.current.update(jobs.load())
-  for job in jobs.walk_through():
-    print job.job["outdir"]
-    if "nelect" in job.job: print job.job["nelect"]
-
-# # substitutions.
-# subs = [(input.species[0].symbol, input.species[1].symbol),\
-#         (input.species[1].symbol, input.species[0].symbol)]
-# for A, B in subs:
-#  for structure in substitution(supercell, input.lattice, A, B):
-#    directory = join(outdir, "%s_on_%s" % (A, B))
-#    print directory, len([0 for atom in structure.atoms if atom.type == B])
-
-
+    if   charge == 0:   oxdir = "neutral"
+    elif charge > 0:    oxdir = "+" + str(charge) 
+    elif charge < 0:    oxdir = str(charge) 
+    yield -charge, oxdir

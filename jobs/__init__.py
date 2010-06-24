@@ -210,12 +210,13 @@ class JobDict(object):
 
   def __str__(self): 
     result = "Jobs: \n"
-    for dummy, name in walk_through(jobdict=self):
+    for dummy, name in self.walk_through():
       result += "  " + name + "\n"
     return result
 
   def __div__(self, other): 
     """ Adds other as a subtree of self. """
+    if other == "" or other == None: return self
     self.children[other] = JobDict()
     self.children[other].parent = self
     return self.children[other]
@@ -264,12 +265,12 @@ class JobDict(object):
     super(JobDict, self).__setattr__("jobparams", args[1])
     d = self.__dict__.update(args[0])
 
-  def walkthrough(directory=None):
+  def walk_through(self, outdir=None):
     """ Iterates over jobs. 
 
         see L{JobDict} description.
     """
-    for u in walkthrough(jobdict=self, directory=None): yield u
+    for u in walk_through(jobdict=self, outdir=outdir): yield u
 
 current = JobDict()
 """ Global with current joblist. """
