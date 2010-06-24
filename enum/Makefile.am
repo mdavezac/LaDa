@@ -3,7 +3,7 @@
 #
 include $(top_srcdir)/Files
 AM_CPPFLAGS = @TINYXML_CFLAGS@ @CPP_DEBUG_FLAGS@\
-	      @BOOST_CXXFLAGS@ -I $(top_srcdir) 
+	      @BOOST_CXXFLAGS@ -I $(top_srcdir) @EIGEN_CXXFLAGS@
 AM_LDFLAGS = 
 
 noinst_LTLIBRARIES = libenum.la # $(pythonlib)
