@@ -41,7 +41,7 @@ AC_ARG_ENABLE(models,
      esac],[models=false])
 
 AC_ARG_ENABLE(vasp,
-     [  --enable-vasp               Compiles Coulom + Lennard-Jhones wrappers.],
+     [  --enable-vasp                 Compiles VASP wrapper.],
      [case "${enableval}" in
        yes) vasp=true ;;
        no)  vasp=false ;;
