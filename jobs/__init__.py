@@ -127,7 +127,7 @@ class JobDict(object):
   def __getitem__(self, name): 
     """ Returns job description from the dictionary.
 
-        If the value is a string, unpickles it before returning.
+        If the job does not exist, will create it.
     """
     from re import split
 
@@ -149,9 +149,7 @@ class JobDict(object):
   def __setitem__(self, name, value): 
     """ Sets a job description in the dictionary.
     
-        If value is not a string, then it is pickled and the
-        result inserted into the job dictionary. Otherwise, it is expected the
-        string is a pickle.
+        If the job does not exist, will create it.
     """
     from copy import deepcopy
     from re import split
