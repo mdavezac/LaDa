@@ -8,12 +8,6 @@ EXTRA_DIST = $(top_srcdir)/bootstrap.sh \
 	     $(EXTRA_FILES) \
              $(top_srcdir)/doxy.conf \
 	     $(top_srcdir)/Files
-if DOCEOPT
-  DARWINSUBDIR = darwin
-endif 
-if DODARWIN
-  DARWINSUBDIR = darwin
-endif 
 if DOMPI 
   MPISUBDIR = mpi
 endif 
@@ -46,8 +40,7 @@ if DOENUM
   ENUMDIR = enum
 endif
 SUBDIRS = $(PYTHONDIR) $(MPISUBDIR) math physics opt minimizer crystal print $(CEDIR) $(VFFSUBDIR) \
-	  $(PESCANSUBDIR) $(DARWINSUBDIR) $(SEPARABLEDIR) factory \
-	  $(MODELSDIR) $(POTENTIALSDIR) $(ENUMDIR) 
+	  $(PESCANSUBDIR) $(SEPARABLEDIR) $(MODELSDIR) $(POTENTIALSDIR) $(ENUMDIR) 
 # revision.h: force
 # 	@cd $(top_srcdir); scripts/max_revision.pl
 # force: ;
@@ -94,7 +87,6 @@ doc: $(ALL_DOCS)
 	@cp $(top_srcdir)/doxy.conf doxy.tmp
 	@echo "HAVE_DOT = @FOUNDDOT@" >> doxy.tmp
 	@echo "INPUT = $(ALL_DOCS)" >> doxy.tmp
-	@echo "OUTPUT_DIRECTORY = @DOCDIR@ " >> doxy.tmp
 	@cat doxy.tmp | doxygen -
 	@rm doxy.tmp
 clean-local:

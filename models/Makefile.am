@@ -28,17 +28,17 @@ librelaxer_la_LIBADD = $(top_builddir)/crystal/libcrystal.la \
                        $(top_builddir)/print/libprint.la \
                        $(top_builddir)/physics/libphysics.la
 
-bin_PROGRAMS = # clj coollj
-clj_SOURCES =  CLJ.f90 force_lj_ewald.f90
-clj_LDADD = libmodels.la librelaxer.la  @BOOST_PROGOP@ 
-coollj_SOURCES =  main.cc
-coollj_LDADD = @BOOST_PROGOP@ libmodels.la \
-               $(top_builddir)/crystal/libcrystal.la \
-               $(top_builddir)/math/libmath.la \
-               $(top_builddir)/minimizer/libminimizer.la \
-               $(top_builddir)/opt/libopt.la \
-               $(top_builddir)/print/libprint.la \
-               $(top_builddir)/physics/libphysics.la
+# bin_PROGRAMS = clj coollj
+# clj_SOURCES =  CLJ.f90 force_lj_ewald.f90
+# clj_LDADD = libmodels.la librelaxer.la  @BOOST_PROGOP@ 
+# coollj_SOURCES =  main.cc
+# coollj_LDADD = @BOOST_PROGOP@ libmodels.la \
+#	 $(top_builddir)/crystal/libcrystal.la \
+#	 $(top_builddir)/math/libmath.la \
+#	 $(top_builddir)/minimizer/libminimizer.la \
+#	 $(top_builddir)/opt/libopt.la \
+#	 $(top_builddir)/print/libprint.la \
+#	 $(top_builddir)/physics/libphysics.la
 
 
 SUBDIRS = python

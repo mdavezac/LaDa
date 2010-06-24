@@ -55,7 +55,7 @@ namespace LaDa
       //!          \f],
       //!          where 
       //!          \f[
-      //!             P_{r,i}[x^(u,v)}_{j\neq i}] = \prod_{j\neq i} \sum_o
+      //!             P_{r,i}[x^{(u,v)}_{j\neq i}] = \prod_{j\neq i} \sum_o
       //!               \alpha_{r,j,o} g_{r,j,o}( x_j^{(u,v)} )
       //!          \f].
       //!          To help with this process, containers over the fitting
@@ -64,7 +64,7 @@ namespace LaDa
       //!          over fitting structures, to loops over representations of a
       //!          single structure, to loop over ranks, to a loop over inner
       //!          functions. They give access to the values required for
-      //!          computing \f$G${(u)}\f$. 
+      //!          computing \f$G{(u)}\f$. 
       class Collapse
       {
 #       ifdef __DOPYTHON 

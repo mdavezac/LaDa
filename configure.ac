@@ -114,14 +114,6 @@ AC_ARG_ENABLE(pescan,
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-pescan) ;;
      esac],[pescan=$enall])
 
-AC_ARG_ENABLE(galib,
-     [  --enable-galib                Turn on galib],
-     [case "${enableval}" in
-       yes) galib=true ;;
-       no)  galib=false ;;
-       *) AC_MSG_ERROR(bad value ${enableval} for --enable-galib) ;;
-     esac],[galib=$enall])
-
 AC_ARG_ENABLE(ce,
      [  --enable-ce                   Turn on cluster-expansion module],
      [case "${enableval}" in
@@ -129,22 +121,6 @@ AC_ARG_ENABLE(ce,
        no)  ce=false ;;
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-ce) ;;
      esac],[ce=$enall])
-
-AC_ARG_ENABLE(ceopt,
-     [  --enable-ceopt                Turn on cluster-expansion optimization],
-     [case "${enableval}" in
-       yes) ceopt=true ;;
-       no)  ceopt=false ;;
-       *) AC_MSG_ERROR(bad value ${enableval} for --enable-ceopt) ;;
-     esac],[ceopt=$enall])
-
-AC_ARG_ENABLE(alloylayersopt,
-     [  --enable-alloylayersopt       Turn on alloylayers configuration space optimization],
-     [case "${enableval}" in
-       yes) alloylayersopt=true ;;
-       no)  alloylayersopt=false ;;
-       *) AC_MSG_ERROR(bad value ${enableval} for --enable-alloylayers) ;;
-     esac],[alloylayersopt=$enall])
 
 AC_ARG_ENABLE(debug,
      [  --enable-debug                Turn on debugging],
@@ -171,21 +147,6 @@ if test x$nolaunch = xtrue; then
   AC_DEFINE([_NOLAUNCH],[],[])
 fi
 
-# if test x$emassopt = xtrue; then
-#   galib=true
-#   emass=true
-#   pescan=true
-#   vff=true
-# fi
-if test x$alloylayersopt = xtrue; then
-  galib=true
-  pescan=true
-  vff=true
-fi
-if test x$ceopt = xtrue; then
-  ce=true
-  galib=true
-fi
 direct_iaga=true;
 
 
@@ -300,7 +261,6 @@ AM_CONDITIONAL(DOCE, test x$ce = xtrue)
 AM_CONDITIONAL(DOCEOPT, test x$ceopt = xtrue)
 AM_CONDITIONAL(DOVFF, test x$vff = xtrue)
 AM_CONDITIONAL(NOLAUNCH, test x$nolaunch = xtrue)
-AM_CONDITIONAL(DODARWIN, test x$galib = xtrue)
 AM_CONDITIONAL(DOALLOYLAYERSOPT, test x$alloylayersopt = xtrue)
 AM_CONDITIONAL(DODIRECTIAGA, test x$direct_iaga = xtrue)
 AM_CONDITIONAL(DOPYTHONPESCAN, test x$python$pescan$direct_iaga = xtruetruetrue)
@@ -312,14 +272,6 @@ AM_CONDITIONAL(DOENUM, test x$enum = xtrue)
 AM_CONDITIONAL(DOPOTENTIALS, test x$potentials = xtrue)
 AM_CONDITIONAL(DOMINIMIZER, test xtrue = xtrue)
 
-
-#  eo libs iff galib is enabled 
-if test x$galib != xtrue; then
-  EO_CFLAGS=""
-  EO_LIBS=""
-fi 
-AC_SUBST(EO_CFLAGS)
-AC_SUBST(EO_LIBS)
 
 #
 AC_PROG_LIBTOOL
@@ -395,10 +347,10 @@ AC_SUBST(MINUIT_CFLAGS)
 
 AC_OUTPUT(Makefile math/Makefile math/python/Makefile physics/Makefile physics/python/Makefile
           opt/Makefile opt/python/Makefile crystal/Makefile crystal/python/Makefile
-          vff/Makefile vff/python/Makefile mpi/Makefile pescan_interface/Makefile darwin/Makefile 
+          vff/Makefile vff/python/Makefile mpi/Makefile pescan_interface/Makefile 
           pescan_interface/python/Makefile
           print/Makefile separable/Makefile ce/Makefile ce/python/Makefile
-          python/Makefile separable/fixedlattice/Makefile factory/Makefile
+          python/Makefile separable/fixedlattice/Makefile 
           minimizer/Makefile minimizer/python/Makefile models/Makefile models/python/Makefile 
           atomic_potentials/Makefile atomic_potentials/python/Makefile 
           atomic_potentials/collapse/Makefile enum/Makefile enum/python/Makefile 
@@ -413,9 +365,6 @@ echo " _ Crystal module library"
 if test "$ce" = true; then
   echo " _ Cluster Expansion library module"
 fi
-if test "$galib" = true; then
-  echo " _ GA libraries"
-fi
 if test "$vff" = true; then
   echo " _ vff functional ";
 fi
@@ -424,12 +373,6 @@ if test "$pescan$direct_iaga" = truefalse; then
 fi
 if test "$pescan$direct_iaga" = truetrue; then
   echo " _ interface to nanopse/pescan functional as external library.";
-fi
-# if test "x$emass" = xtrue; then
-#   echo " _ Effective Electronic Mass calculations for ternary (100) uperlattices" 
-# fi
-if test "$ceopt" = true; then
-  echo " _ Genetic Algorithm for Cluster Expansion"
 fi
 if test "$models" = true; then
   echo " _ Model functionals"
@@ -442,12 +385,6 @@ if test "$enum" = true; then
 fi
 if test "$vasp" = true; then
   echo " _ VASP interface library"
-fi
-# if test x$emassopt = xtrue; then
-#   echo " _ Genetic Algorithm for Electronic Mass Optimization"
-# fi
-if test x$alloylayersopt = xtrue; then
-  echo " _ Genetic Algorithm for Alloy Layers configuration space."
 fi
 if test x$separable = xtrue; then
   echo " _ Sum of separable functions fitting."
