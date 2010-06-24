@@ -1,11 +1,17 @@
 """ NLEP fitting input script. """
-from os.path import join, abspath
+from os import getcwd
+from os.path import join, abspath, relpath
+from lada.opt.changedir import Changedir
 import spinel
 
 outdir = abspath("results")
 """ Root output directory. """
 workdir = join(outdir, "tempdir")
 """ Temporary calculation directory. """
+if "NERSC_HOST" in environ:
+  if environ["NERSC_HOST"] == "hopper":
+    with Changedir(environ["HOME"]) as cwd:
+      workdir = join(environ["SCRATCH"], relpath(outdir, getcwd()))
 
 lattice = spinel.lattice()
 """ Back-bone lattice. """
