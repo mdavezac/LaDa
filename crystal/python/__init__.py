@@ -198,11 +198,15 @@ def _add_atoms(which):
   
       The argument is a sequence, each item of which could be used with
       L{Structure.add_atom} (or L{Lattice.add_site} when appropriate).
-      >>> structure.add_atoms = ((0,0,0), "A"),\
-                                ((0.25,0,0), "B"),\
+
+      >>> structure.add_atoms = ((0,0,0), "A"),\\
+      >>>                       ((0.25,0,0), "B"),
+
       Note that the argument must be a sequence of at least 2.
+
       >>> structure.add_atoms = ((0,0,0), "A") # wrong!
       >>> structure.add_atoms = ((0,0,0), "A"), # Ok
+
       Items which are None are ignored.
   """
   def _func(self, args):
@@ -219,23 +223,36 @@ def _set_types(self, args):
       Sets the species in the lattice using a n-tuple, each item of which is a
       tuple of atomic symbols. The types in each atomic site is set to the
       corresponding item. 
+
       >>> lattice.set_type = ("In", "Ga"), ("As", "P")
+
       If an item is None, then that site is unchanged:
+
       >>> lattice.set_type = ("In", "Ga"), None 
+
       or 
+
       >>> lattice.set_type = ("In", "Ga"), 
+
       will only change the types of the first site.
       Note:
-      >>> lattice.set_type = ("In", "Ga")
+
+      >>> lattice.set_type = ("In", "Ga") # Error!
+
       The line above is most likely an error. It will result in setting the
       first site to "In" and second to "Ga".
+
       >>> lattice.set_type = "In"
+
       The line above is also an error. It will result in setting the
       first site to "I" and second to "n".
       Similarly, each item must be at least a 2-tuple:
+
       >>> lattice.set_type = ("In",), # Ok
       >>> lattice.set_type = ("In"), #  Not Okay.
+
       Finally, the line below, with an empty 2-tuple will change only the second site.
+
       >>> lattice.set_type = (,), ("As", "P")
       
   """

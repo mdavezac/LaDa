@@ -265,7 +265,7 @@ namespace LaDa
           .def( "xcrysden", &xcrysden_str, "Outputs in XCrysden format." )
           .def_readwrite( "freeze", &T_STRUCTURE::freeze,
                            "Tags to freeze coordinates when relaxing structure.\n\n" 
-                           "@see L{FreezeCell} for possible values." 
+                           "See L{FreezeCell} for possible values." 
                         )
           .def(bp::self == bp::other<T_STRUCTURE>())
           .add_property

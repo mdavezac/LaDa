@@ -38,7 +38,7 @@ def relaxation( vasp, structure, comm = None, outdir="relaxation",
       @param tolerance: Total energy convergence criteria. Default: 1e-3. 
       @type tolerance: float
       @param relaxation: Which degrees of freedom to relax. Default: \"volume
-        ionic cellshape\". @see L{incar.Incar.relaxation}.
+        ionic cellshape\". @see L{incar.Incar.set_relaxation}.
       @type relaxation: string. 
   """
   from copy import deepcopy

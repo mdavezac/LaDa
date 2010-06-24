@@ -12,39 +12,51 @@ class Incar(object):
       this class, or calling iter.
 
       Parameters(attributes) which are present by default are the following:
-         - ispin: Sets number of spins. Must be either 1 or 2. 
-         - ismear: Smearing function. Can be set with property L{smearing}. 
-         - sigma: Smearing parameter. Can be set with property L{smearing}.
-         - isif: Degrees of freedom to relax. Can be set using L{self.relaxation}. 
-         - nsw: Number of ionic steps. Can be set using L{self.relaxation}. 
-         - ibrion: ionic-relaxation method. Can be set using L{self.relaxation}. 
-         - potim: ionic-relaxation step. Can be set using L{self.relaxation}. 
+         - C{ispin}: Sets number of spins. Must be either 1 or 2. 
+         - C{ismear}: Smearing function. Can be set with property L{set_smearing}. 
+         - C{sigma}: Smearing parameter. Can be set with property L{set_smearing}.
+         - C{isif}: Degrees of freedom to relax. Can be set using L{self.set_relaxation}. 
+         - C{nsw}: Number of ionic steps. Can be set using L{set_relaxation}. 
+         - C{ibrion}: ionic-relaxation method. Can be set using L{set_relaxation}. 
+         - C{potim}: ionic-relaxation step. Can be set using L{set_relaxation}. 
          - L{iniwave}: initial wavefunction to use can be either "random" or "jellium".   
-         - nelect: sets number of electrons in calculation above and beyond valence.
+         - C{nelect}: sets number of electrons in calculation above and beyond valence.
              - 0(default) lets VASP compute it from species in the system. 
              - 1 would mean +1 electron
              - -1 would mean +1 hole
              - etc
-         - algo: electronic minimization. Can be \"very fast\", \"fast\", or \"normal\" (default). 
-         - precision: sets accuracy of calculation. Can be \"accurate\"
+         - C{algo}: electronic minimization. Can be \"very fast\", \"fast\", or \"normal\" (default). 
+         - C{precision}: sets accuracy of calculation. Can be \"accurate\"
            (default), \"low\", \"medium\", \"high\".
-         - ediff: sets the tolerance per atom of electronic minimization.
+         - C{ediff}: sets the tolerance per atom of electronic minimization.
             This tolerance is multiplied by the number of atoms in the system,
             eg consistent from one system to another.
-         - encut: factor by which ENMAX of species is multiplied.
-         - fftgrid: Either a 3-tuple of integers setting NGX and friend, or
+         - C{encut}: factor by which ENMAX of species is multiplied.
+         - C{fftgrid}: Either a 3-tuple of integers setting NGX and friend, or
            anything else (other than None). In the latter case, a fake VASP
            calculation is performed to get VASP recommended values.
-         - restart: the return from previous vasp run to use as restart. 
+         - C{symprec}: tolerance when determining symmetries.
+         - C{npar}: Defaults to None.
+         - C{lcorr}: Defaults to None.
+         - C{lplane}: Defaults to None.
+         - C{nbands}: Defaults to None.
+         - C{lorbit}: Defaults to None.
+         - C{addgrid}: Defaults to None.
+         - C{magmom}: Defaults to None. Accepts a 2-tuple (type, list of indices):
+             - type: eigther "low" or "high" for low or high spin configuration.
+             - list of indices: indices of the atoms (in structure passed to
+               vasp functional) which are magnetic.  It is expected that the
+               valency of these atoms are all s^2 d^n p^0. 
+         - C{restart}: the return from previous vasp run to use as restart. 
 
              >> save_this_object = vasp(some parameters) # makes a vasp call.
              >> # make a second vasp using WAVECAR and whatnot from above call
              >> vasp(other parameters, ..., restart = save_this_object) 
 
-         - C{set_relaxation}: sets degrees of freedom to relax. Easier to use
+         - L{set_relaxation}: sets degrees of freedom to relax. Easier to use
              than isif, nsw, and friends.
-         - C{set_smearing}: to easily set sigma and ismear.
-         - C{set_symmetries}: to easily set isym and symprec.
+         - L{set_smearing}: to easily set sigma and ismear.
+         - L{set_symmetries}: to easily set isym and symprec.
 
       These parameters can be modified as in C{vasp.ispin = 2} and so forth.
       In the special case that None is given (e.g. C{vasp.ispin = None}), then
@@ -214,9 +226,12 @@ class Incar(object):
   def set_smearing(self, args):
     """ Value of the smearing used in the calculation. 
   
-        It can be specified as a string L{vasp.smearing = "type", x}, where type
-        is any of fermi, gaussian, mp, tetra, metal or insulator, and x is the
-        energy scale in eV.
+        It can be specified as a string:
+          
+          >>> vasp.smearing = "type", x
+       
+        Where type is any of "fermi", "gaussian", "mp", "tetra", "metal", or "insulator",
+        and x is the energy scale in eV.
             - fermi use a Fermi-Dirac broadening.
             - gaussian uses a gaussian smearing.
             - mp is for Methfessel-Paxton, it should be specified as "mp N x",
@@ -271,9 +286,14 @@ class Incar(object):
   def set_relaxation(self, *args): 
     """ Sets type of relaxation.
     
+        It accepts a tuple, as in:
+
+          >>> vasp.set_relaxation = "static", 
+      
+        Some of the parameters (purposefully left out above) are optional:
           - first argument can be "static", or a combination of "ion(ic|s)",
-              "cell(\s+|-|_?(?:shape)?", and "volume". 
-            Can also be set using an integer between 0 and 7. See VASP manual. 
+               "cell(\s+|-|_?(?:shape)?", and "volume".  Can also be set using
+               an integer between 0 and 7. See VASP manual. 
           - second (optional) argument is nsw
           - third (optional) argument is ibrion
           - fourth (optional) argument is potim.

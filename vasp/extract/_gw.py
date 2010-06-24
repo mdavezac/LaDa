@@ -41,7 +41,7 @@ class _ExtractGWImpl(_ExtractImpl):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def _get_dft_eigenvalues(self):
-    """ Greps DFT eigenvalues from L{OUTCAR}.
+    """ Greps DFT eigenvalues from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}.
 
         Returns a two-dimension numpy nxm array of eigenvalues, with n the
         number of kpoints and m the number of bands.
@@ -51,7 +51,7 @@ class _ExtractGWImpl(_ExtractImpl):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def _get_qp_eigenvalues(self):
-    """ Greps Quasi-Particle eigenvalues from L{OUTCAR}.
+    """ Greps Quasi-Particle eigenvalues from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}.
 
         Returns a two-dimension numpy nxm array of eigenvalues, with n the
         number of kpoints and m the number of bands.
@@ -61,7 +61,7 @@ class _ExtractGWImpl(_ExtractImpl):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def _get_self_energies(self):
-    """ Greps self-energies for each eigenvalue from L{OUTCAR}.
+    """ Greps self-energies for each eigenvalue from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}.
 
         Returns a two-dimension numpy nxm array of eigenvalues, with n the
         number of kpoints and m the number of bands.
@@ -71,7 +71,7 @@ class _ExtractGWImpl(_ExtractImpl):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def _get_occupations(self):
-    """ Greps occupation for each eigenvalue from L{OUTCAR}.
+    """ Greps occupation for each eigenvalue from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}.
 
         Returns a two-dimension numpy nxm array of eigenvalues, with n the
         number of kpoints and m the number of bands.

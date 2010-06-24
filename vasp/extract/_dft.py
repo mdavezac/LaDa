@@ -48,7 +48,7 @@ class _ExtractImpl(object):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def _get_energy_sigma0(self):
-    """ Greps total energy extrapolated to $\sigma=0$ from L{OUTCAR}. """
+    """ Greps total energy extrapolated to $\sigma=0$ from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}. """
     from os.path import exists, join
     from re import compile, X as re_X
 
@@ -68,7 +68,7 @@ class _ExtractImpl(object):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def _get_energy(self):
-    """ Greps total energy from L{OUTCAR}."""
+    """ Greps total energy from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}."""
     from os.path import exists, join
     from re import compile, X as re_X
 
@@ -88,7 +88,7 @@ class _ExtractImpl(object):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def _get_free_energy(self):
-    """ Greps total free energy from L{OUTCAR}. """
+    """ Greps total free energy from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}. """
     from os.path import exists, join
     from re import compile
 
@@ -108,7 +108,7 @@ class _ExtractImpl(object):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def _get_fermi_energy(self):
-    """ Greps fermi energy from L{OUTCAR}. """
+    """ Greps fermi energy from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}. """
     from os.path import exists, join
     from re import compile
 
@@ -127,7 +127,7 @@ class _ExtractImpl(object):
 
   @make_cached
   def _get_structure(self):
-    """ Greps structure from L{CONTCAR} and total energy from L{OUTCAR}. """
+    """ Greps structure from L{CONTCAR <lada.vasp.extract._ExtractImpl.CONTCAR>} and total energy from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}. """
     from os.path import exists, join
     from ...crystal import read_poscar
 
@@ -142,7 +142,7 @@ class _ExtractImpl(object):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def _get_species(self):
-    """ Greps species from L{OUTCAR}. """
+    """ Greps species from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}. """
     from os.path import exists, join
     from re import compile, X as re_X
 
@@ -162,7 +162,7 @@ class _ExtractImpl(object):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def _get_fft(self):
-    """ Greps recommended or actual fft setting from L{OUTCAR}. """
+    """ Greps recommended or actual fft setting from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}. """
     from os.path import exists, join
     from re import compile, search, X as re_X
 
@@ -232,7 +232,7 @@ class _ExtractImpl(object):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def _get_kpoints(self):
-    """ Greps k-points from L{OUTCAR}. 
+    """ Greps k-points from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}. 
     
         Numpy array where each row is a k-vector in cartesian units. 
     """
@@ -261,7 +261,7 @@ class _ExtractImpl(object):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def _get_multiplicity(self):
-    """ Greps multiplicity of each k-point from L{OUTCAR}. """
+    """ Greps multiplicity of each k-point from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}. """
     from os.path import exists, join
     from re import compile, search 
     from numpy import array
@@ -318,7 +318,7 @@ class _ExtractImpl(object):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def _get_eigenvalues(self):
-    """ Greps eigenvalues of each band and kpoint from L{OUTCAR}.
+    """ Greps eigenvalues of each band and kpoint from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}.
 
         Returns a two-dimension numpy nxm array of eigenvalues, with n the
         number of kpoints and m the number of bands.
@@ -329,7 +329,7 @@ class _ExtractImpl(object):
   @broadcast_result(attr=True, which=0)
   def _get_occupations(self):
     """ Greps occupations according to k-point and\
-        band index from L{OUTCAR}.
+        band index from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}.
 
         Returns a two-dimension numpy nxm array of occupations, with n the
         number of kpoints and m the number of bands.
@@ -337,7 +337,7 @@ class _ExtractImpl(object):
     return self._get_eigocc(2)
 
   def _get_pressures(self, which):
-    """ Greps pressure from L{OUTCAR} """
+    """ Greps pressure from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>} """
     import re 
     from os.path import exists, join
 
@@ -356,19 +356,19 @@ class _ExtractImpl(object):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def _get_pressure(self):
-    """ Greps pressure from L{OUTCAR}. """
+    """ Greps pressure from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}. """
     return self._get_pressures(1)
 
   @make_cached
   @broadcast_result(attr=True, which=0)
   def _get_pulay_pressure(self):
-    """ Greps pulay pressure from L{OUTCAR} """
+    """ Greps pulay pressure from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>} """
     return self._get_pressures(2)
 
   @make_cached
   @broadcast_result(attr=True, which=0)
   def _get_partial_charges(self):
-    """ Greps partial charges from L{OUTCAR} 
+    """ Greps partial charges from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>} 
 
         This is a numpy array where the first dimension is the ion (eg one row
         per ion), and the second the partial charges for each angular momentum.
@@ -402,9 +402,9 @@ class _ExtractImpl(object):
     """ Checks that VASP run has completed. 
 
         At this point, checks for the existence of
-        L{OUTCAR} and
-        L{OUTCAR}. Then checks that timing stuff
-        is present at end of L{OUTCAR}.
+        L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>} and
+        L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}. Then checks that timing stuff
+        is present at end of L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}.
     """
     from os.path import exists, join
     import re
@@ -425,7 +425,7 @@ class _ExtractImpl(object):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def _get_functional(self):
-    """ Returns vasp functional used for calculation. 
+    """ Returns vasp functional used for calculation.
 
         Requires the L{FUNCCAR} file to be present.
     """

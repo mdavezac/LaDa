@@ -72,7 +72,7 @@ def vacancy(structure, lattice, type):
     # creates vacancy
     atom = result.atoms.pop(which)
     # returns structure with vacancy.
-    yield deepcopy(result), deepcopy(atom), "vacancy_" + atom.type
+    yield deepcopy(result), deepcopy(atom)
     # removes vacancy
     result.atoms.insert(which, atom)
 
@@ -102,7 +102,7 @@ def substitution(structure, lattice, type, subs):
     substituted = deepcopy(result.atoms[which])
     substituted.index = which
     # returns structure with vacancy.
-    yield deepcopy(result), substituted, orig + "_on_" + subs
+    yield deepcopy(result), substituted
     # removes substitution
     result.atoms[which].type = orig
 

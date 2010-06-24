@@ -43,12 +43,13 @@ class Launch(Incar):
   def _prerun(self, comm, outdir):
     """ Sets things up prior to calling VASP. 
 
-          - Writes INCAR file
-          - Writes KPOINTS file
-          - Writes POSCAR file
+        Performs the following.
+          - Writes INCAR file.
+          - Writes KPOINTS file.
+          - Writes POSCAR file.
           - Creates POTCAR file
           - Saves pickle of self.
-        @raise: AssertionError.
+        @raise AssertionError:
     """
     import cPickle
     from os.path import join, exists, abspath
@@ -186,7 +187,6 @@ class Launch(Incar):
           - List of U parameters (optional, see module vasp.specie).
           - Maximum (or minimum) oxidation state (optional, int).
           - ... Any other argument in order of vasp.specie.Specie.init.
-        @raise ValueError
     """
     from .specie import Specie
     assert len(args) > 1, ValueError("Too few arguments.")
