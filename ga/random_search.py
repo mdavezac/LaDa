@@ -1,4 +1,4 @@
-"""" Holds a single function for running a random search """
+""" Holds a single function for running a random search """
 def run(self):
   """ Performs a random search """
   import standard
