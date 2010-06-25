@@ -87,13 +87,14 @@ for A, B in [("Rh", "Zn"), ("Zn", "Rh") ]:
         # loops over high and low spin configurations.
         for spin in ["low", "high"]:
           spinjob = oxjob / (spin + "-spin")
-          spinjob.jobparams["structure"] = structure
-          spinjob.jobparams["nelect"]    = oxidation
-          spinjob.jobparams["magmom"]    = spin, neighbors
+          spinjob["structure"] = structure
+          spinjob["nelect"]    = oxidation
+          spinjob["magmom"]    = spin, neighbors
           spinjob.vasp = input.vasp
 
 string = cPickle.dumps(jobs.current)
 reloaded = cPickle.loads(string)
 for job, name in reloaded.walk_through("results"):
   print name
+print "done\n\n\n"
 # job.compute(norun=True, repat=files.input, outdir=name)

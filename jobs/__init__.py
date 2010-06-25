@@ -124,51 +124,106 @@ class JobDict(object):
     # no arguments yet.
     self.jobparams["args"] = (None)
     
-  def __getitem__(self, name): 
+  def __getitem__(self, index): 
     """ Returns job description from the dictionary.
 
         If the job does not exist, will create it.
     """
     from re import split
+    from os.path import normpath
 
-    names = split("(?<!\\\)/", name)
+    index = normpath(index)
+    assert index != "." 
+    if index == "" or index == None or index == ".": return self
+    if index[0] == "/":  # could create infinit loop.
+      result = self
+      while result.parent != None: result = result.parent
+      return result[index[1:]]
+
     result = self
-    for name in names[:-1]:
-      if name not in result.children: 
-        result.children[name] = JobDict()
-        result.children[name].parent = result
-      result = result.children[name]
-    if names[-1] in result.children: 
-      return result.children[names[-1]]
-    elif names[-1] in result.jobparams: return result.jobparams[names[-1]]
-    else:
-      result.children[names[-1]] = JobDict()
-      result.children[name].parent = result
-      return result.children[names[-1]]
+    names = split(r"(?<!\\)/", index)
+    for i, name in enumerate(names):
+      if name == "..":
+        assert result.parent != None, RuntimeError("Cannot go below root level.")
+        result = result.parent
+      if name in result.children: result = result.children[name]
+      elif name in result.jobparams:
+        assert i+1 == len(names), KeyError("job or job parameter " + index + " does not exist.") 
+        return result.jobparams[name]
+      else: raise KeyError("job or job parameter " + index + " does not exist.")
+    return result
+ 
+  def __delitem__(self, index): 
+    """ Returns job description from the dictionary.
 
-  def __setitem__(self, name, value): 
-    """ Sets a job description in the dictionary.
+        If the job does not exist, will create it.
+    """
+    from os.path import normpath, relpath
+
+    index = normpath(index)
+
+    try: deletee = self.__getitem__(index) # checks if exists.
+    except KeyError: raise
+
+    if isinstance(deletee, JobDict): 
+      assert id(self) != id(deletee), RuntimeError("Will not commit suicide.")
+      parent = self.parent
+      while parent != None: 
+        assert id(parent) != id(deletee), RuntimeError("Will not go Oedipus on you.")
+        parent = parent.parent
+
+    parent = self[index+"/.."]
+    name = relpath(index, index+"/..")
+    if name in parent.children:
+      assert id(self) != id(parent.children[name]),\
+             RuntimeError("Will not delete self.")
+      return parent.children.pop(name)
+    if name in parent.jobparams: return parent.jobparams.pop(name)
+    raise KeyError("job or job parameter " + index + " does not exist.")
+
+  def __setitem__(self, index, value): 
+    """ Sets job/subjob description in the dictionary.
     
         If the job does not exist, will create it.
     """
-    from copy import deepcopy
     from re import split
+    from os.path import normpath, relpath
 
-    names = split("(?<!\\)/", name)
+    index = normpath(index)
+    assert index not in ["", ".", None], RuntimeError("Will not set self.")
+    assert index[0], RuntimeError("Will not set root: " + index + ".")
+
+    result = self.__div__(index+"/..")
+    name = relpath(index, index+"/..")
+    if name in result.children  and isinstance(value, JobDict): 
+                                     result.children [name] = value
+    elif name in result.jobparams:   result.jobparams[name] = value
+    elif isinstance(value, JobDict): result.children [name] = value
+    else:                            result.jobparams[name] = value
+
+  def __div__(self, index): 
+    """ Adds name as a subtree of self. """
+    from re import split
+    from os.path import normpath
+
+    index = normpath(index)
+    if index in ["", ".", None]: return self
+    if index[0] == "/":  # could create infinit loop.
+      result = self
+      while result.parent != None: result = result.parent
+      return result / index[1:]
+
+    names = split(r"(?<!\\)/", index) 
     result = self
-    for name in names[:-1]:
-      assert name in result.children, RuntimeError("Job %s is not known." % (name))
+    for name in names:
+      if name == "..":
+        if result.parent != None: result = result.parent
+        continue
+      elif name not in result.children:
+        result.children[name] = JobDict()
+        result.children[name].parent = result
       result = result.children[name]
-    if names[-1] in result.children: 
-      assert isinstance(value, JobDict),\
-             RuntimeError("Cannot set job attribute %s. Job with same name exists." % (names[-1]))
-      result.children[names[-1]]
-    elif names[-1] in result.jobparams:
-      assert not isinstance(value, JobDict),\
-             RuntimeError("Cannot set job %s. Job attribute with same name exists." % (names[-1]))
-      result.children[names[-1]] = value
-    if isinstance(value, JobDict): result.children[names[-1]] = deepcopy(value)
-    else: result.jobparams[names[-1]] = deepcopy(value)
+    return result
 
   def has_job(self):
     """ True if self.job has keyword \"vasp\". """
@@ -184,7 +239,6 @@ class JobDict(object):
     
   def compute(self, **kwargs):
     """ Performs calculations over job list. """
-    from copy import deepcopy
 
     kwargs.update(self.jobparams)
     if "vasp" not in kwargs: return None
@@ -212,10 +266,6 @@ class JobDict(object):
       result += "  " + name + "\n"
     return result
 
-  def __div__(self, other): 
-    """ Adds other as a subtree of self. """
-    if other == "" or other == None: return self
-    return self[other]
  
   def __delattr__(self, name):
     """ Deletes job attribute. """
@@ -225,7 +275,7 @@ class JobDict(object):
   def __getattr__(self, name):
     """ Returns job attribute. """
     if name in self.jobparams: return self.jobparams[name]
-    AttributeError("Unknown job attribute " + name + ".")
+    raise AttributeError("Unknown job attribute " + name + ".")
 
   def __setattr__(self, name, value):
     """ Sets job attribute. """
@@ -277,7 +327,6 @@ def walk_through(jobdict = None, outdir = None):
       see L{JobDict} description.
   """
   from os.path import join
-  from copy import deepcopy
 
   if outdir == None: outdir = ""
   if jobdict == None: jobdict = current
