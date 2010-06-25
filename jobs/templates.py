@@ -22,7 +22,6 @@ def default_pbs( file, walltime = "05:45:00", mppwidth = 8, queue = "regular", n
       @param pickle: Fileame of job-tree pickle.
       @param kwargs: Ignored by this script.
   """
-  from shutil import copy
   from os.path import exists
 
   if name == None:
