@@ -4,7 +4,7 @@
 """
 
 def default_pbs( file, walltime = "05:45:00", mppwidth = 8, queue = "regular", name = None, \
-                 pyvirt = "vasp.4.6.32", pbspools = 1, npbs = 0, procpools = 1, \
+                 pyvirt = "vasp-4.6.32", pbspools = 1, npbs = 0, procpools = 1, \
                  pyscript = None, pickle = "job_pickle", outdir = None, **kwargs ):
   """ Creates default pbs-script. Does not launch. 
 
@@ -24,9 +24,7 @@ def default_pbs( file, walltime = "05:45:00", mppwidth = 8, queue = "regular", n
   """
   from os.path import exists
 
-  if name == None:
-    name = "automatic" if pbspools <= 1 else "automatic_%i" % (npbs)
-
+  if name == None: name = "automatic" if pbspools <= 1 else "automatic_%i" % (npbs)
 
   file.write("#! /bin/bash\n")
   file.write("#PBS -l walltime=%s,mppwidth=%i\n" % (walltime, mppwidth) )
@@ -42,5 +40,7 @@ def default_pbs( file, walltime = "05:45:00", mppwidth = 8, queue = "regular", n
   file.write("mpirun -n %i python %s " % (mppwidth, pyscript) )
   if pbspools > 1: file.write("--pbspools %i --npbs %i" % (pbspools, npbs) )
   if procpools > 1: file.write("--procpools %i" % (procpools) )
+  for key, value in kwargs.items(): 
+    if value == None: file.write(" --%s" % (key))
+    else:             file.write(" --%s %s" % (key, value))
   file.write(" " + pickle + "\n")
-

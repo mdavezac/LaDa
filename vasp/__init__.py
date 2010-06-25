@@ -69,7 +69,7 @@ class Vasp(Launch):
     Launch.__init__(self, *args, **kwargs)
 
   def __call__( self, structure, outdir = None, comm = None, repat = None,\
-                overwrite=False, **kwargs ):
+                overwrite=False, keep_calc=False, **kwargs ):
     """ Performs a vasp calculation 
      
         The structure is whatever is given on input. The results are stored in
@@ -123,7 +123,7 @@ class Vasp(Launch):
     
     # Otherwise, performs calculation by calling base class functor.
     super(Vasp, this).__call__( structure=structure, outdir=outdir,\
-                                repat=repat, comm=comm, norun=norun )
+                                repat=repat, comm=comm, norun=norun, keep_calc=keep_calc )
     
     # checks if result was successful
     extract = Extract(comm = comm, directory = outdir)

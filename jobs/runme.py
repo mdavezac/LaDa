@@ -12,10 +12,11 @@ def main():
   import cPickle
   import re 
   from os import getcwd, environ
-  from os.path import expanduser, abspath
+  from os.path import expanduser, abspath, join, relpath
   from optparse import OptionParser
   from boost.mpi import world
   from lada import jobs
+  from lada.opt.changedir import Changedir
 
   # below would go additional imports.
 
@@ -69,10 +70,12 @@ def main():
   for i, (job, outdir) in enumerate(jobtree.walk_through()):
     # bypasses those jobs not done here.
     if i % totpools != n: continue
-    if options.relative != None: 
+    if options.relative == None: 
       out = job.compute(comm=local_comm, outdir=outdir)
     else: 
-      workdir = join(environ[options.relative], relpath(outdir, expanduser("~/")))
-      out = job.compute(comm=local_comm, outdir=outdir, workdir=workdir)
+      workdir = abspath(outdir)
+      with Changedir(environ["HOME"]) as cwd:
+        workdir = join(environ[options.relative], relpath(workdir, getcwd()))
+      out = job.compute(comm=local_comm, outdir=outdir, workdir=workdir, keep_calc=True)
     # below would go additional inner loop code.
 if __name__ == "__main__": main()

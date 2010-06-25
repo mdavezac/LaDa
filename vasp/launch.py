@@ -141,12 +141,13 @@ class Launch(Incar):
      if not norun: assert len(notfound) == 0, IOError("Files %s were not found.\n" % (notfound))
 
   def __call__( self, structure=None, outdir = None, comm = None, repat = [], \
-                norun = False, keep_tempdir=False):
+                norun = False, keep_tempdir=False, keep_calc=False):
     from os.path import exists, join, abspath, expanduser
     from os import getcwd
     from shutil import copy2 as copy
     from boost.mpi import world
     from ..opt.tempdir import Tempdir
+    from ..opt.changedir import Changedir
 
     # set up
     if structure != None: self._system = structure
@@ -160,7 +161,10 @@ class Launch(Incar):
     workdir = self.workdir
     if workdir == None: workdir = getcwd()
     workdir = abspath(expanduser(workdir))
-    with Tempdir(workdir=workdir, comm=comm, keep=keep_tempdir) as self._tempdir: 
+    context = Tempdir(workdir=workdir, comm=comm, keep=keep_tempdir)\
+              if keep_calc == False\
+              else Changedir(workdir, comm=comm) 
+    with context as self._tempdir: 
       # We do not move to working directory to make copying of files from indir
       # or outdir (as relative paths) possible.
       # creates INCAR and KPOINTS.
