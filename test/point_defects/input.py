@@ -45,3 +45,29 @@ vasp.add_specie = "Rh", "pseudos/Rh", U("liechtenstein", "d", 3.3), 3, True
 vasp.add_specie = "Zn", "pseudos/Zn", U("liechtenstein", "d", 6.0), 2, False
 vasp.add_specie =  "O",  "pseudos/O", None, -2, False
 
+queue     = "regular"
+""" PBS queue. """
+mppwidth  = 56
+""" Total number of processes (eg core*nodes). """
+pbspools  =  0
+""" Number of pbs scripts over which to parallelize calculations. 
+
+    If 0 or None, defaults to the number of jobs (eg, one script per vasp calculation).
+"""
+procpools =  1
+""" Number of process pools over which to parallelize each pbs scripts. 
+
+    In other words, each vasp calculation will be launched on mppwidth/procpools cores.
+"""
+outdir    = "Zn2RhO"
+""" Root directory where to store results. """
+relative  = "SCRATCH"
+""" Relative calculation directory. 
+
+    If not None, will use perform calculation in relative/directory, where
+    directory is defined such that HOME/dictory is the outdir, and relative is
+    an environment variable.
+    In other words, if C{relative="SCRATCH"} and C{os.path.abspath(outdir) =
+    $HOME/here/there}, then calculations will be performed in
+    C{$SCRATCH/here/there}.
+"""

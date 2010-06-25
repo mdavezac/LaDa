@@ -96,5 +96,10 @@ string = cPickle.dumps(jobs.current)
 reloaded = cPickle.loads(string)
 for job, name in reloaded.walk_through("results"):
   print name
-print "done\n\n\n"
 # job.compute(norun=True, repat=files.input, outdir=name)
+
+print "done\n\n\n"
+jobs.pbs_script( queue=input.queue, mppwidth=input.mppwidth, pbspools=input.pbspools,\
+                 procpools=input.procpools, outdir=input.outdir, relative=input.relative )
+
+
