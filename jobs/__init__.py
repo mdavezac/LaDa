@@ -318,6 +318,11 @@ class JobDict(object):
     """
     for u in walk_through(jobdict=self, outdir=outdir): yield u
 
+  @property
+  def nbjobs(self):
+    """ Returns the number of jobs in tree. """
+    return len([u for u in self.walk_through()])
+
 current = JobDict()
 """ Global with current joblist. """
 
@@ -380,15 +385,17 @@ def pbs_scripts( outdir = None, jobdict = None, template = None, \
       @param outdir: root directory of calculation. Current working directory if None.
       @param jobdict: job-tree instance over which to parallelize.
       @type jobdict: L{JobDict}
-      @param template: PBS-script template to use. See L{jobs.templates}. Default: L{jobs.templates.default_pbs}.
+      @param template: PBS-script template to use. See L{jobs.templates}.
+        Default: L{jobs.templates.default_pbs}.
       @type template: callable.
-      @param pbspools: Number of pbs scripts to issue. 
+      @param pbspools: Number of pbs scripts to issue. If 0 or negative, will
+        issue one script per job.
       @param pickle: Name of file too which L{JobDict} will be pickled.
       @param kwargs: Passed on to template.
       @return: List of pbs-script filenames.
   """
   from os import getcwd, makedirs
-  from os.path import abspath, join, exists
+  from os.path import abspath, join, exists, relpath
   from ..opt.changedir import Changedir
   from templates import default_pbs 
  
@@ -396,12 +403,26 @@ def pbs_scripts( outdir = None, jobdict = None, template = None, \
   if template == None: template = default_pbs
   outdir = getcwd() if outdir == None else abspath(outdir)
   if pickle == None: pickle = "job_pickle"
+  assert not exists(join(outdir, pickle)),\
+         RuntimeError( "Job list %s already exist. Will not overwrite.\n"\
+                       "Please stand back while I reboot the universe.\n"\
+                       % (join(outdir, pickle)))
+
+
+  if pbspools > jobdict.nbjobs or pbspools < 1: pbspools = jobdict.nbjobs
+  if "procpools" in kwargs:
+    assert kwargs["procpools"] * pbspools <= jobdict.nbjobs, \
+        ValueError( "Requested for more ressources than there are jobs:\n"\
+                    "  - Number of jobs: %i\n"\
+                    "  - Number of pbs scripts: %i\n"\
+                    "  - Number of process pools: %i\n"\
+                    % (jobdict.nbjobs, pbspools, kwargs["procpools"]) )
 
   # creates result dictionary.
   if not exists(outdir): makedirs(outdir)
   # pickle jobs.
   save(jobdict = jobdict, path = join(outdir, pickle))
-  if pbspools <= 1:
+  if pbspools == 1:
     filpath = join(outdir, "automatic_pbs_job")
     with open(filepath, "w") as file:
       template(file, pbspools=pbspools, pickle=join(outdir, pickle), **kwargs)
@@ -409,9 +430,14 @@ def pbs_scripts( outdir = None, jobdict = None, template = None, \
   else:
     result = []
     for p in  range(pbspools+1):
+      # creates more meaningful name if none specified:
+      name = kwargs.pop("name", None)
+      if name == None: 
+        name = relpath(outdir+"/..", outdir) + str(p)
+      # writes pbs script.
       filepath = join(outdir, "automatic_pbs_job_%i" % (p))
       with open(filepath, "w") as file:
-        template(file, pbspools=pbspools, pickle=join(outdir, pickle), **kwargs)
+        template(file, pbspools=pbspools, pickle=join(outdir, pickle), name=name, **kwargs)
       result.append(filepath)
 
   return result
