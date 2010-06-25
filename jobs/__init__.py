@@ -375,8 +375,8 @@ def load(path = None):
   with open(path, "r") as file: return load(file)
 
 
-def pbs_scripts( outdir = None, jobdict = None, template = None, \
-                 pbspools = 1, pickle = None, **kwargs):
+def pbs_scripts( outdir = None, jobdict = None, template = None, pbspools = 1,\
+                 name = None, pickle = None, pyscript = None, **kwargs):
   """ Parallelizes jobs over different pbs scrits. 
 
       The root directory (outdir) is created if it does not exist, and the
@@ -390,19 +390,27 @@ def pbs_scripts( outdir = None, jobdict = None, template = None, \
       @type template: callable.
       @param pbspools: Number of pbs scripts to issue. If 0 or negative, will
         issue one script per job.
-      @param pickle: Name of file too which L{JobDict} will be pickled.
+      @param pickle: Filename to which L{JobDict} will be pickled.
+      @param pyscript: Filename of python script to execute. Copied to outdir.
       @param kwargs: Passed on to template.
       @return: List of pbs-script filenames.
   """
+  from shutil import copy
   from os import getcwd, makedirs
-  from os.path import abspath, join, exists, relpath
+  from os.path import abspath, join, exists, relpath, samefile, split as pathsplit
   from ..opt.changedir import Changedir
   from templates import default_pbs 
  
   if jobdict == None: jobdict = current
   if template == None: template = default_pbs
-  outdir = getcwd() if outdir == None else abspath(outdir)
+  if outdir == None: outdir = getcwd() 
   if pickle == None: pickle = "job_pickle"
+  if name == None: name = relpath(outdir, outdir+"/..")
+  if pyscript == None: # just copy standard script.
+    pyscript = __file__.replace(pathsplit(__file__)[1], "runme.py")
+    if pyscript[-3:] == "pyc": pyscript = pyscript[:-1]
+  assert exists(pyscript), RuntimeError("Execution script %s does not exist." % (pyscript))
+
   assert not exists(join(outdir, pickle)),\
          RuntimeError( "Job list %s already exist. Will not overwrite.\n"\
                        "Please stand back while I reboot the universe.\n"\
@@ -422,23 +430,23 @@ def pbs_scripts( outdir = None, jobdict = None, template = None, \
   if not exists(outdir): makedirs(outdir)
   # pickle jobs.
   save(jobdict = jobdict, path = join(outdir, pickle))
-  if pbspools == 1:
-    filpath = join(outdir, "automatic_pbs_job")
-    with open(filepath, "w") as file:
-      template(file, pbspools=pbspools, pickle=join(outdir, pickle), **kwargs)
-    return [filepath]
-  else:
-    result = []
-    for p in  range(pbspools+1):
-      # creates more meaningful name if none specified:
-      name = kwargs.pop("name", None)
-      if name == None: 
-        name = relpath(outdir+"/..", outdir) + str(p)
-      # writes pbs script.
-      filepath = join(outdir, "automatic_pbs_job_%i" % (p))
-      with open(filepath, "w") as file:
-        template(file, pbspools=pbspools, pickle=join(outdir, pickle), name=name, **kwargs)
-      result.append(filepath)
+  # copies script
+  pyscript_filename = pathsplit(pyscript)[1]
+  if not exists(join(outdir, pyscript_filename)): copy(pyscript, outdir)
+  elif not samefile(pyscript, join(outdir, pyscript_filename)): copy(pyscript, outdir)
+  # Writes out pbs scripts.
+  result = []
+  for p in  range(pbspools+1):
+    # writes pbs script.
+    filepath = join(outdir, "launchme")
+    jobname = name
+    if pbspools > 1: 
+      filepath += "_" + str(p)
+      jobname += "-" + str(p)
+    with open(filepath+".pbs", "w") as file:
+      template( file, pbspools=pbspools, npbs=p, pickle=pickle, outdir=abspath(outdir),\
+                name=jobname, pyscript=pyscript_filename, **kwargs)
+    result.append(filepath)
 
   return result
 
