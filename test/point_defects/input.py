@@ -49,6 +49,8 @@ queue     = "regular"
 """ PBS queue. """
 mppwidth  = 56
 """ Total number of processes (eg core*nodes). """
+walltime = "03:45:00"
+""" PBS walltime. """
 pbspools  =  0
 """ Number of pbs scripts over which to parallelize calculations. 
 
