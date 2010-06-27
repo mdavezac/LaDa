@@ -67,11 +67,3 @@ elif options.loadme != None:
     result = job.compute(outdir=outdir, wait=waittime)
     # Root process of pool prints result.
     if local_comm.rank == 0: print result, "\n"
-  jobs.unbleed(options.loadme, world)
-  for job, outdir in jobs.current.walk_through("results"):
-    # launch jobs and stores result
-    result = job.compute(outdir=outdir)
-    # Root process of pool prints result.
-    if local_comm.rank == 0: print outdir
-
-
