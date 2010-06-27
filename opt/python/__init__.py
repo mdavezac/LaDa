@@ -130,7 +130,7 @@ def read_input(filename, global_dict=None, local_dict = None, paths=None, comm =
                         "fill_structure": fill_structure, "world": world, "FreezeCell": FreezeCell, \
                         "FreezeAtom": FreezeAtom, "join": join, "abspath": abspath, \
                         "expanduser": expanduser})
-  local_dict = {}
+  if local_dict == None: local_dict = {}
   # Executes input script.
   execfile(filename, global_dict, local_dict)
 
