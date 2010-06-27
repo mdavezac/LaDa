@@ -381,12 +381,9 @@ class JobDict(object):
         All bleeded jobs are reset as unbleeded.
     """
     if hasattr(self, "_bleeded_jobparams"): 
-      print "unbleeding"
       self.jobparams = self._bleeded_jobparams
       del self._bleeded_jobparams
-    for name in self.subjobs():
-      print name
-      self.children[name].unbleed()
+    for name in self.subjobs(): self.children[name].unbleed()
       
 
 current = JobDict()
