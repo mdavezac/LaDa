@@ -193,9 +193,10 @@ class Incar(object):
 
   def __delattr__(self, name): 
     """ Deletes a VASP parameter from standard and special dictionaries. """
-    if name in self.params: return self.params.pop(name)
+    if name in self.__dict__: return self.__dict__.pop(name)
+    elif name in self.params: return self.params.pop(name)
     elif name in self.params: return self.special.pop(name).value
-    else: super(Incar, self).__delattr__(name)
+    raise AttributeError("Unknown vasp attribute " + name + ".")
 
   def _get_iniwave(self):
     """ Initializes wave functions with \"random\" or 1(default), \"jellium\" or 2. """ 

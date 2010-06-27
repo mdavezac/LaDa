@@ -4,8 +4,8 @@
 """
 
 def default_pbs( file, walltime = "05:45:00", mppwidth = 8, queue = "regular", name = None, \
-                 pyvirt = "vasp-4.6.32", pbspools = 1, npbs = 0, procpools = 1, \
-                 pyscript = None, pickle = "job_pickle", outdir = None, **kwargs ):
+                 pyvirt = "vasp.4.6.32", pools = 1,  pyscript = None, pickle = "job_pickle", \
+                 outdir = None, python_path = None, **kwargs):
   """ Creates default pbs-script. Does not launch. 
 
       @param file: File object to which to write. 
@@ -15,16 +15,12 @@ def default_pbs( file, walltime = "05:45:00", mppwidth = 8, queue = "regular", n
       @param queue: Queue to use
       @param name: Name of the job.
       @param pyvirt: Virtual python environment. Does nothing if None.
-      @param pbspools: Number of pbs pools.
-      @param npbs: Which pool is this script.
-      @param procpools: Number of mpi pools (parallelization over processes).
+      @param pools: Number of mpi pools (parallelization over processes).
       @param pyscript: Python script to launch. Default: L{runme.py}
+      @param pythonpath: Additional path to search for modules.
       @param pickle: Fileame of job-tree pickle.
-      @param kwargs: Ignored by this script.
   """
   from os.path import exists
-
-  if name == None: name = "automatic" if pbspools <= 1 else "automatic_%i" % (npbs)
 
   file.write("#! /bin/bash\n")
   file.write("#PBS -l walltime=%s,mppwidth=%i\n" % (walltime, mppwidth) )
@@ -37,9 +33,8 @@ def default_pbs( file, walltime = "05:45:00", mppwidth = 8, queue = "regular", n
   else: file.write("cd " + outdir + "\n")
   if pyvirt != None: file.write("workon %s \n" % (pyvirt) )
 
-  file.write("mpirun -n %i python %s " % (mppwidth, pyscript) )
-  if pbspools > 1: file.write("--pbspools %i --npbs %i" % (pbspools, npbs) )
-  if procpools > 1: file.write("--procpools %i" % (procpools) )
+  file.write("mpirun -n %i python %s --pools %i " % (mppwidth, pyscript, pools) )
+  if python_path != None: file.write(" --ppath " + python_path)
   for key, value in kwargs.items(): 
     if value == None: file.write(" --%s" % (key))
     else:             file.write(" --%s %s" % (key, value))

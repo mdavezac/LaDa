@@ -2,14 +2,16 @@
 
     Contains the following methods and classes.
        - JobDict: tree of calculations and subcalculations.
-       - walkthrough: iterates over calculation in a tree.
-       - save: pickles a tree to file.
-       - load: loads a pickled tree from file.
+       - walk_through: iterates over calculation in a tree.
+       - save: pickles a tree to file. Acquires a file lock to do this! If you
+           always use a file locking mechanism, then this should work out of the
+           box for you.
+       - load: loads a pickled tree from file. Acquires a file lock to do this! If you
+           always use a file locking mechanism, then this should work out of the
+           box for you.
        - pbs_script: Creates pbs-script to perform calculations on a tree.
-           Calculations can be parallelized simultaneously over different pbs
-           scripts and over different pools of processes within each pbs script.
 """
-from ..opt.decorators import add_setter
+from ..opt.decorators import add_setter, broadcast_result
 
 class JobDict(object):
   """ Tree of jobs. 
@@ -57,10 +59,11 @@ class JobDict(object):
       Where keywordname in the last line should be substituted for its actual
       value (eg structure, nelect...)
 
-      Having a jobtree is great executing it is better:
+      Having a jobtree is great, looping through it is better:
 
         >>> for job, name in jobtree.walkthrough("root_result_directory"):
-        >>>    job.compute(outdir=name)
+        >>>    result = job.compute(outdir=name)
+
 
       The L{walkthrough} method does just that: it goes through the whole tree
       returning those branches where there is something to execute (eg
@@ -94,6 +97,26 @@ class JobDict(object):
 
         >>> metod(arg1, arg2, whatever=value1, outdir="root_result_directory/subjoname1") 
 
+
+      The code above does not work if more than one pbs script is launched. In that case, we want:
+
+        >>> # somewhere the jobdict was created.
+        >>> jobdict.save("pickle")
+        >>> # somewhere else, most likely in another script, the jobs are executed.
+        >>> for job, name in jobs.bleed(comm=local_comm):
+        >>>    result = job.compute(outdir=name)
+
+      L{bleed} makes sure that once a job is accepted, it will not be accessed
+      by any other process or pools of processes. L{bleed} allows parallelization
+      over pbs scripts and pools of MPI processes. However, it does change the
+      C{jobdict} saved to "pickle". This means that once all jobs are executed,
+      both L{bleed} and L{walk_through} will find that C{jobdict} is empty. To
+      undo these changes and use the jobdict for, say, ouptut analysis, do:
+
+      >>> jobs.unbleed("pickle")
+
+      Beware, at this point, relaunching the job could overwrite, if the functional allows it...
+     
       Coding: JobDict has name attributes:
         - children: A dict object holding instances of JobDict. These are the sub-jobs.
         - jobparams: All parameters regarding actual calculations. It contains,
@@ -133,7 +156,6 @@ class JobDict(object):
     from os.path import normpath
 
     index = normpath(index)
-    assert index != "." 
     if index == "" or index == None or index == ".": return self
     if index[0] == "/":  # could create infinit loop.
       result = self
@@ -270,6 +292,7 @@ class JobDict(object):
   def __delattr__(self, name):
     """ Deletes job attribute. """
     if name in self.jobparams: return self.jobparams.pop(name)
+    elif name in self.__dict__: return self.__dict__.pop(name)
     raise AttributeError("Unknown job attribute " + name + ".")
 
   def __getattr__(self, name):
@@ -314,14 +337,54 @@ class JobDict(object):
   def walk_through(self, outdir=None):
     """ Iterates over jobs. 
 
-        see L{JobDict} description.
+        @return: yields (job, directory):
+          - job is a Jobdict which contains something to execute.
+          - directory is a suggested directory name with C{outdir} as its root.
     """
-    for u in walk_through(jobdict=self, outdir=outdir): yield u
+    from os.path import join
+    if outdir == None: outdir = ""
+    # Yield this job if it exists.
+    if self.has_job(): yield self, outdir
+    # Walk throught children jobdict.
+    for name in self.subjobs():
+      for u in self[name].walk_through(join(outdir, name)): 
+        yield u
 
   @property
   def nbjobs(self):
     """ Returns the number of jobs in tree. """
     return len([u for u in self.walk_through()])
+
+  def bleed(self):
+    """ Retrieves and removes first actual job. 
+    
+        This alters the dictionary. Use L{unbleed} to undo all bleed calls.
+        The first jobs jobparam is reset. Subjobs are not, of course.
+        Returns None if no jobs.
+    """
+    for job, outdir in self.walk_through():
+      # new dictionary
+      result = JobDict()
+      # swap functional stuff
+      result.jobparams, job.jobparams = job.jobparams, result.jobparams
+      # adds subjobs.
+      result.children = job.children
+      # saves functional dictionary.
+      super(JobDict, job).__setattr__("_bleeded_jobparams", result.jobparams)
+      # returns result.
+      return result, outdir
+    return None
+
+  def unbleed(self):
+    """ Resets a bleeded dictionary.
+
+        All bleeded jobs are reset as unbleeded.
+    """
+    if hasattr(self, "_bleeded_jobparams"): 
+      self.jobparams = self._bleeded_jobparams
+      del self._bleeded_jobparams
+    for name in self.subjobs(): self.children[name].unbleed()
+      
 
 current = JobDict()
 """ Global with current joblist. """
@@ -331,56 +394,133 @@ def walk_through(jobdict = None, outdir = None):
       
       see L{JobDict} description.
   """
-  from os.path import join
-
-  if outdir == None: outdir = ""
   if jobdict == None: jobdict = current
-  # Yield this job if it exists.
-  if jobdict.has_job(): yield jobdict, outdir
-  # Walk throught children jobdict.
-  for name in jobdict.subjobs():
-    for u in walk_through(jobdict[name], join(outdir, name)): 
-      yield u
+  for u in jobdict.walk_through("outdir"): yield u
 
-def save(jobdict = None, path = None): 
+@broadcast_result(key=True)
+def save(jobdict = None, path = None, overwrite=False, comm=None): 
   """ Pickles a job to file.
 
+      This method first acquire an exclusive lock (using os dependent flock) on
+      the file before writing. This way not two processes can read/write to
+      this file while using this function.
       @param jobdict: A jobtree to pickle. If None, uses L{jobs.current}.
       @type jobdict: JobDict
       @param path: filename of file to which to save pickle. overwritten. If
         None then saves to "pickled_jobdict"
+      @param comm: Only root process gets to do anything.
+      @type comm: boost.mpi.communicator
+      @param overwrite: if True, then overwrites file.
   """ 
   from os.path import exists
   from cPickle import dump
+  from ..opt import open_exclusive
   if path == None: path = "pickled_jobdict"
   if jobdict == None: jobdict = current
-  if exists(path): 
+  if exists(path) and not overwrite: 
     print path, "exists. Please delete first if you want to save the job dictionary."
     return
-  with open(path, "w") as file: dump(jobdict, file)
+  with open_exclusive(path, "w") as file: dump(jobdict, file)
   print "Saved job dictionary to %s." % (path)
 
-def load(path = None): 
+@broadcast_result(key=True)
+def load(path = None, comm = None): 
   """ Unpickles a job from file.
 
+      This method first acquire an exclusive lock (using os dependent flock) on
+      the file before reading. This way not two processes can read/write to
+      this file while using this function.
       @param path: filename from which to load pickle. 
         If None then saves to "pickled_jobdict"
+      @param comm: Broadcasts from root process.
+      @type comm: boost.mpi.communicator
       @return: Returns a JobDict object.
   """ 
+  from fcntl import flock, LOCK_EX, LOCK_UN
   from os.path import exists
-  from cPickle import load
+  from cPickle import load as load_pickle
+  from ..opt import open_exclusive
   if path == None: path = "pickled_jobdict"
   assert exists(path), IOError("File " + path + " does not exist.")
   print "Loading job list from", path, "."
-  with open(path, "r") as file: return load(file)
+  with open_exclusive(path, "r") as file: return load_pickle(file)
+
+def bleed(path=None, outdir=None, comm=None): 
+  """ Generator which deepletes a job dictionary of its jobs. 
+
+      This function alters the dictionary stored in C{path}. If C{path} is
+      empty, then returns None, None. An exclusive lock is acquired before
+      reading/writing to C{path}.  This way, if using L{bleed}, L{save},
+      L{load}, two processes will not step on each others jobs.
+
+      This function is different from JobDict.bleed in that it alters a
+      dictionary stored in a file.
+      @param: Filename of a pickled jobdictionary.
+      @outdir: Root result directory. 
+      @comm: Will broadcast yielded stuff from root. Because of file locking,
+             this generator may freeze the system if not used correctly with mpi.
+      @return: yields (job, directory), see L{walk_through}.
+           - job: a job dictionary with the current job to execute.
+           - directory: a suggested directory name with L{outdir} as its root.
+  """
+  from fcntl import flock, LOCK_EX, LOCK_UN
+  from os.path import join, exists
+  from cPickle import load as load_pickle, dump
+  from ..opt import open_exclusive
+  from boost.mpi import broadcast
+  if path == None: path = "pickled_jobdict"
+  if outdir == None: outdir = ""
+
+  is_root = True if comm == None else comm.rank == 0
+  if is_root:
+    while True:
+      if not exists(path): 
+        print "Job dictionary", path, "does not exist."
+        return
+      with open_exclusive(path, "r") as file:
+        # tries to load pickle.
+        try: jobdict = load_pickle(file)
+        except EOFError: break
+        # Checks if there are any jobs.
+        if jobdict.nbjobs == 0: break
+        # Pops first job.
+        job, directory = jobdict.bleed()
+        # writes modified dictionary to path.
+        with open(path, "w") as newfile: dump(jobdict, newfile)
+      broadcast(comm, (job, join(outdir, directory)), 0)
+      yield job, join(outdir, directory)
+    broadcast(comm, None, 0)
+    return
+  else: 
+    while True:
+      result =  broadcast(comm, root=0)
+      if result == None: return
+      else: yield result
+  
+
+def unbleed(path=None, comm=None): 
+  """ Unbleeds a dictionary stored in a file. """
+  from os.path import join, exists
+  from cPickle import load as load_pickle, dump
+  from ..opt import open_exclusive
+
+  # only one process needs do anything.
+  if (True if comm==None else comm.rank == 0): 
+    assert exists(path), IOError( "Job dictionary" + path + "does not exist.")
+    with open_exclusive(path, "r") as file:
+      jobdict = load_pickle(file)
+      jobdict.unbleed()
+      with open(path, "w") as newfile: dump(jobdict, newfile)
+  # synchronizes communicator.
+  if comm != None: comm.barrier()
 
 
-def pbs_scripts( outdir = None, jobdict = None, template = None, pbspools = 1,\
-                 name = None, pickle = None, pyscript = None, **kwargs):
+def pbs_script( outdir = None, jobdict = None, template = None, \
+                name = None, pickle = None, pyscript = None, **kwargs):
   """ Parallelizes jobs over different pbs scrits. 
 
       The root directory (outdir) is created if it does not exist, and the
-      pbs-scripts placed there. The pbs-scripts are not launched. 
+      pbs-script placed there. The pbs-script is not launched. 
 
       @param outdir: root directory of calculation. Current working directory if None.
       @param jobdict: job-tree instance over which to parallelize.
@@ -388,12 +528,9 @@ def pbs_scripts( outdir = None, jobdict = None, template = None, pbspools = 1,\
       @param template: PBS-script template to use. See L{jobs.templates}.
         Default: L{jobs.templates.default_pbs}.
       @type template: callable.
-      @param pbspools: Number of pbs scripts to issue. If 0 or negative, will
-        issue one script per job.
       @param pickle: Filename to which L{JobDict} will be pickled.
       @param pyscript: Filename of python script to execute. Copied to outdir.
       @param kwargs: Passed on to template.
-      @return: List of pbs-script filenames.
   """
   from shutil import copy
   from os import getcwd, makedirs
@@ -401,6 +538,7 @@ def pbs_scripts( outdir = None, jobdict = None, template = None, pbspools = 1,\
   from ..opt.changedir import Changedir
   from templates import default_pbs 
  
+  # sets up default input.
   if jobdict == None: jobdict = current
   if template == None: template = default_pbs
   if outdir == None: outdir = getcwd() 
@@ -417,15 +555,6 @@ def pbs_scripts( outdir = None, jobdict = None, template = None, pbspools = 1,\
                        % (join(outdir, pickle)))
 
 
-  if pbspools > jobdict.nbjobs or pbspools < 1: pbspools = jobdict.nbjobs
-  if "procpools" in kwargs:
-    assert kwargs["procpools"] * pbspools <= jobdict.nbjobs, \
-        ValueError( "Requested for more ressources than there are jobs:\n"\
-                    "  - Number of jobs: %i\n"\
-                    "  - Number of pbs scripts: %i\n"\
-                    "  - Number of process pools: %i\n"\
-                    % (jobdict.nbjobs, pbspools, kwargs["procpools"]) )
-
   # creates result dictionary.
   if not exists(outdir): makedirs(outdir)
   # pickle jobs.
@@ -436,17 +565,9 @@ def pbs_scripts( outdir = None, jobdict = None, template = None, pbspools = 1,\
   elif not samefile(pyscript, join(outdir, pyscript_filename)): copy(pyscript, outdir)
   # Writes out pbs scripts.
   result = []
-  for p in  range(pbspools+1):
-    # writes pbs script.
-    filepath = join(outdir, "launchme")
-    jobname = name
-    if pbspools > 1: 
-      filepath += "_" + str(p)
-      jobname += "-" + str(p)
-    with open(filepath+".pbs", "w") as file:
-      template( file, pbspools=pbspools, npbs=p, pickle=pickle, outdir=abspath(outdir),\
-                name=jobname, pyscript=pyscript_filename, **kwargs)
-    result.append(filepath)
-
-  return result
+  # writes pbs script.
+  jobname = name
+  with open(join(outdir, "launchme"), "w") as file:
+    template( file, pickle=pickle, outdir=abspath(outdir),\
+              name=jobname, pyscript=pyscript_filename, **kwargs)
 
