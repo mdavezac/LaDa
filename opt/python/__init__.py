@@ -158,14 +158,51 @@ def open_exclusive(*args, **kwargs):
       This context uses fcntl to acquire a lock on file before reading or
       writing. Parameters, exceptions, and return are the same as the built-in
       open.
+
+      Coding: As usual cray's make life difficult. flock does not work on
+      compute nodes when using aprun. lockf does but requires the file to be
+      opened with "w" only! Hence we lock a second file rather than the on of
+      interest. We can't delete either, in case another process is competing
+      with this one. Inconvenient to say the least.
   """
-  from fcntl import flock, LOCK_EX, LOCK_UN
+  from fcntl import lockf, LOCK_EX, LOCK_UN
   try:
+    lock_filename = args[0] + ".lada_lockfile"
+    lock_file = open(lock_filename, "w")
+    lockf(lock_file, LOCK_EX)
     file = open(*args, **kwargs)
-    flock(file, LOCK_EX)
     yield file
   finally:
-    flock(file, LOCK_UN)
     file.close()
+    lockf(lock_file, LOCK_UN)
+    lock_file.close()
+
+  
+@contextmanager
+def acquire_lock(filename):
+  """ Locks access to a file. 
+
+      This context uses fcntl to acquire a lock on file before reading or
+      writing. Parameters, exceptions, and return are the same as the built-in
+      open.
+
+      As described below, the lock is not acquired on the file C{filename} itself.
+      So a read or write on the file itself will work! Always use
+      L{acqire_lock} and/or L{open_exclusive} or things won't work as expected.
+
+      Coding: As usual cray's make life difficult. flock does not work on
+      compute nodes when using aprun. lockf does but requires the file to be
+      opened with "w" only! Hence we lock a second file rather than the on of
+      interest. We can't delete either, in case another process is competing
+      with this one. Inconvenient to say the least.
+  """
+  from fcntl import lockf, LOCK_EX, LOCK_UN
+  try:
+    lock_filename = filename + ".lada_lockfile"
+    lock_file = open(lock_filename, "w")
+    yield lock_file
+  finally:
+    lockf(lock_file, LOCK_UN)
+    lock_file.close()
 
   

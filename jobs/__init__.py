@@ -401,7 +401,7 @@ def walk_through(jobdict = None, outdir = None):
 def save(jobdict = None, path = None, overwrite=False, comm=None): 
   """ Pickles a job to file.
 
-      This method first acquire an exclusive lock (using os dependent flock) on
+      This method first acquire an exclusive lock (using os dependent lockf) on
       the file before writing. This way not two processes can read/write to
       this file while using this function.
       @param jobdict: A jobtree to pickle. If None, uses L{jobs.current}.
@@ -427,7 +427,7 @@ def save(jobdict = None, path = None, overwrite=False, comm=None):
 def load(path = None, comm = None): 
   """ Unpickles a job from file.
 
-      This method first acquire an exclusive lock (using os dependent flock) on
+      This method first acquire an exclusive lock (using os dependent lockf) on
       the file before reading. This way not two processes can read/write to
       this file while using this function.
       @param path: filename from which to load pickle. 
@@ -436,7 +436,6 @@ def load(path = None, comm = None):
       @type comm: boost.mpi.communicator
       @return: Returns a JobDict object.
   """ 
-  from fcntl import flock, LOCK_EX, LOCK_UN
   from os.path import exists
   from cPickle import load as load_pickle
   from ..opt import open_exclusive
@@ -463,11 +462,10 @@ def bleed(path=None, outdir=None, comm=None):
            - job: a job dictionary with the current job to execute.
            - directory: a suggested directory name with L{outdir} as its root.
   """
-  from fcntl import flock, LOCK_EX, LOCK_UN
   from os.path import join, exists
   from cPickle import load as load_pickle, dump
-  from ..opt import open_exclusive
   from boost.mpi import broadcast
+  from ..opt import acquire_lock
   if path == None: path = "pickled_jobdict"
   if outdir == None: outdir = ""
 
@@ -477,10 +475,12 @@ def bleed(path=None, outdir=None, comm=None):
       if not exists(path): 
         print "Job dictionary", path, "does not exist."
         return
-      with open_exclusive(path, "r") as file:
+      # acquires a lock file. 
+      with acquire_lock(path) as lock_file:
         # tries to load pickle.
-        try: jobdict = load_pickle(file)
-        except EOFError: break
+        with open(path, "r") as file:
+          try: jobdict = load_pickle(file)
+          except EOFError: break
         # Checks if there are any jobs.
         if jobdict.nbjobs == 0: break
         # Pops first job.
