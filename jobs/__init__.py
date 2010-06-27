@@ -10,8 +10,6 @@
            always use a file locking mechanism, then this should work out of the
            box for you.
        - pbs_script: Creates pbs-script to perform calculations on a tree.
-           Calculations can be parallelized simultaneously over different pbs
-           scripts and over different pools of processes within each pbs script.
 """
 from ..opt.decorators import add_setter, broadcast_result
 
@@ -61,10 +59,11 @@ class JobDict(object):
       Where keywordname in the last line should be substituted for its actual
       value (eg structure, nelect...)
 
-      Having a jobtree is great executing it is better:
+      Having a jobtree is great, looping through it is better:
 
         >>> for job, name in jobtree.walkthrough("root_result_directory"):
-        >>>    job.compute(outdir=name)
+        >>>    result = job.compute(outdir=name)
+
 
       The L{walkthrough} method does just that: it goes through the whole tree
       returning those branches where there is something to execute (eg
@@ -98,6 +97,26 @@ class JobDict(object):
 
         >>> metod(arg1, arg2, whatever=value1, outdir="root_result_directory/subjoname1") 
 
+
+      The code above does not work if more than one pbs script is launched. In that case, we want:
+
+        >>> # somewhere the jobdict was created.
+        >>> jobdict.save("pickle")
+        >>> # somewhere else, most likely in another script, the jobs are executed.
+        >>> for job, name in jobs.bleed(comm=local_comm):
+        >>>    result = job.compute(outdir=name)
+
+      L{bleed} makes sure that once a job is accepted, it will not be accessed
+      by any other process or pools of processes. L{bleed} allows parallelization
+      over pbs scripts and pools of MPI processes. However, it does change the
+      C{jobdict} saved to "pickle". This means that once all jobs are executed,
+      both L{bleed} and L{walk_through} will find that C{jobdict} is empty. To
+      undo these changes and use the jobdict for, say, ouptut analysis, do:
+
+      >>> jobs.unbleed("pickle")
+
+      Beware, at this point, relaunching the job could overwrite, if the functional allows it...
+     
       Coding: JobDict has name attributes:
         - children: A dict object holding instances of JobDict. These are the sub-jobs.
         - jobparams: All parameters regarding actual calculations. It contains,
@@ -351,7 +370,7 @@ class JobDict(object):
       # adds subjobs.
       result.children = job.children
       # saves functional dictionary.
-      super(JobDict, self).__setattr__("_bleeded_jobparams", result.jobparams)
+      super(JobDict, job).__setattr__("_bleeded_jobparams", result.jobparams)
       # returns result.
       return result, outdir
     return None
@@ -362,9 +381,12 @@ class JobDict(object):
         All bleeded jobs are reset as unbleeded.
     """
     if hasattr(self, "_bleeded_jobparams"): 
+      print "unbleeding"
       self.jobparams = self._bleeded_jobparams
       del self._bleeded_jobparams
-    for name in self.subjobs(): self.children[name].unbleed()
+    for name in self.subjobs():
+      print name
+      self.children[name].unbleed()
       
 
 current = JobDict()
@@ -450,6 +472,7 @@ def bleed(path=None, outdir=None, comm=None):
   from ..opt import open_exclusive
   from boost.mpi import broadcast
   if path == None: path = "pickled_jobdict"
+  if outdir == None: outdir = ""
 
   is_root = True if comm == None else comm.rank == 0
   if is_root:
@@ -495,12 +518,12 @@ def unbleed(path=None, comm=None):
   if comm != None: comm.barrier()
 
 
-def pbs_scripts( outdir = None, jobdict = None, template = None, pbspools = 1,\
-                 name = None, pickle = None, pyscript = None, **kwargs):
+def pbs_script( outdir = None, jobdict = None, template = None, \
+                name = None, pickle = None, pyscript = None, **kwargs):
   """ Parallelizes jobs over different pbs scrits. 
 
       The root directory (outdir) is created if it does not exist, and the
-      pbs-scripts placed there. The pbs-scripts are not launched. 
+      pbs-script placed there. The pbs-script is not launched. 
 
       @param outdir: root directory of calculation. Current working directory if None.
       @param jobdict: job-tree instance over which to parallelize.
@@ -508,12 +531,9 @@ def pbs_scripts( outdir = None, jobdict = None, template = None, pbspools = 1,\
       @param template: PBS-script template to use. See L{jobs.templates}.
         Default: L{jobs.templates.default_pbs}.
       @type template: callable.
-      @param pbspools: Number of pbs scripts to issue. If 0 or negative, will
-        issue one script per job.
       @param pickle: Filename to which L{JobDict} will be pickled.
       @param pyscript: Filename of python script to execute. Copied to outdir.
       @param kwargs: Passed on to template.
-      @return: List of pbs-script filenames.
   """
   from shutil import copy
   from os import getcwd, makedirs
@@ -521,6 +541,7 @@ def pbs_scripts( outdir = None, jobdict = None, template = None, pbspools = 1,\
   from ..opt.changedir import Changedir
   from templates import default_pbs 
  
+  # sets up default input.
   if jobdict == None: jobdict = current
   if template == None: template = default_pbs
   if outdir == None: outdir = getcwd() 
@@ -537,15 +558,6 @@ def pbs_scripts( outdir = None, jobdict = None, template = None, pbspools = 1,\
                        % (join(outdir, pickle)))
 
 
-  if pbspools > jobdict.nbjobs or pbspools < 1: pbspools = jobdict.nbjobs
-  if "procpools" in kwargs:
-    assert kwargs["procpools"] * pbspools <= jobdict.nbjobs, \
-        ValueError( "Requested for more ressources than there are jobs:\n"\
-                    "  - Number of jobs: %i\n"\
-                    "  - Number of pbs scripts: %i\n"\
-                    "  - Number of process pools: %i\n"\
-                    % (jobdict.nbjobs, pbspools, kwargs["procpools"]) )
-
   # creates result dictionary.
   if not exists(outdir): makedirs(outdir)
   # pickle jobs.
@@ -556,17 +568,9 @@ def pbs_scripts( outdir = None, jobdict = None, template = None, pbspools = 1,\
   elif not samefile(pyscript, join(outdir, pyscript_filename)): copy(pyscript, outdir)
   # Writes out pbs scripts.
   result = []
-  for p in  range(pbspools+1):
-    # writes pbs script.
-    filepath = join(outdir, "launchme")
-    jobname = name
-    if pbspools > 1: 
-      filepath += "_" + str(p)
-      jobname += "-" + str(p)
-    with open(filepath+".pbs", "w") as file:
-      template( file, pbspools=pbspools, npbs=p, pickle=pickle, outdir=abspath(outdir),\
-                name=jobname, pyscript=pyscript_filename, **kwargs)
-    result.append(filepath)
-
-  return result
+  # writes pbs script.
+  jobname = name
+  with open(join(outdir, "launchme"), "w") as file:
+    template( file, pickle=pickle, outdir=abspath(outdir),\
+              name=jobname, pyscript=pyscript_filename, **kwargs)
 

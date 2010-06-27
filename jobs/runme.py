@@ -2,17 +2,15 @@
 """ Runs a job-tree, with optional parallelization. 
 
     The jobtree is read from the file given on input. It should be a pickled
-    JobDict instance. If more than one file is given, then the jobtree is
-    concatenation of each jobtree pickled in each file. Parallelization can
-    occur over pbs-scripts, in which case calculations executed in other
-    pbs-scripts are ignored here (as given by npbs and pbspools command line
-    arguments).  Parallelization can also occur over mpi-processes.
+    JobDict instance. Parallelization over
+    mpi-processes is controlled by program option pools.
 """ 
 def main():
   import cPickle
   import re 
+  from sys import path as python_path
   from os import getcwd, environ
-  from os.path import expanduser, abspath
+  from os.path import expanduser, abspath, join
   from optparse import OptionParser
   from boost.mpi import world
   from lada import jobs
@@ -21,21 +19,19 @@ def main():
 
   parser = OptionParser( description = re.sub("\\s+", " ", __doc__[1:]),\
                          usage = "usage: %prog [options] filename_1 .. filename_n" )
-  parser.add_option( "--pbspools", dest="pbspools", help="Number of pbspools",\
-                     metavar="N", type="int", default=1 )
-  parser.add_option( "--npbs", dest="npbs", help="Which pbs script is this", metavar="N",\
-                     type="int", default=0)
-  parser.add_option( "--procpools", dest="procpools", default=1, \
+  parser.add_option( "--pools", dest="pools", default=1, \
                      help="Number of mpi pools per job", metavar="N", type="int" )
   parser.add_option( "--relative", dest="relative", default=None, \
                      help="Perform calculations in a directory relative "
                           "current, but starting at RELATIVE, rather than HOME.",
                      metavar="RELATIVE" )
-
-  # below would go additional program options.
+  parser.add_option( "--ppath", dest="ppath", default=None, \
+                     help="Directory to add to python path",
+                     metavar="Directory" )
 
   (options, args) = parser.parse_args()
-  assert options.pbspools > options.npbs
+
+  # is workdir relative
   if options.relative != None: 
     # get path relative to home.
     if options.relative not in environ:
@@ -43,36 +39,21 @@ def main():
       print "Will work on default dir instead."
       options.relative = None
 
-  if isinstance(args, str): jobpickle = [args]
-  elif len(args) == 0:
+  # additional path to look into.
+  if options.ppath != None: python_path.append(options.ppath)
+
+  if len(args) == 0:
     print "No pickle specified on input. Eg, need a filename on input."
     return
-  elif len(args) == 1: jobpickle = args
 
-  # below would go additional out-of-loop code.
-    
-  # create jobs.
-  jobtree = jobs.JobDict()
-  for file in jobpickle: jobtree.update( jobs.load(path=file) )
-
-  # makes sure that the number of pools is not too large.
-  if world.size < options.procpools: options.procpools = world.size
   # creates local comms.
-  color = world.rank %  options.procpools
-  local_comm = world.split(color)
+  local_comm = world.split(world.rank %  options.pools)
 
-  # total numbe of separate pools.
-  totpools = options.pbspools * options.procpools
-  # index in total number of pools
-  n = options.npbs * options.procpools + color
   # loop over all jobs
-  for i, (job, outdir) in enumerate(jobtree.walk_through()):
-    # bypasses those jobs not done here.
-    if i % totpools != n: continue
-    if options.relative != None: 
+  for job, outdir in jobs.bleed(args[0], comm=local_comm):
+    if options.relative == None: 
       out = job.compute(comm=local_comm, outdir=outdir)
     else: 
       workdir = join(environ[options.relative], relpath(outdir, expanduser("~/")))
       out = job.compute(comm=local_comm, outdir=outdir, workdir=workdir)
-    # below would go additional inner loop code.
 if __name__ == "__main__": main()
