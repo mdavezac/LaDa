@@ -273,6 +273,7 @@ class JobDict(object):
   def __delattr__(self, name):
     """ Deletes job attribute. """
     if name in self.jobparams: return self.jobparams.pop(name)
+    elif name in self.__dict__: return self.__dict__.pop(name)
     raise AttributeError("Unknown job attribute " + name + ".")
 
   def __getattr__(self, name):
@@ -335,9 +336,10 @@ class JobDict(object):
     """ Returns the number of jobs in tree. """
     return len([u for u in self.walk_through()])
 
-  def pop_first(self):
+  def bleed(self):
     """ Retrieves and removes first actual job. 
     
+        This alters the dictionary. Use L{unbleed} to undo all bleed calls.
         The first jobs jobparam is reset. Subjobs are not, of course.
         Returns None if no jobs.
     """
@@ -348,8 +350,21 @@ class JobDict(object):
       result.jobparams, job.jobparams = job.jobparams, result.jobparams
       # adds subjobs.
       result.children = job.children
+      # saves functional dictionary.
+      super(JobDict, self).__setattr__("_bleeded_jobparams", result.jobparams)
+      # returns result.
       return result, outdir
     return None
+
+  def unbleed(self):
+    """ Resets a bleeded dictionary.
+
+        All bleeded jobs are reset as unbleeded.
+    """
+    if hasattr(self, "_bleeded_jobparams"): 
+      self.jobparams = self._bleeded_jobparams
+      del self._bleeded_jobparams
+    for name in self.subjobs(): self.children[name].unbleed()
       
 
 current = JobDict()
@@ -414,10 +429,13 @@ def load(path = None, comm = None):
 def bleed(path=None, outdir=None, comm=None): 
   """ Generator which deepletes a job dictionary of its jobs. 
 
-      This function alters the dictionary path. If C{path} is empty, then
-      returns None, None. An exclusive lock is acquired before reading/writing
-      to C{path}.  This way, if using L{bleed}, L{save}, L{load}, two processes
-      will not step on each others jobs.
+      This function alters the dictionary stored in C{path}. If C{path} is
+      empty, then returns None, None. An exclusive lock is acquired before
+      reading/writing to C{path}.  This way, if using L{bleed}, L{save},
+      L{load}, two processes will not step on each others jobs.
+
+      This function is different from JobDict.bleed in that it alters a
+      dictionary stored in a file.
       @param: Filename of a pickled jobdictionary.
       @outdir: Root result directory. 
       @comm: Will broadcast yielded stuff from root. Because of file locking,
@@ -440,13 +458,13 @@ def bleed(path=None, outdir=None, comm=None):
         print "Job dictionary", path, "does not exist."
         return
       with open_exclusive(path, "r") as file:
-        # tries to load file
+        # tries to load pickle.
         try: jobdict = load_pickle(file)
         except EOFError: break
         # Checks if there are any jobs.
         if jobdict.nbjobs == 0: break
         # Pops first job.
-        job, directory = jobdict.pop_first()
+        job, directory = jobdict.bleed()
         # writes modified dictionary to path.
         with open(path, "w") as newfile: dump(jobdict, newfile)
       broadcast(comm, (job, join(outdir, directory)), 0)
@@ -459,6 +477,22 @@ def bleed(path=None, outdir=None, comm=None):
       if result == None: return
       else: yield result
   
+
+def unbleed(path=None, comm=None): 
+  """ Unbleeds a dictionary stored in a file. """
+  from os.path import join, exists
+  from cPickle import load as load_pickle, dump
+  from ..opt import open_exclusive
+
+  # only one process needs do anything.
+  if (True if comm==None else comm.rank == 0): 
+    assert exists(path), IOError( "Job dictionary" + path + "does not exist.")
+    with open_exclusive(path, "r") as file:
+      jobdict = load_pickle(file)
+      jobdict.unbleed()
+      with open(path, "w") as newfile: dump(jobdict, newfile)
+  # synchronizes communicator.
+  if comm != None: comm.barrier()
 
 
 def pbs_scripts( outdir = None, jobdict = None, template = None, pbspools = 1,\
