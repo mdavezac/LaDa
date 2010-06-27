@@ -28,9 +28,9 @@ functional = Functional()
 
 # Creates dictionary
 if options.loadme == None or options.saveme != None:
-  jobs.current = jobs.JobDict()
+  job_dictionary = jobs.JobDict()
   for caps in ["A", "B", "C", "D"]:
-    capsjob = jobs.current / caps
+    capsjob = job_dictionary / caps
 
     if caps == "B": 
       capsjob.vasp = functional
@@ -46,14 +46,14 @@ if options.loadme == None or options.saveme != None:
       numbersjob["indict"] = "indicted"
       numbersjob["something"] = "else"
 # loads dictionary
-else: jobs.current = jobs.load(options.loadme, comm=world)
+else: job_dictionary = jobs.load(options.loadme, comm=world)
 
 # saves dictionary
 if options.saveme != None: jobs.save(path=options.saveme, overwrite=True, comm=world)
 
 # Computes all jobs.
 if options.loadme == None and options.saveme == None:
-  for job, outdir in jobs.current.walk_through("results"):
+  for job, outdir in job_dictionary.walk_through("results"):
     # launch jobs and stores result
     result = job.compute(outdir=outdir)
     # Root process of pool prints result.
