@@ -1,5 +1,6 @@
 """ Miscellaneous """
 import _opt 
+from contextlib import contextmanager
 __load_vasp_in_global_namespace__ = _opt.__load_vasp_in_global_namespace__
 __load_pescan_in_global_namespace__ = _opt.__load_pescan_in_global_namespace__
 cReals = _opt.cReals
@@ -149,3 +150,22 @@ def read_input(filename, global_dict=None, local_dict = None, paths=None, comm =
   result.__dict__.update(local_dict)
   return result
 
+
+@contextmanager
+def open_exclusive(*args, **kwargs):
+  """ Opens and locks a file.
+
+      This context uses fcntl to acquire a lock on file before reading or
+      writing. Parameters, exceptions, and return are the same as the built-in
+      open.
+  """
+  from fcntl import flock, LOCK_EX, LOCK_UN
+  try:
+    file = open(*args, **kwargs)
+    flock(file, LOCK_EX)
+    yield file
+  finally:
+    flock(file, LOCK_UN)
+    file.close()
+
+  
