@@ -153,34 +153,20 @@ def read_input(filename, global_dict=None, local_dict = None, paths=None, comm =
 
 @contextmanager
 def open_exclusive(*args, **kwargs):
-  """ Opens and locks a file.
+  """ Opens file while checking for advisory lock.
 
       This context uses fcntl to acquire a lock on file before reading or
       writing. Parameters, exceptions, and return are the same as the built-in
-      open.
-
-      Coding: As usual cray's make life difficult. flock does not work on
-      compute nodes when using aprun. lockf does but requires the file to be
-      opened with "w" only! Hence we lock a second file rather than the on of
-      interest. We can't delete either, in case another process is competing
-      with this one. Inconvenient to say the least.
+      open. See L{acquire_lock} for locking details. Most notably, the lock is
+      not on the opened file itself, eg it is an advisory lock only.
   """
-  from fcntl import lockf, LOCK_EX, LOCK_UN
-  try:
-    lock_filename = args[0] + ".lada_lockfile"
-    lock_file = open(lock_filename, "w")
-    lockf(lock_file, LOCK_EX)
-    file = open(*args, **kwargs)
-    yield file
-  finally:
-    file.close()
-    lockf(lock_file, LOCK_UN)
-    lock_file.close()
+  with acquire_lock(args[0]) as lock_file:
+    with open(*args, **kwargs) as file: yield file
 
   
 @contextmanager
 def acquire_lock(filename):
-  """ Locks access to a file. 
+  """ Gets an advisory lock for file C{filename}.
 
       This context uses fcntl to acquire a lock on file before reading or
       writing. Parameters, exceptions, and return are the same as the built-in
@@ -197,12 +183,14 @@ def acquire_lock(filename):
       with this one. Inconvenient to say the least.
   """
   from fcntl import lockf, LOCK_EX, LOCK_UN
+  from os import remove
   try:
     lock_filename = filename + ".lada_lockfile"
     lock_file = open(lock_filename, "w")
+    lockf(lock_file, LOCK_EX, 0)
     yield lock_file
   finally:
-    lockf(lock_file, LOCK_UN)
+    lockf(lock_file, LOCK_UN, 0)
     lock_file.close()
 
   
