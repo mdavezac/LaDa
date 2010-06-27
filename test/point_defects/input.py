@@ -61,7 +61,7 @@ procpools =  1
 
     In other words, each vasp calculation will be launched on mppwidth/procpools cores.
 """
-outdir    = "Zn2RhO"
+outdir    = "Zn2RhO4"
 """ Root directory where to store results. """
 relative  = "SCRATCH"
 """ Relative calculation directory. 
