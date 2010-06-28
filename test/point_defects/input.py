@@ -4,15 +4,6 @@ from os.path import join, abspath, relpath
 from lada.opt.changedir import Changedir
 import spinel
 
-outdir = abspath("results")
-""" Root output directory. """
-workdir = join(outdir, "tempdir")
-""" Temporary calculation directory. """
-if "NERSC_HOST" in environ:
-  if environ["NERSC_HOST"] == "hopper":
-    with Changedir(environ["HOME"]) as cwd:
-      workdir = join(environ["SCRATCH"], relpath(outdir, getcwd()))
-
 lattice = spinel.lattice()
 """ Back-bone lattice. """
 # changes species in lattice.
@@ -20,6 +11,7 @@ for site in lattice.sites:
   if   "A" in site.type: site.type[0] = "Rh"
   elif "B" in site.type: site.type[0] = "Zn"
   elif "X" in site.type: site.type[0] =  "O"
+lattice.scale = 8.506
 
 supercell = array([[1, 0, 0],\
                    [0, 1, 0],\
@@ -28,18 +20,17 @@ supercell = array([[1, 0, 0],\
 
 vasp = Vasp()
 """ VASP functional """
-vasp.kpoints    = "Automatic generation\n0\ngamma\n6 6 10\n0 0 0"
+vasp.kpoints    = "Automatic generation\n0\nMonkhorst\n2 2 2\n0 0 0"
 vasp.precision  = "accurate"
-vasp.smearing   = "bloechl"
 vasp.ediff      = 1e-5
-vasp.relaxation = "ionic"
-vasp.encut      = 1.3
-vasp.workdir    = workdir
+vasp.encut      = 1
 vasp.lorbit     = 10
 vasp.npar       = 2
 vasp.lplane     = True
 vasp.addgrid    = True
- 
+vasp.set_smearing   = "insulator", 0.01
+vasp.set_relaxation = "ionic"
+
 #                Symbol, directory of POTCAR, U parameters, max/min oxidation state, is magnetic
 vasp.add_specie = "Rh", "pseudos/Rh", U("liechtenstein", "d", 3.3), 3, True
 vasp.add_specie = "Zn", "pseudos/Zn", U("liechtenstein", "d", 6.0), 2, False
@@ -51,12 +42,7 @@ mppwidth  = 56
 """ Total number of processes (eg core*nodes). """
 walltime = "03:45:00"
 """ PBS walltime. """
-pbspools  =  0
-""" Number of pbs scripts over which to parallelize calculations. 
-
-    If 0 or None, defaults to the number of jobs (eg, one script per vasp calculation).
-"""
-procpools =  1
+pools =  1
 """ Number of process pools over which to parallelize each pbs scripts. 
 
     In other words, each vasp calculation will be launched on mppwidth/procpools cores.

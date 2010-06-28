@@ -99,8 +99,8 @@ for job, name in reloaded.walk_through("results"):
 # job.compute(norun=True, repat=files.input, outdir=name)
 
 print "done\n\n\n"
-jobs.pbs_scripts( queue=input.queue, mppwidth=input.mppwidth, pbspools=input.pbspools,\
-                  procpools=input.procpools, outdir=input.outdir, relative=input.relative,
-                  walltime=input.walltime)
+jobs.pbs_script( queue=input.queue, mppwidth=input.mppwidth, \
+                 pools=input.pools, outdir=input.outdir, relative=input.relative,
+                 walltime=input.walltime)
 
 
