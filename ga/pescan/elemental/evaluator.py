@@ -49,14 +49,22 @@ class Bandgap(object):
     """ Returns length of bitstring. """
     return len(self.converter)
 
-  def run( self, indiv, outdir = None, comm = None, converter = None, \
-           references = None, escan = None, **kwargs ):
+  def run( self, indiv, outdir = None, comm = None, **kwargs ):
     """ Computes bandgap of an individual. 
     
         The epitaxial energy is stored in indiv.epi_energy
         The eigenvalues are stored in indiv.eigenvalues
         The VBM and CBM are stored in indiv.bands
-        returns an extractor to the bandgap. 
+        @param indiv: Individual to compute. Will be converted to a L{structure
+          <lada.crystal.Structure>} using L{self.converter}.
+        @param outdir: Output directory. 
+        @param comm: MPI communicator.
+        @param **kwargs: L{converter <Bandgap.converter>}, L{escan
+          <Bandgap.escan>}, L{references <Bandgap.reference>}, L{outdir
+          <Bandgap.outdir>} can be overwridden on call. This will not affect
+          calls further down the line. Other arguments are passed on to the
+          L{bandgap <lada.escan.bandgap>} functional.
+        @return: an extractor to the bandgap. 
     """
     from os.path import join
     from copy import deepcopy
@@ -64,9 +72,9 @@ class Bandgap(object):
     from ....escan import bandgap
 
     # takes into account input arguments.
-    if references == None: references = self.references
-    if converter == None:  converter  = self.converter
-    if escan == None:      escan      = self.escan
+    references = kwargs.pop("references", self.references)
+    converter  = kwargs.pop( "converter",  self.converter)
+    escan      = kwargs.pop(     "escan",      self.escan)
     if outdir == None:     outdir     = join(self.outdir, str(self.nbcalc))
     if comm == None:       comm       = world
  
