@@ -40,7 +40,9 @@ def default_pbs( file, walltime = "05:45:00", mppwidth = 8, queue = "regular", n
   else: file.write("cd " + outdir + "\n")
   if pyvirt != None: file.write("workon %s \n" % (pyvirt) )
 
-  file.write("mpirun -n %i python %s --pools %i " % (mppwidth, pyscript, pools) )
+  # aprun on Fucking Crays. mpirun everywhere else.
+  file.write("aprun " if "NERSC_HOST" in environ else "mpirun ")
+  file.write("-n %i python %s --pools %i " % (mppwidth, pyscript, pools) )
   if python_path != None: file.write(" --ppath " + python_path)
   for key, value in kwargs.items(): 
     if value == None: file.write(" --%s" % (key))
