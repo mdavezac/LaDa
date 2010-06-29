@@ -318,7 +318,8 @@ class Escan(object):
     result += "# End of escan definition."
     return result
 
-  def __call__(self, structure, outdir = None, comm = None, overwrite=False, **kwargs):
+  def __call__(self, structure, outdir = None, comm = None, overwrite=False, \
+               keep_calc=None, **kwargs):
     """ Performs calculation """
     from copy import deepcopy
     from os import getcwd

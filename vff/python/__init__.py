@@ -37,6 +37,7 @@ def _get_script_text(file, name):
 
 class Extract(object):
   def __init__(self, directory = None, comm = None, vff = None):
+    from os import getcwd
     super(Extract, self).__init__()
     self.directory = directory if directory != None else getcwd()
     """ Directory where to check for output. """

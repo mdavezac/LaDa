@@ -61,4 +61,18 @@ def main():
         workdir = join(environ[options.relative], relpath(workdir, getcwd()))
       # now pass on relative workdir, where HOME is substituted by options.relative.
       out = job.compute(comm=local_comm, outdir=outdir, workdir=workdir, keep_calc=True)
-if __name__ == "__main__": main()
+
+if __name__ == "__main__":
+  from sys import stderr
+  import traceback
+  from boost.mpi import Exception as mpiException, abort
+  try: main()
+  except mpiException as e: 
+    file.stderr("Encountered mpi exception %s."% (e))
+    traceback.print_exc()
+    abort(0)
+  except: # other exceptions
+    traceback.print_exc()
+    abort(0)
+    raise
+

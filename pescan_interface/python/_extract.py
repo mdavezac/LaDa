@@ -7,6 +7,7 @@ class Extract(object):
   """ A class to extract data from ESCAN output files. """
   def __init__(self, directory = None, comm = None, escan = None):
     """ Initializes ESCAN extraction class. """
+    from os import getcwd
     from . import Escan
 
     if escan == None: escan = Escan()
@@ -76,7 +77,7 @@ class Extract(object):
     
     path = self.OUTCAR
     if len(self.directory): path = join(self.directory, self.OUTCAR)
-    assert exists(path), RuntimeError("Could not find file %s:" % (file))
+    assert exists(path), RuntimeError("Could not find file %s:" % (path))
 
     @broadcast_result(attr=True, which=0)
     def get_functional(this):
@@ -112,7 +113,7 @@ class Extract(object):
     from numpy import array
     path = self.OUTCAR
     if len(self.directory): path = join(self.directory, self.OUTCAR)
-    assert exists(path), RuntimeError("Could not find file %s:" % (file))
+    assert exists(path), RuntimeError("Could not find file %s:" % (path))
     with open(path, "r") as file:
       for line in file: 
         if line.find(" FINAL eigen energies, in eV") != -1: break
@@ -138,7 +139,7 @@ class Extract(object):
     from numpy import array
     path = self.OUTCAR
     if len(self.directory): path = join(self.directory, self.OUTCAR)
-    assert exists(path), RuntimeError("Could not find file %s:" % (file))
+    assert exists(path), RuntimeError("Could not find file %s:" % (path))
     with open(path, "r") as file:
       for line in file: 
         if line.find(" FINAL err of each states, A.U") != -1: break
@@ -161,7 +162,7 @@ class Extract(object):
     from numpy import array
     path = self.OUTCAR
     if len(self.directory): path = join(self.directory, self.OUTCAR)
-    assert exists(path), RuntimeError("Could not find file %s:" % (file))
+    assert exists(path), RuntimeError("Could not find file %s:" % (path))
     with open(path, "r") as file:
       for line in file: 
         if line.find(" nnodes =") != -1: break
