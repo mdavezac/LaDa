@@ -102,9 +102,15 @@ namespace LaDa
         bp::class_< typename PythonConvexHull<T_TYPE>::t_CHBase >( _name.c_str() )
           .def( "__init__", bp::make_constructor( copy<T_TYPE> ) )
           .def( "__init__", bp::make_constructor( empty<T_TYPE> ) )
-          .def( "__call__", &PythonConvexHull<T_TYPE>::t_CHBase::evaluate )
-          .def( "add", &PythonConvexHull<T_TYPE>::add )
-          .def("__iter__", &PythonConvexHull<T_TYPE>::iter)
+          .def( "__call__", &PythonConvexHull<T_TYPE>::t_CHBase::evaluate,
+                "Evaluates convex-hull at C{x}." )
+          .def( "add", &PythonConvexHull<T_TYPE>::add, 
+                (bp::arg("item"), bp::arg("x"), bp::arg("y")),
+                "Tries to add item to convex hull\n\n"
+                "@param item: The item which is to be considered for a breaking point.\n"
+                "@param x: concentration (x-axis) of the item.\n"
+                "@param y: Energy (y-axis) of the item.\n" )
+          .def("__iter__", &PythonConvexHull<T_TYPE>::iter, "Iterates over breaking-points.")
           .def( "__str__", &PythonConvexHull<T_TYPE>::t_CHBase::print );
 
       bp::class_< typename PythonConvexHull<T_TYPE>::t_range >( (_name+"_iter").c_str()  )

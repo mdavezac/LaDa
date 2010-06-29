@@ -6,6 +6,8 @@ __load_pescan_in_global_namespace__ = _opt.__load_pescan_in_global_namespace__
 cReals = _opt.cReals
 _RedirectFortran = _opt._RedirectFortran
 streams = _opt._RedirectFortran.fortran
+ConvexHull = _opt.ConvexHull
+ErrorTuple = _opt.ErrorTuple
 
 class _RedirectPy:
   """ Redirects C/C++ input, output, error. """
