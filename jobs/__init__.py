@@ -355,6 +355,17 @@ class JobDict(object):
     """ Returns the number of jobs in tree. """
     return len([u for u in self.walk_through()])
 
+  def _bleed(self):
+    """ Removes current calculation. """
+    result = JobDict()
+    # swap functional stuff
+    result.jobparams, self.jobparams = self.jobparams, result.jobparams
+    # adds subjobs.
+    result.children = self.children
+    # saves functional dictionary.
+    super(JobDict, self).__setattr__("_bleeded_jobparams", result.jobparams)
+    return result
+
   def bleed(self):
     """ Retrieves and removes first actual job. 
     
@@ -363,16 +374,7 @@ class JobDict(object):
         Returns None if no jobs.
     """
     for job, outdir in self.walk_through():
-      # new dictionary
-      result = JobDict()
-      # swap functional stuff
-      result.jobparams, job.jobparams = job.jobparams, result.jobparams
-      # adds subjobs.
-      result.children = job.children
-      # saves functional dictionary.
-      super(JobDict, job).__setattr__("_bleeded_jobparams", result.jobparams)
-      # returns result.
-      return result, outdir
+      return job._bleed(), outdir
     return None
 
   def unbleed(self):
@@ -513,6 +515,40 @@ def unbleed(path=None, comm=None):
       with open(path, "w") as newfile: dump(jobdict, newfile)
   # synchronizes communicator.
   if comm != None: comm.barrier()
+
+
+def unsucessfull(jobdict, extractor, outdir = None):
+  """ Returns jobdictionary with unsucessfull/incomplete jobs.
+
+      This function will not modify the input dictionary.
+      @param jobdict: a job dictionary instance or the path to a pickled
+        job-dictionary.
+      @type jobdict: JobDict or str
+      @param extractor: Some instance with a directory attribute and a success
+        attribute, capable of judging the success of an operation.
+      @return: A JobDict instance with incomplete and unsuccessful jobs.
+  """
+  from copy import deepcopy
+
+  if outdir == None: outdir = ""
+  extractor = deepcopy(extractor)
+
+  # if path, get pickled dictionary.
+  if not hasattr(jobdict, "unbleed"): jobdict = load(jobdict)
+  # otherwise make deep copy.
+  else: jobdict = deepcopy(jobdict)
+
+  # now unbleeds.
+  jobdict.unbleed()
+
+  # then go through dictionary.
+  for job, directory in jobdict.walk_through(outdir=outdir):
+    extractor.directory = directory
+    # and bleed successfull jobs.
+    if extractor.success: job._bleed()
+
+  return jobdict
+
 
 
 def pbs_script( outdir = None, jobdict = None, template = None, \

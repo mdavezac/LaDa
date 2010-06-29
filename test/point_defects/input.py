@@ -28,7 +28,7 @@ vasp.lorbit     = 10
 vasp.npar       = 2
 vasp.lplane     = True
 vasp.addgrid    = True
-vasp.set_smearing   = "insulator", 0.01
+vasp.set_smearing   = "metal", 0.01
 vasp.set_relaxation = "ionic"
 
 #                Symbol, directory of POTCAR, U parameters, max/min oxidation state, is magnetic
