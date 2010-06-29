@@ -110,8 +110,10 @@ class JobDict(object):
       by any other process or pools of processes. L{bleed} allows parallelization
       over pbs scripts and pools of MPI processes. However, it does change the
       C{jobdict} saved to "pickle". This means that once all jobs are executed,
-      both L{bleed} and L{walk_through} will find that C{jobdict} is empty. To
-      undo these changes and use the jobdict for, say, ouptut analysis, do:
+      L{bleed} (but not L{walk_through}) will find that C{jobdict} is empty. To
+      undo these changes and use the jobdict for, say, ouptut analysis, simply
+      use L{walk_through} where possible (single pbs script or interactive
+      sessions), or do:
 
       >>> jobs.unbleed("pickle")
 
@@ -356,15 +358,11 @@ class JobDict(object):
     return len([u for u in self.walk_through()])
 
   def _bleed(self):
-    """ Removes current calculation. """
-    result = JobDict()
-    # swap functional stuff
-    result.jobparams, self.jobparams = self.jobparams, result.jobparams
-    # adds subjobs.
-    result.children = self.children
-    # saves functional dictionary.
-    super(JobDict, self).__setattr__("_bleeded_jobparams", result.jobparams)
-    return result
+    """ Adds _bled attribute. """
+    super(JobDict, self).__setattr__("_bled", True)
+  def _unbleed(self):
+    """ Adds _bled attribute. """
+    if hasattr(self, "_bled"): self.__delattr__("_bled")
 
   def bleed(self):
     """ Retrieves and removes first actual job. 
@@ -374,7 +372,9 @@ class JobDict(object):
         Returns None if no jobs.
     """
     for job, outdir in self.walk_through():
-      return job._bleed(), outdir
+      if hasattr(job, "_bled"): continue
+      job._bleed()
+      return job, outdir
     return None
 
   def unbleed(self):
@@ -382,9 +382,7 @@ class JobDict(object):
 
         All bleeded jobs are reset as unbleeded.
     """
-    if hasattr(self, "_bleeded_jobparams"): 
-      self.jobparams = self._bleeded_jobparams
-      del self._bleeded_jobparams
+    self._unbleed()
     for name in self.subjobs(): self.children[name].unbleed()
       
 
@@ -415,14 +413,14 @@ def save(jobdict = None, path = None, overwrite=False, comm=None):
       @param overwrite: if True, then overwrites file.
   """ 
   from os.path import exists
-  from cPickle import dump
+  from pickle import dump
   from ..opt import open_exclusive
   if path == None: path = "pickled_jobdict"
   if jobdict == None: jobdict = current
   if exists(path) and not overwrite: 
     print path, "exists. Please delete first if you want to save the job dictionary."
     return
-  with open_exclusive(path, "w") as file: dump(jobdict, file)
+  with open_exclusive(path, "wb") as file: dump(jobdict, file)
   print "Saved job dictionary to %s." % (path)
 
 @broadcast_result(key=True)
@@ -439,12 +437,12 @@ def load(path = None, comm = None):
       @return: Returns a JobDict object.
   """ 
   from os.path import exists
-  from cPickle import load as load_pickle
+  from pickle import load as load_pickle
   from ..opt import open_exclusive
   if path == None: path = "pickled_jobdict"
   assert exists(path), IOError("File " + path + " does not exist.")
   print "Loading job list from", path, "."
-  with open_exclusive(path, "r") as file: return load_pickle(file)
+  with open_exclusive(path, "rb") as file: return load_pickle(file)
 
 def bleed(path=None, outdir=None, comm=None): 
   """ Generator which deepletes a job dictionary of its jobs. 
@@ -465,7 +463,7 @@ def bleed(path=None, outdir=None, comm=None):
            - directory: a suggested directory name with L{outdir} as its root.
   """
   from os.path import join, exists
-  from cPickle import load as load_pickle, dump
+  from pickle import load as load_pickle, dump
   from boost.mpi import broadcast
   from ..opt import acquire_lock
   if path == None: path = "pickled_jobdict"
@@ -480,7 +478,7 @@ def bleed(path=None, outdir=None, comm=None):
       # acquires a lock file. 
       with acquire_lock(path) as lock_file:
         # tries to load pickle.
-        with open(path, "r") as file:
+        with open(path, "rb") as file:
           try: jobdict = load_pickle(file)
           except EOFError: break
         # Checks if there are any jobs.
@@ -488,7 +486,7 @@ def bleed(path=None, outdir=None, comm=None):
         # Pops first job.
         job, directory = jobdict.bleed()
         # writes modified dictionary to path.
-        with open(path, "w") as newfile: dump(jobdict, newfile)
+        with open(path, "wb") as file: dump(jobdict, file)
       broadcast(comm, (job, join(outdir, directory)), 0)
       yield job, join(outdir, directory)
     broadcast(comm, None, 0)
@@ -503,16 +501,16 @@ def bleed(path=None, outdir=None, comm=None):
 def unbleed(path=None, comm=None): 
   """ Unbleeds a dictionary stored in a file. """
   from os.path import join, exists
-  from cPickle import load as load_pickle, dump
-  from ..opt import open_exclusive
+  from pickle import load as load_pickle, dump
+  from ..opt import acquire_lock
 
   # only one process needs do anything.
   if (True if comm==None else comm.rank == 0): 
     assert exists(path), IOError( "Job dictionary" + path + "does not exist.")
-    with open_exclusive(path, "r") as file:
-      jobdict = load_pickle(file)
+    with acquire_lock(path) as lock_file:
+      with open(path, "rb") as file: jobdict = load_pickle(file)
       jobdict.unbleed()
-      with open(path, "w") as newfile: dump(jobdict, newfile)
+      with open(path, "wb") as file: dump(jobdict, file)
   # synchronizes communicator.
   if comm != None: comm.barrier()
 
