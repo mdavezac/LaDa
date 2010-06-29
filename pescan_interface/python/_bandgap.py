@@ -28,6 +28,7 @@ def band_gap(escan, structure, outdir=None, references=None, n=5, overwrite = Fa
          
   if outdir == None: outdir = getcwd()
   outdir    = abspath(outdir)
+  overlap_factor = kwargs.pop("overlap_factor", None)
 
   comm = kwargs.pop("comm", world)
   if not overwrite:  # check for previous results.
@@ -46,7 +47,8 @@ def band_gap(escan, structure, outdir=None, references=None, n=5, overwrite = Fa
   kwargs["overwrite"] = overwrite
   kwargs["comm"] = comm
   return _band_gap_ae_impl(escan, structure, outdir, **kwargs) if references == None\
-         else _band_gap_refs_impl(escan, structure, outdir, references, n, **kwargs) 
+         else _band_gap_refs_impl(escan, structure, outdir, references, n, \
+                                  overlap_factor=overlap_factor, **kwargs) 
 
 class ExtractAE(ExtractVasp):
   """ Band-gap extraction class. """
@@ -106,9 +108,12 @@ def _band_gap_ae_impl(escan, structure, outdir, **kwargs):
     assert kwargs["eref"] == None, ValueError("Unexpected eref argument when computing bandgap.")
     del kwargs["eref"]
   outdir = join(outdir, "AE")
-  nbstates = nb_valence_states(structure)
+  nbstates = kwargs.pop("nbstates", escan.nbstates)
+  if nbstates == None: nbstates = 4
+  if nbstates == 0: nbstates = 4
+  nbstates = nbstates  + nb_valence_states(structure)
   extract = escan( structure, outdir = outdir, eref = None,\
-                   nbstates = nbstates + escan.nbstates, **kwargs)
+                   nbstates = nbstates, **kwargs)
   return ExtractAE(extract)
 
 class ExtractRefs(object):

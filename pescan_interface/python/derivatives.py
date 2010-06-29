@@ -76,14 +76,12 @@ def reciprocal( escan, structure, direction, outdir, comm = None, order = 1, \
   # now performs all calculations.
   measurements = None
   for i in range(0, nbpoints): 
-    directory = 
-    _copy_files(directory)
     out = escan\
           (\
             structure,\
             outdir = join(outdir, "%i-s=%f" % (i, parameters[i,1] )),
             vffrun = vffrun, genpotrun = genpotrun, do_escan = True,\
-            kpoint = escan.kpoint + direction * parameters[i, 1] / units 
+            kpoint = escan.kpoint + direction * parameters[i, 1] / units
           )
     eigenvalues = out.eigenvalues.copy()
     eigenvalues.sort()
