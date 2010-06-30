@@ -108,24 +108,19 @@ class Bandgap(object):
     return self.run(*args, **kwargs).bandgap
 
   def __getstate__(self):
-    from marshal import dumps
+    from pickle import dumps
     d = self.__dict__.copy()
     references = self.references
     del d["references"]
     if hasattr(references, "__name__"):
-      if references.__name__ == '<lambda>':
-        s = dumps(self.references.func_code)
-        return d, True, s
-    return d, False, references
+      assert references.__name__ != '<lambda>',\
+             RuntimeError("\"references\" is a lambda. Lambdas cannot be reliably pickled.")
+    return d, references
   def __setstate__(self, arg):
-    from marshal import loads
+    from pickle import loads
     self.__dict__.update(arg[0])
     self.validity = None
-    if arg[1]: # lambda
-      self.references = lambda x: x
-      self.references.func_code  = loads(arg[2])
-    else: # other pickleable
-      self.references = arg[2]
+    self.references = arg[1]
 
 class Dipole(Bandgap):
   """ Evaluates the oscillator strength.
