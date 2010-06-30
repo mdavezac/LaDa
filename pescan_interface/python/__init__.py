@@ -17,6 +17,7 @@ import _methods
 Extract = _extract.Extract
 nb_valence_states = _escan.nb_valence_states
 bandgap = _bandgap.band_gap
+extract_bg = _bandgap.extract
 dipole_matrix_elements = _methods.dipole_matrix_elements
 
 def _is_in_sync(comm, which = [0]):

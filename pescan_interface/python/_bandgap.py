@@ -1,6 +1,36 @@
 """ Submodule to compute bandgaps with escan. """
 from ..opt.decorators import make_cached
-from _extract import Extract as ExtractVasp
+from _extract import Extract as _ExtractE
+
+def extract(outdir=".", comm = None):
+  """ Gets extraction object from directory structure. 
+  
+      Checks first for all-electron calculation in outdir/AE. If it does not
+      exist or the calculation is unsucessful, then checks for VBM, CBM
+      directories, and checks those calculations. If unsucessfull, returns a
+      fake extraction object with success set to False. Otherwise, returns
+      successfull extraction object.
+  """
+  from os.path import exists, join
+  from ..vff import Extract as VffExtract
+  from boost.mpi import world, broadcast
+
+  is_root = True if comm == None else comm.rank == 0
+
+  paths = join(outdir, "AE"), join(outdir, "VBM"), join(outdir, "CBM")
+  if is_root: exist_paths = [exists(p) for p in paths]
+  if comm != None: exists_paths = broadcast(comm, exist_paths, 0)
+  if exist_paths[0]: 
+    result = ExtractAE( _ExtractE(paths[0], comm = comm) )
+    if result.success: return result
+  elif exist_paths[1] and exist_paths[2]:
+    result = ExtractRefs( _ExtractE(paths[1], comm = comm),\
+                          _ExtractE(paths[2], comm = comm),
+                          _ExtractE(outdir, comm = comm) )
+    if result.success: return result
+  class NoBandGap(object):
+    def __init__(self): self.success = False
+  return NoBandGap()
 
 def band_gap(escan, structure, outdir=None, references=None, n=5, overwrite = False, **kwargs):
   """ Computes bandgap of a structure with a given escan functional. 
@@ -32,16 +62,8 @@ def band_gap(escan, structure, outdir=None, references=None, n=5, overwrite = Fa
 
   comm = kwargs.pop("comm", world)
   if not overwrite:  # check for previous results.
-    paths = join(outdir, "AE"), join(outdir, "VBM"), join(outdir, "CBM")
-    if broadcast(comm, exists(paths[0]) if comm.rank == 0 else None, 0): 
-      result = ExtractAE( ExtractVasp(paths[0], comm = comm) )
-      if result.success: return result
-    elif broadcast(comm, exists(paths[1]) if comm.rank == 0 else None, 0): 
-      if broadcast(comm, exists(paths[2]) if comm.rank == 0 else None, 0): 
-        result = ExtractRefs( ExtractVasp(paths[1], comm = comm),\
-                              ExtractVasp(paths[2], comm = comm),
-                              ExtractVasp(outdir, comm = comm) )
-        if result.success: return result
+    result = extract(outdir, comm)
+    if result.success: return result
 
   
   kwargs["overwrite"] = overwrite
@@ -50,7 +72,7 @@ def band_gap(escan, structure, outdir=None, references=None, n=5, overwrite = Fa
          else _band_gap_refs_impl(escan, structure, outdir, references, n, \
                                   overlap_factor=overlap_factor, **kwargs) 
 
-class ExtractAE(ExtractVasp):
+class ExtractAE(_ExtractE):
   """ Band-gap extraction class. """
   is_ae = True
   """ This was an all-electron bandgap calculation. """
@@ -301,6 +323,9 @@ def _band_gap_refs_impl( escan, structure, outdir, references, n=5,\
   else: # ran through all iterations and failed.
     return _band_gap_ae_impl(escan, structure, outdir, **kwargs)
   return ExtractRefs(vbm_out, cbm_out, vffout)
+
+
+
 
 
 
