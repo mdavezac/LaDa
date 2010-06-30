@@ -8,10 +8,14 @@ from functional import Functional
 
 # Reads program options.
 parser = OptionParser()
-parser.add_option( "--save", dest="saveme", help="Pickle job dictionary.", metavar="FILE", type="str")
-parser.add_option( "--load", dest="loadme", help="Loads a pickled job dictionary.", metavar="FILE", type="str")
-parser.add_option( "--pools", dest="pools", help="Number of mpi pools.", metavar="N", type="int", default=1)
-parser.add_option( "--pbs", dest="pbs", help="Directory where to write pbs stuff.", metavar="DIRECTORY", type="str")
+parser.add_option( "--save", dest="saveme", help="Pickle job dictionary.",\
+                   metavar="FILE", type="str")
+parser.add_option( "--load", dest="loadme", help="Loads a pickled job dictionary.", \
+                   metavar="FILE", type="str")
+parser.add_option( "--pools", dest="pools", help="Number of mpi pools.", \
+                   metavar="N", type="int", default=1)
+parser.add_option( "--pbs", dest="pbs", help="Directory where to write pbs stuff.", \
+                   metavar="DIRECTORY", type="str")
 (options, args) = parser.parse_args()
 
 # takes care of mpi pools

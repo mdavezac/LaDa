@@ -355,7 +355,7 @@ class JobDict(object):
   @property
   def nbjobs(self):
     """ Returns the number of jobs in tree. """
-    return len([u for u in self.walk_through()])
+    return len([0 for j, o in self.walk_through() if not hasattr(j, "_bled")])
 
   def _bleed(self):
     """ Adds _bled attribute. """
