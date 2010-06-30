@@ -30,6 +30,7 @@ vasp.lplane     = True
 vasp.addgrid    = True
 vasp.set_smearing   = "metal", 0.01
 vasp.set_relaxation = "ionic"
+vasp.set_symmetry   = "off"
 
 #                Symbol, directory of POTCAR, U parameters, max/min oxidation state, is magnetic
 vasp.add_specie = "Rh", "pseudos/Rh", U("liechtenstein", "d", 3.3), 3, True
@@ -40,7 +41,7 @@ queue     = "regular"
 """ PBS queue. """
 mppwidth  = 56
 """ Total number of processes (eg core*nodes). """
-walltime = "03:45:00"
+walltime = "05:45:00"
 """ PBS walltime. """
 pools =  1
 """ Number of process pools over which to parallelize each pbs scripts. 

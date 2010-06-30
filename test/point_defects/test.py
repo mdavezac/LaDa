@@ -2,8 +2,10 @@
 import cPickle
 from sys import exit
 from os.path import join
+
 from lada.opt import read_input
 from lada.vasp import Vasp, Specie, specie, files
+from lada.vasp.methods import RelaxCellShape
 from lada.crystal import fill_structure, Neighbors, point_defects as ptd
 from lada import jobs
 
@@ -14,12 +16,23 @@ input = read_input("input.py", input_dict)
 # sets as default lattice.
 input.lattice.set_as_crystal_lattice()
 
+# creates job dictionary.
+jobdict = jobs.JobDict()
+
+# adds pure host calculation.
+jobdict.add_param = "structure", fill_structure(input.lattice.cell)
+jobdict.add_param = "vasp", RelaxCellShape(input.vasp, relaxation="volume cellshape ions")
+jobdict.add_param = "kpoints", "Automatic generation\n0\nMonkhorst\n8 8 8\n0 0 0"
+jobdict.add_param = "encut", 1.3
+jobdict.add_param = "set_symmetry", 1e-5
+
+
 # creates super-structure
 supercell = fill_structure(input.supercell)
 
 # loop over specie vacancy
 for A, specie in input.vasp.species.items(): 
-  vacjobs = jobs.current / ("vacancy_" + A)
+  vacjobs = jobdict / ("vacancy_" + A)
   # loop over types of vacancies for given specie (eg symmetrically inequivalent sites).
   for structure, vacancy, name in ptd.vacancy(supercell, input.lattice, A):
     vacjob = vacjobs / name
@@ -58,7 +71,7 @@ for A, specie in input.vasp.species.items():
 # loop substitutions.
 for A, B in [("Rh", "Zn"), ("Zn", "Rh") ]:
   # loop over inequivalent substitution sites.
-  subjobs = jobs.current / (A + "_on_" + B)
+  subjobs = jobdict / (A + "_on_" + B)
   nbineq = len(ptd.inequivalent_sites(input.lattice, A)) 
   for structure, substitution, name in ptd.substitution(supercell, input.lattice, A, B):
     subjob = subjobs / name
@@ -92,9 +105,9 @@ for A, B in [("Rh", "Zn"), ("Zn", "Rh") ]:
           spinjob["magmom"]    = spin, neighbors
           spinjob.vasp = input.vasp
 
-string = cPickle.dumps(jobs.current)
+string = cPickle.dumps(jobdict)
 reloaded = cPickle.loads(string)
-for job, name in reloaded.walk_through("results"):
+for job, name in reloaded.walk_through("Zn2RhO4"):
   print name
 # job.compute(norun=True, repat=files.input, outdir=name)
 
