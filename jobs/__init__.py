@@ -117,9 +117,19 @@ class JobDict(object):
 
       >>> jobs.unbleed("pickle")
 
-      Beware, at this point, relaunching the job could overwrite, if the functional allows it...
+      Beware, at this point, relaunching the job could overwrite, if the
+      functional allows it... In practice, bled and unbled jobs can also be
+      selected with:
+
+      >>> for job, outdir in job.walk_trough():
+      >>>   if job.is_marked: # this job has been bled/marked.
+      >>>        # do something.
+      >>>        job.unmark() # this job will no longuer be considered bled/marked.
+      >>>   else:  # this job was not previously bled/marked.
+      >>>        # do something.
+      >>>        job.mark() # this job will now be considered bled/marked.
      
-      Coding: JobDict has name attributes:
+      Coding: JobDict has the following attributes:
         - children: A dict object holding instances of JobDict. These are the sub-jobs.
         - jobparams: All parameters regarding actual calculations. It contains,
           at start, only two predefined parameters.
@@ -128,6 +138,7 @@ class JobDict(object):
            - all others are keyword arguments.
         - parent is an instance to the parent job (eg the instance which holds
           self in children) or None.
+        - It may also have a _marked attribute to check for bled/unbled jobs.
       The __getattr__, __setattr__, and __delattr__ have been rewired to
       perform on objects in jobparams. Note however that __setattr__ will not
       set new object in jobparams, but rather pass on the call to the parent
@@ -249,7 +260,8 @@ class JobDict(object):
       result = result.children[name]
     return result
 
-  def has_job(self):
+  @property
+  def is_job(self):
     """ True if self.job has keyword \"vasp\". """
     if "vasp" not in self.jobparams: return False
     return self.jobparams["vasp"] != None
@@ -346,7 +358,7 @@ class JobDict(object):
     from os.path import join
     if outdir == None: outdir = ""
     # Yield this job if it exists.
-    if self.has_job(): yield self, outdir
+    if self.is_job: yield self, outdir
     # Walk throught children jobdict.
     for name in self.subjobs():
       for u in self[name].walk_through(join(outdir, name)): 
@@ -355,38 +367,16 @@ class JobDict(object):
   @property
   def nbjobs(self):
     """ Returns the number of jobs in tree. """
-    return len([0 for j, o in self.walk_through() if not hasattr(j, "_bled")])
+    return len([0 for j, o in self.walk_through() if not j.is_marked])
 
   @property
-  def is_bled(self): return hasattr(self, "_bled")
-  def _bleed(self):
-    """ Adds _bled attribute. """
-    super(JobDict, self).__setattr__("_bled", True)
-  def _unbleed(self):
-    """ Adds _bled attribute. """
-    if hasattr(self, "_bled"): self.__delattr__("_bled")
-
-  def bleed(self):
-    """ Retrieves and removes first actual job. 
-    
-        This alters the dictionary. Use L{unbleed} to undo all bleed calls.
-        The first jobs jobparam is reset. Subjobs are not, of course.
-        Returns None if no jobs.
-    """
-    for job, outdir in self.walk_through():
-      if hasattr(job, "_bled"): continue
-      job._bleed()
-      return job, outdir
-    return None, None
-
-  def unbleed(self):
-    """ Resets a bleeded dictionary.
-
-        All bleeded jobs are reset as unbleeded.
-    """
-    self._unbleed()
-    for name in self.subjobs(): self.children[name].unbleed()
-      
+  def is_marked(self): return hasattr(self, "_marked")
+  def mark(self):
+    """ Adds _marked attribute. """
+    if self.is_job: super(JobDict, self).__setattr__("_marked", True)
+  def unmark(self):
+    """ Adds _marked attribute. """
+    if hasattr(self, "_marked"): self.__delattr__("_marked")
 
 current = JobDict()
 """ Global with current joblist. """
@@ -486,7 +476,8 @@ def bleed(path=None, outdir=None, comm=None):
         # Checks if there are any jobs.
         if jobdict.nbjobs == 0: break
         # Pops first job.
-        job, directory = jobdict.bleed()
+        for job, outdir in jobdict.walk_through():
+          if not jobdict.is_marked: job.mark(); break
         # writes modified dictionary to path.
         with open(path, "wb") as file: dump(jobdict, file)
       broadcast(comm, (job, join(outdir, directory)), 0)
@@ -511,7 +502,7 @@ def unbleed(path=None, comm=None):
     assert exists(path), IOError( "Job dictionary" + path + "does not exist.")
     with acquire_lock(path) as lock_file:
       with open(path, "rb") as file: jobdict = load_pickle(file)
-      jobdict.unbleed()
+      for job, outdir in jobdict.walk_through(): jobdict.unmark()
       with open(path, "wb") as file: dump(jobdict, file)
   # synchronizes communicator.
   if comm != None: comm.barrier()
@@ -538,14 +529,12 @@ def unsucessfull(jobdict, extractor, outdir = None):
   # otherwise make deep copy.
   else: jobdict = deepcopy(jobdict)
 
-  # now unbleeds.
-  jobdict.unbleed()
-
-  # then go through dictionary.
+  # go through dictionary.
   for job, directory in jobdict.walk_through(outdir=outdir):
     extractor.directory = directory
     # and bleed successfull jobs.
-    if extractor.success: job._bleed()
+    if extractor.success: job.mark()
+    else: job.unmark()
 
   return jobdict
 
