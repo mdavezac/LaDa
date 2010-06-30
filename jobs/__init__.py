@@ -375,7 +375,7 @@ class JobDict(object):
       if hasattr(job, "_bled"): continue
       job._bleed()
       return job, outdir
-    return None
+    return None, None
 
   def unbleed(self):
     """ Resets a bleeded dictionary.
