@@ -374,6 +374,7 @@ class JobDict(object):
   def mark(self):
     """ Adds _marked attribute. """
     if self.is_job: super(JobDict, self).__setattr__("_marked", True)
+    
   def unmark(self):
     """ Adds _marked attribute. """
     if hasattr(self, "_marked"): self.__delattr__("_marked")
@@ -476,8 +477,8 @@ def bleed(path=None, outdir=None, comm=None):
         # Checks if there are any jobs.
         if jobdict.nbjobs == 0: break
         # Pops first job.
-        for job, outdir in jobdict.walk_through():
-          if not jobdict.is_marked: job.mark(); break
+        for job, directory in jobdict.walk_through():
+          if not job.is_marked: job.mark(); break
         # writes modified dictionary to path.
         with open(path, "wb") as file: dump(jobdict, file)
       broadcast(comm, (job, join(outdir, directory)), 0)
