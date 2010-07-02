@@ -1,7 +1,7 @@
 subroutine iaga_set_mpi( in_comm_handle )
  
   use mpigroup, only : comm_handle, irank, arank
-  use MomentumDipole, only : params
+  use escan, only : params
   implicit none
   include "mpif.h"
 
@@ -103,56 +103,6 @@ subroutine iaga_get_eigenvalues( states_, n_ )
   i = min(n_, size(zebn))
   states_(1:i) = zebn(1:i)*27.211396d0 ! goes to eV from Hartree units.
   deallocate( zebn )
-
-end subroutine
-
-! Interface to subroutine in MomentumDipole module for easy C access.
-subroutine momentum( in_inputfilename, in_fsize, &
-                     in_dirvalence, in_dsizeA, &
-                     in_dirconduction, in_dsizeB, &
-                     in_indicesA, in_indicesB, & 
-                     in_bandsA, in_bandsB, &
-                     io_dipoles, in_dip2, in_dip3 )
-
-  use MomentumDipole, only : module_momentum => momentum
-
-  ! size of input filename
-  integer, intent(in) :: in_fsize
-  ! input filename. For folded spectrum calculations, only one input is
-  ! needed, wether vbm or cbm. It is implicit that these calculations differ
-  ! only by the reference energy. 
-  character(len= in_fsize), intent(in) :: in_inputfilename
-  ! size of directory filename A.
-  integer, intent(in) :: in_dsizeA
-  ! wfn filename A. 
-  character(len= in_dsizeA), intent(in) :: in_dirvalence
-  ! size of directory filename B.
-  integer, intent(in) :: in_dsizeB
-  ! wfn filename B.
-  character(len= in_dsizeB), intent(in) :: in_dirconduction
-
-  ! number of bands A.
-  integer, intent(in) :: in_bandsA
-  ! band/spin indices A.
-  integer, intent(in) :: in_indicesA( in_bandsA )
-  ! number of bands B.
-  integer, intent(in) :: in_bandsB
-  ! band/spin indices B.
-  integer, intent(in) :: in_indicesB( in_bandsB )
-  ! number of valence dipole 
-  integer, intent(in) :: in_dip2 
-  ! number of conduction dipole 
-  integer, intent(in) :: in_dip3 
-  ! Dipole output.
-  complex( kind=8 ),  intent(inout) :: io_dipoles( 3, in_dip2, in_dip3 )
-
-  call module_momentum( in_inputfilename, in_fsize, &
-                        in_dirvalence, in_dsizeA, &
-                        in_dirconduction, in_dsizeB, &
-                        in_indicesA, in_indicesB, & 
-                        in_bandsA, in_bandsB, &
-                        io_dipoles, in_dip2, in_dip3 )
-
 
 end subroutine
 

@@ -15,7 +15,7 @@ if DOVFF
   VFFSUBDIR = vff
 endif 
 if DOPESCAN
-  PESCANSUBDIR = pescan_interface
+  PESCANSUBDIR = escan
 endif 
 if DOSEPARABLE
   SEPARABLEDIR = separable

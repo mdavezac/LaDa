@@ -43,6 +43,8 @@ Module Escan
 
   endtype
   real( kind=8 ), parameter, public :: pi = 3.14159265358979323846264338327948d0
+  ! Escan parameters.
+  type( t_Escan ), public :: params 
 
   contains
 

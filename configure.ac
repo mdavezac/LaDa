@@ -82,14 +82,6 @@ AC_ARG_ENABLE(mpi,
      esac],[mpi=$dompidefault])
 AH_TEMPLATE([_MPI])
 
-# AC_ARG_ENABLE(emass,
-#      [  --enable-emass                Turn on electronic mass optimization],
-#      [case "${enableval}" in
-#        yes) emass=true ;;
-#        no)  emass=false ;;
-#        *) AC_MSG_ERROR(bad value ${enableval} for --enable-emass) ;;
-#      esac],[emass=$enall])
-
 AC_ARG_ENABLE(separable,
      [  --enable-separable            Turn on sum of separable functions module.],
      [case "${enableval}" in
@@ -106,13 +98,13 @@ AC_ARG_ENABLE(vff,
        *) AC_MSG_ERROR(bad value ${enableval} for --enable-vff) ;;
      esac],[vff=$enall])
 
-AC_ARG_ENABLE(pescan,
-     [  --enable-pescan               Turn on pescan],
+AC_ARG_ENABLE(escan,
+     [  --enable-escan               Turn on escan],
      [case "${enableval}" in
-       yes) pescan=true ;;
-       no)  pescan=false ;;
-       *) AC_MSG_ERROR(bad value ${enableval} for --enable-pescan) ;;
-     esac],[pescan=$enall])
+       yes) escan=true ;;
+       no)  escan=false ;;
+       *) AC_MSG_ERROR(bad value ${enableval} for --enable-escan) ;;
+     esac],[escan=$enall])
 
 AC_ARG_ENABLE(ce,
      [  --enable-ce                   Turn on cluster-expansion module],
@@ -132,23 +124,12 @@ AC_ARG_ENABLE(debug,
 AH_TEMPLATE([_PRINT_ALL_PROCS])
 AH_TEMPLATE([NDEBUG])
 
-AC_ARG_ENABLE(nolaunch,
-     [  --enable-nolaunch             Runs fake pescan/darwin],
-     [case "${enableval}" in
-       yes) nolaunch=true ;;
-       no)  nolaunch=false ;;
-       *) AC_MSG_ERROR(bad value ${enableval} for --enable-nolaunch) ;;
-     esac],[nolaunch=false])
-AH_TEMPLATE([_NOLAUNCH])
 if test x$vasp = xtrue; then
   python=true
 fi
-if test x$nolaunch = xtrue; then
-  AC_DEFINE([_NOLAUNCH],[],[])
+if test x$escan = xtrue; then
+  python=true
 fi
-
-direct_iaga=true;
-
 
 AC_SUBST(EIGEN_CXXFLAGS)
 AC_SUBST(VASP_LDFLAGS)
@@ -165,10 +146,6 @@ fi
 AH_TEMPLATE([__DOPYTHON])
 if test x$python = xtrue; then
   AC_DEFINE([__DOPYTHON],[],[])
-fi
-AH_TEMPLATE([__DOPYTHONESCAN])
-if test x$pescan$python$direct_iaga = xtruetruetrue; then
-  AC_DEFINE([__DOPYTHONESCAN],[],[])
 fi
 AH_TEMPLATE([LADA_GLOBAL_LOAD])
 if test x$global_load = xTrue; then
@@ -256,14 +233,11 @@ AC_CHECK_LIB(m,main)
 
 # conditional
 AM_CONDITIONAL(DOMPI, test x$mpi = xtrue)
-AM_CONDITIONAL(DOPESCAN, test x$pescan = xtrue)
+AM_CONDITIONAL(DOPESCAN, test x$escan = xtrue)
 AM_CONDITIONAL(DOCE, test x$ce = xtrue)
 AM_CONDITIONAL(DOCEOPT, test x$ceopt = xtrue)
 AM_CONDITIONAL(DOVFF, test x$vff = xtrue)
-AM_CONDITIONAL(NOLAUNCH, test x$nolaunch = xtrue)
 AM_CONDITIONAL(DOALLOYLAYERSOPT, test x$alloylayersopt = xtrue)
-AM_CONDITIONAL(DODIRECTIAGA, test x$direct_iaga = xtrue)
-AM_CONDITIONAL(DOPYTHONPESCAN, test x$python$pescan$direct_iaga = xtruetruetrue)
 AM_CONDITIONAL(DOPYTHON, test x$python = xtrue)
 AM_CONDITIONAL(DOSEPARABLE, test x$separable = xtrue)
 AM_CONDITIONAL(DOMODELS, test x$models = xtrue)
@@ -347,8 +321,7 @@ AC_SUBST(MINUIT_CFLAGS)
 
 AC_OUTPUT(Makefile math/Makefile math/python/Makefile physics/Makefile physics/python/Makefile
           opt/Makefile opt/python/Makefile crystal/Makefile crystal/python/Makefile
-          vff/Makefile vff/python/Makefile mpi/Makefile pescan_interface/Makefile 
-          pescan_interface/python/Makefile
+          vff/Makefile vff/python/Makefile mpi/Makefile escan/Makefile
           print/Makefile separable/Makefile ce/Makefile ce/python/Makefile
           python/Makefile separable/fixedlattice/Makefile 
           minimizer/Makefile minimizer/python/Makefile models/Makefile models/python/Makefile 
@@ -368,12 +341,6 @@ fi
 if test "$vff" = true; then
   echo " _ vff functional ";
 fi
-if test "$pescan$direct_iaga" = truefalse; then
-  echo " _ interface to nanopse/pescan functional as external program. ";
-fi
-if test "$pescan$direct_iaga" = truetrue; then
-  echo " _ interface to nanopse/pescan functional as external library.";
-fi
 if test "$models" = true; then
   echo " _ Model functionals"
 fi
@@ -389,6 +356,9 @@ fi
 if test x$separable = xtrue; then
   echo " _ Sum of separable functions fitting."
 fi
+if test x$escan = xtrue; then
+  echo " _ Escan python bindings. "
+fi
 echo ""
 if test "$mpi" = true; then
   echo "Will Include MPI where available."
@@ -399,10 +369,7 @@ fi
 if test "$debug" = true; then
   echo "Compiling with debug options"
 fi
-if test "$nolaunch" = true; then
-  echo "Compiling with _NOLAUNCH.... Are you sure you know what you're doing? "
-fi
-echo ""
+/cho ""
 if test "$founddox" = true; then
   echo "Type \"make doc\" for doxygen documentation"
   echo "Then check out $DOCDIR/html/index.html"

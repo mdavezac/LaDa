@@ -9,8 +9,6 @@
 #include <config.h>
 #endif
 
-#include <crystal/structure.h>
-#include "../interface.h"
 
 namespace LaDa
 {

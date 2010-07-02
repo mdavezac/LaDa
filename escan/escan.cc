@@ -2,26 +2,10 @@
 # include <config.h>
 #endif
 
-#include <boost/python/class.hpp>
-#include <boost/python/object.hpp>
-#include <boost/python/tuple.hpp>
 #include <boost/python/def.hpp>
-#include <boost/python/str.hpp>
-#include <boost/python/enum.hpp>
-#include <boost/python/data_members.hpp>
-#include <boost/python/return_value_policy.hpp>
-#include <boost/python/return_internal_reference.hpp>
-#include <boost/python/with_custodian_and_ward.hpp>
-#include <boost/python/copy_const_reference.hpp>
-#include <boost/python/make_constructor.hpp>
-#include <boost/serialization/serialization.hpp>
-#include <boost/serialization/vector.hpp>
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
 
-
-#include <python/numpy_types.h>
-#include <opt/tuple_serialize.h>
+#include <physics/physics.h>
+#include <crystal/structure.h>
 
 #include "escan.hpp"
 
@@ -67,17 +51,24 @@ void just_call_genpot(boost::mpi::communicator const &_c)
 
 namespace LaDa
 {
-  namespace bp = boost::python;
+  namespace python
+  {
+    namespace bp = boost::python;
+    types::t_unsigned nb_valence_states( Crystal::TStructure<std::string> const &_str ) 
+    {
+      Crystal::TStructure<std::string>::t_Atoms::const_iterator i_atom = _str.atoms.begin();
+      Crystal::TStructure<std::string>::t_Atoms::const_iterator i_atom_end = _str.atoms.end();
+      types::t_unsigned bgstates = 0;
+      for(; i_atom != i_atom_end; ++i_atom)
+        bgstates += Physics::Atomic::Charge( i_atom->type );
+      return bgstates;
+    }
     void expose_escan()
     {
-      bp::def("_call_escan", &just_call_escan);
-//     bp::def("_call_escan", &just_call_escan2, "Private interface. @see lada.escan.call_escan.");
-      bp::def("_call_genpot", &just_call_genpot);
-//     bp::def("_call_genpot", &just_call_genpot2, "Private interface. @see lada.escan.call_escan.");
-
-      bp::def( "nb_valence_states", &nb_valence_states<Crystal::TStructure<std::string> >,
-               bp::arg("structure"), "Returns the number of valence states in a structure." );
+      bp::def("_call_escan", &just_call_escan, "Calls escan, accepts a boost.mpi.communicator.");
+      bp::def("_call_genpot", &just_call_genpot, "Calls genpot, accepts a boost.mpi.communicator.");
+      bp::def( "nb_valence_states", &nb_valence_states, bp::arg("structure"), 
+               "Returns the number of valence states in a structure." );
     }
-
   } // namespace python
 } // namespace LaDa

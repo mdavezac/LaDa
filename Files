@@ -84,13 +84,6 @@ opt_python_c = errortuple.hpp convexhull.impl.hpp redirect.hpp
 EMASS_CC = emass.cc
 EMASS_H  = emass.h
 EMASS_DOC = $(EMASS_H) $(EMASS_CC) 
-pescan_f90 =  escan_types.f90 momentum.f90 wavefunctions.f90 fortran.f90 
-pescan_cc = interface.cc bandgap.cc dipole_elements.cc emass.cc
-pescan_h  = interface.h  bandgap.h  va.h dipole_elements.h emass.h
-pescan_impl_h  = interface.localclasses.h va.impl.h
-pescan_doc = $(pescan_h) $(pescan_cc) $(pescan_f90) $(pescan_impl_h)
-pescan_python_cc = escan.cc bandgap.cc python.cc emass.cc dipole_elements.cc wavefunctions.cc
-pescan_python_h = escan.hpp bandgap.hpp emass.hpp dipole_elements.hpp wavefunctions.hpp
 
 physics_cc = 
 physics_h  = physics.h
@@ -153,8 +146,6 @@ ALL_DOCS = $(top_srcdir)/doxy.conf $(top_srcdir)/$(docs_h) \
            $(addprefix $(top_srcdir)/mpi/,$(mpi_doc)) \
            $(addprefix $(top_srcdir)/opt/,$(opt_doc)) \
            $(addprefix $(top_srcdir)/models/,$(models_clj_doc)) \
-           $(addprefix $(top_srcdir)/pescan_interface/,$(EMASS_DOC)) \
-           $(addprefix $(top_srcdir)/pescan_interface/,$(pescan_doc)) \
            $(addprefix $(top_srcdir)/physics/,$(physics_doc)) \
            $(addprefix $(top_srcdir)/print/,$(print_doc)) \
            $(addprefix $(top_srcdir)/separable/,$(separable_doc)) \
@@ -289,11 +280,6 @@ $(top_builddir)/atomic_potentials/libpotentials.la: \
             $(addprefix $(top_srcdir)/atomic_potentials/, $(ap_h) )\
             $(addprefix $(top_srcdir)/atomic_potentials/, $(ap_cc) ) 
 	@cd $(top_builddir)/atomic_potentials; $(MAKE) libpotentials.la
-
-$(top_builddir)/pescan_interface/libescan.la: \
-    $(addprefix $(top_srcdir)/pescan_interface/, $(pescan_h) )\
-    $(addprefix $(top_srcdir)/pescan_interface/, $(pescan_cc) ) 
-	@cd $(top_builddir)/pescan_interface; $(MAKE) libescan.la
 
 $(top_builddir)/separable/libseparable.la: \
     $(addprefix $(top_srcdir)/separable/, $(separable_h) )\

@@ -5,6 +5,8 @@
 #include <unistd.h>
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
+#include <boost/mpi/communicator.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <boost/python/def.hpp>
 #include <boost/python/object.hpp>
@@ -16,8 +18,8 @@
 #include <boost/python/return_arg.hpp>
 
 #include <python/numpy_types.h>
+#include <math/eigen.h>
 
-#include "../interface.h"
 #include "wavefunctions.hpp"
 
 

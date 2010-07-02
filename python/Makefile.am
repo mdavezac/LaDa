@@ -24,21 +24,9 @@ if DOVFF
   pythonextensions += vff
   libpython_lada_la_LIBADD += $(top_builddir)/vff/libvff.la 
 endif
-if DOPYTHONPESCAN
-  pythonextensions += escan
-  libpython_lada_la_LDFLAGS += @FCLIBS@ @LD_IAGA_FLAGS@
-  libpython_lada_la_LIBADD += $(top_builddir)/pescan_interface/libescan.la 
-endif
 if DOPOTENTIALS
   pythonextensions += potentials
   libpython_lada_la_LIBADD += $(top_builddir)/atomic_potentials/libpotentials.la 
-endif
-
-if DOPYTHONPESCAN
-  liblada_la_FCFLAGS = $(FCFLAGS) @IAGA_FCFLAGS@
-  liblada_la_F77FLAGS = $(FCFLAGS) @IAGA_FCFLAGS@
-  liblada_la_F90FLAGS = $(FCFLAGS) @IAGA_FCFLAGS@
-  liblada_la_FFLAGS = $(FCFLAGS) @IAGA_FCFLAGS@
 endif
 
 if DOMODELS
