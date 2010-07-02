@@ -6,7 +6,7 @@
 
 #include <opt/debug.h>
 #include <opt/tinyxml.h>
-#include <opt/patpath.h>
+#include <opt/path.h>
  
 namespace LaDa
 {

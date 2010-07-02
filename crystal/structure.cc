@@ -6,7 +6,6 @@
 #include <sstream>
 #include <boost/lexical_cast.hpp>
 #include <boost/tuple/tuple_io.hpp>
-#include <boost/algorithm/string/trim.hpp>
 
 #include <Eigen/LU>
 
@@ -155,7 +154,6 @@ namespace LaDa
 
     bool Structure :: load_cell( const TiXmlElement &_element )
     {
-      namespace ba = boost::algorithm;
       // reads in cell
       const TiXmlElement* child = _element.FirstChildElement( "Cell" );
       if( not child ) return false;
@@ -170,9 +168,9 @@ namespace LaDa
                     "Incomplete cell in xml input.\n" )
 
         __TRYBEGIN
-          cell(i,0) = boost::lexical_cast<types::t_real>( ba::trim_copy(child->Attribute("x")) );
-          cell(i,1) = boost::lexical_cast<types::t_real>( ba::trim_copy(child->Attribute("y")) );
-          cell(i,2) = boost::lexical_cast<types::t_real>( ba::trim_copy(child->Attribute("z")) );
+          cell(i,0) = boost::lexical_cast<types::t_real>(child->Attribute("x"));
+          cell(i,1) = boost::lexical_cast<types::t_real>(child->Attribute("y"));
+          cell(i,2) = boost::lexical_cast<types::t_real>(child->Attribute("z"));
         __TRYEND(, "Could not parse cell input.\n" )
         if ( child->Attribute("freeze") )
         {

@@ -1,8 +1,9 @@
 #include <stdlib.h>
+#include <string>
 
 #include <boost/xpressive/basic_regex.hpp>
 #include <boost/xpressive/regex_algorithms.hpp>
-#include <boost/xpressive/regex_primitive.hpp>
+#include <boost/xpressive/regex_primitives.hpp>
 #include <boost/xpressive/regex_actions.hpp>
 
 
@@ -30,31 +31,30 @@ namespace LaDa
         char *result_ = get_current_dir_name();
         std::string const result = result_;
         free(result_);
-        chdir(orig_.c_str());
+        chdir(orig_);
         free(orig_);
         return result;
       }
     };
 
 
-    boost::filesystem::path const expandpath(boost::filesystem::path const &_path) 
+    boost::filesystem::path const expand_path(boost::filesystem::path const &_path) 
     {
-      namespace bx = boost::xpressive
-      std::string path = _path;   
-      bx::sregex home = (bx::beos|bx::as_xpr('~')) >> +(bx::eos|~bx::as_xpr('/'));
-      bx::sregex var1 = bx::as_xpr('$') >> (bx::s1_ = +(~bx::as_xpr('/')));
-      bx::sregex var2 = bx::as_xpr("$(") >> (bx::s1_ = +(~bx::as_xpr('/'))) >> bx::as_xpr(')');
+      namespace bx = boost::xpressive;
+      std::string path(_path.string());   
+      bx::sregex home = (bx::bos|bx::as_xpr('~')) >> +(bx::eos|~bx::as_xpr('/'));
+      bx::sregex var1 = bx::as_xpr('$') >> (bx::s1 = +(~bx::as_xpr('/')));
+      bx::sregex var2 = bx::as_xpr("$(") >> (bx::s1 = +(~bx::as_xpr('/'))) >> bx::as_xpr(')');
       bx::cmatch what;
       bx::function<GetEnv>::type const rep_env = {{}};
       bx::function<GetEnv>::type const rep_home = {{}};
 
 
-      path = bx::regex_replace(path, var1, env(bx::as<std::string const>(bx::s1_)));
-      path = bx::regex_replace(path, var2, env(bx::as<std::string const>(bx::s1_)));
-      path = bx::regex_replace(path, home, rep_home(bx::as<std::string const>(bx::s1_)));
+      path = bx::regex_replace(path, var1, rep_env(bx::as<std::string>(bx::s1)));
+      path = bx::regex_replace(path, var2, rep_env(bx::as<std::string>(bx::s1)));
+      path = bx::regex_replace(path, home, rep_home(bx::as<std::string>(bx::s1)));
     }
      
 
   }
 }
-#endif

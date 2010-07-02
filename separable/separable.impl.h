@@ -2,8 +2,7 @@
 //  Version: $Id$
 //
 
-#include <boost/xpressive/algorithms.hpp>
-#include <boost/xpressive/primitive.hpp>
+#include <boost/algorithm/string/replace.hpp>
 #include <opt/algorithms.h>
 
 namespace LaDa
@@ -104,7 +103,8 @@ namespace LaDa
       std::string str = sstr.str();
       size_t i = str.rfind('\n');
       if( i != std::string::npos ) str = str.substr( 0, i );
-      _stream << _func.name << bx::regex_replace( ":\n" + str, bx::_n, "\n   ");
+      boost::algorithm::replace_all(str, "\n", "\n   ");
+      _stream << _func.name << str;
       return _stream;
     }
 

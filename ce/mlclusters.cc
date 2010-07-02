@@ -11,6 +11,7 @@
 #include <boost/xpressive/regex_primitives.hpp>
 #include <boost/xpressive/regex_algorithms.hpp>
 #include <boost/xpressive/regex_compiler.hpp>
+#include <boost/algorithm/string/replace.hpp>
 
 #include <opt/tinyxml.h>
 
@@ -108,7 +109,9 @@ namespace LaDa
       MLClusters::const_iterator i_cls = _class.begin();
       MLClusters::const_iterator const i_cls_end = _class.end();
       for(; i_cls != i_cls_end; ++i_cls) stream << *i_cls;
-      return _stream << bx::regex_replace(stream.str(), bx::_n, "\n    ");
+      std::string indented = stream.str();
+      boost::algorithm::replace_all(indented, "\n", "\n   ");
+      return _stream << indented;
     }
     
     bool bypass_comment( std::istream & _sstr, std::string &_line )

@@ -1,4 +1,5 @@
-#ifdef LADA_PATH_H
+#ifndef LADA_PATH_H
+#define LADA_PATH_H
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -11,7 +12,7 @@ namespace LaDa
   namespace opt
   {
     //! Expand all user home paths and environment variables.
-    boost::filesystem::path const expandpath(boost::filesystem::path const &_path);
+    boost::filesystem::path const expand_path(boost::filesystem::path const &_path);
   }
 }
 #endif
