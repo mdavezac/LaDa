@@ -16,7 +16,6 @@
 #include <boost/python/return_arg.hpp>
 
 #include <python/numpy_types.h>
-#include <opt/initial_path.h>
 
 #include "../interface.h"
 #include "wavefunctions.hpp"

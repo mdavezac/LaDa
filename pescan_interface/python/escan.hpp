@@ -17,9 +17,6 @@ namespace LaDa
   namespace python
   {
     void expose_escan();
-    void expose_genpot();
-    bool create_directory(Pescan::Interface::t_Path const &_path);
-    void set_scale(Pescan::Interface &_interface, Crystal::TStructure<std::string> const &_str);
   }
 } // namespace LaDa
 #endif

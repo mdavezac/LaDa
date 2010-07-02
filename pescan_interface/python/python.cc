@@ -14,9 +14,6 @@
 #include <numpy/ndarrayobject.h>
 
 #include "escan.hpp"
-#include "bandgap.hpp"
-#include "emass.hpp"
-#include "dipole_elements.hpp"
 #include "wavefunctions.hpp"
 
 BOOST_PYTHON_MODULE(_escan)
@@ -31,11 +28,5 @@ BOOST_PYTHON_MODULE(_escan)
   bp::handle<> math( bp::borrowed(PyImport_ImportModule("lada.math")) );
 
   LaDa::python::expose_escan();
-  LaDa::python::expose_bands();
-  LaDa::python::expose_bandgap();
-  LaDa::python::expose_oscillator_strength();
-  LaDa::python::expose_genpot();
-  LaDa::python::expose_emass();
-  LaDa::python::expose_dipoles();
   LaDa::python::expose_wfns();
 }
