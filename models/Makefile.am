@@ -25,7 +25,6 @@ librelaxer_la_LIBADD = $(top_builddir)/crystal/libcrystal.la \
                        $(top_builddir)/math/libmath.la \
                        $(top_builddir)/minimizer/libminimizer.la \
                        $(top_builddir)/opt/libopt.la \
-                       $(top_builddir)/print/libprint.la \
                        $(top_builddir)/physics/libphysics.la
 
 # bin_PROGRAMS = clj coollj
@@ -37,7 +36,6 @@ librelaxer_la_LIBADD = $(top_builddir)/crystal/libcrystal.la \
 #	 $(top_builddir)/math/libmath.la \
 #	 $(top_builddir)/minimizer/libminimizer.la \
 #	 $(top_builddir)/opt/libopt.la \
-#	 $(top_builddir)/print/libprint.la \
 #	 $(top_builddir)/physics/libphysics.la
 
 

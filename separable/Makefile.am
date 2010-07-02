@@ -18,8 +18,7 @@ cubic_LDADD = libseparable.la \
               $(top_builddir)/math/libmath.la \
               $(top_builddir)/opt/libopt.la \
               $(top_builddir)/mpi/libmpiobject.la \
-              $(top_builddir)/physics/libphysics.la \
-              $(top_builddir)/print/libprint.la 
+              $(top_builddir)/physics/libphysics.la 
 
 tetra_SOURCES = $(cubic_SOURCES)
 tetra_CPPFLAGS =  $(AM_CPPFLAGS) -D_TETRAGONAL_CE_

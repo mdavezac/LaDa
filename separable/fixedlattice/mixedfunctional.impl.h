@@ -5,11 +5,11 @@
 #include <boost/bind.hpp>
 #include <boost/lambda/bind.hpp>
 #include <boost/numeric/ublas/io.hpp>
+#include <boost/algorithm/string/trim.hpp>
 #include <iostream>
 
 #include <ce/find_pis.h>
 #include <ce/create_pairs.h>
-#include <print/manip.h>
 
 namespace LaDa
 {
@@ -92,9 +92,9 @@ namespace LaDa
                             bool _rmpairs, bool _addJ0, bool _addJ1 )
     {
       __DEBUGTRYBEGIN
-      const std::string csxml = Print::StripEdges( _csxml );
-      const std::string desc = Print::StripEdges( _desc );
-      const std::string jtypes = Print::StripEdges( _jtypes );
+      const std::string csxml  = boost::algorithm::trim_copy( _csxml );
+      const std::string desc   = boost::algorithm::trim_copy( _desc );
+      const std::string jtypes = boost::algorithm::trim_copy( _jtypes );
       if( not csxml.empty() )
       {
         TiXmlDocument doc( _csxml );

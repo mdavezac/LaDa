@@ -33,8 +33,6 @@
 # define __PROGNAME__ "Valence Force Field Functional for Zinc-Blende Structures"
 #endif
 
-#include <print/manip.h>
-
 #ifdef _MPI
 # include <boost/mpi/environment.hpp>
 #endif

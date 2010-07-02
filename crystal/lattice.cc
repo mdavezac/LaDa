@@ -12,7 +12,6 @@
 
 #include <Eigen/LU>
 
-#include <print/manip.h>
 #include <opt/tinyxml.h>
 #include <math/misc.h>
 

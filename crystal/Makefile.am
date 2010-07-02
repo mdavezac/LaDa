@@ -27,5 +27,4 @@ SUBDIRS = python
 #	      $(top_builddir)/math/libmath.la \
 #	      $(top_builddir)/opt/libopt.la \
 #	      $(top_builddir)/mpi/libmpiobject.la \
-#	      $(top_builddir)/print/libprint.la \
 #	      @BOOST_MPI@ @BOOST_SERIALIZATION@ @BOOST_REGEX@

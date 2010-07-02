@@ -322,7 +322,7 @@ AC_SUBST(MINUIT_CFLAGS)
 AC_OUTPUT(Makefile math/Makefile math/python/Makefile physics/Makefile physics/python/Makefile
           opt/Makefile opt/python/Makefile crystal/Makefile crystal/python/Makefile
           vff/Makefile vff/python/Makefile mpi/Makefile escan/Makefile
-          print/Makefile separable/Makefile ce/Makefile ce/python/Makefile
+          separable/Makefile ce/Makefile ce/python/Makefile
           python/Makefile separable/fixedlattice/Makefile 
           minimizer/Makefile minimizer/python/Makefile models/Makefile models/python/Makefile 
           atomic_potentials/Makefile atomic_potentials/python/Makefile 

@@ -50,8 +50,7 @@ endif
 libpython_lada_la_LIBADD +=  $(top_builddir)/crystal/libcrystal.la \
                              $(top_builddir)/math/libmath.la \
                              $(top_builddir)/opt/libpythonconvenience.la \
-                             $(top_builddir)/physics/libphysics.la \
-                             $(top_builddir)/print/libprint.la 
+                             $(top_builddir)/physics/libphysics.la 
 
 
 pkgpyexec_PYTHON = __init__.py

@@ -17,7 +17,6 @@ cubic_LDADD =   libce.la \
 		$(top_builddir)/math/libmath.la \
 		$(top_builddir)/physics/libphysics.la \
 		@MPI_ADDLIB@ \
-		$(top_builddir)/print/libprint.la \
                 $(top_builddir)/opt/libopt.la \
 		$(top_builddir)/minimizer/libminimizer.la
 tetra_SOURCES = $(cubic_SOURCES)
@@ -31,7 +30,6 @@ regular_LDADD = libce.la \
                 $(top_builddir)/crystal/libcrystal.la \
 		$(top_builddir)/math/libmath.la \
 		$(top_builddir)/physics/libphysics.la \
-		$(top_builddir)/print/libprint.la \
                 $(top_builddir)/opt/libopt.la \
 		$(top_builddir)/minimizer/libminimizer.la \
 		$(top_builddir)/mpi/libmpiobject.la
