@@ -23,7 +23,7 @@
 #include <opt/debug.h>
 #include <opt/types.h>
 #include <opt/tinyxml.h>
-#include <print/stdout.h>
+#include <opt/path.h>
 
 #include "atom.h"
 #include "symmetry_operator.h"
@@ -245,7 +245,7 @@ namespace LaDa
       if( child->Attribute("filename") )
       {
         const boost::filesystem::path
-          n( Print::reformat_home( child->Attribute("filename") ) );
+          n( opt::expand_path( child->Attribute("filename") ) );
         __DOASSERT( not boost::filesystem::exists( n ),
                     n.string() + " could not be found.\n" )
         std::string file;
@@ -257,7 +257,6 @@ namespace LaDa
         child = doc2.FirstChild( "Job" )->FirstChildElement( "Lattice" );
         __DOASSERT( not child, "Could not find Lattice in input.\n" )
       }
-      Print :: out << *child << "\n";
       __DOASSERT( not result->Load(*child),
                   "Error while reading Lattice from input.\n")
 #     if defined (_TETRAGONAL_CE_)

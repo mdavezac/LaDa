@@ -16,7 +16,6 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 
-#include <print/manip.h>
 #include <mpi/mpi_object.h>
 #include <opt/bpo_macros.h>
 
@@ -24,14 +23,8 @@
 
 #define __PROGNAME__ "lamarck"
 
-#if defined( _LADADEBUG ) && defined( _MPI )
-#include <print/stdout.h>
-#define OUTPUT ::LaDa::Print::out
-#define ENDLINE ::LaDa::Print::endl
-#else
 #define OUTPUT std::cout
 #define ENDLINE "\n"
-#endif
 #ifndef TIXML_USE_STL
 #error not using TIXML_USE_STL
 #endif
@@ -57,12 +50,6 @@ int main(int argc, char *argv[])
   namespace fs = boost::filesystem;
   __TRYBEGIN
   __MPI_START__
-  __MPICODE(
-    __DODEBUGCODE( 
-      ::LaDa::Print::out.init( "out" );
-      ::LaDa::Print::out.doprint( true );
-    )
-  )
 
   __BPO_START__
   __BPO_RERUNS__;

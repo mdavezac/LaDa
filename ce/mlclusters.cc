@@ -12,7 +12,6 @@
 #include <boost/xpressive/regex_algorithms.hpp>
 #include <boost/xpressive/regex_compiler.hpp>
 
-#include <print/manip.h>
 #include <opt/tinyxml.h>
 
 #include "mlclusters.h"
@@ -109,7 +108,7 @@ namespace LaDa
       MLClusters::const_iterator i_cls = _class.begin();
       MLClusters::const_iterator const i_cls_end = _class.end();
       for(; i_cls != i_cls_end; ++i_cls) stream << *i_cls;
-      return _stream << Print::indent( stream.str(), "    ");
+      return _stream << bx::regex_replace(stream.str(), bx::_n, "\n    ");
     }
     
     bool bypass_comment( std::istream & _sstr, std::string &_line )

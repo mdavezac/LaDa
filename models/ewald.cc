@@ -7,6 +7,7 @@
 #endif
 
 #include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string/trim.hpp>
 
 #include <physics/physics.h>
 
@@ -103,7 +104,7 @@ namespace LaDa
       for(; child; child = child->NextSiblingElement("Atom") )
       {
         if( child->Attribute("type") and child->Attribute("Charge") ) continue;
-        const std::string type = Print::StripEdges( child->Attribute("type") );
+        const std::string type = boost::algorithm::trim_copy(child->Attribute("type"));
         const types::t_real charge
           = boost::lexical_cast<types::t_real>( child->Attribute("charge") );
         __DOASSERT( charges.find( type ) != charges.end(),

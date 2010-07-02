@@ -2,8 +2,9 @@
 //  Version: $Id$
 //
 
+#include <boost/xpressive/algorithms.hpp>
+#include <boost/xpressive/primitive.hpp>
 #include <opt/algorithms.h>
-#include <print/manip.h>
 
 namespace LaDa
 {
@@ -103,7 +104,7 @@ namespace LaDa
       std::string str = sstr.str();
       size_t i = str.rfind('\n');
       if( i != std::string::npos ) str = str.substr( 0, i );
-      _stream << _func.name << ":\n" << Print::indent( "   ", str );
+      _stream << _func.name << bx::regex_replace( ":\n" + str, bx::_n, "\n   ");
       return _stream;
     }
 

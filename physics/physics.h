@@ -64,21 +64,6 @@ namespace LaDa
       //! Returns the atomic mass from the atomic symbol
       types::t_real Mass(const std::string &_str);
 
-      //! \brief Returns true if an atomic symbol is found in the next non-blank
-      //!        and non '-' characters of \a _char 
-      //! \details If '\n' is found before any non-blank or non-'-' character,
-      //!          then the %function return false. If the second character found
-      //!          is lowercase and is neither '-', nor ' ', nor '\n', then it is
-      //!          assumed that the atomic symbol contains two characters. 
-      //!          At this point \a _s contains the assumed atomic symbol. As a
-      //!          last check, the function calls Physics::Atomic::Z(). If its
-      //!          return is non-zero, ExtractSymbol() returns successfully.
-      //! \return The funtions returns a negative number on failure, and a
-      //!         positive number of success. This number indicates how far into
-      //!         the string pointed to by \a _char the %function has gone. On
-      //!         success, it should return one past the last letter of the
-      //!         atomic symbol.
-      types::t_int ExtractSymbol( char *_char, std::string &_s );
     } // namespace atoms
   }
 

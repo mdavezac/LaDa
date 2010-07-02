@@ -19,6 +19,7 @@
 #include <physics/physics.h>
 #include <opt/debug.h>
 #include <opt/tinyxml.h>
+#include <opt/path.h>
 #include <crystal/ideal_lattice.h>
 #include <mpi/mpi_object.h>
 
@@ -60,7 +61,7 @@ namespace LaDa
       }
       if( not parent->Attribute( "filename" ) ) return load_( *parent );
 
-      const bfs::path path( Print::reformat_home( parent->Attribute( "filename" ) ) );
+      const bfs::path path( opt::expand_path( parent->Attribute( "filename" ) ) );
       __DOASSERT( not bfs::exists( path ), path.string() + " does not exist.\n" )
       TiXmlDocument doc;
       opt::read_xmlfile( path, doc );
@@ -275,7 +276,7 @@ namespace LaDa
         __DOASSERT( not (structure.lattice and structure.lattice->sites.size() == 2),
                     "Lattice undefined or does not have two sites.\n" )
         namespace bx = boost::xpressive;
-        const std::string bond( Print::StripEdges( _type ) );
+        const std::string bond( boost::algorithm::trim_copy( _type ) );
         bx::smatch what;
       
         const bx::sregex regex =(    ( bx::s1 = ( bx::alpha >> !bx::alpha ) )
@@ -319,7 +320,7 @@ namespace LaDa
         __DOASSERT( not (structure.lattice and structure.lattice->sites.size() == 2),
                     "Lattice undefined or does not have two sites.\n" )
         namespace bx = boost::xpressive;
-        const std::string bond( Print::StripEdges( _type ) );
+        const std::string bond( boost::algorithm::trim_copy( _type ) );
         bx::smatch what;
       
         const bx::sregex regex =(    ( bx::s1 = ( bx::alpha >> !bx::alpha ) )

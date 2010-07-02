@@ -15,6 +15,7 @@
 #include <boost/mpl/equal_to.hpp>
 #include <boost/mpl/int.hpp>
 #include <boost/tuple/tuple.hpp>
+#include <boost/algorithm/string/trim.hpp>
 
 
 #include <tinyxml/tinyxml.h>
@@ -248,7 +249,7 @@ namespace LaDa
         __DOASSERT( not (structure.lattice and structure.lattice->sites.size() == 2),
                     "Lattice undefined or does not have two sites.\n" )
         namespace bx = boost::xpressive;
-        const std::string bond( Print::StripEdges( _type ) );
+        const std::string bond( boost::algorithm::trim_copy( _type ) );
         bx::smatch what;
 
         const bx::sregex regex =(    ( bx::s1 = ( bx::alpha >> !bx::alpha ) )
@@ -290,7 +291,7 @@ namespace LaDa
         __DOASSERT( not (structure.lattice and structure.lattice->sites.size() == 2),
                     "Lattice undefined or does not have two sites.\n" )
         namespace bx = boost::xpressive;
-        const std::string bond( Print::StripEdges( _type ) );
+        const std::string bond( boost::algorithm::trim_copy( _type ) );
         bx::smatch what;
 
         const bx::sregex regex =(    ( bx::s1 = ( bx::alpha >> !bx::alpha ) )

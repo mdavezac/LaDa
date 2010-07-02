@@ -6,6 +6,7 @@
 #include <sstream>
 #include <boost/lexical_cast.hpp>
 #include <boost/tuple/tuple_io.hpp>
+#include <boost/algorithm/string/trim.hpp>
 
 #include <Eigen/LU>
 
@@ -154,6 +155,7 @@ namespace LaDa
 
     bool Structure :: load_cell( const TiXmlElement &_element )
     {
+      namespace ba = boost::algorithm;
       // reads in cell
       const TiXmlElement* child = _element.FirstChildElement( "Cell" );
       if( not child ) return false;
@@ -168,9 +170,9 @@ namespace LaDa
                     "Incomplete cell in xml input.\n" )
 
         __TRYBEGIN
-          cell(i,0) = boost::lexical_cast<types::t_real>( Print::StripEdges(child->Attribute("x")) );
-          cell(i,1) = boost::lexical_cast<types::t_real>( Print::StripEdges(child->Attribute("y")) );
-          cell(i,2) = boost::lexical_cast<types::t_real>( Print::StripEdges(child->Attribute("z")) );
+          cell(i,0) = boost::lexical_cast<types::t_real>( ba::trim_copy(child->Attribute("x")) );
+          cell(i,1) = boost::lexical_cast<types::t_real>( ba::trim_copy(child->Attribute("y")) );
+          cell(i,2) = boost::lexical_cast<types::t_real>( ba::trim_copy(child->Attribute("z")) );
         __TRYEND(, "Could not parse cell input.\n" )
         if ( child->Attribute("freeze") )
         {
@@ -306,7 +308,7 @@ namespace LaDa
       if( parent->Attribute("filename") )
       {
         namespace bfs = boost::filesystem;
-        const bfs::path path( Print::reformat_home( parent->Attribute( "filename" ) ) );
+        const bfs::path path( opt::expand_path( parent->Attribute( "filename" ) ) );
         __DOASSERT( not bfs::exists( path ), path.string() + " does not exist.\n" )
         TiXmlDocument doc;
         opt::read_xmlfile( path, doc );

@@ -70,9 +70,9 @@ opt_h = ndim_iterator.h minimize_base.h polynome.h types.h \
         function_base.h pow.h redirect.h va_minimizer.h \
 	fitness_function.h  function_functors.h monome.h va_function.h \
         algorithms.h bpo_macros.h tuple_io.h  leave_many_out.h \
-        tuple_serialize.h
+        tuple_serialize.h path.h
 opt_f90 = fortran_redirect.f90
-opt_cc = leave_many_out.cc 
+opt_cc = leave_many_out.cc path.cc
 opt_python_convenience_h =  convex_hull.h errors.h convex_hull.impl.h \
                             tinyxml.h initial_path.h fortran_dirio.h 
 opt_python_convenience_cc = convex_hull.cc errors.cc tinyxml.cc \
@@ -92,7 +92,7 @@ pescan_doc = $(pescan_h) $(pescan_cc) $(pescan_f90) $(pescan_impl_h)
 pescan_python_cc = escan.cc bandgap.cc python.cc emass.cc dipole_elements.cc wavefunctions.cc
 pescan_python_h = escan.hpp bandgap.hpp emass.hpp dipole_elements.hpp wavefunctions.hpp
 
-physics_cc = physics.cc
+physics_cc = 
 physics_h  = physics.h
 physics_doc = $(physics_h) $(physics_cc) 
 physics_python_h  =
@@ -129,9 +129,6 @@ separable_fxl_impl_h = functional.impl.h collapse.impl.h methods.impl.h mixed.im
 separable_fxl_doc = $(separable_fxl_cc) $(separable_fxl_h) $(separable_fxl_impl_h)
 
 
-VFF_FORTRAN_CC = fortran.cc
-VFF_FORTRAN_H  = fortran.h
-VFF_FORTRAN_DOC = $(VFF_FORTRAN_H) $(VFF_FORTRAN_CC) 
 vff_cc = atomic_center.cc atomic_functional.cc functional.cc vff.cc layered.cc\
          initialize_centers.cc build_tree_smith.cc build_tree_sort.cc \
          build_tree_sort_dnc.cc # pescan_perturbation.cc 
@@ -162,7 +159,6 @@ ALL_DOCS = $(top_srcdir)/doxy.conf $(top_srcdir)/$(docs_h) \
            $(addprefix $(top_srcdir)/print/,$(print_doc)) \
            $(addprefix $(top_srcdir)/separable/,$(separable_doc)) \
            $(addprefix $(top_srcdir)/separable/fixedlattice/,$(separable_fxl_doc)) \
-           $(addprefix $(top_srcdir)/vff/,$(VFF_FORTRAN_DOC)) \
            $(addprefix $(top_srcdir)/vff/,$(vff_doc)) \
            $(addprefix $(top_srcdir)/minimizer/,$(minimizer_doc)) 
 
