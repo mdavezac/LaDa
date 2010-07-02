@@ -66,24 +66,20 @@ mpi_cc     =
 mpi_h      = mpi_object.h macros.h
 mpi_doc    = $(mpi_h) $(mpi_cc)
 
-opt_h = ndim_iterator.h minimize_base.h polynome.h types.h \
-        function_base.h pow.h redirect.h va_minimizer.h \
-	fitness_function.h  function_functors.h monome.h va_function.h \
-        algorithms.h bpo_macros.h tuple_io.h  leave_many_out.h \
+opt_h = ndim_iterator.h polynome.h types.h \
+        function_base.h pow.h redirect.h fitness_function.h \
+	function_functors.h monome.h va_function.h \
+        bpo_macros.h tuple_io.h  leave_many_out.h \
         tuple_serialize.h path.h
 opt_f90 = fortran_redirect.f90
 opt_cc = leave_many_out.cc path.cc
 opt_python_convenience_h =  convex_hull.h errors.h convex_hull.impl.h \
-                            tinyxml.h initial_path.h fortran_dirio.h 
+                            tinyxml.h fortran_dirio.h 
 opt_python_convenience_cc = convex_hull.cc errors.cc tinyxml.cc \
-                            initial_path.cc fortran_dirio.cc 
+                            fortran_dirio.cc 
 opt_doc = $(opt_h) $(opt_cc) $(opt_python_convenience_cc) $(opt_python_convenience_h)
 opt_python_cc = errortuple.cc python.cc redirect.cc
 opt_python_c = errortuple.hpp convexhull.impl.hpp redirect.hpp
-
-EMASS_CC = emass.cc
-EMASS_H  = emass.h
-EMASS_DOC = $(EMASS_H) $(EMASS_CC) 
 
 physics_cc = 
 physics_h  = physics.h

@@ -15,7 +15,6 @@
 
 #include <opt/types.h>
 #include <opt/debug.h>
-#include <opt/algorithms.h>
 
 namespace LaDa
 {
