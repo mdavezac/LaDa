@@ -19,10 +19,9 @@
 #include <mpi/mpi_object.h>
 #include <math/fuzzy.h>
 #ifdef _MPI
-#include <boost/lambda/lambda.hpp>
-#include <boost/mpi/collectives.hpp>
-#include <functional>
-#include "print/stdout.h"
+# include <boost/lambda/lambda.hpp>
+# include <boost/mpi/collectives.hpp>
+# include <functional>
 #endif 
 
 namespace LaDa

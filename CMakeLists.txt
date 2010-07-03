@@ -1,12 +1,22 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 project (LaDa)
+set (LaDa_VERSION_MAJOR 4)
+set (LaDa_VERSION_MINOR 5)
+
+# Project options
+option(disable_executables  "Disable all executables."  off)
+mark_as_advanced(disable_executables)
+
+option(ce_functional  "Include Cluster Expansion functional."  on)
+option(vasp_wrapper  "Compile vasp wrapper."  off)
+option(escan_functional  "Compile escan python wrapper."  off)
+option(vff_functional  "Compile Valence Force Field method."  off)
+option(python_bindings  "Include python bindings."  off)
+
 
 # Location where cmake first looks for cmake modules.
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 
-# The version number.
-set (LaDa_VERSION_MAJOR 4)
-set (LaDa_VERSION_MINOR 5)
 
 # Languages
 enable_language(C)
@@ -42,6 +52,9 @@ if( MPI_FOUND )
 endif( MPI_FOUND )
   
 
+# Look for numpy. Not all packages require NUMPY, however, it is usefull for
+# most python bindings.
+find_package(numpy)
 
 
 
@@ -49,16 +62,12 @@ endif( MPI_FOUND )
 include_directories("${PROJECT_SOURCE_DIR}")
 include_directories("${PROJECT_BINARY_DIR}")
 
+# the most basic stuff to compile/include
 add_subdirectory(mpi)
 add_subdirectory(opt)
 add_subdirectory(math)
 add_subdirectory(crystal)
 
-option(disable_executables  "Disable all executables."  off)
-mark_as_advanced(disable_executables)
-option(vasp_wrapper  "Compile vasp wrapper."  off)
-option(escan_functional  "Compile escan python wrapper."  on)
-option(vff_functional  "Compile Valence Force Field method."  off)
 
 if( vasp_wrapper )
   set(DOVASP True)
@@ -66,13 +75,9 @@ if( vasp_wrapper )
     message(SEND_ERROR "Vasp interface requires MPI.")
     set(DOVASP False)
   endif( NOT MPI_FOUND )
-  if( NOT PYTHONLIBS_FOUND )
-    message(SEND_ERROR "Vasp interface requires Python libraries."
-                       "Please set PYTHON_INCLUDE_DIR and PYTHON_LIBRARY" )
-    set(DOVASP False)
-  endif( NOT PYTHONLIBS_FOUND )
   if( DOVASP )
     add_subdirectory(vasp)
+    set(python_bindings TRUE)
   endif( DOVASP )
 endif( vasp_wrapper )
 
@@ -80,19 +85,18 @@ endif( vasp_wrapper )
 if( escan_functional )
   set(DOESCAN True)
   if( NOT MPI_FOUND )
-    message(SEND_ERROR "Vasp interface requires MPI.")
+    message(SEND_ERROR "Escan interface requires MPI.")
     set(DOESCAN False)
   endif( NOT MPI_FOUND )
-  if( NOT PYTHONLIBS_FOUND )
-    message(SEND_ERROR "Vasp interface requires Python libraries."
-                       "Please set PYTHON_INCLUDE_DIR and PYTHON_LIBRARY" )
+  if( NOT NUMPY_FOUND )
+    message(SEND_ERROR "Escan interface requires numpy and friends.")
     set(DOESCAN False)
-  endif( NOT PYTHONLIBS_FOUND )
+  endif( NOT NUMPY_FOUND )
   find_package(escan REQUIRED)
-  find_package(numpy REQUIRED)
   if( DOESCAN )
     add_subdirectory(escan)
     set(vff_functional TRUE)
+    set(python_bindings TRUE)
   endif( DOESCAN )
 endif( escan_functional )
 
@@ -101,11 +105,28 @@ if( vff_functional )
   add_subdirectory(vff)
 endif( vff_functional )
 
+if( ce_functional )
+  set(minimizer_libs TRUE)
+  add_subdirectory(ce)
+endif( ce_functional )
+
 if(minimizer_libs)
   find_package(gsl)
+  set(LADA_WITH_GSL GSL_FOUND)
   find_package(minuit2)
+  set(LADA_WITH_MINUIT2 MINUIT2_FOUND)
   add_subdirectory(minimizer)
 endif(minimizer_libs)
+
+if(python_bindings)
+  if(PYTHONLIBS_FOUND)
+    add_subdirectory(python)
+  else(PYTHONLIBS_FOUND)
+    message(SEND_ERROR "Python libraries not found."
+                       "Please set PYTHON_INCLUDE_DIR and PYTHON_LIBRARY" )
+    set(DOPYTHON False)
+  endif(PYTHONLIBS_FOUND)
+endif(python_bindings)
 
 # Configure file.
 if (CMAKE_BUILD_TYPE)

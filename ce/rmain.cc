@@ -19,9 +19,16 @@
 #include <opt/debug.h>
 #include <math/random.h>
 #include <opt/bpo_macros.h>
-#include <minimizer/minuit2.h>
 #include <minimizer/frprmn.h>
-#include <minimizer/gsl_mins.h>
+#ifdef LADA_WITH_GSL
+# include <minimizer/gsl_mins.h>
+#endif
+#ifdef LADA_WITH_MINUIT2
+# include <minimizer/minuit2.h>
+#endif
+#if defined(LADA_WITH_GSL) or defined(LADA_WITH_MINUIT2)
+# include <minimizer/variant.h>
+#endif
 #include <crystal/lattice.h>
 #include <crystal/structure.h>
 #include <crystal/read_structure.h>
@@ -75,7 +82,7 @@ int main(int argc, char *argv[])
                     "Maximum number of iterations for the minimizer."  )
       ("maxpairs,m", po::value<LaDa::types::t_unsigned>()->default_value(5),
                      "Max distance for pairs (in neighbors)."  )
-      ("minimizer", po::value<std::string>()->default_value("gsl_bfgs2"),
+      ("minimizer", po::value<std::string>()->default_value("frprmn"),
                     "Type of Minimizer"  )
       ("iw", po::value<LaDa::types::t_real>()->default_value(0),
              "Initial value of the weights."  )
@@ -326,15 +333,23 @@ int main(int argc, char *argv[])
     fakexml.SetDoubleAttribute( "linestep", linestep );
     fakexml.SetAttribute( "strategy", strategy );
     fakexml.SetAttribute( "verbose", verbosity >= outermin ? "true": "false" );
+#   if defined(LADA_WITH_GSL) or defined(LADA_WITH_MINUIT2)
+    typedef LaDa::Minimizer::Frpr t_Minimizer;
+#   else
     typedef LaDa::Minimizer::Variant
             < 
               boost::mpl::vector
               <
-                LaDa::Minimizer::Frpr, 
-                LaDa::Minimizer::Gsl, 
-                LaDa::Minimizer::Minuit2
+                LaDa::Minimizer::Frpr
+#               ifdef LADA_WITH_GSL
+                  , LaDa::Minimizer::Gsl
+#               endif
+#               ifdef LADA_WITH_MINUIT2
+                  , LaDa::Minimizer::Minuit2
+#               endif
               > 
             > t_Minimizer;
+#   endif
     t_Minimizer minimizer;
     if( not minimizer.Load( fakexml ) )
     {
