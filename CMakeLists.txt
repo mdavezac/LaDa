@@ -8,6 +8,7 @@ set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 set (LaDa_VERSION_MAJOR 4)
 set (LaDa_VERSION_MINOR 5)
 
+# Languages
 enable_language(C)
 enable_language(CXX)
 enable_language(Fortran)
@@ -15,6 +16,8 @@ include(FortranCInterface)
 FortranCInterface_HEADER(${PROJECT_BINARY_DIR}/FCMangle.h
                          MACRO_NAMESPACE "FC_"
                          SYMBOL_NAMESPACE "FC_" )
+# find_package(PythonInterp)
+find_package(PythonLibs)
 
 
 # required packages
@@ -31,9 +34,6 @@ include_directories(${eigen2_INCLUDE_DIR})
 find_package(tinyxml REQUIRED)
 include_directories(${tinyxml_INCLUDE_DIR})
 
-# python packages
-find_package(PythonInterp)
-find_package(PythonLibs)
 
 # other packages
 find_package(MPI)
@@ -41,6 +41,11 @@ find_package(MPI)
 
 
 # Configure!
+if (CMAKE_BUILD_TYPE)
+  if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+    set(LADA_DEBUG TRUE)
+  endif (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+endif (CMAKE_BUILD_TYPE)
 configure_file (
  "${PROJECT_SOURCE_DIR}/LaDaConfig.h.in"
  "${PROJECT_BINARY_DIR}/LaDaConfig.h"
@@ -57,9 +62,17 @@ add_subdirectory(opt)
 
 option(vasp_wrapper  "Compile vasp wrapper."  off)
 if( vasp_wrapper )
+  set(DOVASP True)
   if( NOT MPI_FOUND )
     message(SEND_ERROR "Vasp interface requires MPI.")
-  else()
-    add_subdirectory(vasp)
+    set(DOVASP False)
   endif( NOT MPI_FOUND )
+  if( NOT PYTHONLIBS_FOUND )
+    message(SEND_ERROR "Vasp interface requires Python libraries."
+                       "Please set PYTHON_INCLUDE_DIR and PYTHON_LIBRARY" )
+    set(DOVASP False)
+  endif( NOT PYTHONLIBS_FOUND )
+  if( DOVASP )
+    add_subdirectory(vasp)
+  endif( DOVASP )
 endif( vasp_wrapper )
