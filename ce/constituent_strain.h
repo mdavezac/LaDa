@@ -117,10 +117,10 @@ namespace LaDa
           const std::vector<math::rVector3d>& get_kvectors() const
               { return k_vecs; }
 
-#         ifdef _LADADEBUG
+#         ifdef LADA_DEBUG
             //! Debug stuff.
             void check_derivative();
-#         endif // _LADADEBUG
+#         endif 
 
 #         ifdef _MPI
             /** \ingroup Genetic

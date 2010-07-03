@@ -442,7 +442,7 @@ namespace LaDa
 
       
 
-#     ifdef _LADADEBUG
+#     ifdef LADA_DEBUG
         template<class T_HARMONIC>
         void Functional<T_HARMONIC> :: check_derivative()
         {
@@ -475,7 +475,7 @@ namespace LaDa
           delete[] gradient;
 
         }
-#     endif // _LADADEBUG
+#     endif 
     }
   } // namespace CE
 } // namespace LaDa

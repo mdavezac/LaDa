@@ -55,4 +55,11 @@ add_subdirectory(crystal)
 add_subdirectory(opt)
 
 
-add_subdirectory(vasp)
+option(vasp_wrapper  "Compile vasp wrapper."  off)
+if( vasp_wrapper )
+  if( NOT MPI_FOUND )
+    message(SEND_ERROR "Vasp interface requires MPI.")
+  else()
+    add_subdirectory(vasp)
+  endif( NOT MPI_FOUND )
+endif( vasp_wrapper )

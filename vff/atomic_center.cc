@@ -79,7 +79,7 @@ namespace LaDa
 
       return found_bond ? (types::t_int) bonds.size() : -1; // not a bond
     }
-#   ifdef _LADADEBUG
+#   ifdef LADA_DEBUG
       void AtomicCenter :: const_iterator :: check() const
       {
         __ASSERT(not parent,

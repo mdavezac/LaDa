@@ -241,7 +241,7 @@ namespace LaDa
         i_func->print_out(stream);
     }
 
-#   ifdef _LADADEBUG
+#   ifdef LADA_DEBUG
       void Vff :: check_tree() const
       {
         t_Centers :: const_iterator i_center = centers.begin();

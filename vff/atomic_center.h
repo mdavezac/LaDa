@@ -297,7 +297,7 @@ namespace LaDa
         //! \param _v vector to translate
         void translate( math::rVector3d &_v )
           { if( *i_do_translate ) _v += parent->structure->cell * ( *i_translation ); }
-#       ifdef _LADADEBUG
+#       ifdef LADA_DEBUG
           void check() const;
           void check_valid() const;
 #       endif

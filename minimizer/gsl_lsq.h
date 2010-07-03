@@ -12,10 +12,6 @@
 #include <gsl/gsl_block.h>
 #include <gsl/gsl_multifit.h>
 
-#ifdef _LADADEBUG
-#include <boost/lambda/lambda.hpp>
-#endif
-
 namespace LaDa
 {
   //! Namespace for least-square fitting methods

@@ -213,7 +213,7 @@ namespace LaDa
         t_AtomicFunctionals functionals;
 
 
-#      ifdef _LADADEBUG
+#      ifdef LADA_DEBUG
          //! Checks that the list of centers are valid. somewhat.
          void check_tree() const;
 #      endif

@@ -10,17 +10,17 @@
 #endif
 #define foreach BOOST_FOREACH
 
-#define __SPOT_ERROR __FILE__ << ", line: " << __LINE__ << "\n" 
+#define LADA_SPOT_ERROR __FILE__ << ", line: " << __LINE__ << "\n" 
 #define __CATCHCODE(code, error)\
         catch(...)\
         {\
           code;\
-          std::cerr << __SPOT_ERROR << error; \
+          std::cerr << LADA_SPOT_ERROR << error; \
           throw 0; \
         }
 #define __THROW_ERROR(error) \
         {\
-          std::cerr << __SPOT_ERROR << error ;\
+          std::cerr << LADA_SPOT_ERROR << error ;\
           throw 0; \
         }
 #define __TRYCODE(code,error) try { code } \
@@ -41,8 +41,7 @@
 #define __ENDGROUP__ }
 
 
-#ifdef _LADADEBUG
-# define LADA_DEBUG
+#ifdef LADA_DEBUG
 # define __DODEBUGCODE(code) code
 # define __TRYDEBUGCODE(code, error) __TRYCODE(code, error)
 # define __DOTRYDEBUGCODE(code, error) __TRYCODE(code, error)

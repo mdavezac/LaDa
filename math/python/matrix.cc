@@ -232,7 +232,7 @@ namespace LaDa
             if(array->nd == 1)
             {
               size_t strides = array->strides[0] / sizeof(T2);
-    #         ifdef _LADADEBUG
+    #         ifdef LADA_DEBUG
                 if( array->strides[0] % sizeof(T2) != 0 )
                 {
                   PyErr_SetString(PyExc_RuntimeError, "Incoherent numpy array.\n");
@@ -247,7 +247,7 @@ namespace LaDa
             else
             {
               size_t strides[2] = { array->strides[0] / sizeof(T2), array->strides[1] / sizeof(T2) };
-    #         ifdef _LADADEBUG
+    #         ifdef LADA_DEBUG
                 if( array->strides[0] % sizeof(T2) != 0 or array->strides[1] % sizeof(T2) )
                 {
                   PyErr_SetString(PyExc_RuntimeError, "Incoherent numpy array.\n");

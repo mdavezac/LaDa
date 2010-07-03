@@ -72,10 +72,10 @@ namespace LaDa
         //! Load a polynomial from an XML node.
         bool Load( TiXmlElement* const node );
 
-        #ifdef _LADADEBUG
+        #ifdef LADA_DEBUG
           //! Doesn't do anything...
           bool is_consistent() const;
-        #endif // _LADADEBUG
+        #endif 
     };
 
     
