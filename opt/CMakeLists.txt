@@ -7,8 +7,9 @@ set( LIBOPT_SOURCES
      propagate_std_vector.h tinyxml.h tuple_serialize.h va_function.h
    )
     
-add_library (opt SHARED ${LIBOPT_SOURCES})
-target_link_libraries(opt ${tinyxml_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
+add_library (opt STATIC ${LIBOPT_SOURCES})
+target_link_libraries(opt ${tinyxml_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY}
+                          ${Boost_SERIALIZATION_LIBRARY})
 include_directories(${tinyxml_INCLUDE_DIRS})
 if(MPI_FOUND)
   include_directories(${MPI_INCLUDE_PATH})

@@ -16,7 +16,7 @@ if (MINUIT2_FOUND)
 endif (MINUIT2_FOUND)
 
     
-add_library (minimizer SHARED ${LIBMINIMIZER_SOURCES})
+add_library (minimizer STATIC ${LIBMINIMIZER_SOURCES})
 target_link_libraries(minimizer opt)
 
 if (MPI_FOUND)

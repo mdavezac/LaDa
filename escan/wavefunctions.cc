@@ -1,4 +1,5 @@
 #include "LaDaConfig.h"
+#include "FCMangle.h"
 
 #include <unistd.h>
 #include <boost/filesystem/path.hpp>
@@ -23,16 +24,16 @@
 
 extern "C"
 {
-  void FC_FUNC_(escan_wfns_init, ESCAN_WFNS_INIT)(int*, char const*, MPI_Fint*);
-  void FC_FUNC_(escan_wfns_get_array_dimensions, ESCAN_WFNS_GET_ARRAY_DIMENSIONS)(int*, int*, int*);
-  void FC_FUNC_(escan_wfns_read, ESCAN_WFNS_READ)
+  void FC_GLOBAL_(escan_wfns_init, ESCAN_WFNS_INIT)(int*, char const*, MPI_Fint*);
+  void FC_GLOBAL_(escan_wfns_get_array_dimensions, ESCAN_WFNS_GET_ARRAY_DIMENSIONS)(int*, int*, int*);
+  void FC_GLOBAL_(escan_wfns_read, ESCAN_WFNS_READ)
     (int*, int*, int*, int*, int const*, double*, double*, double*, int*);
-  void FC_FUNC_(escan_get_nr, ESCAN_GET_NR)(int *);
-  void FC_FUNC_(escan_get_mr_n, ESCAN_GET_MR_N)(int *);
-  void FC_FUNC_(escan_get_n1_n2_n3, ESCAN_GET_N1_N2_N3)(int*, int*, int*);
-  void FC_FUNC_(escan_get_cell, ESCAN_GET_CELL)(double *, double *, double *);
-  void FC_FUNC_(d3fft_comp, D3FFT_COMP)(double*, double*, int*);
-  void FC_FUNC_(escan_wfns_cleanup, ESCAN_WFNS_CLEANUP)();
+  void FC_GLOBAL_(escan_get_nr, ESCAN_GET_NR)(int *);
+  void FC_GLOBAL_(escan_get_mr_n, ESCAN_GET_MR_N)(int *);
+  void FC_GLOBAL_(escan_get_n1_n2_n3, ESCAN_GET_N1_N2_N3)(int*, int*, int*);
+  void FC_GLOBAL_(escan_get_cell, ESCAN_GET_CELL)(double *, double *, double *);
+  void FC_GLOBAL_(d3fft_comp, D3FFT_COMP)(double*, double*, int*);
+  void FC_GLOBAL_(escan_wfns_cleanup, ESCAN_WFNS_CLEANUP)();
 }
 
 namespace LaDa
@@ -46,7 +47,7 @@ namespace LaDa
     void escan_get_cell( math::rMatrix3d &_cell )
     {
       double a[9];
-      FC_FUNC_(escan_get_cell, ESCAN_GET_CELL)(a, a+3, a+6);
+      FC_GLOBAL_(escan_get_cell, ESCAN_GET_CELL)(a, a+3, a+6);
       for(size_t i(0); i < 9; ++i) _cell(i%3, i/3) = a[i];
     }
 
@@ -55,8 +56,8 @@ namespace LaDa
       math::rMatrix3d mesh_;
       int max_, nr_, n1, n3_, n2_;
       escan_get_cell(mesh_);
-      FC_FUNC_(escan_get_nr, ESCAN_GET_NR)(&nr_);
-      FC_FUNC_(escan_get_n1_n2_n3, ESCAN_GET_N1_N2_N3)(&n1, &n2_, &n3_);
+      FC_GLOBAL_(escan_get_nr, ESCAN_GET_NR)(&nr_);
+      FC_GLOBAL_(escan_get_n1_n2_n3, ESCAN_GET_N1_N2_N3)(&n1, &n2_, &n3_);
       mesh_.col(0) /= types::t_real(n1);
       mesh_.col(1) /= types::t_real(n2_);
       mesh_.col(2) /= types::t_real(n3_);
@@ -139,10 +140,10 @@ namespace LaDa
       int a(orig.size()), b(indices.size());
       MPI_Comm __commC = (MPI_Comm) ( _comm ) ;
       MPI_Fint __commF = MPI_Comm_c2f( __commC );
-      FC_FUNC_(escan_wfns_init, ESCAN_WFNS_INIT)(&a, orig.c_str(), &__commF);
+      FC_GLOBAL_(escan_wfns_init, ESCAN_WFNS_INIT)(&a, orig.c_str(), &__commF);
       // gets dimensions.
       int n0, n1(indices.size()), n2, g0, g1(3);
-      FC_FUNC_(escan_wfns_get_array_dimensions, ESCAN_WFNS_GET_ARRAY_dimensions)(&n0, &n2, &g0);
+      FC_GLOBAL_(escan_wfns_get_array_dimensions, ESCAN_WFNS_GET_ARRAY_dimensions)(&n0, &n2, &g0);
       
       // Creates numpy objects.
       bp::object wfns = math::numpy::create_array<NPY_CDOUBLE>(n0, n1, n2, true);
@@ -154,7 +155,7 @@ namespace LaDa
         = math::numpy::get_pyarray_pointer(gpoints)->dimensions[0];
 
       // finally reads wavefunctions
-      FC_FUNC_(escan_wfns_read, ESCAN_WFNS_READ)
+      FC_GLOBAL_(escan_wfns_read, ESCAN_WFNS_READ)
               ( 
                 &n0, &n1, &n2, &g0,  // dimensions
                 &(indices[0]),      // indices_ to wavefunctions
@@ -168,7 +169,7 @@ namespace LaDa
                 math::numpy::get_data_pointer<int* const>(inverse)            
               );
       // and cleanup fortran arrays.
-      FC_FUNC_(escan_wfns_cleanup, ESCAN_WFNS_CLEANUP)(); 
+      FC_GLOBAL_(escan_wfns_cleanup, ESCAN_WFNS_CLEANUP)(); 
       // returns a 4-tuple.
       return bp::make_tuple(wfns, gpoints, positions(_comm), projs, inverse);
     }
@@ -185,7 +186,7 @@ namespace LaDa
                                + "."
                                + boost::lexical_cast<std::string>(world.rank());
       int a(orig.size());
-      FC_FUNC_(escan_wfns_init, ESCAN_WFNS_INIT)(&a, orig.c_str(), &__commF);
+      FC_GLOBAL_(escan_wfns_init, ESCAN_WFNS_INIT)(&a, orig.c_str(), &__commF);
       // sanity checks
       if(not math::numpy::check_is_complex_array(_gwfns)) return bp::tuple();
 
@@ -198,14 +199,14 @@ namespace LaDa
         return bp::tuple();
       }
       int n0, n2, g0;
-      FC_FUNC_(escan_wfns_get_array_dimensions, ESCAN_WFNS_GET_ARRAY_DIMENSIONS)(&n0, &n2, &g0);
+      FC_GLOBAL_(escan_wfns_get_array_dimensions, ESCAN_WFNS_GET_ARRAY_DIMENSIONS)(&n0, &n2, &g0);
       if( array->nd == 1 )
       {
         if(array->dimensions[0] != n0)
         {
           PyErr_SetString(PyExc_ValueError, "Unexpected array size. \n");
           bp::throw_error_already_set();
-          FC_FUNC_(escan_wfns_cleanup, ESCAN_WFNS_CLEANUP)(); 
+          FC_GLOBAL_(escan_wfns_cleanup, ESCAN_WFNS_CLEANUP)(); 
           return bp::tuple();
         }
       }
@@ -213,17 +214,17 @@ namespace LaDa
       {
         PyErr_SetString(PyExc_ValueError, "Unexpected array size along first dimension. \n");
         bp::throw_error_already_set();
-        FC_FUNC_(escan_wfns_cleanup, ESCAN_WFNS_CLEANUP)(); 
+        FC_GLOBAL_(escan_wfns_cleanup, ESCAN_WFNS_CLEANUP)(); 
         return bp::tuple();
       }
      
       // creates output array
-      FC_FUNC_(escan_get_mr_n, ESCAN_GET_MR_N)(&n0);
+      FC_GLOBAL_(escan_get_mr_n, ESCAN_GET_MR_N)(&n0);
       if(n0 % 2 != 0) 
       {
         PyErr_SetString(PyExc_RuntimeError, "Wrong array dimension in pescan.");
         bp::throw_error_already_set();
-        FC_FUNC_(escan_wfns_cleanup, ESCAN_WFNS_CLEANUP)(); 
+        FC_GLOBAL_(escan_wfns_cleanup, ESCAN_WFNS_CLEANUP)(); 
         return bp::tuple();
       }
       std::vector<npy_intp> dims(1, n0>>1);
@@ -232,7 +233,7 @@ namespace LaDa
       if( result == NULL or PyErr_Occurred() != NULL )
       {
         bp::throw_error_already_set();
-        FC_FUNC_(escan_wfns_cleanup, ESCAN_WFNS_CLEANUP)(); 
+        FC_GLOBAL_(escan_wfns_cleanup, ESCAN_WFNS_CLEANUP)(); 
         return bp::tuple();
       }
       bp::object resob = bp::object(bp::handle<>(result));
@@ -241,7 +242,7 @@ namespace LaDa
       if( array->nd == 1 ) 
       {
         int sign = -1;
-        FC_FUNC_(d3fft_comp, D3FFT_COMP)
+        FC_GLOBAL_(d3fft_comp, D3FFT_COMP)
         (
           (double*)array->data, 
           (double*)reinterpret_cast<PyArrayObject*>(result)->data,
@@ -257,7 +258,7 @@ namespace LaDa
         {
           PyErr_SetString(PyExc_RuntimeError, "Could not iterate.\n");
           bp::throw_error_already_set();
-          FC_FUNC_(escan_wfns_cleanup, ESCAN_WFNS_CLEANUP)(); 
+          FC_GLOBAL_(escan_wfns_cleanup, ESCAN_WFNS_CLEANUP)(); 
           return bp::tuple();
         }
         PyArrayIterObject *recip_iter 
@@ -271,7 +272,7 @@ namespace LaDa
         {
           PyErr_SetString(PyExc_RuntimeError, "Could not iterate.\n");
           bp::throw_error_already_set();
-          FC_FUNC_(escan_wfns_cleanup, ESCAN_WFNS_CLEANUP)(); 
+          FC_GLOBAL_(escan_wfns_cleanup, ESCAN_WFNS_CLEANUP)(); 
           return bp::tuple();
         }
         // object should release on destruction
@@ -279,7 +280,7 @@ namespace LaDa
         while (real_iter->index < real_iter->size and recip_iter->index < recip_iter->size)  
         {
           int sign = -1;
-          FC_FUNC_(d3fft_comp, D3FFT_COMP)( (double*)recip_iter->dataptr,
+          FC_GLOBAL_(d3fft_comp, D3FFT_COMP)( (double*)recip_iter->dataptr,
                                             (double*)real_iter->dataptr, &sign);
           PyArray_ITER_NEXT(real_iter);
           PyArray_ITER_NEXT(recip_iter);
@@ -287,9 +288,9 @@ namespace LaDa
       }
       
       int nr;
-      FC_FUNC_(escan_get_nr, ESCAN_GET_NR)(&nr);
+      FC_GLOBAL_(escan_get_nr, ESCAN_GET_NR)(&nr);
       reinterpret_cast<PyArrayObject*>(result)->dimensions[0] = nr / _comm.size();
-      FC_FUNC_(escan_wfns_cleanup, ESCAN_WFNS_CLEANUP)(); 
+      FC_GLOBAL_(escan_wfns_cleanup, ESCAN_WFNS_CLEANUP)(); 
       // finally creates real space position data.
       return bp::make_tuple(resob, positions(_comm));
     }

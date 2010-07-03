@@ -4,7 +4,7 @@ set( LIBVFF_SOURCES
      build_tree_sort_dnc.cc functional.cc initialize_centers.cc layered.cc vff.cc )
 
 
-add_library (vff SHARED ${LIBVFF_SOURCES})
+add_library (vff STATIC ${LIBVFF_SOURCES})
 target_link_libraries(vff crystal minimizer)
 
 if(NOT disable_executables)

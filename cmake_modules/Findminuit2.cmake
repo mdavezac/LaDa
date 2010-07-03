@@ -1,6 +1,6 @@
-if(minuit2_INCLUDE_DIRS)
+if(minuit2_INCLUDE_DIRS AND minuit2_LIBRARY)
   set( minuit2_FIND_QUIETLY True)
-endif(minuit2_INCLUDE_DIRS)
+endif(minuit2_INCLUDE_DIRS AND minuit2_LIBRARY)
 
 find_path(minuit2_INCLUDE_DIRS
   NAMES

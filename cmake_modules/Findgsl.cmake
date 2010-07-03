@@ -1,6 +1,6 @@
-if(gsl_INCLUDE_DIRS)
+if(gsl_INCLUDE_DIRS AND gsl_LIBRARY)
   set( gsl_FIND_QUIETLY True)
-endif(gsl_INCLUDE_DIRS)
+endif(gsl_INCLUDE_DIRS AND gsl_LIBRARY)
 
 find_path(gsl_INCLUDE_DIRS
   NAMES

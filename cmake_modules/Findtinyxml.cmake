@@ -1,6 +1,6 @@
-if(tinyxml_INCLUDE_DIRS)
+if(tinyxml_INCLUDE_DIRS AND tinyxml_LIBRARY)
   set( tinyxml_FIND_QUIETLY True)
-endif(tinyxml_INCLUDE_DIRS)
+endif(tinyxml_INCLUDE_DIRS AND tinyxml_LIBRARY)
 
 find_path(tinyxml_INCLUDE_DIRS
   NAMES

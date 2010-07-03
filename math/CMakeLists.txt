@@ -6,7 +6,7 @@ set( LIBMATH_SOURCES
      rational_mathematics.f90
    )
     
-add_library (mathlib SHARED ${LIBMATH_SOURCES})
+add_library (mathlib STATIC ${LIBMATH_SOURCES})
 target_link_libraries(mathlib ${tinyxml_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
 set_target_properties(mathlib PROPERTIES OUTPUT_NAME math)
 include_directories(${tinyxml_INCLUDE_DIRS})

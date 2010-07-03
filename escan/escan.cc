@@ -1,4 +1,5 @@
 #include "LaDaConfig.h"
+#include "FCMangle.h"
 
 #include <boost/python/def.hpp>
 
@@ -10,9 +11,9 @@
 //! \cond
 extern "C"
 {
-  void FC_FUNC_(iaga_set_mpi, IAGA_SET_MPI)( MPI_Fint * );
-  void FC_FUNC_(getvlarg, GETVLARG)();
-  void FC_FUNC_(iaga_just_call_escan, IAGA_JUST_CALL_ESCAN)();
+  void FC_GLOBAL_(iaga_set_mpi, IAGA_SET_MPI)( MPI_Fint * );
+  void FC_GLOBAL_(getvlarg, GETVLARG)();
+  void FC_GLOBAL_(iaga_just_call_escan, IAGA_JUST_CALL_ESCAN)();
 }
 //! \endcond
 
@@ -20,31 +21,31 @@ void just_call_escan(boost::mpi::communicator const &_c)
 {
   MPI_Comm __commC = (MPI_Comm) ( _c ) ;
   MPI_Fint __commF = MPI_Comm_c2f( __commC );
-  FC_FUNC_(iaga_set_mpi, IAGA_SET_MPI)( &__commF );
+  FC_GLOBAL_(iaga_set_mpi, IAGA_SET_MPI)( &__commF );
 
-  FC_FUNC_(iaga_just_call_escan, IAGA_just_CALL_ESCAN)();
+  FC_GLOBAL_(iaga_just_call_escan, IAGA_just_CALL_ESCAN)();
 }
 // void just_call_escan2(MPI_Comm &_comm)
 // {
 //   MPI_Fint __commF = MPI_Comm_c2f( _comm );
-//   FC_FUNC_(iaga_set_mpi, IAGA_SET_MPI)( &__commF );
+//   FC_GLOBAL_(iaga_set_mpi, IAGA_SET_MPI)( &__commF );
 //
-//   FC_FUNC_(iaga_just_call_escan, IAGA_just_CALL_ESCAN)();
+//   FC_GLOBAL_(iaga_just_call_escan, IAGA_just_CALL_ESCAN)();
 // }
 void just_call_genpot(boost::mpi::communicator const &_c)
 {
   MPI_Comm __commC = (MPI_Comm) ( _c ) ;
   MPI_Fint __commF = MPI_Comm_c2f( __commC );
-  FC_FUNC_(iaga_set_mpi, IAGA_SET_MPI)( &__commF );
+  FC_GLOBAL_(iaga_set_mpi, IAGA_SET_MPI)( &__commF );
 
-  FC_FUNC_(getvlarg, GETVLARG)();
+  FC_GLOBAL_(getvlarg, GETVLARG)();
 }
 // void just_call_genpot2(MPI_Comm &_comm)
 // {
 //   MPI_Fint __commF = MPI_Comm_c2f( _comm );
-//   FC_FUNC_(iaga_set_mpi, IAGA_SET_MPI)( &__commF );
+//   FC_GLOBAL_(iaga_set_mpi, IAGA_SET_MPI)( &__commF );
 //
-//   FC_FUNC_(getvlarg, GETVLARG)();
+//   FC_GLOBAL_(getvlarg, GETVLARG)();
 // }
 
 namespace LaDa
