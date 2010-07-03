@@ -8,8 +8,14 @@ set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 set (LaDa_VERSION_MAJOR 4)
 set (LaDa_VERSION_MINOR 5)
 
+enable_language(C)
 enable_language(CXX)
 enable_language(Fortran)
+include(FortranCInterface)
+FortranCInterface_HEADER(${PROJECT_BINARY_DIR}/FCMangle.h
+                         MACRO_NAMESPACE "FC_"
+                         SYMBOL_NAMESPACE "FC_" )
+
 
 # required packages
 #   -- boost packages
@@ -20,7 +26,10 @@ find_package( Boost 1.36.0 REQUIRED
 include_directories(${Boost_INCLUDE_DIRS})
 #   -- eigen2
 find_package( eigen2 REQUIRED )
-include_directories(${eigen2_INCLUDE_DIRS})
+include_directories(${eigen2_INCLUDE_DIR})
+#   -- tinyxml
+find_package(tinyxml REQUIRED)
+include_directories(${tinyxml_INCLUDE_DIR})
 
 # python packages
 find_package(PythonInterp)
@@ -43,3 +52,7 @@ include_directories("${PROJECT_SOURCE_DIR}")
 include_directories("${PROJECT_BINARY_DIR}")
 
 add_subdirectory(crystal)
+add_subdirectory(opt)
+
+
+add_subdirectory(vasp)

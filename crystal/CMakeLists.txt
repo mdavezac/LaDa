@@ -1,6 +1,6 @@
 
 set( LIBCRYSTAL_SOURCES 
-     confsplit.cc fill_structure.cc lattice.cc main.cc 
+     confsplit.cc fill_structure.cc lattice.cc
      read_structure.cc structure.cc epi_structure.cc ideal_lattice.cc 
      layerdepth.cc make_primitive.cc smith.cc symmetry_operator.cc 
      atom.h divide_and_conquer.h epi_structure.h fractional_cartesian.h layerdepth.h 
@@ -9,3 +9,4 @@ set( LIBCRYSTAL_SOURCES
      confsplit.h enumerate.h fourier.h lattice.h read_poscar.h structure.h which_site.h )
     
 add_library (crystal SHARED ${LIBCRYSTAL_SOURCES})
+target_link_libraries(crystal opt)
