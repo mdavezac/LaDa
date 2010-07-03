@@ -32,11 +32,15 @@ find_package( eigen2 REQUIRED )
 include_directories(${eigen2_INCLUDE_DIR})
 #   -- tinyxml
 find_package(tinyxml REQUIRED)
-include_directories(${tinyxml_INCLUDE_DIR})
 
 
 # other packages
 find_package(MPI)
+if( MPI_FOUND )
+  set(LADA_MPI TRUE)
+  set(_MPI TRUE)
+endif( MPI_FOUND )
+  
 
 
 
@@ -59,8 +63,10 @@ include_directories("${PROJECT_BINARY_DIR}")
 add_subdirectory(crystal)
 add_subdirectory(opt)
 
+option(disable_executables  "Disable all executables."  off)
+mark_as_advanced(disable_executables)
 
-option(vasp_wrapper  "Compile vasp wrapper."  off)
+option(vasp_wrapper  "Compile vasp wrapper."  on)
 if( vasp_wrapper )
   set(DOVASP True)
   if( NOT MPI_FOUND )
@@ -76,3 +82,16 @@ if( vasp_wrapper )
     add_subdirectory(vasp)
   endif( DOVASP )
 endif( vasp_wrapper )
+
+option(vff_functional  "Compile Valence Force Field method."  on)
+if( vff_functional )
+  set(minimizer_libs TRUE)
+  add_subdirectory(vff)
+endif( vff_functional )
+
+if(minimizer_libs)
+  find_package(gsl)
+  find_package(minuit2)
+  add_subdirectory(minimizer)
+endif(minimizer_libs)
+

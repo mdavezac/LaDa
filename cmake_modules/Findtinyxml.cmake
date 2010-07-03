@@ -1,13 +1,13 @@
-if(tinyxml_INCLUDE_DIR)
+if(tinyxml_INCLUDE_DIRS)
   set( tinyxml_FIND_QUIETLY True)
-endif(tinyxml_INCLUDE_DIR)
+endif(tinyxml_INCLUDE_DIRS)
 
-find_path(tinyxml_INCLUDE_DIR
+find_path(tinyxml_INCLUDE_DIRS
   NAMES
   tinystr.h
   tinyxml.h
   PATHS
-  $ENV{tinyxml_INCLUDE_DIR}
+  $ENV{tinyxml_INCLUDE_DIRS}
   $ENV{HOME}/usr/include/
   $ENV{HOME}/hopper/include/
   /usr/include
@@ -33,8 +33,8 @@ FIND_LIBRARY(tinyxml_LIBRARY
 
 
 INCLUDE(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(tinyxml DEFAULT_MSG tinyxml_LIBRARY tinyxml_INCLUDE_DIR)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(tinyxml DEFAULT_MSG tinyxml_LIBRARY tinyxml_INCLUDE_DIRS)
 
-IF(tinyxml_INCLUDE_DIR AND tinyxml_LIBRARY)
+IF(tinyxml_INCLUDE_DIRS AND tinyxml_LIBRARY)
   SET(tinyxml_FOUND TRUE)
-ENDIF(tinyxml_INCLUDE_DIR AND tinyxml_LIBRARY)
+ENDIF(tinyxml_INCLUDE_DIRS AND tinyxml_LIBRARY)

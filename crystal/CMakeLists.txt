@@ -10,3 +10,7 @@ set( LIBCRYSTAL_SOURCES
     
 add_library (crystal SHARED ${LIBCRYSTAL_SOURCES})
 target_link_libraries(crystal opt)
+if (MPI_FOUND)
+  include_directories(${MPI_INCLUDE_PATH})
+  target_link_libraries(crystal ${MPI_LIBRARY})
+endif (MPI_FOUND)

@@ -8,3 +8,9 @@ set( LIBOPT_SOURCES
    )
     
 add_library (opt SHARED ${LIBOPT_SOURCES})
+target_link_libraries(opt ${tinyxml_LIBRARY})
+include_directories(${tinyxml_INCLUDE_DIRS})
+if(MPI_FOUND)
+  include_directories(${MPI_INCLUDE_PATH})
+  target_link_libraries(opt ${MPI_LIBRARY})
+endif(MPI_FOUND)
