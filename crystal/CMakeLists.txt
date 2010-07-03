@@ -9,7 +9,7 @@ set( LIBCRYSTAL_SOURCES
      confsplit.h enumerate.h fourier.h lattice.h read_poscar.h structure.h which_site.h )
     
 add_library (crystal SHARED ${LIBCRYSTAL_SOURCES})
-target_link_libraries(crystal opt)
+target_link_libraries(crystal opt mathlib)
 if (MPI_FOUND)
   include_directories(${MPI_INCLUDE_PATH})
   target_link_libraries(crystal ${MPI_LIBRARY})

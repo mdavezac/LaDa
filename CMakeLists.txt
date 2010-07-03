@@ -25,7 +25,7 @@ find_package(PythonLibs)
 set(Boost_USE_STATIC_LIBS   OFF)
 set(BOOST_ROOT   $ENV{HOME}/usr)
 find_package( Boost 1.36.0 REQUIRED 
-              COMPONENTS python mpi mpi_python program_options regex serialization system )
+              COMPONENTS python mpi mpi_python program_options regex serialization system filesystem )
 include_directories(${Boost_INCLUDE_DIRS})
 #   -- eigen2
 find_package( eigen2 REQUIRED )
@@ -60,8 +60,10 @@ configure_file (
 include_directories("${PROJECT_SOURCE_DIR}")
 include_directories("${PROJECT_BINARY_DIR}")
 
-add_subdirectory(crystal)
+add_subdirectory(mpi)
 add_subdirectory(opt)
+add_subdirectory(math)
+add_subdirectory(crystal)
 
 option(disable_executables  "Disable all executables."  off)
 mark_as_advanced(disable_executables)
