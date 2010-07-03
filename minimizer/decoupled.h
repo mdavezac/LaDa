@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef _LADA_MINIMIZER_DECOUPLED_H_
 #define _LADA_MINIMIZER_DECOUPLED_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #ifdef _DEBUG
 #include <stdexcept>

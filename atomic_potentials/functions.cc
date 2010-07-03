@@ -1,9 +1,4 @@
-//
-//  Version: $Id$
-//
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #ifndef LADA_SEPN
 # define LADA_SEPN 2

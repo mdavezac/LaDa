@@ -1,7 +1,3 @@
-//
-//  Version: $Id$
-//
-
 #ifndef _OPT_DEBUG_H_
 #define _OPT_DEBUG_H_
 #include <sstream>

@@ -1,9 +1,7 @@
 #ifndef LADA_MATH_COMPARE_NORMS_H
 #define LADA_MATH_COMPARE_NORMS_H
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include "fuzzy.h"
 

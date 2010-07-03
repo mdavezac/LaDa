@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef _LADA_FORTRAN_DIRIO_H_
 #define _LADA_FORTRAN_DIRIO_H_
 
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 
 extern "C" 

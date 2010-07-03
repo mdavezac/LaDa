@@ -1,7 +1,3 @@
-//
-//  Version: $Id$
-//
-
 #include <boost/algorithm/string/replace.hpp>
 #include <opt/algorithms.h>
 

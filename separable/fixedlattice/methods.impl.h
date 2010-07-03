@@ -1,7 +1,3 @@
-//
-//  Version: $Id$
-//
-
 #include <boost/numeric/ublas/io.hpp>
 namespace LaDa
 { 

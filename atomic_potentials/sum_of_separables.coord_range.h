@@ -1,6 +1,3 @@
-//
-//  Version: $Id$
-//
 #ifdef LADA_WITH_CONST
 #  define LADA_CONST_(a) const_ ## a
 #  define LADA_CONST const 

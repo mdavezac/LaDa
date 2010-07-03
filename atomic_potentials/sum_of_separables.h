@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef LADA_ATOMIC_POTENTIAL_SUM_OF_SEPARABLES_H_
 #define LADA_ATOMIC_POTENTIAL_SUM_OF_SEPARABLES_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <iostream>
 

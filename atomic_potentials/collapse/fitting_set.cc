@@ -1,9 +1,7 @@
 //
 //  Version: $Id: collapse.cc 1270 2009-08-17 03:11:58Z davezac $
 //
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include "../representation.h"
 #include "fitting_set.h"

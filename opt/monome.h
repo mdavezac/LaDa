@@ -1,7 +1,4 @@
 //
-//  Version: $Id$
-//
-//
 // Monome class: a single term made up of a coefficient and an array
 // of variables. The latters are usually integers which are meant to refer to
 // the variable array of a Polynome object
@@ -10,9 +7,7 @@
 #ifndef _OPT_MONOME_H_
 #define _OPT_MONOME_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <list>
 #include <algorithm>

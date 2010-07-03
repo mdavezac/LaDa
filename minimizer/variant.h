@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef _LADA_MINIMIZER_ANY_H_
 #define _LADA_MINIMIZER_ANY_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <boost/variant.hpp>
 #include <boost/variant/apply_visitor.hpp>

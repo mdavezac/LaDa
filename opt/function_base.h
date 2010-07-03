@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef _OPT_FUNCTION_BASE_H_
 #define _OPT_FUNCTION_BASE_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <iostream>
 #include <algorithm>

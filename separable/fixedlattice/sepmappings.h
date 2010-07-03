@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef _CE_SEPMAPPINGS_H_
 #define _CE_SEPMAPPINGS_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <boost/lambda/lambda.hpp>
 

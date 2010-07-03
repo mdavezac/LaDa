@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef _GSL_SIMPLEX_H_
 #define _GSL_SIMPLEX_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <iomanip>
 #include <functional>

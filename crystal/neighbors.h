@@ -4,9 +4,7 @@
 #ifndef _LADA_CRYSTAL_NEIGHBORS_H_
 #define _LADA_CRYSTAL_NEIGHBORS_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <vector>
 #include <utility>

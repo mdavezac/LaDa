@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef LADA_ATOMIC_POTENTIAL_FUNCTIONS_H_
 #define LADA_ATOMIC_POTENTIAL_FUNCTIONS_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #ifndef LADA_SEPN
 # define LADA_SEPN 2

@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef LADA_ENUM_MUMERIC_TYPE_H_
 #define LADA_ENUM_MUMERIC_TYPE_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <vector>
 

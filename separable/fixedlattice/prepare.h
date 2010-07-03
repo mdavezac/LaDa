@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef _CE_POSTOCONF_H_
 #define _CE_POSTOCONF_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <string>
 #include <vector>

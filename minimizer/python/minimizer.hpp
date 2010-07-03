@@ -1,13 +1,7 @@
-//
-//  Version: $Id$
-//
-
 #ifndef _LADA_PYTHON_MINIMIZER_HPP_
 #define _LADA_PYTHON_MINIMIZER_HPP_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <boost/serialization/serialization.hpp>
 

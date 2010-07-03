@@ -1,13 +1,7 @@
-//
-//  Version: $Id$
-//
-
 #ifndef LADA_PYTHON_CE_MLCLUSTER_HPP
 #define LADA_PYTHON_CE_MLCLUSTER_HPP
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 namespace LaDa
 {

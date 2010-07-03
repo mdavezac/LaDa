@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef LADA_OPT_POW_H_
 #define LADA_OPT_POW_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits/is_integral.hpp>

@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef _ATOM_H_
 #define _ATOM_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <string>
 #include <sstream>

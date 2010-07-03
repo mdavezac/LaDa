@@ -4,9 +4,7 @@
 #ifndef _SEPARABLES_STRUCT_TO_CONFS_H_
 #define _SEPARABLES_STRUCT_TO_CONFS_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <vector>
 #include <utility>

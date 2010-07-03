@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef _LADA_GSL_MINS_H_
 #define _LADA_GSL_MINS_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <iomanip>
 #include <functional>

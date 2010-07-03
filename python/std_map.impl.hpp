@@ -1,7 +1,3 @@
-//
-//  Version: $Id$
-//
-
 #ifndef _LADA_OPT_PYTHON_STD_MAP_IMPL_HPP_
 # define _LADA_OPT_PYTHON_STD_MAP_IMPL_HPP_ 0
 # define _PV_ ;

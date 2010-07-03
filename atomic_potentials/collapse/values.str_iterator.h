@@ -1,6 +1,3 @@
-//
-//  Version: $Id$
-//
 #ifdef LADA_CONST_
 #  error LADA_CONST_ already defined
 #endif

@@ -1,9 +1,7 @@
 #ifndef LADA_PATH_H
 #define LADA_PATH_H
 
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <boost/filesystem/path.hpp>
 

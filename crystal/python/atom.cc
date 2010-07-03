@@ -1,9 +1,4 @@
-//
-//  Version: $Id$
-//
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <boost/python.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>

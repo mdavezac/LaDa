@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef _SEPARABLE_CEFITTING_H_
 #define _SEPARABLE_CEFITTING_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <vector>
 #include <string>

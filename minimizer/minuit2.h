@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef _LADA_MINIMIZERS_MINUIT_H_
 #define _LADA_MINIMIZERS_MINUIT_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <Minuit2/FCNGradientBase.h>
 #include <Minuit2/FunctionMinimum.h>

@@ -1,13 +1,7 @@
-//
-//  Version: $Id$
-//
-
 #ifndef _LADA_PYTHON_STRUCTURE_HPP_
 #define _LADA_PYTHON_STRUCTURE_HPP_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 namespace LaDa
 {

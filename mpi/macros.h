@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef _MPI_MACROS_H_
 # define _MPI_MACROS_H_
 
-# ifdef HAVE_CONFIG_H
-# include <config.h>
-# endif
+#include "LaDaConfig.h"
 
 # ifndef _MPI
 #   define __MPICODE(code) 

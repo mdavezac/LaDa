@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef LADA_OPT_NDIMITERATOR_H_
 #define LADA_OPT_NDIMITERATOR_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 
 #include <vector>

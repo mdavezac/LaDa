@@ -1,13 +1,7 @@
-//
-//  Version: $Id$
-//
-
 #ifndef _LADA_CRYSTAL_READ_STRUCTURE_H_
 #define _LADA_CRYSTAL_READ_STRUCTURE_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <vector>
 #include <ostream>

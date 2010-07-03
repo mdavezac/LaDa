@@ -1,7 +1,3 @@
-//
-//  Version: $Id$
-//
-
 #include <boost/lambda/if.hpp>
 #include <math/random.h>
 #include <opt/algorithms.h>

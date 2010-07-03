@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef _SEPARABLES_BESTOF_H_
 #define _SEPARABLES_BESTOF_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <utility> 
 

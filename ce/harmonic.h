@@ -1,13 +1,8 @@
-//
-//  Version: $Id$
-//
 #ifndef _HARMONICS_H_
 #define _HARMONICS_H_
 
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <vector>
 #include <math.h>

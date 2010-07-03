@@ -1,13 +1,7 @@
-//
-//  Version: $Id$
-//
-
 #ifndef __PYTHONLADA_XML_HPP_
 #define __PYTHONLADA_XML_HPP_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include<fstream>
 

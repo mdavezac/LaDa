@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef _LADA_VFF_VA_H_
 #define _LADA_VFF_VA_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <boost/filesystem/path.hpp>
 #include <boost/mpl/vector.hpp>

@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef _PHYSICAL_CONSTANTS_
 #define _PHYSICAL_CONSTANTS_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #ifdef __PGI
 #define __BREAK 

@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef _PYTHONLADA_CONVEXHUL_IMPL_H_
 #define _PYTHONLADA_CONVEXHUL_IMPL_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <boost/python/object.hpp>
 #include <boost/python/tuple.hpp>

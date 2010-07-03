@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef _CE_COLLAPSE_H_
 #define _CE_COLLAPSE_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include<boost/numeric/ublas/vector.hpp>
 #include<boost/numeric/ublas/matrix.hpp>

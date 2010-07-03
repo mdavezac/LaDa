@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef _SEPARABLE_BOOLEAN_H_
 #define _SEPARABLE_BOOLEAN_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include<iostream>
 

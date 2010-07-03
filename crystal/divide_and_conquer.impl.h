@@ -1,7 +1,3 @@
-//
-//  Version: $Id$
-//
-
 #include <limits>
 #include <boost/tuple/tuple_io.hpp>
 #include <set>

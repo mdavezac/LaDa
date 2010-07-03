@@ -1,9 +1,7 @@
 //
 //  Version: $Id: ce.cc 1059 2009-04-12 18:48:23Z Mayeul $
 //
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <struct_to_confs.h>
 #include <crystal/neighbors.h>

@@ -4,9 +4,7 @@
 #ifndef LADA_ATOMIC_POTENTIAL_COLLAPSE_VALUES_H_
 #define LADA_ATOMIC_POTENTIAL_COLLAPSE_VALUES_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <vector>
 

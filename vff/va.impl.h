@@ -1,6 +1,3 @@
-//
-//  Version: $Id$
-//
 #ifndef _VFF_VA_IMPL_H_
 #define _VFF_VA_IMPL_H_
 

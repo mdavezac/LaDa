@@ -1,7 +1,3 @@
-//
-//  Version: $Id$
-//
-
 #if defined(__POLYFUNCTIONS__)
 
 namespace LaDA

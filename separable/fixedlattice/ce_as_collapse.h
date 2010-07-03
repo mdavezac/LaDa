@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef _SEPARABLES_FIXEDLATTICE_CE_AS_COLLAPSE_H_
 #define _SEPARABLES_FIXEDLATTICE_CE_AS_COLLAPSE_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include "colpolicy.h"
 #include <opt/random.h>

@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef LADA_CE_CREATE_CLUSTERS_H
 #define LADA_CE_CREATE_CLUSTERS_H
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <boost/shared_ptr.hpp>
 #include "mlclusters.h"

@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef LADA_CRYSTAL_WHICH_SITE_H
 #define LADA_CRYSTAL_WHICH_SITE_H
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <cmath>
 

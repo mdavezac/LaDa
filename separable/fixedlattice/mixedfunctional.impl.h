@@ -1,7 +1,3 @@
-//
-//  Version: $Id$
-//
-
 #include <boost/bind.hpp>
 #include <boost/lambda/bind.hpp>
 #include <boost/numeric/ublas/io.hpp>

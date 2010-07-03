@@ -1,6 +1,4 @@
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <mpi.h>
 #include <boost/mpi/communicator.hpp>

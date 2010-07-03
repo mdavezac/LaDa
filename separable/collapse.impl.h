@@ -1,7 +1,3 @@
-//
-//  Version: $Id$
-//
-
 #include <math/random.h>
 
 namespace LaDa

@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef _FUNCTION_VA_H_
 #define _FUNCTION_VA_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <opt/types.h>
 #include <crystal/structure.h>

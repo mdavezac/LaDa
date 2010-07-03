@@ -1,9 +1,7 @@
 //
 //  Version: $Id: build_tree_sort.cc 1079 2009-04-29 23:34:09Z Mayeul $
 //
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <algorithm>
 #include <functional>

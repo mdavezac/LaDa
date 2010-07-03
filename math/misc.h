@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef LADA_MATH_IPOW_H
 #define LADA_MATH_IPOW_H
 
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <opt/types.h>
 #include "eigen.h"

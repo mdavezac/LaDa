@@ -4,9 +4,7 @@
 #ifndef _LADA_CLJ_FUNCTIONAL_H_
 #define _LADA_CLJ_FUNCTIONAL_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <map>
 #include <iostream>

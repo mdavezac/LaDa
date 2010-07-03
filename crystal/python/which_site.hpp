@@ -1,13 +1,7 @@
-//
-//  Version: $Id$
-//
-
 #ifndef LADA_PYTHON_CRYSTAL_WHICH_SITE_HPP
 #define LADA_PYTHON_CRYSTAL_WHICH_SITE_HPP
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 namespace LaDa
 {

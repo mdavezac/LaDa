@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef _LADA_MODELS_FORTRAN_H_
 #define _LADA_MODELS_FORTRAN_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <minimizer/variant.h>
 #include <boost/mpl/vector.hpp>

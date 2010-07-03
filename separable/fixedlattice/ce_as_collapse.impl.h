@@ -1,7 +1,3 @@
-//
-//  Version: $Id$
-//
-
 #include <ce/fit.h>
 
 namespace LaDa

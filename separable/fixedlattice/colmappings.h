@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef _CE_COLMAPPINGS_H_
 #define _CE_COLMAPPINGS_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include<boost/lambda/bind.hpp>
 #include<boost/numeric/ublas/vector.hpp>

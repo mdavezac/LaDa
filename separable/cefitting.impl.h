@@ -1,7 +1,3 @@
-//
-//  Version: $Id$
-//
-
 #include <utility>
 #include <algorithm>
 #include "bestof.h"

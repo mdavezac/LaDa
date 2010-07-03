@@ -1,6 +1,3 @@
-//
-//  Version: $Id$
-//
 #ifdef LADA_PROPAGATE_STDVECTOR
 #  undef LADA_PROPAGATE_STDVECTOR
 #endif

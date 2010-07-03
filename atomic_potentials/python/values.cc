@@ -1,9 +1,4 @@
-//
-//  Version: $Id$
-//
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <boost/python/class.hpp>
 #include <boost/python/scope.hpp>
