@@ -22,12 +22,12 @@ if(NOT disable_executables)
   endif(MPI_FOUND)
 
 
-  add_executable(seps_cubic mxmain.cc)
+  add_executable(seps_cubic main.cc)
   set_target_properties(seps_cubic PROPERTIES LINK_FLAGS "${ALL_LDFLAGS}")
   set_target_properties(seps_cubic PROPERTIES COMPILE_FLAGS "${CUBIC_CXXFLAGS}")
   target_link_libraries(seps_cubic fxseps minimizer ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY})
 
-  add_executable(seps_tetra mxmain.cc)
+  add_executable(seps_tetra main.cc)
   set_target_properties(seps_tetra PROPERTIES LINK_FLAGS "${ALL_LDFLAGS}")
   set_target_properties(seps_tetra PROPERTIES COMPILE_FLAGS "${TETRA_CXXFLAGS}")
   target_link_libraries(seps_tetra fxseps minimizer ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY})
