@@ -10,7 +10,3 @@ set( LIBCRYSTAL_SOURCES
     
 add_library (crystal STATIC ${LIBCRYSTAL_SOURCES})
 target_link_libraries(crystal opt mathlib)
-if (MPI_FOUND)
-  include_directories(${MPI_INCLUDE_PATH})
-  target_link_libraries(crystal ${MPI_LIBRARY})
-endif (MPI_FOUND)
