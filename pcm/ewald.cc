@@ -1,4 +1,5 @@
 #include "LaDaConfig.h"
+#include "FCMangle.h"
 
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string/trim.hpp>
@@ -7,7 +8,7 @@
 
 #include "ewald.h"
 
-extern "C" void FC_FUNC( ewaldf, EWALDF )
+extern "C" void FC_GLOBAL( ewaldf, EWALDF )
                 (
                   const int *const, // verbosity
                   const double *const, // Energy
@@ -54,7 +55,7 @@ namespace LaDa
         for( size_t j(0); j < 3; ++j )
           cell[ i + j*3 ] = _in.cell(i,j) * _in.scale / Physics::a0("A");
 
-      FC_FUNC( ewaldf, EWALDF )
+      FC_GLOBAL( ewaldf, EWALDF )
       (
         &verbosity,   // verbosity
         &energy,      // Energy
@@ -98,7 +99,7 @@ namespace LaDa
       for(; child; child = child->NextSiblingElement("Atom") )
       {
         if( child->Attribute("type") and child->Attribute("Charge") ) continue;
-        const std::string type = boost::algorithm::trim_copy(child->Attribute("type"));
+        const std::string type = boost::algorithm::trim_copy(std::string(child->Attribute("type")));
         const types::t_real charge
           = boost::lexical_cast<types::t_real>( child->Attribute("charge") );
         __DOASSERT( charges.find( type ) != charges.end(),

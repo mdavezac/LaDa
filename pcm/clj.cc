@@ -31,7 +31,7 @@ namespace LaDa
 
     Clj :: t_Return Clj :: call_(const t_Arg& _in, t_Arg& _out, size_t _which) const
     {
-      _out.cell.zero();
+      _out.cell = math::rMatrix3d::Zero();
       foreach( t_Arg :: t_Atom &atom, _out.atoms )
         atom.pos = math::rVector3d(0,0,0);
 

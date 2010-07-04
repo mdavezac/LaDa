@@ -130,8 +130,8 @@ namespace LaDa
       __DOASSERT( _node.Attribute( "B" ), "Bond requires a B attribute.\n" )
       __DOASSERT( _node.Attribute( "hardsphere" ), "Bond requires a hardsphere attribute.\n" )
       __DOASSERT( _node.Attribute( "vanderwalls" ), "Bond requires a vanderwalls attribute.\n" )
-      const std::string A = boost::algorithm::trim_copy( _node.Attribute("A") );
-      const std::string B = boost::algorithm::trim_copy( _node.Attribute("B") );
+      const std::string A = boost::algorithm::trim_copy(std::string(_node.Attribute("A")));
+      const std::string B = boost::algorithm::trim_copy(std::string(_node.Attribute("B")));
       _type = bondname(A, B);
       hard_sphere = boost::lexical_cast< types::t_real >( _node.Attribute("hard_sphere") );
       van_der_walls = boost::lexical_cast< types::t_real >( _node.Attribute("van_der_walls") );

@@ -5,4 +5,7 @@ set( LIBPCM_SOURCES
 
 add_library (pcm STATIC ${LIBPCM_SOURCES})
 target_link_libraries(pcm crystal)
+if(MPI_FOUND)
+  include_directories(${MPI_INCLUDE_PATH})
+endif(MPI_FOUND)
 
