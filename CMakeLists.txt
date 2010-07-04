@@ -13,7 +13,7 @@ option(vasp_functional     "Compile vasp functional wrapper."           off)
 option(escan_functional    "Compile escan functional wrapper."          off)
 option(vff_functional      "Compile Valence Force Field method."        off)
 option(fxseps_functional   "Compile Fixed Lattice Sum of Separables."   off)
-option(atompot_functional  "Compile Fixed Lattice Sum of Separables."    on)
+option(atompot_functional  "Compile Fixed Lattice Sum of Separables."   off)
 option(enum_package        "Compile Lattice Decoration Enumeration."    off)
 option(python_bindings     "Include python bindings."                   off)
 
