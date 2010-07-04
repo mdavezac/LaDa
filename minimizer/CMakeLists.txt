@@ -17,7 +17,7 @@ if (MINUIT2_FOUND)
 endif (MINUIT2_FOUND)
 
     
-add_library (minimizer STATIC ${LIBMINIMIZER_SOURCES} ${LIBMINIMIZER_HEADERS} ${LIBMINIMIZER_F90})
+add_library (minimizer SHARED ${LIBMINIMIZER_SOURCES} ${LIBMINIMIZER_HEADERS} ${LIBMINIMIZER_F90})
 target_link_libraries(minimizer opt)
 if(NOT noinstall_headers)
   install(FILES ${LIBMINIMIZER_HEADERS} DESTINATION include/LaDa/minimizer)

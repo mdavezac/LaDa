@@ -1,0 +1,12 @@
+set(PYMATH_HEADERS avogadro.hpp  matrix.hpp)
+set(PYMATH_SOURCES avogadro.cc  matrix.cc  python.cc)
+
+include_directories(${PYTHON_INCLUDE_DIRS})
+python_add_module (pymath ${PYMATH_HEADERS} ${PYMATH_SOURCES})
+target_link_libraries(pymath mathlib ${Boost_PYTHON_LIBRARY})
+mark_as_advanced(PYTHON_ENABLE_MODULE_pyopt)
+mark_as_advanced(PYTHON_MODULE_pyopt_BUILD_SHARED)
+set_target_properties(pymath PROPERTIES PREFIX "")
+set_target_properties(pymath PROPERTIES OUTPUT_NAME math)
+install(FILES ${PYMATH_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/opt)
+install(TARGETS pymath DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/opt)

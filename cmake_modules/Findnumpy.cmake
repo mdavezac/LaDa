@@ -297,6 +297,11 @@ endif (NUMPY_FOUND)
 ## -----------------------------------------------------------------------------
 ## Mark advanced variables
 
+unset(NUMPY_ARRAYOBJECT_H CACHE)
+unset(NUMPY_BOOLTEST_FILE CACHE)
+unset(NUMPY_LONGTEST_FILE CACHE)
+unset(NUMPY_NDARRAYOBJECT_H CACHE)
+unset(NUMPY_VERSION_PY CACHE)
 mark_as_advanced (
   NUMPY_INCLUDES
   NUMPY_LIBRARIES

@@ -41,13 +41,43 @@ include(FortranCInterface)
 FortranCInterface_HEADER(${PROJECT_BINARY_DIR}/FCMangle.h
                          MACRO_NAMESPACE "FC_"
                          SYMBOL_NAMESPACE "FC_" )
-# find_package(PythonInterp)
+find_package(PythonInterp)
 find_package(PythonLibs)
+# look for python version.
+if(NOT PYTHON_VERSION AND PYTHONINTERP_FOUND)
+  execute_process( 
+    COMMAND ${PYTHON_EXECUTABLE} -c "import sys; print \"%i.%i\" % sys.version_info[:2]"
+    OUTPUT_VARIABLE PYTHON_VERSION
+  )
+  if( PYTHON_VERSION )
+    string (STRIP ${PYTHON_VERSION} PYTHON_VERSION)
+    set(PYTHON_VERSION ${PYTHON_VERSION} CACHE STRING "Version of the Python interpreter.")
+    mark_as_advanced(PYTHON_VERSION)
+    MESSAGE(STATUS "[Python] Version: ${PYTHON_VERSION}")
+  else( PYTHON_VERSION )
+    MESSAGE(STATUS "Could not determine python version.")
+  endif( PYTHON_VERSION )
+endif(NOT PYTHON_VERSION AND PYTHONINTERP_FOUND)
+# sets python site-packages
+if(NOT CMAKE_PYINSTALL_PREFIX)
+  execute_process( 
+    COMMAND ${PYTHON_EXECUTABLE} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()"
+    OUTPUT_VARIABLE CMAKE_PYINSTALL_PREFIX
+  )
+  if( CMAKE_PYINSTALL_PREFIX )
+    string (STRIP ${CMAKE_PYINSTALL_PREFIX} CMAKE_PYINSTALL_PREFIX)
+    set(CMAKE_PYINSTALL_PREFIX ${CMAKE_PYINSTALL_PREFIX} CACHE STRING "Version of the Python interpreter.")
+    mark_as_advanced(CMAKE_PYINSTALL_PREFIX)
+    MESSAGE(STATUS "[Python] Version: ${CMAKE_PYINSTALL_PREFIX}")
+  else( CMAKE_PYINSTALL_PREFIX )
+    set( CMAKE_PYINSTALL_PREFIX lib64/python${PYTHON_VERSION}/site-packages/ 
+         CACHE PATH "Python modules will be installed here." )
+  endif( CMAKE_PYINSTALL_PREFIX )
+endif(NOT CMAKE_PYINSTALL_PREFIX)
 
 
 # required packages
 #   -- boost packages
-set(Boost_USE_STATIC_LIBS   OFF)
 set(BOOST_ROOT   $ENV{HOME}/usr)
 find_package( Boost 1.36.0 REQUIRED 
               COMPONENTS python mpi mpi_python program_options regex serialization system filesystem )
@@ -163,6 +193,7 @@ endif(minimizer_libs)
 if(python_bindings)
   if(PYTHONLIBS_FOUND)
     add_subdirectory(python)
+    set(LADA_DO_PYTHON TRUE)
   else(PYTHONLIBS_FOUND)
     message(SEND_ERROR "Python libraries not found."
                        "Please set PYTHON_INCLUDE_DIR and PYTHON_LIBRARY" )
@@ -186,3 +217,45 @@ configure_file (
  "${PROJECT_BINARY_DIR}/LaDaConfig.h"
 )
 
+
+# #  Adds a global library. Also used by python.
+# if(python_bindings OR NOT noinstall_headers) 
+#   # We want to compile with fPIC in this case.
+#   include(CheckCXXCompilerFlag)
+#   CHECK_CXX_COMPILER_FLAG(-fPIC CCOMPILER_HAS_FPIC)
+#   if(COMPILER_HAS_FPIC)
+#     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+#     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
+#     set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fPIC")
+#   endif(COMPILER_HAS_FPIC)
+#   
+#   # now creates library.
+#   add_library(lada "")
+#   target_link_libraries(lada ${Boost_PYTHON_LIBRARY} crystal opt math)
+#   if(MPI_FOUND)
+#     include_directories(${MPI_INCLUDE_PATH})
+#     target_link_libraries(lada mpi)
+#   endif(MPI_FOUND)
+#   if(vff_functional)
+#     target_link_libraries(lada vff)
+#   endif(vff_functional)
+#   if(ce_functional)
+#     target_link_libraries(lada ce)
+#   endif(ce_functional)
+#   if(atompot_functional)
+#     target_link_libraries(lada atompot)
+#   endif(atompot_functional)
+#   if(pcm_functional)
+#     target_link_libraries(lada pcm)
+#   endif(pcm_functional)
+#   if(enum_package)
+#     target_link_libraries(lada enum)
+#   endif(enum_package)
+#   if(minimizer_libs)
+#     target_link_libraries(lada minimizer)
+#   endif(minimizer_libs)
+
+#   if(NOT noinstall_headers)
+#     install(FILES ${PYLADA_HEADERS} DESTINATION include/LaDa/python)
+#   endif(NOT noinstall_headers)
+# endif(python_bindings OR NOT noinstall_headers) 

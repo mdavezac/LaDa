@@ -29,8 +29,6 @@
 
 #include <boost/filesystem/operations.hpp>
 
-#include <pyublas/numpy.hpp>
-
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <python/misc.hpp>

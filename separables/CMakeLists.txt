@@ -7,7 +7,7 @@ set( LIBFXSEPS_HEADERS
 set( LIBFXSEPS_SOURCES prepare.cc )
 
 
-add_library (fxseps STATIC ${LIBFXSEPS_SOURCES} ${LIBFXSEPS_HEADERS})
+add_library (fxseps SHARED ${LIBFXSEPS_SOURCES} ${LIBFXSEPS_HEADERS})
 target_link_libraries(fxseps ce)
 if(NOT noinstall_headers)
   install(FILES ${LIBFXSEPS_HEADERS} DESTINATION include/LaDa/separables)

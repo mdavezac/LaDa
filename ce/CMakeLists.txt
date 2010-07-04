@@ -9,7 +9,7 @@ set( LIBCE_SOURCES
 
 
 
-add_library (ce STATIC ${LIBCE_SOURCES} ${LIBCE_HEADERS})
+add_library (ce SHARED ${LIBCE_SOURCES} ${LIBCE_HEADERS})
 target_link_libraries(ce crystal)
 if (MPI_FOUND)
   include_directories(${MPI_INCLUDE_PATH})
@@ -54,4 +54,8 @@ endif(NOT disable_executables)
 if(NOT noinstall_headers)
   install(FILES ${LIBCE_HEADERS} DESTINATION include/LaDa/ce)
 endif(NOT noinstall_headers)
+
+if(python_bindings)
+  add_subdirectory(python)
+endif(python_bindings)
 

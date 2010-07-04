@@ -13,7 +13,7 @@
 
 namespace LaDa
 {
-# ifdef __DOPYTHON
+# ifdef LADA_DO_PYTHON
   //! \cond
   namespace Python
   {
@@ -42,7 +42,7 @@ namespace LaDa
       //!          storage helps perform the alternating least-square fit.
       class FittingSet
       {
-#         ifdef __DOPYTHON
+#         ifdef LADA_DO_PYTHON
             friend void ::LaDa::Python::expose_fittingset();
 #         endif
         protected:

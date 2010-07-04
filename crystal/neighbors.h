@@ -21,7 +21,7 @@
 namespace LaDa
 {
 
-# ifdef __DOPYTHON
+# ifdef LADA_DO_PYTHON
   //! \cond
   namespace Python
   {
@@ -50,7 +50,7 @@ namespace LaDa
 
      class Neighbors
      {
-#        ifdef __DOPYTHON
+#        ifdef LADA_DO_PYTHON
          friend class Python::Neighbors;
 #        endif
          //! Type of the list of neighbours.

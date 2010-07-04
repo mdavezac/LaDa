@@ -5,7 +5,7 @@ set( LIBVFF_SOURCES
      build_tree_sort_dnc.cc functional.cc initialize_centers.cc layered.cc vff.cc )
 
 
-add_library (vff STATIC ${LIBVFF_SOURCES} ${LIBVFF_HEADERS})
+add_library (vff SHARED ${LIBVFF_SOURCES} ${LIBVFF_HEADERS})
 target_link_libraries(vff crystal minimizer)
 if(NOT noinstall_headers)
   install(FILES ${LIBVFF_HEADERS} DESTINATION include/LaDa/vff)

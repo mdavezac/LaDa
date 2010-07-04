@@ -8,7 +8,8 @@ set( LIBOPT_HEADERS
      tinyxml.h tuple_serialize.h va_function.h
    )
     
-add_library (opt STATIC ${LIBOPT_HEADERS} ${LIBOPT_SOURCES} ${LIBOPT_F90})
+add_library (opt SHARED ${LIBOPT_HEADERS} ${LIBOPT_SOURCES} ${LIBOPT_F90})
+
 target_link_libraries(opt ${tinyxml_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY}
                           ${Boost_SERIALIZATION_LIBRARY})
 include_directories(${tinyxml_INCLUDE_DIRS})

@@ -6,7 +6,7 @@ set( LIBENUM_SOURCES
      remove_smith_equivalents.cc transform.cc translation.cc )
 
 
-add_library (enum STATIC ${LIBENUM_SOURCES} ${LIBENUM_HEADERS})
+add_library (enum SHARED ${LIBENUM_SOURCES} ${LIBENUM_HEADERS})
 target_link_libraries(enum crystal)
 if(NOT noinstall_headers)
   install(FILES ${LIBENUM_HEADERS} DESTINATION include/LaDa/enum)

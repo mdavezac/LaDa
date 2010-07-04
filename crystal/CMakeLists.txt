@@ -9,9 +9,14 @@ set( LIBCRYSTAL_SOURCES
      read_structure.cc structure.cc epi_structure.cc ideal_lattice.cc 
      layerdepth.cc make_primitive.cc smith.cc symmetry_operator.cc )
     
-add_library (crystal STATIC ${LIBCRYSTAL_SOURCES} ${LIBCRYSTAL_HEADERS})
+add_library (crystal SHARED ${LIBCRYSTAL_SOURCES} ${LIBCRYSTAL_HEADERS})
+
 target_link_libraries(crystal opt mathlib)
 
 if(NOT noinstall_headers)
   install(FILES ${LIBCRYSTAL_HEADERS} DESTINATION include/LaDa/crystal)
 endif(NOT noinstall_headers)
+
+if(python_bindings)
+  add_subdirectory(python)
+endif(python_bindings)

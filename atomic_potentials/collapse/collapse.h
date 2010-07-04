@@ -23,7 +23,7 @@ namespace LaDa
   }
   //! \endcond
 
-# ifdef __DOPYTHON
+# ifdef LADA_DO_PYTHON
   namespace Python
   {
     void expose_collapse();
@@ -62,7 +62,7 @@ namespace LaDa
       //!          computing \f$G{(u)}\f$. 
       class Collapse
       {
-#       ifdef __DOPYTHON 
+#       ifdef LADA_DO_PYTHON 
           friend void Python::expose_collapse();
 #       endif
         protected:

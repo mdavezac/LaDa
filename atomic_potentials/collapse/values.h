@@ -15,7 +15,7 @@
 
 namespace LaDa
 {
-# ifdef __DOPYTHON
+# ifdef LADA_DO_PYTHON
   //! \cond
   namespace Python
   {
@@ -43,7 +43,7 @@ namespace LaDa
       //! Function values and aggregates thereof required by alternating least-square fit.
       class Values
       {
-#       ifdef __DOPYTHON
+#       ifdef LADA_DO_PYTHON
           friend void ::LaDa::Python::expose_values();
 #       endif
         protected:

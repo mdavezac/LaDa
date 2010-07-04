@@ -4,7 +4,7 @@ set( LIBMATH_HEADERS
      smith_normal_form.h traits.h )
 set( LIBMATH_SOURCES random.cc  smith_normal_form.cc )
     
-add_library (mathlib STATIC ${LIBMATH_SOURCES} ${LIBMATH_F90} ${LIBMATH_HEADERS})
+add_library (mathlib SHARED ${LIBMATH_SOURCES} ${LIBMATH_F90} ${LIBMATH_HEADERS})
 target_link_libraries(mathlib ${tinyxml_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
 set_target_properties(mathlib PROPERTIES OUTPUT_NAME math)
 include_directories(${tinyxml_INCLUDE_DIRS})
@@ -16,3 +16,7 @@ endif(MPI_FOUND)
 if(NOT noinstall_headers)
   install(FILES ${LIBMATH_HEADERS} DESTINATION include/LaDa/math)
 endif(NOT noinstall_headers)
+
+if(python_bindings)
+  add_subdirectory(python)
+endif(python_bindings)
