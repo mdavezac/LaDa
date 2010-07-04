@@ -8,3 +8,5 @@
 #cmakedefine NUMPY_HAS_BOOL
 #cmakedefine LADA_WITH_GSL
 #cmakedefine LADA_WITH_MINUIT2
+#cmakedefine FUCKING_CRAY
+#define LADA_GLOBAL_LOAD @load_python_stuff_globally@
