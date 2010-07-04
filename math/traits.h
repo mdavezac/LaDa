@@ -9,7 +9,6 @@
 #include <string>
 #include <sstream>
 
-#include <mpi/mpi_object.h>
 #include <opt/types.h>
 
 #include "fuzzy.h"

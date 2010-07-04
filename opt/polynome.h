@@ -16,9 +16,10 @@
 #include "monome.h"
 #include <iomanip>
 
-#include <mpi/mpi_object.h>
+#include <mpi/macros.h>
 #include <math/fuzzy.h>
 #ifdef _MPI
+# include <mpi/mpi_object.h>
 # include <boost/lambda/lambda.hpp>
 # include <boost/mpi/collectives.hpp>
 # include <functional>

@@ -15,7 +15,6 @@
 #include <tinyxml/tinyxml.h>
 
 #include <math/fuzzy.h>
-#include <mpi/mpi_object.h>
 
 #include "types.h"
 #include "function_functors.h"

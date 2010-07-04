@@ -5,6 +5,7 @@
 
 #include <physics/physics.h>
 #include <crystal/structure.h>
+#include <mpi/mpi_object.h>
 
 #include "escan.hpp"
 

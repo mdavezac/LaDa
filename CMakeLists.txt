@@ -7,12 +7,13 @@ set (LaDa_VERSION_MINOR 5)
 option(disable_executables  "Disable all executables."  off)
 mark_as_advanced(disable_executables)
 
-option(pcm_functional   "Include Point Charge Ion functional."   on)
-option(ce_functional    "Include Cluster Expansion functional." off)
-option(vasp_functional  "Compile vasp functional wrapper."      off)
-option(escan_functional "Compile escan functional wrapper."     off)
-option(vff_functional   "Compile Valence Force Field method."   off)
-option(python_bindings  "Include python bindings."              off)
+option(pcm_functional   "Include Point Charge Ion functional."      off)
+option(ce_functional    "Include Cluster Expansion functional."     off)
+option(vasp_functional  "Compile vasp functional wrapper."          off)
+option(escan_functional "Compile escan functional wrapper."         off)
+option(vff_functional   "Compile Valence Force Field method."       off)
+option(enum_package     "Compile Lattice Decoration Enumeration."   on)
+option(python_bindings  "Include python bindings."                  off)
 
 
 # Location where cmake first looks for cmake modules.
@@ -115,6 +116,11 @@ if(pcm_functional)
   set(minimizer_libs TRUE)
   add_subdirectory(pcm)
 endif(pcm_functional)
+
+if(enum_package)
+  set(python_bindings TRUE)
+  add_subdirectory(enum)
+endif(enum_package)
 
 if(minimizer_libs)
   find_package(gsl)
