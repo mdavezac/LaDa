@@ -129,7 +129,7 @@ if(fxseps_functional)
     set(minimizer_libs TRUE)
   endif(NOT disable_executables) 
   set(ce_functional TRUE)
-  add_subdirectory(fixed_lattice_separables)
+  add_subdirectory(separables)
 endif(fxseps_functional)
 
 if(atompot_functional)
