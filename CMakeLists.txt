@@ -7,11 +7,12 @@ set (LaDa_VERSION_MINOR 5)
 option(disable_executables  "Disable all executables."  off)
 mark_as_advanced(disable_executables)
 
-option(ce_functional  "Include Cluster Expansion functional."  on)
-option(vasp_wrapper  "Compile vasp wrapper."  off)
-option(escan_functional  "Compile escan python wrapper."  off)
-option(vff_functional  "Compile Valence Force Field method."  off)
-option(python_bindings  "Include python bindings."  off)
+option(pcm_functional   "Include Point Charge Ion functional."   on)
+option(ce_functional    "Include Cluster Expansion functional." off)
+option(vasp_functional  "Compile vasp functional wrapper."      off)
+option(escan_functional "Compile escan functional wrapper."     off)
+option(vff_functional   "Compile Valence Force Field method."   off)
+option(python_bindings  "Include python bindings."              off)
 
 
 # Location where cmake first looks for cmake modules.
@@ -69,7 +70,7 @@ add_subdirectory(math)
 add_subdirectory(crystal)
 
 
-if( vasp_wrapper )
+if( vasp_functional )
   set(DOVASP True)
   if( NOT MPI_FOUND )
     message(SEND_ERROR "Vasp interface requires MPI.")
@@ -79,7 +80,7 @@ if( vasp_wrapper )
     add_subdirectory(vasp)
     set(python_bindings TRUE)
   endif( DOVASP )
-endif( vasp_wrapper )
+endif( vasp_functional )
 
 
 if( escan_functional )
@@ -109,6 +110,11 @@ if( ce_functional )
   set(minimizer_libs TRUE)
   add_subdirectory(ce)
 endif( ce_functional )
+
+if(pcm_functional)
+  set(minimizer_libs TRUE)
+  add_subdirectory(pcm)
+endif(pcm_functional)
 
 if(minimizer_libs)
   find_package(gsl)
