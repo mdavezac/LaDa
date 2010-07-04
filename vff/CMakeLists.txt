@@ -1,11 +1,15 @@
+set( LIBVFF_HEADERS 
+     atomic_center.h atomic_functional.h functional.h layered.h va.h va.impl.h vff.h )
 set( LIBVFF_SOURCES 
-     atomic_center.h atomic_functional.h functional.h layered.h va.h va.impl.h vff.h
      atomic_center.cc atomic_functional.cc build_tree_smith.cc build_tree_sort.cc
      build_tree_sort_dnc.cc functional.cc initialize_centers.cc layered.cc vff.cc )
 
 
-add_library (vff STATIC ${LIBVFF_SOURCES})
+add_library (vff STATIC ${LIBVFF_SOURCES} ${LIBVFF_HEADERS})
 target_link_libraries(vff crystal minimizer)
+if(NOT noinstall_headers)
+  install(FILES ${LIBVFF_HEADERS} DESTINATION include/LaDa/vff)
+endif(NOT noinstall_headers)
 
 if(NOT disable_executables)
   add_executable(vffexec main.cc)
@@ -15,6 +19,7 @@ if(NOT disable_executables)
     set_target_properties(vffexec PROPERTIES LINK_FLAGS "${MPI_LINK_FLAGS}")
   endif(MPI_FOUND)
   target_link_libraries(vffexec vff ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY})
+  install(TARGETS vffexec DESTINATION bin)
 endif(NOT disable_executables)
 
 
@@ -28,3 +33,4 @@ endif(GSL_FOUND)
 if (MINUIT2_FOUND)
   include_directories(${minuit2_INCLUDE_DIRS})
 endif(MINUIT2_FOUND)
+

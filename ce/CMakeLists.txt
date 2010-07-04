@@ -1,14 +1,15 @@
-set( LIBCE_SOURCES 
-     cluster.cc  create_clusters.cc  create_pairs.cc  fit.cc  harmonic.cc
-     mlcluster.cc  mlclusters.cc  polynome.cc  regularization.cc 
+set( LIBCE_HEADERS 
      cluster.h constituent_strain.impl.h create_pairs.h find_pis.h fit.impl.h
      functional_builder.impl.h harmonic.impl.h  mlclusters.h regularization.h
      constituent_strain.h create_clusters.h drautz_diaz_ortiz.h  fit.h
      functional_builder.h  harmonic.h mlcluster.h polynome.h)
+set( LIBCE_SOURCES 
+     cluster.cc  create_clusters.cc  create_pairs.cc  fit.cc  harmonic.cc
+     mlcluster.cc  mlclusters.cc  polynome.cc  regularization.cc  )
 
 
 
-add_library (ce STATIC ${LIBCE_SOURCES})
+add_library (ce STATIC ${LIBCE_SOURCES} ${LIBCE_HEADERS})
 target_link_libraries(ce crystal)
 if (MPI_FOUND)
   include_directories(${MPI_INCLUDE_PATH})
@@ -43,5 +44,14 @@ if(NOT disable_executables)
   set_target_properties(regularized_tetra PROPERTIES LINK_FLAGS "${ALL_LDFLAGS}")
   set_target_properties(regularized_tetra PROPERTIES COMPILE_FLAGS "${TETRA_CXXFLAGS}")
   target_link_libraries(regularized_tetra ce minimizer ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY})
+
+  install(TARGETS cubic DESTINATION bin)
+  install(TARGETS tetra DESTINATION bin)
+  install(TARGETS regularized_cubic DESTINATION bin)
+  install(TARGETS regularized_tetra DESTINATION bin)
 endif(NOT disable_executables)
+
+if(NOT noinstall_headers)
+  install(FILES ${LIBCE_HEADERS} DESTINATION include/LaDa/ce)
+endif(NOT noinstall_headers)
 

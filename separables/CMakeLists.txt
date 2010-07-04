@@ -1,14 +1,17 @@
-set( LIBFXSEPS_SOURCES 
-     prepare.cc
+set( LIBFXSEPS_HEADERS 
      ce_as_collapse.h collapse.h colmappings.h colpolicy.impl.h
      functional.impl.h many.impl.h methods.impl.h mixedfunctional.impl.h
      mixed.impl.h sepmappings.h ce_as_collapse.impl.h collapse.impl.h
      colpolicy.h functional.h many.h methods.h mixedfunctional.h mixed.h
      prepare.h )
+set( LIBFXSEPS_SOURCES prepare.cc )
 
 
-add_library (fxseps STATIC ${LIBFXSEPS_SOURCES})
+add_library (fxseps STATIC ${LIBFXSEPS_SOURCES} ${LIBFXSEPS_HEADERS})
 target_link_libraries(fxseps ce)
+if(NOT noinstall_headers)
+  install(FILES ${LIBFXSEPS_HEADERS} DESTINATION include/LaDa/separables)
+endif(NOT noinstall_headers)
 
 if(NOT disable_executables)
   set(CUBIC_CXXFLAGS "-D_CUBIC_CE_")
@@ -31,5 +34,8 @@ if(NOT disable_executables)
   set_target_properties(seps_tetra PROPERTIES LINK_FLAGS "${ALL_LDFLAGS}")
   set_target_properties(seps_tetra PROPERTIES COMPILE_FLAGS "${TETRA_CXXFLAGS}")
   target_link_libraries(seps_tetra fxseps minimizer ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY})
+
+  install(TARGETS seps_cubic DESTINATION bin)
+  install(TARGETS seps_tetra DESTINATION bin)
 endif(NOT disable_executables)
 

@@ -1,23 +1,27 @@
-set( LIBMINIMIZER_SOURCES 
-     allsq.h  cgs.h  decoupled.h  frprmn.h  function_wrapper.h interpolated_gradient.h variant.h
-     cgs.cc decoupled.cc frprmn.cc 
-     df1dim.f90  frprmn_fortran.f90  linmin.f90
-   )
+set( LIBMINIMIZER_F90 df1dim.f90  frprmn_fortran.f90  linmin.f90 )
+set( LIBMINIMIZER_HEADERS 
+     allsq.h  cgs.h  decoupled.h  frprmn.h  function_wrapper.h
+     interpolated_gradient.h variant.h )
+set( LIBMINIMIZER_SOURCES cgs.cc decoupled.cc frprmn.cc )
 
 if (GSL_FOUND)
+  set( LIBMINIMIZER_HEADERS  ${LIBMINIMIZER_SOURCES} 
+       gsl.h  gsl_lsq.h  gsl_mins.h  gsl_nllsq.h  gsl_simplex.h)
   set( LIBMINIMIZER_SOURCES  ${LIBMINIMIZER_SOURCES} 
-       gsl.h  gsl_lsq.h  gsl_mins.h  gsl_nllsq.h  gsl_simplex.h
-       gsl.cc gsl_lsq.cc gsl_mins.cc gsl_nllsq.cc gsl_simplex.cc 
-     )
+       gsl.cc gsl_lsq.cc gsl_mins.cc gsl_nllsq.cc gsl_simplex.cc )
 endif (GSL_FOUND)
 
 if (MINUIT2_FOUND)
-  set(LIBMINIMIZER_SOURCES  ${LIBMINIMIZER_SOURCES} minuit2.h minuit2.cc)
+  set(LIBMINIMIZER_SOURCES  ${LIBMINIMIZER_SOURCES} minuit2.cc )
+  set(LIBMINIMIZER_HEADERS  ${LIBMINIMIZER_SOURCES} minuit2.h )
 endif (MINUIT2_FOUND)
 
     
-add_library (minimizer STATIC ${LIBMINIMIZER_SOURCES})
+add_library (minimizer STATIC ${LIBMINIMIZER_SOURCES} ${LIBMINIMIZER_HEADERS} ${LIBMINIMIZER_F90})
 target_link_libraries(minimizer opt)
+if(NOT noinstall_headers)
+  install(FILES ${LIBMINIMIZER_HEADERS} DESTINATION include/LaDa/minimizer)
+endif(NOT noinstall_headers)
 
 if (MPI_FOUND)
   include_directories(${MPI_INCLUDE_PATH})
