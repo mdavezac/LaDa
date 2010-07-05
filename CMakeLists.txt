@@ -60,19 +60,21 @@ if(NOT PYTHON_VERSION AND PYTHONINTERP_FOUND)
 endif(NOT PYTHON_VERSION AND PYTHONINTERP_FOUND)
 # sets python site-packages
 if(NOT CMAKE_PYINSTALL_PREFIX)
-  execute_process( 
-    COMMAND ${PYTHON_EXECUTABLE} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()"
-    OUTPUT_VARIABLE CMAKE_PYINSTALL_PREFIX
-  )
-  if( CMAKE_PYINSTALL_PREFIX )
-    string (STRIP ${CMAKE_PYINSTALL_PREFIX} CMAKE_PYINSTALL_PREFIX)
-    set(CMAKE_PYINSTALL_PREFIX ${CMAKE_PYINSTALL_PREFIX} CACHE STRING "Version of the Python interpreter.")
-    mark_as_advanced(CMAKE_PYINSTALL_PREFIX)
-    MESSAGE(STATUS "[Python] Version: ${CMAKE_PYINSTALL_PREFIX}")
-  else( CMAKE_PYINSTALL_PREFIX )
+  if(PYTHON_VERSION)
     set( CMAKE_PYINSTALL_PREFIX lib64/python${PYTHON_VERSION}/site-packages/ 
          CACHE PATH "Python modules will be installed here." )
-  endif( CMAKE_PYINSTALL_PREFIX )
+  else(PYTHON_VERSION)
+    execute_process( 
+      COMMAND ${PYTHON_EXECUTABLE} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()"
+      OUTPUT_VARIABLE CMAKE_PYINSTALL_PREFIX
+    )
+    if( CMAKE_PYINSTALL_PREFIX )
+      string (STRIP ${CMAKE_PYINSTALL_PREFIX} CMAKE_PYINSTALL_PREFIX)
+      set(CMAKE_PYINSTALL_PREFIX ${CMAKE_PYINSTALL_PREFIX} CACHE STRING "Version of the Python interpreter.")
+      mark_as_advanced(CMAKE_PYINSTALL_PREFIX)
+      MESSAGE(STATUS "[Python] Version: ${CMAKE_PYINSTALL_PREFIX}")
+    endif( CMAKE_PYINSTALL_PREFIX )
+  endif(PYTHON_VERSION)
 endif(NOT CMAKE_PYINSTALL_PREFIX)
 
 
