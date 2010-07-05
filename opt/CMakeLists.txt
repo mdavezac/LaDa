@@ -9,18 +9,21 @@ set( LIBOPT_HEADERS
    )
     
 add_library (opt SHARED ${LIBOPT_HEADERS} ${LIBOPT_SOURCES} ${LIBOPT_F90})
+set_target_properties(opt PROPERTIES OUTPUT_NAME lada_opt)
 
 target_link_libraries(opt ${tinyxml_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY}
                           ${Boost_SERIALIZATION_LIBRARY})
 include_directories(${tinyxml_INCLUDE_DIRS})
 if(MPI_FOUND)
   include_directories(${MPI_INCLUDE_PATH})
-  target_link_libraries(opt ${MPI_LIBRARY})
+  target_link_libraries(opt ${Boost_MPI_LIBRARY} ${MPI_LIBRARY})
 endif(MPI_FOUND)
 
 if(NOT noinstall_headers)
   install(FILES ${LIBOPT_HEADERS} DESTINATION include/LaDa/opt)
 endif(NOT noinstall_headers)
+
+install(TARGETS opt DESTINATION lib64)
 
 if(python_bindings)
   add_subdirectory(python)

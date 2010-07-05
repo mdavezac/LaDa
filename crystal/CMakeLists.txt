@@ -10,8 +10,11 @@ set( LIBCRYSTAL_SOURCES
      layerdepth.cc make_primitive.cc smith.cc symmetry_operator.cc )
     
 add_library (crystal SHARED ${LIBCRYSTAL_SOURCES} ${LIBCRYSTAL_HEADERS})
+set_target_properties(crystal PROPERTIES OUTPUT_NAME lada_crystal)
 
 target_link_libraries(crystal opt mathlib)
+
+install(TARGETS crystal DESTINATION lib64)
 
 if(NOT noinstall_headers)
   install(FILES ${LIBCRYSTAL_HEADERS} DESTINATION include/LaDa/crystal)

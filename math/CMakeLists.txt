@@ -5,8 +5,11 @@ set( LIBMATH_HEADERS
 set( LIBMATH_SOURCES random.cc  smith_normal_form.cc )
     
 add_library (mathlib SHARED ${LIBMATH_SOURCES} ${LIBMATH_F90} ${LIBMATH_HEADERS})
-target_link_libraries(mathlib ${tinyxml_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
-set_target_properties(mathlib PROPERTIES OUTPUT_NAME math)
+target_link_libraries(mathlib ${tinyxml_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} 
+                              ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
+set_target_properties(mathlib PROPERTIES OUTPUT_NAME lada_math)
+install(TARGETS mathlib DESTINATION lib64)
+
 include_directories(${tinyxml_INCLUDE_DIRS})
 if(MPI_FOUND)
   include_directories(${MPI_INCLUDE_PATH})

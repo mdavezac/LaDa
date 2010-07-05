@@ -12,7 +12,7 @@ set( PYCRYSTAL_SOURCES
 
 include_directories(${PYTHON_INCLUDE_DIRS})
 python_add_module (pycrystal ${PYCRYSTAL_HEADERS} ${PYCRYSTAL_SOURCES})
-target_link_libraries(pycrystal crystal)
+target_link_libraries(pycrystal crystal ${Boost_PYTHON_LIBRARY})
 mark_as_advanced(PYTHON_ENABLE_MODULE_pycrystal)
 mark_as_advanced(PYTHON_MODULE_pycrystal_BUILD_SHARED)
 set_target_properties(pycrystal PROPERTIES PREFIX "_")
