@@ -3,6 +3,8 @@
 
 #include "LaDaConfig.h"
 
+#include <vector>
+
 #include <boost/python/class.hpp>
 #include <boost/python/object.hpp>
 #include <boost/python/list.hpp>
