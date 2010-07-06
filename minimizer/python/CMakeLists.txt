@@ -6,7 +6,7 @@ include_directories(${PYTHON_INCLUDE_DIRS} ${PYUBLAS_INCLUDE_DIRS})
 python_add_module (pyminimizer ${PYMINIMIZER_HEADERS} ${PYMINIMIZER_SOURCES})
 target_link_libraries(pyminimizer minimizer ${Boost_PYTHON_LIBRARY})
 mark_as_advanced(PYTHON_ENABLE_MODULE_pyminimizer)
-mark_as_advanced(PYTHON_MODULE_pyenum_BUILD_SHARED)
+mark_as_advanced(PYTHON_MODULE_pyminimizer_BUILD_SHARED)
 set_target_properties(pyminimizer PROPERTIES PREFIX "_")
 set_target_properties(pyminimizer PROPERTIES OUTPUT_NAME minimizer)
 

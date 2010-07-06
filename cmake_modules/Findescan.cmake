@@ -1,12 +1,12 @@
-if(escan_INCLUDE_DIRS AND escan_LIBRARY)
-  set( escan_FIND_QUIETLY True)
-endif(escan_INCLUDE_DIRS AND escan_LIBRARY)
+if(ESCAN_INCLUDE_DIRS AND ESCAN_LIBRARY AND GENPOT_LIBRARY)
+  set( ESCAN_FIND_QUIETLY True)
+endif(ESCAN_INCLUDE_DIRS AND ESCAN_LIBRARY AND GENPOT_LIBRARY)
 
-find_path(escan_INCLUDE_DIRS
+find_path(_ESCAN_INCLUDE_DIRS
   NAMES
   coulomb_4pair_api.mod
   PATHS
-  $ENV{escan_INCLUDE_DIRS}
+  $ENV{ESCAN_INCLUDE_DIRS}
   $ENV{HOME}/usr/include/
   $ENV{HOME}/hopper/include/
   /usr/include
@@ -15,12 +15,12 @@ find_path(escan_INCLUDE_DIRS
   PATH_SUFFIXES
   escan nanopse
 )
-if(NOT escan_INCLUDE_DIRS)
-  find_path(escan_INCLUDE_DIRS
+if(NOT _ESCAN_INCLUDE_DIRS)
+  find_path(_ESCAN_INCLUDE_DIRS
     NAMES
     COULOMB_4PAIR_API.mod
     PATHS
-    $ENV{escan_INCLUDE_DIRS}
+    $ENV{ESCAN_INCLUDE_DIRS}
     $ENV{HOME}/usr/include/
     $ENV{HOME}/hopper/include/
     /usr/include
@@ -29,14 +29,26 @@ if(NOT escan_INCLUDE_DIRS)
     PATH_SUFFIXES
     escan nanopse
   )
-endif(NOT escan_INCLUDE_DIRS)
+endif(NOT _ESCAN_INCLUDE_DIRS)
 
 
-FIND_LIBRARY(escan_LIBRARY
+FIND_LIBRARY(_ESCAN_LIBRARY
   pescan
+  PATH
+  $ENV{ESCAN_LIBRARY_DIR}
+  $ENV{HOME}/usr/lib64/
+  $ENV{HOME}/usr/lib/
+  $ENV{HOME}/hopper/lib64
+  $ENV{HOME}/hopper/lib
+  /usr/lib64
+  /usr/lib
+  /usr/local/lib64
+  /usr/local/lib
+)
+FIND_LIBRARY(_GENPOT_LIBRARY
   genpot
   PATH
-  $ENV{escan_LIBRARY_DIR}
+  $ENV{ESCAN_LIBRARY_DIR}
   $ENV{HOME}/usr/lib64/
   $ENV{HOME}/usr/lib/
   $ENV{HOME}/hopper/lib64
@@ -48,9 +60,15 @@ FIND_LIBRARY(escan_LIBRARY
 )
 
 
-INCLUDE(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(escan DEFAULT_MSG escan_LIBRARY escan_INCLUDE_DIRS)
 
-IF(escan_INCLUDE_DIRS AND escan_LIBRARY)
-  SET(escan_FOUND TRUE)
-ENDIF(escan_INCLUDE_DIRS AND escan_LIBRARY)
+INCLUDE(FindPackageHandleStandardArgs)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(escan DEFAULT_MSG _ESCAN_LIBRARY _GENPOT_LIBRARY _ESCAN_INCLUDE_DIRS)
+IF(_ESCAN_INCLUDE_DIRS AND _ESCAN_LIBRARY AND _GENPOT_LIBRARY)
+  set(ESCAN_INCLUDE_DIRS ${_ESCAN_INCLUDE_DIRS} CACHE PATH "Path to nanopse include directory.")
+  set(ESCAN_LIBRARY ${_ESCAN_LIBRARY} CACHE PATH "Path to escan library.")
+  set(GENPOT_LIBRARY ${_GENPOT_LIBRARY} CACHE PATH "Path to genpot library.")
+  SET(ESCAN_FOUND TRUE)
+  unset(_ESCAN_INCLUDE_DIRS CACHE)
+  unset(_GENPOT_LIBRARY CACHE)
+  unset(_ESCAN_LIBRARY CACHE)
+ENDIF(_ESCAN_INCLUDE_DIRS AND _ESCAN_LIBRARY AND _GENPOT_LIBRARY)

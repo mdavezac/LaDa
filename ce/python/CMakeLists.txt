@@ -11,7 +11,7 @@ include_directories(${PYTHON_INCLUDE_DIRS} ${PYUBLAS_INCLUDE_DIRS})
 python_add_module (pyce ${PYCE_HEADERS} ${PYCE_SOURCES})
 target_link_libraries(pyce ce ${Boost_PYTHON_LIBRARY})
 mark_as_advanced(PYTHON_ENABLE_MODULE_pyce)
-mark_as_advanced(PYTHON_MODULE_pyopt_BUILD_SHARED)
+mark_as_advanced(PYTHON_MODULE_pyce_BUILD_SHARED)
 set_target_properties(pyce PROPERTIES PREFIX "_")
 set_target_properties(pyce PROPERTIES OUTPUT_NAME ce)
 
@@ -25,7 +25,7 @@ elseif(${LATTICE_TYPE} STREQUAL "tetra")
   add_definitions(-D_TETRA_CE_)
 endif(${LATTICE_TYPE} STREQUAL "cubic")
 configure_file (
- "${PROJECT_SOURCE_DIR}/ce/python/__init__.py.in"
+ "${PROJECT_SOURCE_DIR}/ce/python/__init__.in.py"
  "${PROJECT_BINARY_DIR}/ce/python/__init__.py"
 )
 install(FILES ${PROJECT_BINARY_DIR}/ce/python/__init__.py DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/ce)

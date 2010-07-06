@@ -8,12 +8,12 @@ include_directories(MPI_INCLUDE_PATH)
 
 python_add_module (pyescan ${PYESCAN_F90} ${PYESCAN_HEADERS} ${PYESCAN_SOURCES})
 
-include_directories(${MPI_INCLUDE_PATH} ${PYTHON_INCLUDE_DIRS} ${escan_INCLUDE_DIRS})
-target_link_libraries(pyescan ${Boost_PYTHON_LIBRARY} ${MPI_LIBRARIES} ${escan_LIBRARY})
+include_directories(${MPI_INCLUDE_PATH} ${PYTHON_INCLUDE_DIRS} ${ESCAN_INCLUDE_DIRS})
+target_link_libraries(pyescan ${Boost_PYTHON_LIBRARY} ${MPI_LIBRARIES} ${ESCAN_LIBRARY} ${GENPOT_LIBARY})
 mark_as_advanced(PYTHON_ENABLE_MODULE_pyescan)
 mark_as_advanced(PYTHON_MODULE_pyescan_BUILD_SHARED)
 set_target_properties(pyescan PROPERTIES PREFIX "_")
 set_target_properties(pyescan PROPERTIES OUTPUT_NAME escan)
 
 install(TARGETS pyescan DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/escan)
-install(FILES ${PYESCAN_FILES} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/escan)
+install(FILES ${PYESCAN_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/escan)
