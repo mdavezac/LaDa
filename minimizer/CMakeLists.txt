@@ -35,3 +35,7 @@ if (MINUIT2_FOUND)
   include_directories(${minuit2_INCLUDE_DIRS})
   target_link_libraries(minimizer ${minuit2_LIBRARY})
 endif(MINUIT2_FOUND)
+
+if(python_bindings)
+  add_subdirectory(python)
+endif(python_bindings)

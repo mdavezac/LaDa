@@ -11,6 +11,7 @@ set( LIBCE_SOURCES
 
 add_library (ce SHARED ${LIBCE_SOURCES} ${LIBCE_HEADERS})
 target_link_libraries(ce crystal)
+install(TARGETS ce DESTINATION lib64)
 if (MPI_FOUND)
   include_directories(${MPI_INCLUDE_PATH})
   target_link_libraries(ce ${MPI_LIBRARIES} ${Boost_MPI_LIBRARY})

@@ -234,7 +234,6 @@ def main():
   from numpy.linalg import inv, det 
   import cellsym
   from lada import crystal, eigen
-  import pyublas
 
  #file = open("POSCAR", "w")
  #print >>file

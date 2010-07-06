@@ -201,6 +201,10 @@ if(python_bindings)
                        "Please set PYTHON_INCLUDE_DIR and PYTHON_LIBRARY" )
     set(DOPYTHON False)
   endif(PYTHONLIBS_FOUND)
+  if(minimizer_libs OR vff_functional OR ce_functional OR atompot_functional OR enum_package)
+    find_package(pyublas)
+  endif(minimizer_libs OR vff_functional OR ce_functional OR atompot_functional OR enum_package)
+
 endif(python_bindings)
 
 # Configure file.
@@ -219,45 +223,3 @@ configure_file (
  "${PROJECT_BINARY_DIR}/LaDaConfig.h"
 )
 
-
-# #  Adds a global library. Also used by python.
-# if(python_bindings OR NOT noinstall_headers) 
-#   # We want to compile with fPIC in this case.
-#   include(CheckCXXCompilerFlag)
-#   CHECK_CXX_COMPILER_FLAG(-fPIC CCOMPILER_HAS_FPIC)
-#   if(COMPILER_HAS_FPIC)
-#     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
-#     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
-#     set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fPIC")
-#   endif(COMPILER_HAS_FPIC)
-#   
-#   # now creates library.
-#   add_library(lada "")
-#   target_link_libraries(lada ${Boost_PYTHON_LIBRARY} crystal opt math)
-#   if(MPI_FOUND)
-#     include_directories(${MPI_INCLUDE_PATH})
-#     target_link_libraries(lada mpi)
-#   endif(MPI_FOUND)
-#   if(vff_functional)
-#     target_link_libraries(lada vff)
-#   endif(vff_functional)
-#   if(ce_functional)
-#     target_link_libraries(lada ce)
-#   endif(ce_functional)
-#   if(atompot_functional)
-#     target_link_libraries(lada atompot)
-#   endif(atompot_functional)
-#   if(pcm_functional)
-#     target_link_libraries(lada pcm)
-#   endif(pcm_functional)
-#   if(enum_package)
-#     target_link_libraries(lada enum)
-#   endif(enum_package)
-#   if(minimizer_libs)
-#     target_link_libraries(lada minimizer)
-#   endif(minimizer_libs)
-
-#   if(NOT noinstall_headers)
-#     install(FILES ${PYLADA_HEADERS} DESTINATION include/LaDa/python)
-#   endif(NOT noinstall_headers)
-# endif(python_bindings OR NOT noinstall_headers) 

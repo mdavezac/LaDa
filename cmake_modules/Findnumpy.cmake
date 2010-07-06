@@ -40,6 +40,10 @@
 ## original prefixes once the end of this module is reached.
 find_package(PythonLibs REQUIRED)
 find_package(PythonInterp REQUIRED)
+if(NUMPY_FOUND AND NUMPY_LIBRARIES AND NUMPY_INCLUDES)
+  set(NUMPY_FIND_QUIETLY TRUE)
+endif(NUMPY_FOUND AND NUMPY_LIBRARIES AND NUMPY_INCLUDES)
+
 
 set (TMP_FIND_LIBRARY_PREFIXES ${CMAKE_FIND_LIBRARY_PREFIXES})
 
@@ -151,7 +155,9 @@ find_file (NUMPY_VERSION_PY version.py
 
 if (NUMPY_VERSION_PY AND PYTHON_EXECUTABLE)
   ## some basic feedback
-  message (STATUS "[NumPy] Found version.py - running Python to import module numpy.")
+  if (NOT NUMPY_FIND_QUIETLY)
+    message (STATUS "[NumPy] Found version.py - running Python to import module numpy.")
+  endif (NOT NUMPY_FIND_QUIETLY)
   ## Run Python to import module numpy and print the version information
   execute_process (
     COMMAND ${PYTHON_EXECUTABLE} -c "import numpy; print numpy.__version__"
@@ -269,9 +275,11 @@ endif (NUMPY_INCLUDES AND NUMPY_LIBRARIES AND NOT NUMPY_HAS_BOOL)
 ## Actions taken when all components have been found
 
 if (NUMPY_INCLUDES AND NUMPY_LIBRARIES)
-  set (NUMPY_FOUND TRUE)
+  set (NUMPY_FOUND TRUE CACHE PATH "Says wether Numpy Python was found.")
+  set (NUMPY_INCLUDES ${NUMPY_INCLUDES} CACHE PATH "Path to numpy C-API headers.")
+  set (NUMPY_LIBRARIES ${NUMPY_LIBRARIES} CACHE PATH "Path to numpy C-API libraries.")
 else (NUMPY_INCLUDES AND NUMPY_LIBRARIES)
-  set (NUMPY_FOUND FALSE)
+  set (NUMPY_FOUND FALSE CACHE PATH "Says wether Numpy Python was found.")
   if (NOT NUMPY_FIND_QUIETLY)
     if (NOT NUMPY_INCLUDES)
       message (STATUS "[NumPy] Unable to find NUMPY header files!")

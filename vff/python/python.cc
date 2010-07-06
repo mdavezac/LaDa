@@ -8,7 +8,7 @@
 
 #include "vff.hpp"
 
-BOOST_PYTHON_MODULE(vff)
+BOOST_PYTHON_MODULE(_vff)
 {
   namespace bp = boost::python;
   bp::scope scope;

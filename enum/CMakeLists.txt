@@ -8,6 +8,12 @@ set( LIBENUM_SOURCES
 
 add_library (enum SHARED ${LIBENUM_SOURCES} ${LIBENUM_HEADERS})
 target_link_libraries(enum crystal)
+install(TARGETS enum DESTINATION lib64)
 if(NOT noinstall_headers)
   install(FILES ${LIBENUM_HEADERS} DESTINATION include/LaDa/enum)
 endif(NOT noinstall_headers)
+
+if(python_bindings)
+  add_subdirectory(python)
+endif(python_bindings)
+

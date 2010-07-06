@@ -7,6 +7,7 @@ set( LIBVFF_SOURCES
 
 add_library (vff SHARED ${LIBVFF_SOURCES} ${LIBVFF_HEADERS})
 target_link_libraries(vff crystal minimizer)
+install(TARGETS vff DESTINATION lib64)
 if(NOT noinstall_headers)
   install(FILES ${LIBVFF_HEADERS} DESTINATION include/LaDa/vff)
 endif(NOT noinstall_headers)
@@ -33,4 +34,8 @@ endif(GSL_FOUND)
 if (MINUIT2_FOUND)
   include_directories(${minuit2_INCLUDE_DIRS})
 endif(MINUIT2_FOUND)
+
+if(python_bindings)
+  add_subdirectory(python)
+endif(python_bindings)
 

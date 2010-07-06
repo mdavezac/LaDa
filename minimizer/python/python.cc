@@ -8,7 +8,7 @@
 #include "interpolated_gradient.hpp"
 #include "minimizer.hpp"
 
-BOOST_PYTHON_MODULE(minimizer)
+BOOST_PYTHON_MODULE(_minimizer)
 {
   namespace bp = boost::python;
   bp::scope scope;
