@@ -14,8 +14,10 @@
 #include <opt/debug.h>
 
 #include "frprmn.h"
-#include "gsl_mins.h"
-#include "variant.h"
+#ifdef LADA_WITH_GSL
+#  include "gsl_mins.h"
+#  include "variant.h"
+#endif
 
 
 namespace LaDa
@@ -72,7 +74,20 @@ namespace LaDa
         template< class T_FUNCTION, class T_CONTAINER, class T_RETURN >
           T_RETURN operator_( const T_FUNCTION &_func, T_CONTAINER &_arg ) const;
 
-        Variant< boost::mpl::vector< Frpr, Gsl > > minimizer;
+#       if defined(LADA_WITH_GSL) or defined(LADA_WITH_MINUIT2)
+          Variant< boost::mpl::vector
+          < 
+            Frpr
+#           ifdef LADA_WITH_GSL
+              , Gsl
+#           endif
+#           ifdef LADA_WITH_MIUNUIT2
+              , Minuit2
+#           endif
+          > > minimizer;
+#       else
+          Frpr minimizer;
+#       endif
     };
     LADA_REGISTER_MINIMIZER_VARIANT_HEADER( Decoupled, "decoupled" )
 

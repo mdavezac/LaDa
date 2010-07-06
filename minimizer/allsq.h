@@ -17,8 +17,6 @@
 #include <boost/numeric/ublas/vector_proxy.hpp>
 #include <boost/numeric/ublas/matrix_proxy.hpp>
 #include <boost/lambda/lambda.hpp>
-// #include <gsl/gsl_linalg.h>
-// #include <opt/gsl.h>
 
 
 namespace LaDa

@@ -5,7 +5,7 @@ set( LIBMINIMIZER_HEADERS
 set( LIBMINIMIZER_SOURCES cgs.cc decoupled.cc frprmn.cc )
 
 if (GSL_FOUND)
-  set( LIBMINIMIZER_HEADERS  ${LIBMINIMIZER_SOURCES} 
+  set( LIBMINIMIZER_HEADERS  ${LIBMINIMIZER_HEADERS} 
        gsl.h  gsl_lsq.h  gsl_mins.h  gsl_nllsq.h  gsl_simplex.h)
   set( LIBMINIMIZER_SOURCES  ${LIBMINIMIZER_SOURCES} 
        gsl.cc gsl_lsq.cc gsl_mins.cc gsl_nllsq.cc gsl_simplex.cc )
@@ -13,7 +13,7 @@ endif (GSL_FOUND)
 
 if (MINUIT2_FOUND)
   set(LIBMINIMIZER_SOURCES  ${LIBMINIMIZER_SOURCES} minuit2.cc )
-  set(LIBMINIMIZER_HEADERS  ${LIBMINIMIZER_SOURCES} minuit2.h )
+  set(LIBMINIMIZER_HEADERS  ${LIBMINIMIZER_HEADERS} minuit2.h )
 endif (MINUIT2_FOUND)
 
     
@@ -29,8 +29,8 @@ if (MPI_FOUND)
   target_link_libraries(minimizer ${MPI_LIBRARY})
 endif (MPI_FOUND)
 if (GSL_FOUND)
-  include_directories(${gsl_INCLUDE_DIRS})
-  target_link_libraries(minimizer ${gsl_LIBRARY})
+  include_directories(${GSL_INCLUDE_DIRS})
+  target_link_libraries(minimizer ${GSL_LIBRARY} ${GSLCBLAS_LIBRARY})
 endif(GSL_FOUND)
 if (MINUIT2_FOUND)
   include_directories(${minuit2_INCLUDE_DIRS})
