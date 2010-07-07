@@ -27,7 +27,9 @@ endif(NOT noinstall_headers)
 
 if (MPI_FOUND)
   include_directories(${MPI_INCLUDE_PATH})
-  target_link_libraries(minimizer ${MPI_LIBRARY})
+  if(MPI_LIBRARY) # crays make things complicated.
+    target_link_libraries(minimizer  ${MPI_LIBRARY})
+  endif(MPI_LIBRARY)
 endif (MPI_FOUND)
 if (GSL_FOUND)
   include_directories(${GSL_INCLUDE_DIRS})

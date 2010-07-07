@@ -100,16 +100,16 @@ find_package(tinyxml REQUIRED)
 
 
 # MPI packages. Cray's fucking things up as usual
-if($ENV{NERSC_HOST} STREQUAL "hopper")
+if($ENV{NERSC_HOST})
   MESSAGE(STATUS "Working on hopper.")
   MESSAGE(STATUS "Crays being difficult beasts, options are set directly in CMakeLists.txt")
   set(MPI_INCLUDE_PATH "/opt/cray/mpt/4.1.0.1/xt/seastar/mpich2-pgi64/include/")
   set(MPI_FOUND TRUE)
   set(FUCKING_CRAY TRUE)
   set(load_python_stuff_globally TRUE)
-else($ENV{NERSC_HOST} STREQUAL "hopper")
+else($ENV{NERSC_HOST})
   find_package(MPI)
-endif($ENV{NERSC_HOST} STREQUAL "hopper")
+endif($ENV{NERSC_HOST})
 
 if( MPI_FOUND )
   set(LADA_MPI TRUE)
@@ -132,6 +132,7 @@ add_subdirectory(mpi)
 add_subdirectory(opt)
 add_subdirectory(math)
 add_subdirectory(crystal)
+add_subdirectory(physics)
 
 
 if( vasp_functional )

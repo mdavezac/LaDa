@@ -14,7 +14,7 @@ include_directories(${tinyxml_INCLUDE_DIRS})
 if(MPI_FOUND)
   include_directories(${MPI_INCLUDE_PATH})
   if(MPI_LIBRARY) # crays make things complicated.
-    target_link_libraries(opt  ${MPI_LIBRARY})
+    target_link_libraries(mathlib  ${MPI_LIBRARY})
   endif(MPI_LIBRARY)
 endif(MPI_FOUND)
 

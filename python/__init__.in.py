@@ -2,6 +2,7 @@
 import math
 import opt
 import crystal
+import physics
 @do_import_pcm@
 @do_import_ce@
 @do_import_vasp@
