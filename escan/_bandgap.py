@@ -59,7 +59,7 @@ def band_gap(escan, structure, outdir=None, references=None, n=5, overwrite = Fa
          
   if outdir == None: outdir = getcwd()
   outdir    = abspath(outdir)
-  overlap_factor = kwargs.pop("overlap_factor", None)
+  overlap_factor = kwargs.pop("overlap_factor", 10e0)
 
   comm = kwargs.pop("comm", world)
   if not overwrite:  # check for previous results.
