@@ -100,16 +100,17 @@ find_package(tinyxml REQUIRED)
 
 
 # MPI packages. Cray's fucking things up as usual
-if($ENV{NERSC_HOST})
+if("$ENV{NERSC_HOST}" STREQUAL "hopper")
   MESSAGE(STATUS "Working on hopper.")
   MESSAGE(STATUS "Crays being difficult beasts, options are set directly in CMakeLists.txt")
   set(MPI_INCLUDE_PATH "/opt/cray/mpt/4.1.0.1/xt/seastar/mpich2-pgi64/include/")
   set(MPI_FOUND TRUE)
   set(FUCKING_CRAY TRUE)
   set(load_python_stuff_globally TRUE)
-else($ENV{NERSC_HOST})
+else("$ENV{NERSC_HOST}" STREQUAL "hopper")
+  MESSAGE(FATAL_ERROR "wtf")
   find_package(MPI)
-endif($ENV{NERSC_HOST})
+endif("$ENV{NERSC_HOST}" STREQUAL "hopper")
 
 if( MPI_FOUND )
   set(LADA_MPI TRUE)
