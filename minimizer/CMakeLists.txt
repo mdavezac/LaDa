@@ -18,6 +18,7 @@ endif (MINUIT2_FOUND)
 
     
 add_library (minimizer SHARED ${LIBMINIMIZER_SOURCES} ${LIBMINIMIZER_HEADERS} ${LIBMINIMIZER_F90})
+set_target_properties(minimizer PROPERTIES OUTPUT_NAME lada_minimizer)
 target_link_libraries(minimizer opt)
 install(TARGETS minimizer DESTINATION lib64)
 if(NOT noinstall_headers)
