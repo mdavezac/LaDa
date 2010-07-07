@@ -10,6 +10,7 @@ set( LIBCE_SOURCES
 
 
 add_library (ce SHARED ${LIBCE_SOURCES} ${LIBCE_HEADERS})
+set_target_properties(ce PROPERTIES OUTPUT_NAME lada_ce)
 target_link_libraries(ce crystal)
 install(TARGETS ce DESTINATION lib64)
 if (MPI_FOUND)

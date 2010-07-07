@@ -6,8 +6,10 @@ set( LIBVFF_SOURCES
 
 
 add_library (vff SHARED ${LIBVFF_SOURCES} ${LIBVFF_HEADERS})
+set_target_properties(vff PROPERTIES OUTPUT_NAME lada_vff)
 target_link_libraries(vff crystal minimizer)
 install(TARGETS vff DESTINATION lib64)
+
 if(NOT noinstall_headers)
   install(FILES ${LIBVFF_HEADERS} DESTINATION include/LaDa/vff)
 endif(NOT noinstall_headers)
