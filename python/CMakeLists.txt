@@ -49,6 +49,16 @@ if(minimizer_libs)
 else(minimizer_libs) 
   set(do_import_minimizer "# import minimizer")
 endif(minimizer_libs) 
+if(jobs_package) 
+  set(do_import_jobs "import jobs")
+else(jobs_package) 
+  set(do_import_jobs "# import jobs")
+endif(jobs_package) 
+if(ga_package) 
+  set(do_import_jobs "import ga")
+else(ga_package) 
+  set(do_import_jobs "# import ga")
+endif(ga_package) 
 configure_file (
  "${PROJECT_SOURCE_DIR}/python/__init__.in.py"
  "${PROJECT_BINARY_DIR}/python/__init__.py"

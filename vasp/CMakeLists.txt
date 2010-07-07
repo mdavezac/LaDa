@@ -10,8 +10,8 @@ mark_as_advanced(PYTHON_MODULE_pyvasp_BUILD_SHARED)
 set_target_properties(pyvasp PROPERTIES PREFIX "")
 set_target_properties(pyvasp PROPERTIES OUTPUT_NAME enumeration)
 
-install(TARGETS pyvasp DESTINATION ${CMAKE_PYINSTALL_PREFIX}/vasp)
-install(FILES ${PYVASP_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/vasp)
+install(TARGETS pyvasp DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/vasp)
+install(FILES ${PYVASP_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/vasp)
 
 add_subdirectory(incar)
 add_subdirectory(extract)

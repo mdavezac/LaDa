@@ -26,6 +26,8 @@ option(vff_functional         "Compile Valence Force Field method."        off)
 option(separables_functional  "Compile Fixed Lattice Sum of Separables."   off)
 option(atompot_functional     "Compile Fixed Lattice Sum of Separables."   off)
 option(enum_package           "Compile Lattice Decoration Enumeration."    off)
+option(jobs_package           "Installs jobs python module."                on)
+option(ga_package             "Installs GA python module."                  on)
 option(python_bindings        "Include python bindings."                   off)
 
 
@@ -217,6 +219,13 @@ if(python_bindings)
   endif(minimizer_libs OR vff_functional OR ce_functional OR atompot_functional OR enum_package)
 
 endif(python_bindings)
+
+if(jobs_package)
+  add_subdirectory(jobs)
+endif(jobs_package)
+if(ga_package)
+  add_subdirectory(ga)
+endif(ga_package)
 
 # Configure file.
 if (load_python_stuff_globally)

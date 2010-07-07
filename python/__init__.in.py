@@ -11,6 +11,7 @@ import crystal
 @do_import_atompot@
 @do_import_enumeration@
 @do_import_minimizer@
+@do_import_jobs@
 
 version_info = (@LaDa_VERSION_MAJOR@, @LaDa_VERSION_MINOR@)
 """ Tuple containing version info. """
