@@ -11,9 +11,7 @@ set( LIBCRYSTAL_SOURCES
     
 add_library (crystal SHARED ${LIBCRYSTAL_SOURCES} ${LIBCRYSTAL_HEADERS})
 set_target_properties(crystal PROPERTIES OUTPUT_NAME lada_crystal)
-
 target_link_libraries(crystal opt mathlib)
-
 install(TARGETS crystal DESTINATION lib64)
 
 if(NOT noinstall_headers)
