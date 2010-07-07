@@ -2,7 +2,7 @@ set(PYENUM_HEADERS bitset.hpp find_all_cells.hpp label_exchange.hpp transform.hp
 set(PYENUM_SOURCES bitset.cc find_all_cells.cc label_exchange.cc python.cc transform.cc translation.cc)
 
 
-include_directories(${PYTHON_INCLUDE_DIRS} ${PYUBLAS_INCLUDE_DIRS})
+include_directories(${PYTHON_INCLUDE_DIRS} ${PYUBLAS_INCLUDE_DIRS} ${NUMPY_INCLUDES})
 python_add_module (pyenum ${PYENUM_HEADERS} ${PYENUM_SOURCES})
 target_link_libraries(pyenum enum ${Boost_PYTHON_LIBRARY})
 mark_as_advanced(PYTHON_ENABLE_MODULE_pyenum)

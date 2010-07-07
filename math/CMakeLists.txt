@@ -13,7 +13,9 @@ install(TARGETS mathlib DESTINATION lib64)
 include_directories(${tinyxml_INCLUDE_DIRS})
 if(MPI_FOUND)
   include_directories(${MPI_INCLUDE_PATH})
-  target_link_libraries(mathlib ${MPI_LIBRARY})
+  if(MPI_LIBRARY) # crays make things complicated.
+    target_link_libraries(opt  ${MPI_LIBRARY})
+  endif(MPI_LIBRARY)
 endif(MPI_FOUND)
 
 if(NOT noinstall_headers)
