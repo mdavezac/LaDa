@@ -34,6 +34,27 @@ option(python_bindings        "Include python bindings."                   off)
 # Location where cmake first looks for cmake modules.
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 
+# Location where cmake looks for libraries
+# adds environment SOFTWARE_ROOT if it exists.
+# adds SOFTWARE_ROOT if it exists.
+# adds environment LD_LIBRARY_PATH if it exists.
+if (NOT "$ENV{SOFTWARE_ROOT}" STREQUAL "")
+  set(CMAKE_LIBRARY_PATH $ENV{SOFTWARE_ROOT}/lib $ENV{SOFTWARE_ROOT}/lib64  ${CMAKE_LIBRARY_PATH})
+  set(CMAKE_INCLUDE_PATH $ENV{SOFTWARE_ROOT}/include)
+else (NOT "$ENV{SOFTWARE_ROOT}" STREQUAL "")
+  set(CMAKE_LIBRARY_PATH $ENV{HOME}/usr/lib $ENV{HOME}/usr/lib64  ${CMAKE_LIBRARY_PATH})
+  set(CMAKE_INCLUDE_PATH $ENV{HOME}/usr/include)
+endif (NOT "$ENV{SOFTWARE_ROOT}" STREQUAL "")
+if(SOFTWARE_ROOT)
+  set(CMAKE_LIBRARY_PATH ${SOFTWARE_ROOT}/lib ${SOFTWARE_ROOT}/lib64  ${CMAKE_LIBRARY_PATH})
+  set(CMAKE_INCLUDE_PATH ${SOFTWARE_ROOT}/include)
+endif (SOFTWARE_ROOT)
+if (NOT "$ENV{LD_LIBRARY_PATH}" STREQUAL "")
+  string(REPLACE ":" ";" _LDLIBPATH $ENV{LD_LIBRARY_PATH})
+  set(CMAKE_LIBRARY_PATH ${_LDLIBPATH} ${CMAKE_LIBRARY_PATH})
+endif (NOT "$ENV{LD_LIBRARY_PATH}" STREQUAL "")
+  
+
 
 # Languages
 enable_language(C)
@@ -100,16 +121,16 @@ find_package(tinyxml REQUIRED)
 
 
 # MPI packages. Cray's fucking things up as usual
-if($ENV{NERSC_HOST})
+if("$ENV{NERSC_HOST}" STREQUAL "hopper")
   MESSAGE(STATUS "Working on hopper.")
   MESSAGE(STATUS "Crays being difficult beasts, options are set directly in CMakeLists.txt")
   set(MPI_INCLUDE_PATH "/opt/cray/mpt/4.1.0.1/xt/seastar/mpich2-pgi64/include/")
   set(MPI_FOUND TRUE)
   set(FUCKING_CRAY TRUE)
   set(load_python_stuff_globally TRUE)
-else($ENV{NERSC_HOST})
+else("$ENV{NERSC_HOST}" STREQUAL "hopper")
   find_package(MPI)
-endif($ENV{NERSC_HOST})
+endif("$ENV{NERSC_HOST}" STREQUAL "hopper")
 
 if( MPI_FOUND )
   set(LADA_MPI TRUE)

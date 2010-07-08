@@ -21,7 +21,9 @@ execute_process (
   OUTPUT_VARIABLE pyublas_path
   )
 if (pyublas_path)
-  string (STRIP ${pyublas_path} pyublas_search_path)
+  string (STRIP ${pyublas_path} pyublas_path)
+  set(pyublas_search_path ${pyublas_path}/..)
+  message(STATUS "pyublas ${pyublas_search_path}")
 else (pyublas_path)
   set (pyublas_search_path ${lib_locations})
 endif (pyublas_path)
@@ -33,7 +35,7 @@ find_path (PYUBLAS_INCLUDE_DIRS pyublas/numpy.hpp
   PATHS
   ${pyublas_search_path}
   PATH_SUFFIXES
-  ../include
+  include
   )
 
 

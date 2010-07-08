@@ -53,6 +53,7 @@ namespace LaDa
       path = bx::regex_replace(path, var1, rep_env(bx::as<std::string>(bx::s1)));
       path = bx::regex_replace(path, var2, rep_env(bx::as<std::string>(bx::s1)));
       path = bx::regex_replace(path, home, rep_home(bx::as<std::string>(bx::s1)));
+      return path;
     }
      
 

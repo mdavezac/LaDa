@@ -198,6 +198,7 @@ namespace LaDa
 
       LADA_DOASSERT( _genes.empty() or i == _genes.size(),
                      "Gene size and jtypes are inconsistent.\n" )
+      return result;
     }
 
     boost::shared_ptr<t_MLClusterClasses> load_old(TiXmlElement const &_node);
