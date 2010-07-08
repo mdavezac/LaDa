@@ -108,7 +108,6 @@ if("$ENV{NERSC_HOST}" STREQUAL "hopper")
   set(FUCKING_CRAY TRUE)
   set(load_python_stuff_globally TRUE)
 else("$ENV{NERSC_HOST}" STREQUAL "hopper")
-  MESSAGE(FATAL_ERROR "wtf")
   find_package(MPI)
 endif("$ENV{NERSC_HOST}" STREQUAL "hopper")
 
