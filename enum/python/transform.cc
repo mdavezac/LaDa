@@ -130,7 +130,7 @@ namespace LaDa
           PyErr_SetString(PyExc_OverflowError, 
                           "Integer argument too large according to FlavorBase.");
           bp::throw_error_already_set();
-          return -1;
+          return 0u;
         }
 #     endif
       try { return _self(_x, _fl); }
@@ -139,7 +139,6 @@ namespace LaDa
         PyErr_SetString(PyExc_OverflowError, 
                         "Integer argument too large according to FlavorBase.");
         bp::throw_error_already_set();
-        return -1;
       }
       catch(enumeration::argument_error &_e)
       {
@@ -147,7 +146,6 @@ namespace LaDa
                         "FlavorBase argument does not correspond to transform object.\n"
                         "Did you call Transfrom.init?.\n");
         bp::throw_error_already_set();
-        return -1;
       }
       catch(boost::exception &_e)
       {
@@ -156,14 +154,13 @@ namespace LaDa
              << boost::diagnostic_information(_e);
         PyErr_SetString(PyExc_RuntimeError, sstr.str().c_str());
         bp::throw_error_already_set();
-        return -1;
       }
       catch(...)
       {
         PyErr_SetString(PyExc_RuntimeError, "Unkown error.");
         bp::throw_error_already_set();
-        return -1;
       }
+      return 0u;
     }
 
     void expose_transform()

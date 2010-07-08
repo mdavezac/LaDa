@@ -10,10 +10,6 @@ find_path(eigen2_INCLUDE_DIR
   Eigen/Cholesky
   PATHS
   $ENV{eigen2_INCLUDE_DIR}
-  $ENV{HOME}/usr/include/
-  $ENV{HOME}/hopper/include/
-  /usr/include
-  /usr/local/include
   ${INCLUDE_INSTALL_DIR}
   PATH_SUFFIXES
   eigen2

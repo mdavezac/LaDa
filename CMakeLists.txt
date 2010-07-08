@@ -34,6 +34,27 @@ option(python_bindings        "Include python bindings."                   off)
 # Location where cmake first looks for cmake modules.
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 
+# Location where cmake looks for libraries
+# adds environment SOFTWARE_ROOT if it exists.
+# adds SOFTWARE_ROOT if it exists.
+# adds environment LD_LIBRARY_PATH if it exists.
+if (NOT "$ENV{SOFTWARE_ROOT}" STREQUAL "")
+  set(CMAKE_LIBRARY_PATH $ENV{SOFTWARE_ROOT}/lib $ENV{SOFTWARE_ROOT}/lib64  ${CMAKE_LIBRARY_PATH})
+  set(CMAKE_INCLUDE_PATH $ENV{SOFTWARE_ROOT}/include)
+else (NOT "$ENV{SOFTWARE_ROOT}" STREQUAL "")
+  set(CMAKE_LIBRARY_PATH $ENV{HOME}/usr/lib $ENV{HOME}/usr/lib64  ${CMAKE_LIBRARY_PATH})
+  set(CMAKE_INCLUDE_PATH $ENV{HOME}/usr/include)
+endif (NOT "$ENV{SOFTWARE_ROOT}" STREQUAL "")
+if(SOFTWARE_ROOT)
+  set(CMAKE_LIBRARY_PATH ${SOFTWARE_ROOT}/lib ${SOFTWARE_ROOT}/lib64  ${CMAKE_LIBRARY_PATH})
+  set(CMAKE_INCLUDE_PATH ${SOFTWARE_ROOT}/include)
+endif (SOFTWARE_ROOT)
+if (NOT "$ENV{LD_LIBRARY_PATH}" STREQUAL "")
+  string(REPLACE ":" ";" _LDLIBPATH $ENV{LD_LIBRARY_PATH})
+  set(CMAKE_LIBRARY_PATH ${_LDLIBPATH} ${CMAKE_LIBRARY_PATH})
+endif (NOT "$ENV{LD_LIBRARY_PATH}" STREQUAL "")
+  
+
 
 # Languages
 enable_language(C)

@@ -8,10 +8,6 @@ find_path(tinyxml_INCLUDE_DIRS
   tinyxml.h
   PATHS
   $ENV{tinyxml_INCLUDE_DIRS}
-  $ENV{HOME}/usr/include/
-  $ENV{HOME}/hopper/include/
-  /usr/include
-  /usr/local/include
   ${INCLUDE_INSTALL_DIR}
   PATH_SUFFIXES
   tinyxml
@@ -21,14 +17,6 @@ FIND_LIBRARY(tinyxml_LIBRARY
   tinyxml
   PATH
   $ENV{tinyxml_LIBRARY_DIR}
-  $ENV{HOME}/usr/lib64/
-  $ENV{HOME}/usr/lib/
-  $ENV{HOME}/hopper/lib64
-  $ENV{HOME}/hopper/lib
-  /usr/lib64
-  /usr/lib
-  /usr/local/lib64
-  /usr/local/lib
 )
 
 

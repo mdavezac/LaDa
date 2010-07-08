@@ -8,10 +8,6 @@ find_path(minuit2_INCLUDE_DIRS
   Minuit2Minimizer.h
   PATHS
   $ENV{minuit2_INCLUDE_DIRS}
-  $ENV{HOME}/usr/include/
-  $ENV{HOME}/hopper/include/
-  /usr/include
-  /usr/local/include
   ${INCLUDE_INSTALL_DIR}
   PATH_SUFFIXES
   Minuit2
@@ -21,14 +17,6 @@ FIND_LIBRARY(minuit2_LIBRARY
   Minuit2
   PATH
   $ENV{minuit2_LIBRARY_DIR}
-  $ENV{HOME}/usr/lib64/
-  $ENV{HOME}/usr/lib/
-  $ENV{HOME}/hopper/lib64
-  $ENV{HOME}/hopper/lib
-  /usr/lib64
-  /usr/lib
-  /usr/local/lib64
-  /usr/local/lib
 )
 
 

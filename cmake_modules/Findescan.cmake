@@ -7,10 +7,6 @@ find_path(_ESCAN_INCLUDE_DIRS
   coulomb_4pair_api.mod
   PATHS
   $ENV{ESCAN_INCLUDE_DIRS}
-  $ENV{HOME}/usr/include/
-  $ENV{HOME}/hopper/include/
-  /usr/include
-  /usr/local/include
   ${INCLUDE_INSTALL_DIR}
   PATH_SUFFIXES
   escan nanopse
@@ -21,10 +17,6 @@ if(NOT _ESCAN_INCLUDE_DIRS)
     COULOMB_4PAIR_API.mod
     PATHS
     $ENV{ESCAN_INCLUDE_DIRS}
-    $ENV{HOME}/usr/include/
-    $ENV{HOME}/hopper/include/
-    /usr/include
-    /usr/local/include
     ${INCLUDE_INSTALL_DIR}
     PATH_SUFFIXES
     escan nanopse
@@ -36,27 +28,11 @@ FIND_LIBRARY(_ESCAN_LIBRARY
   pescan
   PATH
   $ENV{ESCAN_LIBRARY_DIR}
-  $ENV{HOME}/usr/lib64/
-  $ENV{HOME}/usr/lib/
-  $ENV{HOME}/hopper/lib64
-  $ENV{HOME}/hopper/lib
-  /usr/lib64
-  /usr/lib
-  /usr/local/lib64
-  /usr/local/lib
 )
 FIND_LIBRARY(_GENPOT_LIBRARY
   genpot
   PATH
   $ENV{ESCAN_LIBRARY_DIR}
-  $ENV{HOME}/usr/lib64/
-  $ENV{HOME}/usr/lib/
-  $ENV{HOME}/hopper/lib64
-  $ENV{HOME}/hopper/lib
-  /usr/lib64
-  /usr/lib
-  /usr/local/lib64
-  /usr/local/lib
 )
 
 
