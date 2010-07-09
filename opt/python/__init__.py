@@ -153,46 +153,107 @@ def read_input(filename, global_dict=None, local_dict = None, paths=None, comm =
   return result
 
 
+  
+class LockFile(object):
+  """ Gets an advisory lock for file C{filename}.
+
+      Creates a lock directory named after a file. Relies on the presumably
+      atomic nature of creating a directory. 
+  """
+  def __init__(self, filename, timeout = None, sleep = 0.5):
+    """ Creates a lock object. 
+
+        Does not acquire lock at this stage. 
+        @param timeout: will raise a RuntimeError when calling L{self.lock} if
+          the lock could not be aquired within this time.
+        @param sleep: Time to sleep between checks when waiting to acquire lock. 
+    """
+    from os.path import abspath, dirname, join
+    self.filename = abspath(filename)
+    """ Name of file to lock. """
+    self.timeout = timeout
+    """ Maximum amount of time to wait when acquiring lock. """
+    self.sleep = sleep
+    """ Sleep time between checks on lock. """
+    self._owns_lock = False
+    """ True if this object owns the lock. """
+
+  def lock(self):
+    from os import makedirs, error
+    import time
+
+    start_time = time.time()
+    # loops until acqires lock.
+    while self._owns_lock == False: 
+      # loops until directory ceases to exist.
+      while self.is_locked: 
+        time.sleep(self.sleep)
+        if self.timeout != None:
+          assert time.time() - start_time < self.timeout, \
+                 RuntimeError("Could not acquire lock on %s." % (filename))
+      # tries to create director.
+      try: makedirs(self.lock_directory)
+      # if fails, then another process already created it. Just keep looping.
+      except error: continue
+      # Done!
+      else: self._owns_lock = True
+
+
+  @property
+  def lock_directory(self):
+    """ Name of lock directory. """
+    from os.path import abspath, dirname, join, basename
+    return join(dirname(abspath(self.filename)), "." + basename(self.filename) + "-lada_lockdir")
+
+  @property
+  def is_locked(self):
+    """ True if a lock for this file exists. """
+    from os.path import exists
+    return exists(self.lock_directory)
+
+  @property
+  def owns_lock(self): 
+    """ True if this object owns the lock. """
+    return self._owns_lock
+
+  def release(self):
+    """ Releases a lock.
+
+        It is an error to release a lock not owned by this object.
+        It is also an error to release a lock which is not locked.
+        Makes sure things are syncro. The latter is an internal bug though.
+    """
+    from os import rmdir
+    assert self._owns_lock, IOError("Filelock object does not own lock.")
+    assert self.is_locked, IOError("Filelock object owns an unlocked lock.")
+    self._owns_lock = False
+    rmdir(self.lock_directory)
+
+  def __del__(self):
+    """ Releases lock if still held. """
+    if self.owns_lock and self.is_locked: self.release()
+
 @contextmanager
-def open_exclusive(*args, **kwargs):
+def acquire_lock(filename, timeout = None, sleep = 0.5):
+  """ Context for a L{LockFile}. """
+  # Enter context.
+  lock = LockFile(filename, timeout, sleep)
+  yield lock
+  # exit context.
+  lock.release()
+
+@contextmanager
+def open_exclusive(filename, mode="r", timeout = None, sleep = 0.5):
   """ Opens file while checking for advisory lock.
 
       This context uses fcntl to acquire a lock on file before reading or
-      writing. Parameters, exceptions, and return are the same as the built-in
-      open. See L{acquire_lock} for locking details. Most notably, the lock is
-      not on the opened file itself, eg it is an advisory lock only.
+      writing. This is an advisory lock only.
   """
-  with acquire_lock(args[0]) as lock_file:
-    with open(*args, **kwargs) as file: yield file
+  # Enter context.
+  lock = LockFile(filename, timeout, sleep)
+  file = open(filename, mode)
+  yield file
+  # Exit context.
+  file.close()
+  lock.release()
 
-  
-@contextmanager
-def acquire_lock(filename):
-  """ Gets an advisory lock for file C{filename}.
-
-      This context uses fcntl to acquire a lock on file before reading or
-      writing. Parameters, exceptions, and return are the same as the built-in
-      open.
-
-      As described below, the lock is not acquired on the file C{filename} itself.
-      So a read or write on the file itself will work! Always use
-      L{acqire_lock} and/or L{open_exclusive} or things won't work as expected.
-
-      Coding: As usual cray's make life difficult. flock does not work on
-      compute nodes when using aprun. lockf does but requires the file to be
-      opened with "w" only! Hence we lock a second file rather than the on of
-      interest. We can't delete either, in case another process is competing
-      with this one. Inconvenient to say the least.
-  """
-  from fcntl import lockf, LOCK_EX, LOCK_UN
-  from os import remove
-  try:
-    lock_filename = filename + ".lada_lockfile"
-    lock_file = open(lock_filename, "w")
-    lockf(lock_file, LOCK_EX, 0)
-    yield lock_file
-  finally:
-    lockf(lock_file, LOCK_UN, 0)
-    lock_file.close()
-
-  
