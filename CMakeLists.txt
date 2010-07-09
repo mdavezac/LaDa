@@ -125,6 +125,8 @@ if("$ENV{NERSC_HOST}" STREQUAL "hopper")
   MESSAGE(STATUS "Working on hopper.")
   MESSAGE(STATUS "Crays being difficult beasts, options are set directly in CMakeLists.txt")
   set(MPI_INCLUDE_PATH "/opt/cray/mpt/4.1.0.1/xt/seastar/mpich2-pgi64/include/")
+  set(MPI_COMPILER "CC")
+  set(MPIEXEC "aprun")
   set(MPI_FOUND TRUE)
   set(FUCKING_CRAY TRUE)
   set(load_python_stuff_globally TRUE)
@@ -138,9 +140,6 @@ if( MPI_FOUND )
 endif( MPI_FOUND )
   
 
-# Look for numpy. Not all packages require NUMPY, however, it is usefull for
-# most python bindings.
-find_package(numpy)
 
 
 
@@ -246,10 +245,10 @@ if(python_bindings)
                        "Please set PYTHON_INCLUDE_DIR and PYTHON_LIBRARY" )
     set(DOPYTHON False)
   endif(PYTHONLIBS_FOUND)
+  find_package(numpy REQUIRED)
   if(minimizer_libs OR vff_functional OR ce_functional OR atompot_functional OR enum_package)
     find_package(pyublas)
   endif(minimizer_libs OR vff_functional OR ce_functional OR atompot_functional OR enum_package)
-
 endif(python_bindings)
 
 if(jobs_package)
