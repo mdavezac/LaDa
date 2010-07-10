@@ -13,17 +13,18 @@ def extract(outdir=".", comm = None):
   """
   from os.path import exists, join
   from ..vff import Extract as VffExtract
-  from boost.mpi import world, broadcast
+  from boost.mpi import broadcast
 
   is_root = True if comm == None else comm.rank == 0
 
   paths = join(outdir, "AE"), join(outdir, "VBM"), join(outdir, "CBM")
-  if is_root: exist_paths = [exists(p) for p in paths]
-  if comm != None: exists_paths = broadcast(comm, exist_paths, 0)
-  if exist_paths[0]: 
+  if is_root: exists_paths = [exists(p) for p in paths]
+  if comm != None:
+    exists_paths = broadcast(comm, exists_paths if is_root else None, root=0)
+  if exists_paths[0]: 
     result = ExtractAE( _ExtractE(paths[0], comm = comm) )
     if result.success: return result
-  elif exist_paths[1] and exist_paths[2]:
+  elif exists_paths[1] and exists_paths[2]:
     result = ExtractRefs( _ExtractE(paths[1], comm = comm),\
                           _ExtractE(paths[2], comm = comm),
                           _ExtractE(outdir, comm = comm) )
@@ -86,20 +87,25 @@ class ExtractAE(_ExtractE):
     return self.cbm - self.vbm
 
   @property
-  @make_cached
   def vbm(self):
     """ Greps VBM from calculations. """
-    eigenvalues = self.eigenvalues.copy()
-    eigenvalues.sort()
-    return self.eigenvalues[-5]
+    return self._vbm_cbm[0]
+
+  @property
+  def cbm(self):
+    """ Greps CBM from calculations. """
+    return self._vbm_cbm[1]
 
   @property
   @make_cached
-  def cbm(self):
-    """ Greps CBM from calculations. """
+  def _vbm_cbm(self):
+    """ Gets vbm and cbm. """
+    from lada.escan._escan import nb_valence_states
     eigenvalues = self.eigenvalues.copy()
     eigenvalues.sort()
-    return self.eigenvalues[-4]
+    n = nb_valence_states(self.structure)
+    return eigenvalues[n-1], eigenvalues[n]
+
 
   def oscillator_strength(self, degeneracy=1e-3, attenuate=False):
     """ Computes oscillator strength between vbm and cbm. """
