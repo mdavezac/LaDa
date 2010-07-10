@@ -38,8 +38,12 @@
 ## usual prefix, we need to remove it while searching for the NumPy libraries.
 ## In order however not to affect other CMake modules we need to swap back in the
 ## original prefixes once the end of this module is reached.
-find_package(PythonLibs REQUIRED)
-find_package(PythonInterp REQUIRED)
+if(NOT PYTHONLIBS_FOUND)
+  find_package(PythonLibs REQUIRED)
+endif(NOT PYTHONLIBS_FOUND)
+if(NOT PYTHONINTERP_FOUND)
+  find_package(PythonInterp REQUIRED)
+endif(NOT PYTHONINTERP_FOUND)
 if(NUMPY_FOUND AND NUMPY_LIBRARIES AND NUMPY_INCLUDES)
   set(NUMPY_FIND_QUIETLY TRUE)
 endif(NUMPY_FOUND AND NUMPY_LIBRARIES AND NUMPY_INCLUDES)
@@ -232,7 +236,7 @@ if (NUMPY_INCLUDES AND NUMPY_LIBRARIES AND NOT NUMPY_HAS_LONG_DOUBLE) # only if 
       ${CMAKE_BINARY_DIR}
       ${NUMPY_LONGTEST_FILE}
       COMPILE_DEFINITIONS -I${PYTHON_INCLUDE_DIRS}  -I${Boost_INCLUDE_DIRS} -I${NUMPY_INCLUDES} 
-      CMAKE_FLAGS -DLINK_LIBRARIES:STRING=${PYTHON_LIBRARY}
+      CMAKE_FLAGS -DLINK_LIBRARIES:STRING=${PYTHON_LIBRARIES}
       OUTPUT_VARIABLE NUMPY_DOUBLE_COMPILE
       )
     ## display results
@@ -259,7 +263,7 @@ if (NUMPY_INCLUDES AND NUMPY_LIBRARIES AND NOT NUMPY_HAS_BOOL) # only if numpy f
       ${CMAKE_BINARY_DIR}
       ${NUMPY_BOOLTEST_FILE}
       COMPILE_DEFINITIONS -I${PYTHON_INCLUDE_DIRS}  -I${Boost_INCLUDE_DIRS} -I${NUMPY_INCLUDES} 
-      CMAKE_FLAGS -DLINK_LIBRARIES:STRING=${PYTHON_LIBRARY}
+      CMAKE_FLAGS -DLINK_LIBRARIES:STRING=${PYTHON_LIBRARIES}
       OUTPUT_VARIABLE NUMPY_BOOL_COMPILE
       )
     ## display results
