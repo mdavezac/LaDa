@@ -10,7 +10,7 @@ endif(USE_VASP5)
 FIND_LIBRARY(_VASP_LIBRARY
   ${which_vasp_lib}
   PATH
-  $ENV{ESCAN_LIBRARY_DIR}
+  $ENV{VASP_LIBRARY_DIR}
 )
 
 
