@@ -238,6 +238,7 @@ def acquire_lock(filename, timeout = None, sleep = 0.5):
   """ Context for a L{LockFile}. """
   # Enter context.
   lock = LockFile(filename, timeout, sleep)
+  lock.lock()
   yield lock
   # exit context.
   lock.release()
@@ -251,6 +252,7 @@ def open_exclusive(filename, mode="r", timeout = None, sleep = 0.5):
   """
   # Enter context.
   lock = LockFile(filename, timeout, sleep)
+  lock.lock()
   file = open(filename, mode)
   yield file
   # Exit context.
