@@ -18,16 +18,15 @@ vasp.add_specie = "Mg", "pseudos/Mg"
 vasp.add_specie =  "O",  "pseudos/O"
 vasp.species["Mg"].magnetic = True
 
-materials = ["Al2MgO4"]
-""" Materials to compute. """
+relaxer = RelaxCellShape\
+          (\
+            vasp,
+            "volume ionic cellshape",
+            { "kpoint": "\n1\nG\n0 0 0", "encut": 0.9 },
+            5
+          )
+""" Cell shape relaxation algorithm. """
 
-queue     = "regular"
-""" PBS queue. """
-walltime = "05:45:00"
-""" PBS walltime. """
-
-outdir    = "results"
-""" Root directory where to store results. """
 
 def volume(structure):
   """ Returns *guessed* scale (eg volume^(0.33)) for a given structure. """
@@ -40,10 +39,17 @@ def volume(structure):
   return structure.scale * (spvol / vol)**(1e0/3e0) 
 
 
-relaxer = RelaxCellShape\
-          (\
-            vasp,
-            "volume ionic cellshape",
-            { "kpoint": "\n1\nG\n0 0 0", "encut": 0.9 },
-            5
-          )
+
+materials = ["Al2MgO4"]
+""" Materials to compute. """
+nbantiferro = 3
+""" Number of random anti-ferro trials. """
+
+
+queue     = "regular"
+""" PBS queue. """
+walltime = "05:45:00"
+""" PBS walltime. """
+
+outdir    = "results"
+""" Root directory where to store results. """

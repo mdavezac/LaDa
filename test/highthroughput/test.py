@@ -1,12 +1,16 @@
 #!/usr/bin/env python
+""" High-Thoughput of A2BO4 structures. """
 
 from re import compile
+
 from lada import jobs
 from lada.opt import read_input
 from lada.opt.changedir import Changedir
-from lada.crystal import A2BX4, fill_structure, specie_list
+from lada.crystal import A2BX4, fill_structure
 from lada.vasp import Vasp, Specie, specie, files
 from lada.vasp.methods import RelaxCellShape
+
+import magnetic
 
 # names we need to create input.
 input_dict = { "Vasp": Vasp, "U": specie.U, "nlep": specie.nlep, "RelaxCellShape": RelaxCellShape }
@@ -60,53 +64,31 @@ for material in input.materials:
     lat_jobdict.add_param = "ispin", 1
 
     # goes through magnetic stuff
-    species = specie_list(structure)
-    if len([0 for u in specie if u.magnetic]) == 0: continue
-
-    # some needed lists
-    moments = [0, 1, 2, 3, 4, 5, 4, 3, 2, 1, 0] # high-spin, d elctrons.
-    numbers = [atom.type for atom in structure.atoms]
-    numbers = [ numbers.count(u) for u in species ]
-    valence = [ input.vasp.species[s] for s in species ]
+    if not magnetic.is_magnetic_system(structure, input.vasp.species): continue
 
     # first ferro
-    magom = ""
-    for n, s, val  in zip(numbers, species, valence): 
-      ps = input.vasp.species[s]
-      magmom +="%i*%f   " % (n, moments[ps.valence] if ps.magnetic else 0)
     job = lat_jobdict / "ferro"
     job.vasp = input.relaxer
     job.args = structure
     job.add_param = "ispin", 2
-    job.add_param = "magmom", magmom
+    job.add_param = "magmom", magnetic.ferro(structure, input.vasp.species)
     
-    # then, antiferro, one for each cation.
-    if len([0 for u in specie if u.magnetic]) == 2: 
-      magom, sign = "", 1e0
-      for n, s, val  in zip(numbers, species, valence): 
-        ps = input.vasp.species[s]
-        magmom +="%i*%f   " % (n, sign * moments[ps.valence] if ps.magnetic else 0)
-        if ps.magnetic: sign *= -1e0
+    # then, antiferro with spin direction depending on cation type.
+    magmom = magnetic.sublatt_antiferro(structure, input.vasp.species) 
+    if magmom != None:
       job = lat_jobdict / "anti-ferro-0"
       job.vasp = input.relaxer
       job.args = structure
       job.add_param = "ispin", 2
       job.add_param = "magmom", magmom
 
-   # Then random anti-ferro.
-   for i in range(input.nbantiferro):
-     magom = "", 1e0
-     for n, s, val  in zip(numbers, species, valence): 
-       ps = input.vasp.species[s]
-       if ps.magnetic:
-         magmom += 
-       for i in range(n):
-       magmom +="%i*%f   " % (n, moments[ps.valence] if ps.magnetic else 0)
-     job = lat_jobdict / "anti-ferro-%i" % (i+1)
-     job.vasp = input.relaxer
-     job.args = structure
-     job.add_param = "ispin", 2
-     job.add_param = "magmom", magmom
+    # Then random anti-ferro.
+    for i in range(input.nbantiferro):
+      job = lat_jobdict / ("anti-ferro-%i" % (i+1))
+      job.vasp = input.relaxer
+      job.args = structure
+      job.add_param = "ispin", 2
+      job.add_param = "magmom", magnetic.random(structure, input.vasp.species)
                                          
 
 with Changedir(input.outdir) as pwd: jobs.save(jobdict, "jobdict")
