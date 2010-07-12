@@ -159,6 +159,8 @@ class JobDict(object):
     self.jobparams["vasp"] = None
     # no arguments yet.
     self.jobparams["args"] = (None)
+    # no restart parameters yet.
+    self.jobparams["restart"] = None
     
   def __getitem__(self, index): 
     """ Returns job description from the dictionary.
@@ -274,13 +276,32 @@ class JobDict(object):
     return sorted(self.children.keys())
     
   def compute(self, **kwargs):
-    """ Performs calculations over job list. """
+    """ Performs calculations over job list. """  
+    from lada.opt.changedir import Changedir
+    from sys import stderr
 
     kwargs.update(self.jobparams)
     if "vasp" not in kwargs: return None
     vasp = kwargs.pop("vasp")
     if vasp == None: return
     args = kwargs.pop("args", ())
+    # takes care of restart arguments.
+    restart = kwargs.pop("restart", None) 
+    if restart != None:
+      outdir = kwargs["outdir"] if "outdir" in kwargs else "."
+      comm = kwargs["comm"] if "comm" in kwargs else None
+      with Changedir(outdir) as pwd:
+        kwargs["restart"] = restart[0](restart[1], comm=comm)
+      if not kwargs["restart"].success:
+        # cannot perform this job since dependency is not successfull
+        comm = kwargs["comm"] if "comm" in kwargs else None
+        if (comm.rank == 0 if comm != None else True):
+          print >> stderr, "Could not perform job %s since it depends upon %s completing first."\
+                % (outdir, join(outdir, restart[1]))
+        class NoSuccess:
+          def __init__(self): self.success, self.directory = False, outdir
+        return NoSuccess()
+
     if args == None: args = ()
     assert hasattr(args, "__iter__"), RuntimeError("Functional argument \"args\" is not a sequence.")
     return vasp(*args, **kwargs)
@@ -559,14 +580,17 @@ def pbs_script( outdir = None, jobdict = None, template = None, \
       @param kwargs: Passed on to template.
   """
   from shutil import copy
-  from os import getcwd, makedirs
+  from os import getcwd, makedirs, environ
   from os.path import abspath, join, exists, relpath, samefile, split as pathsplit
   from ..opt.changedir import Changedir
-  from templates import default_pbs 
+  from templates import default_pbs, default_slurm
  
   # sets up default input.
   if jobdict == None: jobdict = current
-  if template == None: template = default_pbs
+  if template == None:
+    which = "SNLCLUSTER" in environ
+    if which: which = environ["SNLCLUSTER"] in ["redrock", "redmesa"]
+    template = default_slurm if which else default_pbs
   if outdir == None: outdir = getcwd() 
   if pickle == None: pickle = "job_pickle"
   if name == None: name = relpath(outdir, outdir+"/..")
@@ -597,3 +621,63 @@ def pbs_script( outdir = None, jobdict = None, template = None, \
     template( file, pickle=pickle, outdir=abspath(outdir),\
               name=jobname, pyscript=pyscript_filename, **kwargs)
 
+
+def one_per_job(outdir = None, jobdict = None, mppalloc=None, **kwargs):
+  """ Launches one pbs job per job. 
+  
+      @param outdir: root output directory.
+      @param jobdict: job dictionary.
+      @param mppalloc: an mpi allocation scheme. It takes the job as argument.
+                       If a number, then flat allocation scheme across all jobs.
+  """
+  from os import environ
+  from os.path import abspath, join, split as pathsplit
+  from lada.opt.changedir import Changedir
+  from templates import default_pbs, default_slurm
+  
+  # sets up default input.
+  if outdir == None: outdir = getcwd() 
+  if jobdict == None: jobdict = current
+
+  which = "SNLCLUSTER" in environ
+  if which: which = environ["SNLCLUSTER"] in ["redrock", "redmesa"]
+  template = default_slurm if which else default_pbs
+
+  # creates directory.
+  dir = abspath( join(outdir, "pbs_scripts") )
+  # saves pickle
+  save(jobdict, join(outdir, "job_pickle"))
+  # creates directory.
+  with Changedir(dir) as pwd: pass 
+  # gets runone 
+  pyscript = __file__.replace(pathsplit(__file__)[1], "runone.py")
+  # creates pbs script for each job.
+  for i, (job, name) in enumerate(jobdict.walk_through()):
+    mppwidth = mppalloc(job) if hasattr(mppalloc, "__call__") else mppalloc
+    name = name.replace("/", ".")
+    with open(join(dir, name + ".pbs"), "w") as file: 
+      template( file, outdir=dir, jobid=i, mppwidth=mppwidth, name=name,\
+                pickle = join(outdir, "job_pickle"), pyscript=pyscript )
+    print "wrote pbs script: %s." % (join(dir, name+".pbs"))
+
+
+
+
+
+def fakerun(jobdict = None, outdir = None):
+  """ Performs a fake run.
+
+      Fake runs include *norun=True* as a job parameter. Whether this works or
+      not depends on the functional. It is meant to create all directories and
+      input file for a quick review of the input parameters.
+      @param jobdict: if None, then uses L{jobs.current}. otherwise fake runs
+                      the provided dictionary. 
+      @type jobdict; L{JobDict} or None
+      @param path: If None uses the current workding path. This will be the ouput directory.
+  """
+  from os import getcwd
+
+  if jobdict == None: jobdict = current
+  if outdir  == None: outdir = getcwd()
+  for job, dirname in jobdict.walk_through(outdir):
+    if not job.is_marked: job.compute(outdir=dirname, norun=True)

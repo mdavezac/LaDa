@@ -89,10 +89,6 @@ class RelaxCellShape(object):
     from os import getcwd
     from os.path import join, exists
 
-    # does not run code. Just creates directory.
-    if kwargs.pop("norun", False): 
-      yield self._norun(structure, outdir, comm, **kwargs)
-      return
 
     # make this function stateless.
     vasp = kwargs.pop("vasp", self.vasp)
@@ -101,8 +97,13 @@ class RelaxCellShape(object):
     set_relaxation = kwargs.pop("set_relaxation", set_relaxation)
     first_trial = kwargs.pop("first_trial", self.first_trial)
     maxiter = kwargs.pop("maxiter", self.maxiter)
-    outdir = kwargs.pop("outdir", getcwd())
+    if outdir == None: outdir = getcwd()
 
+    # does not run code. Just creates directory.
+    if kwargs.pop("norun", False): 
+      this = RelaxCellShape(vasp, set_relaxation, first_trial, maxiter)
+      yield this._norun(structure, outdir=outdir, comm=comm, **kwargs)
+      return
 
     # number of restarts.
     nb_steps, olde = 0, None
@@ -146,7 +147,7 @@ class RelaxCellShape(object):
              )
     yield output
 
-  def __call__(*args, **kwargs):
+  def __call__(self, *args, **kwargs):
     """ Performs a vasp relaxation. 
 
         Arguments are the same as `generator`.
@@ -167,24 +168,25 @@ class RelaxCellShape(object):
         If you want to examine the result of each and every vasp calculation,
         use `generator` instead.
     """ 
-    if kwargs.pop("norun", False): 
-      return self._norun(structure, outdir, comm, **kwargs)
-
     for output in self.generator(*args, **kwargs): pass
     return output
   
-  def _norun(structure, outdir, comm, **kwargs):
+  def _norun(self, *args, **kwargs):
     """ Just creates directory for debugging. """
     from ..opt.changedir import Changedir
 
-    is_root = True if comm == None else comm.rank == 0
+    is_root = True
+    if "comm" in kwargs:
+      comm = kwargs["comm"]
+      is_root = True if comm == None else comm.rank == 0
     if is_root:
       # creates a file describing the relaxation parameters.
-      with Changedir(outdir) as pwd:
-        with open("relaxe_cell_shape_parameters") as file:
+      with Changedir(kwargs["outdir"]) as pwd:
+        with open("relax_cell_shape_parameters", "w") as file:
           file.write( "self.relaxation = %s\n" % (repr(self.relaxation)) )
           file.write( "self.maxiter = %s\n" % (repr(self.maxiter)) )
           file.write( "self.first_trial = %s\n" % (repr(self.first_trial)) )
 
     # Now have vasp do a fake run to create anything it does create.
-    return vasp(structure, outdir, comm, norun=True, **kwargs)
+    kwargs["norun"] = True
+    return self.vasp(*args, **kwargs) 

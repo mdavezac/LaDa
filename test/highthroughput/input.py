@@ -3,7 +3,6 @@ vasp = Vasp()
 vasp.precision  = "accurate"
 vasp.ediff      = 1e-5
 vasp.encut      = 1
-vasp.lorbit     = 10
 vasp.npar       = 2
 vasp.lplane     = True
 vasp.addgrid    = True
@@ -18,13 +17,11 @@ vasp.add_specie = "Mg", "pseudos/Mg"
 vasp.add_specie =  "O",  "pseudos/O"
 vasp.species["Mg"].magnetic = True
 
-relaxer = RelaxCellShape\
-          (\
-            vasp,
-            "volume ionic cellshape",
-            { "kpoint": "\n1\nG\n0 0 0", "encut": 0.9 },
-            5
-          )
+first_trial = { "kpoint": "\n1\nG\n0 0 0", "encut": 0.9 }
+""" parameter to override during first relaxation step. """
+relaxation_dof = "volume ionic cellshape"
+""" Degrees of freedom to relax. """
+relaxer = RelaxCellShape( vasp, relaxation_dof, first_trial, maxiter=5)
 """ Cell shape relaxation algorithm. """
 
 
@@ -38,7 +35,11 @@ def volume(structure):
   vol = det(structure.scale * structure.cell)
   return structure.scale * (spvol / vol)**(1e0/3e0) 
 
-
+def mppalloc(job): 
+  """ Returns number of processes for this job. """
+  N = len(job.args[0].atoms) # number of atoms.
+  if N % 2 == 1: N += 1
+  return N  
 
 materials = ["Al2MgO4"]
 """ Materials to compute. """
