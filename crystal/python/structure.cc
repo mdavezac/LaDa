@@ -320,11 +320,11 @@ namespace LaDa
       bp::def("to_fractional", &Crystal::to_fractional<std::string>,
               "Transforms a structure from fractional to cartesian coordinates.\n" );
 
-      bp::def("fill_structure", &fill_structure<Crystal::Structure>);
-      bp::def("fill_structure", &fill_cell);
+      bp::def("_fill_structure_impl", &fill_structure<Crystal::Structure>);
+      bp::def("_fill_structure_impl", &fill_cell);
       bp::def
       (
-        "fill_structure", 
+        "_fill_structure_impl", 
         &fill_structure< Crystal::TStructure<std::string> >,
         "Returns a structure from knowledge of cell and lattice.\n\n"
         "The argument can be of type L{Structure}, L{rStructure}, "

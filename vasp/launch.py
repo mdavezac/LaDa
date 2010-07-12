@@ -117,7 +117,7 @@ class Launch(Incar):
 
   def _postrun(self, repat, outdir, comm, norun):
      """ Copies files back to outdir """
-     from os.path import exists, join, isdir
+     from os.path import exists, join, isdir, realpath
      from os import makedirs
      from shutil import copy
      from . import files
@@ -133,10 +133,11 @@ class Launch(Incar):
 
 
      notfound = []
-     for filename in set(repat).union(files.minimal):
-       if not is_root: filename = str("%s.%i" % (filename, comm.rank))
-       if exists( join(self._tempdir, filename) ): copy( join(self._tempdir, filename), outdir )
-       elif is_root: notfound.append(filename)
+     if realpath(self._tempdir) != realpath(outdir):
+       for filename in set(repat).union(files.minimal):
+         if not is_root: filename = str("%s.%i" % (filename, comm.rank))
+         if exists( join(self._tempdir, filename) ): copy( join(self._tempdir, filename), outdir )
+         elif is_root: notfound.append(filename)
 
      if not norun: assert len(notfound) == 0, IOError("Files %s were not found.\n" % (notfound))
 
