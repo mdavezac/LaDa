@@ -403,12 +403,13 @@ class JobDict(object):
 current = JobDict()
 """ Global with current joblist. """
 
-def walk_through(jobdict = None, outdir = None):
+def walk_through(jobdict = None, outdir = None, comm = None):
   """ Generator to iterate over actual calculations. 
       
       see L{JobDict} description.
   """
   if jobdict == None: jobdict = current
+  elif isinstance(jobdict, str): jobdict = load(jobdict, comm=comm)
   for u in jobdict.walk_through("outdir"): yield u
 
 @broadcast_result(key=True)
@@ -652,14 +653,17 @@ def one_per_job(outdir = None, jobdict = None, mppalloc=None, **kwargs):
   # gets runone 
   pyscript = __file__.replace(pathsplit(__file__)[1], "runone.py")
   # creates pbs script for each job.
+  results = []
   for i, (job, name) in enumerate(jobdict.walk_through()):
     mppwidth = mppalloc(job) if hasattr(mppalloc, "__call__") else mppalloc
     name = name.replace("/", ".")
-    with open(join(dir, name + ".pbs"), "w") as file: 
+    results.append( join(dir, name + ".pbs") )
+    with open(results[-1], "w") as file: 
       template( file, outdir=dir, jobid=i, mppwidth=mppwidth, name=name,\
                 pickle = join(outdir, "job_pickle"), pyscript=pyscript,
                 ppath = getcwd(), **kwargs )
-    print "wrote pbs script: %s." % (join(dir, name+".pbs"))
+    print "wrote pbs script: %s." % (results[-1])
+  return results
 
 
 

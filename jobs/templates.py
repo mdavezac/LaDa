@@ -47,7 +47,7 @@ def default_pbs( file, walltime = "05:45:00", mppwidth = 8, queue = "regular", n
     else:             file.write(" --%s %s" % (key, value))
   file.write(" " + pickle + "\n")
 
-def default_slurm( file, walltime = "05:45:00", mppwidth = 8, ppernode=8, queue = "regular",\
+def default_slurm( file, walltime = "05:45:00", mppwidth = 8, ppernode=8, queue = None,\
                    name = None, pyvirt = None, pyscript = None,  pickle = "job_pickle",\
                    outdir = None, **kwargs):
   """ Creates default slurm-script. Does not launch. 
@@ -57,7 +57,7 @@ def default_slurm( file, walltime = "05:45:00", mppwidth = 8, ppernode=8, queue 
          acceptable to the PBS implementation.
       @param mppwidth: Number of processes (not processors) to use.
       @param ppernode: Number of processes per node.
-      @param queue: Queue to use
+      @param queue: Queue to use. If none will let slurm use default queue.
       @param name: Name of the job.
       @param pyvirt: Virtual python environment. If None, checks for
         $VIRTUAL_ENV environment variable and uses that if it exists. Otherwise
@@ -78,11 +78,15 @@ def default_slurm( file, walltime = "05:45:00", mppwidth = 8, ppernode=8, queue 
   file.write("#SBATCH --time=" + walltime + "\n") 
   file.write("#SBATCH -N " + str(nnodes) + "\n") 
   file.write("#SBATCH -n " + str(mppwidth) + "\n") 
-  file.write("#SBATCH -p " + queue + "\n") 
-  file.write("#SBATCH -e \"err.%j\"\n")
-  file.write("#SBATCH -o \"out.%j\"\n")
-  if name != None: file.write("#PBS -J \"%s\" \n" % (name))
-  if outdir != None: file.write("#PBS -D %s " % (outdir))
+  if queue != None: file.write("#SBATCH -p %s\n" % (queue))
+  if name != None:
+    file.write("#SBATCH -e \"err.%s.%%j\"\n" % (name))
+    file.write("#SBATCH -o \"out.%s.%%j\"\n" % (name))
+  else:
+    file.write("#SBATCH -e \"err.%j\"\n")
+    file.write("#SBATCH -o \"out.%j\"\n")
+  if name != None: file.write("#SBATCH -J \"%s\" \n" % (name))
+  if outdir != None: file.write("#SBATCH -D %s " % (outdir))
 
   if pyvirt != None: file.write("\nworkon %s \n" % (pyvirt) )
 
