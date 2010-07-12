@@ -1,6 +1,15 @@
 #!/usr/bin/env python
 """ High-Thoughput of A2BO4 structures. """
 
+def _input():
+  from lada.opt import read_input
+  from lada.vasp import Vasp, specie, files
+  from lada.vasp.methods import RelaxCellShape
+
+  # names we need to create input.
+  input_dict = { "Vasp": Vasp, "U": specie.U, "nlep": specie.nlep, "RelaxCellShape": RelaxCellShape }
+  return read_input("input.py", input_dict)
+ 
 input = _input()
 """ All input parameteres. """
 mppalloc = input.mppalloc
@@ -104,15 +113,6 @@ def _waves(is_first = True):
         job.restart = Extract, "../non-magnetic"
   return jobdict
                                            
-def _input():
-  from lada.opt import read_input
-  from lada.vasp import Vasp, specie, files
-  from lada.vasp.methods import RelaxCellShape
-
-  # names we need to create input.
-  input_dict = { "Vasp": Vasp, "U": specie.U, "nlep": specie.nlep, "RelaxCellShape": RelaxCellShape }
-  return read_input("input.py", input_dict)
- 
 
 first_wave = _waves(True)
 """ First waves of jobs. """

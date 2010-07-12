@@ -630,7 +630,7 @@ def one_per_job(outdir = None, jobdict = None, mppalloc=None, **kwargs):
       @param mppalloc: an mpi allocation scheme. It takes the job as argument.
                        If a number, then flat allocation scheme across all jobs.
   """
-  from os import environ
+  from os import environ, getcwd
   from os.path import abspath, join, split as pathsplit
   from lada.opt.changedir import Changedir
   from templates import default_pbs, default_slurm
@@ -657,7 +657,8 @@ def one_per_job(outdir = None, jobdict = None, mppalloc=None, **kwargs):
     name = name.replace("/", ".")
     with open(join(dir, name + ".pbs"), "w") as file: 
       template( file, outdir=dir, jobid=i, mppwidth=mppwidth, name=name,\
-                pickle = join(outdir, "job_pickle"), pyscript=pyscript )
+                pickle = join(outdir, "job_pickle"), pyscript=pyscript,
+                ppath = getcwd(), **kwargs )
     print "wrote pbs script: %s." % (join(dir, name+".pbs"))
 
 
