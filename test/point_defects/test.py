@@ -117,3 +117,4 @@ jobs.pbs_script( queue=input.queue, mppwidth=input.mppwidth, \
                  walltime=input.walltime)
 
 
+materials = ["Al2MgO4"]
