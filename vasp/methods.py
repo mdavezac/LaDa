@@ -84,6 +84,7 @@ class RelaxCellShape(object):
             stateless) if they are named after attributes of `RelaxCellShape`.
             Otherwise, the keywords are passed on to the `vasp` functional.
     """
+    from sys import exit
     from copy import deepcopy
     from math import fabs 
     from os import getcwd
@@ -110,16 +111,17 @@ class RelaxCellShape(object):
     nb_steps, olde = 0, None
    
     # sets parameter dictionary for first trial.
-    if first_trial != None and nb_steps == 0:
+    if first_trial != None:
       params = kwargs.copy()
       params.update(first_trial)
+      comm.barrier()
     else: param = kwargs
+    comm.barrier()
     
     # performs relaxation calculations.
     while maxiter <= 0 or nb_steps < maxiter:
       # performs initial calculation.   
       directory = join(outdir, join("relax_cellshape", str(nb_steps)))
-      print "relaxation iteration: ", nb_steps, directory 
       output = vasp\
                (\
                  structure, \

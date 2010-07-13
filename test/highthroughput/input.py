@@ -17,7 +17,7 @@ vasp.add_specie = "Mg", "pseudos/Mg"
 vasp.add_specie =  "O",  "pseudos/O"
 vasp.species["Mg"].magnetic = True
 
-first_trial = { "kpoint": "\n1\nG\n0 0 0", "encut": 0.9 }
+first_trial = { "kpoints": "\n1\nG\n0 0 0", "encut": 0.9 }
 """ parameter to override during first relaxation step. """
 relaxation_dof = "volume ionic cellshape"
 """ Degrees of freedom to relax. """

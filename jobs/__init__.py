@@ -412,6 +412,7 @@ def walk_through(jobdict = None, outdir = None, comm = None):
   elif isinstance(jobdict, str): jobdict = load(jobdict, comm=comm)
   for u in jobdict.walk_through(outdir): yield u
 
+@broadcast_result(key=True)
 def save(jobdict = None, path = None, overwrite=False, comm=None): 
   """ Pickles a job to file.
 
@@ -446,7 +447,7 @@ def load(path = None, comm = None):
       this file while using this function.
       @param path: filename from which to load pickle. 
         If None then saves to "pickled_jobdict"
-      @param comm: Broadcasts from root process.
+      @param comm: Broadcasts from root process. 
       @type comm: boost.mpi.communicator
       @return: Returns a JobDict object.
   """ 
@@ -653,7 +654,8 @@ def one_per_job(outdir = None, jobdict = None, mppalloc=None, ppath=None, **kwar
   # gets runone 
   pyscript = __file__.replace(pathsplit(__file__)[1], "runone.py")
   # makes sure ppath is absolute.
-  if ppath != None: ppath = abspath(expanduser(ppath))
+  if ppath != None:
+    kwargs["ppath"] = abspath(expanduser(ppath))
   # creates pbs script for each job.
   results = []
   for i, (job, name) in enumerate(jobdict.walk_through()):
@@ -662,8 +664,7 @@ def one_per_job(outdir = None, jobdict = None, mppalloc=None, ppath=None, **kwar
     results.append( abspath(join(dir, name + ".pbs")) )
     with open(results[-1], "w") as file: 
       template( file, outdir=outdir, jobid=i, mppwidth=mppwidth, name=name,\
-                pickle = join(outdir, "job_pickle"), pyscript=pyscript,
-                ppath = ppath, **kwargs )
+                pickle = join(outdir, "job_pickle"), pyscript=pyscript, **kwargs )
     print "wrote pbs script: %s." % (results[-1])
   return results
 

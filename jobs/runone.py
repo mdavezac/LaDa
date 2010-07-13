@@ -42,8 +42,8 @@ def main():
     print "No pickle specified on input. Eg, need a filename on input."
     return
 
-  # loop over all jobs
-  for i, (job, outdir) in enumerate(jobs.walk_through(args[0])):
+  # loop over all jobs -- Needs communicator!
+  for i, (job, outdir) in enumerate(jobs.walk_through(args[0],comm=world)):
     if i != options.n: continue
     if options.relative == None: 
       out = job.compute(comm=world, outdir=outdir, inplace=True)
