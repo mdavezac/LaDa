@@ -67,7 +67,7 @@ class _RedirectAll:
     import os
     import sys
     try: self.file.close()
-    except: print "Am here"
+    except: pass
     if self.unit == streams.input:    os.dup2(self.old, sys.__stdin__.fileno()) 
     elif self.unit == streams.output: os.dup2(self.old, sys.__stdout__.fileno())
     elif self.unit == streams.error:  os.dup2(self.old, sys.__stderr__.fileno())
@@ -159,6 +159,8 @@ class LockFile(object):
 
       Creates a lock directory named after a file. Relies on the presumably
       atomic nature of creating a directory. 
+      *Beware* of mpi problems! L{LockFile} is (purposefully) not mpi aware.
+      If used unwisely, processes will lock each other out.
   """
   def __init__(self, filename, timeout = None, sleep = 0.5):
     """ Creates a lock object. 
@@ -179,31 +181,49 @@ class LockFile(object):
     """ True if this object owns the lock. """
 
   def lock(self):
-    from os import makedirs, error
+    from os import makedirs, error, mkdir
+    from os.path import exists
     import time
 
+    # creates parent directory first, if necessary.
+    if not exists(self._parent_directory):
+      try: makedirs(self._parent_directory) 
+      except error: pass
     start_time = time.time()
     # loops until acqires lock.
     while self._owns_lock == False: 
-      # loops until directory ceases to exist.
-      while self.is_locked: 
-        time.sleep(self.sleep)
+      # tries to create director.
+      try:
+        self._owns_lock = True
+        mkdir(self.lock_directory)
+      # if fails, then another process already created it. Just keep looping.
+      except error: 
+        self._owns_lock = False
         if self.timeout != None:
           assert time.time() - start_time < self.timeout, \
                  RuntimeError("Could not acquire lock on %s." % (filename))
-      # tries to create director.
-      try: makedirs(self.lock_directory)
-      # if fails, then another process already created it. Just keep looping.
-      except error: continue
-      # Done!
-      else: self._owns_lock = True
+        time.sleep(self.sleep)
 
+  def __enter__(self):
+    """ Enters context. """
+    assert self.timeout == None, RuntimeError("Cannot use LockFile as a context with timeout.")
+    self.lock()
+    return self
+
+  def __exit__(self, *args):
+    """ Exits context. """
+    self.release()
 
   @property
   def lock_directory(self):
     """ Name of lock directory. """
+    from os.path import join, basename
+    return join(self._parent_directory, "." + basename(self.filename) + "-lada_lockdir")
+ 
+  @property
+  def _parent_directory(self):
     from os.path import abspath, dirname, join, basename
-    return join(dirname(abspath(self.filename)), "." + basename(self.filename) + "-lada_lockdir")
+    return dirname(abspath(self.filename))
 
   @property
   def is_locked(self):
@@ -233,29 +253,23 @@ class LockFile(object):
     """ Releases lock if still held. """
     if self.owns_lock and self.is_locked: self.release()
 
-@contextmanager
-def acquire_lock(filename, timeout = None, sleep = 0.5):
-  """ Context for a L{LockFile}. """
-  # Enter context.
-  lock = LockFile(filename, timeout, sleep)
-  lock.lock()
-  yield lock
-  # exit context.
-  lock.release()
+def acquire_lock(filename, sleep=0.5):
+  """ Alias for a L{LockFile} context. 
+
+      *Beware* of mpi problems! L{LockFile} is (purposefully) not mpi aware.
+      Only the root node should use this method.
+  """
+  return LockFile(filename, sleep=sleep)
 
 @contextmanager
-def open_exclusive(filename, mode="r", timeout = None, sleep = 0.5):
+def open_exclusive(filename, mode="r", sleep = 0.5):
   """ Opens file while checking for advisory lock.
 
-      This context uses fcntl to acquire a lock on file before reading or
-      writing. This is an advisory lock only.
+      This context uses L{LockFile} to first obtain a lock.
+      *Beware* of mpi problems! L{LockFile} is (purposefully) not mpi aware.
+      Only the root node should use this method.
   """
   # Enter context.
-  lock = LockFile(filename, timeout, sleep)
-  lock.lock()
-  file = open(filename, mode)
-  yield file
-  # Exit context.
-  file.close()
-  lock.release()
+  with LockFile(filename, sleep=sleep) as lock:
+    yield open(filename, mode)
 
