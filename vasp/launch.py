@@ -89,7 +89,8 @@ class Launch(Incar):
   
     # creates kpoints file
     with open(join(self._tempdir, files.KPOINTS), "w") as kp_file: 
-      kp_file.write( self.kpoints(self) if hasattr(self.kpoints, "__call__") else self.kpoints )
+      kp_file.write( self.kpoints(self) if hasattr(self.kpoints, "__call__") \
+                     else self.kpoints + "\n" )
   
     # creates poscar file
     with open(join(self._tempdir, files.POSCAR), "w") as poscar: 

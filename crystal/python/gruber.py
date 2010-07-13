@@ -4,10 +4,7 @@
 
 
 class Reduction(object):
-  """ Functor for unit-cell reduction.
-      Takes a numpy.array type object, or a L{lada.crystal.Structure}, returns
-      the same but within a reduced Niggli unit-cell.
-  """
+  """ Returns Niggli unit cell. """
 
   def __init__(self, itermax=None, multiplier=16, nochange=2):
     from numpy import matrix
@@ -18,24 +15,14 @@ class Reduction(object):
     self.multiplier = multiplier
     self.nochange   = nochange
 
-  def __call__(self, structure, recip=False):
-    """ Functor for unit-cell reduction.
-        Takes a numpy.array type object, or a L{lada.crystal.Structure}, returns
-        the same but within a reduced Niggli unit-cell.
-    """
+  def __call__(self, cell, recip=False):
+    """ Returns Niggli unit cell. """
 
     from copy import deepcopy
     from numpy import matrix
     from numpy.linalg import inv
 
-    cell = None 
-    if hasattr(structure, "cell"):
-      cell = matrix( [[structure.cell[0,0], structure.cell[0,1], structure.cell[0,2]], 
-                      [structure.cell[1,0], structure.cell[1,1], structure.cell[1,2]], 
-                      [structure.cell[2,0], structure.cell[2,1], structure.cell[2,2]]], 
-                     dtype = "float64" )
-    else: cell = matrix(structure, copy=True)
-
+    cell = matrix(cell.copy())
     if recip: cell = inv(cell).T
 
     metrical = cell.T * cell
@@ -56,11 +43,7 @@ class Reduction(object):
     cell = cell * self._r_inv
     if recip: cell = inv(cell).T
 
-    if hasattr(structure, "cell"):
-      new_structure = deepcopy(structure)
-      new_structure.cell = cell
-      return new_structure
-    else: return cell
+    return cell
 
   def itermax(self): return self.itermax
 

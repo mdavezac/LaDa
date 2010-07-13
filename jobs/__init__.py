@@ -659,6 +659,7 @@ def one_per_job(outdir = None, jobdict = None, mppalloc=None, ppath=None, **kwar
   # creates pbs script for each job.
   results = []
   for i, (job, name) in enumerate(jobdict.walk_through()):
+    if job.is_marked: continue
     mppwidth = mppalloc(job) if hasattr(mppalloc, "__call__") else mppalloc
     name = name.replace("/", ".")
     results.append( abspath(join(dir, name + ".pbs")) )

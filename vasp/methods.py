@@ -84,22 +84,26 @@ class RelaxCellShape(object):
             stateless) if they are named after attributes of `RelaxCellShape`.
             Otherwise, the keywords are passed on to the `vasp` functional.
     """
-    from sys import exit
     from copy import deepcopy
     from math import fabs 
     from os import getcwd
     from os.path import join, exists
 
 
-    print "starting relaxation "
     # make this function stateless.
     vasp = kwargs.pop("vasp", self.vasp)
     structure = deepcopy(structure)
     set_relaxation = kwargs.pop("relaxation", self.relaxation)
     set_relaxation = kwargs.pop("set_relaxation", set_relaxation)
+    vasp.set_relaxation = set_relaxation
     first_trial = kwargs.pop("first_trial", self.first_trial)
     maxiter = kwargs.pop("maxiter", self.maxiter)
     if outdir == None: outdir = getcwd()
+
+    # check nsw parameter. kwargs may still overide it.
+    if vasp.nsw == None: vasp.nsw = 60
+    # checks ibrion paramer. kwargs may still overide it.
+    if vasp.ibrion == None and vasp.potim == None: vasp.ibrion = 2
 
     # does not run code. Just creates directory.
     if kwargs.pop("norun", False): 
@@ -127,9 +131,9 @@ class RelaxCellShape(object):
                  structure, \
                  outdir = directory,\
                  comm=comm,\
-                 set_relaxation = set_relaxation,\
                  **params
                )
+      structure = output.structure
       yield output
       
       nb_steps += 1

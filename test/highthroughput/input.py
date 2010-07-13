@@ -9,6 +9,7 @@ vasp.addgrid    = True
 vasp.set_smearing   = "metal", 0.01
 vasp.set_relaxation = "ionic"
 vasp.set_symmetry   = "off"
+vasp.kpoints        = "\n0\nAuto\n30"
 
 # "Al" => specie symbol
 # "pseudos/Al" => directory where relevant POTCAR is located
@@ -17,7 +18,7 @@ vasp.add_specie = "Mg", "pseudos/Mg"
 vasp.add_specie =  "O",  "pseudos/O"
 vasp.species["Mg"].magnetic = True
 
-first_trial = { "kpoints": "\n1\nG\n0 0 0", "encut": 0.9 }
+first_trial = { "kpoints": "\n0\nAuto\n1", "encut": 0.9 }
 """ parameter to override during first relaxation step. """
 relaxation_dof = "volume ionic cellshape"
 """ Degrees of freedom to relax. """
@@ -28,12 +29,13 @@ relaxer = RelaxCellShape( vasp, relaxation_dof, first_trial, maxiter=5)
 def volume(structure):
   """ Returns *guessed* scale (eg volume^(0.33)) for a given structure. """
   from numpy.linalg import det
-  if "O" in [atom.type for atom in structure.atoms]:    spvol = 8.5**3
-  elif "Se" in [atom.type for atom in structure.atoms]: spvol = 9.5**3
-  elif "Te" in [atom.type for atom in structure.atoms]: spvol = 10.5**3
+  if "O" in [atom.type for atom in structure.atoms]:    spvol = 8.5**3/4e0
+  elif "Se" in [atom.type for atom in structure.atoms]: spvol = 9.5**3/4e0
+  elif "Te" in [atom.type for atom in structure.atoms]: spvol = 10.5**3/4e0
 
-  vol = det(structure.scale * structure.cell)
-  return structure.scale * (spvol / vol)**(1e0/3e0) 
+  nfu = float(len(structure.atoms)/7)*0.5 # 0.5 because 2 f.u. in spinel unit-cell.
+  vol = det(structure.cell)
+  return (nfu * spvol / vol)**(1e0/3e0) 
 
 def mppalloc(job): 
   """ Returns number of processes for this job. """
