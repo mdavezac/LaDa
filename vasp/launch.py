@@ -11,7 +11,8 @@ class Launch(Incar):
   # program = "vasp.mpi"
   # """ shell command to launch vasp. """
 
-  def __init__(self, workdir = None, species = None, kpoints = Density(), **kwargs ):
+  def __init__(self, inplace = True, workdir = None, species = None,
+               kpoints = Density(), **kwargs ):
     """ Initializes Launch instance.
 
         The initializer can take any number of keyword arguments. Those other
@@ -21,8 +22,8 @@ class Launch(Incar):
         >> launch.whatnot = something
         This behavior is useful to pass non-standard incar arguments directly
         in initialization.
-        @param workdir: working directory. Defaults to current directory at
-           time of calculation.
+        @param workdir: working directory. Defaults to output directory.
+        @param inplace: In-place calculations. Eg no workdir.
         @param species: Species in the system. 
         @type species: dictionary of L{Specie}
         @param kpoints: Kpoint behavior.
@@ -32,10 +33,14 @@ class Launch(Incar):
     from os.path import abspath, expanduser
     super(Launch, self).__init__() 
 
-    self.workdir = abspath(expanduser(workdir)) if workdir != None else getcwd()
+    self.workdir = abspath(expanduser(workdir)) if workdir != None else None
     # sets species
     self.species = species if species != None else {}
     self.kpoints = kpoints
+
+    # checks inplace vs workdir
+    if inplace: 
+      assert workdir == None, ValueError("Cannot use both workdir and inplace attributes.")
 
     # sets all other keywords as attributes.
     for key in kwargs.keys(): setattr(self, key, kwargs[key])
@@ -52,6 +57,7 @@ class Launch(Incar):
         @raise AssertionError:
     """
     import cPickle
+    from copy import deepcopy
     from os.path import join, exists, abspath
     from os import getcwd
     from shutil import copy
@@ -62,8 +68,12 @@ class Launch(Incar):
 
     # creates incar file. Changedir makes sure that any calculations done to
     # obtain incar will happen in the tempdir. Only head node actually writes.
+    # Also, to make sure in-place calculations will not end up with a bunch of
+    # intermediate file, we copy self and make it non-inplace.
+    this = deepcopy(self) if self.inplace else self
+    this.inplace = False
     with Changedir(self._tempdir) as tmpdir:
-      incar_lines = self.incar_lines(comm = comm)
+      incar_lines = this.incar_lines(comm = comm)
 
     if comm.rank != 0: return # don't have any more business here.
 
@@ -142,7 +152,7 @@ class Launch(Incar):
      if not norun: assert len(notfound) == 0, IOError("Files %s were not found.\n" % (notfound))
 
   def __call__( self, structure=None, outdir = None, comm = None, repat = [], \
-                norun = False, keep_tempdir=False, keep_calc=False):
+                norun = False, keep_tempdir=False):
     from os.path import exists, join, abspath, expanduser
     from os import getcwd
     from shutil import copy2 as copy
@@ -159,12 +169,9 @@ class Launch(Incar):
     is_root = comm.rank == 0
 
     # creates temporary working directory
-    workdir = self.workdir
-    if workdir == None: workdir = getcwd()
-    workdir = abspath(expanduser(workdir))
+    workdir = outdir if self.workdir == None else self.workdir
     context = Tempdir(workdir=workdir, comm=comm, keep=keep_tempdir)\
-              if keep_calc == False\
-              else Changedir(workdir, comm=comm) 
+              if not self.inplace  else Changedir(outdir, comm=comm) 
     with context as self._tempdir: 
       # We do not move to working directory to make copying of files from indir
       # or outdir (as relative paths) possible.

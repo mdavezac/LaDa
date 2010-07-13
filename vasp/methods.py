@@ -90,6 +90,7 @@ class RelaxCellShape(object):
     from os.path import join, exists
 
 
+    print "starting relaxation "
     # make this function stateless.
     vasp = kwargs.pop("vasp", self.vasp)
     structure = deepcopy(structure)
@@ -115,12 +116,14 @@ class RelaxCellShape(object):
     else: param = kwargs
     
     # performs relaxation calculations.
-    while maxiter <= 0 or nbsteps < maxiter:
-      # performs initial calculation.
+    while maxiter <= 0 or nb_steps < maxiter:
+      # performs initial calculation.   
+      directory = join(outdir, join("relax_cellshape", str(nb_steps)))
+      print "relaxation iteration: ", nb_steps, directory 
       output = vasp\
                (\
                  structure, \
-                 outdir = join(outdir, "relax_cellshape_" + str(nb_steps)),\
+                 outdir = directory,\
                  comm=comm,\
                  set_relaxation = set_relaxation,\
                  **params

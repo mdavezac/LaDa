@@ -410,9 +410,8 @@ def walk_through(jobdict = None, outdir = None, comm = None):
   """
   if jobdict == None: jobdict = current
   elif isinstance(jobdict, str): jobdict = load(jobdict, comm=comm)
-  for u in jobdict.walk_through("outdir"): yield u
+  for u in jobdict.walk_through(outdir): yield u
 
-@broadcast_result(key=True)
 def save(jobdict = None, path = None, overwrite=False, comm=None): 
   """ Pickles a job to file.
 
@@ -456,8 +455,9 @@ def load(path = None, comm = None):
   from ..opt import open_exclusive
   if path == None: path = "pickled_jobdict"
   assert exists(path), IOError("File " + path + " does not exist.")
-  print "Loading job list from", path, "."
-  with open_exclusive(path, "rb") as file: return load_pickle(file)
+  with open_exclusive(path, "rb") as file: result = load_pickle(file)
+  print "Loaded job list from", path, "."
+  return result
 
 def bleed(path=None, outdir=None, comm=None): 
   """ Generator which deepletes a job dictionary of its jobs. 
@@ -618,12 +618,12 @@ def pbs_script( outdir = None, jobdict = None, template = None, \
   result = []
   # writes pbs script.
   jobname = name
-  with open(join(outdir, "launchme"), "w") as file:
+  with open(abspath(join(outdir, "launchme")), "w") as file:
     template( file, pickle=pickle, outdir=abspath(outdir),\
               name=jobname, pyscript=pyscript_filename, **kwargs)
 
 
-def one_per_job(outdir = None, jobdict = None, mppalloc=None, **kwargs):
+def one_per_job(outdir = None, jobdict = None, mppalloc=None, ppath=None, **kwargs):
   """ Launches one pbs job per job. 
   
       @param outdir: root output directory.
@@ -632,7 +632,7 @@ def one_per_job(outdir = None, jobdict = None, mppalloc=None, **kwargs):
                        If a number, then flat allocation scheme across all jobs.
   """
   from os import environ, getcwd
-  from os.path import abspath, join, split as pathsplit
+  from os.path import abspath, join, split as pathsplit, expanduser
   from lada.opt.changedir import Changedir
   from templates import default_pbs, default_slurm
   
@@ -652,16 +652,18 @@ def one_per_job(outdir = None, jobdict = None, mppalloc=None, **kwargs):
   with Changedir(dir) as pwd: pass 
   # gets runone 
   pyscript = __file__.replace(pathsplit(__file__)[1], "runone.py")
+  # makes sure ppath is absolute.
+  if ppath != None: ppath = abspath(expanduser(ppath))
   # creates pbs script for each job.
   results = []
   for i, (job, name) in enumerate(jobdict.walk_through()):
     mppwidth = mppalloc(job) if hasattr(mppalloc, "__call__") else mppalloc
     name = name.replace("/", ".")
-    results.append( join(dir, name + ".pbs") )
+    results.append( abspath(join(dir, name + ".pbs")) )
     with open(results[-1], "w") as file: 
-      template( file, outdir=dir, jobid=i, mppwidth=mppwidth, name=name,\
+      template( file, outdir=outdir, jobid=i, mppwidth=mppwidth, name=name,\
                 pickle = join(outdir, "job_pickle"), pyscript=pyscript,
-                ppath = getcwd(), **kwargs )
+                ppath = ppath, **kwargs )
     print "wrote pbs script: %s." % (results[-1])
   return results
 

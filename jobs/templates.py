@@ -25,7 +25,7 @@ def default_pbs( file, walltime = "05:45:00", mppwidth = 8, queue = "regular", n
   from os.path import exists, split as splitpath
 
   if pyvirt == None and "VIRTUAL_ENV" in environ:
-    pyvirt = splitpath(environ["VIRTUAL_ENV"])[1]
+    pyvirt = join(join(environ["VIRTUAL_ENV"], "bin"), "activate")
 
 
   file.write("#! /bin/bash\n")
@@ -37,7 +37,7 @@ def default_pbs( file, walltime = "05:45:00", mppwidth = 8, queue = "regular", n
 
   if outdir == None: file.write("cd $PBS_O_WORKDIR\n")
   else: file.write("cd " + outdir + "\n")
-  if pyvirt != None: file.write("workon %s \n" % (pyvirt) )
+  if pyvirt != None: file.write("\nsource %s \n" % (pyvirt) )
 
   # aprun on Fucking Crays. mpirun everywhere else.
   file.write("aprun " if "NERSC_HOST" in environ else "mpirun ")
@@ -67,10 +67,10 @@ def default_slurm( file, walltime = "05:45:00", mppwidth = 8, ppernode=8, queue 
       @param pickle: Fileame of job-tree pickle.
   """
   from os import environ
-  from os.path import exists, split as splitpath
+  from os.path import exists, split as splitpath, join
 
   if pyvirt == None and "VIRTUAL_ENV" in environ:
-    pyvirt = splitpath(environ["VIRTUAL_ENV"])[1]
+    pyvirt = join(join(environ["VIRTUAL_ENV"], "bin"), "activate")
 
   nnodes = mppwidth / ppernode + (0 if mppwidth % ppernode == 0 else 1)
 
@@ -79,16 +79,17 @@ def default_slurm( file, walltime = "05:45:00", mppwidth = 8, ppernode=8, queue 
   file.write("#SBATCH -N " + str(nnodes) + "\n") 
   file.write("#SBATCH -n " + str(mppwidth) + "\n") 
   if queue != None: file.write("#SBATCH -p %s\n" % (queue))
+  pbsdir = splitpath(file.name)[0]
   if name != None:
-    file.write("#SBATCH -e \"err.%s.%%j\"\n" % (name))
-    file.write("#SBATCH -o \"out.%s.%%j\"\n" % (name))
+    file.write("#SBATCH -e \"%s/err.%s.%%j\"\n" % (pbsdir, name))
+    file.write("#SBATCH -o \"%s/out.%s.%%j\"\n" % (pbsdir, name))
   else:
-    file.write("#SBATCH -e \"err.%j\"\n")
-    file.write("#SBATCH -o \"out.%j\"\n")
+    file.write("#SBATCH -e \"%s/err.%j\"\n" % (pbsdir))
+    file.write("#SBATCH -o \"%s/out.%j\"\n" % (pbsdir))
   if name != None: file.write("#SBATCH -J \"%s\" \n" % (name))
   if outdir != None: file.write("#SBATCH -D %s " % (outdir))
 
-  if pyvirt != None: file.write("\nworkon %s \n" % (pyvirt) )
+  if pyvirt != None: file.write("\nsource %s \n" % (pyvirt) )
 
   # aprun on Fucking Crays. mpirun everywhere else.
   file.write( "mpirun -np %i numa_wrapper -ppn=%i python %s "\

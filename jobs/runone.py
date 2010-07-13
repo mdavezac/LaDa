@@ -43,17 +43,21 @@ def main():
     return
 
   # loop over all jobs
+  print "getcwd ", getcwd()
   for i, (job, outdir) in enumerate(jobs.walk_through(args[0])):
     if i != options.n: continue
     if options.relative == None: 
-      out = job.compute(comm=local_comm, outdir=outdir)
+      print "outdir: ", outdir
+      out = job.compute(comm=world, outdir=outdir, inplace=True)
     else:
       # Computes relative path... made complicated by cray's compute vs head node setup.
       workdir = abspath(outdir)
       with Changedir(environ["HOME"]) as cwd:
         workdir = join(environ[options.relative], relpath(workdir, getcwd()))
       # now pass on relative workdir, where HOME is substituted by options.relative.
-      out = job.compute(comm=local_comm, outdir=outdir, workdir=workdir, keep_calc=True)
+      print "outdir: ", outdir
+      print "workdir: ", workdir
+      out = job.compute(comm=world, outdir=outdir, workdir=workdir, inplace=False)
 
 if __name__ == "__main__":
   from sys import stderr
