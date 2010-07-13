@@ -108,7 +108,12 @@ class Vasp(Launch):
 
     # if other keyword arguments are present, then they are assumed to be
     # attributes of self, with value to be changed before launch. 
-    for key in kwargs.keys(): setattr(this, key, kwargs[key])
+    for key, value in kwargs.items():
+      # direct attributes.
+      if hasattr(this, key): setattr(this, key, value)
+      # properties attributes.
+      elif hasattr(this.__class__, key): setattr(this, key, value)
+      else: raise ValueError("Unkwown keyword argument to vasp: %s=%s" % (key, value))
 
     # First checks if directory outdir exists (and is a directory).
     exists_outdir = broadcast(comm, exists(outdir) if comm.rank == 0 else None, 0) \
