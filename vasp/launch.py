@@ -34,12 +34,19 @@ class Launch(Incar):
     super(Launch, self).__init__() 
 
     self.workdir = abspath(expanduser(workdir)) if workdir != None else None
-    # sets species
+    """ Filesystem location where temporary calculations are performed. 
+
+        Cannot be set at the same time as L{inplace}. 
+    """
     self.species = species if species != None else {}
+    """ Species in the system. """
     self.kpoints = kpoints
+    """ kpoints for which to perform calculations. """
+    self.inplace = inplace
+    """ If True calculations are performed in the output directory. """
 
     # checks inplace vs workdir
-    if inplace: 
+    if self.inplace: 
       assert workdir == None, ValueError("Cannot use both workdir and inplace attributes.")
 
     # sets all other keywords as attributes.
