@@ -16,6 +16,7 @@ mppalloc = input.mppalloc
 """ Process allocation scheme. """
 
 def _waves(is_first = True): 
+  from os.path import join
   from re import compile
 
   from lada import jobs
@@ -69,15 +70,23 @@ def _waves(is_first = True):
       structure.scale = input.volume(structure)
 
       # job dictionary for this lattice.
-      lat_jobdict = jobdict / material / lattice.name / "non-magnetic"
+      lat_jobdict = jobdict / material / lattice.name 
 
-      # sets up job parameters.
-      if is_first: 
-        lat_jobdict.vasp = input.relaxer
-        lat_jobdict.args = [structure]
-        lat_jobdict.jobparams["ispin"] = 1
-        lat_jobdict.jobparams["repat"] = files.input
-        continue # first wave.
+      if is_first: # sets up job parameters of first wave.
+        job = lat_jobdict / "non-magnetic"
+        job.vasp = input.relaxer
+        job.args = [structure]
+        job.jobparams["ispin"] = 1
+        job.jobparams["repat"] = files.input
+        continue 
+      else:        # copies structure from first wave.
+        strdir = join(join(join(input.first_wave_dir, material),\
+                           lattice.name), "non-magnetic")
+        extract = Extract(strdir)
+        if not extract.success:
+          print strdir, "failed."
+          continue
+        structure = extract.structure
 
       # goes through magnetic stuff
       if not magnetic.is_magnetic_system(structure, input.vasp.species): continue
@@ -90,7 +99,6 @@ def _waves(is_first = True):
       job.jobparams["magmom"] = magnetic.ferro(structure, input.vasp.species)
       job.jobparams["repat"] = files.input
       job.jobparams["first_trial"] = {}
-      job.restart = Extract, "../non-magnetic"
       
       # then, antiferro with spin direction depending on cation type.
       magmom = magnetic.sublatt_antiferro(structure, input.vasp.species) 
@@ -102,7 +110,6 @@ def _waves(is_first = True):
         job.jobparams["magmom"] = magmom
         job.jobparams["repat"] = files.input
         job.jobparams["first_trial"] = {}
-        job.restart = Extract, "../non-magnetic"
 
       # Then random anti-ferro.
       for i in range(input.nbantiferro):
@@ -113,7 +120,6 @@ def _waves(is_first = True):
         job.jobparams["magmom"] = magnetic.random(structure, input.vasp.species)
         job.jobparams["repat"] = files.input
         job.jobparams["first_trial"] = {}
-        job.restart = Extract, "../non-magnetic"
   return jobdict
                                            
 
@@ -121,3 +127,8 @@ first_wave = _waves(True)
 """ First waves of jobs. """
 second_wave = _waves(False)
 """ Second waves of jobs. """
+
+# launches first wave.
+# jobs.one_per_job(first_wave_dir, test.first_wave, test.mppalloc)
+# launches second wave.
+# jobs.one_per_job(first_wave_dir, test.second_wave, test.mppalloc)

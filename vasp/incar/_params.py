@@ -34,7 +34,6 @@ class NElect(SpecialVaspParam):
     
   @broadcast_result(key=True)
   def incar_string(self, vasp, *args, **kwargs):
-    from boost.mpi import broadcast
     # gets number of electrons.
     charge_neutral = self.nelectrons(vasp)
     # then prints incar string.
@@ -160,7 +159,9 @@ class Restart(SpecialVaspParam):
 
   def incar_string(self, *args, **kwargs):
     from os.path import join, exists
+    from shutil import copy
     from .. import files
+    comm = kwargs.pop("comm", None)
     is_root = comm.rank == 0 if comm != None else True
     istart = "0   # start from scratch"
     icharg = "2   # superpositions of atomic densities"

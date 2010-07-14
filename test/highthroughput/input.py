@@ -10,6 +10,9 @@ vasp.set_smearing   = "metal", 0.01
 vasp.set_relaxation = "ionic"
 vasp.set_symmetry   = "off"
 vasp.kpoints        = "\n0\nAuto\n30"
+# Magmom is a special parameter with specific implementation for point defects.
+# We need to go through add_item to reset it as normal key/value parameter.
+vasp.add_param      = "magmom", None
 
 # "Al" => specie symbol
 # "pseudos/Al" => directory where relevant POTCAR is located
@@ -56,3 +59,5 @@ walltime = "05:45:00"
 
 outdir    = "results"
 """ Root directory where to store results. """
+
+first_wave_dir = "/scratch/mmdavez/highthroughput"

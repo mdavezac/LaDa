@@ -59,4 +59,5 @@ def random(structure, species):
       for i in range(n):
         magmom += "%f " % ( uniform(-moments[val], moments[val]) )
     else: magmom += "%i*0   " % (n)
+  return magmom
 

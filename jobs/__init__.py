@@ -277,34 +277,51 @@ class JobDict(object):
     
   def compute(self, **kwargs):
     """ Performs calculations over job list. """  
-    from lada.opt.changedir import Changedir
-    from sys import stderr
 
     kwargs.update(self.jobparams)
     if "vasp" not in kwargs: return None
     vasp = kwargs.pop("vasp")
     if vasp == None: return
     args = kwargs.pop("args", ())
-    # takes care of restart arguments.
-    restart = kwargs.pop("restart", None) 
-    if restart != None:
-      outdir = kwargs["outdir"] if "outdir" in kwargs else "."
-      comm = kwargs["comm"] if "comm" in kwargs else None
-      with Changedir(outdir) as pwd:
-        kwargs["restart"] = restart[0](restart[1], comm=comm)
-      if not kwargs["restart"].success:
-        # cannot perform this job since dependency is not successfull
-        comm = kwargs["comm"] if "comm" in kwargs else None
-        if (comm.rank == 0 if comm != None else True):
-          print >> stderr, "Could not perform job %s since it depends upon %s completing first."\
-                % (outdir, join(outdir, restart[1]))
-        class NoSuccess:
-          def __init__(self): self.success, self.directory = False, outdir
-        return NoSuccess()
+    # restart is bit painful to deal with, so farm it out to private function for now.
+    if "restart" in kwargs:
+      args, kwargs = self._restart(*args, **kwargs)
 
     if args == None: args = ()
-    assert hasattr(args, "__iter__"), RuntimeError("Functional argument \"args\" is not a sequence.")
+    assert hasattr(args, "__iter__"),\
+           RuntimeError("Functional argument \"args\" is not a sequence.")
     return vasp(*args, **kwargs)
+
+  def _restart(self, *args, **kwargs):
+    """ Restart for functionals.
+    
+        Transforms arguments and dictionary to deal with restart request.
+        In this case, modifies the first argument of the functional. Then  sets
+        keyword argument restart to None (so nothing else is restarted).
+    """
+    from lada.opt.changedir import Changedir
+    from sys import stderr
+    if kwargs["restart"] == None: return args, kwargs
+
+    restart = kwargs.pop("restart")
+    kwargs["restart"] = None
+
+    outdir = kwargs["outdir"] if "outdir" in kwargs else "."
+    comm = kwargs["comm"] if "comm" in kwargs else None
+    with Changedir(outdir) as pwd:
+      print "restart: ", outdir, restart[1]
+      restart = restart[0](restart[1], comm=comm)
+    if not restart.success:
+      # cannot perform this job since dependency is not successfull
+      comm = kwargs["comm"] if "comm" in kwargs else None
+      if (comm.rank == 0 if comm != None else True):
+        print >> stderr, "Could not perform job %s since it depends upon %s completing first."\
+              % (outdir, join(outdir, restart[1]))
+      class NoSuccess:
+        def __init__(self): self.success, self.directory = False, outdir
+      return NoSuccess()
+    args[0] = restart.structure
+    return args, kwargs
 
   def update(self, other):
     """ Updates job and tree with other.
