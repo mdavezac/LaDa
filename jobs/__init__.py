@@ -317,10 +317,19 @@ class JobDict(object):
     self.children.update(other.children)
     self.jobparams.update(other.jobparams)
 
-  def __str__(self): 
+  def __str__(self):
     result = "Jobs: \n"
     for dummy, name in self.walk_through():
       result += "  " + name + "\n"
+    return result
+
+  @property
+  def unmarked_jobs(self):
+    """ Returns a string with only unmarked jobs. """
+    result = "Jobs: \n"
+    for dummy, name in self.walk_through():
+      if not dummy.is_marked: 
+        result += "  " + name + "\n"
     return result
 
  
@@ -543,15 +552,19 @@ def unsucessfull(jobdict, extractor, outdir = None):
         attribute, capable of judging the success of an operation.
       @return: A JobDict instance with incomplete and unsuccessful jobs.
   """
+  from os.path import split as splitpath
   from copy import deepcopy
 
-  if outdir == None: outdir = ""
   extractor = deepcopy(extractor)
 
   # if path, get pickled dictionary.
-  if not hasattr(jobdict, "unbleed"): jobdict = load(jobdict)
+  if not hasattr(jobdict, "unbleed"):
+    if outdir == None and len(splitpath(jobdict)[0]) != 0:
+      outdir = splitpath(jobdict)[0]
+    jobdict = load(jobdict)
   # otherwise make deep copy.
   else: jobdict = deepcopy(jobdict)
+  if outdir == None: outdir = ""
 
   # go through dictionary.
   for job, directory in jobdict.walk_through(outdir=outdir):

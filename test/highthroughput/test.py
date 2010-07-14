@@ -89,6 +89,7 @@ def _waves(is_first = True):
       job.jobparams["ispin"] =  2
       job.jobparams["magmom"] = magnetic.ferro(structure, input.vasp.species)
       job.jobparams["repat"] = files.input
+      job.jobparams["first_trial"] = {}
       job.restart = Extract, "../non-magnetic"
       
       # then, antiferro with spin direction depending on cation type.
@@ -100,6 +101,7 @@ def _waves(is_first = True):
         job.jobparams["ispin"] = 2
         job.jobparams["magmom"] = magmom
         job.jobparams["repat"] = files.input
+        job.jobparams["first_trial"] = {}
         job.restart = Extract, "../non-magnetic"
 
       # Then random anti-ferro.
@@ -110,6 +112,7 @@ def _waves(is_first = True):
         job.jobparams["ispin"] = 2
         job.jobparams["magmom"] = magnetic.random(structure, input.vasp.species)
         job.jobparams["repat"] = files.input
+        job.jobparams["first_trial"] = {}
         job.restart = Extract, "../non-magnetic"
   return jobdict
                                            
