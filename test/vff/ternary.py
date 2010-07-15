@@ -1,8 +1,7 @@
 import sys 
 from boost.mpi import world
 from lada.vff import Vff
-from lada.vff.vff import Vff as orig
-from lada.crystal import Structure
+from lada.crystal import Structure, FreezeCell
 
 vff = Vff()
 vff.lattice.set_types = ("In", "Ga"), ("As",)
@@ -46,11 +45,10 @@ structure.add_atoms = ((0.00, 0.00, 0.00), "Ga"),\
                       ((9.00, 0.00, 0.00), "Ga"),\
                       ((9.25, 0.25, 0.25), "As"), 
 
-vff.direction = structure.cell[:,0]
+vff.direction = FreezeCell.a1 | FreezeCell.a2
 
 # print vff
 # print structure
 
-out = vff(structure, outdir = "work", comm = world)
-print out.success
-print out.structure.cell
+out = vff(structure, outdir = "work", comm = world, relax=False)
+print out.energy

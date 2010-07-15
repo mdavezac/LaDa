@@ -151,7 +151,8 @@ namespace LaDa
           get_angle( const std::string &_type ) const;
 
         //! Copies parameters from argument.
-        void copy_parameters(Vff const &_f) { functionals = _f.functionals; bond_cutoff = _f.bond_cutoff; }
+        void copy_parameters(Vff const &_f)
+          { functionals = _f.functionals; bond_cutoff = _f.bond_cutoff; }
 
       protected:
         //! Holds ideal first neighbor positions.
