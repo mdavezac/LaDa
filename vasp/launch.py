@@ -68,7 +68,6 @@ class Launch(Incar):
     from os.path import join, exists, abspath
     from os import getcwd
     from shutil import copy
-    from subprocess import Popen, PIPE
     from . import files, is_vasp_5
     from ..crystal import write_poscar, specie_list
     from ..opt.changedir import Changedir
@@ -110,7 +109,6 @@ class Launch(Incar):
   def _run(self, comm):
      """ Isolates calls to vasp itself """
      from os.path import join
-     from subprocess import Popen
      from . import files
      from . import call_vasp
      from ..opt import redirect
