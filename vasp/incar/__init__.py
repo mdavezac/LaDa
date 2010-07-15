@@ -251,6 +251,7 @@ class Incar(object):
       self.ismear, self.sigma = None, None
       return
 
+    if isinstance(args, str): args = args.split()
     first = args[0]
     has_second = len(args) > 1
     second = args[1] if len(args) > 1 else None
