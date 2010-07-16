@@ -18,7 +18,7 @@
 
 namespace LaDa
 {
-  namespace Python
+  namespace python
   {
     Models::Clj::t_Arg minimize( Models::Clj const & _functional,
                                  Python::Minimizer const &_minimizer,
@@ -68,7 +68,7 @@ namespace LaDa
       {
         PyErr_SetString( PyExc_RuntimeError, "Error encountered while minimizing from C.\n");
         Models::Clj::t_Arg forces;
-        forces.cell.zero();
+        forces.cell = math::rMatrix3d::Zero();
         forces.atoms.clear();
         forces.energy = 0e0;
         return forces;
@@ -101,5 +101,5 @@ namespace LaDa
         "The return is a structure object containing the stress and the forces."
       );
     }
-  } // namespace Python
+  } // namespace python
 } // namespace LaDa

@@ -12,3 +12,6 @@ if(NOT noinstall_headers)
   install(FILES ${LIBPCM_HEADERS} DESTINATION include/LaDa/pcm)
 endif(NOT noinstall_headers)
 
+if(python_bindings)
+  add_subdirectory(python)
+endif(python_bindings)

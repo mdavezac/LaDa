@@ -25,40 +25,8 @@
 
 namespace LaDa
 {
-  namespace Python
+  namespace python
   {
-    template< class T_OBJECT >
-      struct pickle : boost::python::pickle_suite
-      {
-        static boost::python::tuple getinitargs( T_OBJECT const& _w)  
-        {
-          return boost::python::tuple();
-        }
-        static boost::python::tuple getstate(const T_OBJECT& _in)
-        {
-          std::ostringstream ss;
-          boost::archive::text_oarchive oa( ss );
-          oa << _in;
-
-          return boost::python::make_tuple( ss.str() );
-        }
-        static void setstate( T_OBJECT& _out, boost::python::tuple state)
-        {
-          namespace bp = boost::python;
-          if( bp::len( state ) != 1 )
-          {
-            PyErr_SetObject(PyExc_ValueError,
-                            ("expected 1-item tuple in call to __setstate__; got %s"
-                             % state).ptr()
-                );
-            bp::throw_error_already_set();
-          }
-          const std::string str = bp::extract< std::string >( state[0] );
-          std::istringstream ss( str.c_str() );
-          boost::archive::text_iarchive ia( ss );
-          ia >> _out;
-        }
-      };
     template<class T_TYPE>
       void unfold_structure( const Crystal :: TStructure<T_TYPE>& _structure, std::vector<types::t_real>& _list )
       {
@@ -165,7 +133,7 @@ namespace LaDa
 
       bp::class_< t_Charges >( "Charges", "Dictionary of charges" )
         .def( bp :: map_indexing_suite< t_Charges >() )
-        .def_pickle( pickle< t_Charges >() );
+        .def_pickle( Python::pickle< t_Charges >() );
    
       bp::class_< t_Bond >( "LJBond", "Holds bond parameters for Lennard-Jones." )
         .def( bp::init<>() )
@@ -174,11 +142,11 @@ namespace LaDa
               "First argument is hard-sphere parameter, and second vand-der-walls parameter." )
         .def_readwrite( "hardsphere", &t_Bond::hard_sphere, "+r^12 factor." )
         .def_readwrite( "vanderwalls", &t_Bond::van_der_walls, "-r^6 factor." )
-        .def_pickle( pickle< t_Bond >() );
+        .def_pickle( Python::pickle< t_Bond >() );
 
       bp::class_< t_Bonds >( "LJBonds", "Dictionary of bonds" )
         .def( bp :: map_indexing_suite< t_Bonds >() )
-        .def_pickle( pickle< t_Bonds >() );
+        .def_pickle( Python::pickle< t_Bonds >() );
 
       bp::class_< Models::Clj >( "Clj", "Coulomb + LennardJones functional.\n" )
         .def_readwrite( "charges", &Models::Clj::charges, "Dictionnary of charges." )
@@ -187,7 +155,7 @@ namespace LaDa
         .def("ewald", &Models::Clj::ewald )
         .def("__call__", &Models::Clj::operator() )
         .def("gradient", &Models::Clj::gradient )
-        .def("__str__", &tostream<Models::Clj> )
+        .def("__str__", &Python::tostream<Models::Clj> )
         .add_property
         (
           "mesh", 
@@ -206,7 +174,7 @@ namespace LaDa
           &Models::Clj::LennardJones::get_rcutoff, &Models::Clj::LennardJones::set_rcutoff,
           "Sets cutoff for real-space lennard-jhones sum."
         )
-        .def_pickle( pickle< Models::Clj >() );
+        .def_pickle( Python::pickle< Models::Clj >() );
  
       bp::def( "bond_type", &Models::LennardJones::bondname );
       bp::def
@@ -235,5 +203,5 @@ namespace LaDa
         "species is a list of atomic symbols which can be used to read a POSCAR."
       );
     }
-  } // namespace Python
+  } // namespace python
 } // namespace LaDa
