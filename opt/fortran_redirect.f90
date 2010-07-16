@@ -43,8 +43,8 @@ subroutine lada_redirect_close(which)
        close(INPUT_UNIT)
        open(unit=INPUT_UNIT, file="/dev/stdin" , POSITION='ASIS')
      else if( which == 6 ) then 
-       close(ERROR_UNIT)
-       open(unit=ERROR_UNIT, file="/dev/stdout", POSITION='ASIS')
+       close(OUTPUT_UNIT)
+       open(unit=OUTPUT_UNIT, file="/dev/stdout", POSITION='ASIS')
      endif
      ! OpenVMS:
      ! Open (Unit=5, File="SYS$INPUT") ! Open Standard Input on Unit 5
