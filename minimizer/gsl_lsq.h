@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef _GSL_LLSQ_H_
 #define _GSL_LLSQ_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <vector>
 
@@ -16,10 +11,6 @@
 
 #include <gsl/gsl_block.h>
 #include <gsl/gsl_multifit.h>
-
-#ifdef _LADADEBUG
-#include <boost/lambda/lambda.hpp>
-#endif
 
 namespace LaDa
 {

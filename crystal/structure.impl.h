@@ -10,6 +10,7 @@ namespace LaDa
       {
         _ar & cell;
         _ar & atoms;
+        _ar & name;
         _ar & energy;
         _ar & weight;
         _ar & freeze;

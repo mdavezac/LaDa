@@ -176,8 +176,12 @@ class Incar(object):
           >>> print vasp.ispin # prints 1
     """
     key, value = args
-    if isinstance(value, SpecialVaspParam): self.special[key] = value
-    else: self.params[key] = value
+    if isinstance(value, SpecialVaspParam):
+      if key in self.params: del self.params[key] # one or other dictionary.
+      self.special[key] = value
+    else:
+      if key in self.special: del self.special[key] # one or other dictionary.
+      self.params[key] = value
 
   def __getattr__(self, name): 
     """ Gets a VASP parameter from standard and special dictionaries. """
@@ -203,8 +207,8 @@ class Incar(object):
     return self.params["iniwave"] 
   def _set_iniwave(self, value):
     value = str(value).split()[0] # removes spaces.
-    if value == "1" or value == "random": self.params["iniwave"] = 2
-    elif value == "2" or value == "jellium": self.params["iniwave"] = 1
+    if value == "1" or value == "random": self.params["iniwave"] = 1
+    elif value == "0" or value == "jellium": self.params["iniwave"] = 0
     else: raise ValueError("iniwave cannot be set to " + value + ".")
   iniwave = property(_get_iniwave, _set_iniwave)
 
@@ -247,6 +251,7 @@ class Incar(object):
       self.ismear, self.sigma = None, None
       return
 
+    if isinstance(args, str): args = args.split()
     first = args[0]
     has_second = len(args) > 1
     second = args[1] if len(args) > 1 else None

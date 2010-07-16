@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef LADA_ATOMIC_POTENTIAL_COLLAPSE_FITTING_SETS_H_
 #define LADA_ATOMIC_POTENTIAL_COLLAPSE_FITTING_SETS_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <vector>
 #include <utility>
@@ -18,7 +13,7 @@
 
 namespace LaDa
 {
-# ifdef __DOPYTHON
+# ifdef LADA_DO_PYTHON
   //! \cond
   namespace Python
   {
@@ -47,7 +42,7 @@ namespace LaDa
       //!          storage helps perform the alternating least-square fit.
       class FittingSet
       {
-#         ifdef __DOPYTHON
+#         ifdef LADA_DO_PYTHON
             friend void ::LaDa::Python::expose_fittingset();
 #         endif
         protected:

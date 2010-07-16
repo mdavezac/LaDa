@@ -1,9 +1,4 @@
-//
-//  Version: $Id$
-//
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <boost/lexical_cast.hpp>
 #include <opt/tinyxml.h>

@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef _CLUSTER_H_
 #define _CLUSTER_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <vector>
 #include <boost/filesystem/path.hpp>

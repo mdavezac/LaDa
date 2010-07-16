@@ -1,13 +1,9 @@
-//
-//  Version: $Id$
-//
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <sstream>
 
 #include <boost/filesystem/path.hpp>
+#include <boost/algorithm/string/trim.hpp>
 #include <boost/python/def.hpp>
 #include <boost/python/return_value_policy.hpp>
 #include <boost/python/manage_new_object.hpp>
@@ -83,7 +79,7 @@ namespace LaDa
           do
           {
             getline(file, line);
-            line = Print::StripEdges(line);
+            boost::algorithm::trim(line);
             if( line[0] == '#' ) continue;
             if( line.size() == 0 ) continue;
             std::istringstream input( line );

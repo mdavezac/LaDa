@@ -1,13 +1,7 @@
-//
-//  Version: $Id$
-//
-
 #ifndef _LADA_CRYSTAL_DIVIDE_AND_CONQUER_H_
 #define _LADA_CRYSTAL_DIVIDE_AND_CONQUER_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <vector>
 
@@ -99,11 +93,11 @@ namespace LaDa
             return states_[_i]; 
           }
           //! Iterator to the first state in the (large) box.
-          typename t_States::const_iterator begin() const { states_.begin(); }
+          typename t_States::const_iterator begin() const { return states_.begin(); }
           //! Iterator to the end of the states in the (large) box.
-          typename t_States::const_iterator end() const { states_.end(); }
+          typename t_States::const_iterator end() const { return states_.end(); }
           //! Number of states in the (large) box.
-          size_t size() const { states_.size(); }
+          size_t size() const { return states_.size(); }
           //! checks whether a state is already counted
           bool is_counted(size_t i) const
           {

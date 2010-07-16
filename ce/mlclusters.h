@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef LADA_CE_MLCLUSTERS_H
 #define LADA_CE_MLCLUSTERS_H
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <opt/propagate_std_vector.h>
 #include "mlcluster.h"

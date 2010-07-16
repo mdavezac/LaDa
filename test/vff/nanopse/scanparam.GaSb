@@ -1,8 +1,0 @@
->scan
- 1 1 2 0 0 -0.99                     pparm,prslt,pstrct,errlvl,psym,rcut
-1800 1 1.0d-10 1.0d-2  1.0d-10  f     maxit,mintyp,ftol,ltol,zeps,frzall
-    6.05800          6.05800             0
-    1.0000000000     1.0000000000        0  # xi1l, xi1h, nxi1
-    1.0000000000     1.0000000000        0  # xi2l, xi2h, nxi2
-    1.0000000000     1.0000000000        1  # xi3l, xi3h, nxi3
-  0                                  usedef

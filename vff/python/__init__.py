@@ -527,7 +527,7 @@ class Vff(object):
     from tempfile import NamedTemporaryFile
     from os import remove
     from boost.mpi import broadcast
-    from vff import Vff, LayeredVff
+    from _vff import Vff, LayeredVff
 
     # Creates temporary input file and creates functional
     functional = None
@@ -548,7 +548,7 @@ class Vff(object):
   def _run(self, structure, comm):
     """ Performs actual calculation. """
     from copy import deepcopy
-    from vff import Vff, LayeredVff
+    from _vff import Vff, LayeredVff
     from ..opt import redirect_all
 
     # Saves global lattice if set.

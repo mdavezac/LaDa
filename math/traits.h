@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef _OPT_TRAITS_H_
 #define _OPT_TRAITS_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 
 #include <list>
@@ -14,7 +9,6 @@
 #include <string>
 #include <sstream>
 
-#include <mpi/mpi_object.h>
 #include <opt/types.h>
 
 #include "fuzzy.h"

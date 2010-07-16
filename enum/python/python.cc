@@ -1,9 +1,4 @@
-//
-//  Version: $Id$
-//
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <boost/python/module.hpp>
 #include <boost/python/handle.hpp>
@@ -27,6 +22,7 @@ BOOST_PYTHON_MODULE(enumeration)
   scope.attr("__doc__") = "This namespace is imported into lada.crystal.\n";
   bp::docstring_options doc_options(true, false);
   bp::handle<> math( bp::borrowed(PyImport_ImportModule("lada.math")) );
+  bp::handle<> crystal( bp::borrowed(PyImport_ImportModule("lada.crystal")) );
 
   LaDa::Python::expose_find_all_cells();
   LaDa::Python::expose_label_exchange();

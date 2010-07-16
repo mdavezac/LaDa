@@ -1,21 +1,15 @@
-//
-//  Version: $Id$
-//
-
 #ifndef _LADA_CRYSTAL_READ_STRUCTURE_H_
 #define _LADA_CRYSTAL_READ_STRUCTURE_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-
-#include <boost/lexical_cast.hpp>
+#include "LaDaConfig.h"
 
 #include <vector>
 #include <ostream>
 #include <fstream>
 #include <string>
 
+#include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string/trim.hpp>
 
 #include <opt/types.h>
 
@@ -87,7 +81,7 @@ namespace LaDa
         do
         {
           getline(file, line);
-          line = Print::StripEdges(line);
+          boost::algorithm::trim(line); 
           if( line[0] == '#' ) continue;
           if( line.size() == 0 ) continue;
           std::istringstream input( line );

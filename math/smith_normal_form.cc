@@ -1,16 +1,12 @@
-//
-//  Version: $Id$
-//
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
+#include "FCMangle.h"
 
 #include <opt/types.h>
 #include "smith_normal_form.h"
 
 //! \cond
-extern "C" void FC_FUNC(smithnormalform, SMITHNORMALFORM)
-                       ( const int*, int*, int*, int* );
+extern "C" void FC_GLOBAL(smithnormalform, SMITHNORMALFORM)
+                         ( const int*, int*, int*, int* );
 //! \endcond
 
 namespace LaDa
@@ -31,7 +27,7 @@ namespace LaDa
           l[ j * 3 + i ] = 0;
           r[ j * 3 + i ] = 0;
         }
-      FC_FUNC(smithnormalform, SMITHNORMALFORM)( m, l, s, r );
+      FC_GLOBAL(smithnormalform, SMITHNORMALFORM)( m, l, s, r );
       for( size_t i(0); i < 3; ++i )
         for( size_t j(0); j < 3; ++j )
         {

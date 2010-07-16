@@ -1,13 +1,7 @@
-//
-//  Version: $Id$
-//
-
 #ifndef _LADA_CE_DRAUTZ_DIAZ_ORTIZ_H_
 #define _LADA_CE_DRAUTZ_DIAZ_ORTIZ_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
@@ -18,7 +12,6 @@
 #include <opt/errors.h>
 #include <crystal/structure.h>
 #include <minimizer/cgs.h>
-#include <minimizer/variant.h>
 
 #include "regularization.h"
 
@@ -30,9 +23,9 @@ namespace LaDa
     //! \details Regulated::clusters are unchanged at the end of the run.
     //! \brief Regulated Cluster-Expansion.
     //! \see <A HREF="http://dx.doi.org/10.1103/PhysRevB.73.224207"> Ralf Drautz
-    template< class T_MPLVECTOR >
+    template< class T_MINIMIZER >
       void drautz_diaz_ortiz( Regulated &_reg, 
-                              const LaDa::Minimizer::Variant<T_MPLVECTOR> &_minimizer,
+                              T_MINIMIZER const &_minimizer,
                               types::t_int _verbosity,
                               Regulated::t_Arg::value_type _initweights )
       {

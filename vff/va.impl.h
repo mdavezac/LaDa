@@ -1,11 +1,9 @@
-//
-//  Version: $Id$
-//
 #ifndef _VFF_VA_IMPL_H_
 #define _VFF_VA_IMPL_H_
 
 #include <opt/debug.h>
 #include <opt/tinyxml.h>
+#include <opt/path.h>
  
 namespace LaDa
 {
@@ -24,7 +22,7 @@ namespace LaDa
       TiXmlDocument doc;
       if(  parent->Attribute( "filename" ) )
       {
-        path = Print::reformat_home( parent->Attribute( "filename" ) );
+        path = opt::expand_path( parent->Attribute( "filename" ) );
         __DOASSERT( not bfs::exists( path ), path.string() + " does not exist.\n" )
         opt::read_xmlfile( path, doc );
         __DOASSERT( not doc.FirstChild( "Job" ),

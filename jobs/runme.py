@@ -53,14 +53,14 @@ def main():
   # loop over all jobs
   for job, outdir in jobs.bleed(args[0], comm=local_comm):
     if options.relative == None: 
-      out = job.compute(comm=local_comm, outdir=outdir)
+      out = job.compute(comm=local_comm, outdir=outdir, inplace=True)
     else:
       # Computes relative path... made complicated by cray's compute vs head node setup.
       workdir = abspath(outdir)
       with Changedir(environ["HOME"]) as cwd:
         workdir = join(environ[options.relative], relpath(workdir, getcwd()))
       # now pass on relative workdir, where HOME is substituted by options.relative.
-      out = job.compute(comm=local_comm, outdir=outdir, workdir=workdir, keep_calc=True)
+      out = job.compute(comm=local_comm, outdir=outdir, workdir=workdir, inplace=False)
 
 if __name__ == "__main__":
   from sys import stderr

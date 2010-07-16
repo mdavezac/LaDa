@@ -1,18 +1,12 @@
-//
-//  Version: $Id$
-//
-
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <boost/lexical_cast.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/xpressive/regex_primitives.hpp>
 #include <boost/xpressive/regex_algorithms.hpp>
 #include <boost/xpressive/regex_compiler.hpp>
+#include <boost/algorithm/string/replace.hpp>
 
-#include <print/manip.h>
 #include <opt/tinyxml.h>
 
 #include "mlclusters.h"
@@ -109,7 +103,9 @@ namespace LaDa
       MLClusters::const_iterator i_cls = _class.begin();
       MLClusters::const_iterator const i_cls_end = _class.end();
       for(; i_cls != i_cls_end; ++i_cls) stream << *i_cls;
-      return _stream << Print::indent( stream.str(), "    ");
+      std::string indented = stream.str();
+      boost::algorithm::replace_all(indented, "\n", "\n   ");
+      return _stream << indented;
     }
     
     bool bypass_comment( std::istream & _sstr, std::string &_line )
@@ -202,6 +198,7 @@ namespace LaDa
 
       LADA_DOASSERT( _genes.empty() or i == _genes.size(),
                      "Gene size and jtypes are inconsistent.\n" )
+      return result;
     }
 
     boost::shared_ptr<t_MLClusterClasses> load_old(TiXmlElement const &_node);

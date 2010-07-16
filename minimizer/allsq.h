@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef _OPT_ALLSQ_H_
 #define _OPT_ALLSQ_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 
 #include <iomanip>
@@ -22,8 +17,6 @@
 #include <boost/numeric/ublas/vector_proxy.hpp>
 #include <boost/numeric/ublas/matrix_proxy.hpp>
 #include <boost/lambda/lambda.hpp>
-// #include <gsl/gsl_linalg.h>
-// #include <opt/gsl.h>
 
 
 namespace LaDa

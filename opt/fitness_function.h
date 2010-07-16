@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef _FITNESS_H_
 #define _FITNESS_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include<iostream>
 

@@ -1,8 +1,3 @@
-//
-//  Version: $Id$
-//
-
-
 namespace LaDa
 {
   namespace atomic_potential

@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef _CRYSTAL_CONFSPLIT_H_
 #define _CRYSTAL_CONFSPLIT_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <vector>
 #include <utility>

@@ -1,9 +1,4 @@
-//
-//  Version: $Id$
-//
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include<stdexcept> 
 #include<set> 
@@ -12,7 +7,6 @@
 
 #include <Eigen/LU>
 
-#include <print/manip.h>
 #include <opt/tinyxml.h>
 #include <math/misc.h>
 

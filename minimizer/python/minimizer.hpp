@@ -1,22 +1,22 @@
-//
-//  Version: $Id$
-//
-
 #ifndef _LADA_PYTHON_MINIMIZER_HPP_
 #define _LADA_PYTHON_MINIMIZER_HPP_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <boost/serialization/serialization.hpp>
 
 #include <opt/debug.h>
 
-#include "../variant.h"
-#include "../minuit2.h"
 #include "../frprmn.h"
-#include "../gsl_mins.h"
+#if defined(LADA_WITH_MINUIT2) or defined(LADA_WITH_GSL)
+# include "../variant.h"
+#endif
+#ifdef LADA_WITH_MINUIT2
+# include "../minuit2.h"
+#endif
+#ifdef LADA_WITH_GSL
+# include "../gsl_mins.h"
+#endif
 #include "function.hpp"
 
 namespace LaDa
@@ -136,15 +136,23 @@ namespace LaDa
         types::t_real uncertainties_;
         types::t_real up_;
         bool use_gradient_;
-        typedef LaDa::Minimizer::Variant
-                < 
-                  boost::mpl::vector
-                  <
-                    LaDa::Minimizer::Frpr, 
-                    LaDa::Minimizer::Gsl, 
-                    LaDa::Minimizer::Minuit2
-                  > 
-                > t_Minimizer;
+#       if defined(LADA_WITH_MINUIT2) or defined(LADA_WITH_GSL)
+          typedef LaDa::Minimizer::Variant
+                  < 
+                    boost::mpl::vector
+                    <
+                      LaDa::Minimizer::Frpr  
+#                     ifdef LADA_WITH_GSL
+                        , LaDa::Minimizer::Gsl  
+#                     endif
+#                     ifdef LADA_WITH_MINUIT2
+                        , LaDa::Minimizer::Minuit2
+#                     endif
+                    > 
+                  > t_Minimizer;
+#       else
+          typedef LaDa::Minimizer::Frpr t_Minimizer;
+#       endif
         t_Minimizer minimizer_;
 
         //! Serializes a lattice.

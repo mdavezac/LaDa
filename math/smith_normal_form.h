@@ -1,13 +1,7 @@
-//
-//  Version: $Id$
-//
-
 #ifndef _LADA_OPT_SMITH_NORMAL_FORM_H_
 #define _LADA_OPT_SMITH_NORMAL_FORM_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include "eigen.h"
 

@@ -1,7 +1,3 @@
-//
-//  Version: $Id$
-//
-
 class LADA_CONST_(rep_iterator)
 {
     friend class LADA_CONST_(str_iterator);

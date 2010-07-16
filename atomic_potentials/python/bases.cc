@@ -1,9 +1,4 @@
-//
-//  Version: $Id$
-//
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <sstream>
 #include <complex>
@@ -87,9 +82,7 @@ namespace LaDa
 #ifndef LADA_CRYSTAL_PYTHON_NEIGHBORS_HPP
 #define LADA_CRYSTAL_PYTHON_NEIGHBORS_HPP
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 namespace LaDa
 {

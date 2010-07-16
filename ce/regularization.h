@@ -1,13 +1,7 @@
-//
-//  Version: $Id$
-//
-
 #ifndef _CE_REGULARIZATION_H_
 #define _CE_REGULARIZATION_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/numeric/ublas/matrix.hpp>

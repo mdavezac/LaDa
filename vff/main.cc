@@ -1,9 +1,4 @@
-//
-//  Version: $Id$
-//
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <boost/program_options.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -32,8 +27,6 @@
   typedef LaDa::Vff::VABase<LaDa::Vff::Functional> t_Vff;
 # define __PROGNAME__ "Valence Force Field Functional for Zinc-Blende Structures"
 #endif
-
-#include <print/manip.h>
 
 #ifdef _MPI
 # include <boost/mpi/environment.hpp>

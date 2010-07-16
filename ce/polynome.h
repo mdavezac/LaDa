@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef _Polynome_H_
 #define _Polynome_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <list>
 #include <vector>
@@ -77,10 +72,10 @@ namespace LaDa
         //! Load a polynomial from an XML node.
         bool Load( TiXmlElement* const node );
 
-        #ifdef _LADADEBUG
+        #ifdef LADA_DEBUG
           //! Doesn't do anything...
           bool is_consistent() const;
-        #endif // _LADADEBUG
+        #endif 
     };
 
     

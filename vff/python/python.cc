@@ -1,9 +1,4 @@
-//
-//  Version: $Id$
-//
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <boost/python/module.hpp>
 #include <boost/python/docstring_options.hpp>
@@ -13,7 +8,7 @@
 
 #include "vff.hpp"
 
-BOOST_PYTHON_MODULE(vff)
+BOOST_PYTHON_MODULE(_vff)
 {
   namespace bp = boost::python;
   bp::scope scope;

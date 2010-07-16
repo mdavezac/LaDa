@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef _CONSTITTUENT_STRAIN_H_
 #define _CONSTITTUENT_STRAIN_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <vector>
 
@@ -122,10 +117,10 @@ namespace LaDa
           const std::vector<math::rVector3d>& get_kvectors() const
               { return k_vecs; }
 
-#         ifdef _LADADEBUG
+#         ifdef LADA_DEBUG
             //! Debug stuff.
             void check_derivative();
-#         endif // _LADADEBUG
+#         endif 
 
 #         ifdef _MPI
             /** \ingroup Genetic

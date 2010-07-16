@@ -1,5 +1,7 @@
 #ifndef LADA_STDOUT_H
 #define LADA_STDOUT_H
+#include "LaDaConfig.h"
+#include "FCMangle.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -15,12 +17,12 @@
 //! \cond
 extern "C"
 {
-  void FC_FUNC_(lada_redirect_open,  LADA_REDIRECT_OPEN )( const int *, const int *,
-                                                           const char *, int *, const int *);
+  void FC_GLOBAL_(lada_redirect_open,  LADA_REDIRECT_OPEN )( const int *, const int *,
+                                                             const char *, int *, const int *);
 # ifdef FUCKING_CRAY
-    void FC_FUNC_(fucking_cray, FUCKING_CRAY)(int *);
+    void FC_GLOBAL_(fucking_cray, FUCKING_CRAY)(int *);
 # else
-    void FC_FUNC_(lada_redirect_close, LADA_REDIRECT_CLOSE)(int *);
+    void FC_GLOBAL_(lada_redirect_close, LADA_REDIRECT_CLOSE)(int *);
 # endif
 }
 //! \endcond
@@ -96,7 +98,7 @@ namespace LaDa
           which_ = _which;
           int isopen = 1;
           int const append = _append ? 1: 0;
-          FC_FUNC_(lada_redirect_open, LADA_REDIRECT_OPEN)
+          FC_GLOBAL_(lada_redirect_open, LADA_REDIRECT_OPEN)
             (&which_, &N, path.c_str(), &isopen, &append);
           isopen_ = isopen == 1;
         }
@@ -106,12 +108,12 @@ namespace LaDa
         //! Closes the pipe.
         void close() 
         {
-          if( isopen_ < 0 ) return;
+          if( isopen_ ) return;
           isopen_ = false;
 #         ifdef FUCKING_CRAY
-            FC_FUNC_(fucking_cray, FUCKING_CRAY)(&which_);
+            FC_GLOBAL_(fucking_cray, FUCKING_CRAY)(&which_);
 #         else
-            FC_FUNC_(lada_redirect_close, LADA_REDIRECT_CLISE)(&which_);
+            FC_GLOBAL_(lada_redirect_close, LADA_REDIRECT_CLISE)(&which_);
 #         endif
         }
         //! True if a pipe is open.

@@ -1,6 +1,4 @@
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 
 #include <boost/python/class.hpp>
@@ -160,6 +158,7 @@ namespace LaDa
                           ("could not find parameters of bond " + _str).c_str() );
           bp::throw_error_already_set();
         }
+        return bp::tuple();
       };
     template<class T>
       bp::tuple get_angle(T const &_self, const std::string &_str ) 
@@ -188,6 +187,7 @@ namespace LaDa
                           ("could not find parameters of angle " + _str).c_str() );
           bp::throw_error_already_set();
         }
+        return bp::tuple();
       };
     template<class T>
       void set_bond(T &_self, const std::string &_str, const bp::tuple &_t ) 

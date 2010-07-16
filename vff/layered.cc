@@ -1,9 +1,4 @@
-//
-//  Version: $Id$
-//
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <cstdlib>
 
@@ -15,6 +10,7 @@
 
 #include <math/fuzzy.h>
 #include <opt/debug.h>
+#include <opt/path.h>
 
 #include "layered.h"
 
@@ -147,7 +143,7 @@ namespace LaDa
       TiXmlDocument doc;
       if(  parent->Attribute( "filename" ) )
       {
-        path = Print :: reformat_home( parent->Attribute( "filename" ) );
+        path = opt::expand_path( parent->Attribute( "filename" ) );
         __DOASSERT( not bfs::exists( path ), path.string() + " does not exist.\n" )
         opt::read_xmlfile( path, doc );
         __DOASSERT( not doc.FirstChild( "Job" ),

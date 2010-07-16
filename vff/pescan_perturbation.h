@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef _VFF_PESCAN_PERTURBATION_H_
 #define _VFF_PESCAN_PERTURBATION_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 
 #include <opt/va_function.h>

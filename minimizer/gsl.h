@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef _LADA_MINIMIZERS_GSL_H_
 #define _LADA_MINIMIZERS_GSL_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <vector>
 #include<boost/type_traits/is_same.hpp>

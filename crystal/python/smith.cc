@@ -1,9 +1,4 @@
-//
-//  Version: $Id$
-//
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <sstream>
 #include <complex>
@@ -123,8 +118,8 @@ namespace LaDa
     }
 
     //! Computes smith indices of position \a _pos.
-    size_t get_linear_smith_index( boost::python::tuple const & _transform,
-                                   math::rVector3d  const &_pos )
+    int get_linear_smith_index( boost::python::tuple const & _transform,
+                                math::rVector3d  const &_pos )
     {
       namespace bt = boost::tuples;
       namespace bp = boost::python;

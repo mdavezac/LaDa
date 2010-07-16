@@ -69,7 +69,7 @@ class Vasp(Launch):
     Launch.__init__(self, *args, **kwargs)
 
   def __call__( self, structure, outdir = None, comm = None, repat = None,\
-                overwrite=False, keep_calc=False, **kwargs ):
+                overwrite=False, **kwargs ):
     """ Performs a vasp calculation 
      
         The structure is whatever is given on input. The results are stored in
@@ -108,7 +108,12 @@ class Vasp(Launch):
 
     # if other keyword arguments are present, then they are assumed to be
     # attributes of self, with value to be changed before launch. 
-    for key in kwargs.keys(): setattr(this, key, kwargs[key])
+    for key, value in kwargs.items():
+      # direct attributes.
+      if hasattr(this, key): setattr(this, key, value)
+      # properties attributes.
+      elif hasattr(this.__class__, key): setattr(this, key, value)
+      else: raise ValueError("Unkwown keyword argument to vasp: %s=%s" % (key, value))
 
     # First checks if directory outdir exists (and is a directory).
     exists_outdir = broadcast(comm, exists(outdir) if comm.rank == 0 else None, 0) \
@@ -123,7 +128,7 @@ class Vasp(Launch):
     
     # Otherwise, performs calculation by calling base class functor.
     super(Vasp, this).__call__( structure=structure, outdir=outdir,\
-                                repat=repat, comm=comm, norun=norun, keep_calc=keep_calc )
+                                repat=repat, comm=comm, norun=norun )
     
     # checks if result was successful
     extract = Extract(comm = comm, directory = outdir)

@@ -1,9 +1,4 @@
-//
-//  Version: $Id$
-//
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <sstream>
 #include <complex>
@@ -170,7 +165,7 @@ namespace LaDa
         {
           PyErr_SetString(PyExc_StopIteration, "Stop iteration.\n");
           boost::python::throw_error_already_set();
-          return -1;
+          return 0u;
         }
         
         enumeration::t_uint const flavor( x / (*i_it) );

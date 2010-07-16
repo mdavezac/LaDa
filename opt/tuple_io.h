@@ -1,9 +1,7 @@
 #ifndef _OPT_TUPLES_H_
 #define _OPT_TUPLES_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <boost/tuple/tuple.hpp>
 #include <boost/lexical_cast.hpp>

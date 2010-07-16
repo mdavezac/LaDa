@@ -1,13 +1,7 @@
-//
-//  Version: $Id$
-//
-
 #ifndef _LADA_CRYSTAL_READ_POSCAR_H_
 #define _LADA_CRYSTAL_READ_POSCAR_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <vector>
 #include <ostream>
@@ -23,10 +17,10 @@
 #include <boost/spirit/include/classic_operators.hpp>
 #include <boost/spirit/include/classic_kleene_star.hpp>
 #include <boost/spirit/include/classic_actions.hpp>
+#include <boost/algorithm/string/trim.hpp>
 
 #include <Eigen/LU>
 
-#include <print/manip.h>
 #include <opt/types.h>
 #include <math/misc.h>
 
@@ -64,7 +58,7 @@ namespace LaDa
         // name
         std::getline( file, line );
         __DOASSERT( file.eof(), "Unexpected end-of-file " + _path.string() + "\n" );
-        _structure.name = Print::StripEdges( line );
+        _structure.name = boost::algorithm::trim_copy( line );
         // scale
         std::getline( file, line );
         __DOASSERT( file.eof(), "Unexpected end-of-file " + _path.string() + "\n" );
@@ -117,7 +111,7 @@ namespace LaDa
         // Cartesian or direct.
         std::getline( file, line );
         __DOASSERT( file.eof(), "Unexpected end-of-file " + _path.string() + "\n" );
-        line = Print :: StripEdges(line);
+        boost::algorithm::trim(line);
         bool direct;
         if( line[0] == 'c' or line[0] == 'C' ) direct = false;
         else if( line[0] == 'd' or line[0] == 'D' ) direct = true;

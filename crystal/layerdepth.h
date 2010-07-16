@@ -1,13 +1,7 @@
-//
-//  Version: $Id$
-//
-
 #ifndef _LADA_CRYSATL_LAYERDEPTH_H_
 #define _LADA_CRYSATL_LAYERDEPTH_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 
 #include <opt/debug.h>

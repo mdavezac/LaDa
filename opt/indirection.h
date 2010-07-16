@@ -1,6 +1,3 @@
-//
-//  Version: $Id$
-//
 #ifndef _OPT_INDIRECTION_H_
 #define _OPT_INDIRECTION_H_
 

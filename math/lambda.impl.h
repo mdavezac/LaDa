@@ -1,7 +1,3 @@
-//
-//  Version: $Id$
-//
-
 #ifndef LADA_MATH_LAMBDA_IMPL_H
 #  if defined( __VTYPE__ ) || defined (__STYPE__) || defined( __MTYPE__)
 #   error Macros __VTYPE__, __STYPE__, or __MTYPE__ already defined.

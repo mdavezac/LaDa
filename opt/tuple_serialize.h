@@ -1,9 +1,7 @@
 #ifndef LADA_OPT_TUPLES_SERIALIZE_H
 #define LADA_OPT_TUPLES_SERIALIZE_H
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <boost/tuple/tuple.hpp>
 #include <boost/preprocessor/repetition.hpp>

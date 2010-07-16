@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef LADA_CE_FIND_PIS_H
 #define LADA_CE_FIND_PIS_H
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <boost/numeric/ublas/vector.hpp>
 

@@ -337,3 +337,51 @@ def _print_lattice(self):
   return result
 _print_lattice.__doc__ = Lattice.__str__.__doc__
 Lattice.__repr__ = _print_lattice
+
+def structure_to_lattice(structure):
+  """ Converts a structure object to a lattice object. """
+  result = Lattice()
+  result.cell = structure.cell.copy()
+  result.name = structure.name
+  result.scale = structure.scale
+  for atom in  structure.atoms:
+    result.add_site = atom.pos, atom.type
+    result.sites[-1].freeze = atom.freeze
+
+  result.make_primitive()
+  result.find_space_group()
+  return result
+
+
+def fill_structure(cell, lattice = None):
+  """ Returns a structure from knowledge of cell and lattice.
+
+      @param cell: Structure or cell to use to create a complete structure with all atoms.
+      @type cell: L{Structure}, L{rStructure}, or numpy 3x3 float64 array
+      @param lattice: Back-bone lattice of the super-structure to build. If
+        None, will use the *global* lattice set by L{Lattice.set_as_crystal_lattice}.
+      @type lattice: L{Lattice}
+      @raise RuntimeError: If the filled structure could not be created.
+  """
+  from _crystal import _fill_structure_impl
+  old_lattice = None
+  if lattice == None:
+    try: Structure().lattice
+    except RuntimeError:
+      raise RuntimeError("No lattice given on input of fill_structure" +
+                         "and global lattice not set either.")
+  else: 
+    # keeps track of old lattice.
+    try: old_lattice = Structure().lattice
+    except RuntimeError: pass
+    # sets this lattice as the global lattice.
+    lattice.set_as_crystal_lattice()
+
+  # creates filled structure.
+  result = _fill_structure_impl(cell)
+
+  # Now resets old lattice.
+  if old_lattice != None: old_lattice.set_as_crystal_lattice()
+  
+  return result
+

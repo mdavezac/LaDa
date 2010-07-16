@@ -1,9 +1,4 @@
-//
-//  Version: $Id$
-//
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <cstdlib>
 
@@ -84,7 +79,7 @@ namespace LaDa
 
       return found_bond ? (types::t_int) bonds.size() : -1; // not a bond
     }
-#   ifdef _LADADEBUG
+#   ifdef LADA_DEBUG
       void AtomicCenter :: const_iterator :: check() const
       {
         __ASSERT(not parent,

@@ -1,9 +1,7 @@
 #ifndef LADA_MATH_SERIALIZE_H
 #define LADA_MATH_SERIALIZE_H
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include "eigen.h"
 

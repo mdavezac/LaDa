@@ -1,12 +1,8 @@
-//
-//  Version: $Id$
-//
 #ifndef _OPT_FRPRMN_H_
 #define _OPT_FRPRMN_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
+#include "FCMangle.h"
 
 #ifdef _DEBUG
 #include <stdexcept>
@@ -19,15 +15,16 @@
 #include <tinyxml/tinyxml.h>
 
 #include <opt/debug.h>
+#include <opt/types.h>
 
 #include "variant.h"
 
 //! \cond
-extern "C" double FC_FUNC(frprmn, FRPRMN)
-                         ( double *, const int *, const double *,
-                           const double *, const double *, int *,
-                           double *, void *, const int *,
-                           const double * );
+extern "C" double FC_GLOBAL(frprmn, FRPRMN)
+                           ( double *, const int *, const double *,
+                             const double *, const double *, int *,
+                             double *, void *, const int *,
+                             const double * );
 //! \endcond
 
 namespace LaDa
@@ -159,10 +156,10 @@ namespace LaDa
           = &details::template call_frpr<t_DataPair>;
         t_DataPair data_pair(_function, _arg);
         details::frpr_pointer_ = (void*) &data_pair;
-        FC_FUNC(frprmn, frprmn) ( x, &x_length, &tolerance,
-                                  &line_tolerance, &zeps,
-                                  &iter, &result, (void*)ptr_func,
-                                  &itermax, &rtol );
+        FC_GLOBAL(frprmn, frprmn) ( x, &x_length, &tolerance,
+                                    &line_tolerance, &zeps,
+                                    &iter, &result, (void*)ptr_func,
+                                    &itermax, &rtol );
         std::copy( x, x + _arg.size(), _arg.begin() );
 
         { // recomputes gradient just to make sure.

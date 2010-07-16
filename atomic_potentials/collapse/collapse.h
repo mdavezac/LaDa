@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef LADA_ATOMIC_POTENTIAL_VARIABLE_SET_H_
 #define LADA_ATOMIC_POTENTIAL_VARIABLE_SET_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <string>
 #include <vector>
@@ -28,7 +23,7 @@ namespace LaDa
   }
   //! \endcond
 
-# ifdef __DOPYTHON
+# ifdef LADA_DO_PYTHON
   namespace Python
   {
     void expose_collapse();
@@ -67,7 +62,7 @@ namespace LaDa
       //!          computing \f$G{(u)}\f$. 
       class Collapse
       {
-#       ifdef __DOPYTHON 
+#       ifdef LADA_DO_PYTHON 
           friend void Python::expose_collapse();
 #       endif
         protected:

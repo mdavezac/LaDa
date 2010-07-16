@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef _VFF_ATOMIC_FUNCTIONAL_H_
 #define _VFF_ATOMIC_FUNCTIONAL_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <vector>
 #include <algorithm>

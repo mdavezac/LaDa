@@ -1,9 +1,4 @@
-//
-//  Version: $Id$
-//
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <boost/python/def.hpp>
 #include <boost/python/class.hpp>
@@ -30,6 +25,7 @@
 
 #include <python/xml.hpp>
 #include <python/misc.hpp>
+#include <opt/path.h>
 #include "lattice.hpp"
 
 namespace LaDa
@@ -67,7 +63,7 @@ namespace LaDa
           if( child->Attribute("filename") )
           {
             const boost::filesystem::path
-              n( Print::reformat_home( child->Attribute("filename") ) );
+              n( opt::expand_path( child->Attribute("filename") ) );
             __DOASSERT( not boost::filesystem::exists( n ),
                         n.string() + " could not be found.\n" )
             fromXML( _type, n.string() );

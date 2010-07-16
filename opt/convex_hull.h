@@ -1,9 +1,7 @@
 #ifndef _CONVEX_HULL_BASE_H_
 #define _CONVEX_HULL_BASE_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <list>
 #include <functional>
@@ -17,7 +15,6 @@
 #include <tinyxml/tinyxml.h>
 
 #include <math/fuzzy.h>
-#include <mpi/mpi_object.h>
 
 #include "types.h"
 #include "function_functors.h"

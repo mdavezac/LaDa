@@ -244,7 +244,7 @@ namespace LaDa
         {
           T2 *values = reinterpret_cast<T2*>(array->data);
           size_t const strides = array->strides[array->dimensions[0] == 3 ? 0: 1] / sizeof(T2);
-#         ifdef _LADADEBUG
+#         ifdef LADA_DEBUG
             if( array->strides[array->dimensions[0] == 3 ? 0: 1] % sizeof(T2) != 0 )
             {
               PyErr_SetString(PyExc_RuntimeError, "Incoherent numpy array.\n");

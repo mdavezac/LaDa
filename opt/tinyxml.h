@@ -1,17 +1,12 @@
-//
-//  Version: $Id$
-//
 #ifndef _OPT_TINYXML_H_
 #define _OPT_TINYXML_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <boost/filesystem/path.hpp>
 #include <string>
 #include <tinyxml/tinyxml.h>
-#include <print/manip.h>
+#include <opt/path.h>
 #include "debug.h"
 
 namespace LaDa
@@ -155,7 +150,7 @@ namespace LaDa
 //         read_functional( _functional,
 //                          boost::filesystem::path
 //                          (
-//                            Print::reformat_home(node->Attribute("filename"))
+//                            opt::expand_path(node->Attribute("filename"))
 //                          ),  _name );
 //       _functional.Load( *node );
 //     }
@@ -197,7 +192,7 @@ namespace LaDa
           read_tag( _object,
                     boost::filesystem::path
                     ( 
-                      Print::reformat_home(node->Attribute("filename"))
+                      opt::expand_path(node->Attribute("filename"))
                     ),  _name, _attribute, _value );
           return;
         }

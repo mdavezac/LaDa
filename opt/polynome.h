@@ -1,12 +1,7 @@
-//
-//  Version: $Id$
-//
 #ifndef _OPT_POLYNOME_H_
 #define _OPT_POLYNOME_H_
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <list>
 #include <vector>
@@ -21,13 +16,13 @@
 #include "monome.h"
 #include <iomanip>
 
-#include <mpi/mpi_object.h>
+#include <mpi/macros.h>
 #include <math/fuzzy.h>
 #ifdef _MPI
-#include <boost/lambda/lambda.hpp>
-#include <boost/mpi/collectives.hpp>
-#include <functional>
-#include "print/stdout.h"
+# include <mpi/mpi_object.h>
+# include <boost/lambda/lambda.hpp>
+# include <boost/mpi/collectives.hpp>
+# include <functional>
 #endif 
 
 namespace LaDa

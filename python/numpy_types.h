@@ -17,7 +17,7 @@ namespace LaDa
       //! An mpl integer defining the type.
       template<class T> class type;
       
-#     ifndef LADA_NPY_DOUBLE_EQ_NPY_LONG_DOUBLE
+#     ifdef NUMPY_HAS_LONG_DOUBLE
         //! numpy identifier for long doubles.
         template<> struct type<npy_longdouble> : public boost::mpl::int_<NPY_LONGDOUBLE> 
         {
@@ -97,7 +97,7 @@ namespace LaDa
         //! Original type.
         typedef npy_ubyte np_type;
       };
-#     ifndef LADA_NPY_UBYTE_EQ_NPY_BOOL
+#     ifdef NUMPY_HAS_BOOL
         //! numpy identifier for bool.
         template<> struct type<npy_bool> : public boost::mpl::int_<NPY_BOOL> 
         {

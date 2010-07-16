@@ -2,7 +2,7 @@
 
     This is mostly for VFF. Should use numpy mininmizers where possible.
 """
-from minimizer import *
+from _minimizer import *
 
 def _print_minimizer(self):
   return "# Minimizer definition.\n"\
