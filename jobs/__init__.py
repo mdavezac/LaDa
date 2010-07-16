@@ -426,26 +426,27 @@ class JobDict(object):
     """ Adds _marked attribute. """
     if hasattr(self, "_marked"): self.__delattr__("_marked")
 
-current = JobDict()
-""" Global with current joblist. """
+  @porperty 
+  def root(self): 
+    """ Returns root dictionary. """
+    root = 
 
-def walk_through(jobdict = None, outdir = None, comm = None):
+def walk_through(jobdict, outdir = None, comm = None):
   """ Generator to iterate over actual calculations. 
       
       see L{JobDict} description.
   """
-  if jobdict == None: jobdict = current
   elif isinstance(jobdict, str): jobdict = load(jobdict, comm=comm)
   for u in jobdict.walk_through(outdir): yield u
 
 @broadcast_result(key=True)
-def save(jobdict = None, path = None, overwrite=False, comm=None): 
+def save(jobdict, path = None, overwrite=False, comm=None): 
   """ Pickles a job to file.
 
       This method first acquire an exclusive lock (using os dependent lockf) on
       the file before writing. This way not two processes can read/write to
       this file while using this function.
-      @param jobdict: A jobtree to pickle. If None, uses L{jobs.current}.
+      @param jobdict: A jobtree to pickle. 
       @type jobdict: JobDict
       @param path: filename of file to which to save pickle. overwritten. If
         None then saves to "pickled_jobdict"
@@ -457,7 +458,6 @@ def save(jobdict = None, path = None, overwrite=False, comm=None):
   from pickle import dump
   from ..opt import open_exclusive
   if path == None: path = "pickled_jobdict"
-  if jobdict == None: jobdict = current
   if exists(path) and not overwrite: 
     print path, "exists. Please delete first if you want to save the job dictionary."
     return
@@ -594,15 +594,15 @@ def unsucessfull(jobdict, extractor, outdir = None):
 
 
 
-def pbs_script( outdir = None, jobdict = None, template = None, \
+def pbs_script( jobdict, outdir = None, template = None, \
                 name = None, pickle = None, pyscript = None, **kwargs):
   """ Parallelizes jobs over different pbs scrits. 
 
       The root directory (outdir) is created if it does not exist, and the
       pbs-script placed there. The pbs-script is not launched. 
 
-      @param outdir: root directory of calculation. Current working directory if None.
       @param jobdict: job-tree instance over which to parallelize.
+      @param outdir: root directory of calculation. Current working directory if None.
       @type jobdict: L{JobDict}
       @param template: PBS-script template to use. See L{jobs.templates}.
         Default: L{jobs.templates.default_pbs}.
@@ -618,7 +618,6 @@ def pbs_script( outdir = None, jobdict = None, template = None, \
   from templates import default_pbs, default_slurm
  
   # sets up default input.
-  if jobdict == None: jobdict = current
   if template == None:
     which = "SNLCLUSTER" in environ
     if which: which = environ["SNLCLUSTER"] in ["redrock", "redmesa"]
@@ -654,11 +653,11 @@ def pbs_script( outdir = None, jobdict = None, template = None, \
               name=jobname, pyscript=pyscript_filename, **kwargs)
 
 
-def one_per_job(outdir = None, jobdict = None, mppalloc=None, ppath=None, **kwargs):
+def one_per_job(jobdict, outdir = None, mppalloc=None, ppath=None, **kwargs):
   """ Launches one pbs job per job. 
   
-      @param outdir: root output directory.
       @param jobdict: job dictionary.
+      @param outdir: root output directory.
       @param mppalloc: an mpi allocation scheme. It takes the job as argument.
                        If a number, then flat allocation scheme across all jobs.
   """
@@ -669,7 +668,6 @@ def one_per_job(outdir = None, jobdict = None, mppalloc=None, ppath=None, **kwar
   
   # sets up default input.
   if outdir == None: outdir = getcwd() 
-  if jobdict == None: jobdict = current
 
   which = "SNLCLUSTER" in environ
   if which: which = environ["SNLCLUSTER"] in ["redrock", "redmesa"]
@@ -703,20 +701,18 @@ def one_per_job(outdir = None, jobdict = None, mppalloc=None, ppath=None, **kwar
 
 
 
-def fakerun(jobdict = None, outdir = None):
+def fakerun(jobdict, outdir = None):
   """ Performs a fake run.
 
       Fake runs include *norun=True* as a job parameter. Whether this works or
       not depends on the functional. It is meant to create all directories and
       input file for a quick review of the input parameters.
-      @param jobdict: if None, then uses L{jobs.current}. otherwise fake runs
-                      the provided dictionary. 
+      @param jobdict: otherwise fake runs the provided dictionary. 
       @type jobdict; L{JobDict} or None
-      @param path: If None uses the current workding path. This will be the ouput directory.
+      @param path: This will be the ouput directory.
   """
   from os import getcwd
 
-  if jobdict == None: jobdict = current
   if outdir  == None: outdir = getcwd()
   for job, dirname in jobdict.walk_through(outdir):
     if not job.is_marked: job.compute(outdir=dirname, norun=True)
