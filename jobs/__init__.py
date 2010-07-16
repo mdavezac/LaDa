@@ -162,6 +162,19 @@ class JobDict(object):
     # no restart parameters yet.
     self.jobparams["restart"] = None
     
+  @property
+  def name(self):
+     """ Returns the name of this dictionary, relative to root. """
+     if self.parent == None: return "/"
+     string = None
+     for key, item in self.parent.children.items():
+       if id(item) == id(self):
+         string = self.parent.name + key
+         break
+     assert string != None, RuntimeError("Could not determine the name of the dictionary.")
+     if not self.is_job: string += "/"
+     return string
+
   def __getitem__(self, index): 
     """ Returns job description from the dictionary.
 
@@ -426,17 +439,19 @@ class JobDict(object):
     """ Adds _marked attribute. """
     if hasattr(self, "_marked"): self.__delattr__("_marked")
 
-  @porperty 
+  @property 
   def root(self): 
     """ Returns root dictionary. """
-    root = 
+    result = self
+    while result.parent != None: result = result.parent
+    return result
 
 def walk_through(jobdict, outdir = None, comm = None):
   """ Generator to iterate over actual calculations. 
       
       see L{JobDict} description.
   """
-  elif isinstance(jobdict, str): jobdict = load(jobdict, comm=comm)
+  if isinstance(jobdict, str): jobdict = load(jobdict, comm=comm)
   for u in jobdict.walk_through(outdir): yield u
 
 @broadcast_result(key=True)

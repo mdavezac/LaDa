@@ -64,4 +64,5 @@ configure_file (
  "${PROJECT_BINARY_DIR}/python/__init__.py"
 )
 install(FILES ${PROJECT_BINARY_DIR}/python/__init__.py DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada)
+install(FILES ipy_lada.py DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada)
 
