@@ -185,20 +185,17 @@ class JobDict(object):
 
     index = normpath(index)
     if index == "" or index == None or index == ".": return self
-    if index[0] == "/":  # could create infinit loop.
-      result = self
-      while result.parent != None: result = result.parent
-      return result[index[1:]]
+    if index[0] == "/": return self.root
 
     result = self
     names = split(r"(?<!\\)/", index)
     for i, name in enumerate(names):
       if name == "..":
-        assert result.parent != None, RuntimeError("Cannot go below root level.")
+        if result.parent == None: raise KeyError("Cannot go below root level.")
         result = result.parent
-      if name in result.children: result = result.children[name]
+      elif name in result.children: result = result.children[name]
       elif name in result.jobparams:
-        assert i+1 == len(names), KeyError("job or job parameter " + index + " does not exist.") 
+        if i+1 != len(names): raise KeyError("job or job parameter " + index + " does not exist.") 
         return result.jobparams[name]
       else: raise KeyError("job or job parameter " + index + " does not exist.")
     return result
@@ -216,17 +213,17 @@ class JobDict(object):
     except KeyError: raise
 
     if isinstance(deletee, JobDict): 
-      assert id(self) != id(deletee), RuntimeError("Will not commit suicide.")
+      assert id(self) != id(deletee), KeyError("Will not commit suicide.")
       parent = self.parent
       while parent != None: 
-        assert id(parent) != id(deletee), RuntimeError("Will not go Oedipus on you.")
+        assert id(parent) != id(deletee), KeyError("Will not go Oedipus on you.")
         parent = parent.parent
 
     parent = self[index+"/.."]
     name = relpath(index, index+"/..")
     if name in parent.children:
       assert id(self) != id(parent.children[name]),\
-             RuntimeError("Will not delete self.")
+             KeyError("Will not delete self.")
       return parent.children.pop(name)
     if name in parent.jobparams: return parent.jobparams.pop(name)
     raise KeyError("job or job parameter " + index + " does not exist.")
@@ -240,8 +237,8 @@ class JobDict(object):
     from os.path import normpath, relpath
 
     index = normpath(index)
-    assert index not in ["", ".", None], RuntimeError("Will not set self.")
-    assert index[0], RuntimeError("Will not set root: " + index + ".")
+    assert index not in ["", ".", None], KeyError("Will not set self.")
+    assert index[0], KeyError("Will not set root: " + index + ".")
 
     result = self.__div__(index+"/..")
     name = relpath(index, index+"/..")

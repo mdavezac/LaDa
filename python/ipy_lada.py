@@ -1,26 +1,16 @@
 """ IPython functions and data. """
 from . import jobs
 
-class _Global(object):
-  current = None
-  """ Current dictionary. """
-
-  pickle_filename = None
-  """ Current pickle filename. """
-
-  pickle_directory = None
-  """ Directory of current pickle. """
-
 def explore(self, arg):
   """ Starts exploration of a pickled jobdictionary. """
   from os.path import exists, split as splitpath, join, abspath
   from cPickle import load
   from .opt import open_exclusive
-  current          = _Global().current
-  pickle_filename  = _Global().pickle_filename
-  pickle_directory = _Global().pickle_directory
-  
   ip = self.api
+  current          = ip.user_ns.pop("current_jobdict", None)
+  pickle_filename  = ip.user_ns.pop("current_jobdict_filename", None)
+  pickle_directory = ip.user_ns.pop("current_jobdict_directory", None)
+  
   args = arg.split()
   if len(args) == 0:
     if current == None:
@@ -29,12 +19,12 @@ def explore(self, arg):
       print "Current position in job dictionary:", current.name
     else:
       print "Current position in job dictionary:", current.name
-      print "Filename of jobdictionary: ", join(pickle_filename, pickle_directory)
+      print "Path to job dictionary: ", join(pickle_filename, pickle_directory)
 
   if isinstance(arg, jobs.JobDict):
-    _Global.current = arg
-    _Global.pickle_filename = None
-    _Global.pickle_dictionary = None
+    ip.user_ns["current_jobdict"] = arg
+    ip.user_ns["current_jobdict_filename"] = None
+    ip.user_ns["current_jobdict_directory"] = None
     return
 
   def get_dict(filename, is_a_file = None):
@@ -71,49 +61,125 @@ def explore(self, arg):
   if len(args) == 1: 
     result = get_dict(args[0])
     if result != None:
-      _Global.current = result[0]
-      _Global.pickle_filename = result[1]
-      _Global.pickle_directory = result[2]
+      ip.user_ns["current_jobdict"] = result[0]
+      ip.user_ns["current_jobdict_directory"] = result[1]
+      ip.user_ns["current_jobdict_filename"] = result[2]
     return 
+  elif len(args) == 2 and args[0] == "file":
+    result = get_dict(args[0], True)
+    if result != None:
+      ip.user_ns["current_jobdict"] = result[0]
+      ip.user_ns["current_jobdict_directory"] = result[1]
+      ip.user_ns["current_jobdict_filename"] = result[2]
+    return 
+  elif len(args) == 2 and args[0] == "JobDict":
+    result = get_dict(args[0], False)
+    if result != None:
+      ip.user_ns["current_jobdict"] = result[0]
+      ip.user_ns["current_jobdict_directory"] = result[1]
+      ip.user_ns["current_jobdict_filename"] = result[2]
+    return 
+  else: 
+    print "Calling explore with arguments %s is invalid." % (arg)
+    return
 
 def goto(self, arg):
   """ Moves current dictionary position and working directory (if appropriate). """
   from os import chdir
-  from os.path import exists
-  current          = _Global().current
-  pickle_filename  = _Global().pickle_filename
-  pickle_directory = _Global().pickle_directory
+  from os.path import exists, join
+  ip = self.api
+  current = ip.user_ns["current_jobdict"] if "current_jobdict" in ip.user_ns else None
+  pickle_filename = ip.user_ns["current_jobdict_filename"] \
+                    if "current_jobdict_filename" in ip.user_ns else None
+  pickle_directory = ip.user_ns["current_jobdict_directory"] \
+                     if "current_jobdict_directory" in ip.user_ns else None
+    
+  if current == None: 
+    print "No current jobs."
+    return
   if len(arg.split()) == 0:
-    if current == None:
-      print "No current jobs."
-    elif pickle_filename == None:
+    if pickle_filename == None:
       print "Current position in job dictionary:", current.name
     else:
       print "Current position in job dictionary:", current.name
       print "Filename of jobdictionary: ", join(pickle_filename, pickle_directory)
-  try: result = _Global().current[arg] 
-  except KeyError: 
-    print "Could not find %s in current directory." % (arg)
+    return
+  arg = arg.split()[0]
+  try: result = current[arg] 
+  except KeyError as e: 
+    print e
     return 
 
   if not (hasattr(result, "parent") and hasattr(result, "children")  and hasattr(result, "jobparams")):
     print "%s is a job parameter, not a directory."
     return
-  _Global.current = result
-  if pickle_directory != None: return
-  chdir( join(_Global.pickle_directory, _Global.current.name[1:]) )
+  ip.user_ns["current_jobdict"] = result
+  current = ip.user_ns["current_jobdict"]
+  if pickle_directory == None: return
+  dir = join(pickle_directory, current.name[1:]) 
+  if exists(dir): chdir(dir)
   return
 
-def current_dictionary(self, arg): 
-  """ Returns current dictionary. """
-  return _Global.current
-  
+def listjobs(self, arg):
+  """ Lists subjobs. """
+  ip = self.api
+  if "current_jobdict" not in ip.user_ns: 
+    print "No current job defined. Please first load a job with \"explore\"."
+    return
+  current = ip.user_ns["current_jobdict"] 
+  if len(arg) != 0:
+    try: subdict = ip.user_ns["current_jobdict"][arg] 
+    except KeyError:
+      print "%s is not a valid jobname of current job dictionary." % (arg)
+      return
+    current = current[arg]
+    if not hasattr(current, "children"):  
+      print "%s is not a valid jobname of current job dictionary." % (arg)
+      return
+  if len(current.children) == 0: return
+  string = ""
+  lines = ""
+  for j in current.children.keys():
+    if len(string+j) > 60:
+      if len(lines) != 0: lines += "\n" + string
+      else: lines = string
+      string = ""
+    string += j + " "
+
+  if len(lines) == 0: print string
+  else: print lines + "\n" + string
+ 
+def goto_completer(self, event):
+  import IPython
+  ip = self.api
+  if "current_jobdict" not in ip.user_ns: raise IPython.ipapi.TryNext
+  elif '/' in event.symbol:
+    # finds last '/' in string.
+    subkey = event.symbol[:-event.symbol[::-1].find('/')-1]
+    while subkey[-1] == '/': subkey = subkey[:-1]
+    try: subdict = ip.user_ns["current_jobdict"][subkey] 
+    except KeyError: raise IPython.ipapi.TryNext
+    if hasattr(subdict, "children"): 
+      if hasattr(subdict.children, "keys"):
+        return [subkey + "/" + a + "/" for a in subdict.children.keys()]
+    raise IPython.ipapi.TryNext
+  else: return [a + "/" for a in ip.user_ns["current_jobdict"].children.keys()]
+
+def current_jobname(self, arg):
+  """ Returns current jobname. """
+  ip = self.api
+  if "current_jobdict" not in ip.user_ns: return
+  print ip.user_ns["current_jobdict"].name
+  return
 
 def _main():
   import IPython.ipapi
   ip = IPython.ipapi.get()
   ip.expose_magic("explore", explore)
-  ip.expose_magic("current_dictionary", current_dictionary)
   ip.expose_magic("goto", goto)
+  ip.expose_magic("listjobs", listjobs)
+  ip.expose_magic("jobname", current_jobname)
+  ip.set_hook('complete_command', goto_completer, re_key = '\s*%?goto')
+
 
 _main()
