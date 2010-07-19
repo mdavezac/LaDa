@@ -1174,3 +1174,55 @@ def b1I():
   lattice.add_site = (-1.977500e+00, -1.977500e+00, -8.908900e+00), "X", 
   return lattice
 
+def b6():
+  """ Returns a b6 lattice. """
+  from . import Lattice
+
+  lattice = Lattice()
+  lattice.scale = 9.442000e+00
+  lattice.set_cell = (3.050000e-01, 6.100000e-01, 0.000000e+00),\
+                     (3.050000e-01, 0.000000e+00, 6.100000e-01),\
+                     (5.000000e-01, 0.000000e+00, 0.000000e+00)
+  lattice.name = "b6"
+  lattice.add_site = (3.050000e-01, 3.050000e-01, 0.000000e+00), "A", 
+  lattice.add_site = (3.050000e-01, 0.000000e+00, 0.000000e+00), "A", 
+  lattice.add_site = (4.575000e-01, 1.525000e-01, 2.500000e-01), "A", 
+  lattice.add_site = (1.525000e-01, 1.525000e-01, 2.500000e-01), "A", 
+  lattice.add_site = (6.100000e-01, 4.575000e-01, 1.250000e-01), "B", 
+  lattice.add_site = (3.050000e-01, 4.575000e-01, 3.750000e-01), "B", 
+  lattice.add_site = (6.100000e-01, 2.880420e-01, 2.589000e-01), "X", 
+  lattice.add_site = (6.100000e-01, 6.269580e-01, 2.589000e-01), "X", 
+  lattice.add_site = (1.694580e-01, 1.525000e-01, 8.900000e-03), "X", 
+  lattice.add_site = (4.405420e-01, 1.525000e-01, 8.900000e-03), "X", 
+  lattice.add_site = (3.050000e-01, 2.880420e-01, 2.411000e-01), "X", 
+  lattice.add_site = (3.050000e-01, 6.269580e-01, 2.411000e-01), "X", 
+  lattice.add_site = (7.455420e-01, 7.625000e-01, 4.911000e-01), "X", 
+  lattice.add_site = (4.744580e-01, 7.625000e-01, 4.911000e-01), "X",
+  return lattice
+
+def b7():
+  """ Returns a b7 lattice. """
+  from . import Lattice
+
+  lattice = Lattice()
+  lattice.scale = 7.780000e+00
+  lattice.set_cell = (3.880000e-01, 7.760000e-01, 0.000000e+00),\
+                     (3.880000e-01, 0.000000e+00, 7.760000e-01),\
+                     (5.000000e-01, 0.000000e+00, 0.000000e+00)
+  lattice.name = "b7"
+  lattice.add_site = (4.074000e-01, 1.940000e-01, 1.250000e-01), "A", 
+  lattice.add_site = (3.686000e-01, 5.820000e-01, 1.250000e-01), "A", 
+  lattice.add_site = (5.820000e-01, 7.566000e-01, 3.750000e-01), "A", 
+  lattice.add_site = (9.700000e-01, 7.954000e-01, 3.750000e-01), "A", 
+  lattice.add_site = (0.000000e+00, 0.000000e+00, 0.000000e+00), "B", 
+  lattice.add_site = (7.760000e-01, 3.880000e-01, 2.500000e-01), "B", 
+  lattice.add_site = (2.172800e-01, 7.977280e-01, 1.200000e-01), "X", 
+  lattice.add_site = (5.587200e-01, 7.542720e-01, 1.200000e-01), "X", 
+  lattice.add_site = (4.097280e-01, 9.467200e-01, 3.800000e-01), "X", 
+  lattice.add_site = (3.662720e-01, 6.052800e-01, 3.800000e-01), "X", 
+  lattice.add_site = (5.587200e-01, 4.097280e-01, 1.300000e-01), "X", 
+  lattice.add_site = (2.172800e-01, 3.662720e-01, 1.300000e-01), "X", 
+  lattice.add_site = (7.542720e-01, 9.467200e-01, 3.700000e-01), "X", 
+  lattice.add_site = (7.977280e-01, 6.052800e-01, 3.700000e-01), "X",
+  return lattice
+
