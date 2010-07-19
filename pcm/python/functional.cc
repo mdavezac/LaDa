@@ -9,7 +9,7 @@
 #include <boost/lambda/lambda.hpp>
 #include <boost/python/def.hpp> 
 #include <boost/python/tuple.hpp> 
-#include <boost/python/enum.hpp> 
+#include <boost/python/object.hpp> 
 
 #include <opt/types.h>
 #include <minimizer/python/minimizer.hpp>
@@ -20,17 +20,20 @@ namespace LaDa
 {
   namespace python
   {
-    Models::Clj::t_Arg minimize( Models::Clj const & _functional,
-                                 Python::Minimizer const &_minimizer,
-                                 Models::Clj::t_Arg &_structure,
-                                 Models::Functional::Relaxation::type _relaxation )
+    namespace bp = boost::python;
+
+    bp::tuple minimize( Models::Clj const & _functional,
+                        bp::object &_minimizer,
+                        Models::Clj::t_Arg &_structure,
+                        bool relax_all )
     {
       try
       {
         namespace bl = boost::lambda;
         Models::Functional functional( _functional );
         Models::Functional::t_Arg args;
-        functional.relaxation = _relaxation;
+        functional.relaxation = relax_all ? Models::Functional::Relaxation::default_:
+                                            Models::Functional::Relaxation::volume;  
         functional.structure = _structure;
         functional.init( args );
 
@@ -43,7 +46,8 @@ namespace LaDa
           )
         );
 
-        Models::Functional::t_Return result( _minimizer.call( functional, args ) ); 
+        bp::object object( _minimizer( functional, args ) ); 
+        Models::Functional::t_Return result = bp::extract<Models::Functional::t_Return>(object);
 
         math::rVector3d const center2 
         (
@@ -61,28 +65,17 @@ namespace LaDa
 
         _structure.energy = result;
         functional.forces.energy = result;
-        _structure = functional.structure;
-        return functional.forces;
+        return bp::make_tuple(functional.forces, functional.structure);
       }
       catch (...)
       {
         PyErr_SetString( PyExc_RuntimeError, "Error encountered while minimizing from C.\n");
-        Models::Clj::t_Arg forces;
-        forces.cell = math::rMatrix3d::Zero();
-        forces.atoms.clear();
-        forces.energy = 0e0;
-        return forces;
+        return bp::tuple();
       }
     }
   
     void expose_functional()
     {
-      namespace bp = boost :: python;
-      bp::enum_< Models::Functional::Relaxation::type >( "relaxation" )
-        .value( "default", Models::Functional::Relaxation::default_ )
-        .value( "volume",  Models::Functional::Relaxation::volume )
-        .export_values();
-
       bp::def
       ( 
         "minimize", 
@@ -91,14 +84,17 @@ namespace LaDa
           bp::arg("clj"),
           bp::arg("minimizer"),
           bp::arg("structure"),
-          bp::arg("relaxation") = Models::Functional::Relaxation::default_
+          bp::arg("relaxation") = true
         ),
-        "Minimizes a Coulomb +Lennard-Jhones functional:\n"
-        "  clj is the functional.\n"
-        "  minimizer is the minimizer object.\n"
-        "  structure is the input/output cell and atomic-position.\n"
-        "  relaxation can be either models.relaxation.default, or models.relaxation.volume.\n"
-        "The return is a structure object containing the stress and the forces."
+        "Minimizes a Coulomb +Lennard-Jhones functional.\n\n"
+        ":Parameter:\n"
+        "clj : `lada.pcm.Clj`\n  Coulomb + Lennard-Jones functional.\n"
+        "minimizer : `lada.minimizer.Minimizer`\n   Minimization object.\n"
+        "structure : `lada.crystal.Structure` \n  Input crystal structure.\n"
+        "relaxation \n  If True, relax everything. If False only relax volume.\n"
+        ":return: an 2-tuple of `lada.crystal.Structure` objects containing the "
+        "relaxed structure for the first, and the forces and stress for the "
+        "second."
       );
     }
   } // namespace python

@@ -68,7 +68,7 @@ namespace LaDa
         bool Load( const TiXmlElement& _node );
 
         //! Computes LennardJohnes only.
-        t_Return lennard_johnes( const t_Arg& _in, t_Arg& _out ) const
+        t_Return lennard_jones( const t_Arg& _in, t_Arg& _out ) const
          { return call_( _in, _out, 1u ); }
         
         //! Computes Ewald only.

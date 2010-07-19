@@ -11,6 +11,7 @@ endif(MPI_FOUND)
 if(NOT noinstall_headers)
   install(FILES ${LIBPCM_HEADERS} DESTINATION include/LaDa/pcm)
 endif(NOT noinstall_headers)
+install(TARGETS pcm DESTINATION lib64)
 
 if(python_bindings)
   add_subdirectory(python)

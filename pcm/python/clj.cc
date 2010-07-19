@@ -27,6 +27,7 @@ namespace LaDa
 {
   namespace python
   {
+    namespace bp = boost::python;
     template<class T_TYPE>
       void unfold_structure( const Crystal :: TStructure<T_TYPE>& _structure, std::vector<types::t_real>& _list )
       {
@@ -103,13 +104,24 @@ namespace LaDa
       result->van_der_walls = _b;
       return result;
     }
+    Models::Clj::t_Bonds::value_type::second_type* bond_tconstructor( bp::tuple const &_t )
+    {
+      if( bp::len( _t ) != 2 )
+      {
+        PyErr_SetString(PyExc_ValueError, "Expected a 3-tuple.");
+        return NULL;
+      }
+      types::t_real const a = bp::extract<types::t_real>(_t[0]);
+      types::t_real const b = bp::extract<types::t_real>(_t[1]);
+      return bond_constructor(a, b);
+    }
 
     void set_mesh( Models::Clj& _clj, const boost::python::tuple& _tuple )
     {
       namespace bp = boost::python;
       if( bp::len( _tuple ) != 3 )
       {
-        PyErr_SetString(PyExc_StopIteration, "Expected a 3-tuple.");
+        PyErr_SetString(PyExc_ValueError, "Expected a 3-tuple.");
         return;
       }
       const types::t_int a = bp::extract<types::t_int>( _tuple[0] );
@@ -123,6 +135,21 @@ namespace LaDa
       const boost::tuple<types::t_int, types::t_int, types::t_int> t( _clj.get_mesh() );
       return boost::python::make_tuple( bt::get<0>(t), bt::get<1>(t), bt::get<2>(t) ); 
     }
+
+    template<int D> boost::shared_ptr<Models::Clj::t_Arg>
+      __call__(Models::Clj const & _clj, Models::Clj::t_Arg const &_in)
+      {
+        boost::shared_ptr<Models::Clj::t_Arg> forces(new Models::Clj::t_Arg);
+        forces->cell = math::rMatrix3d::Zero();
+        forces->atoms.resize(_in.atoms.size());
+        switch(D)
+        {
+          case 0: forces->energy = _clj.lennard_jones(_in, *forces);
+          case 1: forces->energy = _clj.ewald(_in, *forces);
+          case 2: forces->energy = _clj(_in, *forces);
+        }
+        return forces;
+      }
 
     void expose_clj()
     {
@@ -140,6 +167,8 @@ namespace LaDa
         .def( bp::init<t_Bond>() )
         .def( "__init__", bp::make_constructor( &bond_constructor ),
               "First argument is hard-sphere parameter, and second vand-der-walls parameter." )
+        .def( "__init__", bp::make_constructor( &bond_tconstructor ),
+              "First argument is hard-sphere parameter, and second vand-der-walls parameter." )
         .def_readwrite( "hardsphere", &t_Bond::hard_sphere, "+r^12 factor." )
         .def_readwrite( "vanderwalls", &t_Bond::van_der_walls, "-r^6 factor." )
         .def_pickle( Python::pickle< t_Bond >() );
@@ -151,10 +180,21 @@ namespace LaDa
       bp::class_< Models::Clj >( "Clj", "Coulomb + LennardJones functional.\n" )
         .def_readwrite( "charges", &Models::Clj::charges, "Dictionnary of charges." )
         .def_readwrite( "bonds", &Models::Clj::bonds, "Dictionnary of charges." )
-        .def("lennard_johnes", &Models::Clj::lennard_johnes )
-        .def("ewald", &Models::Clj::ewald )
-        .def("__call__", &Models::Clj::operator() )
-        .def("gradient", &Models::Clj::gradient )
+        .def( "lennard_jones", &__call__<0>, bp::arg("structure"),
+              "Returns Lennard-Jones forces and energy.\n\n"
+              ":Parameter:\n"
+              " - `structure` Crystal structure for wich to compute energy.\n"
+              ":return: a lada.crystal.Structure object containing forces and energy.\n" )
+        .def( "ewald", &__call__<1>, bp::arg("structure"),
+              "Returns Ewald forces and energy.\n\n"
+              ":Parameter:\n"
+              " - `structure` Crystal structure for wich to compute energy.\n"
+              ":return: a lada.crystal.Structure object containing forces and energy.\n" )
+        .def( "__call__", &__call__<2>, bp::arg("structure"),
+              "Returns Ewald+Lennard-Jones forces and energy.\n\n"
+              ":Parameter:\n"
+              " - `structure` Crystal structure for wich to compute energy.\n"
+              ":return: a lada.crystal.Structure object containing forces and energy.\n" )
         .def("__str__", &Python::tostream<Models::Clj> )
         .add_property
         (
@@ -179,28 +219,15 @@ namespace LaDa
       bp::def( "bond_type", &Models::LennardJones::bondname );
       bp::def
       ( 
-        "unfold_structure",
+        "_unfold_structure",
         &unfold_structure< std::string >,
         "Unfolds a structure into a c++ vector."
       );
       bp::def
       ( 
-        "fold_structure",
+        "_fold_structure",
         &fold_structure< std::string >,
         "Folds a c++ vector into a structure."
-      );
-
-      bp::def
-      (
-        "read_epinput",
-        &read_fortran_input,
-        (
-          bp::arg("functional"), 
-          bp::arg("species"),
-          bp::arg("filename")
-        ),
-        "Reads input from fortran model.\n"
-        "species is a list of atomic symbols which can be used to read a POSCAR."
       );
     }
   } // namespace python
