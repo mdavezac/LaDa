@@ -29,7 +29,8 @@ namespace LaDa
   {
     namespace bp = boost::python;
     template<class T_TYPE>
-      void unfold_structure( const Crystal :: TStructure<T_TYPE>& _structure, std::vector<types::t_real>& _list )
+      void unfold_structure( const Crystal :: TStructure<T_TYPE>& _structure,
+                             std::vector<types::t_real>& _list )
       {
         _list.clear();
         typedef Crystal::TStructure<T_TYPE> t_Str;
@@ -37,8 +38,9 @@ namespace LaDa
           for( size_t j(0); j < 3; ++j )
             if( (_structure.freeze & Crystal::cell_freeze_tag(i,j)) == 0 )
               _list.push_back( _structure.cell(i,j) );
-        typename Crystal::TStructure<T_TYPE>::t_Atoms::const_iterator i_atom = _structure.atoms.begin();
-        typename Crystal::TStructure<T_TYPE>::t_Atoms::const_iterator i_atom_end = _structure.atoms.end();
+        typedef typename Crystal::TStructure<T_TYPE>::t_Atoms::const_iterator t_cit;
+        t_cit i_atom = _structure.atoms.begin();
+        t_cit i_atom_end = _structure.atoms.end();
         for(; i_atom != i_atom_end; ++i_atom )
         {
           if( (i_atom->freeze & t_Str::t_Atom::FREEZE_X) == 0 )
@@ -150,6 +152,29 @@ namespace LaDa
         }
         return forces;
       }
+    
+    void set_sequence_item(Models::Clj::t_Bonds &_bonds, 
+                           Models::Clj::t_Bonds::value_type::first_type const &_index,
+                           bp::list const &_bond)
+    {
+      if(bp::len(_bond) != 2)
+      {
+        PyErr_SetString(PyExc_ValueError, "Incorrect value for bond type.");
+        return;
+      }
+      types::t_real a, b;
+      try
+      { 
+        a = bp::extract<types::t_real>(_bond[0]); 
+        b = bp::extract<types::t_real>(_bond[1]); 
+      }
+      catch(...) 
+      {
+        PyErr_SetString(PyExc_ValueError, "Incorrect value for bond type.");
+        return;
+      }
+      _bonds[_index] = Models::Clj::t_Bonds::value_type::second_type(a,b);
+    }
 
     void expose_clj()
     {
@@ -175,6 +200,12 @@ namespace LaDa
 
       bp::class_< t_Bonds >( "LJBonds", "Dictionary of bonds" )
         .def( bp :: map_indexing_suite< t_Bonds >() )
+        .def("__setitem__", &set_sequence_item,
+             " Sets lennard-jones parameter for a given bond.\n\n"
+             " :Parameters:\n"
+             "   - `index` of the bond, as obtained from `pcm.bond_name`.\n"
+             "   - `value` a two tuple containing the facto of the r^12 term and the r^6 term.\n"
+            )
         .def_pickle( Python::pickle< t_Bonds >() );
 
       bp::class_< Models::Clj >( "Clj", "Coulomb + LennardJones functional.\n" )
@@ -216,7 +247,7 @@ namespace LaDa
         )
         .def_pickle( Python::pickle< Models::Clj >() );
  
-      bp::def( "bond_type", &Models::LennardJones::bondname );
+      bp::def( "bond_name", &Models::LennardJones::bondname );
       bp::def
       ( 
         "_unfold_structure",

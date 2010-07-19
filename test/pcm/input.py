@@ -4,8 +4,8 @@
 clj  = Clj()
 """ Point charge + vand der Wall model. """
 clj.mesh = (5, 5, 5)
-clj.lj_cutoff = 10.5
 clj.ewald_cutoff = 25
+clj.lj_cutoff = 10.5
 clj.charges["Li"] = 1.0
 clj.charges["Cs"] = 1.0
 clj.charges["Br"] = -1.0

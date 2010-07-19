@@ -9,7 +9,7 @@
 #include "clj.hpp"
 #include "functional.hpp"
 
-BOOST_PYTHON_MODULE(pcm)
+BOOST_PYTHON_MODULE(_pcm)
 {
   namespace bp = boost::python;
   bp::scope scope;
