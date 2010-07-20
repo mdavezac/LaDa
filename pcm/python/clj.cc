@@ -146,16 +146,16 @@ namespace LaDa
         forces->atoms.resize(_in.atoms.size());
         switch(D)
         {
-          case 0: forces->energy = _clj.lennard_jones(_in, *forces);
-          case 1: forces->energy = _clj.ewald(_in, *forces);
-          case 2: forces->energy = _clj(_in, *forces);
+          case 0: forces->energy = _clj.lennard_jones(_in, *forces); break;
+          case 1: forces->energy = _clj.ewald(_in, *forces); break;
+          case 2: forces->energy = _clj(_in, *forces); break;
         }
         return forces;
       }
     
     void set_sequence_item(Models::Clj::t_Bonds &_bonds, 
                            Models::Clj::t_Bonds::value_type::first_type const &_index,
-                           bp::list const &_bond)
+                           bp::object const &_bond)
     {
       if(bp::len(_bond) != 2)
       {
