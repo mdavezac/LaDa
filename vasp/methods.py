@@ -199,3 +199,17 @@ class RelaxCellShape(object):
     # Now have vasp do a fake run to create anything it does create.
     kwargs["norun"] = True
     return self.vasp(*args, **kwargs) 
+
+  def __repr__(self):
+    """ Returns a python script describing this instance. """
+#   result = "from %s import %s" % (self.__class__.__module__, self.__class__.__name__)
+    result = ""
+    result += "functional = %s()\n" % (self.__class__.__name__)
+    result += "functional.relaxation = %s\n" % (repr(self.relaxation))
+    result += "functional.first_trial = %s\n" % (repr(self.first_trial))
+    result += "functional.maxiter = %s\n" % (repr(self.maxiter))
+    string = repr(self.vasp).replace("functional", "functional.vasp")
+    return result + string 
+
+
+
