@@ -337,7 +337,7 @@ namespace LaDa
       for(; i_charge != i_charge_end; ++i_charge )
         _stream << "    "
                 << i_charge->first << ": " << i_charge->second << "/r^2\n";
-
+      return _stream;
     }
   } // namespace CLJ
 } // namespace LaDa
