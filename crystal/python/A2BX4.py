@@ -36,6 +36,7 @@ def b12():
   lattice.add_site = (-9.180000e-01, 4.966500e+00, 5.642767e+00), "X", 
   lattice.add_site = (2.142000e+00, 6.583500e+00, 1.136570e-01), "X", 
   lattice.add_site = (9.180000e-01, 2.733500e+00, 4.841533e+00), "X", 
+  lattice.find_space_group()
   return lattice
 
 def d1I():
@@ -76,6 +77,7 @@ def d1I():
   lattice.add_site = (5.251356e+00, 7.603893e+00, 0.000000e+00), "X", 
   lattice.add_site = (1.207107e+00, 5.251356e+00, 3.281500e+00), "X", 
   lattice.add_site = (7.603893e+00, 3.559644e+00, 3.281500e+00), "X", 
+  lattice.find_space_group()
   return lattice
 
 def b9I():
@@ -116,6 +118,7 @@ def b9I():
   lattice.add_site = (-3.867370e+00, -4.538920e+00, -7.560000e-01), "X", 
   lattice.add_site = (8.482370e+00, 8.135800e-01, 7.560000e-01), "X", 
   lattice.add_site = (-8.482370e+00, -8.135800e-01, -7.560000e-01), "X", 
+  lattice.find_space_group()
   return lattice
 
 def b10I():
@@ -156,6 +159,7 @@ def b10I():
   lattice.add_site = (6.236611e+00, 9.407081e-02, 1.069048e+00), "X", 
   lattice.add_site = (1.534561e+00, 2.643729e+00, 1.144302e+00), "X", 
   lattice.add_site = (3.167489e+00, 2.831871e+00, 3.357652e+00), "X", 
+  lattice.find_space_group()
   return lattice
 
 def b16():
@@ -196,6 +200,7 @@ def b16():
   lattice.add_site = (-2.631750e+00, -1.816650e+00, -1.180349e+00), "X", 
   lattice.add_site = (6.756750e+00, 6.583500e-01, -1.166957e-01), "X", 
   lattice.add_site = (-6.756750e+00, -6.583500e-01, 1.166957e-01), "X", 
+  lattice.find_space_group()
   return lattice
 
 def b10():
@@ -236,32 +241,33 @@ def b10():
   lattice.add_site = (6.236611e+00, 9.407081e-02, 1.069048e+00), "X", 
   lattice.add_site = (1.534561e+00, 2.643729e+00, 1.144302e+00), "X", 
   lattice.add_site = (3.167489e+00, 2.831871e+00, 3.357652e+00), "X", 
+  lattice.find_space_group()
   return lattice
 
-def b5():
+def b5(x=0.387):
   """ Returns a b5 Lattice. """
   from . import Lattice
   
   lattice = Lattice()
-  lattice.scale = 1.200000e+00
-  lattice.set_cell = (0.000000e+00, 4.040000e+00, 4.040000e+00),\
-                     (4.040000e+00, 0.000000e+00, 4.040000e+00),\
-                     (4.040000e+00, 4.040000e+00, 0.000000e+00)
-  lattice.name = "b5"
-  lattice.add_site = (4.040000e+00, 4.040000e+00, 4.040000e+00), "A", 
-  lattice.add_site = (4.040000e+00, 2.020000e+00, 2.020000e+00), "A", 
-  lattice.add_site = (2.020000e+00, 4.040000e+00, 2.020000e+00), "A", 
-  lattice.add_site = (2.020000e+00, 2.020000e+00, 4.040000e+00), "A", 
-  lattice.add_site = (1.010000e+00, 1.010000e+00, 1.010000e+00), "B", 
-  lattice.add_site = (-1.010000e+00, -1.010000e+00, -1.010000e+00), "B", 
-  lattice.add_site = (2.116960e+00, 2.116960e+00, 2.116960e+00), "X", 
-  lattice.add_site = (2.116960e+00, -9.696000e-02, -9.696000e-02), "X", 
-  lattice.add_site = (-9.696000e-02, 2.116960e+00, -9.696000e-02), "X", 
-  lattice.add_site = (-9.696000e-02, -9.696000e-02, 2.116960e+00), "X", 
-  lattice.add_site = (-2.116960e+00, -2.116960e+00, -2.116960e+00), "X", 
-  lattice.add_site = (-2.116960e+00, 9.696000e-02, 9.696000e-02), "X", 
-  lattice.add_site = (9.696000e-02, -2.116960e+00, 9.696000e-02), "X", 
-  lattice.add_site = (9.696000e-02, 9.696000e-02, -2.116960e+00), "X", 
+  lattice.set_cell = (0, 0.5, 0.5), \
+                     (0.5, 0, 0.5), \
+                     (0.5, 0.5, 0)  
+  lattice.add_sites = ( [5e0/8e0, 5e0/8e0, 5e0/8e0], "A"), \
+                      ( [5e0/8e0, 7e0/8e0, 7e0/8e0], "A"), \
+                      ( [7e0/8e0, 5e0/8e0, 7e0/8e0], "A"), \
+                      ( [7e0/8e0, 7e0/8e0, 5e0/8e0], "A"),\
+                      ( [   0,   0,   0], "B"),\
+                      ( [0.25,0.25,0.25], "B"),\
+                      ( [     x,      x,      x], "X" ),\
+                      ( [     x,     -x,     -x], "X" ),\
+                      ( [0.25-x, 0.25-x, 0.25-x], "X" ),\
+                      ( [0.25-x, 0.25+x, 0.25+x], "X" ),\
+                      ( [    -x,     -x,      x], "X" ),\
+                      ( [    -x,      x,     -x], "X" ),\
+                      ( [0.25+x, 0.25-x, 0.25+x], "X" ),\
+                      ( [0.25+x, 0.25+x, 0.25-x], "X" )
+  lattice.scale = 1.0
+  lattice.find_space_group()
   return lattice
 
 def b9():
@@ -302,6 +308,7 @@ def b9():
   lattice.add_site = (-3.867370e+00, -4.538920e+00, -7.560000e-01), "X", 
   lattice.add_site = (8.482370e+00, 8.135800e-01, 7.560000e-01), "X", 
   lattice.add_site = (-8.482370e+00, -8.135800e-01, -7.560000e-01), "X", 
+  lattice.find_space_group()
   return lattice
 
 def b37():
@@ -335,6 +342,7 @@ def b37():
   lattice.add_site = (1.924788e-01, 2.680856e+00, 2.057186e+00), "X", 
   lattice.add_site = (-1.770048e+00, 3.206714e+00, 3.964281e+01), "X", 
   lattice.add_site = (-1.770048e+00, 3.206714e+00, 1.595721e+01), "X", 
+  lattice.find_space_group()
   return lattice
 
 def d9():
@@ -375,6 +383,7 @@ def d9():
   lattice.add_site = (5.733336e+00, 1.433336e+00, 2.866664e+00), "X", 
   lattice.add_site = (2.866664e+00, 5.733336e+00, 1.433336e+00), "X", 
   lattice.add_site = (1.433336e+00, 2.866664e+00, 5.733336e+00), "X", 
+  lattice.find_space_group()
   return lattice
 
 def b2I():
@@ -394,6 +403,7 @@ def b2I():
   lattice.add_site = (5.388201e+00, 5.388201e+00, 0.000000e+00), "X", 
   lattice.add_site = (5.388201e+00, 1.631799e+00, 0.000000e+00), "X", 
   lattice.add_site = (1.631799e+00, 5.388201e+00, 0.000000e+00), "X", 
+  lattice.find_space_group()
   return lattice
 
 def d3():
@@ -413,6 +423,7 @@ def d3():
   lattice.add_site = (8.104050e+00, 0.000000e+00, -3.111441e+00), "X", 
   lattice.add_site = (4.045950e+00, 0.000000e+00, 2.106854e+00), "X", 
   lattice.add_site = (8.104050e+00, 0.000000e+00, -5.773798e+00), "X", 
+  lattice.find_space_group()
   return lattice
 
 def d1():
@@ -453,6 +464,7 @@ def d1():
   lattice.add_site = (5.251356e+00, 7.603893e+00, 0.000000e+00), "X", 
   lattice.add_site = (1.207107e+00, 5.251356e+00, 3.281500e+00), "X", 
   lattice.add_site = (7.603893e+00, 3.559644e+00, 3.281500e+00), "X", 
+  lattice.find_space_group()
   return lattice
 
 def d3I():
@@ -479,6 +491,7 @@ def d3I():
   lattice.add_site = (-4.045950e+00, 0.000000e+00, -2.106854e+00), "X", 
   lattice.add_site = (1.012095e+01, 1.816500e+00, -2.388975e+00), "X", 
   lattice.add_site = (-1.012095e+01, -1.816500e+00, 2.388975e+00), "X", 
+  lattice.find_space_group()
   return lattice
 
 def b33():
@@ -533,6 +546,7 @@ def b33():
   lattice.add_site = (-3.799005e+00, 7.983800e+00, 7.956852e-01), "X", 
   lattice.add_site = (-7.887046e+00, 1.245241e+01, -4.401398e-01), "X", 
   lattice.add_site = (-6.408394e+00, 6.033572e+00, -1.593984e+00), "X", 
+  lattice.find_space_group()
   return lattice
 
 def b4():
@@ -552,6 +566,7 @@ def b4():
   lattice.add_site = (-1.711800e+00, -1.711800e+00, 1.426500e+00), "X", 
   lattice.add_site = (-1.711800e+00, 1.711800e+00, -1.426500e+00), "X", 
   lattice.add_site = (1.711800e+00, -1.711800e+00, -1.426500e+00), "X", 
+  lattice.find_space_group()
   return lattice
 
 def b36():
@@ -592,6 +607,7 @@ def b36():
   lattice.add_site = (1.082828e+01, 1.271868e+00, 3.197690e+00), "X", 
   lattice.add_site = (-1.018278e+00, -2.673132e+00, -1.052690e+00), "X", 
   lattice.add_site = (-1.082828e+01, -1.271868e+00, -3.197690e+00), "X", 
+  lattice.find_space_group()
   return lattice
 
 def S2():
@@ -632,6 +648,7 @@ def S2():
   lattice.add_site = (4.321400e-01, 2.850000e+00, 7.972720e+00), "X", 
   lattice.add_site = (6.787140e+00, 2.850000e+00, 1.134728e+01), "X", 
   lattice.add_site = (1.227786e+01, 9.500000e-01, 4.907280e+00), "X", 
+  lattice.find_space_group()
   return lattice
 
 def b5I():
@@ -658,6 +675,7 @@ def b5I():
   lattice.add_site = (-2.116960e+00, 9.696000e-02, 9.696000e-02), "X", 
   lattice.add_site = (9.696000e-02, -2.116960e+00, 9.696000e-02), "X", 
   lattice.add_site = (9.696000e-02, 9.696000e-02, -2.116960e+00), "X", 
+  lattice.find_space_group()
   return lattice
 
 def S1I():
@@ -726,6 +744,7 @@ def S1I():
   lattice.add_site = (3.226360e+00, 4.804853e+00, 2.906151e+00), "X", 
   lattice.add_site = (3.057940e+00, 4.804853e+00, 9.153251e+00), "X", 
   lattice.add_site = (9.510660e+00, 2.749947e+00, 2.906151e+00), "X", 
+  lattice.find_space_group()
   return lattice
 
 def b20():
@@ -752,6 +771,7 @@ def b20():
   lattice.add_site = (1.456431e+00, 1.991188e+00, 6.472350e+00), "X", 
   lattice.add_site = (-2.998683e-01, 5.136826e+00, 6.472350e+00), "X", 
   lattice.add_site = (-4.671698e-01, 2.473993e+00, 6.472350e+00), "X", 
+  lattice.find_space_group()
   return lattice
 
 def b21():
@@ -778,6 +798,7 @@ def b21():
   lattice.add_site = (-1.880009e+00, -1.880009e+00, 3.675000e+00), "X", 
   lattice.add_site = (3.256272e+00, -3.256272e+00, 3.675000e+00), "X", 
   lattice.add_site = (-1.376262e+00, 5.136281e+00, 3.675000e+00), "X", 
+  lattice.find_space_group()
   return lattice
 
 def b8():
@@ -804,6 +825,7 @@ def b8():
   lattice.add_site = (7.431428e+00, 9.976000e-01, 0.000000e+00), "X", 
   lattice.add_site = (2.295572e+00, 5.985600e+00, 0.000000e+00), "X", 
   lattice.add_site = (7.431428e+00, 3.990400e+00, 0.000000e+00), "X", 
+  lattice.find_space_group()
   return lattice
 
 def b38():
@@ -837,6 +859,7 @@ def b38():
   lattice.add_site = (0.000000e+00, 0.000000e+00, 3.231632e+01), "X", 
   lattice.add_site = (1.719358e-01, 2.394732e+00, 7.609641e+00), "X", 
   lattice.add_site = (-1.581134e+00, 2.864466e+00, 1.996300e+01), "X", 
+  lattice.find_space_group()
   return lattice
 
 def b15():
@@ -877,6 +900,7 @@ def b15():
   lattice.add_site = (7.249710e-01, 4.958446e+00, 4.178083e+00), "X", 
   lattice.add_site = (4.891471e+00, 7.234454e+00, 4.132170e-01), "X", 
   lattice.add_site = (7.608029e+00, 8.941460e-01, 2.708867e+00), "X", 
+  lattice.find_space_group()
   return lattice
 
 def b2():
@@ -896,6 +920,7 @@ def b2():
   lattice.add_site = (5.388201e+00, 5.388201e+00, 0.000000e+00), "X", 
   lattice.add_site = (5.388201e+00, 1.631799e+00, 0.000000e+00), "X", 
   lattice.add_site = (1.631799e+00, 5.388201e+00, 0.000000e+00), "X", 
+  lattice.find_space_group()
   return lattice
 
 def b4I():
@@ -915,6 +940,7 @@ def b4I():
   lattice.add_site = (-1.711800e+00, -1.711800e+00, 1.426500e+00), "X", 
   lattice.add_site = (-1.711800e+00, 1.711800e+00, -1.426500e+00), "X", 
   lattice.add_site = (1.711800e+00, -1.711800e+00, -1.426500e+00), "X", 
+  lattice.find_space_group()
   return lattice
 
 def b19():
@@ -941,6 +967,7 @@ def b19():
   lattice.add_site = (2.930500e+00, 2.314750e+00, 3.069340e+00), "X", 
   lattice.add_site = (2.930500e+00, 2.314750e+00, 4.996600e-01), "X", 
   lattice.add_site = (5.861000e+00, 2.314750e+00, 6.638340e+00), "X", 
+  lattice.find_space_group()
   return lattice
 
 def S3I():
@@ -967,6 +994,7 @@ def S3I():
   lattice.add_site = (3.941760e+00, 6.953820e+00, 0.000000e+00), "X", 
   lattice.add_site = (8.622600e-01, 8.163180e+00, 0.000000e+00), "X", 
   lattice.add_site = (5.296740e+00, 1.914820e+00, 0.000000e+00), "X", 
+  lattice.find_space_group()
   return lattice
 
 def b1():
@@ -986,6 +1014,7 @@ def b1():
   lattice.add_site = (1.977500e+00, 0.000000e+00, 0.000000e+00), "X", 
   lattice.add_site = (3.955000e+00, 3.955000e+00, 2.055900e+00), "X", 
   lattice.add_site = (1.977500e+00, 1.977500e+00, 4.797100e+00), "X", 
+  lattice.find_space_group()
   return lattice
 
 def S3():
@@ -1012,6 +1041,7 @@ def S3():
   lattice.add_site = (3.941760e+00, 6.953820e+00, 0.000000e+00), "X", 
   lattice.add_site = (8.622600e-01, 8.163180e+00, 0.000000e+00), "X", 
   lattice.add_site = (5.296740e+00, 1.914820e+00, 0.000000e+00), "X", 
+  lattice.find_space_group()
   return lattice
 
 def b18():
@@ -1038,6 +1068,7 @@ def b18():
   lattice.add_site = (8.044999e+00, 3.285281e+00, 3.961641e+00), "X", 
   lattice.add_site = (2.963714e+00, 3.841167e+00, 3.946170e+00), "X", 
   lattice.add_site = (8.096986e+00, 3.997133e+00, 5.135830e+00), "X", 
+  lattice.find_space_group()
   return lattice
 
 def b11():
@@ -1078,6 +1109,7 @@ def b11():
   lattice.add_site = (5.984155e+00, 2.366520e-01, 1.526915e+00), "X", 
   lattice.add_site = (2.242655e+00, 2.649348e+00, 3.509085e+00), "X", 
   lattice.add_site = (1.498845e+00, 3.122652e+00, 8.545085e+00), "X", 
+  lattice.find_space_group()
   return lattice
 
 def S1():
@@ -1146,6 +1178,7 @@ def S1():
   lattice.add_site = (3.226360e+00, 4.804853e+00, 2.906151e+00), "X", 
   lattice.add_site = (3.057940e+00, 4.804853e+00, 9.153251e+00), "X", 
   lattice.add_site = (9.510660e+00, 2.749947e+00, 2.906151e+00), "X", 
+  lattice.find_space_group()
   return lattice
 
 def b1I():
@@ -1172,6 +1205,7 @@ def b1I():
   lattice.add_site = (0.000000e+00, 0.000000e+00, -2.055900e+00), "X", 
   lattice.add_site = (1.977500e+00, 1.977500e+00, 8.908900e+00), "X", 
   lattice.add_site = (-1.977500e+00, -1.977500e+00, -8.908900e+00), "X", 
+  lattice.find_space_group()
   return lattice
 
 def b6():

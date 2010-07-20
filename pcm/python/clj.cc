@@ -25,42 +25,12 @@
 
 namespace LaDa
 {
-  namespace Python
+  namespace python
   {
-    template< class T_OBJECT >
-      struct pickle : boost::python::pickle_suite
-      {
-        static boost::python::tuple getinitargs( T_OBJECT const& _w)  
-        {
-          return boost::python::tuple();
-        }
-        static boost::python::tuple getstate(const T_OBJECT& _in)
-        {
-          std::ostringstream ss;
-          boost::archive::text_oarchive oa( ss );
-          oa << _in;
-
-          return boost::python::make_tuple( ss.str() );
-        }
-        static void setstate( T_OBJECT& _out, boost::python::tuple state)
-        {
-          namespace bp = boost::python;
-          if( bp::len( state ) != 1 )
-          {
-            PyErr_SetObject(PyExc_ValueError,
-                            ("expected 1-item tuple in call to __setstate__; got %s"
-                             % state).ptr()
-                );
-            bp::throw_error_already_set();
-          }
-          const std::string str = bp::extract< std::string >( state[0] );
-          std::istringstream ss( str.c_str() );
-          boost::archive::text_iarchive ia( ss );
-          ia >> _out;
-        }
-      };
+    namespace bp = boost::python;
     template<class T_TYPE>
-      void unfold_structure( const Crystal :: TStructure<T_TYPE>& _structure, std::vector<types::t_real>& _list )
+      void unfold_structure( const Crystal :: TStructure<T_TYPE>& _structure,
+                             std::vector<types::t_real>& _list )
       {
         _list.clear();
         typedef Crystal::TStructure<T_TYPE> t_Str;
@@ -68,8 +38,9 @@ namespace LaDa
           for( size_t j(0); j < 3; ++j )
             if( (_structure.freeze & Crystal::cell_freeze_tag(i,j)) == 0 )
               _list.push_back( _structure.cell(i,j) );
-        typename Crystal::TStructure<T_TYPE>::t_Atoms::const_iterator i_atom = _structure.atoms.begin();
-        typename Crystal::TStructure<T_TYPE>::t_Atoms::const_iterator i_atom_end = _structure.atoms.end();
+        typedef typename Crystal::TStructure<T_TYPE>::t_Atoms::const_iterator t_cit;
+        t_cit i_atom = _structure.atoms.begin();
+        t_cit i_atom_end = _structure.atoms.end();
         for(; i_atom != i_atom_end; ++i_atom )
         {
           if( (i_atom->freeze & t_Str::t_Atom::FREEZE_X) == 0 )
@@ -135,13 +106,24 @@ namespace LaDa
       result->van_der_walls = _b;
       return result;
     }
+    Models::Clj::t_Bonds::value_type::second_type* bond_tconstructor( bp::tuple const &_t )
+    {
+      if( bp::len( _t ) != 2 )
+      {
+        PyErr_SetString(PyExc_ValueError, "Expected a 3-tuple.");
+        return NULL;
+      }
+      types::t_real const a = bp::extract<types::t_real>(_t[0]);
+      types::t_real const b = bp::extract<types::t_real>(_t[1]);
+      return bond_constructor(a, b);
+    }
 
     void set_mesh( Models::Clj& _clj, const boost::python::tuple& _tuple )
     {
       namespace bp = boost::python;
       if( bp::len( _tuple ) != 3 )
       {
-        PyErr_SetString(PyExc_StopIteration, "Expected a 3-tuple.");
+        PyErr_SetString(PyExc_ValueError, "Expected a 3-tuple.");
         return;
       }
       const types::t_int a = bp::extract<types::t_int>( _tuple[0] );
@@ -156,6 +138,44 @@ namespace LaDa
       return boost::python::make_tuple( bt::get<0>(t), bt::get<1>(t), bt::get<2>(t) ); 
     }
 
+    template<int D> boost::shared_ptr<Models::Clj::t_Arg>
+      __call__(Models::Clj const & _clj, Models::Clj::t_Arg const &_in)
+      {
+        boost::shared_ptr<Models::Clj::t_Arg> forces(new Models::Clj::t_Arg);
+        forces->cell = math::rMatrix3d::Zero();
+        forces->atoms.resize(_in.atoms.size());
+        switch(D)
+        {
+          case 0: forces->energy = _clj.lennard_jones(_in, *forces); break;
+          case 1: forces->energy = _clj.ewald(_in, *forces); break;
+          case 2: forces->energy = _clj(_in, *forces); break;
+        }
+        return forces;
+      }
+    
+    void set_sequence_item(Models::Clj::t_Bonds &_bonds, 
+                           Models::Clj::t_Bonds::value_type::first_type const &_index,
+                           bp::object const &_bond)
+    {
+      if(bp::len(_bond) != 2)
+      {
+        PyErr_SetString(PyExc_ValueError, "Incorrect value for bond type.");
+        return;
+      }
+      types::t_real a, b;
+      try
+      { 
+        a = bp::extract<types::t_real>(_bond[0]); 
+        b = bp::extract<types::t_real>(_bond[1]); 
+      }
+      catch(...) 
+      {
+        PyErr_SetString(PyExc_ValueError, "Incorrect value for bond type.");
+        return;
+      }
+      _bonds[_index] = Models::Clj::t_Bonds::value_type::second_type(a,b);
+    }
+
     void expose_clj()
     {
       namespace bp = boost :: python;
@@ -165,29 +185,48 @@ namespace LaDa
 
       bp::class_< t_Charges >( "Charges", "Dictionary of charges" )
         .def( bp :: map_indexing_suite< t_Charges >() )
-        .def_pickle( pickle< t_Charges >() );
+        .def_pickle( Python::pickle< t_Charges >() );
    
       bp::class_< t_Bond >( "LJBond", "Holds bond parameters for Lennard-Jones." )
         .def( bp::init<>() )
         .def( bp::init<t_Bond>() )
         .def( "__init__", bp::make_constructor( &bond_constructor ),
               "First argument is hard-sphere parameter, and second vand-der-walls parameter." )
+        .def( "__init__", bp::make_constructor( &bond_tconstructor ),
+              "First argument is hard-sphere parameter, and second vand-der-walls parameter." )
         .def_readwrite( "hardsphere", &t_Bond::hard_sphere, "+r^12 factor." )
         .def_readwrite( "vanderwalls", &t_Bond::van_der_walls, "-r^6 factor." )
-        .def_pickle( pickle< t_Bond >() );
+        .def_pickle( Python::pickle< t_Bond >() );
 
       bp::class_< t_Bonds >( "LJBonds", "Dictionary of bonds" )
         .def( bp :: map_indexing_suite< t_Bonds >() )
-        .def_pickle( pickle< t_Bonds >() );
+        .def("__setitem__", &set_sequence_item,
+             " Sets lennard-jones parameter for a given bond.\n\n"
+             " :Parameters:\n"
+             "   - `index` of the bond, as obtained from `pcm.bond_name`.\n"
+             "   - `value` a two tuple containing the facto of the r^12 term and the r^6 term.\n"
+            )
+        .def_pickle( Python::pickle< t_Bonds >() );
 
       bp::class_< Models::Clj >( "Clj", "Coulomb + LennardJones functional.\n" )
         .def_readwrite( "charges", &Models::Clj::charges, "Dictionnary of charges." )
         .def_readwrite( "bonds", &Models::Clj::bonds, "Dictionnary of charges." )
-        .def("lennard_johnes", &Models::Clj::lennard_johnes )
-        .def("ewald", &Models::Clj::ewald )
-        .def("__call__", &Models::Clj::operator() )
-        .def("gradient", &Models::Clj::gradient )
-        .def("__str__", &tostream<Models::Clj> )
+        .def( "lennard_jones", &__call__<0>, bp::arg("structure"),
+              "Returns Lennard-Jones forces and energy.\n\n"
+              ":Parameter:\n"
+              " - `structure` Crystal structure for wich to compute energy.\n"
+              ":return: a lada.crystal.Structure object containing forces and energy.\n" )
+        .def( "ewald", &__call__<1>, bp::arg("structure"),
+              "Returns Ewald forces and energy.\n\n"
+              ":Parameter:\n"
+              " - `structure` Crystal structure for wich to compute energy.\n"
+              ":return: a lada.crystal.Structure object containing forces and energy.\n" )
+        .def( "__call__", &__call__<2>, bp::arg("structure"),
+              "Returns Ewald+Lennard-Jones forces and energy.\n\n"
+              ":Parameter:\n"
+              " - `structure` Crystal structure for wich to compute energy.\n"
+              ":return: a lada.crystal.Structure object containing forces and energy.\n" )
+        .def("__str__", &Python::tostream<Models::Clj> )
         .add_property
         (
           "mesh", 
@@ -206,34 +245,21 @@ namespace LaDa
           &Models::Clj::LennardJones::get_rcutoff, &Models::Clj::LennardJones::set_rcutoff,
           "Sets cutoff for real-space lennard-jhones sum."
         )
-        .def_pickle( pickle< Models::Clj >() );
+        .def_pickle( Python::pickle< Models::Clj >() );
  
-      bp::def( "bond_type", &Models::LennardJones::bondname );
+      bp::def( "bond_name", &Models::LennardJones::bondname );
       bp::def
       ( 
-        "unfold_structure",
+        "_unfold_structure",
         &unfold_structure< std::string >,
         "Unfolds a structure into a c++ vector."
       );
       bp::def
       ( 
-        "fold_structure",
+        "_fold_structure",
         &fold_structure< std::string >,
         "Folds a c++ vector into a structure."
       );
-
-      bp::def
-      (
-        "read_epinput",
-        &read_fortran_input,
-        (
-          bp::arg("functional"), 
-          bp::arg("species"),
-          bp::arg("filename")
-        ),
-        "Reads input from fortran model.\n"
-        "species is a list of atomic symbols which can be used to read a POSCAR."
-      );
     }
-  } // namespace Python
+  } // namespace python
 } // namespace LaDa

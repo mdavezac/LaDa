@@ -5,7 +5,7 @@
 
 namespace LaDa
 {
-  namespace Python
+  namespace python
   {
     void expose_functional();
   }

@@ -40,7 +40,7 @@ namespace LaDa
           .def( "check", &t_iterator::check );
       }
     template< class T_MAP >
-      void expose_map( const std::string &_name, const std::string &_docstring )
+      bp::class_<T_MAP> expose_map( const std::string &_name, const std::string &_docstring )
       {
         typedef T_MAP t_Map;
         typedef details::map_iterator< t_Map, details::deref_item >  t_itemiterator;
@@ -49,7 +49,7 @@ namespace LaDa
         expose_iterator< t_Map, details::deref_item >( ("__itemiterator_" + _name).c_str() );
         expose_iterator< t_Map, details::deref_str_key >( ("__keyiterator_" + _name).c_str() );
 
-        bp::class_< t_Map >( _name.c_str(), _docstring.c_str() )
+        return bp::class_< t_Map >( _name.c_str(), _docstring.c_str() )
           .def( "__init__",
                 bp::make_constructor( details::default_constructor< T_MAP > ) )
           .def( "__init__",
