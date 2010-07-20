@@ -178,7 +178,8 @@ def mpi_population_evaluation(self, evaluator, pools = None):
 
     # now reinserts them into populations.
     for index, indiv in enumerate(iterpops(this.population, this.offspring)):
-      assert len(gather_these) > index % pools
+      assert len(gather_these) > index % pools, \
+             RuntimeError("%s > %i %% %i" % (len(gather_these), index, pools))
       assert len(gather_these[index % pools]) != 0
       a, fitness = gather_these[index % pools].pop(0)
       indiv.fitness = fitness
