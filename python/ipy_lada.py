@@ -172,7 +172,57 @@ def current_jobname(self, arg):
   print ip.user_ns["current_jobdict"].name
   return
 
+def qstat(self, arg):
+  """ squeue --user=`whoami` -o "%7i %.3C %3t  --   %50j" """
+  from subprocess import Popen, PIPE
+  from IPython.genutils import SList
+
+  ip = self.api
+  # finds user name.
+  whoami = Popen(["whoami"], stdout=PIPE).stdout.readline()[:-1]
+  squeue = Popen(["squeue", "--user=" + whoami, "-o", "\"%7i %.3C %3t    %j\""],
+                 stdout=PIPE)
+  result = squeue.stdout.read().rstrip().split('\n')
+  result = SList([u[1:-1] for u in result])
+  return result.grep(str(arg[1:-1]))
+
+def cancel_jobs(self, arg):
+  """ Cancel jobs which grep for whatever is in arg.
+  
+      For instance, the following cancels all jobs with "anti-ferro" in their
+      name.
+      >>> %cancel_jobs "anti-ferro"
+  """
+  from subprocess import Popen, PIPE
+  
+  arg = str(arg[1:-1])
+  if len(arg) == 0: 
+    print "cancel_job Requires an argument."
+    print "Please use please_cancel_all_jobs to cancel all jobs."
+    return
+  result = qstat(self, arg)
+  for u, name in zip(result.fields(0), result.fields(-1)):
+    print "cancelling %s." % (name)
+  a = ''
+  while a not in ['n', 'y']:
+    a = raw_input("Are you sure you want to cancel all jobs? [y/n] ")
+  if a == 'n': return
+  for u, name in zip(result.fields(0), result.fields(-1)):
+    ip.system("scancel %i" % (int(u)))
+
+def please_cancel_all_jobs(self, arg):
+  """ Cancel all jobs. """
+  from subprocess import Popen, PIPE
+  
+  a = ''
+  while a not in ['n', 'y']: a = raw_input("Are you sure you want to cancel all jobs? [y/n] ")
+  if a == 'n': return
+  result = qstat(self, None)
+  for u in result.field(0):
+    ip.system("scancel %i" % (int(u)))
+
 def _main():
+  from sys import environ
   import IPython.ipapi
   ip = IPython.ipapi.get()
   ip.expose_magic("explore", explore)
@@ -180,6 +230,11 @@ def _main():
   ip.expose_magic("listjobs", listjobs)
   ip.expose_magic("jobname", current_jobname)
   ip.set_hook('complete_command', goto_completer, re_key = '\s*%?goto')
+  if "SNLCLUSTER" in environ:
+    if environ["SNLCLUSTER"] in ["redrock"]:
+      ip.expose_magic("qstat", qstat)
+      ip.expose_magic("cancel_jobs", cancel_jobs)
+      ip.expose_magic("please_cancel_all_jobs", please_cancel_all_jobs)
 
 
 _main()
