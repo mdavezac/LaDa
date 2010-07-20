@@ -288,6 +288,18 @@ Structure.set_cell = add_setter(_set_cell)
 rStructure.set_cell = add_setter(_set_cell)
 Lattice.set_cell = add_setter(_set_cell)
 
+# Makes it easier to set occupation of lattice sites.
+def _set_site_type(self, value): 
+  """ Sets the type of a site using python intrinsics. """
+  self._type.clear()
+  if isinstance(value, str): self._type.append(value)
+  else: 
+    for u in value: self._type.append(u)
+def _get_site_type(self): return self._type
+Site._type = Site.type 
+Site.type = property(_get_site_type, _set_site_type, doc=Site._type.__doc__)
+   
+
 # changes __repr__ behavior
 def _print_structure(self):
   result  = "# Structure definition.\n"
