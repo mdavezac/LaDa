@@ -137,16 +137,69 @@ class Vasp(Launch):
 
     return extract
 
-def return_final(looper, *args, **keywords):
-  """ Function to pass through a loop, returning final result only. 
+  def __repr__(self):
+    """ Returns a python script representing this object. """
+    from .incar._params import SpecialVaspParam
+    string = "vasp = %s()\n" % (self.__class__.__name__)
 
-      Many methods in this module should be of the form: 
-      >>> extract = None
-      >>> for extract in method(vasp):
-      >>>   # do something
-      This function goes through the loop returning only the final result.
-      >>> extract = return_final(method.relaxation, structure, vasp, outdir)
-  """ 
-  result = None
-  for result in looper(*args, **keywords): pass
-  return result
+    # creates a default vasp instance to compare to.
+    compare = self.__class__()
+    params = compare.params.keys()
+
+    # will hold classes from use modules.
+    user_modules = {}
+    # now go through vasp parameters and print them out.
+    for name, value in self.params.items():
+      if value == None: continue
+      # if a special parameter, then is non-default.
+      if name in params: string += "vasp.%s = %s\n" % (name, repr(value))
+      else:
+        string += "vasp.add_item = \"%s\", %s\n" % (name, repr(value))
+        module = value.__class__.__module__ 
+        if module != "lada.vasp.incar._params": 
+          classname = value.__class__.__name__ 
+          if module in user_modules: user_modules[module].append(classname)
+          else: user_modules[module].append(classname)
+    for name, value in self.special.items():
+      if value.value == None: continue
+      assert isinstance(value, SpecialVaspParam)
+      string += "vasp.%s = %s\n" % (name, value)
+      module = value.__class__.__module__ 
+      if module != "lada.vasp.incar._params": 
+        classname = value.__class__.__name__ 
+        if module in user_modules: user_modules[module].append(classname)
+        else: user_modules[module].append(classname)
+    # adds kpoints
+    string += "vasp.kpoints = %s\n" % (repr(self.kpoints))
+    if hasattr(self.kpoints, "__call__"):
+      # checks for user module.
+      module = self.kpoints.__class__.__module__ 
+      if module != "lada.vasp.kpoints":
+        classname = self.kpoints.__class__.__name__ 
+        if module in user_modules: user_modules[module].append(classname)
+        else: user_modules[module].append(classname)
+    # adds species.
+    for name, specie in self.species.items():
+      string += "vasp.add_specie = \"%s\", \"%s\"" % (name, specie.path)
+      if len(specie.U) == 0: string += ", None"
+      else:
+        string += ",\\\n                  [ %s" % (specie.U[0])
+        for u in specie.U[1:]:
+          string += ",\\\n                    %s" % (u)
+        string += " ]\n"
+      string += ",\\\n                  "
+      string += "None" if not hasattr(specie, "oxidation") else str(specie.oxidation)
+      string += ", %s\n" % (repr(specie.magnetic))
+    if not self.inplace: 
+      string += "vasp.inplace = False\n"
+      string += "vasp.workdir = \"%s\"\n" % (self.workdir)
+
+    # adds user modules above repr string.
+    header = ""
+    for name, values in user_modules:
+      header += "from %s import %s" % (name, values[0])
+      for v in values[1:]:
+        header += ", %s" % (v)
+      header += "\n"
+    return header + string
+
