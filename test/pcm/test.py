@@ -1,4 +1,4 @@
-from lada.pcm import Clj
+from lada.pcm import Clj, bond_name
 from numpy import array
 
 from lada.opt import read_input
@@ -8,18 +8,18 @@ from lada.crystal import fill_structure, Structure
 clj  = Clj()
 """ Point charge + r^12 + r^6 model. """
 clj.ewald_cutoff = 32
-#clj.lj_cutoff = 10.5
 
 clj.charges["A"] = 3.0
 clj.charges["B"] = 2.0
 clj.charges["X"] = -2.0
 
-# clj.mesh = (5, 5, 5)
-# hs = { "Li":1.34, "Cs":2.25,"Br":1.14}
-# vdw = {"Li":2.2,"Cs":3,"Br":1.9}
-# for a in ["Li", "Cs", "Br" ]:
-#   for b in ["Li", "Cs", "Br" ]:
-#     type = models.bond_type( a, b )
+# clj.lj_cutoff = 10.5
+# clj.mesh = (15, 15, 15)
+# hs = { "A":1.34, "B":2.25,"X":1.14}
+# vdw = {"A":2.2,"B":3,"X":1.9}
+# for a in ["A", "B", "X" ]:
+#   for b in ["A", "B", "X" ]:
+#     type = bond_name( a, b )
 #     hs_ = float( hs[a] ) + float( hs[b]  )
 #     vdw_ = float(vdw[a]) + float(vdw[b] )
 #     clj.bonds[type] = pow(hs_, 12.0), pow(vdw_, 6.0)
@@ -41,4 +41,5 @@ for atom in structure.atoms:
   elif atom.type == "B": atom.type = "A"
 
 I = clj.ewald(structure)
+print I.energy, N.energy
 print I.energy - N.energy,  structure.scale, x
