@@ -410,7 +410,7 @@ class JobDict(object):
   def __getstate__(self):
     d = self.__dict__.copy()
     params = d.pop("jobparams")
-    return d, params
+    return d, params, "This is a JobDict pickle. Grep me!"
   def __setstate__(self, args):
     super(JobDict, self).__setattr__("jobparams", args[1])
     d = self.__dict__.update(args[0])
