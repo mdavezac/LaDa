@@ -11,7 +11,7 @@ def explore(self, arg):
   pickle_filename  = ip.user_ns.pop("current_jobdict_filename", None)
   pickle_directory = ip.user_ns.pop("current_jobdict_directory", None)
   
-  args = arg.split()
+  args = [u for u in arg.split() if u not in ["in", "with"]]
   if len(args) == 0:
     if current == None:
       print "No current jobs."
@@ -30,58 +30,94 @@ def explore(self, arg):
   def get_dict(filename, is_a_file = None):
     if is_a_file == None: 
       is_a_file = exists(filename)
-      is_a_global = filename in ip.user_ns
-      if is_a_global: is_a_global = isinstance(ip.user_ns[filename], jobs.JobDict)
-      if is_a_global and is_a_file:
-        print "Found both a file and a JobDict variable named %s.\n"\
-              "Please use \"explore file %s\" or \"explore JobDict %s\"." \
-              % (filename, filename, filename)
-        return
-      if not (is_a_file or is_a_global):
-        print "Could not find either JobDict variable or a file with name %s." % (filename)
-        return 
-    else: is_a_global = not is_a_file
+      var, dvar = None, ip.user_ns
+      for name in  filename.split('.'):
+        try: var, dvar = dvar[name], dvar[name].__dict__ 
+        except: var = None; break
+      is_a_variable = var != None
+      if is_a_variable and is_a_file:
+        raise RuntimeError(\
+                "Found both a file and a JobDict variable named %s.\n"\
+                "Please use \"explore file %s\" or \"explore JobDict %s\"." \
+                % (filename, filename, filename) )
+      if not (is_a_file or is_a_variable):
+        raise RuntimeError(\
+            "Could not find either JobDict variable or a file with name %s." % (filename) )
+    else: is_a_variable = not is_a_file
 
     if is_a_file:
       if not exists(filename): # checks the file exists.
-        print "Could not find file %s." % (filename)
-        return 
+        raise RuntimeError("Could not find file %s." % (filename))
       with open_exclusive(filename, "r") as file: result = load(file)
       return result, abspath(splitpath(filename)[0]), splitpath(filename)[1]
 
-    if is_a_global: # checks the variable exists.
-      if not filename in ip.user_ns: 
-        print "Could not find JobDict variable %s." % (filename)
-        return
-      elif not isinstance(ip.user_ns[filename], jobs.JobDict): # checks the file exists.
-        print "Variable %s is not a JobDict object." % (filename)
-        return
-      return ip.user_ns[filename], None, None
+    if is_a_variable: # checks the variable exists.
+      var, dvar = None, ip.user_ns
+      for name in  filename.split('.'):
+        try: var, dvar = dvar[name], dvar[name].__dict__ 
+        except:
+          raise RuntimeError("Could not find variable name %s." % (filename))
+      if not isinstance(var, jobs.JobDict): # checks the file exists.
+        raise RuntimeError("Variable %s is not a JobDict object." % (filename))
+      return var, None, None
 
-  if len(args) == 1: 
-    result = get_dict(args[0])
-    if result != None:
-      ip.user_ns["current_jobdict"] = result[0]
-      ip.user_ns["current_jobdict_directory"] = result[1]
-      ip.user_ns["current_jobdict_filename"] = result[2]
-    return 
-  elif len(args) == 2 and args[0] == "file":
-    result = get_dict(args[0], True)
-    if result != None:
-      ip.user_ns["current_jobdict"] = result[0]
-      ip.user_ns["current_jobdict_directory"] = result[1]
-      ip.user_ns["current_jobdict_filename"] = result[2]
-    return 
-  elif len(args) == 2 and args[0] == "JobDict":
-    result = get_dict(args[0], False)
-    if result != None:
-      ip.user_ns["current_jobdict"] = result[0]
-      ip.user_ns["current_jobdict_directory"] = result[1]
-      ip.user_ns["current_jobdict_filename"] = result[2]
-    return 
-  else: 
-    print "Calling explore with arguments %s is invalid." % (arg)
-    return
+  def _impl():
+    """ Implementation of explore. """
+    from os.path import join, exists
+    from copy import deepcopy
+    # filters some results, depending on success or failure.
+    if args[0] == "errors" or args[0] == "results":
+      # other arguments should be dictionary.
+      string = ""
+      for i in args[1:]: string += " " + i
+      explore(self, string)
+      if "current_jobdict" not in ip.user_ns:
+        raise RuntimeError("No job dictionary currently defined.\n"\
+                           "Please load dictionary with \"explore\"." )
+      if ip.user_ns["current_jobdict_directory"] == None: 
+        raise RuntimeError("Directory of current job dictionary is not defined.\n"\
+                           "Cannot check for success.\n"
+                           "Please reload dictionary with explore, \n"
+                           "or set current_jobdict_directory by hand.")
+      ip.user_ns["current_jobdict_filename"] = None
+      ip.user_ns["current_jobdict"] = deepcopy(ip.user_ns["current_jobdict"])
+      rootdir = ip.user_ns["current_jobdict_directory"]
+      # now marks (un)successful runs.
+      which = (lambda x: not x) if args[0] == "results" else (lambda x: x)
+      for job, d in ip.user_ns["current_jobdict"].walk_through():
+        if job.is_tagged: continue
+        directory = join(rootdir, d)
+        if which(job.functional.Extract(directory).success): job.tag()
+    elif args[0] == "jobs": 
+      string = ""
+      for i in args[1:]: string += " " + i
+      explore(self, string)
+    elif len(args) == 1:
+      result = get_dict(args[0])
+      if result != None:
+        ip.user_ns["current_jobdict"] = result[0]
+        ip.user_ns["current_jobdict_directory"] = result[1]
+        ip.user_ns["current_jobdict_filename"] = result[2]
+    elif len(args) == 2 and args[0] == "file":
+      result = get_dict(args[0], True)
+      if result != None:
+        ip.user_ns["current_jobdict"] = result[0]
+        ip.user_ns["current_jobdict_directory"] = result[1]
+        ip.user_ns["current_jobdict_filename"] = result[2]
+    elif len(args) == 2 and args[0] == "JobDict":
+      result = get_dict(args[0], False)
+      if result != None:
+        ip.user_ns["current_jobdict"] = result[0]
+        ip.user_ns["current_jobdict_directory"] = result[1]
+        ip.user_ns["current_jobdict_filename"] = result[2]
+    else: raise RuntimeError("Calling explore with arguments %s is invalid." % (arg))
+
+  try: _impl()
+  except RuntimeError as e: print e
+  else:
+    # remove any prior iterator stuff.
+    ip.user_ns.pop("_lada_subjob_iterator", None)
+    ip.user_ns.pop("_lada_subjob_iterated", None)
 
 def goto(self, arg):
   """ Moves current dictionary position and working directory (if appropriate). """
@@ -104,8 +140,23 @@ def goto(self, arg):
       print "Current position in job dictionary:", current.name
       print "Filename of jobdictionary: ", join(pickle_filename, pickle_directory)
     return
-  arg = arg.split()[0]
-  try: result = current[arg] 
+  args = arg.split()
+  if len(args) > 1:
+    print "Invalid argument to goto %s." % (arg)
+    return
+
+  # if no argument, then print current job data.
+  if len(args) == 0: 
+    explore(self, "")
+    return
+
+  # cases to send to iterate.
+  if args[0] == "next":       return iterate(self, "")
+  elif args[0] == "previous": return iterate(self, "previous")
+  elif args[0] == "reset":    return iterate(self, "reset")
+
+  # case for which precise location is given.
+  try: result = current[args[0]] 
   except KeyError as e: 
     print e
     return 
@@ -128,6 +179,11 @@ def listjobs(self, arg):
     return
   current = ip.user_ns["current_jobdict"] 
   if len(arg) != 0:
+    if arg == "all": 
+      for job, d in current.root.walk_through():
+        if job.is_tagged: continue
+        print job.name
+      return
     try: subdict = ip.user_ns["current_jobdict"][arg] 
     except KeyError:
       print "%s is not a valid jobname of current job dictionary." % (arg)
@@ -140,6 +196,7 @@ def listjobs(self, arg):
   string = ""
   lines = ""
   for j in current.children.keys():
+    if current.children[j].is_tagged: continue
     if len(string+j) > 60:
       if len(lines) != 0: lines += "\n" + string
       else: lines = string
@@ -148,7 +205,47 @@ def listjobs(self, arg):
 
   if len(lines) == 0: print string
   else: print lines + "\n" + string
- 
+
+def iterate(self, event):
+  """ Goes to next (untagged) job. """
+  ip = self.api
+  if "current_jobdict" not in ip.user_ns:
+    print "No current job-dictionary. Please load one with \"explore\"."
+    return
+
+  args = event.split()
+  if len(args) > 1: 
+    print "Invalid argument %s." % (event)
+  elif len(args) == 0:
+    if "_lada_subjob_iterator" in ip.user_ns: 
+      iterator = ip.user_ns["_lada_subjob_iterator"]
+    else:
+      iterator = ip.user_ns["current_jobdict"].root.walk_through()
+    while True:
+      try: job, d = iterator.next()
+      except StopIteration: 
+        print "Reached end of job list."
+        return 
+      if job.is_tagged: continue
+      break
+    ip.user_ns["_lada_subjob_iterator"] = iterator
+    if "_lada_subjob_iterated" not in ip.user_ns: ip.user_ns["_lada_subjob_iterated"] = []
+    ip.user_ns["_lada_subjob_iterated"].append(ip.user_ns["current_jobdict"].name)
+    goto(self, job.name)
+    print "In job ", ip.user_ns["current_jobdict"].name
+  elif args[0] == "reset" or args[0] == "restart":
+    # remove any prior iterator stuff.
+    ip.user_ns.pop("_lada_subjob_iterator", None)
+    ip.user_ns.pop("_lada_subjob_iterated", None)
+    print "In job ", ip.user_ns["current_jobdict"].name
+  elif args[0] == "back" or args[0] == "previous":
+    if "_lada_subjob_iterated" not in ip.user_ns: 
+      print "No previous job to go to. "
+    else:
+      goto(self, ip.user_ns["_lada_subjob_iterated"].pop(-1))
+      print "In job ", ip.user_ns["current_jobdict"].name
+
+
 def goto_completer(self, event):
   import IPython
   ip = self.api
@@ -163,7 +260,82 @@ def goto_completer(self, event):
       if hasattr(subdict.children, "keys"):
         return [subkey + "/" + a + "/" for a in subdict.children.keys()]
     raise IPython.ipapi.TryNext
-  else: return [a + "/" for a in ip.user_ns["current_jobdict"].children.keys()]
+  else:
+    result = [a + "/" for a in ip.user_ns["current_jobdict"].children.keys()]
+    result.extend(["/", "next", "reset"])
+    if ip.user_ns["current_jobdict"].parent != None: result.append("../")
+    if "_lada_subjob_iterated" in ip.user_ns:
+      if len(ip.user_ns["_lada_subjob_iterated"]): result.append("previous")
+    return result
+
+def showme(self, event):
+  """ Edits functional and/or structure. """
+  from os import remove
+  from tempfile import NamedTemporaryFile
+  from lada.opt import read_input
+  from lada.crystal import write_poscar, read_poscar
+  ip = self.api
+  if "current_jobdict" not in ip.user_ns: 
+    print "No job dictionary. Please use \"explore\" magic function."
+    return
+  args = [u for u in event.split() if u not in ["in"]]
+  if len(args) == 0:
+    print "What should I show you?"
+    return
+  if len(args) == 2:
+    old = ip.user_ns["current_jobdict"].name 
+    try:
+      goto(self, args[0])
+      showme(self, args[1])
+    finally: goto(self, old)
+  elif len(args) == 1:
+    arg = args[0]
+    job = ip.user_ns["current_jobdict"]
+    try: 
+      suffix = ".py" if arg.lower() == "functional" else None
+      with NamedTemporaryFile("w", delete = False, suffix=suffix) as file:
+        filename = file.name
+        # editing INCAR.
+        if arg.lower() == "functional":
+          if job.functional == None: # case where no job is defined.
+            file.write("# There are currently no actual jobs defined here.\n"\
+                       "functional = None\njobparams={}\n")
+          else: # case where a functional exists.
+            file.write(repr(job.functional))
+            file.write("\n\n# Parameters in the functional above **will** be \n"\
+                       "# overwritten by the following corresponding parameters.\n")
+            file.write("jobparams = {}\n")
+            for key, value in job.jobparams.items():
+              if key == "args": continue
+              if key == "functional": continue
+              file.write("jobparams[\"%s\"] = %s\n" % (key, repr(value)))
+        # editing POSCAR.
+        elif arg.lower() == "structure":
+          # always as vasp5. Makes it easier.
+          if job.args[0] != None: write_poscar(job.args[0], file, True)
+        # Error!
+        else: 
+          print "%s is not a valid argument to showme." % (event)
+          return
+
+      # lets user edit stuff.
+      ip.magic("%%edit -x %s" % (filename))
+
+      # change jobparameters.
+      if arg.lower() == "functional":
+        input = read_input(filename)
+        input.jobparams["args"] = job.args
+        input.jobparams["functional"] = input.functional
+        job.jobparams = input.jobparams
+      elif arg.lower() == "structure": 
+        job.args[0] = read_poscar(path=filename)
+    finally: remove(filename)
+
+def showme_completer(self, event):
+  import IPython
+  ip = self.api
+  if "current_jobdict" not in ip.user_ns: raise IPython.ipapi.TryNext
+  return ["structure", "functional"]
 
 def current_jobname(self, arg):
   """ Returns current jobname. """
@@ -221,20 +393,30 @@ def please_cancel_all_jobs(self, arg):
   for u in result.field(0):
     ip.system("scancel %i" % (int(u)))
 
+
 def _main():
-  from sys import environ
+  import lada
+  from os import environ
   import IPython.ipapi
   ip = IPython.ipapi.get()
   ip.expose_magic("explore", explore)
   ip.expose_magic("goto", goto)
   ip.expose_magic("listjobs", listjobs)
   ip.expose_magic("jobname", current_jobname)
+  ip.expose_magic("iterate", iterate)
+  ip.expose_magic("showme", showme)
   ip.set_hook('complete_command', goto_completer, re_key = '\s*%?goto')
+  ip.set_hook('complete_command', showme_completer, re_key = '\s*%?showme')
   if "SNLCLUSTER" in environ:
     if environ["SNLCLUSTER"] in ["redrock"]:
       ip.expose_magic("qstat", qstat)
       ip.expose_magic("cancel_jobs", cancel_jobs)
       ip.expose_magic("please_cancel_all_jobs", please_cancel_all_jobs)
+
+  for key in lada.__dict__:
+    if key[0] == '_': continue
+    if key == "jobs": ip.ex("from lada import jobs as ladajobs")
+    else: ip.ex("from lada import " + key)
 
 
 _main()

@@ -63,6 +63,8 @@ class Vasp(Launch):
       This allows us to use the same scripts for generating and retrieving
       data. 
   """
+  Extract = Extract
+  """ Extraction class. """
 
   def __init__(self, *args, **kwargs):
     """ Initializes vasp class. """
@@ -121,7 +123,7 @@ class Vasp(Launch):
                     else exists(outdir)
     if exists_outdir:
       if not overwrite: # check for success
-        extract = Extract(comm = comm, directory = outdir)
+        extract = self.Extract(comm = comm, directory = outdir)
         if extract.success: return extract # in which case, returns extraction object.
       elif is_root: rmtree(outdir) # overwrite data. 
       if comm != None: comm.barrier() # makes sure directory is not created by other proc!
@@ -131,7 +133,7 @@ class Vasp(Launch):
                                 repat=repat, comm=comm, norun=norun )
     
     # checks if result was successful
-    extract = Extract(comm = comm, directory = outdir)
+    extract = self.Extract(comm = comm, directory = outdir)
     if not norun:
       assert extract.success, RuntimeError("VASP calculation did not complete in %s.\n" % (outdir))
 
@@ -146,8 +148,9 @@ class Vasp(Launch):
     compare = self.__class__()
     params = compare.params.keys()
 
-    # will hold classes from use modules.
-    user_modules = {}
+    # will hold classes from modules.
+    modules = {}
+    modules[self.__class__.__module__] = [self.__class__.__name__]
     # now go through vasp parameters and print them out.
     for name, value in self.params.items():
       if value == None: continue
@@ -156,28 +159,25 @@ class Vasp(Launch):
       else:
         string += "functional.add_item = \"%s\", %s\n" % (name, repr(value))
         module = value.__class__.__module__ 
-        if module != "lada.vasp.incar._params": 
-          classname = value.__class__.__name__ 
-          if module in user_modules: user_modules[module].append(classname)
-          else: user_modules[module].append(classname)
+        classname = value.__class__.__name__ 
+        if module in modules: modules[module].append(classname)
+        else: modules[module] = [classname]
     for name, value in self.special.items():
       if value.value == None: continue
       assert isinstance(value, SpecialVaspParam)
       string += "functional.%s = %s\n" % (name, value)
       module = value.__class__.__module__ 
-      if module != "lada.vasp.incar._params": 
-        classname = value.__class__.__name__ 
-        if module in user_modules: user_modules[module].append(classname)
-        else: user_modules[module].append(classname)
+      classname = value.__class__.__name__ 
+      if module in modules: modules[module].append(classname)
+      else: modules[module] = [classname]
     # adds kpoints
     string += "functional.kpoints = %s\n" % (repr(self.kpoints))
     if hasattr(self.kpoints, "__call__"):
       # checks for user module.
       module = self.kpoints.__class__.__module__ 
-      if module != "lada.vasp.kpoints":
-        classname = self.kpoints.__class__.__name__ 
-        if module in user_modules: user_modules[module].append(classname)
-        else: user_modules[module].append(classname)
+      classname = self.kpoints.__class__.__name__ 
+      if module in modules: modules[module].append(classname)
+      else: modules[module] = [classname]
     # adds species.
     for name, specie in self.species.items():
       string += "functional.add_specie = \"%s\", \"%s\"" % (name, specie.path)
@@ -196,10 +196,9 @@ class Vasp(Launch):
 
     # adds user modules above repr string.
     header = ""
-    for name, values in user_modules:
-      header += "from %s import %s" % (name, values[0])
-      for v in values[1:]:
-        header += ", %s" % (v)
+    for name in sorted(modules.keys()):
+      header += "from %s import %s" % (name, modules[name][0])
+      for v in modules[name][1:]: header += ", %s" % (v)
       header += "\n"
     return header + string
 

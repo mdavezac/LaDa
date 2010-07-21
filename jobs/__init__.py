@@ -31,12 +31,12 @@ class JobDict(object):
       At this point however, these jobs do not do anything. They haven't been
       given anything to do:
 
-        >>> subjob1.vasp = some callable object.
+        >>> subjob1.functional = some callable object.
 
       Where a callable object is anything which can be called (eg, as in
       C{method(parameters)}), C{method} is the callable object:
 
-        >>> subjob1.vasp = method
+        >>> subjob1.functional = method
 
       Note that if you want to pickle the jobtree (eg save to file, google
       "python pickle"), then method should be pickleable. 
@@ -67,7 +67,7 @@ class JobDict(object):
 
       The L{walkthrough} method does just that: it goes through the whole tree
       returning those branches where there is something to execute (eg
-      C{job.vasp != None}). It also returns outdir which is the subdirectory
+      C{job.functional != None}). It also returns outdir which is the subdirectory
       where to execute that particular job. Using the jobtree defined above,
       for which only subjob1 was actually given something to do, 
 
@@ -85,7 +85,7 @@ class JobDict(object):
         >>> subjob2 = jobtree / "subjobname2"
         >>> subsubjob = jobtree / "subjobname1" / "subsubjobname"
         >>> # specify an actual job in one of the subjobs.
-        >>> subjob1.vasp = method
+        >>> subjob1.functional = method
         >>> subjob1.args = (arg1, arg2) # two arguments.
         >>> subjob1.add_param = "whatever", value1
         >>> subjob1.whatever = value2
@@ -122,23 +122,23 @@ class JobDict(object):
       selected with:
 
       >>> for job, outdir in job.walk_trough():
-      >>>   if job.is_marked: # this job has been bled/marked.
+      >>>   if job.is_tagged: # this job has been bled/tagged.
       >>>        # do something.
-      >>>        job.unmark() # this job will no longuer be considered bled/marked.
-      >>>   else:  # this job was not previously bled/marked.
+      >>>        job.untag() # this job will no longuer be considered bled/tagged.
+      >>>   else:  # this job was not previously bled/tagged.
       >>>        # do something.
-      >>>        job.mark() # this job will now be considered bled/marked.
+      >>>        job.tag() # this job will now be considered bled/tagged.
      
       Coding: JobDict has the following attributes:
         - children: A dict object holding instances of JobDict. These are the sub-jobs.
         - jobparams: All parameters regarding actual calculations. It contains,
           at start, only two predefined parameters.
-           - vasp: is the callable (preferably pickleable) to execute.
-           - args: is a tuple of arguments (eg. C{vasp(*args)}
+           - functional: is the callable (preferably pickleable) to execute.
+           - args: is a tuple of arguments (eg. C{functional(*args)}
            - all others are keyword arguments.
         - parent is an instance to the parent job (eg the instance which holds
           self in children) or None.
-        - It may also have a _marked attribute to check for bled/unbled jobs.
+        - It may also have a _tagged attribute to check for bled/unbled jobs.
       The __getattr__, __setattr__, and __delattr__ have been rewired to
       perform on objects in jobparams. Note however that __setattr__ will not
       set new object in jobparams, but rather pass on the call to the parent
@@ -156,7 +156,7 @@ class JobDict(object):
     super(JobDict, self).__setattr__("parent", None)
 
     # no jobs yet.
-    self.jobparams["vasp"] = None
+    self.jobparams["functional"] = None
     # no arguments yet.
     self.jobparams["args"] = (None)
     # no restart parameters yet.
@@ -185,7 +185,7 @@ class JobDict(object):
 
     index = normpath(index)
     if index == "" or index == None or index == ".": return self
-    if index[0] == "/": return self.root
+    if index[0] == "/": return self.root[index[1:]]
 
     result = self
     names = split(r"(?<!\\)/", index)
@@ -274,9 +274,9 @@ class JobDict(object):
 
   @property
   def is_job(self):
-    """ True if self.job has keyword \"vasp\". """
-    if "vasp" not in self.jobparams: return False
-    return self.jobparams["vasp"] != None
+    """ True if self.job has keyword \"functional\". """
+    if "functional" not in self.jobparams: return False
+    return self.jobparams["functional"] != None
 
   def items(self):
     """ Iterator over children jobs. """
@@ -289,9 +289,9 @@ class JobDict(object):
     """ Performs calculations over job list. """  
 
     kwargs.update(self.jobparams)
-    if "vasp" not in kwargs: return None
-    vasp = kwargs.pop("vasp")
-    if vasp == None: return
+    if "functional" not in kwargs: return None
+    functional = kwargs.pop("functional")
+    if functional == None: return
     args = kwargs.pop("args", ())
     # restart is bit painful to deal with, so farm it out to private function for now.
     if "restart" in kwargs:
@@ -300,7 +300,7 @@ class JobDict(object):
     if args == None: args = ()
     assert hasattr(args, "__iter__"),\
            RuntimeError("Functional argument \"args\" is not a sequence.")
-    return vasp(*args, **kwargs)
+    return functional(*args, **kwargs)
 
   def _restart(self, *args, **kwargs):
     """ Restart for functionals.
@@ -351,15 +351,25 @@ class JobDict(object):
     return result
 
   @property
-  def unmarked_jobs(self):
-    """ Returns a string with only unmarked jobs. """
+  def untagged_jobs(self):
+    """ Returns a string with only untagged jobs. """
     result = "Jobs: \n"
     for dummy, name in self.walk_through():
-      if not dummy.is_marked: 
+      if not dummy.is_tagged: 
         result += "  " + name + "\n"
     return result
 
- 
+  @property
+  def is_tagged(self): return hasattr(self, "_tagged")
+
+  def tag(self):
+    """ Adds _tagged attribute. """
+    if self.is_job: super(JobDict, self).__setattr__("_tagged", True)
+    
+  def untag(self):
+    """ Adds _tagged attribute. """
+    if hasattr(self, "_tagged"): self.__delattr__("_tagged")
+
   def __delattr__(self, name):
     """ Deletes job attribute. """
     if name in self.jobparams: return self.jobparams.pop(name)
@@ -389,7 +399,7 @@ class JobDict(object):
          >>> jobs.name = othervalue
 
         Where name should be the value of the string given in the first line.
-        The only preset job parameter are "vasp" and "args", as stand in for
+        The only preset job parameter are "functional" and "args", as stand in for
         the functional to use and the tuple to use as its arguments.
     """
     assert len(args) < 3, ValueError("Too many parameters given to add_param: %s." % (args))
@@ -424,17 +434,7 @@ class JobDict(object):
   @property
   def nbjobs(self):
     """ Returns the number of jobs in tree. """
-    return len([0 for j, o in self.walk_through() if not j.is_marked])
-
-  @property
-  def is_marked(self): return hasattr(self, "_marked")
-  def mark(self):
-    """ Adds _marked attribute. """
-    if self.is_job: super(JobDict, self).__setattr__("_marked", True)
-    
-  def unmark(self):
-    """ Adds _marked attribute. """
-    if hasattr(self, "_marked"): self.__delattr__("_marked")
+    return len([0 for j, o in self.walk_through() if not j.is_tagged])
 
   @property 
   def root(self): 
@@ -539,7 +539,7 @@ def bleed(path=None, outdir=None, comm=None):
         if jobdict.nbjobs == 0: break
         # Pops first job.
         for job, directory in jobdict.walk_through():
-          if not job.is_marked: job.mark(); break
+          if not job.is_tagged: job.tag(); break
         # writes modified dictionary to path.
         with open(path, "wb") as file: dump(jobdict, file)
       broadcast(comm, (job, join(outdir, directory)), 0)
@@ -564,7 +564,7 @@ def unbleed(path=None, comm=None):
     assert exists(path), IOError( "Job dictionary" + path + "does not exist.")
     with acquire_lock(path) as lock_file:
       with open(path, "rb") as file: jobdict = load_pickle(file)
-      for job, outdir in jobdict.walk_through(): jobdict.unmark()
+      for job, outdir in jobdict.walk_through(): jobdict.untag()
       with open(path, "wb") as file: dump(jobdict, file)
   # synchronizes communicator.
   if comm != None: comm.barrier()
@@ -599,8 +599,8 @@ def unsucessfull(jobdict, extractor, outdir = None):
   for job, directory in jobdict.walk_through(outdir=outdir):
     extractor.directory = directory
     # and bleed successfull jobs.
-    if extractor.success: job.mark()
-    else: job.unmark()
+    if extractor.success: job.tag()
+    else: job.untag()
 
   return jobdict
 
@@ -686,11 +686,11 @@ def one_per_job(jobdict, outdir = None, mppalloc=None, ppath=None, **kwargs):
   template = default_slurm if which else default_pbs
 
   # creates directory.
-  dir = abspath( join(outdir, "pbs_scripts") )
+  directory = abspath( join(outdir, "pbs_scripts") )
   # saves pickle
   save(jobdict, join(outdir, "job_pickle"))
   # creates directory.
-  with Changedir(dir) as pwd: pass 
+  with Changedir(directory) as pwd: pass 
   # gets runone 
   pyscript = __file__.replace(pathsplit(__file__)[1], "runone.py")
   # makes sure ppath is absolute.
@@ -699,10 +699,10 @@ def one_per_job(jobdict, outdir = None, mppalloc=None, ppath=None, **kwargs):
   # creates pbs script for each job.
   results = []
   for i, (job, name) in enumerate(jobdict.walk_through()):
-    if job.is_marked: continue
+    if job.is_tagged: continue
     mppwidth = mppalloc(job) if hasattr(mppalloc, "__call__") else mppalloc
     name = name.replace("/", ".")
-    results.append( abspath(join(dir, name + ".pbs")) )
+    results.append( abspath(join(directory, name + ".pbs")) )
     with open(results[-1], "w") as file: 
       template( file, outdir=outdir, jobid=i, mppwidth=mppwidth, name=name,\
                 pickle = join(outdir, "job_pickle"), pyscript=pyscript, **kwargs )
@@ -727,4 +727,4 @@ def fakerun(jobdict, outdir = None):
 
   if outdir  == None: outdir = getcwd()
   for job, dirname in jobdict.walk_through(outdir):
-    if not job.is_marked: job.compute(outdir=dirname, norun=True)
+    if not job.is_tagged: job.compute(outdir=dirname, norun=True)

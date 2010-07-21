@@ -3,6 +3,10 @@ from _params import SpecialVaspParam, NElect, Algo, Precision, Ediff,\
                     Encut, FFTGrid, Restart, UParams, Magmom, IniWave
 from ...opt.decorators import add_setter
 
+__dir__ = [ "SpecialVaspParam", "NElect", "Algo", "Precision", "Ediff",\
+            "Encut", "FFTGrid", "Restart", "UParams", "Magmom", "IniWave",\
+            "Incar" ]
+
 class Incar(object):
   """ Contains vasp Incar parameters. 
 
