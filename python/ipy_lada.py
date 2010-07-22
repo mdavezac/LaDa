@@ -1,5 +1,6 @@
 """ IPython functions and data. """
 from . import jobs
+from contextlib  import contextmanager
 
 def _get_current_job_params(self, verbose=0):
   """ Returns a tuple with current job, filename, directory. """
@@ -54,6 +55,7 @@ def explore(self, arg):
   from .opt import open_exclusive
   ip = self.api
   current, path = _get_current_job_params(self, 0)
+  ip.user_ns.pop("_lada_error", None)
   
   args = [u for u in arg.split() if u not in ["in", "with"]]
   if len(args) == 0:
@@ -128,6 +130,7 @@ def explore(self, arg):
         if job.is_tagged: continue
         directory = join(rootdir, d)
         if which(job.functional.Extract(directory).success): job.tag()
+        else: job.untag()
     elif args[0] == "jobs": 
       string = ""
       for i in args[1:]: string += " " + i
@@ -142,7 +145,9 @@ def explore(self, arg):
       ip.user_ns["current_jobdict_path"] = path
 
   try: _impl()
-  except RuntimeError as e: print e
+  except RuntimeError as e:
+    ip.user_ns["_lada_error"] = e
+    print e
   else:
     # remove any prior iterator stuff.
     ip.user_ns.pop("_lada_subjob_iterator", None)
@@ -154,6 +159,7 @@ def goto(self, arg):
   from os.path import exists, join, split as splitpath
   ip = self.api
   current, path = _get_current_job_params(self, 1)
+  ip.user_ns.pop("_lada_error", None)
     
   if current == None: 
     print "No current jobs."
@@ -167,7 +173,8 @@ def goto(self, arg):
     return
   args = arg.split()
   if len(args) > 1:
-    print "Invalid argument to goto %s." % (arg)
+    ip.user_ns["_lada_error"] = "Invalid argument to goto %s." % (arg)
+    print ip.user_ns["_lada_error"]
     return
 
   # if no argument, then print current job data.
@@ -184,11 +191,13 @@ def goto(self, arg):
   try: result = current[args[0]] 
   except KeyError as e: 
     print e
+    ip.user_ns["_lada_error"] = e
     return 
 
   if not (hasattr(result, "parent") and hasattr(result, "children")\
      and hasattr(result, "jobparams")):
-    print "%s is a job parameter, not a directory."
+    ip.user_ns["_lada_error"] = "%s is a job parameter, not a directory."
+    print ip.user_ns["_lada_error"] 
     return
   ip.user_ns["current_jobdict"] = result
   current = ip.user_ns["current_jobdict"]
@@ -201,6 +210,7 @@ def listjobs(self, arg):
   """ Lists subjobs. """
   ip = self.api
   current, path = _get_current_job_params(self, 1)
+  ip.user_ns.pop("_lada_error", None)
   if current == None: return
   if len(arg) != 0:
     if arg == "all": 
@@ -304,6 +314,7 @@ def showme(self, event):
   ip = self.api
   # gets dictionary, path.
   current, path = _get_current_job_params(self, 1)
+  ip.user_ns.pop("_lada_error", None)
   if current == None: return
   # splits argumetns, removes decorative keywords.
   args = [u for u in event.split() if u not in ["in"]]
@@ -377,17 +388,23 @@ def saveto(self, event):
   ip = self.api
   # gets dictionary, path.
   current, path = _get_current_job_params(self, 1)
-  if current == None: return
+  ip.user_ns.pop("_lada_error", None)
+  if current == None:
+    ip.user_ns["_lada_error"] = "No job-dictionary to save."
+    print ip.user_ns["_lada_error"] 
+    return
   args = [u for u in event.split() ]
   if len(args) == 0: 
     if path == None: 
-      print "No current job-dictionary path.\n"\
-            "Please specify on input, eg"\
-            ">saveto this/path/filename"
+      ip.user_ns["_lada_error"] = "No current job-dictionary path.\n"\
+                                  "Please specify on input, eg"\
+                                  ">saveto this/path/filename"
+      print ip.user_ns["_lada_error"] 
       return
     if exists(path): 
       if not isfile(path): 
-        print "%s is not a file." % (path)
+        ip.user_ns["_lada_error"] = "%s is not a file." % (path)
+        print ip.user_ns["_lada_error"] 
         return
       a = ''
       while a not in ['n', 'y']:
@@ -397,7 +414,8 @@ def saveto(self, event):
   elif len(args) == 1:
     if exists(args[0]): 
       if not isfile(path): 
-        print "%s is not a file." % (path)
+        ip.user_ns["_lada_error"] = "%s is not a file." % (path)
+        print ip.user_ns["_lada_error"] 
         return
       a = ''
       while a not in ['n', 'y']:
@@ -405,7 +423,9 @@ def saveto(self, event):
       if a == 'n': return
     jobs.save(current, args[0]) 
     ip.user_ns["current_jobdict_path"] = abspath(args[0])
-  else: print "Invalid call to saveto."
+  else:
+    ip.user_ns["_lada_error"] = "Invalid call to saveto."
+    print ip.user_ns["_lada_error"] 
 
 
 def showme_completer(self, event):
@@ -420,6 +440,131 @@ def current_jobname(self, arg):
   if "current_jobdict" not in ip.user_ns: return
   print ip.user_ns["current_jobdict"].name
   return
+
+@contextmanager
+def save_state(self):
+  from copy import deepcopy
+  ip = self.api
+  current, path = _get_current_job_params(self, 0)
+  if current != None: current.copy()
+  iterated, iterator = None, None
+  if _lada_subjob_iterator in ip.user_ns:
+    iterated = deepcopy(ip.user_ns["_lada_subjob_iterator"])
+  if _lada_subjob_iterator in ip.user_ns:
+    iterator = deepcopy(ip.user_ns["_lada_subjob_iterator"])
+  yield current, path, iterated, iterator
+
+  if current == None: ip.user_ns.pop("current_jobdict", None)
+  else: ip.user_ns["current_jobdict"] = current
+  if path == None: ip.user_ns.pop("current_jobdict_path", None)
+  else: ip.user_ns["current_jobdict_path"] = path
+  if iterator == None: ip.user_ns.pop("_lada_subjob_iterator", None)
+  else: ip.user_ns["_lada_subjob_iterator"] = iterator
+  if iterated == None: ip.user_ns.pop("_lada_subjob_iterated", None)
+  else: ip.user_ns["_lada_subjob_iterated"] = iterated
+
+
+
+def launch_jobs(self, event):
+  """ Launch pbs jobs according to given recipe. """
+  import re
+  from os.path import split as splitpath, join, exists
+  from lada.opt.changedir import Changedir
+  ip = self.api
+  current, path = _get_current_job_params(self, 0)
+  ip.user_ns.pop("_lada_error", None)
+
+  # parse input phrase 
+  scattered = re.search("scattered", event)
+  mppalloc_re = re.search("\s+(?:with)?\s+mppalloc\s*=?\s*(\S+)", event);
+  pooled = re.search("(?:in)?\s*(\d+)?\s+pools\s+(?:of)?\s+(\d+)\s+(?:processors)?", event)
+  filepath = re.search("(?:as)?\s+filepath\s+(\S+)", event)
+  jobdict = re.search("^\s*(file\s|JobDict\s)\s*(\S+)")
+  andlaunch = re.search("(?:and\s)?\s*launch\s*$")
+  if scattered != None and pooled != None: 
+    print "Invalid argument.\n"\
+          "Choose either pooled or scattered script parallelization method."
+    return 
+  if pooled != None and mppalloc != None:
+    print "Invalid argument.\n"\
+          "mppalloc argument is meaningless in the context of pooled pbs parallelization."
+    return
+  if jobdict != None: # make sure we are not catching scattered or pooled directive.
+    if jobdict.group(2) == "scattered": jobdict == None
+    elif jobdict.group(2) == "pooled": jobdict == None
+    else:
+      try: int(jobdict.group(2))
+      except: pass
+      else: jobdict = None
+
+  # gets filepath
+  if filepath != None: filepath = filepath.match(1)
+
+  # save current state.
+  with save_state() as state:
+    # required scattered parallelization (one pbs script per job).
+    if scattered != None: 
+      # opens new dictionary if requested.
+      if jobdict != None:
+        explore(self, jobdict.group(0))
+        if "_lada_error" in ip.user_ns:
+          print "Encountered error. Will not launch jobs."
+          return
+        current, path = _get_current_job_params(self, 0)
+      # saves to new path if requested.
+      if filepath != None: save(self, filepath)
+      elif jobdict == None: save(self, "")
+      if "_lada_error" in ip.user_ns:
+        print "Encountered error. Will not launch jobs."
+        return
+      # creates mppalloc function.
+      def mppalloc(job): 
+        """ Returns number of processes for this job. """
+        N = len(job.args[0].atoms) # number of atoms.
+        if N % 2 == 1: N += 1
+        return N  
+      # gets used defined mppalloc if requested.
+      if mppalloc_re != None:
+        try: mppalloc = int(mppalloc_re.group(1)) 
+        except ValueError:
+          if mppalloc_re.group(1) not in ip.user_ns:
+            print "Could not find processor allocation function %s." % (mppalloc.group(1))
+            return
+          mppalloc = ip.user_ns[mppalloc_re.group(1)]
+      if path == None: 
+        print "Could not determine which directory to use for output."
+        return
+
+      # where are we? important for default template.
+      which = "SNLCLUSTER" in environ
+      if which: which = environ["SNLCLUSTER"] in ["redrock", "redmesa"]
+      template = default_slurm if which else default_pbs
+      # gets python script to launch in pbs.
+      pyscript = __file__.replace(splitpath(__file__)[1], "runone.py")
+      # creates directory.
+      with Changedir(path + ".pbs") as pwd: pass 
+      # creates pbs scripts.
+      pbsscripts = []
+      for i, (job, name) in enumerate(current.walk_through()):
+        if job.is_tagged: continue
+        mppwidth = mppalloc(job) if hasattr(mppalloc, "__call__") else mppalloc
+        name = name.replace("/", ".")
+        pbsscripts.append( abspath(join(directory, name + ".pbs")) )
+        with open(results[-1], "w") as file: 
+          jobs.template( file, outdir=splitpath(path[0]), jobid=i, mppwidth=mppwidth, name=name,\
+                         pickle = path, pyscript=pyscript )
+      # return if not launching
+      if andlaunch == None: return result
+      # otherwise, launch.
+      for script in pbsscripts:
+        if which: ip.ex("qsub %s" % scipt)
+        else: ip.ex("sbatch %s" % scipt)
+      
+    else: 
+      print "*pooled* not yet implemented."
+      return
+
+
 
 def qstat(self, arg):
   """ squeue --user=`whoami` -o "%7i %.3C %3t  --   %50j" """
