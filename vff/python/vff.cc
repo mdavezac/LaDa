@@ -11,6 +11,11 @@
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/python/register_ptr_to_python.hpp>
+#include <boost/filesystem/path.hpp>
+#include <boost/filesystem/operations.hpp>
+#ifdef LADA_MPI
+# include <boost/mpi/collectives.hpp>
+#endif
 
 
 #include "vff.hpp"
@@ -49,68 +54,91 @@ namespace LaDa
     template<class T> 
       boost::shared_ptr<T> create_input(std::string const &_filename ) 
       {
-        boost::shared_ptr<T> result = create<T>();
-        typename T::first_type &_type = result->first;
         TiXmlDocument doc( _filename ); 
         TiXmlHandle docHandle( &doc ); 
-      
         if( not doc.LoadFile() )
         {
-          PyErr_SetString
-          (
-            PyExc_RuntimeError,
-            (   "Could not parse xml file " + _filename + ".\n" 
-              + doc.ErrorDesc() + "\n" ).c_str()
-          );
+          std::ostringstream sstr;
+          sstr << "Could not parse xml file.\n" << doc.ErrorDesc() << "\n";
+          PyErr_SetString(PyExc_RuntimeError, sstr.str().c_str());
           bp::throw_error_already_set();
         }
-        else if( not docHandle.FirstChild("Job").Element() )
+        return create_docnhand(doc, dochandle);
+      }
+    template<class T> 
+      boost::shared_ptr<T> create_docnhand(TiXmlDocument &_doc, TiXmlHandle &_docHandle)
+      {
+        boost::shared_ptr<T> result = create<T>();
+        typename T::first_type &_type = result->first;
+      
+        if( not _docHandle.FirstChild("Job").Element() )
         {
-          PyErr_SetString
-          (
-            PyExc_RuntimeError,
-            ("Could not find <Job> in xml file " + _filename + ".\n").c_str()
-          );
+          PyErr_SetString(PyExc_RuntimeError, "Could not find <Job> in xml file.\n");
           bp::throw_error_already_set();
         }
         else
         {
           try
           {
-            if(not _type.Load( *docHandle.FirstChild("Job").Element() ) )
+            if(not _type.Load( *_docHandle.FirstChild("Job").Element() ) )
             {
-              PyErr_SetString
-              (
-                PyExc_RuntimeError,
-                ("Could not load VFF functional from xml file " + _filename + ".\n").c_str()
-              );
+              PyErr_SetString(PyExc_RuntimeError, "Could not load VFF functional.");
               bp::throw_error_already_set();
             }
           }
           catch(std::exception &_e)
           {
-            PyErr_SetString
-            (
-              PyExc_RuntimeError,
-              (
-                   "Encountered error while loading  VFF functional from xml file "
-                 + _filename + ".\n"
-                 + _e.what() + "\n"
-              ).c_str()
-            );
+            PyErr_SetString(PyExc_RuntimeError, "Could not create VFF functional.");
             bp::throw_error_already_set();
           }
         }
         return result;
       }
-      template<class T>
 #     ifndef _MPI
+      template<class T>
         boost::shared_ptr<T> create_inputmpi(std::string const& _f, bp::object const&) 
           { return create_input(_f); }
 #     else
+      template<class T>
         boost::shared_ptr<T> create_inputmpi(std::string const& _f, boost::mpi::communicator *_c )
         {
-          boost::shared_ptr<T> result = create_input<T>(_f);
+          namespace bfs = boost::filesystem;
+          namespace bm = boost::mpi;
+          std::string error = "", filestring;
+          if( _c->rank() == 0 )
+          {
+            if( not bfs::exists(_f) ) error = _f + " does not exist.";
+            else try
+            {
+              std::ifstream file( _f.c_str(), std::ios_base::in );
+              std::istream_iterator< std::string > i_file( file );
+              std::istream_iterator< std::string > i_file_end;
+              for(; i_file != i_file_end; ++i_file )
+              {
+                filestring.append( *i_file );
+                filestring.append(" ");  
+              }
+              file.close();
+            }
+            catch (std::exception const &_e)
+            {
+              std::ostringstream sstr;
+              sstr << "Encountered error while creating Vff C++ functional.\n"
+                   << _e.what();
+              error =  sstr.str();
+            }
+          }
+          bm::broadcast(*_c, error, 0);
+          if( error.size() != 0 )
+          {
+            PyErr_SetString(PyExc_RuntimeError, error.c_str());
+            return boost::shared_ptr<T>();
+          }
+          bm::broadcast(*_c, filestring, 0);
+          TiXmlDocument doc;
+          doc.Parse(filestring.c_str()); 
+          TiXmlHandle handle(&doc); 
+          boost::shared_ptr<T> result = create_docnhand<T>(doc, handle); 
           result->first.set_mpi(_c);
           return result;
         }
@@ -121,7 +149,8 @@ namespace LaDa
     template<class T> 
       void init( T &_self, bool _redo, bool _verbose ) { _self.first.init(_redo, _verbose); }
     template<class T> 
-      bp::tuple __call__( T &_self, Crystal::TStructure<std::string> const &_str, bool _doinit, bool relax )
+      bp::tuple __call__( T &_self, Crystal::TStructure<std::string> const &_str,
+                          bool _doinit, bool relax )
       { 
         Crystal::convert_string_to_real_structure(_str, _self.second);     
         init(_self, _doinit, false);
