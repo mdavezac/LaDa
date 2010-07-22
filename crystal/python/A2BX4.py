@@ -267,6 +267,7 @@ def b5(x=0.387):
                       ( [0.25+x, 0.25-x, 0.25+x], "X" ),\
                       ( [0.25+x, 0.25+x, 0.25-x], "X" )
   lattice.scale = 1.0
+  lattice.name  = "b5"
   lattice.find_space_group()
   return lattice
 
