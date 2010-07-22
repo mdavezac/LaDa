@@ -39,13 +39,8 @@ class JobDict(object):
         >>> subjob1.functional = method
 
       Note that if you want to pickle the jobtree (eg save to file, google
-      "python pickle"), then method should be pickleable. 
-      The argument to the method (if any) are specified as:
-
-        >>> subjob1.args = (arg1) # one argument. Not the parenthesis. This is a tuple.
-        >>> subjob1.args = (arg1, arg2) # two arguments.
-
-      Keyword arguments can be specified as:
+      "python pickle"), then method should be pickleable. All arguments to the
+      functional are specified as keyword arguments: 
 
         >>> subjob1.jobparams["keywordname"] = value
 
@@ -57,7 +52,9 @@ class JobDict(object):
         >>> subjob1.keywordname = value2
 
       Where keywordname in the last line should be substituted for its actual
-      value (eg structure, nelect...)
+      value (eg structure, nelect...). Note that there is no options to insert
+      non-keyword argument. This is a feature and most likely will stay that
+      way.
 
       Having a jobtree is great, looping through it is better:
 
@@ -86,7 +83,6 @@ class JobDict(object):
         >>> subsubjob = jobtree / "subjobname1" / "subsubjobname"
         >>> # specify an actual job in one of the subjobs.
         >>> subjob1.functional = method
-        >>> subjob1.args = (arg1, arg2) # two arguments.
         >>> subjob1.add_param = "whatever", value1
         >>> subjob1.whatever = value2
         >>> # actually performs calculations.
@@ -95,7 +91,7 @@ class JobDict(object):
 
       Using the jobtree defined above, this would end-up calling:
 
-        >>> metod(arg1, arg2, whatever=value1, outdir="root_result_directory/subjoname1") 
+        >>> metod(whatever=value1, outdir="root_result_directory/subjoname1") 
 
 
       The code above does not work if more than one pbs script is launched. In that case, we want:
@@ -134,7 +130,6 @@ class JobDict(object):
         - jobparams: All parameters regarding actual calculations. It contains,
           at start, only two predefined parameters.
            - functional: is the callable (preferably pickleable) to execute.
-           - args: is a tuple of arguments (eg. C{functional(*args)}
            - all others are keyword arguments.
         - parent is an instance to the parent job (eg the instance which holds
           self in children) or None.
@@ -142,7 +137,7 @@ class JobDict(object):
       The __getattr__, __setattr__, and __delattr__ have been rewired to
       perform on objects in jobparams. Note however that __setattr__ will not
       set new object in jobparams, but rather pass on the call to the parent
-      class' __setattr__. To set new job parameters, one should use
+      class __setattr__. To set new job parameters, one should use
       L{add_param} or jobparams directly.
   """
 
@@ -157,10 +152,6 @@ class JobDict(object):
 
     # no jobs yet.
     self.jobparams["functional"] = None
-    # no arguments yet.
-    self.jobparams["args"] = (None)
-    # no restart parameters yet.
-    self.jobparams["restart"] = None
     
   @property
   def name(self):
@@ -292,46 +283,8 @@ class JobDict(object):
     if "functional" not in kwargs: return None
     functional = kwargs.pop("functional")
     if functional == None: return
-    args = kwargs.pop("args", ())
-    # restart is bit painful to deal with, so farm it out to private function for now.
-    if "restart" in kwargs:
-      args, kwargs = self._restart(*args, **kwargs)
 
-    if args == None: args = ()
-    assert hasattr(args, "__iter__"),\
-           RuntimeError("Functional argument \"args\" is not a sequence.")
-    return functional(*args, **kwargs)
-
-  def _restart(self, *args, **kwargs):
-    """ Restart for functionals.
-    
-        Transforms arguments and dictionary to deal with restart request.
-        In this case, modifies the first argument of the functional. Then  sets
-        keyword argument restart to None (so nothing else is restarted).
-    """
-    from lada.opt.changedir import Changedir
-    from sys import stderr
-    if kwargs["restart"] == None: return args, kwargs
-
-    restart = kwargs.pop("restart")
-    kwargs["restart"] = None
-
-    outdir = kwargs["outdir"] if "outdir" in kwargs else "."
-    comm = kwargs["comm"] if "comm" in kwargs else None
-    with Changedir(outdir) as pwd:
-      print "restart: ", outdir, restart[1]
-      restart = restart[0](restart[1], comm=comm)
-    if not restart.success:
-      # cannot perform this job since dependency is not successfull
-      comm = kwargs["comm"] if "comm" in kwargs else None
-      if (comm.rank == 0 if comm != None else True):
-        print >> stderr, "Could not perform job %s since it depends upon %s completing first."\
-              % (outdir, join(outdir, restart[1]))
-      class NoSuccess:
-        def __init__(self): self.success, self.directory = False, outdir
-      return NoSuccess()
-    args[0] = restart.structure
-    return args, kwargs
+    return functional(**kwargs)
 
   def update(self, other):
     """ Updates job and tree with other.
@@ -605,19 +558,3 @@ def unsucessfull(jobdict, extractor, outdir = None):
   return jobdict
 
 
-
-def fakerun(jobdict, outdir = None):
-  """ Performs a fake run.
-
-      Fake runs include *norun=True* as a job parameter. Whether this works or
-      not depends on the functional. It is meant to create all directories and
-      input file for a quick review of the input parameters.
-      @param jobdict: otherwise fake runs the provided dictionary. 
-      @type jobdict; L{JobDict} or None
-      @param path: This will be the ouput directory.
-  """
-  from os import getcwd
-
-  if outdir  == None: outdir = getcwd()
-  for job, dirname in jobdict.walk_through(outdir):
-    if not job.is_tagged: job.compute(outdir=dirname, norun=True)

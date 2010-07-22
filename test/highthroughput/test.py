@@ -75,7 +75,7 @@ def _waves(is_first = True):
       if is_first: # sets up job parameters of first wave.
         job = lat_jobdict / "non-magnetic"
         job.functional = input.relaxer
-        job.args = [structure]
+        job.jobparams["structure"] = structure
         job.jobparams["ispin"] = 1
         job.jobparams["repat"] = files.input
         continue 
@@ -94,7 +94,7 @@ def _waves(is_first = True):
       # first ferro
       job = lat_jobdict / "ferro"
       job.functional = input.relaxer
-      job.args = [structure]
+      job.jobparams["structure"] = structure
       job.jobparams["ispin"] =  2
       job.jobparams["magmom"] = magnetic.ferro(structure, input.vasp.species)
       job.jobparams["repat"] = files.input
@@ -105,7 +105,7 @@ def _waves(is_first = True):
       if magmom != None:
         job = lat_jobdict / "anti-ferro-0"
         job.functional = input.relaxer
-        job.args = [structure]
+        job.jobparams["structure"] = structure
         job.jobparams["ispin"] = 2
         job.jobparams["magmom"] = magmom
         job.jobparams["repat"] = files.input
@@ -115,7 +115,7 @@ def _waves(is_first = True):
       for i in range(input.nbantiferro):
         job = lat_jobdict / ("anti-ferro-%i" % (i+1))
         job.functional = input.relaxer
-        job.args = [structure]
+        job.jobparams["structure"] = structure
         job.jobparams["ispin"] = 2
         job.jobparams["magmom"] = magnetic.random(structure, input.vasp.species)
         job.jobparams["repat"] = files.input

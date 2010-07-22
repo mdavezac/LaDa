@@ -355,8 +355,8 @@ def showme(self, event):
         # editing POSCAR.
         elif arg.lower() == "structure":
           # always as vasp5. Makes it easier.
-          structure = Structure() if current.args[0] == None else current.args[0] 
-          write_poscar(current.args[0], file, True)
+          structure = Structure() if current.structure == None else current.structure 
+          write_poscar(current.structure, file, True)
         # Error!
         else: 
           print "%s is not a valid argument to showme." % (event)
@@ -374,7 +374,7 @@ def showme(self, event):
         input.jobparams["functional"] = input.functional
         current.jobparams = input.jobparams
       elif arg.lower() == "structure": 
-        current.args[0] = read_poscar(path=filename)
+        current.structure = read_poscar(path=filename)
     finally:
       if filename != None:
         try: remove(filename)
@@ -523,8 +523,8 @@ def launch_jobs(self, event):
       # creates mppalloc function.
       def mppalloc(job): 
         """ Returns number of processes for this job. """
-        N = len(job.args[0].atoms) # number of atoms.
-        if N % 2 == 1: N += 1
+        N = len(job.structure.atoms) # number of atoms.
+        if N % 2 == 1: N -= 1
         return N  
       # gets used defined mppalloc if requested.
       if mppalloc_re != None:
@@ -568,6 +568,29 @@ def launch_jobs(self, event):
       print "*pooled* not yet implemented."
       return
 
+
+def fakerun(self, event):
+  """ Creates job directory tree and input files without computing. """
+  from os.path import path, split as splitpath
+
+  current, path = _get_current_job_params(self, 0)
+  ip.user_ns.pop("_lada_error", None)
+  if len(event.split()) > 1: 
+    print "fakerun does not take an argument."
+    return
+  elif len(event.split()) == 1: directory = event.split()[0]
+  else: directory = splitpath(path)[0]
+
+  if exists(directory) and not isdir(directory):
+    print "%s exists and is not a directory." % (directory)
+    return 
+  elif exists(directory):
+    a = ''
+    while a not in ['n', 'y']:
+      a = raw_input("%s exists. Some input files could be overwritten. Continue? [y/n]")
+    if a == 'n': return
+  for job, dirname in jobdict.walk_through(path):
+    if not job.is_tagged: job.compute(outdir=dirname, norun=True)
 
 
 def qstat(self, arg):
@@ -633,6 +656,7 @@ def _main():
   ip.expose_magic("iterate", iterate)
   ip.expose_magic("showme", showme)
   ip.expose_magic("savejobs", saveto)
+  ip.expose_magic("fakerun", fakerun)
   ip.set_hook('complete_command', goto_completer, re_key = '\s*%?goto')
   ip.set_hook('complete_command', showme_completer, re_key = '\s*%?showme')
   if "SNLCLUSTER" in environ:
