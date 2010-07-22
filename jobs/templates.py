@@ -37,7 +37,7 @@ def default_pbs( file, walltime = "05:45:00", mppwidth = 8, queue = "regular", n
 
   if outdir == None: file.write("cd $PBS_O_WORKDIR\n")
   else: file.write("cd " + outdir + "\n")
-  if pyvirt != None: file.write("\nsource %s \n" % (pyvirt) )
+# if pyvirt != None: file.write("\nsource %s \n" % (pyvirt) )
 
   # aprun on Fucking Crays. mpirun everywhere else.
   file.write("aprun " if "NERSC_HOST" in environ else "mpirun ")
