@@ -489,6 +489,9 @@ def launch_jobs(self, event):
     print "Invalid argument.\n"\
           "mppalloc argument is meaningless in the context of pooled pbs parallelization."
     return
+  if pooled == None and scattered == None:
+    print "invalid argument.\n"
+    return
   if jobdict != None: # make sure we are not catching scattered or pooled directive.
     if jobdict.group(2) == "scattered": jobdict == None
     elif jobdict.group(2) == "pooled": jobdict == None
@@ -502,21 +505,21 @@ def launch_jobs(self, event):
 
   # save current state.
   with save_state() as state:
-    # required scattered parallelization (one pbs script per job).
-    if scattered != None: 
-      # opens new dictionary if requested.
-      if jobdict != None:
-        explore(self, jobdict.group(0))
-        if "_lada_error" in ip.user_ns:
-          print "Encountered error. Will not launch jobs."
-          return
-        current, path = _get_current_job_params(self, 0)
-      # saves to new path if requested.
-      if filepath != None: save(self, filepath)
-      elif jobdict == None: save(self, "")
+    # opens new dictionary if requested.
+    if jobdict != None:
+      explore(self, jobdict.group(0))
       if "_lada_error" in ip.user_ns:
         print "Encountered error. Will not launch jobs."
         return
+      current, path = _get_current_job_params(self, 0)
+    # saves to new path if requested.
+    if filepath != None: save(self, filepath)
+    elif jobdict == None: save(self, "")
+    if "_lada_error" in ip.user_ns:
+      print "Encountered error. Will not launch jobs."
+      return
+    # required scattered parallelization (one pbs script per job).
+    if scattered != None: 
       # creates mppalloc function.
       def mppalloc(job): 
         """ Returns number of processes for this job. """
@@ -557,9 +560,10 @@ def launch_jobs(self, event):
       if andlaunch == None: return result
       # otherwise, launch.
       for script in pbsscripts:
-        if which: ip.ex("qsub %s" % scipt)
-        else: ip.ex("sbatch %s" % scipt)
-      
+        if which: ip.ex("qsub %s" % script)
+        else: ip.ex("sbatch %s" % script)
+
+    # required pooled parallelization (few pbs scripts, many jobs)
     else: 
       print "*pooled* not yet implemented."
       return
