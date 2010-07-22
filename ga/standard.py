@@ -137,6 +137,7 @@ def mpi_population_evaluation(self, evaluator, pools = None):
   from boost.mpi import broadcast
   # split communicator along number of pools
   if pools == None: pools = self.comm.size
+  if pools > self.comm.size: pools = self.comm.size
   color = self.comm.rank % pools
   local_comm = self.comm.split(color)
   heads_comm = self.comm.split(1 if local_comm.rank == 0 else 2)
