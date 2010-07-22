@@ -71,6 +71,7 @@ def default_slurm( file, walltime = "05:45:00", mppwidth = 8, ppernode=8, queue 
 
   if pyvirt == None and "VIRTUAL_ENV" in environ:
     pyvirt = join(join(environ["VIRTUAL_ENV"], "bin"), "activate")
+  if pyvirt == "no python virtual environment": pyvirt == None
 
   nnodes = mppwidth / ppernode + (0 if mppwidth % ppernode == 0 else 1)
 
