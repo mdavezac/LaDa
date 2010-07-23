@@ -189,12 +189,11 @@ def explore(self, arg):
       if path == None:
         raise RuntimeError("No path set for current job dictionary.\n"\
                            "Please set current_dictionary_path to correct value.\n")
-      ip.user_ns["current_jobdict"] = deepcopy(ip.user_ns["current_jobdict"])
+      current = deepcopy(current)
       rootdir = splitpath(path)[0]
       # now marks (un)successful runs.
       which = (lambda x: not x) if args[0] == "results" else (lambda x: x)
-      for job, d in ip.user_ns["current_jobdict"].walk_through():
-        if job.is_tagged: continue
+      for job, d in current.walk_through():
         directory = join(rootdir, d)
         if which(job.functional.Extract(directory).success): job.tag()
         else: job.untag()
