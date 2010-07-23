@@ -20,6 +20,47 @@ def _get_current_job_params(self, verbose=0):
   return current, path
 
 
+def explore_completer(self, event):
+  """ Completer for explore. """ 
+  from os import getcwd, chdir
+  from os.path import isdir, join
+  from lada.jobs import JobDict
+
+  ip = self.api
+  current, path = _get_current_job_params(self, 0)
+
+  args = event.symbol.split()
+  if len(args) == 0: 
+    result = [ u + "/" for u in ip.magic("mglob dir:*") ]
+    result.extend([ u for u in ip.magic("mglob \"cont:JobDict pickle\" *") ])
+    result.extend(["errors", "results", "file", "JobDict"])
+  elif len(args) == 1 and args[0].find('/') != -1:
+    orig_dir = getcwd()
+    new_dir = args[0][:-args[0][::-1].find('/')-1]
+    chdir (new_dir)
+    result = [ join(new_dir, u) + "/" for u in ip.magic("mglob dir:*") ]
+    result.extend([ join(new_dir, u) for u in ip.magic("mglob \"cont:JobDict pickle\" *") ])
+    chdir(orig_dir)
+  elif len(args) == 1: 
+    result = [ u + "/" for u in ip.magic("mglob dir:%s*" % (args[0])) ]
+    result.extend([ u for u in ip.magic("mglob \"cont:JobDict pickle\" %s*" % (args[0])) ])
+    result.extend(["errors", "results", "file", "JobDict"])
+    pyargs = args[0].split('.')  
+    dictionary, name = ip.user_ns, None
+    for u in pyargs[:-1]:
+      if u not in dictionary: return results
+      if hasattr(dictionary[u], "__dict__"):
+        dictionary = dictionary[u].__dict__
+        if name == None: name = u
+        else: name += "." + u
+    if name == None: 
+      result.extend([u for u in dictionary if u[0] != '_'])
+    else: 
+      result.extend([name + "." + u for u in dictionary if u[0] != '_'])
+    
+
+  return result
+
 
 def explore(self, arg):
   """ Starts exploration of a pickled job dictionary. 
@@ -50,7 +91,7 @@ def explore(self, arg):
 
       >>> explore results in path/to/job_pickle
   """
-  from os.path import exists, split as splitpath, abspath
+  from os.path import exists, split as splitpath, abspath, isfile
   from cPickle import load
   from .opt import open_exclusive
   ip = self.api
@@ -66,6 +107,7 @@ def explore(self, arg):
     else:
       print "Current position in job dictionary:", current.name
       print "Path to job dictionary: ", path
+    return
 
   if isinstance(arg, jobs.JobDict):
     ip.user_ns["current_jobdict"] = arg
@@ -93,6 +135,8 @@ def explore(self, arg):
     if is_a_file:
       if not exists(filename): # checks the file exists.
         raise RuntimeError("Could not find file %s." % (filename))
+      if not isfile(filename):
+        raise RuntimeError("%s is not a file." % (filename))
       with open_exclusive(filename, "r") as file: result = load(file)
       return result, abspath(filename)
 
@@ -659,6 +703,7 @@ def _main():
   ip.expose_magic("fakerun", fakerun)
   ip.set_hook('complete_command', goto_completer, re_key = '\s*%?goto')
   ip.set_hook('complete_command', showme_completer, re_key = '\s*%?showme')
+  ip.set_hook('complete_command', explore_completer, re_key = '\s*%?explore')
   if "SNLCLUSTER" in environ:
     if environ["SNLCLUSTER"] in ["redrock"]:
       ip.expose_magic("qstat", qstat)
