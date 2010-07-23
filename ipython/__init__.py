@@ -213,7 +213,7 @@ def _main():
   from ._goto import goto, iterate, goto_completer
   from ._explore import explore, explore_completer
   from ._showme import showme, showme_completer
-  from ._launch import launch, launch_completer
+  from ._launch import launch_scattered
 
   ip = IPython.ipapi.get()
   ip.expose_magic("explore", explore)
