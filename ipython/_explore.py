@@ -2,6 +2,8 @@
 
 def _glob_job_pickles(ip, arg):
   """ Returns list of candidate files and directory. """
+  from os import getcwd, chdir
+  from os.path import join
   from ..jobs import JobDict
 
   # nothing there yet.
@@ -47,8 +49,8 @@ def _glob_ipy_user_ns(ip, arg):
 
 def explore_completer(self, event):
   """ Completer for explore. """ 
-  from os import getcwd, chdir
   from os.path import isdir, join
+  import re
   import IPython
   from ..jobs import JobDict
   from . import _get_current_job_params
@@ -56,17 +58,28 @@ def explore_completer(self, event):
   ip = self.api
   current, path = _get_current_job_params(self, 0)
 
-  args = event.symbol.split()
-  if len(args) == 0: 
-    result = _glob_job_pickles(ip, "")
-    result.extend(["errors", "results", "file", "JobDict"])
+  line_re = re.search("\%?explore\s*(results|errors)?\s*(?:in)?\s*(file|JobDict)?\s*(\S*)", event.line)
+  text = line_re.group(3)
+  if text == None: text = ""
+  if line_re.group(1) == None and line_re.group(2) == None:
+    result = _glob_job_pickles(ip, text)
+    if text.find('/') == -1: result.extend(["errors", "results", "file", "JobDict"])
+    if text != "": result.extend(_glob_ipy_user_ns(ip, text))
     return result
-  elif len(args) == 1: 
-    result = _glob_job_pickles(ip, args[0])
-    if args[0].find('/') == -1:
-      result.extend(["errors", "results", "file", "JobDict"])
-      result.extend(_glob_ipy_user_ns(ip, args[0]))
+  elif line_re.group(1) == None:
+    if line_re.group(2) == "file": return _glob_job_pickles(ip, text)
+    elif text != "":               return _glob_ipy_user_ns(ip, text)
+  else:
+    result = []
+    if line_re.group(2) == None:
+      if text.find('/') == -1: result.extend(["file", "JobDict"])
+      result.extend(_glob_job_pickles(ip, text))
+      if text != "": result.extend(_glob_ipy_user_ns(ip, text))
+    if line_re.group(2) == "file": result.extend(_glob_job_pickles(ip, text))
+    elif line_re.group(2) == "JobDict" and text != "": result.extend(_glob_ipy_user_ns(ip, text))
+    elif line_re.group(2) == "JobDict" and text == "": raise IPython.ipapi.TryNext
     return result
+
   raise IPython.ipapi.TryNext
 
 
