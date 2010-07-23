@@ -52,20 +52,6 @@ namespace LaDa
         }
 #     endif
     template<class T> 
-      boost::shared_ptr<T> create_input(std::string const &_filename ) 
-      {
-        TiXmlDocument doc( _filename ); 
-        TiXmlHandle docHandle( &doc ); 
-        if( not doc.LoadFile() )
-        {
-          std::ostringstream sstr;
-          sstr << "Could not parse xml file.\n" << doc.ErrorDesc() << "\n";
-          PyErr_SetString(PyExc_RuntimeError, sstr.str().c_str());
-          bp::throw_error_already_set();
-        }
-        return create_docnhand(doc, dochandle);
-      }
-    template<class T> 
       boost::shared_ptr<T> create_docnhand(TiXmlDocument &_doc, TiXmlHandle &_docHandle)
       {
         boost::shared_ptr<T> result = create<T>();
@@ -93,6 +79,20 @@ namespace LaDa
           }
         }
         return result;
+      }
+    template<class T> 
+      boost::shared_ptr<T> create_input(std::string const &_filename ) 
+      {
+        TiXmlDocument doc( _filename ); 
+        TiXmlHandle docHandle( &doc ); 
+        if( not doc.LoadFile() )
+        {
+          std::ostringstream sstr;
+          sstr << "Could not parse xml file.\n" << doc.ErrorDesc() << "\n";
+          PyErr_SetString(PyExc_RuntimeError, sstr.str().c_str());
+          bp::throw_error_already_set();
+        }
+        return create_docnhand<T>(doc, docHandle);
       }
 #     ifndef _MPI
       template<class T>
