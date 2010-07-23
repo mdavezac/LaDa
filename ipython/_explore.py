@@ -57,7 +57,7 @@ def explore_completer(self, event):
 
   ip = self.api
 
-  line_re = re.search("\%?explore\s*(results|errors)?\s*(?:in)?\s*(file|JobDict)?\s*(\S*)",\
+  line_re = re.search("\%?explore\s*(results\s|errors\s)?\s*(?:in)?\s*(file|JobDict)?\s*(\S*)",\
                       event.line)
   text = line_re.group(3)
   if text == None: text = ""
@@ -204,8 +204,8 @@ def explore(self, arg):
       explore(self, string)
       current, path = _get_current_job_params(self, 0)
     elif len(args) == 1:                          current, path = get_dict(args[0])
-    elif len(args) == 2 and args[0] == "file":    current, path = get_dict(args[0], True)
-    elif len(args) == 2 and args[0] == "JobDict": current, path = get_dict(args[0], False)
+    elif len(args) == 2 and args[0] == "file":    current, path = get_dict(args[1], True)
+    elif len(args) == 2 and args[0] == "JobDict": current, path = get_dict(args[1], False)
     else: raise RuntimeError("Calling explore with arguments %s is invalid." % (arg))
     if current != None: 
       ip.user_ns["current_jobdict"] = current
