@@ -5,7 +5,7 @@ class SpecialVaspParam(object):
   def __init__(self, value): 
     super(SpecialVaspParam, self).__init__()
     self.value = value
-  def __repr__(self): return "%s(%s)" % (self.__class__.__name__, self.value)
+  def __repr__(self): return "%s(%s)" % (self.__class__.__name__, repr(self.value))
 
 class NElect(SpecialVaspParam):
   """ Sets number of electrons relative to neutral system.
@@ -45,8 +45,6 @@ class NElect(SpecialVaspParam):
     else: 
       return "NELECT = %s  # positively charged system (+%i) "\
              % (charge_neutral + self.value, -self.value)
-  def __repr__(self):
-    return "%s(%f)" % (self.__class__.__name__, self.value)
           
       
 class Algo(SpecialVaspParam): 
@@ -85,7 +83,6 @@ class Ediff(SpecialVaspParam):
   def __init__(self, value): super(Ediff, self).__init__(value)
   def incar_string(self, vasp, *args, **kwargs):
     return "EDIFF = %f " % (self.value * float(len(vasp._system.atoms)))
-  def __repr__(self): return "%s(%e)" % (self.__class__.__name__, repr(self.value))
 
 
 class Encut(SpecialVaspParam):
@@ -250,11 +247,21 @@ class UParams(SpecialVaspParam):
       result += "\n%s\n%s\n%s\n%s\n" % (line)
     return result
 
+class IniWave(SpecialVaspParam):
+  def __init__(self, value): super(IniWave, self).__init__(value)
+  @broadcast_result(key=True)
+  def incar_string(self, *args, **kwargs):
+    """ Returns VASP incar string. """
+    if self.value == "1" or self.value == "random": result = 1
+    elif self.value == "0" or self.value == "jellium": result = 0
+    else: raise ValueError("iniwave cannot be set to " + self.value + ".")
+    return "INIWAVE = %i\n"  % (value)
+
 
 class Magmom(SpecialVaspParam):
   """ Creates a magmom configuration, whether low-spin or high-spin. """
-  def __init__(self, value):
-    self._config, self._indices = None, None
+  def __init__(self, value, config = None, indices = None):
+    self._config, self._indices = config, indices
     super(Magmom, self).__init__(value)
 
   def _get_value(self):
@@ -321,5 +328,9 @@ class Magmom(SpecialVaspParam):
   
     return "MAGMOM = %s" % (magmom)
 
+  def __repr__(self):
+    """ Returns a python script representing this object. """
+    return "vasp = %s(%s, config=%s, indices=%s))\n" \
+           % (self.__classname__, repr(self.value), repr(self._config), repr(self.indices))
 
     

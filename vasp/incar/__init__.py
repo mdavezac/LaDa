@@ -1,7 +1,11 @@
 """ Subpackage defining vasp incar parameters. """
 from _params import SpecialVaspParam, NElect, Algo, Precision, Ediff,\
-                    Encut, FFTGrid, Restart, UParams, Magmom
+                    Encut, FFTGrid, Restart, UParams, Magmom, IniWave
 from ...opt.decorators import add_setter
+
+__dir__ = [ "SpecialVaspParam", "NElect", "Algo", "Precision", "Ediff",\
+            "Encut", "FFTGrid", "Restart", "UParams", "Magmom", "IniWave",\
+            "Incar" ]
 
 class Incar(object):
   """ Contains vasp Incar parameters. 
@@ -104,7 +108,6 @@ class Incar(object):
 #       system of interest to print INCAR string. 
 #   """ 
 
-    self.iniwave = "random"
     self.add_param = "ispin",       1 
     self.add_param = "isif",        0
     self.add_param = "ismear",      None
@@ -120,16 +123,18 @@ class Incar(object):
     self.add_param = "isym",        None
     self.add_param = "symprec",     None
     self.add_param = "lcorr",       None
-    self.add_param = "nelect",      NElect(0)
-    self.add_param = "algo",        Algo("normal")
-    self.add_param = "precision",   Precision("accurate")
-    self.add_param = "ediff",       Ediff(1e-4)
-    self.add_param = "encut",       Encut(None)
-    self.add_param = "fftgrid",     FFTGrid(None)
-    self.add_param = "restart",     Restart(None)
-    self.add_param = "U_verbosity", UParams("occupancy")
-    self.add_param = "magmom",      Magmom(None)
-
+    # objects derived from SpecialVaspParams will be recognized as such and can
+    # be added without further fuss.
+    self.nelect      = NElect(0)
+    self.algo        = Algo("normal")
+    self.precision   = Precision("accurate")
+    self.ediff       = Ediff(1e-4)
+    self.encut       = Encut(None)
+    self.fftgrid     = FFTGrid(None)
+    self.restart     = Restart(None)
+    self.U_verbosity = UParams("occupancy")
+    self.magmom      = Magmom(None)
+    self.iniwave     = IniWave(None)
 
 
   def incar_lines(self, *args, **kwargs):
@@ -191,7 +196,10 @@ class Incar(object):
 
   def __setattr__(self, name, value):
     """ Sets a VASP parameter to standard and special dictionaries. """
-    if   name in self.params: self.params[name] = value
+    if isinstance(value, SpecialVaspParam):
+      if name in self.params: del self.params[name]
+      self.special[name] = value
+    elif name in self.params: self.params[name] = value
     elif name in self.special: self.special[name].value = value
     else: super(Incar, self).__setattr__(name, value)
 
@@ -201,16 +209,6 @@ class Incar(object):
     elif name in self.params: return self.params.pop(name)
     elif name in self.params: return self.special.pop(name).value
     raise AttributeError("Unknown vasp attribute " + name + ".")
-
-  def _get_iniwave(self):
-    """ Initializes wave functions with \"random\" or 1(default), \"jellium\" or 2. """ 
-    return self.params["iniwave"] 
-  def _set_iniwave(self, value):
-    value = str(value).split()[0] # removes spaces.
-    if value == "1" or value == "random": self.params["iniwave"] = 1
-    elif value == "0" or value == "jellium": self.params["iniwave"] = 0
-    else: raise ValueError("iniwave cannot be set to " + value + ".")
-  iniwave = property(_get_iniwave, _set_iniwave)
 
   @add_setter
   def set_symmetries(self, value):

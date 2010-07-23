@@ -75,10 +75,9 @@ def _waves(is_first = True):
 
       if is_first: # sets up job parameters of first wave.
         job = lat_jobdict / "non-magnetic"
-        job.vasp = input.relaxer
-        job.args = [structure]
+        job.functional = input.relaxer
+        job.jobparams["structure"] = structure
         job.jobparams["ispin"] = 1
-        job.jobparams["repat"] = files.input
         continue 
       else:        # copies structure from first wave.
         strdir = join(join(join(input.first_wave_dir, material),\
@@ -94,32 +93,29 @@ def _waves(is_first = True):
 
       # first ferro
       job = lat_jobdict / "ferro"
-      job.vasp = input.relaxer
-      job.args = [structure]
+      job.functional = input.relaxer
+      job.jobparams["structure"] = structure
       job.jobparams["ispin"] =  2
       job.jobparams["magmom"] = magnetic.ferro(structure, input.vasp.species)
-      job.jobparams["repat"] = files.input
       job.jobparams["first_trial"] = {}
       
       # then, antiferro with spin direction depending on cation type.
       magmom = magnetic.sublatt_antiferro(structure, input.vasp.species) 
       if magmom != None:
         job = lat_jobdict / "anti-ferro-0"
-        job.vasp = input.relaxer
-        job.args = [structure]
+        job.functional = input.relaxer
+        job.jobparams["structure"] = structure
         job.jobparams["ispin"] = 2
         job.jobparams["magmom"] = magmom
-        job.jobparams["repat"] = files.input
         job.jobparams["first_trial"] = {}
 
       # Then random anti-ferro.
       for i in range(input.nbantiferro):
         job = lat_jobdict / ("anti-ferro-%i" % (i+1))
-        job.vasp = input.relaxer
-        job.args = [structure]
+        job.functional = input.relaxer
+        job.jobparams["structure"] = structure
         job.jobparams["ispin"] = 2
         job.jobparams["magmom"] = magnetic.random(structure, input.vasp.species)
-        job.jobparams["repat"] = files.input
         job.jobparams["first_trial"] = {}
   return jobdict
                                            

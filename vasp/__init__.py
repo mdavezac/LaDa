@@ -63,6 +63,8 @@ class Vasp(Launch):
       This allows us to use the same scripts for generating and retrieving
       data. 
   """
+  Extract = Extract
+  """ Extraction class. """
 
   def __init__(self, *args, **kwargs):
     """ Initializes vasp class. """
@@ -121,7 +123,7 @@ class Vasp(Launch):
                     else exists(outdir)
     if exists_outdir:
       if not overwrite: # check for success
-        extract = Extract(comm = comm, directory = outdir)
+        extract = self.Extract(comm = comm, directory = outdir)
         if extract.success: return extract # in which case, returns extraction object.
       elif is_root: rmtree(outdir) # overwrite data. 
       if comm != None: comm.barrier() # makes sure directory is not created by other proc!
@@ -131,22 +133,72 @@ class Vasp(Launch):
                                 repat=repat, comm=comm, norun=norun )
     
     # checks if result was successful
-    extract = Extract(comm = comm, directory = outdir)
+    extract = self.Extract(comm = comm, directory = outdir)
     if not norun:
       assert extract.success, RuntimeError("VASP calculation did not complete in %s.\n" % (outdir))
 
     return extract
 
-def return_final(looper, *args, **keywords):
-  """ Function to pass through a loop, returning final result only. 
+  def __repr__(self):
+    """ Returns a python script representing this object. """
+    from .incar._params import SpecialVaspParam
+    string = "functional = %s()\n" % (self.__class__.__name__)
 
-      Many methods in this module should be of the form: 
-      >>> extract = None
-      >>> for extract in method(vasp):
-      >>>   # do something
-      This function goes through the loop returning only the final result.
-      >>> extract = return_final(method.relaxation, structure, vasp, outdir)
-  """ 
-  result = None
-  for result in looper(*args, **keywords): pass
-  return result
+    # creates a default vasp instance to compare to.
+    compare = self.__class__()
+    params = compare.params.keys()
+
+    # will hold classes from modules.
+    modules = {}
+    modules[self.__class__.__module__] = [self.__class__.__name__]
+    # now go through vasp parameters and print them out.
+    for name, value in self.params.items():
+      if value == None: continue
+      # if a special parameter, then is non-default.
+      if name in params: string += "functional.%s = %s\n" % (name, repr(value))
+      else:
+        string += "functional.add_item = \"%s\", %s\n" % (name, repr(value))
+        module = value.__class__.__module__ 
+        classname = value.__class__.__name__ 
+        if module in modules: modules[module].append(classname)
+        else: modules[module] = [classname]
+    for name, value in self.special.items():
+      if value.value == None: continue
+      assert isinstance(value, SpecialVaspParam)
+      string += "functional.%s = %s\n" % (name, value)
+      module = value.__class__.__module__ 
+      classname = value.__class__.__name__ 
+      if module in modules: modules[module].append(classname)
+      else: modules[module] = [classname]
+    # adds kpoints
+    string += "functional.kpoints = %s\n" % (repr(self.kpoints))
+    if hasattr(self.kpoints, "__call__"):
+      # checks for user module.
+      module = self.kpoints.__class__.__module__ 
+      classname = self.kpoints.__class__.__name__ 
+      if module in modules: modules[module].append(classname)
+      else: modules[module] = [classname]
+    # adds species.
+    for name, specie in self.species.items():
+      string += "functional.add_specie = \"%s\", \"%s\"" % (name, specie.path)
+      if len(specie.U) == 0: string += ", None"
+      else:
+        string += ",\\\n                  [ %s" % (specie.U[0])
+        for u in specie.U[1:]:
+          string += ",\\\n                    %s" % (u)
+        string += " ]\n"
+      string += ",\\\n                  "
+      string += "None" if not hasattr(specie, "oxidation") else str(specie.oxidation)
+      string += ", %s\n" % (repr(specie.magnetic))
+    if not self.inplace: 
+      string += "functional.inplace = False\n"
+      string += "functional.workdir = \"%s\"\n" % (self.workdir)
+
+    # adds user modules above repr string.
+    header = ""
+    for name in sorted(modules.keys()):
+      header += "from %s import %s" % (name, modules[name][0])
+      for v in modules[name][1:]: header += ", %s" % (v)
+      header += "\n"
+    return header + string
+

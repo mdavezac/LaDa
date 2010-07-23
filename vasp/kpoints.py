@@ -4,6 +4,7 @@ class Gamma(object):
   def __call__(self, vasp):
     """ Returns a string which is the text of the KPOINTS file """
     return """Gamma only\n0\nGamma\n1 1 1\n0 0 0\n"""
+  def __repr__(self): return "%s()" % (self.__class__.__name__)
 
 class Density(object):
   """ Contains vasp kpoints parameters. """
@@ -108,4 +109,8 @@ class Density(object):
       op = matrix( [[transform.op[j,i] for j in range(3)] for i in range(3)] )
       if not is_unimodular( grid.I * op * grid ): return False
     return True
+  
+  def __repr__(self):
+    return "%s(offset=%s, length=%s)"\
+           % (self.__class__.__name__, repr(self.offset), repr(self.length))
 
