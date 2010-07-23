@@ -77,7 +77,6 @@ def _waves(is_first = True):
         job.functional = input.relaxer
         job.jobparams["structure"] = structure
         job.jobparams["ispin"] = 1
-        job.jobparams["repat"] = files.input
         continue 
       else:        # copies structure from first wave.
         strdir = join(join(join(input.first_wave_dir, material),\
@@ -97,7 +96,6 @@ def _waves(is_first = True):
       job.jobparams["structure"] = structure
       job.jobparams["ispin"] =  2
       job.jobparams["magmom"] = magnetic.ferro(structure, input.vasp.species)
-      job.jobparams["repat"] = files.input
       job.jobparams["first_trial"] = {}
       
       # then, antiferro with spin direction depending on cation type.
@@ -108,7 +106,6 @@ def _waves(is_first = True):
         job.jobparams["structure"] = structure
         job.jobparams["ispin"] = 2
         job.jobparams["magmom"] = magmom
-        job.jobparams["repat"] = files.input
         job.jobparams["first_trial"] = {}
 
       # Then random anti-ferro.
@@ -118,7 +115,6 @@ def _waves(is_first = True):
         job.jobparams["structure"] = structure
         job.jobparams["ispin"] = 2
         job.jobparams["magmom"] = magnetic.random(structure, input.vasp.species)
-        job.jobparams["repat"] = files.input
         job.jobparams["first_trial"] = {}
   return jobdict
                                            

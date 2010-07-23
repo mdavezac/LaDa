@@ -276,7 +276,7 @@ def saveto(self, event):
       while a not in ['n', 'y']:
         a = raw_input("File already exists. Overwrite? [y/n] ")
       if a == 'n': return
-    jobs.save(current, path) 
+    jobs.save(current, path, overwrite=True) 
   elif len(args) == 1:
     if exists(args[0]): 
       if not isfile(path): 
@@ -287,7 +287,7 @@ def saveto(self, event):
       while a not in ['n', 'y']:
         a = raw_input("File already exists. Overwrite? [y/n] ")
       if a == 'n': return
-    jobs.save(current, args[0]) 
+    jobs.save(current, args[0], overwrite=True) 
     ip.user_ns["current_jobdict_path"] = abspath(args[0])
   else:
     ip.user_ns["_lada_error"] = "Invalid call to saveto."
@@ -515,6 +515,7 @@ def _main():
   import lada
   from ._goto import goto, iterate, goto_completer
   from ._explore import explore, explore_completer
+  from ._showme import showme, showme_completer
 
   ip = IPython.ipapi.get()
   ip.expose_magic("explore", explore)

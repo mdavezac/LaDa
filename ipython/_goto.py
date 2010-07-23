@@ -100,7 +100,7 @@ def iterate(self, event):
 
 def goto_completer(self, event):
   import IPython
-  from ..ipy_lada import _get_current_job_params
+  from . import _get_current_job_params
   ip = self.api
   current, path = _get_current_job_params(self, 0)
   if current == None: raise IPython.ipapi.TryNext

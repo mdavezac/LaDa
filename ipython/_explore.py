@@ -1,47 +1,73 @@
 """ IPython explore function and completer. """
 
+def _glob_job_pickles(ip, arg):
+  """ Returns list of candidate files and directory. """
+  from ..jobs import JobDict
+
+  # nothing there yet.
+  if len(arg) == 0:
+    result = [ u + "/" for u in ip.magic("mglob dir:*") ]
+    result.extend([ u for u in ip.magic("mglob \"cont:JobDict pickle\" *") ])
+  # Contains directory.
+  elif arg.find('/') != -1:
+    orig_dir = getcwd()
+    new_dir = arg[:-arg[::-1].find('/')-1]
+    chdir (new_dir)
+    result = [ join(new_dir, u) + "/" for u in ip.magic("mglob dir:*") ]
+    result.extend([ join(new_dir, u) for u in ip.magic("mglob \"cont:JobDict pickle\" *") ])
+    chdir(orig_dir)
+  else: # not a directory.
+    result = [u + "/" for u in ip.magic("mglob dir:%s*" % (arg))]
+    result.extend([u for u in ip.magic("mglob \"cont:JobDict pickle\" %s*" % (arg))])
+  return result
+
+
+def _glob_ipy_user_ns(ip, arg):
+  """ Returns list of candidate python variables. """
+  from ..jobs import JobDict
+  
+  pyargs = arg.split('.')  
+  if len(pyargs) == 0: return []
+  dictionary, name = ip.user_ns, None
+  for u in pyargs[:-1]:
+    if u not in dictionary: return results
+    if hasattr(dictionary[u], "__dict__"):
+      dictionary = dictionary[u].__dict__
+      if name == None: name = u
+      else: name += "." + u
+  names = [u for u in dictionary if u[0] != '_']
+  if name == None: 
+    result = [u + "." for u in names if not isinstance(dictionary[u], JobDict)]
+    result.extend([ u for u in names if isinstance(dictionary[u], JobDict)])
+  else: 
+    result = [name + "." + u + "." for u in names if not isinstance(dictionary[u], JobDict)]
+    result.extend([ name + "." + u for u in names if isinstance(dictionary[u], JobDict)])
+    return result
+  return result
+
 def explore_completer(self, event):
   """ Completer for explore. """ 
   from os import getcwd, chdir
   from os.path import isdir, join
+  import IPython
   from ..jobs import JobDict
   from . import _get_current_job_params
 
   ip = self.api
   current, path = _get_current_job_params(self, 0)
-  print "wtf"
 
   args = event.symbol.split()
   if len(args) == 0: 
-    result = [ u + "/" for u in ip.magic("mglob dir:*") ]
-    result.extend([ u for u in ip.magic("mglob \"cont:JobDict pickle\" *") ])
+    result = _glob_job_pickles(ip, "")
     result.extend(["errors", "results", "file", "JobDict"])
-  elif len(args) == 1 and args[0].find('/') != -1:
-    orig_dir = getcwd()
-    new_dir = args[0][:-args[0][::-1].find('/')-1]
-    chdir (new_dir)
-    result = [ join(new_dir, u) + "/" for u in ip.magic("mglob dir:*") ]
-    result.extend([ join(new_dir, u) for u in ip.magic("mglob \"cont:JobDict pickle\" *") ])
-    chdir(orig_dir)
+    return result
   elif len(args) == 1: 
-    result = [ u + "/" for u in ip.magic("mglob dir:%s*" % (args[0])) ]
-    result.extend([ u for u in ip.magic("mglob \"cont:JobDict pickle\" %s*" % (args[0])) ])
-    result.extend(["errors", "results", "file", "JobDict"])
-    pyargs = args[0].split('.')  
-    dictionary, name = ip.user_ns, None
-    for u in pyargs[:-1]:
-      if u not in dictionary: return results
-      if hasattr(dictionary[u], "__dict__"):
-        dictionary = dictionary[u].__dict__
-        if name == None: name = u
-        else: name += "." + u
-    if name == None: 
-      result.extend([u for u in dictionary if u[0] != '_'])
-    else: 
-      result.extend([name + "." + u for u in dictionary if u[0] != '_'])
-    
-
-  return result
+    result = _glob_job_pickles(ip, args[0])
+    if args[0].find('/') == -1:
+      result.extend(["errors", "results", "file", "JobDict"])
+      result.extend(_glob_ipy_user_ns(ip, args[0]))
+    return result
+  raise IPython.ipapi.TryNext
 
 
 def explore(self, arg):
@@ -76,6 +102,7 @@ def explore(self, arg):
   from os.path import exists, split as splitpath, abspath, isfile
   from cPickle import load
   from ..opt import open_exclusive
+  from ..jobs import JobDict
   from . import _get_current_job_params
   ip = self.api
   current, path = _get_current_job_params(self, 0)
@@ -92,7 +119,7 @@ def explore(self, arg):
       print "Path to job dictionary: ", path
     return
 
-  if isinstance(arg, jobs.JobDict):
+  if isinstance(arg, JobDict):
     ip.user_ns["current_jobdict"] = arg
     ip.user_ns["current_jobdict_path"] = None
     return
@@ -129,7 +156,7 @@ def explore(self, arg):
         try: var, dvar = dvar[name], dvar[name].__dict__ 
         except:
           raise RuntimeError("Could not find variable name %s." % (filename))
-      if not isinstance(var, jobs.JobDict): # checks the file exists.
+      if not isinstance(var, JobDict): # checks the file exists.
         raise RuntimeError("Variable %s is not a JobDict object." % (filename))
       return var, None
 
