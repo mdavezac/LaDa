@@ -56,9 +56,9 @@ def explore_completer(self, event):
   from . import _get_current_job_params
 
   ip = self.api
-  current, path = _get_current_job_params(self, 0)
 
-  line_re = re.search("\%?explore\s*(results|errors)?\s*(?:in)?\s*(file|JobDict)?\s*(\S*)", event.line)
+  line_re = re.search("\%?explore\s*(results|errors)?\s*(?:in)?\s*(file|JobDict)?\s*(\S*)",\
+                      event.line)
   text = line_re.group(3)
   if text == None: text = ""
   if line_re.group(1) == None and line_re.group(2) == None:
