@@ -5,7 +5,7 @@ def goto(self, arg):
   """ Moves current dictionary position and working directory (if appropriate). """
   from os import chdir
   from os.path import exists, join, split as splitpath
-  from ..ipy_lada import _get_current_job_params
+  from . import _get_current_job_params
   ip = self.api
   current, path = _get_current_job_params(self, 1)
   ip.user_ns.pop("_lada_error", None)
@@ -58,7 +58,7 @@ def goto(self, arg):
 
 def iterate(self, event):
   """ Goes to next (untagged) job. """
-  from ..ipy_lada import _get_current_job_params
+  from . import _get_current_job_params
   ip = self.api
   current, path = _get_current_job_params(self, 1)
   if current == None: return

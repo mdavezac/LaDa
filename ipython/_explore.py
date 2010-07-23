@@ -5,7 +5,7 @@ def explore_completer(self, event):
   from os import getcwd, chdir
   from os.path import isdir, join
   from ..jobs import JobDict
-  from .ipy_lada import _get_current_job_params
+  from . import _get_current_job_params
 
   ip = self.api
   current, path = _get_current_job_params(self, 0)
@@ -75,8 +75,8 @@ def explore(self, arg):
   """
   from os.path import exists, split as splitpath, abspath, isfile
   from cPickle import load
-  from .opt import open_exclusive
-  from ..ipy_lada import _get_current_job_params
+  from ..opt import open_exclusive
+  from . import _get_current_job_params
   ip = self.api
   current, path = _get_current_job_params(self, 0)
   ip.user_ns.pop("_lada_error", None)

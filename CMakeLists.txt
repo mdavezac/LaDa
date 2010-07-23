@@ -26,9 +26,10 @@ option(vff_functional         "Compile Valence Force Field method."        off)
 option(separables_functional  "Compile Fixed Lattice Sum of Separables."   off)
 option(atompot_functional     "Compile Fixed Lattice Sum of Separables."   off)
 option(enum_package           "Compile Lattice Decoration Enumeration."    off)
-option(jobs_package           "Installs jobs python module."                on)
-option(ga_package             "Installs GA python module."                  on)
+option(jobs_package           "Installs jobs python module."               off)
+option(ga_package             "Installs GA python module."                 off)
 option(python_bindings        "Include python bindings."                   off)
+option(ipython_interface      "Include IPython interface."                 off)
 
 
 # Location where cmake first looks for cmake modules.
@@ -209,14 +210,14 @@ endif(enum_package)
 
 if(separables_functional)
   if(NOT disable_executables) 
-    set(minimizer_libs TRUE)
+    set(minimizer_libs on)
   endif(NOT disable_executables) 
-  set(ce_functional TRUE)
+  set(ce_functional on)
   add_subdirectory(separables)
 endif(separables_functional)
 
 if(atompot_functional)
-  set(python_bindings TRUE)
+  set(python_bindings on)
   add_subdirectory(atomic_potentials)
 endif(atompot_functional)
 
@@ -235,6 +236,12 @@ if(minimizer_libs)
   endif(use_minuit2) 
   add_subdirectory(minimizer)
 endif(minimizer_libs)
+
+if(ipython_interface)
+  set(jobs_package on)
+  set(python_bindings on)
+  add_subdirectory(ipython)
+endif(ipython_interface)
 
 if(python_bindings)
   if(PYTHONLIBS_FOUND)

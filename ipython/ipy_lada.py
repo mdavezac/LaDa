@@ -536,6 +536,7 @@ def _main():
 
   for key in lada.__dict__:
     if key[0] == '_': continue
+    if key == "ipython": continue
     if key == "jobs": ip.ex("from lada import jobs as ladajobs")
     else: ip.ex("from lada import " + key)
 
