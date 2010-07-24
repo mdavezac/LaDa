@@ -85,7 +85,7 @@ def saveto(self, event):
     jobs.save(current, path, overwrite=True) 
   elif len(args) == 1:
     if exists(args[0]): 
-      if not isfile(arg[0]): 
+      if not isfile(args[0]): 
         ip.user_ns["_lada_error"] = "%s is not a file." % (path)
         print ip.user_ns["_lada_error"] 
         return

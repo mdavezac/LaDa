@@ -25,8 +25,11 @@ def launch_scattered(self, event):
 
   """
   import re
+  from os import environ
   from os.path import split as splitpath, join, exists
-  from lada.opt.changedir import Changedir
+  from ..opt.changedir import Changedir
+  from ..jobs.templates import default_pbs, default_slurm
+  from . import _get_current_job_params
   ip = self.api
   current, path = _get_current_job_params(self, 0)
   ip.user_ns.pop("_lada_error", None)
@@ -52,14 +55,15 @@ def launch_scattered(self, event):
     if job.is_tagged: continue
     mppwidth = mppalloc(job) if hasattr(mppalloc, "__call__") else mppalloc
     name = name.replace("/", ".")
-    pbsscripts.append( abspath(join(directory, name + ".pbs")) )
-    with open(results[-1], "w") as file: 
-      jobs.template( file, outdir=splitpath(path[0]), jobid=i, mppwidth=mppwidth, name=name,\
-                     pickle = path, pyscript=pyscript )
+    pbsscripts.append(join(path+".pbs", name + ".pbs"))
+    with open(pbsscripts[-1], "w") as file: 
+      template( file, outdir=splitpath(path)[0], jobid=i, mppwidth=mppwidth, name=name,\
+                pickle = path, pyscript=pyscript )
+  if event.find("nolaunch") != -1: return 
   # otherwise, launch.
   for script in pbsscripts:
-    if which: ip.ex("qsub %s" % script)
-    else: ip.ex("sbatch %s" % script)
+    if which: ip.ex("sbatch %s" % script)
+    else: ip.ex("qsub %s" % script)
 
 
 

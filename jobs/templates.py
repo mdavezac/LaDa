@@ -22,7 +22,7 @@ def default_pbs( file, walltime = "05:45:00", mppwidth = 8, queue = "regular", n
       @param pickle: Fileame of job-tree pickle.
   """
   from os import environ
-  from os.path import exists, split as splitpath
+  from os.path import exists, split as splitpath, join
 
   if pyvirt == None and "VIRTUAL_ENV" in environ:
     pyvirt = join(join(environ["VIRTUAL_ENV"], "bin"), "activate")
