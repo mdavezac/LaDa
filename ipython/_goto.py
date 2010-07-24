@@ -4,7 +4,7 @@ from contextlib  import contextmanager
 def goto(self, arg):
   """ Moves current dictionary position and working directory (if appropriate). """
   from os import chdir
-  from os.path import exists, join, split as splitpath
+  from os.path import exists, join, split as splitpath, isdir
   from . import _get_current_job_params
   ip = self.api
   current, path = _get_current_job_params(self, 1)
@@ -35,6 +35,20 @@ def goto(self, arg):
   if args[0] == "next":       return iterate(self, "")
   elif args[0] == "previous": return iterate(self, "previous")
   elif args[0] == "reset":    return iterate(self, "reset")
+  elif args[0] == "pbs":
+   if path == None: 
+     ip.user_ns["_lada_error"] = "Cannot go to pbs dir: default dictionary path not set."\
+                                 "\nPlease user \"savejobs\"."
+     print ip.user_ns["_lada_error"]
+     return
+   elif not exists(path + ".pbs"):
+     ip.user_ns["_lada_error"] = "pbs dir %s does not exist." % (path + ".pbs")
+     print ip.user_ns["_lada_error"]
+   elif not isdir(path + ".pbs"):
+     ip.user_ns["_lada_error"] = "pbs dir %s exists but is not a directory." % (path + ".pbs")
+     print ip.user_ns["_lada_error"]
+   chdir(path+".pbs")
+   return 
 
   # case for which precise location is given.
   try: result = current[args[0]] 
@@ -99,6 +113,7 @@ def iterate(self, event):
 
 
 def goto_completer(self, event):
+  from os.path import exists, isdir
   import IPython
   from . import _get_current_job_params
   ip = self.api
@@ -106,7 +121,12 @@ def goto_completer(self, event):
   if current == None: raise IPython.ipapi.TryNext
   if len(event.line.split()) > 2: raise IPython.ipapi.TryNext
 
-  elif '/' in event.symbol:
+  has_pbs = False
+  if path != None:
+    if exists(path + ".pbs") and isdir(path + ".pbs"):
+      has_pbs = True
+
+  if '/' in event.symbol:
     subkey = ""
     for key in event.symbol.split('/')[:-1]: subkey += key + "/"
     try: subdict = current[subkey]
@@ -118,6 +138,7 @@ def goto_completer(self, event):
   else:
     result = [a + "/" for a in current.children.keys()]
     result.extend(["/", "next", "reset"])
+    if has_pbs: result.append("pbs")
     if current.parent != None: result.append("../")
     if "_lada_subjob_iterated" in ip.user_ns:
       if len(ip.user_ns["_lada_subjob_iterated"]): result.append("previous")

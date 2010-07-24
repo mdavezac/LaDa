@@ -45,7 +45,6 @@ def showme(self, event):
                        "# overwritten by the following corresponding parameters.\n")
             file.write("jobparams = {}\n")
             for key, value in current.jobparams.items():
-              if key == "args": continue
               if key == "functional": continue
               if key == "structure": continue
               file.write("jobparams[\"%s\"] = %s\n" % (key, repr(value)))
@@ -67,7 +66,7 @@ def showme(self, event):
       # change jobparameters.
       if arg.lower() == "functional":
         input = read_input(filename)
-        input.jobparams["args"] = job.args
+        input.jobparams["structure"] = current.structure
         input.jobparams["functional"] = input.functional
         current.jobparams = input.jobparams
       elif arg.lower() == "structure": 

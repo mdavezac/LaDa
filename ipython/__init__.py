@@ -80,9 +80,11 @@ def saveto(self, event):
         return
       a = ''
       while a not in ['n', 'y']:
-        a = raw_input("File already exists. Overwrite? [y/n] ")
-      if a == 'n': return
-    jobs.save(current, path, overwrite=True) 
+        a = raw_input("File %s already exists.\nOverwrite? [y/n] " % (path))
+      if a == 'n':
+       ip.user_ns["_lada_error"] = "User said no save."
+       return
+    jobs.save(current.root, path, overwrite=True) 
   elif len(args) == 1:
     if exists(args[0]): 
       if not isfile(args[0]): 
@@ -91,9 +93,11 @@ def saveto(self, event):
         return
       a = ''
       while a not in ['n', 'y']:
-        a = raw_input("File already exists. Overwrite? [y/n] ")
-      if a == 'n': return
-    jobs.save(current, args[0], overwrite=True) 
+        a = raw_input("File %s already exists.\nOverwrite? [y/n] " % (path))
+      if a == 'n':
+       ip.user_ns["_lada_error"] = "User said no save."
+       return
+    jobs.save(current.root, args[0], overwrite=True) 
     ip.user_ns["current_jobdict_path"] = abspath(args[0])
   else:
     ip.user_ns["_lada_error"] = "Invalid call to saveto."

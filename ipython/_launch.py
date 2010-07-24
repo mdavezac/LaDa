@@ -29,9 +29,12 @@ def launch_scattered(self, event):
   from os.path import split as splitpath, join, exists
   from ..opt.changedir import Changedir
   from ..jobs.templates import default_pbs, default_slurm
-  from . import _get_current_job_params
+  from .. import jobs
+  from . import _get_current_job_params, saveto
   ip = self.api
-  current, path = _get_current_job_params(self, 0)
+  current, path = _get_current_job_params(self, 2)
+  if current == None: return
+  if path == None: return
   ip.user_ns.pop("_lada_error", None)
 
   # creates mppalloc function.
@@ -46,9 +49,15 @@ def launch_scattered(self, event):
   if which: which = environ["SNLCLUSTER"] in ["redrock", "redmesa"]
   template = default_slurm if which else default_pbs
   # gets python script to launch in pbs.
-  pyscript = __file__.replace(splitpath(__file__)[1], "runone.py")
+  pyscript = jobs.__file__.replace(splitpath(jobs.__file__)[1], "runone.py")
   # creates directory.
   with Changedir(path + ".pbs") as pwd: pass 
+  # saving pickle
+  saveto(self, path)
+  if "_lada_error" in ip.user_ns:
+    if ip.user_ns["_lada_error"] == "User said no save.":
+      print "Job-dictionary not saved = jobs not launched."
+    return
   # creates pbs scripts.
   pbsscripts = []
   for i, (job, name) in enumerate(current.walk_through()):
@@ -62,8 +71,8 @@ def launch_scattered(self, event):
   if event.find("nolaunch") != -1: return 
   # otherwise, launch.
   for script in pbsscripts:
-    if which: ip.ex("sbatch %s" % script)
-    else: ip.ex("qsub %s" % script)
+    if which: ip.system("sbatch %s" % script)
+    else: ip.system("qsub %s" % script)
 
 
 
