@@ -219,8 +219,10 @@ namespace LaDa
           if(i_cluster->origin.site == _origin) 
           {
             t_uint const n_prime = cluster_to_integer(*i_cluster, flavors, neighbors);
+            std::cout << is_in_shell;
             if( n_prime < Nmax ) database[n_prime] = false;
             else is_in_shell = false;
+            std::cout << " " << is_in_shell << "\n";
           }
           // shifted sites.
           MLCluster::t_Spins :: const_iterator i_spin = i_cluster->begin();

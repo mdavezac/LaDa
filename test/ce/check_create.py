@@ -1,30 +1,46 @@
-#
-#  Version: $Id$
-#
+def inequivalent_sites(lattice):
+  """ Returns a list containing only one site index per inequivalent sub-lattice. """
+  from lada.crystal import which_site
 
-def main():
+  result = set( i for i in range(len(lattice.sites)) ) 
+  for i, site in enumerate(lattice.sites):
+    if i not in result: continue
+    for op in lattice.space_group:
+      j = which_site( op(site.pos), lattice )
+      if j != i and j in result: result.remove(j)
+  return result
 
-  from boost import mpi
-  from lada import crystal, ce
-  import numpy
-  from math import fabs
-  from time import time
+import numpy
+from lada.crystal import A2BX4
+from lada.opt import read_input
+from lada.ce import create_clusters
 
+# input
+shell = 5
 
-  t0  = time()
-  
-  lattice = crystal.Lattice("input.xml")
-  mlclasses = ce.create_clusters( lattice, nth_shell=0, order=0, site=0)
-# mlclasses.extend( ce.create_clusters( lattice, nth_shell=0, order=1, site=0) )
-  mlclasses.extend( ce.create_clusters( lattice, nth_shell=20, order=2, site=0) )
-  mlclasses.extend( ce.create_clusters( lattice, nth_shell=9, order=3, site=0) )
-  mlclasses.extend( ce.create_clusters( lattice, nth_shell=4, order=4, site=0) )
-  mlclasses.extend( ce.create_clusters( lattice, nth_shell=2, order=5, site=0) )
-  mlclasses.extend( ce.create_clusters( lattice, nth_shell=2, order=6, site=0) )
-  print mlclasses, len(mlclasses)
+# create spinel lattice.
+lattice = A2BX4.b5()
+# occupations.
+for site in lattice.sites:
+  if "X" in site.type: continue
+  site.type = ["A", "B"]
+# recomputes space group for safety.
+lattice.find_space_group()
+lattice.set_as_crystal_lattice()
 
-  t1 = time()
-  print t1 - t0
+# list of inequivalent sites, keeping only those without "X"
+ineqs = []
+for i in  inequivalent_sites(lattice):
+  if len(lattice.sites[i].type) > 1: ineqs.append(i)
 
-if __name__ == "__main__":
-  main()
+# now creates multi-lattice clusters, along with index bookkeeping.
+mlclasses = create_clusters(lattice, nth_shell=0, order=0, site=0) # J0
+print len(mlclasses)
+# creates J1 for these sites.
+for site in ineqs:
+  mlclasses.extend(create_clusters(lattice, nth_shell=0, order=1, site=site))
+# create pairs clusters.
+for site in ineqs:
+  mlclasses = create_clusters(lattice, nth_shell=shell, order=2, site=site)
+print len(mlclasses)
+
