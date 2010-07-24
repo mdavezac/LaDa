@@ -234,7 +234,7 @@ def _main():
       ip.expose_magic("cancel_jobs", cancel_jobs)
       ip.expose_magic("please_cancel_all_jobs", please_cancel_all_jobs)
 
-  for key in lada.__dict__:
+  for key in lada.__all__:
     if key[0] == '_': continue
     if key == "ipython": continue
     if key == "jobs": ip.ex("from lada import jobs as ladajobs")
