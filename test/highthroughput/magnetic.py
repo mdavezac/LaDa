@@ -35,9 +35,9 @@ def sublatt_antiferro(structure, species):
   numbers = [numbers.count(u) for u in names]
   valence = [int(ps.valence) for ps in pseudos]
 
-  magom, sign = "", 1e0
+  magmom, sign = "", 1e0
   for n, ps, val  in zip(numbers, pseudos, valence): 
-    magmom +="%i*%f   " % (n, sign * moments[ps.valence] if ps.magnetic else 0)
+    magmom +="%i*%f   " % (n, sign * moments[int(ps.valence)] if ps.magnetic else 0e0)
     if ps.magnetic: sign *= -1e0
   return magmom
 
