@@ -180,7 +180,9 @@ namespace LaDa
         if( i_first == i_end ) { size_try <<= 1; continue; } // did not find all neighbors.
 
         neighbors.reserve(n);
-        std::copy(i_begin, i_first, std::back_inserter(neighbors));
+        for(; i_begin != i_end; ++i_begin)
+          if(_lat.sites[i_begin->index].type.size() >= 2)
+            neighbors.push_back(*i_begin);
         break;
       }
       while(true);

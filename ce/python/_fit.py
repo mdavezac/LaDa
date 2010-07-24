@@ -8,6 +8,7 @@ class Fit():
   """
   def __init__(self, clusters):
     """ Initialises the fitting class.
+
         clusters should be a ce.MLClusterClass instance, or convertible. A copy
         of clusters is assigned to self.classes
     """
@@ -25,8 +26,10 @@ class Fit():
 
   def __call__(self, A = None, b = None):
     """ Returns observation matrix A and target vector b.
-        if A or b are given, adds to the pre-existing matrix and vector.
-        A and b can then be used in linear-least square fit method numpy.linalg.lstsq(A,b)
+
+        if A or b are given, adds to the pre-existing matrix and vector.  A and
+        b can then be used in linear-least square fit method
+        numpy.linalg.lstsq(A,b)
     """
 
     import numpy
@@ -61,6 +64,7 @@ class Fit():
 
   def add_structure(self, structure):
     """ Adds a structure to input set.
+        
         Computes the pis for given set of clusters.
         Expects structure.energy to hold the target energy, 
         and structure.weight the weight of the fitting set in the structure.
@@ -206,6 +210,7 @@ class PairRegulatedFit(Fit):
       
   def reset_clusterclasses(self, classes):
     """ Recompute pis from known structures.
+
         This is necessary after changing the cluster classes. 
         The weights and energies remain the same after and before call.
         Bookkeeping for regulated pairs is re-initialized.
