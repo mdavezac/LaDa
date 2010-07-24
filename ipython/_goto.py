@@ -104,16 +104,16 @@ def goto_completer(self, event):
   ip = self.api
   current, path = _get_current_job_params(self, 0)
   if current == None: raise IPython.ipapi.TryNext
+  if len(event.line.split()) > 2: raise IPython.ipapi.TryNext
 
   elif '/' in event.symbol:
-    # finds last '/' in string.
-    subkey = event.symbol[:-event.symbol[::-1].find('/')-1]
-    while subkey[-1] == '/': subkey = subkey[:-1]
-    try: subdict = current[subkey] 
+    subkey = ""
+    for key in event.symbol.split('/')[:-1]: subkey += key + "/"
+    try: subdict = current[subkey]
     except KeyError: raise IPython.ipapi.TryNext
     if hasattr(subdict, "children"): 
       if hasattr(subdict.children, "keys"):
-        return [subkey + "/" + a + "/" for a in subdict.children.keys()]
+        return [subkey + a + "/" for a in subdict.children.keys()]
     raise IPython.ipapi.TryNext
   else:
     result = [a + "/" for a in current.children.keys()]
