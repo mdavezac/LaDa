@@ -40,7 +40,7 @@ namespace LaDa
       t_Spins :: iterator const i_last = end();
       for(; i_spin != i_last; ++i_spin)
       {
-        i_spin->pos = _op(i_spin->pos);
+        i_spin->pos = _op.op*i_spin->pos;
         i_spin->site = size_t_cast(which_site(i_spin->pos+origin.pos, inv_cell, lattice.sites));
       }
     }

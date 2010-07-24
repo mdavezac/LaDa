@@ -205,7 +205,7 @@ namespace LaDa
           .def(bp::init<CE::MLClusters const&>())
           .def( "__init__", bp::make_constructor(&init),
                 "Creates a class of equivalent clusters from input.\n" )
-          .add_property("eci", &CE::MLClusters::eci, "Interaction energy.")
+          .def_readwrite("eci", &CE::MLClusters::eci, "Interaction energy.")
           .add_property("order", &CE::MLClusters::order, "Order of the cluster.\n")
           .def("__len__", &CE::MLClusters::size, "Returns the number of equivalent cluster.\n")
           .def("__str__", &tostream<CE::MLClusters>, "Returns the order of the cluster.\n")

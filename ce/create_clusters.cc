@@ -180,7 +180,9 @@ namespace LaDa
         if( i_first == i_end ) { size_try <<= 1; continue; } // did not find all neighbors.
 
         neighbors.reserve(n);
-        std::copy(i_begin, i_first, std::back_inserter(neighbors));
+        for(; i_begin != i_end; ++i_begin)
+          if(_lat.sites[i_begin->index].type.size() >= 2)
+            neighbors.push_back(*i_begin);
         break;
       }
       while(true);
@@ -219,10 +221,8 @@ namespace LaDa
           if(i_cluster->origin.site == _origin) 
           {
             t_uint const n_prime = cluster_to_integer(*i_cluster, flavors, neighbors);
-            std::cout << is_in_shell;
             if( n_prime < Nmax ) database[n_prime] = false;
             else is_in_shell = false;
-            std::cout << " " << is_in_shell << "\n";
           }
           // shifted sites.
           MLCluster::t_Spins :: const_iterator i_spin = i_cluster->begin();
