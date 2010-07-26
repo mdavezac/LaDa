@@ -137,7 +137,6 @@ endif("$ENV{NERSC_HOST}" STREQUAL "hopper")
 
 if( MPI_FOUND )
   set(LADA_MPI TRUE)
-  set(_MPI TRUE)
 endif( MPI_FOUND )
   
 

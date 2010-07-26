@@ -146,10 +146,10 @@ namespace LaDa
     template<typename T_FUNCTION, class T_CONTAINER, class T_RETURN> 
       T_RETURN Decoupled :: operator_( const T_FUNCTION& _function, T_CONTAINER& _arg ) const
       {
-        __DOASSERT( mid == 0, 
+        LADA_DO_NASSERT( mid == 0, 
                        "No need for decoupled minimizer according to input.\n"
                     << "mid=" << mid << "\n" )
-        __DOASSERT( mid >= _arg.size(), "No need for decoupled minimizer according to input.\n" )
+        LADA_DO_NASSERT( mid >= _arg.size(), "No need for decoupled minimizer according to input.\n" )
         const details::Ranged< T_FUNCTION, T_CONTAINER > funcA( _function, _arg,  -1, mid );
         const details::Ranged< T_FUNCTION, T_CONTAINER > funcB( _function, _arg, mid, -1 );
         T_CONTAINER argA( mid, 0), argB( _arg.size() - mid, 0 );

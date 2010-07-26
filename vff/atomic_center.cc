@@ -82,43 +82,43 @@ namespace LaDa
 #   ifdef LADA_DEBUG
       void AtomicCenter :: const_iterator :: check() const
       {
-        __ASSERT(not parent,
+        LADA_NASSERT(not parent,
                  "Pointer to parent atom is invalid.\n")
-        __ASSERT( parent->bonds.size() == 0,
+        LADA_NASSERT( parent->bonds.size() == 0,
                   "The number of bond is zero.\n")
-        __ASSERT( parent->translations.size() == 0,
+        LADA_NASSERT( parent->translations.size() == 0,
                   "The number of translations is zero.\n")
-        __ASSERT( parent->do_translates.size() == 0,
+        LADA_NASSERT( parent->do_translates.size() == 0,
                   "The number of translation switches is zero.\n")
-        __ASSERT( i_bond - parent->bonds.end() > 0,
+        LADA_NASSERT( i_bond - parent->bonds.end() > 0,
                   "The bond iterator is beyond the last bond.\n")
         if( i_bond ==  parent->bonds.end() ) return;
-        __ASSERT( i_bond - parent->bonds.begin() < 0,
+        LADA_NASSERT( i_bond - parent->bonds.begin() < 0,
                   "The bond iterator is before the first bond.\n")
         types::t_int pos = i_bond -  parent->bonds.begin();
-        __ASSERT( i_translation - parent->translations.end() > 0,
+        LADA_NASSERT( i_translation - parent->translations.end() > 0,
                   "The translation iterator is beyond the last bond.\n")
-        __ASSERT( i_translation - parent->translations.begin() < 0,
+        LADA_NASSERT( i_translation - parent->translations.begin() < 0,
                   "The translation iterator is before the first bond.\n")
-        __ASSERT( i_translation != parent->translations.begin() + pos,
+        LADA_NASSERT( i_translation != parent->translations.begin() + pos,
                      "The bond iterator and the translation "
                   << "iterator are out of sync.\n")
-        __ASSERT( i_do_translate - parent->do_translates.end() > 0,
+        LADA_NASSERT( i_do_translate - parent->do_translates.end() > 0,
                   "The do_translate iterator is beyond the last bond.\n")
-        __ASSERT( i_do_translate - parent->do_translates.begin() < 0,
+        LADA_NASSERT( i_do_translate - parent->do_translates.begin() < 0,
                   "The do_translate iterator is before the first bond.\n")
-        __ASSERT( i_do_translate != parent->do_translates.begin() + pos,
+        LADA_NASSERT( i_do_translate != parent->do_translates.begin() + pos,
                      "The bond iterator and the do_translate "
                   << "iterator are out of sync.\n")
       }
       void AtomicCenter :: const_iterator :: check_valid() const
       {
         check();
-        __ASSERT( i_bond == parent->bonds.end(),
+        LADA_NASSERT( i_bond == parent->bonds.end(),
                   "Invalid iterator.\n";)
-        __ASSERT( not parent->origin,
+        LADA_NASSERT( not parent->origin,
                   "Origin of the parent atom is invalid.\n")
-        __ASSERT( not (*i_bond)->origin,
+        LADA_NASSERT( not (*i_bond)->origin,
                   "Origin of the bond atom is invalid.\n")
       }
 #   endif

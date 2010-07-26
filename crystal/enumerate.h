@@ -43,7 +43,7 @@ namespace LaDa
     template< class T_FUNCTIONAL >
       void enumerate_pifile( const std::string &_file, T_FUNCTIONAL &_op )
       {
-        __DEBUGTRYBEGIN
+        LADA_DEBUG_TRY_BEGIN
         Crystal :: Structure structure;
         std::ifstream file( _file.c_str(), std::ifstream::in );
         size_t i(0);
@@ -60,15 +60,15 @@ namespace LaDa
                     << " " << _op( structure ) << "\n";
         }
         while( not file.eof() );
-        __DEBUGTRYEND(, "Error while enumerating pifile.\n" )
+        LADA_DEBUG_TRY_END(, "Error while enumerating pifile.\n" )
       }
 
     template< class T_FUNCTIONAL >
       void enumerate_gusfile( const std::string &_file, T_FUNCTIONAL &_op )
       {
-        __DEBUGTRYBEGIN
+        LADA_DEBUG_TRY_BEGIN
         Crystal :: Structure structure;
-        __DOASSERT( structure.lattice == NULL, "Lattice not set in structure.\n" );
+        LADA_DO_NASSERT( structure.lattice == NULL, "Lattice not set in structure.\n" );
         std::ifstream file( _file.c_str(), std::ifstream::in );
         std::string line;
         do
@@ -96,7 +96,7 @@ namespace LaDa
           input >> line;
           structure.cell = structure.lattice->cell * structure.cell;
           fill_structure( structure );
-          __ASSERT( line.size() != structure.atoms.size(),
+          LADA_NASSERT( line.size() != structure.atoms.size(),
                     "labels and structure have different sizes.\n" )
           t_SmithTransform const transform = get_smith_transform( structure );
           Structure::t_Atoms::iterator i_atom = structure.atoms.begin();
@@ -124,7 +124,7 @@ namespace LaDa
                     << " " << _op( structure ) << "\n";
         }
         while( (not file.eof()) and file.good() );
-        __DEBUGTRYEND(, "Error while enumerating pifile.\n" )
+        LADA_DEBUG_TRY_END(, "Error while enumerating pifile.\n" )
       }
 
 

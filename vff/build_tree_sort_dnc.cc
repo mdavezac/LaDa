@@ -33,7 +33,7 @@ namespace LaDa
         const size_t center_index( bt::get<0>( *i_center ) );
         t_Center &center( centers[ center_index ] );
         const size_t site( center.Origin().site );
-        __DOASSERT( site > structure.lattice->sites.size(), "Unindexed site.\n" )
+        LADA_DO_NASSERT( site > structure.lattice->sites.size(), "Unindexed site.\n" )
         const size_t neigh_site( site == 0 ? 1: 0 );
         const types::t_real cutoff = types::t_real(0.25) * _fn[site].front().squaredNorm();
                    

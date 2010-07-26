@@ -21,8 +21,8 @@ namespace LaDa
       :: create_A_n_b( T_MATRIX &_A, T_VECTOR &_b )
       {
         namespace bblas = boost::numeric::ublas;
-        __ASSERT( not separables_, "Function pointer not set.\n" )
-        __ASSERT( dim >= configurations_->size1(), "Inconsistent sizes.\n" )
+        LADA_NASSERT( not separables_, "Function pointer not set.\n" )
+        LADA_NASSERT( dim >= configurations_->size1(), "Inconsistent sizes.\n" )
         // Loop over inequivalent configurations.
         t_Vector X( dof() );
         std::fill( _A.data().begin(), _A.data().end(), 
@@ -47,7 +47,7 @@ namespace LaDa
       :: create_X( size_t _i, T_VECTOR &_out )
       {
         namespace bblas = boost::numeric::ublas;
-        __ASSERT( dof() != _out.size(), "Incompatible sizes.\n" )
+        LADA_NASSERT( dof() != _out.size(), "Incompatible sizes.\n" )
         // Create matrix range including only equivalent configurations.
         typedef const bblas::matrix_range< t_Configurations > t_Range;
         const bblas::range equivrange( mapping().range( _i ) );
@@ -91,7 +91,7 @@ namespace LaDa
       :: init( const T_STRUCTURES& _strs, const PosToConfs &_postoconfs )
       {
         namespace bblas = boost::numeric::ublas;
-        __ASSERT( not Crystal::Structure::lattice, 
+        LADA_NASSERT( not Crystal::Structure::lattice, 
                   "Crystal::Structure::lattice has not been set.\n" )
         // creates configurations.
         typedef std::vector< PosToConfs::t_Configurations > t_Confs; 
@@ -126,7 +126,7 @@ namespace LaDa
   //       PosToConfs :: t_Configurations :: const_iterator i_conf_end = i_confs->end();
   //       for(; i_conf != i_conf_end; ++i_conf, ++j )
   //       {
-  //         __ASSERT( j == nbconfs, "Inconsistent sizes" );
+  //         LADA_NASSERT( j == nbconfs, "Inconsistent sizes" );
   //         for( size_t i(0); i < _postoconfs.positions.size(); ++i )
   //           (*configurations_)(i,j) = i_conf->first[i] ? 1: 0;
   //       }
@@ -139,20 +139,20 @@ namespace LaDa
  
     INCOLLAPSE( opt::ErrorTuple ) :: evaluate() const
     {
-      __DEBUGTRYBEGIN
+      LADA_DEBUG_TRY_BEGIN
       opt::ErrorTuple error;
       for(size_t n(0); n < mapping().size(); ++n )
         if( not mapping().do_skip(n) ) 
           error += opt::ErrorTuple( mapping().target( n ) - evaluate(n),
                                     mapping().weight( n ) );
       return error;
-      __DEBUGTRYEND(, "Error in Collapse::evaluate().\n" )
+      LADA_DEBUG_TRY_END(, "Error in Collapse::evaluate().\n" )
     }
  
     INCOLLAPSE( typename COLHEAD::t_Matrix::value_type ) :: evaluate(size_t _n) const 
     {
-      __DEBUGTRYBEGIN
-      __ASSERT( _n >= mapping().size(), "Inconsistent sizes.\n" )
+      LADA_DEBUG_TRY_BEGIN
+      LADA_NASSERT( _n >= mapping().size(), "Inconsistent sizes.\n" )
       namespace bblas = boost::numeric::ublas;
       bblas::range range( mapping().range(_n) );
       types::t_real intermed(0);
@@ -164,7 +164,7 @@ namespace LaDa
                     * mapping().eweight(_n,*j - range.start() );
       }
       return intermed;
-      __DEBUGTRYEND(, "Error in Collapse::evaluate().\n" )
+      LADA_DEBUG_TRY_END(, "Error in Collapse::evaluate().\n" )
     }
  
   // INCOLLAPSE( void ) :: init( t_Separables& _sep )

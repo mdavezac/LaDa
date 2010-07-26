@@ -12,7 +12,7 @@
 #include <opt/tuple_io.h>
 #include <math/random.h>
 #include <mpi/mpi_object.h>
-#ifdef _MPI
+#ifdef LADA_MPI
 # include <boost/mpi/environment.hpp>
 #endif
 
@@ -27,13 +27,13 @@ boost::shared_ptr<Crystal::Lattice>
   {
     TiXmlDocument doc( _input ); 
     TiXmlHandle docHandle( &doc ); 
-    __DOASSERT( not doc.LoadFile(),
+    LADA_DO_NASSERT( not doc.LoadFile(),
                    doc.ErrorDesc() << "\n" 
                 << "Could not load input file " << _input 
                 << " in  Darwin<T_EVALUATOR>.\nAborting.\n" )
  
     const TiXmlElement *node = docHandle.FirstChildElement( "Job" ).Element();
-    __DOASSERT( not node, "No structure found in _input file.\n" )
+    LADA_DO_NASSERT( not node, "No structure found in _input file.\n" )
     boost::shared_ptr< Crystal::Lattice > lattice 
       = Crystal::read_lattice( *node );
     Crystal::Structure::lattice = lattice.get();
@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
   namespace bl = boost::lambda;
 
   __MPI_START__
-  __TRYBEGIN
+  LADA_TRY_BEGIN
 
   __BPO_START__;
   __BPO_HIDDEN__;
@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
 
   const bool do_not_order( vm.count("noorder") > 0 );
   fs::path input( vm["input"].as< std::string >() );
-  __DOASSERT( not ( fs::is_regular( input ) or fs::is_symlink( input ) ),
+  LADA_DO_NASSERT( not ( fs::is_regular( input ) or fs::is_symlink( input ) ),
               input << " is a not a valid file.\n" );
   
   const bool print_structure = vm.count("structure") > 0;

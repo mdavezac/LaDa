@@ -28,17 +28,17 @@ namespace LaDa
         TiXmlDocument doc( _filename ); 
         TiXmlHandle docHandle( &doc ); 
       
-        __DOASSERT( not doc.LoadFile(), 
+        LADA_DO_NASSERT( not doc.LoadFile(), 
                        doc.ErrorDesc() << "\n"  
                     << "Could not load input file " << _filename  
                     << ".\nAborting.\n" ) 
-        __DOASSERT( not docHandle.FirstChild("Job").Element(),
+        LADA_DO_NASSERT( not docHandle.FirstChild("Job").Element(),
                     "Could not find <Job> tag in " << _filename << ".\n" )
         TiXmlElement *parent = findnode<T_TYPE>( docHandle );
-        __DOASSERT( not parent,    "Could not find <" << nodename<T_TYPE>() 
+        LADA_DO_NASSERT( not parent,    "Could not find <" << nodename<T_TYPE>() 
                                 << "> tag in " << _filename << ".\n"   )
       
-        __DOASSERT( not doloadcode( _type, parent ), 
+        LADA_DO_NASSERT( not doloadcode( _type, parent ), 
                        "Could not load " << nodename<T_TYPE>()
                     << " from " << _filename << ".\n" )
         do_specialcode<T_TYPE>( _type );

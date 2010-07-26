@@ -48,29 +48,29 @@ namespace LaDa
           TiXmlHandle docHandle( &doc ); 
           TiXmlElement *child;
         
-          __DOASSERT( not doc.LoadFile(), 
+          LADA_DO_NASSERT( not doc.LoadFile(), 
                          doc.ErrorDesc() << "\n"  
                       << "Could not load input file " << _filename  
                       << ".\nAborting.\n" ) 
           child = docHandle.FirstChild("Job").Element();
-          __DOASSERT( not child,
+          LADA_DO_NASSERT( not child,
                       "Could not find <Job> tag in " << _filename << ".\n" )
          
           child = docHandle.FirstChild("Job").FirstChild("Lattice").Element();
-          __DOASSERT( not child,
+          LADA_DO_NASSERT( not child,
                       "Could not find <Lattice> tag in " << _filename << ".\n" )
 
           if( child->Attribute("filename") )
           {
             const boost::filesystem::path
               n( opt::expand_path( child->Attribute("filename") ) );
-            __DOASSERT( not boost::filesystem::exists( n ),
+            LADA_DO_NASSERT( not boost::filesystem::exists( n ),
                         n.string() + " could not be found.\n" )
             fromXML( _type, n.string() );
             return;
           }
 
-          __DOASSERT( not _type.Load( *docHandle.FirstChild("Job").Element() ),
+          LADA_DO_NASSERT( not _type.Load( *docHandle.FirstChild("Job").Element() ),
                          "Could not load Lattice from " + _filename + ".\n" )
 
           set_as_crystal_lattice( _type ); 

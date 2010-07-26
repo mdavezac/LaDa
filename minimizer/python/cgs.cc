@@ -23,34 +23,34 @@ namespace LaDa
 //                            boost::numeric::ublas::matrix< T_TYPE > &_result )
 //       {
 //         namespace bp = boost::python;
-//         __TRYBEGIN
-//           __DOASSERT( not bp::len(_matrix), "Matrix object is of size 0.\n" )
-//           __DOASSERT( not bp::len(_matrix[0]), "Matrix object is of size ?x0.\n" )
+//         LADA_TRY_BEGIN
+//           LADA_DO_NASSERT( not bp::len(_matrix), "Matrix object is of size 0.\n" )
+//           LADA_DO_NASSERT( not bp::len(_matrix[0]), "Matrix object is of size ?x0.\n" )
 //           const size_t nbrows( bp::len(_matrix) );
 //           const size_t nbcols( bp::len(_matrix[0]) );
 //           _result.resize( nbrows, nbcols );
 //           for( size_t i(0); i < nbrows; ++i )
 //           {
 //             const bp::object &row = _matrix[i];
-//             __DOASSERT( bp::len(_matrix[0]) != nbcols,
+//             LADA_DO_NASSERT( bp::len(_matrix[0]) != nbcols,
 //                         "Inconsistent number of columns in matrix." )
 //             for( size_t j(0); j < nbcols; ++j )
 //               _result(i,j) = bp::extract< types::t_real >( row[j] );
 //           }
-//         __TRYEND(,"Error while converting list to matrix.\n" )
+//         LADA_TRY_END(,"Error while converting list to matrix.\n" )
 //       }
 //     template< class T_TYPE >
 //       void extract_vector( const boost::python::list &_vector,
 //                            boost::numeric::ublas::vector< T_TYPE > &_result )
 //       {
 //         namespace bp = boost::python;
-//         __TRYBEGIN
+//         LADA_TRY_BEGIN
 //           const size_t s( bp::len(_vector) );
-//           __DOASSERT( not s, "Vector of length 0.\n" )
+//           LADA_DO_NASSERT( not s, "Vector of length 0.\n" )
 //           _result.resize( s );
 //           for( size_t i(0); i < s; ++i )
 //             _result(i) = bp::extract< types::t_real >( _vector[i] );
-//         __TRYEND(,"Error while converting list to vector.\n" )
+//         LADA_TRY_END(,"Error while converting list to vector.\n" )
 //       }
 //
       boost::python::tuple pcgs( t_Matrix const & _matrix,

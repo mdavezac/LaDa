@@ -43,8 +43,8 @@ namespace LaDa
     template< class T_TRAITS > void CEasCollapse<T_TRAITS> :: reassign()
     {
       namespace bl = boost::lambda;
-      __DEBUGTRYBEGIN
-      __ASSERT( coefficients().size1() != clusters_->size(), "Inconsistent sizes.\n")
+      LADA_DEBUG_TRY_BEGIN
+      LADA_NASSERT( coefficients().size1() != clusters_->size(), "Inconsistent sizes.\n")
    
       typename t_Coefficients :: t_Matrix 
                               :: const_iterator1 i_eci = coefficients().begin1();
@@ -53,7 +53,7 @@ namespace LaDa
         foreach( ::CE::Cluster & _cluster, _clusters ) _cluster.eci = *i_eci;
         ++i_eci;
       }
-      __DEBUGTRYEND(,"Error in CEasCollapse::reassign().\n" )
+      LADA_DEBUG_TRY_END(,"Error in CEasCollapse::reassign().\n" )
     }
     template< class T_TRAITS >
       void CEasCollapse<T_TRAITS>
@@ -108,7 +108,7 @@ namespace LaDa
           template< class T_MATRIX, class T_VECTOR >
             void operator()( T_MATRIX &_m, T_VECTOR &_v, size_t _dim ) const
             {
-              __ASSERT( cefit_ == NULL, "null pointer.\n" )
+              LADA_NASSERT( cefit_ == NULL, "null pointer.\n" )
               if( _dim == 1 ) cefit_->other_A_n_b( _m, _v ); 
             };
 

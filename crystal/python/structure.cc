@@ -18,7 +18,7 @@
 #include <boost/python/return_by_value.hpp>
 #include <boost/python/reference_existing_object.hpp>
 #include <boost/python/register_ptr_to_python.hpp>
-#ifdef _MPI
+#ifdef LADA_MPI
 # include <boost/mpi/python.hpp>
 #endif
 #include <boost/serialization/serialization.hpp>

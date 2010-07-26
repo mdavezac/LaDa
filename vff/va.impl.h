@@ -16,20 +16,20 @@ namespace LaDa
       namespace bfs = boost::filesystem;
       const TiXmlElement* parent
         = opt::find_node( _node, "Functional", "type", "vff" );
-      __DOASSERT( not parent, 
+      LADA_DO_NASSERT( not parent, 
                   "Could not find <Functional type=\"vff\"> in input\n"; )
       bfs::path path;
       TiXmlDocument doc;
       if(  parent->Attribute( "filename" ) )
       {
         path = opt::expand_path( parent->Attribute( "filename" ) );
-        __DOASSERT( not bfs::exists( path ), path.string() + " does not exist.\n" )
+        LADA_DO_NASSERT( not bfs::exists( path ), path.string() + " does not exist.\n" )
         opt::read_xmlfile( path, doc );
-        __DOASSERT( not doc.FirstChild( "Job" ),
+        LADA_DO_NASSERT( not doc.FirstChild( "Job" ),
                     "Root tag <Job> does not exist in " + path.string() + ".\n" )
         parent = opt::find_node( *doc.FirstChildElement( "Job" ),
                                  "Functional", "type", "vff" );
-        __DOASSERT( not parent, 
+        LADA_DO_NASSERT( not parent, 
                     "Could not find <Functional type=\"vff\"> in input\n"; )
       }
       // Load base
@@ -57,7 +57,7 @@ namespace LaDa
 //   template< class T_VFFBASE > typename VABase<T_VFFBASE> :: t_Type 
 //     VABase<T_VFFBASE> :: evaluate_one_gradient( types::t_unsigned _pos )
 //     {
-//       __ASSERT( _pos > va_vars.size(),
+//       LADA_NASSERT( _pos > va_vars.size(),
 //                 "Requesting out-of-range gradient.\n")
 //     
 //       typename t_Centers :: iterator i_center = centers.begin();

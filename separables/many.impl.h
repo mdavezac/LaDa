@@ -16,7 +16,7 @@ namespace LaDa
       :: create_A_n_b( T_MATRIX &_A, T_VECTOR &_b )
       {
         namespace bblas = boost::numeric::ublas;
-        __DEBUGTRYBEGIN
+        LADA_DEBUG_TRY_BEGIN
         // Loop over inequivalent configurations.
         const size_t cdof( current_dof() );
         t_Vector X( cdof );
@@ -49,13 +49,13 @@ namespace LaDa
           _A += mapping().weight(i) * bblas::outer_prod( X, X ); 
           _b += mapping().weight(i) * mapping().target(i) * X;
         }
-        __DEBUGTRYEND(, "Error in Many::create_A_n_b()\n" )
+        LADA_DEBUG_TRY_END(, "Error in Many::create_A_n_b()\n" )
       }
  
     INMANY2( template< class T_MATRIX, class T_VECTOR > void )
       :: operator()( T_MATRIX &_A, T_VECTOR &_b, types::t_unsigned _dim )
       {
-        __DEBUGTRYBEGIN
+        LADA_DEBUG_TRY_BEGIN
         namespace bblas = boost::numeric::ublas;
         dim = _dim;
         create_A_n_b( _A, _b );
@@ -74,19 +74,19 @@ namespace LaDa
         
           rangestart += collapse.dof();
         }
-        __DEBUGTRYEND(, "Error in Many::operator()()\n" )
+        LADA_DEBUG_TRY_END(, "Error in Many::operator()()\n" )
       }
  
     INMANY( opt::ErrorTuple ) :: evaluate() const 
     {
-      __DEBUGTRYBEGIN
+      LADA_DEBUG_TRY_BEGIN
       opt::ErrorTuple error;
       for(size_t n(0); n < mapping().size(); ++n )
         if( not mapping().do_skip(n) )
           error += opt::ErrorTuple( mapping().target( n ) - evaluate(n),
                                     mapping().weight( n ) );
       return error;
-      __DEBUGTRYEND(, "Error in Many::evaluate()\n" )
+      LADA_DEBUG_TRY_END(, "Error in Many::evaluate()\n" )
     }
  
     INMANY( typename MANYHEAD::t_Matrix::value_type ) :: evaluate( size_t _n) const 

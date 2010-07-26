@@ -141,7 +141,7 @@ namespace LaDa
       T_RETURN  Minuit2 :: operator_( const T_FUNCTION &_func, T_CONTAINER &_arg ) const
       {
         namespace rm2 = ROOT::Minuit2;
-        __DEBUGTRYBEGIN
+        LADA_DEBUG_TRY_BEGIN
    
           if ( verbose ) std::cout << "Starting Minuit2 MIGRAD minimization\n";
 
@@ -182,7 +182,7 @@ namespace LaDa
    
           return _func( _arg );
    
-        __DEBUGTRYEND(, "Error encountered while minimizing with the Minuit2 library\n")
+        LADA_DEBUG_TRY_END(, "Error encountered while minimizing with the Minuit2 library\n")
    
       }  // dummy minimizer
 

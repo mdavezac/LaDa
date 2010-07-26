@@ -86,7 +86,7 @@ namespace LaDa
 
     void Structure :: set_atom_types( const std::vector<types::t_real> &types)
     {
-      __ASSERT( types.size() != atoms.size(), "Inequivalent vectors.\n" )
+      LADA_NASSERT( types.size() != atoms.size(), "Inequivalent vectors.\n" )
 
       std::vector<types::t_real> :: const_iterator i_type = types.begin();
       std::vector<types::t_real> :: const_iterator i_type_last = types.end();
@@ -100,7 +100,7 @@ namespace LaDa
 
     void Structure :: get_atom_types( std::vector<types::t_real> &types) const
     {
-      __ASSERT( types.size() != atoms.size(), "Inequivalent vectors.\n" )
+      LADA_NASSERT( types.size() != atoms.size(), "Inequivalent vectors.\n" )
 
       std::vector<types::t_real> :: iterator i_type = types.begin();
       std::vector<types::t_real> :: iterator i_type_last = types.end();
@@ -127,7 +127,7 @@ namespace LaDa
     const TiXmlElement * Structure :: find_node( const TiXmlElement &_element )
     {
       const TiXmlElement *parent = opt::find_node( _element, "Structure" );
-      __DOASSERT( not parent, "Could not find Structure tag in xml.\n" )
+      LADA_DO_NASSERT( not parent, "Could not find Structure tag in xml.\n" )
       return parent;
     }
 
@@ -160,16 +160,16 @@ namespace LaDa
       size_t i(0);
       for (; child and i<3; child=child->NextSiblingElement( "row" ), i++ )
       {
-        __DOASSERT( not (     child->Attribute("x") 
+        LADA_DO_NASSERT( not (     child->Attribute("x") 
                           and child->Attribute("y") 
                           and child->Attribute("z")  ),
                     "Incomplete cell in xml input.\n" )
 
-        __TRYBEGIN
+        LADA_TRY_BEGIN
           cell(i,0) = boost::lexical_cast<types::t_real>(child->Attribute("x"));
           cell(i,1) = boost::lexical_cast<types::t_real>(child->Attribute("y"));
           cell(i,2) = boost::lexical_cast<types::t_real>(child->Attribute("z"));
-        __TRYEND(, "Could not parse cell input.\n" )
+        LADA_TRY_END(, "Could not parse cell input.\n" )
         if ( child->Attribute("freeze") )
         {
           std::string str = child->Attribute("freeze");
@@ -225,7 +225,7 @@ namespace LaDa
         if( not (     lattice
                   and stratom.Load( *child ) 
                   and lattice->convert_StrAtom_to_Atom( stratom, atom )  ) )
-          __TRYASSERT( not atom.Load( *child ),
+          LADA_TRY_ASSERT( not atom.Load( *child ),
                        "Could not read atom from input.\n" )
 
         if (    ( lattice and atom.site > (types::t_int)lattice->sites.size() )
@@ -248,7 +248,7 @@ namespace LaDa
       for (; child; child=child->NextSiblingElement( "Kvec" ) )
       {
         CAtom kvec;
-        __DOASSERT( not kvec.Load(*child),
+        LADA_DO_NASSERT( not kvec.Load(*child),
                     "Could not load k-vector from xml input.\n" )
         k_vecs.push_back(kvec);
       }
@@ -273,25 +273,25 @@ namespace LaDa
       math::iVector3d extent;
       
       // First, Load Attributes 
-      __TRYBEGIN
+      LADA_TRY_BEGIN
         std::istringstream sstr; sstr.str( _node.Attribute("direction") );
         boost::tuple< types::t_real&, types::t_real&, types::t_real& >
                    tupledir( direction[0], direction[1], direction[2] );
         sstr >> boost::tuples::set_open('(')
              >> boost::tuples::set_close(')')
              >> tupledir;
-        __DOASSERT( direction.squaredNorm() < types::tolerance, "direction cannot be null.\n" )
+        LADA_DO_NASSERT( direction.squaredNorm() < types::tolerance, "direction cannot be null.\n" )
         sstr.str( _node.Attribute("extent") );
         boost::tuple< types::t_int&, types::t_int&, types::t_int& >
                    tupleext( extent[0], extent[1], extent[2] );
         sstr >> boost::tuples::set_open('(')
              >> boost::tuples::set_close(')')
              >> tupleext;
-        __DOASSERT( direction.squaredNorm() < types::tolerance, "extent cannot be null.\n" )
+        LADA_DO_NASSERT( direction.squaredNorm() < types::tolerance, "extent cannot be null.\n" )
     
         direction = lattice->cell.inverse() * direction;
         
-      __TRYEND(,"Error while loading superlattice description.\n" )
+      LADA_TRY_END(,"Error while loading superlattice description.\n" )
     
       return create_epitaxial_structure( *this, direction, extent );
     }
@@ -299,16 +299,16 @@ namespace LaDa
     bool Structure :: Load( const TiXmlElement &_element )
     {
       const TiXmlElement* parent = find_node( _element );
-      __DOASSERT( not parent, "Could not find structure tag.\n" )
+      LADA_DO_NASSERT( not parent, "Could not find structure tag.\n" )
 
       if( parent->Attribute("filename") )
       {
         namespace bfs = boost::filesystem;
         const bfs::path path( opt::expand_path( parent->Attribute( "filename" ) ) );
-        __DOASSERT( not bfs::exists( path ), path.string() + " does not exist.\n" )
+        LADA_DO_NASSERT( not bfs::exists( path ), path.string() + " does not exist.\n" )
         TiXmlDocument doc;
         opt::read_xmlfile( path, doc );
-        __DOASSERT( not doc.FirstChild( "Job" ),
+        LADA_DO_NASSERT( not doc.FirstChild( "Job" ),
                     "Root tag <Job> does not exist in " + path.string() + ".\n" )
         parent = opt::find_node( *doc.FirstChildElement( "Job" ),
                                  "Structure" );
@@ -325,7 +325,7 @@ namespace LaDa
         // tries to load atoms.
         bool atomsloaded =  load_atoms( *parent );
         if( not atomsloaded ) atomsloaded = fill_structure( *this );
-        __DOASSERT(  not atomsloaded, "Could not read or create atoms.\n" )
+        LADA_DO_NASSERT(  not atomsloaded, "Could not read or create atoms.\n" )
       }
       else if( not load_epitaxial( *parent ) ) return false;
 
@@ -595,9 +595,9 @@ namespace LaDa
 
     types::t_real concentration( const Structure& _structure, const size_t i )
     {
-      __ASSERT( not _structure.lattice, "Lattice pointer is not set.\n" )
-      __ASSERT( i >= _structure.lattice->sites.size(), "Index out-of-range.\n" )
-      __ASSERT(     _structure.lattice->sites[i].type.size() != 2
+      LADA_NASSERT( not _structure.lattice, "Lattice pointer is not set.\n" )
+      LADA_NASSERT( i >= _structure.lattice->sites.size(), "Index out-of-range.\n" )
+      LADA_NASSERT(     _structure.lattice->sites[i].type.size() != 2
                 and _structure.lattice->sites[i].type.size() != 1,
                 "Wrong number of types at lattice-site.\n" )
 
@@ -605,7 +605,7 @@ namespace LaDa
       types::t_real result( 0 );
       foreach( const Structure::t_Atom& _a, _structure.atoms )
       {
-        __ASSERT( _a.site != 0 and _a.site != 1,
+        LADA_NASSERT( _a.site != 0 and _a.site != 1,
                   "site index not set in structure.\n" )
         if( _a.site == i ) result += _a.type;
       }

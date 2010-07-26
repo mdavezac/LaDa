@@ -11,54 +11,44 @@
 #define foreach BOOST_FOREACH
 
 #define LADA_SPOT_ERROR __FILE__ << ", line: " << __LINE__ << "\n" 
-#define __CATCHCODE(code, error)\
+#define LADA_CATCHCODE(code, error)\
         catch(...)\
         {\
           code;\
           std::cerr << LADA_SPOT_ERROR << error; \
           throw 0; \
         }
-#define __THROW_ERROR(error) \
+#define LADA_THROW_ERROR(error) \
         {\
           std::cerr << LADA_SPOT_ERROR << error ;\
           throw 0; \
         }
-#define __TRYCODE(code,error) try { code } \
+#define LADA_TRY_CODE(code,error) try { code } \
         catch ( std::exception &_e )\
-        __THROW_ERROR( error << _e.what() )
-#define __ASSERTCATCHCODE(condition, code, error) \
-          if( condition ) { code; __THROW_ERROR( error ) }
-#define __DOASSERT( condition, error ) \
-          __ASSERTCATCHCODE( condition, ,error )
-#define __TRYASSERT(condition, error) \
-          __TRYCODE( __DOASSERT( condition, "" ), error )
-#define LADA_ASSERT(a,b) __ASSERT( (not (a) ), b)
-#define LADA_DOASSERT(a,b) __DOASSERT( (not (a) ), b)
-#define __TRYBEGIN try {
-#define __TRYEND( code, error ) } __CATCHCODE( code, error ) 
-#define __COMMA__ ,
-#define __BEGINGROUP__ {
-#define __ENDGROUP__ }
+        LADA_THROW_ERROR( error << _e.what() )
+#define LADA_NASSERT_CATCHCODE(condition, code, error) \
+          if( condition ) { code; LADA_THROW_ERROR( error ) }
+#define LADA_DO_NASSERT( condition, error ) \
+          LADA_NASSERT_CATCHCODE( condition, ,error )
+#define LADA_TRY_ASSERT(condition, error) \
+          LADA_TRY_CODE( LADA_DO_NASSERT( condition, "" ), error )
+#define LADA_ASSERT(a,b) LADA_NASSERT( (not (a) ), b)
+#define LADA_DOASSERT(a,b) LADA_DO_NASSERT( (not (a) ), b)
+#define LADA_TRY_BEGIN try {
+#define LADA_TRY_END( code, error ) } LADA_CATCHCODE( code, error ) 
+#define LADA_COMMA ,
+#define LADA_BEGINGROUP {
+#define LADA_ENDGROUP }
 
 
 #ifdef LADA_DEBUG
-# define __DODEBUGCODE(code) code
-# define __TRYDEBUGCODE(code, error) __TRYCODE(code, error)
-# define __DOTRYDEBUGCODE(code, error) __TRYCODE(code, error)
-# define __ASSERT( condition, error ) __DOASSERT(condition, error)
-# define __NDEBUGCODE( code ) 
-# define __DEBUGCATCHCODE( code, error ) __CATCHCODE( code, error )
-# define __DEBUGTRYBEGIN try {
-# define __DEBUGTRYEND( code, error ) } __CATCHCODE( code, error ) 
+# define LADA_NASSERT( condition, error ) LADA_DO_NASSERT(condition, error)
+# define LADA_DEBUG_TRY_BEGIN try {
+# define LADA_DEBUG_TRY_END( code, error ) } LADA_CATCHCODE( code, error ) 
 #else
-# define __ASSERT( condition, error ) 
-# define __DODEBUGCODE(code) 
-# define __TRYDEBUGCODE(code, error) code
-# define __DOTRYDEBUGCODE(code, error) 
-# define __NDEBUGCODE( code ) code
-# define __DEBUGCATCHCODE( code, error ) 
-# define __DEBUGTRYBEGIN 
-# define __DEBUGTRYEND( code, error ) 
+# define LADA_NASSERT( condition, error ) 
+# define LADA_DEBUG_TRY_BEGIN 
+# define LADA_DEBUG_TRY_END( code, error ) 
 #endif
 
 #endif

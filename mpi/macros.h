@@ -3,7 +3,7 @@
 
 #include "LaDaConfig.h"
 
-# ifndef _MPI
+# ifndef LADA_MPI
 #   define __MPICODE(code) 
 #   define __MPICONSTRUCTORCODE(code) 
 #   define __TRYMPICODE(code, error) 

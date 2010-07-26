@@ -66,7 +66,7 @@ namespace LaDa
         try
         {
           Crystal :: Structure structure;
-          __DOASSERT( structure.lattice == NULL, "Lattice not set in structure.\n" );
+          LADA_DO_NASSERT( structure.lattice == NULL, "Lattice not set in structure.\n" );
           std::ifstream file( _file.c_str(), std::ifstream::in );
           std::string line;
           do
@@ -95,7 +95,7 @@ namespace LaDa
             structure.cell = structure.lattice->cell * structure.cell;
             structure.atoms.clear();
             fill_structure( structure );
-            __DOASSERT( line.size() != structure.atoms.size(),
+            LADA_DO_NASSERT( line.size() != structure.atoms.size(),
                         "labels and structure have different sizes.\n" )
             Crystal::t_SmithTransform const transform = get_smith_transform( structure );
             Crystal::Structure::t_Atoms::iterator i_atom = structure.atoms.begin();

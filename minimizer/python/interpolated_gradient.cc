@@ -23,7 +23,7 @@ namespace LaDa
                                 const types::t_real _tolerance,
                                 const bool _verbose )
     {
-      __DOASSERT( _gradient.size() != _arg.size(), "Argurments and gradients have different sizes.\n" )
+      LADA_DO_NASSERT( _gradient.size() != _arg.size(), "Argurments and gradients have different sizes.\n" )
       namespace bp = boost::python;
       typedef Fitting :: Cgs t_Cgs;
       typedef Function t_Function;

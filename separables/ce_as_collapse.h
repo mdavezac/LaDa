@@ -157,8 +157,8 @@ namespace LaDa
         template< class T_VECTOR >
           void create_X( size_t _i, size_t, T_VECTOR &_out ) 
           { 
-            __ASSERT( cefit().pis.size() <= _i, "Index out-of-range.\n" )
-            __ASSERT( cefit().pis[_i].size() != _out.size(), "Incompatible sizes.\n" )
+            LADA_NASSERT( cefit().pis.size() <= _i, "Index out-of-range.\n" )
+            LADA_NASSERT( cefit().pis[_i].size() != _out.size(), "Incompatible sizes.\n" )
             std::copy( cefit().pis[_i].begin(), cefit().pis[_i].end(), _out.begin() ); 
           }
         //! Reassigns clusters.
@@ -185,13 +185,13 @@ namespace LaDa
         //! Returns a reference to the fitting object.
         t_CEFit& cefit()
         { 
-          __ASSERT( cefit_ == NULL, "Null pointer.\n" )
+          LADA_NASSERT( cefit_ == NULL, "Null pointer.\n" )
           return *cefit_; 
         }
         //! Returns a constant reference to the fitting object.
         const t_CEFit& cefit() const
         { 
-          __ASSERT( cefit_ == NULL, "Null pointer.\n" )
+          LADA_NASSERT( cefit_ == NULL, "Null pointer.\n" )
           return *cefit_; 
         }
         //! Reference to the CE::Fit object.

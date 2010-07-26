@@ -28,7 +28,7 @@
 # define __PROGNAME__ "Valence Force Field Functional for Zinc-Blende Structures"
 #endif
 
-#ifdef _MPI
+#ifdef LADA_MPI
 # include <boost/mpi/environment.hpp>
 #endif
     
@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
 {  
   namespace fs = boost::filesystem;
   __MPI_START__
-  __TRYBEGIN
+  LADA_TRY_BEGIN
 
   __BPO_START__;
   __BPO_HIDDEN__;
@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
 
 
   fs::path input( vm["input"].as< std::string >() );
-  __DOASSERT( not ( fs::is_regular( input ) or fs::is_symlink( input ) ),
+  LADA_DO_NASSERT( not ( fs::is_regular( input ) or fs::is_symlink( input ) ),
               input << " is a not a valid file.\n" );
 # ifdef _LAYERED
     LaDa::math::rVector3d direction;
@@ -83,24 +83,24 @@ int main(int argc, char *argv[])
   LaDa::Crystal::Structure structure;
     
   TiXmlDocument doc( input.string().c_str() );
-  __DOASSERT( not doc.LoadFile(),
+  LADA_DO_NASSERT( not doc.LoadFile(),
               "Error while opening input file.\n";)
   TiXmlHandle handle( &doc );
   
   // loads structure
   child = handle.FirstChild( "Job" ).FirstChild( "Structure" ).Element();
-  __DOASSERT( not child, "No <Structure> tags were found in input file.\n")
+  LADA_DO_NASSERT( not child, "No <Structure> tags were found in input file.\n")
   for (; child ; child = child->NextSiblingElement("Structure") )
   {
-    __DOASSERT( not structure.Load(*child), 
+    LADA_DO_NASSERT( not structure.Load(*child), 
                 "Error while reading Structure description from input.\n")
   
     // loads vff functional
     TiXmlElement *vff_xml = handle.FirstChild( "Job" ).Element();
-    __DOASSERT( not vff_xml, "Could not find <Job> tag in input.\n")
+    LADA_DO_NASSERT( not vff_xml, "Could not find <Job> tag in input.\n")
     t_Vff vff(structure);
     __MPICODE( vff.set_mpi( world.get() ); )
-    __DOASSERT( not vff.Load(*vff_xml),
+    LADA_DO_NASSERT( not vff.Load(*vff_xml),
                 "Could not Load Valence Force Field Functional from input.\n")
     if( not vff.init(true) ) continue;
 #   ifdef _LAYERED

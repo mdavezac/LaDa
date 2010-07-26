@@ -36,7 +36,7 @@ namespace LaDa
         }
      
         // if more than one first neighbor, this is all we need.
-        __DOASSERT( i_first == i_end, "Could not find second-largest distance.\n" );
+        LADA_DO_NASSERT( i_first == i_end, "Could not find second-largest distance.\n" );
         if( first_->size() > 1 ) 
         {
           second_ = first_;
@@ -51,7 +51,7 @@ namespace LaDa
           
           second_->push_back( i_first->pos );
         }
-        __DOASSERT( i_first == i_end, "Could not find third-largest distance.\n" );
+        LADA_DO_NASSERT( i_first == i_end, "Could not find third-largest distance.\n" );
       };
      
     template<class T_STRUCTURE>
@@ -64,7 +64,7 @@ namespace LaDa
     template<class T_STRUCTURE>
       void Bases<T_STRUCTURE>::Xcoord :: end( Xcoord const &_b )
       {
-        __DOASSERT( not _b.first_, "End iterator needs a valid begin iterator.\n" );
+        LADA_DO_NASSERT( not _b.first_, "End iterator needs a valid begin iterator.\n" );
         *this = _b;
         iterator_ = _b.first_->end();
       }

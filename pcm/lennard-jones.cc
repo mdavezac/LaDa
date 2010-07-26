@@ -23,7 +23,7 @@ namespace LaDa
     LennardJones :: t_Return LennardJones :: operator()( const t_Arg& _in, t_Arg &_out ) const
     {
       namespace bt = boost::tuples;
-      __DOASSERT( _in.atoms.size() != _out.atoms.size(), "Incoherent structure size.\n" )
+      LADA_DO_NASSERT( _in.atoms.size() != _out.atoms.size(), "Incoherent structure size.\n" )
       types::t_real energy(0), ecut(0);
       const types::t_real scale_squared( _in.scale * _in.scale );
 
@@ -39,7 +39,7 @@ namespace LaDa
         {
           const std::string bondtype( bondname( i_atom2->type, i_atom1->type ) );
 
-          __DOASSERT( bonds.end() == bonds.find( bondtype ),
+          LADA_DO_NASSERT( bonds.end() == bonds.find( bondtype ),
                       "Bond " + i_atom1->type + "-" + i_atom2->type + " does not exist.\n" )
           const Bond &bond( bonds.find( bondtype )->second );
           const types::t_real rcut_squared( rcut_ * rcut_ );
@@ -98,9 +98,9 @@ namespace LaDa
     bool LennardJones :: Load( const TiXmlElement& _node )
     {
       const TiXmlElement* const parent = opt::find_node( _node, "Functional", "LennardJones" );
-      __DOASSERT( not parent->Attribute( "mesh" ), 
+      LADA_DO_NASSERT( not parent->Attribute( "mesh" ), 
                   "LennardJones functional requires a mesh attribute.\n" )
-      __DOASSERT( not parent->Attribute( "rcut" ), 
+      LADA_DO_NASSERT( not parent->Attribute( "rcut" ), 
                   "LennardJones functional requires a rcut attribute.\n" )
 
       // reads bonds
@@ -111,13 +111,13 @@ namespace LaDa
         Bond bond;
         std::string type("");
         if( not bond.Load( *child, type ) ) return false;
-        __DOASSERT( bonds.end() != bonds.find( type ),
+        LADA_DO_NASSERT( bonds.end() != bonds.find( type ),
                     "Duplicate bond type.\n" )
         bonds[type] = bond;
       }
        
       // reads attributes.
-      __DOASSERT( not opt::tuples::read( parent->Attribute("mesh"), mesh_ ),
+      LADA_DO_NASSERT( not opt::tuples::read( parent->Attribute("mesh"), mesh_ ),
                   "Could not parse mesh attribute.\n" )
       rcut_ = boost::lexical_cast< types::t_real >( parent->Attribute("rcut") );
       return true;
@@ -125,11 +125,11 @@ namespace LaDa
 
     bool LennardJones :: Bond :: Load( const TiXmlElement& _node, std::string &_type )
     {
-      __ASSERT( _node.Value() != "Bond", "Incorrect XML node.\n" )
-      __DOASSERT( _node.Attribute( "A" ), "Bond requires an A attribute.\n" )
-      __DOASSERT( _node.Attribute( "B" ), "Bond requires a B attribute.\n" )
-      __DOASSERT( _node.Attribute( "hardsphere" ), "Bond requires a hardsphere attribute.\n" )
-      __DOASSERT( _node.Attribute( "vanderwalls" ), "Bond requires a vanderwalls attribute.\n" )
+      LADA_NASSERT( _node.Value() != "Bond", "Incorrect XML node.\n" )
+      LADA_DO_NASSERT( _node.Attribute( "A" ), "Bond requires an A attribute.\n" )
+      LADA_DO_NASSERT( _node.Attribute( "B" ), "Bond requires a B attribute.\n" )
+      LADA_DO_NASSERT( _node.Attribute( "hardsphere" ), "Bond requires a hardsphere attribute.\n" )
+      LADA_DO_NASSERT( _node.Attribute( "vanderwalls" ), "Bond requires a vanderwalls attribute.\n" )
       const std::string A = boost::algorithm::trim_copy(std::string(_node.Attribute("A")));
       const std::string B = boost::algorithm::trim_copy(std::string(_node.Attribute("B")));
       _type = bondname(A, B);
@@ -159,7 +159,7 @@ namespace LaDa
           result = false;
         }
 
-      __DOASSERT( not result, "" );
+      LADA_DO_NASSERT( not result, "" );
     }
 
   } // namespace CLJ

@@ -28,7 +28,7 @@ namespace LaDa
   {
     Ewald :: t_Return Ewald :: operator()( const t_Arg& _in, t_Arg &_out ) const
     {
-      __DOASSERT( _in.atoms.size() != _out.atoms.size(), "Incoherent structure size.\n" )
+      LADA_DO_NASSERT( _in.atoms.size() != _out.atoms.size(), "Incoherent structure size.\n" )
 
       const size_t natoms( _in.atoms.size() );
       double Qs[ natoms ];
@@ -43,7 +43,7 @@ namespace LaDa
       t_cit i_atom = _in.atoms.begin();
       for( size_t i(0); i < natoms; ++i, ++i_atom )
       {
-        __ASSERT( charges.find( i_atom->type ) == charges.end(),
+        LADA_NASSERT( charges.find( i_atom->type ) == charges.end(),
                   "Atomic charge does not exist.\n" )
         Qs[i] = charges.find(i_atom->type)->second;
         positions[ i*3 ]     = i_atom->pos[0];
@@ -102,7 +102,7 @@ namespace LaDa
         const std::string type = boost::algorithm::trim_copy(std::string(child->Attribute("type")));
         const types::t_real charge
           = boost::lexical_cast<types::t_real>( child->Attribute("charge") );
-        __DOASSERT( charges.find( type ) != charges.end(),
+        LADA_DO_NASSERT( charges.find( type ) != charges.end(),
                     "Duplicate entry in Ewald functional for " + type + "\n" )
         charges[type] = charge;
       }

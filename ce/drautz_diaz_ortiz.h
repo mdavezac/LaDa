@@ -29,7 +29,7 @@ namespace LaDa
                               types::t_int _verbosity,
                               Regulated::t_Arg::value_type _initweights )
       {
-        __DEBUGTRYBEGIN
+        LADA_DEBUG_TRY_BEGIN
         namespace bl = boost::lambda;
    
         types::t_unsigned nb_cls( _reg.clusters.size() );
@@ -78,7 +78,7 @@ namespace LaDa
    
           // CV with optimized weights
           types::t_real cvw;
-          __TRYBEGIN
+          LADA_TRY_BEGIN
             size_t iter(0);
             Regulated::t_Arg::value_type wrange( _initweights );
             do 
@@ -98,7 +98,7 @@ namespace LaDa
               std::fill( solution.begin(), solution.end(), Regulated :: t_Arg :: value_type(0) );
               cvw = _minimizer( _reg, solution ); 
             }
-          __TRYEND(," ") 
+          LADA_TRY_END(," ") 
 
           
           // Fitting Error
@@ -126,7 +126,7 @@ namespace LaDa
                       << " weights != 0 " << loow.first << " " << loow.second << "\n";
 
         }
-        __DEBUGTRYEND(, "Error encountered in procedure drautz_ortiz_diaz.\n" )
+        LADA_DEBUG_TRY_END(, "Error encountered in procedure drautz_ortiz_diaz.\n" )
       }
   }
 } // namespace LaDa

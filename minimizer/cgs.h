@@ -82,12 +82,12 @@ namespace LaDa
         Cgs::t_Return Cgs :: operator()( T_MATRIX const &_A, T_VECTOR1 &_x, 
                                          const T_VECTOR2 &_b, T_PRECOND &_precond ) const
         {
-          __DEBUGTRYBEGIN
-          __ASSERT( _A.size1() != _A.size2(), "matrix is not square.\n" )
-          __ASSERT( _x.size() != _A.size2(), 
+          LADA_DEBUG_TRY_BEGIN
+          LADA_NASSERT( _A.size1() != _A.size2(), "matrix is not square.\n" )
+          LADA_NASSERT( _x.size() != _A.size2(), 
                        "Matrix and solution vector have different sizes.\n" 
                     << "  " << _x.size() << " != " << _A.size2() << "\n" )
-          __ASSERT( _b.size() != _A.size1(), 
+          LADA_NASSERT( _b.size() != _A.size1(), 
                        "Matrix and solution vector have different sizes.\n" 
                     << "  " << _b.size() << " != " << _A.size1() << "\n" )
           namespace ublas = boost::numeric::ublas;
@@ -157,7 +157,7 @@ namespace LaDa
                       << (iter > 0 ? " iterations": " iteration")
                       << " and with a residual "  << resid << ".\n";
           return t_Return( resid, iter );
-          __DEBUGTRYEND(, "Error encountered while solving Ax = b system.\n" )
+          LADA_DEBUG_TRY_END(, "Error encountered while solving Ax = b system.\n" )
         }
 
   } // end of Fitting namespace.

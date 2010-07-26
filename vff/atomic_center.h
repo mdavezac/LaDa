@@ -203,11 +203,9 @@ namespace LaDa
             return;
           }
           i_bond = parent->bonds.end();
-          __DOTRYDEBUGCODE( check();,
-                               "error in constructor\n"
-                            << " _parent != NULL " << (_parent!=NULL)
-                            << " \n" << " _is_begin "
-                            << _is_begin << "\n" )
+#         ifdef LADA_DEBUG
+            check();
+#         endif
         }
         //! Copy Constrcutor 
         const_iterator   ( const const_iterator &_c ) 
@@ -248,7 +246,9 @@ namespace LaDa
         //! Returns bond length squared
         types::t_real norm2() const
         {
-          __DOTRYDEBUGCODE( check_valid();, "Invalid pointers in norm2()\n")
+#         ifdef LADA_DEBUG
+            check_valid();
+#         endif
           if ( not *i_do_translate )
             return (parent->origin->pos - (*i_bond)->origin->pos).squaredNorm();
           return (   parent->origin->pos - (*i_bond)->origin->pos

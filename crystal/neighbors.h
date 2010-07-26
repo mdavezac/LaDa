@@ -1,6 +1,3 @@
-//
-//  Version: $Id: confsplit.h 844 2008-11-08 01:22:54Z davezac $
-//
 #ifndef _LADA_CRYSTAL_NEIGHBORS_H_
 #define _LADA_CRYSTAL_NEIGHBORS_H_
 
@@ -201,6 +198,11 @@ retry:
          }
          neighbors_.resize(i);
        };
+     
+    //! Reduces list of positions to first neighbors of first position.
+    void find_first_neighbors( std::vector< math::rVector3d > &_positions,
+                               const math::rMatrix3d &_cell,
+                               const size_t _n );
 
   } // end of Crystal namespace.
 } // namespace LaDa

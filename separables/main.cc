@@ -12,7 +12,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
 #include <boost/algorithm/string.hpp>
-#ifdef _MPI
+#ifdef LADA_MPI
 # include <boost/scoped_ptr.hpp>
 # include <boost/mpi/environment.hpp>
 #endif
@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
   namespace fs = boost::filesystem;
 
   __MPI_START__
-  __TRYBEGIN
+  LADA_TRY_BEGIN
   __BPO_START__
          ("verbose,p", po::value<LaDa::types::t_unsigned>()->default_value(0),
                        "Level of verbosity.\n"  )
@@ -154,10 +154,10 @@ int main(int argc, char *argv[])
   }
 
   fs::path dir( vm["datadir"].as< std::string >() );
-  __DOASSERT( not fs::exists( dir ), dir << " does not exist.\n" );
-  __DOASSERT( not fs::exists( dir / "LDAs.dat" ), 
+  LADA_DO_NASSERT( not fs::exists( dir ), dir << " does not exist.\n" );
+  LADA_DO_NASSERT( not fs::exists( dir / "LDAs.dat" ), 
               ( dir / "LDAs.dat" ) << " does not exist.\n" );
-  __DOASSERT
+  LADA_DO_NASSERT
   (
     not (    fs::is_regular( dir / "LDAs.dat" ) 
           or fs::is_symlink( dir / "LDAs.dat" ) ),
@@ -167,10 +167,10 @@ int main(int argc, char *argv[])
   if(    ( not fs::exists( latinput ) )
       or ( not ( fs::is_symlink(latinput) or fs::is_regular(latinput) ) ) )
    latinput = dir / latinput;
-  __DOASSERT( not fs::exists( latinput ),
+  LADA_DO_NASSERT( not fs::exists( latinput ),
                  "Lattice input file " << latinput
               << " could not be found in ./ nor in " << dir << ".\n" )
-  __DOASSERT( not ( fs::is_regular( latinput ) or fs::is_symlink( latinput ) ),
+  LADA_DO_NASSERT( not ( fs::is_regular( latinput ) or fs::is_symlink( latinput ) ),
               latinput << " is a not a valid file.\n" );
 
   fs::path doenum("");
@@ -181,10 +181,10 @@ int main(int argc, char *argv[])
     if(    ( not fs::exists( doenum ) )
         or ( not ( fs::is_symlink(doenum) or fs::is_regular(doenum) ) ) )
       doenum = dir / doenum;
-    __DOASSERT( not fs::exists( doenum ),
+    LADA_DO_NASSERT( not fs::exists( doenum ),
                    "Lattice input file " << orig
                 << " could not be found in ./ nor in " << doenum << ".\n" )
-    __DOASSERT( not ( fs::is_regular( doenum ) or fs::is_symlink( doenum ) ),
+    LADA_DO_NASSERT( not ( fs::is_regular( doenum ) or fs::is_symlink( doenum ) ),
                 doenum << " is a not a valid file.\n" );
   }
   fs::path jtypes("");
@@ -195,10 +195,10 @@ int main(int argc, char *argv[])
     if(    ( not fs::exists( jtypes ) )
         or ( not ( fs::is_symlink(jtypes) or fs::is_regular(jtypes) ) ) )
       jtypes = dir / jtypes;
-    __DOASSERT( not fs::exists( jtypes ),
+    LADA_DO_NASSERT( not fs::exists( jtypes ),
                    "Figure descrition file " << orig
                 << " could not be found in ./ nor in " << jtypes << ".\n" )
-    __DOASSERT( not ( fs::is_regular( jtypes ) or fs::is_symlink( jtypes ) ),
+    LADA_DO_NASSERT( not ( fs::is_regular( jtypes ) or fs::is_symlink( jtypes ) ),
                 jtypes << " is a not a valid file.\n" );
   }
   fs::path cs("");
@@ -209,10 +209,10 @@ int main(int argc, char *argv[])
     if(    ( not fs::exists( cs ) )
         or ( not ( fs::is_symlink(cs) or fs::is_regular(cs) ) ) )
       cs = dir / cs;
-    __DOASSERT( not fs::exists( cs ),
+    LADA_DO_NASSERT( not fs::exists( cs ),
                    "Constituent-strain input file " << orig
                 << " could not be found in ./ nor in " << cs << ".\n" )
-    __DOASSERT( not ( fs::is_regular( cs ) or fs::is_symlink( cs ) ),
+    LADA_DO_NASSERT( not ( fs::is_regular( cs ) or fs::is_symlink( cs ) ),
                 cs << " is a not a valid file.\n" );
   }
 
@@ -236,15 +236,15 @@ int main(int argc, char *argv[])
   const bool J1( vm.count("J1") > 0 );
   const bool gusfile( vm.count("gus") > 0 );
   const bool rmpairs( vm.count("rm") > 0 );
-  __ASSERT( LaDa::math::le(tcoef, 0e0), "Coefficient \"t\" cannot negative.\n" )
+  LADA_NASSERT( LaDa::math::le(tcoef, 0e0), "Coefficient \"t\" cannot negative.\n" )
   const LaDa::types::t_unsigned bestof( vm["bestof"].as<LaDa::types::t_unsigned>() );
-  __DOASSERT( bestof == 0, "0 jobs to be performed..." )
+  LADA_DO_NASSERT( bestof == 0, "0 jobs to be performed..." )
   const LaDa::types::t_unsigned which( vm["which"].as<LaDa::types::t_unsigned>() );
   const std::string genes( boost::algorithm::trim_copy( vm["genes"].as<std::string>() ) );
   if( not genes.empty() )
-    __DOASSERT( not boost::algorithm::all( genes, boost::algorithm::is_any_of( "01" ) ),
+    LADA_DO_NASSERT( not boost::algorithm::all( genes, boost::algorithm::is_any_of( "01" ) ),
                 "Unknown bitstring format.\n" )
-  __DOASSERT( which >= 3, "Don't know which error to perform bestof for.\n" )
+  LADA_DO_NASSERT( which >= 3, "Don't know which error to perform bestof for.\n" )
   const std::string print( vm["print"].as<std::string>() );
 
   if( not ( doenum.empty() or dofit ) )

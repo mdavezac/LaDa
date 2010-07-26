@@ -22,7 +22,7 @@ namespace CE
                                         types::t_unsigned _n, 
                                         bool _verbose ) const
   {
-    __DEBUGTRYBEGIN
+    LADA_DEBUG_TRY_BEGIN
     namespace fs = boost::filesystem;
     namespace bblas = boost::numeric::ublas;
     const t_Structures :: value_type &structure = structures()[_n];
@@ -43,12 +43,12 @@ namespace CE
                 << error.mean()
                 << "\n";
     return error;
-    __DEBUGTRYEND(, "Error in Fit::check_one().\n" )
+    LADA_DEBUG_TRY_END(, "Error in Fit::check_one().\n" )
   }
 
   void BaseFit :: reassign( const t_Vector &_arg, t_Clusters &_clusters ) const
   {
-    __DEBUGTRYBEGIN
+    LADA_DEBUG_TRY_BEGIN
     namespace bl = boost::lambda;
   
     // now copies to clusters.
@@ -61,7 +61,7 @@ namespace CE
         i_clusters->begin(), i_clusters->end(),
         bl::bind( &Cluster::eci, bl::_1 ) = bl::constant(*i_arg)
       );
-    __DEBUGTRYEND(, "Error in Regulated::reassign().\n" )
+    LADA_DEBUG_TRY_END(, "Error in Regulated::reassign().\n" )
   }
 
   void BaseFit :: init( const t_Clusters &_clusters )
@@ -81,7 +81,7 @@ namespace CE
       structures().begin(), structures().end(), targets.begin(),
       bl::bind( &Crystal::Structure::energy, bl::_1 )
     );
-    __ASSERT( weights().size() != targets.size(),
+    LADA_NASSERT( weights().size() != targets.size(),
               "Inconsistent weight and target sizes.\n" )
     return opt::mean_n_var( targets, weights() );
   }

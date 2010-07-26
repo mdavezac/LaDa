@@ -37,8 +37,8 @@ namespace LaDa
           //! Returns one weight.
           t_Vector::value_type weight( size_t i ) const
           { 
-            __ASSERT( N != weights_.size(), "Incoherent logic.\n" )
-            __ASSERT( i >= weights_.size(), 
+            LADA_NASSERT( N != weights_.size(), "Incoherent logic.\n" )
+            LADA_NASSERT( i >= weights_.size(), 
                          "Index out-of-range: " << i
                       << " >= " << weights_.size() << "\n" )
             return weights_[i]; 
@@ -50,8 +50,8 @@ namespace LaDa
           //! Returns one weight.
           t_Vector::value_type target( size_t i ) const 
           {
-            __ASSERT( N != targets_.size(), "Incoherent logic.\n" )
-            __ASSERT( i >= targets_.size(), 
+            LADA_NASSERT( N != targets_.size(), "Incoherent logic.\n" )
+            LADA_NASSERT( i >= targets_.size(), 
                          "Index out-of-range: " << i
                       << " >= " << targets_.size() << "\n" )
             return targets_[i]; 
@@ -94,16 +94,16 @@ namespace LaDa
           //! Returns the range of equivalent configurations for structure \a _i.
           boost::numeric::ublas::range range( size_t _i ) const 
           {
-            __ASSERT( _i >= nb_.size(), "Index out-of-range.\n" )
-            __ASSERT( _i + 1 >= nb_.size(), "Index out-of-range.\n" )
+            LADA_NASSERT( _i >= nb_.size(), "Index out-of-range.\n" )
+            LADA_NASSERT( _i + 1 >= nb_.size(), "Index out-of-range.\n" )
             return boost::numeric::ublas::range( nb_[_i], nb_[_i+1] ); 
           }
           //! Returns the weight for an equivalent structure.
           t_Vector::value_type eweight( size_t _i, size_t _c ) const
           {
-            __ASSERT( _i + 1 >= nb_.size(), "Index out-of-range.\n" )
-            __ASSERT( _c >= nb_[_i+1] - nb_[_i], "Index out-of-range.\n" )
-            __ASSERT( _i + _c >= equiweights.size(), "Index out-of-range.\n" )
+            LADA_NASSERT( _i + 1 >= nb_.size(), "Index out-of-range.\n" )
+            LADA_NASSERT( _c >= nb_[_i+1] - nb_[_i], "Index out-of-range.\n" )
+            LADA_NASSERT( _i + _c >= equiweights.size(), "Index out-of-range.\n" )
             return equiweights[ nb_[_i] + _c ]; 
           }
           //! Initializes the mapping.

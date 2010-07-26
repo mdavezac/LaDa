@@ -38,11 +38,11 @@ namespace LaDa
        math::rVector3d vec;
        
        parent = opt::find_node( _node, "Functional", "type", "CE" );
-       __DOASSERT( not parent,
+       LADA_DO_NASSERT( not parent,
                    "Could not find an <Functional type=\"CE\"> tag in input file.\n" )
 
        // creates static quantities
-       __TRYCODE(
+       LADA_TRY_CODE(
          lattice    = new Crystal::Lattice;
          clusters   = new t_Clusters;
          harmonics  = new t_CS;,
@@ -56,31 +56,31 @@ namespace LaDa
          const TiXmlNode *grandparent = parent->Parent();
          if ( parent )
            child = grandparent->FirstChildElement( "Lattice" );
-         __DOASSERT( not child, "Could not find Lattice in input.\n" )
+         LADA_DO_NASSERT( not child, "Could not find Lattice in input.\n" )
        }
-       __DOASSERT( not lattice->Load(*child),
+       LADA_DO_NASSERT( not lattice->Load(*child),
                    "Error while reading Lattice from input.\n" )
        lattice->find_space_group();
        Crystal :: Structure :: lattice = lattice;
        
        // then load clusters
        child = parent->FirstChildElement( "Clusters" );
-       __DOASSERT( not child,
+       LADA_DO_NASSERT( not child,
                    "Could not find Clusters in input.\n" )
        child = child->FirstChildElement( "Cluster" );
        t_Cluster cluster;
        for (  ; child; child = child->NextSiblingElement("Cluster") )
        {
-         __DOASSERT( not cluster.Load( *child ),
+         LADA_DO_NASSERT( not cluster.Load( *child ),
                      "Error while loading cluster from input.\n" )
          clusters->push_back(cluster);
        }
        
        // reads in Constituent Strain (coefficients are static)
        child = parent->FirstChildElement( "CS" );
-       __DOASSERT( not child,
+       LADA_DO_NASSERT( not child,
                    "Could not find CS in input.\n" )
-       __DOASSERT( not harmonics->Load_Harmonics( *child ),
+       LADA_DO_NASSERT( not harmonics->Load_Harmonics( *child ),
                    "Error while loading harmonics from input.\n" )
 
        return true;
@@ -162,7 +162,7 @@ namespace LaDa
                    if ( math::are_periodic_images(*i_cpos + shift, i_equiv->pos, inv_cell) ) 
                      break;
                  
-                 __ASSERT( i_equiv == i_atom_last, 
+                 LADA_NASSERT( i_equiv == i_atom_last, 
                              "Could not find equivalent of atom "
                            << (*i_cpos + shift) << " in Lamarck::generate_functionals\n" )
                  monome.add_term(index, true);

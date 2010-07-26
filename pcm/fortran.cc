@@ -26,7 +26,7 @@ namespace LaDa
   {
     void Relaxer :: read_info( const std::string& _filename )
     {
-      __TRYBEGIN
+      LADA_TRY_BEGIN
       namespace fs = boost::filesystem;
       namespace bsc = boost::spirit::classic;
 
@@ -98,10 +98,10 @@ namespace LaDa
       fakexml.SetDoubleAttribute( "linestep", linestep );
       fakexml.SetAttribute( "strategy", strategy );
       fakexml.SetAttribute( "verbose", verbose ? "true": "false" );
-      __DOASSERT( not minimizer_.Load( fakexml ), 
+      LADA_DO_NASSERT( not minimizer_.Load( fakexml ), 
                   "Could not create minimizer.\n" << fakexml << "\n" )
 
-      __TRYEND(,"Error while parsing " << _filename << "\n" )
+      LADA_TRY_END(,"Error while parsing " << _filename << "\n" )
     }
 
 
@@ -132,8 +132,8 @@ extern "C" void FC_FUNC_(create_relaxer, CREATE_RELAXER)
              LaDa :: Models :: Relaxer :: t_Functional _function
            )
 {
-  __TRYBEGIN
-    __DOASSERT( *_fsize <= 0, "Filename-length negative or zero." )
+  LADA_TRY_BEGIN
+    LADA_DO_NASSERT( *_fsize <= 0, "Filename-length negative or zero." )
     std::string in;
     std::copy( _filename, _filename + *_fsize, std::back_inserter( in ) );
 
@@ -142,16 +142,16 @@ extern "C" void FC_FUNC_(create_relaxer, CREATE_RELAXER)
     relaxer.init( _function );
     LaDa::C2FHandles< LaDa::Models::Relaxer > handles;
     *_handle = handles.push_back( relaxer );
-  __TRYEND(, "Could not create relaxer." )
+  LADA_TRY_END(, "Could not create relaxer." )
 }
 
 extern "C" void FC_FUNC_(release_relaxer, RELEASE_RELAXER)( int* const _handle )
 {
-  __TRYBEGIN
-    __DOASSERT( *_handle < 0, "Handle cannot be negative.\n" )
+  LADA_TRY_BEGIN
+    LADA_DO_NASSERT( *_handle < 0, "Handle cannot be negative.\n" )
     LaDa::C2FHandles< LaDa::Models::Relaxer > handles;
     handles.erase( *_handle );
-  __TRYEND(, "Could not delete relaxer." )
+  LADA_TRY_END(, "Could not delete relaxer." )
 }
 
 extern "C" void FC_FUNC_(call_relaxer, CALL_RELAXER)
@@ -166,7 +166,7 @@ extern "C" void FC_FUNC_(call_relaxer, CALL_RELAXER)
              double*          _energy        // energy
            )
 {
-  __DOASSERT( *_handle < 0, "Handle cannot be negative.\n" )
+  LADA_DO_NASSERT( *_handle < 0, "Handle cannot be negative.\n" )
   LaDa::C2FHandles< LaDa::Models::Relaxer > handles;
   LaDa::Models::Relaxer& relaxer( handles[ *_handle ] ); 
   *_energy = relaxer( *_natoms, _occupations, _cell, _positions, _stress, _forces );

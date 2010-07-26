@@ -89,7 +89,7 @@ namespace LaDa
           //! Returns the index of and atom inside this box, w.r.t. the original structure.
           const t_State& state( size_t _i ) const
           { 
-            __ASSERT( _i < states_.size(), "Index out-of-range.\n" )
+            LADA_NASSERT( _i < states_.size(), "Index out-of-range.\n" )
             return states_[_i]; 
           }
           //! Iterator to the first state in the (large) box.

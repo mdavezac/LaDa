@@ -65,7 +65,7 @@ namespace LaDa
         do_perform = true;
         
         const boost::regex re("(\\d+)\\s+(\\d+)");
-        __DOASSERT( not boost::regex_search( line, what, re ),
+        LADA_DO_NASSERT( not boost::regex_search( line, what, re ),
                        "Could not make sense of --" << cmdl_set 
                     << "=\"" << line << "\".\n" )
 
@@ -96,7 +96,7 @@ namespace LaDa
         nb_sets = nbsets;
         nb_perset = perset;
       }
-      __CATCHCODE(, "Error while extracting LeaveManyOut command-line options.\n" );
+      LADA_CATCHCODE(, "Error while extracting LeaveManyOut command-line options.\n" );
     }
 
     void LeaveManyOut :: read_sets()
@@ -109,7 +109,7 @@ namespace LaDa
       nb_sets = 0;
       nb_perset = 0;
       fs::path fullpath = filename;
-      __DOASSERT( not fs::exists( fullpath ),
+      LADA_DO_NASSERT( not fs::exists( fullpath ),
                   "Could not find file " << fullpath << ".\n" )
 
       std::ifstream ldas( fullpath.string().c_str(), std::ifstream::in );
@@ -138,21 +138,21 @@ namespace LaDa
         else if( nb_perset != set.size() ) nb_perset = -1;
         sets.push_back(set);
       }
-      __DOASSERT( sets.size() == 0, "Read 0 sets from input.\n" )
+      LADA_DO_NASSERT( sets.size() == 0, "Read 0 sets from input.\n" )
     }
 
 //   void LeaveManyOut :: create_sets( types::t_unsigned _tsize )
 //   {
 //     namespace fs = boost::filesystem;
 //
-//     __DOASSERT( _tsize == 0, "Input error: number of input structures is 0.\n" )
-//     __DOASSERT( nb_sets == 0, "Input error: required creation of 0 sets.\n" )
-//     __DOASSERT( nb_perset == 0, "Input error: required creation of sets of size 0.\n" )
+//     LADA_DO_NASSERT( _tsize == 0, "Input error: number of input structures is 0.\n" )
+//     LADA_DO_NASSERT( nb_sets == 0, "Input error: required creation of 0 sets.\n" )
+//     LADA_DO_NASSERT( nb_perset == 0, "Input error: required creation of sets of size 0.\n" )
 //
 //     fs::path fullpath = filename;
 //     std::ofstream setfile( fullpath.string().c_str(),
 //                            std::ofstream::out | std::ofstream::trunc );
-//     __ASSERT( not setfile.is_open(), "Could not open " << fullpath << " for writing.\n" )
+//     LADA_NASSERT( not setfile.is_open(), "Could not open " << fullpath << " for writing.\n" )
 //
 //     std::cout << "Creating leave-many-out sets ( saved to file: " 
 //               << fullpath << " ): \n";
@@ -178,18 +178,18 @@ namespace LaDa
     void LeaveManyOut :: create_sets( types::t_unsigned _tsize )
     {
       namespace fs = boost::filesystem;
-      __DOASSERT( _tsize == 0, "Input error: number of input structures is 0.\n" )
-      __DOASSERT( nb_sets == 0, "Input error: required creation of 0 sets.\n" )
-      __DOASSERT( nb_perset == 0,
+      LADA_DO_NASSERT( _tsize == 0, "Input error: number of input structures is 0.\n" )
+      LADA_DO_NASSERT( nb_sets == 0, "Input error: required creation of 0 sets.\n" )
+      LADA_DO_NASSERT( nb_perset == 0,
                   "Input error: required creation of sets of size 0.\n" )
-      __DOASSERT( nb_perset >= _tsize,
+      LADA_DO_NASSERT( nb_perset >= _tsize,
                   "Input error: sets too large.\n" )
 
       types::t_unsigned (*ptr_to_rng)( types::t_unsigned ) = &math::range;
       fs::path fullpath = filename;
       std::ofstream setfile( fullpath.string().c_str(),
                              std::ofstream::out | std::ofstream::trunc );
-      __ASSERT( not setfile.is_open(),
+      LADA_NASSERT( not setfile.is_open(),
                 "Could not open " << fullpath << " for writing.\n" )
 
       std::cout << "Creating leave-many-out sets (saved to file: " 

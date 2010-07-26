@@ -23,7 +23,7 @@ namespace LaDa
     template<class T_TRAITS >
       size_t Separables<T_TRAITS> :: ranks() const
       {
-        __ASSERT( coefficients().size1() % t_Mapping::D, 
+        LADA_NASSERT( coefficients().size1() % t_Mapping::D, 
                   "Inconsistent sizes.\n" )
         return coefficients().size1() / t_Mapping::D; 
       }
@@ -33,7 +33,7 @@ namespace LaDa
         namespace bblas = boost::numeric::ublas;
         namespace bl = boost::lambda;
        
-        __ASSERT( ranks() != norms.size(),
+        LADA_NASSERT( ranks() != norms.size(),
                      "Incoherent sizes: rank("
                   << ranks() << ") != norms.size()("
                   << norms.size() << ").\n")
@@ -85,10 +85,10 @@ namespace LaDa
         rank_vector( const T_COEFS &_coefs, const T_VECIN &_vecin,
                      T_VECOUT &_vecout, T_OP _op )
         {
-          __ASSERT( _coefs.size1() != _vecout.size() * t_Mapping :: D,
+          LADA_NASSERT( _coefs.size1() != _vecout.size() * t_Mapping :: D,
                        "Inconsistent sizes: " << _coefs.size1() << " != " 
                     << _vecout.size() << " * " << t_Mapping::D << ".\n" )
-          __ASSERT( _vecin.size() != _coefs.size2(), "Inconsistent sizes.\n" )
+          LADA_NASSERT( _vecin.size() != _coefs.size2(), "Inconsistent sizes.\n" )
           typename T_COEFS :: const_iterator2 i_column = _coefs.begin2();
           typename T_COEFS :: const_iterator2 i_column_end = _coefs.end2();
           typename T_VECIN :: const_iterator i_in = _vecin.begin();
@@ -134,7 +134,7 @@ namespace LaDa
         apply_throughout( const T_COEFS &_coefs, const T_VECIN &_vecin, 
                           T_OUT &_out, T_OP _op )
         {
-          __ASSERT( _coefs.size1() % t_Mapping :: D != 0, "Inconsistent sizes.\n" )
+          LADA_NASSERT( _coefs.size1() % t_Mapping :: D != 0, "Inconsistent sizes.\n" )
           std::vector< T_OUT > result( _coefs.size1() / t_Mapping :: D, T_OUT(1) );
           rank_vector( _coefs, _vecin, result,  _op );
           _out = std::accumulate( result.begin(), result.end(), _out );
@@ -145,9 +145,9 @@ namespace LaDa
                       T_VECOUT &_vecout, size_t _d, T_OP _op )
         {
           namespace bblas = boost::numeric::ublas;
-          __ASSERT( _coefs.size1() != _vecout.size() * t_Mapping :: D, "Inconsistent sizes.\n" )
-          __ASSERT( _vecin.size() != _coefs.size2(), "Inconsistent sizes.\n" )
-          __ASSERT( _d >= _coefs.size2(), "Inconsistent input dimension.\n" )
+          LADA_NASSERT( _coefs.size1() != _vecout.size() * t_Mapping :: D, "Inconsistent sizes.\n" )
+          LADA_NASSERT( _vecin.size() != _coefs.size2(), "Inconsistent sizes.\n" )
+          LADA_NASSERT( _d >= _coefs.size2(), "Inconsistent input dimension.\n" )
           typedef bblas::matrix_column< T_COEFS > t_Column;
           t_Column column( _coefs, _d );
           typename T_VECIN :: value_type in = _vecin[_d];
@@ -161,8 +161,8 @@ namespace LaDa
         apply_to_rank( const T_COEFS &_coefs, const T_VECIN &_vecin,
                        T_OUT &_out, size_t _r, T_OP _op )
         {
-          __ASSERT( _r * t_Mapping::D >= _coefs.size1(), "Inconsistent sizes.\n" )
-          __ASSERT( _vecin.size() != _coefs.size2(), "Inconsistent sizes.\n" )
+          LADA_NASSERT( _r * t_Mapping::D >= _coefs.size1(), "Inconsistent sizes.\n" )
+          LADA_NASSERT( _vecin.size() != _coefs.size2(), "Inconsistent sizes.\n" )
           const typename T_COEFS :: const_iterator1 i_row = _coefs.begin1() + _r * t_Mapping::D;
           typename T_COEFS :: const_iterator2 i_column = i_row.begin();
           typename T_COEFS :: const_iterator2 i_column_end = i_row.end();
@@ -174,8 +174,8 @@ namespace LaDa
         apply_to_dim_n_rank( const T_COEFS &_coefs, const T_VECIN &_vecin,
                              T_OUT &_out, size_t _d, size_t _r, T_OP _op )
         {
-          __ASSERT( _vecin.size() != _coefs.size2(), "Inconsistent sizes.\n" )
-          __ASSERT( _d >= _coefs.size2(), "Inconsistent input dimension.\n" )
+          LADA_NASSERT( _vecin.size() != _coefs.size2(), "Inconsistent sizes.\n" )
+          LADA_NASSERT( _d >= _coefs.size2(), "Inconsistent input dimension.\n" )
           typename T_VECIN :: value_type in = _vecin[_d];
           t_Mapping :: apply( _op, in, 
                               (_coefs.begin2() + _d).begin() + _r * t_Mapping::D,

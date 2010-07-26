@@ -152,7 +152,7 @@ namespace LaDa
         typedef boost::tuples::tuple< const T_FUNCTION&, T_CONTAINER& > t_Pair;
         t_Pair data_pair( _func, _arg );
    
-        __DEBUGTRYBEGIN
+        LADA_DEBUG_TRY_BEGIN
    
           if ( verbose ) std::cout << "Starting GSL minimization\n";
    
@@ -233,7 +233,7 @@ namespace LaDa
    
           return newe;
    
-        __DEBUGTRYEND
+        LADA_DEBUG_TRY_END
         (
           gsl_multimin_fdfminimizer_free (solver);,
           "Error encountered while minimizing with the GSL library\n"

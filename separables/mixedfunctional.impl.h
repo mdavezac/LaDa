@@ -48,7 +48,7 @@ namespace LaDa
       {
         namespace bl = boost::lambda;
         namespace bblas = boost::numeric::ublas;
-        __DEBUGTRYBEGIN
+        LADA_DEBUG_TRY_BEGIN
         typename t_SepBase::t_Matrix::value_type result(0);
         typedef t_PosBase :: t_Configurations t_Configurations;
         if( t_PosBase::dof() )
@@ -78,7 +78,7 @@ namespace LaDa
           result += t_CSBase::evaluate();
         }
         return result;
-        __DEBUGTRYEND(, "Error while evaluating mixed-approach functional.\n" )
+        LADA_DEBUG_TRY_END(, "Error while evaluating mixed-approach functional.\n" )
       }
  
     INHEAD( void ) :: init( const std::string &_csxml,
@@ -87,20 +87,20 @@ namespace LaDa
                             const std::string &_jtypes,
                             bool _rmpairs, bool _addJ0, bool _addJ1 )
     {
-      __DEBUGTRYBEGIN
+      LADA_DEBUG_TRY_BEGIN
       const std::string csxml  = boost::algorithm::trim_copy( _csxml );
       const std::string desc   = boost::algorithm::trim_copy( _desc );
       const std::string jtypes = boost::algorithm::trim_copy( _jtypes );
       if( not csxml.empty() )
       {
         TiXmlDocument doc( _csxml );
-        __DOASSERT( not doc.LoadFile(), 
+        LADA_DO_NASSERT( not doc.LoadFile(), 
                       "error while opening input file "
                    << _csxml << "\n" << doc.ErrorDesc()  )
         TiXmlHandle handle( &doc );
         const TiXmlElement *child = handle.FirstChild( "Job" ).FirstChild( "CS" ).Element();
-        __DOASSERT( not child, "Could not find CS in input.\n" )
-        __DOASSERT( not t_CSBase::Load_Harmonics( *child ),
+        LADA_DO_NASSERT( not child, "Could not find CS in input.\n" )
+        LADA_DO_NASSERT( not t_CSBase::Load_Harmonics( *child ),
                     "Error while loading harmonics from input.\n" )
       }
       if( not desc.empty() ) t_PosBase :: create_positions( desc ); 
@@ -129,7 +129,7 @@ namespace LaDa
         if( isfound ) clusterclasses().push_back( std::vector<CE::Cluster>(1, cluster) ); 
       }
       ecis().resize( clusterclasses().size() );
-      __DEBUGTRYEND(, "Error in MixedFunctional::init().\n" )
+      LADA_DEBUG_TRY_END(, "Error in MixedFunctional::init().\n" )
     }
  
     template<class T_TRAITS, class T_HARMONICS> 

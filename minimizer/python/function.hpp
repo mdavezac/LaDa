@@ -39,15 +39,15 @@ namespace LaDa
             boost::python::throw_error_already_set();
             return 0;
           }
-          __TRYBEGIN
+          LADA_TRY_BEGIN
             const t_Return value = boost::python::extract< t_Return>( result  ); 
             return value;
-          __TRYEND(,"Could not extract real value from return of python object.\n")
+          LADA_TRY_END(,"Could not extract real value from return of python object.\n")
         }
         //! calls gradient.
         void gradient( const t_Arg& _arg, t_GradientArg _gradient ) const
         {
-          __TRYBEGIN
+          LADA_TRY_BEGIN
           namespace bp = boost :: python;
 
           typedef std::vector< t_Arg::value_type > t_vector;
@@ -60,13 +60,13 @@ namespace LaDa
             std::cerr << "Python raised an exception. Could not obtain gradient.\n";
             bp::throw_error_already_set();
           }
-          __TRYBEGIN
+          LADA_TRY_BEGIN
             gradient = bp::extract< t_vector >( result );
-          __TRYEND(,"Could not extract lada.opt.cReal from return of python object.\n")
+          LADA_TRY_END(,"Could not extract lada.opt.cReal from return of python object.\n")
           std::vector< t_Arg::value_type > :: iterator i_var = gradient.begin();
           std::vector< t_Arg::value_type > :: iterator i_var_end = gradient.end();
           for(; i_var != i_var_end; ++i_var, ++_gradient ) *_gradient += *i_var;
-          __TRYEND(, "Error in gradient.\n" )
+          LADA_TRY_END(, "Error in gradient.\n" )
         }
 
       protected:

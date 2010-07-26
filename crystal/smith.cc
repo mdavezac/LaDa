@@ -48,7 +48,7 @@ namespace LaDa
         for( size_t j(0); j < 3; ++j )
         {
           int_cell(i,j) = types::t_int( rint( inv_lat_cell(i,j) ) ); 
-          __DOASSERT
+          LADA_DO_NASSERT
           ( 
             std::abs( types::t_real( int_cell(i,j) ) - inv_lat_cell(i,j) ) > 0.01,
                "Input structure is not supercell of the lattice: \n" 

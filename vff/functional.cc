@@ -6,7 +6,7 @@
 #include <functional>
 #include <boost/type_traits/remove_pointer.hpp>
 #include <boost/filesystem/operations.hpp>
-#ifdef _MPI
+#ifdef LADA_MPI
 # include <boost/mpi/collectives/all_reduce.hpp>
 #endif
 
@@ -65,11 +65,11 @@ namespace LaDa
       }
 
       // Correct stray movements of the center of mass
-      __ASSERT(    fixed_index[0] < 0
+      LADA_NASSERT(    fixed_index[0] < 0
                 or fixed_index[1] < 0
                 or fixed_index[2] < 0,
                 "fixed_index contains negative indices. Was init() called?\n" )
-      __ASSERT(    fixed_index[0] >= structure0.atoms.size()
+      LADA_NASSERT(    fixed_index[0] >= structure0.atoms.size()
                 or fixed_index[1] >= structure0.atoms.size()
                 or fixed_index[2] >= structure0.atoms.size(),
                 "fixed_index contains out-of-range indices.\n" )
@@ -232,7 +232,7 @@ namespace LaDa
       // First repacks into function::Base format
       pack_gradients(stress, _i_grad);
       // Then sums actual results.
-#     ifdef _MPI
+#     ifdef LADA_MPI
         energy = boost::mpi::all_reduce( MPI_COMM, energy, std::plus<types::t_real>() ); 
         // boost does not do in-place reduction.
         BOOST_MPI_CHECK_RESULT

@@ -57,7 +57,7 @@ namespace LaDa
     void SplitIntoConfs :: operator()( const Structure &_structure,
                                        const size_t _n )
     {
-      __DOASSERT( _n <= 3, "Requested size of basis too small.\n" )
+      LADA_DO_NASSERT( _n <= 3, "Requested size of basis too small.\n" )
       n.first = 0; n.second = _n;
       structure = &_structure;
       configurations_.clear();
@@ -68,7 +68,7 @@ namespace LaDa
     void SplitIntoConfs :: operator()( const Structure &_structure,
                                        const std::pair< size_t, size_t > _n )
     {
-      __DOASSERT( _n.second - _n.first <= 3, "Requested size of basis too small.\n" )
+      LADA_DO_NASSERT( _n.second - _n.first <= 3, "Requested size of basis too small.\n" )
       n = _n;
       structure = &_structure;
       configurations_.clear();
@@ -81,7 +81,7 @@ namespace LaDa
                                                  t_Positions &_positions )
     {
       //namespace bm = boost::math;
-      __ASSERT( not structure, "Structure pointer not set.\n" )
+      LADA_NASSERT( not structure, "Structure pointer not set.\n" )
       // first, computes and sorts nth neighbors.
       const types::t_int N( structure->atoms.size() );
       const types::t_int umax = n.second / structure->atoms.size() + 1;
@@ -142,7 +142,7 @@ namespace LaDa
         if( math::is_zero(i_pair->first) ) continue; 
         --i;
       }
-      __DOASSERT( i_pair == i_pair_end, "Insufficient number of atoms considered.\n" )
+      LADA_DO_NASSERT( i_pair == i_pair_end, "Insufficient number of atoms considered.\n" )
 
       while( i_pair != i_pair_end )
       {
@@ -163,7 +163,7 @@ namespace LaDa
     void SplitIntoConfs :: from_origin( size_t _i )
     {
       namespace bl = boost::lambda;
-      __ASSERT( not structure, "Structure pointer not set.\n" )
+      LADA_NASSERT( not structure, "Structure pointer not set.\n" )
 
       const types::t_real weight( 1e0 / types::t_real(structure->atoms.size()) );
       const size_t nsize( n.second - n.first );
@@ -204,7 +204,7 @@ namespace LaDa
           std::cout << *structure << "\n";
           foreach( const t_Position &_pos, *i_ypositions )
             std::cout << _pos.first << "\n";
-          __DOASSERT( true, i_ypositions->size() << "\n" )
+          LADA_DO_NASSERT( true, i_ypositions->size() << "\n" )
         }
         const types::t_real max_x_scalar_pos( max_x_element->first.dot(x) );
         foreach( const t_Position yPos, *i_ypositions )
@@ -228,14 +228,14 @@ namespace LaDa
           //  _ final ties are broken according to largest z coordinate.
 
           // we iterate over distance from origin first.
-          __ASSERT( bitset.first.size() != nsize, "Bitset too small.\n" );
+          LADA_NASSERT( bitset.first.size() != nsize, "Bitset too small.\n" );
           t_CoefBitset::first_type::iterator i_bit = bitset.first.begin();
           t_CoefBitset::first_type::iterator i_bit_end = bitset.first.end();
           size_t nbit(1);
           foreach( t_Positions :: value_type equaldistance, sorting_pos )
           {
             if( nbit == nsize ) break;
-            __ASSERT( nbit > nsize, "index out of range.\n" )
+            LADA_NASSERT( nbit > nsize, "index out of range.\n" )
 
             const size_t edn( std::min( equaldistance.size(), nsize - nbit ) );
             if( edn == 1 ) 

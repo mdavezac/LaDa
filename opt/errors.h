@@ -131,13 +131,13 @@ namespace LaDa
     template< class T_VECTOR >
     NErrorTuple mean_n_var( const T_VECTOR &_targets, const T_VECTOR &_weights )
     {
-      __DEBUGTRYBEGIN
+      LADA_DEBUG_TRY_BEGIN
       typename T_VECTOR::value_type norm_( 0 ), square(0), mean(0), max0(-1);
       NErrorTuple nerror;
       typename T_VECTOR::const_iterator i_target = _targets.begin();
       typename T_VECTOR::const_iterator i_target_end = _targets.end();
       typename T_VECTOR::const_iterator i_weight = _weights.begin();
-      __ASSERT( _targets.size() != _weights.size(),
+      LADA_NASSERT( _targets.size() != _weights.size(),
                 "Inconsistent vector sizes.\n" );
       for(; i_target != i_target_end; ++i_target, ++i_weight )
       {
@@ -158,7 +158,7 @@ namespace LaDa
       nerror.variance_ = types::t_real(square) / types::t_real(norm_);
       nerror.max_ = max0;
       return nerror;
-      __DEBUGTRYEND(, "Error in opt::mean_n_var().\n" )
+      LADA_DEBUG_TRY_END(, "Error in opt::mean_n_var().\n" )
     }
 
     //! Computes mean and variance of energies in structure set.

@@ -134,7 +134,7 @@ namespace LaDa
     template<typename T_FUNCTION, class T_CONTAINER, class T_RETURN> 
       T_RETURN Frpr :: operator_( const T_FUNCTION& _function, T_CONTAINER& _arg ) const
       {
-        __DOASSERT( lock == true, "Race condition.\n" )
+        LADA_DO_NASSERT( lock == true, "Race condition.\n" )
         lock = true;
 
         int x_length = _arg.size();
@@ -143,7 +143,7 @@ namespace LaDa
         int iter = 0;
   
 #       define _MXPARM_ 10000
-        __DOASSERT( x_length > _MXPARM_,
+        LADA_DO_NASSERT( x_length > _MXPARM_,
                       "Current optimizer cannot go beyond " << _MXPARM_ << " variables\n"
                       "Change file cited above, as well as variable mxparm in "
                       "minimizer/df1dim.f90 and opt/linmin.f90 and recompile "

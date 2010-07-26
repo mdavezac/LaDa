@@ -350,8 +350,8 @@ namespace LaDa
       AtomicFunctional::get_bond( size_t _kind ) const
       {
         namespace bt = boost::tuples;
-        __ASSERT( _kind >= lengths.size(), "Index out-of-range.\n" )
-        __ASSERT( 5*_kind + 4 >= alphas.size(), "Index out-of-range.\n" )
+        LADA_NASSERT( _kind >= lengths.size(), "Index out-of-range.\n" )
+        LADA_NASSERT( 5*_kind + 4 >= alphas.size(), "Index out-of-range.\n" )
         return boost::tuples::tie( lengths[_kind], alphas[5*_kind], alphas[5*_kind+1], 
                                    alphas[5*_kind+2], alphas[5*_kind+3], alphas[5*_kind+4] );
       }
@@ -361,9 +361,9 @@ namespace LaDa
                           const types::t_real&, const types::t_real&, const types::t_real& >
       AtomicFunctional::get_angle( size_t _kind ) const
       {
-          __ASSERT( _kind >= gammas.size(), "Index out-of-range.\n" )
-          __ASSERT( _kind >= sigmas.size(), "Index out-of-range.\n" )
-          __ASSERT( 5*_kind + 4 >= betas.size(), "Index out-of-range.\n" )
+          LADA_NASSERT( _kind >= gammas.size(), "Index out-of-range.\n" )
+          LADA_NASSERT( _kind >= sigmas.size(), "Index out-of-range.\n" )
+          LADA_NASSERT( 5*_kind + 4 >= betas.size(), "Index out-of-range.\n" )
           return boost::tuples::tie( gammas[_kind], sigmas[_kind],
                                      betas[5*_kind], betas[5*_kind+1], 
                                      betas[5*_kind+2], betas[5*_kind+3], betas[5*_kind+4] );
@@ -375,14 +375,14 @@ namespace LaDa
                                     const Crystal::Lattice::t_Site &_othersite,
                                     Crystal :: Structure &_structure )
     {
-      __ASSERT( std::string( _node.Value() ).compare("Functional") != 0, "Incorrect node.\n" )
-      __ASSERT( std::string( _node.Attribute( "type" ) ).compare("vff") != 0,
+      LADA_NASSERT( std::string( _node.Value() ).compare("Functional") != 0, "Incorrect node.\n" )
+      LADA_NASSERT( std::string( _node.Attribute( "type" ) ).compare("vff") != 0,
                 "Incorrect node.\n" )
 
       const Crystal::Lattice &lattice = *Crystal::Structure::lattice;
-      __ASSERT( _site_index >= lattice.sites.size(), "Index out of range.\n" )
+      LADA_NASSERT( _site_index >= lattice.sites.size(), "Index out of range.\n" )
       const Crystal::Lattice::t_Site &lsite = lattice.sites[ _site_index ];
-      __ASSERT( _type_index >= lsite.type.size(), "Index out of range.\n" )
+      LADA_NASSERT( _type_index >= lsite.type.size(), "Index out of range.\n" )
 
       structure = &_structure;
       specie = lsite.type[ _type_index ];
@@ -406,13 +406,13 @@ namespace LaDa
       {
         // first the bond parameters.
         const TiXmlElement *child = details::find_bond_node( _node, specie, *i_atype );
-        __DOASSERT( not child,
+        LADA_DO_NASSERT( not child,
                        "Could not find parameters for bond: "
                     << specie << "-" << (*i_atype) << ".\n" )
-        __DOASSERT( not child->Attribute("d0"), 
+        LADA_DO_NASSERT( not child->Attribute("d0"), 
                        "Could not find parameters d0 of bond: "
                     << specie << "-" << (*i_atype) << ".\n" )
-        __DOASSERT( not child->Attribute("alpha"), 
+        LADA_DO_NASSERT( not child->Attribute("alpha"), 
                        "Could not find parameters alpha of bond: "
                     << specie << "-" << (*i_atype) << ".\n" )
 
@@ -436,13 +436,13 @@ namespace LaDa
         {
           child = details::find_angle_node( _node, specie, *i_atype, *i_btype );
           
-          __DOASSERT( not child,
+          LADA_DO_NASSERT( not child,
                          "Could not find parameters for angle: "
                       << (*i_atype) << "-" << specie << "-" << (*i_btype) << ".\n" )
-          __DOASSERT( not child->Attribute("gamma"), 
+          LADA_DO_NASSERT( not child->Attribute("gamma"), 
                          "Could not find parameters gamma of angle: "
                       << (*i_atype) << "-" << specie << "-" << (*i_btype) << ".\n" )
-          __DOASSERT( not child->Attribute("beta"), 
+          LADA_DO_NASSERT( not child->Attribute("beta"), 
                          "Could not find parameters beta of angle: "
                       << (*i_atype) << "-" << specie << "-" << (*i_btype) << ".\n" )
 
@@ -451,7 +451,7 @@ namespace LaDa
           if ( str.compare("tet") == 0 or str.compare("tetrahedral") == 0  )
             gammas[angle_index] = -1e0/3e0;
           else gammas[angle_index] = boost::lexical_cast<types::t_real>( str );
-          __DOASSERT( std::abs(gammas[angle_index]) > 1,
+          LADA_DO_NASSERT( std::abs(gammas[angle_index]) > 1,
                       " gamma must be comprised between 1 and -1.\n" )
 
           // find sigma

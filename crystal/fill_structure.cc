@@ -22,7 +22,7 @@ namespace LaDa
         bool fill_structure( Crystal::TStructure<T_TYPE> &_structure )
         {
           namespace bt = boost::tuples;
-          __ASSERT( _structure.lattice == NULL, "Lattice not set.\n" )
+          LADA_NASSERT( _structure.lattice == NULL, "Lattice not set.\n" )
           t_SmithTransform transform
             = get_smith_transform( _structure.lattice->cell, _structure.cell);
         

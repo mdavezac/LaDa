@@ -11,7 +11,7 @@
 #include <opt/bpo_macros.h>
 #include <opt/tuple_io.h>
 #include <mpi/macros.h>
-#ifdef _MPI
+#ifdef LADA_MPI
 # include <boost/mpi/environment.hpp>
 #endif
 
@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
   namespace bl = boost::lambda;
 
   __MPI_START__
-  __TRYBEGIN
+  LADA_TRY_BEGIN
 
   __BPO_START__;
   po::options_description hidden( "hidden" ); 
@@ -57,10 +57,10 @@ int main(int argc, char *argv[])
 
   // filenames.
   fs::path input( vm["input"].as< std::string >() );
-  __DOASSERT( not ( fs::is_regular( input ) or fs::is_symlink( input ) ),
+  LADA_DO_NASSERT( not ( fs::is_regular( input ) or fs::is_symlink( input ) ),
               input << " is a not a valid file.\n" );
   fs::path poscar( vm["poscar"].as< std::string >() );
-  __DOASSERT( not ( fs::is_regular( poscar ) or fs::is_symlink( poscar ) ),
+  LADA_DO_NASSERT( not ( fs::is_regular( poscar ) or fs::is_symlink( poscar ) ),
               poscar << " is a not a valid file.\n" );
   
   // data declaration.

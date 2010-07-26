@@ -189,9 +189,10 @@ namespace LaDa
     inline std::string Lattice::get_atom_string( const Crystal::Atom &_at ) const
     {
       types::t_int i;
-      __TRYDEBUGCODE(
-          i = get_atom_site_index( _at );,
-             "Caught error while converting string to numerical atom\n" )
+#     ifdef LADA_DEBUG
+        LADA_TRY_CODE( i = get_atom_site_index( _at );,
+                       "Caught error while converting string to numerical atom\n" )
+#     endif
       if ( i == -1 ) return "error";
       if ( get_nb_types(i) == 1 ) return sites[i].type[0];
       return ( std::abs( _at.type - 1.0 ) < types::tolerance ) ? 
@@ -227,7 +228,7 @@ namespace LaDa
     // _TETRAGONAL_CE_ each time.
     inline boost::shared_ptr< Crystal::Lattice > read_lattice( const std::string& _string )
     {
-      __TRYBEGIN
+      LADA_TRY_BEGIN
       boost::shared_ptr< Crystal::Lattice > result( new Crystal::Lattice ); 
 
       TiXmlDocument doc;
@@ -236,23 +237,23 @@ namespace LaDa
       doc.Parse( _string.c_str() );
       TiXmlElement *child = handle.FirstChild( "Job" )
                                   .FirstChild( "Lattice" ).Element();
-      __DOASSERT( not child, "Could not find Lattice in input.\n" )
+      LADA_DO_NASSERT( not child, "Could not find Lattice in input.\n" )
       if( child->Attribute("filename") )
       {
         const boost::filesystem::path
           n( opt::expand_path( child->Attribute("filename") ) );
-        __DOASSERT( not boost::filesystem::exists( n ),
+        LADA_DO_NASSERT( not boost::filesystem::exists( n ),
                     n.string() + " could not be found.\n" )
         std::string file;
         opt::read_xmlfile( n, doc2 );
         doc2.Parse( file.c_str() );
-        __DOASSERT( not doc2.FirstChild( "Job" ), "Job tag does not exist.\n" )
-        __DOASSERT( not doc2.FirstChild( "Job" )->FirstChildElement("Lattice"), 
+        LADA_DO_NASSERT( not doc2.FirstChild( "Job" ), "Job tag does not exist.\n" )
+        LADA_DO_NASSERT( not doc2.FirstChild( "Job" )->FirstChildElement("Lattice"), 
                     "Lattice tag does not exist.\n" )
         child = doc2.FirstChild( "Job" )->FirstChildElement( "Lattice" );
-        __DOASSERT( not child, "Could not find Lattice in input.\n" )
+        LADA_DO_NASSERT( not child, "Could not find Lattice in input.\n" )
       }
-      __DOASSERT( not result->Load(*child),
+      LADA_DO_NASSERT( not result->Load(*child),
                   "Error while reading Lattice from input.\n")
 #     if defined (_TETRAGONAL_CE_)
         // Only Constituent-Strain expects and space group determination
@@ -274,7 +275,7 @@ namespace LaDa
             result->cell(2,i) = 0.5e0;
 #     endif
       return result;
-      __TRYEND(, "Could not read lattice from input.\n" )
+      LADA_TRY_END(, "Could not read lattice from input.\n" )
     }
 
     template< class ARCHIVE >

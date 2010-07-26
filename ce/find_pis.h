@@ -195,7 +195,7 @@ namespace LaDa
         {
           types::t_real nm = 1e0 / types::t_real(   _str.atoms.size()
                                                   * i_clusters->size() );
-          __ASSERT( i_clusters->size() == 0, "Cluster class is empty.\n" );
+          LADA_NASSERT( i_clusters->size() == 0, "Cluster class is empty.\n" );
           if( not i_clusters->front().vectors.size() )
             { *i_pi = 1; continue; }
           typename t_EClusters :: const_iterator i_cluster = i_clusters->begin();
@@ -225,7 +225,7 @@ namespace LaDa
                   if ( math::are_periodic_images(*i_cpos + shift, i_equiv->pos, inv_cell) ) 
                     break;
 
-                __ASSERT( i_equiv == i_atom_end,
+                LADA_NASSERT( i_equiv == i_atom_end,
                           "Could not find equivalent site.\n" )
                 result *= i_equiv->type;
 

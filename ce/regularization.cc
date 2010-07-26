@@ -23,26 +23,26 @@ namespace LaDa
   {
     Regulated::t_Return Regulated :: operator()( const t_Vector& _arg ) const
     {
-      __DEBUGTRYBEGIN
+      LADA_DEBUG_TRY_BEGIN
       t_Vector x(nb_cls );
       std::fill( x.begin(), x.end(), 0e0 );
       std::pair< opt::ErrorTuple, opt::ErrorTuple >
         result = leave_one_out( *static_cast<const t_Base*>(this), cgs, x, &_arg[0], false );
 
       return result.second.variance();
-      __DEBUGTRYEND(, "Error in Regulated::operator().\n" )
+      LADA_DEBUG_TRY_END(, "Error in Regulated::operator().\n" )
     }
 
     Regulated::t_Return Regulated :: operator()( const t_Arg& _arg ) const
     {
-      __DEBUGTRYBEGIN
+      LADA_DEBUG_TRY_BEGIN
       t_Vector x(nb_cls );
       std::fill( x.begin(), x.end(), 0e0 );
       std::pair< opt::ErrorTuple, opt::ErrorTuple >
         result = leave_one_out( *static_cast<const t_Base*>(this), cgs, x, &_arg[0], false );
 
       return result.second.variance();
-      __DEBUGTRYEND(, "Error in Regulated::operator().\n" )
+      LADA_DEBUG_TRY_END(, "Error in Regulated::operator().\n" )
     }
 
     void Regulated :: gradient( const t_Arg& _arg,
@@ -53,7 +53,7 @@ namespace LaDa
 
     Cluster Regulated :: reduce()
     {
-      __DEBUGTRYBEGIN
+      LADA_DEBUG_TRY_BEGIN
       namespace bblas = boost::numeric::ublas;
       t_Clusters :: iterator i_cls = clusters.begin(); 
       t_Clusters :: iterator i_cls_end = clusters.end(); 
@@ -79,7 +79,7 @@ namespace LaDa
       std::vector<t_StructPis> :: iterator i_pis_end = pis.end();
       for(; i_pis != i_pis_end; ++i_pis )
       {
-        __ASSERT( pis.size()-1 == clusters.size(),
+        LADA_NASSERT( pis.size()-1 == clusters.size(),
                   "Inconsistent sizes of Pis and clusters.\n")
 
         t_Vector temp( *i_pis );
@@ -96,7 +96,7 @@ namespace LaDa
       }
 
       return result;
-      __DEBUGTRYEND(, "Error in Regulated::reduce().\n" )
+      LADA_DEBUG_TRY_END(, "Error in Regulated::reduce().\n" )
     }
 
     opt::ErrorTuple Regulated :: fit( t_Arg& _arg, const types::t_real *_weights ) const

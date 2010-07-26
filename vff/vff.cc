@@ -7,7 +7,7 @@
 
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
-#ifdef _MPI
+#ifdef LADA_MPI
 # include <boost/mpi/collectives/all_reduce.hpp>
 #endif
 
@@ -15,7 +15,6 @@
 #include <opt/debug.h>
 #include <opt/tinyxml.h>
 #include <opt/path.h>
-#include <crystal/ideal_lattice.h>
 #include <mpi/mpi_object.h>
 
 
@@ -31,7 +30,7 @@ namespace LaDa
       namespace bfs = boost::filesystem;
 
       // some consistency checking
-      __ASSERT( not structure.lattice, "Lattice has not been set.\n" )
+      LADA_NASSERT( not structure.lattice, "Lattice has not been set.\n" )
       if ( structure.lattice->get_nb_sites() != 2 )
       { 
         std::cerr << "Cannot do vff on this lattice.\n" 
@@ -57,10 +56,10 @@ namespace LaDa
       if( not parent->Attribute( "filename" ) ) return load_( *parent );
 
       const bfs::path path( opt::expand_path( parent->Attribute( "filename" ) ) );
-      __DOASSERT( not bfs::exists( path ), path.string() + " does not exist.\n" )
+      LADA_DO_NASSERT( not bfs::exists( path ), path.string() + " does not exist.\n" )
       TiXmlDocument doc;
       opt::read_xmlfile( path, doc );
-      __DOASSERT( not doc.FirstChild( "Job" ),
+      LADA_DO_NASSERT( not doc.FirstChild( "Job" ),
                   "Root tag <Job> does not exist in " + path.string() + ".\n" )
       parent = opt::find_node( *doc.FirstChildElement( "Job" ),
                                "Functional", "type", "vff" );
@@ -102,7 +101,7 @@ namespace LaDa
       types::t_real energy = 0;
       
       LADA_MPI_SPLIT_LOOP( t_Centers :: const_iterator, center, centers, MPI_COMM )
-// #     ifdef _MPI
+// #     ifdef LADA_MPI
 //         for(size_t i(0); i < MPI_COMM.size(); ++i )
 //         {
 //           if( i != MPI_COMM.rank() ) { MPI_COMM.barrier(); continue; }
@@ -157,12 +156,16 @@ namespace LaDa
       {
         // first gets pseudo index
         Crystal::StrAtom stratom;
-        __TRYDEBUGCODE( 
-          structure.lattice->convert_Atom_to_StrAtom(
-             structure.atoms[i_center->get_index()], stratom );, 
-             "Error while printing escan input for atom " 
-          << i_center->get_index() << ": \n"
-          << structure.atoms[i_center->get_index()] << "\n" << structure )
+#       ifdef LADA_DEBUG
+          try
+          { 
+            structure.lattice->convert_Atom_to_StrAtom(
+               structure.atoms[i_center->get_index()], stratom );
+          }
+          LADA_CATCHCODE(, "Error while printing escan input for atom " 
+                           << i_center->get_index() << ": \n"
+                           << structure.atoms[i_center->get_index()] << "\n" << structure )
+#       endif 
           
         types::t_unsigned index = Physics::Atomic::Z( stratom.type );
         types::t_real msstrain = functionals[i_center->kind()]
@@ -177,11 +180,15 @@ namespace LaDa
         t_pseudos pseudos;
         for(; i_bond != i_bond_end; ++i_bond )
         { 
-          __TRYDEBUGCODE( 
-            structure.lattice->convert_Atom_to_StrAtom( 
-              structure.atoms[i_bond->get_index()], stratom );, 
-               "Error while printing escan input for atoms\n" 
-            << structure.atoms[i_bond->get_index()] << "\n" )
+#         ifdef LADA_DEBUG
+            try
+            { 
+              structure.lattice->convert_Atom_to_StrAtom( 
+                structure.atoms[i_bond->get_index()], stratom );
+            }
+            LADA_CATHCODE( ,  "Error while printing escan input for atoms\n" 
+                            << structure.atoms[i_bond->get_index()] << "\n" )
+#         endif 
           types::t_unsigned Z = Physics::Atomic::Z( stratom.type );
           t_pseudos::iterator i_pseudo = pseudos.begin();
           t_pseudos::iterator i_pseudo_end = pseudos.end();
@@ -218,19 +225,19 @@ namespace LaDa
 
       }
       const t_Path directory( _f.parent_path() );
-      __TRYBEGIN
+      LADA_TRY_BEGIN
         if( not ( directory.empty() or bfs::exists( directory ) ) )
           bfs::create_directory( directory );
         std::ofstream file( _f.string().c_str(), std::ios_base::out|std::ios_base::trunc ); 
-        __DOASSERT( file.bad(), "Could not open file " << _f << ".\n" ) 
+        LADA_DO_NASSERT( file.bad(), "Could not open file " << _f << ".\n" ) 
         // prints number of atoms
         file << nb_pseudos << "\n";
         // print rest of file
         file << stream.str();
         file.flush();
         file.close();
-        __ASSERT( not bfs::exists( _f ), _f << " was not created.\n" )
-      __TRYEND(, "")
+        LADA_NASSERT( not bfs::exists( _f ), _f << " was not created.\n" )
+      LADA_TRY_END(, "")
     }
 
     void Vff :: print_out( std::ostream &stream ) const
@@ -248,14 +255,14 @@ namespace LaDa
         t_Centers :: const_iterator i_center_end = centers.end();
         for(size_t index(0); i_center != i_center_end; ++i_center, ++index )
         {
-          __DOASSERT( not i_center->origin, 
+          LADA_DO_NASSERT( not i_center->origin, 
                       "Origin of the center is invalid\n"; )
-          __DOASSERT( not i_center->structure, 
+          LADA_DO_NASSERT( not i_center->structure, 
                       "Invalid pointer to structure\n"; )
-          __DOASSERT( i_center->bonds.size() != 4,
+          LADA_DO_NASSERT( i_center->bonds.size() != 4,
                          "Invalid number of bonds: "
                       << i_center->bonds.size() << ", " << index << "\n"; )
-          __DOASSERT( i_center->translations.size() != 4,
+          LADA_DO_NASSERT( i_center->translations.size() != 4,
                          "Invalid number of translations: "
                       << i_center->translations.size() << "\n"; )
         }
@@ -268,7 +275,7 @@ namespace LaDa
         typedef t_AtomicFunctionals :: value_type t_AtomicFunctional;
         namespace bt = boost::tuples;
       
-        __DOASSERT( not (structure.lattice and structure.lattice->sites.size() == 2),
+        LADA_DO_NASSERT( not (structure.lattice and structure.lattice->sites.size() == 2),
                     "Lattice undefined or does not have two sites.\n" )
         namespace bx = boost::xpressive;
         const std::string bond( boost::algorithm::trim_copy( _type ) );
@@ -278,7 +285,7 @@ namespace LaDa
                                   >> *bx::_s >> "-" >> *bx::_s
                                   >> ( bx::s2 = ( bx::alpha >> !bx::alpha ) ) );
         if( !bx::regex_match( bond, what, regex ) )
-          __DOASSERT( true, "Could not find bond " + _type + "\n" )
+          LADA_DO_NASSERT( true, "Could not find bond " + _type + "\n" )
       
         const bool two_species( structure.lattice->sites[0].type.size() == 2 );
         const std::string A( what.str(1) );
@@ -297,10 +304,10 @@ namespace LaDa
           (
             site == 0 ? size_t(j):( two_species ? size_t(i): 0 )
           );
-          __DOASSERT( Akind >= functionals.size(), "Index out-of-range.\n" )
+          LADA_DO_NASSERT( Akind >= functionals.size(), "Index out-of-range.\n" )
           return functionals[Akind].get_bond( bond_kind );
         }
-        __DOASSERT( true, "Could not find angle.\n" )
+        LADA_DO_NASSERT( true, "Could not find angle.\n" )
       }
 
     boost::tuples::tuple< const types::t_real&, const types::t_real&, 
@@ -312,7 +319,7 @@ namespace LaDa
         typedef t_AtomicFunctionals :: value_type t_AtomicFunctional;
         namespace bt = boost::tuples;
       
-        __DOASSERT( not (structure.lattice and structure.lattice->sites.size() == 2),
+        LADA_DO_NASSERT( not (structure.lattice and structure.lattice->sites.size() == 2),
                     "Lattice undefined or does not have two sites.\n" )
         namespace bx = boost::xpressive;
         const std::string bond( boost::algorithm::trim_copy( _type ) );
@@ -324,7 +331,7 @@ namespace LaDa
                                   >> *bx::_s >> "-" >> *bx::_s
                                   >> ( bx::s3 = ( bx::alpha >> !bx::alpha ) ) );
         if( !bx::regex_match( bond, what, regex ) )
-          __DOASSERT( true, "Could not find angle " + _type + "\n" )
+          LADA_DO_NASSERT( true, "Could not find angle " + _type + "\n" )
       
         const bool two_species( structure.lattice->sites[0].type.size() == 2 );
         const std::string A( what.str(1) );
@@ -346,10 +353,10 @@ namespace LaDa
               size_t( site == 0 ? size_t(i):( two_species ? size_t(i): 0 ) )
             + size_t( site == 0 ? size_t(k):( two_species ? size_t(k): 0 ) )
           );
-          __DOASSERT( Bkind >= functionals.size(), "Index out-of-range.\n" )
+          LADA_DO_NASSERT( Bkind >= functionals.size(), "Index out-of-range.\n" )
           return functionals[Bkind].get_angle( angle_kind );
         }
-        __DOASSERT( true, "Could not find angle.\n" )
+        LADA_DO_NASSERT( true, "Could not find angle.\n" )
       }
   } // namespace vff
 } // namespace LaDa

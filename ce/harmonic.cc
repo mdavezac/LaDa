@@ -65,7 +65,7 @@ namespace CE
 
       types::t_real Linear_Interpolator :: evaluate( const types::t_real _x ) const
       {
-        __ASSERT( points.size() == 0, "Nothing to interpolate\n" )
+        LADA_NASSERT( points.size() == 0, "Nothing to interpolate\n" )
 
         std::vector<Point> :: const_iterator i_point;
         std::vector<Point> :: const_iterator i_begin = points.begin();
@@ -85,7 +85,7 @@ namespace CE
       }
       types::t_real Linear_Interpolator :: evaluate_gradient( const types::t_real _x ) const
       {
-        __ASSERT( points.size() == 0, "Nothing to interpolate\n" )
+        LADA_NASSERT( points.size() == 0, "Nothing to interpolate\n" )
 
         std::vector<Point> :: const_iterator i_point;
         std::vector<Point> :: const_iterator i_begin = points.begin();
@@ -104,7 +104,7 @@ namespace CE
       types::t_real Linear_Interpolator :: evaluate_with_gradient( const types::t_real _x,
                                                                    types::t_real &gradient ) const
       {
-        __ASSERT( points.size() == 0, "Nothing to interpolate\n" )
+        LADA_NASSERT( points.size() == 0, "Nothing to interpolate\n" )
         
         std::vector<Point> :: const_iterator i_point;
         std::vector<Point> :: const_iterator i_begin = points.begin();
@@ -167,7 +167,7 @@ namespace CE
                                )
                     ) / ipow(r2,4);
            default:
-             __DOASSERT( true, "Kubic harmonics l > 3 not yet implemented.\n"  )
+             LADA_DO_NASSERT( true, "Kubic harmonics l > 3 not yet implemented.\n"  )
         }
 
         return 0.;
@@ -235,7 +235,7 @@ namespace CE
         }
                    
 
-        __DOASSERT(true, "rank > 8 not implemented for tetragonal harmonics.\n" )
+        LADA_DO_NASSERT(true, "rank > 8 not implemented for tetragonal harmonics.\n" )
         return t_real(0);
       }
 

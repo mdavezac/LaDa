@@ -84,23 +84,23 @@ namespace LaDa
     void read_fortran_input( Clj &_clj, std::vector<std::string> &_atoms, 
                              const boost::filesystem::path &_path )
     {
-      __TRYBEGIN
+      LADA_TRY_BEGIN
 
       namespace bsc = boost::spirit::classic;
       namespace fs = boost::filesystem;  
-      __DOASSERT( not fs::exists( _path ), "Path " << _path << " does not exits.\n" )
-      __DOASSERT( not( fs::is_regular( _path ) or fs::is_symlink( _path ) ),
+      LADA_DO_NASSERT( not fs::exists( _path ), "Path " << _path << " does not exits.\n" )
+      LADA_DO_NASSERT( not( fs::is_regular( _path ) or fs::is_symlink( _path ) ),
                   _path << " is neither a regulare file nor a system link.\n" )
       std::ifstream file( _path.string().c_str(), std::ifstream::in );
       std::string line;
 
-      __DOASSERT( file.bad(), "Could not open file " + _path.string() + "\n" );
+      LADA_DO_NASSERT( file.bad(), "Could not open file " + _path.string() + "\n" );
       
       // Number of atomic species.
       std::getline( file, line );
-      __DOASSERT( file.eof(), "Unexpected end-of-file " + _path.string() + "\n" );
+      LADA_DO_NASSERT( file.eof(), "Unexpected end-of-file " + _path.string() + "\n" );
       size_t nbspecies;
-      __DOASSERT
+      LADA_DO_NASSERT
       (
         not bsc::parse
         (
@@ -112,7 +112,7 @@ namespace LaDa
       )
 
       // Atomic types
-      __DOASSERT( nbspecies == 0,
+      LADA_DO_NASSERT( nbspecies == 0,
                   "Number of species set to zero in input " + _path.string() + ".\n" )
       std::vector< details::atomic_specie > species;
       _atoms.clear();
@@ -120,8 +120,8 @@ namespace LaDa
       {
         details::atomic_specie atom;
         std::getline( file, line );
-        __DOASSERT( file.eof(), "Unexpected end-of-file " + _path.string() + "\n" );
-        __DOASSERT
+        LADA_DO_NASSERT( file.eof(), "Unexpected end-of-file " + _path.string() + "\n" );
+        LADA_DO_NASSERT
         (
           not bsc::parse
           (
@@ -134,24 +134,24 @@ namespace LaDa
           ).hit,
           "Could not parse atomic type.\n" 
         )
-        __DOASSERT( species.end() != std::find( species.begin(), species.end(), atom ),
+        LADA_DO_NASSERT( species.end() != std::find( species.begin(), species.end(), atom ),
                     "Same specie specified twice.\n" )
         species.push_back( atom );
-        __DOASSERT( Physics::Atomic::Symbol(atom.atomic_number) == "error",
+        LADA_DO_NASSERT( Physics::Atomic::Symbol(atom.atomic_number) == "error",
                     "Unknown atom with z=" << atom.atomic_number << ". Please complain.\n" )
         _atoms.push_back( Physics::Atomic::Symbol( atom.atomic_number ) );
       }
       
       // Bond types
-      __DOASSERT( nbspecies == 0,
+      LADA_DO_NASSERT( nbspecies == 0,
                   "Number of species set to zero in input " + _path.string() + ".\n" )
       std::vector< details::bond_type > bonds;
       for( size_t i(0); i < nbspecies * nbspecies; ++i )
       {
         details::bond_type bond;
         std::getline( file, line );
-        __DOASSERT( file.eof(), "Unexpected end-of-file " + _path.string() + "\n" );
-        __DOASSERT
+        LADA_DO_NASSERT( file.eof(), "Unexpected end-of-file " + _path.string() + "\n" );
+        LADA_DO_NASSERT
         (
           not bsc::parse
           (
@@ -171,11 +171,11 @@ namespace LaDa
         );
         if( i_found != bonds.end() )
         {
-          __DOASSERT( i_found->a == bond.a and i_found->b == bond.b,
+          LADA_DO_NASSERT( i_found->a == bond.a and i_found->b == bond.b,
                       "Same bond specified twice (bond " << i << ").\n") 
-          __DOASSERT( std::abs( i_found->epsilon - bond.epsilon ) > 1e-12,
+          LADA_DO_NASSERT( std::abs( i_found->epsilon - bond.epsilon ) > 1e-12,
                       "Same bond, different epsilon (bond " << i << ").\n") 
-          __DOASSERT( std::abs( i_found->rsigma - bond.rsigma ) > 1e-12,
+          LADA_DO_NASSERT( std::abs( i_found->rsigma - bond.rsigma ) > 1e-12,
                       "Same bond, different rsigma (bond " << i << ").\n") 
           continue;
         }
@@ -184,8 +184,8 @@ namespace LaDa
 
       // lj real space cutoff
       std::getline( file, line );
-      __DOASSERT( file.eof(), "Unexpected end-of-file " + _path.string() + "\n" );
-      __DOASSERT
+      LADA_DO_NASSERT( file.eof(), "Unexpected end-of-file " + _path.string() + "\n" );
+      LADA_DO_NASSERT
       (
         not bsc::parse
         (
@@ -197,8 +197,8 @@ namespace LaDa
       )
       // lj real space cutoff
       std::getline( file, line );
-      __DOASSERT( file.eof(), "Unexpected end-of-file " + _path.string() + "\n" );
-      __DOASSERT
+      LADA_DO_NASSERT( file.eof(), "Unexpected end-of-file " + _path.string() + "\n" );
+      LADA_DO_NASSERT
       (
         not bsc::parse
         (
@@ -211,9 +211,9 @@ namespace LaDa
 
       // PEGS.
       std::getline( file, line );
-      __DOASSERT( file.eof(), "Unexpected end-of-file " + _path.string() + "\n" );
+      LADA_DO_NASSERT( file.eof(), "Unexpected end-of-file " + _path.string() + "\n" );
       types::t_real pegs;
-      __DOASSERT
+      LADA_DO_NASSERT
       (
         not bsc::parse
         (
@@ -228,7 +228,7 @@ namespace LaDa
       _clj.Ewald::charges.clear(); 
       foreach( const details::atomic_specie & specie, species )
       {
-        __DOASSERT( Physics::Atomic::Symbol( specie.atomic_number ) == "error",
+        LADA_DO_NASSERT( Physics::Atomic::Symbol( specie.atomic_number ) == "error",
                     "Unknow atomic number " << specie.atomic_number << ", please complain.\n" )
         _clj.Ewald::charges[ Physics::Atomic::Symbol( specie.atomic_number ) ] = specie.charge;
       }
@@ -237,13 +237,13 @@ namespace LaDa
       _clj.LennardJones::bonds.clear();
       foreach( const details::bond_type & bond, bonds )
       {
-        __DOASSERT( Physics::Atomic::Symbol( bond.a ) == "error",
+        LADA_DO_NASSERT( Physics::Atomic::Symbol( bond.a ) == "error",
                     "Unknow atomic number " << bond.a << ", please complain.\n" )
-        __DOASSERT( Physics::Atomic::Symbol( bond.b ) == "error",
+        LADA_DO_NASSERT( Physics::Atomic::Symbol( bond.b ) == "error",
                     "Unknow atomic number " << bond.b << ", please complain.\n" )
-        __DOASSERT( species.end() == find( species.begin(), species.end(), bond.a ), 
+        LADA_DO_NASSERT( species.end() == find( species.begin(), species.end(), bond.a ), 
                     "Atomic type " << bond.a << " incomplete in input.\n" )
-        __DOASSERT( species.end() == find( species.begin(), species.end(), bond.b ), 
+        LADA_DO_NASSERT( species.end() == find( species.begin(), species.end(), bond.b ), 
                     "Atomic type " << bond.a << " incomplete in input.\n" )
 
         const std::string bondtype
@@ -254,7 +254,7 @@ namespace LaDa
              Physics::Atomic::Symbol( bond.a ) 
           )
         );
-        __ASSERT( _clj.LennardJones::bonds.end() != _clj.LennardJones::bonds.find( bondtype ),
+        LADA_NASSERT( _clj.LennardJones::bonds.end() != _clj.LennardJones::bonds.find( bondtype ),
                   "Bond already exists.\n" )
         const details::atomic_specie A( *find( species.begin(), species.end(), bond.a ) );
         const details::atomic_specie B( *find( species.begin(), species.end(), bond.b ) );
@@ -271,7 +271,7 @@ namespace LaDa
       boost::tuples::get<1>(_clj.LennardJones::mesh_) = 3;
       boost::tuples::get<2>(_clj.LennardJones::mesh_) = 3;
 
-      __TRYEND(, "Could not parse input.\n" )
+      LADA_TRY_END(, "Could not parse input.\n" )
     }
 
     void Clj :: check_coherency() const
@@ -319,7 +319,7 @@ namespace LaDa
         std::for_each( diff.begin(), diff.end(), std::cerr << bl::_1 << bl::constant( " " ) );
         std::cerr << "\n";
       }
-      __DOASSERT( not result, "" );
+      LADA_DO_NASSERT( not result, "" );
     }
 
     std::ostream& operator<<( std::ostream& _stream, const Clj& _clj )

@@ -46,9 +46,9 @@ namespace LaDa
           void set_ ## NAME( const TYPE& _ ## NAME ) \
           {\
             NAME ## _ = _ ## NAME; \
-            __TRYBEGIN \
+            LADA_TRY_BEGIN \
             load_(); \
-            __TRYEND(,"Could not set parameter " #NAME ".\n") \
+            LADA_TRY_END(,"Could not set parameter " #NAME ".\n") \
           }
 
         __GETSET__( std::string, type)

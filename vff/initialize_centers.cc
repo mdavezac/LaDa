@@ -2,8 +2,8 @@
 
 #include <cmath>
 
-#include <crystal/ideal_lattice.h>
 #include <crystal/divide_and_conquer.h>
+#include <crystal/neighbors.h>
 #include <math/misc.h>
 
 #include "vff.h"
@@ -15,7 +15,7 @@ namespace LaDa
     void Vff :: first_neighbors_( std::vector< std::vector< math::rVector3d > >& _fn )
     {
       const size_t Nsites( structure.lattice->sites.size() );
-      __DOASSERT( Nsites != 2, "Expected two sites for VFF.\n" )
+      LADA_DO_NASSERT( Nsites != 2, "Expected two sites for VFF.\n" )
       typedef std::vector< std::vector< math::rVector3d > > t_FirstNeighbors;
       _fn.resize( structure.lattice->sites.size() );
       foreach( const Crystal::Lattice::t_Site &site, structure.lattice->sites )
@@ -42,64 +42,6 @@ namespace LaDa
       t_FirstNeighbors fn;
       first_neighbors_( fn );
 
-//    // Checks if ideal structure. In which case use smith normal tree building.
-//    if( math::is_integer(structure.lattice->cell.inverse() * structure.cell) )
-//    {
-//      if( _verbose ) 
-//      { 
-//        __ROOTCODE
-//        ( 
-//          MPI_COMM,
-//          std::cout << "Trying to create first neighbor tree "
-//                       "using smith normal form algorithm.\n";
-//        )
-//      }
-//      if( build_tree_smith_( fn ) )
-//      {
-//        __DODEBUGCODE( check_tree(); )
-//        if( _verbose )
-//        { 
-//          __ROOTCODE( MPI_COMM,
-//                      std::cout << "First Neighbor tree successfully created.\n"; ) 
-//        }
-//        return true;
-//      }
-//      __ROOTCODE( MPI_COMM, std::cout << "Failed.\n"; )
-//      t_Centers :: iterator i_center = centers.begin();
-//      t_Centers :: iterator i_center_end = centers.end();
-//      for(; i_center != i_center_end; ++i_center ) i_center->bonds.clear();
-//    } 
-//
-//     const size_t Nperbox( 10 );
-//     if( structure.atoms.size() < Nperbox )
-//     {
-//       if( _verbose )
-//       {
-//         __ROOTCODE
-//         ( 
-//           MPI_COMM,
-//           std::cout << "Creating first neighbor tree using standard algorithm.\n";
-//         )
-//       }
-//       if( not build_tree_sort_( fn ) ) return false;
-//       __DODEBUGCODE( check_tree(); )
-//       if( _verbose )
-//       {
-//         __ROOTCODE( MPI_COMM,
-//                     std::cout << "First Neighbor tree successfully created.\n"; )
-//       }
-//       return true;
-//     }
-//      
-//     if( _verbose )
-//     {
-//       __ROOTCODE
-//       (
-//         MPI_COMM,
-//         std::cout << "Creating first neighbor tree using "
-//                      "divide-and-conquer algorithm.\n";
-//       )
-//     }
       // Tries to guess size of divide and conquer.
       const math::iVector3d nboxes( Crystal::guess_dnc_params( structure, 30 ) );
       types::t_real n(   structure.atoms.size()
@@ -130,7 +72,9 @@ namespace LaDa
       if( not result ) return false;
       
 
-      __DODEBUGCODE( check_tree(); )
+#     ifdef LADA_DEBUG
+        check_tree(); 
+#     endif
       if( _verbose ) 
       {
         __ROOTCODE( MPI_COMM, std::cout << "First Neighbor tree successfully created.\n"; )

@@ -35,7 +35,7 @@ namespace LaDa
     void PosToConfs :: init_syms( Crystal::Lattice &_lat )
     {
       types::t_int N( _lat.space_group.size() );
-      __ASSERT( N <= 0, "Lattice does not have symmetry operations.\n" )
+      LADA_NASSERT( N <= 0, "Lattice does not have symmetry operations.\n" )
       syms.reserve( N );
       for( types::t_int i(0); i < N; ++i )
       {
@@ -68,21 +68,21 @@ namespace LaDa
       }
       if( boost::regex_search( _bdesc, what, re3 ) )
       {
-        __TRYCODE( n.first = boost::lexical_cast< size_t >( what.str(1) );,
+        LADA_TRY_CODE( n.first = boost::lexical_cast< size_t >( what.str(1) );,
                    "Could not parse " << _bdesc << " -> " << what.str(1) << "\n" )
-        __TRYCODE( n.second = boost::lexical_cast< size_t >( what.str(2) );,
+        LADA_TRY_CODE( n.second = boost::lexical_cast< size_t >( what.str(2) );,
                    "Could not parse " << _bdesc << " -> " << what.str(2) << "\n" )
         return;
       }
       if( boost::regex_search( _bdesc, what, re1 ) )
       {
         n.first = 0;
-        __TRYCODE( n.second = boost::lexical_cast< size_t >( what.str(1) );,
+        LADA_TRY_CODE( n.second = boost::lexical_cast< size_t >( what.str(1) );,
                    "Could not parse " << _bdesc << " -> " << what.str(1) << "\n" )
         positions.clear();
         return;
       }
-      __THROW_ERROR( "Could not parse --basis input: " << _bdesc << "\n" )
+      LADA_THROW_ERROR( "Could not parse --basis input: " << _bdesc << "\n" )
     }
 
     // Strict weak ordering functor from knowledge of basis.
@@ -195,7 +195,7 @@ namespace LaDa
     void PosToConfs :: posbasis( const Crystal :: Structure &_structure,
                                  t_Configurations& _confs ) const
     {
-      __TRYBEGIN
+      LADA_TRY_BEGIN
 
       using namespace boost::lambda;
       // Allocates memory.
@@ -251,7 +251,7 @@ namespace LaDa
               a[2] += 0.05e0; a[2] -= std::floor(a[2]); a[2] -= 0.05e0;
               if( math::is_zero(a) ) break; 
             }
-            __DOASSERT( i_found == shifted_fracs.end(),
+            LADA_DO_NASSERT( i_found == shifted_fracs.end(),
                         "Could not find equivalent position.\n" ) 
             // Found the position in atomic structure.
             bitset[ i ] = Crystal::Structure::lattice
@@ -275,7 +275,7 @@ namespace LaDa
         } // loop over symmetry operations.
     
       } // loop over origin-shifts 
-      __TRYEND(,"Error while creating configurations.\n" )
+      LADA_TRY_END(,"Error while creating configurations.\n" )
     }
     
     namespace details
@@ -303,12 +303,12 @@ namespace LaDa
       void supercell_basis( types::t_unsigned _n, const math::rMatrix3d &_cell,
                             std::vector< math::rVector3d >& _positions )
       {
-        __DEBUGTRYBEGIN
+        LADA_DEBUG_TRY_BEGIN
         namespace bl = boost::lambda;
 
         Crystal::Structure structure;
         structure.cell = _cell * (types::t_real) _n;
-        __ASSERT( not Crystal::Structure::lattice,
+        LADA_NASSERT( not Crystal::Structure::lattice,
                   "Lattice of structure has not beens set.\n" )
         Crystal :: fill_structure( structure );
         std::for_each
@@ -333,13 +333,13 @@ namespace LaDa
           bl::bind(&math::rVector3d::squaredNorm, bl::_1)
             > bl::bind(&math::rVector3d::squaredNorm, bl::_2)
         );
-        __DEBUGTRYEND(, "Error while creating super-cell basis.\n" )
+        LADA_DEBUG_TRY_END(, "Error while creating super-cell basis.\n" )
       }
       void convcell_basis( types::t_unsigned _n, 
                            std::vector< math::rVector3d >& _positions )
       {
-        __DEBUGTRYBEGIN
-        __ASSERT( not Crystal::Structure::lattice, 
+        LADA_DEBUG_TRY_BEGIN
+        LADA_NASSERT( not Crystal::Structure::lattice, 
                   "Lattice has not been set.\n" )
         math::rMatrix3d mult;
         // assume fcc
@@ -357,7 +357,7 @@ namespace LaDa
         }
         mult = Crystal::Structure::lattice->cell * mult;
         supercell_basis( _n, mult, _positions );
-        __DEBUGTRYEND(, "Error while creating conventional-cell basis.\n" )
+        LADA_DEBUG_TRY_END(, "Error while creating conventional-cell basis.\n" )
       }
     }
 

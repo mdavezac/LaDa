@@ -8,7 +8,7 @@
 #include <boost/lambda/bind.hpp>
 #include <boost/program_options.hpp>
 #include <boost/mpl/vector.hpp>
-#ifdef _MPI
+#ifdef LADA_MPI
 # include <boost/scoped_ptr.hpp>
 # include <boost/mpi/environment.hpp>
 #endif
@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
   namespace fs = boost::filesystem;
   namespace bl = boost::lambda;
   namespace po = boost::program_options;
-  __TRYBEGIN
+  LADA_TRY_BEGIN
   __MPI_START__
 
 
@@ -135,10 +135,10 @@ int main(int argc, char *argv[])
   }
 
   fs::path dir( vm["datadir"].as< std::string >() );
-  __DOASSERT( not fs::exists( dir ), dir << " does not exist.\n" );
-  __DOASSERT( not fs::exists( dir / "LDAs.dat" ), 
+  LADA_DO_NASSERT( not fs::exists( dir ), dir << " does not exist.\n" );
+  LADA_DO_NASSERT( not fs::exists( dir / "LDAs.dat" ), 
               ( dir / "LDAs.dat" ) << " does not exist.\n" );
-  __DOASSERT
+  LADA_DO_NASSERT
   (
     not (    fs::is_regular( dir / "LDAs.dat" ) 
           or fs::is_symlink( dir / "LDAs.dat" ) ),
@@ -149,20 +149,20 @@ int main(int argc, char *argv[])
   if(    ( not fs::exists( jtypes ) )
       or ( not ( fs::is_symlink(jtypes) or fs::is_regular(jtypes) ) ) )
     jtypes = dir / jtypes;
-  __DOASSERT( not fs::exists( jtypes ),
+  LADA_DO_NASSERT( not fs::exists( jtypes ),
                  "Jtypes input file " << jtypes
               << " could not be found in ./ nor in " << dir << ".\n" )
-  __DOASSERT( not ( fs::is_regular( jtypes ) or fs::is_symlink( jtypes ) ),
+  LADA_DO_NASSERT( not ( fs::is_regular( jtypes ) or fs::is_symlink( jtypes ) ),
               jtypes << " is a not a valid file.\n" );
 
   fs::path latinput( vm["latinput"].as< std::string >() );
   if(    ( not fs::exists( latinput ) )
       or ( not ( fs::is_symlink(latinput) or fs::is_regular(latinput) ) ) )
    latinput = dir / latinput;
-  __DOASSERT( not fs::exists( latinput ),
+  LADA_DO_NASSERT( not fs::exists( latinput ),
                  "Lattice input file " << latinput
               << " could not be found in ./ nor in " << dir << ".\n" )
-  __DOASSERT( not ( fs::is_regular( latinput ) or fs::is_symlink( latinput ) ),
+  LADA_DO_NASSERT( not ( fs::is_regular( latinput ) or fs::is_symlink( latinput ) ),
               latinput << " is a not a valid file.\n" );
 
   const LaDa::types::t_unsigned maxpairs = vm["maxpairs"].as<LaDa::types::t_unsigned>();
@@ -208,7 +208,7 @@ int main(int argc, char *argv[])
   std::cout << "\n";
 
   // consistency checks.
-  __ASSERT( LaDa::math::le(pairreg.second, 0e0), "Coefficient \"t\" cannot negative.\n" )
+  LADA_NASSERT( LaDa::math::le(pairreg.second, 0e0), "Coefficient \"t\" cannot negative.\n" )
 
   // Loads lattice
   boost::shared_ptr< LaDa::Crystal::Lattice >

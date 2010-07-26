@@ -130,11 +130,11 @@ namespace LaDa
                         std::vector< std::vector< Cluster > > &_out,
                         const std::string &_genes )
     {
-      __DEBUGTRYBEGIN
+      LADA_DEBUG_TRY_BEGIN
 
       namespace fs = boost::filesystem;  
-      __DOASSERT( not fs::exists( _path ), "Path " << _path << " does not exits.\n" )
-      __DOASSERT( not( fs::is_regular( _path ) or fs::is_symlink( _path ) ),
+      LADA_DO_NASSERT( not fs::exists( _path ), "Path " << _path << " does not exits.\n" )
+      LADA_DO_NASSERT( not( fs::is_regular( _path ) or fs::is_symlink( _path ) ),
                   _path << " is neither a regulare file nor a system link.\n" )
       std::ifstream file( _path.string().c_str(), std::ifstream::in );
       std::string line;
@@ -147,7 +147,7 @@ namespace LaDa
         if( cluster.size() == 2 ) continue;
         if( not _genes.empty() )
         {
-          __DOASSERT( i >= _genes.size(), "Gene size and jtypes are inconsistent.\n" )
+          LADA_DO_NASSERT( i >= _genes.size(), "Gene size and jtypes are inconsistent.\n" )
           if( _genes[i] == '0' ) { ++i; continue; }
         }
         ++i;
@@ -157,15 +157,15 @@ namespace LaDa
         add_equivalent_clusters( _lat, _out.back() );
       }
       if( not _genes.empty() )
-        __DOASSERT( i != _genes.size(), "Gene size and jtypes are inconsistent.\n" )
+        LADA_DO_NASSERT( i != _genes.size(), "Gene size and jtypes are inconsistent.\n" )
 
-      __DEBUGTRYEND(,"Could not read clusters from input.\n" )
+      LADA_DEBUG_TRY_END(,"Could not read clusters from input.\n" )
     }
     bool read_cluster( const Crystal::Lattice &_lat, 
                        std::istream & _sstr,
                        Cluster &_out )
     {
-      __DEBUGTRYBEGIN
+      LADA_DEBUG_TRY_BEGIN
       std::string line;
       // bypass comments until a name is found.
       const boost::regex comment("^(\\s+)?#");
@@ -195,7 +195,7 @@ namespace LaDa
       { // should contain the order and the multiplicity.
         std::istringstream sstr( line ); 
         sstr >> order >> multiplicity;
-        __DOASSERT( sstr.bad(), "Error while reading figure.\n" );
+        LADA_DO_NASSERT( sstr.bad(), "Error while reading figure.\n" );
       }
 
       // creates cluster.
@@ -207,9 +207,9 @@ namespace LaDa
           while(     boost::regex_search( line, what, comment )
                  and ( not _sstr.eof() ) )
             std::getline( _sstr, line ); 
-          __DOASSERT( _sstr.eof(), "Unexpected end of file.\n" )
+          LADA_DO_NASSERT( _sstr.eof(), "Unexpected end of file.\n" )
         }
-        __DOASSERT( _sstr.eof(),    "Unexpected end-of-file.\n" )
+        LADA_DO_NASSERT( _sstr.eof(),    "Unexpected end-of-file.\n" )
         std::istringstream sstr(line);
         types::t_real x, y, z;
         sstr >> x >> y >> z;
@@ -217,7 +217,7 @@ namespace LaDa
       }
       _out = cluster;
       return true;
-      __DEBUGTRYEND(,"Could not read clusters from input.\n" )
+      LADA_DEBUG_TRY_END(,"Could not read clusters from input.\n" )
     }
 
     void  add_equivalent_clusters( const Crystal::Lattice &_lat, 

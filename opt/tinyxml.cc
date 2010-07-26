@@ -8,7 +8,7 @@
 #include<boost/filesystem/operations.hpp>
 #include<boost/bind.hpp>
 #include<boost/ref.hpp>
-#ifdef _MPI
+#ifdef LADA_MPI
 # include<boost/mpi/collectives.hpp>
 #endif
 
@@ -108,8 +108,8 @@ namespace LaDa
       __ROOTCODE
       ( 
         world, 
-         __DOASSERT( not bfs::exists( _input ), _input << " does not exist.\n" )
-         __DOASSERT( not ( bfs::is_regular( _input ) or bfs::is_symlink( _input ) ),
+         LADA_DO_NASSERT( not bfs::exists( _input ), _input << " does not exist.\n" )
+         LADA_DO_NASSERT( not ( bfs::is_regular( _input ) or bfs::is_symlink( _input ) ),
                      _input << " is a not a valid file.\n" );
         
          std::ifstream file( _input.string().c_str(), std::ios_base::in );
@@ -128,7 +128,7 @@ namespace LaDa
         world, 
         TiXmlDocument doc( _input.string() ); 
         TiXmlHandle docHandle( &doc ); 
-        __DOASSERT( not doc.LoadFile(), 
+        LADA_DO_NASSERT( not doc.LoadFile(), 
                        doc.ErrorDesc() << "\n" 
                     << "Could not load input file " << _input << ".\n" )
         std::ostringstream stream;

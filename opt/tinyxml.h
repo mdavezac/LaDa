@@ -71,13 +71,13 @@ namespace LaDa
         //! Dereference.
         const value_type operator*() const
         { 
-          __ASSERT( not ( node_ or att_ ), "iterator points to nothing." )
+          LADA_NASSERT( not ( node_ or att_ ), "iterator points to nothing." )
           return value_type( att_->Name(), att_->Value() );
         }
         //! Dereference.
         const value_type* operator->() const
         { 
-          __ASSERT( not ( node_ or att_ ), "iterator points to nothing." )
+          LADA_NASSERT( not ( node_ or att_ ), "iterator points to nothing." )
           buffer.first = att_->Name(); 
           buffer.second = att_->Value(); 
           return &buffer;
@@ -86,14 +86,14 @@ namespace LaDa
         //! Pre-increment.
         const_AttributeIterator operator++() 
         { 
-          __ASSERT( not ( node_ or att_ ), "iterator points to nothing." )
+          LADA_NASSERT( not ( node_ or att_ ), "iterator points to nothing." )
           att_ = att_->Next();
           return *this;
         }
         //! Post-increment.
         const_AttributeIterator operator++( int ) 
         { 
-          __ASSERT( not ( node_ or att_ ), "iterator points to nothing." )
+          LADA_NASSERT( not ( node_ or att_ ), "iterator points to nothing." )
           const_AttributeIterator old( *this );
           att_ = att_->Next();
           return old;
@@ -145,7 +145,7 @@ namespace LaDa
 //                           const std::string& _name  )
 //     {
 //       const TiXmlElement* node = find_functional_node( _node, _name );
-//       __DOASSERT( not node, "Could not read functional " + _name + " from input.\n" )
+//       LADA_DO_NASSERT( not node, "Could not read functional " + _name + " from input.\n" )
 //       if( node->Attribute("filename") )
 //         read_functional( _functional,
 //                          boost::filesystem::path
@@ -164,7 +164,7 @@ namespace LaDa
 //       TiXmlHandle docHandle( &doc ); 
 //       read_xmlfile( _path, doc );
 //       const TiXmlElement* child = docHandle.FirstChild( "Job" ).Element();
-//       __DOASSERT( not child, "Could not find root node \"Job\".\n" )
+//       LADA_DO_NASSERT( not child, "Could not find root node \"Job\".\n" )
 //       read_functional( _functional, *child, _name );
 //     }
 
@@ -186,7 +186,7 @@ namespace LaDa
             ) 
           + "/>"
         );
-        __DOASSERT( not node, "Could not read tag " + tagname + " from input.\n" )
+        LADA_DO_NASSERT( not node, "Could not read tag " + tagname + " from input.\n" )
         if( node->Attribute("filename") )
         {
           read_tag( _object,
@@ -210,7 +210,7 @@ namespace LaDa
         TiXmlHandle docHandle( &doc ); 
         read_xmlfile( _path, doc );
         const TiXmlElement* child = docHandle.FirstChild( "Job" ).Element();
-        __DOASSERT( not child, "Could not find root node \"Job\".\n" )
+        LADA_DO_NASSERT( not child, "Could not find root node \"Job\".\n" )
         read_tag( _object, *child, _name, _attribute, _value );
       }
   }

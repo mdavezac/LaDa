@@ -14,7 +14,7 @@ namespace LaDa
     namespace detailsCE
     {
       template< class T_HARMONIC >
-        class Functional : public CE::Builder<T_HARMONIC> __MPICODE( __COMMA__ public MPI_COMMDEC ) 
+        class Functional : public CE::Builder<T_HARMONIC> __MPICODE( LADA_COMMA public MPI_COMMDEC ) 
         {
           public:
             using CE::Builder<T_HARMONIC>::add_equivalent_clusters;
@@ -226,7 +226,7 @@ namespace LaDa
         return call<T_HARMONIC, WHICH>( _functional, str ); 
       }
 
-#     ifndef _MPI
+#     ifndef LADA_MPI
         template<class T_HARMONIC>
           void set_mpi( Functional<T_HARMONIC> const &, boost::python::object const & ) {}
 #     endif
@@ -238,7 +238,7 @@ namespace LaDa
           typedef Functional<T_HARMONIC> t_Builder;
           bp::class_< t_Builder >( _name.c_str(), _docstring.c_str() )
             .def( bp::init<const t_Builder&>() )
-#           ifdef _MPI
+#           ifdef LADA_MPI
               .def( "set_mpi", &Functional<T_HARMONIC>::set_mpi )
 #           else
               .def( "set_mpi", &set_mpi<T_HARMONIC> )

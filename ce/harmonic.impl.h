@@ -55,17 +55,17 @@ namespace LaDa
             if( str.compare( t_Derived::type ) ) return false;
           }
                   
-          __DOASSERT( not _element.Attribute("rank", &i),
+          LADA_DO_NASSERT( not _element.Attribute("rank", &i),
                       "Harmonic has no rank on input.\n" )
-          __DOASSERT( i < 0 or i > t_Derived::maxrank,
+          LADA_DO_NASSERT( i < 0 or i > t_Derived::maxrank,
                       "rank of harmonic is out of range on input.\n" )
 
           rank = types::t_unsigned(abs(i));
           child = _element.FirstChildElement( "Point" );
           clear(); // clear interpolation
-          __DOASSERT( not child, "No interpolation points found for harmonic on input.\n" )
+          LADA_DO_NASSERT( not child, "No interpolation points found for harmonic on input.\n" )
           for ( ; child; child = child->NextSiblingElement( "Point" ) )
-            __DOASSERT( not interpolation.Load( *child ),
+            LADA_DO_NASSERT( not interpolation.Load( *child ),
                         "Error while loading harmonic interpolation point.\n" )
 
           return true;

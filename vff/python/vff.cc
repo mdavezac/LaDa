@@ -32,7 +32,7 @@ namespace LaDa
         return boost::shared_ptr<T>(new T( typename T::first_type(second), second )); 
       }
     template<class T> 
-#     ifndef _MPI
+#     ifndef LADA_MPI
         boost::shared_ptr<T> create_mpi(bp::object const& _object)
         { 
           try
@@ -94,7 +94,7 @@ namespace LaDa
         }
         return create_docnhand<T>(doc, docHandle);
       }
-#     ifndef _MPI
+#     ifndef LADA_MPI
       template<class T>
         boost::shared_ptr<T> create_inputmpi(std::string const& _f, bp::object const&) 
           { return create_input(_f); }
@@ -279,7 +279,7 @@ namespace LaDa
         }
       };
 
-#   ifdef _MPI
+#   ifdef LADA_MPI
       template<class T> boost::mpi::communicator const &
          get_mpi(T const &_self) { return _self.first.comm(); }
       template<class T> void set_mpi(T &_self, boost::mpi::communicator * _c)
@@ -328,7 +328,7 @@ namespace LaDa
          "structure.L{energy<crystal.Structure.energy>}.\n"
        )
        .def("set_minimizer", &set_minimizer<T>)
-#      ifdef _MPI
+#      ifdef LADA_MPI
          .add_property
          (
            "comm", 

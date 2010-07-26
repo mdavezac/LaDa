@@ -24,7 +24,7 @@
 #error not using TIXML_USE_STL
 #endif
 
-#ifdef _MPI
+#ifdef LADA_MPI
 #include <boost/mpi/environment.hpp>
 #endif
 
@@ -43,7 +43,7 @@ typedef LaDa::CE::Builder<t_Harmonic> t_Builder;
 int main(int argc, char *argv[]) 
 {
   namespace fs = boost::filesystem;
-  __TRYBEGIN
+  LADA_TRY_BEGIN
   __MPI_START__
 
   __BPO_START__
@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
   __BPO_HELP_N_VERSION__;
 
   fs::path filename( vm["input"].as< std::string >() );
-  __DOASSERT(    ( not fs::exists( filename ) )
+  LADA_DO_NASSERT(    ( not fs::exists( filename ) )
               or ( not ( fs::is_symlink(filename) or fs::is_regular(filename) ) ),
               filename << " does not exist.\n" )
 
@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
   __MPICODE( std::string input; )
   __ROOTCODE( (*world),
     TiXmlDocument doc( filename.string() );
-    __DOASSERT( not doc.LoadFile(), 
+    LADA_DO_NASSERT( not doc.LoadFile(), 
                   "error while opening input file "
                << filename << "\n" << doc.ErrorDesc()  )
     __MPICODE( 
@@ -91,15 +91,15 @@ int main(int argc, char *argv[])
  
   // loads lattice
   child = handle.FirstChild( "Job" ).FirstChild( "Lattice" ).Element();
-  __DOASSERT( not child, "Could not find Lattice in input." )
-  __DOASSERT( not lattice.Load(*child), "Error while reading Lattice from input.")
+  LADA_DO_NASSERT( not child, "Could not find Lattice in input." )
+  LADA_DO_NASSERT( not lattice.Load(*child), "Error while reading Lattice from input.")
  
   // loads lamarck functional
   child = handle.FirstChild( "Job" ).Element();
-  __DOASSERT( not child, "Could not find Functional in input." )
+  LADA_DO_NASSERT( not child, "Could not find Functional in input." )
 
   t_Builder ce;
-  __DOASSERT( not ce.Load(*child), "Error while reading Functional from input." )
+  LADA_DO_NASSERT( not ce.Load(*child), "Error while reading Functional from input." )
   ce.add_equivalent_clusters();
  
   __MPIROOT( (*world), OUTPUT << "Nb procs: " << world->size() << ENDLINE; )
@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
   {
     LaDa::Crystal::Structure structure;
     LaDa::Crystal :: Structure :: lattice = &lattice;
-    __DOASSERT( not structure.Load(*child), "Error while reading Structure from input." )
+    LADA_DO_NASSERT( not structure.Load(*child), "Error while reading Structure from input." )
  
     t_Builder::t_VA_Functional functional;
     ce.generate_functional(structure, &functional);

@@ -155,7 +155,7 @@ namespace LaDa
 
           return collapse->evaluate( _solution, targets );
         }
-        __CATCHCODE(, "Error encountered in Alternating-least square fit.\n" )
+        LADA_CATCHCODE(, "Error encountered in Alternating-least square fit.\n" )
       }
 
       template< class T_SOLVER > 
@@ -165,7 +165,7 @@ namespace LaDa
           const TiXmlElement *parent = &_node;
           if( name.compare( "Allsq" ) ) 
            parent = _node.FirstChildElement( "Allsq" );
-          __DOASSERT( not parent, "Could not find Allsq tag in input.\n" )
+          LADA_DO_NASSERT( not parent, "Could not find Allsq tag in input.\n" )
           if( parent->Attribute( "tolerance" ) )
             parent->Attribute( "tolerance", &tolerance );
           if( parent->Attribute( "itermax" ) )

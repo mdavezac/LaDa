@@ -142,8 +142,8 @@ namespace LaDa
     template< class T_TUPLE >
       void AtomicFunctional :: set_bond( size_t _kind, const T_TUPLE& _tuple )
       {
-        __ASSERT( _kind >= lengths.size(), "Index out-of-range.\n" )
-        __ASSERT( 5*_kind + 4 >= alphas.size(), "Index out-of-range.\n" )
+        LADA_NASSERT( _kind >= lengths.size(), "Index out-of-range.\n" )
+        LADA_NASSERT( 5*_kind + 4 >= alphas.size(), "Index out-of-range.\n" )
         switch( boost::tuples::length<T_TUPLE>::value )
         {
           case 6: alphas[5*_kind+4] = boost::tuples::get<5>( _tuple );
@@ -158,9 +158,9 @@ namespace LaDa
     template< class T_TUPLE >
       void AtomicFunctional :: set_angle( size_t _kind, const T_TUPLE& _tuple )
       {
-        __ASSERT( _kind >= gammas.size(), "Index out-of-range.\n" )
-        __ASSERT( _kind >= sigmas.size(), "Index out-of-range.\n" )
-        __ASSERT( 5*_kind + 4 >= betas.size(), "Index out-of-range.\n" )
+        LADA_NASSERT( _kind >= gammas.size(), "Index out-of-range.\n" )
+        LADA_NASSERT( _kind >= sigmas.size(), "Index out-of-range.\n" )
+        LADA_NASSERT( 5*_kind + 4 >= betas.size(), "Index out-of-range.\n" )
         switch( boost::tuples::length<T_TUPLE>::value )
         {
           case 7: betas[5*_kind+4] = boost::tuples::get<6>( _tuple );

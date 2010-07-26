@@ -67,7 +67,7 @@ namespace LaDa
       {
         gsl_multifit_fdfsolver *solver = NULL;
 
-        __DEBUGTRYBEGIN
+        LADA_DEBUG_TRY_BEGIN
         if( verbose )
           std::cout << " Starting Gsl Non-linear least-square fit.\n";
 
@@ -112,7 +112,7 @@ namespace LaDa
         gsl_multifit_fdfsolver_free (solver);
         return result;
 
-        __DEBUGTRYEND
+        LADA_DEBUG_TRY_END
         ( 
           if( solver) gsl_multifit_fdfsolver_free (solver);,
           "Error encountered while solving non-linear"

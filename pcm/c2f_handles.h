@@ -42,23 +42,23 @@ namespace LaDa
         //! Erases a handle/object.
         void erase( size_t _index )
         { 
-          __DOASSERT( exists().size() <= _index, "Index out of range.\n" )
-          __DOASSERT( not exists()[_index], "Handle is invalid.\n" )
+          LADA_DO_NASSERT( exists().size() <= _index, "Index out of range.\n" )
+          LADA_DO_NASSERT( not exists()[_index], "Handle is invalid.\n" )
           objects().erase( handles()[_index] );
           exists()[_index] = false;
         }
         //! Returns an object.
         t_Object& operator[]( size_t _index )
         {
-          __DOASSERT( exists().size() <= _index, "Index out of range.\n" )
-          __DOASSERT( not exists()[_index], "Handle is invalid.\n" )
+          LADA_DO_NASSERT( exists().size() <= _index, "Index out of range.\n" )
+          LADA_DO_NASSERT( not exists()[_index], "Handle is invalid.\n" )
           return *( handles()[_index] );
         }
         //! Returns an object.
         const t_Object& operator[]( size_t _index ) const
         {
-          __DOASSERT( exists().size() <= _index, "Index out of range.\n" )
-          __DOASSERT( not exists()[_index], "Handle is invalid.\n" )
+          LADA_DO_NASSERT( exists().size() <= _index, "Index out of range.\n" )
+          LADA_DO_NASSERT( not exists()[_index], "Handle is invalid.\n" )
           return *( chandles()[_index] );
         }
       protected:

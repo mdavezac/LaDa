@@ -36,7 +36,7 @@ namespace LaDa
                          const boost::filesystem::path &_path,
                          bool _check_lattice)
     {
-      __TRYBEGIN
+      LADA_TRY_BEGIN
       math::rMatrix3d inv_cell;
       if( _check_lattice and (not _struct.lattice) )
       {
@@ -46,8 +46,8 @@ namespace LaDa
       if( _check_lattice ) inv_cell = _struct.lattice->cell.inverse();
 
       namespace fs = boost::filesystem;  
-      __DOASSERT( not fs::exists( _path ), "Path " << _path << " does not exits.\n" )
-      __DOASSERT( not( fs::is_regular( _path ) or fs::is_symlink( _path ) ),
+      LADA_DO_NASSERT( not fs::exists( _path ), "Path " << _path << " does not exits.\n" )
+      LADA_DO_NASSERT( not( fs::is_regular( _path ) or fs::is_symlink( _path ) ),
                   _path << " is neither a regulare file nor a system link.\n" )
       std::ifstream file( _path.string().c_str(), std::ifstream::in );
       std::string line;
@@ -62,7 +62,7 @@ namespace LaDa
       // cell 
       for(size_t i(0); i < 3; ++i )
       {
-        __ASSERT( file.eof(),
+        LADA_NASSERT( file.eof(),
                   "Reached unexpected end of file: " << _path << ".\n" )
         std::getline( file, line );
         sstr.str( line ); sstr.seekg (0, std::ios::beg); sstr.clear();
@@ -78,7 +78,7 @@ namespace LaDa
       types::t_int nfound(0);
       while( nfound < N and file.good() )
       {
-        __ASSERT( file.eof(),
+        LADA_NASSERT( file.eof(),
                   "Reached unexpected end of file: " << _path << ".\n" )
         std::getline( file, line );
         sstr.str( line ); sstr.seekg (0, std::ios::beg); sstr.clear();
@@ -95,22 +95,22 @@ namespace LaDa
           LADA_DOASSERT(math::is_integer(inv_cell * a.pos), "Atomic position is not on lattice.")
         _struct.atoms.push_back(a);
       }
-      __ASSERT( nfound != N,    "Could find only " << nfound << " of " 
+      LADA_NASSERT( nfound != N,    "Could find only " << nfound << " of " 
                              << N << " atoms in " << _path << ".\n" )
         
-      __TRYEND(, "Error while reading " << _path << "\n" )
+      LADA_TRY_END(, "Error while reading " << _path << "\n" )
     }
 
     void read_ce_structures( const boost::filesystem::path &_dir,
                              std::vector<Crystal::Structure> &_structures )
     {
-      __TRYBEGIN
+      LADA_TRY_BEGIN
       namespace fs = boost::filesystem;
       namespace bsc = boost::spirit::classic;
 
       // First finds directory of LDAs.dat.
-      __DOASSERT( not fs::exists( _dir ), _dir << " does not exist.\n" );
-      __DOASSERT( not ( fs::is_regular( _dir ) or fs::is_symlink( _dir ) ),
+      LADA_DO_NASSERT( not fs::exists( _dir ), _dir << " does not exist.\n" );
+      LADA_DO_NASSERT( not ( fs::is_regular( _dir ) or fs::is_symlink( _dir ) ),
                   _dir << " is a not a valid file.\n" );
       fs::path dir( _dir.branch_path()  );
 
@@ -137,13 +137,13 @@ namespace LaDa
         _structures.push_back(structure);
       }
 
-      __TRYEND(,"Error while parsing " << _dir << " and structures.\n" )
+      LADA_TRY_END(,"Error while parsing " << _dir << " and structures.\n" )
     }
 
     bool read_pifile_structure( std::istream &_sstr,
                                 Crystal::Structure &_structure )
     {
-      __DEBUGTRYBEGIN
+      LADA_DEBUG_TRY_BEGIN
       LADA_ASSERT(_structure.lattice, "Lattice not set.") 
 #     ifdef LADA_DEBUG
         math::rMatrix3d const inv_cell(!_structure.lattice->cell);
@@ -164,22 +164,22 @@ namespace LaDa
       t_Tokenizer::const_iterator i_tok = notoken.begin();
       t_Tokenizer::const_iterator i_tok_end = notoken.end();
       // read name.
-      __DOASSERT( (++i_tok) == i_tok_end, "Unexpected end-of-line.\n" )
+      LADA_DO_NASSERT( (++i_tok) == i_tok_end, "Unexpected end-of-line.\n" )
       _structure.name = *i_tok;
       // read size.
-      __DOASSERT( (++i_tok) == i_tok_end, "Unexpected end-of-line.\n" )
-      __DOASSERT( (++i_tok) == i_tok_end, "Unexpected end-of-line.\n" )
+      LADA_DO_NASSERT( (++i_tok) == i_tok_end, "Unexpected end-of-line.\n" )
+      LADA_DO_NASSERT( (++i_tok) == i_tok_end, "Unexpected end-of-line.\n" )
       const size_t N( boost::lexical_cast<size_t>( *i_tok ) );
       // read decoration.
-      __DOASSERT( (++i_tok) == i_tok_end, "Unexpected end-of-line.\n" )
+      LADA_DO_NASSERT( (++i_tok) == i_tok_end, "Unexpected end-of-line.\n" )
       const types::t_int decoration( boost::lexical_cast<types::t_int>( *i_tok ) );
-      __DOASSERT( (++i_tok) == i_tok_end, "Unexpected end-of-line.\n" )
-      __DOASSERT( (++i_tok) == i_tok_end, "Unexpected end-of-line.\n" )
+      LADA_DO_NASSERT( (++i_tok) == i_tok_end, "Unexpected end-of-line.\n" )
+      LADA_DO_NASSERT( (++i_tok) == i_tok_end, "Unexpected end-of-line.\n" )
       // read cell.
       for( size_t i(0); i < 3; ++i )
         for( size_t j(0); j < 3; ++j, ++i_tok )
         {
-          __DOASSERT( i_tok == i_tok_end, "Unexpected end-of-line.\n" )
+          LADA_DO_NASSERT( i_tok == i_tok_end, "Unexpected end-of-line.\n" )
           _structure.cell(j,i)
             = boost::lexical_cast<types::t_real>( *i_tok ) * 0.5e0;
         }
@@ -199,14 +199,14 @@ namespace LaDa
       bool is_first = true;
       while( _structure.atoms.size() < N ) 
       {
-        __DOASSERT( _sstr.eof(), "Unexpected end-of-file.\n" )
+        LADA_DO_NASSERT( _sstr.eof(), "Unexpected end-of-file.\n" )
         t_Tokenizer basistoken(line, sep);
         i_tok = basistoken.begin();
         i_tok_end = basistoken.end();
         if( is_first ) 
         {
           is_first = false;
-          __DOASSERT( (++i_tok) == i_tok_end, "Unexpected end-of-line.\n" )
+          LADA_DO_NASSERT( (++i_tok) == i_tok_end, "Unexpected end-of-line.\n" )
         }
         Crystal::Structure :: t_Atom atom;
         atom.site = 0;
@@ -215,7 +215,7 @@ namespace LaDa
           atom.type = ( decoration >> _structure.atoms.size() ) % 2 ? -1e0: 1e0;
           for( size_t i(0); i < 3; ++i, ++i_tok )
           {
-            __DOASSERT( i_tok == i_tok_end, "Unexpected end-of-line.\n" )
+            LADA_DO_NASSERT( i_tok == i_tok_end, "Unexpected end-of-line.\n" )
             atom.pos(i) = boost::lexical_cast<Crystal::Structure::t_Atom::t_Type> 
                                              ( *i_tok ) * 0.5e0;
           }
@@ -225,13 +225,13 @@ namespace LaDa
         }
         std::getline( _sstr, line );
       }
-      __DOASSERT( _structure.atoms.size() != N, "Read too many atoms...\n" )
+      LADA_DO_NASSERT( _structure.atoms.size() != N, "Read too many atoms...\n" )
 
       _structure.scale = 1e0;
       _structure.k_vecs.clear();
       _structure.find_k_vectors();
       return true;
-      __DEBUGTRYEND(, "Error while reading from pifile.\n" )
+      LADA_DEBUG_TRY_END(, "Error while reading from pifile.\n" )
     }
   } // namespace Crystal
 

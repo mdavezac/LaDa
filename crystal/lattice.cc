@@ -29,7 +29,7 @@ namespace LaDa
       if ( str.compare("Lattice" ) != 0 )
         parent = _element.FirstChildElement("Lattice");
       else parent = &_element;
-      __DOASSERT( not parent, "Could not find lattice tag on input.\n" )
+      LADA_DO_NASSERT( not parent, "Could not find lattice tag on input.\n" )
 
       if( parent->Attribute("name") ) name = parent->Attribute("name");
 
@@ -52,7 +52,7 @@ namespace LaDa
 
       // then read sites
       child = parent->FirstChildElement("site" );
-      __DOASSERT( not child, "Could not find site tag in lattice input.\n" )
+      LADA_DO_NASSERT( not child, "Could not find site tag in lattice input.\n" )
       for (types::t_int i=0 ; child; i++, child = child->NextSiblingElement("site") )
       {
         t_Site site;
@@ -109,7 +109,7 @@ namespace LaDa
         if ( math::are_periodic_images(_at, i_site->pos, inv_cell) ) 
           return i_site - sites.begin();
 
-      __THROW_ERROR("Could not find atomic site index!! " << _at << "\n" )
+      LADA_THROW_ERROR("Could not find atomic site index!! " << _at << "\n" )
     }
 
     // returns  -1 on error
@@ -127,7 +127,7 @@ namespace LaDa
             return i_site - sites.begin();
       }
 
-      __THROW_ERROR( "Could not find atomic site index!! " << _at << "\n" ) 
+      LADA_THROW_ERROR( "Could not find atomic site index!! " << _at << "\n" ) 
     }
 
     types::t_int Lattice :: get_atom_type_index( const Crystal :: Atom &_at ) const
@@ -143,7 +143,7 @@ namespace LaDa
           return convert_real_to_type_index( _at.type );
         }
 
-      __THROW_ERROR("Could not find atomic site index!! " << _at << "\n" )
+      LADA_THROW_ERROR("Could not find atomic site index!! " << _at << "\n" )
     }
 
    
@@ -161,19 +161,19 @@ namespace LaDa
             return i_type - i_site->type.begin();
       }
 
-      __THROW_ERROR("Could not find atomic site index!! " << _at << "\n" )
+      LADA_THROW_ERROR("Could not find atomic site index!! " << _at << "\n" )
     }
     
     types::t_int Lattice :: get_atom_type_index( const std::string &_at, types::t_unsigned _i ) const
     {
-      __ASSERT( _i >= sites.size(), "Index out of range.\n" )
+      LADA_NASSERT( _i >= sites.size(), "Index out of range.\n" )
       const t_Site& site = sites[_i];
 
       const t_Site :: t_Type :: const_iterator i_first( site.type.begin() );
       const t_Site :: t_Type :: const_iterator i_last( site.type.end() );
       const t_Site :: t_Type :: const_iterator i_type
         = std::find( i_first, i_last, _at );
-      __DOASSERT( i_type == i_last, "Could not find atomic specie " << _at << "\n" )
+      LADA_DO_NASSERT( i_type == i_last, "Could not find atomic specie " << _at << "\n" )
 
       return i_type - i_first;
     }
@@ -187,13 +187,15 @@ namespace LaDa
       _out.type = 0;
 
       types::t_int site;
-      __TRYDEBUGCODE( site = (_in.site > -1 ) ? _in.site : get_atom_site_index( _in.pos );,
+#     ifdef LADA_DEBUG
+       LADA_TRY_CODE( site = (_in.site > -1 ) ? _in.site : get_atom_site_index( _in.pos );,
                       "Caught error while converting numerical to string atom\n" )
+#     endif
       if( site < 0 ) return false;
       _out.site = site;
       if ( sites[site].type.size() == 1 )
         { _out.type = convert_type_index_to_real(0); return true; }
-      __ASSERT( sites[site].type.size() > 2,
+      LADA_NASSERT( sites[site].type.size() > 2,
                    "More than two types at site " << sites[site].pos
                 << "\nConversion should not work\n"; )
 
@@ -222,12 +224,14 @@ namespace LaDa
       _out.site = _in.site;
 
       types::t_int site;
-      __TRYDEBUGCODE( site = (_in.site > -1 ) ? _in.site : get_atom_site_index( _in.pos );,
-                      "Caught error while converting numerical to string atom\n" )
+#     ifdef LADA_DEBUG
+        LADA_TRY_CODE( site = (_in.site > -1 ) ? _in.site : get_atom_site_index( _in.pos );,
+                       "Caught error while converting numerical to string atom\n" )
+#     endif
       if( site < 0 ) return false;
       if ( sites[site].type.size() == 1 )
         { _out.type = sites[site].type[0]; return true; }
-      __ASSERT( sites[site].type.size() > 2,
+      LADA_NASSERT( sites[site].type.size() > 2,
                    "More than two types at site " << sites[site].pos
                 << "\nConversion should not work\n"; )
 
@@ -279,27 +283,27 @@ namespace LaDa
         boost::filesystem::path filepath( _fpath );
         if( not boost::filesystem::exists( filepath ) )
           filepath = _dpath / _fpath;
-        __DOASSERT( not boost::filesystem::exists( filepath ), 
+        LADA_DO_NASSERT( not boost::filesystem::exists( filepath ), 
                        "Could not find "<< _fpath 
                     << " in current directory, nor in " <<  _dpath )
         return read_lattice( filepath );
       }
     boost::shared_ptr< Crystal::Lattice > read_lattice( const boost::filesystem::path& _path )
     {
-      __TRYBEGIN
+      LADA_TRY_BEGIN
         std::string input_filestream;
         opt::read_xmlfile( _path, input_filestream );
         return read_lattice( input_filestream );
-      __TRYEND(, "Could not read lattice from input.\n" )
+      LADA_TRY_END(, "Could not read lattice from input.\n" )
     }
 
     boost::shared_ptr< Crystal::Lattice > read_lattice( const TiXmlElement& _node )
     {
-      __TRYBEGIN
+      LADA_TRY_BEGIN
         boost::shared_ptr< Crystal::Lattice > lattice( new Lattice );
         opt::read_tag( *lattice, _node, "Lattice" );
         return lattice;
-      __TRYEND(,"Could not real lattice from input.\n" )
+      LADA_TRY_END(,"Could not real lattice from input.\n" )
     }
 
 

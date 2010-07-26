@@ -4,7 +4,6 @@
 #include <functional>
 
 #include <math/smith_normal_form.h>
-#include <crystal/ideal_lattice.h>
 #include <crystal/divide_and_conquer.h>
 
 #include "vff.h"
@@ -16,9 +15,9 @@ namespace LaDa
     bool Vff :: build_tree_smith_(const t_FirstNeighbors& _fn)
     {
       namespace bt = boost::tuples;
-      __TRYBEGIN
-      __DOASSERT( structure.lattice == NULL, "Lattice not set.\n" )
-      __DOASSERT( structure.lattice->sites.size() != 2,
+      LADA_TRY_BEGIN
+      LADA_DO_NASSERT( structure.lattice == NULL, "Lattice not set.\n" )
+      LADA_DO_NASSERT( structure.lattice->sites.size() != 2,
                   "Lattice should contain 2 different sites.\n" )
       const size_t Nsites( structure.lattice->sites.size() );
       const size_t Natoms( structure.atoms.size() );
@@ -46,8 +45,8 @@ namespace LaDa
         foreach( const Crystal::Structure::t_Atom &atom, structure.atoms )
         {
           math::iVector3d sindex;
-          __ASSERT( atom.site < 0, "site indexing is incorrect.\n" );
-          __ASSERT( atom.site > structure.lattice->sites.size(),
+          LADA_NASSERT( atom.site < 0, "site indexing is incorrect.\n" );
+          LADA_NASSERT( atom.site > structure.lattice->sites.size(),
                     "site indexing is incorrect.\n" );
           const unsigned site( atom.site );
           smith_index_
@@ -118,7 +117,7 @@ namespace LaDa
           );
           const types::t_int
             cindex( indices[neighbor_site][sindex(0)][sindex(1)][sindex(2)] );
-          __DOASSERT( cindex == Natoms, "Index corresponds to no site.\n" )
+          LADA_DO_NASSERT( cindex == Natoms, "Index corresponds to no site.\n" )
           // now creates branch in tree.
           t_Centers :: iterator i_bond( centers.begin() + cindex );
           i_center->bonds.push_back( t_Center::__make__iterator__( i_bond ) );
@@ -141,7 +140,7 @@ namespace LaDa
           i_center->do_translates.push_back( not math::is_zero(frac.squaredNorm()) );
         }
       }
-      __ENDGROUP__
+      LADA_ENDGROUP
       catch( ... )
       {
         std::cerr << "Could not build tree.\n";
@@ -164,7 +163,7 @@ namespace LaDa
       );
       for( size_t i(0); i < 3; ++i )
       {
-        __DOASSERT
+        LADA_DO_NASSERT
         (
           std::abs( pos(i) - types::t_real( int_pos(i) ) ) > 0.5, 
           "Structure is not ideal.\n"
@@ -188,7 +187,7 @@ namespace LaDa
           for( size_t j(0); j < 3; ++j )
           {
             int_cell(i,j) = types::t_int( rint( inv_lat_cell(i,j) ) ); 
-            __ASSERT
+            LADA_NASSERT
             ( 
               std::abs( types::t_real( int_cell(i,j) ) - inv_lat_cell(i,j) ) > 0.01,
                  "Input structure is not supercell of the lattice: \n" 
@@ -204,7 +203,7 @@ namespace LaDa
         }
         bt::get<0>( result ) = bt::get<0>( result ) * ( !_lat_cell );
 
-        __ASSERT
+        LADA_NASSERT
         ( 
          2 * bt::get<1>(result)(0) 
            * bt::get<1>(result)(1) 

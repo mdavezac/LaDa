@@ -13,7 +13,7 @@ namespace LaDa
                                    BaseFit::t_Vector &_x, 
                                    const T_SOLVER &_solver ) 
         {
-          __DEBUGTRYBEGIN
+          LADA_DEBUG_TRY_BEGIN
           BaseFit::t_Matrix A( _class.nb_cls, _class.nb_cls );
           BaseFit::t_Vector b( _class.nb_cls );
           std::fill( b.begin(), b.end(), 0e0 );
@@ -24,36 +24,36 @@ namespace LaDa
           // computes square errors.
           opt::ErrorTuple result = _class.check_training( _x, _class.verbose );
           return result;
-          __DEBUGTRYEND(, "Error in CE::details::operator_().\n" )
+          LADA_DEBUG_TRY_END(, "Error in CE::details::operator_().\n" )
         }
       template< class T_CLASS, class T_MATRIX, class T_VECTOR >
         void construct_( const T_CLASS &_class, T_MATRIX &_A, T_VECTOR &_b ) 
         {
-          __DEBUGTRYBEGIN
-          __ASSERT( _A.size1() != _class.nb_cls,
+          LADA_DEBUG_TRY_BEGIN
+          LADA_NASSERT( _A.size1() != _class.nb_cls,
                        "Inconsistent sizes: " << _A.size1()
                     << " != " << _class.nb_cls << "\n" )
-          __ASSERT( _A.size2() != _class.nb_cls, 
+          LADA_NASSERT( _A.size2() != _class.nb_cls, 
                        "Inconsistent sizes: " << _A.size2()
                     << " != " << _class.nb_cls << "\n" )
-          __ASSERT( _b.size() != _class.nb_cls,
+          LADA_NASSERT( _b.size() != _class.nb_cls,
                        "Inconsistent sizes: " << _b.size()
                     << " != " << _class.nb_cls << "\n" )
           _class.create_A_n_b( _A, _b );
           _class.other_A_n_b( _A, _b );
-          __DEBUGTRYEND(, "Error in CE::details::construct_().\n" )
+          LADA_DEBUG_TRY_END(, "Error in CE::details::construct_().\n" )
         }
     }
 
     template<class T_POLICY> template< class T_MATRIX, class T_VECTOR>
     void Fit<T_POLICY> :: create_A_n_b( T_MATRIX &_A, T_VECTOR &_b ) const
     {
-      __DEBUGTRYBEGIN
+      LADA_DEBUG_TRY_BEGIN
       namespace bl = boost::lambda;
       namespace bblas = boost::numeric::ublas;
-      __ASSERT( pis.size() != structures().size(),
+      LADA_NASSERT( pis.size() != structures().size(),
                 "Inconsistent number of structures and pis.\n" )
-      __ASSERT( structures().size() != weights().size(),
+      LADA_NASSERT( structures().size() != weights().size(),
                 "Inconsistent number of structures and weights.\n" )
 
       // loop over targets.
@@ -69,7 +69,7 @@ namespace LaDa
         _A += (*i_w) * bblas::outer_prod( *i_pis, *i_pis );
         _b += (*i_w) * i_target->energy * (*i_pis);
       } // end of loop over betas.
-      __DEBUGTRYEND(, "Error in Fit::create_A_n_b.\n" )
+      LADA_DEBUG_TRY_END(, "Error in Fit::create_A_n_b.\n" )
     } 
 
 
@@ -89,12 +89,12 @@ namespace LaDa
       {
         t_Base :: other_A_n_b( _A, _b );
         if( not regweights  ) return;
-        __DEBUGTRYBEGIN
+        LADA_DEBUG_TRY_BEGIN
         const types::t_real *i_w = regweights;
         const types::t_real *i_w_end = regweights + nb_cls;
         for(size_t i(0); i_w != i_w_end; ++i_w, ++i )
           _A( i, i ) += (*i_w) * (*i_w);
-        __DEBUGTRYEND(, "Error in PairReg<T_POLICY>::other_A_n_b().\n" )
+        LADA_DEBUG_TRY_END(, "Error in PairReg<T_POLICY>::other_A_n_b().\n" )
       }
 
     namespace FittingPolicy
@@ -109,32 +109,32 @@ namespace LaDa
         opt::ErrorTuple Excluded<T_BASE> :: check( const BaseFit::t_Vector &_ecis,
                                                    bool _training, bool _verbose ) const
         {
-          __DEBUGTRYBEGIN
+          LADA_DEBUG_TRY_BEGIN
           opt::ErrorTuple result;
           for(types::t_int n(0); n < structures().size(); ++n)
             if( found(n) xor _training ) 
               result += t_Base::check_one( _ecis, n, _verbose );
           return result;
-          __DEBUGTRYEND(, "Error in Fit::check_all().\n" )
+          LADA_DEBUG_TRY_END(, "Error in Fit::check_all().\n" )
         }
 
       template< class T_BASE >
       opt::ErrorTuple Nothing<T_BASE> :: check_training( const BaseFit::t_Vector &_ecis,
                                                          bool _verbose )
       {
-        __DEBUGTRYBEGIN
+        LADA_DEBUG_TRY_BEGIN
         opt::ErrorTuple result;
         for(types::t_int n(0); n < structures().size(); ++n)
           result += t_Base::check_one( _ecis, n, _verbose );
         return result;
-        __DEBUGTRYEND(, "Error in Fit::check_all().\n" )
+        LADA_DEBUG_TRY_END(, "Error in Fit::check_all().\n" )
       }
 
       template< class T_BASE >
         void PairReg<T_BASE> :: init( const BaseFit::t_Clusters &_clusters )
         {
           t_Base::init( _clusters );
-          __DEBUGTRYBEGIN
+          LADA_DEBUG_TRY_BEGIN
           BaseFit::t_Clusters::const_iterator i_clusters = _clusters.begin();
           BaseFit::t_Clusters::const_iterator i_clusters_end = _clusters.end();
            
@@ -143,7 +143,7 @@ namespace LaDa
           types::t_real normalization(0);
           for(size_t i(0); i_clusters != i_clusters_end; ++i_clusters, ++i )
           {
-            __ASSERT( i_clusters->size() == 0, "No clusters in class.\n" )
+            LADA_NASSERT( i_clusters->size() == 0, "No clusters in class.\n" )
             if( i_clusters->front().size() != 2 ) continue;
     
             types::t_real D( i_clusters->size() );
@@ -162,28 +162,28 @@ namespace LaDa
           t_PairWeights :: iterator i_w = pairweights.begin();
           t_PairWeights :: iterator i_w_end = pairweights.end();
           for(; i_w != i_w_end; ++i_w ) i_w->second *= normalization;
-          __DEBUGTRYEND(, "Error in PairReg<T_POLICY>::init().\n" )
+          LADA_DEBUG_TRY_END(, "Error in PairReg<T_POLICY>::init().\n" )
         }
 
       template< class T_BASE > template< class T_MATRIX, class T_VECTOR >
         void PairReg<T_BASE> ::  other_A_n_b( T_MATRIX &_A, T_VECTOR &_b ) const 
         {
           t_Base :: other_A_n_b( _A, _b );
-          __DEBUGTRYBEGIN
+          LADA_DEBUG_TRY_BEGIN
           if( not do_pairreg ) return;
           t_PairWeights :: const_iterator i_w = pairweights.begin();
           t_PairWeights :: const_iterator i_w_end = pairweights.end();
           for(; i_w != i_w_end; ++i_w )
           {
-            __ASSERT( i_w->first >= _A.size1(),
+            LADA_NASSERT( i_w->first >= _A.size1(),
                          "Inconsistent sizes: " << i_w->first
                       << " >= " << _A.size1() << "\n" )
-            __ASSERT( i_w->first >= _A.size2(),
+            LADA_NASSERT( i_w->first >= _A.size2(),
                          "Inconsistent sizes: " << i_w->first
                       << " >= " << _A.size2() << "\n" )
             _A( i_w->first, i_w->first ) += i_w->second * i_w->second;
           }
-          __DEBUGTRYEND(, "Error in PairReg<T_POLICY>::other_A_n_b().\n" )
+          LADA_DEBUG_TRY_END(, "Error in PairReg<T_POLICY>::other_A_n_b().\n" )
         }
     } // end of namespace FittingPolicy
 
@@ -220,7 +220,7 @@ namespace LaDa
                                        const T_FIT &_fit, const T_SOLVER &_solver )
       {
         namespace bl = boost::lambda;
-        __TRYBEGIN
+        LADA_TRY_BEGIN
         BaseFit::t_Vector x( _fit.dof() );
         opt::t_ErrorPair errors;
         if( not _lmo.do_perform ) return errors;
@@ -260,7 +260,7 @@ namespace LaDa
           }
         }
         return errors;
-        __TRYEND(, "Error while performing leave-many-out.\n")
+        LADA_TRY_END(, "Error while performing leave-many-out.\n")
       }
     template< class T_FIT, class T_SOLVER >
       std::pair< opt::ErrorTuple, opt::ErrorTuple >

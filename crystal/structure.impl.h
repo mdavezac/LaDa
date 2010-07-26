@@ -125,7 +125,7 @@ namespace LaDa
           parent = _element.FirstChildElement("Structure");
         else
           parent = &_element;
-        __DOASSERT( not parent, "Could not find Structure tag in xml.\n" )
+        LADA_DO_NASSERT( not parent, "Could not find Structure tag in xml.\n" )
    
         // read PI name if available
         name = "";
@@ -141,16 +141,16 @@ namespace LaDa
    
         // reads in cell
         child = parent->FirstChildElement( "Cell" );
-        __DOASSERT( not child, "Unit-cell not found in structure input\n")
+        LADA_DO_NASSERT( not child, "Unit-cell not found in structure input\n")
         child = child->FirstChildElement( "row" );
         freeze = FREEZE_NONE;
         for (i=0 ; child and i<3; child=child->NextSiblingElement( "row" ), i++ )
         {
-          d=1.0; __DOASSERT( not child->Attribute("x", &d),
+          d=1.0; LADA_DO_NASSERT( not child->Attribute("x", &d),
                              "Incomplete cell in structure tag.\n" ); vec(0) = d;
-          d=1.0; __DOASSERT( not child->Attribute("y", &d),
+          d=1.0; LADA_DO_NASSERT( not child->Attribute("y", &d),
                              "Incomplete cell in structure tag.\n"); vec(1) = d;
-          d=1.0; __DOASSERT( not child->Attribute("z", &d),
+          d=1.0; LADA_DO_NASSERT( not child->Attribute("z", &d),
                              "Incomplete cell in structure tag.\n"); vec(2) = d;
           cell.row(i) = vec;
           if ( child->Attribute("freeze") )
@@ -193,7 +193,7 @@ namespace LaDa
             }  
           }
         }
-        __DOASSERT(i != 3, "More than three row for unit-cell in input\n")
+        LADA_DO_NASSERT(i != 3, "More than three row for unit-cell in input\n")
    
         scale = 0;
         parent->Attribute("scale", &scale);
@@ -205,7 +205,7 @@ namespace LaDa
         for (; child; child=child->NextSiblingElement( "Atom" ) )
         {
           t_Atom atom;
-          __TRYASSERT( atom.Load( *child ), "Could not read atom from input.\n" )
+          LADA_TRY_ASSERT( atom.Load( *child ), "Could not read atom from input.\n" )
           atoms.push_back(atom);
         }
    

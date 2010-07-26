@@ -22,7 +22,7 @@ namespace LaDa
                        t_ClusterClasses &_out,
                        size_t _site )
     {
-      __DEBUGTRYBEGIN
+      LADA_DEBUG_TRY_BEGIN
       typedef std::vector< std::vector<Cluster> > t_EquivClusters;
       if( _max_neigh == 0 ) return;
 
@@ -113,7 +113,7 @@ namespace LaDa
       }
       _out.resize(N);
 
-      __DEBUGTRYEND(,"Could not create pair clusters.\n" )
+      LADA_DEBUG_TRY_END(,"Could not create pair clusters.\n" )
     }
    
   } // namespace CE

@@ -88,7 +88,7 @@ namespace LaDa
           //! Copy Constructor
           Functional   ( const Functional &_c )
                             : t_Base(_c), r_vecs( _c.r_vecs), k_vecs( _c.k_vecs) 
-                              __MPICODE( __COMMA__ comm( _c.comm ) ) {}
+                              __MPICODE( LADA_COMMA comm( _c.comm ) ) {}
           //! Destructorq
           ~Functional(){};
 
@@ -122,7 +122,7 @@ namespace LaDa
             void check_derivative();
 #         endif 
 
-#         ifdef _MPI
+#         ifdef LADA_MPI
             /** \ingroup Genetic
              *  \brief Sets the communicator. **/
             void set_mpi( boost::mpi::communicator *_c ) { comm = _c; }

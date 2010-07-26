@@ -28,7 +28,7 @@ namespace LaDa
         if( value == "fast" ) strategy = 0u;
         else if( value == "slow" ) strategy = 1u;
         else if( value == "slowest" ) strategy = 2u;
-        else __THROW_ERROR( "Unknown strategy " + value + "\n" );
+        else LADA_THROW_ERROR( "Unknown strategy " + value + "\n" );
       }
       if( parent->Attribute("uncertainties") ) 
         uncertainties = boost::lexical_cast< types::t_real >( parent->Attribute("uncertainties") );

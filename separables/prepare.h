@@ -70,7 +70,7 @@ namespace LaDa
     inline void PosToConfs :: operator()( const Crystal :: Structure &_structure,
                                           t_Configurations& _confs ) const
     {
-      __ASSERT( n.second - n.first == 0 and positions.empty(), "Nothing initialized.\n" )
+      LADA_NASSERT( n.second - n.first == 0 and positions.empty(), "Nothing initialized.\n" )
       ( n.second - n.first == 0 ) ?
         posbasis( _structure, _confs ): 
         nsites( _structure, _confs );

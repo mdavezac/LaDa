@@ -134,7 +134,7 @@ namespace LaDa
           const std::set< size_t > :: const_iterator i_lb_end = lb_set.end();
           for(; i_lb != i_lb_end; ++i_lb )
           {
-            __DOASSERT( *i_lb >= result->size(), "Index out of range.\n" )
+            LADA_DO_NASSERT( *i_lb >= result->size(), "Index out of range.\n" )
             LADA_ASSERT( not (*result)[*i_lb].is_counted(index), "Already counted.\n" )
             (*result)[*i_lb].states_.push_back( t_State( index, false ) );
           }

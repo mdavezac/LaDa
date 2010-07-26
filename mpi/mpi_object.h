@@ -5,7 +5,7 @@
 
 #include "macros.h"
 
-#ifdef _MPI
+#ifdef LADA_MPI
 #include <boost/mpi/communicator.hpp>
 #include <boost/serialization/complex.hpp>
 #include <boost/type_traits/add_reference.hpp>
@@ -36,20 +36,20 @@ namespace LaDa
         //! Sets mpi pointer.
         void set_mpi( boost::mpi::communicator* _c )
         {
-          __ASSERT( _c == NULL, "Pointer not set.\n" )
+          LADA_NASSERT( _c == NULL, "Pointer not set.\n" )
           comm_ = _c;
         }
         
         //! Returns reference to communicator.
         boost::mpi::communicator &comm()
         {
-          __ASSERT( comm_ == NULL, "Pointer not set.\n" )
+          LADA_NASSERT( comm_ == NULL, "Pointer not set.\n" )
           return *comm_;
         }
         //! Returns a constant reference to communicator.
         const boost::mpi::communicator &comm() const 
         {
-          __ASSERT( comm_ == NULL, "Pointer not set.\n" )
+          LADA_NASSERT( comm_ == NULL, "Pointer not set.\n" )
           return *comm_;
         }
 

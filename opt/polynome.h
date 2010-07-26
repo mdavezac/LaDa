@@ -18,7 +18,7 @@
 
 #include <mpi/macros.h>
 #include <math/fuzzy.h>
-#ifdef _MPI
+#ifdef LADA_MPI
 # include <mpi/mpi_object.h>
 # include <boost/lambda/lambda.hpp>
 # include <boost/mpi/collectives.hpp>
@@ -42,7 +42,7 @@ namespace LaDa
     //!       \a T_TERM is an index makes the templatization of T_TERM a bit
     //!       artificial.
     template<class T_TYPE=types::t_real, class T_TERM=types::t_int >
-    class Polynome : public Base<T_TYPE> __MPICODE( __COMMA__ public MPI_COMMDEC )
+    class Polynome : public Base<T_TYPE> __MPICODE( LADA_COMMA public MPI_COMMDEC )
     {
       protected:
         //! The type of the base class
@@ -78,7 +78,7 @@ namespace LaDa
         //! Copy constructor
         Polynome  ( const t_This &_p ) 
                  : monomes(_p.monomes)
-                   __MPICODE( __COMMA__ MPI_COMMCOPY( _p ) ) {}
+                   __MPICODE( LADA_COMMA MPI_COMMCOPY( _p ) ) {}
 
         //! Destructor
         virtual ~Polynome() {};

@@ -11,7 +11,7 @@
 #include <opt/bpo_macros.h>
 #include <opt/tuple_io.h>
 #include <mpi/mpi_object.h>
-#ifdef _MPI
+#ifdef LADA_MPI
 # include <boost/mpi/environment.hpp>
 #endif
 
@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
   namespace bl = boost::lambda;
 
   __MPI_START__
-  __TRYBEGIN
+  LADA_TRY_BEGIN
 
   __BPO_START__;
   __BPO_HIDDEN__;
@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
   }
 
   fs::path input( vm["input"].as< std::string >() );
-  __DOASSERT( not ( fs::is_regular( input ) or fs::is_symlink( input ) ),
+  LADA_DO_NASSERT( not ( fs::is_regular( input ) or fs::is_symlink( input ) ),
               input << " is a not a valid file.\n" );
   
   boost::shared_ptr< LaDa::Crystal::Lattice >

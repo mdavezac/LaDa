@@ -7,7 +7,7 @@
 #include <boost/lambda/lambda.hpp>
 
 #include <boost/lambda/lambda.hpp>
-#ifdef _MPI
+#ifdef LADA_MPI
 #include <boost/mpi/collectives.hpp>
 #endif
 
@@ -23,10 +23,10 @@ namespace LaDa
       template<class T_HARMONIC>
       void Functional<T_HARMONIC> :: operator<<( const Crystal::Structure &_str )
       {
-        __DOASSERT( _str.atoms.size() < 1,  "No atoms in structure.\n" 
+        LADA_DO_NASSERT( _str.atoms.size() < 1,  "No atoms in structure.\n" 
                                             "Cannot create constituent strain"
                                             " for structure.\n" )
-        __DOASSERT( _str.k_vecs.size() < 1, "No kvectors in structure.\n" 
+        LADA_DO_NASSERT( _str.k_vecs.size() < 1, "No kvectors in structure.\n" 
                                             "Cannot create constituent strain"
                                             " for structure.\n" )
         k_vecs.clear(); r_vecs.clear();
@@ -54,7 +54,7 @@ namespace LaDa
             t_Harmonic::set_attenuation( d );
           
           child = _element.FirstChildElement( "Harmonic" );
-          __DOASSERT( not child, "Could not find <Harmonic> tag " 
+          LADA_DO_NASSERT( not child, "Could not find <Harmonic> tag " 
                                  "when loading constituent strain" )
           harmonics.clear();
           for ( ; child; child=child->NextSiblingElement( "Harmonic" ) )
@@ -64,8 +64,8 @@ namespace LaDa
             harmonic.clear();
           }
         }
-        __CATCHCODE(, "Error while parsing <Harmonic> tag for constituent strain.\n" )
-        __DOASSERT( not harmonics.size(),
+        LADA_CATCHCODE(, "Error while parsing <Harmonic> tag for constituent strain.\n" )
+        LADA_DO_NASSERT( not harmonics.size(),
                     "Could find any harmonics in input.\n" )
 
         return true;
@@ -75,7 +75,7 @@ namespace LaDa
       template<class T_HARMONIC>
       types::t_real Functional<T_HARMONIC> :: evaluate()
       {
-        __ASSERT( variables->size() == 0, 
+        LADA_NASSERT( variables->size() == 0, 
                   "variables have not been initialized.\n" )
         types::t_real sum_harm;
         std::complex<types::t_real> sum_exp;
@@ -109,7 +109,7 @@ namespace LaDa
 
         types::t_real value = 0.0;
         __MPICODE(
-          __ASSERT( not comm, "Communicator not set.\n" )
+          LADA_NASSERT( not comm, "Communicator not set.\n" )
           types :: t_unsigned nperproc = k_vecs.size() / comm->size(); 
           types :: t_unsigned remainder = k_vecs.size() % comm->size();
           i_k_vec +=  comm->rank() * nperproc + std::min( (types::t_int) remainder,
@@ -151,7 +151,7 @@ namespace LaDa
       template<class T_HARMONIC>
       types::t_real Functional<T_HARMONIC> :: evaluate_one_gradient( types::t_unsigned _pos ) 
       {
-        __ASSERT( variables->size() == 0, 
+        LADA_NASSERT( variables->size() == 0, 
                   "variables have not been initialized.\n" )
         std::vector<math::rVector3d> :: const_iterator i_k_vec = k_vecs.begin();
         std::vector<math::rVector3d> :: const_iterator i_k_vec_end __SERIALCODE( = k_vecs.end() );
@@ -245,7 +245,7 @@ namespace LaDa
       types::t_real Functional<T_HARMONIC>
         :: evaluate_with_gradient( types::t_real* const gradient ) 
       {
-        __ASSERT( variables->size() == 0, 
+        LADA_NASSERT( variables->size() == 0, 
                   "variables have not been initialized.\n" )
         std::vector<math::rVector3d> :: const_iterator i_k_vec = k_vecs.begin();
         std::vector<math::rVector3d> :: const_iterator i_k_vec_end __SERIALCODE( = k_vecs.end() ); 
@@ -410,12 +410,12 @@ namespace LaDa
 
         // advance to Structure tag
         str = _element.FirstChildElement( "Structure" );
-        __DOASSERT( not str,    "Could not find <Structure> tag when loading"
+        LADA_DO_NASSERT( not str,    "Could not find <Structure> tag when loading"
                              << "constituent strain.\n" )
         
         // read kvec tags
         child = str->FirstChildElement( "kvec" );
-        __DOASSERT( not child,    "Could not find <kvec> tag when loading"
+        LADA_DO_NASSERT( not child,    "Could not find <kvec> tag when loading"
                                << "constituent strain.\n" )
         for ( ; child; child=child->NextSiblingElement( "kvec" ) )
         {
@@ -427,7 +427,7 @@ namespace LaDa
 
         // read Atom tags
         child = str->FirstChildElement( "Atom" );
-        __DOASSERT( not child,    "Could not find <Atom> tag when loading"
+        LADA_DO_NASSERT( not child,    "Could not find <Atom> tag when loading"
                                << "constituent strain.\n" )
         for ( ; child; child=child->NextSiblingElement( "Atom" ) )
         {

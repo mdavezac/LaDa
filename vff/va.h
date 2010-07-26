@@ -151,7 +151,7 @@ namespace LaDa
          //! \sa Functional::stress
          const math::rMatrix3d& get_stress() const { return t_VffBase::stress; }
 
-#        ifdef _MPI
+#        ifdef LADA_MPI
            //! Sets mpi pointer.
            void set_mpi( boost::mpi::communicator* _c )
              { t_VffBase ::  set_mpi( _c ); }

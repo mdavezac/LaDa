@@ -38,7 +38,7 @@ namespace LaDa
     types::t_real Gsl::operator()( t_Vector &_solution )
     {
       size_t dim = _solution.size();
-      __ASSERT( dim * dim != A.size(),
+      LADA_NASSERT( dim * dim != A.size(),
                   "Incoherent matrix/vector size: " 
                << dim << "x" << dim << "!=" << A.size() <<".\n" )
       gsl_multifit_linear_workspace *work;

@@ -94,7 +94,7 @@ namespace LaDa
           template< class T_COLLAPSE, class T_MINIMIZER >
             opt::ErrorTuple operator()( T_COLLAPSE &_collapse, T_MINIMIZER &_minimizer )
             { 
-              __TRYBEGIN
+              LADA_TRY_BEGIN
               policy.start();
               while( policy.go( _collapse, _minimizer, verbosity - 1 ) );
               opt::ErrorTuple errors( policy.end( _collapse,
@@ -103,7 +103,7 @@ namespace LaDa
               if( verbosity >= 2 )
                 return check_all( _collapse, structures(), verbosity >= 3 );
               return errors;
-              __TRYEND(,"Error in CE::Methods::fit().\n" )
+              LADA_TRY_END(,"Error in CE::Methods::fit().\n" )
             }
 
           //! Reference to the structure set.

@@ -12,10 +12,10 @@ namespace LaDa
                                             T_MINIMIZER &_min, 
                                             types::t_int _verb )
           {
-            __ASSERT( restarts == 0, "No runs required.\n" )
+            LADA_NASSERT( restarts == 0, "No runs required.\n" )
             _col.randomize( howrandom ); 
             if( restarts == 1 ) return false;  
-            __ASSERT( which > 2, "Not sure what to check.\n" )
+            LADA_NASSERT( which > 2, "Not sure what to check.\n" )
             
             opt::ErrorTuple intermed = _min( _col.coefficients(), _col );
             if( _verb >= 1 ) std::cout << "  trial " << nbrestarts
@@ -48,7 +48,7 @@ namespace LaDa
                                         const T_MINIMIZER &_min,
                                         types::t_int _verbosity )
         {
-          __TRYBEGIN
+          LADA_TRY_BEGIN
           opt::t_ErrorPair errors;
           for( _collapse.mapping().n = 0;
                _collapse.mapping().n < _collapse.mapping().size();
@@ -72,7 +72,7 @@ namespace LaDa
             errors.second += intermediate;
           }
           return errors;
-          __TRYEND(,"Error in CE::Methods::leave_one_out().\n" )
+          LADA_TRY_END(,"Error in CE::Methods::leave_one_out().\n" )
         }
 
       template< class T_COLLAPSE, class T_FIT, class T_MINIMIZER >
@@ -81,7 +81,7 @@ namespace LaDa
                                          T_FIT &_fit,
                                          const T_MINIMIZER &_min )
       {
-        __TRYBEGIN
+        LADA_TRY_BEGIN
         opt::t_ErrorPair errors;
         if( not _lmo.do_perform ) return errors;
         if( not _lmo.sets.size() ) _lmo.create_sets( _collapse.mapping().size() );
@@ -126,7 +126,7 @@ namespace LaDa
         }
    
         return errors;
-        __TRYEND(, "Error while performing leave-many-out.\n" )
+        LADA_TRY_END(, "Error while performing leave-many-out.\n" )
       }
 
       template< class T_COLLAPSE >
@@ -134,7 +134,7 @@ namespace LaDa
                                    const Crystal::Structure &_structure,
                                    size_t _n, bool _verbose )
         {
-          __DEBUGTRYBEGIN
+          LADA_DEBUG_TRY_BEGIN
           namespace fs = boost::filesystem;
           namespace bblas = boost::numeric::ublas;
           const types::t_real weight = _structure.weight;
@@ -155,7 +155,7 @@ namespace LaDa
                       << error.mean()
                       << "\n";
           return error;
-          __DEBUGTRYEND(, "Error in Fit::check_one().\n" )
+          LADA_DEBUG_TRY_END(, "Error in Fit::check_one().\n" )
         }
 
       template< class T_COLLAPSE, class T_STRUCTURES >
@@ -183,7 +183,7 @@ namespace LaDa
         :: operator()( typename T_COLLAPSE :: t_Matrix &_solution,
                        T_COLLAPSE &_collapse  ) const
         {
-          __TRYBEGIN
+          LADA_TRY_BEGIN
           namespace bblas = boost::numeric::ublas;
           typedef typename T_COLLAPSE::t_Matrix t_Matrix;
           typedef typename bblas::matrix< typename t_Matrix::value_type> t_OMatrix;
@@ -236,23 +236,23 @@ namespace LaDa
           while( iter < itermax or itermax == 0 );
          
           return errors;
-          __TRYEND(, "Error encountered in Alternating-least square fit.\n" )
+          LADA_TRY_END(, "Error encountered in Alternating-least square fit.\n" )
         }
 
       template< class T_SOLVER > 
         void AlternatingLeastSquare<T_SOLVER> :: Load( const TiXmlElement &_node )
         {
-          __TRYBEGIN
+          LADA_TRY_BEGIN
           std::string name = _node.Value();
           const TiXmlElement *parent = &_node;
           if( name.compare( "Allsq" ) ) 
            parent = _node.FirstChildElement( "Allsq" );
-          __DOASSERT( not parent, "Could not find Allsq tag in input.\n" )
+          LADA_DO_NASSERT( not parent, "Could not find Allsq tag in input.\n" )
           if( parent->Attribute( "tolerance" ) )
             parent->Attribute( "tolerance", &tolerance );
           if( parent->Attribute( "itermax" ) )
             parent->Attribute( "itermax", &itermax );
-          __TRYEND(,"Error in AlternatingLeastSquare::Load()\n" )
+          LADA_TRY_END(,"Error in AlternatingLeastSquare::Load()\n" )
         }
   } // end of Fitting namespace
 } // namespace LaDa

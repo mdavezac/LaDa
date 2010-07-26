@@ -20,7 +20,7 @@ namespace LaDa
                    boost::tuple<T_TYPE, T_TYPE, T_TYPE>& _t )
         {
           namespace bt = boost::tuples;
-          __TRYBEGIN
+          LADA_TRY_BEGIN
             boost::regex re("\\(\\s*(\\S+)\\s*,?"
                             "\\s*(\\S+)\\s*,?"
                             "\\s*(\\S+)\\s*\\)");
@@ -35,7 +35,7 @@ namespace LaDa
             bt::get<0>(_t) = boost::lexical_cast<T_TYPE>( what.str(1) );
             bt::get<1>(_t) = boost::lexical_cast<T_TYPE>( what.str(2) );
             bt::get<2>(_t) = boost::lexical_cast<T_TYPE>( what.str(3) );
-          __TRYEND(,"Could not parse tuple. Expects something like \"( a b c )\".\n")
+          LADA_TRY_END(,"Could not parse tuple. Expects something like \"( a b c )\".\n")
           return true;
         }
     }

@@ -20,7 +20,7 @@ namespace LaDa
       INCOLLAPSE2(template< class T_MATRIX, class T_VECTOR > void) 
         :: create_A_n_b( T_MATRIX &_A, T_VECTOR &_b )
         {
-          __DEBUGTRYBEGIN
+          LADA_DEBUG_TRY_BEGIN
           namespace bblas = boost::numeric::ublas;
           // Loop over inequivalent configurations.
           t_Vector X( dof() );
@@ -35,7 +35,7 @@ namespace LaDa
           if( doce )
           {
             i_pis = cefit().pis.begin();
-            __ASSERT( cefit().pis.size() != collapse().mapping().size(), 
+            LADA_NASSERT( cefit().pis.size() != collapse().mapping().size(), 
                       "Inconsistent sizes.\n" )
           }
           for( size_t i(0); i < collapse().mapping().size(); ++i )
@@ -56,13 +56,13 @@ namespace LaDa
             _b += collapse().mapping().weight(i) * collapse().mapping().target(i) * X;
             if( doce ) ++i_pis;
           }
-          __DEBUGTRYEND(, "Error in MixedApproach::create_A_n_b()\n" )
+          LADA_DEBUG_TRY_END(, "Error in MixedApproach::create_A_n_b()\n" )
         }
  
       INCOLLAPSE2( template< class T_MATRIX, class T_VECTOR > void )
         :: operator()( T_MATRIX &_A, T_VECTOR &_b, types::t_unsigned _dim )
         {
-          __DEBUGTRYBEGIN
+          LADA_DEBUG_TRY_BEGIN
           namespace bblas = boost::numeric::ublas;
           dim = _dim;
           create_A_n_b( _A, _b );
@@ -90,7 +90,7 @@ namespace LaDa
                          columnd.begin() + collapse().dof() );
             }
           }
-          __DEBUGTRYEND(, "Error in MixedApproach::operator()()\n" )
+          LADA_DEBUG_TRY_END(, "Error in MixedApproach::operator()()\n" )
         }
       
       INCOLLAPSE( void ) :: randomize( typename t_Vector :: value_type _howrandom )
@@ -117,7 +117,7 @@ namespace LaDa
  
       INCOLLAPSE( void ) :: update_all()
       {
-        __DEBUGTRYBEGIN
+        LADA_DEBUG_TRY_BEGIN
         if( cefit().dof() )
         {
           namespace bblas = boost::numeric::ublas;
@@ -130,11 +130,11 @@ namespace LaDa
           }
         }
         if( collapse().dof() ) collapse().update_all();
-        __DEBUGTRYEND(, "Error in MixedApproach::update_all()\n" )
+        LADA_DEBUG_TRY_END(, "Error in MixedApproach::update_all()\n" )
       }
       INCOLLAPSE( void ) :: update( types::t_unsigned _d )
       {
-        __DEBUGTRYBEGIN
+        LADA_DEBUG_TRY_BEGIN
         if( cefit().dof() )
         {
           namespace bblas = boost::numeric::ublas;
@@ -144,13 +144,13 @@ namespace LaDa
                      column0.begin() + collapse().dof() );
         }
         if( collapse().dof() ) collapse().update( _d );
-        __DEBUGTRYEND(, "Error in MixedApproach::update()\n" )
+        LADA_DEBUG_TRY_END(, "Error in MixedApproach::update()\n" )
       }
  
       INCOLLAPSE( opt::ErrorTuple ) :: evaluate() const 
       {
-        __DEBUGTRYBEGIN
-        __ASSERT(    coefficients().size1() != dof() 
+        LADA_DEBUG_TRY_BEGIN
+        LADA_NASSERT(    coefficients().size1() != dof() 
                   or coefficients().size2() != dimensions(),
                   "Inconsistent sizes.\n" )
         opt::ErrorTuple error;
@@ -160,14 +160,14 @@ namespace LaDa
                                       - evaluate(n),
                                       collapse().mapping().weight( n ) );
         return error;
-        __DEBUGTRYEND(, "Error in MixedApproach::evaluate()\n" )
+        LADA_DEBUG_TRY_END(, "Error in MixedApproach::evaluate()\n" )
       }
  
       INCOLLAPSE( typename COLHEAD::t_Matrix::value_type ) :: evaluate(size_t _n) const 
       {
         namespace bblas = boost::numeric::ublas;
-        __DEBUGTRYBEGIN
-        __ASSERT(    coefficients().size1() != dof() 
+        LADA_DEBUG_TRY_BEGIN
+        LADA_NASSERT(    coefficients().size1() != dof() 
                   or coefficients().size2() != dimensions(),
                   "Inconsistent sizes.\n" )
         typename t_Matrix :: value_type intermed(0);
@@ -185,12 +185,12 @@ namespace LaDa
         }
  
         return intermed;
-        __DEBUGTRYEND(, "Error in MixedApproach::evaluate()\n" )
+        LADA_DEBUG_TRY_END(, "Error in MixedApproach::evaluate()\n" )
       }
  
       INCOLLAPSE( void ) ::  init( size_t _ranks, size_t _dims )
       {
-        __DEBUGTRYBEGIN
+        LADA_DEBUG_TRY_BEGIN
         cefit().init( clusters() );
         if ( not ( _ranks and _dims ) )
         { 
@@ -204,15 +204,15 @@ namespace LaDa
         const bblas::range rows( 0, _ranks * t_Separables::t_Mapping::D );
         const bblas::range columns( 0, _dims );
         separables().coefficients_interface().set( coefficients(), rows, columns );
-        __DEBUGTRYEND(, "Error in MixedApproach::init()\n" )
+        LADA_DEBUG_TRY_END(, "Error in MixedApproach::init()\n" )
       }
  
       INCOLLAPSE( void ) ::  reassign()
       {
         if( not cefit().dof() ) return;
         namespace bl = boost::lambda;
-        __DEBUGTRYBEGIN
-        __ASSERT( coefficients().size1() - collapse().dof() != clusters().size(),
+        LADA_DEBUG_TRY_BEGIN
+        LADA_NASSERT( coefficients().size1() - collapse().dof() != clusters().size(),
                   "Inconsistent sizes.\n")
  
         typename t_Matrix :: const_iterator1 i_eci =   coefficients().begin1()
@@ -222,7 +222,7 @@ namespace LaDa
           foreach( ::LaDa::CE::Cluster & _cluster, _clusters ) _cluster.eci = *i_eci;
           ++i_eci;
         }
-        __DEBUGTRYEND(,"Error in MixedApproach::reassign().\n" )
+        LADA_DEBUG_TRY_END(,"Error in MixedApproach::reassign().\n" )
       }
  
       INCOLLAPSE( template< class TT_TRAITS > void )

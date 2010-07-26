@@ -82,25 +82,25 @@ namespace LaDa
         //! Returns a reference to the structures.
         t_Structures& structures()
         { 
-          __ASSERT( not structures_.get(), "Empty smart pointer.\n" ) 
+          LADA_NASSERT( not structures_.get(), "Empty smart pointer.\n" ) 
           return *structures_;
         }
         //! Returns a constant reference to the structures.
         const t_Structures& structures() const
         { 
-          __ASSERT( not structures_.get(), "Empty smart pointer.\n" ) 
+          LADA_NASSERT( not structures_.get(), "Empty smart pointer.\n" ) 
           return *structures_;
         }
         //! Returns a reference to the weights.
         t_Weights& weights() 
         { 
-          __ASSERT( not weights_.get(), "Empty smart pointer.\n" ) 
+          LADA_NASSERT( not weights_.get(), "Empty smart pointer.\n" ) 
           return *weights_;
         }
         //! Returns a constant reference to the weights.
         const t_Weights& weights() const 
         { 
-          __ASSERT( not weights_.get(), "Empty smart pointer.\n" ) 
+          LADA_NASSERT( not weights_.get(), "Empty smart pointer.\n" ) 
           return *weights_;
         }
 

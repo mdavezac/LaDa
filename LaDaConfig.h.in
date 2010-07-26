@@ -1,5 +1,4 @@
 #cmakedefine LADA_DEBUG
-#cmakedefine _MPI
 #cmakedefine LADA_MPI
 #define LaDa_VERSION_MAJOR @LaDa_VERSION_MAJOR@
 #define LaDa_VERSION_MINOR @LaDa_VERSION_MINOR@

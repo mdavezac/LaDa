@@ -113,7 +113,7 @@ namespace LaDa
     inline void LeaveManyOut :: add_cmdl( boost::program_options
                                                ::options_description &_options )
     {
-      __DEBUGTRYBEGIN
+      LADA_DEBUG_TRY_BEGIN
       namespace po = boost::program_options;
       _options.add_options()
         ( cmdl_except.c_str(), po::value<std::string>(),
@@ -123,7 +123,7 @@ namespace LaDa
           "of leave-many-out sets \" NUMBER-SETS  NUMBER-PER-SET \"." )
         ( cmdl_file.c_str(), po::value<std::string>(),
           "Name of a file where to save/load the leave-many-out sets." );
-      __DEBUGTRYEND(, "Error while creating LeaveManyOut command-line options.\n" );
+      LADA_DEBUG_TRY_END(, "Error while creating LeaveManyOut command-line options.\n" );
     }
 
     template< class T_INTERFACE, class T_ALLSQ, class T_COLLAPSE>
@@ -168,7 +168,7 @@ namespace LaDa
 
         return t_Return( training, prediction);
       }
-      __CATCHCODE(, "Error while performing leave-many-out.\n" )
+      LADA_CATCHCODE(, "Error while performing leave-many-out.\n" )
     }
 
   }

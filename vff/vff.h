@@ -26,7 +26,7 @@
 #include "atomic_center.h"
 #include "atomic_functional.h"
 
-#ifdef _MPI
+#ifdef LADA_MPI
 # include <mpi/mpi_object.h>
 #endif 
 
@@ -109,7 +109,7 @@ namespace LaDa
               bond_cutoff(0) {}
         //! \brief Copy Constructor
         Vff   ( const Vff &_c )
-            : __MPICODE( MPI_COMMCOPY( _c ) __COMMA__ )
+            : __MPICODE( MPI_COMMCOPY( _c ) LADA_COMMA )
               structure( _c.structure ),
               bond_cutoff( _c.bond_cutoff ),
               centers( _c.centers ), functionals( _c.functionals ) {}
@@ -242,7 +242,7 @@ namespace LaDa
       {
         namespace bt = boost::tuples;
 
-        __DOASSERT( not (structure.lattice and structure.lattice->sites.size() == 2),
+        LADA_DO_NASSERT( not (structure.lattice and structure.lattice->sites.size() == 2),
                     "Lattice undefined or does not have two sites.\n" )
         namespace bx = boost::xpressive;
         const std::string bond( boost::algorithm::trim_copy( _type ) );
@@ -252,7 +252,7 @@ namespace LaDa
                                   >> *bx::_s >> "-" >> *bx::_s
                                   >> ( bx::s2 = ( bx::alpha >> !bx::alpha ) ) );
         if( !bx::regex_match( bond, what, regex ) )
-          __DOASSERT( true, "Could not find bond " + _type + "\n" )
+          LADA_DO_NASSERT( true, "Could not find bond " + _type + "\n" )
 
         const bool two_species( structure.lattice->sites[0].type.size() == 2 );
         const std::string A( what.str(1) );
@@ -273,7 +273,7 @@ namespace LaDa
             (
               site == 0 ? size_t(j):( two_species ? size_t(j): 0 )
             );
-            __DOASSERT( Akind >= functionals.size(), "Index out-of-range.\n" )
+            LADA_DO_NASSERT( Akind >= functionals.size(), "Index out-of-range.\n" )
             functionals[Akind].set_bond( bond_kind, _tuple );
           }
         }
@@ -284,7 +284,7 @@ namespace LaDa
       {
         namespace bt = boost::tuples;
 
-        __DOASSERT( not (structure.lattice and structure.lattice->sites.size() == 2),
+        LADA_DO_NASSERT( not (structure.lattice and structure.lattice->sites.size() == 2),
                     "Lattice undefined or does not have two sites.\n" )
         namespace bx = boost::xpressive;
         const std::string bond( boost::algorithm::trim_copy( _type ) );
@@ -296,7 +296,7 @@ namespace LaDa
                                   >> *bx::_s >> "-" >> *bx::_s
                                   >> ( bx::s3 = ( bx::alpha >> !bx::alpha ) ) );
         if( !bx::regex_match( bond, what, regex ) )
-          __DOASSERT( true, "Could not find angle " + _type + "\n" )
+          LADA_DO_NASSERT( true, "Could not find angle " + _type + "\n" )
 
         const bool two_species( structure.lattice->sites[0].type.size() == 2 );
         const std::string A( what.str(1) );
@@ -318,7 +318,7 @@ namespace LaDa
               size_t(site == 0 ? size_t(i):( two_species ? size_t(i): 0 ))
             + size_t(site == 0 ? size_t(k):( two_species ? size_t(k): 0 ))
           );
-          __DOASSERT( Bkind >= functionals.size(), "Index out-of-range.\n" )
+          LADA_DO_NASSERT( Bkind >= functionals.size(), "Index out-of-range.\n" )
           functionals[Bkind].set_angle( angle_kind, _tuple );
         }
       }

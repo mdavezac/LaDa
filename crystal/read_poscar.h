@@ -37,7 +37,7 @@ namespace LaDa
                         const std::vector< T_TYPE >& _types,
                         bool _check_lattice = false )
       {
-        __TRYBEGIN
+        LADA_TRY_BEGIN
         math::rMatrix3d inv_cell;
         if( _check_lattice and (not _structure.lattice) )
         {
@@ -48,21 +48,21 @@ namespace LaDa
         
         namespace bsc = boost::spirit::classic;
         namespace fs = boost::filesystem;  
-        __DOASSERT( not fs::exists( _path ), "Path " << _path << " does not exits.\n" )
-        __DOASSERT( not( fs::is_regular( _path ) or fs::is_symlink( _path ) ),
+        LADA_DO_NASSERT( not fs::exists( _path ), "Path " << _path << " does not exits.\n" )
+        LADA_DO_NASSERT( not( fs::is_regular( _path ) or fs::is_symlink( _path ) ),
                     _path << " is neither a regulare file nor a system link.\n" )
         std::ifstream file( _path.string().c_str(), std::ifstream::in );
         std::string line;
-        __DOASSERT( file.bad(), "Could not open file " + _path.string() + "\n" );
+        LADA_DO_NASSERT( file.bad(), "Could not open file " + _path.string() + "\n" );
         
         // name
         std::getline( file, line );
-        __DOASSERT( file.eof(), "Unexpected end-of-file " + _path.string() + "\n" );
+        LADA_DO_NASSERT( file.eof(), "Unexpected end-of-file " + _path.string() + "\n" );
         _structure.name = boost::algorithm::trim_copy( line );
         // scale
         std::getline( file, line );
-        __DOASSERT( file.eof(), "Unexpected end-of-file " + _path.string() + "\n" );
-        __DOASSERT
+        LADA_DO_NASSERT( file.eof(), "Unexpected end-of-file " + _path.string() + "\n" );
+        LADA_DO_NASSERT
         (
           not bsc::parse
           (
@@ -76,8 +76,8 @@ namespace LaDa
         for( size_t i(0); i < 3; ++i )
         {
           std::getline( file, line );
-          __DOASSERT( file.eof(), "Unexpected end-of-file " + _path.string() + "\n" );
-          __DOASSERT
+          LADA_DO_NASSERT( file.eof(), "Unexpected end-of-file " + _path.string() + "\n" );
+          LADA_DO_NASSERT
           (
             not bsc::parse
             (
@@ -96,8 +96,8 @@ namespace LaDa
         // number of atoms
         std::vector< size_t > nbatoms;
         std::getline( file, line );
-        __DOASSERT( file.eof(), "Unexpected end-of-file " + _path.string() + "\n" );
-        __DOASSERT
+        LADA_DO_NASSERT( file.eof(), "Unexpected end-of-file " + _path.string() + "\n" );
+        LADA_DO_NASSERT
         (
           not bsc::parse
           (
@@ -110,15 +110,15 @@ namespace LaDa
 
         // Cartesian or direct.
         std::getline( file, line );
-        __DOASSERT( file.eof(), "Unexpected end-of-file " + _path.string() + "\n" );
+        LADA_DO_NASSERT( file.eof(), "Unexpected end-of-file " + _path.string() + "\n" );
         boost::algorithm::trim(line);
         bool direct;
         if( line[0] == 'c' or line[0] == 'C' ) direct = false;
         else if( line[0] == 'd' or line[0] == 'D' ) direct = true;
-        else __THROW_ERROR( "Unknown cartesian/direct switch.\n" )
+        else LADA_THROW_ERROR( "Unknown cartesian/direct switch.\n" )
         
         // Atomic positions.
-        __DOASSERT( nbatoms.size() != _types.size(), 
+        LADA_DO_NASSERT( nbatoms.size() != _types.size(), 
                        "Number of species in POSCAR does not match input: " 
                     << nbatoms.size() << " " << _types.size() << ".\n" )
         const size_t nb( std::accumulate( nbatoms.begin(), nbatoms.end(), 0 ) );
@@ -129,11 +129,11 @@ namespace LaDa
         atom.site = -1;
         for( size_t i(0), j(1); i < nb; ++i, ++j )
         {
-          __ASSERT( i_nb == nbatoms.end(), "Unexpected end of vector.\n" )
-          __ASSERT( i_type == _types.end(), "Unexpected end of vector.\n" )
+          LADA_NASSERT( i_nb == nbatoms.end(), "Unexpected end of vector.\n" )
+          LADA_NASSERT( i_type == _types.end(), "Unexpected end of vector.\n" )
           std::getline( file, line );
-          __DOASSERT( file.eof(), "Unexpected end-of-file " + _path.string() + "\n" );
-          __DOASSERT
+          LADA_DO_NASSERT( file.eof(), "Unexpected end-of-file " + _path.string() + "\n" );
+          LADA_DO_NASSERT
           (
             not bsc::parse
             (
@@ -155,7 +155,7 @@ namespace LaDa
           if( j != *i_nb ) continue;
           ++i_nb; ++i_type; j = 0;
         }
-        __TRYEND(, "Could not parse POSCAR " + _path.string() + "\n" )
+        LADA_TRY_END(, "Could not parse POSCAR " + _path.string() + "\n" )
       }
 
   } // namespace Crystal

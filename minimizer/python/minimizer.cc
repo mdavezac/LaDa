@@ -31,7 +31,7 @@ namespace LaDa
       fakexml.SetAttribute( "uncertainties", uncertainties_ );
       fakexml.SetAttribute( "up", up_ );
       fakexml.SetAttribute( "gradient", use_gradient_ ? "true": "false" );
-      __DOASSERT( not minimizer_.Load( fakexml ), "Could not load minimizer " << type_ << ".\n" )
+      LADA_DO_NASSERT( not minimizer_.Load( fakexml ), "Could not load minimizer " << type_ << ".\n" )
     }
     struct pickle_minimizer : boost::python::pickle_suite
     {

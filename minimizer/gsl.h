@@ -63,7 +63,7 @@ namespace LaDa
       Vector::Vector( T_CONTAINER &_vec )
       {
         if( not boost::is_same< typename T_CONTAINER::value_type, double>::value )
-         __THROW_ERROR("Types are not equivalent.\n" )
+         LADA_THROW_ERROR("Types are not equivalent.\n" )
         vector.size = _vec.size();
         vector.stride = 1;
         vector.data = &_vec[0];
