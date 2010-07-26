@@ -30,14 +30,14 @@ def _waves(is_first = True):
   import magnetic
 
   # list of all lattices in A2BX4.
-  lattices = [ A2BX4.S1(), A2BX4.S1I(), A2BX4.S2(), A2BX4.S3(), A2BX4.S3I(),
-               A2BX4.b1(), A2BX4.b10(), A2BX4.b10I(), A2BX4.b11(), A2BX4.b12(),
-               A2BX4.b15(), A2BX4.b16(), A2BX4.b18(), A2BX4.b19(), A2BX4.b1I(),
-               A2BX4.b2(), A2BX4.b20(), A2BX4.b21(), A2BX4.b2I(), A2BX4.b33(),
-               A2BX4.b36(), A2BX4.b37(), A2BX4.b38(), A2BX4.b4(), A2BX4.b4I(), 
-               A2BX4.b5(), A2BX4.b5I(), A2BX4.b8(), A2BX4.b9(), A2BX4.b9I(), 
-               A2BX4.d1(), A2BX4.d1I(), A2BX4.d3(), A2BX4.d3I(), A2BX4.d9(),
-               A2BX4.b6(), A2BX4.b7() ]
+  lattices = [ A2BX4.b1(),  A2BX4.b10(),  A2BX4.b10I(),  A2BX4.b11(),\
+               A2BX4.b12(),  A2BX4.b15(),  A2BX4.b16(),  A2BX4.b18(),  A2BX4.b19(),\
+               A2BX4.b1I(),  A2BX4.b2(),  A2BX4.b20(),  A2BX4.b21(),  A2BX4.b2I(),\
+               A2BX4.b33(),  A2BX4.b34(),  A2BX4.b35(),  A2BX4.b36(),  A2BX4.b37(),\
+               A2BX4.b38(),  A2BX4.b4(),  A2BX4.b4I(),  A2BX4.b5(),  A2BX4.b5I(),  A2BX4.b6(),\
+               A2BX4.b7(),  A2BX4.b8(),  A2BX4.b9(),  A2BX4.b9I(),  A2BX4.d1(),  A2BX4.d1I(),\
+               A2BX4.d3(),  A2BX4.d3I(),  A2BX4.d9(),  A2BX4.s1(),  A2BX4.s1I(),  A2BX4.s2(),\
+	       A2BX4.s2I(),  A2BX4.s3(),  A2BX4.s3I() ]
 
   # regex
   specie_regex = compile("([A-Z][a-z]?)2([A-Z][a-z]?)([A-Z][a-z]?)4")
