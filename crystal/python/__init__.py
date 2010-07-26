@@ -42,7 +42,7 @@ def read_poscar(types=None, path=None, check_lattice=False):
   import re
   from os.path import join, exists, isdir
   from copy import deepcopy
-  from numpy import array, dot
+  from numpy import array, dot, transpose
   from . import Structure, Atom
   # checks input
   if check_lattice == True: raise AssertionError, "Not implemented."
@@ -71,7 +71,7 @@ def read_poscar(types=None, path=None, check_lattice=False):
       line = poscar.readline()
       assert len(line.split()) >= 3, "Could not read column vector from poscar: %s." % (line)
       cell.append( [float(f) for f in line.split()[:3]] )
-    result.cell = array(cell)
+    result.cell = transpose(array(cell))
     # checks for vasp 5 input.
     is_vasp_5 = True
     line = poscar.readline().split()
