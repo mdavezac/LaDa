@@ -799,8 +799,8 @@ def d9():
   return lattice
 
 
-def S1():
-  """ Returns S1 lattice."""
+def s1():
+  """ Returns s1 lattice."""
   from . import Lattice
   
   lattice = Lattice()
@@ -808,7 +808,7 @@ def S1():
   lattice.set_cell = (1.000000e+00, 0.000000e+00, 0.000000e+00),\
                      (0.000000e+00, 6.010000e-01, 0.000000e+00),\
                      (0.000000e+00, 0.000000e+00, 9.940000e-01)
-  lattice.name = "S1"
+  lattice.name = "s1"
   lattice.add_site = (3.802000e-01, 5.356112e-01, 8.081220e-01), "A", 
   lattice.add_site = (6.198000e-01, 6.538880e-02, 3.111220e-01), "A", 
   lattice.add_site = (8.802000e-01, 6.538880e-02, 8.081220e-01), "A", 
@@ -869,8 +869,8 @@ def S1():
   return lattice
 
 
-def S2():
-  """ Returns S2 lattice."""
+def s2():
+  """ Returns s2 lattice."""
   from . import Lattice
   
   lattice = Lattice()
@@ -878,7 +878,7 @@ def S2():
   lattice.set_cell = (9.870000e-01, 0.000000e+00, 0.000000e+00),\
                      (0.000000e+00, 2.950000e-01, 0.000000e+00),\
                      (0.000000e+00, 0.000000e+00, 1.000000e+00)
-  lattice.name = "S2"
+  lattice.name = "s2"
   lattice.add_site = (8.808975e-01, 7.375000e-02, 5.834000e-01), "A", 
   lattice.add_site = (5.996025e-01, 2.212500e-01, 8.340000e-02), "A", 
   lattice.add_site = (1.061025e-01, 2.212500e-01, 4.166000e-01), "A", 
@@ -911,8 +911,8 @@ def S2():
   return lattice
 
 
-def S3():
-  """ Returns S3 lattice."""
+def s3():
+  """ Returns s3 lattice."""
   from . import Lattice
   
   lattice = Lattice()
@@ -920,7 +920,7 @@ def S3():
   lattice.set_cell = (6.110000e-01, 0.000000e+00, 0.000000e+00),\
                      (0.000000e+00, 1.000000e+00, 0.000000e+00),\
                      (0.000000e+00, 0.000000e+00, 3.470000e-01)
-  lattice.name = "S3"
+  lattice.name = "s3"
   lattice.add_site = (4.704700e-02, 3.190000e-01, 1.735000e-01), "A", 
   lattice.add_site = (5.639530e-01, 6.810000e-01, 1.735000e-01), "A", 
   lattice.add_site = (2.584530e-01, 8.190000e-01, 1.735000e-01), "A", 
@@ -1191,8 +1191,8 @@ def d3I():
   return lattice
 
 
-def S1I():
-  """ Returns S1I lattice."""
+def s1I():
+  """ Returns s1I lattice."""
   from . import Lattice
   
   lattice = Lattice()
@@ -1200,7 +1200,7 @@ def S1I():
   lattice.set_cell = (1.000000e+00, 0.000000e+00, 0.000000e+00),\
                      (0.000000e+00, 6.010000e-01, 0.000000e+00),\
                      (0.000000e+00, 0.000000e+00, 9.940000e-01)
-  lattice.name = "S1I"
+  lattice.name = "s1I"
   lattice.add_site = (3.798000e-01, 5.336880e-01, 1.851822e-01), "A", 
   lattice.add_site = (6.202000e-01, 6.731200e-02, 6.821822e-01), "A", 
   lattice.add_site = (8.798000e-01, 6.731200e-02, 1.851822e-01), "A", 
@@ -1261,8 +1261,8 @@ def S1I():
   return lattice
 
 
-def S2I():
-  """ Returns S2I lattice."""
+def s2I():
+  """ Returns s2I lattice."""
   from . import Lattice
   
   lattice = Lattice()
@@ -1270,7 +1270,7 @@ def S2I():
   lattice.set_cell = (9.870000e-01, 0.000000e+00, 0.000000e+00),\
                      (0.000000e+00, 2.950000e-01, 0.000000e+00),\
                      (0.000000e+00, 0.000000e+00, 1.000000e+00)
-  lattice.name = "S2I"
+  lattice.name = "s2I"
   lattice.add_site = (1.302840e-01, 7.375000e-02, 8.420000e-02), "A", 
   lattice.add_site = (3.632160e-01, 2.212500e-01, 5.842000e-01), "A", 
   lattice.add_site = (8.567160e-01, 2.212500e-01, 9.158000e-01), "A", 
@@ -1385,8 +1385,8 @@ def b15():
   lattice.find_space_group()
   return lattice
 
-def S3I():
-  """ Returns S3I lattice."""
+def s3I():
+  """ Returns s3I lattice."""
   from . import Lattice
   
   lattice = Lattice()
@@ -1394,7 +1394,7 @@ def S3I():
   lattice.set_cell = (6.110000e-01, 0.000000e+00, 0.000000e+00),\
                      (0.000000e+00, 1.000000e+00, 0.000000e+00),\
                      (0.000000e+00, 0.000000e+00, 3.470000e-01)
-  lattice.name = "S3I"
+  lattice.name = "s3I"
   lattice.add_site = (0.000000e+00, 0.000000e+00, 0.000000e+00), "A", 
   lattice.add_site = (3.055000e-01, 5.000000e-01, 0.000000e+00), "A", 
   lattice.add_site = (4.704700e-02, 3.190000e-01, 1.735000e-01), "A", 
