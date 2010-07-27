@@ -13,8 +13,8 @@
 # include <boost/mpi/environment.hpp>
 #endif
 
-# include <mpi/mpi_object.h>
-# include <mpi/macros.h>
+# include <opt/mpi.h>
+# include <opt/mpi.h>
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <math/random.h>

@@ -8,7 +8,7 @@
 
 #include <opt/va_function.h>
 #include <crystal/structure.h>
-#include <mpi/mpi_object.h>
+#include <opt/mpi.h>
 
 #include "functional.h"
 

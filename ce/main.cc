@@ -11,7 +11,7 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 
-#include <mpi/mpi_object.h>
+#include <opt/mpi.h>
 #include <opt/bpo_macros.h>
 
 #include "functional_builder.h"

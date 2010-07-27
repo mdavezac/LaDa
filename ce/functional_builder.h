@@ -8,7 +8,7 @@
 
 #include <opt/function_functors.h>
 #include <tinyxml/tinyxml.h>
-#include <mpi/mpi_object.h>
+#include <opt/mpi.h>
 #include <crystal/structure.h>
 #include <crystal/lattice.h>
 

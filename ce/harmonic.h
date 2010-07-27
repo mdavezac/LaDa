@@ -16,7 +16,7 @@
 #include <opt/types.h>
 #include <math/eigen.h>
 #include <math/fuzzy.h>
-#include <mpi/mpi_object.h>
+#include <opt/mpi.h>
 
 namespace LaDa
 {

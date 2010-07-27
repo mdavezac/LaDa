@@ -12,8 +12,7 @@
 # include<boost/mpi/collectives.hpp>
 #endif
 
-#include <mpi/macros.h>
-#include <mpi/mpi_object.h>
+#include <opt/mpi.h>
 #include <opt/debug.h>
 #include "tinyxml.h"
 

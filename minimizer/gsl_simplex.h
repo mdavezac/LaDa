@@ -19,7 +19,7 @@
 #include "gsl_mins.h"
 
 #ifdef LADA_MPI
-#  include <mpi/mpi_object.h>
+#  include <opt/mpi.h>
 #endif
 
 namespace LaDa

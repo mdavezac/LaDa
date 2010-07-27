@@ -10,7 +10,7 @@
 #include <opt/debug.h>
 #include <opt/bpo_macros.h>
 #include <opt/tuple_io.h>
-#include <mpi/macros.h>
+#include <opt/mpi.h>
 #ifdef LADA_MPI
 # include <boost/mpi/environment.hpp>
 #endif

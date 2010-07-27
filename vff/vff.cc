@@ -15,7 +15,7 @@
 #include <opt/debug.h>
 #include <opt/tinyxml.h>
 #include <opt/path.h>
-#include <mpi/mpi_object.h>
+#include <opt/mpi.h>
 
 
 #include "vff.h"

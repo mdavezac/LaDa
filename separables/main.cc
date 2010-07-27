@@ -17,7 +17,7 @@
 # include <boost/mpi/environment.hpp>
 #endif
 
-#include <mpi/macros.h>
+#include <opt/mpi.h>
 #include <minimizer/cgs.h>
 #include <math/fuzzy.h>
 #include <math/random.h>

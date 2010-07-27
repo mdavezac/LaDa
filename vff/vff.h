@@ -21,13 +21,13 @@
 #include <opt/types.h>
 #include <opt/function_base.h>
 #include <opt/debug.h>
-#include <mpi/mpi_object.h>
+#include <opt/mpi.h>
 
 #include "atomic_center.h"
 #include "atomic_functional.h"
 
 #ifdef LADA_MPI
-# include <mpi/mpi_object.h>
+# include <opt/mpi.h>
 #endif 
 
 namespace LaDa

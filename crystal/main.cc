@@ -11,7 +11,7 @@
 #include <opt/bpo_macros.h>
 #include <opt/tuple_io.h>
 #include <math/random.h>
-#include <mpi/mpi_object.h>
+#include <opt/mpi.h>
 #ifdef LADA_MPI
 # include <boost/mpi/environment.hpp>
 #endif

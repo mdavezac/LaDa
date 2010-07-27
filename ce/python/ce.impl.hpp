@@ -1,6 +1,6 @@
 #include "LaDaConfig.h"
 
-#include <mpi/mpi_object.h>
+#include <opt/mpi.h>
 
 #include "../functional_builder.h"
 #include "../constituent_strain.h"
