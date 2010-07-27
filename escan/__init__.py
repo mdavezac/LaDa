@@ -136,12 +136,18 @@ class AtomicPotential(object):
 class Escan(object):
   """ Performs PESCAN calculations, from structure relaxation to wavefunctions. """
 
-  def __init__(self, workdir=None):
+  def __init__(self, inplace=True, workdir=None):
     """ Initializes a PESCAN functional. """
     from numpy import zeros
     from ..vff import Vff
 
     super(Escan, self).__init__()
+    self.inplace = inplace
+    """ If True calculations are performed in the output directory. """
+    # checks inplace vs workdir
+    if self.inplace: 
+      assert workdir == None, ValueError("Cannot use both workdir and inplace attributes.")
+
     self.vff = Vff() 
     """ The L{Vff} functional with which to relax a structure. """
     self.OUTCAR = "escan_out" 
@@ -320,7 +326,7 @@ class Escan(object):
     return result
 
   def __call__(self, structure, outdir = None, comm = None, overwrite=False, \
-               keep_calc=None, **kwargs):
+               norun=False, **kwargs):
     """ Performs calculation """
     from copy import deepcopy
     from os import getcwd
@@ -356,26 +362,28 @@ class Escan(object):
       comm.barrier() # makes sure directory is not created by other proc!
 
     # changes to temporary working directory
-    workdir = abspath(expanduser(this.workdir)) if this.workdir != None\
-              else getcwd()
-    with Tempdir(workdir=workdir, comm=comm) as this.workdir: 
+    workdir = outdir if this.workdir == None else this.workdir
+    context = Tempdir(workdir=workdir, comm=comm, keep=keep_tempdir)\
+              if not this.inplace  else Changedir(outdir, comm=comm) 
+    with context as this.workdir: 
   
       # performs calculation.
-      this._run(structure, outdir, comm, overwrite)
+      this._run(structure, outdir, comm, overwrite, norun)
   
       # copies output files.
-      with Changedir(outdir, comm = comm) as cwd:
-        for file in  [ this._POSCAR + "." + str(world.rank),\
-                       this._POTCAR + "." + str(world.rank),\
-                       this._cout(comm) if this._cout(comm) != "/dev/null" else None,\
-                       this._cerr(comm) if this._cerr(comm) != "/dev/null" else None,\
-                       this.vff._cout(comm) if this.vff._cout(comm) != "/dev/null" else None,\
-                       this.vff._cerr(comm) if this.vff._cerr(comm) != "/dev/null" else None,\
-                       this.WAVECAR if comm.rank == 0  else None ]:
-          if file == None: continue
-          destination, origin = basename(file), join(this.workdir, basename(file))
-          if exists(origin): copyfile(origin, destination)
-
+      if not self.inplace:
+        with Changedir(outdir, comm = comm) as cwd:
+          for file in  [ this._POSCAR + "." + str(world.rank),\
+                         this._POTCAR + "." + str(world.rank),\
+                         this._cout(comm) if this._cout(comm) != "/dev/null" else None,\
+                         this._cerr(comm) if this._cerr(comm) != "/dev/null" else None,\
+                         this.vff._cout(comm) if this.vff._cout(comm) != "/dev/null" else None,\
+                         this.vff._cerr(comm) if this.vff._cerr(comm) != "/dev/null" else None,\
+                         this.WAVECAR if comm.rank == 0  else None ]:
+            if file == None: continue
+            destination, origin = basename(file), join(this.workdir, basename(file))
+            if exists(origin): copyfile(origin, destination)
+  
     return Extract(comm = comm, directory = outdir, escan = this)
 
   def _cout(self, comm):
@@ -389,7 +397,7 @@ class Escan(object):
     return self.ERRCAR if comm.rank == 0 else self.ERRCAR + "." + str(comm.rank)
 
 
-  def _run(self, structure, outdir, comm, overwrite):
+  def _run(self, structure, outdir, comm, overwrite, norun):
     """ Performs escan calculation. """
     import time
     from os.path import join
@@ -414,13 +422,15 @@ class Escan(object):
         print >>file, "# Performing calculations. "
       
       # makes calls to run
-      self._run_vff(structure, outdir, comm, cout, overwrite)
-      self._run_genpot(comm, outdir)
+      self._run_vff(structure, outdir, comm, cout, overwrite, norun)
+      self._run_genpot(comm, outdir, norun)
       if self.do_escan == True:
-        self._run_escan(comm, structure)
+        self._run_escan(comm, structure, norun)
         extract = Extract(comm = comm, directory = outdir, escan = self)
-        assert not extract.success, RuntimeError("Escan calculations did not complete.")
-     
+        if norun == False:
+          assert not extract.success, RuntimeError("Escan calculations did not complete.")
+        else: return extract
+
       with open(cout, "a") as file: 
         timing = time.time() - timing
         hour = int(float(timing/3600e0))
@@ -428,7 +438,7 @@ class Escan(object):
         second = (timing - hour*3600-minute*60)
         print >> file, "# Computed ESCAN in: %i:%i:%f."  % (hour, minute, second) 
 
-  def _run_vff(self, structure, outdir, comm, cout, overwrite):
+  def _run_vff(self, structure, outdir, comm, cout, overwrite, norun):
     """ Gets atomic input ready, with or without relaxation. """
     from shutil import copyfile
     from os.path import join, samefile, exists
@@ -448,6 +458,7 @@ class Escan(object):
         copyfile(join(self.vffrun.directory, VFFCOUT), vffcout)
       return
 
+    if norun == True: return
     out = self.vff(structure, outdir=outdir, comm=comm, overwrite=overwrite)
     assert out.success, RuntimeError("VFF relaxation did not succeed.")
     out.write_escan_input(poscar, out.structure)
@@ -466,7 +477,7 @@ class Escan(object):
           print >>file_out, line[:-1]
 
 
-  def _run_genpot(self, comm, outdir):
+  def _run_genpot(self, comm, outdir, norun):
     """ Runs genpot only """
     from boost.mpi import broadcast, world
     from ._escan import _call_genpot
@@ -506,6 +517,7 @@ class Escan(object):
           copyfile(pot.nonlocal, basename(pot.nonlocal))
     if comm.rank == 0: copyfile(self.maskr, basename(self.maskr))
 
+    if norun == True: return
     comm.barrier() # syncs all procs
     with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 
       _call_genpot(comm)
@@ -563,7 +575,7 @@ class Escan(object):
           print >> file, i + 16, filepath, pot.get_izz(comm),\
                          pot.s , pot.p, pot.d, pot.pnl, pot.dnl
 
-  def _run_escan(self, comm, structure):
+  def _run_escan(self, comm, structure, norun):
     """ Runs escan only """
     from shutil import copyfile
     from os.path import basename
@@ -573,6 +585,7 @@ class Escan(object):
 
     self._write_incar(comm, structure)
     if comm.rank == 0: copyfile(self.maskr, basename(self.maskr))
+    if norun == True: return
     with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 
       comm.barrier() 
       _call_escan(comm)
