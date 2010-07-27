@@ -1,6 +1,6 @@
 """ Numerical energy derivatives. """
 
-def reciprocal( escan, structure, direction, outdir, comm = None, order = 1, \
+def reciprocal( escan, structure, direction, outdir = None, comm = None, order = 1, \
                 nbpoints = None, stepsize = 1e-2, lstsq = None, **kwargs ):
   """ Computes effective mass for a given direction.
 
@@ -29,6 +29,7 @@ def reciprocal( escan, structure, direction, outdir, comm = None, order = 1, \
          parameters. Defaults to numpy.linalg.lstsq.
       @return: Same as return from lstsq.
   """
+  from os import getcwd
   from os.path import join
   from shutil import rmtree
   from copy import deepcopy
@@ -50,6 +51,7 @@ def reciprocal( escan, structure, direction, outdir, comm = None, order = 1, \
   direction /= norm(direction)
   if lstsq == None: lstsq = np_lstsq
   if comm == None: comm = world
+  if outdir == None: outdir = getcwd()
   vffrun = kwargs.pop("vffrun", escan.vffrun)
   genpotrun = kwargs.pop("genpotrun", escan.genpotrun)
 
