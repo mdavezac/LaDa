@@ -162,9 +162,14 @@ namespace LaDa
             structure.lattice->convert_Atom_to_StrAtom(
                structure.atoms[i_center->get_index()], stratom );
           }
-          LADA_CATCHCODE(, "Error while printing escan input for atom " 
-                           << i_center->get_index() << ": \n"
-                           << structure.atoms[i_center->get_index()] << "\n" << structure )
+          catch(...)
+          {
+            std::cerr << LADA_SPOT_ERROR
+                      << "Error while printing escan input for atom " 
+                      << i_center->get_index() << ": \n"
+                      << structure.atoms[i_center->get_index()] << "\n" << structure;
+            throw;
+          }
 #       endif 
           
         types::t_unsigned index = Physics::Atomic::Z( stratom.type );
@@ -186,8 +191,13 @@ namespace LaDa
               structure.lattice->convert_Atom_to_StrAtom( 
                 structure.atoms[i_bond->get_index()], stratom );
             }
-            LADA_CATHCODE( ,  "Error while printing escan input for atoms\n" 
-                            << structure.atoms[i_bond->get_index()] << "\n" )
+            catch(...)
+            {
+              std::cerr << LADA_SPOT_ERROR
+                        << "Error while printing escan input for atoms\n" 
+                        << structure.atoms[i_bond->get_index()] << "\n";
+              throw;
+            }
 #         endif 
           types::t_unsigned Z = Physics::Atomic::Z( stratom.type );
           t_pseudos::iterator i_pseudo = pseudos.begin();

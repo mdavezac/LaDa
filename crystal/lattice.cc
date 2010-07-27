@@ -188,8 +188,19 @@ namespace LaDa
 
       types::t_int site;
 #     ifdef LADA_DEBUG
-       LADA_TRY_CODE( site = (_in.site > -1 ) ? _in.site : get_atom_site_index( _in.pos );,
-                      "Caught error while converting numerical to string atom\n" )
+        try
+        {
+#     endif
+      site = (_in.site > -1 ) ? _in.site : get_atom_site_index( _in.pos );
+#     ifdef LADA_DEBUG
+        }
+        catch(std::exception &_e)
+        {
+          std::cerr << LADA_SPOT_ERROR
+                    << "\nCaught error while converting numerical to string atom\n" 
+                    << e.what();
+          throw;
+        }
 #     endif
       if( site < 0 ) return false;
       _out.site = site;
@@ -225,8 +236,19 @@ namespace LaDa
 
       types::t_int site;
 #     ifdef LADA_DEBUG
-        LADA_TRY_CODE( site = (_in.site > -1 ) ? _in.site : get_atom_site_index( _in.pos );,
-                       "Caught error while converting numerical to string atom\n" )
+        try
+        {
+#     endif
+      site = (_in.site > -1 ) ? _in.site : get_atom_site_index( _in.pos );
+#     ifdef LADA_DEBUG
+        }
+        catch(std::exception &_e)
+        {
+          std::cerr << LADA_SPOT_ERROR
+                    << "\nCaught error while converting numerical to string atom\n" 
+                    << e.what();
+          throw;
+        }
 #     endif
       if( site < 0 ) return false;
       if ( sites[site].type.size() == 1 )
