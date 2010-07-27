@@ -37,7 +37,6 @@ def reciprocal( escan, structure, direction, outdir = None, comm = None, order =
   from numpy import zeros, array, dot
   from numpy.linalg import norm, lstsq as np_lstsq
   from boost.mpi import world
-  from ._escan import method, potential
   from ..physics import a0, Hartree
 
   # check input arguments
@@ -83,7 +82,8 @@ def reciprocal( escan, structure, direction, outdir = None, comm = None, order =
             structure,\
             outdir = join(outdir, "%i-s=%f" % (i, parameters[i,1] )),
             vffrun = vffrun, genpotrun = genpotrun, do_escan = True,\
-            kpoint = escan.kpoint + direction * parameters[i, 1] / units
+            kpoint = escan.kpoint + direction * parameters[i, 1] / units,\
+            **kwargs
           )
     eigenvalues = out.eigenvalues.copy()
     eigenvalues.sort()
