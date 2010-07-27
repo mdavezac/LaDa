@@ -198,7 +198,9 @@ class Extract(object):
 
     local_dict = {"lattice": self.lattice, "array": array, "minimizer": self.minimizer, "Vff": Vff}
     exec get_vff(self) in globals(), local_dict
-    return local_dict["vff"]
+    
+    return local_dict["vff_functional"] if "vff_functional" in local_dict \
+           else local_dict["functional"]
 
   def write_escan_input(self, filepath, structure = None):
     """ Prints escan input to file. """
@@ -397,25 +399,25 @@ class Vff(object):
     result  = repr(self.lattice)
     result += repr(self.minimizer)
     result += "# Vff definition.\n"
-    result += "vff = %s()\n" % (self.__class__.__name__)
-    result += "vff.minimizer = minimizer\n"
-    result += "vff.lattice = lattice\n"
-    result += "vff.OUTCAR = \"%s\"\n" % (self.OUTCAR)
-    result += "vff.ERRCAR = \"%s\"\n" % (self.ERRCAR)
+    result += "functional = %s()\n" % (self.__class__.__name__)
+    result += "functional.minimizer = minimizer\n"
+    result += "functional.lattice = lattice\n"
+    result += "functional.OUTCAR = \"%s\"\n" % (self.OUTCAR)
+    result += "functional.ERRCAR = \"%s\"\n" % (self.ERRCAR)
     if self.direction == None or hasattr(self.direction, "__len__"):
-      result += "vff.direction = %s\n" % (repr(self.direction))
-    else: result += "vff.direction = %i\n" % (int(self.direction))
-    result += "vff.relax = %s\n" % ("True" if self.relax else "False")
+      result += "functional.direction = %s\n" % (repr(self.direction))
+    else: result += "functional.direction = %i\n" % (int(self.direction))
+    result += "functional.relax = %s\n" % ("True" if self.relax else "False")
     for name, params in self.bonds.items():
       A, B = name.split("-")
-      result += "vff.add_bond = \"%s\", \"%s\", (%e" % (A, B, params[0])
+      result += "functional.add_bond = \"%s\", \"%s\", (%e" % (A, B, params[0])
       for i, u in enumerate(params[1:]): 
         if sum([abs(j) for j in params[i+1:]]) / float(len(params)-i-1) < 1e-12: break;
         result += ", %e" % (u)
       result += ")\n"
     for name, params in self.angles.items():
       A, B, C = name.split("-")
-      result += "vff.add_angle = \"%s\", \"%s\", \"%s\", " % (A, B, C)
+      result += "functional.add_angle = \"%s\", \"%s\", \"%s\", " % (A, B, C)
       if abs(params[0] + 1e0/3e0) < 1e-12: result += "(\"tet\""
       else: result += "(%e" % (params[0])
       for i, u in enumerate(params[1:]):
@@ -423,7 +425,15 @@ class Vff(object):
         result += ", %e" % (u)
       result += ")\n"
     result += "# End of vff definition.\n"
-    return result
+
+
+    module = self.__class__.__module__ 
+    classname = self.__class__.__name__ 
+    header = "from %s import %s\n" % (module, classname)
+    module = self.minimizer.__class__.__module__ 
+    classname = self.minimizer.__class__.__name__ 
+    header += "from %s import %s\n" % (module, classname)
+    return header + result
 
   def _cout(self, comm):
     """ Creates output name. """
@@ -502,17 +512,20 @@ class Vff(object):
       result, stress = this._run(structure, comm)
       # must close/reopen redirection context, otherwise it seem that they 
       # are closed anyhow on exiting from the Cpp function call. The following context
-      with open(cout, "a") as file:
+      with open(cout, "r") as file: lines = file.readlines()
+      with open(cout, "w") as file:
+        file.writelines(lines)
         # finally, the dam results.
-        print >> file, "# Result of VFF calculations. "
-        print >> file, repr(result)
-        print >> file, "stress: (%e, %e, %e),\\\n        (%e, %e, %e),\\\n        (%e, %e, %e)"\
-                       % tuple(stress.flat)
+        file.write("# Result of VFF calculations.\n")
+        file.write(repr(result))
+        file.write( "\nstress: (%e, %e, %e),\\"\
+                    "\n        (%e, %e, %e),\\"\
+                    "\n        (%e, %e, %e)\n" % tuple(stress.flat) )
         timing = time.time() - timing
         hour = int(float(timing/3600e0))
         minute = int(float((timing - hour*3600)/60e0))
         second = (timing - hour*3600-minute*60)
-        print >> file, "# Computed VFF in: %i:%i:%f."  % (hour, minute, second) 
+        file.write("# Computed VFF in: %i:%i:%f."  % (hour, minute, second))
 
 
     # checks if result was successful

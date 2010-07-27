@@ -190,8 +190,19 @@ namespace LaDa
     {
       types::t_int i;
 #     ifdef LADA_DEBUG
-        LADA_TRY_CODE( i = get_atom_site_index( _at );,
-                       "Caught error while converting string to numerical atom\n" )
+        try
+        {
+#     endif
+          i = get_atom_site_index( _at );
+#     ifdef LADA_DEBUG
+        }
+        catch(...)
+        {
+          std::cerr << LADA_SPOT_ERROR
+                    << "Caught error while converting string to numerical atom\n"
+                    << structure.atoms[i_bond->get_index()] << "\n";
+          throw;
+        }
 #     endif
       if ( i == -1 ) return "error";
       if ( get_nb_types(i) == 1 ) return sites[i].type[0];

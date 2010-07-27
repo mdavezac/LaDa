@@ -93,7 +93,7 @@ def saveto(self, event):
         return
       a = ''
       while a not in ['n', 'y']:
-        a = raw_input("File %s already exists.\nOverwrite? [y/n] " % (path))
+        a = raw_input("File %s already exists.\nOverwrite? [y/n] " % (args[0]))
       if a == 'n':
        ip.user_ns["_lada_error"] = "User said no save."
        return
@@ -138,10 +138,12 @@ def save_state(self):
 
 def fakerun(self, event):
   """ Creates job directory tree and input files without computing. """
-  from os.path import path, split as splitpath
+  from os.path import split as splitpath, exists, isdir
+  ip = self.api
 
-  current, path = _get_current_job_params(self, 0)
+  current, path = _get_current_job_params(self, 2)
   ip.user_ns.pop("_lada_error", None)
+  if current == None or path == None: return
   if len(event.split()) > 1: 
     print "fakerun does not take an argument."
     return
@@ -154,11 +156,39 @@ def fakerun(self, event):
   elif exists(directory):
     a = ''
     while a not in ['n', 'y']:
-      a = raw_input("%s exists. Some input files could be overwritten. Continue? [y/n]")
+      a = raw_input("%s exists. \n"\
+                    "Some input files could be overwritten.\n"\
+                    "Continue? [y/n]" % (directory))
     if a == 'n': return
-  for job, dirname in jobdict.walk_through(path):
+  for job, dirname in current.walk_through(directory):
     if not job.is_tagged: job.compute(outdir=dirname, norun=True)
 
+def run_current_jobdict(self, event):
+  """ Runs job dictionary interactively. """
+  from os.path import split as splitpath, exists, isdir
+  ip = self.api
+
+  current, path = _get_current_job_params(self, 2)
+  ip.user_ns.pop("_lada_error", None)
+  if current == None or path == None: return
+  if len(event.split()) > 1: 
+    print "fakerun does not take an argument."
+    return
+  elif len(event.split()) == 1: directory = event.split()[0]
+  else: directory = splitpath(path)[0]
+
+  if exists(directory) and not isdir(directory):
+    print "%s exists and is not a directory." % (directory)
+    return 
+  elif exists(directory):
+    a = ''
+    while a not in ['n', 'y']:
+      a = raw_input("%s exists. \n"\
+                    "Some input files could be overwritten.\n"\
+                    "Continue? [y/n]" % (directory))
+    if a == 'n': return
+  for job, dirname in current.walk_through(directory):
+    if not job.is_tagged: job.compute(outdir=dirname)
 
 def qstat(self, arg):
   """ squeue --user=`whoami` -o "%7i %.3C %3t  --   %50j" """
@@ -229,11 +259,12 @@ def _main():
   ip.expose_magic("savejobs", saveto)
   ip.expose_magic("fakerun", fakerun)
   ip.expose_magic("launch_scattered", launch_scattered)
+  ip.expose_magic("run_current_jobdict", run_current_jobdict)
   ip.set_hook('complete_command', goto_completer, re_key = '\s*%?goto')
   ip.set_hook('complete_command', showme_completer, re_key = '\s*%?showme')
   ip.set_hook('complete_command', explore_completer, re_key = '\s*%?explore')
   if "SNLCLUSTER" in environ:
-    if environ["SNLCLUSTER"] in ["redrock"]:
+    if environ["SNLCLUSTER"] in ["redrock", "redmesa"]:
       ip.expose_magic("qstat", qstat)
       ip.expose_magic("cancel_jobs", cancel_jobs)
       ip.expose_magic("please_cancel_all_jobs", please_cancel_all_jobs)

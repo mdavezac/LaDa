@@ -1,5 +1,4 @@
 """ Interface module for pescan. """
-from sys import exit
 from ..opt import __load_pescan_in_global_namespace__
 if __load_pescan_in_global_namespace__:
   from DLFCN import RTLD_NOW as _RTLD_NOW, RTLD_GLOBAL as _RTLD_GLOBAL
@@ -135,6 +134,9 @@ class AtomicPotential(object):
 
 class Escan(object):
   """ Performs PESCAN calculations, from structure relaxation to wavefunctions. """
+
+  Extract = _extract.Extract
+  """ Class for output extraction. """
 
   def __init__(self, inplace=True, workdir=None):
     """ Initializes a PESCAN functional. """
@@ -283,47 +285,53 @@ class Escan(object):
 
   def __repr__(self):
     from os.path import relpath
-    result  = str(self.vff)
+    result  = str(self.vff).replace("functional", "vff_functional")
     result += "# Escan definition.\n"
-    result += "escan = %s()\n" % (self.__class__.__name__)
-    result += "escan.eref                  = %s\n"\
+    result += "functional = %s()\n" % (self.__class__.__name__)
+    result += "functional.vff                   = vff_functional\n"
+    result += "functional.eref                  = %s\n"\
               % ( "None" if self.eref == None else str(self.eref) )
-    result += "escan.cutoff                = %f\n" % (self.cutoff)
-    result += "escan.smooth                = %f\n" % (self.smooth)
-    result += "escan.kinetic_scaling       = %f\n" % (self.kinetic_scaling)
-    result += "escan.nbstates              = %i\n" % (self.nbstates)
-    result += "escan.itermax               = %i\n" % (self.itermax)
-    result += "escan.nlines                = %i\n" % (self.nlines)
-    result += "escan.tolerance             = %e\n" % (self.tolerance)
-    result += "escan.rspace_cutoff         = %f\n" % (self.rspace_cutoff)
-    result += "escan.fft_mesh              = %i, %i, %i\n" % self.fft_mesh
-    result += "escan.genpotrun             = %s\n" % (repr(self.genpotrun))
-    result += "escan.do_escan              = %s\n" % (repr(self.do_escan))
-    result += "escan.vffrun                = %s\n" % (repr(self.vffrun))
-    result += "escan.input_wavefunctions   = %s\n" % (repr(self.input_wavefunctions))
-    result += "escan.kpoint                = %s\n" % (repr(self.kpoint))
-    result += "escan._dont_deform_kpoint   = %s\n" % (repr(self._dont_deform_kpoint))
-    result += "escan.dnc_mesh              = %s\n" % (repr(self.dnc_mesh))
-    result += "escan.overlap_mesh          = %s\n" % (repr(self.overlap_mesh))
+    result += "functional.cutoff                = %f\n" % (self.cutoff)
+    result += "functional.smooth                = %f\n" % (self.smooth)
+    result += "functional.kinetic_scaling       = %f\n" % (self.kinetic_scaling)
+    result += "functional.nbstates              = %i\n" % (self.nbstates)
+    result += "functional.itermax               = %i\n" % (self.itermax)
+    result += "functional.nlines                = %i\n" % (self.nlines)
+    result += "functional.tolerance             = %e\n" % (self.tolerance)
+    result += "functional.rspace_cutoff         = %f\n" % (self.rspace_cutoff)
+    result += "functional.fft_mesh              = %i, %i, %i\n" % self.fft_mesh
+    result += "functional.genpotrun             = %s\n" % (repr(self.genpotrun))
+    result += "functional.do_escan              = %s\n" % (repr(self.do_escan))
+    result += "functional.vffrun                = %s\n" % (repr(self.vffrun))
+    result += "functional.input_wavefunctions   = %s\n" % (repr(self.input_wavefunctions))
+    result += "functional.kpoint                = %s\n" % (repr(self.kpoint))
+    result += "functional._dont_deform_kpoint   = %s\n" % (repr(self._dont_deform_kpoint))
+    result += "functional.dnc_mesh              = %s\n" % (repr(self.dnc_mesh))
+    result += "functional.overlap_mesh          = %s\n" % (repr(self.overlap_mesh))
     if self.potential == localH:
-      result += "escan.potential             = localH\n"
+      result += "functional.potential             = localH\n"
     elif self.potential == nonlocalH:
-      result += "escan.potential             = localH\n"
+      result += "functional.potential             = localH\n"
     elif self.potential == soH:
-      result += "escan.potential             = soH\n"
+      result += "functional.potential             = soH\n"
     else: raise RuntimeError("unknown hamiltonnian %i." % (soH))
     for pot in self.atomic_potentials:
-      result += "escan.add_potential         = %s\n" % (repr(pot))
-    result += "escan.INWAVECAR = \"%s\"\n" % (self.INWAVECAR)
-    result += "escan.ERRCAR = \"%s\"\n" % (self.ERRCAR)
-    result += "escan.WAVECAR = \"%s\"\n" % (self.WAVECAR)
-    result += "escan.workdir = \"%s\"\n" % (self.workdir)
-    result += "escan.maskr = \"%s\"\n" % (relpath(self.maskr))
-    result += "escan._INCAR = \"%s\"\n" % (self._INCAR)
-    result += "escan._POTCAR = \"%s\"\n" % (self._POTCAR)
-    result += "escan._GENCAR = \"%s\"\n" % (self._GENCAR)
+      result += "functional.add_potential         = %s\n" % (repr(pot))
+    result += "functional.INWAVECAR = \"%s\"\n" % (self.INWAVECAR)
+    result += "functional.ERRCAR = \"%s\"\n" % (self.ERRCAR)
+    result += "functional.WAVECAR = \"%s\"\n" % (self.WAVECAR)
+    result += "functional.workdir = \"%s\"\n" % (self.workdir)
+    result += "functional.inplace = %s\n" % (repr(self.inplace))
+    result += "functional.maskr = \"%s\"\n" % (relpath(self.maskr))
+    result += "functional._INCAR = \"%s\"\n" % (self._INCAR)
+    result += "functional._POTCAR = \"%s\"\n" % (self._POTCAR)
+    result += "functional._GENCAR = \"%s\"\n" % (self._GENCAR)
     result += "# End of escan definition."
-    return result
+
+    module = self.__class__.__module__ 
+    classname = self.__class__.__name__ 
+    header = "from %s import %s, soH, localH, nonlocalH\n" % (module, classname)
+    return header + result
 
   def __call__(self, structure, outdir = None, comm = None, overwrite=False, \
                norun=False, **kwargs):
@@ -356,16 +364,15 @@ class Escan(object):
     # checks if outdir contains a successful run.
     if broadcast(comm, exists(outdir) if comm.rank == 0 else None, 0):
       if not overwrite: # check for success
-        extract = Extract(comm = comm, directory = outdir, escan = this)
+        extract = this.Extract(comm = comm, directory = outdir, escan = this)
         if extract.success: return extract # in which case, returns extraction object.
-      elif comm.rank == 0: rmtree(outdir) # overwrite data. 
       comm.barrier() # makes sure directory is not created by other proc!
 
     # changes to temporary working directory
     workdir = outdir if this.workdir == None else this.workdir
     context = Tempdir(workdir=workdir, comm=comm, keep=keep_tempdir)\
               if not this.inplace  else Changedir(outdir, comm=comm) 
-    with context as this.workdir: 
+    with context as this._tempdir: 
   
       # performs calculation.
       this._run(structure, outdir, comm, overwrite, norun)
@@ -381,10 +388,10 @@ class Escan(object):
                          this.vff._cerr(comm) if this.vff._cerr(comm) != "/dev/null" else None,\
                          this.WAVECAR if comm.rank == 0  else None ]:
             if file == None: continue
-            destination, origin = basename(file), join(this.workdir, basename(file))
+            destination, origin = basename(file), join(this._tempdir, basename(file))
             if exists(origin): copyfile(origin, destination)
   
-    return Extract(comm = comm, directory = outdir, escan = this)
+    return self.Extract(comm = comm, directory = outdir, escan = this)
 
   def _cout(self, comm):
     """ Creates output name. """
@@ -411,7 +418,7 @@ class Escan(object):
 
     # prints some output first
     cout, cerr = self._cout(comm), self._cerr(comm)
-    with Changedir(self.workdir, comm = comm) as cwd:
+    with Changedir(self._tempdir, comm = comm) as cwd:
       with open(cout, "w") as file: 
         print >>file, "# Escan calculation on ", time.strftime("%m/%d/%y", local_time),\
                       " at ", time.strftime("%I:%M:%S %p", local_time)
@@ -428,15 +435,15 @@ class Escan(object):
         self._run_escan(comm, structure, norun)
         extract = Extract(comm = comm, directory = outdir, escan = self)
         if norun == False:
-          assert not extract.success, RuntimeError("Escan calculations did not complete.")
+          with open(cout, "a") as file: 
+            timing = time.time() - timing
+            hour = int(float(timing/3600e0))
+            minute = int(float((timing - hour*3600)/60e0))
+            second = (timing - hour*3600-minute*60)
+            file.write("# Computed ESCAN in: %i:%i:%f.\n"  % (hour, minute, second))
+          assert extract.success, RuntimeError("Escan calculations did not complete.")
         else: return extract
 
-      with open(cout, "a") as file: 
-        timing = time.time() - timing
-        hour = int(float(timing/3600e0))
-        minute = int(float((timing - hour*3600)/60e0))
-        second = (timing - hour*3600-minute*60)
-        print >> file, "# Computed ESCAN in: %i:%i:%f."  % (hour, minute, second) 
 
   def _run_vff(self, structure, outdir, comm, cout, overwrite, norun):
     """ Gets atomic input ready, with or without relaxation. """
@@ -523,14 +530,14 @@ class Escan(object):
       _call_genpot(comm)
 
 
-  def _write_incar(self, comm, structure):
+  def _write_incar(self, comm, structure, norun):
     """ Writes escan input to file. """
     from os.path import basename
     from numpy.linalg import norm
     from boost.mpi import world
     assert self.atomic_potentials != None, RuntimeError("Atomic potentials are not set.")
     # Creates temporary input file and creates functional
-    kpoint = (0,0,0,0,0) if norm(self.kpoint) < 1e-12 else self._get_kpoint(structure, comm)
+    kpoint = (0,0,0,0,0) if norm(self.kpoint) < 1e-12 else self._get_kpoint(structure, comm, norun)
     with open(self._INCAR + "." + str(world.rank), "w") as file:
       print >> file, "1 %s.%i" % (self._POTCAR, world.rank) 
       print >> file, "2 %s" % (self.WAVECAR) 
@@ -583,19 +590,21 @@ class Escan(object):
     from ..opt import redirect
 
 
-    self._write_incar(comm, structure)
+    self._write_incar(comm, structure, norun)
     if comm.rank == 0: copyfile(self.maskr, basename(self.maskr))
     if norun == True: return
     with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 
       comm.barrier() 
       _call_escan(comm)
 
-  def _get_kpoint(self, structure, comm):
+  def _get_kpoint(self, structure, comm, norun):
     """ Returns deformed or undeformed kpoint. """
     from numpy import abs, sum, zeros, array
-    from boost.mpi import broadcast
+    from boost.mpi import broadcast, world
     from ..crystal import deform_kpoint
     from ..physics import a0
+    if norun == True:
+      return 1, self.kpoint[0], self.kpoint[1], self.kpoint[2], structure.scale / a0("A")
     if self._dont_deform_kpoint:
       return 1, self.kpoint[0], self.kpoint[1], self.kpoint[2], structure.scale / a0("A")
     # first get relaxed cell

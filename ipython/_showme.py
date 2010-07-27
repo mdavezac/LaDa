@@ -66,7 +66,7 @@ def showme(self, event):
       # change jobparameters.
       if arg.lower() == "functional":
         input = read_input(filename)
-        input.jobparams["structure"] = current.structure
+        if "structure" in current.jobparams: input.jobparams["structure"] = current.structure
         input.jobparams["functional"] = input.functional
         current.jobparams = input.jobparams
       elif arg.lower() == "structure": 

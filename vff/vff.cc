@@ -159,8 +159,10 @@ namespace LaDa
 #       ifdef LADA_DEBUG
           try
           { 
-            structure.lattice->convert_Atom_to_StrAtom(
-               structure.atoms[i_center->get_index()], stratom );
+#       endif 
+            Crystal::Atom const & ratom = structure.atoms[i_center->get_index()];
+            structure.lattice->convert_Atom_to_StrAtom(ratom, stratom );
+#       ifdef LADA_DEBUG
           }
           catch(...)
           {
@@ -188,8 +190,10 @@ namespace LaDa
 #         ifdef LADA_DEBUG
             try
             { 
-              structure.lattice->convert_Atom_to_StrAtom( 
-                structure.atoms[i_bond->get_index()], stratom );
+#         endif 
+              Crystal::Atom const & ratom = structure.atoms[i_center->get_index()];
+              structure.lattice->convert_Atom_to_StrAtom(ratom, stratom );
+#         ifdef LADA_DEBUG
             }
             catch(...)
             {

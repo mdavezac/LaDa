@@ -59,8 +59,9 @@ class Extract(object):
     path = join(self.directory, self.OUTCAR) if len(self.directory) else self.OUTCAR
     if not exists(path): return False
 
+    try: good = 0 if self.solo().do_escan == True else 1
+    except: return False
     with open(path, "r") as file:
-      good = 0 if self.solo().do_escan == True else 1
       for line in file:
         if line.find("FINAL eigen energies, in eV") != -1: good += 1
         if line.find("# Computed ESCAN in:") != -1 and good == 1: good += 1; break
@@ -83,13 +84,14 @@ class Extract(object):
     def get_functional(this):
       with open(path, "r") as file: return _get_script_text(file, "Escan")
     local_dict = { "lattice": self.lattice, "minimizer": self.minimizer,\
-                   "vff": self.vff, "Escan": Escan, "localH": localH,\
+                   "vff_functional": self.vff, "Escan": Escan, "localH": localH,\
                    "nonlocalH": nonlocalH, "soH": soH, "AtomicPotential":AtomicPotential,\
                    "array": array }
     # moves to output directory to get relative paths right.
     with Changedir(self.directory) as cwd:
       exec get_functional(self) in globals(), local_dict
-    return local_dict["escan"]
+    return local_dict["escan_functional"] if "escan_functional" in local_dict\
+           else local_dict["functional"]
 
 
   def _double_trouble(self):
