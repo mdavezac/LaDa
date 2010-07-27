@@ -120,7 +120,7 @@ namespace LaDa
 // #     endif
       for (; i_center != i_center_end; ++i_center)
         energy += functionals[i_center->kind()].evaluate( *i_center );
-      __MPICODE
+      LADA_MPI_CODE
       ( 
         energy = boost::mpi::all_reduce( MPI_COMM, energy, std::plus<types::t_real>() ); 
       )

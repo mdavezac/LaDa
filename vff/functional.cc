@@ -194,7 +194,7 @@ namespace LaDa
         if ( not (i_atom0->freeze & t_Atom::FREEZE_Z) ) 
           *i_grad = gradient[2], ++i_grad;
       }
-      __MPICODE
+      LADA_MPI_CODE
       (
         typedef boost::remove_pointer<t_GradientArg>::type t_Type;
         // boost does not do in-place reduction.

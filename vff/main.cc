@@ -35,7 +35,7 @@
 int main(int argc, char *argv[]) 
 {  
   namespace fs = boost::filesystem;
-  __MPI_START__
+  LADA_MPI_START
   LADA_TRY_BEGIN
 
   __BPO_START__;
@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
     TiXmlElement *vff_xml = handle.FirstChild( "Job" ).Element();
     LADA_DO_NASSERT( not vff_xml, "Could not find <Job> tag in input.\n")
     t_Vff vff(structure);
-    __MPICODE( vff.set_mpi( world.get() ); )
+    LADA_MPI_CODE( vff.set_mpi( world.get() ); )
     LADA_DO_NASSERT( not vff.Load(*vff_xml),
                 "Could not Load Valence Force Field Functional from input.\n")
     if( not vff.init(true) ) continue;
@@ -109,7 +109,9 @@ int main(int argc, char *argv[])
     
     structure.energy = vff.evaluate() / 16.0217733;
 
-    __NOTMPIROOT( (*world), continue; )
+#   ifdef LADA_MPI
+      if( world->rank() != 0 ) continue;
+#   endif
 
     const LaDa::math::rMatrix3d stress = vff.Vff().get_stress();
     std::cout << std::fixed << std::setprecision(12) 
@@ -135,5 +137,5 @@ int main(int argc, char *argv[])
   }
 
   return 0;
-  __BPO_CATCH__( __MPICODE( MPI_Finalize() ) )
+  __BPO_CATCH__( LADA_MPI_CODE( MPI_Finalize() ) )
 }

@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
   namespace fs = boost::filesystem;
   namespace bl = boost::lambda;
 
-  __MPI_START__
+  LADA_MPI_START
   LADA_TRY_BEGIN
 
   __BPO_START__;
@@ -44,8 +44,8 @@ int main(int argc, char *argv[])
   __BPO_VERSION__
   if( vm.count("help") )
   {
-    __MPICODE( boost::mpi::communicator world; )
-    __ROOTCODE( world, \
+    LADA_MPI_CODE( boost::mpi::communicator world; )
+    LADA_ROOT( world, \
       std::cout << argv[0] << " runs the Coulom+Lennard-Jones functional.\n" 
                    "Usage: " << argv[0] << " [options] FunctionalInput POSCAR\n" 
                    "  Defaults are ep.input and POSCAR_0, respectively.\n"
@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
   structure.energy = energy;
   std::cout << "Energy: " << energy  << "\n"
             << structure << "\n" << forces << "\n";
-  __BPO_CATCH__( __MPICODE( MPI_Finalize() ) )
+  __BPO_CATCH__( LADA_MPI_CODE( MPI_Finalize() ) )
 
   return 0;
 }

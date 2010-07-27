@@ -69,7 +69,7 @@ namespace LaDa
           std::vector<math::rVector3d> k_vecs;
           //! Harmonics functions.
           static t_Harmonics harmonics;
-          __MPICODE(
+          LADA_MPI_CODE(
             /** \ingroup mpi
              *  Communicator for parallel computation.
              *  \details During evaluations, the computation over the list of
@@ -88,7 +88,7 @@ namespace LaDa
           //! Copy Constructor
           Functional   ( const Functional &_c )
                             : t_Base(_c), r_vecs( _c.r_vecs), k_vecs( _c.k_vecs) 
-                              __MPICODE( LADA_COMMA comm( _c.comm ) ) {}
+                              LADA_MPI_CODE( LADA_COMMA comm( _c.comm ) ) {}
           //! Destructorq
           ~Functional(){};
 

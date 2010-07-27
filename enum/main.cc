@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
   namespace fs = boost::filesystem;
   namespace bl = boost::lambda;
 
-  __MPI_START__
+  LADA_MPI_START
   LADA_TRY_BEGIN
 
   __BPO_START__;
@@ -41,8 +41,8 @@ int main(int argc, char *argv[])
   __BPO_VERSION__
   if( vm.count("help") )
   {
-    __MPICODE( boost::mpi::communicator world; )
-    __ROOTCODE( world, \
+    LADA_MPI_CODE( boost::mpi::communicator world; )
+    LADA_ROOT( world, \
       std::cout << argv[0] << " Enumerates structures.\n" 
                 << all << "\n";
     ) 
@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
   boost::shared_ptr< std::vector<LaDa::math::rMatrix3d> > cells
     = LaDa::enumeration::find_all_cells(*lattice, N);
 
-  __BPO_CATCH__( __MPICODE( MPI_Finalize() ) )
+  __BPO_CATCH__( LADA_MPI_CODE( MPI_Finalize() ) )
 
   return 0;
 }

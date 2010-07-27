@@ -14,7 +14,7 @@ namespace LaDa
     namespace detailsCE
     {
       template< class T_HARMONIC >
-        class Functional : public CE::Builder<T_HARMONIC> __MPICODE( LADA_COMMA public MPI_COMMDEC ) 
+        class Functional : public CE::Builder<T_HARMONIC> LADA_MPI_CODE( LADA_COMMA public MPI_COMMDEC ) 
         {
           public:
             using CE::Builder<T_HARMONIC>::add_equivalent_clusters;
@@ -173,13 +173,13 @@ namespace LaDa
             types::t_real result(0);
             if( _which & 1 ) 
             {
-              __MPICODE( pair.first->set_mpi( &_functional.comm() )  );
+              LADA_MPI_CODE( pair.first->set_mpi( &_functional.comm() )  );
               pair.first->set_variables( &container );
               result += pair.first->evaluate();
             }
             if( _which & 2 )
             {
-              __MPICODE( pair.second->set_mpi( &_functional.comm() )  );
+              LADA_MPI_CODE( pair.second->set_mpi( &_functional.comm() )  );
               pair.second->set_variables( &container );
               result += pair.second->evaluate();
             }

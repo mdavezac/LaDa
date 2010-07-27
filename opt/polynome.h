@@ -42,7 +42,7 @@ namespace LaDa
     //!       \a T_TERM is an index makes the templatization of T_TERM a bit
     //!       artificial.
     template<class T_TYPE=types::t_real, class T_TERM=types::t_int >
-    class Polynome : public Base<T_TYPE> __MPICODE( LADA_COMMA public MPI_COMMDEC )
+    class Polynome : public Base<T_TYPE> LADA_MPI_CODE( LADA_COMMA public MPI_COMMDEC )
     {
       protected:
         //! The type of the base class
@@ -78,7 +78,7 @@ namespace LaDa
         //! Copy constructor
         Polynome  ( const t_This &_p ) 
                  : monomes(_p.monomes)
-                   __MPICODE( LADA_COMMA MPI_COMMCOPY( _p ) ) {}
+                   LADA_MPI_CODE( LADA_COMMA MPI_COMMCOPY( _p ) ) {}
 
         //! Destructor
         virtual ~Polynome() {};
@@ -234,10 +234,13 @@ namespace LaDa
           t_Type value(0);
         
           typename t_Monomes :: const_iterator i_monome = monomes.begin();
-          typename t_Monomes :: const_iterator i_monome_end
-             __SERIALCODE( = monomes.end() ); 
+#         ifdef LADA_MPI
+            typename t_Monomes :: const_iterator i_monome_end;
+#         else 
+            typename t_Monomes :: const_iterator i_monome_end = monomes.end();
+#         endif
           typename t_Container :: const_iterator i_real = variables->begin();
-          __MPICODE(
+          LADA_MPI_CODE(
             types :: t_unsigned nperproc = monomes.size() / MPI_COMM.size(); 
             types :: t_unsigned remainder = monomes.size() % MPI_COMM.size();
             i_monome +=  MPI_COMM.rank() * nperproc + std::min( (types::t_int) remainder,
@@ -257,7 +260,7 @@ namespace LaDa
             value += v_monome;
           } // end of loop over monomes
         
-          __MPICODE( value = boost::mpi::all_reduce( MPI_COMM, value,
+          LADA_MPI_CODE( value = boost::mpi::all_reduce( MPI_COMM, value,
                                                      std::plus<types::t_real>() ); )
 
           return value;
@@ -277,22 +280,27 @@ namespace LaDa
         t_Type g_monome;
          
         // loops over each monome.
+#       ifdef LADA_ADDHERE
+#         error Please change LADA_ADDHERE to something not already defined
+#       endif
         typename t_Monomes :: const_iterator i_monome = monomes.begin();
-        typename t_Monomes :: const_iterator i_monome_end __SERIALCODE( = monomes.end() );
+#       ifdef LADA_MPI
+          typename t_Monomes :: const_iterator i_monome_end;
+#         define LADA_ADDHERE array
+#       else 
+          typename t_Monomes :: const_iterator i_monome_end = monomes.end();
+#         define LADA_ADDHERE _i_grad
+#       endif
         typename t_Container :: const_iterator i_real = variables->begin();
-  #ifdef __ADDHERE__
-  #error Please change __ADDHERE__ to something not already defined
-  #endif
-  #define __ADDHERE__ __MPISERIALCODE( array, _i_grad )
-        __MPICODE(
+        LADA_MPI_CODE(
           types::t_unsigned nperproc = monomes.size() / MPI_COMM.size(); 
           types :: t_unsigned remainder = monomes.size() % MPI_COMM.size();
           i_monome +=  MPI_COMM.rank() * nperproc + std::min( (types::t_int) remainder,
                                                            MPI_COMM.rank() );
           i_monome_end = i_monome + nperproc;
           if( remainder and MPI_COMM.rank() < remainder ) ++i_monome_end;
-          types::t_real *__ADDHERE__ = new types::t_real[ monomes.size() ];
-          std::fill( __ADDHERE__, __ADDHERE__ + monomes.size(), types::t_real(0) );
+          types::t_real *LADA_ADDHERE = new types::t_real[ monomes.size() ];
+          std::fill( LADA_ADDHERE, LADA_ADDHERE + monomes.size(), types::t_real(0) );
         )
         for ( ; i_monome != i_monome_end; ++i_monome ) // monome loop 
         {
@@ -316,28 +324,28 @@ namespace LaDa
                 g_monome *= t_Type( *(i_real + *i_included) );
       
             // now sums gradient
-            *(__ADDHERE__ + *i_excluded) += g_monome;
+            *(LADA_ADDHERE + *i_excluded) += g_monome;
       
           } // end of outer "derivative" loop
         } // end of loop over monomes
-        __MPICODE
+        LADA_MPI_CODE
         ( 
           // boost does not do in-place reduction.
           BOOST_MPI_CHECK_RESULT
           (
             MPI_Allreduce,
             (
-              MPI_IN_PLACE, __ADDHERE__, monomes.size(),
-              boost::mpi::get_mpi_datatype<types::t_real>(*__ADDHERE__),
+              MPI_IN_PLACE, LADA_ADDHERE, monomes.size(),
+              boost::mpi::get_mpi_datatype<types::t_real>(*LADA_ADDHERE),
               boost::mpi::is_mpi_op< std::plus<types::t_real>, types::t_real>::op(),
               (MPI_Comm) MPI_COMM
             )
           );
-          std::transform( _i_grad, _i_grad + monomes.size(), __ADDHERE__, _i_grad,
+          std::transform( _i_grad, _i_grad + monomes.size(), LADA_ADDHERE, _i_grad,
                           boost::lambda::_1 + boost::lambda::_2 ); 
-          delete[] __ADDHERE__;
+          delete[] LADA_ADDHERE;
         )
-  #undef __ADDHERE__
+#       undef LADA_ADDHERE
       }
     
     template<class T_TYPE, class T_TERM >
@@ -358,20 +366,22 @@ namespace LaDa
            
           // loops over each monome.
           typename t_Monomes :: const_iterator i_monome = monomes.begin();
-          typename t_Monomes :: const_iterator i_monome_end __SERIALCODE( = monomes.end() );
+#         ifdef LADA_MPI
+            typename t_Monomes :: const_iterator i_monome_end;
+#           define LADA_ADDHERE array
+#         else 
+            typename t_Monomes :: const_iterator i_monome_end = monomes.end();
+#           define LADA_ADDHERE _i_grad
+#         endif
           typename t_Container :: const_iterator i_real = variables->begin();
-  #ifdef __ADDHERE__
-  #error Please change __ADDHERE__ to something not already defined
-  #endif
-  #define __ADDHERE__ __MPISERIALCODE( array, _i_grad )
-          __MPICODE(
+          LADA_MPI_CODE(
             types :: t_unsigned nperproc = monomes.size() / MPI_COMM.size(); 
             types :: t_unsigned remainder = monomes.size() % MPI_COMM.size();
             i_monome +=  MPI_COMM.rank() * nperproc + std::min( (types::t_int) remainder,
                                                              MPI_COMM.rank() );
             i_monome_end = i_monome + nperproc;
             if( remainder and MPI_COMM.rank() < remainder ) ++i_monome_end;
-            types::t_real *__ADDHERE__ = new types::t_real[ monomes.size() ];
+            types::t_real *LADA_ADDHERE = new types::t_real[ monomes.size() ];
           )
           for ( ; i_monome != i_monome_end; i_monome++ ) // monome loop 
           {
@@ -404,25 +414,25 @@ namespace LaDa
         
           } // end of loop over monomes
         
-          __MPICODE
+          LADA_MPI_CODE
           ( 
             BOOST_MPI_CHECK_RESULT
             (
               MPI_Allreduce,
               (
-                MPI_IN_PLACE, __ADDHERE__, monomes.size(),
-                boost::mpi::get_mpi_datatype<types::t_real>(*__ADDHERE__),
+                MPI_IN_PLACE, LADA_ADDHERE, monomes.size(),
+                boost::mpi::get_mpi_datatype<types::t_real>(*LADA_ADDHERE),
                 boost::mpi::is_mpi_op< std::plus<types::t_real>, types::t_real>::op(),
                 (MPI_Comm) MPI_COMM
               )
             );
-            std::transform( _i_grad, _i_grad + monomes.size(), __ADDHERE__, _i_grad,
+            std::transform( _i_grad, _i_grad + monomes.size(), LADA_ADDHERE, _i_grad,
                             boost::lambda::_1 + boost::lambda::_2 ); 
-            delete[] __ADDHERE__;
+            delete[] LADA_ADDHERE;
             value = boost::mpi::all_reduce( MPI_COMM, value,
                                             std::plus<types::t_real>() ); 
           )
-  #undef __ADDHERE__
+#         undef LADA_ADDHERE
           return value;
         }
         
@@ -438,9 +448,13 @@ namespace LaDa
            
           // loops over each monome.
           typename t_Monomes :: const_iterator i_monome = monomes.begin();
-          typename t_Monomes :: const_iterator i_monome_end __SERIALCODE( = monomes.end() );
+#         ifdef LADA_MPI
+            typename t_Monomes :: const_iterator i_monome_end;
+#         else 
+            typename t_Monomes :: const_iterator i_monome_end = monomes.end();
+#         endif
           typename t_Container :: const_iterator i_real = variables->begin();
-          __MPICODE(
+          LADA_MPI_CODE(
             types :: t_unsigned nperproc = monomes.size() / MPI_COMM.size(); 
             types :: t_unsigned remainder = monomes.size() % MPI_COMM.size();
             i_monome +=  MPI_COMM.rank() * nperproc + std::min( (types::t_int) remainder,
@@ -473,7 +487,7 @@ namespace LaDa
             result += partial_grad;
         
           } // end of loop over monomes
-          __MPICODE( result = boost::mpi::all_reduce( MPI_COMM, result,
+          LADA_MPI_CODE( result = boost::mpi::all_reduce( MPI_COMM, result,
                                                       std::plus<types::t_real>() ); )
         
           return result;

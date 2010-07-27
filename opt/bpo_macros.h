@@ -40,7 +40,7 @@
   po::notify(vm); 
 
 # define __BPO_PROGNAME__ \
-  __ROOTCODE\
+  LADA_ROOT\
   ( \
     (*world), \
     std::cout << "\n" << __PROGNAME__ \
@@ -51,7 +51,7 @@
 # define __BPO_HELP__ \
   if ( vm.count("help") ) \
   { \
-    __ROOTCODE( (*world), \
+    LADA_ROOT( (*world), \
       std::cout << "Usage: " << argv[0] << " [options] file.xml\n" \
                 << "  file.xml is an optional filename for XML input.\n" \
                 << "  Default input is input.xml.\n\n" \

@@ -48,7 +48,7 @@ namespace LaDa
                        / types::t_real( nboxes(0) * nboxes(1) * nboxes(2) ) );
        if( _verbose )
        {
-        __ROOTCODE
+        LADA_ROOT
         (
           MPI_COMM,
           std::cout << "Will divide into " << nboxes(0) << "x"
@@ -77,7 +77,7 @@ namespace LaDa
 #     endif
       if( _verbose ) 
       {
-        __ROOTCODE( MPI_COMM, std::cout << "First Neighbor tree successfully created.\n"; )
+        LADA_ROOT( MPI_COMM, std::cout << "First Neighbor tree successfully created.\n"; )
       }
       return true;
     } // Vff :: construct_bond_list

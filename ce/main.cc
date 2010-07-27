@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
 {
   namespace fs = boost::filesystem;
   LADA_TRY_BEGIN
-  __MPI_START__
+  LADA_MPI_START
 
   __BPO_START__
   __BPO_RERUNS__;
@@ -69,20 +69,20 @@ int main(int argc, char *argv[])
   LaDa::Crystal::Lattice lattice;
  
   
-  __MPICODE( std::string input; )
-  __ROOTCODE( (*world),
+  LADA_MPI_CODE( std::string input; )
+  LADA_ROOT( (*world),
     TiXmlDocument doc( filename.string() );
     LADA_DO_NASSERT( not doc.LoadFile(), 
                   "error while opening input file "
                << filename << "\n" << doc.ErrorDesc()  )
-    __MPICODE( 
+    LADA_MPI_CODE( 
       std::ostringstream stream;
       stream << *doc.RootElement();
       input = stream.str();
     )
   )
   
-  __MPICODE(
+  LADA_MPI_CODE(
       boost::mpi::broadcast( *world, input, 0 ); 
       TiXmlDocument doc;
       doc.Parse( input.c_str() );
@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
   LADA_DO_NASSERT( not ce.Load(*child), "Error while reading Functional from input." )
   ce.add_equivalent_clusters();
  
-  __MPIROOT( (*world), OUTPUT << "Nb procs: " << world->size() << ENDLINE; )
+  LADA_ROOT( (*world), OUTPUT << "Nb procs: " << world->size() << ENDLINE; )
   // do structure
   child = handle.FirstChild( "Job" ).FirstChild( "Structure" ).Element();
   for (; child; child = child->NextSiblingElement("Structure") )
@@ -113,8 +113,8 @@ int main(int argc, char *argv[])
  
     t_Builder::t_VA_Functional functional;
     ce.generate_functional(structure, &functional);
-    __MPICODE( functional.get_functional1()->set_mpi( world.get() ); )
-    __MPICODE( functional.get_functional2()->set_mpi( world.get() ); )
+    LADA_MPI_CODE( functional.get_functional1()->set_mpi( world.get() ); )
+    LADA_MPI_CODE( functional.get_functional2()->set_mpi( world.get() ); )
   
     functional.resize( structure.atoms.size() );
     std::transform( structure.atoms.begin(), structure.atoms.end(), functional.begin(),

@@ -104,8 +104,8 @@ namespace LaDa
     void read_file( const boost::filesystem::path &_input, std::string& _result )
     {
       namespace bfs = boost::filesystem;
-      __MPICODE( boost::mpi::communicator world; )
-      __ROOTCODE
+      LADA_MPI_CODE( boost::mpi::communicator world; )
+      LADA_ROOT
       ( 
         world, 
          LADA_DO_NASSERT( not bfs::exists( _input ), _input << " does not exist.\n" )
@@ -118,12 +118,12 @@ namespace LaDa
          for(; i_file != i_file_end; ++i_file ) _result.append( *i_file );
          file.close();
       )
-      __MPICODE( boost::mpi::broadcast( world, _result, 0 ); )
+      LADA_MPI_CODE( boost::mpi::broadcast( world, _result, 0 ); )
     }
     void read_xmlfile( const boost::filesystem::path &_input, std::string& _result )
     {
-      __MPICODE( boost::mpi::communicator world; )
-      __ROOTCODE
+      LADA_MPI_CODE( boost::mpi::communicator world; )
+      LADA_ROOT
       ( 
         world, 
         TiXmlDocument doc( _input.string() ); 
@@ -136,7 +136,7 @@ namespace LaDa
         stream << *parent;
         _result = stream.str();
       )
-      __MPICODE( boost::mpi::broadcast( world, _result, 0 ); )
+      LADA_MPI_CODE( boost::mpi::broadcast( world, _result, 0 ); )
     }
     void read_xmlfile( const boost::filesystem::path &_input, TiXmlDocument& _doc )
     {

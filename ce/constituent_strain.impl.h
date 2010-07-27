@@ -84,7 +84,11 @@ namespace LaDa
 
         
         std::vector<math::rVector3d> :: const_iterator i_k_vec = k_vecs.begin();
-        std::vector<math::rVector3d> :: const_iterator i_k_vec_end __SERIALCODE( = k_vecs.end() );
+#       ifdef LADA_MPI
+          std::vector<math::rVector3d> :: const_iterator i_k_vec_end;
+#       else
+          std::vector<math::rVector3d> :: const_iterator i_k_vec_end = k_vecs.end();
+#       endif
         std::vector<math::rVector3d> :: const_iterator i_r_vec;
         std::vector<math::rVector3d> :: const_iterator i_r_vec_begin = r_vecs.begin();
         std::vector<math::rVector3d> :: const_iterator i_r_vec_end = r_vecs.end();
@@ -108,7 +112,7 @@ namespace LaDa
           *i_inter = i_harmonic->evaluate(x);
 
         types::t_real value = 0.0;
-        __MPICODE(
+        LADA_MPI_CODE(
           LADA_NASSERT( not comm, "Communicator not set.\n" )
           types :: t_unsigned nperproc = k_vecs.size() / comm->size(); 
           types :: t_unsigned remainder = k_vecs.size() % comm->size();
@@ -140,7 +144,7 @@ namespace LaDa
           }
           value +=  (real(sum_exp * conj( sum_exp ))) * sum_harm;
         }
-        __MPICODE( value = boost::mpi::all_reduce( *comm, value,
+        LADA_MPI_CODE( value = boost::mpi::all_reduce( *comm, value,
                                                    std::plus<types::t_real>() ); )
         value /= ( (types::t_real)  k_vecs.size() ) * (types::t_real) r_vecs.size();
 
@@ -154,7 +158,11 @@ namespace LaDa
         LADA_NASSERT( variables->size() == 0, 
                   "variables have not been initialized.\n" )
         std::vector<math::rVector3d> :: const_iterator i_k_vec = k_vecs.begin();
-        std::vector<math::rVector3d> :: const_iterator i_k_vec_end __SERIALCODE( = k_vecs.end() );
+#       ifdef LADA_MPI
+          std::vector<math::rVector3d> :: const_iterator i_k_vec_end;
+#       else
+          std::vector<math::rVector3d> :: const_iterator i_k_vec_end = k_vecs.end();
+#       endif
         std::vector<math::rVector3d> :: const_iterator i_r_vec;
         std::vector<math::rVector3d> :: const_iterator i_r_vec_begin = r_vecs.begin();
         std::vector<math::rVector3d> :: const_iterator i_r_vec_end = r_vecs.end();
@@ -193,7 +201,7 @@ namespace LaDa
             *ig_inter /= (types::t_real) N;
         }
 
-        __MPICODE(
+        LADA_MPI_CODE(
           types :: t_unsigned nperproc = k_vecs.size() / comm->size(); 
           types :: t_unsigned remainder = k_vecs.size() % comm->size();
           i_k_vec +=  comm->rank() * nperproc + std::min( (types::t_int) remainder,
@@ -236,7 +244,7 @@ namespace LaDa
 
         }
 
-        __MPICODE( result = boost::mpi::all_reduce( *comm, result, 
+        LADA_MPI_CODE( result = boost::mpi::all_reduce( *comm, result, 
                                                     std::plus<types::t_real>() ); )
         delete[] interpolation;
         return result * inv_N;
@@ -248,7 +256,11 @@ namespace LaDa
         LADA_NASSERT( variables->size() == 0, 
                   "variables have not been initialized.\n" )
         std::vector<math::rVector3d> :: const_iterator i_k_vec = k_vecs.begin();
-        std::vector<math::rVector3d> :: const_iterator i_k_vec_end __SERIALCODE( = k_vecs.end() ); 
+#       ifdef LADA_MPI
+          std::vector<math::rVector3d> :: const_iterator i_k_vec_end;
+#       else
+          std::vector<math::rVector3d> :: const_iterator i_k_vec_end = k_vecs.end();
+#       endif
         std::vector<math::rVector3d> :: const_iterator i_r_vec;
         std::vector<math::rVector3d> :: const_iterator i_r_vec_begin = r_vecs.begin();
         std::vector<math::rVector3d> :: const_iterator i_r_vec_end = r_vecs.end();
@@ -298,19 +310,23 @@ namespace LaDa
         std::fill( gradient, gradient + variables->size(), t_Type(0) );
 
         types::t_real value = 0.0;
-  #  ifdef __ADDHERE__
-  #  error Please change __ADDHERE__ to something not already defined
-  #  endif
-  #  define __ADDHERE__ __MPISERIALCODE( array, gradient )
-        __MPICODE(
+#       ifdef LADA_ADDHERE
+#         error Please change LADA_ADDHERE to something not already defined
+#       endif
+#       ifdef LADA_MPI
+#         define LADA_ADDHERE array
+#       else
+#         define LADA_ADDHERE gradient
+#       endif
+        LADA_MPI_CODE(
           types :: t_unsigned nperproc = k_vecs.size() / comm->size(); 
           types :: t_unsigned remainder = k_vecs.size() % comm->size();
           i_k_vec +=  comm->rank() * nperproc + std::min( (types::t_int) remainder,
                                                           comm->rank() );
           i_k_vec_end = i_k_vec + nperproc;
           if( remainder and comm->rank() < remainder ) ++i_k_vec_end;
-          types::t_real *__ADDHERE__ = new types::t_real[ variables->size() ];
-          std::fill( __ADDHERE__, __ADDHERE__ + variables->size(), types::t_real(0) );
+          types::t_real *LADA_ADDHERE = new types::t_real[ variables->size() ];
+          std::fill( LADA_ADDHERE, LADA_ADDHERE + variables->size(), types::t_real(0) );
         )
         for ( ; i_k_vec != i_k_vec_end; ++i_k_vec )
         {
@@ -340,7 +356,7 @@ namespace LaDa
             sum_exp +=  (*i_spin) * (*i_exp);
           }
 
-          grad = __ADDHERE__;
+          grad = LADA_ADDHERE;
           i_exp = exp_begin;
           for ( ; i_exp != i_exp_end; ++grad, ++i_exp)
             *grad +=   real( sum_exp  * conj( sum_exp ) ) * deriv_harm 
@@ -348,26 +364,26 @@ namespace LaDa
 
           value += real(sum_exp * conj( sum_exp )) * sum_harm;
         }
-        __MPICODE( 
+        LADA_MPI_CODE( 
           boost::mpi::all_reduce( *comm, grad, k_vecs.size(), grad,
                                   std::plus<types::t_real>() ); 
-          std::transform( gradient, gradient + variables->size(), __ADDHERE__, gradient,
+          std::transform( gradient, gradient + variables->size(), LADA_ADDHERE, gradient,
                           boost::lambda::_1 + boost::lambda::_2 * boost::lambda::constant(inv_N) ); 
-          delete[] __ADDHERE__;
+          delete[] LADA_ADDHERE;
           value = boost::mpi::all_reduce( *comm, value,
                                           std::plus<types::t_real>() );
         )
-        __SERIALCODE( 
+#       ifndef LADA_MPI
           std::for_each( gradient, gradient + variables->size(),
                          boost::lambda::_1 *= boost::lambda::constant( inv_N ) );
-        )
+#       endif
         value *= inv_N;
 
         delete[] exp_begin;
         delete[] interpolation;
 
         return value;
-  #undef __ADDHERE__
+#       undef LADA_ADDHERE
       }
 
       // writes k_vecs into a Structure tag

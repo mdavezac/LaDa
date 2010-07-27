@@ -91,7 +91,7 @@ namespace LaDa
     //! vff.print_escan_input( "atomic.config" ); // print pescan input
     //! 
     //! \endcode
-    class Vff __MPICODE( : public MPI_COMMDEC )
+    class Vff LADA_MPI_CODE( : public MPI_COMMDEC )
     {
       protected:
         //! Type of the path.
@@ -109,7 +109,7 @@ namespace LaDa
               bond_cutoff(0) {}
         //! \brief Copy Constructor
         Vff   ( const Vff &_c )
-            : __MPICODE( MPI_COMMCOPY( _c ) LADA_COMMA )
+            : LADA_MPI_CODE( MPI_COMMCOPY( _c ) LADA_COMMA )
               structure( _c.structure ),
               bond_cutoff( _c.bond_cutoff ),
               centers( _c.centers ), functionals( _c.functionals ) {}

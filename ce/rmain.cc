@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
   namespace bl = boost::lambda;
   namespace po = boost::program_options;
   LADA_TRY_BEGIN
-  __MPI_START__
+  LADA_MPI_START
 
 
   LaDa::Fitting::LeaveManyOut leavemanyout;

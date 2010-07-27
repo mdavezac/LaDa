@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
   namespace bl = boost::lambda;
   namespace fs = boost::filesystem;
 
-  __MPI_START__
+  LADA_MPI_START
   LADA_TRY_BEGIN
   __BPO_START__
          ("verbose,p", po::value<LaDa::types::t_unsigned>()->default_value(0),
@@ -506,8 +506,8 @@ int main(int argc, char *argv[])
   }
   std::cout << "\n\n\nEnd of " << __PROGNAME__ << ".\n" << std::endl;
 
-  __MPICODE( MPI_Finalize() );
+  LADA_MPI_CODE( MPI_Finalize() );
   return 1;
-  __BPO_CATCH__( __MPICODE( MPI_Finalize() ) )
+  __BPO_CATCH__( LADA_MPI_CODE( MPI_Finalize() ) )
 }
 
