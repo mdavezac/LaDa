@@ -108,7 +108,7 @@ namespace LaDa
         //! Closes the pipe.
         void close() 
         {
-          if( isopen_ ) return;
+          if( not isopen_ ) return;
           isopen_ = false;
 #         ifdef FUCKING_CRAY
             FC_GLOBAL_(fucking_cray, FUCKING_CRAY)(&which_);

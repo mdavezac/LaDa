@@ -37,12 +37,15 @@ subroutine lada_redirect_close(which)
      integer, intent(in) :: which ! 0 => stderr, 5 => stdin, 6 => stdout
      
      if( which == 0 ) then 
+       flush(ERROR_UNIT)
        close(ERROR_UNIT)
        open(unit=ERROR_UNIT, file="/dev/stderr", POSITION='ASIS')
      else if( which == 5 ) then 
+       flush(INPUT_UNIT)
        close(INPUT_UNIT)
        open(unit=INPUT_UNIT, file="/dev/stdin" , POSITION='ASIS')
      else if( which == 6 ) then 
+       flush(OUTPUT_UNIT)
        close(OUTPUT_UNIT)
        open(unit=OUTPUT_UNIT, file="/dev/stdout", POSITION='ASIS')
      endif
@@ -63,10 +66,13 @@ subroutine fucking_cray(which)
      integer, intent(in) :: which ! 0 => stderr, 5 => stdin, 6 => stdout
      
      if( which == 0 ) then 
+       flush(ERROR_UNIT)
        close(ERROR_UNIT)
      else if( which == 5 ) then 
+       flush(INPUT_UNIT)
        close(INPUT_UNIT)
      else if( which == 6 ) then 
+       flush(OUTPUT_UNIT)
        close(OUTPUT_UNIT)
      endif
 end subroutine
