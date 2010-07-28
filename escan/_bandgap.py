@@ -235,7 +235,6 @@ def _band_gap_refs_impl( escan, structure, outdir, references, n=5,\
   from os.path import join, exists
   from shutil import copyfile
   from numpy import array, argmax
-  from ..opt.changedir import Changedir
   
   # check/correct input arguments
   if "overwrite" in kwargs: del kwargs["overwrite"]

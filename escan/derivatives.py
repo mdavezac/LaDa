@@ -79,10 +79,11 @@ def reciprocal( escan, structure, direction, outdir = None, comm = None, order =
   for i in range(0, nbpoints): 
     out = escan\
           (\
-            structure,\
+            structure, 
             outdir = join(outdir, "%i-s=%f" % (i, parameters[i,1] )),
-            vffrun = vffrun, genpotrun = genpotrun, do_escan = True,\
-            kpoint = escan.kpoint + direction * parameters[i, 1] / units,\
+            vffrun = vffrun, genpotrun = genpotrun, do_escan = True, 
+            kpoint = escan.kpoint + direction * parameters[i, 1] / units,
+            comm = comm,
             **kwargs
           )
     eigenvalues = out.eigenvalues.copy()

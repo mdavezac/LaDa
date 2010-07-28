@@ -88,7 +88,7 @@ class Extract(object):
                    "nonlocalH": nonlocalH, "soH": soH, "AtomicPotential":AtomicPotential,\
                    "array": array }
     # moves to output directory to get relative paths right.
-    with Changedir(self.directory) as cwd:
+    with Changedir(self.directory, comm=self.comm) as cwd:
       exec get_functional(self) in globals(), local_dict
     return local_dict["escan_functional"] if "escan_functional" in local_dict\
            else local_dict["functional"]
@@ -98,8 +98,8 @@ class Extract(object):
     """ Returns true, if non-spin polarized or Kammer calculations. """
     from numpy.linalg import norm
     from . import soH
-    potential = self.solo().escan.potential
-    if potential != soH: return True
+    if self.solo().escan.nbstates  ==   1: return False
+    if self.solo().escan.potential != soH: return True
     return norm(self.solo().escan.kpoint) < 1e-12
 
 
@@ -275,10 +275,11 @@ class Extract(object):
     from ._escan import read_wavefunctions
     from . import soH
 
+    assert self.success
     assert self.comm.size == self.nnodes,\
            RuntimeError("Must read wavefunctions with as many nodes as they were written to disk.")
     with redirect(fout="") as streams:
-      with Changedir(self.directory) as directory:
+      with Changedir(self.directory, comm=self.comm) as directory:
         assert exists(self.escan.WAVECAR),\
                IOError("%s does not exist." % (join(self.directory, self.escan.WAVECAR)))
         self.escan._write_incar(self.comm, self.structure)

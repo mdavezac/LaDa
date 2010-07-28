@@ -23,7 +23,8 @@ class Changedir:
     is_root = True if self.comm == None else self.comm.rank == 0
     if is_root and not exists(self.pwd): makedirs(self.pwd)
     if self.comm != None: self.comm.barrier()
-    assert exists(self.pwd) and isdir(self.pwd), "Could not find working directory."
+    assert exists(self.pwd), "Could not find working directory %s." % (self.pwd)
+    assert isdir(self.pwd), "%s is not a directory." % (self.pwd)
     chdir(self.pwd)
     if self.comm != None: self.comm.barrier()
 

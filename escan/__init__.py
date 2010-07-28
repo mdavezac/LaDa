@@ -370,7 +370,7 @@ class Escan(object):
 
     # changes to temporary working directory
     workdir = outdir if this.workdir == None else this.workdir
-    context = Tempdir(workdir=workdir, comm=comm, keep=keep_tempdir)\
+    context = Tempdir(workdir=workdir, comm=comm)\
               if not this.inplace  else Changedir(outdir, comm=comm) 
     with context as this._tempdir: 
   
@@ -431,18 +431,22 @@ class Escan(object):
       # makes calls to run
       self._run_vff(structure, outdir, comm, cout, overwrite, norun)
       self._run_genpot(comm, outdir, norun)
-      if self.do_escan == True:
-        self._run_escan(comm, structure, norun)
+      if self.do_escan: self._run_escan(comm, structure, norun)
+
+      # don't print timeing if not running.
+      if norun == True: return
+
+
+      with open(cout, "a") as file: 
+        timing = time.time() - timing
+        hour = int(float(timing/3600e0))
+        minute = int(float((timing - hour*3600)/60e0))
+        second = (timing - hour*3600-minute*60)
+        file.write("# Computed ESCAN in: %i:%i:%f.\n"  % (hour, minute, second))
+      
+      if self.do_escan: 
         extract = Extract(comm = comm, directory = outdir, escan = self)
-        if norun == False:
-          with open(cout, "a") as file: 
-            timing = time.time() - timing
-            hour = int(float(timing/3600e0))
-            minute = int(float((timing - hour*3600)/60e0))
-            second = (timing - hour*3600-minute*60)
-            file.write("# Computed ESCAN in: %i:%i:%f.\n"  % (hour, minute, second))
-          assert extract.success, RuntimeError("Escan calculations did not complete.")
-        else: return extract
+        assert extract.success, RuntimeError("Escan calculations did not complete.")
 
 
   def _run_vff(self, structure, outdir, comm, cout, overwrite, norun):
@@ -547,8 +551,12 @@ class Escan(object):
                      % ( self.eref if self.eref != None else 0,\
                          self.cutoff, self.smooth, self.kinetic_scaling )
       if self.potential != soH or norm(self.kpoint) < 1e-6: 
-        print >> file, "5 %i # number of states" % (self.nbstates/2)
-      else: print >> file, "5 %i # number of states" % (self.nbstates)
+        nbstates = max(1, self.nbstates/2)
+        print >> file, "5 %i # number of states" % (nbstates)
+      else:
+        assert self.nbstates > 0,\
+               ValueError("Cannot have less than 1 state (%i)." % (self.nbstates))
+        print >> file, "5 %i # number of states" % (self.nbstates)
 
       print >> file, "6 %i %i %e # itermax, nllines, tolerance"\
                      % (self.itermax, self.nlines, self.tolerance)
@@ -590,11 +598,12 @@ class Escan(object):
     from ..opt import redirect
 
 
+    is_root = True if comm == None else comm.rank == 0
     self._write_incar(comm, structure, norun)
-    if comm.rank == 0: copyfile(self.maskr, basename(self.maskr))
+    if is_root: copyfile(self.maskr, basename(self.maskr))
     if norun == True: return
+    if comm != None: comm.barrier() 
     with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 
-      comm.barrier() 
       _call_escan(comm)
 
   def _get_kpoint(self, structure, comm, norun):

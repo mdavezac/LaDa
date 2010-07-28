@@ -12,7 +12,6 @@ def band_structure(escan, structure, kpoints, density, outdir=None, comm=None,\
   from numpy.linalg import norm
   from numpy import abs, sum
   from ..crystal import deform_kpoint
-  from ..opt.changedir import Changedir
 
   # check/correct input arguments
   assert "do_genpot" not in kwargs,\
