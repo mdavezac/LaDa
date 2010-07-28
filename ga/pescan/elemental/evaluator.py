@@ -78,6 +78,8 @@ class Bandgap(object):
     if outdir == None:     outdir     = join(self.outdir, str(self.nbcalc))
     if comm == None:       comm       = world
  
+    # creates a crystal structure (phenotype) from the genotype.
+    structure = converter(indiv.genes)
     # creates argument dictonary to pass on to calculations.
     dictionary = deepcopy(self.kwargs)
     dictionary.update(kwargs) 
@@ -86,7 +88,6 @@ class Bandgap(object):
     dictionary["references"] = self.references(structure) if hasattr(references, "__call__")\
                                else references
     # performs calculation.
-    structure = converter(indiv.genes)
     out = bandgap(escan, structure, **dictionary)
 
     # saves some stuff
@@ -138,3 +139,59 @@ class Dipole(Bandgap):
     out = super(Dipole, self).run(indiv, *args, **kwargs)
     indiv.oscillator_strength, indiv.osc_nbstates = out.oscillator_strength()
     return indiv.oscillator_strength
+
+
+class EffectiveMass(Bandgap):
+  """ Evaluates effective mass. """
+  def __init__(self, *args, **kwargs): 
+    """ Initializes the dipole element evaluator.  """
+    from numpy import array
+    super(EffectiveMass, self).__init__(*args, **kwargs)
+
+    # isolates effective mass parameters.
+    self.emass_dict = { "direction": array([0,0,1]), "order": 2, "nbpoints": None,
+                        "stepsize": 1e-2, "lstsq": None }
+    for key in self.emass_dict.keys():
+      if key in self.kwargs: self.emass_dict[key] = self.kwargs.pop(key)
+    # some sanity checks.
+    assert self.emass_dict["order"] >= 2
+
+  @count_calls
+  def __call__(self, indiv, comm=None, **kwargs):
+    """ Computes electronic effective mass. """
+    from copy import deepcopy
+    from boost.mpi import world
+    from ....escan import derivatives
+
+    if comm == None: comm = world
+
+    # isolates effective mass parameters.
+    emass_dict = {}
+    for key in self.emass_dict.keys():
+      emass_dict[key] = kwargs.pop(key, self.emass_dict[key])
+
+    # now gets bandgap.
+    out = super(EffectiveMass, self).run(indiv, comm=comm, **kwargs)
+    assert out.success, RuntimeError("error in %s" % (out.directory))
+
+    # then prepares parameters for effective mass. 
+    # at this point, electronic effective mass, for no good reasons.
+    dictionary = deepcopy(self.kwargs)
+    dictionary.update(kwargs) 
+    dictionary.update(self.emass_dict) 
+    dictionary.update(emass_dict) 
+    dictionary["outdir"]     = out.directory + "/emass"
+    dictionary["eref"]       = out.cbm
+    dictionary["structure"]  = out.structure
+    # removes band-gap stuff
+    dictionary.pop("references", None)
+    dictionary.pop("n", None)
+    dictionary.pop("overlap_factor", None)
+    # at this point, only compute one state.
+    dictionary["nbstates"] = 1
+
+    # computes effective mass.
+    results = derivatives.reciprocal(self.escan, comm=comm, **dictionary)
+
+    indiv.emass_vbm =  1e0/results[0][2,0]
+    return indiv.emass_vbm
