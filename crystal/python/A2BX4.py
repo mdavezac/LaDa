@@ -1055,26 +1055,13 @@ def b5I():
   """ Returns b5I lattice."""
   from . import Lattice
   
-  lattice = Lattice()
-  lattice.scale = 1.000000e+00
-  lattice.set_cell = (0.000000e+00, 5.000000e-01, 5.000000e-01),\
-                     (5.000000e-01, 0.000000e+00, 5.000000e-01),\
-                     (5.000000e-01, 5.000000e-01, 0.000000e+00)
-  lattice.name = "b5I"
-  lattice.add_site = (8.750000e-01, 8.750000e-01, 8.750000e-01), "A", 
-  lattice.add_site = (1.250000e-01, 1.250000e-01, 1.250000e-01), "A", 
-  lattice.add_site = (5.000000e-01, 5.000000e-01, 5.000000e-01), "A", 
-  lattice.add_site = (5.000000e-01, 2.500000e-01, 2.500000e-01), "A", 
-  lattice.add_site = (2.500000e-01, 5.000000e-01, 2.500000e-01), "B", 
-  lattice.add_site = (2.500000e-01, 2.500000e-01, 5.000000e-01), "B", 
-  lattice.add_site = (2.500000e-01, 2.500000e-01, 2.500000e-01), "X", 
-  lattice.add_site = (2.500000e-01, 5.000000e-01, 5.000000e-01), "X", 
-  lattice.add_site = (5.000000e-01, 2.500000e-01, 5.000000e-01), "X", 
-  lattice.add_site = (5.000000e-01, 5.000000e-01, 2.500000e-01), "X", 
-  lattice.add_site = (7.500000e-01, 7.500000e-01, 7.500000e-01), "X", 
-  lattice.add_site = (7.500000e-01, 5.000000e-01, 5.000000e-01), "X", 
-  lattice.add_site = (5.000000e-01, 7.500000e-01, 5.000000e-01), "X", 
-  lattice.add_site = (5.000000e-01, 5.000000e-01, 7.500000e-01), "X", 
+  lattice = b5()
+  nb_B = 2
+  for site in lattice.sites:
+    if "A" in site.type and nb_B > 0: 
+      site.type = ["B"]
+      nb_B -= 1
+    elif "B" in site.type: site.type = ["A"]
   lattice.find_space_group()
   return lattice
 
