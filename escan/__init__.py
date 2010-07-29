@@ -534,7 +534,7 @@ class Escan(object):
       _call_genpot(comm)
 
 
-  def _write_incar(self, comm, structure, norun):
+  def _write_incar(self, comm, structure, norun=False):
     """ Writes escan input to file. """
     from os.path import basename
     from numpy.linalg import norm
