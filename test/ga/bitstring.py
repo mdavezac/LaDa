@@ -8,7 +8,7 @@ class Eval:
     self.target = numpy.array([randint(0,1) for u in xrange(self.size) ])
     self.nbevals = 0
 
-  def __call__(self, indiv):
+  def __call__(self, indiv,comm = None):
     from math import fabs
 
     self.nbevals += 1
