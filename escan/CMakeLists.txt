@@ -1,5 +1,5 @@
 set( PYESCAN_PY
-     _bandgap.py  band_structure.py  derivatives.py  _extract.py  __init__.py
+     _bandgap.py  _bandstructure.py  derivatives.py  _extract.py  __init__.py
      _methods.py  va.py  _wfns.py )
 set(PYESCAN_F90 escan_types.f90 fortran.f90 wavefunctions_module.f90)
 set(PYESCAN_HEADERS escan.hpp  wavefunctions.hpp)

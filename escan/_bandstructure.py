@@ -1,10 +1,24 @@
 #! python
 """ Bandstructure plotting tools """
-from sys import exit
+__docformat__  = 'restructuredtext en'
 
 def band_structure(escan, structure, kpoints, density, outdir=None, comm=None,\
                    do_relax=None, pools = 1, **kwargs):
-  """ Returns eigenvalues for plotting bandstructure. """
+  """ Returns eigenvalues for plotting bandstructure. 
+  
+      :Parameters:
+      - `escan`: an `lada.escan.Escan` functional wrapping nanopse's pescan. 
+      - `structure`: an `lada.crystal.Structure` object describing the
+        structure for which to compute a band-structure.
+      - `kpoints`: a sequence of 2-tuples. Each two tuple is a starting k-point and
+        an end k-point. The k-points should be given in cartesian units within
+        the ideal, undistorted lattice. They will deformed to the fit into the
+        relaxed structure. However, translational invariance is not applied
+        (e.g. kpoints are not refolded).
+      - `density`: a float giving the number of kpoints per reciprocal length
+        unit.
+      - **kwargs: Any parameters appropriate to `lada.escan.Escan`.
+  """
   from os import getcwd
   from os.path import join, expanduser, abspath, exists
   from shutil import copyfile

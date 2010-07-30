@@ -9,7 +9,7 @@ if __load_pescan_in_global_namespace__:
   _setdlopenflags(flags)
 else: import _escan
 from ..opt.decorators import add_setter, broadcast_result
-from band_structure import band_structure
+import _bandstructure 
 import _extract
 import _bandgap
 import _methods
@@ -18,6 +18,13 @@ nb_valence_states = _escan.nb_valence_states
 bandgap = _bandgap.band_gap
 extract_bg = _bandgap.extract
 dipole_matrix_elements = _methods.dipole_matrix_elements
+band_structure = _bandstructure.band_structure
+
+
+__all__ = [ "Extract", "nb_valence_states", "bandgap", "extract_bg",\
+            "dipole_matrix_element", "band_structure", "call_escan",\
+            "Escan", "folded_spectrum", "all_electron", "soH", \
+            "nonlocalH", "localH", "AtomicPotential" ]
 
 def _is_in_sync(comm, which = [0]):
   from boost.mpi import broadcast
