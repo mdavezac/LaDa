@@ -6,6 +6,7 @@
 
 #include <math/misc.h>
 #include <math/fuzzy.h>
+#include <limits>
 
 #include "lattice.h"
 #include "compare_sites.h"
@@ -19,14 +20,15 @@ namespace LaDa
                                math::rMatrix3d const &_cell, 
                                math::rMatrix3d const &_inv)
     {
+      const types::t_real roundoff = 1e1 * std::numeric_limits<types::t_real>::epsilon();
       math::rVector3d result( _inv * _vec );
-      result(0) -= std::floor(result(0));
-      result(1) -= std::floor(result(1));
-      result(2) -= std::floor(result(2));
+      result(0) -= std::floor(result(0)+roundoff);
+      result(1) -= std::floor(result(1)+roundoff);
+      result(2) -= std::floor(result(2)+roundoff);
       // numerical stability check.
-      if( math::eq(result(0), 1e0) ) result(0) = 0e0;
-      if( math::eq(result(1), 1e0) ) result(1) = 0e0;
-      if( math::eq(result(2), 1e0) ) result(2) = 0e0;
+      if( math::eq(result(0), -1e0) or math::eq(result(0), 1e0) ) result(0) = 0e0;
+      if( math::eq(result(1), -1e0) or math::eq(result(1), 1e0) ) result(1) = 0e0;
+      if( math::eq(result(2), -1e0) or math::eq(result(2), 1e0) ) result(2) = 0e0;
       return _cell * result;
     }
 
