@@ -38,11 +38,22 @@ def launch_scattered(self, event):
   ip.user_ns.pop("_lada_error", None)
 
   # creates mppalloc function.
-  def mppalloc(job): 
-    """ Returns number of processes for this job. """
-    N = len(job.structure.atoms) # number of atoms.
-    if N % 2 == 1: N -= 1
-    return N  
+  if len(event.split()) == 0: 
+    def mppalloc(job): 
+      """ Returns number of processes for this job. """
+      N = len(job.structure.atoms) # number of atoms.
+      if N % 2 == 1: N -= 1
+      return N  
+  elif len(event.split()) > 1:
+    print "launch_scattered accepts no more than one parameter."
+    return
+  elif event.split()[0] in ip.user_ns:
+    mppalloc = ip.user_ns[event.split()[0]]
+  else:
+    try: mppalloc = int(event.split()[0])
+    except: 
+      print "Could not make sense of argument %s." % event
+      return
 
   # where are we? important for default template.
   which = "SNLCLUSTER" in environ
@@ -67,7 +78,7 @@ def launch_scattered(self, event):
     pbsscripts.append(join(path+".pbs", name + ".pbs"))
     with open(pbsscripts[-1], "w") as file: 
       template( file, outdir=splitpath(path)[0], jobid=i, mppwidth=mppwidth, name=name,\
-                pickle = path, pyscript=pyscript )
+                pickle = path, pyscript=pyscript, ppath=splitpath(path)[0] )
   if event.find("nolaunch") != -1: return 
   # otherwise, launch.
   for script in pbsscripts:
