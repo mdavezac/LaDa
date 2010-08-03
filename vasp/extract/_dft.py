@@ -447,23 +447,24 @@ class _ExtractImpl(object):
     import re
     from numpy import array
 
-    for path in [self.OUTCAR, self.CONTCAR]:
-      if self.directory != "": path = join(self.directory, path)
-      if not exists(path): return False
-      
     path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
+    if not exists(path): raise IOError("File %s does not exist.\n" % (path))
 
     with open(path, "r") as file:
-      regex = re.compile(r"""average\s+(electrostatic)\s+potential\s+at\s+core""", re.X)
+      regex = re.compile(r"""average\s+\(electrostatic\)\s+potential\s+at\s+core""", re.X)
       for line in file:
         if regex.search(line) != None: break
-      file.next()
-      file.next()
+      try:
+        file.next()
+        file.next()
+      except:
+        print "No average potential."
+        return None
       result = []
       for line in file:
         data = line.split()
         if len(data) == 0: break
-        result.extend( [u for u, i in enumerate(data) if i % 2 == 1] )
+        result.extend( [float(u) for i, u in enumerate(data) if i % 2 == 1] )
         
     return array(result, dtype="float64")
 
