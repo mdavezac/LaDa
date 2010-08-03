@@ -30,7 +30,7 @@ vasp.lplane     = True
 vasp.addgrid    = True
 vasp.set_smearing   = "metal", 0.01
 vasp.set_relaxation = "ionic"
-vasp.set_symmetry   = "off"
+vasp.set_symmetries = "off"
 
 #                Symbol, directory of POTCAR, U parameters, max/min oxidation state, is magnetic
 vasp.add_specie = "Rh", "pseudos/Rh", U("liechtenstein", "d", 3.3), 3, True

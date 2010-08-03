@@ -24,7 +24,7 @@ jobdict.add_param = "structure", fill_structure(input.lattice.cell)
 jobdict.add_param = "vasp", RelaxCellShape(input.vasp, relaxation="volume cellshape ions")
 jobdict.add_param = "kpoints", "Automatic generation\n0\nMonkhorst\n8 8 8\n0 0 0"
 jobdict.add_param = "encut", 1.3
-jobdict.add_param = "set_symmetry", 1e-5
+jobdict.add_param = "set_symmetries", 1e-5
 
 
 # creates super-structure

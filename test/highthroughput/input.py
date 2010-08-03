@@ -8,7 +8,7 @@ vasp.lplane     = True
 vasp.addgrid    = True
 vasp.set_smearing   = "metal", 0.01
 vasp.set_relaxation = "ionic"
-vasp.set_symmetry   = "off"
+vasp.set_symmetries = "off"
 vasp.kpoints        = "\n0\nAuto\n30"
 # Magmom is a special parameter with specific implementation for point defects.
 # We need to go through add_item to reset it as normal key/value parameter.
