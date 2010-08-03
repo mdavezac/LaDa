@@ -1,4 +1,6 @@
 """ Point-defect helper functions. """
+__docformat__ = "restructuredtext en"
+
 
 def inequivalent_sites(lattice, type):
   """ Yields sites occupied by type which are inequivalent.
@@ -7,14 +9,18 @@ def inequivalent_sites(lattice, type):
       there may be more than one site which qualifies. We want to iterate over
       those sites which are inequivalent only, so that only the minimum number
       of operations are performed. 
-      @note: lattice sites can be defined as occupiable by more than one atomic type:
+      :note: lattice sites can be defined as occupiable by more than one atomic type:
              C{lattice.site.type[i] = ["Al", "Mg"]}. These sites will be
              counted if C{type in lattice.site.type}, where type is the input
              parameter.
-      @param lattice: Lattice for which to find equivalent sites.
-      @type lattice: lada.crystal.Lattice
-      @param type: Atomic specie for which to find inequivalent sites. 
-      @return: indices of inequivalent sites.
+
+      :Parameters:
+          lattice : `lada.crystal.Lattice`
+            Lattice for which to find equivalent sites.
+          type : str 
+            Atomic specie for which to find inequivalent sites. 
+
+      :return: indices of inequivalent sites.
   """
   from numpy.linalg import inv, norm
   from lada.crystal import fold_vector
@@ -47,10 +53,17 @@ def vacancy(structure, lattice, type):
   """ Yields all inequivalent vacancies. 
   
       Loops over all symmetrically inequivalent vacancies of given type.
-      @param structure: structure on which to operate
-      @param lattice: back-bone lattice of the structure.
-      @param type: type of atoms for which to create vacancy.
-      @return: a 3-tuple consisting of:
+
+      :Parameters:
+        structure : `lada.crystal.Structure`
+          structure on which to operate
+        lattice : `lada.crystal.Lattice` 
+          back-bone lattice of the structure.
+        type : str
+          type of atoms for which to create vacancy.
+
+      :return: 
+        a 3-tuple consisting of:
         - the structure with a vacancy.
         - the vacancy atom from the original structure. It is given an
           additional attribute, C{index}, referring to list of atoms of the
@@ -87,11 +100,18 @@ def substitution(structure, lattice, type, subs):
   """ Yields all inequivalent vacancies. 
   
       Loops over all equivalent vacancies.
-      @param structure: structure on which to operate
-      @param lattice: back-bone lattice of the structure.
-      @param type: type of atoms for which to create vacancy.
-      @param subs: substitution type
-      @return: a 3-tuple consisting of:
+
+      :Parameters:
+        structure : `lada.crystal.Structure`
+          structure on which to operate
+        lattice : `lada.crystal.Lattice`
+          back-bone lattice of the structure.
+        type : str
+          type of atoms for which to create vacancy.
+        subs : str
+          substitution type
+
+      :return: a 3-tuple consisting of:
         - the structure with a substitution.
         - the substituted atom in the structure above. The atom is given an
           additional attribute, C{index}, referring to list of atoms in the
@@ -127,18 +147,20 @@ def substitution(structure, lattice, type, subs):
 def charged_states(A=None, B=None):
   """ Loops over charged systems. 
 
-      The parameters C{A} and C{B} are either None or an L{Specie
-      <lada.vasp.specie.Specie>} instance:
-         - if only one of C{A} and C{B} is not None, then the accepted charge
-           states are anything between 0 and C{-A.oxidation} included. This
-           works both for negative and positive oxidation numbers. The "-" sign
-           comes from the rational that an ion C{A} with oxidation
-           C{A.oxidation} is removed from the system.
-         - if both C{A} and C{B} are not None, than reviewed chared states are between
-           C{max(-A.oxidation, B.oxidation-A.oxidation)} and
-           C{min(-A.oxidation, B.oxidation-A.oxidation)}. 
+      :Types:
+        - `A` : None or `lada.vasp.specie.Species`
+        - `B` : None or `lada.vasp.specie.Species`
 
-      @return: Yields a 2-tuple:
+      - if only one of C{A} and C{B} is not None, then the accepted charge
+        states are anything between 0 and C{-A.oxidation} included. This
+        works both for negative and positive oxidation numbers. The "-" sign
+        comes from the rational that an ion C{A} with oxidation
+        C{A.oxidation} is removed from the system.
+      - if both C{A} and C{B} are not None, than reviewed chared states are between
+        C{max(-A.oxidation, B.oxidation-A.oxidation)} and
+        C{min(-A.oxidation, B.oxidation-A.oxidation)}. 
+
+      :return: Yields a 2-tuple:
         - Number of electrons to add to the system (not charge). 
         - a suggested name for the charge state calculation.
   """
@@ -165,3 +187,19 @@ def charged_states(A=None, B=None):
     elif charge > 0:    oxdir = "+" + str(charge) 
     elif charge < 0:    oxdir = str(charge) 
     yield -charge, oxdir
+
+
+def band_filling_correction(output, cbm):
+  """ Returns band-filling corrrection. 
+
+      :Parameters: 
+        output : return of lada.vasp.Vasp.__call__
+          an output extraction object as returned by the vasp functional when
+          computing the defect of interest.
+        cbm : float 
+          The cbm of the host with potential alignment.
+  """
+  from numpy import sum
+  indices = output.eigenvalues > cbm
+  return sum( (output.multiplicity * output.eigenvalues * output.occupations)[indices] - cbm )
+  
