@@ -189,17 +189,75 @@ def charged_states(A=None, B=None):
     yield -charge, oxdir
 
 
-def band_filling_correction(output, cbm):
+def band_filling_correction(defect, cbm):
   """ Returns band-filling corrrection. 
 
       :Parameters: 
-        output : return of lada.vasp.Vasp.__call__
-          an output extraction object as returned by the vasp functional when
+        defect : return of `lada.vasp.Vasp.__call__`
+          An output extraction object as returned by the vasp functional when
           computing the defect of interest.
         cbm : float 
           The cbm of the host with potential alignment.
   """
   from numpy import sum
-  indices = output.eigenvalues > cbm
-  return sum( (output.multiplicity * output.eigenvalues * output.occupations)[indices] - cbm )
+  indices = defect.eigenvalues > cbm
+  return sum( (defect.multiplicity * defect.eigenvalues * defect.occupations)[indices] - cbm )
   
+
+def potential_alignment(defect, host, maxdiff=0.5):
+  """ Returns potential alignment correction. 
+
+      :Parameter:
+        defect : return of `lada.vasp.Vasp.__call__`
+          An output extraction object as returned by the vasp functional when
+          computing the defect of interest.
+        host : return of `lada.vasp.Vasp.__call__`
+          An output extraction object as returned by the vasp functional when
+          computing the host matrix.
+        maxdiff : float
+          Maximum difference between the electrostatic potential of an atom and
+          the equivalent host electrostatic potential beyond which that atom is
+          considered pertubed by the defect.
+
+      :return: The potential alignment in eV (without charge factor).
+  """
+  from operator import itemgetter
+  from numpy import average, array, abs
+  from crystal import specie_list
+
+  # first get average atomic potential per atomic specie in host.
+  host_electropot = {}
+  host_species = specie_list(host.structure)
+  for s in host_species:
+    indices = array([atom.type == s for atom in structure.atoms])
+    host_electropot[s] = average(host.electropot[indices]) 
+  
+  # creates an initial list of unperturbed atoms. 
+  types = array([atom.type for atom in defect.structure.atoms])
+  unperturbed = array([(type in host_species) for type in types])
+
+  # now finds unpertubed atoms according to maxdiff
+  while any(unperturbed): # Will loop until no atom is left. That shouldn't happen!
+
+    # computes average atomic potentials of unperturbed atoms.
+    defect_electropot = {}
+    for s in host_species:
+      defect_electropot[s] = average( defect.electropot[unperturbed & (types == s)] )
+
+    # finds atomic potential farthest from the average potentials computed above.
+    discrepancies =   defect.electropot[unperturbed] \
+                    - array([host_electropot[type] for type in types[unperturbed]])
+    index, diff = max(enumerate(abs(discrepancies)), key=itemgetter(2))
+
+    # if discrepancy too high, mark atom as perturbed.
+    if diff > maxdiff: unperturbed[unperturbed][index] = False
+    # otherwise, we are done for this loop!
+    else: break
+
+  # now computes potential alignment from unpertubed atoms.
+  diff_from_host =    defect.electropot[unpertubed]  
+                    - array([host_electropot[type] for type in types[unperturbed]])\
+  return average(diff_from_host)
+                    
+
+    
