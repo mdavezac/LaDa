@@ -219,7 +219,7 @@ class Incar(object):
         symmetry operation. 
     """
     if value == None: self.isym = None
-    if str(value).lower() == "off" or str(value) == "0": self.params["isym"] = 0
+    elif str(value).lower() == "off" or str(value) == "0": self.params["isym"] = 0
     elif "isym" in self.params:
       if self.isym == 0: self.isym = None
       self.symprec = value

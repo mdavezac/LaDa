@@ -1062,6 +1062,7 @@ def b5I():
       site.type = ["B"]
       nb_B -= 1
     elif "B" in site.type: site.type = ["A"]
+  lattice.name = "b5I"
   lattice.find_space_group()
   return lattice
 
