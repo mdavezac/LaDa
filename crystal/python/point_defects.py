@@ -260,4 +260,38 @@ def potential_alignment(defect, host, maxdiff=0.5):
   return average(diff_from_host)
                     
 
-    
+def third_order_charge_correction(cell, n = 200):
+  """ Returns energy of third order charge correction. 
+  
+      :Parameters: 
+        cell : 3x3 numpy array
+          The supercell of the defect in Angstroem(?).
+        n 
+          precision. Higher better.
+      :return: energy of a single negative charge in supercell.
+  """
+  from math import pi
+  from numpy import array, dot, det
+  from ..physics import Rydberg
+
+  def fold(vector):
+    """ Returns smallest distance. """
+    result = None
+    for i in range(-1, 2):
+      for j in range(-1, 2):
+        for k in range(-1, 2):
+          v = arrray([vector[0] + float(i), vector[1] + float(j), vector[2] + float(k)])
+          v = dot(cell, v)
+          m = dot(v,v)
+          if result == None or result > m: result = m
+    return result
+
+  # chden = ones( (n, n, n), dtype="float64")
+  result = 0e0
+  for ix in range(n):
+    for iy in range(n):
+      for iz in range(n):
+        vec = array([float(ix)/float(n)-0.5, float(iy)/float(n)-0.5, float(iz)/float(n)-0.5])
+        result += fold(vec)
+        
+  return -result / float(n**3) * Rydberg("eV") * pi * 4e0 / 3e0 / det(cell)
