@@ -553,7 +553,9 @@ namespace LaDa
       {
         StrAtom stratom; lattice->convert_Atom_to_StrAtom( *i_atom, stratom );
         _stream << " " << Physics::Atomic::Z(stratom.type) 
-                << " " << ( stratom.pos * scale ) << "\n";
+                << " " << ( stratom.pos[0] * scale ) << " "
+                << " " << ( stratom.pos[1] * scale ) << " "
+                << " " << ( stratom.pos[2] * scale ) << "\n";
       }
       return _stream;
     } 
