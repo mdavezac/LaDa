@@ -119,7 +119,9 @@ namespace LaDa
       for(; i_atom != i_atom_end; ++i_atom )
       {
         sstr << " " << Physics::Atomic::Z(i_atom->type) 
-             << " " << ( i_atom->pos * _str.scale ) << "\n";
+             << " " << ( i_atom->pos[0] * _str.scale ) << " "
+             << " " << ( i_atom->pos[1] * _str.scale ) << " "
+             << " " << ( i_atom->pos[2] * _str.scale ) << "\n";
       }
       return bp::str( sstr.str().c_str() );
     }
