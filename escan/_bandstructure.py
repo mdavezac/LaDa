@@ -2,8 +2,8 @@
 """ Bandstructure plotting tools """
 __docformat__  = 'restructuredtext en'
 
-def band_structure(escan, structure, kpoints, density, outdir=None, comm=None,\
-                   do_relax=None, pools = 1, **kwargs):
+def band_structure(escan, structure, kpoints, density = None, outdir=None, comm=None,\
+                   do_relax=None, pools = 1, nbkpoints = None, **kwargs):
   """ Returns eigenvalues for plotting bandstructure. 
   
       :Parameters:
@@ -28,6 +28,8 @@ def band_structure(escan, structure, kpoints, density, outdir=None, comm=None,\
   from ..crystal import deform_kpoint
 
   # check/correct input arguments
+  assert nbkpoints == None or density == None, ValueError("Choose either density or nbkpoints")
+  assert nbkpoints != None or density != None, ValueError("Choose either density or nbkpoints")
   assert "do_genpot" not in kwargs,\
          ValueError("\"do_genpot\" is not an admissible argument of band_structure.")
   assert "do_escan" not in kwargs,\
@@ -54,17 +56,18 @@ def band_structure(escan, structure, kpoints, density, outdir=None, comm=None,\
     if dont_deform_kpoint: return _kpoint
     if sum(abs(input-relaxed)) < 1e-11: return _kpoint
     return deform_kpoint(_kpoint, input, relaxed)
-  def _line(start, end, density):
+  def _line(start, end):
     """ Generator for creating points between two kpoints. """
     from numpy.linalg import norm
 
     distance = norm(_get_kpoint(end - start))
-    nbkpt = int(max(1, density * distance - 1))
+    if nbkpoints != None: nbkpt = nbkpoints
+    else: nbkpt = int(max(1, float(density) * distance - 1))
     stepsize = 1e0/float(nbkpt)
     _kpoints = [ float(i) * stepsize for i in range(1, nbkpt+1) ]
     for k in _kpoints: yield start + k * (end-start) 
 
-  def _lines(endpoints, density):
+  def _lines(endpoints):
     """ Generator for creating segments. """
     from numpy.linalg import norm
     assert len(endpoints) > 0, ValueError
@@ -73,7 +76,7 @@ def band_structure(escan, structure, kpoints, density, outdir=None, comm=None,\
     yield pos, endpoints[0][0]
     for start, end in endpoints:
       last = start.copy()
-      for _kpoint in _line(start, end, density):
+      for _kpoint in _line(start, end):
         pos += norm(_get_kpoint(_kpoint-last))
         last = _kpoint.copy()
         yield pos, _kpoint
@@ -84,7 +87,7 @@ def band_structure(escan, structure, kpoints, density, outdir=None, comm=None,\
   local_comm = comm.split(color)
   # then computes different kpoints.
   results = []
-  for i, (x, kpoint) in enumerate(_lines(kpoints, density)):
+  for i, (x, kpoint) in enumerate(_lines(kpoints)):
     # separates jobs into pools.
     if i % pools != color: continue
 
