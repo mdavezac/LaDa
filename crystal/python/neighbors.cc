@@ -61,7 +61,13 @@ namespace LaDa
                            "This is the object returned by L{Neighbors}.")
           .def(bp::init<Neighbor const&>())
           .add_property("index", &Neighbor::index, "Index of atom in structure.")
-          .add_property("pos", &Neighbor::pos, "Position respect to the origin.")
+          .add_property
+          (
+            "pos",
+            make_getter(&Neighbor::pos, bp::return_value_policy<bp::return_by_value>()),
+            make_setter(&Neighbor::pos, bp::return_value_policy<bp::return_by_value>()),
+            "Position respect to the origin."
+          )
           .add_property("distance", &Neighbor::distance, "Distance from the origin.");
 
       bp::class_<Neighbors>
