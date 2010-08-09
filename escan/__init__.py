@@ -242,6 +242,8 @@ class Escan(object):
     """ Private reference to the escan input file. """
     self._GENCAR = "pot.input"
     """ Private reference to the genpot input file. """
+    self._FUNCCAR = "ESCANCAR"
+    """ Private reference to the functional pickle. """
     self._dont_deform_kpoint = False
     """ Whether *not* to deform kpoints from input cell to relaxed cell.
 
@@ -347,6 +349,7 @@ class Escan(object):
     from os import getcwd
     from os.path import exists, isdir, abspath, basename, join, expanduser
     from shutil import copyfile, rmtree
+    from cPickle import dump
     from boost.mpi import world, broadcast
     from ..opt.changedir import Changedir
     from ..opt.tempdir import Tempdir
@@ -380,6 +383,9 @@ class Escan(object):
     context = Tempdir(workdir=workdir, comm=comm)\
               if not this.inplace  else Changedir(outdir, comm=comm) 
     with context as this._tempdir: 
+
+      # Saves FUNCCAR.
+      with open(join(this._tempdir, this._FUNCCAR), "r") as file: dump(this, file)
   
       # performs calculation.
       this._run(structure, outdir, comm, overwrite, norun)

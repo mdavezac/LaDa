@@ -17,6 +17,8 @@ class Extract(object):
     """ Private reference to vff extraction object. """
     self.OUTCAR = escan.OUTCAR
     """ OUTCAR file to extract stuff from. """
+    self.FUNCCAR = escan._FUNCCAR
+    """ Pickle to FUNCCAR. """
     self.comm = comm
     """ Communicator for extracting stuff. 
 
@@ -59,13 +61,15 @@ class Extract(object):
     path = join(self.directory, self.OUTCAR) if len(self.directory) else self.OUTCAR
     if not exists(path): return False
 
-    try: good = 0 if self.solo().do_escan == True else 1
-    except: return False
+    good = 0
+    is_do_escan = True
     with open(path, "r") as file:
       for line in file:
         if line.find("FINAL eigen energies, in eV") != -1: good += 1
+        if line.find("functional.do_escan              =") != -1:
+          is_do_escan = eval(line.split[-1])
         if line.find("# Computed ESCAN in:") != -1 and good == 1: good += 1; break
-    return good == 2
+    return (good == 2 and is_do_escan) or (good == 1 and not is_do_escan)
 
   @property
   @make_cached
@@ -73,9 +77,20 @@ class Extract(object):
     """ Greps escan functional from self.L{OUTCAR}. """
     from os.path import exists, join
     from numpy import array
+    from cPickle import load
     from ..opt.changedir import Changedir
     from . import Escan, localH, nonlocalH, soH, AtomicPotential
     
+    # tries to read from pickle.
+    path = self.FUNCCAR
+    if len(self.directory): path = join(self.directory, self.OUTCAR)
+    if exists(path):
+      try:
+        with open(path, "r") as file: result = load(file)
+      except: pass 
+      else: return result
+
+    # tries to read from outcar.
     path = self.OUTCAR
     if len(self.directory): path = join(self.directory, self.OUTCAR)
     assert exists(path), RuntimeError("Could not find file %s:" % (path))
