@@ -43,13 +43,6 @@ class Extract(object):
     self._directory = dir
   directory = property(_get_directory, _set_directory)
 
-  def __getattr__(self, name):
-    """ Passes on public attributes to vff extractor, then to escan functional. """
-    if name[0] != '_':
-      if hasattr(self._vffout, name): return getattr(self._vffout, name)
-      elif hasattr(self.escan, name): return getattr(self.escan, name)
-    raise AttributeError("Unknown attribute %s" % (name))
-
   @property
   @broadcast_result(attr=True, which=0)
   def success(self):
@@ -67,7 +60,7 @@ class Extract(object):
       for line in file:
         if line.find("FINAL eigen energies, in eV") != -1: good += 1
         if line.find("functional.do_escan              =") != -1:
-          is_do_escan = eval(line.split[-1])
+          is_do_escan = eval(line.split()[-1])
         if line.find("# Computed ESCAN in:") != -1 and good == 1: good += 1; break
     return (good == 2 and is_do_escan) or (good == 1 and not is_do_escan)
 
@@ -291,7 +284,7 @@ class Extract(object):
     from . import soH
 
     assert self.success
-    assert self.comm.size == self.nnodes,\
+    assert self.nnodes == 1 if self.comm == None else self.nnodes == self.comm.size, \
            RuntimeError("Must read wavefunctions with as many nodes as they were written to disk.")
     with redirect(fout="") as streams:
       with Changedir(self.directory, comm=self.comm) as directory:
@@ -382,3 +375,23 @@ class Extract(object):
     from os.path import relpath
     return "%s(\"%s\")" % (self.__class__.__name__, relpath(self.directory))
 
+  def __getattr__(self, name):
+    """ Passes on public attributes to vff extractor, then to escan functional. """
+    if name[0] != '_':
+      if hasattr(self._vffout, name): return getattr(self._vffout, name)
+      elif self.success: 
+        if hasattr(self.escan, name): return getattr(self.escan, name)
+    raise AttributeError("Unknown attribute %s" % (name))
+
+  def __dir__(self):
+    """ Returns list attributes.
+    
+        Since __getattr__ is modified, we need to make sure __dir__ returns a
+        complete list of attributes. This is usefull  for command-line
+        completion in ipython.
+    """
+    result = [u for u in self.__dict__.keys() if u[0] != "_"]
+    result.extend( [u for u in dir(self.__class__) if u[0] != "_" and u not in result] )
+    result.extend( [u for u in dir(self._vffout) if u[0] != "_" and u not in result] )
+    if self.success: result.extend( [u for u in dir(self.escan) if u[0] != "_" and u not in result] )
+    return result
