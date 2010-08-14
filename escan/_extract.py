@@ -61,7 +61,7 @@ class Extract(object):
         if line.find("FINAL eigen energies, in eV") != -1: good += 1
         if line.find("functional.do_escan              =") != -1:
           is_do_escan = eval(line.split()[-1])
-        if line.find("# Computed ESCAN in:") != -1 and good == 1: good += 1; break
+        if line.find("# Computed ESCAN in:") != -1: good += 1; break
     return (good == 2 and is_do_escan) or (good == 1 and not is_do_escan)
 
   @property
@@ -76,7 +76,7 @@ class Extract(object):
     
     # tries to read from pickle.
     path = self.FUNCCAR
-    if len(self.directory): path = join(self.directory, self.OUTCAR)
+    if len(self.directory): path = join(self.directory, self.FUNCCAR)
     if exists(path):
       try:
         with open(path, "r") as file: result = load(file)
@@ -390,8 +390,21 @@ class Extract(object):
         complete list of attributes. This is usefull  for command-line
         completion in ipython.
     """
+    exclude = set(["add_potential", "write_escan_input"])
     result = [u for u in self.__dict__.keys() if u[0] != "_"]
-    result.extend( [u for u in dir(self.__class__) if u[0] != "_" and u not in result] )
-    result.extend( [u for u in dir(self._vffout) if u[0] != "_" and u not in result] )
-    if self.success: result.extend( [u for u in dir(self.escan) if u[0] != "_" and u not in result] )
-    return result
+    result.extend( [u for u in dir(self.__class__) if u[0] != "_"] )
+    result.extend( [u for u in dir(self._vffout) if u[0] != "_"] )
+    if self.success: result.extend( [u for u in dir(self.escan) if u[0] != "_"] )
+    return list( set(result) - exclude )
+
+  def __getstate__(self):
+    from os.path import relpath
+    d = self.__dict__.copy()
+    if "comm" in d: del d["comm"]
+    if "directory" in d: d["directory"] = relpath(d["directory"])
+    return d
+  def __setstate__(self, arg):
+    self.__dict__.update(arg)
+    self.comm = None
+
+

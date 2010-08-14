@@ -48,6 +48,8 @@ class Extract(object):
      
         Data will be read from directory/OUTCAR. 
     """
+    self.FUNCCAR = vff._FUNCCAR if vff != None else Vff()._FUNCCAR
+    """ Pickle filename for the functional. """
 
     
   def _get_directory(self):
@@ -186,8 +188,20 @@ class Extract(object):
   def vff(self):
     """ Greps vff functional from self.L{OUTCAR}. """
     from os.path import exists, join
+    from cPickle import load
     from numpy import array
     from . import Vff
+
+    # tries to read from pickle.
+    path = self.FUNCCAR
+    if len(self.directory): path = join(self.directory, self.FUNCCAR)
+    if exists(path):
+      try:
+        with open(path, "r") as file: result = load(file)
+      except: pass 
+      else: return result
+
+    # tries to read from outcar.
     path = self.OUTCAR
     if len(self.directory): path = join(self.directory, self.OUTCAR)
     assert exists(path), RuntimeError("Could not find file %s:" % (path))
@@ -240,6 +254,18 @@ class Extract(object):
     return "%s(\"%s\")" % (self.__class__.__name__, self.directory)
 
 
+  def __getstate__(self):
+    from os.path import relpath
+    d = self.__dict__.copy()
+    if "comm" in d: del d["comm"]
+    if "directory" in d: d["directory"] = relpath(d["directory"])
+    return d
+  def __setstate__(self, arg):
+    self.__dict__.update(arg)
+    self.comm = None
+
+
+
 
 class Vff(object): 
   """ Valence Force Field functional for zinc-blende materials """
@@ -276,6 +302,9 @@ class Vff(object):
     """ File where to redirect output. """
     self.ERRCAR = "vff_err" 
     """ File where to redirect errors. """
+    from cPickle import dump
+    self._FUNCCAR = "VFFCAR" 
+    """ Pickle file to which functional is saved. """
     self._workdir = workdir
     """ Private reference to the working directory. """
 
@@ -447,6 +476,7 @@ class Vff(object):
   def __call__(self, structure, outdir = None, comm = None, overwrite=False, **kwargs):
     """ Performs calculation """
     import time
+    from cPickle import dump
     from copy import deepcopy
     from os import getcwd
     from os.path import exists, isdir, abspath, expanduser
@@ -509,6 +539,11 @@ class Vff(object):
         print >> file, repr(this)
         print >> file, "# Performing VFF calculations. "
         # then calculations
+
+      # Saves FUNCCAR.
+      if comm.rank == 0:
+        with open(this._FUNCCAR, "w") as file: dump(this, file)
+
       result, stress = this._run(structure, comm)
       # must close/reopen redirection context, otherwise it seem that they 
       # are closed anyhow on exiting from the Cpp function call. The following context

@@ -385,7 +385,9 @@ class Escan(object):
     with context as this._tempdir: 
 
       # Saves FUNCCAR.
-      with open(join(this._tempdir, this._FUNCCAR), "r") as file: dump(this, file)
+      if comm.rank == 0:
+        path = join(abspath(this._tempdir), this._FUNCCAR)
+        with open(path, "w") as file: dump(this, file)
   
       # performs calculation.
       this._run(structure, outdir, comm, overwrite, norun)
@@ -395,6 +397,7 @@ class Escan(object):
         with Changedir(outdir, comm = comm) as cwd:
           for file in  [ this._POSCAR + "." + str(world.rank),\
                          this._POTCAR + "." + str(world.rank),\
+                         this.FUNCCAR if comm.rank == 0 else None,
                          this._cout(comm) if this._cout(comm) != "/dev/null" else None,\
                          this._cerr(comm) if this._cerr(comm) != "/dev/null" else None,\
                          this.vff._cout(comm) if this.vff._cout(comm) != "/dev/null" else None,\
@@ -644,5 +647,4 @@ class Escan(object):
       return 1, self.kpoint[0], self.kpoint[1], self.kpoint[2], structure.scale / a0("A")
     kpoint = deform_kpoint(self.kpoint, input, relaxed)
     return 1, kpoint[0], kpoint[1], kpoint[2], structure.scale / a0("A")
-
 
