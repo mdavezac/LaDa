@@ -5,6 +5,7 @@ set( LIBMINIMIZER_HEADERS
 set( LIBMINIMIZER_SOURCES cgs.cc decoupled.cc frprmn.cc )
 
 if (GSL_FOUND)
+  include_directories(${gsl_INCLUDE_DIRS})
   set( LIBMINIMIZER_HEADERS  ${LIBMINIMIZER_HEADERS} 
        gsl.h  gsl_lsq.h  gsl_mins.h  gsl_nllsq.h  gsl_simplex.h)
   set( LIBMINIMIZER_SOURCES  ${LIBMINIMIZER_SOURCES} 
@@ -12,6 +13,7 @@ if (GSL_FOUND)
 endif (GSL_FOUND)
 
 if (MINUIT2_FOUND)
+  include_directories(${minuit2_INCLUDE_DIRS})
   set(LIBMINIMIZER_SOURCES  ${LIBMINIMIZER_SOURCES} minuit2.cc )
   set(LIBMINIMIZER_HEADERS  ${LIBMINIMIZER_HEADERS} minuit2.h )
 endif (MINUIT2_FOUND)
