@@ -34,6 +34,7 @@ class Extract(_dft._ExtractImpl):
   pulay_pressure  = property(_ExtractImpl._get_pulay_pressure)
   partial_charges = property(_ExtractImpl._get_partial_charges)
   vasp            = property(_ExtractImpl._get_functional)
+  electropot      = property(_ExtractImpl._get_electropot)
   functional      = property(_ExtractImpl._get_functional)
 
   def __init__(self, directory = "", comm = None): 

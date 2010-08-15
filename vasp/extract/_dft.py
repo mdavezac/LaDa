@@ -427,13 +427,47 @@ class _ExtractImpl(object):
   def _get_functional(self):
     """ Returns vasp functional used for calculation.
 
-        Requires the L{FUNCCAR} file to be present.
+        Requires file L{FUNCCAR} to be present.
     """
     from os.path import exists, join
     from cPickle import load
     path = self.FUNCCAR if len(self.directory) == 0 else join(self.directory, self.FUNCCAR)
     if not exists(path): return None
     with open(path, "r") as file: return load(file)
+
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def _get_electropot(self):
+    """ Average atomic electrostatic potentials.
+    
+        Requires file L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}.
+        :return: an array with an entry for each atom. 
+    """
+    from os.path import exists, join
+    import re
+    from numpy import array
+
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
+    if not exists(path): raise IOError("File %s does not exist.\n" % (path))
+
+    with open(path, "r") as file:
+      regex = re.compile(r"""average\s+\(electrostatic\)\s+potential\s+at\s+core""", re.X)
+      for line in file:
+        if regex.search(line) != None: break
+      try:
+        file.next()
+        file.next()
+      except:
+        print "No average potential."
+        return None
+      result = []
+      for line in file:
+        data = line.split()
+        if len(data) == 0: break
+        result.extend( [float(u) for i, u in enumerate(data) if i % 2 == 1] )
+        
+    return array(result, dtype="float64")
+
 
   def __getstate__(self):
     from os.path import relpath

@@ -1,4 +1,6 @@
 """ Point-defect helper functions. """
+__docformat__ = "restructuredtext en"
+
 
 def inequivalent_sites(lattice, type):
   """ Yields sites occupied by type which are inequivalent.
@@ -7,14 +9,18 @@ def inequivalent_sites(lattice, type):
       there may be more than one site which qualifies. We want to iterate over
       those sites which are inequivalent only, so that only the minimum number
       of operations are performed. 
-      @note: lattice sites can be defined as occupiable by more than one atomic type:
+      :note: lattice sites can be defined as occupiable by more than one atomic type:
              C{lattice.site.type[i] = ["Al", "Mg"]}. These sites will be
              counted if C{type in lattice.site.type}, where type is the input
              parameter.
-      @param lattice: Lattice for which to find equivalent sites.
-      @type lattice: lada.crystal.Lattice
-      @param type: Atomic specie for which to find inequivalent sites. 
-      @return: indices of inequivalent sites.
+
+      :Parameters:
+          lattice : `lada.crystal.Lattice`
+            Lattice for which to find equivalent sites.
+          type : str 
+            Atomic specie for which to find inequivalent sites. 
+
+      :return: indices of inequivalent sites.
   """
   from numpy.linalg import inv, norm
   from lada.crystal import fold_vector
@@ -47,10 +53,17 @@ def vacancy(structure, lattice, type):
   """ Yields all inequivalent vacancies. 
   
       Loops over all symmetrically inequivalent vacancies of given type.
-      @param structure: structure on which to operate
-      @param lattice: back-bone lattice of the structure.
-      @param type: type of atoms for which to create vacancy.
-      @return: a 3-tuple consisting of:
+
+      :Parameters:
+        structure : `lada.crystal.Structure`
+          structure on which to operate
+        lattice : `lada.crystal.Lattice` 
+          back-bone lattice of the structure.
+        type : str
+          type of atoms for which to create vacancy.
+
+      :return: 
+        a 3-tuple consisting of:
         - the structure with a vacancy.
         - the vacancy atom from the original structure. It is given an
           additional attribute, C{index}, referring to list of atoms of the
@@ -87,11 +100,18 @@ def substitution(structure, lattice, type, subs):
   """ Yields all inequivalent vacancies. 
   
       Loops over all equivalent vacancies.
-      @param structure: structure on which to operate
-      @param lattice: back-bone lattice of the structure.
-      @param type: type of atoms for which to create vacancy.
-      @param subs: substitution type
-      @return: a 3-tuple consisting of:
+
+      :Parameters:
+        structure : `lada.crystal.Structure`
+          structure on which to operate
+        lattice : `lada.crystal.Lattice`
+          back-bone lattice of the structure.
+        type : str
+          type of atoms for which to create vacancy.
+        subs : str
+          substitution type
+
+      :return: a 3-tuple consisting of:
         - the structure with a substitution.
         - the substituted atom in the structure above. The atom is given an
           additional attribute, C{index}, referring to list of atoms in the
@@ -127,18 +147,20 @@ def substitution(structure, lattice, type, subs):
 def charged_states(A=None, B=None):
   """ Loops over charged systems. 
 
-      The parameters C{A} and C{B} are either None or an L{Specie
-      <lada.vasp.specie.Specie>} instance:
-         - if only one of C{A} and C{B} is not None, then the accepted charge
-           states are anything between 0 and C{-A.oxidation} included. This
-           works both for negative and positive oxidation numbers. The "-" sign
-           comes from the rational that an ion C{A} with oxidation
-           C{A.oxidation} is removed from the system.
-         - if both C{A} and C{B} are not None, than reviewed chared states are between
-           C{max(-A.oxidation, B.oxidation-A.oxidation)} and
-           C{min(-A.oxidation, B.oxidation-A.oxidation)}. 
+      :Types:
+        - `A` : None or `lada.vasp.specie.Species`
+        - `B` : None or `lada.vasp.specie.Species`
 
-      @return: Yields a 2-tuple:
+      - if only one of C{A} and C{B} is not None, then the accepted charge
+        states are anything between 0 and C{-A.oxidation} included. This
+        works both for negative and positive oxidation numbers. The "-" sign
+        comes from the rational that an ion C{A} with oxidation
+        C{A.oxidation} is removed from the system.
+      - if both C{A} and C{B} are not None, than reviewed chared states are between
+        C{max(-A.oxidation, B.oxidation-A.oxidation)} and
+        C{min(-A.oxidation, B.oxidation-A.oxidation)}. 
+
+      :return: Yields a 2-tuple:
         - Number of electrons to add to the system (not charge). 
         - a suggested name for the charge state calculation.
   """
@@ -165,3 +187,111 @@ def charged_states(A=None, B=None):
     elif charge > 0:    oxdir = "+" + str(charge) 
     elif charge < 0:    oxdir = str(charge) 
     yield -charge, oxdir
+
+
+def band_filling_correction(defect, cbm):
+  """ Returns band-filling corrrection. 
+
+      :Parameters: 
+        defect : return of `lada.vasp.Vasp.__call__`
+          An output extraction object as returned by the vasp functional when
+          computing the defect of interest.
+        cbm : float 
+          The cbm of the host with potential alignment.
+  """
+  from numpy import sum
+  indices = defect.eigenvalues > cbm
+  return sum( (defect.multiplicity * defect.eigenvalues * defect.occupations)[indices] - cbm )
+  
+
+def potential_alignment(defect, host, maxdiff=0.5):
+  """ Returns potential alignment correction. 
+
+      :Parameter:
+        defect : return of `lada.vasp.Vasp.__call__`
+          An output extraction object as returned by the vasp functional when
+          computing the defect of interest.
+        host : return of `lada.vasp.Vasp.__call__`
+          An output extraction object as returned by the vasp functional when
+          computing the host matrix.
+        maxdiff : float
+          Maximum difference between the electrostatic potential of an atom and
+          the equivalent host electrostatic potential beyond which that atom is
+          considered pertubed by the defect.
+
+      :return: The potential alignment in eV (without charge factor).
+  """
+  from operator import itemgetter
+  from numpy import average, array, abs
+  from crystal import specie_list
+
+  # first get average atomic potential per atomic specie in host.
+  host_electropot = {}
+  host_species = specie_list(host.structure)
+  for s in host_species:
+    indices = array([atom.type == s for atom in structure.atoms])
+    host_electropot[s] = average(host.electropot[indices]) 
+  
+  # creates an initial list of unperturbed atoms. 
+  types = array([atom.type for atom in defect.structure.atoms])
+  unperturbed = array([(type in host_species) for type in types])
+
+  # now finds unpertubed atoms according to maxdiff
+  while any(unperturbed): # Will loop until no atom is left. That shouldn't happen!
+
+    # computes average atomic potentials of unperturbed atoms.
+    defect_electropot = {}
+    for s in host_species:
+      defect_electropot[s] = average( defect.electropot[unperturbed & (types == s)] )
+
+    # finds atomic potential farthest from the average potentials computed above.
+    discrepancies =   defect.electropot[unperturbed] \
+                    - array([host_electropot[type] for type in types[unperturbed]])
+    index, diff = max(enumerate(abs(discrepancies)), key=itemgetter(2))
+
+    # if discrepancy too high, mark atom as perturbed.
+    if diff > maxdiff: unperturbed[unperturbed][index] = False
+    # otherwise, we are done for this loop!
+    else: break
+
+  # now computes potential alignment from unpertubed atoms.
+  diff_from_host =    defect.electropot[unpertubed]  
+                    - array([host_electropot[type] for type in types[unperturbed]])\
+  return average(diff_from_host)
+                    
+
+def third_order_charge_correction(cell, n = 200):
+  """ Returns energy of third order charge correction. 
+  
+      :Parameters: 
+        cell : 3x3 numpy array
+          The supercell of the defect in Angstroem(?).
+        n 
+          precision. Higher better.
+      :return: energy of a single negative charge in supercell.
+  """
+  from math import pi
+  from numpy import array, dot, det
+  from ..physics import Rydberg
+
+  def fold(vector):
+    """ Returns smallest distance. """
+    result = None
+    for i in range(-1, 2):
+      for j in range(-1, 2):
+        for k in range(-1, 2):
+          v = arrray([vector[0] + float(i), vector[1] + float(j), vector[2] + float(k)])
+          v = dot(cell, v)
+          m = dot(v,v)
+          if result == None or result > m: result = m
+    return result
+
+  # chden = ones( (n, n, n), dtype="float64")
+  result = 0e0
+  for ix in range(n):
+    for iy in range(n):
+      for iz in range(n):
+        vec = array([float(ix)/float(n)-0.5, float(iy)/float(n)-0.5, float(iz)/float(n)-0.5])
+        result += fold(vec)
+        
+  return -result / float(n**3) * Rydberg("eV") * pi * 4e0 / 3e0 / det(cell)
