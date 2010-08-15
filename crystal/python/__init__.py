@@ -53,9 +53,9 @@ def read_poscar(types=None, path=None, check_lattice=False):
     else: types = [str(s) for s in types]
       
   if path == None: path = "POSCAR"
-  assert exists(path), "Could not find path %s." % (path)
+  assert exists(path), IOError("Could not find path %s." % (path))
   if isdir(path):
-    assert exists(join(path, "POSCAR")), "Could not find POSCAR in %s." % (path)
+    assert exists(join(path, "POSCAR")), IOError("Could not find POSCAR in %s." % (path))
     path = join(path, "POSCAR")
   result = Structure()
   with open(path, "r") as poscar:
@@ -69,7 +69,8 @@ def read_poscar(types=None, path=None, check_lattice=False):
     cell = []
     for i in range(3):
       line = poscar.readline()
-      assert len(line.split()) >= 3, "Could not read column vector from poscar: %s." % (line)
+      assert len(line.split()) >= 3,\
+             RuntimeError("Could not read column vector from poscar: %s." % (line))
       cell.append( [float(f) for f in line.split()[:3]] )
     result.cell = transpose(array(cell))
     # checks for vasp 5 input.
@@ -83,12 +84,12 @@ def read_poscar(types=None, path=None, check_lattice=False):
       text_types = deepcopy(line)
       if types != None:
         assert set(text_types) in set(types) or set(text_types) == set(types), \
-               IOError("Unknown species in poscar: %s not in %s." % (set(text_types), set(types)))
+               RuntimeError("Unknown species in poscar: %s not in %s." % (set(text_types), set(types)))
       types = text_types
       line = poscar.readline().split()
-    assert types != None, "No atomic species given in POSCAR or input."
+    assert types != None, RuntimeError("No atomic species given in POSCAR or input.")
     #  checks/reads for number of each specie
-    assert len(types) >= len(line), "Too many atomic species in POSCAR."
+    assert len(types) >= len(line), RuntimeError("Too many atomic species in POSCAR.")
     nb_atoms = [int(u) for u in line]
     # Checks whether cartesian or direct.
     is_direct = poscar.readline().strip().lower()[0] == "d" 
