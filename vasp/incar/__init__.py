@@ -210,6 +210,12 @@ class Incar(object):
     elif name in self.params: return self.special.pop(name).value
     raise AttributeError("Unknown vasp attribute " + name + ".")
 
+  def __dir__(self):
+    result = [u for u in self.__dict__ if u[0] != '_'] 
+    result.extend([u for u in self.params.keys() if u[0] != '_'])
+    result.extend([u for u in self.special.keys() if u[0] != '_'])
+    return list(set(result))
+
   @add_setter
   def set_symmetries(self, value):
     """ Type of symmetry used in the calculation.
@@ -340,3 +346,4 @@ class Incar(object):
     super(Incar, self).__setattr__("params", args[1])
     super(Incar, self).__setattr__("special", args[2])
     d = self.__dict__.update(args[0])
+
