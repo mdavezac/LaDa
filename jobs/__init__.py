@@ -147,11 +147,34 @@ class JobDict(object):
     super(JobDict, self).__setattr__("children", {})
     # This particular job. 
     super(JobDict, self).__setattr__("jobparams", {})
+    # This particular job is not set. 
+    super(JobDict, self).__setattr__("_functional", None)
     # Parent job. 
     super(JobDict, self).__setattr__("parent", None)
 
-    # no jobs yet.
-    self.jobparams["functional"] = None
+  def _get_functional(self):
+    """ Returns current functional.
+    
+        The functional is implemented as a property to make sure that it is
+        either None or a pickleable callable. Furthermore, a deepcopy of the functional is
+        performed. This parameter can never be truly deleted.
+          >>> del job.functional 
+        is equivalent to:
+          >>> job.functional = None
+    """
+    return self._functional
+  def _set_functional(self, value):
+    from pickle import dumps, loads # ascertains pickle-ability, copies functional
+    assert value == None or hasattr(value, "__call__"),\
+           ValueError("job.functional should be either None(no job) or a callable.")
+    # ascertains pickle-ability
+    try: string = dumps(value)
+    except Exception as e:
+      raise ValueError("Could not pickle functional. Caught Error:\n{0}".format(e))
+    else: self._functional = loads(string)
+  def _del_functional(self): self._functional = None
+
+  functional = property(_get_functional, _set_functional, _del_functional)
     
   @property
   def name(self):
@@ -185,10 +208,7 @@ class JobDict(object):
         if result.parent == None: raise KeyError("Cannot go below root level.")
         result = result.parent
       elif name in result.children: result = result.children[name]
-      elif name in result.jobparams:
-        if i+1 != len(names): raise KeyError("job or job parameter " + index + " does not exist.") 
-        return result.jobparams[name]
-      else: raise KeyError("job or job parameter " + index + " does not exist.")
+      else: raise KeyError("job " + index + " does not exist.")
     return result
  
   def __delitem__(self, index): 
@@ -216,28 +236,29 @@ class JobDict(object):
       assert id(self) != id(parent.children[name]),\
              KeyError("Will not delete self.")
       return parent.children.pop(name)
-    if name in parent.jobparams: return parent.jobparams.pop(name)
-    raise KeyError("job or job parameter " + index + " does not exist.")
+    raise KeyError("job " + index + " does not exist.")
 
   def __setitem__(self, index, value): 
     """ Sets job/subjob description in the dictionary.
     
         If the job does not exist, will create it.
+        A copy (copy.deepcopy) of value is inserted, rather than a simple
+        shallow ref.
     """
     from re import split
+    from copy import deepcopy
     from os.path import normpath, relpath
 
     index = normpath(index)
     assert index not in ["", ".", None], KeyError("Will not set self.")
     assert index[0], KeyError("Will not set root: " + index + ".")
+    assert isinstance(value, JobDict), \
+           ValueError("Only JobDict instances can be used a job dictionaries.")
 
     result = self.__div__(index+"/..")
     name = relpath(index, index+"/..")
-    if name in result.children  and isinstance(value, JobDict): 
-                                     result.children [name] = value
-    elif name in result.jobparams:   result.jobparams[name] = value
-    elif isinstance(value, JobDict): result.children [name] = value
-    else:                            result.jobparams[name] = value
+    result.children[name] = deepcopy(value)
+    result.children[name].parent = result
 
   def __div__(self, index): 
     """ Adds name as a subtree of self. """
@@ -265,13 +286,9 @@ class JobDict(object):
 
   @property
   def is_job(self):
-    """ True if self.job has keyword \"functional\". """
-    if "functional" not in self.jobparams: return False
-    return self.jobparams["functional"] != None
+    """ True if functional is not None. """
+    return self.functional != None
 
-  def items(self):
-    """ Iterator over children jobs. """
-    return self.children.items()
   def subjobs(self):
     """ Iterator over children jobs. """
     return sorted(self.children.keys())
@@ -279,12 +296,9 @@ class JobDict(object):
   def compute(self, **kwargs):
     """ Performs calculations over job list. """  
 
+    if not self.is_job: return None
     kwargs.update(self.jobparams)
-    if "functional" not in kwargs: return None
-    functional = kwargs.pop("functional")
-    if functional == None: return
-
-    return functional(**kwargs)
+    return self.functional(**kwargs)
 
   def update(self, other):
     """ Updates job and tree with other.
@@ -336,34 +350,23 @@ class JobDict(object):
 
   def __setattr__(self, name, value):
     """ Sets job attribute. """
-    if name in self.jobparams: self.jobparams[name] = value
+    from pickle import dumps
+    if name in self.jobparams:
+      try: dumps(value)
+      except Exception as e:
+        raise ValueError("Could not pickle job-parameter. Caught error:\n{0}".format(e))
+      else: self.jobparams[name] = value
     else: super(JobDict, self).__setattr__(name, value)
 
-  @add_setter
-  def add_param(self, args):
-    """ Adds a job parameter.
-    
-        Actual job parameter must be first set as:
-
-         >>> jobs.add_param = "name", value
-
-        Then they can be accessed directly as:
-
-         >>> jobs.name = othervalue
-
-        Where name should be the value of the string given in the first line.
-        The only preset job parameter are "functional" and "args", as stand in for
-        the functional to use and the tuple to use as its arguments.
-    """
-    assert len(args) < 3, ValueError("Too many parameters given to add_param: %s." % (args))
-    name = args[0]
-    value = None if len(args) == 1 else args[1]
-    self.jobparams[name] = value
+  def __dir__(self):
+    result = [u for u in self.__dict__ if u[0] != '_'] 
+    result.extend([u for u in self.jobparams.keys() if u[0] != '_'])
+    return list(set(result))
 
   def __getstate__(self):
     d = self.__dict__.copy()
-    params = d.pop("jobparams")
-    return d, params, "This is a JobDict pickle. Grep me!"
+    jobparams = d.pop("jobparams")
+    return d, jobparams, "This is a JobDict pickle. Grep me!"
   def __setstate__(self, args):
     super(JobDict, self).__setattr__("jobparams", args[1])
     d = self.__dict__.update(args[0])

@@ -67,10 +67,10 @@ def showme(self, event):
       if arg.lower() == "functional":
         input = read_input(filename)
         if "structure" in current.jobparams: input.jobparams["structure"] = current.structure
-        input.jobparams["functional"] = input.functional
+        current.functional = input.functional
         current.jobparams = input.jobparams
       elif arg.lower() == "structure": 
-        current.structure = read_poscar(path=filename)
+        current.jobparams["structure"] = read_poscar(path=filename)
     finally:
       if filename != None:
         try: remove(filename)
