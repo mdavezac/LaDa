@@ -195,7 +195,7 @@ class Vasp(Launch):
         string += ",\\\n                  [ %s" % (specie.U[0])
         for u in specie.U[1:]:
           string += ",\\\n                    %s" % (u)
-        string += " ]\n"
+        string += " ]"
       string += ",\\\n                  "
       string += "None" if not hasattr(specie, "oxidation") else str(specie.oxidation)
       string += ", %s\n" % (repr(specie.magnetic))

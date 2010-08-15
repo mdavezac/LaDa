@@ -84,15 +84,16 @@ def vacancy(structure, lattice, type):
     assert which < len(structure.atoms), RuntimeError("Site index not found.")
 
     # name of this vacancy
-    name = ("site_" + str(i)) if len(inequivs) > 1 else ""
+    name = "vacancy_{0}".format(type)
+    if len(inequivs) > 1: name += "/site_{0}".format(i)
     # creates vacancy and keeps atom for record
     atom = deepcopy(structure.atoms.pop(which))
     atom.index = i
     # structure 
     result = deepcopy(structure)
-    result.name = structure.name + " %s vacancy on site %i" % (atom.type, i)
+    result.name = name
     # returns structure with vacancy.
-    yield structure, atom, name
+    yield result, atom
     # removes vacancy
     structure.atoms.insert(which, atom)
 
@@ -107,7 +108,7 @@ def substitution(structure, lattice, type, subs):
         lattice : `lada.crystal.Lattice`
           back-bone lattice of the structure.
         type : str
-          type of atoms for which to create vacancy.
+          type of atoms for which to create substitution.
         subs : str
           substitution type
 
@@ -120,6 +121,13 @@ def substitution(structure, lattice, type, subs):
           of the substitution in the list of atoms.
   """
   from copy import deepcopy
+
+  # Case for vacancies.
+  if subs == None: 
+    for args in vacancy(structure, lattice, type):
+      yield args
+    return
+
   
   result = deepcopy(structure)
   inequivs = inequivalent_sites(lattice, type)
@@ -132,24 +140,27 @@ def substitution(structure, lattice, type, subs):
     assert which < len(structure.atoms), RuntimeError("Site index not found.")
 
     # name of this substitution
-    name = ("site_" + str(i)) if len(inequivs) > 1 else ""
+    name = "{0}_on_{1}".format(subs, type) 
+    if len(inequivs) > 1: name += "/site_{0}".format(i)
     # creates substitution
     orig = result.atoms[which].type
     result.atoms[which].type = subs
     # substituted atom.
     substituted = deepcopy(result.atoms[which])
     substituted.index = which
+    result.name = name
     # returns structure with vacancy.
-    yield result, substituted, name
+    yield result, substituted
     # removes substitution
     result.atoms[which].type = orig
 
-def charged_states(A=None, B=None):
+def charged_states(species, A=None, B=None):
   """ Loops over charged systems. 
 
       :Types:
-        - `A` : None or `lada.vasp.specie.Species`
-        - `B` : None or `lada.vasp.specie.Species`
+        - species: `lada.vasp.specie.Specie`
+        - `A` : None or str index to `species`.
+        - `B` : None or str index to `species`.
 
       - if only one of C{A} and C{B} is not None, then the accepted charge
         states are anything between 0 and C{-A.oxidation} included. This
@@ -169,12 +180,14 @@ def charged_states(A=None, B=None):
   if A == None: # no oxidation
     yield None, "neutral"
     return
+  else: A = species[A]
   if B == None:
     # max/min oxidation state
     max_charge = -A.oxidation if hasattr(A, "oxidation") else 0
     min_charge = 0
     if max_charge < min_charge: max_charge, min_charge = min_charge, max_charge
   else:
+    B = species[B]
     # Finds maximum range of oxidation.
     maxA_oxidation = A.oxidation if hasattr(A, "oxidation") else 0
     maxB_oxidation = B.oxidation if hasattr(B, "oxidation") else 0
@@ -255,8 +268,8 @@ def potential_alignment(defect, host, maxdiff=0.5):
     else: break
 
   # now computes potential alignment from unpertubed atoms.
-  diff_from_host =    defect.electropot[unpertubed]  
-                    - array([host_electropot[type] for type in types[unperturbed]])\
+  diff_from_host =    defect.electropot[unpertubed]  \
+                    - array([host_electropot[type] for type in types[unperturbed]])
   return average(diff_from_host)
                     
 
