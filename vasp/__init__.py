@@ -68,7 +68,10 @@ class Vasp(Launch):
 
   def __init__(self, *args, **kwargs):
     """ Initializes vasp class. """
-    Launch.__init__(self, *args, **kwargs)
+    super(Vasp, self).__init__(self, *args, **kwargs)
+
+    self.restart_from_contcar = True
+    """ If True and self.CONTCAR exists in directory, will restart from it. """
 
   def __call__( self, structure, outdir = None, comm = None, repat = None,\
                 overwrite=False, **kwargs ):
@@ -95,16 +98,22 @@ class Vasp(Launch):
     """ 
     from copy import deepcopy
     from os import getcwd
-    from os.path import exists, isdir
+    from os.path import exists, isdir, join
     from shutil import rmtree
     from boost.mpi import broadcast
+    from ..crystal import specie_list, read_poscar
+    from .files import CONTCAR
 
     # make this functor stateless.
     this      = deepcopy(self)
-    structure = deepcopy(structure)
     outdir    = deepcopy(outdir) if outdir != None else getcwd()
     repat     = deepcopy(repat)  if repat  != None else []
     norun     = kwargs.pop("norun", False)
+    # makes functor stateless/reads structure from CONTCAR if requested and appropriate.
+    if self.restart_from_contcar: 
+      path = join(outdir, CONTCAR)
+      if exists(path): structure = read_poscar(specie_list(structure), path)
+    else: structure = deepcopy(structure) 
 
     is_root = True if comm == None else comm.rank == 0
 
@@ -193,6 +202,8 @@ class Vasp(Launch):
     if not self.inplace: 
       string += "functional.inplace = False\n"
       string += "functional.workdir = \"%s\"\n" % (self.workdir)
+    if not self.restart_from_contcar: 
+      string += "functional.restart_from_contcar = False\n"
 
     # adds user modules above repr string.
     header = ""
