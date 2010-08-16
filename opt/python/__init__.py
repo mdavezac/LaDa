@@ -143,12 +143,14 @@ def read_input(filename, global_dict=None, local_dict = None, paths=None, comm =
       local_dict[path] = abspath(expanduser(local_dict[path]))
     
   # Fake class which will be updated with the local dictionary.
-  class Input:
-    def __init__(self): self._inputfilepath = filename
+  class Input(physics.__class__): 
     def __getattr__(self, name):
-      raise AttributeError( "All out of cheese!\nRequired input parameter \"%s\" not found in %s." \
-                            % (name, self._inputfilepath) )
-  result = Input()
+      raise AttributeError( "All out of cheese!\n"
+                            "Required input parameter \"{0}\" not found in {1}." \
+                            .format(name, self.__name__) )
+    def __delattr__(self, name): raise RuntimeError("Cannot delete object from input namespace.")
+    def __setattr__(self, name): raise RuntimeError("Cannot set/change object in input namespace.")
+  result = Input(filename)
   result.__dict__.update(local_dict)
   return result
 
