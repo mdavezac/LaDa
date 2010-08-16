@@ -247,7 +247,7 @@ def _main():
   from ._goto import goto, iterate, goto_completer
   from ._explore import explore, explore_completer
   from ._showme import showme, showme_completer
-  from ._launch import launch_scattered
+  from ._launch import launch, launch_completer
 
   ip = IPython.ipapi.get()
   ip.expose_magic("explore", explore)
@@ -258,11 +258,12 @@ def _main():
   ip.expose_magic("showme", showme)
   ip.expose_magic("savejobs", saveto)
   ip.expose_magic("fakerun", fakerun)
-  ip.expose_magic("launch_scattered", launch_scattered)
+  ip.expose_magic("launch", launch)
   ip.expose_magic("run_current_jobdict", run_current_jobdict)
   ip.set_hook('complete_command', goto_completer, re_key = '\s*%?goto')
   ip.set_hook('complete_command', showme_completer, re_key = '\s*%?showme')
   ip.set_hook('complete_command', explore_completer, re_key = '\s*%?explore')
+  ip.set_hook('complete_command', launch_completer, re_key = '\s*%?launch')
   if "SNLCLUSTER" in environ:
     if environ["SNLCLUSTER"] in ["redrock", "redmesa"]:
       ip.expose_magic("qstat", qstat)

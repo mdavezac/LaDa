@@ -7,21 +7,25 @@ def _glob_job_pickles(ip, arg):
   from ..jobs import JobDict
 
   # nothing there yet.
-  if len(arg) == 0:
-    result = [ u + "/" for u in ip.magic("mglob dir:*") ]
-    result.extend([ u for u in ip.magic("mglob \"cont:JobDict pickle\" *") ])
-  # Contains directory.
-  elif arg.find('/') != -1:
-    orig_dir = getcwd()
-    new_dir = arg[:-arg[::-1].find('/')-1]
-    chdir (new_dir)
-    result = [ join(new_dir, u) + "/" for u in ip.magic("mglob dir:*") ]
-    result.extend([ join(new_dir, u) for u in ip.magic("mglob \"cont:JobDict pickle\" *") ])
-    chdir(orig_dir)
-  else: # not a directory.
-    result = [u + "/" for u in ip.magic("mglob dir:%s*" % (arg))]
-    result.extend([u for u in ip.magic("mglob \"cont:JobDict pickle\" %s*" % (arg))])
-  return result
+  try: 
+    if len(arg) == 0:
+      result = [ u + "/" for u in ip.magic("mglob dir:*") ]
+      result.extend([ u for u in ip.magic("mglob \"cont:JobDict pickle\" *") ])
+    # Contains directory.
+    elif arg.find('/') != -1:
+      orig_dir = getcwd()
+      new_dir = arg[:-arg[::-1].find('/')-1]
+      chdir (new_dir)
+      result = [ join(new_dir, u) + "/" for u in ip.magic("mglob dir:*") ]
+      result.extend([ join(new_dir, u) for u in ip.magic("mglob \"cont:JobDict pickle\" *") ])
+      chdir(orig_dir)
+    else: # not a directory.
+      result = [u + "/" for u in ip.magic("mglob dir:%s*" % (arg))]
+      result.extend([u for u in ip.magic("mglob \"cont:JobDict pickle\" %s*" % (arg))])
+    return result
+  except: print "Error in _explore._glob_job_pickles."
+
+  return []
 
 
 def _glob_ipy_user_ns(ip, arg):
