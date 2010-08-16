@@ -17,6 +17,8 @@ class Extract(object):
     """ Private reference to vff extraction object. """
     self.OUTCAR = escan.OUTCAR
     """ OUTCAR file to extract stuff from. """
+    self.FUNCCAR = escan._FUNCCAR
+    """ Pickle to FUNCCAR. """
     self.comm = comm
     """ Communicator for extracting stuff. 
 
@@ -41,13 +43,6 @@ class Extract(object):
     self._directory = dir
   directory = property(_get_directory, _set_directory)
 
-  def __getattr__(self, name):
-    """ Passes on public attributes to vff extractor, then to escan functional. """
-    if name[0] != '_':
-      if hasattr(self._vffout, name): return getattr(self._vffout, name)
-      elif hasattr(self.escan, name): return getattr(self.escan, name)
-    raise AttributeError("Unknown attribute %s" % (name))
-
   @property
   @broadcast_result(attr=True, which=0)
   def success(self):
@@ -59,13 +54,15 @@ class Extract(object):
     path = join(self.directory, self.OUTCAR) if len(self.directory) else self.OUTCAR
     if not exists(path): return False
 
-    try: good = 0 if self.solo().do_escan == True else 1
-    except: return False
+    good = 0
+    is_do_escan = True
     with open(path, "r") as file:
       for line in file:
         if line.find("FINAL eigen energies, in eV") != -1: good += 1
-        if line.find("# Computed ESCAN in:") != -1 and good == 1: good += 1; break
-    return good == 2
+        if line.find("functional.do_escan              =") != -1:
+          is_do_escan = eval(line.split()[-1])
+        if line.find("# Computed ESCAN in:") != -1: good += 1; break
+    return (good == 2 and is_do_escan) or (good == 1 and not is_do_escan)
 
   @property
   @make_cached
@@ -73,9 +70,20 @@ class Extract(object):
     """ Greps escan functional from self.L{OUTCAR}. """
     from os.path import exists, join
     from numpy import array
+    from cPickle import load
     from ..opt.changedir import Changedir
     from . import Escan, localH, nonlocalH, soH, AtomicPotential
     
+    # tries to read from pickle.
+    path = self.FUNCCAR
+    if len(self.directory): path = join(self.directory, self.FUNCCAR)
+    if exists(path):
+      try:
+        with open(path, "r") as file: result = load(file)
+      except: pass 
+      else: return result
+
+    # tries to read from outcar.
     path = self.OUTCAR
     if len(self.directory): path = join(self.directory, self.OUTCAR)
     assert exists(path), RuntimeError("Could not find file %s:" % (path))
@@ -276,7 +284,7 @@ class Extract(object):
     from . import soH
 
     assert self.success
-    assert self.comm.size == self.nnodes,\
+    assert self.nnodes == 1 if self.comm == None else self.nnodes == self.comm.size, \
            RuntimeError("Must read wavefunctions with as many nodes as they were written to disk.")
     with redirect(fout="") as streams:
       with Changedir(self.directory, comm=self.comm) as directory:
@@ -366,4 +374,37 @@ class Extract(object):
   def __repr__(self):
     from os.path import relpath
     return "%s(\"%s\")" % (self.__class__.__name__, relpath(self.directory))
+
+  def __getattr__(self, name):
+    """ Passes on public attributes to vff extractor, then to escan functional. """
+    if name[0] != '_':
+      if hasattr(self._vffout, name): return getattr(self._vffout, name)
+      elif self.success: 
+        if hasattr(self.escan, name): return getattr(self.escan, name)
+    raise AttributeError("Unknown attribute %s" % (name))
+
+  def __dir__(self):
+    """ Returns list attributes.
+    
+        Since __getattr__ is modified, we need to make sure __dir__ returns a
+        complete list of attributes. This is usefull  for command-line
+        completion in ipython.
+    """
+    exclude = set(["add_potential", "write_escan_input"])
+    result = [u for u in self.__dict__.keys() if u[0] != "_"]
+    result.extend( [u for u in dir(self.__class__) if u[0] != "_"] )
+    result.extend( [u for u in dir(self._vffout) if u[0] != "_"] )
+    if self.success: result.extend( [u for u in dir(self.escan) if u[0] != "_"] )
+    return list( set(result) - exclude )
+
+  def __getstate__(self):
+    from os.path import relpath
+    d = self.__dict__.copy()
+    if "comm" in d: del d["comm"]
+    if "directory" in d: d["directory"] = relpath(d["directory"])
+    return d
+  def __setstate__(self, arg):
+    self.__dict__.update(arg)
+    self.comm = None
+
 

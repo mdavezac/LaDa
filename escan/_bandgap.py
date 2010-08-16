@@ -229,6 +229,17 @@ class ExtractRefs(object):
     if hasattr(self.extract_vff, name): return getattr(self.extract_vff, name)
     raise AttributeError("Unknown attribute %s." % (name))
 
+  def __dir__(self):
+    """ Returns list of attributes. 
+
+        Since __getattr__ is modified to include vff extraction data, __dir__
+        should be modified as well. This makes for better ipython
+        (tab-completion) integration. 
+    """
+    result = [u for u in dir(self.__class__) if u[0] != '_'] 
+    result.extend([u for u in dir(self.extract_vff) if u[0] != '_'])
+    return list(set(result))
+
 def _band_gap_refs_impl( escan, structure, outdir, references, n=5,\
                          overlap_factor=10e0, **kwargs):
   """ Computes band-gap using two references. """

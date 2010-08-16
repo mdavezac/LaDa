@@ -242,6 +242,8 @@ class Escan(object):
     """ Private reference to the escan input file. """
     self._GENCAR = "pot.input"
     """ Private reference to the genpot input file. """
+    self._FUNCCAR = "ESCANCAR"
+    """ Private reference to the functional pickle. """
     self._dont_deform_kpoint = False
     """ Whether *not* to deform kpoints from input cell to relaxed cell.
 
@@ -347,6 +349,7 @@ class Escan(object):
     from os import getcwd
     from os.path import exists, isdir, abspath, basename, join, expanduser
     from shutil import copyfile, rmtree
+    from cPickle import dump
     from boost.mpi import world, broadcast
     from ..opt.changedir import Changedir
     from ..opt.tempdir import Tempdir
@@ -380,6 +383,11 @@ class Escan(object):
     context = Tempdir(workdir=workdir, comm=comm)\
               if not this.inplace  else Changedir(outdir, comm=comm) 
     with context as this._tempdir: 
+
+      # Saves FUNCCAR.
+      if comm.rank == 0:
+        path = join(abspath(this._tempdir), this._FUNCCAR)
+        with open(path, "w") as file: dump(this, file)
   
       # performs calculation.
       this._run(structure, outdir, comm, overwrite, norun)
@@ -389,6 +397,7 @@ class Escan(object):
         with Changedir(outdir, comm = comm) as cwd:
           for file in  [ this._POSCAR + "." + str(world.rank),\
                          this._POTCAR + "." + str(world.rank),\
+                         this.FUNCCAR if comm.rank == 0 else None,
                          this._cout(comm) if this._cout(comm) != "/dev/null" else None,\
                          this._cerr(comm) if this._cerr(comm) != "/dev/null" else None,\
                          this.vff._cout(comm) if this.vff._cout(comm) != "/dev/null" else None,\
@@ -638,5 +647,4 @@ class Escan(object):
       return 1, self.kpoint[0], self.kpoint[1], self.kpoint[2], structure.scale / a0("A")
     kpoint = deform_kpoint(self.kpoint, input, relaxed)
     return 1, kpoint[0], kpoint[1], kpoint[2], structure.scale / a0("A")
-
 
