@@ -204,6 +204,9 @@ def qstat(self, arg):
   result = SList([u[1:-1] for u in result])
   return result.grep(str(arg[1:-1]))
 
+def cancel_completer(self, info):
+  return qstat(self, info.symbol).fields(-1)[1:]
+
 def cancel_jobs(self, arg):
   """ Cancel jobs which grep for whatever is in arg.
   
@@ -223,10 +226,10 @@ def cancel_jobs(self, arg):
     print "cancelling %s." % (name)
   a = ''
   while a not in ['n', 'y']:
-    a = raw_input("Are you sure you want to cancel all jobs? [y/n] ")
+    a = raw_input("Are you sure you want to cancel the jobs listed above? [y/n] ")
   if a == 'n': return
   for u, name in zip(result.fields(0), result.fields(-1)):
-    ip.system("scancel %i" % (int(u)))
+    self.api.system("scancel %i" % (int(u)))
 
 def please_cancel_all_jobs(self, arg):
   """ Cancel all jobs. """
@@ -237,7 +240,7 @@ def please_cancel_all_jobs(self, arg):
   if a == 'n': return
   result = qstat(self, None)
   for u in result.field(0):
-    ip.system("scancel %i" % (int(u)))
+    self.api.system("scancel %i" % (int(u)))
 
 
 def _main():
@@ -268,6 +271,7 @@ def _main():
     if environ["SNLCLUSTER"] in ["redrock", "redmesa"]:
       ip.expose_magic("qstat", qstat)
       ip.expose_magic("cancel_jobs", cancel_jobs)
+      ip.set_hook('complete_command', cancel_completer, re_key = '\s*%?cancel_jobs')
       ip.expose_magic("please_cancel_all_jobs", please_cancel_all_jobs)
 
   for key in lada.__all__:
