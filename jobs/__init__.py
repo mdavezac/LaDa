@@ -339,8 +339,8 @@ class JobDict(object):
 
   def __delattr__(self, name):
     """ Deletes job attribute. """
+    if name in self.__dict__: return self.__dict__.pop(name)
     if name in self.jobparams: return self.jobparams.pop(name)
-    elif name in self.__dict__: return self.__dict__.pop(name)
     raise AttributeError("Unknown job attribute " + name + ".")
 
   def __getattr__(self, name):

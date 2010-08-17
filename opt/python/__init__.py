@@ -149,7 +149,7 @@ def read_input(filename, global_dict=None, local_dict = None, paths=None, comm =
                             "Required input parameter \"{0}\" not found in {1}." \
                             .format(name, self.__name__) )
     def __delattr__(self, name): raise RuntimeError("Cannot delete object from input namespace.")
-    def __setattr__(self, name): raise RuntimeError("Cannot set/change object in input namespace.")
+    def __setattr__(self, name, value): raise RuntimeError("Cannot set/change object in input namespace.")
   result = Input(filename)
   result.__dict__.update(local_dict)
   return result
