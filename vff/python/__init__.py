@@ -218,6 +218,7 @@ class Extract(object):
 
   def write_escan_input(self, filepath, structure = None):
     """ Prints escan input to file. """
+    from os.path import expanduser
     if structure == None: structure = self.structure
 
     # Saves global lattice if set.
@@ -227,7 +228,7 @@ class Extract(object):
     self.lattice.set_as_crystal_lattice()
 
     functional = self.vff._create_functional(structure, self.comm)
-    functional.print_escan_input(filepath, structure)
+    functional.print_escan_input(expanduser(filepath), structure)
 
     if old_lattice != None: old_lattice.set_as_crystal_lattice()
 
@@ -467,10 +468,12 @@ class Vff(object):
   def _cout(self, comm):
     """ Creates output name. """
     if self.OUTCAR == None: return "/dev/null"
+    if comm == None: return self.OUTCAR
     return self.OUTCAR if comm.rank == 0 else self.OUTCAR + "." + str(comm.rank)
   def _cerr(self, comm):
     """ Creates error name. """
     if self.ERRCAR == None: return "/dev/null"
+    if comm == None: return self.ERRCAR
     return self.ERRCAR if comm.rank == 0 else self.ERRCAR + "." + str(comm.rank)
 
   def __call__(self, structure, outdir = None, comm = None, overwrite=False, **kwargs):
@@ -574,22 +577,23 @@ class Vff(object):
     """ Creates the vff functional using cpp extension. """
     from tempfile import NamedTemporaryFile
     from os import remove
-    from boost.mpi import broadcast
+    if comm != None: from boost.mpi import broadcast
     from _vff import Vff, LayeredVff
 
     # Creates temporary input file and creates functional
     functional = None
-    if comm.rank == 0:
+    is_root = True if comm == None else comm.rank == 0
+    if is_root:
       with NamedTemporaryFile(dir=self.workdir, delete=False) as file: 
         file.write(self._create_input(structure, comm))
-      name = broadcast(comm, file.name, root=0)
-    else: name = broadcast(comm, root=0) # syncs all procs to make sure we are reading from same file.
+      name = file.name if comm == None else broadcast(comm, file.name, root=0)
+    elif comm != None: name = broadcast(comm, root=0) # syncs all procs to make sure we are reading from same file.
 
     
-    comm.barrier() # required before reading file (?).
+    if comm != None: comm.barrier() # required before reading file (?).
     functional = LayeredVff(name, comm) if hasattr(self.direction, "__len__") else Vff(name, comm)
-    comm.barrier() # required before removing file.
-    if comm.rank == 0: remove(file.name)
+    if comm != None: comm.barrier() # required before removing file.
+    if is_root: remove(file.name)
 
     return functional
      
