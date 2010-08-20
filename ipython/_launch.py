@@ -88,8 +88,7 @@ def launch_scattered(self, event):
   if event.nolaunch: return
   # otherwise, launch.
   for script in pbsscripts:
-    if which: ip.system("sbatch %s" % script)
-    else: ip.system("qsub %s" % script)
+    ip.system("{0} {1}".format("sbatch" if which else "qsub", script))
 
 
 
@@ -126,7 +125,8 @@ def launch(self, event):
   parser = argparse.ArgumentParser(prog='%launch')
   # options supported by all.
   opalls = argparse.ArgumentParser(add_help=False)
-  opalls.add_argument('--walltime', type=str, help='walltime for jobs. Should be in hh:mm:ss format.')
+  opalls.add_argument('--walltime', type=str, default="05:59:59", \
+                      help='walltime for jobs. Should be in hh:mm:ss format.')
   opalls.add_argument( 'pickle', metavar='FILE', type=str, nargs='*', default="", 
                        help='Path to jobdictionaries.')
 
