@@ -196,9 +196,9 @@ def charged_states(species, A=None, B=None):
 
   for charge in range(min_charge, max_charge+1):
     # directory
-    if   charge == 0:   oxdir = "neutral"
-    elif charge > 0:    oxdir = "+" + str(charge) 
-    elif charge < 0:    oxdir = str(charge) 
+    if   charge == 0:   oxdir = "charge_neutral"
+    elif charge > 0:    oxdir = "charge_" + str(charge) 
+    elif charge < 0:    oxdir = "charge_" + str(charge) 
     yield -charge, oxdir
 
 

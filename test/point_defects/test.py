@@ -1,5 +1,5 @@
 # will be params:
-def create_jobdict():
+def create_jobdict(filename="input.py"):
   """ Returns a jobdictionary of point-defects.
      
       Parameters are set in input.py.
@@ -17,7 +17,7 @@ def create_jobdict():
   # names we need to create input.
   input_dict = { "Vasp": Vasp, "U": specie.U, "nlep": specie.nlep }
   # reads input.
-  input = read_input("input.py", input_dict)
+  input = read_input(filename, input_dict)
   # sets as default lattice.
   input.lattice.set_as_crystal_lattice()
 
