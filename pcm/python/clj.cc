@@ -20,6 +20,7 @@
 #include <boost/archive/text_oarchive.hpp>
 
 #include <opt/types.h>
+#include <math/fuzzy.h>
 #include <python/misc.hpp>
 #include "../clj.h"
 
@@ -141,6 +142,21 @@ namespace LaDa
     template<int D> boost::shared_ptr<Models::Clj::t_Arg>
       __call__(Models::Clj const & _clj, Models::Clj::t_Arg const &_in)
       {
+        if( math::is_zero(_in.scale) )
+        {
+          PyErr_SetString(PyExc_ValueError, "Scale of input structure is zero.");
+          return boost::shared_ptr<Models::Clj::t_Arg>();
+        }
+        if( math::is_zero(_in.cell.determinant()) )
+        {
+          PyErr_SetString(PyExc_ValueError, "Volume of input structure is zero.");
+          return boost::shared_ptr<Models::Clj::t_Arg>();
+        }
+        if(_in.atoms.size() == 0)
+        {
+          PyErr_SetString(PyExc_ValueError, "No atoms in input structure.");
+          return boost::shared_ptr<Models::Clj::t_Arg>();
+        }
         boost::shared_ptr<Models::Clj::t_Arg> forces(new Models::Clj::t_Arg);
         forces->cell = math::rMatrix3d::Zero();
         forces->atoms.resize(_in.atoms.size());

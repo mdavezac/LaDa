@@ -50,6 +50,13 @@ subroutine EWALDF(IPR,EEWALD,FEWA,FEWAC,STRESS, &
 
   REAL(kind=dbl) :: FSUMR(3,MXDNAT),FSUMG(9,MXDNAT)
   real(kind=dbl), external :: boost_erfc
+  real(kind=dbl) :: dummy
+  real(kind=dbl) :: dNATOT, tot_charge_squared, tot_squared_charge
+  integer :: i, j
+   
+  tot_squared_charge = sum(ZZ(1:NATOT)*ZZ(1:NATOT))
+  tot_charge_squared = sum(ZZ(1:NATOT))**2
+  dNATOT = NATOT
 
  
 !C     COMPUTE VARIOUS PARAMETERS
@@ -188,7 +195,7 @@ subroutine EWALDF(IPR,EEWALD,FEWA,FEWAC,STRESS, &
              FSUMG(8,N1) = REAL(IG(2))*SING
              FSUMG(9,N1) = REAL(IG(3))*SING
  20        CONTINUE
-           SFAC2 = SFACR*SFACR + SFACI*SFACI   
+           SFAC2 = SFACR*SFACR + SFACI*SFACI - tot_squared_charge
            EXP1 = SFAC2*EXPG      
            ESUMG = ESUMG + EXP1
            EXP2 = - (UM/(EPS*DOIS) + DOIS/GMOD2) * EXP1
@@ -211,6 +218,7 @@ subroutine EWALDF(IPR,EEWALD,FEWA,FEWAC,STRESS, &
          ENDIF
  30    CONTINUE
 !C                                     
+       ESUMG = tot_charge_squared * 0.25d0 / EPS
        ESUMG = QPV*ESUMG
        DO 32 L=1,6
          SSUMG(L) = QPV*SSUMG(L)
@@ -394,7 +402,7 @@ subroutine EWALDF(IPR,EEWALD,FEWA,FEWAC,STRESS, &
                     + AVEC(K,3)*FEWA(3,I)
  80      CONTINUE
  82    CONTINUE
-!C      
+!      
 !C     PRINTOUT
        ENORM = EEWALD*VCELL**(UM/TRES)
 !C      WRITE(6,100) ENORM
