@@ -218,7 +218,7 @@ subroutine EWALDF(IPR,EEWALD,FEWA,FEWAC,STRESS, &
          ENDIF
  30    CONTINUE
 !C                                     
-       ESUMG = tot_charge_squared * 0.25d0 / EPS
+       ESUMG = ESUMG + tot_charge_squared * 0.25d0 / EPS
        ESUMG = QPV*ESUMG
        DO 32 L=1,6
          SSUMG(L) = QPV*SSUMG(L)
