@@ -26,8 +26,7 @@ clj.charges["X"] = -2.0
 
 
 
-x = 0.387
-lattice = A2BX4.b5(x)
+lattice = A2BX4.b5()
 lattice.scale = 8.5
 structure = fill_structure(lattice.cell, lattice)
 
@@ -42,4 +41,4 @@ for atom in structure.atoms:
 
 I = clj.ewald(structure)
 print I.energy, N.energy
-print I.energy - N.energy,  structure.scale, x
+print I.energy - N.energy,  structure.scale

@@ -20,6 +20,7 @@
 #include <boost/archive/text_oarchive.hpp>
 
 #include <opt/types.h>
+#include <math/fuzzy.h>
 #include <python/misc.hpp>
 #include "../clj.h"
 
@@ -111,6 +112,7 @@ namespace LaDa
       if( bp::len( _t ) != 2 )
       {
         PyErr_SetString(PyExc_ValueError, "Expected a 3-tuple.");
+        bp::throw_error_already_set();
         return NULL;
       }
       types::t_real const a = bp::extract<types::t_real>(_t[0]);
@@ -124,6 +126,7 @@ namespace LaDa
       if( bp::len( _tuple ) != 3 )
       {
         PyErr_SetString(PyExc_ValueError, "Expected a 3-tuple.");
+        bp::throw_error_already_set();
         return;
       }
       const types::t_int a = bp::extract<types::t_int>( _tuple[0] );
@@ -141,9 +144,28 @@ namespace LaDa
     template<int D> boost::shared_ptr<Models::Clj::t_Arg>
       __call__(Models::Clj const & _clj, Models::Clj::t_Arg const &_in)
       {
+        if( math::is_zero(_in.scale) )
+        {
+          PyErr_SetString(PyExc_ValueError, "Scale of input structure is zero.");
+          bp::throw_error_already_set();
+          return boost::shared_ptr<Models::Clj::t_Arg>();
+        }
+        if( math::is_zero(_in.cell.determinant()) )
+        {
+          PyErr_SetString(PyExc_ValueError, "Volume of input structure is zero.");
+          bp::throw_error_already_set();
+          return boost::shared_ptr<Models::Clj::t_Arg>();
+        }
+        if(_in.atoms.size() == 0)
+        {
+          PyErr_SetString(PyExc_ValueError, "No atoms in input structure.");
+          bp::throw_error_already_set();
+          return boost::shared_ptr<Models::Clj::t_Arg>();
+        }
         boost::shared_ptr<Models::Clj::t_Arg> forces(new Models::Clj::t_Arg);
         forces->cell = math::rMatrix3d::Zero();
         forces->atoms.resize(_in.atoms.size());
+        forces->scale = 1e0;
         switch(D)
         {
           case 0: forces->energy = _clj.lennard_jones(_in, *forces); break;
@@ -160,6 +182,7 @@ namespace LaDa
       if(bp::len(_bond) != 2)
       {
         PyErr_SetString(PyExc_ValueError, "Incorrect value for bond type.");
+        bp::throw_error_already_set();
         return;
       }
       types::t_real a, b;
@@ -171,6 +194,7 @@ namespace LaDa
       catch(...) 
       {
         PyErr_SetString(PyExc_ValueError, "Incorrect value for bond type.");
+        bp::throw_error_already_set();
         return;
       }
       _bonds[_index] = Models::Clj::t_Bonds::value_type::second_type(a,b);

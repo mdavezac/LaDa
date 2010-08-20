@@ -38,6 +38,7 @@ namespace LaDa
       double energy(0);
       const int n( natoms );
       const double rcut( cutoff_ / Physics::a0("A") );
+      math::rMatrix3d const inv(!_in.cell);
 
       typedef t_Arg :: t_Atoms :: const_iterator t_cit;
       t_cit i_atom = _in.atoms.begin();
@@ -46,9 +47,10 @@ namespace LaDa
         LADA_NASSERT( charges.find( i_atom->type ) == charges.end(),
                   "Atomic charge does not exist.\n" )
         Qs[i] = charges.find(i_atom->type)->second;
-        positions[ i*3 ]     = i_atom->pos[0];
-        positions[ i*3 + 1 ] = i_atom->pos[1];
-        positions[ i*3 + 2 ] = i_atom->pos[2];
+        math::rVector3d const frac(inv * i_atom->pos);
+        positions[ i*3 ]     = frac[0];
+        positions[ i*3 + 1 ] = frac[1];
+        positions[ i*3 + 2 ] = frac[2];
       } // loop over atoms
 
       for( size_t i(0); i < 3; ++i )
@@ -78,6 +80,7 @@ namespace LaDa
         i_force->pos[2] += cforces[ i*3 + 2 ] * Physics::Rydberg("eV") / Physics::a0("A");
       } // loop over atoms
       // copy stress.
+      _out.scale = 1e0;
       _out.cell(0,0) += stress[0] * Physics::Rydberg("eV");
       _out.cell(1,1) += stress[1] * Physics::Rydberg("eV");
       _out.cell(2,2) += stress[2] * Physics::Rydberg("eV");

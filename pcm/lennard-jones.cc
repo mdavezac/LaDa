@@ -92,6 +92,7 @@ namespace LaDa
               } // loop over periodic images.
         } // loop over atom 2
       } // loop over atom 1
+      _out.scale = 1e0;
       return energy + ecut;
     }
     
