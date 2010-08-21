@@ -2,26 +2,17 @@
 
 def _glob_job_pickles(ip, arg):
   """ Returns list of candidate files and directory. """
-  from os import getcwd, chdir
   from os.path import join
-  from ..jobs import JobDict
 
   # nothing there yet.
   try: 
-    if len(arg) == 0:
-      result = [ u + "/" for u in ip.magic("mglob dir:*") ]
-      result.extend([ u for u in ip.magic("mglob \"cont:JobDict pickle\" *") ])
-    # Contains directory.
-    elif arg.find('/') != -1:
-      orig_dir = getcwd()
-      new_dir = arg[:-arg[::-1].find('/')-1]
-      chdir (new_dir)
-      result = [ join(new_dir, u) + "/" for u in ip.magic("mglob dir:*") ]
-      result.extend([ join(new_dir, u) for u in ip.magic("mglob \"cont:JobDict pickle\" *") ])
-      chdir(orig_dir)
-    else: # not a directory.
-      result = [u + "/" for u in ip.magic("mglob dir:%s*" % (arg))]
-      result.extend([u for u in ip.magic("mglob \"cont:JobDict pickle\" %s*" % (arg))])
+    where = arg.replace("%goto", "").replace("goto", "").split()
+    where = "" if len(where) == 0 else where[-1]
+
+    result = [ u + "/" for u in ip.magic("mglob dir:{0}*".format(where)) ]
+    print "\n", result
+    s = "mglob \"cont:JobDict pickle\" {0}*".format(where)
+    result.extend([u for u in ip.magic(s)])
     return result
   except: print "Error in _explore._glob_job_pickles."
 
