@@ -14,7 +14,7 @@ def _get_current_job_params(self, verbose=0):
     if verbose > 1:
       print "No filepath for current job dictionary.\n"\
             "Please set current_jobdict_path."
-    return None, None, None
+    return current, None
   path = ip.user_ns["current_jobdict_path"]
   return current, path
 
