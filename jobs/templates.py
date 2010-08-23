@@ -67,7 +67,7 @@ def default_slurm( file, walltime = "05:45:00", mppwidth = 8, ppernode=8, queue 
       @param pickle: Fileame of job-tree pickle.
   """
   from os import environ
-  from os.path import exists, split as splitpath, join
+  from os.path import exists, split as splitpath, join, abspath
 
   if pyvirt == None and "VIRTUAL_ENV" in environ:
     pyvirt = join(join(environ["VIRTUAL_ENV"], "bin"), "activate")
@@ -82,15 +82,15 @@ def default_slurm( file, walltime = "05:45:00", mppwidth = 8, ppernode=8, queue 
   if queue != None: file.write("#SBATCH -p %s\n" % (queue))
   pbsdir = splitpath(file.name)[0]
   if name != None:
-    file.write("#SBATCH -e \"%s/err.%s.%%j\"\n" % (pbsdir, name))
-    file.write("#SBATCH -o \"%s/out.%s.%%j\"\n" % (pbsdir, name))
+    file.write("#SBATCH -e \"%s/err.%s.%%j\"\n" % (abspath(pbsdir), name))
+    file.write("#SBATCH -o \"%s/out.%s.%%j\"\n" % (abspath(pbsdir), name))
   else:
     file.write("#SBATCH -e \"%s/err.%j\"\n" % (pbsdir))
     file.write("#SBATCH -o \"%s/out.%j\"\n" % (pbsdir))
   if name != None: file.write("#SBATCH -J \"%s\" \n" % (name))
-  if outdir != None: file.write("#SBATCH -D %s " % (outdir))
+  if outdir != None: file.write("#SBATCH -D {0}\n".format(abspath(outdir)))
 
-  if pyvirt != None: file.write("\nsource %s \n" % (pyvirt) )
+# if pyvirt != None: file.write("\nsource %s \n" % (pyvirt) )
 
   # aprun on Fucking Crays. mpirun everywhere else.
   file.write( "mpirun -np %i numa_wrapper -ppn=%i python %s "\

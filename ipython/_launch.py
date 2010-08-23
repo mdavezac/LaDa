@@ -6,7 +6,7 @@ def launch_scattered(self, event):
   """ Launch scattered jobs: one job = one pbs script. """
   import re
   from os import environ
-  from os.path import split as splitpath, join, exists
+  from os.path import split as splitpath, join, exists, abspath
   from ..opt.changedir import Changedir
   from ..jobs.templates import default_pbs, default_slurm
   from .. import jobs
@@ -81,8 +81,8 @@ def launch_scattered(self, event):
       name = name.replace("/", ".")
       pbsscripts.append(join(path+".pbs", name + ".pbs"))
       with open(pbsscripts[-1], "w") as file: 
-        template( file, outdir=splitpath(path)[0], jobid=i, mppwidth=mppwidth, name=name,\
-                  pickle = path, pyscript=pyscript, ppath=splitpath(path)[0], walltime=walltime )
+        template( file, outdir=abspath(splitpath(path)[0]), jobid=i, mppwidth=mppwidth, name=name,\
+                  pickle=splitpath(path)[1], pyscript=pyscript, ppath=".", walltime=walltime )
     print "Created scattered jobs in {0}.pbs.".format(path)
 
   if event.nolaunch: return

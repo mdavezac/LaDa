@@ -30,6 +30,7 @@ def explore(self, cmdl):
   """
 
   import argparse
+  from os.path import join, dirname
   from . import _get_current_job_params
 
   ip = self.api
@@ -58,8 +59,7 @@ def explore(self, cmdl):
   try: args = parser.parse_args(cmdl.split())
   except SystemExit as e: return None
   else:
-    if len(args.jobdict) == 0 and (not args.is_file) and (not args.is_expression) \
-       and (args.type not in ["results", "errors", "all", "running"]):
+    if len(args.jobdict) == 0 and (args.type not in ["results", "errors", "all", "running"]):
       args.jobdict = args.type
       args.type = ""
 
@@ -78,7 +78,7 @@ def explore(self, cmdl):
       print "Path to job dictionary: ", path
     return
 
-  options = ["", "errors", "results", "all"]
+  options = ['', "errors", "results", "all"]
   if hasattr(self, "magic_qstat"): options.append("running")
   if args.type not in options: 
     ip.user_ns["_lada_error"] = "Unknown TYPE argument {0}.\n"\
@@ -122,23 +122,26 @@ def explore_completer(self, event):
   ip = self.api
 
   options = set(["errors", "results", "all", "--file", "--expression"])
-  if hasattr(self, "magic_qstat"): options.append("running")
+  if hasattr(self, "magic_qstat"): options.add("running")
   data = event.line.split()[1:]
-  if len(event.symbol) == 0: data.append("")
   if len(set(data) - options) > 1: raise IPython.ipapi.TryNext
 
+  results, has_file, has_expr = [], False, False
+  if "--file" in data: data.remove("--file"); has_file = True
+  elif "--expression" in data: data.remove("--expression"); has_expr = True
+  else: results = ["--file", "--expression"]
+
+  results.extend(["errors", "results", "all"])
+  if hasattr(self, "magic_qstat"): results.append("running")
   if len(data) == 0: 
-    results = ["errors", "results", "all"]
-    if hasattr(self, "magic_qstat"): results.append("running")
     results.extend(_glob_job_pickles(ip, ""))
     return results
+
+  if len(event.symbol) == 0: data.append("")
   
-  results = [u for u in set(["--file", "--expression"])-set(data)]
-  if len(data) == 1: 
-    results.extend(["errors", "results", "all", "running"])
-  if "--file" not in data:
+  if not has_file:
     results.extend(_glob_ipy_user_ns(ip, data[-1]) )
-  if "--expression" not in data:
+  if not has_expr:
     results.extend(_glob_job_pickles(ip, data[-1]) )
   return results
 
