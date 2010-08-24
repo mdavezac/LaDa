@@ -308,3 +308,154 @@ def third_order_charge_correction(cell, n = 200):
         result += fold(vec)
         
   return -result / float(n**3) * Rydberg("eV") * pi * 4e0 / 3e0 / det(cell)
+
+
+def first_order_charge_correction(cell, charge=1e0, cutoff=None):
+  """ First order charge correction of +1 charge in given supercell.
+  
+      :Parameters:
+        - `cell`: Supercell of the point-defect.
+        - `charge`: Charge of the point-defect.
+        - `cutoff`: Ewald cutoff parameter.
+  """
+  from numpy.linalg import norm
+  from ..crystal import Structure
+  try: from ..pcm import Clj 
+  except ImportError as e:
+    print "Could not import Point-Charge Model package (pcm). \n"\
+          "Cannot compute first order charge correction.\n"\
+          "Please compile LaDa with pcm enabled.\n"
+    raise
+
+  clj = Clj()
+  clj.charge["A"] = charge
+  if cutoff == None:
+    clj.ewald = 10 * max( [norm(cell[:,i]) for i in range(3)] )
+  else: clj.ewald_cutoff = cutoff
+
+  structure = Structure(cell)
+  structure.add_atom = ((0e0,0,0), "A")
+
+  return clj.ewald(structure)
+
+# only defined if vasp can be imported.
+def first_neighbors(structure, origin):
+   """ Finds fist-neighbors of origin. """
+   from . import Neighbors
+
+   # now finds first neighbors. 12 is the highest coordination number, so
+   # this should include the first shell.
+   neighbors = [n for n in Neighbors(structure, 12, substitution.pos)]
+   # only take the first shell and keep indices (to atom in structure) only.
+   neighbors = [n.index for n in neighbors if n.distance < neighbors[0].distance + 1e-1]
+   return neighbors
+
+def match_moment(structure, origin, species, moment, extrae):
+
+  from ..physics import Z
+  indices = first_neighbors(structure, origin)
+  indices = filter(indices, lambda x: species[ structure.atoms[x] ].magnetic)
+  atoms = [structure.atoms[i] for i in indices]
+  types = [a.type for a in atoms]
+  oxidations = [species[a].oxidation for a in types]
+
+  maps = {}
+  for type in set(types):
+    maps[type] = [(a, n, o) for a, n, t, o in zip(atoms, indices, types, oxidations) if t == type]
+  moments = {}
+  for type in set(types):
+    nb_electrons = species[type].valence
+    z = Z(type)
+    if (z >= 21 and z <= 30) or (z >= 39 and z <= 48) or (z >= 57 and z <= 80):  
+      nelec = species[type].valence - species[type].oxidation
+      if 
+      moments 
+    else:
+
+
+
+
+
+
+
+try: from .. import vasp as _vasp
+except ImportError as e: pass
+else: 
+  class Magmom(_vasp.incar._params.SpecialVaspParam):
+    """ Creates a magmom configuration, whether low-spin or high-spin. """
+    def __init__(self, value, config = None, indices = None):
+      self._config, self._indices = config, indices
+      super(Magmom, self).__init__(value)
+  
+    def _get_value(self):
+      if self._config == None: return None
+      if self._indices == None: return None
+      elif len(self._indices) == 0: return None
+      return self._config, self._indices
+  
+    def _set_value(self, value): 
+      if value == None: self._indices, self._config = None, None
+      elif isinstance(value, str):
+        if value.lower() == "high":  self._config = value.lower()
+        elif value.lower() == "low": self._config = value.lower()
+        else: raise ValueError("Unkown value for magmom: " + str(value) + ".")
+      elif hasattr(value, "__len__"): # sequence.
+        if isinstance(value[0], str):
+          self._config = value[0]
+          value = value[1]
+        if len(value) > 0: self._indices = sorted(u for u in value)
+      else: raise ValueError("Unkown value for magmom: " + str(value) + ".")
+    value = property( _get_value, _set_value, \
+                      doc = """ ("low|high", [indices]") """ )
+    
+    @broadcast_result(key=True)
+    def incar_string(self, vasp, *args, **kwargs):
+      from ..crystal import specie_list
+  
+      magmom = ""
+      all_types = [atom.type for atom in vasp._system.atoms]
+      for specie in specie_list(vasp._system): # do this per specie.
+        indices = [n for n in self._indices if vasp._system.atoms[n].type == specie]
+        enum_indices = [i for i, n in enumerate(self._indices) if vasp._system.atoms[n].type == specie]
+        if len(indices) == 0: # case where there are no magnetic species of this kind
+          magmom += "%i*0 " % (all_types.count(specie))
+          continue
+        species = [vasp.species[ vasp._system.atoms[n].type ] for n in indices]
+        extra_elecs = -vasp.nelect if vasp.nelect != None else 0
+    
+        # computes low or high spin configurations. 
+        # Assumes that magnetic species are s^2 d^n p^0!
+        per_d = extra_elecs / len(self._indices) # number of electrons added by oxidation per atom
+        leftovers = extra_elecs % len(self._indices) # special occupations...
+        d_elecs = [int(s.valence-2+0.5) for s in species] # d occupation.
+        d_elecs = [  s + per_d + (0 if i < leftovers else 1)\
+                     for i, s in zip(enum_indices, d_elecs) ] # adds extra e-/h+
+        d_elecs = [0 if s > 10 else s for s in d_elecs] # checks for d^n with n > 10
+        mag = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0] if self._config == "low" \
+              else [0, 1, 2, 3, 4, 5, 4, 3, 2, 1, 0]
+        d_elecs = [mag[d] for d in d_elecs] # d occupation.
+    
+        # now constructs magmom
+        last_index = -1
+        for index, valence in zip(indices, d_elecs):
+          index = all_types[:index].count(specie)
+          if index - last_index == 1:   magmom += "%f " % (valence)
+          elif index - last_index == 2: magmom += "0 %f " % (valence)
+          else:                         magmom += "%i*0 %f " % (index-last_index-1, valence)
+          last_index = index
+        # adds last memebers of specie.
+        index = all_types.count(specie)
+        if index - last_index == 1: pass
+        elif index - last_index == 2: magmom += "0 "
+        else:                         magmom += "%i*0 " % (index - last_index - 1)
+    
+      return "MAGMOM = %s" % (magmom)
+  
+    def __repr__(self):
+      """ Returns a python script representing this object. """
+      return "vasp = %s(%s, config=%s, indices=%s))\n" \
+             % (self.__classname__, repr(self.value), repr(self._config), repr(self.indices))
+
+    
+  
+          

@@ -1,10 +1,10 @@
 """ Subpackage defining vasp incar parameters. """
 from _params import SpecialVaspParam, NElect, Algo, Precision, Ediff,\
-                    Encut, FFTGrid, Restart, UParams, Magmom, IniWave
+                    Encut, FFTGrid, Restart, UParams, IniWave
 from ...opt.decorators import add_setter
 
 __all__ = [ "SpecialVaspParam", "NElect", "Algo", "Precision", "Ediff",\
-            "Encut", "FFTGrid", "Restart", "UParams", "Magmom", "IniWave",\
+            "Encut", "FFTGrid", "Restart", "UParams", "IniWave",\
             "Incar" ]
 
 class Incar(object):
@@ -123,6 +123,9 @@ class Incar(object):
     self.add_param = "isym",        None
     self.add_param = "symprec",     None
     self.add_param = "lcorr",       None
+    self.add_param = "magmom",      None
+    self.add_param = "nupdown",     None
+    self.add_param = "loptica",     None
     # objects derived from SpecialVaspParams will be recognized as such and can
     # be added without further fuss.
     self.nelect      = NElect(0)
@@ -133,7 +136,6 @@ class Incar(object):
     self.fftgrid     = FFTGrid(None)
     self.restart     = Restart(None)
     self.U_verbosity = UParams("occupancy")
-    self.magmom      = Magmom(None)
     self.iniwave     = IniWave(None)
 
 
