@@ -359,18 +359,50 @@ def match_moment(structure, origin, species, moment, extrae):
   types = [a.type for a in atoms]
   oxidations = [species[a].oxidation for a in types]
 
-  maps = {}
+  maps = {} 
   for type in set(types):
     maps[type] = [(a, n, o) for a, n, t, o in zip(atoms, indices, types, oxidations) if t == type]
-  moments = {}
+  nelecs = [species[type].valence - species[type].oxidation for type in types]
+
   for type in set(types):
+    nelecs[type] = species[type].valence - species[type].oxidation
+  
+  def equiv_bins(n, N):
+    """ Generator over ways to fill N equivalent bins with n equivalent balls. """
+    from itertools import chain
+    if N == 1: yield [n]; return
+    if n == 0: yield [0 for x in range(N)]
+    for u in xrange(n, 0, -1):
+      for f in  equiv_bins(n-u, N-1):
+        yield chain([u], f)
+
+  def inequiv_bins(n, N):
+  """ Generator over ways to fill N inequivalent bins with n equivalent balls. """
+  from itertools import permutations
+  for u in equiv_bins(n, N):
+    u = [v for v in u]
+    history = []
+    for perm in permutations(u, len(u)):
+      seen = False
+      for other in history:
+        same = False
+        for p, o in zip(perm, other):
+          if p != o: same = True; break
+        if same == False: seen = True; break
+      if not seen: history.append([x for x in perm]); yield perm
+
     nb_electrons = species[type].valence
     z = Z(type)
     if (z >= 21 and z <= 30) or (z >= 39 and z <= 48) or (z >= 57 and z <= 80):  
-      nelec = species[type].valence - species[type].oxidation
-      if 
-      moments 
+      nelecs[type] = species[type].valence - species[type].oxidation
     else:
+      nelecs[type] = species[type].valence - species[type].oxidation
+      nelecs = nelecs, nelecs + extrae
+      nelecs = min(nelecs), max(nelecs)
+
+      hs = [0, 1, 2, 3, 4, 5, 4, 3, 2, 1, 0]
+      ls = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
+      moments[type] = hs
 
 
 
