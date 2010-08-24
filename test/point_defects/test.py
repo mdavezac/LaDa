@@ -30,36 +30,44 @@ def create_jobdict(filename="input.py"):
   # loop substitutions A on B. 
   for B, substituters in input.substitutions.items():
     for A in substituters:
+
       # loop over inequivalent substitution sites.
       for structure, substitution in ptd.substitution(supercell, input.lattice, B, A):
 
+        oxidation = input.vasp.species[substitution.type].oxidation 
         # loop over oxidations states.
-        for oxidation, name in ptd.charged_states(input.vasp.species, B, A):
-          oxjob = jobdict / structure.name / name
- 
-          # now finds first neighbors. 12 is the highest coordination number, so
-          # this should include the first shell.
-          neighbors = [n for n in Neighbors(structure, 12, substitution.pos)]
-          # only take the first shell and keep indices (to atom in structure) only.
-          neighbors = [n.index for n in neighbors if n.distance < neighbors[0].distance + 1e-1]
-          # adds origin.
-          neighbors.insert(substitution.index, 0)
-          # reduce to those which are magnetic.
-          neighbors = [n for n in neighbors if input.vasp.species[ structure.atoms[n].type ].magnetic]
- 
-          if len(neighbors) == 0: # no magnetic neighbors.
-            oxjob.jobparams["structure"] = structure
-            oxjob.jobparams["nelect"]    = oxidation
-            oxjob.functional = input.vasp
-          else: # has magnetic neighbors
-            # Creates low spin and high-spin *ferro* configurations.
-            # The current implementation assumes that magnetic species are s^2 d^n p^0!
-            # loops over high and low spin configurations.
-            for spin in ["low", "high"]:
-              spinjob = oxjob / (spin + "-spin")
-              spinjob.jobparams["structure"] = structure
-              spinjob.jobparams["nelect"]    = oxidation
-              spinjob.jobparams["magmom"]    = spin, neighbors
-              spinjob.functional = input.vasp
+        for nb_extrae, oxname in ptd.charged_states(input.vasp.species, B, A):
+
+          moment = nb_extrae - oxidation
+          # loop over low spin magnetic states, integer and average.
+          iterspins = ptd.low_spin_states(structure, substitution, input.vasp.species, moment)
+          for indices, moments in iterspins:
+
+            job = jobdict / structure.name / oxname / ptd.magname(moments, "moment")
+            job.jobparams["structure"] = structure
+            job.jobparams["nelect"] = nb_extrae
+            job.jobparams["nupdown"] = sum(moments)
+            job.jobparams["magmom"] = ptd.magmom(indices, moments, len(structure.atoms))
+            job.functional = input.vasp
+
+          # loop over high spin magnetic states, integer and average.
+          iterspins = ptd.high_spin_states( structure, substitution, input.vasp.species, moment)
+          for indices, moments in iterspins:
+
+            job = jobdict / structure.name / oxname / ptd.magname(moments, "moment")
+            job.jobparams["structure"] = structure
+            job.jobparams["nelect"] = moment
+            job.jobparams["nupdown"] = sum(moments)
+            job.jobparams["magmom"] = ptd.magmom(indices, moments, len(structure.atoms))
+            job.functional = input.vasp
+
+          # do paramagnetic calculation.
+          job = jobdict / structure.name / oxname / "paramagnetic"
+          job.jobparams["structure"] = structure
+          job.jobparams["nelect"] = nb_extrae
+          job.jobparams["nupdown"] = None
+          job.jobparams["magmom"] = None
+          job.functional = input.vasp
+
 
   return jobdict

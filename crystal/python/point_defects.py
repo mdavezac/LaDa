@@ -68,8 +68,8 @@ def vacancy(structure, lattice, type):
         - the vacancy atom from the original structure. It is given an
           additional attribute, C{index}, referring to list of atoms of the
           original structure.
-        - A suggested name for the vacancy: site_i, where i is the index of the
-          vacancy in the original list of atoms.
+        - A suggested name for the vacancy: site_i, where i is the site index
+          of the vacancy (in the lattice).
   """
   from copy import deepcopy
   
@@ -88,7 +88,7 @@ def vacancy(structure, lattice, type):
     if len(inequivs) > 1: name += "/site_{0}".format(i)
     # creates vacancy and keeps atom for record
     atom = deepcopy(structure.atoms.pop(which))
-    atom.index = i
+    atom.index = which
     # structure 
     result = deepcopy(structure)
     result.name = name
@@ -117,8 +117,8 @@ def substitution(structure, lattice, type, subs):
         - the substituted atom in the structure above. The atom is given an
           additional attribute, C{index}, referring to list of atoms in the
           structure.
-        - A suggested name for the substitution: site_i, where i is the index
-          of the substitution in the list of atoms.
+        - A suggested name for the substitution: site_i, where i is the site
+          index of the substitution.
   """
   from copy import deepcopy
 
@@ -338,45 +338,55 @@ def first_order_charge_correction(cell, charge=1e0, cutoff=None):
 
   return clj.ewald(structure)
 
-# only defined if vasp can be imported.
-def first_neighbors(structure, origin):
-   """ Finds fist-neighbors of origin. """
+def magnetic_neighborhood(structure, defect, species):
+   """ Finds magnetic neighberhood of a defect.
+   
+       If the defect is a substitution with a magnetic atom, then the
+       neighberhood is the defect alone. Otherwise, the neighberhood extends to
+       magnetic first neighbors. An atomic specie is deemed magnetic if marked
+       as such in `species`.
+
+       :Parameters: 
+         structure : `lada.crystal.Structure`
+           The structure with the point-defect already incorporated.
+         defect : `lada.crystal.Atom`
+           The point defect, to which and *index* attribute is given denoting
+           the index of the atom in the original supercell structure (without
+           point-defect).
+         species : dict of `lada.vasp.species.Specie`
+           A dictionary defining the atomic species.
+       :return: indices of the neighboring atoms in the point-defect `structure`.
+   """
+   from numpy import array
+   from numpy.linalg import norm
    from . import Neighbors
 
+   # checks if substitution with a magnetic defect.
+   if defect.index < len(structure.atoms):
+     atom = structure.atoms[defect.index]
+     if species[atom.type].magnetic and norm(defect.pos - atom.pos) < 1e-12:
+       return [defect.index]
    # now finds first neighbors. 12 is the highest coordination number, so
    # this should include the first shell.
-   neighbors = [n for n in Neighbors(structure, 12, substitution.pos)]
+   neighbors = [n for n in Neighbors(structure, 12, defect.pos)]
    # only take the first shell and keep indices (to atom in structure) only.
    neighbors = [n.index for n in neighbors if n.distance < neighbors[0].distance + 1e-1]
-   return neighbors
+   # only keep the magnetic neighborhood.
+   return [n for n in neighbors if species[structure.atoms[n].type].magnetic]
 
-def match_moment(structure, origin, species, moment, extrae):
+def equiv_bins(n, N):
+  """ Generator over ways to fill N equivalent bins with n equivalent balls. """
+  from itertools import chain
+  from numpy import array
+  assert N > 0
+  if N == 1: yield [n]; return
+  if n == 0: yield [0 for x in range(N)]
+  for u in xrange(n, 0, -1):
+    for f in  equiv_bins(n-u, N-1):
+      result = array([x for x in chain([u], f)])
+      if all(result[0:-1]-result[1:] >= 0): yield result
 
-  from ..physics import Z
-  indices = first_neighbors(structure, origin)
-  indices = filter(indices, lambda x: species[ structure.atoms[x] ].magnetic)
-  atoms = [structure.atoms[i] for i in indices]
-  types = [a.type for a in atoms]
-  oxidations = [species[a].oxidation for a in types]
-
-  maps = {} 
-  for type in set(types):
-    maps[type] = [(a, n, o) for a, n, t, o in zip(atoms, indices, types, oxidations) if t == type]
-  nelecs = [species[type].valence - species[type].oxidation for type in types]
-
-  for type in set(types):
-    nelecs[type] = species[type].valence - species[type].oxidation
-  
-  def equiv_bins(n, N):
-    """ Generator over ways to fill N equivalent bins with n equivalent balls. """
-    from itertools import chain
-    if N == 1: yield [n]; return
-    if n == 0: yield [0 for x in range(N)]
-    for u in xrange(n, 0, -1):
-      for f in  equiv_bins(n-u, N-1):
-        yield chain([u], f)
-
-  def inequiv_bins(n, N):
+def inequiv_bins(n, N):
   """ Generator over ways to fill N inequivalent bins with n equivalent balls. """
   from itertools import permutations
   for u in equiv_bins(n, N):
@@ -385,109 +395,220 @@ def match_moment(structure, origin, species, moment, extrae):
     for perm in permutations(u, len(u)):
       seen = False
       for other in history:
-        same = False
-        for p, o in zip(perm, other):
-          if p != o: same = True; break
-        if same == False: seen = True; break
-      if not seen: history.append([x for x in perm]); yield perm
+        same = not any( p != o for p, o in zip(perm, other) )
+        if same: seen = True; break
+      if not seen: history.append(perm); yield [x for x in perm]
 
-    nb_electrons = species[type].valence
-    z = Z(type)
-    if (z >= 21 and z <= 30) or (z >= 39 and z <= 48) or (z >= 57 and z <= 80):  
-      nelecs[type] = species[type].valence - species[type].oxidation
-    else:
-      nelecs[type] = species[type].valence - species[type].oxidation
-      nelecs = nelecs, nelecs + extrae
-      nelecs = min(nelecs), max(nelecs)
+def electron_bins(n, atomic_types):
+  """ Loops over electron bins. """
+  from itertools import product 
+  from numpy import zeros, array
+  # creates a dictionary where every type is associated with a list of indices into atomic_types.
+  Ns = {}
+  for type in set(atomic_types):
+    Ns[type] = [i for i,u in enumerate(atomic_types) if u == type]
+  # Distributes electrons over inequivalent atomic types.
+  for over_types in inequiv_bins(n, len(Ns.keys())):
+    # now distributes electrons over each type independently.
+    iterables = [ equiv_bins(v, len(Ns[type])) for v, type in zip(over_types, Ns.keys()) ] 
+    for nelecs in product(*iterables):
+      # creates a vector where indices run as in atomic_types argument.
+      result = zeros((len(atomic_types),), dtype="float64")
+      for v, (type, value) in zip(nelecs, Ns.items()): result[value] = array(v)
+      yield result
 
-      hs = [0, 1, 2, 3, 4, 5, 4, 3, 2, 1, 0]
-      ls = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
-      moments[type] = hs
-
-
-
-
-
-
-
-try: from .. import vasp as _vasp
-except ImportError as e: pass
-else: 
-  class Magmom(_vasp.incar._params.SpecialVaspParam):
-    """ Creates a magmom configuration, whether low-spin or high-spin. """
-    def __init__(self, value, config = None, indices = None):
-      self._config, self._indices = config, indices
-      super(Magmom, self).__init__(value)
-  
-    def _get_value(self):
-      if self._config == None: return None
-      if self._indices == None: return None
-      elif len(self._indices) == 0: return None
-      return self._config, self._indices
-  
-    def _set_value(self, value): 
-      if value == None: self._indices, self._config = None, None
-      elif isinstance(value, str):
-        if value.lower() == "high":  self._config = value.lower()
-        elif value.lower() == "low": self._config = value.lower()
-        else: raise ValueError("Unkown value for magmom: " + str(value) + ".")
-      elif hasattr(value, "__len__"): # sequence.
-        if isinstance(value[0], str):
-          self._config = value[0]
-          value = value[1]
-        if len(value) > 0: self._indices = sorted(u for u in value)
-      else: raise ValueError("Unkown value for magmom: " + str(value) + ".")
-    value = property( _get_value, _set_value, \
-                      doc = """ ("low|high", [indices]") """ )
+def magmom(indices, moments, nbatoms):
+  """ Yields a magmom string from knowledge of which moments are non-zero. """
+  from operator import itemgetter
+  s = [0 for i in range(nbatoms)]
+  for i, m in zip(indices, moments): s[i] = m
+  compact = [[1, s[0]]]
+  for m in s[1:]:
+    if abs(compact[-1][1] - m) < 1e-12: compact[-1][0] += 1
+    else: compact.append( [1, m] )
     
-    @broadcast_result(key=True)
-    def incar_string(self, vasp, *args, **kwargs):
-      from ..crystal import specie_list
-  
-      magmom = ""
-      all_types = [atom.type for atom in vasp._system.atoms]
-      for specie in specie_list(vasp._system): # do this per specie.
-        indices = [n for n in self._indices if vasp._system.atoms[n].type == specie]
-        enum_indices = [i for i, n in enumerate(self._indices) if vasp._system.atoms[n].type == specie]
-        if len(indices) == 0: # case where there are no magnetic species of this kind
-          magmom += "%i*0 " % (all_types.count(specie))
-          continue
-        species = [vasp.species[ vasp._system.atoms[n].type ] for n in indices]
-        extra_elecs = -vasp.nelect if vasp.nelect != None else 0
-    
-        # computes low or high spin configurations. 
-        # Assumes that magnetic species are s^2 d^n p^0!
-        per_d = extra_elecs / len(self._indices) # number of electrons added by oxidation per atom
-        leftovers = extra_elecs % len(self._indices) # special occupations...
-        d_elecs = [int(s.valence-2+0.5) for s in species] # d occupation.
-        d_elecs = [  s + per_d + (0 if i < leftovers else 1)\
-                     for i, s in zip(enum_indices, d_elecs) ] # adds extra e-/h+
-        d_elecs = [0 if s > 10 else s for s in d_elecs] # checks for d^n with n > 10
-        mag = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0] if self._config == "low" \
-              else [0, 1, 2, 3, 4, 5, 4, 3, 2, 1, 0]
-        d_elecs = [mag[d] for d in d_elecs] # d occupation.
-    
-        # now constructs magmom
-        last_index = -1
-        for index, valence in zip(indices, d_elecs):
-          index = all_types[:index].count(specie)
-          if index - last_index == 1:   magmom += "%f " % (valence)
-          elif index - last_index == 2: magmom += "0 %f " % (valence)
-          else:                         magmom += "%i*0 %f " % (index-last_index-1, valence)
-          last_index = index
-        # adds last memebers of specie.
-        index = all_types.count(specie)
-        if index - last_index == 1: pass
-        elif index - last_index == 2: magmom += "0 "
-        else:                         magmom += "%i*0 " % (index - last_index - 1)
-    
-      return "MAGMOM = %s" % (magmom)
-  
-    def __repr__(self):
-      """ Returns a python script representing this object. """
-      return "vasp = %s(%s, config=%s, indices=%s))\n" \
-             % (self.__classname__, repr(self.value), repr(self._config), repr(self.indices))
+  string = ""
+  for n, m in compact:
+    if n > 1: string +=" {0}*{1}".format(n, m)
+    elif n == 1: string += " {0}".format(m)
+    assert n != 0
+  return string
 
-    
+def electron_counting(structure, defect, species, extrae):
+  """ Enumerate though number of electron in point-defect magnetic neighberhood. 
+
+      Generator over the number of electrons of each atom in the magnetic
+      neighberhood of a point defect with `extrae` electrons. If there are no
+      magnetic neighborhood, then `magmom` is set
+      to None and the total magnetic moment to 0 (e.g. lets VASP figure it out).
+      Performs a sanity check on integers to make sure things are correct.
+      :Parameters:
+        structure : `lada.crystal.Structure`
+          Structure with point-defect already inserted.
+        defect : `lada.crystal.Atom`
+          Atom making up the point-defect.
+          In addition, it should have an *index* attribute denoting the defect 
+        species : dict of `lada.vasp.species.Specie`
+          Dictionary containing details of the atomic species.
+        extrae :
+          Number of extra electrons to add/remove.
+      :return: yields (indices, electrons) where indices is a list of indices
+        to the atom in the neighberhood, and electrons is a corresponding list of
+        elctrons.
+  """
+  from numpy import array
+  from ..physics import Z
+  indices = magnetic_neighborhood(structure, defect, species)
+
+  # no magnetic neighborhood.
+  if len(indices) == 0: 
+    yield None, None
+    return
+
+  # has magnetic neighberhood from here on.
+  atoms = [structure.atoms[i] for i in indices]
+  types = [a.type for a in atoms]
+  nelecs = array([species[type].valence - species[type].oxidation for type in types])
+
+  # loop over different electron distributions.
+  for tote in electron_bins(abs(extrae), types):
+    # total number of electrons on each atom.
+    if extrae < 0:   tote = nelecs - tote
+    elif extrae > 0: tote += nelecs
+
+    # sanity check. There may be more electrons than orbitals at this point.
+    sane = True
+    for n, type in zip(tote, types):
+      if n < 0: sane = False; break;
+      z = Z(type)
+      if (z >= 21 and z <= 30) or (z >= 39 and z <= 48) or (z >= 57 and z <= 80):  
+        if n > 10: sane = False;  break
+      elif n > 8: sane = False; break
+
+    if not sane: continue
+
+    yield indices, tote
+ 
+
+def low_spin_states(structure, defect, species, extrae, do_integer=True, do_average=True):
+  """ Enumerate though low-spin-states in point-defect. 
+
+      Generator over low-spin magnetic states of a defect with
+      `extrae` electrons. The extra electrons are distributed both as integers
+      and as an average. All these states are ferromagnetic. In the special
+      case of a substitution with a magnetic atom, the moment is expected to go
+      on the substitution alone. If there are no magnetic neighborhood, then `magmom` is set
+      to None and the total magnetic moment to 0 (e.g. lets VASP figure it out).
+      :Parameters:
+        structure : `lada.crystal.Structure`
+          Structure with point-defect already inserted.
+        defect : `lada.crystal.Atom`
+          Atom making up the point-defect.
+          In addition, it should have an *index* attribute denoting the defect 
+        species : dict of `lada.vasp.species.Specie`
+          Dictionary containing details of the atomic species.
+        extrae :
+          Number of extra electrons to add/remove.
+      :return: yields (indices, moments) where the former index the relevant
+               atoms in `structure` and latter are their respective moments.
+  """
+
+  from numpy import array, abs, all, any
+
+  history = []
+  def check_history(*args):
+    for i, t in history:
+      if all(abs(i-args[0]) < 1e-12) and all(abs(t-args[1]) < 1e-12):
+        return False
+    history.append(args)
+    return True
+
+
+  if do_integer: 
+    for indices, tote in electron_counting(structure, defect, species, extrae):
+      if tote == None: continue # non-magnetic case
+      indices, moments = array(indices), array(tote) % 2
+      if all(abs(moments) < 1e-12): continue # non - magnetic case
+      if check_history(indices, moments): yield indices, moments
+  if do_average: 
+    for indices, tote in electron_counting(structure, defect, species, 0):
+      if tote == None: continue # non-magnetic case
+      if len(indices) < 2: continue
+      indices, moments = array(indices), array(tote) % 2 + extrae / float(len(tote))
+      if all(abs(moments) < 1e-12): continue # non - magnetic case
+      if check_history(indices, moments): yield indices, moments
+
+
+def high_spin_states(structure, defect, species, extrae, do_integer=True, do_average=True):
+  """ Enumerate though high-spin-states in point-defect. 
+
+      Generator over high-spin magnetic states of a defect with
+      `extrae` electrons. The extra electrons are distributed both as integers
+      and as an average. All these states are ferromagnetic. In the special
+      case of a substitution with a magnetic atom, the moment is expected to go
+      n the substitution alone. If there are no magnetic neighborhood, then
+      `magmom` is set to None and the total magnetic moment to 0 (e.g. lets
+      VASP figure it out).
+      :Parameters:
+        structure : `lada.crystal.Structure`
+          Structure with point-defect already inserted.
+        defect : `lada.crystal.Atom`
+          Atom making up the point-defect.
+          In addition, it should have an *index* attribute denoting the defect 
+        species : dict of `lada.vasp.species.Specie`
+          Dictionary containing details of the atomic species.
+        extrae :
+          Number of extra electrons to add/remove.
+      :return: yields (indices, moments) where the former index the relevant
+               atoms in `structure` and latter are their respective moments.
+  """
+  from numpy import array, abs, all, any
+
+  def is_d(t): 
+    """ Determines whether an atomic specie is transition metal. """
+    from ..physics import Z
+    z = Z(t)
+    return (z >= 21 and z <= 30) or (z >= 39 and z <= 48) or (z >= 57 and z <= 80) 
+
+  def determine_moments(arg, ts): 
+    """ Computes spin state from number of electrons. """
+    f = lambda n, t: (n if n < 6 else 10-n) if is_d(t) else (n if n < 5 else 8-n)
+    return [f(n,t) for n, t in zip(arg, ts)]
+
+  history = []
+  def check_history(*args):
+    for i, t in history:
+      if all(abs(i-args[0]) < 1e-12) and all(abs(t-args[1]) < 1e-12):
+        return False
+    history.append(args)
+    return True
   
-          
+  if do_integer: 
+    for indices, tote in electron_counting(structure, defect, species, extrae):
+      if tote == None: continue # non-magnetic case
+      
+      types = [structure.atoms[i].type for i in indices]
+      indices, moments = array(indices), array(determine_moments(tote, types))
+      if all(moments == 0): continue # non - magnetic case
+      if check_history(indices, moments):  yield indices, moments
+
+  if do_average: 
+    for indices, tote in electron_counting(structure, defect, species, 0):
+      if tote == None: continue # non-magnetic case
+      if len(indices) < 2: continue
+
+      types = [structure.atoms[i].type for i in indices]
+      indices = array(indices)
+      moments = array(determine_moments(tote, types)) + float(extrae) / float(len(types))
+      if all(abs(moments) < 1e-12): continue # non - magnetic case
+      if check_history(indices, moments):  yield indices, moments
+
+def magname(moments, prefix=None, suffix=None):
+  """ Construct name for magnetic moments. """
+  if len(moments) == 0: return "paramagnetic"
+  string = str(moments[0])
+  for m in moments[1:]: string += "_" + str(m)
+  if prefix != None: string = prefix + "_" + string
+  if suffix != None: string += "_" + suffix
+  return string
+
