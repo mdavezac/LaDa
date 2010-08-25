@@ -121,7 +121,7 @@ class RelaxCellShape(object):
       params = kwargs.copy()
       params.update(first_trial)
       comm.barrier()
-    else: param = kwargs
+    else: params = kwargs
     comm.barrier()
     
     # performs relaxation calculations.
