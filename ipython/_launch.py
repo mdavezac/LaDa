@@ -78,6 +78,7 @@ def launch_scattered(self, event):
     for i, (job, name) in enumerate(current.walk_through()):
       if job.is_tagged: continue
       mppwidth = mppalloc(job) if hasattr(mppalloc, "__call__") else mppalloc
+      if len(name) == 0: name = "{0}-root".format(splitpath(path)[1])
       name = name.replace("/", ".")
       pbsscripts.append(join(path+".pbs", name + ".pbs"))
       with open(pbsscripts[-1], "w") as file: 
