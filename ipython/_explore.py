@@ -190,7 +190,7 @@ def _glob_ipy_user_ns(ip, arg):
 
 def _explore(self, args):
   """ Tries to open job-dictionary. """
-  from os.path import exists 
+  from os.path import exists, abspath
   from pickle import load
   from copy import deepcopy
 
@@ -223,7 +223,7 @@ def _explore(self, args):
         ip.user_ns["current_jobdict"] = load(file)
     except: pass
     else:
-      ip.user_ns["current_jobdict_path"] = args.jobdict
+      ip.user_ns["current_jobdict_path"] = abspath(args.jobdict)
       return 
   if args.is_expression or not args.is_file:
     try: ip.user_ns["current_jobdict"] = ip.ev(args.jobdict)
