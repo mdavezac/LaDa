@@ -1,6 +1,15 @@
 """ Point-defect helper functions. """
 __docformat__ = "restructuredtext en"
+from ..opt import RelativeDirectory 
+try: from lada import vasp
+except ImportError: _lada_has_vasp = False
+else: _lada_has_vasp = True
 
+
+__all__ = [ 'inequivalent_sites', 'vacancy', 'substitution', 'charged_states', \
+            'band_filling', 'potential_alignment', 'charge_correction', \
+            'magmom', 'low_spin_states', 'high_spin_states', 'magname' ]
+if _lada_has_vasp: __all__.append('Extract')
 
 def inequivalent_sites(lattice, type):
   """ Yields sites occupied by type which are inequivalent.
@@ -202,7 +211,7 @@ def charged_states(species, A=None, B=None):
     yield -charge, oxdir
 
 
-def band_filling_correction(defect, cbm):
+def band_filling(defect, cbm):
   """ Returns band-filling corrrection. 
 
       :Parameters: 
@@ -273,7 +282,7 @@ def potential_alignment(defect, host, maxdiff=0.5):
   return average(diff_from_host)
                     
 
-def third_order_charge_correction(cell, n = 200):
+def third_order_charge_correction(cell, n = 200, **kwargs):
   """ Returns energy of third order charge correction. 
   
       :Parameters: 
@@ -310,7 +319,7 @@ def third_order_charge_correction(cell, n = 200):
   return -result / float(n**3) * Rydberg("eV") * pi * 4e0 / 3e0 / det(cell)
 
 
-def first_order_charge_correction(cell, charge=1e0, cutoff=None):
+def first_order_charge_correction(cell, charge=1e0, cutoff=None, **kwargs):
   """ First order charge correction of +1 charge in given supercell.
   
       :Parameters:
@@ -337,6 +346,14 @@ def first_order_charge_correction(cell, charge=1e0, cutoff=None):
   structure.add_atom = ((0e0,0,0), "A")
 
   return clj.ewald(structure)
+
+def charge_correction(cell, *kwargs):
+  """ Electrostatic charge correction (first and third order). """
+  return   first_order_charge_correction(cell, **kwargs) \
+         + third_order_charge_correction(cell, **kwargs) \
+
+
+
 
 def magnetic_neighborhood(structure, defect, species):
    """ Finds magnetic neighberhood of a defect.
@@ -611,4 +628,153 @@ def magname(moments, prefix=None, suffix=None):
   if prefix != None: string = prefix + "_" + string
   if suffix != None: string += "_" + suffix
   return string
+
+
+
+if _lada_has_vasp:
+  from ..opt.decorators import make_cached
+  class Extract(object):
+    """ Extract point-defect quantities. """
+    root = RelativeDirectory()
+    """ Root directory of the point-defect calculations. """
+
+    def __init__(self, directory, comm = None, envvar=None, host=None, Extract=None):
+      """ Initializes the extraction routine. """
+      from os.path import normpath, relpath
+      from ..vasp import Extract as vasp_Extract
+      self.root = directory, envvar
+      self.comm = comm
+      """ Communicator to use when extracting values.
+      
+          Any extracted value is broadcasted across this communicator.
+      """
+      self.host = "" if host == None else normpath(relpath(host, self.root))
+      """ Directory for host calculations. 
+
+          Stored relative to point-defect root directory.
+      """ 
+      self.Extract = vasp_Extract
+
+      self.nopropagate = ["uncache", "solo"]
+      """ Attribute of self.Extract which should not be propagated. """
+      self.optimize_moments = True
+      """ If true, will optimize out degrees of freedom related to magnetic moments. """
+
+    def walk_through(self, depth=None):
+      """ Iterates through possible calculation directories. """
+      from glob import iglob
+      from re import compile
+      from os.path import join
+      from itertools import chain
+      from operator import itemgetter
+
+      re_sub = compile("^(?:[A-Z][a-z]?_on|vacancy)_[A-Z][a-z]?$")
+      re_charge = compile("^charge_(?:-?[0-9]*|neutral)$")
+      re_moment = compile("^(?:moment(_(\S*))+|paramagnetic)$")
+      it_sub = chain( iglob(join(self.root, "*_on_*/")), \
+                      iglob(join(self.root, "vacancy_*/"))  )
+      for dir_sub in it_sub:
+        if dir_sub[-1] == '/': dir_sub = dir_sub[:-1]
+        if re_sub.match(dir_sub.split('/')[-1]) == None: continue
+
+        if depth != None and (depth <= 1 or depth == "sub"): yield dir_sub
+
+        for dir_charge in iglob(join(dir_sub, "charge_*/")):
+          if dir_charge[-1] == '/': dir_charge = dir_charge[:-1]
+          if re_charge.match(dir_charge.split('/')[-1]) == None: continue
+
+          if depth != None and (depth <= 2 or depth == "charge"): yield dir_charge
+
+          it_moment = chain( iglob(join(dir_charge, "moment_*/")), \
+                             iglob(join(dir_charge, "paramagnetic/"))  )
+
+          # depth == cut magnetic -- keep only lowest magnetic result.
+          if depth == "cut magnetic": moments = []
+          for dir_moment in it_moment:
+            if dir_moment[-1] == '/': dir_moment = dir_moment[:-1]
+            if re_moment.match(dir_moment.split('/')[-1]) == None: continue
+            
+            # depth == cut magnetic -- keep only lowest magnetic result.
+            if depth == "cut magnetic":
+              extract = self.Extract(dir_moment, self.comm)
+              if extract.success: moments.append( (dir_moment, extract.energy) )
+              continue
+              
+            yield dir_moment
+
+          # depth == cut magnetic -- keep only lowest magnetic result.
+          if depth == "cut magnetic":
+            yield min(moments, key=itemgetter(1))[0]
+
+
+    def __getattr__(self, name):
+      """ Returns a dictionary of point-defects values. """
+      if name[0] != '_' and name in set(dir(self.Extract())) - set(self.nopropagate):
+        return self._impl_dictattr(name)
+      error = "Point-defect extractor does not possess a \"{0}\" attribute."
+      raise AttributeError(error.format(name))
+    
+    
+    def __dir__(self):
+      result = [u for u in self.__dict__ if u[0] != '_'] 
+      result.extend([u for u in set(dir(self.Extract())) - set(self.nopropagate)])
+      return result
+    
+    @make_cached
+    def _extractors(self):
+      """ Caches extracting instances for each point-defect. """
+      from os.path import dirname, relpath
+      result = {}
+      iterate = self.walk_through("cut magnetic") if self.optimize_moments \
+                else self.walk_through()
+      for u in iterate:
+        name = dirname(u) if self.optimize_moments else u
+        name = relpath(name, self.root)
+        result[name] = self.Extract(u, self.comm)
+      return result
+      
+    
+    def _impl_dictattr(self, name):
+      """ Propagates vasp extraction attribute into a dictionary of point-defects. """
+      result = {}
+      for key, value in self._extractors().items():
+        assert hasattr(value, name),\
+               AttributeError("Extract does not possess a \"{0}\" attribute.".format(name))
+        result[key] = getattr(value, name)
+      return result
+
+    def uncache(self): 
+      """ Removes cached results.
+      
+          After this outputs are re-read from file.
+      """
+      from ...opt.decorators import uncache
+      uncache(self)
+
+    def solo(self):
+      """ Extraction on a single process.
+    
+          Sometimes, it is practical to perform extractions on a single process
+          only, eg without blocking mpi calls. C{self.L{solo}()} returns an
+          extractor for a single process:
+          
+          >>> # prints only on proc 0.
+          >>> if boost.mpi.world.rank == 0: print extract.solo().structure
+      """
+      from copy import deepcopy
+      
+      if self.comm == None: return self
+      copy = deepcopy(self)
+      return copy
+
+    def __getstate__(self):
+      d = self.__dict__.copy()
+      d.pop("comm", None)
+      return d
+
+    def __setstate__(self, arg):
+      self.__dict__.update(arg)
+      self.comm = None
+
+
 
