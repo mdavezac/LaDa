@@ -282,7 +282,7 @@ class RelativeDirectory(object):
       it is stored relative to the user's home, and hence can be passed from
       one computer system to the next.
   """
-  def __init__(self, value = None, envvar = None):
+  def __init__(self, value = None, envvar = None, hook = None):
     """ Initializes the property. 
     
         By default, initializes such that the fixed point is the user's home.
@@ -294,6 +294,12 @@ class RelativeDirectory(object):
     """ Relative directory. """
     self.envvar = envvar if envvar != None else "~/"
     """ Fixed point. """
+    self.hook = hook
+    """ An object to call when the directory is changed.
+    
+        This callable need only take two argument, the 'self' of the owner and
+        the absolute path to the directory.
+    """
 
   @property
   def fixed_point(self):
@@ -319,3 +325,4 @@ class RelativeDirectory(object):
         return
 
     self._value = relpath(value, self.fixed_point) if value != None else ""
+    if hasattr(self.hook, "__call__"): self.hook(instance, self.fixed_point)

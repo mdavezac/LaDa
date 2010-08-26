@@ -568,8 +568,6 @@ def unsucessfull(jobdict, extractor, outdir = None):
 
 class Extract(object): 
   """ Propagates extraction methods from different jobs. """
-  root = RelativeDirectory()
-  """ Root directory of the job. """
 
   def __init__(self, path, jobdict=None, comm = None):
     """ Initializes extraction object. 
@@ -596,18 +594,29 @@ class Extract(object):
       self.jobdict = jobdict
     self.comm = comm
 
+  def walk_through(self):
+    """ Generator to go through all relevant jobs. 
+    
+        :return: (name, extractor), where name is the name of the job, and
+           extractor an extraction object.
+    """
+    from os.path import exists, join
+    
+    for job, name in self.jobdict.walk_through():
+      if job.is_tagged: continue
+      if not hasattr(job.functional, "Extract"): continue
+      if not exists(join(self.root, name)): continue
+      try: extract = job.functional.Extract(join(self.root, name), comm = self.comm)
+      except: pass
+      else: yield name, extract
+
   def _extractors(self):
     """ Goes through all jobs and collects Extract if available. """
     from os.path import exists, join
     
     if hasattr(self, "_cached_extractors"): return self._cached_extractors
     result = {}
-    for job, name in self.jobdict.walk_through():
-      if not hasattr(job.is_tagged, "Extract"): continue
-      if job.is_tagged: continue
-      if not exists(join(self.root, name)): continue
-      try: result[name] = job.functional.Extract(join(self.root, name), comm = self.comm)
-      except: pass
+    for name, extract in self.walk_through(): result[name] = extract 
     self._cached_extractors = result
     return result
 
@@ -640,7 +649,7 @@ class Extract(object):
     raise AttributeError("Unknown attribute {0}.".format(name))
 
 
-  def uncache(self): 
+  def uncache(self, dummy=None): 
     """ Uncache values. """
     self.__dict__.pop("_cached_extractors", None)
     self.__dict__.pop("_cached_properties", None)
@@ -655,7 +664,24 @@ class Extract(object):
     self.comm = None
        
      
+  def solo(self):
+    """ Extraction on a single process.
+  
+        Sometimes, it is practical to perform extractions on a single process
+        only, eg without blocking mpi calls. C{self.L{solo}()} returns an
+        extractor for a single process:
+        
+        >>> # prints only on proc 0.
+        >>> if boost.mpi.world.rank == 0: print extract.solo().structure
+    """
+    from copy import deepcopy
+    
+    if self.comm == None: return self
+    copy = deepcopy(self)
+    return copy
 
+  root = RelativeDirectory(hook = uncache)
+  """ Root directory of the job. """
 
 
     
