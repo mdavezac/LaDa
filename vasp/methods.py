@@ -120,9 +120,8 @@ class RelaxCellShape(object):
     if first_trial != None:
       params = kwargs.copy()
       params.update(first_trial)
-      comm.barrier()
-    else: params = kwargs
-    comm.barrier()
+    else: param = kwargs
+    if comm != None: comm.barrier()
     
     # performs relaxation calculations.
     while maxiter <= 0 or nb_steps < maxiter:
@@ -212,6 +211,130 @@ class RelaxCellShape(object):
     result += "functional.relaxation = %s\n" % (repr(self.relaxation))
     result += "functional.first_trial = %s\n" % (repr(self.first_trial))
     result += "functional.maxiter = %s\n\n" % (repr(self.maxiter))
+    return string + "\n" + result
+
+
+
+class RelaxIons(object):
+  """ Functor for ionic relaxation.
+  
+      Since vasp is a plane-wave code, cell-relaxation are never quite accurate.
+      This functional keeps working until convergence is achieved, and then
+      creates a static calculation.
+  """
+  def __init__(self, vasp, first_trial=None):
+    """ Initializes a ionic relaxation.
+        
+        In order to obtain accurate total energies, a static calculation is
+        performed following the ionic calculation.
+    """
+    super(RelaxIons, self).__init__()
+    self.vasp = vasp
+    """ The functional with which to perform cell relaxation. see `__init__`. """
+    self.first_trial = first_trial
+    """ Dictionary of parameters for the first run of the functional. see `__init__`. """
+    self.Extract = self.vasp.Extract
+    """ Extraction class. """
+
+  def __call__(self, structure, outdir=None, comm=None, **kwargs ):
+    """ Performs an ionic relaxation followed by a static calculation.
+    
+        This will call will overide the `lada.vasp.Incar.set_relaxation`
+        parameter with \"ionic\".
+        :Parameters:
+          structure
+            The structure to relax with `vasp`.
+          outdir
+            Output directory passed on to the `vasp` functional.
+          comm : boost.mpi.communicator or None
+            MPI communicator passed on to the `vasp` functional.
+          kwargs 
+            Other keywords will overide attributes of this instance of
+            `RelaxCellShape` (though for this run only. This function is
+            stateless) if they are named after attributes of `RelaxCellShape`.
+            Otherwise, the keywords are passed on to the `vasp` functional.
+    """
+    from copy import deepcopy
+    from math import fabs 
+    from os import getcwd
+    from os.path import join, exists
+
+
+    # make this function stateless.
+    vasp = kwargs.pop("vasp", self.vasp)
+    structure = deepcopy(structure)
+    first_trial = kwargs.pop("first_trial", self.first_trial)
+    if outdir == None: outdir = getcwd()
+
+    # check nsw parameter. kwargs may still overide it.
+    if vasp.nsw == None: vasp.nsw = 60
+    # checks ibrion paramer. kwargs may still overide it.
+    if vasp.ibrion == None and vasp.potim == None: vasp.ibrion = 2
+
+    # does not run code. Just creates directory.
+    if kwargs.pop("norun", False): 
+      this = RelaxIons(vasp, first_trial)
+      return this._norun(structure, outdir=outdir, comm=comm, **kwargs)
+
+    # sets parameter dictionary for first trial.
+    if first_trial != None:
+      params = kwargs.copy()
+      params.update(first_trial)
+    else: param = kwargs
+    if comm != None: comm.barrier()
+    
+    # performs relaxation.
+    directory = join(outdir, "relax_ions")
+    params["set_relaxation"] = "ionic"
+    output = vasp\
+             (\
+               structure, \
+               outdir = directory,\
+               comm=comm,\
+               **params
+             )
+
+    # performs final calculation outside relaxation directory. 
+    structure = output.structure
+    params = kwargs.copy()
+    params["set_relaxation"] = "static"
+    output = vasp\
+             (\
+               structure, \
+               outdir = outdir,\
+               comm=comm,\
+               **kwargs\
+             )
+             
+    return output
+
+  def _norun(self, *args, **kwargs):
+    """ Just creates directory for debugging. """
+    from ..opt.changedir import Changedir
+
+    is_root = True
+    if "comm" in kwargs:
+      comm = kwargs["comm"]
+      is_root = True if comm == None else comm.rank == 0
+    if is_root:
+      # creates a file describing the relaxation parameters.
+      with Changedir(kwargs["outdir"]) as pwd:
+        with open("relax_ions_parameters", "w") as file:
+          file.write( "self.relaxation = %s\n" % (repr(self.relaxation)) )
+          file.write( "self.first_trial = %s\n" % (repr(self.first_trial)) )
+
+    # Now have vasp do a fake run to create anything it does create.
+    kwargs["norun"] = True
+    return self.vasp(*args, **kwargs) 
+
+  def __repr__(self):
+    """ Returns a python script describing this instance. """
+    string = "# VASP functional.\n"
+    string += repr(self.vasp).replace("functional", "vasp_functional") 
+    result = "from %s import %s\n\n" % (self.__class__.__module__, self.__class__.__name__)
+    result += "# VASP Functional to relax cell-shape, volume, etc.\n"
+    result += "functional = %s(vasp_functional)\n" % (self.__class__.__name__)
+    result += "functional.first_trial = %s\n" % (repr(self.first_trial))
     return string + "\n" + result
 
 

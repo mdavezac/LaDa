@@ -10,7 +10,7 @@ def create_jobdict(filename="input.py"):
 
   from lada.opt import read_input
   from lada.vasp import Vasp, Specie, specie, files
-  from lada.vasp.methods import RelaxCellShape
+  from lada.vasp.methods import RelaxIons
   from lada.crystal import fill_structure, Neighbors, point_defects as ptd
   from lada import jobs
 
@@ -20,6 +20,7 @@ def create_jobdict(filename="input.py"):
   input = read_input(filename, input_dict)
   # sets as default lattice.
   input.lattice.set_as_crystal_lattice()
+  if not hasattr(input, "relaxation_parameters"): input.relaxation_parameters = {}
 
   # creates job dictionary.
   jobdict = jobs.JobDict()
@@ -48,7 +49,7 @@ def create_jobdict(filename="input.py"):
             job.jobparams["nelect"] = nb_extrae
             job.jobparams["nupdown"] = sum(moments)
             job.jobparams["magmom"] = ptd.magmom(indices, moments, len(structure.atoms))
-            job.functional = input.vasp
+            job.functional = RelaxIons(input.vasp, first_trial = input.relaxation_parameters)
 
           # loop over high spin magnetic states, integer and average.
           iterspins = ptd.high_spin_states( structure, substitution, input.vasp.species, moment)
@@ -59,7 +60,7 @@ def create_jobdict(filename="input.py"):
             job.jobparams["nelect"] = moment
             job.jobparams["nupdown"] = sum(moments)
             job.jobparams["magmom"] = ptd.magmom(indices, moments, len(structure.atoms))
-            job.functional = input.vasp
+            job.functional = RelaxIons(input.vasp, first_trial = input.relaxation_parameters)
 
           # do paramagnetic calculation.
           job = jobdict / structure.name / oxname / "paramagnetic"
@@ -67,7 +68,7 @@ def create_jobdict(filename="input.py"):
           job.jobparams["nelect"] = nb_extrae
           job.jobparams["nupdown"] = None
           job.jobparams["magmom"] = None
-          job.functional = input.vasp
+          job.functional = RelaxIons(input.vasp, first_trial = input.relaxation_parameters)
 
 
   return jobdict
