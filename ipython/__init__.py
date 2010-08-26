@@ -99,6 +99,9 @@ def saveto(self, event):
        return
     jobs.save(current.root, args[0], overwrite=True) 
     ip.user_ns["current_jobdict_path"] = abspath(args[0])
+    if "collect" in ip.user_ns:
+      ip.user_ns["collect"].root = args[0]
+      ip.user_ns["collect"].uncache()
   else:
     ip.user_ns["_lada_error"] = "Invalid call to saveto."
     print ip.user_ns["_lada_error"] 
@@ -110,31 +113,6 @@ def current_jobname(self, arg):
   if "current_jobdict" not in ip.user_ns: return
   print ip.user_ns["current_jobdict"].name
   return
-
-@contextmanager
-def save_state(self):
-  from copy import deepcopy
-  ip = self.api
-  current, path = _get_current_job_params(self, 0)
-  if current != None: current.copy()
-  iterated, iterator = None, None
-  if _lada_subjob_iterator in ip.user_ns:
-    iterated = deepcopy(ip.user_ns["_lada_subjob_iterator"])
-  if _lada_subjob_iterator in ip.user_ns:
-    iterator = deepcopy(ip.user_ns["_lada_subjob_iterator"])
-  yield current, path, iterated, iterator
-
-  if current == None: ip.user_ns.pop("current_jobdict", None)
-  else: ip.user_ns["current_jobdict"] = current
-  if path == None: ip.user_ns.pop("current_jobdict_path", None)
-  else: ip.user_ns["current_jobdict_path"] = path
-  if iterator == None: ip.user_ns.pop("_lada_subjob_iterator", None)
-  else: ip.user_ns["_lada_subjob_iterator"] = iterator
-  if iterated == None: ip.user_ns.pop("_lada_subjob_iterated", None)
-  else: ip.user_ns["_lada_subjob_iterated"] = iterated
-
-
-
 
 def fakerun(self, event):
   """ Creates job directory tree and input files without computing. """

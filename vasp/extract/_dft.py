@@ -365,14 +365,12 @@ class _ExtractImpl(object):
     """ Greps pulay pressure from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>} """
     return self._get_pressures(2)
 
-  @make_cached
-  @broadcast_result(attr=True, which=0)
-  def _get_partial_charges(self):
+  def _get_partial_charges_magnetization(self, grep):
     """ Greps partial charges from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>} 
 
         This is a numpy array where the first dimension is the ion (eg one row
         per ion), and the second the partial charges for each angular momentum.
-        The total is not included.
+        The total is not included. Implementation also used for magnetization.
     """
     import re 
     from os.path import exists, join
@@ -383,7 +381,7 @@ class _ExtractImpl(object):
 
     result = []
     with open(path, "r") as file:
-      found = re.compile(r"""\s*total\s+charge\s*$""")
+      found = re.compile(grep) 
       lines = file.readlines()
       while len(lines) > 0:
         if found.search(lines[0]) != None: break 
@@ -395,6 +393,28 @@ class _ExtractImpl(object):
         assert int(data[0]) == i + 1
         result.append( data[1:len(data)-1] )
     return array(result, dtype="float64")
+
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def _get_partial_charges(self):
+    """ Greps partial charges from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>} 
+
+        This is a numpy array where the first dimension is the ion (eg one row
+        per ion), and the second the partial charges for each angular momentum.
+        The total is not included.
+    """
+    return self._get_partial_charges_magnetization(r"""\s*total\s+charge\s*$""")
+
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def _get_magnetization(self):
+    """ Greps partial charges from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>} 
+
+        This is a numpy array where the first dimension is the ion (eg one row
+        per ion), and the second the partial charges for each angular momentum.
+        The total is not included.
+    """
+    return self._get_partial_charges_magnetization(r"""\s*magnetization\s*\(x\)\s*$""")
     
   @make_cached
   @broadcast_result(attr=True, which=0)
