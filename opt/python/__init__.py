@@ -275,3 +275,47 @@ def open_exclusive(filename, mode="r", sleep = 0.5):
   with LockFile(filename, sleep=sleep) as lock:
     yield open(filename, mode)
 
+class RelativeDirectory(object):
+  """ Directory property which is relative to the user's home.
+  
+      The directory wich is returned (eg __get__) is always absolute. However,
+      it is stored relative to the user's home, and hence can be passed from
+      one computer system to the next.
+  """
+  def __init__(self, value = None, envvar = None):
+    """ Initializes the property. 
+    
+        By default, initializes such that the fixed point is the user's home.
+        However, if envvar is set, then the fixed-point is determined by a
+        through os.path.expanduser and os.path.expandvars.
+    """
+    from os import environ
+    self._value = "" if value == None else value
+    """ Relative directory. """
+    self.envvar = envvar if envvar != None else "~/"
+    """ Fixed point. """
+
+  @property
+  def fixed_point(self):
+    from os.path import expanduser, expandvars
+    return expandvars(expanduser(self.envvar))
+
+  def __get__(self, instance, owner):
+    """ Returns absolute directory """
+    from os.path import join, normpath
+    return normpath(join(self.fixed_point, self._value))
+
+  def __set__(self, instance, value):
+    """ Sets directory relative to fixed-point. """
+    from os.path import relpath
+    # checking for a 2-tuple to set envvar.
+    if value != None and len(value) == 2:
+      if hasattr(value[0], "__len__") and hasattr(value[1], "__len__"):
+            is_2_tuple = len(value[0]) != 1 and len(value[1]) != 1
+      else: is_2_tuple = value[0] == None or value[1] == None
+      if is_2_tuple:
+        self.envvar = value[1] if value[1] != None else "~/"
+        self.__set__(instance, value[0])
+        return
+
+    self._value = relpath(value, self.fixed_point) if value != None else ""

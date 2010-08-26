@@ -33,6 +33,7 @@ class Extract(_dft._ExtractImpl):
   pressure        = property(_ExtractImpl._get_pressure)
   pulay_pressure  = property(_ExtractImpl._get_pulay_pressure)
   partial_charges = property(_ExtractImpl._get_partial_charges)
+  magnetization   = property(_ExtractImpl._get_magnetization)
   vasp            = property(_ExtractImpl._get_functional)
   electropot      = property(_ExtractImpl._get_electropot)
   functional      = property(_ExtractImpl._get_functional)
@@ -116,9 +117,6 @@ class ExtractGW(_ExtractGWImpl):
     from copy import deepcopy
     
     if self.comm == None: return self
-    comm = self.comm 
-    self.comm = None
     copy = deepcopy(self)
-    self.comm = comm
     return copy
 
