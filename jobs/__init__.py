@@ -11,7 +11,12 @@
            box for you.
        - pbs_script: Creates pbs-script to perform calculations on a tree.
 """
-from ..opt.decorators import add_setter, broadcast_result
+from ..opt import RelativeDirectory
+from ..opt.decorators import add_setter, broadcast_result, make_cached
+
+__all__ = [ 'JobDict', 'walk_through', 'save', 'load', 'bleed', 'unbleed',\
+            'unsucessfull', 'Extract' ]
+
 
 class JobDict(object):
   """ Tree of jobs. 
@@ -561,3 +566,96 @@ def unsucessfull(jobdict, extractor, outdir = None):
   return jobdict
 
 
+class Extract(object): 
+  """ Propagates extraction methods from different jobs. """
+  root = RelativeDirectory()
+  """ Root directory of the job. """
+
+  def __init__(self, path, jobdict=None, comm = None):
+    """ Initializes extraction object. 
+
+
+        :Parameters:
+          - `path` : If `jobdict` is None, then should point to a pickled
+             dictionary. If `jobdict` is a JobDict instance, then it should
+             point the directory where calculations are saved.
+          - `jobdict` : None, or a jobdictionary. If it is None, then `path`
+             should point to a pickled job-dictionary. If it is a jobdictonary,
+             then `path` should point to a directory where calculations where performed.
+          - `comm` : an boost.mpi.communicator instance.
+    """
+    from os.path import isdir, isfile, exists, dirname
+    assert exists(path), IOErrror("{0} does not exist.".format(path))
+    if jobdict == None:
+      assert isfile(path), IOError("{0} is not a file.".format(path))
+      with open(path, "r") as file: self.jobdict = load(path, comm)
+      self.root = dirname(path)
+    else: 
+      assert isdir(path), IOError("{0} is not a directory.".format(path))
+      self.root = path
+      self.jobdict = jobdict
+    self.comm = comm
+
+  def _extractors(self):
+    """ Goes through all jobs and collects Extract if available. """
+    from os.path import exists, join
+    
+    if hasattr(self, "_cached_extractors"): return self._cached_extractors
+    result = {}
+    for job, name in self.jobdict.walk_through():
+      if not hasattr(job.is_tagged, "Extract"): continue
+      if job.is_tagged: continue
+      if not exists(join(self.root, name)): continue
+      try: result[name] = job.functional.Extract(join(self.root, name), comm = self.comm)
+      except: pass
+    self._cached_extractors = result
+    return result
+
+  def _properties(self): 
+    """ Returns cached __dir__ result. """
+    if hasattr(self, "_cached_properties"): return self._cached_properties
+    results = set([])
+    for key, value in self._extractors().items():
+      for name in dir(value):
+        if name[0] == '_': continue
+        results.add(name)
+    self._cached_properties = results
+    return results
+
+
+  def __dir__(self): 
+    results = set([u for u in self.__dict__ if u[0] != '_']) | self._properties()
+    return list(results)
+
+  def __getattr__(self, name): 
+    """ Returns extracted values. """
+    if name == "_cached_extractors" or name == "_cached_properties": 
+      raise AttributeError("Unknown attribute {0}.".format(name))
+    if name in self._properties(): 
+      result = {}
+      for key, value in self._extractors().items():
+        try: result[key] = getattr(value, name)
+        except: result.pop(key, None)
+      return result
+    raise AttributeError("Unknown attribute {0}.".format(name))
+
+
+  def uncache(self): 
+    """ Uncache values. """
+    self.__dict__.pop("_cached_extractors", None)
+    self.__dict__.pop("_cached_properties", None)
+
+  def __getstate__(self):
+    d = self.__dict__.copy()
+    d.pop("comm", None)
+    return d
+
+  def __setstate__(self, arg):
+    self.__dict__.update(arg)
+    self.comm = None
+       
+     
+
+
+
+    
