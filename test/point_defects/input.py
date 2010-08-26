@@ -32,5 +32,8 @@ vasp.add_specie = "Rh", "pseudos/Rh", U("liechtenstein", "d", 3.3), 3, True
 vasp.add_specie = "Zn", "pseudos/Zn", U("liechtenstein", "d", 6.0), 2, False
 vasp.add_specie =  "O",  "pseudos/O", None, -2, True
 
+# Parameters specific to the ionic relaxation.
+relaxation_parameters = {}
+
 # The following sets-up which point defects to do.
 substitutions = {"Rh": ["Zn", None], "Zn": ["Rh", None], "O": [None]}
