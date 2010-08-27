@@ -120,7 +120,7 @@ class RelaxCellShape(object):
     if first_trial != None:
       params = kwargs.copy()
       params.update(first_trial)
-    else: param = kwargs
+    else: params = kwargs
     if comm != None: comm.barrier()
     
     # performs relaxation calculations.
@@ -280,7 +280,7 @@ class RelaxIons(object):
     if first_trial != None:
       params = kwargs.copy()
       params.update(first_trial)
-    else: param = kwargs
+    else: params = kwargs
     if comm != None: comm.barrier()
     
     # performs relaxation.
