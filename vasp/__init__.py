@@ -22,6 +22,8 @@
 """
 from launch import Launch
 from extract import Extract, ExtractGW
+try: from extract import MassExtract
+except ImportError: pass
 from incar import Incar
 from kpoints import Density, Gamma
 from specie import Specie

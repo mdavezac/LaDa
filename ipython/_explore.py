@@ -193,7 +193,7 @@ def _explore(self, args):
   from os.path import exists, abspath, dirname
   from pickle import load
   from copy import deepcopy
-  from ..jobs import Extract
+  from ..jobs import MassExtract
 
   ip = self.api
 
@@ -228,7 +228,7 @@ def _explore(self, args):
     except: pass
     else:
       ip.user_ns["current_jobdict_path"] = abspath(args.jobdict)
-      ip.user_ns["collect"] = Extract( dirname(ip.user_ns["current_jobdict_path"]), \
+      ip.user_ns["collect"] = MassExtract( dirname(ip.user_ns["current_jobdict_path"]), \
                                        ip.user_ns["current_jobdict"] )
       return 
   if args.is_expression or not args.is_file:

@@ -383,15 +383,14 @@ class _ExtractImpl(object):
     with open(path, "r") as file:
       found = re.compile(grep) 
       lines = file.readlines()
-      while len(lines) > 0:
-        if found.search(lines[0]) != None: break 
-        lines.pop(0)
-      if len(lines) == 0: return None
-      for i in range(4): lines.pop(0)
-      for i in range(len(self.solo().structure.atoms)):
-        data = lines.pop(0).split()
-        assert int(data[0]) == i + 1
-        result.append( data[1:len(data)-1] )
+    for index in xrange(1, len(lines)+1):
+      if found.search(lines[-index]) != None: break 
+    if index == len(lines): return None
+    index -= 4
+    for i in xrange(index, index - len(self.solo().structure.atoms), -1):
+      data = lines[-i].split()
+      assert int(data[0]) == index - i + 1
+      result.append( data[1:len(data)-1] )
     return array(result, dtype="float64")
 
   @make_cached
@@ -414,7 +413,7 @@ class _ExtractImpl(object):
         per ion), and the second the partial charges for each angular momentum.
         The total is not included.
     """
-    return self._get_partial_charges_magnetization(r"""\s*magnetization\s*\(x\)\s*$""")
+    return self._get_partial_charges_magnetization(r"""^\s*magnetization\s*\(x\)\s*$""")
     
   @make_cached
   @broadcast_result(attr=True, which=0)

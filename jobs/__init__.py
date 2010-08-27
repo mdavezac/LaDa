@@ -565,33 +565,27 @@ def unsucessfull(jobdict, extractor, outdir = None):
 
   return jobdict
 
-
-class Extract(object): 
+class AbstractMassExtract(object): 
   """ Propagates extraction methods from different jobs. """
 
-  def __init__(self, path, jobdict=None, comm = None):
+  def uncache(self, dummy=None): 
+    """ Uncache values. """
+    self.__dict__.pop("_cached_extractors", None)
+    self.__dict__.pop("_cached_properties", None)
+
+  root = RelativeDirectory(hook = uncache)
+  """ Root directory of the job. """
+
+  def __init__(self, path, comm = None):
     """ Initializes extraction object. 
 
 
         :Parameters:
-          - `path` : If `jobdict` is None, then should point to a pickled
-             dictionary. If `jobdict` is a JobDict instance, then it should
-             point the directory where calculations are saved.
-          - `jobdict` : None, or a jobdictionary. If it is None, then `path`
-             should point to a pickled job-dictionary. If it is a jobdictonary,
-             then `path` should point to a directory where calculations where performed.
+          - `path` : Root of calculations.
           - `comm` : an boost.mpi.communicator instance.
     """
-    from os.path import isdir, isfile, exists, dirname
-    assert exists(path), IOErrror("{0} does not exist.".format(path))
-    if jobdict == None:
-      assert isfile(path), IOError("{0} is not a file.".format(path))
-      with open(path, "r") as file: self.jobdict = load(path, comm)
-      self.root = dirname(path)
-    else: 
-      assert isdir(path), IOError("{0} is not a directory.".format(path))
-      self.root = path
-      self.jobdict = jobdict
+    super(AbstractMassExtract, self).__init__()
+    self.root = path
     self.comm = comm
 
   def walk_through(self):
@@ -600,21 +594,14 @@ class Extract(object):
         :return: (name, extractor), where name is the name of the job, and
            extractor an extraction object.
     """
-    from os.path import exists, join
-    
-    for job, name in self.jobdict.walk_through():
-      if job.is_tagged: continue
-      if not hasattr(job.functional, "Extract"): continue
-      if not exists(join(self.root, name)): continue
-      try: extract = job.functional.Extract(join(self.root, name), comm = self.comm)
-      except: pass
-      else: yield name, extract
+    abstract
 
   def _extractors(self):
     """ Goes through all jobs and collects Extract if available. """
     from os.path import exists, join
     
-    if hasattr(self, "_cached_extractors"): return self._cached_extractors
+    if "_cached_extractors" in self.__dict__:
+      return self._cached_extractors
     result = {}
     for name, extract in self.walk_through(): result[name] = extract 
     self._cached_extractors = result
@@ -631,7 +618,6 @@ class Extract(object):
     self._cached_properties = results
     return results
 
-
   def __dir__(self): 
     results = set([u for u in self.__dict__ if u[0] != '_']) | self._properties()
     return list(results)
@@ -647,12 +633,6 @@ class Extract(object):
         except: result.pop(key, None)
       return result
     raise AttributeError("Unknown attribute {0}.".format(name))
-
-
-  def uncache(self, dummy=None): 
-    """ Uncache values. """
-    self.__dict__.pop("_cached_extractors", None)
-    self.__dict__.pop("_cached_properties", None)
 
   def __getstate__(self):
     d = self.__dict__.copy()
@@ -680,8 +660,57 @@ class Extract(object):
     copy = deepcopy(self)
     return copy
 
-  root = RelativeDirectory(hook = uncache)
-  """ Root directory of the job. """
 
 
+class MassExtract(AbstractMassExtract): 
+  """ Propagates extraction methods from different jobs.
+  
+      Collects extractors across all jobs (for which job.functional.Extract
+      exist). The results are presented as attributes of an instance of
+      MassExtract, and arranged as directory where the key is the name of the
+      job and the value obtained from an instance of that job's Extract. This
+      class is set-up to fail silently, and hence is of limited use for
+      diagnosis.
+  """
+
+  def __init__(self, path, jobdict=None, comm = None):
+    """ Initializes extraction object. 
+
+
+        :Parameters:
+          - `path` : If `jobdict` is None, then should point to a pickled
+             dictionary. If `jobdict` is a JobDict instance, then it should
+             point the directory where calculations are saved.
+          - `jobdict` : None, or a jobdictionary. If it is None, then `path`
+             should point to a pickled job-dictionary. If it is a jobdictonary,
+             then `path` should point to a directory where calculations where performed.
+          - `comm` : an boost.mpi.communicator instance.
+    """
+    from os.path import isdir, isfile, exists, dirname, abspath
+    super(MassExtract, self).__init__(path, comm=comm)
+    if jobdict == None:
+      assert isfile(path), IOError("{0} is not a file.".format(path))
+      with open(path, "r") as file: self.jobdict = load(path, comm)
+      self.root = dirname(abspath(path))
+    elif path != None: 
+      assert isdir(path), IOError("{0} is not a directory.".format(path))
+      self.root = path
+      self.jobdict = jobdict
+    self.comm = comm
+    if path != None: self._extractors() # gets stuff cached.
+
+  def walk_through(self):
+    """ Generator to go through all relevant jobs. 
     
+        :return: (name, extractor), where name is the name of the job, and
+           extractor an extraction object.
+    """
+    from os.path import exists, join
+    
+    for job, name in self.jobdict.walk_through():
+      if job.is_tagged: continue
+      if not hasattr(job.functional, "Extract"): continue
+      if not exists(join(self.root, name)): print join(self.root, name); continue
+      try: extract = job.functional.Extract(join(self.root, name), comm = self.comm)
+      except: pass
+      else: yield name, extract

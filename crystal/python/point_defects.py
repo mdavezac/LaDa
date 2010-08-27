@@ -633,15 +633,15 @@ def magname(moments, prefix=None, suffix=None):
 
 if _lada_has_vasp:
   from ..opt.decorators import make_cached
-  from ..jobs import Extract as MassJobExtract
-  class Extract(MassJobExtract):
+  from .. import jobs
+  class MassExtract(jobs.MassExtract):
     """ Extract point-defect quantities. """
 
     def __init__(self, path, only_untagged = False, **kwargs):
       """ Initializes point-defect mass extractor. """
       self.only_untagged = only_untagged
       """ If true, only untagged jobs will be examined. """
-      super(Extract, self).__init__(path, **kwargs)
+      super(MassExtract, self).__init__(path, **kwargs)
 
 
     def walk_through(self): 
