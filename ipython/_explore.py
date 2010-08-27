@@ -191,9 +191,8 @@ def _glob_ipy_user_ns(ip, arg):
 def _explore(self, args):
   """ Tries to open job-dictionary. """
   from os.path import exists, abspath, dirname
-  from pickle import load
   from copy import deepcopy
-  from ..jobs import MassExtract
+  from ..jobs import MassExtract, load, JobDict
 
   ip = self.api
 
@@ -222,9 +221,7 @@ def _explore(self, args):
   ip.user_ns.pop("_lada_subjob_iterated", None)
 
   if args.is_file or not args.is_expression:
-    try:
-      with open(args.jobdict, "r") as file:
-        ip.user_ns["current_jobdict"] = load(file)
+    try: ip.user_ns["current_jobdict"] = load(args.jobdict)
     except: pass
     else:
       ip.user_ns["current_jobdict_path"] = abspath(args.jobdict)
@@ -234,7 +231,8 @@ def _explore(self, args):
   if args.is_expression or not args.is_file:
     try: ip.user_ns["current_jobdict"] = ip.ev(args.jobdict)
     except: pass
-    else: return
+    else:
+      if isinstance(ip.user_ns["current_jobdict"], JobDict): return
 
   ip.user_ns["_lada_error"] = \
      "Could not convert \"{0}\" to a job-dictionary.".format(args.jobdict) 
