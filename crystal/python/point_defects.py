@@ -633,148 +633,46 @@ def magname(moments, prefix=None, suffix=None):
 
 if _lada_has_vasp:
   from ..opt.decorators import make_cached
-  class Extract(object):
+  from ..jobs import Extract as MassJobExtract
+  class Extract(MassJobExtract):
     """ Extract point-defect quantities. """
-    root = RelativeDirectory()
-    """ Root directory of the point-defect calculations. """
 
-    def __init__(self, directory, comm = None, envvar=None, host=None, Extract=None):
-      """ Initializes the extraction routine. """
-      from os.path import normpath, relpath
-      from ..vasp import Extract as vasp_Extract
-      self.root = directory, envvar
-      self.comm = comm
-      """ Communicator to use when extracting values.
-      
-          Any extracted value is broadcasted across this communicator.
-      """
-      self.host = "" if host == None else normpath(relpath(host, self.root))
-      """ Directory for host calculations. 
+    def __init__(self, path, only_untagged = False, **kwargs):
+      """ Initializes point-defect mass extractor. """
+      self.only_untagged = only_untagged
+      """ If true, only untagged jobs will be examined. """
+      super(Extract, self).__init__(path, **kwargs)
 
-          Stored relative to point-defect root directory.
-      """ 
-      self.Extract = vasp_Extract
 
-      self.nopropagate = ["uncache", "solo"]
-      """ Attribute of self.Extract which should not be propagated. """
-      self.optimize_moments = True
-      """ If true, will optimize out degrees of freedom related to magnetic moments. """
-
-    def walk_through(self, depth=None):
-      """ Iterates through possible calculation directories. """
+    def walk_through(self): 
       from glob import iglob
       from re import compile
-      from os.path import join
+      from os.path import join, exists
       from itertools import chain
       from operator import itemgetter
 
       re_sub = compile("^(?:[A-Z][a-z]?_on|vacancy)_[A-Z][a-z]?$")
       re_charge = compile("^charge_(?:-?[0-9]*|neutral)$")
       re_moment = compile("^(?:moment(_(\S*))+|paramagnetic)$")
-      it_sub = chain( iglob(join(self.root, "*_on_*/")), \
-                      iglob(join(self.root, "vacancy_*/"))  )
-      for dir_sub in it_sub:
+      for dir_sub, job_sub in self.jobdict.children.items():
         if dir_sub[-1] == '/': dir_sub = dir_sub[:-1]
         if re_sub.match(dir_sub.split('/')[-1]) == None: continue
 
-        if depth != None and (depth <= 1 or depth == "sub"): yield dir_sub
-
-        for dir_charge in iglob(join(dir_sub, "charge_*/")):
+        for dir_charge, job_charge in job_sub.children.items():
           if dir_charge[-1] == '/': dir_charge = dir_charge[:-1]
           if re_charge.match(dir_charge.split('/')[-1]) == None: continue
 
-          if depth != None and (depth <= 2 or depth == "charge"): yield dir_charge
-
-          it_moment = chain( iglob(join(dir_charge, "moment_*/")), \
-                             iglob(join(dir_charge, "paramagnetic/"))  )
-
-          # depth == cut magnetic -- keep only lowest magnetic result.
-          if depth == "cut magnetic": moments = []
-          for dir_moment in it_moment:
+          moments = []
+          for dir_moment, job_moment in job_charge.children.items():
             if dir_moment[-1] == '/': dir_moment = dir_moment[:-1]
             if re_moment.match(dir_moment.split('/')[-1]) == None: continue
-            
-            # depth == cut magnetic -- keep only lowest magnetic result.
-            if depth == "cut magnetic":
-              extract = self.Extract(dir_moment, self.comm)
-              if extract.success: moments.append( (dir_moment, extract.energy) )
-              continue
-              
-            yield dir_moment
 
-          # depth == cut magnetic -- keep only lowest magnetic result.
-          if depth == "cut magnetic":
-            yield min(moments, key=itemgetter(1))[0]
+            if self.only_untagged and job_charge.tagged: continue
+            if not hasattr(job_moment.functional, "Extract"): continue
+            if not exists(self.root + "/" + job_moment.name): continue
 
+            extract = job_moment.functional.Extract(self.root + "/" + job_moment.name, self.comm)
+            if extract.success: moments.append( (job_moment.name, extract.energy, extract) )
 
-    def __getattr__(self, name):
-      """ Returns a dictionary of point-defects values. """
-      if name[0] != '_' and name in set(dir(self.Extract())) - set(self.nopropagate):
-        return self._impl_dictattr(name)
-      error = "Point-defect extractor does not possess a \"{0}\" attribute."
-      raise AttributeError(error.format(name))
-    
-    
-    def __dir__(self):
-      result = [u for u in self.__dict__ if u[0] != '_'] 
-      result.extend([u for u in set(dir(self.Extract())) - set(self.nopropagate)])
-      return result
-    
-    @make_cached
-    def _extractors(self):
-      """ Caches extracting instances for each point-defect. """
-      from os.path import dirname, relpath
-      result = {}
-      iterate = self.walk_through("cut magnetic") if self.optimize_moments \
-                else self.walk_through()
-      for u in iterate:
-        name = dirname(u) if self.optimize_moments else u
-        name = relpath(name, self.root)
-        result[name] = self.Extract(u, self.comm)
-      return result
-      
-    
-    def _impl_dictattr(self, name):
-      """ Propagates vasp extraction attribute into a dictionary of point-defects. """
-      result = {}
-      for key, value in self._extractors().items():
-        assert hasattr(value, name),\
-               AttributeError("Extract does not possess a \"{0}\" attribute.".format(name))
-        result[key] = getattr(value, name)
-      return result
-
-    def uncache(self): 
-      """ Removes cached results.
-      
-          After this outputs are re-read from file.
-      """
-      from ...opt.decorators import uncache
-      uncache(self)
-
-    def solo(self):
-      """ Extraction on a single process.
-    
-          Sometimes, it is practical to perform extractions on a single process
-          only, eg without blocking mpi calls. C{self.L{solo}()} returns an
-          extractor for a single process:
-          
-          >>> # prints only on proc 0.
-          >>> if boost.mpi.world.rank == 0: print extract.solo().structure
-      """
-      from copy import deepcopy
-      
-      if self.comm == None: return self
-      copy = deepcopy(self)
-      return copy
-
-    def __getstate__(self):
-      d = self.__dict__.copy()
-      d.pop("comm", None)
-      return d
-
-    def __setstate__(self, arg):
-      self.__dict__.update(arg)
-      self.comm = None
-
-
-
+          result = min(moments, key=itemgetter(1))
+          yield result[0], result[2]

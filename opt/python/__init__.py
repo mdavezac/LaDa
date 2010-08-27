@@ -324,5 +324,7 @@ class RelativeDirectory(object):
         self.__set__(instance, value[0])
         return
 
-    self._value = relpath(value, self.fixed_point) if value != None else ""
+    if value == None: self._value = ""
+    elif len(value.rstrip().lstrip()) == 0: self._value = ""
+    else: self._value = relpath(value, self.fixed_point) 
     if hasattr(self.hook, "__call__"): self.hook(instance, self.fixed_point)
