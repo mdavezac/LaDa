@@ -192,6 +192,7 @@ endif(minimizer_libs)
 if(python_bindings)
   if(PYTHONLIBS_FOUND)
     add_subdirectory(python)
+    add_subdirectory(periodic_table)
     set(LADA_DO_PYTHON TRUE)
   else(PYTHONLIBS_FOUND)
     message(SEND_ERROR "Python libraries not found."
