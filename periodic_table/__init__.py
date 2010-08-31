@@ -1,9 +1,13 @@
 """ Physical quantities of elements. 
 
     Atomic quantities can be used as in:
-      >>> import lada.periodic_table
-      >>> periodic_table.Au.atomic_weight
-      >>> periodic_table.Gold.atomic_weight
+
+    .. python::
+    
+      import lada.periodic_table
+      periodic_table.Au.atomic_weight
+      periodic_table.Gold.atomic_weight
+
     Available quantities can be found in `lada.periodic_table.Atom`. Some of
     these are set to None when either meaningless or not available.
 """
@@ -17,16 +21,10 @@ import quantities as qt
 class Element(object):
   """ Contains atomic data for single element. 
   
-      Data is taken from www.webelements.com.
+      Data is taken from the `webelements`_ website.
+
+      .. _webelements: http://www.webelements.com
   """
-  __slots__ = ['symbol', 'name', 'atomic_weight', 'atomic_number', 'pauling', 'sanderson', \
-               'allred_rochow', 'mulliken_jaffe', 'allen', 'electron_affinity', \
-               'ionization_energies', 'atomic_radius', 'covalent_radius', 'single_bond_radius', \
-               'double_bond_radius', 'triple_bond_radius', 'van_der_waals_radius', \
-               'fusion', 'vaporization', 'atomization', 'melting_point', 'boiling_point', \
-               'critical_temperature', 'thermal_conductivity', 'thermal_expansion', 'density',\
-               'molar_volume', 'sound_velocity', 'young_modulus', 'rigidity_modulus',\
-               'bulk_modulus', 'poisson_ratio', 'electrical_resistivity' ]
   def __init__(self, **kwargs):
     """ Initializes atoms """
     self.symbol                 = kwargs.pop('symbol', None)
@@ -99,6 +97,28 @@ class Element(object):
     """ Poisson ratio of the elemental solid. """
     self.electrical_resistivity = kwargs.pop('electical_resistivity', None)
     """ Electrical Resistivity ratio of the elemental solid. """
+    self.pettifor               = kwargs.pop('pettifor', None)
+    """ This element on the `Pettifor` scale.
+
+        `Pettifor`_'s is an artificial scale designed to parameterizes
+        a two-dimensional structure map of binary AB compounds. 
+  
+        References
+        ==========
+          .. _Pettifor : D.G. Pettifor, Solid. Stat. Comm., *51* 31-34 (1984).
+    """
+    self.orbital_radii        = kwargs.pop('orbital_radii', None)
+    """ `Orbital`_ radii of this element.
+
+        The orbital radii can be defined for s, p, and d orbitals using
+        psudo-potential wavefunctions. 
+        
+        References
+        ==========
+       
+        .. _Orbital radii : Alex Zunger, PRB *22* 5839-5872 (1980),
+            http://dx.doi.org/10.1103/PhysRevB.22.5839
+    """
 
 
 
@@ -107,11 +127,181 @@ class Element(object):
            .format(self.name, self.symbol, self.atomic_number, self.atomic_weight)
   def __repr__(self):
     result = {}
-    for name in self.__slots__:
+    for name in self.__dict__:
+      if name[0] == '_': continue
       s = getattr(self, name)
       if s != None: result[name] = s
-    return "{0} = {1}({2})".format(self.name, self.__class__.__name__, result)
+    return "{0} = {1}({2})".format(self.symbol, self.__class__.__name__, result)
 
+
+def _orbital_radii():
+  """ Zunger `Orbital radii`_.
+  
+
+      The orbital radii (in a.u.) are defined for s, p, and d orbitals using
+      psudo-potential wavefunctions.
+      
+      References
+      ==========
+
+      .. _Orbital radii : Alex Zunger, PRB *22* 5839-5872 (1980),
+          http://dx.doi.org/10.1103/PhysRevB.22.5839
+
+  """
+  return  { "Li":( 0.985, 0.625 ), 
+            "Be":(  0.64,  0.44 ), 
+             "B":(  0.48, 0.315 ), 
+             "C":(  0.39,  0.25 ), 
+             "N":(  0.33,  0.21 ), 
+             "O":( 0.285,  0.18 ), 
+             "F":(  0.25, 0.155 ), 
+            "Ne":(  0.22,  0.14 ), 
+            
+            "Na":(  1.10,  1.55 ), 
+            "Mg":(  0.90,  1.13 ), 
+            "Al":(  0.77, 0.905 ), 
+            "Si":(  0.68,  0.74 ),  
+             "P":(  0.60,  0.64 ), 
+             "S":(  0.54,  0.56 ), 
+            "Cl":(  0.50,  0.51 ), 
+            "Ar":(  0.46,  0.46 ), 
+                   
+             "K":(  1.54,  2.15,  0.37 ),
+            "Ca":(  1.32,  1.68,  0.34 ),
+            "Sc":(  1.22,  1.53,  0.31 ),
+            "Ti":(  1.15,  1.43,  0.28 ),
+             "V":(  1.09,  1.34,  0.26 ),
+            "Cr":(  1.07,  1.37,  0.25 ),
+            "Mn":(  0.99,  1.23,  0.23 ),
+            "Fe":(  0.95,  1.16,  0.22 ),
+            "Co":(  0.92,  1.10,  0.21 ),
+            "Ni":(  0.96,  1.22, 0.195 ),
+            "Cu":(  0.88,  1.16, 0.185 ),
+            "Zn":(  0.82,  1.06, 0.175 ),
+            "Ga":(  0.76, 0.935,  0.17 ),
+            "Ge":(  0.72,  0.84,  0.16 ),
+            "As":(  0.67, 0.745, 0.155 ),
+            "Se":( 0.615,  0.67,  0.15 ),
+            "Br":(  0.58,  0.62, 0.143 ),
+            "Kr":(  0.56,  0.60, 0.138 ), 
+
+            "Rb":(  1.67,  2.43,  0.71 ),
+            "Sr":(  1.42,  1.79, 0.633 ),
+             "Y":(  1.32,  1.62,  0.58 ),
+            "Zr":( 1.265,  1.56,  0.54 ),
+            "Nb":(  1.23,  1.53,  0.51 ),
+            "Mo":(  1.22,  1.50,  0.49 ),
+            "Tc":(  1.16,  1.49, 0.455 ),
+            "Ru":( 1.145,  1.46,  0.45 ),
+            "Rh":(  1.11,  1.41,  0.42 ),
+            "Pd":(  1.08,  1.37,  0.40 ), 
+            "Ag":( 1.045,  1.33, 0.385 ),
+            "Cd":( 0.985,  1.23,  0.37 ),
+            "In":(  0.94,  1.11,  0.36 ),
+            "Sn":(  0.88,  1.00, 0.345 ),
+            "Sb":(  0.83, 0.935, 0.335 ),
+            "Te":(  0.79,  0.88, 0.325 ),
+             "I":( 0.755,  0.83, 0.315 ),
+            "Xe":(  0.75,  0.81, 0.305 ),
+          
+            "Cs":(  1.71,  2.60 ),
+            "Ba":( 1.515, 1.887,  0.94 ),
+            "La":( 1.375, 1.705, 0.874 ),
+            "Hf":(  1.30,  1.61,  0.63 ),
+            "Ta":(  1.25,  1.54, 0.605 ),
+             "W":(  1.22, 1.515,  0.59 ), 
+            "Re":(  1.19,  1.49, 0.565 ),
+            "Os":(  1.17,  1.48, 0.543 ),
+            "Ir":(  1.16, 1.468, 0.526 ),
+            "Pt":(  1.24,  1.46,  0.51 ),
+            "Au":(  1.21,  1.45, 0.488 ),
+            "Hg":(  1.07,  1.34, 0.475 ),
+            "Tl":( 1.015,  1.22, 0.463 ),
+            "Pb":(  0.96,  1.13,  0.45 ),
+            "Bi":(  0.92, 1.077, 0.438 ),
+            "Po":(  0.88,  1.02, 0.425 ),
+            "At":(  0.85,  0.98, 0.475 ),
+            "Rn":(  0.84,  0.94, 0.405 )  }
+
+def _pettifor_numbers():
+  """ Pettifor numbers. 
+  
+      The `Pettifor numbers`_ make up scale which parameterizes a two-dimensional
+      structure map of binary AB compounds. 
+
+      References
+      ==========
+        .. _Pettifor numbers : D.G. Pettifor, Solid. Stat. Comm., *51* 31-34 (1984).
+  """
+  return  { "Li": 0.45,
+            "Be": 1.5,
+             "B": 2.0,
+             "C": 2.5,
+             "N": 3.0, 
+             "O": 3.5,
+             "F": 4.0,
+            
+            "Na": 0.4,
+            "Mg": 1.28,
+            "Al": 1.66,
+            "Si": 1.92,
+             "P": 2.18,
+             "S": 2.44,
+            "Cl": 2.70,
+                   
+             "K": 0.35,
+            "Ca": 0.60,
+            "Sc": 0.74,
+            "Ti": 0.79,
+             "V": 0.84,
+            "Cr": 0.89,
+            "Mn": 0.94,
+            "Fe": 0.99,
+            "Co": 1.04,
+            "Ni": 1.09,
+            "Cu": 1.20,
+            "Zn": 1.44,
+            "Ga": 1.68,
+            "Ge": 1.92,
+            "As": 2.16,
+            "Se": 2.40,
+            "Br": 2.64,
+
+            "Rb": 0.30,
+            "Sr": 0.55,
+             "Y": 0.70,
+            "Zr": 0.76,
+            "Nb": 0.82,
+            "Mo": 0.88,
+            "Tc": 0.94,
+            "Ru": 1.00,
+            "Rh": 1.06,
+            "Pd": 1.12,
+            "Ag": 1.18,
+            "Cd": 1.36,
+            "In": 1.60,
+            "Sn": 1.84,
+            "Sb": 2.08,
+            "Te": 2.32,
+             "I": 2.56,
+          
+            "Cs": 0.25,
+            "Ba": 0.50,
+            "La": 0.748,
+            "Hf": 0.775,
+            "Ta": 0.83,
+             "W": 0.885,
+            "Re": 0.94,
+            "Os": 0.995,
+            "Ir": 1.05,
+            "Pt": 1.105,
+            "Au": 1.16,
+            "Hg": 1.32,
+            "Tl": 1.56,
+            "Pb": 1.80,
+            "Bi": 2.04,
+            "Po": 2.28, 
+            "At": 2.52 }
 
 def _download_files():
   """ Downloads data from webelements.com. """
@@ -177,6 +367,7 @@ def _create_elements_py(filename="_elements.py"):
   import urllib
   from os.path import exists, join
   from BeautifulSoup import BeautifulSoup, HTMLParseError
+  from ..physics import a0
   import quantities as pq
 
   atom_list = ['Ruthenium', 'Rhenium', 'Rutherfordium', 'Radium', 'Rubidium',
@@ -198,6 +389,9 @@ def _create_elements_py(filename="_elements.py"):
     'Ytterbium', 'Dubnium', 'Zirconium', 'Dysprosium', 'Iodine', 'Uranium',
     'Yttrium', 'Actinium', 'Silver', 'Iridium', 'Americium', 'Aluminium',
     'Arsenic', 'Argon', 'Gold', 'Astatine', 'Indium']
+
+  orbital_radii = _orbital_radii()
+  pettifor_numbers = _pettifor_numbers()
 
   re_swf = re.compile("(rainbow|NI3|volcano|\_flash|K\_H2O).swf\s*(?!\")")
   re_atomweight = re.compile(":\s*\[?\s*(\d+(?:\.\d+)?)\s*\]?")
@@ -454,4 +648,27 @@ def _create_elements_py(filename="_elements.py"):
     electrical_resistivity = re.search(":\s*(?:about)?\s*(\d+(?:\.\d+)?)", electrical_resistivity)
     if electrical_resistivity != None and electrical_resistivity.group(1) not in ["no", "&gt;"]:
       atom.electrical_resistivity = float(electrical_resistivity.group(1)) * 1e-8 * pq.ohm * pq.m
-    print repr(atom)
+
+    results[atom.symbol] = atom
+    
+    if atom.symbol in orbital_radii:
+      au = a0("A") * pq.angstrom 
+      results[atom.symbol].orbital_radii = tuple([u * au for u in orbital_radii[atom.symbol]])
+    if atom.symbol in pettifor_numbers:
+      results[atom.symbol].pettifor = pettifor_numbers[atom.symbol]
+
+
+  with open(filename, "w") as file:
+    file.write("\"\"\" Definition of the elements. \"\"\"\n")
+    file.write("\nfrom .. import Element\n")
+    for n in range(1, len(results)):
+      for key, value in results.items():
+        if value.atomic_number == n:
+          file.write("\n" + repr(value) + "\n")
+          break
+
+    
+
+
+     
+
