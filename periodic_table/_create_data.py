@@ -520,13 +520,13 @@ def _create_elements_py(filename="_elements.py"):
     if electrical_resistivity != None and electrical_resistivity.group(1) not in ["no", "&gt;"]:
       atom.electrical_resistivity = float(electrical_resistivity.group(1)) * 1e-8 * pq.ohm * pq.m
 
-    results[atom.symbol] = atom
+    results[str(atom.symbol)] = atom
     
     if atom.symbol in orbital_radii:
       au = a0("A") * pq.angstrom 
-      results[atom.symbol].orbital_radii = tuple([u * au for u in orbital_radii[atom.symbol]])
+      results[str(atom.symbol)].orbital_radii = tuple([u * au for u in orbital_radii[atom.symbol]])
     if atom.symbol in pettifor_numbers:
-      results[atom.symbol].pettifor = pettifor_numbers[atom.symbol]
+      results[str(atom.symbol)].pettifor = pettifor_numbers[atom.symbol]
 
 
   with open(filename, "w") as file:

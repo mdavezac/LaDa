@@ -131,8 +131,15 @@ class Element(object):
     return "{0}(**{1})".format(self.__class__.__name__, result)
 
 
+
+def iterate():
+  """ Iterates through all elements. """
+  for name in _elements.symbols:
+    yield globals()[name] 
+
+
 from _create_data import *
 import _elements
-__all__ = _elements.symbols 
-__all__.extend(['Element'])
+__all__ = list(_elements.symbols)
+__all__.extend(['Element', 'iterate'])
 locals().update(_elements.elements)
