@@ -282,19 +282,26 @@ def potential_alignment(defect, host, maxdiff=0.5):
   return average(diff_from_host)
                     
 
-def third_order_charge_correction(cell, n = 200, **kwargs):
+def third_order_charge_correction(cell, charge = None, n = 200, **kwargs):
   """ Returns energy of third order charge correction. 
   
+      Uses Quantity package to take care of units.
       :Parameters: 
         cell : 3x3 numpy array
-          The supercell of the defect in Angstroem(?).
+          If the cell has not units, then defaults to Angstrom.
         n 
           precision. Higher better.
+        charge 
+          If no units are given, defaults to elementary charge. If None,
+          defaults to 1 elementary charge.
       :return: energy of a single negative charge in supercell.
   """
-  from math import pi
-  from numpy import array, dot, det
-  from ..physics import Rydberg
+  from numpy import array, dot
+  from numpy.linalg import det
+  import quantities as pq
+
+  if not hasattr(charge, "units"): charge = charge * pq.elementary_charge
+  if not hasattr(cell, "units"): cell = cell.copy() * pq.angstrom
 
   def fold(vector):
     """ Returns smallest distance. """
@@ -302,7 +309,7 @@ def third_order_charge_correction(cell, n = 200, **kwargs):
     for i in range(-1, 2):
       for j in range(-1, 2):
         for k in range(-1, 2):
-          v = arrray([vector[0] + float(i), vector[1] + float(j), vector[2] + float(k)])
+          v = array([vector[0] + float(i), vector[1] + float(j), vector[2] + float(k)])
           v = dot(cell, v)
           m = dot(v,v)
           if result == None or result > m: result = m
@@ -316,18 +323,27 @@ def third_order_charge_correction(cell, n = 200, **kwargs):
         vec = array([float(ix)/float(n)-0.5, float(iy)/float(n)-0.5, float(iz)/float(n)-0.5])
         result += fold(vec)
         
-  return -result / float(n**3) * Rydberg("eV") * pi * 4e0 / 3e0 / det(cell)
+  result = (result/float(n**3)) * 2e0/3e0*pq.pi * charge * charge / det(cell)\
+           / epsilon
+  result = pq.eV
+  return -result
 
 
-def first_order_charge_correction(cell, charge=1e0, cutoff=None, **kwargs):
+def first_order_charge_correction(cell, charge=None, epsilon=1e0, cutoff=None, **kwargs):
   """ First order charge correction of +1 charge in given supercell.
   
+      Units in this function are either handled by the module Quantities, or
+      defaults to Angstroems and elementary charges.
       :Parameters:
-        - `cell`: Supercell of the point-defect.
-        - `charge`: Charge of the point-defect.
+        - `cell`: Supercell of the point-defect. If no units are attached, expects Angstroems.
+        - `charge`: Charge of the point-defect. Defaults to 1e0 elementary
+           charge. If no units are attached, expects units of elementary charges.
+        - `epsilon`: dimensionless relative permittivity.
         - `cutoff`: Ewald cutoff parameter.
+      :return: Electrostatic energy in eV.
   """
   from numpy.linalg import norm
+  import quantities as pq
   from ..crystal import Structure
   try: from ..pcm import Clj 
   except ImportError as e:
@@ -336,18 +352,29 @@ def first_order_charge_correction(cell, charge=1e0, cutoff=None, **kwargs):
           "Please compile LaDa with pcm enabled.\n"
     raise
 
+  if charge == None: charge = 1e0 
+  if not hasattr(charge, "units"): charge = charge * pq.elementary_charge
+  if not hasattr(cell, "units"): cell = cell * pq.angstrom
+
   clj = Clj()
-  clj.charge["A"] = charge
+  clj.charges["A"] = float(charge.rescale("e"))
   if cutoff == None:
-    clj.ewald = 10 * max( [norm(cell[:,i]) for i in range(3)] )
+    clj.ewald_cutoff = 10 * max( [norm(cell[:,i]) for i in range(3)] )
   else: clj.ewald_cutoff = cutoff
 
-  structure = Structure(cell)
+  structure = Structure()
+  structure.cell = cell
+  structure.scale = 1e0
   structure.add_atom = ((0e0,0,0), "A")
 
-  return clj.ewald(structure)
+  cell_units = cell.units
+  charge_units = charge.units
+  result = clj.ewald(structure).energy / cell.units * charge_units**2\
+           / (4e0*pq.pi*pq.electric_constant) / epsilon
+  result.units = pq.eV
+  return -result
 
-def charge_correction(cell, *kwargs):
+def charge_correction(cell, **kwargs):
   """ Electrostatic charge correction (first and third order). """
   return   first_order_charge_correction(cell, **kwargs) \
          + third_order_charge_correction(cell, **kwargs) \
@@ -676,3 +703,70 @@ if _lada_has_vasp:
 
           result = min(moments, key=itemgetter(1))
           yield result[0], result[2]
+
+    def _charge_correction(self, epsilon, which, **kwargs):
+      """ Charge correction implementation. 
+      
+          Computes dictionary of charge corrections.
+          rParameters:
+            - `epsilon`: dimensionless relative permittivity.
+          :return: dictionary of charge corrections in eV.
+      """
+      import re
+      import quantities as pq
+
+      re_charge = re.compile(r"""charge_((?:-|\+)?\d+|neutral)""")
+      result = {}
+      for key, item in self._extractors().items(): 
+        charge = re_charge.search(key)
+        if charge == None or charge.group(1) == "neutral":
+          result[key] = 0e0*pq.eV
+          continue
+        charge = float(charge.group(1)) * pq.elementary_charge
+        cell = item.structure.cell * item.structure.scale * pq.angstrom
+        result[key] = which(cell, charge=charge, epsilon=epsilon, **kwargs)
+        result[key].units = pq.eV
+      return result
+
+    def first_order_charge_correction(self, epsilon, **kwargs):
+      """ First order charge correction. 
+      
+          Computes the electrostatic energy of a point-charge in a cell. The
+          cells are extracted from the runs investigated in this instance, and
+          are expected to be in Angstroem ([cell * scale]=A). The unit charge
+          are multiple of the elementary charges and extracted from the name of
+          each point-defect computation.
+          :Parameters:
+            - `epsilon`: dimensionless relative permittivity.
+          :return: dictionary of charge corrections in eV.
+      """
+      return self._charge_correction(epsilon, globals()["first_order_charge_correction"], **kwargs)
+
+    def third_order_charge_correction(self, epsilon, **kwargs):
+      """ Third order charge correction. 
+      
+          Computes the electrostatic energy of a point-charge in a cell. The
+          cells are extracted from the runs investigated in this instance, and
+          are expected to be in Angstroem ([cell * scale]=A). The unit charge
+          are multiple of the elementary charges and extracted from the name of
+          each point-defect computation.
+          :Parameters:
+            - `epsilon`: dimensionless relative permittivity.
+          :return: dictionary of charge corrections in eV.
+      """
+      return self._charge_correction(epsilon, globals()["third_order_charge_correction"], **kwargs)
+
+    def charge_correction(self, epsilon, **kwargs):
+      """ First and third order charge corrections. 
+      
+          Computes the electrostatic energy of a point-charge in a cell. The
+          cells are extracted from the runs investigated in this instance, and
+          are expected to be in Angstroem ([cell * scale]=A). The unit charge
+          are multiple of the elementary charges and extracted from the name of
+          each point-defect computation.
+          :Parameters:
+            - `epsilon`: dimensionless relative permittivity.
+          :return: dictionary of charge corrections in eV.
+      """
+      return self._charge_correction(epsilon, globals()["charge_correction"], **kwargs)
+

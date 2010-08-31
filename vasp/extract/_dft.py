@@ -51,6 +51,7 @@ class _ExtractImpl(object):
     """ Greps total energy extrapolated to $\sigma=0$ from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}. """
     from os.path import exists, join
     from re import compile, X as re_X
+    import quantities as pq
 
     path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
@@ -63,7 +64,7 @@ class _ExtractImpl(object):
         match = regex.search(line)
         if match != None: result = float(match.group(2))
     if result == None: raise RuntimeError, "File %s is incomplete.\n" % (path)
-    return result
+    return result * pq.eV
 
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -71,6 +72,7 @@ class _ExtractImpl(object):
     """ Greps total energy from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}."""
     from os.path import exists, join
     from re import compile, X as re_X
+    import quantities as pq
 
     path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
@@ -83,7 +85,7 @@ class _ExtractImpl(object):
         match = regex.search(line)
         if match != None: result = float(match.group(1))
     if result == None: raise RuntimeError, "File %s is incomplete.\n" % (path)
-    return result
+    return result * pq.eV
 
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -91,6 +93,7 @@ class _ExtractImpl(object):
     """ Greps total free energy from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}. """
     from os.path import exists, join
     from re import compile
+    import quantities as pq
 
     path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
@@ -103,7 +106,7 @@ class _ExtractImpl(object):
         if match != None: result = float(match.group(1))
 
     if result == None: raise RuntimeError, "File %s is incomplete.\n" % (path)
-    return result
+    return result * pq.eV
 
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -111,6 +114,7 @@ class _ExtractImpl(object):
     """ Greps fermi energy from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}. """
     from os.path import exists, join
     from re import compile
+    import quantities as pq
 
     path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
@@ -123,7 +127,7 @@ class _ExtractImpl(object):
         if match != None: result = float(match.group(1))
 
     if result == None: raise RuntimeError, "File %s is incomplete.\n" % (path)
-    return result
+    return result * pq.eV
 
   @make_cached
   def _get_structure(self):
@@ -136,7 +140,7 @@ class _ExtractImpl(object):
     path = self.CONTCAR if len(self.directory) == 0 else join(self.directory, self.CONTCAR)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
     result = read_poscar(species_in, path, comm=self.comm)
-    result.energy = self.energy
+    result.energy = float(self.energy.rescale("eV"))
     return result
 
   @make_cached
@@ -256,7 +260,7 @@ class _ExtractImpl(object):
         data = line.split()
         if len(data) != 4: break;
         result.append( data[:3] )
-    return array(result, dtype="float64")
+    return array(result, dtype="float64") 
 
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -313,7 +317,7 @@ class _ExtractImpl(object):
           if match != None:  
             if int(match.group(1)) == 1: result = []
             in_kpoint = 0
-    return array(result, dtype="float64")
+    return array(result, dtype="float64") 
 
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -323,7 +327,8 @@ class _ExtractImpl(object):
         Returns a two-dimension numpy nxm array of eigenvalues, with n the
         number of kpoints and m the number of bands.
     """
-    return self._get_eigocc(1)
+    import quantities as pq
+    return self._get_eigocc(1) * pq.eV
 
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -334,12 +339,14 @@ class _ExtractImpl(object):
         Returns a two-dimension numpy nxm array of occupations, with n the
         number of kpoints and m the number of bands.
     """
-    return self._get_eigocc(2)
+    import quantities as pq
+    return self._get_eigocc(2) * pq.elementary_charge
 
   def _get_pressures(self, which):
     """ Greps pressure from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>} """
     import re 
     from os.path import exists, join
+    import quantities as pq
 
     path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
@@ -351,7 +358,7 @@ class _ExtractImpl(object):
       for line in file:
         match = found.search(line)
         if match != None: result = float(match.group(which))
-    return result
+    return result * pq.kbar
 
   @make_cached
   @broadcast_result(attr=True, which=0)

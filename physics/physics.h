@@ -18,7 +18,7 @@
 namespace LaDa
 {
   //! For mathematical constants
-  namespace Math
+  namespace math
   {
     //! \f$\pi\f$
     const types::t_real pi = 3.1415926535897932384626433832795028841971693993751058209749445920;
@@ -43,6 +43,9 @@ namespace LaDa
     //! \details "amu" stands for atomic mass unit. The conversion to eV is done
     //! via \f$m_e c^2 /\mathrm{"1 eV"}\f$
     types::t_real emass( const std::string &_str );
+
+    //! Electronic charge
+    types::t_real e(std::string const &_str);
 
     
     //! Atomic numbers, symbols, and affiliate routines.
@@ -96,8 +99,8 @@ namespace LaDa
       if( _str == "erg*s" ) return 6.626075510e-27;
       else if( _str == "J*s" ) return 6.626075510e-34;
       else if( _str == "eV*s" ) return 4.1356692e-15;
-      else if( _str == "Ry" ) return 2.0 * Math::pi;
-      else if( _str == "H" ) return 2.0 * Math::pi;
+      else if( _str == "Ry" ) return 2.0 * math::pi;
+      else if( _str == "H" ) return 2.0 * math::pi;
       else throw std::runtime_error( "Unknown Unit for Planck constant" );
     }
 
@@ -126,7 +129,25 @@ namespace LaDa
       else if( _str == "amu" ) return 5.48579903e-4;
       else if( _str == "eV" ) return 0.51099906e6;
       else if( _str == "MeV" ) return 0.51099906;
-      else throw std::runtime_error( "Unknown Unit for emass constant" );
+      else throw std::runtime_error( "Unknown Unit for emass constant." );
+    }
+
+    inline types::t_real e(std::string const &_str)
+    {
+      if( _str == "au" ) return 1;
+      else if( _str == "H" ) return 1;
+      else if( _str == "Ry" ) return 1;
+      else if( _str == "si" or _str == "SI" ) return 1.6021765314e-19;
+      else if( _str == "mks" ) return 1.6021765314e-19;
+      else if( _str == "cgs" ) return 4.8032042712e-10; 
+      else throw std::runtime_error( "Unknown Unit for elementary charge." );
+    }
+
+    inline types::t_real vacuum_permittivity(std::string const &_str)
+    {
+      if(_str == "mks" or _str == "si" or _str == "SI") return 8.854187817e-12;
+      else if(_str == "au") return 0.25e0 / math::pi;
+      else throw std::runtime_error( "Unknown Unit for vacuum permittivity." );
     }
 
     namespace Atomic

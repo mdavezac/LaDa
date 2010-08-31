@@ -104,7 +104,8 @@ class Encut(SpecialVaspParam):
     from ...crystal import specie_list
     assert self.value > -1e-12, ValueError("Wrong value for cutoff.")
     if fabs(self.value) < 1e-12: return "# ENCUT = VASP default"
-    if self.value > 3e0 + 1e-12: return "ENCUT = %f" % (self.value)
+    if self.value > 3e0 + 1e-12:
+      return "ENCUT = %f" % (self.value.rescale("eV") if hasattr(value, "rescale") else self.value)
     types = specie_list(vasp._system)
     encut = max(vasp.species[type].enmax for type in types)
     return "ENCUT = %f " % (float(encut) * self.value)
@@ -234,12 +235,14 @@ class UParams(SpecialVaspParam):
         a = -1, 0e0, 0e0, 1
         if len(specie.U) <= i: pass
         elif specie.U[i]["func"] == "U":    
-          a = specie.U[i]["l"], specie.U[i]["U"], specie.U[i]["J"], 1
+          a = [specie.U[i]["l"], specie.U[i]["U"], specie.U[i]["J"], 1]
         elif specie.U[i]["func"] == "nlep": 
-          a = specie.U[i]["l"], specie.U[i]["U"], 0e0, 2
+          a = [specie.U[i]["l"], specie.U[i]["U"], 0e0, 2]
         elif specie.U[i]["func"] == "enlep":
-          a = specie.U[i]["l"], specie.U[i]["U0"], specie.U[i]["U1"], 3
+          a = [specie.U[i]["l"], specie.U[i]["U0"], specie.U[i]["U1"], 3]
         else: raise RuntimeError, "Debug Error."
+        if hasattr(a[1], "rescale"): a[1] = a[1].rescale("eV")
+        if hasattr(a[2], "rescale"): a[2] = a[2].rescale("eV")
         line = "%s %i"      % (line[0], a[0]),\
                "%s %18.10e" % (line[1], a[1]),\
                "%s %18.10e" % (line[2], a[2]),\

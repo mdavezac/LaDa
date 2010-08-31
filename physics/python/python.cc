@@ -43,6 +43,10 @@ namespace LaDa
       bp::def("emass", Physics::emass, "Returns the mass of the electron in eV, amu, kg, g, MeV." );
       bp::def("hbar", Physics::hbar, "Returns hbar in  eV*s, erg*s, J*s." );
       bp::def("planck", Physics::Planck, "Returns the Planck constant in  eV*s, erg*s, J*s, Ry, H." );
+      bp::def("vacuum_permittivity", Physics::vacuum_permittivity,\
+              "Returns the permittivity of vacuum in mks, SI, and au.");
+      bp::def("e", Physics::e,\
+              "Returns the elementary charge in mks, SI, cgs, and au.");
     }
 
   }
