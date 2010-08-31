@@ -4,7 +4,7 @@ if(NOT noinstall_headers)
   install(FILES ${PYLADA_HEADERS} DESTINATION include/LaDa/python)
 endif(NOT noinstall_headers)
 
-set(which_packages "\"math\", \"opt\", \"crystal\", \"physics\"")
+set(which_packages "\"math\", \"opt\", \"crystal\", \"physics\", \"periodic_table\"")
 if(pcm_functional) 
   set(which_packages "${which_packages}, \"pcm\"")
 endif(pcm_functional) 
