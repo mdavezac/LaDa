@@ -1,25 +1,31 @@
-""" Templates for job submissal.
-
- 
-"""
+""" Templates for job submissal. """
+__docformat__ = "restructuredtext en"
 
 def default_pbs( file, walltime = "05:45:00", mppwidth = 8, queue = "regular", name = None, \
                  pyvirt = None, pyscript = None, pickle = "job_pickle", \
                  outdir = None, **kwargs):
   """ Creates default pbs-script. Does not launch. 
 
-      @param file: File object to which to write. 
-      @param walltime: must be a string in "hh:mm:ss" format, or anything
+      :Parameters:
+        file
+          File object to which to write. 
+        walltime
+         must be a string in "hh:mm:ss" format, or anything
          acceptable to the PBS implementation.
-      @param mppwidth: Number of processes (not processors) to use.
-      @param queue: Queue to use
-      @param name: Name of the job.
-      @param pyvirt: Virtual python environment. If None, checks for
-        $VIRTUAL_ENV environment variable and uses that if it exists. Otherwise
-        does nothing.
-      @param pyscript: Python script to launch. Default: L{runme.py}
-      @param pythonpath: Additional path to search for modules.
-      @param pickle: Fileame of job-tree pickle.
+        mppwidth
+          Number of processes (not processors) to use.
+        queue
+          Queue to use
+        name
+          Name of the job.
+        pyvirt
+          Virtual python environment. If None, checks for $VIRTUAL_ENV
+          environment variable and uses that if it exists. Otherwise does
+          nothing.
+        pyscript
+          Python script to launch. Default: L{runme.py}
+        pickle
+          Fileame of job-tree pickle.
   """
   from os import environ
   from os.path import exists, split as splitpath, join
@@ -52,19 +58,28 @@ def default_slurm( file, walltime = "05:45:00", mppwidth = 8, ppernode=8, queue 
                    outdir = None, **kwargs):
   """ Creates default slurm-script. Does not launch. 
 
-      @param file: File object to which to write. 
-      @param walltime: must be a string in "hh:mm:ss" format, or anything
-         acceptable to the PBS implementation.
-      @param mppwidth: Number of processes (not processors) to use.
-      @param ppernode: Number of processes per node.
-      @param queue: Queue to use. If none will let slurm use default queue.
-      @param name: Name of the job.
-      @param pyvirt: Virtual python environment. If None, checks for
-        $VIRTUAL_ENV environment variable and uses that if it exists. Otherwise
-        does nothing.
-      @param pyscript: Python script to launch. Default: L{runme.py}
-      @param pythonpath: Additional path to search for modules.
-      @param pickle: Fileame of job-tree pickle.
+      :Parameters:
+        file
+          File object to which to write. 
+        walltime
+          must be a string in "hh:mm:ss" format, or anything acceptable to the
+          PBS implementation.
+        mppwidth
+          Number of processes (not processors) to use.
+        ppernode
+          Number of processes per node.
+        queue
+          Queue to use. If none will let slurm use default queue.
+        name
+          Name of the job.
+        pyvirt
+          Virtual python environment. If None, checks for $VIRTUAL_ENV
+          environment variable and uses that if it exists. Otherwise does
+          nothing.
+        pyscript
+          Python script to launch. Default: L{runme.py}
+        pickle
+          Fileame of job-tree pickle.
   """
   from os import environ
   from os.path import exists, split as splitpath, join, abspath

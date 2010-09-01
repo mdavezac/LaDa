@@ -12,17 +12,18 @@ __all__ = [ 'inequivalent_sites', 'vacancy', 'substitution', 'charged_states', \
 if _lada_has_vasp: __all__.append('Extract')
 
 def inequivalent_sites(lattice, type):
-  """ Yields sites occupied by type which are inequivalent.
+  """ Yields sites occupied by type which are inequivalent. 
   
       When creating a vacancy on, say, "O", or a substitution of "Al" by "Mg",
       there may be more than one site which qualifies. We want to iterate over
       those sites which are inequivalent only, so that only the minimum number
       of operations are performed. 
-      :note: lattice sites can be defined as occupiable by more than one atomic type:
-             C{lattice.site.type[i] = ["Al", "Mg"]}. These sites will be
-             counted if C{type in lattice.site.type}, where type is the input
-             parameter.
 
+      :note:
+        lattice sites can be defined as occupiable by more than one atomic type\:
+        lattice.site.type[i] = ["Al", "Mg"]. These sites will be counted if
+        type in lattice.site.type, where type is the input parameter.
+ 
       :Parameters:
           lattice : `lada.crystal.Lattice`
             Lattice for which to find equivalent sites.
@@ -71,8 +72,8 @@ def vacancy(structure, lattice, type):
         type : str
           type of atoms for which to create vacancy.
 
-      :return: 
-        a 3-tuple consisting of:
+      :return: a 3-tuple consisting of:
+
         - the structure with a vacancy.
         - the vacancy atom from the original structure. It is given an
           additional attribute, C{index}, referring to list of atoms of the
@@ -122,6 +123,7 @@ def substitution(structure, lattice, type, subs):
           substitution type
 
       :return: a 3-tuple consisting of:
+
         - the structure with a substitution.
         - the substituted atom in the structure above. The atom is given an
           additional attribute, C{index}, referring to list of atoms in the
@@ -166,31 +168,38 @@ def substitution(structure, lattice, type, subs):
 def charged_states(species, A=None, B=None):
   """ Loops over charged systems. 
 
-      :Types:
-        - species: `lada.vasp.specie.Specie`
-        - `A` : None or str index to `species`.
-        - `B` : None or str index to `species`.
+      Depending on whether both A and B are specified, the following will happen:
 
       - if only one of C{A} and C{B} is not None, then the accepted charge
         states are anything between 0 and C{-A.oxidation} included. This
-        works both for negative and positive oxidation numbers. The "-" sign
+        works both for negative and positive oxidation numbers. The "minus" sign
         comes from the rational that an ion C{A} with oxidation
         C{A.oxidation} is removed from the system.
       - if both C{A} and C{B} are not None, than reviewed chared states are between
-        C{max(-A.oxidation, B.oxidation-A.oxidation)} and
-        C{min(-A.oxidation, B.oxidation-A.oxidation)}. 
+        ``max(-A.oxidation, B.oxidation-A.oxidation)`` and
+        ``min(-A.oxidation, B.oxidation-A.oxidation)``. 
+
+      :Parameters:
+        species 
+          `lada.vasp.specie.Specie`
+        A
+          None or str index to `species`.
+        B
+          None or str index to `species`.
 
       :return: Yields a 2-tuple:
+
         - Number of electrons to add to the system (not charge). 
         - a suggested name for the charge state calculation.
   """
-
   if A == None: A, B = B, A
   if A == None: # no oxidation
     yield None, "neutral"
     return
   else: A = species[A]
   if B == None:
+
+
     # max/min oxidation state
     max_charge = -A.oxidation if hasattr(A, "oxidation") else 0
     min_charge = 0
@@ -215,6 +224,7 @@ def band_filling(defect, cbm):
   """ Returns band-filling corrrection. 
 
       :Parameters: 
+
         defect : return of `lada.vasp.Vasp.__call__`
           An output extraction object as returned by the vasp functional when
           computing the defect of interest.
@@ -229,8 +239,9 @@ def band_filling(defect, cbm):
 def potential_alignment(defect, host, maxdiff=0.5):
   """ Returns potential alignment correction. 
 
-      :Parameter:
-        defect : return of `lada.vasp.Vasp.__call__`
+      :Parameters:
+
+        defect : return of lada.vasp.Vasp.__call__
           An output extraction object as returned by the vasp functional when
           computing the defect of interest.
         host : return of `lada.vasp.Vasp.__call__`
@@ -286,6 +297,7 @@ def third_order_charge_correction(cell, charge = None, n = 200, **kwargs):
   """ Returns energy of third order charge correction. 
   
       Uses Quantity package to take care of units.
+      
       :Parameters: 
         cell : 3x3 numpy array
           If the cell has not units, then defaults to Angstrom.
@@ -294,6 +306,7 @@ def third_order_charge_correction(cell, charge = None, n = 200, **kwargs):
         charge 
           If no units are given, defaults to elementary charge. If None,
           defaults to 1 elementary charge.
+
       :return: energy of a single negative charge in supercell.
   """
   from numpy import array, dot
@@ -330,16 +343,23 @@ def third_order_charge_correction(cell, charge = None, n = 200, **kwargs):
 
 
 def first_order_charge_correction(cell, charge=None, epsilon=1e0, cutoff=None, **kwargs):
-  """ First order charge correction of +1 charge in given supercell.
+  """ First order charge correction of +1 charge in given supercell. 
   
       Units in this function are either handled by the module Quantities, or
       defaults to Angstroems and elementary charges.
+
       :Parameters:
-        - `cell`: Supercell of the point-defect. If no units are attached, expects Angstroems.
-        - `charge`: Charge of the point-defect. Defaults to 1e0 elementary
-           charge. If no units are attached, expects units of elementary charges.
-        - `epsilon`: dimensionless relative permittivity.
-        - `cutoff`: Ewald cutoff parameter.
+        cell 
+          Supercell of the point-defect. If no units are attached, expects
+          Angstroems.
+        charge 
+          Charge of the point-defect. Defaults to 1e0 elementary charge. If no
+          units are attached, expects units of elementary charges.
+        epsilon 
+          dimensionless relative permittivity.
+        cutoff 
+          Ewald cutoff parameter.
+
       :return: Electrostatic energy in eV.
   """
   from numpy.linalg import norm
@@ -383,7 +403,7 @@ def charge_correction(cell, **kwargs):
 
 
 def magnetic_neighborhood(structure, defect, species):
-   """ Finds magnetic neighberhood of a defect.
+   """ Finds magnetic neighberhood of a defect. 
    
        If the defect is a substitution with a magnetic atom, then the
        neighberhood is the defect alone. Otherwise, the neighberhood extends to
@@ -399,6 +419,7 @@ def magnetic_neighborhood(structure, defect, species):
            point-defect).
          species : dict of `lada.vasp.species.Specie`
            A dictionary defining the atomic species.
+
        :return: indices of the neighboring atoms in the point-defect `structure`.
    """
    from numpy import array
@@ -486,6 +507,7 @@ def electron_counting(structure, defect, species, extrae):
       magnetic neighborhood, then `magmom` is set
       to None and the total magnetic moment to 0 (e.g. lets VASP figure it out).
       Performs a sanity check on integers to make sure things are correct.
+
       :Parameters:
         structure : `lada.crystal.Structure`
           Structure with point-defect already inserted.
@@ -494,8 +516,9 @@ def electron_counting(structure, defect, species, extrae):
           In addition, it should have an *index* attribute denoting the defect 
         species : dict of `lada.vasp.species.Specie`
           Dictionary containing details of the atomic species.
-        extrae :
+        extrae
           Number of extra electrons to add/remove.
+
       :return: yields (indices, electrons) where indices is a list of indices
         to the atom in the neighberhood, and electrons is a corresponding list of
         elctrons.
@@ -543,6 +566,7 @@ def low_spin_states(structure, defect, species, extrae, do_integer=True, do_aver
       case of a substitution with a magnetic atom, the moment is expected to go
       on the substitution alone. If there are no magnetic neighborhood, then `magmom` is set
       to None and the total magnetic moment to 0 (e.g. lets VASP figure it out).
+      
       :Parameters:
         structure : `lada.crystal.Structure`
           Structure with point-defect already inserted.
@@ -551,8 +575,9 @@ def low_spin_states(structure, defect, species, extrae, do_integer=True, do_aver
           In addition, it should have an *index* attribute denoting the defect 
         species : dict of `lada.vasp.species.Specie`
           Dictionary containing details of the atomic species.
-        extrae :
+        extrae
           Number of extra electrons to add/remove.
+
       :return: yields (indices, moments) where the former index the relevant
                atoms in `structure` and latter are their respective moments.
   """
@@ -593,6 +618,7 @@ def high_spin_states(structure, defect, species, extrae, do_integer=True, do_ave
       n the substitution alone. If there are no magnetic neighborhood, then
       `magmom` is set to None and the total magnetic moment to 0 (e.g. lets
       VASP figure it out).
+
       :Parameters:
         structure : `lada.crystal.Structure`
           Structure with point-defect already inserted.
@@ -601,8 +627,9 @@ def high_spin_states(structure, defect, species, extrae, do_integer=True, do_ave
           In addition, it should have an *index* attribute denoting the defect 
         species : dict of `lada.vasp.species.Specie`
           Dictionary containing details of the atomic species.
-        extrae :
+        extrae 
           Number of extra electrons to add/remove.
+
       :return: yields (indices, moments) where the former index the relevant
                atoms in `structure` and latter are their respective moments.
   """
@@ -707,10 +734,11 @@ if _lada_has_vasp:
     def _charge_correction(self, epsilon, which, **kwargs):
       """ Charge correction implementation. 
       
+          :Parameters:
+            epsilon
+              dimensionless relative permittivity.
+
           Computes dictionary of charge corrections.
-          rParameters:
-            - `epsilon`: dimensionless relative permittivity.
-          :return: dictionary of charge corrections in eV.
       """
       import re
       import quantities as pq
@@ -731,42 +759,51 @@ if _lada_has_vasp:
     def first_order_charge_correction(self, epsilon, **kwargs):
       """ First order charge correction. 
       
+          :Parameters:
+            epsilon 
+              dimensionless relative permittivity.
+          :return: dictionary of charge corrections in eV.
+
           Computes the electrostatic energy of a point-charge in a cell. The
           cells are extracted from the runs investigated in this instance, and
           are expected to be in Angstroem ([cell * scale]=A). The unit charge
           are multiple of the elementary charges and extracted from the name of
           each point-defect computation.
-          :Parameters:
-            - `epsilon`: dimensionless relative permittivity.
-          :return: dictionary of charge corrections in eV.
       """
       return self._charge_correction(epsilon, globals()["first_order_charge_correction"], **kwargs)
 
     def third_order_charge_correction(self, epsilon, **kwargs):
       """ Third order charge correction. 
       
+          :Parameters:
+             epsilon
+               dimensionless relative permittivity.
+
+          :return: dictionary of charge corrections in eV.
+
           Computes the electrostatic energy of a point-charge in a cell. The
           cells are extracted from the runs investigated in this instance, and
           are expected to be in Angstroem ([cell * scale]=A). The unit charge
           are multiple of the elementary charges and extracted from the name of
           each point-defect computation.
-          :Parameters:
-            - `epsilon`: dimensionless relative permittivity.
-          :return: dictionary of charge corrections in eV.
       """
       return self._charge_correction(epsilon, globals()["third_order_charge_correction"], **kwargs)
 
     def charge_correction(self, epsilon, **kwargs):
       """ First and third order charge corrections. 
       
+          :Parameters:
+            epsilon
+              dimensionless relative permittivity.
+
+          :return: dictionary of charge corrections in eV.
+
           Computes the electrostatic energy of a point-charge in a cell. The
           cells are extracted from the runs investigated in this instance, and
           are expected to be in Angstroem ([cell * scale]=A). The unit charge
           are multiple of the elementary charges and extracted from the name of
           each point-defect computation.
-          :Parameters:
-            - `epsilon`: dimensionless relative permittivity.
-          :return: dictionary of charge corrections in eV.
+
       """
       return self._charge_correction(epsilon, globals()["charge_correction"], **kwargs)
 
