@@ -279,13 +279,15 @@ class Escan(object):
   def add_potential(self, args):
     """ Adds atomic potential to escan.
         
-        - first argument is the path to the atomic potential. 
-          The absolute path is deduced when set.
-        - second argument is the path to the non-local potential file. 
-          If None, then no non-local argument is added. Defaults to None.
-        - third trough seventh arguments are the
-          non-local potential parameters s, p, d,
-          pnl, dnl. Defaults to None (eg 0).
+        @param args: 
+          A tuple to set the potential.
+            - first argument is the path to the atomic potential. 
+              The absolute path is deduced when set.
+            - second argument is the path to the non-local potential file. 
+              If None, then no non-local argument is added. Defaults to None.
+            - third trough seventh arguments are the
+              non-local potential parameters s, p, d,
+              pnl, dnl. Defaults to None (eg 0).
     """ 
     assert len(args) > 2, RuntimeError("Atomic  potentials need at least two parameters.")
     assert len(args) < 9, RuntimeError("Too many parameters when setting atomic potentials.")

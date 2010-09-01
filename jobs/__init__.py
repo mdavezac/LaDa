@@ -11,6 +11,7 @@
            box for you.
        - pbs_script: Creates pbs-script to perform calculations on a tree.
 """
+__docformat__ = "restructuredtext en"
 from ..opt import RelativeDirectory
 from ..opt.decorators import add_setter, broadcast_result, make_cached
 
@@ -20,6 +21,9 @@ __all__ = [ 'JobDict', 'walk_through', 'save', 'load', 'bleed', 'unbleed',\
 
 class JobDict(object):
   """ Tree of jobs. 
+
+      User Guide
+      ==========
 
       A tree of jobs can be created as:
 
@@ -130,15 +134,27 @@ class JobDict(object):
       >>>        # do something.
       >>>        job.tag() # this job will now be considered bled/tagged.
      
-      Coding: JobDict has the following attributes:
+
+
+
+      Coding 
+      ======
+
+      JobDict has the following attributes:
+
         - children: A dict object holding instances of JobDict. These are the sub-jobs.
         - jobparams: All parameters regarding actual calculations. It contains,
           at start, only two predefined parameters.
+
            - functional: is the callable (preferably pickleable) to execute.
            - all others are keyword arguments.
+
+        - functional: if None there are no jobs. Otherwise is a callable
+          accepting jobparams as keyword arguments.
         - parent is an instance to the parent job (eg the instance which holds
           self in children) or None.
         - It may also have a _tagged attribute to check for bled/unbled jobs.
+
       The __getattr__, __setattr__, and __delattr__ have been rewired to
       perform on objects in jobparams. Note however that __setattr__ will not
       set new object in jobparams, but rather pass on the call to the parent
@@ -163,11 +179,15 @@ class JobDict(object):
         The functional is implemented as a property to make sure that it is
         either None or a pickleable callable. Furthermore, a deepcopy of the functional is
         performed. This parameter can never be truly deleted.
-          >>> del job.functional 
+
+        >>> del job.functional 
+
         is equivalent to:
-          >>> job.functional = None
+        
+        >>> job.functional = None
     """
     return self._functional
+
   def _set_functional(self, value):
     from pickle import dumps, loads # ascertains pickle-ability, copies functional
     assert value == None or hasattr(value, "__call__"),\
@@ -414,18 +434,22 @@ def walk_through(jobdict, outdir = None, comm = None):
 
 @broadcast_result(key=True)
 def save(jobdict, path = None, overwrite=False, comm=None): 
-  """ Pickles a job to file.
+  """ Pickles a job to file. 
+ 
+      :Parameters:
+        jobdict
+         A jobtree to pickle. 
+        path
+          filename of file to which to save pickle. overwritten. If None then
+          saves to "pickled_jobdict"
+        comm
+          Only root process gets to do anything.
+        overwrite
+          if True, then overwrites file.
 
       This method first acquire an exclusive lock (using os dependent lockf) on
       the file before writing. This way not two processes can read/write to
       this file while using this function.
-      @param jobdict: A jobtree to pickle. 
-      @type jobdict: JobDict
-      @param path: filename of file to which to save pickle. overwritten. If
-        None then saves to "pickled_jobdict"
-      @param comm: Only root process gets to do anything.
-      @type comm: boost.mpi.communicator
-      @param overwrite: if True, then overwrites file.
   """ 
   from os.path import exists
   from pickle import dump
@@ -439,16 +463,19 @@ def save(jobdict, path = None, overwrite=False, comm=None):
 
 @broadcast_result(key=True)
 def load(path = None, comm = None): 
-  """ Unpickles a job from file.
+  """ Unpickles a job from file. 
+ 
+      :Parameters: 
+        path 
+          Filename of a pickled jobdictionary.
+        comm
+          boost.mpi.communicator
+
+      :return: Returns a JobDict object.
 
       This method first acquire an exclusive lock (using os dependent lockf) on
       the file before reading. This way not two processes can read/write to
       this file while using this function.
-      @param path: filename from which to load pickle. 
-        If None then saves to "pickled_jobdict"
-      @param comm: Broadcasts from root process. 
-      @type comm: boost.mpi.communicator
-      @return: Returns a JobDict object.
   """ 
   from os.path import exists
   from pickle import load as load_pickle
@@ -460,22 +487,27 @@ def load(path = None, comm = None):
   return result
 
 def bleed(path=None, outdir=None, comm=None): 
-  """ Generator which deepletes a job dictionary of its jobs. 
+  """ Generator which deepletes a job dictionary of its jobs.  
 
-      This function alters the dictionary stored in C{path}. If C{path} is
-      empty, then returns None, None. An exclusive lock is acquired before
-      reading/writing to C{path}.  This way, if using L{bleed}, L{save},
-      L{load}, two processes will not step on each others jobs.
+      :Parameters: 
+        path 
+          Filename of a pickled jobdictionary.
+        outdir
+          Root result directory. 
+        comm
+          Will broadcast yielded stuff from root. Because of file locking,
+          this generator may freeze the system if not used correctly with mpi.
 
-      This function is different from JobDict.bleed in that it alters a
-      dictionary stored in a file.
-      @param: Filename of a pickled jobdictionary.
-      @outdir: Root result directory. 
-      @comm: Will broadcast yielded stuff from root. Because of file locking,
-             this generator may freeze the system if not used correctly with mpi.
-      @return: yields (job, directory), see L{walk_through}.
+      :return: yields (job, directory), see L{walk_through}.
            - job: a job dictionary with the current job to execute.
            - directory: a suggested directory name with L{outdir} as its root.
+
+      This function alters the dictionary stored in `path`. If `path` is
+      empty, then returns None, None. An exclusive lock is acquired before
+      reading/writing to `path`.  This way, if using `bleed`, `save`,
+      `load`, two processes will not step on each others jobs.
+      This function is different from JobDict.bleed in that it alters a
+      dictionary stored in a file.
   """
   from os.path import join, exists
   from pickle import load as load_pickle, dump
@@ -534,13 +566,16 @@ def unbleed(path=None, comm=None):
 def unsucessfull(jobdict, extractor, outdir = None):
   """ Returns jobdictionary with unsucessfull/incomplete jobs.
 
+      :Parameters:
+        jobdict : JobDict or str
+          a job dictionary instance or the path to a pickled job-dictionary.
+        extractor
+          Some instance with a directory attribute and a success attribute,
+          capable of judging the success of an operation.
+
+      :return: A JobDict instance with incomplete and unsuccessful jobs.
+
       This function will not modify the input dictionary.
-      @param jobdict: a job dictionary instance or the path to a pickled
-        job-dictionary.
-      @type jobdict: JobDict or str
-      @param extractor: Some instance with a directory attribute and a success
-        attribute, capable of judging the success of an operation.
-      @return: A JobDict instance with incomplete and unsuccessful jobs.
   """
   from os.path import split as splitpath
   from copy import deepcopy
@@ -581,8 +616,10 @@ class AbstractMassExtract(object):
 
 
         :Parameters:
-          - `path` : Root of calculations.
-          - `comm` : an boost.mpi.communicator instance.
+          path
+            Root of calculations.
+          comm
+            an boost.mpi.communicator instance.
     """
     super(AbstractMassExtract, self).__init__()
     self.root = path
@@ -592,7 +629,7 @@ class AbstractMassExtract(object):
     """ Generator to go through all relevant jobs. 
     
         :return: (name, extractor), where name is the name of the job, and
-           extractor an extraction object.
+          extractor an extraction object.
     """
     abstract
 
@@ -663,7 +700,7 @@ class AbstractMassExtract(object):
 
 
 class MassExtract(AbstractMassExtract): 
-  """ Propagates extraction methods from different jobs.
+  """ Propagates extraction methods from different jobs. 
   
       Collects extractors across all jobs (for which job.functional.Extract
       exist). The results are presented as attributes of an instance of
@@ -675,16 +712,18 @@ class MassExtract(AbstractMassExtract):
 
   def __init__(self, path, jobdict=None, comm = None):
     """ Initializes extraction object. 
-
-
+ 
         :Parameters:
-          - `path` : If `jobdict` is None, then should point to a pickled
+           path 
+             If `jobdict` is None, then should point to a pickled
              dictionary. If `jobdict` is a JobDict instance, then it should
              point the directory where calculations are saved.
-          - `jobdict` : None, or a jobdictionary. If it is None, then `path`
-             should point to a pickled job-dictionary. If it is a jobdictonary,
-             then `path` should point to a directory where calculations where performed.
-          - `comm` : an boost.mpi.communicator instance.
+           jobdict : None or JobDict.
+             If it is None, then `path` should point to a pickled
+             job-dictionary. If it is a jobdictonary, then `path` should point
+             to a directory where calculations where performed.
+           comm : boost.mpi.communicator
+             All processes will be syncronized.
     """
     from os.path import isdir, isfile, exists, dirname, abspath
     super(MassExtract, self).__init__(path, comm=comm)
@@ -700,10 +739,10 @@ class MassExtract(AbstractMassExtract):
     if path != None: self._extractors() # gets stuff cached.
 
   def walk_through(self):
-    """ Generator to go through all relevant jobs. 
+    """ Generator to go through all relevant jobs.  
     
         :return: (name, extractor), where name is the name of the job, and
-           extractor an extraction object.
+          extractor an extraction object.
     """
     from os.path import exists, join
     

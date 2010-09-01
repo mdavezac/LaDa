@@ -2,7 +2,7 @@ from pickle import dumps, loads
 from kpoints import Gamma, Density
 from specie  import Specie, nlep, U
 from launch  import Launch
-from incar  import Standard, Incar
+from incar  import Incar
 from .  import Vasp
 def test_gamma_serialization():
 
@@ -89,11 +89,11 @@ def test_vasp_serialization():
          )
   """ VASP functional """
   # adds some extra parameters to VASP functional.
-  vasp.nbands     = Standard("NBANDS", 64)
-  vasp.lorbit     = Standard("LORBIT", 10)
-  vasp.npar       = Standard("NPAR", 2)
-  vasp.lplane     = Standard("LPLANE", ".TRUE.")
-  vasp.addgrid    = Standard("ADDGRID", ".TRUE.")
+  vasp.add_params = "nbands", 64
+  vasp.add_params = "lorbit", 10
+  vasp.add_params = "npar", 2
+  vasp.add_params = "lplane", ".TRUE."
+  vasp.add_params = "addgrid", ".TRUE."
 
   string = dumps(vasp)
   e = loads(string)
