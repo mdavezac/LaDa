@@ -105,7 +105,7 @@ class Encut(SpecialVaspParam):
     assert self.value > -1e-12, ValueError("Wrong value for cutoff.")
     if fabs(self.value) < 1e-12: return "# ENCUT = VASP default"
     if self.value > 3e0 + 1e-12:
-      return "ENCUT = %f" % (self.value.rescale("eV") if hasattr(value, "rescale") else self.value)
+      return "ENCUT = %f" % (self.value.rescale("eV") if hasattr(self.value, "rescale") else self.value)
     types = specie_list(vasp._system)
     encut = max(vasp.species[type].enmax for type in types)
     return "ENCUT = %f " % (float(encut) * self.value)
