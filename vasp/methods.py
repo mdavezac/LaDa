@@ -252,7 +252,7 @@ class RelaxIons(object):
             stateless) if they are named after attributes of `RelaxCellShape`.
             Otherwise, the keywords are passed on to the `vasp` functional.
 
-        :return: `Relaxation.Extract` object for output analysis.
+        :return: `RelaxIons.Extract` object for output analysis.
 
         This will call will overide the `lada.vasp.Incar.set_relaxation`
         parameter with \"ionic\".

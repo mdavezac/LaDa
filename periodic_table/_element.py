@@ -106,8 +106,14 @@ class Element(object):
 
 
   def __str__(self):
-    return "{0} ({1}): n={2}, Z={3}"\
-           .format(self.name, self.symbol, self.atomic_number, self.atomic_weight)
+    string = "{0} elemental data.\n\n".format(self.name)
+    for name in self.__dict__:
+      if name[0] == '_': continue
+      s = getattr(self, name)
+      if s != None: string += "  - {0}: {1}.\n".format(name, str(s))
+    
+    return string
+
   def __repr__(self):
     result = {}
     for name in self.__dict__:

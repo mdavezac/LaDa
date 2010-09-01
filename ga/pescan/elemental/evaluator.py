@@ -60,7 +60,7 @@ class Bandgap(object):
         @param outdir: Output directory. 
         @param comm: MPI communicator.
         @param kwargs: L{converter <Bandgap.converter>}, L{escan
-          <Bandgap.escan>}, L{references <Bandgap.reference>}, L{outdir
+          <Bandgap.escan>}, L{references <Bandgap.references>}, L{outdir
           <Bandgap.outdir>} can be overwridden on call. This will not affect
           calls further down the line. Other arguments are passed on to the
           L{bandgap <lada.escan.bandgap>} functional.
