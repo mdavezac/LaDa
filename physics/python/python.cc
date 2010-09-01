@@ -5,6 +5,7 @@
 #include <boost/python/def.hpp>
 #include <boost/python/docstring_options.hpp>
 #include <boost/python/scope.hpp>
+#include <boost/python/handle.hpp>
 
 #include <opt/types.h>
 #include <opt/debug.h>
@@ -21,10 +22,6 @@ namespace LaDa
     void expose_physics()
     {
       namespace bp = boost::python;
-      bp::scope scope;
-      scope.attr("__doc__") = "Package with text-book physical quantities.";
-      bp::docstring_options doc_options(true, false);
-
       bp::def("Z", Physics::Atomic::Z,
               "Given an atomic symbol, returns the atomic number.");
       bp::def("Symbol", Physics::Atomic::Symbol,
@@ -52,7 +49,12 @@ namespace LaDa
   }
 } // namespace LaDa
 
-BOOST_PYTHON_MODULE(physics)
+BOOST_PYTHON_MODULE(_physics)
 {
+  namespace bp = boost::python;
+  bp::scope scope;
+  scope.attr("__doc__") = "Physics quantities. ";
+  scope.attr("__docformat__") = "restructuredtext en";
+  bp::docstring_options doc_options(true, false);
   LaDa::Python::expose_physics();
 }

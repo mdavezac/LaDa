@@ -112,11 +112,11 @@ class ExtractAE(_ExtractE):
     """ Computes oscillator strength between vbm and cbm. """
     from numpy import transpose, dot
     from numpy.linalg import det
-    from ..physics import a0, Rydberg
+    from ..physics import a0
     from . import dipole_matrix_elements
     result, nstates = 0e0, 0
     units = det(self.structure.cell * self.structure.scale / a0("A") )  
-    units *= units * 2e0/3e0 * Rydberg("eV") 
+    units *= units * 1e0/3e0 * pq.hartree
     gvectors = transpose(self.gvectors)
     for wfnA in self.gwfns:
       if abs(wfnA.eigenvalue - self.cbm) > degeneracy: continue
@@ -125,7 +125,36 @@ class ExtractAE(_ExtractE):
         nstates += 1
         dme = wfnA.braket(gvectors, wfnB, attenuate=attenuate)
         result += dot(dme, dme.conjugate()).real / (wfnA.eigenvalue - wfnB.eigenvalue) 
-    return units * result, nstates
+    results *= units
+    results.units = pq.dimensionless
+    return result, nstates
+  
+# def momentum_element(self, attenuate=False):
+#   from operator import itemgetter
+#   from numpy import transpose, dot
+#   from numpy.linalg import det
+#   from ..physics import a0, Rydberg
+#   from . import dipole_matrix_elements
+#   result, nstates = 0e0, 0
+#   units = det(self.structure.cell * self.structure.scale / a0("A") )  
+#   units *= units * 1e0/3e0 * pq.hartree
+#   gvectors = transpose(self.gvectors)
+
+#   cbm = min([(i, abs(e-self.cbm)) for i, e in enumerate(self.eigenvalues)], key=itemgetter(1))
+#   cmb = self.gwfns[cmb[0]]
+#   vbm = min([(i, abs(e-self.vbm)) for i, e in enumerate(self.eigenvalues)], key=itemgetter(1))[0]
+#   vmb = self.gwfns[vmb[0]]
+
+#   result  = cbm.braket(gvectors, vbm, attenuate=attenuate)
+#   result.units = 
+
+#   for wfnA in self.gwfns:
+#     if abs(wfnA.eigenvalue - self.cbm) > degeneracy: continue
+#     for wfnB in self.gwfns:
+#       if abs(wfnB.eigenvalue - self.vbm) > degeneracy: continue
+#       nstates += 1
+#       result wfnA.braket(gvectors, wfnB, attenuate=attenuate)
+#   return units * result, nstates
     
 
 def _band_gap_ae_impl(escan, structure, outdir, **kwargs):

@@ -121,6 +121,7 @@ class Extract(object):
     """
     from os.path import exists, join
     from numpy import array
+    import quantities as pq
     path = self.OUTCAR
     if len(self.directory): path = join(self.directory, self.OUTCAR)
     assert exists(path), RuntimeError("Could not find file %s:" % (path))
@@ -134,8 +135,9 @@ class Extract(object):
         result.extend( float(u) for u in line.split() )
       else: raise IOError("Unexpected end of file when grepping for eigenvectors.")
 
-    return array(result, dtype="float64") if not self._double_trouble()\
-           else array([result[i/2] for i in range(2*len(result))], dtype="float64")
+    result =  array(result, dtype="float64") if not self._double_trouble()\
+              else array([result[i/2] for i in range(2*len(result))], dtype="float64")
+    return result * pq.eV
 
   @property 
   @make_cached
