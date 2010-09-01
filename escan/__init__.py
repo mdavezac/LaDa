@@ -1,4 +1,5 @@
 """ Interface module for pescan. """
+__docformat__ = "restructuredtext en"
 from ..opt import __load_pescan_in_global_namespace__
 if __load_pescan_in_global_namespace__:
   from DLFCN import RTLD_NOW as _RTLD_NOW, RTLD_GLOBAL as _RTLD_GLOBAL
@@ -38,15 +39,20 @@ def _is_in_sync(comm, which = [0]):
 def call_escan(comm, atom="atom_input", pot="pot_input", escan="escan_input"):
   """ Calls escan functional in current directory.
 
+      :Parameters:
+        comm : boost.mpi.communicator
+          Processes on which to execute.
+        atom
+          file with atomic input (from vff). 
+        pot
+          file with input to potential generation.
+        escan
+          file with input to escan itself.
+
       Before calling the functional, the files are propagated such that each
       proc can read its own. What is more, the inputs are modified such that
       L{pot} does refer to L{atom}, and L{escan} to both atomic config and
       potential files.
-      @param comm: Processes on which to execute.
-      @type comm: boost.mpi.Communicator or mpi4py
-      @param atom: file with atomic input (from vff). 
-      @param pot: file with input to potential generation.
-      @param escan: file with input to escan itself.
   """
   from os import remove
   from boost.mpi import world, broadcast
@@ -279,8 +285,8 @@ class Escan(object):
   def add_potential(self, args):
     """ Adds atomic potential to escan.
         
-        @param args: 
-          A tuple to set the potential.
+        :Parameters:
+          args 
             - first argument is the path to the atomic potential. 
               The absolute path is deduced when set.
             - second argument is the path to the non-local potential file. 

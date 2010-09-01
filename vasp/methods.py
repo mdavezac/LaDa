@@ -239,8 +239,6 @@ class RelaxIons(object):
   def __call__(self, structure, outdir=None, comm=None, **kwargs ):
     """ Performs an ionic relaxation followed by a static calculation.
     
-        This will call will overide the `lada.vasp.Incar.set_relaxation`
-        parameter with \"ionic\".
         :Parameters:
           structure
             The structure to relax with `vasp`.
@@ -253,6 +251,11 @@ class RelaxIons(object):
             `RelaxCellShape` (though for this run only. This function is
             stateless) if they are named after attributes of `RelaxCellShape`.
             Otherwise, the keywords are passed on to the `vasp` functional.
+
+        :return: `Relaxation.Extract` object for output analysis.
+
+        This will call will overide the `lada.vasp.Incar.set_relaxation`
+        parameter with \"ionic\".
     """
     from copy import deepcopy
     from math import fabs 

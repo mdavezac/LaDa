@@ -1,4 +1,5 @@
 """ Classes to handle ESCAN wavefunctions. """
+__docformat__  = 'restructuredtext en'
 
 
 from ..opt.decorators import broadcast_result, make_cached
@@ -81,22 +82,26 @@ class Wavefunction(rWavefunction):
 def gtor_fourrier(wavefunctions, rvectors, gvectors, comm, axis=0):
   """ g-space to r-space fourrier transform of wavefunctions.
   
-      @param wavefunctions: an numpy array of wavefunctions.
-      @param rvectors: a two-dimensional array of r-space vectors, with each
-        row a position. The return r-space wavefunctions will be given with
-        respect to these points. Each process should have different r-space
-        vectors. Otherwise use another implementation.
-      param gvectors: a two-dimensional array of g-space vectors, with each
-        row a (g-)position. The input wavefunctions should be given with
-        respect to these points, in the same order, etc.
-      @param comm: communicator over which the wavefunctions are distributed.
-        The return wavefunctions will also be dirstributed over these
-        processes.
-      @params axis: axis over which the wavefunctions are deployed, eg axis
-        of L{wavefunctions} which corresponds to L{gvectors}. Independent
-        (though simultaneous, implementation wise) fourrier transform will be
-        performed over this axis for all other axis. 0 by default.
-      @type axis: integer
+      :Parameters:
+        wavefunctions : numpy array
+          Arry of wavefunctions.
+        rvectors : numpy array
+          Two-dimensional array of r-space vectors, with each row a position.
+          The return r-space wavefunctions will be given with respect to these
+          points. Each process should have different r-space vectors. Otherwise
+          use another implementation.
+        gvectors : numpy array
+          Two-dimensional array of g-space vectors, with each row a
+          (g-)position. The input wavefunctions should be given with respect to
+          these points, in the same order, etc.
+        comm : boost.mpi.communicator
+          communicator over which the wavefunctions are distributed.  The
+          return wavefunctions will also be dirstributed over these processes.
+        axis : integer
+          axis over which the wavefunctions are deployed, eg axis of
+          `wavefunctions` which corresponds to `gvectors`. Independent
+          (though simultaneous, implementation wise) fourrier transform will be
+          performed over this axis for all other axis. 0 by default.
   """
   import numpy as np
   from boost.mpi import broadcast, reduce
@@ -120,22 +125,26 @@ def gtor_fourrier(wavefunctions, rvectors, gvectors, comm, axis=0):
 def rtog_fourrier(wavefunctions, rvectors, gvectors, comm, axis=0):
   """ r-space to g-space fourrier transform of wavefunctions.
   
-      @param wavefunctions: an numpy array of wavefunctions.
-      @param rvectors: a two-dimensional array of r-space vectors, with each
-        row a position. The return r-space wavefunctions will be given with
-        respect to these points. Each process should have different r-space
-        vectors. Otherwise use another implementation.
-      @param gvectors: a two-dimensional array of g-space vectors, with each
-        row a (g-)position. The input wavefunctions should be given with
-        respect to these points, in the same order, etc.
-      @param comm: communicator over which the wavefunctions are distributed.
-        The return wavefunctions will also be dirstributed over these
-        processes.
-      @params axis: axis over which the wavefunctions are deployed, eg axis
-        of L{wavefunctions} which corresponds to L{gvectors}. Independent
-        (though simultaneous, implementation wise) fourrier transform will be
-        performed over this axis for all other axis. 0 by default.
-      @type axis: integer
+      :Parameters:
+        wavefunctions : numpy array
+          Arry of wavefunctions.
+        rvectors : numpy array
+          Two-dimensional array of r-space vectors, with each row a position.
+          The return r-space wavefunctions will be given with respect to these
+          points. Each process should have different r-space vectors. Otherwise
+          use another implementation.
+        gvectors : numpy array
+          Two-dimensional array of g-space vectors, with each row a
+          (g-)position. The input wavefunctions should be given with respect to
+          these points, in the same order, etc.
+        comm : boost.mpi.communicator
+          communicator over which the wavefunctions are distributed.  The
+          return wavefunctions will also be dirstributed over these processes.
+        axis : integer
+          axis over which the wavefunctions are deployed, eg axis of
+          `wavefunctions` which corresponds to `gvectors`. Independent
+          (though simultaneous, implementation wise) fourrier transform will be
+          performed over this axis for all other axis. 0 by default.
   """
   import numpy as np
   from boost.mpi import broadcast, reduce, all_reduce

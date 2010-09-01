@@ -23,7 +23,7 @@ class Bandgap(object):
           lada.crystal.Structure, and vice versa.
         @type  converter: duck-typed to L{Converter}
         @param escan: escan functional.
-        @param **kwargs: Other keyword arguments to be passed to the bandgap routine.
+        @param kwargs: Other keyword arguments to be passed to the bandgap routine.
     """
     from copy import deepcopy
 
@@ -59,7 +59,7 @@ class Bandgap(object):
           <lada.crystal.Structure>} using L{self.converter}.
         @param outdir: Output directory. 
         @param comm: MPI communicator.
-        @param **kwargs: L{converter <Bandgap.converter>}, L{escan
+        @param kwargs: L{converter <Bandgap.converter>}, L{escan
           <Bandgap.escan>}, L{references <Bandgap.reference>}, L{outdir
           <Bandgap.outdir>} can be overwridden on call. This will not affect
           calls further down the line. Other arguments are passed on to the

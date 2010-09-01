@@ -12,8 +12,6 @@ def _input():
  
 input = _input()
 """ All input parameteres. """
-mppalloc = input.mppalloc
-""" Process allocation scheme. """
 
 def _waves(is_first = True): 
   from os.path import join

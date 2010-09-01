@@ -87,12 +87,16 @@ namespace LaDa
           bp::arg("relaxation") = true
         ),
         "Minimizes a Coulomb +Lennard-Jhones functional.\n\n"
-        ":Parameter:\n"
-        "clj : `lada.pcm.Clj`\n  Coulomb + Lennard-Jones functional.\n"
-        "minimizer : `lada.minimizer.Minimizer`\n   Minimization object.\n"
-        "structure : `lada.crystal.Structure` \n  Input crystal structure.\n"
-        "relaxation \n  If True, relax everything. If False only relax volume.\n"
-        ":return: an 2-tuple of `lada.crystal.Structure` objects containing the "
+        ":Parameters:\n"
+        "  clj : `lada.pcm.Clj`\n"
+        "    Coulomb + Lennard-Jones functional.\n"
+        "  minimizer : `lada.minimizer.Minimizer`\n"
+        "    Minimization object.\n"
+        "  structure : `lada.crystal.Structure` \n"
+        "    Input crystal structure.\n"
+        "  relaxation \n "
+        "    If True, relax everything. If False only relax volume.\n\n"
+        ":return: a 2-tuple of `lada.crystal.Structure` objects containing the "
         "relaxed structure for the first, and the forces and stress for the "
         "second."
       );

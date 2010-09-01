@@ -100,24 +100,22 @@ def launch(self, event):
       The usual setup is to first explore a dictionary of some sort, 
       then modify it and save it, and finally launch it.
 
-      .. highlight:: python
-
-      # to recompute errors.
-      %explore errors path/to/original/pickle
-      %goto next
-      # modify dictionary here.
-      %showme functional
-      ...
-      %goto next
-      %showme functional
-      ...
-      # Saves the modified job.
-      # the new path could a different filename in the same directory.
-      # This way, the unsuccessful output from the first run will be
-      # overwritten.
-      %savejobs path/to/original/pickle.errors
-      # then  launch.
-      %launch scattered --walltime "24:00:00"
+      >>> # to recompute errors.
+      >>> %explore errors path/to/original/pickle
+      >>> %goto next
+      >>> # modify dictionary here.
+      >>> %showme functional
+      >>> ...
+      >>> %goto next
+      >>> %showme functional
+      >>> ...
+      >>> # Saves the modified job.
+      >>> # the new path could a different filename in the same directory.
+      >>> # This way, the unsuccessful output from the first run will be
+      >>> # overwritten.
+      >>> %savejobs path/to/original/pickle.errors
+      >>> # then  launch.
+      >>> %launch scattered --walltime "24:00:00"
   """ 
 
   import argparse

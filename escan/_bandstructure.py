@@ -4,20 +4,29 @@ __docformat__  = 'restructuredtext en'
 
 def band_structure(escan, structure, kpoints, density = None, outdir=None, comm=None,\
                    do_relax=None, pools = 1, nbkpoints = None, **kwargs):
-  """ Returns eigenvalues for plotting bandstructure. 
+  """ Returns 
   
       :Parameters:
-      - `escan`: an `lada.escan.Escan` functional wrapping nanopse's pescan. 
-      - `structure`: an `lada.crystal.Structure` object describing the
-        structure for which to compute a band-structure.
-      - `kpoints`: a sequence of 2-tuples. Each two tuple is a starting k-point and
-        an end k-point. The k-points should be given in cartesian units within
-        the ideal, undistorted lattice. They will deformed to the fit into the
-        relaxed structure. However, translational invariance is not applied
-        (e.g. kpoints are not refolded).
-      - `density`: a float giving the number of kpoints per reciprocal length
-        unit.
-      - **kwargs: Any parameters appropriate to `lada.escan.Escan`.
+        escan : `lada.escan.Escan`
+          Functional wrapping nanopse's pescan. 
+        structure : `lada.crystal.Structure`
+          object describing the structure for which to compute a
+          band-structure.
+        kpoints : sequence of 2-tuples
+          Each two tuple is a starting k-point and an end k-point. The k-points
+          should be given in cartesian units within the ideal, undistorted
+          lattice. They will deformed to the fit into the relaxed structure.
+          However, translational invariance is not applied (e.g. kpoints are
+          not refolded).
+        density : float 
+          Number of kpoints per reciprocal length unit.
+        kwargs 
+          Any parameters appropriate to `lada.escan.Escan`.
+
+      :return: sequence of (x, kpoint, eigenvalues), where
+        - x is the abscissa for the brand-structure plot.
+        - kpoint is actual deformed kpoint at which computation was performed.
+        - eigenvalues is a numpy array of eigenvalues.
   """
   from os import getcwd
   from os.path import join, expanduser, abspath, exists

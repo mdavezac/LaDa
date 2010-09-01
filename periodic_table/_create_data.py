@@ -1,7 +1,7 @@
 """ Creates data by trolling webelements.com. """
 __docformat__ = "restructuredtext en"
 import quantities as qt
-from . import Element
+from ._element import Element
 
 def _orbital_radii():
   """ Zunger `Orbital radii`_.

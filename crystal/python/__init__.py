@@ -1,6 +1,9 @@
 """ Contains basic data type and methods for crystal structure and lattices.
-    The basic types are imported in this namespace from (and described in)
-    module L{_crystal}.
+
+    C++ bindings are located in L{_crystal}. A fair number of enhancements are
+    added directly within the python code in __init__.py. In practice all
+    public interfaces to C++ bindings should be available directly in the
+    L{crystal} namespace.
 """
 from _crystal import FreezeAtom, which_site, Site, SymmetryOperator, Lattice, to_cartesian,\
                      get_point_group_symmetries, read_structure, sort_layers, \

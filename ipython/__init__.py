@@ -1,4 +1,18 @@
-""" IPython functions and data. """
+""" IPython interface for lada.
+
+    Installing the lada interface to ipython. 
+    =========================================
+
+    In order to initialize an ipython session with the lada interface, the
+    following lines can be introduces in the main function of your
+    ipy_user_conf.py
+
+    >>> try: import lada.ipython 
+    >>> except ImportError:
+    >>>   print "Could not find module lada.ipython."
+    >>>   pass
+    >>> else: lada.ipython.ipy_init()
+"""
 from contextlib  import contextmanager
 
 def _get_current_job_params(self, verbose=0):
@@ -190,6 +204,7 @@ def cancel_jobs(self, arg):
   
       For instance, the following cancels all jobs with "anti-ferro" in their
       name.
+
       >>> %cancel_jobs "anti-ferro"
   """
   from subprocess import Popen, PIPE
@@ -221,42 +236,54 @@ def please_cancel_all_jobs(self, arg):
     self.api.system("scancel %i" % (int(u)))
 
 
-def _main():
-  from os import environ
-  import IPython.ipapi
-  import lada
-  from ._goto import goto, iterate, goto_completer
-  from ._explore import explore, explore_completer
-  from ._showme import showme, showme_completer
-  from ._launch import launch, launch_completer
+def ipy_init():
+  """ Initialises ipython session. 
 
-  ip = IPython.ipapi.get()
-  ip.expose_magic("explore", explore)
-  ip.expose_magic("goto", goto)
-  ip.expose_magic("listjobs", listjobs)
-  ip.expose_magic("jobname", current_jobname)
-  ip.expose_magic("iterate", iterate)
-  ip.expose_magic("showme", showme)
-  ip.expose_magic("savejobs", saveto)
-  ip.expose_magic("fakerun", fakerun)
-  ip.expose_magic("launch", launch)
-  ip.expose_magic("run_current_jobdict", run_current_jobdict)
-  ip.set_hook('complete_command', goto_completer, re_key = '\s*%?goto')
-  ip.set_hook('complete_command', showme_completer, re_key = '\s*%?showme')
-  ip.set_hook('complete_command', explore_completer, re_key = '\s*%?explore')
-  ip.set_hook('complete_command', launch_completer, re_key = '\s*%?launch')
-  if "SNLCLUSTER" in environ:
-    if environ["SNLCLUSTER"] in ["redrock", "redmesa"]:
-      ip.expose_magic("qstat", qstat)
-      ip.expose_magic("cancel_jobs", cancel_jobs)
-      ip.set_hook('complete_command', cancel_completer, re_key = '\s*%?cancel_jobs')
-      ip.expose_magic("please_cancel_all_jobs", please_cancel_all_jobs)
+      In order to initialize an ipython session with the lada interface, the
+      following lines can be introduces in the main function of you
+      ipy_user_conf.py
 
-  for key in lada.__all__:
-    if key[0] == '_': continue
-    if key == "ipython": continue
-    if key == "jobs": ip.ex("from lada import jobs as ladajobs")
-    else: ip.ex("from lada import " + key)
+      >>> try: import lada.ipython 
+      >>> except ImportError:
+      >>>   print "Could not find module lada.ipython."
+      >>>   pass
+      >>> else: lada.ipython.ipy_init()
+  """ 
+  try: import IPython.ipapi
+  except: pass
+  else:
+    from os import environ
+    import lada
+    from ._goto import goto, iterate, goto_completer
+    from ._explore import explore, explore_completer
+    from ._showme import showme, showme_completer
+    from ._launch import launch, launch_completer
+    
+    ip = IPython.ipapi.get()
+    ip.expose_magic("explore", explore)
+    ip.expose_magic("goto", goto)
+    ip.expose_magic("listjobs", listjobs)
+    ip.expose_magic("jobname", current_jobname)
+    ip.expose_magic("iterate", iterate)
+    ip.expose_magic("showme", showme)
+    ip.expose_magic("savejobs", saveto)
+    ip.expose_magic("fakerun", fakerun)
+    ip.expose_magic("launch", launch)
+    ip.expose_magic("run_current_jobdict", run_current_jobdict)
+    ip.set_hook('complete_command', goto_completer, re_key = '\s*%?goto')
+    ip.set_hook('complete_command', showme_completer, re_key = '\s*%?showme')
+    ip.set_hook('complete_command', explore_completer, re_key = '\s*%?explore')
+    ip.set_hook('complete_command', launch_completer, re_key = '\s*%?launch')
+    if "SNLCLUSTER" in environ:
+      if environ["SNLCLUSTER"] in ["redrock", "redmesa"]:
+        ip.expose_magic("qstat", qstat)
+        ip.expose_magic("cancel_jobs", cancel_jobs)
+        ip.set_hook('complete_command', cancel_completer, re_key = '\s*%?cancel_jobs')
+        ip.expose_magic("please_cancel_all_jobs", please_cancel_all_jobs)
+    
+    for key in lada.__all__:
+      if key[0] == '_': continue
+      if key == "ipython": continue
+      if key == "jobs": ip.ex("from lada import jobs as ladajobs")
+      else: ip.ex("from lada import " + key)
 
-
-_main()

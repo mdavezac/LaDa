@@ -1,4 +1,5 @@
 """ Submodule to compute bandgaps with escan. """
+__docformat__  = 'restructuredtext en'
 from ..opt.decorators import make_cached
 from _extract import Extract as _ExtractE
 

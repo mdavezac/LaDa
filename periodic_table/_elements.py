@@ -2,9 +2,9 @@
 
 from numpy import array
 
-from quantities import *
+from quantities import cm, m, g, J, pm, K, mol, angstrom, dimensionless, W, GPa, s, ohm
 
-from . import Element
+from ._element import Element
 
 __dir__ = ['elements', 'symbols']
 

@@ -225,10 +225,12 @@ namespace LaDa
       bp::class_< t_Bonds >( "LJBonds", "Dictionary of bonds" )
         .def( bp :: map_indexing_suite< t_Bonds >() )
         .def("__setitem__", &set_sequence_item,
-             " Sets lennard-jones parameter for a given bond.\n\n"
-             " :Parameters:\n"
-             "   - `index` of the bond, as obtained from `pcm.bond_name`.\n"
-             "   - `value` a two tuple containing the facto of the r^12 term and the r^6 term.\n"
+             "Sets lennard-jones parameter for a given bond.\n\n"
+             ":Parameters:\n"
+             "  index \n"
+             "    Index of the bond, as obtained from `pcm.bond_name`.\n"
+             "  value \n"
+             "    A two tuple containing the facto of the r^12 term and the r^6 term.\n"
             )
         .def_pickle( Python::pickle< t_Bonds >() );
 
@@ -237,18 +239,21 @@ namespace LaDa
         .def_readwrite( "bonds", &Models::Clj::bonds, "Dictionnary of charges." )
         .def( "lennard_jones", &__call__<0>, bp::arg("structure"),
               "Returns Lennard-Jones forces and energy.\n\n"
-              ":Parameter:\n"
-              " - `structure` Crystal structure for wich to compute energy.\n"
-              ":return: a lada.crystal.Structure object containing forces and energy.\n" )
+              ":Parameters:\n"
+              "  structure\n"
+              "    Crystal structure for wich to compute energy.\n\n"
+              ":return: a `lada.crystal.Structure` object containing forces and energy.\n" )
         .def( "ewald", &__call__<1>, bp::arg("structure"),
               "Returns Ewald forces and energy.\n\n"
-              ":Parameter:\n"
-              " - `structure` Crystal structure for wich to compute energy.\n"
+              ":Parameters:\n"
+              "  structure\n"
+              "    Crystal structure for wich to compute energy.\n\n"
               ":return: a lada.crystal.Structure object containing forces and energy.\n" )
         .def( "__call__", &__call__<2>, bp::arg("structure"),
               "Returns Ewald+Lennard-Jones forces and energy.\n\n"
-              ":Parameter:\n"
-              " - `structure` Crystal structure for wich to compute energy.\n"
+              ":Parameters:\n"
+              "  structure\n"
+              "    Crystal structure for wich to compute energy.\n\n"
               ":return: a lada.crystal.Structure object containing forces and energy.\n" )
         .def("__str__", &Python::tostream<Models::Clj> )
         .add_property
