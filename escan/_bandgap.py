@@ -121,17 +121,17 @@ class ExtractAE(_ExtractE):
     from ..physics import a0, electronic_mass, h_bar
     from . import dipole_matrix_elements
     result, nstates = 0e0, 0
-#   units = det(self.structure.cell * self.structure.scale * pq.angstrom)  
-    units = 2e0/3e0 * electronic_mass / h_bar
+    units = 2e0/3e0 * h_bar**2 / electronic_mass
     gvectors = transpose(self.gvectors)
     for wfnA in self.gwfns:
       if abs(wfnA.eigenvalue - self.cbm) > degeneracy: continue
       for wfnB in self.gwfns:
         if abs(wfnB.eigenvalue - self.vbm) > degeneracy: continue
         nstates += 1
-        dme = wfnA.braket(gvectors, wfnB, attenuate=attenuate)
-        result += dot(dme, dme.conjugate()).real / (wfnA.eigenvalue - wfnB.eigenvalue) 
-    return result * units, nstates
+        dme = wfnA.braket(gvectors, wfnB, attenuate=attenuate) 
+        result += dot(dme, dme.conjugate()).real / (wfnA.eigenvalue - wfnB.eigenvalue) \
+                  * dme.units * dme.units
+    return (result * units).simplified, nstates
   
 # def momentum_element(self, attenuate=False):
 #   from operator import itemgetter
@@ -246,9 +246,7 @@ class ExtractRefs(object):
     assert self.extract_vbm.comm == self.extract_cbm.comm
     assert self.extract_vbm.gvectors.shape == self.extract_cbm.gvectors.shape
     assert all( abs(self.extract_vbm.gvectors - self.extract_cbm.gvectors) < 1e-12 )
-#   units = det(self.structure.cell * self.structure.scale / a0("A") )  
-#   units = units * 2e0/3e0 * Rydberg("eV") 
-    units = 2e0/3e0 * electronic_mass / h_bar
+    units = 2e0/3e0 * h_bar**2 / electronic_mass
     result, nstates = None, 0
     gvectors = transpose(self.extract_vbm.gvectors)
     print gvectors.units
@@ -259,11 +257,9 @@ class ExtractRefs(object):
         nstates += 1
         dme = wfnA.braket(gvectors, wfnB, attenuate=attenuate)
         dme = dot(dme, dme.conjugate()).real * dme.units * dme.units
-        print dme.units
-        print wfnA.eigenvalue, wfnB.eigenvalue
         if result == None: result = dme / (wfnA.eigenvalue - wfnB.eigenvalue) 
         else: result += dme / (wfnA.eigenvalue - wfnB.eigenvalue) 
-    return units * result, nstates
+    return (units * result).simplified, nstates
 
   @property
   def success(self):

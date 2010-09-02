@@ -37,7 +37,6 @@ class rWavefunction(object):
         perform scalar product.
     """
     from numpy import conjugate, dot, multiply
-    from boost.mpi import all_reduce
     a = conjugate(self.up)
     b = multiply(operator, ket.up) if operator != None else ket.up
     result = dot(b, a)
@@ -45,7 +44,10 @@ class rWavefunction(object):
       a = conjugate(self.down)
       b = multiply(operator, ket.down) if operator != None else ket.down
       result += dot(b, a)
-    return all_reduce(self.comm, result, lambda x,y: x+y) 
+    if self.comm != None:
+      from boost.mpi import all_reduce
+      return all_reduce(self.comm, result, lambda x,y: x+y) 
+    else: return result
 
 class Wavefunction(rWavefunction):
   is_gspace = True
@@ -103,23 +105,35 @@ def gtor_fourrier(wavefunctions, rvectors, gvectors, comm, axis=0):
           (though simultaneous, implementation wise) fourrier transform will be
           performed over this axis for all other axis. 0 by default.
   """
+  from quantities import pi
   import numpy as np
-  from boost.mpi import broadcast, reduce
 
-  result = None
-  for node in range(comm.size):
-    # sends rvectors from node to all
-    r = broadcast(comm, rvectors, node)
-    # computes all exponentials exp(-i r.g), with r in first dim, and g in second.
-    v = np.exp(-1j * np.tensordot(r, gvectors, ((1),(1))))
-    # computes fourrier transform for all wavefunctions simultaneously.
-    dummy = np.tensordot(v, wavefunctions, ((1),(axis)))
-    # reduce across processes
-    if node == comm.rank: result = reduce(comm, dummy, lambda x,y: x+y, node)
-    else: reduce(comm, dummy, lambda x,y: x+y, node)
+  # serial version
+  if comm == None:
+    v = np.tensordot(rvectors, gvectors, ((1),(1))) 
+    v = np.exp(-1j * v * (rvectors.units * gvectors.units).simplified)
+    return np.tensordot(v, wavefunctions, ((1),(axis))) / np.sqrt(float(len(rvectors)))
 
-  assert not np.any(np.isnan(result))
-  return result
+  # mpi version
+  else: 
+    from boost.mpi import broadcast, reduce
+
+    result = None
+    for node in range(comm.size):
+      # sends rvectors from node to all
+      r = broadcast(comm, rvectors, node)
+      # computes all exponentials exp(-i r.g), with r in first dim, and g in second.
+      v = np.tensordot(r, gvectors, ((1),(1)))
+      v = np.exp(-1j * v * (rvectors.units * gvectors.units).simplified)
+      # computes fourrier transform for all wavefunctions simultaneously.
+      dummy = np.tensordot(v, wavefunctions, ((1),(axis)))
+      # reduce across processes
+      if node == comm.rank: result = reduce(comm, dummy, lambda x,y: x+y, node)
+      else: reduce(comm, dummy, lambda x,y: x+y, node)
+
+    assert not np.any(np.isnan(result))
+    norm = reduce(comm, len(rvectors), lambda x, y: x+y, 0)
+    return result / np.sqrt(float(norm))
 
 
 def rtog_fourrier(wavefunctions, rvectors, gvectors, comm, axis=0):
@@ -146,31 +160,43 @@ def rtog_fourrier(wavefunctions, rvectors, gvectors, comm, axis=0):
           (though simultaneous, implementation wise) fourrier transform will be
           performed over this axis for all other axis. 0 by default.
   """
+  from quantities import pi
   import numpy as np
-  from boost.mpi import broadcast, reduce, all_reduce
 
   assert not np.any(np.isnan(wavefunctions))
   assert not np.any(np.isnan(gvectors))
   assert not np.any(np.isnan(rvectors))
   result = None
-  for node in range(comm.size):
-    # sends rvectors from node to all
-    g = broadcast(comm, gvectors, node)
-    # computes all exponentials exp(-i r.g), with g in first dim, and r in second.
-    v = np.exp(1j * np.tensordot(rvectors, g, ((1),(1))))
-    # computes fourrier transform for all wavefunctions simultaneously.
-    # somehow, there is a problem with tensordot leading to nan numbers...
-    assert not np.any(np.isnan(v))
+  
+  if comm == None:
+    v = np.tensordot(rvectors, gvectors, ((1),(1)))
+    v = np.exp(1j * v * (rvectors.units * gvectors.units).simplified)
     last = wavefunctions.ndim-1
-    dummy = np.dot(wavefunctions.swapaxes(axis, last), v).swapaxes(last, axis)
-    # reduce across processes
-    assert not np.any(np.isnan(dummy))
-    if node == comm.rank: result = reduce(comm, dummy, lambda x,y: x+y, node)
-    else: reduce(comm, dummy, lambda x,y: x+y, node)
+    result = np.dot(wavefunctions.swapaxes(axis, last), v).swapaxes(last, axis)
+    return result/ float(result.shape[0])
+
+  # mpi version
+  else: 
+    from boost.mpi import broadcast, reduce, all_reduce
+    for node in range(comm.size):
+      # sends rvectors from node to all
+      g = broadcast(comm, gvectors, node)
+      # computes all exponentials exp(-i r.g), with g in first dim, and r in second.
+      v = np.tensordot(rvectors, g, ((1),(1)))
+      v = np.exp(1j * v * (rvectors.units * gvectors.units).simplified)
+      # computes fourrier transform for all wavefunctions simultaneously.
+      # somehow, there is a problem with tensordot leading to nan numbers...
+      assert not np.any(np.isnan(v))
+      last = wavefunctions.ndim-1
+      dummy = np.dot(wavefunctions.swapaxes(axis, last), v).swapaxes(last, axis)
+      # reduce across processes
+      assert not np.any(np.isnan(dummy))
+      if node == comm.rank: result = reduce(comm, dummy, lambda x,y: x+y, node)
+      else: reduce(comm, dummy, lambda x,y: x+y, node)
 
 
-  assert not np.any(np.isnan(result))
-  # gets normalization factor.
-  norm = all_reduce(comm, rvectors.shape[0], lambda x,y:x+y)
-  assert norm != 0
-  return result/ float(norm)
+    assert not np.any(np.isnan(result))
+    # gets normalization factor.
+    norm = all_reduce(comm, rvectors.shape[0], lambda x,y:x+y)
+    assert norm != 0
+    return result/ float(norm)

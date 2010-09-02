@@ -258,7 +258,7 @@ class Extract(object):
                                   self._raw_rwfns[0][:,i/2,1])
           else: 
             rwfn = rWavefunction(self.comm, i, eig, -self._raw_rwfns[1][:,i/2,1].conjugate(),\
-                                 self._raw_rwfns[0][:,i/2,0].conjugate())
+                                 self._raw_rwfns[1][:,i/2,0].conjugate())
           result.append(rwfn)
       else: # no krammer degeneracy
         self._raw_rwfns = \
@@ -302,8 +302,10 @@ class Extract(object):
     """
     from os import remove
     from os.path import exists, join
-    from numpy.linalg import norm
+    from numpy import sqrt
+    from numpy.linalg import norm, det
     from boost.mpi import world
+    from quantities import angstrom, pi
     from ..opt import redirect
     from ..opt.changedir import Changedir
     from ..physics import a0, reduced_reciprocal_au
@@ -323,7 +325,11 @@ class Extract(object):
                    else self.escan.nbstates / 2
         result = read_wavefunctions(self.escan, range(nbstates), comm)
         remove(self.escan._INCAR + "." + str(world.rank))
-    return result[0], result[1] * reduced_reciprocal_au, result[2] * a0, result[3], result[4]
+
+    cell = self.structure.cell * self.structure.scale * angstrom
+    normalization = det(cell.rescale(a0)) 
+    return result[0] * sqrt(normalization), result[1] * 0.5 / pi * reduced_reciprocal_au,\
+           result[2] * a0, result[3], result[4]
 
   @property
   def raw_gwfns(self):

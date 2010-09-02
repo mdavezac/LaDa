@@ -5,19 +5,16 @@
 """
 __docformat__ = "restructuredtext en"
 
-from _physics import Z, Symbol, Charge, Mass 
+from numpy import sqrt
 import quantities as pq
+from _physics import Z, Symbol, Charge, Mass 
 
 __all__ = [ 'Z', 'Symbol', 'Charge', 'Mass', 'a0', 'bhor_radius',\
             'h', 'planck', 'h_bar', 'reduced_planck', 'electronic_mass',\
             'Ry', 'rydberg', 'Kb', 'boltzmann' ]
 
-a0 = pq.UnitQuantity('bhor_radius', 0.5219177 * pq.angstrom, symbol='a0')
-""" Bhor radius, unit of length of atomic units. """
-bhor_radius = a0
-""" Bhor radius, unit of length of atomic units. """
 
-h = pq.UnitQuantity("planck", 4.1357 * pq.eV * pq.s)
+h = pq.UnitQuantity("planck", 4.1356673310e-15 * pq.eV * pq.s)
 """ Planck's constant. """
 planck = h
 """ Planck's constant. """
@@ -26,13 +23,23 @@ h_bar = pq.UnitQuantity("h_bar", h / 2e0 / pq.pi, symbol='h_bar')
 reduced_plank = h_bar
 """ Reduced Planck's constant. """
 
-electronic_mass = pq.UnitQuantity("electronic_mass", 9.1095e-31 * pq.kg)
-""" Mass of the electron at rest. """
-
-Ry = pq.UnitQuantity('Rydberg', 13.60569172 * pq.eV, symbol='Ry')
+Ry = pq.UnitQuantity('Rydberg', 0.5 * pq.hartree, symbol='Ry')
 """ Rydberg energy units. """
 rydberg = Ry
 """ Rydberg energy units. """
+
+a0 = pq.UnitQuantity('bhor_radius', 0.52917720858 * pq.angstrom, symbol='a0')
+""" Bhor radius, unit of length of atomic units. """
+bhor_radius = a0
+""" Bhor radius, unit of length of atomic units. """
+
+electronic_mass = pq.UnitQuantity("electronic_mass", h_bar**2 / (2e0 * Ry * a0**2)  )
+""" Mass of the electron at rest.
+
+    The value is obtained from a formula. It comes close enough and makes the
+    Rydberg units consistent.
+"""
+
 
 Kb = pq.UnitQuantity("boltzmann", 8.617 * pq.eV / pq.K, symbol='Kb')
 """ Boltzmann's constant. """
