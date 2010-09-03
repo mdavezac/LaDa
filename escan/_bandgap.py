@@ -101,6 +101,7 @@ class ExtractAE(_ExtractE):
   @make_cached
   def _vbm_cbm(self):
     """ Gets vbm and cbm. """
+    from quantities import eV
     from lada.escan._escan import nb_valence_states
     eigenvalues = self.eigenvalues.copy()
     eigenvalues.sort()
@@ -117,10 +118,9 @@ class ExtractAE(_ExtractE):
     """ Computes oscillator strength between vbm and cbm. """
     from numpy import dot
     from numpy.linalg import det
-    from pq import angstrom
     from ..physics import a0, electronic_mass, h_bar
     from . import dipole_matrix_elements
-    result, nstates = 0e0, 0
+    result, nstates = None, 0
     units = 2e0/3e0 * h_bar**2 / electronic_mass
     for wfnA in self.gwfns:
       if abs(wfnA.eigenvalue - self.cbm) > degeneracy: continue
@@ -128,8 +128,12 @@ class ExtractAE(_ExtractE):
         if abs(wfnB.eigenvalue - self.vbm) > degeneracy: continue
         nstates += 1
         dme = wfnA.braket(self.gvectors, wfnB, attenuate=attenuate) 
-        result += dot(dme, dme.conjugate()).real / (wfnA.eigenvalue - wfnB.eigenvalue) \
-                  * dme.units * dme.units
+        if result == None: 
+          result = dot(dme, dme.conjugate()).real / (wfnA.eigenvalue - wfnB.eigenvalue) \
+                   * dme.units * dme.units
+        else: 
+          result += dot(dme, dme.conjugate()).real / (wfnA.eigenvalue - wfnB.eigenvalue) \
+                    * dme.units * dme.units
     return (result * units).simplified, nstates
   
 def _band_gap_ae_impl(escan, structure, outdir, **kwargs):
