@@ -47,4 +47,4 @@ boltzmann = Kb
 """ Boltzmann's constant. """
 
 reduced_reciprocal_au = pq.UnitQuantity("reduced_reciprocal_au",
-                                        2e0*pq.pi/a0, symbol='* 2pi/a0')
+                                        2e0*pq.pi/a0, symbol='2pi/a0')

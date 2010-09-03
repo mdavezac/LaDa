@@ -115,52 +115,23 @@ class ExtractAE(_ExtractE):
 
   def oscillator_strength(self, degeneracy=1e-3, attenuate=False):
     """ Computes oscillator strength between vbm and cbm. """
-    from numpy import transpose, dot
+    from numpy import dot
     from numpy.linalg import det
     from pq import angstrom
     from ..physics import a0, electronic_mass, h_bar
     from . import dipole_matrix_elements
     result, nstates = 0e0, 0
     units = 2e0/3e0 * h_bar**2 / electronic_mass
-    gvectors = transpose(self.gvectors)
     for wfnA in self.gwfns:
       if abs(wfnA.eigenvalue - self.cbm) > degeneracy: continue
       for wfnB in self.gwfns:
         if abs(wfnB.eigenvalue - self.vbm) > degeneracy: continue
         nstates += 1
-        dme = wfnA.braket(gvectors, wfnB, attenuate=attenuate) 
+        dme = wfnA.braket(self.gvectors, wfnB, attenuate=attenuate) 
         result += dot(dme, dme.conjugate()).real / (wfnA.eigenvalue - wfnB.eigenvalue) \
                   * dme.units * dme.units
     return (result * units).simplified, nstates
   
-# def momentum_element(self, attenuate=False):
-#   from operator import itemgetter
-#   from numpy import transpose, dot
-#   from numpy.linalg import det
-#   from ..physics import a0, Rydberg
-#   from . import dipole_matrix_elements
-#   result, nstates = 0e0, 0
-#   units = det(self.structure.cell * self.structure.scale / a0("A") )  
-#   units *= units * 1e0/3e0 * pq.hartree
-#   gvectors = transpose(self.gvectors)
-
-#   cbm = min([(i, abs(e-self.cbm)) for i, e in enumerate(self.eigenvalues)], key=itemgetter(1))
-#   cmb = self.gwfns[cmb[0]]
-#   vbm = min([(i, abs(e-self.vbm)) for i, e in enumerate(self.eigenvalues)], key=itemgetter(1))[0]
-#   vmb = self.gwfns[vmb[0]]
-
-#   result  = cbm.braket(gvectors, vbm, attenuate=attenuate)
-#   result.units = 
-
-#   for wfnA in self.gwfns:
-#     if abs(wfnA.eigenvalue - self.cbm) > degeneracy: continue
-#     for wfnB in self.gwfns:
-#       if abs(wfnB.eigenvalue - self.vbm) > degeneracy: continue
-#       nstates += 1
-#       result wfnA.braket(gvectors, wfnB, attenuate=attenuate)
-#   return units * result, nstates
-    
-
 def _band_gap_ae_impl(escan, structure, outdir, **kwargs):
   """ Computes bandgap of a structure using all-electron method. """
   from os.path import join
@@ -238,7 +209,7 @@ class ExtractRefs(object):
 
   def oscillator_strength(self, degeneracy=1e-3, attenuate=False):
     """ Computes oscillator strength between vbm and cbm. """
-    from numpy import transpose, all, abs, dot
+    from numpy import all, abs, dot
     from numpy.linalg import det
     from ..physics import a0, electronic_mass, h_bar
     from . import dipole_matrix_elements
@@ -248,14 +219,12 @@ class ExtractRefs(object):
     assert all( abs(self.extract_vbm.gvectors - self.extract_cbm.gvectors) < 1e-12 )
     units = 2e0/3e0 * h_bar**2 / electronic_mass
     result, nstates = None, 0
-    gvectors = transpose(self.extract_vbm.gvectors)
-    print gvectors.units
     for wfnA in self.extract_cbm.gwfns:
       if abs(wfnA.eigenvalue - self.cbm) > degeneracy: continue
       for wfnB in self.extract_vbm.gwfns:
         if abs(wfnB.eigenvalue - self.vbm) > degeneracy: continue
         nstates += 1
-        dme = wfnA.braket(gvectors, wfnB, attenuate=attenuate)
+        dme = wfnA.braket(self.extract_vbm.gvectors, wfnB, attenuate=attenuate)
         dme = dot(dme, dme.conjugate()).real * dme.units * dme.units
         if result == None: result = dme / (wfnA.eigenvalue - wfnB.eigenvalue) 
         else: result += dme / (wfnA.eigenvalue - wfnB.eigenvalue) 

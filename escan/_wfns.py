@@ -36,13 +36,19 @@ class rWavefunction(object):
         The operator is applied to the ket. If operator is None, then simply
         perform scalar product.
     """
-    from numpy import conjugate, dot, multiply
+    from numpy import conjugate, dot, multiply, transpose
     a = conjugate(self.up)
-    b = multiply(operator, ket.up) if operator != None else ket.up
+    if operator == None: b = ket.up
+    if operator.shape[0] == ket.up.shape[0] and operator.shape[-1] != ket.up.shape[0]:
+      b = multiply(transpose(operator), ket.up) 
+    else: b = multiply(operator, ket.up) 
     result = dot(b, a)
     if self.down != None: 
       a = conjugate(self.down)
-      b = multiply(operator, ket.down) if operator != None else ket.down
+      if operator == None: b = ket.down
+      if operator.shape[0] == ket.down.shape[0] and operator.shape[-1] != ket.down.shape[0]:
+        b = multiply(transpose(operator), ket.down) 
+      else: b = multiply(operator, ket.down) 
       result += dot(b, a)
     if self.comm != None:
       from boost.mpi import all_reduce
@@ -74,9 +80,12 @@ class Wavefunction(rWavefunction):
         The operator is applied to the ket. If operator is None, then simply
         perform scalar product.
     """
-    from numpy import multiply
+    from numpy import multiply, transpose
     if attenuate == None:  a = operator
     elif operator == None: a = multiply(self.attenuation, self.attenuation)
+    elif     operator.shape[0] == self.attenuation.shape[0] \
+         and operator.shape[-1] != self.attenuation.shape[0]:
+      a = multiply(transpose(operator), multiply(self.attenuation, self.attenuation))
     else: a = multiply(operator, multiply(self.attenuation, self.attenuation))
     return super(Wavefunction, self).braket(a, ket)
 
