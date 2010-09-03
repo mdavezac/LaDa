@@ -51,7 +51,7 @@ def showme(self, event):
         # editing POSCAR.
         elif arg.lower() == "structure":
           # always as vasp5. Makes it easier.
-          structure = Structure() if "structure" in current.jobparams \
+          structure = Structure() if "structure" not in current.jobparams \
                       else current.jobparams["structure"]
           write_poscar(current.structure, file, True)
         # Error!
