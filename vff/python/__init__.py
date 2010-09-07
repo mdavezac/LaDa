@@ -556,14 +556,17 @@ class Vff(object):
         # finally, the dam results.
         file.write("# Result of VFF calculations.\n")
         file.write(repr(result))
-        file.write( "\nstress: (%e, %e, %e),\\"\
-                    "\n        (%e, %e, %e),\\"\
-                    "\n        (%e, %e, %e)\n" % tuple(stress.flat) )
+        if stress != None: 
+          file.write( "\nstress: ({0[0]}, {0[1]}, {0[2]}),\\"\
+                      "\n        ({1[0]}, {1[1]}, {1[2]}),\\"\
+                      "\n        ({2[0]}, {2[1]}, {2[2]})\n"\
+                      .format(stress[0,:], stress[1,:], stress[2,:]))
+        else: file.write("\nstress not computed.\n")
         timing = time.time() - timing
         hour = int(float(timing/3600e0))
         minute = int(float((timing - hour*3600)/60e0))
         second = (timing - hour*3600-minute*60)
-        file.write("# Computed VFF in: %i:%i:%f."  % (hour, minute, second))
+        file.write("# Computed VFF in: %i:%i:%f.\n"  % (hour, minute, second))
 
 
     # checks if result was successful

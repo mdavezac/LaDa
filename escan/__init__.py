@@ -307,7 +307,7 @@ class Escan(object):
     result += "functional = %s()\n" % (self.__class__.__name__)
     result += "functional.vff                   = vff_functional\n"
     result += "functional.eref                  = %s\n"\
-              % ( "None" if self.eref == None else str(self.eref) )
+              % ( "None" if self.eref == None else repr(self.eref) )
     result += "functional.cutoff                = %f\n" % (self.cutoff)
     result += "functional.smooth                = %f\n" % (self.smooth)
     result += "functional.kinetic_scaling       = %f\n" % (self.kinetic_scaling)
@@ -563,6 +563,8 @@ class Escan(object):
     from os.path import basename
     from numpy.linalg import norm
     from boost.mpi import world
+    from quantities import eV
+    from ..physics import Ry
     assert self.atomic_potentials != None, RuntimeError("Atomic potentials are not set.")
     # Creates temporary input file and creates functional
     kpoint = (0,0,0,0,0) if norm(self.kpoint) < 1e-12 else self._get_kpoint(structure, comm, norun)
@@ -571,8 +573,12 @@ class Escan(object):
       print >> file, "2 %s" % (self.WAVECAR) 
       print >> file, "3 %i # %s"\
                      % ((1, "folded spectrum") if self.eref != None else (2, "all electron"))
+      eref = self.eref
+      if hasattr(eref, "rescale"): eref = float(eref.rescale(eV))
+      cutoff = self.cutoff
+      if hasattr(cutoff, "rescale"): cutoff = float(cutoff.rescale(Ry))
       print >> file, "4 %f %f %f %f # Eref, cutoff, smooth, kinetic scaling"\
-                     % ( self.eref if self.eref != None else 0,\
+                     % ( eref if eref != None else 0,\
                          self.cutoff, self.smooth, self.kinetic_scaling )
       if self.potential != soH or norm(self.kpoint) < 1e-6: 
         nbstates = max(1, self.nbstates/2)

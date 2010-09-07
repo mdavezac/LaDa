@@ -59,7 +59,7 @@ namespace LaDa
         t_Return operator()( const t_Arg& _arg ) const; 
 
         //! Evaluates a gradient.
-        void gradient( const t_Arg& _arg, t_GradientArg _grad ) const;
+        t_Return gradient( const t_Arg& _arg, t_GradientArg _grad ) const;
 
         //! \brief initializes stuff before minimization
         //! \details Defines the packing and unpacking process, such that only unfrozen

@@ -155,12 +155,13 @@ namespace LaDa
         Crystal::convert_string_to_real_structure(_str, _self.second);     
         init(_self, _doinit, false);
         types::t_real const energy = _self.first.evaluate(relax) / 16.0217733;
-
+        
         boost::shared_ptr< Crystal::TStructure<std::string> >
           result( new Crystal::TStructure<std::string> );
         Crystal::convert_real_to_string_structure(_self.second, *result);     
         result->energy = energy;
-        return bp::make_tuple(result, math::rMatrix3d(_self.first.get_stress()));
+        if(relax) return bp::make_tuple(result, math::rMatrix3d(_self.first.get_stress()));
+        else return bp::make_tuple(result, bp::object());
       }
     template<class T>
       bp::tuple get_bond(T const &_self, const std::string &_str ) 

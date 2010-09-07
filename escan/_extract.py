@@ -1,12 +1,31 @@
 """ Module to extract esca and vff ouput. """
+__docformat__ = "restructuredtext en"
 
 from ..vff import Extract as VffExtract, _get_script_text
 from ..opt.decorators import broadcast_result, make_cached
 
 class Extract(object):
-  """ A class to extract data from ESCAN output files. """
+  """ A class to extract data from ESCAN output files. 
+  
+      This class helps to extract information from the escan output, including
+      escan and vff parameters, relaxed crystal structure, eigenvalues, and
+      optionally, wavefunctions in real and reciprocal space. Where possible
+      quantities have attached units, using the package ``quantities``.
+  """
   def __init__(self, directory = None, comm = None, escan = None):
-    """ Initializes ESCAN extraction class. """
+    """ Initializes ESCAN extraction class. 
+    
+        :Parameters: 
+          directory : str or None
+            Directory where escan output files are located. Defaults to current
+            working directory if None.
+          comm : boost.mpi.communicator
+            Communicator containing as many processes as were used to perform
+            calculations. This is only mandatory when using wavefunctions in
+            some way.
+          escan : lada.escan.Escan
+            Wrapper around the escan functional.
+    """
     from os import getcwd
     from . import Escan
 
@@ -67,7 +86,7 @@ class Extract(object):
   @property
   @make_cached
   def escan(self):
-    """ Greps escan functional from self.L{OUTCAR}. """
+    """ Greps escan functional from `OUTCAR`. """
     from os.path import exists, join
     from numpy import array
     from cPickle import load
@@ -115,12 +134,13 @@ class Extract(object):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def eigenvalues(self):
-    """ Greps eigenvalues from self.L{OUTCAR}. 
+    """ Greps eigenvalues from `OUTCAR. 
     
         Always returns "spin-polarized" number of eigenvalues.
     """
     from os.path import exists, join
     from numpy import array
+    import quantities as pq
     path = self.OUTCAR
     if len(self.directory): path = join(self.directory, self.OUTCAR)
     assert exists(path), RuntimeError("Could not find file %s:" % (path))
@@ -134,8 +154,9 @@ class Extract(object):
         result.extend( float(u) for u in line.split() )
       else: raise IOError("Unexpected end of file when grepping for eigenvectors.")
 
-    return array(result, dtype="float64") if not self._double_trouble()\
-           else array([result[i/2] for i in range(2*len(result))], dtype="float64")
+    result =  array(result, dtype="float64") if not self._double_trouble()\
+              else array([result[i/2] for i in range(2*len(result))], dtype="float64")
+    return result * pq.eV
 
   @property 
   @make_cached
@@ -167,7 +188,7 @@ class Extract(object):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def nnodes(self):
-    """ Greps eigenvalue convergence errors from self.L{OUTCAR}. """
+    """ Greps eigenvalue convergence errors from `OUTCAR. """
     from os.path import exists, join
     from numpy import array
     path = self.OUTCAR
@@ -237,7 +258,7 @@ class Extract(object):
                                   self._raw_rwfns[0][:,i/2,1])
           else: 
             rwfn = rWavefunction(self.comm, i, eig, -self._raw_rwfns[1][:,i/2,1].conjugate(),\
-                                 self._raw_rwfns[0][:,i/2,0].conjugate())
+                                 self._raw_rwfns[1][:,i/2,0].conjugate())
           result.append(rwfn)
       else: # no krammer degeneracy
         self._raw_rwfns = \
@@ -271,20 +292,29 @@ class Extract(object):
   def _raw_gwfns_data(self):
     """ Reads and caches g-space wavefunction data. 
     
-        This is a tuple described making up the return of
-        L{read_wavefunctions<lada.escan._escan.read_wavefunctions>}
+        :return: a tuple holding information about the wavefunctions.
+          - a spin by N by x matrix holding the N wavefuntions/spinor.
+          - a 3 by x matrix with each row a G-vector in units of
+            `lada.physics.reduced_reciprocal_au`.
+          - a 3 by x matrix with each row a R-vector in atomic units.
+          - one-dimensional array of real coefficients to smooth higher energy G-vectors.
+          - one-dimensional array of integer indices to map G-vectors to -G.
     """
     from os import remove
     from os.path import exists, join
-    from numpy.linalg import norm
+    from numpy import sqrt
+    from numpy.linalg import norm, det
     from boost.mpi import world
+    from quantities import angstrom, pi
     from ..opt import redirect
     from ..opt.changedir import Changedir
+    from ..physics import a0, reduced_reciprocal_au
     from ._escan import read_wavefunctions
     from . import soH
 
+    comm = self.comm if self.comm != None else world
     assert self.success
-    assert self.nnodes == 1 if self.comm == None else self.nnodes == self.comm.size, \
+    assert self.nnodes == comm.size, \
            RuntimeError("Must read wavefunctions with as many nodes as they were written to disk.")
     with redirect(fout="") as streams:
       with Changedir(self.directory, comm=self.comm) as directory:
@@ -293,9 +323,13 @@ class Extract(object):
         self.escan._write_incar(self.comm, self.structure)
         nbstates = self.escan.nbstates if self.escan.potential == soH and norm(self.escan.kpoint)\
                    else self.escan.nbstates / 2
-        result = read_wavefunctions(self.escan, range(nbstates), self.comm)
+        result = read_wavefunctions(self.escan, range(nbstates), comm)
         remove(self.escan._INCAR + "." + str(world.rank))
-    return result
+
+    cell = self.structure.cell * self.structure.scale * angstrom
+    normalization = det(cell.rescale(a0)) 
+    return result[0] * sqrt(normalization), result[1] * 0.5 / pi * reduced_reciprocal_au,\
+           result[2] * a0, result[3], result[4]
 
   @property
   def raw_gwfns(self):
