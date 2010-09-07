@@ -210,7 +210,7 @@ namespace LaDa
       )
     }
 
-    void Functional :: gradient( const t_Arg& _arg, t_GradientArg _i_grad ) const
+    Functional::t_Return Functional :: gradient( const t_Arg& _arg, t_GradientArg _i_grad ) const
     {
       math::rMatrix3d strain = math::rMatrix3d::Zero();
       t_Return energy(0);
@@ -246,6 +246,7 @@ namespace LaDa
           )
         );
 #     endif
+      return energy;
     }
 
   } // namespace vff
