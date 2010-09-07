@@ -1,7 +1,7 @@
-from lada.physics import a0
+from quantities import angstrom
 from lada.crystal.bravais import fcc
 
-lattice = fcc("Rh", 3.80 / a0("A"))
+lattice = fcc("Rh", 3.80 * angstrom)
 
 vasp = Vasp()
 """ VASP functional """
