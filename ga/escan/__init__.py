@@ -1,4 +1,4 @@
-""" Contains GA operators and evaluators for PESCAN properties. 
+""" Contains GA operators and evaluators for ESCAN properties. 
 
     At present operators are included only for elemental superlattices.
 """

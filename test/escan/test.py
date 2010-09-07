@@ -128,7 +128,7 @@ exit(0)
 #   assert abs(solo.energy - result_str.energy) < 1e-8, abs(solo.energy - result_str.energy) 
 
 # some kpoints
-# launch pescan for different jobs.
+# launch escan for different jobs.
 for kpoint, name, ref, expected_eigs in jobs:
   out = escan( structure, join("results", name), comm = world,\
                kpoint = kpoint, #deform_kpoint(kpoint, structure.cell, vff_out.structure.cell),\

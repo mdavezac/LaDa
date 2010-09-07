@@ -20,7 +20,7 @@ N = 2
 color = world.rank % N
 local_comm = world.split(color)
 
-# launch pescan for different jobs.
+# launch escan for different jobs.
 for i, dir in enumerate(jobs):
   # splits job according to color.
   if i % N != color: continue

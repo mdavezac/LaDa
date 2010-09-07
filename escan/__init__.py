@@ -1,7 +1,7 @@
-""" Interface module for pescan. """
+""" Interface module for ESCAN. """
 __docformat__ = "restructuredtext en"
-from ..opt import __load_pescan_in_global_namespace__
-if __load_pescan_in_global_namespace__:
+from ..opt import __load_escan_in_global_namespace__
+if __load_escan_in_global_namespace__:
   from DLFCN import RTLD_NOW as _RTLD_NOW, RTLD_GLOBAL as _RTLD_GLOBAL
   from sys import getdlopenflags as _getdlopenflags, setdlopenflags as _setdlopenflags
   flags = _getdlopenflags()
@@ -146,13 +146,13 @@ class AtomicPotential(object):
 
 
 class Escan(object):
-  """ Performs PESCAN calculations, from structure relaxation to wavefunctions. """
+  """ Performs ESCAN calculations, from structure relaxation to wavefunctions. """
 
   Extract = _extract.Extract
   """ Class for output extraction. """
 
   def __init__(self, inplace=True, workdir=None):
-    """ Initializes a PESCAN functional. """
+    """ Initializes a ESCAN functional. """
     from numpy import zeros
     from ..vff import Vff
 

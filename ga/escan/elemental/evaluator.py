@@ -1,4 +1,4 @@
-""" Contains evaluators for Pescan properties """
+""" Contains evaluators for ESCAN properties """
 from numpy import array as np_array
 def count_calls(method):
   """ Increments calls at each call. """
