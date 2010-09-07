@@ -314,7 +314,7 @@ class Incar(object):
     if args[0] == None: isif = None
     else:
       try: isif = int(args[0]) 
-      except ValueError: 
+      except (ValueError, TypeError): 
         isif = str(args[0]).lower()
         ionic = re.search( "ion(ic|s)?", isif.lower() ) != None
         cellshape = re.search( "cell(\s+|-|_)?(?:shape)?", isif.lower() ) != None

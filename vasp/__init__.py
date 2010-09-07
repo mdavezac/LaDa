@@ -55,8 +55,9 @@ class Vasp(Launch):
       caching, and data retrieval together. 
       
       A vasp run is parameterized using Incar class defined in incar.py.
-      It is launched using the Launch class from launch.py class. 
-      The results of a successful run is cached in the self.outdir directory. 
+      It is launched using the Launch class from launch.py class. More
+      specifically, Vasp derives from Launch wich derives from Incar.  The
+      results of a successful run is cached in the self.outdir directory.
       After being launched an object is returned which can extract output data
       from the files in this directory.
 
@@ -79,14 +80,25 @@ class Vasp(Launch):
                 overwrite=False, **kwargs ):
     """ Performs a vasp calculation 
      
-        The structure is whatever is given on input. The results are stored in
-        directory outdir. The files in L{files.minimal} are copied there, as
-        well as any other file named in repat. Other keyword arguements are
-        assigned as attributes to a (deepcopy) copy of self prior to actual
-        performing the calculation. This way, input parameters can be change
-        upon call, while keeping this functor call stateless.
-
-        The return is an L{extract.Extract} object initialized to outdir.
+	@param structure: the structure to compute, *unless* a CONTCAR already
+	  exists in L{outdir}, in which case this parameter is ignored. (This
+	  feature can be disabled with the keyword/attribute
+          C{restart_from_contcar=False}).
+        @type structure : L{lada.crystal.Structure}
+	@param outdir: Output directory where the results should be stored.
+	  This directory will be checked for restart status, eg whether
+	  calculations already exist. Files defined in L{files.minimal} are
+	  copied, as well as any other files listed in L{repat}. If None, then
+          results are stored in current working directory.
+        @type outdir : str or None
+        @param comm: Calculations are performed over this MPI communicator.
+        @type : boost.mpi.communicator 
+	@param repat: list of files to save, above and beyond L{files.minimal}.
+	@param overwrite: Whether to overwrite pre-existing results, eg does
+          not check for restart status.
+	@param kwargs: Any attribute of the Vasp instance can be overidden for
+          the duration of this call by passing it as keyword argument.  
+        @return: Am L{extract.Extract} object initialized to L{outdir} and L{comm}.
 
         If successfull results (see L{extract.Extract.success}) already exist
         in outdir, calculations are not repeated. Instead, an extraction object
@@ -102,6 +114,8 @@ class Vasp(Launch):
     from os import getcwd
     from os.path import exists, isdir, join
     from shutil import rmtree
+    from numpy import abs
+    from numpy.linalg import det
     from boost.mpi import broadcast
     from ..crystal import specie_list, read_poscar
     from .files import CONTCAR
@@ -112,9 +126,15 @@ class Vasp(Launch):
     repat     = deepcopy(repat)  if repat  != None else []
     norun     = kwargs.pop("norun", False)
     # makes functor stateless/reads structure from CONTCAR if requested and appropriate.
-    if self.restart_from_contcar: 
+    if kwargs.pop("restart_from_contcar", self.restart_from_contcar): 
       path = join(outdir, CONTCAR)
-      if exists(path): structure = read_poscar(specie_list(structure), path)
+      if exists(path):
+        try:
+          old_structure = structure
+          structure = read_poscar(specie_list(structure), path)
+          assert len(structure.atoms) > 0
+          assert abs(det(structure.cell)) > 1e-8
+        except: structure = deepcopy(old_structure)
     else: structure = deepcopy(structure) 
 
     is_root = True if comm == None else comm.rank == 0
