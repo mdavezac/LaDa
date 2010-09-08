@@ -26,6 +26,12 @@ namespace LaDa
 {
   namespace Python
   {
+    typedef Crystal::Atom_Type<std::string> t_StrAtom;
+    typedef Crystal::Atom_Type<types::t_real> t_Atom;
+    typedef Crystal::Structure::t_Atom t_Atom;
+    typedef Crystal::Structure::t_kAtom t_kAtom;
+    typedef Crystal::Lattice::t_Site t_Site;
+
     template< class T_TYPE >
       Crystal::Atom_Type<T_TYPE>* object_constructor( math::rVector3d const &_vec,
                                                       boost::python::object const & _ob) ;
@@ -35,6 +41,17 @@ namespace LaDa
                                                     types::t_int _site );
     types::t_real toReal(std::string _str );
     std::string toType( types::t_real _r );
+
+    template<class T_TYPE> struct TypeAttr
+      {
+        std::string const static name;
+      }; 
+    template<> struct TypeAttr< t_Site::t_Type >
+      {
+        std::string const static name;
+      }; 
+    template<class T_TYPE> std::string const TypeAttr<T_TYPE>::name = "type";
+    std::string const TypeAttr< std::vector<std::string> >::name = "_type";
 
     template< class T_TYPE >
       void expose_typed_atom( const std::string &_name,
@@ -69,7 +86,7 @@ namespace LaDa
          )
          .def_readwrite( "site",   &t_Atom::site,
                          "index of the \"site\" as referenced by a LaDa.Lattice object." )
-         .def_readwrite( "type",   &t_Atom::type, _typeds.c_str() )
+         .def_readwrite( TypeAttr<T_TYPE>::name.c_str(),   &t_Atom::type, _typeds.c_str() )
          .def_readwrite( "freeze", &t_Atom::freeze )
          .def_pickle( Python::pickle< t_Atom >() )
          .def( "__str__",  &print<t_Atom> );
@@ -80,11 +97,6 @@ namespace LaDa
     void expose_atom()
     {
       namespace bp = boost::python;
-      typedef Crystal::Atom_Type<std::string> t_StrAtom;
-      typedef Crystal::Atom_Type<types::t_real> t_Atom;
-      typedef Crystal::Structure::t_Atom t_Atom;
-      typedef Crystal::Structure::t_kAtom t_kAtom;
-      typedef Crystal::Lattice::t_Site t_Site;
 
       bp::enum_<t_Atom::t_FreezeAtom>( "FreezeAtom", "Tags to freeze atomic coordinates." )
         .value(       "none", t_Atom::FREEZE_NONE )

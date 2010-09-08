@@ -182,21 +182,31 @@ namespace LaDa
     void expose_smith()
     {
       namespace bp = boost::python;
-      bp::def("smith_normal_transform", &get_smith_transform_str<std::string>);
-      bp::def("smith_normal_transform", &get_smith_transform_str<types::t_real>);
+      bp::def( "smith_normal_transform", &get_smith_transform_str<std::string>,
+               bp::arg("structure") );
+      bp::def( "smith_normal_transform", &get_smith_transform_str<types::t_real>,
+               bp::arg("structure") );
       bp::def
       ( 
         "smith_normal_transform", &get_smith_transform,
-        "Returns a tuple allowing a stransformation to the smith normal form.\n\n" 
-        "The input can have one or two arguments depending on their types:\n"
-        "  - if one argument is given, it must be of type L{Structure} or a"
-             " L{rStructure}, with L{rStructure.lattice} set.\n"
-        "  - if two argument are given, the first one is the cell of the"
-             " structure, and the second the cell of the lattice.\n" 
-        "In any case, the cell of structure must be exactly commensurate with "
-        "the lattice, eg no relaxation.\n"
+        (bp::arg("unitcell"), bp::arg("supercell")), 
+        "Computes Smith Normal Transform parameters.\n\n" 
+	"This function accepts two types of call: using a correctly defined "
+          "*structure* alone, and by specifying the *unitcell* and the "
+	  "*supercell* explicitely. In any case, the cell of structure must be "
+          "exactly commensurate with the lattice, eg no relaxation.\n"
         "@see: U{G. Hart and R. Forcade, I{Phys. Rev. B.} B{80}, 014120 (2009)"
-        "<dx.doi.org/10.1103/PhysRevB.80.014120>}\n"
+          "<dx.doi.org/10.1103/PhysRevB.80.014120>}\n"
+	"@param structure: A structure for which *structure.lattice* is set. "
+          "The supercell is then *structure.cell* and the unit cell "
+          "*structure.lattice.cell*. \n"
+        "@type structure: L{Structure}\n"
+        "@param unitcell: Primitive cell of the lattice from which "
+           "supercells are built.\n"
+        "@type unitcell: numpy 3x3 array\n"
+        "@param supercell: Multiple of the unit cell.\n"
+        "@type supercell: numpy 3x3 array\n"
+        "@return: tuple allowing a stransformation to the smith normal form.\n" 
       );
       bp::def
       ( 
