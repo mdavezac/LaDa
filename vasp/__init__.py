@@ -22,8 +22,6 @@
 """
 from launch import Launch
 from extract import Extract, ExtractGW
-try: from extract import MassExtract
-except ImportError: pass
 from incar import Incar
 from kpoints import Density, Gamma
 from specie import Specie
@@ -35,18 +33,28 @@ if __load_vasp_in_global_namespace__:
   from sys import getdlopenflags as _getdlopenflags, setdlopenflags as _setdlopenflags
   flags = _getdlopenflags()
   _setdlopenflags(_RTLD_NOW|_RTLD_GLOBAL)
+  _setdlopenflags(flags)
+
+try: 
   from _vasp import version, vasp as call_vasp
   import _vasp
-  _setdlopenflags(flags)
+except ImportError: 
+  version = None
+  is_vasp_5 = True
+  def call_vasp(*args, **kwargs): 
+    """ Vasp Library not found. Raises ImportError. """
+    raise ImportError("VASP was not compiled into lada.")
 else:
-  import _vasp
-call_vasp = _vasp.vasp
-version = _vasp.version
-""" Vasp version. """
-is_vasp_5 = int(version[0]) == 5
-""" True if using vasp 5. """
-is_vasp_4 = int(version[0]) == 4
-""" True if using vasp 4. """
+  is_vasp_5 = int(version[0]) == 5
+  """ True if using vasp 5. """
+  is_vasp_4 = int(version[0]) == 4
+  """ True if using vasp 4. """
+
+__all__ = [ 'Launch', 'Extract', 'ExtractGW', 'Incar', 'Density', 'Gamma', 'Specie',\
+            'incar', 'extract', 'kpoints', 'methods' ]
+try: from extract import MassExtract
+except ImportError: pass
+else: __all__.append('MassExtract')
     
 class Vasp(Launch):
   """ Interface to VASP code.
