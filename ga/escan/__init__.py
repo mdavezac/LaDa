@@ -2,11 +2,12 @@
 
     At present operators are included only for elemental superlattices.
 """
-__all__ = ["elemental"]
-import elemental
+__all__ = ['elemental']
 
-try:
-  from .. import enumeration
+try: from ... import enumeration
+except ImportError: pass
+else:
+  __all__.append('CompareSuperCells')
   class CompareSuperCells(object):
     """ A class to compare crystal supercells according to occupation. 
     
@@ -19,7 +20,7 @@ try:
 
         >>> comparison(A, B)
     """
-    def __init__(self, lattice, cell, converter = None):
+    def __init__(self, lattice, supercell, converter = None):
       """ Initializes comparison operator. 
 
           :Parameters:
@@ -34,7 +35,7 @@ try:
               None, functor expects `lada.crystal.Structure` instances which it
               will compare.
       """
-      from ..crystal import smith_normal_transform
+      from ...crystal import smith_normal_transform
 
       self.lattice  = lattice
       """ Backbone lattice for which to compare supercells. """
@@ -43,22 +44,22 @@ try:
       
       self.supercell = supercell 
       """ Supercell for which to do comparisons. """
-      self.smith = smith_normal_transform(cell, lattice.cell)
+      self.smith = smith_normal_transform(lattice.cell, supercell)
       """ Smith normal transform tuple """
       self.nflavors = enumeration.count_flavors(lattice)
       """ Number of flavors. """
       self.nsites = len([0 for i in lattice.sites if len(i.type) > 1])
       """ Number of combinatorial sites. """
-      self.card = int(self.smith[1][0]*self.smith[1][1]*self.smith[1][2]*nsites)
+      self.card = int(self.smith[1][0]*self.smith[1][1]*self.smith[1][2]*self.nsites)
       """ Size of the configuration space. """
       self.flavorbase = enumeration.create_flavorbase(self.card, self.nflavors)
       """ Basis of different flavors. """
-      self.indice = []
+      self.indices = []
       """ Indices to combinatorial sites. """
       i = 0
       for site in lattice.sites:
         if len(site.type) <= 1: self.indice.append(None)
-        else: i += 1; self.indices.append(i)
+        else: i += 1; self.indices.append(i-1)
       self.converter = converter
       """ Converts individuals into structures. """
       transforms = enumeration.create_transforms(self.lattice)
@@ -66,10 +67,10 @@ try:
       """ Rotational transforms. """
       for transform in transforms:
         if not transform.invariant(self.supercell): continue
-        transform.init(supercell.transform, self.smith[1])
+        transform.init(*self.smith)
         if not transform.is_trivial: self.transforms.append(transform)
 
-      translations = enumeration.Translation(self.smith[1], self.nsites)
+      self.translations = enumeration.Translation(self.smith[1], self.nsites)
       """ Translation transforms. """
 
 
@@ -96,11 +97,11 @@ try:
           structure but rotated/translated and otherwise transformed may result
           in a different integer number.
       """
-      from numpy import abs, all
-      from ..crystal import linear_smith_index
+      from numpy import abs, any
+      from ...crystal import linear_smith_index
 
       # this is not an accurate definition. should use something like integer transform matrix...
-      assert not any(abs(structure.cell - self.supercell) < 1e-12)), \
+      assert not any(abs(structure.cell - self.supercell) > 1e-12), \
              ValueError("Structure and supercell are not coherent.")
 
       # now creates integers from linear smith index
@@ -111,19 +112,19 @@ try:
                ValueError("Atoms in structure are not correctly indexed by site type.")
 
         types = self.lattice.sites[atom.site].type
-        if len(types) > 1: continue
+        if len(types) < 2: continue
 
-        lsi = linear_smith_index(self.smith, atom.pos, indices[i])
-        assert atom.type in types.index,\
+        lsi = linear_smith_index(self.smith, atom.pos, self.indices[atom.site])
+        assert atom.type in types,\
                ValueError( "Atomic type in structure not found in backbone lattice.\n{0} not in {1}"\
-                           .format(atom.type, str(types.index)))
-        result = self.flavorbase * types.index(atom.type)
+                           .format(atom.type, str(types)))
+        result += self.flavorbase[lsi] * types.index(atom.type)
 
       return result
 
-    def structure_hascode(self, structure):
+    def structure_hashcode(self, structure):
       """ Returns structure hashcode according to enumeration algorithms. """
-      result = structure_to_integer(structure)
+      result = self.structure_to_integer(structure)
       x = int(result)
 
       # checks pure translation
@@ -142,17 +143,17 @@ try:
 
       return result
 
-    def __call__(a, b):
+    def __call__(self, a, b):
       """ Returns True if two structures are equivalent. """
       if hasattr(self.converter, "__call__"):
         if not hasattr(a, "integer_hashcode"): 
-          a.integer_hash_code = self.structure_hashcode(converter(a))
+          a.integer_hash_code = self.structure_hashcode(self.converter(a))
         a = a.integer_hashcode
         if not hasattr(b, "integer_hashcode"): 
-          b.integer_hash_code = self.structure_hashcode(converter(b))
+          b.integer_hash_code = self.structure_hashcode(self.converter(b))
         b = b.integer_hashcode
         return a == b
 
-      else: raise RuntimeError("Not implemented")
+      else:
+        return self.structure_hashcode(a) == self.structure_hashcode(b)
 
-except ImportError: pass
