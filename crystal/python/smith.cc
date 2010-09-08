@@ -119,7 +119,7 @@ namespace LaDa
 
     //! Computes smith indices of position \a _pos.
     int get_linear_smith_index( boost::python::tuple const & _transform,
-                                math::rVector3d  const &_pos )
+                                math::rVector3d  const &_pos, int _site_index )
     {
       namespace bt = boost::tuples;
       namespace bp = boost::python;
@@ -127,44 +127,51 @@ namespace LaDa
       {
         PyErr_SetString
         (
-          PyExc_RuntimeError, 
+          PyExc_TypeError, 
           "Incorrect tuple argument when computing smith normal form indices.\n" 
         );
         bp::throw_error_already_set();
         return -1;
       }
-      try
+      if( _site_index < 0 )
       {
-        Crystal::t_SmithTransform transform;
-        try{  bt::get<0>( transform ) = bp::extract< math::rMatrix3d >( _transform[0] ); }
-        catch(...)
-        {
-          PyErr_SetString
-          (
-            PyExc_IOError, 
-            "First tuple element is not an rMatrix3d object.\n"
-          );
-          bp::throw_error_already_set();
-          return -1;
-        }
-        try{  bt::get<1>( transform ) = bp::extract< math::iVector3d >( _transform[1] ); }
-        catch(...)
-        {
-          PyErr_SetString
-          (
-            PyExc_IOError, 
-            "Second tuple element is not an iVector3d object.\n"
-          );
-          bp::throw_error_already_set();
-          return -1;
-        }
-        return Crystal::get_linear_smith_index( transform, _pos );
+        PyErr_SetString
+        (
+          PyExc_ValueError, 
+          "Negative site index not accepted in linear_smith_index."
+        );
+        bp::throw_error_already_set();
+        return -1;
       }
+      Crystal::t_SmithTransform transform;
+      try{  bt::get<0>( transform ) = bp::extract< math::rMatrix3d >( _transform[0] ); }
       catch(...)
       {
         PyErr_SetString
         (
-          PyExc_IOError, 
+          PyExc_TypeError, 
+          "First tuple element is not an rMatrix3d object.\n"
+        );
+        bp::throw_error_already_set();
+        return -1;
+      }
+      try{  bt::get<1>( transform ) = bp::extract< math::iVector3d >( _transform[1] ); }
+      catch(...)
+      {
+        PyErr_SetString
+        (
+          PyExc_TypeError, 
+          "Second tuple element is not an iVector3d object.\n"
+        );
+        bp::throw_error_already_set();
+        return -1;
+      }
+      try{ return Crystal::get_linear_smith_index( transform, _site_index, _pos ); }
+      catch(...)
+      {
+        PyErr_SetString
+        (
+          PyExc_RuntimeError, 
           "Error while computing smith normal form indices.\n" 
         );
         bp::throw_error_already_set();
@@ -203,7 +210,7 @@ namespace LaDa
       bp::def
       ( 
         "linear_smith_index", &get_linear_smith_index,
-        ( bp::arg("transform"), bp::arg("position") ),
+        ( bp::arg("transform"), bp::arg("position"), bp::arg("site_index") = 0 ),
         "Returns the indices of the position in the smith normal form." 
       );
     }

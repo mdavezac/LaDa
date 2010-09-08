@@ -17,20 +17,41 @@ class Taboo(object):
     """ Creates a Taboo container.
 
         @param diversity: if True then a diversity constraint is added to the
-          Taboo container. Otherwise the container is empty on initialization.
-        @type diversity: Boolean
+          Taboo container. If a callable, uses should be a comparison operator
+          to use with the diversity operator.  Otherwise the container is empty
+          on initialization.
+        @type diversity: Boolean, or callable. 
     """
     super(Taboo, self).__init__()
-    def diversity_taboo(self, _indiv):
-      """ taboo makes sure that no two individuals in the population and the
-          offspring are the same. """
-      return _indiv in self.population or _indiv in self.offspring
-
     self.taboos = []
-    if diversity: self.taboos.append(diversity_taboo)
+
+
+    if hasattr(diversity, "__call__"):
+      
+      def diversity_taboo(self, indiv):
+        """ taboo makes sure that no two individuals in the population and the
+            offspring are the same. """
+        from iterator import iterchain
+        comparison_operator = diversity
+        for a in iterchain(self.population, self.offspring):
+          if comparison_operator(a, indiv): return True
+        return False
+
+      self.taboos.append(diversity_taboo)
+
+    elif diversity:
+
+      def diversity_taboo(self, indiv):
+        """ taboo makes sure that no two individuals in the population and the
+            offspring are the same. """
+        return indiv in self.population or indiv in self.offspring
+
+      self.taboos.append(diversity_taboo)
+
 
   def add(self, taboo):
     """ Adds a taboo operator to the list.
+
         A taboo operator takes the darwin class and the individual as arguments
         and returns True if the individual is taboo.
     """
