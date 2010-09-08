@@ -1,22 +1,5 @@
 #! /usr/bin/python
 
-def add_directories():
-  import sys
-  import os
-
-  i = 0
-# for i, p in enumerate(sys.path):
-#   if p == '/home/davezac/usr/lib64/python2.5/site-packages':
-#     break;
-# sys.path.pop(i)
-
-  sys.path.extend\
-  (\
-    [\
-     '/home/davezac/usr/debug/lib64/python2.5/site-packages'\
-    ]\
-  )
-
 def find_smith_set( _n, _hermite ):
   from math import pow
   file = open("struct_enum.out", "r") 

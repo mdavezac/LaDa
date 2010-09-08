@@ -1,6 +1,3 @@
-#
-#  Version: $Id$
-#
 """ Genetic Algorithm Package
     
     The package consists of three main modules, darwin, standard, and

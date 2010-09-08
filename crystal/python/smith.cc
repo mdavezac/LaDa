@@ -119,7 +119,7 @@ namespace LaDa
 
     //! Computes smith indices of position \a _pos.
     int get_linear_smith_index( boost::python::tuple const & _transform,
-                                math::rVector3d  const &_pos )
+                                math::rVector3d  const &_pos, int _site_index )
     {
       namespace bt = boost::tuples;
       namespace bp = boost::python;
@@ -127,44 +127,51 @@ namespace LaDa
       {
         PyErr_SetString
         (
-          PyExc_RuntimeError, 
+          PyExc_TypeError, 
           "Incorrect tuple argument when computing smith normal form indices.\n" 
         );
         bp::throw_error_already_set();
         return -1;
       }
-      try
+      if( _site_index < 0 )
       {
-        Crystal::t_SmithTransform transform;
-        try{  bt::get<0>( transform ) = bp::extract< math::rMatrix3d >( _transform[0] ); }
-        catch(...)
-        {
-          PyErr_SetString
-          (
-            PyExc_IOError, 
-            "First tuple element is not an rMatrix3d object.\n"
-          );
-          bp::throw_error_already_set();
-          return -1;
-        }
-        try{  bt::get<1>( transform ) = bp::extract< math::iVector3d >( _transform[1] ); }
-        catch(...)
-        {
-          PyErr_SetString
-          (
-            PyExc_IOError, 
-            "Second tuple element is not an iVector3d object.\n"
-          );
-          bp::throw_error_already_set();
-          return -1;
-        }
-        return Crystal::get_linear_smith_index( transform, _pos );
+        PyErr_SetString
+        (
+          PyExc_ValueError, 
+          "Negative site index not accepted in linear_smith_index."
+        );
+        bp::throw_error_already_set();
+        return -1;
       }
+      Crystal::t_SmithTransform transform;
+      try{  bt::get<0>( transform ) = bp::extract< math::rMatrix3d >( _transform[0] ); }
       catch(...)
       {
         PyErr_SetString
         (
-          PyExc_IOError, 
+          PyExc_TypeError, 
+          "First tuple element is not an rMatrix3d object.\n"
+        );
+        bp::throw_error_already_set();
+        return -1;
+      }
+      try{  bt::get<1>( transform ) = bp::extract< math::iVector3d >( _transform[1] ); }
+      catch(...)
+      {
+        PyErr_SetString
+        (
+          PyExc_TypeError, 
+          "Second tuple element is not an iVector3d object.\n"
+        );
+        bp::throw_error_already_set();
+        return -1;
+      }
+      try{ return Crystal::get_linear_smith_index( transform, _site_index, _pos ); }
+      catch(...)
+      {
+        PyErr_SetString
+        (
+          PyExc_RuntimeError, 
           "Error while computing smith normal form indices.\n" 
         );
         bp::throw_error_already_set();
@@ -175,21 +182,31 @@ namespace LaDa
     void expose_smith()
     {
       namespace bp = boost::python;
-      bp::def("smith_normal_transform", &get_smith_transform_str<std::string>);
-      bp::def("smith_normal_transform", &get_smith_transform_str<types::t_real>);
+      bp::def( "smith_normal_transform", &get_smith_transform_str<std::string>,
+               bp::arg("structure") );
+      bp::def( "smith_normal_transform", &get_smith_transform_str<types::t_real>,
+               bp::arg("structure") );
       bp::def
       ( 
         "smith_normal_transform", &get_smith_transform,
-        "Returns a tuple allowing a stransformation to the smith normal form.\n\n" 
-        "The input can have one or two arguments depending on their types:\n"
-        "  - if one argument is given, it must be of type L{Structure} or a"
-             " L{rStructure}, with L{rStructure.lattice} set.\n"
-        "  - if two argument are given, the first one is the cell of the"
-             " structure, and the second the cell of the lattice.\n" 
-        "In any case, the cell of structure must be exactly commensurate with "
-        "the lattice, eg no relaxation.\n"
+        (bp::arg("unitcell"), bp::arg("supercell")), 
+        "Computes Smith Normal Transform parameters.\n\n" 
+	"This function accepts two types of call: using a correctly defined "
+          "*structure* alone, and by specifying the *unitcell* and the "
+	  "*supercell* explicitely. In any case, the cell of structure must be "
+          "exactly commensurate with the lattice, eg no relaxation.\n"
         "@see: U{G. Hart and R. Forcade, I{Phys. Rev. B.} B{80}, 014120 (2009)"
-        "<dx.doi.org/10.1103/PhysRevB.80.014120>}\n"
+          "<dx.doi.org/10.1103/PhysRevB.80.014120>}\n"
+	"@param structure: A structure for which *structure.lattice* is set. "
+          "The supercell is then *structure.cell* and the unit cell "
+          "*structure.lattice.cell*. \n"
+        "@type structure: L{Structure}\n"
+        "@param unitcell: Primitive cell of the lattice from which "
+           "supercells are built.\n"
+        "@type unitcell: numpy 3x3 array\n"
+        "@param supercell: Multiple of the unit cell.\n"
+        "@type supercell: numpy 3x3 array\n"
+        "@return: tuple allowing a stransformation to the smith normal form.\n" 
       );
       bp::def
       ( 
@@ -203,7 +220,7 @@ namespace LaDa
       bp::def
       ( 
         "linear_smith_index", &get_linear_smith_index,
-        ( bp::arg("transform"), bp::arg("position") ),
+        ( bp::arg("transform"), bp::arg("position"), bp::arg("site_index") = 0 ),
         "Returns the indices of the position in the smith normal form." 
       );
     }

@@ -320,7 +320,6 @@ def _set_site_type(self, value):
   else: 
     for u in value: self._type.append(u)
 def _get_site_type(self): return self._type
-Site._type = Site.type 
 Site.type = property(_get_site_type, _set_site_type, doc=Site._type.__doc__)
    
 

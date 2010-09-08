@@ -4,6 +4,6 @@ if(ce_functional)
 endif(ce_functional)
 install(FILES ${PYGA_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/ga)
 if(escan_functional)
-  add_subdirectory(pescan)
+  add_subdirectory(escan)
 endif(escan_functional)
 

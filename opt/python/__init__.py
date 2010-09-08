@@ -2,7 +2,7 @@
 import _opt 
 from contextlib import contextmanager
 __load_vasp_in_global_namespace__ = _opt.__load_vasp_in_global_namespace__
-__load_pescan_in_global_namespace__ = _opt.__load_pescan_in_global_namespace__
+__load_escan_in_global_namespace__ = _opt.__load_escan_in_global_namespace__
 cReals = _opt.cReals
 _RedirectFortran = _opt._RedirectFortran
 streams = _opt._RedirectFortran.fortran

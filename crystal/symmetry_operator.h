@@ -51,7 +51,7 @@ namespace LaDa
       //! True if the matrix is invariant by this operator.
       bool invariant(math::rMatrix3d const &_mat, types::t_real _tolerance = types::tolerance) const;
       //! Comparison.
-      bool operator==(SymmetryOperator const &_sym)
+      bool operator==(SymmetryOperator const &_sym) const
       {
         return not(    math::neq(op(0,0), _sym.op(0,0))
                     or math::neq(op(1,0), _sym.op(1,0))

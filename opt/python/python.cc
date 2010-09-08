@@ -19,7 +19,7 @@ BOOST_PYTHON_MODULE(_opt)
   bp::docstring_options doc_options(true, false);
   scope.attr("__doc__") = "imported into L{opt} namespace.";
   scope.attr("__load_vasp_in_global_namespace__") = LADA_GLOBAL_LOAD;
-  scope.attr("__load_pescan_in_global_namespace__") = LADA_GLOBAL_LOAD;
+  scope.attr("__load_escan_in_global_namespace__") = LADA_GLOBAL_LOAD;
 
   LaDa::Python::expose_errors();
   LaDa::Python::exposeConvexHull<boost::python::object>( "ConvexHull" );

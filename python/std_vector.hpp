@@ -4,6 +4,7 @@
 #include "LaDaConfig.h"
 
 #include <vector>
+#include <algorithm>
 #include <string>
 #include <sstream>
 #include <boost/python/iterator.hpp>
@@ -83,6 +84,47 @@ namespace LaDa
           _self.insert(i_var, _t);
         }
 
+      template<class T>
+        int index(std::vector<T> &_self, T const &_t )
+        {
+          typename std::vector<T>::const_iterator i_found = 
+             std::find(_self.begin(), _self.end(), _t);
+          if(i_found == _self.end()) 
+          {
+            PyErr_SetString(PyExc_ValueError, "object not in list.");
+            bp::throw_error_already_set();
+            return -1;
+          }
+          return i_found - _self.begin();
+        }
+//     template<class T>
+//       void sort(std::vector<T> &_self)
+//       {
+//         std::sort(_self.begin(), _self.end());
+//       }
+      template<class T>
+        void reverse(std::vector<T> &_self) 
+        {
+          std::reverse(_self.begin(), _self.end());
+        }
+      template<class T>
+        int count(std::vector<T> const &_self, T const &_t) 
+        {
+          return std::count(_self.begin(), _self.end(), _t);
+        }
+      template<class T>
+        void remove(std::vector<T> &_self, T const &_t) 
+        {
+          typename std::vector<T>::iterator i_found = 
+             std::find(_self.begin(), _self.end(), _t);
+          if(i_found == _self.end()) 
+          {
+            PyErr_SetString(PyExc_ValueError, "object not in list.");
+            bp::throw_error_already_set();
+            return;
+          }
+          _self.erase(i_found);
+        }
     }
 
     template< class T_TYPE >
@@ -111,6 +153,11 @@ namespace LaDa
           .def( "pop", &details::pop_last<T_TYPE> ) 
           .def( "pop", &details::pop<T_TYPE> ) 
           .def( "insert", &details::insert<T_TYPE> ) 
+          .def( "remove", &details::remove<T_TYPE> ) 
+          .def( "index", &details::index<T_TYPE> ) 
+          .def( "reverse", &details::reverse<T_TYPE> ) 
+//         .def( "sort", &details::sort<T_TYPE> ) 
+          .def( "count", &details::count<T_TYPE> ) 
           .def( "clear", &std::vector<T_TYPE> :: clear );
         return result;
       }

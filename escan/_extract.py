@@ -343,7 +343,7 @@ class Extract(object):
         >>>   if np.linalg.norm(g) < 1e-8: break
         >>> self.raw_gwfns[i, 0, 0] # G=0 component of spin-up wavefunction with band-index 0.
 
-        The band index is the one from pescan, eg. it is different if user
+        The band index is the one from ESCAN, eg. it is different if user
         Krammer doubling or not, etc. This data is exactly as read from disk.
     """
     return self._raw_gwfns_data[0]

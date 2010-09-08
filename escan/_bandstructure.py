@@ -8,7 +8,7 @@ def band_structure(escan, structure, kpoints, density = None, outdir=None, comm=
   
       :Parameters:
         escan : `lada.escan.Escan`
-          Functional wrapping nanopse's pescan. 
+          Functional wrapping nanopse's ESCAN. 
         structure : `lada.crystal.Structure`
           object describing the structure for which to compute a
           band-structure.
