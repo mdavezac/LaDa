@@ -41,6 +41,9 @@
 
     An example (function test()) can be found directly in the package's __init__.py
 """
+
+__all__ = [@which_gapackages@]
+
 def test():
   class Eval:
 
@@ -92,5 +95,4 @@ def test():
   dd.run(darwin)
        
 
-if __name__ == "__main__":
-  test()
+if __name__ == "__main__": test()
