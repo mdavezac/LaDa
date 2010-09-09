@@ -211,6 +211,7 @@ def _add_atom(which, container):
     if len(args) > 3:
       if args[2] != None: result.freeze = args[3]
     getattr(self, container).append(result)
+  _fun.__doc__ = _add_atom.__doc__
   return _fun
 
 Structure.add_atom = add_setter( _add_atom(Atom, "atoms") )
@@ -236,6 +237,7 @@ def _add_atoms(which):
   def _func(self, args):
     for arg in args:
       if arg != None:   setattr(self, which, arg)
+  _func.__doc__ = _add_atoms.__doc__
   return _func
 Structure.add_atoms = add_setter( _add_atoms("add_atom") )
 rStructure.add_atoms = add_setter( _add_atoms("add_atom") )

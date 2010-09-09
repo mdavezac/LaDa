@@ -43,7 +43,7 @@ class Extract(object):
 
         All procs will get same results at end of extraction. 
         Program will hang if not all procs are called when extracting some
-        value. Instead, use L{solo}.
+        value. Instead, use `solo`.
 
         >>> extract.success # Ok
         >>> if comm.rank == 0: extract.success # will hang if comm.size != 1
@@ -86,7 +86,7 @@ class Extract(object):
   @property
   @make_cached
   def escan(self):
-    """ Greps escan functional from `OUTCAR`. """
+    """ Greps escan functional from OUTCAR. """
     from os.path import exists, join
     from numpy import array
     from cPickle import load
@@ -134,7 +134,7 @@ class Extract(object):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def eigenvalues(self):
-    """ Greps eigenvalues from `OUTCAR. 
+    """ Greps eigenvalues from OUTCAR. 
     
         Always returns "spin-polarized" number of eigenvalues.
     """
@@ -162,7 +162,7 @@ class Extract(object):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def convergence(self):
-    """ Greps eigenvalue convergence errors from self.L{OUTCAR}. 
+    """ Greps eigenvalue convergence errors from OUTCAR. 
     
         Always returns "spin-polarized" number of eigenvalues.
     """
@@ -188,7 +188,7 @@ class Extract(object):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def nnodes(self):
-    """ Greps eigenvalue convergence errors from `OUTCAR. """
+    """ Greps eigenvalue convergence errors from OUTCAR. """
     from os.path import exists, join
     from numpy import array
     path = self.OUTCAR
@@ -292,13 +292,14 @@ class Extract(object):
   def _raw_gwfns_data(self):
     """ Reads and caches g-space wavefunction data. 
     
-        :return: a tuple holding information about the wavefunctions.
-          - a spin by N by x matrix holding the N wavefuntions/spinor.
-          - a 3 by x matrix with each row a G-vector in units of
-            `lada.physics.reduced_reciprocal_au`.
-          - a 3 by x matrix with each row a R-vector in atomic units.
-          - one-dimensional array of real coefficients to smooth higher energy G-vectors.
-          - one-dimensional array of integer indices to map G-vectors to -G.
+        This property is a tuple holding information about the wavefunctions.
+        
+        - a spin by N by x matrix holding the N wavefuntions/spinor.
+        - a 3 by x matrix with each row a G-vector in units of
+          `lada.physics.reduced_reciprocal_au`.
+        - a 3 by x matrix with each row a R-vector in atomic units.
+        - one-dimensional array of real coefficients to smooth higher energy G-vectors.
+        - one-dimensional array of integer indices to map G-vectors to -G.
     """
     from os import remove
     from os.path import exists, join
@@ -391,7 +392,7 @@ class Extract(object):
     """ Extraction on a single process.
 
         Sometimes, it is practical to perform extractions on a single process
-        only, eg without blocking mpi calls. C{self.L{solo}()} returns an
+        only, eg without blocking mpi calls. `solo` returns an
         extractor for a single process:
         
         >>> # prints only on proc 0.

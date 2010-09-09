@@ -32,8 +32,23 @@ vasp.add_specie = "Rh", "pseudos/Rh", U("liechtenstein", "d", 3.3), 3, True
 vasp.add_specie = "Zn", "pseudos/Zn", U("liechtenstein", "d", 6.0), 2, False
 vasp.add_specie =  "O",  "pseudos/O", None, -2, True
 
+######################## FAKE! #######################################
+vasp.add_specie = "Li", "pseudos/Zn", None, 1
+vasp.add_specie = "Na", "pseudos/Zn", None, 1
+######################## FAKE! #######################################
+
 # Parameters specific to the ionic relaxation.
 relaxation_parameters = {}
 
 # The following sets-up which point defects to do.
 substitutions = {"Rh": ["Zn", None], "Zn": ["Rh", None], "O": [None]}
+
+# The following sets-up which which interstitials to examine.
+# below, we have:
+# Li interstitial on 16c (0,0,0)
+# Li interstitial on 32e (x,x,x) with x = 0.75.
+# Na interstitial on 16c (0,0,0)
+# Na interstitial on 32e (x,x,x) with x = 0.75.
+# These are cartesian coordinates in units of lattice.scale (set above).
+interstitials = { "Li": [(0,0,0, "16c"), (0.75,0.75,0.75, "32e_0.75")],\
+                  "Na": [(0,0,0, "16c"), (0.75,0.75,0.75, "32e_0.75")] }

@@ -37,17 +37,17 @@ void boost_vasp(boost::mpi::communicator const &_c)
                                                                         
 void expose_vasp()
 {                                                                       
-  bp::def("vasp", &boost_vasp, bp::arg("communicator"));           
+  bp::def("vasp", &boost_vasp, bp::arg("comm"));           
   bp::def                                                               
   (                                                                     
     "vasp",                                                          
     &vasp,                                                         
-    bp::arg("communicator"),                                            
+    bp::arg("comm"),                                            
     "Make a call to vasp, given the handle to a communicator.\n\n"      
     "POSCAR, INCAR, IBZKPT, and other input files are expected in the current "
     "working directory.\n"
-    "@param communicator: the processes which vasp will use.\n"         
-    "@type communicator: boost.mpi.Communicator or mpi4py equivalent"   
+    "@param comm: the processes which vasp will use.\n"         
+    "@type comm: boost.mpi.Communicator or mpi4py equivalent"   
   );                                                                    
 }
 

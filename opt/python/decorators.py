@@ -1,4 +1,5 @@
 """ A subpackage with decorators """
+__docformat__ = "restructuredtext en"
 
 
 def broadcast_result(key=False, attr=False, which=0): 

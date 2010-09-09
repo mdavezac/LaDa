@@ -184,13 +184,15 @@ namespace LaDa
           "A 3x3 numpy array representing the lattice vector in cartesian units, "
           "in units of self.L{scale<lada.crystal.Lattice.scale>}."
         )
-        .def_readwrite("sites", &Crystal::Lattice::sites )
-        .def_readwrite("scale", &Crystal::Lattice::scale )
-        .def_readwrite("space_group", &Crystal::Lattice::space_group )
-        .def_readwrite("name", &Crystal::Lattice::name )
+        .def_readwrite("sites", &Crystal::Lattice::sites, "List of L{lada.crystal.Site}.")
+        .def_readwrite("scale", &Crystal::Lattice::scale, "Units of all coordinates." )
+        .def_readwrite("space_group", &Crystal::Lattice::space_group,
+                       "List of symmetry operators L{lada.crystal.SymmetryOperator}." )
+        .def_readwrite("name", &Crystal::Lattice::name, "Name of the lattice." )
         .def("__str__",  &print<Crystal::Lattice> )
         .def("fromXML",  &details::fromXML<Crystal::Lattice> )
-        .def("set_as_crystal_lattice", &details::set_as_crystal_lattice )
+        .def("set_as_crystal_lattice", &details::set_as_crystal_lattice,
+             "Makes this the global lattice." )
         .def("make_primitive", &Crystal::Lattice::make_primitive,
              (bp::arg("self"), bp::arg("tolerance")=-1e0),
              "Makes lattice primitive, e.g. reduces to smallest unit-cell." )

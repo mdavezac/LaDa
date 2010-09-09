@@ -1,15 +1,16 @@
 """ Point-defect helper functions. """
 __docformat__ = "restructuredtext en"
 from ..opt import RelativeDirectory 
-try: from lada import vasp
-except ImportError: _lada_has_vasp = False
-else: _lada_has_vasp = True
+try:
+  from .. import vasp
+  from .. import jobs
+except ImportError: _add_mass_extract = False
+else: _add_mass_extract = True
 
 
 __all__ = [ 'inequivalent_sites', 'vacancy', 'substitution', 'charged_states', \
             'band_filling', 'potential_alignment', 'charge_correction', \
             'magmom', 'low_spin_states', 'high_spin_states', 'magname' ]
-if _lada_has_vasp: __all__.append('Extract')
 
 def inequivalent_sites(lattice, type):
   """ Yields sites occupied by type which are inequivalent. 
@@ -165,52 +166,56 @@ def substitution(structure, lattice, type, subs):
     # removes substitution
     result.atoms[which].type = orig
 
-def charged_states(species, A=None, B=None):
+def charged_states(species, A, B):
   """ Loops over charged systems. 
 
-      Depending on whether both A and B are specified, the following will happen:
-
-      - if only one of C{A} and C{B} is not None, then the accepted charge
-        states are anything between 0 and C{-A.oxidation} included. This
-        works both for negative and positive oxidation numbers. The "minus" sign
-        comes from the rational that an ion C{A} with oxidation
-        C{A.oxidation} is removed from the system.
-      - if both C{A} and C{B} are not None, than reviewed chared states are between
-        ``max(-A.oxidation, B.oxidation-A.oxidation)`` and
-        ``min(-A.oxidation, B.oxidation-A.oxidation)``. 
+      Charged states are given as A on B, where A and B are either None or an
+      atomic-specie. If B is None, this indicates that A should be an
+      interstitial. If A is None, than the defect is a vacancy.
+      The charge states are as follows:
+      
+      - vacancy: between 0 and -B.oxidation.
+      - interstitial: between 0 and A.oxidation.
+      - substitution: between the maximum and minimum values of 
+        A.oxidation - B.oxidation, -B.oxidation, 0.
 
       :Parameters:
-        species 
-          `lada.vasp.specie.Specie`
-        A
-          None or str index to `species`.
-        B
-          None or str index to `species`.
+        species : `lada.vasp.specie.Specie`
+          A dictionary containing the description of the atomic species.
+        A : None, or str
+          If None, indicates that the charge states of an interstial are
+          requested. If a string, it should be an atomic symbol with an entry
+          in `species`. The defect is then either a vacancy or a substitution,
+          depending on `B`. 
+        B : None, or str
+          If None, indicates that the charge states of a vacancy are
+          requested. If a string, it should be an atomic symbol with an entry
+          in `species`. The defect is then either an interstitial or a
+          substitution, depending on `A`. 
 
       :return: Yields a 2-tuple:
 
         - Number of electrons to add to the system (not charge). 
         - a suggested name for the charge state calculation.
   """
-  if A == None: A, B = B, A
-  if A == None: # no oxidation
-    yield None, "neutral"
-    return
-  else: A = species[A]
-  if B == None:
+  assert A != None or B != None, ValueError("Both A and B cannot be None")
 
-
-    # max/min oxidation state
-    max_charge = -A.oxidation if hasattr(A, "oxidation") else 0
-    min_charge = 0
-    if max_charge < min_charge: max_charge, min_charge = min_charge, max_charge
-  else:
+  if A == None:   # vacancy! Charge states are in 0 to -B.oxidation.
     B = species[B]
-    # Finds maximum range of oxidation.
-    maxA_oxidation = A.oxidation if hasattr(A, "oxidation") else 0
-    maxB_oxidation = B.oxidation if hasattr(B, "oxidation") else 0
-    max_charge = max(-maxA_oxidation, maxB_oxidation - maxA_oxidation, 0)
-    min_charge = min(-maxA_oxidation, maxB_oxidation - maxA_oxidation, 0)
+    max_charge = -B.oxidation if hasattr(B, "oxidation") else 0
+    min_charge = 0
+  elif B == None: # interstial! Charge states are in 0, A.oxidation.
+    A = species[A]
+    max_charge = A.oxidation if hasattr(A, "oxidation") else 0
+    min_charge = 0
+  else:           # substitution! Charge states are difference of A and B.
+    A, B = species[A], species[B]
+    Aox = A.oxidation if hasattr(A, "oxidation") else 0
+    Box = B.oxidation if hasattr(B, "oxidation") else 0
+    max_charge = max(Aox - Box, -Box, 0)
+    min_charge = min(Aox - Box, -Box, 0)
+    
+  if max_charge < min_charge: max_charge, min_charge = min_charge, max_charge
 
   for charge in range(min_charge, max_charge+1):
     # directory
@@ -427,7 +432,7 @@ def magnetic_neighborhood(structure, defect, species):
    from . import Neighbors
 
    # checks if substitution with a magnetic defect.
-   if defect.index < len(structure.atoms):
+   if hasattr(defect, "index") and defect.index < len(structure.atoms):
      atom = structure.atoms[defect.index]
      if species[atom.type].magnetic and norm(defect.pos - atom.pos) < 1e-12:
        return [defect.index]
@@ -685,7 +690,9 @@ def magname(moments, prefix=None, suffix=None):
 
 
 
-if _lada_has_vasp:
+if _add_mass_extract:
+  __all__.append('MassExtract')
+
   from ..opt.decorators import make_cached
   from .. import jobs
   class MassExtract(jobs.MassExtract):
