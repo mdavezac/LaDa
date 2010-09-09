@@ -1,7 +1,20 @@
 """ IPython interface for lada.
+    ===========================
+
+    IPython is the *enhanced interactive python shell*. In  practice this
+    means it is a bash shell which incorporates interactive python programming,
+    or the other way around. Think of it as a bash script where you don't need
+    to call awk to add a few numbers, or print things in a different format,
+    but rather use python's power to do everything natively and on the fly.
+    It's a bash shell for the real geeks. It does have a `user guide`__, as
+    well as a `tutorial`__ with plenty of tips.
+
+    __ http://ipython.scipy.org/doc/stable/html/
+    __ http://ipython.scipy.org/doc/manual/html/interactive/tutorial.html
+
 
     Installing the lada interface to ipython. 
-    =========================================
+    -----------------------------------------
 
     In order to initialize an ipython session with the lada interface, the
     following lines can be introduces in the main function of your
@@ -12,7 +25,135 @@
     >>>   print "Could not find module lada.ipython."
     >>>   pass
     >>> else: lada.ipython.ipy_init()
+
+    This will give you access to all the lada magic functions. 
+
+    In addition, I would recommend uncommenting/adding the following lines in
+    you ipy_user_conf.py. They can be found at the beginning of the 'main'
+    function.
+
+    >>> import ipy_profile_sh
+
+    This will allow you to use standard bash commands (cd, cp, find, cat, ...)
+    without any fuss (Whithout this, bash commands can only be accessed by
+    escaping them first with an exclamation mark, eg '!cd ..' or '!rm -rf ~/*').
+
+    >>> import ipy_editors
+    >>> # Then for VI users.
+    >>> ipy_editors.install_editor("vim +$line $file")    
+    >>> # or for EMACS users.
+    >>> ipy_editors.install_editor("emacs -nw +$line $file")
+
+    There are many more things you can do. Checkout the two links given above.
+
+
+    What is a Job-dictionary?
+    -------------------------
+    
+    In practice a job-dictionary should be viewed as a directory tree where
+    calculations will be performed. The old way was to create a bunch of
+    directories with POSCAR, INCAR, POTCAR files at the start of the job.
+    For example, if trying to compute Spinel and Olivine structures for the two
+    materials ZnMgO and ZnRhO, the folling directory structure could have been created
+    (by hand, or by stringing a bunch of bash scripts):
+
+    :: 
+
+      path/to/calcs/
+        ZnRhO/
+          Spinel/
+            POSCAR  
+            POTCAR
+            INCAR 
+          Olivine/
+            POSCAR  
+            POTCAR
+            INCAR 
+        ZnMgO/
+          Spinel/
+            POSCAR  
+            POTCAR
+            INCAR 
+          Olivine/
+            POSCAR  
+            POTCAR
+            INCAR 
+
+    The game is then to launch calculations in each directory. The
+    job-dictionary is a python object which replicates this type of tree-like
+    structure. It's main advantage is that it can be manipulated
+    programmatically within python,  with more ease than bash can manipulate a
+    collections of files and directories. The `programmatic approach`__ (eg
+    writing a script to create a job-dictionary) is beyond the scope of this
+    tutorial. 
+
+    __ `lada.jobs`_
+
+
+    Prep-ing up: Exploring and modifying a job-dictionary before launch:
+    --------------------------------------------------------------------
+
+    The following expects that you have a job-dictionary *saved to file* in
+    some directory. How one gets a job-dictionary is somewhat dependent on how
+    it is built, e.g. from a script, or from scratch using the capabilities
+    described in `lada.jobs`. 
+
+    >>> %explore path/to/jobdictionary # opens file *jobdictionary* in directory path/to/
+
+    The command above opens a job-dictionary exactly as it exists on disk. It
+    also keeps track of the path so that the job-dictionary can be save after
+    being modified:
+
+    >>> %savejobs                      # saves job-dictionary to the file it was read from.
+    >>> %savejobs new/path/to/newfile  # saves to new file
+
+    Note that in the first case above, the dictionary on disk will be
+    overwritten. This may be good or bad... 
+    
+    Lets take up the example calculations given above. The job-dictionary would
+    have the following tree-like structure:
+
+    ::
+      /
+        ZnMgO/
+          Spinel/  <-- parameters for calculation at this level
+          Olivine/ <-- and here as well
+        ZnRhO/
+          Spinel/  <-- and here
+          Olivine/ <-- and here
+
+    When opening the job-dictionary, you are at the root level '/'. The list of
+    all sub-jobs (eg subdirectories) can be printed using *%listjob*, the
+    equivalent of *ls* for job-dictionaries:
+
+    >>> %listjob
+    ZnMgO ZnRhO
+
+    To navigate to, say, ZnMgO, we can use *goto*, which is the eqivalent of *cd*:
+
+    >>> %goto ZnMgO
+    >>> %listjob
+    Spinel Olivine
+
+    We can also navigate back, or forward two, and back to the root:
+    
+    >>> %goto ..            # goes one back, the same way "cd .." does.
+    >>> %goto ZnMgO/Olivine # goes down two directories
+    >>> %goto /             # goes back to root.
+
+    Note that tab-completion works for all these commands. Try it!  Once we
+    have navigated to a subjob where an actual calculation exists -- eg
+    /ZnMgO/Olivine, as opposed to /ZnMgO -- we can edit both the crystal
+    structure and the functioanl with which calculations.
+
+    >>> %explore structure 
+    >>> %explore functional 
+
+    The first command opens an editor (vim? emacs? others? see `Installing the
+    lada interface to ipython`_)
+    
 """
+__docformat__ = "restructuredtext en"
 from contextlib  import contextmanager
 
 def _get_current_job_params(self, verbose=0):
