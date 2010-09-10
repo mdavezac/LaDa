@@ -353,17 +353,14 @@ class Vff(object):
     
         @param A: Endpoint specie.
         @type A: str
-        @param B: Middle specie.
+        @param B: Other endpoint species. 
         @type B: str
-        @param C: Endpoint specie.
-        @type C: str
-        @param gamma: S{gamma} parameter. Can be a number or a string starting with "tet".
-        @param sigma: S{sigma} parameter.
-        @param a2: 2nd order bond-angle parameter.
-        @param a3: 3rd order bond-angle parameter.
-        @param a4: 4rd order bond-angle parameter.
-        @param a5: 5rd order bond-angle parameter.
-        @param a6: 6rd order bond-angle parameter.
+        @param d0: ideal bond-length.
+        @param a2: 2nd order bond-stretching parameter.
+        @param a3: 3rd order bond-stretching parameter.
+        @param a4: 4rd order bond-stretching parameter.
+        @param a5: 5rd order bond-stretching parameter.
+        @param a6: 6rd order bond-stretching parameter.
     """
     self.add_bond = A, B, [d0, a2, a3, a4, a5, a6]
 
@@ -405,7 +402,7 @@ class Vff(object):
 
     self.angles[name] = params
     
-  def set_angle(self, A, B, gamma = None, sigma = None, a2 = None, a3 = None, a4 = None, a5 = None, a6 = None):
+  def set_angle(self, A, B, C, gamma = None, sigma = None, a2 = None, a3 = None, a4 = None, a5 = None, a6 = None):
     """ Adds/Modifies the angle parameter dictionary.
     
         @param A: Endpoint specie.

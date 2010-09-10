@@ -44,10 +44,10 @@ void expose_vasp()
     &vasp,                                                         
     bp::arg("comm"),                                            
     "Make a call to vasp, given the handle to a communicator.\n\n"      
+    ":keyword comm: the processes which vasp will use.\n"         
+    ":type comm: boost.mpi.Communicator\n\n"
     "POSCAR, INCAR, IBZKPT, and other input files are expected in the current "
     "working directory.\n"
-    "@param comm: the processes which vasp will use.\n"         
-    "@type comm: boost.mpi.Communicator or mpi4py equivalent"   
   );                                                                    
 }
 
@@ -55,6 +55,7 @@ BOOST_PYTHON_MODULE(_vasp)
 {
   bp::scope scope;
   scope.attr("__doc__") = "VASP-as-library extension.";
+  scope.attr("__docformat__") = "restructuredtext en";
   bp::docstring_options doc_options(true, false);
   int minor=0, major=0, medium=0;
   FC_GLOBAL_(vasp_version, VASP_VERSION)(&major, &medium, &minor);

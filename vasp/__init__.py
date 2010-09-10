@@ -42,8 +42,12 @@ except ImportError:
   version = None
   is_vasp_5 = True
   def call_vasp(*args, **kwargs): 
-    """ Vasp Library not found. Raises ImportError. """
-    raise ImportError("VASP was not compiled into lada.")
+    """ Vasp Library not found. Raises RuntimeError.
+    
+        :keyword comm: dummy
+        :raise RuntimeError: on any call!
+    """
+    raise RuntimeError("VASP was not compiled into lada.")
 else:
   is_vasp_5 = int(version[0]) == 5
   """ True if using vasp 5. """

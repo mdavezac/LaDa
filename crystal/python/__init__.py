@@ -51,15 +51,15 @@ def deform_kpoint(kpoint, ideal, relaxed):
   
 
 @broadcast_result(key=True)
-def read_poscar(types=None, path=None, check_lattice=False):
+def read_poscar(types=None, path=None):
   """ Tries to read a VASP POSCAR file.
       
-      @param types: species in the POSCAR.
+      @keyword types: species in the POSCAR.
       @type types: none, or sequence of objects convertible to str 
-      @param path: path to the POSCAR file.
+      @keyword path: path to the POSCAR file.
       @type path: string
-      @param check_lattice: not implemented.
-      @type check_lattice: Boolean
+      @keyword comm: MPI communicator over which to read structure.
+      @type comm: boost.mpi.communicator
       @return: (L{lada.crystal.Structure}) structure on success.
   """ 
   import re
@@ -67,8 +67,6 @@ def read_poscar(types=None, path=None, check_lattice=False):
   from copy import deepcopy
   from numpy import array, dot, transpose
   from . import Structure, Atom
-  # checks input
-  if check_lattice == True: raise AssertionError, "Not implemented."
   # if types is not none, converts to a list of strings.
   if types != None:
     if isinstance(types, str): types = [types] # can't see another way of doing this...

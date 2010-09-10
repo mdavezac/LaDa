@@ -2,6 +2,10 @@
     =================================
 
 
+    Getting the source, installing, and compiling LaDa:
+    ---------------------------------------------------
+    Getting there.
+
     IPython interface for high-thoughput calculations:
     --------------------------------------------------
 
@@ -9,6 +13,7 @@
     launching job-dictionaries, rapid access to jobs which did not complete
     successfully, as well as output collection (e.g. total-energy,
     eigenvalues,...) across all calculation in a job-dictionary.  
+
     Please see `lada.ipython` for a more in-depth description.
 
 

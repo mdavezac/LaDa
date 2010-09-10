@@ -436,20 +436,21 @@ def walk_through(jobdict, outdir = None, comm = None):
 def save(jobdict, path = None, overwrite=False, comm=None): 
   """ Pickles a job to file. 
  
-      :Parameters:
-        jobdict
-         A jobtree to pickle. 
-        path
+      :keyword jobdict: A job-dictionary to pickle. 
+      :type jobdict: `JobDict`
+      :keyword path: 
           filename of file to which to save pickle. overwritten. If None then
           saves to "pickled_jobdict"
-        comm
-          Only root process gets to do anything.
-        overwrite
-          if True, then overwrites file.
+      :type path: str or None
+      :keyword comm:
+        Convenience parameter. Only root process actually saves.
+        Other processes wait silently.
+      :type comm: boost.mpi.comm
+      :keyword overwrite: if True, then overwrites file.
 
-      This method first acquire an exclusive lock (using os dependent lockf) on
-      the file before writing. This way not two processes can read/write to
-      this file while using this function.
+      This method first acquire an exclusive lock on the file before writing
+      (see `lada.opt.open_exclusive`).  This way not two processes can
+      read/write to this file while using this function.
   """ 
   from os.path import exists
   from pickle import dump
@@ -465,12 +466,9 @@ def save(jobdict, path = None, overwrite=False, comm=None):
 def load(path = None, comm = None): 
   """ Unpickles a job from file. 
  
-      :Parameters: 
-        path 
-          Filename of a pickled jobdictionary.
-        comm
-          boost.mpi.communicator
-
+      :keyword path: Filename of a pickled jobdictionary.
+      :keyword comm: MPI processes for which to read job-dictionary.
+      :type comm: boost.mpi.communicator
       :return: Returns a JobDict object.
 
       This method first acquire an exclusive lock (using os dependent lockf) on
@@ -715,12 +713,12 @@ class MassExtract(AbstractMassExtract):
  
         :Parameters:
            path 
-             If `jobdict` is None, then should point to a pickled
-             dictionary. If `jobdict` is a JobDict instance, then it should
+             If ``jobdict`` is None, then should point to a pickled
+             dictionary. If ``jobdict`` is a JobDict instance, then it should
              point the directory where calculations are saved.
            jobdict : None or JobDict.
-             If it is None, then `path` should point to a pickled
-             job-dictionary. If it is a jobdictonary, then `path` should point
+             If it is None, then ``path`` should point to a pickled
+             job-dictionary. If it is a jobdictonary, then ``path`` should point
              to a directory where calculations where performed.
            comm : boost.mpi.communicator
              All processes will be syncronized.

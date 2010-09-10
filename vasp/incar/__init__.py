@@ -23,7 +23,7 @@ class Incar(object):
          - C{nsw}: Number of ionic steps. Can be set using L{set_relaxation}. 
          - C{ibrion}: ionic-relaxation method. Can be set using L{set_relaxation}. 
          - C{potim}: ionic-relaxation step. Can be set using L{set_relaxation}. 
-         - L{iniwave}: initial wavefunction to use can be either "random" or "jellium".   
+         - C{iniwave}: initial wavefunction to use can be either "random" or "jellium".   
          - C{nelect}: sets number of electrons in calculation above and beyond valence.
              - 0(default) lets VASP compute it from species in the system. 
              - 1 would mean +1 electron
