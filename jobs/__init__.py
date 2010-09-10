@@ -620,7 +620,7 @@ class AbstractMassExtract(object):
             an boost.mpi.communicator instance.
     """
     super(AbstractMassExtract, self).__init__()
-    self.root = path
+    if path != None: self.root = path
     self.comm = comm
 
   def walk_through(self):
