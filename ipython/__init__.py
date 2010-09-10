@@ -717,7 +717,7 @@ class Collect(AbstractMassExtract):
     for job, name in self.jobdict.walk_through():
       if job.is_tagged: continue
       if not hasattr(job.functional, "Extract"): continue
-      if not exists(join(self.root, name)): print join(self.root, name); continue
+      if not exists(join(self.root, name)): continue
       try: extract = job.functional.Extract(join(self.root, name), comm = self.comm)
       except: pass
       else: yield name, extract
@@ -759,9 +759,10 @@ class Collect(AbstractMassExtract):
       position = self.position
       for key, value in self._extractors().items():
         if position != key[:len(position)]: continue
+        if len(position) < len(key) and position[-1] != '/': continue
         try: result[key] = getattr(value, name)
         except: result.pop(key, None)
-      return result
+      return result if len(result.keys()) > 1 else result[result.keys()[0]]
     raise AttributeError("Unknown attribute {0}.".format(name))
 
 
