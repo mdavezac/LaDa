@@ -127,7 +127,8 @@ def launch(self, event):
   opalls.add_argument('--walltime', type=str, default="05:59:59", \
                       help='walltime for jobs. Should be in hh:mm:ss format.')
   opalls.add_argument( 'pickle', metavar='FILE', type=str, nargs='*', default="", 
-                       help='Path to jobdictionaries.')
+                       help='Optional path to a jobdictionary. If not present, the '\
+                            'currently loaded job-dictionary will be launched.')
 
 
   # subparsers

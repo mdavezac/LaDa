@@ -17,7 +17,7 @@
     -----------------------------------------
 
     In order to initialize an ipython session with the lada interface, the
-    following lines can be introduces in the main function of your
+    following lines can be introduces in the ``main`` function of your
     ipy_user_conf.py
 
     >>> try: import lada.ipython 
@@ -29,14 +29,14 @@
     This will give you access to all the lada magic functions. 
 
     In addition, I would recommend uncommenting/adding the following lines in
-    you ipy_user_conf.py. They can be found at the beginning of the 'main'
+    you ipy_user_conf.py. They can be found at the beginning of the ``main``
     function.
 
     >>> import ipy_profile_sh
 
     This will allow you to use standard bash commands (cd, cp, find, cat, ...)
     without any fuss (Whithout this, bash commands can only be accessed by
-    escaping them first with an exclamation mark, eg '!cd ..' or '!rm -rf ~/*').
+    escaping them first with an exclamation mark, eg ``!cd ..`` or ``!rm -rf ~/\*``).
 
     >>> import ipy_editors
     >>> # Then for VI users.
@@ -83,12 +83,9 @@
     job-dictionary is a python object which replicates this type of tree-like
     structure. It's main advantage is that it can be manipulated
     programmatically within python,  with more ease than bash can manipulate a
-    collections of files and directories. The `programmatic approach`__ (eg
-    writing a script to create a job-dictionary) is beyond the scope of this
-    tutorial. 
-
-    __ `lada.jobs`_
-
+    collections of files and directories. The programmatic approach (eg
+    writing a script to create a job-dictionary, see `lada.jobs.JobDict`) is
+    beyond the scope of this tutorial. 
 
     Prep-ing up: Exploring and modifying a job-dictionary before launch:
     --------------------------------------------------------------------
@@ -114,7 +111,8 @@
     have the following tree-like structure:
 
     ::
-      /
+
+       /           <-- root of the job dictionary
         ZnMgO/
           Spinel/  <-- parameters for calculation at this level
           Olivine/ <-- and here as well
@@ -140,18 +138,199 @@
     >>> %goto ..            # goes one back, the same way "cd .." does.
     >>> %goto ZnMgO/Olivine # goes down two directories
     >>> %goto /             # goes back to root.
+    >>> %listjob 
+    ZnMgO ZnRhO
+
+    Ok, so at this point you are not sure where the hell you are in the job
+    dictionary. The equivalent of ``pwd`` is again ``goto`` (or ``explore``)
+    but without any arguments:
+
+    >>> %goto
+    Current position in job dictionary: / 
+    Filename of jobdictionary: path/to/jobdict
 
     Note that tab-completion works for all these commands. Try it!  Once we
     have navigated to a subjob where an actual calculation exists -- eg
     /ZnMgO/Olivine, as opposed to /ZnMgO -- we can edit both the crystal
-    structure and the functioanl with which calculations.
+    structure and the functional. Gathering data may take a while *the first
+    time around*, depending on the size of the job-dictionary. However, results
+    are cached and will  show up in a jiffy the second time around.
 
     >>> %explore structure 
     >>> %explore functional 
 
-    The first command opens an editor (vim? emacs? others? see `Installing the
-    lada interface to ipython`_)
+    The first command opens an editor(vim? emacs? others? 
+    see `Installing the lada interface to ipython.`_) with the POSCAR file
+    corresponding to the structure. Once you save the file and exit the editor,
+    the POSCAR is interpreted and replaces the old structure. Similarly, the
+    second command will start an editor with python code:
+
+    >>> from lada.vasp import Vasp
+    >>> from lada.vasp.incar._params import NElect, UParams, Precision, Encut, Algo, Ediff
+    >>> functional = Vasp()
+    >>> functional.nelect = None
+    >>> functional.encut = Encut(1)
+    >>> ...
+
+    >>> ...
+    >>> # Parameters in the functional above **will** be
+    >>> # overwritten by the following corresponding parameters.
+    >>> jobparams = {}
+    >>> jobparams["nelect"] = 1
+
+    As shown above, there are two parts to this file. In the first part, the
+    functional is defined. The name ``functional`` is crucial. It is simply
+    the `vasp.Vasp` wrapper in this case, but could somewhat more complex, say
+    a *meta*-functional over Vasp, such as `vasp.method.RelaxCellShape`, which
+    would perform more than one calculation (eg relaxation steps + final
+    static calculation). Whatever is called ``functional`` once the file
+    interpreted by python will end up being the functional called by the job. 
+    The second part are parameter specific to this particular calculation:
+    parameters defined in jobparams will override parameters with the same name
+    in the functional. In the example above, modifying ``nelect`` in the top
+    part will have no effect (unless you remove it from the bottom). Modifying
+    ``encut`` in the top half will work however, since it is not present in the
+    bottom half. This setup happens because of the way most job-dictionaries
+    are constructed, using a template functional which is then modified to suit the
+    particular purpose of a particular calculation. Note that this true only at
+    construction time: modifying the functional when calling ``showme
+    functional`` will **not** affect any other jobs.
     
+    Launching the highthoughput calculations:
+    -----------------------------------------
+
+    Once the job-dictionary has been modified, it can be launched with a single
+    command:
+
+    >>> # first load the dictionary
+    >>> %explore path/to/dict
+    >>> # then have fun with it
+    >>> ...
+    >>> # finally launch it.
+    >>> %launch scattered 
+
+    The last line will launch one `PBS <http://www.mcs.anl.gov/research/projects/openpbs/>`__
+    (or `SLURM <https://computing.llnl.gov/linux/slurm/>`__) job per actual
+    calculation. That is the meaning of ``scattered``. Other ways of launching
+    calculations will come as needed. The line above will allocate as many
+    processors as there are atoms in the structure. This can be changed to suit
+    you taste. Details on how to proceed are documented by ``launch`` itself.
+
+    >>> # description of possible launch scenarios.
+    >>> %launch --help
+
+    >>> # description of possible *scattered* scenarios.
+    >>> %launch scattered --help
+
+
+    Inspecting and modifying jobs which did not complete:
+    -----------------------------------------------------
+
+    If all goes well, you won't need this. But life's a beautiful b*ch. At any
+    time after launching a job-dictionary, you can inspect jobs that did not
+    complete using the command:
+
+    >>> %explore errors path/to/jobdictionary
+
+    This will load the requested job-dictionary and mark those jobs wich are
+    either running (on redmesa only) and jobs that completed successfully as
+    uninteresting. You are left with errors only (note that the description of
+    the other jobs is not lost and can be easily recovered if necessary). You
+    can then rapidly navigate through the errors using the ``goto`` command
+    we examined previously.
+
+    >>> %goto next        # first failed job
+    >>> vi OUTCAR         # diagnose
+    >>> vi stderr         # diagnose
+    >>> %showme functional # edit and correct.
+
+    This will got the first error and *change the working directory* so you can
+    inspect the output of the failed job. At this time, since the jobs has been
+    launched, a directory on disk exists which reflects the "job"-directory of
+    the job-dictionary.
+
+    You can then go to the next failed job.
+    
+    >>> %goto next        # second failed job
+    >>> vi OUTCAR         # diagnose
+    >>> vi stderr         # diagnose
+    >>> %showme functional # edit and correct.
+
+    When no failed jobs are left, you will get the following message:
+
+    >>> %goto next        
+    Reached end of job list.
+
+    If needed, you go through the failed jobs again:
+
+    >>> %goto reset # restart the merry go round.
+
+    In some cases, errors may happen sooner than we would like, and a printout
+    only available in the standard error/ouput of the PBS job itself.
+
+    >>> %goto pbs
+
+    Will relocate you to the directory where all the pbs scripts and output are located.
+
+    At this point, you can relaunch the failed jobs the same way you did previously.
+
+    >>> %launch scattered
+
+    Note that this will overwrite (don't worry, it will prompt you first) the
+    job-dictionary on disk. Whether this is a problem is up to you. *None* of
+    the information about any calculation has been lost, only information about the
+    failed calculations may have been modified (by you). In any case, the modified
+    job-dictionary can always be save to a different file with ``savejobs
+    path/to/newdict``.
+
+
+    Inspecting successful jobs and gathering output:
+    ------------------------------------------------
+
+    Successfull jobs are inspected the same way errors were above:
+
+    >>> %explore results path/to/job
+
+    Don't worry if you did overwrite the job-dictionary in the previous
+    section. Didn't I say no job information was lost?
+    Jobs can be cycled through on a case by case basis using ``goto next``.
+    It is also possible to gather all data from a job, say eigenvalues
+
+    >>> collect.eigenvalues
+    { "ZnMgO/Spinel": array([[6.5,...,18.546513]]) * eV,
+      ...
+      "ZnRhO/Olivine": array([[0.1541631, ..., 0.1315]) * eV }
+
+    This results are arranged in  python `dict
+    <http://docs.python.org/tutorial/datastructures.html#dictionaries>`__ where
+    each key points to a particular job. Most quantities are numpy_
+    arrays_. `numpy`_ is the standard python package for scientific
+    calculations. Furthermore, many quantities are given physical units using
+    the quantities_ package.
+
+    .. _numpy : http://docs.scipy.org/doc/numpy/reference/
+    .. _arrays : http://docs.scipy.org/doc/numpy/reference/arrays.html
+    .. _quantities : http://packages.python.org/quantities/user/tutorial.html
+
+    Which quantities are available, you ask? just hit tab at the right spot
+    and look for available completions.
+
+    >>> collect. # hit tab now. yes there is a dot at the end.
+
+    Lots of printout, but if it doesn't sound like a physical property, use at your own risk.
+    Note that if data gathering encounters an error in any given job, it will fail
+    silently for that job. If a particular calculation does not show up in the
+    dictionary, either that quantity is not available or something went wrong
+    in that job.
+
+
+    Inspecting running job.
+    -----------------------
+
+    >>> %explore running path/to/job
+    
+    Well, that is there to. At least on redmesa.
+
 """
 __docformat__ = "restructuredtext en"
 from contextlib  import contextmanager
@@ -381,7 +560,7 @@ def ipy_init():
   """ Initialises ipython session. 
 
       In order to initialize an ipython session with the lada interface, the
-      following lines can be introduces in the main function of you
+      following lines can be introduces in the main function of your
       ipy_user_conf.py
 
       >>> try: import lada.ipython 
