@@ -39,14 +39,14 @@ class rWavefunction(object):
     from numpy import conjugate, dot, multiply, transpose
     a = conjugate(self.up)
     if operator == None: b = ket.up
-    if operator.shape[0] == ket.up.shape[0] and operator.shape[-1] != ket.up.shape[0]:
+    elif operator.shape[0] == ket.up.shape[0] and operator.shape[-1] != ket.up.shape[0]:
       b = multiply(transpose(operator), ket.up) 
     else: b = multiply(operator, ket.up) 
     result = dot(b, a)
     if self.down != None: 
       a = conjugate(self.down)
       if operator == None: b = ket.down
-      if operator.shape[0] == ket.down.shape[0] and operator.shape[-1] != ket.down.shape[0]:
+      elif operator.shape[0] == ket.down.shape[0] and operator.shape[-1] != ket.down.shape[0]:
         b = multiply(transpose(operator), ket.down) 
       else: b = multiply(operator, ket.down) 
       result += dot(b, a)

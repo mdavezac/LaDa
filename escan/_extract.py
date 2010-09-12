@@ -249,16 +249,14 @@ class Extract(object):
     if self.is_spinor:
       if self.is_krammer:
         self._raw_rwfns = \
-            gtor_fourrier(self.raw_gwfns, self.rvectors, self.gvectors, self.comm), \
-            gtor_fourrier( self.raw_gwfns[self.inverse_indices,:,:],\
-                           self.rvectors, self.gvectors, self.comm )
+            gtor_fourrier(self.raw_gwfns, self.rvectors, self.gvectors, self.comm)
         for i, eig in enumerate(self.eigenvalues):
           if i%2 == 0:
-            rwfn = rWavefunction( self.comm, i, eig, self._raw_rwfns[0][:,i/2,0],\
-                                  self._raw_rwfns[0][:,i/2,1])
+            rwfn = rWavefunction( self.comm, i, eig, self._raw_rwfns[:,i/2,0],\
+                                  self._raw_rwfns[:,i/2,1])
           else: 
-            rwfn = rWavefunction(self.comm, i, eig, -self._raw_rwfns[1][:,i/2,1].conjugate(),\
-                                 self._raw_rwfns[1][:,i/2,0].conjugate())
+            rwfn = rWavefunction(self.comm, i, eig, self._raw_rwfns[:,i/2,1].conjugate(),\
+                                 -self._raw_rwfns[:,i/2,0].conjugate())
           result.append(rwfn)
       else: # no krammer degeneracy
         self._raw_rwfns = \
@@ -269,11 +267,12 @@ class Extract(object):
     else: # no spin polarization.
       if self.is_krammer:
         self._raw_rwfns = \
-            gtor_fourrier(self.raw_gwfns, self.rvectors, self.gvectors, self.comm), \
-            gtor_fourrier( self.raw_gwfns[self.inverse_indices,:,:],\
-                           self.rvectors, self.gvectors, self.comm )
+            gtor_fourrier(self.raw_gwfns, self.rvectors, self.gvectors, self.comm)
         for i, eig in enumerate(self.eigenvalues):
-          result.append( rWavefunction(self.comm, i, eig, self._raw_rwfns[i%2][:,i/2,0]) )
+          if i%2 == 0: 
+            result.append( rWavefunction(self.comm, i, eig, self._raw_rwfns[:,i/2,0]) )
+          else:
+            result.append( rWavefunction(self.comm, i, eig, -self._raw_rwfns[:,i/2,0].conjugate()) )
       else: # no krammer degeneracy
         self._raw_rwfns = \
             gtor_fourrier(self.raw_gwfns, self.rvectors, self.gvectors, self.comm)
