@@ -148,12 +148,10 @@ else:
       """ Returns True if two structures are equivalent. """
       if hasattr(self.converter, "__call__"):
         if not hasattr(a, "integer_hashcode"): 
-          a.integer_hash_code = self.structure_hashcode(self.converter(a))
-        a = a.integer_hashcode
+          a.integer_hashcode = self.structure_hashcode(self.converter(a.genes))
         if not hasattr(b, "integer_hashcode"): 
-          b.integer_hash_code = self.structure_hashcode(self.converter(b))
-        b = b.integer_hashcode
-        return a == b
+          b.integer_hashcode = self.structure_hashcode(self.converter(b.genes))
+        return a.integer_hashcode == b.integer_hashcode
 
       else:
         return self.structure_hashcode(a) == self.structure_hashcode(b)

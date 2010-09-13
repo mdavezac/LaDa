@@ -19,7 +19,7 @@ vasp.add_param      = "magmom", None
 vasp.add_specie = "Al", "pseudos/Al"
 vasp.add_specie = "Mg", "pseudos/Mg"
 vasp.add_specie =  "O",  "pseudos/O"
-vasp.species["Mg"].magnetic = True
+vasp.species["Mg"].moment = 5e0
 
 first_trial = { "kpoints": "\n0\nAuto\n1", "encut": 0.9 }
 """ parameter to override during first relaxation step. """

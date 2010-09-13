@@ -31,9 +31,9 @@ class Taboo(object):
       def diversity_taboo(self, indiv):
         """ taboo makes sure that no two individuals in the population and the
             offspring are the same. """
-        from iterator import iterchain
+        from itertools import chain
         comparison_operator = diversity
-        for a in iterchain(self.population, self.offspring):
+        for a in chain(self.population, self.offspring):
           if comparison_operator(a, indiv): return True
         return False
 
