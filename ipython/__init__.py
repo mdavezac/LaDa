@@ -327,12 +327,16 @@
     or something went wrong in that job.
 
     Finally, when changing to particular leaf of the jod-dictionary using
-    ``goto``, only subjobs will appear. 
+    ``goto``, only subjobs will appear. When there is only one job, the
+    quantities are returned explicitely, without the help of a dictionary.
 
     >>> %goto /ZnMgO
     >>> collect.eigenvalues
     { "ZnMgO/Spinel": array([[6.5,...,18.546513]]) * eV,
       "ZnMgO/Olivine": array([[-12.25463, ..., 21.216515]]) * eV }
+    >>> %goto Spinel
+    >>> collect.eigenvalues
+    array([[6.5,...,18.546513]]) * eV
 
 
     Inspecting running job.
@@ -758,8 +762,9 @@ class Collect(AbstractMassExtract):
       result = {}
       position = self.position
       for key, value in self._extractors().items():
-        if position != key[:len(position)]: continue
-        if len(position) < len(key) and position[-1] != '/': continue
+        if len(position) > 0:
+          if position != key[:len(position)]: continue
+          if len(position) < len(key) and position[-1] != '/': continue
         try: result[key] = getattr(value, name)
         except: result.pop(key, None)
       return result if len(result.keys()) > 1 else result[result.keys()[0]]
