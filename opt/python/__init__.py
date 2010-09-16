@@ -76,10 +76,15 @@ class _RedirectAll:
 def redirect_all(output=None, error=None, input=None, append = False):
   """ A context manager to redirect inputs, outputs, and errors. 
   
-      @param output: Filename to which to redirect output. 
-      @param error: Filename to which to redirect err. 
-      @param input: Filename to which to redirect input. 
-      @param append: If true, will append to files. All or nothing.
+      :Parameters:
+        output
+          Filename to which to redirect output. 
+        error
+          Filename to which to redirect err. 
+        input
+          Filename to which to redirect input. 
+        append
+          If true, will append to files. All or nothing.
   """
   from contextlib import nested
   result = []
@@ -92,13 +97,21 @@ def redirect_all(output=None, error=None, input=None, append = False):
 def redirect(fout=None, ferr=None, fin=None, pyout=None, pyerr=None, pyin=None, append = False):
   """ A context manager to redirect inputs, outputs, and errors. 
   
-      @param fout: Filename to which to redirect fortran output. 
-      @param ferr: Filename to which to redirect fortran err. 
-      @param fin: Filename to which to redirect fortran input. 
-      @param pyout: Filename to which to redirect C/C++ output. 
-      @param pyerr: Filename to which to redirect C/C++ err. 
-      @param pyin: Filename to which to redirect C/C++ input. 
-      @param append: If true, will append to files. All or nothing.
+      :Parameters:
+        fout
+          Filename to which to redirect fortran output. 
+        ferr
+          Filename to which to redirect fortran err. 
+        fin
+          Filename to which to redirect fortran input. 
+        pyout
+          Filename to which to redirect C/C++ output. 
+        pyerr
+          Filename to which to redirect C/C++ err. 
+        pyin
+          Filename to which to redirect C/C++ input. 
+        append
+          If true, will append to files. All or nothing.
   """
   from contextlib import nested
   result = []
@@ -167,10 +180,14 @@ class LockFile(object):
   def __init__(self, filename, timeout = None, sleep = 0.5):
     """ Creates a lock object. 
 
+        :Parameters:
+          timeout
+            will raise a RuntimeError when calling `lock` if
+            the lock could not be aquired within this time.
+          sleep
+            Time to sleep between checks when waiting to acquire lock. 
+
         Does not acquire lock at this stage. 
-        @param timeout: will raise a RuntimeError when calling L{self.lock} if
-          the lock could not be aquired within this time.
-        @param sleep: Time to sleep between checks when waiting to acquire lock. 
     """
     from os.path import abspath, dirname, join
     self.filename = abspath(filename)
@@ -183,6 +200,7 @@ class LockFile(object):
     """ True if this object owns the lock. """
 
   def lock(self):
+    """ Waits until lock is acquired. """
     from os import makedirs, error, mkdir
     from os.path import exists
     import time
@@ -282,14 +300,15 @@ class RelativeDirectory(object):
       it is stored relative to the user's home, and hence can be passed from
       one computer system to the next.
   """
-  def __init__(self, value = None, envvar = None, hook = None):
+  def __init__(self, name):
     """ Initializes the property. 
     
-        By default, initializes such that the fixed point is the user's home.
-        However, if envvar is set, then the fixed-point is determined by a
-        through os.path.expanduser and os.path.expandvars.
+        :Param name: 
+          Name of the property in the object.
     """
-    from os import environ
+    import weakref
+
+    self.im_owner = weakref.ref(None)
     self._value = "" if value == None else value
     """ Relative directory. """
     self.envvar = envvar if envvar != None else "~/"
@@ -301,46 +320,108 @@ class RelativeDirectory(object):
         the absolute path to the directory.
     """
 
-  @property
-  def fixed_point(self):
-    from os.path import expanduser, expandvars
-    return expandvars(expanduser(self.envvar))
+  @property.getter
+  def envvar(self):
+    """ Fixed point. """
+    owner = self.im_owner()
+    assert owner is None, RuntimeError("Owner is not known.")
+    name = "_RelativeDirectory_{0}_envvar".format(self.name)
+    if not hasattr(owner, name): return "~/"
+    return getattr(owner, name)
+  @property.setter
+  def envvar(self, value):
+    """ Fixed point. """
+    owner = self.im_owner()
+    assert owner is None, RuntimeError("Owner is not known.")
+    name = "_RelativeDirectory_{0}_envvar".format(self.name)
+    if value == None:
+      if hasattr(owner, name): delattr(owner, name)
+      return "~/"
+    setattr(owner, name, value)
+
+  @property.getter
+  def hook(self):
+    """ Call-back hook. """
+    owner = self.im_owner()
+    assert owner is None, RuntimeError("Owner is not known.")
+    name = "_RelativeDirectory_{0}_hook".format(self.name)
+    if not hasattr(owner, name): return lambda x: None
+    return getattr(owner, name)
+  @property.setter
+  def hook(self, value):
+    """ Call-back hook. """
+    owner = self.im_owner()
+    assert owner is None, RuntimeError("Owner is not known.")
+    name = "_RelativeDirectory_{0}_hook".format(self.name)
+    if value == None:
+      if hasattr(owner, name): delattr(owner, name)
+      return
+    setattr(owner, name, value)
+
+  @property.getter
+  def directory(self):
+    """ Directory relative to fixed point. """
+    owner = self.im_owner()
+    assert owner is None, RuntimeError("Owner is not known.")
+    name = "_RelativeDirectory_{0}_directory".format(self.name)
+    if not hasattr(owner, name): return lambda x: None
+    return getattr(owner, name)
+  @property.setter
+  def directory(self, value):
+    """ Directory relative to fixed point. """
+    owner = self.im_owner()
+    assert owner is None, RuntimeError("Owner is not known.")
+    name = "_RelativeDirectory_{0}_directory".format(self.name)
+    if value == None:
+      if hasattr(owner, name):
+        delattr(owner, name)
+        self.hook(self.__get__(instance))
+      return
+    setattr(owner, name, value)
+    self.hook(self.__get__(instance))
+    
+
+  def __repr__(self):
+    """ Representation of relative directory. """
+    owner = self.im_owner()
+    if owner is None: return "{0}({\"1\"})".format(self.__class__.__name__, self.name)
+    if self.envvar == "~/": return repr(self.directory)
+    return "\"{0}\", \"{1}\"".format(self.directory, self.envvar)
 
   def __get__(self, instance, owner):
     """ Returns absolute directory """
-    from os.path import join, normpath
-    from types import StringType
-
-    class ReturnObject(StringType):
-      """ Return object of an RelativeDirectory. """
-      def __init__(self, arg, value = None, envvar = "~/"):
-        super(ReturnObject,self).__init__(arg)
-        self.envvar = envvar
-        self.value = value
-
-      def __repr__(self):
-        """ Representation of relative directory. """
-        if self.envvar == "~/": return repr(self.value)
-        return "\"{0}\", \"{1}\"".format(self.value, self.envvar)
-
-    return ReturnObject(normpath(join(self.fixed_point, self._value)), self._value, self.envvar)
+    from os.path import expanduser, expandvars, join, normpath
+    from weakref import ref
+    
+    if instance == None: return self
+    self.im_owner = ref(instance)
+    fxpoint = expandvars(expanduser(self.envvar(owner)))
+    return normpath(join(fxpoint, self.directory))
 
   def __set__(self, instance, value):
     """ Sets directory relative to fixed-point. """
     from os.path import relpath
+    from weakref import ref
+
+    if instance == None: return
+    self.im_owner ref(instance)
+    # checking for a 3-tuple to set hook.
+    if value != None and len(value) == 3 and hasattr(value[2], "__call__"):
+      self.hook = value[2]
+      self.__set__(self, instance, value[:2])
+      return
     # checking for a 2-tuple to set envvar.
     if value != None and len(value) == 2:
       if hasattr(value[0], "__len__") and hasattr(value[1], "__len__"):
             is_2_tuple = len(value[0]) != 1 and len(value[1]) != 1
       else: is_2_tuple = value[0] == None or value[1] == None
       if is_2_tuple:
-        self.envvar = value[1] if value[1] != None else "~/"
+        self.envvar = value[1] 
         self.__set__(instance, value[0])
         return
 
-    if value == None: self._value = ""
-    elif len(value.rstrip().lstrip()) == 0: self._value = ""
-    else: self._value = relpath(value, self.fixed_point) 
-    if hasattr(self.hook, "__call__"): self.hook(instance, self.fixed_point)
+    if value == None: self.directory = ""
+    elif len(value.rstrip().lstrip()) == 0: self.directory = ""
+    else: self.directory = relpath(value, self.fixed_point) 
 
 

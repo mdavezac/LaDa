@@ -606,7 +606,7 @@ class AbstractMassExtract(object):
     self.__dict__.pop("_cached_extractors", None)
     self.__dict__.pop("_cached_properties", None)
 
-  root = RelativeDirectory(hook = uncache)
+  root = RelativeDirectory("root")
   """ Root directory of the job. """
 
   def __init__(self, path, comm = None):
