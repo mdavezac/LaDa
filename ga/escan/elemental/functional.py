@@ -5,12 +5,22 @@ from .extract import Extract as GAExtract
 __all__ = ['Darwin']
 
 class Darwin: 
+  ordinals = ['first', 'second', 'third', 'fourth', 'fith', 'sixth',
+              'seventh', 'eight', 'nineth', 'eleventh', 'twelfth',
+              'thirteenth', 'fourteenth', 'fifteenth', 'sixteenth',
+              'seventeenth', 'eighteenth', 'nineteenth' ]
+  """ Names of each historical age in the GA. """
   Extract = GAExtract
   """ Holds all GA parameters """
   RESTARTCAR = "GA_RESTARTCAR" 
-  """ Pickle for restarting GA. """
-  SAVECAR = "GA_SAVECAR" 
-  """ Pickle to which GA saves. """
+  """ Pickle to which GA saves and from which it restarts. """
+  OUTCAR = "out"
+  """ Output filename. """
+  ERRCAR = "err"
+  """ Error filename. """
+  FUNCCAR = "GA_FUNCCAR"
+  """ Functional filename """
+
   def __init__(self, evaluator, **kwargs): 
     """ Initializes a GA functional. 
          
@@ -76,6 +86,9 @@ class Darwin:
     """ Current population """
     self.offspring = []
     """ Current offspring """
+
+    self.age = None
+    """ Current historical age (e.g. number of restarts). """
 
   @property
   def checkpoints(self):
@@ -146,22 +159,23 @@ class Darwin:
   def restart(self):
     """ Saves current status. """
     import cPickle
-    from os.path import exists
+    from os.path import exists, join
     from boost.mpi import broadcast
-    if not exists(self.GA_RESTARTCAR):
-      if self.comm.do_print == True:
-        print "Restart file %s not found. Will start from scratch." % (self.GA_RESTARTCAR)
-      return
+
+
+    path = join(join(self.outdir.path, self.age), self.RESTARTCAR)
+    if not exists(path): return
     if self.comm.rank == 0:
-      with open(self.GA_RESTARTCAR, "r") as file: this = cPickle.load(file)
+      with open(path, "r") as file: this = cPickle.load(file)
       broadcast(self.comm, this,0)
       self.__dict__.update(this.__dict__)
     else:
       this = broadcast(self.comm, None,0)
       self.__dict__.update(this.__dict__)
     if self.comm.do_print:
-      print "Restarting from file %s." % (self.GA_RESTARTCAR)
-      print "Restarting at generation %i." % (self.current_gen)
+      print "Restarting from file {0}.\n"\
+            "Restarting at generation {1}.\n"
+            .format(self.RESTARTCAR, self.current_gen)
       if len(self.population) == 0: print "Restarting with new population.\n"
       else:
         print "Restarting with population:"
@@ -174,8 +188,13 @@ class Darwin:
 
   def save(self):
     """ Saves current status. """
-    import cPickle
-    with open(self.GA_SAVECAR, "w") as file: cPickle.dump(self, file)
+    from os.path import join
+    from pickle import dump
+    from ....opt.changedir import changedir
+
+    path = join(join(self.outdir.path, self.age), self.RESTARTCAR)
+    with Changedir(join(self.outdir.path, age)) as cwd: 
+      with open(self.GA_SAVECAR, "w") as file: dump(self, file)
     return True
     
   def print_nb_evals(self):
@@ -183,9 +202,11 @@ class Darwin:
       print "Number of functional evaluations: ", self.evaluator.nbcalc
 
   def __call__(self, comm = None, **kwargs):
+    from os.path import join
     from copy import deepcopy
     from boost.mpi import world
-    from lada.ga import darwin as search
+    from ... import darwin as search
+    from ....opt import redirect
     # takes care of keyword arguments:
     if len(kwargs.keys()) > 0: 
       this = deepcopy(self)
@@ -199,8 +220,10 @@ class Darwin:
     self.comm = comm if comm != None else world
     self.comm.do_print = self.comm.rank == 0
 
-    this.restart()
-    search.run(this)
+    with redirect( pyout=join(self.outdir.path, self.OUTCAR),\
+                   pyerr=join(self.outdir.path, self.ERRCAR) ) as streams:
+      this.restart()
+      search.run(this)
     del self.comm
 
   def __str__(self):
@@ -225,6 +248,7 @@ class Darwin:
            "functional.cm_rate     = {5.cm_rate}\n"\
            "functional.popsize     = {5.popsize}\n"\
            "functional.max_gen     = {5.max_gen}\n"\
+           "functional.age         = {5.age}\n"\
            "functional.current_gen = {5.current_gen}\n"\
            "functional.mean_conc   = {5.mean_conc}\n"\
            "functional.stddev_conc = {5.stddev_conc}\n"\
@@ -234,6 +258,7 @@ class Darwin:
                     repr(self.crossover).replace("ga_operator", "crossover"),
                     repr(self.mutation).replace("ga_operator", "mutation"),
                     self )
+
 
 
 

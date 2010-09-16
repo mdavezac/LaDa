@@ -1,24 +1,18 @@
-from lada.opt.decorators import make_cached 
+from ....decorators import make_cached 
+from .functional import Darwin
 import re
 
 __all__  = ['Extract']
 
 class Extract(object): 
   """ Extracts from ga ouput. """
-
-
-  ordinals = ['first', 'second', 'third', 'fourth', 'fith', 'sixth',
-              'seventh', 'eight', 'nineth', 'eleventh', 'twelfth',
-              'thirteenth', 'fourteenth', 'fifteenth', 'sixteenth',
-              'seventeenth', 'eighteenth', 'nineteenth' ]
+  ordinals = Darwin.ordinals
   """ Names of each historical age in the GA. """
-  OUTCAR = "out"
+  OUTCAR = Darwin.OUTCAR
   """ Output filename. """
-  ERRCAR = "err"
+  ERRCAR = Darwin.ERRCAR
   """ Error filename. """
-  INCAR = "input.py"
-  """ Input filename. """
-  FUNCCAR = "oscillator.py"
+  FUNCCAR = Darwin.FUNCCAR
   """ Functional filename. """
 
   INDIV_PATTERN = re.compile("^\s*(array\(\[(?:\s*[0,1]\,|(?:\,\s*$^)\s*)*"\
@@ -110,23 +104,6 @@ class Extract(object):
     """ Uncaches results. """
     from lada.opt.decorators  import uncache as opt_uncache
     opt_uncache(self)
-
-  def move_to_new_age(self): 
-    """ Moves current results to a new age directory. """
-    from os import makedirs
-    from os.path import join, exists
-    from shutil import copy, move
-
-    # uncache results, make sure we don't overwrite anything.
-    self.uncache()
-
-    if not exists(join(self.root.path, "stdout")): return
-    newdir = join(self.root.path, self.next_dirname)
-    if not exists(newdir): makedirs(newdir)
-    for file in ["stdout", "stderr"]:
-      move(join(self.root.path, file), join(newdir, self.OUTCAR))
-    for file in [self.INCAR, self.FUNCCAR]: 
-      copy(join(self.root.path, file), newdir)
 
 
   @property
