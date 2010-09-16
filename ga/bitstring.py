@@ -53,6 +53,10 @@ class Crossover(object):
     if hasattr(a, "fitness"): delattr(a, "fitness")
     return a
 
+  def __repr__(self):
+    return "from {0} import {1}\nga_operator = {1}({2})"\
+           .format(self.__class__.__module__, self.__class__.__name__, self.rate)
+
 class Mutation(object):
   """ A mutation operation. """
 
@@ -69,6 +73,9 @@ class Mutation(object):
     if hasattr(a, "fitness"): delattr(a, "fitness")
     return a
 
+  def __repr__(self):
+    return "from {0} import {1}\nga_operator = {1}({2})"\
+           .format(self.__class__.__module__, self.__class__.__name__, self.rate)
 
 class LocalSearch(object):
   """ Performs a local search over a bitstring by flipping random bits. """

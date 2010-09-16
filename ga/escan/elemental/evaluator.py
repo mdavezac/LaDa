@@ -1,5 +1,10 @@
 """ Contains evaluators for ESCAN properties """
+__docformat__ = "restructuredtext en"
 from numpy import array as np_array
+from ....opt import RelativeDirectory
+
+
+__all__ = ['cound_calls', 'Bandgap', 'Dipole', 'EffectiveMass']
 def count_calls(method):
   """ Increments calls at each call. """
   def wrapped(*args, **kwargs):
@@ -16,16 +21,25 @@ def count_calls(method):
   
 class Bandgap(object):
   """ An evaluator function for bandgaps at S{Gamma}. """
-  def __init__(self, converter, escan, outdir = None, references = None, **kwargs):
+  outdir = RelativeDirectory()
+  """ Location of output directory. """
+  workdir = RelativeDirectory()
+  """ Location of working directory. """
+  def __init__(self, converter, escan, outdir = None, workdir = None, references = None, **kwargs):
     """ Initializes the bandgap object. 
 
-        @param converter: is a functor which converts between a bitstring and a
-          lada.crystal.Structure, and vice versa.
-        @type  converter: duck-typed to L{Converter}
-        @param escan: escan functional.
-        @param kwargs: Other keyword arguments to be passed to the bandgap routine.
+        :Parameters: 
+          converter : `lada.ga.escan.elemental.Converter`
+            is a functor which converts between a bitstring and a
+            `lada.crystal.Structure`, and vice versa.
+          escan : `lada.escan.Escan`
+            escan functional.
+          kwargs
+            Other keyword arguments to be passed to the bandgap routine.
     """
     from copy import deepcopy
+
+    super(Bandgap, self).__init__()
 
     self.converter = converter 
     """ Conversion functor between structures and bitstrings. """
@@ -43,6 +57,8 @@ class Bandgap(object):
     """
     self.kwargs = deepcopy(kwargs)
     """ Additional arguments to be passed to the bandgap functional. """
+    self.outdir = outdir
+    self.workdir = workdir
 
 
   def __len__(self):
@@ -52,19 +68,24 @@ class Bandgap(object):
   def run( self, indiv, outdir = None, comm = None, **kwargs ):
     """ Computes bandgap of an individual. 
     
+        :Parameters:
+          indiv 
+            Individual to compute. Will be converted to a
+            `lada.crystal.Structure` using `converter`.
+          outdir
+            Output directory. 
+          comm : boost,mpi.communicator
+            MPI communicator.
+          kwargs 
+            converter, escan, references, outdir  can be overwridden
+            on call. This will not affect calls further down the line. Other
+            arguments are passed on to the lada.escan.bandgap` function on call.
+
+        :return: an extractor to the bandgap. 
+
         The epitaxial energy is stored in indiv.epi_energy
         The eigenvalues are stored in indiv.eigenvalues
         The VBM and CBM are stored in indiv.bands
-        @param indiv: Individual to compute. Will be converted to a L{structure
-          <lada.crystal.Structure>} using L{self.converter}.
-        @param outdir: Output directory. 
-        @param comm: MPI communicator.
-        @param kwargs: L{converter <Bandgap.converter>}, L{escan
-          <Bandgap.escan>}, L{references <Bandgap.references>}, L{outdir
-          <Bandgap.outdir>} can be overwridden on call. This will not affect
-          calls further down the line. Other arguments are passed on to the
-          L{bandgap <lada.escan.bandgap>} functional.
-        @return: an extractor to the bandgap. 
     """
     from os.path import join
     from copy import deepcopy
@@ -75,6 +96,7 @@ class Bandgap(object):
     references = kwargs.pop("references", self.references)
     converter  = kwargs.pop( "converter",  self.converter)
     escan      = kwargs.pop(     "escan",      self.escan)
+    workdir    = kwargs.pop(   "workdir",     self.workdir)
     if outdir == None:     outdir     = join(self.outdir, str(self.nbcalc))
     if comm == None:       comm       = world
  
@@ -85,6 +107,7 @@ class Bandgap(object):
     dictionary.update(kwargs) 
     dictionary["comm"]       = comm 
     dictionary["outdir"]     = outdir
+    dictionary["workdir"]    = workdir
     dictionary["references"] = self.references(structure) if hasattr(references, "__call__")\
                                else references
     # performs calculation.
@@ -122,6 +145,24 @@ class Bandgap(object):
     self.__dict__.update(arg[0])
     self.validity = None
     self.references = arg[1]
+
+  def __repr__(self): 
+    """ Returns representation of evaluator. """
+    return   "from {5} import {2}\n"\
+             "{0}\n\n{1}\nevaluator = {2}(converter, escan_functional)\n"\
+             "evaluator.kwargs     = {4}\n"\
+             "evaluator.nbcalc     = {3.nbcalc}\n"\
+             "evaluator.references = {3.references}\n"\
+             "evaluator.outdir     = {5}\n"\
+             "evaluator.workdir    = {6}\n"\
+             .format( repr(self.converter),
+                      repr(self.escan).replace("functional", "escan_functional"),
+                      self.__class__.__name__,
+                      self,
+                      repr(self.kwargs), 
+                      self.__class__.__module__,
+                      repr(self.outdir), repr(self.workdir))
+
 
 class Dipole(Bandgap):
   """ Evaluates the oscillator strength.

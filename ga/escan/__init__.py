@@ -3,7 +3,7 @@
     At present operators are included only for elemental superlattices.
 """
 __docformat__ = "restructuredtext en"
-__all__ = ['elemental', 'extract']
+__all__ = ['elemental']
 
 try: from ... import enumeration
 except ImportError: pass

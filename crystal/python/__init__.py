@@ -326,15 +326,16 @@ Site.type = property(_get_site_type, _set_site_type, doc=Site._type.__doc__)
 # changes __repr__ behavior
 def _print_structure(self):
   result  = "# Structure definition.\n"
-  result += "structure = %s()\n" % (self.__class__.__name__)
-  result += "structure.scale = %e\n" % (self.scale)
+  result += "from {0} import {1}\nstructure = {1}()\n"\
+            "structure.scale = {2.scale}\n"\
+            "structure.weight = {2.weight}\n"\
+            "structure.name = \"{2.name}\"\n"\
+            "structure.energy = {2.energy}\n"\
+            .format(self.__class__.__module__, self.__class__.__name__, self)
   result += "structure.set_cell = (%e, %e, %e),\\\n"\
             "                     (%e, %e, %e),\\\n"\
             "                     (%e, %e, %e)\n"\
             % tuple([x for x in self.cell.flat])
-  result += "structure.weight = %e\n" % (self.weight)
-  result += "structure.name = \"%s\"\n" % (self.name)
-  result += "structure.energy = %s\n" % (self.energy)
   for atom in self.atoms:
     result += "structure.add_atom = (%e, %e, %e), \"%s\", " \
               % (atom.pos[0], atom.pos[1], atom.pos[2], str(atom.type))
@@ -348,14 +349,16 @@ _print_structure.__doc__ = Structure.__str__.__doc__
 Structure.__repr__ = _print_structure
 
 def _print_lattice(self):
-  result  = "# Lattice definition.\n"
-  result += "lattice = %s()\n" % (self.__class__.__name__)
-  result += "lattice.scale = %e\n" % (self.scale)
+  result  = "# Lattice definition.\n"\
+            "from {0} import {1}\n"\
+            "lattice = {1}()\n"\
+            "lattice.scale = {2.scale}\n"\
+            "lattice.name = \"{2.name}\"\n"\
+            .format(self.__class__.__module__,self.__class__.__name__,self)
   result += "lattice.set_cell = (%e, %e, %e),\\\n"\
             "                   (%e, %e, %e),\\\n"\
             "                   (%e, %e, %e)\n"\
             % tuple([x for x in self.cell.flat])
-  result += "lattice.name = \"%s\"\n" % (self.name)
   for site in self.sites:
     result += "lattice.add_site = (%e, %e, %e)"  % tuple( x for x in site.pos )
     if len(site.type) == 0: result += "\n"; continue

@@ -309,7 +309,21 @@ class RelativeDirectory(object):
   def __get__(self, instance, owner):
     """ Returns absolute directory """
     from os.path import join, normpath
-    return normpath(join(self.fixed_point, self._value))
+    from types import StringType
+
+    class ReturnObject(StringType):
+      """ Return object of an RelativeDirectory. """
+      def __init__(self, arg, value = None, envvar = "~/"):
+        super(ReturnObject,self).__init__(arg)
+        self.envvar = envvar
+        self.value = value
+
+      def __repr__(self):
+        """ Representation of relative directory. """
+        if self.envvar == "~/": return repr(self.value)
+        return "\"{0}\", \"{1}\"".format(self.value, self.envvar)
+
+    return ReturnObject(normpath(join(self.fixed_point, self._value)), self._value, self.envvar)
 
   def __set__(self, instance, value):
     """ Sets directory relative to fixed-point. """
@@ -328,3 +342,5 @@ class RelativeDirectory(object):
     elif len(value.rstrip().lstrip()) == 0: self._value = ""
     else: self._value = relpath(value, self.fixed_point) 
     if hasattr(self.hook, "__call__"): self.hook(instance, self.fixed_point)
+
+

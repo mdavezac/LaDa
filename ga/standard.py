@@ -1,8 +1,9 @@
 """ Holds standard genetic algorithm operations. 
 
-    @group Checkpoints: best, print_population, print_offspring,
+    :group Checkpoints: best, print_population, print_offspring,
                         average_fitness, _check_generation
 """
+__docformat__ = "restructuredtext en"
 def bound_method(self, method):
   """ Returns a method bound to self. """
   from new import instancemethod
@@ -10,17 +11,18 @@ def bound_method(self, method):
 
 class Taboo(object):
   """ A container of taboo operators.
+
       By default, a diversity taboo operator is added. 
   """
 
   def __init__(self, diversity=True):
     """ Creates a Taboo container.
 
-        @param diversity: if True then a diversity constraint is added to the
+        :Param diversity: if True then a diversity constraint is added to the
           Taboo container. If a callable, uses should be a comparison operator
           to use with the diversity operator.  Otherwise the container is empty
           on initialization.
-        @type diversity: Boolean, or callable. 
+        :type diversity: Boolean, or callable. 
     """
     super(Taboo, self).__init__()
     self.taboos = []
@@ -129,39 +131,41 @@ def _check_generation( self ):
   if self.max_gen < 0: return True
   return self.current_gen < self.max_gen
   
-def population_evaluation(self, evaluator):
-  """ Standard population evaluation. 
-      Evaluates individual only if fitness attribute does not exist. 
-      Fitness is the return of evaluation subroutine given on input.
-      evaluation subroutine should take an individual at its only argument.
-  """
-  from new import instancemethod
-
-  def popeval(self):
-    for indiv in self.population:
-      if not hasattr(indiv, "fitness" ): 
-        indiv.fitness = evaluator(indiv)
-    for indiv in self.offspring:
-      if not hasattr(indiv, "fitness" ): 
-        indiv.fitness = evaluator(indiv)
-
-  popeval.__doc__ = population_evaluation.__doc__
-  popeval = bound_method(self, popeval)
-  return popeval
-
-def mpi_population_evaluation(self, evaluator, pools = None):
-  """ Population and offspring evaluation are splitted across processors.
+def serial_population_evaluation(self, evaluator):
+  """ Evaluates population and offspring serially.
   
-      Usage:
-      >>> darwin.evaluation = standard.mpi_population_evaluation(darwin, evaluator, pools)
+      :Param evaluator: 
+        Functional which performs actual calculations.
+
+      Only individuals without a ``fitness`` attribute are evaluated. 
   """
-  from boost.mpi import broadcast
+  for indiv in self.population:
+    if not hasattr(indiv, "fitness" ): 
+      indiv.fitness = evaluator(indiv)
+  for indiv in self.offspring:
+    if not hasattr(indiv, "fitness" ): 
+      indiv.fitness = evaluator(indiv)
+
+def mpi_population_evaluation(self, evaluator, pools, comm = None):
+  """ MPI Population and offspring evaluation.
+  
+      :Param evaluator: 
+        Functional which performs actual calculations.
+      :Param pools:
+        Number of pools of processors across which to split evaluations.
+      :Param comm: 
+        group boost.mpi.communicator.
+
+      Only individuals without a ``fitness`` attribute are evaluated. 
+  """
+  from boost.mpi import broadcast, scatter, all_gather
+  from itertools import chain
   # split communicator along number of pools
-  if pools == None: pools = self.comm.size
-  if pools > self.comm.size: pools = self.comm.size
-  color = self.comm.rank % pools
-  local_comm = self.comm.split(color)
-  heads_comm = self.comm.split(1 if local_comm.rank == 0 else 2)
+  if pools == None: pools = comm.size
+  if pools > comm.size: pools = comm.size, scatter, all_gather
+  color = comm.rank % pools
+  local_comm = comm.split(color)
+  heads_comm = comm.split(1 if local_comm.rank == 0 else 2)
 
   def check_pops(this, population):
     if not __debug__: return
@@ -178,45 +182,52 @@ def mpi_population_evaluation(self, evaluator, pools = None):
         RuntimeError("Fitness are not equivalent across processes.")
     this.comm.barrier()
 
-  def evaluation(this):
-    from boost.mpi import scatter, all_gather
 
-    gather_these = []
-    def iterpops(*pops):  # goes through both populations, one after the other.
-      for pop in pops:
-        for u in pop:
-          if not hasattr(u, "fitness"): yield u
+  gather_these = []
+  # Now goes throught individuals which need be evaluated
+  for index, indiv in enumerate(chain(self.population, self.offspring)):
+    if not hasattr(indiv, "fitness"): continue
+    if index % pools == color: 
+      fitness = evaluator(indiv, comm = local_comm)
+      if local_comm.rank == 0: gather_these.append( (indiv, fitness) )
 
-    # Now goes throught individuals which need be evaluated
-    for index, indiv in enumerate(iterpops(this.population, this.offspring)):
-      if index % pools == color: 
-        fitness = evaluator(indiv, comm = local_comm)
-        if local_comm.rank == 0: gather_these.append( (indiv, fitness) )
+  # gathers all newly computed individuals. 
+  if local_comm.rank == 0:
+    gather_these = all_gather(heads_comm, gather_these)
+  gather_these = broadcast(local_comm, gather_these, 0)
 
-    # gathers all newly computed individuals. 
-    if local_comm.rank == 0:
-      gather_these = all_gather(heads_comm, gather_these)
-    gather_these = broadcast(local_comm, gather_these, 0)
+  # now reinserts them into populations.
+  for index, indiv in enumerate(chain(self.population, self.offspring)):
+    if not hasattr(indiv, "fitness"): continue
+    assert len(gather_these) > index % pools, \
+           RuntimeError("%s > %i %% %i" % (len(gather_these), index, pools))
+    assert len(gather_these[index % pools]) != 0
+    a, fitness = gather_these[index % pools].pop(0)
+    indiv.fitness = fitness
+    indiv = a
+  comm.barrier()
+  for index, indiv in enumerate(chain(self.population, self.offspring)):
+    if not hasattr(indiv, "fitness"): continue
+    assert False, "should not be here"
+  comm.barrier()
 
-    # now reinserts them into populations.
-    for index, indiv in enumerate(iterpops(this.population, this.offspring)):
-      assert len(gather_these) > index % pools, \
-             RuntimeError("%s > %i %% %i" % (len(gather_these), index, pools))
-      assert len(gather_these[index % pools]) != 0
-      a, fitness = gather_these[index % pools].pop(0)
-      indiv.fitness = fitness
-      indiv = a
-    self.comm.barrier()
-    for index, indiv in enumerate(iterpops(this.population, this.offspring)):
-      assert False, "should not be here"
-    this.comm.barrier()
-
-    check_pops(this, this.population)
-    check_pops(this, this.offspring)
+  check_pops(self, self.population)
+  check_pops(self, self.offspring)
     
   evaluation.__doc__ = mpi_population_evaluation.__doc__
   evaluation = bound_method(self, evaluation)
   return evaluation
+
+def population_evaluation(self, evaluator, comm=None, pools=None):
+  """ Chooses between MPI and serial evaluation. """
+  if comm == None or pools == None or pools == 1: 
+    serial_population_evaluation(self, evaluator)
+  elif comm.size == 1: 
+    serial_population_evaluation(self, evaluator)
+  else: 
+    if pools == 0: pools = comm.size
+    mpi_population_evaluation(self, evaluator, comm=comm, pools=pools)
+
 
 class Mating(object):
   """ Aggregator of mating operators. 
@@ -236,6 +247,15 @@ class Mating(object):
     """ Initializes the container of mating operator. """
     self.operators = []
     self.sequential = sequential
+    """ If true, operators are applied sequentially. """
+
+  def __repr__(self):
+    string =  "from {0} import {1}".format(self.__class__.__module__, self.__class__.__name__)
+    string +=  "mating = {0}({1})".format(self.__class__.__name__, self.sequential)
+    for function, rate, n in self.operators:
+      string += "mating.add({0}, {1})".format(repr(self.function), self.rate)
+    return string
+
 
   def add(self, function, rate=1):
     """ Adds a mating operator, with a given rate, to the current list. """

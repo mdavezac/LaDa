@@ -1,10 +1,13 @@
 """ A GA subpackage defining standard genetic operator for elemental alloys. """
 
-__all__ = [ "evaluator" ]
-from lada.ga.bitstring import Individual as BitstringIndividual, \
-                              Crossover as BitstringCrossover, \
-                              Mutation
-import evaluator 
+__all__ = [ 'evaluator', 'Individual', 'Crossover', 'Mutation', 'Converter',
+            'LayeredConverter', 'Extract', 'Darwin']
+
+from ...bitstring import Individual as BitstringIndividual, \
+                         Crossover as BitstringCrossover, \
+                         Mutation
+from .extract import Extract
+from .functional import Darwin
 class Individual(BitstringIndividual):
   """ An individual for elemental superlattices. 
       
@@ -138,10 +141,15 @@ class Converter(object):
       result.scale = result.lattice.scale
       return result
 
+  def __repr__(self):
+    return "from {0} import {1}\n{2}\nconverter = {1}({3},{4})"\
+           .format(self.__class__.__module__, self.__class__.__name__,\
+                   self.lattice, repr(self.structure.cell))
+
 class LayeredConverter(object):
   """ Converts a bitstring into an actual superlattice structure, and vice-versa. """
 
-  def __init__(self, cell, lattice = None):
+  def __init__(self, cell=None, lattice = None, structure=None):
     """ Initializes a functor for bitstring to crystal structure conversion. 
 
         Structure().L{lattice<crystal.Structure.lattice>} must be set. 
@@ -153,6 +161,9 @@ class LayeredConverter(object):
     """
     from lada.crystal import LayerDepth, sort_layers, Structure, fill_structure
     super(LayeredConverter, self).__init__()
+    if structure != None: 
+      self.structure = sort_layers(structure)
+      return
     
     if lattice != None:
       oldlattice = None
@@ -222,3 +233,7 @@ class LayeredConverter(object):
       assert result.lattice.scale > 0e0
       result.scale = result.lattice.scale
       return result
+
+  def __repr__(self):
+    return "from {0} import {1}\n{2}\nconverter = {1}(structure)"\
+           .format(self.__class__.__module__, self.__class__.__name__, repr(self.structure))
