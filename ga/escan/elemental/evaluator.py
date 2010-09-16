@@ -1,7 +1,6 @@
 """ Contains evaluators for ESCAN properties """
 __docformat__ = "restructuredtext en"
 from numpy import array as np_array
-from ....opt import RelativeDirectory
 
 
 __all__ = ['cound_calls', 'Bandgap', 'Dipole', 'EffectiveMass']
@@ -21,10 +20,6 @@ def count_calls(method):
   
 class Bandgap(object):
   """ An evaluator function for bandgaps at S{Gamma}. """
-  outdir = RelativeDirectory()
-  """ Location of output directory. """
-  workdir = RelativeDirectory()
-  """ Location of working directory. """
   def __init__(self, converter, escan, outdir = None, workdir = None, references = None, **kwargs):
     """ Initializes the bandgap object. 
 
@@ -38,6 +33,7 @@ class Bandgap(object):
             Other keyword arguments to be passed to the bandgap routine.
     """
     from copy import deepcopy
+    from ....opt import RelativeDirectory
 
     super(Bandgap, self).__init__()
 
@@ -45,8 +41,6 @@ class Bandgap(object):
     """ Conversion functor between structures and bitstrings. """
     self.escan = escan
     """ Escan functional """
-    self.outdir = "indiv"  if outdir == None else outdir
-    """ Output directory.  """
     self.nbcalc = 0
     """ Number of calculations. """
     self.references = references 
@@ -57,9 +51,11 @@ class Bandgap(object):
     """
     self.kwargs = deepcopy(kwargs)
     """ Additional arguments to be passed to the bandgap functional. """
-    self.outdir = outdir
-    self.workdir = workdir
 
+    self.outdir = RelativeDirectory(path=outdir)
+    """ Location of output directory. """
+    self.workdir = RelativeDirectory(path=workdir)
+    """ Location of working directory. """
 
   def __len__(self):
     """ Returns length of bitstring. """
@@ -97,7 +93,7 @@ class Bandgap(object):
     converter  = kwargs.pop( "converter",  self.converter)
     escan      = kwargs.pop(     "escan",      self.escan)
     workdir    = kwargs.pop(   "workdir",     self.workdir)
-    if outdir == None:     outdir     = join(self.outdir, str(self.nbcalc))
+    if outdir == None:     outdir     = join(self.outdir.path, str(self.nbcalc))
     if comm == None:       comm       = world
  
     # creates a crystal structure (phenotype) from the genotype.
@@ -135,33 +131,28 @@ class Bandgap(object):
     from pickle import dumps
     d = self.__dict__.copy()
     references = self.references
-    del d["references"]
-    if hasattr(references, "__name__"):
-      assert references.__name__ != '<lambda>',\
-             RuntimeError("\"references\" is a lambda. Lambdas cannot be reliably pickled.")
-    return d, references
+    try:  dumps(d["references"])
+    except TypeError: 
+      raise RuntimeError("Cannot pickle references in Bandgap evaluator.")
+    return d
   def __setstate__(self, arg):
     from pickle import loads
     self.__dict__.update(arg[0])
-    self.validity = None
-    self.references = arg[1]
 
   def __repr__(self): 
     """ Returns representation of evaluator. """
-    return   "from {5} import {2}\n"\
-             "{0}\n\n{1}\nevaluator = {2}(converter, escan_functional)\n"\
-             "evaluator.kwargs     = {4}\n"\
-             "evaluator.nbcalc     = {3.nbcalc}\n"\
-             "evaluator.references = {3.references}\n"\
-             "evaluator.outdir     = {5}\n"\
-             "evaluator.workdir    = {6}\n"\
-             .format( repr(self.converter),
-                      repr(self.escan).replace("functional", "escan_functional"),
-                      self.__class__.__name__,
-                      self,
-                      repr(self.kwargs), 
-                      self.__class__.__module__,
-                      repr(self.outdir), repr(self.workdir))
+    return   "from {0} import {1}\n"\
+             "{2}\n\n{3}\n"\
+             "evaluator = {1}(converter, escan_functional)\n"\
+             "evaluator.kwargs            = {4}\n"\
+             "evaluator.nbcalc            = {5.nbcalc}\n"\
+             "evaluator.references        = {5.references}\n"\
+             "evaluator.outdir{6}\n"\
+             "evaluator.workdir{7}\n"\
+             .format( self.__class__.__module__, self.__class__.__name__,
+                      repr(self.converter), repr(self.escan), 
+                      repr(self.kwargs), self, 
+                      self.outdir.repr(), self.workdir.repr())
 
 
 class Dipole(Bandgap):

@@ -12,7 +12,6 @@
        - pbs_script: Creates pbs-script to perform calculations on a tree.
 """
 __docformat__ = "restructuredtext en"
-from ..opt import RelativeDirectory
 from ..opt.decorators import add_setter, broadcast_result, make_cached
 
 __all__ = [ 'JobDict', 'walk_through', 'save', 'load', 'bleed', 'unbleed',\
@@ -601,13 +600,11 @@ def unsucessfull(jobdict, extractor, outdir = None):
 class AbstractMassExtract(object): 
   """ Propagates extraction methods from different jobs. """
 
-  def uncache(self, dummy=None): 
+  def uncache(self): 
     """ Uncache values. """
     self.__dict__.pop("_cached_extractors", None)
     self.__dict__.pop("_cached_properties", None)
 
-  root = RelativeDirectory("root")
-  """ Root directory of the job. """
 
   def __init__(self, path, comm = None):
     """ Initializes extraction object. 
@@ -619,9 +616,14 @@ class AbstractMassExtract(object):
           comm
             an boost.mpi.communicator instance.
     """
+    from ..opt import RelativeDirectory
+
     super(AbstractMassExtract, self).__init__()
     if path != None: self.root = path
     self.comm = comm
+
+    self.root = RelativeDirectory(path=path, hook=self.uncache)
+    """ Root directory of the job. """
 
   def walk_through(self):
     """ Generator to go through all relevant jobs. 
@@ -728,10 +730,10 @@ class MassExtract(AbstractMassExtract):
     if jobdict == None:
       assert isfile(path), IOError("{0} is not a file.".format(path))
       with open(path, "r") as file: self.jobdict = load(path, comm)
-      self.root = dirname(abspath(path))
+      self.root.path = dirname(abspath(path))
     elif path != None: 
       assert isdir(path), IOError("{0} is not a directory.".format(path))
-      self.root = path
+      self.root.path = path
       self.jobdict = jobdict
     self.comm = comm
     if path != None: self._extractors() # gets stuff cached.
@@ -747,7 +749,7 @@ class MassExtract(AbstractMassExtract):
     for job, name in self.jobdict.walk_through():
       if job.is_tagged: continue
       if not hasattr(job.functional, "Extract"): continue
-      if not exists(join(self.root, name)): print join(self.root, name); continue
-      try: extract = job.functional.Extract(join(self.root, name), comm = self.comm)
+      if not exists(join(self.root.path, name)): print join(self.root.path, name); continue
+      try: extract = job.functional.Extract(join(self.root.path, name), comm = self.comm)
       except: pass
       else: yield name, extract

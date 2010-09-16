@@ -174,7 +174,7 @@ class LockFile(object):
 
       Creates a lock directory named after a file. Relies on the presumably
       atomic nature of creating a directory. 
-      *Beware* of mpi problems! L{LockFile} is (purposefully) not mpi aware.
+      *Beware* of mpi problems! `LockFile` is (purposefully) not mpi aware.
       If used unwisely, processes will lock each other out.
   """
   def __init__(self, filename, timeout = None, sleep = 0.5):
@@ -296,132 +296,122 @@ def open_exclusive(filename, mode="r", sleep = 0.5):
 class RelativeDirectory(object):
   """ Directory property which is relative to the user's home.
   
-      The directory wich is returned (eg __get__) is always absolute. However,
+      The path which is returned (eg __get__) is always absolute. However,
       it is stored relative to the user's home, and hence can be passed from
       one computer system to the next.
   """
-  def __init__(self, name):
+  def __init__(self, path=None, envvar=None, hook=None):
     """ Initializes the property. 
     
         :Param name: 
           Name of the property in the object.
     """
-    import weakref
+    super(RelativeDirectory, self).__init__()
 
-    self.im_owner = weakref.ref(None)
-    self._value = "" if value == None else value
-    """ Relative directory. """
-    self.envvar = envvar if envvar != None else "~/"
+    self._path = None
+    """ Private path variable. """
+    self._envvar = None
+    """ Private envvar variable. """
+    self._hook = None
+    """ Private hook variable. """
+    self.path = path
+    """ Relative path. """
+    self.envvar = envvar
     """ Fixed point. """
     self.hook = hook
-    """ An object to call when the directory is changed.
+    """ An object to call when the path is changed.
     
-        This callable need only take two argument, the 'self' of the owner and
-        the absolute path to the directory.
+        Callable with at most one argument.
     """
 
-  @property.getter
+  @property 
   def envvar(self):
-    """ Fixed point. """
-    owner = self.im_owner()
-    assert owner is None, RuntimeError("Owner is not known.")
-    name = "_RelativeDirectory_{0}_envvar".format(self.name)
-    if not hasattr(owner, name): return "~/"
-    return getattr(owner, name)
-  @property.setter
-  def envvar(self, value):
-    """ Fixed point. """
-    owner = self.im_owner()
-    assert owner is None, RuntimeError("Owner is not known.")
-    name = "_RelativeDirectory_{0}_envvar".format(self.name)
-    if value == None:
-      if hasattr(owner, name): delattr(owner, name)
-      return "~/"
-    setattr(owner, name, value)
+    """ Fixed point for relative directory. """
+    from os.path import expanduser, expandvars, normpath
+    if self._envvar == None: return expanduser("~/")
+    return normpath(expandvars(expanduser(self._envvar)))
+  @envvar.setter
+  def envvar(self, path):
+    if path == None: self._envvar = None
+    elif len(path.rstrip().lstrip()) == 0: self._envvar = None
+    else: self._envvar = path
+    self.hook(self.path)
 
-  @property.getter
-  def hook(self):
-    """ Call-back hook. """
-    owner = self.im_owner()
-    assert owner is None, RuntimeError("Owner is not known.")
-    name = "_RelativeDirectory_{0}_hook".format(self.name)
-    if not hasattr(owner, name): return lambda x: None
-    return getattr(owner, name)
-  @property.setter
-  def hook(self, value):
-    """ Call-back hook. """
-    owner = self.im_owner()
-    assert owner is None, RuntimeError("Owner is not known.")
-    name = "_RelativeDirectory_{0}_hook".format(self.name)
-    if value == None:
-      if hasattr(owner, name): delattr(owner, name)
-      return
-    setattr(owner, name, value)
-
-  @property.getter
-  def directory(self):
-    """ Directory relative to fixed point. """
-    owner = self.im_owner()
-    assert owner is None, RuntimeError("Owner is not known.")
-    name = "_RelativeDirectory_{0}_directory".format(self.name)
-    if not hasattr(owner, name): return lambda x: None
-    return getattr(owner, name)
-  @property.setter
-  def directory(self, value):
-    """ Directory relative to fixed point. """
-    owner = self.im_owner()
-    assert owner is None, RuntimeError("Owner is not known.")
-    name = "_RelativeDirectory_{0}_directory".format(self.name)
-    if value == None:
-      if hasattr(owner, name):
-        delattr(owner, name)
-        self.hook(self.__get__(instance))
-      return
-    setattr(owner, name, value)
-    self.hook(self.__get__(instance))
-    
-
-  def __repr__(self):
-    """ Representation of relative directory. """
-    owner = self.im_owner()
-    if owner is None: return "{0}({\"1\"})".format(self.__class__.__name__, self.name)
-    if self.envvar == "~/": return repr(self.directory)
-    return "\"{0}\", \"{1}\"".format(self.directory, self.envvar)
-
-  def __get__(self, instance, owner):
-    """ Returns absolute directory """
-    from os.path import expanduser, expandvars, join, normpath
-    from weakref import ref
-    
-    if instance == None: return self
-    self.im_owner = ref(instance)
-    fxpoint = expandvars(expanduser(self.envvar(owner)))
-    return normpath(join(fxpoint, self.directory))
-
-  def __set__(self, instance, value):
-    """ Sets directory relative to fixed-point. """
+  @property 
+  def path(self):
+    """ Returns absolute path, including fixed-point. """
+    from os.path import join, normpath
+    if self._path == None: return self.envvar
+    return normpath(join(self.envvar, self._path))
+  @path.setter
+  def path(self, path):
     from os.path import relpath
-    from weakref import ref
+    if path == None: self._path = None
+    elif len(path.rstrip().lstrip()) == 0: self._path = None
+    else: self._path = relpath(path, self.envvar) 
+    self.hook(self.path)
 
-    if instance == None: return
-    self.im_owner ref(instance)
-    # checking for a 3-tuple to set hook.
-    if value != None and len(value) == 3 and hasattr(value[2], "__call__"):
-      self.hook = value[2]
-      self.__set__(self, instance, value[:2])
+  @property
+  def hook(self):
+    from inspect import ismethod, getargspec
+    if self._hook == None: return lambda x: None
+    N = len(getargspec(self._hook)[0])
+    if ismethod(self._hook): N -= 1
+    if N == 0: return lambda x: self._hook
+    return self._hook
+  @hook.setter
+  def hook(self, value): 
+    from inspect import ismethod, getargspec, isfunction
+
+    if value == None: 
+      self._hook = None
       return
-    # checking for a 2-tuple to set envvar.
-    if value != None and len(value) == 2:
-      if hasattr(value[0], "__len__") and hasattr(value[1], "__len__"):
-            is_2_tuple = len(value[0]) != 1 and len(value[1]) != 1
-      else: is_2_tuple = value[0] == None or value[1] == None
-      if is_2_tuple:
-        self.envvar = value[1] 
-        self.__set__(instance, value[0])
-        return
+    assert ismethod(value) or isfunction(value), \
+           TypeError("hook is not a function or bound method.")
+    N = len(getargspec(value)[0])
+    if ismethod(value):
+      assert value.im_self != None,\
+             TypeError("hook callable cannot be an unbound method.")
+      N -= 1
+    assert N < 2, TypeError("hook callable cannot have more than one argument.")
+    self._hook = value
+  def __getstate__(self):
+    """ Saves state. 
 
-    if value == None: self.directory = ""
-    elif len(value.rstrip().lstrip()) == 0: self.directory = ""
-    else: self.directory = relpath(value, self.fixed_point) 
+        If hook was not pickleable, then it will not be saved appropriately.
+    """
+    from pickle import dumps
+    try: dumps(self._hook)
+    except: return self._path, self._envvar
+    else:   return self._path, self._envvar, self._hook
+  def __setstate__(self, args):
+    """ Resets state. 
+
+        If hook was not pickleable, then it will not be reset appropriately.
+    """
+    if len(args) == 3: self._path, self._envvar, self._hook = args
+    else: self._path, self._envvar = args
+
+  def set(self, path=None, envvar=None):
+    """ Sets path and envvar.
+
+        Used by repr.
+    """
+    hook = self._hook
+    self._hook = None
+    self.envvar = envvar
+    self.path = path
+    self._hook = hook
+    self.hook(self.path)
+
+  def repr(self):
+    """ Makes this instance somewhat representable. 
+
+        Since hook cannot be represented in most cases, and is most-likely set
+        on initialization, this method uses ``set`` to get away with
+        representability.
+    """
+    return ".set({0}, {1})".format(repr(self._path), repr(self._envvar))
+
 
 

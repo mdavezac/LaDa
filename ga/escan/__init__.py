@@ -156,3 +156,12 @@ else:
       else:
         return self.structure_hashcode(a) == self.structure_hashcode(b)
 
+
+    def __getstate__(self):
+      """ Saves state. """
+      return self.lattice, self.supercell, self.converter
+    def __setstate__(self, args):
+      """ Resets state. """
+      self.__init__(*args)
+
+

@@ -36,17 +36,10 @@ class Darwin:
         :Kwarg current_gen:
           Current generation. Defaults to 0 or to whatever is in the restart.
     """
-    from ...standard import print_offspring, average_fitness, best
     from .. import CompareSuperCells
     from . import Crossover, Mutation
     from . import Individual
 
-    self.checkpoints = [ print_offspring, 
-                         average_fitness,
-                         best,
-                         self.__class__.print_nb_evals,
-                         self.__class__.save]
-    """ Checkpoints functions. """
 
     self.evaluator = evaluator
     """ Evaluator object taking an individual and computing its fitness. """
@@ -83,6 +76,19 @@ class Darwin:
     """ Current population """
     self.offspring = []
     """ Current offspring """
+
+  @property
+  def checkpoints(self):
+    """ Checkpoints functions.
+    
+        Defined as a property to avoid hassle with __getstate__
+    """
+    from ...standard import print_offspring, average_fitness, best
+    return [ print_offspring, 
+             average_fitness,
+             best,
+             self.__class__.print_nb_evals,
+             self.__class__.save ]
 
   def evaluation(self):
     """ Evaluates population. """
