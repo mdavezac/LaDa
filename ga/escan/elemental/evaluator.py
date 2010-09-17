@@ -20,7 +20,7 @@ def count_calls(method):
   
 class Bandgap(object):
   """ An evaluator function for bandgaps at S{Gamma}. """
-  def __init__(self, converter, escan, outdir = None, workdir = None, references = None, **kwargs):
+  def __init__(self, converter, escan, outdir = None, references = None, **kwargs):
     """ Initializes the bandgap object. 
 
         :Parameters: 
@@ -54,8 +54,6 @@ class Bandgap(object):
 
     self.outdir = RelativeDirectory(path=outdir)
     """ Location of output directory. """
-    self.workdir = RelativeDirectory(path=workdir)
-    """ Location of working directory. """
 
   def __len__(self):
     """ Returns length of bitstring. """
@@ -92,7 +90,6 @@ class Bandgap(object):
     references = kwargs.pop("references", self.references)
     converter  = kwargs.pop( "converter",  self.converter)
     escan      = kwargs.pop(     "escan",      self.escan)
-    workdir    = kwargs.pop(   "workdir",     self.workdir)
     if outdir == None:     outdir     = join(self.outdir.path, str(self.nbcalc))
     if comm == None:       comm       = world
  
@@ -103,7 +100,7 @@ class Bandgap(object):
     dictionary.update(kwargs) 
     dictionary["comm"]       = comm 
     dictionary["outdir"]     = outdir
-    dictionary["workdir"]    = workdir
+    dictionary["workdir"]    = self.outdir.path
     dictionary["references"] = self.references(structure) if hasattr(references, "__call__")\
                                else references
     # performs calculation.
@@ -137,7 +134,7 @@ class Bandgap(object):
     return d
   def __setstate__(self, arg):
     from pickle import loads
-    self.__dict__.update(arg[0])
+    self.__dict__.update(arg)
 
   def __repr__(self): 
     """ Returns representation of evaluator. """
@@ -148,11 +145,9 @@ class Bandgap(object):
              "evaluator.nbcalc            = {5.nbcalc}\n"\
              "evaluator.references        = {5.references}\n"\
              "evaluator.outdir{6}\n"\
-             "evaluator.workdir{7}\n"\
              .format( self.__class__.__module__, self.__class__.__name__,
                       repr(self.converter), repr(self.escan), 
-                      repr(self.kwargs), self, 
-                      self.outdir.repr(), self.workdir.repr())
+                      repr(self.kwargs), self, self.outdir.repr() )
 
 
 class Dipole(Bandgap):

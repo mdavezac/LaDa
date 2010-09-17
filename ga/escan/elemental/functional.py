@@ -5,19 +5,17 @@ from .extract import Extract as GAExtract
 __all__ = ['Darwin']
 
 class Darwin: 
-  ordinals = ['first', 'second', 'third', 'fourth', 'fith', 'sixth',
-              'seventh', 'eight', 'nineth', 'eleventh', 'twelfth',
-              'thirteenth', 'fourteenth', 'fifteenth', 'sixteenth',
-              'seventeenth', 'eighteenth', 'nineteenth' ]
-  """ Names of each historical age in the GA. """
+  """ GA functional for optimizations of epitaxial structures. """
   Extract = GAExtract
   """ Holds all GA parameters """
-  OUTCAR = "out"
+  ordinals = GAExtract.ordinals
+  """ Names of each historical age in the GA. """
+  OUTCAR = GAExtract.OUTCAR
   """ Output filename. """
-  ERRCAR = "err"
+  ERRCAR = GAExtract.ERRCAR
   """ Error filename. """
-  FUNCCAR = "GA_FUNCCAR"
-  """ Functional filename """
+  FUNCCAR = GAExtract.FUNCCAR
+  """ Functional filename. """
 
   def __init__(self, evaluator, **kwargs): 
     """ Initializes a GA functional. 
@@ -47,6 +45,7 @@ class Darwin:
     from .. import CompareSuperCells
     from . import Crossover, Mutation
     from . import Individual
+    from ....opt import RelativeDirectory
 
 
     self.evaluator = evaluator
@@ -87,6 +86,9 @@ class Darwin:
 
     self.age = None
     """ Current historical age (e.g. number of restarts). """
+    
+    self.outdir = RelativeDirectory()
+    """" Current workding directory. """
 
   @property
   def checkpoints(self):
@@ -166,7 +168,7 @@ class Darwin:
     do_print = True if comm == None else comm.do_print
     
     # creates extraction object
-    extract = self.Extract(self.workdir.path, comm)
+    extract = self.Extract(self.outdir.path, comm)
 
     # checks for restart file.
     path = join(join(self.outdir.path, extract.current_age), self.FUNCCAR)
@@ -184,7 +186,7 @@ class Darwin:
 
     if do_print:
       print "Restarting from file {0}.\n"\
-            "Restarting at generation {1}.\n"
+            "Restarting at generation {1}.\n"\
             .format(self.FUNCCAR, self.current_gen)
       if len(self.population) == 0: print "Restarting with new population.\n"
       else:
@@ -207,17 +209,50 @@ class Darwin:
     with Changedir(join(self.outdir.path, age)) as cwd: 
       with open(self.FUNCCAR, "w") as file: dump(self, file)
     return True
-    
-  def print_nb_evals(self):
-    if self.comm.do_print: 
-      print "Number of functional evaluations: ", self.evaluator.nbcalc
 
-  def __call__(self, comm = None, **kwargs):
+  @property
+  def do_print(self):
+    """ Wether this process prints. """
+    if not hasattr(self, "comm"): return True
+    if self.comm == None: return True
+    return self.comm.rank == 0
+
+    
+  @property
+  def color(self):
+    """ Returns color of this process and None if not pooled or MPI. """
+    if self.pools < 2:            return None
+    if not hasattr(self, "comm"): return None
+    if self.comm == None:         return None
+    pools = self.pools if self.comm.size >= self.pools else self.comm.size
+    return self.comm.rank % pools
+
+
+  def print_nb_evals(self):
+    """ Prints current number of evaluations. """
+    is_mpi = self.comm != None
+    do_print = 0 if not is_mpi else self.comm.do_print 
+    if self.color != None:
+      from boost.mpi import all_reduce
+      local_comm = self.comm.split(self.color)
+      heads_comm = self.comm.split(1 if local_comm.rank == 0 else 2)
+      nbcalc = all_reduce(heads_comm, self.evaluator.nbcalc, lambda x,y: x+y, 0)
+    else: nbcalc = self.evaluator.nbcalc
+    
+    if self.do_print:
+      print "Number of functional evaluations: ", nbcalc
+
+  def __call__(self, comm = None, outdir = None, **kwargs):
+    from os import getcwd
     from os.path import join
     from copy import deepcopy
     from boost.mpi import world
     from ... import darwin as search
     from ....opt import redirect
+
+    if outdir == None: outdir = getcwd()
+    self.outdir.path = outdir
+
     # takes care of keyword arguments:
     if len(kwargs.keys()) > 0: 
       this = deepcopy(self)
@@ -227,11 +262,20 @@ class Darwin:
       this(comm=comm)
       return
 
+
     # mpi stuff
     self.comm = comm if comm != None else world
-    self.comm.do_print = self.comm.rank == 0
+    self.comm.do_print = self.do_print
 
+    # gets current age
     self.age = Extract(self.outdir.path, comm).next_age
+
+    # changes working directory
+    workdir = join(self.outdir.relative, self.age)
+    if self.color != None: workdir = join(workdir, "pool_{0}".format(self.color))
+    self.evaluators.outdir.relative = workdir
+      
+    # now goes to work
     with Changedir(join(self.outdir.path, self.age)) as cwd:
       with redirect(pyout=self.OUTCAR, pyerr=self.ERRCAR) as streams:
         # reloads if necessary

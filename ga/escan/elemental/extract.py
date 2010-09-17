@@ -1,19 +1,21 @@
-from ....decorators import make_cached, broadcast_result
-from .functional import Darwin
+from ....opt.decorators import make_cached, broadcast_result
 import re
 
 __all__  = ['Extract']
 
 class Extract(object): 
   """ Extracts from ga ouput. """
-  ordinals = Darwin.ordinals
+  ordinals = ['first', 'second', 'third', 'fourth', 'fith', 'sixth',
+              'seventh', 'eight', 'nineth', 'eleventh', 'twelfth',
+              'thirteenth', 'fourteenth', 'fifteenth', 'sixteenth',
+              'seventeenth', 'eighteenth', 'nineteenth' ]
   """ Names of each historical age in the GA. """
-  OUTCAR = Darwin.OUTCAR
+  OUTCAR = "out"
   """ Output filename. """
-  ERRCAR = Darwin.ERRCAR
+  ERRCAR = "err"
   """ Error filename. """
-  FUNCCAR = Darwin.FUNCCAR
-  """ Functional filename. """
+  FUNCCAR = "GA_FUNCCAR"
+  """ Functional filename """
 
   INDIV_PATTERN = re.compile("^\s*(array\(\[(?:\s*[0,1]\,|(?:\,\s*$^)\s*)*"\
                              "\s*[0,1]\s*\]\))\s*(\S+)\s*$", re.X|re.M)

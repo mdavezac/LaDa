@@ -1,13 +1,11 @@
 """ A GA subpackage defining standard genetic operator for elemental alloys. """
 
 __all__ = [ 'evaluator', 'Individual', 'Crossover', 'Mutation', 'Converter',
-            'LayeredConverter', 'Extract', 'Darwin']
+            'LayeredConverter', 'extract', 'functional']
 
 from ...bitstring import Individual as BitstringIndividual, \
                          Crossover as BitstringCrossover, \
                          Mutation
-from .extract import Extract
-from .functional import Darwin
 class Individual(BitstringIndividual):
   """ An individual for elemental superlattices. 
       

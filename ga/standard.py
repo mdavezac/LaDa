@@ -126,7 +126,7 @@ def print_offspring(self):
 def _check_generation( self ):
   """ returns false if maximum number of generations was passed. 
       
-      @attention: This checkpoint is always added by default. Users need not include it.
+      :attention: This checkpoint is always added by default. Users need not include it.
   """
   if self.max_gen < 0: return True
   return self.current_gen < self.max_gen
@@ -162,7 +162,7 @@ def mpi_population_evaluation(self, evaluator, pools, comm = None):
   from itertools import chain
   # split communicator along number of pools
   if pools == None: pools = comm.size
-  if pools > comm.size: pools = comm.size, scatter, all_gather
+  if pools > comm.size: pools = comm.size
   color = comm.rank % pools
   local_comm = comm.split(color)
   heads_comm = comm.split(1 if local_comm.rank == 0 else 2)
@@ -329,17 +329,19 @@ def add_checkpoint(self, _chk):
 
 def fill_attributes(self):
   """ Checks self for correct attributes.
+
       Fills in where possible:
-        - "taboo" defaults to standard.taboo
-        - "selection" defaults to standard.selection
-        - "population" defaults to empty list []
-        - "popsize" defaults to len(self.population)
-        - "offspring" defaults to empty list []
-        - "rate" defaults to len(self.offspring)/self.popsize
-        - standard._check_generation is ALWAYS added to the checkpoints
-        - "current_gen" defaults to 0 
-        - "max_gen" defaults to 100, or current_gen+100 if max_gen > current_gen.
-        - "cmp_indiv" defaults to standard.cmp_indiv
+
+      - "taboo" defaults to standard.taboo
+      - "selection" defaults to standard.selection
+      - "population" defaults to empty list []
+      - "popsize" defaults to len(self.population)
+      - "offspring" defaults to empty list []
+      - "rate" defaults to len(self.offspring)/self.popsize
+      - standard._check_generation is ALWAYS added to the checkpoints
+      - "current_gen" defaults to 0 
+      - "max_gen" defaults to 100, or current_gen+100 if max_gen > current_gen.
+      - "cmp_indiv" defaults to standard.cmp_indiv
   """
   import darwin 
   # must have an evaluation function.

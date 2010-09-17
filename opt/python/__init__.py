@@ -1,4 +1,5 @@
 """ Miscellaneous """
+__docformat__  = 'restructuredtext en'
 import _opt 
 from contextlib import contextmanager
 __load_vasp_in_global_namespace__ = _opt.__load_vasp_in_global_namespace__
@@ -299,6 +300,38 @@ class RelativeDirectory(object):
       The path which is returned (eg __get__) is always absolute. However,
       it is stored relative to the user's home, and hence can be passed from
       one computer system to the next.
+      Unless you know what you are doing, it is best to get and set using the
+      ``path`` attribute, starting from the current working directory if a
+      relative path is given, and from the '/' root if an absolute path is
+      given.
+
+      >>> from os import getcwd, environ
+      >>> getcwd()
+      '/home/me/inhere/'
+      >>> relative_directory.path = 'use/this/attribute'
+      >>> relative_directory.path
+      '/home/me/inhere/use/this/attribute'
+
+      Other descriptors have somewhat more complex behaviors. ``envvar`` is the
+      root directory - aka the fixed point. Changing it will simply change the
+      root directory.
+
+      >>> environ["SCRATCH"]
+      '/scratch/me/'
+      >>> relative_directory.envvar = "$SCRATCH"
+      >>> relative_directory.envvar
+      '/scratch/me/use/this/attribute'
+
+      Modifying ``relative`` will change the second part of the relative
+      directory. If a relative path is given, that relative path is used as is,
+      without reference to the working directory. It is an error to give an
+      absolute directory.
+
+      >>> relative_directory.relative = "now/here"
+      '/scratch/me/now/here'
+      >>> relative_directory.relative = "/now/here"
+      ValueError: Cannot set relative with absolute path. 
+
   """
   def __init__(self, path=None, envvar=None, hook=None):
     """ Initializes the property. 
@@ -308,8 +341,8 @@ class RelativeDirectory(object):
     """
     super(RelativeDirectory, self).__init__()
 
-    self._path = None
-    """ Private path variable. """
+    self._relative = None
+    """ Private path relative to fixed point. """
     self._envvar = None
     """ Private envvar variable. """
     self._hook = None
@@ -324,6 +357,18 @@ class RelativeDirectory(object):
         Callable with at most one argument.
     """
 
+  @property
+  def relative(self):
+    """ Path relative to fixed point. """
+    return self._relative if self._relative == None else ""
+  @relative.setter
+  def relative(self, value):
+    """ Path relative to fixed point. """
+    value = value.rstrip().lstrip()
+    assert value[0] != '/', ValueError('Cannot set "relative" attribute with absolute path.')
+    self._relative = value if len(value) else None
+    self.hook(self.value)
+
   @property 
   def envvar(self):
     """ Fixed point for relative directory. """
@@ -331,25 +376,26 @@ class RelativeDirectory(object):
     if self._envvar == None: return expanduser("~/")
     return normpath(expandvars(expanduser(self._envvar)))
   @envvar.setter
-  def envvar(self, path):
-    if path == None: self._envvar = None
-    elif len(path.rstrip().lstrip()) == 0: self._envvar = None
-    else: self._envvar = path
+  def envvar(self, value):
+    if value == None: self._envvar = None
+    elif len(value.rstrip().lstrip()) == 0: self._envvar = None
+    else: self._envvar = value
     self.hook(self.path)
 
   @property 
   def path(self):
     """ Returns absolute path, including fixed-point. """
     from os.path import join, normpath
-    if self._path == None: return self.envvar
-    return normpath(join(self.envvar, self._path))
+    if self._relative == None: return self.envvar
+    return normpath(join(self.envvar, self._relative))
   @path.setter
-  def path(self, path):
+  def path(self, value):
     from os.path import relpath
-    if path == None: self._path = None
-    elif len(path.rstrip().lstrip()) == 0: self._path = None
-    else: self._path = relpath(path, self.envvar) 
+    if value == None: self._relative = None
+    elif len(value.rstrip().lstrip()) == 0: self._relative = None
+    else: self._relative = relpath(value, self.envvar) 
     self.hook(self.path)
+
 
   @property
   def hook(self):
@@ -382,15 +428,15 @@ class RelativeDirectory(object):
     """
     from pickle import dumps
     try: dumps(self._hook)
-    except: return self._path, self._envvar
-    else:   return self._path, self._envvar, self._hook
+    except: return self._relative, self._envvar
+    else:   return self._relative, self._envvar, self._hook
   def __setstate__(self, args):
     """ Resets state. 
 
         If hook was not pickleable, then it will not be reset appropriately.
     """
-    if len(args) == 3: self._path, self._envvar, self._hook = args
-    else: self._path, self._envvar = args
+    if len(args) == 3: self._relative, self._envvar, self._hook = args
+    else: self._relative, self._envvar = args
 
   def set(self, path=None, envvar=None):
     """ Sets path and envvar.
@@ -411,7 +457,7 @@ class RelativeDirectory(object):
         on initialization, this method uses ``set`` to get away with
         representability.
     """
-    return ".set({0}, {1})".format(repr(self._path), repr(self._envvar))
+    return ".set({0}, {1})".format(repr(self._relative), repr(self._envvar))
 
 
 
