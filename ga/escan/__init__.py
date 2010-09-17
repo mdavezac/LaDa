@@ -156,3 +156,6 @@ else:
       else:
         return self.structure_hashcode(a) == self.structure_hashcode(b)
 
+    @staticmethod
+    def remove_hashcode(o):
+      if hasattr(o, "integer_hashcode"): del o.integer_hashcode

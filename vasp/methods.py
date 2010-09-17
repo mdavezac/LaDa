@@ -27,7 +27,8 @@ class RelaxCellShape(object):
       This functional keeps working until convergence is achieved, and then
       creates a static calculation.
   """
-  def __init__(self, vasp, relaxation="volume ionic cellshape", first_trial=None, maxiter=0):
+  def __init__( self, vasp, relaxation="volume ionic cellshape",\
+                first_trial=None, maxiter=0, keep_steps=True ):
     """ Initializes a cell-shape relaxation. 
         
         :Parameters:
@@ -50,6 +51,9 @@ class RelaxCellShape(object):
           maxiter : int
             Maximum number of iterations before bailing out. Zero or negative
             number means infinit iterations.
+          keep_steps : bool
+	    If False, directory ``relax_cellshape`` where intermediate results
+            are kept will be deleted once static are finished (and successfull).
     """
     super(RelaxCellShape, self).__init__()
     self.vasp = vasp
@@ -62,6 +66,8 @@ class RelaxCellShape(object):
     """ Maximum number of iterations before bailing out. """
     self.Extract = self.vasp.Extract
     """ Extraction class. """
+    self.keep_steps = keep_steps
+    """ Whether or not to keep intermediate results. """
 
   def generator(self, structure, outdir=None, comm=None, **kwargs ):
     """ Performs a vasp relaxation, yielding each result.
@@ -90,6 +96,7 @@ class RelaxCellShape(object):
     from math import fabs 
     from os import getcwd
     from os.path import join, exists
+    from shutil import rmtree
 
 
     # make this function stateless.
@@ -100,6 +107,7 @@ class RelaxCellShape(object):
     vasp.set_relaxation = set_relaxation
     first_trial = kwargs.pop("first_trial", self.first_trial)
     maxiter = kwargs.pop("maxiter", self.maxiter)
+    keep_steps = kwargs.pop("keep_steps", self.keep_steps)
     if outdir == None: outdir = getcwd()
 
     # check nsw parameter. kwargs may still overide it.
@@ -156,6 +164,9 @@ class RelaxCellShape(object):
                **kwargs\
              )
     yield output
+
+    if output.success and (not keep_steps): 
+      rmtree(join(outdir, "relax_cellshape"))
 
   def __call__(self, *args, **kwargs):
     """ Performs a vasp relaxation. 
