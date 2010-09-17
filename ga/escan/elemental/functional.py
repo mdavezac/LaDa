@@ -304,6 +304,7 @@ class Darwin:
     """ Returns representation of this instance. """
     return "from {0} import {1}\n{2}\n{3}\n{4}\n\n"\
            "functional = {1}(evaluator, crossover=crossover, mutation=mutation)\n"\
+           "functional.pools       = {5.pools}\n"\
            "functional.cm_rate     = {5.cm_rate}\n"\
            "functional.popsize     = {5.popsize}\n"\
            "functional.max_gen     = {5.max_gen}\n"\
