@@ -709,6 +709,7 @@ class Collect(AbstractMassExtract):
 
     self.ip = get_ip_handle()
     """ Gets current handle. """
+    del self._root # this won't be needed
 
   def walk_through(self):
     """ Generator to go through all relevant jobs.  

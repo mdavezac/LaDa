@@ -393,7 +393,9 @@ class RelativeDirectory(object):
   @path.setter
   def path(self, value):
     from os.path import relpath, expandvars, expanduser
-    if value == None: self._relative = None
+    from os import getcwd
+    if value == None: value = getcwd()
+    if len(value.rstrip().lstrip()) == 0: value = getcwd()
     else: self._relative = relpath(expanduser(expandvars(value)), self.envvar) 
     self.hook(self.path)
 
@@ -411,7 +413,7 @@ class RelativeDirectory(object):
     if self._hook == None: return lambda x: None
     N = len(getargspec(self._hook)[0])
     if ismethod(self._hook): N -= 1
-    if N == 0: return lambda x: self._hook
+    if N == 0: return lambda x: self._hook()
     return self._hook
   @hook.setter
   def hook(self, value): 
@@ -441,7 +443,7 @@ class RelativeDirectory(object):
   def __setstate__(self, args):
     """ Resets state. 
 
-        If hook was not pickleable, then it will not be reset appropriately.
+        If hook was not pickleable, then it will not be reset.
     """
     if len(args) == 3: self._relative, self._envvar, self._hook = args
     else: self._relative, self._envvar = args

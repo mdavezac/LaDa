@@ -622,8 +622,16 @@ class AbstractMassExtract(object):
     if path != None: self.root = path
     self.comm = comm
 
-    self.root = RelativeDirectory(path=path, hook=self.uncache)
+    self._root = RelativeDirectory(path=path, hook=self.uncache)
     """ Root directory of the job. """
+
+  @property 
+  def root(self):
+    """ Root directory of the job. """
+    return self._root.path
+  @root.setter
+  def root(self, value): self._root.path = value
+    
 
   def walk_through(self):
     """ Generator to go through all relevant jobs. 
@@ -674,11 +682,13 @@ class AbstractMassExtract(object):
   def __getstate__(self):
     d = self.__dict__.copy()
     d.pop("comm", None)
+    if "_root" in d: d["_root"].hook = None
     return d
 
   def __setstate__(self, arg):
     self.__dict__.update(arg)
     self.comm = None
+    if "_root" in d: d["_root"].hook = self.uncache
        
      
   def solo(self):
@@ -729,11 +739,12 @@ class MassExtract(AbstractMassExtract):
     super(MassExtract, self).__init__(path, comm=comm)
     if jobdict == None:
       assert isfile(path), IOError("{0} is not a file.".format(path))
-      with open(path, "r") as file: self.jobdict = load(path, comm)
-      self.root.path = dirname(abspath(path))
+      self.root = path # expands usernames, environment variables.
+      with open(self.root, "r") as file: self.jobdict = load(path, comm)
+      self.root = dirname(self.root)
     elif path != None: 
       assert isdir(path), IOError("{0} is not a directory.".format(path))
-      self.root.path = path
+      self.root = path
       self.jobdict = jobdict
     self.comm = comm
     if path != None: self._extractors() # gets stuff cached.
@@ -749,7 +760,7 @@ class MassExtract(AbstractMassExtract):
     for job, name in self.jobdict.walk_through():
       if job.is_tagged: continue
       if not hasattr(job.functional, "Extract"): continue
-      if not exists(join(self.root.path, name)): print join(self.root.path, name); continue
-      try: extract = job.functional.Extract(join(self.root.path, name), comm = self.comm)
+      if not exists(join(self.root, name)): print join(self.root, name); continue
+      try: extract = job.functional.Extract(join(self.root, name), comm = self.comm)
       except: pass
       else: yield name, extract

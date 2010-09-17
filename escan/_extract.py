@@ -62,7 +62,9 @@ class Extract(object):
     """ Directory where output should be found. """
     return self._directory.path
   @directory.setter
-  def directory(self, value): self._directory.path = value
+  def directory(self, value):
+    self._directory.path = value
+    self._vffout.directory = value
 
   @property
   @broadcast_result(attr=True, which=0)
@@ -434,13 +436,21 @@ class Extract(object):
     return list( set(result) - exclude )
 
   def __getstate__(self):
-    from os.path import relpath
     d = self.__dict__.copy()
-    if "comm" in d: del d["comm"]
-    if "directory" in d: d["directory"] = relpath(d["directory"])
+    d.pop("comm", None)
+    if "_directory" in d: d["_directory"].hook = None
     return d
+
   def __setstate__(self, arg):
     self.__dict__.update(arg)
     self.comm = None
+    if "_directory" in d: d["_directory"].hook = self.uncache
+
+  def uncache(self): 
+    """ Uncache values. """
+    self.__dict__.pop("_cached_extractors", None)
+    self.__dict__.pop("_cached_properties", None)
+    self._vffout.uncache()
+
 
 

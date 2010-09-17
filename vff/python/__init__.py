@@ -243,11 +243,7 @@ class Extract(object):
     from copy import deepcopy
     
     if self.comm == None: return self
-    comm = self.comm 
-    self.comm = None
-    copy = deepcopy(self)
-    self.comm = comm
-    return copy
+    return deepcopy(self)
 
   def __repr__(self):
     return "%s(\"%s\")" % (self.__class__.__name__, self._directory.unexpanded)
@@ -257,13 +253,17 @@ class Extract(object):
     from os.path import relpath
     d = self.__dict__.copy()
     d.pop("comm", None)
-    d["_directory"].hook = None
+    if "_directory" in d: d["_directory"].hook = None
     return d
   def __setstate__(self, arg):
     self.__dict__.update(arg)
-    self._directory.hook = self.uncache
+    if "_directory" in d: d["_directory"].hook = self.uncache
     self.comm = None
 
+  def uncache(self): 
+    """ Uncache values. """
+    self.__dict__.pop("_cached_extractors", None)
+    self.__dict__.pop("_cached_properties", None)
 
 
 
