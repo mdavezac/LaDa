@@ -38,8 +38,11 @@ def _get_script_text(file, name):
 class Extract(object):
   def __init__(self, directory = None, comm = None, vff = None):
     from os import getcwd
+    from ..opt import RelativeDirectory
+
     super(Extract, self).__init__()
-    self.directory = directory if directory != None else getcwd()
+
+    self._directory = RelativeDirectory(directory)
     """ Directory where to check for output. """
     self.comm = comm
     """ Mpi group communicator. """
@@ -52,17 +55,12 @@ class Extract(object):
     """ Pickle filename for the functional. """
 
     
-  def _get_directory(self):
-    """ Directory with VASP output files """
-    return self._directory
-  def _set_directory(self, dir):
-    from os.path import abspath, expanduser
-    dir = abspath(expanduser(dir))
-    if hasattr(self, "_directory"): 
-      if dir != self._directory: self.uncache()
-    self._directory = dir
-  directory = property(_get_directory, _set_directory)
-
+  @property
+  def directory(self):
+    """ Directory where output should be found. """
+    return self._directory.path
+  @directory.setter
+  def directory(self, value): self._directory.path = value
 
   @property
   @broadcast_result(attr=True, which=0)
@@ -252,17 +250,18 @@ class Extract(object):
     return copy
 
   def __repr__(self):
-    return "%s(\"%s\")" % (self.__class__.__name__, self.directory)
+    return "%s(\"%s\")" % (self.__class__.__name__, self._directory.unexpanded)
 
 
   def __getstate__(self):
     from os.path import relpath
     d = self.__dict__.copy()
-    if "comm" in d: del d["comm"]
-    if "directory" in d: d["directory"] = relpath(d["directory"])
+    d.pop("comm", None)
+    d["_directory"].hook = None
     return d
   def __setstate__(self, arg):
     self.__dict__.update(arg)
+    self._directory.hook = self.uncache
     self.comm = None
 
 
@@ -429,23 +428,23 @@ class Vff(object):
     result += "functional = %s()\n" % (self.__class__.__name__)
     result += "functional.minimizer = minimizer\n"
     result += "functional.lattice = lattice\n"
-    result += "functional.OUTCAR = \"%s\"\n" % (self.OUTCAR)
-    result += "functional.ERRCAR = \"%s\"\n" % (self.ERRCAR)
+    result += "functional.OUTCAR = '%s'\n" % (self.OUTCAR)
+    result += "functional.ERRCAR = '%s'\n" % (self.ERRCAR)
     if self.direction == None or hasattr(self.direction, "__len__"):
       result += "functional.direction = %s\n" % (repr(self.direction))
     else: result += "functional.direction = %i\n" % (int(self.direction))
     result += "functional.relax = %s\n" % ("True" if self.relax else "False")
     for name, params in self.bonds.items():
       A, B = name.split("-")
-      result += "functional.add_bond = \"%s\", \"%s\", (%e" % (A, B, params[0])
+      result += "functional.add_bond = '%s', '%s', (%e" % (A, B, params[0])
       for i, u in enumerate(params[1:]): 
         if sum([abs(j) for j in params[i+1:]]) / float(len(params)-i-1) < 1e-12: break;
         result += ", %e" % (u)
       result += ")\n"
     for name, params in self.angles.items():
       A, B, C = name.split("-")
-      result += "functional.add_angle = \"%s\", \"%s\", \"%s\", " % (A, B, C)
-      if abs(params[0] + 1e0/3e0) < 1e-12: result += "(\"tet\""
+      result += "functional.add_angle = '%s', '%s', '%s', " % (A, B, C)
+      if abs(params[0] + 1e0/3e0) < 1e-12: result += "('tet'"
       else: result += "(%e" % (params[0])
       for i, u in enumerate(params[1:]):
         if sum([abs(j) for j in params[i+1:]]) / float(len(params)-i-1) < 1e-12: break;

@@ -160,7 +160,7 @@ def read_input(filename, global_dict=None, local_dict = None, paths=None, comm =
   class Input(physics.__class__): 
     def __getattr__(self, name):
       raise AttributeError( "All out of cheese!\n"
-                            "Required input parameter \"{0}\" not found in {1}." \
+                            "Required input parameter '{0}' not found in {1}." \
                             .format(name, self.__name__) )
     def __delattr__(self, name): raise RuntimeError("Cannot delete object from input namespace.")
     def __setattr__(self, name, value): raise RuntimeError("Cannot set/change object in input namespace.")
@@ -364,7 +364,9 @@ class RelativeDirectory(object):
   @relative.setter
   def relative(self, value):
     """ Path relative to fixed point. """
-    value = value.rstrip().lstrip()
+    from os.path import expandvars, expanduser
+    if value == None: value = ""
+    value = expandvars(expanduser(value.rstrip().lstrip()))
     assert value[0] != '/', ValueError('Cannot set "relative" attribute with absolute path.')
     self._relative = value if len(value) else None
     self.hook(self.value)
@@ -390,11 +392,17 @@ class RelativeDirectory(object):
     return normpath(join(self.envvar, self._relative))
   @path.setter
   def path(self, value):
-    from os.path import relpath
+    from os.path import relpath, expandvars, expanduser
     if value == None: self._relative = None
-    elif len(value.rstrip().lstrip()) == 0: self._relative = None
-    else: self._relative = relpath(value, self.envvar) 
+    else: self._relative = relpath(expanduser(expandvars(value)), self.envvar) 
     self.hook(self.path)
+
+  @property
+  def unexpanded(self):
+    """ Unexpanded path (eg with envvar as is). """
+    from os.path import join
+    e = "~/" if self._envvar == None else self._envvar
+    return e if self._relative == None else join(e, self._relative)
 
 
   @property
