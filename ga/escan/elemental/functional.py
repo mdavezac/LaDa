@@ -12,8 +12,6 @@ class Darwin:
   """ Names of each historical age in the GA. """
   Extract = GAExtract
   """ Holds all GA parameters """
-  RESTARTCAR = "GA_RESTARTCAR" 
-  """ Pickle to which GA saves and from which it restarts. """
   OUTCAR = "out"
   """ Output filename. """
   ERRCAR = "err"
@@ -156,26 +154,38 @@ class Darwin:
     if fabs(a.fitness - b.fitness) <  tolerance: return 0
     return 1 if a.fitness < b.fitness else -1
 
-  def restart(self):
+  def restart(self, comm = None):
     """ Saves current status. """
     import cPickle
     from os.path import exists, join
-    from boost.mpi import broadcast
 
+    # sanity check.
+    if self.age == self.ordinals[0] or self.age == None: return
 
-    path = join(join(self.outdir.path, self.age), self.RESTARTCAR)
-    if not exists(path): return
-    if self.comm.rank == 0:
-      with open(path, "r") as file: this = cPickle.load(file)
-      broadcast(self.comm, this,0)
-      self.__dict__.update(this.__dict__)
-    else:
-      this = broadcast(self.comm, None,0)
-      self.__dict__.update(this.__dict__)
-    if self.comm.do_print:
+    if comm == None and hasattr(self, "comm"): comm = self.comm
+    do_print = True if comm == None else comm.do_print
+    
+    # creates extraction object
+    extract = self.Extract(self.workdir.path, comm)
+
+    # checks for restart file.
+    path = join(join(self.outdir.path, extract.current_age), self.FUNCCAR)
+    if not exists(path): 
+      error = "Could not find restart file {0}.\n"\
+              "Yet directory {1} exits.\nAborting\n"\
+              .format(path, join(self.outdir.path, name))
+      if do_print: print error
+      raise RuntimeErorr(error)
+
+    # copies populations and friends.
+    self.population = extract.population
+    self.offspring = extract.offspring
+    self.current_gen = extract.current_gen
+
+    if do_print:
       print "Restarting from file {0}.\n"\
             "Restarting at generation {1}.\n"
-            .format(self.RESTARTCAR, self.current_gen)
+            .format(self.FUNCCAR, self.current_gen)
       if len(self.population) == 0: print "Restarting with new population.\n"
       else:
         print "Restarting with population:"
@@ -185,6 +195,7 @@ class Darwin:
       else:
         print "Restarting with offspring:"
         for indiv in self.offspring: print indiv, indiv.fitness
+      print "\nStarting {0} GA age.\n".format(self.age)
 
   def save(self):
     """ Saves current status. """
@@ -192,9 +203,9 @@ class Darwin:
     from pickle import dump
     from ....opt.changedir import changedir
 
-    path = join(join(self.outdir.path, self.age), self.RESTARTCAR)
+    path = join(join(self.outdir.path, self.age), self.FUNCCAR)
     with Changedir(join(self.outdir.path, age)) as cwd: 
-      with open(self.GA_SAVECAR, "w") as file: dump(self, file)
+      with open(self.FUNCCAR, "w") as file: dump(self, file)
     return True
     
   def print_nb_evals(self):
@@ -220,10 +231,14 @@ class Darwin:
     self.comm = comm if comm != None else world
     self.comm.do_print = self.comm.rank == 0
 
-    with redirect( pyout=join(self.outdir.path, self.OUTCAR),\
-                   pyerr=join(self.outdir.path, self.ERRCAR) ) as streams:
-      this.restart()
-      search.run(this)
+    self.age = Extract(self.outdir.path, comm).next_age
+    with Changedir(join(self.outdir.path, self.age)) as cwd:
+      with redirect(pyout=self.OUTCAR, pyerr=self.ERRCAR) as streams:
+        # reloads if necessary
+        if self.age != self.ordinals[0]: this.restart(comm)
+        # runs.
+        search.run(this)
+        
     del self.comm
 
   def __str__(self):

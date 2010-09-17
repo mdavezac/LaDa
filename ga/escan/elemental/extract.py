@@ -1,4 +1,4 @@
-from ....decorators import make_cached 
+from ....decorators import make_cached, broadcast_result
 from .functional import Darwin
 import re
 
@@ -22,69 +22,83 @@ class Extract(object):
                "\s*((array\(\[(?:\s*[0,1]\,|(?:\,\s*$^)\s*)*\s*[0,1]\s*\]\))"\
                "\s*(\S+)\s*\n)+", re.X|re.M)
 
-  def __init__(self, directory = "."):
+  def __init__(self, directory = ".", comm = None):
     """ Initializes Extract object. """
     from lada.opt import RelativeDirectory
 
-    root = RelativeDirectory(path=directory, hook=lambda x:self.uncache())
+    self.root = RelativeDirectory(path=directory, hook=self.uncache)
     """ GA directory. """
+    self.comm = comm
 
-
-  @property
-  @make_cached
-  def input(self): 
-    """ Input parameters. """
-    from os.path import join, exists
-    from lada.ga.escan.elemental import Converter
-    from lada.ga.escan.elemental.evaluator import Dipole 
-    from lada.opt   import read_input
-    from lada.vff   import Vff
-    from lada.escan import Escan, soH
-
-    assert exists(join(self.root, self.OUTCAR)), \
-           IOError("Could not find file {0}.".format(join(self.root, self.OUTCAR)))
-    return read_input\
-           (\
-             join(self.root.path, self.OUTCAR),\
-             { "Converter": Converter, "DipoleEvaluator": Dipole,\
-               "Vff": Vff, "Escan": Escan, "soH": soH },\
-             paths = ("saveto_path", "restartfrom_path", "workdir", "outdir")
-           )
 
   @property
   @make_cached
   def functional(self): 
-    """ Input parameters. """
+    """ Input functional from last age. """
     from os.path import join, exists
-    from lada.opt import read_input
+    from pickle import load
 
-    assert exists(join(self.root.path, self.FUNCCAR)), \
-           IOError("Could not find file {0}.".format(join(self.root.path, self.FUNCCAR)))
-    funccar = read_input(join(self.root.path, self.FUNCCAR) )
-    return funccar.Darwin()
+    is_mpi = self.comm != None
+    is_root = 0 if not is_mpi else self.comm.rank == 0
+
+    if self.current_age == None: return None
+    if is_root:
+      current_path = join(join(self.root.path, self.current_age), self.FUNCCAR)
+      with open(current_path, "r") as file: result = load(file)
+      if is_mpi:
+        from boost.mpi import broadcast
+        broadcast(self.comm, result, 0)
+    elif is_mpi:
+      from boost.mpi import broadcast
+      broadcast(self.comm, result, 0)
+    return result
+
+  @property
+  def population(self):
+    """ Returns current population. """
+    if self.functional == None: return []
+    return self.functional.population
+
+  @property
+  def offspring(self):
+    """ Returns current population. """
+    if self.functional == None: return []
+    return self.functional.offspring
+  
+  @property
+  def current_gen(self):
+    """ Returns current population. """
+    if self.functional == None: return 0
+    return self.functional.current_gen
+  
+  @property
+  def current_age(self):
+    """ Current GA age (eg last run). """
+    return self.ages[-1]
+
+  @property
+  @broadcast_result(attr=True, which=0)
+  def next_age(self):
+    """ Next GA age (eg next run). """
+
+    if self.current_age == None: return self.ordinals[0] 
+    index = self.ordinals.index(self.current_age) + 1
+    assert index < len(self.ordinals), RuntimeError("Ran out of ordinals.")
+    return self.ordinals[index]
 
   @property
   @make_cached
-  def Functional(self): 
-    """ Returns functional type. """
-    from os.path import join, exists
-    from lada.opt import read_input
-
-    assert exists(join(self.root.path, self.FUNCCAR)), \
-           IOError("Could not find file {0}.".format(join(self.root.path, self.FUNCCAR)))
-    funccar = read_input(join(self.root.path, self.FUNCCAR) )
-    return funccar.Darwin
-   
-  @property
-  @make_cached
+  @broadcast_result(attr=True, which=0)
   def ages(self): 
     """ Returns existing ages. """
     from os.path import exists, join
 
     results = []
+    filenames = [self.OUTCAR, self.FUNCCAR]
     for name in self.ordinals:
-      filepath = join(join(self.root.path, name), self.OUTCAR)
-      if exists(filepath): results.append(name)
+      if not all( [ exists(join(self.workdir.path, filename)) \
+                    for filename in filenames ] ): continue
+      results.append(name)
     return results
 
   @property
@@ -95,11 +109,6 @@ class Extract(object):
       if a != b: return True
     return True
 
-  @property
-  def next_dirname(self):
-    """ Returns next directory name. """
-    return self.ordinals[self.ordinals.index(self.ages[-1]) + 1]
-
   def uncache(self): 
     """ Uncaches results. """
     from lada.opt.decorators  import uncache as opt_uncache
@@ -108,6 +117,7 @@ class Extract(object):
 
   @property
   @make_cached 
+  @broadcast_result(attr=True, which=0)
   def offspring(self):
     """ List of bitstring + fitness for each offspring at each generation. """
     from os.path import join
@@ -142,6 +152,7 @@ class Extract(object):
                
   @property
   @make_cached 
+  @broadcast_result(attr=True, which=0)
   def generations(self):
     """ List of bitstring + fitness for each population at each generation. """
     if len(self.offspring) == 0: return []
@@ -153,6 +164,7 @@ class Extract(object):
     return result 
 
   @property
+  @broadcast_result(attr=True, which=0)
   def genplots(self):
     """ Generation plotter arrays. """
     from numpy import arange, array, transpose
