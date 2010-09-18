@@ -360,7 +360,7 @@ class RelativeDirectory(object):
   @property
   def relative(self):
     """ Path relative to fixed point. """
-    return self._relative if self._relative == None else ""
+    return self._relative if self._relative != None else ""
   @relative.setter
   def relative(self, value):
     """ Path relative to fixed point. """
@@ -369,7 +369,7 @@ class RelativeDirectory(object):
     value = expandvars(expanduser(value.rstrip().lstrip()))
     assert value[0] != '/', ValueError('Cannot set "relative" attribute with absolute path.')
     self._relative = value if len(value) else None
-    self.hook(self.value)
+    self.hook(self.path)
 
   @property 
   def envvar(self):

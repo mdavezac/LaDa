@@ -146,15 +146,19 @@ class Bandgap(object):
   def __repr__(self): 
     """ Returns representation of evaluator. """
     return   "from {0} import {1}\n"\
-             "{2}\n\n{3}\n"\
+             "from {2} import {3}\n"\
+             "{4}\n\n"\
+             "supercell = {5}\n"\
+             "converter = {3}(supercell, lattice)\n"\
              "evaluator = {1}(converter, escan_functional)\n"\
-             "evaluator.kwargs            = {4}\n"\
-             "evaluator.nbcalc            = {5.nbcalc}\n"\
-             "evaluator.references        = {5.references}\n"\
-             "evaluator.outdir            = {6}\n"\
+             "evaluator.kwargs            = {6}\n"\
+             "evaluator.nbcalc            = {7.nbcalc}\n"\
+             "evaluator.references        = {7.references}\n"\
+             "evaluator.outdir            = {8}\n"\
              .format( self.__class__.__module__, self.__class__.__name__,
-                      repr(self.converter),
+                      self.converter.__class__.__module__, self.converter.__class__.__name__,
                       repr(self.escan).replace("functional", "escan_functional"), 
+                      repr(self.converter.structure.cell),
                       repr(self.kwargs), self, repr(self._outdir.unexpanded))
 
 

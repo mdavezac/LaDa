@@ -10,7 +10,7 @@ class Individual(object):
 
   size = 10
 
-  def __init__(self):
+  def __init__(self, size = None):
     """ Initializes a bitstring individual randomly. 
 
       @attention: This class does handle mpi at all. Created instances will
@@ -20,7 +20,8 @@ class Individual(object):
     from numpy import array
 
     super(Individual, self).__init__()
-    self.genes = array([ randint(0,1) for i in xrange(self.size) ])
+    if size == None: size = self.size
+    self.genes = array([ randint(0,1) for i in xrange(size) ])
   
   def __eq__(self, a): 
     from math import fabs

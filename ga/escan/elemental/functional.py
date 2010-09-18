@@ -44,13 +44,11 @@ class Darwin:
     """
     from .. import CompareSuperCells
     from . import Crossover, Mutation
-    from . import Individual
     from ....opt import RelativeDirectory
 
 
     self.evaluator = evaluator
     """ Evaluator object taking an individual and computing its fitness. """
-    Individual.size = len(self.evaluator)
     lattice = self.evaluator.escan.vff.lattice
     unit_cell = self.evaluator.converter.structure.cell
     self.compare = CompareSuperCells(lattice, unit_cell, self.evaluator.converter)
@@ -87,16 +85,6 @@ class Darwin:
     self.age = None
     """ Current historical age (e.g. number of restarts). """
     
-    self._outdir = RelativeDirectory()
-    """ Private implementation of current workding directory. """
-
-  @property 
-  def outdir(self):
-    """ Current workding directory. """
-    return self._outdir.path
-  @outdir.setter 
-  def outdir(self, value): self._outdir.path = value
-
   @property
   def checkpoints(self):
     """ Checkpoints functions.
@@ -140,8 +128,9 @@ class Darwin:
 
   def Individual(self):
     """ Generates an individual (with mpi) """
+    from . import Individual
     from numpy.random import normal, shuffle
-    result = escan.elemental.Individual()
+    result = Individual(size=len(self.evaluator))
     if self.mean_conc == None or self.stddev_conc == None: return result
     N = 0
     while N == result.genes.size or N == 0:
@@ -163,7 +152,7 @@ class Darwin:
     if fabs(a.fitness - b.fitness) <  tolerance: return 0
     return 1 if a.fitness < b.fitness else -1
 
-  def restart(self, comm = None):
+  def restart(self, outdir, comm = None):
     """ Saves current status. """
     import cPickle
     from os.path import exists, join
@@ -175,14 +164,14 @@ class Darwin:
     do_print = True if comm == None else comm.do_print
     
     # creates extraction object
-    extract = self.Extract(self.outdir, comm)
+    extract = self.Extract(outdir, comm)
 
     # checks for restart file.
-    path = join(join(self.outdir, extract.current_age), self.FUNCCAR)
+    path = join(join(outdir, extract.current_age), self.FUNCCAR)
     if not exists(path): 
       error = "Could not find restart file {0}.\n"\
               "Yet directory {1} exits.\nAborting\n"\
-              .format(path, join(self.outdir, name))
+              .format(path, join(outdir, name))
       if do_print: print error
       raise RuntimeErorr(error)
 
@@ -212,9 +201,7 @@ class Darwin:
     from pickle import dump
     from ....opt.changedir import changedir
 
-    path = join(join(self.outdir, self.age), self.FUNCCAR)
-    with Changedir(join(self.outdir, age)) as cwd: 
-      with open(self.FUNCCAR, "w") as file: dump(self, file)
+    with open(self.FUNCCAR, "w") as file: dump(self, file)
     return True
 
   @property
@@ -256,10 +243,14 @@ class Darwin:
     from copy import deepcopy
     from boost.mpi import world
     from ... import darwin as search
-    from ....opt import redirect
-    from sys import exit
+    from ....opt import redirect, RelativeDirectory
+    from ....opt.changedir import Changedir
 
-    self.outdir = getcwd() if outdir == None else outdir
+    outdir = RelativeDirectory(outdir)
+    if outdir == None: outdir = getcwd()
+    # mpi stuff
+    self.comm = comm if comm != None else world
+    self.comm.do_print = self.do_print
 
     # takes care of keyword arguments:
     if len(kwargs.keys()) > 0: 
@@ -270,37 +261,20 @@ class Darwin:
       this(comm=comm)
       return
 
-
-    # mpi stuff
-    self.comm = comm if comm != None else world
-    self.comm.do_print = self.do_print
-
     # gets current age
-    self.age = self.Extract(self.outdir, comm).next_age
+    self.age = self.Extract(outdir.path, comm).next_age
+    self.evaluator._outdir.relative = outdir.relative
+    self.evaluator.outdir = join(self.evaluator.outdir, self.age)
+    if self.color != None: 
+      self.evaluator.outdir = join(self.evaluator.outdir, "pool_{0}".format(self.color))
 
-    # changes working directory
-    workdir = join(self._outdir.relative, self.age)
-    if self.do_print:
-      print "age: ", self.age
-      print "color: ", self.color
-      print "outdir: ", self.outdir
-    exit(0)
-    workdir = join(self._outdir.relative, self.age)
-    if self.do_print:
-      print "workdir: ", self.workdir
-    if self.color != None: workdir = join(workdir, "pool_{0}".format(self.color))
-    if self.do_print:
-      print "workdir: ", self.workdir
-      print "relative: ", self.evaluator.outdir.relative
-    self.evaluator._outdir.relative = workdir
-      
     # now goes to work
-    with Changedir(join(self.outdir, self.age)) as cwd:
+    with Changedir(join(outdir.path, self.age)) as cwd:
       with redirect(pyout=self.OUTCAR, pyerr=self.ERRCAR) as streams:
         # reloads if necessary
-        if self.age != self.ordinals[0]: this.restart(comm)
+        if self.age != self.ordinals[0]: this.restart(comm, outdir.path)
         # runs.
-        search.run(this)
+        search.run(self)
         
     del self.comm
 

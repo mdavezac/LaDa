@@ -28,7 +28,7 @@ for scale in input.scales:
       converter = Converter(supercell, lattice=escan.vff.lattice)
       
       evaluator = Evaluator(converter = converter, escan = escan, **input.kwargs)
-      evaluator.outdir.envvar = "$SCRATCH"
+      evaluator._outdir.envvar = "$SCRATCH"
 
       functional = Functional(evaluator)
       functional.popsize     = input.population_size

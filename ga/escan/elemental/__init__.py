@@ -12,13 +12,15 @@ class Individual(BitstringIndividual):
       Comparison between two individuals expect that a bitstring represents an
       elemental superlattice, with translation and inversion symmetries.
   """
-  def __init__(self): 
+  def __init__(self, size=None): 
     """ Initializes a bitstring individual randomly. """
     from random import randint
     import numpy
 
-    super(Individual, self).__init__()
-    self.genes = numpy.array([ int(randint(0,1)) for i in xrange(self.size) ], dtype="int")
+    super(Individual, self).__init__(size)
+    if size == None: size = self.size
+    self.genes = numpy.array([ int(randint(0,1)) for i in xrange(size) ], dtype="int")
+    print "?? ", size, self.genes.shape
   
   def __eq__(self, a): 
     """ Compares two elemental superlattices. """
@@ -77,19 +79,21 @@ class Crossover(BitstringCrossover):
 class Converter(object):
   """ Converts a bitstring into an actual superlattice structure, and vice-versa. """
 
-  def __init__(self, cell, lattice = None):
+  def __init__(self, supercell, lattice):
     """ Initializes a functor for bitstring to crystal structure conversion. 
 
         Structure().L{lattice<crystal.Structure.lattice>} must be set. 
-        @param cell: are the lattice-vectors of the supercell making up the
+        @param supercell: are the lattice-vectors of the supercell making up the
           elemental superlattice. The epitaxial direction must be given by the
           first column vector.
-        @type cell: 3x3 float64 numpy array.
+        @type supercell: 3x3 float64 numpy array.
         @param lattice: lattice from which to create supercell.
     """
     from lada.crystal import LayerDepth, sort_layers, Structure, fill_structure
     super(Converter, self).__init__()
     
+    self.lattice = lattice
+    """ Backbone lattice. """
     if lattice != None:
       oldlattice = None
       try: oldlattice = Structure().lattice
@@ -97,7 +101,7 @@ class Converter(object):
       lattice.set_as_crystal_lattice()
     # creates epitaxial tructure
     self.structure = Structure()
-    self.structure.cell = cell
+    self.structure.cell = supercell
     self.structure = sort_layers( fill_structure(self.structure.cell) )
 
     ld = LayerDepth(self.structure.cell[:,0])
@@ -124,7 +128,7 @@ class Converter(object):
 
     if hasattr(object, "cell"): # crystal structure
       def which(u): # finds type
-        return 0 if u.type == self.structure.lattice.sites[u.site].type[0] else 1
+        return 0 if u.type == self.lattice.sites[u.site].type[0] else 1
       return array([ which(u) for u in object.atoms ])
     else:  # bitstring.
       if len(object) != len(self.structure.atoms): 
@@ -134,35 +138,34 @@ class Converter(object):
         raise ValueError, "Bitstring and epitaxial structure are not compatible.\n"
       result = Structure(self.structure)
       for i, atom in enumerate(result.atoms):
-        atom.type = self.structure.lattice.sites[atom.site].type[int(object[i])]
-      assert result.lattice.scale > 0e0
-      result.scale = result.lattice.scale
+        atom.type = self.lattice.sites[atom.site].type[int(object[i])]
+      assert self.lattice.scale > 0e0
+      result.scale = self.lattice.scale
       return result
 
   def __repr__(self):
-    return "from {0} import {1}\n{2}\nconverter = {1}({3},{4})"\
+    return "from {0} import {1}\n{2}\nsupercell = {3}\nconverter = {1}(supercell,lattice)"\
            .format(self.__class__.__module__, self.__class__.__name__,\
                    self.lattice, repr(self.structure.cell))
 
 class LayeredConverter(object):
   """ Converts a bitstring into an actual superlattice structure, and vice-versa. """
 
-  def __init__(self, cell=None, lattice = None, structure=None):
+  def __init__(self, supercell, lattice):
     """ Initializes a functor for bitstring to crystal structure conversion. 
 
         Structure().L{lattice<crystal.Structure.lattice>} must be set. 
-        @param cell: are the lattice-vectors of the supercell making up the
+        @param supercell: are the lattice-vectors of the supercell making up the
           elemental superlattice. The epitaxial direction must be given by the
           first column vector.
-        @type cell: 3x3 float64 numpy array.
+        @type supercell: 3x3 float64 numpy array.
         @param lattice: lattice from which to create supercell.
     """
     from lada.crystal import LayerDepth, sort_layers, Structure, fill_structure
     super(LayeredConverter, self).__init__()
-    if structure != None: 
-      self.structure = sort_layers(structure)
-      return
     
+    self.lattice = lattice
+    """ Backbone lattice. """
     if lattice != None:
       oldlattice = None
       try: oldlattice = Structure().lattice
@@ -170,7 +173,7 @@ class LayeredConverter(object):
       lattice.set_as_crystal_lattice()
     # creates epitaxial tructure
     self.structure = Structure()
-    self.structure.cell = cell
+    self.structure.cell = supercell
     self.structure = sort_layers( fill_structure(self.structure.cell) )
 
     ld = LayerDepth(self.structure.cell[:,0])
@@ -217,21 +220,22 @@ class LayeredConverter(object):
 
     if hasattr(object, "cell"): # crystal structure
       def which(u): # finds type
-        return 0 if u.type == self.structure.lattice.sites[u.site].type[0] else 1
+        return 0 if u.type == self.lattice.sites[u.site].type[0] else 1
       return array([ which(u) for i, u in generator(object, False) ])
     else:  # bitstring.
       if len(object) != len([0 for i, u in generator(self.structure, False)]):
         print object
-        print len(self.structure.atoms), len([0 for i, u in generator(self.structure)])
-        print self.structure
+        print len(self.structure.atoms), len([0 for i, u in generator(self.structure, False)])
+        print repr(self.structure)
         raise ValueError, "Bitstring and epitaxial structure are not compatible.\n"
       result = Structure(self.structure)
       for i, atom in generator(result, True):
-        atom.type = self.structure.lattice.sites[atom.site].type[int(object[i])]
-      assert result.lattice.scale > 0e0
-      result.scale = result.lattice.scale
+        atom.type = self.lattice.sites[atom.site].type[int(object[i])]
+      assert self.lattice.scale > 0e0
+      result.scale = self.lattice.scale
       return result
 
   def __repr__(self):
-    return "from {0} import {1}\n{2}\nconverter = {1}(structure)"\
-           .format(self.__class__.__module__, self.__class__.__name__, repr(self.structure))
+    return "from {0} import {1}\n{2}\nsupercell = {3}\nconverter = {1}(supercell, lattice)"\
+           .format(self.__class__.__module__, self.__class__.__name__,
+                   repr(lattice), repr(self.structure.cell))
