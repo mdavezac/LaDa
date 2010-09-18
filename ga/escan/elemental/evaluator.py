@@ -52,8 +52,15 @@ class Bandgap(object):
     self.kwargs = deepcopy(kwargs)
     """ Additional arguments to be passed to the bandgap functional. """
 
-    self.outdir = RelativeDirectory(path=outdir)
+    self._outdir = RelativeDirectory(path=outdir)
     """ Location of output directory. """
+
+  @property 
+  def outdir(self):
+    """ Current workding directory. """
+    return self._outdir.path
+  @outdir.setter 
+  def outdir(self, value): self._outdir.path = value
 
   def __len__(self):
     """ Returns length of bitstring. """
@@ -90,7 +97,7 @@ class Bandgap(object):
     references = kwargs.pop("references", self.references)
     converter  = kwargs.pop( "converter",  self.converter)
     escan      = kwargs.pop(     "escan",      self.escan)
-    if outdir == None:     outdir     = join(self.outdir.path, str(self.nbcalc))
+    if outdir == None:     outdir     = join(self.outdir, str(self.nbcalc))
     if comm == None:       comm       = world
  
     # creates a crystal structure (phenotype) from the genotype.
@@ -100,7 +107,7 @@ class Bandgap(object):
     dictionary.update(kwargs) 
     dictionary["comm"]       = comm 
     dictionary["outdir"]     = outdir
-    dictionary["workdir"]    = self.outdir.path
+    dictionary["workdir"]    = self.outdir
     dictionary["references"] = self.references(structure) if hasattr(references, "__call__")\
                                else references
     # performs calculation.
@@ -144,10 +151,11 @@ class Bandgap(object):
              "evaluator.kwargs            = {4}\n"\
              "evaluator.nbcalc            = {5.nbcalc}\n"\
              "evaluator.references        = {5.references}\n"\
-             "evaluator.outdir{6}\n"\
+             "evaluator.outdir            = {6}\n"\
              .format( self.__class__.__module__, self.__class__.__name__,
-                      repr(self.converter), repr(self.escan), 
-                      repr(self.kwargs), self, self.outdir.repr() )
+                      repr(self.converter),
+                      repr(self.escan).replace("functional", "escan_functional"), 
+                      repr(self.kwargs), self, repr(self._outdir.unexpanded))
 
 
 class Dipole(Bandgap):

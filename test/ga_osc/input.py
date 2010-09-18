@@ -43,7 +43,7 @@ escan.maskr                 = "~/SiGe/pseudos/maskr"
 escan.vff = vff
 
 # GA parameters.
-population_size = 80
+population_size = 100
 """ Size of the GA population """
 max_generations = 100
 """ Maximum number of generations """
@@ -58,7 +58,7 @@ mean_conc = 0.2
 """
 stddev_conc = 0.4
 """ Standard deviation of the concentration of randomly created individual. """
-pools = 1
+pools = 5
 """ Number of pools of processes.
 
     During the evaluation of new individuals, the processes are splitted
@@ -89,7 +89,7 @@ def fftmesh(cell):
 
 scales = [5.45]
 """ Substrate lattice parameter. """
-trials = range(5)
+trials = range(2)
 """ Number of trials per configuration space. """
 periods = [5]
 """ Size of the period in the configuration space. """

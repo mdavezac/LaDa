@@ -87,8 +87,15 @@ class Darwin:
     self.age = None
     """ Current historical age (e.g. number of restarts). """
     
-    self.outdir = RelativeDirectory()
-    """" Current workding directory. """
+    self._outdir = RelativeDirectory()
+    """ Private implementation of current workding directory. """
+
+  @property 
+  def outdir(self):
+    """ Current workding directory. """
+    return self._outdir.path
+  @outdir.setter 
+  def outdir(self, value): self._outdir.path = value
 
   @property
   def checkpoints(self):
@@ -168,14 +175,14 @@ class Darwin:
     do_print = True if comm == None else comm.do_print
     
     # creates extraction object
-    extract = self.Extract(self.outdir.path, comm)
+    extract = self.Extract(self.outdir, comm)
 
     # checks for restart file.
-    path = join(join(self.outdir.path, extract.current_age), self.FUNCCAR)
+    path = join(join(self.outdir, extract.current_age), self.FUNCCAR)
     if not exists(path): 
       error = "Could not find restart file {0}.\n"\
               "Yet directory {1} exits.\nAborting\n"\
-              .format(path, join(self.outdir.path, name))
+              .format(path, join(self.outdir, name))
       if do_print: print error
       raise RuntimeErorr(error)
 
@@ -205,8 +212,8 @@ class Darwin:
     from pickle import dump
     from ....opt.changedir import changedir
 
-    path = join(join(self.outdir.path, self.age), self.FUNCCAR)
-    with Changedir(join(self.outdir.path, age)) as cwd: 
+    path = join(join(self.outdir, self.age), self.FUNCCAR)
+    with Changedir(join(self.outdir, age)) as cwd: 
       with open(self.FUNCCAR, "w") as file: dump(self, file)
     return True
 
@@ -242,21 +249,22 @@ class Darwin:
     if self.do_print:
       print "Number of functional evaluations: ", nbcalc
 
-  def __call__(self, comm = None, outdir = None, **kwargs):
+  def __call__(self, comm = None, outdir = None, inplace=None, **kwargs):
+    """ Runs/Restart  GA """
     from os import getcwd
     from os.path import join
     from copy import deepcopy
     from boost.mpi import world
     from ... import darwin as search
     from ....opt import redirect
+    from sys import exit
 
-    if outdir == None: outdir = getcwd()
-    self.outdir.path = outdir
+    self.outdir = getcwd() if outdir == None else outdir
 
     # takes care of keyword arguments:
     if len(kwargs.keys()) > 0: 
       this = deepcopy(self)
-      for key, value in kwargs:
+      for key, value in kwargs.items():
         assert hasattr(self, key), TypeError("Unknown argument {0}.".format(key))
         setattr(self, key, value)
       this(comm=comm)
@@ -268,15 +276,26 @@ class Darwin:
     self.comm.do_print = self.do_print
 
     # gets current age
-    self.age = Extract(self.outdir.path, comm).next_age
+    self.age = self.Extract(self.outdir, comm).next_age
 
     # changes working directory
-    workdir = join(self.outdir.relative, self.age)
+    workdir = join(self._outdir.relative, self.age)
+    if self.do_print:
+      print "age: ", self.age
+      print "color: ", self.color
+      print "outdir: ", self.outdir
+    exit(0)
+    workdir = join(self._outdir.relative, self.age)
+    if self.do_print:
+      print "workdir: ", self.workdir
     if self.color != None: workdir = join(workdir, "pool_{0}".format(self.color))
-    self.evaluators.outdir.relative = workdir
+    if self.do_print:
+      print "workdir: ", self.workdir
+      print "relative: ", self.evaluator.outdir.relative
+    self.evaluator._outdir.relative = workdir
       
     # now goes to work
-    with Changedir(join(self.outdir.path, self.age)) as cwd:
+    with Changedir(join(self.outdir, self.age)) as cwd:
       with redirect(pyout=self.OUTCAR, pyerr=self.ERRCAR) as streams:
         # reloads if necessary
         if self.age != self.ordinals[0]: this.restart(comm)

@@ -28,10 +28,16 @@ class Extract(object):
     """ Initializes Extract object. """
     from lada.opt import RelativeDirectory
 
-    self.root = RelativeDirectory(path=directory, hook=self.uncache)
+    self._directory = RelativeDirectory(path=directory, hook=self.uncache)
     """ GA directory. """
     self.comm = comm
 
+  @property
+  def directory(self):
+   """ Root output directory. """
+   return self._directory.path
+  @directory.setter
+  def directory(self, value): self._directory.path = value
 
   @property
   @make_cached
@@ -45,7 +51,7 @@ class Extract(object):
 
     if self.current_age == None: return None
     if is_root:
-      current_path = join(join(self.root.path, self.current_age), self.FUNCCAR)
+      current_path = join(join(self.directory, self.current_age), self.FUNCCAR)
       with open(current_path, "r") as file: result = load(file)
       if is_mpi:
         from boost.mpi import broadcast
@@ -98,9 +104,8 @@ class Extract(object):
     results = []
     filenames = [self.OUTCAR, self.FUNCCAR]
     for name in self.ordinals:
-      if not all( [ exists(join(self.workdir.path, filename)) \
-                    for filename in filenames ] ): continue
-      results.append(name)
+      dummy = [join(join(self.directory, name), f) for f in filenames]
+      if all([exists(p) for p in dummy]): results.append(name)
     return results
 
   @property
@@ -129,7 +134,7 @@ class Extract(object):
     result = []
     individual = self.functional.Individual()
     for age in self.ages: 
-      with open(join(join(self.root.path, age), self.OUTCAR), "r") as file:
+      with open(join(join(self.directory, age), self.OUTCAR), "r") as file:
         text = "".join(file.readlines())
 
       # loop over Offspring blocks.
