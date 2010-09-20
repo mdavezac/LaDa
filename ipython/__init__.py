@@ -477,6 +477,7 @@
 """
 __docformat__ = "restructuredtext en"
 from contextlib  import contextmanager
+from _collect import Collect
 
 def _get_current_job_params(self, verbose=0):
   """ Returns a tuple with current job, filename, directory. """
@@ -695,81 +696,6 @@ def please_cancel_all_jobs(self, arg):
   result = qstat(self, None)
   for u in result.field(0):
     self.api.system("scancel %i" % (int(u)))
-
-from ..jobs import AbstractMassExtract
-class Collect(AbstractMassExtract):
-  """ Mass extraction with varying position argument. 
-  
-      By adjusting ``self.position``, which jobs to collect can be adjusted.
-  """
-  def __init__(self, comm=None):
-    """ Initializes a Collect instance. """
-    from IPython.ipapi import get as get_ip_handle
-    super(Collect, self).__init__(None, comm=comm)
-
-    self.ip = get_ip_handle()
-    """ Gets current handle. """
-
-  def walk_through(self):
-    """ Generator to go through all relevant jobs.  
-    
-        :return: (name, extractor), where name is the name of the job, and
-          extractor an extraction object.
-    """
-    from os.path import exists, join
-    
-    for job, name in self.jobdict.walk_through():
-      if job.is_tagged: continue
-      if not hasattr(job.functional, "Extract"): continue
-      if not exists(join(self.root, name)): continue
-      try: extract = job.functional.Extract(join(self.root, name), comm = self.comm)
-      except: pass
-      else: yield name, extract
-
-  @property 
-  def jobdict(self):
-    """ Returns root of current dictionary. """
-    if "current_jobdict" not in self.ip.user_ns: 
-      print "No current job-dictionary to collect from."
-      return
-    return self.ip.user_ns["current_jobdict"].root
-
-  @property 
-  def position(self):
-    """ Returns current position in dictionary. """
-    if "current_jobdict" not in self.ip.user_ns: 
-      print "No current job-dictionary to collect from."
-      return
-    return self.ip.user_ns["current_jobdict"].name[1:]
-
-  @property 
-  def root(self):
-    """ Returns directory name of current dictionary. """
-    from os.path import dirname
-    if "current_jobdict_path" not in self.ip.user_ns: 
-      print "No known path for current job-dictionary."
-      print "Don't know where to look for results."
-      print "Please use %saveto magic function."
-      return
-    return dirname(self.ip.user_ns["current_jobdict_path"])
-
-  def __getattr__(self, name): 
-    """ Returns extracted values. """
-    from os.path import dirname
-    if name == "_cached_extractors" or name == "_cached_properties": 
-      raise AttributeError("Unknown attribute {0}.".format(name))
-    if name in self._properties(): 
-      result = {}
-      position = self.position
-      for key, value in self._extractors().items():
-        if len(position) > 0:
-          if position != key[:len(position)]: continue
-          if len(position) < len(key) and position[-1] != '/': continue
-        try: result[key] = getattr(value, name)
-        except: result.pop(key, None)
-      return result if len(result.keys()) > 1 else result[result.keys()[0]]
-    raise AttributeError("Unknown attribute {0}.".format(name))
-
 
 def ipy_init():
   """ Initialises ipython session. 
