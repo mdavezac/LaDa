@@ -200,7 +200,8 @@ def _explore(self, args):
   from os.path import exists, abspath, dirname
   from copy import deepcopy
   from ..jobs import MassExtract, load, JobDict
-  from . import Collect, _get_current_job_params
+  from ._collect import Collect
+  from . import _get_current_job_params
 
   ip = self.api
 
@@ -231,10 +232,9 @@ def _explore(self, args):
     try: jobdict = load(args.jobdict)
     except: jobdict = None
     else: new_path = abspath(args.jobdict)
-  if args.is_expression or not args.is_file:
+  if jobdict == None and (args.is_expression or not args.is_file):
     try: jobdict = ip.ev(args.jobdict)
     except: jobdict = None
-
 
   if not isinstance(jobdict, JobDict): jobdict = None
 
@@ -254,8 +254,6 @@ def _explore(self, args):
     if new_path == None: new_path = path
 
   ip.user_ns["current_jobdict"] = jobdict
-  ip.user_ns["current_jobdict_path"] = path
+  if new_path != None: ip.user_ns["current_jobdict_path"] = new_path
+  else: ip.user_ns.pop("current_jobdict_path", None)
   if new_path != None: ip.user_ns["collect"] = Collect()
-
-
-  

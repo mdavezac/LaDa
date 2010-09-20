@@ -29,7 +29,9 @@ class Collect(AbstractMassExtract):
     """
     from os.path import exists, join
     
-    for job, name in self.jobdict.walk_through():
+    if not self.root: return
+    jobdict = self.jobdict
+    for job, name in jobdict.walk_through():
       if job.is_tagged: continue
       if not hasattr(job.functional, "Extract"): continue
       if not exists(join(self.root, name)): continue
@@ -48,11 +50,10 @@ class Collect(AbstractMassExtract):
   @property 
   def position(self):
     """ Returns current position in dictionary. """
-    if self._view != None: return self._view[1:]
     if "current_jobdict" not in self.ip.user_ns: 
       print "No current job-dictionary to collect from."
       return
-    return self.ip.user_ns["current_jobdict"].name[1:]
+    return (self._view if self._view != None else self.ip.user_ns["current_jobdict"].name)[1:]
 
   @property 
   def root(self):
@@ -68,18 +69,17 @@ class Collect(AbstractMassExtract):
   def __getattr__(self, name): 
     """ Returns extracted values. """
     from os.path import dirname
+    from re import compile
     if name == "_cached_extractors" or name == "_cached_properties": 
       raise AttributeError("Unknown attribute {0}.".format(name))
     if name in self._properties(): 
       result = {}
-      position = self.position
+      position = compile("^" + self.position)
       for key, value in self._extractors().items():
-        if len(position) > 0:
-          if position != key[:len(position)]: continue
-          if len(position) < len(key) and position[-1] != '/': continue
+        if position.match(key) == None: continue
         try: result[key] = getattr(value, name)
         except: result.pop(key, None)
-      return result if len(result.keys()) > 1 else result[result.keys()[0]]
+      return result
     raise AttributeError("Unknown attribute {0}.".format(name))
 
   def __getitem__(self, name):
@@ -90,6 +90,9 @@ class Collect(AbstractMassExtract):
   @property
   def children(self):
     """ Iterates through all sub-jobs. """
-    if "/" + self.position not in self.jobdict.children: return
-    for name in self.jobdict["/"+self.position].children.keys():
-      yield self.__class__(comm=self.comm, _view="/"+self.position + name)
+    from os.path import join, normpath
+    try: jobdict = self.jobdict["/" + self.position]
+    except: return
+    for name in jobdict.children.keys():
+      path = normpath(join(join("/", self.position), name))
+      yield self.__class__(comm=self.comm, _view=path)

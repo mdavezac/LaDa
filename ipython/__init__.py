@@ -477,7 +477,6 @@
 """
 __docformat__ = "restructuredtext en"
 from contextlib  import contextmanager
-from _collect import Collect
 
 def _get_current_job_params(self, verbose=0):
   """ Returns a tuple with current job, filename, directory. """
@@ -534,7 +533,8 @@ def listjobs(self, arg):
 def saveto(self, event):
   """ Saves current job to current filename and directory. """
   from os.path import exists, abspath, isfile
-  from lada import jobs
+  from .. import jobs
+  from ._collect import Collect
   ip = self.api
   # gets dictionary, path.
   current, path = _get_current_job_params(self, 1)
