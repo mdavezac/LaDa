@@ -263,14 +263,24 @@ class Darwin:
 
     # gets current age
     self.age = self.Extract(outdir.path, comm).next_age
+    for i in range(comm.size):
+      if i == comm.rank:
+        print i, " outdir: ", outdir.path
+        print i, " evaluator.outdir: ", self.evaluator.outdir
+        print i, " age: ",  self.age
+        print i, " ages: ",  self.Extract(outdir.path, comm).ages
+        print i, " current_age: ",  self.Extract(outdir.path, comm).current_age
+      comm.barrier()
     self.evaluator._outdir.relative = outdir.relative
     self.evaluator.outdir = join(self.evaluator.outdir, self.age)
     if self.color != None: 
       self.evaluator.outdir = join(self.evaluator.outdir, "pool_{0}".format(self.color))
 
     # now goes to work
-    with Changedir(join(outdir.path, self.age)) as cwd:
-      with redirect(pyout=self.OUTCAR, pyerr=self.ERRCAR) as streams:
+    with Changedir(join(outdir.path, self.age), comm=comm) as cwd:
+      pyout = self.OUTCAR if self.do_print else '/dev/null'
+      pyerr = self.ERRCAR if self.do_print else '/dev/null'
+      with redirect(pyout=pyout, pyerr=pyerr) as streams:
         # reloads if necessary
         if self.age != self.ordinals[0]: this.restart(comm, outdir.path)
         # runs.

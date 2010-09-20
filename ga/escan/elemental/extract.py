@@ -85,7 +85,6 @@ class Extract(object):
     return self.ages[-1] if len(self.ages) else None
 
   @property
-  @broadcast_result(attr=True, which=0)
   def next_age(self):
     """ Next GA age (eg next run). """
     if self.current_age == None: return self.ordinals[0] 

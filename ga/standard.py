@@ -213,10 +213,6 @@ def mpi_population_evaluation(self, evaluator, pools, comm = None):
 
   check_pops(self, self.population)
   check_pops(self, self.offspring)
-    
-  evaluation.__doc__ = mpi_population_evaluation.__doc__
-  evaluation = bound_method(self, evaluation)
-  return evaluation
 
 def population_evaluation(self, evaluator, comm=None, pools=None):
   """ Chooses between MPI and serial evaluation. """

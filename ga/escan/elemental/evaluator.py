@@ -110,6 +110,7 @@ class Bandgap(object):
     dictionary["workdir"]    = self.outdir
     dictionary["references"] = self.references(structure) if hasattr(references, "__call__")\
                                else references
+    if "overwrite" not in dictionary: dictionary["overwrite"]  = True
     # performs calculation.
     out = bandgap(escan, structure, **dictionary)
 
