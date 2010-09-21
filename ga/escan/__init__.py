@@ -164,4 +164,9 @@ else:
       """ Resets state. """
       self.__init__(*args)
 
+    @staticmethod
+    def remove_hashcode(indiv):
+      """ Removes hash-code from object. """
+      if hasattr(indiv, "integer_hashcode"): del indiv.integer_hashcode
+
 

@@ -158,7 +158,7 @@ def mpi_population_evaluation(self, evaluator, pools, comm = None):
 
       Only individuals without a ``fitness`` attribute are evaluated. 
   """
-  from boost.mpi import broadcast, scatter, all_gather
+  from boost.mpi import broadcast, scatter, all_gather, world
   from itertools import chain
   # split communicator along number of pools
   if pools == None: pools = comm.size
@@ -186,7 +186,7 @@ def mpi_population_evaluation(self, evaluator, pools, comm = None):
   gather_these = []
   # Now goes throught individuals which need be evaluated
   for index, indiv in enumerate(chain(self.population, self.offspring)):
-    if not hasattr(indiv, "fitness"): continue
+    if hasattr(indiv, "fitness"): continue
     if index % pools == color: 
       fitness = evaluator(indiv, comm = local_comm)
       if local_comm.rank == 0: gather_these.append( (indiv, fitness) )
@@ -198,21 +198,22 @@ def mpi_population_evaluation(self, evaluator, pools, comm = None):
 
   # now reinserts them into populations.
   for index, indiv in enumerate(chain(self.population, self.offspring)):
-    if not hasattr(indiv, "fitness"): continue
+    if hasattr(indiv, "fitness"): continue
     assert len(gather_these) > index % pools, \
            RuntimeError("%s > %i %% %i" % (len(gather_these), index, pools))
     assert len(gather_these[index % pools]) != 0
     a, fitness = gather_these[index % pools].pop(0)
+    indiv.__dict__.update(a.__dict__)
     indiv.fitness = fitness
-    indiv = a
   comm.barrier()
   for index, indiv in enumerate(chain(self.population, self.offspring)):
-    if not hasattr(indiv, "fitness"): continue
+    if hasattr(indiv, "fitness"): continue
     assert False, "should not be here"
   comm.barrier()
 
   check_pops(self, self.population)
   check_pops(self, self.offspring)
+  world.barrier()
 
 def population_evaluation(self, evaluator, comm=None, pools=None):
   """ Chooses between MPI and serial evaluation. """

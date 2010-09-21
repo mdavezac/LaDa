@@ -45,7 +45,7 @@ escan.vff = vff
 # GA parameters.
 population_size = 100
 """ Size of the GA population """
-max_generations = 100
+max_generations = -1
 """ Maximum number of generations """
 offspring_rate  = 0.1
 """ Rate at which offspring are created. """

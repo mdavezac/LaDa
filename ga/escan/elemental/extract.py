@@ -58,21 +58,9 @@ class Extract(object):
         broadcast(self.comm, result, 0)
     elif is_mpi:
       from boost.mpi import broadcast
-      broadcast(self.comm, result, 0)
+      result = broadcast(self.comm, None, 0)
     return result
 
-  @property
-  def population(self):
-    """ Returns current population. """
-    if self.functional == None: return []
-    return self.functional.population
-
-  @property
-  def offspring(self):
-    """ Returns current population. """
-    if self.functional == None: return []
-    return self.functional.offspring
-  
   @property
   def current_gen(self):
     """ Returns current population. """

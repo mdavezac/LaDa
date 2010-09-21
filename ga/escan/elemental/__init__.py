@@ -20,7 +20,6 @@ class Individual(BitstringIndividual):
     super(Individual, self).__init__(size)
     if size == None: size = self.size
     self.genes = numpy.array([ int(randint(0,1)) for i in xrange(size) ], dtype="int")
-    print "?? ", size, self.genes.shape
   
   def __eq__(self, a): 
     """ Compares two elemental superlattices. """

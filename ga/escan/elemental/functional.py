@@ -66,7 +66,7 @@ class Darwin:
     # other parameters
     self.popsize = kwargs.pop("popsize", 100)
     self.rate    = kwargs.pop("rate", max(1e0/(float(self.popsize)-0.5), 0.1))
-    self.max_gen = kwargs.pop("maxgen", 0)
+    self.max_gen = kwargs.pop("max_generations", kwargs.pop("max_gen", 0))
 
     # Parameters for starting population.
     self.mean_conc = kwargs.pop("mean_conc", 0.5)
@@ -96,7 +96,12 @@ class Darwin:
              average_fitness,
              best,
              self.__class__.print_nb_evals,
-             self.__class__.save ]
+             self.__class__.save,
+             self.__class__.check_generations ]
+
+  def check_generations(self): 
+    """ Returns False if the maximum number of generations has been reached. """
+    return self.current_gen < self.max_gen if self.max_gen >= 0 else True
 
   def evaluation(self):
     """ Evaluates population. """
@@ -110,10 +115,10 @@ class Darwin:
      
     # construct sequential mating operator.
     mating = Mating(sequential=False)
-    mating.add(self.crossover, rate=cm_rate)
-    mating.add(self.mutation,  rate=1-cm_rate) 
+    mating.add(self.crossover, rate=self.cm_rate)
+    mating.add(self.mutation,  rate=1-self.cm_rate) 
     # calls mating operator.
-    result = mating(*args, **kwargs)
+    result = mating(self, *args, **kwargs)
     # removes any has-code.
     CompareSuperCells.remove_hashcode(result)
     return result
@@ -161,7 +166,6 @@ class Darwin:
     if self.age == self.ordinals[0] or self.age == None: return
 
     if comm == None and hasattr(self, "comm"): comm = self.comm
-    do_print = True if comm == None else comm.do_print
     
     # creates extraction object
     extract = self.Extract(outdir, comm)
@@ -172,15 +176,15 @@ class Darwin:
       error = "Could not find restart file {0}.\n"\
               "Yet directory {1} exits.\nAborting\n"\
               .format(path, join(outdir, name))
-      if do_print: print error
+      if self.do_print: print error
       raise RuntimeErorr(error)
 
     # copies populations and friends.
-    self.population = extract.population
-    self.offspring = extract.offspring
-    self.current_gen = extract.current_gen
+    self.population  = extract.functional.population
+    self.offspring   = extract.functional.offspring
+    self.current_gen = extract.functional.current_gen
 
-    if do_print:
+    if self.do_print:
       print "Restarting from file {0}.\n"\
             "Restarting at generation {1}.\n"\
             .format(self.FUNCCAR, self.current_gen)
@@ -192,16 +196,17 @@ class Darwin:
       if len(self.offspring) == 0: print "Restarting with empty offspring.\n"
       else:
         print "Restarting with offspring:"
-        for indiv in self.offspring: print indiv, indiv.fitness
+        for indiv in self.offspring: print indiv
       print "\nStarting {0} GA age.\n".format(self.age)
 
   def save(self):
     """ Saves current status. """
-    from os.path import join
     from pickle import dump
-    from ....opt.changedir import changedir
 
-    with open(self.FUNCCAR, "w") as file: dump(self, file)
+    # only one proc should print.
+    is_root = self.comm.rank == 0 if hasattr(self, "comm") else True
+    if is_root:
+      with open(self.FUNCCAR, "w") as file: dump(self, file)
     return True
 
   @property
@@ -230,7 +235,7 @@ class Darwin:
       from boost.mpi import all_reduce
       local_comm = self.comm.split(self.color)
       heads_comm = self.comm.split(1 if local_comm.rank == 0 else 2)
-      nbcalc = all_reduce(heads_comm, self.evaluator.nbcalc, lambda x,y: x+y, 0)
+      nbcalc = all_reduce(heads_comm, self.evaluator.nbcalc, lambda x,y: x+y)
     else: nbcalc = self.evaluator.nbcalc
     
     if self.do_print:
@@ -243,8 +248,7 @@ class Darwin:
     from copy import deepcopy
     from boost.mpi import world
     from ... import darwin as search
-    from ....opt import redirect, RelativeDirectory
-    from ....opt.changedir import Changedir
+    from ....opt import redirect, RelativeDirectory, Changedir
 
     outdir = RelativeDirectory(outdir)
     if outdir == None: outdir = getcwd()
@@ -263,14 +267,6 @@ class Darwin:
 
     # gets current age
     self.age = self.Extract(outdir.path, comm).next_age
-    for i in range(comm.size):
-      if i == comm.rank:
-        print i, " outdir: ", outdir.path
-        print i, " evaluator.outdir: ", self.evaluator.outdir
-        print i, " age: ",  self.age
-        print i, " ages: ",  self.Extract(outdir.path, comm).ages
-        print i, " current_age: ",  self.Extract(outdir.path, comm).current_age
-      comm.barrier()
     self.evaluator._outdir.relative = outdir.relative
     self.evaluator.outdir = join(self.evaluator.outdir, self.age)
     if self.color != None: 
@@ -282,7 +278,7 @@ class Darwin:
       pyerr = self.ERRCAR if self.do_print else '/dev/null'
       with redirect(pyout=pyout, pyerr=pyerr) as streams:
         # reloads if necessary
-        if self.age != self.ordinals[0]: this.restart(comm, outdir.path)
+        if self.age != self.ordinals[0]: self.restart(outdir.path, comm=comm)
         # runs.
         search.run(self)
         
