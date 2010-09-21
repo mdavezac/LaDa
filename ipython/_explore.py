@@ -233,7 +233,7 @@ def _explore(self, args):
     except: jobdict = None
     else: new_path = abspath(args.jobdict)
   if jobdict == None and (args.is_expression or not args.is_file):
-    try: jobdict = ip.ev(args.jobdict)
+    try: jobdict = deepcopy(ip.ev(args.jobdict))
     except: jobdict = None
 
   if not isinstance(jobdict, JobDict): jobdict = None
