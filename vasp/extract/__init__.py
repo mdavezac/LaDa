@@ -34,6 +34,8 @@ class Extract(_dft._ExtractImpl):
   pulay_pressure  = property(_ExtractImpl._get_pulay_pressure)
   partial_charges = property(_ExtractImpl._get_partial_charges)
   magnetization   = property(_ExtractImpl._get_magnetization)
+  moment          = property(_ExtractImpl._get_moment)
+  nb_electrons    = property(_ExtractImpl._get_nb_electrons)
   vasp            = property(_ExtractImpl._get_functional)
   electropot      = property(_ExtractImpl._get_electropot)
   functional      = property(_ExtractImpl._get_functional)

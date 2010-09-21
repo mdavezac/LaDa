@@ -387,18 +387,20 @@ class _ExtractImpl(object):
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = []
-    with open(path, "r") as file:
-      found = re.compile(grep) 
-      lines = file.readlines()
+    with open(path, "r") as file: lines = file.readlines()
+    found = re.compile(grep) 
     for index in xrange(1, len(lines)+1):
       if found.search(lines[-index]) != None: break 
+    print index, len(lines)
     if index == len(lines): return None
     index -= 4
-    for i in xrange(index, index - len(self.solo().structure.atoms), -1):
-      data = lines[-i].split()
-      assert int(data[0]) == index - i + 1
-      result.append( data[1:len(data)-1] )
+    line_re = re.compile(r"""^\s*\d+\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s*$""")
+    for i in xrange(0, index): 
+      match = line_re.match(lines[-index+i])
+      if match == None: break
+      result.append([float(match.group(j)) for j in range(1, 5)])
     return array(result, dtype="float64")
+
 
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -421,6 +423,37 @@ class _ExtractImpl(object):
         The total is not included.
     """
     return self._get_partial_charges_magnetization(r"""^\s*magnetization\s*\(x\)\s*$""")
+
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def _get_moment(self):
+    """ Returns magnetic moment from OUTCAR. """
+    from os.path import exists, join
+    from re import compile
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
+    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
+
+    with open(path, "r") as file: lines = file.readlines()
+    found = compile(r"""^\s*number\s+of\s+electron\s+(\S+)\s+magnetization\s+(\S+)\s*$""") 
+    for line in lines[::-1]:
+      match = found.match(line)
+      if match != None: return float(match.group(2))
+
+
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def _get_nb_electrons(self):
+    """ Returns number of electrons from OUTCAR. """
+    from os.path import exists, join
+    from re import compile
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
+    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
+
+    with open(path, "r") as file: lines = file.readlines()
+    found = compile(r"""^\s*number\s+of\s+electron\s+(\S+)\s+magnetization\s+(\S+)\s*$""") 
+    for line in lines[::-1]:
+      match = found.match(line)
+      if match != None: return float(match.group(1))
     
   @make_cached
   @broadcast_result(attr=True, which=0)
