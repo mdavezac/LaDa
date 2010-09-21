@@ -129,19 +129,121 @@ class _ExtractImpl(object):
     if result == None: raise RuntimeError, "File %s is incomplete.\n" % (path)
     return result * pq.eV
 
+
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def _get_name(self):
+    """ Gets name of system from OUTCAR. """
+    from os.path import exists, join
+    from re import compile
+
+    species_in = self.species
+
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
+    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
+    
+    with open(path, "r") as file: 
+      line_re = compile("^\s*POSCAR\s*=\s*")
+      for line in file: 
+        if line_re.search(line) != None: break
+      return line[line.find("=")+1:].rstrip().strip()
+
+
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def _get_structure_data(self):
+    """ Greps cell and positions from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}. """
+    from os.path import exists, join
+    from re import compile
+    from numpy import array, zeros
+
+    species_in = self.species
+
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
+    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
+
+    cell = zeros((3,3), dtype="float64")
+    atoms = []
+
+
+    with open(path, "r") as file: lines = file.readlines()
+
+    atom_index, cell_index = None, None
+    atom_re = compile(r"""^\s*POSITION\s+""")
+    cell_re = compile(r"""^\s*direct\s+lattice\s+vectors\s+""")
+    for index, line in enumerate(lines[::-1]):
+      if atom_re.search(line) != None: atom_index = index - 1
+      if cell_re.search(line) != None: cell_index = index; break
+    assert atom_index != None and cell_index != None,\
+           RuntimeError("Could not find structure description in OUTCAR.")
+    for i in range(3):
+      cell[:,i] = [float(u) for u in lines[-cell_index+i].split()[:3]]
+    while atom_index > 0 and len(lines[-atom_index].split()) == 6:
+      atoms.append( array([float(u) for u in lines[-atom_index].split()[:3]], dtype="float64") )
+      atom_index -= 1
+
+    return cell, atoms
+
   @make_cached
   def _get_structure(self):
-    """ Greps structure from L{CONTCAR <lada.vasp.extract._ExtractImpl.CONTCAR>} and total energy from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}. """
+    """ Greps structure and total energy from OUTCAR. """
+    from os.path import exists, join
+    from re import compile
+    from numpy import array, zeros
+    from quantities import eV
+    from ...crystal import Structure
+
+    species_in = self.species
+    cell, atoms = self._get_structure_data()
+
+    structure = Structure()
+    structure.name = self.name
+    structure.energy = float(self.total_energy.rescale(eV))
+    structure.cell = cell
+    structure.scale = 1e0
+    assert len(self.species) == len(self.ions_per_specie),\
+           RuntimeError("Number of species and of ions per specie incoherent.")
+    for specie, n in zip(self.species[::-1],self.ions_per_specie[::-1]):
+      for i in range(n):
+        structure.add_atom = atoms.pop(), specie
+
+    return structure
+
+  @make_cached
+  def _get_contcar_structure(self):
+    """ Greps structure from CONTCAR. """
     from os.path import exists, join
     from ...crystal import read_poscar
+    from quantities import eV
 
     species_in = self.species
 
     path = self.CONTCAR if len(self.directory) == 0 else join(self.directory, self.CONTCAR)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
     result = read_poscar(species_in, path, comm=self.comm)
-    result.energy = float(self.energy.rescale("eV"))
+    result.energy = float(self.energy.rescale(eV))
     return result
+
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def _get_ions_per_type(self):
+    """ Greps species from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}. """
+    from os.path import exists, join
+    from re import compile, X as re_X
+
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
+    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
+
+    result = []
+    with open(path, "r") as file:
+      regex = compile(r"""\s*ions\s+per\s+type\s*=""")
+      for line in file:
+        match = regex.search(line)
+        if match == None: continue
+        return [int(u) for u in line.split()[4:]]
+    return None
+
+  
 
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -468,7 +570,7 @@ class _ExtractImpl(object):
     from os.path import exists, join
     import re
 
-    for path in [self.OUTCAR, self.CONTCAR]:
+    for path in [self.OUTCAR]:
       if self.directory != "": path = join(self.directory, path)
       if not exists(path): return False
       
