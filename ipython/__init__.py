@@ -338,6 +338,34 @@
     >>> collect.eigenvalues
     array([[6.5,...,18.546513]]) * eV
 
+    There are a couple of functions to operate on collected results, other than
+    at the dictionary level. A subset of results can be explored using the
+    indexing interface of the ``collect`` object. For instance to collect all
+    results for the ZnMgO material only:
+
+    >>> %goto / # go back to root
+    >>> collect["ZnMgO"].eigenvalues
+    { "ZnMgO/Spinel": array([[6.5,...,18.546513]]) * eV,
+      "ZnMgO/Olivine": array([[-12.25463, ..., 21.216515]]) * eV }
+
+    Another option allows to loop over the results in the sub-*directories* (eg
+    subjob) of the current job. For instance, the following few line will sort
+    between the results within each material and print only the ground-state energy.
+
+    >>> from operator import itemgetter
+    >>> for material in collect.children:
+    >>>   a = collect.total_energy
+    >>>   if len(a) == 0: continue # could not find result. It happens.
+    >>>   items = sorted(a.items(), key=itemgetter(1))[0]
+    >>>   print "{0:25} {1:12.3f}".format(material.position, float(items[1]))
+    ZnMgO                    -295.455
+    ZnRhO                    -285.097
+
+    Note that ``material.position`` gives the name of the root subjob of each
+    ``material`` object.
+
+
+
 
     Inspecting running job.
     -----------------------
@@ -534,7 +562,8 @@ def listjobs(self, arg):
 def saveto(self, event):
   """ Saves current job to current filename and directory. """
   from os.path import exists, abspath, isfile
-  from lada import jobs
+  from .. import jobs
+  from ._collect import Collect
   ip = self.api
   # gets dictionary, path.
   current, path = _get_current_job_params(self, 1)

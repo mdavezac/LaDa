@@ -44,6 +44,11 @@ def explore(self, cmdl):
                       help='JOBDICT is a path to a job-dictionary stored on disk.' )
   group.add_argument( '--expression', action="store_true", dest="is_expression",
                       help='JOBDICT is a python expression.' )
+  group.add_argument( '--concatenate', action="store_true", dest="concatenate",
+                      help='Update/overwrites current jobdictionary with newly explored one.' )
+  group.add_argument( '--add', metavar="NAME", type=str, dest="add",
+                      help='Adds newly explored jobdictionary to current'\
+                           'dictionary in specified location..' )
   parser.add_argument( 'type', metavar='TYPE', type=str, default="", nargs='?',
                        help="Optional. Specifies what kind of jobs will be explored. "\
                             "Can be one of results, errors, all, running. "\
@@ -130,6 +135,8 @@ def explore_completer(self, event):
   if "--file" in data: data.remove("--file"); has_file = True
   elif "--expression" in data: data.remove("--expression"); has_expr = True
   else: results = ["--file", "--expression"]
+  if "--add" not in data: results.append('--add')
+  if "--concatenate" not in data: results.append('--concatenate')
 
   results.extend(["errors", "results", "all"])
   if hasattr(self, "magic_qstat"): results.append("running")
@@ -193,7 +200,8 @@ def _explore(self, args):
   from os.path import exists, abspath, dirname
   from copy import deepcopy
   from ..jobs import MassExtract, load, JobDict
-  from . import Collect
+  from ._collect import Collect
+  from . import _get_current_job_params
 
   ip = self.api
 
@@ -214,27 +222,38 @@ def _explore(self, args):
     return 
 
   # delete stuff from namespace.
-  ip.user_ns.pop("current_jobdict", None)
-  ip.user_ns.pop("current_jobdict_path", None)
+  current, path = _get_current_job_params(self, 0)
+  ip.user_ns.pop("collect", None)
   ip.user_ns.pop("_lada_subjob_iterator", None)
   ip.user_ns.pop("_lada_subjob_iterated", None)
 
+  jobdict, new_path = None, None
   if args.is_file or not args.is_expression:
-    try: ip.user_ns["current_jobdict"] = load(args.jobdict)
-    except: pass
-    else:
-      ip.user_ns["current_jobdict_path"] = abspath(args.jobdict)
-      ip.user_ns["collect"] = Collect()
-      return 
-  if args.is_expression or not args.is_file:
-    try: ip.user_ns["current_jobdict"] = ip.ev(args.jobdict)
-    except: pass
-    else:
-      if isinstance(ip.user_ns["current_jobdict"], JobDict): return
+    try: jobdict = load(args.jobdict)
+    except: jobdict = None
+    else: new_path = abspath(args.jobdict)
+  if jobdict == None and (args.is_expression or not args.is_file):
+    try: jobdict = deepcopy(ip.ev(args.jobdict))
+    except: jobdict = None
 
-  ip.user_ns["_lada_error"] = \
-     "Could not convert \"{0}\" to a job-dictionary.".format(args.jobdict) 
-  print ip.user_ns["_lada_error"] 
-  raise RuntimeError(ip.user_ns["_lada_error"])
+  if not isinstance(jobdict, JobDict): jobdict = None
 
-  
+  if jobdict == None: # error
+    ip.user_ns["_lada_error"] = \
+       "Could not convert \"{0}\" to a job-dictionary.".format(args.jobdict) 
+    print ip.user_ns["_lada_error"] 
+    raise RuntimeError(ip.user_ns["_lada_error"])
+    
+  if args.concatenate: 
+    current.update(jobdict)
+    jobdict = current
+    if new_path == None: new_path = path
+  elif args.add != None:
+    current[args.add[1:-1]] = jobdict
+    jobdict = current
+    if new_path == None: new_path = path
+
+  ip.user_ns["current_jobdict"] = jobdict
+  if new_path != None: ip.user_ns["current_jobdict_path"] = new_path
+  else: ip.user_ns.pop("current_jobdict_path", None)
+  if new_path != None: ip.user_ns["collect"] = Collect()

@@ -325,16 +325,37 @@ class JobDict(object):
     kwargs.update(self.jobparams)
     return self.functional(**kwargs)
 
-  def update(self, other):
+  def update(self, other, merge=False):
     """ Updates job and tree with other.
     
-        Updates the dictionaries of job parameters and sub-jobs. Will overwrite
-        if items in C{other} are found in self.
-        @param other: An other job tree from which to update.
-        @type other: L{JobDict}
+        :Param other: An other job tree from which to update.
+        :type other: `JobDict`
+        :Param merge: 
+          If false (default), then actual jobs in ``other`` completely
+          overwrite actual jobs in ``self``. If False, then ``jobparams`` in
+          ``self`` is updated with ``jobparams`` in ``other`` if either one is
+          an actual job. If ``other`` is an actual job, then ``functional`` in
+          ``self`` is overwritten. If ``other`` is not an actual job, then
+          ``functional`` in ``self`` is not replaced.
+         
+
+        Updates the dictionaries of job parameters and sub-jobs. Actual jobs in
+        ``other`` (eg with ``self.is_job=True``) will completely overwrite those in
+        ``self``.  if items in ``other`` are found in ``self``, unless merge is
+        set to true. This function is recurrent: subjobs are also updated.
     """
-    self.children.update(other.children)
-    self.jobparams.update(other.jobparams)
+    for key, value in other.children.items():
+      if key in self: self[key].update(value)
+      else: self[key] = value
+
+    if not merge:
+      if not other.is_job: return
+      self.jobparams = other.jobparams
+      self.functional = other.functional
+    else:
+      if not (self.is_job or other.is_job): return
+      self.jobparams.update(other.jobparams)
+      if other.functional != None: self.functional = other.functional
 
   def __str__(self):
     result = "Jobs: \n"
@@ -423,6 +444,21 @@ class JobDict(object):
     result = self
     while result.parent != None: result = result.parent
     return result
+
+  def __contains__(self, index):
+    """ Returns true if index a branch in the job-dictionary. """
+    from re import split
+    from os.path import normpath
+    index = normpath(index)
+    if index[0] == '/': return index[1:] in self.root
+    names = split(r"(?<!\\)/", index) 
+    if len(names) == 0: return False
+    if len(names) == 1: return names[0] in self.children
+    if names[0] not in self.children: return False
+    new_index = normpath(index[len(names[0])+1:])
+    if len(new_index) == 0: return True
+    return new_index in self[names[0]]
+
 
 def walk_through(jobdict, outdir = None, comm = None):
   """ Generator to iterate over actual calculations. 
