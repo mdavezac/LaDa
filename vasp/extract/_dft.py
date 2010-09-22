@@ -194,7 +194,8 @@ class _ExtractImpl(object):
     from ...crystal import Structure
 
     species_in = self.species
-    cell, atoms = self._get_structure_data()
+    try: cell, atoms = self._get_structure_data()
+    except: return self._get_contcar_structure()
 
     structure = Structure()
     structure.name = self.name

@@ -50,7 +50,7 @@ def random(structure, species):
     atoms = [atom for atom in structure.atoms if atom.type == specie]
     ps = species[specie]
     if hasattr(species[specie], "moment"): 
-      for atom in atoms: magmom += "{0} ".format( uniform(-ps.moment, ps.moment) )
+      for atom in atoms: magmom += "{0:.2f} ".format( uniform(-ps.moment, ps.moment) )
     else: magmom += "{0}*0   ".format(len(atoms))
 
   return magmom
