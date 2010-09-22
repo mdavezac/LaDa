@@ -6,20 +6,16 @@
       - Extracting data from vasp output: to be found in L{extract} subpackage.
       - Methods: such as k-mesh or energy cutoff convergence, strain relaxation....
 
-    The L{Vasp} class  combines the first three concepts together.
+    The `Vasp` class  combines the first three concepts together.
     It allows us to launch vasp and retrieve information from the output. It
     checks for errors and avoids running the same job twice. Hence data
     retrieval and vasp calculations can be performed using the same class and
     script. 
 
-    L{version<_vasp.version>} tells for which version of VASP these bindings
-    have been compiled.
-
-    L{call_vasp<_vasp.vasp>} allows for direct calls to VASP, with a
-    boost.mpi.Communicator as the only argument. VASP input files are expected
-    to be found in the current working directory. For an example, see the code
-    of L{launch.Launch._run}.
+    `version` tells for which version of VASP these bindings have been
+    compiled.
 """
+__docformat__ = "restructuredtext en"
 from launch import Launch
 from extract import Extract, ExtractGW
 from incar import Incar
@@ -74,7 +70,7 @@ class Vasp(Launch):
       from the files in this directory.
 
       One of the strength of this class is that since results are cached in the
-      self.outdir directory, successful calculations are never runned twice.
+      outdir directory, successful calculations are never runned twice.
       This allows us to use the same scripts for generating and retrieving
       data. 
   """
@@ -92,35 +88,40 @@ class Vasp(Launch):
                 overwrite=False, **kwargs ):
     """ Performs a vasp calculation 
      
-	@param structure: the structure to compute, *unless* a CONTCAR already
-	  exists in L{outdir}, in which case this parameter is ignored. (This
-	  feature can be disabled with the keyword/attribute
-          C{restart_from_contcar=False}).
-        @type structure : L{lada.crystal.Structure}
-	@param outdir: Output directory where the results should be stored.
-	  This directory will be checked for restart status, eg whether
-	  calculations already exist. Files defined in L{files.minimal} are
-	  copied, as well as any other files listed in L{repat}. If None, then
-          results are stored in current working directory.
-        @type outdir : str or None
-        @param comm: Calculations are performed over this MPI communicator.
-        @type : boost.mpi.communicator 
-	@param repat: list of files to save, above and beyond L{files.minimal}.
-	@param overwrite: Whether to overwrite pre-existing results, eg does
-          not check for restart status.
-	@param kwargs: Any attribute of the Vasp instance can be overidden for
-          the duration of this call by passing it as keyword argument.  
-        @return: Am L{extract.Extract} object initialized to L{outdir} and L{comm}.
+        :Parameters:
+	  structure :  `lada.crystal.Structure`
+            the structure to compute, *unless* a CONTCAR already exists in
+            ``outdir``, in which case this parameter is ignored. (This feature
+            can be disabled with the keyword/attribute
+            ``restart_from_contcar=False``).
+	  outdir : str or None
+            Output directory where the results should be stored.  This
+            directory will be checked for restart status, eg whether
+            calculations already exist. If None, then results are stored in
+            current working directory.
+          comm : boost.mpi.communicator 
+            Calculations are performed over this MPI communicator.  
+          repat : list 
+            list of files to save, above and beyond `files.minimal`. This is
+            only used when `Vasp.inplace` is False.
+	  overwrite : boolean 
+            Whether to overwrite pre-existing results, eg does not check for
+            restart status.
+	  kwargs 
+            Any attribute of the Vasp instance can be overidden for
+            the duration of this call by passing it as keyword argument.  
 
-        If successfull results (see L{extract.Extract.success}) already exist
+        :return: An `extract.Extract` object from which results can be obtained.
+
+        If successfull results (see ``extract.Extract.success``) already exist
         in outdir, calculations are not repeated. Instead, an extraction object
         for the stored results are given.
 
-        @note: This functor is stateless as long as self and structure can be
+        :note: This functor is stateless as long as self and structure can be
                deepcopied correctly.  
 
-        @raise RuntimeError: when computations do not complete.
-        @raise IOError: when outdir exists but is not a directory.
+        :raise RuntimeError: when computations do not complete.
+        :raise IOError: when outdir exists but is not a directory.
     """ 
     from copy import deepcopy
     from os import getcwd
@@ -223,7 +224,7 @@ class Vasp(Launch):
       else: modules[module] = [classname]
     # adds species.
     for name, specie in self.species.items():
-      string += "functional.add_specie = \"%s\", \"%s\"" % (name, specie.path)
+      string += "functional.add_specie = \"%s\", \"%s\"" % (name, specie._directory.unexpanded)
       if len(specie.U) == 0: string += ", None"
       else:
         string += ",\\\n                  [ %s" % (specie.U[0])
@@ -235,7 +236,7 @@ class Vasp(Launch):
       string += ", %s\n" % (repr(specie.magnetic))
     if not self.inplace: 
       string += "functional.inplace = False\n"
-      string += "functional.workdir = \"%s\"\n" % (self.workdir)
+      string += "functional.workdir = \"%s\"\n" % (self._workdir.unexpanded)
     if not self.restart_from_contcar: 
       string += "functional.restart_from_contcar = False\n"
 
