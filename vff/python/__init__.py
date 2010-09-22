@@ -257,8 +257,8 @@ class Extract(object):
     return d
   def __setstate__(self, arg):
     self.__dict__.update(arg)
-    if "_directory" in d: d["_directory"].hook = self.uncache
     self.comm = None
+    if hasattr(self, "_directory"): self._directory.hook = self.uncache
 
   def uncache(self): 
     """ Uncache values. """
