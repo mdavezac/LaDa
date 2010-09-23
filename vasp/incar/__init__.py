@@ -333,6 +333,14 @@ class Incar(object):
     if len(args) > 1: self.params["nsw"] = args[1]
     if len(args) > 2: self.params["ibrion"] = args[2]
     if len(args) > 3: self.params["potim"] = args[3]
+    # sanity checks.
+    if isif == 0: self.params["ibrion"] = -1
+    elif isif > 1 and self.params["ibrion"] in [0, None]: 
+      assert len(args) < 3, ValueError("IBRION = 0 is not compatible with volume/cell relaxation.")
+      self.params["ibrion"] = 2
+    if isif >= 0 and self.params["nsw"] == 0: 
+      assert len(args) < 2, ValueError("Requested both relaxation and 0 ionic steps.")
+      self.params["nsw"] = 50
 
   def __iter__(self):
     """ Iterates over attribute names and values. """

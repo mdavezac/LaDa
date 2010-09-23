@@ -131,12 +131,13 @@ class Vasp(Launch):
     from numpy.linalg import det
     from boost.mpi import broadcast
     from ..crystal import specie_list, read_poscar
+    from ..opt import RelativeDirectory
     from .files import CONTCAR
 
     # make this functor stateless.
     this      = deepcopy(self)
-    outdir    = deepcopy(outdir) if outdir != None else getcwd()
-    repat     = deepcopy(repat)  if repat  != None else []
+    outdir    = getcwd() if outdir == None else RelativeDirectory(outdir).directory
+    repat     = deepcopy(repat)  if repat != None else []
     norun     = kwargs.pop("norun", False)
     # makes functor stateless/reads structure from CONTCAR if requested and appropriate.
     if kwargs.pop("restart_from_contcar", self.restart_from_contcar): 
@@ -161,16 +162,12 @@ class Vasp(Launch):
       elif hasattr(this.__class__, key): setattr(this, key, value)
       else: raise ValueError("Unkwown keyword argument to vasp: %s=%s" % (key, value))
 
-    # First checks if directory outdir exists (and is a directory).
-    exists_outdir = broadcast(comm, exists(outdir) if comm.rank == 0 else None, 0) \
-                    if comm != None \
-                    else exists(outdir)
-    if exists_outdir:
-      if not overwrite: # check for success
-        extract = self.Extract(comm = comm, directory = outdir)
-        if extract.success: return extract # in which case, returns extraction object.
-      elif is_root: rmtree(outdir) # overwrite data. 
-      if comm != None: comm.barrier() # makes sure directory is not created by other proc!
+    # Checks for previous run, or deletes previous run if requested.
+    if not overwrite:
+      extract = self.Extract(comm = comm, directory = outdir)
+      if extract.success: return extract # in which case, returns extraction object.
+    elif is_root and exists(outdir): rmtree(outdir)
+    if comm != None: comm.barrier() # makes sure directory is not created by other proc!
     
     # Otherwise, performs calculation by calling base class functor.
     super(Vasp, this).__call__( structure=structure, outdir=outdir,\
@@ -248,3 +245,15 @@ class Vasp(Launch):
       header += "\n"
     return header + string
 
+def read_input():
+  """ Specialized read_input function for vasp. 
+  
+      It add a few names to the input-file's namespace. 
+  """
+  from lada.opt import read_input
+  from lada.vasp import Vasp, specie, files
+  from lada.vasp.methods import RelaxCellShape, RelaxIons
+
+  # names we need to create input.
+  input_dict = { "Vasp": Vasp, "U": specie.U, "nlep": specie.nlep, "RelaxCellShape": RelaxCellShape }
+  return read_input("input.py", input_dict)
