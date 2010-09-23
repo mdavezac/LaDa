@@ -1,3 +1,21 @@
+def ground_state_wave(path, input="input.py"):
+  """ Jobs to explore possible ground-states. 
+  
+      :Param path: 
+        Path where the job-dictionary will be saved. Calculations will be
+        performed in the parent directory of this file.
+      :Param input: 
+        Path to an input file. Defaults to input.py
+
+      Creates a high-throughput job-dictionary to compute the magnetic
+      ground-state of a host-material.
+  """
+  
+
+
+
+
+
 # will be params:
 def _ox_spin_loops(A, B, defect, structure, input, is_interstitial=False):
   """ Loops over oxidation and moments. """
