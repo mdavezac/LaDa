@@ -97,6 +97,7 @@ class Darwin:
              best,
              self.__class__.print_nb_evals,
              self.__class__.save,
+             self.__class__.timing,
              self.__class__.check_generations ]
 
   def check_generations(self): 
@@ -241,8 +242,21 @@ class Darwin:
     if self.do_print:
       print "Number of functional evaluations: ", nbcalc
 
+  def timing(self):
+    """ Prints timing at each generation. """
+    import time
+    if not self.do_print: return True
+    t = time.time() - self.start_time
+    hour = int(float(t/3600e0))
+    minute = int(float((t - hour*3600)/60e0))
+    second = (t - hour*3600-minute*60)
+    print "# Elapsed time: {0}:{1}:{2:.4f}.".format(hour, minute, second)
+    return True
+
+
   def __call__(self, comm = None, outdir = None, inplace=None, **kwargs):
     """ Runs/Restart  GA """
+    import time
     from os import getcwd
     from os.path import join
     from copy import deepcopy
@@ -250,6 +264,8 @@ class Darwin:
     from ... import darwin as search
     from ....opt import redirect, RelativeDirectory, Changedir
 
+    local_time = time.localtime() 
+    self.start_time = time.time() 
     outdir = RelativeDirectory(outdir)
     if outdir == None: outdir = getcwd()
     # mpi stuff
@@ -277,10 +293,14 @@ class Darwin:
       pyout = self.OUTCAR if self.do_print else '/dev/null'
       pyerr = self.ERRCAR if self.do_print else '/dev/null'
       with redirect(pyout=pyout, pyerr=pyerr) as streams:
+        if self.do_print:
+          print "# GA calculation on ", time.strftime("%m/%d/%y", local_time),\
+                " at ", time.strftime("%I:%M:%S %p", local_time)
         # reloads if necessary
         if self.age != self.ordinals[0]: self.restart(outdir.path, comm=comm)
         # runs.
         search.run(self)
+        self.timing()
         
     del self.comm
 

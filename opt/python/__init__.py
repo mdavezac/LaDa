@@ -337,6 +337,13 @@ class RelativeDirectory(object):
       ValueError: Cannot set relative with absolute path. 
 
   """
+  global_envvar = "~"
+  """ Global envvar position.
+
+      If envvar is set to None in any single instance, than this value takes
+      over. Since it is a class attribute, it should be global to all instances
+      with ``self.envvar == None``. 
+  """
   def __init__(self, path=None, envvar=None, hook=None):
     """ Initializes the property. 
     
@@ -379,7 +386,7 @@ class RelativeDirectory(object):
   def envvar(self):
     """ Fixed point for relative directory. """
     from os.path import expanduser, expandvars, normpath
-    if self._envvar == None: return expanduser("~/")
+    if self._envvar == None: return expanduser(self.global_envvar)
     return normpath(expandvars(expanduser(self._envvar)))
   @envvar.setter
   def envvar(self, value):
@@ -407,7 +414,7 @@ class RelativeDirectory(object):
   def unexpanded(self):
     """ Unexpanded path (eg with envvar as is). """
     from os.path import join
-    e = "~/" if self._envvar == None else self._envvar
+    e = self.global_envvar if self._envvar == None else self._envvar
     return e if self._relative == None else join(e, self._relative)
 
 
