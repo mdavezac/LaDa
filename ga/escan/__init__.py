@@ -156,6 +156,14 @@ else:
       else:
         return self.structure_hashcode(a) == self.structure_hashcode(b)
 
+    def __getstate__(self):
+      """ Saves state. """
+      return self.lattice, self.supercell, self.converter
+    def __setstate__(self, args):
+      """ Resets state. """
+      self.__init__(*args)
+
     @staticmethod
-    def remove_hashcode(o):
-      if hasattr(o, "integer_hashcode"): del o.integer_hashcode
+    def remove_hashcode(indiv):
+      """ Removes hash-code from object. """
+      if hasattr(indiv, "integer_hashcode"): del indiv.integer_hashcode

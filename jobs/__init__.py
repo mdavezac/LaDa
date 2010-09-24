@@ -12,7 +12,6 @@
        - pbs_script: Creates pbs-script to perform calculations on a tree.
 """
 __docformat__ = "restructuredtext en"
-from ..opt import RelativeDirectory
 from ..opt.decorators import add_setter, broadcast_result, make_cached
 
 __all__ = [ 'JobDict', 'walk_through', 'save', 'load', 'bleed', 'unbleed',\
@@ -637,13 +636,11 @@ def unsucessfull(jobdict, extractor, outdir = None):
 class AbstractMassExtract(object): 
   """ Propagates extraction methods from different jobs. """
 
-  def uncache(self, dummy=None): 
+  def uncache(self): 
     """ Uncache values. """
     self.__dict__.pop("_cached_extractors", None)
     self.__dict__.pop("_cached_properties", None)
 
-  root = RelativeDirectory(hook = uncache)
-  """ Root directory of the job. """
 
   def __init__(self, path, comm = None):
     """ Initializes extraction object. 
@@ -655,9 +652,22 @@ class AbstractMassExtract(object):
           comm
             an boost.mpi.communicator instance.
     """
+    from ..opt import RelativeDirectory
+
     super(AbstractMassExtract, self).__init__()
     if path != None: self.root = path
     self.comm = comm
+
+    self._root = RelativeDirectory(path=path, hook=self.uncache)
+    """ Root directory of the job. """
+
+  @property 
+  def root(self):
+    """ Root directory of the job. """
+    return self._root.path
+  @root.setter
+  def root(self, value): self._root.path = value
+    
 
   def walk_through(self):
     """ Generator to go through all relevant jobs. 
@@ -708,11 +718,13 @@ class AbstractMassExtract(object):
   def __getstate__(self):
     d = self.__dict__.copy()
     d.pop("comm", None)
+    if "_root" in d: d["_root"].hook = None
     return d
 
   def __setstate__(self, arg):
     self.__dict__.update(arg)
     self.comm = None
+    if "_root" in d: d["_root"].hook = self.uncache
        
      
   def solo(self):
@@ -763,8 +775,9 @@ class MassExtract(AbstractMassExtract):
     super(MassExtract, self).__init__(path, comm=comm)
     if jobdict == None:
       assert isfile(path), IOError("{0} is not a file.".format(path))
-      with open(path, "r") as file: self.jobdict = load(path, comm)
-      self.root = dirname(abspath(path))
+      self.root = path # expands usernames, environment variables.
+      with open(self.root, "r") as file: self.jobdict = load(path, comm)
+      self.root = dirname(self.root)
     elif path != None: 
       assert isdir(path), IOError("{0} is not a directory.".format(path))
       self.root = path

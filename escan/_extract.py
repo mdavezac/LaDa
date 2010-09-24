@@ -28,6 +28,7 @@ class Extract(object):
     """
     from os import getcwd
     from . import Escan
+    from ..opt import RelativeDirectory
 
     if escan == None: escan = Escan()
     super(Extract, self).__init__()
@@ -49,18 +50,21 @@ class Extract(object):
         >>> if comm.rank == 0: extract.success # will hang if comm.size != 1
         >>> if comm.rank == 0: extract.solo().success # Ok
     """
-    self.directory = directory if directory != None else getcwd()
+    self._directory = RelativeDirectory(directory, hook=self.uncache)
+    """ Directory where output should be found.
+
+        Implemented as a RelativeDirectory for added computer to computer
+        transferability.
+    """
   
-  def _get_directory(self):
-    """ Directory with VASP output files """
-    return self._directory
-  def _set_directory(self, dir):
-    from os.path import abspath, expanduser
-    dir = abspath(expanduser(dir))
-    if hasattr(self, "_directory"): 
-      if dir != self._directory: self.uncache()
-    self._directory = dir
-  directory = property(_get_directory, _set_directory)
+  @property
+  def directory(self):
+    """ Directory where output should be found. """
+    return self._directory.path
+  @directory.setter
+  def directory(self, value):
+    self._directory.path = value
+    self._vffout.directory = value
 
   @property
   @broadcast_result(attr=True, which=0)
@@ -432,13 +436,21 @@ class Extract(object):
     return list( set(result) - exclude )
 
   def __getstate__(self):
-    from os.path import relpath
     d = self.__dict__.copy()
-    if "comm" in d: del d["comm"]
-    if "directory" in d: d["directory"] = relpath(d["directory"])
+    d.pop("comm", None)
+    if "_directory" in d: d["_directory"].hook = None
     return d
+
   def __setstate__(self, arg):
     self.__dict__.update(arg)
     self.comm = None
+    if hasattr(self, "_directory"): self._directory.hook = self.uncache
+
+  def uncache(self): 
+    """ Uncache values. """
+    self.__dict__.pop("_cached_extractors", None)
+    self.__dict__.pop("_cached_properties", None)
+    self._vffout.uncache()
+
 
 

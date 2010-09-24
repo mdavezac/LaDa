@@ -38,7 +38,7 @@ def run(self):
 
 
   # Checks that self is complete and fills in where possible
-  if hasattr(self, "fill_attributes"): self = self.fill_attributes()
+  if hasattr(self, "fill_attributes"): self.fill_attributes()
   else: self = standard.fill_attributes(self)
   assert hasattr(self, "Individual"), "No Individual type.\n"
   assert hasattr(self, "taboo"), "No taboo operation.\n"
