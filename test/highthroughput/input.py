@@ -11,16 +11,13 @@ vasp.set_smearing   = "metal", 0.01
 vasp.set_relaxation = "ionic"
 vasp.set_symmetries = "off"
 vasp.kpoints        = "\n0\nAuto\n30"
-# Magmom is a special parameter with specific implementation for point defects.
-# We need to go through add_item to reset it as normal key/value parameter.
-vasp.add_param      = "magmom", None
 
 # "Al" => specie symbol
 # "pseudos/Al" => directory where relevant POTCAR is located
 vasp.add_specie = "Al", "pseudos/Al"
 vasp.add_specie = "Mg", "pseudos/Mg"
 vasp.add_specie =  "O",  "pseudos/O"
-vasp.species["Mg"].moment = 5e0
+vasp.species["Mg"].moment = [5e0, 0.5e0]
 
 first_trial = { "kpoints": "\n0\nAuto\n1", "encut": 0.9 }
 """ parameter to override during first relaxation step. """

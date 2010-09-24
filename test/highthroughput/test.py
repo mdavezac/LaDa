@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """ High-Thoughput of A2BO4 structures. """
+__docformat__ = "restructuredtext en"
 
 def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
   """ Jobs to explore possible ground-states. 
@@ -77,7 +78,7 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
   ip.magic("savejob " + path)
 
 
-def magnetic_wave(path=None, jobdict=None, input=None, nbantiferro=None, **kwargs):
+def magnetic_wave(path=None, jobdict=None, inputpath=None, nbantiferro=None, **kwargs):
   """ Creates magnetic wave from knowledge of previous wave. 
 
       :Parameters:
@@ -93,23 +94,26 @@ def magnetic_wave(path=None, jobdict=None, input=None, nbantiferro=None, **kwarg
           all parameters are taken from the non-magnetic wave.
         nbantiferro : int or None
           Number of random anti-ferro runs. If absent, looks into the input
-          file. If that is absent as well, defaults to 0. Takes precedence over
-          input file if present and not None.
+          file given by inputpath. If that is absent as well, defaults to a variable located at
+          the root of the jobdict (``jobdict.root.nbantiferro``), generally
+          read from the input file at the time the non-magnetic wave was
+          created. If that is absent as well (eg, wasn't in original
+          non-magnetic input file), defaults to 0.
         kwargs
           Any keyword/value pair to add to the job-dictionaries' jobparams. These
           values will take precedence over anything in the input file.
 
       Creates magnetic wave from pre-existing non-magnetic wave. If no input
       file is given on input, then all parameters are obtained from the
-      corresponding non-magnetic wave. Note that the only parameter which
-      cannot be inferred is the number of random anti-ferro magnetic
-      configurations.
+      corresponding non-magnetic wave. 
 
       The new job-dictionary is loaded into memory automatically. No need to
       call explore. It is save to the path provided on input (or to the current
       job-dictionary path ifnot provided).  It will contain magnetic and
-      non-magnetic calculations both. However, pre-existing magnetic
-      calculations will *not* be overwritten.
+      non-magnetic calculations both. Pre-existing magnetic
+      calculations will *not* be overwritten. However, additional anti-ferro
+      configurations can be calculated by giving a large enough ``nbantiferro``
+      on input.
   """
   from os.path import dirname, normpath, relpath
   import IPython.ipapi
@@ -206,6 +210,93 @@ def magnetic_wave(path=None, jobdict=None, input=None, nbantiferro=None, **kwarg
       job.material = nonmagjob.material
       job.lattice  = nonmagjob.lattice
 
+  if hasattr(input, "nbantiferro"): jobdict.root.nbantiferro = input.nbantiferro
   ip = IPython.ipapi.get()
-  ip.user_ns["current_jobdict"] = jobdict
+  ip.user_ns["current_jobdict"] = jobdict.root
   ip.magic("savejob " + path)
+
+def is_magnetic_system(structure, species):
+  """ True if system is magnetic. """
+  from lada.crystal import specie_list
+
+  for u in [u for name, u in species.items() if name in specie_list(structure)]:
+    if not hasattr(u, "moment"): continue
+    if not hasattr(u.moment, "__iter__"): 
+      if abs(u) > 1e-12: return True
+      continue
+    for a in u.moment:
+      if abs(a) > 1e-12: return True
+    
+  return False
+
+def ls_ferro(structure, species):
+  """ Returns magmom VASP flag for low-spin ferromagnetic order. """
+  from lada.crystal import specie_list
+
+  magmom = ""
+  for specie in specie_list(structure):
+    assert specie in species,\
+           KeyError("specie {0} not found in pseudo-potential dictionary.".format(specie))
+    atoms = [atom for atom in structure.atoms if atom.type == specie]
+    if hasattr(species[specie], "moment"):
+      moment = species[specie].moment
+      if hasattr(moment, "__iter__"): moment = min(moment)
+      magmom += "{0}*{1:.2f} ".format(len(atoms), moment)
+    else: magmom += "{0}*0 ".format(len(atoms), 0)
+  return magmom
+
+def hs_ferro(structure, species):
+  """ Returns magmom VASP flag for high-spin ferromagnetic order. """
+  from lada.crystal import specie_list
+
+  magmom, has_both = "", False
+  for specie in specie_list(structure):
+    assert specie in species,\
+           KeyError("specie {0} not found in pseudo-potential dictionary.".format(specie))
+    atoms = [atom for atom in structure.atoms if atom.type == specie]
+    if hasattr(species[specie], "moment"):
+      moment = species[specie].moment
+      if hasattr(moment, "__iter__"):
+        moment = max(moment)
+        has_both = True
+      magmom += "{0}*{1:.2f} ".format(len(atoms), moment)
+    else: magmom += "{0}*0 ".format(len(atoms), 0)
+  return magmom if has_both else None
+
+def sublatt_antiferro(structure, species):
+  """ Anti ferro order with each cation type in a different direction. """
+  from lada.crystal import specie_list
+
+  magmom, sign, nb = "", 1e0, 0
+  for specie in specie_list(structure):
+    assert specie in species,\
+           KeyError("specie {0} not found in pseudo-potential dictionary.".format(specie))
+    atoms = [atom for atom in structure.atoms if atom.type == specie]
+    if hasattr(species[specie], "moment"):
+      moment = species[specie].moment
+      if hasattr(moment, "__iter__"): moment = max(moment)
+      magmom += "{0}*{1:.2f} ".format(len(atoms), moment * sign)
+      nb += 1
+      sign *= -1e0
+    else: magmom += "{0}*0 ".format(len(atoms), 0)
+  return None if nb < 2 else magmom
+
+def random(structure, species):
+  """ Random magnetic order. """
+  from random import uniform
+  from lada.crystal import specie_list
+
+  magmom = ""
+  for specie in specie_list(structure):
+    assert specie in species,\
+           KeyError("specie {0} not found in pseudo-potential dictionary.".format(specie))
+    atoms = [atom for atom in structure.atoms if atom.type == specie]
+    ps = species[specie]
+    if hasattr(species[specie], "moment"): 
+      moment = species[specie].moment
+      if hasattr(moment, "__iter__"): moment = max(moment)
+      for atom in atoms: magmom += "{0:.2f} ".format( uniform(-moment, moment) )
+    else: magmom += "{0}*0   ".format(len(atoms))
+
+  return magmom
+
