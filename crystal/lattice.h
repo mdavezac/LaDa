@@ -200,7 +200,7 @@ namespace LaDa
         {
           std::cerr << LADA_SPOT_ERROR
                     << "Caught error while converting string to numerical atom\n"
-                    << structure.atoms[i_bond->get_index()] << "\n";
+                    << _at << "\n";
           throw;
         }
 #     endif
