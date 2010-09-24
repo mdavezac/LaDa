@@ -245,9 +245,15 @@ class Vasp(Launch):
       header += "\n"
     return header + string
 
-def read_input():
+def read_input(filepath="input.py", namespace=None):
   """ Specialized read_input function for vasp. 
   
+      :Parameters: 
+        filepath : str
+          A path to the input file.
+        namespace : dict
+          Addiotional names to include in the local namespace when evaluating
+          the input file.
       It add a few names to the input-file's namespace. 
   """
   from lada.opt import read_input
@@ -256,4 +262,5 @@ def read_input():
 
   # names we need to create input.
   input_dict = { "Vasp": Vasp, "U": specie.U, "nlep": specie.nlep, "RelaxCellShape": RelaxCellShape }
-  return read_input("input.py", input_dict)
+  if namespace != None: input_dict.update(namespace)
+  return read_input(filepath, input_dict)

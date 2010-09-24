@@ -1,3 +1,4 @@
+from lada.crystal import A2BX4
 vasp = Vasp()
 """ VASP functional """
 vasp.precision  = "accurate"
@@ -29,7 +30,7 @@ relaxer = RelaxCellShape( vasp, relaxation_dof, first_trial, maxiter=5)
 """ Cell shape relaxation algorithm. """
 
 
-def volume(structure):
+def scale(structure):
   """ Returns *guessed* scale (eg volume^(0.33)) for a given structure. """
   from numpy.linalg import det
   if "O" in [atom.type for atom in structure.atoms]:    spvol = 8.5**3/4e0
@@ -40,24 +41,18 @@ def volume(structure):
   vol = det(structure.cell)
   return (nfu * spvol / vol)**(1e0/3e0) 
 
-def mppalloc(job): 
-  """ Returns number of processes for this job. """
-  N = len(job.args[0].atoms) # number of atoms.
-  if N % 2 == 1: N += 1
-  return N  
-
 materials = ["Al2MgO4"]
 """ Materials to compute. """
 nbantiferro = 3
 """ Number of random anti-ferro trials. """
 
-
-queue     = "regular"
-""" PBS queue. """
-walltime = "05:45:00"
-""" PBS walltime. """
-
-outdir    = "results"
-""" Root directory where to store results. """
-
-first_wave_dir = "/scratch/mmdavez/highthroughput"
+lattices = [ A2BX4.b1(),  A2BX4.b10(),  A2BX4.b10I(),  A2BX4.b11(),
+             A2BX4.b12(),  A2BX4.b15(),  A2BX4.b16(),  A2BX4.b18(),
+             A2BX4.b19(), A2BX4.b1I(),  A2BX4.b2(),  A2BX4.b20(),  A2BX4.b21(),
+             A2BX4.b2I(), A2BX4.b33(),  A2BX4.b34(),  A2BX4.b35(),
+             A2BX4.b36(),  A2BX4.b37(), A2BX4.b38(),  A2BX4.b4(),  A2BX4.b4I(),
+             A2BX4.b5(),  A2BX4.b5I(),  A2BX4.b6(), A2BX4.b7(),  A2BX4.b8(),
+             A2BX4.b9(),  A2BX4.b9I(),  A2BX4.d1(),  A2BX4.d1I(), A2BX4.d3(),
+             A2BX4.d3I(),  A2BX4.d9(),  A2BX4.s1(),  A2BX4.s1I(),  A2BX4.s2(),
+             A2BX4.s2I(),  A2BX4.s3(),  A2BX4.s3I() ]
+""" Lattice for which to create structures. """

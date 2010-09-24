@@ -1,4 +1,4 @@
-def ground_state_wave(path, input="input.py"):
+def ground_state_wave(path, inputpath="input.py"):
   """ Jobs to explore possible ground-states. 
   
       :Param path: 
@@ -10,9 +10,55 @@ def ground_state_wave(path, input="input.py"):
       Creates a high-throughput job-dictionary to compute the magnetic
       ground-state of a host-material.
   """
+  import IPython.ipapi
+  from lada.vasp import read_input
+  from lada.jobs import save
+
+  # reads input.
+  input = read_input(inputpath)
+
+  # sanity checks.
+  assert len(input.lattice.name) != 0, ValueError("Lattice has no name.")
   
+  # regex
+  specie_regex = compile("([A-Z][a-z]?)2([A-Z][a-z]?)([A-Z][a-z]?)4")
 
+  # Job dictionary.
+  jobdict = jobs.JobDict()
 
+  # loop over materials.
+  for material in input.materials:
+
+    # creates dictionary to replace A2BX4 with meaningfull species.
+    match = specie_regex.match(material)
+    assert match != None, RuntimeError("Incorrect material " + material + ".")
+    # checks species are known to vasp functional
+    for i in range(1, 4):
+      assert match.group(i) in input.vasp.species,\
+             RuntimeError("%s not in specie dictionary." % (match.group(i)))
+    # actually creates dictionary.
+    species_dict = {"A": match.group(1), "B": match.group(2), "X": match.group(3)}
+
+    # creates a structure.
+    structure = fill_structure(input.lattice.cell, input.lattice)
+    # assigns it a name.
+    structure.name = "{0} in {1}, spin-unpolarized.".format(material, input.lattice.name, 
+    # gets its scale.
+    structure.scale = input.scale(structure)
+    # changes atomic species.
+    for atom in structure.atoms:  atom.type  = species_dict[atom.type]
+
+    # job dictionary for this lattice.
+    lat_jobdict = jobdict / material 
+
+    job = lat_jobdict / "non-magnetic"
+    job.functional = input.relaxer
+    job.jobparams["structure"] = structure
+    job.jobparams["ispin"] = 1
+
+  ip = IPython.ipapi.get()
+  ip.user_ns["current_jobdict"] = jobdict
+  ip.magic("savejob " + path)
 
 
 
