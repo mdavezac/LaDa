@@ -28,9 +28,10 @@ def broadcast_result(key=False, attr=False, which=0):
       error, result, exception = False, None, None
       if comm.rank == 0: # root process
         try: result = method(*args, **kwargs)
-        except Exception as exception: error, result = True, (str(exception), world.rank)
-        broadcast(comm, (error, result), root=0)
-        assert not error, exception
+        except Exception as exception:
+          broadcast(comm, (True, (str(exception), world.rank)), root=0)
+          raise
+        broadcast(comm, (False, result), root=0)
       else:
         error, result = broadcast(comm, root=0)
         assert not error, RuntimeError("Process %i reports an error: %s"  % (result[1], result[0]))

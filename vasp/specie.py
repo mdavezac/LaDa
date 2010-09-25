@@ -97,7 +97,7 @@ class Specie(object):
           magnetic : boolean
             If true, then this atom is magnetic.
     """
-    from ..opt import RelativDirectory
+    from ..opt import RelativeDirectory
 
     self._directory = RelativeDirectory(directory)
     if oxidation != None: self.oxidation = oxidation
@@ -109,9 +109,9 @@ class Specie(object):
   @property
   def directory(self):
     """ Directory where the POTCAR file may be found. """
-    return self._directory
-  @directory.setter(self): 
-  def directory(self, value): self._directory = value
+    return self._directory.path
+  @directory.setter
+  def directory(self, value): self._directory.path = value
 
   @property 
   def path(self):
@@ -141,6 +141,7 @@ class Specie(object):
 
   def potcar_exists(self):
     """ Raises IOError if POTCAR file does not exist. """
+    from os.path import exists
     assert exists(self.path), IOError("Could not find POTCAR in {1}.".format(self.directory))
 
   def read_potcar(self):

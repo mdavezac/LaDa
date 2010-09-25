@@ -83,6 +83,8 @@ class Vasp(Launch):
 
     self.restart_from_contcar = True
     """ If True and self.CONTCAR exists in directory, will restart from it. """
+    self.print_from_all = False
+    """ If True, will print from all nodes rather than just root. """
 
   def __call__( self, structure, outdir = None, comm = None, repat = None,\
                 overwrite=False, **kwargs ):
@@ -136,7 +138,7 @@ class Vasp(Launch):
 
     # make this functor stateless.
     this      = deepcopy(self)
-    outdir    = getcwd() if outdir == None else RelativeDirectory(outdir).directory
+    outdir    = getcwd() if outdir == None else RelativeDirectory(outdir).path
     repat     = deepcopy(repat)  if repat != None else []
     norun     = kwargs.pop("norun", False)
     # makes functor stateless/reads structure from CONTCAR if requested and appropriate.
@@ -236,6 +238,8 @@ class Vasp(Launch):
       string += "functional.workdir = \"%s\"\n" % (self._workdir.unexpanded)
     if not self.restart_from_contcar: 
       string += "functional.restart_from_contcar = False\n"
+    if self.print_from_all: 
+      string += "functional.print_from_all = True\n"
 
     # adds user modules above repr string.
     header = ""

@@ -95,7 +95,7 @@ class RelaxCellShape(object):
     from copy import deepcopy
     from math import fabs 
     from os import getcwd
-    from os.path import join, exists
+    from os.path import join
     from shutil import rmtree
     from ..opt import RelativeDirectory
 
@@ -109,7 +109,7 @@ class RelaxCellShape(object):
     first_trial = kwargs.pop("first_trial", self.first_trial)
     maxiter = kwargs.pop("maxiter", self.maxiter)
     keep_steps = kwargs.pop("keep_steps", self.keep_steps)
-    outdir = getcwd() if outdir == None else RelativeDirectory(outdir).directory
+    outdir = getcwd() if outdir == None else RelativeDirectory(outdir).path
 
     # check nsw parameter. kwargs may still overide it.
     if vasp.nsw == None: vasp.nsw = 60
@@ -215,11 +215,12 @@ class RelaxCellShape(object):
     """ 
     from shutil import rmtree
     from os import getcwd
+    from os.path import exists
     from ..opt import RelativeDirectory
 
-    outdir = getcwd() if outdir == None else RelativeDirectory(outdir).directory
+    outdir = getcwd() if outdir == None else RelativeDirectory(outdir).path
     if not overwrite:
-      extract = self.Extract(outdir, comm=None).success
+      extract = self.Extract(outdir, comm=None)
       if extract.success: return extract
     elif is_root and exists(outdir): rmtree(outdir)
     if comm != None: comm.barrier() # makes sure directory is not created by other proc!
@@ -318,7 +319,7 @@ class RelaxIons(object):
     structure = deepcopy(structure)
     first_trial = kwargs.pop("first_trial", self.first_trial)
     keep_steps = kwargs.pop("keep_steps", self.keep_steps)
-    outdir = getcwd() if outdir == None else RelativeDirectory(outdir).directory
+    outdir = getcwd() if outdir == None else RelativeDirectory(outdir).path
 
     # does not run code. Just creates directory.
     if kwargs.pop("norun", False): 
@@ -326,7 +327,7 @@ class RelaxIons(object):
       return this._norun(structure, outdir=outdir, comm=comm, **kwargs)
 
     if not overwrite:
-      extract = self.Extract(outdir, comm=None).success
+      extract = self.Extract(outdir, comm=None)
       if extract.success: return extract
     elif is_root and exists(outdir): rmtree(outdir)
     

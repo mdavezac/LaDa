@@ -21,21 +21,24 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
       memory automatically. No need to call explore. It is save to the path
       provided on input.
   """
+  from re import compile
   import IPython.ipapi
   from lada.vasp import read_input
   from lada.jobs import JobDict
+  from lada.crystal import fill_structure
 
   # reads input.
   input = read_input(inputpath)
 
   # sanity checks.
-  assert len(input.lattice.name) != 0, ValueError("Lattice has no name.")
+  for lattice in input.lattices:
+    assert len(lattice.name) != 0, ValueError("Lattice has no name.")
   
   # regex
   specie_regex = compile("([A-Z][a-z]?)2([A-Z][a-z]?)([A-Z][a-z]?)4")
 
   # Job dictionary.
-  jobdict = jobs.JobDict()
+  jobdict = JobDict()
 
   # loop over materials.
   for material in input.materials:
@@ -55,12 +58,12 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
 
       # creates a structure.
       structure = fill_structure(lattice.cell, lattice)
+      # changes atomic species.
+      for atom in structure.atoms:  atom.type  = species_dict[atom.type]
       # assigns it a name.
       structure.name = "{0} in {1}, spin-unpolarized.".format(material, lattice.name)
       # gets its scale.
       structure.scale = input.scale(structure)
-      # changes atomic species.
-      for atom in structure.atoms:  atom.type  = species_dict[atom.type]
   
       # job dictionary for this lattice.
       lat_jobdict = jobdict / material 
@@ -75,7 +78,7 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
 
   ip = IPython.ipapi.get()
   ip.user_ns["current_jobdict"] = jobdict
-  ip.magic("savejob " + path)
+  ip.magic("savejobs " + path)
 
 
 def magnetic_wave(path=None, jobdict=None, inputpath=None, nbantiferro=None, **kwargs):
@@ -121,7 +124,7 @@ def magnetic_wave(path=None, jobdict=None, inputpath=None, nbantiferro=None, **k
   from lada.vasp import read_input
 
   ip = IPython.ipapi.get()
-  if jobdict = None:
+  if jobdict == None:
     if "current_jobdict" not in ip.user_ns: 
       print "No current job-dictionary." 
       return
@@ -213,7 +216,7 @@ def magnetic_wave(path=None, jobdict=None, inputpath=None, nbantiferro=None, **k
   if hasattr(input, "nbantiferro"): jobdict.root.nbantiferro = input.nbantiferro
   ip = IPython.ipapi.get()
   ip.user_ns["current_jobdict"] = jobdict.root
-  ip.magic("savejob " + path)
+  ip.magic("savejobs " + path)
 
 def is_magnetic_system(structure, species):
   """ True if system is magnetic. """

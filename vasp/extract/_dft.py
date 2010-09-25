@@ -3,8 +3,9 @@ from ...opt.decorators import make_cached, broadcast_result
 class _ExtractImpl(object):
   """ Implementation class for extracting data from VASP output """
 
-  def __init__(self, directory = "", comm = None):
+  def __init__(self, directory = None, comm = None):
     from .. import files
+    from ...opt import RelativeDirectory
     """ Initializes the extraction class. 
 
         @param comm: MPI group communicator. Extraction will be performed
@@ -14,7 +15,7 @@ class _ExtractImpl(object):
         @param directory: path to the directory where the VASP output is located.
         @type directory: str
     """
-    self.directory = directory
+    self._directory = RelativeDirectory(directory, hook=self.uncache)
     """ Directory where to check for output. """
     self.comm = comm
     """ MPI group communicator. """
@@ -25,16 +26,12 @@ class _ExtractImpl(object):
     self.FUNCCAR = files.FUNCCAR
     """ Filename of the FUNCCAR file containing the pickled functional. """
     
-  def _get_directory(self):
+  @property
+  def directory(self):
     """ Directory with VASP output files """
-    return self._directory
-  def _set_directory(self, dir):
-    from os.path import abspath, expanduser
-    dir = abspath(expanduser(dir))
-    if hasattr(self, "_directory"): 
-      if dir != self._directory: self.uncache()
-    self._directory = dir
-  directory = property(_get_directory, _set_directory)
+    return self._directory.path
+  @directory.setter
+  def directory(self, value): self._directory.path = value
 
   def uncache(self): 
     """ Removes cached results.
@@ -187,7 +184,6 @@ class _ExtractImpl(object):
   @make_cached
   def _get_structure(self):
     """ Greps structure and total energy from OUTCAR. """
-    from os.path import exists, join
     from re import compile
     from numpy import array, zeros
     from quantities import eV
@@ -634,10 +630,11 @@ class _ExtractImpl(object):
   def __getstate__(self):
     from os.path import relpath
     d = self.__dict__.copy()
+    if "_directory" in d: d["_directory"].hook = None
     if "comm" in d: del d["comm"]
-    if "directory" in d: d["directory"] = relpath(d["directory"])
     return d
   def __setstate__(self, arg):
     self.__dict__.update(arg)
     self.comm = None
+    if hasattr(self, "_directory"): self._directory.hook = self.uncache
 

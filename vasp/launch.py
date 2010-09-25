@@ -29,7 +29,6 @@ class Launch(Incar):
             callable returning such a string.
     """
     from os import getcwd
-    from os.path import abspath, expanduser
     from ..opt import RelativeDirectory
     super(Launch, self).__init__() 
 
@@ -56,9 +55,9 @@ class Launch(Incar):
         If `Launch.inplace` is true, then this parameter is ignored, and
         calculations are performed in the output directory.
     """
-    return self._workdir
+    return self._workdir.path
   @workdir.setter
-  def workdir(self, value): self._workdir = value
+  def workdir(self, value): self._workdir.path = value
 
   def _prerun(self, comm, outdir):
     """ Sets things up prior to calling VASP. 
@@ -73,7 +72,7 @@ class Launch(Incar):
     """
     import cPickle
     from copy import deepcopy
-    from os.path import join, exists, abspath
+    from os.path import join, abspath
     from os import getcwd
     from shutil import copy
     from . import files, is_vasp_5
@@ -122,10 +121,13 @@ class Launch(Incar):
      # moves to working dir only now.
      stdout = join(self._tempdir, files.STDOUT) 
      stderr = join(self._tempdir, files.STDERR) 
-     if comm.rank != None:
-       if comm.rank != 0:
-         stdout += ".%i" % (comm.rank)
-         stderr += ".%i" % (comm.rank)
+     is_notroot = False if comm == None else comm.rank != 0
+     if is_notroot and self.print_from_all:
+       stdout += ".{0}".format(comm.rank)
+       stderr += ".{0}".format(comm.rank)
+     else: 
+       stdout = "/dev/null"
+       stderr = "/dev/null"
      with Changedir(self._tempdir):
        with redirect(fout=stdout, ferr=stderr) as streams:
          if comm != None: comm.barrier()
@@ -165,16 +167,15 @@ class Launch(Incar):
 
   def __call__( self, structure=None, outdir = None, comm = None, repat = [], \
                 norun = False, keep_tempdir=False):
-    from os.path import exists, join, abspath, expanduser
     from os import getcwd
     from shutil import copy2 as copy
     from boost.mpi import world
-    from ..opt import Tempdir, Changedir
+    from ..opt import Tempdir, Changedir, RelativeDirectory
 
     # set up
     if structure != None: self._system = structure
     elif not hasattr(self, "_system"): raise RuntimeError, "Internal bug.\n"
-    outdir = getcwd() if outdir == None else abspath(expanduser(outdir))
+    outdir = getcwd() if outdir == None else RelativeDirectory(outdir).path
     if comm == None: comm = world
 
     is_root = comm.rank == 0
@@ -182,7 +183,7 @@ class Launch(Incar):
     # creates temporary working directory
     if self.inplace: context = Changedir(outdir, comm=comm) 
     else:            context = Tempdir(workdir = self.workdir, comm = comm)
-    with context as this._tempdir:
+    with context as self._tempdir:
       # We do not move to working directory to make copying of files from indir
       # or outdir (as relative paths) possible.
       # creates INCAR and KPOINTS.

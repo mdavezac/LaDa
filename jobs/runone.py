@@ -62,14 +62,20 @@ if __name__ == "__main__":
   from boost.mpi import Exception as mpiException, abort, world
   try: main()
   except mpiException as e: 
-    file.stderr("Encountered mpi exception %s."% (e))
-    traceback.print_exc()
+    for i in range(world.size): 
+      if i == world.rank:
+        traceback.print_exc()
+        file.stderr("Encountered mpi exception %s."% (e))
+        print 
+      world.barrier()
     abort(0)
+    raise
   except: # other exceptions
     for i in range(world.size): 
       if i == world.rank:
         traceback.print_exc()
         print 
+      world.barrier()
     abort(0)
     raise
 
