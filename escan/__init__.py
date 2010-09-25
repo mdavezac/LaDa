@@ -687,3 +687,15 @@ class Escan(object):
     kpoint = deform_kpoint(self.kpoint, input, relaxed)
     return 1, kpoint[0], kpoint[1], kpoint[2], structure.scale / a0("A")
 
+def read_input(filepath = "input.py", namespace = None):
+  """ Reads an input file including namespace for escan/vff. """ 
+  from ..jobs import JobDict
+  from ..vff import Vff
+  from ..opt import read_input
+  from . import Escan, soH, nonlocalH, localH, folded_spectrum, all_electron
+
+  dictionary = { "Vff": Vff, "Escan": Escan, "soH": soH, \
+                 "nonlocalH": nonlocalH, "localH": localH, \
+                 "folded_spectrum": folded_spectrum, "all_electron": all_electron}
+  if namespace != None: dictionary.update(namespace)
+  return read_input(filepath, dictionary)

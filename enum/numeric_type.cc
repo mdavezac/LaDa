@@ -18,6 +18,8 @@ namespace LaDa
     //! Create a flavor basis.
     boost::shared_ptr<FlavorBase> create_flavor_base( size_t _card, size_t _nflavor )
     {
+      if( not check_size( _card, _nflavor ) ) 
+        BOOST_THROW_EXCEPTION( supercell_too_large() ); 
       boost::shared_ptr<FlavorBase> result( new FlavorBase() );
       result->reserve( _card );
       t_uint k(1);
@@ -25,20 +27,10 @@ namespace LaDa
       return result;
     }
 
-    void check_size( size_t _card, size_t _nflavor )
-    {
-      t_uint first(1), second(_nflavor);
-      for( size_t i(0); i < _card; ++i )
-      {
-        first *= _nflavor;
-        second *= _nflavor;
-        if( first > second ) BOOST_THROW_EXCEPTION( supercell_too_large() );
-      } 
-    }
-
     boost::shared_ptr<Database> create_database( size_t _card, size_t _nflavor )
     {
-      check_size( _card, _nflavor );
+      if( not check_size( _card, _nflavor ) ) 
+        BOOST_THROW_EXCEPTION( supercell_too_large() ); 
       t_uint k = opt::pow(_nflavor, _card);
       boost::shared_ptr<Database> result(new Database(k));
       result->flip();

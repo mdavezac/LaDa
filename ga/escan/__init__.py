@@ -112,14 +112,14 @@ else:
         assert atom.site >= 0 and atom.site <= len(self.lattice.sites),\
                ValueError("Atoms in structure are not correctly indexed by site type.")
 
-        types = self.lattice.sites[atom.site].type
-        if len(types) < 2: continue
+        site = self.lattice.sites[atom.site]
+        if len(site.type) < 2: continue
 
-        lsi = linear_smith_index(self.smith, atom.pos, self.indices[atom.site])
-        assert atom.type in types,\
+        lsi = linear_smith_index(self.smith, atom.pos - site.pos, self.indices[atom.site])
+        assert atom.type in site.type,\
                ValueError( "Atomic type in structure not found in backbone lattice.\n{0} not in {1}"\
-                           .format(atom.type, str(types)))
-        result += self.flavorbase[lsi] * types.index(atom.type)
+                           .format(atom.type, str(site.type)))
+        result += self.flavorbase[lsi] * site.type.index(atom.type)
 
       return result
 

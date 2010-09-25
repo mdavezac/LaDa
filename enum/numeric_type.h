@@ -45,7 +45,8 @@ namespace LaDa
       { return _card-1- Crystal::get_linear_smith_index(_smith, _d, _g); }
 
     //! Throws when supercell is too large for t_uint integer type.
-    void check_size( size_t _card, size_t _nflavor );
+    inline bool check_size( size_t _card, size_t _nflavor )
+      { return double(_card) * std::log(double(_nflavor))+1e-12 < double(sizeof(t_uint)); } 
 
     //! Returns an initialized database for specified size. 
     boost::shared_ptr<Database> create_database( size_t _card, size_t _nflavor );

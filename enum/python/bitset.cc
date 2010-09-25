@@ -32,24 +32,25 @@ namespace LaDa
   namespace Python
   {
     namespace bp = boost::python;
-    bool get_item( enumeration::Database const &_d, enumeration::t_uint _x ) { return _d[_x]; }
-    void set_item( enumeration::Database &_d, enumeration::t_uint _x, bool _b ) { _d[_x] = _b; }
+    namespace e = LaDa::enumeration;
+    bool get_item( e::Database const &_d, e::t_uint _x ) { return _d[_x]; }
+    void set_item( e::Database &_d, e::t_uint _x, bool _b ) { _d[_x] = _b; }
 
-    pyublas::numpy_vector<size_t> integer_to_vector( enumeration::t_uint _x,
-                                                     enumeration::FlavorBase const& _fl ) 
+    pyublas::numpy_vector<size_t> integer_to_vector( e::t_uint _x,
+                                                     e::FlavorBase const& _fl ) 
     {
       pyublas::numpy_vector<size_t> result;
-      enumeration::integer_to_vector(_x, _fl, result);
+      e::integer_to_vector(_x, _fl, result);
       return result;
     }
 
-    std::string integer_to_bitstring(enumeration::t_uint _x, enumeration::FlavorBase const &_fl )
+    std::string integer_to_bitstring(e::t_uint _x, e::FlavorBase const &_fl )
     {
       try
       {
-        return enumeration::integer_to_bitstring(_x, _fl);
+        return e::integer_to_bitstring(_x, _fl);
       }
-      catch(enumeration::integer_too_large &_e)
+      catch(e::integer_too_large &_e)
       {
         std::ostringstream sstr;
         sstr << "Integer is too large according to FlavorBase.\n"
@@ -77,24 +78,24 @@ namespace LaDa
       }
     }
 
-    boost::shared_ptr<enumeration::Database> create(size_t const &_a, size_t const &_b)
+    boost::shared_ptr<e::Database> create(size_t const &_a, size_t const &_b)
     {
       if( _a == 0 or _b == 0 )
       {
         PyErr_SetString(PyExc_ValueError, "Invalid argument: value of 0.\n" );
         bp::throw_error_already_set();
-        return boost::shared_ptr<enumeration::Database>();
+        return boost::shared_ptr<e::Database>();
       }
-      try { return enumeration::create_database(_a, _b); }
-      catch(enumeration::supercell_too_large &_e)
+      try { return e::create_database(_a, _b); }
+      catch(e::supercell_too_large &_e)
       {
         std::ostringstream sstr;
         sstr << "Supercell configuration-space too large.\n"
-             << "Maximum size is 2^" << sizeof(enumeration::t_uint) << "\n"
+             << "Maximum size is 2^" << sizeof(e::t_uint) << "\n"
              << boost::diagnostic_information(_e);
         PyErr_SetString(PyExc_RuntimeError, sstr.str().c_str());
         bp::throw_error_already_set();
-        return boost::shared_ptr<enumeration::Database>();
+        return boost::shared_ptr<e::Database>();
       }
       catch(boost::exception &_e)
       {
@@ -103,13 +104,13 @@ namespace LaDa
              << boost::diagnostic_information(_e);
         PyErr_SetString(PyExc_RuntimeError, sstr.str().c_str());
         bp::throw_error_already_set();
-        return boost::shared_ptr<enumeration::Database>();
+        return boost::shared_ptr<e::Database>();
       }
       catch(...)
       {
         PyErr_SetString(PyExc_ValueError, "Unknown error while creating database.\n");
         bp::throw_error_already_set();
-        return boost::shared_ptr<enumeration::Database>();
+        return boost::shared_ptr<e::Database>();
       }
     }
 
@@ -117,32 +118,32 @@ namespace LaDa
       negative( T const &_a ) { return _a < 0; } 
     template<class T> typename boost::disable_if<boost::is_signed<T>, bool>::type
       negative( T const &_a ) { return false; }
-    template<class T> typename boost::enable_if<boost::is_signed<T>, enumeration::t_uint>::type
+    template<class T> typename boost::enable_if<boost::is_signed<T>, e::t_uint>::type
       abs( T const &_a ) { return std::abs(_a); }
-    template<class T> typename boost::disable_if<boost::is_signed<T>, enumeration::t_uint>::type
+    template<class T> typename boost::disable_if<boost::is_signed<T>, e::t_uint>::type
       abs( T const &_a ) { return _a; }
 
     template< class T1, class T2>
-      boost::shared_ptr<enumeration::Database> create1(T1 const &_a, T2 const &_b)
+      boost::shared_ptr<e::Database> create1(T1 const &_a, T2 const &_b)
       {
         if( negative(_a) or negative(_b) )
         {
           PyErr_SetString(PyExc_ValueError, "Invalid argument: negative value.\n" );
           bp::throw_error_already_set();
-          return boost::shared_ptr<enumeration::Database>();
+          return boost::shared_ptr<e::Database>();
         }
         return create(_a, _b);
       }
 
 
     template<class T_STR> 
-      inline void as_structure( T_STR &_out, enumeration::t_uint _x,
-                                enumeration::FlavorBase const &_fl )
-        { return enumeration::integer_to_structure(_out, _x, _fl); }
+      inline void as_structure( T_STR &_out, e::t_uint _x,
+                                e::FlavorBase const &_fl )
+        { return e::integer_to_structure(_out, _x, _fl); }
 
     struct flavor_iter
     {
-      flavor_iter   (enumeration::FlavorBase const &_fl, enumeration::t_uint const _x) 
+      flavor_iter   (e::FlavorBase const &_fl, e::t_uint const _x) 
                   : i_it(_fl.rbegin()), i_it_end(_fl.rend()), x(_x), is_first(true) 
       {
         if( x < *i_it * _fl[1] ) return;
@@ -156,7 +157,7 @@ namespace LaDa
                   : i_it(_c.i_it), i_it_end(_c.i_it_end), x(_c.x), is_first(_c.is_first) {}
 
       flavor_iter iter() { return *this; }
-      enumeration::t_uint next()
+      e::t_uint next()
       {
         if( is_first ) is_first = false;
         else if(i_it != i_it_end) ++i_it;
@@ -168,28 +169,45 @@ namespace LaDa
           return 0u;
         }
         
-        enumeration::t_uint const flavor( x / (*i_it) );
+        e::t_uint const flavor( x / (*i_it) );
         x %= (*i_it);
         return flavor;
       };
 
-      enumeration::t_uint x;
-      enumeration::FlavorBase::const_reverse_iterator i_it;
-      enumeration::FlavorBase::const_reverse_iterator i_it_end;
+      e::t_uint x;
+      e::FlavorBase::const_reverse_iterator i_it;
+      e::FlavorBase::const_reverse_iterator i_it_end;
       bool is_first;
     };
 
+    boost::shared_ptr<e::FlavorBase> create_flavor_base(size_t _card, size_t _n_flavor)
+    {
+      try { return e::create_flavor_base(_card, _n_flavor); }
+      catch(e::supercell_too_large &_e)
+      {
+        std::ostringstream sstr;
+        sstr << "Supercell configuration-space too large.\n"
+             << "Maximum size is 2^" << sizeof(e::t_uint);
+        if( std::string const * mi=boost::get_error_info<e::error_string>(_e) )
+          PyErr_SetString( PyExc_ValueError, (sstr.str() + ": " + (*mi)).c_str());
+        else
+          PyErr_SetString( PyExc_ValueError, (sstr.str() + ".").c_str());
+        bp::throw_error_already_set();
+        return boost::shared_ptr<e::FlavorBase>();
+      }
+    }
+
     void expose_bitset()
     {
-      bp::def("get_index", &enumeration::get_index);
-      bp::def("count_flavors", &enumeration::count_flavors);
-      bp::def("create_flavorbase", &enumeration::create_flavor_base, 
+      bp::def("get_index", &e::get_index);
+      bp::def("count_flavors", &e::count_flavors);
+      bp::def("create_flavorbase", &e::create_flavor_base, 
               (bp::arg("card"), bp::arg("nflavors")), "Creates a basis nflavors^k, ( 0<=k<card)." );
       expose_vector<size_t>("FlavorBase", "A basis k^m");
       bp::register_ptr_to_python< boost::shared_ptr< std::vector<size_t> > >();
       
       bp::class_<flavor_iter>("IntegerIterator", "Iterates over atoms of an integer structure.\n",
-                              bp::init<enumeration::FlavorBase const &, enumeration::t_uint>())
+                              bp::init<e::FlavorBase const &, e::t_uint>())
         .def("__iter__", &flavor_iter::iter )
         .def("next", &flavor_iter::next );
 
@@ -219,21 +237,21 @@ namespace LaDa
         "@type flavorbase: L{FlavorBase}\n"
       );
       
-      typedef boost::make_signed<enumeration::t_uint>::type t_int;
-      bp::scope scope = bp::class_<enumeration::Database>
+      typedef boost::make_signed<e::t_uint>::type t_int;
+      bp::scope scope = bp::class_<e::Database>
       (
         "Database", 
         "A large bitset"
-      ).def( bp::init<enumeration::Database const&>() )
+      ).def( bp::init<e::Database const&>() )
        .def( "__init__", bp::make_constructor(&create))
        .def( "__init__", bp::make_constructor(&create1<t_int, t_int>))
-       .def( "__init__", bp::make_constructor(&create1<enumeration::t_uint, t_int>))
-       .def( "__init__", bp::make_constructor(&create1<t_int, enumeration::t_uint>))
+       .def( "__init__", bp::make_constructor(&create1<e::t_uint, t_int>))
+       .def( "__init__", bp::make_constructor(&create1<t_int, e::t_uint>))
        .def("__getitem__", &get_item)
        .def("__setitem__", &set_item)
-       .def("__len__", &enumeration::Database::size);
+       .def("__len__", &e::Database::size);
 
-      bp::register_ptr_to_python< boost::shared_ptr<enumeration::Database> >();
+      bp::register_ptr_to_python< boost::shared_ptr<e::Database> >();
     }
   }
 } // namespace LaDa
