@@ -329,7 +329,9 @@ class Incar(object):
       self.params["ibrion"] = -1
       assert ibrion == None or ibrion == -1, \
              ValueError("Cannot set ibrion to anything but -1 for static calculations.")
-      if nsw != None: self.params["nsw"] = nsw
+      assert nsw  == None or nsw == 0, \
+             ValueError("static calculation with nsw > 0 is way too creative.")
+      self.params["nsw"] = None
       if potim != None: self.params["potim"] = potim
 
     else: # Some kind of relaxations. 

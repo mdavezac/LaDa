@@ -358,6 +358,7 @@ class RelaxIons(object):
                structure, \
                outdir = outdir,\
                comm=comm,\
+               restart=output,\
                **kwargs\
              )
              

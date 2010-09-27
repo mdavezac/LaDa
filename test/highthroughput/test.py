@@ -155,7 +155,6 @@ def magnetic_wave(path=None, jobdict=None, inputpath=None, nbantiferro=None, **k
     # avoid tagged jobs.
     if nonmagjob.is_tagged: continue
     # check for success and avoid failures.
-    print basedir, join(basedir, name)
     extract = nonmagjob.functional.Extract(join(basedir, name)) 
     if not extract.success: continue
     if not is_magnetic_system(extract.structure, extract.functional.species): continue
@@ -165,8 +164,9 @@ def magnetic_wave(path=None, jobdict=None, inputpath=None, nbantiferro=None, **k
     magmom = hs_ferro(extract.structure, extract.functional.species)
     if magmom != None and jobname not in jobdict:
       job = jobdict / jobname
-      job.functional = input.relaxer if inputpath != None else job.functional
+      job.functional = input.relaxer if inputpath != None else nonmagjob.functional
       job.jobparams["structure"] = extract.structure
+      job.jobparams["structure"].name = "{0} in {1}, high-spin.".format(material, lattice.name)
       job.jobparams["magmom"] = magmom
       job.jobparams["ispin"] =  2
       job.jobparams.update(kwargs)
@@ -180,8 +180,9 @@ def magnetic_wave(path=None, jobdict=None, inputpath=None, nbantiferro=None, **k
     magmom = ls_ferro(extract.structure, extract.functional.species)
     if magmom != None and jobname not in jobdict:
       job = jobdict / jobname
-      job.functional = input.relaxer if inputpath != None else job.functional
+      job.functional = input.relaxer if inputpath != None else nonmagjob.functional
       job.jobparams["structure"] = extract.structure
+      job.jobparams["structure"].name = "{0} in {1}, low-spin.".format(material, lattice.name)
       job.jobparams["magmom"] = magmom
       job.jobparams["ispin"] =  2
       job.jobparams.update(kwargs)
@@ -196,8 +197,9 @@ def magnetic_wave(path=None, jobdict=None, inputpath=None, nbantiferro=None, **k
     jobname = normpath(basename + "/anti-ferro-0")
     if magmom != None and jobname not in jobdict:
       job = jobdict / jobname
-      job.functional = input.relaxer if inputpath != None else job.functional
+      job.functional = input.relaxer if inputpath != None else nonmagjob.functional
       job.jobparams["structure"] = extract.structure
+      job.jobparams["structure"].name = "{0} in {1}, lattice anti-ferro.".format(material, lattice.name)
       job.jobparams["magmom"] = magmom
       job.jobparams["ispin"] =  2
       job.jobparams.update(kwargs)
@@ -213,8 +215,9 @@ def magnetic_wave(path=None, jobdict=None, inputpath=None, nbantiferro=None, **k
       jobname = normpath("/" + basename + "/anti-ferro-{0}".format(i))
       if jobname in jobdict: continue
       job = jobdict / jobname
-      job.functional = input.relaxer if inputpath != None else job.functional
+      job.functional = input.relaxer if inputpath != None else nonmagjob.functional
       job.jobparams["structure"] = extract.structure
+      job.jobparams["structure"].name = "{0} in {1}, random anti-ferro.".format(material, lattice.name)
       job.jobparams["magmom"] = magmom
       job.jobparams["ispin"] =  2
       job.jobparams.update(kwargs)
