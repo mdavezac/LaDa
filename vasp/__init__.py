@@ -83,8 +83,6 @@ class Vasp(Launch):
 
     self.restart_from_contcar = True
     """ If True and self.CONTCAR exists in directory, will restart from it. """
-    self.print_from_all = False
-    """ If True, will print from all nodes rather than just root. """
 
   def __call__( self, structure, outdir = None, comm = None, repat = None,\
                 overwrite=False, **kwargs ):

@@ -39,6 +39,7 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
 
   # Job dictionary.
   jobdict = JobDict()
+  if hasattr(input, "nbantiferro"): jobdict.nbantiferro = input.nbantiferro
 
   # loop over materials.
   for material in input.materials:
@@ -75,6 +76,7 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
       # saves some stuff for future reference.
       job.material = material
       job.lattice  = lattice
+
 
   ip = IPython.ipapi.get()
   ip.user_ns["current_jobdict"] = jobdict
@@ -118,7 +120,7 @@ def magnetic_wave(path=None, jobdict=None, inputpath=None, nbantiferro=None, **k
       configurations can be calculated by giving a large enough ``nbantiferro``
       on input.
   """
-  from os.path import dirname, normpath, relpath
+  from os.path import dirname, normpath, relpath, join
   import IPython.ipapi
   from lada.jobs import JobDict
   from lada.vasp import read_input
@@ -129,37 +131,40 @@ def magnetic_wave(path=None, jobdict=None, inputpath=None, nbantiferro=None, **k
       print "No current job-dictionary." 
       return
     jobdict = ip.user_ns["current_jobdict"].root
-  if path == none:
+  if path == None:
     if "current_jobdict_path" not in ip.user_ns:
       print "No known path for current dictionary and no path specified on input."
       return
-    path = ip.user_ns["current_jobdict"]
+    path = ip.user_ns["current_jobdict_path"]
     basedir = dirname(path)
   else: basedir = dirname(path)
       
   # reads input.
   if inputpath != None:
     input = read_input(inputpath)
-    if nbantiferro == None: nbantiferro = input.nbantiferro
-  elif nbantiferro == None: nbantiferro = 0
+    if nbantiferro == None and hasattr(input, "antiferro"):
+      nbantiferro = input.nbantiferro
+  if nbantiferro == None: nbantiferro = 0
 
   nonmagname = "non-magnetic"
+  has_changed = False
   for nonmagjob, name in jobdict.walk_through():
     # avoid other jobs (eg magnetic jobs).
-    basename = normpath("/" + name + "../")
-    if relpath(name, basename) != nonmagname: continue
+    basename = normpath("/" + name + "/../")
+    if relpath(name, basename[1:]) != nonmagname: continue
     # avoid tagged jobs.
-    if nonmagjob.tagged: continue
+    if nonmagjob.is_tagged: continue
     # check for success and avoid failures.
-    extract = nonmagjob.functional.Extract(basedir) 
+    print basedir, join(basedir, name)
+    extract = nonmagjob.functional.Extract(join(basedir, name)) 
     if not extract.success: continue
-    if not magnetic.is_magnetic_system(extract.structure, extract.functional.vasp.species): continue
+    if not is_magnetic_system(extract.structure, extract.functional.species): continue
 
     # now tries and creates high-spin ferro jobs if it does not already exist.
     jobname = normpath(basename + "/hs_ferro")
-    magmom = magnetic.hs_ferro(extract.structure, extract.functional.species)
+    magmom = hs_ferro(extract.structure, extract.functional.species)
     if magmom != None and jobname not in jobdict:
-      job = jobdict[jobname]
+      job = jobdict / jobname
       job.functional = input.relaxer if inputpath != None else job.functional
       job.jobparams["structure"] = extract.structure
       job.jobparams["magmom"] = magmom
@@ -168,12 +173,13 @@ def magnetic_wave(path=None, jobdict=None, inputpath=None, nbantiferro=None, **k
       # saves some stuff for future reference.
       job.material = nonmagjob.material
       job.lattice  = nonmagjob.lattice
+      has_changed = True
 
     # now tries and creates low-spin ferro jobs if it does not already exist.
     jobname = normpath(basename + "/ls_ferro")
-    magmom = magnetic.ls_ferro(extract.structure, extract.functional.species)
+    magmom = ls_ferro(extract.structure, extract.functional.species)
     if magmom != None and jobname not in jobdict:
-      job = jobdict[jobname]
+      job = jobdict / jobname
       job.functional = input.relaxer if inputpath != None else job.functional
       job.jobparams["structure"] = extract.structure
       job.jobparams["magmom"] = magmom
@@ -182,13 +188,14 @@ def magnetic_wave(path=None, jobdict=None, inputpath=None, nbantiferro=None, **k
       # saves some stuff for future reference.
       job.material = nonmagjob.material
       job.lattice  = nonmagjob.lattice
+      has_changed = True
 
 
     # now tries and creates anti-ferro-lattices jobs if it does not already exist.
-    magmom = magnetic.sublatt_antiferro(extract.structure, extract.functional.species) 
+    magmom = sublatt_antiferro(extract.structure, extract.functional.species) 
     jobname = normpath(basename + "/anti-ferro-0")
     if magmom != None and jobname not in jobdict:
-      job = jobdict[jobname]
+      job = jobdict / jobname
       job.functional = input.relaxer if inputpath != None else job.functional
       job.jobparams["structure"] = extract.structure
       job.jobparams["magmom"] = magmom
@@ -197,13 +204,15 @@ def magnetic_wave(path=None, jobdict=None, inputpath=None, nbantiferro=None, **k
       # saves some stuff for future reference.
       job.material = nonmagjob.material
       job.lattice  = nonmagjob.lattice
+      has_changed = True
 
     # random anti-ferro.
     for i in range(1, 1+nbantiferro):
-      magmom = magnetic.random(structure, input.vasp.species)
+      magmom = random(extract.structure, extract.functional.species)
       if magmom == None: continue
       jobname = normpath("/" + basename + "/anti-ferro-{0}".format(i))
       if jobname in jobdict: continue
+      job = jobdict / jobname
       job.functional = input.relaxer if inputpath != None else job.functional
       job.jobparams["structure"] = extract.structure
       job.jobparams["magmom"] = magmom
@@ -212,8 +221,12 @@ def magnetic_wave(path=None, jobdict=None, inputpath=None, nbantiferro=None, **k
       # saves some stuff for future reference.
       job.material = nonmagjob.material
       job.lattice  = nonmagjob.lattice
+      has_changed = True
 
-  if hasattr(input, "nbantiferro"): jobdict.root.nbantiferro = input.nbantiferro
+
+  if not has_changed:
+    print "No new jobs. "
+    return
   ip = IPython.ipapi.get()
   ip.user_ns["current_jobdict"] = jobdict.root
   ip.magic("savejobs " + path)

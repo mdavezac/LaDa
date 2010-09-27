@@ -75,7 +75,7 @@ def launch_scattered(self, event):
     # creates directory.
     with Changedir(path + ".pbs") as pwd: pass 
     # creates pbs scripts.
-    for i, (job, name) in enumerate(current.walk_through()):
+    for i, (job, name) in enumerate(current.root.walk_through()):
       if job.is_tagged: continue
       mppwidth = mppalloc(job) if hasattr(mppalloc, "__call__") else mppalloc
       if len(name) == 0: name = "{0}-root".format(splitpath(path)[1])

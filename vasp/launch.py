@@ -40,6 +40,8 @@ class Launch(Incar):
     """ kpoints for which to perform calculations. """
     self.inplace = inplace
     """ If True calculations are performed in the output directory. """
+    self.print_from_all = False
+    """ If True, will print from all nodes rather than just root. """
 
     # checks inplace vs workdir
     if self.inplace: 
@@ -125,7 +127,7 @@ class Launch(Incar):
      if is_notroot and self.print_from_all:
        stdout += ".{0}".format(comm.rank)
        stderr += ".{0}".format(comm.rank)
-     else: 
+     elif is_notroot: 
        stdout = "/dev/null"
        stderr = "/dev/null"
      with Changedir(self._tempdir):

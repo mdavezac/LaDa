@@ -327,7 +327,7 @@ class Incar(object):
     if (not ionic) and (not cellshape) and (not volume):
       self.params["isif"] = 1
       self.params["ibrion"] = -1
-      assert ibrion != None or ibrion == -1, \
+      assert ibrion == None or ibrion == -1, \
              ValueError("Cannot set ibrion to anything but -1 for static calculations.")
       if nsw != None: self.params["nsw"] = nsw
       if potim != None: self.params["potim"] = potim
