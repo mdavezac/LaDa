@@ -6,7 +6,7 @@ class Collect(AbstractMassExtract):
   
       By adjusting ``self.position``, which jobs to collect can be adjusted.
   """
-  def __init__(self, comm=None, _view=None):
+  def __init__(self, comm=None, _view=None, _naked_end):
     """ Initializes a Collect instance. """
     from IPython.ipapi import get as get_ip_handle
     super(Collect, self).__init__(None, comm=comm)
@@ -20,6 +20,8 @@ class Collect(AbstractMassExtract):
         look for the position of the current_jobdict. Otherwise, this should be
         a string which forms the beginning of the job-dictionaries to collect.
     """
+    self._naked_end = True
+    """ If True, a value is returned if at end of branch. """
 
   def walk_through(self):
     """ Generator to go through all relevant jobs.  
@@ -34,7 +36,6 @@ class Collect(AbstractMassExtract):
     for job, name in jobdict.walk_through():
       if job.is_tagged: continue
       if not hasattr(job.functional, "Extract"): continue
-      if not exists(join(self.root, name)): continue
       try: extract = job.functional.Extract(join(self.root, name), comm = self.comm)
       except: pass
       else: yield name, extract
@@ -79,6 +80,7 @@ class Collect(AbstractMassExtract):
         if position.match(key) == None: continue
         try: result[key] = getattr(value, name)
         except: result.pop(key, None)
+      if self._naked_end and len(result.keys()) == 1: return result[result.keys()[0]] 
       return result
     raise AttributeError("Unknown attribute {0}.".format(name))
 
@@ -96,3 +98,25 @@ class Collect(AbstractMassExtract):
     for name in jobdict.children.keys():
       path = normpath(join(join("/", self.position), name))
       yield self.__class__(comm=self.comm, _view=path)
+
+  def grep(self, regex, flags=None):
+    """ Yields views for children with fullnames matching the regex.
+    
+        :Param regex: The matching regular expression.
+        :type regex: str
+
+        The match is successful if the regex is matched using python's
+        `re.search <http://docs.python.org/library/re.html#re.search>`_ method.
+
+        Only the outermost view of each math is given. In other words, if a
+        view is yielded, its subviews will not be yielded.
+    """
+    from re import search, compile
+    if search(regex, self.position, flags) != None:
+      yield self
+      return
+    regex = compile(regex)
+    for child in self.children(self):
+      if search(regex, child.position, flags) != None: yield child
+      else: # goes to next level.
+        for grandchild in child.grep(regex, flags): yield grandchild

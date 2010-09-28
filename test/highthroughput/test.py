@@ -13,8 +13,8 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
         inputpath
           Path to an input file. Defaults to input.py. 
         kwargs
-          Any keyword/value pair to add to the job-dictionaries' jobparams. These
-          values will take precedence over anything in the input file.
+          Any keyword/value pair to take precedence over anything in the input
+          file.
 
       Creates a high-throughput job-dictionary to compute the non-magnetic
       ground-state of a host-material.  The new job-dictionary is loaded into
@@ -29,6 +29,7 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
 
   # reads input.
   input = read_input(inputpath)
+  input.update(kwargs)
 
   # sanity checks.
   for lattice in input.lattices:
@@ -39,7 +40,9 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
 
   # Job dictionary.
   jobdict = JobDict()
-  if hasattr(input, "nbantiferro"): jobdict.nbantiferro = input.nbantiferro
+  # reads current file and attaches it to jobdictionary.
+  with open(__file__, "r") as file: jobdict.nonmagscript = "".file.read()
+  with open(inputpath, "r") as file: jobdict.nonmaginput = "".file.read()
 
   # loop over materials.
   for material in input.materials:
@@ -83,7 +86,7 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
   ip.magic("savejobs " + path)
 
 
-def magnetic_wave(path=None, jobdict=None, inputpath=None, nbantiferro=None, **kwargs):
+def magnetic_wave(path=None, jobdict=None, inputpath=None, **kwargs):
   """ Creates magnetic wave from knowledge of previous wave. 
 
       :Parameters:
@@ -97,16 +100,8 @@ def magnetic_wave(path=None, jobdict=None, inputpath=None, nbantiferro=None, **k
         inputpath : str or None
           Path to an input file. If not present, then no input file is read and
           all parameters are taken from the non-magnetic wave.
-        nbantiferro : int or None
-          Number of random anti-ferro runs. If absent, looks into the input
-          file given by inputpath. If that is absent as well, defaults to a variable located at
-          the root of the jobdict (``jobdict.root.nbantiferro``), generally
-          read from the input file at the time the non-magnetic wave was
-          created. If that is absent as well (eg, wasn't in original
-          non-magnetic input file), defaults to 0.
         kwargs
-          Any keyword/value pair to add to the job-dictionaries' jobparams. These
-          values will take precedence over anything in the input file.
+          Any keyword/value pair to take precedence over anything in the input file.
 
       Creates magnetic wave from pre-existing non-magnetic wave. If no input
       file is given on input, then all parameters are obtained from the
@@ -120,11 +115,14 @@ def magnetic_wave(path=None, jobdict=None, inputpath=None, nbantiferro=None, **k
       configurations can be calculated by giving a large enough ``nbantiferro``
       on input.
   """
+  from tempfile import NamedTemporaryFile
   from os.path import dirname, normpath, relpath, join
   import IPython.ipapi
   from lada.jobs import JobDict
   from lada.vasp import read_input
+  from lada.opt import Input
 
+  # Loads jobdictionary and path as requested. 
   ip = IPython.ipapi.get()
   if jobdict == None:
     if "current_jobdict" not in ip.user_ns: 
@@ -139,21 +137,30 @@ def magnetic_wave(path=None, jobdict=None, inputpath=None, nbantiferro=None, **k
     basedir = dirname(path)
   else: basedir = dirname(path)
       
-  # reads input.
-  if inputpath != None:
-    input = read_input(inputpath)
-    if nbantiferro == None and hasattr(input, "antiferro"):
-      nbantiferro = input.nbantiferro
-  if nbantiferro == None: nbantiferro = 0
+  # saves this file to the jobdictionary.
+  with open(__file__, "r") as file: jobdict.magscript = file.read()
+  # reads input. Some complications since we are checking for old input as well.
+  if hasattr(jobdict, "nonmaginput"):
+    with NamedTemporaryFile() as file: 
+      file.write(jobdict.nonmaginput)
+      file.flush()
+      input.update(read_input(file.name).__dict__)
+  if inputpath != None
+    input.update(read_input(inputpath))
+    with open(inputpath, "r") as file: jobdict.maginput = file.read()
+  input.update(kwargs)
+  nbantiferro = input.__dict__.pop("nbantiferro", 0)
 
+  # will loop over all jobs, looking for *successfull* *non-magnetic* calculations. 
+  # Only magnetic jobs which do NOT exist are added at that point.
   nonmagname = "non-magnetic"
   has_changed = False
   for nonmagjob, name in jobdict.walk_through():
+    # avoid tagged jobs.
+    if nonmagjob.is_tagged: continue
     # avoid other jobs (eg magnetic jobs).
     basename = normpath("/" + name + "/../")
     if relpath(name, basename[1:]) != nonmagname: continue
-    # avoid tagged jobs.
-    if nonmagjob.is_tagged: continue
     # check for success and avoid failures.
     extract = nonmagjob.functional.Extract(join(basedir, name)) 
     if not extract.success: continue
@@ -169,7 +176,6 @@ def magnetic_wave(path=None, jobdict=None, inputpath=None, nbantiferro=None, **k
       job.jobparams["structure"].name = "{0} in {1}, high-spin.".format(material, lattice.name)
       job.jobparams["magmom"] = magmom
       job.jobparams["ispin"] =  2
-      job.jobparams.update(kwargs)
       # saves some stuff for future reference.
       job.material = nonmagjob.material
       job.lattice  = nonmagjob.lattice
@@ -185,7 +191,6 @@ def magnetic_wave(path=None, jobdict=None, inputpath=None, nbantiferro=None, **k
       job.jobparams["structure"].name = "{0} in {1}, low-spin.".format(material, lattice.name)
       job.jobparams["magmom"] = magmom
       job.jobparams["ispin"] =  2
-      job.jobparams.update(kwargs)
       # saves some stuff for future reference.
       job.material = nonmagjob.material
       job.lattice  = nonmagjob.lattice
@@ -199,10 +204,10 @@ def magnetic_wave(path=None, jobdict=None, inputpath=None, nbantiferro=None, **k
       job = jobdict / jobname
       job.functional = input.relaxer if inputpath != None else nonmagjob.functional
       job.jobparams["structure"] = extract.structure
-      job.jobparams["structure"].name = "{0} in {1}, lattice anti-ferro.".format(material, lattice.name)
+      job.jobparams["structure"].name = "{0} in {1}, lattice anti-ferro."\
+                                        .format(material, lattice.name)
       job.jobparams["magmom"] = magmom
       job.jobparams["ispin"] =  2
-      job.jobparams.update(kwargs)
       # saves some stuff for future reference.
       job.material = nonmagjob.material
       job.lattice  = nonmagjob.lattice
@@ -217,10 +222,10 @@ def magnetic_wave(path=None, jobdict=None, inputpath=None, nbantiferro=None, **k
       job = jobdict / jobname
       job.functional = input.relaxer if inputpath != None else nonmagjob.functional
       job.jobparams["structure"] = extract.structure
-      job.jobparams["structure"].name = "{0} in {1}, random anti-ferro.".format(material, lattice.name)
+      job.jobparams["structure"].name = "{0} in {1}, random anti-ferro."\
+                                        .format(material, lattice.name)
       job.jobparams["magmom"] = magmom
       job.jobparams["ispin"] =  2
-      job.jobparams.update(kwargs)
       # saves some stuff for future reference.
       job.material = nonmagjob.material
       job.lattice  = nonmagjob.lattice
