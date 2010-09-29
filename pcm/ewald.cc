@@ -10,17 +10,18 @@
 
 extern "C" void FC_GLOBAL( ewaldf, EWALDF )
                 (
-                  const int *const, // verbosity
-                  const double *const, // Energy
-                  const double *const, // forces (reduced)
-                  const double *const, // forces (cartesian)
+                  const int *const,    // verbosity
+                  double * const,      // Energy
+                  double * const,      // forces (reduced)
+                  double * const,      // forces (cartesian)
                   const double *const, // stress
-                  const int *const, // number of atoms
+                  const int *const,    // number of atoms
                   const double *const, // reduced atomic coordinates.
                   const double *const, // atomic charges
                   const double *const, // real space cutoff
                   const double *const, // cell vectors
-                  const int *const  // dimension of arrays.
+                  const int *const,    // dimension of arrays.
+                  int * const          // ERROR
                 );
 namespace LaDa
 {
@@ -36,8 +37,9 @@ namespace LaDa
       double cell[ 9 ], stress[ 6 ];
       const int verbosity(0);
       double energy(0);
+      int error;
       const int n( natoms );
-      const double rcut( cutoff_ / Physics::a0("A") );
+      const double gcut( cutoff_ / Physics::Rydberg("eV") );
       math::rMatrix3d const inv(!_in.cell);
 
       typedef t_Arg :: t_Atoms :: const_iterator t_cit;
@@ -67,10 +69,13 @@ namespace LaDa
         &n,           // number of atoms
         positions,    // reduced atomic coordinates.
         Qs,           // atomic charges
-        &rcut,        // Real-space cutoff.
+        &gcut,        // g-space cutoff in Ry.
         cell,         // cell vectors
-        &n            // dimension of arrays.
+        &n,           // dimension of arrays.
+        &error
       );
+      LADA_ASSERT(error != 1, "Could not find optimal alpha for ewald summation.")
+
       // Copy (reduced) forces.
       t_Arg :: t_Atoms :: iterator i_force = _out.atoms.begin();
       for( size_t i(0); i < natoms; ++i, ++i_force )
