@@ -91,7 +91,7 @@ scales = [5.45]
 """ Substrate lattice parameter. """
 trials = range(2)
 """ Number of trials per configuration space. """
-periods = [5]
+periods = [20]
 """ Size of the period in the configuration space. """
 
 references = (-0.45, 0.10)
