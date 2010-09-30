@@ -1,4 +1,5 @@
 """ A class for single-shot VASP calculation """
+__docformat__ = "restructuredtext en"
 import incar
 from incar import Incar
 from kpoints import Density
@@ -15,35 +16,32 @@ class Launch(Incar):
                kpoints = Density(), **kwargs ):
     """ Initializes Launch instance.
 
-        The initializer can take any number of keyword arguments. Those other
-        than kpoints and species will be set as attributes: C{launch =
-        Launch(whatnot = something)} is equivalent to
-        >> launch = Launch()
-        >> launch.whatnot = something
-        This behavior is useful to pass non-standard incar arguments directly
-        in initialization.
-        @param workdir: working directory. Defaults to output directory.
-        @param inplace: In-place calculations. Eg no workdir.
-        @param species: Species in the system. 
-        @type species: dictionary of L{Specie}
-        @param kpoints: Kpoint behavior.
-        @type kpoints: see L{kpoints.Density} and L{kpoints.Gamma}
+        :Parameters:
+          workdir : str
+            working directory. Defaults to output directory.
+          inplace : boolean
+            In-place calculations. Eg no workdir.
+          species
+           Species in the system. It is a dictionary of `vasp.Specie`.
+           Individual items can be set using `Launch.add_specie`.
+          kpoints : str or callable
+            A string describing the kpoint mesh (in VASP's KPOINT format), or a
+            callable returning such a string.
     """
     from os import getcwd
-    from os.path import abspath, expanduser
+    from ..opt import RelativeDirectory
     super(Launch, self).__init__() 
 
-    self.workdir = abspath(expanduser(workdir)) if workdir != None else None
-    """ Filesystem location where temporary calculations are performed. 
-
-        Cannot be set at the same time as L{inplace}. 
-    """
+    self._workdir = RelativeDirectory(workdir)
+    """ Filesystem location where temporary calculations are performed.  """
     self.species = species if species != None else {}
     """ Species in the system. """
     self.kpoints = kpoints
     """ kpoints for which to perform calculations. """
     self.inplace = inplace
     """ If True calculations are performed in the output directory. """
+    self.print_from_all = False
+    """ If True, will print from all nodes rather than just root. """
 
     # checks inplace vs workdir
     if self.inplace: 
@@ -52,20 +50,31 @@ class Launch(Incar):
     # sets all other keywords as attributes.
     for key in kwargs.keys(): setattr(self, key, kwargs[key])
 
+  @property
+  def workdir(self):
+    """ Directory where calculations are performed. 
+
+        If `Launch.inplace` is true, then this parameter is ignored, and
+        calculations are performed in the output directory.
+    """
+    return self._workdir.path
+  @workdir.setter
+  def workdir(self, value): self._workdir.path = value
+
   def _prerun(self, comm, outdir):
     """ Sets things up prior to calling VASP. 
 
-        Performs the following.
-          - Writes INCAR file.
-          - Writes KPOINTS file.
-          - Writes POSCAR file.
-          - Creates POTCAR file
-          - Saves pickle of self.
-        @raise AssertionError:
+        Performs the following actions.
+
+        - Writes INCAR file.
+        - Writes KPOINTS file.
+        - Writes POSCAR file.
+        - Creates POTCAR file
+        - Saves pickle of self.
     """
     import cPickle
     from copy import deepcopy
-    from os.path import join, exists, abspath
+    from os.path import join, abspath
     from os import getcwd
     from shutil import copy
     from . import files, is_vasp_5
@@ -98,9 +107,7 @@ class Launch(Incar):
     # creates POTCAR file
     with open(join(self._tempdir, files.POTCAR), 'w') as potcar:
       for s in specie_list(self._system):
-        assert exists(join(self.species[s].path, files.POTCAR)), \
-               AssertionError("Could not find potcar in " + s.path)
-        with open(join(self.species[s].path, files.POTCAR), "r") as infile: potcar.writelines(infile)
+        potcar.writelines( self.species[s].read_potcar() )
 
     path = join(abspath(self._tempdir), files.FUNCCAR)
     with Changedir(outdir) as outdir: # allows relative paths.
@@ -116,10 +123,13 @@ class Launch(Incar):
      # moves to working dir only now.
      stdout = join(self._tempdir, files.STDOUT) 
      stderr = join(self._tempdir, files.STDERR) 
-     if comm.rank != None:
-       if comm.rank != 0:
-         stdout += ".%i" % (comm.rank)
-         stderr += ".%i" % (comm.rank)
+     is_notroot = False if comm == None else comm.rank != 0
+     if is_notroot and self.print_from_all:
+       stdout += ".{0}".format(comm.rank)
+       stderr += ".{0}".format(comm.rank)
+     elif is_notroot: 
+       stdout = "/dev/null"
+       stderr = "/dev/null"
      with Changedir(self._tempdir):
        with redirect(fout=stdout, ferr=stderr) as streams:
          if comm != None: comm.barrier()
@@ -159,26 +169,23 @@ class Launch(Incar):
 
   def __call__( self, structure=None, outdir = None, comm = None, repat = [], \
                 norun = False, keep_tempdir=False):
-    from os.path import exists, join, abspath, expanduser
     from os import getcwd
     from shutil import copy2 as copy
     from boost.mpi import world
-    from ..opt.tempdir import Tempdir
-    from ..opt.changedir import Changedir
+    from ..opt import Tempdir, Changedir, RelativeDirectory
 
     # set up
     if structure != None: self._system = structure
     elif not hasattr(self, "_system"): raise RuntimeError, "Internal bug.\n"
-    outdir = getcwd() if outdir == None else abspath(expanduser(outdir))
+    outdir = getcwd() if outdir == None else RelativeDirectory(outdir).path
     if comm == None: comm = world
 
     is_root = comm.rank == 0
 
     # creates temporary working directory
-    workdir = outdir if self.workdir == None else self.workdir
-    context = Tempdir(workdir=workdir, comm=comm, keep=keep_tempdir)\
-              if not self.inplace  else Changedir(outdir, comm=comm) 
-    with context as self._tempdir: 
+    if self.inplace: context = Changedir(outdir, comm=comm) 
+    else:            context = Tempdir(workdir = self.workdir, comm = comm)
+    with context as self._tempdir:
       # We do not move to working directory to make copying of files from indir
       # or outdir (as relative paths) possible.
       # creates INCAR and KPOINTS.
@@ -200,11 +207,12 @@ class Launch(Incar):
     """ Adds a specie to current functional. 
      
         The argument is a tuple containing the following.
-          - Symbol (str).
-          - Directory where POTCAR resides (str).
-          - List of U parameters (optional, see module vasp.specie).
-          - Maximum (or minimum) oxidation state (optional, int).
-          - ... Any other argument in order of vasp.specie.Specie.init.
+
+        - Symbol (str).
+        - Directory where POTCAR resides (str).
+        - List of U parameters (optional, see module vasp.specie).
+        - Maximum (or minimum) oxidation state (optional, int).
+        - ... Any other argument in order of `vasp.specie.Specie.__init__`.
     """
     from .specie import Specie
     assert len(args) > 1, ValueError("Too few arguments.")

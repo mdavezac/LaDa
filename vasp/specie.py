@@ -1,12 +1,21 @@
 """ Defines specie specific methods and objects. """
+__docformat__ = "restructuredtext en"
 
 
 def U(type = 1, l=2, U=0e0, J=0e0 ):
   """ Creates an LDA+U parameter 
 
       LDA+U is always LSDA+U here. 
-      @param type: (1|2|"liechtenstein"|"dudarev")
-      @param l: (0|1|2|"s"|"p"|"d") channel for which to apply U. Default: 2.
+      :Parameters:
+        type : 1|2|"liechtenstein"|"dudarev"
+          A string or integer specifying the type of the Hubbard U. Defaults
+          to 1.
+        l : 0|1|2|"s"|"p"|"d"
+          Channel for which to apply U. Defaults to 2.
+        U : float
+          Hubbard U. Defaults to 0.
+        J : float
+          Hubbard J. Defaults to 0.
   """
 
   if hasattr(type, "lower"):
@@ -25,14 +34,25 @@ def U(type = 1, l=2, U=0e0, J=0e0 ):
   return { "type": int(type), "l": l, "U": U, "J": J, "func": "U" }
 
 def nlep(type = 1, l=2, U0=0e0, U1=None ):
-  """ Creates nlep parameters 
+  """ Creates `nlep`_ parameters 
 
-      LDA+U is always LSDA+U here. 
-      @param type: (1|2|"liechtenstein"|"dudarev")
-      @param U0: (float) first E-nlep parameter. Defaults to 0e0.
-      @param U1: (float|None) second E-nlep parameter, if specified. Otherwise
-                 reverts to nlep. Default:None.
-      @param l: (0|1|2|"s"|"p"|"d") channel for which to apply U. Default: 2.
+      :Parameters:
+        type : 1|2|"liechtenstein"|"dudarev"
+          A string or integer specifying the type of the Hubbard U. Defaults
+          to 1.
+        l : 0|1|2|"s"|"p"|"d"
+          Channel for which to apply U. Defaults to 2.
+        U : float
+          First nlep parameter. Defaults to 0.
+        J : float
+          Second (e)nlep parameter. Defaults to 0.
+
+      `Non Local External Potentials`__ attempt to correct in part for the
+      band-gap problem. It was proposed in PRB **77**, 241201(R) (2008).
+      :note: LDA+U is always LSDA+U here. 
+
+      .. _nlep : http://dx.doi.org/10.1103/PhysRevB.77.241201
+      __ nlep_
   """
   if hasattr(type, "lower"):
     type = type.lower()
@@ -54,20 +74,32 @@ def nlep(type = 1, l=2, U0=0e0, U1=None ):
 
 
 class Specie(object):
-  """ Holds atomic specie information:  """
-  def __init__(self, path, U=None, oxidation=None, magnetic=False):
+  """ Holds atomic specie information.
+  
+      Instances of this object define an atomic specie for VASP calculations.
+      In addition, it may contain information used to build a set of
+      high-throughput jobs. For instance, `Specie.magnetic` may enable
+      calculations for different magnetic moments.
+  """
+  def __init__(self, directory, U=None, oxidation=None, magnetic=False):
     """ Initializes a specie.
-        @param path: to the directory with the potcar for this particular atomic types.
-          This directory should contain a POTCAR or POTCAR.Z file.
-        @type path: str
-        @param U: LDA+U parameters. It should a list of dictionaries, one entry
-                  per momentum channel. The simplest approach is to use
-                  >>> Species(..., U=[U(l=1, U=1.5), U(l=2, U=2.5)],...)
-        @param oxidation: Maximum oxidation state (or minimum if negative).
-    """
-    import os.path
 
-    self.path = os.path.abspath(os.path.expanduser(path))
+        :Parameters:
+          directory : str
+            Directory with the potcar for this particular atomic types.  This
+            directory should contain an *unzipped* POTCAR file.
+          U 
+            LDA+U parameters. It should a list of dictionaries, one entry per
+            momentum channel, and each entry returned by a call to `Specie.U`
+            or `Specie.nlep`.
+          oxidation : int
+            Maximum oxidation state (or minimum if negative).
+          magnetic : boolean
+            If true, then this atom is magnetic.
+    """
+    from ..opt import RelativeDirectory
+
+    self._directory = RelativeDirectory(directory)
     if oxidation != None: self.oxidation = oxidation
     if U == None: self.U = []
     elif isinstance(U, dict): self.U = [U]
@@ -75,25 +107,45 @@ class Specie(object):
     self.magnetic = magnetic
 
   @property
+  def directory(self):
+    """ Directory where the POTCAR file may be found. """
+    return self._directory.path
+  @directory.setter
+  def directory(self, value): self._directory.path = value
+
+  @property 
+  def path(self):
+    """ Path to POTCAR file. """
+    from os.path import join
+    return join(self.directory, "POTCAR")
+
+  @property
   def enmax(self):
     """ Maximum recommended cutoff """
     import re
-    from os.path import exists, join
-    if not exists(join(self.path, "POTCAR")):
-      raise IOError, "Could not find potcar in " + self.path
-    with open(join(self.path, "POTCAR"), "r") as potcar:
+    self.potcar_exists()
+    with self.read_potcar() as potcar:
       r = re.compile("ENMAX\s+=\s+(\S+);\s+ENMIN")
       p = r.search(potcar.read())
-      if p == None: raise AssertionError, "Could not retrieve ENMAX from " + self.path
+      if p == None: raise AssertionError, "Could not retrieve ENMAX from " + self.directory
       return float( p.group(1) )
   
   @property
   def valence(self):
     """ Number of valence electrons specified by pseudo-potential """ 
     import re
-    from os.path import exists, join
-    if not exists(join(self.path, "POTCAR")):
-      raise IOError, "Could not find potcar in " + self.path
-    with open(join(self.path, "POTCAR"), "r") as potcar:
+    self.potcar_exists()
+    with self.read_potcar() as potcar:
       potcar.readline()
       return float(potcar.readline().split()[0]) # shoud be number on second line
+
+  def potcar_exists(self):
+    """ Raises IOError if POTCAR file does not exist. """
+    from os.path import exists
+    assert exists(self.path), IOError("Could not find POTCAR in {1}.".format(self.directory))
+
+  def read_potcar(self):
+    """ Returns handle/context to POTCAR file. """
+    self.potcar_exists()
+    return open(self.path, "r") 
+

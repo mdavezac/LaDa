@@ -304,35 +304,59 @@ class Incar(object):
       
         Some of the parameters (purposefully left out above) are optional:
           - first argument can be "static", or a combination of "ion(ic|s)",
-               "cell(\s+|-|_?(?:shape)?", and "volume".  Can also be set using
-               an integer between 0 and 7. See VASP manual. 
+               "cell(\s+|-|_?(?:shape)?", and "volume".  
           - second (optional) argument is nsw
           - third (optional) argument is ibrion
           - fourth (optional) argument is potim.
     """
     import re
-    if args[0] == None: isif = None
-    else:
-      try: isif = int(args[0]) 
-      except (ValueError, TypeError): 
-        isif = str(args[0]).lower()
-        ionic = re.search( "ion(ic|s)?", isif.lower() ) != None
-        cellshape = re.search( "cell(\s+|-|_)?(?:shape)?", isif.lower() ) != None
-        volume = re.search( "volume", isif.lower() ) != None
-        if (not ionic) and (not cellshape) and (not volume): isif = 0
-        elif ionic and (not cellshape) and (not volume):     isif = 2
-        elif ionic and cellshape and volume:                 isif = 3
-        elif ionic and cellshape and (not volume):           isif = 4
-        elif(not ionic) and  cellshape and (not volume):     isif = 5
-        elif(not ionic) and  cellshape and volume:           isif = 6
-        elif(not ionic) and (not cellshape) and volume:      isif = 7
-        elif ionic and (not cellshape) and volume:
-          raise RuntimeError, "VASP does not allow relaxation of atomic position"\
-                              "and volume at constant cell-shape.\n"
-    self.params["isif"] = isif
-    if len(args) > 1: self.params["nsw"] = args[1]
-    if len(args) > 2: self.params["ibrion"] = args[2]
-    if len(args) > 3: self.params["potim"] = args[3]
+
+    dof =  args.lower() if isinstance(args,str) else str(args[0]).lower()
+    ionic = re.search( "ion(ic|s)?", dof ) != None
+    cellshape = re.search( "cell(\s+|-|_)?(?:shape)?", dof ) != None
+    volume = re.search( "volume", dof ) != None
+
+    nsw, ibrion, potim = None, None, None
+    if not isinstance(args, str):
+      if len(args) > 1: nsw = int(args[1])
+      if len(args) > 2: ibrion = int(args[2])
+      if len(args) > 2: potim = int(args[3])
+
+
+    # static calculation.
+    if (not ionic) and (not cellshape) and (not volume):
+      self.params["isif"] = 1
+      self.params["ibrion"] = -1
+      assert ibrion == None or ibrion == -1, \
+             ValueError("Cannot set ibrion to anything but -1 for static calculations.")
+      assert nsw  == None or nsw == 0, \
+             ValueError("static calculation with nsw > 0 is way too creative.")
+      self.params["nsw"] = None
+      if potim != None: self.params["potim"] = potim
+
+    else: # Some kind of relaxations. 
+      # ionic calculation.
+      if ionic and (not cellshape) and (not volume):   self.params["isif"] = 1
+      elif ionic and cellshape and (not volume):       self.params["isif"] = 4
+      elif ionic and cellshape and volume:             self.params["isif"] = 3
+      elif (not ionic) and cellshape and volume:       self.params["isif"] = 6
+      elif (not ionic) and cellshape and (not volume): self.params["isif"] = 5
+      elif (not ionic) and (not cellshape) and volume: self.params["isif"] = 7
+      elif ionic and (not cellshape) and volume: 
+        raise RuntimeError, "VASP does not allow relaxation of atomic position"\
+                            "and volume at constant cell-shape.\n"
+
+      if ibrion == None and self.params["ibrion"] in [None, -1]: self.params["ibrion"] = 2
+      elif ibrion != None: 
+        assert ibrion != -1, ValueError("Cannot set ibrion to -1 with strain relaxations.")
+        assert ibrion != 0 or self.params["isif"] == 1,\
+               ValueError("Cannot set ibrion to 0 with strain relaxations.")
+        self.params["ibrion"] = ibrion
+      if nsw != None:
+        assert nsw > 0, ValueError("Cannot set nse < 1 and perform strain relaxations.")
+        self.params["nsw"] = nsw
+      elif self.params["nsw"] == None or self.params["nsw"] == 0: self.params["nsw"] = 50
+      if potim != None: self.params["potim"] = potim
 
   def __iter__(self):
     """ Iterates over attribute names and values. """

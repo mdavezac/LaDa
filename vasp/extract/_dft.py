@@ -1,40 +1,53 @@
 """ Subpackage containing extraction methods for VASP-DFT data from output. """
+__docformat__  = 'restructuredtext en'
+__all__ = ['Extract']
 from ...opt.decorators import make_cached, broadcast_result
 class _ExtractImpl(object):
   """ Implementation class for extracting data from VASP output """
 
-  def __init__(self, directory = "", comm = None):
-    from .. import files
+  def __init__(self, directory = None, comm = None, OUTCAR = None):
     """ Initializes the extraction class. 
 
-        @param comm: MPI group communicator. Extraction will be performed
-                        for all procs in the group. In serial mode, comm can
-                        be None.
-        @param comm: boost.mpi.Communicator
-        @param directory: path to the directory where the VASP output is located.
-        @type directory: str
+        :Parameters: boost.mpi.Communicator
+          directory : str or None
+            path to the directory where the VASP output is located. If none,
+            will use current working directory.
+          comm : boost.mpi.communicator or None
+            MPI group communicator. Extraction will be performed for all procs
+            in the group. In serial mode, comm can be None.
+          OUTCAR : str or None
+            Name of the OUTCAR file.
     """
-    self.directory = directory
+    from os import getcwd
+    from .. import files
+    from ...opt import RelativeDirectory
+    super(_ExtractImpl, self).__init__()
+
+    if directory == None: directory = getcwd()
+    self._directory = RelativeDirectory(directory, hook=self.uncache)
     """ Directory where to check for output. """
     self.comm = comm
     """ MPI group communicator. """
-    self.OUTCAR = files.OUTCAR
+    self.OUTCAR = files.OUTCAR if OUTCAR == None else OUTCAR
     """ Filename of the OUTCAR file from VASP. """
     self.CONTCAR = files.CONTCAR
     """ Filename of the CONTCAR file from VASP. """
     self.FUNCCAR = files.FUNCCAR
     """ Filename of the FUNCCAR file containing the pickled functional. """
     
-  def _get_directory(self):
+  @property
+  def exports(self):
+    """ List of files to export. """
+    from os.path import join, exists
+    return [ join(self.directory, u) for u in [self.OUTCAR, self.FUNCCAR] \
+             if exists(join(self.directory, u)) ]
+
+  @property
+  def directory(self):
     """ Directory with VASP output files """
-    return self._directory
-  def _set_directory(self, dir):
-    from os.path import abspath, expanduser
-    dir = abspath(expanduser(dir))
-    if hasattr(self, "_directory"): 
-      if dir != self._directory: self.uncache()
-    self._directory = dir
-  directory = property(_get_directory, _set_directory)
+    return self._directory.path
+  @directory.setter
+  def directory(self, value): self._directory.path = value
 
   def uncache(self): 
     """ Removes cached results.
@@ -44,115 +57,113 @@ class _ExtractImpl(object):
     from ...opt.decorators import uncache
     uncache(self)
 
+  def solo(self):
+    """ Extraction on a single process.
 
-  @make_cached
-  @broadcast_result(attr=True, which=0)
-  def _get_energy_sigma0(self):
-    """ Greps total energy extrapolated to $\sigma=0$ from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}. """
-    from os.path import exists, join
-    from re import compile, X as re_X
-    import quantities as pq
+        Sometimes, it is practical to perform extractions on a single process
+        only, eg without blocking mpi calls. ``self.solo()`` returns an
+        extractor for a single process:
+        
+        >>> # prints only on proc 0.
+        >>> if boost.mpi.world.rank == 0: print extract.solo().structure
+    """
+    from copy import deepcopy
+    return deepcopy(self) if self.comm != None else self
 
-    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
-    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
+  def __getstate__(self):
+    from os.path import relpath
+    d = self.__dict__.copy()
+    if "_directory" in d: d["_directory"].hook = None
+    if "comm" in d: del d["comm"]
+    return d
+  def __setstate__(self, arg):
+    self.__dict__.update(arg)
+    self.comm = None
+    if hasattr(self, "_directory"): self._directory.hook = self.uncache
 
-    result = None
-    with open(path, "r") as file:
-      regex = compile( r"""energy\s+without\s+entropy\s*=\s*(\S+)\s+
-                           energy\(sigma->0\)\s+=\s+(\S+)""", re_X)
-      for line in file:
-        match = regex.search(line)
-        if match != None: result = float(match.group(2))
-    if result == None: raise RuntimeError, "File %s is incomplete.\n" % (path)
-    return result * pq.eV
 
-  @make_cached
-  @broadcast_result(attr=True, which=0)
-  def _get_energy(self):
-    """ Greps total energy from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}."""
-    from os.path import exists, join
-    from re import compile, X as re_X
-    import quantities as pq
-
-    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
-    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
-
-    result = None
-    with open(path, "r") as file:
-      regex = compile( r"""energy\s+without\s+entropy\s*=\s*(\S+)\s+
-                           energy\(sigma->0\)\s+=\s+(\S+)""", re_X)
-      for line in file:
-        match = regex.search(line)
-        if match != None: result = float(match.group(1))
-    if result == None: raise RuntimeError, "File %s is incomplete.\n" % (path)
-    return result * pq.eV
-
-  @make_cached
-  @broadcast_result(attr=True, which=0)
-  def _get_free_energy(self):
-    """ Greps total free energy from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}. """
+  def _search_OUTCAR(self, regex):
+    """ Looks for all matches. """
     from os.path import exists, join
     from re import compile
-    import quantities as pq
+    from numpy import array
 
     path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
-    result = None
+    result = []
+    regex  = compile(regex)
     with open(path, "r") as file:
-      regex = compile( r"""free\s+energy\s+TOTEN\s*=\s*(\S+)\s+eV""" )
-      for line in file:
-        match = regex.search(line)
-        if match != None: result = float(match.group(1))
-
-    if result == None: raise RuntimeError, "File %s is incomplete.\n" % (path)
-    return result * pq.eV
-
-  @make_cached
-  @broadcast_result(attr=True, which=0)
-  def _get_fermi_energy(self):
-    """ Greps fermi energy from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}. """
-    from os.path import exists, join
-    from re import compile
-    import quantities as pq
-
-    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
-    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
-
-    result = None
-    with open(path, "r") as file:
-      regex = compile( r"""E-fermi\s*:\s*(\S+)""" )
-      for line in file:
-        match = regex.search(line)
-        if match != None: result = float(match.group(1))
-
-    if result == None: raise RuntimeError, "File %s is incomplete.\n" % (path)
-    return result * pq.eV
-
-
-  @make_cached
-  @broadcast_result(attr=True, which=0)
-  def _get_name(self):
-    """ Gets name of system from OUTCAR. """
-    from os.path import exists, join
-    from re import compile
-
-    species_in = self.species
-
-    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
-    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
-    
-    with open(path, "r") as file: 
-      line_re = compile("^\s*POSCAR\s*=\s*")
       for line in file: 
-        if line_re.search(line) != None: break
-      return line[line.find("=")+1:].rstrip().strip()
+        found = regex.search(line)
+        if found != None: yield found
 
+  def _find_first_OUTCAR(self, regex):
+    """ Returns first result from a regex. """
+    for first in self._search_OUTCAR(regex): return first
+    return None
 
+  def _rsearch_OUTCAR(self, regex):
+    """ Looks for all matches starting from the end. """
+    from os.path import exists, join
+    from re import compile
+    from numpy import array
+
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
+    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
+
+    result = []
+    regex  = compile(regex)
+    with open(path, "r") as file: lines = file.readlines()
+    for line in lines[::-1]:
+      found = regex.search(line)
+      if found != None: yield found
+
+  def _find_last_OUTCAR(self, regex):
+    """ Returns first result from a regex. """
+    for last in self._rsearch_OUTCAR(regex): return last
+    return None
+
+  @property
   @make_cached
   @broadcast_result(attr=True, which=0)
-  def _get_structure_data(self):
-    """ Greps cell and positions from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}. """
+  def functional(self):
+    """ Returns vasp functional used for calculation.
+
+        Requires file L{FUNCCAR} to be present.
+    """
+    from os.path import exists, join
+    from cPickle import load
+    path = self.FUNCCAR if len(self.directory) == 0 else join(self.directory, self.FUNCCAR)
+    if not exists(path): return None
+    with open(path, "r") as file: return load(file)
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def success(self):
+    """ Checks that VASP run has completed. 
+
+        At this point, checks for the existence of OUTCAR.
+        Then checks that timing stuff is present at end of OUTCAR.
+    """
+    from os.path import exists, join
+    import re
+
+    for path in [self.OUTCAR]:
+      if self.directory != "": path = join(self.directory, path)
+      if not exists(path): return False
+      
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
+
+    regex = r"""General\s+timing\s+and\s+accounting\s+informations\s+for\s+this\s+job"""
+    return self._find_last_OUTCAR(regex) != None
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def _structure_data(self):
+    """ Greps cell and positions from OUTCAR. """
     from os.path import exists, join
     from re import compile
     from numpy import array, zeros
@@ -164,7 +175,6 @@ class _ExtractImpl(object):
 
     cell = zeros((3,3), dtype="float64")
     atoms = []
-
 
     with open(path, "r") as file: lines = file.readlines()
 
@@ -184,18 +194,18 @@ class _ExtractImpl(object):
 
     return cell, atoms
 
+  @property
   @make_cached
-  def _get_structure(self):
+  def structure(self):
     """ Greps structure and total energy from OUTCAR. """
-    from os.path import exists, join
     from re import compile
     from numpy import array, zeros
     from quantities import eV
     from ...crystal import Structure
 
     species_in = self.species
-    try: cell, atoms = self._get_structure_data()
-    except: return self._get_contcar_structure()
+    try: cell, atoms = self._structure_data
+    except: return self.contcar_structure
 
     structure = Structure()
     structure.name = self.name
@@ -210,8 +220,9 @@ class _ExtractImpl(object):
 
     return structure
 
+  @property
   @make_cached
-  def _get_contcar_structure(self):
+  def contcar_structure(self):
     """ Greps structure from CONTCAR. """
     from os.path import exists, join
     from ...crystal import read_poscar
@@ -225,51 +236,309 @@ class _ExtractImpl(object):
     result.energy = float(self.energy.rescale(eV))
     return result
 
+  @property
   @make_cached
   @broadcast_result(attr=True, which=0)
-  def _get_ions_per_type(self):
-    """ Greps species from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}. """
+  def ions_per_specie(self):
+    """ Greps species from OUTCAR. """
+    result = self._find_first_OUTCAR(r"""\s*ions\s+per\s+type\s*=.*$""")
+    if result == None: return None
+    return [int(u) for u in result.group(0).split()[4:]]
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def species(self):
+    """ Greps species from OUTCAR. """
+    return tuple([ u.group(1) for u in self._search_OUTCAR(r"""VRHFIN\s*=\s*(\S+)\s*:""") ])
+
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def kpoints(self):
+    """ Greps k-points from OUTCAR.
+    
+        Numpy array where each row is a k-vector in cartesian units. 
+    """
     from os.path import exists, join
-    from re import compile, X as re_X
+    from re import compile, search 
+    from numpy import array
 
     path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = []
     with open(path, "r") as file:
-      regex = compile(r"""\s*ions\s+per\s+type\s*=""")
+      found = compile(r"""Found\s+(\d+)\s+irreducible\s+k-points""")
       for line in file:
-        match = regex.search(line)
-        if match == None: continue
-        return [int(u) for u in line.split()[4:]]
-    return None
+        if found.search(line) != None: break
+      found = compile(r"""Following\s+cartesian\s+coordinates:""")
+      for line in file:
+        if found.search(line) != None: break
+      file.next()
+      for line in file:
+        data = line.split()
+        if len(data) != 4: break;
+        result.append( data[:3] )
+    return array(result, dtype="float64") 
 
-  
-
+  @property
   @make_cached
   @broadcast_result(attr=True, which=0)
-  def _get_species(self):
-    """ Greps species from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}. """
+  def multiplicity(self):
+    """ Greps multiplicity of each k-point from OUTCAR. """
     from os.path import exists, join
-    from re import compile, X as re_X
+    from re import compile, search 
+    from numpy import array
 
     path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
 
     result = []
     with open(path, "r") as file:
-      regex = compile(r"""VRHFIN\s*=\s*(\S+)\s*:""")
+      found = compile(r"""Found\s+(\d+)\s+irreducible\s+k-points""")
       for line in file:
-        match = regex.search(line)
-        if match == None: continue
-        assert match.group(1) not in result, "Found the same element twice.\n" 
-        result.append( match.group(1) )
-    return tuple(result)
+        if found.search(line) != None: break
+      found = compile(r"""Following\s+cartesian\s+coordinates:""")
+      for line in file:
+        if found.search(line) != None: break
+      file.next()
+      for line in file:
+        data = line.split()
+        if len(data) != 4: break;
+        result.append( float(data[3]) )
+    return array(result, dtype="float64")
 
+  @property 
   @make_cached
   @broadcast_result(attr=True, which=0)
-  def _get_fft(self):
-    """ Greps recommended or actual fft setting from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}. """
+  def ispin(self):
+    """ Greps ISPIN from OUTCAR. """
+    result = self._find_first_OUTCAR(r"""^\s*ISPIN\s*=\s*(1|2)\s+""")
+    assert result != None, RuntimeError("Could not extract ISPIN from OUTCAR.")
+    return int(result.group(1))
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def name(self):
+    """ Greps POSCAR title from OUTCAR. """
+    result = self._find_first_OUTCAR(r"""^\s*POSCAR\s*=.*$""")
+    assert result != None, RuntimeError("Could not extract POSCAR title from OUTCAR.")
+    result = result.group(0)
+    result = result[result.index('=')+1:]
+    return result.rstrip().lstrip()
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def system(self):
+    """ Greps system title from OUTCAR. """
+    result = self._find_first_OUTCAR(r"""^\s*SYSTEM\s*=.*$""")
+    assert result != None, RuntimeError("Could not extract SYSTEM title from OUTCAR.")
+    result = result.group(0)
+    result = result[result.index('=')+1:]
+    return result.rstrip().lstrip()
+
+  @broadcast_result(attr=True, which=0)
+  def _unpolarized_values(self, which):
+    """ Returns spin-unpolarized eigenvalues and occupations. """
+    from re import compile, search, finditer
+    import re
+    from os.path import exists, join
+    from numpy import array
+
+    # checks for existence.
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
+    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
+
+    with open(path, "r") as file: lines = file.readlines()
+    # Finds last first kpoint.
+    spin_comp1_re = compile(r"\s*k-point\s+1\s*:\s*(\S+)\s+(\S+)\s+(\S+)\s*")
+    found = None
+    for i, line in enumerate(lines[::-1]):
+      found = spin_comp1_re.match(line)
+      if found != None: break
+    assert found != None, RuntimeError("Could not extract eigenvalues/occupation from OUTCAR.")
+
+    # now greps actual results.
+    if self.is_dft:
+      kp_re = r"\s*k-point\s+(?:\d+)\s*:\s*(?:\S+)\s*(?:\S+)\s*(?:\S+)\n"\
+              r"\s*band\s+No\.\s+band\s+energies\s+occupation\s*\n"\
+              r"(\s*(?:\d+)\s+(?:\S+)\s+(?:\S+)\s*\n)+"
+      skip, cols = 2, 3
+    else: 
+      kp_re = r"\s*k-point\s+(?:\d+)\s*:\s*(?:\S+)\s*(?:\S+)\s*(?:\S+)\n"\
+              r"\s*band\s+No\.\s+.*\n\n"\
+              r"(\s*(?:\d+)\s+(?:\S+)\s+(?:\S+)\s+(?:\S+)\s+(?:\S+)"\
+              r"\s+(?:\S+)\s+(?:\S+)\s+(?:\S+)\s*\n)+"
+      skip, cols = 3, 8
+    results = []
+    for kp in finditer(kp_re, "".join(lines[-i:]), re.M):
+      dummy = [u.split() for u in kp.group(0).split('\n')[skip:]]
+      results.append([float(u[which]) for u in dummy if len(u) == cols])
+    return results
+
+  @broadcast_result(attr=True, which=0)
+  def _spin_polarized_values(self, which):
+    """ Returns spin-polarized eigenvalues and occupations. """
+    from re import compile, search, finditer
+    import re
+    from os.path import exists, join
+    from numpy import array
+
+    # checks for existence.
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
+    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
+
+    with open(path, "r") as file: lines = file.readlines()
+    # Finds last spin components.
+    spin_comp1_re = compile(r"""\s*spin\s+component\s+(1|2)\s*$""")
+    spins = [None,None]
+    for i, line in enumerate(lines[::-1]):
+      found = spin_comp1_re.match(line)
+      if found == None: continue
+      if found.group(1) == '1': 
+        assert spins[1] != None, \
+               RuntimeError("Could not find two spin components in OUTCAR.")
+        spins[0] = i
+        break
+      else:  spins[1] = i
+    assert spins[0] != None and spins[1] != None,\
+           RuntimeError("Could not extract eigenvalues/occupation from OUTCAR.")
+
+    # now greps actual results.
+    if self.is_dft:
+      kp_re = r"\s*k-point\s+(?:\d+)\s*:\s*(?:\S+)\s*(?:\S+)\s*(?:\S+)\n"\
+              r"\s*band\s+No\.\s+band\s+energies\s+occupation\s*\n"\
+              r"(\s*(?:\d+)\s+(?:\S+)\s+(?:\S+)\s*\n)+"
+      skip, cols = 2, 3
+    else: 
+      kp_re = r"\s*k-point\s+(?:\d+)\s*:\s*(?:\S+)\s*(?:\S+)\s*(?:\S+)\n"\
+              r"\s*band\s+No\.\s+.*\n\n"\
+              r"(\s*(?:\d+)\s+(?:\S+)\s+(?:\S+)\s+(?:\S+)\s+(?:\S+)"\
+              r"\s+(?:\S+)\s+(?:\S+)\s+(?:\S+)\s*\n)+"
+      skip, cols = 3, 8
+    results = [ [], [] ]
+    for kp in finditer(kp_re, "".join(lines[-spins[0]:-spins[1]]), re.M):
+      dummy = [u.split() for u in kp.group(0).split('\n')[skip:]]
+      results[0].append([float(u[which]) for u in dummy if len(u) == cols])
+    for kp in finditer(kp_re, "".join(lines[-spins[1]:]), re.M):
+      dummy = [u.split() for u in kp.group(0).split('\n')[skip:]]
+      results[1].append([u[which] for u in dummy if len(u) == cols])
+    return results
+
+class Extract(_ExtractImpl): 
+  """ Extracts output from OUTCAR, including DFT specific stuff. """
+
+  def __init__(self, directory = None, comm = None, OUTCAR = None): 
+    """ Initializes the extraction class. 
+
+        :Parameters: boost.mpi.Communicator
+          directory : str or None
+            path to the directory where the VASP output is located. If none,
+            will use current working directory.
+          comm : boost.mpi.communicator or None
+            MPI group communicator. Extraction will be performed for all procs
+            in the group. In serial mode, comm can be None.
+            OUTCAR : str or None
+            Name of the OUTCAR file.
+    """
+    super(Extract, self).__init__(directory, comm, OUTCAR)
+
+  @property
+  def is_dft(self): return True
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def energy_sigma0(self):
+    """ Greps total energy extrapolated to $\sigma=0$ from OUTCAR. """
+    from quantities import eV
+    regex = """energy\s+without\s+entropy\s*=\s*(\S+)\s+energy\(sigma->0\)\s+=\s+(\S+)"""
+    result = self._find_last_OUTCAR(regex) 
+    assert result != None, RuntimeError("Could not find sigma0 energy in OUTCAR")
+    return float(result.group(2)) * eV
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def total_energy(self):
+    """ Greps total energy from OUTCAR."""
+    from quantities import eV
+    regex = """energy\s+without\s+entropy\s*=\s*(\S+)\s+energy\(sigma->0\)\s+=\s+(\S+)"""
+    result = self._find_last_OUTCAR(regex) 
+    assert result != None, RuntimeError("Could not find energy in OUTCAR")
+    return float(result.group(1)) * eV
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def free_energy(self):
+    """ Greps total free energy from OUTCAR. """
+    from quantities import eV
+    regex = r"""free\s+energy\s+TOTEN\s*=\s*(\S+)\s+eV""" 
+    result = self._find_last_OUTCAR(regex) 
+    assert result != None, RuntimeError("Could not find free energy in OUTCAR")
+    return float(result.group(1)) * eV
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def fermi_energy(self):
+    """ Greps fermi energy from OUTCAR. """
+    from quantities import eV
+    regex = r"""E-fermi\s*:\s*(\S+)"""
+    result = self._find_last_OUTCAR(regex) 
+    assert result != None, RuntimeError("Could not find fermi energy in OUTCAR")
+    return float(result.group(1)) * eV
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def moment(self):
+    """ Returns magnetic moment from OUTCAR. """
+    regex = r"""^\s*number\s+of\s+electron\s+(\S+)\s+magnetization\s+(\S+)\s*$"""
+    result = self._find_last_OUTCAR(regex) 
+    assert result != None, RuntimeError("Could not find magnetic moment in OUTCAR")
+    return float(result.group(2))
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def nb_electrons(self):
+    """ Returns magnetic moment from OUTCAR. """
+    regex = r"""^\s*number\s+of\s+electron\s+(\S+)\s+magnetization\s+(\S+)\s*$"""
+    result = self._find_last_OUTCAR(regex) 
+    assert result != None, RuntimeError("Could not find number of electrons in OUTCAR")
+    return float(result.group(1))
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def pressure(self):
+    """ Greps pressure from OUTCAR """
+    regex = r"""external\s+pressure\s*=\s*(\S+)\s*kB\s+Pullay\s+stress\s*=\s*(\S+)\s*kB"""
+    result = self._find_last_OUTCAR(regex) 
+    assert result != None, RuntimeError("Could not find pressure in OUTCAR")
+    return float(result.group(1))
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def pulay_pressure(self):
+    """ Greps pressure from OUTCAR """
+    regex = r"""external\s+pressure\s*=\s*(\S+)\s*kB\s+Pullay\s+stress\s*=\s*(\S+)\s*kB"""
+    result = self._find_last_OUTCAR(regex) 
+    assert result != None, RuntimeError("Could not find pulay pressure in OUTCAR")
+    return float(result.group(2))
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def fft(self):
+    """ Greps recommended or actual fft setting from OUTCAR. """
     from os.path import exists, join
     from re import compile, search, X as re_X
 
@@ -334,149 +603,8 @@ class _ExtractImpl(object):
       return tuple(fft)
     raise RuntimeError, "File %s could not be opened.\n" % (path)
 
-
-      
-  @make_cached
-  @broadcast_result(attr=True, which=0)
-  def _get_kpoints(self):
-    """ Greps k-points from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}. 
-    
-        Numpy array where each row is a k-vector in cartesian units. 
-    """
-    from os.path import exists, join
-    from re import compile, search 
-    from numpy import array
-
-    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
-    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
-
-    result = []
-    with open(path, "r") as file:
-      found = compile(r"""Found\s+(\d+)\s+irreducible\s+k-points""")
-      for line in file:
-        if found.search(line) != None: break
-      found = compile(r"""Following\s+cartesian\s+coordinates:""")
-      for line in file:
-        if found.search(line) != None: break
-      file.next()
-      for line in file:
-        data = line.split()
-        if len(data) != 4: break;
-        result.append( data[:3] )
-    return array(result, dtype="float64") 
-
-  @make_cached
-  @broadcast_result(attr=True, which=0)
-  def _get_multiplicity(self):
-    """ Greps multiplicity of each k-point from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}. """
-    from os.path import exists, join
-    from re import compile, search 
-    from numpy import array
-
-    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
-    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
-
-    result = []
-    with open(path, "r") as file:
-      found = compile(r"""Found\s+(\d+)\s+irreducible\s+k-points""")
-      for line in file:
-        if found.search(line) != None: break
-      found = compile(r"""Following\s+cartesian\s+coordinates:""")
-      for line in file:
-        if found.search(line) != None: break
-      file.next()
-      for line in file:
-        data = line.split()
-        if len(data) != 4: break;
-        result.append( float(data[3]) )
-    return array(result, dtype="float64")
-
-
-  def _get_eigocc(self,which):
-    """ Implementation of _get_eigenvalues and _get_occupations """
-    import re 
-    from os.path import exists, join
-    from numpy import array
-
-    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
-    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
-
-    result = []
-    with open(path, "r") as file:
-      found = re.compile(r"""k-point\s+(\d+)\s*:\s*(\S+)\s+(\S+)\s+(\S+)$""")
-      in_kpoint = -1
-      kp_result = []
-      for line in file:
-        if in_kpoint > 0: 
-          data = line.split()
-          if len(data) == 3: kp_result.append(float(data[which]))
-          else: 
-            result.append(kp_result)
-            kp_result = []
-            in_kpoint = -1
-        elif in_kpoint == 0: in_kpoint = 1
-        else:
-          match = found.search(line)
-          if match != None:  
-            if int(match.group(1)) == 1: result = []
-            in_kpoint = 0
-    return array(result, dtype="float64") 
-
-  @make_cached
-  @broadcast_result(attr=True, which=0)
-  def _get_eigenvalues(self):
-    """ Greps eigenvalues of each band and kpoint from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}.
-
-        Returns a two-dimension numpy nxm array of eigenvalues, with n the
-        number of kpoints and m the number of bands.
-    """
-    import quantities as pq
-    return self._get_eigocc(1) * pq.eV
-
-  @make_cached
-  @broadcast_result(attr=True, which=0)
-  def _get_occupations(self):
-    """ Greps occupations according to k-point and\
-        band index from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}.
-
-        Returns a two-dimension numpy nxm array of occupations, with n the
-        number of kpoints and m the number of bands.
-    """
-    import quantities as pq
-    return self._get_eigocc(2) * pq.elementary_charge
-
-  def _get_pressures(self, which):
-    """ Greps pressure from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>} """
-    import re 
-    from os.path import exists, join
-    import quantities as pq
-
-    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
-    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
-
-    result = None
-    with open(path, "r") as file:
-      found = re.compile(r"""external\s+pressure\s*=\s*(\S+)\s*kB\s+"""
-                          """Pullay\s+stress\s*=\s*(\S+)\s*kB""", re.X )
-      for line in file:
-        match = found.search(line)
-        if match != None: result = float(match.group(which))
-    return result * pq.kbar
-
-  @make_cached
-  @broadcast_result(attr=True, which=0)
-  def _get_pressure(self):
-    """ Greps pressure from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}. """
-    return self._get_pressures(1)
-
-  @make_cached
-  @broadcast_result(attr=True, which=0)
-  def _get_pulay_pressure(self):
-    """ Greps pulay pressure from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>} """
-    return self._get_pressures(2)
-
   def _get_partial_charges_magnetization(self, grep):
-    """ Greps partial charges from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>} 
+    """ Greps partial charges from OUTCAR.
 
         This is a numpy array where the first dimension is the ion (eg one row
         per ion), and the second the partial charges for each angular momentum.
@@ -494,7 +622,6 @@ class _ExtractImpl(object):
     found = re.compile(grep) 
     for index in xrange(1, len(lines)+1):
       if found.search(lines[-index]) != None: break 
-    print index, len(lines)
     if index == len(lines): return None
     index -= 4
     line_re = re.compile(r"""^\s*\d+\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s*$""")
@@ -504,11 +631,11 @@ class _ExtractImpl(object):
       result.append([float(match.group(j)) for j in range(1, 5)])
     return array(result, dtype="float64")
 
-
+  @property
   @make_cached
   @broadcast_result(attr=True, which=0)
-  def _get_partial_charges(self):
-    """ Greps partial charges from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>} 
+  def partial_charges(self):
+    """ Greps partial charges from OUTCAR.
 
         This is a numpy array where the first dimension is the ion (eg one row
         per ion), and the second the partial charges for each angular momentum.
@@ -516,10 +643,11 @@ class _ExtractImpl(object):
     """
     return self._get_partial_charges_magnetization(r"""\s*total\s+charge\s*$""")
 
+  @property
   @make_cached
   @broadcast_result(attr=True, which=0)
-  def _get_magnetization(self):
-    """ Greps partial charges from L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>} 
+  def magnetization(self):
+    """ Greps partial charges from OUTCAR.
 
         This is a numpy array where the first dimension is the ion (eg one row
         per ion), and the second the partial charges for each angular momentum.
@@ -527,84 +655,41 @@ class _ExtractImpl(object):
     """
     return self._get_partial_charges_magnetization(r"""^\s*magnetization\s*\(x\)\s*$""")
 
+
+  @property
   @make_cached
-  @broadcast_result(attr=True, which=0)
-  def _get_moment(self):
-    """ Returns magnetic moment from OUTCAR. """
-    from os.path import exists, join
-    from re import compile
-    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
-    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
+  def eigenvalues(self):
+    """ Greps eigenvalues from OUTCAR. 
 
-    with open(path, "r") as file: lines = file.readlines()
-    found = compile(r"""^\s*number\s+of\s+electron\s+(\S+)\s+magnetization\s+(\S+)\s*$""") 
-    for line in lines[::-1]:
-      match = found.match(line)
-      if match != None: return float(match.group(2))
-
-
-  @make_cached
-  @broadcast_result(attr=True, which=0)
-  def _get_nb_electrons(self):
-    """ Returns number of electrons from OUTCAR. """
-    from os.path import exists, join
-    from re import compile
-    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
-    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
-
-    with open(path, "r") as file: lines = file.readlines()
-    found = compile(r"""^\s*number\s+of\s+electron\s+(\S+)\s+magnetization\s+(\S+)\s*$""") 
-    for line in lines[::-1]:
-      match = found.match(line)
-      if match != None: return float(match.group(1))
-    
-  @make_cached
-  @broadcast_result(attr=True, which=0)
-  def _get_success(self):
-    """ Checks that VASP run has completed. 
-
-        At this point, checks for the existence of
-        L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>} and
-        L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}. Then checks that timing stuff
-        is present at end of L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}.
+        In spin-polarized cases, the leading dimension of the numpy array are
+        spins, followed by kpoints, and finally with bands. In spin-unpolarized
+        cases, the leading dimension are the kpoints, followed by the bands.
     """
-    from os.path import exists, join
-    import re
+    from numpy import array
+    from quantities import eV
+    if self.ispin == 2: return array(self._spin_polarized_values(1), dtype="float64") * eV
+    return array(self._unpolarized_values(1), dtype="float64") * eV
 
-    for path in [self.OUTCAR]:
-      if self.directory != "": path = join(self.directory, path)
-      if not exists(path): return False
-      
-    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
+  @property
+  @make_cached
+  def occupations(self):
+    """ Greps occupations from OUTCAR. 
 
-    with open(path, "r") as file:
-      regex = re.compile(r"""General\s+timing\s+and\s+accounting
-                             \s+informations\s+for\s+this\s+job""", re.X)
-      for line in file:
-        if regex.search(line) != None: return True
-    return False
+        In spin-polarized cases, the leading dimension of the numpy array are
+        spins, followed by kpoints, and finally with bands. In spin-unpolarized
+        cases, the leading dimension are the kpoints, followed by the bands.
+    """
+    from numpy import array
+    if self.ispin == 2: return array(self._spin_polarized_values(2), dtype="float64")
+    return array(self._unpolarized_values(2), dtype="float64") 
 
+
+
+  @property
   @make_cached
   @broadcast_result(attr=True, which=0)
-  def _get_functional(self):
-    """ Returns vasp functional used for calculation.
-
-        Requires file L{FUNCCAR} to be present.
-    """
-    from os.path import exists, join
-    from cPickle import load
-    path = self.FUNCCAR if len(self.directory) == 0 else join(self.directory, self.FUNCCAR)
-    if not exists(path): return None
-    with open(path, "r") as file: return load(file)
-
-  @make_cached
-  @broadcast_result(attr=True, which=0)
-  def _get_electropot(self):
-    """ Average atomic electrostatic potentials.
-    
-        Requires file L{OUTCAR <lada.vasp.extract._ExtractImpl.OUTCAR>}.
-        :return: an array with an entry for each atom. 
-    """
+  def electropot(self):
+    """ Greps average atomic electrostatic potentials from OUTCAR. """
     from os.path import exists, join
     import re
     from numpy import array
@@ -612,32 +697,15 @@ class _ExtractImpl(object):
     path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
     if not exists(path): raise IOError("File %s does not exist.\n" % (path))
 
-    with open(path, "r") as file:
-      regex = re.compile(r"""average\s+\(electrostatic\)\s+potential\s+at\s+core""", re.X)
-      for line in file:
-        if regex.search(line) != None: break
-      try:
-        file.next()
-        file.next()
-      except:
-        print "No average potential."
-        return None
-      result = []
-      for line in file:
-        data = line.split()
-        if len(data) == 0: break
-        result.extend( [float(u) for i, u in enumerate(data) if i % 2 == 1] )
+    with open(path, "r") as file: lines = file.readlines()
+    regex = re.compile(r"""average\s+\(electrostatic\)\s+potential\s+at\s+core""", re.X)
+    for i, line in enumerate(lines[::-1]):
+      if regex.search(line) != None: break
+    assert i + 3 < len(lines), RuntimeError("Could not find average atomic potential in file.")
+    result = []
+    for line in lines[-i+3:]:
+      data = line.split()
+      if len(data) == 0: break
+      result.extend( [float(u) for i, u in enumerate(data) if i % 2 == 1] )
         
     return array(result, dtype="float64")
-
-
-  def __getstate__(self):
-    from os.path import relpath
-    d = self.__dict__.copy()
-    if "comm" in d: del d["comm"]
-    if "directory" in d: d["directory"] = relpath(d["directory"])
-    return d
-  def __setstate__(self, arg):
-    self.__dict__.update(arg)
-    self.comm = None
-

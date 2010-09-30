@@ -1,5 +1,6 @@
 """ Miscellaneous """
 __docformat__  = 'restructuredtext en'
+from types import ModuleType
 import _opt 
 from contextlib import contextmanager
 from _opt import __load_vasp_in_global_namespace__, __load_escan_in_global_namespace__,\
@@ -129,6 +130,19 @@ def redirect(fout=None, ferr=None, fin=None, pyout=None, pyerr=None, pyin=None, 
   return nested(*result)
 
 
+class Input(ModuleType):
+  """ Fake class which will be updated with the local dictionary. """
+  def __getattr__(self, name):
+    raise AttributeError( "All out of cheese!\n"
+                          "Required input parameter '{0}' not found in {1}." \
+                          .format(name, self.__name__) )
+  def __delattr__(self, name):
+    raise RuntimeError("Cannot delete object from input namespace.")
+  def __setattr__(self, name, value):
+    raise RuntimeError("Cannot set/change object in input namespace.")
+  def update(self, other):
+    if isinstance(other, Input): self.__dict__.update(other.__dict__)
+    else: self.__dict__.update(other)
 
 def read_input(filename, global_dict=None, local_dict = None, paths=None, comm = None):
   """ Executes input script and returns local dictionary (as class instance). """
@@ -138,9 +152,10 @@ def read_input(filename, global_dict=None, local_dict = None, paths=None, comm =
   from math import pi 
   from numpy import array, matrix, dot, sqrt, abs, ceil
   from numpy.linalg import norm, det
+  from boost.mpi import world
   from lada.crystal import Lattice, Site, Atom, Structure, fill_structure, FreezeCell, FreezeAtom
   from lada import physics
-  from boost.mpi import world
+  from . import Input
   
   # Add some names to execution environment.
   if global_dict == None: global_dict = {}
@@ -160,16 +175,8 @@ def read_input(filename, global_dict=None, local_dict = None, paths=None, comm =
       if path not in local_dict: continue
       local_dict[path] = abspath(expanduser(local_dict[path]))
     
-  # Fake class which will be updated with the local dictionary.
-  class Input(physics.__class__): 
-    def __getattr__(self, name):
-      raise AttributeError( "All out of cheese!\n"
-                            "Required input parameter '{0}' not found in {1}." \
-                            .format(name, self.__name__) )
-    def __delattr__(self, name): raise RuntimeError("Cannot delete object from input namespace.")
-    def __setattr__(self, name, value): raise RuntimeError("Cannot set/change object in input namespace.")
   result = Input(filename)
-  result.__dict__.update(local_dict)
+  result.update(local_dict)
   return result
 
 
