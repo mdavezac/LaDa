@@ -200,7 +200,7 @@ class _ExtractImpl(object):
     structure = Structure()
     structure.name = self.name
     structure.energy = float(self.total_energy.rescale(eV))
-    structure.cell = cell
+    structure.cell = array(cell, dtype="float64")
     structure.scale = 1e0
     assert len(self.species) == len(self.ions_per_specie),\
            RuntimeError("Number of species and of ions per specie incoherent.")
