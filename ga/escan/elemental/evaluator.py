@@ -110,7 +110,7 @@ class Bandgap(object):
     converter  = kwargs.pop( "converter",  self.converter)
     escan      = kwargs.pop(     "escan",      self.escan)
     if comm == None:       comm       = world
-    if outdir == None and self.keep_only)last: 
+    if outdir == None and self.keep_only_last: 
       outdir = self.outdir 
       if comm.rank == 0 and exists(outdir): rmtree(outdir)
       comm.barrier()
