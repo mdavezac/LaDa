@@ -199,7 +199,7 @@ namespace LaDa
         typedef std::vector< AtomicFunctional > t_AtomicFunctionals;  
         
         //! Crystal::Structure for which to compute energy and stress
-        mutable Crystal :: Structure &structure;
+        Crystal :: Structure &structure; 
         //! length below which first-neighbor relationship is defined
         types::t_real bond_cutoff; 
         //! \brief list of all AtomicCenter created from Vff::structure

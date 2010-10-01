@@ -20,7 +20,8 @@ def count_calls(method):
   
 class Bandgap(object):
   """ An evaluator function for bandgaps at S{Gamma}. """
-  def __init__(self, converter, escan, outdir = None, references = None, **kwargs):
+  def __init__(self, converter, escan, outdir = None, references = None, \
+               keep_only_last = True, **kwargs):
     """ Initializes the bandgap object. 
 
         :Parameters: 
@@ -29,6 +30,14 @@ class Bandgap(object):
             `lada.crystal.Structure`, and vice versa.
           escan : `lada.escan.Escan`
             escan functional.
+          outdir : str or None
+            Directory where to perform calculations. Defaults to None. 
+          referemces
+	    Reference energies for band-gap calculations. See
+            `lada.escan.bandgap`. Defaults to None.
+          keep_only_last : boolean
+	    If true, only the last calculation is kept. Limits the space
+            required for ESCAN optimizations.
           kwargs
             Other keyword arguments to be passed to the bandgap routine.
     """
@@ -49,6 +58,8 @@ class Bandgap(object):
         Can be None (all-electron method), a 2-tuple of reference values
         (folded-spectrum), or a callable returnin a 2-tuple when given a structure.
     """
+    self.keep_only_last = keep_only_last
+    """ Whethere to keep only last calculations or all. """
     self.kwargs = deepcopy(kwargs)
     """ Additional arguments to be passed to the bandgap functional. """
 
@@ -88,6 +99,7 @@ class Bandgap(object):
         The eigenvalues are stored in indiv.eigenvalues
         The VBM and CBM are stored in indiv.bands
     """
+    from shutil import rmtree
     from os.path import join
     from copy import deepcopy
     from boost.mpi import world
@@ -97,8 +109,13 @@ class Bandgap(object):
     references = kwargs.pop("references", self.references)
     converter  = kwargs.pop( "converter",  self.converter)
     escan      = kwargs.pop(     "escan",      self.escan)
-    if outdir == None:     outdir     = join(self.outdir, str(self.nbcalc))
     if comm == None:       comm       = world
+    if outdir == None and self.keep_only_last: 
+      outdir = self.outdir 
+      if comm.rank == 0 and exists(outdir): rmtree(outdir)
+      comm.barrier()
+    elif outdir == None:
+      outdir = join(self.outdir, str(self.nbcalc))
  
     # creates a crystal structure (phenotype) from the genotype.
     structure = converter(indiv.genes)
@@ -155,6 +172,7 @@ class Bandgap(object):
              "evaluator.kwargs            = {6}\n"\
              "evaluator.nbcalc            = {7.nbcalc}\n"\
              "evaluator.references        = {7.references}\n"\
+             "evaluator.keep_only_last    = {7.keep_only_last}\n"\
              "evaluator.outdir            = {8}\n"\
              .format( self.__class__.__module__, self.__class__.__name__,
                       self.converter.__class__.__module__, self.converter.__class__.__name__,

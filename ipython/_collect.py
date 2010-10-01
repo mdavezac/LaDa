@@ -6,7 +6,7 @@ class Collect(AbstractMassExtract):
   
       By adjusting ``self.position``, which jobs to collect can be adjusted.
   """
-  def __init__(self, comm=None, _view=None, _naked_end):
+  def __init__(self, comm=None, _view=None, _naked_end=True):
     """ Initializes a Collect instance. """
     from IPython.ipapi import get as get_ip_handle
     super(Collect, self).__init__(None, comm=comm)

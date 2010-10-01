@@ -81,7 +81,7 @@ namespace LaDa
           PyErr_SetString(PyExc_ValueError, "Error in translation.");
       }
       bp::throw_error_already_set();
-      return -1;
+      return 0;
     }
 
     void expose_translation()
