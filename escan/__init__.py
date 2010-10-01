@@ -278,6 +278,8 @@ class Escan(object):
 
         Default is True. Relaxed cell is taken from self.L{_POSCAR}
     """
+    self.print_from_all = False
+    """ If True, each node will print. """
 
 
   @property
@@ -445,12 +447,16 @@ class Escan(object):
   def _cout(self, comm):
     """ Creates output name. """
     if self.OUTCAR == None: return "/dev/null"
-    return self.OUTCAR if comm.rank == 0 else self.OUTCAR + "." + str(comm.rank)
+    if comm == None:   return self.OUTCAR
+    if comm.rank == 0: return self.OUTCAR
+    return self.OUTCAR + "." + str(comm.rank) if self.print_from_all else "/dev/null"
 
   def _cerr(self, comm):
     """ Creates error name. """
     if self.OUTCAR == None: return "/dev/null"
-    return self.ERRCAR if comm.rank == 0 else self.ERRCAR + "." + str(comm.rank)
+    if comm == None:   return self.OUTCAR
+    if comm.rank == 0: return self.OUTCAR
+    return self.OUTCAR + "." + str(comm.rank) if self.print_from_all else "/dev/null"
 
 
   def _run(self, structure, outdir, comm, overwrite, norun):
@@ -471,6 +477,9 @@ class Escan(object):
       with open(cout, "w") as file: 
         print >>file, "# Escan calculation on ", time.strftime("%m/%d/%y", local_time),\
                       " at ", time.strftime("%I:%M:%S %p", local_time)
+        if comm != None:
+          from boost.mpi import world
+          file.write("Computing with {0} processors of {1}.\n".format(comm.size, world.size))
         if len(structure.name) != 0: print "# Structure named ", structure.name 
         # changes directory to get relative paths.
         with Changedir(outdir, comm = comm) as outdir_wd:
@@ -546,12 +555,13 @@ class Escan(object):
     from ..opt import redirect
 
     # using genpot from previous run
+    is_root = True if comm == None else comm.rank == 0
     if self.genpotrun != None:
       POTCAR = self.genpotrun.escan._POTCAR + "." + str(world.rank)
       potcar = self._POTCAR + "." + str(world.rank)
       if exists(join(self.genpotrun.directory, POTCAR)):
         copyfile(join(self.genpotrun.directory, POTCAR), potcar)
-      if comm.rank == 0:
+      if is_root:
         copyfile(self.maskr, basename(self.maskr))
         for pot in self.atomic_potentials:
           if pot.nonlocal != None: copyfile(pot.nonlocal, basename(pot.nonlocal))
@@ -572,13 +582,19 @@ class Escan(object):
         filepath = basename(pot.filepath)
         file.write(filepath + "\n") 
         # copy potential files as well.
-        if comm.rank == 0: copyfile(pot.filepath, filepath)
-        if pot.nonlocal != None and comm.rank == 0: 
+        if is_root: copyfile(pot.filepath, filepath)
+        if pot.nonlocal != None and is_root: 
           copyfile(pot.nonlocal, basename(pot.nonlocal))
-    if comm.rank == 0: copyfile(self.maskr, basename(self.maskr))
+    if is_root: copyfile(self.maskr, basename(self.maskr))
 
     if norun == True: return
-    comm.barrier() # syncs all procs
+    if comm != None:
+      comm.barrier() # syncs all procs  
+      assert self.fft_mesh[0] * self.fft_mesh[1] * self.fft_mesh[2] % comm.size == 0,\
+             RuntimeError( "FFT mesh and number of processors must be commensurate.\n"\
+                           " {0} * {1} * {2} % {3} != 0\n"\
+                           .format(self.fft_mesh[0], self.fft_mesh[1], self.fft_mesh[2],\
+                                   comm.size) ) 
     with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 
       _call_genpot(comm)
 
@@ -657,7 +673,13 @@ class Escan(object):
     self._write_incar(comm, structure, norun)
     if is_root: copyfile(self.maskr, basename(self.maskr))
     if norun == True: return
-    if comm != None: comm.barrier() 
+    if comm != None:
+      comm.barrier() 
+      assert self.fft_mesh[0] * self.fft_mesh[1] * self.fft_mesh[2] % comm.size == 0,\
+             RuntimeError( "FFT mesh and number of processors must be commensurate.\n"\
+                           " {0} * {1} * {2} % {3} != 0\n"\
+                           .format(self.fft_mesh[0], self.fft_mesh[1], self.fft_mesh[2],\
+                                   comm.size) ) 
     with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 
       _call_escan(comm)
 
@@ -687,3 +709,15 @@ class Escan(object):
     kpoint = deform_kpoint(self.kpoint, input, relaxed)
     return 1, kpoint[0], kpoint[1], kpoint[2], structure.scale / a0("A")
 
+def read_input(filepath = "input.py", namespace = None):
+  """ Reads an input file including namespace for escan/vff. """ 
+  from ..jobs import JobDict
+  from ..vff import Vff
+  from ..opt import read_input
+  from . import Escan, soH, nonlocalH, localH, folded_spectrum, all_electron
+
+  dictionary = { "Vff": Vff, "Escan": Escan, "soH": soH, \
+                 "nonlocalH": nonlocalH, "localH": localH, \
+                 "folded_spectrum": folded_spectrum, "all_electron": all_electron}
+  if namespace != None: dictionary.update(namespace)
+  return read_input(filepath, dictionary)

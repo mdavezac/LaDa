@@ -46,7 +46,20 @@ namespace LaDa
          if(i_trans_->size() != card_)
            BOOST_THROW_EXCEPTION( internal() << error_string("permutations_ size is incorrect.") );
          if(_flavorbase.size() != card_) BOOST_THROW_EXCEPTION( argument_error());
-         if(_x >= _flavorbase.back() * _flavorbase[1]) BOOST_THROW_EXCEPTION( integer_too_large() );
+         if(_x >= _flavorbase.back() * _flavorbase[1])
+         {
+           std::ostringstream sstr;
+           sstr << _x << " >= " << _flavorbase.back()  << " * " <<  _flavorbase[1] 
+                << "(=" << _flavorbase.back()*_flavorbase[1] << ")" << "\n";
+           FlavorBase::const_iterator i_first = _flavorbase.begin();
+           FlavorBase::const_iterator i_end = _flavorbase.end();
+           for(size_t i(0); i_first != i_end; ++i_first, ++i)
+           {
+             if(i % 6 == 5) sstr << "\n";
+             sstr << *i_first << " ";
+           }
+           BOOST_THROW_EXCEPTION( integer_too_large() << error_string(sstr.str()) );
+         }
 #      endif
 
        t_uint result(0);
