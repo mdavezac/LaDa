@@ -206,7 +206,7 @@ class _ExtractImpl(object):
            RuntimeError("Number of species and of ions per specie incoherent.")
     for specie, n in zip(self.species[::-1],self.ions_per_specie[::-1]):
       for i in range(n):
-        structure.add_atom = atoms.pop(), specie
+        structure.add_atom = array(atoms.pop(), dtype="float64"), specie
 
     return structure
 
