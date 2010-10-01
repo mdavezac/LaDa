@@ -655,7 +655,6 @@ class AbstractMassExtract(object):
     from ..opt import RelativeDirectory
 
     super(AbstractMassExtract, self).__init__()
-    if path != None: self.root = path
     self.comm = comm
 
     self._root = RelativeDirectory(path=path, hook=self.uncache)
