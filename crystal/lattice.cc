@@ -194,7 +194,7 @@ namespace LaDa
       site = (_in.site > -1 ) ? _in.site : get_atom_site_index( _in.pos );
 #     ifdef LADA_DEBUG
         }
-        catch(std::exception &_e)
+        catch(std::exception &e)
         {
           std::cerr << LADA_SPOT_ERROR
                     << "\nCaught error while converting numerical to string atom\n" 
@@ -242,7 +242,7 @@ namespace LaDa
       site = (_in.site > -1 ) ? _in.site : get_atom_site_index( _in.pos );
 #     ifdef LADA_DEBUG
         }
-        catch(std::exception &_e)
+        catch(std::exception &e)
         {
           std::cerr << LADA_SPOT_ERROR
                     << "\nCaught error while converting numerical to string atom\n" 

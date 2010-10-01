@@ -222,7 +222,7 @@ class _ExtractImpl(object):
     path = self.CONTCAR if len(self.directory) == 0 else join(self.directory, self.CONTCAR)
     if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
     result = read_poscar(species_in, path, comm=self.comm)
-    result.energy = float(self.energy.rescale(eV))
+    result.energy = float(self.total_energy.rescale(eV))
     return result
 
   @make_cached
