@@ -102,8 +102,7 @@ namespace LaDa
           size_t const index = Crystal::get_linear_smith_index(transform, enum_index, pos);
           LADA_ASSERT
           (
-                bitstring[index] >= 0
-            and bitstring[index] < _out.lattice->sites[i_atom->site].type.size(),
+            bitstring[index] < _out.lattice->sites[i_atom->site].type.size(),
             "Index out of range.\n" 
           );
           _conv(*i_atom, bitstring[index]);
