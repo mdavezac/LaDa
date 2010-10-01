@@ -40,6 +40,20 @@ class Extract(object):
   def directory(self, value): self._directory.path = value
 
   @property
+  def success(self):
+    """ Was last run successful?
+    
+       Checks if directories and files exist. 
+    """
+    from os.path import exists, isdir, join
+    
+    all_dirs = [ u for u in self.ordinals if exists(join(self.directory, u)) ]
+    if len(all_dirs) == 0: return len(self.ages) == 0  
+    all_dirs = [ u for u in all_dirs if isdir(join(self.directory, u)) ]
+    if len(all_dirs) == 0: return len(self.ages) == 0  
+    return all_dirs[-1] == self.ages[-1] if len(self.ages) != 0 else False
+
+  @property
   @make_cached
   def functional(self): 
     """ Input functional from last age. """

@@ -90,6 +90,7 @@ class Extract(object):
     results = []
     for name in self.ordinals:
       filepath = join(join(self.root.path, name), self.OUTCAR)
+      filepath = join(join(self.root.path, name), self.FUNCCAR)
       if exists(filepath): results.append(name)
     return results
 
