@@ -380,7 +380,7 @@ def fill_attributes(self):
   # checks current generation.
   if not hasattr(self, "current_gen"): self.current_gen = 0
   elif not hasattr(self, "max_gen"): self.max_gen = 100
-  elif self.max_gen < self.current_gen: self.max_gen += 100
+  elif self.max_gen not in [0, -1] and self.max_gen < self.current_gen: self.max_gen += 100
 
   if not hasattr(self, "max_gen"): self.max_gen = self.current_gen + 100
 
