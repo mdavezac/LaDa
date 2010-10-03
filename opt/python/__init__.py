@@ -413,6 +413,10 @@ class RelativeDirectory(object):
     from os.path import relpath, expandvars, expanduser
     from os import getcwd
     if value == None: value = getcwd()
+    if isinstance(value, tuple) and len(value) == 2: 
+      self.envvar = value[0]
+      self.relative = value[1]
+      return
     if len(value.rstrip().lstrip()) == 0: value = getcwd()
     else: self._relative = relpath(expanduser(expandvars(value)), self.envvar) 
     self.hook(self.path)
@@ -485,7 +489,7 @@ class RelativeDirectory(object):
         on initialization, this method uses ``set`` to get away with
         representability.
     """
-    return ".set({0}, {1})".format(repr(self._relative), repr(self._envvar))
+    return "{0}, {1}".format(repr(self._envvar), repr(self._relative))
 
 
 

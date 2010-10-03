@@ -110,12 +110,8 @@ class Bandgap(object):
     converter  = kwargs.pop( "converter",  self.converter)
     escan      = kwargs.pop(     "escan",      self.escan)
     if comm == None:       comm       = world
-    if outdir == None and self.keep_only_last: 
-      outdir = self.outdir 
-      if comm.rank == 0 and exists(outdir): rmtree(outdir)
-      comm.barrier()
-    elif outdir == None:
-      outdir = join(self.outdir, str(self.nbcalc))
+    if outdir == None: outdir = self.outdir
+    if not self.keep_only_last: outdir = join(outdir, str(self.nbcalc))
  
     # creates a crystal structure (phenotype) from the genotype.
     structure = converter(indiv.genes)
@@ -124,7 +120,6 @@ class Bandgap(object):
     dictionary.update(kwargs) 
     dictionary["comm"]       = comm 
     dictionary["outdir"]     = outdir
-    dictionary["workdir"]    = self.outdir
     dictionary["references"] = self.references(structure) if hasattr(references, "__call__")\
                                else references
     if "overwrite" not in dictionary: dictionary["overwrite"]  = True
@@ -178,7 +173,7 @@ class Bandgap(object):
                       self.converter.__class__.__module__, self.converter.__class__.__name__,
                       repr(self.escan).replace("functional", "escan_functional"), 
                       repr(self.converter.structure.cell),
-                      repr(self.kwargs), self, repr(self._outdir.unexpanded))
+                      repr(self.kwargs), self, self._outdir.repr())
 
 
 class Dipole(Bandgap):

@@ -233,7 +233,7 @@ class Vasp(Launch):
       string += ", %s\n" % (repr(specie.magnetic))
     if not self.inplace: 
       string += "functional.inplace = False\n"
-      string += "functional.workdir = \"%s\"\n" % (self._workdir.unexpanded)
+      string += "functional.workdir = \"%s\"\n" % (self._workdir.repr())
     if not self.restart_from_contcar: 
       string += "functional.restart_from_contcar = False\n"
     if self.print_from_all: 
