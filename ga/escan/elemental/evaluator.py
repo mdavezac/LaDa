@@ -100,7 +100,7 @@ class Bandgap(object):
         The VBM and CBM are stored in indiv.bands
     """
     from shutil import rmtree
-    from os.path import join
+    from os.path import join, exists
     from copy import deepcopy
     from boost.mpi import world
     from ....escan import bandgap
