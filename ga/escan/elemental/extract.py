@@ -32,6 +32,52 @@ class Extract(object):
     """ GA directory. """
     self.comm = comm
 
+  def _search_OUTCAR(self, regex, path=None):
+    """ Looks for all matches. """
+    from os.path import exists, join
+    from re import compile
+    from numpy import array
+
+    if path == None: 
+      assert self.current_age != None, IOError("No data to search. No GA run completed.")
+      path = join(join(self.directory, self.current_age), self.OUTCAR)
+    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
+
+    result = []
+    regex  = compile(regex)
+    with open(path, "r") as file:
+      for line in file: 
+        found = regex.search(line)
+        if found != None: yield found
+
+  def _find_first_OUTCAR(self, regex, path=None):
+    """ Returns first result from a regex. """
+    for first in self._search_OUTCAR(regex, path): return first
+    return None
+
+  def _rsearch_OUTCAR(self, regex, path=None):
+    """ Looks for all matches starting from the end. """
+    from os.path import exists, join
+    from re import compile
+    from numpy import array
+
+    if path == None: 
+      assert self.current_age != None, IOError("No data to search. No GA run completed.")
+      path = join(join(self.directory, self.current_age), self.OUTCAR)
+    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
+
+    result = []
+    regex  = compile(regex)
+    with open(path, "r") as file: lines = file.readlines()
+    for line in lines[::-1]:
+      found = regex.search(line)
+      if found != None: yield found
+
+  def _find_last_OUTCAR(self, regex, path=None):
+    """ Returns first result from a regex. """
+    for last in self._rsearch_OUTCAR(regex, path): return last
+    return None
+
   @property
   def directory(self):
    """ Root output directory. """
@@ -48,7 +94,7 @@ class Extract(object):
     from os.path import exists, isdir, join
     
     all_dirs = [ u for u in self.ordinals if exists(join(self.directory, u)) ]
-    if len(all_dirs) == 0: return len(self.ages) == 0  
+    if len(all_dirs) == 0: return False
     all_dirs = [ u for u in all_dirs if isdir(join(self.directory, u)) ]
     if len(all_dirs) == 0: return len(self.ages) == 0  
     return all_dirs[-1] == self.ages[-1] if len(self.ages) != 0 else False
@@ -105,8 +151,44 @@ class Extract(object):
     filenames = [self.OUTCAR, self.FUNCCAR]
     for name in self.ordinals:
       dummy = [join(join(self.directory, name), f) for f in filenames]
-      if all([exists(p) for p in dummy]): results.append(name)
+      # check for existsnce of all files.
+      if not all([exists(p) for p in dummy]): continue
+      # checks for the nimber of generations.
+      first = self._find_first_OUTCAR( r"^\s*Starting\s+generation\s+(\d+)\s*$",\
+                                       join(join(self.directory, name), self.OUTCAR))
+      if first == None: continue
+      first = int(first.group(1))
+      last = self._find_last_OUTCAR( r"^\s*Starting\s+generation\s+(\d+)\s*$",\
+                                     join(join(self.directory, name), self.OUTCAR))
+      if last == None: continue
+      last = int(last.group(1))
+      if last - first < 1: continue
+      results.append(name)
     return results
+
+  @make_cached
+  def solo(self):
+    """ Returns extractor with no communicator. """
+    from copy import deepcopy
+    result = deepcopy(self)
+    result.comm = None
+    return result
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def start_generation(self):
+    """ Generation at start of run. """
+    found = self._find_first_OUTCAR("^\s*Starting\s+generation\s+(\d+)\s*$")
+    return int(found.group(1)) if found != None else None
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def last_generation(self):
+    """ Generation at end of run. """
+    found = self._find_last_OUTCAR("^\s*Starting\s+generation\s+(\d+)\s*$")
+    return int(found.group(1)) if found != None else None
 
   @property
   def has_gaps(self):

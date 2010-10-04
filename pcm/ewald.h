@@ -56,9 +56,9 @@ namespace LaDa
         bool Load( const TiXmlElement& _node );
 
         //! Sets real-space cutoff.
-        types::t_real get_rcutoff() const { return cutoff_; }
+        types::t_real get_gcutoff() const { return cutoff_; }
         //! Sets real-space cutoff.
-        void set_rcutoff(types::t_real _r) { cutoff_ = _r; }
+        void set_gcutoff(types::t_real _r) { cutoff_ = _r; }
 
       protected:
         //! Cutoff.

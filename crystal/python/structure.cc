@@ -70,38 +70,6 @@ namespace LaDa
       return Crystal::Structure::lattice; 
     }
 
-    template< class T_STRUCTURE >
-      struct pickle_structure : bp::pickle_suite
-      {
-        static bp::tuple getinitargs( T_STRUCTURE const& _w)  
-        {
-          return bp::tuple();
-        }
-        static bp::tuple getstate(const T_STRUCTURE& _in)
-        {
-          std::ostringstream ss;
-          boost::archive::text_oarchive oa( ss );
-          oa << _in;
-
-          return bp::make_tuple( ss.str() );
-        }
-        static void setstate( T_STRUCTURE& _out, bp::tuple state)
-        {
-          if( bp::len( state ) != 1 )
-          {
-            PyErr_SetObject(PyExc_ValueError,
-                            ("expected 1-item tuple in call to __setstate__; got %s"
-                             % state).ptr()
-                );
-            bp::throw_error_already_set();
-          }
-          const std::string str = bp::extract< std::string >( state[0] );
-          std::istringstream ss( str.c_str() );
-          boost::archive::text_iarchive ia( ss );
-          ia >> _out;
-        }
-      };
-
     bp::str xcrysden( Crystal::Structure const & _str )
     {
       std::ostringstream sstr;
@@ -274,7 +242,7 @@ namespace LaDa
             "References the lattice within which this structure is defined."
             " Read, but do not write to this object." 
           ) 
-          .def_pickle( pickle_structure< T_STRUCTURE >() );
+          .def_pickle( Python::pickle< T_STRUCTURE >() );
       }
 
     void expose_structure()

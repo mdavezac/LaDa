@@ -166,11 +166,20 @@ namespace LaDa
         forces->cell = math::rMatrix3d::Zero();
         forces->atoms.resize(_in.atoms.size());
         forces->scale = 1e0;
-        switch(D)
+        try 
         {
-          case 0: forces->energy = _clj.lennard_jones(_in, *forces); break;
-          case 1: forces->energy = _clj.ewald(_in, *forces); break;
-          case 2: forces->energy = _clj(_in, *forces); break;
+          switch(D)
+          {
+            case 0: forces->energy = _clj.lennard_jones(_in, *forces); break;
+            case 1: forces->energy = _clj.ewald(_in, *forces); break;
+            case 2: forces->energy = _clj(_in, *forces); break;
+          }
+        }
+        catch(std::exception &_e)
+        {
+          PyErr_SetString(PyExc_RuntimeError, _e.what());
+          bp::throw_error_already_set();
+          return boost::shared_ptr<Models::Clj::t_Arg>();
         }
         return forces;
       }
@@ -264,9 +273,9 @@ namespace LaDa
         )
         .add_property
         (
-          "ewald_cutoff", 
-          &Models::Clj::Ewald::get_rcutoff, &Models::Clj::Ewald::set_rcutoff,
-          "Sets cutoff for real-space ewald sum."
+          "_cutoff", 
+          &Models::Clj::Ewald::get_gcutoff, &Models::Clj::Ewald::set_gcutoff,
+          "G-space cutoff in eV. "
         )
         .add_property
         (

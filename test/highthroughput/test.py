@@ -1,47 +1,48 @@
 #!/usr/bin/env python
 """ High-Thoughput of A2BO4 structures. """
+__docformat__ = "restructuredtext en"
 
-def _input():
-  from lada.opt import read_input
-  from lada.vasp import Vasp, specie, files
-  from lada.vasp.methods import RelaxCellShape
+def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
+  """ Jobs to explore possible ground-states. 
+  
+      :Parameters:
+        path 
+          Path where the job-dictionary will be saved. Calculations will be
+          performed in the parent directory of this file. Calculations will be
+          performed in same directory as this file.
+        inputpath
+          Path to an input file. Defaults to input.py. 
+        kwargs
+          Any keyword/value pair to take precedence over anything in the input
+          file.
 
-  # names we need to create input.
-  input_dict = { "Vasp": Vasp, "U": specie.U, "nlep": specie.nlep, "RelaxCellShape": RelaxCellShape }
-  return read_input("input.py", input_dict)
- 
-input = _input()
-""" All input parameteres. """
-
-def _waves(is_first = True): 
-  from os.path import join
+      Creates a high-throughput job-dictionary to compute the non-magnetic
+      ground-state of a host-material.  The new job-dictionary is loaded into
+      memory automatically. No need to call explore. It is save to the path
+      provided on input.
+  """
   from re import compile
+  from IPython.ipapi import get as get_ipy
+  from lada.vasp import read_input
+  from lada.jobs import JobDict
+  from lada.crystal import fill_structure
 
-  from lada import jobs
-  from lada.opt import read_input
-  from lada.opt.changedir import Changedir
-  from lada.crystal import A2BX4, fill_structure
-  from lada.vasp import Vasp, Specie, specie, files, Extract
-  from lada.vasp.methods import RelaxCellShape
-  from lada.vasp import files
+  # reads input.
+  input = read_input(inputpath)
+  input.update(kwargs)
 
-  import magnetic
-
-  # list of all lattices in A2BX4.
-  lattices = [ A2BX4.b1(),  A2BX4.b10(),  A2BX4.b10I(),  A2BX4.b11(),\
-               A2BX4.b12(),  A2BX4.b15(),  A2BX4.b16(),  A2BX4.b18(),  A2BX4.b19(),\
-               A2BX4.b1I(),  A2BX4.b2(),  A2BX4.b20(),  A2BX4.b21(),  A2BX4.b2I(),\
-               A2BX4.b33(),  A2BX4.b34(),  A2BX4.b35(),  A2BX4.b36(),  A2BX4.b37(),\
-               A2BX4.b38(),  A2BX4.b4(),  A2BX4.b4I(),  A2BX4.b5(),  A2BX4.b5I(),  A2BX4.b6(),\
-               A2BX4.b7(),  A2BX4.b8(),  A2BX4.b9(),  A2BX4.b9I(),  A2BX4.d1(),  A2BX4.d1I(),\
-               A2BX4.d3(),  A2BX4.d3I(),  A2BX4.d9(),  A2BX4.s1(),  A2BX4.s1I(),  A2BX4.s2(),\
-	       A2BX4.s2I(),  A2BX4.s3(),  A2BX4.s3I() ]
-
+  # sanity checks.
+  for lattice in input.lattices:
+    assert len(lattice.name) != 0, ValueError("Lattice has no name.")
+  
   # regex
   specie_regex = compile("([A-Z][a-z]?)2([A-Z][a-z]?)([A-Z][a-z]?)4")
 
   # Job dictionary.
-  jobdict = jobs.JobDict()
+  jobdict = JobDict()
+  # reads current file and attaches it to jobdictionary.
+  with open(__file__, "r") as file: jobdict.nonmagscript = file.read()
+  with open(inputpath, "r") as file: jobdict.nonmaginput = file.read()
 
   # loop over materials.
   for material in input.materials:
@@ -52,78 +53,255 @@ def _waves(is_first = True):
     # checks species are known to vasp functional
     for i in range(1, 4):
       assert match.group(i) in input.vasp.species,\
-             RuntimeError("%s not in specie dictionary." % (match.group(i)))
+             RuntimeError("No pseudo-potential defined for {0}.".format(match.group)(i))
     # actually creates dictionary.
     species_dict = {"A": match.group(1), "B": match.group(2), "X": match.group(3)}
 
     # loop over lattices. 
-    for lattice in lattices:
+    for lattice in input.lattices:
 
       # creates a structure.
       structure = fill_structure(lattice.cell, lattice)
-      structure.name = material + ": " + lattice.name
-      # changes atomic types.
-      for atom in structure.atoms:
-        atom.type  = species_dict[atom.type]
-      # set volume
-      structure.scale = input.volume(structure)
-
+      # changes atomic species.
+      for atom in structure.atoms:  atom.type  = species_dict[atom.type]
+      # assigns it a name.
+      structure.name = "{0} in {1}, spin-unpolarized.".format(material, lattice.name)
+      # gets its scale.
+      structure.scale = input.scale(structure)
+  
       # job dictionary for this lattice.
-      lat_jobdict = jobdict / material / lattice.name 
-
-      if is_first: # sets up job parameters of first wave.
-        job = lat_jobdict / "non-magnetic"
-        job.functional = input.relaxer
-        job.jobparams["structure"] = structure
-        job.jobparams["ispin"] = 1
-        continue 
-      else:        # copies structure from first wave.
-        strdir = join(join(join(input.first_wave_dir, material),\
-                           lattice.name), "non-magnetic")
-        extract = Extract(strdir)
-        if not extract.success:
-          print strdir, "failed."
-          continue
-        structure = extract.structure
-
-      # goes through magnetic stuff
-      if not magnetic.is_magnetic_system(structure, input.vasp.species): continue
-
-      # first ferro
-      job = lat_jobdict / "ferro"
+      lat_jobdict = jobdict / material 
+  
+      job = lat_jobdict / lattice.name / "non-magnetic"
       job.functional = input.relaxer
       job.jobparams["structure"] = structure
-      job.jobparams["ispin"] =  2
-      job.jobparams["magmom"] = magnetic.ferro(structure, input.vasp.species)
-      job.jobparams["first_trial"] = {}
+      job.jobparams["ispin"] = 1
+      # saves some stuff for future reference.
+      job.material = material
+      job.lattice  = lattice
+
+
+  ip = get_ipy()
+  ip.user_ns["current_jobdict"] = jobdict
+  ip.magic("savejobs " + path)
+
+
+def magnetic_wave(path=None, inputpath=None, **kwargs):
+  """ Creates magnetic wave for current job-dictionary.
+
+      :Parameters:
+        path : str or None
+          Path where the modified job-dictionary will be saved. Calculations will be
+          performed in the parent directory of this file. If None, will use the
+          current job-dictionary path.
+        inputpath : str or None
+          Path to an input file. If not present, then no input file is read and
+          all parameters are taken from the non-magnetic wave.
+        kwargs
+          Any keyword/value pair to take precedence over anything in the input file.
+
+      Creates magnetic wave from pre-existing non-magnetic wave. If no input
+      file is given on input, then all parameters are obtained from the
+      corresponding non-magnetic wave. 
+
+      The new job-dictionary is loaded into memory automatically. No need to
+      call explore. It is save to the path provided on input (or to the current
+      job-dictionary path ifnot provided).  It will contain magnetic and
+      non-magnetic calculations both. Pre-existing magnetic
+      calculations will *not* be overwritten. However, additional anti-ferro
+      configurations can be calculated by giving a large enough ``nbantiferro``
+      on input.
+  """
+  from tempfile import NamedTemporaryFile
+  from os.path import dirname, normpath, relpath, join
+  from copy import deepcopy
+  from IPython.ipapi import get as get_ipy
+  from lada.jobs import JobDict
+  from lada.vasp import read_input
+  from lada.opt import Input
+
+  # Loads jobdictionary and path as requested. 
+  ip = get_ipy()
+  if "current_jobdict" not in ip.user_ns: 
+    print "No current job-dictionary." 
+    return
+  jobdict = ip.user_ns["current_jobdict"].root
+  if path == None:
+    if "current_jobdict_path" not in ip.user_ns:
+      print "No known path for current dictionary and no path specified on input."
+      return
+    path = ip.user_ns["current_jobdict_path"]
+  basedir = dirname(path)
       
-      # then, antiferro with spin direction depending on cation type.
-      magmom = magnetic.sublatt_antiferro(structure, input.vasp.species) 
-      if magmom != None:
-        job = lat_jobdict / "anti-ferro-0"
-        job.functional = input.relaxer
-        job.jobparams["structure"] = structure
-        job.jobparams["ispin"] = 2
-        job.jobparams["magmom"] = magmom
-        job.jobparams["first_trial"] = {}
+  # saves this file to the jobdictionary.
+  with open(__file__, "r") as file: jobdict.magscript = file.read()
+  # reads input. Some complications since we are checking for old input as well.
+  input = Input()
+  if hasattr(jobdict, "nonmaginput"):
+    with NamedTemporaryFile() as file: 
+      file.write(jobdict.nonmaginput)
+      file.flush()
+      dummy =read_input(file.name)
+      input.update(dummy)
+  if inputpath != None:
+    input.update(read_input(inputpath))
+    with open(inputpath, "r") as file: jobdict.maginput = file.read()
+  input.update(kwargs)
+  assert len(input.__dict__.keys()) != 2, ValueError("No input.")
 
-      # Then random anti-ferro.
-      for i in range(input.nbantiferro):
-        job = lat_jobdict / ("anti-ferro-%i" % (i+1))
-        job.functional = input.relaxer
-        job.jobparams["structure"] = structure
-        job.jobparams["ispin"] = 2
-        job.jobparams["magmom"] = magnetic.random(structure, input.vasp.species)
-        job.jobparams["first_trial"] = {}
-  return jobdict
-                                           
+  # will loop over all jobs, looking for *successfull* *non-magnetic* calculations. 
+  # Only magnetic jobs which do NOT exist are added at that point.
+  nonmagname = "non-magnetic"
+  has_changed = False
+  for nonmagjob, name in jobdict.walk_through():
+    # avoid tagged jobs.
+    if nonmagjob.is_tagged: continue
+    # avoid other jobs (eg magnetic jobs).
+    basename = normpath("/" + name + "/../")
+    if relpath(name, basename[1:]) != nonmagname: continue
+    # check for success and avoid failures.
+    extract = nonmagjob.functional.Extract(join(basedir, name)) 
+    if not extract.success: continue
+    if not is_magnetic_system(extract.structure, extract.functional.species): continue
 
-first_wave = _waves(True)
-""" First waves of jobs. """
-second_wave = _waves(False)
-""" Second waves of jobs. """
+    # loads lattice and material from non-magnetic job.
+    material = nonmagjob.material
+    lattice = nonmagjob.lattice
 
-# launches first wave.
-# jobs.one_per_job(first_wave_dir, test.first_wave, test.mppalloc)
-# launches second wave.
-# jobs.one_per_job(first_wave_dir, test.second_wave, test.mppalloc)
+    # now tries and creates high-spin ferro jobs if it does not already exist.
+    jobname = normpath(basename + "/hs_ferro")
+    magmom = hs_ferro(extract.structure, extract.functional.species)
+    if magmom != None and jobname not in jobdict:
+      job = jobdict / jobname
+      job.functional = input.relaxer if inputpath != None else nonmagjob.functional
+      job.jobparams["structure"] = deepcopy(extract.structure)
+      job.jobparams["structure"].name = "{0} in {1}, high-spin.".format(material, lattice.name)
+      job.jobparams["structure"].magmom = magmom
+      job.jobparams["magmom"] = "attribute: magmom"
+      job.jobparams["ispin"] =  2
+      # saves some stuff for future reference.
+      job.material = material
+      job.lattice  = lattice
+      has_changed = True
+
+    # now tries and creates low-spin ferro jobs if it does not already exist.
+    jobname = normpath(basename + "/ls_ferro")
+    magmom = ls_ferro(extract.structure, extract.functional.species)
+    if magmom != None and jobname not in jobdict:
+      job = jobdict / jobname
+      job.functional = input.relaxer if inputpath != None else nonmagjob.functional
+      job.jobparams["structure"] = deepcopy(extract.structure)
+      job.jobparams["structure"].name = "{0} in {1}, low-spin.".format(material, lattice.name)
+      job.jobparams["structure"].magmom = magmom
+      job.jobparams["magmom"] = "attribute: magmom"
+      job.jobparams["ispin"] =  2
+      # saves some stuff for future reference.
+      job.material = material
+      job.lattice  = lattice
+      has_changed = True
+
+
+    # now tries and creates anti-ferro-lattices jobs if it does not already exist.
+    magmom = species_antiferro(extract.structure, extract.functional.species) 
+    jobname = normpath(basename + "/anti-ferro-0")
+    if magmom != None and jobname not in jobdict:
+      job = jobdict / jobname
+      job.functional = input.relaxer if inputpath != None else nonmagjob.functional
+      job.jobparams["structure"] = deepcopy(extract.structure)
+      job.jobparams["structure"].name = "{0} in {1}, lattice anti-ferro."\
+                                        .format(material, lattice.name)
+      job.jobparams["structure"].magmom = magmom
+      job.jobparams["magmom"] = "attribute: magmom"
+      job.jobparams["ispin"] =  2
+      # saves some stuff for future reference.
+      job.material = material
+      job.lattice  = lattice
+      has_changed = True
+
+    # random anti-ferro.
+    for i in range(1, 1+input.nbantiferro):
+      magmom = random(extract.structure, extract.functional.species)
+      if magmom == None: continue
+      jobname = normpath("/" + basename + "/anti-ferro-{0}".format(i))
+      if jobname in jobdict: continue
+      job = jobdict / jobname
+      job.functional = input.relaxer if inputpath != None else nonmagjob.functional
+      job.jobparams["structure"] = deepcopy(extract.structure)
+      job.jobparams["structure"].name = "{0} in {1}, random anti-ferro."\
+                                        .format(material, lattice.name)
+      job.jobparams["structure"].magmom = magmom
+      job.jobparams["magmom"] = "attribute: magmom"
+      job.jobparams["ispin"] =  2
+      # saves some stuff for future reference.
+      job.material = material
+      job.lattice  = lattice
+      has_changed = True
+
+
+  if not has_changed:
+    print "No new jobs: magnetic jobs already exist in dictionary, "\
+          "or no system was declared magnetic. "
+    return
+  ip = get_ipy()
+  ip.user_ns["current_jobdict"] = jobdict.root
+  ip.magic("savejobs " + path)
+
+def is_magnetic_system(structure, species):
+  """ True if system is magnetic. """
+  from lada.crystal import specie_list
+
+  for u in [u for name, u in species.items() if name in specie_list(structure)]:
+    if not hasattr(u, "moment"): continue
+    if not hasattr(u.moment, "__iter__"): 
+      if abs(u) > 1e-12: return True
+      continue
+    for a in u.moment:
+      if abs(a) > 1e-12: return True
+    
+  return False
+
+def deduce_moment(atom, species):
+  """ Returns moment.
+
+      This is a helper function which all atomic species the same with respect
+      to the attribute ``moment``. If specie has no ``moment`` attribute,
+      returns ``[0]``. If it exists and is a scalar, returns ``[moment]``. And
+      if already is a list, returns as is.
+  """
+  if not hasattr(species[atom.type], "moment"): return [0]
+  if not hasattr(species[atom.type].moment, "__iter__"):
+    return [species[atom.type].moment]
+  return species[atom.type].moment
+
+def ls_ferro(structure, species):
+  """ Returns magmom VASP flag for low-spin ferromagnetic order. """
+  return [ min(deduce_moment(a, species)) for a in structure.atoms ]
+
+def hs_ferro(structure, species):
+  """ Returns magmom VASP flag for high-spin ferromagnetic order. """
+  return [ max(deduce_moment(a, species)) for a in structure.atoms ]
+
+def species_antiferro(structure, species):
+  """ Anti ferro order with each cation specie in a different direction. """
+  # checks whether lattice-sites are magnetic or not.
+  signs = {}
+  for atom in structure.atoms:
+    m = max(deduce_moment(atom, species))
+    signs[atom.type] = 1 if abs(m) < 1e-12 else -1
+  if len([u[1] for u in signs.items() if u[1] == -1]) < 2: return None
+  # makes alternating sign list.
+  dummy = 1
+  for k in sorted(signs.keys()):
+    if signs[k] != -1: continue
+    signs[k] = 1 if dummy == 1 else -1
+    dummy = -1 * dummy
+  # creates magmom
+  return [ float(signs[a.type]) * max(deduce_moment(a, species))\
+           for a in structure.atoms ]
+
+def random(structure, species):
+  """ Random magnetic order. """
+  from random import choice
+  return [ choice([-1e0, 1e0]) * max(deduce_moment(a, species))\
+           for a in structure.atoms ]
+

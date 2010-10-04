@@ -306,7 +306,8 @@ def _set_cell(self, sequence):
   elif len(sequence) == 3:
     a0, a1, a2 = [x for x in sequence[0]], [x for x in sequence[1]], [x for x in sequence[2]]
   else: raise RuntimeError("Don't know how to deal with this much cheese: %s" % (sequence))
-  self.cell = array( [a0, a1, a2] )
+  dummy = array( [a0, a1, a2], dtype="float64" )
+  self.cell = dummy
 
 Structure.set_cell = add_setter(_set_cell)
 rStructure.set_cell = add_setter(_set_cell)

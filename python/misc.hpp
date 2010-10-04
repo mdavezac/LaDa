@@ -41,10 +41,7 @@ namespace LaDa
     template< class T >
       struct pickle : bp::pickle_suite
       {
-        static bp::tuple getinitargs( T const& _w)  
-        {
-          return bp::tuple();
-        }
+        static boost::python::tuple getinitargs(T const &) { return boost::python::tuple(); }
         static bp::tuple getstate(bp::object const &_object)
         {
           T const & whatever = bp::extract<T const&>(_object);
