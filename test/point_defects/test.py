@@ -1,4 +1,4 @@
-def pointdefect_wave(inputpath=None, **kwargs):
+def pointdefect_wave(path=None, inputpath=None, **kwargs):
   """ Creates point-defect wave using ground-state job-dictionary. """
   from tempfile import NamedTemporaryFile
   from os.path import dirname, normpath, relpath, join
@@ -13,10 +13,11 @@ def pointdefect_wave(inputpath=None, **kwargs):
     print "No current job-dictionary." 
     return
   jobdict = ip.user_ns["current_jobdict"].root
-  if "current_jobdict_path" not in ip.user_ns:
-    print "No known path for current dictionary and no path specified on input."
-    return
-  path = ip.user_ns["current_jobdict_path"]
+  if path == None:
+    if "current_jobdict_path" not in ip.user_ns:
+      print "No known path for current dictionary and no path specified on input."
+      return
+    path = ip.user_ns["current_jobdict_path"]
   basedir = dirname(path)
 
   # create input dictionary. First reads non-magnetic input, then magnetic

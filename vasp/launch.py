@@ -111,7 +111,7 @@ class Launch(Incar):
 
     path = join(abspath(self._tempdir), files.FUNCCAR)
     with Changedir(outdir) as outdir: # allows relative paths.
-      with open(path, 'w') as file: cPickle.dump((self), file)
+      with open(path, 'w') as file: cPickle.dump(self, file)
 
   def _run(self, comm):
      """ Isolates calls to vasp itself """

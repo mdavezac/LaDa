@@ -132,6 +132,9 @@ def redirect(fout=None, ferr=None, fin=None, pyout=None, pyerr=None, pyin=None, 
 
 class Input(ModuleType):
   """ Fake class which will be updated with the local dictionary. """
+  def __init__(self, name = "lada_input"): 
+    """ Initializes input module. """
+    super(Input, self).__init__(name, "Input module for lada scripts.")
   def __getattr__(self, name):
     raise AttributeError( "All out of cheese!\n"
                           "Required input parameter '{0}' not found in {1}." \
@@ -141,8 +144,10 @@ class Input(ModuleType):
   def __setattr__(self, name, value):
     raise RuntimeError("Cannot set/change object in input namespace.")
   def update(self, other):
-    if isinstance(other, Input): self.__dict__.update(other.__dict__)
-    else: self.__dict__.update(other)
+    if hasattr(other, '__dict__'): other = other.__dict__
+    for key, value in other.items():
+      if key[0] == '_': continue
+      super(Input, self).__setattr__(key, value)
 
 def read_input(filename, global_dict=None, local_dict = None, paths=None, comm = None):
   """ Executes input script and returns local dictionary (as class instance). """
