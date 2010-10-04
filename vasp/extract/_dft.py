@@ -473,6 +473,11 @@ class Extract(_ExtractImpl):
     return float(result.group(1)) * eV
 
   @property
+  def energy(self): 
+    """ Alias for total_energy. """
+    return self.total_energy
+
+  @property
   @make_cached
   @broadcast_result(attr=True, which=0)
   def free_energy(self):

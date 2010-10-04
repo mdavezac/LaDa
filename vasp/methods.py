@@ -77,7 +77,7 @@ class RelaxCellShape(object):
 
         >>> relaxor = RelaxCellShape(vasp)
         >>> for output in relaxor.generator(structure): 
-        >>>   print output.energy
+        >>>   print output.total_energy
 
         :Parameters:
           structure
@@ -148,12 +148,12 @@ class RelaxCellShape(object):
       
       nb_steps += 1
       params = kwargs
-      olde = output.energy
+      olde = output.total_energy
       if nb_steps == 1: continue
-      if fabs(output.energy - olde) < float(len(structure.atoms)) * self.vasp.ediff: break
+      if fabs(output.total_energy - olde) < float(len(structure.atoms)) * self.vasp.ediff: break
 
     # Does not perform static calculation if convergence not reached.
-    if fabs(output.energy - olde) > float(len(structure.atoms)) * self.vasp.ediff: 
+    if fabs(output.total_energy - olde) > float(len(structure.atoms)) * self.vasp.ediff: 
       yield output 
 
     # performs ionic calculation. 
