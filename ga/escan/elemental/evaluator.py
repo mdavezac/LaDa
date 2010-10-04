@@ -1,5 +1,9 @@
 """ Contains evaluators for ESCAN properties """
+__docformat__ = "restructuredtext en"
 from numpy import array as np_array
+
+
+__all__ = ['cound_calls', 'Bandgap', 'Dipole', 'EffectiveMass']
 def count_calls(method):
   """ Increments calls at each call. """
   def wrapped(*args, **kwargs):
@@ -16,23 +20,36 @@ def count_calls(method):
   
 class Bandgap(object):
   """ An evaluator function for bandgaps at S{Gamma}. """
-  def __init__(self, converter, escan, outdir = None, references = None, **kwargs):
+  def __init__(self, converter, escan, outdir = None, references = None, \
+               keep_only_last = True, **kwargs):
     """ Initializes the bandgap object. 
 
-        @param converter: is a functor which converts between a bitstring and a
-          lada.crystal.Structure, and vice versa.
-        @type  converter: duck-typed to L{Converter}
-        @param escan: escan functional.
-        @param kwargs: Other keyword arguments to be passed to the bandgap routine.
+        :Parameters: 
+          converter : `lada.ga.escan.elemental.Converter`
+            is a functor which converts between a bitstring and a
+            `lada.crystal.Structure`, and vice versa.
+          escan : `lada.escan.Escan`
+            escan functional.
+          outdir : str or None
+            Directory where to perform calculations. Defaults to None. 
+          referemces
+	    Reference energies for band-gap calculations. See
+            `lada.escan.bandgap`. Defaults to None.
+          keep_only_last : boolean
+	    If true, only the last calculation is kept. Limits the space
+            required for ESCAN optimizations.
+          kwargs
+            Other keyword arguments to be passed to the bandgap routine.
     """
     from copy import deepcopy
+    from ....opt import RelativeDirectory
+
+    super(Bandgap, self).__init__()
 
     self.converter = converter 
     """ Conversion functor between structures and bitstrings. """
     self.escan = escan
     """ Escan functional """
-    self.outdir = "indiv"  if outdir == None else outdir
-    """ Output directory.  """
     self.nbcalc = 0
     """ Number of calculations. """
     self.references = references 
@@ -41,9 +58,20 @@ class Bandgap(object):
         Can be None (all-electron method), a 2-tuple of reference values
         (folded-spectrum), or a callable returnin a 2-tuple when given a structure.
     """
+    self.keep_only_last = keep_only_last
+    """ Whethere to keep only last calculations or all. """
     self.kwargs = deepcopy(kwargs)
     """ Additional arguments to be passed to the bandgap functional. """
 
+    self._outdir = RelativeDirectory(path=outdir)
+    """ Location of output directory. """
+
+  @property 
+  def outdir(self):
+    """ Current workding directory. """
+    return self._outdir.path
+  @outdir.setter 
+  def outdir(self, value): self._outdir.path = value
 
   def __len__(self):
     """ Returns length of bitstring. """
@@ -52,21 +80,27 @@ class Bandgap(object):
   def run( self, indiv, outdir = None, comm = None, **kwargs ):
     """ Computes bandgap of an individual. 
     
+        :Parameters:
+          indiv 
+            Individual to compute. Will be converted to a
+            `lada.crystal.Structure` using `converter`.
+          outdir
+            Output directory. 
+          comm : boost,mpi.communicator
+            MPI communicator.
+          kwargs 
+            converter, escan, references, outdir  can be overwridden
+            on call. This will not affect calls further down the line. Other
+            arguments are passed on to the lada.escan.bandgap` function on call.
+
+        :return: an extractor to the bandgap. 
+
         The epitaxial energy is stored in indiv.epi_energy
         The eigenvalues are stored in indiv.eigenvalues
         The VBM and CBM are stored in indiv.bands
-        @param indiv: Individual to compute. Will be converted to a L{structure
-          <lada.crystal.Structure>} using L{self.converter}.
-        @param outdir: Output directory. 
-        @param comm: MPI communicator.
-        @param kwargs: L{converter <Bandgap.converter>}, L{escan
-          <Bandgap.escan>}, L{references <Bandgap.references>}, L{outdir
-          <Bandgap.outdir>} can be overwridden on call. This will not affect
-          calls further down the line. Other arguments are passed on to the
-          L{bandgap <lada.escan.bandgap>} functional.
-        @return: an extractor to the bandgap. 
     """
-    from os.path import join
+    from shutil import rmtree
+    from os.path import join, exists
     from copy import deepcopy
     from boost.mpi import world
     from ....escan import bandgap
@@ -75,8 +109,9 @@ class Bandgap(object):
     references = kwargs.pop("references", self.references)
     converter  = kwargs.pop( "converter",  self.converter)
     escan      = kwargs.pop(     "escan",      self.escan)
-    if outdir == None:     outdir     = join(self.outdir, str(self.nbcalc))
     if comm == None:       comm       = world
+    if outdir == None: outdir = self.outdir
+    if not self.keep_only_last: outdir = join(outdir, str(self.nbcalc))
  
     # creates a crystal structure (phenotype) from the genotype.
     structure = converter(indiv.genes)
@@ -87,6 +122,7 @@ class Bandgap(object):
     dictionary["outdir"]     = outdir
     dictionary["references"] = self.references(structure) if hasattr(references, "__call__")\
                                else references
+    if "overwrite" not in dictionary: dictionary["overwrite"]  = True
     # performs calculation.
     out = bandgap(escan, structure, **dictionary)
 
@@ -112,16 +148,33 @@ class Bandgap(object):
     from pickle import dumps
     d = self.__dict__.copy()
     references = self.references
-    del d["references"]
-    if hasattr(references, "__name__"):
-      assert references.__name__ != '<lambda>',\
-             RuntimeError("\"references\" is a lambda. Lambdas cannot be reliably pickled.")
-    return d, references
+    try:  dumps(d["references"])
+    except TypeError: 
+      raise RuntimeError("Cannot pickle references in Bandgap evaluator.")
+    return d
   def __setstate__(self, arg):
     from pickle import loads
-    self.__dict__.update(arg[0])
-    self.validity = None
-    self.references = arg[1]
+    self.__dict__.update(arg)
+
+  def __repr__(self): 
+    """ Returns representation of evaluator. """
+    return   "from {0} import {1}\n"\
+             "from {2} import {3}\n"\
+             "{4}\n\n"\
+             "supercell = {5}\n"\
+             "converter = {3}(supercell, lattice)\n"\
+             "evaluator = {1}(converter, escan_functional)\n"\
+             "evaluator.kwargs            = {6}\n"\
+             "evaluator.nbcalc            = {7.nbcalc}\n"\
+             "evaluator.references        = {7.references}\n"\
+             "evaluator.keep_only_last    = {7.keep_only_last}\n"\
+             "evaluator.outdir            = {8}\n"\
+             .format( self.__class__.__module__, self.__class__.__name__,
+                      self.converter.__class__.__module__, self.converter.__class__.__name__,
+                      repr(self.escan).replace("functional", "escan_functional"), 
+                      repr(self.converter.structure.cell),
+                      repr(self.kwargs), self, self._outdir.repr())
+
 
 class Dipole(Bandgap):
   """ Evaluates the oscillator strength.

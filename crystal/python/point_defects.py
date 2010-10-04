@@ -1,6 +1,5 @@
 """ Point-defect helper functions. """
 __docformat__ = "restructuredtext en"
-from ..opt import RelativeDirectory 
 try:
   from .. import vasp
   from .. import jobs

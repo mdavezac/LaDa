@@ -1,44 +1,36 @@
+from lada.crystal import Structure
 from lada.pcm import Clj, bond_name
-from numpy import array
-
-from lada.opt import read_input
-from lada.crystal import A2BX4
-from lada.crystal import fill_structure, Structure
+from lada.physics import a0, Ry
+from quantities import angstrom, eV, hartree
 
 clj  = Clj()
 """ Point charge + r^12 + r^6 model. """
-clj.ewald_cutoff = 32
+clj.ewald_cutoff = 150 * Ry
 
-clj.charges["A"] = 3.0
-clj.charges["B"] = 2.0
-clj.charges["X"] = -2.0
+clj.charges["A"] = -1.0
+clj.charges["B"] =  1.0
 
-# clj.lj_cutoff = 10.5
-# clj.mesh = (15, 15, 15)
-# hs = { "A":1.34, "B":2.25,"X":1.14}
-# vdw = {"A":2.2,"B":3,"X":1.9}
-# for a in ["A", "B", "X" ]:
-#   for b in ["A", "B", "X" ]:
-#     type = bond_name( a, b )
-#     hs_ = float( hs[a] ) + float( hs[b]  )
-#     vdw_ = float(vdw[a]) + float(vdw[b] )
-#     clj.bonds[type] = pow(hs_, 12.0), pow(vdw_, 6.0)
+structure = Structure()
+structure.set_cell = (1,0,0),\
+                     (0,1,0),\
+                     (0,0,1)
+structure.scale = 50
+structure.add_atom = (0,0,0), "A"
+structure.add_atom = (a0.rescale(angstrom)/structure.scale,0,0), "B"
+
+print clj.ewald(structure).energy, hartree.rescale(eV)
 
 
-
-lattice = A2BX4.b5()
-lattice.scale = 8.5
+from lada.crystal.A2BX4 import b5
+from lada.crystal import fill_structure
+from numpy import array
+clj.ewald_cutoff = 150 * Ry
+lattice = b5()
+lattice.sites[4].type='A'
 structure = fill_structure(lattice.cell, lattice)
+structure.scale = 8.0
 
-N = clj.ewald(structure)
-nbB = 2
-for atom in structure.atoms:
-  if atom.type == "X": continue
-  elif atom.type == "A" and nbB > 0:
-    atom.type = "B"
-    nbB -= 1
-  elif atom.type == "B": atom.type = "A"
-
-I = clj.ewald(structure)
-print I.energy, N.energy
-print I.energy - N.energy,  structure.scale
+clj.charges["A"] =  3.0
+clj.charges["B"] =  2.0
+clj.charges["X"] = -2.0
+print clj.ewald(structure).energy, -498.586

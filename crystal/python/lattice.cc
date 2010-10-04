@@ -133,44 +133,6 @@ namespace LaDa
     math::rVector3d into_cell2(math::rVector3d const &_vec, math::rMatrix3d const &_cell)
       { return Crystal::into_cell(_vec, _cell, _cell.inverse()); }
 
-    template< class T_STRUCTURE >
-      struct pickle_lattice : bp::pickle_suite
-      {
-        static bp::tuple getinitargs( T_STRUCTURE const& _w)  
-        {
-          return bp::tuple();
-        }
-        static bp::tuple getstate(bp::object const &_object)
-        {
-          T_STRUCTURE const & structure = bp::extract<T_STRUCTURE const&>(_object);
-          std::ostringstream ss;
-          boost::archive::text_oarchive oa( ss );
-          oa << structure;
-
-          return bp::make_tuple( _object.attr("__dict__"), ss.str() );
-        }
-        static void setstate(bp::object _out, bp::tuple state)
-        {
-          T_STRUCTURE & out = bp::extract<T_STRUCTURE&>(_out)();
-          if (bp::len(state) != 2)
-          {
-            PyErr_SetObject(PyExc_ValueError,
-                            ("expected 2-item tuple in call to __setstate__; got %s"
-                             % state).ptr()
-                );
-            bp::throw_error_already_set();
-          }
-          // restore the object's __dict__
-          bp::dict d = bp::extract<bp::dict>(_out.attr("__dict__"))();
-          d.update(state[0]);
-          const std::string str = bp::extract< std::string >( state[1] );
-          std::istringstream ss( str.c_str() );
-          boost::archive::text_iarchive ia( ss );
-          ia >> out;
-        }
-        static bool getstate_manages_dict() { return true; }
-      };
-
     void expose_lattice()
     {
       bp::class_< Crystal::Lattice >( "Lattice", "Defines back-bone lattice." )
@@ -196,7 +158,7 @@ namespace LaDa
         .def("make_primitive", &Crystal::Lattice::make_primitive,
              (bp::arg("self"), bp::arg("tolerance")=-1e0),
              "Makes lattice primitive, e.g. reduces to smallest unit-cell." )
-        .def_pickle( pickle_lattice< Crystal::Lattice >() )
+        .def_pickle( Python::pickle< Crystal::Lattice >() )
         .def
         ( 
           "find_space_group", 

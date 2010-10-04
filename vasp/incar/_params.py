@@ -1,4 +1,5 @@
 """ Standard parameter types for use as attributes in Incar """
+__docformat__ = "restructuredtext en"
 from ...opt.decorators import broadcast_result
 class SpecialVaspParam(object): 
   """ Type checking class. """
@@ -6,6 +7,80 @@ class SpecialVaspParam(object):
     super(SpecialVaspParam, self).__init__()
     self.value = value
   def __repr__(self): return "%s(%s)" % (self.__class__.__name__, repr(self.value))
+
+class Magmom(SpecialVaspParam):
+  """ Prints magmom to INCAR. 
+
+      There are three types of usage: (i) do nothing, (ii) print a string,
+      (iii) use attribute ``magmom`` in the system for which the calculations
+      are launched.
+
+      In the second case, the string should be adequately formatted such that
+      VASP can understand it for that structure.
+
+      In the third case, the ``magmom`` attribute should be either a (well
+      formated) string, or a sequence of floats giving the moment for each
+      atom. It is given by setting magmom to the string "magmom", or
+      "attribute: somename". This sequence of float must follow the same order
+      as the atoms in the system.
+  """
+  def __init__(self, value = "attribute: magmom"):
+    """ Initializes magmom. """
+    from re import compile
+    super(Magmom, self).__init__(value)
+
+    self._regex = compile("^\s*attribute: (\S+)\s*$")
+    """ Regex from which to obtain attribute name. """
+    
+  @broadcast_result(key=True)
+  def incar_string(self, vasp, *args, **kwargs):
+    """ Prints the magmom string if requested. """
+    if self.value == None: return None
+    if self.value.lower() == "magmom":
+      magmom = self._from_attr(vasp, "magmom",  *args, **kwargs)
+      return "Magmom = {0}".format(magmom) if magmom != None else None
+    elif self._regex.match(self.value) != None:
+      magmom = self._from_attr(vasp, self._regex.match(self.value).group(1),  *args, **kwargs)
+      return "Magmom = {0}".format(magmom) if magmom != None else None
+    return "MAGMOM = {0}".format(self.value)
+
+  def _from_attr(self, vasp, name, *args, **kwargs):
+    """ Creates magmom string from attribute in system. """
+    from ...crystal import specie_list
+    # checks for existence of the attribute.
+    assert hasattr(vasp, "_system"),\
+           ValueError("vasp functional does not have a _system attribute.")
+    if not hasattr(vasp._system, name): return None
+    magmom = getattr(vasp._system, name)
+    if magmom == None: return None
+    if isinstance(magmom, str): return magmom
+    
+    # magmom should be a list of moments.
+    assert len(magmom) == len(vasp._system.atoms), \
+           ValueError("Number of moments and number of atoms does not coincide.")
+
+    result = ""
+    for specie in specie_list(vasp._system):
+      moments = [u[1] for u in zip(vasp._system.atoms, magmom) if u[0].type == specie]
+      tupled = [[1, moments[0]]]
+      for m in moments[1:]: 
+        if abs(m - tupled[-1][1]) < 1e-12: tupled[-1][0] += 1
+        else: tupled.append([1, m])
+      for i, m in tupled:
+        if i == 1: result += "{0:.2f} ".format(m)
+        else:      result += "{0}*{1:.2f} ".format(i, m)
+    print result
+    return result
+  
+  def __getstate__(self):
+    return self.value
+  def __setstate__(self, value):
+    from re import compile
+    self.value = value
+    self._regex = compile("^\s*attribute: (\S+)\s*$")
+
+
+
 
 class NElect(SpecialVaspParam):
   """ Sets number of electrons relative to neutral system.
@@ -16,7 +91,7 @@ class NElect(SpecialVaspParam):
       >>> nelect.value = 1   # charge -1 (1 extra electron)
       >>> nelect.value = -1  # charge +1 (1 extra hole)
 
-      @param value: (default:0) number of electrons to add to charge neutral
+      :Param value: (default:0) number of electrons to add to charge neutral
                     system.
   """
 

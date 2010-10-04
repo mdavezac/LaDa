@@ -1,13 +1,19 @@
 """ Miscellaneous """
+__docformat__  = 'restructuredtext en'
+from types import ModuleType
 import _opt 
 from contextlib import contextmanager
-__load_vasp_in_global_namespace__ = _opt.__load_vasp_in_global_namespace__
-__load_escan_in_global_namespace__ = _opt.__load_escan_in_global_namespace__
-cReals = _opt.cReals
-_RedirectFortran = _opt._RedirectFortran
-streams = _opt._RedirectFortran.fortran
-ConvexHull = _opt.ConvexHull
-ErrorTuple = _opt.ErrorTuple
+from _opt import __load_vasp_in_global_namespace__, __load_escan_in_global_namespace__,\
+                 cReals, _RedirectFortran, ConvexHull, ErrorTuple
+from changedir import Changedir
+from tempdir import Tempdir
+
+__all__ = [ '__load_vasp_in_global_namespace__', '__load_escan_in_global_namespace__',\
+            'cReals', 'ConvexHull', 'ErrorTuple', 'redirect_all', 'redirect', 'read_input',\
+            'LockFile', 'acquire_lock', 'open_exclusive', 'RelativeDirectory', 'streams' ]
+
+streams = _RedirectFortran.fortran
+""" Name of the streams. """
 
 class _RedirectPy:
   """ Redirects C/C++ input, output, error. """
@@ -76,10 +82,15 @@ class _RedirectAll:
 def redirect_all(output=None, error=None, input=None, append = False):
   """ A context manager to redirect inputs, outputs, and errors. 
   
-      @param output: Filename to which to redirect output. 
-      @param error: Filename to which to redirect err. 
-      @param input: Filename to which to redirect input. 
-      @param append: If true, will append to files. All or nothing.
+      :Parameters:
+        output
+          Filename to which to redirect output. 
+        error
+          Filename to which to redirect err. 
+        input
+          Filename to which to redirect input. 
+        append
+          If true, will append to files. All or nothing.
   """
   from contextlib import nested
   result = []
@@ -92,13 +103,21 @@ def redirect_all(output=None, error=None, input=None, append = False):
 def redirect(fout=None, ferr=None, fin=None, pyout=None, pyerr=None, pyin=None, append = False):
   """ A context manager to redirect inputs, outputs, and errors. 
   
-      @param fout: Filename to which to redirect fortran output. 
-      @param ferr: Filename to which to redirect fortran err. 
-      @param fin: Filename to which to redirect fortran input. 
-      @param pyout: Filename to which to redirect C/C++ output. 
-      @param pyerr: Filename to which to redirect C/C++ err. 
-      @param pyin: Filename to which to redirect C/C++ input. 
-      @param append: If true, will append to files. All or nothing.
+      :Parameters:
+        fout
+          Filename to which to redirect fortran output. 
+        ferr
+          Filename to which to redirect fortran err. 
+        fin
+          Filename to which to redirect fortran input. 
+        pyout
+          Filename to which to redirect C/C++ output. 
+        pyerr
+          Filename to which to redirect C/C++ err. 
+        pyin
+          Filename to which to redirect C/C++ input. 
+        append
+          If true, will append to files. All or nothing.
   """
   from contextlib import nested
   result = []
@@ -111,6 +130,24 @@ def redirect(fout=None, ferr=None, fin=None, pyout=None, pyerr=None, pyin=None, 
   return nested(*result)
 
 
+class Input(ModuleType):
+  """ Fake class which will be updated with the local dictionary. """
+  def __init__(self, name = "lada_input"): 
+    """ Initializes input module. """
+    super(Input, self).__init__(name, "Input module for lada scripts.")
+  def __getattr__(self, name):
+    raise AttributeError( "All out of cheese!\n"
+                          "Required input parameter '{0}' not found in {1}." \
+                          .format(name, self.__name__) )
+  def __delattr__(self, name):
+    raise RuntimeError("Cannot delete object from input namespace.")
+  def __setattr__(self, name, value):
+    raise RuntimeError("Cannot set/change object in input namespace.")
+  def update(self, other):
+    if hasattr(other, '__dict__'): other = other.__dict__
+    for key, value in other.items():
+      if key[0] == '_': continue
+      super(Input, self).__setattr__(key, value)
 
 def read_input(filename, global_dict=None, local_dict = None, paths=None, comm = None):
   """ Executes input script and returns local dictionary (as class instance). """
@@ -120,9 +157,10 @@ def read_input(filename, global_dict=None, local_dict = None, paths=None, comm =
   from math import pi 
   from numpy import array, matrix, dot, sqrt, abs, ceil
   from numpy.linalg import norm, det
+  from boost.mpi import world
   from lada.crystal import Lattice, Site, Atom, Structure, fill_structure, FreezeCell, FreezeAtom
   from lada import physics
-  from boost.mpi import world
+  from . import Input
   
   # Add some names to execution environment.
   if global_dict == None: global_dict = {}
@@ -142,16 +180,8 @@ def read_input(filename, global_dict=None, local_dict = None, paths=None, comm =
       if path not in local_dict: continue
       local_dict[path] = abspath(expanduser(local_dict[path]))
     
-  # Fake class which will be updated with the local dictionary.
-  class Input(physics.__class__): 
-    def __getattr__(self, name):
-      raise AttributeError( "All out of cheese!\n"
-                            "Required input parameter \"{0}\" not found in {1}." \
-                            .format(name, self.__name__) )
-    def __delattr__(self, name): raise RuntimeError("Cannot delete object from input namespace.")
-    def __setattr__(self, name, value): raise RuntimeError("Cannot set/change object in input namespace.")
   result = Input(filename)
-  result.__dict__.update(local_dict)
+  result.update(local_dict)
   return result
 
 
@@ -161,16 +191,20 @@ class LockFile(object):
 
       Creates a lock directory named after a file. Relies on the presumably
       atomic nature of creating a directory. 
-      *Beware* of mpi problems! L{LockFile} is (purposefully) not mpi aware.
+      *Beware* of mpi problems! `LockFile` is (purposefully) not mpi aware.
       If used unwisely, processes will lock each other out.
   """
   def __init__(self, filename, timeout = None, sleep = 0.5):
     """ Creates a lock object. 
 
+        :Parameters:
+          timeout
+            will raise a RuntimeError when calling `lock` if
+            the lock could not be aquired within this time.
+          sleep
+            Time to sleep between checks when waiting to acquire lock. 
+
         Does not acquire lock at this stage. 
-        @param timeout: will raise a RuntimeError when calling L{self.lock} if
-          the lock could not be aquired within this time.
-        @param sleep: Time to sleep between checks when waiting to acquire lock. 
     """
     from os.path import abspath, dirname, join
     self.filename = abspath(filename)
@@ -183,6 +217,7 @@ class LockFile(object):
     """ True if this object owns the lock. """
 
   def lock(self):
+    """ Waits until lock is acquired. """
     from os import makedirs, error, mkdir
     from os.path import exists
     import time
@@ -278,53 +313,188 @@ def open_exclusive(filename, mode="r", sleep = 0.5):
 class RelativeDirectory(object):
   """ Directory property which is relative to the user's home.
   
-      The directory wich is returned (eg __get__) is always absolute. However,
+      The path which is returned (eg __get__) is always absolute. However,
       it is stored relative to the user's home, and hence can be passed from
       one computer system to the next.
+      Unless you know what you are doing, it is best to get and set using the
+      ``path`` attribute, starting from the current working directory if a
+      relative path is given, and from the '/' root if an absolute path is
+      given.
+
+      >>> from os import getcwd, environ
+      >>> getcwd()
+      '/home/me/inhere/'
+      >>> relative_directory.path = 'use/this/attribute'
+      >>> relative_directory.path
+      '/home/me/inhere/use/this/attribute'
+
+      Other descriptors have somewhat more complex behaviors. ``envvar`` is the
+      root directory - aka the fixed point. Changing it will simply change the
+      root directory.
+
+      >>> environ["SCRATCH"]
+      '/scratch/me/'
+      >>> relative_directory.envvar = "$SCRATCH"
+      >>> relative_directory.envvar
+      '/scratch/me/use/this/attribute'
+
+      Modifying ``relative`` will change the second part of the relative
+      directory. If a relative path is given, that relative path is used as is,
+      without reference to the working directory. It is an error to give an
+      absolute directory.
+
+      >>> relative_directory.relative = "now/here"
+      '/scratch/me/now/here'
+      >>> relative_directory.relative = "/now/here"
+      ValueError: Cannot set relative with absolute path. 
+
   """
-  def __init__(self, value = None, envvar = None, hook = None):
+  global_envvar = "~"
+  """ Global envvar position.
+
+      If envvar is set to None in any single instance, than this value takes
+      over. Since it is a class attribute, it should be global to all instances
+      with ``self.envvar == None``. 
+  """
+  def __init__(self, path=None, envvar=None, hook=None):
     """ Initializes the property. 
     
-        By default, initializes such that the fixed point is the user's home.
-        However, if envvar is set, then the fixed-point is determined by a
-        through os.path.expanduser and os.path.expandvars.
+        :Param name: 
+          Name of the property in the object.
     """
-    from os import environ
-    self._value = "" if value == None else value
-    """ Relative directory. """
-    self.envvar = envvar if envvar != None else "~/"
+    super(RelativeDirectory, self).__init__()
+
+    self._relative = None
+    """ Private path relative to fixed point. """
+    self._envvar = None
+    """ Private envvar variable. """
+    self._hook = None
+    """ Private hook variable. """
+    self.path = path
+    """ Relative path. """
+    self.envvar = envvar
     """ Fixed point. """
     self.hook = hook
-    """ An object to call when the directory is changed.
+    """ An object to call when the path is changed.
     
-        This callable need only take two argument, the 'self' of the owner and
-        the absolute path to the directory.
+        Callable with at most one argument.
     """
 
   @property
-  def fixed_point(self):
-    from os.path import expanduser, expandvars
-    return expandvars(expanduser(self.envvar))
+  def relative(self):
+    """ Path relative to fixed point. """
+    return self._relative if self._relative != None else ""
+  @relative.setter
+  def relative(self, value):
+    """ Path relative to fixed point. """
+    from os.path import expandvars, expanduser
+    if value == None: value = ""
+    value = expandvars(expanduser(value.rstrip().lstrip()))
+    assert value[0] != '/', ValueError('Cannot set "relative" attribute with absolute path.')
+    self._relative = value if len(value) else None
+    self.hook(self.path)
 
-  def __get__(self, instance, owner):
-    """ Returns absolute directory """
+  @property 
+  def envvar(self):
+    """ Fixed point for relative directory. """
+    from os.path import expanduser, expandvars, normpath
+    if self._envvar == None: return expanduser(self.global_envvar)
+    return normpath(expandvars(expanduser(self._envvar)))
+  @envvar.setter
+  def envvar(self, value):
+    if value == None: self._envvar = None
+    elif len(value.rstrip().lstrip()) == 0: self._envvar = None
+    else: self._envvar = value
+    self.hook(self.path)
+
+  @property 
+  def path(self):
+    """ Returns absolute path, including fixed-point. """
     from os.path import join, normpath
-    return normpath(join(self.fixed_point, self._value))
+    if self._relative == None: return self.envvar
+    return normpath(join(self.envvar, self._relative))
+  @path.setter
+  def path(self, value):
+    from os.path import relpath, expandvars, expanduser
+    from os import getcwd
+    if value == None: value = getcwd()
+    if isinstance(value, tuple) and len(value) == 2: 
+      self.envvar = value[0]
+      self.relative = value[1]
+      return
+    if len(value.rstrip().lstrip()) == 0: value = getcwd()
+    else: self._relative = relpath(expanduser(expandvars(value)), self.envvar) 
+    self.hook(self.path)
 
-  def __set__(self, instance, value):
-    """ Sets directory relative to fixed-point. """
-    from os.path import relpath
-    # checking for a 2-tuple to set envvar.
-    if value != None and len(value) == 2:
-      if hasattr(value[0], "__len__") and hasattr(value[1], "__len__"):
-            is_2_tuple = len(value[0]) != 1 and len(value[1]) != 1
-      else: is_2_tuple = value[0] == None or value[1] == None
-      if is_2_tuple:
-        self.envvar = value[1] if value[1] != None else "~/"
-        self.__set__(instance, value[0])
-        return
+  @property
+  def unexpanded(self):
+    """ Unexpanded path (eg with envvar as is). """
+    from os.path import join
+    e = self.global_envvar if self._envvar == None else self._envvar
+    return e if self._relative == None else join(e, self._relative)
 
-    if value == None: self._value = ""
-    elif len(value.rstrip().lstrip()) == 0: self._value = ""
-    else: self._value = relpath(value, self.fixed_point) 
-    if hasattr(self.hook, "__call__"): self.hook(instance, self.fixed_point)
+
+  @property
+  def hook(self):
+    from inspect import ismethod, getargspec
+    if self._hook == None: return lambda x: None
+    N = len(getargspec(self._hook)[0])
+    if ismethod(self._hook): N -= 1
+    if N == 0: return lambda x: self._hook()
+    return self._hook
+  @hook.setter
+  def hook(self, value): 
+    from inspect import ismethod, getargspec, isfunction
+
+    if value == None: 
+      self._hook = None
+      return
+    assert ismethod(value) or isfunction(value), \
+           TypeError("hook is not a function or bound method.")
+    N = len(getargspec(value)[0])
+    if ismethod(value):
+      assert value.im_self != None,\
+             TypeError("hook callable cannot be an unbound method.")
+      N -= 1
+    assert N < 2, TypeError("hook callable cannot have more than one argument.")
+    self._hook = value
+  def __getstate__(self):
+    """ Saves state. 
+
+        If hook was not pickleable, then it will not be saved appropriately.
+    """
+    from pickle import dumps
+    try: dumps(self._hook)
+    except: return self._relative, self._envvar
+    else:   return self._relative, self._envvar, self._hook
+  def __setstate__(self, args):
+    """ Resets state. 
+
+        If hook was not pickleable, then it will not be reset.
+    """
+    if len(args) == 3: self._relative, self._envvar, self._hook = args
+    else: self._relative, self._envvar = args
+
+  def set(self, path=None, envvar=None):
+    """ Sets path and envvar.
+
+        Used by repr.
+    """
+    hook = self._hook
+    self._hook = None
+    self.envvar = envvar
+    self.path = path
+    self._hook = hook
+    self.hook(self.path)
+
+  def repr(self):
+    """ Makes this instance somewhat representable. 
+
+        Since hook cannot be represented in most cases, and is most-likely set
+        on initialization, this method uses ``set`` to get away with
+        representability.
+    """
+    return "{0}, {1}".format(repr(self._envvar), repr(self._relative))
+
+
+

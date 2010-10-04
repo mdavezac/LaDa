@@ -1,11 +1,11 @@
 """ Subpackage defining vasp incar parameters. """
 from _params import SpecialVaspParam, NElect, Algo, Precision, Ediff,\
-                    Encut, FFTGrid, Restart, UParams, IniWave
+                    Encut, FFTGrid, Restart, UParams, IniWave, Magmom
 from ...opt.decorators import add_setter
 
 __all__ = [ "SpecialVaspParam", "NElect", "Algo", "Precision", "Ediff",\
             "Encut", "FFTGrid", "Restart", "UParams", "IniWave",\
-            "Incar" ]
+            "Incar", "Magmom" ]
 
 class Incar(object):
   """ Contains vasp Incar parameters. 
@@ -40,17 +40,13 @@ class Incar(object):
            anything else (other than None). In the latter case, a fake VASP
            calculation is performed to get VASP recommended values.
          - C{symprec}: tolerance when determining symmetries.
+         - C{magmom}: Sets magnetic moment. See `incar.Magmom`.
          - C{npar}: Defaults to None.
          - C{lcorr}: Defaults to None.
          - C{lplane}: Defaults to None.
          - C{nbands}: Defaults to None.
          - C{lorbit}: Defaults to None.
          - C{addgrid}: Defaults to None.
-         - C{magmom}: Defaults to None. Accepts a 2-tuple (type, list of indices):
-             - type: eigther "low" or "high" for low or high spin configuration.
-             - list of indices: indices of the atoms (in structure passed to
-               vasp functional) which are magnetic.  It is expected that the
-               valency of these atoms are all s^2 d^n p^0. 
          - C{restart}: the return from previous vasp run to use as restart. 
 
              >> save_this_object = vasp(some parameters) # makes a vasp call.
@@ -69,11 +65,11 @@ class Incar(object):
 
       New parameters can be added as follows:
 
-         >>> vasp.add_param = "ispin", 2
+      >>> vasp.add_param = "ispin", 2
 
       This will print "ISPIN = 2" to the incar. Uppercase conversion is automatic.
 
-      @note: U and NLEP parameters should be given when defining the pseudo-potentials.
+      :note: U and NLEP parameters should be given when defining the pseudo-potentials.
 
       For hackers, how this code works: VASP parameters are set either in
       self.params, in which case VASP key/value pair are the key (in uppercase)
@@ -123,7 +119,6 @@ class Incar(object):
     self.add_param = "isym",        None
     self.add_param = "symprec",     None
     self.add_param = "lcorr",       None
-    self.add_param = "magmom",      None
     self.add_param = "nupdown",     None
     self.add_param = "loptica",     None
     # objects derived from SpecialVaspParams will be recognized as such and can
@@ -137,6 +132,7 @@ class Incar(object):
     self.restart     = Restart(None)
     self.U_verbosity = UParams("occupancy")
     self.iniwave     = IniWave(None)
+    self.magmom      = Magmom()
 
 
   def incar_lines(self, *args, **kwargs):
@@ -174,13 +170,13 @@ class Incar(object):
     
         Consists of a key value pair. 
 
-          >>> vasp.add_param = "ispin", 2
+        >>> vasp.add_param = "ispin", 2
 
         This will result in the INCAR as "ISPIN = 2". Once set, the value can be accessed directly:
 
-          >>> vasp.add_param = "ispin", 2
-          >>> vasp.ispin = 1
-          >>> print vasp.ispin # prints 1
+        >>> vasp.add_param = "ispin", 2
+        >>> vasp.ispin = 1
+        >>> print vasp.ispin # prints 1
     """
     key, value = args
     if isinstance(value, SpecialVaspParam):
@@ -239,7 +235,7 @@ class Incar(object):
   
         It can be specified as a string:
           
-          >>> vasp.smearing = "type", x
+        >>> vasp.smearing = "type", x
        
         Where type is any of "fermi", "gaussian", "mp", "tetra", "metal", or "insulator",
         and x is the energy scale in eV.
@@ -300,39 +296,64 @@ class Incar(object):
     
         It accepts a tuple, as in:
 
-          >>> vasp.set_relaxation = "static", 
+        >>> vasp.set_relaxation = "static", 
       
         Some of the parameters (purposefully left out above) are optional:
-          - first argument can be "static", or a combination of "ion(ic|s)",
-               "cell(\s+|-|_?(?:shape)?", and "volume".  Can also be set using
-               an integer between 0 and 7. See VASP manual. 
-          - second (optional) argument is nsw
-          - third (optional) argument is ibrion
-          - fourth (optional) argument is potim.
+        
+        - first argument can be "static", or a combination of "ion(ic|s)",
+          "cell(\s+|-|_?(?:shape)?", and "volume".  
+        - second (optional) argument is nsw
+        - third (optional) argument is ibrion
+        - fourth (optional) argument is potim.
     """
     import re
-    if args[0] == None: isif = None
-    else:
-      try: isif = int(args[0]) 
-      except (ValueError, TypeError): 
-        isif = str(args[0]).lower()
-        ionic = re.search( "ion(ic|s)?", isif.lower() ) != None
-        cellshape = re.search( "cell(\s+|-|_)?(?:shape)?", isif.lower() ) != None
-        volume = re.search( "volume", isif.lower() ) != None
-        if (not ionic) and (not cellshape) and (not volume): isif = 0
-        elif ionic and (not cellshape) and (not volume):     isif = 2
-        elif ionic and cellshape and volume:                 isif = 3
-        elif ionic and cellshape and (not volume):           isif = 4
-        elif(not ionic) and  cellshape and (not volume):     isif = 5
-        elif(not ionic) and  cellshape and volume:           isif = 6
-        elif(not ionic) and (not cellshape) and volume:      isif = 7
-        elif ionic and (not cellshape) and volume:
-          raise RuntimeError, "VASP does not allow relaxation of atomic position"\
-                              "and volume at constant cell-shape.\n"
-    self.params["isif"] = isif
-    if len(args) > 1: self.params["nsw"] = args[1]
-    if len(args) > 2: self.params["ibrion"] = args[2]
-    if len(args) > 3: self.params["potim"] = args[3]
+
+    dof =  args.lower() if isinstance(args,str) else str(args[0]).lower()
+    ionic = re.search( "ion(ic|s)?", dof ) != None
+    cellshape = re.search( "cell(\s+|-|_)?(?:shape)?", dof ) != None
+    volume = re.search( "volume", dof ) != None
+
+    nsw, ibrion, potim = None, None, None
+    if not isinstance(args, str):
+      if len(args) > 1: nsw = int(args[1])
+      if len(args) > 2: ibrion = int(args[2])
+      if len(args) > 2: potim = int(args[3])
+
+
+    # static calculation.
+    if (not ionic) and (not cellshape) and (not volume):
+      self.params["isif"] = 1
+      self.params["ibrion"] = -1
+      assert ibrion == None or ibrion == -1, \
+             ValueError("Cannot set ibrion to anything but -1 for static calculations.")
+      assert nsw  == None or nsw == 0, \
+             ValueError("static calculation with nsw > 0 is way too creative.")
+      self.params["nsw"] = None
+      if potim != None: self.params["potim"] = potim
+
+    else: # Some kind of relaxations. 
+      # ionic calculation.
+      if ionic and (not cellshape) and (not volume):   self.params["isif"] = 1
+      elif ionic and cellshape and (not volume):       self.params["isif"] = 4
+      elif ionic and cellshape and volume:             self.params["isif"] = 3
+      elif (not ionic) and cellshape and volume:       self.params["isif"] = 6
+      elif (not ionic) and cellshape and (not volume): self.params["isif"] = 5
+      elif (not ionic) and (not cellshape) and volume: self.params["isif"] = 7
+      elif ionic and (not cellshape) and volume: 
+        raise RuntimeError, "VASP does not allow relaxation of atomic position"\
+                            "and volume at constant cell-shape.\n"
+
+      if ibrion == None and self.params["ibrion"] in [None, -1]: self.params["ibrion"] = 2
+      elif ibrion != None: 
+        assert ibrion != -1, ValueError("Cannot set ibrion to -1 with strain relaxations.")
+        assert ibrion != 0 or self.params["isif"] == 1,\
+               ValueError("Cannot set ibrion to 0 with strain relaxations.")
+        self.params["ibrion"] = ibrion
+      if nsw != None:
+        assert nsw > 0, ValueError("Cannot set nse < 1 and perform strain relaxations.")
+        self.params["nsw"] = nsw
+      elif self.params["nsw"] == None or self.params["nsw"] == 0: self.params["nsw"] = 50
+      if potim != None: self.params["potim"] = potim
 
   def __iter__(self):
     """ Iterates over attribute names and values. """

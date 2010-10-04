@@ -25,7 +25,8 @@ def main():
                      help="Directory to add to python path",
                      metavar="Directory" )
 
-  (options, args) = parser.parse_args()
+  try: (options, args) = parser.parse_args()
+  except SystemExit: return
 
   # is workdir relative
   if options.relative != None: 
@@ -58,14 +59,23 @@ def main():
 if __name__ == "__main__":
   from sys import stderr
   import traceback
-  from boost.mpi import Exception as mpiException, abort
+  from boost.mpi import Exception as mpiException, abort, world
   try: main()
   except mpiException as e: 
-    file.stderr("Encountered mpi exception %s."% (e))
-    traceback.print_exc()
+    for i in range(world.size): 
+      if i == world.rank:
+        traceback.print_exc()
+        file.stderr("Encountered mpi exception %s."% (e))
+        print 
+      world.barrier()
     abort(0)
+    raise
   except: # other exceptions
-    traceback.print_exc()
+    for i in range(world.size): 
+      if i == world.rank:
+        traceback.print_exc()
+        print 
+      world.barrier()
     abort(0)
     raise
 

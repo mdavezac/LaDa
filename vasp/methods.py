@@ -95,8 +95,9 @@ class RelaxCellShape(object):
     from copy import deepcopy
     from math import fabs 
     from os import getcwd
-    from os.path import join, exists
+    from os.path import join
     from shutil import rmtree
+    from ..opt import RelativeDirectory
 
 
     # make this function stateless.
@@ -108,7 +109,7 @@ class RelaxCellShape(object):
     first_trial = kwargs.pop("first_trial", self.first_trial)
     maxiter = kwargs.pop("maxiter", self.maxiter)
     keep_steps = kwargs.pop("keep_steps", self.keep_steps)
-    if outdir == None: outdir = getcwd()
+    outdir = getcwd() if outdir == None else RelativeDirectory(outdir).path
 
     # check nsw parameter. kwargs may still overide it.
     if vasp.nsw == None: vasp.nsw = 60
@@ -154,6 +155,18 @@ class RelaxCellShape(object):
     # Does not perform static calculation if convergence not reached.
     if fabs(output.energy - olde) > float(len(structure.atoms)) * self.vasp.ediff: 
       yield output 
+
+    # performs ionic calculation. 
+    output = vasp\
+             (\
+               structure, \
+               outdir = join(outdir, join("relax_cellshape", "ionic")),\
+               comm=comm,\
+               set_relaxation = "ionic",\
+               **kwargs\
+             )
+    yield output
+
     # performs final calculation outside relaxation directory. 
     output = vasp\
              (\
@@ -161,17 +174,28 @@ class RelaxCellShape(object):
                outdir = outdir,\
                comm=comm,\
                set_relaxation = "static",\
+               restart = output, \
                **kwargs\
              )
     yield output
 
-    if output.success and (not keep_steps): 
-      rmtree(join(outdir, "relax_cellshape"))
+    if output.success and (not keep_steps): rmtree(join(outdir, "relax_cellshape"))
 
-  def __call__(self, *args, **kwargs):
+  def __call__(self, structure, outdir=None, comm=None, overwrite=False, **kwargs):
     """ Performs a vasp relaxation. 
 
-        Arguments are the same as `generator`.
+        :Parameters:
+          structure : lada.crystal.Structure
+            The structure to relax with `vasp`.
+          outdir
+            Output directory passed on to the `vasp` functional.
+          comm : boost.mpi.communicator or None
+            MPI communicator passed on to the `vasp` functional.
+          kwargs 
+            Other keywords will overide attributes of this instance of
+            `RelaxCellShape` (though for this run only. This function is
+            stateless) if they are named after attributes of `RelaxCellShape`.
+            Otherwise, the keywords are passed on to the `vasp` functional.
 
         The plane wave basis depends upon cell-shape. Hence, the basis goes out
         of sync with the actual structure during cell-shape relaxation.
@@ -189,7 +213,20 @@ class RelaxCellShape(object):
         If you want to examine the result of each and every vasp calculation,
         use `generator` instead.
     """ 
-    for output in self.generator(*args, **kwargs): pass
+    from shutil import rmtree
+    from os import getcwd
+    from os.path import exists
+    from ..opt import RelativeDirectory
+
+    outdir = getcwd() if outdir == None else RelativeDirectory(outdir).path
+    if not overwrite:
+      extract = self.Extract(outdir, comm=None)
+      if extract.success: return extract
+    elif is_root and exists(outdir): rmtree(outdir)
+    if comm != None: comm.barrier() # makes sure directory is not created by other proc!
+
+    for output in self.generator(structure, outdir=outdir,
+                                 comm=comm, overwrite=overwrite, **kwargs): pass
     return output
   
   def _norun(self, *args, **kwargs):
@@ -233,7 +270,7 @@ class RelaxIons(object):
       This functional keeps working until convergence is achieved, and then
       creates a static calculation.
   """
-  def __init__(self, vasp, first_trial=None):
+  def __init__(self, vasp, first_trial=None, keep_steps=True):
     """ Initializes a ionic relaxation.
         
         In order to obtain accurate total energies, a static calculation is
@@ -246,6 +283,8 @@ class RelaxIons(object):
     """ Dictionary of parameters for the first run of the functional. see `__init__`. """
     self.Extract = self.vasp.Extract
     """ Extraction class. """
+    self.keep_steps = keep_steps
+    """ Whether or not to keep intermediate results. """
 
   def __call__(self, structure, outdir=None, comm=None, **kwargs ):
     """ Performs an ionic relaxation followed by a static calculation.
@@ -272,31 +311,33 @@ class RelaxIons(object):
     from math import fabs 
     from os import getcwd
     from os.path import join, exists
+    from ..opt import RelativeDirectory
 
 
     # make this function stateless.
     vasp = kwargs.pop("vasp", self.vasp)
     structure = deepcopy(structure)
     first_trial = kwargs.pop("first_trial", self.first_trial)
-    if outdir == None: outdir = getcwd()
-
-    # check nsw parameter. kwargs may still overide it.
-    if vasp.nsw == None: vasp.nsw = 60
-    # checks ibrion paramer. kwargs may still overide it.
-    if vasp.ibrion == None and vasp.potim == None: vasp.ibrion = 2
+    keep_steps = kwargs.pop("keep_steps", self.keep_steps)
+    outdir = getcwd() if outdir == None else RelativeDirectory(outdir).path
 
     # does not run code. Just creates directory.
     if kwargs.pop("norun", False): 
       this = RelaxIons(vasp, first_trial)
       return this._norun(structure, outdir=outdir, comm=comm, **kwargs)
 
+    if not overwrite:
+      extract = self.Extract(outdir, comm=None)
+      if extract.success: return extract
+    elif is_root and exists(outdir): rmtree(outdir)
+    
     # sets parameter dictionary for first trial.
     if first_trial != None:
       params = kwargs.copy()
       params.update(first_trial)
     else: params = kwargs
-    if comm != None: comm.barrier()
-    
+
+    if comm != None: comm.barrier() # makes sure directory is not created by other proc
     # performs relaxation.
     directory = join(outdir, "relax_ions")
     params["set_relaxation"] = "ionic"
@@ -317,9 +358,11 @@ class RelaxIons(object):
                structure, \
                outdir = outdir,\
                comm=comm,\
+               restart=output,\
                **kwargs\
              )
              
+    if output.success and (not keep_steps): rmtree(join(outdir, "relax_ions"))
     return output
 
   def _norun(self, *args, **kwargs):

@@ -10,7 +10,7 @@ class Individual(object):
 
   size = 10
 
-  def __init__(self):
+  def __init__(self, size = None):
     """ Initializes a bitstring individual randomly. 
 
       @attention: This class does handle mpi at all. Created instances will
@@ -20,7 +20,8 @@ class Individual(object):
     from numpy import array
 
     super(Individual, self).__init__()
-    self.genes = array([ randint(0,1) for i in xrange(self.size) ])
+    if size == None: size = self.size
+    self.genes = array([ randint(0,1) for i in xrange(size) ])
   
   def __eq__(self, a): 
     from math import fabs
@@ -53,6 +54,10 @@ class Crossover(object):
     if hasattr(a, "fitness"): delattr(a, "fitness")
     return a
 
+  def __repr__(self):
+    return "from {0} import {1}\nga_operator = {1}({2})"\
+           .format(self.__class__.__module__, self.__class__.__name__, self.rate)
+
 class Mutation(object):
   """ A mutation operation. """
 
@@ -69,6 +74,9 @@ class Mutation(object):
     if hasattr(a, "fitness"): delattr(a, "fitness")
     return a
 
+  def __repr__(self):
+    return "from {0} import {1}\nga_operator = {1}({2})"\
+           .format(self.__class__.__module__, self.__class__.__name__, self.rate)
 
 class LocalSearch(object):
   """ Performs a local search over a bitstring by flipping random bits. """

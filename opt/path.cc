@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string>
+#include <unistd.h>
 
 #include <boost/xpressive/basic_regex.hpp>
 #include <boost/xpressive/regex_algorithms.hpp>
@@ -47,7 +48,7 @@ namespace LaDa
       bx::sregex var2 = bx::as_xpr("$(") >> (bx::s1 = +(~bx::as_xpr('/'))) >> bx::as_xpr(')');
       bx::cmatch what;
       bx::function<GetEnv>::type const rep_env = {{}};
-      bx::function<GetEnv>::type const rep_home = {{}};
+      bx::function<GetHome>::type const rep_home = {{}};
 
 
       path = bx::regex_replace(path, var1, rep_env(bx::as<std::string>(bx::s1)));
