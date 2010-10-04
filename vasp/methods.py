@@ -113,6 +113,7 @@ class RelaxCellShape(object):
 
     # check nsw parameter. kwargs may still overide it.
     if vasp.nsw == None: vasp.nsw = 60
+    if vasp.nsw < 2: vasp.nsw = 3
     # checks ibrion paramer. kwargs may still overide it.
     if vasp.ibrion == None and vasp.potim == None: vasp.ibrion = 2
 
@@ -123,7 +124,7 @@ class RelaxCellShape(object):
       return
 
     # number of restarts.
-    nb_steps, olde = 0, None
+    nb_steps = None
    
     # sets parameter dictionary for first trial.
     if first_trial != None:
@@ -148,13 +149,16 @@ class RelaxCellShape(object):
       
       nb_steps += 1
       params = kwargs
-      olde = output.total_energy
       if nb_steps == 1: continue
-      if fabs(output.total_energy - olde) < float(len(structure.atoms)) * self.vasp.ediff: break
+      assert output.total_energies.shape[0] >= 2
+      energies = output.total_energies[-2] - output.total_energies[-1:]
+      if abs(energies) < float(len(structure.atoms)) * self.vasp.ediff: break
 
     # Does not perform static calculation if convergence not reached.
-    if fabs(output.total_energy - olde) > float(len(structure.atoms)) * self.vasp.ediff: 
-      yield output 
+    assert output.total_energies.shape[0] >= 2
+    energies = output.total_energies[-2] - output.total_energies[-1:]
+    if abs(energies) > float(len(structure.atoms)) * self.vasp.ediff:
+      raise RuntimeError("Could not converge cell-shape in {0} iterations.".format(maxiter))
 
     # performs ionic calculation. 
     output = vasp\
