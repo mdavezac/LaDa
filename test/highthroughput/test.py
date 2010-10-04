@@ -152,7 +152,7 @@ def magnetic_wave(path=None, inputpath=None, **kwargs):
   # will loop over all jobs, looking for *successfull* *non-magnetic* calculations. 
   # Only magnetic jobs which do NOT exist are added at that point.
   nonmagname = "non-magnetic"
-  has_changed = False
+  nb_new_jobs = 0
   for nonmagjob, name in jobdict.walk_through():
     # avoid tagged jobs.
     if nonmagjob.is_tagged: continue
@@ -168,80 +168,66 @@ def magnetic_wave(path=None, inputpath=None, **kwargs):
     material = nonmagjob.material
     lattice = nonmagjob.lattice
 
-    # now tries and creates high-spin ferro jobs if it does not already exist.
-    jobname = normpath(basename + "/hs_ferro")
-    magmom = hs_ferro(extract.structure, extract.functional.species)
-    if magmom != None and jobname not in jobdict:
-      job = jobdict / jobname
-      job.functional = input.relaxer if inputpath != None else nonmagjob.functional
-      job.jobparams["structure"] = deepcopy(extract.structure)
-      job.jobparams["structure"].name = "{0} in {1}, high-spin.".format(material, lattice.name)
-      job.jobparams["structure"].magmom = magmom
-      job.jobparams["magmom"] = "attribute: magmom"
-      job.jobparams["ispin"] =  2
-      # saves some stuff for future reference.
-      job.material = material
-      job.lattice  = lattice
-      has_changed = True
+    # figures out whether we have both high and low spins. 
+    if has_high_and_low(extract.structure, extract.functional.species):
+          hnl = [(min, "ls-"), (max, "hs-")]
+    else: hnl = [(min, "")] 
+    # now loops over moments.
+    for func, prefix in hnl: 
+      # now tries and creates high-spin ferro jobs if it does not already exist.
+      jobname = normpath("{0}/{1}ferro".format(basename, prefix))
+      magmom = ferro(extract.structure, extract.functional.species, func)
+      if magmom != None and jobname not in jobdict:
+        job = jobdict / jobname
+        job.functional = input.relaxer if inputpath != None else nonmagjob.functional
+        job.jobparams["structure"] = deepcopy(extract.structure)
+        job.jobparams["structure"].name = "{0} in {1}, {2}ferro.".format(material, lattice.name, prefix)
+        job.jobparams["structure"].magmom = magmom
+        job.jobparams["magmom"] = "attribute: magmom"
+        job.jobparams["ispin"] =  2
+        # saves some stuff for future reference.
+        job.material = material
+        job.lattice  = lattice
+        nb_new_jobs += 1
 
-    # now tries and creates low-spin ferro jobs if it does not already exist.
-    jobname = normpath(basename + "/ls_ferro")
-    magmom = ls_ferro(extract.structure, extract.functional.species)
-    if magmom != None and jobname not in jobdict:
-      job = jobdict / jobname
-      job.functional = input.relaxer if inputpath != None else nonmagjob.functional
-      job.jobparams["structure"] = deepcopy(extract.structure)
-      job.jobparams["structure"].name = "{0} in {1}, low-spin.".format(material, lattice.name)
-      job.jobparams["structure"].magmom = magmom
-      job.jobparams["magmom"] = "attribute: magmom"
-      job.jobparams["ispin"] =  2
-      # saves some stuff for future reference.
-      job.material = material
-      job.lattice  = lattice
-      has_changed = True
+      # now tries and creates anti-ferro-lattices jobs if it does not already exist.
+      magmom = species_antiferro(extract.structure, extract.functional.species, func) 
+      jobname = normpath("{0}/{1}anti-ferro-0".format(basename, prefix))
+      if magmom != None and jobname not in jobdict:
+        job = jobdict / jobname
+        job.functional = input.relaxer if inputpath != None else nonmagjob.functional
+        job.jobparams["structure"] = deepcopy(extract.structure)
+        job.jobparams["structure"].name = "{0} in {1}, {2}specie-anti-ferro."\
+                                          .format(material, lattice.name, prefix)
+        job.jobparams["structure"].magmom = magmom
+        job.jobparams["magmom"] = "attribute: magmom"
+        job.jobparams["ispin"] =  2
+        # saves some stuff for future reference.
+        job.material = material
+        job.lattice  = lattice
+        nb_new_jobs += 1
 
+      # random anti-ferro.
+      for i in range(1, 1+input.nbantiferro):
+        magmom = random(extract.structure, extract.functional.species, func)
+        if magmom == None: continue
+        jobname = normpath("{0}/{1}anti-ferro-{2}".format(basename, prefix, i))
+        if jobname in jobdict: continue
+        job = jobdict / jobname
+        job.functional = input.relaxer if inputpath != None else nonmagjob.functional
+        job.jobparams["structure"] = deepcopy(extract.structure)
+        job.jobparams["structure"].name = "{0} in {1}, random anti-ferro."\
+                                          .format(material, lattice.name)
+        job.jobparams["structure"].magmom = magmom
+        job.jobparams["magmom"] = "attribute: magmom"
+        job.jobparams["ispin"] =  2
+        # saves some stuff for future reference.
+        job.material = material
+        job.lattice  = lattice
+        nb_new_jobs += 1
 
-    # now tries and creates anti-ferro-lattices jobs if it does not already exist.
-    magmom = species_antiferro(extract.structure, extract.functional.species) 
-    jobname = normpath(basename + "/anti-ferro-0")
-    if magmom != None and jobname not in jobdict:
-      job = jobdict / jobname
-      job.functional = input.relaxer if inputpath != None else nonmagjob.functional
-      job.jobparams["structure"] = deepcopy(extract.structure)
-      job.jobparams["structure"].name = "{0} in {1}, lattice anti-ferro."\
-                                        .format(material, lattice.name)
-      job.jobparams["structure"].magmom = magmom
-      job.jobparams["magmom"] = "attribute: magmom"
-      job.jobparams["ispin"] =  2
-      # saves some stuff for future reference.
-      job.material = material
-      job.lattice  = lattice
-      has_changed = True
-
-    # random anti-ferro.
-    for i in range(1, 1+input.nbantiferro):
-      magmom = random(extract.structure, extract.functional.species)
-      if magmom == None: continue
-      jobname = normpath("/" + basename + "/anti-ferro-{0}".format(i))
-      if jobname in jobdict: continue
-      job = jobdict / jobname
-      job.functional = input.relaxer if inputpath != None else nonmagjob.functional
-      job.jobparams["structure"] = deepcopy(extract.structure)
-      job.jobparams["structure"].name = "{0} in {1}, random anti-ferro."\
-                                        .format(material, lattice.name)
-      job.jobparams["structure"].magmom = magmom
-      job.jobparams["magmom"] = "attribute: magmom"
-      job.jobparams["ispin"] =  2
-      # saves some stuff for future reference.
-      job.material = material
-      job.lattice  = lattice
-      has_changed = True
-
-
-  if not has_changed:
-    print "No new jobs: magnetic jobs already exist in dictionary, "\
-          "or no system was declared magnetic. "
-    return
+  print "Created {0} new jobs.".format(nb_new_jobs)
+  if nb_new_jobs == 0: return
   ip = get_ipy()
   ip.user_ns["current_jobdict"] = jobdict.root
   ip.magic("savejobs " + path)
@@ -253,11 +239,17 @@ def is_magnetic_system(structure, species):
   for u in [u for name, u in species.items() if name in specie_list(structure)]:
     if not hasattr(u, "moment"): continue
     if not hasattr(u.moment, "__iter__"): 
-      if abs(u) > 1e-12: return True
+      if abs(u.moment) > 1e-12: return True
       continue
     for a in u.moment:
       if abs(a) > 1e-12: return True
     
+  return False
+
+def has_high_and_low(structure, species):
+  """ True if some species have both high and low spins. """
+  for atom in structure.atoms:
+    if len(deduce_moment(atom, species)) > 1: return True
   return False
 
 def deduce_moment(atom, species):
@@ -273,20 +265,16 @@ def deduce_moment(atom, species):
     return [species[atom.type].moment]
   return species[atom.type].moment
 
-def ls_ferro(structure, species):
+def ferro(structure, species, func=min):
   """ Returns magmom VASP flag for low-spin ferromagnetic order. """
-  return [ min(deduce_moment(a, species)) for a in structure.atoms ]
+  return [ func(deduce_moment(a, species)) for a in structure.atoms ]
 
-def hs_ferro(structure, species):
-  """ Returns magmom VASP flag for high-spin ferromagnetic order. """
-  return [ max(deduce_moment(a, species)) for a in structure.atoms ]
-
-def species_antiferro(structure, species):
-  """ Anti ferro order with each cation specie in a different direction. """
+def species_antiferro(structure, species, func=min):
+  """ Low spin anti ferro order with each cation specie in a different direction. """
   # checks whether lattice-sites are magnetic or not.
   signs = {}
   for atom in structure.atoms:
-    m = max(deduce_moment(atom, species))
+    m = func(deduce_moment(atom, species))
     signs[atom.type] = 1 if abs(m) < 1e-12 else -1
   if len([u[1] for u in signs.items() if u[1] == -1]) < 2: return None
   # makes alternating sign list.
@@ -296,12 +284,11 @@ def species_antiferro(structure, species):
     signs[k] = 1 if dummy == 1 else -1
     dummy = -1 * dummy
   # creates magmom
-  return [ float(signs[a.type]) * max(deduce_moment(a, species))\
+  return [ float(signs[a.type]) * func(deduce_moment(a, species))\
            for a in structure.atoms ]
 
-def random(structure, species):
-  """ Random magnetic order. """
+def random(structure, species, func=min):
+  """ High-spin random magnetic order. """
   from random import choice
-  return [ choice([-1e0, 1e0]) * max(deduce_moment(a, species))\
+  return [ choice([-1e0, 1e0]) * func(deduce_moment(a, species))\
            for a in structure.atoms ]
-
