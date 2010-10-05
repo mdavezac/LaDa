@@ -124,7 +124,7 @@ class RelaxCellShape(object):
       return
 
     # number of restarts.
-    nb_steps = None
+    nb_steps = 0
    
     # sets parameter dictionary for first trial.
     if first_trial != None:
