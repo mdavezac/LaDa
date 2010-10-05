@@ -172,7 +172,8 @@ class JobDict(object):
     # Parent job. 
     super(JobDict, self).__setattr__("parent", None)
 
-  def _get_functional(self):
+  @property
+  def functional(self):
     """ Returns current functional.
     
         The functional is implemented as a property to make sure that it is
@@ -187,7 +188,8 @@ class JobDict(object):
     """
     return self._functional
 
-  def _set_functional(self, value):
+  @functional.setter
+  def functional(self, value):
     from pickle import dumps, loads # ascertains pickle-ability, copies functional
     assert value == None or hasattr(value, "__call__"),\
            ValueError("job.functional should be either None(no job) or a callable.")
@@ -196,10 +198,9 @@ class JobDict(object):
     except Exception as e:
       raise ValueError("Could not pickle functional. Caught Error:\n{0}".format(e))
     else: self._functional = loads(string)
-  def _del_functional(self): self._functional = None
+  @functional.deleter
+  def functional(self): self._functional = None
 
-  functional = property(_get_functional, _set_functional, _del_functional)
-    
   @property
   def name(self):
      """ Returns the name of this dictionary, relative to root. """
