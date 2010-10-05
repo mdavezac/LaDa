@@ -111,10 +111,10 @@ class RelaxCellShape(object):
     keep_steps = kwargs.pop("keep_steps", self.keep_steps)
     outdir = getcwd() if outdir == None else RelativeDirectory(outdir).path
     ediffg = self.vasp.ediffg
-    if ediffg == None: ediffg = 1e1 * self.ediff
+    if ediffg == None: ediffg = 1e1 * self.vasp.ediff
     elif ediffg < self.vasp.ediff: 
-      raise ValueError("Parameter ediffg({0}) is smaller than ediffg({1}.".format(self.ediffg, self.ediff))
-    ediff *= 1.2 * float(len(structure.atoms))
+      raise ValueError("Parameter ediffg({0}) is smaller than ediffg({1}.".format(self.ediffg, self.vasp.ediff))
+    ediffg *= 1.2 * float(len(structure.atoms))
 
     # check nsw parameter. kwargs may still overide it.
     if vasp.nsw == None: vasp.nsw = 60
