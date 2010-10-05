@@ -110,6 +110,11 @@ class RelaxCellShape(object):
     maxiter = kwargs.pop("maxiter", self.maxiter)
     keep_steps = kwargs.pop("keep_steps", self.keep_steps)
     outdir = getcwd() if outdir == None else RelativeDirectory(outdir).path
+    ediffg = self.vasp.ediffg
+    if ediffg == None: ediffg = 1e1 * self.ediff
+    elif ediffg < self.vasp.ediff: 
+      raise ValueError("Parameter ediffg({0}) is smaller than ediffg({1}.".format(self.ediffg, self.ediff))
+    ediff *= 1.2 * float(len(structure.atoms))
 
     # check nsw parameter. kwargs may still overide it.
     if vasp.nsw == None: vasp.nsw = 60
@@ -152,12 +157,12 @@ class RelaxCellShape(object):
       if nb_steps == 1: continue
       assert output.total_energies.shape[0] >= 2
       energies = output.total_energies[-2] - output.total_energies[-1:]
-      if abs(energies) < float(len(structure.atoms)) * self.vasp.ediff: break
+      if abs(energies) < ediffg: break
 
     # Does not perform static calculation if convergence not reached.
     assert output.total_energies.shape[0] >= 2
     energies = output.total_energies[-2] - output.total_energies[-1:]
-    if abs(energies) > float(len(structure.atoms)) * self.vasp.ediff:
+    if abs(energies) > ediffg:
       raise RuntimeError("Could not converge cell-shape in {0} iterations.".format(maxiter))
 
     # performs ionic calculation. 

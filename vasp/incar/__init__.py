@@ -127,6 +127,7 @@ class Incar(object):
     self.algo        = Algo("normal")
     self.precision   = Precision("accurate")
     self.ediff       = Ediff(1e-4)
+    self.ediffg      = Ediff(None)
     self.encut       = Encut(None)
     self.fftgrid     = FFTGrid(None)
     self.restart     = Restart(None)
@@ -354,6 +355,7 @@ class Incar(object):
         self.params["nsw"] = nsw
       elif self.params["nsw"] == None or self.params["nsw"] == 0: self.params["nsw"] = 50
       if potim != None: self.params["potim"] = potim
+      if self.ediffg != None and self.ediffg < self.ediff: self.ediffg = None
 
   def __iter__(self):
     """ Iterates over attribute names and values. """
