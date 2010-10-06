@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """ High-Thoughput of A2BO4 structures. """
 __docformat__ = "restructuredtext en"
+__all__ = ['nonmagnetic_wave', 'magnetic_wave']
 
 def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
   """ Jobs to explore possible ground-states. 
@@ -181,7 +182,8 @@ def magnetic_wave(path=None, inputpath=None, **kwargs):
         job = jobdict / jobname
         job.functional = input.relaxer if inputpath != None else nonmagjob.functional
         job.jobparams["structure"] = deepcopy(extract.structure)
-        job.jobparams["structure"].name = "{0} in {1}, {2}ferro.".format(material, lattice.name, prefix)
+        job.jobparams["structure"].name = "{0} in {1}, {2}ferro."\ 
+                                          .format(material, lattice.name, prefix)
         job.jobparams["structure"].magmom = magmom
         job.jobparams["magmom"] = "attribute: magmom"
         job.jobparams["ispin"] =  2
@@ -226,6 +228,7 @@ def magnetic_wave(path=None, inputpath=None, **kwargs):
         job.lattice  = lattice
         nb_new_jobs += 1
 
+  # now saves new job dictionary
   print "Created {0} new jobs.".format(nb_new_jobs)
   if nb_new_jobs == 0: return
   ip = get_ipy()

@@ -1,5 +1,66 @@
+""" Submodule defining the *third wave* to compute point-defects. """
+__docformat__ = "restructuredtext en"
+__all__ = ['pointdefect_wave']
+
 def pointdefect_wave(path=None, inputpath=None, **kwargs):
-  """ Creates point-defect wave using ground-state job-dictionary. """
+  """ Creates point-defect wave using ground-state job-dictionary. 
+
+      :Parameters:
+        path : str or None
+          Path where the modified job-dictionary will be saved. Calculations will be
+          performed in the parent directory of this file. If None, will use the
+          current job-dictionary path.
+        inputpath : str or None
+          Path to an input file. If not present, then no input file is read and
+          all parameters are taken from the non-magnetic wave.
+        kwargs
+          Any keyword/value pair to take precedence over anything in the input file.
+
+      Creates a point-defect wave from the materials computed in the
+      magnetic and non-magnetic waves. Usage is fairly simple. If the pickle
+      for the magnetic/non-magnetic wave is called ``magnetic_wave``, then one
+      need only open it and call the ``pointdefect_wave``.
+
+      >>> explore all magnetic_wave 
+      >>> import test
+      >>> test.magnetic_wave()
+      >>> launch scattered
+
+      The above will add point-defect calculations for all meterials and
+      lattices of the ``magnetic_wave`` job-dictionary and save it (to the same 
+      path unless an argument is provided to ``magnetic_wave``). Note that
+      changing the location of the current job-dictionary has no effect. It
+      would be possible but sounds too error prone:
+
+      >>> explore all magnetic_wave 
+      >>> goto /Fe2AlO4 # has no effect on what point-defects are added.
+      >>> goto /Al2FeO4 # has no effect on what point-defects are added.
+      >>> import test
+      >>> # creates point-defects for both Fe2AlO4 and Al2FeO4: location does not matter.
+      >>> test.magnetic_wave() 
+      >>> launch scattered
+
+      Point-defects calculations are added to
+      a material if and only if all existing magnetic/non-magnetic jobs for
+      that material have completed successfully. Furthermore, only untagged
+      materials are accepted. Hence, to disable Fe2AlO4 lattices from having
+      point-defects added to it, one can simply tag it:
+
+      >>> explore all magnetic_wave 
+      >>> current_jobdict["/Fe2AlO4"].tag()
+      >>> import test
+      >>> test.magnetic_wave()
+      >>> launch scattered
+
+      Similarly to make sure point-defect calculations are *not* created for
+      the b5 lattice of the Fe2AlO4 material, one could tag it as follows:
+
+      >>> explore all magnetic_wave 
+      >>> current_jobdict["/Fe2AlO4/b5"].tag()
+      >>> import test
+      >>> test.magnetic_wave()
+      >>> launch scattered
+  """
   from tempfile import NamedTemporaryFile
   from os.path import dirname, normpath, relpath, join
   import IPython.ipapi
@@ -43,6 +104,9 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
   for name in magnetic_groundstates():
     # gets the ground-states job-dictionary.
     groundstate = jobdict[name]
+    # checks that the lattice and material are not tagged. 
+    if groundstate[".."].is_tagged: continue
+    if groundstate["../.."].is_tagged: continue
     # extracts the structure from it.
     superstructure = create_superstructure(groundstate, input)
     # extracts lattice.
@@ -57,60 +121,51 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
       # loop over subtituters.
       for A in substituters:
         # loop over inequivalent point-defects sites.
-        for structure, substitution in ptd.all_defects(superstructure, lattice, B, A):
+        for structure, defect in ptd.all_defects(superstructure, lattice, B, A):
           # loop over oxidations states.
           for nb_extrae, oxname in ptd.charged_states(species, A, B):
-            # gets moments.
+            if B == None: nb_extrae *= -1 # correct for insterstitials. 
+            
+            # creates list of moments. 
             new_moments = deduce_moment(A, species) 
-            # correct for insterstitials. 
-            if substitution.type == "None": nb_extrae *= -1
-            
-            # low-spin or no-spin case.
-            # creates new job-dictionary name.
-            if len(new_moments) == 2:   name =  "PointDefects/ls-{0}".format(structure.name)
-            elif len(new_moments) == 1: name = "PointDefects/{0}".format(structure.name)
-            else: raise RuntimeError("Too many moments in specie description.")
-            
-            # checks if job already exists.
-            if name not in groundstate[".."]: 
+            if len(new_moments) > 1: 
+              moments = [ (min(new_moments), "ls-"), (max(new_moments), "hs-") ]
+            else:
+              moments = [ (min(new_moments), "") ]
+            # loop  over moments.
+            for moment, prefix in moments:
+              name =  "PointDefects/{0}{1}".format(prefix, structure.name)
+              
+              # checks if job already exists. Does not change job if it exists!
+              if name in groundstate[".."]: continue
+
+              # creates new job.
               jobdict = groundstate["../"] / name
               jobdict.functional = groundstates.functional
               jobdict.jobparams  = groundstates.jobparams.copy()
               jobdict.jobparams["structure"] = deepcopy(structure)
               jobdict.jobparams["nelect"] = nb_extrae
+              jobdict.jobparams["relaxation"] = "ionic"
               jobdict.lattice  = lattice
               jobdict.material = material
-              jobdict.defect   = substitution
-              # adds or remove moment.
-              if substitution.type == "None": # interstitial:
-                jobdict.jobparams["structure"].magmom = [u for u in superstructure.magmom]
+              jobdict.defect   = defect
+              # adds, modifies, or remove moment depending on defect type.
+              jobdict.jobparams["structure"].magmom = [u for u in superstructure.magmom]
+              if B == None: # interstitial:
                 jobdict.jobparams["structure"].magmom.append(min(new_moment))
-              elif new_moments[0] == None: # vacancy -> remove moment.
-                jobdict.jobparams["structure"].magmom.pop(substitution.index)
+              elif A == None: # vacancy -> remove moment.
+                jobdict.jobparams["structure"].magmom.pop(defect.index)
               else: 
-                jobdict.jobparams["structure"].magmom[substitution.index] = min(new_moments)
+                jobdict.jobparams["structure"].magmom[defect.index] = min(new_moments)
               nb_new_jobs += 1
+
+  # now saves new job dictionary
+  print "Created {0} new jobs.".format(nb_new_jobs)
+  if nb_new_jobs == 0: return
+  ip = get_ipy()
+  ip.user_ns["current_jobdict"] = jobdict.root
+  ip.magic("savejobs " + path)
             
-            # high-spin case.
-            name =  "PointDefects/hs-{0}".format(structure.name)
-            if len(new_moments) == 1 and name not in groundstate[".."]: 
-              jobdict = groundstate["../"] / name
-              jobdict.functional = groundstates.functional
-              jobdict.jobparams  = groundstates.jobparams.copy()
-              jobdict.jobparams["structure"] = deepcopy(structure)
-              jobdict.jobparams["nelect"] = nb_extrae
-              jobdict.lattice  = lattice
-              jobdict.material = material
-              jobdict.defect   = substitution
-              # adds or remove moment.
-              if substitution.type == "None": # interstitial:
-                jobdict.jobparams["structure"].magmom = [u for u in superstructure.magmom]
-                jobdict.jobparams["structure"].magmom.append(max(new_moment))
-              elif new_moments[0] == None: # vacancy -> remove moment.
-                jobdict.jobparams["structure"].magmom.pop(substitution.index)
-              else: 
-                jobdict.jobparams["structure"].magmom[substitution.index] = max(new_moments)
-              nb_new_jobs += 1
           
 
 def create_superstructure(groundstate, input):

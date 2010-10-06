@@ -113,7 +113,8 @@ class RelaxCellShape(object):
     ediffg = self.vasp.ediffg
     if ediffg == None: ediffg = 1e1 * self.vasp.ediff
     elif ediffg < self.vasp.ediff: 
-      raise ValueError("Parameter ediffg({0}) is smaller than ediffg({1}.".format(self.ediffg, self.vasp.ediff))
+      raise ValueError( "Parameter ediffg({0}) is smaller than ediffg({1}."\
+                        .format(self.ediffg, self.vasp.ediff))
     ediffg *= 1.2 * float(len(structure.atoms))
 
     # check nsw parameter. kwargs may still overide it.
@@ -139,7 +140,7 @@ class RelaxCellShape(object):
     if comm != None: comm.barrier()
     
     # performs relaxation calculations.
-    while maxiter <= 0 or nb_steps < maxiter:
+    while maxiter <= 0 or nb_steps < maxiter and vasp.isif != 1:
       # performs initial calculation.   
       directory = join(outdir, join("relax_cellshape", str(nb_steps)))
       output = vasp\
@@ -153,8 +154,7 @@ class RelaxCellShape(object):
       yield output
       
       nb_steps += 1
-      params = kwargs
-      if nb_steps == 1: continue
+      if nb_steps == 1: params = kwargs; continue
       assert output.total_energies.shape[0] >= 2
       energies = output.total_energies[-2] - output.total_energies[-1:]
       if abs(energies) < ediffg: break
@@ -166,15 +166,23 @@ class RelaxCellShape(object):
       raise RuntimeError("Could not converge cell-shape in {0} iterations.".format(maxiter))
 
     # performs ionic calculation. 
-    output = vasp\
-             (\
-               structure, \
-               outdir = join(outdir, join("relax_cellshape", "ionic")),\
-               comm=comm,\
-               set_relaxation = "ionic",\
-               **kwargs\
-             )
-    yield output
+    while maxiter <= 0 or nb_steps < maxiter + 1:
+      output = vasp\
+               (\
+                 structure, \
+                 outdir = join(outdir, join("relax_ions", str(nb_steps))),\
+                 comm=comm,\
+                 set_relaxation = "ionic",\
+                 **kwargs\
+               )
+      structure = output.structure
+      yield output
+
+      nb_steps += 1
+      if nb_steps == 1: params = kwargs; continue
+      assert output.total_energies.shape[0] >= 2
+      energies = output.total_energies[-2] - output.total_energies[-1:]
+      if abs(energies) < ediffg: break
 
     # performs final calculation outside relaxation directory. 
     output = vasp\
@@ -188,7 +196,9 @@ class RelaxCellShape(object):
              )
     yield output
 
-    if output.success and (not keep_steps): rmtree(join(outdir, "relax_cellshape"))
+    if output.success and (not keep_steps):
+      rmtree(join(outdir, "relax_cellshape"))
+      rmtree(join(outdir, "relax_ions"))
 
   def __call__(self, structure, outdir=None, comm=None, overwrite=False, **kwargs):
     """ Performs a vasp relaxation. 
@@ -269,139 +279,3 @@ class RelaxCellShape(object):
     result += "functional.first_trial = %s\n" % (repr(self.first_trial))
     result += "functional.maxiter = %s\n\n" % (repr(self.maxiter))
     return string + "\n" + result
-
-
-
-class RelaxIons(object):
-  """ Functor for ionic relaxation.
-  
-      Since vasp is a plane-wave code, cell-relaxation are never quite accurate.
-      This functional keeps working until convergence is achieved, and then
-      creates a static calculation.
-  """
-  def __init__(self, vasp, first_trial=None, keep_steps=True):
-    """ Initializes a ionic relaxation.
-        
-        In order to obtain accurate total energies, a static calculation is
-        performed following the ionic calculation.
-    """
-    super(RelaxIons, self).__init__()
-    self.vasp = vasp
-    """ The functional with which to perform cell relaxation. see `__init__`. """
-    self.first_trial = first_trial
-    """ Dictionary of parameters for the first run of the functional. see `__init__`. """
-    self.Extract = self.vasp.Extract
-    """ Extraction class. """
-    self.keep_steps = keep_steps
-    """ Whether or not to keep intermediate results. """
-
-  def __call__(self, structure, outdir=None, comm=None, **kwargs ):
-    """ Performs an ionic relaxation followed by a static calculation.
-    
-        :Parameters:
-          structure
-            The structure to relax with `vasp`.
-          outdir
-            Output directory passed on to the `vasp` functional.
-          comm : boost.mpi.communicator or None
-            MPI communicator passed on to the `vasp` functional.
-          kwargs 
-            Other keywords will overide attributes of this instance of
-            `RelaxCellShape` (though for this run only. This function is
-            stateless) if they are named after attributes of `RelaxCellShape`.
-            Otherwise, the keywords are passed on to the `vasp` functional.
-
-        :return: `RelaxIons.Extract` object for output analysis.
-
-        This will call will overide the `lada.vasp.Incar.set_relaxation`
-        parameter with \"ionic\".
-    """
-    from copy import deepcopy
-    from math import fabs 
-    from os import getcwd
-    from os.path import join, exists
-    from ..opt import RelativeDirectory
-
-
-    # make this function stateless.
-    vasp = kwargs.pop("vasp", self.vasp)
-    structure = deepcopy(structure)
-    first_trial = kwargs.pop("first_trial", self.first_trial)
-    keep_steps = kwargs.pop("keep_steps", self.keep_steps)
-    outdir = getcwd() if outdir == None else RelativeDirectory(outdir).path
-
-    # does not run code. Just creates directory.
-    if kwargs.pop("norun", False): 
-      this = RelaxIons(vasp, first_trial)
-      return this._norun(structure, outdir=outdir, comm=comm, **kwargs)
-
-    if not overwrite:
-      extract = self.Extract(outdir, comm=None)
-      if extract.success: return extract
-    elif is_root and exists(outdir): rmtree(outdir)
-    
-    # sets parameter dictionary for first trial.
-    if first_trial != None:
-      params = kwargs.copy()
-      params.update(first_trial)
-    else: params = kwargs
-
-    if comm != None: comm.barrier() # makes sure directory is not created by other proc
-    # performs relaxation.
-    directory = join(outdir, "relax_ions")
-    params["set_relaxation"] = "ionic"
-    output = vasp\
-             (\
-               structure, \
-               outdir = directory,\
-               comm=comm,\
-               **params
-             )
-
-    # performs final calculation outside relaxation directory. 
-    structure = output.structure
-    params = kwargs.copy()
-    params["set_relaxation"] = "static"
-    output = vasp\
-             (\
-               structure, \
-               outdir = outdir,\
-               comm=comm,\
-               restart=output,\
-               **kwargs\
-             )
-             
-    if output.success and (not keep_steps): rmtree(join(outdir, "relax_ions"))
-    return output
-
-  def _norun(self, *args, **kwargs):
-    """ Just creates directory for debugging. """
-    from ..opt.changedir import Changedir
-
-    is_root = True
-    if "comm" in kwargs:
-      comm = kwargs["comm"]
-      is_root = True if comm == None else comm.rank == 0
-    if is_root:
-      # creates a file describing the relaxation parameters.
-      with Changedir(kwargs["outdir"]) as pwd:
-        with open("relax_ions_parameters", "w") as file:
-          file.write( "self.relaxation = %s\n" % (repr(self.relaxation)) )
-          file.write( "self.first_trial = %s\n" % (repr(self.first_trial)) )
-
-    # Now have vasp do a fake run to create anything it does create.
-    kwargs["norun"] = True
-    return self.vasp(*args, **kwargs) 
-
-  def __repr__(self):
-    """ Returns a python script describing this instance. """
-    string = "# VASP functional.\n"
-    string += repr(self.vasp).replace("functional", "vasp_functional") 
-    result = "from %s import %s\n\n" % (self.__class__.__module__, self.__class__.__name__)
-    result += "# VASP Functional to relax cell-shape, volume, etc.\n"
-    result += "functional = %s(vasp_functional)\n" % (self.__class__.__name__)
-    result += "functional.first_trial = %s\n" % (repr(self.first_trial))
-    return string + "\n" + result
-
-
-
