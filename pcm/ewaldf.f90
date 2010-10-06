@@ -56,7 +56,7 @@ subroutine ewaldf(ipr,eewald,fewa,fewac,stress, natot,rc,zz,ecut,avec,mxdnat, er
 
   alpha = 3.0d0
   upperbound = 1e0
-  do while (alpha .gt. 0d0 .and. upperbound .gt. 1d-7 ) 
+  do while (alpha .gt. 0d0 .and. upperbound .gt. 1d-7 .and. abs(ecut) .ge. 1e-12) 
     alpha = alpha - 0.1d0
     upperbound = 2.d0 * tot_charge_squared * sqrt(alpha/pi) * boost_erfc( sqrt(ecut/4e0/alpha) )
   enddo
@@ -134,9 +134,11 @@ subroutine ewaldf(ipr,eewald,fewa,fewac,stress, natot,rc,zz,ecut,avec,mxdnat, er
        adot(3,2) = adot(2,3)
  
   ! limits g-sum to less than ecut.
-  imk = int(sqrt(ecut/bdot(1,1))) + 1
-  jmk = int(sqrt(ecut/bdot(2,2))) + 1
-  kmk = int(sqrt(ecut/bdot(3,3))) + 1
+  if( abs(ecut) .ge. 1e-12) then
+    imk = int(sqrt(ecut/bdot(1,1))) + 1
+    jmk = int(sqrt(ecut/bdot(2,2))) + 1
+    kmk = int(sqrt(ecut/bdot(3,3))) + 1
+  endif
   ! means r-sum never goes beyond erfc(15)
   imx = int(15e0/sqrt(alpha * adot(1,1))) + 1
   jmx = int(15e0/sqrt(alpha * adot(2,2))) + 1
