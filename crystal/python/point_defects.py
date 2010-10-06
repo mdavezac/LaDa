@@ -107,29 +107,37 @@ def vacancy(structure, lattice, type):
     # removes vacancy
     structure.atoms.insert(which, atom)
 
-def substitution(structure, lattice, type, subs):
-  """ Yields all inequivalent vacancies. 
+def all_defects(structure, lattice, type, subs):
+  """ Yields all inequivalent point-defects. 
   
-      Loops over all equivalent vacancies.
+      Loops over all equivalent point-defects.
 
       :Parameters:
         structure : `lada.crystal.Structure`
           structure on which to operate
         lattice : `lada.crystal.Lattice`
           back-bone lattice of the structure.
-        type : str
+        type : str or None or sequence
           type of atoms for which to create substitution.
-        subs : str
-          substitution type
+          If None, will create a vacancy.
+          If ``subs`` is None, then will create a vacancy. In that case, type
+          should be a sequence describing the interstitials:
 
-      :return: a 3-tuple consisting of:
+          >> type = [ "Li", (0,0,0), "16c" ],\
+          >>        [ "Li", (0.75,0.75,0.75), "32e_0.75" ] 
+           
+          Each item in the sequence is itself a sequence where the first item is the
+          specie, and the other items the positions and name of the
+          interstitials for that specie. 
+        subs : str or None
+          substitution type. If None, will create an interstitial.
+
+      :return: a 2-tuple consisting of:
 
         - the structure with a substitution.
         - the substituted atom in the structure above. The atom is given an
           additional attribute, C{index}, referring to list of atoms in the
           structure.
-        - A suggested name for the substitution: site_i, where i is the site
-          index of the substitution.
   """
   from copy import deepcopy
 
@@ -138,8 +146,18 @@ def substitution(structure, lattice, type, subs):
     for args in vacancy(structure, lattice, type):
       yield args
     return
+  # case for interstitials.
+  if type == None:
+    for type, position, name in subs:
+      result = deepcopy(structure)
+      result.add_atom = dot(lattice.cell, position), type
+      result.name = "{0}_interstitial_{1}".format(type, name)
+      defect = deepcopy(structure.atoms[-1])
+      defect.type = "None"
+      defect.index = -1
+      yield structure, defect
+    return
 
-  
   result = deepcopy(structure)
   inequivs = inequivalent_sites(lattice, type)
   for i in inequivs:
