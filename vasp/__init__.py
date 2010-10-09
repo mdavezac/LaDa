@@ -198,7 +198,7 @@ class Vasp(Launch):
       # if a special parameter, then is non-default.
       if name in params: string += "functional.%s = %s\n" % (name, repr(value))
       else:
-        string += "functional.add_item = \"%s\", %s\n" % (name, repr(value))
+        string += "functional.add_param = \"%s\", %s\n" % (name, repr(value))
         module = value.__class__.__module__ 
         classname = value.__class__.__name__ 
         if module in modules: modules[module].append(classname)

@@ -47,6 +47,10 @@ class Incar(object):
          - C{nbands}: Defaults to None.
          - C{lorbit}: Defaults to None.
          - C{addgrid}: Defaults to None.
+         - C{nupdown}: Defaults to None.
+         - C{loptics}: Defaults to None.
+         - C{lmaxmix}: Defaults to None.
+         - C{magmom}: Defaults to None.
          - C{restart}: the return from previous vasp run to use as restart. 
 
              >> save_this_object = vasp(some parameters) # makes a vasp call.
@@ -120,7 +124,9 @@ class Incar(object):
     self.add_param = "symprec",     None
     self.add_param = "lcorr",       None
     self.add_param = "nupdown",     None
-    self.add_param = "loptica",     None
+    self.add_param = "loptics",     None
+    self.add_param = "lmaxmix",     None
+    self.add_param = "magmom",      None
     # objects derived from SpecialVaspParams will be recognized as such and can
     # be added without further fuss.
     self.nelect      = NElect(0)
@@ -133,7 +139,6 @@ class Incar(object):
     self.restart     = Restart(None)
     self.U_verbosity = UParams("occupancy")
     self.iniwave     = IniWave(None)
-    self.magmom      = Magmom()
 
 
   def incar_lines(self, *args, **kwargs):

@@ -113,7 +113,8 @@ class RelaxCellShape(object):
     ediffg = self.vasp.ediffg
     if ediffg == None: ediffg = 1e1 * self.vasp.ediff
     elif ediffg < self.vasp.ediff: 
-      raise ValueError("Parameter ediffg({0}) is smaller than ediffg({1}.".format(self.ediffg, self.vasp.ediff))
+      raise ValueError("Parameter ediffg({0}) is smaller than ediffg({1}."\
+                       .format(self.ediffg, self.vasp.ediff))
     ediffg *= 1.2 * float(len(structure.atoms))
 
     # check nsw parameter. kwargs may still overide it.
@@ -151,19 +152,20 @@ class RelaxCellShape(object):
                )
       structure = output.structure
       yield output
+      assert output.success, RuntimeError("VASP calculations did not complete.")
       
       nb_steps += 1
-      params = kwargs
-      if nb_steps == 1: continue
-      assert output.total_energies.shape[0] >= 2
+      if nb_steps == 1: params = kwargs; continue
+      if output.total_energies.shape[0] < 2: break
       energies = output.total_energies[-2] - output.total_energies[-1:]
       if abs(energies) < ediffg: break
 
     # Does not perform static calculation if convergence not reached.
-    assert output.total_energies.shape[0] >= 2
-    energies = output.total_energies[-2] - output.total_energies[-1:]
-    if abs(energies) > ediffg:
-      raise RuntimeError("Could not converge cell-shape in {0} iterations.".format(maxiter))
+    assert output.success, RuntimeError("VASP calculations did not complete.")
+    if output.total_energies.shape[0] >= 2:
+      energies = output.total_energies[-2] - output.total_energies[-1:]
+      assert abs(energies) < ediffg, \
+             RuntimeError("Could not converge cell-shape in {0} iterations.".format(maxiter))
 
     # performs ionic calculation. 
     output = vasp\
@@ -200,6 +202,9 @@ class RelaxCellShape(object):
             Output directory passed on to the `vasp` functional.
           comm : boost.mpi.communicator or None
             MPI communicator passed on to the `vasp` functional.
+          overwrite : bool
+	    Wether to perform the calculation no matter what, or whether to
+            check if results already exist.
           kwargs 
             Other keywords will overide attributes of this instance of
             `RelaxCellShape` (though for this run only. This function is
@@ -227,6 +232,7 @@ class RelaxCellShape(object):
     from os.path import exists
     from ..opt import RelativeDirectory
 
+    is_root = True if comm == None else comm.rank == 0
     outdir = getcwd() if outdir == None else RelativeDirectory(outdir).path
     if not overwrite:
       extract = self.Extract(outdir, comm=None)
@@ -295,7 +301,7 @@ class RelaxIons(object):
     self.keep_steps = keep_steps
     """ Whether or not to keep intermediate results. """
 
-  def __call__(self, structure, outdir=None, comm=None, **kwargs ):
+  def __call__(self, structure, outdir=None, comm=None, overwrite=False, **kwargs):
     """ Performs an ionic relaxation followed by a static calculation.
     
         :Parameters:
@@ -305,6 +311,9 @@ class RelaxIons(object):
             Output directory passed on to the `vasp` functional.
           comm : boost.mpi.communicator or None
             MPI communicator passed on to the `vasp` functional.
+          overwrite : bool
+	    Wether to perform the calculation no matter what, or whether to
+            check if results already exist.
           kwargs 
             Other keywords will overide attributes of this instance of
             `RelaxCellShape` (though for this run only. This function is
@@ -329,6 +338,7 @@ class RelaxIons(object):
     first_trial = kwargs.pop("first_trial", self.first_trial)
     keep_steps = kwargs.pop("keep_steps", self.keep_steps)
     outdir = getcwd() if outdir == None else RelativeDirectory(outdir).path
+    is_root = True if comm == None else comm.rank == 0
 
     # does not run code. Just creates directory.
     if kwargs.pop("norun", False): 
@@ -339,6 +349,7 @@ class RelaxIons(object):
       extract = self.Extract(outdir, comm=None)
       if extract.success: return extract
     elif is_root and exists(outdir): rmtree(outdir)
+    if comm != None: comm.barrier() # makes sure directory is not created by other proc!
     
     # sets parameter dictionary for first trial.
     if first_trial != None:
