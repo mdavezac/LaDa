@@ -140,6 +140,7 @@ def all_defects(structure, lattice, type, subs):
           structure.
   """
   from copy import deepcopy
+  from numpy import dot
 
   # Case for vacancies.
   if subs == None: 
@@ -148,14 +149,18 @@ def all_defects(structure, lattice, type, subs):
     return
   # case for interstitials.
   if type == None:
-    for type, position, name in subs:
-      result = deepcopy(structure)
-      result.add_atom = dot(lattice.cell, position), type
-      result.name = "{0}_interstitial_{1}".format(type, name)
-      defect = deepcopy(structure.atoms[-1])
-      defect.type = "None"
-      defect.index = -1
-      yield structure, defect
+    assert hasattr(subs, "__iter__"),\
+           ValueError("For interstitials, subs should be a sequence: {0}".format(subs))
+    assert len([u for u in subs]) == 3,\
+           ValueError("For interstitials, subs should be a sequence of length 3: {0}".format(subs))
+    type, position, name = tuple([u for u in subs])
+    result = deepcopy(structure)
+    result.add_atom = dot(lattice.cell, position), type
+    result.name = "{0}_interstitial_{1}".format(type, name)
+    defect = deepcopy(structure.atoms[-1])
+    defect.type = "None"
+    defect.index = -1
+    yield result, defect
     return
 
   result = deepcopy(structure)
@@ -222,7 +227,7 @@ def charged_states(species, A, B):
     max_charge = -B.oxidation if hasattr(B, "oxidation") else 0
     min_charge = 0
   elif B == None: # interstial! Charge states are in 0, A.oxidation.
-    A = species[A]
+    A = species[A[0]]
     max_charge = A.oxidation if hasattr(A, "oxidation") else 0
     min_charge = 0
   else:           # substitution! Charge states are difference of A and B.

@@ -777,3 +777,8 @@ def ipy_init():
       if key == "jobs": ip.ex("from lada import jobs as ladajobs")
       else: ip.ex("from lada import " + key)
 
+represent_structure_with_POSCAR = False
+""" If true, then structures are represented using POSCAR format. 
+
+    If False, then uses normal python representation.
+"""

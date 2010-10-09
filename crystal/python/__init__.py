@@ -10,7 +10,7 @@ from _crystal import FreezeAtom, which_site, Site, SymmetryOperator, Lattice, to
                      smith_indices, kAtoms, Atom, kAtom, fold_vector, Structure, FreezeCell,\
                      smith_normal_transform,  get_space_group_symmetries, Neighbors, Neighbor, \
                      read_pifile_structure, LayerDepth, to_fractional, linear_smith_index,\
-                     rStructure, rAtom, Sites, Atoms, kAtoms # this line not in __all__
+                     rStructure, rAtom, Sites, Atoms, kAtoms, StringVector # this line not in __all__
 
 from lada.opt.decorators import broadcast_result, add_setter
 import A2BX4
@@ -323,59 +323,96 @@ def _set_site_type(self, value):
 def _get_site_type(self): return self._type
 Site.type = property(_get_site_type, _set_site_type, doc=Site._type.__doc__)
    
+def _repr_site_type(self):
+  "Represents the type of a lattice site."
+  if len(self) == 1: return repr(self[0])
+  return repr(tuple([u for u in self]))
+StringVector.__repr__ = _repr_site_type
 
 # changes __repr__ behavior
-def _print_structure(self):
-  result  = "# Structure definition.\n"
-  result += "from {0} import {1}\nstructure = {1}()\n"\
-            "structure.scale = {2.scale}\n"\
-            "structure.weight = {2.weight}\n"\
-            "structure.name = \"{2.name}\"\n"\
-            "structure.energy = {2.energy}\n"\
-            .format(self.__class__.__module__, self.__class__.__name__, self)
-  result += "structure.set_cell = (%e, %e, %e),\\\n"\
-            "                     (%e, %e, %e),\\\n"\
-            "                     (%e, %e, %e)\n"\
-            % tuple([x for x in self.cell.flat])
-  for atom in self.atoms:
-    result += "structure.add_atom = (%e, %e, %e), \"%s\", " \
-              % (atom.pos[0], atom.pos[1], atom.pos[2], str(atom.type))
-    if atom.site < 0 and atom.freeze == FreezeAtom.none: result += "\n"; continue
-    if atom.site < 0: result += "None, "
-    else: result += "%i, " % (atom.site)
-    result += " %i\n" % (atom.freeze)
-  result += "# End of structure definition.\n"
-  return result
-_print_structure.__doc__ = Structure.__str__.__doc__
-Structure.__repr__ = _print_structure
-
-def _print_lattice(self):
-  result  = "# Lattice definition.\n"\
-            "from {0} import {1}\n"\
-            "lattice = {1}()\n"\
-            "lattice.scale = {2.scale}\n"\
-            "lattice.name = \"{2.name}\"\n"\
-            .format(self.__class__.__module__,self.__class__.__name__,self)
-  result += "lattice.set_cell = (%e, %e, %e),\\\n"\
-            "                   (%e, %e, %e),\\\n"\
-            "                   (%e, %e, %e)\n"\
-            % tuple([x for x in self.cell.flat])
-  for site in self.sites:
-    result += "lattice.add_site = (%e, %e, %e)"  % tuple( x for x in site.pos )
-    if len(site.type) == 0: result += "\n"; continue
-    if len(site.type) == 1: result += ", \"%s\", " % (site.type[0])
+def _repr_lattstr(self, atoms="atoms", name="structure", add_atoms="add_atoms"):
+  """ Represents lattices and/or structures. """
+  result  = "# {c}{name} definition.\n".format(c=name[0].upper(), name=name[1:])
+  # prints all but atoms.
+  result += "from {0} import {1}\n{name} = {1}()\n"\
+            .format(self.__class__.__module__, self.__class__.__name__, self, name=name)
+  # force representation of these values.
+  do_represent = ['name', 'scale', 'energy', 'weight', 'magmom']
+  width = max(len(u) for u in do_represent)
+  for key in do_represent:
+    if not hasattr(self, key): continue
+    try:
+      r = repr( getattr(self, key) )
+      assert r[0] != '<' and r[-1] != '>'
+    except: result += "# Could not represent {name}.{0}.".format(key, name=name)
     else:
-      result += ", (\"%s\"" % (site.type[0])
-      for type in site.type[1:]:  result += ", \"%s\"" % (type)
-      result += "), "
-    if site.site < 0 and site.freeze == FreezeAtom.none: result += "\n"; continue
-    if site.site < 0: result += "None, "
-    else: result += "%i, " % (site.site)
-    result += " %i\n" % (site.freeze)
-  result += "# End of lattice definition.\n"
+      start = "{name}.{0: <{1}} = ".format(key, width, name=name)
+      r = r.replace('\n', '\\\n{0:{1}}'.format(' ', len(start)))
+      result += "{0}{1}\n".format(start, r)
+  # tries to print rest of dictionary.
+  for key, value in self.__dict__.items(): 
+    if key in do_represent: continue
+    try: 
+      r = repr(value)
+      assert r[0] != '<' and r[-1] != '>'
+    except: result += "# Could not represent {name}.{0}.".format(key, name=name)
+    else: result += "{name}.{0} = {1}\n".format(key, repr(value), name=name)
+
+  # now adds cell
+  width = max(len("{0:.0f}".format(u)) for u in self.cell.flat) 
+  precision = ["{0}".format(u) for u in self.cell.flat]
+  precision = max(len(u[(u.index('.') + 1 if '.' in u else 0):]) for u in precision)
+  width = precision + width
+  result += "{start}({0[0][0]:{1}.{2}f}, {0[0][1]:{1}.{2}f}, {0[0][2]:{1}.{2}f}),\\\n"\
+            "{empty}({0[1][0]:{1}.{2}f}, {0[1][1]:{1}.{2}f}, {0[1][2]:{1}.{2}f}),\\\n"\
+            "{empty}({0[2][0]:{1}.{2}f}, {0[2][1]:{1}.{2}f}, {0[2][2]:{1}.{2}f})\n"\
+            .format(self.cell, width, precision, 
+                    start = "{0}.set_cell = ".format(name),\
+                    empty = "".join(" " for u in "{0}.set_cell = ".format(name)) )
+
+  # finds with and precision of atoms.
+  width = max(len("{0:.0f}".format(u)) for atom in getattr(self, atoms) for u in atom.pos) 
+  precision = ["{0}".format(u) for atom in getattr(self, atoms) for u in atom.pos]
+  precision = max(len(u[(u.index('.') + 1 if '.' in u else 0):]) for u in precision)
+  type_width = max(len(repr(atom.type)) for atom in getattr(self, atoms))
+  start = "{name}.{add_atoms} =".format(name=name, add_atoms=add_atoms)
+  lstart = len(start)
+  site_width, freeze_width = 0, 0
+  for atom in getattr(self, atoms):
+    if atom.site > 0 and len(str(atom.site)) > site_width:
+      site_width = len(str(atom.site))
+    if atom.freeze != FreezeAtom.none and len(str(atom.freeze)) > freeze_width:
+      freeze_width = len(str(atom.freeze))
+
+  # now prints atoms.
+  for atom in getattr(self, atoms):
+    result += "{start:{lstart}} [({pos[0]:{w}.{p}f}, {pos[1]:{w}.{p}f}, {pos[2]:{w}.{p}f}), "\
+              "{type: >{wtype}}"\
+              .format( start  = start, 
+                       lstart = lstart,
+                       pos    = atom.pos, 
+                       w      = width,
+                       p      = precision,
+                       type   = repr(atom.type),
+                       wtype  = type_width)
+    if atom.site >= 0 or atom.freeze != FreezeAtom.none:
+      if atom.site < 0: result += "None, "
+      else: result += ", {0: >{1}}".format(atom.site, site_width)
+      if atom.freeze != FreezeAtom.none:
+        result += ", {0: >{1}}".format(atom.freeze, freeze_width)
+    result += "],\\\n"
+    start = ""
+  if len(getattr(self, atoms)) > 0: result = result[:-3] + "\n"
+
+  result += "# End of {name} definition.\n".format(name=name)
   return result
-_print_lattice.__doc__ = Lattice.__str__.__doc__
-Lattice.__repr__ = _print_lattice
+
+def _repr_structure(self): return _repr_lattstr(self)
+_repr_structure.__doc__ = Structure.__str__.__doc__
+Structure.__repr__ = _repr_structure
+
+def _repr_lattice(self): return _repr_lattstr(self, "sites", "lattice", "add_sites")
+Lattice.__repr__ = _repr_lattice
 
 def _copy(self): 
   """ Returns an exact clone. """

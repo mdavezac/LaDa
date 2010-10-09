@@ -65,6 +65,7 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
   from os.path import dirname, normpath, relpath, join
   from copy import deepcopy
   from IPython.ipapi import get as get_ipy
+  from numpy import array, sum, abs
   from lada.jobs import JobDict
   from lada.vasp import read_input
   from lada.opt import Input
@@ -117,9 +118,7 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
     if groundstate[".."].is_tagged: continue
     if groundstate["../.."].is_tagged: continue
     # extracts the structure from it.
-    superstructure = create_superstructure(groundstate, input)
-    # extracts lattice.
-    lattice = groundstate.lattice
+    superstructure, lattice = create_superstructure(groundstate, input)
     # extracts material.
     material = groundstate.material
     # extracts description of species.
@@ -127,13 +126,10 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
 
     # loop over substitutees.
     for B, substituters in input.point_defects.items():
-      print "B", B
       # loop over subtituters.
       for A in substituters:
-        print "A", A
         # loop over inequivalent point-defects sites.
         for structure, defect in ptd.all_defects(superstructure, lattice, B, A):
-          print "?? ", structure.name
           # loop over oxidations states.
           for nb_extrae, oxname in ptd.charged_states(species, A, B):
             if B == None: nb_extrae *= -1 # correct for insterstitials. 
@@ -147,7 +143,6 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
             # loop  over moments.
             for moment, prefix in moments:
               name =  "PointDefects/{0}{1}/{2}".format(prefix, structure.name, oxname)
-              print name, name in groundstate[".."]
               
               # checks if job already exists. Does not change job if it exists!
               if name in groundstate[".."]: continue
@@ -163,14 +158,23 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
               jobdict.material = material
               jobdict.defect   = defect
               # adds, modifies, or remove moment depending on defect type.
-              if hasattr(superstructure, "magmom"): 
-                jobdict.jobparams["structure"].magmom = [u for u in superstructure.magmom]
-                if B == None: # interstitial:
-                  jobdict.jobparams["structure"].magmom.append(min(new_moment))
-                elif A == None: # vacancy -> remove moment.
-                  jobdict.jobparams["structure"].magmom.pop(defect.index)
+              if hasattr(superstructure, "magmom") or abs(moment) > 1e-12: 
+                jstruct = jobdict.jobparams["structure"]
+                # construct initial magmom
+                if hasattr(superstructure, "magmom"):
+                  jstruct.magmom = [u for u in superstructure.magmom]
                 else: 
-                  jobdict.jobparams["structure"].magmom[defect.index] = min(new_moments)
+                  jstruct.magmom = [0 for u in superstructure.atoms]
+                # now modifies according to structure.
+                if B == None: # interstitial:
+                  jstruct.magmom.append(min(new_moment))
+                elif A == None: # vacancy -> remove moment.
+                  jstruct.magmom.pop(defect.index)
+                else: 
+                  jstruct.magmom[defect.index] = min(new_moments)
+                # only keep moment if there are moments. 
+                if sum(abs(jstruct.magmom)) < 1e-12 * float(len(jstruct.atoms)): del jstruct.magmom
+
               nb_new_jobs += 1
 
   # now saves new job dictionary
@@ -223,7 +227,7 @@ def create_superstructure(groundstate, input):
     moments = fill_structure(cell, mlat)
     result.magmom = [ [0, 1, -1, 5, -5][int(i.type)] for i in moments.atoms ]
 
-  return result
+  return result, lattice
 
 def magnetic_groundstates():
   """ Yields name of magnetic-groundstates from current job-dictionary.
