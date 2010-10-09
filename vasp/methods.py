@@ -103,6 +103,7 @@ class RelaxCellShape(object):
     # make this function stateless.
     vasp = kwargs.pop("vasp", self.vasp)
     structure = deepcopy(structure)
+    str_dict = deepcopy(structure.__dict__)
     set_relaxation = kwargs.pop("relaxation", self.relaxation)
     set_relaxation = kwargs.pop("set_relaxation", set_relaxation)
     vasp.set_relaxation = set_relaxation
@@ -130,7 +131,7 @@ class RelaxCellShape(object):
       return
 
     # number of restarts.
-    nb_steps = 0
+    nb_steps, output = 0, None
    
     # sets parameter dictionary for first trial.
     if first_trial != None:
@@ -142,47 +143,60 @@ class RelaxCellShape(object):
     # performs relaxation calculations.
     while maxiter <= 0 or nb_steps < maxiter and vasp.isif != 1:
       # performs initial calculation.   
-      directory = join(outdir, join("relax_cellshape", str(nb_steps)))
       output = vasp\
                (\
-                 structure, \
-                 outdir = directory,\
-                 comm=comm,\
+                 structure,
+                 outdir = join(outdir, join("relax_cellshape", str(nb_steps))),
+                 comm=comm,
+                 restart = output if nb_steps > 1 else None,
                  **params
                )
       structure = output.structure
+      structure.__dict__.update(str_dict)
       yield output
+      assert output.success, RuntimeError("VASP calculations did not complete.")
       
       nb_steps += 1
       if nb_steps == 1: params = kwargs; continue
-      assert output.total_energies.shape[0] >= 2
+      if output.total_energies.shape[0] < 2: break
       energies = output.total_energies[-2] - output.total_energies[-1:]
       if abs(energies) < ediffg: break
 
-    # Does not perform static calculation if convergence not reached.
-    assert output.total_energies.shape[0] >= 2
-    energies = output.total_energies[-2] - output.total_energies[-1:]
-    if abs(energies) > ediffg:
-      raise RuntimeError("Could not converge cell-shape in {0} iterations.".format(maxiter))
+    # Does not perform ionic calculation if convergence not reached.
+    assert output.success, RuntimeError("VASP calculations did not complete.")
+    if output.total_energies.shape[0] >= 2:
+      energies = output.total_energies[-2] - output.total_energies[-1:]
+      assert abs(energies) < ediffg, \
+             RuntimeError("Could not converge cell-shape in {0} iterations.".format(maxiter))
 
     # performs ionic calculation. 
     while maxiter <= 0 or nb_steps < maxiter + 1:
       output = vasp\
                (\
-                 structure, \
-                 outdir = join(outdir, join("relax_ions", str(nb_steps))),\
-                 comm=comm,\
-                 set_relaxation = "ionic",\
-                 **kwargs\
+                 structure, 
+                 outdir = join(outdir, join("relax_ions", str(nb_steps))),
+                 comm=comm,
+                 set_relaxation = "ionic",
+                 restart = output if nb_steps > 1 else None,
+                 **kwargs
                )
       structure = output.structure
+      structure.__dict__.update(str_dict)
       yield output
+      assert output.success, RuntimeError("VASP run did not succeed.")
 
       nb_steps += 1
       if nb_steps == 1: params = kwargs; continue
-      assert output.total_energies.shape[0] >= 2
+      if output.total_energies.shape[0] < 2: break
       energies = output.total_energies[-2] - output.total_energies[-1:]
       if abs(energies) < ediffg: break
+
+    # Does not perform static calculation if convergence not reached.
+    assert output.success, RuntimeError("VASP calculations did not complete.")
+    if output.total_energies.shape[0] >= 2:
+      energies = output.total_energies[-2] - output.total_energies[-1:]
+      assert abs(energies) < ediffg, \
+             RuntimeError("Could not converge ions in {0} iterations.".format(maxiter))
 
     # performs final calculation outside relaxation directory. 
     output = vasp\

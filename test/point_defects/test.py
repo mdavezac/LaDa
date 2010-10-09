@@ -63,13 +63,15 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
   """
   from tempfile import NamedTemporaryFile
   from os.path import dirname, normpath, relpath, join
-  import IPython.ipapi
+  from copy import deepcopy
+  from IPython.ipapi import get as get_ipy
   from lada.jobs import JobDict
   from lada.vasp import read_input
   from lada.opt import Input
+  from lada.crystal import point_defects as ptd
 
   # Loads jobdictionary and path as requested. 
-  ip = IPython.ipapi.get()
+  ip = get_ipy()
   if "current_jobdict" not in ip.user_ns: 
     print "No current job-dictionary." 
     return
@@ -88,16 +90,23 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
     with NamedTemporaryFile() as file: 
       file.write(jobdict.nonmaginput)
       file.flush()
-      input.update(read_input(file.name).__dict__)
+      input.update(read_input(file.name))
   if hasattr(jobdict, "maginput"):
     with NamedTemporaryFile() as file: 
       file.write(jobdict.nonmaginput)
       file.flush()
-      input.update(read_input(file.name).__dict__)
+      input.update(read_input(file.name))
   if inputpath != None:
     input.update(read_input(inputpath))
     with open(inputpath, "r") as file: jobdict.maginput = file.read()
   input.update(kwargs)
+
+  # saves inputfile to jobdictioanry if needed.
+  if inputpath != None:
+    input.update(read_input(inputpath))
+    with open(inputpath, "r") as file: jobdict.pointdefectinput = file.read()
+  # saves current script tof file.
+  with open(__file__, "r") as file: jobdict.pointdefectscript = file.read()
   
   nb_new_jobs = 0
   # loops over completed structural jobs.
@@ -114,14 +123,17 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
     # extracts material.
     material = groundstate.material
     # extracts description of species.
-    specie = groundstate.functional.vasp.species
+    species = groundstate.functional.vasp.species
 
     # loop over substitutees.
-    for B, substituters in input.substitutions.items():
+    for B, substituters in input.point_defects.items():
+      print "B", B
       # loop over subtituters.
       for A in substituters:
+        print "A", A
         # loop over inequivalent point-defects sites.
         for structure, defect in ptd.all_defects(superstructure, lattice, B, A):
+          print "?? ", structure.name
           # loop over oxidations states.
           for nb_extrae, oxname in ptd.charged_states(species, A, B):
             if B == None: nb_extrae *= -1 # correct for insterstitials. 
@@ -134,15 +146,16 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
               moments = [ (min(new_moments), "") ]
             # loop  over moments.
             for moment, prefix in moments:
-              name =  "PointDefects/{0}{1}".format(prefix, structure.name)
+              name =  "PointDefects/{0}{1}/{2}".format(prefix, structure.name, oxname)
+              print name, name in groundstate[".."]
               
               # checks if job already exists. Does not change job if it exists!
               if name in groundstate[".."]: continue
 
               # creates new job.
               jobdict = groundstate["../"] / name
-              jobdict.functional = groundstates.functional
-              jobdict.jobparams  = groundstates.jobparams.copy()
+              jobdict.functional = input.relaxer
+              jobdict.jobparams  = groundstate.jobparams.copy()
               jobdict.jobparams["structure"] = deepcopy(structure)
               jobdict.jobparams["nelect"] = nb_extrae
               jobdict.jobparams["relaxation"] = "ionic"
@@ -150,19 +163,19 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
               jobdict.material = material
               jobdict.defect   = defect
               # adds, modifies, or remove moment depending on defect type.
-              jobdict.jobparams["structure"].magmom = [u for u in superstructure.magmom]
-              if B == None: # interstitial:
-                jobdict.jobparams["structure"].magmom.append(min(new_moment))
-              elif A == None: # vacancy -> remove moment.
-                jobdict.jobparams["structure"].magmom.pop(defect.index)
-              else: 
-                jobdict.jobparams["structure"].magmom[defect.index] = min(new_moments)
+              if hasattr(superstructure, "magmom"): 
+                jobdict.jobparams["structure"].magmom = [u for u in superstructure.magmom]
+                if B == None: # interstitial:
+                  jobdict.jobparams["structure"].magmom.append(min(new_moment))
+                elif A == None: # vacancy -> remove moment.
+                  jobdict.jobparams["structure"].magmom.pop(defect.index)
+                else: 
+                  jobdict.jobparams["structure"].magmom[defect.index] = min(new_moments)
               nb_new_jobs += 1
 
   # now saves new job dictionary
   print "Created {0} new jobs.".format(nb_new_jobs)
   if nb_new_jobs == 0: return
-  ip = get_ipy()
   ip.user_ns["current_jobdict"] = jobdict.root
   ip.magic("savejobs " + path)
             
@@ -170,7 +183,7 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
 
 def create_superstructure(groundstate, input):
   """ Creates a superstructure from existing structure. """
-  from os.path import dirname
+  from os.path import dirname, join
   from operator import itemgetter
   from numpy import dot
   from IPython.ipapi import get as get_ipy
@@ -190,7 +203,7 @@ def create_superstructure(groundstate, input):
   orig_lattice = groundstate.jobparams["structure"].to_lattice()
   
   # Extracts computed lattice from ground state calculation.
-  extract = groundstate.functional.Extract( join(rootdir, groundstate.name) )
+  extract = groundstate.functional.Extract( join(rootdir, groundstate.name[1:]) )
   assert extract.success, RuntimeError("Ground-state computation was not successful.")
   lattice = extract.structure.to_lattice()
 
@@ -230,7 +243,7 @@ def magnetic_groundstates():
   from lada.ipython import Collect
   collect = Collect()
   # loops over untagged non-magnetic structural jobs.
-  for nonmag in collect.grep("/.*/.*/non-magnetic"):
+  for nonmag in collect.grep(".*/.*/non-magnetic"):
     # check for success of all jobs (except for Point-defects).
     success = [u[1] for u in nonmag["../"].success.items() if u[0].find("PointDefects") == -1]
     if not all(success): continue
@@ -248,6 +261,7 @@ def deduce_moment(type, species):
       if already is a list, returns as is.
   """
   if type == None: return [0]
+  if not isinstance(type, str): type = type[0]
   if not hasattr(species[type], "moment"): return [0]
   if not hasattr(species[type].moment, "__iter__"):
     return [species[type].moment]

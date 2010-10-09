@@ -86,8 +86,10 @@ class Collect(AbstractMassExtract):
 
   def __getitem__(self, name):
     """ Returns a view of the current job-dictionary. """
+    from os.path import normpath, join
     if name[0] == '/': return self.__class__(comm=self.comm, _view=name)
-    return self.__class__(comm=self.comm, _view="/"+self.position+name)
+    path = normpath(join('/', join(self.position, name)))
+    return self.__class__(comm=self.comm, _view=path)
 
   @property
   def children(self):
@@ -99,7 +101,7 @@ class Collect(AbstractMassExtract):
       path = normpath(join(join("/", self.position), name))
       yield self.__class__(comm=self.comm, _view=path)
 
-  def grep(self, regex, flags=None):
+  def grep(self, regex, flags=0):
     """ Yields views for children with fullnames matching the regex.
     
         :Param regex: The matching regular expression.
@@ -111,12 +113,12 @@ class Collect(AbstractMassExtract):
         Only the outermost view of each math is given. In other words, if a
         view is yielded, its subviews will not be yielded.
     """
-    from re import search, compile
-    if search(regex, self.position, flags) != None:
+    from re import compile
+    reg = compile(regex, flags)
+    if reg.search(self.position) != None:
       yield self
       return
-    regex = compile(regex)
-    for child in self.children(self):
-      if search(regex, child.position, flags) != None: yield child
+    for child in self.children:
+      if reg.search(child.position) != None: yield child
       else: # goes to next level.
         for grandchild in child.grep(regex, flags): yield grandchild

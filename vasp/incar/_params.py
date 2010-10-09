@@ -38,10 +38,10 @@ class Magmom(SpecialVaspParam):
     if self.value == None: return None
     if self.value.lower() == "magmom":
       magmom = self._from_attr(vasp, "magmom",  *args, **kwargs)
-      return "Magmom = {0}".format(magmom) if magmom != None else None
+      return "MAGMOM = {0}".format(magmom) if magmom != None else None
     elif self._regex.match(self.value) != None:
       magmom = self._from_attr(vasp, self._regex.match(self.value).group(1),  *args, **kwargs)
-      return "Magmom = {0}".format(magmom) if magmom != None else None
+      return "MAGMOM = {0}".format(magmom) if magmom != None else None
     return "MAGMOM = {0}".format(self.value)
 
   def _from_attr(self, vasp, name, *args, **kwargs):
@@ -69,7 +69,6 @@ class Magmom(SpecialVaspParam):
       for i, m in tupled:
         if i == 1: result += "{0:.2f} ".format(m)
         else:      result += "{0}*{1:.2f} ".format(i, m)
-    print result
     return result
   
   def __getstate__(self):
@@ -79,6 +78,34 @@ class Magmom(SpecialVaspParam):
     self.value = value
     self._regex = compile("^\s*attribute: (\S+)\s*$")
 
+class Npar(SpecialVaspParam):
+  """ Sets number of electrons relative to neutral system.
+      
+      Gets the number of electrons in the (neutral) system. Then adds value to
+      it and computes with the resulting number of electrons.
+      >>> nelect = NElect(0) # charge neutral system
+      >>> nelect.value = 1   # charge -1 (1 extra electron)
+      >>> nelect.value = -1  # charge +1 (1 extra hole)
+
+      :Param value: (default:0) number of electrons to add to charge neutral
+                    system.
+  """
+
+  def __init__(self, value): super(Npar, self).__init__(value)
+
+  def incar_string(self, vasp, *args, **kwargs):
+    from re import search
+    from math import log
+    if self.value == None: return None
+    if "comm" not in kwargs: return None
+    comm = kwargs["comm"] 
+    if search("power\s+of\s+2", self.value.lower()) != None:
+      m = int(log(comm.size)/log(2)) + 1
+      for i in range(m, 0, -1):
+        if comm.size % i**2 == 0: return "NPAR = {0}".format(i**2)
+      return None
+    else: return "NPAR = {0}".format(self.value)
+    
 
 
 
@@ -244,6 +271,7 @@ class Restart(SpecialVaspParam):
       print "Restarting from scratch."
       istart = "0   # start from scratch"
     else:
+      if comm != None: comm.barrier()
       ewave = exists( join(self.value.directory, files.WAVECAR) )
       echarge = exists( join(self.value.directory, files.CHGCAR) )
       if ewave:
@@ -259,8 +287,12 @@ class Restart(SpecialVaspParam):
       else: 
         istart = "0   # start from scratch"
         icharg = "2   # superpositions of atomic densities"
-      if is_root and exists( join(self.value.directory, files.EIGENVALUES) ):
-        copy(join(self.value.directory, files.EIGENVALUES), ".") 
+      if is_root:
+        if exists( join(self.value.directory, files.EIGENVALUES) ):
+          copy(join(self.value.directory, files.EIGENVALUES), ".") 
+        if exists( join(self.value.directory, files.CONTCAR) ):
+          copy(join(self.value.directory, files.CONTCAR), files.POSCAR) 
+      if comm != None: comm.barrier()
 
 
     return  "ISTART = %s\nICHARG = %s" % (istart, icharg)

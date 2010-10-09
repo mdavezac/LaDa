@@ -1,11 +1,12 @@
 """ Subpackage defining vasp incar parameters. """
 from _params import SpecialVaspParam, NElect, Algo, Precision, Ediff,\
-                    Encut, FFTGrid, Restart, UParams, IniWave, Magmom
+                    Encut, FFTGrid, Restart, UParams, IniWave, Magmom,\
+                    Npar
 from ...opt.decorators import add_setter
 
 __all__ = [ "SpecialVaspParam", "NElect", "Algo", "Precision", "Ediff",\
             "Encut", "FFTGrid", "Restart", "UParams", "IniWave",\
-            "Incar", "Magmom" ]
+            "Incar", "Magmom", 'Npar' ]
 
 class Incar(object):
   """ Contains vasp Incar parameters. 
@@ -41,7 +42,7 @@ class Incar(object):
            calculation is performed to get VASP recommended values.
          - C{symprec}: tolerance when determining symmetries.
          - C{magmom}: Sets magnetic moment. See `incar.Magmom`.
-         - C{npar}: Defaults to None.
+         - C{npar}: Sets npar.
          - C{lcorr}: Defaults to None.
          - C{lplane}: Defaults to None.
          - C{nbands}: Defaults to None.
@@ -113,14 +114,14 @@ class Incar(object):
     self.add_param = "potim",       None
     self.add_param = "nbands",      None
     self.add_param = "lorbit",      None
-    self.add_param = "npar",        None
     self.add_param = "lplane",      None
     self.add_param = "addgrid",     None
     self.add_param = "isym",        None
     self.add_param = "symprec",     None
     self.add_param = "lcorr",       None
     self.add_param = "nupdown",     None
-    self.add_param = "loptica",     None
+    self.add_param = "loptics",     None
+    self.add_param = "lmaxmix",     None
     # objects derived from SpecialVaspParams will be recognized as such and can
     # be added without further fuss.
     self.nelect      = NElect(0)
@@ -134,6 +135,7 @@ class Incar(object):
     self.U_verbosity = UParams("occupancy")
     self.iniwave     = IniWave(None)
     self.magmom      = Magmom()
+    self.npar        = Npar(None)
 
 
   def incar_lines(self, *args, **kwargs):

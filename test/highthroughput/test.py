@@ -150,6 +150,8 @@ def magnetic_wave(path=None, inputpath=None, **kwargs):
   input.update(kwargs)
   assert len(input.__dict__.keys()) != 2, ValueError("No input.")
 
+  with open(__file__, "r") as file: jobdict.magscript = file.read()
+
   # will loop over all jobs, looking for *successfull* *non-magnetic* calculations. 
   # Only magnetic jobs which do NOT exist are added at that point.
   nonmagname = "non-magnetic"
@@ -180,9 +182,9 @@ def magnetic_wave(path=None, inputpath=None, **kwargs):
       magmom = ferro(extract.structure, extract.functional.species, func)
       if magmom != None and jobname not in jobdict:
         job = jobdict / jobname
-        job.functional = input.relaxer if inputpath != None else nonmagjob.functional
+        job.functional = input.relaxer 
         job.jobparams["structure"] = deepcopy(extract.structure)
-        job.jobparams["structure"].name = "{0} in {1}, {2}ferro."\ 
+        job.jobparams["structure"].name = "{0} in {1}, {2}ferro."\
                                           .format(material, lattice.name, prefix)
         job.jobparams["structure"].magmom = magmom
         job.jobparams["magmom"] = "attribute: magmom"
@@ -197,7 +199,7 @@ def magnetic_wave(path=None, inputpath=None, **kwargs):
       jobname = normpath("{0}/{1}anti-ferro-0".format(basename, prefix))
       if magmom != None and jobname not in jobdict:
         job = jobdict / jobname
-        job.functional = input.relaxer if inputpath != None else nonmagjob.functional
+        job.functional = input.relaxer
         job.jobparams["structure"] = deepcopy(extract.structure)
         job.jobparams["structure"].name = "{0} in {1}, {2}specie-anti-ferro."\
                                           .format(material, lattice.name, prefix)

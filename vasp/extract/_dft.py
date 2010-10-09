@@ -551,21 +551,35 @@ class Extract(_ExtractImpl):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def pressure(self):
+    from quantities import kbar as kB
+    """ Greps pressure from OUTCAR """
+    regex = r"""external\s+pressure\s*=\s*(\S+)\s*kB\s+Pullay\s+stress\s*=\s*(\S+)\s*kB"""
+    try: result = [float(u.group(1)) for u in self._search_OUTCAR(regex)]
+    except TypeError: raise RuntimeError("Could not find pressures in OUTCAR")
+    assert len(result) != 0, RuntimeError("Could not find pressures in OUTCAR")
+    return result * kB
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def pressure(self):
+    from quantities import kb as kbar
     """ Greps pressure from OUTCAR """
     regex = r"""external\s+pressure\s*=\s*(\S+)\s*kB\s+Pullay\s+stress\s*=\s*(\S+)\s*kB"""
     result = self._find_last_OUTCAR(regex) 
     assert result != None, RuntimeError("Could not find pressure in OUTCAR")
-    return float(result.group(1))
+    return float(result.group(1)) * kB
 
   @property
   @make_cached
   @broadcast_result(attr=True, which=0)
   def pulay_pressure(self):
+    from quantities import kb as kbar
     """ Greps pressure from OUTCAR """
     regex = r"""external\s+pressure\s*=\s*(\S+)\s*kB\s+Pullay\s+stress\s*=\s*(\S+)\s*kB"""
     result = self._find_last_OUTCAR(regex) 
     assert result != None, RuntimeError("Could not find pulay pressure in OUTCAR")
-    return float(result.group(2))
+    return float(result.group(2)) * kB
 
   @property
   @make_cached
