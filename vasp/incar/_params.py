@@ -36,6 +36,8 @@ class Magmom(SpecialVaspParam):
   def incar_string(self, vasp, *args, **kwargs):
     """ Prints the magmom string if requested. """
     if self.value == None: return None
+    if len(self.value.rstrip().lstrip()) == 0: return None
+    assert vasp.ispin == 2, ValueError("Magmom is non-zero, but ispin == 2.")
     if self.value.lower() == "magmom":
       magmom = self._from_attr(vasp, "magmom",  *args, **kwargs)
       return "MAGMOM = {0}".format(magmom) if magmom != None else None

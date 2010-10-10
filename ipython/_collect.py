@@ -6,7 +6,7 @@ class Collect(AbstractMassExtract):
   
       By adjusting ``self.position``, which jobs to collect can be adjusted.
   """
-  def __init__(self, comm=None, _view=None, _naked_end=True):
+  def __init__(self, comm=None, _view=None, naked_end=True):
     """ Initializes a Collect instance. """
     from IPython.ipapi import get as get_ip_handle
     super(Collect, self).__init__(None, comm=comm)
@@ -20,8 +20,8 @@ class Collect(AbstractMassExtract):
         look for the position of the current_jobdict. Otherwise, this should be
         a string which forms the beginning of the job-dictionaries to collect.
     """
-    self._naked_end = True
-    """ If True, a value is returned if at end of branch. """
+    self.naked_end = naked_end
+    """ If True, a value, rathe than a dict, is returned if at end of branch. """
 
   def walk_through(self):
     """ Generator to go through all relevant jobs.  
@@ -80,7 +80,7 @@ class Collect(AbstractMassExtract):
         if position.match(key) == None: continue
         try: result[key] = getattr(value, name)
         except: result.pop(key, None)
-      if self._naked_end and len(result.keys()) == 1: return result[result.keys()[0]] 
+      if self.naked_end and len(result.keys()) == 1: return result[result.keys()[0]] 
       return result
     raise AttributeError("Unknown attribute {0}.".format(name))
 

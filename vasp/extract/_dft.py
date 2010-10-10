@@ -550,9 +550,9 @@ class Extract(_ExtractImpl):
   @property
   @make_cached
   @broadcast_result(attr=True, which=0)
-  def pressure(self):
+  def pressures(self):
+    """ Greps all pressures from OUTCAR """
     from quantities import kbar as kB
-    """ Greps pressure from OUTCAR """
     regex = r"""external\s+pressure\s*=\s*(\S+)\s*kB\s+Pullay\s+stress\s*=\s*(\S+)\s*kB"""
     try: result = [float(u.group(1)) for u in self._search_OUTCAR(regex)]
     except TypeError: raise RuntimeError("Could not find pressures in OUTCAR")
@@ -563,8 +563,8 @@ class Extract(_ExtractImpl):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def pressure(self):
+    """ Greps last pressure from OUTCAR """
     from quantities import kbar as kB
-    """ Greps pressure from OUTCAR """
     regex = r"""external\s+pressure\s*=\s*(\S+)\s*kB\s+Pullay\s+stress\s*=\s*(\S+)\s*kB"""
     result = self._find_last_OUTCAR(regex) 
     assert result != None, RuntimeError("Could not find pressure in OUTCAR")

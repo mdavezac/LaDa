@@ -804,8 +804,23 @@ class MassExtract(AbstractMassExtract):
 
 class JobParams(object):
   """ Get and sets job parameters for a job-dictionary. """
-  def __init__(self, jobdict = None, only_existing=True,  _view = None):
-    """ Initializes job-parameters. """
+  def __init__(self, jobdict = None, only_existing=True,  naked_end=True, _view = None):
+    """ Initializes job-parameters.
+
+        :Parameters:
+          jobdict : None or JobDict
+	    The jobdictionary for which to get/set parameters. If None, will
+            look for ipython's current_jobdict.
+          only_existing : bool
+	    If True (default), will never create new parameters. It will 
+            modify only existing parameters.
+          naked_end : bool
+	    If True, if the returned dictionary contains only one item, and if
+	    that item corresponds to the root of the jobdictionary being
+            explored, returns that item alone.
+          _view : None or str
+            Grepable to examin.
+    """
     super(JobParams, self).__init__()
 
     super(JobParams, self).__setattr__("_jobdict", None)
@@ -817,6 +832,9 @@ class JobParams(object):
     super(JobParams, self).__setattr__("only_existing", None)
     self.only_existing = only_existing
     """ Only modifies parameter which already exist. """
+    super(JobParams, self).__setattr__("naked_end", None)
+    self.naked_end = True
+    """ If True, a value, rathe than a dict, is returned if at end of branch. """
 
   @property
   def jobdict(self):
@@ -842,7 +860,8 @@ class JobParams(object):
   def walk_through(self):
     """ Loops through all correct jobs. """
     if self._view == None:
-      for job, name in self.jobdict.walk_through(): yield job, name
+      for job, name in self.jobdict.walk_through():
+        if not job.is_tagged: yield job, name
       return
 
     from re import compile
@@ -860,7 +879,9 @@ class JobParams(object):
     """ Returns dictionary with job parameters for each job. """
     result = {}
     for job, jobname in self.walk_through():
-      if hasattr(job, name): result[jobname] = getattr(job, name)
+      if hasattr(job, name): result[job.name] = getattr(job, name)
+    if self.naked_end and len(result.keys()) == 1:
+       if result.keys()[0] == self.jobdict.name: return result[result.keys()[0]] 
     return result
 
   def __setattr__(self, name, value):

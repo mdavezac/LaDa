@@ -92,6 +92,7 @@ class RelaxCellShape(object):
             stateless) if they are named after attributes of `RelaxCellShape`.
             Otherwise, the keywords are passed on to the `vasp` functional.
     """
+    from warnings import warn
     from copy import deepcopy
     from math import fabs 
     from os import getcwd
@@ -116,11 +117,13 @@ class RelaxCellShape(object):
     ediffg *= 1.2 * float(len(structure.atoms))
 
     # updates vasp as much as possible.
+    if "set_relaxation" in kwargs: 
+      warn("set_relaxation is deprecated. Please use relaxation.", DeprecationWarning)
+    vasp.relaxation = kwargs.pop("relaxation", kwargs.pop("set_relaxation", self.relaxation))
     for key in kwargs.keys():
       if hasattr(vasp, key): setattr(vasp, key, kwargs.pop(key))
      
     # does not run code. Just creates directory.
-    vasp.relaxation = kwargs.pop("relaxation", self.relaxation)
     if kwargs.pop("norun", False): 
       this = RelaxCellShape(vasp, relaxation, first_trial, maxiter)
       yield this._norun(structure, outdir=outdir, comm=comm, **kwargs)
@@ -137,7 +140,7 @@ class RelaxCellShape(object):
     if comm != None: comm.barrier()
     
     # performs relaxation calculations.
-    while maxiter <= 0 or nb_steps < maxiter and self.relaxation.find("cellshape") != -1:
+    while maxiter <= 0 or nb_steps < maxiter and vasp.relaxation.find("cellshape") != -1:
       # performs initial calculation.   
       output = vasp\
                (\
@@ -167,7 +170,7 @@ class RelaxCellShape(object):
                RuntimeError("Could not converge cell-shape in {0} iterations.".format(maxiter))
 
     # performs ionic calculation. 
-    while maxiter <= 0 or nb_steps < maxiter + 1 and self.relaxation.find("ionic") != -1:
+    while maxiter <= 0 or nb_steps < maxiter + 1 and vasp.relaxation.find("ionic") != -1:
       output = vasp\
                (\
                  structure, 

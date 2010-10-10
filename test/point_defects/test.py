@@ -139,7 +139,7 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
             if len(new_moments) > 1: 
               moments = [ (min(new_moments), "/ls"), (max(new_moments), "/hs") ]
             else:
-              moments = [ (min(new_moments), "") ]
+              moments = [ (max(new_moments), "") ]
             # loop  over moments.
             for moment, suffix in moments:
               name =  "PointDefects/{1}/{2}{0}".format(suffix, structure.name, oxname)
@@ -154,6 +154,8 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
               jobdict.jobparams["structure"] = deepcopy(structure)
               jobdict.jobparams["nelect"] = nb_extrae
               jobdict.jobparams["relaxation"] = "ionic"
+              jobdict.jobparams["ispin"] = 2
+              jobdict.jobparams["set_symmetries"] = "off"
               jobdict.lattice  = lattice
               jobdict.material = material
               jobdict.defect   = defect
@@ -167,11 +169,11 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
                   jstruct.magmom = [0 for u in superstructure.atoms]
                 # now modifies according to structure.
                 if B == None: # interstitial:
-                  jstruct.magmom.append(min(new_moment))
+                  jstruct.magmom.append(moment)
                 elif A == None: # vacancy -> remove moment.
                   jstruct.magmom.pop(defect.index)
                 else: 
-                  jstruct.magmom[defect.index] = min(new_moments)
+                  jstruct.magmom[defect.index] = moment
                 # only keep moment if there are moments. 
                 if sum(abs(jstruct.magmom)) < 1e-12 * float(len(jstruct.atoms)): del jstruct.magmom
 
@@ -217,15 +219,15 @@ def create_superstructure(groundstate, input):
 
   # adds magnetic moment if necessary.
   if hasattr(orig_lattice, "magmom"):
-    assert extract.magnetization.shape[0] == len(lattice.cell),\
+    assert extract.magnetization.shape[0] == len(lattice.sites),\
            RuntimeError("Could not find magnetization in ground-state's OUTCAR.")
     mlat = lattice.copy()
-    for atom, m in zip(lattice.atoms, extract.magnetization[:,-1]):
-      i = sorted( enumerate([abs(m), abs(m-1e0), abs(m+1e0), abs(m-5e0), abs(m+5e0)]),\
-                  key=itemgetter(1))[0]
-      atom.type = str(i)
+    for atom, m in zip(mlat.sites, extract.magnetization[:,-1]):
+      if abs(m) < 0.1: atom.type = '0'
+      elif m < 0e0: atom.type = str(int(m-1))
+      else: atom.type = str(int(m+1))
     moments = fill_structure(cell, mlat)
-    result.magmom = [ [0, 1, -1, 5, -5][int(i.type)] for i in moments.atoms ]
+    result.magmom = [ int(i.type) for i in moments.atoms ]
 
   return result, lattice
 
@@ -254,7 +256,7 @@ def magnetic_groundstates():
     # checks for lowest energy structure.
     energies = [u for u in nonmag["../"].total_energy.items() if u[0].find("PointDefects") == -1]
     energies = sorted(energies, key=itemgetter(1))
-    yield energies[-1][0]
+    yield energies[0][0]
 
 def deduce_moment(type, species):
   """ Returns moment.

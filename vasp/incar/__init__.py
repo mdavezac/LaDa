@@ -306,8 +306,8 @@ class Incar(object):
     result = ""
     if isif < 5: result += "ionic "
     if isif > 2 and isif < 7: result += "cellshape "
-    if isif in [3, 6, 7]: result += "volume "
-    return result
+    if isif in [3, 6, 7]: result += "volume"
+    return result.lstrip()
 
   @relaxation.setter
   def relaxation(self, args): 
@@ -378,7 +378,7 @@ class Incar(object):
   @add_setter
   def set_relaxation(self, value):
     """ Alias to relaxation. """
-    from warnings import warn, DeprecationWarning
+    from warnings import warn
     warn("set_relaxation is obsolete. Please use relaxation instead.",\
          DeprecationWarning)
     self.relaxation = value
