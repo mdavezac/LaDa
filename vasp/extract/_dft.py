@@ -563,7 +563,7 @@ class Extract(_ExtractImpl):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def pressure(self):
-    from quantities import kb as kbar
+    from quantities import kbar as kB
     """ Greps pressure from OUTCAR """
     regex = r"""external\s+pressure\s*=\s*(\S+)\s*kB\s+Pullay\s+stress\s*=\s*(\S+)\s*kB"""
     result = self._find_last_OUTCAR(regex) 
@@ -574,7 +574,7 @@ class Extract(_ExtractImpl):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def pulay_pressure(self):
-    from quantities import kb as kbar
+    from quantities import kbar as kB
     """ Greps pressure from OUTCAR """
     regex = r"""external\s+pressure\s*=\s*(\S+)\s*kB\s+Pullay\s+stress\s*=\s*(\S+)\s*kB"""
     result = self._find_last_OUTCAR(regex) 

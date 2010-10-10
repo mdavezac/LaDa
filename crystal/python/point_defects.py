@@ -96,16 +96,14 @@ def vacancy(structure, lattice, type):
     # name of this vacancy
     name = "vacancy_{0}".format(type)
     if len(inequivs) > 1: name += "/site_{0}".format(i)
-    # creates vacancy and keeps atom for record
-    atom = deepcopy(structure.atoms.pop(which))
-    atom.index = which
     # structure 
     result = deepcopy(structure)
     result.name = name
+    # creates vacancy and keeps atom for record
+    atom = deepcopy(result.atoms.pop(which))
+    atom.index = which
     # returns structure with vacancy.
     yield result, atom
-    # removes vacancy
-    structure.atoms.insert(which, atom)
 
 def all_defects(structure, lattice, type, subs):
   """ Yields all inequivalent point-defects. 

@@ -101,12 +101,9 @@ class RelaxCellShape(object):
 
 
     # make this function stateless.
-    vasp = kwargs.pop("vasp", self.vasp)
+    vasp = deepcopy(kwargs.pop("vasp", self.vasp))
     structure = deepcopy(structure)
     str_dict = deepcopy(structure.__dict__)
-    set_relaxation = kwargs.pop("relaxation", self.relaxation)
-    set_relaxation = kwargs.pop("set_relaxation", set_relaxation)
-    vasp.set_relaxation = set_relaxation
     first_trial = kwargs.pop("first_trial", self.first_trial)
     maxiter = kwargs.pop("maxiter", self.maxiter)
     keep_steps = kwargs.pop("keep_steps", self.keep_steps)
@@ -118,15 +115,14 @@ class RelaxCellShape(object):
                         .format(self.ediffg, self.vasp.ediff))
     ediffg *= 1.2 * float(len(structure.atoms))
 
-    # check nsw parameter. kwargs may still overide it.
-    if vasp.nsw == None: vasp.nsw = 60
-    if vasp.nsw < 2: vasp.nsw = 3
-    # checks ibrion paramer. kwargs may still overide it.
-    if vasp.ibrion == None and vasp.potim == None: vasp.ibrion = 2
-
+    # updates vasp as much as possible.
+    for key in kwargs.keys():
+      if hasattr(vasp, key): setattr(vasp, key, kwargs.pop(key))
+     
     # does not run code. Just creates directory.
+    vasp.relaxation = kwargs.pop("relaxation", self.relaxation)
     if kwargs.pop("norun", False): 
-      this = RelaxCellShape(vasp, set_relaxation, first_trial, maxiter)
+      this = RelaxCellShape(vasp, relaxation, first_trial, maxiter)
       yield this._norun(structure, outdir=outdir, comm=comm, **kwargs)
       return
 
@@ -141,7 +137,7 @@ class RelaxCellShape(object):
     if comm != None: comm.barrier()
     
     # performs relaxation calculations.
-    while maxiter <= 0 or nb_steps < maxiter and vasp.isif != 1:
+    while maxiter <= 0 or nb_steps < maxiter and self.relaxation.find("cellshape") != -1:
       # performs initial calculation.   
       output = vasp\
                (\
@@ -163,20 +159,21 @@ class RelaxCellShape(object):
       if abs(energies) < ediffg: break
 
     # Does not perform ionic calculation if convergence not reached.
-    assert output.success, RuntimeError("VASP calculations did not complete.")
-    if output.total_energies.shape[0] >= 2:
-      energies = output.total_energies[-2] - output.total_energies[-1:]
-      assert abs(energies) < ediffg, \
-             RuntimeError("Could not converge cell-shape in {0} iterations.".format(maxiter))
+    if output != None:
+      assert output.success, RuntimeError("VASP calculations did not complete.")
+      if output.total_energies.shape[0] >= 2:
+        energies = output.total_energies[-2] - output.total_energies[-1:]
+        assert abs(energies) < ediffg, \
+               RuntimeError("Could not converge cell-shape in {0} iterations.".format(maxiter))
 
     # performs ionic calculation. 
-    while maxiter <= 0 or nb_steps < maxiter + 1:
+    while maxiter <= 0 or nb_steps < maxiter + 1 and self.relaxation.find("ionic") != -1:
       output = vasp\
                (\
                  structure, 
                  outdir = join(outdir, join("relax_ions", str(nb_steps))),
                  comm=comm,
-                 set_relaxation = "ionic",
+                 relaxation = "ionic",
                  restart = output if nb_steps > 1 else None,
                  **kwargs
                )
@@ -192,11 +189,12 @@ class RelaxCellShape(object):
       if abs(energies) < ediffg: break
 
     # Does not perform static calculation if convergence not reached.
-    assert output.success, RuntimeError("VASP calculations did not complete.")
-    if output.total_energies.shape[0] >= 2:
-      energies = output.total_energies[-2] - output.total_energies[-1:]
-      assert abs(energies) < ediffg, \
-             RuntimeError("Could not converge ions in {0} iterations.".format(maxiter))
+    if output != None:
+      assert output.success, RuntimeError("VASP calculations did not complete.")
+      if output.total_energies.shape[0] >= 2:
+        energies = output.total_energies[-2] - output.total_energies[-1:]
+        assert abs(energies) < ediffg, \
+               RuntimeError("Could not converge ions in {0} iterations.".format(maxiter))
 
     # performs final calculation outside relaxation directory. 
     output = vasp\
@@ -204,7 +202,7 @@ class RelaxCellShape(object):
                structure, \
                outdir = outdir,\
                comm=comm,\
-               set_relaxation = "static",\
+               relaxation = "static",\
                restart = output, \
                **kwargs\
              )
@@ -234,14 +232,6 @@ class RelaxCellShape(object):
         of sync with the actual structure during cell-shape relaxation.
         Convergence can only be achieved by restarting the calculation. And
         eventually performing a static calculation.
-
-        It is wastefull to use this functional unless a cell-shape relaxation
-        is wanted.
-
-        On top of the usual vasp parameter, this functional accepts the keyword
-        agument *relaxation* as a shorthand for *set_relaxation* attribute of
-        the vasp functional. If both are passed to this method,
-        *set_relaxation* takes precedence.
 
         If you want to examine the result of each and every vasp calculation,
         use `generator` instead.

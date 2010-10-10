@@ -137,12 +137,12 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
             # creates list of moments. 
             new_moments = deduce_moment(A, species) 
             if len(new_moments) > 1: 
-              moments = [ (min(new_moments), "ls-"), (max(new_moments), "hs-") ]
+              moments = [ (min(new_moments), "/ls"), (max(new_moments), "/hs") ]
             else:
               moments = [ (min(new_moments), "") ]
             # loop  over moments.
-            for moment, prefix in moments:
-              name =  "PointDefects/{0}{1}/{2}".format(prefix, structure.name, oxname)
+            for moment, suffix in moments:
+              name =  "PointDefects/{1}/{2}{0}".format(suffix, structure.name, oxname)
               
               # checks if job already exists. Does not change job if it exists!
               if name in groundstate[".."]: continue

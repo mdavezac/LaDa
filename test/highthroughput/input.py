@@ -7,8 +7,8 @@ vasp.encut      = 1
 vasp.npar       = 2
 vasp.lplane     = True
 vasp.addgrid    = True
+vasp.relaxation = "ionic"
 vasp.set_smearing   = "metal", 0.01
-vasp.set_relaxation = "ionic"
 vasp.set_symmetries = "off"
 vasp.kpoints        = "\n0\nAuto\n30"
 

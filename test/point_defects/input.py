@@ -23,9 +23,9 @@ vasp.lorbit     = 10
 vasp.npar       = 2
 vasp.lplane     = True
 vasp.addgrid    = True
+vasp.relaxation = "ionic"
 vasp.set_smearing   = "metal", 0.01
-vasp.set_relaxation = "ionic"
-vasp.set_symmetries = "off"
+vasp.set_symmetries = 1e-3
 
 #                Symbol, directory of POTCAR, U parameters, max/min oxidation state, is magnetic
 vasp.add_specie = "Fe", "pseudos/Fe", U("liechtenstein", "d", 2.5), 3
@@ -64,7 +64,7 @@ lattices = [ A2BX4.b4() ]
 """ Lattice for which to create structures. """
 
 # The following sets-up which point defects to do.
-point_defects = {"Rh": ["Zn", None], "Zn": ["Rh", None], "O": [None]}
+point_defects = {"Mn": ["Ga", None], "Ga": ["Mn", None], "O": [None]}
 # The following sets-up which which interstitials to examine.
 # Li interstitial on 16c (0,0,0)
 # Li interstitial on 32e (x,x,x) with x = 0.75.
