@@ -564,6 +564,7 @@ def saveto(self, event):
   from os.path import exists, abspath, isfile
   from .. import jobs
   from ._collect import Collect
+  from ..jobs import JobParams
   ip = self.api
   # gets dictionary, path.
   current, path = _get_current_job_params(self, 1)
@@ -607,6 +608,7 @@ def saveto(self, event):
     jobs.save(current.root, args[0], overwrite=True) 
     ip.user_ns["current_jobdict_path"] = abspath(args[0])
     if "collect" not in ip.user_ns: ip.user_ns["collect"] = Collect()
+    if "jobparams" not in ip.user_ns: ip.user_ns["jobparams"] = JobParams()
   else:
     ip.user_ns["_lada_error"] = "Invalid call to saveto."
     print ip.user_ns["_lada_error"] 
@@ -748,6 +750,7 @@ def ipy_init():
     from ._explore import explore, explore_completer
     from ._showme import showme, showme_completer
     from ._launch import launch, launch_completer
+    from ._jobparams import completer as jobparams_completer
     
     ip = IPython.ipapi.get()
     ip.expose_magic("explore", explore)
@@ -764,6 +767,7 @@ def ipy_init():
     ip.set_hook('complete_command', showme_completer, re_key = '\s*%?showme')
     ip.set_hook('complete_command', explore_completer, re_key = '\s*%?explore')
     ip.set_hook('complete_command', launch_completer, re_key = '\s*%?launch')
+    ip.set_hook('complete_command', jobparams_completer, re_key = 'jobparams')
     if "SNLCLUSTER" in environ:
       if environ["SNLCLUSTER"] in ["redrock", "redmesa"]:
         ip.expose_magic("qstat", qstat)
