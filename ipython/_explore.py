@@ -201,6 +201,7 @@ def _explore(self, args):
   from copy import deepcopy
   from ..jobs import MassExtract, load, JobDict
   from ._collect import Collect
+  from ..jobs import JobParams
   from . import _get_current_job_params
 
   ip = self.api
@@ -224,6 +225,7 @@ def _explore(self, args):
   # delete stuff from namespace.
   current, path = _get_current_job_params(self, 0)
   ip.user_ns.pop("collect", None)
+  ip.user_ns.pop("jobparams", None)
   ip.user_ns.pop("_lada_subjob_iterator", None)
   ip.user_ns.pop("_lada_subjob_iterated", None)
 
@@ -254,6 +256,7 @@ def _explore(self, args):
     if new_path == None: new_path = path
 
   ip.user_ns["current_jobdict"] = jobdict
+  ip.user_ns["jobparams"] = JobParams()
   if new_path != None: ip.user_ns["current_jobdict_path"] = new_path
   else: ip.user_ns.pop("current_jobdict_path", None)
   if new_path != None: ip.user_ns["collect"] = Collect()

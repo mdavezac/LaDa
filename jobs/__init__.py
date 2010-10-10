@@ -406,6 +406,7 @@ class JobDict(object):
 
   def __dir__(self):
     result = [u for u in self.__dict__ if u[0] != '_'] 
+    result = [u for u in self.__class__.__dict__ if u[0] != '_'] 
     result.extend([u for u in self.jobparams.keys() if u[0] != '_'])
     return list(set(result))
 
@@ -800,3 +801,81 @@ class MassExtract(AbstractMassExtract):
       try: extract = job.functional.Extract(join(self.root, name), comm = self.comm)
       except: pass
       else: yield name, extract
+
+class JobParams(object):
+  """ Get and sets job parameters for a job-dictionary. """
+  def __init__(self, jobdict = None, only_existing=True,  _view = None):
+    """ Initializes job-parameters. """
+    super(JobParams, self).__init__()
+
+    super(JobParams, self).__setattr__("_jobdict", None)
+    self._jobdict = jobdict
+    """ Job-dictionary for which to get/set parameters. """
+    super(JobParams, self).__setattr__("_view", None)
+    self._view = _view
+    """ Dictionary keys for which to get stuff. """
+    super(JobParams, self).__setattr__("only_existing", None)
+    self.only_existing = only_existing
+    """ Only modifies parameter which already exist. """
+
+  @property
+  def jobdict(self):
+    """ Jobdictionary for which to get/set parameters. """
+    if self._jobdict == None:
+      try: from IPython.ipapi import get as get_ipy
+      except ImportError: raise AttributeError("jobdict not set.")
+      else:
+        ip = get_ipy()
+        if "current_jobdict" not in ip.user_ns:
+          print "No current jobdictionary."
+          return
+        return ip.user_ns["current_jobdict"]
+    return self._jobdict
+  @jobdict.setter
+  def jobdict(self, value): self._jobdict = value
+
+  @property
+  def jobs(self):
+    """ Name of jobs which can currently be grepped. """
+    return [name for job, name in self.walk_through()]
+    
+  def walk_through(self):
+    """ Loops through all correct jobs. """
+    if self._view == None:
+      for job, name in self.jobdict.walk_through(): yield job, name
+      return
+
+    from re import compile
+    regex = compile(self._view) 
+    for job, name in self.jobdict.walk_through():
+      if regex.match(name) != None: yield job, name
+
+  def __getitem__(self, name):
+    """ Returns a JobParams object with new view. """
+    from os.path import join, normpath
+    view = name if self._view == None else normpath(join(self._view, name))
+    return JobParams(self._jobdict, _view = view)
+
+  def __getattr__(self, name):
+    """ Returns dictionary with job parameters for each job. """
+    result = {}
+    for job, jobname in self.walk_through():
+      if hasattr(job, name): result[jobname] = getattr(job, name)
+    return result
+
+  def __setattr__(self, name, value):
+    """ Returns dictionary with job parameters for each job. """
+    try: super(JobParams, self).__getattribute__(name)
+    except AttributeError: 
+      for job, jobname in self.walk_through():
+        if hasattr(job, name): setattr(job, name, value)
+        elif not self.only_existing: job.jobparams[name] = value
+    else: super(JobParams, self).__setattr__(name, value)
+
+  def __dir__(self):
+    """ Attributes which already exist. """
+    result = [u for u in self.__class__.__dict__ if u[0] != '_'] 
+    result.extend([u for u in self.__dict__ if u[0] != '_'])
+    for job, name in self.walk_through(): result.extend(job.jobparams.keys())
+    return list(set(result))
+ 

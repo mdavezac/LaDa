@@ -564,6 +564,7 @@ def saveto(self, event):
   from os.path import exists, abspath, isfile
   from .. import jobs
   from ._collect import Collect
+  from ..jobs import JobParams
   ip = self.api
   # gets dictionary, path.
   current, path = _get_current_job_params(self, 1)
@@ -607,6 +608,7 @@ def saveto(self, event):
     jobs.save(current.root, args[0], overwrite=True) 
     ip.user_ns["current_jobdict_path"] = abspath(args[0])
     if "collect" not in ip.user_ns: ip.user_ns["collect"] = Collect()
+    if "jobparams" not in ip.user_ns: ip.user_ns["jobparams"] = JobParams()
   else:
     ip.user_ns["_lada_error"] = "Invalid call to saveto."
     print ip.user_ns["_lada_error"] 
