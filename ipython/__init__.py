@@ -750,7 +750,6 @@ def ipy_init():
     from ._explore import explore, explore_completer
     from ._showme import showme, showme_completer
     from ._launch import launch, launch_completer
-    from ._jobparams import completer as jobparams_completer
     
     ip = IPython.ipapi.get()
     ip.expose_magic("explore", explore)
@@ -767,7 +766,6 @@ def ipy_init():
     ip.set_hook('complete_command', showme_completer, re_key = '\s*%?showme')
     ip.set_hook('complete_command', explore_completer, re_key = '\s*%?explore')
     ip.set_hook('complete_command', launch_completer, re_key = '\s*%?launch')
-    ip.set_hook('complete_command', jobparams_completer, re_key = 'jobparams')
     if "SNLCLUSTER" in environ:
       if environ["SNLCLUSTER"] in ["redrock", "redmesa"]:
         ip.expose_magic("qstat", qstat)
