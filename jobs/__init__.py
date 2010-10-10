@@ -406,6 +406,7 @@ class JobDict(object):
 
   def __dir__(self):
     result = [u for u in self.__dict__ if u[0] != '_'] 
+    result = [u for u in self.__class__.__dict__ if u[0] != '_'] 
     result.extend([u for u in self.jobparams.keys() if u[0] != '_'])
     return list(set(result))
 
@@ -852,7 +853,7 @@ class JobParams(object):
   def __getitem__(self, name):
     """ Returns a JobParams object with new view. """
     from os.path import join, normpath
-    view = None if self._view == None else normpath(join(self._view, name))
+    view = name if self._view == None else normpath(join(self._view, name))
     return JobParams(self._jobdict, _view = view)
 
   def __getattr__(self, name):
@@ -875,6 +876,6 @@ class JobParams(object):
     """ Attributes which already exist. """
     result = [u for u in self.__class__.__dict__ if u[0] != '_'] 
     result.extend([u for u in self.__dict__ if u[0] != '_'])
-    for job, name in self.walk_through(): result.extend(dir(job))
+    for job, name in self.walk_through(): result.extend(job.jobparams.keys())
     return list(set(result))
  
