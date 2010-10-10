@@ -805,10 +805,15 @@ class JobParams(object):
   """ Get and sets job parameters for a job-dictionary. """
   def __init__(self, jobdict = None, only_existing=True,  _view = None):
     """ Initializes job-parameters. """
+    super(JobParams, self).__init__()
+
+    super(JobParams, self).__setattr__("_jobdict", None)
     self._jobdict = jobdict
     """ Job-dictionary for which to get/set parameters. """
+    super(JobParams, self).__setattr__("_view", None)
     self._view = _view
     """ Dictionary keys for which to get stuff. """
+    super(JobParams, self).__setattr__("only_existing", None)
     self.only_existing = only_existing
     """ Only modifies parameter which already exist. """
 
@@ -819,7 +824,7 @@ class JobParams(object):
       try: from IPython.ipapi import get as get_ipy
       except ImportError: raise AttributeError("jobdict not set.")
       else:
-        ip = get_ipy
+        ip = get_ipy()
         if "current_jobdict" not in ip.user_ns:
           print "No current jobdictionary."
           return
@@ -828,11 +833,27 @@ class JobParams(object):
   @jobdict.setter
   def jobdict(self, value): self._jobdict = value
 
+  @property
+  def jobs(self):
+    """ Name of jobs which can currently be grepped. """
+    return [name for job, name in self.walk_through()]
+    
+  def walk_through(self):
+    """ Loops through all correct jobs. """
+    if self._view == None:
+      for job, name in self.jobdict.walk_through(): yield job, name
+      return
+
+    from re import compile
+    regex = compile(self._view) 
+    for job, name in self.jobdict.walk_through():
+      if regex.match(name) != None: yield job, name
+
   def __getitem__(self, name):
     """ Returns a JobParams object with new view. """
     from os.path import join, normpath
-    view = name if self._view != None else normpath(join(self._view, name))
-    return JobParams(self._jobdict, _view = name)
+    view = None if self._view == None else normpath(join(self._view, name))
+    return JobParams(self._jobdict, _view = view)
 
   def __getattr__(self, name):
     """ Returns dictionary with job parameters for each job. """
@@ -843,25 +864,17 @@ class JobParams(object):
 
   def __setattr__(self, name, value):
     """ Returns dictionary with job parameters for each job. """
-    for job, jobname in self.walk_through():
-      if hasattr(job, name): setattr(job, name, value)
-      elif not self.only_existing: job.jobparams[name] = value
-    return result
+    try: super(JobParams, self).__getattribute__(name)
+    except AttributeError: 
+      for job, jobname in self.walk_through():
+        if hasattr(job, name): setattr(job, name, value)
+        elif not self.only_existing: job.jobparams[name] = value
+    else: super(JobParams, self).__setattr__(name, value)
 
   def __dir__(self):
     """ Attributes which already exist. """
+    result = [u for u in self.__class__.__dict__ if u[0] != '_'] 
+    result.extend([u for u in self.__dict__ if u[0] != '_'])
+    for job, name in self.walk_through(): result.extend(dir(job))
+    return list(set(result))
  
-  @property
-  def jobs(self):
-    """ Name of jobs which can currently be grepped. """
-    return [name for job, name in self.walk_through()]
-    
-
-  def walk_through(self):
-    """ Loops through all correct jobs. """
-    from re import compile
-    if self._view == None:
-      for job, name in self.jobdict.walk_through(): yield job, name
-    regex = compile(self._view) 
-    for job, name in self.jobdict.walk_through():
-      if regex.match(name) != None: yield job, name
