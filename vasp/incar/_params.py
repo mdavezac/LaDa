@@ -36,8 +36,8 @@ class Magmom(SpecialVaspParam):
   def incar_string(self, vasp, *args, **kwargs):
     """ Prints the magmom string if requested. """
     if self.value == None: return None
+    if vasp.ispin == 1: return None
     if len(self.value.rstrip().lstrip()) == 0: return None
-    assert vasp.ispin == 2, ValueError("Magmom is non-zero, but ispin == 2.")
     if self.value.lower() == "magmom":
       magmom = self._from_attr(vasp, "magmom",  *args, **kwargs)
       return "MAGMOM = {0}".format(magmom) if magmom != None else None
@@ -81,16 +81,17 @@ class Magmom(SpecialVaspParam):
     self._regex = compile("^\s*attribute: (\S+)\s*$")
 
 class Npar(SpecialVaspParam):
-  """ Sets number of electrons relative to neutral system.
-      
-      Gets the number of electrons in the (neutral) system. Then adds value to
-      it and computes with the resulting number of electrons.
-      >>> nelect = NElect(0) # charge neutral system
-      >>> nelect.value = 1   # charge -1 (1 extra electron)
-      >>> nelect.value = -1  # charge +1 (1 extra hole)
+  """ Parallelization over bands. 
 
-      :Param value: (default:0) number of electrons to add to charge neutral
-                    system.
+      This parameter is described `here <http://cms.mpi.univie.ac.at/vasp/guide/node138.html>`_.
+      It can be set to a particular number:
+  
+      >>> vasp.npar = 2
+
+     Or it can be deduced automatically. In the latter case, npar is set to the
+     largest power of 2 which divides the number of processors:
+
+     >>> vasp.npar = "power of two"
   """
 
   def __init__(self, value): super(Npar, self).__init__(value)
@@ -102,9 +103,9 @@ class Npar(SpecialVaspParam):
     if "comm" not in kwargs: return None
     comm = kwargs["comm"] 
     if search("power\s+of\s+2", self.value.lower()) != None:
-      m = int(log(comm.size)/log(2)) + 1
-      for i in range(m, 0, -1):
-        if comm.size % i**2 == 0: return "NPAR = {0}".format(i**2)
+      m = int(log(comm.size)/log(2))
+      for i in range(m, -1, -1):
+        if comm.size % 2**i == 0: return "NPAR = {0}".format(2**i)
       return None
     else: return "NPAR = {0}".format(self.value)
     
