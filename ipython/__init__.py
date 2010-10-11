@@ -505,7 +505,7 @@
 """
 __docformat__ = "restructuredtext en"
 from contextlib  import contextmanager
-from _collect import Collect
+from ..jobs import MassExtract as Collect
 
 def _get_current_job_params(self, verbose=0):
   """ Returns a tuple with current job, filename, directory. """
@@ -563,8 +563,7 @@ def saveto(self, event):
   """ Saves current job to current filename and directory. """
   from os.path import exists, abspath, isfile
   from .. import jobs
-  from ._collect import Collect
-  from ..jobs import JobParams
+  from ..jobs import JobParams, MassExtract as Collect
   ip = self.api
   # gets dictionary, path.
   current, path = _get_current_job_params(self, 1)

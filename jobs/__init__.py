@@ -644,31 +644,24 @@ class AbstractMassExtract(object):
     self.__dict__.pop("_cached_properties", None)
 
 
-  def __init__(self, path, comm = None):
+  def __init__(self, naked_end = True, view = None):
     """ Initializes extraction object. 
 
 
         :Parameters:
-          path
-            Root of calculations.
-          comm
-            an boost.mpi.communicator instance.
+          naked_end : bool
+            True if should return value rather than dict when only one item.
+          view : str or None
+            Grepable.
     """
     from ..opt import RelativeDirectory
 
     super(AbstractMassExtract, self).__init__()
-    self.comm = comm
 
-    self._root = RelativeDirectory(path=path, hook=self.uncache)
-    """ Root directory of the job. """
-
-  @property 
-  def root(self):
-    """ Root directory of the job. """
-    return self._root.path
-  @root.setter
-  def root(self, value): self._root.path = value
-    
+    self.naked_end = naked_end
+    """ If True and dict to return contains only one item, returns value itself. """
+    self.view = view
+    """ The pattern which job-names should match. """
 
   def walk_through(self):
     """ Generator to go through all relevant jobs. 
@@ -677,6 +670,17 @@ class AbstractMassExtract(object):
           extractor an extraction object.
     """
     abstract
+
+  @property
+  def view(self):
+    """ A regex pattern which the name of extracted jobs should match.
+
+        If None, then no match required. Should be a string, not an re object.
+    """
+    if self._view == None: return ""
+    return self._view
+  @view.setter
+  def view(self, value): self._view = value
 
   def _extractors(self):
     """ Goes through all jobs and collects Extract if available. """
@@ -689,45 +693,113 @@ class AbstractMassExtract(object):
     self._cached_extractors = result
     return result
 
+  def _regex_extractors(self):
+    """ Loops through jobs in this view. """
+    if self._view == "": 
+      for key, value in self._extractors().items(): yield key, value
+      return
+
+    from re import compile
+    regex = compile(self.view)
+    for key, value in self._extractors().items():
+      if regex.match(key) == None: continue
+      yield key, value
+
   def _properties(self): 
     """ Returns cached __dir__ result. """
+    from re import compile
     if hasattr(self, "_cached_properties"): return self._cached_properties
+
     results = set([])
-    for key, value in self._extractors().items():
-      for name in dir(value):
-        if name[0] == '_': continue
-        results.add(name)
+    for key, value in self._regex_extractors():
+      results |= set([u for u in dir(value) if u[0] != '_'])
     self._cached_properties = results
     return results
 
   def __dir__(self): 
-    results = set([u for u in self.__dict__ if u[0] != '_']) | self._properties()
+    results =   set([u for u in self.__dict__ if u[0] != '_']) \
+              | set([u for u in self.__class__.__dict__ if u[0] != '_']) \
+              | self._properties()
     return list(results)
 
   def __getattr__(self, name): 
     """ Returns extracted values. """
-    if name == "_cached_extractors" or name == "_cached_properties": 
-      raise AttributeError("Unknown attribute {0}.".format(name))
-    if name in self._properties(): 
-      result = {}
-      for key, value in self._extractors().items():
-        try: result[key] = getattr(value, name)
-        except: result.pop(key, None)
-      return result
-    raise AttributeError("Unknown attribute {0}.".format(name))
+    assert name not in ["_cached_extractors", "_cached_properties"],\
+           AttributeError("Unknown attribute {0}.".format(name))
+    assert name in self._properties(), AttributeError("Unknown attribute {0}.".format(name))
+
+    result = {}
+    for key, value in self._regex_extractors():
+      try: result[key] = getattr(value, name)
+      except: result.pop(key, None)
+    if self.naked_end and len(result) == 1: return result[result.keys()[0]]
+    return result
+
+  def __getitem__(self, name):
+    """ Returns a view of the current job-dictionary. """
+    from os.path import normpath, join
+    if name[0] == '/': return self.copy(view=name)
+    path = normpath(join('/', join(self.view, name)))
+    return self.__class__(comm=self.comm, view=path)
+
+  @property
+  def jobs(self):
+    """ List of jobnames (satisfying the current view). """
+    return [key for key, value in self._regex_extractors()]
+
+  @property
+  def children(self):
+    """ next set of minimal regex. """
+    from re import compile
+    from os.path import join, normpath
+    splitter = compile(r"(?<!\\)/")
+    regex = compile(self.view)
+
+    jobs = self.jobs
+    if len(self.jobs) < 2: return 
+    children = set()
+    for name in self.jobs:
+      where = regex.match(name)
+      if name[where.end()] == '/': children.add(name[:where.end()+1])
+      else:
+        last = name[where.end():].find('/')
+        if last != -1: children.add(name[:last+where.end()+1])
+        else: yield self.copy(view=name)
+    for child in children: yield self.copy(view=child+".")
+
+  def grep(self, regex, flags=0):
+    """ Yields views for children with fullnames matching the regex.
+    
+        :Param regex: The matching regular expression.
+        :type regex: str
+
+        The match is successful if the regex is matched using python's
+        `re.search <http://docs.python.org/library/re.html#re.search>`_ method.
+
+        Only the outermost view of each match is given. In other words, if a
+        view is yielded, its subviews will not be yielded.
+    """
+    from re import compile
+    reg = compile(regex, flags)
+    if reg.search(self.view) != None:
+      yield self
+      return
+    for child in self.children:
+      if reg.search(child.view) != None: yield child
+      else: # goes to next level.
+        for grandchild in child.grep(regex, flags): yield grandchild
 
   def __getstate__(self):
     d = self.__dict__.copy()
     d.pop("comm", None)
-    if "_root" in d: d["_root"].hook = None
+    if "_rootdir" in d: d["_rootdir"].hook = None
     return d
 
   def __setstate__(self, arg):
     self.__dict__.update(arg)
     self.comm = None
-    if "_root" in d: d["_root"].hook = self.uncache
+    if "_rootdir" in d: d["_rootdir"].hook = self.uncache
        
-     
   def solo(self):
     """ Extraction on a single process.
   
@@ -738,11 +810,23 @@ class AbstractMassExtract(object):
         >>> # prints only on proc 0.
         >>> if boost.mpi.world.rank == 0: print extract.solo().structure
     """
-    from copy import deepcopy
-    
     if self.comm == None: return self
+
+    from copy import deepcopy
     copy = deepcopy(self)
     return copy
+
+  def copy(self, **kwargs):
+    """ Returns a shallow copy. 
+    
+        :Param kwargs:  Any keyword attribute will modify the corresponding
+          attribute of the copy.
+    """
+    from copy import deepcopy
+    result = self.__class__()
+    result.__dict__.update(self.__dict__)
+    for key, value in kwargs.items(): setattr(result, key, value)
+    return result
 
 
 
@@ -757,34 +841,68 @@ class MassExtract(AbstractMassExtract):
       diagnosis.
   """
 
-  def __init__(self, path, jobdict=None, comm = None):
+  def __init__(self, path = None, comm = None, naked_end=None, view=None):
     """ Initializes extraction object. 
  
         :Parameters:
-           path 
-             If ``jobdict`` is None, then should point to a pickled
-             dictionary. If ``jobdict`` is a JobDict instance, then it should
-             point the directory where calculations are saved.
-           jobdict : None or JobDict.
-             If it is None, then ``path`` should point to a pickled
-             job-dictionary. If it is a jobdictonary, then ``path`` should point
-             to a directory where calculations where performed.
+           path : str or None
+             Pickled jobdictioanary for which to extract stuff. If None, will
+             attempt to use the current jobdictionary.
            comm : boost.mpi.communicator
              All processes will be syncronized.
+          naked_end : bool
+            True if should return value rather than dict when only one item.
+          view : str or None
+            Grepable.
     """
+    super(MassExtract, self).__init__(naked_end=naked_end, view=view)
+
     from os.path import isdir, isfile, exists, dirname, abspath
-    super(MassExtract, self).__init__(path, comm=comm)
-    if jobdict == None:
-      assert isfile(path), IOError("{0} is not a file.".format(path))
-      self.root = path # expands usernames, environment variables.
-      with open(self.root, "r") as file: self.jobdict = load(path, comm)
-      self.root = dirname(self.root)
-    elif path != None: 
-      assert isdir(path), IOError("{0} is not a directory.".format(path))
-      self.root = path
-      self.jobdict = jobdict
+
+    self.rootdir = path
     self.comm = comm
+    """ Communicator if any. """
+
     if path != None: self._extractors() # gets stuff cached.
+
+  @property
+  def rootdir(self): 
+    """ Root directory of the jobdictionary. """
+    from os.path import dirname
+
+    if self._rootdir == None: 
+      try: from IPython.ipapi import get as get_ipy
+      except ImportError: raise AttributeError("path not set.")
+      ip = get_ipy()
+      if "current_jobdict_path" not in ip.user_ns:
+        print "No current jobdictionary path."
+        return
+      return dirname(ip.user_ns["current_jobdict_path"])
+
+    return dirname(self._rootdir.path)
+  @rootdir.setter
+  def rootdir(self, value):
+    from ..opt import RelativeDirectory
+    if value == None:
+      self._rootdir = None
+      return
+    self._rootdir = RelativeDirectory(value, hook=self.uncache)
+    del self._jobdict
+  @rootdir.deleter
+  def rootdir(self): self._rootdir = None
+
+  @property
+  def jobdict(self):
+    if self._rootdir == None: 
+      try: from IPython.ipapi import get as get_ipy
+      except ImportError: raise AttributeError("path not set.")
+      ip = get_ipy()
+      if "current_jobdict" not in ip.user_ns:
+        print "No current jobdictionary."
+        return
+      return ip.user_ns["current_jobdict"].root
+    if "_jobdict" not in self.__dict__: self._jobdict = load(self._rootdir.path, self.comm)
+    return self._jobdict.root
 
   def walk_through(self):
     """ Generator to go through all relevant jobs.  
@@ -797,10 +915,10 @@ class MassExtract(AbstractMassExtract):
     for job, name in self.jobdict.walk_through():
       if job.is_tagged: continue
       if not hasattr(job.functional, "Extract"): continue
-      if not exists(join(self.root, name)): print join(self.root, name); continue
-      try: extract = job.functional.Extract(join(self.root, name), comm = self.comm)
+      try: extract = job.functional.Extract(join(self.rootdir, name), comm = self.comm)
       except: pass
-      else: yield name, extract
+      else: yield job.name, extract
+
 
 class JobParams(object):
   """ Get and sets job parameters for a job-dictionary. """
