@@ -102,7 +102,8 @@ class Npar(SpecialVaspParam):
     if self.value == None: return None
     if "comm" not in kwargs: return None
     comm = kwargs["comm"] 
-    if search("power\s+of\s+2", self.value.lower()) != None:
+    if     hasattr(self.value, "lower")\
+       and search("power\s+of\s+2", self.value.lower()) != None:
       m = int(log(comm.size)/log(2))
       for i in range(m, -1, -1):
         if comm.size % 2**i == 0: return "NPAR = {0}".format(2**i)
