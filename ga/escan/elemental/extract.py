@@ -18,11 +18,11 @@ class Extract(object):
   """ Functional filename """
 
   INDIV_PATTERN = re.compile("^\s*(array\(\[(?:\s*[0,1]\,|(?:\,\s*$^)\s*)*"\
-                             "\s*[0,1]\s*\]\))\s*(\S+)\s*$", re.X|re.M)
+                             "\s*[0,1]\s*\]\))\s*(\S+)\s*(\S+)?\s*$", re.X|re.M)
   OFFSPRING_PATTERN = \
     re.compile("^\s*Offspring:\s*\n"\
                "\s*((array\(\[(?:\s*[0,1]\,|(?:\,\s*$^)\s*)*\s*[0,1]\s*\]\))"\
-               "\s*(\S+)\s*\n)+", re.X|re.M)
+               "\s*(\S+)\s*(\S+)?\s*\n)+", re.X|re.M)
 
   def __init__(self, directory = ".", comm = None):
     """ Initializes Extract object. """
@@ -31,6 +31,7 @@ class Extract(object):
     self._directory = RelativeDirectory(path=directory, hook=self.uncache)
     """ GA directory. """
     self.comm = comm
+    """ MPI Communicator. """
 
   def _search_OUTCAR(self, regex, path=None):
     """ Looks for all matches. """
@@ -112,6 +113,7 @@ class Extract(object):
     if self.current_age == None: return None
     if is_root:
       current_path = join(join(self.directory, self.current_age), self.FUNCCAR)
+      assert exists(current_path), RuntimeError("File {0} does not exist.".format(current_path))
       with open(current_path, "r") as file: result = load(file)
       if is_mpi:
         from boost.mpi import broadcast
@@ -121,12 +123,6 @@ class Extract(object):
       result = broadcast(self.comm, None, 0)
     return result
 
-  @property
-  def current_gen(self):
-    """ Returns current population. """
-    if self.functional == None: return 0
-    return self.functional.current_gen
-  
   @property
   def current_age(self):
     """ Current GA age (eg last run). """
@@ -191,6 +187,12 @@ class Extract(object):
     return int(found.group(1)) if found != None else None
 
   @property
+  def current_gen(self):
+    """ Returns current population. Alias for last_generation. """
+    return self.last_generation
+  
+
+  @property
   def has_gaps(self):
     """ True if there are gaps in historical ages. """
     if len(self.ages) == 0: return False 
@@ -232,7 +234,7 @@ class Extract(object):
           if len(result) >= 2: 
             for other in result[-2]: 
               if self.functional.cmp_indiv(individual, other) != 0: continue
-              if any( abs(individual.genes - other.genes[0]) > 1e-12 ): continue
+              if not self.functional.compare(individual, other): continue
               found_other = True
               break
           result[-1].append( other if found_other else deepcopy(individual) )
@@ -264,9 +266,40 @@ class Extract(object):
 
     return x, y
 
+  @property
+  @make_cached 
+  @broadcast_result(attr=True, which=0)
+  def uniques(self):
+    """ Minimum set of individuals. """
+    results = []
+    compare = self.functional.compare
+    for pop in self.solo().offspring:
+      for indiv in pop:
+        i = id(indiv)
+        if any( i == id(o) for o in results ): continue
+        if any( compare(indiv, o) for o in results ): continue
+        results.append(indiv)
+    return results
+
+  @property
+  @make_cached 
+  @broadcast_result(attr=True, which=0)
+  def sorted_unique(self):
+    """ Minimum set of individuals. """
+    from operator import attrgetter
+    return sorted(self.solo().uniques, key=attrgetter('fitness'))
+
+  def solo(self):
+    """ Returns a serial extractor (as opposed to MPI). """
+    from copy import deepcopy
+    result = deepcopy(self)
+    result.comm = None
+    return result
+
   def __getstate__(self):
     d = self.__dict__.copy()
     d.pop("comm", None)
     return d
+
   def __setstate__(self, arg):
     self.__dict__.update(arg)
