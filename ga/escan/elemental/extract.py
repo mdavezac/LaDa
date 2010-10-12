@@ -107,7 +107,7 @@ class Extract(object):
     from pickle import load
 
     is_mpi = self.comm != None
-    is_root = 0 if not is_mpi else self.comm.rank == 0
+    is_root = True if not is_mpi else self.comm.rank == 0
 
     if self.current_age == None: return None
     if is_root:

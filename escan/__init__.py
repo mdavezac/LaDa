@@ -361,6 +361,7 @@ class Escan(object):
     else: raise RuntimeError("unknown hamiltonnian %i." % (soH))
     for pot in self.atomic_potentials:
       result += "functional.add_potential         = %s\n" % (repr(pot))
+    result += "functional.print_from_all = '{0}'\n".format(repr(self.print_from_all))
     result += "functional.INWAVECAR = '%s'\n" % (self.INWAVECAR)
     result += "functional.ERRCAR = '%s'\n" % (self.ERRCAR)
     result += "functional.WAVECAR = '%s'\n" % (self.WAVECAR)
@@ -453,10 +454,10 @@ class Escan(object):
 
   def _cerr(self, comm):
     """ Creates error name. """
-    if self.OUTCAR == None: return "/dev/null"
-    if comm == None:   return self.OUTCAR
-    if comm.rank == 0: return self.OUTCAR
-    return self.OUTCAR + "." + str(comm.rank) if self.print_from_all else "/dev/null"
+    if self.ERRCAR == None: return "/dev/null"
+    if comm == None:   return self.ERRCAR
+    if comm.rank == 0: return self.ERRCAR
+    return self.ERRCAR + "." + str(comm.rank) if self.print_from_all else "/dev/null"
 
 
   def _run(self, structure, outdir, comm, overwrite, norun):

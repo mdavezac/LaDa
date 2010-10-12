@@ -307,6 +307,8 @@ class Vff(object):
     """ Pickle file to which functional is saved. """
     self._workdir = workdir
     """ Private reference to the working directory. """
+    self.print_from_all = False
+    """ If True, each node will print. """
 
   def _get_workdir(self): return self._workdir
   def _set_workdir(self, workdir):
@@ -428,6 +430,7 @@ class Vff(object):
     result += "functional = %s()\n" % (self.__class__.__name__)
     result += "functional.minimizer = minimizer\n"
     result += "functional.lattice = lattice\n"
+    result += "functional.print_from_all = '{0}'\n".format(repr(self.print_from_all))
     result += "functional.OUTCAR = '%s'\n" % (self.OUTCAR)
     result += "functional.ERRCAR = '%s'\n" % (self.ERRCAR)
     if self.direction == None or hasattr(self.direction, "__len__"):
@@ -464,13 +467,15 @@ class Vff(object):
   def _cout(self, comm):
     """ Creates output name. """
     if self.OUTCAR == None: return "/dev/null"
-    if comm == None: return self.OUTCAR
-    return self.OUTCAR if comm.rank == 0 else self.OUTCAR + "." + str(comm.rank)
+    if comm == None:   return self.OUTCAR
+    if comm.rank == 0: return self.OUTCAR
+    return self.OUTCAR + "." + str(comm.rank) if self.print_from_all else "/dev/null"
   def _cerr(self, comm):
     """ Creates error name. """
     if self.ERRCAR == None: return "/dev/null"
-    if comm == None: return self.ERRCAR
-    return self.ERRCAR if comm.rank == 0 else self.ERRCAR + "." + str(comm.rank)
+    if comm == None:   return self.ERRCAR
+    if comm.rank == 0: return self.ERRCAR
+    return self.ERRCAR + "." + str(comm.rank) if self.print_from_all else "/dev/null"
 
   def __call__(self, structure, outdir = None, comm = None, overwrite=False, **kwargs):
     """ Performs calculation """
