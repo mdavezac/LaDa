@@ -267,10 +267,10 @@ class Incar(object):
       self.ismear = None
       if has_second: self.sigma = None
     elif first == "fermi" or first == "-1":    
-      self.ismear == -1
+      self.ismear = -1
       if has_second: self.sigma = second
     elif first == "gaussian" or first == "0":
-      self.ismear == 0
+      self.ismear = 0
       if has_second: self.sigma = second
     elif first == "metal":
       self.ismear = 1
