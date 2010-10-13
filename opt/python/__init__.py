@@ -497,4 +497,17 @@ class RelativeDirectory(object):
     return "{0}, {1}".format(repr(self._envvar), repr(self._relative))
 
 
+def convert_from_unix_re(pattern):
+  """ Converts unix-command-line like regex to python regex.
 
+      Does not handle active python regex characters too well.
+  """
+  from re import compile
+  star = compile(r"(?<!\\)\*")
+  optional = compile(r"\[(\S),(\S)\]")
+  unknown = compile(r"\?")
+  pattern = unknown.sub(r".", pattern)
+  pattern = star.sub(r"[^/]*", pattern)
+  pattern = optional.sub(r"(?:\1,\2)", pattern)
+  return compile(pattern)
+    

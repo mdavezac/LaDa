@@ -644,13 +644,15 @@ class AbstractMassExtract(object):
     self.__dict__.pop("_cached_properties", None)
 
 
-  def __init__(self, naked_end = True, view = None):
+  def __init__(self, naked_end = True, unix_re=True, view=None, excludes=None):
     """ Initializes extraction object. 
 
 
         :Parameters:
           naked_end : bool
             True if should return value rather than dict when only one item.
+          unix_re : bool
+            converts regex patterns from unix-like expression.
           view : str or None
             Grepable.
     """
@@ -662,6 +664,20 @@ class AbstractMassExtract(object):
     """ If True and dict to return contains only one item, returns value itself. """
     self.view = view
     """ The pattern which job-names should match. """
+    self.unix_re = unix_re
+    """ If True, then all regex matching is done using unix-command-line patterns. """
+    self.excludes = excludes
+    """ List of patterns to ignore. or None.
+
+        ``self.unix_re`` determines whether these are unix-command-line like
+        patterns or true python regex.
+    """ 
+
+  def _regex_pattern(self, pattern, flags=0):
+    """ Returns a regular expression. """
+    from ..opt import convert_from_unix_re
+    return compile(pattern, flags) if not self.unix_re\
+           else convert_from_unix_re(pattern)
 
   def walk_through(self):
     """ Generator to go through all relevant jobs. 
@@ -699,15 +715,15 @@ class AbstractMassExtract(object):
       for key, value in self._extractors().items(): yield key, value
       return
 
-    from re import compile
-    regex = compile(self.view)
+    regex = self._regex_pattern(self.view)
+    if self.excludes != None: excludes = [self._regex_pattern(u) for u in self.excludes]
     for key, value in self._extractors().items():
       if regex.match(key) == None: continue
+      if self.excludes != None and any(u.match(key) != None for u in excludes): continue
       yield key, value
 
   def _properties(self): 
-    """ Returns cached __dir__ result. """
-    from re import compile
+    """ Returns __dir__ special to the extraction itself. """
     if hasattr(self, "_cached_properties"): return self._cached_properties
 
     results = set([])
@@ -740,7 +756,7 @@ class AbstractMassExtract(object):
     from os.path import normpath, join
     if name[0] == '/': return self.copy(view=name)
     path = normpath(join('/', join(self.view, name)))
-    return self.__class__(comm=self.comm, view=path)
+    return self.copy(view=path)
 
   @property
   def jobs(self):
@@ -750,55 +766,68 @@ class AbstractMassExtract(object):
   @property
   def children(self):
     """ next set of minimal regex. """
-    from re import compile
     from os.path import join, normpath
-    splitter = compile(r"(?<!\\)/")
-    regex = compile(self.view)
+    regex = self._regex_pattern(self.view)
 
     jobs = self.jobs
     if len(self.jobs) < 2: return 
     children = set()
     if len(self.view) == 0:
       for name in self.jobs:
-        children.add(name[:name[1:].find('/')])
-    for name in self.jobs:
-      where = regex.match(name)
-      if len(name) == where.end() +1: continue
-      start = where.end() - name[:where.end()][::-1].find('/')
-      end = where.end() + name[where.end():].find('/')
-      children.add(name[:end])
-    return children
-#     if name[where.end()] == '/':
-#       print name[:where.end()+1], name
-#       children.add(name[:where.end()+1])
-#     else:
-#       last = name[where.end():].find('/')
-#       if last != -1: children.add(name[:last+where.end()+1])
-#       else: yield self.copy(view=name)
-#   for child in children: yield self.copy(view=child+".")
-#   return children
+        children.add(name[:1+name[1:].find('/')])
+    else:
+      for name in self.jobs:
+        where = regex.match(name)
+        if len(name) == where.end() +1: continue
+        first_index = name[where.end():].find('/')
+        if first_index == -1: continue
+        first_index += where.end() + 1
+        if first_index >= len(name): continue
+        end = name[first_index:].find('/')
+        if end == -1: children.add(name)
+        else: children.add(name[:end + first_index])
+    
+    for child in children: yield self.copy(view=child)
 
-  def grep(self, regex, flags=0):
+  def grep(self, regex, flags=0, yield_match=False):
     """ Yields views for children with fullnames matching the regex.
     
-        :Param regex: The matching regular expression.
-        :type regex: str
+        :Parameters:
+          regex : str
+            The regular expression which the fullnames should match. Whether
+            this is a python regex, or something which behaves like the unix
+            command-line depends on ``self.unix_re``.
+          flags : int
+             Flags from ``re`` to use when compilling the regex pattern.
+          yield match: bool
+             If True, will yield a two tuple, where the second item is the
+             match object.
+             If False, only the view is yielded.
+             This option is not available (or meaningfull) if ``self.unix_re``
+             is True.
 
         The match is successful if the regex is matched using python's
         `re.search <http://docs.python.org/library/re.html#re.search>`_ method.
 
-        Only the outermost view of each match is given. In other words, if a
+        Only the innermost view of each match is given. In other words, if a
         view is yielded, its subviews will not be yielded.
+
+        If the current view matches the regex, then it alone is yielded. 
     """
-    from re import compile
-    reg = compile(regex, flags)
-    if reg.search(self.view) != None:
-      yield self
-      return
+    assert not (yield_match and self.unix_re),\
+           ValueError("unix_re and yield_matc cannot be both true.") 
+    reg = self._regex_pattern(regex, flags)
+
+    found = reg.search(self.view)
+    if found != None and yield_match:       yield self; return
+    elif found != None and not yield_match: yield self, found; return
+    
     for child in self.children:
-      if reg.search(child.view) != None: yield child
-      else: # goes to next level.
-        for grandchild in child.grep(regex, flags): yield grandchild
+      found = reg.search(self.view)
+      if reg.search(child.view) == None:# goes to next level. 
+        for grandchild in child.grep(regex, flags, yield_match): yield grandchild
+      elif yield_match: yield child, found
+      else: yield child
 
   def __getstate__(self):
     d = self.__dict__.copy()
@@ -827,15 +856,20 @@ class AbstractMassExtract(object):
     copy = deepcopy(self)
     return copy
 
+  def __copy__(self):
+    """ Returns a shallow copy. """
+    result = self.__class__(self.rootdir)
+    result.__dict__.update(self.__dict__)
+    return result
+
   def copy(self, **kwargs):
     """ Returns a shallow copy. 
     
         :Param kwargs:  Any keyword attribute will modify the corresponding
           attribute of the copy.
     """
-    from copy import deepcopy
-    result = self.__class__()
-    result.__dict__.update(self.__dict__)
+    from copy import copy
+    result = copy(self)
     for key, value in kwargs.items(): setattr(result, key, value)
     return result
 
@@ -933,7 +967,7 @@ class MassExtract(AbstractMassExtract):
 
 class JobParams(object):
   """ Get and sets job parameters for a job-dictionary. """
-  def __init__(self, jobdict = None, only_existing=True,  naked_end=True, _view = None):
+  def __init__(self, jobdict = None, only_existing=True,  naked_end=True, unix_re=True, _view = None):
     """ Initializes job-parameters.
 
         :Parameters:
@@ -947,6 +981,8 @@ class JobParams(object):
 	    If True, if the returned dictionary contains only one item, and if
 	    that item corresponds to the root of the jobdictionary being
             explored, returns that item alone.
+          unix_re : bool
+            converts regex patterns from unix-like expression.
           _view : None or str
             Grepable to examin.
     """
@@ -964,6 +1000,9 @@ class JobParams(object):
     super(JobParams, self).__setattr__("naked_end", None)
     self.naked_end = True
     """ If True, a value, rathe than a dict, is returned if at end of branch. """
+    super(JobParams, self).__setattr__("unix_re", None)
+    self.unix_re = unix_re
+    """ If True, then all regex matching is done using unix-command-line patterns. """
 
   @property
   def jobdict(self):
@@ -985,7 +1024,13 @@ class JobParams(object):
   def jobs(self):
     """ Name of jobs which can currently be grepped. """
     return [name for job, name in self.walk_through()]
-    
+
+  def _regex_pattern(self, pattern, flags=0):
+    """ Returns a regular expression. """
+    from ..opt import convert_from_unix_re
+    return compile(pattern, flags) if not self.unix_re\
+           else convert_from_unix_re(pattern)
+
   def walk_through(self):
     """ Loops through all correct jobs. """
     if self._view == None:
@@ -993,8 +1038,7 @@ class JobParams(object):
         if not job.is_tagged: yield job, name
       return
 
-    from re import compile
-    regex = compile(self._view) 
+    regex = self._regex_pattern(self._view) 
     for job, name in self.jobdict.walk_through():
       if regex.match(name) != None: yield job, name
 
