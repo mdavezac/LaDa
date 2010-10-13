@@ -758,14 +758,25 @@ class AbstractMassExtract(object):
     jobs = self.jobs
     if len(self.jobs) < 2: return 
     children = set()
+    if len(self.view) == 0:
+      for name in self.jobs:
+        children.add(name[:name[1:].find('/')])
     for name in self.jobs:
       where = regex.match(name)
-      if name[where.end()] == '/': children.add(name[:where.end()+1])
-      else:
-        last = name[where.end():].find('/')
-        if last != -1: children.add(name[:last+where.end()+1])
-        else: yield self.copy(view=name)
-    for child in children: yield self.copy(view=child+".")
+      if len(name) == where.end() +1: continue
+      start = where.end() - name[:where.end()][::-1].find('/')
+      end = where.end() + name[where.end():].find('/')
+      children.add(name[:end])
+    return children
+#     if name[where.end()] == '/':
+#       print name[:where.end()+1], name
+#       children.add(name[:where.end()+1])
+#     else:
+#       last = name[where.end():].find('/')
+#       if last != -1: children.add(name[:last+where.end()+1])
+#       else: yield self.copy(view=name)
+#   for child in children: yield self.copy(view=child+".")
+#   return children
 
   def grep(self, regex, flags=0):
     """ Yields views for children with fullnames matching the regex.
