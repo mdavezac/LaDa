@@ -377,6 +377,13 @@ def _print_lattice(self):
 _print_lattice.__doc__ = Lattice.__str__.__doc__
 Lattice.__repr__ = _print_lattice
 
+def _copy(self): 
+  """ Returns an exact clone. """
+  from copy import deepcopy
+  return deepcopy(self)
+Lattice.deepcopy   = _copy
+Structure.deepcopy = _copy
+
 def structure_to_lattice(structure):
   """ Converts a structure object to a lattice object. """
   result = Lattice()
