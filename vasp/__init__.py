@@ -198,7 +198,7 @@ class Vasp(Launch):
       # if a special parameter, then is non-default.
       if name in params: string += "functional.%s = %s\n" % (name, repr(value))
       else:
-        string += "functional.add_item = \"%s\", %s\n" % (name, repr(value))
+        string += "functional.add_param = \"%s\", %s\n" % (name, repr(value))
         module = value.__class__.__module__ 
         classname = value.__class__.__name__ 
         if module in modules: modules[module].append(classname)
@@ -260,7 +260,7 @@ def read_input(filepath="input.py", namespace=None):
   """
   from lada.opt import read_input
   from lada.vasp import Vasp, specie, files
-  from lada.vasp.methods import RelaxCellShape, RelaxIons
+  from lada.vasp.methods import RelaxCellShape
 
   # names we need to create input.
   input_dict = { "Vasp": Vasp, "U": specie.U, "nlep": specie.nlep, "RelaxCellShape": RelaxCellShape }

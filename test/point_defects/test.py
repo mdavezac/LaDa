@@ -1,14 +1,78 @@
+""" Submodule defining the *third wave* to compute point-defects. """
+__docformat__ = "restructuredtext en"
+__all__ = ['pointdefect_wave']
+
 def pointdefect_wave(path=None, inputpath=None, **kwargs):
-  """ Creates point-defect wave using ground-state job-dictionary. """
+  """ Creates point-defect wave using ground-state job-dictionary. 
+
+      :Parameters:
+        path : str or None
+          Path where the modified job-dictionary will be saved. Calculations will be
+          performed in the parent directory of this file. If None, will use the
+          current job-dictionary path.
+        inputpath : str or None
+          Path to an input file. If not present, then no input file is read and
+          all parameters are taken from the non-magnetic wave.
+        kwargs
+          Any keyword/value pair to take precedence over anything in the input file.
+
+      Creates a point-defect wave from the materials computed in the
+      magnetic and non-magnetic waves. Usage is fairly simple. If the pickle
+      for the magnetic/non-magnetic wave is called ``magnetic_wave``, then one
+      need only open it and call the ``pointdefect_wave``.
+
+      >>> explore all magnetic_wave 
+      >>> import test
+      >>> test.magnetic_wave()
+      >>> launch scattered
+
+      The above will add point-defect calculations for all meterials and
+      lattices of the ``magnetic_wave`` job-dictionary and save it (to the same 
+      path unless an argument is provided to ``magnetic_wave``). Note that
+      changing the location of the current job-dictionary has no effect. It
+      would be possible but sounds too error prone:
+
+      >>> explore all magnetic_wave 
+      >>> goto /Fe2AlO4 # has no effect on what point-defects are added.
+      >>> goto /Al2FeO4 # has no effect on what point-defects are added.
+      >>> import test
+      >>> # creates point-defects for both Fe2AlO4 and Al2FeO4: location does not matter.
+      >>> test.magnetic_wave() 
+      >>> launch scattered
+
+      Point-defects calculations are added to
+      a material if and only if all existing magnetic/non-magnetic jobs for
+      that material have completed successfully. Furthermore, only untagged
+      materials are accepted. Hence, to disable Fe2AlO4 lattices from having
+      point-defects added to it, one can simply tag it:
+
+      >>> explore all magnetic_wave 
+      >>> current_jobdict["/Fe2AlO4"].tag()
+      >>> import test
+      >>> test.magnetic_wave()
+      >>> launch scattered
+
+      Similarly to make sure point-defect calculations are *not* created for
+      the b5 lattice of the Fe2AlO4 material, one could tag it as follows:
+
+      >>> explore all magnetic_wave 
+      >>> current_jobdict["/Fe2AlO4/b5"].tag()
+      >>> import test
+      >>> test.magnetic_wave()
+      >>> launch scattered
+  """
   from tempfile import NamedTemporaryFile
   from os.path import dirname, normpath, relpath, join
-  import IPython.ipapi
+  from copy import deepcopy
+  from IPython.ipapi import get as get_ipy
+  from numpy import array, sum, abs
   from lada.jobs import JobDict
   from lada.vasp import read_input
   from lada.opt import Input
+  from lada.crystal import point_defects as ptd
 
   # Loads jobdictionary and path as requested. 
-  ip = IPython.ipapi.get()
+  ip = get_ipy()
   if "current_jobdict" not in ip.user_ns: 
     print "No current job-dictionary." 
     return
@@ -27,186 +91,184 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
     with NamedTemporaryFile() as file: 
       file.write(jobdict.nonmaginput)
       file.flush()
-      input.update(read_input(file.name).__dict__)
+      input.update(read_input(file.name))
   if hasattr(jobdict, "maginput"):
     with NamedTemporaryFile() as file: 
       file.write(jobdict.nonmaginput)
       file.flush()
-      input.update(read_input(file.name).__dict__)
+      input.update(read_input(file.name))
   if inputpath != None:
     input.update(read_input(inputpath))
     with open(inputpath, "r") as file: jobdict.maginput = file.read()
   input.update(kwargs)
-  
-  assert hasattr(input, "supercell"), RuntimeError("Supercell not given on input.")
-  assert hasattr(input, "interstitials") or hasattr(input, "substitutions"),\
-         RuntimeError("Neither substitutions nor interstitials given on input.")
-  interstitials = {} if not hasattr(input, "interstitials") else input.interstitials
-  substitutions = {} if not hasattr(input, "substitutions") else input.substitutions
 
+  # saves inputfile to jobdictioanry if needed.
+  if inputpath != None:
+    input.update(read_input(inputpath))
+    with open(inputpath, "r") as file: jobdict.pointdefectinput = file.read()
+  # saves current script tof file.
+  with open(__file__, "r") as file: jobdict.pointdefectscript = file.read()
+  
+  nb_new_jobs = 0
   # loops over completed structural jobs.
-  for name in completed_structurals():
-    root = jobdict[name]
-    if not hasattr(root["non-magnetic"], "lattice"): continue
-    # starts creating Point-Defect jobs.
-    supercell = fill_structure(input.supercell, root["non-magnetic"].lattice)
+  for name in magnetic_groundstates():
+    # gets the ground-states job-dictionary.
+    groundstate = jobdict[name]
+    # checks that the lattice and material are not tagged. 
+    if groundstate[".."].is_tagged: continue
+    if groundstate["../.."].is_tagged: continue
+    # extracts the structure from it.
+    superstructure, lattice = create_superstructure(groundstate, input)
+    # extracts material.
+    material = groundstate.material
+    # extracts description of species.
+    species = groundstate.functional.vasp.species
 
-    # loop over interstitials.
-    for B, substituters in substitutions.items():
+    # loop over substitutees.
+    for B, substituters in input.point_defects.items():
+      # loop over subtituters.
       for A in substituters:
-        # loop over inequivalent substitution sites.
-        for structure, substitution in ptd.substitution(supercell, input.lattice, B, A):
-          # Add new jobs only.
-          dummy = (root / "PointDefects" / structure.name)
-          has_changed |= dummy.add_new( charge_and_spins(A, B, substitution, structure, input) ) 
+        # loop over inequivalent point-defects sites.
+        for structure, defect in ptd.all_defects(superstructure, lattice, B, A):
+          # loop over oxidations states.
+          for nb_extrae, oxname in ptd.charged_states(species, A, B):
+            if B == None: nb_extrae *= -1 # correct for insterstitials. 
+            
+            # creates list of moments. 
+            new_moments = deduce_moment(A, species) 
+            if len(new_moments) > 1: 
+              moments = [ (min(new_moments), "/ls"), (max(new_moments), "/hs") ]
+            else:
+              moments = [ (max(new_moments), "") ]
+            # loop  over moments.
+            for moment, suffix in moments:
+              name =  "PointDefects/{1}/{2}{0}".format(suffix, structure.name, oxname)
+              
+              # checks if job already exists. Does not change job if it exists!
+              if name in groundstate[".."]: continue
 
-    # loop over interstitials.
-    for type, positions in input.interstitials.items():
-      # loop over substitutional positions (and name).
-      for position in positions: 
-        # create structures.
-        structure = fill_structure(input.supercell)
-        structure.add_atom = position[:-1], type
-        structure.name = "{0}_interstitial_{1}".format(type, position[3])
+              # creates new job.
+              jobdict = groundstate["../"] / name
+              jobdict.functional = input.relaxer
+              jobdict.jobparams  = groundstate.jobparams.copy()
+              jobdict.jobparams["structure"] = deepcopy(structure)
+              jobdict.jobparams["nelect"] = nb_extrae
+              jobdict.jobparams["relaxation"] = "ionic"
+              jobdict.jobparams["ispin"] = 2
+              jobdict.jobparams["set_symmetries"] = "off"
+              jobdict.lattice  = lattice
+              jobdict.material = material
+              jobdict.defect   = defect
+              # adds, modifies, or remove moment depending on defect type.
+              if hasattr(superstructure, "magmom") or abs(moment) > 1e-12: 
+                jstruct = jobdict.jobparams["structure"]
+                # construct initial magmom
+                if hasattr(superstructure, "magmom"):
+                  jstruct.magmom = [u for u in superstructure.magmom]
+                else: 
+                  jstruct.magmom = [0 for u in superstructure.atoms]
+                # now modifies according to structure.
+                if B == None: # interstitial:
+                  jstruct.magmom.append(moment)
+                elif A == None: # vacancy -> remove moment.
+                  jstruct.magmom.pop(defect.index)
+                else: 
+                  jstruct.magmom[defect.index] = moment
+                # only keep moment if there are moments. 
+                if sum(abs(jstruct.magmom)) < 1e-12 * float(len(jstruct.atoms)): del jstruct.magmom
+
+              nb_new_jobs += 1
+
+  # now saves new job dictionary
+  print "Created {0} new jobs.".format(nb_new_jobs)
+  if nb_new_jobs == 0: return
+  ip.user_ns["current_jobdict"] = jobdict.root
+  ip.magic("savejobs " + path)
+            
+          
+
+def create_superstructure(groundstate, input):
+  """ Creates a superstructure from existing structure. """
+  from os.path import dirname, join
+  from operator import itemgetter
+  from numpy import dot
+  from IPython.ipapi import get as get_ipy
+  from lada.crystal import fill_structure
+
+  # sanity checks,
+  assert "structure" in groundstate.jobparams,\
+         ValueError("Could not find structure in ground-state job-dictionary.")
+  assert hasattr(groundstate.functional, "Extract"),\
+         ValueError("Could not find extraction class in ground-state job-dictionary.")
   
-        # loops over oxidation and moments are collected in _ox_spin_loop,
-        # since it can be used for substitutionals.
-        defect = deepcopy(structure.atoms[-1])
-        defect.type = "None"
-        dummy = (root / "PointDefects" / structure.name)
-        has_changed |= dummy.add_new( charge_and_spins(A, B, substitution, structure, input) ) 
-
-
-
+  ip = get_ipy()
+  assert "current_jobdict_path" in ip.user_ns,\
+         RuntimeError("Could not find path for current job-dictionary.")
+  rootdir = dirname(ip.user_ns["current_jobdict_path"])
+  # gets original lattice from job-dictionary.
+  orig_lattice = groundstate.jobparams["structure"].to_lattice()
   
+  # Extracts computed lattice from ground state calculation.
+  extract = groundstate.functional.Extract( join(rootdir, groundstate.name[1:]) )
+  assert extract.success, RuntimeError("Ground-state computation was not successful.")
+  lattice = extract.structure.to_lattice()
 
-def completed_structurals():
-  """ Yields structural jobs which are complete.
+  # creates superstructure.
+  cell = dot(lattice.cell, input.supercell)
+  result = fill_structure(cell, lattice)
 
-      Returns the name of the job containing all magnetic jobs for each lattice
-      and material if and only if all magnetic jobs are finished and
-      successful. 
+  # adds magnetic moment if necessary.
+  if hasattr(orig_lattice, "magmom"):
+    assert extract.magnetization.shape[0] == len(lattice.sites),\
+           RuntimeError("Could not find magnetization in ground-state's OUTCAR.")
+    mlat = lattice.copy()
+    for atom, m in zip(mlat.sites, extract.magnetization[:,-1]):
+      if abs(m) < 0.1: atom.type = '0'
+      elif m < 0e0: atom.type = str(int(m-1))
+      else: atom.type = str(int(m+1))
+    moments = fill_structure(cell, mlat)
+    result.magmom = [ int(i.type) for i in moments.atoms ]
+
+  return result, lattice
+
+def magnetic_groundstates():
+  """ Yields name of magnetic-groundstates from current job-dictionary.
+
+      A set of magnetic-states for the same lattice and materials is defined by
+      all jobs residing in the parent directory of .*/.*/non-magnetic, other
+      than PointDefects. 
+
+      All jobs within a set of magnetic-states must be
+      finished. Otherwise, that particular combination of material + lattice is
+      not considered. 
+
+      This yields the fully qualified job-name of each lowest energy magnetic
+      ground-state within the current job-dictionary.
   """
+  from operator import itemgetter
   from lada.ipython import Collect
   collect = Collect()
   # loops over untagged non-magnetic structural jobs.
-  for nonmag in collect.grep("/.*/.*/non-magnetic"):
-    successes = collect["../"].success.items()
-    if all( [value for key, value in successes if value.find("PointDefects") == -1] ):
-      yield collect["../"].position
+  for nonmag in collect.grep(".*/.*/non-magnetic"):
+    # check for success of all jobs (except for Point-defects).
+    success = [u[1] for u in nonmag["../"].success.items() if u[0].find("PointDefects") == -1]
+    if not all(success): continue
+    # checks for lowest energy structure.
+    energies = [u for u in nonmag["../"].total_energy.items() if u[0].find("PointDefects") == -1]
+    energies = sorted(energies, key=itemgetter(1))
+    yield energies[0][0]
 
+def deduce_moment(type, species):
+  """ Returns moment.
 
-
-
-
-
-
-
-def charges_and_spins(A, B, defect, structure, input, is_interstitial=False):
-  """ Loops over oxidation and moments. """
-  from copy import deepcopy
-  from lada.crystal import fill_structure, Neighbors, point_defects as ptd
-  from lada.jobs import JobDict
-  from lada.vasp.methods import RelaxIons
-
-  # creates jobdictionary 
-  jobdict = JobDict()
-  oxidation = input.vasp.species[defect.type].oxidation if defect.type != "None" else 0
-  # loop over oxidations states.
-  for nb_extrae, oxname in ptd.charged_states(input.vasp.species, A, B):
-
-    if is_interstitial: nb_extrae *= -1
-    moment = nb_extrae - oxidation
-    # loop over low spin magnetic states, integer and average.
-    iterspins = ptd.low_spin_states(structure, defect, input.vasp.species, moment)
-    for indices, moments in iterspins:
-
-      job = jobdict / oxname / ptd.magname(moments, "moment")
-      job.jobparams["structure"] = structure
-      job.jobparams["nelect"] = nb_extrae
-      job.jobparams["nupdown"] = sum(moments)
-      job.jobparams["magmom"] = ptd.magmom(indices, moments, len(structure.atoms))
-      job.functional = RelaxIons(input.vasp, first_trial = input.relaxation_parameters)
-      job.defect = deepcopy(defect) # original atom prior to defect.
-
-    # loop over high spin magnetic states, integer and average.
-    iterspins = ptd.high_spin_states( structure, defect, input.vasp.species, moment)
-    for indices, moments in iterspins:
-
-      job = jobdict / oxname / ptd.magname(moments, "moment")
-      job.jobparams["structure"] = structure
-      job.jobparams["nelect"] = moment
-      job.jobparams["nupdown"] = sum(moments)
-      job.jobparams["magmom"] = ptd.magmom(indices, moments, len(structure.atoms))
-      job.functional = RelaxIons(input.vasp, first_trial = input.relaxation_parameters)
-      job.defect = deepcopy(defect) # original atom prior to defect.
-
-    # do paramagnetic calculation.
-    job = jobdict / oxname / "paramagnetic"
-    job.jobparams["structure"] = structure
-    job.jobparams["nelect"] = nb_extrae
-    job.jobparams["nupdown"] = None
-    job.jobparams["magmom"] = None
-    job.functional = RelaxIons(input.vasp, first_trial = input.relaxation_parameters)
-    job.defect = deepcopy(defect) # original atom prior to defect.
-
-  return jobdict
-
-
-def point_defects(jobdict, input)
-  """ Returns a jobdictionary of point-defects.
-     
-      Parameters are set in input.py.
+      This is a helper function which all atomic species the same with respect
+      to the attribute ``moment``. If specie has no ``moment`` attribute,
+      returns ``[0]``. If it exists and is a scalar, returns ``[moment]``. And
+      if already is a list, returns as is.
   """
-  import cPickle
-  from sys import exit
-  from os.path import join
-
-  from lada.opt import read_input
-  from lada.vasp import Vasp, Specie, specie, files
-  from lada.crystal import fill_structure, Neighbors, point_defects as ptd
-  from copy import deepcopy
-  from lada import jobs
-
-  if not hasattr(input, "relaxation_parameters"): input.relaxation_parameters = {}
-
-  # creates job dictionary.
-  jobdict = jobs.JobDict()
-
-  # creates super-structure
-  supercell = fill_structure(input.supercell)
-
-  # loop substitutions A on B. 
-  for B, substituters in input.substitutions.items():
-    for A in substituters:
-
-      # loop over inequivalent substitution sites.
-      for structure, substitution in ptd.substitution(supercell, input.lattice, B, A):
-
-        # loops over oxidation and moments are collected in _ox_spin_loop,
-        # since it can be used for intersitials.
-        jobdict[structure.name] = _ox_spin_loops(A, B, substitution, structure, input)
-  
-  # return if not interstitials.
-  if not hasattr(input, "interstitials"): return jobdict
-  
-  # loop over interstitials.
-  for type, positions in input.interstitials.items():
-
-    # loop over substitutional positions (and name).
-    for position in positions: 
-
-      # create structures.
-      structure = fill_structure(input.supercell)
-      structure.add_atom = position[:-1], type
-      structure.name = "{0}_interstitial_{1}".format(type, position[3])
-
-      # loops over oxidation and moments are collected in _ox_spin_loop,
-      # since it can be used for substitutionals.
-      defect = deepcopy(structure.atoms[-1])
-      defect.type = "None"
-      jobdict[structure.name] = _ox_spin_loops(type, None, defect, structure, input, True)
-       
-      
-
-  return jobdict
+  if type == None: return [0]
+  if not isinstance(type, str): type = type[0]
+  if not hasattr(species[type], "moment"): return [0]
+  if not hasattr(species[type].moment, "__iter__"):
+    return [species[type].moment]
+  return species[type].moment

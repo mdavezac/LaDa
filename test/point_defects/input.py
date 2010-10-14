@@ -23,32 +23,55 @@ vasp.lorbit     = 10
 vasp.npar       = 2
 vasp.lplane     = True
 vasp.addgrid    = True
+vasp.relaxation = "ionic"
 vasp.set_smearing   = "metal", 0.01
-vasp.set_relaxation = "ionic"
-vasp.set_symmetries = "off"
+vasp.set_symmetries = 1e-3
 
 #                Symbol, directory of POTCAR, U parameters, max/min oxidation state, is magnetic
-vasp.add_specie = "Rh", "pseudos/Rh", U("liechtenstein", "d", 3.3), 3, True
-vasp.add_specie = "Zn", "pseudos/Zn", U("liechtenstein", "d", 6.0), 2, False
-vasp.add_specie =  "O",  "pseudos/O", None, -2, True
+vasp.add_specie = "Fe", "pseudos/Fe", U("liechtenstein", "d", 2.5), 3
+vasp.add_specie = "Al", "pseudos/Al", None,  2
+vasp.add_specie =  "O",  "pseudos/O", None, -2
+vasp.add_specie = "Li", "pseudos/Li", None,  1
+vasp.species["Fe"].moment = [5e0, 1e0]
 
-######################## FAKE! #######################################
-vasp.add_specie = "Li", "pseudos/Zn", None, 1
-vasp.add_specie = "Na", "pseudos/Zn", None, 1
-######################## FAKE! #######################################
 
-# Parameters specific to the ionic relaxation.
-relaxation_parameters = {}
+first_trial = { "kpoints": "\n0\nAuto\n1", "encut": 0.9 }
+""" parameter to override during first relaxation step. """
+relaxation_dof = "volume ionic cellshape"
+""" Degrees of freedom to relax. """
+relaxer = RelaxCellShape( vasp, relaxation_dof, first_trial, maxiter=5)
+""" Cell shape relaxation algorithm. """
+
+
+def scale(structure):
+  """ Returns *guessed* scale (eg volume^(0.33)) for a given structure. """
+  from numpy.linalg import det
+  if "O" in [atom.type for atom in structure.atoms]:    spvol = 8.5**3/4e0
+  elif "Se" in [atom.type for atom in structure.atoms]: spvol = 9.5**3/4e0
+  elif "Te" in [atom.type for atom in structure.atoms]: spvol = 10.5**3/4e0
+  else: raise ValueError("Neither O, nor Se, nor Te atom found.")
+
+  nfu = float(len(structure.atoms)/7)*0.5 # 0.5 because 2 f.u. in spinel unit-cell.
+  vol = det(structure.cell)
+  return (nfu * spvol / vol)**(1e0/3e0) 
+
+materials = ["Al2MgO4"]
+""" Materials to compute. """
+nbantiferro = 3
+""" Number of random anti-ferro trials. """
+
+lattices = [ A2BX4.b4() ]
+""" Lattice for which to create structures. """
 
 # The following sets-up which point defects to do.
-substitutions = {"Rh": ["Zn", None], "Zn": ["Rh", None], "O": [None]}
-
+point_defects = {"Mn": ["Ga", None], "Ga": ["Mn", None], "O": [None]}
 # The following sets-up which which interstitials to examine.
-# below, we have:
 # Li interstitial on 16c (0,0,0)
 # Li interstitial on 32e (x,x,x) with x = 0.75.
-# Na interstitial on 16c (0,0,0)
-# Na interstitial on 32e (x,x,x) with x = 0.75.
-# These are cartesian coordinates in units of lattice.scale (set above).
-interstitials = { "Li": [(0,0,0, "16c"), (0.75,0.75,0.75, "32e_0.75")],\
-                  "Na": [(0,0,0, "16c"), (0.75,0.75,0.75, "32e_0.75")] }
+# These are *FRACTIONAL* coordinates of the LATTICE unit-cell.
+point_defects[None] =\
+     [ "Li", (0,0,0), "16c" ], \
+     [ "Li", (0.75,0.75,0.75), "32e_0.75" ]
+# This is a sequence. If there is only one interstitial, use the following line:
+# point_defects[None] = [  [ "Li", (0,0,0), "16c" ]  ]
+

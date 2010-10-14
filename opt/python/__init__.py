@@ -11,7 +11,8 @@ from decorators import broadcast_result, make_cached
 
 __all__ = [ '__load_vasp_in_global_namespace__', '__load_escan_in_global_namespace__',\
             'cReals', 'ConvexHull', 'ErrorTuple', 'redirect_all', 'redirect', 'read_input',\
-            'LockFile', 'acquire_lock', 'open_exclusive', 'RelativeDirectory', 'streams' ]
+            'LockFile', 'acquire_lock', 'open_exclusive', 'RelativeDirectory', 'streams',
+            'AbstractBaseClass', 'convert_from_unix_re' ]
 
 streams = _RedirectFortran.fortran
 """ Name of the streams. """
@@ -597,3 +598,18 @@ class AbstractExtractBase(object):
   def __repr__(self):
     from os.path import relpath
     return "{0.__class__.__name__}(\"{0._directory.unexpanded}\")".join(self)
+
+def convert_from_unix_re(pattern):
+  """ Converts unix-command-line like regex to python regex.
+
+      Does not handle active python regex characters too well.
+  """
+  from re import compile
+  star = compile(r"(?<!\\)\*")
+  optional = compile(r"\[(\S),(\S)\]")
+  unknown = compile(r"\?")
+  pattern = unknown.sub(r".", pattern)
+  pattern = star.sub(r"[^/]*", pattern)
+  pattern = optional.sub(r"(?:\1,\2)", pattern)
+  return compile(pattern)
+    

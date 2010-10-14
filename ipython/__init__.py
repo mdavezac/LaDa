@@ -505,7 +505,7 @@
 """
 __docformat__ = "restructuredtext en"
 from contextlib  import contextmanager
-from _collect import Collect
+from ..jobs import MassExtract as Collect
 
 def _get_current_job_params(self, verbose=0):
   """ Returns a tuple with current job, filename, directory. """
@@ -563,7 +563,7 @@ def saveto(self, event):
   """ Saves current job to current filename and directory. """
   from os.path import exists, abspath, isfile
   from .. import jobs
-  from ._collect import Collect
+  from ..jobs import JobParams, MassExtract as Collect
   ip = self.api
   # gets dictionary, path.
   current, path = _get_current_job_params(self, 1)
@@ -607,6 +607,7 @@ def saveto(self, event):
     jobs.save(current.root, args[0], overwrite=True) 
     ip.user_ns["current_jobdict_path"] = abspath(args[0])
     if "collect" not in ip.user_ns: ip.user_ns["collect"] = Collect()
+    if "jobparams" not in ip.user_ns: ip.user_ns["jobparams"] = JobParams()
   else:
     ip.user_ns["_lada_error"] = "Invalid call to saveto."
     print ip.user_ns["_lada_error"] 
@@ -726,82 +727,6 @@ def please_cancel_all_jobs(self, arg):
   for u in result.field(0):
     self.api.system("scancel %i" % (int(u)))
 
-from ..jobs import AbstractMassExtract
-class Collect(AbstractMassExtract):
-  """ Mass extraction with varying position argument. 
-  
-      By adjusting ``self.position``, which jobs to collect can be adjusted.
-  """
-  def __init__(self, comm=None):
-    """ Initializes a Collect instance. """
-    from IPython.ipapi import get as get_ip_handle
-    super(Collect, self).__init__(None, comm=comm)
-
-    self.ip = get_ip_handle()
-    """ Gets current handle. """
-    del self._root # this won't be needed
-
-  def walk_through(self):
-    """ Generator to go through all relevant jobs.  
-    
-        :return: (name, extractor), where name is the name of the job, and
-          extractor an extraction object.
-    """
-    from os.path import exists, join
-    
-    for job, name in self.jobdict.walk_through():
-      if job.is_tagged: continue
-      if not hasattr(job.functional, "Extract"): continue
-      if not exists(join(self.root, name)): continue
-      try: extract = job.functional.Extract(join(self.root, name), comm = self.comm)
-      except: pass
-      else: yield name, extract
-
-  @property 
-  def jobdict(self):
-    """ Returns root of current dictionary. """
-    if "current_jobdict" not in self.ip.user_ns: 
-      print "No current job-dictionary to collect from."
-      return
-    return self.ip.user_ns["current_jobdict"].root
-
-  @property 
-  def position(self):
-    """ Returns current position in dictionary. """
-    if "current_jobdict" not in self.ip.user_ns: 
-      print "No current job-dictionary to collect from."
-      return
-    return self.ip.user_ns["current_jobdict"].name[1:]
-
-  @property 
-  def root(self):
-    """ Returns directory name of current dictionary. """
-    from os.path import dirname
-    if "current_jobdict_path" not in self.ip.user_ns: 
-      print "No known path for current job-dictionary."
-      print "Don't know where to look for results."
-      print "Please use %saveto magic function."
-      return
-    return dirname(self.ip.user_ns["current_jobdict_path"])
-
-  def __getattr__(self, name): 
-    """ Returns extracted values. """
-    from os.path import dirname
-    if name == "_cached_extractors" or name == "_cached_properties": 
-      raise AttributeError("Unknown attribute {0}.".format(name))
-    if name in self._properties(): 
-      result = {}
-      position = self.position
-      for key, value in self._extractors().items():
-        if len(position) > 0:
-          if position != key[:len(position)]: continue
-          if len(position) < len(key) and position[-1] != '/': continue
-        try: result[key] = getattr(value, name)
-        except: result.pop(key, None)
-      return result if len(result.keys()) > 1 else result[result.keys()[0]]
-    raise AttributeError("Unknown attribute {0}.".format(name))
-
-
 def ipy_init():
   """ Initialises ipython session. 
 
@@ -853,3 +778,8 @@ def ipy_init():
       if key == "jobs": ip.ex("from lada import jobs as ladajobs")
       else: ip.ex("from lada import " + key)
 
+represent_structure_with_POSCAR = False
+""" If true, then structures are represented using POSCAR format. 
+
+    If False, then uses normal python representation.
+"""

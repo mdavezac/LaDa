@@ -7,6 +7,7 @@ def showme(self, event):
   from ..opt import read_input
   from ..crystal import write_poscar, read_poscar, Structure
   from . import _get_current_job_params
+  from . import represent_structure_with_POSCAR
   ip = self.api
   # gets dictionary, path.
   current, path = _get_current_job_params(self, 1)
@@ -53,7 +54,9 @@ def showme(self, event):
           # always as vasp5. Makes it easier.
           structure = Structure() if "structure" not in current.jobparams \
                       else current.jobparams["structure"]
-          write_poscar(current.structure, file, True)
+          if represent_structure_with_POSCAR:
+            write_poscar(current.structure, file, True)
+          else: file.write(repr(structure))
         # Error!
         else: 
           print "%s is not a valid argument to showme." % (event)
@@ -71,7 +74,25 @@ def showme(self, event):
         current.functional = input.functional
         current.jobparams = input.jobparams
       elif arg.lower() == "structure": 
-        current.jobparams["structure"] = read_poscar(path=filename)
+        if represent_structure_with_POSCAR:
+          d = {}
+          if    "structure" in current.jobparams \
+             and hasattr(current.jobparams["structure"], __dict__):
+            d = current.jobparams["structure"].__dict__
+          current.jobparams["structure"] = read_poscar(path=filename)
+          current.jobparams["structure"].__dict__.update(d)
+        else: 
+          globals = ip.user_ns.copy()
+          try: execfile(filename, globals)
+          except:
+            print "Error when executing structure script."
+            raise
+          else:
+            if "structure" not in globals:
+              print "Could not find structure in structure script."
+              return
+            current.jobparams["structure"] = globals["structure"]
+            
     finally:
       if filename != None:
         try: remove(filename)

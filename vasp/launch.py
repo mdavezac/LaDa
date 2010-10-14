@@ -66,9 +66,9 @@ class Launch(Incar):
 
         Performs the following actions.
 
+        - Writes POSCAR file.
         - Writes INCAR file.
         - Writes KPOINTS file.
-        - Writes POSCAR file.
         - Creates POTCAR file
         - Saves pickle of self.
     """
@@ -81,6 +81,13 @@ class Launch(Incar):
     from ..crystal import write_poscar, specie_list
     from ..opt.changedir import Changedir
 
+    is_root = True if comm == None else comm.rank == 0
+
+    # creates poscar file. Might be overwriten by restart.
+    if is_root:
+      with open(join(self._tempdir, files.POSCAR), "w") as poscar: 
+        write_poscar(self._system, poscar, is_vasp_5)
+
     # creates incar file. Changedir makes sure that any calculations done to
     # obtain incar will happen in the tempdir. Only head node actually writes.
     # Also, to make sure in-place calculations will not end up with a bunch of
@@ -90,8 +97,10 @@ class Launch(Incar):
     with Changedir(self._tempdir) as tmpdir:
       incar_lines = this.incar_lines(comm = comm)
 
-    if comm.rank != 0: return # don't have any more business here.
+    if is_root: return # don't have any more business here.
 
+
+    # creates INCAR file. Note that POSCAR file might be overwritten here by Restart.
     with open(join(self._tempdir, files.INCAR), "w") as incar_file: 
       incar_file.writelines(incar_lines)
   
@@ -99,10 +108,6 @@ class Launch(Incar):
     with open(join(self._tempdir, files.KPOINTS), "w") as kp_file: 
       kp_file.write( self.kpoints(self) if hasattr(self.kpoints, "__call__") \
                      else self.kpoints + "\n" )
-  
-    # creates poscar file
-    with open(join(self._tempdir, files.POSCAR), "w") as poscar: 
-      write_poscar(self._system, poscar, is_vasp_5)
   
     # creates POTCAR file
     with open(join(self._tempdir, files.POTCAR), 'w') as potcar:

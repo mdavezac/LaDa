@@ -464,24 +464,57 @@ class Extract(_ExtractImpl):
   @property
   @make_cached
   @broadcast_result(attr=True, which=0)
+  def energies_sigma0(self):
+    """ Greps total energy extrapolated to $\sigma=0$ from OUTCAR. """
+    from numpy import array
+    from quantities import eV
+    regex = """energy\s+without\s+entropy\s*=\s*(\S+)\s+energy\(sigma->0\)\s+=\s+(\S+)"""
+    try: result = [float(u.group(2)) for u in self._search_OUTCAR(regex)]
+    except TypeError: raise RuntimeError("Could not find energies in OUTCAR")
+    assert len(result) != 0, RuntimeError("Could not find energy in OUTCAR")
+    return array(result) * eV
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def all_total_energies(self):
+    """ Greps total energies for all electronic steps from OUTCAR."""
+    from numpy import array
+    from quantities import eV
+    regex = """energy\s+without\s+entropy =\s*(\S+)\s+energy\(sigma->0\)\s+=\s+(\S+)"""
+    try: result = [float(u.group(1)) for u in self._search_OUTCAR(regex)]
+    except TypeError: raise RuntimeError("Could not find energies in OUTCAR")
+    assert len(result) != 0, RuntimeError("Could not find energy in OUTCAR")
+    return array(result) * eV
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def total_energies(self):
+    """ Greps total energies for all ionic steps from OUTCAR."""
+    from numpy import array
+    from quantities import eV
+    regex = """energy\s+without\s+entropy=\s*(\S+)\s+energy\(sigma->0\)\s+=\s+(\S+)"""
+    try: result = [float(u.group(1)) for u in self._search_OUTCAR(regex)]
+    except TypeError: raise RuntimeError("Could not find energies in OUTCAR")
+    assert len(result) != 0, RuntimeError("Could not find energy in OUTCAR")
+    return array(result) * eV
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
   def total_energy(self):
     """ Greps total energy from OUTCAR."""
     from quantities import eV
-    regex = """energy\s+without\s+entropy\s*=\s*(\S+)\s+energy\(sigma->0\)\s+=\s+(\S+)"""
+    regex = """energy\s+without\s+entropy=\s*(\S+)\s+energy\(sigma->0\)\s+=\s+(\S+)"""
     result = self._find_last_OUTCAR(regex) 
     assert result != None, RuntimeError("Could not find energy in OUTCAR")
     return float(result.group(1)) * eV
 
   @property
-  @make_cached
-  @broadcast_result(attr=True, which=0)
-  def free_energy(self):
-    """ Greps total free energy from OUTCAR. """
-    from quantities import eV
-    regex = r"""free\s+energy\s+TOTEN\s*=\s*(\S+)\s+eV""" 
-    result = self._find_last_OUTCAR(regex) 
-    assert result != None, RuntimeError("Could not find free energy in OUTCAR")
-    return float(result.group(1)) * eV
+  def energy(self): 
+    """ Alias for total_energy. """
+    return self.total_energy
 
   @property
   @make_cached
@@ -517,22 +550,36 @@ class Extract(_ExtractImpl):
   @property
   @make_cached
   @broadcast_result(attr=True, which=0)
+  def pressures(self):
+    """ Greps all pressures from OUTCAR """
+    from quantities import kbar as kB
+    regex = r"""external\s+pressure\s*=\s*(\S+)\s*kB\s+Pullay\s+stress\s*=\s*(\S+)\s*kB"""
+    try: result = [float(u.group(1)) for u in self._search_OUTCAR(regex)]
+    except TypeError: raise RuntimeError("Could not find pressures in OUTCAR")
+    assert len(result) != 0, RuntimeError("Could not find pressures in OUTCAR")
+    return result * kB
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
   def pressure(self):
-    """ Greps pressure from OUTCAR """
+    """ Greps last pressure from OUTCAR """
+    from quantities import kbar as kB
     regex = r"""external\s+pressure\s*=\s*(\S+)\s*kB\s+Pullay\s+stress\s*=\s*(\S+)\s*kB"""
     result = self._find_last_OUTCAR(regex) 
     assert result != None, RuntimeError("Could not find pressure in OUTCAR")
-    return float(result.group(1))
+    return float(result.group(1)) * kB
 
   @property
   @make_cached
   @broadcast_result(attr=True, which=0)
   def pulay_pressure(self):
+    from quantities import kbar as kB
     """ Greps pressure from OUTCAR """
     regex = r"""external\s+pressure\s*=\s*(\S+)\s*kB\s+Pullay\s+stress\s*=\s*(\S+)\s*kB"""
     result = self._find_last_OUTCAR(regex) 
     assert result != None, RuntimeError("Could not find pulay pressure in OUTCAR")
-    return float(result.group(2))
+    return float(result.group(2)) * kB
 
   @property
   @make_cached

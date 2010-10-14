@@ -6,7 +6,7 @@ def launch_scattered(self, event):
   """ Launch scattered jobs: one job = one pbs script. """
   import re
   from os import environ
-  from os.path import split as splitpath, join, exists, abspath
+  from os.path import split as splitpath, join, exists, abspath, dirname
   from ..opt.changedir import Changedir
   from ..jobs.templates import default_pbs, default_slurm
   from .. import jobs
@@ -77,6 +77,13 @@ def launch_scattered(self, event):
     # creates pbs scripts.
     for i, (job, name) in enumerate(current.root.walk_through()):
       if job.is_tagged: continue
+      # does not launch successful jobs.
+      if hasattr(job.functional, 'Extract') and not event.force: 
+        p = join(dirname(path), name)
+        extract = job.functional.Extract(p)
+        if extract.success:
+          print "Job {0} completed successfully. It will not be relaunched.".format(name)
+          continue
       mppwidth = mppalloc(job) if hasattr(mppalloc, "__call__") else mppalloc
       if len(name) == 0: name = "{0}-root".format(splitpath(path)[1])
       name = name.replace("/", ".")
@@ -144,6 +151,8 @@ def launch(self, event):
                                "argument and returning a integer. Will default "\
                                "to as many procs as there are atoms in that particular structure.")
   scattered.add_argument('--nolaunch', action="store_true", dest="nolaunch")
+  scattered.add_argument('--force', action="store_true", dest="force", \
+                         help="Launches all untagged jobs, even those which completed successfully.")
   scattered.set_defaults(func=launch_scattered)
 
 
@@ -168,7 +177,7 @@ def launch_completer(self, info):
       result = [u for u in ip.user_ns if u[0] != '_' and isinstance(ip.user_ns[u], int)]
       result.extend([u for u in ip.user_ns if u[0] != '_' and hasattr(u, "__call__")])
       return result
-    result = list(set(['--walltime', '--nbprocs', '--help']) - set(data))
+    result = list(set(['--force', '--walltime', '--nbprocs', '--help']) - set(data))
     result.extend( _glob_job_pickles(ip, info.symbol) )
     return result
   raise IPython.ipapi.TryNext
