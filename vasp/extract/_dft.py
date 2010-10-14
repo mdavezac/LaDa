@@ -560,6 +560,26 @@ class Extract(_ExtractImpl):
   @property
   @make_cached
   @broadcast_result(attr=True, which=0)
+  def alphabet(self):
+    """ Greps alpha+bet from OUTCAR """
+    regex = r"""^\s*E-fermi\s*:\s*(\S+)\s+XC\(G=0\)\s*:\s*(\S+)\s+alpha\+bet\s*:(\S+)\s*$"""
+    result = self._find_last_OUTCAR(regex) 
+    assert result != None, RuntimeError("Could not find alpha+bet in OUTCAR")
+    return float(result.group(3))
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def xc_g0(self):
+    """ Greps XC(G=0) from OUTCAR """
+    regex = r"""^\s*E-fermi\s*:\s*(\S+)\s+XC\(G=0\)\s*:\s*(\S+)\s+alpha\+bet\s*:(\S+)\s*$"""
+    result = self._find_last_OUTCAR(regex) 
+    assert result != None, RuntimeError("Could not find xc(G=0) in OUTCAR")
+    return float(result.group(2))
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
   def pulay_pressure(self):
     """ Greps pressure from OUTCAR """
     regex = r"""external\s+pressure\s*=\s*(\S+)\s*kB\s+Pullay\s+stress\s*=\s*(\S+)\s*kB"""
