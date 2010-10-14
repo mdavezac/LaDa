@@ -3,6 +3,7 @@
 def showme(self, event):
   """ Edits functional and/or structure. """
   from os import remove, stat
+  from os.path import join
   from tempfile import NamedTemporaryFile
   from ..opt import read_input
   from ..crystal import write_poscar, read_poscar, Structure
@@ -29,6 +30,7 @@ def showme(self, event):
   # showme *whatever*
   elif len(args) == 1:
     arg = args[0]
+    if args[0] in ["pbserr", "pbsout", "pbs"]: _showme_pbs(self, args[0]); return
     filename = None
     try: # try/finally section will removed namedtemporaryfile.
       # want .py suffix to get syntax highlighting in editors.
@@ -98,11 +100,31 @@ def showme(self, event):
         try: remove(filename)
         except: pass
 
+def _showme_pbs(self, which):
+  from os.path import join, exists
+  from glob  import glob
+  from operator import itemgetter
+  from . import _get_current_job_params
 
+  ip = self.api
+  current, path = _get_current_job_params(self, 1)
+  filename = current.name.replace("/", ".")
+  if which in ["pbserr", "pbsout"]:
+    prefix = "out" if which == "pbsout" else "err"
+    filename = join(path + ".pbs", prefix + filename)
+    filenames = [u for u in glob(filename+'.*')]
+    numbers   = [(i, int(u[len(filename)+1:])) for i, u in enumerate(filenames)]
+    if len(numbers) == 0: filename = None
+    else: filename = filenames[ sorted(numbers, key=itemgetter(1))[-1][0] ]
+  else: filename = join(path + ".pbs", filename[1:] + ".pbs")
+  
+  if filename == None or (not exists(filename)):  print "Could not find {0}.".format(which); return
+
+  ip.system("less {0}".format(filename))
 
 def showme_completer(self, event):
   import IPython
   ip = self.api
   if "current_jobdict" not in ip.user_ns: raise IPython.ipapi.TryNext
-  return ["structure", "functional"]
+  return ["structure", "functional", "pbserr", "pbsout", "pbs"]
 
