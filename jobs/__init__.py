@@ -677,6 +677,18 @@ class AbstractMassExtract(object):
         patterns or true python regex.
     """ 
 
+  def __iter__(self):
+    """ Iterates through all job names. """
+    for name, job in self._regex_extractors(): yield name
+
+  def items(self):
+    """ Iterates through all extraction objects and names. """
+    for name, job in self._regex_extractors(): yield name, job
+    
+  def values(self):
+    """ Iterates through all extraction objects. """
+    for name, job in self._regex_extractors(): yield job
+
   def _regex_pattern(self, pattern, flags=0):
     """ Returns a regular expression. """
     from re import compile

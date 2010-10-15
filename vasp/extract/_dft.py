@@ -2,7 +2,8 @@
 __docformat__  = 'restructuredtext en'
 __all__ = ['Extract']
 from ...opt.decorators import make_cached, broadcast_result
-class _ExtractImpl(object):
+from ...opt import AbstractExtractBase
+class _ExtractImpl(AbstractExtractBase):
   """ Implementation class for extracting data from VASP output """
 
   def __init__(self, directory = None, comm = None, OUTCAR = None):
@@ -18,16 +19,11 @@ class _ExtractImpl(object):
           OUTCAR : str or None
             Name of the OUTCAR file.
     """
-    from os import getcwd
+    super(_ExtractImpl, self).__init__(directory, comm)
+
     from .. import files
     from ...opt import RelativeDirectory
-    super(_ExtractImpl, self).__init__()
 
-    if directory == None: directory = getcwd()
-    self._directory = RelativeDirectory(directory, hook=self.uncache)
-    """ Directory where to check for output. """
-    self.comm = comm
-    """ MPI group communicator. """
     self.OUTCAR = files.OUTCAR if OUTCAR == None else OUTCAR
     """ Filename of the OUTCAR file from VASP. """
     self.CONTCAR = files.CONTCAR
@@ -41,46 +37,6 @@ class _ExtractImpl(object):
     from os.path import join, exists
     return [ join(self.directory, u) for u in [self.OUTCAR, self.FUNCCAR] \
              if exists(join(self.directory, u)) ]
-
-  @property
-  def directory(self):
-    """ Directory with VASP output files """
-    return self._directory.path
-  @directory.setter
-  def directory(self, value): self._directory.path = value
-
-  def uncache(self): 
-    """ Removes cached results.
-
-        After this outputs are re-read from file.
-    """
-    from ...opt.decorators import uncache
-    uncache(self)
-
-  def solo(self):
-    """ Extraction on a single process.
-
-        Sometimes, it is practical to perform extractions on a single process
-        only, eg without blocking mpi calls. ``self.solo()`` returns an
-        extractor for a single process:
-        
-        >>> # prints only on proc 0.
-        >>> if boost.mpi.world.rank == 0: print extract.solo().structure
-    """
-    from copy import deepcopy
-    return deepcopy(self) if self.comm != None else self
-
-  def __getstate__(self):
-    from os.path import relpath
-    d = self.__dict__.copy()
-    if "_directory" in d: d["_directory"].hook = None
-    if "comm" in d: del d["comm"]
-    return d
-  def __setstate__(self, arg):
-    self.__dict__.update(arg)
-    self.comm = None
-    if hasattr(self, "_directory"): self._directory.hook = self.uncache
-
 
   def _search_OUTCAR(self, regex):
     """ Looks for all matches. """
@@ -434,23 +390,21 @@ class _ExtractImpl(object):
   @broadcast_result(attr=True, which=0)
   def ionic_charges(self):
     """ Greps ionic_charges from OUTCAR."""
-    from quantities import elementary_charge
     from numpy import array
     regex = """^\s*ZVAL\s*=\s*(.*)$"""
     result = self._find_last_OUTCAR(regex) 
     assert result != None, RuntimeError("Could not find ionic_charges in OUTCAR")
-    return array([float(u) for u in result.group(1).split()]) * elementary_charge
+    return array([float(u) for u in result.group(1).split()])
 
   @property
   @make_cached
   def valence(self):
     """ Greps total energy from OUTCAR."""
-    from quantities import elementary_charge
     from numpy import array
     ionic = self.ionic_charges
     species = self.species
     atoms = [u.type for u in self.structure.atoms]
-    result = 0 * elementary_charge
+    result = 0
     for c, s in zip(ionic, species): result += c * atoms.count(s)
     return result
   
@@ -468,8 +422,7 @@ class _ExtractImpl(object):
   @make_cached
   def charge(self):
     """ Greps total charge in the system from OUTCAR."""
-    from quantities import elementary_charge
-    return self.valence-self.nelect * elementary_charge
+    return self.valence-self.nelect
 
 class Extract(_ExtractImpl): 
   """ Extracts output from OUTCAR, including DFT specific stuff. """
@@ -528,6 +481,32 @@ class Extract(_ExtractImpl):
     except TypeError: raise RuntimeError("Could not find energies in OUTCAR")
     assert len(result) != 0, RuntimeError("Could not find energy in OUTCAR")
     return array(result) * eV
+
+  @property
+  def cbm(self):
+    """ Returns Condunction Band Minimum. """
+    from numpy import min
+    if self.ispin == 2:
+      assert 2 * self.eigenvalues.shape[2] > self.valence + 2,\
+             RuntimeError("Not enough bands were computed.")
+      return min(self.eigenvalues[:, :, self.valence/2+1])
+    else:
+      assert 2 * self.eigenvalues.shape[1] > (self.valence/2) + 1,\
+             RuntimeError("Not enough bands were computed.")
+      return min(self.eigenvalues[:, self.valence/2+1])
+
+  @property
+  def vbm(self):
+    """ Returns Valence Band Maximum. """
+    from numpy import max
+    if self.ispin == 2:
+      assert 2 * self.eigenvalues.shape[2] > self.valence,\
+             RuntimeError("Not enough bands were computed.")
+      return max(self.eigenvalues[:, :, self.valence/2])
+    else:
+      assert 2 * self.eigenvalues.shape[1] > self.valence,\
+             RuntimeError("Not enough bands were computed.")
+      return max(self.eigenvalues[:, self.valence/2])
 
   @property
   @make_cached
