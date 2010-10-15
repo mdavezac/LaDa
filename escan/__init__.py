@@ -1,14 +1,18 @@
 """ Interface module for ESCAN. """
 __docformat__ = "restructuredtext en"
 from ..opt import __load_escan_in_global_namespace__
-if __load_escan_in_global_namespace__:
-  from DLFCN import RTLD_NOW as _RTLD_NOW, RTLD_GLOBAL as _RTLD_GLOBAL
-  from sys import getdlopenflags as _getdlopenflags, setdlopenflags as _setdlopenflags
-  flags = _getdlopenflags()
-  _setdlopenflags(_RTLD_NOW|_RTLD_GLOBAL)
-  import _escan
-  _setdlopenflags(flags)
-else: import _escan
+from . import lada_with_mpi
+if lada_with_mpi:
+  if __load_escan_in_global_namespace__:
+    from DLFCN import RTLD_NOW as _RTLD_NOW, RTLD_GLOBAL as _RTLD_GLOBAL
+    from sys import getdlopenflags as _getdlopenflags, setdlopenflags as _setdlopenflags
+    flags = _getdlopenflags()
+    _setdlopenflags(_RTLD_NOW|_RTLD_GLOBAL)
+    import _escan
+    _setdlopenflags(flags)
+  else: import _escan
+else: 
+  raise RuntimerError("Cannot load escan without MPI yet.")
 from ..opt.decorators import add_setter, broadcast_result
 import _bandstructure 
 import _extract

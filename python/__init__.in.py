@@ -41,7 +41,7 @@ __all__ = [@which_packages@]
 
 version_info = (@LaDa_VERSION_MAJOR@, @LaDa_VERSION_MINOR@)
 """ Tuple containing version info. """
-version = "{0[0]}.{0[1]}".join(version_info)
+version = "{0[0]}.{0[1]}".format(version_info)
 """ String containing version info. """
 lada_with_mpi = @do_use_mpi@
 """ If True, should load MPI stuff.
