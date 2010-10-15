@@ -597,7 +597,7 @@ class AbstractExtractBase(object):
 
   def __repr__(self):
     from os.path import relpath
-    return "{0.__class__.__name__}(\"{0._directory.unexpanded}\")".join(self)
+    return "{0}(\"{1}\")".format(self.__class__.__name__, self._directory.unexpanded)
 
 def convert_from_unix_re(pattern):
   """ Converts unix-command-line like regex to python regex.
