@@ -70,7 +70,7 @@ class JobDict(object):
         >>>    result = job.compute(outdir=name)
 
 
-      The L{walkthrough} method does just that: it goes through the whole tree
+      The ``walkthrough`` method does just that: it goes through the whole tree
       returning those branches where there is something to execute (eg
       C{job.functional != None}). It also returns outdir which is the subdirectory
       where to execute that particular job. Using the jobtree defined above,
@@ -110,13 +110,13 @@ class JobDict(object):
         >>> for job, name in jobs.bleed(comm=local_comm):
         >>>    result = job.compute(outdir=name)
 
-      L{bleed} makes sure that once a job is accepted, it will not be accessed
-      by any other process or pools of processes. L{bleed} allows parallelization
+      ``bleed`` makes sure that once a job is accepted, it will not be accessed
+      by any other process or pools of processes. ``bleed`` allows parallelization
       over pbs scripts and pools of MPI processes. However, it does change the
       C{jobdict} saved to "pickle". This means that once all jobs are executed,
-      L{bleed} (but not L{walk_through}) will find that C{jobdict} is empty. To
+      ``bleed`` (but not ``walk_through``) will find that C{jobdict} is empty. To
       undo these changes and use the jobdict for, say, ouptut analysis, simply
-      use L{walk_through} where possible (single pbs script or interactive
+      use ``walk_through`` where possible (single pbs script or interactive
       sessions), or do:
 
       >>> jobs.unbleed("pickle")
@@ -158,7 +158,7 @@ class JobDict(object):
       perform on objects in jobparams. Note however that __setattr__ will not
       set new object in jobparams, but rather pass on the call to the parent
       class __setattr__. To set new job parameters, one should use
-      L{add_param} or jobparams directly.
+      ``add_param`` or jobparams directly.
   """
 
   def __init__(self):
@@ -464,7 +464,7 @@ class JobDict(object):
 def walk_through(jobdict, outdir = None, comm = None):
   """ Generator to iterate over actual calculations. 
       
-      see L{JobDict} description.
+      see ``JobDict`` description.
   """
   if isinstance(jobdict, str): jobdict = load(jobdict, comm=comm)
   for u in jobdict.walk_through(outdir): yield u
@@ -533,9 +533,9 @@ def bleed(path=None, outdir=None, comm=None):
           Will broadcast yielded stuff from root. Because of file locking,
           this generator may freeze the system if not used correctly with mpi.
 
-      :return: yields (job, directory), see L{walk_through}.
+      :return: yields (job, directory), see ``walk_through``.
            - job: a job dictionary with the current job to execute.
-           - directory: a suggested directory name with L{outdir} as its root.
+           - directory: a suggested directory name with ``outdir`` as its root.
 
       This function alters the dictionary stored in `path`. If `path` is
       empty, then returns None, None. An exclusive lock is acquired before
@@ -848,7 +848,7 @@ class AbstractMassExtract(object):
     """ Extraction on a single process.
   
         Sometimes, it is practical to perform extractions on a single process
-        only, eg without blocking mpi calls. C{self.L{solo}()} returns an
+        only, eg without blocking mpi calls. C{self.``solo}()`` returns an
         extractor for a single process:
         
         >>> # prints only on proc 0.
@@ -933,7 +933,7 @@ class MassExtract(AbstractMassExtract):
       except ImportError: raise AttributeError("path not set.")
       ip = get_ipy()
       if "current_jobdict" not in ip.user_ns:
-        print "No current jobdictionary path."
+        print "No current jobdictionary."
         return
       return ip.user_ns["current_jobdict"].name
       return 
@@ -996,9 +996,10 @@ class MassExtract(AbstractMassExtract):
       else: yield job.name, extract
 
 
-class JobParams(object):
+class JobParams(AbstractMassExtract):
   """ Get and sets job parameters for a job-dictionary. """
-  def __init__(self, jobdict = None, only_existing=True,  naked_end=True, unix_re=True, _view = None):
+  def __init__( self, jobdict = None, only_existing=True,  naked_end=True,\
+                unix_re=True, view = None, excludes = None):
     """ Initializes job-parameters.
 
         :Parameters:
@@ -1014,26 +1015,18 @@ class JobParams(object):
             explored, returns that item alone.
           unix_re : bool
             converts regex patterns from unix-like expression.
-          _view : None or str
-            Grepable to examin.
+          view : None or str
+            Grepable to examine.
     """
-    super(JobParams, self).__init__()
+    super(JobParams, self).__init__( naked_end=naked_end, unix_re=unix_re, \
+                                     view=view, excludes=excludes)
 
     super(JobParams, self).__setattr__("_jobdict", None)
     self._jobdict = jobdict
     """ Job-dictionary for which to get/set parameters. """
-    super(JobParams, self).__setattr__("_view", None)
-    self._view = _view
-    """ Dictionary keys for which to get stuff. """
     super(JobParams, self).__setattr__("only_existing", None)
     self.only_existing = only_existing
     """ Only modifies parameter which already exist. """
-    super(JobParams, self).__setattr__("naked_end", None)
-    self.naked_end = True
-    """ If True, a value, rathe than a dict, is returned if at end of branch. """
-    super(JobParams, self).__setattr__("unix_re", None)
-    self.unix_re = unix_re
-    """ If True, then all regex matching is done using unix-command-line patterns. """
 
   @property
   def jobdict(self):
@@ -1046,61 +1039,62 @@ class JobParams(object):
         if "current_jobdict" not in ip.user_ns:
           print "No current jobdictionary."
           return
-        return ip.user_ns["current_jobdict"]
-    return self._jobdict
+        return ip.user_ns["current_jobdict"].root
+    return self._jobdict.root
   @jobdict.setter
   def jobdict(self, value): self._jobdict = value
 
   @property
-  def jobs(self):
-    """ Name of jobs which can currently be grepped. """
-    return [name for job, name in self.walk_through()]
+  def view(self):
+    """ A regex pattern which the name of extracted jobs should match.
 
-  def _regex_pattern(self, pattern, flags=0):
-    """ Returns a regular expression. """
-    from ..opt import convert_from_unix_re
-    return compile(pattern, flags) if not self.unix_re\
-           else convert_from_unix_re(pattern)
+        If None, then no match required. Should be a string, not an re object.
+    """
+    if self._view == None:
+      try: from IPython.ipapi import get as get_ipy
+      except ImportError: raise AttributeError("path not set.")
+      ip = get_ipy()
+      if "current_jobdict" not in ip.user_ns:
+        print "No current jobdictionary."
+        return
+      return ip.user_ns["current_jobdict"].name
+      return 
+    return self._view
+  @view.setter
+  def view(self, value): self._view = value
 
   def walk_through(self):
     """ Loops through all correct jobs. """
-    if self._view == None:
-      for job, name in self.jobdict.walk_through():
-        if not job.is_tagged: yield job, name
-      return
-
-    regex = self._regex_pattern(self._view) 
     for job, name in self.jobdict.walk_through():
-      if regex.match(name) != None: yield job, name
-
-  def __getitem__(self, name):
-    """ Returns a JobParams object with new view. """
-    from os.path import join, normpath
-    view = name if self._view == None else normpath(join(self._view, name))
-    return JobParams(self._jobdict, _view = view)
-
-  def __getattr__(self, name):
-    """ Returns dictionary with job parameters for each job. """
-    result = {}
-    for job, jobname in self.walk_through():
-      if hasattr(job, name): result[job.name] = getattr(job, name)
-    if self.naked_end and len(result.keys()) == 1:
-       if result.keys()[0] == self.jobdict.name: return result[result.keys()[0]] 
-    return result
+      if not job.is_tagged: yield job.name, job
 
   def __setattr__(self, name, value):
     """ Returns dictionary with job parameters for each job. """
+    from re import match
+    # initialization not done yet.
+    if "only_existing" not in self.__dict__: super(JobParams, self).__setattr__(name, value)
+    # some cached attributes.
+    if name == "_cached_extractors" or name == "_cached_properties":
+      super(JobParams, self).__setattr__(name, value)
+    # other cached attributes.
+    if match("_cached_attr\S+", name): super(JobParams, self).__setattr__(name, value)
     try: super(JobParams, self).__getattribute__(name)
     except AttributeError: 
-      for job, jobname in self.walk_through():
+      for jobname, job in self._regex_extractors():
         if hasattr(job, name): setattr(job, name, value)
         elif not self.only_existing: job.jobparams[name] = value
     else: super(JobParams, self).__setattr__(name, value)
 
-  def __dir__(self):
+  def __delattr__(self, name):
+    try: super(JobParams, self).__getattribute__(name)
+    except AttributeError: 
+      for jobname, job in self._regex_extractors():
+        if hasattr(job, name): delattr(job, name)
+    else: super(JobParams, self).__delattr__(name, value)
+
+  def _properties(self):
     """ Attributes which already exist. """
-    result = [u for u in self.__class__.__dict__ if u[0] != '_'] 
-    result.extend([u for u in self.__dict__ if u[0] != '_'])
-    for job, name in self.walk_through(): result.extend(job.jobparams.keys())
-    return list(set(result))
+    result = set()
+    for name, job in self._regex_extractors(): result |= set(job.jobparams.keys())
+    return result
  
