@@ -17,7 +17,7 @@ target_link_libraries( pyescan ${Boost_PYTHON_LIBRARY}
 
 if (MPI_FOUND)
   include_directories(${MPI_INCLUDE_PATH})
-  target_link_libraries(vff ${MPI_LIBRARY} ${Boost_MPI_LIBRARY})
+  target_link_libraries(pyescan ${MPI_LIBRARY} ${Boost_MPI_LIBRARY})
 endif (MPI_FOUND)
 
 mark_as_advanced(PYTHON_ENABLE_MODULE_pyescan)
