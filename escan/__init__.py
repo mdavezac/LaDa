@@ -361,7 +361,7 @@ class Escan(object):
     else: raise RuntimeError("unknown hamiltonnian %i." % (soH))
     for pot in self.atomic_potentials:
       result += "functional.add_potential         = %s\n" % (repr(pot))
-    result += "functional.print_from_all = '{0}'\n".format(repr(self.print_from_all))
+    result += "functional.print_from_all = {0}\n".format(repr(self.print_from_all))
     result += "functional.INWAVECAR = '%s'\n" % (self.INWAVECAR)
     result += "functional.ERRCAR = '%s'\n" % (self.ERRCAR)
     result += "functional.WAVECAR = '%s'\n" % (self.WAVECAR)
