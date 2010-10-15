@@ -7,10 +7,12 @@ from _opt import __load_vasp_in_global_namespace__, __load_escan_in_global_names
                  cReals, _RedirectFortran, ConvexHull, ErrorTuple
 from changedir import Changedir
 from tempdir import Tempdir
+from decorators import broadcast_result, make_cached
 
 __all__ = [ '__load_vasp_in_global_namespace__', '__load_escan_in_global_namespace__',\
             'cReals', 'ConvexHull', 'ErrorTuple', 'redirect_all', 'redirect', 'read_input',\
-            'LockFile', 'acquire_lock', 'open_exclusive', 'RelativeDirectory', 'streams' ]
+            'LockFile', 'acquire_lock', 'open_exclusive', 'RelativeDirectory', 'streams',
+            'AbstractBaseClass', 'convert_from_unix_re' ]
 
 streams = _RedirectFortran.fortran
 """ Name of the streams. """
@@ -497,4 +499,117 @@ class RelativeDirectory(object):
     return "{0}, {1}".format(repr(self._envvar), repr(self._relative))
 
 
+class AbstractExtractBase(object):
+  """ Abstract base class for extraction classes. 
+  
+      Defines a number of members common to all extraction classes:
+        - directory: root directory where output should exist.
+        - comm : boost.mpi.communicator in case of mpi syncronization.
+  """
+  def __init__(self, directory=None, comm=None):
+    """ Initializes an extraction base class.
 
+        :Parameters: 
+          directory : str or None
+            Root directory for extraction. If None, will use current working directory.
+          comm : boost.mpi.communicator or None
+            Processes over which to synchronize output.
+    """
+    super(AbstractExtractBase, self).__init__()
+
+    from os import getcwd
+    from . import RelativeDirectory
+
+    if directory == None: directory = getcwd()
+    self._directory = RelativeDirectory(directory, hook=self.__directory_hook__)
+    """ Directory where output should be found. """
+    self.comm = comm
+    """ Communicator for extracting stuff. 
+
+        All procs will get same results at end of extraction. 
+        Program will hang if not all procs are called when extracting some
+        value. Instead, use `solo`.
+
+        >>> extract.success # Ok
+        >>> if comm.rank == 0: extract.success # will hang if comm.size != 1
+        >>> if comm.rank == 0: extract.solo().success # Ok
+    """
+  @property
+  def directory(self):
+    """ Directory where output should be found. """
+    return self._directory.path
+  @directory.setter
+  def directory(self, value): self._directory.path = value
+
+  @property
+  @broadcast_result(attr=True, which=0)
+  def success(self):
+    """ Checks for success. 
+
+        Should never ever throw!
+
+        :return: True if calculations were successfull, false otherwise.
+    """
+    abstract 
+
+
+  def __directory_hook__(self):
+    """ Called whenever the directory changes. """
+    self.uncache()
+
+  def uncache(self): 
+    """ Uncache values. """
+    self.__dict__.pop("_cached_extractors", None)
+    self.__dict__.pop("_cached_properties", None)
+
+  def __copy__(self):
+    """ Returns a shallow copy of this object. """
+    result = self.__class__()
+    result.__dict__ = self.__dict__.copy()
+    result._directory = RelativeDirectory( self._directory.path,\
+                                           self._directory._envvar, 
+                                           result.uncache )
+    return result
+
+  def copy(self, **kwargs):
+    """ Returns a shallow copy of this object.
+
+        :Params kwargs:
+          Any keyword argument is set as an attribute of this object.
+    """
+    result = self.__copy__()
+    for k, v in kwargs: setattr(result, k, v)
+
+  def solo(self):
+    """ Returns a serial version of this object. """
+    return self.copy(comm=None)
+
+  def __getstate__(self):
+    d = self.__dict__.copy()
+    d.pop("comm", None)
+    if "_directory" in d: d["_directory"].hook = None
+    return d
+
+  def __setstate__(self, arg):
+    self.__dict__.update(arg)
+    self.comm = None
+    if hasattr(self, "_directory"): self._directory.hook = self.uncache
+
+  def __repr__(self):
+    from os.path import relpath
+    return "{0.__class__.__name__}(\"{0._directory.unexpanded}\")".join(self)
+
+def convert_from_unix_re(pattern):
+  """ Converts unix-command-line like regex to python regex.
+
+      Does not handle active python regex characters too well.
+  """
+  from re import compile
+  star = compile(r"(?<!\\)\*")
+  optional = compile(r"\[(\S),(\S)\]")
+  unknown = compile(r"\?")
+  pattern = unknown.sub(r".", pattern)
+  pattern = star.sub(r"[^/]*", pattern)
+  pattern = optional.sub(r"(?:\1,\2)", pattern)
+  return compile(pattern)
+    

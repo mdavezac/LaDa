@@ -2,6 +2,7 @@
 
 # imports C++ extension
 from ..opt.decorators import add_setter, broadcast_result, make_cached
+from ..opt import AbstractExtractBase
 
 def _is_in_sync(comm, which = [0]):
   from boost.mpi import broadcast
@@ -35,17 +36,12 @@ def _get_script_text(file, name):
     lines += line
   return lines
 
-class Extract(object):
+class Extract(AbstractExtractBase):
+  """ Extracts vff results from output file. """
   def __init__(self, directory = None, comm = None, vff = None):
-    from os import getcwd
-    from ..opt import RelativeDirectory
+    """ Initializes the extraction class. """
+    super(Extract, self).__init__(directory=directory, comm=comm)
 
-    super(Extract, self).__init__()
-
-    self._directory = RelativeDirectory(directory)
-    """ Directory where to check for output. """
-    self.comm = comm
-    """ Mpi group communicator. """
     self.OUTCAR = vff.OUTCAR if vff != None else Vff().OUTCAR
     """ Filename of the OUTCAR file from VASP.
      
@@ -55,13 +51,6 @@ class Extract(object):
     """ Pickle filename for the functional. """
 
     
-  @property
-  def directory(self):
-    """ Directory where output should be found. """
-    return self._directory.path
-  @directory.setter
-  def directory(self, value): self._directory.path = value
-
   @property
   @broadcast_result(attr=True, which=0)
   def success(self):
@@ -230,42 +219,6 @@ class Extract(object):
 
     if old_lattice != None: old_lattice.set_as_crystal_lattice()
 
-  def solo(self):
-    """ Extraction on a single process.
-
-        Sometimes, it is practical to perform extractions on a single process
-        only, eg without blocking mpi calls. C{self.L{solo}()} returns an
-        extractor for a single process:
-        
-        >>> # prints only on proc 0.
-        >>> if boost.mpi.world.rank == 0: print extract.solo().structure
-    """
-    from copy import deepcopy
-    
-    if self.comm == None: return self
-    return deepcopy(self)
-
-  def __repr__(self):
-    return "%s(\"%s\")" % (self.__class__.__name__, self._directory.unexpanded)
-
-
-  def __getstate__(self):
-    from os.path import relpath
-    d = self.__dict__.copy()
-    d.pop("comm", None)
-    if "_directory" in d: d["_directory"].hook = None
-    return d
-  def __setstate__(self, arg):
-    self.__dict__.update(arg)
-    self.comm = None
-    if hasattr(self, "_directory"): self._directory.hook = self.uncache
-
-  def uncache(self): 
-    """ Uncache values. """
-    self.__dict__.pop("_cached_extractors", None)
-    self.__dict__.pop("_cached_properties", None)
-
-
 
 class Vff(object): 
   """ Valence Force Field functional for zinc-blende materials """
@@ -307,6 +260,8 @@ class Vff(object):
     """ Pickle file to which functional is saved. """
     self._workdir = workdir
     """ Private reference to the working directory. """
+    self.print_from_all = False
+    """ If True, each node will print. """
 
   def _get_workdir(self): return self._workdir
   def _set_workdir(self, workdir):
@@ -428,6 +383,7 @@ class Vff(object):
     result += "functional = %s()\n" % (self.__class__.__name__)
     result += "functional.minimizer = minimizer\n"
     result += "functional.lattice = lattice\n"
+    result += "functional.print_from_all = '{0}'\n".format(repr(self.print_from_all))
     result += "functional.OUTCAR = '%s'\n" % (self.OUTCAR)
     result += "functional.ERRCAR = '%s'\n" % (self.ERRCAR)
     if self.direction == None or hasattr(self.direction, "__len__"):
@@ -464,13 +420,15 @@ class Vff(object):
   def _cout(self, comm):
     """ Creates output name. """
     if self.OUTCAR == None: return "/dev/null"
-    if comm == None: return self.OUTCAR
-    return self.OUTCAR if comm.rank == 0 else self.OUTCAR + "." + str(comm.rank)
+    if comm == None:   return self.OUTCAR
+    if comm.rank == 0: return self.OUTCAR
+    return self.OUTCAR + "." + str(comm.rank) if self.print_from_all else "/dev/null"
   def _cerr(self, comm):
     """ Creates error name. """
     if self.ERRCAR == None: return "/dev/null"
-    if comm == None: return self.ERRCAR
-    return self.ERRCAR if comm.rank == 0 else self.ERRCAR + "." + str(comm.rank)
+    if comm == None:   return self.ERRCAR
+    if comm.rank == 0: return self.ERRCAR
+    return self.ERRCAR + "." + str(comm.rank) if self.print_from_all else "/dev/null"
 
   def __call__(self, structure, outdir = None, comm = None, overwrite=False, **kwargs):
     """ Performs calculation """

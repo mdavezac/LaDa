@@ -115,7 +115,6 @@ def magnetic_wave(path=None, inputpath=None, **kwargs):
   """
   from tempfile import NamedTemporaryFile
   from os.path import dirname, normpath, relpath, join
-  from copy import deepcopy
   from IPython.ipapi import get as get_ipy
   from lada.jobs import JobDict
   from lada.vasp import read_input
@@ -183,7 +182,7 @@ def magnetic_wave(path=None, inputpath=None, **kwargs):
       if magmom != None and jobname not in jobdict:
         job = jobdict / jobname
         job.functional = input.relaxer 
-        job.jobparams["structure"] = deepcopy(extract.structure)
+        job.jobparams["structure"] = extract.structure.deepcopy()
         job.jobparams["structure"].name = "{0} in {1}, {2}ferro."\
                                           .format(material, lattice.name, prefix)
         job.jobparams["structure"].magmom = magmom
@@ -200,7 +199,7 @@ def magnetic_wave(path=None, inputpath=None, **kwargs):
       if magmom != None and jobname not in jobdict:
         job = jobdict / jobname
         job.functional = input.relaxer
-        job.jobparams["structure"] = deepcopy(extract.structure)
+        job.jobparams["structure"] = extract.structure.deepcopy()
         job.jobparams["structure"].name = "{0} in {1}, {2}specie-anti-ferro."\
                                           .format(material, lattice.name, prefix)
         job.jobparams["structure"].magmom = magmom
@@ -219,7 +218,7 @@ def magnetic_wave(path=None, inputpath=None, **kwargs):
         if jobname in jobdict: continue
         job = jobdict / jobname
         job.functional = input.relaxer if inputpath != None else nonmagjob.functional
-        job.jobparams["structure"] = deepcopy(extract.structure)
+        job.jobparams["structure"] = extract.structure.deepcopy()
         job.jobparams["structure"].name = "{0} in {1}, random anti-ferro."\
                                           .format(material, lattice.name)
         job.jobparams["structure"].magmom = magmom

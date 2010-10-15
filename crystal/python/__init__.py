@@ -422,6 +422,13 @@ def _copy(self):
 Lattice.copy   = _copy
 Structure.copy = _copy
 
+def _copy(self): 
+  """ Returns an exact clone. """
+  from copy import deepcopy
+  return deepcopy(self)
+Lattice.deepcopy   = _copy
+Structure.deepcopy = _copy
+
 def structure_to_lattice(structure):
   """ Converts a structure object to a lattice object. """
   result = Lattice()

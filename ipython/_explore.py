@@ -200,8 +200,7 @@ def _explore(self, args):
   from os.path import exists, abspath, dirname
   from copy import deepcopy
   from ..jobs import MassExtract, load, JobDict
-  from ._collect import Collect
-  from ..jobs import JobParams
+  from ..jobs import JobParams, MassExtract as Collect
   from . import _get_current_job_params
 
   ip = self.api
