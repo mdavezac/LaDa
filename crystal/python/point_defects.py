@@ -2,7 +2,6 @@
 __docformat__ = "restructuredtext en"
 try:
   from .. import vasp
-  from .. import jobs
 except ImportError: _add_mass_extract = False
 else: _add_mass_extract = True
 
@@ -338,7 +337,9 @@ def third_order_charge_correction(cell, charge = None, n = 200, **kwargs):
   from numpy.linalg import det
   import quantities as pq
 
-  if not hasattr(charge, "units"): charge = charge * pq.elementary_charge
+  if charge == None: charge = pq.elementary_charge
+  elif charge == 0: return 0e0 * pq.eV
+  elif not hasattr(charge, "units"): charge = charge * pq.elementary_charge
   if not hasattr(cell, "units"): cell = cell.copy() * pq.angstrom
 
   def fold(vector):
@@ -397,7 +398,8 @@ def first_order_charge_correction(cell, charge=None, epsilon=1e0, cutoff=None, *
           "Please compile LaDa with pcm enabled.\n"
     raise
 
-  if charge == None: charge = 1e0 
+  if charge == None: charge = pq.elementary_charge
+  elif charge == 0: return 0e0 * pq.eV
   if not hasattr(charge, "units"): charge = charge * pq.elementary_charge
   if not hasattr(cell, "units"): cell = cell * pq.angstrom
 
@@ -715,7 +717,7 @@ if _add_mass_extract:
 
   from ..opt.decorators import make_cached
   from .. import jobs
-  class MassExtract(jobs.MassExtract):
+  class MassExtract(vasp.MassExtract):
     """ Extract point-defect quantities. """
 
     def __init__(self, path, only_untagged = False, **kwargs):
@@ -783,7 +785,7 @@ if _add_mass_extract:
         result[key].units = pq.eV
       return result
 
-    def first_order_charge_correction(self, epsilon, **kwargs):
+    def charge_correction1(self, epsilon, **kwargs):
       """ First order charge correction. 
       
           :Parameters:
@@ -797,9 +799,10 @@ if _add_mass_extract:
           are multiple of the elementary charges and extracted from the name of
           each point-defect computation.
       """
-      return self._charge_correction(epsilon, globals()["first_order_charge_correction"], **kwargs)
+      from . import first_order_charge_correction
+      return self._charge_correction(epsilon, first_order_charge_correction, **kwargs)
 
-    def third_order_charge_correction(self, epsilon, **kwargs):
+    def charge_correction3(self, epsilon, **kwargs):
       """ Third order charge correction. 
       
           :Parameters:
@@ -814,7 +817,8 @@ if _add_mass_extract:
           are multiple of the elementary charges and extracted from the name of
           each point-defect computation.
       """
-      return self._charge_correction(epsilon, globals()["third_order_charge_correction"], **kwargs)
+      from . import third_order_charge_correction
+      return self._charge_correction(epsilon, third_order_charge_correction, **kwargs)
 
     def charge_correction(self, epsilon, **kwargs):
       """ First and third order charge corrections. 

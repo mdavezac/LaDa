@@ -429,6 +429,48 @@ class _ExtractImpl(object):
       results[1].append([u[which] for u in dummy if len(u) == cols])
     return results
 
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def ionic_charges(self):
+    """ Greps ionic_charges from OUTCAR."""
+    from quantities import elementary_charge
+    from numpy import array
+    regex = """^\s*ZVAL\s*=\s*(.*)$"""
+    result = self._find_last_OUTCAR(regex) 
+    assert result != None, RuntimeError("Could not find ionic_charges in OUTCAR")
+    return array([float(u) for u in result.group(1).split()]) * elementary_charge
+
+  @property
+  @make_cached
+  def valence(self):
+    """ Greps total energy from OUTCAR."""
+    from quantities import elementary_charge
+    from numpy import array
+    ionic = self.ionic_charges
+    species = self.species
+    atoms = [u.type for u in self.structure.atoms]
+    result = 0 * elementary_charge
+    for c, s in zip(ionic, species): result += c * atoms.count(s)
+    return result
+  
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def nelect(self):
+    """ Greps nelect from OUTCAR."""
+    regex = """^\s*NELECT\s*=\s*(\S+)\s+total\s+number\s+of\s+electrons\s*$"""
+    result = self._find_last_OUTCAR(regex) 
+    assert result != None, RuntimeError("Could not find energy in OUTCAR")
+    return float(result.group(1)) 
+
+  @property
+  @make_cached
+  def charge(self):
+    """ Greps total charge in the system from OUTCAR."""
+    from quantities import elementary_charge
+    return self.valence-self.nelect * elementary_charge
+
 class Extract(_ExtractImpl): 
   """ Extracts output from OUTCAR, including DFT specific stuff. """
 
