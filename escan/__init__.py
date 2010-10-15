@@ -1,7 +1,7 @@
 """ Interface module for ESCAN. """
 __docformat__ = "restructuredtext en"
 from ..opt import __load_escan_in_global_namespace__
-from . import lada_with_mpi
+from .. import lada_with_mpi
 if lada_with_mpi:
   if __load_escan_in_global_namespace__:
     from DLFCN import RTLD_NOW as _RTLD_NOW, RTLD_GLOBAL as _RTLD_GLOBAL
