@@ -644,7 +644,7 @@ class AbstractMassExtract(object):
     self.__dict__.pop("_cached_properties", None)
 
 
-  def __init__(self, naked_end = True, unix_re=True, view=None, excludes=None):
+  def __init__(self, naked_end=True, unix_re=True, view=None, excludes=None):
     """ Initializes extraction object. 
 
 
@@ -654,7 +654,11 @@ class AbstractMassExtract(object):
           unix_re : bool
             converts regex patterns from unix-like expression.
           view : str or None
-            Grepable.
+            Pattern which the job names must match to be included in the
+            extraction.
+          excludes : list of str or None
+            List of patterns which the job names must *not* match to be
+            included in the extraction.
     """
     from ..opt import RelativeDirectory
 
@@ -886,29 +890,56 @@ class MassExtract(AbstractMassExtract):
       diagnosis.
   """
 
-  def __init__(self, path = None, comm = None, naked_end=None, view=None):
+  def __init__(self, path=None, naked_end=True, unix_re=True,\
+                     view=None, excludes=None, comm=None):
     """ Initializes extraction object. 
  
         :Parameters:
-           path : str or None
-             Pickled jobdictioanary for which to extract stuff. If None, will
-             attempt to use the current jobdictionary.
-           comm : boost.mpi.communicator
-             All processes will be syncronized.
+          path : str or None
+            Pickled jobdictioanary for which to extract stuff. If None, will
+            attempt to use the current jobdictionary.
           naked_end : bool
             True if should return value rather than dict when only one item.
+          unix_re : bool
+            converts regex patterns from unix-like expression.
           view : str or None
-            Grepable.
+            Pattern which the job names must match to be included in the
+            extraction.
+          excludes : list of str or None
+            List of patterns which the job names must *not* match to be
+            included in the extraction.
+          comm : boost.mpi.communicator
+             All processes will be syncronized.
     """
-    super(MassExtract, self).__init__(naked_end=naked_end, view=view)
+    super(MassExtract, self).__init__( naked_end=naked_end, unix_re=unix_re, \
+                                       view=view, excludes=excludes)
 
     from os.path import isdir, isfile, exists, dirname, abspath
 
-    self.rootdir = path
+    self.rootdir = path # Path to the job dictionary.
     self.comm = comm
     """ Communicator if any. """
 
     if path != None: self._extractors() # gets stuff cached.
+
+  @property
+  def view(self):
+    """ A regex pattern which the name of extracted jobs should match.
+
+        If None, then no match required. Should be a string, not an re object.
+    """
+    if self._view == None:
+      try: from IPython.ipapi import get as get_ipy
+      except ImportError: raise AttributeError("path not set.")
+      ip = get_ipy()
+      if "current_jobdict" not in ip.user_ns:
+        print "No current jobdictionary path."
+        return
+      return ip.user_ns["current_jobdict"].name
+      return 
+    return self._view
+  @view.setter
+  def view(self, value): self._view = value
 
   @property
   def rootdir(self): 

@@ -159,19 +159,22 @@ def read_input(filename, global_dict=None, local_dict = None, paths=None, comm =
   from math import pi 
   from numpy import array, matrix, dot, sqrt, abs, ceil
   from numpy.linalg import norm, det
-  from boost.mpi import world
   from lada.crystal import Lattice, Site, Atom, Structure, fill_structure, FreezeCell, FreezeAtom
   from lada import physics
   from . import Input
+  from .. import lada_with_mpi
   
   # Add some names to execution environment.
   if global_dict == None: global_dict = {}
   global_dict.update( { "environ": environ, "pi": pi, "array": array, "matrix": matrix, "dot": dot,\
                         "norm": norm, "sqrt": sqrt, "ceil": ceil, "abs": abs, "Lattice": Lattice, \
                         "Structure": Structure, "Atom": Atom, "Site": Site, "physics": physics,\
-                        "fill_structure": fill_structure, "world": world, "FreezeCell": FreezeCell, \
+                        "fill_structure": fill_structure, "FreezeCell": FreezeCell, \
                         "FreezeAtom": FreezeAtom, "join": join, "abspath": abspath, \
                         "expanduser": expanduser})
+  if lada_with_mpi: 
+    from boost.mpi import world
+    globals["world"] = world
   if local_dict == None: local_dict = {}
   # Executes input script.
   execfile(filename, global_dict, local_dict)
