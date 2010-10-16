@@ -679,6 +679,7 @@ class AbstractMassExtract(object):
 
   def _regex_pattern(self, pattern, flags=0):
     """ Returns a regular expression. """
+    from re import compile
     from ..opt import convert_from_unix_re
     return compile(pattern, flags) if not self.unix_re\
            else convert_from_unix_re(pattern)
@@ -862,7 +863,7 @@ class AbstractMassExtract(object):
 
   def __copy__(self):
     """ Returns a shallow copy. """
-    result = self.__class__(self.rootdir)
+    result = self.__class__()
     result.__dict__.update(self.__dict__)
     return result
 
@@ -1045,6 +1046,32 @@ class JobParams(AbstractMassExtract):
   def jobdict(self, value): self._jobdict = value
 
   @property
+  def onoff(self):
+    """ Dictionary with calculations which will run.
+
+	Whereas other properties only report untagged jobs, this will report
+        both. Effectively checks wether a job is tagged or not. Calculations which 
+    """
+    result = {}
+    for name, job in self._regex_extractors():
+      result[name] = "off" if job.is_tagged else "on"
+    if self.naked_end and len(result) == 1: return result[result.keys()[0]]
+    return result
+
+  @onoff.setter
+  def onoff(self, value):
+    """ Dictionary with tagged and untagged jobs.
+
+	Whereas other properties only report untagged jobs, this will report
+        both.
+    """
+    if value == "on" or value == True:
+      for name, job in self._regex_extractors(): job.untag()
+    elif value == "off" or value == False:
+      for name, job in self._regex_extractors(): job.tag()
+    
+
+  @property
   def view(self):
     """ A regex pattern which the name of extracted jobs should match.
 
@@ -1065,8 +1092,21 @@ class JobParams(AbstractMassExtract):
 
   def walk_through(self):
     """ Loops through all correct jobs. """
-    for job, name in self.jobdict.walk_through():
-      if not job.is_tagged: yield job.name, job
+    for job, name in self.jobdict.walk_through(): yield job.name, job
+
+  def __getattr__(self, name): 
+    """ Returns extracted values. """
+    assert name not in ["_cached_extractors", "_cached_properties"],\
+           AttributeError("Unknown attribute {0}.".format(name))
+    assert name in self._properties(), AttributeError("Unknown attribute {0}.".format(name))
+
+    result = {}
+    for key, value in self._regex_extractors():
+      if value.is_tagged: continue
+      try: result[key] = getattr(value, name)
+      except: result.pop(key, None)
+    if self.naked_end and len(result) == 1: return result[result.keys()[0]]
+    return result
 
   def __setattr__(self, name, value):
     """ Returns dictionary with job parameters for each job. """
@@ -1081,6 +1121,7 @@ class JobParams(AbstractMassExtract):
     try: super(JobParams, self).__getattribute__(name)
     except AttributeError: 
       for jobname, job in self._regex_extractors():
+        if job.is_tagged: continue
         if hasattr(job, name): setattr(job, name, value)
         elif not self.only_existing: job.jobparams[name] = value
     else: super(JobParams, self).__setattr__(name, value)
@@ -1089,12 +1130,14 @@ class JobParams(AbstractMassExtract):
     try: super(JobParams, self).__getattribute__(name)
     except AttributeError: 
       for jobname, job in self._regex_extractors():
+        if job.is_tagged: continue
         if hasattr(job, name): delattr(job, name)
     else: super(JobParams, self).__delattr__(name, value)
 
   def _properties(self):
     """ Attributes which already exist. """
     result = set()
-    for name, job in self._regex_extractors(): result |= set(job.jobparams.keys())
+    for name, job in self._regex_extractors():
+      if not job.is_tagged: result |= set(job.jobparams.keys())
     return result
  
