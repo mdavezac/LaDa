@@ -65,6 +65,7 @@ class Enthalpy(object):
         If a charge state has children, then only the lowest energy calculation
         is returned.
     """
+    from operator import itemgetter
     for child in self.extract.children: # Each child is a different charge state.
       child.naked_end = False
       lowest = sorted(child.total_energies.items(), key=itemgetter(1))[0][0]
@@ -89,21 +90,19 @@ class Enthalpy(object):
   def _site(self):
     """ Returns site number or None. """
     from re import match
-    regex = match("^site_(\d+)$", self.extract.rootdir.split()[-1])
+    regex = match("^site_(\d+)$", self.extract.view.split()[-1])
     return int(regex.group(1)) if regex != None else None
 
   @property 
   def name(self):
     """ Name of the defect. """
-    from os.path import relpath, dirname
-    result = relpath(self.extract.rootdir, dirname(self.extract.rootdir))
-    return result if self._site == None else relpath(result, dirname(self.extract.rootdir))
+    return self.extract.view.split('/')[-2 if self._site != None else -1]
 
   @property
   def is_vacancy(self):
     """ True if this is a vacancy. """
     from re import match
-    return match("Vacancy_[A-Z][a-z]?", self.name) != None
+    return match("vacancy_[A-Z][a-z]?", self.name) != None
 
   @property
   def is_interstitial(self):
@@ -122,20 +121,20 @@ class Enthalpy(object):
     """ List of species involved in this defect. """
     from re import match
     if self.is_vacancy:
-      return [match("Vacancy_([A-Z][a-z])?", self.name).group(1)]
+      return [match("vacancy_([A-Z][a-z])?", self.name).group(1)]
     elif self.is_interstitial:
       return [match("[A-Z][a-z]?_interstitial_(\S+)", self.name).group(1)]
     else: 
       found = match("([A-Z][a-z])?_on_([A-Z][a-z])?", self.name)
       return [match.group(1), match.group(2)]
 
-  def _lines():
+  def _lines(self):
     """ Returns lines composed by the different charge states. """
     from numpy import array
-    from quantitie import elementary_charge as e
+    from quantities import elementary_charge as e
     lines = []
     states = set()
-    for state in self._charged_state():
+    for state in self._charged_states():
       assert state.charge not in states,\
              RuntimeError("Found more than one calculation for the same charge state.")
       states.add(state.charge)
@@ -184,7 +183,7 @@ class Enthalpy(object):
       lines.append([min_line[0].rescale(eV). min_line[1]])
     return lines
 
-  def __call__(fermi, mu = None):
+  def __call__(self, fermi, mu = None):
     """ Returns formation enthalpy for given fermi energy and mu. """
     from quantities import eV
     if mu == None: mu = 0e0
@@ -194,7 +193,7 @@ class Enthalpy(object):
     else: mu = mu * eV
     if hasattr(fermi, "rescale"): fermi = fermi.rescale(eV)
     else: fermi = fermi * eV
-    return (min(x[0]+fermi*x[1] for x in self.lines) + self.n * mu).rescale(eV)
+    return (min(x[0]+fermi*x[1] for x in self.lines()) + self.n * mu).rescale(eV)
 
   @property
   def latex_label(self):
