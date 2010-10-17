@@ -26,13 +26,17 @@ else:
               Extraction class to use. 
             kwargs : dict
               Keyword parameters passed on to AbstractMassExtract.
-      """
-      super(MassExtract, self).__init__(**kwargs)
 
+          :Kwargs naked_end: True if should return value rather than dict when only one item.
+          :Kwargs unix_re: converts regex patterns from unix-like expression.
+      """
       from os import getcwd
       from os.path import exists, isdir
       from . import Extract as VaspExtract
       from ...opt import RelativeDirectory
+
+      # this will throw on unknown kwargs arguments.
+      super(MassExtract, self).__init__(**kwargs)
 
       self.Extract = Extract if Extract != None else VaspExtract
       """ Extraction class to use. """
