@@ -255,9 +255,15 @@ def band_filling(defect, cbm):
         cbm : float 
           The cbm of the host with potential alignment.
   """
-  from numpy import sum
+  from numpy import sum, multiply, newaxis
+  if defect.eigenvalues.shape.ndim == 3:
+    dummy = multiply(defect.eigenvalues, defect.multiplicity[newaxis,:,newaxis])
+  elif defect.eigenvalues.shape.ndim == 2:
+    dummy = multiply(defect.eigenvalues, defect.multiplicity[:, newaxis])
+
+  dummy = multiply(dummy, defect.occupations)
   indices = defect.eigenvalues > cbm
-  return sum( (defect.multiplicity * defect.eigenvalues * defect.occupations)[indices] - cbm )
+  return sum( dummy[indices] - cbm )
   
 
 def potential_alignment(defect, host, maxdiff=0.5):
@@ -279,15 +285,16 @@ def potential_alignment(defect, host, maxdiff=0.5):
       :return: The potential alignment in eV (without charge factor).
   """
   from operator import itemgetter
-  from numpy import average, array, abs
-  from crystal import specie_list
+  from numpy import mean, array, abs
+  from quantities import eV
+  from . import specie_list
 
   # first get average atomic potential per atomic specie in host.
   host_electropot = {}
   host_species = specie_list(host.structure)
   for s in host_species:
-    indices = array([atom.type == s for atom in structure.atoms])
-    host_electropot[s] = average(host.electropot[indices]) 
+    indices = array([atom.type == s for atom in host.structure.atoms])
+    host_electropot[s] = mean(host.electropot[indices]) 
   
   # creates an initial list of unperturbed atoms. 
   types = array([atom.type for atom in defect.structure.atoms])
@@ -299,29 +306,28 @@ def potential_alignment(defect, host, maxdiff=0.5):
     # computes average atomic potentials of unperturbed atoms.
     defect_electropot = {}
     for s in host_species:
-      defect_electropot[s] = average( defect.electropot[unperturbed & (types == s)] )
+      defect_electropot[s] = mean(defect.electropot[unperturbed & (types == s)])
 
     # finds atomic potential farthest from the average potentials computed above.
-    discrepancies =   defect.electropot[unperturbed] \
-                    - array([host_electropot[type] for type in types[unperturbed]])
-    index, diff = max(enumerate(abs(discrepancies)), key=itemgetter(2))
+    by_type = array([host_electropot[type] for type in types[unperturbed]]) * eV
+    discrepancies = defect.electropot[unperturbed] - by_type
+    index, diff = max(enumerate(abs(discrepancies)), key=itemgetter(1))
 
     # if discrepancy too high, mark atom as perturbed.
-    if diff > maxdiff: unperturbed[unperturbed][index] = False
+    if diff > maxdiff:
+      unperturbed[ [i for i, u in enumerate(unperturbed) if u][index] ] = False
     # otherwise, we are done for this loop!
     else: break
 
   # now computes potential alignment from unpertubed atoms.
-  diff_from_host =    defect.electropot[unpertubed]  \
-                    - array([host_electropot[type] for type in types[unperturbed]])
-  return average(diff_from_host)
+  by_type = array([host_electropot[type] for type in types[unperturbed]]) * eV
+  diff_from_host = defect.electropot[unperturbed]  - by_type
+  return mean(diff_from_host).rescale(eV)
                     
 
-def third_order_charge_correction(cell, charge = None, n = 200, **kwargs):
+def third_order_charge_correction(cell, charge = None, n = 200, epsilon = 1.0, **kwargs):
   """ Returns energy of third order charge correction. 
   
-      Uses Quantity package to take care of units.
-      
       :Parameters: 
         cell : 3x3 numpy array
           If the cell has not units, then defaults to Angstrom.
@@ -330,42 +336,28 @@ def third_order_charge_correction(cell, charge = None, n = 200, **kwargs):
         charge 
           If no units are given, defaults to elementary charge. If None,
           defaults to 1 elementary charge.
+        epsilon 
+          Static dielectrict constant of the host. Most likely in atomic units
+          (e.g. dimensionless), but I'm not sure.
+      
+      Taken as is from Lany and Zunger's `PRB *78*, 235104 (2008)
+      <http://dx.doi.org/10.1103/PhysRevB.78.235104>`_
+      Always outputs as eV. Not sure what the units of some of these quantities are. 
 
-      :return: energy of a single negative charge in supercell.
+      :return: third order correction  to the energy in eV. Should be *added* to total energy.
   """
-  from numpy import array, dot
-  from numpy.linalg import det
-  import quantities as pq
+  from ._crystal import third_order 
+  from numpy import array
+  from quantities import elementary_charge, eV, pi, angstrom, dimensionless
+  from physics import a0, Ry
 
-  if charge == None: charge = pq.elementary_charge
-  elif charge == 0: return 0e0 * pq.eV
-  elif not hasattr(charge, "units"): charge = charge * pq.elementary_charge
-  if not hasattr(cell, "units"): cell = cell.copy() * pq.angstrom
-
-  def fold(vector):
-    """ Returns smallest distance. """
-    result = None
-    for i in range(-1, 2):
-      for j in range(-1, 2):
-        for k in range(-1, 2):
-          v = array([vector[0] + float(i), vector[1] + float(j), vector[2] + float(k)])
-          v = dot(cell, v)
-          m = dot(v,v)
-          if result == None or result > m: result = m
-    return result
-
-  # chden = ones( (n, n, n), dtype="float64")
-  result = 0e0
-  for ix in range(n):
-    for iy in range(n):
-      for iz in range(n):
-        vec = array([float(ix)/float(n)-0.5, float(iy)/float(n)-0.5, float(iz)/float(n)-0.5])
-        result += fold(vec)
-        
-  result = (result/float(n**3)) * 2e0/3e0*pq.pi * charge * charge / det(cell)\
-           / epsilon
-  result = pq.eV
-  return -result
+  if charge == None: charge = 1e0
+  elif charge == 0: return 0e0 * eV
+  if hasattr(charge, "units"):  charge  = float(charge.rescale(elementary_charge))
+  if hasattr(epsilon, "units"): epsilon = float(epsilon.simplified)
+  if hasattr(cell, "units"):    cell    = array(cell.rescale(angstrom))
+  return - charge**2 / epsilon * third_order(cell, n/2) * (4e0*pi/3e0) \
+         * (array(a0.rescale(angstrom))/scale)**3 * Ry.rescale(eV)
 
 
 def first_order_charge_correction(cell, charge=None, epsilon=1e0, cutoff=None, **kwargs):

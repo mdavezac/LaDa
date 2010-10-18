@@ -759,21 +759,22 @@ class Extract(_ExtractImpl):
   def electropot(self):
     """ Greps average atomic electrostatic potentials from OUTCAR. """
     from os.path import exists, join
-    import re
+    from re import compile, X as reX
     from numpy import array
+    from quantities import eV
 
     path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
     if not exists(path): raise IOError("File %s does not exist.\n" % (path))
 
     with open(path, "r") as file: lines = file.readlines()
-    regex = re.compile(r"""average\s+\(electrostatic\)\s+potential\s+at\s+core""", re.X)
+    regex = compile(r"""average\s+\(electrostatic\)\s+potential\s+at\s+core""", reX)
     for i, line in enumerate(lines[::-1]):
       if regex.search(line) != None: break
-    assert i + 3 < len(lines), RuntimeError("Could not find average atomic potential in file.")
+    assert -i + 2 < len(lines), RuntimeError("Could not find average atomic potential in file.")
     result = []
-    for line in lines[-i+3:]:
+    for line in lines[-i+2:]:
       data = line.split()
       if len(data) == 0: break
       result.extend( [float(u) for i, u in enumerate(data) if i % 2 == 1] )
         
-    return array(result, dtype="float64")
+    return array(result, dtype="float64") * eV

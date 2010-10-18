@@ -27,35 +27,31 @@ class Enthalpy(object):
 
   def _charge_correction(self, extract):
     """ Returns the charge correction. """
-    from lada.crystal.point_defect import charge_correction
-    assert len(extract.jobs) == 0, ValueError("extract should return naked objects.")
+    from lada.crystal.point_defects import charge_correction
+    assert len(extract.jobs) == 1, ValueError("extract should return naked objects.")
     assert extract.naked_end,      ValueError("extract should return naked objects.")
-    return charge_correction( self.extract.structure.cell,\
-                              charge=self.extract.charge,\
-                              epsilon=self.epsilon )
+    cell = extract.structure.cell
+    return charge_correction(cell, charge=extract.charge, epsilon=self.epsilon)
 
   def _potential_alignment(self, extract):
     """ Returns the charge correction. """
-    from lada.crystal.point_defect import potential_alignment
-    assert len(extract.jobs) == 0, ValueError("extract should return naked objects.")
+    from lada.crystal.point_defects import potential_alignment
+    assert len(extract.jobs) == 1, ValueError("extract should return naked objects.")
     assert extract.naked_end,      ValueError("extract should return naked objects.")
     return potential_alignment(extract, self.host, self.pa_maxdiff)
 
   def _band_filling(self, extract):
-    from lada.crystal.point_defect import band_filling
-    from pq import elementary_charge as e
-    from numpy import max
-    assert len(extract.jobs) == 0, ValueError("extract should return naked objects.")
+    from lada.crystal.point_defects import band_filling
+    assert len(extract.jobs) == 1, ValueError("extract should return naked objects.")
     assert extract.naked_end,      ValueError("extract should return naked objects.")
-    valence = int(extract.valence.rescale(e)+1e-12)
-    return band_filling(extract, self.cbm + self._potential_aligment(extract))
+    return band_filling(extract, self.host.cbm + self._potential_alignment(extract))
 
   def _corrected(self, extract):
     """ Corrected formation enthalpy. """
     return   extract.total_energy\
            - self.host.total_energy \
            + self._charge_correction(extract)\
-           + self._potential_alignemnt(extract)\
+           + self._potential_alignment(extract)\
            + self._band_filling(extract)
 
 
@@ -65,6 +61,7 @@ class Enthalpy(object):
         If a charge state has children, then only the lowest energy calculation
         is returned.
     """
+    from operator import itemgetter
     for child in self.extract.children: # Each child is a different charge state.
       child.naked_end = False
       lowest = sorted(child.total_energies.items(), key=itemgetter(1))[0][0]
@@ -95,15 +92,16 @@ class Enthalpy(object):
   @property 
   def name(self):
     """ Name of the defect. """
-    from os.path import relpath, dirname
-    result = relpath(self.extract.rootdir, dirname(self.extract.rootdir))
-    return result if self._site == None else relpath(result, dirname(self.extract.rootdir))
+    from os.path import dirname, basename
+    result = self.extract.view
+    if self._site != None: result = dirname(result)
+    return basename(result)
 
   @property
   def is_vacancy(self):
     """ True if this is a vacancy. """
     from re import match
-    return match("Vacancy_[A-Z][a-z]?", self.name) != None
+    return match("vacancy_[A-Z][a-z]?", self.name) != None
 
   @property
   def is_interstitial(self):
@@ -122,24 +120,24 @@ class Enthalpy(object):
     """ List of species involved in this defect. """
     from re import match
     if self.is_vacancy:
-      return [match("Vacancy_([A-Z][a-z])?", self.name).group(1)]
+      return [match("vacancy_([A-Z][a-z])?", self.name).group(1)]
     elif self.is_interstitial:
       return [match("[A-Z][a-z]?_interstitial_(\S+)", self.name).group(1)]
     else: 
       found = match("([A-Z][a-z])?_on_([A-Z][a-z])?", self.name)
       return [match.group(1), match.group(2)]
 
-  def _lines():
+  def _lines(self):
     """ Returns lines composed by the different charge states. """
     from numpy import array
-    from quantitie import elementary_charge as e
+    from quantities import elementary_charge as e
     lines = []
     states = set()
-    for state in self._charged_state():
+    for state in self._charged_states():
       assert state.charge not in states,\
              RuntimeError("Found more than one calculation for the same charge state.")
       states.add(state.charge)
-      lines.append(array([state._corrected, state.charge]))
+      lines.append(array([self._corrected(state), state.charge]))
 
   def _all_intersections(self):
     """ Returns all intersection points between vbm and cbm, ordered. """
@@ -184,7 +182,7 @@ class Enthalpy(object):
       lines.append([min_line[0].rescale(eV). min_line[1]])
     return lines
 
-  def __call__(fermi, mu = None):
+  def __call__(self, fermi, mu = None):
     """ Returns formation enthalpy for given fermi energy and mu. """
     from quantities import eV
     if mu == None: mu = 0e0
@@ -194,7 +192,7 @@ class Enthalpy(object):
     else: mu = mu * eV
     if hasattr(fermi, "rescale"): fermi = fermi.rescale(eV)
     else: fermi = fermi * eV
-    return (min(x[0]+fermi*x[1] for x in self.lines) + self.n * mu).rescale(eV)
+    return (min(x[0]+fermi*x[1] for x in self.lines()) + self.n * mu).rescale(eV)
 
   @property
   def latex_label(self):
