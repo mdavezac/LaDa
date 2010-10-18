@@ -389,9 +389,10 @@ class Escan(object):
     from copy import deepcopy
     from os import getcwd
     from os.path import exists, isdir, abspath, basename, join, expanduser
-    from shutil import copyfile, rmtree
+    from shutil import rmtree
     from cPickle import dump
     from boost.mpi import world, broadcast
+    from ..opt import copyfile
     from ..opt.changedir import Changedir
     from ..opt.tempdir import Tempdir
 
@@ -437,16 +438,13 @@ class Escan(object):
         with Changedir(outdir, comm = comm) as cwd:
           for file in  [ this._POSCAR + "." + str(world.rank),\
                          this._POTCAR + "." + str(world.rank),\
-                         this.FUNCCAR if comm.rank == 0 else None,
-                         this._cout(comm) if this._cout(comm) != "/dev/null" else None,\
-                         this._cerr(comm) if this._cerr(comm) != "/dev/null" else None,\
-                         this.vff._cout(comm) if this.vff._cout(comm) != "/dev/null" else None,\
-                         this.vff._cerr(comm) if this.vff._cerr(comm) != "/dev/null" else None,\
+                         this.FUNCCAR, 
+                         this._cout(comm), 
+                         this._cerr(comm), 
+                         this.vff._cout(comm),
+                         this.vff._cerr(comm),
                          this.WAVECAR if comm.rank == 0  else None ]:
-            if file == None: continue
-            destination, origin = basename(file), join(this._tempdir, basename(file))
-            if exists(origin) and (not samefile(origin, destination)):
-              copyfile(origin, destination)
+            copyfile(file, this._tempdir, 'same exists null', None)
   
     return self.Extract(comm = comm, directory = outdir, escan = this)
 
@@ -515,26 +513,21 @@ class Escan(object):
 
   def _run_vff(self, structure, outdir, comm, cout, overwrite, norun):
     """ Gets atomic input ready, with or without relaxation. """
-    from shutil import copyfile
     from os.path import join, samefile, exists
     from ..vff import Extract as ExtractVff
+    from ..opt import copyfile
     from boost.mpi import world
 
     poscar = self._POSCAR + "." + str(world.rank)
     if self.vffrun != None:
       POSCAR = self.vffrun.escan._POSCAR + "." + str(world.rank)
+      POSCAR = join(self.vffrun.directory, POSCAR)
       rstr = self.vffrun.structure
-      if     exists(join(self.vffrun.directory, POSCAR))\
-         and (not samefile(join(self.vffrun.directory, POSCAR), poscar)):
-        copyfile(join(self.vffrun.directory, POSCAR), poscar)
+      if exists(POSCAR): copyfile(POSCAR, poscar, 'same', comm)
       else: out.solo().write_escan_input(poscar, rstr)
       VFFCOUT = self.vffrun.escan.vff._cout(comm)
-      vffcout = self.vff._cout(comm)
-      if     (not samefile(VFFCOUT, '/dev/null')) \
-         and (not samefile(vffcout, '/dev/null')) \
-         and exists(join(self.vffrun.directory, VFFCOUT)) \
-         and (not samefile(join(self.vffrun.directory, VFFCOUT), vffcout)):
-        copyfile(join(self.vffrun.directory, VFFCOUT), vffcout)
+      VFFCOUT = join(self.vffrun.directory, VFFCOUT)
+      copyfile(VFFCOUT, self.vff._cout(comm), 'same exists null', comm)
       return
 
     if norun == True: return
@@ -560,27 +553,18 @@ class Escan(object):
     """ Runs genpot only """
     from boost.mpi import broadcast, world
     from ._escan import _call_genpot
-    from shutil import copyfile
     from os.path import basename, exists, join, samefile
-    from ..opt import redirect
+    from ..opt import redirect, copyfile
 
     # using genpot from previous run
     is_root = True if comm == None else comm.rank == 0
     if self.genpotrun != None:
       POTCAR = self.genpotrun.escan._POTCAR + "." + str(world.rank)
       potcar = self._POTCAR + "." + str(world.rank)
-      if     exists(join(self.genpotrun.directory, POTCAR))\
-         and (not samefile(join(self.genpotrun.directory, POTCAR), potcar)):
-        copyfile(join(self.genpotrun.directory, POTCAR), potcar)
-      if is_root:
-        assert exists(self.maskr), IOError("{0} does not exist.".format(self.maskr))
-        if not samefile(self.maskr, basename(self.maskr)):
-          copyfile(self.maskr, basename(self.maskr))
-        for pot in self.atomic_potentials:
-          if pot.nonlocal == None: continue
-          if samefile(pot.nonlocal, basename(pot.nonlocal)): continue
-          assert exists(pot.nonlocal), IOError("{0} does not exist.".format(pot.nonlocal))
-          copyfile(pot.nonlocal, basename(pot.nonlocal))
+      copyfile(join(self.genpotrun.directory, POTCAR), potcar, 'same exists')
+      copyfile(self.maskr, nothrow='same', comm=comm)
+      for pot in self.atomic_potentials:
+        copyfile(pot.nonlocal, nothrow='none same', comm=comm)
       return
 
     assert self.atomic_potentials != None, RuntimeError("Atomic potentials are not set.")
@@ -595,20 +579,12 @@ class Escan(object):
                       len(self.atomic_potentials) ))
       for pot in self.atomic_potentials:
         # adds to list of potentials
-        filepath = basename(pot.filepath)
-        file.write(filepath + "\n") 
+        file.write(basename(pot.filepath) + "\n") 
         # copy potential files as well.
-        if is_root:
-          assert exists(pot.filepath), IOError("{0} does not exist.".format(pot.filepath))
-          if not samefile(pot.filepath, filepath): copyfile(pot.filepath, filepath)
-        if pot.nonlocal != None and is_root: 
-          assert exists(pot.filepath), IOError("{0} does not exist.".format(pot.nonlocal))
-          if not samefile(pot.nonlocal, basename(pot.nonlocal)): 
-            copyfile(pot.nonlocal, basename(pot.nonlocal))
-    if is_root:
-      assert exists(pot.maskr), IOError("{0} does not exist.".format(pot.maskr))
-      if not samefile(self.maskr, basename(self.maskr)): 
-        copyfile(self.maskr, basename(self.maskr))
+        copyfile(pot.filepath, nothrow='same', comm=comm)
+        copyfile(pot.nonlocal, nothrow='same None', comm=comm)
+
+    copyfile(self.maskr, nothrow='same', comm=comm)
 
     if norun == True: return
     if comm != None:
@@ -631,7 +607,8 @@ class Escan(object):
     from ..physics import Ry
     assert self.atomic_potentials != None, RuntimeError("Atomic potentials are not set.")
     # Creates temporary input file and creates functional
-    kpoint = (0,0,0,0,0) if norm(self.kpoint) < 1e-12 else self._get_kpoint(structure, comm, norun)
+    kpoint = (0,0,0,0,0) if norm(self.kpoint) < 1e-12\
+             else self._get_kpoint(structure, comm, norun)
     with open(self._INCAR + "." + str(world.rank), "w") as file:
       print >> file, "1 %s.%i" % (self._POTCAR, world.rank) 
       print >> file, "2 %s" % (self.WAVECAR) 
@@ -686,7 +663,6 @@ class Escan(object):
 
   def _run_escan(self, comm, structure, norun):
     """ Runs escan only """
-    from shutil import copyfile
     from os.path import basename
     from ._escan import _call_escan
     from ..opt import redirect
@@ -694,12 +670,8 @@ class Escan(object):
 
     is_root = True if comm == None else comm.rank == 0
     self._write_incar(comm, structure, norun)
-    if is_root:
-      assert exists(pot.maskr), IOError("{0} does not exist.".format(pot.maskr))
-      if not samefile(self.maskr, basename(self.maskr)): 
-        copyfile(self.maskr, basename(self.maskr))
     if norun == True: return
-    if comm != None:
+    if comm != None: 
       comm.barrier() 
       assert self.fft_mesh[0] * self.fft_mesh[1] * self.fft_mesh[2] % comm.size == 0,\
              RuntimeError( "FFT mesh and number of processors must be commensurate.\n"\
@@ -712,29 +684,41 @@ class Escan(object):
   def _get_kpoint(self, structure, comm, norun):
     """ Returns deformed or undeformed kpoint. """
     from numpy import abs, sum, zeros, array
-    from boost.mpi import broadcast, world
     from ..crystal import deform_kpoint
     from quantities import angstrom
     from ..physics import a0
     if norun == True:
-      return 1, self.kpoint[0], self.kpoint[1], self.kpoint[2], structure.scale * a0.rescale(angstrom)
+      return 1, self.kpoint[0], self.kpoint[1], self.kpoint[2],\
+             structure.scale / float(a0.rescale(angstrom))
     if self._dont_deform_kpoint:
-      return 1, self.kpoint[0], self.kpoint[1], self.kpoint[2], structure.scale * a0.rescale(angstrom)
+      return 1, self.kpoint[0], self.kpoint[1], self.kpoint[2],\
+             structure.scale / float(a0.rescale(angstrom))
     # first get relaxed cell
     relaxed = zeros((3,3), dtype="float64")
-    if comm.rank == 0:
-      with open(self._POSCAR + "." + str(world.rank), "r") as file:
+    is_mpi  = comm != None
+    is_root = comm.rank == 0 if is_mpi else True
+    if is_root:
+      if is_mpi:
+        from boost.mpi import world
+        POSCAR = "{0}.{1}".format(self._POSCAR, world.rank)
+      else: POSCAR = "{0}.0".format(self._POSCAR)
+      with open(POSCAR, "r") as file:
         file.readline() # number of atoms.
         # lattice vector by lattice vector
         for i in range(3): 
           relaxed[:,i] = array([float(u) for u in file.readline().split()[:3]])
-    relaxed = (broadcast(comm, relaxed, 0) / structure.scale * a0).rescaled(angstrom)
+      relaxed = relaxed / structure.scale * float(a0.rescale(angstrom))
+    if is_mpi:
+      from boost.mpi import broadcast
+      relaxed = broadcast(comm, relaxed, 0)
     input = structure.cell 
     # no relaxation.
     if sum( abs(input - relaxed) ) < 1e-11:
-      return 1, self.kpoint[0], self.kpoint[1], self.kpoint[2], structure.scale * a0.rescale(angstrom)
+      return 1, self.kpoint[0], self.kpoint[1], self.kpoint[2],\
+             structure.scale / float(a0.rescale(angstrom))
     kpoint = deform_kpoint(self.kpoint, input, relaxed)
-    return 1, kpoint[0], kpoint[1], kpoint[2], structure.scale * a0.rescale(angstrom)
+    return 1, kpoint[0], kpoint[1], kpoint[2],\
+           structure.scale / float(a0.rescale(angstrom))
 
 def read_input(filepath = "input.py", namespace = None):
   """ Reads an input file including namespace for escan/vff. """ 

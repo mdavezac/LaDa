@@ -29,10 +29,9 @@ class Extract(AbstractExtractBase):
           escan : lada.escan.Escan
             Wrapper around the escan functional.
     """
-    super(Extract, self).__init__(directory=directory, comm=comm)
-
-    from os import getcwd
     from . import Escan
+
+    super(Extract, self).__init__(directory=directory, comm=comm)
 
     if escan == None: escan = Escan()
     
@@ -66,11 +65,12 @@ class Extract(AbstractExtractBase):
           Any keyword argument is set as an attribute of this object.
     """
     result = self.__copy__()
-    for k, v in kwargs:
+    for k, v in kwargs.items():
       if hasattr(result._vffout, k):
         setattr(result._vffout, k, v)
         if hasattr(result, k): setattr(result, k, v)
       else: setattr(result, k, v)
+    return result
 
   @property
   @broadcast_result(attr=True, which=0)
@@ -131,6 +131,7 @@ class Extract(AbstractExtractBase):
            else local_dict["functional"]
 
 
+  @property
   def _double_trouble(self):
     """ Returns true, if non-spin polarized or Kammer calculations. """
     from numpy.linalg import norm
@@ -150,10 +151,10 @@ class Extract(AbstractExtractBase):
     """
     from os.path import exists, join
     from numpy import array
-    import quantities as pq
+    from quantities import eV
     path = self.OUTCAR
     if len(self.directory): path = join(self.directory, self.OUTCAR)
-    assert exists(path), RuntimeError("Could not find file %s:" % (path))
+    assert exists(path), RuntimeError("Could not find file {0}.".format(path))
     with open(path, "r") as file:
       for line in file: 
         if line.find(" FINAL eigen energies, in eV") != -1: break
@@ -164,9 +165,8 @@ class Extract(AbstractExtractBase):
         result.extend( float(u) for u in line.split() )
       else: raise IOError("Unexpected end of file when grepping for eigenvectors.")
 
-    result =  array(result, dtype="float64") if not self._double_trouble()\
-              else array([result[i/2] for i in range(2*len(result))], dtype="float64")
-    return result * pq.eV
+    if self._double_trouble: result = [result[i/2] for i in range(2*len(result))]
+    return array(result, dtype="float64") * eV
 
   @property 
   @make_cached
@@ -191,8 +191,8 @@ class Extract(AbstractExtractBase):
         result.extend( float(u) for u in line.split() )
       else: raise IOError("Unexpected end of file when grepping for eigenvectors.")
 
-    return array(result, dtype="float64") if not self._double_trouble()\
-           else array([result[i/2] for i in range(2*len(result))], dtype="float64")
+    if self._double_trouble: result = [result[i/2] for i in range(2*len(result))]
+    return array(result, dtype="float64") 
 
   @property
   @make_cached

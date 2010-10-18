@@ -616,3 +616,59 @@ def convert_from_unix_re(pattern):
   pattern = optional.sub(r"(?:\1,\2)", pattern)
   return compile(pattern)
     
+@broadcast_result(key=True)
+def copyfile(src, dest=None, nothrow=None, comm=None):
+  """ Copy ``src`` file onto ``dest`` directory or file.
+
+      :Parameters:
+        src : str
+          Source file.
+        dest : str or None
+          Destination file or directory.
+        nothrow : container or None
+          Throwing is disable selectively depending on the content of nothrow:
+
+          - *exists*: will not throw is src does not exist.
+          - *isfile*: will not throw is src is not a file.
+          - *same*: will not throw if src and dest are the same.
+          - *none*: ``src`` can be None.
+          - *null*: ``src`` can be '/dev/null'.
+          - *never*: will never throw.
+
+
+      This function fails selectively, depending on what is in ``nothrow`` list.
+  """
+  try:
+    from os import getcwd
+    from os.path import isdir, isfile, samefile, exists, basename, dirname, join
+    from shutil import copyfile as cpf
+    if nothrow == None: nothrow = []
+    if isinstance(nothrow, str): nothrow = nothrow.split()
+    if nothrow == 'all': nothrow = 'exists', 'same', 'isfile', 'never', 'none', 'null'
+    nothrow = [u.lower() for u in nothrow]
+    
+    if src == None: 
+      if 'none' in nothrow: return False
+      raise IOError("Source is None.")
+    if dest == None: dest = getcwd()
+    if dest == '/dev/null': return True
+    if src  == '/dev/null':
+      if 'null' in nothrow: return False
+      raise IOError("Source is '/dev/null' but Destination is {0}.".format(destination))
+
+    if not exists(src): 
+      if 'exists' in nothrow: return False
+      raise IOError("{0} does not exist.".format(src))
+    if not isfile(src):
+      if 'isfile' in nothrow: return False
+      raise IOError("{0} is not a file.".format(src))
+    # makes destination a file.
+    if exists(dest) and isdir(dest): dest = join(dest, basename(src))
+    if exists(dest) and samefile(src, dest): 
+      if 'same' in nothrow: return False
+      raise IOError("{0} and {1} are the same file.".format(src, dest))
+    cpf(src, dest)
+  except:
+    if 'never' in nothrow: return False
+    raise
+  else: return True

@@ -107,7 +107,9 @@ def band_structure(escan, structure, kpoints, density = None, outdir=None, comm=
     out = escan( structure, outdir=directory, kpoint=kpoint, vffrun=vffrun,\
                  genpotrun=genpotrun, do_escan=True, comm = local_comm, **kwargs )
     # saves stuff
+    print out.eigenvalues, comm.rank
     eigenvalues = out.eigenvalues.copy()
+    print "2. ", eigenvalues, comm.rank
     eigenvalues.sort()
     results.append( (x, kpoint, eigenvalues) )
 

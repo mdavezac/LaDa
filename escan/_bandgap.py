@@ -79,8 +79,9 @@ class ExtractAE(_ExtractE):
   is_ae = True
   """ This was an all-electron bandgap calculation. """
   def __init__(self, extract):
-    super(ExtractAE, self).__init__(directory=extract.directory, comm=extract.comm)
+    super(ExtractAE, self).__init__(extract.directory, extract.comm, escan=extract.escan)
     self.OUTCAR = extract.OUTCAR
+    self.FUNCCAR = extract.FUNCCAR
 
   @property
   def bandgap(self):
@@ -135,6 +136,11 @@ class ExtractAE(_ExtractE):
           result += dot(dme, dme.conjugate()).real / (wfnA.eigenvalue - wfnB.eigenvalue) \
                     * dme.units * dme.units
     return (result * units).simplified, nstates
+
+  def __copy__(self):
+    """ Returns a shallow copy of this object. """
+    result = self.__class__(self)
+    return result
   
 def _band_gap_ae_impl(escan, structure, outdir, **kwargs):
   """ Computes bandgap of a structure using all-electron method. """
