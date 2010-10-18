@@ -27,8 +27,8 @@ class Enthalpy(object):
 
   def _charge_correction(self, extract):
     """ Returns the charge correction. """
-    from lada.crystal.point_defect import charge_correction
-    assert len(extract.jobs) == 0, ValueError("extract should return naked objects.")
+    from lada.crystal.point_defects import charge_correction
+    assert len(extract.jobs) == 1, ValueError("extract should return naked objects.")
     assert extract.naked_end,      ValueError("extract should return naked objects.")
     return charge_correction( self.extract.structure.cell,\
                               charge=self.extract.charge,\
@@ -36,16 +36,16 @@ class Enthalpy(object):
 
   def _potential_alignment(self, extract):
     """ Returns the charge correction. """
-    from lada.crystal.point_defect import potential_alignment
-    assert len(extract.jobs) == 0, ValueError("extract should return naked objects.")
+    from lada.crystal.point_defects import potential_alignment
+    assert len(extract.jobs) == 1, ValueError("extract should return naked objects.")
     assert extract.naked_end,      ValueError("extract should return naked objects.")
     return potential_alignment(extract, self.host, self.pa_maxdiff)
 
   def _band_filling(self, extract):
-    from lada.crystal.point_defect import band_filling
+    from lada.crystal.point_defects import band_filling
     from pq import elementary_charge as e
     from numpy import max
-    assert len(extract.jobs) == 0, ValueError("extract should return naked objects.")
+    assert len(extract.jobs) == 1, ValueError("extract should return naked objects.")
     assert extract.naked_end,      ValueError("extract should return naked objects.")
     valence = int(extract.valence.rescale(e)+1e-12)
     return band_filling(extract, self.cbm + self._potential_aligment(extract))
@@ -138,7 +138,7 @@ class Enthalpy(object):
       assert state.charge not in states,\
              RuntimeError("Found more than one calculation for the same charge state.")
       states.add(state.charge)
-      lines.append(array([state._corrected, state.charge]))
+      lines.append(array([self._corrected(state), self.charge(state)]))
 
   def _all_intersections(self):
     """ Returns all intersection points between vbm and cbm, ordered. """
