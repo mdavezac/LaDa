@@ -906,12 +906,46 @@ class AbstractMassExtract(object):
     self.unix_re = kwargs.pop('unix_re', DefaultParams.unix_re)
     """ If True, then all regex matching is done using unix-command-line patterns. """
     self.excludes = excludes
-    """ List of patterns to ignore. or None.
+    assert len(kwargs) == 0, ValueError("Unkwnown keyword arguments:{0}.".format(kwargs.keys()))
+
+  @property 
+  def excludes(self):
+    """ Pattern or List of patterns to ignore. or None.
 
         ``self.unix_re`` determines whether these are unix-command-line like
         patterns or true python regex.
     """ 
-    assert len(kwargs) == 0, ValueError("Unkwnown keyword arguments:{0}.".format(kwargs.keys()))
+    try: return self._excludes 
+    except AttributeError: return None
+  @excludes.setter
+  def excludes(self, value):
+    if isinstance(value, str): self._excludes = [value]
+    else: self._excludes = value
+
+  def avoid(self, excludes):
+    """ Returns a new MassExtract object with further exclusions. 
+
+        :Param excludes: Pattern or patterns to exclude from output.
+        :type excludes: str or list of str or None 
+          
+        The goal of this function is to work as an *anti* operator [], i.e. by
+        excluding from the output anything that matches the patterns, rather
+        including only those which match the pattern.
+        This is strickly equivalent to:
+
+        >>> other = massextract.copy(excludes=excludes)
+        >>> other.excludes.extend(massextract.excludes)
+
+        and then doing calculations with ``other``. The advantage is that it
+        can all be done on one line.
+
+        If the ``excludes`` argument is None or an empty list, then the
+        returned object will not exlude anything.
+    """ 
+    if excludes == None or len(excludes) == 0: return self.copy(excludes=None)
+    result = self.copy(excludes=excludes)
+    if self.excludes != None: result.excludes.extend(self.excludes)
+    return result
 
   def __iter__(self):
     """ Iterates through all job names. """
@@ -924,6 +958,13 @@ class AbstractMassExtract(object):
   def values(self):
     """ Iterates through all extraction objects. """
     for name, job in self._regex_extractors(): yield job
+  
+  def extractors(self):
+    """ Returns dictioanary of extrators. """
+    result = {}
+    for k, j in self._regex_extractors(): result[k] = j
+    if self.naked_end and len(result) == 1: return result[result.keys()[0]]
+    return ForwardingDict(result, naked_end=self.naked_end)
 
   def __iter__(self):
     """ Iterates through all job names. """
@@ -1318,6 +1359,14 @@ class JobParams(AbstractMassExtract):
       for name, job in self._regex_extractors(): job.untag()
     elif value == "off" or value == False:
       for name, job in self._regex_extractors(): job.tag()
+
+  def extractors(self):
+    """ Returns dictioanary of extrators. """
+    result = {}
+    for k, j in self._regex_extractors(): result[k] = j
+    if self.naked_end and len(result) == 1: return result[result.keys()[0]]
+    return ForwardingDict( result, naked_end=self.naked_end, \
+                           only_existing=self.only_existing, readonly=False)
     
 
   @property

@@ -215,6 +215,8 @@ def create_superstructure(groundstate, input):
   # creates superstructure.
   cell = dot(lattice.cell, input.supercell)
   result = fill_structure(cell, lattice)
+  assert len(result.atoms) != len(lattice.sites), \
+         ValueError("Superstructure as large as lattice. Disable this line if that's ok.")
 
   # adds magnetic moment if necessary.
   if hasattr(orig_lattice, "magmom"):

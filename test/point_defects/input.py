@@ -8,9 +8,9 @@ for site in lattice.sites:
   site.type = {"A": "Rh", "B": "Zn", "X": "O"}[site.type[0]]
 lattice.scale = 8.506
 
-supercell = array([[1, 0, 0],\
-                   [0, 1, 0],\
-                   [0, 0, 1]], dtype="float64" )
+supercell = array([[-1,  1,  1],\
+                   [ 1, -1,  1],\
+                   [ 1,  1, -1]], dtype="float64" )
 """ Supercell of defect structures. """
 
 vasp = Vasp()

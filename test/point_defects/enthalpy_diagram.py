@@ -27,11 +27,9 @@ class Enthalpy(object):
 
   def _charge_correction(self, extract):
     """ Returns the charge correction. """
-    from lada.crystal.point_defects import charge_correction
     assert len(extract.jobs) == 1, ValueError("extract should return naked objects.")
     assert extract.naked_end,      ValueError("extract should return naked objects.")
-    cell = extract.structure.cell
-    return charge_correction(cell, charge=extract.charge, epsilon=self.epsilon)
+    return extract.charge_corrections / self.epsilon 
 
   def _potential_alignment(self, extract):
     """ Returns the charge correction. """
@@ -48,6 +46,8 @@ class Enthalpy(object):
 
   def _corrected(self, extract):
     """ Corrected formation enthalpy. """
+    print extract.total_energy, self.host.total_energy, self._charge_correction(extract),\
+          self._potential_alignment(extract), self._band_filling(extract)
     return   extract.total_energy\
            - self.host.total_energy \
            + self._charge_correction(extract)\
@@ -135,21 +135,22 @@ class Enthalpy(object):
              RuntimeError("Found more than one calculation for the same charge state.")
       states.add(state.charge)
       lines.append(array([self._corrected(state), state.charge]))
+    return lines
 
-  def _all_intersections(self):
+  def _all_intersections(self, _lines):
     """ Returns all intersection points between vbm and cbm, ordered. """
     from numpy import array
     from quantities import eV
     vbm = self.host.vbm
     cbm = self.host.cbm
-    lines = self._lines()
-    for i, (b0, a0) in enumerate(lines[:-1]):
-      for b1, a1 in lines[i:]: intersections.append( (b0 - b1) / (a1 - a0) )
-    intersections = [u for u in sorted(intersections) if u + 1e-6 * eV > vbm]
-    intersections = [u for u in intersections if u - 1e-6 * eV > cbm]
-    intersections.append(cbm)
-    intersections.insert(0, vbm)
-    return array([u for u in intersections]).rescaled(eV) 
+    result = []
+    for i, (b0, a0) in enumerate(_lines[:-1]):
+      for b1, a1 in _lines[i:]: result.append( (b0 - b1) / (a1 - a0) )
+    result = [u for u in sorted(result) if u + 1e-6 * eV > vbm]
+    result = [u for u in result if u - 1e-6 * eV > cbm]
+    result.append(cbm)
+    result.insert(0, vbm)
+    return array([u for u in result]).rescaled(eV) 
 
   def lines(self):
     """ Lines forming the formation enthalpy diagram. 
@@ -159,9 +160,10 @@ class Enthalpy(object):
     from numpy import array
     from quantities import eV
     _lines = self._lines()
+    intersections = self._all_intersections(_lines)
     # adds line before vbm
     func  = lambda x: x[0] + (intersections[0]-eV)*x[1] 
-    lines = [ min_line(_lines, key=func)  ]
+    lines = [ min(_lines, key=func)  ]
 
     # now look for lines up to cbm
     for i, intersection in enumerate(intersections[1:]):
@@ -173,7 +175,7 @@ class Enthalpy(object):
 
     # adds line after cbm
     func  = lambda x: x[0] + (intersections[-1]+eV)*x[1] 
-    min_line = min_line(_lines, key=func)
+    min_line = min(_lines, key=func)
     if    abs(min_line[0] - lines[-1][0]) > 1e-12*eV \
        or abs(min_line[1] - lines[-1][1]) > 1e-12:
       lines.append([min_line[0].rescale(eV). min_line[1]])

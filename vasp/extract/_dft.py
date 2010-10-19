@@ -447,6 +447,26 @@ class Extract(_ExtractImpl):
 
   @property
   @make_cached
+  def charge_corrections(self):
+     """ First and Third order charge corrections.
+     
+         Computes first and third order charge corrections according to Lany
+         and Zunger, `PRB *78*, 235104 (2008)
+         <http://dx.doi.org/10.1103/PhysRevB.78.235104>`_. Calculations are
+         done for the correct charge of the system and a static dielectric
+         constant epsilon=1. For other static dielectric constants, use:
+
+         >>> correction = output.charge_corrections / epsilon
+
+         For conventional and unit-cells of Ga2MnO4 spinels, the charge
+         corrections are converged to roughly 1e-5 eV (for singly charged).
+     """
+     from ...crystal.point_defects import charge_corrections
+     return charge_corrections( self.structure, charge=self.charge, \
+                                epsilon=1e0, n=125, cutoff=15e1 )
+
+  @property
+  @make_cached
   @broadcast_result(attr=True, which=0)
   def energy_sigma0(self):
     """ Greps total energy extrapolated to $\sigma=0$ from OUTCAR. """
