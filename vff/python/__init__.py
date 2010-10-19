@@ -383,7 +383,7 @@ class Vff(object):
     result += "functional = %s()\n" % (self.__class__.__name__)
     result += "functional.minimizer = minimizer\n"
     result += "functional.lattice = lattice\n"
-    result += "functional.print_from_all = '{0}'\n".format(repr(self.print_from_all))
+    result += "functional.print_from_all = {0}\n".format(repr(self.print_from_all))
     result += "functional.OUTCAR = '%s'\n" % (self.OUTCAR)
     result += "functional.ERRCAR = '%s'\n" % (self.ERRCAR)
     if self.direction == None or hasattr(self.direction, "__len__"):

@@ -14,9 +14,12 @@ include_directories( ${MPI_INCLUDE_PATH}
 target_link_libraries( pyescan ${Boost_PYTHON_LIBRARY} 
                        ${Boost_SYSTEM_LIBRARY} 
                        ${ESCAN_LIBRARY} ${GENPOT_LIBRARY})
-if(MPI_LIBRARY) # crays make things complicated.
-  target_link_libraries(pyescan  ${MPI_LIBRARY})
-endif(MPI_LIBRARY)
+
+if (MPI_FOUND)
+  include_directories(${MPI_INCLUDE_PATH})
+  target_link_libraries(pyescan ${MPI_LIBRARY} ${Boost_MPI_LIBRARY})
+endif (MPI_FOUND)
+
 mark_as_advanced(PYTHON_ENABLE_MODULE_pyescan)
 mark_as_advanced(PYTHON_MODULE_pyescan_BUILD_SHARED)
 set_target_properties(pyescan PROPERTIES PREFIX "_")

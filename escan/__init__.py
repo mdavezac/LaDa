@@ -1,14 +1,18 @@
 """ Interface module for ESCAN. """
 __docformat__ = "restructuredtext en"
 from ..opt import __load_escan_in_global_namespace__
-if __load_escan_in_global_namespace__:
-  from DLFCN import RTLD_NOW as _RTLD_NOW, RTLD_GLOBAL as _RTLD_GLOBAL
-  from sys import getdlopenflags as _getdlopenflags, setdlopenflags as _setdlopenflags
-  flags = _getdlopenflags()
-  _setdlopenflags(_RTLD_NOW|_RTLD_GLOBAL)
-  import _escan
-  _setdlopenflags(flags)
-else: import _escan
+from .. import lada_with_mpi
+if lada_with_mpi:
+  if __load_escan_in_global_namespace__:
+    from DLFCN import RTLD_NOW as _RTLD_NOW, RTLD_GLOBAL as _RTLD_GLOBAL
+    from sys import getdlopenflags as _getdlopenflags, setdlopenflags as _setdlopenflags
+    flags = _getdlopenflags()
+    _setdlopenflags(_RTLD_NOW|_RTLD_GLOBAL)
+    import _escan
+    _setdlopenflags(flags)
+  else: import _escan
+else: 
+  raise RuntimerError("Cannot load escan without MPI yet.")
 from ..opt.decorators import add_setter, broadcast_result
 import _bandstructure 
 import _extract
@@ -361,7 +365,7 @@ class Escan(object):
     else: raise RuntimeError("unknown hamiltonnian %i." % (soH))
     for pot in self.atomic_potentials:
       result += "functional.add_potential         = %s\n" % (repr(pot))
-    result += "functional.print_from_all = '{0}'\n".format(repr(self.print_from_all))
+    result += "functional.print_from_all = {0}\n".format(repr(self.print_from_all))
     result += "functional.INWAVECAR = '%s'\n" % (self.INWAVECAR)
     result += "functional.ERRCAR = '%s'\n" % (self.ERRCAR)
     result += "functional.WAVECAR = '%s'\n" % (self.WAVECAR)
@@ -441,7 +445,8 @@ class Escan(object):
                          this.WAVECAR if comm.rank == 0  else None ]:
             if file == None: continue
             destination, origin = basename(file), join(this._tempdir, basename(file))
-            if exists(origin): copyfile(origin, destination)
+            if exists(origin) and (not samefile(origin, destination)):
+              copyfile(origin, destination)
   
     return self.Extract(comm = comm, directory = outdir, escan = this)
 
@@ -519,12 +524,16 @@ class Escan(object):
     if self.vffrun != None:
       POSCAR = self.vffrun.escan._POSCAR + "." + str(world.rank)
       rstr = self.vffrun.structure
-      if exists(join(self.vffrun.directory, POSCAR)):
+      if     exists(join(self.vffrun.directory, POSCAR))\
+         and (not samefile(join(self.vffrun.directory, POSCAR), poscar)):
         copyfile(join(self.vffrun.directory, POSCAR), poscar)
       else: out.solo().write_escan_input(poscar, rstr)
       VFFCOUT = self.vffrun.escan.vff._cout(comm)
       vffcout = self.vff._cout(comm)
-      if exists(join(self.vffrun.directory, VFFCOUT)):
+      if     (not samefile(VFFCOUT, '/dev/null')) \
+         and (not samefile(vffcout, '/dev/null')) \
+         and exists(join(self.vffrun.directory, VFFCOUT)) \
+         and (not samefile(join(self.vffrun.directory, VFFCOUT), vffcout)):
         copyfile(join(self.vffrun.directory, VFFCOUT), vffcout)
       return
 
@@ -560,12 +569,18 @@ class Escan(object):
     if self.genpotrun != None:
       POTCAR = self.genpotrun.escan._POTCAR + "." + str(world.rank)
       potcar = self._POTCAR + "." + str(world.rank)
-      if exists(join(self.genpotrun.directory, POTCAR)):
+      if     exists(join(self.genpotrun.directory, POTCAR))\
+         and (not samefile(join(self.genpotrun.directory, POTCAR), potcar)):
         copyfile(join(self.genpotrun.directory, POTCAR), potcar)
       if is_root:
-        copyfile(self.maskr, basename(self.maskr))
+        assert exists(self.maskr), IOError("{0} does not exist.".format(self.maskr))
+        if not samefile(self.maskr, basename(self.maskr)):
+          copyfile(self.maskr, basename(self.maskr))
         for pot in self.atomic_potentials:
-          if pot.nonlocal != None: copyfile(pot.nonlocal, basename(pot.nonlocal))
+          if pot.nonlocal == None: continue
+          if samefile(pot.nonlocal, basename(pot.nonlocal)): continue
+          assert exists(pot.nonlocal), IOError("{0} does not exist.".format(pot.nonlocal))
+          copyfile(pot.nonlocal, basename(pot.nonlocal))
       return
 
     assert self.atomic_potentials != None, RuntimeError("Atomic potentials are not set.")
@@ -583,10 +598,17 @@ class Escan(object):
         filepath = basename(pot.filepath)
         file.write(filepath + "\n") 
         # copy potential files as well.
-        if is_root: copyfile(pot.filepath, filepath)
+        if is_root:
+          assert exists(pot.filepath), IOError("{0} does not exist.".format(pot.filepath))
+          if not samefile(pot.filepath, filepath): copyfile(pot.filepath, filepath)
         if pot.nonlocal != None and is_root: 
-          copyfile(pot.nonlocal, basename(pot.nonlocal))
-    if is_root: copyfile(self.maskr, basename(self.maskr))
+          assert exists(pot.filepath), IOError("{0} does not exist.".format(pot.nonlocal))
+          if not samefile(pot.nonlocal, basename(pot.nonlocal)): 
+            copyfile(pot.nonlocal, basename(pot.nonlocal))
+    if is_root:
+      assert exists(pot.maskr), IOError("{0} does not exist.".format(pot.maskr))
+      if not samefile(self.maskr, basename(self.maskr)): 
+        copyfile(self.maskr, basename(self.maskr))
 
     if norun == True: return
     if comm != None:
@@ -672,7 +694,10 @@ class Escan(object):
 
     is_root = True if comm == None else comm.rank == 0
     self._write_incar(comm, structure, norun)
-    if is_root: copyfile(self.maskr, basename(self.maskr))
+    if is_root:
+      assert exists(pot.maskr), IOError("{0} does not exist.".format(pot.maskr))
+      if not samefile(self.maskr, basename(self.maskr)): 
+        copyfile(self.maskr, basename(self.maskr))
     if norun == True: return
     if comm != None:
       comm.barrier() 
@@ -689,11 +714,12 @@ class Escan(object):
     from numpy import abs, sum, zeros, array
     from boost.mpi import broadcast, world
     from ..crystal import deform_kpoint
+    from quantities import angstrom
     from ..physics import a0
     if norun == True:
-      return 1, self.kpoint[0], self.kpoint[1], self.kpoint[2], structure.scale / a0("A")
+      return 1, self.kpoint[0], self.kpoint[1], self.kpoint[2], structure.scale * a0.rescale(angstrom)
     if self._dont_deform_kpoint:
-      return 1, self.kpoint[0], self.kpoint[1], self.kpoint[2], structure.scale / a0("A")
+      return 1, self.kpoint[0], self.kpoint[1], self.kpoint[2], structure.scale * a0.rescale(angstrom)
     # first get relaxed cell
     relaxed = zeros((3,3), dtype="float64")
     if comm.rank == 0:
@@ -702,13 +728,13 @@ class Escan(object):
         # lattice vector by lattice vector
         for i in range(3): 
           relaxed[:,i] = array([float(u) for u in file.readline().split()[:3]])
-    relaxed = broadcast(comm, relaxed, 0) / structure.scale * a0("A")
+    relaxed = (broadcast(comm, relaxed, 0) / structure.scale * a0).rescaled(angstrom)
     input = structure.cell 
     # no relaxation.
     if sum( abs(input - relaxed) ) < 1e-11:
-      return 1, self.kpoint[0], self.kpoint[1], self.kpoint[2], structure.scale / a0("A")
+      return 1, self.kpoint[0], self.kpoint[1], self.kpoint[2], structure.scale * a0.rescale(angstrom)
     kpoint = deform_kpoint(self.kpoint, input, relaxed)
-    return 1, kpoint[0], kpoint[1], kpoint[2], structure.scale / a0("A")
+    return 1, kpoint[0], kpoint[1], kpoint[2], structure.scale * a0.rescale(angstrom)
 
 def read_input(filepath = "input.py", namespace = None):
   """ Reads an input file including namespace for escan/vff. """ 

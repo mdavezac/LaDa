@@ -4,6 +4,12 @@ if(NOT noinstall_headers)
   install(FILES ${PYLADA_HEADERS} DESTINATION include/LaDa/python)
 endif(NOT noinstall_headers)
 
+set(do_use_mpi "False")
+if(MPI_FOUND)
+  set(do_use_mpi "True")
+endif(MPI_FOUND)
+
+
 set(which_packages "'math', 'opt', 'crystal', 'physics', 'periodic_table'")
 if(pcm_functional) 
   set(which_packages "${which_packages}, 'pcm'")

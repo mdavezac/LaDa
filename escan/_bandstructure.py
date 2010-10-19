@@ -35,6 +35,7 @@ def band_structure(escan, structure, kpoints, density = None, outdir=None, comm=
   from numpy.linalg import norm
   from numpy import abs, sum
   from ..crystal import deform_kpoint
+  from ..opt import RelativeDirectory
 
   # check/correct input arguments
   assert nbkpoints == None or density == None, ValueError("Choose either density or nbkpoints")
@@ -43,8 +44,8 @@ def band_structure(escan, structure, kpoints, density = None, outdir=None, comm=
          ValueError("\"do_genpot\" is not an admissible argument of band_structure.")
   assert "do_escan" not in kwargs,\
          ValueError("\"do_escan\" is not an admissible argument of band_structure.")
-  outdir = abspath(expanduser(outdir)) if outdir != None else getcwd()
-  outdir = join(outdir, "band_structure")
+  outdir = RelativeDirectory(outdir if outdir != None else getcwd()).path
+  outdir_calc = join(outdir, 'calculations')
   if comm == None: comm = world
   if pools > comm.size: pools = comm.size
   vffrun = kwargs.pop("vffrun", escan.vffrun)
@@ -52,7 +53,7 @@ def band_structure(escan, structure, kpoints, density = None, outdir=None, comm=
 
   # first computes vff and genpot unless given.
   if genpotrun == None or vffrun == None: 
-    vffout = escan( structure, outdir=outdir, do_escan=False, genpotrun=genpotrun,\
+    vffout = escan( structure, outdir=outdir_calc, do_escan=False, genpotrun=genpotrun,\
                     vffrun=vffrun, comm = comm, **kwargs )
     if genpotrun == None: genpotrun = vffout
     if vffrun == None: vffrun = vffout
@@ -101,7 +102,7 @@ def band_structure(escan, structure, kpoints, density = None, outdir=None, comm=
     if i % pools != color: continue
 
     # sets directory.
-    directory = join(join(outdir, "band_structure"), "%i-%s" % (i, kpoint))
+    directory = join(outdir_calc, "%i-%s" % (i, kpoint))
     # actually computes stuff.
     out = escan( structure, outdir=directory, kpoint=kpoint, vffrun=vffrun,\
                  genpotrun=genpotrun, do_escan=True, comm = local_comm, **kwargs )
