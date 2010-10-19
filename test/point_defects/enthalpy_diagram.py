@@ -30,9 +30,8 @@ class Enthalpy(object):
     from lada.crystal.point_defects import charge_correction
     assert len(extract.jobs) == 1, ValueError("extract should return naked objects.")
     assert extract.naked_end,      ValueError("extract should return naked objects.")
-    return charge_correction( self.extract.structure.cell,\
-                              charge=self.extract.charge,\
-                              epsilon=self.epsilon )
+    cell = extract.structure.cell
+    return charge_correction(cell, charge=extract.charge, epsilon=self.epsilon)
 
   def _potential_alignment(self, extract):
     """ Returns the charge correction. """
@@ -43,19 +42,16 @@ class Enthalpy(object):
 
   def _band_filling(self, extract):
     from lada.crystal.point_defects import band_filling
-    from pq import elementary_charge as e
-    from numpy import max
     assert len(extract.jobs) == 1, ValueError("extract should return naked objects.")
     assert extract.naked_end,      ValueError("extract should return naked objects.")
-    valence = int(extract.valence.rescale(e)+1e-12)
-    return band_filling(extract, self.cbm + self._potential_aligment(extract))
+    return band_filling(extract, self.host.cbm + self._potential_alignment(extract))
 
   def _corrected(self, extract):
     """ Corrected formation enthalpy. """
     return   extract.total_energy\
            - self.host.total_energy \
            + self._charge_correction(extract)\
-           + self._potential_alignemnt(extract)\
+           + self._potential_alignment(extract)\
            + self._band_filling(extract)
 
 
@@ -138,7 +134,7 @@ class Enthalpy(object):
       assert state.charge not in states,\
              RuntimeError("Found more than one calculation for the same charge state.")
       states.add(state.charge)
-      lines.append(array([self._corrected(state), self.charge(state)]))
+      lines.append(array([self._corrected(state), state.charge]))
 
   def _all_intersections(self):
     """ Returns all intersection points between vbm and cbm, ordered. """
