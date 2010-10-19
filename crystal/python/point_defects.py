@@ -277,6 +277,9 @@ def potential_alignment(defect, host, maxdiff=0.5):
           the equivalent host electrostatic potential beyond which that atom is
           considered pertubed by the defect.
 
+          If this number is negative, than the algorithm is to exclude from the
+          average the ``-maxdiff`` atoms furthest from the average (of the host). 
+
       :return: The potential alignment in eV (without charge factor).
   """
   from operator import itemgetter
@@ -308,12 +311,21 @@ def potential_alignment(defect, host, maxdiff=0.5):
     # finds atomic potential farthest from the average potentials computed above.
     by_type = array([host_electropot[type] for type in types[unperturbed]]) * eV
     discrepancies = defect.electropot[unperturbed] - by_type
-    index, diff = max(enumerate(abs(discrepancies)), key=itemgetter(1))
 
     # if discrepancy too high, mark atom as perturbed.
-    if diff > maxdiff:
-      unperturbed[ [i for i, u in enumerate(unperturbed) if u][index] ] = False
-    # otherwise, we are done for this loop!
+    if maxdiff > 0e0: 
+      index, diff = max(enumerate(abs(discrepancies)), key=itemgetter(1))
+      if diff > maxdiff:
+        unperturbed[ [i for i, u in enumerate(unperturbed) if u][index] ] = False
+      # otherwise, we are done for this loop!
+      else: break
+    # mark n atoms with highest relative discrepancy.
+    elif maxdiff < 0e0:
+      maxdiff = int(0.01 - maxdiff)
+      discrepancies = sorted(enumerate(discrepancies / by_type), key=itemgetter(1))[-maxdiff:]
+      for i, v in discrepancies: unperturbed[i] = False
+      break 
+    # Do nothing, use all atoms to compute potential alignment.
     else: break
 
   # now computes potential alignment from unpertubed atoms.

@@ -3,7 +3,7 @@ from lada.jobs import AbstractMassExtract
 
 class Enthalpy(object):
   """ Enthalpy of a single defect. """
-  def __init__(self, extract, epsilon = 1e0, host = None, pa_maxdiff=0.5):
+  def __init__(self, extract, epsilon = 1e0, host = None, pa_maxdiff=-8):
     """ Initializes an enthalpy function. """
     # extraction object.
     self.extract = extract.copy(unix_re=False)
@@ -46,6 +46,7 @@ class Enthalpy(object):
 
   def _corrected(self, extract):
     """ Corrected formation enthalpy. """
+    print extract.view
     print extract.total_energy, self.host.total_energy, self._charge_correction(extract),\
           self._potential_alignment(extract), self._band_filling(extract)
     return   extract.total_energy\
