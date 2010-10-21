@@ -207,7 +207,7 @@ class JobDict(object):
      """ Returns the name of this dictionary, relative to root. """
      if self.parent == None: return "/"
      string = None
-     for key, item in self.parent.children.items():
+     for key, item in self.parent.children.iteritems():
        if id(item) == id(self):
          string = self.parent.name + key
          break
@@ -317,7 +317,7 @@ class JobDict(object):
 
   def subjobs(self):
     """ Iterator over children jobs. """
-    return sorted(self.children.keys())
+    return sorted(self.children.iterkeys())
     
   def compute(self, **kwargs):
     """ Performs calculations over job list. """  
@@ -345,7 +345,7 @@ class JobDict(object):
         ``self``.  if items in ``other`` are found in ``self``, unless merge is
         set to true. This function is recurrent: subjobs are also updated.
     """
-    for key, value in other.children.items():
+    for key, value in other.children.iteritems():
       if key in self: self[key].update(value)
       else: self[key] = value
 
@@ -406,9 +406,10 @@ class JobDict(object):
     else: super(JobDict, self).__setattr__(name, value)
 
   def __dir__(self):
-    result = [u for u in self.__dict__ if u[0] != '_'] 
-    result = [u for u in self.__class__.__dict__ if u[0] != '_'] 
-    result.extend([u for u in self.jobparams.keys() if u[0] != '_'])
+    from itertools import chain
+    result = chain([u for u in self.__dict__ if u[0] != '_'], \
+                   [u for u in dir(self.__class__) if u[0] != '_'], \
+                   [u for u in self.jobparams.iterkeys() if u[0] != '_'])
     return list(set(result))
 
   def __getstate__(self):
@@ -679,7 +680,7 @@ class ForwardingDict(MutableMapping):
     """
     result = self.copy(attr_list=[])
     result.clear()
-    for key, value in self.dictionary.items():
+    for key, value in self.dictionary.iteritems():
       if hasattr(value, "__call__"): result[key] = value(*args, **kwargs)
     if self.naked_end and len(result) == 1: return result[result.keys()[0]]
     return result
@@ -695,7 +696,8 @@ class ForwardingDict(MutableMapping):
     """ Returns a ForwardingDict with root grandparent. """
     return self.copy(_attr_list=[])
 
-  def _properties(self):
+  @property
+  def _attributes(self):
     """ Returns attributes special to this ForwardingDict. """
     result = set()
     for value in self.values(): result |= set(dir(value))
@@ -709,7 +711,7 @@ class ForwardingDict(MutableMapping):
     found = False
     attrs = len(self._attr_list) > 0
     result = self.copy(append=name)
-    for key, value in result.dictionary.items():
+    for key, value in self.dictionary.iteritems():
       if attrs: value = reduce(getattr, chain([value], self._attr_list))
       if not hasattr(value, name): del result[key]
     if self.naked_end and len(result.dictionary) == 1: return result[result.keys()[0]]
@@ -776,10 +778,11 @@ class ForwardingDict(MutableMapping):
                             .format(name, self.__class__.__name__) )
 
   def __dir__(self):
-    results =   set([u for u in self.__dict__ if u[0] != '_']) \
-              | set([u for u in self.__class__.__dict__ if u[0] != '_']) \
-              | self._properties()
-    return list(results)
+    from itertools import chain
+    results = chain( [u for u in self.__dict__ if u[0] != '_'], \
+                     [u for u in dir(self.__class__) if u[0] != '_'], \
+                     self._attributes )
+    return list(set(results))
 
 
   def __getitem__(self, key):
@@ -798,7 +801,7 @@ class ForwardingDict(MutableMapping):
     if len(self._attr_list) == 0: self.dictionary[key] = value; return
     # checks this is writable.
     assert not self.readonly, RuntimeError("This ForwardingDict is readonly.")
-    assert key not in self.dictionary,\
+    assert key in self.dictionary,\
            KeyError( "{0} is not in the ForwaringDict. Items "\
                      "cannot be added to a non-root ForwardingDict.".format(key))
     # non-root dict: must set innermost attribute.
@@ -828,7 +831,6 @@ class ForwardingDict(MutableMapping):
     result = self.__class__()
     result.__dict__.update(self.__dict__)
     result.dictionary = self.dictionary.copy()
-    result.update(self)
     return result
 
   def copy(self, append=None, dict=None, **kwargs):
@@ -850,7 +852,7 @@ class ForwardingDict(MutableMapping):
            ValueError( "Cannot copy attribute _attr_list as "\
                        "a keyword and as ``append`` simultaneously." )
     if 'dictionary' in kwargs: result.dictionary = kwargs.pop('dictionary').copy()
-    for key, value in kwargs.items():
+    for key, value in kwargs.iteritems():
       super(ForwardingDict, result).__setattr__(key, value)
 
     if append != None:
@@ -867,7 +869,7 @@ class ForwardingDict(MutableMapping):
     if len(self) == 1: return "{{'{0}': {1}}}".format(self.keys()[0], repr(self.values()[0]))
     string = "{\n"
     m = max(len(k) for k in self.keys())
-    for k, v in self.items():
+    for k, v in self.iteritems():
       string += "  '{0}': {2}{1},\n".format(k, repr(v), "".join(" " for i in range(m-len(k))))
     return string + "}"
 
@@ -877,8 +879,8 @@ class AbstractMassExtract(object):
 
   def uncache(self): 
     """ Uncache values. """
-    self.__dict__.pop("_cached_extractors", None)
-    self.__dict__.pop("_cached_properties", None)
+    self._cached_extractors = None
+    self._cached_attributes = None
 
 
   def __init__(self, view=None, excludes=None, **kwargs):
@@ -907,6 +909,10 @@ class AbstractMassExtract(object):
     """ If True, then all regex matching is done using unix-command-line patterns. """
     self.excludes = excludes
     assert len(kwargs) == 0, ValueError("Unkwnown keyword arguments:{0}.".format(kwargs.keys()))
+    self._cached_attributes = None
+    """ List of extra attributes derived from extraction objects. """
+    self._cached_extractors = None
+    """ List of extration objects. """
 
   @property 
   def excludes(self):
@@ -951,32 +957,37 @@ class AbstractMassExtract(object):
     """ Iterates through all job names. """
     for name, job in self._regex_extractors(): yield name
 
-  def items(self):
+  def iteritems(self):
     """ Iterates through all extraction objects and names. """
     for name, job in self._regex_extractors(): yield name, job
+  def items(self):
+    """ Iterates through all extraction objects and names. """
+    return [name, job in self.iteritems()]
     
-  def values(self):
+  def itervalues(self):
     """ Iterates through all extraction objects. """
     for name, job in self._regex_extractors(): yield job
+  def values(self):
+    """ Iterates through all extraction objects. """
+    return [job for job in self.itervalues()]
+
+  def iterkeys(self):
+    """ Iterates through all extraction objects. """
+    for name, job in self._regex_extractors(): yield name
+  def keys(self):
+    """ Iterates through all extraction objects. """
+    return [name for name in self.iterkeys()]
   
   def extractors(self):
     """ Returns dictioanary of extrators. """
     result = {}
-    for k, j in self._regex_extractors(): result[k] = j
+    for k, j in self.iteritems(): result[k] = j
     if self.naked_end and len(result) == 1: return result[result.keys()[0]]
     return ForwardingDict(result, naked_end=self.naked_end)
 
   def __iter__(self):
     """ Iterates through all job names. """
-    for name, job in self._regex_extractors(): yield name
-
-  def items(self):
-    """ Iterates through all extraction objects and names. """
-    for name, job in self._regex_extractors(): yield name, job
-    
-  def values(self):
-    """ Iterates through all extraction objects. """
-    for name, job in self._regex_extractors(): yield job
+    for name, job in self.iteritems(): yield name
 
   def _regex_pattern(self, pattern, flags=0):
     """ Returns a regular expression. """
@@ -1004,12 +1015,12 @@ class AbstractMassExtract(object):
   @view.setter
   def view(self, value): self._view = value
 
+  @property
   def _extractors(self):
     """ Goes through all jobs and collects Extract if available. """
-    from os.path import exists, join
+    if self._cached_extractors != None: return self._cached_extractors
     
-    if "_cached_extractors" in self.__dict__:
-      return self._cached_extractors
+    from os.path import exists, join
     result = {}
     for name, extract in self.walk_through(): result[name] = extract 
     self._cached_extractors = result
@@ -1018,40 +1029,40 @@ class AbstractMassExtract(object):
   def _regex_extractors(self):
     """ Loops through jobs in this view. """
     if self._view == "": 
-      for key, value in self._extractors().items(): yield key, value
+      for key, value in self._extractors.iteritems(): yield key, value
       return
 
     regex = self._regex_pattern(self.view)
     if self.excludes != None: excludes = [self._regex_pattern(u) for u in self.excludes]
-    for key, value in self._extractors().items():
+    for key, value in self._extractors.iteritems():
       if regex.match(key) == None: continue
       if self.excludes != None and any(u.match(key) != None for u in excludes): continue
       yield key, value
 
-  def _properties(self): 
+  @property
+  def _attributes(self): 
     """ Returns __dir__ special to the extraction itself. """
-    if hasattr(self, "_cached_properties"): return self._cached_properties
+    if self._cached_attributes != None: return self._cached_attributes
 
     results = set([])
-    for key, value in self._regex_extractors():
+    for key, value in self.iteritems():
       results |= set([u for u in dir(value) if u[0] != '_'])
-    self._cached_properties = results
+    self._cached_attributes = results
     return results
 
   def __dir__(self): 
-    results =   set([u for u in self.__dict__ if u[0] != '_']) \
-              | set([u for u in self.__class__.__dict__ if u[0] != '_']) \
-              | self._properties()
-    return list(results)
+    from itertools import chain
+    results = chain( [u for u in self.__dict__ if u[0] != '_'], \
+                     [u for u in dir(self.__class__) if u[0] != '_'], \
+                     self._attributes )
+    return list(set(results))
 
   def __getattr__(self, name): 
     """ Returns extracted values. """
-    assert name not in ["_cached_extractors", "_cached_properties"],\
-           AttributeError("Unknown attribute {0}.".format(name))
-    assert name in self._properties(), AttributeError("Unknown attribute {0}.".format(name))
+    assert name in self._attributes, AttributeError("Unknown attribute {0}.".format(name))
 
     result = {}
-    for key, value in self._regex_extractors():
+    for key, value in self.iteritems():
       try: result[key] = getattr(value, name)
       except: result.pop(key, None)
     if self.naked_end and len(result) == 1: return result[result.keys()[0]]
@@ -1067,7 +1078,7 @@ class AbstractMassExtract(object):
   @property
   def jobs(self):
     """ List of jobnames (satisfying the current view). """
-    return [key for key, value in self._regex_extractors()]
+    return [key for key, value in self.iteritems()]
 
   @property
   def children(self):
@@ -1176,7 +1187,7 @@ class AbstractMassExtract(object):
     """
     from copy import copy
     result = copy(self)
-    for key, value in kwargs.items(): setattr(result, key, value)
+    for key, value in kwargs.iteritems(): setattr(result, key, value)
     return result
 
 
@@ -1216,8 +1227,6 @@ class MassExtract(AbstractMassExtract):
     self.rootdir = path # Path to the job dictionary.
     self.comm = comm
     """ Communicator if any. """
-
-    if path != None: self._extractors() # gets stuff cached.
 
   @property
   def view(self):
@@ -1343,7 +1352,7 @@ class JobParams(AbstractMassExtract):
         both. Effectively checks wether a job is tagged or not. Calculations which 
     """
     result = {}
-    for name, job in self._regex_extractors():
+    for name, job in self.iteritems():
       result[name] = "off" if job.is_tagged else "on"
     if self.naked_end and len(result) == 1: return result[result.keys()[0]]
     return result
@@ -1356,14 +1365,14 @@ class JobParams(AbstractMassExtract):
         both.
     """
     if value == "on" or value == True:
-      for name, job in self._regex_extractors(): job.untag()
+      for name, job in self.iteritems(): job.untag()
     elif value == "off" or value == False:
-      for name, job in self._regex_extractors(): job.tag()
+      for name, job in self.iteritems(): job.tag()
 
   def extractors(self):
-    """ Returns dictioanary of extrators. """
+    """ Returns dictionary of extrators. """
     result = {}
-    for k, j in self._regex_extractors(): result[k] = j
+    for k, j in self.iteritems(): result[k] = j
     if self.naked_end and len(result) == 1: return result[result.keys()[0]]
     return ForwardingDict( result, naked_end=self.naked_end, \
                            only_existing=self.only_existing, readonly=False)
@@ -1394,11 +1403,8 @@ class JobParams(AbstractMassExtract):
 
   def __getattr__(self, name): 
     """ Returns extracted values. """
-    assert name not in ["_cached_extractors", "_cached_properties"],\
-           AttributeError("Unknown attribute {0}.".format(name))
-
     result = {}
-    for key, value in self._regex_extractors():
+    for key, value in self.iteritems():
       if value.is_tagged: continue
       try: result[key] = getattr(value, name)
       except: result.pop(key, None)
@@ -1415,9 +1421,6 @@ class JobParams(AbstractMassExtract):
     # initialization not done yet.
     if "only_existing" not in self.__dict__: super(JobParams, self).__setattr__(name, value)
     # some cached attributes.
-    if name == "_cached_extractors" or name == "_cached_properties":
-      super(JobParams, self).__setattr__(name, value)
-    # other cached attributes.
     if match("_cached_attr\S+", name): super(JobParams, self).__setattr__(name, value)
     # Look for other attriubtes in current instance.
     try: super(JobParams, self).__getattribute__(name)
@@ -1427,7 +1430,7 @@ class JobParams(AbstractMassExtract):
       return 
 
     found = False
-    for jobname, job in self._regex_extractors():
+    for jobname, job in self.iteritems():
       if job.is_tagged: continue
       if hasattr(job, name): setattr(job, name, value)
       elif not self.only_existing: 
@@ -1445,7 +1448,7 @@ class JobParams(AbstractMassExtract):
       return
 
     found = False
-    for jobname, job in self._regex_extractors():
+    for jobname, job in self.iteritems():
       if job.is_tagged: continue
       if hasattr(job, name):
         delattr(job, name)
@@ -1454,10 +1457,11 @@ class JobParams(AbstractMassExtract):
       raise AttributeError( "Attribute {0} not found in {1} instance."\
                             .format(name, self.__class__.__name__) )
 
-  def _properties(self):
+  @property
+  def _attributes(self):
     """ Attributes which already exist. """
     result = set()
-    for name, job in self._regex_extractors():
-      if not job.is_tagged: result |= set(job.jobparams.keys())
+    for name, job in self.iteritems():
+      if not job.is_tagged: result |= set([u for u in dir(job) if u[0] != '_'])
     return result
  

@@ -414,6 +414,19 @@ Structure.__repr__ = _repr_structure
 def _repr_lattice(self): return _repr_lattstr(self, "sites", "lattice", "add_sites")
 Lattice.__repr__ = _repr_lattice
 
+def _repr_atom(self): 
+  """ Representation of atoms. """
+  if self.site < 0: 
+    return "{0}({1}, {2})"\
+           .format(self.__class__.__name__, repr(self.pos), repr(self.type))
+  return "{0}({1}, {2}, {3})"\
+         .format(self.__class__.__name__, repr(self.pos), repr(self.type), self.site)
+Atom.__repr__ = _repr_atom
+kAtom.__repr__ = _repr_atom
+rAtom.__repr__ = _repr_atom
+Site.__repr__ = _repr_atom
+
+
 def _copy(self): 
   """ Returns an exact clone. """
   from copy import deepcopy
