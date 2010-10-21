@@ -71,7 +71,8 @@ else:
         result.OUTCAR = self.OUTCAR
         yield join('/', relpath(dirpath, self.rootdir)), result
 
-    def _properties(self): 
+    @property
+    def _attributes(self): 
       """ Returns __dir__ set special to the extraction itself. """
       return set([u for u in dir(self.Extract()) if u[0] != '_'])
 

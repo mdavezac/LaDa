@@ -1,5 +1,6 @@
 """" Creates diagram of formation enthalpies with respect to Fermi energy. """
 from lada.jobs import AbstractMassExtract
+from lada.opt.decorators import make_cached
 
 class Enthalpy(object):
   """ Enthalpy of a single defect. """
@@ -27,30 +28,35 @@ class Enthalpy(object):
 
   def _charge_correction(self, extract):
     """ Returns the charge correction. """
-    assert len(extract.jobs) == 1, ValueError("extract should return naked objects.")
-    assert extract.naked_end,      ValueError("extract should return naked objects.")
+    if hasattr(extract, "jobs"): 
+      assert len(extract.jobs) == 1, ValueError("extract should return naked objects.")
+    if hasattr(extract, "naked_end"): 
+      assert extract.naked_end,      ValueError("extract should return naked objects.")
     return extract.charge_corrections / self.epsilon 
 
   def _potential_alignment(self, extract):
     """ Returns the charge correction. """
     from lada.crystal.point_defects import potential_alignment
-    assert len(extract.jobs) == 1, ValueError("extract should return naked objects.")
-    assert extract.naked_end,      ValueError("extract should return naked objects.")
+    if hasattr(extract, "jobs"): 
+      assert len(extract.jobs) == 1, ValueError("extract should return naked objects.")
+    if hasattr(extract, "naked_end"): 
+      assert extract.naked_end,      ValueError("extract should return naked objects.")
     return potential_alignment(extract, self.host, self.pa_maxdiff)
 
   def _band_filling(self, extract):
     from lada.crystal.point_defects import band_filling
-    assert len(extract.jobs) == 1, ValueError("extract should return naked objects.")
-    assert extract.naked_end,      ValueError("extract should return naked objects.")
-    return band_filling(extract, self.host.cbm + self._potential_alignment(extract))
+    if hasattr(extract, "jobs"): 
+      assert len(extract.jobs) == 1, ValueError("extract should return naked objects.")
+    if hasattr(extract, "naked_end"): 
+      assert extract.naked_end,      ValueError("extract should return naked objects.")
+    return band_filling(extract, self.host.cbm - self._potential_alignment(extract))
 
   def _corrected(self, extract):
     """ Corrected formation enthalpy. """
-    print extract.view
-    print extract.total_energy, self.host.total_energy, self._charge_correction(extract),\
-          self._potential_alignment(extract), self._band_filling(extract)
+    from numpy.linalg import det
+    n = int(det(extract.structure.cell)/det(self.host.structure.cell) + 1.e-3) + 0.
     return   extract.total_energy\
-           - self.host.total_energy \
+           - self.host.total_energy * n\
            + self._charge_correction(extract)\
            + self._potential_alignment(extract)\
            + self._band_filling(extract)
@@ -62,10 +68,12 @@ class Enthalpy(object):
         If a charge state has children, then only the lowest energy calculation
         is returned.
     """
+    from os.path import basename
     from operator import itemgetter
     for child in self.extract.children: # Each child is a different charge state.
       child.naked_end = False
-      lowest = sorted(child.total_energies.items(), key=itemgetter(1))[0][0]
+      sequence = ((n, self._corrected(v)) for n, v in child.iteritems())
+      lowest = sorted(sequence, key=itemgetter(1))[0][0]
       result = child[lowest]
       result.naked_end = True
       yield result
@@ -77,8 +85,8 @@ class Enthalpy(object):
       host = self.extract['../..' if self._is_site == None else '../../..']
       host = self.copy(excludes=[".*PointDefects"], naked_end=False)
       host.excludes.extend(host.excludes)
-      lowest = sorted(child.total_energies.items(), key=itemgetter(1))[0][0]
-      self._host = [u for u in self.extract[lowest].values()]
+      lowest = sorted(child.total_energies.iteritems(), key=itemgetter(1))[0][0]
+      self._host = [u for u in self.extract[lowest].itervalues()]
       assert len(self._host) == 1
       self._host = self._host[0]
     return self._host
@@ -87,7 +95,7 @@ class Enthalpy(object):
   def _site(self):
     """ Returns site number or None. """
     from re import match
-    regex = match("^site_(\d+)$", self.extract.view.split()[-1])
+    regex = match(r"site_(\d+)", self.extract.view.split('/')[-1])
     return int(regex.group(1)) if regex != None else None
 
   @property 
@@ -114,45 +122,69 @@ class Enthalpy(object):
     return match("[A-Z][a-z]?_on_[A-Z][a-z]?", self.name) != None
 
   @property
-  def species(self):
-    """ List of species involved in this defect. """
+  def n(self):
+    """ Number of atoms added/removed from system.
+    
+        This is a dictionary.
+    """
     from re import match
     if self.is_vacancy:
-      return [match("vacancy_([A-Z][a-z])?", self.name).group(1)]
+      return {match("vacancy_([A-Z][a-z])?", self.name).group(1): -1}
     elif self.is_interstitial:
-      return [match("[A-Z][a-z]?_interstitial_(\S+)", self.name).group(1)]
+      return {match("[A-Z][a-z]?_interstitial_(\S+)", self.name).group(1): -1}
     else: 
       found = match("([A-Z][a-z])?_on_([A-Z][a-z])?", self.name)
-      return [match.group(1), match.group(2)]
+      return {match.group(1): 1, match.group(2): -1}
+
+  def chempot(self, mu):
+    """ Computes sum of chemical potential from dictionary ``mu``. 
+    
+        :Param mu: Dictionary of chemical potentials. If no units, assumes eV.
+        :return: Chemical potential of this defect. Value is always in eV.
+    """
+    from quantities import eV
+    if mu == None: return 0 * eV 
+    result = 0e0 * eV
+    n = self.n
+    for specie, value in self.n:
+      assert specie in mu,\
+             ValueError("Specie {0} not in input chemical potentials {1}.".format(specie, mu))
+      chem = mu[specie]
+      if not hasattr(chem, 'units'): chem = chem * eV
+      result += value * chem
+    return result.rescale(eV)
 
   def _lines(self):
     """ Returns lines composed by the different charge states. """
     from numpy import array
-    from quantities import elementary_charge as e
+    from quantities import elementary_charge as e, eV
     lines = []
     states = set()
     for state in self._charged_states():
       assert state.charge not in states,\
              RuntimeError("Found more than one calculation for the same charge state.")
       states.add(state.charge)
-      lines.append(array([self._corrected(state), state.charge]))
+      lines.append((self._corrected(state).rescale(eV), state.charge))
     return lines
 
   def _all_intersections(self, _lines):
     """ Returns all intersection points between vbm and cbm, ordered. """
     from numpy import array
     from quantities import eV
-    vbm = self.host.vbm
-    cbm = self.host.cbm
+    vbm = 0.*eV
+    cbm = (self.host.cbm - self.host.vbm).rescale(eV)
     result = []
     for i, (b0, a0) in enumerate(_lines[:-1]):
-      for b1, a1 in _lines[i:]: result.append( (b0 - b1) / (a1 - a0) )
-    result = [u for u in sorted(result) if u + 1e-6 * eV > vbm]
-    result = [u for u in result if u - 1e-6 * eV > cbm]
+      for b1, a1 in _lines[i+1:]: result.append( (b0 - b1) / (a1 - a0) )
+    result = [u for u in sorted(result) if u - 1e-6 * eV > vbm]
+    result = [u for u in result if u + 1e-6 * eV < cbm]
     result.append(cbm)
     result.insert(0, vbm)
-    return array([u for u in result]).rescaled(eV) 
+    print "lines: ", _lines
+    print "intersections ", result
+    return array([array(u.rescale(eV)) for u in result]) * eV
 
+  @make_cached
   def lines(self):
     """ Lines forming the formation enthalpy diagram. 
     
@@ -167,12 +199,15 @@ class Enthalpy(object):
     lines = [ min(_lines, key=func)  ]
 
     # now look for lines up to cbm
+    print "here", _lines
+    print "  ", lines
     for i, intersection in enumerate(intersections[1:]):
       func  = lambda x: x[0] + (intersection-intersections[i])*x[1] 
       min_line = min(lines, key=func)
       if    abs(min_line[0] - lines[-1][0]) > 1e-12*eV \
          or abs(min_line[1] - lines[-1][1]) > 1e-12:
         lines.append([min_line[0].rescale(eV). min_line[1]])
+      print "  ", lines, min_line
 
     # adds line after cbm
     func  = lambda x: x[0] + (intersections[-1]+eV)*x[1] 
@@ -180,19 +215,27 @@ class Enthalpy(object):
     if    abs(min_line[0] - lines[-1][0]) > 1e-12*eV \
        or abs(min_line[1] - lines[-1][1]) > 1e-12:
       lines.append([min_line[0].rescale(eV). min_line[1]])
+    print "  ", lines, min_line
     return lines
 
   def __call__(self, fermi, mu = None):
-    """ Returns formation enthalpy for given fermi energy and mu. """
+    """ Point-defect formation enthalpy. 
+    
+        :Parameters:
+          fermi  
+            Fermi energy with respect to the host's VBM. If without
+            units, assumes eV. 
+          mu : dictionary or None
+            Dictionary of chemical potentials. If without units, assumes eV.
+            If None, chemical potential part of the formation enthalpy is
+            assumed zero.
+
+        :return: Lowest formation enthalpy for all charged states.
+    """
     from quantities import eV
-    if mu == None: mu = 0e0
-    elif self.is_substitutional: mu = mu[self.species[0]] - mu[self.specie[1]]
-    else: mu = mu[self.species[0]]
-    if hasattr(mu, "rescale"): mu = mu.rescale(eV)
-    else: mu = mu * eV
     if hasattr(fermi, "rescale"): fermi = fermi.rescale(eV)
     else: fermi = fermi * eV
-    return (min(x[0]+fermi*x[1] for x in self.lines()) + self.n * mu).rescale(eV)
+    return (min(x[0]+fermi*x[1] for x in self.lines()) + self.chempot(mu)).rescale(eV)
 
   @property
   def latex_label(self):
@@ -201,33 +244,71 @@ class Enthalpy(object):
     if self.is_interstitial:
       found = match("([A-Z][a-z]?)_interstitial_(.+)$", self.name) 
       return r"{0}$_{{ \\mathrm{{ {1} }} }}$".format(found.group(1), found.group(2))
-    if self.is_substitutional:
+    if self.is_substitution:
       found = match("([A-Z][a-z]?)_on_([A-Z][a-z]?)", self.name) 
-      site = self._is_site
+      site = self._site
       if site == None:
         return r"{0}$_{{ \\mathrm{{ {1} }} }}$".format(found.group(1), found.group(2))
       else:
         return r"{0}$_{{ \\mathrm{{ {1} }}_{{ {2} }} }}$"\
                .format(found.group(1), found.group(2), site)
-
+  
+  def __str__(self):
+    """ Energy and corrections for each charge defect. """
+    from operator import itemgetter
+    from os.path import relpath
+    from numpy import array
+    from numpy.linalg import det
+    from quantities import eV
+    result = "{0}: \n".format(self.name)
+    states = sorted(((c, c.charge) for c in self._charged_states()),  key = itemgetter(1))
+    for extract, charge in states:
+      n = int(det(extract.structure.cell)/det(self.host.structure.cell) + 1.e-3) + 0.
+      a = float( (extract.total_energy - self.host.total_energy * n).rescale(eV) )
+      b = float( self._charge_correction(extract).rescale(eV) )
+      c = float( self._potential_alignment(extract).rescale(eV) )
+      d = float( self._band_filling(extract).rescale(eV) )
+      e = relpath(extract.view, extract.view + "/../../")
+      result += "  - charge {0:>3}: DeltaH = {1:8.4f} + {2:8.4f} + {3:8.4f}"\
+                "+ {4:8.4f} = {5:8.4f} eV # {6}.\n"\
+                .format(int(charge), a, b, c, d, a+b+c+d, e)
+    return result
 
 class Enthalpies(AbstractMassExtract):
   """ Enthalpy for a series of defects for a given material and lattice. """
   def __init__(self, path=None, epsilon = 1e0, pa_maxdiff=0.5, **kwargs):
     """ Initializes an enthalpy function. """
-    super(Enthalpies, self).__init__(**kwargs)
-
     from lada.vasp import MassExtract
-    self.epsilon = epsilon
-    """ Dimensionless dielectric constant. """
-    self.pa_maxdiff = pa_maxdiff
-    """ Potential alignment parameter. """
+    super(Enthalpies, self).__init__(**kwargs)
 
     self.massextract = MassExtract(path, unix_re=False, excludes=[".*relax_*"])
     """ Mass extraction object from which all results are pulled. """
-    
     self.host = self._get_host()
     """ Result of host calculations. """
+
+    # must be last. Can't use porperty setter.
+    self._epsilon = epsilon
+    self._pa_maxdiff = pa_maxdiff
+
+
+  @property 
+  def epsilon(self): 
+    """ Dimensionless dielectric constant. """
+    return self._epsilon
+  @epsilon.setter
+  def epsilon(self, value):
+    self._epsilon = value 
+    for v in self.itervalues(): v.epsilon = self._epsilon
+
+  @property 
+  def pa_maxdiff(self): 
+    """ Dimensionless dielectric constant. """
+    return self._pa_maxdiff
+  @pa_maxdiff.setter
+  def pa_maxdiff(self, value):
+    self._pa_maxdiff = value 
+    for v in self.itervalues(): v.pa_maxdiff = self._pa_maxdiff
+
 
   @property
   def rootdir(self): 
@@ -241,8 +322,8 @@ class Enthalpies(AbstractMassExtract):
     from operator import itemgetter
     host = self.massextract.copy(excludes=[".*PointDefects"])
     host.excludes.extend(self.massextract.excludes)
-    lowest = sorted(host.total_energies.items(), key=itemgetter(1))[0][0]
-    host = [u for u in host[lowest].values()]
+    lowest = sorted(host.total_energies.iteritems(), key=itemgetter(1))[0][0]
+    host = [u for u in host[lowest].itervalues()]
     assert len(host) == 1
     return host[0]
 
@@ -254,7 +335,7 @@ class Enthalpies(AbstractMassExtract):
         assert len(child["site_\d+"].jobs) == len(child.jobs),\
                RuntimeError("Don't understand directory structure of {0}.".format(child.view))
         for site in child.children: # should site specific defects.
-          result = Enthalpy(child, self.epsilon, self.host, self.pa_maxdiff)
+          result = Enthalpy(site, self.epsilon, self.host, self.pa_maxdiff)
           # checks this is a point-defect.
           if result.is_interstitial or result.is_vacancy or result.is_substitution:
             yield site.view, result
@@ -265,44 +346,72 @@ class Enthalpies(AbstractMassExtract):
           yield child.view, result
 
   def __call__(self, fermi, mu=None):
-    """ Returns dictionary of point-defect formation enthalpies. """
+    """ Dictionary of point-defect formation enthalpies. 
+    
+        :Parameters:
+          fermi  
+            Fermi energy with respect to the host's VBM. If without
+            units, assumes eV. 
+          mu : dictionary or None
+            Dictionary of chemical potentials. If without units, assumes eV.
+            If None, chemical potential part of the formation enthalpy is
+            assumed zero.
+
+        :return: Dictionary where keys are the name of the defects, and the
+          values the formation enthalpy.
+    """
+    from quantities import eV
     results = {}
-    for name, defect in self._regex_extractors(): results[name] = defect(fermi, mu)
+    for name, defect in self._regex_extractors(): results[name] = defect(fermi, mu).rescale(eV)
     return results
+  
+  def __str__(self): 
+    """ Prints out all energies and corrections. """
+    values = [ (str(value), value) for value in self.itervalues() ]
+    result  = "".join( string for string, value in values if value.is_substitution )
+    result += "".join( string for string, value in values if value.is_vacancy )
+    result += "".join( string for string, value in values if value.is_interstitial )
+    return result
+      
       
 
-  def plot_enthalpies(self, mu=None, **kwargs):
-    """ Plots diagrams using matplotlib. """
-    from quantities import eV
-    try: import matplotlib.pyplot as plt
-    except ImportError: 
-      print "No matplotlib module."
-      return
-    from operator import itemgetter
+def plot_enthalpies(self, mu=None, **kwargs):
+  """ Plots diagrams using matplotlib. """
+  from quantities import eV
+  try: import matplotlib.pyplot as plt
+  except ImportError: 
+    print "No matplotlib module."
+    return
+  from operator import itemgetter
 
-    # finds limits of figure
-    xlim = float(self.host.vbm.rescale(eV)), float(self.host.cbm.rescale(eV)) 
-    ylim = min(self(xlim[0], mu).items(), key=itemgetter(1)),\
-           max(self(xlim[0], mu).items(), key=itemgetter(1) )
-    ylim = float(ylim[0].rescale(eV)), float(ylim[1].rescale(eV))
-    # creates figures and axes.
-    figure = plt.figure()
-    figure.add_subplot(111, xlim=(self.vbm, self.cbm), ylim=ylim)
+  for name, defect in self.iteritems():
+    print "preparing ", name
+    defect.lines()
 
-    # loop over defects.
-    for name, defect in self:
-      # finds intersection points. 
-      x = [self.host.vbm.rescale(eV) - 5e0*eV]
-      lines = defect.lines()
-      for i in range(len(lines)-1):
-        (b0, a0), (b1, a1) = lines[i], lines[i+1]
-        intersections.append( ((b0-b1)/(a1-a0)).rescale(eV) )
-      x = [self.host.cbm.rescale(eV) + 5e0*eV]
+  # finds limits of figure
+  xlim = 0., float( (self.host.cbm-self.host.cbm).rescale(eV) ) 
+  ylim = min(self(0., mu).itervalues()), max(self(xlim[0], mu).itervalues())
+  ylim = float(ylim[0].rescale(eV)), float(ylim[1].rescale(eV))
+  # creates figures and axes.
+  figure = plt.figure()
+  axes = figure.add_subplot(111, xlim=(self.host.vbm, self.host.cbm), ylim=ylim)
 
-      # Now draws lines. 
-      lines.append(lines[-1])
-      y = [u[0] + u[1] * xx for u, xx in zip(lines, x)]
-      figure.plot(x, y, label=defect.latex_label, **kwargs)
+  # loop over defects.
+  for name, defect in self.iteritems():
+    print "plotting ", name
+    # finds intersection points. 
+    x = [-5e0*eV]
+    lines = defect.lines()
+    for i in range(len(lines)-1):
+      (b0, a0), (b1, a1) = lines[i], lines[i+1]
+      x.append( ((b0-b1)/(a1-a0)).rescale(eV) - self.host.vbm)
+    x.append(5e0*eV)
+    print x
+
+    # Now draws lines. 
+    lines.append(lines[-1])
+    y = [u[0] + u[1] * xx for u, xx in zip(lines, x)]
+    axes.plot(x, y, label=defect.latex_label, **kwargs)
       
         
 

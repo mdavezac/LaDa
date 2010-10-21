@@ -252,13 +252,12 @@ def band_filling(defect, cbm):
   """
   from numpy import sum, multiply, newaxis
   if defect.eigenvalues.ndim == 3:
-    dummy = multiply(defect.eigenvalues, defect.multiplicity[newaxis,:,newaxis])
+    dummy = multiply(defect.eigenvalues-cbm, defect.multiplicity[newaxis,:,newaxis])
   elif defect.eigenvalues.ndim == 2:
-    dummy = multiply(defect.eigenvalues, defect.multiplicity[:, newaxis])
+    dummy = multiply(defect.eigenvalues-cbm, defect.multiplicity[:, newaxis])
 
   dummy = multiply(dummy, defect.occupations)
-  indices = defect.eigenvalues > cbm
-  return sum( dummy[indices] - cbm )
+  return -sum(dummy[defect.eigenvalues > cbm])
   
 
 def potential_alignment(defect, host, maxdiff=0.5):

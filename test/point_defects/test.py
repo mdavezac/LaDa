@@ -131,7 +131,6 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
         for structure, defect in ptd.all_defects(superstructure, lattice, B, A):
           # loop over oxidations states.
           for nb_extrae, oxname in ptd.charged_states(species, A, B):
-            if B == None: nb_extrae *= -1 # correct for insterstitials. 
             
             # creates list of moments. 
             new_moments = deduce_moment(A, species) 

@@ -509,11 +509,11 @@ class Extract(_ExtractImpl):
     if self.ispin == 2:
       assert 2 * self.eigenvalues.shape[2] > self.valence + 2,\
              RuntimeError("Not enough bands were computed.")
-      return min(self.eigenvalues[:, :, self.valence/2+1])
+      return min(self.eigenvalues[:, :, self.valence/2])
     else:
       assert 2 * self.eigenvalues.shape[1] > (self.valence/2) + 1,\
              RuntimeError("Not enough bands were computed.")
-      return min(self.eigenvalues[:, self.valence/2+1])
+      return min(self.eigenvalues[:, self.valence/2])
 
   @property
   def vbm(self):
@@ -522,11 +522,11 @@ class Extract(_ExtractImpl):
     if self.ispin == 2:
       assert 2 * self.eigenvalues.shape[2] > self.valence,\
              RuntimeError("Not enough bands were computed.")
-      return max(self.eigenvalues[:, :, self.valence/2])
+      return max(self.eigenvalues[:, :, self.valence/2-1])
     else:
       assert 2 * self.eigenvalues.shape[1] > self.valence,\
              RuntimeError("Not enough bands were computed.")
-      return max(self.eigenvalues[:, self.valence/2])
+      return max(self.eigenvalues[:, self.valence/2-1])
 
   @property
   @make_cached
