@@ -146,7 +146,7 @@ namespace LaDa
           "A 3x3 numpy array representing the lattice vector in cartesian units, "
           "in units of self.L{scale<lada.crystal.Lattice.scale>}."
         )
-        .def_readwrite("sites", &Crystal::Lattice::sites, "List of L{lada.crystal.Site}.")
+        .def_readwrite("_sites", &Crystal::Lattice::sites, "List of L{lada.crystal.Site}.")
         .def_readwrite("scale", &Crystal::Lattice::scale, "Units of all coordinates." )
         .def_readwrite("space_group", &Crystal::Lattice::space_group,
                        "List of symmetry operators L{lada.crystal.SymmetryOperator}." )
