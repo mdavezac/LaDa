@@ -53,7 +53,7 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
     # checks species are known to vasp functional
     for i in range(1, 4):
       assert match.group(i) in input.vasp.species,\
-             RuntimeError("No pseudo-potential defined for {0}.".format(match.group)(i))
+             RuntimeError("No pseudo-potential defined for {0}.".format(match.group(i)))
     # actually creates dictionary.
     species_dict = {"A": match.group(1), "B": match.group(2), "X": match.group(3)}
 
