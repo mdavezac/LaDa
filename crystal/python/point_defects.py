@@ -239,25 +239,49 @@ def charged_states(species, A, B):
     yield -charge, oxdir
 
 
-def band_filling(defect, cbm):
+def band_filling(defect, host, **kwargs):
   """ Returns band-filling corrrection. 
 
       :Parameters: 
 
-        defect : return of `lada.vasp.Vasp.__call__`
+        defect 
           An output extraction object as returned by the vasp functional when
           computing the defect of interest.
-        cbm : float 
-          The cbm of the host with potential alignment.
+        host 
+          An output extraction object as returned by the vasp functional when
+          computing the host matrix.
+        kwargs 
+          Parameters are passed on to potential alignment calculations.
+         
+      :return: Band-filling correction in eV.
+
+      Accounts for Moss-Burnstein band-filling effects in the case of shallow
+      donors and acceptors.
+      The result of this call should be added to the energy of the point-defect.
   """
   from numpy import sum, multiply, newaxis
+  from quantities import eV
+
+  potal = potential_alignment(defect, host, **kwargs)
+
+  cbm = host.cbm - potal
   if defect.eigenvalues.ndim == 3:
     dummy = multiply(defect.eigenvalues-cbm, defect.multiplicity[newaxis,:,newaxis])
   elif defect.eigenvalues.ndim == 2:
     dummy = multiply(defect.eigenvalues-cbm, defect.multiplicity[:, newaxis])
-
   dummy = multiply(dummy, defect.occupations)
-  return -sum(dummy[defect.eigenvalues > cbm])
+  result = -sum(dummy[defect.eigenvalues > cbm])
+
+  vbm = host.vbm - potal
+  if defect.eigenvalues.ndim == 3:
+    dummy = multiply(vbm-defect.eigenvalues, defect.multiplicity[newaxis,:,newaxis])
+    dummy = multiply(dummy, 1e0-defect.occupations)
+  elif defect.eigenvalues.ndim == 2:
+    dummy = multiply(vbm-defect.eigenvalues, defect.multiplicity[:, newaxis])
+    dummy = multiply(dummy, 2e0-defect.occupations)
+  result -= sum(dummy[defect.eigenvalues < vbm])
+
+  return -result.rescale(eV)
   
 
 def potential_alignment(defect, host, maxdiff=0.5):
@@ -265,10 +289,10 @@ def potential_alignment(defect, host, maxdiff=0.5):
 
       :Parameters:
 
-        defect : return of lada.vasp.Vasp.__call__
+        defect 
           An output extraction object as returned by the vasp functional when
           computing the defect of interest.
-        host : return of `lada.vasp.Vasp.__call__`
+        host 
           An output extraction object as returned by the vasp functional when
           computing the host matrix.
         maxdiff : float

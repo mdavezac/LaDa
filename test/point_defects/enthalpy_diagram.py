@@ -3,7 +3,7 @@ from lada.jobs import AbstractMassExtract
 from lada.opt.decorators import make_cached
 
 class Enthalpy(object):
-  """ Enthalpy of a single defect. """
+  """ Enthalpies of a single defect. """
   def __init__(self, extract, epsilon = 1e0, host = None, pa_maxdiff=-8):
     """ Initializes an enthalpy function. """
     # extraction object.
@@ -26,42 +26,85 @@ class Enthalpy(object):
     """ Root directory of defects. """
     return self.extract.rootdir
 
-  def _charge_correction(self, extract):
-    """ Returns the charge correction. """
-    if hasattr(extract, "jobs"): 
-      assert len(extract.jobs) == 1, ValueError("extract should return naked objects.")
-    if hasattr(extract, "naked_end"): 
-      assert extract.naked_end,      ValueError("extract should return naked objects.")
-    return extract.charge_corrections / self.epsilon 
+  def _all_jobs(self):
+    """ Loops over all jobs in special way. """
+    for child in self.extract.children: # Each child is a different charge state.
+      for job in child.itervalues(): yield job
 
-  def _potential_alignment(self, extract):
-    """ Returns the charge correction. """
+  @property
+  @make_cached
+  def _charge_correction(self):
+    """ Returns the charge corrections.
+    
+        Tries and minimizes the number of calculations by checking if performed
+        in smae cell.
+    """
+    from numpy.linalg import inv, det
+    from numpy import array
+    from quantities import eV
+    result, cells  = [], []
+    # loops of all jobs.
+    for job in self._all_jobs():
+      cell = job.structure.cell * job.structure.scale
+      invcell = inv(cell)
+      found = None
+      # looks if already exists.
+      for i, other in enumerate(cells):
+        rotmat = other * cell
+        d = abs(det(rotmat))
+        if abs(d - 1e0) < 1e-8: continue
+        invrotmat = inv(rotmat)
+        if all( abs(rotmat.T - invrotmat) < 1e-8 ): found = i; break
+      if found == None: 
+        cells.append(inv(cell))
+        result.append( job.charge_corrections / self.epsilon )
+      else: result.append(result[found])
+    return array(result) * eV
+
+  @property
+  @make_cached
+  def _potential_alignment(self):
+    """ Potential alignments for all jobs. """
+    from numpy import array
+    from quantities import eV
     from lada.crystal.point_defects import potential_alignment
-    if hasattr(extract, "jobs"): 
-      assert len(extract.jobs) == 1, ValueError("extract should return naked objects.")
-    if hasattr(extract, "naked_end"): 
-      assert extract.naked_end,      ValueError("extract should return naked objects.")
-    return potential_alignment(extract, self.host, self.pa_maxdiff)
+    return array([ potential_alignment(state, self.host, self.pa_maxdiff) \
+                   for state in self._all_jobs() ]) * eV
 
-  def _band_filling(self, extract):
+  @property
+  @make_cached
+  def _band_filling(self):
+    """ Band-filling for all jobs. """
+    from numpy import array
+    from quantities import eV
     from lada.crystal.point_defects import band_filling
-    if hasattr(extract, "jobs"): 
-      assert len(extract.jobs) == 1, ValueError("extract should return naked objects.")
-    if hasattr(extract, "naked_end"): 
-      assert extract.naked_end,      ValueError("extract should return naked objects.")
-    return band_filling(extract, self.host.cbm - self._potential_alignment(extract))
+    return array([ band_filling(state, self.host, maxdiff=self.pa_maxdiff) \
+                   for state in self._all_jobs() ]) * eV
 
-  def _corrected(self, extract):
-    """ Corrected formation enthalpy. """
+  @property
+  @make_cached
+  def _uncorrected(self):
+    """ Uncorrected formation enthalpy. """
     from numpy.linalg import det
-    n = int(det(extract.structure.cell)/det(self.host.structure.cell) + 1.e-3) + 0.
-    return   extract.total_energy\
-           - self.host.total_energy * n\
-           + self._charge_correction(extract)\
-           + self._potential_alignment(extract)\
-           + self._band_filling(extract)
+    from numpy import array
+    from quantities import eV
+    energies = []
+    for state in self._all_jobs():
+      n = int(det(state.structure.cell)/det(self.host.structure.cell) + 1.e-3) + 0.
+      energies.append(state.total_energy - self.host.total_energy * n)
+    return array(energies) * eV 
+
+  @property
+  def _corrected(self):
+    """ Corrected formation enthalpy. """
+    return   self._uncorrected \
+           + self._charge_correction\
+           + self._potential_alignment\
+           + self._band_filling
 
 
+  @property
+  @make_cached
   def _charged_states(self):
     """ Yields extraction routine toward each charge states. 
 
@@ -70,13 +113,34 @@ class Enthalpy(object):
     """
     from os.path import basename
     from operator import itemgetter
-    for child in self.extract.children: # Each child is a different charge state.
-      child.naked_end = False
-      sequence = ((n, self._corrected(v)) for n, v in child.iteritems())
-      lowest = sorted(sequence, key=itemgetter(1))[0][0]
-      result = child[lowest]
-      result.naked_end = True
-      yield result
+    alles = {}
+    names = [child.directory for child in self._all_jobs()]
+    for n, u, c, p, b, corr in zip( names, self._uncorrected, \
+                                    self._charge_correction, \
+                                    self._potential_alignment, \
+                                    self._band_filling,\
+                                    self._corrected ):
+      alles[n] = u, c, p, b, corr
+    corrected = self._corrected
+    charges  = [u.charge for u in self._all_jobs()]
+    children  = [u for u in self._all_jobs()]
+    result = []
+    for charge in sorted(list(set(charges))):
+      sequence = [(child, u) for child, u, c in zip(children, corrected, charges) if c == charge]
+      child = sorted(sequence, key=itemgetter(1))[0][0].copy()
+      child.__dict__['raw_DeltaH']          = alles[child.directory][0]
+      child.__dict__['charge_corrections']  = alles[child.directory][1]
+      child.__dict__['potential_alignment'] = alles[child.directory][2]
+      child.__dict__['band_filling']        = alles[child.directory][3]
+      child.__dict__['DeltaH']              = alles[child.directory][4]
+      result.append(child)
+    return result
+
+  @property
+  def _all_energies(self):
+    """ Dictionary with all energies. """
+    return result
+
 
   @property
   def host(self):
@@ -160,11 +224,11 @@ class Enthalpy(object):
     from quantities import elementary_charge as e, eV
     lines = []
     states = set()
-    for state in self._charged_states():
+    for state in self._charged_states:
       assert state.charge not in states,\
              RuntimeError("Found more than one calculation for the same charge state.")
       states.add(state.charge)
-      lines.append((self._corrected(state).rescale(eV), state.charge))
+      lines.append((state.DeltaH.rescale(eV), state.charge))
     return lines
 
   def _all_intersections(self, _lines):
@@ -180,11 +244,8 @@ class Enthalpy(object):
     result = [u for u in result if u + 1e-6 * eV < cbm]
     result.append(cbm)
     result.insert(0, vbm)
-    print "lines: ", _lines
-    print "intersections ", result
     return array([array(u.rescale(eV)) for u in result]) * eV
 
-  @make_cached
   def lines(self):
     """ Lines forming the formation enthalpy diagram. 
     
@@ -199,23 +260,19 @@ class Enthalpy(object):
     lines = [ min(_lines, key=func)  ]
 
     # now look for lines up to cbm
-    print "here", _lines
-    print "  ", lines
     for i, intersection in enumerate(intersections[1:]):
       func  = lambda x: x[0] + (intersection-intersections[i])*x[1] 
       min_line = min(lines, key=func)
       if    abs(min_line[0] - lines[-1][0]) > 1e-12*eV \
          or abs(min_line[1] - lines[-1][1]) > 1e-12:
-        lines.append([min_line[0].rescale(eV). min_line[1]])
-      print "  ", lines, min_line
+        lines.append([min_line[0].rescale(eV), min_line[1]])
 
     # adds line after cbm
     func  = lambda x: x[0] + (intersections[-1]+eV)*x[1] 
     min_line = min(_lines, key=func)
     if    abs(min_line[0] - lines[-1][0]) > 1e-12*eV \
        or abs(min_line[1] - lines[-1][1]) > 1e-12:
-      lines.append([min_line[0].rescale(eV). min_line[1]])
-    print "  ", lines, min_line
+      lines.append([min_line[0].rescale(eV), min_line[1]])
     return lines
 
   def __call__(self, fermi, mu = None):
@@ -242,16 +299,30 @@ class Enthalpy(object):
     """ A label in LaTex format. """
     from re import match
     if self.is_interstitial:
-      found = match("([A-Z][a-z]?)_interstitial_(.+)$", self.name) 
-      return r"{0}$_{{ \\mathrm{{ {1} }} }}$".format(found.group(1), found.group(2))
+      site = self._site
+      if site == None:
+        found = match("([A-Z][a-z]?)_interstitial_(.+)$", self.name) 
+        return r"{0}$^{{(i)}}_{{ \mathrm{{ {1} }} }}$"\
+               .format(found.group(1), found.group(2).replace('_', r"\_"))
+      else:
+        found = match("([A-Z][a-z]?)_interstitial_(.+)$", self.name) 
+        return r"{0}$^{{(i,{2})}}_{{ \mathrm{{ {1} }} }}$"\
+               .format(found.group(1), found.group(2).replace('_', r"\_"), site)
     if self.is_substitution:
       found = match("([A-Z][a-z]?)_on_([A-Z][a-z]?)", self.name) 
       site = self._site
       if site == None:
-        return r"{0}$_{{ \\mathrm{{ {1} }} }}$".format(found.group(1), found.group(2))
+        return r"{0}$_{{ \mathrm{{ {1} }} }}$".format(found.group(1), found.group(2))
       else:
-        return r"{0}$_{{ \\mathrm{{ {1} }}_{{ {2} }} }}$"\
+        return r"{0}$_{{ \mathrm{{ {1} }}_{{ {2} }} }}$"\
                .format(found.group(1), found.group(2), site)
+    if self.is_vacancy:
+      found = match("vacancy_([A-Z][a-z]?)", self.name) 
+      site = self._site
+      if site == None:
+        return r"$\square_{{ \mathrm{{ {0} }} }}$".format(found.group(1))
+      else:
+        return r"$\square_{{ \mathrm{{ {0} }}_{{{1}}} }}$".format(found.group(1), site)
   
   def __str__(self):
     """ Energy and corrections for each charge defect. """
@@ -261,18 +332,25 @@ class Enthalpy(object):
     from numpy.linalg import det
     from quantities import eV
     result = "{0}: \n".format(self.name)
-    states = sorted(((c, c.charge) for c in self._charged_states()),  key = itemgetter(1))
+    states = sorted(((c, c.charge) for c in self._charged_states),  key = itemgetter(1))
     for extract, charge in states:
       n = int(det(extract.structure.cell)/det(self.host.structure.cell) + 1.e-3) + 0.
-      a = float( (extract.total_energy - self.host.total_energy * n).rescale(eV) )
-      b = float( self._charge_correction(extract).rescale(eV) )
-      c = float( self._potential_alignment(extract).rescale(eV) )
-      d = float( self._band_filling(extract).rescale(eV) )
-      e = relpath(extract.view, extract.view + "/../../")
+      a = float(extract.raw_DeltaH.rescale(eV))
+      b = float(extract.charge_corrections.rescale(eV))
+      c = float(extract.potential_alignment.rescale(eV))
+      d = float(extract.band_filling.rescale(eV))
+      e = relpath(extract.directory, extract.directory + "/../../")
       result += "  - charge {0:>3}: DeltaH = {1:8.4f} + {2:8.4f} + {3:8.4f}"\
                 "+ {4:8.4f} = {5:8.4f} eV # {6}.\n"\
                 .format(int(charge), a, b, c, d, a+b+c+d, e)
     return result
+
+  def uncache(self):
+    """ Uncaches result. """
+    from opt import uncache as opt_uncache
+    opt_uncache(self)
+    self.extract.uncache()
+    self.host.unchache()
 
 class Enthalpies(AbstractMassExtract):
   """ Enthalpy for a series of defects for a given material and lattice. """
@@ -373,45 +451,37 @@ class Enthalpies(AbstractMassExtract):
     result += "".join( string for string, value in values if value.is_interstitial )
     return result
       
-      
+  def plot_enthalpies(self, mu=None, **kwargs):
+    """ Plots diagrams using matplotlib. """
+    from quantities import eV
+    try: import matplotlib.pyplot as plt
+    except ImportError: 
+      print "No matplotlib module."
+      return
+    from operator import itemgetter
 
-def plot_enthalpies(self, mu=None, **kwargs):
-  """ Plots diagrams using matplotlib. """
-  from quantities import eV
-  try: import matplotlib.pyplot as plt
-  except ImportError: 
-    print "No matplotlib module."
-    return
-  from operator import itemgetter
+    # finds limits of figure
+    xlim = 0., float( (self.host.cbm-self.host.cbm).rescale(eV) ) 
+    ylim = min(self(0., mu).itervalues()), max(self(xlim[0], mu).itervalues())
+    ylim = float(ylim[0].rescale(eV)), float(ylim[1].rescale(eV))
+    # creates figures and axes.
+    figure = plt.figure()
+    axes = figure.add_subplot(111, xlim=(self.host.vbm, self.host.cbm), ylim=ylim)
 
-  for name, defect in self.iteritems():
-    print "preparing ", name
-    defect.lines()
+    # loop over defects.
+    for name, defect in self.iteritems():
+      # finds intersection points. 
+      x = [-5e0*eV]
+      lines = defect.lines()
+      for i in range(len(lines)-1):
+        (b0, a0), (b1, a1) = lines[i], lines[i+1]
+        x.append( ((b0-b1)/(a1-a0)).rescale(eV) - self.host.vbm)
+      x.append(5e0*eV)
 
-  # finds limits of figure
-  xlim = 0., float( (self.host.cbm-self.host.cbm).rescale(eV) ) 
-  ylim = min(self(0., mu).itervalues()), max(self(xlim[0], mu).itervalues())
-  ylim = float(ylim[0].rescale(eV)), float(ylim[1].rescale(eV))
-  # creates figures and axes.
-  figure = plt.figure()
-  axes = figure.add_subplot(111, xlim=(self.host.vbm, self.host.cbm), ylim=ylim)
-
-  # loop over defects.
-  for name, defect in self.iteritems():
-    print "plotting ", name
-    # finds intersection points. 
-    x = [-5e0*eV]
-    lines = defect.lines()
-    for i in range(len(lines)-1):
-      (b0, a0), (b1, a1) = lines[i], lines[i+1]
-      x.append( ((b0-b1)/(a1-a0)).rescale(eV) - self.host.vbm)
-    x.append(5e0*eV)
-    print x
-
-    # Now draws lines. 
-    lines.append(lines[-1])
-    y = [u[0] + u[1] * xx for u, xx in zip(lines, x)]
-    axes.plot(x, y, label=defect.latex_label, **kwargs)
+      # Now draws lines. 
+      lines.append(lines[-1])
+      y = [u[0] + u[1] * xx for u, xx in zip(lines, x)]
+      axes.plot(x, y, label=defect.latex_label, **kwargs)
       
         
 

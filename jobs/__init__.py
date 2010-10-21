@@ -978,6 +978,7 @@ class AbstractMassExtract(object):
     """ Iterates through all extraction objects. """
     return [name for name in self.iterkeys()]
   
+  @property
   def extractors(self):
     """ Returns dictioanary of extrators. """
     result = {}
@@ -1369,6 +1370,7 @@ class JobParams(AbstractMassExtract):
     elif value == "off" or value == False:
       for name, job in self.iteritems(): job.tag()
 
+  @property
   def extractors(self):
     """ Returns dictionary of extrators. """
     result = {}
