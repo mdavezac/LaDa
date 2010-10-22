@@ -405,6 +405,7 @@ class Enthalpies(AbstractMassExtract):
     assert len(host) == 1
     return host[0]
 
+
   def walk_through(self):
     """ Walks through point-defects only. """
     for child in self.massextract["PointDefects"].children:
@@ -422,6 +423,23 @@ class Enthalpies(AbstractMassExtract):
         # checks if this is a valid point-defect.
         if result.is_interstitial or result.is_vacancy or result.is_substitution:
           yield child.view, result
+
+  def ordered_items(self):
+    """ Returns items ordered by substitution, vacancy, and interstitial. """
+    from operator import itemgetter
+    interstitials = (u for u in self.iteritems() if u[1].is_interstitial)
+    substitution  = (u for u in self.iteritems() if u[1].is_substitution)
+    vacancy       = (u for u in self.iteritems() if u[1].is_vacancy)
+    result = sorted(substitution, key = itemgetter(0)) 
+    result.extend(sorted(vacancy, key = itemgetter(0)))
+    result.extend(sorted(interstitials, key = itemgetter(0)))
+    return result
+  def ordered_keys(self):
+    """ Returns keys ordered by substitution, vacancy, and interstitial. """
+    return [u[0] for u in self.ordered_items()]
+  def ordered_values(self):
+    """ Returns values ordered by substitution, vacancy, and interstitial. """
+    return [u[1] for u in self.ordered_items()]
 
   def __call__(self, fermi, mu=None):
     """ Dictionary of point-defect formation enthalpies. 
@@ -445,11 +463,7 @@ class Enthalpies(AbstractMassExtract):
   
   def __str__(self): 
     """ Prints out all energies and corrections. """
-    values = [ (str(value), value) for value in self.itervalues() ]
-    result  = "".join( string for string, value in values if value.is_substitution )
-    result += "".join( string for string, value in values if value.is_vacancy )
-    result += "".join( string for string, value in values if value.is_interstitial )
-    return result
+    return "".join( str(value) for value in self.ordered_values() )
       
   def plot_enthalpies(self, mu=None, **kwargs):
     """ Plots diagrams using matplotlib. """
@@ -460,16 +474,19 @@ class Enthalpies(AbstractMassExtract):
       return
     from operator import itemgetter
 
+    # sets up some stuff for legends.
+    plt.rc('text', usetex=True)
+    plt.rc('text.latex', preamble="\usepackage{amssymb}")
     # finds limits of figure
-    xlim = 0., float( (self.host.cbm-self.host.cbm).rescale(eV) ) 
-    ylim = min(self(0., mu).itervalues()), max(self(xlim[0], mu).itervalues())
-    ylim = float(ylim[0].rescale(eV)), float(ylim[1].rescale(eV))
+    xlim = 0., float( (self.host.cbm-self.host.vbm).rescale(eV) ) 
+    all_ys = [float(val.rescale(eV)) for x in xlim for val in self(x, mu).itervalues()]
+    ylim = min(all_ys), max(all_ys)
     # creates figures and axes.
     figure = plt.figure()
     axes = figure.add_subplot(111, xlim=(self.host.vbm, self.host.cbm), ylim=ylim)
 
     # loop over defects.
-    for name, defect in self.iteritems():
+    for defect in self.ordered_values():
       # finds intersection points. 
       x = [-5e0*eV]
       lines = defect.lines()
@@ -482,6 +499,11 @@ class Enthalpies(AbstractMassExtract):
       lines.append(lines[-1])
       y = [u[0] + u[1] * xx for u, xx in zip(lines, x)]
       axes.plot(x, y, label=defect.latex_label, **kwargs)
+    axes.set_xlim(xlim)
+    axes.set_ylim(ylim)
+    plt.legend()
+    plt.draw()
+
       
         
 

@@ -246,8 +246,8 @@ def magnetic_groundstates():
       ground-state within the current job-dictionary.
   """
   from operator import itemgetter
-  from lada.ipython import Collect
-  collect = Collect()
+  from lada.jobs import MassExtract
+  collect = MassExtract(naked_end=False)
   # loops over untagged non-magnetic structural jobs.
   for nonmag in collect.grep(".*/.*/non-magnetic"):
     # check for success of all jobs (except for Point-defects).
