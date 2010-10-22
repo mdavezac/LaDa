@@ -174,7 +174,7 @@ def read_input(filename, global_dict=None, local_dict = None, paths=None, comm =
                         "expanduser": expanduser})
   if lada_with_mpi: 
     from boost.mpi import world
-    globals["world"] = world
+    global_dict["world"] = world
   if local_dict == None: local_dict = {}
   # Executes input script.
   execfile(filename, global_dict, local_dict)
