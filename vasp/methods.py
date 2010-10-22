@@ -239,7 +239,6 @@ class RelaxCellShape(object):
         If you want to examine the result of each and every vasp calculation,
         use `generator` instead.
     """ 
-    from shutil import rmtree
     from os import getcwd
     from os.path import exists
     from ..opt import RelativeDirectory
@@ -248,8 +247,6 @@ class RelaxCellShape(object):
     if not overwrite:
       extract = self.Extract(outdir, comm=None)
       if extract.success: return extract
-    elif is_root and exists(outdir): rmtree(outdir)
-    if comm != None: comm.barrier() # makes sure directory is not created by other proc!
 
     for output in self.generator(structure, outdir=outdir,
                                  comm=comm, overwrite=overwrite, **kwargs): pass

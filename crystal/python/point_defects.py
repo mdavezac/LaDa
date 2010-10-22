@@ -1,14 +1,8 @@
 """ Point-defect helper functions. """
 __docformat__ = "restructuredtext en"
-try:
-  from .. import vasp
-  from .. import jobs
-except ImportError: _add_mass_extract = False
-else: _add_mass_extract = True
-
 
 __all__ = [ 'inequivalent_sites', 'vacancy', 'substitution', 'charged_states', \
-            'band_filling', 'potential_alignment', 'charge_correction', \
+            'band_filling', 'potential_alignment', 'charge_corrections', \
             'magmom', 'low_spin_states', 'high_spin_states', 'magname' ]
 
 def inequivalent_sites(lattice, type):
@@ -245,20 +239,49 @@ def charged_states(species, A, B):
     yield -charge, oxdir
 
 
-def band_filling(defect, cbm):
+def band_filling(defect, host, **kwargs):
   """ Returns band-filling corrrection. 
 
       :Parameters: 
 
-        defect : return of `lada.vasp.Vasp.__call__`
+        defect 
           An output extraction object as returned by the vasp functional when
           computing the defect of interest.
-        cbm : float 
-          The cbm of the host with potential alignment.
+        host 
+          An output extraction object as returned by the vasp functional when
+          computing the host matrix.
+        kwargs 
+          Parameters are passed on to potential alignment calculations.
+         
+      :return: Band-filling correction in eV.
+
+      Accounts for Moss-Burnstein band-filling effects in the case of shallow
+      donors and acceptors.
+      The result of this call should be added to the energy of the point-defect.
   """
-  from numpy import sum
-  indices = defect.eigenvalues > cbm
-  return sum( (defect.multiplicity * defect.eigenvalues * defect.occupations)[indices] - cbm )
+  from numpy import sum, multiply, newaxis
+  from quantities import eV
+
+  potal = potential_alignment(defect, host, **kwargs)
+
+  cbm = host.cbm - potal
+  if defect.eigenvalues.ndim == 3:
+    dummy = multiply(defect.eigenvalues-cbm, defect.multiplicity[newaxis,:,newaxis])
+  elif defect.eigenvalues.ndim == 2:
+    dummy = multiply(defect.eigenvalues-cbm, defect.multiplicity[:, newaxis])
+  dummy = multiply(dummy, defect.occupations)
+  result = -sum(dummy[defect.eigenvalues > cbm])
+
+  vbm = host.vbm - potal
+  if defect.eigenvalues.ndim == 3:
+    dummy = multiply(vbm-defect.eigenvalues, defect.multiplicity[newaxis,:,newaxis])
+    dummy = multiply(dummy, 1e0-defect.occupations)
+  elif defect.eigenvalues.ndim == 2:
+    dummy = multiply(vbm-defect.eigenvalues, defect.multiplicity[:, newaxis])
+    dummy = multiply(dummy, 2e0-defect.occupations)
+  result -= sum(dummy[defect.eigenvalues < vbm])
+
+  return -result.rescale(eV)
   
 
 def potential_alignment(defect, host, maxdiff=0.5):
@@ -266,10 +289,10 @@ def potential_alignment(defect, host, maxdiff=0.5):
 
       :Parameters:
 
-        defect : return of lada.vasp.Vasp.__call__
+        defect 
           An output extraction object as returned by the vasp functional when
           computing the defect of interest.
-        host : return of `lada.vasp.Vasp.__call__`
+        host 
           An output extraction object as returned by the vasp functional when
           computing the host matrix.
         maxdiff : float
@@ -277,18 +300,24 @@ def potential_alignment(defect, host, maxdiff=0.5):
           the equivalent host electrostatic potential beyond which that atom is
           considered pertubed by the defect.
 
+          If this number is negative, than the algorithm is to exclude from the
+          average the ``-maxdiff`` atoms furthest from the average (of the host). 
+
       :return: The potential alignment in eV (without charge factor).
   """
   from operator import itemgetter
-  from numpy import average, array, abs
-  from crystal import specie_list
+  from numpy import mean, array, abs
+  from quantities import eV
+  from . import specie_list
+
+  if abs(defect.charge) < 1e-12: return 0 * eV
 
   # first get average atomic potential per atomic specie in host.
   host_electropot = {}
   host_species = specie_list(host.structure)
   for s in host_species:
-    indices = array([atom.type == s for atom in structure.atoms])
-    host_electropot[s] = average(host.electropot[indices]) 
+    indices = array([atom.type == s for atom in host.structure.atoms])
+    host_electropot[s] = mean(host.electropot[indices]) 
   
   # creates an initial list of unperturbed atoms. 
   types = array([atom.type for atom in defect.structure.atoms])
@@ -300,83 +329,79 @@ def potential_alignment(defect, host, maxdiff=0.5):
     # computes average atomic potentials of unperturbed atoms.
     defect_electropot = {}
     for s in host_species:
-      defect_electropot[s] = average( defect.electropot[unperturbed & (types == s)] )
+      defect_electropot[s] = mean(defect.electropot[unperturbed & (types == s)])
 
     # finds atomic potential farthest from the average potentials computed above.
-    discrepancies =   defect.electropot[unperturbed] \
-                    - array([host_electropot[type] for type in types[unperturbed]])
-    index, diff = max(enumerate(abs(discrepancies)), key=itemgetter(2))
+    by_type = array([host_electropot[type] for type in types[unperturbed]]) * eV
+    discrepancies = defect.electropot[unperturbed] - by_type
 
     # if discrepancy too high, mark atom as perturbed.
-    if diff > maxdiff: unperturbed[unperturbed][index] = False
-    # otherwise, we are done for this loop!
+    if maxdiff > 0e0: 
+      index, diff = max(enumerate(abs(discrepancies)), key=itemgetter(1))
+      if diff > maxdiff:
+        unperturbed[ [i for i, u in enumerate(unperturbed) if u][index] ] = False
+      # otherwise, we are done for this loop!
+      else: break
+    # mark n atoms with highest relative discrepancy.
+    elif maxdiff < 0e0:
+      maxdiff = int(0.01 - maxdiff)
+      discrepancies = sorted(enumerate(discrepancies / by_type), key=itemgetter(1))[-maxdiff:]
+      for i, v in discrepancies: unperturbed[i] = False
+      break 
+    # Do nothing, use all atoms to compute potential alignment.
     else: break
 
   # now computes potential alignment from unpertubed atoms.
-  diff_from_host =    defect.electropot[unpertubed]  \
-                    - array([host_electropot[type] for type in types[unperturbed]])
-  return average(diff_from_host)
+  by_type = array([host_electropot[type] for type in types[unperturbed]]) * eV
+  diff_from_host = defect.electropot[unperturbed]  - by_type
+  return mean(diff_from_host).rescale(eV) * defect.charge
                     
 
-def third_order_charge_correction(cell, charge = None, n = 200, **kwargs):
+def third_order_charge_correction(structure, charge = None, n = 200, epsilon = 1.0, **kwargs):
   """ Returns energy of third order charge correction. 
   
-      Uses Quantity package to take care of units.
-      
       :Parameters: 
-        cell : 3x3 numpy array
-          If the cell has not units, then defaults to Angstrom.
+        structure : `lada.crystal.Structure`
+          Defect supercell, with cartesian positions in angstrom.
         n 
           precision. Higher better.
         charge 
           If no units are given, defaults to elementary charge. If None,
           defaults to 1 elementary charge.
+        epsilon 
+          Static dielectrict constant of the host. Most likely in atomic units
+          (e.g. dimensionless), but I'm not sure.
+      
+      Taken as is from Lany and Zunger's `PRB *78*, 235104 (2008)
+      <http://dx.doi.org/10.1103/PhysRevB.78.235104>`_
+      Always outputs as eV. Not sure what the units of some of these quantities are. 
 
-      :return: energy of a single negative charge in supercell.
+      :return: third order correction  to the energy in eV. Should be *added* to total energy.
   """
-  from numpy import array, dot
-  from numpy.linalg import det
-  import quantities as pq
+  from ._crystal import third_order 
+  from numpy import array
+  from quantities import elementary_charge, eV, pi, angstrom, dimensionless
+  from ..physics import a0, Ry
 
-  if not hasattr(charge, "units"): charge = charge * pq.elementary_charge
-  if not hasattr(cell, "units"): cell = cell.copy() * pq.angstrom
-
-  def fold(vector):
-    """ Returns smallest distance. """
-    result = None
-    for i in range(-1, 2):
-      for j in range(-1, 2):
-        for k in range(-1, 2):
-          v = array([vector[0] + float(i), vector[1] + float(j), vector[2] + float(k)])
-          v = dot(cell, v)
-          m = dot(v,v)
-          if result == None or result > m: result = m
-    return result
-
-  # chden = ones( (n, n, n), dtype="float64")
-  result = 0e0
-  for ix in range(n):
-    for iy in range(n):
-      for iz in range(n):
-        vec = array([float(ix)/float(n)-0.5, float(iy)/float(n)-0.5, float(iz)/float(n)-0.5])
-        result += fold(vec)
-        
-  result = (result/float(n**3)) * 2e0/3e0*pq.pi * charge * charge / det(cell)\
-           / epsilon
-  result = pq.eV
-  return -result
+  if charge == None: charge = 1e0
+  elif charge == 0: return 0e0 * eV
+  if hasattr(charge, "units"):  charge  = float(charge.rescale(elementary_charge))
+  if hasattr(epsilon, "units"): epsilon = float(epsilon.simplified)
+  cell = structure.cell
+  scale = structure.scale
+  return - charge**2 / epsilon * third_order(cell, n/2) * (4e0*pi/3e0) \
+         * (array(a0.rescale(angstrom))/scale)**3 * Ry.rescale(eV)
 
 
-def first_order_charge_correction(cell, charge=None, epsilon=1e0, cutoff=None, **kwargs):
+def first_order_charge_correction(structure, charge=None, epsilon=1e0, cutoff=15e1, **kwargs):
   """ First order charge correction of +1 charge in given supercell. 
   
       Units in this function are either handled by the module Quantities, or
       defaults to Angstroems and elementary charges.
 
       :Parameters:
-        cell 
-          Supercell of the point-defect. If no units are attached, expects
-          Angstroems.
+        structure : `lada.crystal.Structure`
+          Defect supercell, with cartesian positions in angstrom.
         charge 
           Charge of the point-defect. Defaults to 1e0 elementary charge. If no
           units are attached, expects units of elementary charges.
@@ -388,8 +413,9 @@ def first_order_charge_correction(cell, charge=None, epsilon=1e0, cutoff=None, *
       :return: Electrostatic energy in eV.
   """
   from numpy.linalg import norm
-  import quantities as pq
+  from quantities import elementary_charge, eV
   from ..crystal import Structure
+  from ..physics import Ry
   try: from ..pcm import Clj 
   except ImportError as e:
     print "Could not import Point-Charge Model package (pcm). \n"\
@@ -397,35 +423,26 @@ def first_order_charge_correction(cell, charge=None, epsilon=1e0, cutoff=None, *
           "Please compile LaDa with pcm enabled.\n"
     raise
 
-  if charge == None: charge = 1e0 
-  if not hasattr(charge, "units"): charge = charge * pq.elementary_charge
-  if not hasattr(cell, "units"): cell = cell * pq.angstrom
+  if charge == None: charge = 1
+  elif charge == 0: return 0e0 * eV
+  if hasattr(charge, "units"): charge = float(charge.rescale(elementary_charge))
 
   clj = Clj()
-  clj.charges["A"] = float(charge.rescale("e"))
-  if cutoff == None:
-    clj.ewald_cutoff = 10 * max( [norm(cell[:,i]) for i in range(3)] )
-  else: clj.ewald_cutoff = cutoff
+  clj.charges["A"] = charge
+  clj.ewald_cutoff = cutoff * Ry
 
-  structure = Structure()
-  structure.cell = cell
-  structure.scale = 1e0
-  structure.add_atom = ((0e0,0,0), "A")
+  struc = Structure()
+  struc.cell = structure.cell
+  struc.scale = structure.scale
+  struc.add_atom = ((0e0,0,0), "A")
 
-  cell_units = cell.units
-  charge_units = charge.units
-  result = clj.ewald(structure).energy / cell.units * charge_units**2\
-           / (4e0*pq.pi*pq.electric_constant) / epsilon
-  result.units = pq.eV
-  return -result
+  result = clj.ewald(struc).energy / epsilon
+  return -result * eV
 
-def charge_correction(cell, **kwargs):
+def charge_corrections(structure, **kwargs):
   """ Electrostatic charge correction (first and third order). """
-  return   first_order_charge_correction(cell, **kwargs) \
-         + third_order_charge_correction(cell, **kwargs) \
-
-
-
+  return   first_order_charge_correction(structure, **kwargs) \
+         + third_order_charge_correction(structure, **kwargs) \
 
 def magnetic_neighborhood(structure, defect, species):
    """ Finds magnetic neighberhood of a defect. 
@@ -707,130 +724,3 @@ def magname(moments, prefix=None, suffix=None):
   if prefix != None: string = prefix + "_" + string
   if suffix != None: string += "_" + suffix
   return string
-
-
-
-if _add_mass_extract:
-  __all__.append('MassExtract')
-
-  from ..opt.decorators import make_cached
-  from .. import jobs
-  class MassExtract(jobs.MassExtract):
-    """ Extract point-defect quantities. """
-
-    def __init__(self, path, only_untagged = False, **kwargs):
-      """ Initializes point-defect mass extractor. """
-      self.only_untagged = only_untagged
-      """ If true, only untagged jobs will be examined. """
-      super(MassExtract, self).__init__(path, **kwargs)
-
-
-    def walk_through(self): 
-      from glob import iglob
-      from re import compile
-      from os.path import join, exists
-      from itertools import chain
-      from operator import itemgetter
-
-      re_sub = compile("^(?:[A-Z][a-z]?_on|vacancy)_[A-Z][a-z]?$")
-      re_charge = compile("^charge_(?:-?[0-9]*|neutral)$")
-      re_moment = compile("^(?:moment(_(\S*))+|paramagnetic)$")
-      for dir_sub, job_sub in self.jobdict.children.items():
-        if dir_sub[-1] == '/': dir_sub = dir_sub[:-1]
-        if re_sub.match(dir_sub.split('/')[-1]) == None: continue
-
-        for dir_charge, job_charge in job_sub.children.items():
-          if dir_charge[-1] == '/': dir_charge = dir_charge[:-1]
-          if re_charge.match(dir_charge.split('/')[-1]) == None: continue
-
-          moments = []
-          for dir_moment, job_moment in job_charge.children.items():
-            if dir_moment[-1] == '/': dir_moment = dir_moment[:-1]
-            if re_moment.match(dir_moment.split('/')[-1]) == None: continue
-
-            if self.only_untagged and job_charge.tagged: continue
-            if not hasattr(job_moment.functional, "Extract"): continue
-            if not exists(self.root + "/" + job_moment.name): continue
-
-            extract = job_moment.functional.Extract(self.root + "/" + job_moment.name, self.comm)
-            if extract.success: moments.append( (job_moment.name, extract.energy, extract) )
-
-          result = min(moments, key=itemgetter(1))
-          yield result[0], result[2]
-
-    def _charge_correction(self, epsilon, which, **kwargs):
-      """ Charge correction implementation. 
-      
-          :Parameters:
-            epsilon
-              dimensionless relative permittivity.
-
-          Computes dictionary of charge corrections.
-      """
-      import re
-      import quantities as pq
-
-      re_charge = re.compile(r"""charge_((?:-|\+)?\d+|neutral)""")
-      result = {}
-      for key, item in self._extractors().items(): 
-        charge = re_charge.search(key)
-        if charge == None or charge.group(1) == "neutral":
-          result[key] = 0e0*pq.eV
-          continue
-        charge = float(charge.group(1)) * pq.elementary_charge
-        cell = item.structure.cell * item.structure.scale * pq.angstrom
-        result[key] = which(cell, charge=charge, epsilon=epsilon, **kwargs)
-        result[key].units = pq.eV
-      return result
-
-    def first_order_charge_correction(self, epsilon, **kwargs):
-      """ First order charge correction. 
-      
-          :Parameters:
-            epsilon 
-              dimensionless relative permittivity.
-          :return: dictionary of charge corrections in eV.
-
-          Computes the electrostatic energy of a point-charge in a cell. The
-          cells are extracted from the runs investigated in this instance, and
-          are expected to be in Angstroem ([cell * scale]=A). The unit charge
-          are multiple of the elementary charges and extracted from the name of
-          each point-defect computation.
-      """
-      return self._charge_correction(epsilon, globals()["first_order_charge_correction"], **kwargs)
-
-    def third_order_charge_correction(self, epsilon, **kwargs):
-      """ Third order charge correction. 
-      
-          :Parameters:
-             epsilon
-               dimensionless relative permittivity.
-
-          :return: dictionary of charge corrections in eV.
-
-          Computes the electrostatic energy of a point-charge in a cell. The
-          cells are extracted from the runs investigated in this instance, and
-          are expected to be in Angstroem ([cell * scale]=A). The unit charge
-          are multiple of the elementary charges and extracted from the name of
-          each point-defect computation.
-      """
-      return self._charge_correction(epsilon, globals()["third_order_charge_correction"], **kwargs)
-
-    def charge_correction(self, epsilon, **kwargs):
-      """ First and third order charge corrections. 
-      
-          :Parameters:
-            epsilon
-              dimensionless relative permittivity.
-
-          :return: dictionary of charge corrections in eV.
-
-          Computes the electrostatic energy of a point-charge in a cell. The
-          cells are extracted from the runs investigated in this instance, and
-          are expected to be in Angstroem ([cell * scale]=A). The unit charge
-          are multiple of the elementary charges and extracted from the name of
-          each point-defect computation.
-
-      """
-      return self._charge_correction(epsilon, globals()["charge_correction"], **kwargs)
-

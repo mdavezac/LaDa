@@ -582,6 +582,7 @@ class AbstractExtractBase(object):
     """
     result = self.__copy__()
     for k, v in kwargs: setattr(result, k, v)
+    return result
 
   def solo(self):
     """ Returns a serial version of this object. """

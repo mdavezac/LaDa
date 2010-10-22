@@ -371,6 +371,7 @@ def _repr_lattstr(self, atoms="atoms", name="structure", add_atoms="add_atoms"):
                     empty = "".join(" " for u in "{0}.set_cell = ".format(name)) )
 
   # finds with and precision of atoms.
+  if len(self.atoms) == 0: return result
   width = max(len("{0:.0f}".format(u)) for atom in getattr(self, atoms) for u in atom.pos) 
   precision = ["{0}".format(u) for atom in getattr(self, atoms) for u in atom.pos]
   precision = max(len(u[(u.index('.') + 1 if '.' in u else 0):]) for u in precision)
@@ -413,6 +414,32 @@ Structure.__repr__ = _repr_structure
 
 def _repr_lattice(self): return _repr_lattstr(self, "sites", "lattice", "add_sites")
 Lattice.__repr__ = _repr_lattice
+
+def _repr_atom(self): 
+  """ Representation of atoms. """
+  if self.site < 0: 
+    return "{0}({1}, {2})"\
+           .format(self.__class__.__name__, repr(self.pos), repr(self.type))
+  return "{0}({1}, {2}, {3})"\
+         .format(self.__class__.__name__, repr(self.pos), repr(self.type), self.site)
+Atom.__repr__ = _repr_atom
+kAtom.__repr__ = _repr_atom
+rAtom.__repr__ = _repr_atom
+Site.__repr__ = _repr_atom
+
+def _get_atoms(self): return self._atoms
+def _set_atoms(self, value): self._atoms = self._atoms.__class__(value)
+def _del_atoms(self): self._atoms = self._atoms.__class__([])
+def _get_sites(self): return self._sites
+def _set_sites(self, value): self._sites = self._sites.__class__(value)
+def _del_sites(self): self._atoms = self._atoms.__class__([])
+Lattice.sites = property( _get_sites, _set_sites, _del_sites, \
+                          Lattice._sites.__doc__ )
+Structure.atoms = property( _get_atoms, _set_atoms, _del_atoms, \
+                            Structure._atoms.__doc__ )
+rStructure.atoms = property( _get_atoms, _set_atoms, _del_atoms, \
+                             rStructure._atoms.__doc__ )
+
 
 def _copy(self): 
   """ Returns an exact clone. """

@@ -211,7 +211,7 @@ namespace LaDa
             ("A 3x3 numpy array representing the cell vector in cartesian units, "
              "in units of self.L{scale<lada.crystal." + _name + ".scale>}.").c_str()
           )
-          .def_readwrite( "atoms",   &T_STRUCTURE::atoms,
+          .def_readwrite( "_atoms",   &T_STRUCTURE::atoms,
                           (   "The list of atoms of type L{" + _type
                             + "}, in units of self.{scale<" + _name + ">}.").c_str() )
           .def_readwrite( "energy",  &T_STRUCTURE::energy, "Holds a real value." )

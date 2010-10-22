@@ -63,7 +63,6 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
   """
   from tempfile import NamedTemporaryFile
   from os.path import dirname, normpath, relpath, join
-  from copy import deepcopy
   from IPython.ipapi import get as get_ipy
   from numpy import array, sum, abs
   from lada.jobs import JobDict
@@ -132,7 +131,6 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
         for structure, defect in ptd.all_defects(superstructure, lattice, B, A):
           # loop over oxidations states.
           for nb_extrae, oxname in ptd.charged_states(species, A, B):
-            if B == None: nb_extrae *= -1 # correct for insterstitials. 
             
             # creates list of moments. 
             new_moments = deduce_moment(A, species) 
@@ -151,7 +149,7 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
               jobdict = groundstate["../"] / name
               jobdict.functional = input.relaxer
               jobdict.jobparams  = groundstate.jobparams.copy()
-              jobdict.jobparams["structure"] = deepcopy(structure)
+              jobdict.jobparams["structure"] = structure.deepcopy()
               jobdict.jobparams["nelect"] = nb_extrae
               jobdict.jobparams["relaxation"] = "ionic"
               jobdict.jobparams["ispin"] = 2
@@ -216,12 +214,14 @@ def create_superstructure(groundstate, input):
   # creates superstructure.
   cell = dot(lattice.cell, input.supercell)
   result = fill_structure(cell, lattice)
+  assert len(result.atoms) != len(lattice.sites), \
+         ValueError("Superstructure as large as lattice. Disable this line if that's ok.")
 
   # adds magnetic moment if necessary.
   if hasattr(orig_lattice, "magmom"):
     assert extract.magnetization.shape[0] == len(lattice.sites),\
            RuntimeError("Could not find magnetization in ground-state's OUTCAR.")
-    mlat = lattice.copy()
+    mlat = lattice.deepcopy()
     for atom, m in zip(mlat.sites, extract.magnetization[:,-1]):
       if abs(m) < 0.1: atom.type = '0'
       elif m < 0e0: atom.type = str(int(m-1))

@@ -14,27 +14,34 @@ else:
         Trolls through all subdirectories for vasp calculations, and organises
         results as a dictionary where keys are the name of the diretory.
     """
-    def __init__(self, path, Extract = None, **kwargs):
+    def __init__(self, path = None, Extract = None, **kwargs):
       """ Initializes MassExtract.
       
       
           :Parameters:
-            path : str
+            path : str or None
               Root directory for which to investigate all subdirectories.
+              If None, uses current working directory.
             Extract : `lada.vasp.Extract`
               Extraction class to use. 
             kwargs : dict
               Keyword parameters passed on to AbstractMassExtract.
-      """
-      super(MassExtract, self).__init__(path, **kwargs)
 
+          :Kwargs naked_end: True if should return value rather than dict when only one item.
+          :Kwargs unix_re: converts regex patterns from unix-like expression.
+      """
+      from os import getcwd
       from os.path import exists, isdir
       from . import Extract as VaspExtract
       from ...opt import RelativeDirectory
 
+      # this will throw on unknown kwargs arguments.
+      super(MassExtract, self).__init__(**kwargs)
+
       self.Extract = Extract if Extract != None else VaspExtract
       """ Extraction class to use. """
 
+      if path == None: path = getcwd()
       self._rootdir = RelativeDirectory(path, hook=self.uncache)
       """ Root of the directory-tree to trawl for OUTCARs. """
       
@@ -64,7 +71,8 @@ else:
         result.OUTCAR = self.OUTCAR
         yield join('/', relpath(dirpath, self.rootdir)), result
 
-    def _properties(self): 
+    @property
+    def _attributes(self): 
       """ Returns __dir__ set special to the extraction itself. """
       return set([u for u in dir(self.Extract()) if u[0] != '_'])
 
