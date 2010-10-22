@@ -68,7 +68,7 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
   from lada.jobs import JobDict
   from lada.vasp import read_input
   from lada.opt import Input
-  from lada.crystal import point_defects as ptd
+  from lada.crystal import defects as ptd
 
   # Loads jobdictionary and path as requested. 
   ip = get_ipy()

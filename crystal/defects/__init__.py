@@ -1,9 +1,11 @@
 """ Point-defect helper functions. """
 __docformat__ = "restructuredtext en"
-
 __all__ = [ 'inequivalent_sites', 'vacancy', 'substitution', 'charged_states', \
             'band_filling', 'potential_alignment', 'charge_corrections', \
-            'magmom', 'low_spin_states', 'high_spin_states', 'magname' ]
+            'magmom', 'low_spin_states', 'high_spin_states', 'magname', \
+            'ExtractPointDefect', 'ExtractMaterial' ]
+
+from extract import PointDefect as ExtractPointDefect, Material as ExtractMaterials
 
 def inequivalent_sites(lattice, type):
   """ Yields sites occupied by type which are inequivalent. 
