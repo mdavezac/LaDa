@@ -371,7 +371,7 @@ def _repr_lattstr(self, atoms="atoms", name="structure", add_atoms="add_atoms"):
                     empty = "".join(" " for u in "{0}.set_cell = ".format(name)) )
 
   # finds with and precision of atoms.
-  if len(self.atoms) == 0: return result
+  if len(getattr(self, atoms)) == 0: return result
   width = max(len("{0:.0f}".format(u)) for atom in getattr(self, atoms) for u in atom.pos) 
   precision = ["{0}".format(u) for atom in getattr(self, atoms) for u in atom.pos]
   precision = max(len(u[(u.index('.') + 1 if '.' in u else 0):]) for u in precision)
