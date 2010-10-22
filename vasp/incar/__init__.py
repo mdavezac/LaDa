@@ -1,11 +1,12 @@
 """ Subpackage defining vasp incar parameters. """
 from _params import SpecialVaspParam, NElect, Algo, Precision, Ediff,\
-                    Encut, FFTGrid, Restart, UParams, IniWave, Magmom
+                    Encut, FFTGrid, Restart, UParams, IniWave, Magmom,\
+                    Npar
 from ...opt.decorators import add_setter
 
 __all__ = [ "SpecialVaspParam", "NElect", "Algo", "Precision", "Ediff",\
             "Encut", "FFTGrid", "Restart", "UParams", "IniWave",\
-            "Incar", "Magmom" ]
+            "Incar", "Magmom", 'Npar' ]
 
 class Incar(object):
   """ Contains vasp Incar parameters. 
@@ -19,10 +20,10 @@ class Incar(object):
          - C{ispin}: Sets number of spins. Must be either 1 or 2. 
          - C{ismear}: Smearing function. Can be set with property L{set_smearing}. 
          - C{sigma}: Smearing parameter. Can be set with property L{set_smearing}.
-         - C{isif}: Degrees of freedom to relax. Can be set using L{self.set_relaxation}. 
-         - C{nsw}: Number of ionic steps. Can be set using L{set_relaxation}. 
-         - C{ibrion}: ionic-relaxation method. Can be set using L{set_relaxation}. 
-         - C{potim}: ionic-relaxation step. Can be set using L{set_relaxation}. 
+         - C{isif}: Degrees of freedom to relax. Can be set using L{self.relaxation}. 
+         - C{nsw}: Number of ionic steps. Can be set using L{relaxation}. 
+         - C{ibrion}: ionic-relaxation method. Can be set using L{relaxation}. 
+         - C{potim}: ionic-relaxation step. Can be set using L{relaxation}. 
          - C{iniwave}: initial wavefunction to use can be either "random" or "jellium".   
          - C{nelect}: sets number of electrons in calculation above and beyond valence.
              - 0(default) lets VASP compute it from species in the system. 
@@ -41,7 +42,7 @@ class Incar(object):
            calculation is performed to get VASP recommended values.
          - C{symprec}: tolerance when determining symmetries.
          - C{magmom}: Sets magnetic moment. See `incar.Magmom`.
-         - C{npar}: Defaults to None.
+         - C{npar}: Sets npar.
          - C{lcorr}: Defaults to None.
          - C{lplane}: Defaults to None.
          - C{nbands}: Defaults to None.
@@ -57,7 +58,7 @@ class Incar(object):
              >> # make a second vasp using WAVECAR and whatnot from above call
              >> vasp(other parameters, ..., restart = save_this_object) 
 
-         - L{set_relaxation}: sets degrees of freedom to relax. Easier to use
+         - L{relaxation}: sets degrees of freedom to relax. Easier to use
              than isif, nsw, and friends.
          - L{set_smearing}: to easily set sigma and ismear.
          - L{set_symmetries}: to easily set isym and symprec.
@@ -117,7 +118,6 @@ class Incar(object):
     self.add_param = "potim",       None
     self.add_param = "nbands",      None
     self.add_param = "lorbit",      None
-    self.add_param = "npar",        None
     self.add_param = "lplane",      None
     self.add_param = "addgrid",     None
     self.add_param = "isym",        None
@@ -126,7 +126,6 @@ class Incar(object):
     self.add_param = "nupdown",     None
     self.add_param = "loptics",     None
     self.add_param = "lmaxmix",     None
-    self.add_param = "magmom",      None
     # objects derived from SpecialVaspParams will be recognized as such and can
     # be added without further fuss.
     self.nelect      = NElect(0)
@@ -139,6 +138,8 @@ class Incar(object):
     self.restart     = Restart(None)
     self.U_verbosity = UParams("occupancy")
     self.iniwave     = IniWave(None)
+    self.magmom      = Magmom()
+    self.npar        = Npar(None)
 
 
   def incar_lines(self, *args, **kwargs):
@@ -296,13 +297,29 @@ class Incar(object):
       except: raise ValueError, "Unknown smearing value %s.\n" % (value)
       assert self._value >= 1, "Unknown smearing value %s.\n" % (value)
 
-  @add_setter
-  def set_relaxation(self, *args): 
+  @property
+  def relaxation(self):
+    """ Returns the kind of relaxation being performed. """
+    nsw = 0 if self.nsw == None else self.nsw
+    if self.ibrion == None: ibrion = -1 if nsw < 0 else 0
+    else: ibrion = self.ibrion
+    if self.isif == None: isif = 0 if ibrion == 0 else 2
+    else: isif = self.isif
+   
+    if nsw < 2 or ibrion == -1: return "static"
+    result = ""
+    if isif < 5: result += "ionic "
+    if isif > 2 and isif < 7: result += "cellshape "
+    if isif in [3, 6, 7]: result += "volume"
+    return result.lstrip()
+
+  @relaxation.setter
+  def relaxation(self, args): 
     """ Sets type of relaxation.
     
         It accepts a tuple, as in:
 
-        >>> vasp.set_relaxation = "static", 
+        >>> vasp.relaxation = "static", 
       
         Some of the parameters (purposefully left out above) are optional:
         
@@ -361,6 +378,15 @@ class Incar(object):
       elif self.params["nsw"] == None or self.params["nsw"] == 0: self.params["nsw"] = 50
       if potim != None: self.params["potim"] = potim
       if self.ediffg != None and self.ediffg < self.ediff: self.ediffg = None
+
+  @add_setter
+  def set_relaxation(self, value):
+    """ Alias to relaxation. """
+    from warnings import warn
+    warn("set_relaxation is obsolete. Please use relaxation instead.",\
+         DeprecationWarning)
+    self.relaxation = value
+    
 
   def __iter__(self):
     """ Iterates over attribute names and values. """

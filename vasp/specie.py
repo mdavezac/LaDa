@@ -142,7 +142,7 @@ class Specie(object):
   def potcar_exists(self):
     """ Raises IOError if POTCAR file does not exist. """
     from os.path import exists
-    assert exists(self.path), IOError("Could not find POTCAR in {1}.".format(self.directory))
+    assert exists(self.path), IOError("Could not find POTCAR in {0}.".format(self.directory))
 
   def read_potcar(self):
     """ Returns handle/context to POTCAR file. """

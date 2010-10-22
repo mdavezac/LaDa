@@ -13,6 +13,7 @@
 """
 __docformat__ = "restructuredtext en"
 from ..opt.decorators import add_setter, broadcast_result, make_cached
+from collections import MutableMapping
 
 __all__ = [ 'JobDict', 'walk_through', 'save', 'load', 'bleed', 'unbleed',\
             'unsucessfull', 'Extract' ]
@@ -70,7 +71,7 @@ class JobDict(object):
         >>>    result = job.compute(outdir=name)
 
 
-      The L{walkthrough} method does just that: it goes through the whole tree
+      The ``walkthrough`` method does just that: it goes through the whole tree
       returning those branches where there is something to execute (eg
       C{job.functional != None}). It also returns outdir which is the subdirectory
       where to execute that particular job. Using the jobtree defined above,
@@ -110,13 +111,13 @@ class JobDict(object):
         >>> for job, name in jobs.bleed(comm=local_comm):
         >>>    result = job.compute(outdir=name)
 
-      L{bleed} makes sure that once a job is accepted, it will not be accessed
-      by any other process or pools of processes. L{bleed} allows parallelization
+      ``bleed`` makes sure that once a job is accepted, it will not be accessed
+      by any other process or pools of processes. ``bleed`` allows parallelization
       over pbs scripts and pools of MPI processes. However, it does change the
       C{jobdict} saved to "pickle". This means that once all jobs are executed,
-      L{bleed} (but not L{walk_through}) will find that C{jobdict} is empty. To
+      ``bleed`` (but not ``walk_through``) will find that C{jobdict} is empty. To
       undo these changes and use the jobdict for, say, ouptut analysis, simply
-      use L{walk_through} where possible (single pbs script or interactive
+      use ``walk_through`` where possible (single pbs script or interactive
       sessions), or do:
 
       >>> jobs.unbleed("pickle")
@@ -158,7 +159,7 @@ class JobDict(object):
       perform on objects in jobparams. Note however that __setattr__ will not
       set new object in jobparams, but rather pass on the call to the parent
       class __setattr__. To set new job parameters, one should use
-      L{add_param} or jobparams directly.
+      ``add_param`` or jobparams directly.
   """
 
   def __init__(self):
@@ -172,7 +173,8 @@ class JobDict(object):
     # Parent job. 
     super(JobDict, self).__setattr__("parent", None)
 
-  def _get_functional(self):
+  @property
+  def functional(self):
     """ Returns current functional.
     
         The functional is implemented as a property to make sure that it is
@@ -187,7 +189,8 @@ class JobDict(object):
     """
     return self._functional
 
-  def _set_functional(self, value):
+  @functional.setter
+  def functional(self, value):
     from pickle import dumps, loads # ascertains pickle-ability, copies functional
     assert value == None or hasattr(value, "__call__"),\
            ValueError("job.functional should be either None(no job) or a callable.")
@@ -196,16 +199,15 @@ class JobDict(object):
     except Exception as e:
       raise ValueError("Could not pickle functional. Caught Error:\n{0}".format(e))
     else: self._functional = loads(string)
-  def _del_functional(self): self._functional = None
+  @functional.deleter
+  def functional(self): self._functional = None
 
-  functional = property(_get_functional, _set_functional, _del_functional)
-    
   @property
   def name(self):
      """ Returns the name of this dictionary, relative to root. """
      if self.parent == None: return "/"
      string = None
-     for key, item in self.parent.children.items():
+     for key, item in self.parent.children.iteritems():
        if id(item) == id(self):
          string = self.parent.name + key
          break
@@ -315,7 +317,7 @@ class JobDict(object):
 
   def subjobs(self):
     """ Iterator over children jobs. """
-    return sorted(self.children.keys())
+    return sorted(self.children.iterkeys())
     
   def compute(self, **kwargs):
     """ Performs calculations over job list. """  
@@ -343,7 +345,7 @@ class JobDict(object):
         ``self``.  if items in ``other`` are found in ``self``, unless merge is
         set to true. This function is recurrent: subjobs are also updated.
     """
-    for key, value in other.children.items():
+    for key, value in other.children.iteritems():
       if key in self: self[key].update(value)
       else: self[key] = value
 
@@ -404,8 +406,10 @@ class JobDict(object):
     else: super(JobDict, self).__setattr__(name, value)
 
   def __dir__(self):
-    result = [u for u in self.__dict__ if u[0] != '_'] 
-    result.extend([u for u in self.jobparams.keys() if u[0] != '_'])
+    from itertools import chain
+    result = chain([u for u in self.__dict__ if u[0] != '_'], \
+                   [u for u in dir(self.__class__) if u[0] != '_'], \
+                   [u for u in self.jobparams.iterkeys() if u[0] != '_'])
     return list(set(result))
 
   def __getstate__(self):
@@ -462,7 +466,7 @@ class JobDict(object):
 def walk_through(jobdict, outdir = None, comm = None):
   """ Generator to iterate over actual calculations. 
       
-      see L{JobDict} description.
+      see ``JobDict`` description.
   """
   if isinstance(jobdict, str): jobdict = load(jobdict, comm=comm)
   for u in jobdict.walk_through(outdir): yield u
@@ -531,9 +535,9 @@ def bleed(path=None, outdir=None, comm=None):
           Will broadcast yielded stuff from root. Because of file locking,
           this generator may freeze the system if not used correctly with mpi.
 
-      :return: yields (job, directory), see L{walk_through}.
+      :return: yields (job, directory), see ``walk_through``.
            - job: a job dictionary with the current job to execute.
-           - directory: a suggested directory name with L{outdir} as its root.
+           - directory: a suggested directory name with ``outdir`` as its root.
 
       This function alters the dictionary stored in `path`. If `path` is
       empty, then returns None, None. An exclusive lock is acquired before
@@ -633,40 +637,365 @@ def unsucessfull(jobdict, extractor, outdir = None):
 
   return jobdict
 
+class DefaultParams:
+  """ Default parameters for `ForwardingDict`, `MassExtract`, and `JobParams`. """
+  readonly = False
+  """ Whether items can be modified in parallel using attribute syntax. """
+  naked_end = True
+  """ Whether last item is returned as is or wrapped in ForwardingDict. """
+  only_existing = True
+  """ Whether attributes can be added or only modified. """
+  unix_re  = True
+  """ If True, then all regex matching is done using unix-command-line patterns. """
+
+class ForwardingDict(MutableMapping): 
+  """ A dictionary which forwards attributes and calls. """
+  def __init__(self, dictionary = None, _attr_list=None, **kwargs):
+    self._is_initializing_forwarding_dict = True
+    """ Tells get/setattr that Forwarding dict is being initialized. """
+    super(ForwardingDict, self).__init__()
+
+    self.readonly      = kwargs.pop('readonly', DefaultParams.readonly)
+    """ Whether items can be modified in parallel using attribute syntax. """
+    self.naked_end     = kwargs.pop('naked_end', DefaultParams.naked_end)
+    """ Whether last item is returned as is or wrapped in ForwardingDict. """
+    self.only_existing = kwargs.pop('only_existing', DefaultParams.only_existing)
+    """ Whether attributes can be added or only modified. """
+    self._attr_list    = [] if _attr_list == None else _attr_list
+    """ List of attributes of attributes, from oldest parent to youngest grandkid. """
+    self.dictionary    = {} if dictionary == None else dictionary
+    """" The dictionary for which to unroll attributes. """
+    del self._is_initializing_forwarding_dict
+    assert len(kwargs) == 0, ValueError("Unkwnown keyword arguments:{0}.".format(kwargs.keys()))
+
+  def call(self, *args, **kwargs):
+    """ Forwards call to items in dictionary.
+    
+        In practice, only forward calls to those items which can be completely
+        unrolled and for which the unrolled object is callable.
+
+        There seems to be a bug in python 2.6 or 2.7 which make instances
+        derived from object with a __call__ bound method in __dict__ (rather
+        than in __class__.__dict__) uncallable. Linked to tp_getattr deprecation?
+    """
+    result = self.copy(attr_list=[])
+    result.clear()
+    for key, value in self.dictionary.iteritems():
+      if hasattr(value, "__call__"): result[key] = value(*args, **kwargs)
+    if self.naked_end and len(result) == 1: return result[result.keys()[0]]
+    return result
+
+
+  @property
+  def parent(self):
+    """ Returns a ForwardingDict with parent items of self, eg unrolled once. """
+    return self.copy(_attr_list=self._attr_list[:-1])
+
+  @property
+  def root(self):
+    """ Returns a ForwardingDict with root grandparent. """
+    return self.copy(_attr_list=[])
+
+  @property
+  def _attributes(self):
+    """ Returns attributes special to this ForwardingDict. """
+    result = set()
+    for value in self.values(): result |= set(dir(value))
+    return result
+
+  def __getattr__(self, name):
+    """ Returns a Forwarding dict with next requested attribute. """
+    from functools import reduce
+    from itertools import chain
+
+    found = False
+    attrs = len(self._attr_list) > 0
+    result = self.copy(append=name)
+    for key, value in self.dictionary.iteritems():
+      if attrs: value = reduce(getattr, chain([value], self._attr_list))
+      if not hasattr(value, name): del result[key]
+    if self.naked_end and len(result.dictionary) == 1: return result[result.keys()[0]]
+    if len(result.dictionary) == 0: 
+      raise AttributeError( "Attribute {0} not found in {1} instance."\
+                            .format(name, self.__class__.__name__) )
+    return result
+
+  def __setattr__(self, name, value):
+    """ Forwards attribute setting. """
+    from functools import reduce
+    from itertools import chain
+    # prior to initialization.
+    if name == "_is_initializing_forwarding_dict": 
+      super(ForwardingDict, self).__setattr__(name, value)
+    if "_is_initializing_forwarding_dict" in self.__dict__:
+      super(ForwardingDict, self).__setattr__(name, value)
+
+    # After initialization.
+    # First checks for attribute in ForwardingDict instance.
+    try: super(ForwardingDict, self).__getattribute__(name)
+    except AttributeError: pass
+    else: super(ForwardingDict, self).__setattr__(name, value); return
+
+    # checks this dictionary is writable.
+    if self.readonly: raise RuntimeError("ForwardingDict instance is read-only.")
+
+    # Case with no attributes to unroll.
+    found = False
+    attrs = len(self._attr_list) > 0
+    for item in self.dictionary.values():
+      if attrs: # unroll attribute list.
+        try: item = reduce(getattr, chain([item], self._attr_list))
+        except AttributeError: continue
+      if hasattr(item, name) or not self.only_existing:
+        found = True
+        setattr(item, name, value)
+    if not found:
+      raise AttributeError( "Attribute {0} not found in {1} instance."\
+                            .format(name, self.__class__.__name__) )
+
+  def __delattr__(self, name):
+    """ Deletes an attribute or forwarded attribute. """
+    from functools import reduce
+    from itertools import chain
+
+    try: super(ForwardingDict, self).__delattr__(name)
+    except AttributeError: pass
+    else: return
+    
+    if self.readonly: raise RuntimeError("ForwardingDict instance is read-only.")
+
+    found = False
+    attrs = len(self._attr_list) > 0
+    for item in self.dictionary.values():
+      if attrs:
+        try: item = reduce(getattr, chain([item], self._attr_list))
+        except AttributeError: continue
+      if hasattr(item, name): 
+        delattr(item, name)
+        found = True
+    if not found:
+      raise AttributeError( "Attribute {0} not found in {1} instance."\
+                            .format(name, self.__class__.__name__) )
+
+  def __dir__(self):
+    from itertools import chain
+    results = chain( [u for u in self.__dict__ if u[0] != '_'], \
+                     [u for u in dir(self.__class__) if u[0] != '_'], \
+                     self._attributes )
+    return list(set(results))
+
+
+  def __getitem__(self, key):
+    from functools import reduce
+    from itertools import chain
+    if len(self._attr_list) == 0: return self.dictionary[key]
+    return reduce(getattr, chain([self.dictionary[key]], self._attr_list))
+  def __setitem__(self, key, value):
+    """ Add/modify item to dictionary.
+
+        Items can be truly added only to root dictionary.
+    """
+    from functools import reduce
+    from itertools import chain
+    # root dictioanary.
+    if len(self._attr_list) == 0: self.dictionary[key] = value; return
+    # checks this is writable.
+    assert not self.readonly, RuntimeError("This ForwardingDict is readonly.")
+    assert key in self.dictionary,\
+           KeyError( "{0} is not in the ForwaringDict. Items "\
+                     "cannot be added to a non-root ForwardingDict.".format(key))
+    # non-root dict: must set innermost attribute.
+    o = self.dictionary[key]
+    if len(self._attr_list) > 1: 
+      try: o = reduce(getattr, chain([o], self._attr_list[:-1]))
+      except AttributeError:
+        raise AttributeError( "Could not unroll list of attributes for object in {0}: {1}."\
+                              .format(key, self._attr_list) )  
+    assert (not self.only_existing) or hasattr(o, self._attr_list[-1]), \
+           KeyError( "{0} cannot be set with current attribute list.\n{1}\n"\
+                     .format(key, self._attr_list) )
+    setattr(o, self._attr_list[-1], value)
+  def __delitem__(self, key): 
+    """ Removes item from dictionary. """
+    o = self.dictionary[key]
+    del self.dictionary[key]
+    return o
+  def __len__(self): return len(self.dictionary)
+  def __contains__(self, key): return key in self.dictionary
+  def __iter__(self): return self.dictionary.__iter__()
+  def keys(self): return self.dictionary.keys()
+
+
+  def __copy__(self):
+    """ Returns a shallow copy of this object. """
+    result = self.__class__()
+    result.__dict__.update(self.__dict__)
+    result.dictionary = self.dictionary.copy()
+    return result
+
+  def copy(self, append=None, dict=None, **kwargs):
+    """ Returns a shallow copy of this object.
+     
+        :Parameters:
+          append : str or None
+            If not none, will append value to list attributes of the copy. In
+            that case, the list of attributes ``_attr_list`` is copied
+            *deeply*.
+          kwargs : dict
+            Any other attribute to set in the ForwardingDict instance. Note
+            that only attributes of the ForwardingDict instance are
+            set/modified. This is npt propagated to the object the dict holds.
+    """
+    from copy import copy, deepcopy
+    result = copy(self)
+    assert append == None or "_attr_list" not in kwargs,\
+           ValueError( "Cannot copy attribute _attr_list as "\
+                       "a keyword and as ``append`` simultaneously." )
+    if 'dictionary' in kwargs: result.dictionary = kwargs.pop('dictionary').copy()
+    for key, value in kwargs.iteritems():
+      super(ForwardingDict, result).__setattr__(key, value)
+
+    if append != None:
+      result._attr_list = deepcopy(self._attr_list)
+      result._attr_list.append(append)
+
+    return result
+
+
+  def __str__(self): return self.dictionary.__str__()
+  def __repr__(self): 
+    """ Returns a represetation of this object. """
+    if len(self) == 0: return '{}'
+    if len(self) == 1: return "{{'{0}': {1}}}".format(self.keys()[0], repr(self.values()[0]))
+    string = "{\n"
+    m = max(len(k) for k in self.keys())
+    for k, v in self.iteritems():
+      string += "  '{0}': {2}{1},\n".format(k, repr(v), "".join(" " for i in range(m-len(k))))
+    return string + "}"
+
+
 class AbstractMassExtract(object): 
   """ Propagates extraction methods from different jobs. """
 
   def uncache(self): 
     """ Uncache values. """
-    self.__dict__.pop("_cached_extractors", None)
-    self.__dict__.pop("_cached_properties", None)
+    self._cached_extractors = None
+    self._cached_attributes = None
 
 
-  def __init__(self, path, comm = None):
+  def __init__(self, view=None, excludes=None, **kwargs):
     """ Initializes extraction object. 
 
-
         :Parameters:
-          path
-            Root of calculations.
-          comm
-            an boost.mpi.communicator instance.
+          view : str or None
+            Pattern which the job names must match to be included in the
+            extraction.
+          excludes : list of str or None
+            List of patterns which the job names must *not* match to be
+            included in the extraction.
+
+        :Kwargs naked_end: True if should return value rather than dict when only one item.
+        :Kwargs unix_re: converts regex patterns from unix-like expression.
     """
     from ..opt import RelativeDirectory
 
     super(AbstractMassExtract, self).__init__()
-    self.comm = comm
 
-    self._root = RelativeDirectory(path=path, hook=self.uncache)
-    """ Root directory of the job. """
+    self.naked_end = kwargs.pop('naked_end', DefaultParams.naked_end)
+    """ If True and dict to return contains only one item, returns value itself. """
+    self.view = view
+    """ The pattern which job-names should match. """
+    self.unix_re = kwargs.pop('unix_re', DefaultParams.unix_re)
+    """ If True, then all regex matching is done using unix-command-line patterns. """
+    self.excludes = excludes
+    assert len(kwargs) == 0, ValueError("Unkwnown keyword arguments:{0}.".format(kwargs.keys()))
+    self._cached_attributes = None
+    """ List of extra attributes derived from extraction objects. """
+    self._cached_extractors = None
+    """ List of extration objects. """
 
   @property 
-  def root(self):
-    """ Root directory of the job. """
-    return self._root.path
-  @root.setter
-  def root(self, value): self._root.path = value
+  def excludes(self):
+    """ Pattern or List of patterns to ignore. or None.
+
+        ``self.unix_re`` determines whether these are unix-command-line like
+        patterns or true python regex.
+    """ 
+    try: return self._excludes 
+    except AttributeError: return None
+  @excludes.setter
+  def excludes(self, value):
+    if isinstance(value, str): self._excludes = [value]
+    else: self._excludes = value
+
+  def avoid(self, excludes):
+    """ Returns a new MassExtract object with further exclusions. 
+
+        :Param excludes: Pattern or patterns to exclude from output.
+        :type excludes: str or list of str or None 
+          
+        The goal of this function is to work as an *anti* operator [], i.e. by
+        excluding from the output anything that matches the patterns, rather
+        including only those which match the pattern.
+        This is strickly equivalent to:
+
+        >>> other = massextract.copy(excludes=excludes)
+        >>> other.excludes.extend(massextract.excludes)
+
+        and then doing calculations with ``other``. The advantage is that it
+        can all be done on one line.
+
+        If the ``excludes`` argument is None or an empty list, then the
+        returned object will not exlude anything.
+    """ 
+    if excludes == None or len(excludes) == 0: return self.copy(excludes=None)
+    result = self.copy(excludes=excludes)
+    if self.excludes != None: result.excludes.extend(self.excludes)
+    return result
+
+  def __iter__(self):
+    """ Iterates through all job names. """
+    for name, job in self._regex_extractors(): yield name
+
+  def iteritems(self):
+    """ Iterates through all extraction objects and names. """
+    for name, job in self._regex_extractors(): yield name, job
+  def items(self):
+    """ Iterates through all extraction objects and names. """
+    return [name, job in self.iteritems()]
     
+  def itervalues(self):
+    """ Iterates through all extraction objects. """
+    for name, job in self._regex_extractors(): yield job
+  def values(self):
+    """ Iterates through all extraction objects. """
+    return [job for job in self.itervalues()]
+
+  def iterkeys(self):
+    """ Iterates through all extraction objects. """
+    for name, job in self._regex_extractors(): yield name
+  def keys(self):
+    """ Iterates through all extraction objects. """
+    return [name for name in self.iterkeys()]
+  
+  @property
+  def extractors(self):
+    """ Returns dictioanary of extrators. """
+    result = {}
+    for k, j in self.iteritems(): result[k] = j
+    if self.naked_end and len(result) == 1: return result[result.keys()[0]]
+    return ForwardingDict(result, naked_end=self.naked_end)
+
+  def __iter__(self):
+    """ Iterates through all job names. """
+    for name, job in self.iteritems(): yield name
+
+  def _regex_pattern(self, pattern, flags=0):
+    """ Returns a regular expression. """
+    from re import compile
+    from ..opt import convert_from_unix_re
+    return compile(pattern, flags) if not self.unix_re\
+           else convert_from_unix_re(pattern)
 
   def walk_through(self):
     """ Generator to go through all relevant jobs. 
@@ -676,71 +1005,191 @@ class AbstractMassExtract(object):
     """
     abstract
 
+  @property
+  def view(self):
+    """ A regex pattern which the name of extracted jobs should match.
+
+        If None, then no match required. Should be a string, not an re object.
+    """
+    if self._view == None: return ""
+    return self._view
+  @view.setter
+  def view(self, value): self._view = value
+
+  @property
   def _extractors(self):
     """ Goes through all jobs and collects Extract if available. """
-    from os.path import exists, join
+    if self._cached_extractors != None: return self._cached_extractors
     
-    if "_cached_extractors" in self.__dict__:
-      return self._cached_extractors
+    from os.path import exists, join
     result = {}
     for name, extract in self.walk_through(): result[name] = extract 
     self._cached_extractors = result
     return result
 
-  def _properties(self): 
-    """ Returns cached __dir__ result. """
-    if hasattr(self, "_cached_properties"): return self._cached_properties
+  def _regex_extractors(self):
+    """ Loops through jobs in this view. """
+    if self._view == "": 
+      for key, value in self._extractors.iteritems(): yield key, value
+      return
+
+    regex = self._regex_pattern(self.view)
+    if self.excludes != None: excludes = [self._regex_pattern(u) for u in self.excludes]
+    for key, value in self._extractors.iteritems():
+      if regex.match(key) == None: continue
+      if self.excludes != None and any(u.match(key) != None for u in excludes): continue
+      yield key, value
+
+  @property
+  def _attributes(self): 
+    """ Returns __dir__ special to the extraction itself. """
+    if self._cached_attributes != None: return self._cached_attributes
+
     results = set([])
-    for key, value in self._extractors().items():
-      for name in dir(value):
-        if name[0] == '_': continue
-        results.add(name)
-    self._cached_properties = results
+    for key, value in self.iteritems():
+      results |= set([u for u in dir(value) if u[0] != '_'])
+    self._cached_attributes = results
     return results
 
   def __dir__(self): 
-    results = set([u for u in self.__dict__ if u[0] != '_']) | self._properties()
-    return list(results)
+    from itertools import chain
+    results = chain( [u for u in self.__dict__ if u[0] != '_'], \
+                     [u for u in dir(self.__class__) if u[0] != '_'], \
+                     self._attributes )
+    return list(set(results))
 
   def __getattr__(self, name): 
     """ Returns extracted values. """
-    if name == "_cached_extractors" or name == "_cached_properties": 
-      raise AttributeError("Unknown attribute {0}.".format(name))
-    if name in self._properties(): 
-      result = {}
-      for key, value in self._extractors().items():
-        try: result[key] = getattr(value, name)
-        except: result.pop(key, None)
-      return result
-    raise AttributeError("Unknown attribute {0}.".format(name))
+    assert name in self._attributes, AttributeError("Unknown attribute {0}.".format(name))
+
+    result = {}
+    for key, value in self.iteritems():
+      try: result[key] = getattr(value, name)
+      except: result.pop(key, None)
+    if self.naked_end and len(result) == 1: return result[result.keys()[0]]
+    return ForwardingDict(result, naked_end=self.naked_end)
+
+  def __getitem__(self, name):
+    """ Returns a view of the current job-dictionary. """
+    from os.path import normpath, join
+    if name[0] == '/': return self.copy(view=name)
+    path = normpath(join('/', join(self.view, name)))
+    return self.copy(view=path)
+
+  @property
+  def jobs(self):
+    """ List of jobnames (satisfying the current view). """
+    return [key for key, value in self.iteritems()]
+
+  @property
+  def children(self):
+    """ next set of minimal regex. """
+    from os.path import join, normpath
+    regex = self._regex_pattern(self.view)
+
+    jobs = self.jobs
+    if len(self.jobs) < 2: return 
+    children = set()
+    if len(self.view) == 0:
+      for name in self.jobs:
+        children.add(name[:1+name[1:].find('/')])
+    else:
+      for name in self.jobs:
+        where = regex.match(name)
+        if len(name) == where.end() +1: continue
+        first_index = name[where.end():].find('/')
+        if first_index == -1: continue
+        first_index += where.end() + 1
+        if first_index >= len(name): continue
+        end = name[first_index:].find('/')
+        if end == -1: children.add(name)
+        else: children.add(name[:end + first_index])
+    
+    for child in children: yield self.copy(view=child)
+
+  def grep(self, regex, flags=0, yield_match=False):
+    """ Yields views for children with fullnames matching the regex.
+    
+        :Parameters:
+          regex : str
+            The regular expression which the fullnames should match. Whether
+            this is a python regex, or something which behaves like the unix
+            command-line depends on ``self.unix_re``.
+          flags : int
+             Flags from ``re`` to use when compilling the regex pattern.
+          yield match: bool
+             If True, will yield a two tuple, where the second item is the
+             match object.
+             If False, only the view is yielded.
+             This option is not available (or meaningfull) if ``self.unix_re``
+             is True.
+
+        The match is successful if the regex is matched using python's
+        `re.search <http://docs.python.org/library/re.html#re.search>`_ method.
+
+        Only the innermost view of each match is given. In other words, if a
+        view is yielded, its subviews will not be yielded.
+
+        If the current view matches the regex, then it alone is yielded. 
+    """
+    assert not (yield_match and self.unix_re),\
+           ValueError("unix_re and yield_matc cannot be both true.") 
+    reg = self._regex_pattern(regex, flags)
+
+    found = reg.search(self.view)
+    if found != None and yield_match:       yield self; return
+    elif found != None and not yield_match: yield self, found; return
+    
+    for child in self.children:
+      found = reg.search(self.view)
+      if reg.search(child.view) == None:# goes to next level. 
+        for grandchild in child.grep(regex, flags, yield_match): yield grandchild
+      elif yield_match: yield child, found
+      else: yield child
 
   def __getstate__(self):
     d = self.__dict__.copy()
     d.pop("comm", None)
-    if "_root" in d: d["_root"].hook = None
+    if "_rootdir" in d: d["_rootdir"].hook = None
     return d
 
   def __setstate__(self, arg):
     self.__dict__.update(arg)
     self.comm = None
-    if "_root" in d: d["_root"].hook = self.uncache
+    if "_rootdir" in d: d["_rootdir"].hook = self.uncache
        
-     
   def solo(self):
     """ Extraction on a single process.
   
         Sometimes, it is practical to perform extractions on a single process
-        only, eg without blocking mpi calls. C{self.L{solo}()} returns an
+        only, eg without blocking mpi calls. C{self.``solo}()`` returns an
         extractor for a single process:
         
         >>> # prints only on proc 0.
         >>> if boost.mpi.world.rank == 0: print extract.solo().structure
     """
-    from copy import deepcopy
-    
     if self.comm == None: return self
+
+    from copy import deepcopy
     copy = deepcopy(self)
     return copy
+
+  def __copy__(self):
+    """ Returns a shallow copy. """
+    result = self.__class__()
+    result.__dict__.update(self.__dict__)
+    return result
+
+  def copy(self, **kwargs):
+    """ Returns a shallow copy. 
+    
+        :Param kwargs:  Any keyword attribute will modify the corresponding
+          attribute of the copy.
+    """
+    from copy import copy
+    result = copy(self)
+    for key, value in kwargs.iteritems(): setattr(result, key, value)
+    return result
 
 
 
@@ -755,34 +1204,88 @@ class MassExtract(AbstractMassExtract):
       diagnosis.
   """
 
-  def __init__(self, path, jobdict=None, comm = None):
+  def __init__(self, path=None, comm=None, **kwargs):
     """ Initializes extraction object. 
  
         :Parameters:
-           path 
-             If ``jobdict`` is None, then should point to a pickled
-             dictionary. If ``jobdict`` is a JobDict instance, then it should
-             point the directory where calculations are saved.
-           jobdict : None or JobDict.
-             If it is None, then ``path`` should point to a pickled
-             job-dictionary. If it is a jobdictonary, then ``path`` should point
-             to a directory where calculations where performed.
-           comm : boost.mpi.communicator
-             All processes will be syncronized.
+          path : str or None
+            Pickled jobdictioanary for which to extract stuff. If None, will
+            attempt to use the current jobdictionary.
+          comm : boost.mpi.communicator
+            All processes will be syncronized.
+          kwargs : dict
+            Variable length keyword argument passed on to `AbstractMassExtract`.
+
+        :Kwargs view: Pattern to match to job names.
+        :Kwargs excludes: List of patterns which job-names should not match.
+        :Kwargs naked_end: True if should return value rather than dict when only one item.
+        :Kwargs unix_re: converts regex patterns from unix-like expression.
     """
+    super(MassExtract, self).__init__(**kwargs)
+
     from os.path import isdir, isfile, exists, dirname, abspath
-    super(MassExtract, self).__init__(path, comm=comm)
-    if jobdict == None:
-      assert isfile(path), IOError("{0} is not a file.".format(path))
-      self.root = path # expands usernames, environment variables.
-      with open(self.root, "r") as file: self.jobdict = load(path, comm)
-      self.root = dirname(self.root)
-    elif path != None: 
-      assert isdir(path), IOError("{0} is not a directory.".format(path))
-      self.root = path
-      self.jobdict = jobdict
+
+    self.rootdir = path # Path to the job dictionary.
     self.comm = comm
-    if path != None: self._extractors() # gets stuff cached.
+    """ Communicator if any. """
+
+  @property
+  def view(self):
+    """ A regex pattern which the name of extracted jobs should match.
+
+        If None, then no match required. Should be a string, not an re object.
+    """
+    if self._view == None:
+      try: from IPython.ipapi import get as get_ipy
+      except ImportError: raise AttributeError("path not set.")
+      ip = get_ipy()
+      if "current_jobdict" not in ip.user_ns:
+        print "No current jobdictionary."
+        return
+      return ip.user_ns["current_jobdict"].name
+      return 
+    return self._view
+  @view.setter
+  def view(self, value): self._view = value
+
+  @property
+  def rootdir(self): 
+    """ Root directory of the jobdictionary. """
+    from os.path import dirname
+
+    if self._rootdir == None: 
+      try: from IPython.ipapi import get as get_ipy
+      except ImportError: raise AttributeError("path not set.")
+      ip = get_ipy()
+      if "current_jobdict_path" not in ip.user_ns:
+        print "No current jobdictionary path."
+        return
+      return dirname(ip.user_ns["current_jobdict_path"])
+
+    return dirname(self._rootdir.path)
+  @rootdir.setter
+  def rootdir(self, value):
+    from ..opt import RelativeDirectory
+    if value == None:
+      self._rootdir = None
+      return
+    self._rootdir = RelativeDirectory(value, hook=self.uncache)
+    del self._jobdict
+  @rootdir.deleter
+  def rootdir(self): self._rootdir = None
+
+  @property
+  def jobdict(self):
+    if self._rootdir == None: 
+      try: from IPython.ipapi import get as get_ipy
+      except ImportError: raise AttributeError("path not set.")
+      ip = get_ipy()
+      if "current_jobdict" not in ip.user_ns:
+        print "No current jobdictionary."
+        return
+      return ip.user_ns["current_jobdict"].root
+    if "_jobdict" not in self.__dict__: self._jobdict = load(self._rootdir.path, self.comm)
+    return self._jobdict.root
 
   def walk_through(self):
     """ Generator to go through all relevant jobs.  
@@ -795,7 +1298,172 @@ class MassExtract(AbstractMassExtract):
     for job, name in self.jobdict.walk_through():
       if job.is_tagged: continue
       if not hasattr(job.functional, "Extract"): continue
-      if not exists(join(self.root, name)): print join(self.root, name); continue
-      try: extract = job.functional.Extract(join(self.root, name), comm = self.comm)
+      try: extract = job.functional.Extract(join(self.rootdir, name), comm = self.comm)
       except: pass
-      else: yield name, extract
+      else: yield job.name, extract
+
+
+class JobParams(AbstractMassExtract):
+  """ Get and sets job parameters for a job-dictionary. """
+  def __init__( self, jobdict = None, only_existing=True, **kwargs):
+    """ Initializes job-parameters.
+
+        :Parameters:
+          jobdict : None or JobDict
+	    The jobdictionary for which to get/set parameters. If None, will
+            look for ipython's current_jobdict.
+          kwargs : dict
+            Variable length keyword argument passed on to `AbstractMassExtract`.
+
+        :Kwargs view: Pattern to match to job names.
+        :Kwargs excludes: List of patterns which job-names should not match.
+        :Kwargs naked_end: True if should return value rather than dict when only one item.
+        :Kwargs unix_re: converts regex patterns from unix-like expression.
+    """
+    super(JobParams, self).__init__(**kwargs)
+
+    super(JobParams, self).__setattr__("_jobdict", None)
+    self._jobdict = jobdict
+    """ Job-dictionary for which to get/set parameters. """
+    super(JobParams, self).__setattr__("only_existing", None)
+    self.only_existing = kwargs.get('only_existing', DefaultParams.only_existing)
+    """ Only modifies parameter which already exist. """
+
+  @property
+  def jobdict(self):
+    """ Jobdictionary for which to get/set parameters. """
+    if self._jobdict == None:
+      try: from IPython.ipapi import get as get_ipy
+      except ImportError: raise AttributeError("jobdict not set.")
+      else:
+        ip = get_ipy()
+        if "current_jobdict" not in ip.user_ns:
+          print "No current jobdictionary."
+          return
+        return ip.user_ns["current_jobdict"].root
+    return self._jobdict.root
+  @jobdict.setter
+  def jobdict(self, value): self._jobdict = value
+
+  @property
+  def onoff(self):
+    """ Dictionary with calculations which will run.
+
+	Whereas other properties only report untagged jobs, this will report
+        both. Effectively checks wether a job is tagged or not. Calculations which 
+    """
+    result = {}
+    for name, job in self.iteritems():
+      result[name] = "off" if job.is_tagged else "on"
+    if self.naked_end and len(result) == 1: return result[result.keys()[0]]
+    return result
+
+  @onoff.setter
+  def onoff(self, value):
+    """ Dictionary with tagged and untagged jobs.
+
+	Whereas other properties only report untagged jobs, this will report
+        both.
+    """
+    if value == "on" or value == True:
+      for name, job in self.iteritems(): job.untag()
+    elif value == "off" or value == False:
+      for name, job in self.iteritems(): job.tag()
+
+  @property
+  def extractors(self):
+    """ Returns dictionary of extrators. """
+    result = {}
+    for k, j in self.iteritems(): result[k] = j
+    if self.naked_end and len(result) == 1: return result[result.keys()[0]]
+    return ForwardingDict( result, naked_end=self.naked_end, \
+                           only_existing=self.only_existing, readonly=False)
+    
+
+  @property
+  def view(self):
+    """ A regex pattern which the name of extracted jobs should match.
+
+        If None, then no match required. Should be a string, not an re object.
+    """
+    if self._view == None:
+      try: from IPython.ipapi import get as get_ipy
+      except ImportError: raise AttributeError("path not set.")
+      ip = get_ipy()
+      if "current_jobdict" not in ip.user_ns:
+        print "No current jobdictionary."
+        return
+      return ip.user_ns["current_jobdict"].name
+      return 
+    return self._view
+  @view.setter
+  def view(self, value): self._view = value
+
+  def walk_through(self):
+    """ Loops through all correct jobs. """
+    for job, name in self.jobdict.walk_through(): yield job.name, job
+
+  def __getattr__(self, name): 
+    """ Returns extracted values. """
+    result = {}
+    for key, value in self.iteritems():
+      if value.is_tagged: continue
+      try: result[key] = getattr(value, name)
+      except: result.pop(key, None)
+    if self.naked_end and len(result) == 1: return result[result.keys()[0]]
+    if len(result) == 0: 
+      raise AttributeError( "Attribute {0} not found in {1} instance."\
+                            .format(name, self.__class__.__name__) )
+    return ForwardingDict( result, naked_end=self.naked_end, \
+                           only_existing=self.only_existing, readonly=False)
+
+  def __setattr__(self, name, value):
+    """ Returns dictionary with job parameters for each job. """
+    from re import match
+    # initialization not done yet.
+    if "only_existing" not in self.__dict__: super(JobParams, self).__setattr__(name, value)
+    # some cached attributes.
+    if match("_cached_attr\S+", name): super(JobParams, self).__setattr__(name, value)
+    # Look for other attriubtes in current instance.
+    try: super(JobParams, self).__getattribute__(name)
+    except AttributeError: pass
+    else:
+      super(JobParams, self).__setattr__(name, value)
+      return 
+
+    found = False
+    for jobname, job in self.iteritems():
+      if job.is_tagged: continue
+      if hasattr(job, name): setattr(job, name, value)
+      elif not self.only_existing: 
+        job.jobparams[name] = value
+        found = True
+    if not found:
+      raise AttributeError( "Attribute {0} not found in {1} instance."\
+                            .format(name, self.__class__.__name__) )
+
+  def __delattr__(self, name):
+    try: super(JobParams, self).__getattribute__(name)
+    except AttributeError: pass
+    else:
+      super(JobParams, self).__delattr__(name, value)
+      return
+
+    found = False
+    for jobname, job in self.iteritems():
+      if job.is_tagged: continue
+      if hasattr(job, name):
+        delattr(job, name)
+        found = True
+    if not found:
+      raise AttributeError( "Attribute {0} not found in {1} instance."\
+                            .format(name, self.__class__.__name__) )
+
+  @property
+  def _attributes(self):
+    """ Attributes which already exist. """
+    result = set()
+    for name, job in self.iteritems():
+      if not job.is_tagged: result |= set([u for u in dir(job) if u[0] != '_'])
+    return result
+ 

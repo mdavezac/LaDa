@@ -3,8 +3,11 @@ __docformat__ = "restructuredtext en"
 
 from ..vff import Extract as VffExtract, _get_script_text
 from ..opt.decorators import broadcast_result, make_cached
+from ..opt import AbstractExtractBase
 
-class Extract(object):
+__all__ = ['Extract']
+
+class Extract(AbstractExtractBase):
   """ A class to extract data from ESCAN output files. 
   
       This class helps to extract information from the escan output, including
@@ -26,12 +29,11 @@ class Extract(object):
           escan : lada.escan.Escan
             Wrapper around the escan functional.
     """
-    from os import getcwd
     from . import Escan
-    from ..opt import RelativeDirectory
+
+    super(Extract, self).__init__(directory=directory, comm=comm)
 
     if escan == None: escan = Escan()
-    super(Extract, self).__init__()
     
     self._vffout = VffExtract(directory, comm = comm, vff = escan.vff)
     """ Private reference to vff extraction object. """
@@ -39,32 +41,36 @@ class Extract(object):
     """ OUTCAR file to extract stuff from. """
     self.FUNCCAR = escan._FUNCCAR
     """ Pickle to FUNCCAR. """
-    self.comm = comm
-    """ Communicator for extracting stuff. 
-
-        All procs will get same results at end of extraction. 
-        Program will hang if not all procs are called when extracting some
-        value. Instead, use `solo`.
-
-        >>> extract.success # Ok
-        >>> if comm.rank == 0: extract.success # will hang if comm.size != 1
-        >>> if comm.rank == 0: extract.solo().success # Ok
-    """
-    self._directory = RelativeDirectory(directory, hook=self.uncache)
-    """ Directory where output should be found.
-
-        Implemented as a RelativeDirectory for added computer to computer
-        transferability.
-    """
   
-  @property
-  def directory(self):
-    """ Directory where output should be found. """
-    return self._directory.path
-  @directory.setter
-  def directory(self, value):
-    self._directory.path = value
+  def __directory__hook__(self):
+    """ Called whenever the directory changes. """
+    super(Extract, self).__directory_hook__()
     self._vffout.directory = value
+
+  def uncache(self): 
+    """ Uncache values. """
+    super(Extract, self).uncache(self)
+    self._vffout.uncache()
+
+  def __copy__(self):
+    """ Returns a shallow copy of this object. """
+    result = super(Extract, self).__copy__()
+    result._vffout.__copy__()
+    return result
+
+  def copy(self, **kwargs):
+    """ Returns a shallow copy of this object.
+
+        :Params kwargs:
+          Any keyword argument is set as an attribute of this object.
+    """
+    result = self.__copy__()
+    for k, v in kwargs.items():
+      if hasattr(result._vffout, k):
+        setattr(result._vffout, k, v)
+        if hasattr(result, k): setattr(result, k, v)
+      else: setattr(result, k, v)
+    return result
 
   @property
   @broadcast_result(attr=True, which=0)
@@ -125,6 +131,7 @@ class Extract(object):
            else local_dict["functional"]
 
 
+  @property
   def _double_trouble(self):
     """ Returns true, if non-spin polarized or Kammer calculations. """
     from numpy.linalg import norm
@@ -144,10 +151,10 @@ class Extract(object):
     """
     from os.path import exists, join
     from numpy import array
-    import quantities as pq
+    from quantities import eV
     path = self.OUTCAR
     if len(self.directory): path = join(self.directory, self.OUTCAR)
-    assert exists(path), RuntimeError("Could not find file %s:" % (path))
+    assert exists(path), RuntimeError("Could not find file {0}.".format(path))
     with open(path, "r") as file:
       for line in file: 
         if line.find(" FINAL eigen energies, in eV") != -1: break
@@ -158,9 +165,8 @@ class Extract(object):
         result.extend( float(u) for u in line.split() )
       else: raise IOError("Unexpected end of file when grepping for eigenvectors.")
 
-    result =  array(result, dtype="float64") if not self._double_trouble()\
-              else array([result[i/2] for i in range(2*len(result))], dtype="float64")
-    return result * pq.eV
+    if self._double_trouble: result = [result[i/2] for i in range(2*len(result))]
+    return array(result, dtype="float64") * eV
 
   @property 
   @make_cached
@@ -185,8 +191,8 @@ class Extract(object):
         result.extend( float(u) for u in line.split() )
       else: raise IOError("Unexpected end of file when grepping for eigenvectors.")
 
-    return array(result, dtype="float64") if not self._double_trouble()\
-           else array([result[i/2] for i in range(2*len(result))], dtype="float64")
+    if self._double_trouble: result = [result[i/2] for i in range(2*len(result))]
+    return array(result, dtype="float64") 
 
   @property
   @make_cached
@@ -391,35 +397,14 @@ class Extract(object):
     return norm(self.escan.kpoint) < 1e-12
 
 
-  def solo(self):
-    """ Extraction on a single process.
-
-        Sometimes, it is practical to perform extractions on a single process
-        only, eg without blocking mpi calls. `solo` returns an
-        extractor for a single process:
-        
-        >>> # prints only on proc 0.
-        >>> if boost.mpi.world.rank == 0: print extract.solo().structure
-    """
-    from copy import deepcopy
-    
-    if self.comm == None: return self
-    copy = Extract(self.directory, comm = None)
-    copy.OUTCAR = self.OUTCAR
-    copy._vffout = self._vffout.solo()
-    return copy
-
-  def __repr__(self):
-    from os.path import relpath
-    return "%s(\"%s\")" % (self.__class__.__name__, relpath(self.directory))
 
   def __getattr__(self, name):
     """ Passes on public attributes to vff extractor, then to escan functional. """
     if name[0] != '_':
-      if hasattr(self._vffout, name): return getattr(self._vffout, name)
-      elif self.success: 
-        if hasattr(self.escan, name): return getattr(self.escan, name)
-    raise AttributeError("Unknown attribute %s" % (name))
+      if name in dir(self._vffout): return getattr(self._vffout, name)
+      elif self.success and hasattr(self.escan, name):
+        return getattr(self.escan, name)
+    raise AttributeError("Unknown attribute {0}. It could be the run is unsuccessfull.".format(name))
 
   def __dir__(self):
     """ Returns list attributes.
@@ -434,23 +419,4 @@ class Extract(object):
     result.extend( [u for u in dir(self._vffout) if u[0] != "_"] )
     if self.success: result.extend( [u for u in dir(self.escan) if u[0] != "_"] )
     return list( set(result) - exclude )
-
-  def __getstate__(self):
-    d = self.__dict__.copy()
-    d.pop("comm", None)
-    if "_directory" in d: d["_directory"].hook = None
-    return d
-
-  def __setstate__(self, arg):
-    self.__dict__.update(arg)
-    self.comm = None
-    if hasattr(self, "_directory"): self._directory.hook = self.uncache
-
-  def uncache(self): 
-    """ Uncache values. """
-    self.__dict__.pop("_cached_extractors", None)
-    self.__dict__.pop("_cached_properties", None)
-    self._vffout.uncache()
-
-
 

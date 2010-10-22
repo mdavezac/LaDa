@@ -2,7 +2,8 @@
 __docformat__  = 'restructuredtext en'
 __all__ = ['Extract']
 from ...opt.decorators import make_cached, broadcast_result
-class _ExtractImpl(object):
+from ...opt import AbstractExtractBase
+class _ExtractImpl(AbstractExtractBase):
   """ Implementation class for extracting data from VASP output """
 
   def __init__(self, directory = None, comm = None, OUTCAR = None):
@@ -18,16 +19,11 @@ class _ExtractImpl(object):
           OUTCAR : str or None
             Name of the OUTCAR file.
     """
-    from os import getcwd
+    super(_ExtractImpl, self).__init__(directory, comm)
+
     from .. import files
     from ...opt import RelativeDirectory
-    super(_ExtractImpl, self).__init__()
 
-    if directory == None: directory = getcwd()
-    self._directory = RelativeDirectory(directory, hook=self.uncache)
-    """ Directory where to check for output. """
-    self.comm = comm
-    """ MPI group communicator. """
     self.OUTCAR = files.OUTCAR if OUTCAR == None else OUTCAR
     """ Filename of the OUTCAR file from VASP. """
     self.CONTCAR = files.CONTCAR
@@ -41,46 +37,6 @@ class _ExtractImpl(object):
     from os.path import join, exists
     return [ join(self.directory, u) for u in [self.OUTCAR, self.FUNCCAR] \
              if exists(join(self.directory, u)) ]
-
-  @property
-  def directory(self):
-    """ Directory with VASP output files """
-    return self._directory.path
-  @directory.setter
-  def directory(self, value): self._directory.path = value
-
-  def uncache(self): 
-    """ Removes cached results.
-
-        After this outputs are re-read from file.
-    """
-    from ...opt.decorators import uncache
-    uncache(self)
-
-  def solo(self):
-    """ Extraction on a single process.
-
-        Sometimes, it is practical to perform extractions on a single process
-        only, eg without blocking mpi calls. ``self.solo()`` returns an
-        extractor for a single process:
-        
-        >>> # prints only on proc 0.
-        >>> if boost.mpi.world.rank == 0: print extract.solo().structure
-    """
-    from copy import deepcopy
-    return deepcopy(self) if self.comm != None else self
-
-  def __getstate__(self):
-    from os.path import relpath
-    d = self.__dict__.copy()
-    if "_directory" in d: d["_directory"].hook = None
-    if "comm" in d: del d["comm"]
-    return d
-  def __setstate__(self, arg):
-    self.__dict__.update(arg)
-    self.comm = None
-    if hasattr(self, "_directory"): self._directory.hook = self.uncache
-
 
   def _search_OUTCAR(self, regex):
     """ Looks for all matches. """
@@ -429,6 +385,45 @@ class _ExtractImpl(object):
       results[1].append([u[which] for u in dummy if len(u) == cols])
     return results
 
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def ionic_charges(self):
+    """ Greps ionic_charges from OUTCAR."""
+    from numpy import array
+    regex = """^\s*ZVAL\s*=\s*(.*)$"""
+    result = self._find_last_OUTCAR(regex) 
+    assert result != None, RuntimeError("Could not find ionic_charges in OUTCAR")
+    return array([float(u) for u in result.group(1).split()])
+
+  @property
+  @make_cached
+  def valence(self):
+    """ Greps total energy from OUTCAR."""
+    from numpy import array
+    ionic = self.ionic_charges
+    species = self.species
+    atoms = [u.type for u in self.structure.atoms]
+    result = 0
+    for c, s in zip(ionic, species): result += c * atoms.count(s)
+    return result
+  
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def nelect(self):
+    """ Greps nelect from OUTCAR."""
+    regex = """^\s*NELECT\s*=\s*(\S+)\s+total\s+number\s+of\s+electrons\s*$"""
+    result = self._find_last_OUTCAR(regex) 
+    assert result != None, RuntimeError("Could not find energy in OUTCAR")
+    return float(result.group(1)) 
+
+  @property
+  @make_cached
+  def charge(self):
+    """ Greps total charge in the system from OUTCAR."""
+    return self.valence-self.nelect
+
 class Extract(_ExtractImpl): 
   """ Extracts output from OUTCAR, including DFT specific stuff. """
 
@@ -449,6 +444,26 @@ class Extract(_ExtractImpl):
 
   @property
   def is_dft(self): return True
+
+  @property
+  @make_cached
+  def charge_corrections(self):
+     """ First and Third order charge corrections.
+     
+         Computes first and third order charge corrections according to Lany
+         and Zunger, `PRB *78*, 235104 (2008)
+         <http://dx.doi.org/10.1103/PhysRevB.78.235104>`_. Calculations are
+         done for the correct charge of the system and a static dielectric
+         constant epsilon=1. For other static dielectric constants, use:
+
+         >>> correction = output.charge_corrections / epsilon
+
+         For conventional and unit-cells of Ga2MnO4 spinels, the charge
+         corrections are converged to roughly 1e-5 eV (for singly charged).
+     """
+     from ...crystal.point_defects import charge_corrections
+     return charge_corrections( self.structure, charge=self.charge, \
+                                epsilon=1e0, n=125, cutoff=15e1 )
 
   @property
   @make_cached
@@ -486,6 +501,32 @@ class Extract(_ExtractImpl):
     except TypeError: raise RuntimeError("Could not find energies in OUTCAR")
     assert len(result) != 0, RuntimeError("Could not find energy in OUTCAR")
     return array(result) * eV
+
+  @property
+  def cbm(self):
+    """ Returns Condunction Band Minimum. """
+    from numpy import min
+    if self.ispin == 2:
+      assert 2 * self.eigenvalues.shape[2] > self.valence + 2,\
+             RuntimeError("Not enough bands were computed.")
+      return min(self.eigenvalues[:, :, self.valence/2])
+    else:
+      assert 2 * self.eigenvalues.shape[1] > (self.valence/2) + 1,\
+             RuntimeError("Not enough bands were computed.")
+      return min(self.eigenvalues[:, self.valence/2])
+
+  @property
+  def vbm(self):
+    """ Returns Valence Band Maximum. """
+    from numpy import max
+    if self.ispin == 2:
+      assert 2 * self.eigenvalues.shape[2] > self.valence,\
+             RuntimeError("Not enough bands were computed.")
+      return max(self.eigenvalues[:, :, self.valence/2-1])
+    else:
+      assert 2 * self.eigenvalues.shape[1] > self.valence,\
+             RuntimeError("Not enough bands were computed.")
+      return max(self.eigenvalues[:, self.valence/2-1])
 
   @property
   @make_cached
@@ -550,12 +591,25 @@ class Extract(_ExtractImpl):
   @property
   @make_cached
   @broadcast_result(attr=True, which=0)
+  def pressures(self):
+    """ Greps all pressures from OUTCAR """
+    from quantities import kbar as kB
+    regex = r"""external\s+pressure\s*=\s*(\S+)\s*kB\s+Pullay\s+stress\s*=\s*(\S+)\s*kB"""
+    try: result = [float(u.group(1)) for u in self._search_OUTCAR(regex)]
+    except TypeError: raise RuntimeError("Could not find pressures in OUTCAR")
+    assert len(result) != 0, RuntimeError("Could not find pressures in OUTCAR")
+    return result * kB
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
   def pressure(self):
-    """ Greps pressure from OUTCAR """
+    """ Greps last pressure from OUTCAR """
+    from quantities import kbar as kB
     regex = r"""external\s+pressure\s*=\s*(\S+)\s*kB\s+Pullay\s+stress\s*=\s*(\S+)\s*kB"""
     result = self._find_last_OUTCAR(regex) 
     assert result != None, RuntimeError("Could not find pressure in OUTCAR")
-    return float(result.group(1))
+    return float(result.group(1)) * kB
 
   @property
   @make_cached
@@ -581,11 +635,12 @@ class Extract(_ExtractImpl):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def pulay_pressure(self):
+    from quantities import kbar as kB
     """ Greps pressure from OUTCAR """
     regex = r"""external\s+pressure\s*=\s*(\S+)\s*kB\s+Pullay\s+stress\s*=\s*(\S+)\s*kB"""
     result = self._find_last_OUTCAR(regex) 
     assert result != None, RuntimeError("Could not find pulay pressure in OUTCAR")
-    return float(result.group(2))
+    return float(result.group(2)) * kB
 
   @property
   @make_cached
@@ -744,21 +799,22 @@ class Extract(_ExtractImpl):
   def electropot(self):
     """ Greps average atomic electrostatic potentials from OUTCAR. """
     from os.path import exists, join
-    import re
+    from re import compile, X as reX
     from numpy import array
+    from quantities import eV
 
     path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
     if not exists(path): raise IOError("File %s does not exist.\n" % (path))
 
     with open(path, "r") as file: lines = file.readlines()
-    regex = re.compile(r"""average\s+\(electrostatic\)\s+potential\s+at\s+core""", re.X)
+    regex = compile(r"""average\s+\(electrostatic\)\s+potential\s+at\s+core""", reX)
     for i, line in enumerate(lines[::-1]):
       if regex.search(line) != None: break
-    assert i + 3 < len(lines), RuntimeError("Could not find average atomic potential in file.")
+    assert -i + 2 < len(lines), RuntimeError("Could not find average atomic potential in file.")
     result = []
-    for line in lines[-i+3:]:
+    for line in lines[-i+2:]:
       data = line.split()
       if len(data) == 0: break
       result.extend( [float(u) for i, u in enumerate(data) if i % 2 == 1] )
         
-    return array(result, dtype="float64")
+    return array(result, dtype="float64") * eV

@@ -3,10 +3,12 @@
 def showme(self, event):
   """ Edits functional and/or structure. """
   from os import remove, stat
+  from os.path import join
   from tempfile import NamedTemporaryFile
   from ..opt import read_input
   from ..crystal import write_poscar, read_poscar, Structure
   from . import _get_current_job_params
+  from . import represent_structure_with_POSCAR
   ip = self.api
   # gets dictionary, path.
   current, path = _get_current_job_params(self, 1)
@@ -28,6 +30,7 @@ def showme(self, event):
   # showme *whatever*
   elif len(args) == 1:
     arg = args[0]
+    if args[0] in ["pbserr", "pbsout", "pbs"]: _showme_pbs(self, args[0]); return
     filename = None
     try: # try/finally section will removed namedtemporaryfile.
       # want .py suffix to get syntax highlighting in editors.
@@ -53,7 +56,9 @@ def showme(self, event):
           # always as vasp5. Makes it easier.
           structure = Structure() if "structure" not in current.jobparams \
                       else current.jobparams["structure"]
-          write_poscar(current.structure, file, True)
+          if represent_structure_with_POSCAR:
+            write_poscar(current.structure, file, True)
+          else: file.write(repr(structure))
         # Error!
         else: 
           print "%s is not a valid argument to showme." % (event)
@@ -71,17 +76,55 @@ def showme(self, event):
         current.functional = input.functional
         current.jobparams = input.jobparams
       elif arg.lower() == "structure": 
-        current.jobparams["structure"] = read_poscar(path=filename)
+        if represent_structure_with_POSCAR:
+          d = {}
+          if    "structure" in current.jobparams \
+             and hasattr(current.jobparams["structure"], __dict__):
+            d = current.jobparams["structure"].__dict__
+          current.jobparams["structure"] = read_poscar(path=filename)
+          current.jobparams["structure"].__dict__.update(d)
+        else: 
+          globals = ip.user_ns.copy()
+          try: execfile(filename, globals)
+          except:
+            print "Error when executing structure script."
+            raise
+          else:
+            if "structure" not in globals:
+              print "Could not find structure in structure script."
+              return
+            current.jobparams["structure"] = globals["structure"]
+            
     finally:
       if filename != None:
         try: remove(filename)
         except: pass
 
+def _showme_pbs(self, which):
+  from os.path import join, exists
+  from glob  import glob
+  from operator import itemgetter
+  from . import _get_current_job_params
 
+  ip = self.api
+  current, path = _get_current_job_params(self, 1)
+  filename = current.name.replace("/", ".")
+  if which in ["pbserr", "pbsout"]:
+    prefix = "out" if which == "pbsout" else "err"
+    filename = join(path + ".pbs", prefix + filename)
+    filenames = [u for u in glob(filename+'.*')]
+    numbers   = [(i, int(u[len(filename)+1:])) for i, u in enumerate(filenames)]
+    if len(numbers) == 0: filename = None
+    else: filename = filenames[ sorted(numbers, key=itemgetter(1))[-1][0] ]
+  else: filename = join(path + ".pbs", filename[1:] + ".pbs")
+  
+  if filename == None or (not exists(filename)):  print "Could not find {0}.".format(which); return
+
+  ip.system("less {0}".format(filename))
 
 def showme_completer(self, event):
   import IPython
   ip = self.api
   if "current_jobdict" not in ip.user_ns: raise IPython.ipapi.TryNext
-  return ["structure", "functional"]
+  return ["structure", "functional", "pbserr", "pbsout", "pbs"]
 

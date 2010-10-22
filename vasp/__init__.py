@@ -126,7 +126,6 @@ class Vasp(Launch):
     from copy import deepcopy
     from os import getcwd
     from os.path import exists, isdir, join
-    from shutil import rmtree
     from numpy import abs
     from numpy.linalg import det
     from boost.mpi import broadcast
@@ -166,8 +165,7 @@ class Vasp(Launch):
     if not overwrite:
       extract = self.Extract(comm = comm, directory = outdir)
       if extract.success: return extract # in which case, returns extraction object.
-    elif is_root and exists(outdir): rmtree(outdir)
-    if comm != None: comm.barrier() # makes sure directory is not created by other proc!
+    if comm != None: comm.barrier() # sync all procs.
     
     # Otherwise, performs calculation by calling base class functor.
     super(Vasp, this).__call__( structure=structure, outdir=outdir,\
@@ -260,7 +258,7 @@ def read_input(filepath="input.py", namespace=None):
   """
   from lada.opt import read_input
   from lada.vasp import Vasp, specie, files
-  from lada.vasp.methods import RelaxCellShape, RelaxIons
+  from lada.vasp.methods import RelaxCellShape
 
   # names we need to create input.
   input_dict = { "Vasp": Vasp, "U": specie.U, "nlep": specie.nlep, "RelaxCellShape": RelaxCellShape }

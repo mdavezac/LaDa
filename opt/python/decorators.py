@@ -12,27 +12,23 @@ def broadcast_result(key=False, attr=False, which=0):
         If comm is not present or comm is None, then all processes call the
         original method, and the results are not broadcasted.
     """
-    from boost.mpi import world, broadcast
 
     def wrapped(*args, **kwargs):
-      # no comm provided, performs on all procs
-      if "comm" not in kwargs: return method(*args, **kwargs)
       # removes comm argument
-      comm = kwargs["comm"]
-      del kwargs["comm"]
-      # nonetype case: each proc performs same action. 
-      if comm == None: return method(*args, **kwargs)
-      # not an mpi process.
-      if comm.size == 1: return method(*args, **kwargs)
+      comm = kwargs.pop("comm", None)
+      # nonetype case: each proc performs same action. Serial case.
+      if comm == None or comm.size == 1: return method(*args, **kwargs)
       # is an mpi process.
       error, result, exception = False, None, None
       if comm.rank == 0: # root process
+        from boost.mpi import world, broadcast
         try: result = method(*args, **kwargs)
         except Exception as exception:
           broadcast(comm, (True, (str(exception), world.rank)), root=0)
           raise
         broadcast(comm, (False, result), root=0)
       else:
+        from boost.mpi import broadcast
         error, result = broadcast(comm, root=0)
         assert not error, RuntimeError("Process %i reports an error: %s"  % (result[1], result[0]))
       return result
@@ -49,28 +45,28 @@ def broadcast_result(key=False, attr=False, which=0):
         It is expected that a communicator name comm is found on the first
         argument of the method (eg in self).
     """
-    from boost.mpi import world, broadcast
 
     def wrapped(*args, **kwargs):
       assert len(args) > which,\
              RuntimeError("Expected at least %i arguments, got %s." % (which, args))
       assert hasattr(args[which], "comm"),\
              RuntimeError("Argument %i does not have communicator." %(which))
-      # nonetype case: each proc performs same action. 
-      if args[which].comm == None: return method(*args, **kwargs)
-      # not an mpi process.
-      if args[which].comm.size == 1: return method(*args, **kwargs)
+      comm = args[which].comm
+      # nonetype and serial case: each proc performs same action. 
+      if comm == None or comm.size == 1: return method(*args, **kwargs)
       # is an mpi process.
       error, result, exception = False, None, None
-      if args[which].comm.rank == 0: # root process
+      if comm.rank == 0: # root process
+        from boost.mpi import world, broadcast
         try: result = method(*args, **kwargs)
         except Exception as exception: error, result = True, (str(exception), world.rank)
-        broadcast(args[which].comm, (error, result), root=0)
+        broadcast(comm, (error, result), root=0)
         assert not error, exception
       else:
-        error, result = broadcast(args[which].comm, root=0)
+        from boost.mpi import broadcast
+        error, result = broadcast(comm, root=0)
         assert not error, RuntimeError("Process %i reports an error: %s"  % (result[1], result[0]))
-      if __debug__: args[which].comm.barrier()
+      if __debug__: comm.barrier()
       return result
     wrapped.__name__ = method.__name__
     wrapped.__doc__ = method.__doc__

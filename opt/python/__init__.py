@@ -7,10 +7,12 @@ from _opt import __load_vasp_in_global_namespace__, __load_escan_in_global_names
                  cReals, _RedirectFortran, ConvexHull, ErrorTuple
 from changedir import Changedir
 from tempdir import Tempdir
+from decorators import broadcast_result, make_cached
 
 __all__ = [ '__load_vasp_in_global_namespace__', '__load_escan_in_global_namespace__',\
             'cReals', 'ConvexHull', 'ErrorTuple', 'redirect_all', 'redirect', 'read_input',\
-            'LockFile', 'acquire_lock', 'open_exclusive', 'RelativeDirectory', 'streams' ]
+            'LockFile', 'acquire_lock', 'open_exclusive', 'RelativeDirectory', 'streams',
+            'AbstractBaseClass', 'convert_from_unix_re' ]
 
 streams = _RedirectFortran.fortran
 """ Name of the streams. """
@@ -157,19 +159,22 @@ def read_input(filename, global_dict=None, local_dict = None, paths=None, comm =
   from math import pi 
   from numpy import array, matrix, dot, sqrt, abs, ceil
   from numpy.linalg import norm, det
-  from boost.mpi import world
   from lada.crystal import Lattice, Site, Atom, Structure, fill_structure, FreezeCell, FreezeAtom
   from lada import physics
   from . import Input
+  from .. import lada_with_mpi
   
   # Add some names to execution environment.
   if global_dict == None: global_dict = {}
   global_dict.update( { "environ": environ, "pi": pi, "array": array, "matrix": matrix, "dot": dot,\
                         "norm": norm, "sqrt": sqrt, "ceil": ceil, "abs": abs, "Lattice": Lattice, \
                         "Structure": Structure, "Atom": Atom, "Site": Site, "physics": physics,\
-                        "fill_structure": fill_structure, "world": world, "FreezeCell": FreezeCell, \
+                        "fill_structure": fill_structure, "FreezeCell": FreezeCell, \
                         "FreezeAtom": FreezeAtom, "join": join, "abspath": abspath, \
                         "expanduser": expanduser})
+  if lada_with_mpi: 
+    from boost.mpi import world
+    global_dict["world"] = world
   if local_dict == None: local_dict = {}
   # Executes input script.
   execfile(filename, global_dict, local_dict)
@@ -497,4 +502,174 @@ class RelativeDirectory(object):
     return "{0}, {1}".format(repr(self._envvar), repr(self._relative))
 
 
+class AbstractExtractBase(object):
+  """ Abstract base class for extraction classes. 
+  
+      Defines a number of members common to all extraction classes:
+        - directory: root directory where output should exist.
+        - comm : boost.mpi.communicator in case of mpi syncronization.
+  """
+  def __init__(self, directory=None, comm=None):
+    """ Initializes an extraction base class.
 
+        :Parameters: 
+          directory : str or None
+            Root directory for extraction. If None, will use current working directory.
+          comm : boost.mpi.communicator or None
+            Processes over which to synchronize output.
+    """
+    super(AbstractExtractBase, self).__init__()
+
+    from os import getcwd
+    from . import RelativeDirectory
+
+    if directory == None: directory = getcwd()
+    self._directory = RelativeDirectory(directory, hook=self.__directory_hook__)
+    """ Directory where output should be found. """
+    self.comm = comm
+    """ Communicator for extracting stuff. 
+
+        All procs will get same results at end of extraction. 
+        Program will hang if not all procs are called when extracting some
+        value. Instead, use `solo`.
+
+        >>> extract.success # Ok
+        >>> if comm.rank == 0: extract.success # will hang if comm.size != 1
+        >>> if comm.rank == 0: extract.solo().success # Ok
+    """
+  @property
+  def directory(self):
+    """ Directory where output should be found. """
+    return self._directory.path
+  @directory.setter
+  def directory(self, value): self._directory.path = value
+
+  @property
+  @broadcast_result(attr=True, which=0)
+  def success(self):
+    """ Checks for success. 
+
+        Should never ever throw!
+
+        :return: True if calculations were successfull, false otherwise.
+    """
+    abstract 
+
+
+  def __directory_hook__(self):
+    """ Called whenever the directory changes. """
+    self.uncache()
+
+  def uncache(self): 
+    """ Uncache values. """
+    self.__dict__.pop("_cached_extractors", None)
+    self.__dict__.pop("_cached_properties", None)
+
+  def __copy__(self):
+    """ Returns a shallow copy of this object. """
+    result = self.__class__()
+    result.__dict__ = self.__dict__.copy()
+    result._directory = RelativeDirectory( self._directory.path,\
+                                           self._directory._envvar, 
+                                           result.uncache )
+    return result
+
+  def copy(self, **kwargs):
+    """ Returns a shallow copy of this object.
+
+        :Params kwargs:
+          Any keyword argument is set as an attribute of this object.
+    """
+    result = self.__copy__()
+    for k, v in kwargs: setattr(result, k, v)
+    return result
+
+  def solo(self):
+    """ Returns a serial version of this object. """
+    return self.copy(comm=None)
+
+  def __getstate__(self):
+    d = self.__dict__.copy()
+    d.pop("comm", None)
+    if "_directory" in d: d["_directory"].hook = None
+    return d
+
+  def __setstate__(self, arg):
+    self.__dict__.update(arg)
+    self.comm = None
+    if hasattr(self, "_directory"): self._directory.hook = self.uncache
+
+  def __repr__(self):
+    from os.path import relpath
+    return "{0}(\"{1}\")".format(self.__class__.__name__, self._directory.unexpanded)
+
+def convert_from_unix_re(pattern):
+  """ Converts unix-command-line like regex to python regex.
+
+      Does not handle active python regex characters too well.
+  """
+  from re import compile
+  star = compile(r"(?<!\\)\*")
+  optional = compile(r"\[(\S),(\S)\]")
+  unknown = compile(r"\?")
+  pattern = unknown.sub(r".", pattern)
+  pattern = star.sub(r"[^/]*", pattern)
+  pattern = optional.sub(r"(?:\1,\2)", pattern)
+  return compile(pattern)
+    
+@broadcast_result(key=True)
+def copyfile(src, dest=None, nothrow=None, comm=None):
+  """ Copy ``src`` file onto ``dest`` directory or file.
+
+      :Parameters:
+        src : str
+          Source file.
+        dest : str or None
+          Destination file or directory.
+        nothrow : container or None
+          Throwing is disable selectively depending on the content of nothrow:
+
+          - *exists*: will not throw is src does not exist.
+          - *isfile*: will not throw is src is not a file.
+          - *same*: will not throw if src and dest are the same.
+          - *none*: ``src`` can be None.
+          - *null*: ``src`` can be '/dev/null'.
+          - *never*: will never throw.
+
+
+      This function fails selectively, depending on what is in ``nothrow`` list.
+  """
+  try:
+    from os import getcwd
+    from os.path import isdir, isfile, samefile, exists, basename, dirname, join
+    from shutil import copyfile as cpf
+    if nothrow == None: nothrow = []
+    if isinstance(nothrow, str): nothrow = nothrow.split()
+    if nothrow == 'all': nothrow = 'exists', 'same', 'isfile', 'never', 'none', 'null'
+    nothrow = [u.lower() for u in nothrow]
+    
+    if src == None: 
+      if 'none' in nothrow: return False
+      raise IOError("Source is None.")
+    if dest == None: dest = getcwd()
+    if dest == '/dev/null': return True
+    if src  == '/dev/null':
+      if 'null' in nothrow: return False
+      raise IOError("Source is '/dev/null' but Destination is {0}.".format(destination))
+
+    if not exists(src): 
+      if 'exists' in nothrow: return False
+      raise IOError("{0} does not exist.".format(src))
+    if not isfile(src):
+      if 'isfile' in nothrow: return False
+      raise IOError("{0} is not a file.".format(src))
+    # makes destination a file.
+    if exists(dest) and isdir(dest): dest = join(dest, basename(src))
+    if exists(dest) and samefile(src, dest): 
+      if 'same' in nothrow: return False
+      raise IOError("{0} and {1} are the same file.".format(src, dest))
+    cpf(src, dest)
+  except:
+    if 'never' in nothrow: return False
+    raise
+  else: return True

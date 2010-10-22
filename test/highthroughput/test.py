@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """ High-Thoughput of A2BO4 structures. """
 __docformat__ = "restructuredtext en"
+__all__ = ['nonmagnetic_wave', 'magnetic_wave']
 
 def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
   """ Jobs to explore possible ground-states. 
@@ -114,7 +115,6 @@ def magnetic_wave(path=None, inputpath=None, **kwargs):
   """
   from tempfile import NamedTemporaryFile
   from os.path import dirname, normpath, relpath, join
-  from copy import deepcopy
   from IPython.ipapi import get as get_ipy
   from lada.jobs import JobDict
   from lada.vasp import read_input
@@ -149,6 +149,8 @@ def magnetic_wave(path=None, inputpath=None, **kwargs):
   input.update(kwargs)
   assert len(input.__dict__.keys()) != 2, ValueError("No input.")
 
+  with open(__file__, "r") as file: jobdict.magscript = file.read()
+
   # will loop over all jobs, looking for *successfull* *non-magnetic* calculations. 
   # Only magnetic jobs which do NOT exist are added at that point.
   nonmagname = "non-magnetic"
@@ -179,9 +181,10 @@ def magnetic_wave(path=None, inputpath=None, **kwargs):
       magmom = ferro(extract.structure, extract.functional.species, func)
       if magmom != None and jobname not in jobdict:
         job = jobdict / jobname
-        job.functional = input.relaxer if inputpath != None else nonmagjob.functional
-        job.jobparams["structure"] = deepcopy(extract.structure)
-        job.jobparams["structure"].name = "{0} in {1}, {2}ferro.".format(material, lattice.name, prefix)
+        job.functional = input.relaxer 
+        job.jobparams["structure"] = extract.structure.deepcopy()
+        job.jobparams["structure"].name = "{0} in {1}, {2}ferro."\
+                                          .format(material, lattice.name, prefix)
         job.jobparams["structure"].magmom = magmom
         job.jobparams["magmom"] = "attribute: magmom"
         job.jobparams["ispin"] =  2
@@ -195,8 +198,8 @@ def magnetic_wave(path=None, inputpath=None, **kwargs):
       jobname = normpath("{0}/{1}anti-ferro-0".format(basename, prefix))
       if magmom != None and jobname not in jobdict:
         job = jobdict / jobname
-        job.functional = input.relaxer if inputpath != None else nonmagjob.functional
-        job.jobparams["structure"] = deepcopy(extract.structure)
+        job.functional = input.relaxer
+        job.jobparams["structure"] = extract.structure.deepcopy()
         job.jobparams["structure"].name = "{0} in {1}, {2}specie-anti-ferro."\
                                           .format(material, lattice.name, prefix)
         job.jobparams["structure"].magmom = magmom
@@ -215,7 +218,7 @@ def magnetic_wave(path=None, inputpath=None, **kwargs):
         if jobname in jobdict: continue
         job = jobdict / jobname
         job.functional = input.relaxer if inputpath != None else nonmagjob.functional
-        job.jobparams["structure"] = deepcopy(extract.structure)
+        job.jobparams["structure"] = extract.structure.deepcopy()
         job.jobparams["structure"].name = "{0} in {1}, random anti-ferro."\
                                           .format(material, lattice.name)
         job.jobparams["structure"].magmom = magmom
@@ -226,6 +229,7 @@ def magnetic_wave(path=None, inputpath=None, **kwargs):
         job.lattice  = lattice
         nb_new_jobs += 1
 
+  # now saves new job dictionary
   print "Created {0} new jobs.".format(nb_new_jobs)
   if nb_new_jobs == 0: return
   ip = get_ipy()
