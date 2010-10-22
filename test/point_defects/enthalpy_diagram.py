@@ -2,8 +2,8 @@
 from lada.jobs import AbstractMassExtract
 from lada.opt.decorators import make_cached
 
-class Enthalpy(object):
-  """ Enthalpies of a single defect. """
+class PointDefectExtactor(object):
+  """ Extracts output across all charged states of a defect. """
   def __init__(self, extract, epsilon = 1e0, host = None, pa_maxdiff=-8):
     """ Initializes an enthalpy function. """
     # extraction object.
@@ -200,6 +200,20 @@ class Enthalpy(object):
       found = match("([A-Z][a-z])?_on_([A-Z][a-z])?", self.name)
       return {match.group(1): 1, match.group(2): -1}
 
+  def uncache(self):
+    """ Uncaches result. """
+    from opt import uncache as opt_uncache
+    opt_uncache(self)
+    self.extract.uncache()
+    self.host.unchache()
+
+
+class PointDefectExtractor(PointDefectExtractorImpl):
+  """ Properties of a single defect. """
+  def __init__(self, extract, epsilon = 1e0, host = None, pa_maxdiff=-8):
+    """ Initializes an enthalpy function. """
+    super(PointDefectExtractor, self).__init__(extract, epsilon, host, pa_maxdiff)
+
   def chempot(self, mu):
     """ Computes sum of chemical potential from dictionary ``mu``. 
     
@@ -275,7 +289,7 @@ class Enthalpy(object):
       lines.append([min_line[0].rescale(eV), min_line[1]])
     return lines
 
-  def __call__(self, fermi, mu = None):
+  def enthalpy(self, fermi, mu = None):
     """ Point-defect formation enthalpy. 
     
         :Parameters:
@@ -345,20 +359,17 @@ class Enthalpy(object):
                 .format(int(charge), a, b, c, d, a+b+c+d, e)
     return result
 
-  def uncache(self):
-    """ Uncaches result. """
-    from opt import uncache as opt_uncache
-    opt_uncache(self)
-    self.extract.uncache()
-    self.host.unchache()
 
-class Enthalpies(AbstractMassExtract):
+class PointDefectMassExtractorImpl(AbstractMassExtract):
   """ Enthalpy for a series of defects for a given material and lattice. """
-  def __init__(self, path=None, epsilon = 1e0, pa_maxdiff=0.5, **kwargs):
+  def __init__(self, path=None, epsilon = 1e0, pa_maxdiff=0.5, Extractor=None, **kwargs):
     """ Initializes an enthalpy function. """
     from lada.vasp import MassExtract
-    super(Enthalpies, self).__init__(**kwargs)
+    super(PointDefectMassExtractor, self).__init__(**kwargs)
 
+    self.Extractor = Extractor
+    """ Class for extracting data from a single defect. """
+    if self.Extractor == None: self.Extractor = PointDefectExtractor
     self.massextract = MassExtract(path, unix_re=False, excludes=[".*relax_*"])
     """ Mass extraction object from which all results are pulled. """
     self.host = self._get_host()
@@ -414,12 +425,13 @@ class Enthalpies(AbstractMassExtract):
         assert len(child["site_\d+"].jobs) == len(child.jobs),\
                RuntimeError("Don't understand directory structure of {0}.".format(child.view))
         for site in child.children: # should site specific defects.
-          result = Enthalpy(site, self.epsilon, self.host, self.pa_maxdiff)
+          result = self.Extractor(site, self.epsilon, self.host, self.pa_maxdiff)
           # checks this is a point-defect.
           if result.is_interstitial or result.is_vacancy or result.is_substitution:
             yield site.view, result
       else:
-        result = Enthalpy(child, host=self.host, pa_maxdiff=self.pa_maxdiff, epsilon = self.epsilon)
+        result = self.Extractor(child, host=self.host, pa_maxdiff=self.pa_maxdiff,\
+                                epsilon = self.epsilon)
         # checks if this is a valid point-defect.
         if result.is_interstitial or result.is_vacancy or result.is_substitution:
           yield child.view, result
@@ -441,7 +453,20 @@ class Enthalpies(AbstractMassExtract):
     """ Returns values ordered by substitution, vacancy, and interstitial. """
     return [u[1] for u in self.ordered_items()]
 
-  def __call__(self, fermi, mu=None):
+  def __str__(self): 
+    """ Prints out all energies and corrections. """
+    return "".join( str(value) for value in self.ordered_values() )
+      
+        
+
+
+class PointDefectMassExtractor(PointDefectMassExtractImpl):
+  """ Enthalpy for a series of defects for a given material and lattice. """
+  def __init__(self, **kwargs):
+    """ Initializes an enthalpy function. """
+    super(PointDefectMassExtractor, self).__init__(**kwargs)
+
+  def enthalpies(self, fermi, mu=None):
     """ Dictionary of point-defect formation enthalpies. 
     
         :Parameters:
@@ -458,13 +483,10 @@ class Enthalpies(AbstractMassExtract):
     """
     from quantities import eV
     results = {}
-    for name, defect in self._regex_extractors(): results[name] = defect(fermi, mu).rescale(eV)
+    for name, defect in self.iteritems():
+      results[name] = defect.enthalpy(fermi, mu).rescale(eV)
     return results
   
-  def __str__(self): 
-    """ Prints out all energies and corrections. """
-    return "".join( str(value) for value in self.ordered_values() )
-      
   def plot_enthalpies(self, mu=None, **kwargs):
     """ Plots diagrams using matplotlib. """
     from quantities import eV
@@ -479,7 +501,7 @@ class Enthalpies(AbstractMassExtract):
     plt.rc('text.latex', preamble="\usepackage{amssymb}")
     # finds limits of figure
     xlim = 0., float( (self.host.cbm-self.host.vbm).rescale(eV) ) 
-    all_ys = [float(val.rescale(eV)) for x in xlim for val in self(x, mu).itervalues()]
+    all_ys = [float(val.rescale(eV)) for x in xlim for val in self.enthalpies(x, mu).itervalues()]
     ylim = min(all_ys), max(all_ys)
     # creates figures and axes.
     figure = plt.figure()
@@ -506,6 +528,13 @@ class Enthalpies(AbstractMassExtract):
 
       
         
+
+
+
+
+
+
+
 
 
 
