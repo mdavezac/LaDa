@@ -386,7 +386,7 @@ class _MaterialNavigator(AbstractMassExtract):
     MassExtractor = kwargs.pop("MassExtractor", VaspMassExtract)
     """ Object type for mass extraction. """
     # possible customization of single defect extration objects.
-    self.__dict__["DefectExtractors"] 
+    self.__dict__["DefectExtractors"] \
         = kwargs.pop("DefectExtractors", _MaterialNavigator.DefectExtractors)
 
     super(_MaterialNavigator, self).__init__(**kwargs)

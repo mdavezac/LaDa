@@ -3,9 +3,9 @@ __docformat__ = "restructuredtext en"
 __all__ = [ 'inequivalent_sites', 'vacancy', 'substitution', 'charged_states', \
             'band_filling', 'potential_alignment', 'charge_corrections', \
             'magmom', 'low_spin_states', 'high_spin_states', 'magname', \
-            'ExtractPointDefect', 'ExtractMaterial' ]
+            'ExtractSingle', 'ExtractMaterial' ]
 
-from extract import PointDefect as ExtractPointDefect, Material as ExtractMaterials
+from extract import SingleDefect as ExtractSingle, Material as ExtractMaterial
 
 def inequivalent_sites(lattice, type):
   """ Yields sites occupied by type which are inequivalent. 
@@ -117,8 +117,8 @@ def all_defects(structure, lattice, type, subs):
           If ``subs`` is None, then will create a vacancy. In that case, type
           should be a sequence describing the interstitials:
 
-          >> type = [ "Li", (0,0,0), "16c" ],\
-          >>        [ "Li", (0.75,0.75,0.75), "32e_0.75" ] 
+          >>> type = [ "Li", (0,0,0), "16c" ],\
+          >>>        [ "Li", (0.75,0.75,0.75), "32e_0.75" ] 
            
           Each item in the sequence is itself a sequence where the first item is the
           specie, and the other items the positions and name of the
@@ -374,9 +374,10 @@ def third_order_charge_correction(structure, charge = None, n = 200, epsilon = 1
           Static dielectrict constant of the host. Most likely in atomic units
           (e.g. dimensionless), but I'm not sure.
       
-      Taken as is from Lany and Zunger's `PRB *78*, 235104 (2008)
-      <http://dx.doi.org/10.1103/PhysRevB.78.235104>`_
+      Taken as is from `Lany and Zunger, PRB 78, 235104 (2008)`__.
       Always outputs as eV. Not sure what the units of some of these quantities are. 
+
+      .. __:  http://dx.doi.org/10.1103/PhysRevB.78.235104
 
       :return: third order correction  to the energy in eV. Should be *added* to total energy.
   """

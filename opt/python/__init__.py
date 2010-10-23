@@ -296,9 +296,9 @@ class LockFile(object):
     if self.owns_lock and self.is_locked: self.release()
 
 def acquire_lock(filename, sleep=0.5):
-  """ Alias for a L{LockFile} context. 
+  """ Alias for a `LockFile` context. 
 
-      *Beware* of mpi problems! L{LockFile} is (purposefully) not mpi aware.
+      *Beware* of mpi problems! `LockFile` is (purposefully) not mpi aware.
       Only the root node should use this method.
   """
   return LockFile(filename, sleep=sleep)
@@ -307,8 +307,8 @@ def acquire_lock(filename, sleep=0.5):
 def open_exclusive(filename, mode="r", sleep = 0.5):
   """ Opens file while checking for advisory lock.
 
-      This context uses L{LockFile} to first obtain a lock.
-      *Beware* of mpi problems! L{LockFile} is (purposefully) not mpi aware.
+      This context uses `LockFile` to first obtain a lock.
+      *Beware* of mpi problems! `LockFile` is (purposefully) not mpi aware.
       Only the root node should use this method.
   """
   # Enter context.
@@ -362,10 +362,21 @@ class RelativeDirectory(object):
       with ``self.envvar == None``. 
   """
   def __init__(self, path=None, envvar=None, hook=None):
-    """ Initializes the property. 
+    """ Initializes the relative directory. 
     
-        :Param name: 
-          Name of the property in the object.
+        :Parameters:
+          path : str or None
+            path to store here. It can be relative to the current working
+            directory, include envirnonment variables or shorthands for user
+            homes. If None, will be set to `envvar`.
+          envvar : str or None 
+            Fixed point wich can be understood from system to system. It should
+            be a shorthand to a user homer directory ("~/") or use an
+            environment variable ("$SCRATCH"). If None, defaults to user's
+            home.
+          hook : callable or None
+            This function will be called if/when the directory is changed. Note
+            that it may be lost during pickling if it is not itself pickelable.
     """
     super(RelativeDirectory, self).__init__()
 
@@ -550,8 +561,7 @@ class AbstractExtractBase(object):
     """ Checks for success. 
 
         Should never ever throw!
-
-        :return: True if calculations were successfull, false otherwise.
+        True if calculations were successfull, false otherwise.
     """
     abstract 
 
@@ -577,8 +587,9 @@ class AbstractExtractBase(object):
   def copy(self, **kwargs):
     """ Returns a shallow copy of this object.
 
-        :Params kwargs:
+        :param kwargs:
           Any keyword argument is set as an attribute of this object.
+          Does not check for existence or anything.
     """
     result = self.__copy__()
     for k, v in kwargs: setattr(result, k, v)
@@ -621,12 +632,12 @@ def convert_from_unix_re(pattern):
 def copyfile(src, dest=None, nothrow=None, comm=None):
   """ Copy ``src`` file onto ``dest`` directory or file.
 
-      :Parameters:
-        src : str
-          Source file.
-        dest : str or None
-          Destination file or directory.
-        nothrow : container or None
+      :kwarg src: Source file.
+      :type  src: str
+      :kwarg dest: Destination file or directory.
+      :type dest: str or None
+      :type nothrow: container or None
+      :kwarg nothrow:
           Throwing is disable selectively depending on the content of nothrow:
 
           - *exists*: will not throw is src does not exist.
@@ -635,6 +646,7 @@ def copyfile(src, dest=None, nothrow=None, comm=None):
           - *none*: ``src`` can be None.
           - *null*: ``src`` can be '/dev/null'.
           - *never*: will never throw.
+
 
 
       This function fails selectively, depending on what is in ``nothrow`` list.

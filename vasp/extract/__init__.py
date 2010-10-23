@@ -27,8 +27,8 @@ else:
             kwargs : dict
               Keyword parameters passed on to AbstractMassExtract.
 
-          :Kwargs naked_end: True if should return value rather than dict when only one item.
-          :Kwargs unix_re: converts regex patterns from unix-like expression.
+          :kwarg naked_end: True if should return value rather than dict when only one item.
+          :kwarg unix_re: converts regex patterns from unix-like expression.
       """
       from os import getcwd
       from os.path import exists, isdir

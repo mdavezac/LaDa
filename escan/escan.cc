@@ -3,7 +3,6 @@
 
 #include <boost/python/def.hpp>
 
-#include <physics/physics.h>
 #include <crystal/structure.h>
 #include <opt/mpi.h>
 
@@ -54,21 +53,10 @@ namespace LaDa
   namespace python
   {
     namespace bp = boost::python;
-    types::t_unsigned nb_valence_states( Crystal::TStructure<std::string> const &_str ) 
-    {
-      Crystal::TStructure<std::string>::t_Atoms::const_iterator i_atom = _str.atoms.begin();
-      Crystal::TStructure<std::string>::t_Atoms::const_iterator i_atom_end = _str.atoms.end();
-      types::t_unsigned bgstates = 0;
-      for(; i_atom != i_atom_end; ++i_atom)
-        bgstates += Physics::Atomic::Charge( i_atom->type );
-      return bgstates;
-    }
     void expose_escan()
     {
       bp::def("_call_escan", &just_call_escan, "Calls escan, accepts a boost.mpi.communicator.");
       bp::def("_call_genpot", &just_call_genpot, "Calls genpot, accepts a boost.mpi.communicator.");
-      bp::def( "nb_valence_states", &nb_valence_states, bp::arg("structure"), 
-               "Returns the number of valence states in a structure." );
     }
   } // namespace python
 } // namespace LaDa

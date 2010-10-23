@@ -47,7 +47,7 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
       point-defects added to it, one can simply tag it:
 
       >>> explore all magnetic_wave 
-      >>> current_jobdict["/Fe2AlO4"].tag()
+      >>> jobparams["/Fe2AlO4"] = 'off'
       >>> import test
       >>> test.magnetic_wave()
       >>> launch scattered

@@ -5,7 +5,6 @@ __docformat__ = "restructuredtext en"
 def U(type = 1, l=2, U=0e0, J=0e0 ):
   """ Creates an LDA+U parameter 
 
-      LDA+U is always LSDA+U here. 
       :Parameters:
         type : 1|2|"liechtenstein"|"dudarev"
           A string or integer specifying the type of the Hubbard U. Defaults
@@ -16,6 +15,8 @@ def U(type = 1, l=2, U=0e0, J=0e0 ):
           Hubbard U. Defaults to 0.
         J : float
           Hubbard J. Defaults to 0.
+
+      LDA+U is always LSDA+U here. 
   """
 
   if hasattr(type, "lower"):
@@ -42,9 +43,9 @@ def nlep(type = 1, l=2, U0=0e0, U1=None ):
           to 1.
         l : 0|1|2|"s"|"p"|"d"
           Channel for which to apply U. Defaults to 2.
-        U : float
+        U0 : float
           First nlep parameter. Defaults to 0.
-        J : float
+        U1 : float
           Second (e)nlep parameter. Defaults to 0.
 
       `Non Local External Potentials`__ attempt to correct in part for the
@@ -78,10 +79,9 @@ class Specie(object):
   
       Instances of this object define an atomic specie for VASP calculations.
       In addition, it may contain information used to build a set of
-      high-throughput jobs. For instance, `Specie.magnetic` may enable
-      calculations for different magnetic moments.
+      high-throughput jobs.
   """
-  def __init__(self, directory, U=None, oxidation=None, magnetic=False):
+  def __init__(self, directory, U=None, oxidation=None):
     """ Initializes a specie.
 
         :Parameters:
@@ -90,12 +90,10 @@ class Specie(object):
             directory should contain an *unzipped* POTCAR file.
           U 
             LDA+U parameters. It should a list of dictionaries, one entry per
-            momentum channel, and each entry returned by a call to `Specie.U`
-            or `Specie.nlep`.
+            momentum channel, and each entry returned by a call to `U`
+            or `nlep`.
           oxidation : int
             Maximum oxidation state (or minimum if negative).
-          magnetic : boolean
-            If true, then this atom is magnetic.
     """
     from ..opt import RelativeDirectory
 
@@ -104,7 +102,6 @@ class Specie(object):
     if U == None: self.U = []
     elif isinstance(U, dict): self.U = [U]
     else: self.U = [u for u in U] # takes care of any kind of iterator.
-    self.magnetic = magnetic
 
   @property
   def directory(self):

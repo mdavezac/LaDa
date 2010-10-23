@@ -9,6 +9,8 @@
 
 #include <math/eigen.h>
 #include <opt/types.h>
+#include <physics/physics.h>
+#include <crystal/structure.h>
 
 #include "lattice.hpp"
 #include "structure.hpp"
@@ -51,6 +53,16 @@ LaDa::types::t_real third_order(LaDa::math::rMatrix3d const & _matrix, LaDa::typ
   return result  / (_matrix.determinant() * t_real(_n*_n*_n));
 }
 
+LaDa::types::t_unsigned nb_valence_states( LaDa::Crystal::TStructure<std::string> const &_str ) 
+{
+  LaDa::Crystal::TStructure<std::string>::t_Atoms::const_iterator i_atom = _str.atoms.begin();
+  LaDa::Crystal::TStructure<std::string>::t_Atoms::const_iterator i_atom_end = _str.atoms.end();
+  LaDa::types::t_unsigned bgstates = 0;
+  for(; i_atom != i_atom_end; ++i_atom)
+    bgstates += LaDa::Physics::Atomic::Charge( i_atom->type );
+  return bgstates;
+}
+
 BOOST_PYTHON_MODULE(_crystal)
 {
   namespace bp = boost::python;
@@ -63,6 +75,8 @@ BOOST_PYTHON_MODULE(_crystal)
   bp::handle<> math( bp::borrowed(PyImport_ImportModule("lada.math")) );
 
   bp::def("third_order", &third_order);
+  bp::def( "nb_valence_states", &nb_valence_states, bp::arg("structure"), 
+           "Returns the number of `escan` valence states in a structure." );
 
   LaDa::Python::expose_atom();
   LaDa::Python::expose_structure();

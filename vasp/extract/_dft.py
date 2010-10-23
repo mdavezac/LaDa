@@ -9,7 +9,7 @@ class _ExtractImpl(AbstractExtractBase):
   def __init__(self, directory = None, comm = None, OUTCAR = None):
     """ Initializes the extraction class. 
 
-        :Parameters: boost.mpi.Communicator
+        :Parameters: 
           directory : str or None
             path to the directory where the VASP output is located. If none,
             will use current working directory.
@@ -86,7 +86,7 @@ class _ExtractImpl(AbstractExtractBase):
   def functional(self):
     """ Returns vasp functional used for calculation.
 
-        Requires file L{FUNCCAR} to be present.
+        Requires file FUNCCAR to be present.
     """
     from os.path import exists, join
     from cPickle import load
@@ -430,7 +430,7 @@ class Extract(_ExtractImpl):
   def __init__(self, directory = None, comm = None, OUTCAR = None): 
     """ Initializes the extraction class. 
 
-        :Parameters: boost.mpi.Communicator
+        :Parameters: 
           directory : str or None
             path to the directory where the VASP output is located. If none,
             will use current working directory.
@@ -450,9 +450,8 @@ class Extract(_ExtractImpl):
   def charge_corrections(self):
      """ First and Third order charge corrections.
      
-         Computes first and third order charge corrections according to Lany
-         and Zunger, `PRB *78*, 235104 (2008)
-         <http://dx.doi.org/10.1103/PhysRevB.78.235104>`_. Calculations are
+         Computes first and third order charge corrections according to `Lany
+         and Zunger, PRB 78, 235104 (2008)`__. Calculations are
          done for the correct charge of the system and a static dielectric
          constant epsilon=1. For other static dielectric constants, use:
 
@@ -460,8 +459,10 @@ class Extract(_ExtractImpl):
 
          For conventional and unit-cells of Ga2MnO4 spinels, the charge
          corrections are converged to roughly 1e-5 eV (for singly charged).
+
+         .. __:  http://dx.doi.org/10.1103/PhysRevB.78.235104
      """
-     from ...crystal.point_defects import charge_corrections
+     from ...crystal.defects import charge_corrections
      return charge_corrections( self.structure, charge=self.charge, \
                                 epsilon=1e0, n=125, cutoff=15e1 )
 

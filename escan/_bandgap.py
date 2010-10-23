@@ -34,7 +34,7 @@ def extract(outdir=".", comm = None):
     def __init__(self): self.success = False
   return NoBandGap()
 
-def band_gap(escan, structure, outdir=None, references=None, n=5, overwrite = False, **kwargs):
+def bandgap(escan, structure, outdir=None, references=None, n=5, overwrite = False, **kwargs):
   """ Computes bandgap of a structure with a given escan functional. 
   
       The band-gap is computed using an all-electron method (if references=None

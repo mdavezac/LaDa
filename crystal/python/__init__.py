@@ -5,28 +5,31 @@
     public interfaces to C++ bindings should be available directly in the
     L{crystal} namespace.
 """
+__all__ = [ 'FreezeAtom', 'which_site', 'Sites', 'SymmetryOperator', 'Lattice', 'to_cartesian',\
+            'get_point_group_symmetries', 'read_structure', 'sort_layers', 'Site', \
+            'smith_indices', 'Atom', 'kAtom', 'fold_vector', 'Structure', 'FreezeCell',\
+            'smith_normal_transform', 'get_space_group_symmetries', 'Neighbors', 'Neighbor', \
+            'read_pifile_structure', 'LayerDepth', 'to_fractional', 'linear_smith_index', \
+            'nb_valence_states', \
+            # Below, only true python stuff
+            'deform_kpoints', 'read_poscar', 'specie_list', 'write_poscar',\
+            'structure_to_lattice', 'fill_structure', 'defects', \
+            'A2BX4', 'bravais', 'gruber' ]
+
 from _crystal import FreezeAtom, which_site, Site, SymmetryOperator, Lattice, to_cartesian,\
                      get_point_group_symmetries, read_structure, sort_layers, \
                      smith_indices, kAtoms, Atom, kAtom, fold_vector, Structure, FreezeCell,\
                      smith_normal_transform,  get_space_group_symmetries, Neighbors, Neighbor, \
                      read_pifile_structure, LayerDepth, to_fractional, linear_smith_index,\
+                     nb_valence_states, \
                      rStructure, rAtom, Sites, Atoms, kAtoms, StringVector # this line not in __all__
 
 from lada.opt.decorators import broadcast_result, add_setter
 import A2BX4
 import bravais
 import gruber
-import point_defects
+import defects
 
-__all__ = [ 'FreezeAtom', 'which_site', 'Sites', 'SymmetryOperator', 'Lattice', 'to_cartesian',\
-            'get_point_group_symmetries', 'read_structure', 'sort_layers', 'Site', \
-            'smith_indices', 'Atom', 'kAtom', 'fold_vector', 'Structure', 'FreezeCell',\
-            'smith_normal_transform', 'get_space_group_symmetries', 'Neighbors', 'Neighbor', \
-            'read_pifile_structure', 'LayerDepth', 'to_fractional', 'linear_smith_index', \
-            # Below, only true python stuff
-            'deform_kpoints', 'read_poscar', 'specie_list', 'write_poscar',\
-            'structure_to_lattice', 'fill_structure', 'point_defects', \
-            'A2BX4', 'bravais', 'gruber' ]
 
 def deform_kpoint(kpoint, ideal, relaxed):
   """ Deform kpoints from ideal cell to relaxed cell. 

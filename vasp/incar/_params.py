@@ -83,15 +83,17 @@ class Magmom(SpecialVaspParam):
 class Npar(SpecialVaspParam):
   """ Parallelization over bands. 
 
-      This parameter is described `here <http://cms.mpi.univie.ac.at/vasp/guide/node138.html>`_.
+      This parameter is described `here`__.
       It can be set to a particular number:
   
       >>> vasp.npar = 2
 
-     Or it can be deduced automatically. In the latter case, npar is set to the
-     largest power of 2 which divides the number of processors:
+      Or it can be deduced automatically. In the latter case, npar is set to the
+      largest power of 2 which divides the number of processors:
+ 
+      >>> vasp.npar = "power of two"
 
-     >>> vasp.npar = "power of two"
+      .. __: http://cms.mpi.univie.ac.at/vasp/guide/node138.html
   """
 
   def __init__(self, value): super(Npar, self).__init__(value)
@@ -195,10 +197,12 @@ class Encut(SpecialVaspParam):
   """ Defines cutoff factor for calculation. 
 
       There are three ways to set this parameter:
-        - if 0 < value <= 3, then the cutoff is value * ENMAX, where ENMAX is
-          the maximum recommended cutoff for the species in the system.
-        - if value > 3, then prints encut is exactly value.
-        - if 0 or None, does not print anything to INCAR
+
+      - if 0 < value <= 3, then the cutoff is value * ENMAX, where ENMAX is
+        the maximum recommended cutoff for the species in the system.
+      - if value > 3, then prints encut is exactly value.
+      - if 0 or None, does not print anything to INCAR
+
       If 0 or None, uses VASP default.
   """
   def __init__(self, value): super(Encut, self).__init__(value)

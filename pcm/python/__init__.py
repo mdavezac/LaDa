@@ -9,7 +9,9 @@ def _get_gcutoff(self):
   """ Cutoff in G-space for the Ewald sum. 
 
       By default, units are in eV, but will adapt to whatever units from the
-      package `quantities <http://packages.python.org/quantities/user/tutorial.html>`_.
+      package `quantities`__.
+
+      .. __:  http://packages.python.org/quantities/user/tutorial.html
   """
   from quantities import eV
   if not hasattr(self, "_cutoff_units"):

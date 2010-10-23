@@ -9,7 +9,7 @@ class ExtractGW(_ExtractImpl):
   def __init__(self, directory = None, comm = None, OUTCAR = None): 
     """ Initializes the extraction class. 
 
-        :Parameters: boost.mpi.Communicator
+        :Parameters:
           directory : str or None
             path to the directory where the VASP output is located. If none,
             will use current working directory.

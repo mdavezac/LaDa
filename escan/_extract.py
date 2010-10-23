@@ -1,11 +1,11 @@
 """ Module to extract esca and vff ouput. """
 __docformat__ = "restructuredtext en"
+__all__ = ['Extract']
 
 from ..vff import Extract as VffExtract, _get_script_text
 from ..opt.decorators import broadcast_result, make_cached
 from ..opt import AbstractExtractBase
 
-__all__ = ['Extract']
 
 class Extract(AbstractExtractBase):
   """ A class to extract data from ESCAN output files. 
@@ -61,7 +61,7 @@ class Extract(AbstractExtractBase):
   def copy(self, **kwargs):
     """ Returns a shallow copy of this object.
 
-        :Params kwargs:
+        :param kwargs:
           Any keyword argument is set as an attribute of this object.
     """
     result = self.__copy__()

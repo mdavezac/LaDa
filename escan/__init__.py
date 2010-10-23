@@ -1,7 +1,13 @@
 """ Interface module for ESCAN. """
 __docformat__ = "restructuredtext en"
+__all__ = [ "Extract", "nb_valence_states", "bandgap", "extract_bg",\
+            "dipole_matrix_element", "band_structure", "call_escan",\
+            "Escan", "folded_spectrum", "all_electron", "soH", \
+            "nonlocalH", "localH", "AtomicPotential", "band_structure",\
+            "extract_bg", "nb_valence_states" ]
+
 from ..opt import __load_escan_in_global_namespace__
-from .. import lada_with_mpi
+from lada import lada_with_mpi
 if lada_with_mpi:
   if __load_escan_in_global_namespace__:
     from DLFCN import RTLD_NOW as _RTLD_NOW, RTLD_GLOBAL as _RTLD_GLOBAL
@@ -14,22 +20,12 @@ if lada_with_mpi:
 else: 
   raise RuntimerError("Cannot load escan without MPI yet.")
 from ..opt.decorators import add_setter, broadcast_result
-import _bandstructure 
-import _extract
-import _bandgap
-import _methods
-Extract = _extract.Extract
-nb_valence_states = _escan.nb_valence_states
-bandgap = _bandgap.band_gap
-extract_bg = _bandgap.extract
-dipole_matrix_elements = _methods.dipole_matrix_elements
-band_structure = _bandstructure.band_structure
+from _bandstructure import band_structure
+from ..crystal import nb_valence_states
+from _bandgap import bandgap, extract as extract_bg
+from _extract import Extract
+from _extract import Extract as _EscanExtract
 
-
-__all__ = [ "Extract", "nb_valence_states", "bandgap", "extract_bg",\
-            "dipole_matrix_element", "band_structure", "call_escan",\
-            "Escan", "folded_spectrum", "all_electron", "soH", \
-            "nonlocalH", "localH", "AtomicPotential" ]
 
 def _is_in_sync(comm, which = [0]):
   from boost.mpi import broadcast
@@ -174,7 +170,7 @@ class AtomicPotential(object):
 class Escan(object):
   """ Performs ESCAN calculations, from structure relaxation to wavefunctions. """
 
-  Extract = _extract.Extract
+  Extract = _EscanExtract
   """ Class for output extraction. """
 
   def __init__(self, inplace=True, workdir=None):

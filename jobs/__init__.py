@@ -894,8 +894,8 @@ class AbstractMassExtract(object):
             List of patterns which the job names must *not* match to be
             included in the extraction.
 
-        :Kwargs naked_end: True if should return value rather than dict when only one item.
-        :Kwargs unix_re: converts regex patterns from unix-like expression.
+        :Kwarg naked_end: True if should return value rather than dict when only one item.
+        :Kwarg unix_re: converts regex patterns from unix-like expression.
     """
     from ..opt import RelativeDirectory
 
@@ -1117,7 +1117,7 @@ class AbstractMassExtract(object):
             command-line depends on ``self.unix_re``.
           flags : int
              Flags from ``re`` to use when compilling the regex pattern.
-          yield match: bool
+          yield_match : bool
              If True, will yield a two tuple, where the second item is the
              match object.
              If False, only the view is yielded.
@@ -1125,7 +1125,9 @@ class AbstractMassExtract(object):
              is True.
 
         The match is successful if the regex is matched using python's
-        `re.search <http://docs.python.org/library/re.html#re.search>`_ method.
+        `re.search`__ method.
+
+        .. __:  http://docs.python.org/library/re.html#re.search
 
         Only the innermost view of each match is given. In other words, if a
         view is yielded, its subviews will not be yielded.
@@ -1216,10 +1218,10 @@ class MassExtract(AbstractMassExtract):
           kwargs : dict
             Variable length keyword argument passed on to `AbstractMassExtract`.
 
-        :Kwargs view: Pattern to match to job names.
-        :Kwargs excludes: List of patterns which job-names should not match.
-        :Kwargs naked_end: True if should return value rather than dict when only one item.
-        :Kwargs unix_re: converts regex patterns from unix-like expression.
+        :kwarg view: Pattern to match to job names.
+        :kwarg excludes: List of patterns which job-names should not match.
+        :kwarg naked_end: True if should return value rather than dict when only one item.
+        :kwarg unix_re: converts regex patterns from unix-like expression.
     """
     super(MassExtract, self).__init__(**kwargs)
 
@@ -1315,10 +1317,10 @@ class JobParams(AbstractMassExtract):
           kwargs : dict
             Variable length keyword argument passed on to `AbstractMassExtract`.
 
-        :Kwargs view: Pattern to match to job names.
-        :Kwargs excludes: List of patterns which job-names should not match.
-        :Kwargs naked_end: True if should return value rather than dict when only one item.
-        :Kwargs unix_re: converts regex patterns from unix-like expression.
+        :kwarg view: Pattern to match to job names.
+        :kwarg excludes: List of patterns which job-names should not match.
+        :kwarg naked_end: True if should return value rather than dict when only one item.
+        :kwarg unix_re: converts regex patterns from unix-like expression.
     """
     super(JobParams, self).__init__(**kwargs)
 

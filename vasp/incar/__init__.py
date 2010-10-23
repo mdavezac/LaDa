@@ -1,12 +1,13 @@
 """ Subpackage defining vasp incar parameters. """
+__docformat__ = "restructuredtext en"
+__all__ = [ "SpecialVaspParam", "NElect", "Algo", "Precision", "Ediff",\
+            "Encut", "FFTGrid", "Restart", "UParams", "IniWave",\
+            "Incar", "Magmom", 'Npar' ]
 from _params import SpecialVaspParam, NElect, Algo, Precision, Ediff,\
                     Encut, FFTGrid, Restart, UParams, IniWave, Magmom,\
                     Npar
 from ...opt.decorators import add_setter
 
-__all__ = [ "SpecialVaspParam", "NElect", "Algo", "Precision", "Ediff",\
-            "Encut", "FFTGrid", "Restart", "UParams", "IniWave",\
-            "Incar", "Magmom", 'Npar' ]
 
 class Incar(object):
   """ Contains vasp Incar parameters. 
@@ -17,51 +18,51 @@ class Incar(object):
       this class, or calling iter.
 
       Parameters(attributes) which are present by default are the following:
-         - C{ispin}: Sets number of spins. Must be either 1 or 2. 
-         - C{ismear}: Smearing function. Can be set with property L{set_smearing}. 
-         - C{sigma}: Smearing parameter. Can be set with property L{set_smearing}.
-         - C{isif}: Degrees of freedom to relax. Can be set using L{self.relaxation}. 
-         - C{nsw}: Number of ionic steps. Can be set using L{relaxation}. 
-         - C{ibrion}: ionic-relaxation method. Can be set using L{relaxation}. 
-         - C{potim}: ionic-relaxation step. Can be set using L{relaxation}. 
-         - C{iniwave}: initial wavefunction to use can be either "random" or "jellium".   
-         - C{nelect}: sets number of electrons in calculation above and beyond valence.
+         - ``ispin``: Sets number of spins. Must be either 1 or 2. 
+         - ``ismear``: Smearing function. Can be set with property `set_smearing`. 
+         - ``sigma``: Smearing parameter. Can be set with property `set_smearing`.
+         - ``isif``: Degrees of freedom to relax. Can be set using `relaxation`. 
+         - ``nsw``: Number of ionic steps. Can be set using `relaxation`. 
+         - ``ibrion``: ionic-relaxation method. Can be set using `relaxation`. 
+         - ``potim``: ionic-relaxation step. Can be set using `relaxation`. 
+         - ``iniwave``: initial wavefunction to use can be either "random" or "jellium".   
+         - ``nelect``: sets number of electrons in calculation above and beyond valence.
              - 0(default) lets VASP compute it from species in the system. 
              - 1 would mean +1 electron
              - -1 would mean +1 hole
              - etc
-         - C{algo}: electronic minimization. Can be \"very fast\", \"fast\", or \"normal\" (default). 
-         - C{precision}: sets accuracy of calculation. Can be \"accurate\"
+         - ``algo``: electronic minimization. Can be \"very fast\", \"fast\", or \"normal\" (default). 
+         - ``precision``: sets accuracy of calculation. Can be \"accurate\"
            (default), \"low\", \"medium\", \"high\".
-         - C{ediff}: sets the tolerance per atom of electronic minimization.
+         - ``ediff``: sets the tolerance per atom of electronic minimization.
             This tolerance is multiplied by the number of atoms in the system,
             eg consistent from one system to another.
-         - C{encut}: factor by which ENMAX of species is multiplied.
-         - C{fftgrid}: Either a 3-tuple of integers setting NGX and friend, or
+         - ``encut``: factor by which ENMAX of species is multiplied.
+         - ``fftgrid``: Either a 3-tuple of integers setting NGX and friend, or
            anything else (other than None). In the latter case, a fake VASP
            calculation is performed to get VASP recommended values.
-         - C{symprec}: tolerance when determining symmetries.
-         - C{magmom}: Sets magnetic moment. See `incar.Magmom`.
-         - C{npar}: Sets npar.
-         - C{lcorr}: Defaults to None.
-         - C{lplane}: Defaults to None.
-         - C{nbands}: Defaults to None.
-         - C{lorbit}: Defaults to None.
-         - C{addgrid}: Defaults to None.
-         - C{nupdown}: Defaults to None.
-         - C{loptics}: Defaults to None.
-         - C{lmaxmix}: Defaults to None.
-         - C{magmom}: Defaults to None.
-         - C{restart}: the return from previous vasp run to use as restart. 
+         - ``symprec``: tolerance when determining symmetries.
+         - ``magmom``: Sets magnetic moment. See `incar.Magmom`.
+         - ``npar``: Sets npar.
+         - ``lcorr``: Defaults to None.
+         - ``lplane``: Defaults to None.
+         - ``nbands``: Defaults to None.
+         - ``lorbit``: Defaults to None.
+         - ``addgrid``: Defaults to None.
+         - ``nupdown``: Defaults to None.
+         - ``loptics``: Defaults to None.
+         - ``lmaxmix``: Defaults to None.
+         - ``magmom``: Defaults to None.
+         - ``restart``: the return from previous vasp run to use as restart. 
 
              >> save_this_object = vasp(some parameters) # makes a vasp call.
              >> # make a second vasp using WAVECAR and whatnot from above call
              >> vasp(other parameters, ..., restart = save_this_object) 
 
-         - L{relaxation}: sets degrees of freedom to relax. Easier to use
+         - `relaxation`: sets degrees of freedom to relax. Easier to use
              than isif, nsw, and friends.
-         - L{set_smearing}: to easily set sigma and ismear.
-         - L{set_symmetries}: to easily set isym and symprec.
+         - `set_smearing`: to easily set sigma and ismear.
+         - `set_symmetries`: to easily set isym and symprec.
 
       These parameters can be modified as in C{vasp.ispin = 2} and so forth.
       In the special case that None is given (e.g. C{vasp.ispin = None}), then
@@ -80,7 +81,7 @@ class Incar(object):
       self.params, in which case VASP key/value pair are the key (in uppercase)
       and value of that dictionary, or in the self.special dictionary. In the
       latter case, the values in the dictionary of classes inheriting from
-      LL{_params.SpecialVaspParam}. They contain (at least) one variable,
+      `_params.SpecialVaspParam`. They contain (at least) one variable,
       "value", and one method, "incar_string".  The former is the one which is
       modified when an attribute is gotten or set (as in
       C{vasp.some_special_parameter = whatever}). The latter is called, with at
@@ -95,19 +96,6 @@ class Incar(object):
     # first, actually sets these two variables by hand, since they are used in __setattr__.
     super(Incar, self).__setattr__("params", {})
     super(Incar, self).__setattr__("special", {})
-#    # Then makes sure epydoc reads this right.
-#   self.params = {} 
-#   """ Key/Value vasp pairs.
-#   
-#       The vasp key is the uppercase of the dictionary key.
-#       In other words C{self.params["ispin"] = 2} will print as "ISPIN = 2".
-#   """
-#   self.special = {} 
-#   """ Special vasp parameters.
-#   
-#       These parameters need to know about other vasp parameters and/or the
-#       system of interest to print INCAR string. 
-#   """ 
 
     self.add_param = "ispin",       1 
     self.add_param = "isif",        0
@@ -246,15 +234,16 @@ class Incar(object):
        
         Where type is any of "fermi", "gaussian", "mp", "tetra", "metal", or "insulator",
         and x is the energy scale in eV.
-            - fermi use a Fermi-Dirac broadening.
-            - gaussian uses a gaussian smearing.
-            - mp is for Methfessel-Paxton, it should be specified as "mp N x",
-              where N is the order the mp method.
-            - tetra tetrahedron method without Bloechl correction.
-            - bloechl means tetrahedron method with Bloechl correction.
-            - "metal x" is equivalent to "mp 1 x"
-            - insulator is equivalent to "tetra bloechl".
-            - if x is omitted a default value of 0.2eV is used.
+
+        - fermi use a Fermi-Dirac broadening.
+        - gaussian uses a gaussian smearing.
+        - mp is for Methfessel-Paxton, it should be specified as "mp N x",
+          where N is the order the mp method.
+        - tetra tetrahedron method without Bloechl correction.
+        - bloechl means tetrahedron method with Bloechl correction.
+        - "metal x" is equivalent to "mp 1 x"
+        - insulator is equivalent to "tetra bloechl".
+        - if x is omitted a default value of 0.2eV is used.
     """
     if args == None: 
       self.ismear, self.sigma = None, None
@@ -299,7 +288,20 @@ class Incar(object):
 
   @property
   def relaxation(self):
-    """ Returns the kind of relaxation being performed. """
+    """ Sets type of relaxation.
+    
+        It accepts a tuple, as in:
+
+        >>> vasp.relaxation = "static", 
+      
+        Some of the parameters (purposefully left out above) are optional:
+        
+        - first argument can be "static", or a combination of "ionic",
+          "cellshape", and "volume".  
+        - second (optional) argument is nsw
+        - third (optional) argument is ibrion
+        - fourth (optional) argument is potim.
+    """
     nsw = 0 if self.nsw == None else self.nsw
     if self.ibrion == None: ibrion = -1 if nsw < 0 else 0
     else: ibrion = self.ibrion
@@ -315,20 +317,7 @@ class Incar(object):
 
   @relaxation.setter
   def relaxation(self, args): 
-    """ Sets type of relaxation.
-    
-        It accepts a tuple, as in:
-
-        >>> vasp.relaxation = "static", 
-      
-        Some of the parameters (purposefully left out above) are optional:
-        
-        - first argument can be "static", or a combination of "ion(ic|s)",
-          "cell(\s+|-|_?(?:shape)?", and "volume".  
-        - second (optional) argument is nsw
-        - third (optional) argument is ibrion
-        - fourth (optional) argument is potim.
-    """
+    """ Returns the kind of relaxation being performed. """
     import re
 
     dof =  args.lower() if isinstance(args,str) else str(args[0]).lower()

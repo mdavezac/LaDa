@@ -254,6 +254,7 @@ def read_input(filepath="input.py", namespace=None):
         namespace : dict
           Addiotional names to include in the local namespace when evaluating
           the input file.
+
       It add a few names to the input-file's namespace. 
   """
   from lada.opt import read_input

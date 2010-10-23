@@ -19,7 +19,7 @@ def count_calls(method):
 
   
 class Bandgap(object):
-  """ An evaluator function for bandgaps at S{Gamma}. """
+  """ An evaluator function for direct bandgaps. """
   def __init__(self, converter, escan, outdir = None, references = None, \
                keep_only_last = True, **kwargs):
     """ Initializes the bandgap object. 
@@ -32,7 +32,7 @@ class Bandgap(object):
             escan functional.
           outdir : str or None
             Directory where to perform calculations. Defaults to None. 
-          referemces
+          references
 	    Reference energies for band-gap calculations. See
             `lada.escan.bandgap`. Defaults to None.
           keep_only_last : boolean

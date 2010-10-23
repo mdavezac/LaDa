@@ -20,4 +20,5 @@ endif(NOT noinstall_headers)
 
 if(python_bindings)
   add_subdirectory(python)
+  add_subdirectory(defects)
 endif(python_bindings)

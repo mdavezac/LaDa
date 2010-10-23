@@ -90,6 +90,9 @@
     Prep-ing up: Exploring and modifying a job-dictionary before launch
     -------------------------------------------------------------------
 
+    Navigating across jobs
+    ++++++++++++++++++++++
+
     The following expects that you have a job-dictionary *saved to file* in
     some directory. How one gets a job-dictionary is somewhat dependent on how
     it is built, e.g. from a script, or from scratch using the capabilities
@@ -149,18 +152,23 @@
     Current position in job dictionary: / 
     Filename of jobdictionary: path/to/jobdict
 
-    Note that tab-completion works for all these commands. Try it!  Once we
-    have navigated to a subjob where an actual calculation exists -- eg
-    /ZnMgO/Olivine, as opposed to /ZnMgO -- we can edit both the crystal
+    Note that tab-completion works for all these commands. Try it!
+
+    Modifying one job at a time: showme
+    +++++++++++++++++++++++++++++++++++
+
+    Once we have navigated to a subjob where an actual calculation exists --
+    eg /ZnMgO/Olivine, as opposed to /ZnMgO -- we can edit both the crystal
     structure and the functional. 
 
-    >>> %explore structure 
-    >>> %explore functional 
+    >>> %showme structure 
+    >>> %showme functional 
 
     The first command opens an editor(vim? emacs? others?  see `Installing the
-    lada interface to ipython.`_) with the POSCAR file corresponding to the
-    structure. Once you save the file and exit the editor, the POSCAR is
-    interpreted and replaces the old structure. Similarly, the second command
+    lada interface to ipython.`_) with python code detailing the structure.
+    Once you save the file and exit the editor, the code is interpreted and
+    replaces the old structure with the content of the variable ``structure``
+    (from the code).  Similarly, the second command
     will start an editor with python code:
 
     >>> from lada.vasp import Vasp
@@ -193,6 +201,44 @@
     particular purpose of a particular calculation. Note that this true only at
     construction time: modifying the functional when calling ``showme
     functional`` will **not** affect any other jobs.
+
+
+    Batch modifications: jobparams
+    ++++++++++++++++++++++++++++++
+
+    Since highthroughput is the name of the game, there is a highthroughput way
+    of examining/modifying job-parameters:
+
+    >>> jobparams.onoff 
+    {
+      'this/job': 'on'
+      'this/other/job': 'off'
+    }
+    >>> jobparams['this/other/job'].onoff = 'off'
+    >>> jobparams.onoff 
+    {
+      'this/job': 'on'
+      'this/other/job': 'on'
+    }
+    
+    The above demonstrate how the status of the jobs, whether ``on`` or ``off``,
+    can be examined and modified with ``jobparams``. All and any parameter can
+    be modified in this way, if you know how to get to them. 
+
+    >>> del jobparams.structure.magmom 
+
+    The above will remove any magnetic moment information from all structures
+    of all jobs (which are on). Note that you can only modify jobs which are
+    on. By default only parameters which already exist can be added:
+
+    >>> del jobparams.structure.magmom # delete magmom in all occurences of  structure.
+    >>> jobparams.structure.magmom = [0,0,0,-1,2]
+    Error!!
+    >>> jobparams.only_existing = False
+    >>> jobparams.structure.magmom = [0,0,0,-1,2]
+    
+    The second to last line make it possible to add new attributes to job objects.
+
     
     Launching highthoughput calculations
     ------------------------------------
@@ -365,21 +411,18 @@
     ``material`` object.
 
 
-
-
-    Inspecting running job.
+    Inspecting running job:
     -----------------------
 
     >>> %explore running path/to/job
     
     Well, that is there to. At least on redmesa.
 
+    Example High-throughput script: HT-energy
+    -----------------------------------------
 
-    Example High-throughput script: point-defects.
-    ----------------------------------------------
-
-    The following describes, succintly, how to get high-throuput point-defects
-    up and running.
+    The following describes, succintly, how to get high-throuput energy
+    calculations up and running.
 
     The typical hight-thoughput script is organized around to files: 
     
@@ -390,13 +433,13 @@
 
     >>> mkdir ladatest
     >>> cd ladatest
-    >>> cp ~mmdavezac/usr/src/LaDa/master/test/point_defects/*.py .
+    >>> cp ~mmdavezac/usr/src/LaDa/master/test/highthroughput/*.py .
 
     Since the high-thoughput for point-defects uses Vasp, we will also need
     pseudo-potential files as input. Those for this specific test can be found
     here: 
 
-    >>> cp -r ~mmdavezac/usr/src/LaDa/master/test/point_defects/pseudos .
+    >>> cp -r ~mmdavezac/usr/src/LaDa/master/test/highthroughput/pseudos .
 
     Now that we all the files, we can start the IPython interface:
 
@@ -413,37 +456,13 @@
     defined. Lets look at a few, in order of appearance.
 
     >>>  from lada.crystal import A2BX4
-    >>>  lattice = A2BX4.b5()
 
-    >>>  for site in lattice.sites:
-    >>>    site.type = {"A": "Rh", "B": "Zn", "X": "O"}[site.type[0]]
-    >>>  lattice.scale = 8.506
+    A2BX4 is a *subpackage* of `lada.crystal` which contains all known lattices
+    for these compounds. It is customary to import subpackages at the top of a
+    python script. 
 
-    These two lines create a spinel lattice (b5) using the stock A2BX4 lattices
-    from lada. The second set of lines replaces the stock names ``A``, ``B``,
-    ``X`` with appropriate elements and sets the lattice parameter.
-    
-    
-    You could replace this with any other stock lattice in `lada.crystal.A2BX4`
-    or `lada.crystal.bravais`, or one of your own making (see
-    `lada.crystal.A2BX4` source code for templates on how to do this). You
-    could also read a poscar using `lada.crystal.read_poscar`, and then
-    transform the returned variable to a lattice using: 
-
-    >>> from lada.crystal import read_poscar, structure_to_lattice
-    >>> structure = read_poscar(["Rh", "Zn", "O"], "path/to/poscar")
-    >>> lattice = structure_to_lattice(structure)
-    
-
-    The second variable to be defined is the supercell to use for
-    point-defects.  This is a simple `numpy`_ array. 
-
-    >>>  supercell = array([[1, 0, 0],
-    >>>                     [0, 1, 0],
-    >>>                     [0, 0, 1]], dtype="float64" )
-       
-
-    The third type of variable is the vasp functional
+    The next few lines define the vasp functional. It should be viewed as a
+    template which individual jobs may modify for their own use. 
 
     >>>  vasp = Vasp()
     >>>  vasp.kpoints    = "Automatic generation\\n0\\nMonkhorst\\n2 2 2\\n0 0 0"
@@ -454,53 +473,57 @@
 
     Don't forget to include all relevant pseudo-potentials!
       
-    The fourth variable is somewhat more bizare. It is python `dict`_ where
-    each key/value pair will override a vasp parameter during the
-    ionic-relaxation step. Indeed, each point-defect structure if fist relaxed,
-    and then recomputed statically for maximum accuracy. Be default, the
-    dictionary is empty: nothing is overriden.
+    The next few lines define a *meta*-functional which relaxes cell-shapes and
+    ionic positions. In practice, plane-wave codes do not modify the FFT
+    lattices once a calculation is started. Hence some accuracy is lost during
+    molecular dynamics. The *meta*-functional takes care of this and related
+    issues by relaunching VASP as many times as necessary until convergence is
+    achieved.
 
-    >>>  relaxation_parameters = {}
+    >>> first_trial = { "kpoints": "\\n0\\nAuto\\n1", "encut": 0.9 }
+    >>> relaxation_dof = "volume ionic cellshape"
+    >>> relaxer = RelaxCellShape( vasp, relaxation_dof, first_trial, maxiter=5)
       
 
-    Finally getting to the meat of it. Substitutional and vacancy defects are
-    defined in the following line:
+    The first line above defines a dictionary of parameters to use during the
+    first trial relaxation. The second line defines what exactly to relax. The
+    third line defines the *meta*-functional itself.
 
-    >>>  substitutions = {"Rh": ["Zn", None], "Zn": ["Rh", None], "O": [None]}
+    A function is defined which takes a structure as an argument and returns a
+    guess of the scale (e.g. volume) from the atomic species. This
+    particular function is used within the test.py script. Note that anything
+    python understands can be used in the input.py script: it is no more than a
+    script which is read and evaluated by python.
 
-    This reads as in: compute Zn on Rh, vacancy on Rh, Rh on Zn, vacancy on Zn,
-    vacancy on O.
-      
-    The interstitials are a bit more complicated to define, since an actual
-    position in cartesian coordinates must be given, as well as a name.
-
-    >>>  interstitials = { "Li": [(0,0,0, "16c"), (0.75,0.75,0.75, "32e_0.75")],
-    >>>                    "Na": [(0,0,0, "16c"), (0.75,0.75,0.75, "32e_0.75")] }
-
-    It is important that the name of the interstial defect differ for any given elements. 
-
+    >>> def scale(structure):
+    >>>   from numpy.linalg import det
+    >>>   if "O" in [atom.type for atom in structure.atoms]:    spvol = 8.5**3/4e0
+    >>>   elif "Se" in [atom.type for atom in structure.atoms]: spvol = 9.5**3/4e0
+    >>>   elif "Te" in [atom.type for atom in structure.atoms]: spvol = 10.5**3/4e0
+    >>>   else: raise ValueError("Neither O, nor Se, nor Te atom found.")
+    >>>   nfu = float(len(structure.atoms)/7)*0.5 # 0.5 because 2 f.u. in spinel unit-cell.
+    >>>   vol = det(structure.cell)
+    >>>   return (nfu * spvol / vol)**(1e0/3e0) 
 
 
+    Finally, the configuration space to enumerate is defined, with first the
+    type A2BX4 materials, and then the lattices to consider.
+
+    >>> materials = ["Al2MgO4"]
+    >>> lattices = [ A2BX4.b1(),  A2BX4.b10()] #,  A2BX4.b10I(),  A2BX4.b11() ] 
+    
     Once the input has been modified to suit your needs, you can create the
     jobdictionary (within pylada) with 
 
     >>> import test
-    >>> jobdict = test.create_jobdict("input.py")
-    >>> %explore jobdict
-    >>> %savejobs path/to/file/on/disk
+    >>> test.nonmagnetic_wave("savemehere", "input.py")
 
     - The first line imports the test script in memory.
-    - The second line creates the job-dictionary in memory.
-    - The third line makes ``jobdict`` the current job-dictionary, still only in
-      memory (The current job-dictionary is ``current_jobdict`` in your IPython
-      user namespace).
-    - The fourth line save the current job-dictionary to file. 
+    - The second line creates the job-dictionary and saves it to the file *savemehere*.
 
     At this point, you can examine and launch the job-dictionary, as explainged
     in sections `Prep-ing up: Exploring and modifying a job-dictionary before
     launch`_ and `Launching highthoughput calculations`_.
-
-
 
 """
 __docformat__ = "restructuredtext en"
