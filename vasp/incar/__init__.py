@@ -329,7 +329,7 @@ class Incar(object):
     if not isinstance(args, str):
       if len(args) > 1: nsw = int(args[1])
       if len(args) > 2: ibrion = int(args[2])
-      if len(args) > 2: potim = int(args[3])
+      if len(args) > 3: potim = int(args[3])
 
 
     # static calculation.

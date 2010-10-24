@@ -15,8 +15,8 @@ vasp.lplane     = True
 vasp.addgrid    = True
 vasp.restart_from_contcar = False
 vasp.set_smearing   = "metal", 0.01
-vasp.set_relaxation = "volume", 50, 2
+vasp.relaxation = "volume", 50, 2
 vasp.set_symmetries = "off"
 
-vasp.add_specie = "Rh", "pseudos/Rh", U("liechtenstein", "d", 3.3), 3, True
+vasp.add_specie = "Rh", "pseudos/Rh", U("liechtenstein", "d", 3.3), 3
 
