@@ -170,7 +170,7 @@ class _ExtractImpl(AbstractExtractBase):
     structure.scale = 1e0
     assert len(self.species) == len(self.ions_per_specie),\
            RuntimeError("Number of species and of ions per specie incoherent.")
-    for specie, n in zip(self.species[::-1],self.ions_per_specie[::-1]):
+    for specie, n in zip(self.species,self.ions_per_specie):
       for i in range(n):
         structure.add_atom = array(atoms.pop(), dtype="float64"), specie
 

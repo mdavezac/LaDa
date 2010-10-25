@@ -99,11 +99,11 @@ class RelaxCellShape(object):
     from os.path import join
     from shutil import rmtree
     from ..opt import RelativeDirectory
-
+    from ..crystal import vasp_reordered
 
     # make this function stateless.
     vasp = deepcopy(kwargs.pop("vasp", self.vasp))
-    structure = deepcopy(structure)
+    structure = vasp_reordered(structure, attributes=["magmom"])
     str_dict = deepcopy(structure.__dict__)
     first_trial = kwargs.pop("first_trial", self.first_trial)
     maxiter = kwargs.pop("maxiter", self.maxiter)
@@ -156,7 +156,7 @@ class RelaxCellShape(object):
       assert output.success, RuntimeError("VASP calculations did not complete.")
       
       nb_steps += 1
-      if nb_steps == 1: params = kwargs; continue
+      if nb_steps == 1 and len(first_trial) != 0: params = kwargs; continue
       if output.total_energies.shape[0] < 2: break
       energies = output.total_energies[-2] - output.total_energies[-1:]
       if abs(energies) < ediffg: break
@@ -186,7 +186,7 @@ class RelaxCellShape(object):
       assert output.success, RuntimeError("VASP run did not succeed.")
 
       nb_steps += 1
-      if nb_steps == 1: params = kwargs; continue
+      if nb_steps == 1 and len(first_trial) != 0: params = kwargs; continue
       if output.total_energies.shape[0] < 2: break
       energies = output.total_energies[-2] - output.total_energies[-1:]
       if abs(energies) < ediffg: break

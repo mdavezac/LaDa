@@ -14,7 +14,7 @@ __all__ = [ 'FreezeAtom', 'which_site', 'Sites', 'SymmetryOperator', 'Lattice', 
             # Below, only true python stuff
             'deform_kpoints', 'read_poscar', 'specie_list', 'write_poscar',\
             'structure_to_lattice', 'fill_structure', 'defects', \
-            'A2BX4', 'bravais', 'gruber' ]
+            'A2BX4', 'bravais', 'gruber', 'vasp_ordered' ]
 
 from _crystal import FreezeAtom, which_site, Site, SymmetryOperator, Lattice, to_cartesian,\
                      get_point_group_symmetries, read_structure, sort_layers, \
@@ -476,6 +476,38 @@ def structure_to_lattice(structure):
   return result
 
 Structure.to_lattice = structure_to_lattice
+
+
+def vasp_ordered(structure, attributes=None):
+  """ Returns  a structure with correct VASP order of ions.
+  
+      :Parameters: 
+        structure 
+          Structure to reorder
+        attributes
+          A list of attributes to keep in sync with the ions.
+          Defaults to ``["magmom"]``.
+  """
+  from copy import deepcopy
+  if attributes == None: attributes = ["magmom"]
+  elif "magmom" not in attributes and hasattr(attributes, "append"):
+    attributes.append("magmom")
+
+  result = deepcopy(structure)
+  result.atoms.clear()
+  for attr in attributes:
+    if hasattr(result, attr): setattr(result, attr, [])
+
+  for type in specie_list(structure):
+    for i, atom in enumerate(structure.atoms):
+      if atom.type != type: continue
+      result.atoms.append(atom)
+      # reorders requested attributes.
+      for attr in attributes:
+        if hasattr(result, attr):
+          getattr(result, attr).append(getattr(structure, attr)[i])
+  return result
+
 
 
 def fill_structure(cell, lattice = None):

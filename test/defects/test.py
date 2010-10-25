@@ -191,7 +191,7 @@ def create_superstructure(groundstate, input):
   from operator import itemgetter
   from numpy import dot
   from IPython.ipapi import get as get_ipy
-  from lada.crystal import fill_structure
+  from lada.crystal import fill_structure, vasp_ordered
 
   # sanity checks,
   assert "structure" in groundstate.jobparams,\
@@ -204,7 +204,7 @@ def create_superstructure(groundstate, input):
          RuntimeError("Could not find path for current job-dictionary.")
   rootdir = dirname(ip.user_ns["current_jobdict_path"])
   # gets original lattice from job-dictionary.
-  orig_lattice = groundstate.jobparams["structure"].to_lattice()
+  orig_structure = groundstate.jobparams["structure"]
   
   # Extracts computed lattice from ground state calculation.
   extract = groundstate.functional.Extract( join(rootdir, groundstate.name[1:]) )
@@ -218,7 +218,7 @@ def create_superstructure(groundstate, input):
          ValueError("Superstructure as large as lattice. Disable this line if that's ok.")
 
   # adds magnetic moment if necessary.
-  if hasattr(orig_lattice, "magmom"):
+  if hasattr(orig_structure, "magmom"):
     assert extract.magnetization.shape[0] == len(lattice.sites),\
            RuntimeError("Could not find magnetization in ground-state's OUTCAR.")
     mlat = lattice.deepcopy()
@@ -229,7 +229,7 @@ def create_superstructure(groundstate, input):
     moments = fill_structure(cell, mlat)
     result.magmom = [ int(i.type) for i in moments.atoms ]
 
-  return result, lattice
+  return vasp_ordered(result, attributes=["magmom"]), lattice
 
 def magnetic_groundstates():
   """ Yields name of magnetic-groundstates from current job-dictionary.

@@ -26,7 +26,7 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
   from IPython.ipapi import get as get_ipy
   from lada.vasp import read_input
   from lada.jobs import JobDict
-  from lada.crystal import fill_structure
+  from lada.crystal import fill_structure, vasp_ordered
 
   # reads input.
   input = read_input(inputpath)
@@ -65,6 +65,7 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
       structure = fill_structure(lattice.cell, lattice)
       # changes atomic species.
       for atom in structure.atoms:  atom.type  = species_dict[atom.type]
+      structure = vasp_ordered(structure)
       # assigns it a name.
       structure.name = "{0} in {1}, spin-unpolarized.".format(material, lattice.name)
       # gets its scale.
