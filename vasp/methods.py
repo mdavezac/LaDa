@@ -99,11 +99,11 @@ class RelaxCellShape(object):
     from os.path import join
     from shutil import rmtree
     from ..opt import RelativeDirectory
-    from ..crystal import vasp_reordered
+    from ..crystal import vasp_ordered
 
     # make this function stateless.
     vasp = deepcopy(kwargs.pop("vasp", self.vasp))
-    structure = vasp_reordered(structure, attributes=["magmom"])
+    structure = vasp_ordered(structure, attributes=["magmom"])
     str_dict = deepcopy(structure.__dict__)
     first_trial = kwargs.pop("first_trial", self.first_trial)
     maxiter = kwargs.pop("maxiter", self.maxiter)
