@@ -125,7 +125,7 @@ def gtor_fourrier(wavefunctions, rvectors, gvectors, comm, axis=0):
 
   # mpi version
   else: 
-    from boost.mpi import broadcast, reduce
+    from boost.mpi import broadcast, reduce, all_reduce
 
     result = None
     for node in range(comm.size):
@@ -141,7 +141,7 @@ def gtor_fourrier(wavefunctions, rvectors, gvectors, comm, axis=0):
       else: reduce(comm, dummy, lambda x,y: x+y, node)
 
     assert not np.any(np.isnan(result))
-    norm = reduce(comm, len(rvectors), lambda x, y: x+y, 0)
+    norm = all_reduce(comm, len(rvectors), lambda x, y: x+y)
     return result / np.sqrt(float(norm))
 
 

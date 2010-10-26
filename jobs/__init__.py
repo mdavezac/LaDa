@@ -435,6 +435,25 @@ class JobDict(object):
     for name in self.subjobs():
       for u in self[name].walk_through(join(outdir, name)): 
         yield u
+  def itervalues(self): 
+    """ Iterates over all jobs. """
+    for job, name in self.walk_through(): yield job
+  def iterkeys(self): 
+    """ Iterates over all jobs. """
+    for job, name in self.walk_through(): yield name
+  def iteritems(self): 
+    """ Iterates over all jobs. """
+    for job, name in self.walk_through(): yield name, job
+  def value(self):
+    """ List of all jobs. """
+    return [u for u in self.itervalues()]
+  def keys(self):
+    """ List of all jobs. """
+    return [u for u in self.iterkeys()]
+  def items(self):
+    """ List of all jobs. """
+    return [u for u in self.iteritems()]
+
 
   @property
   def nbjobs(self):
@@ -472,7 +491,7 @@ def walk_through(jobdict, outdir = None, comm = None):
   for u in jobdict.walk_through(outdir): yield u
 
 @broadcast_result(key=True)
-def save(jobdict, path = None, overwrite=False, comm=None): 
+def save(jobdict, path = None, overwrite=False): 
   """ Pickles a job to file. 
  
       :keyword jobdict: A job-dictionary to pickle. 
@@ -502,7 +521,7 @@ def save(jobdict, path = None, overwrite=False, comm=None):
   print "Saved job dictionary to %s." % (path)
 
 @broadcast_result(key=True)
-def load(path = None, comm = None): 
+def load(path = None): 
   """ Unpickles a job from file. 
  
       :keyword path: Filename of a pickled jobdictionary.
