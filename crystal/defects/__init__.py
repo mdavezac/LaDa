@@ -5,7 +5,7 @@ __all__ = [ 'inequivalent_sites', 'vacancy', 'substitution', 'charged_states', \
             'magmom', 'low_spin_states', 'high_spin_states', 'magname', \
             'ExtractSingle', 'ExtractMaterial' ]
 
-from extract import SingleDefect as ExtractSingle, Material as ExtractMaterial
+from extract import Single as ExtractSingle, Material as ExtractMaterial
 
 def inequivalent_sites(lattice, type):
   """ Yields sites occupied by type which are inequivalent. 
@@ -29,7 +29,7 @@ def inequivalent_sites(lattice, type):
       :return: indices of inequivalent sites.
   """
   from numpy.linalg import inv, norm
-  from lada.crystal import fold_vector
+  from .. import fold_vector
 
   # all sites with occupation "type". 
   sites = [site for site in lattice.sites if type in site.type]
@@ -310,7 +310,7 @@ def potential_alignment(defect, host, maxdiff=0.5):
   from operator import itemgetter
   from numpy import mean, array, abs
   from quantities import eV
-  from . import specie_list
+  from .. import specie_list
 
   if abs(defect.charge) < 1e-12: return 0 * eV
 
@@ -381,10 +381,10 @@ def third_order_charge_correction(structure, charge = None, n = 200, epsilon = 1
 
       :return: third order correction  to the energy in eV. Should be *added* to total energy.
   """
-  from ._crystal import third_order 
+  from .._crystal import third_order 
   from numpy import array
   from quantities import elementary_charge, eV, pi, angstrom, dimensionless
-  from ..physics import a0, Ry
+  from ...physics import a0, Ry
 
   if charge == None: charge = 1e0
   elif charge == 0: return 0e0 * eV
@@ -417,9 +417,9 @@ def first_order_charge_correction(structure, charge=None, epsilon=1e0, cutoff=15
   """
   from numpy.linalg import norm
   from quantities import elementary_charge, eV
-  from ..crystal import Structure
-  from ..physics import Ry
-  try: from ..pcm import Clj 
+  from .. import Structure
+  from ...physics import Ry
+  try: from ...pcm import Clj 
   except ImportError as e:
     print "Could not import Point-Charge Model package (pcm). \n"\
           "Cannot compute first order charge correction.\n"\
@@ -569,7 +569,7 @@ def electron_counting(structure, defect, species, extrae):
         elctrons.
   """
   from numpy import array
-  from ..physics import Z
+  from ...physics import Z
   indices = magnetic_neighborhood(structure, defect, species)
 
   # no magnetic neighborhood.
@@ -682,7 +682,7 @@ def high_spin_states(structure, defect, species, extrae, do_integer=True, do_ave
 
   def is_d(t): 
     """ Determines whether an atomic specie is transition metal. """
-    from ..physics import Z
+    from ...physics import Z
     z = Z(t)
     return (z >= 21 and z <= 30) or (z >= 39 and z <= 48) or (z >= 57 and z <= 80) 
 
