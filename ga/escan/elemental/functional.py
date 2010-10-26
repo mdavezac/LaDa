@@ -98,11 +98,20 @@ class Darwin:
              self.__class__.print_nb_evals,
              self.__class__.save,
              self.__class__.timing,
-             self.__class__.check_generations ]
+             self.__class__.check_generations,
+             self.__class__.flush_out ]
 
   def check_generations(self): 
     """ Returns False if the maximum number of generations has been reached. """
     return self.current_gen < self.max_gen if self.max_gen >= 0 else True
+
+  def flush_out(self):
+    """ Tries to flush current output. """
+    from sys import stdout
+    from os import fsync
+    stdout.flush()
+    try: fsync(stdout)
+    except: pass
 
   def evaluation(self):
     """ Evaluates population. """
@@ -207,7 +216,7 @@ class Darwin:
     # only one proc should print.
     is_root = self.comm.rank == 0 if hasattr(self, "comm") else True
     if is_root:
-      with open(self.FUNCCAR, "w") as file: dump(self, file)
+      with open(self.FUNCCAR, "wb") as file: dump(self, file)
     return True
 
   @property
@@ -240,7 +249,7 @@ class Darwin:
     else: nbcalc = self.evaluator.nbcalc
     
     if self.do_print:
-      print "Number of functional evaluations: ", nbcalc
+      print "  Number of functional evaluations: ", nbcalc
 
   def timing(self):
     """ Prints timing at each generation. """
@@ -250,7 +259,7 @@ class Darwin:
     hour = int(float(t/3600e0))
     minute = int(float((t - hour*3600)/60e0))
     second = (t - hour*3600-minute*60)
-    print "# Elapsed time: {0}:{1}:{2:.4f}.".format(hour, minute, second)
+    print "  Elapsed time: {0}:{1}:{2:.4f}.".format(hour, minute, second)
     return True
 
 

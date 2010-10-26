@@ -102,16 +102,21 @@ class Bandgap(object):
     from shutil import rmtree
     from os.path import join, exists
     from copy import deepcopy
-    from boost.mpi import world
     from ....escan import bandgap
 
     # takes into account input arguments.
     references = kwargs.pop("references", self.references)
     converter  = kwargs.pop( "converter",  self.converter)
     escan      = kwargs.pop(     "escan",      self.escan)
-    if comm == None:       comm       = world
+    is_mpi = comm != None
+    is_root = True if not is_mpi else comm.rank == 0
     if outdir == None: outdir = self.outdir
-    if not self.keep_only_last: outdir = join(outdir, str(self.nbcalc))
+    if self.keep_only_last and is_root:
+      # deletes previous calculations.
+      for i in range(self.nbcalc): 
+        if exists(join(outdir, str(i))): rmtree(join(outdir, str(i)))
+    if is_mpi: comm.barrier()
+    outdir = join(outdir, str(self.nbcalc))
  
     # creates a crystal structure (phenotype) from the genotype.
     structure = converter(indiv.genes)
@@ -213,10 +218,7 @@ class EffectiveMass(Bandgap):
   def __call__(self, indiv, comm=None, **kwargs):
     """ Computes electronic effective mass. """
     from copy import deepcopy
-    from boost.mpi import world
     from ....escan import derivatives
-
-    if comm == None: comm = world
 
     # isolates effective mass parameters.
     emass_dict = {}

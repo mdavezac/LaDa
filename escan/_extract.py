@@ -2,7 +2,6 @@
 __docformat__ = "restructuredtext en"
 __all__ = ['Extract']
 
-from ..vff import Extract as VffExtract, _get_script_text
 from ..opt.decorators import broadcast_result, make_cached
 from ..opt import AbstractExtractBase
 
@@ -29,18 +28,29 @@ class Extract(AbstractExtractBase):
           escan : lada.escan.Escan
             Wrapper around the escan functional.
     """
+    from ..vff import Extract as VffExtract
     from . import Escan
 
-    super(Extract, self).__init__(directory=directory, comm=comm)
+    super(Extract, self).__init__(directory=directory, comm=None)
 
     if escan == None: escan = Escan()
     
-    self._vffout = VffExtract(directory, comm = comm, vff = escan.vff)
+    self._vffout = VffExtract(directory, comm = None, vff = escan.vff)
     """ Private reference to vff extraction object. """
     self.OUTCAR = escan.OUTCAR
     """ OUTCAR file to extract stuff from. """
     self.FUNCCAR = escan._FUNCCAR
     """ Pickle to FUNCCAR. """
+    self.comm = comm
+
+  @property 
+  def comm(self):
+    """ Communicator over which to sync output. """
+    return self._vffout.comm 
+  @comm.setter
+  def comm(self, value):
+    if hasattr(self, "_vffout"): self._vffout.comm = value
+
   
   def __directory__hook__(self):
     """ Called whenever the directory changes. """
@@ -55,7 +65,7 @@ class Extract(AbstractExtractBase):
   def __copy__(self):
     """ Returns a shallow copy of this object. """
     result = super(Extract, self).__copy__()
-    result._vffout.__copy__()
+    result._vffout = self._vffout.__copy__()
     return result
 
   def copy(self, **kwargs):
@@ -101,6 +111,7 @@ class Extract(AbstractExtractBase):
     from numpy import array
     from cPickle import load
     from ..opt.changedir import Changedir
+    from ..vff import _get_script_text
     from . import Escan, localH, nonlocalH, soH, AtomicPotential
     
     # tries to read from pickle.
@@ -136,9 +147,10 @@ class Extract(AbstractExtractBase):
     """ Returns true, if non-spin polarized or Kammer calculations. """
     from numpy.linalg import norm
     from . import soH
-    if self.solo().escan.nbstates  ==   1: return False
-    if self.solo().escan.potential != soH: return True
-    return norm(self.solo().escan.kpoint) < 1e-12
+    seul = self.solo()
+    if seul.escan.nbstates  ==   1: return False
+    if seul.escan.potential != soH: return True
+    return norm(seul.escan.kpoint) < 1e-12
 
 
   @property 
@@ -328,8 +340,8 @@ class Extract(AbstractExtractBase):
            RuntimeError("Must read wavefunctions with as many nodes as they were written to disk.")
     with redirect(fout="") as streams:
       with Changedir(self.directory, comm=self.comm) as directory:
-        assert exists(self.escan.WAVECAR),\
-               IOError("%s does not exist." % (join(self.directory, self.escan.WAVECAR)))
+        path = join(self.directory, self.escan.WAVECAR)
+        assert exists(path), IOError("{0} does not exist.".format(path))
         self.escan._write_incar(self.comm, self.structure)
         nbstates = self.escan.nbstates if self.escan.potential == soH and norm(self.escan.kpoint)\
                    else self.escan.nbstates / 2

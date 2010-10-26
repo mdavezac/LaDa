@@ -114,7 +114,7 @@ class Extract(object):
     if is_root:
       current_path = join(join(self.directory, self.current_age), self.FUNCCAR)
       assert exists(current_path), RuntimeError("File {0} does not exist.".format(current_path))
-      with open(current_path, "r") as file: result = load(file)
+      with open(current_path, "rb") as file: result = load(file)
       if is_mpi:
         from boost.mpi import broadcast
         broadcast(self.comm, result, 0)

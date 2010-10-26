@@ -120,7 +120,6 @@ class ExtractAE(_ExtractE):
     from numpy import dot
     from numpy.linalg import det
     from ..physics import a0, electronic_mass, h_bar
-    from . import dipole_matrix_elements
     result, nstates = None, 0
     units = 2e0/3e0 * h_bar**2 / electronic_mass
     for wfnA in self.gwfns:
@@ -171,6 +170,17 @@ class ExtractRefs(object):
     """ CBM extraction method. """
     self.extract_vff = vff_out
     """ VFF extraction method. """
+    self.comm = self.comm # makes sure all share the same communicator.
+
+  @property
+  def comm(self):
+    """ Communicator over which to sync output. """
+    return self.extract_vbm.comm
+  @comm.setter
+  def comm(self, value):
+    self.extract_vbm.comm = value
+    self.extract_cbm.comm = value
+    self.extract_vff.comm = value
 
   @property
   def bandgap(self):
@@ -178,7 +188,6 @@ class ExtractRefs(object):
     return self.cbm - self.vbm
 
   @property
-  @make_cached
   def _raw(self):
     from numpy import array
     from quantities import eV
@@ -206,15 +215,11 @@ class ExtractRefs(object):
   @property
   def vbm(self):
     """ Greps VBM from calculations. """
-    from numpy import amax
-    vbm_eigs = self.extract_vbm.eigenvalues.copy()
     return self._raw[0]
 
   @property
   def cbm(self):
     """ Greps CBM from calculations. """
-    from numpy import amin
-    cbm_eigs = self.extract_cbm.eigenvalues.copy()
     return self._raw[1]
 
   def oscillator_strength(self, degeneracy=1e-3, attenuate=False):
@@ -222,9 +227,7 @@ class ExtractRefs(object):
     from numpy import all, abs, dot
     from numpy.linalg import det
     from ..physics import a0, electronic_mass, h_bar
-    from . import dipole_matrix_elements
 
-    assert self.extract_vbm.comm == self.extract_cbm.comm
     assert self.extract_vbm.gvectors.shape == self.extract_cbm.gvectors.shape
     assert all( abs(self.extract_vbm.gvectors - self.extract_cbm.gvectors) < 1e-12 )
     units = 2e0/3e0 * h_bar**2 / electronic_mass

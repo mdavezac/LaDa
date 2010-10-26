@@ -131,7 +131,7 @@ def _check_generation( self ):
   if self.max_gen < 0: return True
   return self.current_gen < self.max_gen
   
-def serial_population_evaluation(self, evaluator):
+def serial_population_evaluation(self, evaluator, comm = None):
   """ Evaluates population and offspring serially.
   
       :Param evaluator: 
@@ -141,10 +141,10 @@ def serial_population_evaluation(self, evaluator):
   """
   for indiv in self.population:
     if not hasattr(indiv, "fitness" ): 
-      indiv.fitness = evaluator(indiv)
+      indiv.fitness = evaluator(indiv, comm=comm)
   for indiv in self.offspring:
     if not hasattr(indiv, "fitness" ): 
-      indiv.fitness = evaluator(indiv)
+      indiv.fitness = evaluator(indiv, comm=comm)
 
 def mpi_population_evaluation(self, evaluator, pools, comm = None):
   """ MPI Population and offspring evaluation.
@@ -217,10 +217,9 @@ def mpi_population_evaluation(self, evaluator, pools, comm = None):
 
 def population_evaluation(self, evaluator, comm=None, pools=None):
   """ Chooses between MPI and serial evaluation. """
-  if comm == None or pools == None or pools == 1: 
-    serial_population_evaluation(self, evaluator)
-  elif comm.size == 1: 
-    serial_population_evaluation(self, evaluator)
+  is_serial = pools == 1 or (comm.size == 1 if comm != None else True)
+  if is_serial:
+    serial_population_evaluation(self, evaluator, comm = comm)
   else: 
     if pools == 0: pools = comm.size
     mpi_population_evaluation(self, evaluator, comm=comm, pools=pools)
