@@ -97,7 +97,7 @@ class Launch(Incar):
     with Changedir(self._tempdir) as tmpdir:
       incar_lines = this.incar_lines(comm = comm)
 
-    if is_root: return # don't have any more business here.
+    if not is_root: return # don't have any more business here.
 
 
     # creates INCAR file. Note that POSCAR file might be overwritten here by Restart.
@@ -184,8 +184,6 @@ class Launch(Incar):
     elif not hasattr(self, "_system"): raise RuntimeError, "Internal bug.\n"
     outdir = getcwd() if outdir == None else RelativeDirectory(outdir).path
     if comm == None: comm = world
-
-    is_root = comm.rank == 0
 
     # creates temporary working directory
     if self.inplace: context = Changedir(outdir, comm=comm) 
