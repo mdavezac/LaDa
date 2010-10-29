@@ -103,7 +103,7 @@ class ExtractAE(_ExtractE):
   def _vbm_cbm(self):
     """ Gets vbm and cbm. """
     from quantities import eV
-    from lada.escan._escan import nb_valence_states
+    from ..crystal import nb_valence_states
     eigenvalues = self.eigenvalues.copy()
     eigenvalues.sort()
     n = nb_valence_states(self.structure)
@@ -144,7 +144,7 @@ class ExtractAE(_ExtractE):
 def _band_gap_ae_impl(escan, structure, outdir, **kwargs):
   """ Computes bandgap of a structure using all-electron method. """
   from os.path import join
-  from lada.escan._escan import nb_valence_states
+  from ..crystal import nb_valence_states
   
   if "eref" in kwargs:
     assert kwargs["eref"] == None, ValueError("Unexpected eref argument when computing bandgap.")

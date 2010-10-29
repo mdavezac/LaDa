@@ -1,10 +1,10 @@
 """ Interface module for ESCAN. """
 __docformat__ = "restructuredtext en"
-__all__ = [ "Extract", "nb_valence_states", "bandgap", "extract_bg",\
+__all__ = [ "Extract", "bandgap", "extract_bg",\
             "dipole_matrix_element", "band_structure", "call_escan",\
             "Escan", "folded_spectrum", "all_electron", "soH", \
             "nonlocalH", "localH", "AtomicPotential", "band_structure",\
-            "extract_bg", "nb_valence_states" ]
+            "extract_bg" ]
 
 from ..opt import __load_escan_in_global_namespace__
 from lada import lada_with_mpi
@@ -21,7 +21,6 @@ else:
   raise RuntimerError("Cannot load escan without MPI yet.")
 from ..opt.decorators import add_setter, broadcast_result
 from _bandstructure import band_structure
-from ..crystal import nb_valence_states
 from _bandgap import bandgap, extract as extract_bg
 from _extract import Extract
 from _extract import Extract as _EscanExtract

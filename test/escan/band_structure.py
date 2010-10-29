@@ -5,9 +5,9 @@ from numpy import matrix, array
 from numpy.linalg import norm
 from boost.mpi import world
 from lada.opt import read_input
-from lada.escan import Escan, nb_valence_states, soH, band_structure
+from lada.escan import Escan, soH, band_structure
 from lada.vff import Vff
-from lada.crystal import fill_structure, sort_layers, FreezeCell
+from lada.crystal import fill_structure, sort_layers, FreezeCell, nb_valence_states  
 
 # reads input file.
 global_dict={"Vff": Vff, "Escan": Escan, "nb_valence_states": nb_valence_states, "soH": soH}

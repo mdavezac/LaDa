@@ -13,11 +13,11 @@ from numpy.linalg import norm
 from boost.mpi import world
 from lada.opt import read_input, redirect
 from lada.opt.changedir import Changedir
-from lada.escan import Escan, nb_valence_states, soH, bandgap
+from lada.escan import Escan, soH, bandgap
 from lada.escan._escan import to_realspace
 from lada.escan._wfns import rtog_fourrier
 from lada.vff import Vff
-from lada.crystal import fill_structure, sort_layers, FreezeCell
+from lada.crystal import fill_structure, sort_layers, FreezeCell, nb_valence_states
 
 # reads input file.
 global_dict={"Vff": Vff, "Escan": Escan, "nb_valence_states": nb_valence_states, "soH": soH}

@@ -8,11 +8,11 @@ from numpy.linalg import norm, det
 from boost.mpi import world
 from lada.opt import read_input, redirect
 from lada.opt.changedir import Changedir
-from lada.escan import Escan, nb_valence_states, soH, bandgap, dipole_matrix_elements, Extract
+from lada.escan import Escan, soH, bandgap, Extract
 from lada.escan._bandgap import ExtractRefs
 from lada.escan._wfns import rtog_fourrier
 from lada.vff import Vff
-from lada.crystal import fill_structure, sort_layers, FreezeCell
+from lada.crystal import fill_structure, sort_layers, FreezeCell, nb_valence_states 
 from lada.physics import a0
 
 # reads input file.

@@ -1,9 +1,9 @@
 from math import fabs as abs
 from numpy import array
 from boost.mpi import world
-from lada.crystal import fill_structure
+from lada.crystal import fill_structure, nb_valence_states
 from lada.vff import Vff
-from lada.escan import Escan, soH, nb_valence_states
+from lada.escan import Escan, soH 
 from lada.escan.derivatives import reciprocal
 from lada.opt import read_input
 
