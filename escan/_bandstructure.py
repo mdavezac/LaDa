@@ -1,6 +1,10 @@
 #! python
 """ Bandstructure plotting tools """
 __docformat__  = 'restructuredtext en'
+__all__ = ['band_structure', 'Extract']
+
+from ..opt.decorators import broadcast_result, make_cached
+from ._extract import MassExtract
 
 def band_structure(escan, structure, kpoints, density = None, outdir=None, comm=None,\
                    do_relax=None, pools = 1, nbkpoints = None, **kwargs):
@@ -107,9 +111,7 @@ def band_structure(escan, structure, kpoints, density = None, outdir=None, comm=
     out = escan( structure, outdir=directory, kpoint=kpoint, vffrun=vffrun,\
                  genpotrun=genpotrun, do_escan=True, comm = local_comm, **kwargs )
     # saves stuff
-    print out.eigenvalues, comm.rank
     eigenvalues = out.eigenvalues.copy()
-    print "2. ", eigenvalues, comm.rank
     eigenvalues.sort()
     results.append( (x, kpoint, eigenvalues) )
 
@@ -126,3 +128,41 @@ def band_structure(escan, structure, kpoints, density = None, outdir=None, comm=
     else: results = broadcast(local_comm, None, 0) 
   return results
 
+class Extract(MassExtract):
+  """ Extraction class for band-structures. """
+
+  def walk_through(self):
+    """ Goes through all calculations and orders them. """
+    from re import compile
+    result = [u for u in super(Extract, self).walk_through() if u[0] != '/calculations']
+    regex = compile("/calculations/(\d+)-")
+    result = sorted(result, key=lambda x: int(regex.match(x[0]).group(1)))
+    for u in result: yield u
+
+  @property
+  def success(self): 
+    """ Checks for success of jobs. """
+    for name, job in self.walk_through(): 
+      if not job.success: return False
+    return True
+
+  @property
+  @make_cached
+  def vff(self):
+    """ Vff extraction object. """
+    from os.path import join
+    return self.Extract(join(self.rootdir, 'calculations'))
+
+  @property
+  @make_cached
+  def kpoints(self):
+    """ kpoints used to compute band-structure. """
+    from numpy import zeros, array
+    from re import compile
+    regex = compile("/calculations/(\d+)-\[\s*(\S+)\s+(\S+)\s+(\S+)\s*\]")
+    result = zeros((len(self.jobs), 3), dtype='float64')
+    for i, name in enumerate(self.iterkeys()):
+      found = regex.search(name)
+      result[i,:] = array([found.group(2), found.group(3), found.group(4)])
+    return result
+    

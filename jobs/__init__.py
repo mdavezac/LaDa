@@ -12,8 +12,9 @@
        - pbs_script: Creates pbs-script to perform calculations on a tree.
 """
 __docformat__ = "restructuredtext en"
-from ..opt.decorators import add_setter, broadcast_result, make_cached
 from collections import MutableMapping
+from abc import ABCMeta, abstractmethod
+from ..opt.decorators import add_setter, broadcast_result, make_cached
 
 __all__ = [ 'JobDict', 'walk_through', 'save', 'load', 'bleed', 'unbleed',\
             'unsucessfull', 'Extract' ]
@@ -895,6 +896,7 @@ class ForwardingDict(MutableMapping):
 
 class AbstractMassExtract(object): 
   """ Propagates extraction methods from different jobs. """
+  __metaclass__ = ABCMeta
 
   def uncache(self): 
     """ Uncache values. """
@@ -1016,13 +1018,14 @@ class AbstractMassExtract(object):
     return compile(pattern, flags) if not self.unix_re\
            else convert_from_unix_re(pattern)
 
+  @abstractmethod
   def walk_through(self):
     """ Generator to go through all relevant jobs. 
     
         :return: (name, extractor), where name is the name of the job, and
           extractor an extraction object.
     """
-    abstract
+    pass
 
   @property
   def view(self):
@@ -1041,7 +1044,8 @@ class AbstractMassExtract(object):
     if self._cached_extractors != None: return self._cached_extractors
     
     from os.path import exists, join
-    result = {}
+    from ..opt import OrderedDict
+    result = OrderedDict()
     for name, extract in self.walk_through(): result[name] = extract 
     self._cached_extractors = result
     return result
@@ -1098,7 +1102,7 @@ class AbstractMassExtract(object):
   @property
   def jobs(self):
     """ List of jobnames (satisfying the current view). """
-    return [key for key, value in self.iteritems()]
+    return [key for key in self.iterkeys()]
 
   @property
   def children(self):
@@ -1335,12 +1339,12 @@ class AbstractMassExtractDirectories(AbstractMassExtract):
       - `Extract` is not none.
       - `__is_calc_dir__ ` is correctly defined. 
   """
-  def __init__(self, path = None, Extract = None,  **kwargs):
+  def __init__(self, path = '.', Extract = None,  **kwargs):
     """ Initializes AbstractMassExtractDirectories.
     
     
         :Parameters:
-          path : str or None
+          path : str 
             Root directory for which to investigate all subdirectories.
             If None, uses current working directory.
           Extract
@@ -1351,7 +1355,6 @@ class AbstractMassExtractDirectories(AbstractMassExtract):
         :kwarg naked_end: True if should return value rather than dict when only one item.
         :kwarg unix_re: converts regex patterns from unix-like expression.
     """
-    from os import getcwd
     from os.path import exists, isdir
     from ..opt import RelativeDirectory
 
@@ -1361,7 +1364,6 @@ class AbstractMassExtractDirectories(AbstractMassExtract):
     self.Extract = Extract
     """ Extraction class to use. """
 
-    if path == None: path = getcwd()
     self._rootdir = RelativeDirectory(path, hook=self.uncache)
     """ Root of the directory-tree to trawl for OUTCARs. """
     
@@ -1400,9 +1402,10 @@ class AbstractMassExtractDirectories(AbstractMassExtract):
     result.__dict__.update(self.__dict__)
     return result
   
+  @abstractmethod
   def __is_calc_dir__(self, dirpath, dirnames, filenames):
     """ Returns true this directory contains a calculation. """
-    abstract
+    pass
 
 
 class JobParams(AbstractMassExtract):
