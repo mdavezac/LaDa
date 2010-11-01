@@ -1323,6 +1323,87 @@ class MassExtract(AbstractMassExtract):
       except: pass
       else: yield job.name, extract
 
+class AbstractMassExtractDirectories(AbstractMassExtract):
+  """ Propagates extractors from all subdirectories.
+  
+      Trolls through all subdirectories for calculations with given extraction
+      files, and organises results as a dictionary where keys are the name of
+      the diretory.
+
+      An class derived from this one should make sure that:
+      
+      - `Extract` is not none.
+      - `__is_calc_dir__ ` is correctly defined. 
+  """
+  def __init__(self, path = None, Extract = None,  **kwargs):
+    """ Initializes AbstractMassExtractDirectories.
+    
+    
+        :Parameters:
+          path : str or None
+            Root directory for which to investigate all subdirectories.
+            If None, uses current working directory.
+          Extract
+            Extraction class to use within each calculation. 
+          kwargs : dict
+            Keyword parameters passed on to AbstractMassExtract.
+
+        :kwarg naked_end: True if should return value rather than dict when only one item.
+        :kwarg unix_re: converts regex patterns from unix-like expression.
+    """
+    from os import getcwd
+    from os.path import exists, isdir
+    from ..opt import RelativeDirectory
+
+    # this will throw on unknown kwargs arguments.
+    super(AbstractMassExtractDirectories, self).__init__(**kwargs)
+
+    self.Extract = Extract
+    """ Extraction class to use. """
+
+    if path == None: path = getcwd()
+    self._rootdir = RelativeDirectory(path, hook=self.uncache)
+    """ Root of the directory-tree to trawl for OUTCARs. """
+    
+    assert exists(self.rootdir), RuntimeError("Path {0} does not exist.".format(self.rootdir))
+    assert isdir(self.rootdir), RuntimeError("Path {0} is not a directory.".format(self.rootdir))
+
+  @property
+  def rootdir(self): 
+    """ Root of the directory-tree to trawl for OUTCARs. """
+    return self._rootdir.path
+  @rootdir.setter
+  def rootdir(self, value): self._rootdir.path = value
+
+  def walk_through(self):
+    """ Goes through all directories with a contcar. """
+    from os import walk, getcwd
+    from os.path import abspath, relpath, abspath, join
+
+    for dirpath, dirnames, filenames in walk(self.rootdir, topdown=True, followlinks=True):
+      if not self.__is_calc_dir__(dirpath, dirnames, filenames): continue
+
+      try: result = self.Extract(join(self.rootdir, dirpath))
+      except: continue
+
+      result.OUTCAR = self.OUTCAR
+      yield join('/', relpath(dirpath, self.rootdir)), result
+
+  @property
+  def _attributes(self): 
+    """ Returns __dir__ set special to the extraction itself. """
+    return set([u for u in dir(self.Extract()) if u[0] != '_'])
+
+  def __copy__(self):
+    """ Returns a shallow copy. """
+    result = self.__class__(self.rootdir)
+    result.__dict__.update(self.__dict__)
+    return result
+  
+  def __is_calc_dir__(self, dirpath, dirnames, filenames):
+    """ Returns true this directory contains a calculation. """
+    abstract
+
 
 class JobParams(AbstractMassExtract):
   """ Get and sets job parameters for a job-dictionary. """

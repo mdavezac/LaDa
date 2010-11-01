@@ -1,6 +1,6 @@
 """ Interface module for ESCAN. """
 __docformat__ = "restructuredtext en"
-__all__ = [ "Extract", "bandgap", "extract_bg",\
+__all__ = [ "Extract", 'MassExtract', "bandgap", "extract_bg",\
             "dipole_matrix_element", "band_structure", "call_escan",\
             "Escan", "folded_spectrum", "all_electron", "soH", \
             "nonlocalH", "localH", "AtomicPotential", "band_structure",\
@@ -22,7 +22,7 @@ else:
 from ..opt.decorators import add_setter, broadcast_result
 from _bandstructure import band_structure
 from _bandgap import bandgap, extract as extract_bg
-from _extract import Extract
+from _extract import Extract, MassExtract
 from _extract import Extract as _EscanExtract
 
 
