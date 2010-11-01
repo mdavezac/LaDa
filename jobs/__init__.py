@@ -669,8 +669,10 @@ class DefaultParams:
   """ If True, then all regex matching is done using unix-command-line patterns. """
 
 class ForwardingDict(MutableMapping): 
-  """ A dictionary which forwards attributes and calls. """
+  """ An *ordered* dictionary which forwards attributes and calls. """
   def __init__(self, dictionary = None, _attr_list=None, **kwargs):
+    """ Initializes a ForwardingDict instance. """
+    from ..opt import OrderedDict
     self._is_initializing_forwarding_dict = True
     """ Tells get/setattr that Forwarding dict is being initialized. """
     super(ForwardingDict, self).__init__()
@@ -683,7 +685,7 @@ class ForwardingDict(MutableMapping):
     """ Whether attributes can be added or only modified. """
     self._attr_list    = [] if _attr_list == None else _attr_list
     """ List of attributes of attributes, from oldest parent to youngest grandkid. """
-    self.dictionary    = {} if dictionary == None else dictionary
+    self.dictionary    = OrderedDict({} if dictionary == None else dictionary)
     """" The dictionary for which to unroll attributes. """
     del self._is_initializing_forwarding_dict
     assert len(kwargs) == 0, ValueError("Unkwnown keyword arguments:{0}.".format(kwargs.keys()))
@@ -1002,7 +1004,8 @@ class AbstractMassExtract(object):
   @property
   def extractors(self):
     """ Returns dictioanary of extrators. """
-    result = {}
+    from ..opt import OrderedDict
+    result = OrderedDict()
     for k, j in self.iteritems(): result[k] = j
     if self.naked_end and len(result) == 1: return result[result.keys()[0]]
     return ForwardingDict(result, naked_end=self.naked_end)
@@ -1083,9 +1086,10 @@ class AbstractMassExtract(object):
 
   def __getattr__(self, name): 
     """ Returns extracted values. """
+    from ..opt import OrderedDict
     assert name in self._attributes, AttributeError("Unknown attribute {0}.".format(name))
 
-    result = {}
+    result = OrderedDict()
     for key, value in self.iteritems():
       try: result[key] = getattr(value, name)
       except: result.pop(key, None)
@@ -1478,7 +1482,8 @@ class JobParams(AbstractMassExtract):
   @property
   def extractors(self):
     """ Returns dictionary of extrators. """
-    result = {}
+    from ..opt import OrderedDict
+    result = OrderedDict()
     for k, j in self.iteritems(): result[k] = j
     if self.naked_end and len(result) == 1: return result[result.keys()[0]]
     return ForwardingDict( result, naked_end=self.naked_end, \
@@ -1510,7 +1515,8 @@ class JobParams(AbstractMassExtract):
 
   def __getattr__(self, name): 
     """ Returns extracted values. """
-    result = {}
+    from ..opt import OrderedDict
+    result = OrderedDict()
     for key, value in self.iteritems():
       if value.is_tagged: continue
       try: result[key] = getattr(value, name)
