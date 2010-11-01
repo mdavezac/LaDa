@@ -1109,7 +1109,7 @@ class AbstractMassExtract(object):
     jobs = self.jobs
     if len(self.jobs) < 2: return 
     children = set()
-    if len(self.view) == 0:
+    if len(self.view) == 0 or self.view == '/':
       for name in self.jobs:
         children.add(name[:1+name[1:].find('/')])
     else:
