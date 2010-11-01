@@ -219,16 +219,11 @@ class Vasp(Launch):
       else: modules[module] = [classname]
     # adds species.
     for name, specie in self.species.items():
-      string += "functional.add_specie = \"%s\", \"%s\"" % (name, specie._directory.unexpanded)
-      if len(specie.U) == 0: string += ", None"
-      else:
-        string += ",\\\n                  [ %s" % (specie.U[0])
-        for u in specie.U[1:]:
-          string += ",\\\n                    %s" % (u)
-        string += " ]"
-      string += ",\\\n                  "
-      string += "None" if not hasattr(specie, "oxidation") else str(specie.oxidation)
-      string += ", %s\n" % (repr(specie.magnetic))
+      string += "functional.species['{0}'] = {1}\n".format(name, repr(specie))
+      module = specie.__class__.__module__ 
+      classname = specie.__class__.__name__ 
+      if module in modules: modules[module].append(classname)
+      else: modules[module] = [classname]
     if not self.inplace: 
       string += "functional.inplace = False\n"
       string += "functional.workdir = \"%s\"\n" % (self._workdir.repr())

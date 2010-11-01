@@ -81,7 +81,7 @@ class Specie(object):
       In addition, it may contain information used to build a set of
       high-throughput jobs.
   """
-  def __init__(self, directory, U=None, oxidation=None):
+  def __init__(self, directory, U=None, oxidation=None, **kwargs):
     """ Initializes a specie.
 
         :Parameters:
@@ -94,6 +94,8 @@ class Specie(object):
             or `nlep`.
           oxidation : int
             Maximum oxidation state (or minimum if negative).
+          kwargs : dict
+            Any other keyworkd argument is added as an attribute of this object.
     """
     from ..opt import RelativeDirectory
 
@@ -102,6 +104,9 @@ class Specie(object):
     if U == None: self.U = []
     elif isinstance(U, dict): self.U = [U]
     else: self.U = [u for u in U] # takes care of any kind of iterator.
+
+    # sets up other arguments.
+    for k, v in kwargs.items(): setattr(self, k, v)
 
   @property
   def directory(self):
@@ -145,4 +150,17 @@ class Specie(object):
     """ Returns handle/context to POTCAR file. """
     self.potcar_exists()
     return open(self.path, "r") 
+
+  def __repr__(self):
+    """ Represents a specie. """
+    string = "{0.__class__.__name__}('{0._directory.unexpanded}'".format(self)
+    for k, v in self.__dict__.items():
+      if k[0] == '_directory': continue
+      if k == 'U' and len(v) == 0: continue
+      try: assert repr(v)[0] != '<' 
+      except: continue
+      string += ", {name}={value}".format(name=k, value=repr(v))
+    return string + ')'
+
+
 
