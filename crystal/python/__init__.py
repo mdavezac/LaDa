@@ -13,7 +13,7 @@ __all__ = [ 'FreezeAtom', 'which_site', 'Sites', 'SymmetryOperator', 'Lattice', 
             'nb_valence_states', \
             # Below, only true python stuff
             'deform_kpoints', 'read_poscar', 'specie_list', 'write_poscar',\
-            'structure_to_lattice', 'fill_structure', 'defects', \
+            'structure_to_lattice', 'fill_structure', \
             'A2BX4', 'bravais', 'gruber', 'vasp_ordered' ]
 
 from _crystal import FreezeAtom, which_site, Site, SymmetryOperator, Lattice, to_cartesian,\
@@ -28,7 +28,9 @@ from lada.opt.decorators import broadcast_result, add_setter
 import A2BX4
 import bravais
 import gruber
-import defects
+try: import defects
+except ImportError: pass # required vasp and jobs packages.
+else: __all__.append('defects')
 
 
 def deform_kpoint(kpoint, ideal, relaxed):
