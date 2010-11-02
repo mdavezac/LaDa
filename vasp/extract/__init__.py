@@ -57,8 +57,8 @@ else:
     @rootdir.setter
     def rootdir(self, value): self._rootdir.path = value
 
-    def walk_through(self):
-      """ Goes through all directories with a contcar. """
+    def __iter_alljobs__(self):
+      """ Goes through all directories with an OUTVAR. """
       from os import walk, getcwd
       from os.path import abspath, relpath, abspath, join
 
