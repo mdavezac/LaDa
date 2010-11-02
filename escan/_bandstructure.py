@@ -172,7 +172,8 @@ class Extract(MassExtract):
     from numpy import array, max
     from ..crystal import nb_valence_states
     nbe = nb_valence_states(self.vff.structure)
-    return max(array(self.eigenvalues.values())[:, nbe-2:nbe])
+    units = self.eigenvalues.itervalues().next().units
+    return max(array(self.eigenvalues.values())[:, nbe-2:nbe]) * units
 
   @property
   def cbm(self): 
@@ -180,7 +181,22 @@ class Extract(MassExtract):
     from numpy import array, min
     from ..crystal import nb_valence_states
     nbe = nb_valence_states(self.vff.structure)
-    return min(array(self.eigenvalues.values())[:, nbe:nbe+2])
+    units = self.eigenvalues.itervalues().next().units
+    return min(array(self.eigenvalues.values())[:, nbe:nbe+2]) * units
+
+  @property 
+  def directness(self):
+    """ Difference in energy between the CBM at Gamma and the LUMO. """
+    from numpy.linalg import norm
+    from ..crystal import nb_valence_states
+    lumo = self.cbm
+    gamma = min((job for job in self.values()), key=lambda x: norm(x.escan.kpoint))
+    if norm(gamma.escan.kpoint) > 1e-6: raise RuntimeError("Gamma point not found.")
+    nbe = nb_valence_states(self.vff.structure)
+    cbm = min(gamma.eigenvalues[nbe], gamma.eigenvalues[nbe+1])
+    return cbm - lumo
+    
+
     
 try: import matplotlib.pyplot as plt 
 except: 

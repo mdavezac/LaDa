@@ -142,6 +142,10 @@ class Extract(AbstractExtractBase):
     return local_dict["escan_functional"] if "escan_functional" in local_dict\
            else local_dict["functional"]
 
+  @property 
+  def functional(self): 
+    """ Alias for `escan`. """
+    return self.escan
 
   @property
   def _double_trouble(self):
