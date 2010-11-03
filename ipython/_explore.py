@@ -99,26 +99,26 @@ def explore(self, cmdl):
   current, path = _get_current_job_params(self, 0)
   if args.type == "errors": 
     running_jobs = set(ip.magic("qstat").fields(-1)) if hasattr(self, "magic_qstat") else set([])
-    for job, name in current.walk_through():
+    for name, job in current.iteritems():
       if path == None: job.untag()
       elif job.functional.Extract(join(dirname(path),name)).success: job.tag()
       elif name.replace("/", ".") in running_jobs: job.tag()
       else: job.untag()
 
   elif args.type == "results": 
-    for job, name in current.walk_through():
+    for name, job in current.iteritems():
       if path == None: job.tag()
       elif not job.functional.Extract(join(dirname(path),name)).success: job.tag()
       else: job.untag()
 
   elif args.type == "running": 
     running_jobs = set(ip.magic("qstat").fields(-1)) if hasattr(self, "magic_qstat") else set([])
-    for job, name in current.walk_through():
+    for name, name in current.iteritems():
       if name.replace("/", ".") not in running_jobs: job.tag()
       else: job.untag()
 
   elif args.type == "all": 
-    for job, name in current.walk_through(): job.untag()
+    for job in current.itervalues(): job.untag()
 
 def explore_completer(self, event): 
   """ Completer for explore. """ 

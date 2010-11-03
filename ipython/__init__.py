@@ -555,7 +555,7 @@ def listjobs(self, arg):
   if current == None: return
   if len(arg) != 0:
     if arg == "all": 
-      for job, d in current.root.walk_through():
+      for job in current.root.itervalues():
         if job.is_tagged: continue
         print job.name
       return
@@ -645,7 +645,7 @@ def current_jobname(self, arg):
 
 def fakerun(self, event):
   """ Creates job directory tree and input files without computing. """
-  from os.path import split as splitpath, exists, isdir
+  from os.path import split as splitpath, exists, isdir, join
   ip = self.api
 
   current, path = _get_current_job_params(self, 2)
@@ -667,12 +667,12 @@ def fakerun(self, event):
                     "Some input files could be overwritten.\n"\
                     "Continue? [y/n]" % (directory))
     if a == 'n': return
-  for job, dirname in current.walk_through(directory):
-    if not job.is_tagged: job.compute(outdir=dirname, norun=True)
+  for dirname, job in current.iteritems():
+    if not job.is_tagged: job.compute(outdir=join(directory, dirname), norun=True)
 
 def run_current_jobdict(self, event):
   """ Runs job dictionary interactively. """
-  from os.path import split as splitpath, exists, isdir
+  from os.path import split as splitpath, exists, isdir, join
   ip = self.api
 
   current, path = _get_current_job_params(self, 2)
@@ -694,8 +694,8 @@ def run_current_jobdict(self, event):
                     "Some input files could be overwritten.\n"\
                     "Continue? [y/n]" % (directory))
     if a == 'n': return
-  for job, dirname in current.walk_through(directory):
-    if not job.is_tagged: job.compute(outdir=dirname)
+  for dirname, job in current.iteritems():
+    if not job.is_tagged: job.compute(outdir=join(directory, dirname))
 
 def qstat(self, arg):
   """ squeue --user=`whoami` -o "%7i %.3C %3t  --   %50j" """

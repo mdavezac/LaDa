@@ -2,7 +2,6 @@
 
     Contains the following methods and classes.
        - JobDict: tree of calculations and subcalculations.
-       - walk_through: iterates over calculation in a tree.
        - save: pickles a tree to file. Acquires a file lock to do this! If you
            always use a file locking mechanism, then this should work out of the
            box for you.
@@ -16,7 +15,7 @@ from collections import MutableMapping
 from abc import ABCMeta, abstractmethod
 from ..opt.decorators import add_setter, broadcast_result, make_cached
 
-__all__ = [ 'JobDict', 'walk_through', 'save', 'load', 'bleed', 'unbleed',\
+__all__ = [ 'JobDict', 'save', 'load', 'bleed', 'unbleed',\
             'unsucessfull', 'Extract' ]
 
 
@@ -68,21 +67,13 @@ class JobDict(object):
 
       Having a jobtree is great, looping through it is better:
 
-        >>> for job, name in jobtree.walkthrough("root_result_directory"):
-        >>>    result = job.compute(outdir=name)
+        >>> for name, job in jobtree.iteritems():
+        >>>    result = job.compute(outdir=join(rootdir, name))
 
 
-      The ``walkthrough`` method does just that: it goes through the whole tree
+      The ``iteritems`` method does just that: it goes through the whole tree
       returning those branches where there is something to execute (eg
-      C{job.functional != None}). It also returns outdir which is the subdirectory
-      where to execute that particular job. Using the jobtree defined above,
-      for which only subjob1 was actually given something to do, 
-
-        >>> for job, name in walkthrough(jobdict=jobtree, outdir="root_result_directory"):
-        >>>    print name
-
-      would print out: "root_result_directory/subjoname1".
-      The actual directory is not created. The name is only a suggestion to use or not.
+      C{job.functional != None}).
         
       Putting it all together:
 
@@ -96,8 +87,8 @@ class JobDict(object):
         >>> subjob1.add_param = "whatever", value1
         >>> subjob1.whatever = value2
         >>> # actually performs calculations.
-        >>> for job, name in walkthrough(jobdict=jobtree, outdir="root_result_directory"):
-        >>>    job.compute(outdir=name)
+        >>> for name, job in jobtree.iteritems():
+        >>>    job.compute(outdir=join(rootdir, name))
 
       Using the jobtree defined above, this would end-up calling:
 
@@ -116,9 +107,9 @@ class JobDict(object):
       by any other process or pools of processes. ``bleed`` allows parallelization
       over pbs scripts and pools of MPI processes. However, it does change the
       C{jobdict} saved to "pickle". This means that once all jobs are executed,
-      ``bleed`` (but not ``walk_through``) will find that C{jobdict} is empty. To
-      undo these changes and use the jobdict for, say, ouptut analysis, simply
-      use ``walk_through`` where possible (single pbs script or interactive
+      ``bleed`` will find that C{jobdict} is empty. To undo these changes and
+      use the jobdict for, say, ouptut analysis, simply use ``iteritems``
+      where possible (single pbs script or interactive
       sessions), or do:
 
       >>> jobs.unbleed("pickle")
@@ -360,7 +351,7 @@ class JobDict(object):
 
   def __str__(self):
     result = "Jobs: \n"
-    for dummy, name in self.walk_through():
+    for name in self.iterkeys():
       result += "  " + name + "\n"
     return result
 
@@ -368,7 +359,7 @@ class JobDict(object):
   def untagged_jobs(self):
     """ Returns a string with only untagged jobs. """
     result = "Jobs: \n"
-    for dummy, name in self.walk_through():
+    for name, dummy in self.iteritems():
       if not dummy.is_tagged: 
         result += "  " + name + "\n"
     return result
@@ -420,7 +411,7 @@ class JobDict(object):
     super(JobDict, self).__setattr__("jobparams", args[1])
     d = self.__dict__.update(args[0])
 
-  def walk_through(self, outdir=None):
+  def __iter_alljobs__(self, outdir=None):
     """ Iterates over jobs. 
 
         @return: yields (job, directory):
@@ -433,18 +424,18 @@ class JobDict(object):
     if self.is_job: yield self, outdir
     # Walk throught children jobdict.
     for name in self.subjobs():
-      for u in self[name].walk_through(join(outdir, name)): 
+      for u in self[name].__iter_alljobs__(join(outdir, name)): 
         yield u
   def itervalues(self): 
     """ Iterates over all jobs. """
-    for job, name in self.walk_through(): yield job
+    for job, name in self.__iter_alljobs__(): yield job
   def iterkeys(self): 
     """ Iterates over all jobs. """
-    for job, name in self.walk_through(): yield name
+    for job, name in self.__iter_alljobs__(): yield name
   def iteritems(self): 
     """ Iterates over all jobs. """
-    for job, name in self.walk_through(): yield name, job
-  def value(self):
+    for job, name in self.__iter_alljobs__(): yield name, job
+  def values(self):
     """ List of all jobs. """
     return [u for u in self.itervalues()]
   def keys(self):
@@ -458,7 +449,7 @@ class JobDict(object):
   @property
   def nbjobs(self):
     """ Returns the number of jobs in tree. """
-    return len([0 for j, o in self.walk_through() if not j.is_tagged])
+    return len([0 for j in self.values() if not j.is_tagged])
 
   @property 
   def root(self): 
@@ -481,14 +472,6 @@ class JobDict(object):
     if len(new_index) == 0: return True
     return new_index in self[names[0]]
 
-
-def walk_through(jobdict, outdir = None, comm = None):
-  """ Generator to iterate over actual calculations. 
-      
-      see ``JobDict`` description.
-  """
-  if isinstance(jobdict, str): jobdict = load(jobdict, comm=comm)
-  for u in jobdict.walk_through(outdir): yield u
 
 @broadcast_result(key=True)
 def save(jobdict, path = None, overwrite=False): 
@@ -554,9 +537,9 @@ def bleed(path=None, outdir=None, comm=None):
           Will broadcast yielded stuff from root. Because of file locking,
           this generator may freeze the system if not used correctly with mpi.
 
-      :return: yields (job, directory), see ``walk_through``.
-           - job: a job dictionary with the current job to execute.
+      :return: yields (directory, job).
            - directory: a suggested directory name with ``outdir`` as its root.
+           - job: a job dictionary with the current job to execute.
 
       This function alters the dictionary stored in `path`. If `path` is
       empty, then returns None, None. An exclusive lock is acquired before
@@ -587,7 +570,7 @@ def bleed(path=None, outdir=None, comm=None):
         # Checks if there are any jobs.
         if jobdict.nbjobs == 0: break
         # Pops first job.
-        for job, directory in jobdict.walk_through():
+        for directory, job in jobdict.iteritems():
           if not job.is_tagged: job.tag(); break
         # writes modified dictionary to path.
         with open(path, "wb") as file: dump(jobdict, file)
@@ -613,7 +596,7 @@ def unbleed(path=None, comm=None):
     if not exists(path): raise IOError( "Job dictionary" + path + "does not exist.")
     with acquire_lock(path) as lock_file:
       with open(path, "rb") as file: jobdict = load_pickle(file)
-      for job, outdir in jobdict.walk_through(): jobdict.untag()
+      for outdir, job in jobdict.iteritems(): jobdict.untag()
       with open(path, "wb") as file: dump(jobdict, file)
   # synchronizes communicator.
   if comm != None: comm.barrier()
@@ -648,7 +631,7 @@ def unsucessfull(jobdict, extractor, outdir = None):
   if outdir == None: outdir = ""
 
   # go through dictionary.
-  for job, directory in jobdict.walk_through(outdir=outdir):
+  for directory, job in jobdict.iteritems(outdir=outdir):
     extractor.directory = directory
     # and bleed successfull jobs.
     if extractor.success: job.tag()
@@ -729,6 +712,9 @@ class ForwardingDict(MutableMapping):
     from functools import reduce
     from itertools import chain
 
+    if name not in self._attributes:
+      raise AttributeError( "Attribute {0} not found in {1} instance."\
+                            .format(name, self.__class__.__name__) )
     found = False
     attrs = len(self._attr_list) > 0
     result = self.copy(append=name)
@@ -1002,7 +988,7 @@ class AbstractMassExtract(object):
   
   @property
   def extractors(self):
-    """ Returns dictioanary of extrators. """
+    """ Returns dictionary of extrators. """
     from ..opt import OrderedDict
     result = OrderedDict()
     for k, j in self.iteritems(): result[k] = j
@@ -1068,12 +1054,13 @@ class AbstractMassExtract(object):
   @property
   def _attributes(self): 
     """ Returns __dir__ special to the extraction itself. """
-    if self._cached_attributes != None: return self._cached_attributes
+#   Not cached, so things work with jobparams.onoff
+#   if self._cached_attributes != None: return self._cached_attributes
 
     results = set([])
     for key, value in self.iteritems():
       results |= set([u for u in dir(value) if u[0] != '_'])
-    self._cached_attributes = results
+#   self._cached_attributes = results
     return results
 
   def __dir__(self): 
@@ -1088,6 +1075,7 @@ class AbstractMassExtract(object):
     if len(self.values()) == 0: raise AttributeError("Unknown attribute {0}.".format(name))
     from ..opt import OrderedDict
 
+    if name not in self._attributes: raise AttributeError("Unknown attribute {0}.".format(name))
     result = OrderedDict()
     for key, value in self.iteritems():
       try: result[key] = getattr(value, name)
@@ -1348,14 +1336,22 @@ class MassExtract(AbstractMassExtract):
     from os.path import exists, join
     
     for name, job in self.jobdict.items():
-      if job.is_tagged: continue
       if not hasattr(job.functional, "Extract"): continue
       try:
         extract = job.functional.Extract(join(self.rootdir, name), comm = self.comm)
       except TypeError: # no comm keyword.  
         try: extract = job.functional.Extract(join(self.rootdir, name))
         except:  continue
-      yield job.name, extract
+      yield job.name, (job, extract)
+
+  def _regex_extractors(self):
+    """ Loops through jobs in this view.
+    
+        Avoids tagged jobs. Yields only extraction object.
+    """
+    for name, (job, extract) in super(MassExtract, self)._regex_extractors(): 
+      if job.is_tagged: continue
+      yield name, extract
 
 class AbstractMassExtractDirectories(AbstractMassExtract):
   """ Propagates extractors from all subdirectories.
@@ -1508,19 +1504,32 @@ class JobParams(AbstractMassExtract):
   @property
   def jobdict(self):
     """ Jobdictionary for which to get/set parameters. """
-    if self._jobdict == None:
-      try: from IPython.ipapi import get as get_ipy
-      except ImportError: raise AttributeError("jobdict not set.")
-      else:
-        ip = get_ipy()
-        if "current_jobdict" not in ip.user_ns:
-          print "No current jobdictionary."
-          return
-        return ip.user_ns["current_jobdict"].root
-    return self._jobdict.root
+    return self._ipy_jobdict if self._jobdict == None else self._jobdict.root
   @jobdict.setter
   def jobdict(self, value): self._jobdict = value
+  @jobdict.deleter
+  def jobdict(self, value): self._jobdict = None
 
+  @property
+  def _is_ipy_global(self):
+    """ True if working on global dictionary. """
+    if self._jobdict != None: return False
+    try: from IPython.ipapi import get as get_ipy
+    except ImportError: return False
+    else: return True
+
+  @property 
+  def _ipy_jobdict(self):
+    """ Returns global dictionary. """
+    try: from IPython.ipapi import get as get_ipy
+    except ImportError: raise RuntimeError("Not an ipy session.")
+    
+    ip = get_ipy()
+    if "current_jobdict" not in ip.user_ns:
+      print "No current jobdictionary."
+      return
+    return ip.user_ns["current_jobdict"].root
+    
   @property
   def onoff(self):
     """ Dictionary with calculations which will run.
@@ -1550,7 +1559,6 @@ class JobParams(AbstractMassExtract):
   def extractors(self):
     """ Returns dictionary of extrators. """
     from ..opt import OrderedDict
-    result = OrderedDict()
     for k, j in self.iteritems(): result[k] = j
     if self.naked_end and len(result) == 1: return result[result.keys()[0]]
     return ForwardingDict( result, naked_end=self.naked_end, \
