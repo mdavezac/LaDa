@@ -75,7 +75,7 @@ def launch_scattered(self, event):
     # creates directory.
     with Changedir(path + ".pbs") as pwd: pass 
     # creates pbs scripts.
-    for i, (job, name) in enumerate(current.root.iteritems()):
+    for i, (name, job) in enumerate(current.root.iteritems()):
       if job.is_tagged: continue
       # does not launch successful jobs.
       if hasattr(job.functional, 'Extract') and not event.force: 

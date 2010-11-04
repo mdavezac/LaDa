@@ -157,7 +157,7 @@ class JobDict(object):
   def __init__(self):
     super(JobDict, self).__init__()
     # List of subjobs (as in subdirectories). 
-    super(JobDict, self).__setattr__("children", {})
+    uper(JobDict, self).__setattr__("children", {})
     # This particular job. 
     super(JobDict, self).__setattr__("jobparams", {})
     # This particular job is not set. 
@@ -411,15 +411,16 @@ class JobDict(object):
     super(JobDict, self).__setattr__("jobparams", args[1])
     d = self.__dict__.update(args[0])
 
-  def __iter_alljobs__(self, outdir=None):
+  def __iter_alljobs__(self, outdir=''):
     """ Iterates over jobs. 
 
-        @return: yields (job, directory):
+        :return:
+          
+          yields (job, directory):
           - job is a Jobdict which contains something to execute.
-          - directory is a suggested directory name with C{outdir} as its root.
+          - directory is a suggested directory name with `outdir` as its root.
     """
     from os.path import join
-    if outdir == None: outdir = ""
     # Yield this job if it exists.
     if self.is_job: yield self, outdir
     # Walk throught children jobdict.
@@ -574,8 +575,8 @@ def bleed(path=None, outdir=None, comm=None):
           if not job.is_tagged: job.tag(); break
         # writes modified dictionary to path.
         with open(path, "wb") as file: dump(jobdict, file)
-      broadcast(comm, (job, join(outdir, directory)), 0)
-      yield job, join(outdir, directory)
+      broadcast(comm, (join(outdir, directory), job), 0)
+      yield join(outdir, directory), job
     broadcast(comm, None, 0)
     return
   else: 
@@ -885,12 +886,6 @@ class AbstractMassExtract(object):
   """ Propagates extraction methods from different jobs. """
   __metaclass__ = ABCMeta
 
-  def uncache(self): 
-    """ Uncache values. """
-    self._cached_extractors = None
-    self._cached_attributes = None
-
-
   def __init__(self, view=None, excludes=None, **kwargs):
     """ Initializes extraction object. 
 
@@ -917,10 +912,12 @@ class AbstractMassExtract(object):
     """ If True, then all regex matching is done using unix-command-line patterns. """
     self.excludes = excludes
     if len(kwargs) != 0: raise TypeError("Unknown keyword arguments:{0}.".format(kwargs.keys()))
-    self._cached_attributes = None
-    """ List of extra attributes derived from extraction objects. """
     self._cached_extractors = None
     """ List of extration objects. """
+
+  def uncache(self): 
+    """ Uncache values. """
+    self._cached_extractors = None
 
   @property 
   def excludes(self):
@@ -1029,14 +1026,11 @@ class AbstractMassExtract(object):
   @property
   def _extractors(self):
     """ Goes through all jobs and collects Extract if available. """
-    if self._cached_extractors != None: return self._cached_extractors
-    
-    from os.path import exists, join
     from ..opt import OrderedDict
-    result = OrderedDict()
-    for name, extract in self.__iter_alljobs__(): result[name] = extract 
-    self._cached_extractors = result
-    return result
+    if self._cached_extractors == None: self._cached_extractors = OrderedDict()
+    for name, extract in self.__iter_alljobs__():
+      if name not in self._cached_extractors: self._cached_extractors[name] = extract 
+    return self._cached_extractors
 
   def _regex_extractors(self):
     """ Loops through jobs in this view. """
@@ -1054,13 +1048,9 @@ class AbstractMassExtract(object):
   @property
   def _attributes(self): 
     """ Returns __dir__ special to the extraction itself. """
-#   Not cached, so things work with jobparams.onoff
-#   if self._cached_attributes != None: return self._cached_attributes
-
     results = set([])
     for key, value in self.iteritems():
       results |= set([u for u in dir(value) if u[0] != '_'])
-#   self._cached_attributes = results
     return results
 
   def __dir__(self): 

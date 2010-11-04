@@ -142,7 +142,10 @@ class Extract(MassExtract):
   @property
   def success(self): 
     """ Checks for success of jobs. """
-    for name, job in self.items(): 
+    from os.path import exists
+    if not exists(self.rootdir): return False
+    if len(self.items()) == 0: return False
+    for name, job in self.iteritems(): 
       if not job.success: return False
     return True
 
