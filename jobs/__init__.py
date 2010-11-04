@@ -1396,12 +1396,8 @@ class AbstractMassExtractDirectories(AbstractMassExtract):
     self._rootdir = RelativeDirectory(path, hook=self.uncache)
     """ Root of the directory-tree to trawl for OUTCARs. """
     
+    # mpi communicator is a property.
     self.comm = comm
-
-    if not exists(self.rootdir):
-      raise RuntimeError("Path {0} does not exist.".format(self.rootdir))
-    if not isdir(self.rootdir):
-      raise RuntimeError("Path {0} is not a directory.".format(self.rootdir))
 
   @property
   def comm(self):
