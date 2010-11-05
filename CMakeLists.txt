@@ -30,6 +30,7 @@ option(jobs_package           "Installs jobs python module."               off)
 option(ga_package             "Installs GA python module."                 off)
 option(python_bindings        "Include python bindings."                   off)
 option(ipython_interface      "Include IPython interface."                 off)
+option(ladabase_package       "Install ladabase package for pymongo."      off)
 
 
 # Location where cmake first looks for cmake modules.
@@ -154,6 +155,11 @@ add_subdirectory(crystal)
 add_subdirectory(physics)
 
 # checks for package dependencies.
+if(ladabase_package)
+  set(ipython_interface TRUE)
+  set(python_bindings TRUE)
+  set(vasp_functional TRUE)
+endif(ladabase_package)
 if(escan_functional)
   set(vff_functional TRUE)
 endif(escan_functional)
@@ -216,6 +222,11 @@ if( vasp_functional )
   endif(${VASP_FOUND} AND NOT ${MPI_FOUND})
   add_subdirectory(vasp)
 endif( vasp_functional )
+
+if(ladabase_package)
+  find_package(pymongo REQUIRED)
+  add_subdirectory(pymongo)
+endif(ladabase_package)
 
 
 if( escan_functional )
