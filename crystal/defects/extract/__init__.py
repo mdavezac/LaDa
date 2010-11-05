@@ -26,7 +26,8 @@ else:
     plt.rc('text.latex', preamble="\usepackage{amssymb}")
     # finds limits of figure
     xlim = float(material.host.vbm.rescale(eV)), float(material.host.cbm.rescale(eV)) 
-    all_ys = [float(val.rescale(eV)) for x in xlim for val in material.enthalpies(x, mu).itervalues()]
+    all_ys = [ float(val.rescale(eV)) for x in xlim \
+               for val in material.enthalpies(x, mu).itervalues() ]
     ylim = min(all_ys), max(all_ys)
 
     # loop over defects.
