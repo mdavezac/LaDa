@@ -1039,8 +1039,7 @@ class AbstractMassExtract(object):
   def _extractors(self):
     """ Goes through all jobs and collects Extract if available. """
     if self._cached_extractors != None: return self._cached_extractors
-    
-    from os.path import exists, join
+
     result = {}
     for name, extract in self.walk_through(): result[name] = extract 
     self._cached_extractors = result
