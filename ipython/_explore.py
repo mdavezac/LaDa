@@ -258,4 +258,4 @@ def _explore(self, args):
   ip.user_ns["jobparams"] = JobParams()
   if new_path != None: ip.user_ns["current_jobdict_path"] = new_path
   else: ip.user_ns.pop("current_jobdict_path", None)
-  if new_path != None: ip.user_ns["collect"] = Collect()
+  if new_path != None: ip.user_ns["collect"] = Collect(dynamic=True)

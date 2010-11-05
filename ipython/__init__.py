@@ -629,7 +629,7 @@ def saveto(self, event):
        return
     jobs.save(current.root, args[0], overwrite=True) 
     ip.user_ns["current_jobdict_path"] = abspath(args[0])
-    if "collect" not in ip.user_ns: ip.user_ns["collect"] = Collect()
+    if "collect" not in ip.user_ns: ip.user_ns["collect"] = Collect(dynamic=True)
     if "jobparams" not in ip.user_ns: ip.user_ns["jobparams"] = JobParams()
   else:
     ip.user_ns["_lada_error"] = "Invalid call to saveto."

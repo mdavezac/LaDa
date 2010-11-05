@@ -11,13 +11,11 @@
        - pbs_script: Creates pbs-script to perform calculations on a tree.
 """
 __docformat__ = "restructuredtext en"
-from collections import MutableMapping
+__all__ = ['JobDict', 'walk_through', 'save', 'load', 'bleed', 'unbleed', 'unsucessfull', 'Extract']
+
 from abc import ABCMeta, abstractmethod
+from collections import MutableMapping
 from ..opt.decorators import add_setter, broadcast_result, make_cached
-
-__all__ = [ 'JobDict', 'save', 'load', 'bleed', 'unbleed',\
-            'unsucessfull', 'Extract' ]
-
 
 class JobDict(object):
   """ Tree of jobs. 
@@ -184,8 +182,8 @@ class JobDict(object):
   @functional.setter
   def functional(self, value):
     from pickle import dumps, loads # ascertains pickle-ability, copies functional
-    if value != None and not hasattr(value, "__call__"):
-      raise ValueError("job.functional should be either None(no job) or a callable.")
+    assert value == None or hasattr(value, "__call__"),\
+           ValueError("job.functional should be either None(no job) or a callable.")
     # ascertains pickle-ability
     try: string = dumps(value)
     except Exception as e:
@@ -203,7 +201,7 @@ class JobDict(object):
        if id(item) == id(self):
          string = self.parent.name + key
          break
-     if string == None: raise RuntimeError("Could not determine the name of the dictionary.")
+     assert string != None, RuntimeError("Could not determine the name of the dictionary.")
      if not self.is_job: string += "/"
      return string
 
@@ -242,16 +240,17 @@ class JobDict(object):
     except KeyError: raise
 
     if isinstance(deletee, JobDict): 
-      if id(self) == id(deletee): raise KeyError("Will not commit suicide.")
+      assert id(self) != id(deletee), KeyError("Will not commit suicide.")
       parent = self.parent
       while parent != None: 
-        if id(parent) == id(deletee): raise KeyError("Will not go Oedipus on you.")
+        assert id(parent) != id(deletee), KeyError("Will not go Oedipus on you.")
         parent = parent.parent
 
     parent = self[index+"/.."]
     name = relpath(index, index+"/..")
     if name in parent.children:
-      if id(self) == id(parent.children[name]): raise KeyError("Will not delete self.")
+      assert id(self) != id(parent.children[name]),\
+             KeyError("Will not delete self.")
       return parent.children.pop(name)
     raise KeyError("job " + index + " does not exist.")
 
@@ -267,10 +266,10 @@ class JobDict(object):
     from os.path import normpath, relpath
 
     index = normpath(index)
-    if index in ["", ".", None]: raise KeyError("Will not set self.")
-    if not index[0]: raise KeyError("Will not set root: " + index + ".")
-    if not isinstance(value, JobDict):
-      raise ValueError("Only JobDict instances can be used a job dictionaries.")
+    assert index not in ["", ".", None], KeyError("Will not set self.")
+    assert index[0], KeyError("Will not set root: " + index + ".")
+    assert isinstance(value, JobDict), \
+           ValueError("Only JobDict instances can be used a job dictionaries.")
 
     result = self.__div__(index+"/..")
     name = relpath(index, index+"/..")
@@ -359,9 +358,8 @@ class JobDict(object):
   def untagged_jobs(self):
     """ Returns a string with only untagged jobs. """
     result = "Jobs: \n"
-    for name, dummy in self.iteritems():
-      if not dummy.is_tagged: 
-        result += "  " + name + "\n"
+    for name, job in self.iteritems():
+      if not job.is_tagged: result += "  " + name + "\n"
     return result
 
   @property
@@ -411,31 +409,26 @@ class JobDict(object):
     super(JobDict, self).__setattr__("jobparams", args[1])
     d = self.__dict__.update(args[0])
 
-  def __iter_alljobs__(self, outdir=''):
+  def iteritems(self, outdir=''):
     """ Iterates over jobs. 
 
-        :return:
-          
-          yields (job, directory):
+        :return: yields (directory, job):
+          - directory is a suggested directory name with ``outdir`` as its root.
           - job is a Jobdict which contains something to execute.
-          - directory is a suggested directory name with `outdir` as its root.
     """
     from os.path import join
     # Yield this job if it exists.
-    if self.is_job: yield self, outdir
+    if self.is_job: yield outdir, self
     # Walk throught children jobdict.
     for name in self.subjobs():
-      for u in self[name].__iter_alljobs__(join(outdir, name)): 
+      for u in self[name].iteritems(join(outdir, name)): 
         yield u
   def itervalues(self): 
     """ Iterates over all jobs. """
-    for job, name in self.__iter_alljobs__(): yield job
+    for name, job in self.iteritems(): yield job
   def iterkeys(self): 
     """ Iterates over all jobs. """
-    for job, name in self.__iter_alljobs__(): yield name
-  def iteritems(self): 
-    """ Iterates over all jobs. """
-    for job, name in self.__iter_alljobs__(): yield name, job
+    for name, job in self.iteritems(): yield name
   def values(self):
     """ List of all jobs. """
     return [u for u in self.itervalues()]
@@ -450,7 +443,7 @@ class JobDict(object):
   @property
   def nbjobs(self):
     """ Returns the number of jobs in tree. """
-    return len([0 for j in self.values() if not j.is_tagged])
+    return len([0 for j, o in self.iteritems() if not j.is_tagged])
 
   @property 
   def root(self): 
@@ -694,7 +687,7 @@ def load(path = None):
   from pickle import load as load_pickle
   from ..opt import open_exclusive
   if path == None: path = "pickled_jobdict"
-  if not exists(path): raise IOError("File " + path + " does not exist.")
+  assert exists(path), IOError("File " + path + " does not exist.")
   with open_exclusive(path, "rb") as file: result = load_pickle(file)
   print "Loaded job list from", path, "."
   return result
@@ -711,7 +704,7 @@ def bleed(path=None, outdir=None, comm=None):
           Will broadcast yielded stuff from root. Because of file locking,
           this generator may freeze the system if not used correctly with mpi.
 
-      :return: yields (directory, job).
+      :return: yields (directory, job), see ``walk_through``.
            - directory: a suggested directory name with ``outdir`` as its root.
            - job: a job dictionary with the current job to execute.
 
@@ -767,7 +760,7 @@ def unbleed(path=None, comm=None):
 
   # only one process needs do anything.
   if (True if comm==None else comm.rank == 0): 
-    if not exists(path): raise IOError( "Job dictionary" + path + "does not exist.")
+    assert exists(path), IOError( "Job dictionary" + path + "does not exist.")
     with acquire_lock(path) as lock_file:
       with open(path, "rb") as file: jobdict = load_pickle(file)
       for outdir, job in jobdict.iteritems(): jobdict.untag()
@@ -826,7 +819,7 @@ class DefaultParams:
 
 class ForwardingDict(MutableMapping): 
   """ An *ordered* dictionary which forwards attributes and calls. """
-  def __init__(self, dictionary = None, _attr_list=None, **kwargs):
+  def __init__(self, dictionary = None, _attr_list=None, ordered=True, **kwargs):
     """ Initializes a ForwardingDict instance. """
     from ..opt import OrderedDict
     self._is_initializing_forwarding_dict = True
@@ -841,10 +834,11 @@ class ForwardingDict(MutableMapping):
     """ Whether attributes can be added or only modified. """
     self._attr_list    = [] if _attr_list == None else _attr_list
     """ List of attributes of attributes, from oldest parent to youngest grandkid. """
-    self.dictionary    = OrderedDict({} if dictionary == None else dictionary)
+    dicttype = OrderedDict if ordered else dict
+    self.dictionary    = dicttype({} if dictionary == None else dictionary)
     """" The dictionary for which to unroll attributes. """
     del self._is_initializing_forwarding_dict
-    if len(kwargs) != 0: raise TypeError("Unknown keyword arguments:{0}.".format(kwargs.keys()))
+    assert len(kwargs) == 0, ValueError("Unkwnown keyword arguments:{0}.".format(kwargs.keys()))
 
   def call(self, *args, **kwargs):
     """ Forwards call to items in dictionary.
@@ -981,9 +975,9 @@ class ForwardingDict(MutableMapping):
     # root dictioanary.
     if len(self._attr_list) == 0: self.dictionary[key] = value; return
     # checks this is writable.
-    if self.readonly: raise RuntimeError("This ForwardingDict is readonly.")
-    if key not in self.dictionary:
-      raise KeyError( "{0} is not in the ForwaringDict. Items "\
+    assert not self.readonly, RuntimeError("This ForwardingDict is readonly.")
+    assert key in self.dictionary,\
+           KeyError( "{0} is not in the ForwaringDict. Items "\
                       "cannot be added to a non-root ForwardingDict.".format(key))
     # non-root dict: must set innermost attribute.
     o = self.dictionary[key]
@@ -992,8 +986,8 @@ class ForwardingDict(MutableMapping):
       except AttributeError:
         raise AttributeError( "Could not unroll list of attributes for object in {0}: {1}."\
                               .format(key, self._attr_list) )  
-    if self.only_existing and  not hasattr(o, self._attr_list[-1]):
-      raise KeyError( "{0} cannot be set with current attribute list.\n{1}\n"\
+    assert (not self.only_existing) or hasattr(o, self._attr_list[-1]), \
+           KeyError( "{0} cannot be set with current attribute list.\n{1}\n"\
                       .format(key, self._attr_list) )
     setattr(o, self._attr_list[-1], value)
   def __delitem__(self, key): 
@@ -1029,8 +1023,8 @@ class ForwardingDict(MutableMapping):
     """
     from copy import copy, deepcopy
     result = copy(self)
-    if append != None and "_attr_list" in kwargs:
-      raise ValueError( "Cannot copy attribute _attr_list as "\
+    assert append == None or "_attr_list" not in kwargs,\
+           ValueError( "Cannot copy attribute _attr_list as "\
                         "a keyword and as ``append`` simultaneously." )
     if 'dictionary' in kwargs: result.dictionary = kwargs.pop('dictionary').copy()
     for key, value in kwargs.iteritems():
@@ -1059,7 +1053,7 @@ class AbstractMassExtract(object):
   """ Propagates extraction methods from different jobs. """
   __metaclass__ = ABCMeta
 
-  def __init__(self, view=None, excludes=None, **kwargs):
+  def __init__(self, view=None, excludes=None, dynamic=False, ordered=True, **kwargs):
     """ Initializes extraction object. 
 
         :Parameters:
@@ -1069,11 +1063,16 @@ class AbstractMassExtract(object):
           excludes : list of str or None
             List of patterns which the job names must *not* match to be
             included in the extraction.
+          dynamic : boolean
+            If true, chooses a slower but more dynamic caching method. Only
+            necessary for ipython shell. 
+          ordered : boolean
+            If true, uses OrderedDict rather than conventional dict.
 
         :Kwarg naked_end: True if should return value rather than dict when only one item.
         :Kwarg unix_re: converts regex patterns from unix-like expression.
     """
-    from ..opt import RelativeDirectory
+    from ..opt import RelativeDirectory, OrderedDict
 
     super(AbstractMassExtract, self).__init__()
 
@@ -1084,9 +1083,12 @@ class AbstractMassExtract(object):
     self.unix_re = kwargs.pop('unix_re', DefaultParams.unix_re)
     """ If True, then all regex matching is done using unix-command-line patterns. """
     self.excludes = excludes
-    if len(kwargs) != 0: raise TypeError("Unknown keyword arguments:{0}.".format(kwargs.keys()))
+    assert len(kwargs) == 0, ValueError("Unkwnown keyword arguments:{0}.".format(kwargs.keys()))
     self._cached_extractors = None
     """ List of extration objects. """
+    self.dynamic = dynamic
+    """ If True chooses a slower but more dynamic caching method. """
+    self.dicttype = OrderedDict if ordered else dict
 
   def uncache(self): 
     """ Uncache values. """
@@ -1156,15 +1158,6 @@ class AbstractMassExtract(object):
     """ Iterates through all extraction objects. """
     return [name for name in self.iterkeys()]
   
-  @property
-  def extractors(self):
-    """ Returns dictionary of extrators. """
-    from ..opt import OrderedDict
-    result = OrderedDict()
-    for k, j in self.iteritems(): result[k] = j
-    if self.naked_end and len(result) == 1: return result[result.keys()[0]]
-    return ForwardingDict(result, naked_end=self.naked_end)
-
   def __iter__(self):
     """ Iterates through all job names. """
     for name, job in self.iteritems(): yield name
@@ -1199,11 +1192,19 @@ class AbstractMassExtract(object):
   @property
   def _extractors(self):
     """ Goes through all jobs and collects Extract if available. """
-    from ..opt import OrderedDict
-    if self._cached_extractors == None: self._cached_extractors = OrderedDict()
-    for name, extract in self.__iter_alljobs__():
-      if name not in self._cached_extractors: self._cached_extractors[name] = extract 
-    return self._cached_extractors
+    if self.dynamic:
+      if self._cached_extractors == None: self._cached_extractors = self.dicttype()
+      result = self.dicttype()
+      for name, extract in self.__iter_alljobs__():
+        if name not in self._cached_extractors: self._cached_extractors[name] = extract
+        result[name] = self._cached_extractors[name]
+      return result
+    else:
+      if self._cached_extractors != None: return self._cached_extractors
+      result = self.dicttype()
+      for name, extract in self.__iter_alljobs__(): result[name] = extract
+      self._cached_extractors = result
+      return result
 
   def _regex_extractors(self):
     """ Loops through jobs in this view. """
@@ -1235,15 +1236,12 @@ class AbstractMassExtract(object):
 
   def __getattr__(self, name): 
     """ Returns extracted values. """
-    if len(self.values()) == 0: raise AttributeError("Unknown attribute {0}.".format(name))
-    from ..opt import OrderedDict
+    assert name in self._attributes, AttributeError("Unknown attribute {0}.".format(name))
 
-    if name not in self._attributes: raise AttributeError("Unknown attribute {0}.".format(name))
-    result = OrderedDict()
+    result = self.dicttype()
     for key, value in self.iteritems():
       try: result[key] = getattr(value, name)
       except: result.pop(key, None)
-    if len(result) == 0: raise AttributeError("Unknown attribute {0}.".format(name))
     if self.naked_end and len(result) == 1: return result[result.keys()[0]]
     return ForwardingDict(result, naked_end=self.naked_end)
 
@@ -1253,11 +1251,6 @@ class AbstractMassExtract(object):
     if name[0] == '/': return self.copy(view=name)
     path = normpath(join('/', join(self.view, name)))
     return self.copy(view=path)
-
-  @property
-  def jobs(self):
-    """ List of jobnames (satisfying the current view). """
-    return [key for key in self.iterkeys()]
 
   @property
   def children(self):
@@ -1312,8 +1305,8 @@ class AbstractMassExtract(object):
 
         If the current view matches the regex, then it alone is yielded. 
     """
-    if (yield_match and self.unix_re):
-      raise ValueError("unix_re and yield_matc cannot be both true.") 
+    assert not (yield_match and self.unix_re),\
+           ValueError("unix_re and yield_matc cannot be both true.") 
     reg = self._regex_pattern(regex, flags)
 
     found = reg.search(self.view)
@@ -1496,25 +1489,13 @@ class MassExtract(AbstractMassExtract):
         :return: (name, extractor), where name is the name of the job, and
           extractor an extraction object.
     """
-    from os.path import exists, join
+    from os.path import join
     
-    for name, job in self.jobdict.items():
-      if not hasattr(job.functional, "Extract"): continue
-      try:
-        extract = job.functional.Extract(join(self.rootdir, name), comm = self.comm)
-      except TypeError: # no comm keyword.  
-        try: extract = job.functional.Extract(join(self.rootdir, name))
-        except:  continue
-      yield job.name, (job, extract)
-
-  def _regex_extractors(self):
-    """ Loops through jobs in this view.
-    
-        Avoids tagged jobs. Yields only extraction object.
-    """
-    for name, (job, extract) in super(MassExtract, self)._regex_extractors(): 
+    for name, job in self.jobdict.iteritems():
       if job.is_tagged: continue
-      yield name, extract
+      try: extract = job.functional.Extract(join(self.rootdir, name), comm = self.comm)
+      except: pass 
+      else: yield job.name, extract
 
 class AbstractMassExtractDirectories(AbstractMassExtract):
   """ Propagates extractors from all subdirectories.
@@ -1614,12 +1595,6 @@ class AbstractMassExtractDirectories(AbstractMassExtract):
   def _attributes(self): 
     """ Returns __dir__ set special to the extraction itself. """
     return set([u for u in dir(self.Extract()) if u[0] != '_'])
-
-  def __copy__(self):
-    """ Returns a shallow copy. """
-    result = self.__class__(self.rootdir)
-    result.__dict__.update(self.__dict__)
-    return result
   
   @abstractmethod
   def __is_calc_dir__(self, dirpath, dirnames, filenames):
@@ -1636,7 +1611,7 @@ class AbstractMassExtractDirectories(AbstractMassExtract):
 
 class JobParams(AbstractMassExtract):
   """ Get and sets job parameters for a job-dictionary. """
-  def __init__( self, jobdict = None, only_existing=True, **kwargs):
+  def __init__(self, jobdict = None, only_existing=True, **kwargs):
     """ Initializes job-parameters.
 
         :Parameters:
@@ -1650,7 +1625,10 @@ class JobParams(AbstractMassExtract):
         :kwarg excludes: List of patterns which job-names should not match.
         :kwarg naked_end: True if should return value rather than dict when only one item.
         :kwarg unix_re: converts regex patterns from unix-like expression.
+        :kwarg dynamic: Whether to choose a slower but more dynamic caching
+                        method. True by default.
     """
+    if 'dynamic' not in kwargs: kwargs['dynamic'] = True
     super(JobParams, self).__init__(**kwargs)
 
     super(JobParams, self).__setattr__("_jobdict", None)
@@ -1717,7 +1695,7 @@ class JobParams(AbstractMassExtract):
   @property
   def extractors(self):
     """ Returns dictionary of extrators. """
-    from ..opt import OrderedDict
+    result = self.dicttype()
     for k, j in self.iteritems(): result[k] = j
     if self.naked_end and len(result) == 1: return result[result.keys()[0]]
     return ForwardingDict( result, naked_end=self.naked_end, \
@@ -1745,12 +1723,11 @@ class JobParams(AbstractMassExtract):
 
   def __iter_alljobs__(self):
     """ Loops through all correct jobs. """
-    for job in self.jobdict.values(): yield job.name, job
+    for name, job in self.jobdict.iteritems(): yield job.name, job
 
   def __getattr__(self, name): 
     """ Returns extracted values. """
-    from ..opt import OrderedDict
-    result = OrderedDict()
+    result = self.dicttype()
     for key, value in self.iteritems():
       if value.is_tagged: continue
       try: result[key] = getattr(value, name)
