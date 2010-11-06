@@ -2,14 +2,14 @@
 __pymongo_host__ = 'localhost'
 __pymongo_port__ = 27017
 __vasp_database_name__ = 'vasp'
-__OUTCARS_collection_name__ = 'OUTCARs'
+__OUTCARS_prefix__ = 'OUTCARs'
 
 class Manager(object): 
   """ Holds data regarding database management. """
-  def __init__(self, host=None, port=None, database=None, collection=None): 
+  def __init__(self, host=None, port=None, database=None, prefix=None): 
     """ Initializes a connection and database. """
     from pymongo import Connection
-    from gridfs import GridFs
+    from gridfs import GridFS
     super(Manager, self).__init__()
 
     self._host = host if host != None else __pymongo_host__
@@ -18,13 +18,13 @@ class Manager(object):
     """ Port of the host where the database is hosted. """
     self._vaspbase_name = database if database != None else __vasp_database_name__
     """ Name of the vasp database. """
-    self._outcarbase_name = name if name != None else __OUTCARS_collection_name__
+    self._outcars_prefix = prefix if prefix != None else __OUTCARS_prefix__
     """ Name of the OUTCAR database. """
     self.connection = Connection(self._host, self._port)
     """ Holds connection to pymongo. """
     self.database = getattr(self.connection, self._vaspbase_name)
     """ Database within pymongo. """
-    self.outcars = GridFs(self.database, self._outcarbase_name)
+    self.outcars = GridFS(self.database, self.outcars_prefix)
     """ GridFS object for OUTCARs. """
 
   @property
@@ -40,30 +40,60 @@ class Manager(object):
     """ Name of the vasp database. """
     return self._vaspbase_name
   @property
-  def outcar_collection_name(self):
+  def outcars_prefix(self):
     """ Name of the OUTCAR GridFS collection. """
-    return self._outcarbase_name
+    return self._outcars_prefix
 
-def outcar_push(self, arg):
-  """ Push outcar to database. """
-  from hashlib import sha224
-  
-  if not 'ladabase_manager' in ip.user_ns:
-    print "Could not find ladabase in user namespace."
-    return
-  ladabase = ip.user_ns['ladabase_manager']
+  @property 
+  def files(self):
+    """ Return the files collection. """
+    return getattr(self.database, '{0}.files'.format(self.outcars_prefix))
 
-  filename = args.rstrip().lstrip()
-  with open(filename, 'r') as file: string = file.read()
-  hash = sha224(string).hexdigest()
+  def push(self, filepath, **kwargs):
+    """ Pushes OUTCAR to database. """
+    from os.path import exists
+    from hashlib import md5
+    from ..opt import RelativeDirectory
+    path = RelativeDirectory(filepath).path
 
-  if ladabase.outcars.exists(hash=hash): return
-  return ladabase.outcars.put(string, filename=filename, hash=hash)
+    assert exists(path), ValueError('{0} does not exist.'.format(path))
 
+    with open(path, 'r') as file: string = file.read()
+    hash = md5(string).hexdigest()
+
+    if 'filename' not in kwargs: kwargs['filename'] = filepath
+    if self.outcars.exists(md5=hash): 
+      self.files.update({'md': hash}, {'$set': kwargs})
+      return self.files.find_one(md5=hash)['_id']
+    return self.outcars.put(string, **kwargs)
+
+  def find_fromfile(self, path):
+    """ Returns the database object corresponding to this file.
+
+        :raise ValueError:  if the corresponding object is not found.
+        :raise IOError:  if the path does not exist or is not a file.
+
+        Finds the corresponding file using md5 hash. 
+    """
+    from hashlib import md5
+    from os.path import exists, isfile
+    from ..opt import RelativeDirectory
+
+    ipath = RelativeDirectory(path).path
+    assert exists(ipath), IOError('{0} does not exist.'.format(path))
+    assert isfile(ipath), IOError('{0} is not a file.'.format(path))
+
+    with open(ipath, 'r') as file: string = file.read()
+    hash = md5(string).hexdigest()
+   
+    assert self.outcars.exists(md5=hash),\
+           ValueError('{0} could not be found in database.'.format(path))
+
+    return self.files.find_one(md5=hash)
 
 def ipy_init():
   from IPython.ipapi import get as get_ipy
   ip = get_ipy()
 
   manager = Manager()
-  ip.user_ns['ladabase_manager'] = manager
+  ip.user_ns['ladabase'] = manager

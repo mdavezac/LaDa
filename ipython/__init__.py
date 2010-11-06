@@ -799,7 +799,11 @@ def ipy_init():
       if key[0] == '_': continue
       if key == "ipython": continue
       if key == "jobs": ip.ex("from lada import jobs as ladajobs")
+      if key == "ladabase": ip.ex("from lada import ladabase as ladabase_module")
       else: ip.ex("from lada import " + key)
+      if 'ipy_init' in getattr(getattr(lada, key), '__dict__'): 
+        x = __import__('lada.{0}'.format(key), fromlist='ipy_init')
+        x.ipy_init()
 
 represent_structure_with_POSCAR = False
 """ If true, then structures are represented using POSCAR format. 

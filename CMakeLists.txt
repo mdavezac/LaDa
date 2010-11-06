@@ -225,7 +225,7 @@ endif( vasp_functional )
 
 if(ladabase_package)
   find_package(pymongo REQUIRED)
-  add_subdirectory(pymongo)
+  add_subdirectory(ladabase)
 endif(ladabase_package)
 
 
