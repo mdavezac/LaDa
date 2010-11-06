@@ -1,8 +1,18 @@
 """ Subpackage containing extraction methods for vasp parameters from vasp output. """
 __docformat__  = 'restructuredtext en'
-from ._dft import Extract
+__all__ = ['ExtractDFT', 'ExtractGW']
+from ._dft import Extract as ExtractDFT
 from ._gw import  ExtractGW
-__all__ = ['Extract', 'ExtractGW']
+from ...opt import AbstractExtractBase
+
+def Extract(*args, **kwargs): 
+  """ Chooses between DFT or GW extraction object, depending on OUTCAR. """
+  from _dft import _ExtractImpl
+  a = _ExtractImpl(*args, **kwargs)
+  try: which = ExtractDFT if a.is_dft else ExtractGW
+  except: which = _ExtractImpl
+  return which(*args, **kwargs)
+    
 
 try: from ... import jobs
 except ImportError: pass
@@ -70,11 +80,6 @@ else:
 
         result.OUTCAR = self.OUTCAR
         yield join('/', relpath(dirpath, self.rootdir)), result
-
-    @property
-    def _attributes(self): 
-      """ Returns __dir__ set special to the extraction itself. """
-      return set([u for u in dir(self.Extract()) if u[0] != '_'])
 
     def __copy__(self):
       """ Returns a shallow copy. """

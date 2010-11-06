@@ -13,7 +13,7 @@ from ._ordered_dict import OrderedDict
 __all__ = [ '__load_vasp_in_global_namespace__', '__load_escan_in_global_namespace__',\
             'cReals', 'ConvexHull', 'ErrorTuple', 'redirect_all', 'redirect', 'read_input',\
             'LockFile', 'acquire_lock', 'open_exclusive', 'RelativeDirectory', 'streams',
-            'AbstractBaseClass', 'convert_from_unix_re', 'OrderedDict' ]
+            'AbstractExtractBase', 'convert_from_unix_re', 'OrderedDict' ]
 
 streams = _RedirectFortran.fortran
 """ Name of the streams. """

@@ -6,7 +6,7 @@ from ...opt.decorators import make_cached, broadcast_result
 class ExtractGW(_ExtractImpl):
   """ Implementation of GW extractor. """
 
-  def __init__(self, directory = None, comm = None, OUTCAR = None): 
+  def __init__(self, directory = None, comm = None, **kwargs):
     """ Initializes the extraction class. 
 
         :Parameters:
@@ -16,10 +16,8 @@ class ExtractGW(_ExtractImpl):
           comm : boost.mpi.communicator or None
             MPI group communicator. Extraction will be performed for all procs
             in the group. In serial mode, comm can be None.
-          OUTCAR : str or None
-            Name of the OUTCAR file.
     """
-    super(ExtractGW, self).__init__(directory=directory, comm=comm, OUTCAR=OUTCAR)
+    super(ExtractGW, self).__init__(directory=directory, comm=comm, **kwargs)
 
   @property
   def is_dft(self): return False
