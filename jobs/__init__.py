@@ -1072,7 +1072,7 @@ class AbstractMassExtract(object):
         :Kwarg naked_end: True if should return value rather than dict when only one item.
         :Kwarg unix_re: converts regex patterns from unix-like expression.
     """
-    from ..opt import RelativeDirectory, OrderedDict
+    from ..opt import OrderedDict
 
     super(AbstractMassExtract, self).__init__()
 
