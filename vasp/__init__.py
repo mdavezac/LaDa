@@ -17,7 +17,7 @@
 """
 __docformat__ = "restructuredtext en"
 from launch import Launch
-from extract import Extract
+from extract import Extract, ExtractGW_deprecated as ExtractGW
 from incar import Incar
 from kpoints import Density, Gamma
 from specie import Specie

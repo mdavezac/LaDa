@@ -46,6 +46,12 @@ def Extract(*args, **kwargs):
   try: which = ExtractDFT if a.is_dft else ExtractGW
   except: which = ExtractCommon
   return which(*args, **kwargs)
+
+def ExtractGW_deprecated(*args, **kwargs):
+  """ Deprecated. Please use vasp.Extract instead. """
+  from warnings import warn
+  warn('ExtractGW is deprecated. Please use vasp.Extract instead.', DeprecationWarning)
+  return Extract(*args, **kwargs)
     
 try: from ... import jobs
 except ImportError: pass
