@@ -555,7 +555,7 @@ def listjobs(self, arg):
   if current == None: return
   if len(arg) != 0:
     if arg == "all": 
-      for job, d in current.root.walk_through():
+      for job in current.root.itervalues():
         if job.is_tagged: continue
         print job.name
       return
@@ -629,7 +629,7 @@ def saveto(self, event):
        return
     jobs.save(current.root, args[0], overwrite=True) 
     ip.user_ns["current_jobdict_path"] = abspath(args[0])
-    if "collect" not in ip.user_ns: ip.user_ns["collect"] = Collect()
+    if "collect" not in ip.user_ns: ip.user_ns["collect"] = Collect(dynamic=True)
     if "jobparams" not in ip.user_ns: ip.user_ns["jobparams"] = JobParams()
   else:
     ip.user_ns["_lada_error"] = "Invalid call to saveto."
@@ -645,7 +645,7 @@ def current_jobname(self, arg):
 
 def fakerun(self, event):
   """ Creates job directory tree and input files without computing. """
-  from os.path import split as splitpath, exists, isdir
+  from os.path import split as splitpath, exists, isdir, join
   ip = self.api
 
   current, path = _get_current_job_params(self, 2)
@@ -667,12 +667,12 @@ def fakerun(self, event):
                     "Some input files could be overwritten.\n"\
                     "Continue? [y/n]" % (directory))
     if a == 'n': return
-  for job, dirname in current.walk_through(directory):
-    if not job.is_tagged: job.compute(outdir=dirname, norun=True)
+  for dirname, job in current.iteritems():
+    if not job.is_tagged: job.compute(outdir=join(directory, dirname), norun=True)
 
 def run_current_jobdict(self, event):
   """ Runs job dictionary interactively. """
-  from os.path import split as splitpath, exists, isdir
+  from os.path import split as splitpath, exists, isdir, join
   ip = self.api
 
   current, path = _get_current_job_params(self, 2)
@@ -694,8 +694,8 @@ def run_current_jobdict(self, event):
                     "Some input files could be overwritten.\n"\
                     "Continue? [y/n]" % (directory))
     if a == 'n': return
-  for job, dirname in current.walk_through(directory):
-    if not job.is_tagged: job.compute(outdir=dirname)
+  for dirname, job in current.iteritems():
+    if not job.is_tagged: job.compute(outdir=join(directory, dirname))
 
 def qstat(self, arg):
   """ squeue --user=`whoami` -o "%7i %.3C %3t  --   %50j" """
@@ -799,7 +799,11 @@ def ipy_init():
       if key[0] == '_': continue
       if key == "ipython": continue
       if key == "jobs": ip.ex("from lada import jobs as ladajobs")
+      if key == "ladabase": ip.ex("from lada import ladabase as ladabase_module")
       else: ip.ex("from lada import " + key)
+      if 'ipy_init' in getattr(getattr(lada, key), '__dict__'): 
+        x = __import__('lada.{0}'.format(key), fromlist='ipy_init')
+        x.ipy_init()
 
 represent_structure_with_POSCAR = False
 """ If true, then structures are represented using POSCAR format. 

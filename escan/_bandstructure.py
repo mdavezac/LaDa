@@ -1,6 +1,10 @@
 #! python
 """ Bandstructure plotting tools """
 __docformat__  = 'restructuredtext en'
+__all__ = ['band_structure', 'Extract']
+
+from ..opt.decorators import broadcast_result, make_cached
+from ._extract import MassExtract
 
 def band_structure(escan, structure, kpoints, density = None, outdir=None, comm=None,\
                    do_relax=None, pools = 1, nbkpoints = None, **kwargs):
@@ -107,9 +111,7 @@ def band_structure(escan, structure, kpoints, density = None, outdir=None, comm=
     out = escan( structure, outdir=directory, kpoint=kpoint, vffrun=vffrun,\
                  genpotrun=genpotrun, do_escan=True, comm = local_comm, **kwargs )
     # saves stuff
-    print out.eigenvalues, comm.rank
     eigenvalues = out.eigenvalues.copy()
-    print "2. ", eigenvalues, comm.rank
     eigenvalues.sort()
     results.append( (x, kpoint, eigenvalues) )
 
@@ -125,4 +127,123 @@ def band_structure(escan, structure, kpoints, density = None, outdir=None, comm=
       broadcast(local_comm, results, 0)
     else: results = broadcast(local_comm, None, 0) 
   return results
+
+class Extract(MassExtract):
+  """ Extraction class for band-structures. """
+
+  def __iter_alljobs__(self):
+    """ Goes through all calculations and orders them. """
+    from re import compile
+    result = [u for u in super(Extract, self).__iter_alljobs__() if u[0] != '/calculations']
+    regex = compile("/calculations/(\d+)-")
+    result = sorted(result, key=lambda x: int(regex.match(x[0]).group(1)))
+    for u in result: yield u
+
+  @property
+  def success(self): 
+    """ Checks for success of jobs. """
+    from os.path import exists
+    if not exists(self.rootdir): return False
+    if len(self.items()) == 0: return False
+    for name, job in self.iteritems(): 
+      if not job.success: return False
+    return True
+
+  @property
+  @make_cached
+  def vff(self):
+    """ Vff extraction object. """
+    from os.path import join
+    return self.Extract(join(self.rootdir, 'calculations'))
+
+  @property
+  @make_cached
+  def kpoints(self):
+    """ kpoints used to compute band-structure. """
+    from numpy import zeros, array
+    from re import compile
+    regex = compile("/calculations/(\d+)-\[\s*(\S+)\s+(\S+)\s+(\S+)\s*\]")
+    result = zeros((len(self.jobs), 3), dtype='float64')
+    for i, name in enumerate(self.iterkeys()):
+      found = regex.search(name)
+      result[i,:] = array([found.group(2), found.group(3), found.group(4)])
+    return result
+
+  @property
+  def vbm(self): 
+    """ Returns energy at vbm. """
+    from numpy import array, max
+    from ..crystal import nb_valence_states
+    nbe = nb_valence_states(self.vff.structure)
+    units = self.eigenvalues.itervalues().next().units
+    return max(array(self.eigenvalues.values())[:, nbe-2:nbe]) * units
+
+  @property
+  def cbm(self): 
+    """ Returns energy at vbm. """
+    from numpy import array, min
+    from ..crystal import nb_valence_states
+    nbe = nb_valence_states(self.vff.structure)
+    units = self.eigenvalues.itervalues().next().units
+    return min(array(self.eigenvalues.values())[:, nbe:nbe+2]) * units
+
+  @property 
+  def directness(self):
+    """ Difference in energy between the CBM at Gamma and the LUMO. """
+    from numpy.linalg import norm
+    from ..crystal import nb_valence_states
+    lumo = self.cbm
+    gamma = min((job for job in self.values()), key=lambda x: norm(x.escan.kpoint))
+    if norm(gamma.escan.kpoint) > 1e-6: raise RuntimeError("Gamma point not found.")
+    nbe = nb_valence_states(self.vff.structure)
+    cbm = min(gamma.eigenvalues[nbe], gamma.eigenvalues[nbe+1])
+    return cbm - lumo
+    
+
+    
+try: import matplotlib.pyplot as plt 
+except: 
+  def plot_bands(extractor, **kwargs):
+    """ Plots band-structure. """
+    raise ImportError("Cannot use plot_bands without matplotlib. """)
+else:
+  def plot_bands(extractor, tolerance=1e-6, **kwargs):
+    """ Tries and plots band-structure. """
+    from numpy import dot, array, min, max
+    from numpy.linalg import norm
+
+    bandcolor = kwargs.pop('bandcolor', 'blue')
+    edgecolor = kwargs.pop('edgecolor', 'red')
+    edgestyle = kwargs.pop('edgestyle', '--')
+
+    # first finds breaking point.
+    kpoints = extractor.kpoints
+    delta = kpoints[1:] - kpoints[:-1]
+    norms = [norm(delta[i,:]) for i in range(delta.shape[0])]
+    bk = []
+    for i, d in enumerate(norms[1:]):
+      if abs(norms[i]-d) > 1e-6: bk.append(i+1)
+
+    # then plot bands.
+    x = array([sum(norms[:i]) for i in range(len(norms)+1)])
+    y = array(extractor.eigenvalues.values())
+
+    # then line markers.
+    plt.plot(x, y, color=bandcolor, **kwargs)
+    for i in bk: plt.axvline(x[i], color='black', **kwargs)
+
+    # then plot vbm and cbm.
+    kwargs.pop('linestyle', None) 
+    plt.axhline(extractor.vbm, color=edgecolor, linestyle=edgestyle, **kwargs)
+    plt.axhline(extractor.cbm, color=edgecolor, linestyle=edgestyle, **kwargs)
+
+
+
+    plt.xlim((x[0], x[-1]))
+    ylims = min(y) - (max(y) - min(y))*0.05, max(y) + (max(y) - min(y))*0.05
+    plt.ylim(ylims)
+
+  Extract.plot_bands = plot_bands
+
+
 

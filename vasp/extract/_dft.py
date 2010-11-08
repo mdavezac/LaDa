@@ -1,35 +1,48 @@
 """ Subpackage containing extraction methods for VASP-DFT data from output. """
 __docformat__  = 'restructuredtext en'
-__all__ = ['Extract']
+__all__ = ['Extract', 'IOMixin']
 from ...opt.decorators import make_cached, broadcast_result
 from ...opt import AbstractExtractBase
-class _ExtractImpl(AbstractExtractBase):
+
+def dft_method(method):
+  """ Marks method as dft method. """
+  if hasattr(method, 'fget'): method.fget.__extraction_type__ = 'dft'
+  else: method.__extraction_type__ = 'dft'
+  return method
+def gw_method(method):
+  """ Marks method as dft method. """
+  if hasattr(method, '__get__'): method.fget.__extraction_type__ = 'gw'
+  else: method.__extraction_type__ = 'gw'
+  return method
+
+class Extract(AbstractExtractBase):
   """ Implementation class for extracting data from VASP output """
 
-  def __init__(self, directory = None, comm = None, OUTCAR = None):
+  def __init__(self, directory = None, comm = None):
     """ Initializes the extraction class. 
 
         :Parameters: 
           directory : str or None
             path to the directory where the VASP output is located. If none,
-            will use current working directory.
+            will use current working directory. Can also be the path to the
+            OUTCAR file itself. 
           comm : boost.mpi.communicator or None
             MPI group communicator. Extraction will be performed for all procs
             in the group. In serial mode, comm can be None.
-          OUTCAR : str or None
-            Name of the OUTCAR file.
     """
-    super(_ExtractImpl, self).__init__(directory, comm)
+    super(Extract, self).__init__(directory, comm)
+    
+  @dft_method
+  @property 
+  def contcar_path(self):
+    """ Returns path to CONTCAR file.
 
-    from .. import files
-    from ...opt import RelativeDirectory
-
-    self.OUTCAR = files.OUTCAR if OUTCAR == None else OUTCAR
-    """ Filename of the OUTCAR file from VASP. """
-    self.CONTCAR = files.CONTCAR
-    """ Filename of the CONTCAR file from VASP. """
-    self.FUNCCAR = files.FUNCCAR
-    """ Filename of the FUNCCAR file containing the pickled functional. """
+        :raise IOError: if the CONTCAR file does not exist. 
+    """
+    from os.path import exists, join
+    path = join(self.directory, self.CONTCAR)
+    if not exists(path): raise IOError("Path {0} does not exist.\n".format(path))
+    return path
     
   @property
   def exports(self):
@@ -38,18 +51,16 @@ class _ExtractImpl(AbstractExtractBase):
     return [ join(self.directory, u) for u in [self.OUTCAR, self.FUNCCAR] \
              if exists(join(self.directory, u)) ]
 
+
   def _search_OUTCAR(self, regex):
     """ Looks for all matches. """
     from os.path import exists, join
     from re import compile
     from numpy import array
 
-    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
-    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
-
     result = []
     regex  = compile(regex)
-    with open(path, "r") as file:
+    with self.__outcar__() as file:
       for line in file: 
         found = regex.search(line)
         if found != None: yield found
@@ -65,12 +76,9 @@ class _ExtractImpl(AbstractExtractBase):
     from re import compile
     from numpy import array
 
-    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
-    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
-
     result = []
     regex  = compile(regex)
-    with open(path, "r") as file: lines = file.readlines()
+    with self.__outcar__() as file: lines = file.readlines()
     for line in lines[::-1]:
       found = regex.search(line)
       if found != None: yield found
@@ -79,6 +87,25 @@ class _ExtractImpl(AbstractExtractBase):
     """ Returns first result from a regex. """
     for last in self._rsearch_OUTCAR(regex): return last
     return None
+
+  @property 
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def algo(self):
+    """ Returns the kind of algorithms. """
+    result = self._find_first_OUTCAR(r"""^\s*ALGO\s*=\s*(\S+)\s*""")
+    if result == None: return 'Normal'
+    return result.group(1).lower()
+
+  @property
+  def is_dft(self):
+    """ True if this is a DFT calculation, as opposed to GW. """
+    return self.algo not in ['gw', 'gw0', 'chi', 'scgw', 'scgw0'] 
+  @property
+  def is_gw(self):
+    """ True if this is a GW calculation, as opposed to DFT. """
+    return self.algo in ['gw', 'gw0', 'chi', 'scgw', 'scgw0'] 
+    
 
   @property
   @make_cached
@@ -90,9 +117,9 @@ class _ExtractImpl(AbstractExtractBase):
     """
     from os.path import exists, join
     from cPickle import load
-    path = self.FUNCCAR if len(self.directory) == 0 else join(self.directory, self.FUNCCAR)
-    if not exists(path): return None
-    with open(path, "r") as file: return load(file)
+    try: path = self.funccar_path
+    except IOError: return None
+    with self.__funccar__ as file: return load(file)
 
   @property
   @make_cached
@@ -107,32 +134,85 @@ class _ExtractImpl(AbstractExtractBase):
     import re
 
     for path in [self.OUTCAR]:
-      if self.directory != "": path = join(self.directory, path)
-      if not exists(path): return False
+      if not exists(join(self.directory, path)): return False
       
-    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
-
     regex = r"""General\s+timing\s+and\s+accounting\s+informations\s+for\s+this\s+job"""
     return self._find_last_OUTCAR(regex) != None
+
+
+  @broadcast_result(attr=True, which=0)
+  def _starting_structure_data(self):
+    """ Structure at start of calculations. """
+    from re import compile
+    from numpy import array, zeros, dot
+
+    species_in = self.species
+
+    cell = zeros((3,3), dtype="float64")
+    atoms = []
+
+    with self.__outcar__() as file: 
+      atom_index, cell_index = None, None
+      cell_re = compile(r"""^\s*direct\s+lattice\s+vectors\s+""")
+      atom_re = compile(r"""^\s*position\s+of\s+ions\s+in\s+fractional\s+coordinates""")
+      for line in file:
+        if cell_re.search(line) != None: break
+      for i in range(3):
+        cell[:,i] = array(file.next().split()[:3], dtype='float64')
+      for line in file:
+        if atom_re.search(line) != None: break
+      for line in file:
+        data = line.split()
+        if len(data) != 3: break
+        atoms.append(dot(cell, array(data, dtype='float64')))
+
+    return cell, atoms
+
+  @property
+  @make_cached
+  def starting_structure(self):
+    """ Structure at start of calculations. """
+    from ...crystal import Structure
+    from quantities import eV
+    cell, atoms = self._starting_structure_data()
+    structure = Structure()
+    # tries to find adequate name for structure.
+    try: name = self.system
+    except RuntimeError: name = ''
+    structure.name = self.name
+    if len(name) == 0 or name == 'POSCAR created by SUPERPOSCAR':
+      try: title = self.system
+      except RuntimeError: title = ''
+      if len(title) != 0: structure.name = title
+
+    structure.energy = 0e0
+    structure.cell = cell
+    structure.scale = 1e0
+    assert len(self.species) == len(self.ions_per_specie),\
+           RuntimeError("Number of species and of ions per specie incoherent.")
+    assert len(atoms) == sum(self.ions_per_specie),\
+           RuntimeError('Number of atoms per specie does not sum to number of atoms.')
+    for specie, n in zip(self.species,self.ions_per_specie):
+      for i in range(n): structure.add_atom = atoms.pop(0), specie
+
+    if (self.isif == 0 or self.nsw == 0 or self.ibrion == -1) and self.is_dft:
+      structure.energy = float(self.total_energy.rescale(eV))
+    return structure
 
   @property
   @make_cached
   @broadcast_result(attr=True, which=0)
   def _structure_data(self):
     """ Greps cell and positions from OUTCAR. """
-    from os.path import exists, join
     from re import compile
     from numpy import array, zeros
 
     species_in = self.species
 
-    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
-    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
-
     cell = zeros((3,3), dtype="float64")
     atoms = []
 
-    with open(path, "r") as file: lines = file.readlines()
+    with self.__outcar__() as file: lines = file.readlines()
 
     atom_index, cell_index = None, None
     atom_re = compile(r"""^\s*POSITION\s+""")
@@ -159,13 +239,25 @@ class _ExtractImpl(AbstractExtractBase):
     from quantities import eV
     from ...crystal import Structure
 
+    if self.isif == 0 or self.nsw == 0 or self.ibrion == -1:
+      return self.starting_structure
+
+
     species_in = self.species
     try: cell, atoms = self._structure_data
     except: return self.contcar_structure
 
     structure = Structure()
+    # tries to find adequate name for structure.
+    try: name = self.system
+    except RuntimeError: name = ''
     structure.name = self.name
-    structure.energy = float(self.total_energy.rescale(eV))
+    if len(name) == 0 or name == 'POSCAR created by SUPERPOSCAR':
+      try: title = self.system
+      except RuntimeError: title = ''
+      if len(title) != 0: structure.name = title
+    
+    structure.energy = float(self.total_energy.rescale(eV)) if self.is_dft else 0e0
     structure.cell = array(cell, dtype="float64")
     structure.scale = 1e0
     assert len(self.species) == len(self.ions_per_specie),\
@@ -186,10 +278,8 @@ class _ExtractImpl(AbstractExtractBase):
 
     species_in = self.species
 
-    path = self.CONTCAR if len(self.directory) == 0 else join(self.directory, self.CONTCAR)
-    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
-    result = read_poscar(species_in, path, comm=self.comm)
-    result.energy = float(self.total_energy.rescale(eV))
+    result = read_poscar(species_in, self.__contcar__(), comm=self.comm)
+    structure.energy = float(self.total_energy.rescale(eV)) if self.is_dft else 0e0
     return result
 
   @property
@@ -208,6 +298,32 @@ class _ExtractImpl(AbstractExtractBase):
     """ Greps species from OUTCAR. """
     return tuple([ u.group(1) for u in self._search_OUTCAR(r"""VRHFIN\s*=\s*(\S+)\s*:""") ])
 
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def isif(self):
+    """ Greps ISIF from OUTCAR. """
+    result = self._find_first_OUTCAR(r"""\s*ISIF\s*=\s*(-?\d+)\s+""")
+    if result == None: return None
+    return int(result.group(1))
+  
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def nsw(self):
+    """ Greps NSW from OUTCAR. """
+    result = self._find_first_OUTCAR(r"""\s*NSW\s*=\s*(-?\d+)\s+""")
+    if result == None: return None
+    return int(result.group(1))
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def ibrion(self):
+    """ Greps IBRION from OUTCAR. """
+    result = self._find_first_OUTCAR(r"""\s*IBRION\s*=\s*(-?\d+)\s+""")
+    if result == None: return None
+    return int(result.group(1))
 
   @property
   @make_cached
@@ -221,11 +337,8 @@ class _ExtractImpl(AbstractExtractBase):
     from re import compile, search 
     from numpy import array
 
-    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
-    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
-
     result = []
-    with open(path, "r") as file:
+    with self.__outcar__() as file:
       found = compile(r"""Found\s+(\d+)\s+irreducible\s+k-points""")
       for line in file:
         if found.search(line) != None: break
@@ -248,11 +361,8 @@ class _ExtractImpl(AbstractExtractBase):
     from re import compile, search 
     from numpy import array
 
-    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
-    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
-
     result = []
-    with open(path, "r") as file:
+    with self.__outcar__() as file:
       found = compile(r"""Found\s+(\d+)\s+irreducible\s+k-points""")
       for line in file:
         if found.search(line) != None: break
@@ -305,11 +415,7 @@ class _ExtractImpl(AbstractExtractBase):
     from os.path import exists, join
     from numpy import array
 
-    # checks for existence.
-    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
-    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
-
-    with open(path, "r") as file: lines = file.readlines()
+    with self.__outcar__() as file: lines = file.readlines()
     # Finds last first kpoint.
     spin_comp1_re = compile(r"\s*k-point\s+1\s*:\s*(\S+)\s+(\S+)\s+(\S+)\s*")
     found = None
@@ -344,11 +450,7 @@ class _ExtractImpl(AbstractExtractBase):
     from os.path import exists, join
     from numpy import array
 
-    # checks for existence.
-    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
-    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
-
-    with open(path, "r") as file: lines = file.readlines()
+    with self.__outcar__() as file: lines = file.readlines()
     # Finds last spin components.
     spin_comp1_re = compile(r"""\s*spin\s+component\s+(1|2)\s*$""")
     spins = [None,None]
@@ -424,27 +526,7 @@ class _ExtractImpl(AbstractExtractBase):
     """ Greps total charge in the system from OUTCAR."""
     return self.valence-self.nelect
 
-class Extract(_ExtractImpl): 
-  """ Extracts output from OUTCAR, including DFT specific stuff. """
-
-  def __init__(self, directory = None, comm = None, OUTCAR = None): 
-    """ Initializes the extraction class. 
-
-        :Parameters: 
-          directory : str or None
-            path to the directory where the VASP output is located. If none,
-            will use current working directory.
-          comm : boost.mpi.communicator or None
-            MPI group communicator. Extraction will be performed for all procs
-            in the group. In serial mode, comm can be None.
-            OUTCAR : str or None
-            Name of the OUTCAR file.
-    """
-    super(Extract, self).__init__(directory, comm, OUTCAR)
-
-  @property
-  def is_dft(self): return True
-
+  @dft_method
   @property
   @make_cached
   def charge_corrections(self):
@@ -466,6 +548,7 @@ class Extract(_ExtractImpl):
      return charge_corrections( self.structure, charge=self.charge, \
                                 epsilon=1e0, n=125, cutoff=15e1 )
 
+  @dft_method
   @property
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -477,6 +560,7 @@ class Extract(_ExtractImpl):
     assert result != None, RuntimeError("Could not find sigma0 energy in OUTCAR")
     return float(result.group(2)) * eV
 
+  @dft_method
   @property
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -490,6 +574,7 @@ class Extract(_ExtractImpl):
     assert len(result) != 0, RuntimeError("Could not find energy in OUTCAR")
     return array(result) * eV
 
+  @dft_method
   @property
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -503,6 +588,7 @@ class Extract(_ExtractImpl):
     assert len(result) != 0, RuntimeError("Could not find energy in OUTCAR")
     return array(result) * eV
 
+  @dft_method
   @property
   def cbm(self):
     """ Returns Condunction Band Minimum. """
@@ -516,6 +602,7 @@ class Extract(_ExtractImpl):
              RuntimeError("Not enough bands were computed.")
       return min(self.eigenvalues[:, self.valence/2])
 
+  @dft_method
   @property
   def vbm(self):
     """ Returns Valence Band Maximum. """
@@ -529,6 +616,7 @@ class Extract(_ExtractImpl):
              RuntimeError("Not enough bands were computed.")
       return max(self.eigenvalues[:, self.valence/2-1])
 
+  @dft_method
   @property
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -542,6 +630,7 @@ class Extract(_ExtractImpl):
     assert len(result) != 0, RuntimeError("Could not find energy in OUTCAR")
     return array(result) * eV
 
+  @dft_method
   @property
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -553,11 +642,13 @@ class Extract(_ExtractImpl):
     assert result != None, RuntimeError("Could not find energy in OUTCAR")
     return float(result.group(1)) * eV
 
+  @dft_method
   @property
   def energy(self): 
     """ Alias for total_energy. """
     return self.total_energy
 
+  @dft_method
   @property
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -569,6 +660,7 @@ class Extract(_ExtractImpl):
     assert result != None, RuntimeError("Could not find fermi energy in OUTCAR")
     return float(result.group(1)) * eV
 
+  @dft_method
   @property
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -579,6 +671,7 @@ class Extract(_ExtractImpl):
     assert result != None, RuntimeError("Could not find magnetic moment in OUTCAR")
     return float(result.group(2))
 
+  @dft_method
   @property
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -589,6 +682,7 @@ class Extract(_ExtractImpl):
     assert result != None, RuntimeError("Could not find number of electrons in OUTCAR")
     return float(result.group(1))
 
+  @dft_method
   @property
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -601,6 +695,7 @@ class Extract(_ExtractImpl):
     assert len(result) != 0, RuntimeError("Could not find pressures in OUTCAR")
     return result * kB
 
+  @dft_method
   @property
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -612,6 +707,7 @@ class Extract(_ExtractImpl):
     assert result != None, RuntimeError("Could not find pressure in OUTCAR")
     return float(result.group(1)) * kB
 
+  @dft_method
   @property
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -622,6 +718,7 @@ class Extract(_ExtractImpl):
     assert result != None, RuntimeError("Could not find alpha+bet in OUTCAR")
     return float(result.group(3))
 
+  @dft_method
   @property
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -632,6 +729,7 @@ class Extract(_ExtractImpl):
     assert result != None, RuntimeError("Could not find xc(G=0) in OUTCAR")
     return float(result.group(2))
 
+  @dft_method
   @property
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -643,6 +741,7 @@ class Extract(_ExtractImpl):
     assert result != None, RuntimeError("Could not find pulay pressure in OUTCAR")
     return float(result.group(2)) * kB
 
+  @dft_method
   @property
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -651,11 +750,8 @@ class Extract(_ExtractImpl):
     from os.path import exists, join
     from re import compile, search, X as re_X
 
-    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
-    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
-
     result = None
-    with open(path, "r") as file:
+    with self.__outcar__() as file:
 
       # find start
       for line in file:
@@ -723,11 +819,8 @@ class Extract(_ExtractImpl):
     from os.path import exists, join
     from numpy import array
 
-    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
-    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
-
     result = []
-    with open(path, "r") as file: lines = file.readlines()
+    with self.__outcar__() as file: lines = file.readlines()
     found = re.compile(grep) 
     for index in xrange(1, len(lines)+1):
       if found.search(lines[-index]) != None: break 
@@ -740,6 +833,7 @@ class Extract(_ExtractImpl):
       result.append([float(match.group(j)) for j in range(1, 5)])
     return array(result, dtype="float64")
 
+  @dft_method
   @property
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -752,6 +846,7 @@ class Extract(_ExtractImpl):
     """
     return self._get_partial_charges_magnetization(r"""\s*total\s+charge\s*$""")
 
+  @dft_method
   @property
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -765,6 +860,7 @@ class Extract(_ExtractImpl):
     return self._get_partial_charges_magnetization(r"""^\s*magnetization\s*\(x\)\s*$""")
 
 
+  @dft_method
   @property
   @make_cached
   def eigenvalues(self):
@@ -779,6 +875,7 @@ class Extract(_ExtractImpl):
     if self.ispin == 2: return array(self._spin_polarized_values(1), dtype="float64") * eV
     return array(self._unpolarized_values(1), dtype="float64") * eV
 
+  @dft_method
   @property
   @make_cached
   def occupations(self):
@@ -794,6 +891,7 @@ class Extract(_ExtractImpl):
 
 
 
+  @dft_method
   @property
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -804,10 +902,7 @@ class Extract(_ExtractImpl):
     from numpy import array
     from quantities import eV
 
-    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
-    if not exists(path): raise IOError("File %s does not exist.\n" % (path))
-
-    with open(path, "r") as file: lines = file.readlines()
+    with self.__outcar__() as file: lines = file.readlines()
     regex = compile(r"""average\s+\(electrostatic\)\s+potential\s+at\s+core""", reX)
     for i, line in enumerate(lines[::-1]):
       if regex.search(line) != None: break
@@ -819,3 +914,127 @@ class Extract(_ExtractImpl):
       result.extend( [float(u) for i, u in enumerate(data) if i % 2 == 1] )
         
     return array(result, dtype="float64") * eV
+
+
+  @gw_method
+  @property
+  @make_cached
+  def dft_eigenvalues(self):
+    """ Greps DFT eigenvalues from OUTCAR.
+
+        In spin-polarized cases, the leading dimension of the numpy array are
+        spins, followed by kpoints, and finally with bands. In spin-unpolarized
+        cases, the leading dimension are the kpoints, followed by the bands.
+    """
+    from numpy import array
+    from quantities import eV
+    if self.ispin == 2: return array(self._spin_polarized_values(1), dtype="float64") * eV
+    return array(self._unpolarized_values(1), dtype="float64") * eV
+
+  @gw_method
+  @property
+  @make_cached
+  def qp_eigenvalues(self):
+    """ Greps quasi-particle eigenvalues from OUTCAR.
+
+        In spin-polarized cases, the leading dimension of the numpy array are
+        spins, followed by kpoints, and finally with bands. In spin-unpolarized
+        cases, the leading dimension are the kpoints, followed by the bands.
+    """
+    from numpy import array
+    from quantities import eV
+    if self.ispin == 2: return array(self._spin_polarized_values(1), dtype="float64") * eV
+    return array(self._unpolarized_values(2), dtype="float64") * eV
+
+  @gw_method
+  @property
+  @make_cached
+  def self_energies(self):
+    """ Greps self-energies of each eigenvalue from OUTCAR.
+
+        In spin-polarized cases, the leading dimension of the numpy array are
+        spins, followed by kpoints, and finally with bands. In spin-unpolarized
+        cases, the leading dimension are the kpoints, followed by the bands.
+    """
+    from numpy import array
+    from quantities import eV
+    if self.ispin == 2: return array(self._spin_polarized_values(1), dtype="float64") * eV
+    return array(self._unpolarized_values(3), dtype="float64") * eV
+
+  @gw_method
+  @property
+  @make_cached
+  def occupations(self):
+    """ Greps occupations from OUTCAR.
+
+        In spin-polarized cases, the leading dimension of the numpy array are
+        spins, followed by kpoints, and finally with bands. In spin-unpolarized
+        cases, the leading dimension are the kpoints, followed by the bands.
+    """
+    from numpy import array
+    from quantities import eV
+    if self.ispin == 2: return array(self._spin_polarized_values(1), dtype="float64") * eV
+    return array(self._unpolarized_values(3), dtype="float64") * eV
+
+
+class IOMixin(object):
+  """ A mixin base clase which controls file IO. 
+
+      Defines special property with file-like behaviors. 
+      Makes it easier to change the behavior of the extraction class.
+  """
+  def __init__(self, directory=None, OUTCAR=None, FUNCCAR=None, CONTCAR=None):
+    """ Initializes the extraction class. 
+
+        :Parameters: 
+          directory : str or None
+            path to the directory where the VASP output is located. If none,
+            will use current working directory. Can also be the path to the
+            OUTCAR file itself. 
+          OUTCAR : str or None
+            If given, this name will be used, rather than files.OUTCAR.
+          CONTCAR : str or None
+            If given, this name will be used, rather than files.CONTCAR.
+          FUNCCAR : str or None
+            If given, this name will be used, rather than files.FUNCCAR.
+    """
+    from .. import files
+    
+    super(IOMixin, self).__init__()
+
+    self.OUTCAR  = OUTCAR if OUTCAR != None else files.OUTCAR
+    """ Filename of the OUTCAR file from VASP. """
+    self.CONTCAR  = CONTCAR if CONTCAR != None else files.CONTCAR
+    """ Filename of the CONTCAR file from VASP. """
+    self.FUNCCAR  = FUNCCAR if FUNCCAR != None else files.FUNCCAR
+    """ Filename of the FUNCCAR file containing the pickled functional. """
+
+  def __outcar__(self):
+    """ Returns path to OUTCAR file.
+
+        :raise IOError: if the OUTCAR file does not exist. 
+    """
+    from os.path import exists, join
+    path = join(self.directory, self.OUTCAR)
+    if not exists(path): raise IOError("Path {0} does not exist.\n".format(path))
+    return open(path, 'r')
+
+  def __funccar__(self):
+    """ Returns path to FUNCCAR file.
+
+        :raise IOError: if the FUNCCAR file does not exist. 
+    """
+    from os.path import exists, join
+    path = join(self.directory, self.FUNCCAR)
+    if not exists(path): raise IOError("Path {0} does not exist.\n".format(path))
+    return open(path, 'r')
+
+  def __contcar__(self):
+    """ Returns path to FUNCCAR file.
+
+        :raise IOError: if the FUNCCAR file does not exist. 
+    """
+    from os.path import exists, join
+    path = join(self.directory, self.CONTCAR)
+    if not exists(path): raise IOError("Path {0} does not exist.\n".format(path))
+    return open(path, 'r')

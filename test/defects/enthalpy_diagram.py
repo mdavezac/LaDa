@@ -417,7 +417,7 @@ class PointDefectMassExtractorImpl(AbstractMassExtract):
     return host[0]
 
 
-  def walk_through(self):
+  def __iter_alljobs__(self):
     """ Walks through point-defects only. """
     for child in self.massextract["PointDefects"].children:
       # looks for site_n
