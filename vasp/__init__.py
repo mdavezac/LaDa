@@ -17,7 +17,7 @@
 """
 __docformat__ = "restructuredtext en"
 from launch import Launch
-from extract import Extract, ExtractGW
+from extract import Extract
 from incar import Incar
 from kpoints import Density, Gamma
 from specie import Specie
@@ -50,7 +50,7 @@ else:
   is_vasp_4 = int(version[0]) == 4
   """ True if using vasp 4. """
 
-__all__ = [ 'Launch', 'Extract', 'ExtractGW', 'Incar', 'Density', 'Gamma', 'Specie',\
+__all__ = [ 'Launch', 'Extract', 'Incar', 'Density', 'Gamma', 'Specie',\
             'incar', 'extract', 'kpoints', 'methods' ]
 try: from extract import MassExtract
 except ImportError: pass
