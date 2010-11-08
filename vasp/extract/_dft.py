@@ -162,7 +162,6 @@ class Extract(AbstractExtractBase):
       for line in file:
         if atom_re.search(line) != None: break
       for line in file:
-        print line
         data = line.split()
         if len(data) != 3: break
         atoms.append(dot(cell, array(data, dtype='float64')))
@@ -196,7 +195,7 @@ class Extract(AbstractExtractBase):
     for specie, n in zip(self.species,self.ions_per_specie):
       for i in range(n): structure.add_atom = atoms.pop(0), specie
 
-    if self.isif == 0 or self.nsw == 0 or self.ibrion == -1 and self.is_dft:
+    if (self.isif == 0 or self.nsw == 0 or self.ibrion == -1) and self.is_dft:
       structure.energy = float(self.total_energy.rescale(eV))
     return structure
 
