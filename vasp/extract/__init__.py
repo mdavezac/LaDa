@@ -85,7 +85,7 @@ else:
       from ...opt import RelativeDirectory
 
       # this will throw on unknown kwargs arguments.
-      super(MassExtract, self).__init__(**kwargs)
+      jobs.AbstractMassExtract.__init__(self, **kwargs)
 
       self.Extract = Extract if Extract != None else VaspExtract
       """ Extraction class to use. """

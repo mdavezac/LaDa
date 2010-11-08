@@ -8,7 +8,7 @@ class Extract(object):
 
   def __init__(self):
     """ Initializes the extraction class. """
-    super(Extract, self).__init__()
+    object.__init__(self)
     
   @property
   def exports(self):

@@ -25,7 +25,7 @@ class IOMixin(object):
     """
     from .. import files
     
-    super(IOMixin, self).__init__()
+    object.__init__(self)
 
     self.OUTCAR  = OUTCAR if OUTCAR != None else files.OUTCAR
     """ Filename of the OUTCAR file from VASP. """
@@ -67,7 +67,7 @@ class IOMixin(object):
 
 class SearchMixin(object):
   """ Defines search methods. """
-  def __init__(self): super(SearchMixin, self).__init__()
+  def __init__(self): object.__init__(self)
   
   def _search_OUTCAR(self, regex):
     """ Looks for all matches. """

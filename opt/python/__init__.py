@@ -530,7 +530,7 @@ class AbstractExtractBase(object):
           comm : boost.mpi.communicator or None
             Processes over which to synchronize output.
     """
-    super(AbstractExtractBase, self).__init__()
+    object.__init__(self)
 
     from os import getcwd
     from . import RelativeDirectory

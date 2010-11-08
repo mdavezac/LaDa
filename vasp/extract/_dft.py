@@ -8,7 +8,7 @@ class Extract(object):
 
   def __init__(self, directory = None, comm = None):
     """ Initializes the extraction class. """
-    super(Extract, self).__init__()
+    object.__init__(self)
     
   @property
   @make_cached

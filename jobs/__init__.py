@@ -1074,7 +1074,7 @@ class AbstractMassExtract(object):
     """
     from ..opt import OrderedDict
 
-    super(AbstractMassExtract, self).__init__()
+    object.__init__(self)
 
     self.naked_end = kwargs.pop('naked_end', DefaultParams.naked_end)
     """ If True and dict to return contains only one item, returns value itself. """
@@ -1395,7 +1395,7 @@ class MassExtract(AbstractMassExtract):
         :kwarg naked_end: True if should return value rather than dict when only one item.
         :kwarg unix_re: converts regex patterns from unix-like expression.
     """
-    super(MassExtract, self).__init__(**kwargs)
+    AbstractMassExtract.__init__(self, **kwargs)
 
     from os.path import isdir, isfile, exists, dirname, abspath
 
@@ -1532,7 +1532,7 @@ class AbstractMassExtractDirectories(AbstractMassExtract):
     from ..opt import RelativeDirectory
 
     # this will throw on unknown kwargs arguments.
-    super(AbstractMassExtractDirectories, self).__init__(**kwargs)
+    AbstractMassExtract.__init__(self,**kwargs)
 
     self.Extract = Extract
     """ Extraction class to use. """
@@ -1629,7 +1629,7 @@ class JobParams(AbstractMassExtract):
                         method. True by default.
     """
     if 'dynamic' not in kwargs: kwargs['dynamic'] = True
-    super(JobParams, self).__init__(**kwargs)
+    AbstractMassExtract.__init__(self, **kwargs)
 
     super(JobParams, self).__setattr__("_jobdict", None)
     self._jobdict = jobdict
