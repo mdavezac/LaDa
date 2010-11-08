@@ -1,19 +1,72 @@
 """ Subpackage containing extraction methods for vasp parameters from vasp output. """
 __docformat__  = 'restructuredtext en'
-__all__ = ['ExtractDFT', 'ExtractGW']
-from ._dft import Extract as ExtractDFT
-from ._gw import  ExtractGW
-from ...opt import AbstractExtractBase
+__all__ = ['Extract']
+from ._dft import Extract as ExtractBase, IOMixin
+
+class MetaExtract(type):
+  """ Picks and Chooses between DFT and GW extraction objects. """
+  def __new__(cls, name, bases, attrs):
+    """ Allocates an extraction class. """
+    is_dft = attrs.pop('__extraction_type__', True)
+    newattrs = {}
+    for k, v in attrs.iteritems():
+      if hasattr(v, 'fget') and hasattr(v.fget, 'is_dft'): 
+        if is_dft == v.fget.is_dft: newattrs[k] = v; print "HERE 0", k, v.fget.is_dft
+      elif hasattr(v, 'is_dft') and is_dft == v.is_dft:  
+        print "HERE 1", k, v.is_dft
+        newattrs[k] = v
+      else: newattrs[k] = v; print "THERE", k
+    return type.__new__(cls, name, bases, newattrs)
+
+class ExtractCommon(ExtractBase, IOMixin):
+  """ Extracts DFT data from an OUTCAR. """
+  __extraction_type__ = None
+  __metaclass__ = MetaExtract
+  def __init__(self, directory=None, comm=None, **kwargs):
+    """ Initializes extraction object. """
+    from os.path import exists, isdir, basename, dirname
+    # checks if path or directory
+    if directory != None and exists(directory) and not isdir(directory):
+      kwargs['OUTCAR'] = basename(directory)
+      directory = dirname(directory)
+    ExtractBase.__init__(self, directory, comm)
+    IOMixin.__init__(self, directory, **kwargs)
+
+class ExtractDFT(ExtractBase, IOMixin):
+  """ Extracts DFT data from an OUTCAR. """
+  __extraction_type__ = 'dft'
+  __metaclass__ = MetaExtract
+  def __init__(self, directory=None, comm=None, **kwargs):
+    """ Initializes extraction object. """
+    from os.path import exists, isdir, basename, dirname
+    # checks if path or directory
+    if directory != None and exists(directory) and not isdir(directory):
+      kwargs['OUTCAR'] = basename(directory)
+      directory = dirname(directory)
+    ExtractBase.__init__(self, directory, comm)
+    IOMixin.__init__(self, directory, **kwargs)
+
+class ExtractGW(ExtractBase, IOMixin):
+  """ Extracts GW data from an OUTCAR. """
+  __extraction_type__ = 'gw'
+  __metaclass__ = MetaExtract
+  def __init__(self, directory=None, comm=None, **kwargs):
+    """ Initializes extraction object. """
+    from os.path import exists, isdir, basename, dirname
+    # checks if path or directory
+    if directory != None and exists(directory) and not isdir(directory):
+      kwargs['OUTCAR'] = basename(directory)
+      directory = dirname(directory)
+    ExtractBase.__init__(self, directory, comm)
+    IOMixin.__init__(self, directory, **kwargs)
 
 def Extract(*args, **kwargs): 
   """ Chooses between DFT or GW extraction object, depending on OUTCAR. """
-  from _dft import _ExtractImpl
-  a = _ExtractImpl(*args, **kwargs)
+  a = ExtractCommon(*args, **kwargs)
   try: which = ExtractDFT if a.is_dft else ExtractGW
-  except: which = _ExtractImpl
+  except: which = ExtractCommon
   return which(*args, **kwargs)
     
-
 try: from ... import jobs
 except ImportError: pass
 else: 
