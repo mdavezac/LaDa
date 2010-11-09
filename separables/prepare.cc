@@ -208,7 +208,7 @@ namespace LaDa
       ( 
         _structure.atoms.begin(), _structure.atoms.end(), fractionals.begin(),
              ret<math::rMatrix3d>(constant( !(_structure.cell) ))
-           * bind(&Crystal::Structure::t_Atom::pos, _1) 
+           * bind<math::rVector3d const&>(&Crystal::Structure::t_Atom::pos, _1) 
       );
     
       // Loops over shifts.
