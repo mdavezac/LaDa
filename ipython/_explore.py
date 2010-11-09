@@ -113,7 +113,7 @@ def explore(self, cmdl):
 
   elif args.type == "running": 
     running_jobs = set(ip.magic("qstat").fields(-1)) if hasattr(self, "magic_qstat") else set([])
-    for name, name in current.iteritems():
+    for name, job in current.iteritems():
       if name.replace("/", ".") not in running_jobs: job.tag()
       else: job.untag()
 
