@@ -9,6 +9,10 @@
 #include <iomanip>
 
 #include <boost/serialization/serialization.hpp>
+#ifndef BOOST_SERIALIZATION_SPLIT_MEMBER
+# include <boost/serialization/split_member.hpp>
+# include <boost/serialization/base_object.hpp>
+#endif
 #include <boost/lambda/lambda.hpp>
 #include <boost/lambda/bind.hpp>
 

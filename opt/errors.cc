@@ -41,12 +41,12 @@ namespace LaDa
       std::transform
       (
         _strs.begin(), _strs.end(), std::back_inserter( t ),
-        bl::bind( &Crystal::Structure::energy, bl::_1 )
+        bl::bind<double const&>( &Crystal::Structure::energy, bl::_1 )
       );
       std::transform
       (
         _strs.begin(), _strs.end(), std::back_inserter( w ),
-        bl::bind( &Crystal::Structure::weight, bl::_1 )
+        bl::bind<double const&>( &Crystal::Structure::weight, bl::_1 )
       );
       return mean_n_var( t, w );
     }
