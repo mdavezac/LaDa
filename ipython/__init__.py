@@ -714,98 +714,55 @@ if lada_with_slurm:
     result = SList([u[1:-1] for u in result])
     return result.grep(str(arg[1:-1]))
 
-  def cancel_completer(self, info):
-    return qstat(self, info.symbol).fields(-1)[1:]
-
-  def cancel_jobs(self, arg):
-    """ Cancel jobs which grep for whatever is in arg.
-    
-        For instance, the following cancels all jobs with "anti-ferro" in their
-        name.
-
-        >>> %cancel_jobs "anti-ferro"
-    """
-    from subprocess import Popen, PIPE
-    
-    arg = str(arg[1:-1])
-    result = qstat(self, arg)
-    if len(arg) != 0: 
-      for u, name in zip(result.fields(0), result.fields(-1)):
-        print "cancelling %s." % (name)
-      message = "Are you sure you want to cancel the jobs listed above? [y/n] "
-    else: message = "Cancel all jobs? [y/n] "
-    a = ''
-    while a not in ['n', 'y']: a = raw_input(message)
-    if a == 'n': return
-    for u, name in zip(result.fields(0), result.fields(-1)):
-      self.api.system("scancel %i" % (int(u)))
-
 else:
   def qstat(self, arg):
     """ Prints jobs of current user. """
     from subprocess import Popen, PIPE
-    from BeautifulSoup import BeautifulSoup
     from getpass import getuser
+    from BeautifulSoup import BeautifulSoup
+    from IPython.genutils import SList
     xml = Popen('qstat -xf'.split(), stdout=PIPE).communicate()[0]
     parser = BeautifulSoup(xml)
     user = getuser()
   
     def func(x):
       if x.name != 'job': return False
+      if x.job_state.contents[0] == 'C': return False
       return x.job_owner.contents[0].find(user) != -1
+    result = SList() 
     for job in parser.findAll(func):
-      print "{0.job_state.contents[0]:>3} -- {0.job_id.contents[0]:>10}"\
-            " ({0.mppwidth.contents[0]:>4}): {0.job_name.contents[0]}".format(job)
+      result.append( "{0.job_id.contents[0]:>10} {0.mppwidth.contents[0]:>4} "\
+                     "{0.job_state.contents[0]:>3}  --  {0.job_name.contents[0]}".format(job) )
+    return result.grep(str(arg[1:-1]))
 
-  def cancel_completer(self, info):
-    from subprocess import Popen, PIPE
-    from BeautifulSoup import BeautifulSoup
-    from getpass import getuser
-    xml = Popen('qstat -xf'.split(), stdout=PIPE).communicate()[0]
-    parser = BeautifulSoup(xml)
-    user = getuser()
+def cancel_completer(self, info):
+  return qstat(self, info.symbol).fields(-1)[1:]
+
+def cancel_jobs(self, arg):
+  """ Cancel jobs which grep for whatever is in arg.
   
-    def func(x):
-      if x.name != 'job': return False
-      return x.job_owner.contents[0].find(user) != -1
-    return [job.job_name.contents[0] for job in parser.findAll(func)]
+      For instance, the following cancels all jobs with "anti-ferro" in their
+      name.
 
-  def cancel_jobs(self, arg):
-    """ Cancel jobs which grep for whatever is in arg.
-    
-        For instance, the following cancels all jobs with "anti-ferro" in their
-        name.
-
-        >>> %cancel_jobs "anti-ferro"
-    """
-    from subprocess import Popen, PIPE
-    from re import compile
-    
-    arg = str(arg[1:-1])
-    xml = Popen('qstat -xf'.split(), stdout=PIPE).communicate()[0]
-    parser = BeautifulSoup(xml)
-    user = getuser()
-    regex = compile(arg[1:-1])
+      >>> %cancel_jobs "anti-ferro"
+  """
+  from subprocess import Popen, PIPE
   
-    if len(arg) != 0: 
-      def func(x):
-        if x.name != 'job': return False
-        if x.job_owner.contents[0].find(user) == -1: return False
-        return regex.match(x.job_name.contents[0]) != None
-      for job in parser.FindAll(func): 
-        print "cancelling {0}.".format(job.job_name.contents[0])
-      message = "Are you sure you want to cancel the jobs listed above? [y/n] "
-    else:
-      def func(x):
-        if x.name != 'job': return False
-        return x.job_owner.contents[0].find(user) != -1
-      message = "Cancel all jobs? [y/n] "
-    a = ''
-    while a not in ['n', 'y']: a = raw_input(message)
-    if a == 'n': return
-    
-    for job in parser.FindAll(func): 
-      self.api.system("qdel {0}".format(job.job_id.contents[0]))
+  arg = str(arg[1:-1])
+  if len(arg) != 0: 
+    result = qstat(self, arg)
+    for u, name in zip(result.fields(0), result.fields(-1)):
+      print "cancelling %s." % (name)
+    message = "Are you sure you want to cancel the jobs listed above? [y/n] "
+  else: message = "Cancel all jobs? [y/n] "
+  a = ''
+  while a not in ['n', 'y']: a = raw_input(message)
+  if a == 'n': return
+  
+  cmd = "scancel " if lada_with_slurm  else  "qdel "
+  result = qstat(self, arg)
+  for u, name in zip(result.fields(0), result.fields(-1)): self.api.system(cmd + str(u))
+
 
 def ipy_init():
   """ Initialises ipython session. 
