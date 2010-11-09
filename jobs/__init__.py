@@ -1258,14 +1258,14 @@ class AbstractMassExtract(object):
     from os.path import join, normpath
     regex = self._regex_pattern(self.view)
 
-    jobs = self.jobs
-    if len(self.jobs) < 2: return 
+    jobs = self.keys()
+    if len(self.keys()) < 2: return 
     children = set()
     if len(self.view) == 0 or self.view == '/':
-      for name in self.jobs:
+      for name in self.iterkeys():
         children.add(name[:1+name[1:].find('/')])
     else:
-      for name in self.jobs:
+      for name in self.iterkeys():
         where = regex.match(name)
         if len(name) == where.end() +1: continue
         first_index = name[where.end():].find('/')
@@ -1363,6 +1363,14 @@ class AbstractMassExtract(object):
     result = copy(self)
     for key, value in kwargs.iteritems(): setattr(result, key, value)
     return result
+
+
+  @property
+  def jobs(self):
+    """ Deprecated. Use keys and iterkeys instead. """
+    from warnings import warn
+    warn('jobs property is deprecated. Please use keys and or iterkeys instead.', DeprecationWarning)
+    return self.keys()
 
 
 

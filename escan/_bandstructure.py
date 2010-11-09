@@ -140,6 +140,7 @@ class Extract(MassExtract):
     for u in result: yield u
 
   @property
+  @make_cached
   def success(self): 
     """ Checks for success of jobs. """
     from os.path import exists
