@@ -56,37 +56,52 @@ def inequivalent_sites(lattice, type):
   return site_indices
 
 
-def non_interstitials(structure, indices, types):
+def non_interstitials(structure, indices, mods):
   """ Yields substitutions for given indices to structure. """
   from copy import deepcopy
+  from regex import compile
+  from re import compile
   if not hasattr(indices, '__len__'): indices = [indices]
 
-  all_types = types
-  specials = ['vacancy', 'vacancies', 'cation', 'cations']
-  types = [type for type in all_types if type == None or type.lower() not in specials]
-  str_types = [type.lower().rstrip().lstrip() for type in types if type != None]
-  if 'vacancy' in str_types or 'vacancies' in str_types: types.append(None)
-  if 'cation' in str_types or 'cations' in str_types:
-    species = set([a.type for type in structure if a.type not in ['O', 'S', 'Se', 'Te']])
-    types.extend(species) 
+  cation_regex  = compile(r'^\s*cations?\s*$')
+  vacancy_regex = compile(r'^\s*vacanc(?:y|ies)\s*$')
+  specie_regex  = compile(r'^\s*[A-Z][a-z]?(?:\d+)\s*$')
+
+  # modify input to something which makes sense and check it.
+  if mods == None: all_mods = [None]
+  elif isinstance(mods, str): all_mods = [mods]
+  else: all_mods = mods
+  mods = []
+  whatthehell = []
+  for type in all_mods:
+    if type == None: mods.append(None)
+    elif cation_regex.match(type.lower()) != None:  mods.extend(_cationic_species(structure)) 
+    elif vacancy_regex.match(type.lower()) != None: mods.append(None)
+    elif specie_regex.match(type) != None: mods.append(type)
+    else: whatthehell.append(type)
+  assert len(whatthehell) == 0,\
+         ValueError('Cannot understand following specie types: {0}.'.format(whatthehell))
+  mods = list(set(mods))
+
   # loop over atoms to modify.
   for i, j in enumerate(indices):
     assert j < len(structure.atoms), RuntimeError("Site index not found.")
     atom = deepcopy(structure.atoms[j])
     atom.index = j
     # loop over atoms to modifications.
-    for type in types:
+    for modif in mods:
       result = deepcopy(structure)
-      if type == atom.type: continue # can't substitute with self.
-      if type == None: 
+      if modif == atom.type: continue # can't substitute with self.
+      if modif == None: 
         result.atoms.pop(j)
         name = "vacancy_{0}".format(atom.type)
         B = atom.type
         atom.type = 'None'
       else: 
-        B = result.atoms[j].type 
-        result.atoms[j].type = type
-        name = "{0}_on_{1}".format(type, atom.type)
+        result.atoms[j].type = modif
+        B = atom.type
+        atom.type = modif
+        name = "{0}_on_{1}".format(atom.type, B)
       if len(indices) > 1: name += "/site_{0}".format(i)
       result.name = name
       yield result, atom, B
@@ -120,14 +135,40 @@ def interstitials(structure, lattice, interstitials):
     defect.index = -1
     yield result, defect, 'None'
 
+def _cationic_species(structure):
+  """ Returns list of cationic species. """
+  return list(set([a.type for a in structure.atoms if a.type not in ['O', 'S', 'Se', 'Te']]))
+
 def iterdefects(structure, lattice, defects):
-  """ Iterates over all defects. """
+  """ Iterates over all defects for any number of types and modifications. """
+  from re import compile
+
+  cation_regex       = compile(r'^\s*cations?\s*$')
+  cation0_regex      = compile(r'^\s*cations?(\d+)\s*$')
+  interstitial_regex = compile(r'^\s*interstitials?\s*$')
+  type_regex         = compile(r'^\s*(?:vacanc(?:y|ies)|[A-Z][a-z]?(?:\d+)?)\s*$')
+  already_cations    = False
 
   for key, value in defects.items():
-    for result in any_defect(structure, lattice, key, value): yield result
+    if key == None: keys = [None]
+    elif interstitial_regex.match(key.lower()) != None: keys = [None]
+    elif cation_regex.match(key.lower()) != None:
+      assert already_cations == False, ValueError('Can only have one cations?\d* tag.')
+      already_cations = True
+      keys = _cationic_species(structure)
+    elif cation0_regex.match(key.lower()) != None:
+      assert already_cations == False, ValueError('Can only have one cations?\d* tag.')
+      already_cations = True
+      d = int(cation0_regex.match(key.lower()).group(1))
+      keys = ['{0}{1}'.format(k, d) for k in _cationic_species(structure)]
+    else: keys = [key]
+    for type in keys:
+      assert type == None or type_regex.match(type) != None,\
+             ValueError("Cannot understand type {0}.".format(type))
+      for result in any_defect(structure, lattice, type, value): yield result
 
 def any_defect(structure, lattice, type, subs):
-  """ Yields point-defects of a given type. 
+  """ Yields point-defects of a given type and different modifications. 
   
       Loops over all equivalent point-defects.
 
@@ -171,7 +212,7 @@ def any_defect(structure, lattice, type, subs):
   if type == None or type.lower() in ['interstitial', 'interstitials', 'none']: 
     for result in interstitials(structure, lattice, subs): yield result
   # O\d: looking for specific atoms.
-  elif specie_regex.match(type):
+  elif specie_regex.match(type) != None:
     # looks for atom to modify
     found = specie_regex.match(type)
     type, index = found.group(1), int(found.group(2)) 
@@ -182,10 +223,11 @@ def any_defect(structure, lattice, type, subs):
       if index == 0: break
     assert index == 0, ValueError("Could not find {0}.".format(type))
     for index, atom in enumerate(structure.atoms):
-      if atom.site == site.site: break
+      if atom.site == i: break
+    assert atom.site == i, ValueError('Could not find atomic-site.')
     for result in non_interstitials(structure, index, subs): yield result
   # O, Mn ... but not O1: looking for inequivalent sites.
-  elif single_regex.match(type): 
+  elif single_regex.match(type) != None: 
     for result in inequiv_non_interstitials(structure, lattice, type, subs): yield result
   else: raise ValueError("Don't understand defect type {0}".format(type))
 
