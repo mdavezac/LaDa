@@ -59,7 +59,6 @@ def inequivalent_sites(lattice, type):
 def non_interstitials(structure, indices, mods):
   """ Yields substitutions for given indices to structure. """
   from copy import deepcopy
-  from regex import compile
   from re import compile
   if not hasattr(indices, '__len__'): indices = [indices]
 
