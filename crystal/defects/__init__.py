@@ -101,6 +101,41 @@ def vacancy(structure, lattice, type):
     # returns structure with vacancy.
     yield result, atom
 
+
+def iterdefects(structure, lattice, defects):
+  """ Iterates over all defects. """
+  from regex import compile
+
+  single_regex    = compile(r'[A-Z][a-z]')
+  specie_regex    = compile(r'\b[A-Z][a-z]?(?:\d+)?\b')
+  intrinsic_regex = compile(r'\bintrinsic')
+  vacancy_regex = compile(r'\bvacancy\b')
+  tuple_regex = compile(r'\((S+)(?:,|\s)\s*(S+)(?:,|\s)\s*(S+)\)')
+  for key, value in defects.items():
+    # Interstitials.
+    if key == None: 
+      assert hasattr(subs, "__iter__"),\
+             ValueError("For interstitials, subs should be a sequence: {0}".format(subs))
+      assert len([u for u in subs]) == 3,\
+             ValueError("For interstitials, subs should be a sequence of length 3: {0}".format(subs))
+      type, position, name = tuple([u for u in subs])
+      result = deepcopy(structure)
+      result.add_atom = dot(lattice.cell, position), type
+      result.name = "{0}_interstitial_{1}".format(type, name)
+      defect = deepcopy(structure.atoms[-1])
+      defect.type = "None"
+      defect.index = -1
+      yield result, defect
+      continue
+
+    jobs = []
+    key = key.rstrip().lstrip()
+    # matching single specie -- Normal way of doing business. 
+    if single_regex.match(key): 
+      if isinstance(value, str): jobs.append( (key, value) )
+      else: job.extend([(key, v) for v in value])
+
+
 def all_defects(structure, lattice, type, subs):
   """ Yields all inequivalent point-defects. 
   
