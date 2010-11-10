@@ -55,89 +55,79 @@ def inequivalent_sites(lattice, type):
     i += 1
   return site_indices
 
-def vacancy(structure, lattice, type):
-  """ Yields all inequivalent vacancies. 
-  
-      Loops over all symmetrically inequivalent vacancies of given type.
 
-      :Parameters:
-        structure : `lada.crystal.Structure`
-          structure on which to operate
-        lattice : `lada.crystal.Lattice` 
-          back-bone lattice of the structure.
-        type : str
-          type of atoms for which to create vacancy.
-
-      :return: a 3-tuple consisting of:
-
-        - the structure with a vacancy.
-        - the vacancy atom from the original structure. It is given an
-          additional attribute, C{index}, referring to list of atoms of the
-          original structure.
-        - A suggested name for the vacancy: site_i, where i is the site index
-          of the vacancy (in the lattice).
-  """
+def non_interstitials(structure, indices, types):
+  """ Yields substitutions for given indices to structure. """
   from copy import deepcopy
-  
-  structure = deepcopy(structure)
-  inequivs = inequivalent_sites(lattice, type)
-  for i in inequivs:
+  if not hasattr(indices, '__len__'): indices = [indices]
 
+  all_types = types
+  specials = ['vacancy', 'vacancies', 'cation', 'cations']
+  types = [type for type in all_types if type == None or type.lower() not in specials]
+  str_types = [type.lower().rstrip().lstrip() for type in types if type != None]
+  if 'vacancy' in str_types or 'vacancies' in str_types: types.append(None)
+  if 'cation' in str_types or 'cations' in str_types:
+    species = set([a.type for type in structure if a.type not in ['O', 'S', 'Se', 'Te']])
+    types.extend(species) 
+  # loop over atoms to modify.
+  for i, j in enumerate(indices):
+    assert j < len(structure.atoms), RuntimeError("Site index not found.")
+    atom = deepcopy(structure.atoms[j])
+    atom.index = j
+    # loop over atoms to modifications.
+    for type in types:
+      result = deepcopy(structure)
+      if type == atom.type: continue # can't substitute with self.
+      if type == None: 
+        result.atoms.pop(j)
+        name = "vacancy_{0}".format(atom.type)
+        B = atom.type
+        atom.type = 'None'
+      else: 
+        B = result.atoms[j].type 
+        result.atoms[j].type = type
+        name = "{0}_on_{1}".format(type, atom.type)
+      if len(indices) > 1: name += "/site_{0}".format(i)
+      result.name = name
+      yield result, atom, B
+
+def inequiv_non_interstitials(structure, lattice, type, mods):
+  """ Loop over inequivalent non-interstitials. """
+  inequivs = inequivalent_sites(lattice, type)
+  indices = []
+  for i in inequivs:
     # finds first qualifying atom
     for which, atom in enumerate(structure.atoms):
       if atom.site == i: break
+    indices.append(which)
+  for result in non_interstitials(structure, indices, mods): yield result
 
-    assert which < len(structure.atoms), RuntimeError("Site index not found.")
 
-    # name of this vacancy
-    name = "vacancy_{0}".format(type)
-    if len(inequivs) > 1: name += "/site_{0}".format(i)
-    # structure 
+def interstitials(structure, lattice, interstitials):
+  """ Yields interstitial. """
+  from copy import deepcopy
+  from numpy import dot
+  for desc in interstitials:
+    assert hasattr(desc, "__iter__"),\
+           ValueError("For interstitials, desc should be a sequence: {0}".format(desc))
+    assert len([u for u in desc]) == 3,\
+           ValueError("For interstitials, desc should be a sequence of length 3: {0}".format(desc))
+    type, position, name = tuple([u for u in desc])
     result = deepcopy(structure)
-    result.name = name
-    # creates vacancy and keeps atom for record
-    atom = deepcopy(result.atoms.pop(which))
-    atom.index = which
-    # returns structure with vacancy.
-    yield result, atom
-
+    result.add_atom = dot(lattice.cell, position), type
+    result.name = "{0}_interstitial_{1}".format(type, name)
+    defect = deepcopy(structure.atoms[-1])
+    defect.index = -1
+    yield result, defect, 'None'
 
 def iterdefects(structure, lattice, defects):
   """ Iterates over all defects. """
-  from regex import compile
 
-  single_regex    = compile(r'[A-Z][a-z]')
-  specie_regex    = compile(r'\b[A-Z][a-z]?(?:\d+)?\b')
-  intrinsic_regex = compile(r'\bintrinsic')
-  vacancy_regex = compile(r'\bvacancy\b')
-  tuple_regex = compile(r'\((S+)(?:,|\s)\s*(S+)(?:,|\s)\s*(S+)\)')
   for key, value in defects.items():
-    # Interstitials.
-    if key == None: 
-      assert hasattr(subs, "__iter__"),\
-             ValueError("For interstitials, subs should be a sequence: {0}".format(subs))
-      assert len([u for u in subs]) == 3,\
-             ValueError("For interstitials, subs should be a sequence of length 3: {0}".format(subs))
-      type, position, name = tuple([u for u in subs])
-      result = deepcopy(structure)
-      result.add_atom = dot(lattice.cell, position), type
-      result.name = "{0}_interstitial_{1}".format(type, name)
-      defect = deepcopy(structure.atoms[-1])
-      defect.type = "None"
-      defect.index = -1
-      yield result, defect
-      continue
+    for result in any_defect(structure, lattice, key, value): yield result
 
-    jobs = []
-    key = key.rstrip().lstrip()
-    # matching single specie -- Normal way of doing business. 
-    if single_regex.match(key): 
-      if isinstance(value, str): jobs.append( (key, value) )
-      else: job.extend([(key, v) for v in value])
-
-
-def all_defects(structure, lattice, type, subs):
-  """ Yields all inequivalent point-defects. 
+def any_defect(structure, lattice, type, subs):
+  """ Yields point-defects of a given type. 
   
       Loops over all equivalent point-defects.
 
@@ -168,54 +158,36 @@ def all_defects(structure, lattice, type, subs):
           additional attribute, C{index}, referring to list of atoms in the
           structure.
   """
+  from re import compile
   from copy import deepcopy
   from numpy import dot
 
-  # Case for vacancies.
-  if subs == None: 
-    for args in vacancy(structure, lattice, type):
-      yield args
-    return
-  # case for interstitials.
-  if type == None:
-    assert hasattr(subs, "__iter__"),\
-           ValueError("For interstitials, subs should be a sequence: {0}".format(subs))
-    assert len([u for u in subs]) == 3,\
-           ValueError("For interstitials, subs should be a sequence of length 3: {0}".format(subs))
-    type, position, name = tuple([u for u in subs])
-    result = deepcopy(structure)
-    result.add_atom = dot(lattice.cell, position), type
-    result.name = "{0}_interstitial_{1}".format(type, name)
-    defect = deepcopy(structure.atoms[-1])
-    defect.type = "None"
-    defect.index = -1
-    yield result, defect
-    return
+  single_regex    = compile(r'[A-Z][a-z]?')
+  specie_regex    = compile(r'\b([A-Z][a-z]?)(\d+)\b')
 
-  result = deepcopy(structure)
-  inequivs = inequivalent_sites(lattice, type)
-  for i in inequivs:
-
-    # finds first qualifying atom
-    for which, atom in enumerate(structure.atoms):
-      if atom.site == i: break
-
-    assert which < len(structure.atoms), RuntimeError("Site index not found.")
-
-    # name of this substitution
-    name = "{0}_on_{1}".format(subs, type) 
-    if len(inequivs) > 1: name += "/site_{0}".format(i)
-    # creates substitution
-    orig = result.atoms[which].type
-    result.atoms[which].type = subs
-    # substituted atom.
-    substituted = deepcopy(result.atoms[which])
-    substituted.index = which
-    result.name = name
-    # returns structure with vacancy.
-    yield result, substituted
-    # removes substitution
-    result.atoms[which].type = orig
+  # Interstitials.
+  if hasattr(type, 'rstrip'): type = type.rstrip()
+  if hasattr(type, 'lstrip'): type = type.lstrip()
+  if type == None or type.lower() in ['interstitial', 'interstitials', 'none']: 
+    for result in interstitials(structure, lattice, subs): yield result
+  # O\d: looking for specific atoms.
+  elif specie_regex.match(type):
+    # looks for atom to modify
+    found = specie_regex.match(type)
+    type, index = found.group(1), int(found.group(2)) 
+    if index < 1: index = 1
+    for i, site in enumerate(lattice.sites):
+      if type in site.type: continue
+      index -= 1
+      if index == 0: break
+    assert index == 0, ValueError("Could not find {0}.".format(type))
+    for index, atom in enumerate(structure.atoms):
+      if atom.site == site.site: break
+    for result in non_interstitials(structure, index, subs): yield result
+  # O, Mn ... but not O1: looking for inequivalent sites.
+  elif single_regex.match(type): 
+    for result in inequiv_non_interstitials(structure, lattice, type, subs): yield result
+  else: raise ValueError("Don't understand defect type {0}".format(type))
 
 def charged_states(species, A, B):
   """ Loops over charged systems. 
@@ -249,6 +221,8 @@ def charged_states(species, A, B):
         - Number of electrons to add to the system (not charge). 
         - a suggested name for the charge state calculation.
   """
+  if A == 'None': A = None
+  if B == 'None': B = None
   assert A != None or B != None, ValueError("Both A and B cannot be None")
 
   if A == None:   # vacancy! Charge states are in 0 to -B.oxidation.

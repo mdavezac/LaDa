@@ -124,58 +124,54 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
     species = groundstate.functional.vasp.species
 
     # loop over substitutees.
-    for B, substituters in input.point_defects.items():
-      # loop over subtituters.
-      for A in substituters:
-        # loop over inequivalent point-defects sites.
-        for structure, defect in ptd.all_defects(superstructure, lattice, B, A):
-          # loop over oxidations states.
-          for nb_extrae, oxname in ptd.charged_states(species, A, B):
-            
-            # creates list of moments. 
-            new_moments = deduce_moment(A, species) 
-            if len(new_moments) > 1: 
-              moments = [ (min(new_moments), "/ls"), (max(new_moments), "/hs") ]
-            else:
-              moments = [ (max(new_moments), "") ]
-            # loop  over moments.
-            for moment, suffix in moments:
-              name =  "PointDefects/{1}/{2}{0}".format(suffix, structure.name, oxname)
-              
-              # checks if job already exists. Does not change job if it exists!
-              if name in groundstate[".."]: continue
+    for structure, defect, B in ptd.iterdefects(superstructure, lattice, input.point_defects):
+      # loop over oxidations states.
+      for nb_extrae, oxname in ptd.charged_states(species, defect.type, B):
+        
+        # creates list of moments. 
+        new_moments = deduce_moment(defect.type, species) 
+        if len(new_moments) > 1: 
+          moments = [ (min(new_moments), "/ls"), (max(new_moments), "/hs") ]
+        else:
+          moments = [ (max(new_moments), "") ]
+        # loop  over moments.
+        for moment, suffix in moments:
+          name =  "PointDefects/{1}/{2}{0}".format(suffix, structure.name, oxname)
+          
+          # checks if job already exists. Does not change job if it exists!
+          if name in groundstate[".."]: continue
 
-              # creates new job.
-              jobdict = groundstate["../"] / name
-              jobdict.functional = input.relaxer
-              jobdict.jobparams  = groundstate.jobparams.copy()
-              jobdict.jobparams["structure"] = structure.deepcopy()
-              jobdict.jobparams["nelect"] = nb_extrae
-              jobdict.jobparams["relaxation"] = "ionic"
-              jobdict.jobparams["ispin"] = 2
-              jobdict.jobparams["set_symmetries"] = "off"
-              jobdict.lattice  = lattice
-              jobdict.material = material
-              jobdict.defect   = defect
-              # adds, modifies, or remove moment depending on defect type.
-              if hasattr(superstructure, "magmom") or abs(moment) > 1e-12: 
-                jstruct = jobdict.jobparams["structure"]
-                # construct initial magmom
-                if hasattr(superstructure, "magmom"):
-                  jstruct.magmom = [u for u in superstructure.magmom]
-                else: 
-                  jstruct.magmom = [0 for u in superstructure.atoms]
-                # now modifies according to structure.
-                if B == None: # interstitial:
-                  jstruct.magmom.append(moment)
-                elif A == None: # vacancy -> remove moment.
-                  jstruct.magmom.pop(defect.index)
-                else: 
-                  jstruct.magmom[defect.index] = moment
-                # only keep moment if there are moments. 
-                if sum(abs(jstruct.magmom)) < 1e-12 * float(len(jstruct.atoms)): del jstruct.magmom
+          # creates new job.
+          jobdict = groundstate["../"] / name
+          jobdict.functional = input.relaxer
+          jobdict.jobparams  = groundstate.jobparams.copy()
+          jobdict.jobparams["structure"] = structure.deepcopy()
+          jobdict.jobparams["nelect"] = nb_extrae
+          jobdict.jobparams["relaxation"] = "ionic"
+          jobdict.jobparams["ispin"] = 2
+          jobdict.jobparams["set_symmetries"] = "off"
+          jobdict.lattice  = lattice
+          jobdict.material = material
+          jobdict.defect   = defect
+          # adds, modifies, or remove moment depending on defect type.
+          if hasattr(superstructure, "magmom") or abs(moment) > 1e-12: 
+            jstruct = jobdict.jobparams["structure"]
+            # construct initial magmom
+            if hasattr(superstructure, "magmom"):
+              jstruct.magmom = [u for u in superstructure.magmom]
+            else: 
+              jstruct.magmom = [0 for u in superstructure.atoms]
+            # now modifies according to structure.
+            if B == None or B == 'None': # interstitial:
+              jstruct.magmom.append(moment)
+            elif defect.type == None: # vacancy -> remove moment.
+              jstruct.magmom.pop(defect.index)
+            else: 
+              jstruct.magmom[defect.index] = moment
+            # only keep moment if there are moments. 
+            if sum(abs(jstruct.magmom)) < 1e-12 * float(len(jstruct.atoms)): del jstruct.magmom
 
-              nb_new_jobs += 1
+          nb_new_jobs += 1
 
   # now saves new job dictionary
   print "Created {0} new jobs.".format(nb_new_jobs)
@@ -266,7 +262,7 @@ def deduce_moment(type, species):
       returns ``[0]``. If it exists and is a scalar, returns ``[moment]``. And
       if already is a list, returns as is.
   """
-  if type == None: return [0]
+  if type == None or type.lower() == 'none': return [0]
   if not isinstance(type, str): type = type[0]
   if not hasattr(species[type], "moment"): return [0]
   if not hasattr(species[type].moment, "__iter__"):
