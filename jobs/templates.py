@@ -1,7 +1,7 @@
 """ Templates for job submissal. """
 __docformat__ = "restructuredtext en"
 
-def default_pbs( file, walltime = "05:45:00", mppwidth = 8, queue = "regular", name = None, \
+def default_pbs( file, walltime = "05:45:00", mppwidth = 8, queue = None, name = None, \
                  pyscript = None, pickle = "job_pickle", outdir = None, **kwargs):
   """ Creates default pbs-script. Does not launch. 
 
@@ -26,12 +26,15 @@ def default_pbs( file, walltime = "05:45:00", mppwidth = 8, queue = "regular", n
   from os.path import exists, join, dirname, abspath
 
   pbsdir = abspath(dirname(file.name))
-  file.write("#! /bin/bash\n"\
-             "#PBS -l walltime={0},mppwidth={1}\n"\
-             "#PBS -q {2} \n"\
-             "#PBS -e {3}/err.$PBS_JOBID\n"\
-             "#PBS -o {3}/out.$PBS_JOBID\n".format(walltime, mppwidth, queue, pbsdir))
-  if name != None: file.write("#PBS -N {0}\n\n".format(name))
+  file.write("#! /bin/bash\n#PBS -l walltime={0},mppwidth={1}\n".format(walltime, mppwidth))
+  if name != None: 
+    file.write("#PBS -N {1}\n\n"\
+               "#PBS -e {0}/err.{1}.$PBS_JOBID\n"\
+               "#PBS -o {0}/out.{1}.$PBS_JOBID\n".format(pbsdir, name))
+  else:
+    file.write("#PBS -e {0}/err.$PBS_JOBID\n"\
+               "#PBS -o {0}/out.$PBS_JOBID\n".format(pbsdir))
+  if queue != None: file.write("#PBS -q {0} \n".format(queue))
   if outdir == None: file.write("cd $PBS_O_WORKDIR\n")
   else: file.write("#PBS -d {0}\n#PBS -D {0}\ncd $PBS_O_INITDIR\n".format(outdir))
   if 'VIRTUAL_ENV' in environ:
@@ -81,12 +84,12 @@ def default_slurm( file, walltime = "05:45:00", mppwidth = 8, ppernode=8, queue 
   if queue != None: file.write("#SBATCH -p {0}\n".format(queue))
   pbsdir = dirname(file.name)
   if name != None:
-    file.write("#SBATCH -e \"{0}/err.{1}.%j\"\n"\
+    file.write("#SBATCH -J {1} \n"\
+               "#SBATCH -e \"{0}/err.{1}.%j\"\n"\
                "#SBATCH -o \"{0}/out.{1}.%j\"\n".format(pbsdir, name))
   else:
     file.write("#SBATCH -e \"{0}/err.%j\"\n"\
                "#SBATCH -o \"{0}/out.%j\"\n".format(pbsdir))
-  if name != None: file.write("#SBATCH -J {0} \n".fomat(repr(name)))
   if outdir != None: file.write("#SBATCH -D {0}\n".format(abspath(outdir)))
 
   file.write( "mpirun -np {0} numa_wrapper -ppn={1} python {2} "\

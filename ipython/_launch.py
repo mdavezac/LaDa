@@ -94,7 +94,7 @@ def launch_scattered(self, event):
       with open(pbsscripts[-1], "w") as file: 
         template( file, outdir=abspath(splitpath(path)[0]), jobid=i, mppwidth=mppwidth, name=name,\
                   pickle=splitpath(path)[1], pyscript=pyscript, ppath=".", walltime=walltime,\
-                  queue = None )
+                  queue = queue )
     print "Created scattered jobs in {0}.pbs.".format(path)
 
   if event.nolaunch: return
@@ -159,7 +159,7 @@ def launch(self, event):
   scattered.add_argument('--force', action="store_true", dest="force", \
                          help="Launches all untagged jobs, even those which completed successfully.")
   if len(lada_queues) != 0: 
-    scattered.add_argument( '--queue', dest="queue", choices=lada_queues,
+    scattered.add_argument( '--queue', dest="queue", choices=lada_queues, default=lada_queues[0],
                             help="Queue on which to launch job. Defaults to system default." )
   else: scattered.add_argument('--queue', dest="queue", type=str)
   scattered.set_defaults(func=launch_scattered)
