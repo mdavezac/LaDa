@@ -1,6 +1,12 @@
 ! Redirects stdout, stderr, or stdin
 subroutine lada_redirect_open(which, N, path, isopen, doappend)
+#ifdef FUCKING_CRAY
+# define OUTPUT_UNIT 6
+# define INPUT_UNIT 5
+# define ERROR_UNIT 0
+#else 
      use iso_fortran_env, only: OUTPUT_UNIT, ERROR_UNIT, INPUT_UNIT
+#endif
      integer, intent(in) :: which ! 0 => stderr, 5 => stdin, 6 => stdout
      integer, intent(in) :: N     ! size of the path.
      character(len=N), intent(in) :: path ! path name
@@ -33,7 +39,9 @@ subroutine lada_redirect_open(which, N, path, isopen, doappend)
 end subroutine
 
 subroutine lada_redirect_close(which)
+#ifndef FUCKING_CRAY
      use iso_fortran_env, only: OUTPUT_UNIT, ERROR_UNIT, INPUT_UNIT
+#endif
      integer, intent(in) :: which ! 0 => stderr, 5 => stdin, 6 => stdout
      
      if( which == 0 ) then 
@@ -62,7 +70,9 @@ end subroutine
 
 ! permissions are incorrect when using aprun.
 subroutine fucking_cray(which) 
+#ifndef FUCKING_CRAY
      use iso_fortran_env, only: OUTPUT_UNIT, ERROR_UNIT, INPUT_UNIT
+#endif
      integer, intent(in) :: which ! 0 => stderr, 5 => stdin, 6 => stdout
      
      if( which == 0 ) then 
@@ -76,3 +86,9 @@ subroutine fucking_cray(which)
        close(OUTPUT_UNIT)
      endif
 end subroutine
+
+#ifdef FUCKING_CRAY
+#undef OUTPUT_UNIT
+#undef INPUT_UNIT
+#undef ERROR_UNIT
+#endif

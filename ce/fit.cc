@@ -79,7 +79,7 @@ namespace CE
     std::transform
     (
       structures().begin(), structures().end(), targets.begin(),
-      bl::bind( &Crystal::Structure::energy, bl::_1 )
+      bl::bind<double const&>( &Crystal::Structure::energy, bl::_1 )
     );
     LADA_NASSERT( weights().size() != targets.size(),
               "Inconsistent weight and target sizes.\n" )
