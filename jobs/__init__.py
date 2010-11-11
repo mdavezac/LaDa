@@ -188,10 +188,9 @@ class JobDict(object):
     try: string = dumps(value)
     except Exception as e:
       raise ValueError("Could not pickle functional. Caught Error:\n{0}".format(e))
-    try: loads(string)
+    try: self._functional = loads(string)
     except Exception as e:
       raise ValueError("Could not reload pickled functional. Caught Error:\n{0}".format(e))
-    self._functional = value
   @functional.deleter
   def functional(self): self._functional = None
 
@@ -260,9 +259,8 @@ class JobDict(object):
   def __setitem__(self, index, value): 
     """ Sets job/subjob description in the dictionary.
     
-        If the job does not exist, will create it.
-        A copy (copy.deepcopy) of value is inserted, rather than a simple
-        shallow ref.
+        If the job does not exist, will create it.  A copy (copy.deepcopy) of
+        value is inserted, rather than a simple shallow ref.
     """
     from re import split
     from copy import deepcopy
@@ -468,6 +466,30 @@ class JobDict(object):
     new_index = normpath(index[len(names[0])+1:])
     if len(new_index) == 0: return True
     return new_index in self[names[0]]
+
+  def __copy__(self):
+    """ Performs a shallow copy of this job-dictionary.
+
+        Shallow copies are made of all internal dictionaries children and
+        jobparams. However, functional and jobparams values should the same
+        object as self. The sub-branches of the returned dictionary are shallow
+        copies of the sub-branches of self. In other words, the functional and
+        refences in jobparams dictionary are in common between result and self,
+        but nothing else.
+
+        The returned dictionary does not have a parent!
+    """
+    from copy import copy
+    # new job-dictionary.
+    result = JobDict()
+    result._functional = self._functional
+    result.jobparams   = self.jobparams.copy()
+    result._parent     = None
+    for name, value in self.children.items():
+      result.children[name] = copy(value)
+      result.children[name].parent = result
+    return result
+
 
 
 class Bleeder(object): 
