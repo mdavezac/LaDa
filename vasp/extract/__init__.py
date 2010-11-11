@@ -1,9 +1,58 @@
-""" Subpackage containing extraction methods for vasp parameters from vasp output. """
-__docformat__  = 'restructuredtext en'
-from ._dft import Extract
-from ._gw import  ExtractGW
-__all__ = ['Extract', 'ExtractGW']
+""" Subpackage containing extraction methods for vasp parameters from vasp output. 
 
+    Extaction objects are implemented as a mix and mash of bases classes. The
+    reason for this is we want to isolate functionality specific to DFT and GW,
+    and specific to reading *real* OUTCAR files and *database* OUTCAR files. 
+"""
+__docformat__  = 'restructuredtext en'
+__all__ = ['Extract']
+from ...opt import AbstractExtractBase
+from ._common import Extract as ExtractCommonBase
+from ._dft import Extract as ExtractDFTBase
+from ._gw import Extract as ExtractGWBase
+from ._mixin import IOMixin, SearchMixin
+
+class ExtractCommon(AbstractExtractBase, ExtractCommonBase, IOMixin, SearchMixin):
+  """ Extracts DFT data from an OUTCAR. """
+  def __init__(self, directory=None, comm=None, **kwargs):
+    """ Initializes extraction object. """
+    from os.path import exists, isdir, basename, dirname
+    # checks if path or directory
+    if directory != None and exists(directory) and not isdir(directory):
+      kwargs['OUTCAR'] = basename(directory)
+      directory = dirname(directory)
+    AbstractExtractBase.__init__(self, directory, comm)
+    ExtractCommonBase.__init__(self)
+    IOMixin.__init__(self, directory, **kwargs)
+    SearchMixin.__init__(self)
+
+class ExtractDFT(ExtractCommon, ExtractDFTBase):
+  """ Extracts DFT data from an OUTCAR. """
+  def __init__(self, directory=None, comm=None, **kwargs):
+    """ Initializes extraction object. """
+    ExtractCommon.__init__(self, directory, comm, **kwargs)
+    ExtractDFTBase.__init__(self)
+
+class ExtractGW(ExtractCommon, ExtractGWBase):
+  """ Extracts GW data from an OUTCAR. """
+  def __init__(self, directory=None, comm=None, **kwargs):
+    """ Initializes extraction object. """
+    ExtractCommon.__init__(self, directory, comm, **kwargs)
+    ExtractGWBase.__init__(self)
+
+def Extract(*args, **kwargs): 
+  """ Chooses between DFT or GW extraction object, depending on OUTCAR. """
+  a = ExtractCommon(*args, **kwargs)
+  try: which = ExtractDFT if a.is_dft else ExtractGW
+  except: which = ExtractCommon
+  return which(*args, **kwargs)
+
+def ExtractGW_deprecated(*args, **kwargs):
+  """ Deprecated. Please use vasp.Extract instead. """
+  from warnings import warn
+  warn('ExtractGW is deprecated. Please use vasp.Extract instead.', DeprecationWarning)
+  return Extract(*args, **kwargs)
+    
 try: from ... import jobs
 except ImportError: pass
 else: 
@@ -36,7 +85,7 @@ else:
       from ...opt import RelativeDirectory
 
       # this will throw on unknown kwargs arguments.
-      super(MassExtract, self).__init__(**kwargs)
+      jobs.AbstractMassExtract.__init__(self, **kwargs)
 
       self.Extract = Extract if Extract != None else VaspExtract
       """ Extraction class to use. """
@@ -70,11 +119,6 @@ else:
 
         result.OUTCAR = self.OUTCAR
         yield join('/', relpath(dirpath, self.rootdir)), result
-
-    @property
-    def _attributes(self): 
-      """ Returns __dir__ set special to the extraction itself. """
-      return set([u for u in dir(self.Extract()) if u[0] != '_'])
 
     def __copy__(self):
       """ Returns a shallow copy. """

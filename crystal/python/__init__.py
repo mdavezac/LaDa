@@ -61,8 +61,9 @@ def read_poscar(types=None, path=None):
       
       @keyword types: species in the POSCAR.
       @type types: none, or sequence of objects convertible to str 
-      @keyword path: path to the POSCAR file.
-      @type path: string
+      @keyword path: path to the POSCAR file. Can also be an object with
+                     file-like behavior.
+      @type path: string or file object
       @keyword comm: MPI communicator over which to read structure.
       @type comm: boost.mpi.communicator
       @return: (L{lada.crystal.Structure}) structure on success.
@@ -84,7 +85,8 @@ def read_poscar(types=None, path=None):
     assert exists(join(path, "POSCAR")), IOError("Could not find POSCAR in %s." % (path))
     path = join(path, "POSCAR")
   result = Structure()
-  with open(path, "r") as poscar:
+  filecontext = path if hasattr(path, read) else open(path, 'r')
+  with filecontext as poscar:
     # gets name of structure
     result.name = poscar.readline().strip()
     if len(result.name) > 0:
