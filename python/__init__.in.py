@@ -53,3 +53,10 @@ lada_with_mpi = @do_use_mpi@
 # right now just check for redmesa or redrock. 
 lada_with_slurm = 'SNLCLUSTER' in environ 
 """ If True use slurm as ressource manager, else use openpbs. """
+queues = []
+""" List of slurm or pbs queues allowed for use. 
+
+    This is used by ipython's %launch magic function. 
+    It is not required for slurm systems. 
+    If empty, then %launch will not have a queue option.
+"""
