@@ -84,9 +84,9 @@ def iterate(self, event):
     if "_lada_subjob_iterator" in ip.user_ns: 
       iterator = ip.user_ns["_lada_subjob_iterator"]
     else:
-      iterator = current.root.walk_through()
+      iterator = current.root.itervalues()
     while True:
-      try: job, d = iterator.next()
+      try: job = iterator.next()
       except StopIteration: 
         print "Reached end of job list."
         return 

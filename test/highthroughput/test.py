@@ -156,7 +156,7 @@ def magnetic_wave(path=None, inputpath=None, **kwargs):
   # Only magnetic jobs which do NOT exist are added at that point.
   nonmagname = "non-magnetic"
   nb_new_jobs = 0
-  for nonmagjob, name in jobdict.walk_through():
+  for name, nonmagjob in jobdict.iteritems():
     # avoid tagged jobs.
     if nonmagjob.is_tagged: continue
     # avoid other jobs (eg magnetic jobs).

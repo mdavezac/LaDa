@@ -2,7 +2,6 @@
 
     Contains the following methods and classes.
        - JobDict: tree of calculations and subcalculations.
-       - walk_through: iterates over calculation in a tree.
        - save: pickles a tree to file. Acquires a file lock to do this! If you
            always use a file locking mechanism, then this should work out of the
            box for you.
@@ -12,12 +11,11 @@
        - pbs_script: Creates pbs-script to perform calculations on a tree.
 """
 __docformat__ = "restructuredtext en"
-from ..opt.decorators import add_setter, broadcast_result, make_cached
+__all__ = ['JobDict', 'walk_through', 'save', 'load', 'bleed', 'unbleed', 'unsucessfull', 'Extract']
+
+from abc import ABCMeta, abstractmethod
 from collections import MutableMapping
-
-__all__ = [ 'JobDict', 'walk_through', 'save', 'load', 'bleed', 'unbleed',\
-            'unsucessfull', 'Extract' ]
-
+from ..opt.decorators import add_setter, broadcast_result, make_cached
 
 class JobDict(object):
   """ Tree of jobs. 
@@ -43,7 +41,7 @@ class JobDict(object):
         >>> subjob1.functional = some callable object.
 
       Where a callable object is anything which can be called (eg, as in
-      C{method(parameters)}), C{method} is the callable object:
+      ``method(parameters)``), ``method`` is the callable object:
 
         >>> subjob1.functional = method
 
@@ -67,21 +65,13 @@ class JobDict(object):
 
       Having a jobtree is great, looping through it is better:
 
-        >>> for job, name in jobtree.walkthrough("root_result_directory"):
-        >>>    result = job.compute(outdir=name)
+        >>> for name, job in jobtree.iteritems():
+        >>>    result = job.compute(outdir=join(rootdir, name))
 
 
-      The ``walkthrough`` method does just that: it goes through the whole tree
+      The ``iteritems`` method does just that: it goes through the whole tree
       returning those branches where there is something to execute (eg
-      C{job.functional != None}). It also returns outdir which is the subdirectory
-      where to execute that particular job. Using the jobtree defined above,
-      for which only subjob1 was actually given something to do, 
-
-        >>> for job, name in walkthrough(jobdict=jobtree, outdir="root_result_directory"):
-        >>>    print name
-
-      would print out: "root_result_directory/subjoname1".
-      The actual directory is not created. The name is only a suggestion to use or not.
+      ``job.functional != None``).
         
       Putting it all together:
 
@@ -95,8 +85,8 @@ class JobDict(object):
         >>> subjob1.add_param = "whatever", value1
         >>> subjob1.whatever = value2
         >>> # actually performs calculations.
-        >>> for job, name in walkthrough(jobdict=jobtree, outdir="root_result_directory"):
-        >>>    job.compute(outdir=name)
+        >>> for name, job in jobtree.iteritems():
+        >>>    job.compute(outdir=join(rootdir, name))
 
       Using the jobtree defined above, this would end-up calling:
 
@@ -114,10 +104,10 @@ class JobDict(object):
       ``bleed`` makes sure that once a job is accepted, it will not be accessed
       by any other process or pools of processes. ``bleed`` allows parallelization
       over pbs scripts and pools of MPI processes. However, it does change the
-      C{jobdict} saved to "pickle". This means that once all jobs are executed,
-      ``bleed`` (but not ``walk_through``) will find that C{jobdict} is empty. To
-      undo these changes and use the jobdict for, say, ouptut analysis, simply
-      use ``walk_through`` where possible (single pbs script or interactive
+      ``jobdict`` saved to "pickle". This means that once all jobs are executed,
+      ``bleed`` will find that ``jobdict`` is empty. To undo these changes and
+      use the jobdict for, say, ouptut analysis, simply use ``iteritems``
+      where possible (single pbs script or interactive
       sessions), or do:
 
       >>> jobs.unbleed("pickle")
@@ -198,7 +188,9 @@ class JobDict(object):
     try: string = dumps(value)
     except Exception as e:
       raise ValueError("Could not pickle functional. Caught Error:\n{0}".format(e))
-    else: self._functional = loads(string)
+    try: self._functional = loads(string)
+    except Exception as e:
+      raise ValueError("Could not reload pickled functional. Caught Error:\n{0}".format(e))
   @functional.deleter
   def functional(self): self._functional = None
 
@@ -267,9 +259,8 @@ class JobDict(object):
   def __setitem__(self, index, value): 
     """ Sets job/subjob description in the dictionary.
     
-        If the job does not exist, will create it.
-        A copy (copy.deepcopy) of value is inserted, rather than a simple
-        shallow ref.
+        If the job does not exist, will create it.  A copy (copy.deepcopy) of
+        value is inserted, rather than a simple shallow ref.
     """
     from re import split
     from copy import deepcopy
@@ -360,7 +351,7 @@ class JobDict(object):
 
   def __str__(self):
     result = "Jobs: \n"
-    for dummy, name in self.walk_through():
+    for name in self.iterkeys():
       result += "  " + name + "\n"
     return result
 
@@ -368,9 +359,8 @@ class JobDict(object):
   def untagged_jobs(self):
     """ Returns a string with only untagged jobs. """
     result = "Jobs: \n"
-    for dummy, name in self.walk_through():
-      if not dummy.is_tagged: 
-        result += "  " + name + "\n"
+    for name, job in self.iteritems():
+      if not job.is_tagged: result += "  " + name + "\n"
     return result
 
   @property
@@ -420,31 +410,27 @@ class JobDict(object):
     super(JobDict, self).__setattr__("jobparams", args[1])
     d = self.__dict__.update(args[0])
 
-  def walk_through(self, outdir=None):
+  def iteritems(self, outdir=''):
     """ Iterates over jobs. 
 
-        @return: yields (job, directory):
+        :return: yields (directory, job):
+          - directory is a suggested directory name with ``outdir`` as its root.
           - job is a Jobdict which contains something to execute.
-          - directory is a suggested directory name with C{outdir} as its root.
     """
     from os.path import join
-    if outdir == None: outdir = ""
     # Yield this job if it exists.
-    if self.is_job: yield self, outdir
+    if self.is_job: yield outdir, self
     # Walk throught children jobdict.
     for name in self.subjobs():
-      for u in self[name].walk_through(join(outdir, name)): 
+      for u in self[name].iteritems(join(outdir, name)): 
         yield u
   def itervalues(self): 
     """ Iterates over all jobs. """
-    for job, name in self.walk_through(): yield job
+    for name, job in self.iteritems(): yield job
   def iterkeys(self): 
     """ Iterates over all jobs. """
-    for job, name in self.walk_through(): yield name
-  def iteritems(self): 
-    """ Iterates over all jobs. """
-    for job, name in self.walk_through(): yield name, job
-  def value(self):
+    for name, job in self.iteritems(): yield name
+  def values(self):
     """ List of all jobs. """
     return [u for u in self.itervalues()]
   def keys(self):
@@ -458,7 +444,7 @@ class JobDict(object):
   @property
   def nbjobs(self):
     """ Returns the number of jobs in tree. """
-    return len([0 for j, o in self.walk_through() if not j.is_tagged])
+    return len([0 for j, o in self.iteritems() if not j.is_tagged])
 
   @property 
   def root(self): 
@@ -481,14 +467,203 @@ class JobDict(object):
     if len(new_index) == 0: return True
     return new_index in self[names[0]]
 
+  def __copy__(self):
+    """ Performs a shallow copy of this job-dictionary.
 
-def walk_through(jobdict, outdir = None, comm = None):
-  """ Generator to iterate over actual calculations. 
-      
-      see ``JobDict`` description.
+        Shallow copies are made of all internal dictionaries children and
+        jobparams. However, functional and jobparams values should the same
+        object as self. The sub-branches of the returned dictionary are shallow
+        copies of the sub-branches of self. In other words, the functional and
+        refences in jobparams dictionary are in common between result and self,
+        but nothing else.
+
+        The returned dictionary does not have a parent!
+    """
+    from copy import copy
+    # new job-dictionary.
+    result = JobDict()
+    result._functional = self._functional
+    result.jobparams   = self.jobparams.copy()
+    result._parent     = None
+    for name, value in self.children.items():
+      result.children[name] = copy(value)
+      result.children[name].parent = result
+    return result
+
+
+
+class Bleeder(object): 
+  """ Bleeds a jobdictionary from file. 
+  
+  
+      The goal is to iterate through all jobs across multiple pools of
+      processes, such that jobs are visited only once. It allows the best
+      possible load balance across pools of processes. During iterations,
+      modifications to the jobs are kept (when used in a for loop. Do not
+      create lists).
   """
-  if isinstance(jobdict, str): jobdict = load(jobdict, comm=comm)
-  for u in jobdict.walk_through(outdir): yield u
+  def __init__(self, jobdict, pools, comm, directory = '.'): 
+    """ Creates a bleeding job-dictionary. """
+    from tempfile import NamedTemporaryFile
+    from pickle import dump
+    from ..opt import RelativeDirectory
+    super(Bleeder, self).__init__()
+   
+    self._comm = comm
+    """ *World* communicator. """
+
+    self.pools = pools
+    """ Number of processor pools to work with. """
+
+    self._filename = None
+    """ Name of the temp file where the job-dictionary is stored. """
+    directory = RelativeDirectory(directory).path
+    if self.is_root: 
+      with NamedTemporaryFile(dir=directory, delete=False, prefix='ga_evaldict') as file:
+        dump(jobdict, file)
+        self._filename = file.name
+    self._filename = self.broadcast(self._filename)
+
+  @property 
+  def pools(self):
+    """ Number of processor pools to work with. """
+    return self._pools
+  @pools.setter
+  def pools(self, value):
+    if value == None: self._pools = 1
+    elif not self.is_mpi: self._pools = 1
+    elif value < self.comm.size: self._pools = self.comm.size
+    else: self._pools = value
+
+    self._local_comm = self.comm
+    if self.is_mpi and self._pools > 1: 
+      self._local_comm = self.comm.split(self.comm.rank % value) 
+  @pools.deleter
+  def pools(self): self.pools = None
+
+  @property
+  def is_mpi(self): 
+    """ True if this is an mpi session. """
+    return False if self.comm == None else self.comm.size > 1
+  @property 
+  def is_root(self):
+    """ True if this process is the world root. """
+    return self.comm.rank == 0 if self.is_mpi else True
+  @property
+  def comm(self):
+    """ *World* communicator. """
+    return self._comm
+  
+  def broadcast(self, value):
+    """ Broadcasts from comm, if needed. """
+    if self.is_mpi:
+      from boost.mpi import broadcast
+      return broadcast(self.comm, value, 0)
+    return value
+  def barrier(self):
+    """ MPI barrier if needed. """
+    if self.is_mpi: self.comm.barrier()
+  @property
+  def is_local_root(self):
+    """ True if this process is the local root. """
+    return self.local_comm.rank == 0 if self.is_mpi else True
+  @property
+  def is_local_mpi(self):
+    """ True if local comm has more than one rank. """
+    return False if self.local_comm == None else self.local_comm.size > 1
+  @property
+  def local_comm(self): 
+    """ Local communicator. """
+    return self._local_comm
+  def local_broadcast(self, value):
+    """ Broadcasts from local comm, if needed. """
+    if self.is_local_mpi:
+      from boost.mpi import broadcast
+      return broadcast(self.local_comm, value, 0)
+    return value
+  def local_barrier(self):
+    """ Barrier over local processes. """
+    if self.is_local_mpi: self.local_mpi.barrier()
+
+  def __iter__(self): 
+    """ Iterates over all jobs until completion. 
+    
+        Yielded jobs can be modified. These modifications will be saved.
+    """
+    from os.path import exists
+    from pickle import load as pickle_load, dump
+    from ..opt import LockFile
+    # infinite loop. breaks when no new jobs can be found.
+    while True:
+      # only local root reads stuff. 
+      job = None
+      if self.is_local_root: 
+        # acquire a lock first.
+        with LockFile(self._filename) as lock:
+          # checks for file existence. Done if no file.
+          if exists(self._filename): 
+            # Loads pickle.
+            with open(self._filename, 'r') as file: jobdict = pickle_load(file)
+            # Finds first untagged job.
+            for job in jobdict.values():
+              if not job.is_tagged: break
+            # Check we found an untagged job. Otherwise, we are done.
+            if not job.is_tagged: 
+              job.tag()
+              with open(self._filename, 'w') as file: dump(jobdict, file)
+            else: job = None # no job was found.
+      # for all nodes, broadcasts job.
+      job = self.local_broadcast(job)
+      # check for bailout.
+      if job == None: break
+
+      # yield job.
+      yield job
+
+      # saves job and whatever modifications.
+      if self.is_local_root: 
+        # acquire a lock first.
+        with LockFile(self._filename) as lock:
+          # Loads pickle.
+          with open(self._filename, 'r') as file: jobdict = pickle_load(file)
+          # modifies job.
+          jobdict[job.name] = job
+          # save jobs.
+          with open(self._filename, 'w') as file: dump(jobdict, file)
+    
+  def cleanup(self): 
+    """ Cleans up disk. Return job-dictionary. """
+    from os.path import exists
+    from os import remove
+    from pickle import load as pickle_load
+    from ..opt import LockFile
+    jobdict = None
+    if self.is_root:
+      # acquire a lock first.
+      with LockFile(self._filename) as lock:
+        # checks for file existence. Done if no file.
+        if exists(self._filename): 
+          # Loads pickle.
+          with open(self._filename, 'r') as file: jobdict = pickle_load(file)
+          remove(self._filename)
+    return self.broadcast(jobdict)
+
+  def itercompute(self, *args, **kwargs):
+    """ Iterates over computable jobs. 
+    
+        Communicator is handled by this routine.
+        Yields the object returned by each job, as well as the job itself.
+        Yielded jobs can be modified. These modifications will be saved.
+    """
+    kwargs['comm'] = self.local_comm
+    for job in self: yield job.compute(*args, **kwargs), job
+
+      
+
+
+            
+      
+
 
 @broadcast_result(key=True)
 def save(jobdict, path = None, overwrite=False): 
@@ -554,9 +729,9 @@ def bleed(path=None, outdir=None, comm=None):
           Will broadcast yielded stuff from root. Because of file locking,
           this generator may freeze the system if not used correctly with mpi.
 
-      :return: yields (job, directory), see ``walk_through``.
-           - job: a job dictionary with the current job to execute.
+      :return: yields (directory, job), see ``walk_through``.
            - directory: a suggested directory name with ``outdir`` as its root.
+           - job: a job dictionary with the current job to execute.
 
       This function alters the dictionary stored in `path`. If `path` is
       empty, then returns None, None. An exclusive lock is acquired before
@@ -587,12 +762,12 @@ def bleed(path=None, outdir=None, comm=None):
         # Checks if there are any jobs.
         if jobdict.nbjobs == 0: break
         # Pops first job.
-        for job, directory in jobdict.walk_through():
+        for directory, job in jobdict.iteritems():
           if not job.is_tagged: job.tag(); break
         # writes modified dictionary to path.
         with open(path, "wb") as file: dump(jobdict, file)
-      broadcast(comm, (job, join(outdir, directory)), 0)
-      yield job, join(outdir, directory)
+      broadcast(comm, (join(outdir, directory), job), 0)
+      yield join(outdir, directory), job
     broadcast(comm, None, 0)
     return
   else: 
@@ -613,7 +788,7 @@ def unbleed(path=None, comm=None):
     assert exists(path), IOError( "Job dictionary" + path + "does not exist.")
     with acquire_lock(path) as lock_file:
       with open(path, "rb") as file: jobdict = load_pickle(file)
-      for job, outdir in jobdict.walk_through(): jobdict.untag()
+      for outdir, job in jobdict.iteritems(): jobdict.untag()
       with open(path, "wb") as file: dump(jobdict, file)
   # synchronizes communicator.
   if comm != None: comm.barrier()
@@ -648,7 +823,7 @@ def unsucessfull(jobdict, extractor, outdir = None):
   if outdir == None: outdir = ""
 
   # go through dictionary.
-  for job, directory in jobdict.walk_through(outdir=outdir):
+  for directory, job in jobdict.iteritems(outdir=outdir):
     extractor.directory = directory
     # and bleed successfull jobs.
     if extractor.success: job.tag()
@@ -668,8 +843,10 @@ class DefaultParams:
   """ If True, then all regex matching is done using unix-command-line patterns. """
 
 class ForwardingDict(MutableMapping): 
-  """ A dictionary which forwards attributes and calls. """
-  def __init__(self, dictionary = None, _attr_list=None, **kwargs):
+  """ An *ordered* dictionary which forwards attributes and calls. """
+  def __init__(self, dictionary = None, _attr_list=None, ordered=True, **kwargs):
+    """ Initializes a ForwardingDict instance. """
+    from ..opt import OrderedDict
     self._is_initializing_forwarding_dict = True
     """ Tells get/setattr that Forwarding dict is being initialized. """
     super(ForwardingDict, self).__init__()
@@ -682,7 +859,8 @@ class ForwardingDict(MutableMapping):
     """ Whether attributes can be added or only modified. """
     self._attr_list    = [] if _attr_list == None else _attr_list
     """ List of attributes of attributes, from oldest parent to youngest grandkid. """
-    self.dictionary    = {} if dictionary == None else dictionary
+    dicttype = OrderedDict if ordered else dict
+    self.dictionary    = dicttype({} if dictionary == None else dictionary)
     """" The dictionary for which to unroll attributes. """
     del self._is_initializing_forwarding_dict
     assert len(kwargs) == 0, ValueError("Unkwnown keyword arguments:{0}.".format(kwargs.keys()))
@@ -727,6 +905,9 @@ class ForwardingDict(MutableMapping):
     from functools import reduce
     from itertools import chain
 
+    if name not in self._attributes:
+      raise AttributeError( "Attribute {0} not found in {1} instance."\
+                            .format(name, self.__class__.__name__) )
     found = False
     attrs = len(self._attr_list) > 0
     result = self.copy(append=name)
@@ -822,7 +1003,7 @@ class ForwardingDict(MutableMapping):
     assert not self.readonly, RuntimeError("This ForwardingDict is readonly.")
     assert key in self.dictionary,\
            KeyError( "{0} is not in the ForwaringDict. Items "\
-                     "cannot be added to a non-root ForwardingDict.".format(key))
+                      "cannot be added to a non-root ForwardingDict.".format(key))
     # non-root dict: must set innermost attribute.
     o = self.dictionary[key]
     if len(self._attr_list) > 1: 
@@ -832,7 +1013,7 @@ class ForwardingDict(MutableMapping):
                               .format(key, self._attr_list) )  
     assert (not self.only_existing) or hasattr(o, self._attr_list[-1]), \
            KeyError( "{0} cannot be set with current attribute list.\n{1}\n"\
-                     .format(key, self._attr_list) )
+                      .format(key, self._attr_list) )
     setattr(o, self._attr_list[-1], value)
   def __delitem__(self, key): 
     """ Removes item from dictionary. """
@@ -869,7 +1050,7 @@ class ForwardingDict(MutableMapping):
     result = copy(self)
     assert append == None or "_attr_list" not in kwargs,\
            ValueError( "Cannot copy attribute _attr_list as "\
-                       "a keyword and as ``append`` simultaneously." )
+                        "a keyword and as ``append`` simultaneously." )
     if 'dictionary' in kwargs: result.dictionary = kwargs.pop('dictionary').copy()
     for key, value in kwargs.iteritems():
       super(ForwardingDict, result).__setattr__(key, value)
@@ -895,14 +1076,9 @@ class ForwardingDict(MutableMapping):
 
 class AbstractMassExtract(object): 
   """ Propagates extraction methods from different jobs. """
+  __metaclass__ = ABCMeta
 
-  def uncache(self): 
-    """ Uncache values. """
-    self._cached_extractors = None
-    self._cached_attributes = None
-
-
-  def __init__(self, view=None, excludes=None, **kwargs):
+  def __init__(self, view=None, excludes=None, dynamic=False, ordered=True, **kwargs):
     """ Initializes extraction object. 
 
         :Parameters:
@@ -912,11 +1088,16 @@ class AbstractMassExtract(object):
           excludes : list of str or None
             List of patterns which the job names must *not* match to be
             included in the extraction.
+          dynamic : boolean
+            If true, chooses a slower but more dynamic caching method. Only
+            necessary for ipython shell. 
+          ordered : boolean
+            If true, uses OrderedDict rather than conventional dict.
 
         :Kwarg naked_end: True if should return value rather than dict when only one item.
         :Kwarg unix_re: converts regex patterns from unix-like expression.
     """
-    from ..opt import RelativeDirectory
+    from ..opt import RelativeDirectory, OrderedDict
 
     super(AbstractMassExtract, self).__init__()
 
@@ -928,10 +1109,15 @@ class AbstractMassExtract(object):
     """ If True, then all regex matching is done using unix-command-line patterns. """
     self.excludes = excludes
     assert len(kwargs) == 0, ValueError("Unkwnown keyword arguments:{0}.".format(kwargs.keys()))
-    self._cached_attributes = None
-    """ List of extra attributes derived from extraction objects. """
     self._cached_extractors = None
     """ List of extration objects. """
+    self.dynamic = dynamic
+    """ If True chooses a slower but more dynamic caching method. """
+    self.dicttype = OrderedDict if ordered else dict
+
+  def uncache(self): 
+    """ Uncache values. """
+    self._cached_extractors = None
 
   @property 
   def excludes(self):
@@ -981,7 +1167,7 @@ class AbstractMassExtract(object):
     for name, job in self._regex_extractors(): yield name, job
   def items(self):
     """ Iterates through all extraction objects and names. """
-    return [name, job in self.iteritems()]
+    return [(name, job) for name, job in self.iteritems()]
     
   def itervalues(self):
     """ Iterates through all extraction objects. """
@@ -997,14 +1183,6 @@ class AbstractMassExtract(object):
     """ Iterates through all extraction objects. """
     return [name for name in self.iterkeys()]
   
-  @property
-  def extractors(self):
-    """ Returns dictioanary of extrators. """
-    result = {}
-    for k, j in self.iteritems(): result[k] = j
-    if self.naked_end and len(result) == 1: return result[result.keys()[0]]
-    return ForwardingDict(result, naked_end=self.naked_end)
-
   def __iter__(self):
     """ Iterates through all job names. """
     for name, job in self.iteritems(): yield name
@@ -1016,13 +1194,14 @@ class AbstractMassExtract(object):
     return compile(pattern, flags) if not self.unix_re\
            else convert_from_unix_re(pattern)
 
-  def walk_through(self):
+  @abstractmethod
+  def __iter_alljobs__(self):
     """ Generator to go through all relevant jobs. 
     
         :return: (name, extractor), where name is the name of the job, and
           extractor an extraction object.
     """
-    abstract
+    pass
 
   @property
   def view(self):
@@ -1038,13 +1217,19 @@ class AbstractMassExtract(object):
   @property
   def _extractors(self):
     """ Goes through all jobs and collects Extract if available. """
-    if self._cached_extractors != None: return self._cached_extractors
-    
-    from os.path import exists, join
-    result = {}
-    for name, extract in self.walk_through(): result[name] = extract 
-    self._cached_extractors = result
-    return result
+    if self.dynamic:
+      if self._cached_extractors == None: self._cached_extractors = self.dicttype()
+      result = self.dicttype()
+      for name, extract in self.__iter_alljobs__():
+        if name not in self._cached_extractors: self._cached_extractors[name] = extract
+        result[name] = self._cached_extractors[name]
+      return result
+    else:
+      if self._cached_extractors != None: return self._cached_extractors
+      result = self.dicttype()
+      for name, extract in self.__iter_alljobs__(): result[name] = extract
+      self._cached_extractors = result
+      return result
 
   def _regex_extractors(self):
     """ Loops through jobs in this view. """
@@ -1062,12 +1247,9 @@ class AbstractMassExtract(object):
   @property
   def _attributes(self): 
     """ Returns __dir__ special to the extraction itself. """
-    if self._cached_attributes != None: return self._cached_attributes
-
     results = set([])
     for key, value in self.iteritems():
       results |= set([u for u in dir(value) if u[0] != '_'])
-    self._cached_attributes = results
     return results
 
   def __dir__(self): 
@@ -1081,7 +1263,7 @@ class AbstractMassExtract(object):
     """ Returns extracted values. """
     assert name in self._attributes, AttributeError("Unknown attribute {0}.".format(name))
 
-    result = {}
+    result = self.dicttype()
     for key, value in self.iteritems():
       try: result[key] = getattr(value, name)
       except: result.pop(key, None)
@@ -1096,24 +1278,19 @@ class AbstractMassExtract(object):
     return self.copy(view=path)
 
   @property
-  def jobs(self):
-    """ List of jobnames (satisfying the current view). """
-    return [key for key, value in self.iteritems()]
-
-  @property
   def children(self):
     """ next set of minimal regex. """
     from os.path import join, normpath
     regex = self._regex_pattern(self.view)
 
-    jobs = self.jobs
-    if len(self.jobs) < 2: return 
+    jobs = self.keys()
+    if len(self.keys()) < 2: return 
     children = set()
-    if len(self.view) == 0:
-      for name in self.jobs:
+    if len(self.view) == 0 or self.view == '/':
+      for name in self.iterkeys():
         children.add(name[:1+name[1:].find('/')])
     else:
-      for name in self.jobs:
+      for name in self.iterkeys():
         where = regex.match(name)
         if len(name) == where.end() +1: continue
         first_index = name[where.end():].find('/')
@@ -1183,7 +1360,7 @@ class AbstractMassExtract(object):
     """ Extraction on a single process.
   
         Sometimes, it is practical to perform extractions on a single process
-        only, eg without blocking mpi calls. C{self.``solo}()`` returns an
+        only, eg without blocking mpi calls. `solo` returns an
         extractor for a single process:
         
         >>> # prints only on proc 0.
@@ -1213,6 +1390,14 @@ class AbstractMassExtract(object):
     return result
 
 
+  @property
+  def jobs(self):
+    """ Deprecated. Use keys and iterkeys instead. """
+    from warnings import warn
+    warn('jobs property is deprecated. Please use keys and or iterkeys instead.', DeprecationWarning)
+    return self.keys()
+
+
 
 class MassExtract(AbstractMassExtract): 
   """ Propagates extraction methods from different jobs. 
@@ -1232,8 +1417,9 @@ class MassExtract(AbstractMassExtract):
           path : str or None
             Pickled jobdictioanary for which to extract stuff. If None, will
             attempt to use the current jobdictionary.
-          comm : boost.mpi.communicator
-            All processes will be syncronized.
+          comm : boost.mpi.communicator or None
+            Optional communicator. How communicators are used will depend on
+            each calculation's extractor.
           kwargs : dict
             Variable length keyword argument passed on to `AbstractMassExtract`.
 
@@ -1248,7 +1434,29 @@ class MassExtract(AbstractMassExtract):
 
     self.rootdir = path # Path to the job dictionary.
     self.comm = comm
-    """ Communicator if any. """
+
+  @property
+  def comm(self):
+    """ MPI Communicator, or None for serial. 
+
+        This property is intended to synchronize communicator over all
+        extractor objects. How MPI is done will depend on individual
+        extractors. Note that extractors are initialized with communicators
+        only if they accept a ``comm`` keyword. Communicators are set only if
+        an extractor contains a ``comm`` attribute.
+    """
+    return self._comm
+  @comm.setter
+  def comm(self, value):
+    if self._cached_extractors != None:
+      for e in self._cached_extractors.values(): e.comm = value
+    self._comm = value
+  @comm.deleter
+  def comm(self):
+    if self._cached_extractors != None:
+      for e in self._cached_extractors.values():
+        if hasattr(e, "comm"): e.comm = None
+    self._comm = None
 
   @property
   def view(self):
@@ -1308,25 +1516,135 @@ class MassExtract(AbstractMassExtract):
     if "_jobdict" not in self.__dict__: self._jobdict = load(self._rootdir.path, self.comm)
     return self._jobdict.root
 
-  def walk_through(self):
+  def __iter_alljobs__(self):
     """ Generator to go through all relevant jobs.  
     
         :return: (name, extractor), where name is the name of the job, and
           extractor an extraction object.
     """
-    from os.path import exists, join
+    from os.path import join
     
-    for job, name in self.jobdict.walk_through():
+    for name, job in self.jobdict.iteritems():
       if job.is_tagged: continue
-      if not hasattr(job.functional, "Extract"): continue
       try: extract = job.functional.Extract(join(self.rootdir, name), comm = self.comm)
-      except: pass
+      except: pass 
       else: yield job.name, extract
 
+class AbstractMassExtractDirectories(AbstractMassExtract):
+  """ Propagates extractors from all subdirectories.
+  
+      Trolls through all subdirectories for calculations with given extraction
+      files, and organises results as a dictionary where keys are the name of
+      the diretory.
+
+      An class derived from this one should make sure that:
+      
+      - `Extract` is not none.
+      - `__is_calc_dir__ ` is correctly defined. 
+  """
+  def __init__(self, path = '.', Extract = None, comm = None, **kwargs):
+    """ Initializes AbstractMassExtractDirectories.
+    
+    
+        :Parameters:
+          path : str 
+            Root directory for which to investigate all subdirectories.
+            If None, uses current working directory.
+          Extract
+            Extraction class to use within each calculation. 
+          comm : boost.mpi.communicator or None
+            Optional communicator. How communicators are used will depend on
+            each calculation's extractor.
+          kwargs : dict
+            Keyword parameters passed on to AbstractMassExtract.
+
+        :kwarg naked_end: True if should return value rather than dict when only one item.
+        :kwarg unix_re: converts regex patterns from unix-like expression.
+    """
+    from os.path import exists, isdir
+    from ..opt import RelativeDirectory
+
+    # this will throw on unknown kwargs arguments.
+    super(AbstractMassExtractDirectories, self).__init__(**kwargs)
+
+    self.Extract = Extract
+    """ Extraction class to use. """
+
+    self._rootdir = RelativeDirectory(path, hook=self.uncache)
+    """ Root of the directory-tree to trawl for OUTCARs. """
+    
+    # mpi communicator is a property.
+    self.comm = comm
+
+  @property
+  def comm(self):
+    """ MPI Communicator, or None for serial. 
+
+        This property is intended to synchronize communicator over all
+        extractor objects. How MPI is done will depend on individual
+        extractors. Note that extractors are initialized with communicators
+        only if they accept a ``comm`` keyword. Communicators are set only if
+        an extractor contains a ``comm`` attribute.
+    """
+    return self._comm
+  @comm.setter
+  def comm(self, value):
+    if self._cached_extractors != None:
+      for e in self._cached_extractors.values(): e.comm = value
+    self._comm = value
+  @comm.deleter
+  def comm(self):
+    if self._cached_extractors != None:
+      for e in self._cached_extractors.values():
+        if hasattr(e, "comm"): e.comm = None
+    self._comm = None
+
+  @property
+  def rootdir(self): 
+    """ Root of the directory-tree to trawl for OUTCARs. """
+    return self._rootdir.path
+  @rootdir.setter
+  def rootdir(self, value): self._rootdir.path = value
+
+  def __iter_alljobs__(self):
+    """ Goes through all directories with a contcar. """
+    from os import walk, getcwd
+    from os.path import abspath, relpath, abspath, join
+
+    for dirpath, dirnames, filenames in walk(self.rootdir, topdown=True, followlinks=True):
+      if not self.__is_calc_dir__(dirpath, dirnames, filenames): continue
+
+      try:
+        result = self.Extract(join(self.rootdir, dirpath), comm = self.comm)
+      except TypeError: # no comm keyword.  
+        try: result = self.Extract(join(self.rootdir, dirpath))
+        except: continue
+      except: continue
+
+      result.OUTCAR = self.OUTCAR
+      yield join('/', relpath(dirpath, self.rootdir)), result
+
+  @property
+  def _attributes(self): 
+    """ Returns __dir__ set special to the extraction itself. """
+    return set([u for u in dir(self.Extract()) if u[0] != '_'])
+  
+  @abstractmethod
+  def __is_calc_dir__(self, dirpath, dirnames, filenames):
+    """ Returns true this directory contains a calculation. """
+    pass
+
+  def __copy__(self):
+    """ Returns a shallow copy of this object. """
+    result = self.__class__(self.path)
+    for k, v in self.__dict__:
+      if k != '_rootdir': result[k] = v
+    result.dictionary = self.dictionary.copy()
+    return result
 
 class JobParams(AbstractMassExtract):
   """ Get and sets job parameters for a job-dictionary. """
-  def __init__( self, jobdict = None, only_existing=True, **kwargs):
+  def __init__(self, jobdict = None, only_existing=True, **kwargs):
     """ Initializes job-parameters.
 
         :Parameters:
@@ -1340,7 +1658,10 @@ class JobParams(AbstractMassExtract):
         :kwarg excludes: List of patterns which job-names should not match.
         :kwarg naked_end: True if should return value rather than dict when only one item.
         :kwarg unix_re: converts regex patterns from unix-like expression.
+        :kwarg dynamic: Whether to choose a slower but more dynamic caching
+                        method. True by default.
     """
+    if 'dynamic' not in kwargs: kwargs['dynamic'] = True
     super(JobParams, self).__init__(**kwargs)
 
     super(JobParams, self).__setattr__("_jobdict", None)
@@ -1353,19 +1674,32 @@ class JobParams(AbstractMassExtract):
   @property
   def jobdict(self):
     """ Jobdictionary for which to get/set parameters. """
-    if self._jobdict == None:
-      try: from IPython.ipapi import get as get_ipy
-      except ImportError: raise AttributeError("jobdict not set.")
-      else:
-        ip = get_ipy()
-        if "current_jobdict" not in ip.user_ns:
-          print "No current jobdictionary."
-          return
-        return ip.user_ns["current_jobdict"].root
-    return self._jobdict.root
+    return self._ipy_jobdict if self._jobdict == None else self._jobdict.root
   @jobdict.setter
   def jobdict(self, value): self._jobdict = value
+  @jobdict.deleter
+  def jobdict(self, value): self._jobdict = None
 
+  @property
+  def _is_ipy_global(self):
+    """ True if working on global dictionary. """
+    if self._jobdict != None: return False
+    try: from IPython.ipapi import get as get_ipy
+    except ImportError: return False
+    else: return True
+
+  @property 
+  def _ipy_jobdict(self):
+    """ Returns global dictionary. """
+    try: from IPython.ipapi import get as get_ipy
+    except ImportError: raise RuntimeError("Not an ipy session.")
+    
+    ip = get_ipy()
+    if "current_jobdict" not in ip.user_ns:
+      print "No current jobdictionary."
+      return
+    return ip.user_ns["current_jobdict"].root
+    
   @property
   def onoff(self):
     """ Dictionary with calculations which will run.
@@ -1394,7 +1728,7 @@ class JobParams(AbstractMassExtract):
   @property
   def extractors(self):
     """ Returns dictionary of extrators. """
-    result = {}
+    result = self.dicttype()
     for k, j in self.iteritems(): result[k] = j
     if self.naked_end and len(result) == 1: return result[result.keys()[0]]
     return ForwardingDict( result, naked_end=self.naked_end, \
@@ -1420,13 +1754,13 @@ class JobParams(AbstractMassExtract):
   @view.setter
   def view(self, value): self._view = value
 
-  def walk_through(self):
+  def __iter_alljobs__(self):
     """ Loops through all correct jobs. """
-    for job, name in self.jobdict.walk_through(): yield job.name, job
+    for name, job in self.jobdict.iteritems(): yield job.name, job
 
   def __getattr__(self, name): 
     """ Returns extracted values. """
-    result = {}
+    result = self.dicttype()
     for key, value in self.iteritems():
       if value.is_tagged: continue
       try: result[key] = getattr(value, name)

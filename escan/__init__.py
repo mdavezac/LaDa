@@ -1,10 +1,10 @@
 """ Interface module for ESCAN. """
 __docformat__ = "restructuredtext en"
-__all__ = [ "Extract", "bandgap", "extract_bg",\
+__all__ = [ "Extract", 'MassExtract', "bandgap", "extract_bg",\
             "dipole_matrix_element", "band_structure", "call_escan",\
             "Escan", "folded_spectrum", "all_electron", "soH", \
             "nonlocalH", "localH", "AtomicPotential", "band_structure",\
-            "extract_bg" ]
+            "extract_bg", 'ExtractBS' ]
 
 from ..opt import __load_escan_in_global_namespace__
 from lada import lada_with_mpi
@@ -20,9 +20,9 @@ if lada_with_mpi:
 else: 
   raise RuntimerError("Cannot load escan without MPI yet.")
 from ..opt.decorators import add_setter, broadcast_result
-from _bandstructure import band_structure
+from _bandstructure import band_structure, Extract as ExtractBS
 from _bandgap import bandgap, extract as extract_bg
-from _extract import Extract
+from _extract import Extract, MassExtract
 from _extract import Extract as _EscanExtract
 
 
@@ -519,7 +519,7 @@ class Escan(object):
       POSCAR = join(self.vffrun.directory, POSCAR)
       rstr = self.vffrun.structure
       if exists(POSCAR): copyfile(POSCAR, poscar, 'same', comm)
-      else: out.solo().write_escan_input(poscar, rstr)
+      else: self.vffrun.solo().write_escan_input(poscar, rstr)
       VFFCOUT = self.vffrun.escan.vff._cout(comm)
       VFFCOUT = join(self.vffrun.directory, VFFCOUT)
       copyfile(VFFCOUT, self.vff._cout(comm), 'same exists null', comm)

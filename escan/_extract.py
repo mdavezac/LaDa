@@ -1,9 +1,10 @@
 """ Module to extract esca and vff ouput. """
 __docformat__ = "restructuredtext en"
-__all__ = ['Extract']
+__all__ = ['Extract', 'MassExtract']
 
 from ..opt.decorators import broadcast_result, make_cached
 from ..opt import AbstractExtractBase
+from ..jobs import AbstractMassExtractDirectories
 
 
 class Extract(AbstractExtractBase):
@@ -141,6 +142,10 @@ class Extract(AbstractExtractBase):
     return local_dict["escan_functional"] if "escan_functional" in local_dict\
            else local_dict["functional"]
 
+  @property 
+  def functional(self): 
+    """ Alias for `escan`. """
+    return self.escan
 
   @property
   def _double_trouble(self):
@@ -432,3 +437,33 @@ class Extract(AbstractExtractBase):
     if self.success: result.extend( [u for u in dir(self.escan) if u[0] != "_"] )
     return list( set(result) - exclude )
 
+
+class MassExtract(AbstractMassExtractDirectories):
+  def __init__(self, path = ".", **kwargs):
+    """ Initializes AbstractMassExtractDirectories.
+    
+    
+        :Parameters:
+          path : str or None
+            Root directory for which to investigate all subdirectories.
+            If None, uses current working directory.
+          kwargs : dict
+            Keyword parameters passed on to AbstractMassExtractDirectories.
+
+        :kwarg naked_end: True if should return value rather than dict when only one item.
+        :kwarg unix_re: converts regex patterns from unix-like expression.
+    """
+    # this will throw on unknown kwargs arguments.
+    if 'Extract' not in kwargs: kwargs['Extract'] = Extract
+    super(MassExtract, self).__init__(path, **kwargs)
+
+    self.OUTCAR = Extract().OUTCAR
+    """ Name of the escan output file. """
+    self.vffOUTCAR = Extract()._vffout.OUTCAR
+    """ Name of the vff output file. """
+    self.FUNCCAR = Extract().FUNCCAR
+    """ Name of the escan input pickle. """
+
+  def __is_calc_dir__(self, dirpath, dirnames, filenames):
+    """ Returns true this directory contains a calculation. """
+    return self.OUTCAR in filenames or self.vffOUTCAR in filenames or self.FUNCCAR in filenames

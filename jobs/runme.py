@@ -51,7 +51,7 @@ def main():
   local_comm = world.split(world.rank %  options.pools)
 
   # loop over all jobs
-  for job, outdir in jobs.bleed(args[0], comm=local_comm):
+  for outdir, job in jobs.bleed(args[0], comm=local_comm):
     if options.relative == None: 
       out = job.compute(comm=local_comm, outdir=outdir, inplace=True)
     else:

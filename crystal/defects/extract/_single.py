@@ -391,4 +391,3 @@ class Single(_ChargedStateNavigation):
                 "+ {4:8.4f} = {5:8.4f} eV # {6}.\n"\
                 .format(int(charge), a, b, c, d, a+b+c+d, e)
     return result
-

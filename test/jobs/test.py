@@ -1,6 +1,7 @@
 """ Tests job dictionary and semaphores. """ 
 import random
 from os import getcwd
+from os.path import join
 from optparse import OptionParser
 from boost.mpi import world, broadcast
 from lada import jobs
@@ -56,9 +57,9 @@ if options.pbs != None and world.rank == 0:
 
 # Computes all jobs.
 if options.loadme == None and options.saveme == None and options.pbs == None:
-  for job, outdir in job_dictionary.walk_through("results"):
+  for outdir, job in job_dictionary.iteritems():
     # launch jobs and stores result
-    result = job.compute(outdir=outdir)
+    result = job.compute(outdir=join('results', outdir))
     # Root process of pool prints result.
     if local_comm.rank == 0: print result, "\n"
 # Executes jobs using jobs.bleed

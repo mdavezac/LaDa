@@ -38,6 +38,8 @@
 """
 __docformat__ = "restructuredtext en"
 __all__ = [@which_packages@]
+from os import environ
+
 
 version_info = (@LaDa_VERSION_MAJOR@, @LaDa_VERSION_MINOR@)
 """ Tuple containing version info. """
@@ -47,4 +49,14 @@ lada_with_mpi = @do_use_mpi@
 """ If True, should load MPI stuff.
 
     If False, should try and avoid loading MPI related stuff.
+"""
+# right now just check for redmesa or redrock. 
+lada_with_slurm = 'SNLCLUSTER' in environ 
+""" If True use slurm as ressource manager, else use openpbs. """
+queues = []
+""" List of slurm or pbs queues allowed for use. 
+
+    This is used by ipython's %launch magic function. 
+    It is not required for slurm systems. 
+    If empty, then %launch will not have a queue option.
 """

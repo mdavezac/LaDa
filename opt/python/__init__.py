@@ -8,11 +8,12 @@ from _opt import __load_vasp_in_global_namespace__, __load_escan_in_global_names
 from changedir import Changedir
 from tempdir import Tempdir
 from decorators import broadcast_result, make_cached
+from ._ordered_dict import OrderedDict
 
 __all__ = [ '__load_vasp_in_global_namespace__', '__load_escan_in_global_namespace__',\
             'cReals', 'ConvexHull', 'ErrorTuple', 'redirect_all', 'redirect', 'read_input',\
             'LockFile', 'acquire_lock', 'open_exclusive', 'RelativeDirectory', 'streams',
-            'AbstractBaseClass', 'convert_from_unix_re' ]
+            'AbstractBaseClass', 'convert_from_unix_re', 'OrderedDict' ]
 
 streams = _RedirectFortran.fortran
 """ Name of the streams. """
@@ -613,6 +614,61 @@ class AbstractExtractBase(object):
   def __repr__(self):
     from os.path import relpath
     return "{0}(\"{1}\")".format(self.__class__.__name__, self._directory.unexpanded)
+
+class AbstractSearchOutcar(object):
+  """ A mixin to include standard methods to search OUTCAR.
+  
+      This mixin only includes the methods themselves. It expects the derived
+      class to have an OUTCAR attribute. 
+  """ 
+  def _search_OUTCAR(self, regex, flags=0):
+    """ Looks for all matches. """
+    from os.path import exists, join
+    from re import compile, M as moultline
+    from numpy import array
+
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
+    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
+
+    result = []
+    regex  = compile(regex, flags)
+    with open(path, "r") as file:
+      if moultline & flags: 
+        for found in regex.finditer(file.read()): yield found
+      else:
+        for line in file: 
+          found = regex.search(line)
+          if found != None: yield found
+
+  def _find_first_OUTCAR(self, regex):
+    """ Returns first result from a regex. """
+    for first in self._search_OUTCAR(regex): return first
+    return None
+
+  def _rsearch_OUTCAR(self, regex, flags=0):
+    """ Looks for all matches starting from the end. """
+    from os.path import exists, join
+    from re import compile, M as moultline
+    from numpy import array
+
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
+    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
+
+    result = []
+    regex  = compile(regex)
+    with open(path, "r") as file:
+      lines = file.read() if moultline & flags else file.readlines()
+    if moultline & flags: 
+      for v in [u for u in regex.finditer(lines)]: yield v
+    else:
+      for line in lines[::-1]:
+        found = regex.search(line)
+        if found != None: yield found
+
+  def _find_last_OUTCAR(self, regex):
+    """ Returns first result from a regex. """
+    for last in self._rsearch_OUTCAR(regex): return last
+    return None
 
 def convert_from_unix_re(pattern):
   """ Converts unix-command-line like regex to python regex.
