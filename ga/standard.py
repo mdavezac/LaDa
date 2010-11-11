@@ -176,6 +176,7 @@ def bleeder_evaluation(self, evaluator, pools, comm):
         job = jobdict / '{0}/{1}'.format(name, index)
         job.functional = evaluator
         job.jobparams['indiv'] = indiv
+        job.jobparams['outdir'] = job.name[1:]
         # lets not recompute already known individuals. Need to keep them as record though.
         if hasattr(indiv, "fitness"): job.tag() 
 
@@ -183,7 +184,9 @@ def bleeder_evaluation(self, evaluator, pools, comm):
   # iterated over once, with each job being seen by only one pool of processes.
   # Modified jobs are saved by the bleeder!
   bleeder = Bleeder(jobdict, pools, comm)
-  for value, job in bleeder.itercompute(): job.indiv.fitness = value
+  for value, job in bleeder.itercompute():
+    job.indiv.fitness = value
+    if hasattr(evaluator,'nbcalc'): evaluator.nbcalc += 1
   
   # recovers population and offspring.
   jobdict = bleeder.cleanup()

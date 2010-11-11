@@ -294,8 +294,8 @@ class Darwin:
     self.age = self.Extract(outdir.path, comm).next_age
     self.evaluator._outdir.relative = outdir.relative
     self.evaluator.outdir = join(self.evaluator.outdir, self.age)
-    if self.color != None: 
-      self.evaluator.outdir = join(self.evaluator.outdir, "pool_{0}".format(self.color))
+#   if self.color != None: 
+#     self.evaluator.outdir = join(self.evaluator.outdir, "pool_{0}".format(self.color))
 
     # now goes to work
     with Changedir(join(outdir.path, self.age), comm=comm) as cwd:

@@ -41,7 +41,7 @@ class JobDict(object):
         >>> subjob1.functional = some callable object.
 
       Where a callable object is anything which can be called (eg, as in
-      C{method(parameters)}), C{method} is the callable object:
+      ``method(parameters)``), ``method`` is the callable object:
 
         >>> subjob1.functional = method
 
@@ -71,7 +71,7 @@ class JobDict(object):
 
       The ``iteritems`` method does just that: it goes through the whole tree
       returning those branches where there is something to execute (eg
-      C{job.functional != None}).
+      ``job.functional != None``).
         
       Putting it all together:
 
@@ -104,8 +104,8 @@ class JobDict(object):
       ``bleed`` makes sure that once a job is accepted, it will not be accessed
       by any other process or pools of processes. ``bleed`` allows parallelization
       over pbs scripts and pools of MPI processes. However, it does change the
-      C{jobdict} saved to "pickle". This means that once all jobs are executed,
-      ``bleed`` will find that C{jobdict} is empty. To undo these changes and
+      ``jobdict`` saved to "pickle". This means that once all jobs are executed,
+      ``bleed`` will find that ``jobdict`` is empty. To undo these changes and
       use the jobdict for, say, ouptut analysis, simply use ``iteritems``
       where possible (single pbs script or interactive
       sessions), or do:
@@ -188,7 +188,10 @@ class JobDict(object):
     try: string = dumps(value)
     except Exception as e:
       raise ValueError("Could not pickle functional. Caught Error:\n{0}".format(e))
-    else: self._functional = loads(string)
+    try: loads(string)
+    except Exception as e:
+      raise ValueError("Could not reload pickled functional. Caught Error:\n{0}".format(e))
+    self._functional = value
   @functional.deleter
   def functional(self): self._functional = None
 
@@ -1335,7 +1338,7 @@ class AbstractMassExtract(object):
     """ Extraction on a single process.
   
         Sometimes, it is practical to perform extractions on a single process
-        only, eg without blocking mpi calls. C{self.``solo}()`` returns an
+        only, eg without blocking mpi calls. `solo` returns an
         extractor for a single process:
         
         >>> # prints only on proc 0.

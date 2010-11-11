@@ -4,18 +4,6 @@ from numpy import array as np_array
 
 
 __all__ = ['cound_calls', 'Bandgap', 'Dipole', 'EffectiveMass']
-def count_calls(method):
-  """ Increments calls at each call. """
-  def wrapped(*args, **kwargs):
-    if not hasattr(args[0], "nbcalc"): args[0].nbcalc = 0
-    result = method(*args, **kwargs)
-    args[0].nbcalc += 1
-    return result
-  wrapped.__name__ = method.__name__
-  wrapped.__doc__  = method.__doc__
-  wrapped.__module__ = method.__module__
-  wrapped.__dict__.update(method.__dict__)
-  return wrapped
 
   
 class Bandgap(object):
@@ -50,8 +38,6 @@ class Bandgap(object):
     """ Conversion functor between structures and bitstrings. """
     self.escan = escan
     """ Escan functional """
-    self.nbcalc = 0
-    """ Number of calculations. """
     self.references = references 
     """ References to compute bandgap.
     
@@ -65,6 +51,10 @@ class Bandgap(object):
 
     self._outdir = RelativeDirectory(path=outdir)
     """ Location of output directory. """
+    self._lastcalcdir = None
+    """ Location of last calculation. """
+    self.nbcalc = 0
+    """ Number of actual calculations. """
 
   @property 
   def outdir(self):
@@ -111,11 +101,7 @@ class Bandgap(object):
     is_mpi = comm != None
     is_root = True if not is_mpi else comm.rank == 0
     if outdir == None: outdir = self.outdir
-    if self.keep_only_last and is_root:
-      # deletes previous calculations.
-      for i in range(self.nbcalc): 
-        if exists(join(outdir, str(i))): rmtree(join(outdir, str(i)))
-    if is_mpi: comm.barrier()
+    elif outdir[0] != '/': outdir = join(self.outdir, outdir)
     outdir = join(outdir, str(self.nbcalc))
  
     # creates a crystal structure (phenotype) from the genotype.
@@ -137,11 +123,16 @@ class Bandgap(object):
     indiv.bandgap = out.bandgap
     indiv.vbm = out.vbm
     indiv.cbm = out.cbm
+
+    if self.keep_only_last and is_root and self._lastcalcdir != None:
+      if exists(self._lastcalcdir): rmtree(join(outdir, str(i)))
+    self._lastcalcdir = outdir
+    self.nbcalc += 1
+    if is_mpi: comm.barrier()
     
     # returns extractor
     return out
 
-  @count_calls
   def __call__(self, *args, **kwargs):
     """ Computes and returns bandgap. 
     
@@ -191,7 +182,6 @@ class Dipole(Bandgap):
     """ Initializes the dipole element evaluator.  """
     super(Dipole, self).__init__(*args, **kwargs)
 
-  @count_calls
   def __call__(self, indiv, *args, **kwargs):
     """ Computes the oscillator strength. """
     out = super(Dipole, self).run(indiv, *args, **kwargs)
@@ -214,7 +204,6 @@ class EffectiveMass(Bandgap):
     # some sanity checks.
     assert self.emass_dict["order"] >= 2
 
-  @count_calls
   def __call__(self, indiv, comm=None, **kwargs):
     """ Computes electronic effective mass. """
     from copy import deepcopy
