@@ -26,6 +26,11 @@ class ExtractCommon(AbstractExtractBase, ExtractCommonBase, IOMixin, SearchMixin
     IOMixin.__init__(self, directory, **kwargs)
     SearchMixin.__init__(self)
 
+  @property
+  def success(self):
+    """ True if calculation was successfull. """
+    return ExtractCommonBase.success.__get__(self)
+
 class ExtractDFT(ExtractCommon, ExtractDFTBase):
   """ Extracts DFT data from an OUTCAR. """
   def __init__(self, directory=None, comm=None, **kwargs):

@@ -1,8 +1,10 @@
 """ Miscellaneous """
 __docformat__  = 'restructuredtext en'
 from types import ModuleType
-import _opt 
+from abc import ABCMeta, abstractmethod, abstractproperty
 from contextlib import contextmanager
+
+import _opt 
 from _opt import __load_vasp_in_global_namespace__, __load_escan_in_global_namespace__,\
                  cReals, _RedirectFortran, ConvexHull, ErrorTuple
 from changedir import Changedir
@@ -521,6 +523,7 @@ class AbstractExtractBase(object):
         - directory: root directory where output should exist.
         - comm : boost.mpi.communicator in case of mpi syncronization.
   """
+  __metaclass__ = ABCMeta
   def __init__(self, directory=None, comm=None):
     """ Initializes an extraction base class.
 
@@ -556,15 +559,14 @@ class AbstractExtractBase(object):
   @directory.setter
   def directory(self, value): self._directory.path = value
 
-  @property
-  @broadcast_result(attr=True, which=0)
+  @abstractproperty
   def success(self):
     """ Checks for success. 
 
         Should never ever throw!
         True if calculations were successfull, false otherwise.
     """
-    abstract 
+    pass
 
 
   def __directory_hook__(self):

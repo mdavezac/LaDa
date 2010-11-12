@@ -7,8 +7,8 @@ __all__ = [ 'inequivalent_sites', 'vacancy', 'substitution', 'charged_states', \
 
 from extract import Single as ExtractSingle, Material as ExtractMaterial
 
-def inequivalent_sites(lattice, type):
-  """ Yields sites occupied by type which are inequivalent. 
+def symmetrically_inequivalent_sites(lattice, type):
+  """ Yields sites occupied by type which are inequivalent according to symmetry operations. 
   
       When creating a vacancy on, say, "O", or a substitution of "Al" by "Mg",
       there may be more than one site which qualifies. We want to iterate over
@@ -54,6 +54,45 @@ def inequivalent_sites(lattice, type):
         site_indices.pop(t)
     i += 1
   return site_indices
+
+def coordination_inequivalent_sites(lattice, type, tolerance=0.1):
+  """ Yields sites occupied by type which are inequivalent according to their coordination number. 
+  
+      When creating a vacancy on, say, "O", or a substitution of "Al" by "Mg",
+      there may be more than one site which qualifies. We want to iterate over
+      those sites which are inequivalent only, so that only the minimum number
+      of operations are performed. In this case, inequivalent means different
+      number of first neighbors.
+
+      :note:
+        lattice sites can be defined as occupiable by more than one atomic type\:
+        lattice.site.type[i] = ["Al", "Mg"]. These sites will be counted if
+        type in lattice.site.type, where type is the input parameter.
+ 
+      :Parameters:
+          lattice : `lada.crystal.Lattice`
+            Lattice for which to find equivalent sites.
+          type : str 
+            Atomic specie for which to find inequivalent sites. 
+
+      :return: indices of inequivalent sites.
+  """
+  from numpy.linalg import inv, norm
+  from .. import Neighbors
+
+  # all sites with occupation "type". 
+  sites = [(i, site) for i, site in enumerate(lattice.sites) if type in site.type]
+
+  indices = []
+  coords  = set()
+  for i, site in sites:
+    neigh = [n for n in Neighbors(lattice.to_structure(), 12, site.pos)]
+    d = neigh[0].distance
+    coord = len([n for n in neigh if abs(n.distance - d) < tolerance * d])
+    if coord not in coords:
+      indices.append(i)
+      coords.add(coord)
+  return indices
 
 
 def non_interstitials(structure, indices, mods):
@@ -105,9 +144,10 @@ def non_interstitials(structure, indices, mods):
       result.name = name
       yield result, atom, B
 
-def inequiv_non_interstitials(structure, lattice, type, mods):
+def inequiv_non_interstitials(structure, lattice, type, mods, do_coords = True):
   """ Loop over inequivalent non-interstitials. """
-  inequivs = inequivalent_sites(lattice, type)
+  inequivs = coordination_inequivalent_sites(lattice, type.split()[0]) if do_coords \
+             else symmetrically_inequivalent_sites(lattice, type)
   indices = []
   for i in inequivs:
     # finds first qualifying atom
@@ -143,23 +183,28 @@ def iterdefects(structure, lattice, defects):
   from re import compile
 
   cation_regex       = compile(r'^\s*cations?\s*$')
-  cation0_regex      = compile(r'^\s*cations?(\d+)\s*$')
+  cation_id_regex    = compile(r'^\s*cations?(\d+)\s*$')
+  cation_coord_regex = compile(r'^\s*cations?\s+coord\s*$')
   interstitial_regex = compile(r'^\s*interstitials?\s*$')
-  type_regex         = compile(r'^\s*(?:vacanc(?:y|ies)|[A-Z][a-z]?(?:\d+)?)\s*$')
+  type_regex         = compile(r'^\s*(?:vacanc(?:y|ies)|[A-Z][a-z]?(?:\d+)?)(?:\s+coord)?\s*$')
   already_cations    = False
 
   for key, value in defects.items():
     if key == None: keys = [None]
     elif interstitial_regex.match(key.lower()) != None: keys = [None]
     elif cation_regex.match(key.lower()) != None:
-      assert already_cations == False, ValueError('Can only have one cations?\d* tag.')
+      assert already_cations == False, ValueError('Can only have one cation tag.')
       already_cations = True
       keys = _cationic_species(structure)
-    elif cation0_regex.match(key.lower()) != None:
-      assert already_cations == False, ValueError('Can only have one cations?\d* tag.')
+    elif cation_id_regex.match(key.lower()) != None:
+      assert already_cations == False, ValueError('Can only have one cation tag.')
       already_cations = True
-      d = int(cation0_regex.match(key.lower()).group(1))
+      d = int(cation_id_regex.match(key.lower()).group(1))
       keys = ['{0}{1}'.format(k, d) for k in _cationic_species(structure)]
+    elif cation_coord_regex.match(key.lower()) != None:
+      assert already_cations == False, ValueError('Can only have one cation tag.')
+      already_cations = True
+      keys = ['{0} coord'.format(k) for k in _cationic_species(structure)]
     else: keys = [key]
     for type in keys:
       assert type == None or type_regex.match(type) != None,\
@@ -202,8 +247,9 @@ def any_defect(structure, lattice, type, subs):
   from copy import deepcopy
   from numpy import dot
 
-  single_regex    = compile(r'[A-Z][a-z]?')
-  specie_regex    = compile(r'\b([A-Z][a-z]?)(\d+)\b')
+  specie_regex = compile(r'^\s*[A-Z][a-z]?\s*$')
+  id_regex     = compile(r'^\s*([A-Z][a-z]?)(\d+)\s*$')
+  coord_regex  = compile(r'^\s*([A-Z][a-z]?)\s+coord\s*$')
 
   # Interstitials.
   if hasattr(type, 'rstrip'): type = type.rstrip()
@@ -211,13 +257,13 @@ def any_defect(structure, lattice, type, subs):
   if type == None or type.lower() in ['interstitial', 'interstitials', 'none']: 
     for result in interstitials(structure, lattice, subs): yield result
   # O\d: looking for specific atoms.
-  elif specie_regex.match(type) != None:
+  elif id_regex.match(type) != None:
     # looks for atom to modify
-    found = specie_regex.match(type)
+    found = id_regex.match(type)
     type, index = found.group(1), int(found.group(2)) 
     if index < 1: index = 1
     for i, site in enumerate(lattice.sites):
-      if type in site.type: continue
+      if type not in site.type: continue
       index -= 1
       if index == 0: break
     assert index == 0, ValueError("Could not find {0}.".format(type))
@@ -225,9 +271,11 @@ def any_defect(structure, lattice, type, subs):
       if atom.site == i: break
     assert atom.site == i, ValueError('Could not find atomic-site.')
     for result in non_interstitials(structure, index, subs): yield result
-  # O, Mn ... but not O1: looking for inequivalent sites.
-  elif single_regex.match(type) != None: 
-    for result in inequiv_non_interstitials(structure, lattice, type, subs): yield result
+  # O, Mn ... but not O1: looking for symmetrically inequivalent sites.
+  elif specie_regex.match(type) != None: 
+    for result in inequiv_non_interstitials(structure, lattice, type, subs, False): yield result
+  elif coord_regex.match(type) != None: 
+    for result in inequiv_non_interstitials(structure, lattice, type, subs, True): yield result
   else: raise ValueError("Don't understand defect type {0}".format(type))
 
 def charged_states(species, A, B):

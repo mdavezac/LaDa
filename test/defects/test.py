@@ -245,7 +245,7 @@ def magnetic_groundstates():
   from lada.jobs import MassExtract
   collect = MassExtract(naked_end=False)
   # loops over untagged non-magnetic structural jobs.
-  for nonmag in collect.grep(".*/.*/non-magnetic"):
+  for nonmag in collect.children:
     # check for success of all jobs (except for Point-defects).
     success = [u[1] for u in nonmag["../"].success.items() if u[0].find("PointDefects") == -1]
     if not all(success): continue

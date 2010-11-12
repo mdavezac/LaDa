@@ -44,11 +44,8 @@ class Extract(object):
 
         Requires file FUNCCAR to be present.
     """
-    from os.path import exists, join
     from cPickle import load
-    try: path = self.funccar_path
-    except IOError: return None
-    with self.__funccar__ as file: return load(file)
+    with self.__funccar__() as file: return load(file)
 
   @property
   @make_cached

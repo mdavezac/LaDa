@@ -481,6 +481,13 @@ def structure_to_lattice(structure):
 
 Structure.to_lattice = structure_to_lattice
 
+def lattice_to_structure(lattice):
+  """ Converts lattice to structure. """
+  from . import fill_structure
+  return fill_structure(lattice.cell, lattice)
+
+Lattice.to_structure = lattice_to_structure
+
 
 def vasp_ordered(structure, attributes=None):
   """ Returns  a structure with correct VASP order of ions.

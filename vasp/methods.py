@@ -64,10 +64,12 @@ class RelaxCellShape(object):
     """ Dictionary of parameters for the first run of the functional. see `__init__`. """
     self.maxiter = maxiter
     """ Maximum number of iterations before bailing out. """
-    self.Extract = self.vasp.Extract
-    """ Extraction class. """
     self.keep_steps = keep_steps
     """ Whether or not to keep intermediate results. """
+
+  def Extract(self):
+    """ Extraction class. """
+    return self.vasp.Extract
 
   def generator(self, structure, outdir=None, comm=None, **kwargs ):
     """ Performs a vasp relaxation, yielding each result.

@@ -484,10 +484,16 @@ class JobDict(object):
     result = JobDict()
     result._functional = self._functional
     result.jobparams   = self.jobparams.copy()
-    result._parent     = None
+    result.parent     = None
     for name, value in self.children.items():
       result.children[name] = copy(value)
       result.children[name].parent = result
+    attrs = self.__dict__.copy()
+    attrs.pop('jobparams')
+    attrs.pop('parent')
+    attrs.pop('children')
+    attrs.pop('_functional')
+    result.__dict__.update(attrs)
     return result
 
 
