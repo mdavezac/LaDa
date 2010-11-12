@@ -5,7 +5,7 @@ from abc import ABCMeta, abstractmethod
 from .functional import Functional
 from .. import __all__ as all_lada_packages
  
-class KMesh(object):
+class KPoints(object):
   """ Abstract base class for callable KMesh objects. """
   __metaclass__ = ABCMeta
   @abstractmethod
@@ -36,6 +36,8 @@ class KEscan(Functional):
       from ...jobs import JobDict, Bleeder
 
       kpoints = kwargs.pop('kpoints', self.kpoints)
+      dont_deform_kpoints = getattr(kpoints, 'dont_deform_kpoint', self._dont_deform_kpoint)
+      dont_deform_kpoints = kwargs('_dont_deform_kpoint', kpoints)
       is_mpi = False if comm == None else comm.size > 1
       is_root = True if not is_mpi else comm.rank == 0
       vffrun = kwargs.get("vffrun", None)
@@ -51,6 +53,7 @@ class KEscan(Functional):
       kpoints = self._interpret_kpoints(kpoints, vffout)
       # checks for 
       if len(kpoints) == 1:
+        if hasattr(j
         kwargs['kpoint'] = kpoints[0]
         result = super(KEscan, self).__call__(structure, outdir, comm, *args, **kwargs)
         return result
@@ -123,4 +126,7 @@ class KEscan(Functional):
     if len(pools) >= 1: return pools[-1]
     return 1
 
-
+class KMesh(object):
+  """ Unreduces kpoint mesh with offsets. """
+  def __init__(self, grid = None, offset = None):
+    """ Initializes unreduced KMesh. """
