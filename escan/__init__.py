@@ -4,7 +4,7 @@ __all__ = [ "Extract", 'MassExtract', "bandgap", "extract_bg",\
             "dipole_matrix_element", "band_structure", "call_escan",\
             "Escan", "folded_spectrum", "all_electron", "soH", \
             "nonlocalH", "localH", "AtomicPotential", "band_structure",\
-            "extract_bg", 'ExtractBS' ]
+            "extract_bg", 'ExtractBS', 'KEscan', 'KPoints', 'KGrid', 'ReducedKGrid' ]
 
 from ..opt import __load_escan_in_global_namespace__
 from lada import lada_with_mpi
@@ -17,12 +17,13 @@ if lada_with_mpi:
     import _escan
     _setdlopenflags(flags)
   else: import _escan
-from ..opt.decorators import add_setter, broadcast_result
+from ..opt.decorators import broadcast_result
 from _bandstructure import band_structure, Extract as ExtractBS
 from _bandgap import bandgap, extract as extract_bg
 from _extract import Extract, MassExtract
 from _extract import Extract as _EscanExtract
 from functional import Functional as Escan
+from kescan import KEscan, KGrid, ReducedKGrid, KPoints
 
 
 def call_escan(comm, atom="atom_input", pot="pot_input", escan="escan_input"):
