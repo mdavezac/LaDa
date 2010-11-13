@@ -4,19 +4,6 @@
 from ..opt.decorators import add_setter, broadcast_result, make_cached
 from ..opt import AbstractExtractBase
 
-def zinc_blend_lattice():
-  """ Defines a default zinc-blende lattice (InGaNP). """
-  from ..crystal import Lattice, Site
-  from numpy import array
-
-  lattice = Lattice()
-  lattice.set_cell = (0,0.5,0.5), (0.5,0,0.5), (0.5,0.5,0)
-  lattice.scale = 1e0
-  lattice.add_site = (0,0,0)
-  lattice.add_site = (0.25,0.25,0.25)
-  lattice.name = "Zinc-Blende"
-  return lattice
-
 def _get_script_text(file, name):
   string = "# " + name + " definition."
   for line in file:
@@ -216,10 +203,11 @@ class Vff(object):
   """ Valence Force Field functional for zinc-blende materials """
   def __init__(self, workdir = None):
     """ Initializes a valence force field functional. """
+    from crystal.binary import zinc_blende
     from ..minimizer import Minimizer
 
     super(Vff, self).__init__()
-    self.lattice = zinc_blend_lattice()
+    self.lattice = zinc_blende()
     """ Lattice for which to perform calculations.
     
         In practice, zinc-blende lattices can be defined for any number of parameterizations.

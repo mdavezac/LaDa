@@ -1,13 +1,14 @@
 """ ESCAN functional wrapper. """
 __docformat__ = "restructuredtext en"
 __all__ = [ 'Functional' ]
-from lada import lada_with_mpi
-
+from .. import lada_with_mpi
+from ..opt.decorators import add_setter
+from ._extract import Extract
 
 class Functional(object):
   """ Performs ESCAN calculations, from structure relaxation to wavefunctions. """
 
-  Extract = _EscanExtract
+  Extract = Extract
   """ Class for output extraction. """
 
   def __init__(self, inplace=True, workdir=None):
