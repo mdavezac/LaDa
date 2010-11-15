@@ -138,9 +138,11 @@ class KGrid(KPoints):
 
   def __call__(self, structure):
     """ Yields kpoints on the grid. """
-    from numpy.linalg import inv
-    from numpy import zeros
-    cell = inv(structure.cell.T)
+    from numpy.linalg import inv, norm
+    from numpy import zeros, array, dot
+    from crystal import fold_vector
+    inv_cell = structure.cell.T
+    cell = inv(inv_cell)
     a = zeros((3,), dtype='float64')
     for x in xrange(self.grid[0]):
       a[0] = float(x) / float(self.grid[0]) + self.offset[0]
@@ -148,7 +150,7 @@ class KGrid(KPoints):
         a[1] = float(y) / float(self.grid[1]) + self.offset[1]
         for z in xrange(self.grid[2]):
           a[2] = float(z) / float(self.grid[2]) + self.offset[2]
-          yield cell * a
+          yield fold_vector(dot(cell, a), cell, inv_cell
 
 class ReducedKGrid(KGrid): 
   """ Reduces KGrid according to symmetries. """
@@ -160,37 +162,29 @@ class ReducedKGrid(KGrid):
 
   def __call__(self, structure):
     """ Yields KPoint grid reduced by symmetry. """
-    from numpy.linalg import inv
-    from ..crystal import Lattice
-    # creates reciprocal space lattice to get symmetries.
-    lattice = Lattice()
-    lattice.cell = inv(structure.cell.T)
-    lattice.add_site = (0,0,0), '0'
-    lattice.find_space_group()
-    # now checks whether symmetry kpoint exists or not.
-    seen = []
-    for kpoint in self.kpoints: 
-      if any(norm(s-op(kpoint)) < tolerance for s in seen for op in lattice.space_group):
-        continue
-      seen.append(kpoint)
-      yield seen[-1]
+    for count, k in self._mnk(structure): yield k
 
-  def multiplicity(self, structure):
-    """ Yields KPoint grid reduced by symmetry. """
+  def __call__(self, structure):
+    """ Yields multiplicity of each inequivalent k-vector. """
+    for count, k in self._mnk(structure): yield k
+
+  def _mnk(self, structure):
+    """ Returns list of inequivalent vectors with multiplicity. """
     from numpy.linalg import inv
     from ..crystal import Lattice
     lattice = Lattice()
     lattice.cell = inv(structure.cell.T)
     lattice.add_site = (0,0,0), '0'
     lattice.find_space_group()
+    inv_cell = structure.cell.T
     # now checks whether symmetry kpoint exists or not.
     seen = []
-    for kpoint in self.kpoints: 
+    for kpoint in KGrid.__call__(self, structure): 
       found = False
       for i, (count, vec) in enumerate(seen):
-        if any(norm(vec-op(kpoint)) < tolerance for op in lattice.space_group):
+        if any(norm(fold_vector((vec-op(kpoint))) < tolerance for op in lattice.space_group):
           seen[i] += 1
           found = True
           break
       seen.append((1, kpoint))
-    return [count for count, vec in seen]
+    return seen
