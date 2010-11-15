@@ -124,29 +124,30 @@ def non_interstitials(structure, indices, mods):
   # loop over atoms to modify.
   for i, j in enumerate(indices):
     assert j < len(structure.atoms), RuntimeError("Site index not found.")
-    atom = deepcopy(structure.atoms[j])
-    atom.index = j
+    input_atom = deepcopy(structure.atoms[j])
+    input_atom.index = j
     # loop over atoms to modifications.
     for modif in mods:
       result = deepcopy(structure)
-      if modif == atom.type: continue # can't substitute with self.
+      if modif == input_atom.type: continue # can't substitute with self.
       if modif == None: 
         result.atoms.pop(j)
-        name = "vacancy_{0}".format(atom.type)
-        B = atom.type
-        atom.type = 'None'
+        name = "vacancy_{0}".format(input_atom.type)
+        output_atom = deepcopy(input_atom)
+        output_atom.type = 'None'
       else: 
         result.atoms[j].type = modif
-        B = atom.type
-        atom.type = modif
-        name = "{0}_on_{1}".format(atom.type, B)
+        output_atom = deepcopy(input_atom)
+        output_atom.type = modif
+        name = "{0}_on_{1}".format(output_atom.type, input_atom.type)
       if len(indices) > 1: name += "/site_{0}".format(i)
       result.name = name
-      yield result, atom, B
+      yield result, output_atom, input_atom.type
 
 def inequiv_non_interstitials(structure, lattice, type, mods, do_coords = True):
   """ Loop over inequivalent non-interstitials. """
-  inequivs = coordination_inequivalent_sites(lattice, type.split()[0]) if do_coords \
+  if do_coords: type = type.split()[0]
+  inequivs = coordination_inequivalent_sites(lattice, type) if do_coords \
              else symmetrically_inequivalent_sites(lattice, type)
   indices = []
   for i in inequivs:
