@@ -126,7 +126,7 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
     # loop over substitutees.
     for structure, defect, B in ptd.iterdefects(superstructure, lattice, input.point_defects):
       # loop over oxidations states.
-      for nb_extrae, oxname in ptd.charged_states(species, defect.type, B):
+      for nb_extrae, oxname in charged_states(species, structure, defect, B):
         
         # creates list of moments. 
         new_moments = deduce_moment(defect.type, species) 
@@ -268,3 +268,26 @@ def deduce_moment(type, species):
   if not hasattr(species[type].moment, "__iter__"):
     return [species[type].moment]
   return species[type].moment
+
+def oxnumber(species, structure, pos, type):
+  """ Returns oxidation number, depending on environment. """
+  from lada.crystal.defects import coordination_number 
+  if type not in species: return 0
+  if not hasattr(species[type], 'oxidation'): return 0
+  result = species[type].oxidation
+  if not hasattr(result, '__iter__'): return result
+  c = coordination_number(structure, pos)
+  assert c not in [4, 6], RuntimeError('Unexpected coordination environment')
+  if c == 4: return result[0]
+  if c == 6: return result[1]
+
+def charged_states(species, structure, Aatom, Btype):
+  """ List of charged states. """
+  Aox = oxnumber(species, structure, Aatom.pos, Aatom.type)
+  Box = oxnumber(species, structure, Aatom.pos, Btype)
+  diff = Aox - Box - 1 if Aox < Box else Aox - Box + 1 
+  sign = 1 if Aox > Box else -1
+  for c in range(0, diff, sign):
+    if c == 0: yield 0, 'charge_neutral'
+    else:      yield c, 'charge_{0}'.format(-c)
+

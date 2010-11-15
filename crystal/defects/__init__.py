@@ -55,6 +55,15 @@ def symmetrically_inequivalent_sites(lattice, type):
     i += 1
   return site_indices
 
+def coordination_number(structure, pos, tolerance=0.1):
+  """ Returns coordination number of given position in structure. """
+  from numpy.linalg import inv, norm
+  from .. import Neighbors
+
+  neigh = [n for n in Neighbors(structure, 12, pos)]
+  d = neigh[0].distance
+  return len([n for n in neigh if abs(n.distance - d) < tolerance * d])
+  
 def coordination_inequivalent_sites(lattice, type, tolerance=0.1):
   """ Yields sites occupied by type which are inequivalent according to their coordination number. 
   
@@ -86,9 +95,7 @@ def coordination_inequivalent_sites(lattice, type, tolerance=0.1):
   indices = []
   coords  = set()
   for i, site in sites:
-    neigh = [n for n in Neighbors(lattice.to_structure(), 12, site.pos)]
-    d = neigh[0].distance
-    coord = len([n for n in neigh if abs(n.distance - d) < tolerance * d])
+    coord = coordination_number(lattice.to_structure(), site.pos, tolerance)
     if coord not in coords:
       indices.append(i)
       coords.add(coord)
