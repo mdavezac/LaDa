@@ -67,6 +67,7 @@ class RelaxCellShape(object):
     self.keep_steps = keep_steps
     """ Whether or not to keep intermediate results. """
 
+  @property
   def Extract(self):
     """ Extraction class. """
     return self.vasp.Extract
