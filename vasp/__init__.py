@@ -74,7 +74,7 @@ class Vasp(Launch):
       This allows us to use the same scripts for generating and retrieving
       data. 
   """
-  Extract = Extract
+  Extract = staticmethod(Extract)
   """ Extraction class. """
 
   def __init__(self, *args, **kwargs):
