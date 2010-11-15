@@ -79,6 +79,23 @@ def broadcast_result(key=False, attr=False, which=0):
   if key: return _key_broadcast_result
   return _attr_broadcast_result
  
+def count_calls(name='nbcalc', argnb=0):
+  """ Counts calls to a member function. """
+  def decorating_function(method):
+
+    def wrapped(*args, **kwargs):
+      if not hasattr(args[argnb], name): setattr(args[argnb], name, 0)
+      result = method(*args, **kwargs)
+      setattr(args[argnb], name, getattr(args[argnb], name)+1)
+      return result
+   
+    wrapped.__name__ = method.__name__
+    wrapped.__doc__ = method.__doc__
+    wrapped.__module__ = method.__module__
+    wrapped.__dict__.update(method.__dict__)
+    return wrapped
+  return decorating_function
+ 
 def make_cached(method):
   """ Caches the result of a method for futur calls. """
 

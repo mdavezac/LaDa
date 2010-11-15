@@ -643,6 +643,7 @@ class Bleeder(object):
     from os import remove
     from pickle import load as pickle_load
     from ..opt import LockFile
+    self.barrier()
     jobdict = None
     if self.is_root:
       # acquire a lock first.
