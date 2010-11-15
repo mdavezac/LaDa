@@ -120,13 +120,14 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
     superstructure, lattice = create_superstructure(groundstate, input)
     # extracts material.
     material = groundstate.material
+    print 'Working on ', groundstate.name, groundstate.name.split('/')[1]
     # extracts description of species.
     species = groundstate.functional.vasp.species
 
     # loop over substitutees.
     for structure, defect, B in ptd.iterdefects(superstructure, lattice, input.point_defects):
       # loop over oxidations states.
-      for nb_extrae, oxname in charged_states(species, structure, defect, B):
+      for nb_extrae, oxname in charged_states(input.vasp.species, material, defect.type, B):
         
         # creates list of moments. 
         new_moments = deduce_moment(defect.type, species) 
@@ -247,10 +248,10 @@ def magnetic_groundstates():
   # loops over untagged non-magnetic structural jobs.
   for nonmag in collect.children:
     # check for success of all jobs (except for Point-defects).
-    success = [u[1] for u in nonmag["../"].success.items() if u[0].find("PointDefects") == -1]
+    success = [u[1] for u in nonmag.success.items() if u[0].find("PointDefects") == -1]
     if not all(success): continue
     # checks for lowest energy structure.
-    energies = [u for u in nonmag["../"].total_energy.items() if u[0].find("PointDefects") == -1]
+    energies = [u for u in nonmag.total_energy.items() if u[0].find("PointDefects") == -1]
     energies = sorted(energies, key=itemgetter(1))
     yield energies[0][0]
 
@@ -276,17 +277,33 @@ def oxnumber(species, structure, pos, type):
   if not hasattr(species[type], 'oxidation'): return 0
   result = species[type].oxidation
   if not hasattr(result, '__iter__'): return result
-  c = coordination_number(structure, pos)
-  assert c not in [4, 6], RuntimeError('Unexpected coordination environment')
+  c = coordination_number(structure, pos, tolerance=0.01)
+  assert c in [4, 6], RuntimeError('Unexpected coordination environment')
   if c == 4: return result[0]
   if c == 6: return result[1]
 
-def charged_states(species, structure, Aatom, Btype):
+def charged_states(species, material, Atype, Btype):
   """ List of charged states. """
-  Aox = oxnumber(species, structure, Aatom.pos, Aatom.type)
-  Box = oxnumber(species, structure, Aatom.pos, Btype)
-  diff = Aox - Box - 1 if Aox < Box else Aox - Box + 1 
-  sign = 1 if Aox > Box else -1
+  from re import compile
+  from lada.crystal.defects import charged_states
+  mat_regex = compile('([A-Z][a-z]?)2([A-Z][a-z]?)O4')
+  found = mat_regex.match(material)
+  A, B = found.group(1), found.group(2)
+  if Atype not in [A,B] or Btype not in [A,B]: 
+    for result in charged_states(species, Atype, Btype): yield result
+    return
+  Aox, Box = species[Atype].oxidation, species[Btype].oxidation
+  if Atype == A: 
+    if hasattr(Aox, '__iter__'): Aox = Aox[1]
+    if hasattr(Box, '__iter__'): Box = Box[0]
+  elif Atype == B: 
+    if hasattr(Aox, '__iter__'): Aox = Aox[0]
+    if hasattr(Box, '__iter__'): Box = Box[1]
+
+  diff = Aox - Box
+  if diff < 0: diff -= 1 
+  else: diff += 1 
+  sign = 1 if diff > 0 else -1
   for c in range(0, diff, sign):
     if c == 0: yield 0, 'charge_neutral'
     else:      yield c, 'charge_{0}'.format(-c)
