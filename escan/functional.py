@@ -1,14 +1,20 @@
 """ ESCAN functional wrapper. """
 __docformat__ = "restructuredtext en"
-__all__ = [ 'Functional' ]
+__all__ = [ 'Functional', 'folded_spectrum', 'all_electron']
 from .. import lada_with_mpi
 from ..opt.decorators import add_setter
 from ._extract import Extract
 
-class Functional(object):
+folded_spectrum = 0
+""" Folded spectrum method. """
+all_electron = 1
+""" All electron method. """
+
+
+class Escan(object):
   """ Performs ESCAN calculations, from structure relaxation to wavefunctions. """
 
-  Extract = Extract
+  Extract = staticmethod(Extract)
   """ Class for output extraction. """
 
   def __init__(self, inplace=True, workdir=None):
@@ -16,8 +22,9 @@ class Functional(object):
     from numpy import zeros
     from ..vff import Vff
     from ..opt import RelativeDirectory
+    from ._potential import soH
 
-    super(Functional, self).__init__()
+    object.__init__(self)
     self.inplace = inplace
     """ If True calculations are performed in the output directory. """
     # checks inplace vs workdir
@@ -166,6 +173,7 @@ class Functional(object):
           non-local potential parameters s, p, d,
           pnl, dnl. Defaults to None (eg 0).
     """ 
+    from ._potential import AtomicPotential
     assert len(args) > 2, RuntimeError("Atomic  potentials need at least two parameters.")
     assert len(args) < 9, RuntimeError("Too many parameters when setting atomic potentials.")
     if self.atomic_potentials == None: self.atomic_potentials = []
@@ -173,54 +181,60 @@ class Functional(object):
 
   def __repr__(self):
     from os.path import relpath
+    from ._potential import localH, nonlocalH, soH
     result  = str(self.vff).replace("functional", "vff_functional")
     result += "# Escan definition.\n"
     result += "functional = %s()\n" % (self.__class__.__name__)
-    result += "functional.vff                   = vff_functional\n"
-    result += "functional.eref                  = %s\n"\
-              % ( "None" if self.eref == None else repr(self.eref) )
-    result += "functional.cutoff                = %f\n" % (self.cutoff)
-    result += "functional.smooth                = %f\n" % (self.smooth)
-    result += "functional.kinetic_scaling       = %f\n" % (self.kinetic_scaling)
-    result += "functional.nbstates              = %i\n" % (self.nbstates)
-    result += "functional.itermax               = %i\n" % (self.itermax)
-    result += "functional.nlines                = %i\n" % (self.nlines)
-    result += "functional.tolerance             = %e\n" % (self.tolerance)
-    result += "functional.rspace_cutoff         = %f\n" % (self.rspace_cutoff)
-    result += "functional.fft_mesh              = %i, %i, %i\n" % self.fft_mesh
-    result += "functional.genpotrun             = %s\n" % (repr(self.genpotrun))
-    result += "functional.do_escan              = %s\n" % (repr(self.do_escan))
-    result += "functional.vffrun                = %s\n" % (repr(self.vffrun))
-    result += "functional.input_wavefunctions   = %s\n" % (repr(self.input_wavefunctions))
-    result += "functional.kpoint                = %s\n" % (repr(self.kpoint))
-    result += "functional._dont_deform_kpoint   = %s\n" % (repr(self._dont_deform_kpoint))
-    result += "functional.dnc_mesh              = %s\n" % (repr(self.dnc_mesh))
-    result += "functional.overlap_mesh          = %s\n" % (repr(self.overlap_mesh))
+
+    # create format string for public data members.
+    max_length, string, _string, values = len('add_potential'), '', '', {}
+    for key, value in self.__dict__.items():
+      if key[0] == '_': continue
+      if key == 'potential': continue
+      if key == 'workdir': continue
+      if key == 'atomic_potentials': continue
+      if key == 'vff': continue
+      if key == 'lattice': continue
+      try: r = repr(value).rstrip().lstrip()
+      except: continue
+      if r[0] == '<' or r[-1] == '>': continue
+      max_length = max(max_length, len('{0}'.format(key)))
+      string += 'functional.{{{0}: <{{_mxlgth_repr_}}}} = {1}\n'.format(key, r)
+      values[key] = key
+    # create format string for private data members.
+    for key, value in self.__dict__.items():
+      if key[0] != '_': continue
+      if key == '_workdir': continue
+      if key == '_maskr': continue
+      try: r = repr(value).rstrip().lstrip()
+      except: continue
+      if r[0] == '<' or r[-1] == '>': continue
+      max_length = max(max_length, len('{0}'.format(key)))
+      _string += 'functional.{{{0}: <{{_mxlgth_repr_}}}} = {1}\n'.format(key, r)
+      values[key] = key
+
+    result += "functional.{0: <{1}} = vff_functional\n".format('vff', max_length)
+    values['_mxlgth_repr_'] = max_length
     if self.potential == localH:
-      result += "functional.potential             = localH\n"
+      result += "functional.{0: <{1}} = localH\n".format('potential', max_length)
     elif self.potential == nonlocalH:
-      result += "functional.potential             = localH\n"
+      result += "functional.{0: <{1}} = nonlocalH\n".format('potential', max_length)
     elif self.potential == soH:
-      result += "functional.potential             = soH\n"
-    else: raise RuntimeError("unknown hamiltonnian %i." % (soH))
+      result += "functional.{0: <{1}} = soH\n".format('potential', max_length)
+    else: raise RuntimeError("unknown hamiltonnian {0}.".format(soH))
     for pot in self.atomic_potentials:
-      result += "functional.add_potential         = %s\n" % (repr(pot))
-    result += "functional.print_from_all = {0}\n".format(repr(self.print_from_all))
-    result += "functional.INWAVECAR = '%s'\n" % (self.INWAVECAR)
-    result += "functional.ERRCAR = '%s'\n" % (self.ERRCAR)
-    result += "functional.WAVECAR = '%s'\n" % (self.WAVECAR)
-    result += "functional.inplace = %s\n" % (repr(self.inplace))
-    result += "functional.maskr = '{0}'\n".format(self._maskr.unexpanded)
-    result += "functional._INCAR = '%s'\n" % (self._INCAR)
-    result += "functional._POTCAR = '%s'\n" % (self._POTCAR)
-    result += "functional._GENCAR = '%s'\n" % (self._GENCAR)
+      result += "functional.{0: <{1}} = {2}\n".format('add_potential', max_length, repr(pot))
     if self.inplace == False: 
-      result += "functional.workdir = '%s'\n" % (self._workdir.unexpanded)
+      result += "functional.{0: <{1}} = {2}\n"\
+                .format('workdir', max_length, repr(self._workdir.unexpanded))
+    result += string.format(**values)
+    result += _string.format(**values)
     result += "# End of escan definition."
 
     module = self.__class__.__module__ 
     classname = self.__class__.__name__ 
-    header = "from %s import %s, soH, localH, nonlocalH\n" % (module, classname)
+    header = "from numpy import array\n"\
+             "from lada.escan import {0}, soH, localH, nonlocalH\n".format(classname)
     return header + result
 
   def __call__(self, structure, outdir = None, comm = None, overwrite=False, \

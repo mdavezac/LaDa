@@ -2,7 +2,7 @@
 __docformat__ = "restructuredtext en"
 __all__ = ["KEscan", 'KPoints', 'KGrid', 'ReducedKGrid', 'ReducedKDensity']
 from abc import ABCMeta, abstractmethod
-from .functional import Functional
+from .functional import Escan
 from .. import __all__ as all_lada_packages
  
 class KPoints(object):
@@ -43,9 +43,9 @@ class KPoints(object):
     for r in self._mnk(structure): yield r
     
 
-class KEscan(Functional):
+class KEscan(Escan):
   """ A wrapper around Escan for computing many kpoints. """
-  def __init__(self, kpoints = None, multiplicity=None):
+  def __init__(self, kpoints=None, multiplicity=None, **kwargs):
     """ Initializes the KEscan functional. """
     self.kpoints = kpoints
     """ Kpoints to use for calculations.
@@ -59,6 +59,10 @@ class KEscan(Functional):
 
         .. |pi|  unicode:: U+003C0 .. GREEK SMALL LETTER PI
     """
+    # case for simple containers.
+    if kpoints == None: kpoints, multiplicity = [[0,0,0]], [1]
+    if not hasattr(kpoints, '__call__'): self.kpoints = KContainer(kpoints, multiplicity)
+    Escan.__init__(self)
 
   # need jobs package to run this code.
   if 'jobs' in all_lada_packages: 
@@ -157,6 +161,25 @@ class KEscan(Functional):
     if len(pools) >= 1: return pools[-1]
     return 1
 
+class KContainer():
+  """ Simple KPoints class which acts as a container. """
+  def __init__(self, kpoints, multiplicity):
+    """ Initializes the kpoint container. """
+    self.kpoints = [k for k in kpoints]
+    """ Sequence of kpoints. """
+    self.multiplicity = multiplicity
+    """ Sequence with the multiplicity of the respective kpoints. """
+    if self.multiplicity == None:
+      self.multiplicity = [1e0 / len(self.kpoints) for k in self.kpoints]
+    else: self.multiplicity = [m for m in self.multiplicity]
+
+  def _mnk(self):
+    for count, k in zip(self.kpoints, self.multiplicity): yield count, k
+  def __call__(self):
+    for count, k in zip(self.kpoints, self.multiplicity): yield count, k
+  def __repr__(self):
+    return '{0.__class__.__name__}({1},{2})'\
+           .format(self, repr(self.kpoints), repr(self.multiplicity))
 
 class KGrid(KPoints):
   """ Unreduces kpoint grid with offsets. """
