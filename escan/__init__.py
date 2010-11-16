@@ -4,7 +4,8 @@ __all__ = [ "Extract", 'MassExtract', "bandgap", "extract_bg",\
             "dipole_matrix_element", "band_structure", "call_escan",\
             "Escan", "folded_spectrum", "all_electron", "soH", \
             "nonlocalH", "localH", "AtomicPotential", "band_structure",\
-            "extract_bg", 'ExtractBS', 'KEscan', 'KPoints', 'KGrid', 'ReducedKGrid' ]
+            "extract_bg", 'ExtractBS', 'KEscan', 'KPoints', 'KGrid', \
+            'ReducedKGrid', 'ReducedKDensity' ]
 
 from ..opt import __load_escan_in_global_namespace__
 from lada import lada_with_mpi
@@ -23,7 +24,7 @@ from _bandgap import bandgap, extract as extract_bg
 from _extract import Extract, MassExtract
 from _extract import Extract as _EscanExtract
 from functional import Functional as Escan
-from kescan import KEscan, KGrid, ReducedKGrid, KPoints
+from kescan import KEscan, KGrid, ReducedKGrid, KPoints, ReducedKDensity
 
 
 def call_escan(comm, atom="atom_input", pot="pot_input", escan="escan_input"):

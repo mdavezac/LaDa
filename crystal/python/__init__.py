@@ -10,7 +10,7 @@ __all__ = [ 'FreezeAtom', 'which_site', 'Sites', 'SymmetryOperator', 'Lattice', 
             'smith_indices', 'Atom', 'kAtom', 'fold_vector', 'Structure', 'FreezeCell',\
             'smith_normal_transform', 'get_space_group_symmetries', 'Neighbors', 'Neighbor', \
             'read_pifile_structure', 'LayerDepth', 'to_fractional', 'linear_smith_index', \
-            'nb_valence_states', \
+            'nb_valence_states', 'into_voronoi', 'zero_centered', \
             # Below, only true python stuff
             'deform_kpoints', 'read_poscar', 'specie_list', 'write_poscar',\
             'structure_to_lattice', 'fill_structure', \
@@ -21,7 +21,7 @@ from _crystal import FreezeAtom, which_site, Site, SymmetryOperator, Lattice, to
                      smith_indices, kAtoms, Atom, kAtom, fold_vector, Structure, FreezeCell,\
                      smith_normal_transform,  get_space_group_symmetries, Neighbors, Neighbor, \
                      read_pifile_structure, LayerDepth, to_fractional, linear_smith_index,\
-                     nb_valence_states, \
+                     nb_valence_states, into_voronoi, zero_centered,  \
                      rStructure, rAtom, Sites, Atoms, kAtoms, StringVector # this line not in __all__
 
 from lada.opt.decorators import broadcast_result, add_setter
