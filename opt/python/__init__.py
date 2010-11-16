@@ -156,7 +156,7 @@ def read_input(filename, global_dict=None, local_dict = None, paths=None, comm =
   """ Executes input script and returns local dictionary (as class instance). """
   # stuff to import into script.
   from os import environ
-  from os.path import abspath, expanduser, join
+  from os.path import abspath, expanduser, join, exists
   from math import pi 
   from numpy import array, matrix, dot, sqrt, abs, ceil
   from numpy.linalg import norm, det
@@ -178,7 +178,8 @@ def read_input(filename, global_dict=None, local_dict = None, paths=None, comm =
     global_dict["world"] = world
   if local_dict == None: local_dict = {}
   # Executes input script.
-  execfile(filename, global_dict, local_dict)
+  if exists(filename): execfile(filename, global_dict, local_dict)
+  else: exec(filename, global_dict, local_dict)
 
   # Makes sure expected paths are absolute.
   if paths != None:
