@@ -710,7 +710,7 @@ if lada_with_slurm:
     whoami = getuser()
     squeue = Popen(["squeue", "--user=" + whoami, "-o", "\"%7i %.3C %3t    %j\""], stdout=PIPE)
     result = squeue.stdout.read().rstrip().split('\n')
-    result = SList([u[1:-1] for u in result])
+    result = SList([u[1:-1] for u in result])[1:]
     return result.grep(str(arg[1:-1]))
     
 else:

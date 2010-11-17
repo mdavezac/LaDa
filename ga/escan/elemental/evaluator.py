@@ -125,7 +125,7 @@ class Bandgap(object):
     indiv.cbm = out.cbm
 
     if self.keep_only_last and is_root and self._lastcalcdir != None:
-      if exists(self._lastcalcdir): rmtree(join(outdir, str(i)))
+      if exists(self._lastcalcdir): rmtree(self._lastcalcdir)
     self._lastcalcdir = outdir
     if is_mpi: comm.barrier()
     
