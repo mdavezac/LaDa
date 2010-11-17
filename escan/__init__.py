@@ -6,7 +6,7 @@ __all__ = [ "Extract", 'MassExtract', "bandgap", "extract_bg",\
             "nonlocalH", "localH", "AtomicPotential", "band_structure",\
             "extract_bg", 'ExtractBS', 'KEscan', 'KPoints', 'KGrid', \
             'ReducedKGrid', 'ReducedKDensity', 'soH', 'nonlocalH', 'localH',\
-            'folded_spectrum', 'all_electron']
+            'folded_spectrum', 'all_electron', 'read_input', 'exec_input']
 
 from ..opt import __load_escan_in_global_namespace__
 from lada import lada_with_mpi
@@ -101,7 +101,20 @@ def call_escan(comm, atom="atom_input", pot="pot_input", escan="escan_input"):
   remove(escaninput)
 
 
-def read_input(filepath = "input.py", namespace = None):
+def exec_input(filepath = "input.py", namespace = None):
+  """ Executes an input script including namespace for escan/vff. """ 
+  from ..jobs import JobDict
+  from ..vff import Vff
+  from ..opt import exec_input
+  from . import Escan, soH, nonlocalH, localH, folded_spectrum, all_electron
+
+  dictionary = { "Vff": Vff, "Escan": Escan, "soH": soH, \
+                 "nonlocalH": nonlocalH, "localH": localH, \
+                 "folded_spectrum": folded_spectrum, "all_electron": all_electron}
+  if namespace != None: dictionary.update(namespace)
+  return exec_input(filepath, dictionary)
+
+def read_input(filepath = "input.py", namespace = None, name=None):
   """ Reads an input file including namespace for escan/vff. """ 
   from ..jobs import JobDict
   from ..vff import Vff
@@ -111,5 +124,7 @@ def read_input(filepath = "input.py", namespace = None):
   dictionary = { "Vff": Vff, "Escan": Escan, "soH": soH, \
                  "nonlocalH": nonlocalH, "localH": localH, \
                  "folded_spectrum": folded_spectrum, "all_electron": all_electron}
-  if namespace != None: dictionary.update(namespace)
+  if namespace != None:
+    dictionary.update(namespace)
+    if name == None and hasattr(namespace, '__name__'): namee = namespace.__name__
   return read_input(filepath, dictionary)
