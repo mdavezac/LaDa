@@ -13,7 +13,7 @@ from ._ordered_dict import OrderedDict
 __all__ = [ '__load_vasp_in_global_namespace__', '__load_escan_in_global_namespace__',\
             'cReals', 'ConvexHull', 'ErrorTuple', 'redirect_all', 'redirect', 'read_input',\
             'LockFile', 'acquire_lock', 'open_exclusive', 'RelativeDirectory', 'streams',
-            'AbstractExtractBase', 'convert_from_unix_re', 'OrderedDict' ]
+            'AbstractExtractBase', 'convert_from_unix_re', 'OrderedDict', 'exec_input' ]
 
 streams = _RedirectFortran.fortran
 """ Name of the streams. """
@@ -152,8 +152,16 @@ class Input(ModuleType):
       if key[0] == '_': continue
       super(Input, self).__setattr__(key, value)
 
-def read_input(filename, global_dict=None, local_dict = None, paths=None, comm = None):
-  """ Executes input script and returns local dictionary (as class instance). """
+def read_input(filename='input.py', global_dict=None, local_dict = None, paths=None, comm = None):
+  """ Reads and executes input script and returns local dictionary (as namespace instance). """
+  from os.path import exists, basename
+  assert exists(filename), IOError('File {0} does not exist.'.format(filename))
+  with open(filename, 'r') as file: string = file.read()
+  return exec_input(string, global_dict, local_dict, paths, comm, basename(filename))
+
+def exec_input( script, global_dict=None, local_dict = None,\
+                paths=None, comm = None, name=None):
+  """ Executes input script and returns local dictionary (as namespace instance). """
   # stuff to import into script.
   from os import environ
   from os.path import abspath, expanduser, join, exists
@@ -178,8 +186,7 @@ def read_input(filename, global_dict=None, local_dict = None, paths=None, comm =
     global_dict["world"] = world
   if local_dict == None: local_dict = {}
   # Executes input script.
-  if exists(filename): execfile(filename, global_dict, local_dict)
-  else: exec(filename, global_dict, local_dict)
+  exec(script, global_dict, local_dict)
 
   # Makes sure expected paths are absolute.
   if paths != None:
@@ -187,7 +194,8 @@ def read_input(filename, global_dict=None, local_dict = None, paths=None, comm =
       if path not in local_dict: continue
       local_dict[path] = abspath(expanduser(local_dict[path]))
     
-  result = Input(filename)
+  if name == None: name = 'None'
+  result = Input(name)
   result.update(local_dict)
   return result
 
