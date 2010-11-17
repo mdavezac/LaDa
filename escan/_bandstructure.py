@@ -5,6 +5,18 @@ __all__ = ['band_structure', 'Extract']
 
 from ..opt.decorators import broadcast_result, make_cached
 from ._extract import MassExtract
+from .kescan import KPoints, _reduced_grids_factory
+
+class BPoints(KPoints):
+  """ Bands-structure calculation. """
+  def __init__(self, lines = None, density):
+    KPoints.__init__(self)
+    self.lines = lines
+    if self.lines == None: self.lines = []
+
+  def _mnk(self, structure):
+   
+    
 
 def band_structure(escan, structure, kpoints, density = None, outdir=None, comm=None,\
                    do_relax=None, pools = 1, nbkpoints = None, **kwargs):

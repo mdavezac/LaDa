@@ -95,7 +95,7 @@ class KEscan(Escan):
 
       jobdict = JobDict()
       for i, kpoint in enumerate(kpoints):
-        job = jobdict / 'kpoint_{0}'.format(kpoint)
+        job = jobdict / 'kpoint_{0}'.format(i)
         job.functional = self
         job.jobparams = kwargs.copy()
         job.jobparams['kpoint'] = kpoint
@@ -201,7 +201,6 @@ class KGrid(KPoints):
     inv_cell = structure.cell.T
     cell = inv(inv_cell)
     a = zeros((3,), dtype='float64')
-    seen = []
     weight = 1e0 / float(self.grid[0] * self.grid[1] * self.grid[2])
     for x in xrange(self.grid[0]):
       a[0] = float(x + self.offset[0]) / float(self.grid[0])
@@ -209,15 +208,6 @@ class KGrid(KPoints):
         a[1] = float(y + self.offset[1]) / float(self.grid[1]) 
         for z in xrange(self.grid[2]):
           a[2] = float(z + self.offset[2]) / float(self.grid[2])
-          b = into_voronoi(dot(cell, a), cell, inv_cell)
-          found = False
-          for i, (count, v) in enumerate(seen):
-            if all(abs(v-b) < 1e-12):
-              seen[i][0] += weight
-              found = True
-              break
-          if found == False: seen.append([weight, b.copy()])
-    return seen
  
   def __repr__(self):
     """ Represents this object. """
@@ -299,6 +289,7 @@ def _reduced_grids_factory(name, base):
       seen = []
       for mult, kpoint in base._mnk(self, structure): 
         found = False
+        kpoint = into_voronoi(kpoint, lattice.cell, inv_cell)
         for i, (count, vec) in enumerate(seen):
           for op in lattice.space_group:
             u = zero_centered(vec-op(kpoint), lattice.cell, inv_cell)
@@ -309,6 +300,33 @@ def _reduced_grids_factory(name, base):
           if found: break
         if found == False: seen.append([mult, kpoint.copy()])
       return seen
+
+    def mapping(self, structure):
+      """ Yields index of unreduced kpoint in array of reduced kpoints. """
+      from numpy.linalg import inv, norm
+      from ..crystal import Lattice, zero_centered
+      lattice = Lattice()
+      lattice.cell = inv(structure.cell.T)
+      lattice.add_site = (0,0,0), '0'
+      lattice.find_space_group()
+      inv_cell = structure.cell.T
+      # now checks whether symmetry kpoint exists or not.
+      seen = []
+      for mult, kpoint in base._mnk(self, structure): 
+        found = False
+        kpoint = into_voronoi(kpoint, lattice.cell, inv_cell)
+        for i, (count, vec) in enumerate(seen):
+          for op in lattice.space_group:
+            u = zero_centered(vec-op(kpoint), lattice.cell, inv_cell)
+            if all(abs(u)) < self.tolerance:
+              found = True
+              seen[i][0] += mult
+              yield i, kpoint.copy()
+              break
+          if found: break
+        if found == False:
+          seen.append([mult, kpoint.copy()])
+          yield i, kpoint.copy()
 
     def __repr__(self):
       """ Represents this object. """
