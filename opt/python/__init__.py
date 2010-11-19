@@ -11,11 +11,13 @@ from changedir import Changedir
 from tempdir import Tempdir
 from decorators import broadcast_result, make_cached
 from ._ordered_dict import OrderedDict
+from ._extract import AbstractExtractBase, OutcarSearchMixin
 
 __all__ = [ '__load_vasp_in_global_namespace__', '__load_escan_in_global_namespace__',\
             'cReals', 'ConvexHull', 'ErrorTuple', 'redirect_all', 'redirect', 'read_input',\
             'LockFile', 'acquire_lock', 'open_exclusive', 'RelativeDirectory', 'streams',
-            'AbstractExtractBase', 'convert_from_unix_re', 'OrderedDict', 'exec_input' ]
+            'AbstractExtractBase', 'OutcarSearchMixin', 'convert_from_unix_re', 'OrderedDict', 
+            'exec_input' ]
 
 streams = _RedirectFortran.fortran
 """ Name of the streams. """
@@ -524,162 +526,6 @@ class RelativeDirectory(object):
     """
     return "{0}, {1}".format(repr(self._envvar), repr(self._relative))
 
-
-class AbstractExtractBase(object):
-  """ Abstract base class for extraction classes. 
-  
-      Defines a number of members common to all extraction classes:
-        - directory: root directory where output should exist.
-        - comm : boost.mpi.communicator in case of mpi syncronization.
-  """
-  __metaclass__ = ABCMeta
-  def __init__(self, directory=None, comm=None):
-    """ Initializes an extraction base class.
-
-        :Parameters: 
-          directory : str or None
-            Root directory for extraction. If None, will use current working directory.
-          comm : boost.mpi.communicator or None
-            Processes over which to synchronize output.
-    """
-    object.__init__(self)
-
-    from os import getcwd
-    from . import RelativeDirectory
-
-    if directory == None: directory = getcwd()
-    self._directory = RelativeDirectory(directory, hook=self.__directory_hook__)
-    """ Directory where output should be found. """
-    self.comm = comm
-    """ Communicator for extracting stuff. 
-
-        All procs will get same results at end of extraction. 
-        Program will hang if not all procs are called when extracting some
-        value. Instead, use `solo`.
-
-        >>> extract.success # Ok
-        >>> if comm.rank == 0: extract.success # will hang if comm.size != 1
-        >>> if comm.rank == 0: extract.solo().success # Ok
-    """
-  @property
-  def directory(self):
-    """ Directory where output should be found. """
-    return self._directory.path
-  @directory.setter
-  def directory(self, value): self._directory.path = value
-
-  @abstractproperty
-  def success(self):
-    """ Checks for success. 
-
-        Should never ever throw!
-        True if calculations were successfull, false otherwise.
-    """
-    pass
-
-
-  def __directory_hook__(self):
-    """ Called whenever the directory changes. """
-    self.uncache()
-
-  def uncache(self): 
-    """ Uncache values. """
-    self.__dict__.pop("_cached_extractors", None)
-    self.__dict__.pop("_cached_properties", None)
-
-  def __copy__(self):
-    """ Returns a shallow copy of this object. """
-    result = self.__class__()
-    result.__dict__ = self.__dict__.copy()
-    result._directory = RelativeDirectory( self._directory.path,\
-                                           self._directory._envvar, 
-                                           result.uncache )
-    return result
-
-  def copy(self, **kwargs):
-    """ Returns a shallow copy of this object.
-
-        :param kwargs:
-          Any keyword argument is set as an attribute of this object.
-          Does not check for existence or anything.
-    """
-    result = self.__copy__()
-    for k, v in kwargs: setattr(result, k, v)
-    return result
-
-  def solo(self):
-    """ Returns a serial version of this object. """
-    return self.copy(comm=None)
-
-  def __getstate__(self):
-    d = self.__dict__.copy()
-    d.pop("comm", None)
-    if "_directory" in d: d["_directory"].hook = None
-    return d
-
-  def __setstate__(self, arg):
-    self.__dict__.update(arg)
-    self.comm = None
-    if hasattr(self, "_directory"): self._directory.hook = self.uncache
-
-  def __repr__(self):
-    from os.path import relpath
-    return "{0}(\"{1}\")".format(self.__class__.__name__, self._directory.unexpanded)
-
-class AbstractSearchOutcar(object):
-  """ A mixin to include standard methods to search OUTCAR.
-  
-      This mixin only includes the methods themselves. It expects the derived
-      class to have an OUTCAR attribute. 
-  """ 
-  def _search_OUTCAR(self, regex, flags=0):
-    """ Looks for all matches. """
-    from os.path import exists, join
-    from re import compile, M as moultline
-    from numpy import array
-
-    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
-    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
-
-    result = []
-    regex  = compile(regex, flags)
-    with open(path, "r") as file:
-      if moultline & flags: 
-        for found in regex.finditer(file.read()): yield found
-      else:
-        for line in file: 
-          found = regex.search(line)
-          if found != None: yield found
-
-  def _find_first_OUTCAR(self, regex):
-    """ Returns first result from a regex. """
-    for first in self._search_OUTCAR(regex): return first
-    return None
-
-  def _rsearch_OUTCAR(self, regex, flags=0):
-    """ Looks for all matches starting from the end. """
-    from os.path import exists, join
-    from re import compile, M as moultline
-    from numpy import array
-
-    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
-    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
-
-    result = []
-    regex  = compile(regex)
-    with open(path, "r") as file:
-      lines = file.read() if moultline & flags else file.readlines()
-    if moultline & flags: 
-      for v in [u for u in regex.finditer(lines)]: yield v
-    else:
-      for line in lines[::-1]:
-        found = regex.search(line)
-        if found != None: yield found
-
-  def _find_last_OUTCAR(self, regex):
-    """ Returns first result from a regex. """
-    for last in self._rsearch_OUTCAR(regex): return last
-    return None
 
 def convert_from_unix_re(pattern):
   """ Converts unix-command-line like regex to python regex.

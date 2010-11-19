@@ -1,4 +1,8 @@
 """ Holds base classes and mixins for extraction objects. """
+__docformat__ = "restructuredtext en"
+__all__ = ['AbstractExtratBase', 'OutcarSearchMixin']
+from abc import ABCMeta, abstractmethod, abstractproperty
+from .decorators import broadcast_result
 
 class AbstractExtractBase(object):
   """ Abstract base class for extraction classes. 
@@ -7,6 +11,7 @@ class AbstractExtractBase(object):
         - directory: root directory where output should exist.
         - comm : boost.mpi.communicator in case of mpi syncronization.
   """
+  __metaclass__ = ABCMeta
   def __init__(self, directory=None, comm=None):
     """ Initializes an extraction base class.
 
@@ -42,7 +47,7 @@ class AbstractExtractBase(object):
   @directory.setter
   def directory(self, value): self._directory.path = value
 
-  @property
+  @abstractproperty
   @broadcast_result(attr=True, which=0)
   def success(self):
     """ Checks for success. 
@@ -50,7 +55,7 @@ class AbstractExtractBase(object):
         Should never ever throw!
         True if calculations were successfull, false otherwise.
     """
-    abstract 
+    pass
 
 
   def __directory_hook__(self):
@@ -101,7 +106,7 @@ class AbstractExtractBase(object):
     from os.path import relpath
     return "{0}(\"{1}\")".format(self.__class__.__name__, self._directory.unexpanded)
 
-def _search_factory(name, filename):
+def _search_factory(name, filename, module):
   """ Factory to create Mixing classes capable of search a given file. """
   doc = \
     """ A mixin to include standard methods to search {0}.
@@ -171,7 +176,8 @@ def _search_factory(name, filename):
             _rsearch_OUTCAR.__name__: _rsearch_OUTCAR,
             _find_first_OUTCAR.__name__: _find_first_OUTCAR,
             _find_last_OUTCAR.__name__: _find_last_OUTCAR,\
-            '__doc__': doc }
-  return types(name, [], attrs)
+            '__doc__': doc,
+            '__module__': module }
+  return type(name, (), attrs)
 
-OutcarSearchMixin = _search_factory('OutcarSearchMixin', 'OUTCAR')
+OutcarSearchMixin = _search_factory('OutcarSearchMixin', 'OUTCAR', __module__)

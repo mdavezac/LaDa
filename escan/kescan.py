@@ -1,48 +1,12 @@
 """ Escan wrapper to compute many eigen k-points. """
 __docformat__ = "restructuredtext en"
-__all__ = ["KEscan", 'KPoints', 'KGrid', 'ReducedKGrid', 'ReducedKDensity']
+__all__ = ['KEscan', 'Extract']
 from abc import ABCMeta, abstractmethod
 from .functional import Escan
 from .. import __all__ as all_lada_packages
+from ..opt import AbstractExtractBase
+from ._extract import MassExtract as EscanMassExtract
  
-class KPoints(object):
-  """ Abstract base class for callable KMesh objects. 
-
-      It is expected that the kpoints are expressed in cartesian coordinates
-      of the reciprocal space. There is no 2|pi|. In other words, the
-      following code holds true:
-
-      >>> for count, kvec in kpoints_instance(structure): 
-      >>>   assert abs(dot(kvec, structure.cell[:,0]) * 2e0 * pi -1e0) < 1e-12
-
-      The code above assumes that structure is a valid `crystal.Structure`
-      object.
-
-      .. |pi|  unicode:: U+003C0 .. GREEK SMALL LETTER PI
-  """
-  __metaclass__ = ABCMeta
-
-  def __init__(self): object.__init__(self)
-
-  @abstractmethod
-  def _mnk(self, structure):
-    """ Returns iterable yielding (multiplicity, kpoints). """
-    pass
-  @abstractmethod
-  def __repr__(self, structure):
-    """ This object must be representable. """
-  
-  def multiplicity(self, structure):
-    """ Generator yielding multiplicity. """
-    for count, k in self._mnk(structure): yield count
-  def kpoint(self, structure):
-    """ Generator yielding kpoints. """
-    for count, k in self._mnk(structure): yield k
-  def __call__(self, structure): 
-    """ Iterator over (multiplicity, kpoint) tuples. """
-    for r in self._mnk(structure): yield r
-    
-
 class KEscan(Escan):
   """ A wrapper around Escan for computing many kpoints. """
   def __init__(self, kpoints=None, multiplicity=None, **kwargs):
@@ -59,6 +23,7 @@ class KEscan(Escan):
 
         .. |pi|  unicode:: U+003C0 .. GREEK SMALL LETTER PI
     """
+    from .kpoints import KContainer
     # case for simple containers.
     if kpoints == None: kpoints, multiplicity = [[0,0,0]], [1]
     if not hasattr(kpoints, '__call__'): self.kpoints = KContainer(kpoints, multiplicity)
@@ -69,24 +34,22 @@ class KEscan(Escan):
     def __call__(self, structure, outdir=None, comm=None, **kwargs):
       """ Performs calculcations. """
       from os.path import join
-      from ...jobs import JobDict, Bleeder
+      from ..jobs import JobDict, Bleeder
 
       kpoints = kwargs.pop('kpoints', self.kpoints)
-      dont_deform_kpoints = getattr(kpoints, 'dont_deform_kpoint', self._dont_deform_kpoint)
-      dont_deform_kpoints = kwargs('_dont_deform_kpoint', kpoints)
+      do_relax_kpoint = not getattr(kpoints, 'do_relax_kpoint', not self.do_relax_kpoint)
+      do_relax_kpoint = kwargs.pop('do_relax_kpoint', do_relax_kpoint)
       is_mpi = False if comm == None else comm.size > 1
       is_root = True if not is_mpi else comm.rank == 0
-      vffrun = kwargs.get("vffrun", None)
-      genpotrun = kwargs.get("genpotrun", None)
 
       # performs vff calculations
-      if vffrun != None: 
-        vffout = super(KEscan, self)(structure, outdir, comm, do_escan=False, **kwargs)
-        kwargs['vffrun'] = vffout
-        if kwargs.get('genpotrun', None) == None: kwargs['genpotrun'] = vffout
+      if kwargs.get('vffrun', None) == None: 
+        vffrun = Escan.__call__(self, structure, outdir, comm, do_escan=False, **kwargs)
+        if kwargs.get('genpotrun', None) == None: kwargs['genpotrun'] = vffrun
+        if kwargs.get('vffrun', None) == None: kwargs['vffrun'] = vffrun
   
       # create list of kpoints.
-      kpoints = self._interpret_kpoints(kpoints, vffout)
+      kpoints = self._interpret_kpoints(kpoints, kwargs['vffrun'])
       # checks for 
       if len(kpoints) == 1:
         kwargs['kpoint'] = kpoints[0]
@@ -100,8 +63,10 @@ class KEscan(Escan):
         job.jobparams = kwargs.copy()
         job.jobparams['kpoint'] = kpoint
         job.jobparams['structure'] = structure
+        job.jobparams['do_relax_kpoint'] = do_relax_kpoint
         job.jobparams['outdir'] = join(outdir, job.name[1:])
       
+      kwargs['vffrun'].jobdict = jobdict
       bleeder = Bleeder(jobdict, self._pools(len(kpoints), comm), comm)
       for value, job in bleeder.itercompute(): continue
       bleeder.cleanup()
@@ -115,7 +80,7 @@ class KEscan(Escan):
   
   def _interpret_kpoints(self, kpoints, vffout):
      """ Returns list of kpoints. """
-     from numpy import zero, array
+     from numpy import zeros, array
      # case where kpoints is None.
      if kpoints == None: return [zeros((3,1), dtype='float64')]
      # case where kpoints is already a single vector.
@@ -125,7 +90,8 @@ class KEscan(Escan):
          if not hasattr(kpoints[0], '__len__'): return [array(kpoints, dtype='float64')]
          if len(kpoints[0]) == 1: return [array([k[0] for k in kpoints], dtype='float64')]
      # case where kpoints is a callable.
-     if hasattr(kpoints, '__call__'): kpoints = kpoints(vffout.structure)
+     if hasattr(kpoints, '__call__'):
+       kpoints = kpoints.kpoint(vffout.input_structure, vffout.structure)
      # last case covers list of vectors and finishes up callable.
      result = []  
      for k in kpoints: 
@@ -161,183 +127,125 @@ class KEscan(Escan):
     if len(pools) >= 1: return pools[-1]
     return 1
 
-class KContainer():
-  """ Simple KPoints class which acts as a container. """
-  def __init__(self, kpoints, multiplicity):
-    """ Initializes the kpoint container. """
-    self.kpoints = [k for k in kpoints]
-    """ Sequence of kpoints. """
-    self.multiplicity = multiplicity
-    """ Sequence with the multiplicity of the respective kpoints. """
-    if self.multiplicity == None:
-      self.multiplicity = [1e0 / len(self.kpoints) for k in self.kpoints]
-    else: self.multiplicity = [m for m in self.multiplicity]
-
-  def _mnk(self):
-    for count, k in zip(self.kpoints, self.multiplicity): yield count, k
-  def __call__(self):
-    for count, k in zip(self.kpoints, self.multiplicity): yield count, k
   def __repr__(self):
-    return '{0.__class__.__name__}({1},{2})'\
-           .format(self, repr(self.kpoints), repr(self.multiplicity))
+    """ Represents KEscan instance. """
+    if not hasattr(self.kpoints, '__call__'): return Escan.__repr__(self)
+    return 'from {0.kpoints.__class__.__module__} import {0.kpoints.__class__.__name__}\n'\
+           .format(self) + Escan.__repr__(self)
 
-class KGrid(KPoints):
-  """ Unreduces kpoint grid with offsets. """
+class Extract(EscanMassExtract):
+  """ Extraction class for KEscan. """
 
-  def __init__(self, grid = None, offset = None):
-    """ Initializes unreduced KGrid. """
-    from numpy import array
-    KPoints.__init__(self)
-    self.grid = grid if grid != None else array([1,1,1])
-    """ Grid dimensions in reciprocal space. """
-    self.offset = offset if offset != None else array([0,0,0])
-    """ Offset from Gamma of the grid. """
+  def __init__(self, directory=None, comm=None, unreduced=True, **kwargs):
+    """ Initializes the extraction object. """
+    EscanMassExtract.__init__(self, directory, comm=comm, **kwargs)
+    self.unreduce = unreduce
+    """ Unreduced kpoints if True and if kpoints scheme sports a mapping method. """
 
-  def _mnk(self, structure):
-    """ Yields kpoints on the grid. """
-    from numpy.linalg import inv, norm
-    from numpy import zeros, array, dot
-    from ..crystal import into_voronoi
-    inv_cell = structure.cell.T
-    cell = inv(inv_cell)
-    a = zeros((3,), dtype='float64')
-    weight = 1e0 / float(self.grid[0] * self.grid[1] * self.grid[2])
-    for x in xrange(self.grid[0]):
-      a[0] = float(x + self.offset[0]) / float(self.grid[0])
-      for y in xrange(self.grid[1]):
-        a[1] = float(y + self.offset[1]) / float(self.grid[1]) 
-        for z in xrange(self.grid[2]):
-          a[2] = float(z + self.offset[2]) / float(self.grid[2])
+  def _do_unreduce(self):
+    """ True if should unreduce kpoints. """
+    if self.unreduce == False: return False
+    return hasattr(self.functional.kpoints, 'mapping')
+
+  def __iter_alljobs__(self):
+    """ Yields extraction objects for KEscan calculations. """
+    from glob import iglob, glob
+    from re import compile
+    from os.path import isdir
+
+    regex = compile(r'kpoint_(\d+)/')
+    paths = [path for path in iglob('kpoint_*/') if isdir(path) and regex.search(path) != None]
+    vffout = self.Extract()._vffout
+
+    for path in sorted(paths, key=lambda x: int(regex.search(path).group(1))):
+      inpaths = glob('*')
+      dirnames =  [u for u in inpaths if isdir(u)]
+      filenames = set(inpaths) - set(dirnames)
+      if not self.__is_calc_dir__(path, dirnames, filename): continue
+
+      try: result = self.Extract(join(self.rootdir, dirpath), comm = self.comm)
+      except: continue
+
+      result._vffout = vffout
+      result.OUTCAR = self.OUTCAR
+      result.FUNCCAR = self.FUNCCAR
+      yield join('/', relpath(dirpath, self.rootdir)), result
+
+  def __getitem__(self, name):
+    """ Forks between integer and str keys. """
+    if isinstance(name, int):
+      name = 'escan_{0}'.format(self._index(name))
+    return EscanMassself['escan_{0}'.format(value)]
  
-  def __repr__(self):
-    """ Represents this object. """
-    from numpy import array, abs, all
-    is_one = all( abs(array(self.grid)-array([1,1,1])) < 1e-12 )
-    is_zero = all( abs(array(self.offset)-array([0,0,0])) < 1e-12 )
-    if is_one and is_zero:
-      return '{0.__class__.__name__}()'.format(self)
-    if is_one:
-      return '{0.__class__.__name__}(offset=({0.offset[0]},{0.offset[0]},{0.offset[0]}))'\
-             .format(self)
-    if is_zero:
-      return '{0.__class__.__name__}(({0.grid[0]},{0.grid[0]},{0.grid[0]}))'\
-             .format(self)
-    return '{0.__class__.__name__}(({0.grid[0]},{0.grid[0]},{0.grid[0]}), '\
-           '({0.offset[0]},{0.offset[0]},{0.offset[0]}))'.format(self)
+  def __len__(self):
+    """ Number of kpoint calculations. """
+    if self._do_unreduce: return len([k for k in self.functional.mapping()])
+    return len(self.items())
 
+  def _index(self):
+    """ Returns index, accounting for possible unreduce. """
+    if name < 0: name += self.__len__()
+    if name >= self.__len__() or name < 0:
+      raise IndexError('Index out-of-range:{0}.'.format(name))
+    return list(self.functional.mapping())[name] if self._do_unreduce else name
 
-class KDensity(KPoints):
-  """ Unreduced kpoint grid parameterized by the density and offset. """
+  def __iter__(self): 
+    """ Iterates through individual kpoint calculations. """
+    for i in range(len(self)): yield self[i]
 
-  def __init__(self, density, offset = None):
-    """ Initializes unreduced KGrid. """
+  @property
+  def kpoints(self):
+    """ kpoint values. """
     from numpy import array
-    KPoints.__init__(self)
-    self.density = density
-    """ 1-dimensional density in cartesian coordinates (1/Angstrom). """
-    self.offset = offset if offset != None else array([0,0,0])
-    """ Offset from Gamma of the grid. """
+    return array((job.kpoint for job in self), dtype='float64')
 
-  def _mnk(self, structure):
-    """ Yields kpoints on the grid. """
-    from numpy.linalg import inv, norm
-    from numpy import zeros, array, dot, floor
-    from ..crystal import fill_structure
-    from ..crystal.gruber import Reduction
-    from quantities import angstrom
-    
-    reduction = Reduction()
-    cell = reduction(structure.cell, recip=True) * structure.scale
-    density = self.density
-    if hasattr(density, 'rescale'): density.rescale(1e0/Angstrom)
-    grid = [0,0,0]
+  @property
+  def multiplicity(self):
+    """ Multiplicity of the kpoints. """
+    from numpy import array, ones
+    if self._do_unreduce: 
+      return array((m for m in self.functional.kpoints.multiplicity), dtype='float64')
+    else: return ones((len(self),), dtype='float64') / float(len(self))
 
-    for i in range(3):
-      grid[i] = norm(cell[:,i]) / self.density
-      grid[i] = int(max(1, floor(grid[i]+0.5)))
+  @property
+  def eigenvalues(self):
+    """ Eigenvalues across all kpoints. """
+    from numpy import array
+    if len(self) == 0: return array()
+    return array((job.eigenvalues for job in self), dtype='float64') * self[0].eigenvalues.units
 
-    kgrid = KGrid(grid=grid, offset=self.offset)
-    return kgrid._mnk(structure)
- 
-  def __repr__(self):
-    """ Represents this object. """
-    from numpy import array, abs, all
-    is_zero = all( abs(array(self.offset)-array([0,0,0])) < 1e-12 )
-    if is_zero: return '{0.__class__.__name__}({0.density})'.format(self, repr(self.cell))
-    return '{0.__class__.__name__}(({1}, ({2[0]},{2[0]},{2[0]}))'\
-           .format(self, repr(self.cell), self.offset)
+  @property
+  def escan(self):
+    """ Returns functional used for calculation. """
+    for job in self.iteritems(): return job
+  functional = escan
 
-def _reduced_grids_factory(name, base):
-  class ReducedKGrid(base): 
-    """ Reduced {0} according to symmetries. """.format(base.__name__)
-    def __init__(self, grid=None, offset=None, tolerance=1e-12):
-      """ Initializes reduces k-grid. """
-      base.__init__(self, grid, offset)
-      self.tolerance = tolerance
-      """ Criteria to determine whether two k-vectors are the same. """
+  @property
+  def vbm(self): 
+    """ Returns energy at vbm. """
+    from numpy import array, max
+    from ..crystal import nb_valence_states
+    nbe = nb_valence_states(self.vff.structure)
+    units = self.eigenvalues.itervalues().next().units
+    return max(array(self.eigenvalues.values())[:, nbe-2:nbe]) * units
 
-    def _mnk(self, structure):
-      """ Returns list of inequivalent vectors with multiplicity. """
-      from numpy.linalg import inv, norm
-      from ..crystal import Lattice, zero_centered
-      lattice = Lattice()
-      lattice.cell = inv(structure.cell.T)
-      lattice.add_site = (0,0,0), '0'
-      lattice.find_space_group()
-      inv_cell = structure.cell.T
-      # now checks whether symmetry kpoint exists or not.
-      seen = []
-      for mult, kpoint in base._mnk(self, structure): 
-        found = False
-        kpoint = into_voronoi(kpoint, lattice.cell, inv_cell)
-        for i, (count, vec) in enumerate(seen):
-          for op in lattice.space_group:
-            u = zero_centered(vec-op(kpoint), lattice.cell, inv_cell)
-            if all(abs(u)) < self.tolerance:
-              found = True
-              seen[i][0] += mult
-              break
-          if found: break
-        if found == False: seen.append([mult, kpoint.copy()])
-      return seen
+  @property
+  def cbm(self): 
+    """ Returns energy at vbm. """
+    from numpy import array, min
+    from ..crystal import nb_valence_states
+    nbe = nb_valence_states(self.vff.structure)
+    units = self.eigenvalues.itervalues().next().units
+    return min(array(self.eigenvalues.values())[:, nbe:nbe+2]) * units
 
-    def mapping(self, structure):
-      """ Yields index of unreduced kpoint in array of reduced kpoints. """
-      from numpy.linalg import inv, norm
-      from ..crystal import Lattice, zero_centered
-      lattice = Lattice()
-      lattice.cell = inv(structure.cell.T)
-      lattice.add_site = (0,0,0), '0'
-      lattice.find_space_group()
-      inv_cell = structure.cell.T
-      # now checks whether symmetry kpoint exists or not.
-      seen = []
-      for mult, kpoint in base._mnk(self, structure): 
-        found = False
-        kpoint = into_voronoi(kpoint, lattice.cell, inv_cell)
-        for i, (count, vec) in enumerate(seen):
-          for op in lattice.space_group:
-            u = zero_centered(vec-op(kpoint), lattice.cell, inv_cell)
-            if all(abs(u)) < self.tolerance:
-              found = True
-              seen[i][0] += mult
-              yield i, kpoint.copy()
-              break
-          if found: break
-        if found == False:
-          seen.append([mult, kpoint.copy()])
-          yield i, kpoint.copy()
-
-    def __repr__(self):
-      """ Represents this object. """
-      if self.tolerance == 1e-12: return base.__repr__(self)
-      result = base.__repr__(self)
-      result = result[:-1].rstrip()
-      if result[-1] == '(': return result + 'tolerance={0})'.format(self.tolerance)
-      return result + ', tolerance={0})'.format(self.tolerance)
-  ReducedKGrid.__name__ = name
-  return ReducedKGrid
-
-
-ReducedKGrid    = _reduced_grids_factory('ReducedKGrid', KGrid)
-ReducedKDensity = _reduced_grids_factory('ReducedKDensity', KDensity)
+  @property 
+  def directness(self):
+    """ Difference in energy between the CBM at Gamma and the LUMO. """
+    from numpy.linalg import norm
+    from ..crystal import nb_valence_states
+    lumo = self.cbm
+    gamma = min((job for job in self.values()), key=lambda x: norm(x.escan.kpoint))
+    if norm(gamma.escan.kpoint) > 1e-6: raise RuntimeError("Gamma point not found.")
+    nbe = nb_valence_states(self.vff.structure)
+    cbm = min(gamma.eigenvalues[nbe], gamma.eigenvalues[nbe+1])
+    return cbm - lumo

@@ -1,12 +1,13 @@
 """ Interface module for ESCAN. """
 __docformat__ = "restructuredtext en"
-__all__ = [ "Extract", 'MassExtract', "bandgap", "extract_bg",\
-            "dipole_matrix_element", "band_structure", "call_escan",\
-            "Escan", "folded_spectrum", "all_electron", "soH", \
-            "nonlocalH", "localH", "AtomicPotential", "band_structure",\
-            "extract_bg", 'ExtractBS', 'KEscan', 'KPoints', 'KGrid', \
-            'ReducedKGrid', 'ReducedKDensity', 'soH', 'nonlocalH', 'localH',\
-            'folded_spectrum', 'all_electron', 'read_input', 'exec_input']
+__all__ = [ "Extract", 'MassExtract', "bandgap", "extract_bg",
+            "dipole_matrix_element", "band_structure", "call_escan",
+            "Escan", "folded_spectrum", "all_electron", "soH", 
+            "nonlocalH", "localH", "AtomicPotential", "band_structure",
+            "extract_bg", 'ExtractBS', 'KEscan', 'KPoints', 'KGrid', 
+            'ReducedKGrid', 'ReducedKDensity', 'BPoints', 'ReducedBPoints', 
+            'soH', 'nonlocalH', 'localH', 'folded_spectrum', 'all_electron',
+            'read_input', 'exec_input']
 
 from ..opt import __load_escan_in_global_namespace__
 from lada import lada_with_mpi
@@ -19,13 +20,14 @@ if lada_with_mpi:
     import _escan
     _setdlopenflags(flags)
   else: import _escan
-from _bandstructure import band_structure, Extract as ExtractBS
+from _bandstructure import band_structure, Extract as ExtractBS, BPoints, ReducedBPoints
 from _bandgap import bandgap, extract as extract_bg
 from _extract import Extract, MassExtract
 from _extract import Extract as _EscanExtract
 from functional import Escan, folded_spectrum, all_electron
 from _potential import soH, nonlocalH, localH, AtomicPotential
-from kescan import KEscan, KGrid, ReducedKGrid, KPoints, ReducedKDensity
+from kescan import KEscan, Extract as KExtract
+from kpoints import KGrid, ReducedKGrid, KPoints, ReducedKDensity
 
 
 def call_escan(comm, atom="atom_input", pot="pot_input", escan="escan_input"):
@@ -103,7 +105,6 @@ def call_escan(comm, atom="atom_input", pot="pot_input", escan="escan_input"):
 
 def exec_input(filepath = "input.py", namespace = None):
   """ Executes an input script including namespace for escan/vff. """ 
-  from ..jobs import JobDict
   from ..vff import Vff
   from ..opt import exec_input
   from . import Escan, soH, nonlocalH, localH, folded_spectrum, all_electron
@@ -116,7 +117,6 @@ def exec_input(filepath = "input.py", namespace = None):
 
 def read_input(filepath = "input.py", namespace = None, name=None):
   """ Reads an input file including namespace for escan/vff. """ 
-  from ..jobs import JobDict
   from ..vff import Vff
   from ..opt import read_input
   from . import Escan, soH, nonlocalH, localH, folded_spectrum, all_electron
