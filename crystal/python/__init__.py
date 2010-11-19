@@ -482,6 +482,36 @@ def structure_to_lattice(structure):
 
 Structure.to_lattice = structure_to_lattice
 
+def lattice_to_structure(lattice, cell=None, subs=None):
+  """ Creates a structure from a lattice.
+
+      :Parameters:
+        lattice : `Lattice`
+          Input lattice from which to create structure.
+        cell : None or 3x3 sequence
+          If None, will create structure with primitive cell. Otherwise, will
+          create supercell. In the latter case, the cell should be in cartesian
+          coordinates (not in lattice vector coordinates).
+        subs : None or dict
+          If a dictionary, then substitutes atomic species in the lattice  with
+          other atomic types. E.g. ``subs={'A':'Si'}`` will substitute 'A' in
+          the lattice with 'Si' in the structure. If the lattice site can
+          accomodate more than one atom than the last match will count.
+  """
+  from numpy import array
+  from . import fill_structure
+  if cell  == None: cell = lattice.cell
+  else: cell = array(cell, dtype='float64').reshape((3,3))
+  if subs == None: subs = {}
+
+  result = fill_structure(cell, lattice)
+  for key, value in subs.items():
+    for atom in result.atoms:
+      if key in lattice.sites[atom.site].type: atom.type = value
+  return result
+Lattice.to_structure = lattice_to_structure
+
+
 
 def vasp_ordered(structure, attributes=None):
   """ Returns  a structure with correct VASP order of ions.

@@ -32,7 +32,7 @@ class Escan(object):
       assert workdir == None, ValueError("Cannot use both workdir and inplace attributes.")
 
     self.vff = Vff() 
-    """ The L{Vff} functional with which to relax a structure. """
+    """ The `Vff` functional with which to relax a structure. """
     self.OUTCAR = "escan_out" 
     """ Escan output file. """
     self.ERRCAR = "escan_err"
@@ -69,7 +69,7 @@ class Escan(object):
         2pi/structure.scale. However, since relaxation will deform the BZ, the
         kpoint given to escan is the one deformed to the relaxed BZ. E.g, the
         meaning of [1,0,0] stays [1,0,0], despite possible relaxation. To turn
-        this behavior off, use self.L{_dont_deform_kpoint}.
+        this behavior off, use `do_relax_kpoint`.
     """
     self.potential = soH
     """ Type of hamiltonian to use. """
@@ -118,14 +118,25 @@ class Escan(object):
     """ Private reference to the genpot input file. """
     self._FUNCCAR = "ESCANCAR"
     """ Private reference to the functional pickle. """
-    self._dont_deform_kpoint = False
+    self.do_relax_kpoint = False
     """ Whether *not* to deform kpoints from input cell to relaxed cell.
 
-        Default is True. Relaxed cell is taken from self.L{_POSCAR}
+        Default is True. Relaxed cell is taken from `_POSCAR`
     """
     self.print_from_all = False
     """ If True, each node will print. """
 
+
+  @property
+  def _dont_deform_kpoint(self):
+    from warnings import warn
+    warn('_dont_deform_kpoint is deprecated in favor of do_relax_kpoint.', DeprecationWarning)
+    return self.do_relax_kpoint
+  @_dont_deform_kpoint.setter
+  def _dont_deform_kpoint(self, value):
+    from warnings import warn
+    warn('_dont_deform_kpoint is deprecated in favor of do_relax_kpoint.', DeprecationWarning)
+    self.do_relax_kpoint = value
 
   @property
   def maskr(self): 
@@ -222,6 +233,7 @@ class Escan(object):
       result += "functional.{0: <{1}} = {2}\n"\
                 .format('workdir', max_length, repr(self._workdir.unexpanded))
     result += string.format(**values)
+    result += 'functional.{0: <{1}} = {2}\n'.format('maskr', max_length, self._maskr.repr())
     result += _string.format(**values)
     result += "# End of escan definition."
 
@@ -266,7 +278,7 @@ class Escan(object):
       else: raise NameError( "%s attribute unknown of escan." % (key) )
 
     # checks if outdir contains a successful run.
-    does_exist = exist(outdir) if is_root else None
+    does_exist = exists(outdir) if is_root else None
     if is_mpi: 
       from boost.mpi import broadcast
       does_exist, overwrite = broadcast(comm, (does_exist, overwrite), 0)
@@ -457,6 +469,7 @@ class Escan(object):
 
     copyfile(self.maskr, nothrow='same', comm=comm)
 
+    local_comm = comm
     if is_mpi: # finds larges acceptable number of processors. 
       fftsize = self.fft_mesh[0] * self.fft_mesh[1] * self.fft_mesh[2]
       for m in range(comm.size, 0, -1):
@@ -465,8 +478,8 @@ class Escan(object):
       local_comm = self.comm.split(0 if norun else 1)
     if norun == True: return
     with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 
-      assert is_mpi, RuntimeError('Cannot run genpot with lada_with_mpi == False.')
-      from .._escan import _call_genpot
+      assert comm != None, RuntimeError('Cannot run genpot with lada_with_mpi == False.')
+      from ._escan import _call_genpot
       _call_genpot(local_comm)
 
 
@@ -548,6 +561,7 @@ class Escan(object):
     is_mpi  = False if comm == None else comm.size > 1
     is_root = True if is_mpi else comm.rank == 0
     self._write_incar(comm, structure, norun)
+    local_comm = comm
     if is_mpi: # finds larges acceptable number of processors. 
       fftsize = self.fft_mesh[0] * self.fft_mesh[1] * self.fft_mesh[2]
       for m in range(comm.size, 0, -1):
@@ -556,45 +570,41 @@ class Escan(object):
       local_comm = self.comm.split(0 if norun else 1)
     if norun == True: return
     with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 
-      assert is_mpi, RuntimeError('Cannot run escan without mpi communicator.')
-      from .._escan import _call_escan
+      assert comm != None, RuntimeError('Cannot run escan without mpi communicator.')
+      from ._escan import _call_escan
       _call_escan(comm)
 
   def _get_kpoint(self, structure, comm, norun):
     """ Returns deformed or undeformed kpoint. """
-    from numpy import abs, sum, zeros, array
-    from ..crystal import deform_kpoint
+    from numpy import abs, sum, zeros, array, all, dot
+    from numpy.linalg import inv
     from quantities import angstrom
     from ..physics import a0
-    if norun == True:
-      return 1, self.kpoint[0], self.kpoint[1], self.kpoint[2],\
-             structure.scale / float(a0.rescale(angstrom))
-    if self._dont_deform_kpoint:
-      return 1, self.kpoint[0], self.kpoint[1], self.kpoint[2],\
-             structure.scale / float(a0.rescale(angstrom))
+    from ..crystal import into_voronoi
     # first get relaxed cell
-    relaxed = zeros((3,3), dtype="float64")
-    is_mpi  = comm != None
-    is_root = comm.rank == 0 if is_mpi else True
-    if is_root:
+    if norun == True: relaxed = structure.cell.copy()
+    else:
+      relaxed = zeros((3,3), dtype="float64")
+      is_mpi  = comm != None
+      is_root = comm.rank == 0 if is_mpi else True
+      if is_root:
+        if is_mpi:
+          from boost.mpi import world
+          POSCAR = "{0}.{1}".format(self._POSCAR, world.rank)
+        else: POSCAR = "{0}.0".format(self._POSCAR)
+        with open(POSCAR, "r") as file:
+          file.readline() # number of atoms.
+          # lattice vector by lattice vector
+          for i in range(3): 
+            relaxed[:,i] = array([float(u) for u in file.readline().split()[:3]])
+        relaxed = relaxed / structure.scale * float(a0.rescale(angstrom))
       if is_mpi:
-        from boost.mpi import world
-        POSCAR = "{0}.{1}".format(self._POSCAR, world.rank)
-      else: POSCAR = "{0}.0".format(self._POSCAR)
-      with open(POSCAR, "r") as file:
-        file.readline() # number of atoms.
-        # lattice vector by lattice vector
-        for i in range(3): 
-          relaxed[:,i] = array([float(u) for u in file.readline().split()[:3]])
-      relaxed = relaxed / structure.scale * float(a0.rescale(angstrom))
-    if is_mpi:
-      from boost.mpi import broadcast
-      relaxed = broadcast(comm, relaxed, 0)
+        from boost.mpi import broadcast
+        relaxed = broadcast(comm, relaxed, 0)
+
     input = structure.cell 
-    # no relaxation.
-    if sum( abs(input - relaxed) ) < 1e-11:
-      return 1, self.kpoint[0], self.kpoint[1], self.kpoint[2],\
-             structure.scale / float(a0.rescale(angstrom))
-    kpoint = deform_kpoint(self.kpoint, input, relaxed)
-    return 1, kpoint[0], kpoint[1], kpoint[2],\
-           structure.scale / float(a0.rescale(angstrom))
+    if (norun != True) and self.do_relax_kpoint and any(abs(relaxed-input) > 1e-12):
+      kpoint = dot(dot(relaxed.T, inv(input.T)), self.kpoint)
+      kpoint = into_voronoi(self.kpoint, relaxed)
+    else: kpoint = self.kpoint
+    return 1, kpoint[0], kpoint[1], kpoint[2], structure.scale / float(a0.rescale(angstrom))

@@ -1,4 +1,7 @@
 """ Holds base classes and mixins for extraction objects. """
+__docformat__ = "restructuredtext en"
+__all__ = ['AbstractExtratBase', 'OutcarSearchMixin']
+from .decorators import broadcast_result
 
 class AbstractExtractBase(object):
   """ Abstract base class for extraction classes. 
@@ -101,7 +104,7 @@ class AbstractExtractBase(object):
     from os.path import relpath
     return "{0}(\"{1}\")".format(self.__class__.__name__, self._directory.unexpanded)
 
-def _search_factory(name, filename):
+def _search_factory(name, filename, module):
   """ Factory to create Mixing classes capable of search a given file. """
   doc = \
     """ A mixin to include standard methods to search {0}.
@@ -171,7 +174,8 @@ def _search_factory(name, filename):
             _rsearch_OUTCAR.__name__: _rsearch_OUTCAR,
             _find_first_OUTCAR.__name__: _find_first_OUTCAR,
             _find_last_OUTCAR.__name__: _find_last_OUTCAR,\
-            '__doc__': doc }
-  return types(name, [], attrs)
+            '__doc__': doc,
+            '__module__': module }
+  return type(name, (), attrs)
 
-OutcarSearchMixin = _search_factory('OutcarSearchMixin', 'OUTCAR')
+OutcarSearchMixin = _search_factory('OutcarSearchMixin', 'OUTCAR', __module__)

@@ -15,6 +15,24 @@ def _get_script_text(file, name):
     lines += line
   return lines
 
+def exec_input(filepath = "input.py", namespace = None):
+  """ Executes an input script including namespace for escan/vff. """ 
+  from ..opt import exec_input
+
+  dictionary = { "Vff": Vff }
+  if namespace != None: dictionary.update(namespace)
+  return exec_input(filepath, dictionary)
+
+def read_input(filepath = "input.py", namespace = None, name=None):
+  """ Reads an input file including namespace for escan/vff. """ 
+  from ..opt import read_input
+
+  dictionary = { "Vff": Vff }
+  if namespace != None:
+    dictionary.update(namespace)
+    if name == None and hasattr(namespace, '__name__'): namee = namespace.__name__
+  return read_input(filepath, dictionary)
+
 class Extract(AbstractExtractBase):
   """ Extracts vff results from output file. """
   def __init__(self, directory = None, comm = None, vff = None):
@@ -29,6 +47,14 @@ class Extract(AbstractExtractBase):
     self.FUNCCAR = vff._FUNCCAR if vff != None else Vff()._FUNCCAR
     """ Pickle filename for the functional. """
 
+  def __outcar__(self):
+    """ Path to OUTCAR. """
+    from os.path import exists, join, isfile
+    path = join(self.directory, self.OUTCAR)
+    assert exists(path), IOError('Path {0} does not exist.'.format(path))
+    assert isfile(path), IOError('Path {0} is not a file.'.format(path))
+    return open(path, 'r')
+
     
   @property
   @broadcast_result(attr=True, which=0)
@@ -37,14 +63,11 @@ class Extract(AbstractExtractBase):
         
         At this point, checks for files and 
     """
-    from os.path import exists, join
-    path = self.OUTCAR
-    if len(self.directory): path = join(self.directory, self.OUTCAR)
-    if not exists(path): return False
-
-    with open(path, "r") as file:
-      for line in file:
-        if line.find("# Computed VFF in:") != -1: return True
+    try:
+      with self.__outcar__() as file:
+        for line in file:
+          if line.find("# Computed VFF in:") != -1: return True
+    except: pass
     return False
  
   @property
@@ -52,33 +75,31 @@ class Extract(AbstractExtractBase):
   @broadcast_result(attr=True, which=0)
   def structure(self):
     """ Greps structure from self.L{OUTCAR}. """
-    from os.path import exists, join
-    from ..crystal import Structure
-    path = self.OUTCAR
-    if len(self.directory): path = join(self.directory, self.OUTCAR)
-    assert exists(path), RuntimeError("Could not find file %s:" % (path))
-
-    with open(path, "r") as file:
+    with self.__outcar__() as file:
       # find start of calculations.
       for line in file:
         if line.find("# Result of VFF calculations.") != -1: break
       script = _get_script_text(file, "Structure")
-    local_dict = {"Structure": Structure}
-    exec script in globals(), local_dict
-    return local_dict["structure"]
+    return exec_input(script).structure
 
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def input_structure(self):
+    """ Greps input structure from self.L{OUTCAR}. """
+    with self.__outcar__() as file:
+      # find start of calculations.
+      for line in file:
+        if line.find("# Input Structure.") != -1: break
+      script = _get_script_text(file, "Structure")
+    return exec_input(script).structure
 
   @property
   @make_cached
   @broadcast_result(attr=True, which=0)
   def energy(self):
     """ Greps energy from self.L{OUTCAR}. """
-    from os.path import exists, join
-    path = self.OUTCAR
-    if len(self.directory): path = join(self.directory, self.OUTCAR)
-    assert exists(path), RuntimeError("Could not find file %s:" % (path))
-
-    with open(path, "r") as file:
+    with self.__outcar__() as file:
       # find start of calculations.
       for line in file:
         if line.find("# Result of VFF calculations.") != -1: break
@@ -93,14 +114,8 @@ class Extract(AbstractExtractBase):
   @broadcast_result(attr=True, which=0)
   def stress(self):
     """ Greps stress from self.L{OUTCAR}. """
-    from os.path import exists, join
-    from numpy import array
-    path = self.OUTCAR
-    if len(self.directory): path = join(self.directory, self.OUTCAR)
-    assert exists(path), RuntimeError("Could not find file %s:" % (path))
-
     result = []
-    with open(path, "r") as file:
+    with self.__outcar__() as file:
       # find start of calculations.
       for line in file:
         if line.find("# Result of VFF calculations.") != -1: break
@@ -123,31 +138,18 @@ class Extract(AbstractExtractBase):
   @broadcast_result(attr=True, which=0)
   def lattice(self):
     """ Greps lattice from self.L{OUTCAR}. """
-    from os.path import exists, join
     from lada.crystal import Lattice
-
-    path = self.OUTCAR
-    if len(self.directory): path = join(self.directory, self.OUTCAR)
-    assert exists(path), RuntimeError("Could not find file %s:" % (path))
-    with open(path, "r") as file: script = _get_script_text(file, "Lattice")
-    local_dict = {"Lattice": Lattice}
-    exec script in globals(), local_dict
-    return local_dict["lattice"]
+    with self.__outcar__() as file: script = _get_script_text(file, "Lattice")
+    return exec_input(script).lattice
 
   @property
   @make_cached
   @broadcast_result(attr=True, which=0)
   def minimizer(self):
     """ Greps minimizer from self.L{OUTCAR}. """
-    from os.path import exists, join
     from ..minimizer import Minimizer
-    path = self.OUTCAR
-    if len(self.directory): path = join(self.directory, self.OUTCAR)
-    assert exists(path), RuntimeError("Could not find file %s:" % (path))
-    with open(path, "r") as file: script = _get_script_text(file, "Minimizer")
-    local_dict = {"Minimizer": Minimizer}
-    exec script in globals(), local_dict
-    return local_dict["minimizer"]
+    with self.__outcar__() as file: script = _get_script_text(file, "Minimizer")
+    return exec_input(script).minimizer
 
   @property
   @make_cached
@@ -168,19 +170,13 @@ class Extract(AbstractExtractBase):
       else: return result
 
     # tries to read from outcar.
-    path = self.OUTCAR
-    if len(self.directory): path = join(self.directory, self.OUTCAR)
-    assert exists(path), RuntimeError("Could not find file %s:" % (path))
-
     @broadcast_result(attr=True, which=0) # easier to broadcast this way.
     def get_vff(this):
-      with open(path, "r") as file: return _get_script_text(file, "Vff")
+      with self.__outcar__() as file: return _get_script_text(file, "Vff")
 
     local_dict = {"lattice": self.lattice, "array": array, "minimizer": self.minimizer, "Vff": Vff}
-    exec get_vff(self) in globals(), local_dict
-    
-    return local_dict["vff_functional"] if "vff_functional" in local_dict \
-           else local_dict["functional"]
+    input = exec_input(get_vff(self))
+    return input,vff_functional if "vff_functional" in input else input.functional
 
   def write_escan_input(self, filepath, structure = None):
     """ Prints escan input to file. """
@@ -327,7 +323,8 @@ class Vff(object):
     if args[0] > args[2]: name = "%s-%s-%s" % (args[2], args[1], args[0])
 
     params = [u for u in args[3]]
-    assert len(params) <= 7 and len(params) > 0, RuntimeError("To few or too many parameters: %s." % (params))
+    assert len(params) <= 7 and len(params) > 0,\
+           RuntimeError("To few or too many parameters: %s." % (params))
     if name in self.angles: # replaces none value with known value
       for old, new in zip(self.angles[name], params):
         if old == None: old = new
@@ -336,7 +333,8 @@ class Vff(object):
 
     self.angles[name] = params
     
-  def set_angle(self, A, B, C, gamma = None, sigma = None, a2 = None, a3 = None, a4 = None, a5 = None, a6 = None):
+  def set_angle(self, A, B, C, gamma = None, sigma = None, a2 = None,\
+                      a3 = None, a4 = None, a5 = None, a6 = None):
     """ Adds/Modifies the angle parameter dictionary.
     
         @param A: Endpoint specie.
@@ -417,6 +415,7 @@ class Vff(object):
     from copy import deepcopy
     from os import getcwd
     from os.path import exists, isdir, abspath, expanduser
+    from .. import lada_with_mpi
     from ..opt.changedir import Changedir
 
     if lada_with_mpi and comm == None: 
@@ -463,7 +462,7 @@ class Vff(object):
     if comm == None: comm = world
 
     # checks if outdir contains a (wanted) successful run.
-    does_exist = exist(outdir) if is_root else None
+    does_exist = exists(outdir) if is_root else None
     if is_mpi: 
       from boost.mpi import broadcast
       does_exist, overwrite = broadcast(comm, (does_exist, overwrite), 0)
@@ -480,6 +479,7 @@ class Vff(object):
         # now for some input variables
         print >> file, "# VFF calculation on ", time.strftime("%m/%d/%y", local_time),\
                        " at ", time.strftime("%I:%M:%S %p", local_time)
+        print >> file, "# Input Structure.\n{0}\n".format(repr(structure))
         if len(structure.name) != 0: print "# Structure named ", structure.name 
         print >> file, repr(this)
         print >> file, "# Performing VFF calculations. "

@@ -3,11 +3,11 @@ __docformat__ = "restructuredtext en"
 __all__ = ['Extract', 'MassExtract']
 
 from ..opt.decorators import broadcast_result, make_cached
-from ..opt import AbstractExtractBase
+from ..opt import AbstractExtractBase, OutcarSearchMixin
 from ..jobs import AbstractMassExtractDirectories
 
 
-class Extract(AbstractExtractBase):
+class Extract(AbstractExtractBase, OutcarSearchMixin):
   """ A class to extract data from ESCAN output files. 
   
       This class helps to extract information from the escan output, including
@@ -44,6 +44,16 @@ class Extract(AbstractExtractBase):
     """ Pickle to FUNCCAR. """
     self.comm = comm
 
+  def __funccar__(self):
+    """ Returns path to FUNCCAR file.
+
+        :raise IOError: if the FUNCCAR file does not exist. 
+    """
+    from os.path import exists, join
+    path = join(self.directory, self.FUNCCAR)
+    if not exists(path): raise IOError("Path {0} does not exist.\n".format(path))
+    return open(path, 'r')
+
   @property 
   def comm(self):
     """ Communicator over which to sync output. """
@@ -51,6 +61,17 @@ class Extract(AbstractExtractBase):
   @comm.setter
   def comm(self, value):
     if hasattr(self, "_vffout"): self._vffout.comm = value
+
+  @property
+  def kpoint(self):
+    """ K-point in this calculation. """
+    from numpy import array
+    from quantities import eV
+    regex = r'\s*ikpt,akx,aky,akz\s+(\d+)\s+(\S+)\s+(\S+)\s+(\S+)'
+    result = self._find_first_OUTCAR(regex)
+    assert result != None,\
+           RuntimeError('Could not find kpoint in file {0};'.format(self.__outcar__().name))
+    return array([result.group(1), result.group(2), result.group(3)]) 
 
   
   def __directory__hook__(self):
@@ -91,18 +112,18 @@ class Extract(AbstractExtractBase):
         At this point, checks for files and 
     """
     from os.path import exists, join
-    path = join(self.directory, self.OUTCAR) if len(self.directory) else self.OUTCAR
-    if not exists(path): return False
 
-    good = 0
-    is_do_escan = True
-    with open(path, "r") as file:
-      for line in file:
-        if line.find("FINAL eigen energies, in eV") != -1: good += 1
-        if line.find("functional.do_escan              =") != -1:
-          is_do_escan = eval(line.split()[-1])
-        if line.find("# Computed ESCAN in:") != -1: good += 1; break
-    return (good == 2 and is_do_escan) or (good == 1 and not is_do_escan)
+    try:
+      good = 0
+      is_do_escan = True
+      with self.__outcar__() as file:
+        for line in file:
+          if line.find("FINAL eigen energies, in eV") != -1: good += 1
+          if line.find("functional.do_escan              =") != -1:
+            is_do_escan = eval(line.split()[-1])
+          if line.find("# Computed ESCAN in:") != -1: good += 1; break
+      return (good == 2 and is_do_escan) or (good == 1 and not is_do_escan)
+    except: return False
 
   @property
   @make_cached
@@ -117,21 +138,16 @@ class Extract(AbstractExtractBase):
     
     # tries to read from pickle.
     path = self.FUNCCAR
-    if len(self.directory): path = join(self.directory, self.FUNCCAR)
-    if exists(path):
-      try:
-        with open(path, "r") as file: result = load(file)
-      except: pass 
-      else: return result
+    try:
+      with self.__funccar__() as file: result = load(file)
+    except: pass 
+    else: return result
+
 
     # tries to read from outcar.
-    path = self.OUTCAR
-    if len(self.directory): path = join(self.directory, self.OUTCAR)
-    assert exists(path), RuntimeError("Could not find file %s:" % (path))
-
     @broadcast_result(attr=True, which=0)
     def get_functional(this):
-      with open(path, "r") as file: return _get_script_text(file, "Escan")
+      with self.__outcar__() as file: return _get_script_text(file, "Escan")
     local_dict = { "lattice": self.lattice, "minimizer": self.minimizer,\
                    "vff_functional": self.vff, "Escan": Escan, "localH": localH,\
                    "nonlocalH": nonlocalH, "soH": soH, "AtomicPotential":AtomicPotential,\
@@ -155,7 +171,7 @@ class Extract(AbstractExtractBase):
     seul = self.solo()
     if seul.escan.nbstates  ==   1: return False
     if seul.escan.potential != soH: return True
-    return norm(seul.escan.kpoint) < 1e-12
+    return norm(seul.kpoint) < 1e-12
 
 
   @property 
@@ -348,7 +364,7 @@ class Extract(AbstractExtractBase):
         path = join(self.directory, self.escan.WAVECAR)
         assert exists(path), IOError("{0} does not exist.".format(path))
         self.escan._write_incar(self.comm, self.structure)
-        nbstates = self.escan.nbstates if self.escan.potential == soH and norm(self.escan.kpoint)\
+        nbstates = self.escan.nbstates if self.escan.potential == soH and norm(self.kpoint)\
                    else self.escan.nbstates / 2
         result = read_wavefunctions(self.escan, range(nbstates), comm)
         remove(self.escan._INCAR + "." + str(world.rank))
@@ -411,7 +427,7 @@ class Extract(AbstractExtractBase):
     """ True if wavefunction is a spinor. """
     from numpy.linalg import norm
     from . import soH
-    return norm(self.escan.kpoint) < 1e-12
+    return norm(self.kpoint) < 1e-12
 
 
 
@@ -439,6 +455,9 @@ class Extract(AbstractExtractBase):
 
 
 class MassExtract(AbstractMassExtractDirectories):
+  """ Extracts all escan calculations nested within a given input directory. """
+  Extract = staticmethod(Extract)
+  """ Extraction object for a single calculation. """
   def __init__(self, path = ".", **kwargs):
     """ Initializes AbstractMassExtractDirectories.
     
@@ -456,14 +475,27 @@ class MassExtract(AbstractMassExtractDirectories):
     # this will throw on unknown kwargs arguments.
     if 'Extract' not in kwargs: kwargs['Extract'] = Extract
     super(MassExtract, self).__init__(path, **kwargs)
+    del self.__dict__['Extract']
 
-    self.OUTCAR = Extract().OUTCAR
+    self.OUTCAR = self.Extract().OUTCAR
     """ Name of the escan output file. """
-    self.vffOUTCAR = Extract()._vffout.OUTCAR
-    """ Name of the vff output file. """
-    self.FUNCCAR = Extract().FUNCCAR
+    self.FUNCCAR = self.Extract().FUNCCAR
     """ Name of the escan input pickle. """
 
+  def __iter_alljobs__(self):
+    """ Goes through all directories with a contcar. """
+    from os import walk, getcwd
+    from os.path import abspath, relpath, abspath, join
+
+    for dirpath, dirnames, filenames in walk(self.rootdir, topdown=True, followlinks=True):
+      if not self.__is_calc_dir__(dirpath, dirnames, filenames): continue
+
+      try: result = self.Extract(join(self.rootdir, dirpath), comm = self.comm)
+      except: continue
+
+      result.OUTCAR = self.OUTCAR
+      result.FUNCCAR = self.FUNCCAR
+      yield join('/', relpath(dirpath, self.rootdir)), result
   def __is_calc_dir__(self, dirpath, dirnames, filenames):
     """ Returns true this directory contains a calculation. """
     return self.OUTCAR in filenames or self.vffOUTCAR in filenames or self.FUNCCAR in filenames
