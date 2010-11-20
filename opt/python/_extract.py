@@ -69,6 +69,7 @@ class AbstractExtractBase(object):
 
   def __copy__(self):
     """ Returns a shallow copy of this object. """
+    from . import RelativeDirectory
     result = self.__class__()
     result.__dict__ = self.__dict__.copy()
     result._directory = RelativeDirectory( self._directory.path,\
@@ -180,4 +181,4 @@ def _search_factory(name, filename, module):
             '__module__': module }
   return type(name, (), attrs)
 
-OutcarSearchMixin = _search_factory('OutcarSearchMixin', 'OUTCAR', __module__)
+OutcarSearchMixin = _search_factory('OutcarSearchMixin', 'OUTCAR', __name__)
