@@ -28,11 +28,15 @@ class KEscan(Escan):
     if kpoints == None: kpoints, multiplicity = [[0,0,0]], [1]
     if not hasattr(kpoints, '__call__'): self.kpoints = KContainer(kpoints, multiplicity)
     Escan.__init__(self)
+    """ True if performing calculation on single point. """
 
   # need jobs package to run this code.
   if 'jobs' in all_lada_packages: 
-    def __call__(self, structure, outdir=None, comm=None, **kwargs):
+    def __call__(self, structure, outdir=None, comm=None, _in_call=False, **kwargs):
       """ Performs calculcations. """
+      if _in_call == True: # single calculation.
+        return Escan.__call__(self, structure, outdir, comm, **kwargs)
+
       from os.path import join
       from ..jobs import JobDict, Bleeder
 
@@ -43,35 +47,37 @@ class KEscan(Escan):
       is_root = True if not is_mpi else comm.rank == 0
 
       # performs vff calculations
-      if kwargs.get('vffrun', None) == None: 
+      vffrun = kwargs.get('vffrun', None)
+      if vffrun == None: 
         vffrun = Escan.__call__(self, structure, outdir, comm, do_escan=False, **kwargs)
-        if kwargs.get('genpotrun', None) == None: kwargs['genpotrun'] = vffrun
-        if kwargs.get('vffrun', None) == None: kwargs['vffrun'] = vffrun
+        kwargs.pop('vffrun', None)
+        if kwargs.get('genpotrun', None) == None: kwargs.pop('genpotrun', None)
   
       # create list of kpoints.
-      kpoints = self._interpret_kpoints(kpoints, kwargs['vffrun'])
+      kpoints = self._interpret_kpoints(kpoints, vffrun)
       # checks for 
       if len(kpoints) == 1:
-        kwargs['kpoint'] = kpoints[0]
-        result = super(KEscan, self).__call__(structure, outdir, comm, *args, **kwargs)
-        return result
+        return self(structure, outdir, comm, _in_call=True, kpoint=kpoints[0], **kwargs)
 
       jobdict = JobDict()
       for i, kpoint in enumerate(kpoints):
         job = jobdict / 'kpoint_{0}'.format(i)
         job.functional = self
-        job.jobparams = kwargs.copy()
         job.jobparams['kpoint'] = kpoint
         job.jobparams['structure'] = structure
         job.jobparams['do_relax_kpoint'] = do_relax_kpoint
         job.jobparams['outdir'] = join(outdir, job.name[1:])
+        job.jobparams['_in_call'] = True
+        if kwargs.get('genpotrun', None) == None: job.jobparams['genpotrun'] = vffrun
+        if kwargs.get('vffrun', None) == None:    job.jobparams['vffrun']    = vffrun
       
-      kwargs['vffrun'].jobdict = jobdict
       bleeder = Bleeder(jobdict, self._pools(len(kpoints), comm), comm)
-      for value, job in bleeder.itercompute(): continue
+      for result, job in bleeder.itercompute(**kwargs): continue
       bleeder.cleanup()
 
-      return Extract(outdir, comm)
+      result = Extract(outdir, comm)
+      result.jobdict = jobdict
+      return result
 
   # otherwise, will drop out on call.
   else: 
@@ -136,7 +142,7 @@ class KEscan(Escan):
 class Extract(EscanMassExtract):
   """ Extraction class for KEscan. """
 
-  def __init__(self, directory=None, comm=None, unreduced=True, **kwargs):
+  def __init__(self, directory=None, comm=None, unreduce=True, **kwargs):
     """ Initializes the extraction object. """
     EscanMassExtract.__init__(self, directory, comm=comm, **kwargs)
     self.unreduce = unreduce

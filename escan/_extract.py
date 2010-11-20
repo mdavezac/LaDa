@@ -166,12 +166,12 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
   @property
   def _double_trouble(self):
     """ Returns true, if non-spin polarized or Kammer calculations. """
-    from numpy.linalg import norm
+    from numpy import all, abs
     from . import soH
     seul = self.solo()
     if seul.escan.nbstates  ==   1: return False
     if seul.escan.potential != soH: return True
-    return norm(seul.kpoint) < 1e-12
+    return all(abs(seul.kpoint) < 1e-12)
 
 
   @property 
@@ -477,25 +477,20 @@ class MassExtract(AbstractMassExtractDirectories):
     super(MassExtract, self).__init__(path, **kwargs)
     del self.__dict__['Extract']
 
-    self.OUTCAR = self.Extract().OUTCAR
-    """ Name of the escan output file. """
-    self.FUNCCAR = self.Extract().FUNCCAR
-    """ Name of the escan input pickle. """
-
   def __iter_alljobs__(self):
     """ Goes through all directories with a contcar. """
     from os import walk, getcwd
     from os.path import abspath, relpath, abspath, join
 
+    OUTCAR = self.Extract().OUTCAR
     for dirpath, dirnames, filenames in walk(self.rootdir, topdown=True, followlinks=True):
-      if not self.__is_calc_dir__(dirpath, dirnames, filenames): continue
+      if self.OUTCAR in filename: continue
 
       try: result = self.Extract(join(self.rootdir, dirpath), comm = self.comm)
       except: continue
 
-      result.OUTCAR = self.OUTCAR
-      result.FUNCCAR = self.FUNCCAR
       yield join('/', relpath(dirpath, self.rootdir)), result
+      
   def __is_calc_dir__(self, dirpath, dirnames, filenames):
     """ Returns true this directory contains a calculation. """
-    return self.OUTCAR in filenames or self.vffOUTCAR in filenames or self.FUNCCAR in filenames
+    raise 

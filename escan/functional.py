@@ -489,6 +489,7 @@ class Escan(object):
     from numpy.linalg import norm
     from quantities import eV
     from ..physics import Ry
+    from ._potential import soH, nonlocalH, localH
     assert self.atomic_potentials != None, RuntimeError("Atomic potentials are not set.")
     # Creates temporary input file and creates functional
     kpoint = (0,0,0,0,0) if norm(self.kpoint) < 1e-12\
@@ -498,59 +499,45 @@ class Escan(object):
       incar = self._INCAR + "." + str(world.rank)
     else: incar = self._INCAR
     with open(incar, "w") as file:
-      if lada_with_mpi:
-        print >> file, "1 %s.%i" % (self._POTCAR, world.rank) 
-      else: file.write('1 {0}'.format(self.POTCAR))
-      print >> file, "2 %s" % (self.WAVECAR) 
-      print >> file, "3 %i # %s"\
-                     % ((1, "folded spectrum") if self.eref != None else (2, "all electron"))
-      eref = self.eref
+      if lada_with_mpi: file.write('1 {0}.{1}\n'.format(self._POTCAR, world.rank))
+      else:             file.write('1 {0}\n'.format(self.POTCAR))
+      file.write( '2 {0.WAVECAR}\n3 {1}\n'.format(self, 1 if self.eref != None else 2) )
+      eref = self.eref if self.eref != None else 0
       if hasattr(eref, "rescale"): eref = float(eref.rescale(eV))
       cutoff = self.cutoff
       if hasattr(cutoff, "rescale"): cutoff = float(cutoff.rescale(Ry))
-      print >> file, "4 %f %f %f %f # Eref, cutoff, smooth, kinetic scaling"\
-                     % ( eref if eref != None else 0,\
-                         self.cutoff, self.smooth, self.kinetic_scaling )
-      if self.potential != soH or norm(self.kpoint) < 1e-6: 
-        nbstates = max(1, self.nbstates/2)
-        print >> file, "5 %i # number of states" % (nbstates)
-      else:
-        assert self.nbstates > 0,\
-               ValueError("Cannot have less than 1 state (%i)." % (self.nbstates))
-        print >> file, "5 %i # number of states" % (self.nbstates)
-
-      print >> file, "6 %i %i %e # itermax, nllines, tolerance"\
-                     % (self.itermax, self.nlines, self.tolerance)
+      file.write('4 {0} {1} {2.smooth} {2.kinetic_scaling}\n'.format(eref, cutoff, self))
+      nbstates = self.nbstates
+      if self.potential != soH or norm(self.kpoint) < 1e-6: nbstates = max(1, self.nbstates/2)
+      assert nbstates > 0, ValueError("Cannot have less than 1 state ({0}).".format(nbstates))
+      file.write( '5 {0}\n6 {1.itermax} {1.nlines} {1.tolerance}\n'.format(nbstates, self))
       nowfns = self.input_wavefunctions == None
       if not nowfns: nowfns = len(self.input_wavefunctions) == 0
-      if nowfns: print >> file, "7 0 # no input wfns\n8 0 # wfns indices"
+      if nowfns: file.write('7 0\n8 0\n')
       else:
-        print >> file, "7 %i\n8 %i" % (len(self.input_wavefunctions), self.input_wavefunctions[0])
-        for u in self.input_wavefunctions[1:]:
-          print >> file, str(u),
-        print >> file
-      print >> file, "9 %s # input wavefunction filename" % (self.INWAVECAR)
-
-      print >> file, "10 0 1 1 1 0"
-      print >> file, "11 %i %f %f %f %f" % kpoint
+        file.write('7 {0}\n8 {1}'.format(len(self.input_wavefunctions), self.input_wavefunctions[0]))
+        for u in self.input_wavefunctions[1:]: file.write(' {0}'.format(u))
+        file.write('\n')
+      file.write('9 {0.INWAVECAR}\n10 0 1 1 1 0\n11 {1[0]} {1[1]} {1[2]} {1[3]} {1[4]}\n'\
+                 .format(self, kpoint))
       
-      if   self.potential == localH: print >> file, "12 1 # local hamiltonian" 
-      elif self.potential == nonlocalH: print >> file, "12 2 # non-local hamiltonian" 
-      elif self.potential == soH: print >> file, "12 3 # spin orbit hamiltonian" 
+      if   self.potential == localH:    file.write("12 1 # local hamiltonian\n")
+      elif self.potential == nonlocalH: file.write("12 2 # non-local hamiltonian\n")
+      elif self.potential == soH:       file.write("12 3 # spin orbit hamiltonian\n")
       else: raise RuntimeError("Unknown potential requested.")
       
-      if lada_with_mpi: file.write('13 {0}.{1}'.format(self._POSCAR, world.rank))
-      else:             file.write('13 {0}'.format(self._POSCAR))
-      print >> file, "14 ", self.rspace_cutoff, "# real-space cutoff" 
+      if lada_with_mpi: file.write('13 {0}.{1}\n'.format(self._POSCAR, world.rank))
+      else:             file.write('13 {0}\n'.format(self._POSCAR))
+      file.write('14 {0.rspace_cutoff}\n'.format(self))
 
-      if self.potential != soH:
-        print >> file, "15 ", 0, "# Number of spin-orbit potentials"
+      if self.potential != soH: file.write('15 0\n')
       else:
-        print >> file, "15 ", len(self.atomic_potentials), "# Number of spin-orbit potentials"
+        file.write('15 {0}\n'.format(len(self.atomic_potentials)))
         for i, pot in enumerate(self.atomic_potentials):
           filepath = basename(pot.nonlocal)
-          print >> file, i + 16, filepath, pot.get_izz(comm),\
-                         pot.s , pot.p, pot.d, pot.pnl, pot.dnl
+          file.write( '{0} {1} {2} {3} {4} {5} {6} {7}\n'\
+                      .format( i + 16, filepath, pot.get_izz(comm), \
+                               pot.s, pot.p, pot.d, pot.pnl, pot.dnl ))
 
   def _run_escan(self, comm, structure, norun):
     """ Runs escan only """

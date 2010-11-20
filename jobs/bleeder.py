@@ -120,7 +120,7 @@ class Bleeder(object):
             # Loads pickle.
             with open(self._filename, 'r') as file: jobdict = pickle_load(file)
             # Finds first untagged job.
-            for job in jobdict.values():
+            for job in jobdict.itervalues():
               if not job.is_tagged: break
             # Check we found an untagged job. Otherwise, we are done.
             if not job.is_tagged: 
@@ -152,6 +152,7 @@ class Bleeder(object):
     from os import remove
     from pickle import load as pickle_load
     from ..opt import LockFile
+    self.barrier()
     jobdict = None
     if self.is_root:
       # acquire a lock first.
