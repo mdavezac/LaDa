@@ -71,7 +71,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     result = self._find_first_OUTCAR(regex)
     assert result != None,\
            RuntimeError('Could not find kpoint in file {0};'.format(self.__outcar__().name))
-    return array([result.group(1), result.group(2), result.group(3)]) 
+    return array([result.group(1), result.group(2), result.group(3)], dtype='float64') 
 
   
   def __directory__hook__(self):
@@ -111,7 +111,9 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
         
         At this point, checks for files and 
     """
+    from re import compile
     from os.path import exists, join
+    do_escan_re = compile(r'functional\.do_escan\s*=')
 
     try:
       good = 0
@@ -119,9 +121,8 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
       with self.__outcar__() as file:
         for line in file:
           if line.find("FINAL eigen energies, in eV") != -1: good += 1
-          if line.find("functional.do_escan              =") != -1:
-            is_do_escan = eval(line.split()[-1])
-          if line.find("# Computed ESCAN in:") != -1: good += 1; break
+          elif do_escan_re.search(line) != None: is_do_escan = eval(line.split()[-1])
+          elif line.find("# Computed ESCAN in:") != -1: good += 1; break
       return (good == 2 and is_do_escan) or (good == 1 and not is_do_escan)
     except: return False
 
@@ -487,7 +488,7 @@ class MassExtract(AbstractMassExtractDirectories):
 
     OUTCAR = self.Extract().OUTCAR
     for dirpath, dirnames, filenames in walk(self.rootdir, topdown=True, followlinks=True):
-      if self.OUTCAR in filename: continue
+      if OUTCAR not in filenames: continue
 
       try: result = self.Extract(join(self.rootdir, dirpath), comm = self.comm)
       except: continue
@@ -496,4 +497,5 @@ class MassExtract(AbstractMassExtractDirectories):
       
   def __is_calc_dir__(self, dirpath, dirnames, filenames):
     """ Returns true this directory contains a calculation. """
-    raise 
+    OUTCAR = self.Extract().OUTCAR
+    return OUTCAR in filenames

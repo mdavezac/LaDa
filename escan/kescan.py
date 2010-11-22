@@ -5,6 +5,7 @@ from abc import ABCMeta, abstractmethod
 from .functional import Escan
 from .. import __all__ as all_lada_packages
 from ..opt import AbstractExtractBase
+from ..opt.decorators import make_cached
 from ._extract import MassExtract as EscanMassExtract
  
 class KEscan(Escan):
@@ -155,27 +156,42 @@ class Extract(EscanMassExtract):
 
   def __iter_alljobs__(self):
     """ Yields extraction objects for KEscan calculations. """
-    from glob import iglob, glob
+    from glob import iglob
     from re import compile
-    from os.path import isdir
+    from os.path import isdir, join, basename, relpath
 
     regex = compile(r'kpoint_(\d+)/')
-    paths = [path for path in iglob('kpoint_*/') if isdir(path) and regex.search(path) != None]
+    paths = [ path for path in iglob(join(self.rootdir, 'kpoint_*/'))\
+              if isdir(path) and regex.search(path) != None ]
     vffout = self.Extract()._vffout
+    OUTCAR = self.Extract().OUTCAR
 
     for path in sorted(paths, key=lambda x: int(regex.search(path).group(1))):
-      inpaths = glob('*')
-      dirnames =  [u for u in inpaths if isdir(u)]
-      filenames = set(inpaths) - set(dirnames)
-      if not self.__is_calc_dir__(path, dirnames, filename): continue
+      filenames = [basename(u) for u in iglob(join(path, '*')) if not isdir(u)]
+      if OUTCAR not in filenames: continue
 
-      try: result = self.Extract(join(self.rootdir, dirpath), comm = self.comm)
+      try: result = self.Extract(path, comm = self.comm)
       except: continue
 
       result._vffout = vffout
-      result.OUTCAR = self.OUTCAR
-      result.FUNCCAR = self.FUNCCAR
-      yield join('/', relpath(dirpath, self.rootdir)), result
+      yield join('/', relpath(path, self.rootdir)), result
+
+  @property 
+  def success(self):
+    """ True if jobs are successfull. """
+    return all(job.success for job in self.values())
+
+  @property
+  @make_cached
+  def structure(self):
+    """ Returns vff output structure. """
+    return self.Extract(self.rootdir, comm=self.comm)._vffout.structure
+
+  @property
+  @make_cached
+  def input_structure(self):
+    """ Returns vff output structure. """
+    return self.Extract(self.rootdir, comm=self.comm)._vffout.input_structure
 
   def __getitem__(self, name):
     """ Forks between integer and str keys. """
@@ -217,8 +233,9 @@ class Extract(EscanMassExtract):
   def eigenvalues(self):
     """ Eigenvalues across all kpoints. """
     from numpy import array
-    if len(self) == 0: return array()
-    return array((job.eigenvalues for job in self), dtype='float64') * self[0].eigenvalues.units
+    from quantities import eV
+    if len(self.values()) == 0: return array()
+    return array([job.eigenvalues.rescale(eV) for job in self.itervalues()], dtype='float64') * eV
 
   @property
   def escan(self):
@@ -231,18 +248,16 @@ class Extract(EscanMassExtract):
     """ Returns energy at vbm. """
     from numpy import array, max
     from ..crystal import nb_valence_states
-    nbe = nb_valence_states(self.vff.structure)
-    units = self.eigenvalues.itervalues().next().units
-    return max(array(self.eigenvalues.values())[:, nbe-2:nbe]) * units
+    nbe = nb_valence_states(self.structure)
+    return max(self.eigenvalues[:, nbe-2:nbe])
 
   @property
   def cbm(self): 
     """ Returns energy at vbm. """
     from numpy import array, min
     from ..crystal import nb_valence_states
-    nbe = nb_valence_states(self.vff.structure)
-    units = self.eigenvalues.itervalues().next().units
-    return min(array(self.eigenvalues.values())[:, nbe:nbe+2]) * units
+    nbe = nb_valence_states(self.structure)
+    return min(self.eigenvalues[:, nbe:nbe+2])
 
   @property 
   def directness(self):
@@ -252,6 +267,6 @@ class Extract(EscanMassExtract):
     lumo = self.cbm
     gamma = min((job for job in self.values()), key=lambda x: norm(x.escan.kpoint))
     if norm(gamma.escan.kpoint) > 1e-6: raise RuntimeError("Gamma point not found.")
-    nbe = nb_valence_states(self.vff.structure)
+    nbe = nb_valence_states(self.structure)
     cbm = min(gamma.eigenvalues[nbe], gamma.eigenvalues[nbe+1])
     return cbm - lumo

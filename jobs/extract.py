@@ -118,6 +118,9 @@ class AbstractMassExtract(object):
   def __iter__(self):
     """ Iterates through all job names. """
     for name, job in self.iteritems(): yield name
+  def __len__(self): 
+    """ Returns length of output dictionary. """
+    return len(self.keys())
 
   def _regex_pattern(self, pattern, flags=0):
     """ Returns a regular expression. """
