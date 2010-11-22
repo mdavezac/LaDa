@@ -266,7 +266,7 @@ def population_evaluation(self, evaluator, comm=None, pools=None):
   """ Chooses between MPI and serial evaluation. """
   is_serial = pools == 1 or (comm.size == 1 if comm != None else True)
   if is_serial: serial_population_evaluation(self, evaluator, comm = comm)
-  else:         bleeder_evaluation(self, evaluator, max(pools, comm.size), comm)
+  else:         bleeder_evaluation(self, evaluator, min(pools, comm.size), comm)
 
 
 class Mating(object):
