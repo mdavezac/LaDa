@@ -7,7 +7,7 @@ __all__ = [ "Extract", 'MassExtract', "bandgap", "extract_bg",
             "extract_bg", 'ExtractBS', 'KEscan', 'KPoints', 'KGrid', 
             'ReducedKGrid', 'ReducedKDensity', 'BPoints', 'ReducedBPoints', 
             'soH', 'nonlocalH', 'localH', 'folded_spectrum', 'all_electron',
-            'read_input', 'exec_input']
+            'read_input', 'exec_input', 'KExtract']
 
 from ..opt import __load_escan_in_global_namespace__
 from lada import lada_with_mpi
