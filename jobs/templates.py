@@ -36,7 +36,7 @@ def default_pbs( file, walltime = "05:45:00", mppwidth = 8, queue = None, name =
                "#PBS -o {0}/out.$PBS_JOBID\n".format(pbsdir))
   if queue != None: file.write("#PBS -q {0} \n".format(queue))
   if outdir == None: file.write("cd $PBS_O_WORKDIR\n")
-  else: file.write("#PBS -d {0}\n#PBS -D {0}\ncd $PBS_O_INITDIR\n".format(outdir))
+  else: file.write("cd {0}\n".format(outdir))
   if 'VIRTUAL_ENV' in environ:
     file.write("\nsource {0}/bin/activate \n".format(environ['VIRTUAL_ENV']) )
 

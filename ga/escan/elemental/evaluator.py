@@ -1,6 +1,7 @@
 """ Contains evaluators for ESCAN properties """
 __docformat__ = "restructuredtext en"
 from numpy import array as np_array
+from ....opt.decorators import count_calls
 
 
 __all__ = ['cound_calls', 'Bandgap', 'Dipole', 'EffectiveMass']
@@ -53,8 +54,6 @@ class Bandgap(object):
     """ Location of output directory. """
     self._lastcalcdir = None
     """ Location of last calculation. """
-    self.nbcalc = 0
-    """ Number of actual calculations. """
 
   @property 
   def outdir(self):
@@ -67,7 +66,8 @@ class Bandgap(object):
     """ Returns length of bitstring. """
     return len(self.converter)
 
-  def run( self, indiv, outdir = None, comm = None, **kwargs ):
+  @count_calls('nbcalc', 0)
+  def run(self, indiv, outdir = None, comm = None, **kwargs):
     """ Computes bandgap of an individual. 
     
         :Parameters:
@@ -125,9 +125,8 @@ class Bandgap(object):
     indiv.cbm = out.cbm
 
     if self.keep_only_last and is_root and self._lastcalcdir != None:
-      if exists(self._lastcalcdir): rmtree(join(outdir, str(i)))
+      if exists(self._lastcalcdir): rmtree(self._lastcalcdir)
     self._lastcalcdir = outdir
-    self.nbcalc += 1
     if is_mpi: comm.barrier()
     
     # returns extractor

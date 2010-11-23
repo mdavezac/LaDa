@@ -264,18 +264,22 @@ class JobDict(object):
     """
     from re import split
     from copy import deepcopy
-    from os.path import normpath, relpath
+    from os.path import normpath, relpath, dirname, basename
 
     index = normpath(index)
-    assert index not in ["", ".", None], KeyError("Will not set self.")
-    assert index[0], KeyError("Will not set root: " + index + ".")
-    assert isinstance(value, JobDict), \
-           ValueError("Only JobDict instances can be used a job dictionaries.")
+    parentpath, childpath = dirname(index), basename(index)
+    if len(parentpath) != 0: 
+      assert parentpath in self, KeyError('Could not find parent job {0}.'.format(parentpath))
+      mother = self[parentpath]
+      parent = self.parent
+      while parent != None:
+        assert parent is not mother, KeyError('Will not set parent job of current job.')
+    assert len(childpath) > 0 or childpath == '.', KeyError('Will not set current directory.')
+    assert childpath != '..', KeyError('Will not set parent directory.')
 
-    result = self.__div__(index+"/..")
-    name = relpath(index, index+"/..")
-    result.children[name] = deepcopy(value)
-    result.children[name].parent = result
+    parent = self if len(parentpath) == 0 else self[parentpath]
+    parent.children[childpath] = deepcopy(value)
+    parent.children[childpath].parent = parent
 
   def __div__(self, index): 
     """ Adds name as a subtree of self. """
@@ -422,8 +426,7 @@ class JobDict(object):
     if self.is_job: yield outdir, self
     # Walk throught children jobdict.
     for name in self.subjobs():
-      for u in self[name].iteritems(join(outdir, name)): 
-        yield u
+      for u in self[name].iteritems(join(outdir, name)): yield u
   def itervalues(self): 
     """ Iterates over all jobs. """
     for name, job in self.iteritems(): yield job
@@ -458,6 +461,7 @@ class JobDict(object):
     from re import split
     from os.path import normpath
     index = normpath(index)
+    if index == '/': return True
     if index[0] == '/': return index[1:] in self.root
     names = split(r"(?<!\\)/", index) 
     if len(names) == 0: return False
@@ -611,7 +615,7 @@ class Bleeder(object):
             # Loads pickle.
             with open(self._filename, 'r') as file: jobdict = pickle_load(file)
             # Finds first untagged job.
-            for job in jobdict.values():
+            for job in jobdict.itervalues():
               if not job.is_tagged: break
             # Check we found an untagged job. Otherwise, we are done.
             if not job.is_tagged: 
@@ -643,6 +647,7 @@ class Bleeder(object):
     from os import remove
     from pickle import load as pickle_load
     from ..opt import LockFile
+    self.barrier()
     jobdict = None
     if self.is_root:
       # acquire a lock first.
