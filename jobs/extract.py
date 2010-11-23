@@ -570,8 +570,8 @@ class AbstractMassExtractDirectories(AbstractMassExtract):
 
   def __copy__(self):
     """ Returns a shallow copy of this object. """
-    result = self.__class__(self.path)
-    for k, v in self.__dict__:
-      if k != '_rootdir': result[k] = v
-    result.dictionary = self.dictionary.copy()
+    from copy import copy
+    result = self.__class__(self.rootdir)
+    for k, v in self.__dict__.items():
+      if k != '_rootdir': result.__dict__[k] = copy(v)
     return result

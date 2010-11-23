@@ -221,19 +221,19 @@ def _reduced_grids_factory(name, base):
       for mult, kpoint_orig in base._mnk(self, input, output): 
         found = False
         kpoint = dot(deformation, kpoint_orig) if relax else kpoint
-        kpoint = into_voronoi(kpoint_orig, lattice.cell, inv_cell) 
+        kpoint = into_voronoi(kpoint, lattice.cell, inv_cell) 
         for i, (count, vec) in enumerate(seen):
           for op in lattice.space_group:
             u = zero_centered(vec-op(kpoint), lattice.cell, inv_cell)
             if all(abs(u) < self.tolerance):
               found = True
               seen[i][0] += mult
-              yield i, (mult, kpoint_orig)
+              yield i
               break
           if found: break
         if found == False:
           seen.append([mult, kpoint.copy()])
-          yield len(seen)-1, (mult, kpoint_orig)
+          yield len(seen)-1
 
     def __repr__(self):
       """ Represents this object. """
