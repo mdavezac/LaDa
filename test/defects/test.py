@@ -300,7 +300,7 @@ def charged_states(species, material, Atype, Btype):
     if hasattr(Aox, '__iter__'): Aox = Aox[0]
     if hasattr(Box, '__iter__'): Box = Box[1]
 
-  diff = Aox - Box
+  diff = Box - Aox
   if diff < 0: diff -= 1 
   else: diff += 1 
   sign = 1 if diff > 0 else -1
