@@ -20,7 +20,7 @@ if lada_with_mpi:
     import _escan
     _setdlopenflags(flags)
   else: import _escan
-from _bandstructure import band_structure, Extract as ExtractBS, BPoints, ReducedBPoints
+from _bandstructure import plot_bands, BPoints, ReducedBPoints
 from _bandgap import bandgap, extract as extract_bg
 from _extract import Extract, MassExtract
 from _extract import Extract as _EscanExtract

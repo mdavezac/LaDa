@@ -196,20 +196,24 @@ class Extract(EscanMassExtract):
   def __getitem__(self, name):
     """ Forks between integer and str keys. """
     if isinstance(name, int):
-      name = 'escan_{0}'.format(self._index(name))
-    return EscanMassself['escan_{0}'.format(value)]
+      istr, ostr = self.input_structure, self.structure
+      name = 'kpoint_{0}'.format(self._index(name, istr, ostr))
+    return EscanMassExtract.__getitem__(self, name).values()[0]
  
   def __len__(self):
     """ Number of kpoint calculations. """
-    if self._do_unreduce: return len([k for k in self.functional.mapping()])
+    if self._do_unreduce:
+      kpoints = self.functional.kpoints
+      istr, ostr = self.input_structure, self.structure
+      return len([k for m, k in kpoints.unreduced(istr, ostr)])
     return len(self.items())
 
-  def _index(self):
+  def _index(self, name, istr, ostr):
     """ Returns index, accounting for possible unreduce. """
     if name < 0: name += self.__len__()
     if name >= self.__len__() or name < 0:
       raise IndexError('Index out-of-range:{0}.'.format(name))
-    return list(self.functional.mapping())[name] if self._do_unreduce else name
+    return list(self.functional.kpoints.mapping(istr, ostr))[name] if self._do_unreduce else name
 
   def __iter__(self): 
     """ Iterates through individual kpoint calculations. """
@@ -219,28 +223,40 @@ class Extract(EscanMassExtract):
   def kpoints(self):
     """ kpoint values. """
     from numpy import array
-    return array((job.kpoint for job in self), dtype='float64')
+    if self._do_unreduce: 
+      kpoints = self.functional.kpoints
+      istr, ostr = self.input_structure, self.structure
+      return array([k for m, k in kpoints.unreduced(istr, ostr)], dtype='float64')
+    return array([job.kpoint for job in self.itervalues()], dtype='float64')
 
   @property
   def multiplicity(self):
     """ Multiplicity of the kpoints. """
     from numpy import array, ones
     if self._do_unreduce: 
-      return array((m for m in self.functional.kpoints.multiplicity), dtype='float64')
-    else: return ones((len(self),), dtype='float64') / float(len(self))
+      kpoints = self.functional.kpoints
+      istr, ostr = self.input_structure, self.structure
+      return array([m for m, k in kpoints.unreduced(istr, ostr)], dtype='float64')
+    return array((m for m in self.functional.kpoints.multiplicity), dtype='float64')
 
   @property
   def eigenvalues(self):
     """ Eigenvalues across all kpoints. """
     from numpy import array
     from quantities import eV
-    if len(self.values()) == 0: return array()
+    if len(self.values()) == 0: return array([])
+    if self._do_unreduce: 
+      kpoints = self.functional.kpoints
+      istr, ostr = self.input_structure, self.structure
+      mapping = [i for i in kpoints.mapping(istr, ostr)]
+      return array([self[i].eigenvalues.rescale(eV) for i in mapping]) * eV
+
     return array([job.eigenvalues.rescale(eV) for job in self.itervalues()], dtype='float64') * eV
 
   @property
   def escan(self):
     """ Returns functional used for calculation. """
-    for job in self.iteritems(): return job
+    for job in self.itervalues(): return job
   functional = escan
 
   @property
