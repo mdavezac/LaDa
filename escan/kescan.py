@@ -6,7 +6,7 @@ from .functional import Escan
 from .. import __all__ as all_lada_packages
 from ..opt import AbstractExtractBase
 from ..opt.decorators import make_cached
-from ._extract import MassExtract as EscanMassExtract
+from ._extract import Extract as EscanExtract
  
 class KEscan(Escan):
   """ A wrapper around Escan for computing many kpoints. """
@@ -140,94 +140,99 @@ class KEscan(Escan):
     return 'from {0.kpoints.__class__.__module__} import {0.kpoints.__class__.__name__}\n'\
            .format(self) + Escan.__repr__(self)
 
-class Extract(EscanMassExtract):
+class Extract(AbstractExtractBase):
   """ Extraction class for KEscan. """
+  Extract = staticmethod(EscanExtract)
+  """ Escan extraction object. """
 
-  def __init__(self, directory=None, comm=None, unreduce=True, **kwargs):
+  def __init__(self, directory=None, comm=None, unreduce=True):
     """ Initializes the extraction object. """
-    EscanMassExtract.__init__(self, directory, comm=comm, **kwargs)
+    AbstractExtractBase.__init__(self, directory, comm=comm)
     self.unreduce = unreduce
     """ Unreduced kpoints if True and if kpoints scheme sports a mapping method. """
+    self.__dict__['_cached_jobs'] = None
+    self._cached_jobs = []
+    """ List of cached jobs. """
 
   def _do_unreduce(self):
     """ True if should unreduce kpoints. """
     if self.unreduce == False: return False
     return hasattr(self.functional.kpoints, 'mapping')
 
-  def __iter_alljobs__(self):
-    """ Yields extraction objects for KEscan calculations. """
+  def __cache_jobs__(self):
+    """ Creates cache of extraction objects. """
     from glob import iglob
     from re import compile
     from os.path import isdir, join, basename, relpath
 
     regex = compile(r'kpoint_(\d+)/')
-    paths = [ path for path in iglob(join(self.rootdir, 'kpoint_*/'))\
+    paths = [ path for path in iglob(join(self.directory, 'kpoint_*/'))\
               if isdir(path) and regex.search(path) != None ]
-    vffout = self.Extract()._vffout
+    vffout = self.Extract(self.directory, comm=self.comm)._vffout
     OUTCAR = self.Extract().OUTCAR
 
-    for path in sorted(paths, key=lambda x: int(regex.search(path).group(1))):
+    result = []
+    for path in sorted(paths, key=lambda x: int(regex.search(x).group(1))):
       filenames = [basename(u) for u in iglob(join(path, '*')) if not isdir(u)]
       if OUTCAR not in filenames: continue
 
-      try: result = self.Extract(path, comm = self.comm)
+      try: extractor = self.Extract(path, comm = self.comm)
       except: continue
 
-      result._vffout = vffout
-      yield join('/', relpath(path, self.rootdir)), result
+      extractor._vffout = vffout
+      result.append(extractor)
+    if self._do_unreduce():
+      self._cached_jobs = []
+      for i in self.functional.kpoints.mapping(self.input_structure, self.structure):
+        self._cached_jobs.append(result[i])
+    else: self._cached_jobs = result
+    return result
+
 
   @property 
   def success(self):
     """ True if jobs are successfull. """
-    return all(job.success for job in self.values())
+    if len(self._cached_jobs) == 0: self.__cache_jobs__()
+    if len(self._cached_jobs) == 0: return False
+    return all(job.success for job in self)
 
   @property
   @make_cached
   def structure(self):
     """ Returns vff output structure. """
-    return self.Extract(self.rootdir, comm=self.comm)._vffout.structure
+    return self.Extract(self.directory, comm=self.comm)._vffout.structure
 
   @property
   @make_cached
   def input_structure(self):
     """ Returns vff output structure. """
-    return self.Extract(self.rootdir, comm=self.comm)._vffout.input_structure
+    return self.Extract(self.directory, comm=self.comm)._vffout.input_structure
 
-  def __getitem__(self, name):
+  def __getitem__(self, index):
     """ Forks between integer and str keys. """
-    if isinstance(name, int):
-      istr, ostr = self.input_structure, self.structure
-      name = 'kpoint_{0}'.format(self._index(name, istr, ostr))
-    return EscanMassExtract.__getitem__(self, name).values()[0]
+    if len(self._cached_jobs) == 0: self.__cache_jobs__()
+    return self._cached_jobs[index]
  
   def __len__(self):
     """ Number of kpoint calculations. """
-    if self._do_unreduce:
-      kpoints = self.functional.kpoints
-      istr, ostr = self.input_structure, self.structure
-      return len([k for m, k in kpoints.unreduced(istr, ostr)])
-    return len(self.items())
-
-  def _index(self, name, istr, ostr):
-    """ Returns index, accounting for possible unreduce. """
-    if name < 0: name += self.__len__()
-    if name >= self.__len__() or name < 0:
-      raise IndexError('Index out-of-range:{0}.'.format(name))
-    return list(self.functional.kpoints.mapping(istr, ostr))[name] if self._do_unreduce else name
+    if len(self._cached_jobs) == 0: self.__cache_jobs__()
+    return len(self._cached_jobs)
 
   def __iter__(self): 
     """ Iterates through individual kpoint calculations. """
-    for i in range(len(self)): yield self[i]
+    if len(self._cached_jobs) == 0: self.__cache_jobs__()
+    return self._cached_jobs.__iter__()
 
   @property
   def kpoints(self):
     """ kpoint values. """
     from numpy import array
-    if self._do_unreduce: 
+    if self._do_unreduce:
       kpoints = self.functional.kpoints
       istr, ostr = self.input_structure, self.structure
       return array([k for m, k in kpoints.unreduced(istr, ostr)], dtype='float64')
-    return array([job.kpoint for job in self.itervalues()], dtype='float64')
+    if len(self._cached_jobs) == 0: self.__cache_jobs__()
+    return array([job.kpoint for job in self], dtype='float64')
 
   @property
   def multiplicity(self):
@@ -244,19 +249,14 @@ class Extract(EscanMassExtract):
     """ Eigenvalues across all kpoints. """
     from numpy import array
     from quantities import eV
-    if len(self.values()) == 0: return array([])
-    if self._do_unreduce: 
-      kpoints = self.functional.kpoints
-      istr, ostr = self.input_structure, self.structure
-      mapping = [i for i in kpoints.mapping(istr, ostr)]
-      return array([self[i].eigenvalues.rescale(eV) for i in mapping]) * eV
-
-    return array([job.eigenvalues.rescale(eV) for job in self.itervalues()], dtype='float64') * eV
+    if len(self._cached_jobs) == 0: self.__cache_jobs__()
+    return array([job.eigenvalues.rescale(eV) for job in self], dtype='float64') * eV
 
   @property
+  @make_cached
   def escan(self):
     """ Returns functional used for calculation. """
-    for job in self.itervalues(): return job
+    return EscanExtract(self.directory, comm=self.comm).functional
   functional = escan
 
   @property

@@ -65,13 +65,16 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
   @property
   def kpoint(self):
     """ K-point in this calculation. """
-    from numpy import array
-    from quantities import eV
+    from numpy import array, zeros, pi
+    from quantities import angstrom
+    from ..physics import a0
     regex = r'\s*ikpt,akx,aky,akz\s+(\d+)\s+(\S+)\s+(\S+)\s+(\S+)'
     result = self._find_first_OUTCAR(regex)
     assert result != None,\
            RuntimeError('Could not find kpoint in file {0};'.format(self.__outcar__().name))
-    return array([result.group(1), result.group(2), result.group(3)], dtype='float64') 
+    if result.group(1) == '0': return zeros((3,), dtype='float64')
+    return array([result.group(2), result.group(3), result.group(4)], dtype='float64') / 2e0 / pi\
+           * (self.structure.scale * angstrom).rescale(a0).magnitude
 
   
   def __directory__hook__(self):
