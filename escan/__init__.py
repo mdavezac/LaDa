@@ -519,7 +519,7 @@ class Escan(object):
       POSCAR = join(self.vffrun.directory, POSCAR)
       rstr = self.vffrun.structure
       if exists(POSCAR): copyfile(POSCAR, poscar, 'same', comm)
-      else: self.vffrun.solo().write_escan_input(poscar, rstr)
+      else: self.vffrun.write_escan_input(poscar, rstr)
       VFFCOUT = self.vffrun.escan.vff._cout(comm)
       VFFCOUT = join(self.vffrun.directory, VFFCOUT)
       copyfile(VFFCOUT, self.vff._cout(comm), 'same exists null', comm)

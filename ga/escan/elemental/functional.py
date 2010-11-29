@@ -164,8 +164,11 @@ class Darwin:
         Maximizes fitness by default.
     """
     from math import fabs
-    if fabs(a.fitness - b.fitness) <  tolerance: return 0
-    return 1 if a.fitness < b.fitness else -1
+    a, b = a.fitness, b.fitness
+    if hasattr(b, 'rescale') and hasattr(a, 'magnitude'):
+      a, b = a.magnitude, b.rescale(a.units).magnitude
+    if fabs(a-b) <  tolerance: return 0
+    return 1 if a < b else -1
 
   def restart(self, outdir, comm = None):
     """ Saves current status. """
