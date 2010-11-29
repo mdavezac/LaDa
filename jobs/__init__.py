@@ -1731,7 +1731,12 @@ class JobParams(AbstractMassExtract):
 	Whereas other properties only report untagged jobs, this will report
         both.
     """
-    if value == "on" or value == True:
+    if hasattr(value, 'iteritems'):
+      for key, value in value.iteritems():
+        try: job = self[key]
+        except: continue
+        else: job.onoff = value
+    elif value == "on" or value == True:
       for name, job in self.iteritems(): job.untag()
     elif value == "off" or value == False:
       for name, job in self.iteritems(): job.tag()
