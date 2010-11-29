@@ -37,8 +37,8 @@ def default_pbs( file, walltime = "05:45:00", mppwidth = 8, queue = None, name =
   if queue != None: file.write("#PBS -q {0} \n".format(queue))
   if outdir == None: file.write("cd $PBS_O_WORKDIR\n")
   else: file.write("cd {0}\n".format(outdir))
-  if 'VIRTUAL_ENV' in environ:
-    file.write("\nsource {0}/bin/activate \n".format(environ['VIRTUAL_ENV']) )
+  for key, value in environ.items():
+    file.write("export {0}={1}\n".format(key, repr(value)))
 
   # aprun on Fucking Crays. mpirun everywhere else.
   file.write("aprun " if "NERSC_HOST" in environ else "mpirun ")
