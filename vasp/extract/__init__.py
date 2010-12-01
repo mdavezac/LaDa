@@ -27,17 +27,12 @@ class ExtractCommon(AbstractExtractBase, ExtractCommonBase, IOMixin, SearchMixin
     """
     from os.path import exists, isdir, basename, dirname
     from ...opt import RelativeDirectory
-    # checks if path or directory
-    if 'directory' in kwargs: 
-      from warnings import warn
-      assert outcar == None, ValueError('Cannot use both directory and outcar keyword arguments.')
-      outcar = kwargs.pop('directory')
-      warn( DeprecationWarning( 'directory keyword is deprecated in favor of '
-                                'outcar keyword in vasp extraction objects.') )
+       
     if outcar != None and exists(outcar) and not isdir(outcar):
       outcar = RelativeDirectory(outcar).path
       kwargs['OUTCAR'] = basename(outcar)
       directory = dirname(outcar)
+    else: directory = outcar
     AbstractExtractBase.__init__(self, directory, comm)
     ExtractCommonBase.__init__(self)
     IOMixin.__init__(self, directory, **kwargs)
@@ -72,6 +67,25 @@ def Extract(outcar=None, comm=None, **kwargs):
           comm : boost.mpi.communicator
             Processes over which to synchronize output gathering. 
   """
+  # checks if path or directory
+  if 'directory' in kwargs: 
+    from warnings import warn
+    assert outcar == None, ValueError('Cannot use both directory and outcar keyword arguments.')
+    outcar = kwargs.pop('directory')
+    warn( DeprecationWarning( 'directory keyword is deprecated in favor of '
+                              'outcar keyword in vasp extraction objects.'),\
+          stacklevel=2)
+  if 'OUTCAR' in kwargs: 
+    from os.path import join
+    from warnings import warn
+    warn( DeprecationWarning('OUTCAR keyword is deprecated in favor of outcar keyword.'),
+          stacklevel=2)
+    if outcar != None:
+      if (exists(outcar) and isdir(outcar)) or (not exists(outcar)):
+        outcar = join(outcar, kwargs.pop('OUTCAR')) 
+      else: raise ValueError('Cannot use both outcar and OUTCAR keywords.')
+    else: outcar = kwargs.pop('OUTCAR')
+
   a = ExtractCommon(outcar=outcar, comm=comm, **kwargs)
   try: which = ExtractDFT if a.is_dft else ExtractGW
   except: which = ExtractCommon
@@ -80,7 +94,8 @@ def Extract(outcar=None, comm=None, **kwargs):
 def ExtractGW_deprecated(*args, **kwargs):
   """ Deprecated. Please use vasp.Extract instead. """
   from warnings import warn
-  warn( DeprecationWarning('ExtractGW is deprecated. Please use vasp.Extract instead.') )
+  warn( DeprecationWarning('ExtractGW is deprecated. Please use vasp.Extract instead.'),
+        stacklevel=2)
   return Extract(*args, **kwargs)
     
 try: from ... import jobs

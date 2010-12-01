@@ -163,7 +163,7 @@ class Vasp(Launch):
 
     # Checks for previous run, or deletes previous run if requested.
     if not overwrite:
-      extract = self.Extract(comm = comm, directory = outdir)
+      extract = self.Extract(comm = comm, outcar = outdir)
       if extract.success: return extract # in which case, returns extraction object.
     if comm != None: comm.barrier() # sync all procs.
     
@@ -172,7 +172,7 @@ class Vasp(Launch):
                                 repat=repat, comm=comm, norun=norun )
     
     # checks if result was successful
-    extract = self.Extract(comm = comm, directory = outdir)
+    extract = self.Extract(comm = comm, outcar = outdir)
     if not norun:
       assert extract.success, RuntimeError("VASP calculation did not complete in %s.\n" % (outdir))
 

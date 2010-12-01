@@ -1405,7 +1405,8 @@ class AbstractMassExtract(object):
   def jobs(self):
     """ Deprecated. Use keys and iterkeys instead. """
     from warnings import warn
-    warn('jobs property is deprecated. Please use keys and or iterkeys instead.', DeprecationWarning)
+    warn( DeprecationWarning('jobs property is deprecated in favor of keys and iterkeys.'),
+          stacklevel=2 )
     return self.keys()
 
 
