@@ -95,7 +95,6 @@ class RelaxCellShape(object):
             stateless) if they are named after attributes of `RelaxCellShape`.
             Otherwise, the keywords are passed on to the `vasp` functional.
     """
-    from warnings import warn
     from copy import deepcopy
     from math import fabs 
     from os import getcwd
@@ -124,7 +123,9 @@ class RelaxCellShape(object):
 
     # updates vasp as much as possible.
     if "set_relaxation" in kwargs: 
-      warn("set_relaxation is deprecated. Please use relaxation.", DeprecationWarning)
+      from warnings import warn
+      warn( DeprecationWarning("set_relaxation is deprecated. Please use relaxation."),\
+            stacklevel=2 )
     vasp.relaxation = kwargs.pop("relaxation", kwargs.pop("set_relaxation", self.relaxation))
     for key in kwargs.keys():
       if hasattr(vasp, key): setattr(vasp, key, kwargs.pop(key))

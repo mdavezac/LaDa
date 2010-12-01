@@ -14,13 +14,25 @@ from ._mixin import IOMixin, SearchMixin
 
 class ExtractCommon(AbstractExtractBase, ExtractCommonBase, IOMixin, SearchMixin):
   """ Extracts DFT data from an OUTCAR. """
-  def __init__(self, directory=None, comm=None, **kwargs):
-    """ Initializes extraction object. """
+  def __init__(self, outcar=None, comm=None, **kwargs):
+    """ Initializes extraction object.
+    
+    
+        :Parameters:
+          outcar : str or None
+            Path to OUTCAR file. Can also be the directory if the OUTCAR is
+            named "OUTCAR".
+          comm : boost.mpi.communicator
+            Processes over which to synchronize output gathering. 
+    """
     from os.path import exists, isdir, basename, dirname
-    # checks if path or directory
-    if directory != None and exists(directory) and not isdir(directory):
-      kwargs['OUTCAR'] = basename(directory)
-      directory = dirname(directory)
+    from ...opt import RelativeDirectory
+       
+    if outcar != None and exists(outcar) and not isdir(outcar):
+      outcar = RelativeDirectory(outcar).path
+      kwargs['OUTCAR'] = basename(outcar)
+      directory = dirname(outcar)
+    else: directory = outcar
     AbstractExtractBase.__init__(self, directory, comm)
     ExtractCommonBase.__init__(self)
     IOMixin.__init__(self, directory, **kwargs)
@@ -33,29 +45,57 @@ class ExtractCommon(AbstractExtractBase, ExtractCommonBase, IOMixin, SearchMixin
 
 class ExtractDFT(ExtractCommon, ExtractDFTBase):
   """ Extracts DFT data from an OUTCAR. """
-  def __init__(self, directory=None, comm=None, **kwargs):
+  def __init__(self, outcar=None, comm=None, **kwargs):
     """ Initializes extraction object. """
-    ExtractCommon.__init__(self, directory, comm, **kwargs)
+    ExtractCommon.__init__(self, outcar, comm, **kwargs)
     ExtractDFTBase.__init__(self)
 
 class ExtractGW(ExtractCommon, ExtractGWBase):
   """ Extracts GW data from an OUTCAR. """
-  def __init__(self, directory=None, comm=None, **kwargs):
+  def __init__(self, outcar=None, comm=None, **kwargs):
     """ Initializes extraction object. """
-    ExtractCommon.__init__(self, directory, comm, **kwargs)
+    ExtractCommon.__init__(self, outcar, comm, **kwargs)
     ExtractGWBase.__init__(self)
 
-def Extract(*args, **kwargs): 
-  """ Chooses between DFT or GW extraction object, depending on OUTCAR. """
-  a = ExtractCommon(*args, **kwargs)
+def Extract(outcar=None, comm=None, **kwargs):
+  """ Chooses between DFT or GW extraction object, depending on OUTCAR.
+  
+        :Parameters:
+          outcar : str or None
+            Path to OUTCAR file. Can also be the directory if the OUTCAR is
+            named "OUTCAR".
+          comm : boost.mpi.communicator
+            Processes over which to synchronize output gathering. 
+  """
+  # checks if path or directory
+  if 'directory' in kwargs: 
+    from warnings import warn
+    assert outcar == None, ValueError('Cannot use both directory and outcar keyword arguments.')
+    outcar = kwargs.pop('directory')
+    warn( DeprecationWarning( 'directory keyword is deprecated in favor of '
+                              'outcar keyword in vasp extraction objects.'),\
+          stacklevel=2)
+  if 'OUTCAR' in kwargs: 
+    from os.path import join
+    from warnings import warn
+    warn( DeprecationWarning('OUTCAR keyword is deprecated in favor of outcar keyword.'),
+          stacklevel=2)
+    if outcar != None:
+      if (exists(outcar) and isdir(outcar)) or (not exists(outcar)):
+        outcar = join(outcar, kwargs.pop('OUTCAR')) 
+      else: raise ValueError('Cannot use both outcar and OUTCAR keywords.')
+    else: outcar = kwargs.pop('OUTCAR')
+
+  a = ExtractCommon(outcar=outcar, comm=comm, **kwargs)
   try: which = ExtractDFT if a.is_dft else ExtractGW
   except: which = ExtractCommon
-  return which(*args, **kwargs)
+  return which(outcar=outcar, comm=comm, **kwargs)
 
 def ExtractGW_deprecated(*args, **kwargs):
   """ Deprecated. Please use vasp.Extract instead. """
   from warnings import warn
-  warn('ExtractGW is deprecated. Please use vasp.Extract instead.', DeprecationWarning)
+  warn( DeprecationWarning('ExtractGW is deprecated. Please use vasp.Extract instead.'),
+        stacklevel=2)
   return Extract(*args, **kwargs)
     
 try: from ... import jobs
@@ -119,10 +159,9 @@ else:
       for dirpath, dirnames, filenames in walk(self.rootdir, topdown=True, followlinks=True):
         if self.OUTCAR not in filenames: continue
 
-        try: result = self.Extract(join(self.rootdir, dirpath))
+        try: result = self.Extract(join(join(self.rootdir, dirpath), self.OUTCAR))
         except: continue
 
-        result.OUTCAR = self.OUTCAR
         yield join('/', relpath(dirpath, self.rootdir)), result
 
     def __copy__(self):

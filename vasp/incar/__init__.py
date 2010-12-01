@@ -372,8 +372,8 @@ class Incar(object):
   def set_relaxation(self, value):
     """ Alias to relaxation. """
     from warnings import warn
-    warn("set_relaxation is obsolete. Please use relaxation instead.",\
-         DeprecationWarning)
+    warn( DeprecationWarning("set_relaxation is obsolete. Please use relaxation instead."), 
+          stacklevel=2 )
     self.relaxation = value
     
 

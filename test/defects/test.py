@@ -2,6 +2,7 @@
 __docformat__ = "restructuredtext en"
 __all__ = ['pointdefect_wave']
 
+coord_tolerance = 0.25
 def pointdefect_wave(path=None, inputpath=None, **kwargs):
   """ Creates point-defect wave using ground-state job-dictionary. 
 
@@ -107,6 +108,8 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
     with open(inputpath, "r") as file: jobdict.pointdefectinput = file.read()
   # saves current script tof file.
   with open(__file__, "r") as file: jobdict.pointdefectscript = file.read()
+
+  if hasattr(input, 'coord_tolerance'): coord_tolerance = input.coord_tolerance
   
   nb_new_jobs = 0
   # loops over completed structural jobs.
@@ -125,7 +128,7 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
     species = groundstate.functional.vasp.species
 
     # loop over substitutees.
-    for structure, defect, B in ptd.iterdefects(superstructure, lattice, input.point_defects):
+    for structure, defect, B in ptd.iterdefects(superstructure, lattice, input.point_defects, tolerance=coord_tolerance):
       # loop over oxidations states.
       for nb_extrae, oxname in charged_states(input.vasp.species, material, defect.type, B):
         
@@ -163,10 +166,10 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
             else: 
               jstruct.magmom = [0 for u in superstructure.atoms]
             # now modifies according to structure.
-            if B == None or B == 'None': # interstitial:
+            if B == None or B.lower() == 'none': # interstitial:
               jstruct.magmom.append(moment)
-            elif defect.type == None: # vacancy -> remove moment.
-              jstruct.magmom.pop(defect.index)
+            elif defect.type == None or defect.type.lower() == 'none':
+              vacancy_moment(input.vasp.species, jstruct, defect, B, nb_extrae)
             else: 
               jstruct.magmom[defect.index] = moment
             # only keep moment if there are moments. 
@@ -277,8 +280,8 @@ def oxnumber(species, structure, pos, type):
   if not hasattr(species[type], 'oxidation'): return 0
   result = species[type].oxidation
   if not hasattr(result, '__iter__'): return result
-  c = coordination_number(structure, pos, tolerance=0.01)
-  assert c in [4, 6], RuntimeError('Unexpected coordination environment')
+  c = coordination_number(structure, pos, tolerance=coord_tolerance)
+  assert c in [4, 6], RuntimeError('Unexpected coordination environment for {0}: {1}'.format(type, c))
   if c == 4: return result[0]
   if c == 6: return result[1]
 
@@ -289,16 +292,10 @@ def charged_states(species, material, Atype, Btype):
   mat_regex = compile('([A-Z][a-z]?)2([A-Z][a-z]?)O4')
   found = mat_regex.match(material)
   A, B = found.group(1), found.group(2)
-  if Atype not in [A,B] or Btype not in [A,B]: 
-    for result in charged_states(species, Atype, Btype): yield result
-    return
-  Aox, Box = species[Atype].oxidation, species[Btype].oxidation
-  if Atype == A: 
-    if hasattr(Aox, '__iter__'): Aox = Aox[1]
-    if hasattr(Box, '__iter__'): Box = Box[0]
-  elif Atype == B: 
-    if hasattr(Aox, '__iter__'): Aox = Aox[0]
-    if hasattr(Box, '__iter__'): Box = Box[1]
+  Aox = species[Atype].oxidation if Atype != None and Atype.lower() != 'none' else 0
+  Box = species[Btype].oxidation if Btype != None and Btype.lower() != 'none' else 0
+  if hasattr(Aox, '__iter__'): Aox = Aox[1 if Atype == A else 0]
+  if hasattr(Box, '__iter__'): Box = Box[1 if Btype == A else 0]
 
   diff = Box - Aox
   if diff < 0: diff -= 1 
@@ -308,3 +305,14 @@ def charged_states(species, material, Atype, Btype):
     if c == 0: yield 0, 'charge_neutral'
     else:      yield c, 'charge_{0}'.format(-c)
 
+def vacancy_moment(species, structure, defect, atomtype, extrae):
+  """ Creates/modifies moments surrounding a vacancy. """
+  from lada.crystal.defects import first_shell
+  if len(structure.magmom) != len(structure.atoms): structure.magmom.pop(defect.index)
+  max_ox = oxnumber(species, structure, defect.pos, atomtype)
+  extra_moment = int(abs(max_ox - extrae)+0.001)
+  if extra_moment == 0: return
+  coordination_shell = first_shell(structure, defect.pos, tolerance=coord_tolerance)
+  for n in coordination_shell:
+    sign = 1 if structure.magmom[n.index] >= 0e0 else -1
+    structure.magmom[n.index] += sign * extra_moment / float(len(coordination_shell))

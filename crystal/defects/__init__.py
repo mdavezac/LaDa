@@ -55,16 +55,21 @@ def symmetrically_inequivalent_sites(lattice, type):
     i += 1
   return site_indices
 
-def coordination_number(structure, pos, tolerance=0.1):
-  """ Returns coordination number of given position in structure. """
+
+def first_shell(structure, pos, tolerance=0.25):
+  """ Iterates though first neighbor shell. """
   from numpy.linalg import inv, norm
   from .. import Neighbors
 
   neigh = [n for n in Neighbors(structure, 12, pos)]
   d = neigh[0].distance
-  return len([n for n in neigh if abs(n.distance - d) < tolerance * d])
+  return [n for n in neigh if abs(n.distance - d) < tolerance * d]
+
+def coordination_number(structure, pos, tolerance=0.25):
+  """ Returns coordination number of given position in structure. """
+  return len(first_shell(structure, pos, tolerance))
   
-def coordination_inequivalent_sites(lattice, type, tolerance=0.1):
+def coordination_inequivalent_sites(lattice, type, tolerance=0.25):
   """ Yields sites occupied by type which are inequivalent according to their coordination number. 
   
       When creating a vacancy on, say, "O", or a substitution of "Al" by "Mg",
@@ -151,10 +156,10 @@ def non_interstitials(structure, indices, mods):
       result.name = name
       yield result, output_atom, input_atom.type
 
-def inequiv_non_interstitials(structure, lattice, type, mods, do_coords = True):
+def inequiv_non_interstitials(structure, lattice, type, mods, do_coords = True, tolerance=0.25):
   """ Loop over inequivalent non-interstitials. """
   if do_coords: type = type.split()[0]
-  inequivs = coordination_inequivalent_sites(lattice, type) if do_coords \
+  inequivs = coordination_inequivalent_sites(lattice, type, tolerance) if do_coords \
              else symmetrically_inequivalent_sites(lattice, type)
   indices = []
   for i in inequivs:
@@ -186,7 +191,7 @@ def _cationic_species(structure):
   """ Returns list of cationic species. """
   return list(set([a.type for a in structure.atoms if a.type not in ['O', 'S', 'Se', 'Te']]))
 
-def iterdefects(structure, lattice, defects):
+def iterdefects(structure, lattice, defects, tolerance=0.25):
   """ Iterates over all defects for any number of types and modifications. """
   from re import compile
 
@@ -217,9 +222,9 @@ def iterdefects(structure, lattice, defects):
     for type in keys:
       assert type == None or type_regex.match(type) != None,\
              ValueError("Cannot understand type {0}.".format(type))
-      for result in any_defect(structure, lattice, type, value): yield result
+      for result in any_defect(structure, lattice, type, value, tolerance): yield result
 
-def any_defect(structure, lattice, type, subs):
+def any_defect(structure, lattice, type, subs, tolerance=0.25):
   """ Yields point-defects of a given type and different modifications. 
   
       Loops over all equivalent point-defects.
@@ -264,7 +269,7 @@ def any_defect(structure, lattice, type, subs):
   if hasattr(type, 'lstrip'): type = type.lstrip()
   if type == None or type.lower() in ['interstitial', 'interstitials', 'none']: 
     for result in interstitials(structure, lattice, subs): yield result
-  # O\d: looking for specific atoms.
+  # Old: looking for specific atoms.
   elif id_regex.match(type) != None:
     # looks for atom to modify
     found = id_regex.match(type)
@@ -281,9 +286,9 @@ def any_defect(structure, lattice, type, subs):
     for result in non_interstitials(structure, index, subs): yield result
   # O, Mn ... but not O1: looking for symmetrically inequivalent sites.
   elif specie_regex.match(type) != None: 
-    for result in inequiv_non_interstitials(structure, lattice, type, subs, False): yield result
+    for result in inequiv_non_interstitials(structure, lattice, type, subs, False, tolerance): yield result
   elif coord_regex.match(type) != None: 
-    for result in inequiv_non_interstitials(structure, lattice, type, subs, True): yield result
+    for result in inequiv_non_interstitials(structure, lattice, type, subs, True, tolerance): yield result
   else: raise ValueError("Don't understand defect type {0}".format(type))
 
 def charged_states(species, A, B):
