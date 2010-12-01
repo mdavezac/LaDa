@@ -442,7 +442,7 @@ class RelativeDirectory(object):
       self.relative = value[1]
       return
     if len(value.rstrip().lstrip()) == 0: value = getcwd()
-    else: self._relative = relpath(expanduser(expandvars(value)), self.envvar) 
+    self._relative = relpath(expanduser(expandvars(value)), self.envvar) 
     self.hook(self.path)
 
   @property
