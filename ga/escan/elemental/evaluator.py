@@ -153,22 +153,48 @@ class Bandgap(object):
 
   def __repr__(self): 
     """ Returns representation of evaluator. """
-    return   "from {0} import {1}\n"\
+    max_length, string, _string, values = 0, '', '', {}
+    for key, value in self.__dict__.items():
+      if key[0] == '_': continue
+      if key == 'converter': continue
+      if key == 'escan': continue
+      if key == 'outdir': continue
+      try: r = repr(value).rstrip().lstrip()
+      except: continue
+      else: r = r.replace('{', '{{').replace('}', '}}')
+      if r[0] == '<' or r[-1] == '>': continue
+      max_length = max(max_length, len('{0}'.format(key)))
+      string += 'evaluator.{{{0}: <{{_mxlgth_repr_}}}} = {1}\n'.format(key, r)
+      values[key] = key
+    # create format string for private data members.
+    for key, value in self.__dict__.items():
+      if key[0] != '_': continue
+      if key == '_outdir': continue
+      try: r = repr(value).rstrip().lstrip()
+      except: continue
+      else: r = r.replace('{', '{{').replace('}', '}}')
+      if r[0] == '<' or r[-1] == '>': continue
+      max_length = max(max_length, len('{0}'.format(key)))
+      _string += 'evaluator.{{{0}: <{{_mxlgth_repr_}}}} = {1}\n'.format(key, r)
+      values[key] = key
+    values['_mxlgth_repr_'] = max_length
+    string += "evaluator.{{outdir: <{{_mxlgth_repr_}}}} = {1}\n"\
+              .format('outdir', self._outdir.repr())
+    values['outdir'] = 'outdir'
+
+    result = "from {0} import {1}\n"\
              "from {2} import {3}\n"\
              "{4}\n\n"\
              "supercell = {5}\n"\
              "converter = {3}(supercell, lattice)\n"\
              "evaluator = {1}(converter, escan_functional)\n"\
-             "evaluator.kwargs            = {6}\n"\
-             "evaluator.nbcalc            = {7.nbcalc}\n"\
-             "evaluator.references        = {7.references}\n"\
-             "evaluator.keep_only_last    = {7.keep_only_last}\n"\
-             "evaluator.outdir            = {8}\n"\
              .format( self.__class__.__module__, self.__class__.__name__,
                       self.converter.__class__.__module__, self.converter.__class__.__name__,
                       repr(self.escan).replace("functional", "escan_functional"), 
-                      repr(self.converter.structure.cell),
-                      repr(self.kwargs), self, self._outdir.repr())
+                      repr(self.converter.structure.cell))
+    result += string.format(**values)
+    result += _string.format(**values)
+    return result
 
 
 class Dipole(Bandgap):
