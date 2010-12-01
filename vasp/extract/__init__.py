@@ -28,10 +28,12 @@ class ExtractCommon(AbstractExtractBase, ExtractCommonBase, IOMixin, SearchMixin
     from os.path import exists, isdir, basename, dirname
     from ...opt import RelativeDirectory
        
-    if outcar != None and exists(outcar) and not isdir(outcar):
+    if outcar != None:
       outcar = RelativeDirectory(outcar).path
-      kwargs['OUTCAR'] = basename(outcar)
-      directory = dirname(outcar)
+      if exists(outcar) and not isdir(outcar):
+        kwargs['OUTCAR'] = basename(outcar)
+        directory = dirname(outcar)
+      else: directory = outcar
     else: directory = outcar
     AbstractExtractBase.__init__(self, directory, comm)
     ExtractCommonBase.__init__(self)
