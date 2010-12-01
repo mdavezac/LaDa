@@ -147,12 +147,6 @@ class _ChargedStateNavigation(object):
     return result
 
   @property
-  def _all_energies(self):
-    """ Dictionary with all energies. """
-    return result
-
-
-  @property
   def host(self):
     """ Returns extraction object towards the host. """
     if self._host == None: 
@@ -340,6 +334,29 @@ class Single(_ChargedStateNavigation):
     """ List of charges of all charged states. """
     return sorted([s.charge for s in self._charged_states])
 
+  @property 
+  def potal(self):
+    """ Array of potential alignment values. """
+    from numpy import array
+    return array([a.potential_alignment for a in self._charged_states])
+
+  @property 
+  def band_filling(self):
+    """ Array of band-filling corrections. """
+    from numpy import array
+    return array([a.band_filling for a in self._charged_states])
+
+  @property 
+  def charge_corrections(self):
+    """ Array of charge corrections (first and third order both). """
+    from numpy import array
+    return array([a.charge_corrections for a in self._charged_states])
+
+  @property 
+  def raw_deltaH(self):
+    """ Array of delta H without any correction. """
+    from numpy import array
+    return array([a.raw_deltaH for a in self._charged_states])
 
   @property
   def latex_label(self):

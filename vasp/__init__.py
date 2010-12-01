@@ -252,11 +252,13 @@ def read_input(filepath="input.py", namespace=None):
 
       It add a few names to the input-file's namespace. 
   """
-  from lada.opt import read_input
-  from lada.vasp import Vasp, specie, files
-  from lada.vasp.methods import RelaxCellShape
+  from ..opt import read_input
+  from . import Vasp, specie, files
+  from methods import RelaxCellShape
+  from extract import Extract
 
   # names we need to create input.
-  input_dict = { "Vasp": Vasp, "U": specie.U, "nlep": specie.nlep, "RelaxCellShape": RelaxCellShape }
+  input_dict = { "Vasp": Vasp, "U": specie.U, "nlep": specie.nlep, 
+                 "RelaxCellShape": RelaxCellShape, 'Extract': Extract }
   if namespace != None: input_dict.update(namespace)
   return read_input(filepath, input_dict)
