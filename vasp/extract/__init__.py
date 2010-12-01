@@ -144,10 +144,9 @@ else:
       for dirpath, dirnames, filenames in walk(self.rootdir, topdown=True, followlinks=True):
         if self.OUTCAR not in filenames: continue
 
-        try: result = self.Extract(join(self.rootdir, dirpath))
+        try: result = self.Extract(join(join(self.rootdir, dirpath), self.OUTCAR))
         except: continue
 
-        result.OUTCAR = self.OUTCAR
         yield join('/', relpath(dirpath, self.rootdir)), result
 
     def __copy__(self):
