@@ -19,7 +19,7 @@ class _MaterialNavigator(AbstractMassExtract):
     self.__dict__["DefectExtractor"] \
         = kwargs.pop("DefectExtractor", _MaterialNavigator.DefectExtractor)
 
-    super(_MaterialNavigator, self).__init__(**kwargs)
+    AbstractMassExtract.__init__(self, **kwargs)
 
     self.massextract = MassExtractor(path, unix_re=False, excludes=[".*relax_*"])
     """ Mass extraction object from which all results are pulled. """
@@ -60,7 +60,7 @@ class _MaterialNavigator(AbstractMassExtract):
   def _get_host(self):
     """ Returns extraction object towards the host. """
     from operator import itemgetter
-    host = self.massextract.copy(excludes=[".*PointDefects"])
+    host = self.massextract.copy(excludes=[".*PointDefects", ".*dielectric"], naked_end=False)
     host.excludes.extend(self.massextract.excludes)
     lowest = sorted(host.total_energies.iteritems(), key=itemgetter(1))[0][0]
     host = [u for u in host[lowest].itervalues()]
@@ -68,12 +68,12 @@ class _MaterialNavigator(AbstractMassExtract):
     return host[0]
 
 
-  def walk_through(self):
+  def __iter_alljobs__(self):
     """ Walks through point-defects only. """
     for child in self.massextract["PointDefects"].children:
       # looks for site_n
-      if len(child["site_\d+"].jobs) != 0:
-        assert len(child["site_\d+"].jobs) == len(child.jobs),\
+      if len(child["site_\d+"].keys()) != 0:
+        assert len(child["site_\d+"].keys()) == len(child.keys()),\
                RuntimeError("Don't understand directory structure of {0}.".format(child.view))
         for site in child.children: # should site specific defects.
           result = self.DefectExtractor(site, self.epsilon, self.host, self.pa_maxdiff)
