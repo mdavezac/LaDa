@@ -161,8 +161,9 @@ class Launch(Incar):
        if not isdir(outdir):  raise IOError, "%s is not a directory." % (outdir)
        # Appends INCAR and CONTCAR to OUTCAR:
        with open(files.OUTCAR, 'a') as outcar:
-         outcar.write('################ INCAR ################')
+         outcar.write('\n################ INCAR ################\n')
          with open(files.INCAR, 'r') as incar: outcar.write(incar.read())
+         outcar.write('\n################ END INCAR ################\n')
      
      if comm != None: comm.barrier()
 
