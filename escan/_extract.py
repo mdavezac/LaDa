@@ -106,7 +106,7 @@ class Extract(AbstractExtractBase):
 
   @property
   @make_cached
-  def escan(self):
+  def functional(self):
     """ Greps escan functional from OUTCAR. """
     from os.path import exists, join
     from numpy import array
@@ -143,8 +143,10 @@ class Extract(AbstractExtractBase):
            else local_dict["functional"]
 
   @property 
-  def functional(self): 
+  def escan(self): 
     """ Alias for `escan`. """
+    from warnings import warn
+    warn(DeprecationWarning('escan attribute is deprecated in favor of functional.'), stacklevel=2)
     return self.escan
 
   @property

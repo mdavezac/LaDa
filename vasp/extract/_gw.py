@@ -10,6 +10,14 @@ class Extract(object):
     object.__init__(self)
 
   @property
+  def eigenvalues(self):
+    """ Deprecated. """
+    from warnings import warn
+    warn( DeprecationWarning('eigenvalues attribute is deprecated in favor of qp_eigenvalues.'), \
+          stacklevel=2 )
+    return self.qp_eigenvalues
+
+  @property
   @make_cached
   def dft_eigenvalues(self):
     """ Greps DFT eigenvalues from OUTCAR.

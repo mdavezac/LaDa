@@ -48,6 +48,13 @@ class Extract(object):
     with self.__funccar__() as file: return load(file)
 
   @property
+  def vasp(self):
+    """ Deprecated. """
+    from warnings import warn
+    warn(DeprecationWarning('vasp attribute is deprecated in favor of functional.'), stacklevel=2)
+    return self.functional
+
+  @property
   @make_cached
   @broadcast_result(attr=True, which=0)
   def success(self):
