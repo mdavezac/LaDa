@@ -211,6 +211,19 @@ class _ChargedStateNavigation(object):
     self.extract.uncache()
     self.host.unchache()
 
+  def __getitem__(self, value):
+    """ Returns specific charge state. """
+    for job in self._all_jobs():
+      if abs(job.charge - value) < 1e-12: return job
+    raise KeyError('Charge state {0} not found.'.format(value))
+  def __contains__(self, value):
+    """ True if value is a known charge state. """
+    for job in self._all_jobs():
+      if abs(job.charge - value) < 1e-12: return True
+    return False
+  def __len__(self, value): 
+    """ Number of charge states. """
+    return len([0 for u in self._all_jobs()])
 
 class Single(_ChargedStateNavigation):
   """ Extracts data for a single defect.
