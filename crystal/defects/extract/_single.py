@@ -13,7 +13,7 @@ class _ChargedStateNavigation(object):
       stage is optimized out and will not appear explicitely in the interface
       of this object.
   """
-  def __init__(self, extract, epsilon = 1e0, host = None, pa_maxdiff=-8):
+  def __init__(self, extract, epsilon = 1e0, host = None, pa_kwargs=None):
     """ Initializes an enthalpy function. """
     super(_ChargedStateNavigation, self).__init__()
     # extraction object.
@@ -28,8 +28,9 @@ class _ChargedStateNavigation(object):
 
         If None, will determine it from the directory structure.
     """
-    self.pa_maxdiff = pa_maxdiff
+    self.pa_kwargs = pa_kwargs 
     """ Potential alignment parameter. """
+    if self.pa_kwargs == None: self.pa_kwargs = {}
 
   @property
   def rootdir(self):
@@ -78,7 +79,7 @@ class _ChargedStateNavigation(object):
     from numpy import array
     from quantities import eV
     from .. import potential_alignment
-    return array([ potential_alignment(state, self.host, self.pa_maxdiff) \
+    return array([ potential_alignment(state, self.host, **self.pa_kwargs) \
                    for state in self._all_jobs() ]) * eV
 
   @property
@@ -88,7 +89,7 @@ class _ChargedStateNavigation(object):
     from numpy import array
     from quantities import eV
     from .. import band_filling
-    return array([ band_filling(state, self.host, maxdiff=self.pa_maxdiff) \
+    return array([ band_filling(state, self.host, **self.pa_kwargs) \
                    for state in self._all_jobs() ]) * eV
 
   @property
@@ -231,9 +232,9 @@ class Single(_ChargedStateNavigation):
       A *single* defect includes charged states, as well as magnetic states
       which have been optimized out.
   """
-  def __init__(self, extract, epsilon = 1e0, host = None, pa_maxdiff=-8):
+  def __init__(self, extract, epsilon = 1e0, host = None, pa_kwargs=None):
     """ Initializes an enthalpy function. """
-    super(Single, self).__init__(extract, epsilon, host, pa_maxdiff)
+    super(Single, self).__init__(extract, epsilon, host, pa_kwargs)
 
   def chempot(self, mu):
     """ Computes sum of chemical potential from dictionary ``mu``. 
