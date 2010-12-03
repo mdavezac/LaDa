@@ -90,10 +90,6 @@ class AbstractMassExtract(object):
     if self.excludes != None: result.excludes.extend(self.excludes)
     return result
 
-  def __iter__(self):
-    """ Iterates through all job names. """
-    for name, job in self._regex_extractors(): yield name
-
   def iteritems(self):
     """ Iterates through all extraction objects and names. """
     for name, job in self._regex_extractors(): yield name, job
