@@ -370,7 +370,7 @@ class Extract(object):
               r"\s+(?:\S+)\s+(?:\S+)\s+(?:\S+)\s*\n)+"
       skip, cols = 3, 8
     results = []
-    for kp in finditer(kp_re, "".join(lines[-i:]), re.M):
+    for kp in finditer(kp_re, "".join(lines[-i-1:]), re.M):
       dummy = [u.split() for u in kp.group(0).split('\n')[skip:]]
       results.append([float(u[which]) for u in dummy if len(u) == cols])
     return results
