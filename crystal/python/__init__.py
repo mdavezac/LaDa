@@ -12,8 +12,8 @@ __all__ = [ 'FreezeAtom', 'which_site', 'Sites', 'SymmetryOperator', 'Lattice', 
             'read_pifile_structure', 'LayerDepth', 'to_fractional', 'linear_smith_index', \
             'nb_valence_states', \
             # Below, only true python stuff
-            'deform_kpoints', 'read_poscar', 'specie_list', 'write_poscar',\
-            'structure_to_lattice', 'fill_structure', \
+            'deform_kpoints', 'specie_list', 'read_poscar', 'write_poscar',\
+            'write_oldvff', 'read_oldvff', 'structure_to_lattice', 'fill_structure', \
             'A2BX4', 'bravais', 'gruber', 'vasp_ordered' ]
 
 from _crystal import FreezeAtom, which_site, Site, SymmetryOperator, Lattice, to_cartesian,\
@@ -24,7 +24,8 @@ from _crystal import FreezeAtom, which_site, Site, SymmetryOperator, Lattice, to
                      nb_valence_states, \
                      rStructure, rAtom, Sites, Atoms, kAtoms, StringVector # this line not in __all__
 
-from lada.opt.decorators import broadcast_result, add_setter
+from lada.opt.decorators import add_setter
+from read_write import read_poscar, write_poscar, write_oldvff, read_oldvff
 import A2BX4
 import bravais
 import gruber
@@ -54,125 +55,9 @@ def deform_kpoint(kpoint, ideal, relaxed):
     if k[i] > 1e0-1e-6: k[i] = 0e0
   return dot(inv(relaxed.T), k.T)
   
-
-@broadcast_result(key=True)
-def read_poscar(types=None, path=None):
-  """ Tries to read a VASP POSCAR file.
-      
-      @keyword types: species in the POSCAR.
-      @type types: none, or sequence of objects convertible to str 
-      @keyword path: path to the POSCAR file. Can also be an object with
-                     file-like behavior.
-      @type path: string or file object
-      @keyword comm: MPI communicator over which to read structure.
-      @type comm: boost.mpi.communicator
-      @return: (L{lada.crystal.Structure}) structure on success.
-  """ 
-  import re
-  from os.path import join, exists, isdir
-  from copy import deepcopy
-  from numpy import array, dot, transpose
-  from . import Structure, Atom
-  # if types is not none, converts to a list of strings.
-  if types != None:
-    if isinstance(types, str): types = [types] # can't see another way of doing this...
-    elif not hasattr(types, "__getitem__"): types = [str(types)] # single lone vasp.specie.Specie
-    else: types = [str(s) for s in types]
-      
-  if path == None: path = "POSCAR"
-  assert exists(path), IOError("Could not find path %s." % (path))
-  if isdir(path):
-    assert exists(join(path, "POSCAR")), IOError("Could not find POSCAR in %s." % (path))
-    path = join(path, "POSCAR")
-  result = Structure()
-  filecontext = path if hasattr(path, read) else open(path, 'r')
-  with filecontext as poscar:
-    # gets name of structure
-    result.name = poscar.readline().strip()
-    if len(result.name) > 0:
-      if result.name[0] == "#": result.name = result.name[1:].strip()
-    # reads scale
-    result.scale = float(poscar.readline().split()[0])
-    # gets cell vectors.
-    cell = []
-    for i in range(3):
-      line = poscar.readline()
-      assert len(line.split()) >= 3,\
-             RuntimeError("Could not read column vector from poscar: %s." % (line))
-      cell.append( [float(f) for f in line.split()[:3]] )
-    result.cell = transpose(array(cell))
-    # checks for vasp 5 input.
-    is_vasp_5 = True
-    line = poscar.readline().split()
-    for i in line: 
-      if not re.match(r"[A-Z][a-z]?", i): 
-        is_vasp_5 = False
-        break
-    if is_vasp_5:
-      text_types = deepcopy(line)
-      if types != None:
-        assert set(text_types) in set(types) or set(text_types) == set(types), \
-               RuntimeError("Unknown species in poscar: %s not in %s." % (set(text_types), set(types)))
-      types = text_types
-      line = poscar.readline().split()
-    assert types != None, RuntimeError("No atomic species given in POSCAR or input.")
-    #  checks/reads for number of each specie
-    assert len(types) >= len(line), RuntimeError("Too many atomic species in POSCAR.")
-    nb_atoms = [int(u) for u in line]
-    # Checks whether cartesian or direct.
-    is_direct = poscar.readline().strip().lower()[0] == "d" 
-    # reads atoms.
-    for n, type in zip(nb_atoms, types):
-      for i in range(n):
-        line = poscar.readline().split()
-        pos = array([float(u) for u in line[:3]], dtype="float64")
-        if is_direct: pos = dot(result.cell, pos)
-        result.atoms.append( Atom(pos, type) )
-  return result
-    
 def specie_list(structure):
   """ Returns minimal list of species in alphabetical order. """
   return sorted(list(set([a.type for a in structure.atoms])))
-
-def write_poscar(structure, file, vasp5=False, substitute=None):
-  """ Writes a poscar to file. 
-  
-      >>> with open("POSCAR", "w") as file: write_poscar(structure, file, vasp5=True)
-
-      Species in structures can be substituted for others (when using vasp5 format).
-      Below, aluminum atoms are replaced by cadmium atoms. Other atoms are left unchanged.
-
-      >>> with open("POSCAR", "w") as file:
-      >>>   write_poscar(structure, file, vasp5=True, substitute={"Al":"Cd"})
-
-      @param structure: The structure to print out.
-      @param file: a stream (open file) to which to write.
-      @param vasp5: if true, include species in poscar, vasp-5 style.
-        Otherwise, does not print specie types.
-      @param substitute: if present, will substitute the atom type in the
-        structure. Can be incomplete. Only works with vasp5 = True.
-      @type substitute: dict
-  """
-  from numpy import matrix, dot
-  file.write(structure.name + "\n")
-  file.write(str(structure.scale)+ "\n")
-  for i in range(3): file.write("  %f %f %f\n" % tuple(structure.cell[:,i].flat))
-  species = specie_list(structure)
-  if vasp5: 
-    if substitute != None:
-      for s in species: file.write(" "+ substitute.pop(s,s) +" ")
-    else: 
-      for s in species: file.write(" "+s+" ")
-    file.write("\n")
-  for s in species: 
-    file.write(" %i " % (len([0 for atom in structure.atoms if atom.type == s])))
-  file.write("\nDirect\n")
-  inv_cell = matrix(structure.cell).I
-  for s in species: 
-    for atom in structure.atoms:
-      if atom.type != s: continue
-      file.write( "  %f %f %f\n" % tuple(dot(inv_cell, atom.pos).flat))
-  
 
 # Adds setter like propertie for easy input 
 def _add_atom(which, container):
@@ -197,6 +82,7 @@ def _add_atom(which, container):
     # some skipping around to make sure we parse argument tuple correctly and
     # initialize sites well if type argument is None, or single string.
     if hasattr(args[0], "__iter__"): # assume first argument is a sequence of 3.
+      print args[0]
       pos = array([x for x in args[0]], dtype="float64")
     else: 
       assert len(args) == 3, RuntimeError("Not sure how to parse these arguments." % (args))
@@ -553,3 +439,5 @@ def fill_structure(cell, lattice = None):
   
   return result
 
+Structure.write_poscar = write_poscar
+Structure.write_oldvff = write_oldvff
