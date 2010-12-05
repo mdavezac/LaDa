@@ -545,20 +545,19 @@ def third_order_charge_correction(structure, charge = None, n = 200, epsilon = 1
 
       :return: third order correction  to the energy in eV. Should be *added* to total energy.
   """
-  from .._crystal import third_order 
   from numpy import array
   from quantities import elementary_charge, eV, pi, angstrom, dimensionless
   from ...physics import a0, Ry
+  from .._crystal import third_order
 
   if charge == None: charge = 1e0
   elif charge == 0: return 0e0 * eV
   if hasattr(charge, "units"):  charge  = float(charge.rescale(elementary_charge))
   if hasattr(epsilon, "units"): epsilon = float(epsilon.simplified)
-  cell = structure.cell
-  scale = structure.scale
-  return - charge**2 / epsilon * third_order(cell, n/2) * (4e0*pi/3e0) \
-         * (array(a0.rescale(angstrom))/scale)**3 * Ry.rescale(eV)
-
+  cell = (structure.cell*structure.scale*angstrom).rescale(a0)
+  return third_order(cell, n) * (4e0*pi/3e0) * Ry.rescale(eV) * charge * charge \
+         * (1e0 - 1e0/epsilon) / epsilon
+         
 
 def first_order_charge_correction(structure, charge=None, epsilon=1e0, cutoff=15e1, **kwargs):
   """ First order charge correction of +1 charge in given supercell. 
