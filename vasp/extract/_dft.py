@@ -372,3 +372,42 @@ class Extract(object):
       result.extend( [float(u) for i, u in enumerate(data) if i % 2 == 1] )
         
     return array(result, dtype="float64") * eV
+
+  @property 
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def electronic_dielectric_constant(self):
+    """ Electronic contribution to the dielectric constant. """
+    from re import M as multline
+    from numpy import array
+    regex = r"\s*MACROSCOPIC\s+STATIC\s+DIELECTRIC\s+TENSOR\s*\(including local field effects in DFT\)\s*\n"\
+            r"\s*-+\s*\n"\
+            r"\s*(\S+)\s+(\S+)\s+(\S+)\s*\n"\
+            r"\s*(\S+)\s+(\S+)\s+(\S+)\s*\n"\
+            r"\s*(\S+)\s+(\S+)\s+(\S+)\s*\n"\
+            r"\s*-+\s*\n"
+    result = self._find_last_OUTCAR(regex, multline)
+    assert result != None, RuntimeError('Could not find dielectric tensor in output.')
+    return array([result.group(i) for i in range(1,10)], dtype='float64').reshape((3,3))
+
+  @property 
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def ionic_dielectric_constant(self):
+    """ Ionic contribution to the dielectric constant. """
+    from re import M as multline
+    from numpy import array
+    regex = r"\s*MACROSCOPIC\s+STATIC\s+DIELECTRIC\s+TENSOR\s+IONIC\s+CONTRIBUTION\s*\n"\
+            r"\s*-+\s*\n"\
+            r"\s*(\S+)\s+(\S+)\s+(\S+)\s*\n"\
+            r"\s*(\S+)\s+(\S+)\s+(\S+)\s*\n"\
+            r"\s*(\S+)\s+(\S+)\s+(\S+)\s*\n"\
+            r"\s*-+\s*\n"
+    result = self._find_last_OUTCAR(regex, multline)
+    assert result != None, RuntimeError('Could not find dielectric tensor in output.')
+    return array([result.group(i) for i in range(1,10)], dtype='float64').reshape((3,3))
+
+  @property 
+  def dielectric_constant(self):
+    """ Dielectric constant of the material. """
+    return  self.electronic_dielectric_constant + self.ionic_dielectric_constant

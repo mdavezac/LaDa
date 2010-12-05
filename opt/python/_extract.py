@@ -141,9 +141,9 @@ def _search_factory(name, filename, module):
           if found != None: yield found
   _search_OUTCAR.__name__ = '_search_{0}'.format(filename.upper())
 
-  def _find_first_OUTCAR(self, regex):
+  def _find_first_OUTCAR(self, regex, flags=0):
     """ Returns first result from a regex. """
-    for first in getattr(self, _search_OUTCAR.__name__)(regex): return first
+    for first in getattr(self, _search_OUTCAR.__name__)(regex, flags): return first
     return None
   _find_first_OUTCAR.__name__ = '_find_first_{0}'.format(filename.upper())
 
@@ -158,16 +158,16 @@ def _search_factory(name, filename, module):
     with getattr(self, __outcar__.__name__)() as file:
       lines = file.read() if moultline & flags else file.readlines()
     if moultline & flags: 
-      for v in [u for u in regex.finditer(lines)]: yield v
+      for v in [u for u in regex.finditer(lines)][::-1]: yield v
     else:
       for line in lines[::-1]:
         found = regex.search(line)
         if found != None: yield found
   _rsearch_OUTCAR.__name__ = '_rsearch_{0}'.format(filename.upper())
 
-  def _find_last_OUTCAR(self, regex):
+  def _find_last_OUTCAR(self, regex, flags=0):
     """ Returns first result from a regex. """
-    for last in getattr(self, _rsearch_OUTCAR.__name__)(regex): return last
+    for last in getattr(self, _rsearch_OUTCAR.__name__)(regex, flags): return last
     return None
 
   attrs = { __outcar__.__name__: __outcar__,

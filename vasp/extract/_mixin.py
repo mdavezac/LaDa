@@ -65,42 +65,42 @@ class IOMixin(object):
     return open(path, 'r')
 
 
-class SearchMixin(object):
-  """ Defines search methods. """
-  def __init__(self): object.__init__(self)
-  
-  def _search_OUTCAR(self, regex):
-    """ Looks for all matches. """
-    from os.path import exists, join
-    from re import compile
-    from numpy import array
+# class SearchMixin(object):
+#   """ Defines search methods. """
+#   def __init__(self): object.__init__(self)
+#   
+#   def _search_OUTCAR(self, regex):
+#     """ Looks for all matches. """
+#     from os.path import exists, join
+#     from re import compile
+#     from numpy import array
 
-    result = []
-    regex  = compile(regex)
-    with self.__outcar__() as file:
-      for line in file: 
-        found = regex.search(line)
-        if found != None: yield found
+#     result = []
+#     regex  = compile(regex)
+#     with self.__outcar__() as file:
+#       for line in file: 
+#         found = regex.search(line)
+#         if found != None: yield found
 
-  def _find_first_OUTCAR(self, regex):
-    """ Returns first result from a regex. """
-    for first in self._search_OUTCAR(regex): return first
-    return None
+#   def _find_first_OUTCAR(self, regex):
+#     """ Returns first result from a regex. """
+#     for first in self._search_OUTCAR(regex): return first
+#     return None
 
-  def _rsearch_OUTCAR(self, regex):
-    """ Looks for all matches starting from the end. """
-    from os.path import exists, join
-    from re import compile
-    from numpy import array
+#   def _rsearch_OUTCAR(self, regex):
+#     """ Looks for all matches starting from the end. """
+#     from os.path import exists, join
+#     from re import compile
+#     from numpy import array
 
-    result = []
-    regex  = compile(regex)
-    with self.__outcar__() as file: lines = file.readlines()
-    for line in lines[::-1]:
-      found = regex.search(line)
-      if found != None: yield found
+#     result = []
+#     regex  = compile(regex)
+#     with self.__outcar__() as file: lines = file.readlines()
+#     for line in lines[::-1]:
+#       found = regex.search(line)
+#       if found != None: yield found
 
-  def _find_last_OUTCAR(self, regex):
-    """ Returns first result from a regex. """
-    for last in self._rsearch_OUTCAR(regex): return last
-    return None
+#   def _find_last_OUTCAR(self, regex):
+#     """ Returns first result from a regex. """
+#     for last in self._rsearch_OUTCAR(regex): return last
+#     return None
