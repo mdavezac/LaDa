@@ -38,7 +38,7 @@ LaDa::types::t_real third_order(LaDa::math::rMatrix3d const & _matrix, LaDa::typ
       d(2) = -0.5;
       for(size_t k(0); k < _n; ++k, d(2) += ninv)
       {
-        t_real min_dist = d.squaredNorm();
+        t_real min_dist = (_matrix * d).squaredNorm();
         for(int l(-1); l < 2; ++l)
           for(int m(-1); m < 2; ++m)
             for(int n(-1); n < 2; ++n)
@@ -50,7 +50,7 @@ LaDa::types::t_real third_order(LaDa::math::rMatrix3d const & _matrix, LaDa::typ
       }
     }
   }
-  return result  / (_matrix.determinant() * t_real(_n*_n*_n));
+  return result / (_matrix.determinant() * t_real(_n*_n*_n));
 }
 
 LaDa::types::t_unsigned nb_valence_states( LaDa::Crystal::TStructure<std::string> const &_str ) 
@@ -74,7 +74,7 @@ BOOST_PYTHON_MODULE(_crystal)
   namespace bp = boost::python;
   bp::handle<> math( bp::borrowed(PyImport_ImportModule("lada.math")) );
 
-  bp::def("third_order", &third_order);
+  bp::def("third_order", &third_order, (bp::arg("structure"), bp::arg("n")=200));
   bp::def( "nb_valence_states", &nb_valence_states, bp::arg("structure"), 
            "Returns the number of `escan` valence states in a structure." );
 
