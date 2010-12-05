@@ -6,11 +6,11 @@
 """
 __docformat__  = 'restructuredtext en'
 __all__ = ['Extract']
-from ...opt import AbstractExtractBase
+from ...opt import AbstractExtractBase, OutcarSearchMixin as SearchMixin
 from ._common import Extract as ExtractCommonBase
 from ._dft import Extract as ExtractDFTBase
 from ._gw import Extract as ExtractGWBase
-from ._mixin import IOMixin, SearchMixin
+from ._mixin import IOMixin
 
 class ExtractCommon(AbstractExtractBase, ExtractCommonBase, IOMixin, SearchMixin):
   """ Extracts DFT data from an OUTCAR. """

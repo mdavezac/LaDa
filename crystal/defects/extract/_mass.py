@@ -8,7 +8,7 @@ class _MaterialNavigator(AbstractMassExtract):
   """ Navigates around multiple defects of a single material. """
   DefectExtractor = Single
   """ Class for extracting data from a single defect. """
-  def __init__(self, path=None, epsilon = 1e0, pa_kwargs=None, **kwargs):
+  def __init__(self, path=None, epsilon = None, pa_kwargs=None, **kwargs):
     """ Initializes an enthalpy function. """
     from ....vasp import MassExtract as VaspMassExtract
 
@@ -34,7 +34,12 @@ class _MaterialNavigator(AbstractMassExtract):
   @property 
   def epsilon(self): 
     """ Dimensionless dielectric constant. """
-    return self._epsilon
+    if self._epsilon != None: return self._epsilon
+    if 'dielectric' in self.massextract and len(self.massextract['dielectric']) == 1:
+      from numpy import trace
+      return trace(self.massextract.copy(naked_end=True)['dielectric'].epsilon)/3e0
+    return 1e0
+
   @epsilon.setter
   def epsilon(self, value):
     self._epsilon = value 
