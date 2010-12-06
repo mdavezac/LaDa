@@ -17,12 +17,12 @@ class Extract(object):
   FUNCCAR = "GA_FUNCCAR"
   """ Functional filename """
 
-  INDIV_PATTERN = re.compile("^\s*(array\(\[(?:\s*[0,1]\,|(?:\,\s*$^)\s*)*"\
-                             "\s*[0,1]\s*\]\))\s*(\S+)\s*(\S+)?\s*$", re.X|re.M)
+  INDIV_PATTERN = re.compile(r"^\s*(array\(\[(?:\s*[0,1]\,|(?:\,\s*$^)\s*)*"\
+                             r"\s*[0,1]\s*\]\))\s*(\S+)\s*(\S+)?\s*$", re.X|re.M)
   OFFSPRING_PATTERN = \
-    re.compile("^\s*Offspring:\s*\n"\
-               "\s*((array\(\[(?:\s*[0,1]\,|(?:\,\s*$^)\s*)*\s*[0,1]\s*\]\))"\
-               "\s*(\S+)\s*(\S+)?\s*\n)+", re.X|re.M)
+    re.compile(r"^\s*Offspring:\s*\n"\
+               r"(\s*(array\(\[(?:\s*[0,1]\,|(?:\,\s*$^)\s*)*\s*[0,1]\s*\]\))"\
+               r"\s*(\S+)\s*(\S+)?\s*\n)+", re.X|re.M)
 
   def __init__(self, directory = ".", comm = None):
     """ Initializes Extract object. """
@@ -266,20 +266,23 @@ class Extract(object):
 
     return x, y
 
+  def uniquify_lists(self, *args): 
+    """ Make list of unique individuals from different lists. """
+    from itertools import chain
+    results = []
+    compare = self.functional.compare
+    for indiv in chain(*args):
+      i = id(indiv)
+      if any( i == id(o) for o in results ): continue
+      if not any( compare(indiv, o) for o in results ): results.append(indiv)
+    return results
+
   @property
   @make_cached 
   @broadcast_result(attr=True, which=0)
   def uniques(self):
     """ Minimum set of individuals. """
-    results = []
-    compare = self.functional.compare
-    for pop in self.solo().offspring:
-      for indiv in pop:
-        i = id(indiv)
-        if any( i == id(o) for o in results ): continue
-        if any( compare(indiv, o) for o in results ): continue
-        results.append(indiv)
-    return results
+    return self.uniquify_lists(*self.solo().offspring)
 
   @property
   @make_cached 
