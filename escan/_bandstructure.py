@@ -5,203 +5,75 @@ __all__ = ['band_structure', 'Extract']
 
 from ..opt.decorators import broadcast_result, make_cached
 from ._extract import MassExtract
+from .kpoints import KPoints, _reduced_grids_factory
 
-def band_structure(escan, structure, kpoints, density = None, outdir=None, comm=None,\
-                   do_relax=None, pools = 1, nbkpoints = None, **kwargs):
-  """ Returns 
-  
-      :Parameters:
-        escan : `lada.escan.Escan`
-          Functional wrapping nanopse's ESCAN. 
-        structure : `lada.crystal.Structure`
-          object describing the structure for which to compute a
-          band-structure.
-        kpoints : sequence of 2-tuples
-          Each two tuple is a starting k-point and an end k-point. The k-points
-          should be given in cartesian units within the ideal, undistorted
-          lattice. They will deformed to the fit into the relaxed structure.
-          However, translational invariance is not applied (e.g. kpoints are
-          not refolded).
-        density : float 
-          Number of kpoints per reciprocal length unit.
-        kwargs 
-          Any parameters appropriate to `lada.escan.Escan`.
+class BPoints(KPoints):
+  """ *Grid* of kpoints for bands-structure calculation. """
+  def __init__(self, lines=None, density=10, do_relax_kpoint=True, mink=3):
+    KPoints.__init__(self)
+    self.lines = lines
+    """ Lines of k-points for which to perform calculations. """
+    if self.lines == None: self.lines = []
+    self.do_relax_kpoint=True
+    """ If True, will deform kpoints from input cell to relaxed cell. """
+    self.density = density
+    """ Requested density of kpoints. """
+    self.mink = mink
+    """ Minimum number of kpoints per line. """
 
-      :return: sequence of (x, kpoint, eigenvalues), where
-        - x is the abscissa for the brand-structure plot.
-        - kpoint is actual deformed kpoint at which computation was performed.
-        - eigenvalues is a numpy array of eigenvalues.
-  """
-  from os import getcwd
-  from os.path import join, expanduser, abspath, exists
-  from shutil import copyfile
-  from boost.mpi import world, all_gather, broadcast
-  from numpy.linalg import norm
-  from numpy import abs, sum
-  from ..crystal import deform_kpoint
-  from ..opt import RelativeDirectory
-
-  # check/correct input arguments
-  assert nbkpoints == None or density == None, ValueError("Choose either density or nbkpoints")
-  assert nbkpoints != None or density != None, ValueError("Choose either density or nbkpoints")
-  assert "do_genpot" not in kwargs,\
-         ValueError("\"do_genpot\" is not an admissible argument of band_structure.")
-  assert "do_escan" not in kwargs,\
-         ValueError("\"do_escan\" is not an admissible argument of band_structure.")
-  outdir = RelativeDirectory(outdir if outdir != None else getcwd()).path
-  outdir_calc = join(outdir, 'calculations')
-  if comm == None: comm = world
-  if pools > comm.size: pools = comm.size
-  vffrun = kwargs.pop("vffrun", escan.vffrun)
-  genpotrun = kwargs.pop("genpotrun", escan.genpotrun)
-
-  # first computes vff and genpot unless given.
-  if genpotrun == None or vffrun == None: 
-    vffout = escan( structure, outdir=outdir_calc, do_escan=False, genpotrun=genpotrun,\
-                    vffrun=vffrun, comm = comm, **kwargs )
-    if genpotrun == None: genpotrun = vffout
-    if vffrun == None: vffrun = vffout
-  
-  # two functions required to continue.
-  input, relaxed = structure.cell.copy(), vffout.structure.cell.copy()
-  dont_deform_kpoint = vffout.escan._dont_deform_kpoint
-  def _get_kpoint(_kpoint):
-    """ Deforms kpoint to new lattice, if required. """
-    if dont_deform_kpoint: return _kpoint
-    if sum(abs(input-relaxed)) < 1e-11: return _kpoint
-    return deform_kpoint(_kpoint, input, relaxed)
-  def _line(start, end):
-    """ Generator for creating points between two kpoints. """
+  def _mnk(self, input, output):
+    """ Yields lines of k-points with appropriate density. """
+    from numpy import any, abs
     from numpy.linalg import norm
+    relax = self.do_relax_kpoint if any( abs(input.cell-output.cell) < 1e-12 ) else False
+    if len(self.lines) == 0: return
+    
+    last_end = self.lines[0][0] + 1e0
+    for start, end in self.lines:
+      if any(abs(last_end-start) > 1e-12): yield 1e0, start
+      last_end = end
+      for kpoint in self._line(start, end): yield 1e0, kpoint
 
-    distance = norm(_get_kpoint(end - start))
-    if nbkpoints != None: nbkpt = nbkpoints
-    else: nbkpt = int(max(1, float(density) * distance - 1))
-    stepsize = 1e0/float(nbkpt)
-    _kpoints = [ float(i) * stepsize for i in range(1, nbkpt+1) ]
-    for k in _kpoints: yield start + k * (end-start) 
-
-  def _lines(endpoints):
-    """ Generator for creating segments. """
+  def _line(self, start, end):
+    """ Yields kpoints on a line. """
     from numpy.linalg import norm
-    assert len(endpoints) > 0, ValueError
-    assert len(endpoints[0]) == 2, ValueError
-    pos = 0
-    yield pos, endpoints[0][0]
-    for start, end in endpoints:
-      last = start.copy()
-      for _kpoint in _line(start, end):
-        pos += norm(_get_kpoint(_kpoint-last))
-        last = _kpoint.copy()
-        yield pos, _kpoint
+    distance = norm(end-start)
+    nbkpt = max(self.mink, int(float(self.density) * distance - 1))
+    stepsize = 1e0 / float(nbkpt)
+    for i in range(1, nbkpt+1):
+      yield start + float(i) * stepsize * (end-start)
 
+  def __iadd__(self, values):
+    """ Adds segment to band-structure line. """
+    from numpy import array
+    assert hasattr(values, '__iter__'), ValueError('Value should be a sequence.')
+    values = [v for v in values]
+    if len(values) == 2 and len(values[0]) == 3 and len(values[1]) == 3: values = [values]
+    for start, end in values:
+      assert hasattr(start, '__iter__'), ValueError('Values should be two tuples of 3d-vectors.')
+      start = array(start, dtype='float64')
+      assert hasattr(end, '__iter__'), ValueError('Values should be two tuples of 3d-vectors.')
+      end = array(end, dtype='float64')
+      self.lines.append((start, end))
+    return self
 
-  # splits local communicator.
-  color = comm.rank % pools
-  local_comm = comm.split(color)
-  # then computes different kpoints.
-  results = []
-  for i, (x, kpoint) in enumerate(_lines(kpoints)):
-    # separates jobs into pools.
-    if i % pools != color: continue
-
-    # sets directory.
-    directory = join(outdir_calc, "%i-%s" % (i, kpoint))
-    # actually computes stuff.
-    out = escan( structure, outdir=directory, kpoint=kpoint, vffrun=vffrun,\
-                 genpotrun=genpotrun, do_escan=True, comm = local_comm, **kwargs )
-    # saves stuff
-    eigenvalues = out.eigenvalues.copy()
-    eigenvalues.sort()
-    results.append( (x, kpoint, eigenvalues) )
-
-  if comm.size > 1 and pools > 1: # gathers and orders results.
-    head_comm = comm.split(0 if local_comm.rank == 0 else 1)
-    if local_comm.rank == 0:
-      results = all_gather(head_comm, results)
-      def comp(a,b):
-        if a[0] < b[0]: return -1
-        if a[0] ==  b[0]: return 0
-        return 1
-      results = sorted((j for i in results for j in i), comp)
-      broadcast(local_comm, results, 0)
-    else: results = broadcast(local_comm, None, 0) 
-  return results
-
-class Extract(MassExtract):
-  """ Extraction class for band-structures. """
-
-  def __iter_alljobs__(self):
-    """ Goes through all calculations and orders them. """
-    from re import compile
-    result = [u for u in super(Extract, self).__iter_alljobs__() if u[0] != '/calculations']
-    regex = compile("/calculations/(\d+)-")
-    result = sorted(result, key=lambda x: int(regex.match(x[0]).group(1)))
-    for u in result: yield u
-
-  @property
-  @make_cached
-  def success(self): 
-    """ Checks for success of jobs. """
-    from os.path import exists
-    if not exists(self.rootdir): return False
-    if len(self.items()) == 0: return False
-    for name, job in self.iteritems(): 
-      if not job.success: return False
-    return True
-
-  @property
-  @make_cached
-  def vff(self):
-    """ Vff extraction object. """
-    from os.path import join
-    return self.Extract(join(self.rootdir, 'calculations'))
-
-  @property
-  @make_cached
-  def kpoints(self):
-    """ kpoints used to compute band-structure. """
-    from numpy import zeros, array
-    from re import compile
-    regex = compile("/calculations/(\d+)-\[\s*(\S+)\s+(\S+)\s+(\S+)\s*\]")
-    result = zeros((len(self.jobs), 3), dtype='float64')
-    for i, name in enumerate(self.iterkeys()):
-      found = regex.search(name)
-      result[i,:] = array([found.group(2), found.group(3), found.group(4)])
+  def __add__(self, other):
+    """ Returns new instance with summed segment. """
+    result = self.__class__(self.lines, self.density, self.do_relax_kpoint, self.mink)
+    result += other.lines if hasattr(other, 'lines') else other
     return result
 
-  @property
-  def vbm(self): 
-    """ Returns energy at vbm. """
-    from numpy import array, max
-    from ..crystal import nb_valence_states
-    nbe = nb_valence_states(self.vff.structure)
-    units = self.eigenvalues.itervalues().next().units
-    return max(array(self.eigenvalues.values())[:, nbe-2:nbe]) * units
-
-  @property
-  def cbm(self): 
-    """ Returns energy at vbm. """
-    from numpy import array, min
-    from ..crystal import nb_valence_states
-    nbe = nb_valence_states(self.vff.structure)
-    units = self.eigenvalues.itervalues().next().units
-    return min(array(self.eigenvalues.values())[:, nbe:nbe+2]) * units
-
-  @property 
-  def directness(self):
-    """ Difference in energy between the CBM at Gamma and the LUMO. """
-    from numpy.linalg import norm
-    from ..crystal import nb_valence_states
-    lumo = self.cbm
-    gamma = min((job for job in self.values()), key=lambda x: norm(x.escan.kpoint))
-    if norm(gamma.escan.kpoint) > 1e-6: raise RuntimeError("Gamma point not found.")
-    nbe = nb_valence_states(self.vff.structure)
-    cbm = min(gamma.eigenvalues[nbe], gamma.eigenvalues[nbe+1])
-    return cbm - lumo
+  def __repr__(self):
+    """ Returns representation of this object. """
+    compare = BPoints()
+    string = '{0.__class__.__name__}(None, {0.density}, {0.do_relax_kpoint}, {0.mink})'.format(self)
+    for start, end in self.lines:
+      string += '+([{0[0]},{0[1]},{0[2]}], [{1[0]},{1[1]},{1[2]}])'.format(start, end)
+    return string
     
 
-    
+ReducedBPoints = _reduced_grids_factory('ReducedBPoints', BPoints)
+
 try: import matplotlib.pyplot as plt 
 except: 
   def plot_bands(extractor, **kwargs):
@@ -212,6 +84,9 @@ else:
     """ Tries and plots band-structure. """
     from numpy import dot, array, min, max
     from numpy.linalg import norm
+
+    old = extractor.unreduce
+    extractor.unreduce = True
 
     bandcolor = kwargs.pop('bandcolor', 'blue')
     edgecolor = kwargs.pop('edgecolor', 'red')
@@ -227,7 +102,7 @@ else:
 
     # then plot bands.
     x = array([sum(norms[:i]) for i in range(len(norms)+1)])
-    y = array(extractor.eigenvalues.values())
+    y = array(extractor.eigenvalues)
 
     # then line markers.
     plt.plot(x, y, color=bandcolor, **kwargs)
@@ -244,7 +119,4 @@ else:
     ylims = min(y) - (max(y) - min(y))*0.05, max(y) + (max(y) - min(y))*0.05
     plt.ylim(ylims)
 
-  Extract.plot_bands = plot_bands
-
-
-
+    extractor.unreduce = old

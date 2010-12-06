@@ -34,6 +34,22 @@ namespace LaDa
                                math::rMatrix3d const &_cell, 
                                math::rMatrix3d const &_inv);
     
+   
+    //! \brief Refolds a periodic vector into the voronoi cell (eg first BZ or WignerSeitz).
+    //! \note Source code is in make_primitive.cc
+    math::rVector3d into_voronoi( math::rVector3d const &_vec, 
+                                  math::rMatrix3d const &_cell, 
+                                  math::rMatrix3d const &_inv);
+
+    //! \brief Refolds a periodic vector into a cell centered around zero (in
+    //!        fractional coordinates).
+    //! \details Since the vector is refolded in fractional coordinates, it may
+    //!          or may not be the vector with smallest norm. Use math::rVector3d
+    //!          into_voronoi() to get the equivalent vector with smallest norm.
+    //! \note Source code is in make_primitive.cc
+    math::rVector3d zero_centered( math::rVector3d const &_vec, 
+                                   math::rMatrix3d const &_cell, 
+                                   math::rMatrix3d const &_inv);
 
     //! \brief Defines a lattice.
     //! \details A lattice is actually quite similar to a structure.

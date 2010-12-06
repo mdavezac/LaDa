@@ -10,7 +10,7 @@ __all__ = [ 'FreezeAtom', 'which_site', 'Sites', 'SymmetryOperator', 'Lattice', 
             'smith_indices', 'Atom', 'kAtom', 'fold_vector', 'Structure', 'FreezeCell',\
             'smith_normal_transform', 'get_space_group_symmetries', 'Neighbors', 'Neighbor', \
             'read_pifile_structure', 'LayerDepth', 'to_fractional', 'linear_smith_index', \
-            'nb_valence_states', \
+            'nb_valence_states', 'into_voronoi', 'zero_centered', \
             # Below, only true python stuff
             'deform_kpoints', 'specie_list', 'read_poscar', 'write_poscar',\
             'write_oldvff', 'read_oldvff', 'structure_to_lattice', 'fill_structure', \
@@ -21,13 +21,14 @@ from _crystal import FreezeAtom, which_site, Site, SymmetryOperator, Lattice, to
                      smith_indices, kAtoms, Atom, kAtom, fold_vector, Structure, FreezeCell,\
                      smith_normal_transform,  get_space_group_symmetries, Neighbors, Neighbor, \
                      read_pifile_structure, LayerDepth, to_fractional, linear_smith_index,\
-                     nb_valence_states, \
+                     nb_valence_states, into_voronoi, zero_centered,  \
                      rStructure, rAtom, Sites, Atoms, kAtoms, StringVector # this line not in __all__
 
 from lada.opt.decorators import add_setter
 from read_write import read_poscar, write_poscar, write_oldvff, read_oldvff
 import A2BX4
 import bravais
+import binary
 import gruber
 try: import defects
 except ImportError: pass # required vasp and jobs packages.
@@ -367,11 +368,33 @@ def structure_to_lattice(structure):
 
 Structure.to_lattice = structure_to_lattice
 
-def lattice_to_structure(lattice):
-  """ Converts lattice to structure. """
-  from . import fill_structure
-  return fill_structure(lattice.cell, lattice)
+def lattice_to_structure(lattice, cell=None, subs=None):
+  """ Creates a structure from a lattice.
 
+      :Parameters:
+        lattice : `Lattice`
+          Input lattice from which to create structure.
+        cell : None or 3x3 sequence
+          If None, will create structure with primitive cell. Otherwise, will
+          create supercell. In the latter case, the cell should be in cartesian
+          coordinates (not in lattice vector coordinates).
+        subs : None or dict
+          If a dictionary, then substitutes atomic species in the lattice  with
+          other atomic types. E.g. ``subs={'A':'Si'}`` will substitute 'A' in
+          the lattice with 'Si' in the structure. If the lattice site can
+          accomodate more than one atom than the last match will count.
+  """
+  from numpy import array
+  from . import fill_structure
+  if cell  == None: cell = lattice.cell
+  else: cell = array(cell, dtype='float64').reshape((3,3))
+  if subs == None: subs = {}
+
+  result = fill_structure(cell, lattice)
+  for key, value in subs.items():
+    for atom in result.atoms:
+      if key in lattice.sites[atom.site].type: atom.type = value
+  return result
 Lattice.to_structure = lattice_to_structure
 
 

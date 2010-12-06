@@ -7,7 +7,7 @@ from numpy.linalg import norm
 from boost.mpi import world
 from lada.vff import Vff
 from lada.crystal import Structure, Lattice, fill_structure, deform_kpoint
-from lada.escan import Escan, soH, _is_in_sync
+from lada.escan import Escan, soH
 
 # sets up input stuff
 vff = Vff()
