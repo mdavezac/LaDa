@@ -33,6 +33,15 @@ class _ChargedStateNavigation(object):
     if self.pa_kwargs == None: self.pa_kwargs = {}
 
   @property
+  def epsilon(self):
+    """ Dimensionless dielectric constant of the host material. """
+    return self._epsilon
+  @epsilon.setter
+  def epsilon(self, value): 
+    self._epsilon = value
+    self.uncache()
+
+  @property
   def rootdir(self):
     """ Root directory of defects. """
     return self.extract.rootdir
