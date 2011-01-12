@@ -147,7 +147,7 @@ class Extract(AbstractExtractBase):
     """ Alias for `escan`. """
     from warnings import warn
     warn(DeprecationWarning('escan attribute is deprecated in favor of functional.'), stacklevel=2)
-    return self.escan
+    return self.functional
 
   @property
   def _double_trouble(self):
