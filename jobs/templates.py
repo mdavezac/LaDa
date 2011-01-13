@@ -48,7 +48,7 @@ def default_pbs( file, walltime = "05:45:00", mppwidth = 8, queue = None, name =
     else:             file.write(" --{0} {1}".format(key, value))
   file.write(" " + pickle + "\n")
 
-def default_slurm( file, walltime = "05:45:00", mppwidth = 8, ppernode=8, queue = None,\
+def default_slurm( file, walltime = "05:45:00", mppwidth = 8, ppernode=8, account = None,\
                    name = None, pyscript = None,  pickle = "job_pickle",\
                    outdir = None, **kwargs):
   """ Creates default slurm-script. Does not launch. 
@@ -63,8 +63,8 @@ def default_slurm( file, walltime = "05:45:00", mppwidth = 8, ppernode=8, queue 
           Number of processes (not processors) to use.
         ppernode
           Number of processes per node.
-        queue
-          Queue to use. If none will let slurm use default queue.
+        account
+          Account to use. Defaults to BES000.
         name
           Name of the job.
         pyscript
@@ -78,12 +78,10 @@ def default_slurm( file, walltime = "05:45:00", mppwidth = 8, ppernode=8, queue 
   nnodes = mppwidth / ppernode + (0 if mppwidth % ppernode == 0 else 1)
 
   file.write("#! /bin/bash\n"\
-             "#SBATCH --account=BES000\n"\
              "#SBATCH --time={0}\n"\
-             "#SBATCH --account=BES000\n"\
              "#SBATCH -N {1}\n"\
              "#SBATCH -n {2}\n".format(walltime, nnodes, mppwidth)) 
-  if queue != None: file.write("#SBATCH -p {0}\n".format(queue))
+  if account != None: file.write("#SBATCH --account={0}\n".format(account))
   pbsdir = dirname(file.name)
   if name != None:
     file.write("#SBATCH -J {1} \n"\
