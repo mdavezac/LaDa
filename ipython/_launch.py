@@ -156,7 +156,7 @@ def launch(self, event):
   scattered = subparsers.add_parser('scattered', description='Each calculation is a separate job.',\
                                     parents=[opalls])
   scattered.add_argument( '--nbprocs', type=str, default="None", dest="nbprocs",
-                          help="Can be an integer, in which case it speciefies "\
+                          help="Can be an integer, in which case it specifies "\
                                " the number of processes to exectute jobs with. "\
                                "Can also be a callable taking a JobDict as " \
                                "argument and returning a integer. Will default "\
