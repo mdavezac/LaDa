@@ -78,6 +78,7 @@ def default_slurm( file, walltime = "05:45:00", mppwidth = 8, ppernode=8, queue 
   nnodes = mppwidth / ppernode + (0 if mppwidth % ppernode == 0 else 1)
 
   file.write("#! /bin/bash\n"\
+             "#SBATCH --account=BES000\n"\
              "#SBATCH --time={0}\n"\
              "#SBATCH -N {1}\n"\
              "#SBATCH -n {2}\n".format(walltime, nnodes, mppwidth)) 
