@@ -7,7 +7,7 @@
  
 namespace LaDa
 {
-  namespace Vff
+  namespace vff
   {
 
     template< class T_VFFBASE >

@@ -15,6 +15,12 @@ namespace LaDa
     typedef Eigen::Matrix<types::t_real, 3, 1> rVector3d;
     //! 3d-vector of integers. 
     typedef Eigen::Matrix<types::t_int, 3, 1> iVector3d;
+    //! 6d-vector of reals. 
+    typedef Eigen::Matrix<types::t_real, 4, 1> rVector4d;
+    //! 6d-vector of reals. 
+    typedef Eigen::Matrix<types::t_real, 5, 1> rVector5d;
+    //! 6d-vector of reals. 
+    typedef Eigen::Matrix<types::t_real, 6, 1> rVector6d;
 
     //! 3d-matrix of reals. 
     typedef Eigen::Matrix<types::t_real, 3, 3> rMatrix3d;

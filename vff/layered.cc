@@ -16,7 +16,7 @@
 
 namespace LaDa
 {
-  namespace Vff
+  namespace vff
   { 
 
     void Layered::create_template_strain()
@@ -36,12 +36,13 @@ namespace LaDa
           template_strain(i,j) *= b;
     }
 
-    Layered :: t_Return Layered :: operator()( const t_Arg& _arg ) const
+    Layered::t_Return
+      Layered::operator()( const t_Arg& _arg 
+                           LADA_MPI_CODE(LADA_COMMA boost::mpi::communicator const &_comm) ) 
     {
       math::rMatrix3d strain;
       unpack_variables( _arg, strain );
-      t_Return energy = Vff::energy();
-      return Vff::energy();
+      return Vff::energy(LADA_MPI_CODE(_comm));
     }
 
 
@@ -90,7 +91,7 @@ namespace LaDa
     }
 
     // Unpacks opt::Function_Base::variables into Vff::Layered format
-    void Layered :: unpack_variables( const t_Arg& _arg, math::rMatrix3d& strain ) const
+    void Layered :: unpack_variables( const t_Arg& _arg, math::rMatrix3d& strain ) 
     {
       t_Arg :: const_iterator i_x = _arg.begin();
 
@@ -104,69 +105,8 @@ namespace LaDa
       unpack_positions( i_x, strain );
     }
 
-    bool Layered :: Load_( const TiXmlElement &_node )
-    {
-      if( not t_Base :: Load( _node ) ) return false;
-      if( not _node.Attribute("direction") )
-      {
-        is_fixed_by_input = false;
-        return true;
-      }
-      bool couldload = true;
-      std::istringstream sstr; sstr.str( _node.Attribute("direction") );
-      sstr >> direction[0]; if ( sstr.fail() ) couldload = false;
-      sstr >> direction[1]; if ( sstr.fail() ) couldload = false;
-      sstr >> direction[2]; if ( sstr.fail() ) couldload = false;
-
-      if ( math::is_zero( direction.squaredNorm() ) ) couldload = false;
-
-      if ( not couldload )
-      {
-        is_fixed_by_input = false;
-        std::cerr << "Found direction tag, but could not read it correctly.\n";
-        return false; 
-      }
-       
-      is_fixed_by_input = true;
-      create_template_strain();
-      return true;
-    }
-
-    bool Layered :: Load( const TiXmlElement &_node )
-    {
-      namespace bfs = boost::filesystem;
-      const TiXmlElement* parent
-        = opt::find_node( _node, "Functional", "type", "vff" );
-      LADA_DO_NASSERT( not parent, 
-                  "Could not find <Functional type=\"vff\"> in input\n"; )
-      bfs::path path;
-      TiXmlDocument doc;
-      if(  parent->Attribute( "filename" ) )
-      {
-        path = opt::expand_path( parent->Attribute( "filename" ) );
-        LADA_DO_NASSERT( not bfs::exists( path ), path.string() + " does not exist.\n" )
-        opt::read_xmlfile( path, doc );
-        LADA_DO_NASSERT( not doc.FirstChild( "Job" ),
-                    "Root tag <Job> does not exist in " + path.string() + ".\n" )
-        parent = opt::find_node( *doc.FirstChildElement( "Job" ),
-                                 "Functional", "type", "vff" );
-        LADA_DO_NASSERT( not parent, 
-                    "Could not find <Functional type=\"vff\"> in input\n"; )
-      }
-      return Load_( *parent );
-    }
-
-
-     void Layered :: print_out( std::ostream &stream ) const
-     {
-       t_Base :: print_out( stream );
-       if( is_fixed_by_input )
-         stream << "Epitaxial Direction fixed on input: " << direction << "\n";
-       else stream << "Epitaxial Direction fixed by unit cell\n";
-     }
-
-    void Layered :: pack_gradients(const math::rMatrix3d& _stress, 
-                                   t_GradientArg _grad) const
+    void Layered::pack_gradients( const math::rMatrix3d& _stress, t_GradientArg _grad
+                                  LADA_MPI_CODE(LADA_COMMA boost::mpi::communicator const &_comm) ) const
     {
       t_GradientArg i_grad(_grad);
 
@@ -178,10 +118,10 @@ namespace LaDa
       ++i_grad;
 
       // then atomic position stuff
-      t_Centers :: const_iterator i_center = centers.begin();
-      t_Centers :: const_iterator i_end = centers.end();
+      t_Centers :: const_iterator i_center = centers_.begin();
+      t_Centers :: const_iterator i_end = centers_.end();
       t_Atoms :: const_iterator i_atom0 = structure0.atoms.begin();
-      i_center = centers.begin();
+      i_center = centers_.begin();
       for (; i_center != i_end; ++i_center, ++i_atom0)
       {
         const math::rVector3d& gradient = i_center->gradient;
@@ -203,23 +143,25 @@ namespace LaDa
             MPI_IN_PLACE, _grad, size_t(i_grad - _grad),
             boost::mpi::get_mpi_datatype<t_Type>(*_grad),
             boost::mpi::is_mpi_op< std::plus<t_Type>, t_Type>::op(), 
-            (MPI_Comm) MPI_COMM
+            (MPI_Comm) _comm
           )
         );
 //       boost::mpi::all_reduce
 //       (
-//         MPI_COMM, 
+//         _comm, 
 //         _grad, size_t(i_grad - _grad), _grad,
 //         std::plus<types::t_real>()
 //       );
       )
     }
 
-    void Layered :: gradient( const t_Arg& _arg, t_GradientArg _i_grad ) const
+    Layered::t_Return
+      Layered::gradient( const t_Arg& _arg, t_GradientArg _i_grad
+                         LADA_MPI_CODE(LADA_COMMA boost::mpi::communicator const &_comm) )
     {
       math::rMatrix3d strain = math::rMatrix3d::Zero();
       t_Return energy(0);
-      foreach( const t_Center& center, centers ) center.gradient = math::rVector3d(0,0,0);
+      foreach( const t_Center& center, centers_ ) center.gradient = math::rVector3d(0,0,0);
 
       // unpacks variables into vff atomic_center and strain format
       unpack_variables(_arg, strain);
@@ -229,13 +171,12 @@ namespace LaDa
 
       // computes energy and gradient
       stress = math::rMatrix3d::Zero();
-      LADA_MPI_SPLIT_LOOP( t_Centers :: const_iterator, center, centers, MPI_COMM )
+      LADA_MPI_SPLIT_LOOP( t_Centers :: const_iterator, center, centers_, _comm )
       for (; i_center != i_center_end; ++i_center)
-        energy += functionals[i_center->kind()].
-                        evaluate_with_gradient( *i_center, strain, stress, K0 );
+        energy += evaluate_center_with_gradient( *i_center, strain, stress, K0 );
 
 #     ifdef LADA_MPI
-        energy = boost::mpi::all_reduce( MPI_COMM, energy, std::plus<types::t_real>() ); 
+        energy = boost::mpi::all_reduce( _comm, energy, std::plus<types::t_real>() ); 
         // boost does not do in-place reduction.
         BOOST_MPI_CHECK_RESULT
         (
@@ -244,12 +185,12 @@ namespace LaDa
             MPI_IN_PLACE, stress.data(), stress.stride()*3,
             boost::mpi::get_mpi_datatype<types::t_real>(stress(0,0)),
             boost::mpi::is_mpi_op< std::plus<types::t_real>, types::t_real>::op(),
-            (MPI_Comm) MPI_COMM
+            (MPI_Comm) _comm
           )
         );
 #     endif
       // now repacks into function::Base format
-      pack_gradients(stress, _i_grad);
+      pack_gradients(stress, _i_grad LADA_MPI_CODE(LADA_COMMA _comm));
     }
 
   } // namespace vff

@@ -14,13 +14,13 @@
   
 namespace LaDa
 {
-  namespace Vff
+  namespace vff
   { 
-    bool Vff :: build_tree_sort_dnc_( const Crystal::ConquerBox<types::t_real>& _dnc, 
+    bool Vff :: build_tree_sort_dnc_( const Crystal::ConquerBox<t_Atom::t_Type>& _dnc, 
                                       const t_FirstNeighbors & _fn )
     {
       namespace bt = boost::tuples;
-      typedef Crystal::ConquerBox<types::t_real> :: t_States t_States;
+      typedef Crystal::ConquerBox<t_Atom::t_Type> :: t_States t_States;
       const t_States :: const_iterator i_state_begin = _dnc.begin();
       const t_States :: const_iterator i_state_end = _dnc.end();
 
@@ -31,8 +31,8 @@ namespace LaDa
         if( not bt::get<1>( *i_center ) ) continue; // skip states outside small box.
 
         const size_t center_index( bt::get<0>( *i_center ) );
-        t_Center &center( centers[ center_index ] );
-        const size_t site( center.Origin().site );
+        t_Center &center( centers_[ center_index ] );
+        const size_t site( center.atom().site );
         LADA_DO_NASSERT( site > structure.lattice->sites.size(), "Unindexed site.\n" )
         const size_t neigh_site( site == 0 ? 1: 0 );
         const types::t_real cutoff = types::t_real(0.25) * _fn[site].front().squaredNorm();
@@ -44,8 +44,8 @@ namespace LaDa
           const size_t bond_index( bt::get<0>( *i_bond ) );
           if( bond_index == center_index ) continue;
 
-          const t_Center &bond( centers[ bond_index ] );
-          if( site == bond.site_one() ? 0: 1 ) continue;
+          const t_Center &bond( centers_[ bond_index ] );
+          if( site == bond.atom().site ) continue;
           
           std::vector<math::rVector3d> :: const_iterator i_neigh = _fn[site].begin();
           const std::vector<math::rVector3d> :: const_iterator i_neigh_end = _fn[site].end();
@@ -53,7 +53,7 @@ namespace LaDa
           {
             const math::rVector3d image
             ( 
-              center.origin->pos + *i_neigh - bond.origin->pos
+              center.i_atom_->pos + *i_neigh - bond.i_atom_->pos
             );
             const math::rVector3d frac_image( (!structure.cell) * image );
             const math::rVector3d frac_centered
@@ -66,7 +66,7 @@ namespace LaDa
 
             if( cut.squaredNorm() > cutoff ) continue;
             
-            t_Centers :: iterator ii_bond( centers.begin() + bond_index );
+            t_Centers :: iterator ii_bond( centers_.begin() + bond_index );
             center.bonds.push_back( t_Center ::__make__iterator__( ii_bond ) );
             const math::rVector3d trans
             (
@@ -81,7 +81,7 @@ namespace LaDa
           } // loop over neighbors
           if( center.bonds.size() == 4 ) break;
         } // loop over bonds
-      } // loop over centers 
+      } // loop over centers_ 
 
       return true;
     } // Vff :: build_tree_sort_dnc

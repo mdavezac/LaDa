@@ -20,7 +20,7 @@
 
 namespace LaDa
 {
-  namespace Python
+  namespace python
   {
     namespace details
     {

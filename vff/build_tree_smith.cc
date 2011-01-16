@@ -10,7 +10,7 @@
 
 namespace LaDa
 {
-  namespace Vff
+  namespace vff
   { 
     bool Vff :: build_tree_smith_(const t_FirstNeighbors& _fn)
     {
@@ -42,7 +42,7 @@ namespace LaDa
       {
         size_t index(0);
         bool error = false;
-        foreach( const Crystal::Structure::t_Atom &atom, structure.atoms )
+        foreach( const t_Atom &atom, structure.atoms )
         {
           math::iVector3d sindex;
           LADA_NASSERT( atom.site < 0, "site indexing is incorrect.\n" );
@@ -81,18 +81,18 @@ namespace LaDa
       }
       
       // constructs list of centers.
-      centers.clear();
-      centers.reserve( structure.atoms.size() );
-      Crystal::Structure::t_Atoms::iterator i_atom = structure.atoms.begin();
-      Crystal::Structure::t_Atoms::iterator i_atom_end = structure.atoms.end();
+      centers_.clear();
+      centers_.reserve( structure.atoms.size() );
+      t_Atoms::iterator i_atom = structure.atoms.begin();
+      t_Atoms::iterator i_atom_end = structure.atoms.end();
       for(types::t_unsigned index=0; i_atom != i_atom_end; ++i_atom, ++index )
-        centers.push_back( AtomicCenter( structure, *i_atom, index ) );
+        centers_.push_back( AtomicCenter( structure, *i_atom, index ) );
 
       // finally builds tree.
       typedef std::vector< math::rVector3d > :: const_iterator t_cit;
 
-      t_Centers :: iterator i_center = centers.begin();
-      t_Centers :: iterator i_center_end = centers.end();
+      t_Centers :: iterator i_center = centers_.begin();
+      t_Centers :: iterator i_center_end = centers_.end();
       const math::rMatrix3d inv_cell( structure.cell.inverse() );
       i_atom = structure.atoms.begin();
       for(; i_center != i_center_end; ++i_center, ++i_atom )
@@ -119,7 +119,7 @@ namespace LaDa
             cindex( indices[neighbor_site][sindex(0)][sindex(1)][sindex(2)] );
           LADA_DO_NASSERT( cindex == Natoms, "Index corresponds to no site.\n" )
           // now creates branch in tree.
-          t_Centers :: iterator i_bond( centers.begin() + cindex );
+          t_Centers :: iterator i_bond( centers_.begin() + cindex );
           i_center->bonds.push_back( t_Center::__make__iterator__( i_bond ) );
           const math::rVector3d dfrac
           ( 

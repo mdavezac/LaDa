@@ -28,7 +28,7 @@
 
 namespace LaDa
 {
-  namespace Vff
+  namespace vff
   {
 
     //! \brief Implements a Virtual Atom functional around Vff::Functional derived object.
@@ -42,7 +42,6 @@ namespace LaDa
     //!         - with Vff::Functional as the base class, 
     //!         - with Vff::Layered as the base class.
     //!         .
-    //!       You can declare other virtual atom functionals at your own risk.
     template <class T_VFFBASE>
     class VABase : protected T_VFFBASE, public function::VirtualAtom
     {
@@ -73,20 +72,18 @@ namespace LaDa
           //! Type of the minimizer for minimizing strain
           typedef Minimizer::Frpr t_Minimizer;
 #       endif
+        //! The minimizer with which vff is minimized
+        t_Minimizer minimizer;
 
       protected:
         //! The type of the atom container
-        typedef Crystal :: Structure :: t_Atoms   t_Atoms;
+        typedef typename Vff::t_Arg::t_Atoms   t_Atoms;
         //! The type of the atom
         typedef t_Atoms :: value_type t_Atom;
         //! Type of the container holding the atomic centers
         typedef typename t_VffBase :: t_Centers t_Centers;  
         //! Type of the atomic centers
         typedef typename t_Centers :: value_type t_Center;  
-        //! Type of the container holding the atomic functionals
-        typedef typename t_VffBase :: t_AtomicFunctionals t_AtomicFunctionals;  
-        //! Type of the atomic functionals
-        typedef typename t_AtomicFunctionals :: value_type t_AtomicFunctional;  
 
 
         // Those public members of t_VffBase which are expected in this class
@@ -95,9 +92,7 @@ namespace LaDa
 
         // Those protected members of t_VffBase which are expected in this class
       protected:
-        using t_VffBase::centers;
-        using t_VffBase::functionals;
-
+        using t_VffBase::centers_;
 
       public:
         //! see functional::Base::t_Type
@@ -107,8 +102,8 @@ namespace LaDa
 
       public:
         //! Constructor and Initializer
-        VABase   ( Crystal::Structure &_str )
-               : t_VffBase( _str ), t_VABase( _str ), minimizer() {}
+        VABase   ( typename T_VFFBASE::t_Arg &_str )
+               : t_VffBase( _str ), minimizer() { ptr_structure_ = &t_VffBase::structure; }
         //! Copy Constructor
         VABase   ( const VABase &_c )
                : t_VffBase( _c ), t_VABase( _c ), minimizer( _c.minimizer ) {}
@@ -139,12 +134,12 @@ namespace LaDa
         //!          vff.
         bool init( bool _redocenters = false, bool _verbose = false );
         //! Returns reference to the Vff base class
-        t_VffBase& Vff() { return *static_cast<t_VffBase*>(this); }
+        t_VffBase& VffBase() { return *static_cast<t_VffBase*>(this); }
         //! Returns constant reference to the Vff base class
-        const t_VffBase& Vff() const
+        const t_VffBase& VffBase() const
          { return *static_cast<const t_VffBase*>(this); }
         //! Returns constant structure.
-        const Crystal::Structure& get_structure() const { return structure; }
+        typename T_VFFBASE::t_Arg const & get_structure() const { return *ptr_structure_; }
         
 
          //! \brief Returns a reference to the computed stress
@@ -185,14 +180,7 @@ namespace LaDa
 
          //! Copies parameters from argument.
          template<class T> 
-           void copy_parameters(VABase<T> const &_f) { t_VffBase::copy_parameters(_f.Vff()); }
-
-         //! Sets minimizer. For python mostly.
-         void set_minimizer(t_Minimizer const &_minimizer) { minimizer = _minimizer; }
-
-      protected:
-        //! The minimizer with which vff is minimized
-        t_Minimizer minimizer;
+           void copy_parameters(VABase<T> const &_f) { t_VffBase::copy_parameters(_f.VffBase()); }
     };
 
   } // namespace vff 

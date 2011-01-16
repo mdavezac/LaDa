@@ -14,17 +14,19 @@
 #include <opt/function_base.h>
 #include <opt/debug.h>
 
+#include "data.h"
+
 namespace LaDa
 {
-  namespace Vff
+  namespace vff
   {
 
     class Vff;
 
     //! \brief Represents a single Structure::t_Atom and its first neighbor relationships
     //! \details This class is meant to be used in conjunction with a list of
-    //! Crystal::Structure::t_Atom, most likely in a Crystal::Structure. It contains a
-    //! pointer, AtomicCenter::origin, which points a single Crystal::Structure::t_Atom. The
+    //! Crystal::TStructure<std::string>::t_Atom, most likely in a Crystal::TStructure<std::string>. It contains a
+    //! pointer, AtomicCenter::i_atom_, which points a single Crystal::TStructure<std::string>::t_Atom. The
     //! first neighbor bonds of this atom are collected as vector of pointers to
     //! Vff::AtomicCenter objects in AtomicCenter::bonds. Since we are concerned
     //! with periodic structures, AtomicCenter::translations and
@@ -34,7 +36,7 @@ namespace LaDa
     {
       friend class Vff;
       //! The type of the atom  
-      typedef Crystal::Structure::t_Atom  t_Atom;
+      typedef Crystal::TStructure<std::string>::t_Atom  t_Atom;
       //! The container of atomic centers. Defined here once and for all.
       typedef std::vector<AtomicCenter> t_Centers;
       //! Type of pointer/iterator to the atomic center on the other side of the bond
@@ -51,7 +53,7 @@ namespace LaDa
         class const_iterator;
         
       protected:
-        t_Atom *origin; //!< The atom this object is addressing
+        t_Atom *i_atom_; //!< The atom this object is addressing
         //! \brief Other Vff::AtomicCenter objects with which this one is in a bond-relationship
         //! \details Via bonds, a collection of AtomicCenter can be made into a tree,
         //! which can be travelled linearly, or through the first neighbor bonds,
@@ -59,16 +61,14 @@ namespace LaDa
         //! \sa AtomicCenter::const_iterator, Vff::Functional::construct_centers, 
         //!     Vff::functional::initialize_centers
         std::vector< t_Bond > bonds; 
-        //! \brief Allow to relate origin pointer of Atomic_center::bonds to the correct
+        //! \brief Allow to relate i_atom_ pointer of Atomic_center::bonds to the correct
         //! periodic image with which the bond is made
         std::vector< math::rVector3d > translations;
         //! \brief A switch to say wether a bond is made directely or with a periodic
         //! image of an AtomicCenter
         std::vector< bool > do_translates;
         //! Crystal::Structure on which the Vff  functional is applied.
-        Crystal :: Structure *structure;
-        bool is_site_one; //!< helps determine the kind of atom this is
-        bool is_site_one_two_species; //!< helps determine the kind of atom this is
+        Crystal :: TStructure<std::string> *structure;
         //! atomic index in Crystal::Structure::t_Atoms collection of AtomicCenter::structure
         types::t_unsigned index;
 
@@ -79,23 +79,14 @@ namespace LaDa
         //! \param _str structure in which \a _e can be found
         //! \param _e atom to which this AtomicCenter relates
         //! \param _i index of _i in _str.atoms collection. Usefull for mpi processing
-        AtomicCenter ( Crystal::Structure &_str, t_Atom &_e, types::t_unsigned _i);
+        AtomicCenter   (Crystal::TStructure<std::string> &_str, t_Atom &_e, types::t_unsigned _i) 
+                     : i_atom_(&_e), structure(&_str), index(_i) {};
         //! \brief Copy Constructor
         //! \param[in] _c AtomicCenter object to copy
         AtomicCenter   ( const AtomicCenter &_c )
-                      : origin(_c.origin), bonds(_c.bonds), translations(_c.translations), 
+                      : i_atom_(_c.i_atom_), bonds(_c.bonds), translations(_c.translations), 
                         do_translates(_c.do_translates), structure(_c.structure),
-                        is_site_one(_c.is_site_one),
-                        is_site_one_two_species( _c.is_site_one_two_species), 
                         gradient(0,0,0), index( _c.index) {} 
-
-        //! \brief Returns the kind of atomic center this is
-        //! \details In order to use the right coefficients in bond stretching and other
-        //! interactions, we have to know the "kind" of
-        //! functional this is. This will depend on the atomic specie of this
-        //! atom and the encoding of Vff::Atomic_Functional array in
-        //! Vff::Functional
-        types::t_unsigned kind() const;
 
         //! \brief Adds _bond to  AtomicCenter::bonds if it is in first neighbor relationship
         //! \details This function returns -1 if \a _e is not a bond, and returns the
@@ -110,47 +101,29 @@ namespace LaDa
         //! Returns a AtomicCenter::const_iterator object pointing to the last bond
         const_iterator end() const;
         //! Returns the number of bonds
-        types::t_unsigned size() const
-          { return bonds.size(); }
+        types::t_unsigned size() const { return bonds.size(); }
 
         //! Sets the atomic position of the origin
-        math::rVector3d& operator=(math::rVector3d& _vec)
-          { origin->pos = _vec; return _vec; }
+        math::rVector3d& operator=(math::rVector3d& _vec) { i_atom_->pos = _vec; return _vec; }
         //! Translates the atomic position of the origin by _vec
         //! \param _vec Translation
-        void operator+=(const math::rVector3d& _vec)
-          { origin->pos += _vec; }
+        void operator+=(const math::rVector3d& _vec) { i_atom_->pos += _vec; }
         //! Translates the atomic position of the origin by -_vec
         //! \param _vec "Negative" Translation
-        void operator-=(const math::rVector3d& _vec)
-          { origin->pos -= _vec; }
+        void operator-=(const math::rVector3d& _vec) { i_atom_->pos -= _vec; }
         //! Returns the atomic position of the origin
-        operator math::rVector3d& ()
-          { return origin->pos; }
+        operator math::rVector3d& () { return i_atom_->pos; }
         //! Returns the atomic position of the origin, constant format
-        operator const math::rVector3d& () const
-          { return origin->pos; }
+        operator const math::rVector3d& () const { return i_atom_->pos; }
         //! Returns the atom at the origin
-        t_Atom& Origin()
-          { return *origin; }
+        t_Atom& atom() { return *i_atom_; }
         //! Returns the atom at the origin, constant format
-        const t_Atom& Origin() const
-          { return *origin; }
+        const t_Atom& atom() const { return *i_atom_; }
         //! Sets the gradient place-holder to the (0,0,0) vector
         void reset_gradient()
           { gradient[0] = 0; gradient[1] = 0; gradient[2] = 0; }
-        //! Returns true if AtomicCenter is a site 1 in this lattice type
-        bool site_one() const
-          { return is_site_one; }
         //! Returns the index of this AtomicCenter in AtomicCenter::structure
-        types::t_unsigned get_index() const
-          { return index; }
-
-      protected:
-        //! \brief Returns the type of bond between this AtomicCenter and _bond
-        //! \param _bond If this is not a bond, function will return result, not error!!
-        //! \sa AtomicCenter::add_bond(), Atomic_Functional::add_bond(), Functional::Load()
-        types::t_unsigned bond_kind( const AtomicCenter &_bond ) const;
+        types::t_unsigned get_index() const { return index; }
     };
 
     //! \brief Iterator to travel along the bonds of an AtomicCenter
@@ -164,7 +137,7 @@ namespace LaDa
     class AtomicCenter :: const_iterator
     {
       //! The type of the atom  
-      typedef Crystal::Structure::t_Atom  t_Atom;
+      typedef Crystal::TStructure<std::string>::t_Atom  t_Atom;
       //! Type of pointer/iterator to the atomic center on the other side of the bond
       typedef AtomicCenter::t_Bond t_Bond;
       //! A reference to the of pointer/iterator to the atomic center on the other side of the bond
@@ -250,14 +223,14 @@ namespace LaDa
             check_valid();
 #         endif
           if ( not *i_do_translate )
-            return (parent->origin->pos - (*i_bond)->origin->pos).squaredNorm();
-          return (   parent->origin->pos - (*i_bond)->origin->pos
+            return (parent->i_atom_->pos - (*i_bond)->i_atom_->pos).squaredNorm();
+          return (   parent->i_atom_->pos - (*i_bond)->i_atom_->pos
                    - parent->structure->cell * (*i_translation) ).squaredNorm();
         }
         //! \brief Returns bond vector
         math::rVector3d& vector( math::rVector3d &_hold )
         {
-          _hold = (*i_bond)->origin->pos - parent->origin->pos ;
+          _hold = (*i_bond)->i_atom_->pos - parent->i_atom_->pos ;
           if ( *i_do_translate )
             _hold += parent->structure->cell * (*i_translation);
           return _hold;
@@ -267,26 +240,33 @@ namespace LaDa
         {
           math::rVector3d a, b;
           if ( *i_do_translate )
-            a =   (*i_bond)->origin->pos - parent->origin->pos 
+            a =   (*i_bond)->i_atom_->pos - parent->i_atom_->pos 
                 + parent->structure->cell * (*i_translation);
           else
-            a = (*i_bond)->origin->pos - parent->origin->pos;
+            a = (*i_bond)->i_atom_->pos - parent->i_atom_->pos;
           if ( *_b.i_do_translate )
-            b =   (*_b.i_bond)->origin->pos - _b.parent->origin->pos 
+            b =   (*_b.i_bond)->i_atom_->pos - _b.parent->i_atom_->pos 
                 + _b.parent->structure->cell * (*_b.i_translation);
           else
-            b = (*_b.i_bond)->origin->pos - _b.parent->origin->pos;
+            b = (*_b.i_bond)->i_atom_->pos - _b.parent->i_atom_->pos;
           return a.dot(b);
         }
-        //! \brief Returns the kind of bond this is
-        //! \see  AtomicCenter::bond_kind(), AtomicCenter::add_bond(),
-        //!       Atomic_Functional::add_bond(), Functional::Load() 
-        types::t_unsigned kind() const
-          { return parent->bond_kind( *(*i_bond) ); }
+        //! Returns unique key for maps of bonds.
+        std::string key() const
+          { return bond_type(parent->atom().type, (*i_bond)->atom().type); }
+        //! Returns unique key for maps of angles.
+        std::string angle_key(AtomicCenter::const_iterator const &_other) const
+        {
+          return (_other.parent == parent) ? 
+                 angle_type(parent->atom().type, (*i_bond)->atom().type, _other->atom().type):
+                 angle_type(parent->atom().type, (*i_bond)->atom().type, _other.atom().type); 
+        }
         //! \brief Returns the atom at the origin of range of bonds this iterator travels
         //! \see AtomicCenter::const_iterator::parent 
-        t_Atom& Origin()
-          { return ((*i_bond)->Origin()); }
+        t_Atom& atom() { return ((*i_bond)->atom()); }
+        //! \brief Returns the atom at the origin of range of bonds this iterator travels
+        //! \see AtomicCenter::const_iterator::parent 
+        t_Atom const & atom() const { return ((*i_bond)->atom()); }
         //! \brief Translates a vector _v by periodic image of enpoint of bond
         //! \param _v vector to translate
         //! \param _cell unit-cell defining periodic image (can be different from
