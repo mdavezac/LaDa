@@ -9,39 +9,9 @@ namespace LaDa
 {
   namespace vff
   {
-
-    template< class T_VFFBASE >
-    bool VABase<T_VFFBASE> :: Load( const TiXmlElement &_node )
-    {
-      namespace bfs = boost::filesystem;
-      const TiXmlElement* parent
-        = opt::find_node( _node, "Functional", "type", "vff" );
-      LADA_DO_NASSERT( not parent, 
-                  "Could not find <Functional type=\"vff\"> in input\n"; )
-      bfs::path path;
-      TiXmlDocument doc;
-      if(  parent->Attribute( "filename" ) )
-      {
-        path = opt::expand_path( parent->Attribute( "filename" ) );
-        LADA_DO_NASSERT( not bfs::exists( path ), path.string() + " does not exist.\n" )
-        opt::read_xmlfile( path, doc );
-        LADA_DO_NASSERT( not doc.FirstChild( "Job" ),
-                    "Root tag <Job> does not exist in " + path.string() + ".\n" )
-        parent = opt::find_node( *doc.FirstChildElement( "Job" ),
-                                 "Functional", "type", "vff" );
-        LADA_DO_NASSERT( not parent, 
-                    "Could not find <Functional type=\"vff\"> in input\n"; )
-      }
-      // Load base
-      if( not t_VffBase :: Load( _node ) ) return false;
-
-      if( minimizer.Load( *parent ) ) return true;
-      return minimizer.Load( *parent->Parent()->ToElement() );
-    }
-
-
     template< class T_VFFBASE > typename VABase<T_VFFBASE> :: t_Type 
-      VABase<T_VFFBASE> :: evaluate(bool relax)
+      VABase<T_VFFBASE> :: evaluate( LADA_MPI_CODE(boost::mpi::communicator const &_comm LADA_COMMA) 
+                                     bool relax)
       {
         // no minimization required if variables is empty.
         typename t_VffBase :: t_Arg arg;
@@ -49,7 +19,7 @@ namespace LaDa
           
         if(arg.size() and relax) minimizer( *( (t_VffBase*) this), arg );
      
-        t_VffBase :: structure.energy = t_VffBase::energy();
+        t_VffBase :: structure.energy = t_VffBase::energy(LADA_MPI_CODE(_comm));
 
         return t_VffBase::structure.energy;
       }

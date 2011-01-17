@@ -16,7 +16,7 @@ namespace LaDa
       void print_escan_input( T &_self, const std::string &_path,
                               Crystal::TStructure<std::string> const &_str) 
       {
-        _self.structure = _str;
+        _self.set_structure(_str);
         _self.init(true, false);
         _self.print_escan_input( _path ); 
       }

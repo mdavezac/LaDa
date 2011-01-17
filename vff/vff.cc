@@ -63,15 +63,15 @@ namespace LaDa
 //   const  types::t_real  no1280 = 0.00703125;
 //   const  types::t_real  no2560 = 0.003515625;
 
-    types::t_real Vff :: energy( LADA_MPI_CODE(boost::mpi::communicator const &_comm) ) const
+    types::t_real Vff :: energy() const
     {
       types::t_real energy = 0;
       
-      LADA_MPI_SPLIT_LOOP( t_Centers :: const_iterator, center, centers_, _comm )
+      LADA_MPI_SPLIT_LOOP( t_Centers :: const_iterator, center, centers_, comm )
       for (; i_center != i_center_end; ++i_center) energy += evaluate_center( *i_center );
       LADA_MPI_CODE
       ( 
-        energy = boost::mpi::all_reduce( _comm, energy, std::plus<types::t_real>() ); 
+        energy = boost::mpi::all_reduce( comm, energy, std::plus<types::t_real>() ); 
       )
 
       return energy;

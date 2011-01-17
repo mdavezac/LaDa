@@ -3,6 +3,7 @@
 
 #include "LaDaConfig.h"
 
+#include <opt/types.h>
 #include "exceptions.h"
 
 namespace LaDa

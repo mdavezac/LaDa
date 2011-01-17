@@ -78,17 +78,25 @@ namespace LaDa
         //! \brief Destructor
         ~Layered() {}
 
+#       ifdef LADA_MPI
+          //! Evaluates a functional after unpacking it.
+          t_Return operator()( const t_Arg& _arg, boost::mpi::communicator const &_comm)
+            { comm = _comm; return operator()(_arg); }
+  
+          //! Evaluates a gradient.
+          t_Return gradient( const t_Arg& _arg, t_GradientArg _grad,
+                             boost::mpi::communicator const &_comm)
+            { comm = _comm; return gradient(_arg, _grad); }
+#       endif
         //! \brief unpacks function::Base::variables, then calls energy
         //! \details This function is redeclared, so that it correctly calls the
         //!          correct unpack_variables() member function from this class,
         //!          and not its base. The alternative is to make pack and unpack
         //!          virtual.
         //! \sa function::Base, function::Base::evaluate
-        t_Return operator()( const t_Arg& _arg
-                             LADA_MPI_CODE(LADA_COMMA boost::mpi::communicator const &_comm) );
+        t_Return operator()(const t_Arg& _arg) const;
         //! Evaluates a gradient.
-        t_Return gradient( const t_Arg& _arg, t_GradientArg _grad
-                           LADA_MPI_CODE(LADA_COMMA boost::mpi::communicator const &_comm) );
+        t_Return gradient(const t_Arg& _arg, t_GradientArg _grad) const;
 
         //! \brief initializes stuff before minimization
         //! \details Defines the packing and unpacking process, such that only unfrozen
@@ -121,13 +129,12 @@ namespace LaDa
         //! \brief unpacks variables from minimizer
         //! \details Functional knows about Functional::Structure, whereas minizers now
         //! about function::Base, this function does the interface between the two
-        void unpack_variables(const t_Arg& _arg, math::rMatrix3d& strain);
+        void unpack_variables(const t_Arg& _arg, math::rMatrix3d& strain) const;
         //! \brief packs variables from minimizer
         //! \details Functional knows about Functional::Structure, whereas
         //! minizers now about function::Base, this function does the interface
         //! between the two
-        void pack_gradients( const math::rMatrix3d& _stress, t_GradientArg _grad
-                             LADA_MPI_CODE(LADA_COMMA boost::mpi::communicator const &_comm) ) const;
+        void pack_gradients( const math::rMatrix3d& _stress, t_GradientArg _grad) const;
 
 
         //! Initializes Layered::u and Layered::template_strain

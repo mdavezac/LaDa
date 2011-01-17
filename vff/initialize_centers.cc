@@ -46,15 +46,16 @@ namespace LaDa
       const math::iVector3d nboxes( Crystal::guess_dnc_params( structure, 30 ) );
       types::t_real n(   structure.atoms.size()
                        / types::t_real( nboxes(0) * nboxes(1) * nboxes(2) ) );
-//      if( _verbose )
-//      {
-//       (
-//         MPI_COMM,
-//         std::cout << "Will divide into " << nboxes(0) << "x"
-//                   << nboxes(1) << "x" << nboxes(2)
-//                   << " boxes of " << n << " atoms each.\n";
-//       )
-//      }
+       if( _verbose )
+       {
+         LADA_ROOT
+         (
+           comm,
+           std::cout << "Will divide into " << nboxes(0) << "x"
+                     << nboxes(1) << "x" << nboxes(2)
+                     << " boxes of " << n << " atoms each.\n";
+         )
+       }
       // Then creates boxes.
       const types::t_real odist( 1.5e0 * std::sqrt( fn[0].front().squaredNorm() ) );
       Crystal::t_ConquerBoxes<t_Atom::t_Type> :: shared_ptr boxes
@@ -74,10 +75,10 @@ namespace LaDa
 #     ifdef LADA_DEBUG
         check_tree(); 
 #     endif
-//     if( _verbose ) 
-//     {
-//       LADA_ROOT( MPI_COMM, std::cout << "First Neighbor tree successfully created.\n"; )
-//     }
+      if( _verbose ) 
+      {
+        LADA_ROOT( comm, std::cout << "First Neighbor tree successfully created.\n"; )
+      }
       return true;
     } // Vff :: construct_bond_list
 

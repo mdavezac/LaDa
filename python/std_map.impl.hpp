@@ -229,7 +229,7 @@
             if( i_current == i_end ) 
             {
               PyErr_SetObject(PyExc_StopIteration, Py_None);
-              return NULL;
+              return t_Deref::t_value();
             } 
             ++i_current;
             return deref( i_current );

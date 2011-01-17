@@ -20,17 +20,15 @@ namespace LaDa
 {
   namespace vff
   { 
-    Functional :: t_Return Functional 
-       :: operator()( const t_Arg& _arg
-                      LADA_MPI_CODE(LADA_COMMA boost::mpi::communicator const &_comm) ) 
+    Functional::t_Return Functional::operator()(const t_Arg& _arg) const
     {
       math::rMatrix3d strain;
       unpack_variables( _arg, strain );
-      return Vff::energy(LADA_MPI_CODE(_comm));
+      return Vff::energy();
     }
 
     // Unpacks opt::Function_Base::variables into Vff::Functional format
-    void Functional :: unpack_variables(const t_Arg& _arg, math::rMatrix3d& _strain)
+    void Functional :: unpack_variables(const t_Arg& _arg, math::rMatrix3d& _strain) const
     {
       t_Arg :: const_iterator i_x = _arg.begin();
 
@@ -44,7 +42,7 @@ namespace LaDa
     }
 
     void Functional :: unpack_positions( t_Arg :: const_iterator &_i_x, 
-                                         math::rMatrix3d& _strain ) 
+                                         math::rMatrix3d& _strain ) const
     {
       // then computes positions
       t_Atoms :: iterator i_atom = structure.atoms.begin();
@@ -167,9 +165,7 @@ namespace LaDa
        }
     }
 
-    void Functional :: pack_gradients( const math::rMatrix3d& _stress, 
-                                       t_GradientArg _grad 
-                                       LADA_MPI_CODE(LADA_COMMA boost::mpi::communicator const& _comm) ) const
+    void Functional :: pack_gradients(const math::rMatrix3d& _stress, t_GradientArg _grad) const 
     {
       t_GradientArg i_grad(_grad);
 
@@ -207,14 +203,13 @@ namespace LaDa
           (
             MPI_IN_PLACE, _grad, size_t(i_grad - _grad),
             boost::mpi::get_mpi_datatype<t_Type>(*_grad),
-            boost::mpi::is_mpi_op< std::plus<t_Type>, t_Type>::op(), (MPI_Comm) _comm
+            boost::mpi::is_mpi_op< std::plus<t_Type>, t_Type>::op(), (MPI_Comm) comm
           )
         );
       )
     }
 
-    Functional::t_Return Functional :: gradient( const t_Arg& _arg, t_GradientArg _i_grad
-                                                 LADA_MPI_CODE(LADA_COMMA boost::mpi::communicator const &_comm) ) 
+    Functional::t_Return Functional :: gradient(const t_Arg& _arg, t_GradientArg _i_grad) const
     {
       math::rMatrix3d strain = math::rMatrix3d::Zero();
       t_Return energy(0);
@@ -228,15 +223,15 @@ namespace LaDa
 
       // computes energy and gradient
       stress = math::rMatrix3d::Zero();
-      LADA_MPI_SPLIT_LOOP( t_Centers :: const_iterator, center, centers_, _comm )
+      LADA_MPI_SPLIT_LOOP( t_Centers :: const_iterator, center, centers_, comm )
       for (; i_center != i_center_end; ++i_center)
         energy += evaluate_center_with_gradient(*i_center, strain, stress, K0);
 
       // First repacks into function::Base format
-      pack_gradients(stress, _i_grad LADA_MPI_CODE(LADA_COMMA _comm));
+      pack_gradients(stress, _i_grad);
       // Then sums actual results.
 #     ifdef LADA_MPI
-        energy = boost::mpi::all_reduce( _comm, energy, std::plus<types::t_real>() ); 
+        energy = boost::mpi::all_reduce( comm, energy, std::plus<types::t_real>() ); 
         // boost does not do in-place reduction.
         BOOST_MPI_CHECK_RESULT
         (
@@ -245,7 +240,7 @@ namespace LaDa
             MPI_IN_PLACE, stress.data(), stress.stride()*3,
             boost::mpi::get_mpi_datatype<types::t_real>(stress(0,0)),
             boost::mpi::is_mpi_op< std::plus<types::t_real>, types::t_real>::op(),
-            (MPI_Comm) _comm
+            (MPI_Comm) comm
           )
         );
 #     endif

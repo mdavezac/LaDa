@@ -93,6 +93,7 @@ namespace LaDa
         // Those protected members of t_VffBase which are expected in this class
       protected:
         using t_VffBase::centers_;
+        using t_VffBase::structure;
 
       public:
         //! see functional::Base::t_Type
@@ -102,22 +103,31 @@ namespace LaDa
 
       public:
         //! Constructor and Initializer
+        VABase() {}
+        //! Constructor and Initializer
         VABase   ( typename T_VFFBASE::t_Arg &_str )
-               : t_VffBase( _str ), minimizer() { ptr_structure_ = &t_VffBase::structure; }
+               : t_VffBase( _str ), minimizer() {}
         //! Copy Constructor
         VABase   ( const VABase &_c )
                : t_VffBase( _c ), t_VABase( _c ), minimizer( _c.minimizer ) {}
         //! Destructor
         ~VABase() {}
          
-        //! Loads the vff's and the minimizer's parameters from XML
-        bool Load( const TiXmlElement &_node );
-
         // Now truly "functional" stuff.
         
+#       ifdef LADA_MPI
+          //! \brief Evaluated the strain after copying the occupations from
+          //!        VirtualAtom::va_vars.
+          t_Type evaluate(boost::mpi::communicator const &_comm, bool relax=true)
+            { T_VFFBASE::comm = _comm; return evaluate(relax); }
+      protected:
+#       endif
         //! \brief Evaluated the strain after copying the occupations from
         //!        VirtualAtom::va_vars.
         t_Type evaluate(bool relax=true);
+#       ifdef LADA_MPI
+      public:
+#       endif
 //       //! Returns the \e virtual gradient in direction \a _pos
 //       t_Type evaluate_one_gradient( types::t_unsigned _pos );
 //       //! Computes the \e virtual gradients and returns the energy
@@ -139,52 +149,46 @@ namespace LaDa
         const t_VffBase& VffBase() const
          { return *static_cast<const t_VffBase*>(this); }
         //! Returns constant structure.
-        typename T_VFFBASE::t_Arg const & get_structure() const { return *ptr_structure_; }
+        Crystal::TStructure<std::string> const & get_structure() const { return structure; }
+        //! Sets internal structure.
+        void set_structure(Crystal::TStructure<std::string> const & _str) { structure = _str; }
         
 
          //! \brief Returns a reference to the computed stress
          //! \sa Functional::stress
          const math::rMatrix3d& get_stress() const { return t_VffBase::stress; }
 
-#        ifdef LADA_MPI
-           //! Sets mpi pointer.
-           void set_mpi( boost::mpi::communicator* _c )
-             { t_VffBase ::  set_mpi( _c ); }
-           //! Returns reference to communicator.
-           boost::mpi::communicator &comm() { return t_VffBase :: comm(); }
-           //! Returns a constant reference to communicator.
-           const boost::mpi::communicator &comm() const { return t_VffBase :: comm(); } 
-#        endif
-
          //! Sets the bond parameters.
          template< class T_TUPLE >
            void set_bond( const std::string &_type, const T_TUPLE& _tuple )
              { t_VffBase::set_bond( _type, _tuple ); }
-         //! Returns bond parameters, first the length, then the alphas.
-         boost::tuples::tuple< const types::t_real&, const types::t_real&,
-                               const types::t_real&, const types::t_real&, 
-                               const types::t_real&, const types::t_real& >
-           get_bond( const std::string &_type ) const
-             { return t_VffBase::get_bond( _type ); }
-         //! Sets the angle parameters.
-         template< class T_TUPLE >
-           void set_angle( const std::string &_type, const T_TUPLE& _tuple )
-             { t_VffBase::set_angle( _type, _tuple); }
-         //! Returns angle parameters, first the length, then sigma, then the betas.
-         boost::tuples::tuple< const types::t_real&, const types::t_real&, 
-                               const types::t_real&, const types::t_real&,
-                               const types::t_real&, const types::t_real&,
-                               const types::t_real& >
-           get_angle( const std::string &_type ) const
-             { return t_VffBase::get_angle( _type ); }
-
          //! Copies parameters from argument.
          template<class T> 
            void copy_parameters(VABase<T> const &_f) { t_VffBase::copy_parameters(_f.VffBase()); }
     };
 
+    template< class T_VFFBASE > typename VABase<T_VFFBASE> :: t_Type 
+      VABase<T_VFFBASE> :: evaluate(bool relax)
+      {
+        // no minimization required if variables is empty.
+        typename t_VffBase :: t_Arg arg;
+        t_VffBase :: init( arg );
+          
+        if(arg.size() and relax) minimizer( *( (t_VffBase*) this), arg );
+     
+        t_VffBase :: structure.energy = t_VffBase::energy();
+
+        return t_VffBase::structure.energy;
+      }
+
+    template< class T_VFFBASE > 
+      inline bool VABase<T_VFFBASE> :: init(bool _redocenters, bool _verbose)
+      {
+        if ( _redocenters and ( not t_VffBase::initialize_centers(_verbose) ) ) return false;
+        return t_VABase::init();
+      }
+
   } // namespace vff 
 } // namespace LaDa
-#include "va.impl.h"
 
 #endif // _VFF_FUNCTIONAL_H_

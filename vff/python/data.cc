@@ -5,25 +5,24 @@
 
 
 #include <python/numpy_types.h>
-#include <python/std_map.h>
 
 #include "data.hpp"
 #include "../data.h"
 
 namespace LaDa
 {
-  namespace bp = boost::python;
   namespace python
   {
-    vff::BondData create_BondData();
+    namespace bp = boost::python;
+    vff::BondData create_BondData()
     {
       vff::BondData result;
-      result.bond_length = 0;
+      result.length = 0;
       for(size_t i(0); i < vff::max_vff_expansion; ++i) result.alphas[i] = 0e0;
       return result;
     }
 
-    vff::BondData create_AngleData();
+    vff::AngleData create_AngleData()
     {
       vff::AngleData result;
       result.gamma = 0e0;
@@ -32,7 +31,7 @@ namespace LaDa
       return result;
     }
     
-    inline bp::object get_alphas(vff::BondData const &_this)
+    inline bp::object get_alphas(vff::BondData &_this)
     {
       return math::numpy::array_from_ptr(_this.alphas, vff::max_vff_expansion);
     }
@@ -46,7 +45,7 @@ namespace LaDa
         bp::throw_error_already_set();
         return;
       }
-      for(size_t i(0); i < vff::max_vff_expension; ++i)
+      for(size_t i(0); i < vff::max_vff_expansion; ++i)
         if( i >= N ) _this.alphas[i] = 0e0;
         else
           try { _this.alphas[i] = bp::extract<types::t_real>(_object[i]); }
@@ -56,13 +55,12 @@ namespace LaDa
             bp::throw_error_already_set();
             return;
           }
-        }
     }
-    inline bp::object get_betas(vff::BondData const &_this)
+    inline bp::object get_betas(vff::AngleData &_this)
     {
       return math::numpy::array_from_ptr(_this.betas, vff::max_vff_expansion);
     }
-    inline void set_betas(vff::BondData &_this, bp::object _object)
+    inline void set_betas(vff::AngleData &_this, bp::object _object)
     {
       std::ostringstream sstr; sstr << vff::max_vff_expansion; 
       size_t const N(bp::len(_object));
@@ -72,7 +70,7 @@ namespace LaDa
         bp::throw_error_already_set();
         return;
       }
-      for(size_t i(0); i < vff::max_vff_expension; ++i)
+      for(size_t i(0); i < vff::max_vff_expansion; ++i)
         if( i >= N ) _this.betas[i] = 0e0;
         else
           try { _this.betas[i] = bp::extract<types::t_real>(_object[i]); }
@@ -82,7 +80,6 @@ namespace LaDa
             bp::throw_error_already_set();
             return;
           }
-        }
     }
 
     void expose_data()
@@ -90,25 +87,26 @@ namespace LaDa
       std::ostringstream sstr; sstr << vff::max_vff_expansion;
       bp::class_<vff::BondData>("BondData", "Bond-parameters for vff.")
         .def("__init__", bp::make_constructor(&create_BondData) )
-        .def_readwrite("length", "Equilibrium bond-length", bp::no_init)
+        .def_readwrite("length", &vff::BondData::length, "Equilibrium bond-length")
         .add_property( "alphas", 
-                       bp::make_function(&get_alphas, bp::with_custodian_and_ward<0, 1>()),
-                       &set_alphas,
-                       "Bond-stretching parameters.\n\n"
-                       "First value is order two. Only up to order " + sstr.str() + " allowed." );
-      bp::class_<vff::BondData>("BondData", "Bond-parameters for vff.")
+                       bp::make_function(&get_alphas, bp::with_custodian_and_ward_postcall<0, 1>()),
+//                        "Bond-stretching parameters.\n\n"
+//                        "First value is order two. Only up to order " + sstr.str() + " allowed."),
+                       bp::make_function(&set_alphas));
+      bp::class_<vff::AngleData>("AngleData", "Angle-parameters for vff.")
         .def("__init__", bp::make_constructor(&create_AngleData) )
-        .def_readwrite("length", "Equilibrium bond-length", bp::no_init)
+        .def_readwrite("sigma", &vff::AngleData::sigma, "Equilibrium bond-length")
+        .def_readwrite("gamma", &vff::AngleData::gamma, "Equilibrium bond-length")
         .add_property( "betas", 
-                       bp::make_function(&get_betas, bp::with_custodian_and_ward<0, 1>()),
-                       &set_betas,
-                       "Bond-stretching parameters.\n\n"
-                       "First value is order two. Only up to order " + sstr.str() + " allowed." );
+                       bp::make_function(&get_betas, bp::with_custodian_and_ward_postcall<0, 1>()),
+//                        "Bond-stretching parameters.\n\n"
+//                        "First value is order two. Only up to order " + sstr.str() + " allowed."),
+                       &set_betas);
       bp::def("_bond_type", &vff::bond_type);
       bp::def("_angle_type", &vff::angle_type);
 
-      expose_map< std::map<std::string, vff::BondData> >("_BondDataMap");
-      expose_map< std::map<std::string, vff::AngleData> >("_AngleDataMap");
+//     expose_map< std::map<std::string, vff::BondData> >("_BondDataMap", "Map (dict) of BondData objects.");
+//     expose_map< std::map<std::string, vff::AngleData> >("_AngleDataMap", "Map (dict) of AngleData objects.");
     
     }
 

@@ -35,12 +35,12 @@ namespace LaDa
       { 
         _self.VffBase().structure = _str;
         _self.init(_doinit, false);
-        types::t_real const energy = _self.evaluate(relax LADA_MPI_CODE(LADA_COMMA _comm)) / 16.0217733;
+        types::t_real const energy = _self.evaluate(LADA_MPI_CODE(_comm LADA_COMMA) relax) / 16.0217733;
         
         boost::shared_ptr< Crystal::TStructure<std::string> >
-          result( new Crystal::TStructure<std::string>(_self.structure) );
+          result( new Crystal::TStructure<std::string>(_self.get_structure()) );
         result->energy = energy;
-        if(relax) return bp::make_tuple(result, math::rMatrix3d(_self.first.get_stress()));
+        if(relax) return bp::make_tuple(result, math::rMatrix3d(_self.get_stress()));
         else return bp::make_tuple(result, bp::object());
       }
 

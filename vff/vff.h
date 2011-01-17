@@ -68,13 +68,17 @@ namespace LaDa
         //! Argument to Vff.
         typedef Crystal::TStructure<std::string> t_Arg;
         //! Keeps track of structure being currently evaluated.
-        t_Arg structure;
+        mutable t_Arg structure;
         //! First-neighbor bond parameter.
         types::t_real bond_cutoff;
         //! Bond parameters.
         std::map<std::string, BondData> bonds_params;
         //! Angle parameters.
         std::map<std::string, AngleData> angles_params;
+#       ifdef LADA_MPI
+          //! MPI communicator
+          boost::mpi::communicator comm;
+#       endif
         
       protected:
         //! Type of the path.
@@ -97,15 +101,23 @@ namespace LaDa
         //! \brief Destructor
         ~Vff() {}
 
+#       ifdef LADA_MPI
+          //! \brief computes energy and stress, expects everything to be set
+          t_Return operator()(t_Arg const &_arg, boost::mpi::communicator const &_comm)
+            { comm = _comm; return operator()(_arg); }
+          //! \brief computes energy and stress, expects everything to be set
+          t_Return energy(boost::mpi::communicator const &_comm) 
+            { comm = _comm; return energy(); }
+#       endif
         //! \brief computes energy and stress, expects everything to be set
-        t_Return operator()(t_Arg const &_arg LADA_MPI_CODE(LADA_COMMA boost::mpi::communicator const &_comm) ) 
+        t_Return operator()(t_Arg const &_arg)
         { 
           structure = _arg;
           initialize_centers();
-          return energy(LADA_MPI_CODE(_comm));
+          return energy();
         }
         //! \brief computes energy and stress, expects everything to be set
-        types::t_real energy( LADA_MPI_CODE(boost::mpi::communicator const &_comm) ) const;
+        types::t_real energy() const;
         //! \brief Prints atom.config type input to escan
         //! \param _f optional filename to which to direct the output
         void print_escan_input( const t_Path &_f = "atom.config") const;

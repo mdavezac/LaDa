@@ -9,6 +9,7 @@
 #include <boost/python/class.hpp>
 #include <boost/python/list.hpp>
 #include <boost/python/dict.hpp>
+#include <boost/python/str.hpp>
 #include <boost/python/extract.hpp>
 #include <boost/python/make_constructor.hpp>
 #include <boost/python/return_value_policy.hpp>
@@ -40,7 +41,7 @@ namespace LaDa
           .def( "check", &t_iterator::check );
       }
     template< class T_MAP >
-      bp::class_<T_MAP> expose_map( const std::string &_name, const std::string &_docstring )
+      boost::python::class_<T_MAP> expose_map( const std::string &_name, const std::string &_docstring )
       {
         typedef T_MAP t_Map;
         typedef details::map_iterator< t_Map, details::deref_item >  t_itemiterator;
@@ -74,8 +75,8 @@ namespace LaDa
           .def( "popitem", &details::popitem<T_MAP> )
           .def( "__delitem__", &details::pop<T_MAP> )
           .def( "__iter__", &details::iter<t_itemiterator>, bp::return_internal_reference<1>() )
-          .def( "iterkeys", &details::iter<t_keyiterator>, bp::return_internal_reference<1>() )
-          .def( "__str__", &details::print<T_MAP> );
+          .def( "iterkeys", &details::iter<t_keyiterator>, bp::return_internal_reference<1>() );
+//         .def( "__str__", &details::print<T_MAP> );
       }
 
     namespace details
