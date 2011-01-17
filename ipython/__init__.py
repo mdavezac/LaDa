@@ -528,8 +528,8 @@
 """
 __docformat__ = "restructuredtext en"
 from contextlib  import contextmanager
-from ..jobs import MassExtract as Collect
-from .. import lada_with_slurm
+from lada.jobs import MassExtract as Collect
+from lada import lada_with_slurm
 
 def _get_current_job_params(self, verbose=0):
   """ Returns a tuple with current job, filename, directory. """

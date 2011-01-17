@@ -1548,7 +1548,8 @@ class AbstractMassExtractDirectories(AbstractMassExtract):
       An class derived from this one should make sure that:
       
       - `Extract` is not none.
-      - `__is_calc_dir__ ` is correctly defined. 
+      - `__is_calc_dir__` is correctly defined. 
+
   """
   def __init__(self, path = '.', Extract = None, comm = None, **kwargs):
     """ Initializes AbstractMassExtractDirectories.

@@ -1,4 +1,4 @@
-set(PYCRYSTAL_PY  gruber.py  __init__.py  A2BX4.py bravais.py read_write.py)
+set(PYCRYSTAL_PY  gruber.py  __init__.py A2BX4.py bravais.py binary.py read_write.py _docstring.py)
 set( PYCRYSTAL_HEADERS 
      atom.hpp  enumerate.hpp  lattice.hpp  layerdepth.hpp  neighbors.hpp
      read_structure.hpp  smith.hpp  structure.hpp  symmetry_operator.hpp

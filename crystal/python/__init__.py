@@ -1,10 +1,4 @@
-""" Contains basic data type and methods for crystal structure and lattices.
-
-    C++ bindings are located in L{_crystal}. A fair number of enhancements are
-    added directly within the python code in __init__.py. In practice all
-    public interfaces to C++ bindings should be available directly in the
-    L{crystal} namespace.
-"""
+from ._docstring import __doc__ 
 __all__ = [ 'FreezeAtom', 'which_site', 'Sites', 'SymmetryOperator', 'Lattice', 'to_cartesian',\
             'get_point_group_symmetries', 'read_structure', 'sort_layers', 'Site', \
             'smith_indices', 'Atom', 'kAtom', 'fold_vector', 'Structure', 'FreezeCell',\
@@ -14,7 +8,8 @@ __all__ = [ 'FreezeAtom', 'which_site', 'Sites', 'SymmetryOperator', 'Lattice', 
             # Below, only true python stuff
             'deform_kpoints', 'specie_list', 'read_poscar', 'write_poscar',\
             'write_oldvff', 'read_oldvff', 'structure_to_lattice', 'fill_structure', \
-            'A2BX4', 'bravais', 'gruber', 'vasp_ordered' ]
+            'A2BX4', 'bravais', 'gruber', 'vasp_ordered', 'binary' ]
+__docformat__ = "restructuredtext en"
 
 from _crystal import FreezeAtom, which_site, Site, SymmetryOperator, Lattice, to_cartesian,\
                      get_point_group_symmetries, read_structure, sort_layers, \
@@ -28,6 +23,7 @@ from lada.opt.decorators import add_setter
 from read_write import read_poscar, write_poscar, write_oldvff, read_oldvff
 import A2BX4
 import bravais
+import binary
 import gruber
 try: import defects
 except ImportError: pass # required vasp and jobs packages.
@@ -37,13 +33,16 @@ else: __all__.append('defects')
 def deform_kpoint(kpoint, ideal, relaxed):
   """ Deform kpoints from ideal cell to relaxed cell. 
 
-      @param kpoint: The kpoint to deform in cartesian coordinates.
-      @type kpoint: numpy array
-      @param ideal: The original (real-space) cell, as an ideal supercell of the lattice.
-      @type ideal: numpy 2d-array
-      @param relaxed: The relaxed (real-space) cell.
-      @type relaxed: numpy 2d-array
-      @return: the kpoint deformed from the ideal reciprocal cell to the
+
+      :Parameters:
+        kpoint : numpy array
+          The kpoint to deform in cartesian coordinates.
+        ideal : numpy 2d-array
+          The original (real-space) cell, as an ideal supercell of the lattice.
+        relaxed : numpy 2d-array
+          The relaxed (real-space) cell.
+
+      :return: the kpoint deformed from the ideal reciprocal cell to the
                relaxed reciprocal cell, in cartesian coordinates.
   """
   from numpy import dot, matrix
@@ -68,12 +67,15 @@ def _add_atom(which, container):
     
      Only the first two arguments are necessary.
      None can be used as a place-holder for the last two arguments.
+
        - first argument: sequence of three numbers indicating position.
        - second argument: atomic type (or tuple of types for lattices).
-       - third argument: index of the site as existing in L{Structure.lattice}
-       - fourth argument: whether to freeze
-             positional and/or type degrees of freedom.
+       - third argument: index of the site as existing in `Structure.lattice`.
+       - fourth argument: whether to freeze positional and/or type degrees of
+         freedom.
+
   """ 
+
   def _fun(self, args):
     from numpy import array
     args = [x for x in args]
@@ -82,7 +84,6 @@ def _add_atom(which, container):
     # some skipping around to make sure we parse argument tuple correctly and
     # initialize sites well if type argument is None, or single string.
     if hasattr(args[0], "__iter__"): # assume first argument is a sequence of 3.
-      print args[0]
       pos = array([x for x in args[0]], dtype="float64")
     else: 
       assert len(args) == 3, RuntimeError("Not sure how to parse these arguments." % (args))
@@ -102,6 +103,7 @@ def _add_atom(which, container):
     if len(args) > 3:
       if args[2] != None: result.freeze = args[3]
     getattr(self, container).append(result)
+
   _fun.__doc__ = _add_atom.__doc__
   return _fun
 
@@ -113,7 +115,7 @@ def _add_atoms(which):
   """ Adds a list of atoms/sites to structure/lattice. 
   
       The argument is a sequence, each item of which could be used with
-      L{Structure.add_atom} (or L{Lattice.add_site} when appropriate).
+      `Structure.add_atom` (or `Lattice.add_site` when appropriate).
 
       >>> structure.add_atoms = ((0,0,0), "A"),\\
       >>>                       ((0.25,0,0), "B"),
@@ -367,10 +369,18 @@ def structure_to_lattice(structure):
 
 Structure.to_lattice = structure_to_lattice
 
-def lattice_to_structure(lattice):
-  """ Converts lattice to structure. """
+def lattice_to_structure(lattice, cell=None):
+  """ Converts lattice to structure.
+  
+      :kwarg cell:
+        The cell of the superstructure to create. It should be in the same
+        units as ``lattice.cell`` and in cartesian coordinates. It defaults to
+        the lattice's unit-cell.
+  """
   from . import fill_structure
-  return fill_structure(lattice.cell, lattice)
+  from numpy import array
+  if cell == None: cell = lattice.cell
+  return fill_structure( array(cell, dtype='float64'), lattice)
 
 Lattice.to_structure = lattice_to_structure
 
@@ -410,12 +420,14 @@ def vasp_ordered(structure, attributes=None):
 def fill_structure(cell, lattice = None):
   """ Returns a structure from knowledge of cell and lattice.
 
-      @param cell: Structure or cell to use to create a complete structure with all atoms.
-      @type cell: L{Structure}, L{rStructure}, or numpy 3x3 float64 array
-      @param lattice: Back-bone lattice of the super-structure to build. If
-        None, will use the *global* lattice set by L{Lattice.set_as_crystal_lattice}.
-      @type lattice: L{Lattice}
-      @raise RuntimeError: If the filled structure could not be created.
+      :Parameters:
+        cell : `Structure`, `rStructure`, or numpy 3x3 float64 array
+          Structure or cell to use to create a complete structure with all atoms.
+        lattice : `Lattice`
+          Back-bone lattice of the super-structure to build. If
+          None, will use the *global* lattice set by `Lattice.set_as_crystal_lattice`.
+      
+      :raises RuntimeError: If the filled structure could not be created.
   """
   from _crystal import _fill_structure_impl
   old_lattice = None
