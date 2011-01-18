@@ -5,8 +5,6 @@
 #include <boost/python/def.hpp>
 #include <boost/python/tuple.hpp>
 #include <boost/python/return_value_policy.hpp>
-#include <boost/python/return_by_value.hpp>
-#include <boost/python/make_constructor.hpp>
 #include <boost/python/data_members.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits/is_same.hpp>
@@ -44,24 +42,111 @@ namespace LaDa
         else return bp::make_tuple(result, bp::object());
       }
 
-    template<class T> std::map<std::string, vff::BondData> const & get_bonddata(T const &_t)
-      {return _t.VffBase().bonds_params;}
-    template<class T> void set_bonddata(T &_t, std::map<std::string, vff::BondData> const & _val)
-      {_t.VffBase().bonds_params = _val;}
-    template<class T> std::map<std::string, vff::AngleData> const & get_angledata(T const &_t)
-      {return _t.VffBase().angles_params;}
-    template<class T> void set_angledata(T &_t, std::map<std::string, vff::AngleData> const & _val)
-      {_t.VffBase().angles_params = _val;}
+    template<class T> std::string angle_index(T &_self, bp::object const &_object)
+    {
+      if(bp::len(_object) != 3)
+      {
+        PyErr_SetString(PyExc_IndexError, "Angle parameters are accessed with 3-tuples.");
+        bp::throw_error_already_set();
+        return "";
+      }
+      std::string A, B, C;
+      try
+      {
+        A = bp::extract<std::string>(_object[0]);
+        B = bp::extract<std::string>(_object[1]);
+        C = bp::extract<std::string>(_object[2]);
+      }
+      catch(...)
+      {
+        PyErr_SetString(PyExc_ValueError, "Could not convert index to 3-tuple of strings.");
+        bp::throw_error_already_set();
+        return "";
+      }
+      try { return vff::angle_type(A, B, C); }
+      catch(vff::input &e)
+      {
+        PyErr_SetString(PyExc_ValueError, "Empty string is not a valid index.");
+        bp::throw_error_already_set();
+      }
+      return "";
+    }
+
+    template<class T> std::string bond_index(T &_self, bp::object const &_object)
+    {
+      if(bp::len(_object) != 2)
+      {
+        PyErr_SetString(PyExc_IndexError, "Angle parameters are accessed with 3-tuples.");
+        bp::throw_error_already_set();
+        return "";
+      }
+      std::string A, B, index;
+      try
+      {
+        A = bp::extract<std::string>(_object[0]);
+        B = bp::extract<std::string>(_object[1]);
+      }
+      catch(...)
+      {
+        PyErr_SetString(PyExc_ValueError, "Could not convert index to 3-tuple of strings.");
+        bp::throw_error_already_set();
+        return "";
+      }
+      try { return vff::bond_type(A, B); }
+      catch(vff::input &e)
+      {
+        PyErr_SetString(PyExc_ValueError, "Empty string is not a valid index.");
+        bp::throw_error_already_set();
+      }
+      catch(std::exception &e)
+      {
+        PyErr_SetString(PyExc_RuntimeError, "Unknown error.");
+        bp::throw_error_already_set();
+      }
+      return "";
+    }
+
+    template<class T> vff::BondData& get_bond(T &_self, bp::object const &_object)
+    {
+      std::string const index = bond_index(_self, _object);
+      return _self.VffBase().bonds_params[index];
+    }
+    template<class T> void set_bond(T &_self, bp::object const &_index, vff::BondData const &_bond)
+    {
+      std::string const index = bond_index(_self, _index);
+      try { _self.VffBase().bonds_params[index] = _bond; }
+      catch(std::exception &e)
+      {
+        PyErr_SetString(PyExc_RuntimeError, e.what());
+        bp::throw_error_already_set();
+      }
+    }
+
+    template<class T> vff::AngleData& get_angle(T &_self, bp::object const &_object)
+    {
+      std::string const index = angle_index(_self, _object);
+      return _self.VffBase().angles_params[index];
+    }
+    template<class T> void set_angle(T &_self, bp::object const &_index, vff::AngleData const &_angle)
+    {
+      std::string const index = bond_index(_self, _index);
+      try { _self.VffBase().angles_params[index] = _angle; }
+      catch(std::exception &e)
+      {
+        PyErr_SetString(PyExc_RuntimeError, e.what());
+        bp::throw_error_already_set();
+      }
+    }
 
     template<class T> bp::class_<T> expose_functional(std::string const &_name, std::string const &_doc)
     {
       return bp::class_<T>(_name.c_str(), _doc.c_str())
         .def(bp::init<T const &>())
         .def_readwrite("minimizer", &T::minimizer)
-        .add_property( "_bonds_params", bp::make_function(&get_bonddata<T>, bp::return_internal_reference<>()), 
-                       &set_bonddata<T> )  
-        .add_property( "_angles_params", bp::make_function(&get_angledata<T>, bp::return_internal_reference<>()), 
-                       &set_angledata<T> )  
+        .def( "_get_bond", &get_bond<T>, bp::return_internal_reference<>())
+        .def( "_set_bond", &set_bond<T>)
+        .def( "_get_angle", &get_angle<T>, bp::return_internal_reference<>())
+        .def( "_set_angle", &set_angle<T>)
         .def
         ( 
           "__call__",  

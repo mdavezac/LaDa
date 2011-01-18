@@ -4,6 +4,7 @@
 #include "LaDaConfig.h"
 
 #include <opt/types.h>
+#include <opt/debug.h>
 #include "exceptions.h"
 
 namespace LaDa

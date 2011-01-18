@@ -214,7 +214,7 @@ class Extract(AbstractExtractBase):
     except RuntimeError: pass
     self.lattice.set_as_crystal_lattice()
 
-    functional = self.vff._create_functional(structure, self.comm)
+    functional = self.vff._create_functional()
     functional.print_escan_input(expanduser(filepath), structure)
 
     if old_lattice != None: old_lattice.set_as_crystal_lattice()
@@ -530,27 +530,24 @@ class Vff(object):
     return extract
 
 
-  def _create_functional(self, structure, comm):
+  def _create_functional(self):
     """ Creates the vff functional using cpp extension. """
     from tempfile import NamedTemporaryFile
     from os import remove
-    if comm != None: from boost.mpi import broadcast
     from _vff import Vff, LayeredVff
+    from ..import minimizer
 
-    # Creates temporary input file and creates functional
-    functional = None
-    is_root = True if comm == None else comm.rank == 0
-    if is_root:
-      with NamedTemporaryFile(dir=self.workdir, delete=False) as file: 
-        file.write(self._create_input(structure, comm))
-      name = file.name if comm == None else broadcast(comm, file.name, root=0)
-    elif comm != None: name = broadcast(comm, root=0) # syncs all procs to make sure we are reading from same file.
-
-    
-    if comm != None: comm.barrier() # required before reading file (?).
-    functional = LayeredVff(name, comm) if hasattr(self.direction, "__len__") else Vff(name, comm)
-    if comm != None: comm.barrier() # required before removing file.
-    if is_root: remove(file.name)
+    if hasattr(self.direction, "__len__"):
+      functional = Layered()
+      functional.direction = self.direction
+    else: functional = Vff()
+    functional.minimizer = self.minimizer
+    for name, params in self.bonds.items():
+      bond = functional._get_bond(name.split('-'))
+      bond.length, bond.alphas[:] = params[0], params[1:]
+    for name, params in self.angles.items():
+      angle = functional._get_angle(name.split('-'))
+      angle.gamma, angle.sigma, bond.betas[:] = params[0], params[1], params[1:]
 
     return functional
      
@@ -558,6 +555,7 @@ class Vff(object):
     """ Performs actual calculation. """
     from copy import deepcopy
     from _vff import Vff, LayeredVff
+    from .. import lada_with_mpi
     from ..opt import redirect_all
 
     # Saves global lattice if set.
@@ -574,9 +572,12 @@ class Vff(object):
     cout, cerr = self._cout(comm), self._cerr(comm)
     with open(cerr, "w") as file: pass # file has not yet been opened
     with redirect_all(output=cout, error=cerr, append="True") as oestream:
-      functional = self._create_functional(structure, comm)
+      functional = self._create_functional()
       # now performs call
-      result, stress = functional(structure, doinit=True, relax=self.relax)
+      if lada_with_mpi:
+        result, stress = functional(comm, doinit=True, relax=self.relax)
+      else: 
+        result, stress = functional(doinit=True, relax=self.relax)
     
     # unsets lattice.
     if old_lattice != None: old_lattice.set_as_crystal_lattice()

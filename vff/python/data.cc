@@ -2,6 +2,7 @@
 
 #include <boost/python/class.hpp>
 #include <boost/python/def.hpp>
+#include <boost/python/make_constructor.hpp>
 
 
 #include <python/numpy_types.h>
@@ -14,21 +15,39 @@ namespace LaDa
   namespace python
   {
     namespace bp = boost::python;
-    vff::BondData create_BondData()
+    vff::BondData* create_BondData()
     {
-      vff::BondData result;
-      result.length = 0;
-      for(size_t i(0); i < vff::max_vff_expansion; ++i) result.alphas[i] = 0e0;
-      return result;
+      try
+      {
+        vff::BondData *result = new vff::BondData;
+        result->length = 0;
+        for(size_t i(0); i < vff::max_vff_expansion; ++i) result->alphas[i] = 0e0;
+        return result;
+      }
+      catch(std::exception &_e)
+      {
+        PyErr_SetString(PyExc_RuntimeError, "Could not create BondData object.");
+        bp::throw_error_already_set();
+      }
+      return NULL;
     }
 
-    vff::AngleData create_AngleData()
+    vff::AngleData* create_AngleData()
     {
-      vff::AngleData result;
-      result.gamma = 0e0;
-      result.sigma = 0e0;
-      for(size_t i(0); i < vff::max_vff_expansion; ++i) result.betas[i] = 0e0;
-      return result;
+      try
+      {
+        vff::AngleData *result = new vff::AngleData;
+        result->gamma = 0e0;
+        result->sigma = 0e0;
+        for(size_t i(0); i < vff::max_vff_expansion; ++i) result->betas[i] = 0e0;
+        return result;
+      }
+      catch(std::exception &_e)
+      {
+        PyErr_SetString(PyExc_RuntimeError, "Could not create AngleData object.");
+        bp::throw_error_already_set();
+      }
+      return NULL;
     }
     
     inline bp::object get_alphas(vff::BondData &_this)
@@ -90,8 +109,6 @@ namespace LaDa
         .def_readwrite("length", &vff::BondData::length, "Equilibrium bond-length")
         .add_property( "alphas", 
                        bp::make_function(&get_alphas, bp::with_custodian_and_ward_postcall<0, 1>()),
-//                        "Bond-stretching parameters.\n\n"
-//                        "First value is order two. Only up to order " + sstr.str() + " allowed."),
                        bp::make_function(&set_alphas));
       bp::class_<vff::AngleData>("AngleData", "Angle-parameters for vff.")
         .def("__init__", bp::make_constructor(&create_AngleData) )
@@ -99,15 +116,9 @@ namespace LaDa
         .def_readwrite("gamma", &vff::AngleData::gamma, "Equilibrium bond-length")
         .add_property( "betas", 
                        bp::make_function(&get_betas, bp::with_custodian_and_ward_postcall<0, 1>()),
-//                        "Bond-stretching parameters.\n\n"
-//                        "First value is order two. Only up to order " + sstr.str() + " allowed."),
                        &set_betas);
       bp::def("_bond_type", &vff::bond_type);
-      bp::def("_angle_type", &vff::angle_type);
-
-//     expose_map< std::map<std::string, vff::BondData> >("_BondDataMap", "Map (dict) of BondData objects.");
-//     expose_map< std::map<std::string, vff::AngleData> >("_AngleDataMap", "Map (dict) of AngleData objects.");
-    
+      bp::def("_angle_type", &vff::bond_type);
     }
 
   }
