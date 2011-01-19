@@ -142,7 +142,7 @@ namespace LaDa
     {
       return bp::class_<T>(_name.c_str(), _doc.c_str())
         .def(bp::init<T const &>())
-        .def_readwrite("minimizer", &T::minimizer)
+        .def_readwrite("_minimizer", &T::minimizer)
         .def( "_get_bond", &get_bond<T>, bp::return_internal_reference<>())
         .def( "_set_bond", &set_bond<T>)
         .def( "_get_angle", &get_angle<T>, bp::return_internal_reference<>())

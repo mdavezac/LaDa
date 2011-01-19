@@ -2,7 +2,6 @@
 
 
 #include <boost/mpl/vector.hpp>
-#include <boost/python/tuple.hpp>
 
 #include <python/misc.hpp>
 #include "minimizer.hpp"
@@ -12,7 +11,6 @@ namespace LaDa
 {
   namespace Python
   {
-
     void Minimizer :: load_()
     {
       TiXmlElement fakexml( "Minimizer" );
@@ -29,7 +27,8 @@ namespace LaDa
       LADA_DO_NASSERT( not minimizer_.Load( fakexml ), "Could not load minimizer " << type_ << ".\n" )
     }
 
-    void expose_minimizer()
+
+    boost::python::tuple expose_minimizer()
     {
       namespace bp = boost::python;
       bp::class_< Minimizer >
@@ -45,7 +44,7 @@ namespace LaDa
         __GETSET__( tolerance, "Convergence criteria." )
         __GETSET__( itermax, "Maximum number of iterations." )
         __GETSET__( linetolerance, "Line tolerance for conjugate-gradient methods." )
-        __GETSET__( linestep, "Line steo for conjugate-gradient methods." )
+        __GETSET__( linestep, "Line step for conjugate-gradient methods." )
         __GETSET__( strategy, "slowest/slow/fast strategies for Minuit2 minimizers." )
         __GETSET__( up, "Not sure. For Minuit2 minimizers only." )
         __GETSET__( uncertainties, "Not sure. For Minuit2 minimizers only, and "
@@ -71,7 +70,20 @@ namespace LaDa
               "Sets parameters for the optimizers. "
               "Not all parameters are needed by all optimizers."
             )
+        .def("_copy_to_cpp", &Minimizer::copy_to_internal)
         .def_pickle( Python::pickle<Minimizer>() );
+
+
+      return bp::make_tuple
+        (
+          "frprmn"
+#       ifdef LADA_WITH_GSL
+          , "gsl_bfgs", "gsl_bfgs2", "gsl_fr", "gsl_pr", "gsl_sd"
+#       endif
+#       ifdef LADA_WITH_MINUIT
+          , "minuit2"
+#       endif
+        );
     }
   } // namespace Python
 } // namespace LaDa

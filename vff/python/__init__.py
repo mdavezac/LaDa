@@ -535,13 +535,14 @@ class Vff(object):
     from tempfile import NamedTemporaryFile
     from os import remove
     from _vff import Vff, LayeredVff
-    from ..import minimizer
 
     if hasattr(self.direction, "__len__"):
       functional = Layered()
       functional.direction = self.direction
     else: functional = Vff()
-    functional.minimizer = self.minimizer
+    # minimizer variants are somewhat difficult to expose...
+    self.minimizer._copy_to_cpp(functional._minimizer)
+    # ... done jumping through hoops.
     for name, params in self.bonds.items():
       bond = functional._get_bond(name.split('-'))
       bond.length, bond.alphas[:] = params[0], params[1:]

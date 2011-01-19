@@ -3,6 +3,7 @@
 
 #include "LaDaConfig.h"
 
+#include <boost/python/tuple.hpp>
 #include <boost/serialization/serialization.hpp>
 
 #include <opt/debug.h>
@@ -23,13 +24,31 @@ namespace LaDa
 {
   namespace Python
   {
-    void expose_minimizer();
+    boost::python::tuple expose_minimizer();
 
     //! Declaration for the python minimizer.
     class Minimizer
     {
       friend class boost::serialization::access;
       public:
+#       if defined(LADA_WITH_MINUIT2) or defined(LADA_WITH_GSL)
+          typedef LaDa::Minimizer::Variant
+                  < 
+                    boost::mpl::vector
+                    <
+                      LaDa::Minimizer::Frpr  
+#                     ifdef LADA_WITH_GSL
+                        , LaDa::Minimizer::Gsl  
+#                     endif
+#                     ifdef LADA_WITH_MINUIT2
+                        , LaDa::Minimizer::Minuit2
+#                     endif
+                    > 
+                  > t_Minimizer;
+#       else
+          typedef LaDa::Minimizer::Frpr t_Minimizer;
+#       endif
+
         Minimizer() : type_( "gsl_bfgs2" ),
                       tolerance_( 1e-6 ),
                       itermax_( 50 ),
@@ -123,6 +142,8 @@ namespace LaDa
             PyErr_SetString( PyExc_RuntimeError, "Error setting minimizer parameters.\n");
           }
         }
+        void copy_to_internal(Minimizer::t_Minimizer &_minimizer) const
+          { _minimizer = minimizer_; }
 
       protected:
         void load_();
@@ -136,23 +157,6 @@ namespace LaDa
         types::t_real uncertainties_;
         types::t_real up_;
         bool use_gradient_;
-#       if defined(LADA_WITH_MINUIT2) or defined(LADA_WITH_GSL)
-          typedef LaDa::Minimizer::Variant
-                  < 
-                    boost::mpl::vector
-                    <
-                      LaDa::Minimizer::Frpr  
-#                     ifdef LADA_WITH_GSL
-                        , LaDa::Minimizer::Gsl  
-#                     endif
-#                     ifdef LADA_WITH_MINUIT2
-                        , LaDa::Minimizer::Minuit2
-#                     endif
-                    > 
-                  > t_Minimizer;
-#       else
-          typedef LaDa::Minimizer::Frpr t_Minimizer;
-#       endif
         t_Minimizer minimizer_;
 
         //! Serializes a lattice.
