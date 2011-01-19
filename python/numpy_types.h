@@ -162,31 +162,32 @@ namespace LaDa
         throw;
       }
 
-      template<int T_TYPE>
-        inline boost::python::object _create_array(npy_intp ndims, npy_intp dims[], bool is_fortran = false)
+      inline boost::python::object _create_array(npy_intp ndims, npy_intp dims[], int _type, bool is_fortran = false)
+      {
+        PyObject *result = PyArray_ZEROS(ndims, dims, _type, is_fortran ? 1: 0);
+        if( result == NULL or PyErr_Occurred() != NULL ) 
         {
-          PyObject *result = PyArray_ZEROS(ndims, dims, T_TYPE, is_fortran ? 1: 0);
-          if( result == NULL or PyErr_Occurred() != NULL ) 
-          {
-            if(PyErr_Occurred() == NULL) PyErr_SetString(PyExc_RuntimeError, "Could not create numpy array");
-            boost::python::throw_error_already_set();
-            return boost::python::object();
-          }
-          return boost::python::object(boost::python::handle<>(result));
+          if(PyErr_Occurred() == NULL) PyErr_SetString(PyExc_RuntimeError, "Could not create numpy array");
+          boost::python::throw_error_already_set();
+          return boost::python::object();
         }
+        return boost::python::object(boost::python::handle<>(result));
+      }
+
       template<int T_TYPE>
         boost::python::object create_array(npy_intp n0, bool is_fortran = false)
-          { npy_intp a[1] = {n0}; return _create_array<T_TYPE>(1, a, is_fortran); }
+          { npy_intp a[1] = {n0}; return _create_array(1, a, T_TYPE, is_fortran); }
       template<int T_TYPE>
         boost::python::object create_array(npy_intp n0, npy_intp n1, bool is_fortran = false)
-          { npy_intp a[2] = {n0, n1}; return _create_array<T_TYPE>(2, a, is_fortran); }
+          { npy_intp a[2] = {n0, n1}; return _create_array(2, a, T_TYPE, is_fortran); }
       template<int T_TYPE>
         boost::python::object create_array(npy_intp n0, npy_intp n1, npy_intp n2, bool is_fortran = false)
-          { npy_intp a[3] = {n0, n1, n2}; return _create_array<T_TYPE>(3, a, is_fortran); }
+          { npy_intp a[3] = {n0, n1, n2}; return _create_array(3, a, T_TYPE, is_fortran); }
       template<int T_TYPE>
         boost::python::object create_array( npy_intp n0, npy_intp n1, npy_intp n2,
                                                    npy_intp n3, bool is_fortran = false )
-          { npy_intp a[4] = {n0, n1, n2, n3}; return _create_array<T_TYPE>(4, a, is_fortran); }
+          { npy_intp a[4] = {n0, n1, n2, n3}; return _create_array(4, a, T_TYPE, is_fortran); }
+
      
       inline PyArrayObject* get_pyarray_pointer(boost::python::object const &_object)
          { return reinterpret_cast<PyArrayObject*>(_object.ptr()); }
@@ -213,6 +214,54 @@ namespace LaDa
         boost::python::throw_error_already_set();
         return false;
       }
+
+      inline boost::python::object from_template( boost::python::object const &_object,
+                                                  int new_type = -1, bool _fortran = false ) 
+      {
+         PyArrayObject *ptr_array = get_pyarray_pointer(_object);
+         if(new_type == -1) new_type = PyArray_TYPE(ptr_array);
+         return _create_array(ptr_array->nd, ptr_array->dimensions, new_type, _fortran);
+      }
+
+      //! Converts data from numpy iterator to requested type.
+      template<class T>
+        T to_type(PyObject* _iter, int const _type)
+        {
+          void * const ptr_data = PyArray_ITER_DATA(_iter);
+          switch(_type)
+          {
+            case NPY_FLOAT     :
+              return static_cast<T>(*((type<npy_float>::np_type*)      ptr_data));
+            case NPY_DOUBLE    :
+              return static_cast<T>(*((type<npy_double>::np_type*)     ptr_data));
+            case NPY_LONGDOUBLE:
+              return static_cast<T>(*((type<npy_longdouble>::np_type*) ptr_data));
+            case NPY_INT       :
+              return static_cast<T>(*((type<npy_int>::np_type*)        ptr_data));
+            case NPY_UINT      :
+              return static_cast<T>(*((type<npy_uint>::np_type*)       ptr_data));
+            case NPY_LONG      :
+              return static_cast<T>(*((type<npy_long>::np_type*)       ptr_data));
+            case NPY_ULONG     :
+              return static_cast<T>(*((type<npy_ulong>::np_type*)      ptr_data));
+            case NPY_LONGLONG  :
+              return static_cast<T>(*((type<npy_longlong>::np_type*)   ptr_data));
+            case NPY_ULONGLONG :
+              return static_cast<T>(*((type<npy_ulonglong>::np_type*)  ptr_data));
+            case NPY_BYTE      :
+              return static_cast<T>(*((type<npy_byte>::np_type*)       ptr_data));
+            case NPY_UBYTE     :
+              return static_cast<T>(*((type<npy_ubyte>::np_type*)      ptr_data));
+            case NPY_SHORT     :
+              return static_cast<T>(*((type<npy_short>::np_type*)      ptr_data));
+            case NPY_USHORT    :
+              return static_cast<T>(*((type<npy_ushort>::np_type*)     ptr_data));
+            default: break;
+          };
+          PyErr_SetString(PyExc_ValueError, "Unknown numpy type on input.");
+          boost::python::throw_error_already_set();
+          return T(-1);
+        }
     }
   }
 }
