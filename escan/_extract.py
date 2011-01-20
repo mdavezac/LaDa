@@ -155,9 +155,9 @@ class Extract(AbstractExtractBase):
     from numpy.linalg import norm
     from . import soH
     seul = self.solo()
-    if seul.escan.nbstates  ==   1: return False
-    if seul.escan.potential != soH: return True
-    return norm(seul.escan.kpoint) < 1e-12
+    if seul.functional.nbstates  ==   1: return False
+    if seul.functional.potential != soH: return True
+    return norm(seul.functional.kpoint) < 1e-12
 
 
   @property 
@@ -347,13 +347,14 @@ class Extract(AbstractExtractBase):
            RuntimeError("Must read wavefunctions with as many nodes as they were written to disk.")
     with redirect(fout="") as streams:
       with Changedir(self.directory, comm=self.comm) as directory:
-        path = join(self.directory, self.escan.WAVECAR)
+        path = join(self.directory, self.functional.WAVECAR)
         assert exists(path), IOError("{0} does not exist.".format(path))
-        self.escan._write_incar(self.comm, self.structure)
-        nbstates = self.escan.nbstates if self.escan.potential == soH and norm(self.escan.kpoint)\
-                   else self.escan.nbstates / 2
-        result = read_wavefunctions(self.escan, range(nbstates), comm)
-        remove(self.escan._INCAR + "." + str(world.rank))
+        self.functional._write_incar(self.comm, self.structure)
+        if self.functional.potential == soH and norm(self.functional.kpoint):
+          nbstates = self.functional.nbstates
+        else: nbstates = self.functional.nbstates / 2
+        result = read_wavefunctions(self.functional, range(nbstates), comm)
+        remove(self.functional._INCAR + "." + str(world.rank))
 
     cell = self.structure.cell * self.structure.scale * angstrom
     normalization = det(cell.rescale(a0)) 
@@ -400,20 +401,20 @@ class Extract(AbstractExtractBase):
   @property
   @make_cached
   @broadcast_result(attr=True, which=0)
-  def _wavefunction_path(self): return self.solo().escan.WAVECAR
+  def _wavefunction_path(self): return self.solo().functional.WAVECAR
 
   @property
   def is_spinor(self):
     """ True if wavefunction is a spinor. """
     from . import soH
-    return self.escan.potential == soH
+    return self.functional.potential == soH
 
   @property
   def is_krammer(self):
     """ True if wavefunction is a spinor. """
     from numpy.linalg import norm
     from . import soH
-    return norm(self.escan.kpoint) < 1e-12
+    return norm(self.functional.kpoint) < 1e-12
 
 
 
@@ -421,8 +422,8 @@ class Extract(AbstractExtractBase):
     """ Passes on public attributes to vff extractor, then to escan functional. """
     if name[0] != '_':
       if name in dir(self._vffout): return getattr(self._vffout, name)
-      elif self.success and hasattr(self.escan, name):
-        return getattr(self.escan, name)
+      elif self.success and hasattr(self.functional, name):
+        return getattr(self.functional, name)
     raise AttributeError("Unknown attribute {0}. It could be the run is unsuccessfull.".format(name))
 
   def __dir__(self):
@@ -436,7 +437,7 @@ class Extract(AbstractExtractBase):
     result = [u for u in self.__dict__.keys() if u[0] != "_"]
     result.extend( [u for u in dir(self.__class__) if u[0] != "_"] )
     result.extend( [u for u in dir(self._vffout) if u[0] != "_"] )
-    if self.success: result.extend( [u for u in dir(self.escan) if u[0] != "_"] )
+    if self.success: result.extend( [u for u in dir(self.functional) if u[0] != "_"] )
     return list( set(result) - exclude )
 
 

@@ -515,12 +515,12 @@ class Escan(object):
 
     poscar = self._POSCAR + "." + str(world.rank)
     if self.vffrun != None:
-      POSCAR = self.vffrun.escan._POSCAR + "." + str(world.rank)
+      POSCAR = self.vffrun.functional._POSCAR + "." + str(world.rank)
       POSCAR = join(self.vffrun.directory, POSCAR)
       rstr = self.vffrun.structure
       if exists(POSCAR): copyfile(POSCAR, poscar, 'same', comm)
       else: self.vffrun.write_escan_input(poscar, rstr)
-      VFFCOUT = self.vffrun.escan.vff._cout(comm)
+      VFFCOUT = self.vffrun.functional.vff._cout(comm)
       VFFCOUT = join(self.vffrun.directory, VFFCOUT)
       copyfile(VFFCOUT, self.vff._cout(comm), 'same exists null', comm)
       return
@@ -554,7 +554,7 @@ class Escan(object):
     # using genpot from previous run
     is_root = True if comm == None else comm.rank == 0
     if self.genpotrun != None:
-      POTCAR = self.genpotrun.escan._POTCAR + "." + str(world.rank)
+      POTCAR = self.genpotrun.functional._POTCAR + "." + str(world.rank)
       potcar = self._POTCAR + "." + str(world.rank)
       copyfile(join(self.genpotrun.directory, POTCAR), potcar, 'same exists')
       copyfile(self.maskr, nothrow='same', comm=comm)

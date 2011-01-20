@@ -1,4 +1,3 @@
-#! python
 """ Bandstructure plotting tools """
 __docformat__  = 'restructuredtext en'
 __all__ = ['band_structure', 'Extract']
@@ -64,7 +63,7 @@ def band_structure(escan, structure, kpoints, density = None, outdir=None, comm=
   
   # two functions required to continue.
   input, relaxed = structure.cell.copy(), vffout.structure.cell.copy()
-  dont_deform_kpoint = vffout.escan._dont_deform_kpoint
+  dont_deform_kpoint = vffout.functional._dont_deform_kpoint
   def _get_kpoint(_kpoint):
     """ Deforms kpoint to new lattice, if required. """
     if dont_deform_kpoint: return _kpoint
@@ -134,10 +133,14 @@ class Extract(MassExtract):
   def __iter_alljobs__(self):
     """ Goes through all calculations and orders them. """
     from re import compile
-    result = [u for u in super(Extract, self).__iter_alljobs__() if u[0] != '/calculations']
-    regex = compile("/calculations/(\d+)-")
-    result = sorted(result, key=lambda x: int(regex.match(x[0]).group(1)))
-    for u in result: yield u
+    from operator import itemgetter
+
+    alls = []
+    regex = compile("/calculations/(\d+)-\[\s*\S+\s+\S+\s+\S+\s*\]")
+    for key, result in MassExtract.__iter_alljobs__(self):
+      found = regex.match(key)
+      if found != None: alls.append((key, result, i))
+    for key, value, i in result: yield key, value
 
   @property
   @make_cached
@@ -194,13 +197,11 @@ class Extract(MassExtract):
     from numpy.linalg import norm
     from ..crystal import nb_valence_states
     lumo = self.cbm
-    gamma = min((job for job in self.values()), key=lambda x: norm(x.escan.kpoint))
-    if norm(gamma.escan.kpoint) > 1e-6: raise RuntimeError("Gamma point not found.")
+    gamma = min((job for job in self.values()), key=lambda x: norm(x.functional.kpoint))
+    if norm(gamma.functional.kpoint) > 1e-6: raise RuntimeError("Gamma point not found.")
     nbe = nb_valence_states(self.vff.structure)
     cbm = min(gamma.eigenvalues[nbe], gamma.eigenvalues[nbe+1])
     return cbm - lumo
-    
-
     
 try: import matplotlib.pyplot as plt 
 except: 
