@@ -15,6 +15,7 @@ namespace LaDa
   namespace python
   {
     namespace bp = boost::python;
+    namespace mn = math::numpy;
     vff::BondData* create_BondData()
     {
       try
@@ -50,11 +51,14 @@ namespace LaDa
       return NULL;
     }
     
-    inline bp::object get_alphas(vff::BondData &_this)
+    bp::object get_alphas(vff::BondData &_this)
     {
-      return math::numpy::array_from_ptr(_this.alphas, vff::max_vff_expansion);
+      std::cout << "THERE " << vff::max_vff_expansion << "\n";
+      bp::object result = mn::create_array<mn::type<types::t_real>::value>(vff::max_vff_expansion); //_this.alphas, vff::max_vff_expansion);
+//     std::cout << "HERE" << PyArray_REFCOUNT(result.ptr()) << "\n" << std::flush;
+      return bp::object();
     }
-    inline void set_alphas(vff::BondData &_this, bp::object _object)
+    void set_alphas(vff::BondData &_this, bp::object _object)
     {
       std::ostringstream sstr; sstr << vff::max_vff_expansion; 
       size_t const N(bp::len(_object));
@@ -64,6 +68,7 @@ namespace LaDa
         bp::throw_error_already_set();
         return;
       }
+      std::cout << "There " << _this.alphas << std::flush;
       for(size_t i(0); i < vff::max_vff_expansion; ++i)
         if( i >= N ) _this.alphas[i] = 0e0;
         else

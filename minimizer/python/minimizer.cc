@@ -1,5 +1,8 @@
 #include "LaDaConfig.h"
 
+#include<boost/python/class.hpp>
+#include<boost/python/tuple.hpp>
+#include<boost/python/make_constructor.hpp>
 
 #include <boost/mpl/vector.hpp>
 
@@ -27,6 +30,16 @@ namespace LaDa
       LADA_DO_NASSERT( not minimizer_.Load( fakexml ), "Could not load minimizer " << type_ << ".\n" )
     }
 
+    t_Minimizer* make_internal(Minimizer const &_in)
+    { 
+      t_Minimizer *result(new t_Minimizer(_in.minimizer_));
+      if(result == NULL)
+      {
+        PyErr_SetString(PyExc_RuntimeError, "Could not create internal C++ minimizer.");
+        bp::throw_error_already_set();
+      }
+      return result;
+    }
 
     boost::python::tuple expose_minimizer()
     {
@@ -57,7 +70,7 @@ namespace LaDa
               "set", &Minimizer::set, 
               (
                 bp::arg("type") = "gsl_bfgs2",
-                bp::arg("convergence") = 1e-6,
+                bp::arg("tolerance") = 1e-6,
                 bp::arg("itermax") = 50,
                 bp::arg("linetolerance") = 1e-2,
                 bp::arg("linestep") = 1e-1,
@@ -65,7 +78,7 @@ namespace LaDa
                 bp::arg("verbose") = false,
                 bp::arg("uncertainties") = 0.1,
                 bp::arg("up") = 1,
-                bp::arg("gradient") = true
+                bp::arg("use_gradient") = true
               ),
               "Sets parameters for the optimizers. "
               "Not all parameters are needed by all optimizers."
@@ -73,6 +86,8 @@ namespace LaDa
         .def("_copy_to_cpp", &Minimizer::copy_to_internal)
         .def_pickle( Python::pickle<Minimizer>() );
 
+      bp::class_<t_Minimizer>("_CppMinimizer", bp::no_init)
+        .def("__init__", bp::make_constructor(&make_internal));
 
       return bp::make_tuple
         (

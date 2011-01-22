@@ -535,6 +535,7 @@ class Vff(object):
     from tempfile import NamedTemporaryFile
     from os import remove
     from _vff import Vff, LayeredVff
+    from sys import exit
 
     if hasattr(self.direction, "__len__"):
       functional = Layered()
@@ -545,6 +546,10 @@ class Vff(object):
     # ... done jumping through hoops.
     for name, params in self.bonds.items():
       bond = functional._get_bond(name.split('-'))
+      bond.length = params[0]
+      print "An here", params, bond.length
+      print bond.alphas
+      exit(0)
       bond.length, bond.alphas[:] = params[0], params[1:]
     for name, params in self.angles.items():
       angle = functional._get_angle(name.split('-'))

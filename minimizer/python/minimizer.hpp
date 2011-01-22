@@ -24,30 +24,33 @@ namespace LaDa
 {
   namespace Python
   {
+#   if defined(LADA_WITH_MINUIT2) or defined(LADA_WITH_GSL)
+      typedef LaDa::Minimizer::Variant
+              < 
+                boost::mpl::vector
+                <
+                  LaDa::Minimizer::Frpr  
+#                 ifdef LADA_WITH_GSL
+                    , LaDa::Minimizer::Gsl  
+#                 endif
+#                 ifdef LADA_WITH_MINUIT2
+                    , LaDa::Minimizer::Minuit2
+#                 endif
+                > 
+              > t_Minimizer;
+#   else
+      typedef LaDa::Minimizer::Frpr t_Minimizer;
+#   endif
     boost::python::tuple expose_minimizer();
+    class Minimizer;
+    t_Minimizer* make_internal(Minimizer const &_in);
 
     //! Declaration for the python minimizer.
     class Minimizer
     {
       friend class boost::serialization::access;
       public:
-#       if defined(LADA_WITH_MINUIT2) or defined(LADA_WITH_GSL)
-          typedef LaDa::Minimizer::Variant
-                  < 
-                    boost::mpl::vector
-                    <
-                      LaDa::Minimizer::Frpr  
-#                     ifdef LADA_WITH_GSL
-                        , LaDa::Minimizer::Gsl  
-#                     endif
-#                     ifdef LADA_WITH_MINUIT2
-                        , LaDa::Minimizer::Minuit2
-#                     endif
-                    > 
-                  > t_Minimizer;
-#       else
-          typedef LaDa::Minimizer::Frpr t_Minimizer;
-#       endif
+        friend t_Minimizer* make_internal(Minimizer const &_in);
 
         Minimizer() : type_( "gsl_bfgs2" ),
                       tolerance_( 1e-6 ),
@@ -142,7 +145,7 @@ namespace LaDa
             PyErr_SetString( PyExc_RuntimeError, "Error setting minimizer parameters.\n");
           }
         }
-        void copy_to_internal(Minimizer::t_Minimizer &_minimizer) const
+        void copy_to_internal(t_Minimizer &_minimizer) const
           { _minimizer = minimizer_; }
 
       protected:
@@ -167,6 +170,7 @@ namespace LaDa
            _ar & up_; _ar & use_gradient_;
         }
     };
+
   }
 } // namespace LaDa
 #endif
