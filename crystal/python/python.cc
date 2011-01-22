@@ -7,6 +7,8 @@
 #include <boost/python/borrowed.hpp>
 #include <boost/python/def.hpp>
 
+#include <numpy/arrayobject.h>
+
 #include <math/eigen.h>
 #include <opt/types.h>
 #include <physics/physics.h>
@@ -71,7 +73,8 @@ BOOST_PYTHON_MODULE(_crystal)
   scope.attr("__doc__") = "This namespace is imported into lada.crystal.\n";
   bp::docstring_options doc_options(true, false);
 
-  // loads lada.math first
+  // imports numpy and loads lada.math first
+  import_array();
   namespace bp = boost::python;
   bp::handle<> math( bp::borrowed(PyImport_ImportModule("lada.math")) );
 

@@ -139,8 +139,8 @@ class Extract(MassExtract):
     regex = compile("/calculations/(\d+)-\[\s*\S+\s+\S+\s+\S+\s*\]")
     for key, result in MassExtract.__iter_alljobs__(self):
       found = regex.match(key)
-      if found != None: alls.append((key, result, i))
-    for key, value, i in result: yield key, value
+      if found != None: alls.append((key, result, int(found.group(1))))
+    for key, value, i in sorted(alls, key=itemgetter(2)): yield key, value
 
   @property
   @make_cached

@@ -280,6 +280,12 @@ class Escan(object):
     self.print_from_all = False
     """ If True, each node will print. """
 
+  @property
+  def is_krammer(self):
+    """ True if wavefunction is a spinor. """
+    from numpy.linalg import norm
+    from . import soH
+    return True if (norm(self.kpoint) < 1e-12 and self.potential == soH) else False
 
   @property
   def maskr(self): 
@@ -504,7 +510,6 @@ class Escan(object):
       if self.do_escan: 
         extract = Extract(comm = comm, directory = outdir, escan = self)
         assert extract.success, RuntimeError("Escan calculations did not complete.")
-
 
   def _run_vff(self, structure, outdir, comm, cout, overwrite, norun):
     """ Gets atomic input ready, with or without relaxation. """

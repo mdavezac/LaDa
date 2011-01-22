@@ -64,6 +64,7 @@ Module Escan
       integer, parameter :: unitnumber = 9
       ! special kpoint  requested?
       integer ikpt, rank, ierr, width
+      common /comikpt/ikpt
 
       escan_input%ecp%comm_handle    = comm
       escan_input%ecp%fileescaninput = filename;

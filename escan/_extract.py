@@ -301,7 +301,8 @@ class Extract(AbstractExtractBase):
           if i%2 == 0: 
             result.append( rWavefunction(self.comm, i, eig, self._raw_rwfns[:,i/2,0]) )
           else:
-            result.append( rWavefunction(self.comm, i, eig, -self._raw_rwfns[:,i/2,0].conjugate()) )
+            result.append( rWavefunction( self.comm, i, eig,
+                                          -self._raw_rwfns[:,i/2,0].conjugate()) )
       else: # no krammer degeneracy
         self._raw_rwfns = \
             gtor_fourrier(self.raw_gwfns, self.rvectors, self.gvectors, self.comm)
@@ -344,17 +345,18 @@ class Extract(AbstractExtractBase):
     comm = self.comm if self.comm != None else world
     assert self.success
     assert self.nnodes == comm.size, \
-           RuntimeError("Must read wavefunctions with as many nodes as they were written to disk.")
-    with redirect(fout="") as streams:
-      with Changedir(self.directory, comm=self.comm) as directory:
-        path = join(self.directory, self.functional.WAVECAR)
-        assert exists(path), IOError("{0} does not exist.".format(path))
-        self.functional._write_incar(self.comm, self.structure)
-        if self.functional.potential == soH and norm(self.functional.kpoint):
-          nbstates = self.functional.nbstates
-        else: nbstates = self.functional.nbstates / 2
-        result = read_wavefunctions(self.functional, range(nbstates), comm)
-        remove(self.functional._INCAR + "." + str(world.rank))
+           RuntimeError( "Must read wavefunctions with as many nodes as "\
+                         "they were written to disk.")
+    with Changedir(self.directory, comm=self.comm) as directory:
+      path = join(self.directory, self.functional.WAVECAR)
+      assert exists(path), IOError("{0} does not exist.".format(path))
+      self.functional._write_incar(self.comm, self.structure)
+      if self.functional.potential == soH and norm(self.functional.kpoint):
+        nbstates = self.functional.nbstates
+      else: nbstates = self.functional.nbstates / 2
+      with redirect(fout="") as streams:
+        result = read_wavefunctions(self.functional, range(nbstates), comm, self.is_krammer)
+      remove(self.functional._INCAR + "." + str(world.rank))
 
     cell = self.structure.cell * self.structure.scale * angstrom
     normalization = det(cell.rescale(a0)) 
@@ -411,10 +413,8 @@ class Extract(AbstractExtractBase):
 
   @property
   def is_krammer(self):
-    """ True if wavefunction is a spinor. """
-    from numpy.linalg import norm
-    from . import soH
-    return norm(self.functional.kpoint) < 1e-12
+    """ True if wavefunction has krammer degenerate equivalent. """
+    return self.functional.is_krammer
 
 
 
@@ -424,7 +424,8 @@ class Extract(AbstractExtractBase):
       if name in dir(self._vffout): return getattr(self._vffout, name)
       elif self.success and hasattr(self.functional, name):
         return getattr(self.functional, name)
-    raise AttributeError("Unknown attribute {0}. It could be the run is unsuccessfull.".format(name))
+    raise AttributeError("Unknown attribute {0}. It could be the "\
+                         "run is unsuccessfull.".format(name))
 
   def __dir__(self):
     """ Returns list attributes.

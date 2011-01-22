@@ -4,7 +4,7 @@ __all__ = [ 'FreezeAtom', 'which_site', 'Sites', 'SymmetryOperator', 'Lattice', 
             'smith_indices', 'Atom', 'kAtom', 'fold_vector', 'Structure', 'FreezeCell',\
             'smith_normal_transform', 'get_space_group_symmetries', 'Neighbors', 'Neighbor', \
             'read_pifile_structure', 'LayerDepth', 'to_fractional', 'linear_smith_index', \
-            'nb_valence_states', 'to_voronoi', \
+            'nb_valence_states', 'to_voronoi', 'gaussian_projector', \
             # Below, only true python stuff
             'deform_kpoints', 'specie_list', 'read_poscar', 'write_poscar',\
             'write_oldvff', 'read_oldvff', 'structure_to_lattice', 'fill_structure', \
@@ -453,3 +453,43 @@ def fill_structure(cell, lattice = None):
 
 Structure.write_poscar = write_poscar
 Structure.write_oldvff = write_oldvff
+
+def gaussian_projector(positions, center, cell, alpha=1e0):
+  """ Returns gaussian projector operator. 
+  
+      :Parameter:
+        positions : numpy array
+          Last dimension of this array must be 3. 
+        center : numpy array
+          1-dimensional vector of three elements. Center of the gaussian projector.
+        cell : numpy array
+          Cell into which gaussian projector is wrapped. I.e. this operator is
+          periodic.
+        alpha : numpy scalar
+          Factor within the gaussian, akin (but not equal) to width at half maximum.
+
+      :return: array = exp( alpha * norm(positions[i])**2 )
+
+      All arguments can have units. The return however is without units
+      (dimensionless).
+  """
+  from _crystal import _gaussian_projector_impl
+  length_units = None
+  if hasattr(positions, "units"): length_units = positions.units
+  elif hasattr(center, "units"):  length_units = center.units
+  elif hasattr(cell, "units"):    length_units = cell.units
+  if length_units != None:
+    if hasattr(cell, "units"):
+      try: cell = cell.rescale(length_units)
+      except: raise ValueError("Cell and positions have incompatible units.")
+    if hasattr(center, "units"):
+      try: center = center.rescale(length_units)
+      except: raise ValueError("Center and positions have incompatible units.")
+    if hasattr(alpha, "units"):
+      try: alpha_units = length_units ** -2
+      except: raise ValueError("Could not create alpha units from positions units.")
+      try: alpha = alpha.rescale(alpha_units)
+      except: raise ValueError("Could not rescale alpha to {0}.".format(alpha_units))
+      else: alpha = float(alpha.magnitude)
+  return _gaussian_projector_impl(positions, center, cell, alpha)
+

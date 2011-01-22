@@ -148,3 +148,23 @@ subroutine escan_wfns_read(n0, n1, n2, g0, indices, wfns, gvecs, projs, inverse)
 
 end subroutine escan_wfns_read
 
+! Reads wavefunction with given index. No krammer degeneracy.
+subroutine escan_wfns_read_nokram(n0, n1, n2, g0, indices, wfns, gvecs, projs)
+  use wfns_module, only: read_wavefunctions
+  implicit none
+
+  integer, intent(in) :: n0, n1, n2, g0               ! all dimensions.
+  integer, dimension(n1), intent(in) :: indices       ! indices to wavefunctions
+  ! output wavefunctions
+  complex(kind=8), dimension(n0, n1, n2), intent(out) :: wfns
+  ! output g vectors.
+  real(kind=8), dimension(g0,3), intent(out) :: gvecs
+  ! output projects (g-space smooth cutoff)
+  real(kind=8), dimension(g0), intent(out) :: projs
+  ! output projects (g-space smooth cutoff)
+  integer, dimension(1) :: inverse
+
+  call read_wavefunctions(indices, wfns, gvecs, projs, inverse)
+
+end subroutine escan_wfns_read_nokram
+

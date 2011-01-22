@@ -6,6 +6,7 @@
 #include <boost/python/handle.hpp>
 #include <boost/python/errors.hpp>
 #include <numpy/ndarrayobject.h>
+#include <numpy/arrayobject.h>
 #include <numpy/npy_common.h>
 
 namespace LaDa
@@ -162,12 +163,14 @@ namespace LaDa
         throw;
       }
 
-      inline boost::python::object _create_array(npy_intp ndims, npy_intp dims[], int _type, bool is_fortran = false)
+      inline boost::python::object _create_array( npy_intp ndims, npy_intp dims[],
+                                                  int _type, bool is_fortran = false )
       {
         PyObject *result = PyArray_ZEROS(ndims, dims, _type, is_fortran ? 1: 0);
         if( result == NULL or PyErr_Occurred() != NULL ) 
         {
-          if(PyErr_Occurred() == NULL) PyErr_SetString(PyExc_RuntimeError, "Could not create numpy array");
+          if(PyErr_Occurred() == NULL)
+            PyErr_SetString(PyExc_RuntimeError, "Could not create numpy array");
           boost::python::throw_error_already_set();
           return boost::python::object();
         }
@@ -215,19 +218,20 @@ namespace LaDa
         return false;
       }
 
-      inline boost::python::object from_template( boost::python::object const &_object,
-                                                  int new_type = -1, bool _fortran = false ) 
+      inline boost::python::object from_template( boost::python::object const &_object, 
+                                                  int new_type = -1 )
       {
          PyArrayObject *ptr_array = get_pyarray_pointer(_object);
          if(new_type == -1) new_type = PyArray_TYPE(ptr_array);
-         return _create_array(ptr_array->nd, ptr_array->dimensions, new_type, _fortran);
+         bool const fortran = PyArray_ISFORTRAN(ptr_array->ob_type);
+         return _create_array(ptr_array->nd, ptr_array->dimensions, new_type, fortran);
       }
 
       //! Converts data from numpy iterator to requested type.
       template<class T>
-        T to_type(PyObject* _iter, int const _type)
+        T to_type(PyObject* _iter, int const _type, int const _offset = 0)
         {
-          void * const ptr_data = PyArray_ITER_DATA(_iter);
+          char const * const ptr_data = ((char const *) PyArray_ITER_DATA(_iter) + _offset);
           switch(_type)
           {
             case NPY_FLOAT     :

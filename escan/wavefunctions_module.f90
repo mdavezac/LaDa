@@ -70,7 +70,7 @@ module Wfns_module
 
       nb_gpoints = ngtotnod( inode )
       projs = wg_n(1:nb_gpoints) ! copy projector data
-      inverse = inv_n(1:nb_gpoints) - 1 ! copy -G indices (starting at 0)
+      if(allocated(inv_n)) inverse = inv_n(1:nb_gpoints) - 1 ! copy -G indices (starting at 0)
       ! Computes all gpoints.
       do ig = 1, nb_gpoints
         ! compute G point.
