@@ -8,7 +8,7 @@
 #include <boost/filesystem/path.hpp>
 
 #include "functional.h"
-#include "va.h"
+#include "with_minimizer.h"
 
 #include <opt/mpi.h>
 

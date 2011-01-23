@@ -1,5 +1,5 @@
-#ifndef _LADA_VFF_VA_H_
-#define _LADA_VFF_VA_H_
+#ifndef LADA_VFF_WITH_MINIMIZER_H
+#define LADA_VFF_WITH_MINIMIZER_H
 
 #include "LaDaConfig.h"
 
@@ -31,17 +31,11 @@ namespace LaDa
   namespace vff
   {
 
-    //! \brief Implements a Virtual Atom functional around Vff::Functional derived object.
-    //! \details In other words, this functional is capable of returning the
-    //!          gradient with respect to a change in the atomic occupation
-    //!          within the structure. It should interact quite well with
-    //!          Minimizer::VA and Minimizer::Beratan, Note that the vff
-    //!          functional members are hidden.
-    //! \note This class is mean to be used with a vff derived object.
-    //!       At this two types have been tried:
-    //!         - with Vff::Functional as the base class, 
-    //!         - with Vff::Layered as the base class.
-    //!         .
+    //! \brief Adds automatic minimization to a VFF functional.
+    //! \details The minimizer variant is added to the class, 
+    //!          and is called automatically when evaluating the energy.
+    //!          Note that the argument to the functional (structure) is
+    //!          hidden.
     template <class T_VFFBASE>
     class WithMinimizer : protected T_VFFBASE
     {
@@ -124,12 +118,6 @@ namespace LaDa
 #       ifdef LADA_MPI
       public:
 #       endif
-//       //! Returns the \e virtual gradient in direction \a _pos
-//       t_Type evaluate_one_gradient( types::t_unsigned _pos );
-//       //! Computes the \e virtual gradients and returns the energy
-//       t_Type evaluate_with_gradient( t_Type* _grad );
-//       //! Computes the \e virtual gradients
-//       void evaluate_gradient( t_Type* _grad );
         //! Forwards Vff::Functional::print_escan_input()
         void print_escan_input( const t_Path& _f = "atom.config") const
           { t_VffBase::print_escan_input( _f ); }
@@ -187,4 +175,4 @@ namespace LaDa
   } // namespace vff 
 } // namespace LaDa
 
-#endif // _VFF_FUNCTIONAL_H_
+#endif 

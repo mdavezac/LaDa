@@ -20,7 +20,7 @@
 #include "vff.hpp"
 #include "../functional.h"
 #include "../layered.h"
-#include "../va.h"
+#include "../with_minimizer.h"
 
 namespace LaDa
 {
