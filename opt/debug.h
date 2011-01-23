@@ -43,7 +43,7 @@
 
 #ifdef LADA_DEBUG
 # include <boost/throw_exception.hpp>
-# define LADA_BASSERT(condition, error) if(not condition) BOOST_THROW_EXCEPTION(error)
+# define LADA_BASSERT(condition, error) if(not (condition)) BOOST_THROW_EXCEPTION(error)
 # define LADA_NASSERT(condition, error ) LADA_DO_NASSERT(condition, error)
 # define LADA_DEBUG_TRY_BEGIN try {
 # define LADA_DEBUG_TRY_END( code, error ) } LADA_CATCHCODE( code, error ) 

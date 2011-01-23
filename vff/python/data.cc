@@ -3,6 +3,7 @@
 #include <boost/python/class.hpp>
 #include <boost/python/def.hpp>
 #include <boost/python/make_constructor.hpp>
+#include <numpy/ndarrayobject.h>
 
 
 #include <python/numpy_types.h>
@@ -52,12 +53,7 @@ namespace LaDa
     }
     
     bp::object get_alphas(vff::BondData &_this)
-    {
-      std::cout << "THERE " << vff::max_vff_expansion << "\n";
-      bp::object result = mn::create_array<mn::type<types::t_real>::value>(vff::max_vff_expansion); //_this.alphas, vff::max_vff_expansion);
-//     std::cout << "HERE" << PyArray_REFCOUNT(result.ptr()) << "\n" << std::flush;
-      return bp::object();
-    }
+      { return mn::array_from_ptr(_this.alphas, vff::max_vff_expansion); }
     void set_alphas(vff::BondData &_this, bp::object _object)
     {
       std::ostringstream sstr; sstr << vff::max_vff_expansion; 
@@ -108,6 +104,7 @@ namespace LaDa
 
     void expose_data()
     {
+      import_array();
       std::ostringstream sstr; sstr << vff::max_vff_expansion;
       bp::class_<vff::BondData>("BondData", "Bond-parameters for vff.")
         .def("__init__", bp::make_constructor(&create_BondData) )

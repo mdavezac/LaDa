@@ -1,5 +1,6 @@
 #include "LaDaConfig.h"
 
+#include <string>
 
 #include <boost/python/class.hpp>
 #include <boost/python/def.hpp>
@@ -9,8 +10,8 @@
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/python/register_ptr_to_python.hpp>
-#include <boost/filesystem/path.hpp>
-#include <boost/filesystem/operations.hpp>
+#include <boost/exception/get_error_info.hpp>
+#include <boost/exception/diagnostic_information.hpp>
 #ifdef LADA_MPI
 # include <boost/mpi/collectives.hpp>
 #endif
@@ -27,12 +28,29 @@ namespace LaDa
   namespace python
   {
     template<class T> 
-      bp::tuple __call__( T &_self, typename Crystal::TStructure<std::string> const &_str,
-                          LADA_MPI_CODE(boost::mpi::communicator const &_comm LADA_COMMA)
-                          bool _doinit, bool relax )
+      void init( T &_self, typename Crystal::TStructure<std::string> const &_str,
+                 bool _doinit, bool _verbose = false )
       { 
         _self.VffBase().structure = _str;
-        _self.init(_doinit, false);
+        try { _self.init(_doinit, _verbose); }
+        catch(vff::exceptions::site_index &e)
+        {
+          if(int const * mi = boost::get_error_info<vff::exceptions::integer>(e) )
+          {
+            std::ostringstream sstr;
+            sstr << "Wrong site index: " << *mi << ".\n" << boost::diagnostic_information(e);
+            PyErr_SetString(PyExc_ValueError, sstr.str().c_str());
+          }
+          else if(std::string const *mi = boost::get_error_info<vff::exceptions::string>(e))
+            PyErr_SetString(PyExc_ValueError, mi->c_str());
+          else PyErr_SetString(PyExc_ValueError, "Wrong site index in structure.");
+          bp::throw_error_already_set();
+        }
+      }
+
+    template<class T> 
+      bp::tuple __call__( T &_self, LADA_MPI_CODE(boost::mpi::communicator const &_comm LADA_COMMA) bool relax )
+      { 
         types::t_real const energy = _self.evaluate(LADA_MPI_CODE(_comm LADA_COMMA) relax) / 16.0217733;
         
         boost::shared_ptr< Crystal::TStructure<std::string> >
@@ -40,6 +58,15 @@ namespace LaDa
         result->energy = energy;
         if(relax) return bp::make_tuple(result, math::rMatrix3d(_self.get_stress()));
         else return bp::make_tuple(result, bp::object());
+      }
+
+    template<class T> 
+      bp::tuple __call2__( T &_self, typename Crystal::TStructure<std::string> const &_str,
+                           LADA_MPI_CODE(boost::mpi::communicator const &_comm LADA_COMMA)
+                           bool _doinit, bool relax )
+      { 
+        init(_self, _str, _doinit);
+        return __call__<T>(_self, LADA_MPI_CODE(_comm LADA_COMMA) relax);
       }
 
     template<class T> std::string angle_index(T &_self, bp::object const &_object)
@@ -63,8 +90,8 @@ namespace LaDa
         bp::throw_error_already_set();
         return "";
       }
-      try { return vff::angle_type(A, B, C); }
-      catch(vff::input &e)
+      try { return vff::angle_type(B, A, C); }
+      catch(vff::exceptions::angle_input &e)
       {
         PyErr_SetString(PyExc_ValueError, "Empty string is not a valid index.");
         bp::throw_error_already_set();
@@ -93,7 +120,7 @@ namespace LaDa
         return "";
       }
       try { return vff::bond_type(A, B); }
-      catch(vff::input &e)
+      catch(vff::exceptions::bond_input &e)
       {
         PyErr_SetString(PyExc_ValueError, "Empty string is not a valid index.");
         bp::throw_error_already_set();
@@ -137,6 +164,50 @@ namespace LaDa
         bp::throw_error_already_set();
       }
     }
+    template<class T> void check_input(T const &_self)
+    {
+      try { _self.VffBase().check_input(); }
+      catch(vff::exceptions::missing_bond &e)
+      {
+        using vff::exceptions::bond;
+        if(bond::value_type *ptr_bond = boost::get_error_info<bond>(e))
+        {
+          std::string const error = "Missing bond parameters for " + ptr_bond->get<0>() + "-" 
+                                    + ptr_bond->get<1>() + " in vff input.";
+          PyErr_SetString(PyExc_ValueError, error.c_str());
+        }
+        else PyErr_SetString(PyExc_ValueError, "Missing bond parameters in vff input.");
+        bp::throw_error_already_set();
+      }
+      catch(vff::exceptions::missing_angle &e)
+      {
+        using vff::exceptions::angle;
+        if(angle::value_type *ptr_angle = boost::get_error_info<angle>(e))
+        {
+          std::string const error = "Missing angle parameters for " + ptr_angle->get<1>() + "-" 
+                                    + ptr_angle->get<0>() + "-" + ptr_angle->get<2>()
+                                    + " in vff input.";
+          PyErr_SetString(PyExc_ValueError, error.c_str());
+        }
+        else PyErr_SetString(PyExc_ValueError, "Missing angle parameters in vff input.");
+        bp::throw_error_already_set();
+      }
+      catch(vff::exceptions::faulty_structure &e)
+      {
+        using vff::exceptions::atom;
+        std::ostringstream sstr;
+        if(atom::value_type *ptr_atom = boost::get_error_info<atom>(e))
+          sstr << "Following atom is not four-fold coordinated.\n"
+               << "   position:  (" << ptr_atom->pos[0] << ", "
+               <<                      ptr_atom->pos[1] << ", "
+               <<                      ptr_atom->pos[2] << "), type: "
+               << ptr_atom->type << ".\n";
+        else sstr << "Found atom which is not four-fold coordinated in structure.\n";
+        sstr << "You may want to adjust bond_cutoff in vff, or correct the structure.\n";
+        PyErr_SetString(PyExc_ValueError, sstr.str().c_str());
+        bp::throw_error_already_set();
+      }
+    }
 
     template<class T> bp::class_<T> expose_functional(std::string const &_name, std::string const &_doc)
     {
@@ -151,6 +222,12 @@ namespace LaDa
         ( 
           "__call__",  
           &__call__<T>,
+          ( LADA_MPI_CODE(bp::arg("comm") LADA_COMMA) bp::arg("relax")=true )
+        )
+        .def
+        ( 
+          "__call__",  
+          &__call2__<T>,
           ( bp::arg("structure"), LADA_MPI_CODE(bp::arg("comm") LADA_COMMA)
             bp::arg("doinit") = true, bp::arg("relax")=true ),
           "Minimizes structure.\n\n"
@@ -164,7 +241,8 @@ namespace LaDa
           "structure, and the second a matrix with the stress. The energy is in "
           "``structure.energy``.\n"
         )
-       .def( "_init",  &T::init, (bp::arg("redo_tree") = true, bp::arg("verbose")=false), 
+       .def("check_input", &check_input<T>)
+       .def( "init",  &init<T>, (bp::arg("structure"), bp::arg("dotree") = true, bp::arg("verbose")=false), 
              "Initializes the functional for the current structure." ) 
        .def( "print_escan_input",  &print_escan_input<T>,
              (bp::arg("file"), bp::arg("structure")), 
@@ -172,12 +250,13 @@ namespace LaDa
     }
 
 
-    typedef vff::VABase< vff::Functional > t_Vff;
-    typedef vff::VABase< vff::Layered > t_LayeredVff;
+    typedef vff::WithMinimizer< vff::Functional > t_Vff;
+    typedef vff::WithMinimizer< vff::Layered > t_LayeredVff;
     math::rVector3d get_direction(t_LayeredVff const &_self)
       { return _self.VffBase().get_direction(); } 
     void set_direction(t_LayeredVff &_self, math::rVector3d const &_dir)
       { _self.VffBase().set_direction(_dir); } 
+
     
     void expose_vff()
     {

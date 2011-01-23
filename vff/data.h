@@ -14,27 +14,26 @@ namespace LaDa
     //! Returns name of a bond.
     inline std::string bond_type(std::string const &_A, std::string const &_B)
     {
-      LADA_BASSERT(not _A.empty(), input() << error_string("Empty string for atomic specie."));
-      LADA_BASSERT(not _B.empty(), input() << error_string("Empty string for atomic specie."));
+      LADA_BASSERT(not _A.empty(), exceptions::bond_input()
+                                      << exceptions::string("Empty string for atomic specie."));
+      LADA_BASSERT(not _B.empty(), exceptions::bond_input()
+                                      << exceptions::string("Empty string for atomic specie."));
       return _A[0] < _B[0] ? _A + _B: _B + _A;
     }
     
     //! Returns name of an angle.
-    inline std::string angle_type(std::string const &_A, std::string const &_B, std::string const &_C)
+    inline std::string angle_type(std::string const &_origin, std::string const &_A, std::string const &_B)
     {
-      LADA_BASSERT(not _A.empty(), input() << error_string("Empty string for atomic specie."));
-      LADA_BASSERT(not _B.empty(), input() << error_string("Empty string for atomic specie."));
-      LADA_BASSERT(not _C.empty(), input() << error_string("Empty string for atomic specie."));
-      if(_A[0] < _B[0])
-      {
-        if(_A[0] < _C[0]) return _B[0] < _C[0] ? _A + _B + _C: _A + _C + _B;
-        return _C + _A + _B;
-      }
-      else if(_B[0] < _C[0]) return _A[0] < _C[0] ? _B + _A + _C: _B + _C + _A;
-      return _C + _B + _A;
+      LADA_BASSERT( not _origin.empty(), 
+                    exceptions::angle_input() << exceptions::string("Empty string for atomic specie."));
+      LADA_BASSERT(not _A.empty(), exceptions::angle_input()
+                                      << exceptions::string("Empty string for atomic specie."));
+      LADA_BASSERT(not _B.empty(), exceptions::angle_input()
+                                      << exceptions::string("Empty string for atomic specie."));
+      return _A[0] < _B[0] ? _A + _origin + _B: _B + _origin +_A;
     }
     
-    size_t const max_vff_expansion = 6;
+    size_t const max_vff_expansion = 5;
     
     //! \brief Holds bond information (length and stretching parameters).
     //! \note This is a POD structure.

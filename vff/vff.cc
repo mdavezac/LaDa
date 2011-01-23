@@ -38,30 +38,6 @@ namespace LaDa
     types::t_real const s33256 = 3e0 / 256 * std::sqrt(3);
     types::t_real const no1280 = 0.00703125;
     types::t_real const no2560 = 0.003515625;
-//   // 2*sqrt(3)
-//   const types::t_real twos3 = 3.4641016151377545870548926830117447338856105076207612561116139588;
-//   // 1 / 16
-//   const types::t_real one16 = 0.0625;
-//   // sqrt(3) / 8
-//   const types::t_real s3o160 = 0.2165063509461096616909307926882340458678506567262975785069758724;
-//   // 1 / 640 
-//   const types::t_real one640 = 0.0015625;
-//   // 3 / 8
-//   const types::t_real three8 = 0.375;
-//   // 3 * sqrt(3) / 8
-//   const  types::t_real s33o8  = 0.6495190528383289850727923780647021376035519701788927355209276172;
-//   // 3 * sqrt(3) / 16
-//   const  types::t_real s33o16 = 0.3247595264191644925363961890323510688017759850894463677604638086;
-//   // 3 / 16
-//   const  types::t_real thre16 = 0.1875; 
-//   // 3 / 32
-//   const  types::t_real thre32 = 0.09375;
-//   // 3/128 *sqrt(3) 
-//   const  types::t_real s33128 = 0.0405949408023955615670495236290438836002219981361807959700579760;
-//   // 3/256 *sqrt(3) 
-//   const  types::t_real  s33256 = 0.0202974704011977807835247618145219418001109990680903979850289880;
-//   const  types::t_real  no1280 = 0.00703125;
-//   const  types::t_real  no2560 = 0.003515625;
 
     types::t_real Vff :: energy() const
     {
@@ -272,7 +248,8 @@ namespace LaDa
     types::t_real Vff :: micro_strain(const AtomicCenter &_center) const
     {
       if ( _center.size() != 4 )
-        BOOST_THROW_EXCEPTION(input() << error_string("Wrong number of bonds in structure."));
+        BOOST_THROW_EXCEPTION(exceptions::input()
+                                 << exceptions::string("Wrong number of bonds in structure."));
 
       // computes the microstrain as the average strain over four paralellepipeds.
       // first computes four bond vectors, bond lengths, and angles.
@@ -348,7 +325,8 @@ namespace LaDa
         // first gets pseudo index
         size_t const str_index0 = i_center->get_index();
         LADA_BASSERT( str_index0 < structure.atoms.size(),
-                      internal() << error_string("Atom index is incorrect in first-neighbor tree."));
+                      exceptions::internal()
+                        << exceptions::string("Atom index is incorrect in first-neighbor tree."));
 
         t_Atom const & atom0 = structure.atoms[str_index0];
         types::t_unsigned const index0 = Physics::Atomic::Z( atom0.type );
@@ -365,7 +343,8 @@ namespace LaDa
         { 
           size_t const str_index1 = i_bond->get_index();
           LADA_BASSERT( str_index1 < structure.atoms.size(),
-                        internal() << error_string("Atom index is incorrect in first-neighbor tree.") );
+                        exceptions::internal()
+                          << exceptions::string("Atom index is incorrect in first-neighbor tree.") );
           t_Atom const & atom1 = structure.atoms[str_index1];
           types::t_unsigned const index1 = Physics::Atomic::Z( atom1.type );
 
@@ -419,26 +398,45 @@ namespace LaDa
       LADA_TRY_END(, "")
     }
 
-#   ifdef LADA_DEBUG
-      void Vff :: check_tree() const
+    void Vff::check_input() const 
+    {
+      t_Centers :: const_iterator i_center = centers_.begin();
+      t_Centers :: const_iterator const i_center_end = centers_.end();
+      for (; i_center != i_center_end; ++i_center)
       {
-        t_Centers :: const_iterator i_center = centers_.begin();
-        t_Centers :: const_iterator i_center_end = centers_.end();
-        for(size_t index(0); i_center != i_center_end; ++i_center, ++index )
+        if(i_center->size() != 4)
         {
-          LADA_DO_NASSERT( not i_center->i_atom_, 
-                      "Origin of the center is invalid\n"; )
-          LADA_DO_NASSERT( not i_center->structure, 
-                      "Invalid pointer to structure\n"; )
-          LADA_DO_NASSERT( i_center->bonds.size() != 4,
-                         "Invalid number of bonds: "
-                      << i_center->bonds.size() << ", " << index << "\n"; )
-          LADA_DO_NASSERT( i_center->translations.size() != 4,
-                         "Invalid number of translations: "
-                      << i_center->translations.size() << "\n"; )
+          exceptions::atom info(i_center->atom());
+          BOOST_THROW_EXCEPTION(exceptions::faulty_structure() << info);
+        }
+        AtomicCenter :: const_iterator i_bond = i_center->begin();
+        AtomicCenter :: const_iterator const i_bond_end = i_center->end();
+        for(; i_bond != i_bond_end; ++i_bond)
+        {
+          std::string const bkey(i_bond.key());
+          if( bonds_params.find(bkey) == bonds_params.end() )
+          {
+            exceptions::bond::value_type const value(i_center->atom().type, i_bond->atom().type);
+            exceptions::bond const info(value);
+            BOOST_THROW_EXCEPTION(exceptions::missing_bond() << info);
+          }
+          AtomicCenter :: const_iterator i_angle (i_center->begin());
+          for (; i_angle != i_bond_end; ++i_angle )
+          {
+            if( i_angle == i_bond ) continue;
+            std::string const akey(i_bond.angle_key(i_angle));
+            if( angles_params.find(akey) == angles_params.end() )
+            {
+              exceptions::angle::value_type const angle( i_center->atom().type, 
+                                                         i_bond->atom().type, 
+                                                         i_angle->atom().type);
+              exceptions::angle const info(angle);
+              BOOST_THROW_EXCEPTION(exceptions::missing_angle() << info);
+            }
+          }
         }
       }
-#   endif
-
+    }
+ 
   } // namespace vff
 } // namespace LaDa

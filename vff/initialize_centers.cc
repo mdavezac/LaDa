@@ -35,7 +35,13 @@ namespace LaDa
         t_Atoms :: iterator i_atom = structure.atoms.begin();
         t_Atoms :: iterator i_atom_end = structure.atoms.end();
         for(types::t_unsigned index=0; i_atom != i_atom_end; ++i_atom, ++index )
+        {
+          if(i_atom->site == -1)
+            try { i_atom->site = structure.lattice->get_atom_site_index(*i_atom); }
+            catch(std::exception &e)
+              { BOOST_THROW_EXCEPTION(exceptions::site_index() << exceptions::string(e.what())); }
           centers_.push_back( AtomicCenter( structure, *i_atom, index ) );
+        }
       }
 
       // finds first neighbors on ideal lattice.
@@ -68,13 +74,10 @@ namespace LaDa
       t_cit i_box_end = boxes->end();
       bool result( true );
       for(; result and i_box != i_box_end; ++i_box )
-        result = build_tree_sort_dnc_( *i_box, fn );
+        result &= build_tree_sort_dnc_( *i_box, fn );
       if( not result ) return false;
       
 
-#     ifdef LADA_DEBUG
-        check_tree(); 
-#     endif
       if( _verbose ) 
       {
         LADA_ROOT( comm, std::cout << "First Neighbor tree successfully created.\n"; )

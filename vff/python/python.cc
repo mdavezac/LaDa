@@ -6,8 +6,6 @@
 #include <boost/python/handle.hpp>
 #include <boost/python/borrowed.hpp>
 
-#include <numpy/ndarrayobject.h>
-
 #include "vff.hpp"
 #include "data.hpp"
 
@@ -21,7 +19,6 @@ BOOST_PYTHON_MODULE(_vff)
   // loads lada.math first
   namespace bp = boost::python;
   bp::handle<> math( bp::borrowed(PyImport_ImportModule("lada.math")) );
-  import_array();
 
   LaDa::python::expose_vff();
   LaDa::python::expose_layeredvff();

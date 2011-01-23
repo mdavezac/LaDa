@@ -547,13 +547,10 @@ class Vff(object):
     for name, params in self.bonds.items():
       bond = functional._get_bond(name.split('-'))
       bond.length = params[0]
-      print "An here", params, bond.length
-      print bond.alphas
-      exit(0)
       bond.length, bond.alphas[:] = params[0], params[1:]
     for name, params in self.angles.items():
       angle = functional._get_angle(name.split('-'))
-      angle.gamma, angle.sigma, bond.betas[:] = params[0], params[1], params[1:]
+      angle.gamma, angle.sigma, angle.betas[:] = params[0], params[1], params[2:]
 
     return functional
      
@@ -579,49 +576,16 @@ class Vff(object):
     with open(cerr, "w") as file: pass # file has not yet been opened
     with redirect_all(output=cout, error=cerr, append="True") as oestream:
       functional = self._create_functional()
-      # now performs call
-      if lada_with_mpi:
-        result, stress = functional(comm, doinit=True, relax=self.relax)
-      else: 
-        result, stress = functional(doinit=True, relax=self.relax)
+    # now performs call
+    functional.init(structure, dotree=True)
+    functional.check_input()
+    
+    with redirect_all(output=cout, error=cerr, append="True") as oestream:
+      result, stress = functional(comm, relax=self.relax) if lada_with_mpi\
+                       else functional(relax=self.relax)
     
     # unsets lattice.
     if old_lattice != None: old_lattice.set_as_crystal_lattice()
     if self.direction != None and not hasattr(self.direction, "__len__"):
       structure.freeze = oldfreeze
     return result, stress
-
-  def _create_input(self, structure, comm):
-    """ Creates a temporary file with input to vff. """
-
-    result = "<?xml version=\"1.0\" standalone=\"no\" ?>\n"\
-             "<Job>\n<Functional type=\"vff\""
-    if hasattr(self.direction, "__len__"):
-      result += " direction=\"%s %s %s\"" % tuple(self.direction.flat)
-    result += ">\n"
-    result += "<Minimizer type=\"%s\" tolerance=%e itermax=%i linetolerance=%e\n"\
-              "           linestep=%e strategy=\"%s\" verbose=\"%s\" uncertainties=%e\n"\
-              "           zeps=%e up=%i gradient=\"%s\"/>\n"\
-              % ( self.minimizer.type, self.minimizer.tolerance, self.minimizer.itermax,\
-                  self.minimizer.linetolerance, self.minimizer.linestep, self.minimizer.strategy,\
-                  "true" if self.minimizer.verbose else "false", self.minimizer.uncertainties,\
-                  self.minimizer.uncertainties, self.minimizer.up, \
-                  "true" if self.minimizer.use_gradient else "false" )
-    types = set(u for site in self.lattice.sites for u in site.type)
-    bonds = set(u for name in self.bonds.keys() for u in name.split('-'))
-    assert types <= bonds, "Species in structure and vff-input do not match."
-    for name, params in self.bonds.items():
-      if set(name.split('-')) <= types:
-        p = name.split('-')
-        p.extend([u for u in params])
-        result += "<Bond A=\"%s\" B=\"%s\" d0=%e alpha=%e alpha3=%e alpha4=%e alpha5=%e alpha6=%e />\n"\
-                  % tuple(p) 
-    for name, params in self.angles.items():
-      if set(name.split('-')) <= types:
-        p = name.split('-')
-        p.extend([u for u in params])
-        result += "<Angle A=\"%s\" B=\"%s\" C=\"%s\" gamma=\"%s\" sigma=\"%s\" \n"\
-                  "       beta=%e beta3=%e beta4=%e beta5=%e beta6=%e />\n"\
-                  % tuple(p) 
-    result += "</Functional>\n</Job>"
-    return result

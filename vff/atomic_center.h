@@ -257,11 +257,10 @@ namespace LaDa
         //! Returns unique key for maps of angles.
         std::string angle_key(AtomicCenter::const_iterator const &_other) const
         {
-          return (_other.parent == parent) ? 
-                 angle_type(parent->atom().type, (*i_bond)->atom().type, _other->atom().type):
-                 angle_type(parent->atom().type, (*i_bond)->atom().type, _other.atom().type); 
+          LADA_BASSERT(_other.parent == parent, exceptions::mishappened_origin());
+          return angle_type(parent->atom().type, (*i_bond)->atom().type, _other->atom().type);
         }
-        //! \brief Returns the atom at the origin of range of bonds this iterator travels
+        //! \brief Returns the atom at the end of the current bond.
         //! \see AtomicCenter::const_iterator::parent 
         t_Atom& atom() { return ((*i_bond)->atom()); }
         //! \brief Returns the atom at the origin of range of bonds this iterator travels

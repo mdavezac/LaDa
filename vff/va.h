@@ -43,15 +43,13 @@ namespace LaDa
     //!         - with Vff::Layered as the base class.
     //!         .
     template <class T_VFFBASE>
-    class VABase : protected T_VFFBASE, public function::VirtualAtom
+    class WithMinimizer : protected T_VFFBASE
     {
       //! Type of the path.
       typedef boost::filesystem::path t_Path;
       public:
         //! Type from which the vff functional is derived
         typedef T_VFFBASE t_VffBase;
-        //! Type from which the VA functional is derived
-        typedef function::VirtualAtom t_VABase;
         
 #       if defined(LADA_WITH_GSL) or defined(LADA_WITH_MINUIT2)
         //! Type of the minimizer for minimizing strain
@@ -75,6 +73,8 @@ namespace LaDa
         //! The minimizer with which vff is minimized
         t_Minimizer minimizer;
 
+        //! Type of the return.
+        typedef typename t_VffBase::t_Return t_Return;
       protected:
         //! The type of the atom container
         typedef typename Vff::t_Arg::t_Atoms   t_Atoms;
@@ -87,6 +87,8 @@ namespace LaDa
 
 
         // Those public members of t_VffBase which are expected in this class
+      public:
+        using t_VffBase::check_input;
       protected:
         using t_VffBase::energy;
 
@@ -96,35 +98,29 @@ namespace LaDa
         using t_VffBase::structure;
 
       public:
-        //! see functional::Base::t_Type
-        typedef t_VABase :: t_Type t_Type;
-        //! see functional::Base::t_Container
-        typedef t_VABase :: t_Container  t_Container;
-
-      public:
         //! Constructor and Initializer
-        VABase() {}
+        WithMinimizer() {}
         //! Constructor and Initializer
-        VABase   ( typename T_VFFBASE::t_Arg &_str )
+        WithMinimizer   ( typename T_VFFBASE::t_Arg &_str )
                : t_VffBase( _str ), minimizer() {}
         //! Copy Constructor
-        VABase   ( const VABase &_c )
-               : t_VffBase( _c ), t_VABase( _c ), minimizer( _c.minimizer ) {}
+        WithMinimizer   ( const WithMinimizer &_c )
+               : t_VffBase( _c ), minimizer( _c.minimizer ) {}
         //! Destructor
-        ~VABase() {}
+        ~WithMinimizer() {}
          
         // Now truly "functional" stuff.
         
 #       ifdef LADA_MPI
           //! \brief Evaluated the strain after copying the occupations from
           //!        VirtualAtom::va_vars.
-          t_Type evaluate(boost::mpi::communicator const &_comm, bool relax=true)
+          t_Return evaluate(boost::mpi::communicator const &_comm, bool relax=true)
             { T_VFFBASE::comm = _comm; return evaluate(relax); }
       protected:
 #       endif
         //! \brief Evaluated the strain after copying the occupations from
         //!        VirtualAtom::va_vars.
-        t_Type evaluate(bool relax=true);
+        t_Return evaluate(bool relax=true);
 #       ifdef LADA_MPI
       public:
 #       endif
@@ -164,11 +160,11 @@ namespace LaDa
              { t_VffBase::set_bond( _type, _tuple ); }
          //! Copies parameters from argument.
          template<class T> 
-           void copy_parameters(VABase<T> const &_f) { t_VffBase::copy_parameters(_f.VffBase()); }
+           void copy_parameters(WithMinimizer<T> const &_f) { t_VffBase::copy_parameters(_f.VffBase()); }
     };
 
-    template< class T_VFFBASE > typename VABase<T_VFFBASE> :: t_Type 
-      VABase<T_VFFBASE> :: evaluate(bool relax)
+    template< class T_VFFBASE > typename WithMinimizer<T_VFFBASE> :: t_Return 
+      WithMinimizer<T_VFFBASE> :: evaluate(bool relax)
       {
         // no minimization required if variables is empty.
         typename t_VffBase :: t_Arg arg;
@@ -182,10 +178,10 @@ namespace LaDa
       }
 
     template< class T_VFFBASE > 
-      inline bool VABase<T_VFFBASE> :: init(bool _redocenters, bool _verbose)
+      inline bool WithMinimizer<T_VFFBASE> :: init(bool _redocenters, bool _verbose)
       {
-        if ( _redocenters and ( not t_VffBase::initialize_centers(_verbose) ) ) return false;
-        return t_VABase::init();
+        if( not _redocenters) return true;
+        return t_VffBase::initialize_centers(_verbose);
       }
 
   } // namespace vff 

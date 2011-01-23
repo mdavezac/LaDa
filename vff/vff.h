@@ -125,6 +125,10 @@ namespace LaDa
         //! \details Defined in initialize_centers.cc.
         bool initialize_centers(bool _verbose = false);
 
+        //! \brief checks that all required bond/angle parameters are there. 
+        //! \details throws if input is missing.
+        void check_input() const;
+
       protected:
         //! Holds ideal first neighbor positions.
         typedef std::vector< std::vector< math::rVector3d > > t_FirstNeighbors;
@@ -195,11 +199,6 @@ namespace LaDa
         //!          in Vff::structure is changed, then it is imperative
         //!          that the tree be reconstructed from scratch.
         t_Centers centers_;  
-
-#      ifdef LADA_DEBUG
-         //! Checks that the list of centers are valid. somewhat.
-         void check_tree() const;
-#      endif
     };
   } // namespace vff 
 } // namespace LaDa
