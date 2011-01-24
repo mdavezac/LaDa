@@ -153,7 +153,7 @@ namespace LaDa
       bp::object gpoints = math::numpy::create_array<NPY_DOUBLE>(g0, g1, true);
       bp::object projs = math::numpy::create_array<NPY_DOUBLE>(g0, true);
       bp::object inverse; 
-      if(_is_krammer) math::numpy::create_array<NPY_INT>(g0, true);
+      if(_is_krammer) inverse = math::numpy::create_array<NPY_INT>(g0, true);
       
       math::numpy::get_pyarray_pointer(wfns)->dimensions[0]
         = math::numpy::get_pyarray_pointer(gpoints)->dimensions[0];
