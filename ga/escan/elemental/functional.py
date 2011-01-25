@@ -168,7 +168,7 @@ class Darwin:
     if hasattr(b, 'rescale') and hasattr(a, 'magnitude'):
       a, b = a.magnitude, b.rescale(a.units).magnitude
     if fabs(a-b) <  tolerance: return 0
-    return 1 if a < b else -1
+    return 1 if float(a-b) < 0 else -1
 
   def restart(self, outdir, comm = None):
     """ Saves current status. """

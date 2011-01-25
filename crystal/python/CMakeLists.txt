@@ -10,7 +10,7 @@ set( PYCRYSTAL_SOURCES
      which_site.cc misc.cc )
 
 
-include_directories(${PYTHON_INCLUDE_DIRS})
+include_directories(${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDES})
 python_add_module (pycrystal ${PYCRYSTAL_HEADERS} ${PYCRYSTAL_SOURCES})
 target_link_libraries(pycrystal crystal ${Boost_PYTHON_LIBRARY})
 mark_as_advanced(PYTHON_ENABLE_MODULE_pycrystal)
