@@ -13,6 +13,7 @@ def compute_projections(extract, filename, alpha = 1e0, **kwargs):
   from pickle import dump
   from numpy import zeros, dot, array, exp, sum
   from numpy.linalg import norm
+  from quantities import angstrom
   from lada import periodic_table as table
   from lada.crystal import gaussian_projector
   species = set([u.type for u in extract.structure.atoms])
@@ -25,12 +26,11 @@ def compute_projections(extract, filename, alpha = 1e0, **kwargs):
 
     # create projection operator.
     proj = zeros(extract.rvectors.shape[:-1])
-    cell = extract.structure.cell
+    cell = extract.structure.cell * extract.structure.scale 
     for atom in extract.structure.atoms:
       if atom.type != key: continue
-      proj += gaussian_projector(extract.rvectors, atom.pos, cell, sigma )
-    proj /= sum(proj) 
-
+      pos = atom.pos * extract.structure.scale 
+      proj += gaussian_projector(extract.rvectors, pos * angstrom, cell * angstrom, sigma )
     result[key] = [(w.eigenvalue, w.expectation_value(proj)) for w in extract.rwfns]
   
   n = norm(array(result.values()))
@@ -83,11 +83,71 @@ def compute_bs():
       pickle.dump(result, file) 
 
 
+def create_data():
+  from lada.escan import ExtractBS
+  from os.path import join
+  compute_bs()
+  extract_bs = ExtractBS("results")
+  for key, value in extract_bs.iteritems():
+    filename = join(value.directory, "PROJECT_BS")
+    a = compute_projections(value, filename)
+
+
+def plot_bands(extractor, tolerance=1e-6, **kwargs):
+  """ Tries and plots band-structure. """
+  from os.path import join
+  from numpy import dot, array, min, max, sqrt
+  from numpy.linalg import norm
+
+  bandcolor = kwargs.pop('bandcolor', 'blue')
+  edgecolor = kwargs.pop('edgecolor', 'red')
+  edgestyle = kwargs.pop('edgestyle', '--')
+  awidth    = kwargs.pop('awidth', 5.)
+  type      = kwargs.pop('type', 'Si')
+  alpha     = kwargs.pop('alpha', 1.)
+
+  # first finds breaking point.
+  kpoints = extractor.kpoints
+  delta = kpoints[1:] - kpoints[:-1]
+  norms = [norm(delta[i,:]) for i in range(delta.shape[0])]
+  bk = []
+  for i, d in enumerate(norms[1:]):
+    if abs(norms[i]-d) > 1e-6: bk.append(i+1)
+
+  # then create array of mean x, y values.
+  x = array([sum(norms[:i]) for i in range(len(norms)+1)])
+  y = array(extractor.eigenvalues.values())
+
+  # gets projected stuff
+  si_projs = array([ compute_projections(value, join(value.directory, "PROJECT_BS"), alpha=alpha)["Si"]
+                     for value in extractor.itervalues() ] )
+  si_projs = si_projs[:,:,1]
+  ge_projs = array([ compute_projections(value, join(value.directory, "PROJECT_BS"), alpha=alpha)["Ge"]
+                     for value in extractor.itervalues() ] )
+  ge_projs = ge_projs[:,:,1]
+
+  # then loop over each band.
+  for band, si, ge in zip(y.T, si_projs.T.real, ge_projs.T.real):
+    width = (si if type == "Si" else ge)  / sqrt(si * si + ge * ge)
+    plt.fill_between(x, band + awidth * width, band - awidth * width,
+                     color=bandcolor, **kwargs)
+  
+  # plots break-lines.
+  for i in bk: plt.axvline(x[i], color='black', **kwargs)
+
+  # then plot vbm and cbm.
+  kwargs.pop('linestyle', None) 
+  plt.axhline(extractor.vbm, color=edgecolor, linestyle=edgestyle, **kwargs)
+  plt.axhline(extractor.cbm, color=edgecolor, linestyle=edgestyle, **kwargs)
+
+
+
+  plt.xlim((x[0], x[-1]))
+  ylims = min(y) - (max(y) - min(y))*0.05, max(y) + (max(y) - min(y))*0.05
+  plt.ylim(ylims)
+  plt.show()
+
 from lada.escan import ExtractBS
-from os.path import join
-compute_bs()
 extract_bs = ExtractBS("results")
-for key, value in extract_bs.iteritems():
-  filename = join(value.directory, "PROJECT_BS")
-  print key
-  a = compute_projections(value, filename)
+# p = compute_projections(extract_bs.values()[0], "shit", alpha=5.)
+plot_bands(extract_bs, awidth=1)
