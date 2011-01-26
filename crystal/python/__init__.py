@@ -20,7 +20,7 @@ from _crystal import FreezeAtom, which_site, Site, SymmetryOperator, Lattice, to
                      rStructure, rAtom, Sites, Atoms, kAtoms, StringVector # this line not in __all__
 
 from lada.opt.decorators import add_setter
-from read_write import read_poscar, write_poscar, write_oldvff, read_oldvff
+from read_write import read_poscar, write_poscar, write_oldvff, read_oldvff, icsd_cif
 import A2BX4
 import bravais
 import binary
