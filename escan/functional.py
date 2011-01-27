@@ -398,13 +398,13 @@ class Escan(object):
     poscar = self._POSCAR 
     if worldrank != None: poscar += '.' + worldrank
     if self.vffrun != None:
-      POSCAR = self.vffrun.escan._POSCAR 
+      POSCAR = self.vffrun.functional._POSCAR 
       if worldrank != None: POSCAR += '.' + worldrank
       POSCAR = join(self.vffrun.directory, POSCAR)
       rstr = self.vffrun.structure
       if exists(POSCAR): copyfile(POSCAR, poscar, 'same', comm)
       else: self.vffrun.solo().write_escan_input(poscar, rstr)
-      VFFCOUT = self.vffrun.escan.vff._cout(comm)
+      VFFCOUT = self.vffrun.functional.vff._cout(comm)
       VFFCOUT = join(self.vffrun.directory, VFFCOUT)
       copyfile(VFFCOUT, self.vff._cout(comm), 'same exists null', comm)
       return
@@ -441,10 +441,10 @@ class Escan(object):
     if self.genpotrun != None:
       if lada_with_mpi:
         from boost.mpi import world
-        POTCAR = self.genpotrun.escan._POTCAR + "." + str(world.rank)
+        POTCAR = self.genpotrun.functional._POTCAR + "." + str(world.rank)
         potcar = self._POTCAR + "." + str(world.rank)
       else:
-        POTCAR = self.genpotrun.escan._POTCAR 
+        POTCAR = self.genpotrun.functional._POTCAR 
         potcar = self._POTCAR
       copyfile(join(self.genpotrun.directory, POTCAR), potcar, 'same exists')
       copyfile(self.maskr, nothrow='same', comm=comm)
@@ -573,7 +573,7 @@ class Escan(object):
     from numpy.linalg import inv
     from quantities import angstrom
     from ..physics import a0
-    from ..crystal import into_voronoi
+    from ..crystal import to_voronoi
     # first get relaxed cell
     if norun == True: relaxed = structure.cell.copy()
     else:
@@ -598,6 +598,6 @@ class Escan(object):
     input = structure.cell 
     if (norun != True) and self.do_relax_kpoint and any(abs(relaxed-input) > 1e-12):
       kpoint = dot(dot(relaxed.T, inv(input.T)), self.kpoint)
-      kpoint = into_voronoi(self.kpoint, relaxed)
+      kpoint = to_voronoi(self.kpoint, relaxed)
     else: kpoint = self.kpoint
     return 1, kpoint[0], kpoint[1], kpoint[2], structure.scale / float(a0.rescale(angstrom))

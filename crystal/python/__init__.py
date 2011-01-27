@@ -4,7 +4,7 @@ __all__ = [ 'FreezeAtom', 'which_site', 'Sites', 'SymmetryOperator', 'Lattice', 
             'smith_indices', 'Atom', 'kAtom', 'fold_vector', 'Structure', 'FreezeCell',\
             'smith_normal_transform', 'get_space_group_symmetries', 'Neighbors', 'Neighbor', \
             'read_pifile_structure', 'LayerDepth', 'to_fractional', 'linear_smith_index', \
-            'nb_valence_states', 'to_voronoi', 'gaussian_projector', \
+            'nb_valence_states', 'to_voronoi', 'gaussian_projector', 'to_cell', \
             # Below, only true python stuff
             'deform_kpoints', 'specie_list', 'read_poscar', 'write_poscar',\
             'write_oldvff', 'read_oldvff', 'structure_to_lattice', 'fill_structure', \
@@ -16,7 +16,7 @@ from _crystal import FreezeAtom, which_site, Site, SymmetryOperator, Lattice, to
                      smith_indices, kAtoms, Atom, kAtom, fold_vector, Structure, FreezeCell,\
                      smith_normal_transform,  get_space_group_symmetries, Neighbors, Neighbor, \
                      read_pifile_structure, LayerDepth, to_fractional, linear_smith_index,\
-                     nb_valence_states, to_voronoi, \
+                     nb_valence_states, to_voronoi, to_cell, \
                      rStructure, rAtom, Sites, Atoms, kAtoms, StringVector # this line not in __all__
 
 from lada.opt.decorators import add_setter
@@ -468,7 +468,7 @@ def fill_structure(cell, lattice = None):
 Structure.write_poscar = write_poscar
 Structure.write_oldvff = write_oldvff
 
-def gaussian_projector(positions, center, cell, alpha=1e0):
+def gaussian_projector(positions, cell, center=(0,0,0), alpha=1e0):
   """ Returns gaussian projector operator. 
   
       :Parameter:
@@ -488,7 +488,9 @@ def gaussian_projector(positions, center, cell, alpha=1e0):
       (dimensionless).
   """
   from _crystal import _gaussian_projector_impl
+  from numpy import array
   length_units = None
+  if isinstance(center, tuple) or isinstance(center, list): center = array(center)
   if hasattr(positions, "units"): length_units = positions.units
   elif hasattr(center, "units"):  length_units = center.units
   elif hasattr(cell, "units"):    length_units = cell.units
@@ -505,5 +507,5 @@ def gaussian_projector(positions, center, cell, alpha=1e0):
       try: alpha = alpha.rescale(alpha_units)
       except: raise ValueError("Could not rescale alpha to {0}.".format(alpha_units))
       else: alpha = float(alpha.magnitude)
-  return _gaussian_projector_impl(positions, center, cell, alpha)
+  return _gaussian_projector_impl(positions, cell, center, alpha)
 

@@ -144,7 +144,7 @@ class KDensity(KPoints):
       grid[i] = int(max(1, floor(grid[i]+0.5)))
 
     kgrid = KGrid(grid=grid, offset=self.offset)
-    return kgrid._mnk(output)
+    return kgrid._mnk(input, output)
  
   def __repr__(self):
     """ Represents this object. """
@@ -172,25 +172,24 @@ def _reduced_grids_factory(name, base):
       """ Returns list of inequivalent vectors with multiplicity. """
       from numpy import dot
       from numpy.linalg import inv, norm
-      from ..crystal import Lattice, zero_centered, into_voronoi
-      lattice = Lattice()
-      lattice.cell = inv(output.cell.T)
-      lattice.add_site = (0,0,0), '0'
-      lattice.find_space_group()
+      from ..crystal import Lattice, to_cell, to_voronoi
+      recip = Lattice()
+      recip.cell = inv(output.cell.T)
+      recip.add_site = (0,0,0), '0'
+      recip.find_space_group()
 
-      inv_cell = output.cell.T
       relax = getattr(self, 'do_relax_kpoint', False)
 
       # now checks whether symmetry kpoint exists or not.
       seen = []
-      if relax: deformation = dot(lattice.cell, input.cell.T)
+      if relax: deformation = dot(recip.cell, input.cell.T)
       for mult, kpoint in base._mnk(self, input, output): 
         found = False
         if relax: kpoint = dot(deformation, kpoint)
-        kpoint = into_voronoi(kpoint, lattice.cell, inv_cell) 
+        kpoint = to_voronoi(kpoint, inv(recip.cell))
         for i, (count, vec) in enumerate(seen):
-          for op in lattice.space_group:
-            u = zero_centered(vec-op(kpoint), lattice.cell, inv_cell)
+          for op in recip.space_group:
+            u = to_cell(vec-op(kpoint), recip.cell)
             if all(abs(u) < self.tolerance):
               found = True
               seen[i][0] += mult
@@ -207,24 +206,23 @@ def _reduced_grids_factory(name, base):
       """ Yields index of unreduced kpoint in array of reduced kpoints. """
       from numpy import dot
       from numpy.linalg import inv, norm
-      from ..crystal import Lattice, zero_centered, into_voronoi
-      lattice = Lattice()
-      lattice.cell = inv(output.cell.T)
-      lattice.add_site = (0,0,0), '0'
-      lattice.find_space_group()
-      inv_cell = output.cell.T
+      from ..crystal import Lattice, to_cell, to_voronoi
+      recip = Lattice()
+      recip.cell = inv(output.cell.T)
+      recip.add_site = (0,0,0), '0'
+      recip.find_space_group()
 
       relax = getattr(self, 'do_relax_kpoint', False)
-      if relax: deformation = dot(lattice.cell, input.cell.T)
+      if relax: deformation = dot(recip.cell, input.cell.T)
       # now checks whether symmetry kpoint exists or not.
       seen = []
       for mult, kpoint_orig in base._mnk(self, input, output): 
         found = False
         kpoint = dot(deformation, kpoint_orig) if relax else kpoint
-        kpoint = into_voronoi(kpoint, lattice.cell, inv_cell) 
+        kpoint = to_voronoi(kpoint, recip.cell)
         for i, (count, vec) in enumerate(seen):
-          for op in lattice.space_group:
-            u = zero_centered(vec-op(kpoint), lattice.cell, inv_cell)
+          for op in recip.space_group:
+            u = to_cell(vec-op(kpoint), recip.cell)
             if all(abs(u) < self.tolerance):
               found = True
               seen[i][0] += mult

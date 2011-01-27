@@ -168,11 +168,12 @@ class Extract(AbstractExtractBase):
     regex = compile(r'kpoint_(\d+)/')
     paths = [ path for path in iglob(join(self.directory, 'kpoint_*/'))\
               if isdir(path) and regex.search(path) != None ]
+    paths = sorted(paths, key=lambda x: int(regex.search(x).group(1)))
     vffout = self.Extract(self.directory, comm=self.comm)._vffout
     OUTCAR = self.Extract().OUTCAR
 
     result = []
-    for path in sorted(paths, key=lambda x: int(regex.search(x).group(1))):
+    for path in paths:
       filenames = [basename(u) for u in iglob(join(path, '*')) if not isdir(u)]
       if OUTCAR not in filenames: continue
 
@@ -192,8 +193,10 @@ class Extract(AbstractExtractBase):
   @property 
   def success(self):
     """ True if jobs are successfull. """
-    if len(self._cached_jobs) == 0: self.__cache_jobs__()
-    if len(self._cached_jobs) == 0: return False
+    try: 
+      if len(self._cached_jobs) == 0: self.__cache_jobs__()
+      if len(self._cached_jobs) == 0: return False
+    except: return False
     return all(job.success for job in self)
 
   @property
@@ -254,10 +257,9 @@ class Extract(AbstractExtractBase):
 
   @property
   @make_cached
-  def escan(self):
+  def functional(self):
     """ Returns functional used for calculation. """
     return EscanExtract(self.directory, comm=self.comm).functional
-  functional = escan
 
   @property
   def vbm(self): 

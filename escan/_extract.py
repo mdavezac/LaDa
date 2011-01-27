@@ -172,7 +172,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
   @property
   def _double_trouble(self):
     """ Returns true, if non-spin polarized or Kammer calculations. """
-    from numpy import all, abs
+    from numpy.linalg import norm
     from . import soH
     seul = self.solo()
     if seul.functional.nbstates  ==   1: return False

@@ -30,7 +30,7 @@ def compute_projections(extract, filename, alpha = 1e0, **kwargs):
     for atom in extract.structure.atoms:
       if atom.type != key: continue
       pos = atom.pos * extract.structure.scale 
-      proj += gaussian_projector(extract.rvectors, pos * angstrom, cell * angstrom, sigma )
+      proj += gaussian_projector(extract.rvectors, cell * angstrom, pos * angstrom, sigma )
     result[key] = [(w.eigenvalue, w.expectation_value(proj)) for w in extract.rwfns]
   
   n = norm(array(result.values()))

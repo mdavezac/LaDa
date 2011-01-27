@@ -33,12 +33,13 @@ class Minimizer(object):
   @property 
   def strategy(self):
     """ Strategy of MINUIT2 optimizers. """
-    return self._type
+    return self._strategy
   @strategy.setter
   def strategy(self, value):
     assert value.lower() in ["fast", "slow", "slowest"], \
-           RuntimeError("strategy must be own of \"fast\", \"slow\", \"slowest\".")
-    self._type = value.lower()
+           RuntimeError("strategy must be one of \"fast\", "
+                        "\"slow\", \"slowest\" (vs {0}).".format(value))
+    self._strategy = value.lower()
 
   @property
   def _minimizer(self):
