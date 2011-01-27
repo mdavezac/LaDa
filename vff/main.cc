@@ -16,14 +16,13 @@
 #include <opt/bpo_macros.h>
 #include <opt/tuple_io.h>
 
+# include <vff/with_minimizer.h>
 #ifdef _LAYERED
-# include <vff/va.h>
 # include <vff/layered.h>
   typedef LaDa::Vff::VABase<LaDa::Vff::Layered> t_Vff;
 # define __PROGNAME__ "Valence Force Field Functional for Epitaxial Zinc-Blende Structures"
 #else
 # include <vff/functional.h>
-# include <vff/va.h>
   typedef LaDa::Vff::VABase<LaDa::Vff::Functional> t_Vff;
 # define __PROGNAME__ "Valence Force Field Functional for Zinc-Blende Structures"
 #endif

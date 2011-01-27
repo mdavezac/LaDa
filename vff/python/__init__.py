@@ -189,7 +189,7 @@ class Extract(AbstractExtractBase):
     except RuntimeError: pass
     self.lattice.set_as_crystal_lattice()
 
-    functional = self.vff._create_functional(structure, self.comm)
+    functional = self.vff._create_functional()
     functional.print_escan_input(expanduser(filepath), structure)
 
     if old_lattice != None: old_lattice.set_as_crystal_lattice()
@@ -518,30 +518,27 @@ class Vff(object):
     return extract
 
 
-  def _create_functional(self, structure, comm):
+  def _create_functional(self):
     """ Creates the vff functional using cpp extension. """
     from tempfile import NamedTemporaryFile
     from os import remove
     from _vff import Vff, LayeredVff
+    from sys import exit
 
-    is_mpi  = False if comm == None else comm.size > 1
-    is_root = comm.rank == 0 if is_mpi else True
-
-    # Creates temporary input file and creates functional
-    functional, name = None, None
-    if is_root:
-      with NamedTemporaryFile(dir=self.workdir, delete=False) as file: 
-        file.write(self._create_input(structure))
-        name = file.name
-    if is_mpi:
-      from boost.mpi import broadcast
-      name = broadcast(comm, name, 0)
-
-    
-    if is_mpi: comm.barrier() # required before reading file (?).
-    functional = LayeredVff(name, comm) if hasattr(self.direction, "__len__") else Vff(name, comm)
-    if is_mpi: comm.barrier() # required before removing file.
-    if is_root: remove(file.name)
+    if hasattr(self.direction, "__len__"):
+      functional = Layered()
+      functional.direction = self.direction
+    else: functional = Vff()
+    # minimizer variants are somewhat difficult to expose...
+    self.minimizer._copy_to_cpp(functional._minimizer)
+    # ... done jumping through hoops.
+    for name, params in self.bonds.items():
+      bond = functional._get_bond(name.split('-'))
+      bond.length = params[0]
+      bond.length, bond.alphas[:] = params[0], params[1:]
+    for name, params in self.angles.items():
+      angle = functional._get_angle(name.split('-'))
+      angle.gamma, angle.sigma, angle.betas[:] = params[0], params[1], params[2:]
 
     return functional
      
@@ -549,6 +546,7 @@ class Vff(object):
     """ Performs actual calculation. """
     from copy import deepcopy
     from _vff import Vff, LayeredVff
+    from .. import lada_with_mpi
     from ..opt import redirect_all
 
     # Saves global lattice if set.
@@ -565,15 +563,21 @@ class Vff(object):
     cout, cerr = self._cout(comm), self._cerr(comm)
     with open(cerr, "w") as file: pass # file has not yet been opened
     with redirect_all(output=cout, error=cerr, append="True") as oestream:
-      functional = self._create_functional(structure, comm)
-      # now performs call
-      result, stress = functional(structure, doinit=True, relax=self.relax)
+      functional = self._create_functional()
+    # now performs call
+    functional.init(structure, dotree=True)
+    functional.check_input()
+    
+    with redirect_all(output=cout, error=cerr, append="True") as oestream:
+      result, stress = functional(comm, relax=self.relax) if lada_with_mpi\
+                       else functional(relax=self.relax)
     
     # unsets lattice.
     if old_lattice != None: old_lattice.set_as_crystal_lattice()
     if self.direction != None and not hasattr(self.direction, "__len__"):
       structure.freeze = oldfreeze
     return result, stress
+<<<<<<< HEAD
 
   def _create_input(self, structure):
     """ Creates a temporary file with input to vff. """
@@ -609,3 +613,5 @@ class Vff(object):
                   % tuple(p) 
     result += "</Functional>\n</Job>"
     return result
+=======
+>>>>>>> codaset/next/ternary_vff

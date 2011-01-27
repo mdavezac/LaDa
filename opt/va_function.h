@@ -30,17 +30,15 @@ namespace LaDa
          typedef std::vector< t_Type >  t_Container;
 
        protected:
-         Crystal::Structure& structure;
+         Crystal::Structure* ptr_structure_;
          t_Container va_vars;
 
        public:
          //! Constructor and Initializer
-         VirtualAtom   ( Crystal::Structure &_str )
-                     : structure( _str )
-          { va_vars.reserve( _str.atoms.size() ); }
+         VirtualAtom () {} 
          //! Copy Constructor
          VirtualAtom   ( const VirtualAtom &_c )
-                     : structure( _c.structure ), va_vars( _c.va_vars ) {}
+                     : ptr_structure_( _c.ptr_structure_ ), va_vars( _c.va_vars ) {}
           
          // Simple constainer behaviors required by Minimizer::VA and
          // Minimizer::Beratan
@@ -72,9 +70,9 @@ namespace LaDa
     inline bool VirtualAtom :: init()
     {
       va_vars.clear();
-      va_vars.reserve( structure.atoms.size() );
-      t_Atoms :: const_iterator i_atom = structure.atoms.begin();
-      t_Atoms :: const_iterator i_atom_end = structure.atoms.end();
+      va_vars.reserve( ptr_structure_->atoms.size() );
+      t_Atoms :: const_iterator i_atom = ptr_structure_->atoms.begin();
+      t_Atoms :: const_iterator i_atom_end = ptr_structure_->atoms.end();
       for(; i_atom != i_atom_end; ++i_atom )
         if( not ( i_atom->freeze & t_Atom::FREEZE_T ) ) 
           va_vars.push_back( i_atom->type );
@@ -84,8 +82,8 @@ namespace LaDa
 
     inline void VirtualAtom :: unpack_variables()
     {
-      t_Atoms :: iterator i_atom = structure.atoms.begin();
-      t_Atoms :: iterator i_atom_end = structure.atoms.end();
+      t_Atoms :: iterator i_atom = ptr_structure_->atoms.begin();
+      t_Atoms :: iterator i_atom_end = ptr_structure_->atoms.end();
       t_Container :: const_iterator i_var = va_vars.begin();
       for(; i_atom != i_atom_end; ++i_atom )
       {

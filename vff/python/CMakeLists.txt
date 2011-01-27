@@ -1,6 +1,6 @@
 set(PYVFF_PY __init__.py)
-set(PYVFF_HEADERS vff.hpp)
-set(PYVFF_SOURCES python.cc  vff.cc)
+set(PYVFF_HEADERS vff.hpp data.hpp)
+set(PYVFF_SOURCES python.cc  vff.cc data.cc)
 
 include_directories(${PYTHON_INCLUDE_DIRS})
 python_add_module (pyvff ${PYVFF_HEADERS} ${PYVFF_SOURCES})

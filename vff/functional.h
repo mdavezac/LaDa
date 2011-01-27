@@ -23,10 +23,10 @@ namespace LaDa
   //!   - Vff::AtomicFunctional computes the strain energy of one single atom, eg
   //!   all three body terms in which a particular atom takes part.
   //!   .
-  namespace Vff
+  namespace vff
   {
     //! Vff functional called using a string of numbers rather than a complete structure.
-    class Functional : protected Vff
+    class Functional : public Vff
     {
       public:
         //! Type of the return.
@@ -38,9 +38,12 @@ namespace LaDa
 
         
       public:
+        //! Constructor and Initializer
+        Functional() : fixed_index(-1,-1,-1)
+          { stress = math::rMatrix3d::Zero(); }
         //! \brief Constructor and Initializer
         //! \param _str structure for which to compute energy and stress
-        Functional   ( Crystal :: Structure &_str )
+        Functional   (Vff::t_Arg const &_str)
                    : Vff( _str ), structure0(_str), fixed_index(-1,-1,-1)
           { stress = math::rMatrix3d::Zero(); }
         //! \brief Copy Constructor
@@ -50,16 +53,21 @@ namespace LaDa
         //! \brief Destructor
         ~Functional() {}
 
-        //! \brief Loads input to functional from  xml 
-        //! \param _element should point to an xml node which is the functional data
-        //! or contains a node to the funtional data as a direct child
-        bool Load( const TiXmlElement &_element ) { return Vff::Load( _element ); } 
-
+#       ifdef LADA_MPI
+          //! Evaluates a functional after unpacking it.
+          t_Return operator()( const t_Arg& _arg, boost::mpi::communicator const &_comm)
+            { comm = _comm; return operator()(_arg); }
+  
+          //! Evaluates a gradient.
+          t_Return gradient( const t_Arg& _arg, t_GradientArg _grad,
+                             boost::mpi::communicator const &_comm)
+            { comm = _comm; return gradient(_arg, _grad); }
+#       endif
         //! Evaluates a functional after unpacking it.
-        t_Return operator()( const t_Arg& _arg ) const; 
+        t_Return operator()(const t_Arg& _arg) const; 
 
         //! Evaluates a gradient.
-        t_Return gradient( const t_Arg& _arg, t_GradientArg _grad ) const;
+        t_Return gradient(const t_Arg& _arg, t_GradientArg _grad) const;
 
         //! \brief initializes stuff before minimization
         //! \details Defines the packing and unpacking process, such that only unfrozen
@@ -70,30 +78,13 @@ namespace LaDa
         //! \sa Functional::stress
         const math::rMatrix3d& get_stress() const { return stress; }
 
-        //! Sets the bond parameters.
-        template< class T_TUPLE >
-          void set_bond( const std::string &_type, const T_TUPLE& _tuple )
-            { Vff::set_bond( _type, _tuple ); }
-        //! Returns bond parameters, first the length, then the alphas.
-        boost::tuples::tuple< const types::t_real&, const types::t_real&,
-                              const types::t_real&, const types::t_real&, 
-                              const types::t_real&, const types::t_real& >
-          get_bond( const std::string &_type ) const
-            { return Vff::get_bond( _type ); }
-        //! Sets the angle parameters.
-        template< class T_TUPLE >
-          void set_angle( const std::string &_type, const T_TUPLE& _tuple )
-            { Vff::set_angle( _type, _tuple); }
-        //! Returns angle parameters, first the length, then sigma, then the betas.
-        boost::tuples::tuple< const types::t_real&, const types::t_real&, 
-                              const types::t_real&, const types::t_real&,
-                              const types::t_real&, const types::t_real&,
-                              const types::t_real& >
-          get_angle( const std::string &_type ) const
-            { return Vff::get_angle( _type ); }
-
         //! Copies parameters from argument.
-        void copy_parameters(Functional const &_f) { Vff::copy_parameters(_f); }
+        void copy_parameters(Functional const &_f)
+        {
+          bond_cutoff = _f.bond_cutoff;
+          bonds_params = _f.bonds_params;
+          angles_params = _f.angles_params;
+        }
 
       protected:
         //! \brief unpacks variables from minimizer
@@ -114,11 +105,10 @@ namespace LaDa
         //! \details Functional knows about Functional::Structure, whereas
         //! minizers now about function::Base, this function does the interface
         //! between the two
-        void pack_gradients( const math::rMatrix3d& _stress,
-                             t_GradientArg _grad) const;
+        void pack_gradients(const math::rMatrix3d& _stress, t_GradientArg _grad) const;
       
         //! original structure,  needed for gradients
-        Crystal :: Structure structure0;
+        Vff::t_Arg structure0;
         //! stores stress in Functional::structure after computation
         mutable math::rMatrix3d stress;
         //! Index of the first atoms with fixed x, y, z;

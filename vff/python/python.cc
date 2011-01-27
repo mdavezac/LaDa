@@ -7,6 +7,7 @@
 #include <boost/python/borrowed.hpp>
 
 #include "vff.hpp"
+#include "data.hpp"
 
 BOOST_PYTHON_MODULE(_vff)
 {
@@ -21,4 +22,5 @@ BOOST_PYTHON_MODULE(_vff)
 
   LaDa::python::expose_vff();
   LaDa::python::expose_layeredvff();
+  LaDa::python::expose_data();
 }

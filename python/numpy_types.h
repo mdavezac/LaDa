@@ -1,6 +1,8 @@
 #ifndef LADA_NUMPY_TYPES
 #define LADA_NUMPY_TYPES
 
+#include <iostream>
+
 #include <boost/mpl/int.hpp>
 #include <boost/python/object.hpp>
 #include <boost/python/handle.hpp>
@@ -8,6 +10,7 @@
 #include <numpy/ndarrayobject.h>
 #include <numpy/arrayobject.h>
 #include <numpy/npy_common.h>
+
 
 namespace LaDa
 {
@@ -162,6 +165,21 @@ namespace LaDa
         };
         throw;
       }
+     
+      //! Returns python object from array.
+      template<class T>
+        boost::python::object array_from_ptr(T *_ptr, size_t n)
+        {
+          npy_intp dims[1] = {n};
+          PyObject *result = PyArray_SimpleNewFromData(1, dims, type<T>::value, _ptr);
+          if( result == NULL or PyErr_Occurred() != NULL ) 
+          {
+            if(PyErr_Occurred() == NULL) PyErr_SetString(PyExc_RuntimeError, "Could not create numpy array");
+            boost::python::throw_error_already_set();
+            return boost::python::object();
+          }
+          return boost::python::object(boost::python::handle<>(result));
+        }
 
       inline boost::python::object _create_array( npy_intp ndims, npy_intp dims[],
                                                   int _type, bool is_fortran = false )

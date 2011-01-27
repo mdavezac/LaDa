@@ -8,7 +8,7 @@
 
 namespace LaDa
 { 
-  namespace Vff
+  namespace vff
   {
     //! Computes in-plane stress from stress matrix \a _stress and plane \a _dir.
     types::t_real inplane_stress( const math::rMatrix3d &_stress,
@@ -29,9 +29,9 @@ namespace LaDa
     class Layered : public Functional
     {
       //! The type of the atom  
-      typedef Crystal::Structure::t_Atom  t_Atom;
+      typedef Vff::t_Atom  t_Atom;
       //! The type of the atom container
-      typedef Crystal::Structure::t_Atoms t_Atoms;
+      typedef Vff::t_Atoms t_Atoms;
       typedef Functional t_Base; //!< Base Class
       public:
         //! Type of the return.
@@ -47,10 +47,6 @@ namespace LaDa
         typedef t_Base::t_Centers t_Centers;  
         //! Type of the atomic centers
         typedef t_Centers::value_type t_Center;  
-        //! Type of the container holding the atomic functionals
-        typedef t_Base::t_AtomicFunctionals t_AtomicFunctionals;  
-        //! Type of the atomic functionals
-        typedef t_AtomicFunctionals::value_type t_AtomicFunctional;  
 
       protected:
         //! Direction in which to allow lattice-cell relaxation
@@ -65,9 +61,12 @@ namespace LaDa
         bool is_fixed_by_input;
         
       public:
+        //! Constructor and Initializer
+        Layered() : t_Base(), direction(0,0,0), u(0,0,0),
+                    template_strain(), is_fixed_by_input(false) {}
         //! \brief Constructor and Initializer
         //! \param _str structure for which to compute energy and stress
-        Layered   ( Crystal :: Structure &_str )
+        Layered   (Vff::t_Arg const &_str )
                 : t_Base( _str ), direction(0,0,0), u(0,0,0),
                   template_strain(), is_fixed_by_input(false)
           { template_strain = math::rMatrix3d::Zero(); }
@@ -79,15 +78,25 @@ namespace LaDa
         //! \brief Destructor
         ~Layered() {}
 
+#       ifdef LADA_MPI
+          //! Evaluates a functional after unpacking it.
+          t_Return operator()( const t_Arg& _arg, boost::mpi::communicator const &_comm)
+            { comm = _comm; return operator()(_arg); }
+  
+          //! Evaluates a gradient.
+          t_Return gradient( const t_Arg& _arg, t_GradientArg _grad,
+                             boost::mpi::communicator const &_comm)
+            { comm = _comm; return gradient(_arg, _grad); }
+#       endif
         //! \brief unpacks function::Base::variables, then calls energy
         //! \details This function is redeclared, so that it correctly calls the
         //!          correct unpack_variables() member function from this class,
         //!          and not its base. The alternative is to make pack and unpack
         //!          virtual.
         //! \sa function::Base, function::Base::evaluate
-        t_Return operator()( const t_Arg& _arg ) const; 
+        t_Return operator()(const t_Arg& _arg) const;
         //! Evaluates a gradient.
-        void gradient( const t_Arg& _arg, t_GradientArg _grad ) const;
+        t_Return gradient(const t_Arg& _arg, t_GradientArg _grad) const;
 
         //! \brief initializes stuff before minimization
         //! \details Defines the packing and unpacking process, such that only unfrozen
@@ -95,8 +104,6 @@ namespace LaDa
         //! \sa function::Base, Minimizer::Base
         bool init( t_Arg& _arg );
 
-        //! Prints functional to \a stream.
-        void print_out( std::ostream &stream ) const;
         //! Sets epitaxial direction.
         void set_direction( const math::rVector3d& _direction)
         {
@@ -108,7 +115,11 @@ namespace LaDa
         math::rVector3d const& get_direction() const { return direction; }
 
         //! Copies parameters from argument.
-        void copy_parameters(Layered const &_f) { Vff::copy_parameters(_f); direction = _f.direction; }
+        void copy_parameters(Layered const &_f)
+        { 
+          Functional::copy_parameters(_f);
+          direction = _f.direction;
+        }
         
       protected:
         //! \brief packs variables from minimizer
@@ -123,7 +134,7 @@ namespace LaDa
         //! \details Functional knows about Functional::Structure, whereas
         //! minizers now about function::Base, this function does the interface
         //! between the two
-        void pack_gradients(const math::rMatrix3d& _stress, t_GradientArg _grad) const;
+        void pack_gradients( const math::rMatrix3d& _stress, t_GradientArg _grad) const;
 
 
         //! Initializes Layered::u and Layered::template_strain
