@@ -288,3 +288,8 @@ class Extract(AbstractExtractBase):
     nbe = nb_valence_states(self.structure)
     cbm = min(gamma.eigenvalues[nbe], gamma.eigenvalues[nbe+1])
     return cbm - lumo
+
+  @property 
+  def vffrun(self):
+    if len(self._cached_jobs) == 0: self.__cache_jobs__()
+    return self._cached_jobs[0].vffrun

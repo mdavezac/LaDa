@@ -172,7 +172,7 @@ def _reduced_grids_factory(name, base):
       """ Returns list of inequivalent vectors with multiplicity. """
       from numpy import dot
       from numpy.linalg import inv, norm
-      from ..crystal import Lattice, to_cell, to_voronoi
+      from ..crystal import Lattice, to_origin, to_voronoi
       recip = Lattice()
       recip.cell = inv(output.cell.T)
       recip.add_site = (0,0,0), '0'
@@ -186,10 +186,10 @@ def _reduced_grids_factory(name, base):
       for mult, kpoint in base._mnk(self, input, output): 
         found = False
         if relax: kpoint = dot(deformation, kpoint)
-        kpoint = to_voronoi(kpoint, inv(recip.cell))
+        kpoint = to_origin(kpoint, recip.cell)
         for i, (count, vec) in enumerate(seen):
           for op in recip.space_group:
-            u = to_cell(vec-op(kpoint), recip.cell)
+            u = to_voronoi(op(kpoint), recip.cell, vec)
             if all(abs(u) < self.tolerance):
               found = True
               seen[i][0] += mult
@@ -206,7 +206,7 @@ def _reduced_grids_factory(name, base):
       """ Yields index of unreduced kpoint in array of reduced kpoints. """
       from numpy import dot
       from numpy.linalg import inv, norm
-      from ..crystal import Lattice, to_cell, to_voronoi
+      from ..crystal import Lattice, to_origin, to_voronoi
       recip = Lattice()
       recip.cell = inv(output.cell.T)
       recip.add_site = (0,0,0), '0'
@@ -219,10 +219,10 @@ def _reduced_grids_factory(name, base):
       for mult, kpoint_orig in base._mnk(self, input, output): 
         found = False
         kpoint = dot(deformation, kpoint_orig) if relax else kpoint
-        kpoint = to_voronoi(kpoint, recip.cell)
+        kpoint = to_origin(kpoint, recip.cell)
         for i, (count, vec) in enumerate(seen):
           for op in recip.space_group:
-            u = to_cell(vec-op(kpoint), recip.cell)
+            u = to_voronoi(op(kpoint), recip.cell, vec)
             if all(abs(u) < self.tolerance):
               found = True
               seen[i][0] += mult

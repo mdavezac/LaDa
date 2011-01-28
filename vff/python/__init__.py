@@ -114,6 +114,7 @@ class Extract(AbstractExtractBase):
   @broadcast_result(attr=True, which=0)
   def stress(self):
     """ Greps stress from self.L{OUTCAR}. """
+    from numpy import array
     result = []
     with self.__outcar__() as file:
       # find start of calculations.

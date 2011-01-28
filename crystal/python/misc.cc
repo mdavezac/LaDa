@@ -101,6 +101,25 @@ namespace LaDa
       void operator++() { PyArray_ITER_NEXT(iterator.ptr()); }
     }; 
 
+    struct ToOrigin : public ToCell
+    {
+      ToOrigin   (math::rMatrix3d const &_cell, math::rVector3d const &_center)
+               : ToCell(_cell, _center) {}
+      void operator()(math::rVector3d const &_orig) const
+      {
+        math::rVector3d const fractional(invcell * (_orig-center));
+        math::rVector3d const centered_frac(
+            fractional[0] - std::floor(fractional[0] + 0.5),
+            fractional[1] - std::floor(fractional[1] + 0.5),
+            fractional[2] - std::floor(fractional[2] + 0.5) );
+        math::rVector3d const vec(cell * centered_frac);
+        char const * const ptr_out = (char const * const)(PyArray_ITER_DATA(iterator.ptr()));
+        *(types::t_real*)(ptr_out)           = vec[0];
+        *(types::t_real*)(ptr_out + stride)  = vec[1];
+        *(types::t_real*)(ptr_out + stride2) = vec[2];
+      }
+    }; 
+
     struct ToVoronoi : public ToCell
     {
       ToVoronoi   (math::rMatrix3d const &_cell, math::rVector3d const &_center)
@@ -204,13 +223,20 @@ namespace LaDa
       bp::def( "to_cell", &with_op2<ToCell, math::rMatrix3d, math::rVector3d>,
                (bp::arg("positions"), bp::arg("cell"), bp::arg("center") = math::rVector3d(0,0,0) ),
                "Centers the positions in the unit cell with origin center.");
+      bp::def( "to_origin", &with_op2<ToOrigin, math::rMatrix3d, math::rVector3d>,
+               (bp::arg("positions"), bp::arg("cell"), bp::arg("center") = math::rVector3d(0,0,0) ),
+               "Centers positions around the center in fractional coordinates.\n\n"
+               "This type of centering may yield points outside the Voronoi cell of center."\
+               "Use `to_voronoi` if you want the point in the Voronoi "
+               "(a.k.a. Wigner-Seitz a.k.a. Brillouin) cell." );
       bp::def( "to_voronoi", &with_op2<ToVoronoi, math::rMatrix3d, math::rVector3d>,
                (bp::arg("positions"), bp::arg("cell"), bp::arg("center") = math::rVector3d(0,0,0) ),
                "Centers the positions into the voronoi "\
                "cell of center, as defined by cell. " );
       bp::def( "_gaussian_projector_impl",
                &with_op3<GaussianProj, math::rMatrix3d, math::rVector3d, types::t_real>,
-               (bp::arg("positions"), bp::arg("cell"), bp::arg("center") = math::rVector3d(0,0,0), bp::arg("alpha") = 1e0),
+               ( bp::arg("positions"), bp::arg("cell"), 
+                 bp::arg("center") = math::rVector3d(0,0,0), bp::arg("alpha") = 1e0 ),
                "Computes gaussian projector around given center in unit cell.");
     }
 
