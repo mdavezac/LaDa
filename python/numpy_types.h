@@ -108,6 +108,13 @@ namespace LaDa
           //! Original type.
           typedef npy_bool np_type;
         };
+#     else
+        //! numpy identifier for bool.
+        template<> struct type<bool> : public boost::mpl::int_<NPY_BOOL> 
+        {
+          //! Original type.
+          typedef npy_bool np_type;
+        };
 #     endif 
       
       //! Returns true if object is float.

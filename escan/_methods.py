@@ -61,5 +61,62 @@ def LDOS(extract, positions):
 
   return ldoses(extract.eigenvalues, rspace)
 
+def majority_representation(extractor, multicell): 
+  """ Majority Represention for all unmapped kpoint.
+  
+      :Parameters: 
+        extractor : `KExtractor`
+          Result of a `KEscan` calculation. The ``kpoints`` attribute from
+          ``extractor.functional`` should be a class of *reduced* kpoints, such
+          as `ReducedKGrid`, `ReducedKDensity`, or `ReducedBPoints`.
+        multicell : numpy 3x3
+          A matrix (M) linking the unit-cell (U) to the super cell (S), ``S = U
+          * M``.  From this, the unit-cell is determined, whatever deformation
+          may have happened, as engendered by VFF.
+       
+       :return: An  list of lists of 2-tuples. The first dimension corresponds to unreduced kpoints.
+         The 2-tuples consiste  of the eigenvalue for that kpoint and band, and
+         of its majority representation. The inner list duplicate entries with
+         respect to eigenvalues. It is meant to be used with matplotlib's
+         hexbin.
+  """
+  from numpy import dot, pi, array
+  from numpy.linalg import inv
+  from quantities import angstrom
+  from ..crystal import is_on_lattice
+
+  assert extractor.success,\
+         ValueError("extractor is not the return of a *successfull* KEscan calculation.")
+  assert len(extractor) > 0, ValueError("extractor does not contain escan runs.")
+  Gs = extractor[0].gvectors        # reciprocal vectors of supercell.  
+  istr = extractor.input_structure
+  ostr = extractor.structure
+  unitcell = dot(ostr.cell, inv(multicell)) * ostr.scale * angstrom
+  unitkcell = (inv(unitcell.T) * 2e0 * pi / angstrom).rescale(Gs.units)
+  
+  # use the functional's kpoint object so we have access to all its goodies.
+  kpoints = extractor.functional.kpoints
+
+  # list of results.
+  results = []
+
+  unreduced = array([k[1] for k in kpoints.unreduced(istr, ostr)])
+  mapping = [i for i in kpoints.mapping(istr, ostr)]
+  reduced = array([k[1] for k in kpoints(istr, ostr)])
+  reduced = reduced[mapping]
+  for K, k0, i in zip(reduced, unreduced, mapping):
+    # links reduced to unreduced: folding vector.
+    Gfold = K - k0
+    # mapping for reciprocal vector of supercell which are reciprocal vectors
+    # of unitcell *with* folding.
+    onlatop = is_on_lattice(Gs, unitkcell, Gfold)
+    # actual calculation for that kpoint.
+    extract = extractor[i]
+    # loop over bands and sum 
+    results.append([(gwfn.eigenvalue, gwfn.expectation_value(onlatop)) for gwfn in extract.gwfns])
+
+  return result
+      
+
 
   

@@ -5,6 +5,7 @@ __all__ = [ 'FreezeAtom', 'which_site', 'Sites', 'SymmetryOperator', 'Lattice', 
             'smith_normal_transform', 'get_space_group_symmetries', 'Neighbors', 'Neighbor', \
             'read_pifile_structure', 'LayerDepth', 'to_fractional', 'linear_smith_index', \
             'nb_valence_states', 'to_voronoi', 'gaussian_projector', 'to_cell', 'to_origin', \
+            'is_on_lattice', \
             # Below, only true python stuff
             'deform_kpoints', 'specie_list', 'read_poscar', 'write_poscar',\
             'write_oldvff', 'read_oldvff', 'structure_to_lattice', 'fill_structure', \
@@ -16,7 +17,7 @@ from _crystal import FreezeAtom, which_site, Site, SymmetryOperator, Lattice, to
                      smith_indices, kAtoms, Atom, kAtom, fold_vector, Structure, FreezeCell,\
                      smith_normal_transform,  get_space_group_symmetries, Neighbors, Neighbor, \
                      read_pifile_structure, LayerDepth, to_fractional, linear_smith_index,\
-                     nb_valence_states, to_voronoi, to_cell, to_origin,\
+                     nb_valence_states, to_voronoi, to_cell, to_origin, is_on_lattice, \
                      rStructure, rAtom, Sites, Atoms, kAtoms, StringVector # this line not in __all__
 
 from lada.opt.decorators import add_setter

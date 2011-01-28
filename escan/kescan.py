@@ -42,7 +42,7 @@ class KEscan(Escan):
       from ..jobs import JobDict, Bleeder
 
       kpoints = kwargs.pop('kpoints', self.kpoints)
-      do_relax_kpoint = not getattr(kpoints, 'do_relax_kpoint', not self.do_relax_kpoint)
+      do_relax_kpoint = not getattr(kpoints, 'relax', not self.do_relax_kpoint)
       do_relax_kpoint = kwargs.pop('do_relax_kpoint', do_relax_kpoint)
       is_mpi = False if comm == None else comm.size > 1
       is_root = True if not is_mpi else comm.rank == 0
@@ -58,7 +58,8 @@ class KEscan(Escan):
       kpoints = self._interpret_kpoints(kpoints, vffrun)
       # checks for 
       if len(kpoints) == 1:
-        return self(structure, outdir, comm, _in_call=True, kpoint=kpoints[0], **kwargs)
+        return self(structure, outdir, comm, _in_call=True, kpoint=kpoints[0], 
+                    do_relax_kpoint = do_relax_kpoint, **kwargs)
 
       jobdict = JobDict()
       for i, kpoint in enumerate(kpoints):
@@ -139,6 +140,19 @@ class KEscan(Escan):
     if not hasattr(self.kpoints, '__call__'): return Escan.__repr__(self)
     return 'from {0.kpoints.__class__.__module__} import {0.kpoints.__class__.__name__}\n'\
            .format(self) + Escan.__repr__(self)
+
+  @property
+  def do_relax_kpoint(self):
+    """ Whether to deform kpoints from original to relaxed geometry.
+    
+        Default is True. Relaxed cell is taken from `_POSCAR`
+        Coding: Also sets attribute in kpoints. 
+    """
+    return self.__dict__["do_relax_kpoints"]
+  @do_relax_kpoint.setter
+  def do_relax_kpoint(self, value): 
+    self.__dict__["do_relax_kpoints"] = value
+    self.kpoints.relax = value
 
 class Extract(AbstractExtractBase):
   """ Extraction class for KEscan. """

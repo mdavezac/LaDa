@@ -12,6 +12,7 @@
 #include <python/numpy_types.h>
 
 #include "../structure.h"
+#include "../lattice.h"
 #include "misc.hpp"
 
 
@@ -74,20 +75,12 @@ namespace LaDa
              : center(_center), cell(_cell) { invcell = cell.inverse(); }
       void operator()(math::rVector3d const &_orig) const
       {
-        math::rVector3d const fractional(invcell * (_orig-center));
-        math::rVector3d const centered(
-            fractional[0] - std::floor(fractional[0] + 0.5),
-            fractional[1] - std::floor(fractional[1] + 0.5),
-            fractional[2] - std::floor(fractional[2] + 0.5) );
-        math::rVector3d const O1( 
-            centered[0] > 0e0 ? centered[0] + 1e0: centered[0], 
-            centered[1] > 0e0 ? centered[1] + 1e0: centered[1], 
-            centered[2] > 0e0 ? centered[2] + 1e0: centered[2] );
-        math::rVector3d vec(cell * O1);
+        math::rVector3d const vec( Crystal::into_cell(_orig-center, cell, invcell) );
         char const * const ptr_out = (char const * const)(PyArray_ITER_DATA(iterator.ptr()));
-        *(types::t_real*)(ptr_out)           = vec[0];
-        *(types::t_real*)(ptr_out + stride)  = vec[1];
-        *(types::t_real*)(ptr_out + stride2) = vec[2];
+        typedef mn::type<types::t_real>::np_type t_type;
+        *(t_type*)(ptr_out)           = static_cast<t_type>(vec[0]);
+        *(t_type*)(ptr_out + stride)  = static_cast<t_type>(vec[1]);
+        *(t_type*)(ptr_out + stride2) = static_cast<t_type>(vec[2]);
       }
       void init(bp::object _array)
       {
@@ -107,16 +100,12 @@ namespace LaDa
                : ToCell(_cell, _center) {}
       void operator()(math::rVector3d const &_orig) const
       {
-        math::rVector3d const fractional(invcell * (_orig-center));
-        math::rVector3d const centered_frac(
-            fractional[0] - std::floor(fractional[0] + 0.5),
-            fractional[1] - std::floor(fractional[1] + 0.5),
-            fractional[2] - std::floor(fractional[2] + 0.5) );
-        math::rVector3d const vec(cell * centered_frac);
+        math::rVector3d const vec( Crystal::zero_centered(_orig-center, cell, invcell) );
         char const * const ptr_out = (char const * const)(PyArray_ITER_DATA(iterator.ptr()));
-        *(types::t_real*)(ptr_out)           = vec[0];
-        *(types::t_real*)(ptr_out + stride)  = vec[1];
-        *(types::t_real*)(ptr_out + stride2) = vec[2];
+        typedef mn::type<types::t_real>::np_type t_type;
+        *(t_type*)(ptr_out)           = static_cast<t_type>(vec[0]);
+        *(t_type*)(ptr_out + stride)  = static_cast<t_type>(vec[1]);
+        *(t_type*)(ptr_out + stride2) = static_cast<t_type>(vec[2]);
       }
     }; 
 
@@ -126,40 +115,23 @@ namespace LaDa
                 : ToCell(_cell, _center) {}
       void operator()(math::rVector3d const &_orig) const
       {
-        math::rVector3d const fractional(invcell * (_orig-center));
-        math::rVector3d const centered_frac(
-            fractional[0] - std::floor(fractional[0] + 0.5),
-            fractional[1] - std::floor(fractional[1] + 0.5),
-            fractional[2] - std::floor(fractional[2] + 0.5) );
-        math::rVector3d const cart(cell * centered_frac);
-        math::rVector3d mini = cart;
-        types::t_real dist = cart.squaredNorm();
-        for(int i(-0); i < 2; ++i)
-          for(int j(-0); j < 2; ++j)
-            for(int k(-0); k < 2; ++k)
-            {
-              math::rVector3d const nvec(cart + cell * math::rVector3d(i, j, k));
-              types::t_real const nnorm = nvec.squaredNorm();
-              if( dist > nnorm ) 
-              {
-                dist = nnorm;
-                mini = nvec;
-              }
-            }
+        math::rVector3d const mini( Crystal::into_voronoi(_orig-center, cell, invcell) );
         char const * const ptr_out = (char const * const)(PyArray_ITER_DATA(iterator.ptr()));
-        *(types::t_real*)(ptr_out)           = mini[0];
-        *(types::t_real*)(ptr_out + stride)  = mini[1];
-        *(types::t_real*)(ptr_out + stride2) = mini[2];
+        typedef mn::type<types::t_real>::np_type t_type;
+        *(t_type*)(ptr_out)           = static_cast<t_type>(mini[0]);
+        *(t_type*)(ptr_out + stride)  = static_cast<t_type>(mini[1]);
+        *(t_type*)(ptr_out + stride2) = static_cast<t_type>(mini[2]);
       }
     }; 
 
-    struct GaussianProj : public ToVoronoi
+    //! Creates gaussian projector in r-space.
+    struct GaussianProj : public ToCell
     {
       types::t_real sigma;
       GaussianProj  ( math::rMatrix3d const &_cell,
                       math::rVector3d const &_center, 
                       types::t_real _sigma )
-                   : ToVoronoi(_cell, _center), sigma(_sigma) {}
+                   : ToCell(_cell, _center), sigma(_sigma) {}
       void init(bp::object _array)
       {
         PyArrayObject const * const ptr_array = mn::get_pyarray_pointer(_array);
@@ -180,27 +152,46 @@ namespace LaDa
       }
       void operator()(math::rVector3d const &_orig) const
       {
-        math::rVector3d const fractional(invcell * (_orig-center));
-        math::rVector3d const centered_frac(
-            fractional[0] - std::floor(fractional[0] + 0.5),
-            fractional[1] - std::floor(fractional[1] + 0.5),
-            fractional[2] - std::floor(fractional[2] + 0.5) );
-        math::rVector3d const cart(cell * centered_frac);
-        math::rVector3d mini = cart;
-        types::t_real dist = cart.squaredNorm();
-        for(int i(-0); i < 2; ++i)
-          for(int j(-0); j < 2; ++j)
-            for(int k(-0); k < 2; ++k)
-            {
-              math::rVector3d const nvec(cart + cell * math::rVector3d(i, j, k));
-              types::t_real const nnorm = nvec.squaredNorm();
-              if( dist > nnorm ) 
-              {
-                dist = nnorm;
-                mini = nvec;
-              }
-            }
-        *(types::t_real * const)(PyArray_ITER_DATA(iterator.ptr())) = std::exp(sigma * dist);
+        math::rVector3d const mini( Crystal::into_voronoi(_orig-center, cell, invcell) );
+        types::t_real const dist = mini.squaredNorm();
+        typedef mn::type<types::t_real>::np_type t_type;
+        *(t_type*)(PyArray_ITER_DATA(iterator.ptr())) = static_cast<t_type>(std::exp(sigma * dist));
+      }
+    };
+
+
+    //! Returns boolean arrays indicating points on lattice.
+    struct IsOnLattice : public ToCell
+    {
+      types::t_real tolerance;
+      IsOnLattice  ( math::rMatrix3d const &_cell,
+                     math::rVector3d const &_center, 
+                     types::t_real _tolerance )
+                  : ToCell(_cell, _center), tolerance(_tolerance) {}
+      void init(bp::object _array)
+      {
+        PyArrayObject const * const ptr_array = mn::get_pyarray_pointer(_array);
+        npy_intp nd = ptr_array->nd - 1;
+        std::vector<npy_intp> dims(nd);
+        for(size_t i(0); i < nd; ++i) dims[i] = ptr_array->dimensions[i];
+        bool const isf( PyArray_ISFORTRAN(ptr_array->ob_type));
+        PyObject *ptr_result = PyArray_ZEROS(nd, &(dims[0]), mn::type<bool>::value, isf);
+        if( ptr_result == NULL or PyErr_Occurred() != NULL ) 
+        {
+          if(PyErr_Occurred() == NULL)
+            PyErr_SetString(PyExc_RuntimeError, "Could not create numpy array");
+          boost::python::throw_error_already_set();
+          return;
+        }
+        result = bp::object(bp::handle<>(ptr_result));
+        iterator = bp::object(bp::handle<>(PyArray_IterNew(result.ptr())));
+      }
+      void operator()(math::rVector3d const &_orig) const
+      {
+        math::rVector3d const vec(Crystal::into_cell(_orig-center, cell, invcell));
+        typedef mn::type<bool>::np_type t_type;
+        *(t_type*)(PyArray_ITER_DATA(iterator.ptr()))
+            = static_cast<t_type>(vec.squaredNorm() < tolerance);
       }
     };
 
@@ -238,6 +229,12 @@ namespace LaDa
                ( bp::arg("positions"), bp::arg("cell"), 
                  bp::arg("center") = math::rVector3d(0,0,0), bp::arg("alpha") = 1e0 ),
                "Computes gaussian projector around given center in unit cell.");
+      bp::def( "is_on_lattice",
+               &with_op3<IsOnLattice, math::rMatrix3d, math::rVector3d, types::t_real>,
+               ( bp::arg("positions"), bp::arg("cell"), 
+                 bp::arg("origin") = math::rVector3d(0,0,0),
+                 bp::arg("tolerance") = types::tolerance ),
+               "Computes whether a set of points is on a lattice defined by origin and cell." );
     }
 
   }

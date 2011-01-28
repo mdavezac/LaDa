@@ -37,6 +37,7 @@ class KPoints(object):
   @abstractmethod
   def __repr__(self):
     """ This object must be representable. """
+    pass
   
   def multiplicity(self, input, output):
     """ Generator yielding multiplicity. """
@@ -49,9 +50,9 @@ class KPoints(object):
     for r in self._mnk(input, output): yield r
     
 
-class KContainer():
+class KContainer(object):
   """ Simple KPoints class which acts as a container. """
-  def __init__(self, kpoints, multiplicity):
+  def __init__(self, kpoints, multiplicity, relax=True):
     """ Initializes the kpoint container. """
     self.kpoints = [k for k in kpoints]
     """ Sequence of kpoints. """
@@ -60,11 +61,30 @@ class KContainer():
     if self.multiplicity == None:
       self.multiplicity = [1e0 / len(self.kpoints) for k in self.kpoints]
     else: self.multiplicity = [m for m in self.multiplicity]
+    self.relax = relax
+    """ Whether to deform kpoints to the relaxed structure. """
 
-  def _mnk(self, *args):
-    for count, k in zip(self.kpoints, self.multiplicity): yield count, k
-  def __call__(self, *args):
-    for count, k in zip(self.kpoints, self.multiplicity): yield count, k
+  def _mnk(self, input, output):
+    """ Loop over array of kpoints. 
+    
+        If ``self.relax`` is True, then kpoints are relaxed from the input cell
+        to the relaxed output cell.
+    """
+    from numpy import dot, abs
+    from numpy.linalg import inv
+
+    if self.relax: deformation = dot(inv(output.cell.T), input.cell.T)
+    for count, k in zip(self.kpoints, self.multiplicity):
+      if self.relax: k = dot(deformation, k)
+      yield count, k
+    
+  def kpoint(self, input, output):
+    """ Generator yielding kpoints. """
+    for count, k in self._mnk(input, output): yield k
+  def __call__(self, input, output): 
+    """ Iterator over (multiplicity, kpoint) tuples. """
+    for r in self._mnk(input, output): yield r
+
   def __repr__(self, *args):
     return '{0.__class__.__name__}({1},{2})'\
            .format(self, repr(self.kpoints), repr(self.multiplicity))
@@ -72,7 +92,7 @@ class KContainer():
 class KGrid(KPoints):
   """ Unreduces kpoint grid with offsets. """
 
-  def __init__(self, grid = None, offset = None):
+  def __init__(self, grid = None, offset = None, relax = True):
     """ Initializes unreduced KGrid. """
     from numpy import array
     KPoints.__init__(self)
@@ -80,13 +100,19 @@ class KGrid(KPoints):
     """ Grid dimensions in reciprocal space. """
     self.offset = offset if offset != None else array([0,0,0])
     """ Offset from Gamma of the grid. """
+    self.relax = relax
+    """ Whether to deform kpoints to the relaxed structure. """
+
 
   def _mnk(self, input, output):
     """ Yields kpoints on the grid. """
     from numpy.linalg import inv, norm
     from numpy import zeros, array, dot
-    inv_cell = output.cell.T
-    cell = inv(inv_cell)
+    invcell = output.cell.T
+    cell = inv(invcell)
+    
+    if self.relax: deformation = dot(cell, input.cell.T)
+
     a = zeros((3,), dtype='float64')
     weight = 1e0 / float(self.grid[0] * self.grid[1] * self.grid[2])
     for x in xrange(self.grid[0]):
@@ -95,6 +121,9 @@ class KGrid(KPoints):
         a[1] = float(y + self.offset[1]) / float(self.grid[1]) 
         for z in xrange(self.grid[2]):
           a[2] = float(z + self.offset[2]) / float(self.grid[2])
+          yield 1, (dot(deformation, a) if self.relax else a)
+          
+          
  
   def __repr__(self):
     """ Represents this object. """
@@ -102,24 +131,25 @@ class KGrid(KPoints):
     is_one = all( abs(array(self.grid)-array([1,1,1])) < 1e-12 )
     is_zero = all( abs(array(self.offset)-array([0,0,0])) < 1e-12 )
     if is_one and is_zero:
-      return '{0.__class__.__name__}()'.format(self)
+      return '{0.__class__.__name__}(relax={0.relax})'.format(self)
     if is_one:
-      return '{0.__class__.__name__}(offset=({0.offset[0]},{0.offset[0]},{0.offset[0]}))'\
+      return '{0.__class__.__name__}(relax={0.relax}, '\
+             'offset=({0.offset[0]},{0.offset[0]},{0.offset[0]}))'\
              .format(self)
     if is_zero:
-      return '{0.__class__.__name__}(({0.grid[0]},{0.grid[0]},{0.grid[0]}))'\
-             .format(self)
+      return '{0.__class__.__name__}(({0.grid[0]},{0.grid[0]},{0.grid[0]}), '\
+             'relax={0.relax}))'.format(self)
     return '{0.__class__.__name__}(({0.grid[0]},{0.grid[0]},{0.grid[0]}), '\
-           '({0.offset[0]},{0.offset[0]},{0.offset[0]}))'.format(self)
+           '({0.offset[0]},{0.offset[0]},{0.offset[0]}), relax={0.relax})'.format(self)
 
 
 class KDensity(KPoints):
   """ Unreduced kpoint grid parameterized by the density and offset. """
 
-  def __init__(self, density, offset = None):
+  def __init__(self, density, offset = None, relax=True):
     """ Initializes unreduced KGrid. """
     from numpy import array
-    KPoints.__init__(self)
+    KPoints.__init__(self, relax=relax)
     self.density = density
     """ 1-dimensional density in cartesian coordinates (1/Angstrom). """
     self.offset = offset if offset != None else array([0,0,0])
@@ -150,8 +180,9 @@ class KDensity(KPoints):
     """ Represents this object. """
     from numpy import array, abs, all
     is_zero = all( abs(array(self.offset)-array([0,0,0])) < 1e-12 )
-    if is_zero: return '{0.__class__.__name__}({0.density})'.format(self, repr(self.cell))
-    return '{0.__class__.__name__}(({1}, ({2[0]},{2[0]},{2[0]}))'\
+    if is_zero:
+      return '{0.__class__.__name__}({0.density}, relax={0.relax})'.format(self, repr(self.cell))
+    return '{0.__class__.__name__}(({1}, ({2[0]},{2[0]},{2[0]}), relax={0.relax})'\
            .format(self, repr(self.cell), self.offset)
 
 def _reduced_grids_factory(name, base):
@@ -170,7 +201,6 @@ def _reduced_grids_factory(name, base):
 
     def _mnk(self, input, output):
       """ Returns list of inequivalent vectors with multiplicity. """
-      from numpy import dot
       from numpy.linalg import inv, norm
       from ..crystal import Lattice, to_origin, to_voronoi
       recip = Lattice()
@@ -178,14 +208,10 @@ def _reduced_grids_factory(name, base):
       recip.add_site = (0,0,0), '0'
       recip.find_space_group()
 
-      relax = getattr(self, 'do_relax_kpoint', False)
-
       # now checks whether symmetry kpoint exists or not.
       seen = []
-      if relax: deformation = dot(recip.cell, input.cell.T)
       for mult, kpoint in base._mnk(self, input, output): 
         found = False
-        if relax: kpoint = dot(deformation, kpoint)
         kpoint = to_origin(kpoint, recip.cell)
         for i, (count, vec) in enumerate(seen):
           for op in recip.space_group:
@@ -204,21 +230,17 @@ def _reduced_grids_factory(name, base):
 
     def mapping(self, input, output):
       """ Yields index of unreduced kpoint in array of reduced kpoints. """
-      from numpy import dot
       from numpy.linalg import inv, norm
       from ..crystal import Lattice, to_origin, to_voronoi
       recip = Lattice()
       recip.cell = inv(output.cell.T)
       recip.add_site = (0,0,0), '0'
       recip.find_space_group()
-
-      relax = getattr(self, 'do_relax_kpoint', False)
-      if relax: deformation = dot(recip.cell, input.cell.T)
+      
       # now checks whether symmetry kpoint exists or not.
       seen = []
-      for mult, kpoint_orig in base._mnk(self, input, output): 
+      for mult, kpoint in base._mnk(self, input, output): 
         found = False
-        kpoint = dot(deformation, kpoint_orig) if relax else kpoint
         kpoint = to_origin(kpoint, recip.cell)
         for i, (count, vec) in enumerate(seen):
           for op in recip.space_group:

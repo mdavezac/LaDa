@@ -119,7 +119,7 @@ class Escan(object):
     self._FUNCCAR = "ESCANCAR"
     """ Private reference to the functional pickle. """
     self.do_relax_kpoint = False
-    """ Whether *not* to deform kpoints from input cell to relaxed cell.
+    """ Whether to deform kpoints from input cell to relaxed cell.
 
         Default is True. Relaxed cell is taken from `_POSCAR`
     """
@@ -137,7 +137,7 @@ class Escan(object):
   def _dont_deform_kpoint(self):
     from warnings import warn
     warn('_dont_deform_kpoint is deprecated in favor of do_relax_kpoint.', DeprecationWarning)
-    return self.do_relax_kpoint
+    return not self.do_relax_kpoint
   @_dont_deform_kpoint.setter
   def _dont_deform_kpoint(self, value):
     from warnings import warn

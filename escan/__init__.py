@@ -7,7 +7,8 @@ __all__ = [ "Extract", 'MassExtract', "bandgap", "extract_bg",
             "extract_bg", 'ExtractBS', 'KEscan', 'KPoints', 'KGrid', 
             'ReducedKGrid', 'ReducedKDensity', 'BPoints', 'ReducedBPoints', 
             'soH', 'nonlocalH', 'localH', 'folded_spectrum', 'all_electron',
-            'read_input', 'exec_input', 'KExtract']
+            'read_input', 'exec_input', 'KExtract', 'plot_alloybands', 
+            'plot_bands', 'majority_representation']
 
 from ..opt import __load_escan_in_global_namespace__
 from lada import lada_with_mpi
@@ -20,12 +21,12 @@ if lada_with_mpi:
     import _escan
     _setdlopenflags(flags)
   else: import _escan
-from _bandstructure import plot_bands, BPoints, ReducedBPoints
+from _bandstructure import plot_bands, BPoints, ReducedBPoints, plot_alloybands
 from _bandgap import bandgap, extract as extract_bg
 from _extract import Extract, MassExtract
-from _extract import Extract as _EscanExtract
-from functional import Escan, folded_spectrum, all_electron
 from _potential import soH, nonlocalH, localH, AtomicPotential
+from _methods import majority_representation
+from functional import Escan, folded_spectrum, all_electron
 from kescan import KEscan, Extract as KExtract
 from kpoints import KGrid, ReducedKGrid, KPoints, ReducedKDensity
 
