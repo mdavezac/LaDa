@@ -83,7 +83,8 @@ def majority_representation(extractor, multicell):
   from numpy import dot, pi, array
   from numpy.linalg import inv
   from quantities import angstrom
-  from ..crystal import is_on_lattice
+  from ..crystal import is_on_lattice, to_voronoi
+  from ..physics import a0
 
   assert extractor.success,\
          ValueError("extractor is not the return of a *successfull* KEscan calculation.")
@@ -93,6 +94,7 @@ def majority_representation(extractor, multicell):
   ostr = extractor.structure
   unitcell = dot(ostr.cell, inv(multicell)) * ostr.scale * angstrom
   unitkcell = (inv(unitcell.T) * 2e0 * pi / angstrom).rescale(Gs.units)
+  invcell = inv(ostr.cell.T)
   
   # use the functional's kpoint object so we have access to all its goodies.
   kpoints = extractor.functional.kpoints
@@ -102,18 +104,19 @@ def majority_representation(extractor, multicell):
 
   unreduced = array([k[1] for k in kpoints.unreduced(istr, ostr)])
   mapping = [i for i in kpoints.mapping(istr, ostr)]
-  reduced = array([k[1] for k in kpoints(istr, ostr)])
-  reduced = reduced[mapping]
-  for K, k0, i in zip(reduced, unreduced, mapping):
+  scale = float(1e0/(ostr.scale  * angstrom).rescale(a0))
+  for k0, i in zip(unreduced, mapping):
+    # Compute kpoint folded into voronoi cell.
+    K = to_voronoi(k0, invcell)
     # links reduced to unreduced: folding vector.
-    Gfold = K - k0
+    Gfold = (K - k0) * scale
     # mapping for reciprocal vector of supercell which are reciprocal vectors
     # of unitcell *with* folding.
     onlatop = is_on_lattice(Gs, unitkcell, Gfold)
     # actual calculation for that kpoint.
     extract = extractor[i]
     # loop over bands and sum 
-    results.append([(gwfn.eigenvalue, gwfn.expectation_value(onlatop)) for gwfn in extract.gwfns])
+    results.append([(w.eigenvalue, w.expectation_value(onlatop).real) for w in extract.gwfns])
 
   return result
       

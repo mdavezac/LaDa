@@ -52,7 +52,7 @@ class KEscan(Escan):
       if vffrun == None: 
         vffrun = Escan.__call__(self, structure, outdir, comm, do_escan=False, **kwargs)
         kwargs.pop('vffrun', None)
-        if kwargs.get('genpotrun', None) == None: kwargs.pop('genpotrun', None)
+        kwargs.pop('genpotrun', None)
   
       # create list of kpoints.
       kpoints = self._interpret_kpoints(kpoints, vffrun)

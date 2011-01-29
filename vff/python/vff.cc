@@ -27,6 +27,27 @@ namespace LaDa
   namespace bp = boost::python;
   namespace python
   {
+
+    template<class T>
+      void print_escan_input( T &_self, const std::string &_path, bp::object &_str )
+      {
+        if(_str.ptr() != Py_None)  
+        {
+          Crystal::TStructure<std::string> structure;
+          try { structure = bp::extract< Crystal::TStructure<std::string> >(_str); }
+          catch(std::exception &e)
+          {
+            std::ostringstream sstr;
+            sstr << "Could not convert to structure.\n" << e.what() << "\n";
+            PyErr_SetString(PyExc_ValueError, sstr.str().c_str());
+            bp::throw_error_already_set();
+            return;
+          }
+          _self.set_structure(structure);
+          _self.init(true, false);
+        }
+        _self.print_escan_input(_path);
+      }
     template<class T> 
       void init( T &_self, typename Crystal::TStructure<std::string> const &_str,
                  bool _doinit, bool _verbose = false )
@@ -242,10 +263,11 @@ namespace LaDa
           "``structure.energy``.\n"
         )
        .def("check_input", &check_input<T>)
-       .def( "init",  &init<T>, (bp::arg("structure"), bp::arg("dotree") = true, bp::arg("verbose")=false), 
+       .def( "init",  &init<T>, (bp::arg("structure"), bp::arg("dotree") = true,
+                                 bp::arg("verbose")=false), 
              "Initializes the functional for the current structure." ) 
        .def( "print_escan_input",  &print_escan_input<T>,
-             (bp::arg("file"), bp::arg("structure")), 
+             (bp::arg("file"), bp::arg("structure") = bp::object()), 
              "Outputs the current structure in a format suitable for pescan." );
     }
 
