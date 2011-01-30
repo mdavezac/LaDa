@@ -130,7 +130,8 @@ else:
     """ Plots alloy band-structure using the majority representation. """
     from numpy import dot, array, min, max
     from numpy.linalg import norm
-    from .. import majority_representation
+    from . import majority_representation
+    from pickle import load, dump
 
     edgecolor = kwargs.pop('edgecolor', 'red')
     edgestyle = kwargs.pop('edgestyle', '--')
@@ -138,7 +139,7 @@ else:
     # first finds breaking point.
     istr = extractor.input_structure
     ostr = extractor.structure
-    kpoints = [u[1] for u in extractor.functional.kpoints.unreduced(istr, ostr)]
+    kpoints = array([u[1] for u in extractor.functional.kpoints.unreduced(istr, ostr)])
     delta = kpoints[1:] - kpoints[:-1]
     norms = [norm(delta[i,:]) for i in range(delta.shape[0])]
     bk = []
@@ -148,16 +149,26 @@ else:
     # then plot bands.
     xvalues = array([sum(norms[:i]) for i in range(len(norms)+1)])
     args = [[],[],[]]
-    for x, values in zip(majority_representation(extractor, multicell), xvalues):
+    maj = majority_representation(extractor, multicell)
+#   with open("/tmp/shit2", "w") as file: dump(maj, file)
+#   with open("/tmp/shit", "r") as file: maj = load(file)
+#   print len(maj), xvalues.shape, kpoints.shape
+    for values, x in zip(maj, xvalues):
       for v in values: 
         args[0].append(x)
         args[1].append(v[0])
-        args[2].append(v[2])
+        args[2].append(v[1])
 
     # then line markers.
     plt.hexbin(*args, **kwargs)
+    x = array([sum(norms[:i]) for i in range(len(norms)+1)])
     for i in bk: plt.axvline(x[i], color='black', **kwargs)
 
     kwargs.pop('linestyle', None) 
     plt.axhline(extractor.vbm, color=edgecolor, linestyle=edgestyle, **kwargs)
     plt.axhline(extractor.cbm, color=edgecolor, linestyle=edgestyle, **kwargs)
+
+    y = array(extractor.eigenvalues)
+    plt.xlim((x[0], x[-1]))
+    ylims = min(y) - (max(y) - min(y))*0.05, max(y) + (max(y) - min(y))*0.05
+    plt.ylim(ylims)

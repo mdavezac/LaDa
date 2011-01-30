@@ -14,10 +14,12 @@ kescan = exec_input(repr(input.escan).replace('Escan', 'KEscan')).functional
 
 structure = zinc_blende().to_structure(cell=(1,0,0,0,1,0,0,0,1), subs={'A':'Si', 'B':'Si'}) 
 structure.scale = 5.45
+structure = zinc_blende().to_structure(subs={'A':'Si', 'B':'Si'}) 
+structure.scale = 5.45
 
 kescan.fft_mesh = 20, 20, 20
 kescan.kpoints = ReducedBPoints(density=20) + (X, G) + (G, L)
-result = kescan( structure, comm=world, outdir='results/kescan', 
+result = kescan( structure, comm=world, outdir='results/kescan2', 
                  nbstates = nb_valence_states(structure) + 4,
                  eref = None )
 

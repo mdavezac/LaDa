@@ -61,7 +61,7 @@ def LDOS(extract, positions):
 
   return ldoses(extract.eigenvalues, rspace)
 
-def majority_representation(extractor, multicell): 
+def majority_representation(extractor, multicell, tolerance=1e-12): 
   """ Majority Represention for all unmapped kpoint.
   
       :Parameters: 
@@ -80,6 +80,7 @@ def majority_representation(extractor, multicell):
          respect to eigenvalues. It is meant to be used with matplotlib's
          hexbin.
   """
+  from operator import itemgetter
   from numpy import dot, pi, array
   from numpy.linalg import inv
   from quantities import angstrom
@@ -89,11 +90,10 @@ def majority_representation(extractor, multicell):
   assert extractor.success,\
          ValueError("extractor is not the return of a *successfull* KEscan calculation.")
   assert len(extractor) > 0, ValueError("extractor does not contain escan runs.")
-  Gs = extractor[0].gvectors        # reciprocal vectors of supercell.  
   istr = extractor.input_structure
   ostr = extractor.structure
   unitcell = dot(ostr.cell, inv(multicell)) * ostr.scale * angstrom
-  unitkcell = (inv(unitcell.T) * 2e0 * pi / angstrom).rescale(Gs.units)
+  unitkcell = inv(unitcell.T) * 2e0 * pi / angstrom
   invcell = inv(ostr.cell.T)
   
   # use the functional's kpoint object so we have access to all its goodies.
@@ -105,20 +105,30 @@ def majority_representation(extractor, multicell):
   unreduced = array([k[1] for k in kpoints.unreduced(istr, ostr)])
   mapping = [i for i in kpoints.mapping(istr, ostr)]
   scale = float(1e0/(ostr.scale  * angstrom).rescale(a0))
-  for k0, i in zip(unreduced, mapping):
+  N = float(len(ostr.atoms))
+  for k0, extract in zip(unreduced, extractor):
+#   # actual calculation for that kpoint.
+#   extract = extractor[i]
+    # reciprocal vectors of supercell.  
+    Gs = extract.gvectors        
     # Compute kpoint folded into voronoi cell.
     K = to_voronoi(k0, invcell)
     # links reduced to unreduced: folding vector.
     Gfold = (K - k0) * scale
     # mapping for reciprocal vector of supercell which are reciprocal vectors
     # of unitcell *with* folding.
-    onlatop = is_on_lattice(Gs, unitkcell, Gfold)
-    # actual calculation for that kpoint.
-    extract = extractor[i]
+    onlatop = is_on_lattice(Gs, unitkcell.rescale(Gs.units), Gfold)
     # loop over bands and sum 
-    results.append([(w.eigenvalue, w.expectation_value(onlatop).real) for w in extract.gwfns])
+    current = [[w.eigenvalue, w.expectation_value(onlatop).real] for w in extract.gwfns]
+    current = sorted(current, key=itemgetter(0))
+    intermediate = [current[0]]
+    for eig, val in current[1:]: 
+      if abs(eig-intermediate[-1][0]) < tolerance: intermediate[-1][1] += val
+      else: intermediate.append([eig, val])
 
-  return result
+    results.append([ (e, v) for e, v in intermediate if abs(v) * N > tolerance])
+
+  return results
       
 
 

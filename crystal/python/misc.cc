@@ -188,7 +188,7 @@ namespace LaDa
       }
       void operator()(math::rVector3d const &_orig) const
       {
-        math::rVector3d const vec(Crystal::into_cell(_orig-center, cell, invcell));
+        math::rVector3d const vec(Crystal::zero_centered(_orig-center, cell, invcell));
         typedef mn::type<bool>::np_type t_type;
         *(t_type*)(PyArray_ITER_DATA(iterator.ptr()))
             = static_cast<t_type>(vec.squaredNorm() < tolerance);
