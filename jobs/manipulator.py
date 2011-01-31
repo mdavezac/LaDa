@@ -158,7 +158,9 @@ class JobParams(AbstractMassExtract):
     found = False
     for jobname, job in self.iteritems():
       if job.is_tagged: continue
-      if hasattr(job, name): setattr(job, name, value)
+      if hasattr(job, name):
+        setattr(job, name, value)
+        found = True
       elif not self.only_existing: 
         job.jobparams[name] = value
         found = True

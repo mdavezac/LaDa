@@ -271,7 +271,8 @@ class Vff(object):
     if args[0] > args[1]: name = "%s-%s" % (args[1], args[0])
 
     params = [u for u in args[2]]
-    assert len(params) < 7 and len(params) > 0, RuntimeError("To few or too many parameters: %s." % (params))
+    assert len(params) < 7 and len(params) > 0,\
+           RuntimeError("To few or too many parameters: %s." % (params))
     if name in self.bonds: # replaces none value with known value
       for old, new in zip(self.bonds[name], params):
         if old == None: old = new

@@ -28,8 +28,14 @@ class KEscan(Escan):
     # case for simple containers.
     if kpoints == None: kpoints, multiplicity = [[0,0,0]], [1]
     if not hasattr(kpoints, '__call__'): self.kpoints = KContainer(kpoints, multiplicity)
-    Escan.__init__(self)
-    """ True if performing calculation on single point. """
+    escan_copy = kwargs.pop("escan", None)
+    Escan.__init__(self, **kwargs)
+
+    if escan_copy != None: # copy constructor from Escan instance. 
+      from copy import copy
+      for key, value in escan_copy.__dict__.items():
+        self.__dict__[key] = copy(value)
+
 
   # need jobs package to run this code.
   if 'jobs' in all_lada_packages: 

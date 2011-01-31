@@ -136,12 +136,14 @@ class Escan(object):
   @property
   def _dont_deform_kpoint(self):
     from warnings import warn
-    warn('_dont_deform_kpoint is deprecated in favor of do_relax_kpoint.', DeprecationWarning)
+    warn( DeprecationWarning('_dont_deform_kpoint is deprecated in favor of do_relax_kpoint.' ),
+          stacklevel=2 )
     return not self.do_relax_kpoint
   @_dont_deform_kpoint.setter
   def _dont_deform_kpoint(self, value):
     from warnings import warn
-    warn('_dont_deform_kpoint is deprecated in favor of do_relax_kpoint.', DeprecationWarning)
+    warn( DeprecationWarning('_dont_deform_kpoint is deprecated in favor of do_relax_kpoint.' ),
+          stacklevel=2 )
     self.do_relax_kpoint = value
 
   @property
