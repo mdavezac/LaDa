@@ -5,6 +5,7 @@ set( LIBVFF_SOURCES
      build_tree_sort_dnc.cc functional.cc initialize_centers.cc layered.cc vff.cc )
 
 
+include_directories(${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDES})
 add_library (vff SHARED ${LIBVFF_SOURCES} ${LIBVFF_HEADERS})
 set_target_properties(vff PROPERTIES OUTPUT_NAME lada_vff)
 target_link_libraries(vff crystal minimizer)

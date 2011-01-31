@@ -150,9 +150,6 @@ else:
     xvalues = array([sum(norms[:i]) for i in range(len(norms)+1)])
     args = [[],[],[]]
     maj = majority_representation(extractor, multicell)
-#   with open("/tmp/shit2", "w") as file: dump(maj, file)
-#   with open("/tmp/shit", "r") as file: maj = load(file)
-#   print len(maj), xvalues.shape, kpoints.shape
     for values, x in zip(maj, xvalues):
       for v in values: 
         args[0].append(x)
