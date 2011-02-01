@@ -92,6 +92,7 @@ def launch_scattered(self, event):
       if len(name) == 0: name = "{0}-root".format(splitpath(path)[1])
       name = name.replace("/", ".")
       pbsscripts.append(join(path+".pbs", name + ".pbs"))
+      if getattr(event, "prefix", None): name = "{0}-{1}".format(event.prefix, name)
       with open(pbsscripts[-1], "w") as file: 
         template( file, outdir=abspath(splitpath(path)[0]), jobid=i, mppwidth=mppwidth, name=name,\
                   pickle=splitpath(path)[1], pyscript=pyscript, ppath=".", walltime=walltime,\
@@ -161,6 +162,7 @@ def launch(self, event):
                                "Can also be a callable taking a JobDict as " \
                                "argument and returning a integer. Will default "\
                                "to as many procs as there are atoms in that particular structure.")
+  scattered.add_argument( '--prefix', action="store", type=str, help="Adds prefix to job name.")
   scattered.add_argument('--nolaunch', action="store_true", dest="nolaunch")
   scattered.add_argument('--force', action="store_true", dest="force", \
                          help="Launches all untagged jobs, even those which completed successfully.")
@@ -203,6 +205,9 @@ def launch_completer(self, info):
       result = [u for u in ip.user_ns if u[0] != '_' and isinstance(ip.user_ns[u], int)]
       result.extend([u for u in ip.user_ns if u[0] != '_' and hasattr(u, "__call__")])
       return result
+    if    (len(info.symbol) == 0 and data[-1] == "--prefix") \
+       or (len(info.symbol) > 0  and data[-2] == "--prefix"):
+      return []
     if    (len(info.symbol) == 0 and data[-1] == queue) \
        or (len(info.symbol) > 0  and data[-2] == queue):
       return lada_queues
