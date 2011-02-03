@@ -41,6 +41,10 @@ def launch_scattered(self, event):
     print "Could not make sense of --walltime argument {0}.".format(event.walltime)
     return
 
+  # gets queue (aka partition in slurm), if any.
+  kwargs = {}
+  if event.__dict__.get('queue', None) != None: kwargs['queue'] = event.queue
+
   # creates list of dictionaries.
   pickles = set(event.pickle) - set([""])
   if len(pickles) > 0: 
@@ -75,7 +79,7 @@ def launch_scattered(self, event):
     # creates directory.
     with Changedir(path + ".pbs") as pwd: pass 
     # creates pbs scripts.
-    for i, (job, name) in enumerate(current.root.walk_through()):
+    for i, (name, job) in enumerate(current.root.iteritems()):
       if job.is_tagged: continue
       # does not launch successful jobs.
       if hasattr(job.functional, 'Extract') and not event.force: 
@@ -88,9 +92,11 @@ def launch_scattered(self, event):
       if len(name) == 0: name = "{0}-root".format(splitpath(path)[1])
       name = name.replace("/", ".")
       pbsscripts.append(join(path+".pbs", name + ".pbs"))
+      if getattr(event, "prefix", None): name = "{0}-{1}".format(event.prefix, name)
       with open(pbsscripts[-1], "w") as file: 
         template( file, outdir=abspath(splitpath(path)[0]), jobid=i, mppwidth=mppwidth, name=name,\
-                  pickle=splitpath(path)[1], pyscript=pyscript, ppath=".", walltime=walltime )
+                  pickle=splitpath(path)[1], pyscript=pyscript, ppath=".", walltime=walltime,\
+                  **kwargs )
     print "Created scattered jobs in {0}.pbs.".format(path)
 
   if event.nolaunch: return
@@ -126,6 +132,12 @@ def launch(self, event):
   """ 
 
   import argparse
+  from os import environ
+  from .. import queues as lada_queues
+
+  which = "SNLCLUSTER" in environ
+  if which: which = environ["SNLCLUSTER"] in ["redrock", "redmesa"]
+  queue = "--account" if which else "--queue"
 
   # main parser
   parser = argparse.ArgumentParser(prog='%launch')
@@ -145,14 +157,23 @@ def launch(self, event):
   scattered = subparsers.add_parser('scattered', description='Each calculation is a separate job.',\
                                     parents=[opalls])
   scattered.add_argument( '--nbprocs', type=str, default="None", dest="nbprocs",
-                          help="Can be an integer, in which case it speciefies "\
+                          help="Can be an integer, in which case it specifies "\
                                " the number of processes to exectute jobs with. "\
                                "Can also be a callable taking a JobDict as " \
                                "argument and returning a integer. Will default "\
                                "to as many procs as there are atoms in that particular structure.")
+  scattered.add_argument( '--prefix', action="store", type=str, help="Adds prefix to job name.")
   scattered.add_argument('--nolaunch', action="store_true", dest="nolaunch")
   scattered.add_argument('--force', action="store_true", dest="force", \
                          help="Launches all untagged jobs, even those which completed successfully.")
+  if which:
+    scattered.add_argument( '--account', dest="account", choices=lada_queues,
+                            default=(lada_queues[0] if len(lada_queues) > 0 else 'BES000'),
+                            help="Account on which to launch job. Defaults to system default." )
+  elif len(lada_queues) != 0: 
+    scattered.add_argument( '--queue', dest="queue", choices=lada_queues, default=lada_queues[0],
+                            help="Queue on which to launch job. Defaults to system default." )
+  else: scattered.add_argument('--queue', dest="queue", type=str)
   scattered.set_defaults(func=launch_scattered)
 
 
@@ -164,7 +185,14 @@ def launch(self, event):
 
 def launch_completer(self, info):
   """ Completion for launchers. """
+  from os import environ
   from ._explore import _glob_job_pickles
+  from .. import queues as lada_queues
+
+  which = "SNLCLUSTER" in environ
+  if which: which = environ["SNLCLUSTER"] in ["redrock", "redmesa"]
+  queue = "--account" if which else "--queue"
+  
   ip = self.api
   data = info.line.split()
   if len(data)  <= 2 and data[-1] not in ["scattered"]: return ["scattered"] 
@@ -177,7 +205,15 @@ def launch_completer(self, info):
       result = [u for u in ip.user_ns if u[0] != '_' and isinstance(ip.user_ns[u], int)]
       result.extend([u for u in ip.user_ns if u[0] != '_' and hasattr(u, "__call__")])
       return result
-    result = list(set(['--force', '--walltime', '--nbprocs', '--help']) - set(data))
+    if    (len(info.symbol) == 0 and data[-1] == "--prefix") \
+       or (len(info.symbol) > 0  and data[-2] == "--prefix"):
+      return []
+    if    (len(info.symbol) == 0 and data[-1] == queue) \
+       or (len(info.symbol) > 0  and data[-2] == queue):
+      return lada_queues
+    result = ['--force', '--walltime', '--nbprocs', '--help']
+    if len(lada_queues) > 0: result.append(queue) 
+    result = list(set(result) - set(data))
     result.extend( _glob_job_pickles(ip, info.symbol) )
     return result
   raise IPython.ipapi.TryNext

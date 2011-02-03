@@ -113,7 +113,7 @@ def _showme_pbs(self, which):
     prefix = "out" if which == "pbsout" else "err"
     filename = join(path + ".pbs", prefix + filename)
     filenames = [u for u in glob(filename+'.*')]
-    numbers   = [(i, int(u[len(filename)+1:])) for i, u in enumerate(filenames)]
+    numbers   = [(i, int(u[len(filename)+1:].split('.')[0])) for i, u in enumerate(filenames)]
     if len(numbers) == 0: filename = None
     else: filename = filenames[ sorted(numbers, key=itemgetter(1))[-1][0] ]
   else: filename = join(path + ".pbs", filename[1:] + ".pbs")

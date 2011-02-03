@@ -64,10 +64,13 @@ class RelaxCellShape(object):
     """ Dictionary of parameters for the first run of the functional. see `__init__`. """
     self.maxiter = maxiter
     """ Maximum number of iterations before bailing out. """
-    self.Extract = self.vasp.Extract
-    """ Extraction class. """
     self.keep_steps = keep_steps
     """ Whether or not to keep intermediate results. """
+
+  @property
+  def Extract(self):
+    """ Extraction class. """
+    return self.vasp.Extract
 
   def generator(self, structure, outdir=None, comm=None, **kwargs ):
     """ Performs a vasp relaxation, yielding each result.
@@ -92,7 +95,6 @@ class RelaxCellShape(object):
             stateless) if they are named after attributes of `RelaxCellShape`.
             Otherwise, the keywords are passed on to the `vasp` functional.
     """
-    from warnings import warn
     from copy import deepcopy
     from math import fabs 
     from os import getcwd
@@ -116,9 +118,14 @@ class RelaxCellShape(object):
                        .format(self.ediffg, self.vasp.ediff))
     ediffg *= 1.2 * float(len(structure.atoms))
 
+    is_mpi = False if comm == None else comm.size > 1
+    is_root = comm.rank == 0 if is_mpi else True
+
     # updates vasp as much as possible.
     if "set_relaxation" in kwargs: 
-      warn("set_relaxation is deprecated. Please use relaxation.", DeprecationWarning)
+      from warnings import warn
+      warn( DeprecationWarning("set_relaxation is deprecated. Please use relaxation."),\
+            stacklevel=2 )
     vasp.relaxation = kwargs.pop("relaxation", kwargs.pop("set_relaxation", self.relaxation))
     for key in kwargs.keys():
       if hasattr(vasp, key): setattr(vasp, key, kwargs.pop(key))
@@ -211,7 +218,7 @@ class RelaxCellShape(object):
              )
     yield output
 
-    if output.success and (not keep_steps):
+    if output.success and (not keep_steps) and is_root:
       rmtree(join(outdir, "relax_cellshape"))
       rmtree(join(outdir, "relax_ions"))
 
@@ -246,7 +253,6 @@ class RelaxCellShape(object):
     from os.path import exists
     from ..opt import RelativeDirectory
 
-    is_root = True if comm == None else comm.rank == 0
     outdir = getcwd() if outdir == None else RelativeDirectory(outdir).path
     if not overwrite:
       extract = self.Extract(outdir, comm=None)
@@ -260,10 +266,8 @@ class RelaxCellShape(object):
     """ Just creates directory for debugging. """
     from ..opt.changedir import Changedir
 
-    is_root = True
-    if "comm" in kwargs:
-      comm = kwargs["comm"]
-      is_root = True if comm == None else comm.rank == 0
+    is_mpi = False if kwargs.get('comm', None) == None else kwargs['comm'].size > 1
+    is_root = kwargs['comm'].rank == 0 if is_mpi else True
     if is_root:
       # creates a file describing the relaxation parameters.
       with Changedir(kwargs["outdir"]) as pwd:

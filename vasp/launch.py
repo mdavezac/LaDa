@@ -159,6 +159,11 @@ class Launch(Incar):
        if not exists(outdir): makedirs(outdir)
        if not exists(outdir): raise IOError, "%s directory does not exist." % (outdir)
        if not isdir(outdir):  raise IOError, "%s is not a directory." % (outdir)
+       # Appends INCAR and CONTCAR to OUTCAR:
+       with open(files.OUTCAR, 'a') as outcar:
+         outcar.write('\n################ INCAR ################\n')
+         with open(files.INCAR, 'r') as incar: outcar.write(incar.read())
+         outcar.write('\n################ END INCAR ################\n')
      
      if comm != None: comm.barrier()
 

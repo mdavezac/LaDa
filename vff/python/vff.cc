@@ -46,6 +46,12 @@ namespace LaDa
 #     else
         boost::shared_ptr<T> create_mpi(boost::mpi::communicator *_c )
         {
+          if( not _c )
+          { 
+            PyErr_SetString(PyExc_ValueError, "Null pointer to boost.mpi.communicator.");
+            bp::throw_error_already_set();
+            return boost::shared_ptr<T>();
+          }
           boost::shared_ptr<T> result = create<T>();
           result->first.set_mpi(_c);
           return result;
@@ -105,6 +111,14 @@ namespace LaDa
           namespace bfs = boost::filesystem;
           namespace bm = boost::mpi;
           std::string error = "", filestring;
+
+          if( not _c )
+          { 
+            PyErr_SetString(PyExc_ValueError, "Null pointer to boost.mpi.communicator.");
+            bp::throw_error_already_set();
+            return boost::shared_ptr<T>();
+          }
+
           if( _c->rank() == 0 )
           {
             if( not bfs::exists(_f) ) error = _f + " does not exist.";

@@ -19,11 +19,13 @@ extern "C"
 
 void just_call_escan(boost::mpi::communicator const &_c)
 {
+  Py_BEGIN_ALLOW_THREADS;
   MPI_Comm __commC = (MPI_Comm) ( _c ) ;
   MPI_Fint __commF = MPI_Comm_c2f( __commC );
   FC_GLOBAL_(iaga_set_mpi, IAGA_SET_MPI)( &__commF );
 
   FC_GLOBAL_(iaga_just_call_escan, IAGA_just_CALL_ESCAN)();
+  Py_END_ALLOW_THREADS;
 }
 // void just_call_escan2(MPI_Comm &_comm)
 // {
@@ -34,11 +36,13 @@ void just_call_escan(boost::mpi::communicator const &_c)
 // }
 void just_call_genpot(boost::mpi::communicator const &_c)
 {
+  Py_BEGIN_ALLOW_THREADS;
   MPI_Comm __commC = (MPI_Comm) ( _c ) ;
   MPI_Fint __commF = MPI_Comm_c2f( __commC );
   FC_GLOBAL_(iaga_set_mpi, IAGA_SET_MPI)( &__commF );
 
   FC_GLOBAL_(getvlarg, GETVLARG)();
+  Py_END_ALLOW_THREADS;
 }
 // void just_call_genpot2(MPI_Comm &_comm)
 // {

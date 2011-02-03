@@ -44,7 +44,8 @@ def main():
     return
 
   # loop over all jobs -- Needs communicator!
-  for i, (job, outdir) in enumerate(jobs.walk_through(args[0],comm=world)):
+  jobdict = jobs.load(args[0],comm=world)
+  for i, (outdir, job) in enumerate(jobdict.iteritems()):
     if i != options.n: continue
     if options.relative == None: 
       out = job.compute(comm=world, outdir=outdir, inplace=True)

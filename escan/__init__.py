@@ -1,10 +1,10 @@
 """ Interface module for ESCAN. """
 __docformat__ = "restructuredtext en"
-__all__ = [ "Extract", "bandgap", "extract_bg",\
+__all__ = [ "Extract", 'MassExtract', "bandgap", "extract_bg",\
             "dipole_matrix_element", "band_structure", "call_escan",\
             "Escan", "folded_spectrum", "all_electron", "soH", \
             "nonlocalH", "localH", "AtomicPotential", "band_structure",\
-            "extract_bg" ]
+            "extract_bg", 'ExtractBS' ]
 
 from ..opt import __load_escan_in_global_namespace__
 from lada import lada_with_mpi
@@ -20,9 +20,9 @@ if lada_with_mpi:
 else: 
   raise RuntimerError("Cannot load escan without MPI yet.")
 from ..opt.decorators import add_setter, broadcast_result
-from _bandstructure import band_structure
+from _bandstructure import band_structure, Extract as ExtractBS
 from _bandgap import bandgap, extract as extract_bg
-from _extract import Extract
+from _extract import Extract, MassExtract
 from _extract import Extract as _EscanExtract
 
 
@@ -280,6 +280,12 @@ class Escan(object):
     self.print_from_all = False
     """ If True, each node will print. """
 
+  @property
+  def is_krammer(self):
+    """ True if wavefunction is a spinor. """
+    from numpy.linalg import norm
+    from . import soH
+    return True if (norm(self.kpoint) < 1e-12 and self.potential == soH) else False
 
   @property
   def maskr(self): 
@@ -505,7 +511,6 @@ class Escan(object):
         extract = Extract(comm = comm, directory = outdir, escan = self)
         assert extract.success, RuntimeError("Escan calculations did not complete.")
 
-
   def _run_vff(self, structure, outdir, comm, cout, overwrite, norun):
     """ Gets atomic input ready, with or without relaxation. """
     from os.path import join, samefile, exists
@@ -515,12 +520,12 @@ class Escan(object):
 
     poscar = self._POSCAR + "." + str(world.rank)
     if self.vffrun != None:
-      POSCAR = self.vffrun.escan._POSCAR + "." + str(world.rank)
+      POSCAR = self.vffrun.functional._POSCAR + "." + str(world.rank)
       POSCAR = join(self.vffrun.directory, POSCAR)
       rstr = self.vffrun.structure
       if exists(POSCAR): copyfile(POSCAR, poscar, 'same', comm)
-      else: out.solo().write_escan_input(poscar, rstr)
-      VFFCOUT = self.vffrun.escan.vff._cout(comm)
+      else: self.vffrun.write_escan_input(poscar, rstr)
+      VFFCOUT = self.vffrun.functional.vff._cout(comm)
       VFFCOUT = join(self.vffrun.directory, VFFCOUT)
       copyfile(VFFCOUT, self.vff._cout(comm), 'same exists null', comm)
       return
@@ -554,7 +559,7 @@ class Escan(object):
     # using genpot from previous run
     is_root = True if comm == None else comm.rank == 0
     if self.genpotrun != None:
-      POTCAR = self.genpotrun.escan._POTCAR + "." + str(world.rank)
+      POTCAR = self.genpotrun.functional._POTCAR + "." + str(world.rank)
       potcar = self._POTCAR + "." + str(world.rank)
       copyfile(join(self.genpotrun.directory, POTCAR), potcar, 'same exists')
       copyfile(self.maskr, nothrow='same', comm=comm)

@@ -17,7 +17,7 @@
 """
 __docformat__ = "restructuredtext en"
 from launch import Launch
-from extract import Extract, ExtractGW
+from extract import Extract, ExtractGW_deprecated as ExtractGW
 from incar import Incar
 from kpoints import Density, Gamma
 from specie import Specie
@@ -50,7 +50,7 @@ else:
   is_vasp_4 = int(version[0]) == 4
   """ True if using vasp 4. """
 
-__all__ = [ 'Launch', 'Extract', 'ExtractGW', 'Incar', 'Density', 'Gamma', 'Specie',\
+__all__ = [ 'Launch', 'Extract', 'Incar', 'Density', 'Gamma', 'Specie',\
             'incar', 'extract', 'kpoints', 'methods' ]
 try: from extract import MassExtract
 except ImportError: pass
@@ -74,7 +74,7 @@ class Vasp(Launch):
       This allows us to use the same scripts for generating and retrieving
       data. 
   """
-  Extract = Extract
+  Extract = staticmethod(Extract)
   """ Extraction class. """
 
   def __init__(self, *args, **kwargs):
@@ -163,7 +163,7 @@ class Vasp(Launch):
 
     # Checks for previous run, or deletes previous run if requested.
     if not overwrite:
-      extract = self.Extract(comm = comm, directory = outdir)
+      extract = self.Extract(comm = comm, outcar = outdir)
       if extract.success: return extract # in which case, returns extraction object.
     if comm != None: comm.barrier() # sync all procs.
     
@@ -172,7 +172,7 @@ class Vasp(Launch):
                                 repat=repat, comm=comm, norun=norun )
     
     # checks if result was successful
-    extract = self.Extract(comm = comm, directory = outdir)
+    extract = self.Extract(comm = comm, outcar = outdir)
     if not norun:
       assert extract.success, RuntimeError("VASP calculation did not complete in %s.\n" % (outdir))
 

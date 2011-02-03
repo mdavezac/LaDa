@@ -1,9 +1,10 @@
 """ Module to extract esca and vff ouput. """
 __docformat__ = "restructuredtext en"
-__all__ = ['Extract']
+__all__ = ['Extract', 'MassExtract']
 
 from ..opt.decorators import broadcast_result, make_cached
 from ..opt import AbstractExtractBase
+from ..jobs import AbstractMassExtractDirectories
 
 
 class Extract(AbstractExtractBase):
@@ -105,7 +106,7 @@ class Extract(AbstractExtractBase):
 
   @property
   @make_cached
-  def escan(self):
+  def functional(self):
     """ Greps escan functional from OUTCAR. """
     from os.path import exists, join
     from numpy import array
@@ -141,6 +142,12 @@ class Extract(AbstractExtractBase):
     return local_dict["escan_functional"] if "escan_functional" in local_dict\
            else local_dict["functional"]
 
+  @property 
+  def escan(self): 
+    """ Alias for `escan`. """
+    from warnings import warn
+    warn(DeprecationWarning('escan attribute is deprecated in favor of functional.'), stacklevel=2)
+    return self.functional
 
   @property
   def _double_trouble(self):
@@ -148,9 +155,9 @@ class Extract(AbstractExtractBase):
     from numpy.linalg import norm
     from . import soH
     seul = self.solo()
-    if seul.escan.nbstates  ==   1: return False
-    if seul.escan.potential != soH: return True
-    return norm(seul.escan.kpoint) < 1e-12
+    if seul.functional.nbstates  ==   1: return False
+    if seul.functional.potential != soH: return True
+    return norm(seul.functional.kpoint) < 1e-12
 
 
   @property 
@@ -294,7 +301,8 @@ class Extract(AbstractExtractBase):
           if i%2 == 0: 
             result.append( rWavefunction(self.comm, i, eig, self._raw_rwfns[:,i/2,0]) )
           else:
-            result.append( rWavefunction(self.comm, i, eig, -self._raw_rwfns[:,i/2,0].conjugate()) )
+            result.append( rWavefunction( self.comm, i, eig,
+                                          -self._raw_rwfns[:,i/2,0].conjugate()) )
       else: # no krammer degeneracy
         self._raw_rwfns = \
             gtor_fourrier(self.raw_gwfns, self.rvectors, self.gvectors, self.comm)
@@ -337,16 +345,18 @@ class Extract(AbstractExtractBase):
     comm = self.comm if self.comm != None else world
     assert self.success
     assert self.nnodes == comm.size, \
-           RuntimeError("Must read wavefunctions with as many nodes as they were written to disk.")
-    with redirect(fout="") as streams:
-      with Changedir(self.directory, comm=self.comm) as directory:
-        path = join(self.directory, self.escan.WAVECAR)
-        assert exists(path), IOError("{0} does not exist.".format(path))
-        self.escan._write_incar(self.comm, self.structure)
-        nbstates = self.escan.nbstates if self.escan.potential == soH and norm(self.escan.kpoint)\
-                   else self.escan.nbstates / 2
-        result = read_wavefunctions(self.escan, range(nbstates), comm)
-        remove(self.escan._INCAR + "." + str(world.rank))
+           RuntimeError( "Must read wavefunctions with as many nodes as "\
+                         "they were written to disk.")
+    with Changedir(self.directory, comm=self.comm) as directory:
+      path = join(self.directory, self.functional.WAVECAR)
+      assert exists(path), IOError("{0} does not exist.".format(path))
+      self.functional._write_incar(self.comm, self.structure)
+      if self.functional.potential == soH and norm(self.functional.kpoint):
+        nbstates = self.functional.nbstates
+      else: nbstates = self.functional.nbstates / 2
+      with redirect(fout="") as streams:
+        result = read_wavefunctions(self.functional, range(nbstates), comm, self.is_krammer)
+      remove(self.functional._INCAR + "." + str(world.rank))
 
     cell = self.structure.cell * self.structure.scale * angstrom
     normalization = det(cell.rescale(a0)) 
@@ -393,20 +403,18 @@ class Extract(AbstractExtractBase):
   @property
   @make_cached
   @broadcast_result(attr=True, which=0)
-  def _wavefunction_path(self): return self.solo().escan.WAVECAR
+  def _wavefunction_path(self): return self.solo().functional.WAVECAR
 
   @property
   def is_spinor(self):
     """ True if wavefunction is a spinor. """
     from . import soH
-    return self.escan.potential == soH
+    return self.functional.potential == soH
 
   @property
   def is_krammer(self):
-    """ True if wavefunction is a spinor. """
-    from numpy.linalg import norm
-    from . import soH
-    return norm(self.escan.kpoint) < 1e-12
+    """ True if wavefunction has krammer degenerate equivalent. """
+    return self.functional.is_krammer
 
 
 
@@ -414,9 +422,10 @@ class Extract(AbstractExtractBase):
     """ Passes on public attributes to vff extractor, then to escan functional. """
     if name[0] != '_':
       if name in dir(self._vffout): return getattr(self._vffout, name)
-      elif self.success and hasattr(self.escan, name):
-        return getattr(self.escan, name)
-    raise AttributeError("Unknown attribute {0}. It could be the run is unsuccessfull.".format(name))
+      elif self.success and hasattr(self.functional, name):
+        return getattr(self.functional, name)
+    raise AttributeError("Unknown attribute {0}. It could be the "\
+                         "run is unsuccessfull.".format(name))
 
   def __dir__(self):
     """ Returns list attributes.
@@ -429,6 +438,36 @@ class Extract(AbstractExtractBase):
     result = [u for u in self.__dict__.keys() if u[0] != "_"]
     result.extend( [u for u in dir(self.__class__) if u[0] != "_"] )
     result.extend( [u for u in dir(self._vffout) if u[0] != "_"] )
-    if self.success: result.extend( [u for u in dir(self.escan) if u[0] != "_"] )
+    if self.success: result.extend( [u for u in dir(self.functional) if u[0] != "_"] )
     return list( set(result) - exclude )
 
+
+class MassExtract(AbstractMassExtractDirectories):
+  def __init__(self, path = ".", **kwargs):
+    """ Initializes AbstractMassExtractDirectories.
+    
+    
+        :Parameters:
+          path : str or None
+            Root directory for which to investigate all subdirectories.
+            If None, uses current working directory.
+          kwargs : dict
+            Keyword parameters passed on to AbstractMassExtractDirectories.
+
+        :kwarg naked_end: True if should return value rather than dict when only one item.
+        :kwarg unix_re: converts regex patterns from unix-like expression.
+    """
+    # this will throw on unknown kwargs arguments.
+    if 'Extract' not in kwargs: kwargs['Extract'] = Extract
+    super(MassExtract, self).__init__(path, **kwargs)
+
+    self.OUTCAR = Extract().OUTCAR
+    """ Name of the escan output file. """
+    self.vffOUTCAR = Extract()._vffout.OUTCAR
+    """ Name of the vff output file. """
+    self.FUNCCAR = Extract().FUNCCAR
+    """ Name of the escan input pickle. """
+
+  def __is_calc_dir__(self, dirpath, dirnames, filenames):
+    """ Returns true this directory contains a calculation. """
+    return self.OUTCAR in filenames or self.vffOUTCAR in filenames or self.FUNCCAR in filenames

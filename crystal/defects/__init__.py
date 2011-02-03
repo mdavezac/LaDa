@@ -5,10 +5,10 @@ __all__ = [ 'inequivalent_sites', 'vacancy', 'substitution', 'charged_states', \
             'magmom', 'low_spin_states', 'high_spin_states', 'magname', \
             'ExtractSingle', 'ExtractMaterial' ]
 
-from extract import SingleDefect as ExtractSingle, Material as ExtractMaterial
+from extract import Single as ExtractSingle, Material as ExtractMaterial
 
-def inequivalent_sites(lattice, type):
-  """ Yields sites occupied by type which are inequivalent. 
+def symmetrically_inequivalent_sites(lattice, type):
+  """ Yields sites occupied by type which are inequivalent according to symmetry operations. 
   
       When creating a vacancy on, say, "O", or a substitution of "Al" by "Mg",
       there may be more than one site which qualifies. We want to iterate over
@@ -29,7 +29,7 @@ def inequivalent_sites(lattice, type):
       :return: indices of inequivalent sites.
   """
   from numpy.linalg import inv, norm
-  from lada.crystal import fold_vector
+  from .. import fold_vector
 
   # all sites with occupation "type". 
   sites = [site for site in lattice.sites if type in site.type]
@@ -55,54 +55,177 @@ def inequivalent_sites(lattice, type):
     i += 1
   return site_indices
 
-def vacancy(structure, lattice, type):
-  """ Yields all inequivalent vacancies. 
-  
-      Loops over all symmetrically inequivalent vacancies of given type.
 
+def first_shell(structure, pos, tolerance=0.25):
+  """ Iterates though first neighbor shell. """
+  from numpy.linalg import inv, norm
+  from .. import Neighbors
+
+  neigh = [n for n in Neighbors(structure, 12, pos)]
+  d = neigh[0].distance
+  return [n for n in neigh if abs(n.distance - d) < tolerance * d]
+
+def coordination_number(structure, pos, tolerance=0.25):
+  """ Returns coordination number of given position in structure. """
+  return len(first_shell(structure, pos, tolerance))
+  
+def coordination_inequivalent_sites(lattice, type, tolerance=0.25):
+  """ Yields sites occupied by type which are inequivalent according to their coordination number. 
+  
+      When creating a vacancy on, say, "O", or a substitution of "Al" by "Mg",
+      there may be more than one site which qualifies. We want to iterate over
+      those sites which are inequivalent only, so that only the minimum number
+      of operations are performed. In this case, inequivalent means different
+      number of first neighbors.
+
+      :note:
+        lattice sites can be defined as occupiable by more than one atomic type\:
+        lattice.site.type[i] = ["Al", "Mg"]. These sites will be counted if
+        type in lattice.site.type, where type is the input parameter.
+ 
       :Parameters:
-        structure : `lada.crystal.Structure`
-          structure on which to operate
-        lattice : `lada.crystal.Lattice` 
-          back-bone lattice of the structure.
-        type : str
-          type of atoms for which to create vacancy.
+          lattice : `lada.crystal.Lattice`
+            Lattice for which to find equivalent sites.
+          type : str 
+            Atomic specie for which to find inequivalent sites. 
 
-      :return: a 3-tuple consisting of:
-
-        - the structure with a vacancy.
-        - the vacancy atom from the original structure. It is given an
-          additional attribute, C{index}, referring to list of atoms of the
-          original structure.
-        - A suggested name for the vacancy: site_i, where i is the site index
-          of the vacancy (in the lattice).
+      :return: indices of inequivalent sites.
   """
-  from copy import deepcopy
-  
-  structure = deepcopy(structure)
-  inequivs = inequivalent_sites(lattice, type)
-  for i in inequivs:
+  from numpy.linalg import inv, norm
+  from .. import Neighbors
 
+  # all sites with occupation "type". 
+  sites = [(i, site) for i, site in enumerate(lattice.sites) if type in site.type]
+
+  indices = []
+  coords  = set()
+  for i, site in sites:
+    coord = coordination_number(lattice.to_structure(), site.pos, tolerance)
+    if coord not in coords:
+      indices.append(i)
+      coords.add(coord)
+  return indices
+
+
+def non_interstitials(structure, indices, mods):
+  """ Yields substitutions for given indices to structure. """
+  from copy import deepcopy
+  from re import compile
+  if not hasattr(indices, '__len__'): indices = [indices]
+
+  cation_regex  = compile(r'^\s*cations?\s*$')
+  vacancy_regex = compile(r'^\s*vacanc(?:y|ies)\s*$')
+  specie_regex  = compile(r'^\s*[A-Z][a-z]?(?:\d+)\s*$')
+
+  # modify input to something which makes sense and check it.
+  if mods == None: all_mods = [None]
+  elif isinstance(mods, str): all_mods = [mods]
+  else: all_mods = mods
+  mods = []
+  whatthehell = []
+  for type in all_mods:
+    if type == None: mods.append(None)
+    elif cation_regex.match(type.lower()) != None:  mods.extend(_cationic_species(structure)) 
+    elif vacancy_regex.match(type.lower()) != None: mods.append(None)
+    elif specie_regex.match(type) != None: mods.append(type)
+    else: whatthehell.append(type)
+  assert len(whatthehell) == 0,\
+         ValueError('Cannot understand following specie types: {0}.'.format(whatthehell))
+  mods = list(set(mods))
+
+  # loop over atoms to modify.
+  for i, j in enumerate(indices):
+    assert j < len(structure.atoms), RuntimeError("Site index not found.")
+    input_atom = deepcopy(structure.atoms[j])
+    input_atom.index = j
+    # loop over atoms to modifications.
+    for modif in mods:
+      result = deepcopy(structure)
+      if modif == input_atom.type: continue # can't substitute with self.
+      if modif == None: 
+        result.atoms.pop(j)
+        name = "vacancy_{0}".format(input_atom.type)
+        output_atom = deepcopy(input_atom)
+        output_atom.type = 'None'
+      else: 
+        result.atoms[j].type = modif
+        output_atom = deepcopy(input_atom)
+        output_atom.type = modif
+        name = "{0}_on_{1}".format(output_atom.type, input_atom.type)
+      if len(indices) > 1: name += "/site_{0}".format(i)
+      result.name = name
+      yield result, output_atom, input_atom.type
+
+def inequiv_non_interstitials(structure, lattice, type, mods, do_coords = True, tolerance=0.25):
+  """ Loop over inequivalent non-interstitials. """
+  if do_coords: type = type.split()[0]
+  inequivs = coordination_inequivalent_sites(lattice, type, tolerance) if do_coords \
+             else symmetrically_inequivalent_sites(lattice, type)
+  indices = []
+  for i in inequivs:
     # finds first qualifying atom
     for which, atom in enumerate(structure.atoms):
       if atom.site == i: break
+    indices.append(which)
+  for result in non_interstitials(structure, indices, mods): yield result
 
-    assert which < len(structure.atoms), RuntimeError("Site index not found.")
 
-    # name of this vacancy
-    name = "vacancy_{0}".format(type)
-    if len(inequivs) > 1: name += "/site_{0}".format(i)
-    # structure 
+def interstitials(structure, lattice, interstitials):
+  """ Yields interstitial. """
+  from copy import deepcopy
+  from numpy import dot
+  for desc in interstitials:
+    assert hasattr(desc, "__iter__"),\
+           ValueError("For interstitials, desc should be a sequence: {0}".format(desc))
+    assert len([u for u in desc]) == 3,\
+           ValueError("For interstitials, desc should be a sequence of length 3: {0}".format(desc))
+    type, position, name = tuple([u for u in desc])
     result = deepcopy(structure)
-    result.name = name
-    # creates vacancy and keeps atom for record
-    atom = deepcopy(result.atoms.pop(which))
-    atom.index = which
-    # returns structure with vacancy.
-    yield result, atom
+    result.add_atom = dot(lattice.cell, position), type
+    result.name = "{0}_interstitial_{1}".format(type, name)
+    defect = deepcopy(structure.atoms[-1])
+    defect.index = -1
+    yield result, defect, 'None'
 
-def all_defects(structure, lattice, type, subs):
-  """ Yields all inequivalent point-defects. 
+def _cationic_species(structure):
+  """ Returns list of cationic species. """
+  return list(set([a.type for a in structure.atoms if a.type not in ['O', 'S', 'Se', 'Te']]))
+
+def iterdefects(structure, lattice, defects, tolerance=0.25):
+  """ Iterates over all defects for any number of types and modifications. """
+  from re import compile
+
+  cation_regex       = compile(r'^\s*cations?\s*$')
+  cation_id_regex    = compile(r'^\s*cations?(\d+)\s*$')
+  cation_coord_regex = compile(r'^\s*cations?\s+coord\s*$')
+  interstitial_regex = compile(r'^\s*interstitials?\s*$')
+  type_regex         = compile(r'^\s*(?:vacanc(?:y|ies)|[A-Z][a-z]?(?:\d+)?)(?:\s+coord)?\s*$')
+  already_cations    = False
+
+  for key, value in defects.items():
+    if key == None: keys = [None]
+    elif interstitial_regex.match(key.lower()) != None: keys = [None]
+    elif cation_regex.match(key.lower()) != None:
+      assert already_cations == False, ValueError('Can only have one cation tag.')
+      already_cations = True
+      keys = _cationic_species(structure)
+    elif cation_id_regex.match(key.lower()) != None:
+      assert already_cations == False, ValueError('Can only have one cation tag.')
+      already_cations = True
+      d = int(cation_id_regex.match(key.lower()).group(1))
+      keys = ['{0}{1}'.format(k, d) for k in _cationic_species(structure)]
+    elif cation_coord_regex.match(key.lower()) != None:
+      assert already_cations == False, ValueError('Can only have one cation tag.')
+      already_cations = True
+      keys = ['{0} coord'.format(k) for k in _cationic_species(structure)]
+    else: keys = [key]
+    for type in keys:
+      assert type == None or type_regex.match(type) != None,\
+             ValueError("Cannot understand type {0}.".format(type))
+      for result in any_defect(structure, lattice, type, value, tolerance): yield result
+
+def any_defect(structure, lattice, type, subs, tolerance=0.25):
+  """ Yields point-defects of a given type and different modifications. 
   
       Loops over all equivalent point-defects.
 
@@ -133,54 +256,40 @@ def all_defects(structure, lattice, type, subs):
           additional attribute, C{index}, referring to list of atoms in the
           structure.
   """
+  from re import compile
   from copy import deepcopy
   from numpy import dot
 
-  # Case for vacancies.
-  if subs == None: 
-    for args in vacancy(structure, lattice, type):
-      yield args
-    return
-  # case for interstitials.
-  if type == None:
-    assert hasattr(subs, "__iter__"),\
-           ValueError("For interstitials, subs should be a sequence: {0}".format(subs))
-    assert len([u for u in subs]) == 3,\
-           ValueError("For interstitials, subs should be a sequence of length 3: {0}".format(subs))
-    type, position, name = tuple([u for u in subs])
-    result = deepcopy(structure)
-    result.add_atom = dot(lattice.cell, position), type
-    result.name = "{0}_interstitial_{1}".format(type, name)
-    defect = deepcopy(structure.atoms[-1])
-    defect.type = "None"
-    defect.index = -1
-    yield result, defect
-    return
+  specie_regex = compile(r'^\s*[A-Z][a-z]?\s*$')
+  id_regex     = compile(r'^\s*([A-Z][a-z]?)(\d+)\s*$')
+  coord_regex  = compile(r'^\s*([A-Z][a-z]?)\s+coord\s*$')
 
-  result = deepcopy(structure)
-  inequivs = inequivalent_sites(lattice, type)
-  for i in inequivs:
-
-    # finds first qualifying atom
-    for which, atom in enumerate(structure.atoms):
+  # Interstitials.
+  if hasattr(type, 'rstrip'): type = type.rstrip()
+  if hasattr(type, 'lstrip'): type = type.lstrip()
+  if type == None or type.lower() in ['interstitial', 'interstitials', 'none']: 
+    for result in interstitials(structure, lattice, subs): yield result
+  # Old: looking for specific atoms.
+  elif id_regex.match(type) != None:
+    # looks for atom to modify
+    found = id_regex.match(type)
+    type, index = found.group(1), int(found.group(2)) 
+    if index < 1: index = 1
+    for i, site in enumerate(lattice.sites):
+      if type not in site.type: continue
+      index -= 1
+      if index == 0: break
+    assert index == 0, ValueError("Could not find {0}.".format(type))
+    for index, atom in enumerate(structure.atoms):
       if atom.site == i: break
-
-    assert which < len(structure.atoms), RuntimeError("Site index not found.")
-
-    # name of this substitution
-    name = "{0}_on_{1}".format(subs, type) 
-    if len(inequivs) > 1: name += "/site_{0}".format(i)
-    # creates substitution
-    orig = result.atoms[which].type
-    result.atoms[which].type = subs
-    # substituted atom.
-    substituted = deepcopy(result.atoms[which])
-    substituted.index = which
-    result.name = name
-    # returns structure with vacancy.
-    yield result, substituted
-    # removes substitution
-    result.atoms[which].type = orig
+    assert atom.site == i, ValueError('Could not find atomic-site.')
+    for result in non_interstitials(structure, index, subs): yield result
+  # O, Mn ... but not O1: looking for symmetrically inequivalent sites.
+  elif specie_regex.match(type) != None: 
+    for result in inequiv_non_interstitials(structure, lattice, type, subs, False, tolerance): yield result
+  elif coord_regex.match(type) != None: 
+    for result in inequiv_non_interstitials(structure, lattice, type, subs, True, tolerance): yield result
+  else: raise ValueError("Don't understand defect type {0}".format(type))
 
 def charged_states(species, A, B):
   """ Loops over charged systems. 
@@ -214,6 +323,8 @@ def charged_states(species, A, B):
         - Number of electrons to add to the system (not charge). 
         - a suggested name for the charge state calculation.
   """
+  if A == 'None': A = None
+  if B == 'None': B = None
   assert A != None or B != None, ValueError("Both A and B cannot be None")
 
   if A == None:   # vacancy! Charge states are in 0 to -B.oxidation.
@@ -310,7 +421,7 @@ def potential_alignment(defect, host, maxdiff=0.5):
   from operator import itemgetter
   from numpy import mean, array, abs
   from quantities import eV
-  from . import specie_list
+  from .. import specie_list
 
   if abs(defect.charge) < 1e-12: return 0 * eV
 
@@ -381,10 +492,10 @@ def third_order_charge_correction(structure, charge = None, n = 200, epsilon = 1
 
       :return: third order correction  to the energy in eV. Should be *added* to total energy.
   """
-  from ._crystal import third_order 
+  from .._crystal import third_order 
   from numpy import array
   from quantities import elementary_charge, eV, pi, angstrom, dimensionless
-  from ..physics import a0, Ry
+  from ...physics import a0, Ry
 
   if charge == None: charge = 1e0
   elif charge == 0: return 0e0 * eV
@@ -417,9 +528,9 @@ def first_order_charge_correction(structure, charge=None, epsilon=1e0, cutoff=15
   """
   from numpy.linalg import norm
   from quantities import elementary_charge, eV
-  from ..crystal import Structure
-  from ..physics import Ry
-  try: from ..pcm import Clj 
+  from .. import Structure
+  from ...physics import Ry
+  try: from ...pcm import Clj 
   except ImportError as e:
     print "Could not import Point-Charge Model package (pcm). \n"\
           "Cannot compute first order charge correction.\n"\
@@ -569,7 +680,7 @@ def electron_counting(structure, defect, species, extrae):
         elctrons.
   """
   from numpy import array
-  from ..physics import Z
+  from ...physics import Z
   indices = magnetic_neighborhood(structure, defect, species)
 
   # no magnetic neighborhood.
@@ -682,7 +793,7 @@ def high_spin_states(structure, defect, species, extrae, do_integer=True, do_ave
 
   def is_d(t): 
     """ Determines whether an atomic specie is transition metal. """
-    from ..physics import Z
+    from ...physics import Z
     z = Z(t)
     return (z >= 21 and z <= 30) or (z >= 39 and z <= 48) or (z >= 57 and z <= 80) 
 

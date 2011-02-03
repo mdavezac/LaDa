@@ -1,32 +1,29 @@
-""" Contains basic data type and methods for crystal structure and lattices.
-
-    C++ bindings are located in L{_crystal}. A fair number of enhancements are
-    added directly within the python code in __init__.py. In practice all
-    public interfaces to C++ bindings should be available directly in the
-    L{crystal} namespace.
-"""
+from ._docstring import __doc__ 
 __all__ = [ 'FreezeAtom', 'which_site', 'Sites', 'SymmetryOperator', 'Lattice', 'to_cartesian',\
             'get_point_group_symmetries', 'read_structure', 'sort_layers', 'Site', \
             'smith_indices', 'Atom', 'kAtom', 'fold_vector', 'Structure', 'FreezeCell',\
             'smith_normal_transform', 'get_space_group_symmetries', 'Neighbors', 'Neighbor', \
             'read_pifile_structure', 'LayerDepth', 'to_fractional', 'linear_smith_index', \
-            'nb_valence_states', \
+            'nb_valence_states', 'to_voronoi', 'gaussian_projector', \
             # Below, only true python stuff
-            'deform_kpoints', 'read_poscar', 'specie_list', 'write_poscar',\
-            'structure_to_lattice', 'fill_structure', \
-            'A2BX4', 'bravais', 'gruber', 'vasp_ordered' ]
+            'deform_kpoints', 'specie_list', 'read_poscar', 'write_poscar',\
+            'write_oldvff', 'read_oldvff', 'structure_to_lattice', 'fill_structure', \
+            'A2BX4', 'bravais', 'gruber', 'vasp_ordered', 'binary' ]
+__docformat__ = "restructuredtext en"
 
 from _crystal import FreezeAtom, which_site, Site, SymmetryOperator, Lattice, to_cartesian,\
                      get_point_group_symmetries, read_structure, sort_layers, \
                      smith_indices, kAtoms, Atom, kAtom, fold_vector, Structure, FreezeCell,\
                      smith_normal_transform,  get_space_group_symmetries, Neighbors, Neighbor, \
                      read_pifile_structure, LayerDepth, to_fractional, linear_smith_index,\
-                     nb_valence_states, \
+                     nb_valence_states, to_voronoi, \
                      rStructure, rAtom, Sites, Atoms, kAtoms, StringVector # this line not in __all__
 
-from lada.opt.decorators import broadcast_result, add_setter
+from lada.opt.decorators import add_setter
+from read_write import read_poscar, write_poscar, write_oldvff, read_oldvff, icsd_cif
 import A2BX4
 import bravais
+import binary
 import gruber
 try: import defects
 except ImportError: pass # required vasp and jobs packages.
@@ -36,13 +33,16 @@ else: __all__.append('defects')
 def deform_kpoint(kpoint, ideal, relaxed):
   """ Deform kpoints from ideal cell to relaxed cell. 
 
-      @param kpoint: The kpoint to deform in cartesian coordinates.
-      @type kpoint: numpy array
-      @param ideal: The original (real-space) cell, as an ideal supercell of the lattice.
-      @type ideal: numpy 2d-array
-      @param relaxed: The relaxed (real-space) cell.
-      @type relaxed: numpy 2d-array
-      @return: the kpoint deformed from the ideal reciprocal cell to the
+
+      :Parameters:
+        kpoint : numpy array
+          The kpoint to deform in cartesian coordinates.
+        ideal : numpy 2d-array
+          The original (real-space) cell, as an ideal supercell of the lattice.
+        relaxed : numpy 2d-array
+          The relaxed (real-space) cell.
+
+      :return: the kpoint deformed from the ideal reciprocal cell to the
                relaxed reciprocal cell, in cartesian coordinates.
   """
   from numpy import dot, matrix
@@ -54,123 +54,9 @@ def deform_kpoint(kpoint, ideal, relaxed):
     if k[i] > 1e0-1e-6: k[i] = 0e0
   return dot(inv(relaxed.T), k.T)
   
-
-@broadcast_result(key=True)
-def read_poscar(types=None, path=None):
-  """ Tries to read a VASP POSCAR file.
-      
-      @keyword types: species in the POSCAR.
-      @type types: none, or sequence of objects convertible to str 
-      @keyword path: path to the POSCAR file.
-      @type path: string
-      @keyword comm: MPI communicator over which to read structure.
-      @type comm: boost.mpi.communicator
-      @return: (L{lada.crystal.Structure}) structure on success.
-  """ 
-  import re
-  from os.path import join, exists, isdir
-  from copy import deepcopy
-  from numpy import array, dot, transpose
-  from . import Structure, Atom
-  # if types is not none, converts to a list of strings.
-  if types != None:
-    if isinstance(types, str): types = [types] # can't see another way of doing this...
-    elif not hasattr(types, "__getitem__"): types = [str(types)] # single lone vasp.specie.Specie
-    else: types = [str(s) for s in types]
-      
-  if path == None: path = "POSCAR"
-  assert exists(path), IOError("Could not find path %s." % (path))
-  if isdir(path):
-    assert exists(join(path, "POSCAR")), IOError("Could not find POSCAR in %s." % (path))
-    path = join(path, "POSCAR")
-  result = Structure()
-  with open(path, "r") as poscar:
-    # gets name of structure
-    result.name = poscar.readline().strip()
-    if len(result.name) > 0:
-      if result.name[0] == "#": result.name = result.name[1:].strip()
-    # reads scale
-    result.scale = float(poscar.readline().split()[0])
-    # gets cell vectors.
-    cell = []
-    for i in range(3):
-      line = poscar.readline()
-      assert len(line.split()) >= 3,\
-             RuntimeError("Could not read column vector from poscar: %s." % (line))
-      cell.append( [float(f) for f in line.split()[:3]] )
-    result.cell = transpose(array(cell))
-    # checks for vasp 5 input.
-    is_vasp_5 = True
-    line = poscar.readline().split()
-    for i in line: 
-      if not re.match(r"[A-Z][a-z]?", i): 
-        is_vasp_5 = False
-        break
-    if is_vasp_5:
-      text_types = deepcopy(line)
-      if types != None:
-        assert set(text_types) in set(types) or set(text_types) == set(types), \
-               RuntimeError("Unknown species in poscar: %s not in %s." % (set(text_types), set(types)))
-      types = text_types
-      line = poscar.readline().split()
-    assert types != None, RuntimeError("No atomic species given in POSCAR or input.")
-    #  checks/reads for number of each specie
-    assert len(types) >= len(line), RuntimeError("Too many atomic species in POSCAR.")
-    nb_atoms = [int(u) for u in line]
-    # Checks whether cartesian or direct.
-    is_direct = poscar.readline().strip().lower()[0] == "d" 
-    # reads atoms.
-    for n, type in zip(nb_atoms, types):
-      for i in range(n):
-        line = poscar.readline().split()
-        pos = array([float(u) for u in line[:3]], dtype="float64")
-        if is_direct: pos = dot(result.cell, pos)
-        result.atoms.append( Atom(pos, type) )
-  return result
-    
 def specie_list(structure):
   """ Returns minimal list of species in alphabetical order. """
   return sorted(list(set([a.type for a in structure.atoms])))
-
-def write_poscar(structure, file, vasp5=False, substitute=None):
-  """ Writes a poscar to file. 
-  
-      >>> with open("POSCAR", "w") as file: write_poscar(structure, file, vasp5=True)
-
-      Species in structures can be substituted for others (when using vasp5 format).
-      Below, aluminum atoms are replaced by cadmium atoms. Other atoms are left unchanged.
-
-      >>> with open("POSCAR", "w") as file:
-      >>>   write_poscar(structure, file, vasp5=True, substitute={"Al":"Cd"})
-
-      @param structure: The structure to print out.
-      @param file: a stream (open file) to which to write.
-      @param vasp5: if true, include species in poscar, vasp-5 style.
-        Otherwise, does not print specie types.
-      @param substitute: if present, will substitute the atom type in the
-        structure. Can be incomplete. Only works with vasp5 = True.
-      @type substitute: dict
-  """
-  from numpy import matrix, dot
-  file.write(structure.name + "\n")
-  file.write(str(structure.scale)+ "\n")
-  for i in range(3): file.write("  %f %f %f\n" % tuple(structure.cell[:,i].flat))
-  species = specie_list(structure)
-  if vasp5: 
-    if substitute != None:
-      for s in species: file.write(" "+ substitute.pop(s,s) +" ")
-    else: 
-      for s in species: file.write(" "+s+" ")
-    file.write("\n")
-  for s in species: 
-    file.write(" %i " % (len([0 for atom in structure.atoms if atom.type == s])))
-  file.write("\nDirect\n")
-  inv_cell = matrix(structure.cell).I
-  for s in species: 
-    for atom in structure.atoms:
-      if atom.type != s: continue
-      file.write( "  %f %f %f\n" % tuple(dot(inv_cell, atom.pos).flat))
-  
 
 # Adds setter like propertie for easy input 
 def _add_atom(which, container):
@@ -181,12 +67,15 @@ def _add_atom(which, container):
     
      Only the first two arguments are necessary.
      None can be used as a place-holder for the last two arguments.
+
        - first argument: sequence of three numbers indicating position.
        - second argument: atomic type (or tuple of types for lattices).
-       - third argument: index of the site as existing in L{Structure.lattice}
-       - fourth argument: whether to freeze
-             positional and/or type degrees of freedom.
+       - third argument: index of the site as existing in `Structure.lattice`.
+       - fourth argument: whether to freeze positional and/or type degrees of
+         freedom.
+
   """ 
+
   def _fun(self, args):
     from numpy import array
     args = [x for x in args]
@@ -214,6 +103,7 @@ def _add_atom(which, container):
     if len(args) > 3:
       if args[2] != None: result.freeze = args[3]
     getattr(self, container).append(result)
+
   _fun.__doc__ = _add_atom.__doc__
   return _fun
 
@@ -225,7 +115,7 @@ def _add_atoms(which):
   """ Adds a list of atoms/sites to structure/lattice. 
   
       The argument is a sequence, each item of which could be used with
-      L{Structure.add_atom} (or L{Lattice.add_site} when appropriate).
+      `Structure.add_atom` (or `Lattice.add_site` when appropriate).
 
       >>> structure.add_atoms = ((0,0,0), "A"),\\
       >>>                       ((0.25,0,0), "B"),
@@ -479,6 +369,21 @@ def structure_to_lattice(structure):
 
 Structure.to_lattice = structure_to_lattice
 
+def lattice_to_structure(lattice, cell=None):
+  """ Converts lattice to structure.
+  
+      :kwarg cell:
+        The cell of the superstructure to create. It should be in the same
+        units as ``lattice.cell`` and in cartesian coordinates. It defaults to
+        the lattice's unit-cell.
+  """
+  from . import fill_structure
+  from numpy import array
+  if cell == None: cell = lattice.cell
+  return fill_structure( array(cell, dtype='float64'), lattice)
+
+Lattice.to_structure = lattice_to_structure
+
 
 def vasp_ordered(structure, attributes=None):
   """ Returns  a structure with correct VASP order of ions.
@@ -515,12 +420,14 @@ def vasp_ordered(structure, attributes=None):
 def fill_structure(cell, lattice = None):
   """ Returns a structure from knowledge of cell and lattice.
 
-      @param cell: Structure or cell to use to create a complete structure with all atoms.
-      @type cell: L{Structure}, L{rStructure}, or numpy 3x3 float64 array
-      @param lattice: Back-bone lattice of the super-structure to build. If
-        None, will use the *global* lattice set by L{Lattice.set_as_crystal_lattice}.
-      @type lattice: L{Lattice}
-      @raise RuntimeError: If the filled structure could not be created.
+      :Parameters:
+        cell : `Structure`, `rStructure`, or numpy 3x3 float64 array
+          Structure or cell to use to create a complete structure with all atoms.
+        lattice : `Lattice`
+          Back-bone lattice of the super-structure to build. If
+          None, will use the *global* lattice set by `Lattice.set_as_crystal_lattice`.
+      
+      :raises RuntimeError: If the filled structure could not be created.
   """
   from _crystal import _fill_structure_impl
   old_lattice = None
@@ -543,4 +450,46 @@ def fill_structure(cell, lattice = None):
   if old_lattice != None: old_lattice.set_as_crystal_lattice()
   
   return result
+
+Structure.write_poscar = write_poscar
+Structure.write_oldvff = write_oldvff
+
+def gaussian_projector(positions, center, cell, alpha=1e0):
+  """ Returns gaussian projector operator. 
+  
+      :Parameter:
+        positions : numpy array
+          Last dimension of this array must be 3. 
+        center : numpy array
+          1-dimensional vector of three elements. Center of the gaussian projector.
+        cell : numpy array
+          Cell into which gaussian projector is wrapped. I.e. this operator is
+          periodic.
+        alpha : numpy scalar
+          Factor within the gaussian, akin (but not equal) to width at half maximum.
+
+      :return: array = exp( alpha * norm(positions[i])**2 )
+
+      All arguments can have units. The return however is without units
+      (dimensionless).
+  """
+  from _crystal import _gaussian_projector_impl
+  length_units = None
+  if hasattr(positions, "units"): length_units = positions.units
+  elif hasattr(center, "units"):  length_units = center.units
+  elif hasattr(cell, "units"):    length_units = cell.units
+  if length_units != None:
+    if hasattr(cell, "units"):
+      try: cell = cell.rescale(length_units)
+      except: raise ValueError("Cell and positions have incompatible units.")
+    if hasattr(center, "units"):
+      try: center = center.rescale(length_units)
+      except: raise ValueError("Center and positions have incompatible units.")
+    if hasattr(alpha, "units"):
+      try: alpha_units = length_units ** -2
+      except: raise ValueError("Could not create alpha units from positions units.")
+      try: alpha = alpha.rescale(alpha_units)
+      except: raise ValueError("Could not rescale alpha to {0}.".format(alpha_units))
+      else: alpha = float(alpha.magnitude)
+  return _gaussian_projector_impl(positions, center, cell, alpha)
 

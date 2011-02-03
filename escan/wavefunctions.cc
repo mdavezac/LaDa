@@ -28,6 +28,8 @@ extern "C"
   void FC_GLOBAL_(escan_wfns_get_array_dimensions, ESCAN_WFNS_GET_ARRAY_DIMENSIONS)(int*, int*, int*);
   void FC_GLOBAL_(escan_wfns_read, ESCAN_WFNS_READ)
     (int*, int*, int*, int*, int const*, double*, double*, double*, int*);
+  void FC_GLOBAL_(escan_wfns_read_nokram, ESCAN_WFNS_READ_NOKRAM)
+    (int*, int*, int*, int*, int const*, double*, double*, double*);
   void FC_GLOBAL_(escan_get_nr, ESCAN_GET_NR)(int *);
   void FC_GLOBAL_(escan_get_mr_n, ESCAN_GET_MR_N)(int *);
   void FC_GLOBAL_(escan_get_n1_n2_n3, ESCAN_GET_N1_N2_N3)(int*, int*, int*);
@@ -82,7 +84,8 @@ namespace LaDa
 
     bp::tuple read_wavefunctions( bp::object const &_escan, 
                                   bp::object const &_indices, 
-                                  bm::communicator const &_comm)
+                                  bm::communicator const &_comm,
+                                  bool _is_krammer)
     {
       int const N = bp::extract<int>( _escan.attr("nbstates") );
       std::vector<int> indices;
@@ -149,25 +152,39 @@ namespace LaDa
       bp::object wfns = math::numpy::create_array<NPY_CDOUBLE>(n0, n1, n2, true);
       bp::object gpoints = math::numpy::create_array<NPY_DOUBLE>(g0, g1, true);
       bp::object projs = math::numpy::create_array<NPY_DOUBLE>(g0, true);
-      bp::object inverse = math::numpy::create_array<NPY_INT>(g0, true);
+      bp::object inverse; 
+      if(_is_krammer) inverse = math::numpy::create_array<NPY_INT>(g0, true);
       
       math::numpy::get_pyarray_pointer(wfns)->dimensions[0]
         = math::numpy::get_pyarray_pointer(gpoints)->dimensions[0];
 
       // finally reads wavefunctions
-      FC_GLOBAL_(escan_wfns_read, ESCAN_WFNS_READ)
-              ( 
-                &n0, &n1, &n2, &g0,  // dimensions
-                &(indices[0]),      // indices_ to wavefunctions
-                // pointer to wavefunctions data
-                math::numpy::get_data_pointer<double *const>(wfns),    
-                // pointer to gpoint  data
-                math::numpy::get_data_pointer<double *const>(gpoints), 
-                // pointer to projector data (smooth cutoff)
-                math::numpy::get_data_pointer<double *const>(projs),   
-                // pointer to -G indices
-                math::numpy::get_data_pointer<int* const>(inverse)            
-              );
+      if(_is_krammer)
+        FC_GLOBAL_(escan_wfns_read, ESCAN_WFNS_READ)
+                ( 
+                  &n0, &n1, &n2, &g0,  // dimensions
+                  &(indices[0]),      // indices_ to wavefunctions
+                  // pointer to wavefunctions data
+                  math::numpy::get_data_pointer<double *const>(wfns),    
+                  // pointer to gpoint  data
+                  math::numpy::get_data_pointer<double *const>(gpoints), 
+                  // pointer to projector data (smooth cutoff)
+                  math::numpy::get_data_pointer<double *const>(projs),   
+                  // pointer to -G indices
+                  math::numpy::get_data_pointer<int* const>(inverse)            
+                );
+      else
+        FC_GLOBAL_(escan_wfns_read_nokram, ESCAN_WFNS_READ_NOKRAM)
+                ( 
+                  &n0, &n1, &n2, &g0,  // dimensions
+                  &(indices[0]),      // indices_ to wavefunctions
+                  // pointer to wavefunctions data
+                  math::numpy::get_data_pointer<double *const>(wfns),    
+                  // pointer to gpoint  data
+                  math::numpy::get_data_pointer<double *const>(gpoints), 
+                  // pointer to projector data (smooth cutoff)
+                  math::numpy::get_data_pointer<double *const>(projs)
+                );
       // and cleanup fortran arrays.
       FC_GLOBAL_(escan_wfns_cleanup, ESCAN_WFNS_CLEANUP)(); 
       // returns a 4-tuple.
@@ -302,27 +319,30 @@ namespace LaDa
       (
         "read_wavefunctions", 
         &read_wavefunctions,
-        (bp::arg("escan"), bp::arg("indices"), bp::arg("comm")),
+        (bp::arg("escan"), bp::arg("indices"), bp::arg("comm"), bp::arg("iskrammer")),
         "Context with temporary arrays to wavefunctions and corresponding g-vectors.\n\n"
-        "@param escan: Escan functional with which calculation were performed.\n"
-        "@param indices: index or indices for which to recover the wavefunctions. "
+        ":Parameters:\n"
+        "  escan\n    Escan functional with which calculation were performed.\n"
+        "  indices\n    index or indices for which to recover the wavefunctions. "
           "Indices of wavefunctions correspond to the eigenvalues "
           "returned by the functional during calculation.\n"
-        "@param comm: Communicator of same size as for calculations.\n"
-        "@return: (wavefunctions, g-vectors, projs, inverse).\n"
+        "  comm\n    Communicator of same size as for calculations.\n"
+        "  iskrammer : bool\n    True if escan uses krammer defeneracy.\n\n"
+        ":return: (wavefunctions, g-vectors, projs, inverse).\n"
           "  - an spin by N by x matrix holding the N wavefuntions/spinor.\n",
           "  - a 3 by x matrix with each row a G-vector.\n"
           "  - a 3 by x matrix with each row a R-vector.\n"
           "  - one-dimensional array of real coefficients to smooth higher energy G-vectors.\n"
           "  - one-dimensional array of integer indices to map G-vectors to -G.\n"
       );
-      bp::def( "to_realspace", &to_realspace, (bp::arg("escan"), bp::arg("wfns"), bp::arg("comm")),
+      bp::def( "to_realspace", &to_realspace,
+               (bp::arg("escan"), bp::arg("wfns"), bp::arg("comm")),
                "Returns wavefunctions in real-space.\n\n"
-               "@param escan: Escan funtional.\n"
-               "@param wfns: Array of reciprocal-space wavefunctions.\n"
-               "@type wfns: numpy array\n"
-               "@param comm: boost mpi communicator.\n"
-               "@return: (numpy array real-space wfns, generator/array of positions\n");
+               ":Parameters:\n"
+               "  escan\n    Escan functional.\n"
+               "  wfns : numpy array\n    Array of reciprocal-space wavefunctions.\n"
+               "  comm\n    boost mpi communicator.\n"
+               ":return: (numpy array real-space wfns, generator/array of positions\n");
     }
 
 

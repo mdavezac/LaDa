@@ -1,18 +1,21 @@
 """ Miscellaneous """
 __docformat__  = 'restructuredtext en'
 from types import ModuleType
-import _opt 
+from abc import ABCMeta, abstractmethod, abstractproperty
 from contextlib import contextmanager
+
+import _opt 
 from _opt import __load_vasp_in_global_namespace__, __load_escan_in_global_namespace__,\
                  cReals, _RedirectFortran, ConvexHull, ErrorTuple
 from changedir import Changedir
 from tempdir import Tempdir
 from decorators import broadcast_result, make_cached
+from ._ordered_dict import OrderedDict
 
 __all__ = [ '__load_vasp_in_global_namespace__', '__load_escan_in_global_namespace__',\
             'cReals', 'ConvexHull', 'ErrorTuple', 'redirect_all', 'redirect', 'read_input',\
             'LockFile', 'acquire_lock', 'open_exclusive', 'RelativeDirectory', 'streams',
-            'AbstractBaseClass', 'convert_from_unix_re' ]
+            'AbstractExtractBase', 'convert_from_unix_re', 'OrderedDict' ]
 
 streams = _RedirectFortran.fortran
 """ Name of the streams. """
@@ -439,7 +442,7 @@ class RelativeDirectory(object):
       self.relative = value[1]
       return
     if len(value.rstrip().lstrip()) == 0: value = getcwd()
-    else: self._relative = relpath(expanduser(expandvars(value)), self.envvar) 
+    self._relative = relpath(expanduser(expandvars(value)), self.envvar) 
     self.hook(self.path)
 
   @property
@@ -520,6 +523,7 @@ class AbstractExtractBase(object):
         - directory: root directory where output should exist.
         - comm : boost.mpi.communicator in case of mpi syncronization.
   """
+  __metaclass__ = ABCMeta
   def __init__(self, directory=None, comm=None):
     """ Initializes an extraction base class.
 
@@ -529,7 +533,7 @@ class AbstractExtractBase(object):
           comm : boost.mpi.communicator or None
             Processes over which to synchronize output.
     """
-    super(AbstractExtractBase, self).__init__()
+    object.__init__(self)
 
     from os import getcwd
     from . import RelativeDirectory
@@ -555,15 +559,14 @@ class AbstractExtractBase(object):
   @directory.setter
   def directory(self, value): self._directory.path = value
 
-  @property
-  @broadcast_result(attr=True, which=0)
+  @abstractproperty
   def success(self):
     """ Checks for success. 
 
         Should never ever throw!
         True if calculations were successfull, false otherwise.
     """
-    abstract 
+    pass
 
 
   def __directory_hook__(self):
@@ -613,6 +616,61 @@ class AbstractExtractBase(object):
   def __repr__(self):
     from os.path import relpath
     return "{0}(\"{1}\")".format(self.__class__.__name__, self._directory.unexpanded)
+
+class AbstractSearchOutcar(object):
+  """ A mixin to include standard methods to search OUTCAR.
+  
+      This mixin only includes the methods themselves. It expects the derived
+      class to have an OUTCAR attribute. 
+  """ 
+  def _search_OUTCAR(self, regex, flags=0):
+    """ Looks for all matches. """
+    from os.path import exists, join
+    from re import compile, M as moultline
+    from numpy import array
+
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
+    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
+
+    result = []
+    regex  = compile(regex, flags)
+    with open(path, "r") as file:
+      if moultline & flags: 
+        for found in regex.finditer(file.read()): yield found
+      else:
+        for line in file: 
+          found = regex.search(line)
+          if found != None: yield found
+
+  def _find_first_OUTCAR(self, regex):
+    """ Returns first result from a regex. """
+    for first in self._search_OUTCAR(regex): return first
+    return None
+
+  def _rsearch_OUTCAR(self, regex, flags=0):
+    """ Looks for all matches starting from the end. """
+    from os.path import exists, join
+    from re import compile, M as moultline
+    from numpy import array
+
+    path = self.OUTCAR if len(self.directory) == 0 else join(self.directory, self.OUTCAR)
+    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
+
+    result = []
+    regex  = compile(regex)
+    with open(path, "r") as file:
+      lines = file.read() if moultline & flags else file.readlines()
+    if moultline & flags: 
+      for v in [u for u in regex.finditer(lines)]: yield v
+    else:
+      for line in lines[::-1]:
+        found = regex.search(line)
+        if found != None: yield found
+
+  def _find_last_OUTCAR(self, regex):
+    """ Returns first result from a regex. """
+    for last in self._rsearch_OUTCAR(regex): return last
+    return None
 
 def convert_from_unix_re(pattern):
   """ Converts unix-command-line like regex to python regex.

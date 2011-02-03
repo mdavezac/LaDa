@@ -64,6 +64,14 @@ def goto(self, arg):
     return
   ip.user_ns["current_jobdict"] = result
   current = ip.user_ns["current_jobdict"]
+  good = not current.is_tagged
+  if good:
+    for value in current.values():
+      good = not value.is_tagged
+      if good: break
+  if not good:
+    print '**** Current job and subjobs are all off; '\
+          'jobparams (except onoff) and collect will not work.'
   if path == None: return
   dir = join(splitpath(path)[0], current.name[1:]) 
   if exists(dir): chdir(dir)
@@ -84,9 +92,9 @@ def iterate(self, event):
     if "_lada_subjob_iterator" in ip.user_ns: 
       iterator = ip.user_ns["_lada_subjob_iterator"]
     else:
-      iterator = current.root.walk_through()
+      iterator = current.root.itervalues()
     while True:
-      try: job, d = iterator.next()
+      try: job = iterator.next()
       except StopIteration: 
         print "Reached end of job list."
         return 

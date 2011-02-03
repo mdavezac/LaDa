@@ -7,6 +7,8 @@
 #include <boost/python/borrowed.hpp>
 #include <boost/python/def.hpp>
 
+#include <numpy/arrayobject.h>
+
 #include <math/eigen.h>
 #include <opt/types.h>
 #include <physics/physics.h>
@@ -22,6 +24,7 @@
 #include "neighbors.hpp"
 #include "symmetry_operator.hpp"
 #include "which_site.hpp"
+#include "misc.hpp"
 
 LaDa::types::t_real third_order(LaDa::math::rMatrix3d const & _matrix, LaDa::types::t_int _n)
 {
@@ -70,7 +73,8 @@ BOOST_PYTHON_MODULE(_crystal)
   scope.attr("__doc__") = "This namespace is imported into lada.crystal.\n";
   bp::docstring_options doc_options(true, false);
 
-  // loads lada.math first
+  // imports numpy and loads lada.math first
+  import_array();
   namespace bp = boost::python;
   bp::handle<> math( bp::borrowed(PyImport_ImportModule("lada.math")) );
 
@@ -88,4 +92,5 @@ BOOST_PYTHON_MODULE(_crystal)
   LaDa::Python::expose_neighbors();
   LaDa::Python::expose_symmetry_operator();
   LaDa::Python::expose_which_site();
+  LaDa::python::expose_misc();
 }

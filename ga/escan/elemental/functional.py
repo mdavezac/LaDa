@@ -164,8 +164,11 @@ class Darwin:
         Maximizes fitness by default.
     """
     from math import fabs
-    if fabs(a.fitness - b.fitness) <  tolerance: return 0
-    return 1 if a.fitness < b.fitness else -1
+    a, b = a.fitness, b.fitness
+    if hasattr(b, 'rescale') and hasattr(a, 'magnitude'):
+      a, b = a.magnitude, b.rescale(a.units).magnitude
+    if fabs(a-b) <  tolerance: return 0
+    return 1 if float(a-b) < 0 else -1
 
   def restart(self, outdir, comm = None):
     """ Saves current status. """
@@ -294,8 +297,8 @@ class Darwin:
     self.age = self.Extract(outdir.path, comm).next_age
     self.evaluator._outdir.relative = outdir.relative
     self.evaluator.outdir = join(self.evaluator.outdir, self.age)
-    if self.color != None: 
-      self.evaluator.outdir = join(self.evaluator.outdir, "pool_{0}".format(self.color))
+#   if self.color != None: 
+#     self.evaluator.outdir = join(self.evaluator.outdir, "pool_{0}".format(self.color))
 
     # now goes to work
     with Changedir(join(outdir.path, self.age), comm=comm) as cwd:

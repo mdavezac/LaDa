@@ -146,6 +146,53 @@ def serial_population_evaluation(self, evaluator, comm = None):
     if not hasattr(indiv, "fitness" ): 
       indiv.fitness = evaluator(indiv, comm=comm)
 
+def bleeder_evaluation(self, evaluator, pools, comm):
+  """ MPI Evaluation using an on-disk dictionary.
+  
+      :Parameter: 
+        self 
+          A *darwin* type object with ``offspring`` and ``population``
+          attributes. Only those on the root process matter. However, at the
+          end of the call, all processes will share the same ``offspring`` and
+          ``population``. 
+        evaluator 
+          An object capable of evaluating individuals.
+        pools
+          The number of pools of processes to create.
+        comm  : None or boost.mpi.communicator
+          Communication object. 
+  """
+  from operator import itemgetter
+  from ..jobs import JobDict, Bleeder
+
+  # creates job-dictionary.
+  jobdict = JobDict()
+    
+  # goes throught individuals which need be evaluated
+  # bleeder only looks at jobdict from root processs.
+  if comm == None or comm.rank == 0: 
+    for name, pop in [('off', self.offspring), ('pop', self.population)]:
+      for index, indiv in enumerate(pop):
+        job = jobdict / '{0}/{1}'.format(name, index)
+        job.functional = evaluator
+        job.jobparams['indiv'] = indiv
+        # lets not recompute already known individuals. Need to keep them as record though.
+        if hasattr(indiv, "fitness"): job.tag() 
+
+  # Creates a bleeding job-dict, eg a JobDictionary on file which can be
+  # iterated over once, with each job being seen by only one pool of processes.
+  # Modified jobs are saved by the bleeder!
+  bleeder = Bleeder(jobdict, pools, comm)
+  for job in bleeder:
+    fitness = evaluator(job.indiv, outdir=job.name[1:], comm=bleeder.local_comm)
+    job.indiv.fitness = bleeder.local_broadcast(fitness)
+  
+  # recovers population and offspring.
+  jobdict = bleeder.cleanup()
+  if 'off' in jobdict: self.offspring  = [u.indiv for u in jobdict['off'].values()]
+  if 'pop' in jobdict: self.population = [u.indiv for u in jobdict['pop'].values()]
+    
+
 def mpi_population_evaluation(self, evaluator, pools, comm = None):
   """ MPI Population and offspring evaluation.
   
@@ -218,11 +265,8 @@ def mpi_population_evaluation(self, evaluator, pools, comm = None):
 def population_evaluation(self, evaluator, comm=None, pools=None):
   """ Chooses between MPI and serial evaluation. """
   is_serial = pools == 1 or (comm.size == 1 if comm != None else True)
-  if is_serial:
-    serial_population_evaluation(self, evaluator, comm = comm)
-  else: 
-    if pools == 0: pools = comm.size
-    mpi_population_evaluation(self, evaluator, comm=comm, pools=pools)
+  if is_serial: serial_population_evaluation(self, evaluator, comm = comm)
+  else:         bleeder_evaluation(self, evaluator, min(pools, comm.size), comm)
 
 
 class Mating(object):
@@ -237,8 +281,6 @@ class Mating(object):
       arguments are references to individual in the population. They should be
       treated as read-only.
   """
-      
-
   def __init__(self, sequential=False): 
     """ Initializes the container of mating operator. """
     self.operators = []

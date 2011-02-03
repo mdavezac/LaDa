@@ -1,28 +1,21 @@
 """ Extracts VASP-GW output """
 __docformat__  = 'restructuredtext en'
-__all__ = ['ExtratGW']
-from ._dft import _ExtractImpl
+__all__ = ['Extrat']
 from ...opt.decorators import make_cached, broadcast_result
-class ExtractGW(_ExtractImpl):
+class Extract(object):
   """ Implementation of GW extractor. """
 
-  def __init__(self, directory = None, comm = None, OUTCAR = None): 
-    """ Initializes the extraction class. 
-
-        :Parameters:
-          directory : str or None
-            path to the directory where the VASP output is located. If none,
-            will use current working directory.
-          comm : boost.mpi.communicator or None
-            MPI group communicator. Extraction will be performed for all procs
-            in the group. In serial mode, comm can be None.
-          OUTCAR : str or None
-            Name of the OUTCAR file.
-    """
-    super(ExtractGW, self).__init__(directory=directory, comm=comm, OUTCAR=OUTCAR)
+  def __init__(self): 
+    """ Initializes the extraction class. """
+    object.__init__(self)
 
   @property
-  def is_dft(self): return False
+  def eigenvalues(self):
+    """ Deprecated. """
+    from warnings import warn
+    warn( DeprecationWarning('eigenvalues attribute is deprecated in favor of qp_eigenvalues.'), \
+          stacklevel=2 )
+    return self.qp_eigenvalues
 
   @property
   @make_cached

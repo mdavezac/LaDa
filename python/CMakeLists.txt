@@ -44,6 +44,9 @@ endif(jobs_package)
 if(ga_package) 
   set(which_packages "${which_packages}, 'ga'")
 endif(ga_package) 
+if(ladabase_package) 
+  set(which_packages "${which_packages}, 'ladabase'")
+endif(ladabase_package) 
 configure_file (
  "${PROJECT_SOURCE_DIR}/python/__init__.in.py"
  "${PROJECT_BINARY_DIR}/python/__init__.py"

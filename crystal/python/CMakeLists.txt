@@ -1,16 +1,16 @@
-set(PYCRYSTAL_PY  gruber.py  __init__.py  A2BX4.py bravais.py)
+set(PYCRYSTAL_PY  gruber.py  __init__.py A2BX4.py bravais.py binary.py read_write.py _docstring.py)
 set( PYCRYSTAL_HEADERS 
      atom.hpp  enumerate.hpp  lattice.hpp  layerdepth.hpp  neighbors.hpp
      read_structure.hpp  smith.hpp  structure.hpp  symmetry_operator.hpp
-     which_site.hpp )
+     which_site.hpp misc.hpp )
 
 set( PYCRYSTAL_SOURCES
      atom.cc  enumerate.cc  lattice.cc  layerdepth.cc  neighbors.cc  python.cc
      read_structure.cc  smith.cc  structure.cc  symmetry_operator.cc
-     which_site.cc )
+     which_site.cc misc.cc )
 
 
-include_directories(${PYTHON_INCLUDE_DIRS})
+include_directories(${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDES})
 python_add_module (pycrystal ${PYCRYSTAL_HEADERS} ${PYCRYSTAL_SOURCES})
 target_link_libraries(pycrystal crystal ${Boost_PYTHON_LIBRARY})
 mark_as_advanced(PYTHON_ENABLE_MODULE_pycrystal)

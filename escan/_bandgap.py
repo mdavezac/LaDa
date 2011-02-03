@@ -79,7 +79,7 @@ class ExtractAE(_ExtractE):
   is_ae = True
   """ This was an all-electron bandgap calculation. """
   def __init__(self, extract):
-    super(ExtractAE, self).__init__(extract.directory, extract.comm, escan=extract.escan)
+    super(ExtractAE, self).__init__(extract.directory, extract.comm, escan=extract.functional)
     self.OUTCAR = extract.OUTCAR
     self.FUNCCAR = extract.FUNCCAR
 

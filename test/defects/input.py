@@ -64,14 +64,15 @@ lattices = [ A2BX4.b4() ]
 """ Lattice for which to create structures. """
 
 # The following sets-up which point defects to do.
-point_defects = {"Mn": ["Ga", None], "Ga": ["Mn", None], "O": [None]}
+# point_defects = {"Mn": ["Ga", None], "Ga": ["Mn", None], "O": [None]}
+point_defects = {'cations1': 'cations'}
 # The following sets-up which which interstitials to examine.
 # Li interstitial on 16c (0,0,0)
 # Li interstitial on 32e (x,x,x) with x = 0.75.
 # These are *FRACTIONAL* coordinates of the LATTICE unit-cell.
-point_defects[None] =\
-     [ "Li", (0,0,0), "16c" ], \
-     [ "Li", (0.75,0.75,0.75), "32e_0.75" ]
+# point_defects[None] =\
+#      [ "Li", (0,0,0), "16c" ], \
+#      [ "Li", (0.75,0.75,0.75), "32e_0.75" ]
 # This is a sequence. If there is only one interstitial, use the following line:
 # point_defects[None] = [  [ "Li", (0,0,0), "16c" ]  ]
 

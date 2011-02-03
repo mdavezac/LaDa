@@ -17,6 +17,7 @@ BOOST_PYTHON_MODULE(_escan)
   bp::docstring_options doc_options(true, false);
   bp::scope scope;
   scope.attr("__doc__") = "This namespace is imported into lada.escan.\n";
+  scope.attr("__docformat__") = "restructuredtext en";
 
   // loads lada.math first
   namespace bp = boost::python;
