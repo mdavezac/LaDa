@@ -40,7 +40,6 @@ __docformat__ = "restructuredtext en"
 __all__ = [@which_packages@]
 from os import environ
 
-
 version_info = (@LaDa_VERSION_MAJOR@, @LaDa_VERSION_MINOR@)
 """ Tuple containing version info. """
 version = "{0[0]}.{0[1]}".format(version_info)

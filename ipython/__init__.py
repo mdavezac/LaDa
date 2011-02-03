@@ -528,8 +528,8 @@
 """
 __docformat__ = "restructuredtext en"
 from contextlib  import contextmanager
-from lada.jobs import MassExtract as Collect
-from lada import lada_with_slurm
+from ..jobs import MassExtract as Collect
+from .. import lada_with_slurm
 
 def _get_current_job_params(self, verbose=0):
   """ Returns a tuple with current job, filename, directory. """
@@ -712,7 +712,6 @@ if lada_with_slurm:
     result = squeue.stdout.read().rstrip().split('\n')
     result = SList([u[1:-1] for u in result[1:]])
     return result.grep(str(arg[1:-1]))
-    
 else:
   def qstat(self, arg):
     """ Prints jobs of current user. """
