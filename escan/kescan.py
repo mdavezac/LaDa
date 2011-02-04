@@ -44,46 +44,47 @@ class KEscan(Escan):
       if _in_call == True: # single calculation.
         return Escan.__call__(self, structure, outdir, comm, **kwargs)
 
+      from copy import deepcopy
       from os.path import join
       from ..jobs import JobDict, Bleeder
 
-      kpoints = kwargs.pop('kpoints', self.kpoints)
-      do_relax_kpoint = not getattr(kpoints, 'relax', not self.do_relax_kpoint)
-      do_relax_kpoint = kwargs.pop('do_relax_kpoint', do_relax_kpoint)
+      this = deepcopy(self)
+      do_relax_kpoint = kwargs.pop('do_relax_kpoint', kwargs.pop('do_relax_kpoints', None))
+      for key, value in kwargs.iteritems():
+        assert hasattr(this, key), TypeError("Unexpected keyword argument {0}.".format(key))
+        setattr(this, key, value)
+      if do_relax_kpoint != None: this.do_relax_kpoint = do_relax_kpoint
+
       is_mpi = False if comm == None else comm.size > 1
       is_root = True if not is_mpi else comm.rank == 0
 
       # performs vff calculations
       vffrun = kwargs.get('vffrun', None)
       if vffrun == None: 
-        vffrun = Escan.__call__(self, structure, outdir, comm, do_escan=False, **kwargs)
+        vffrun = Escan.__call__(this, structure, outdir, comm, do_escan=False, **kwargs)
         kwargs.pop('vffrun', None)
         kwargs.pop('genpotrun', None)
   
       # create list of kpoints.
-      kpoints = self._interpret_kpoints(kpoints, vffrun)
-      # checks for 
-      if len(kpoints) == 1:
-        return self(structure, outdir, comm, _in_call=True, kpoint=kpoints[0], 
-                    do_relax_kpoint = do_relax_kpoint, **kwargs)
+      kpoints = this._interpret_kpoints(this.kpoints, vffrun)
 
       jobdict = JobDict()
       for i, kpoint in enumerate(kpoints):
         job = jobdict / 'kpoint_{0}'.format(i)
-        job.functional = self
+        job.functional = this
         job.jobparams['kpoint'] = kpoint
         job.jobparams['structure'] = structure
-        job.jobparams['do_relax_kpoint'] = do_relax_kpoint
+        job.jobparams['do_relax_kpoint'] = False
         job.jobparams['outdir'] = join(outdir, job.name[1:])
         job.jobparams['_in_call'] = True
         if kwargs.get('genpotrun', None) == None: job.jobparams['genpotrun'] = vffrun
         if kwargs.get('vffrun', None) == None:    job.jobparams['vffrun']    = vffrun
       
-      bleeder = Bleeder(jobdict, self._pools(len(kpoints), comm), comm)
+      bleeder = Bleeder(jobdict, this._pools(len(kpoints), comm), comm)
       for result, job in bleeder.itercompute(**kwargs): continue
       bleeder.cleanup()
 
-      result = Extract(outdir, comm)
+      result = Extract(outdir, comm, unreduce=True)
       result.jobdict = jobdict
       return result
 
@@ -177,6 +178,7 @@ class Extract(AbstractExtractBase):
     self._cached_jobs = []
     """ List of cached jobs. """
 
+  @property
   def _do_unreduce(self):
     """ True if should unreduce kpoints. """
     if self.unreduce == False: return False
@@ -205,7 +207,7 @@ class Extract(AbstractExtractBase):
 
       extractor._vffout = vffout
       result.append(extractor)
-    if self._do_unreduce():
+    if self._do_unreduce:
       self._cached_jobs = []
       for i in self.functional.kpoints.mapping(self.input_structure, self.structure):
         self._cached_jobs.append(result[i])

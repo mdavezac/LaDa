@@ -4,7 +4,7 @@ from .kpoints import KPoints, _reduced_grids_factory
 
 class DDPoints(KPoints):
   """ Points to compute Derivate of the Dispersion. """
-  def __init__(self, direction, center = None, order = 2, nbpoints = 0, stepsize=1e-2):
+  def __init__(self, direction, center = None, order = 2, nbpoints = 0, stepsize=1e-2, relax=True):
     """ Initializes the dispersion derivative k-point object. 
 
 
@@ -20,10 +20,9 @@ class DDPoints(KPoints):
           stepsize : float
             Distance between interpolation points. Default = 1e-2.
             Units of ``2|pi|/a``, with ``a=structure.scale``.
-
-        :kwarg relax : bool
-          Whether kpoint should be relaxed from input to output vff
-          structure. True by default.
+          relax : bool
+            Whether kpoint should be relaxed from input to output vff
+            structure. True by default.
     """
     from numpy import array
 
@@ -52,54 +51,58 @@ class DDPoints(KPoints):
 
   def _mnk(self, input, output):
     """ Yields lines of k-points to perform numerical derivation. """
-    from numpy import array, dot
-    from numpy.linalg import norm
+    from math import factorial
+    from numpy import array, dot, zeros, pi
+    from numpy.linalg import norm, inv
+    from quantities import angstrom
+    from ..physics import a0
 
     assert norm(self.direction) > 1e-12, ValueError("Direction cannot be null.")
     assert self.order > 0, ValueError("Derivation order cannot be zero.")
     assert self.stepsize > 0, ValueError("Stepsize must be positive.")
+    assert abs(output.scale) > 1e-12, ValueError("scale is zero in structure.")
+    assert self.order > 0, ValueError("Order of derivative should be positive.")
 
     nbpoints  = max(self.order+1, self.nbpoints)
     direction = array(self.direction) 
     center    = array(self.center) if self.center != None else zeros((3,), dtype="float64")
     if self.relax:
-      deformation = dot(cell, input.cell.T)
+      deformation = dot(inv(output.cell.T), input.cell.T)
       direction = dot(deformation, direction)
-      center = dot(center, direction)
+      center = dot(deformation, center)
     direction /= norm(self.direction) # normalizes direction.
 
-    # creates list of steps.
-    start = 0e0 if nbpoints % 2 == 0 else 0.5 * stepsize
-    steps = array(shape=(nbpoints,), dtype="float64") 
-    parameters = zeros(shape=(nbpoints, order+1), dtype="float64") 
-    for i in range(0, (nbpoints-nbpoints%2) / 2):
-      # computes position on vector.
-      s = stepsize * float(i+1) + start
-      # yields to the left.
-      yield 1, center - direction * s
-      # yields to the right.
+    # yields vector at point derivation for odd numbers of points.
+    if nbpoints % 2 == 1: yield 1, center
+
+    # yields all other points.
+    start = 1 if nbpoints % 2 == 1 else 0.5
+    parameters = zeros(shape=(nbpoints, self.order+1), dtype="float64") 
+    parameters[:,0] = 1
+    units = 2e0 * pi * a0.rescale(angstrom) / output.scale 
+    for i in range(0, nbpoints - nbpoints%2): 
+      # computes position on derivation line.
+      s = (1 if i % 2 == 0 else -1) * self.stepsize * (i//2+start)
+      # yields reciprocal space vector where to do calculation.
       yield 1, center + direction * s
-      # then computes parameters.
-      s *= units
-      parameters[2*i,   1:] = array([pow(s, n)/float(factorial(n)) for n in range(1, order+1)])
-      parameters[2*i+1, 1:] = parameters[2*i,   1:]
-      for j in range(1, order+1): 
-        if j % 2 == 1: parameters[2*i+1, j] *= -1e0
+      # sets up regression parameters.
+      parameters[i + nbpoints%2, 1:] = [ pow(s*units, n)/float(factorial(n))\
+                                         for n in range(1, self.order+1) ]
 
     # saves parameters for later use.
     self._parameters = parameters
 
   def __repr__(self):
     result = '{0.__class__.__name__}({1}'.format(self, repr(self.direction))
-    do_key = center == None
-    if center != None: result += ', {0}'.format(repr(self.center))
-    if order != 2:
+    do_key = self.center == None
+    if self.center != None: result += ', {0}'.format(repr(self.center))
+    if self.order != 2:
       result += ', {1}{0}'.format(repr(self.relax), 'relax=' if do_key else '') 
     else: do_key = True
-    if nbpoints != 0:
+    if self.nbpoints != 0:
       result += ', {1}{0.nbpoints}'.format(self, 'nbpoints=' if do_key else '') 
     else: do_key = True
-    if stepsize != 1e-2:
+    if self.stepsize != 1e-2:
       result += ', {1}{0.stepsize}'.format(self, 'stepsize=' if do_key else '') 
     else: do_key = True
     return result + ')'
@@ -149,14 +152,17 @@ def reciprocal( escan, structure, direction, outdir = None, comm = None, order =
   """
   from os.path import join
   from numpy import array, sort
+  from numpy.linalg import lstsq as np_lstsq
   from quantities import hartree
   from .kescan import KEscan
 
-  if not isinstance(escan, KEscan): escan = KEscan(escan_copy=escan)
+  # takes care of default parameters.
+  if not isinstance(escan, KEscan): escan = KEscan(escan=escan)
   if center == None: center = kwargs.pop("kpoint", escan.kpoint)
   center = array(center)
   relax = kwargs.pop("do_relax_kpoint", escan.do_relax_kpoint)
-  outdir = "reciprocal" if outdir == None else join(outdir, "reciprocal")
+  if outdir == None: outdir = "reciprocal"
+  if lstsq == None: lstsq = np_lstsq
 
   # creates kpoints object.
   kpoints = ReducedDDPoints(direction, center, order, nbpoints, stepsize, relax)

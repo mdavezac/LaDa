@@ -571,7 +571,7 @@ class Escan(object):
 
   def _get_kpoint(self, structure, comm, norun):
     """ Returns deformed or undeformed kpoint. """
-    from numpy import abs, sum, zeros, array, all, dot
+    from numpy import abs, sum, zeros, array, any, dot
     from numpy.linalg import inv
     from quantities import angstrom
     from ..physics import a0
@@ -600,6 +600,6 @@ class Escan(object):
     input = structure.cell 
     if (norun != True) and self.do_relax_kpoint and any(abs(relaxed-input) > 1e-12):
       kpoint = dot(dot(relaxed.T, inv(input.T)), self.kpoint)
-      kpoint = to_voronoi(self.kpoint, relaxed)
-    else: kpoint = self.kpoint
+    else:
+      kpoint = self.kpoint
     return 1, kpoint[0], kpoint[1], kpoint[2], structure.scale / float(a0.rescale(angstrom))
