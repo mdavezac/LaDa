@@ -201,9 +201,9 @@ namespace LaDa
 	      "This function accepts two types of call: using a correctly defined "
           "*structure* alone, and by specifying the *unitcell* and the "
 	        "*supercell* explicitely. In any case, the cell of structure must be "
-          "exactly commensurate with the lattice, eg no relaxation.\n"
-        ":see: `G. Hart and R. Forcade, Phys. Rev. B. **80**, 014120 (2009)"
-          "<https:\\dx.doi.org/10.1103/PhysRevB.80.014120>`__\n"
+          "exactly commensurate with the lattice, eg no relaxation.\n\n"
+        ":see: `G. Hart and R. Forcade`__, Phys. Rev. B. **80**, 014120 (2009).\n\n"
+        "__ http://dx.doi.org/10.1103/PhysRevB.80.014120\n"
       );
       bp::def
       ( 

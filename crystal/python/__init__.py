@@ -5,9 +5,9 @@ __all__ = [ 'FreezeAtom', 'which_site', 'Sites', 'SymmetryOperator', 'Lattice', 
             'smith_normal_transform', 'get_space_group_symmetries', 'Neighbors', 'Neighbor', \
             'read_pifile_structure', 'LayerDepth', 'to_fractional', 'linear_smith_index', \
             'nb_valence_states', 'to_voronoi', 'gaussian_projector', 'to_cell', 'to_origin', \
-            'is_on_lattice', \
+            'is_on_lattice', 
             # Below, only true python stuff
-            'deform_kpoints', 'specie_list', 'read_poscar', 'write_poscar',\
+            'deform_kpoints', 'specie_list', 'read_poscar', 'write_poscar', 'icsd_cif',\
             'write_oldvff', 'read_oldvff', 'structure_to_lattice', 'fill_structure', \
             'A2BX4', 'bravais', 'gruber', 'vasp_ordered', 'binary' ]
 __docformat__ = "restructuredtext en"
