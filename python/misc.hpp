@@ -54,7 +54,7 @@ namespace LaDa
         static void setstate(bp::object _out, bp::tuple state)
         {
           T & out = bp::extract<T&>(_out)();
-          if (bp::len(state) == 1)
+          if (bp::len(state) != 2)
           {
             try
             {
@@ -76,15 +76,6 @@ namespace LaDa
             PyErr_WarnEx( PyExc_DeprecationWarning, 
                           "This pickle is deprecated. Please repickle after unpickling.",
                           1 );
-            return;
-          }
-          else if (bp::len(state) != 2)
-          {
-            PyErr_SetObject(PyExc_ValueError,
-                            ("expected 2-item tuple in call to __setstate__; got %s"
-                             % state).ptr()
-                );
-            bp::throw_error_already_set();
             return;
           }
           // restore the object's __dict__
