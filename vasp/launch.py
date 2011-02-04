@@ -227,5 +227,12 @@ class Launch(Incar):
     self.species[args[0]] = Specie(*args[1:])
     
 
-       
+  def __setstate__(self, args):
+    """ Sets state from pickle.
+
+        Takes care of older pickle versions.
+    """
+    Incar.__setstate__(self, args)
+    if "print_from_all" not in self.__dict__:
+      self.__dict__["print_from_all"] = False
 

@@ -161,6 +161,16 @@ class Specie(object):
       except: continue
       string += ", {name}={value}".format(name=k, value=repr(v))
     return string + ')'
+  
+  def __setstate__(self, dictionary):
+    """ Retrieves state from pickle.
+
+        Takes care of older pickle as well.
+    """
+    self.__dict__.update(dictionary)
+    if "path" in self.__dict__ and "_directory" not in self.__dict__:
+      from ..opt import RelativeDirectory
+      self._directory = RelativeDirectory(self.__dict__.pop("path"))
 
 
 
