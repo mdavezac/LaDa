@@ -19,7 +19,7 @@ class KEscan(Escan):
         kpoint, or a list of kpoints.
 
         It is expected that the kpoints are expressed in cartesian coordinates
-        of the reciprocal space. There is no 2|pi|. See `Kpoints` for more
+        of the reciprocal space. There is no 2|pi|. See `escan.KPoints` for more
         information.
 
         .. |pi|  unicode:: U+003C0 .. GREEK SMALL LETTER PI
@@ -154,11 +154,14 @@ class KEscan(Escan):
         Default is True. Relaxed cell is taken from `_POSCAR`
         Coding: Also sets attribute in kpoints. 
     """
-    return self.__dict__["do_relax_kpoints"]
+    return self.__dict__["do_relax_kpoint"]
   @do_relax_kpoint.setter
   def do_relax_kpoint(self, value): 
-    self.__dict__["do_relax_kpoints"] = value
+    self.__dict__["do_relax_kpoint"] = value
     self.kpoints.relax = value
+
+  do_relax_kpoints = do_relax_kpoint
+  """ Alias for `KEscan.do_relax_kpoint`. """
 
 class Extract(AbstractExtractBase):
   """ Extraction class for KEscan. """

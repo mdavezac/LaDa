@@ -208,8 +208,9 @@ namespace LaDa
               &get_cell<T_STRUCTURE>, 
               bp::return_value_policy<bp::return_by_value>()
             ), &set_cell<T_STRUCTURE>, 
-            ("A 3x3 numpy array representing the cell vector in cartesian units, "
-             "in units of self.L{scale<lada.crystal." + _name + ".scale>}.").c_str()
+            "Cell vectors in cartesian coordinates.\n\n"
+            "Units are ``self.scale``. The latter should be in angstrom, "
+            "though use quantities package is not possible here."
           )
           .def_readwrite( "_atoms",   &T_STRUCTURE::atoms,
                           (   "The list of atoms of type L{" + _type
@@ -218,7 +219,8 @@ namespace LaDa
           .def_readwrite( "weight",  &T_STRUCTURE::weight,
                           "Optional weight for fitting purposes." )
           .def_readwrite( "scale",   &T_STRUCTURE::scale,
-                          "A scaling factor for atomic-positions and cell-vectors." )
+                          "A scaling factor for atomic-positions and cell-vectors.\n\n"
+                          "Should always be in ansgtrom. No exceptions allowed." )
           .def_readwrite( "name", &T_STRUCTURE::name, "Holds a string." )
           .def( "__str__",  &print< T_STRUCTURE > ) 
           .def( "fromXML",  &XML::from< T_STRUCTURE >, bp::arg("file"),
@@ -228,7 +230,7 @@ namespace LaDa
           .def( "xcrysden", &xcrysden_str, "Outputs in XCrysden format." )
           .def_readwrite( "freeze", &T_STRUCTURE::freeze,
                            "Tags to freeze coordinates when relaxing structure.\n\n" 
-                           "See L{FreezeCell} for possible values." 
+                           "See `FreezeCell` for possible values." 
                         )
           .def(bp::self == bp::other<T_STRUCTURE>())
           .add_property
@@ -268,7 +270,7 @@ namespace LaDa
       expose< Crystal::Structure >
       (
         "rStructure", 
-        "Defines a structure.\n\nGenerally, it is a super-cell of a L{Lattice} object.",
+        "Defines a structure.\n\nGenerally, it is a super-cell of a `Lattice` object.",
         "rAtom"
       ).def( "__init__", bp::make_constructor( string_to_real ) )
        .def_readwrite( "k_vecs",  &Crystal::Structure::k_vecs,
@@ -280,7 +282,7 @@ namespace LaDa
       expose< Crystal::TStructure<std::string> >
       (
         "Structure", 
-        "Defines a structure.\n\nGenerally, it is a super-cell of a L{Lattice} object.",
+        "Defines a structure.\n\nGenerally, it is a super-cell of a `Lattice` object.",
         "Atom"
       ).def( "__init__", bp::make_constructor( real_to_string ) );
       bp::register_ptr_to_python< boost::shared_ptr< Crystal::TStructure<std::string> > >();
@@ -297,10 +299,10 @@ namespace LaDa
         "_fill_structure_impl", 
         &fill_structure< Crystal::TStructure<std::string> >,
         "Returns a structure from knowledge of cell and lattice.\n\n"
-        "The argument can be of type L{Structure}, L{rStructure}, "
+        "The argument can be of type `Structure`, `rStructure`, "
         "or a numpy 3x3 float64 array. In the second case, the return is "
-        "also a L{rStructure}. In all other cases, the return is an L{Structure}.\n"
-        "@raise RuntimeError: If the filled structure could not be created.\n" 
+        "also a `rStructure`. In all other cases, the return is an `Structure`.\n"
+        ":raise RuntimeError: If the filled structure could not be created.\n" 
       );
     }
 

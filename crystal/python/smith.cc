@@ -191,31 +191,28 @@ namespace LaDa
         "smith_normal_transform", &get_smith_transform,
         (bp::arg("unitcell"), bp::arg("supercell")), 
         "Computes Smith Normal Transform parameters.\n\n" 
-	"This function accepts two types of call: using a correctly defined "
-          "*structure* alone, and by specifying the *unitcell* and the "
-	  "*supercell* explicitely. In any case, the cell of structure must be "
-          "exactly commensurate with the lattice, eg no relaxation.\n"
-        "@see: U{G. Hart and R. Forcade, I{Phys. Rev. B.} B{80}, 014120 (2009)"
-          "<dx.doi.org/10.1103/PhysRevB.80.014120>}\n"
-	"@param structure: A structure for which *structure.lattice* is set. "
+	      "  structure : `Structure`\n    A structure for which *structure.lattice* is set. "
           "The supercell is then *structure.cell* and the unit cell "
           "*structure.lattice.cell*. \n"
-        "@type structure: L{Structure}\n"
-        "@param unitcell: Primitive cell of the lattice from which "
+        "  unitcell\n    Primitive cell of the lattice from which "
            "supercells are built.\n"
-        "@type unitcell: numpy 3x3 array\n"
-        "@param supercell: Multiple of the unit cell.\n"
-        "@type supercell: numpy 3x3 array\n"
-        "@return: tuple allowing a stransformation to the smith normal form.\n" 
+        "  supercell\n    Multiple of the unit cell.\n\n"
+        ":return: tuple allowing a stransformation to the smith normal form.\n\n" 
+	      "This function accepts two types of call: using a correctly defined "
+          "*structure* alone, and by specifying the *unitcell* and the "
+	        "*supercell* explicitely. In any case, the cell of structure must be "
+          "exactly commensurate with the lattice, eg no relaxation.\n"
+        ":see: `G. Hart and R. Forcade, Phys. Rev. B. **80**, 014120 (2009)"
+          "<https:\\dx.doi.org/10.1103/PhysRevB.80.014120>`__\n"
       );
       bp::def
       ( 
         "smith_indices", &get_smith_index,
         ( bp::arg("transform"), bp::arg("position") ),
         "Returns the indices of the position in the smith normal form.\n\n" 
-        "@param transform: transformation tuple yielded by L{smith_normal_transform}\n"
-        "@param position: cartesian coordinates on the lattice.\n"
-        "@type position: numpy 3x1 float64 array.\n"
+        ":Parameters:"
+        "  transform\n    transformation tuple yielded by `smith_normal_transform`\n"
+        "  position\n    cartesian coordinates on the lattice.\n"
       );
       bp::def
       ( 

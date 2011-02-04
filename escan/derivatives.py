@@ -1,99 +1,173 @@
 """ Numerical energy derivatives. """
+__docformat__ = "restructuredtext en"
+from .kpoints import KPoints, _reduced_grids_factory
+
+class DDPoints(KPoints):
+  """ Points to compute Derivate of the Dispersion. """
+  def __init__(self, direction, center = None, order = 2, nbpoints = 0, stepsize=1e-2):
+    """ Initializes the dispersion derivative k-point object. 
+
+
+        :Parameters:
+          direction : 3-tuple 
+            Direction for which to compute derivatives.
+          center : 3-tuple
+            Point at which to take derivative.
+          order : int
+            Order of the derivative.
+          nbpoints : int
+            Number of points to use in computing derivative.
+          stepsize : float
+            Distance between interpolation points. Default = 1e-2.
+            Units of ``2|pi|/a``, with ``a=structure.scale``.
+
+        :kwarg relax : bool
+          Whether kpoint should be relaxed from input to output vff
+          structure. True by default.
+    """
+    from numpy import array
+
+    self.direction = direction
+    """ Direction for which to compute derivatives. """
+    self.center = center
+    """ Point at which to take derivative. """
+    self.order = order
+    """ Order of the derivative. """
+    self.nbpoints = nbpoints
+    """ Number of points to use in computing derivative. """
+    self.stepsize = stepsize
+    """ Distance between interpolation points. 
+
+        Units of ``2|pi|/a``, with ``a=structure.scale``.
+    """
+    self.relax = relax
+    """ Whether to deform kpoints to the relaxed structure. """
+
+  @property
+  def parameters(self): 
+    """ Parameters for derivation. """
+    assert hasattr(self, "_parameters"),\
+           RuntimeError("parameters attribute cannot be accessed befor calculation.")
+    return self._parameters
+
+  def _mnk(self, input, output):
+    """ Yields lines of k-points to perform numerical derivation. """
+    from numpy import array, dot
+    from numpy.linalg import norm
+
+    assert norm(self.direction) > 1e-12, ValueError("Direction cannot be null.")
+    assert self.order > 0, ValueError("Derivation order cannot be zero.")
+    assert self.stepsize > 0, ValueError("Stepsize must be positive.")
+
+    nbpoints  = max(self.order+1, self.nbpoints)
+    direction = array(self.direction) 
+    center    = array(self.center) if self.center != None else zeros((3,), dtype="float64")
+    if self.relax:
+      deformation = dot(cell, input.cell.T)
+      direction = dot(deformation, direction)
+      center = dot(center, direction)
+    direction /= norm(self.direction) # normalizes direction.
+
+    # creates list of steps.
+    start = 0e0 if nbpoints % 2 == 0 else 0.5 * stepsize
+    steps = array(shape=(nbpoints,), dtype="float64") 
+    parameters = zeros(shape=(nbpoints, order+1), dtype="float64") 
+    for i in range(0, (nbpoints-nbpoints%2) / 2):
+      # computes position on vector.
+      s = stepsize * float(i+1) + start
+      # yields to the left.
+      yield 1, center - direction * s
+      # yields to the right.
+      yield 1, center + direction * s
+      # then computes parameters.
+      s *= units
+      parameters[2*i,   1:] = array([pow(s, n)/float(factorial(n)) for n in range(1, order+1)])
+      parameters[2*i+1, 1:] = parameters[2*i,   1:]
+      for j in range(1, order+1): 
+        if j % 2 == 1: parameters[2*i+1, j] *= -1e0
+
+    # saves parameters for later use.
+    self._parameters = parameters
+
+  def __repr__(self):
+    result = '{0.__class__.__name__}({1}'.format(self, repr(self.direction))
+    do_key = center == None
+    if center != None: result += ', {0}'.format(repr(self.center))
+    if order != 2:
+      result += ', {1}{0}'.format(repr(self.relax), 'relax=' if do_key else '') 
+    else: do_key = True
+    if nbpoints != 0:
+      result += ', {1}{0.nbpoints}'.format(self, 'nbpoints=' if do_key else '') 
+    else: do_key = True
+    if stepsize != 1e-2:
+      result += ', {1}{0.stepsize}'.format(self, 'stepsize=' if do_key else '') 
+    else: do_key = True
+    return result + ')'
+
+ReducedDDPoints    = _reduced_grids_factory('ReducedDDPoints', DDPoints)
+
 
 def reciprocal( escan, structure, direction, outdir = None, comm = None, order = 1, \
-                nbpoints = None, stepsize = 1e-2, lstsq = None, **kwargs ):
+                nbpoints = None, stepsize = 1e-2, center = None, lstsq = None, **kwargs ):
   """ Computes effective mass for a given direction.
 
-      @warning: escan.nbstates (or nbstates if passed as arg) must be the
-        *spin-polarized* number of electrons, whatever escan thinks.
-      @param structure: The structure for wich to compute effective masses.
-      @type  structure: crystal.Structure
-      @param escan: Emiprical pseudo-potential functional.
-      @type  escan: Escan
-      @param direction: direction for which to compute derivatives.
-      @type  direction: 3-tuple 
-      @param order: Highest order derivative to perform. Defaults to 1.
-      @type  order: int
-      @param nbpoints: Number of points with wich to compute derivatives.
-        Should be at least order + 1. Default = order + 1. 
-      @type  nbpoints: int
-      @param stepsize: Distance between interpolation points. Default = 1e-2.
-        Units of 2S{pi}/a, with C{a=structure.scale}.
-      @type  stepsize: float
-      @param kwargs: Extra parameters which are passed on first to escan (if escan
-         object has an attribute with the same name), then to the linear least
-         square fit method. Note that this will *not* change the external escan
-         object.  This function is stateless. 
-      @param lstsq: Linear least square method. The first two parameters should
-         be same as numpy.linalg.lstsq. Other parameters can be passed as extra
-         parameters. Defaults to numpy.linalg.lstsq.
-      @return: Same as return from lstsq.
+      :Parameters:
+        structure : `crystal.Structure`
+          The structure for wich to compute effective masses.
+        escan : `Escan` or `KEscan`
+          Emiprical pseudo-potential functional.
+        direction : 3-tuple 
+          direction for which to compute derivatives.
+        order : int
+          Highest order derivative to perform. Defaults to 1.
+        nbpoints : int
+          Number of points with wich to compute derivatives.
+          Should be at least order + 1. Default = order + 1. 
+        stepsize : float
+          Distance between interpolation points. Default = 1e-2.
+          Units of ``2|pi|/a``, with ``a=structure.scale``.
+        center : 3-tuple
+          k-point where to take derivative. Units of ``2|pi|/a``, with
+          ``a=structure.scale``.
+        lstsq 
+          Linear least square method. The first two parameters should
+          be same as numpy.linalg.lstsq. Other parameters can be passed as extra
+          parameters. Defaults to numpy.linalg.lstsq.
+        kwargs 
+          Extra parameters which are passed on first to escan (if escan
+          object has an attribute with the same name), then to the linear least
+          square fit method. Note that this will *not* change the external escan
+          object.  This function is stateless. 
+
+      :return: Same as return from lstsq.
+
+      :warning: escan.nbstates (or nbstates if passed as arg) must be the
+                *spin-polarized* number of electrons, whatever escan thinks.
+
+      .. |pi|  unicode:: U+003C0 .. GREEK SMALL LETTER PI
+
   """
-  from os import getcwd
   from os.path import join
-  from shutil import rmtree
-  from copy import deepcopy
-  from math import pow, pi, factorial
-  from numpy import zeros, array, dot
-  from numpy.linalg import norm, lstsq as np_lstsq
-  from boost.mpi import world
-  from ..physics import a0, Hartree
+  from numpy import array, sort
+  from quantities import hartree
+  from .kescan import KEscan
 
-  # check input arguments
-  order = int(order)
-  if order <= 0: raise ValueError, "order should be at least one (%i)." % ( order )
-  if nbpoints == None: nbpoints = order + 1
-  else: nbpoints = int(nbpoints)
-  if nbpoints < order + 1: raise ValueError, "The number of points shoule be at least order+1."
-  direction = array(direction, dtype="float64")
-  if norm(direction) < 1e-12: "Direction cannot be 0."
-  direction /= norm(direction)
-  if lstsq == None: lstsq = np_lstsq
-  if comm == None: comm = world
-  if outdir == None: outdir = getcwd()
-  vffrun = kwargs.pop("vffrun", escan.vffrun)
-  genpotrun = kwargs.pop("genpotrun", escan.genpotrun)
+  if not isinstance(escan, KEscan): escan = KEscan(escan_copy=escan)
+  if center == None: center = kwargs.pop("kpoint", escan.kpoint)
+  center = array(center)
+  relax = kwargs.pop("do_relax_kpoint", escan.do_relax_kpoint)
+  outdir = "reciprocal" if outdir == None else join(outdir, "reciprocal")
 
-  # creates parameters matrix.
-  parameters = zeros(shape=(nbpoints, order+1), dtype="float64") 
-  parameters[:,0] = 1 # zero order terms are all 1.
-  start = 0e0 
-  if nbpoints % 2 == 0: start = 0.5 * stepsize
-  units = 2e0 * pi * a0("A") / structure.scale 
-  for i in range(0, (nbpoints-nbpoints%2) / 2):
-    s = ( stepsize * float(i+1) + start ) * units
-    parameters[2*i,   1:] = array([pow( s, n)/float(factorial(n)) for n in range(1, order+1)])
-    parameters[2*i+1, 1:] = parameters[2*i,   1:]
-    for j in range(1, order+1): 
-      if j % 2 == 1: parameters[2*i+1, j] *= -1e0
+  # creates kpoints object.
+  kpoints = ReducedDDPoints(direction, center, order, nbpoints, stepsize, relax)
 
-  # first computes vff and genpot unless given.
-  if genpotrun == None or vffrun == None: 
-    vffout = escan( structure, outdir=outdir, do_escan=False, genpotrun=genpotrun,\
-                    vffrun=vffrun, comm = comm, **kwargs )
-    if genpotrun == None: genpotrun = vffout
-    if vffrun == None: vffrun = vffout
+  # performs calculations.
+  out = escan(structure, outdir=outdir, comm=comm, kpoints=kpoints, **kwargs)
 
-  # now performs all calculations.
-  measurements = None
-  for i in range(0, nbpoints): 
-    out = escan\
-          (\
-            structure, 
-            outdir = join(outdir, "%i-s=%f" % (i, parameters[i,1] )),
-            vffrun = vffrun, genpotrun = genpotrun, do_escan = True, 
-            kpoint = escan.kpoint + direction * parameters[i, 1] / units,
-            comm = comm,
-            **kwargs
-          )
-    eigenvalues = out.eigenvalues.copy()
-    eigenvalues.sort()
-    if measurements == None: 
-      measurements = zeros(shape=(nbpoints, eigenvalues.size), dtype="float64")
-    measurements[i,:] = eigenvalues / Hartree("eV")
-    
-  # finally, performs least-square fit and returns evrything.
-  result = lstsq( parameters, measurements )
+  # sorts eigenvalues at each kpoint and rescales to hartree.
+  measurements = sort(out.eigenvalues.rescale(hartree), axis=1) 
+  
+  # finally, performs least-square fit and returns everything.
+  result = lstsq( kpoints.parameters, measurements )
 
   return result
-

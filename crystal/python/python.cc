@@ -70,6 +70,7 @@ BOOST_PYTHON_MODULE(_crystal)
 {
   namespace bp = boost::python;
   bp::scope scope;
+  scope.attr("__docformat__") = "restructuredtext en";
   scope.attr("__doc__") = "This namespace is imported into lada.crystal.\n";
   bp::docstring_options doc_options(true, false);
 

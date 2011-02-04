@@ -147,13 +147,16 @@ namespace LaDa
           "cell",
           make_getter(&Crystal::Lattice::cell, bp::return_value_policy<bp::return_by_value>()),
           make_setter(&Crystal::Lattice::cell, bp::return_value_policy<bp::return_by_value>()),
-          "A 3x3 numpy array representing the lattice vector in cartesian units, "
-          "in units of self.L{scale<lada.crystal.Lattice.scale>}."
+          "Cell vectors in cartesian coordinates.\n\n"
+          "Units are ``self.scale``. The latter should be in angstrom, "
+          "though use quantities package is not possible here."
         )
-        .def_readwrite("_sites", &Crystal::Lattice::sites, "List of L{lada.crystal.Site}.")
-        .def_readwrite("scale", &Crystal::Lattice::scale, "Units of all coordinates." )
+        .def_readwrite("_sites", &Crystal::Lattice::sites, "List of `Site` objects.")
+        .def_readwrite("scale", &Crystal::Lattice::scale, 
+                       "A scaling factor for site-positions and cell-vectors.\n\n"
+                       "Should always be in ansgtrom. No exceptions allowed." )
         .def_readwrite("space_group", &Crystal::Lattice::space_group,
-                       "List of symmetry operators L{lada.crystal.SymmetryOperator}." )
+                       "List of symmetry operators `crystal.SymmetryOperator`." )
         .def_readwrite("name", &Crystal::Lattice::name, "Name of the lattice." )
         .def("__str__",  &print<Crystal::Lattice> )
         .def("fromXML",  &details::fromXML<Crystal::Lattice> )
@@ -176,46 +179,40 @@ namespace LaDa
       (
         "fold_vector", &Crystal::into_cell,
         (bp::arg("vector"), bp::arg("cell"), bp::arg("inverse")),
-        "Returns the vector folded into the given cell.\n\n"
-        "@param vector: the vector to be folded.\n"
-        "@type vector: numpy 3x3 float64 array.\n"
-        "@param cell: the cell for which to fold.\n"
-        "@type cell: numpy 3x3 float64 array.\n"
-        "@param inv: the inverse of the cell for which to fold. Computed from "
-        "cell if not given on input.\n"
-        "@type inv: numpy 3x3 float64 array.\n"
+        "Folds vector into the given cell.\n\n"
+        ":Parameters:\n"
+        "  vector\n    the vector to be folded.\n"
+        "  cell\n    the cell for which to fold.\n"
+        "  inv\n    the inverse of the cell for which to fold. Computed from "
+           "cell if not given on input.\n"
       );
       bp::def("into_voronoi", &into_voronoi2, (bp::arg("vector"), bp::arg("cell")));
       bp::def
       (
         "into_voronoi", &Crystal::into_voronoi,
         (bp::arg("vector"), bp::arg("cell"), bp::arg("inverse")),
-        "Returns the vector folded into the Wigner-Seitz cell.\n\n"
-        "@param vector: the vector to be folded.\n"
-        "@type vector: numpy 3x3 float64 array.\n"
-        "@param cell: the cell for which to fold.\n"
-        "@type cell: numpy 3x3 float64 array.\n"
-        "@param inv: the inverse of the cell for which to fold. Computed from "
-        "cell if not given on input.\n"
-        "@type inv: numpy 3x3 float64 array.\n"
+        "Folds vector into the Wigner-Seitz cell.\n\n"
+        ":Parameters:\n"
+        "  vector\n    the vector to be folded.\n"
+        "  cell\n    the cell for which to fold.\n"
+        "  inv\n    the inverse of the cell for which to fold. Computed from "
+           "cell if not given on input.\n"
       );
       bp::def("zero_centered", &zero_centered2, (bp::arg("vector"), bp::arg("cell")));
       bp::def
       (
         "zero_centered", &Crystal::zero_centered,
         (bp::arg("vector"), bp::arg("cell"), bp::arg("inverse")),
-        "Returns the vector folded around zero (in fractional coordinates).\n\n"
+        "Folds vector around zero (in fractional coordinates).\n\n"
+        ":Parameters:\n"
+        "  vector\n    the vector to be folded.\n"
+        "  cell\n    the cell for which to fold.\n"
+        "  inv\n    the inverse of the cell for which to fold. Computed from "
+           "cell if not given on input.\n\n"
         "Since the vector is refolded in fractional coordinates, it may not be "
         "the equivalent vector with the smallest norm (e.g., not in "
         "Wigner-Seitz), especially in the case of long slender supercells. To "
         "get the vector from Wigner-Seitz cell, use into_voronoi.\n"
-        "@param vector: the vector to be folded.\n"
-        "@type vector: numpy 3x3 float64 array.\n"
-        "@param cell: the cell for which to fold.\n"
-        "@type cell: numpy 3x3 float64 array.\n"
-        "@param inv: the inverse of the cell for which to fold. Computed from "
-        "cell if not given on input.\n"
-        "@type inv: numpy 3x3 float64 array.\n"
       );
     }
 

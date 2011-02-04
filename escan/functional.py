@@ -32,7 +32,7 @@ class Escan(object):
       assert workdir == None, ValueError("Cannot use both workdir and inplace attributes.")
 
     self.vff = Vff() 
-    """ The `Vff` functional with which to relax a structure. """
+    """ The `lada.vff.Vff` functional with which to relax a structure. """
     self.OUTCAR = "escan_out" 
     """ Escan output file. """
     self.ERRCAR = "escan_err"

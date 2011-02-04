@@ -285,11 +285,7 @@ namespace LaDa
       expose_functional<t_Vff>
       ( 
         "Vff", 
-        "A Valence Force Field Functional.\n\n"
-        "Usage:\n"
-        ">>> vff = lada.vff.Vff(\"input.xml\", boost.mpi.world)\n"
-        ">>> structure = crystal.Structure(\"input.xml\")\n"
-        ">>> relaxed_structure = vff(structure)\n\n"
+        "A Valence Force Field Functional."
       );
       bp::register_ptr_to_python< boost::shared_ptr<t_Vff> >();
     }
@@ -299,12 +295,7 @@ namespace LaDa
       expose_functional<t_LayeredVff>
       ( 
         "LayeredVff", 
-        "A Valence Force Field Functional with epitaxial constraints.\n\n"
-        "Usage:\n"
-        ">>> vff = lada.vff.LayeredVff(\"input.xml\", boost.mpi.world)\n"
-        ">>> vff.direction = numpy.array([0,0,1], dtype=\"float64\")"
-        ">>> structure = crystal.Structure(\"input.xml\")\n"
-        ">>> relaxed_structure = vff(structure)\n\n"
+        "A Valence Force Field Functional with epitaxial constraints."
       ).add_property
        (
          "direction",

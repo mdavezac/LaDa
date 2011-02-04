@@ -164,7 +164,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
 
   @property 
   def escan(self): 
-    """ Alias for `escan`. """
+    """ Alias for functional. """
     from warnings import warn
     warn(DeprecationWarning('escan attribute is deprecated in favor of functional.'), stacklevel=2)
     return self.functional

@@ -2,6 +2,7 @@
 
     This is mostly for VFF. Should use numpy mininmizers where possible.
 """
+__docformat__ = "restructuredtext en"
 __all__ = ["Minimizer"]
       
 class Minimizer(object):
@@ -70,8 +71,8 @@ class Minimizer(object):
           kwargs 
             Attributes of the minimizer to modify here. 
 
-       :return: A 2-tuple consisting of the minimized function value and the
-                locus of the minimum.
+        :return: A 2-tuple consisting of the minimized function value and the
+                 locus of the minimum.
     """ 
     from copy import deepcopy
     try: result = deepcopy(arg)

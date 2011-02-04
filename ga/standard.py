@@ -149,7 +149,7 @@ def serial_population_evaluation(self, evaluator, comm = None):
 def bleeder_evaluation(self, evaluator, pools, comm):
   """ MPI Evaluation using an on-disk dictionary.
   
-      :Parameter: 
+      :Parameters: 
         self 
           A *darwin* type object with ``offspring`` and ``population``
           attributes. Only those on the root process matter. However, at the

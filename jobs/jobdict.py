@@ -1,4 +1,5 @@
 """ Submodule declaring the job-dictionary class. """
+__docformat__ = "restructuredtext en"
 
 class JobDict(object):
   """ Tree of jobs. 
@@ -307,15 +308,16 @@ class JobDict(object):
   def update(self, other, merge=False):
     """ Updates job and tree with other.
     
-        :Param other: An other job tree from which to update.
-        :type other: `JobDict`
-        :Param merge: 
-          If false (default), then actual jobs in ``other`` completely
-          overwrite actual jobs in ``self``. If False, then ``jobparams`` in
-          ``self`` is updated with ``jobparams`` in ``other`` if either one is
-          an actual job. If ``other`` is an actual job, then ``functional`` in
-          ``self`` is overwritten. If ``other`` is not an actual job, then
-          ``functional`` in ``self`` is not replaced.
+        :Parameters: 
+           other : `JobDict`
+             An other job tree from which to update.
+           merge : bool
+             If false (default), then actual jobs in ``other`` completely
+             overwrite actual jobs in ``self``. If False, then ``jobparams`` in
+             ``self`` is updated with ``jobparams`` in ``other`` if either one is
+             an actual job. If ``other`` is an actual job, then ``functional`` in
+             ``self`` is overwritten. If ``other`` is not an actual job, then
+             ``functional`` in ``self`` is not replaced.
          
 
         Updates the dictionaries of job parameters and sub-jobs. Actual jobs in

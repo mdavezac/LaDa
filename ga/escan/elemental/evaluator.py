@@ -70,16 +70,11 @@ class Bandgap(object):
   def run(self, indiv, outdir = None, comm = None, **kwargs):
     """ Computes bandgap of an individual. 
     
-        :Parameters:
-          indiv 
-            Individual to compute. Will be converted to a
-            `lada.crystal.Structure` using `converter`.
-          outdir
-            Output directory. 
-          comm : boost,mpi.communicator
-            MPI communicator.
-          kwargs 
-            converter, escan, references, outdir  can be overwridden
+        :kwarg indiv: Individual to compute. Will be converted to a
+          `lada.crystal.Structure` using `converter`.
+        :kwarg outdir: Output directory. 
+        :kwarg comm: boost,mpi.communicator.
+        :kwarg kwarg: converter, escan, references, outdir  can be overwridden
             on call. This will not affect calls further down the line. Other
             arguments are passed on to the lada.escan.bandgap` function on call.
 

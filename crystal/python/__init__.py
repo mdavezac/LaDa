@@ -472,7 +472,7 @@ Structure.write_oldvff = write_oldvff
 def gaussian_projector(positions, cell, center=(0,0,0), alpha=1e0):
   """ Returns gaussian projector operator. 
   
-      :Parameter:
+      :Parameters:
         positions : numpy array
           Last dimension of this array must be 3. 
         center : numpy array
