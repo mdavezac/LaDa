@@ -101,35 +101,45 @@ def dipole_matrix_elements(*args):
   return -1e0j * result
 
 
-# def LDOS(extract, positions):
-#   """ Local density of states """
-#   import numpy as np
-#   from boost.mpi import broadcast, reduce
+def LDOS(extract, positions):
+  """ Local density of states """
+  import numpy as np
+  from .. import lada_with_mpi
 
-#   result = None
-#   # computes all exponentials exp(-i r.g), with r in first dim, and g in second.
-#   v = np.exp(-1j * np.tensordot(positions, extract.gvectors, ((1),(1))))
-#   # computes fourrier transform for all wavefunctions simultaneously.
-#   rspace = np.tensordot(v, extract.raw_wfns, ((1),(0)))
-#   # reduce across processes
-#   rspace = reduce(comm, result, lambda x,y: x+y, 0)
-#   if extract.is_krammer:
-#     rspace2 = rspace 
-#     rspace = zeros( (rspace.shape[0], rspace.shape[1]*2, rspace.shape[2]), dtype="complex64")
-#     rspace[:,::2,:] = rspace2
-#     rspace2 = np.tensordot(v, extract.raw_wfns[extract.inverse_indices,:,:].conjugate(), ((1),(0)))
-#     rspace2 = reduce(comm, result, lambda x,y: x+y, 0)
-#     rspace[:,1::2,:] = rspace2
-#   rspace = np.multiply(rspace, np.conjugate(rspace))
-#   if not extract.is_spinor: rspace = rspace[:,:,0]
-#   else: rspace = rspace[:,:,0] + rspace[:,:,1]
+  extractors = extract if not hasattr(extract, "__iter__") else [extract]
 
-#  
-#   class ldoses(object):
-#     """ Local density of states for a given set of positions within a given structure. """
-#     def __init__(self, eigs, rs):
-#       self.eigs, self.rs = -np.multiply(eigs, eigs), rs.copy()
-#     def __call__(self, e, sigma=0.1):
-#       return np.dot(self.rs, 1e0/sqrt(np.pi)/sigma * np.exp(-self.eigs/sigma/sigma))
+  result = np.zeros(positions.shape[0], dtype="float64")
 
-#   return ldoses(extract.eigenvalues, rspace)
+  for extract in  extractors:
+      # computes all exponentials exp(-i r.g), with r in first dim, and g in second.
+      v = np.exp(-1j * np.tensordot(positions, extract.gvectors, ((1),(1))))
+      # computes fourrier transform for all wavefunctions simultaneously.
+      rspace = np.tensordot(v, extract.raw_wfns, ((1),(0)))
+      # reduce across processes
+      if lada_with_mpi:
+        from boost.mpi import reduce
+        rspace = reduce(comm, rspace, lambda x,y: x+y, 0)
+  
+      if extract.is_krammer:
+        rspace2 = rspace 
+        rspace = zeros( (rspace.shape[0], rspace.shape[1]*2, rspace.shape[2]), dtype="complex64")
+        rspace[:,::2,:] = rspace2
+        cj = extract.raw_wfns[extract.inverse_indices,:,:].conjugate()
+        rspace2 = np.tensordot(v, cj, ((1),(0)))
+        rspace2 = reduce(comm, rspace, lambda x,y: x+y, 0)
+        rspace[:,1::2,:] = rspace2
+      rspace = np.multiply(rspace, np.conjugate(rspace))
+      if not extract.is_spinor: rspace = rspace[:,:,0]
+      else: rspace = rspace[:,:,0] + rspace[:,:,1]
+      result += rspace
+
+  result /= float(len(extractors))
+ 
+  class ldoses(object):
+    """ Local density of states for a given set of positions within a given structure. """
+    def __init__(self, eigs, rs):
+      self.eigs, self.rs = -np.multiply(eigs, eigs), rs.copy()
+    def __call__(self, e, sigma=0.1):
+      return np.dot(self.rs, 1e0/sqrt(np.pi)/sigma * np.exp(-self.eigs/sigma/sigma))
+
+  return ldoses(extract.eigenvalues, rspace)
