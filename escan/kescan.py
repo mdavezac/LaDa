@@ -13,7 +13,7 @@ class Extract(AbstractExtractBase):
   Extract = staticmethod(EscanExtract)
   """ Escan extraction object. """
 
-  def __init__(self, directory=None, comm=None, unreduce=True):
+  def __init__(self, directory=None, comm=None, unreduce=True, **kwargs):
     """ Initializes the extraction object. """
     AbstractExtractBase.__init__(self, directory, comm=comm)
     self.unreduce = unreduce
@@ -219,7 +219,6 @@ class KEscan(Escan):
       if vffrun == None: 
         vffrun = Escan.__call__(this, structure, outdir, comm, do_escan=False, **kwargs)
         kwargs.pop('vffrun', None)
-        kwargs.pop('genpotrun', None)
   
       # create list of kpoints.
       kpoints = this._interpret_kpoints(this.kpoints, vffrun)
@@ -233,7 +232,6 @@ class KEscan(Escan):
         job.jobparams['do_relax_kpoint'] = False
         job.jobparams['outdir'] = join(outdir, job.name[1:])
         job.jobparams['_in_call'] = True
-        if kwargs.get('genpotrun', None) == None: job.jobparams['genpotrun'] = vffrun
         if kwargs.get('vffrun', None) == None:    job.jobparams['vffrun']    = vffrun
       
       bleeder = Bleeder(jobdict, this._pools(len(kpoints), comm), comm)
