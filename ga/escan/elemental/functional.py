@@ -248,7 +248,7 @@ class Darwin:
       from boost.mpi import all_reduce
       local_comm = self.comm.split(self.color)
       heads_comm = self.comm.split(1 if local_comm.rank == 0 else 2)
-      nbcalc = all_reduce(heads_comm, self.evaluator.nbcalc, lambda x,y: x+y)
+      nbcalc = all_reduce(heads_comm, getattr(self.evaluator, "nbcalc", 0), lambda x,y: x+y)
     else: nbcalc = self.evaluator.nbcalc
     
     if self.do_print:

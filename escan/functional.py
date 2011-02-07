@@ -482,13 +482,14 @@ class Escan(object):
       fftsize = self.fft_mesh[0] * self.fft_mesh[1] * self.fft_mesh[2]
       for m in range(comm.size, 0, -1):
         if fftsize % m == 0: break
-      norun = comm.rank >= m
-      local_comm = self.comm.split(0 if norun else 1)
-    if norun == True: return
-    with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 
-      assert comm != None, RuntimeError('Cannot run genpot with lada_with_mpi == False.')
-      from ._escan import _call_genpot
-      _call_genpot(local_comm)
+      norun = comm.rank > m
+      local_comm = comm.split(0 if norun else 1)
+    if norun == False:
+      with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 
+        assert comm != None, RuntimeError('Cannot run genpot with lada_with_mpi == False.')
+        from ._escan import _call_genpot
+        _call_genpot(local_comm)
+    if is_mpi: comm.barrier()
 
 
   def _write_incar(self, comm, structure, norun=False):
@@ -561,13 +562,14 @@ class Escan(object):
       fftsize = self.fft_mesh[0] * self.fft_mesh[1] * self.fft_mesh[2]
       for m in range(comm.size, 0, -1):
         if fftsize % m == 0: break
-      norun = comm.rank >= m
-      local_comm = self.comm.split(0 if norun else 1)
-    if norun == True: return
-    with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 
-      assert comm != None, RuntimeError('Cannot run escan without mpi communicator.')
-      from ._escan import _call_escan
-      _call_escan(comm)
+      norun = comm.rank > m
+      local_comm = comm.split(0 if norun else 1)
+    if norun == False:
+      with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 
+        assert comm != None, RuntimeError('Cannot run escan without mpi communicator.')
+        from ._escan import _call_escan
+        _call_escan(comm)
+    if is_mpi: comm.barrier()
 
   def _get_kpoint(self, structure, comm, norun):
     """ Returns deformed or undeformed kpoint. """

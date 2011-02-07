@@ -524,8 +524,8 @@ class Vff(object):
     """ Creates the vff functional using cpp extension. """
     from tempfile import NamedTemporaryFile
     from os import remove
+    from ..minimizer._minimizer import Minimizer
     from _vff import Vff, LayeredVff
-    from sys import exit
 
     if hasattr(self.direction, "__len__"):
       functional = Layered()

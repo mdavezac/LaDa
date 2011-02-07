@@ -7,162 +7,6 @@ from .. import __all__ as all_lada_packages
 from ..opt import AbstractExtractBase
 from ..opt.decorators import make_cached
 from ._extract import Extract as EscanExtract
- 
-class KEscan(Escan):
-  """ A wrapper around Escan for computing many kpoints. """
-  def __init__(self, kpoints=None, multiplicity=None, **kwargs):
-    """ Initializes the KEscan functional. """
-    self.kpoints = kpoints
-    """ Kpoints to use for calculations.
-    
-        This object must be None (Gamma), a KMesh-derived structure, a single
-        kpoint, or a list of kpoints.
-
-        It is expected that the kpoints are expressed in cartesian coordinates
-        of the reciprocal space. There is no 2|pi|. See `escan.KPoints` for more
-        information.
-
-        .. |pi|  unicode:: U+003C0 .. GREEK SMALL LETTER PI
-    """
-    from .kpoints import KContainer
-    # case for simple containers.
-    if kpoints == None: kpoints, multiplicity = [[0,0,0]], [1]
-    if not hasattr(kpoints, '__call__'): self.kpoints = KContainer(kpoints, multiplicity)
-    escan_copy = kwargs.pop("escan", None)
-    Escan.__init__(self, **kwargs)
-
-    if escan_copy != None: # copy constructor from Escan instance. 
-      from copy import copy
-      for key, value in escan_copy.__dict__.items():
-        self.__dict__[key] = copy(value)
-
-
-  # need jobs package to run this code.
-  if 'jobs' in all_lada_packages: 
-    def __call__(self, structure, outdir=None, comm=None, _in_call=False, **kwargs):
-      """ Performs calculcations. """
-      if _in_call == True: # single calculation.
-        return Escan.__call__(self, structure, outdir, comm, **kwargs)
-
-      from copy import deepcopy
-      from os.path import join
-      from ..jobs import JobDict, Bleeder
-
-      this = deepcopy(self)
-      do_relax_kpoint = kwargs.pop('do_relax_kpoint', kwargs.pop('do_relax_kpoints', None))
-      for key, value in kwargs.iteritems():
-        assert hasattr(this, key), TypeError("Unexpected keyword argument {0}.".format(key))
-        setattr(this, key, value)
-      if do_relax_kpoint != None: this.do_relax_kpoint = do_relax_kpoint
-
-      is_mpi = False if comm == None else comm.size > 1
-      is_root = True if not is_mpi else comm.rank == 0
-
-      # performs vff calculations
-      vffrun = kwargs.get('vffrun', None)
-      if vffrun == None: 
-        vffrun = Escan.__call__(this, structure, outdir, comm, do_escan=False, **kwargs)
-        kwargs.pop('vffrun', None)
-        kwargs.pop('genpotrun', None)
-  
-      # create list of kpoints.
-      kpoints = this._interpret_kpoints(this.kpoints, vffrun)
-
-      jobdict = JobDict()
-      for i, kpoint in enumerate(kpoints):
-        job = jobdict / 'kpoint_{0}'.format(i)
-        job.functional = this
-        job.jobparams['kpoint'] = kpoint
-        job.jobparams['structure'] = structure
-        job.jobparams['do_relax_kpoint'] = False
-        job.jobparams['outdir'] = join(outdir, job.name[1:])
-        job.jobparams['_in_call'] = True
-        if kwargs.get('genpotrun', None) == None: job.jobparams['genpotrun'] = vffrun
-        if kwargs.get('vffrun', None) == None:    job.jobparams['vffrun']    = vffrun
-      
-      bleeder = Bleeder(jobdict, this._pools(len(kpoints), comm), comm)
-      for result, job in bleeder.itercompute(**kwargs): continue
-      bleeder.cleanup()
-
-      result = Extract(outdir, comm, unreduce=True)
-      result.jobdict = jobdict
-      return result
-
-  # otherwise, will drop out on call.
-  else: 
-    def __call__(self, *args, **kwargs):
-      raise ImportError('Cannot use KEscan without jobs package.')
-  
-  def _interpret_kpoints(self, kpoints, vffout):
-     """ Returns list of kpoints. """
-     from numpy import zeros, array
-     # case where kpoints is None.
-     if kpoints == None: return [zeros((3,1), dtype='float64')]
-     # case where kpoints is already a single vector.
-     if hasattr(kpoints, '__len__'):
-       if len(kpoints) == 0: return [zeros((3,1), dtype='float64')]
-       if len(kpoints) == 3:
-         if not hasattr(kpoints[0], '__len__'): return [array(kpoints, dtype='float64')]
-         if len(kpoints[0]) == 1: return [array([k[0] for k in kpoints], dtype='float64')]
-     # case where kpoints is a callable.
-     if hasattr(kpoints, '__call__'):
-       kpoints = kpoints.kpoint(vffout.input_structure, vffout.structure)
-     # last case covers list of vectors and finishes up callable.
-     result = []  
-     for k in kpoints: 
-       kpoint = array(k, dtype='float64')
-       assert len(kpoint) == 3, ValueError('k-vector = {0}?'.format(kpoint))
-       result.append(kpoint)
-     return result
-
-  def _pools(self, N, comm):
-    """ Optimizes number of pools. 
-    
-        Tries to find the largest number of pools which divides the number of
-        kpoints, of procs, and the fft mesh, in that order increasingly
-        inclusive order. Returns 1 on failure.
-    """
-    if comm == None: return 1
-    if comm.size == 1: return 1
-    if N == 1: return 1
-
-    # finds divisors of N
-    pools = [i for i in range(1, N+1) if N % i == 0 and comm.size / i > 0]
-    if len(pools) == 1: return pools[-1]
-    if len(pools) == 0: return 1
-
-    # checks for pools which best divide comm.size
-    pools = [i for i in pools if comm.size % i == 0]
-    if len(pools) == 1: return pools[-1]
-    if len(pools) == 0: return 1
-
-    # checks for pools which best divide mesh size
-    fftsize = self.fft_mesh[0] * self.fft_mesh[1] * self.fft_mesh[2]
-    pools = [i for i in pools if fftmesh % (comm.size / i) == 0]
-    if len(pools) >= 1: return pools[-1]
-    return 1
-
-  def __repr__(self):
-    """ Represents KEscan instance. """
-    if not hasattr(self.kpoints, '__call__'): return Escan.__repr__(self)
-    return 'from {0.kpoints.__class__.__module__} import {0.kpoints.__class__.__name__}\n'\
-           .format(self) + Escan.__repr__(self)
-
-  @property
-  def do_relax_kpoint(self):
-    """ Whether to deform kpoints from original to relaxed geometry.
-    
-        Default is True. Relaxed cell is taken from `_POSCAR`
-        Coding: Also sets attribute in kpoints. 
-    """
-    return self.__dict__["do_relax_kpoint"]
-  @do_relax_kpoint.setter
-  def do_relax_kpoint(self, value): 
-    self.__dict__["do_relax_kpoint"] = value
-    self.kpoints.relax = value
-
-  do_relax_kpoints = do_relax_kpoint
-  """ Alias for `KEscan.do_relax_kpoint`. """
 
 class Extract(AbstractExtractBase):
   """ Extraction class for KEscan. """
@@ -318,3 +162,161 @@ class Extract(AbstractExtractBase):
   def vffrun(self):
     if len(self._cached_jobs) == 0: self.__cache_jobs__()
     return self._cached_jobs[0].vffrun
+ 
+class KEscan(Escan):
+  """ A wrapper around Escan for computing many kpoints. """
+  Extract = Extract
+  def __init__(self, kpoints=None, multiplicity=None, **kwargs):
+    """ Initializes the KEscan functional. """
+    self.kpoints = kpoints
+    """ Kpoints to use for calculations.
+    
+        This object must be None (Gamma), a KMesh-derived structure, a single
+        kpoint, or a list of kpoints.
+
+        It is expected that the kpoints are expressed in cartesian coordinates
+        of the reciprocal space. There is no 2|pi|. See `escan.KPoints` for more
+        information.
+
+        .. |pi|  unicode:: U+003C0 .. GREEK SMALL LETTER PI
+    """
+    from .kpoints import KContainer
+    # case for simple containers.
+    if kpoints == None: kpoints, multiplicity = [[0,0,0]], [1]
+    if not hasattr(kpoints, '__call__'): self.kpoints = KContainer(kpoints, multiplicity)
+    escan_copy = kwargs.pop("escan", None)
+    Escan.__init__(self, **kwargs)
+
+    if escan_copy != None: # copy constructor from Escan instance. 
+      from copy import copy
+      for key, value in escan_copy.__dict__.items():
+        self.__dict__[key] = copy(value)
+
+
+  # need jobs package to run this code.
+  if 'jobs' in all_lada_packages: 
+    def __call__(self, structure, outdir=None, comm=None, _in_call=False, **kwargs):
+      """ Performs calculcations. """
+      if _in_call == True: # single calculation.
+        return Escan.__call__(self, structure, outdir, comm, **kwargs)
+
+      from copy import deepcopy
+      from os.path import join
+      from ..jobs import JobDict, Bleeder
+
+      this = deepcopy(self)
+      do_relax_kpoint = kwargs.pop('do_relax_kpoint', kwargs.pop('do_relax_kpoints', None))
+      for key, value in kwargs.iteritems():
+        assert hasattr(this, key), TypeError("Unexpected keyword argument {0}.".format(key))
+        setattr(this, key, value)
+      if do_relax_kpoint != None: this.do_relax_kpoint = do_relax_kpoint
+
+      is_mpi = False if comm == None else comm.size > 1
+      is_root = True if not is_mpi else comm.rank == 0
+
+      # performs vff calculations
+      vffrun = kwargs.get('vffrun', None)
+      if vffrun == None: 
+        vffrun = Escan.__call__(this, structure, outdir, comm, do_escan=False, **kwargs)
+        kwargs.pop('vffrun', None)
+        kwargs.pop('genpotrun', None)
+  
+      # create list of kpoints.
+      kpoints = this._interpret_kpoints(this.kpoints, vffrun)
+
+      jobdict = JobDict()
+      for i, kpoint in enumerate(kpoints):
+        job = jobdict / 'kpoint_{0}'.format(i)
+        job.functional = this
+        job.jobparams['kpoint'] = kpoint
+        job.jobparams['structure'] = structure
+        job.jobparams['do_relax_kpoint'] = False
+        job.jobparams['outdir'] = join(outdir, job.name[1:])
+        job.jobparams['_in_call'] = True
+        if kwargs.get('genpotrun', None) == None: job.jobparams['genpotrun'] = vffrun
+        if kwargs.get('vffrun', None) == None:    job.jobparams['vffrun']    = vffrun
+      
+      bleeder = Bleeder(jobdict, this._pools(len(kpoints), comm), comm)
+      for result, job in bleeder.itercompute(**kwargs): continue
+      bleeder.cleanup()
+
+      result = Extract(outdir, comm, unreduce=True)
+      result.jobdict = jobdict
+      return result
+
+  # otherwise, will drop out on call.
+  else: 
+    def __call__(self, *args, **kwargs):
+      raise ImportError('Cannot use KEscan without jobs package.')
+  
+  def _interpret_kpoints(self, kpoints, vffout):
+     """ Returns list of kpoints. """
+     from numpy import zeros, array
+     # case where kpoints is None.
+     if kpoints == None: return [zeros((3,1), dtype='float64')]
+     # case where kpoints is already a single vector.
+     if hasattr(kpoints, '__len__'):
+       if len(kpoints) == 0: return [zeros((3,1), dtype='float64')]
+       if len(kpoints) == 3:
+         if not hasattr(kpoints[0], '__len__'): return [array(kpoints, dtype='float64')]
+         if len(kpoints[0]) == 1: return [array([k[0] for k in kpoints], dtype='float64')]
+     # case where kpoints is a callable.
+     if hasattr(kpoints, '__call__'):
+       kpoints = kpoints.kpoint(vffout.input_structure, vffout.structure)
+     # last case covers list of vectors and finishes up callable.
+     result = []  
+     for k in kpoints: 
+       kpoint = array(k, dtype='float64')
+       assert len(kpoint) == 3, ValueError('k-vector = {0}?'.format(kpoint))
+       result.append(kpoint)
+     return result
+
+  def _pools(self, N, comm):
+    """ Optimizes number of pools. 
+    
+        Tries to find the largest number of pools which divides the number of
+        kpoints, of procs, and the fft mesh, in that order increasingly
+        inclusive order. Returns 1 on failure.
+    """
+    if comm == None: return 1
+    if comm.size == 1: return 1
+    if N == 1: return 1
+
+    # finds divisors of N
+    pools = [i for i in range(1, N+1) if N % i == 0 and comm.size / i > 0]
+    if len(pools) == 1: return pools[-1]
+    if len(pools) == 0: return 1
+
+    # checks for pools which best divide comm.size
+    pools = [i for i in pools if comm.size % i == 0]
+    if len(pools) == 1: return pools[-1]
+    if len(pools) == 0: return 1
+
+    # checks for pools which best divide mesh size
+    fftsize = self.fft_mesh[0] * self.fft_mesh[1] * self.fft_mesh[2]
+    pools = [i for i in pools if fftsize % (comm.size / i) == 0]
+    if len(pools) >= 1: return pools[-1]
+    return 1
+
+  def __repr__(self):
+    """ Represents KEscan instance. """
+    if not hasattr(self.kpoints, '__call__'): return Escan.__repr__(self)
+    return 'from {0.kpoints.__class__.__module__} import {0.kpoints.__class__.__name__}\n'\
+           .format(self) + Escan.__repr__(self)
+
+  @property
+  def do_relax_kpoint(self):
+    """ Whether to deform kpoints from original to relaxed geometry.
+    
+        Default is True. Relaxed cell is taken from `_POSCAR`
+        Coding: Also sets attribute in kpoints. 
+    """
+    return self.__dict__["do_relax_kpoint"]
+  @do_relax_kpoint.setter
+  def do_relax_kpoint(self, value): 
+    self.__dict__["do_relax_kpoint"] = value
+    self.kpoints.relax = value
+
+  do_relax_kpoints = do_relax_kpoint
+  """ Alias for `KEscan.do_relax_kpoint`. """
+
