@@ -214,6 +214,38 @@ namespace LaDa
         "Wigner-Seitz), especially in the case of long slender supercells. To "
         "get the vector from Wigner-Seitz cell, use into_voronoi.\n"
       );
+      bp::def("into_voronoi", &into_voronoi2, (bp::arg("vector"), bp::arg("cell")));
+      bp::def
+      (
+        "into_voronoi", &Crystal::into_voronoi,
+        (bp::arg("vector"), bp::arg("cell"), bp::arg("inverse")),
+        "Returns the vector folded into the Wigner-Seitz cell.\n\n"
+        "@param vector: the vector to be folded.\n"
+        "@type vector: numpy 3x3 float64 array.\n"
+        "@param cell: the cell for which to fold.\n"
+        "@type cell: numpy 3x3 float64 array.\n"
+        "@param inv: the inverse of the cell for which to fold. Computed from "
+        "cell if not given on input.\n"
+        "@type inv: numpy 3x3 float64 array.\n"
+      );
+      bp::def("zero_centered", &zero_centered2, (bp::arg("vector"), bp::arg("cell")));
+      bp::def
+      (
+        "zero_centered", &Crystal::zero_centered,
+        (bp::arg("vector"), bp::arg("cell"), bp::arg("inverse")),
+        "Returns the vector folded around zero (in fractional coordinates).\n\n"
+        "Since the vector is refolded in fractional coordinates, it may not be "
+        "the equivalent vector with the smallest norm (e.g., not in "
+        "Wigner-Seitz), especially in the case of long slender supercells. To "
+        "get the vector from Wigner-Seitz cell, use into_voronoi.\n"
+        "@param vector: the vector to be folded.\n"
+        "@type vector: numpy 3x3 float64 array.\n"
+        "@param cell: the cell for which to fold.\n"
+        "@type cell: numpy 3x3 float64 array.\n"
+        "@param inv: the inverse of the cell for which to fold. Computed from "
+        "cell if not given on input.\n"
+        "@type inv: numpy 3x3 float64 array.\n"
+      );
     }
 
   }

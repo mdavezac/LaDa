@@ -139,6 +139,9 @@ namespace LaDa
       //!           the occupations.
       bool operator== (const TStructure<T_TYPE> &_str ) const;
       
+      //! Sets the site index of each atom according to Structure::lattice.
+      bool set_site_indices();
+
       private:
         //! Serializes a structure.
         template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version);
@@ -231,9 +234,6 @@ namespace LaDa
       std::ostream& print_xyz( std::ostream &_stream,
                                const std::string &_name = "" ) const;
       
-      //! Sets the site index of each atom according to Structure::lattice.
-      bool set_site_indices();
-
       protected:
         //! Finds parent node.
         const TiXmlElement* find_node( const TiXmlElement &_element );

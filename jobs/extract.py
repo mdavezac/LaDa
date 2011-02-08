@@ -118,6 +118,12 @@ class AbstractMassExtract(object):
     """ Returns length of output dictionary. """
     return len(self.keys())
 
+  def __contains__(self, key):
+    """ Returns True if key is valid and not empty. """
+    try: return len(self[key]) != 0
+    except: pass
+    return False
+
   def _regex_pattern(self, pattern, flags=0):
     """ Returns a regular expression. """
     from re import compile

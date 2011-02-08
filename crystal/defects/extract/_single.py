@@ -13,7 +13,7 @@ class _ChargedStateNavigation(object):
       stage is optimized out and will not appear explicitely in the interface
       of this object.
   """
-  def __init__(self, extract, epsilon = 1e0, host = None, pa_maxdiff=-8):
+  def __init__(self, extract, epsilon = 1e0, host = None, pa_kwargs=None):
     """ Initializes an enthalpy function. """
     super(_ChargedStateNavigation, self).__init__()
     # extraction object.
@@ -28,8 +28,18 @@ class _ChargedStateNavigation(object):
 
         If None, will determine it from the directory structure.
     """
-    self.pa_maxdiff = pa_maxdiff
+    self.pa_kwargs = pa_kwargs 
     """ Potential alignment parameter. """
+    if self.pa_kwargs == None: self.pa_kwargs = {}
+
+  @property
+  def epsilon(self):
+    """ Dimensionless dielectric constant of the host material. """
+    return self._epsilon
+  @epsilon.setter
+  def epsilon(self, value): 
+    self._epsilon = value
+    self.uncache()
 
   @property
   def rootdir(self):
@@ -78,7 +88,7 @@ class _ChargedStateNavigation(object):
     from numpy import array
     from quantities import eV
     from .. import potential_alignment
-    return array([ potential_alignment(state, self.host, self.pa_maxdiff) \
+    return array([ potential_alignment(state, self.host, **self.pa_kwargs) \
                    for state in self._all_jobs() ]) * eV
 
   @property
@@ -88,7 +98,7 @@ class _ChargedStateNavigation(object):
     from numpy import array
     from quantities import eV
     from .. import band_filling
-    return array([ band_filling(state, self.host, maxdiff=self.pa_maxdiff) \
+    return array([ band_filling(state, self.host, **self.pa_kwargs) \
                    for state in self._all_jobs() ]) * eV
 
   @property
@@ -145,12 +155,6 @@ class _ChargedStateNavigation(object):
       child.__dict__['deltaH']              = alles[child.directory][4]
       result.append(child)
     return result
-
-  @property
-  def _all_energies(self):
-    """ Dictionary with all energies. """
-    return result
-
 
   @property
   def host(self):
@@ -217,6 +221,19 @@ class _ChargedStateNavigation(object):
     self.extract.uncache()
     self.host.unchache()
 
+  def __getitem__(self, value):
+    """ Returns specific charge state. """
+    for job in self._all_jobs():
+      if abs(job.charge - value) < 1e-12: return job
+    raise KeyError('Charge state {0} not found.'.format(value))
+  def __contains__(self, value):
+    """ True if value is a known charge state. """
+    for job in self._all_jobs():
+      if abs(job.charge - value) < 1e-12: return True
+    return False
+  def __len__(self, value): 
+    """ Number of charge states. """
+    return len([0 for u in self._all_jobs()])
 
 class Single(_ChargedStateNavigation):
   """ Extracts data for a single defect.
@@ -224,9 +241,9 @@ class Single(_ChargedStateNavigation):
       A *single* defect includes charged states, as well as magnetic states
       which have been optimized out.
   """
-  def __init__(self, extract, epsilon = 1e0, host = None, pa_maxdiff=-8):
+  def __init__(self, extract, epsilon = 1e0, host = None, pa_kwargs=None):
     """ Initializes an enthalpy function. """
-    super(Single, self).__init__(extract, epsilon, host, pa_maxdiff)
+    super(Single, self).__init__(extract, epsilon, host, pa_kwargs)
 
   def chempot(self, mu):
     """ Computes sum of chemical potential from dictionary ``mu``. 
@@ -340,6 +357,29 @@ class Single(_ChargedStateNavigation):
     """ List of charges of all charged states. """
     return sorted([s.charge for s in self._charged_states])
 
+  @property 
+  def potal(self):
+    """ Array of potential alignment values. """
+    from numpy import array
+    return array([a.potential_alignment for a in self._charged_states])
+
+  @property 
+  def band_filling(self):
+    """ Array of band-filling corrections. """
+    from numpy import array
+    return array([a.band_filling for a in self._charged_states])
+
+  @property 
+  def charge_corrections(self):
+    """ Array of charge corrections (first and third order both). """
+    from numpy import array
+    return array([a.charge_corrections for a in self._charged_states])
+
+  @property 
+  def raw_deltaH(self):
+    """ Array of delta H without any correction. """
+    from numpy import array
+    return array([a.raw_deltaH for a in self._charged_states])
 
   @property
   def latex_label(self):

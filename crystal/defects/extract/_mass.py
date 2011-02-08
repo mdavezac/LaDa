@@ -8,7 +8,7 @@ class _MaterialNavigator(AbstractMassExtract):
   """ Navigates around multiple defects of a single material. """
   DefectExtractor = Single
   """ Class for extracting data from a single defect. """
-  def __init__(self, path=None, epsilon = 1e0, pa_maxdiff=0.5, **kwargs):
+  def __init__(self, path=None, epsilon = None, pa_kwargs=None, **kwargs):
     """ Initializes an enthalpy function. """
     from ....vasp import MassExtract as VaspMassExtract
 
@@ -19,7 +19,7 @@ class _MaterialNavigator(AbstractMassExtract):
     self.__dict__["DefectExtractor"] \
         = kwargs.pop("DefectExtractor", _MaterialNavigator.DefectExtractor)
 
-    super(_MaterialNavigator, self).__init__(**kwargs)
+    AbstractMassExtract.__init__(self, **kwargs)
 
     self.massextract = MassExtractor(path, unix_re=False, excludes=[".*relax_*"])
     """ Mass extraction object from which all results are pulled. """
@@ -28,26 +28,32 @@ class _MaterialNavigator(AbstractMassExtract):
 
     # must be last. Can't use porperty setter.
     self._epsilon = epsilon
-    self._pa_maxdiff = pa_maxdiff
+    self._pa_kwargs = pa_kwargs
 
 
   @property 
   def epsilon(self): 
     """ Dimensionless dielectric constant. """
-    return self._epsilon
+    if self._epsilon != None: return self._epsilon
+    if 'dielectric' in self.massextract and len(self.massextract['dielectric']) == 1:
+      from numpy import trace
+      self.epsilon = trace(self.massextract.copy(naked_end=True)['dielectric'].epsilon)/3e0
+      return self._epsilon
+    return 1e0
+
   @epsilon.setter
   def epsilon(self, value):
     self._epsilon = value 
     for v in self.itervalues(): v.epsilon = self._epsilon
 
   @property 
-  def pa_maxdiff(self): 
+  def pa_kwargs(self): 
     """ Dimensionless dielectric constant. """
-    return self._pa_maxdiff
-  @pa_maxdiff.setter
-  def pa_maxdiff(self, value):
-    self._pa_maxdiff = value 
-    for v in self.itervalues(): v.pa_maxdiff = self._pa_maxdiff
+    return self._pa_kwargs
+  @pa_kwargs.setter
+  def pa_kwargs(self, value):
+    self._pa_kwargs = value 
+    for v in self.itervalues(): v.pa_kwargs = self._pa_kwargs
 
 
   @property
@@ -60,7 +66,7 @@ class _MaterialNavigator(AbstractMassExtract):
   def _get_host(self):
     """ Returns extraction object towards the host. """
     from operator import itemgetter
-    host = self.massextract.copy(excludes=[".*PointDefects"])
+    host = self.massextract.copy(excludes=[".*PointDefects", ".*dielectric"], naked_end=False)
     host.excludes.extend(self.massextract.excludes)
     lowest = sorted(host.total_energies.iteritems(), key=itemgetter(1))[0][0]
     host = [u for u in host[lowest].itervalues()]
@@ -68,21 +74,22 @@ class _MaterialNavigator(AbstractMassExtract):
     return host[0]
 
 
-  def walk_through(self):
+  def __iter_alljobs__(self):
     """ Walks through point-defects only. """
     for child in self.massextract["PointDefects"].children:
       # looks for site_n
-      if len(child["site_\d+"].jobs) != 0:
-        assert len(child["site_\d+"].jobs) == len(child.jobs),\
+      if len(child["site_\d+"].keys()) != 0:
+        assert len(child["site_\d+"].keys()) == len(child.keys()),\
                RuntimeError("Don't understand directory structure of {0}.".format(child.view))
         for site in child.children: # should site specific defects.
-          result = self.DefectExtractor(site, self.epsilon, self.host, self.pa_maxdiff)
+          result = self.DefectExtractor( site, epsilon=self.epsilon,
+                                         host=self.host, pa_kwargs=self.pa_kwargs )
           # checks this is a point-defect.
           if result.is_interstitial or result.is_vacancy or result.is_substitution:
             yield site.view, result
       else:
-        result = self.DefectExtractor(child, host=self.host, pa_maxdiff=self.pa_maxdiff,\
-                                      epsilon = self.epsilon)
+        result = self.DefectExtractor( child, epsilon=self.epsilon,
+                                       host=self.host, pa_kwargs=self.pa_kwargs )
         # checks if this is a valid point-defect.
         if result.is_interstitial or result.is_vacancy or result.is_substitution:
           yield child.view, result

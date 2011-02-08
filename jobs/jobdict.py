@@ -318,7 +318,6 @@ class JobDict(object):
              an actual job. If ``other`` is an actual job, then ``functional`` in
              ``self`` is overwritten. If ``other`` is not an actual job, then
              ``functional`` in ``self`` is not replaced.
-         
 
         Updates the dictionaries of job parameters and sub-jobs. Actual jobs in
         ``other`` (eg with ``self.is_job=True``) will completely overwrite those in

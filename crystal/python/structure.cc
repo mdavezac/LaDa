@@ -39,6 +39,7 @@
 
 #include "../structure.h"
 #include "../fill_structure.h"
+#include "../which_site.h"
 #include "../lattice.h"
 #include "../fractional_cartesian.h"
 
@@ -62,8 +63,7 @@ namespace LaDa
     {
       if( not Crystal::Structure::lattice )
       {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "Crystal::Structure::lattice has not been set.\n");
+        PyErr_SetString(PyExc_RuntimeError, "Crystal::Structure::lattice has not been set.\n");
         bp::throw_error_already_set();
         return NULL;
       }
@@ -186,6 +186,39 @@ namespace LaDa
         return result;
       }
       
+    template<class T>
+      void reindex_sites(T &_str, Crystal::Lattice const * const _lattice)
+      {
+        Crystal::Lattice * const old_lattice = _str.lattice;
+        Crystal::Lattice const * const lattice(_lattice ? _lattice: old_lattice);
+  
+        if(lattice == NULL)
+        {
+          PyErr_SetString(PyExc_RuntimeError, "No lattice on input, and no default lattice.");
+          bp::throw_error_already_set();
+          return;
+        }
+  
+        typename T::t_Atoms::iterator i_first = _str.atoms.begin();
+        typename T::t_Atoms::iterator const i_end = _str.atoms.end();
+        std::ostringstream sstr;
+        math::rMatrix3d const inv_cell(!_str.cell);
+        for(; i_first != i_end; ++i_first)
+        {
+          i_first->site = Crystal::which_site(i_first->pos, inv_cell, lattice->sites);
+          if(i_first->site == -1) sstr << (i_first - _str.atoms.begin()) << ' ';
+        }
+        if(sstr.str().size() != 0) 
+        {
+          PyErr_SetString( PyExc_RuntimeError,
+                           ("Could not relate atoms to lattice sites.\n  " + sstr.str()).c_str() );
+          bp::throw_error_already_set();
+          return;
+        }
+  
+        _str.lattice = old_lattice;
+      }
+
 
     template< class T>
       math::rMatrix3d get_cell( T const &_str ) { return _str.cell; }
@@ -244,7 +277,9 @@ namespace LaDa
             "References the lattice within which this structure is defined."
             " Read, but do not write to this object." 
           ) 
-          .def_pickle( Python::pickle< T_STRUCTURE >() );
+          .def_pickle( Python::pickle< T_STRUCTURE >() )
+          .def( "reindex_sites", &reindex_sites<T_STRUCTURE>, bp::arg("lattice") = NULL,
+                "Sets site index in atoms to match the input lattice." );
       }
 
     void expose_structure()

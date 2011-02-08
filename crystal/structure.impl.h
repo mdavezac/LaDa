@@ -57,6 +57,24 @@ namespace LaDa
 
 
     template< class T_TYPE >
+      bool TStructure<T_TYPE> :: set_site_indices()
+      {
+        if ( not lattice ) return false;
+      
+        bool result = true;
+        typename TStructure<T_TYPE> :: t_Atoms :: iterator i_atom = atoms.begin();
+        typename TStructure<T_TYPE> :: t_Atoms :: iterator i_atom_end = atoms.end();
+        for(; i_atom != i_atom_end; ++i_atom )
+        {
+          i_atom->site = lattice->get_atom_site_index( i_atom->pos );
+          (i_atom->site == -1) ?
+            result = false:
+            i_atom->freeze |= lattice->sites[ i_atom->site ].freeze;
+        }
+        return result;
+      }
+
+    template< class T_TYPE >
      bool TStructure<T_TYPE> :: operator== (const TStructure<T_TYPE> &_str ) const
      {
        return     math::eq( cell(0,0), _str.cell(0,0) )
