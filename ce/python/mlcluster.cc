@@ -131,7 +131,7 @@ namespace LaDa
       namespace bp = boost::python;
       bp::scope scope = bp::class_<CE::MLCluster>("MLCluster", "A multi-lattice cluster (figure).")
           .def(bp::init<CE::MLCluster const&>())
-          .add_property("origin", &CE::MLCluster::origin, "Cluster origin.")
+          .def_readwrite("origin", &CE::MLCluster::origin, "Cluster origin.")
           .def("apply_symmetry", &apply_symmetry, "Returns a transformed cluster.\n")
           .def("order", &CE::MLCluster::order, "Returns the order of the cluster.\n")
           .def("__str__", &tostream<CE::MLCluster>, "Returns the order of the cluster.\n")
@@ -146,7 +146,7 @@ namespace LaDa
                "Input can consist of a `Spin`, a position and a site, "
                "or a only the position (site defaults to 0)." );
       bp::class_<CE::MLCluster::Spin>("Spin", "A spin.")
-        .add_property("site", &CE::MLCluster::Spin::site, "Site index in lattice.")
+        .def_readwrite("site", &CE::MLCluster::Spin::site, "Site index in lattice.")
         .add_property
         (
           "pos",

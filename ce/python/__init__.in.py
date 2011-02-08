@@ -8,6 +8,7 @@ ce_lattice_type = "@LATTICE_TYPE@"
 def read_jtypes(path, lattice, pairs = 0):
   """ Reads jtype file. """
   from re import compile, M as multline
+  from numpy import array
   from ..crystal import lattice_context
   from ..crystal.bravais import bcc, fcc
   from . import MLCluster, MLClusters, MLClusterClasses, create_clusters
@@ -24,14 +25,13 @@ def read_jtypes(path, lattice, pairs = 0):
                  r"(?:\s*\d+\s+\d+\s+\d+(?:\s|#)*)*$", multline)
   
     with open(path, "r") as file: text = file.read()
-    if J0.search(text) != None: result.append(MLClusters())
-    if J1.search(text) != None:
-      j1 = MLCluster()
-      j1.append((0,0,0))
-      result.append(j1)
+    if J0.search(text) != None: result.append()
+    if J1.search(text) != None: result.append(MLCluster())
     for manybody in mb.finditer(text):
       cluster = MLCluster()
-      for vector in manybody.group(0).split('\n')[2:]:
+      cluster.origin.site = 0
+      cluster.origin.pos = array([0,0,0], dtype="float64")
+      for vector in manybody.group(0).split('\n')[3:]:
         cluster.append([float(u) * 0.5 for u in vector.split()], 0)
       result.append(cluster)
 
@@ -48,8 +48,10 @@ def read_mbce_structure(path):
   cell = zeros((3,3), dtype="float64")
   for i in range(3): cell[:,i] = array(lines[i+2].split(), dtype="float64")
   structure.cell = cell
-  for line in lines[5:-1]:
-    structure.add_atom = array(line.split()[1:], dtype="float64"),\
+  for line in lines[5:]:
+    if len(line.split()) < 4: break
+    if line.split()[0] not in ['1', '2']: continue 
+    structure.add_atom = array(line.split()[1:4], dtype="float64"),\
                          "A" if line.split()[0] == "1" else "B"
   structure.scale  = 1e0
   structure.energy = 0e0
@@ -64,6 +66,6 @@ def read_mbce_structures(directory):
     for line in file:
       if line.find('#') != -1: line = line[:line.find('#')]
       if len(line.split()) < 2: continue
-      result.append( read_mbce_structure(line.split()[0]) )
+      result.append( read_mbce_structure(join(directory, line.split()[0])) )
       result[-1].energy = float(line.split()[1])
   return result

@@ -124,8 +124,9 @@ namespace LaDa
     boost::shared_ptr<CE::t_MLClusterClasses> init3(std::string const &_path, bool _b)
       { return CE::load_mlclusters(_path, _b); }
 
-    boost::shared_ptr<CE::t_MLClusterClasses> copy_constructor( CE::t_MLClusterClasses const & _ob )
-      { return boost::shared_ptr<CE::t_MLClusterClasses>( new CE::t_MLClusterClasses(_ob) ); }
+    boost::shared_ptr<CE::t_MLClusterClasses>
+      copy_constructor( CE::t_MLClusterClasses const & _ob )
+        { return boost::shared_ptr<CE::t_MLClusterClasses>( new CE::t_MLClusterClasses(_ob) ); }
     boost::shared_ptr<CE::t_MLClusterClasses> object_constructor( const boost::python::list& _ob )
     {
       namespace bp = boost::python;

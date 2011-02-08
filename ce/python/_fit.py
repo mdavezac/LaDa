@@ -38,6 +38,11 @@ class Fit():
     self._classes = ce.MLClusterClasses(clusters)
     self._structures = None
 
+  @property
+  def energies(self):
+    """ Array of energies corresponding to the structures. """
+    return self._energies
+
   @changelattice
   def __call__(self, A = None, b = None):
     """ Returns observation matrix A and target vector b.
@@ -341,7 +346,7 @@ def leave_many_out( fitter, sets ):
 
   # loop over fitting sets.
   for i, s in enumerate(sets):
-    fitter.extinguish_structure(s)
+    fitter.extinguish_structure(s, on="all")
     A, b = fitter()
     x, residues, rank, s = numpy.linalg.lstsq(A, b)
     errors[i, :] = numpy.dot(A_all, x) - b_all
