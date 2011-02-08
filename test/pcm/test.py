@@ -5,7 +5,7 @@ from quantities import angstrom, eV, hartree
 
 clj  = Clj()
 """ Point charge + r^12 + r^6 model. """
-clj.ewald_cutoff = 150 * Ry
+clj.ewald_cutoff = 80 * Ry
 
 clj.charges["A"] = -1.0
 clj.charges["B"] =  1.0
@@ -24,7 +24,7 @@ print clj.ewald(structure).energy, hartree.rescale(eV)
 from lada.crystal.A2BX4 import b5
 from lada.crystal import fill_structure
 from numpy import array
-clj.ewald_cutoff = 150 * Ry
+clj.ewald_cutoff = 20 * Ry
 lattice = b5()
 lattice.sites[4].type='A'
 structure = fill_structure(lattice.cell, lattice)

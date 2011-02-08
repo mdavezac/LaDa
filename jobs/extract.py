@@ -120,8 +120,10 @@ class AbstractMassExtract(object):
 
   def __contains__(self, key):
     """ Returns True if key is valid and not empty. """
-    try: return len(self[key]) != 0
-    except: pass
+    from re import compile
+    rekey = compile(key)
+    for key in self.iterkeys(): 
+      if rekey.match(key): return True
     return False
 
   def _regex_pattern(self, pattern, flags=0):

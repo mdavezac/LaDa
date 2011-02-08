@@ -559,7 +559,7 @@ def third_order_charge_correction(structure, charge = None, n = 200, epsilon = 1
          * (1e0 - 1e0/epsilon) / epsilon
          
 
-def first_order_charge_correction(structure, charge=None, epsilon=1e0, cutoff=15e1, **kwargs):
+def first_order_charge_correction(structure, charge=None, epsilon=1e0, cutoff=20.0, **kwargs):
   """ First order charge correction of +1 charge in given supercell. 
   
       Units in this function are either handled by the module Quantities, or
@@ -584,10 +584,11 @@ def first_order_charge_correction(structure, charge=None, epsilon=1e0, cutoff=15
   from ...physics import Ry
   try: from ...pcm import Clj 
   except ImportError as e:
-    print "Could not import Point-Charge Model package (pcm). \n"\
-          "Cannot compute first order charge correction.\n"\
-          "Please compile LaDa with pcm enabled.\n"
-    raise
+    from warnings import warn
+    warn(ImportWarning("Could not import Point-Charge Model package (pcm). \n"\
+                       "Cannot compute first order charge correction.\n"\
+                       "Please compile LaDa with pcm enabled.\n"))
+    return 
 
   if charge == None: charge = 1
   elif charge == 0: return 0e0 * eV

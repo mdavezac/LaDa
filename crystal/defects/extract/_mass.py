@@ -37,7 +37,10 @@ class _MaterialNavigator(AbstractMassExtract):
     if self._epsilon != None: return self._epsilon
     if 'dielectric' in self.massextract and len(self.massextract['dielectric']) == 1:
       from numpy import trace
-      self.epsilon = trace(self.massextract.copy(naked_end=True)['dielectric'].epsilon)/3e0
+      epsilon = self.massextract.copy(naked_end=True)['dielectric'].dielectric_constant
+      if epsilon == None: return 1
+      if len(epsilon) != 3: return 1
+      self.epsilon = trace(epsilon)/3e0
       return self._epsilon
     return 1e0
 

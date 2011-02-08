@@ -21,13 +21,13 @@ class _ChargedStateNavigation(object):
     if self.extract.excludes == None: self.extract.excludes = [".*relax_*"]
     else: self.extract.excludes.append(".*relax_*$")
 
-    self.epsilon = epsilon
-    """ Dimensionless dielectric constant. """
     self._host = host
     """ Host extraction object. 
 
         If None, will determine it from the directory structure.
     """
+    self.epsilon = epsilon
+    """ Dimensionless dielectric constant. """
     self.pa_kwargs = pa_kwargs 
     """ Potential alignment parameter. """
     if self.pa_kwargs == None: self.pa_kwargs = {}
@@ -216,10 +216,10 @@ class _ChargedStateNavigation(object):
 
   def uncache(self):
     """ Uncaches result. """
-    from opt import uncache as opt_uncache
+    from ....opt.decorators import uncache as opt_uncache
     opt_uncache(self)
     self.extract.uncache()
-    self.host.unchache()
+    self.host.uncache()
 
   def __getitem__(self, value):
     """ Returns specific charge state. """
