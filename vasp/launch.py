@@ -129,7 +129,7 @@ class Launch(Incar):
      stdout = join(self._tempdir, files.STDOUT) 
      stderr = join(self._tempdir, files.STDERR) 
      is_notroot = False if comm == None else comm.rank != 0
-     if is_notroot and self.print_from_all:
+     if is_notroot and getattr(self, "print_from_all", False):
        stdout += ".{0}".format(comm.rank)
        stderr += ".{0}".format(comm.rank)
      elif is_notroot: 
@@ -227,5 +227,12 @@ class Launch(Incar):
     self.species[args[0]] = Specie(*args[1:])
     
 
-       
+  def __setstate__(self, args):
+    """ Sets state from pickle.
+
+        Takes care of older pickle versions.
+    """
+    Incar.__setstate__(self, args)
+    if "print_from_all" not in self.__dict__:
+      self.__dict__["print_from_all"] = False
 

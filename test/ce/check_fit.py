@@ -12,9 +12,10 @@ def main():
   import random
 
 
-  lattice = crystal.Lattice("input.xml")
+  lattice = crystal.bravais.fcc(); lattice.sites[0].type = "A", "B"
+  lattice.set_as_crystal_lattice()
   mlclasses = ce.MLClusterClasses("input.xml", False)
-  fit = ce.PairRegulatedFit(mlclasses, alpha=3.0, tcoef=1, type="laks")
+  fit = ce.PairRegulatedFit(mlclasses, lattice, alpha=3.0, tcoef=1, type="laks")
 
   fit.read_directory("data")
   A, b = fit()

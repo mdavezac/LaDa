@@ -3,8 +3,6 @@
 #include <sstream>
 #include <complex>
 
-#include <pyublas/numpy.hpp>
-
 #include <boost/exception/diagnostic_information.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits/is_signed.hpp>
@@ -18,6 +16,7 @@
 #include <boost/python/make_constructor.hpp>
 
 #include <python/std_vector.hpp>
+#include <python/numpy_types.h>
 #include <crystal/lattice.h>
 
 #include "bitset.hpp"
@@ -36,12 +35,11 @@ namespace LaDa
     bool get_item( e::Database const &_d, e::t_uint _x ) { return _d[_x]; }
     void set_item( e::Database &_d, e::t_uint _x, bool _b ) { _d[_x] = _b; }
 
-    pyublas::numpy_vector<size_t> integer_to_vector( e::t_uint _x,
-                                                     e::FlavorBase const& _fl ) 
+    bp::object integer_to_vector(e::t_uint _x, e::FlavorBase const& _fl) 
     {
-      pyublas::numpy_vector<size_t> result;
+      std::vector<size_t> result;
       e::integer_to_vector(_x, _fl, result);
-      return result;
+      return math::numpy::copy_1darray(result);
     }
 
     std::string integer_to_bitstring(e::t_uint _x, e::FlavorBase const &_fl )
@@ -199,6 +197,7 @@ namespace LaDa
 
     void expose_bitset()
     {
+      import_array();
       bp::def("get_index", &e::get_index);
       bp::def("count_flavors", &e::count_flavors);
       bp::def("create_flavorbase", &e::create_flavor_base, 

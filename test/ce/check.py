@@ -144,12 +144,14 @@ def main():
   import boost.mpi as mpi
   import numpy
   import pyublas
+  from numpy import array
+  from lada.crystal.bravais import fcc
 
   functional = ce.Cubic()
   functional.set_mpi(mpi.world)
   functional.load( "input.xml" )
-  structure = crystal.Structure()
-  structure.fromXML("input.xml")
+  lattice = fcc(); lattice.sites[0].type = "Au", "Pd"
+  structure = lattice.to_structure( array([[0,1.0,1.5],[1,0,1.5],[1.0,1.0,0]]))
 # print structure.lattice.space_group
 
   mlclasses = ce.MLClusterClasses("input.xml", False)
@@ -198,8 +200,8 @@ def main():
 
   for test in tests:
     for i, atom in enumerate(structure.atoms):
-      if test[0][i] == "0": atom.type = -1e0
-      else:               atom.type = 1e0
+      if test[0][i] == "0": atom.type = "Au"
+      else:                 atom.type = "Pd"
     e = mlclasses(structure) 
     c = functional.chemical(structure) 
     if not e == 0e0:

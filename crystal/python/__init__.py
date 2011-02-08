@@ -8,7 +8,7 @@ __all__ = [ 'FreezeAtom', 'which_site', 'Sites', 'SymmetryOperator', 'Lattice', 
             # Below, only true python stuff
             'deform_kpoints', 'specie_list', 'read_poscar', 'write_poscar',\
             'write_oldvff', 'read_oldvff', 'structure_to_lattice', 'fill_structure', \
-            'A2BX4', 'bravais', 'gruber', 'vasp_ordered', 'binary' ]
+            'A2BX4', 'bravais', 'gruber', 'vasp_ordered', 'binary', 'lattice_context' ]
 __docformat__ = "restructuredtext en"
 
 from _crystal import FreezeAtom, which_site, Site, SymmetryOperator, Lattice, to_cartesian,\
@@ -28,6 +28,8 @@ import gruber
 try: import defects
 except ImportError: pass # required vasp and jobs packages.
 else: __all__.append('defects')
+
+from contextlib import contextmanager
 
 
 def deform_kpoint(kpoint, ideal, relaxed):
@@ -492,4 +494,14 @@ def gaussian_projector(positions, center, cell, alpha=1e0):
       except: raise ValueError("Could not rescale alpha to {0}.".format(alpha_units))
       else: alpha = float(alpha.magnitude)
   return _gaussian_projector_impl(positions, center, cell, alpha)
+
+@contextmanager
+def lattice_context(lattice):
+  """ Sets global lattice within a context. """
+  from . import Structure
+  try: oldlattice = Structure().lattice
+  except: oldlattice = None
+  lattice.set_as_crystal_lattice()
+  yield oldlattice
+  if oldlattice != None: oldlattice.set_as_crystal_lattice()
 
