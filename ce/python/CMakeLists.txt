@@ -7,7 +7,7 @@ set( PYCE_SOURCES
      mlcluster.cc  mlclusters.cc  python.cc )
 
 
-include_directories(${PYTHON_INCLUDE_DIRS} ${PYUBLAS_INCLUDE_DIRS} ${NUMPY_INCLUDES})
+include_directories(${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDES})
 python_add_module (pyce ${PYCE_HEADERS} ${PYCE_SOURCES})
 target_link_libraries(pyce ce ${Boost_PYTHON_LIBRARY})
 mark_as_advanced(PYTHON_ENABLE_MODULE_pyce)

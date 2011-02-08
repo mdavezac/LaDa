@@ -1,12 +1,24 @@
-#
-#  Version: $Id$
-#
+""" Contains fitting functional. """
+__docformat__ = "restructuredtext en"
+__all__ = ['Fit', 'PairRegulatedFit', 'leave_one_out', 'leave_many_out'] 
 
+def changelattice(method):
+  """ Counts calls to a member function. """
+  def wrapped(*args, **kwargs):
+    from lada.crystal import lattice_context
+    with lattice_context(args[0].lattice) as oldlattice: 
+      return method(*args, **kwargs)
+  
+  wrapped.__name__ = method.__name__
+  wrapped.__doc__ = method.__doc__
+  wrapped.__module__ = method.__module__
+  wrapped.__dict__.update(method.__dict__)
+  return wrapped
 
 class Fit(): 
   """ Computes lstsq vector and matrix for a sub-set of clusters and a sub-set of structures.
   """
-  def __init__(self, clusters):
+  def __init__(self, clusters, lattice):
     """ Initialises the fitting class.
 
         clusters should be a ce.MLClusterClass instance, or convertible. A copy
@@ -16,6 +28,8 @@ class Fit():
     import numpy
 
 
+    self.lattice = lattice
+    """ Lattice for which to perform CE. """
     self._pis       = None
     self._energies  = None
     self._weights   = None
@@ -24,6 +38,7 @@ class Fit():
     self._classes = ce.MLClusterClasses(clusters)
     self._structures = None
 
+  @changelattice
   def __call__(self, A = None, b = None):
     """ Returns observation matrix A and target vector b.
 
@@ -33,7 +48,6 @@ class Fit():
     """
 
     import numpy
-    import pyublas
 
     # gets array lengths
     x, y = 0, 0
@@ -62,6 +76,7 @@ class Fit():
 
 
 
+  @changelattice
   def add_structure(self, structure):
     """ Adds a structure to input set.
         
@@ -69,9 +84,8 @@ class Fit():
         Expects structure.energy to hold the target energy, 
         and structure.weight the weight of the fitting set in the structure.
     """
-    from lada.ce import find_pis
+    from . import find_pis
     import numpy
-    import pyublas
     
     # resize array to fit structure.
     if self._pis == None:  # on-offs for clusters.
@@ -136,6 +150,7 @@ class Fit():
     return len(self._cls_onoff), len(self._str_onoff)
 
 
+  @changelattice
   def reset_clusterclasses(self, classes):
     """ Resets cluster classes to those on input.
         This is necessary after changing the cluster classes. 
@@ -154,48 +169,37 @@ class Fit():
       self.add_structure(structure)
     self._weights = weights
 
-
+  @changelattice
   def read_directory(self, path):
     """ Reads a directory containing LDAs.dat file and adds the structures to the fitting set. 
         The structure files should exist in the same directory.
     """
     import os.path
     import re
-    from lada import crystal
+    from . import read_mbce_structures
 
-    assert os.path.exists(path), "%s does not exist.\n" % (path)
-    assert os.path.isdir(path), "%s is not a directory.\n" % (path)
-    LDAs_filename = os.path.join(path, "LDAs.dat")
-    assert os.path.exists(LDAs_filename), "%s does not exist.\n" % (LDAs_filename)
-
-    LDAs = open(LDAs_filename, "r")
-    for line in LDAs:
-      if re.match("\s*#", line) != None: continue 
-      filename = line.split()[0] 
-      structure = crystal.read_structure( os.path.join(path, filename) )
-      structure.energy = float(line.split()[1])
-      structure.weight = 1e0
-      self.add_structure(structure)
+    for structure in read_mbce_structures(path): self.add_structure(structure)
     
 
 
 class PairRegulatedFit(Fit):
   """ CE with pair regularisation.
+
       This class returns (__call__) observation and target arrays for use with
       linear least square fit routine from numpy.linalg.
       The last observations are for regularisation.
       For some reason (a bug that lasted long enough to become a feature?)
-      there are two types of reugalarization used at NREL. They differ only by
+      there are two types of reugalarization used at NREL. They differ only 
       in the exact normalization (or equivalently, they differ in the unit of tcoef).
       self.alpha and self.tcoef parameterize the regularization.
   """
 
-  def __init__(self, clusters, alpha = 2, tcoef = 1, type="laks"):
+  def __init__(self, clusters, lattice, alpha = 2, tcoef = 1, type="laks"):
     """ alpha and tcoef are the regularization coefficients. """
-    from numpy.linalg.basic import norm as np_norm
+    from numpy.linalg import norm as np_norm
 
     # constructs from base.
-    Fit.__init__(self, clusters)
+    Fit.__init__(self, clusters, lattice)
 
     # now adds regulatization.
     self.type = type
@@ -215,7 +219,7 @@ class PairRegulatedFit(Fit):
         The weights and energies remain the same after and before call.
         Bookkeeping for regulated pairs is re-initialized.
     """
-    from numpy.linalg.basic import norm as np_norm
+    from numpy.linalg import norm as np_norm
     Fit.reset_clusterclasses(self, classes)
     self._norms = []
     for i, class_ in enumerate(self._classes): 
@@ -256,6 +260,7 @@ class PairRegulatedFit(Fit):
 
   def __call__(self, A = None, b = None):
     """ Returns observation matrix A and target vector b.
+
         if A or b are given, adds to the pre-existing matrix and vector.
         A and b can then be used in linear-least square fit method numpy.linalg.lstsq(A,b)
         A and b (if given) should be large enough to accomodate for pair regularization.

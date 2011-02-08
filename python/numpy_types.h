@@ -218,6 +218,26 @@ namespace LaDa
         return false;
       }
 
+      template<class T> 
+        inline boost::python::object copy_1darray(T const &_array)
+        {
+          int const value = type<typename T::value_type>::value;
+          typedef typename type<typename T::value_type>::np_type np_type;
+          boost::python::object result = create_array<value>(_array.size());
+          PyObject *i_in  = PyArray_IterNew(result.ptr());
+          typename T::const_iterator i_first = _array.begin();
+          typename T::const_iterator const i_end = _array.end();
+          for(; i_first != i_end; ++i_first)
+          {
+            np_type * const data =  (np_type *)(PyArray_ITER_DATA(i_in));
+            *data = *i_first;
+            PyArray_ITER_NEXT(i_in);
+          }
+          Py_DECREF(i_in);
+          return result;
+        }
+
+
       inline boost::python::object from_template( boost::python::object const &_object, 
                                                   int new_type = -1 )
       {

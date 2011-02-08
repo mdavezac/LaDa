@@ -44,7 +44,7 @@ namespace LaDa
         Spin origin;
 
         //! Constructor
-        MLCluster () {}
+        MLCluster () { origin.site = 0; origin.pos = math::rVector3d(0,0,0); }
         //! Copy Constructor
         MLCluster   (const MLCluster &_c)
                   : origin(_c.origin), spins_(_c.spins_) {}
