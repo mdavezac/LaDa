@@ -523,7 +523,7 @@ def potential_alignment(defect, host, maxdiff=0.5, first_shell=True, tolerance=0
 
 
 
-def third_order_charge_correction(structure, charge = None, n = 200, epsilon = 1.0, **kwargs):
+def third_order_charge_correction(structure, charge = None, n = 30, epsilon = 1.0, **kwargs):
   """ Returns energy of third order charge correction. 
   
       :Parameters: 

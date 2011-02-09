@@ -31,23 +31,23 @@ LaDa::types::t_real third_order(LaDa::math::rMatrix3d const & _matrix, LaDa::typ
   typedef LaDa::math::rVector3d rVector3d;
   typedef LaDa::types::t_real t_real;
   t_real result = 0e0;
-  t_real ninv = 1e0 / t_real(_n);
-  rVector3d d(-0.5,0,0);
-  for(size_t i(0); i < _n; ++i, d(0) += ninv)
+  t_real const ninv = 1e0 / t_real(_n);
+  t_real const maxdist = (_matrix * 10e0 * rVector3d(1,1,1)).squaredNorm();
+  for(size_t i(0); i < _n; ++i)
   {
-    d(1) = -0.5;
-    for(size_t j(0); j < _n; ++j, d(1) += ninv)
+    for(size_t j(0); j < _n; ++j)
     {
-      d(2) = -0.5;
-      for(size_t k(0); k < _n; ++k, d(2) += ninv)
+      for(size_t k(0); k < _n; ++k)
       {
-        t_real min_dist = (_matrix * d).squaredNorm();
+        t_real min_dist = maxdist;
         for(int l(-1); l < 2; ++l)
           for(int m(-1); m < 2; ++m)
             for(int n(-1); n < 2; ++n)
             {
-              t_real const m = (_matrix * (rVector3d(l, m, n) + d)).squaredNorm();
-              if( m < min_dist ) min_dist = m;
+              t_real const q = (_matrix * rVector3d( i*ninv+l-0.5, 
+                                                     j*ninv+m-0.5, 
+                                                     k*ninv+n-0.5  ) ).squaredNorm();
+              if( q < min_dist ) min_dist = q;
             }
         result += min_dist;
       }
