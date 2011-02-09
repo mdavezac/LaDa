@@ -57,7 +57,7 @@ class _ChargedStateNavigation(object):
     """ Returns the charge corrections.
     
         Tries and minimizes the number of calculations by checking if performed
-        in smae cell.
+        in same cell.
     """
     from numpy.linalg import inv, det
     from numpy import array
@@ -65,7 +65,7 @@ class _ChargedStateNavigation(object):
     result, cells  = [], []
     # loops of all jobs.
     for job in self._all_jobs():
-      cell = job.structure.cell * job.structure.scale
+      cell = job.structure.cell
       invcell = inv(cell)
       found = None
       # looks if already exists.
@@ -76,8 +76,11 @@ class _ChargedStateNavigation(object):
         invrotmat = inv(rotmat)
         if all( abs(rotmat.T - invrotmat) < 1e-8 ): found = i; break
       if found == None: 
+        from .. import charge_corrections
+        c = charge_corrections( job.structure, charge=job.charge, 
+                                epsilon=self.epsilon, n=40, cutoff=45. )
         cells.append(inv(cell))
-        result.append( job.charge_corrections / self.epsilon )
+        result.append(c.copy())
       else: result.append(result[found])
     return array(result) * eV
 

@@ -607,7 +607,20 @@ def first_order_charge_correction(structure, charge=None, epsilon=1e0, cutoff=20
   return -result * eV
 
 def charge_corrections(structure, **kwargs):
-  """ Electrostatic charge correction (first and third order). """
+  """ Electrostatic charge correction (first and third order). 
+
+      Computes first and third order charge corrections according to `Lany
+      and Zunger, PRB 78, 235104 (2008)`__. Calculations are
+      done for the correct charge of the system and a static dielectric
+      constant epsilon=1. For other static dielectric constants, use:
+
+      >>> correction = output.charge_corrections / epsilon
+
+      For conventional and unit-cells of Ga2MnO4 spinels, the charge
+      corrections are converged to roughly 1e-5 eV (for singly charged).
+
+      .. __:  http://dx.doi.org/10.1103/PhysRevB.78.235104
+  """
   return   first_order_charge_correction(structure, **kwargs) \
          + third_order_charge_correction(structure, **kwargs) \
 
