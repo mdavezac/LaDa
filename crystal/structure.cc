@@ -651,8 +651,13 @@ namespace LaDa
       if( math::is_integer(_real.lattice->cell.inverse() * _real.cell) )
       {
         _real.find_k_vectors();
-        Fourier::Fourier( _real.atoms.begin(), _real.atoms.end(),
-                          _real.k_vecs.begin(), _real.k_vecs.end() );
+#       if __GNUC__ >= 4 and __GNUC_MINOR__ >= 5
+          Fourier( _real.atoms.begin(), _real.atoms.end(),
+                   _real.k_vecs.begin(), _real.k_vecs.end() );
+#       else 
+          Fourier::Fourier( _real.atoms.begin(), _real.atoms.end(),
+                            _real.k_vecs.begin(), _real.k_vecs.end() );
+#       endif
       }
     }
 
