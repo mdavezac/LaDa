@@ -437,10 +437,10 @@ class Vff(object):
     from copy import deepcopy
     from os import getcwd
     from os.path import exists, isdir, abspath, expanduser
-    from boost.mpi import world
     from ..opt.changedir import Changedir
-    from boost.mpi import world, broadcast
 
+    is_mpi = comm != None and comm.size > 1
+    is_root = comm.size == 0 if is_mpi else True
     # bull shit. 
     assert len(self.lattice.sites) == 2, RuntimeError("Lattice is not zinc-blend")
     assert len(self.lattice.sites[0].type) > 0,\
@@ -476,13 +476,15 @@ class Vff(object):
       else: raise NameError( "%s attribute unknown of vff or vff.minimizer." % (key) )
 
 
-    if comm == None: comm = world
-
     # checks if outdir contains a (wanted) successful run.
-    if broadcast(comm, exists(outdir) if comm.rank == 0 else None, 0) and overwrite==False:
+    existing = exists(outdir) if is_root else None
+    if is_mpi:
+      from boost.mpi import broadcast
+      existing = broadcast(comm, existing, 0)
+    if existing and overwrite==False:
       extract = Extract(comm = comm, directory = outdir, vff = this)
       if extract.success: return extract # in which case, returns extraction object.
-      comm.barrier() # makes sure directory is not created by other proc!
+      if is_mpi: comm.barrier() # makes sure directory is not created by other proc!
     
     with Changedir(outdir, comm = comm) as current_dir:
       # redirects C/C++/fortran streams
@@ -492,13 +494,16 @@ class Vff(object):
         # now for some input variables
         print >> file, "# VFF calculation on ", time.strftime("%m/%d/%y", local_time),\
                        " at ", time.strftime("%I:%M:%S %p", local_time)
+        if is_mpi: 
+          from boost.mpi import world
+          print >> file, "# Using {0} processors of {1}.".format(comm.size, world.size)
         if len(structure.name) != 0: print "# Structure named ", structure.name 
         print >> file, repr(this)
         print >> file, "# Performing VFF calculations. "
         # then calculations
 
       # Saves FUNCCAR.
-      if comm.rank == 0:
+      if is_root:
         with open(this._FUNCCAR, "w") as file: dump(this, file)
 
       result, stress = this._run(structure, comm)
@@ -534,22 +539,25 @@ class Vff(object):
     """ Creates the vff functional using cpp extension. """
     from tempfile import NamedTemporaryFile
     from os import remove
-    if comm != None: from boost.mpi import broadcast
     from _vff import Vff, LayeredVff
 
     # Creates temporary input file and creates functional
     functional = None
-    is_root = True if comm == None else comm.rank == 0
+    is_mpi = False if comm == None else comm.rank > 1
+    is_root = True if not is_mpi else comm.rank == 0
     if is_root:
       with NamedTemporaryFile(dir=self.workdir, delete=False) as file: 
         file.write(self._create_input(structure, comm))
-      name = file.name if comm == None else broadcast(comm, file.name, root=0)
-    elif comm != None: name = broadcast(comm, root=0) # syncs all procs to make sure we are reading from same file.
+      name = file.name
+    else: name = None
+    if is_mpi:
+      from boost.mpi import broadcast
+      name = broadcast(comm, name, root=0) # syncs all procs to make sure we are reading from same file.
 
     
-    if comm != None: comm.barrier() # required before reading file (?).
+    if is_mpi: comm.barrier() # required before reading file (?).
     functional = LayeredVff(name, comm) if hasattr(self.direction, "__len__") else Vff(name, comm)
-    if comm != None: comm.barrier() # required before removing file.
+    if is_mpi: comm.barrier() # required before removing file.
     if is_root: remove(file.name)
 
     return functional

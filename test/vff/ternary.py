@@ -44,11 +44,12 @@ structure.add_atoms = ((0.00, 0.00, 0.00), "Ga"),\
                       ((8.25, 0.25, 0.25), "As"),\
                       ((9.00, 0.00, 0.00), "Ga"),\
                       ((9.25, 0.25, 0.25), "As"), 
+structure.scale = vff.lattice.scale + 0.1
 
 vff.direction = FreezeCell.a1 | FreezeCell.a2
 
 # print vff
 # print structure
 
-out = vff(structure, outdir = "work", comm = world, relax=False)
+out = vff(structure, outdir = "work", comm = world, relax=True)
 print out.energy
