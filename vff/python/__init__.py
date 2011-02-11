@@ -461,8 +461,6 @@ class Vff(object):
       else: raise NameError( "%s attribute unknown of vff or vff.minimizer." % (key) )
 
 
-    if comm == None: comm = world
-
     # checks if outdir contains a (wanted) successful run.
     does_exist = exists(outdir) if is_root else None
     if is_mpi: 

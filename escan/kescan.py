@@ -166,7 +166,7 @@ class Extract(AbstractExtractBase):
 class KEscan(Escan):
   """ A wrapper around Escan for computing many kpoints. """
   Extract = Extract
-  def __init__(self, kpoints=None, multiplicity=None, **kwargs):
+  def __init__(self, kpoints=None, multiplicity=None, nbpools=-1, **kwargs):
     """ Initializes the KEscan functional. """
     self.kpoints = kpoints
     """ Kpoints to use for calculations.
@@ -184,7 +184,14 @@ class KEscan(Escan):
     # case for simple containers.
     if kpoints == None: kpoints, multiplicity = [[0,0,0]], [1]
     if not hasattr(kpoints, '__call__'): self.kpoints = KContainer(kpoints, multiplicity)
-    escan_copy = kwargs.pop("escan", None)
+    escan_copy = kwargs.pop("escan", None) 
+
+    self.nbpools = nbpools
+    """ Number of processor pools (over kpoints). 
+
+        If 0 or negative, then will try to determine it from number of kpoints,
+        processors, and fft mesh.
+    """
     Escan.__init__(self, **kwargs)
 
     if escan_copy != None: # copy constructor from Escan instance. 
@@ -217,7 +224,8 @@ class KEscan(Escan):
       # performs vff calculations
       vffrun = kwargs.get('vffrun', None)
       if vffrun == None: 
-        vffrun = Escan.__call__(this, structure, outdir, comm, do_escan=False, **kwargs)
+        vffrun = Escan.__call__( this, structure, outdir, comm,\
+                                 do_escan=False, do_genpot=False, **kwargs)
         kwargs.pop('vffrun', None)
   
       # create list of kpoints.
@@ -276,6 +284,7 @@ class KEscan(Escan):
         kpoints, of procs, and the fft mesh, in that order increasingly
         inclusive order. Returns 1 on failure.
     """
+    if self.nbpools > 0: return min(comm.size, self.nbpools)
     if comm == None: return 1
     if comm.size == 1: return 1
     if N == 1: return 1

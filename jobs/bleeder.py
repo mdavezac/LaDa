@@ -52,7 +52,7 @@ class Bleeder(object):
 
     self._local_comm = self.comm
     if self.is_mpi and self._pools > 1: 
-      self._local_comm = self.comm.split(self.comm.rank % value) 
+      self._local_comm = self.comm.split(self.comm.rank % self._pools) 
   @pools.deleter
   def pools(self): self.pools = None
 

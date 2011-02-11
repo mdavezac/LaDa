@@ -252,7 +252,7 @@ class Escan(object):
     return header + result
 
   def __call__(self, structure, outdir = None, comm = None, overwrite=False, \
-               norun=False, workdir=None, **kwargs):
+               norun=False, workdir=None, do_vff=True, do_genpot=True, **kwargs):
     """ Performs calculation """
     from copy import deepcopy
     from os import getcwd
@@ -306,7 +306,7 @@ class Escan(object):
         with open(path, "w") as file: dump(this, file)
   
       # performs calculation.
-      this._run(structure, outdir, comm, overwrite, norun)
+      this._run(structure, outdir, comm, overwrite, norun, do_vff, do_genpot)
   
       # copies output files.
       if not self.inplace:
@@ -338,7 +338,7 @@ class Escan(object):
     return self.ERRCAR + "." + str(comm.rank) if self.print_from_all else "/dev/null"
 
 
-  def _run(self, structure, outdir, comm, overwrite, norun):
+  def _run(self, structure, outdir, comm, overwrite, norun, do_vff, do_genpot):
     """ Performs escan calculation. """
     import time
     from os.path import join
@@ -358,7 +358,7 @@ class Escan(object):
                       " at ", time.strftime("%I:%M:%S %p", local_time)
         if comm != None:
           from boost.mpi import world
-          file.write("Computing with {0} processors of {1}.\n".format(comm.size, world.size))
+          file.write("# Computing with {0} processors of {1}.\n".format(comm.size, world.size))
         if len(structure.name) != 0: print "# Structure named ", structure.name 
         # changes directory to get relative paths.
         with Changedir(outdir, comm=comm) as outdir_wd:
@@ -366,8 +366,8 @@ class Escan(object):
         print >>file, "# Performing calculations. "
       
       # makes calls to run
-      self._run_vff(structure, outdir, comm, cout, overwrite, norun)
-      self._run_genpot(comm, outdir, norun)
+      if do_vff: self._run_vff(structure, outdir, comm, cout, overwrite, norun)
+      if do_genpot: self._run_genpot(comm, outdir, norun)
       if self.do_escan: self._run_escan(comm, structure, norun)
 
       # don't print timeing if not running.
