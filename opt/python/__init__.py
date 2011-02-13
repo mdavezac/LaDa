@@ -427,8 +427,11 @@ class RelativeDirectory(object):
   @property 
   def envvar(self):
     """ Fixed point for relative directory. """
+    from os import getcwd
     from os.path import expanduser, expandvars, normpath
-    if self._envvar == None: return expanduser(self.global_envvar)
+    from . import Changedir
+    if self._envvar == None:
+       with Changedir(expanduser(self.global_envvar)) as pwd: return getcwd()
     return normpath(expandvars(expanduser(self._envvar)))
   @envvar.setter
   def envvar(self, value):

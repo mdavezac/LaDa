@@ -242,7 +242,8 @@ class KEscan(Escan):
         job.jobparams['_in_call'] = True
         if kwargs.get('vffrun', None) == None:    job.jobparams['vffrun']    = vffrun
       
-      bleeder = Bleeder(jobdict, this._pools(len(kpoints), comm), comm)
+      directory = '.' if outdir == None else outdir
+      bleeder = Bleeder(jobdict, this._pools(len(kpoints), comm), comm, directory=directory)
       for result, job in bleeder.itercompute(**kwargs): continue
       bleeder.cleanup()
 
