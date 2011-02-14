@@ -47,7 +47,7 @@ class Bleeder(object):
   def pools(self, value):
     if value == None: self._pools = 1
     elif not self.is_mpi: self._pools = 1
-    elif value < self.comm.size: self._pools = self.comm.size
+    elif value > self.comm.size: self._pools = self.comm.size
     else: self._pools = value
 
     self._local_comm = self.comm
