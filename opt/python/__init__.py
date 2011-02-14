@@ -155,6 +155,8 @@ class Input(ModuleType):
     for key, value in other.items():
       if key[0] == '_': continue
       super(Input, self).__setattr__(key, value)
+  def __contains__(self, name):
+    return name in self.__dict__
 
 def read_input(filename='input.py', global_dict=None, local_dict = None, paths=None, comm = None):
   """ Reads and executes input script and returns local dictionary (as namespace instance). """

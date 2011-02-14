@@ -5,15 +5,22 @@ from ..opt.decorators import add_setter, broadcast_result, make_cached
 from ..opt import AbstractExtractBase
 
 def _get_script_text(file, name):
+  from re import compile
+  imps = compile("^\s*from\s+(?:\S+)\s+import\s+(?:\S+)(?:\s*,\s*\S+)*\s*$")
+  header = ""
   string = "# " + name + " definition."
   for line in file:
+    found = imps.match(line)
+    if found: header += found.group(0)
     if line.find(string) != -1: break;
   lines = ""
   string = "# End of " + name.lower() + " definition."
   for line in file:
+    found = imps.match(line)
+    if found: header += found.group(0)
     if line.find(string) != -1: break;
     lines += line
-  return lines
+  return header + lines
 
 def exec_input(filepath = "input.py", namespace = None):
   """ Executes an input script including namespace for escan/vff. """ 
@@ -176,7 +183,7 @@ class Extract(AbstractExtractBase):
       with self.__outcar__() as file: return _get_script_text(file, "Vff")
 
     local_dict = {"lattice": self.lattice, "array": array, "minimizer": self.minimizer, "Vff": Vff}
-    input = exec_input(get_vff(self))
+    input = exec_input(get_vff(self), namespace=local_dict)
     return input,vff_functional if "vff_functional" in input else input.functional
 
   def write_escan_input(self, filepath, structure = None):

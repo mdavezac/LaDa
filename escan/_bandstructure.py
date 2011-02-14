@@ -91,7 +91,7 @@ else:
     from numpy.linalg import norm
 
     old = extractor.unreduce
-    extractor.unreduce = False
+    extractor.unreduce = True
 
     bandcolor = kwargs.pop('bandcolor', 'blue')
     edgecolor = kwargs.pop('edgecolor', 'red')
