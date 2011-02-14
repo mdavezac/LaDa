@@ -85,13 +85,13 @@ except:
     """ Plots alloy band-structure using the majority representation. """
     raise ImportError("Cannot use plot_alloybands without matplotlib. """)
 else:
-  def plot_bands(extractor, **kwargs):
+  def plot_bands(extractor, offset = 0.05, labels = None, **kwargs):
     """ Tries and plots band-structure. """
     from numpy import dot, array, min, max
     from numpy.linalg import norm
 
     old = extractor.unreduce
-    extractor.unreduce = True
+    extractor.unreduce = False
 
     bandcolor = kwargs.pop('bandcolor', 'blue')
     edgecolor = kwargs.pop('edgecolor', 'red')
@@ -101,17 +101,38 @@ else:
     kpoints = extractor.kpoints
     delta = kpoints[1:] - kpoints[:-1]
     norms = [norm(delta[i,:]) for i in range(delta.shape[0])]
-    bk = []
+    bk, offsets, x, lims = [0], [False], [], [0]
     for i, d in enumerate(norms[1:]):
-      if abs(norms[i]-d) > 1e-6: bk.append(i+1)
+      if abs(norms[i]-d) > 1e-6: 
+        if i == bk[-1] and i != 0:
+          offsets[-1] = True
+          bk[-1] += 1
+          lims.append(bk[-1])
+        else:
+          bk.append(i+1)
+          offsets.append(False)
+        x.append(0 if offsets[-1] else norms[i])
+      else: x.append(d)
+    bk.append(None)
+    offsets.append(False)
+    lims.append(None)
+    x.append(x[-1])
 
     # then plot bands.
-    x = array([sum(norms[:i]) for i in range(len(norms)+1)])
+    x = array([sum(x[:i]) for i in range(len(x)+1)])
     y = array(extractor.eigenvalues)
 
     # then line markers.
-    plt.plot(x, y, color=bandcolor, **kwargs)
-    for i in bk: plt.axvline(x[i], color='black', **kwargs)
+    offset *= x[-1]
+    lines = []
+    for first, last, add_offset in zip(bk[:-1], bk[1:], offsets):
+      if first != 0: lines.append(x[first])
+      if add_offset:
+        x[first:] += offset
+        lines.append(x[first])
+    for first, last in  zip(lims[:-1], lims[1:]):
+      plt.plot(x[first:last], y[first:last], color=bandcolor, **kwargs)
+    for l in lines: plt.axvline(l, color='black', **kwargs)
 
     # then plot vbm and cbm.
     kwargs.pop('linestyle', None) 
@@ -123,6 +144,16 @@ else:
     plt.xlim((x[0], x[-1]))
     ylims = min(y) - (max(y) - min(y))*0.05, max(y) + (max(y) - min(y))*0.05
     plt.ylim(ylims)
+    axes = plt.gca()
+    axes.yaxis.set_ticks_position('both')
+    if labels == None: axes.xaxis.set_ticks([])
+    else:
+      lines.insert(0, 0)
+      lines.append(x[-1])
+      assert len(labels) <= len(lines),\
+             ValueError("Could not find as many breaking points as were provided labels.")
+      axes.xaxis.set_ticks(lines[:len(labels)])
+      axes.xaxis.set_ticklabels(labels)
 
     extractor.unreduce = old
 
