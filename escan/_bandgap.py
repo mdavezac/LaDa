@@ -194,8 +194,8 @@ class ExtractRefs(object):
     vbm_eigs = self.extract_vbm.eigenvalues.copy()
     cbm_eigs = self.extract_cbm.eigenvalues.copy()
 
-    vbm_ref = self.extract_vbm.escan.eref
-    cbm_ref = self.extract_cbm.escan.eref
+    vbm_ref = self.extract_vbm.functional.eref
+    cbm_ref = self.extract_cbm.functional.eref
     above_refs =       [u for u in cbm_eigs if u >= cbm_ref]
     above_refs.extend( [u for u in vbm_eigs if u >= cbm_ref])
     above_refs = array([u for u in set(above_refs)] );

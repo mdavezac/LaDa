@@ -84,8 +84,10 @@ class AbstractExtractBase(object):
           Any keyword argument is set as an attribute of this object.
           Does not check for existence or anything.
     """
+    if 'comm' in kwargs: kwargs["comm"], self.comm = self.comm, kwargs['comm']
     result = self.__copy__()
-    for k, v in kwargs: setattr(result, k, v)
+    if 'comm' in kwargs: kwargs["comm"], self.comm = self.comm, kwargs['comm']
+    for k, v in kwargs.iteritems(): setattr(result, k, v)
     return result
 
   def solo(self):

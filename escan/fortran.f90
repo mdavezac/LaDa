@@ -32,7 +32,7 @@ subroutine iaga_just_call_escan()
   type ( escancomp ) ecp
 
   ecp%comm_handle = comm_handle
-  ecp%fileescaninput= trim("escan_input.")//arank(1:len_trim(arank))
+  ecp%fileescaninput= "escan_input" !trim("escan_input.")//arank(1:len_trim(arank))
   ecp%escanfileonly=.TRUE.
   ecp%escandefaultprint=.true.
   ! The following do not need to be set for escanfileonly=.TRUE.

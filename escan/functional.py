@@ -267,7 +267,7 @@ class Escan(object):
       from boost.mpi import world
       comm = world
     is_mpi = False if comm == None else comm.size > 1
-    is_root = True if is_mpi else comm.rank == 0
+    is_root = comm.rank == 0 if is_mpi else True
 
     if outdir == None: outdir = getcwd()
 
@@ -311,8 +311,8 @@ class Escan(object):
       # copies output files.
       if not self.inplace:
         with Changedir(outdir, comm = comm) as cwd:
-          for file in  [ this._POSCAR + "." + str(world.rank),\
-                         this._POTCAR + "." + str(world.rank),\
+          for file in  [ this._POSCAR, 
+                         this._POTCAR, 
                          this.FUNCCAR, 
                          this._cout(comm), 
                          this._cerr(comm), 
@@ -367,8 +367,10 @@ class Escan(object):
       
       # makes calls to run
       if do_vff: self._run_vff(structure, outdir, comm, cout, overwrite, norun)
-      if do_genpot: self._run_genpot(comm, outdir, norun)
-      if self.do_escan: self._run_escan(comm, structure, norun)
+      local_comm = self._local_comm(comm)
+      if local_comm != None:
+        if do_genpot: self._run_genpot(local_comm, outdir, norun)
+        if self.do_escan: self._run_escan(local_comm, structure, norun)
 
       # don't print timeing if not running.
       if norun == True: return
@@ -385,6 +387,15 @@ class Escan(object):
         extract = Extract(comm=comm, directory = outdir, escan = self)
         assert extract.success, RuntimeError("Escan calculations did not complete.")
 
+  def _local_comm(self, comm):
+    """ Communicator over which calculations are done. """
+    if comm == None or comm.size == 1: return comm
+    fftsize = self.fft_mesh[0] * self.fft_mesh[1] * self.fft_mesh[2]
+    for m in range(comm.size, 0, -1):
+      if fftsize % m == 0: break
+    norun = comm.rank > m
+    result = comm.split(0 if norun else 1)
+    return None if norun else result
 
   def _run_vff(self, structure, outdir, comm, cout, overwrite, norun):
     """ Gets atomic input ready, with or without relaxation. """
@@ -392,35 +403,30 @@ class Escan(object):
     from ..vff import Extract as ExtractVff
     from ..opt import copyfile
 
-    if lada_with_mpi: 
-      from boost.mpi import world
-      worldrank = str(world.rank)
-    else: worldrank = None
+    is_root = comm.rank == 0 if comm != None else True
 
-    poscar = self._POSCAR 
-    if worldrank != None: poscar += '.' + worldrank
-    if self.vffrun != None:
-      POSCAR = self.vffrun.functional._POSCAR 
-      if worldrank != None: POSCAR += '.' + worldrank
-      POSCAR = join(self.vffrun.directory, POSCAR)
-      rstr = self.vffrun.structure
-      if exists(POSCAR): copyfile(POSCAR, poscar, 'same', comm)
-      else: self.vffrun.solo().write_escan_input(poscar, rstr)
-      VFFCOUT = self.vffrun.functional.vff._cout(comm)
-      VFFCOUT = join(self.vffrun.directory, VFFCOUT)
-      copyfile(VFFCOUT, self.vff._cout(comm), 'same exists null', comm)
-      return
+    if is_root and self.vffrun != None:
+      vffrun = self.vffrun.solo()
+      POSCAR = join(vffrun.directory, vffrun.functional._POSCAR)
+      rstr = vffrun.structure
+      if exists(POSCAR): copyfile(POSCAR, self._POSCAR, 'same', None)
+      else: vffrun.write_escan_input(self._POSCAR, rstr)
+      VFFCOUT = vffrun.functional.vff._cout(None)
+      VFFCOUT = join(vffrun.directory, VFFCOUT)
+      copyfile(VFFCOUT, self.vff._cout(None), 'same exists null', None)
 
-    if norun == True: return
+    if self.vffrun != None or norun == True: return
+    
     out = self.vff(structure, outdir=outdir, comm=comm, overwrite=overwrite)
     assert out.success, RuntimeError("VFF relaxation did not succeed.")
-    out.write_escan_input(poscar, out.structure)
+    if is_root: out.solo().write_escan_input(self._POSCAR, out.solo().structure)
 
     # copies vff output to stdout. This way, only one outcar.
     is_mpi = False if comm == None else comm.size > 1
-    is_root = True if is_mpi else comm.rank == 0
+    is_root = comm.rank == 0 if is_mpi else True
     if is_root and out.OUTCAR != self.OUTCAR:
-      with open(join(out.directory, out.OUTCAR)) as file_in: 
+      s = out.solo()
+      with open(join(s.directory, s.OUTCAR)) as file_in: 
         with open(cout, "aw") as file_out: 
           for line in file_in:
             if line.find("# VFF calculation on ") != -1: print >>file_out, line[:-1]
@@ -439,57 +445,43 @@ class Escan(object):
 
     # using genpot from previous run
     is_mpi = False if comm == None else comm.size > 1
-    is_root = True if is_mpi else comm.rank == 0
-    if self.genpotrun != None:
-      if lada_with_mpi:
-        from boost.mpi import world
-        POTCAR = self.genpotrun.functional._POTCAR + "." + str(world.rank)
-        potcar = self._POTCAR + "." + str(world.rank)
-      else:
-        POTCAR = self.genpotrun.functional._POTCAR 
-        potcar = self._POTCAR
-      copyfile(join(self.genpotrun.directory, POTCAR), potcar, 'same exists')
-      copyfile(self.maskr, nothrow='same', comm=comm)
-      for pot in self.atomic_potentials:
-        copyfile(pot.nonlocal, nothrow='none same', comm=comm)
-      return
+    is_root = comm.rank == 0 if is_mpi else True
+    if is_root and self.genpotrun != None:
+      genpotrun = self.genpotrun.solo()
+      POTCAR = join(genpotrun.directory, genpotrun.functional._POTCAR)
+      potcar = self._POTCAR
+      copyfile(POTCAR, potcar, 'same exists')
+      copyfile(self.maskr, nothrow='same')
+      for pot in self.atomic_potentials: copyfile(pot.nonlocal, nothrow='none same')
+    if self.genpotrun != None: return
 
     assert self.atomic_potentials != None, RuntimeError("Atomic potentials are not set.")
     # Creates temporary input file and creates functional
     dnc_mesh = self.dnc_mesh if self.dnc_mesh != None else self.fft_mesh
     overlap_mesh = self.overlap_mesh if self.overlap_mesh != None else (0,0,0)
-    if lada_with_mpi:
-      from boost.mpi import world
-      gencar = '{0}.{1.rank}'.format(self._GENCAR, world) 
-    else: gencar = self._GENCAR
-    with open(gencar, "w") as file:
-      file.write( "%s\n%i %i %i\n%i %i %i\n%i %i %i\n%f\n%i\n"\
-                  % ( self._POSCAR, self.fft_mesh[0], self.fft_mesh[1], self.fft_mesh[2], \
-                      dnc_mesh[0], dnc_mesh[1], dnc_mesh[2],\
-                      overlap_mesh[0], overlap_mesh[1], overlap_mesh[2], self.cutoff,\
-                      len(self.atomic_potentials) ))
-      for pot in self.atomic_potentials:
-        # adds to list of potentials
-        file.write(basename(pot.filepath) + "\n") 
-        # copy potential files as well.
-        copyfile(pot.filepath, nothrow='same', comm=comm)
-        copyfile(pot.nonlocal, nothrow='same None', comm=comm)
+    if is_root: 
+      with open(self._GENCAR, "w") as file:
+        file.write( "%s\n%i %i %i\n%i %i %i\n%i %i %i\n%f\n%i\n"\
+                    % ( self._POSCAR, self.fft_mesh[0], self.fft_mesh[1], self.fft_mesh[2], \
+                        dnc_mesh[0], dnc_mesh[1], dnc_mesh[2],\
+                        overlap_mesh[0], overlap_mesh[1], overlap_mesh[2], self.cutoff,\
+                        len(self.atomic_potentials) ))
+        for pot in self.atomic_potentials:
+          # adds to list of potentials
+          file.write(basename(pot.filepath) + "\n") 
+    for pot in self.atomic_potentials:
+      # copy potential files as well.
+      copyfile(pot.filepath, nothrow='same', comm=comm)
+      copyfile(pot.nonlocal, nothrow='same None', comm=comm)
 
     copyfile(self.maskr, nothrow='same', comm=comm)
 
-    local_comm = comm
-    if is_mpi: # finds larges acceptable number of processors. 
-      fftsize = self.fft_mesh[0] * self.fft_mesh[1] * self.fft_mesh[2]
-      for m in range(comm.size, 0, -1):
-        if fftsize % m == 0: break
-      norun = comm.rank > m
-      local_comm = comm.split(0 if norun else 1)
     if norun == False:
       with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 
         assert comm != None, RuntimeError('Cannot run genpot with lada_with_mpi == False.')
         from ._escan import _call_genpot
-        _call_genpot(local_comm)
-    if is_mpi: comm.barrier()
+        if is_mpi: comm.barrier()
+        _call_genpot(comm)
 
 
   def _write_incar(self, comm, structure, norun=False):
@@ -503,73 +495,60 @@ class Escan(object):
     # Creates temporary input file and creates functional
     kpoint = (0,0,0,0,0) if norm(self.kpoint) < 1e-12\
              else self._get_kpoint(structure, comm, norun)
-    if lada_with_mpi:
-      from boost.mpi import world
-      incar = self._INCAR + "." + str(world.rank)
-    else: incar = self._INCAR
-    with open(incar, "w") as file:
-      if lada_with_mpi: file.write('1 {0}.{1}\n'.format(self._POTCAR, world.rank))
-      else:             file.write('1 {0}\n'.format(self.POTCAR))
-      file.write( '2 {0.WAVECAR}\n3 {1}\n'.format(self, 1 if self.eref != None else 2) )
-      eref = self.eref if self.eref != None else 0
-      if hasattr(eref, "rescale"): eref = float(eref.rescale(eV))
-      cutoff = self.cutoff
-      if hasattr(cutoff, "rescale"): cutoff = float(cutoff.rescale(Ry))
-      file.write('4 {0} {1} {2.smooth} {2.kinetic_scaling}\n'.format(eref, cutoff, self))
-      nbstates = self.nbstates
-      if self.potential != soH or norm(self.kpoint) < 1e-6: nbstates = max(1, self.nbstates/2)
-      assert nbstates > 0, ValueError("Cannot have less than 1 state ({0}).".format(nbstates))
-      file.write( '5 {0}\n6 {1.itermax} {1.nlines} {1.tolerance}\n'.format(nbstates, self))
-      nowfns = self.input_wavefunctions == None
-      if not nowfns: nowfns = len(self.input_wavefunctions) == 0
-      if nowfns: file.write('7 0\n8 0\n')
-      else:
-        file.write('7 {0}\n8 {1}'.format(len(self.input_wavefunctions), self.input_wavefunctions[0]))
-        for u in self.input_wavefunctions[1:]: file.write(' {0}'.format(u))
-        file.write('\n')
-      file.write('9 {0.INWAVECAR}\n10 0 1 1 1 0\n11 {1[0]} {1[1]} {1[2]} {1[3]} {1[4]}\n'\
-                 .format(self, kpoint))
-      
-      if   self.potential == localH:    file.write("12 1 # local hamiltonian\n")
-      elif self.potential == nonlocalH: file.write("12 2 # non-local hamiltonian\n")
-      elif self.potential == soH:       file.write("12 3 # spin orbit hamiltonian\n")
-      else: raise RuntimeError("Unknown potential requested.")
-      
-      if lada_with_mpi: file.write('13 {0}.{1}\n'.format(self._POSCAR, world.rank))
-      else:             file.write('13 {0}\n'.format(self._POSCAR))
-      file.write('14 {0.rspace_cutoff}\n'.format(self))
-
-      if self.potential != soH: file.write('15 0\n')
-      else:
-        file.write('15 {0}\n'.format(len(self.atomic_potentials)))
-        for i, pot in enumerate(self.atomic_potentials):
-          filepath = basename(pot.nonlocal)
-          file.write( '{0} {1} {2} {3} {4} {5} {6} {7}\n'\
-                      .format( i + 16, filepath, pot.get_izz(comm), \
-                               pot.s, pot.p, pot.d, pot.pnl, pot.dnl ))
+    if comm != None or comm.rank > 1:
+      with open(self._INCAR, "w") as file:
+        file.write('1 {0}\n'.format(self._POTCAR))
+        file.write('2 {0.WAVECAR}\n3 {1}\n'.format(self, 1 if self.eref != None else 2) )
+        eref = self.eref if self.eref != None else 0
+        if hasattr(eref, "rescale"): eref = float(eref.rescale(eV))
+        cutoff = self.cutoff
+        if hasattr(cutoff, "rescale"): cutoff = float(cutoff.rescale(Ry))
+        file.write('4 {0} {1} {2.smooth} {2.kinetic_scaling}\n'.format(eref, cutoff, self))
+        nbstates = self.nbstates
+        if self.potential != soH or norm(self.kpoint) < 1e-6: nbstates = max(1, self.nbstates/2)
+        assert nbstates > 0, ValueError("Cannot have less than 1 state ({0}).".format(nbstates))
+        file.write( '5 {0}\n6 {1.itermax} {1.nlines} {1.tolerance}\n'.format(nbstates, self))
+        nowfns = self.input_wavefunctions == None
+        if not nowfns: nowfns = len(self.input_wavefunctions) == 0
+        if nowfns: file.write('7 0\n8 0\n')
+        else:
+          file.write( '7 {0}\n8 {1}'\
+                      .format(len(self.input_wavefunctions), self.input_wavefunctions[0]) )
+          for u in self.input_wavefunctions[1:]: file.write(' {0}'.format(u))
+          file.write('\n')
+        file.write('9 {0.INWAVECAR}\n10 0 1 1 1 0\n11 {1[0]} {1[1]} {1[2]} {1[3]} {1[4]}\n'\
+                   .format(self, kpoint))
+        
+        if   self.potential == localH:    file.write("12 1 # local hamiltonian\n")
+        elif self.potential == nonlocalH: file.write("12 2 # non-local hamiltonian\n")
+        elif self.potential == soH:       file.write("12 3 # spin orbit hamiltonian\n")
+        else: raise RuntimeError("Unknown potential requested.")
+        
+        file.write('13 {0}\n'.format(self._POSCAR))
+        file.write('14 {0.rspace_cutoff}\n'.format(self))
+  
+        if self.potential != soH: file.write('15 0\n')
+        else:
+          file.write('15 {0}\n'.format(len(self.atomic_potentials)))
+          for i, pot in enumerate(self.atomic_potentials):
+            filepath = basename(pot.nonlocal)
+            file.write( '{0} {1} {2} {3} {4} {5} {6} {7}\n'\
+                        .format( i + 16, filepath, pot.get_izz(comm), \
+                                 pot.s, pot.p, pot.d, pot.pnl, pot.dnl ))
 
   def _run_escan(self, comm, structure, norun):
     """ Runs escan only """
     from os.path import basename
     from ..opt import redirect
 
-
     is_mpi  = False if comm == None else comm.size > 1
-    is_root = True if is_mpi else comm.rank == 0
     self._write_incar(comm, structure, norun)
-    local_comm = comm
-    if is_mpi: # finds larges acceptable number of processors. 
-      fftsize = self.fft_mesh[0] * self.fft_mesh[1] * self.fft_mesh[2]
-      for m in range(comm.size, 0, -1):
-        if fftsize % m == 0: break
-      norun = comm.rank > m
-      local_comm = comm.split(0 if norun else 1)
     if norun == False:
       with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 
         assert comm != None, RuntimeError('Cannot run escan without mpi communicator.')
         from ._escan import _call_escan
+        if is_mpi: comm.barrier()
         _call_escan(comm)
-    if is_mpi: comm.barrier()
 
   def _get_kpoint(self, structure, comm, norun):
     """ Returns deformed or undeformed kpoint. """
@@ -585,11 +564,7 @@ class Escan(object):
       is_mpi  = comm != None
       is_root = comm.rank == 0 if is_mpi else True
       if is_root:
-        if is_mpi:
-          from boost.mpi import world
-          POSCAR = "{0}.{1}".format(self._POSCAR, world.rank)
-        else: POSCAR = "{0}.0".format(self._POSCAR)
-        with open(POSCAR, "r") as file:
+        with open(self._POSCAR, "r") as file:
           file.readline() # number of atoms.
           # lattice vector by lattice vector
           for i in range(3): 

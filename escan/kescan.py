@@ -219,14 +219,17 @@ class KEscan(Escan):
       if do_relax_kpoint != None: this.do_relax_kpoint = do_relax_kpoint
 
       is_mpi = False if comm == None else comm.size > 1
-      is_root = True if not is_mpi else comm.rank == 0
+      is_root = comm.rank == 0 if is_mpi else True
 
       # performs vff calculations
-      vffrun = kwargs.get('vffrun', None)
-      if vffrun == None: 
-        vffrun = Escan.__call__( this, structure, outdir, comm,\
-                                 do_escan=False, do_genpot=False, **kwargs)
-        kwargs.pop('vffrun', None)
+      vffrun = kwargs.pop('vffrun', None)
+      genpotrun = kwargs.pop('genpotrun', None)
+      if vffrun == None or genpotrun == None: 
+        out = Escan.__call__( this, structure, outdir, comm, do_escan=False,\
+                              vffrun = vffrun, genpotrun=genpotrun, **kwargs)
+        if vffrun    == None: vffrun    = out
+        if genpotrun == None: genpotrun = out
+
   
       # create list of kpoints.
       kpoints = this._interpret_kpoints(this.kpoints, vffrun)
@@ -235,12 +238,13 @@ class KEscan(Escan):
       for i, kpoint in enumerate(kpoints):
         job = jobdict / 'kpoint_{0}'.format(i)
         job.functional = this
-        job.jobparams['kpoint'] = kpoint
-        job.jobparams['structure'] = structure
+        job.jobparams['kpoint']          = kpoint
+        job.jobparams['structure']       = structure
         job.jobparams['do_relax_kpoint'] = False
-        job.jobparams['outdir'] = join(outdir, job.name[1:])
-        job.jobparams['_in_call'] = True
-        if kwargs.get('vffrun', None) == None:    job.jobparams['vffrun']    = vffrun
+        job.jobparams['outdir']          = join(outdir, job.name[1:])
+        job.jobparams['_in_call']        = True
+        job.jobparams['vffrun']          = vffrun
+        job.jobparams['genpotrun']       = genpotrun
       
       directory = '.' if outdir == None else outdir
       bleeder = Bleeder(jobdict, this._pools(len(kpoints), comm), comm, directory=directory)
