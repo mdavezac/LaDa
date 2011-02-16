@@ -1,7 +1,7 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 project (LaDa)
-set (LaDa_VERSION_MAJOR 4)
-set (LaDa_VERSION_MINOR 6)
+set (LaDa_VERSION_MAJOR 5)
+set (LaDa_VERSION_MINOR 0)
 
 # Project advanced options 
 option(disable_executables  "Disable all executables."  off)
