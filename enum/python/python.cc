@@ -14,7 +14,7 @@
 #include "transform.hpp"
 #include "bitset.hpp"
 
-BOOST_PYTHON_MODULE(enumeration)
+BOOST_PYTHON_MODULE(_enumeration)
 {
   // loads lada.math first
   namespace bp = boost::python;
