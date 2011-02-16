@@ -411,8 +411,9 @@ def explore_defect(defect, host, **kwargs):
         kwargs 
           Passed on to `reindex_sites`.
 
-      :return:
+      :return: 
         Dictionary containing three items:
+
         - 'vacancy': a list of atoms from the host *missing* in the defect
           structure. The position of these atoms correspond to the missing atom
           in the supercell (not the translational equivalent of the unit-cell).

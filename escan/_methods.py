@@ -20,6 +20,16 @@ def majority_representation(extractor, multicell, tolerance=1e-12):
         kpoint and band, and of its majority representation. The inner list
         duplicate entries with respect to eigenvalues. It is meant to be used
         with matplotlib's hexbin.
+
+      The majority representation is a way to get to the band-structure of an
+      alloy despite the lack of translational symmetries. It was introduced by
+      L.L.Wang *et al.* in  [LLW]_, and then further refined in [VP]_.
+
+      .. [LLW] Lin Wang Wang, Laurent Bellaiche, Suhai Wei, and Alex Zunger,
+         Phys. Rev. Lett. **80**, 4725 (1998). 
+
+      .. [VP] Voicu Popescu and Alex Zunger, Phys. Rev. Lett. **104**, 236403
+         (2010).
   """
   from operator import itemgetter
   from numpy import dot, pi, array
