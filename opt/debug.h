@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <boost/foreach.hpp>
 #include <iostream>
+#include <boost/throw_exception.hpp>
 
 #if defined(foreach)
 #  warning "foreach macro already exists"
@@ -40,12 +41,14 @@
 #define LADA_BEGINGROUP {
 #define LADA_ENDGROUP }
 
-
 #ifdef LADA_DEBUG
-# define LADA_NASSERT( condition, error ) LADA_DO_NASSERT(condition, error)
+# include <boost/throw_exception.hpp>
+# define LADA_BASSERT(condition, error) if(not (condition)) BOOST_THROW_EXCEPTION(error)
+# define LADA_NASSERT(condition, error ) LADA_DO_NASSERT(condition, error)
 # define LADA_DEBUG_TRY_BEGIN try {
 # define LADA_DEBUG_TRY_END( code, error ) } LADA_CATCHCODE( code, error ) 
 #else
+# define LADA_BASSERT(condition, error) 
 # define LADA_NASSERT( condition, error ) 
 # define LADA_DEBUG_TRY_BEGIN 
 # define LADA_DEBUG_TRY_END( code, error ) 

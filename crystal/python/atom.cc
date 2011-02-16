@@ -65,13 +65,13 @@ namespace LaDa
           _name.c_str(), 
           ( 
               _ds 
-            +  "\nThis object can be constructed from:\n"
-               "  - with no argument\n"
-               "  - another L{" + _name + "} object (deepcopy)\n"
-               "  - a numpy 1d-vector of length 3, in which self.L{pos<" 
-               + _name + ".pos>} is the only variable to be set.\n"
-               "  - same as above + a type value.\n"
-               "  - same as above + a site index.\n"
+            +  "\nThis object can be constructed from:\n\n"
+               "- with no argument\n"
+               "- another `" + _name + "` object (deepcopy)\n"
+               "- a numpy 1d-vector of length 3, in which ``self.pos``" 
+                 " is the only variable to be set.\n"
+               "- same as above + a type value.\n"
+               "- same as above + a site index.\n"
           ).c_str()
         ).def(bp::init<t_Atom const &>())
          .def("__init__", bp::make_constructor( &object_constructor< T_TYPE > ) )

@@ -25,8 +25,6 @@ namespace LaDa
   {
     using namespace boost::python;
     namespace numpy = math::numpy;
-
-
     /***********************************************************************
      *
      * Vector3x = Vector3d, Vector3f, Vector3i

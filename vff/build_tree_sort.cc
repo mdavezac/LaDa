@@ -7,16 +7,16 @@
   
 namespace LaDa
 {
-  namespace Vff
+  namespace vff
   { 
     bool Vff :: build_tree_sort_(const t_FirstNeighbors & _fn)
     {
-      t_Centers :: iterator i_begin = centers.begin();
-      t_Centers :: iterator i_end = centers.end();
+      t_Centers :: iterator i_begin = centers_.begin();
+      t_Centers :: iterator i_end = centers_.end();
       t_Centers :: iterator i_center, i_bond;
       for( i_center = i_begin; i_center != i_end; ++i_center )
       {
-        const size_t site( i_center->Origin().site );
+        const size_t site( i_center->atom().site );
         LADA_DO_NASSERT( site > structure.lattice->sites.size(), "Unindexed site.\n" )
         const size_t neigh_site( site == 0 ? 1: 0 );
         const types::t_real cutoff = types::t_real(0.25) * _fn[site].front().squaredNorm();
@@ -25,7 +25,7 @@ namespace LaDa
         for( i_bond = i_begin; i_bond != i_end; ++i_bond)
         {
           if( i_bond == i_center ) continue;
-          if( i_bond->Origin().site == site ) continue;
+          if( i_bond->atom().site == site ) continue;
           
           std::vector<math::rVector3d> :: const_iterator i_neigh = _fn[site].begin();
           const std::vector<math::rVector3d> :: const_iterator i_neigh_end = _fn[site].end();
@@ -33,7 +33,7 @@ namespace LaDa
           {
             const math::rVector3d image
             ( 
-              i_center->origin->pos + *i_neigh - i_bond->origin->pos 
+              i_center->i_atom_->pos + *i_neigh - i_bond->i_atom_->pos 
             );
             const math::rVector3d frac_image( (!structure.cell) * image );
             const math::rVector3d frac_centered

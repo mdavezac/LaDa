@@ -15,35 +15,8 @@
   
 namespace LaDa
 {
-  namespace Vff
+  namespace vff
   { 
-    AtomicCenter :: AtomicCenter  ( Crystal::Structure &_str, t_Atom &_e,
-                                      types::t_unsigned _i )
-                                   : origin(&_e), structure(&_str)
-    {
-       is_site_one = ( structure->lattice->get_atom_site_index( _e ) == 0 );
-       is_site_one_two_species = ( structure->lattice->get_nb_types( 0 ) == 2 );
-       index = _i;
-    }
-
-    types::t_unsigned  AtomicCenter :: kind() const
-    {
-      if ( is_site_one )
-        return structure->lattice->convert_real_to_type_index( 0, origin->type );
-      else if ( is_site_one_two_species )
-        return 2 + structure->lattice->convert_real_to_type_index( 1, origin->type );
-      return 1 + structure->lattice->convert_real_to_type_index( 1, origin->type );
-    }
-
-    types::t_unsigned  AtomicCenter :: bond_kind( const AtomicCenter &_bond ) const
-    {
-      if ( is_site_one ) 
-        return  structure->lattice->convert_real_to_type_index( 1, _bond.origin->type );
-      else if ( is_site_one_two_species )
-        return  structure->lattice->convert_real_to_type_index( 0, _bond.origin->type );
-      return 0; 
-    }
-
     types::t_int AtomicCenter :: add_bond( t_BondRefd _bond, 
                                             const types::t_real _cutoff ) 
     {
@@ -60,16 +33,11 @@ namespace LaDa
         frac_image[0] =  (types::t_real) period.access(0);
         frac_image[1] =  (types::t_real) period.access(1);
         frac_image[2] =  (types::t_real) period.access(2);
-        image = _bond->origin->pos + structure->cell * frac_image;
+        image = _bond->i_atom_->pos + structure->cell * frac_image;
 
         // checks if within 
-        if( (image - origin->pos).squaredNorm() < _cutoff  )
+        if( (image - i_atom_->pos).squaredNorm() < _cutoff  )
         {
-          // adds bond
-          types :: t_unsigned site = structure->lattice->get_atom_site_index( image );
-          if ( (not site) == is_site_one )
-            return -1;  // error bond between same site
-
           bonds.push_back( _bond );
           translations.push_back( frac_image );
           do_translates.push_back( not math::is_zero(frac_image.squaredNorm()) );
@@ -114,12 +82,9 @@ namespace LaDa
       void AtomicCenter :: const_iterator :: check_valid() const
       {
         check();
-        LADA_NASSERT( i_bond == parent->bonds.end(),
-                  "Invalid iterator.\n";)
-        LADA_NASSERT( not parent->origin,
-                  "Origin of the parent atom is invalid.\n")
-        LADA_NASSERT( not (*i_bond)->origin,
-                  "Origin of the bond atom is invalid.\n")
+        LADA_NASSERT(i_bond == parent->bonds.end(), "Invalid iterator.\n";);
+        LADA_NASSERT(not parent->i_atom_, "Origin of the parent atom is invalid.\n");
+        LADA_NASSERT(not (*i_bond)->i_atom_, "Origin of the bond atom is invalid.\n");
       }
 #   endif
   } // namespace vff

@@ -1,5 +1,88 @@
 """ Subpackage containing dipole matrix-element implementations. """
+__docformat__ = "restructuredtext en"
 
+
+def majority_representation(extractor, multicell, tolerance=1e-12): 
+  """ Majority Represention for all unmapped kpoint. 
+
+      :Parameters:
+        extractor : `KExtract`
+           Result of a `KEscan` calculation. The ``kpoints`` attribute from
+           ``extractor.functional`` should be a class of *reduced* kpoints, such
+           as `ReducedKGrid`, `ReducedKDensity`, or `ReducedBPoints`.
+        multicell : numpy 3x3
+           A matrix (M) linking the unit-cell (U) to the super cell (S), ``S = U
+           * M``.  From this, the unit-cell is determined, whatever deformation
+           may have happened, as engendered by VFF.
+       
+      :return: An  list of lists of 2-tuples. The first dimension corresponds
+        to unreduced kpoints.  The 2-tuples consiste  of the eigenvalue for that
+        kpoint and band, and of its majority representation. The inner list
+        duplicate entries with respect to eigenvalues. It is meant to be used
+        with matplotlib's hexbin.
+
+      The majority representation is a way to get to the band-structure of an
+      alloy despite the lack of translational symmetries. It was introduced by
+      L.L.Wang *et al.* in  [LLW]_, and then further refined in [VP]_.
+
+      .. [LLW] Lin Wang Wang, Laurent Bellaiche, Suhai Wei, and Alex Zunger,
+         Phys. Rev. Lett. **80**, 4725 (1998). 
+
+      .. [VP] Voicu Popescu and Alex Zunger, Phys. Rev. Lett. **104**, 236403
+         (2010).
+  """
+  from operator import itemgetter
+  from numpy import dot, pi, array
+  from numpy.linalg import inv
+  from quantities import angstrom
+  from ..crystal import is_on_lattice, to_voronoi
+  from ..physics import a0
+
+  assert extractor.success,\
+         ValueError("extractor is not the return of a *successfull* KEscan calculation.")
+  assert len(extractor) > 0, ValueError("extractor does not contain escan runs.")
+  istr = extractor.input_structure
+  ostr = extractor.structure
+  unitcell = dot(ostr.cell, inv(multicell)) * ostr.scale * angstrom
+  unitkcell = inv(unitcell.T) * 2e0 * pi / angstrom
+  invcell = inv(ostr.cell.T)
+  
+  # use the functional's kpoint object so we have access to all its goodies.
+  kpoints = extractor.functional.kpoints
+
+  # list of results.
+  results = []
+
+  unreduced = array([k[1] for k in kpoints.unreduced(istr, ostr)])
+  mapping = [i for i in kpoints.mapping(istr, ostr)]
+  scale = float(1e0/(ostr.scale  * angstrom).rescale(a0))
+  N = float(len(ostr.atoms))
+  for k0, extract in zip(unreduced, extractor):
+    # actual calculation for that kpoint.
+    # reciprocal vectors of supercell.  
+    Gs = extract.gvectors        
+    # Compute kpoint folded into voronoi cell.
+    K = to_voronoi(k0, invcell)
+    # links reduced to unreduced: folding vector.
+    Gfold = (K - k0) * scale
+    # mapping for reciprocal vector of supercell which are reciprocal vectors
+    # of unitcell *with* folding.
+    onlatop = is_on_lattice(Gs, unitkcell.rescale(Gs.units), Gfold)
+    # loop over bands and sum 
+    current = [[w.eigenvalue, w.expectation_value(onlatop).real] for w in extract.gwfns]
+    current = sorted(current, key=itemgetter(0))
+    intermediate = [current[0]]
+    for eig, val in current[1:]: 
+      if abs(eig-intermediate[-1][0]) < tolerance: intermediate[-1][1] += val
+      else: intermediate.append([eig, val])
+
+    results.append([ (e, v) for e, v in intermediate if abs(v) * N > tolerance])
+
+  return results
+      
+
+
+  
 def dipole_matrix_elements(*args):
   """ Computes dipole matrix elements (g-space).
 
@@ -31,26 +114,36 @@ def dipole_matrix_elements(*args):
 def LDOS(extract, positions):
   """ Local density of states """
   import numpy as np
-  from boost.mpi import broadcast, reduce
+  from .. import lada_with_mpi
 
-  result = None
-  # computes all exponentials exp(-i r.g), with r in first dim, and g in second.
-  v = np.exp(-1j * np.tensordot(positions, extract.gvectors, ((1),(1))))
-  # computes fourrier transform for all wavefunctions simultaneously.
-  rspace = np.tensordot(v, extract.raw_wfns, ((1),(0)))
-  # reduce across processes
-  rspace = reduce(comm, result, lambda x,y: x+y, 0)
-  if extract.is_krammer:
-    rspace2 = rspace 
-    rspace = zeros( (rspace.shape[0], rspace.shape[1]*2, rspace.shape[2]), dtype="complex64")
-    rspace[:,::2,:] = rspace2
-    rspace2 = np.tensordot(v, extract.raw_wfns[extract.inverse_indices,:,:].conjugate(), ((1),(0)))
-    rspace2 = reduce(comm, result, lambda x,y: x+y, 0)
-    rspace[:,1::2,:] = rspace2
-  rspace = np.multiply(rspace, np.conjugate(rspace))
-  if not extract.is_spinor: rspace = rspace[:,:,0]
-  else: rspace = rspace[:,:,0] + rspace[:,:,1]
+  extractors = extract if not hasattr(extract, "__iter__") else [extract]
 
+  result = np.zeros(positions.shape[0], dtype="float64")
+
+  for extract in  extractors:
+      # computes all exponentials exp(-i r.g), with r in first dim, and g in second.
+      v = np.exp(-1j * np.tensordot(positions, extract.gvectors, ((1),(1))))
+      # computes fourrier transform for all wavefunctions simultaneously.
+      rspace = np.tensordot(v, extract.raw_wfns, ((1),(0)))
+      # reduce across processes
+      if lada_with_mpi:
+        from boost.mpi import reduce
+        rspace = reduce(comm, rspace, lambda x,y: x+y, 0)
+  
+      if extract.is_krammer:
+        rspace2 = rspace 
+        rspace = zeros( (rspace.shape[0], rspace.shape[1]*2, rspace.shape[2]), dtype="complex64")
+        rspace[:,::2,:] = rspace2
+        cj = extract.raw_wfns[extract.inverse_indices,:,:].conjugate()
+        rspace2 = np.tensordot(v, cj, ((1),(0)))
+        rspace2 = reduce(comm, rspace, lambda x,y: x+y, 0)
+        rspace[:,1::2,:] = rspace2
+      rspace = np.multiply(rspace, np.conjugate(rspace))
+      if not extract.is_spinor: rspace = rspace[:,:,0]
+      else: rspace = rspace[:,:,0] + rspace[:,:,1]
+      result += rspace
+
+  result /= float(len(extractors))
  
   class ldoses(object):
     """ Local density of states for a given set of positions within a given structure. """
@@ -60,6 +153,3 @@ def LDOS(extract, positions):
       return np.dot(self.rs, 1e0/sqrt(np.pi)/sigma * np.exp(-self.eigs/sigma/sigma))
 
   return ldoses(extract.eigenvalues, rspace)
-
-
-  

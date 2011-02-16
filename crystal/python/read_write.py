@@ -7,14 +7,12 @@ from lada.opt.decorators import broadcast_result
 def read_poscar(types=None, path=None):
   """ Tries to read a VASP POSCAR file.
       
-      :Parameters:
-        types : None or sequence of str
-          Species in the POSCAR.
-        path : str or file object
-          Path to the POSCAR file. Can also be an object with file-like
-          behavior.
-        comm : boost.mpi.communicator
-          MPI communicator over which to read structure.
+       :kwarg types: Species in the POSCAR.
+       :type types: None or sequence of str
+       :kwarg path: Path to the POSCAR file. Can also be an object with
+         file-like behavior.
+       :type path: str or file object
+       :kwarg comm: boost.mpi.communicator over which to read structure.
       
       :return: `lada.crystal.Structure` instance.
   """ 
@@ -183,12 +181,11 @@ def write_oldvff(structure, file, disable_bonds=False):
 def read_oldvff(path):
   """ Tries to read a VASP POSCAR file.
       
-      :Parameters:
-        path : str or file object
-          Path to the POSCAR file. Can also be an object with file-like
-          behavior.
-        comm : boost.mpi.communicator
-          MPI communicator over which to read structure.
+      :kwarg path: Path to the POSCAR file. Can also be an
+        object with file-like behavior.
+      :type path: str or file object.
+
+      :kwarg comm: boost.mpi.communicator over which to read structure.
       
       :return: `lada.crystal.Structure` instance.
   """ 
@@ -237,10 +234,10 @@ def read_oldvff(path):
 
 @broadcast_result(key=True)
 def icsd_cif(filename): 
-  """ Reads lattice from the ICSD *cif files.
+  """ Reads lattice from the ICSD \*cif files.
 
-      It will not work in the case of other *cif. 
-      It's likely to produce wrong output if the site occupations are fractional.
+      It will not work in the case of other \*cif. 
+      It is likely to produce wrong output if the site occupations are fractional.
       If the occupation is > 0.5 it will treat it as 1 and 
       in the case occupation < 0.5 it will treat it as 0 and 
       it will accept all occupation = 0.5 as 1 and create a mess!
@@ -329,15 +326,17 @@ def icsd_cif(filename):
       if pos_end == 0 and l == '\n' and lines.index(l) > pos_big:
           pos_end = lines.index(l)
 
-  symm_ops = ['(' + x.split()[1][1:] + x.split()[2] + x.split()[3][:-1] + ')' for x in lines[sym_big+1:sym_end-1]]
+  symm_ops = [ '(' + x.split()[1][1:] + x.split()[2] + x.split()[3][:-1] + ')'\
+               for x in lines[sym_big+1:sym_end-1] ]
 
   symm_ops = [re.sub(r'(\d+)', r'\1.', x) for x in symm_ops]
   
-  wyckoff = [[x.split()[0],[x.split()[4],x.split()[5],x.split()[6]],x.split()[7]] for x in lines[pos_big+1:pos_end]]
+  wyckoff = [ [x.split()[0],[x.split()[4],x.split()[5],x.split()[6]],x.split()[7]]\
+              for x in lines[pos_big+1:pos_end] ]
   
   wyckoff = [w for w in wyckoff if int(float(w[-1][:4])+0.5) != 0]
 
-############## Setting up a good wyckoff list
+  ############## Setting up a good wyckoff list
 
   for w in wyckoff:
       pom = 0
@@ -358,7 +357,7 @@ def icsd_cif(filename):
           w[1][i] = float(w[1][i][:index])
           
       del w[-1]
-##########################################
+  ##########################################
   symbols = list(set([w[0] for w in wyckoff]))
   positions = [[] for i in range(len(symbols))]
 
@@ -374,7 +373,7 @@ def icsd_cif(filename):
           if not any(norm(array(u)-array(pom)) < 0.01 for u in positions[symbols.index(symbol)]):
               positions[symbols.index(symbol)].append(pom)
 
-################ CELL ####################
+  ################ CELL ####################
 
   a1 = a*array([1.,0.,0.])
   a2 = b*array([cos(gamma*pi/180.),sin(gamma*pi/180.),0.])
@@ -383,7 +382,7 @@ def icsd_cif(filename):
   a3 = array([c1, c2, sqrt(c**2-(c1**2+c2**2))])
   cell = array([a1,a2,a3])
 
-##########################################
+  ##########################################
 
   from lada.crystal import Lattice
   lattice = Lattice()
@@ -398,25 +397,4 @@ def icsd_cif(filename):
   lattice.make_primitive()
 
   return lattice
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

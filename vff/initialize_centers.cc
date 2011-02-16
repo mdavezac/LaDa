@@ -10,7 +10,7 @@
   
 namespace LaDa
 {
-  namespace Vff
+  namespace vff
   { 
     void Vff :: first_neighbors_( std::vector< std::vector< math::rVector3d > >& _fn )
     {
@@ -30,12 +30,18 @@ namespace LaDa
     {
       LADA_ASSERT(structure.atoms.size() != 0, "Structure has no atoms.\n" )
       LADA_ASSERT(not math::is_zero(structure.cell.determinant()), "Structure with zero volume.\n")
-      centers.clear();
+      centers_.clear();
       { // Creates a list of centers
         t_Atoms :: iterator i_atom = structure.atoms.begin();
         t_Atoms :: iterator i_atom_end = structure.atoms.end();
         for(types::t_unsigned index=0; i_atom != i_atom_end; ++i_atom, ++index )
-          centers.push_back( AtomicCenter( structure, *i_atom, index ) );
+        {
+          if(i_atom->site == -1)
+            try { i_atom->site = structure.lattice->get_atom_site_index(*i_atom); }
+            catch(std::exception &e)
+              { BOOST_THROW_EXCEPTION(exceptions::site_index() << exceptions::string(e.what())); }
+          centers_.push_back( AtomicCenter( structure, *i_atom, index ) );
+        }
       }
 
       // finds first neighbors on ideal lattice.
@@ -48,36 +54,33 @@ namespace LaDa
                        / types::t_real( nboxes(0) * nboxes(1) * nboxes(2) ) );
        if( _verbose )
        {
-        LADA_ROOT
-        (
-          MPI_COMM,
-          std::cout << "Will divide into " << nboxes(0) << "x"
-                    << nboxes(1) << "x" << nboxes(2)
-                    << " boxes of " << n << " atoms each.\n";
-        )
+         LADA_ROOT
+         (
+           comm,
+           std::cout << "Will divide into " << nboxes(0) << "x"
+                     << nboxes(1) << "x" << nboxes(2)
+                     << " boxes of " << n << " atoms each.\n";
+         )
        }
       // Then creates boxes.
       const types::t_real odist( 1.5e0 * std::sqrt( fn[0].front().squaredNorm() ) );
-      Crystal::t_ConquerBoxes<types::t_real> :: shared_ptr boxes
+      Crystal::t_ConquerBoxes<t_Atom::t_Type> :: shared_ptr boxes
       (
         Crystal :: divide_and_conquer_boxes( structure, nboxes, odist )
       );
       // Finally calls algorithm.
-      typedef Crystal::t_ConquerBoxes<types::t_real>::type::const_iterator t_cit;
+      typedef Crystal::t_ConquerBoxes<t_Atom::t_Type>::type::const_iterator t_cit;
       t_cit i_box = boxes->begin();
       t_cit i_box_end = boxes->end();
       bool result( true );
       for(; result and i_box != i_box_end; ++i_box )
-        result = build_tree_sort_dnc_( *i_box, fn );
+        result &= build_tree_sort_dnc_( *i_box, fn );
       if( not result ) return false;
       
 
-#     ifdef LADA_DEBUG
-        check_tree(); 
-#     endif
       if( _verbose ) 
       {
-        LADA_ROOT( MPI_COMM, std::cout << "First Neighbor tree successfully created.\n"; )
+        LADA_ROOT( comm, std::cout << "First Neighbor tree successfully created.\n"; )
       }
       return true;
     } // Vff :: construct_bond_list

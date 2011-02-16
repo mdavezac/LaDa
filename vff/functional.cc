@@ -18,9 +18,9 @@
   
 namespace LaDa
 {
-  namespace Vff
+  namespace vff
   { 
-    Functional :: t_Return Functional :: operator()( const t_Arg& _arg ) const
+    Functional::t_Return Functional::operator()(const t_Arg& _arg) const
     {
       math::rMatrix3d strain;
       unpack_variables( _arg, strain );
@@ -165,8 +165,7 @@ namespace LaDa
        }
     }
 
-    void Functional :: pack_gradients( const math::rMatrix3d& _stress, 
-                                       t_GradientArg _grad) const
+    void Functional :: pack_gradients(const math::rMatrix3d& _stress, t_GradientArg _grad) const 
     {
       t_GradientArg i_grad(_grad);
 
@@ -180,10 +179,10 @@ namespace LaDa
         }
 
       // then atomic position stuff
-      t_Centers :: const_iterator i_center = centers.begin();
-      t_Centers :: const_iterator i_end = centers.end();
+      t_Centers :: const_iterator i_center = centers_.begin();
+      t_Centers :: const_iterator i_end = centers_.end();
       t_Atoms :: const_iterator i_atom0 = structure0.atoms.begin();
-      i_center = centers.begin();
+      i_center = centers_.begin();
       for (; i_center != i_end; ++i_center, ++i_atom0)
       {
         const math::rVector3d& gradient = i_center->gradient;
@@ -204,17 +203,17 @@ namespace LaDa
           (
             MPI_IN_PLACE, _grad, size_t(i_grad - _grad),
             boost::mpi::get_mpi_datatype<t_Type>(*_grad),
-            boost::mpi::is_mpi_op< std::plus<t_Type>, t_Type>::op(), (MPI_Comm) MPI_COMM
+            boost::mpi::is_mpi_op< std::plus<t_Type>, t_Type>::op(), (MPI_Comm) comm
           )
         );
       )
     }
 
-    Functional::t_Return Functional :: gradient( const t_Arg& _arg, t_GradientArg _i_grad ) const
+    Functional::t_Return Functional :: gradient(const t_Arg& _arg, t_GradientArg _i_grad) const
     {
       math::rMatrix3d strain = math::rMatrix3d::Zero();
       t_Return energy(0);
-      foreach( const t_Center& center, centers ) center.gradient = math::rVector3d(0,0,0);
+      foreach( const t_Center& center, centers_ ) center.gradient = math::rVector3d(0,0,0);
 
       // unpacks variables into vff atomic_center and strain format
       unpack_variables( _arg, strain);
@@ -224,16 +223,15 @@ namespace LaDa
 
       // computes energy and gradient
       stress = math::rMatrix3d::Zero();
-      LADA_MPI_SPLIT_LOOP( t_Centers :: const_iterator, center, centers, MPI_COMM )
+      LADA_MPI_SPLIT_LOOP( t_Centers :: const_iterator, center, centers_, comm )
       for (; i_center != i_center_end; ++i_center)
-        energy += functionals[i_center->kind()].
-                       evaluate_with_gradient( *i_center, strain, stress, K0 );
+        energy += evaluate_center_with_gradient(*i_center, strain, stress, K0);
 
       // First repacks into function::Base format
       pack_gradients(stress, _i_grad);
       // Then sums actual results.
 #     ifdef LADA_MPI
-        energy = boost::mpi::all_reduce( MPI_COMM, energy, std::plus<types::t_real>() ); 
+        energy = boost::mpi::all_reduce( comm, energy, std::plus<types::t_real>() ); 
         // boost does not do in-place reduction.
         BOOST_MPI_CHECK_RESULT
         (
@@ -242,7 +240,7 @@ namespace LaDa
             MPI_IN_PLACE, stress.data(), stress.stride()*3,
             boost::mpi::get_mpi_datatype<types::t_real>(stress(0,0)),
             boost::mpi::is_mpi_op< std::plus<types::t_real>, types::t_real>::op(),
-            (MPI_Comm) MPI_COMM
+            (MPI_Comm) comm
           )
         );
 #     endif

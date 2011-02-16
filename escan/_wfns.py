@@ -72,7 +72,7 @@ class Wavefunction(rWavefunction):
         The operator is applied to the ket. If operator is None, then simply
         perform scalar product.
     """
-    return self.braket(self, attenuate)
+    return self.braket(operator, self, attenuate=attenuate)
 
   def braket(self, operator, ket, attenuate = True):
     """ Returns <this wavefunction|operator|ket wavefuntion>.

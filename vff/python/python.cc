@@ -7,12 +7,14 @@
 #include <boost/python/borrowed.hpp>
 
 #include "vff.hpp"
+#include "data.hpp"
 
 BOOST_PYTHON_MODULE(_vff)
 {
   namespace bp = boost::python;
   bp::scope scope;
   scope.attr("__doc__") = "Valence Force-Field functional for the Zinc-Blende lattice.\n";
+  scope.attr("__docformat__") = "restructuredtext en";
   bp::docstring_options doc_options(true, false);
 
   // loads lada.math first
@@ -21,4 +23,5 @@ BOOST_PYTHON_MODULE(_vff)
 
   LaDa::python::expose_vff();
   LaDa::python::expose_layeredvff();
+  LaDa::python::expose_data();
 }

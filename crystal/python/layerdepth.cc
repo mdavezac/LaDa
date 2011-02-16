@@ -79,12 +79,11 @@ namespace LaDa
         &sort_structure2< Crystal::TStructure<std::string> >,
         (bp::arg("structure"), bp::arg("direction")), 
         "Returns a structure with the atoms sorted by layer.\n\n"
-        "@param structure: An input structure. Not modified on output.\n"
-        "@type structure: L{Structure} or L{rStructure}\n"
-        "@param direction: Optional argument giving the direction and length of "
-        "repetitions. When not given, this is the firstr cell vector of the structure, "
-        "C{structure.cell[:,0]}.\n"
-        "@type direction: numpy array\n"
+        ":Parameters:\n"
+        "  structure\n    An input structure. Not modified on output.\n"
+        "  direction\n    Optional argument giving the direction and length of "
+           "repetitions. When not given, this is the firstr cell vector of the structure, "
+           "``structure.cell[:,0]``.\n"
       );
     }
 

@@ -61,9 +61,9 @@ def first_shell(structure, pos, tolerance=0.25):
   from numpy.linalg import inv, norm
   from .. import Neighbors
 
-  neigh = [n for n in Neighbors(structure, 12, pos)]
-  d = neigh[0].distance
-  return [n for n in neigh if abs(n.distance - d) < tolerance * d]
+  neighs = [n for n in Neighbors(structure, 12, pos)]
+  d = neighs[0].distance
+  return [n for n in neighs if abs(n.distance - d) < tolerance * d]
 
 def coordination_number(structure, pos, tolerance=0.25):
   """ Returns coordination number of given position in structure. """
@@ -377,27 +377,76 @@ def band_filling(defect, host, **kwargs):
 
   potal = potential_alignment(defect, host, **kwargs)
 
-  cbm = host.cbm - potal
+  cbm = host.cbm + potal
   if defect.eigenvalues.ndim == 3:
     dummy = multiply(defect.eigenvalues-cbm, defect.multiplicity[newaxis,:,newaxis])
+    dummy = multiply(dummy, defect.occupations)
   elif defect.eigenvalues.ndim == 2:
     dummy = multiply(defect.eigenvalues-cbm, defect.multiplicity[:, newaxis])
-  dummy = multiply(dummy, defect.occupations)
+    dummy = 2e0 * multiply(dummy, defect.occupations)
   result = -sum(dummy[defect.eigenvalues > cbm])
 
-  vbm = host.vbm - potal
+  vbm = host.vbm + potal
   if defect.eigenvalues.ndim == 3:
     dummy = multiply(vbm-defect.eigenvalues, defect.multiplicity[newaxis,:,newaxis])
     dummy = multiply(dummy, 1e0-defect.occupations)
   elif defect.eigenvalues.ndim == 2:
     dummy = multiply(vbm-defect.eigenvalues, defect.multiplicity[:, newaxis])
-    dummy = multiply(dummy, 2e0-defect.occupations)
+    dummy = 2e0 * multiply(dummy, 1e0-defect.occupations)
   result -= sum(dummy[defect.eigenvalues < vbm])
 
-  return -result.rescale(eV)
+  return -result.rescale(eV) / sum(defect.multiplicity)
   
+def explore_defect(defect, host, **kwargs):
+  """ Diagnostic tool to determine defect from defect calculation and host. 
+  
+      :Parameters:
+        defect : `lada.vasp.ExtractDFT`
+          Extraction object for the vasp calculation of the defect structure.
+          The defect structure should be a supercell of the host. Its unit cell
+          must be an exact multiple of the host unit cell. Atoms may have moved
+          around, however.
+        host : `lada.vasp.ExtractDFT`
+          Extraction object for the vasp calculation of the host structure.
+        kwargs 
+          Passed on to `reindex_sites`.
 
-def potential_alignment(defect, host, maxdiff=0.5):
+      :return: 
+        Dictionary containing three items:
+
+        - 'vacancy': a list of atoms from the host *missing* in the defect
+          structure. The position of these atoms correspond to the missing atom
+          in the supercell (not the translational equivalent of the unit-cell).
+        - 'substitution': list of indices referring to atoms in the defect
+          structure with substituted types (w.r.t. the host).
+        - 'intersititial': list of indices referring to atoms in the defect
+          structure with no counterpart in the host structure.
+     
+      :note: The results may be incorrect if the defects incur too much relaxation. 
+  """
+  from copy import deepcopy
+  from lada.crystal.defects import reindex_sites
+  
+  dstr = defect.structure.copy()
+  hstr = host.structure
+  reindex_sites(dstr, hstr.to_lattice(), **kwargs)
+
+  result = {'interstitial': [], 'substitution': [], 'vacancy': []}
+  # looks for intersitials and substitutionals.
+  for i, atom in enumerate(dstr.atoms):
+    if atom.site == -1: 
+      result['interstitial'].append(i)
+    elif atom.type != hstr.atoms[atom.site].type: 
+      result['substitution'].append(i)
+  # looks for vacancies.
+  filled = hstr.to_lattice().to_structure(dstr.cell)
+  reindex_sites(filled, dstr.to_lattice(), **kwargs)
+  for atom in filled.atoms:
+    if atom.site != -1: continue
+    result['vacancy'].append(deepcopy(atom))
+  return result
+
+def potential_alignment(defect, host, maxdiff=0.5, first_shell=True, tolerance=0.25):
   """ Returns potential alignment correction. 
 
       :Parameters:
@@ -408,69 +457,74 @@ def potential_alignment(defect, host, maxdiff=0.5):
         host 
           An output extraction object as returned by the vasp functional when
           computing the host matrix.
-        maxdiff : float
+        maxdiff : float or None
           Maximum difference between the electrostatic potential of an atom and
           the equivalent host electrostatic potential beyond which that atom is
           considered pertubed by the defect.
-
-          If this number is negative, than the algorithm is to exclude from the
-          average the ``-maxdiff`` atoms furthest from the average (of the host). 
+          If None or negative, then differences in electrostatice potentials
+          are not considered.
+        first_shell : bool
+          If true then removes from potential alignment the first neighbor of
+          defect atoms.
+        tolerance
+          Passed on to `reindex_sites`.
 
       :return: The potential alignment in eV (without charge factor).
+
+      Returns average difference of the electrostatic potential of the
+      unperturbed atoms in the defect structure with respect to the host.
+      *Perturbed* atoms are those flagged as defect by `explore_defect`, their
+      first coordination shell if ''first_shell'' is true, and atoms for which
+      the electrostatic potential differ to far from the average electrostatic
+      potential for each lattice site (parameterized by maxdiff).
+
+      :note: The return *does* include the charge factor.
   """
-  from operator import itemgetter
-  from numpy import mean, array, abs
+  from itertools import chain
+  from numpy import abs, zeros, array, mean
   from quantities import eV
-  from .. import specie_list
+  from . import reindex_sites, first_shell as ffirst_shell
 
   if abs(defect.charge) < 1e-12: return 0 * eV
 
-  # first get average atomic potential per atomic specie in host.
-  host_electropot = {}
-  host_species = specie_list(host.structure)
-  for s in host_species:
-    indices = array([atom.type == s for atom in host.structure.atoms])
-    host_electropot[s] = mean(host.electropot[indices]) 
+  dstr = defect.structure
+  hstr = host.structure
+  reindex_sites(dstr, hstr.to_lattice(), tolerance=tolerance)
+  defects = explore_defect(defect, host, tolerance=tolerance)
+  acceptable = [True for a in dstr.atoms]
+  # make interstitials and substitutionals unaceptable.
+  for i in chain(defects['interstitial'], defects['substitution']):
+    acceptable[i] = False
+    if first_shell:
+      for n in ffirst_shell(dstr, dstr.atoms[i].pos, tolerance=tolerance):
+        acceptable[n.index] = False
+  # makes vacancies unacceptable.
+  if first_shell:
+    for atom in defects['vacancy']:
+      for n in ffirst_shell(dstr, atom.pos, tolerance=tolerance):
+        acceptable[n.index] = False
   
-  # creates an initial list of unperturbed atoms. 
-  types = array([atom.type for atom in defect.structure.atoms])
-  unperturbed = array([(type in host_species) for type in types])
+  while maxdiff != None and maxdiff < 0.:
+    average = [[] for a in hstr.atoms]
+    for epot, atom, ok in zip(defect.electropot, dstr.atoms, acceptable):
+      if not ok: continue
+      average[atom.site].append(epot.rescale(eV).magnitude)
+    average = array([mean(v) for v in average]) * eV
+  
+    diff = [ (None if not ok else (e - average[a.site]).rescale(eV)) \
+  	     for e, a, ok in zip(defect.electropot, dstr.atoms, acceptable) ]
 
-  # now finds unpertubed atoms according to maxdiff
-  while any(unperturbed): # Will loop until no atom is left. That shouldn't happen!
+    maximum = max(enumerate(diff), key=lambda x: (0 if x[1] == None else abs(x[1])))
+    if abs(maximum[1]) < maxdiff: break
+    else: acceptable[maximum[0]] = False
 
-    # computes average atomic potentials of unperturbed atoms.
-    defect_electropot = {}
-    for s in host_species:
-      defect_electropot[s] = mean(defect.electropot[unperturbed & (types == s)])
+  iterable = zip(defect.electropot, dstr.atoms, acceptable)
+  return mean([ (e - host.electropot[a.site]).rescale(eV).magnitude\
+                for e, a, ok in iterable if ok ]) * eV * defect.charge
 
-    # finds atomic potential farthest from the average potentials computed above.
-    by_type = array([host_electropot[type] for type in types[unperturbed]]) * eV
-    discrepancies = defect.electropot[unperturbed] - by_type
 
-    # if discrepancy too high, mark atom as perturbed.
-    if maxdiff > 0e0: 
-      index, diff = max(enumerate(abs(discrepancies)), key=itemgetter(1))
-      if diff > maxdiff:
-        unperturbed[ [i for i, u in enumerate(unperturbed) if u][index] ] = False
-      # otherwise, we are done for this loop!
-      else: break
-    # mark n atoms with highest relative discrepancy.
-    elif maxdiff < 0e0:
-      maxdiff = int(0.01 - maxdiff)
-      discrepancies = sorted(enumerate(discrepancies / by_type), key=itemgetter(1))[-maxdiff:]
-      for i, v in discrepancies: unperturbed[i] = False
-      break 
-    # Do nothing, use all atoms to compute potential alignment.
-    else: break
 
-  # now computes potential alignment from unpertubed atoms.
-  by_type = array([host_electropot[type] for type in types[unperturbed]]) * eV
-  diff_from_host = defect.electropot[unperturbed]  - by_type
-  return mean(diff_from_host).rescale(eV) * defect.charge
-                    
-
-def third_order_charge_correction(structure, charge = None, n = 200, epsilon = 1.0, **kwargs):
+def third_order_charge_correction(structure, charge = None, n = 30, epsilon = 1.0, **kwargs):
   """ Returns energy of third order charge correction. 
   
       :Parameters: 
@@ -492,22 +546,21 @@ def third_order_charge_correction(structure, charge = None, n = 200, epsilon = 1
 
       :return: third order correction  to the energy in eV. Should be *added* to total energy.
   """
-  from .._crystal import third_order 
   from numpy import array
   from quantities import elementary_charge, eV, pi, angstrom, dimensionless
   from ...physics import a0, Ry
+  from .._crystal import third_order
 
   if charge == None: charge = 1e0
   elif charge == 0: return 0e0 * eV
   if hasattr(charge, "units"):  charge  = float(charge.rescale(elementary_charge))
   if hasattr(epsilon, "units"): epsilon = float(epsilon.simplified)
-  cell = structure.cell
-  scale = structure.scale
-  return - charge**2 / epsilon * third_order(cell, n/2) * (4e0*pi/3e0) \
-         * (array(a0.rescale(angstrom))/scale)**3 * Ry.rescale(eV)
+  cell = (structure.cell*structure.scale*angstrom).rescale(a0)
+  return third_order(cell, n) * (4e0*pi/3e0) * Ry.rescale(eV) * charge * charge \
+         * (1e0 - 1e0/epsilon) / epsilon
+         
 
-
-def first_order_charge_correction(structure, charge=None, epsilon=1e0, cutoff=15e1, **kwargs):
+def first_order_charge_correction(structure, charge=None, epsilon=1e0, cutoff=20.0, **kwargs):
   """ First order charge correction of +1 charge in given supercell. 
   
       Units in this function are either handled by the module Quantities, or
@@ -532,10 +585,11 @@ def first_order_charge_correction(structure, charge=None, epsilon=1e0, cutoff=15
   from ...physics import Ry
   try: from ...pcm import Clj 
   except ImportError as e:
-    print "Could not import Point-Charge Model package (pcm). \n"\
-          "Cannot compute first order charge correction.\n"\
-          "Please compile LaDa with pcm enabled.\n"
-    raise
+    from warnings import warn
+    warn(ImportWarning("Could not import Point-Charge Model package (pcm). \n"\
+                       "Cannot compute first order charge correction.\n"\
+                       "Please compile LaDa with pcm enabled.\n"))
+    return 
 
   if charge == None: charge = 1
   elif charge == 0: return 0e0 * eV
@@ -554,7 +608,20 @@ def first_order_charge_correction(structure, charge=None, epsilon=1e0, cutoff=15
   return -result * eV
 
 def charge_corrections(structure, **kwargs):
-  """ Electrostatic charge correction (first and third order). """
+  """ Electrostatic charge correction (first and third order). 
+
+      Computes first and third order charge corrections according to `Lany
+      and Zunger, PRB 78, 235104 (2008)`__. Calculations are
+      done for the correct charge of the system and a static dielectric
+      constant epsilon=1. For other static dielectric constants, use:
+
+      >>> correction = output.charge_corrections / epsilon
+
+      For conventional and unit-cells of Ga2MnO4 spinels, the charge
+      corrections are converged to roughly 1e-5 eV (for singly charged).
+
+      .. __:  http://dx.doi.org/10.1103/PhysRevB.78.235104
+  """
   return   first_order_charge_correction(structure, **kwargs) \
          + third_order_charge_correction(structure, **kwargs) \
 
@@ -829,6 +896,25 @@ def high_spin_states(structure, defect, species, extrae, do_integer=True, do_ave
       moments = array(determine_moments(tote, types)) + float(extrae) / float(len(types))
       if all(abs(moments) < 1e-12): continue # non - magnetic case
       if check_history(indices, moments):  yield indices, moments
+
+def reindex_sites(structure, lattice, tolerance=0.5):
+  """ Reindexes atoms of structure according to lattice sites.
+  
+      Expects that the structure is an exact supercell of the lattice, as far
+      cell vectors are concerned. The atoms, however, may have moved around a
+      bit. To get an index, an atom must be clearly closer to one ideal lattice
+      site than to any other, within a given tolerance (< closest/next closest
+      distance).
+  """
+  from .. import Neighbors
+  if hasattr(lattice, 'to_lattice'): lattice = lattice.to_lattice()
+  lattice = lattice.to_structure(structure.cell)
+  for atom in structure.atoms:
+    neighs = [n for n in Neighbors(lattice, 2, atom.pos)]
+    assert abs(neighs[1].distance) > 1e-12,\
+           RuntimeError('Found two sites occupying the same position.')
+    if neighs[0].distance / neighs[1].distance > tolerance: continue
+    atom.site = lattice.atoms[neighs[0].index].site
 
 def magname(moments, prefix=None, suffix=None):
   """ Construct name for magnetic moments. """

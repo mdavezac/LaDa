@@ -59,21 +59,20 @@ namespace LaDa
         "which_site",
         &Crystal::which_site<Crystal::Lattice::t_Sites>,
         ( boost::python::arg("pos"), boost::python::arg("invcell"), boost::python::arg("sites") ),
-        "Returns index of the site which matches the given position.\n\n"
+        "Index of the site which matches the given position.\n\n"
+        ":Parameters:\n"\
+        "  pos\n    A position to match modulo the supercell.\n"
+        "  invcell\n    the inverse of the supercell.\n"
+        "  sites : `Lattice.sites`, `Structure.atoms`, `rStructure.atoms`\n"
+        "    A list of sites.\n"
+        // other implementation,
+        "  lattice : `Lattice`\n"
+        "    match pos to the sites in lattice, modulo the lattice vectors.\n"
+        // other implementation,
+        "  structure : `Structure`\n"
+        "    match pos to the atoms in structure, modulo the cell-vectors.\n\n"
         "This function can take either three (pos, invcell, sites) or two "
         "arguments (pos, structure), or (pos, lattice).\n"
-        "@param pos: A position to match modulo the supercell.\n"
-        "@type pos: numpy 3x1 float64 array\n"
-        "@param invcell: the inverse of the supercell.\n"
-        "@type invcell: numpy 3x3 float64 array\n"
-        "@param sites: A list of sites.\n"
-        "@type sites: L{Lattice.sites}, L{Structure.atoms}, L{rStructure.atoms}\n"
-        // other implementation,
-        "@param lattice: match pos to the sites in lattice, modulo the lattice vectors.\n"
-        "@type lattice: L{Lattice}\n"
-        // other implementation,
-        "@param structure: match pos to the atoms in structure, modulo the cell-vectors.\n"
-        "@type structure: L{Structure} or L{rStructure}\n"
       );
     }
 

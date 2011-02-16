@@ -162,7 +162,6 @@ class Specie(object):
       string += ", {name}={value}".format(name=k, value=repr(v))
     return string + ')'
   
-
   def __setstate__(self, dictionary):
     """ Retrieves state from pickle.
 

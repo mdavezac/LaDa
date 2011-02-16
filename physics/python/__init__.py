@@ -7,7 +7,7 @@ __docformat__ = "restructuredtext en"
 
 from numpy import sqrt
 import quantities as pq
-from _physics import Z, Symbol, Charge, Mass 
+from _physics import Z, Symbol, Charge, Mass, a0 as _a0
 
 __all__ = [ 'Z', 'Symbol', 'Charge', 'Mass', 'a0', 'bhor_radius',\
             'h', 'planck', 'h_bar', 'reduced_planck', 'electronic_mass',\
@@ -28,7 +28,7 @@ Ry = pq.UnitQuantity('Rydberg', 0.5 * pq.hartree, symbol='Ry')
 rydberg = Ry
 """ Rydberg energy units. """
 
-a0 = pq.UnitQuantity('bhor_radius', 0.52917720858 * pq.angstrom, symbol='a0')
+a0 = pq.UnitQuantity('bhor_radius', _a0("A") * pq.angstrom, symbol='a0')
 """ Bhor radius, unit of length of atomic units. """
 bhor_radius = a0
 """ Bhor radius, unit of length of atomic units. """

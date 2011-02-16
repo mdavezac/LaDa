@@ -39,6 +39,7 @@
 
 #include "../structure.h"
 #include "../fill_structure.h"
+#include "../which_site.h"
 #include "../lattice.h"
 #include "../fractional_cartesian.h"
 
@@ -62,8 +63,7 @@ namespace LaDa
     {
       if( not Crystal::Structure::lattice )
       {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "Crystal::Structure::lattice has not been set.\n");
+        PyErr_SetString(PyExc_RuntimeError, "Crystal::Structure::lattice has not been set.\n");
         bp::throw_error_already_set();
         return NULL;
       }
@@ -186,6 +186,39 @@ namespace LaDa
         return result;
       }
       
+    template<class T>
+      void reindex_sites(T &_str, Crystal::Lattice const * const _lattice)
+      {
+        Crystal::Lattice * const old_lattice = _str.lattice;
+        Crystal::Lattice const * const lattice(_lattice ? _lattice: old_lattice);
+  
+        if(lattice == NULL)
+        {
+          PyErr_SetString(PyExc_RuntimeError, "No lattice on input, and no default lattice.");
+          bp::throw_error_already_set();
+          return;
+        }
+  
+        typename T::t_Atoms::iterator i_first = _str.atoms.begin();
+        typename T::t_Atoms::iterator const i_end = _str.atoms.end();
+        std::ostringstream sstr;
+        math::rMatrix3d const inv_cell(!_str.cell);
+        for(; i_first != i_end; ++i_first)
+        {
+          i_first->site = Crystal::which_site(i_first->pos, inv_cell, lattice->sites);
+          if(i_first->site == -1) sstr << (i_first - _str.atoms.begin()) << ' ';
+        }
+        if(sstr.str().size() != 0) 
+        {
+          PyErr_SetString( PyExc_RuntimeError,
+                           ("Could not relate atoms to lattice sites.\n  " + sstr.str()).c_str() );
+          bp::throw_error_already_set();
+          return;
+        }
+  
+        _str.lattice = old_lattice;
+      }
+
 
     template< class T>
       math::rMatrix3d get_cell( T const &_str ) { return _str.cell; }
@@ -208,8 +241,9 @@ namespace LaDa
               &get_cell<T_STRUCTURE>, 
               bp::return_value_policy<bp::return_by_value>()
             ), &set_cell<T_STRUCTURE>, 
-            ("A 3x3 numpy array representing the cell vector in cartesian units, "
-             "in units of self.L{scale<lada.crystal." + _name + ".scale>}.").c_str()
+            "Cell vectors in cartesian coordinates.\n\n"
+            "Units are ``self.scale``. The latter should be in angstrom, "
+            "though use quantities package is not possible here."
           )
           .def_readwrite( "_atoms",   &T_STRUCTURE::atoms,
                           (   "The list of atoms of type L{" + _type
@@ -218,7 +252,8 @@ namespace LaDa
           .def_readwrite( "weight",  &T_STRUCTURE::weight,
                           "Optional weight for fitting purposes." )
           .def_readwrite( "scale",   &T_STRUCTURE::scale,
-                          "A scaling factor for atomic-positions and cell-vectors." )
+                          "A scaling factor for atomic-positions and cell-vectors.\n\n"
+                          "Should always be in ansgtrom. No exceptions allowed." )
           .def_readwrite( "name", &T_STRUCTURE::name, "Holds a string." )
           .def( "__str__",  &print< T_STRUCTURE > ) 
           .def( "fromXML",  &XML::from< T_STRUCTURE >, bp::arg("file"),
@@ -228,7 +263,7 @@ namespace LaDa
           .def( "xcrysden", &xcrysden_str, "Outputs in XCrysden format." )
           .def_readwrite( "freeze", &T_STRUCTURE::freeze,
                            "Tags to freeze coordinates when relaxing structure.\n\n" 
-                           "See L{FreezeCell} for possible values." 
+                           "See `FreezeCell` for possible values." 
                         )
           .def(bp::self == bp::other<T_STRUCTURE>())
           .add_property
@@ -242,7 +277,9 @@ namespace LaDa
             "References the lattice within which this structure is defined."
             " Read, but do not write to this object." 
           ) 
-          .def_pickle( Python::pickle< T_STRUCTURE >() );
+          .def_pickle( Python::pickle< T_STRUCTURE >() )
+          .def( "reindex_sites", &reindex_sites<T_STRUCTURE>, bp::arg("lattice") = NULL,
+                "Sets site index in atoms to match the input lattice." );
       }
 
     void expose_structure()
@@ -268,7 +305,7 @@ namespace LaDa
       expose< Crystal::Structure >
       (
         "rStructure", 
-        "Defines a structure.\n\nGenerally, it is a super-cell of a L{Lattice} object.",
+        "Defines a structure.\n\nGenerally, it is a super-cell of a `Lattice` object.",
         "rAtom"
       ).def( "__init__", bp::make_constructor( string_to_real ) )
        .def_readwrite( "k_vecs",  &Crystal::Structure::k_vecs,
@@ -280,7 +317,7 @@ namespace LaDa
       expose< Crystal::TStructure<std::string> >
       (
         "Structure", 
-        "Defines a structure.\n\nGenerally, it is a super-cell of a L{Lattice} object.",
+        "Defines a structure.\n\nGenerally, it is a super-cell of a `Lattice` object.",
         "Atom"
       ).def( "__init__", bp::make_constructor( real_to_string ) );
       bp::register_ptr_to_python< boost::shared_ptr< Crystal::TStructure<std::string> > >();
@@ -297,10 +334,10 @@ namespace LaDa
         "_fill_structure_impl", 
         &fill_structure< Crystal::TStructure<std::string> >,
         "Returns a structure from knowledge of cell and lattice.\n\n"
-        "The argument can be of type L{Structure}, L{rStructure}, "
+        "The argument can be of type `Structure`, `rStructure`, "
         "or a numpy 3x3 float64 array. In the second case, the return is "
-        "also a L{rStructure}. In all other cases, the return is an L{Structure}.\n"
-        "@raise RuntimeError: If the filled structure could not be created.\n" 
+        "also a `rStructure`. In all other cases, the return is an `Structure`.\n"
+        ":raise RuntimeError: If the filled structure could not be created.\n" 
       );
     }
 
