@@ -29,8 +29,6 @@ class Enum(Lattice):
     self.__dict__.update(deepcopy(lattice.__dict__))
     self.find_space_group()
 
-    self.nflavors = enumeration.count_flavors(self)
-
   @property 
   def nflavors(self):
     """ Number of flavors in this lattice. """
@@ -40,7 +38,7 @@ class Enum(Lattice):
   @property
   def nsites(self):
     """ Number of sites in lattice. """
-    return len([0 for u in _lattice.sites if  len(u.type) > 1])
+    return len([0 for u in self.sites if  len(u.type) > 1])
 
   @property
   def transforms(self):
@@ -55,7 +53,7 @@ class Enum(Lattice):
 
   def smiths(self, n):
     """ Iterates over smith groups. """
-    from _enumeration import find_all_cells
+    from _enumeration import find_all_cells, create_smith_groups
     supercells = find_all_cells(self, n)
     for smith in create_smith_groups(self, supercells): yield smith
 
@@ -83,8 +81,8 @@ class Enum(Lattice):
 
     # loop over smith groups.
     for smith in self.smiths(n):
-      card           = smith.smith[0]*smith.smith[1]*smith.smith[2]*nsites
-      label_exchange = LabelExchange( card, nflavors )
+      card           = int(smith.smith[0]*smith.smith[1]*smith.smith[2]*nsites)
+      label_exchange = LabelExchange(card, nflavors)
       flavorbase     = create_flavorbase(card, nflavors)
       translations   = Translation(smith.smith, nsites)
       database       = Database(card, nflavors)
@@ -141,7 +139,6 @@ class Enum(Lattice):
             specialized_database[t] = False
       
             for labelperm in label_exchange:
-<<<<<<< HEAD
               u = labelperm(t, flavorbase)
               if u == x: continue
               specialized_database[u] = False
@@ -155,12 +152,6 @@ class Enum(Lattice):
                 if v == x: continue
                 specialized_database[v] = False
           if specialized_database[x]: yield x, smith, supercell, flavorbase
-=======
-              v = labelperm(u, flavorbase)
-              if v == x: continue
-              specialized_database[v] = False
-        if specialized_database[x]: yield x, supercell.hermite, flavorbase
->>>>>>> parent of dd66fe8... Working on enum example.
 
   def structures(self, *args, **kwargs):
     """ Yields inequivalent structures.
@@ -171,6 +162,7 @@ class Enum(Lattice):
     from numpy import zeros
     from _enumeration import as_structure
     oldhermite = zeros((3,3))
-    for x, hermite, flavorbase in self.xn(*args, **kwargs):
+    for x, supercell, flavorbase in self.xn(*args, **kwargs):
+      hermite = supercell.hermite
       if oldhermite != hermite: structure = self.to_structure(dot(self.cell, hermite))
       yield as_structure(structure, x, flavorbase)
