@@ -181,7 +181,7 @@ namespace LaDa
     boost::shared_ptr<e::FlavorBase> create_flavor_base(size_t _card, size_t _n_flavor)
     {
       try { return e::create_flavor_base(_card, _n_flavor); }
-      catch(e::supercell_too_large &_e)
+      catch(e::supercell_too_large const &_e)
       {
         std::ostringstream sstr;
         sstr << "Supercell configuration-space too large.\n"

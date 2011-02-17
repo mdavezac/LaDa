@@ -46,7 +46,10 @@ namespace LaDa
 
     //! Throws when supercell is too large for t_uint integer type.
     inline bool check_size( size_t _card, size_t _nflavor )
-      { return double(_card) * std::log(double(_nflavor))+1e-12 < double(sizeof(t_uint)); } 
+    {
+      return double(_card) * std::log(double(_nflavor))+1e-12
+                 < double(sizeof(t_uint)<<3) * std::log(double(2)); 
+    } 
 
     //! Returns an initialized database for specified size. 
     boost::shared_ptr<Database> create_database( size_t _card, size_t _nflavor );

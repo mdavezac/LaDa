@@ -4,27 +4,8 @@ __all__ = ['Enum', 'as_structure', 'as_numpy']
 from _enumeration import as_structure, as_numpy   
 from ..crystal import Lattice
 
-def self_as_global_lattice(method):
-  """ Sets the global lattice to self on entering function. """
-  def wrapper(self, *args, **kwargs):
-    from ..crystal import Structure
-    oldlattice = None
-    try: oldlattice = Structure().lattice
-    except: pass
-    self.set_as_crystal_lattice()
-    result = method(self, *args, **kwargs)
-    if oldlattice != None: oldlattice.set_as_crystal_lattice()
-    return result
-  wrapper.__name__   = method.__name__
-  wrapper.__doc__    = method.__doc__
-  wrapper.__module__ = method.__module__
-  wrapper.__dict___  = method.__dict__.update(method.__dict__)
-  return wrapper
-
-    
 class Enum(Lattice):
   """ Enhanced `crystal.Lattice` providing generators over inequivalent configurations. """
-
   def __init__(self, lattice=None, tolerance=1e-12):
     """ Initializes the enumeration class. 
     
@@ -48,6 +29,8 @@ class Enum(Lattice):
     self.__dict__.update(deepcopy(lattice.__dict__))
     self.find_space_group()
 
+    self.nflavors = enumeration.count_flavors(self)
+
   @property 
   def nflavors(self):
     """ Number of flavors in this lattice. """
@@ -57,7 +40,7 @@ class Enum(Lattice):
   @property
   def nsites(self):
     """ Number of sites in lattice. """
-    return len([0 for u in self.sites if  len(u.type) > 1])
+    return len([0 for u in _lattice.sites if  len(u.type) > 1])
 
   @property
   def transforms(self):
@@ -72,11 +55,10 @@ class Enum(Lattice):
 
   def smiths(self, n):
     """ Iterates over smith groups. """
-    from _enumeration import find_all_cells, create_smith_groups
+    from _enumeration import find_all_cells
     supercells = find_all_cells(self, n)
     for smith in create_smith_groups(self, supercells): yield smith
 
-  @self_as_global_lattice
   def xn(self, n, callback = None):
     """ Iterates over all decorations with n atoms. 
     
@@ -86,12 +68,10 @@ class Enum(Lattice):
           callback : callable or None
             Callable taking x, flavorbase, and smith on call. 
             It should return a tuple where the first item says to proceed with
-            the loop, and the other wether to set that entry in the database to
+            the loop, and the other whether to set that entry in the database to
             True or False. If the second item is None, then the database entry
             is untouched.
-
-         :return: Yields a tuple consisting of x, the smith structure,
-                  the supercell, and the flavorbase.
+         :return: Yields a tuple consisting of x, the hermite cell, and the flavorbase.
     """
     from numpy import dot
     from _enumeration import LabelExchange, create_flavorbase, Translation, Database, as_numpy
@@ -103,8 +83,8 @@ class Enum(Lattice):
 
     # loop over smith groups.
     for smith in self.smiths(n):
-      card           = int(smith.smith[0]*smith.smith[1]*smith.smith[2]*nsites)
-      label_exchange = LabelExchange(card, nflavors )
+      card           = smith.smith[0]*smith.smith[1]*smith.smith[2]*nsites
+      label_exchange = LabelExchange( card, nflavors )
       flavorbase     = create_flavorbase(card, nflavors)
       translations   = Translation(smith.smith, nsites)
       database       = Database(card, nflavors)
@@ -120,7 +100,7 @@ class Enum(Lattice):
         if callback != None:
           loop, entry = callback(x, flavorbase, smith)
           if entry != None: database[x] = entry
-          if loop: continue
+          if not loop: continue
 
         # check for supercell independent transforms.
         maxterm = x
@@ -139,41 +119,48 @@ class Enum(Lattice):
             u = labelperm(t, flavorbase)
             if u > x: database[u] = False
 
-    # checks supercell dependent transforms.
-    for nsupercell, supercell in enumerate(smith.supercells):
-      mine = []
-      # creates list of transformation which leave the supercell invariant.
-      cell = dot(self.cell, supercell.hermite)
-      specialized = []
-      for transform in transforms:
-        if not transform.invariant(cell): continue
-        transform.init(supercell.transform, smith.smith)
-        if not transform.is_trivial: specialized.append( transform )
-
-      specialized_database = Database(database)
-      for x in xrange(1, maxterm+1):
-        if not database[x]: continue
-        maxterm = x
-        
-        for transform in specialized:
-          t = transform(x, flavorbase)
-          if t == x: continue
-          specialized_database[t] = False
-
-          for labelperm in label_exchange:
-            u = labelperm(t, flavorbase)
-            if u == x: continue
-            specialized_database[u] = False
-            
-          for translation in translations:
-            u = translation(t, flavorbase)
-            if u == x: continue
-            specialized_database[u] = False
+      # checks supercell dependent transforms.
+      for nsupercell, supercell in enumerate(smith.supercells):
+        mine = []
+        # creates list of transformation which leave the supercell invariant.
+        cell = dot(self.cell, supercell.hermite)
+        specialized = []
+        for transform in transforms:
+          if not transform.invariant(cell): continue
+          transform.init(supercell.transform, smith.smith)
+          if not transform.is_trivial: specialized.append( transform )
+      
+        specialized_database = Database(database)
+        for x in xrange(1, maxterm+1):
+          if not database[x]: continue
+          maxterm = x
+          
+          for transform in specialized:
+            t = transform(x, flavorbase)
+            if t == x: continue
+            specialized_database[t] = False
+      
             for labelperm in label_exchange:
+<<<<<<< HEAD
+              u = labelperm(t, flavorbase)
+              if u == x: continue
+              specialized_database[u] = False
+              
+            for translation in translations:
+              u = translation(t, flavorbase)
+              if u == x: continue
+              specialized_database[u] = False
+              for labelperm in label_exchange:
+                v = labelperm(u, flavorbase)
+                if v == x: continue
+                specialized_database[v] = False
+          if specialized_database[x]: yield x, smith, supercell, flavorbase
+=======
               v = labelperm(u, flavorbase)
               if v == x: continue
               specialized_database[v] = False
-        if specialized_database[x]: yield x, smith, supercell, flavorbase
+        if specialized_database[x]: yield x, supercell.hermite, flavorbase
+>>>>>>> parent of dd66fe8... Working on enum example.
 
   def structures(self, *args, **kwargs):
     """ Yields inequivalent structures.
@@ -184,7 +171,6 @@ class Enum(Lattice):
     from numpy import zeros
     from _enumeration import as_structure
     oldhermite = zeros((3,3))
-    for x, smith, supercell, flavorbase in self.xn(*args, **kwargs):
-      hermite = supercell.hermite
+    for x, hermite, flavorbase in self.xn(*args, **kwargs):
       if oldhermite != hermite: structure = self.to_structure(dot(self.cell, hermite))
       yield as_structure(structure, x, flavorbase)
