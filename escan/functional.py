@@ -495,7 +495,9 @@ class Escan(object):
     # Creates temporary input file and creates functional
     kpoint = (0,0,0,0,0) if norm(self.kpoint) < 1e-12\
              else self._get_kpoint(structure, comm, norun)
-    if comm != None or comm.rank > 1:
+    is_mpi = False if comm == None else comm.rank > 1
+    is_root = comm.rank == 0 if is_mpi else True
+    if is_root:
       with open(self._INCAR, "w") as file:
         file.write('1 {0}\n'.format(self._POTCAR))
         file.write('2 {0.WAVECAR}\n3 {1}\n'.format(self, 1 if self.eref != None else 2) )

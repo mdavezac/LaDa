@@ -1,42 +1,59 @@
 import pickle
 import matplotlib.pyplot as plt 
-from lada.escan import ExtractBS
 
-def compute_projections(extract, filename, alpha = 1e0, **kwargs):
-  """ Computes projected densities around each atom for a calculation. """
-  from os.path import exists
-  from sys import exit, getrefcount
-  if exists(filename): 
-    from pickle import load
-    with open(filename, "r") as file: return load(file)
+class Projections(object):
+  def __init__(self): object.__init__(self)
+  def __call__(self, outdir, **kwargs): 
+    from os.path import join
+    from lada.escan import KExtract
+    extract = KExtract(outdir)
+    for value in extract:
+      filename = join(value.directory, "PROJECT_BS")
+      a = self._project(value, filename, **kwargs)
 
-  from pickle import dump
-  from numpy import zeros, dot, array, exp, sum
-  from numpy.linalg import norm
-  from quantities import angstrom
-  from lada import periodic_table as table
-  from lada.crystal import gaussian_projector
-  species = set([u.type for u in extract.structure.atoms])
-  species = sorted(list(species))
-  result = {}
-  for key in species:
-    if (key not in kwargs) and (key not in table.__dict__): continue
-    radius = kwargs.get(key, getattr(table, key)).atomic_radius
-    sigma = -alpha / radius / radius
+  def _project(self, extract, filename = "projections", alpha = 1e0, **kwargs):
+    """ Computes projected densities around each atom for a calculation. """
+    from os.path import exists
+    from sys import exit, getrefcount
+    if exists(filename): 
+      from pickle import load
+      with open(filename, "r") as file: return load(file)
 
-    # create projection operator.
-    proj = zeros(extract.rvectors.shape[:-1])
-    cell = extract.structure.cell * extract.structure.scale 
-    for atom in extract.structure.atoms:
-      if atom.type != key: continue
-      pos = atom.pos * extract.structure.scale 
-      proj += gaussian_projector(extract.rvectors, cell * angstrom, pos * angstrom, sigma )
-    result[key] = [(w.eigenvalue, w.expectation_value(proj)) for w in extract.rwfns]
-  
-  n = norm(array(result.values()))
-  for key in result.keys(): result[key] /= n
-  with open(filename, "w") as file: dump(result, file)
-  return result
+    from pickle import dump
+    from numpy import zeros, dot, array, exp, sum
+    from numpy.linalg import norm
+    from quantities import angstrom
+    from lada import periodic_table as table
+    from lada.crystal import gaussian_projector
+    species = set([u.type for u in extract.structure.atoms])
+    species = sorted(list(species))
+    result = {}
+    for key in species:
+      if (key not in kwargs) and (key not in table.__dict__): continue
+      radius = kwargs.get(key, getattr(table, key)).atomic_radius
+      sigma = -alpha / radius / radius
+
+      # create projection operator.
+      proj = zeros(extract.rvectors.shape[:-1])
+      cell = extract.structure.cell * extract.structure.scale 
+      for atom in extract.structure.atoms:
+        if atom.type != key: continue
+        pos = atom.pos * extract.structure.scale 
+        proj += gaussian_projector(extract.rvectors, cell * angstrom, pos * angstrom, sigma )
+      result[key] = [(w.eigenvalue, w.expectation_value(proj)) for w in extract.rwfns]
+    
+    n = norm(array(result.values()))
+    for key in result.keys(): result[key] /= n
+    with open(filename, "w") as file: dump(result, file)
+    return result
+
+  def iter(self, outdir, **kwargs):
+    from os.path import join
+    from lada.escan import KExtract
+    extract = KExtract(outdir)
+    for value in extract:
+      filename = join(value.directory, "PROJECT_BS")
+      yield self._project(value, filename, **kwargs)
 
 def compute_bs():
   import pickle
@@ -45,14 +62,13 @@ def compute_bs():
   from numpy import matrix, array
   from numpy.linalg import norm
   from boost.mpi import world
-  from lada.opt import read_input
-  from lada.escan import Escan, soH, band_structure
+  from lada.escan import read_input, exec_input, BPoints, ReducedBPoints
+  from lada.crystal import nb_valence_states  
   from lada.vff import Vff
   from lada.crystal import fill_structure, sort_layers, FreezeCell, nb_valence_states  
 
   # reads input file.
-  global_dict={"Vff": Vff, "Escan": Escan, "nb_valence_states": nb_valence_states, "soH": soH}
-  input = read_input("input.py", global_dict=global_dict)
+  input = read_input("input.py")
 
   # creating unrelaxed structure.
   structure = input.vff.lattice.to_structure()
@@ -69,35 +85,22 @@ def compute_bs():
   # Each job is performed for a given kpoint (first argument), at a given
   # reference energy (third argument). Results are stored in a specific directory
   # (second arguement). The expected eigenvalues are given in the fourth argument.
-  kpoints = [ (X, G), (G, L) ]
-  density = 20 / min( norm(X), norm(L), norm(W) )
+  input = read_input('input.py')
+  kescan = exec_input(repr(input.escan).replace('Escan', 'KEscan')).functional
 
-  result = band_structure( input.escan, structure, kpoints, density, 
-                           outdir = "results",
-                           eref   = None, 
-                           nbstates = nb_valence_states(structure) + 4,
-                           pools = 4)
-    
-  if world.rank == 0:
-    with open(join("results", "pickle"), "w") as file:
-      pickle.dump(result, file) 
+  kescan.fft_mesh = 14, 14, 14
+  kescan.kpoints = ReducedBPoints(density=20) + (X, G) + (G, L)
+  result = kescan( structure, comm=world, outdir='results/projections', 
+                   nbstates = nb_valence_states(structure) + 4,
+                   eref = None )
 
-
-def create_data():
-  from lada.escan import ExtractBS
-  from os.path import join
-  compute_bs()
-  extract_bs = ExtractBS("results")
-  for key, value in extract_bs.iteritems():
-    filename = join(value.directory, "PROJECT_BS")
-    a = compute_projections(value, filename)
-
-
-def plot_bands(extractor, tolerance=1e-6, **kwargs):
+def plot_bands(extractor, offset = 0.05, labels = None, **kwargs):
   """ Tries and plots band-structure. """
-  from os.path import join
   from numpy import dot, array, min, max, sqrt
   from numpy.linalg import norm
+
+  old = extractor.unreduce
+  extractor.unreduce = True
 
   bandcolor = kwargs.pop('bandcolor', 'blue')
   edgecolor = kwargs.pop('edgecolor', 'red')
@@ -110,30 +113,47 @@ def plot_bands(extractor, tolerance=1e-6, **kwargs):
   kpoints = extractor.kpoints
   delta = kpoints[1:] - kpoints[:-1]
   norms = [norm(delta[i,:]) for i in range(delta.shape[0])]
-  bk = []
+  bk, offsets, x, lims = [0], [False], [], [0]
   for i, d in enumerate(norms[1:]):
-    if abs(norms[i]-d) > 1e-6: bk.append(i+1)
+    if abs(norms[i]-d) > 1e-6: 
+      if i == bk[-1] and i != 0:
+        offsets[-1] = True
+        bk[-1] += 1
+        lims.append(bk[-1])
+      else:
+        bk.append(i+1)
+        offsets.append(False)
+      x.append(0 if offsets[-1] else norms[i])
+    else: x.append(d)
+  bk.append(None)
+  offsets.append(False)
+  lims.append(None)
+  x.append(x[-1])
 
-  # then create array of mean x, y values.
-  x = array([sum(norms[:i]) for i in range(len(norms)+1)])
-  y = array(extractor.eigenvalues.values())
-
-  # gets projected stuff
-  si_projs = array([ compute_projections(value, join(value.directory, "PROJECT_BS"), alpha=alpha)["Si"]
-                     for value in extractor.itervalues() ] )
+  # then plot bands.
+  x = array([sum(x[:i]) for i in range(len(x)+1)])
+  y = array(extractor.eigenvalues)
+  projs = Projections()
+  si_projs = array([ u["Si"] for u in projs.iter(extractor.directory) ])
   si_projs = si_projs[:,:,1]
-  ge_projs = array([ compute_projections(value, join(value.directory, "PROJECT_BS"), alpha=alpha)["Ge"]
-                     for value in extractor.itervalues() ] )
+  ge_projs = array([ u["Ge"] for u in projs.iter(extractor.directory) ])
   ge_projs = ge_projs[:,:,1]
 
-  # then loop over each band.
-  for band, si, ge in zip(y.T, si_projs.T.real, ge_projs.T.real):
-    width = (si if type == "Si" else ge)  / sqrt(si * si + ge * ge)
-    plt.fill_between(x, band + awidth * width, band - awidth * width,
-                     color=bandcolor, **kwargs)
-  
-  # plots break-lines.
-  for i in bk: plt.axvline(x[i], color='black', **kwargs)
+  # then line markers.
+  offset *= x[-1]
+  lines = []
+  for first, last, add_offset in zip(bk[:-1], bk[1:], offsets):
+    if first != 0: lines.append(x[first])
+    if add_offset:
+      x[first:] += offset
+      lines.append(x[first])
+  for first, last in  zip(lims[:-1], lims[1:]):
+    for band, si, ge in zip(y[first:last].T, si_projs[first:last].T.real, ge_projs[first:last].T.real):
+      width = (si if type == "Si" else ge)  / sqrt(si * si + ge * ge)
+      plt.fill_between(x, band + awidth * width, band - awidth * width,
+                       color=bandcolor, **kwargs)
+#   plt.plot(x[first:last], y[first:last], color=bandcolor, **kwargs)
+  for l in lines: plt.axvline(l, color='black', **kwargs)
 
   # then plot vbm and cbm.
   kwargs.pop('linestyle', None) 
@@ -145,9 +165,20 @@ def plot_bands(extractor, tolerance=1e-6, **kwargs):
   plt.xlim((x[0], x[-1]))
   ylims = min(y) - (max(y) - min(y))*0.05, max(y) + (max(y) - min(y))*0.05
   plt.ylim(ylims)
-  plt.show()
+  axes = plt.gca()
+  axes.yaxis.set_ticks_position('both')
+  if labels == None: axes.xaxis.set_ticks([])
+  else:
+    lines.insert(0, 0)
+    lines.append(x[-1])
+    assert len(labels) <= len(lines),\
+           ValueError("Could not find as many breaking points as were provided labels.")
+    axes.xaxis.set_ticks(lines[:len(labels)])
+    axes.xaxis.set_ticklabels(labels)
 
-from lada.escan import ExtractBS
-extract_bs = ExtractBS("results")
-# p = compute_projections(extract_bs.values()[0], "shit", alpha=5.)
-plot_bands(extract_bs, awidth=1)
+  extractor.unreduce = old
+
+# compute_bs()
+# p = Projections()
+# p("results/projections")
+# plot_bands(extract_bs, awidth=1)
