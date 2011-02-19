@@ -159,10 +159,11 @@ class Enum(Lattice):
         Parameters are those of `Enum.xn`.
         This generator yields actual `crystal.Structure.`
     """
-    from numpy import zeros
+    from numpy import zeros, any, dot
     from _enumeration import as_structure
     oldhermite = zeros((3,3))
-    for x, supercell, flavorbase in self.xn(*args, **kwargs):
+    for x, smith, supercell, flavorbase in self.xn(*args, **kwargs):
       hermite = supercell.hermite
-      if oldhermite != hermite: structure = self.to_structure(dot(self.cell, hermite))
-      yield as_structure(structure, x, flavorbase)
+      if any(oldhermite != hermite): structure = self.to_structure(dot(self.cell, hermite))
+      as_structure(structure, x, flavorbase)
+      yield structure
