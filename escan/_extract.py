@@ -376,7 +376,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
       else: nbstates = self.functional.nbstates / 2
       with redirect(fout="") as streams:
         result = read_wavefunctions(self.functional, range(nbstates), comm, self.is_krammer)
-      remove(self.functional._INCAR + "." + str(world.rank))
+      remove(self.functional._INCAR)
 
     cell = self.structure.cell * self.structure.scale * angstrom
     normalization = det(cell.rescale(a0)) 

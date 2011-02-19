@@ -62,10 +62,10 @@ def call_escan(comm, atom="atom_input", pot="pot_input", escan="escan_input"):
   
   # escan is free for all, with every proc reading at the same time.
   # hence it must be from different files.
-  atominput = "%s.%i" % (atom, world.rank)
-  potinput = "%s.%i" % ("pot.input", world.rank)
-  potoutput = "%s.%i" % ("pot.output", world.rank)
-  escaninput = "%s.%i" % ("escan_input", world.rank)
+  atominput = atom
+  potinput = "pot.input"
+  potoutput = "pot.output"
+  escaninput = "escan_input"
 
   # propagates atomic input first
   buffer = None
