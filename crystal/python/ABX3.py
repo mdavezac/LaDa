@@ -1,12 +1,15 @@
-""" Standard ABX3 lattices """
+""" Standard ABX3 lattices. """
 __docformat__ = "restructuredtext en"
 
-def 'p60'():
-  """ Return instance of a 'p60' lattice. """  
+def p60(scale=1e0):
+  """ ABX3 lattice p60.
+
+      :Param scale: Should be given in angstrom.
+  """
   from lada.crystal._crystal import Lattice
   lattice = Lattice()
   lattice.name   = '60, P b c n'
-  lattice.scale  = 1.0
+  lattice.scale  = scale
   lattice.set_cell = (1.000000, 0.000000, 0.000000),\
                      (0.000000, 0.944865, 0.000000),\
                      (0.000000, 0.000000, 0.575135)
@@ -53,12 +56,15 @@ def 'p60'():
   lattice.find_space_group()
   return lattice
 
-def 'p88'():
-  """ Return instance of a 'p88' lattice. """  
+def p88(scale=1e0):
+  """ ABX3 lattice p88.
+
+      :Param scale: Should be given in angstrom.
+  """
   from lada.crystal._crystal import Lattice
   lattice = Lattice()
   lattice.name   = '88, I 41/a Z, tetragonal'
-  lattice.scale  = 1.0
+  lattice.scale  = scale
   lattice.set_cell = (1.000000, 2.000000, 0.000000),\
                      (1.000000, 0.000000, 2.000000),\
                      (0.988279, 0.000000, 0.000000)
@@ -145,12 +151,15 @@ def 'p88'():
   lattice.find_space_group()
   return lattice
 
-def 'p127'():
-  """ Return instance of a 'p127' lattice. """  
+def p127(scale=1e0):
+  """ ABX3 lattice p127.
+
+      :Param scale: Should be given in angstrom.
+  """
   from lada.crystal._crystal import Lattice
   lattice = Lattice()
   lattice.name   = '127, P 4/m b m'
-  lattice.scale  = 1.0
+  lattice.scale  = scale
   lattice.set_cell = (1.000000, 0.000000, 0.000000),\
                      (0.000000, 1.000000, 0.000000),\
                      (0.000000, 0.000000, 0.762175)
@@ -167,12 +176,15 @@ def 'p127'():
   lattice.find_space_group()
   return lattice
 
-def 'p167'():
-  """ Return instance of a 'p167' lattice. """  
+def p167(scale=1e0):
+  """ ABX3 lattice p167.
+
+      :Param scale: Should be given in angstrom.
+  """
   from lada.crystal._crystal import Lattice
   lattice = Lattice()
   lattice.name   = '167, R -3 c H, hexagonal'
-  lattice.scale  = 1.0
+  lattice.scale  = scale
   lattice.set_cell = (1.000000, -1.000000, 0.000000),\
                      (0.577350, 1.732051, 1.154700),\
                      (1.677416, 0.000000, 3.354831)
@@ -189,12 +201,15 @@ def 'p167'():
   lattice.find_space_group()
   return lattice
 
-def 'p19'():
-  """ Return instance of a 'p19' lattice. """  
+def p19(scale=1e0):
+  """ ABX3 lattice p19.
+
+      :Param scale: Should be given in angstrom.
+  """
   from lada.crystal._crystal import Lattice
   lattice = Lattice()
   lattice.name   = '19, P 21 21 21'
-  lattice.scale  = 1.0
+  lattice.scale  = scale
   lattice.set_cell = (1.000000, 0.000000, 0.000000),\
                      (0.000000, 1.225109, 0.000000),\
                      (0.000000, 0.000000, 2.714192)
@@ -221,12 +236,15 @@ def 'p19'():
   lattice.find_space_group()
   return lattice
 
-def 'p140'():
-  """ Return instance of a 'p140' lattice. """  
+def p140(scale=1e0):
+  """ ABX3 lattice p140.
+
+      :Param scale: Should be given in angstrom.
+  """
   from lada.crystal._crystal import Lattice
   lattice = Lattice()
   lattice.name   = '140, I 4/m c m, tetragonal'
-  lattice.scale  = 1.0
+  lattice.scale  = scale
   lattice.set_cell = (1.000000, 2.000000, 0.000000),\
                      (1.000000, 0.000000, 2.000000),\
                      (1.415653, 0.000000, 0.000000)
@@ -243,12 +261,15 @@ def 'p140'():
   lattice.find_space_group()
   return lattice
 
-def 'p194'():
-  """ Return instance of a 'p194' lattice. """  
+def p194(scale=1e0):
+  """ ABX3 lattice p194.
+
+      :Param scale: Should be given in angstrom.
+  """
   from lada.crystal._crystal import Lattice
   lattice = Lattice()
   lattice.name   = '194, P 63/m m, hexagonal'
-  lattice.scale  = 1.0
+  lattice.scale  = scale
   lattice.set_cell = (1.000000, -0.500000, 0.000000),\
                      (0.000000, 0.866025, 0.000000),\
                      (0.000000, 0.000000, 2.449869)
@@ -285,12 +306,15 @@ def 'p194'():
   lattice.find_space_group()
   return lattice
 
-def 'p38'():
-  """ Return instance of a 'p38' lattice. """  
+def p38(scale=1e0):
+  """ ABX3 lattice p38.
+
+      :Param scale: Should be given in angstrom.
+  """
   from lada.crystal._crystal import Lattice
   lattice = Lattice()
   lattice.name   = '38, A m m 2, orthorhombic'
-  lattice.scale  = 1.0
+  lattice.scale  = scale
   lattice.set_cell = (0.000000, 1.407656, 0.000000),\
                      (1.000000, 0.000000, 2.000000),\
                      (1.002293, 0.000000, 0.000000)
@@ -302,12 +326,15 @@ def 'p38'():
   lattice.find_space_group()
   return lattice
 
-def 'p62'():
-  """ Return instance of a 'p62' lattice. """  
+def p62(scale=1e0):
+  """ ABX3 lattice p62.
+
+      :Param scale: Should be given in angstrom.
+  """
   from lada.crystal._crystal import Lattice
   lattice = Lattice()
   lattice.name   = '62, P b n m'
-  lattice.scale  = 1.0
+  lattice.scale  = scale
   lattice.set_cell = (1.000000, 0.000000, 0.000000),\
                      (0.000000, 1.044561, 0.000000),\
                      (0.000000, 0.000000, 1.443933)
@@ -334,12 +361,15 @@ def 'p62'():
   lattice.find_space_group()
   return lattice
 
-def 'p139'():
-  """ Return instance of a 'p139' lattice. """  
+def p139(scale=1e0):
+  """ ABX3 lattice p139.
+
+      :Param scale: Should be given in angstrom.
+  """
   from lada.crystal._crystal import Lattice
   lattice = Lattice()
   lattice.name   = '139, I 4/m m m'
-  lattice.scale  = 1.0
+  lattice.scale  = scale
   lattice.set_cell = (1.000000, 2.000000, 0.000000),\
                      (1.000000, 0.000000, 2.000000),\
                      (0.994821, 0.000000, 0.000000)
@@ -366,12 +396,15 @@ def 'p139'():
   lattice.find_space_group()
   return lattice
 
-def 'p137'():
-  """ Return instance of a 'p137' lattice. """  
+def p137(scale=1e0):
+  """ ABX3 lattice p137.
+
+      :Param scale: Should be given in angstrom.
+  """
   from lada.crystal._crystal import Lattice
   lattice = Lattice()
   lattice.name   = '137, P 42/n m c Z'
-  lattice.scale  = 1.0
+  lattice.scale  = scale
   lattice.set_cell = (1.000000, 0.000000, 0.000000),\
                      (0.000000, 1.000000, 0.000000),\
                      (0.000000, 0.000000, 1.018276)
@@ -418,12 +451,15 @@ def 'p137'():
   lattice.find_space_group()
   return lattice
 
-def 'p186'():
-  """ Return instance of a 'p186' lattice. """  
+def p186(scale=1e0):
+  """ ABX3 lattice p186.
+
+      :Param scale: Should be given in angstrom.
+  """
   from lada.crystal._crystal import Lattice
   lattice = Lattice()
   lattice.name   = '186, P 63 m c, hexagonal'
-  lattice.scale  = 1.0
+  lattice.scale  = scale
   lattice.set_cell = (1.000000, -0.500000, 0.000000),\
                      (0.000000, 0.866025, 0.000000),\
                      (0.000000, 0.000000, 0.853845)
@@ -440,12 +476,15 @@ def 'p186'():
   lattice.find_space_group()
   return lattice
 
-def 'p160'():
-  """ Return instance of a 'p160' lattice. """  
+def p160(scale=1e0):
+  """ ABX3 lattice p160.
+
+      :Param scale: Should be given in angstrom.
+  """
   from lada.crystal._crystal import Lattice
   lattice = Lattice()
   lattice.name   = '160, R 3 m R, rhombohedral'
-  lattice.scale  = 1.0
+  lattice.scale  = scale
   lattice.set_cell = (4.001000, 0.002618, 0.002618),\
                      (0.000000, 0.999996, 0.002611),\
                      (0.000000, 0.000000, 0.999993)
@@ -457,12 +496,15 @@ def 'p160'():
   lattice.find_space_group()
   return lattice
 
-def 'p2'():
-  """ Return instance of a 'p2' lattice. """  
+def p2(scale=1e0):
+  """ ABX3 lattice p2.
+
+      :Param scale: Should be given in angstrom.
+  """
   from lada.crystal._crystal import Lattice
   lattice = Lattice()
   lattice.name   = '2, P -1, triclinic'
-  lattice.scale  = 1.0
+  lattice.scale  = scale
   lattice.set_cell = (1.000000, -0.575204, -0.060150),\
                      (0.000000, 1.460988, 0.053058),\
                      (0.000000, 0.000000, 0.858552)
@@ -519,12 +561,15 @@ def 'p2'():
   lattice.find_space_group()
   return lattice
 
-def 'p61'():
-  """ Return instance of a 'p61' lattice. """  
+def p61(scale=1e0):
+  """ ABX3 lattice p61.
+
+      :Param scale: Should be given in angstrom.
+  """
   from lada.crystal._crystal import Lattice
   lattice = Lattice()
   lattice.name   = '61, P b c a'
-  lattice.scale  = 1.0
+  lattice.scale  = scale
   lattice.set_cell = (1.000000, 0.000000, 0.000000),\
                      (0.000000, 0.499176, 0.000000),\
                      (0.000000, 0.000000, 0.289936)
@@ -611,12 +656,15 @@ def 'p61'():
   lattice.find_space_group()
   return lattice
 
-def 'p99'():
-  """ Return instance of a 'p99' lattice. """  
+def p99(scale=1e0):
+  """ ABX3 lattice p99.
+
+      :Param scale: Should be given in angstrom.
+  """
   from lada.crystal._crystal import Lattice
   lattice = Lattice()
   lattice.name   = '99, P 4 m m, tetragonal'
-  lattice.scale  = 1.0
+  lattice.scale  = scale
   lattice.set_cell = (1.000000, 0.000000, 0.000000),\
                      (0.000000, 1.000000, 0.000000),\
                      (0.000000, 0.000000, 1.009763)
@@ -628,12 +676,15 @@ def 'p99'():
   lattice.find_space_group()
   return lattice
 
-def 'p221'():
-  """ Return instance of a 'p221' lattice. """  
+def p221(scale=1e0):
+  """ ABX3 lattice p221.
+
+      :Param scale: Should be given in angstrom.
+  """
   from lada.crystal._crystal import Lattice
   lattice = Lattice()
   lattice.name   = '221, P m -3 m, cubic'
-  lattice.scale  = 1.0
+  lattice.scale  = scale
   lattice.set_cell = (1.0, 0.0, 0.0),\
                      (0.0, 1.0, 0.0),\
                      (0.0, 0.0, 1.0)
@@ -645,12 +696,15 @@ def 'p221'():
   lattice.find_space_group()
   return lattice
 
-def 'p74'():
-  """ Return instance of a 'p74' lattice. """  
+def p74(scale=1e0):
+  """ ABX3 lattice p74.
+
+      :Param scale: Should be given in angstrom.
+  """
   from lada.crystal._crystal import Lattice
   lattice = Lattice()
   lattice.name   = '74, I m m a'
-  lattice.scale  = 1.0
+  lattice.scale  = scale
   lattice.set_cell = (1.00000, 2.00000, 0.00000),\
                      (1.40955, 0.00000, 2.81910),\
                      (1.00489, 0.00000, 0.00000)
@@ -667,12 +721,15 @@ def 'p74'():
   lattice.find_space_group()
   return lattice
 
-def 'p123'():
-  """ Return instance of a 'p123' lattice. """  
+def p123(scale=1e0):
+  """ ABX3 lattice p123.
+
+      :Param scale: Should be given in angstrom.
+  """
   from lada.crystal._crystal import Lattice
   lattice = Lattice()
   lattice.name   = '123, P 4/m m m, tetragonal'
-  lattice.scale  = 1.0
+  lattice.scale  = scale
   lattice.set_cell = (1.00000, 0.00000, 0.00000),\
                      (0.00000, 1.00000, 0.00000),\
                      (0.00000, 0.00000, 1.00879)
@@ -684,12 +741,15 @@ def 'p123'():
   lattice.find_space_group()
   return lattice
 
-def 'p20'():
-  """ Return instance of a 'p20' lattice. """  
+def p20(scale=1e0):
+  """ ABX3 lattice p20.
+
+      :Param scale: Should be given in angstrom.
+  """
   from lada.crystal._crystal import Lattice
   lattice = Lattice()
   lattice.name   = '20, C 2 2 21, orthorhombic'
-  lattice.scale  = 1.0
+  lattice.scale  = scale
   lattice.set_cell = (1.000000, 0.000000, 2.000000),\
                      (1.726908, 0.000000, 0.000000),\
                      (0.000000, 4.868867, 0.000000)
@@ -726,12 +786,15 @@ def 'p20'():
   lattice.find_space_group()
   return lattice
 
-def 'p187'():
-  """ Return instance of a 'p187' lattice. """  
+def p187(scale=1e0):
+  """ ABX3 lattice p187.
+
+      :Param scale: Should be given in angstrom.
+  """
   from lada.crystal._crystal import Lattice
   lattice = Lattice()
   lattice.name   = '187, P -6 m 2, hexagonal'
-  lattice.scale  = 1.0
+  lattice.scale  = scale
   lattice.set_cell = (1.000000, -0.500000, 0.000000),\
                      (0.000000, 0.866025, 0.000000),\
                      (0.000000, 0.000000, 0.841807)
@@ -748,12 +811,15 @@ def 'p187'():
   lattice.find_space_group()
   return lattice
 
-def 'p166'():
-  """ Return instance of a 'p166' lattice. """  
+def p166(scale=1e0):
+  """ ABX3 lattice p166.
+
+      :Param scale: Should be given in angstrom.
+  """
   from lada.crystal._crystal import Lattice
   lattice = Lattice()
   lattice.name   = '166, R -3 m H'
-  lattice.scale  = 1.0
+  lattice.scale  = scale
   lattice.set_cell = (1.000000, -1.000000, 0.000000),\
                      (0.577350, 1.732051, 1.154700),\
                      (2.419418, 0.000000, 4.838836)
@@ -775,12 +841,15 @@ def 'p166'():
   lattice.find_space_group()
   return lattice
 
-def 'p15'():
-  """ Return instance of a 'p15' lattice. """  
+def p15(scale=1e0):
+  """ ABX3 lattice p15.
+
+      :Param scale: Should be given in angstrom.
+  """
   from lada.crystal._crystal import Lattice
   lattice = Lattice()
   lattice.name   = '15, C 1 2/c 1'
-  lattice.scale  = 1.0
+  lattice.scale  = scale
   lattice.set_cell = (1.000000, -0.395240, 2.000000),\
                      (0.936038, 0.000000, 0.000000),\
                      (0.000000, 1.007499, 0.000000)
@@ -807,12 +876,15 @@ def 'p15'():
   lattice.find_space_group()
   return lattice
 
-def 'p65'():
-  """ Return instance of a 'p65' lattice. """  
+def p65(scale=1e0):
+  """ ABX3 lattice p65.
+
+      :Param scale: Should be given in angstrom.
+  """
   from lada.crystal._crystal import Lattice
   lattice = Lattice()
   lattice.name   = '65, C m m m'
-  lattice.scale  = 1.0
+  lattice.scale  = scale
   lattice.set_cell = (1.000000, 0.000000, 2.000000),\
                      (1.012071, 0.000000, 0.000000),\
                      (0.000000, 1.424745, 0.000000)
@@ -824,12 +896,15 @@ def 'p65'():
   lattice.find_space_group()
   return lattice
 
-def 'p164'():
-  """ Return instance of a 'p164' lattice. """  
+def p164(scale=1e0):
+  """ ABX3 lattice p164.
+
+      :Param scale: Should be given in angstrom.
+  """
   from lada.crystal._crystal import Lattice
   lattice = Lattice()
   lattice.name   = '164, P -3 m 1, trigonal'
-  lattice.scale  = 1.0
+  lattice.scale  = scale
   lattice.set_cell = (1.000000, -0.500000, 0.000000),\
                      (0.000000, 0.866025, 0.000000),\
                      (0.000000, 0.000000, 2.023150)
@@ -861,12 +936,15 @@ def 'p164'():
   lattice.find_space_group()
   return lattice
 
-def 'p204'():
-  """ Return instance of a 'p204' lattice. """  
+def p204(scale=1e0):
+  """ ABX3 lattice p204.
+
+      :Param scale: Should be given in angstrom.
+  """
   from lada.crystal._crystal import Lattice
   lattice = Lattice()
   lattice.name   = '204, I m -3'
-  lattice.scale  = 1.0
+  lattice.scale  = scale
   lattice.set_cell = (1.0, 2.0, 0.0),\
                      (1.0, 0.0, 2.0),\
                      (1.0, 0.0, 0.0)
@@ -893,12 +971,15 @@ def 'p204'():
   lattice.find_space_group()
   return lattice
 
-def 'p14'():
-  """ Return instance of a 'p14' lattice. """  
+def p14(scale=1e0):
+  """ ABX3 lattice p14.
+
+      :Param scale: Should be given in angstrom.
+  """
   from lada.crystal._crystal import Lattice
   lattice = Lattice()
   lattice.name   = '14, P 1 21/c 1, monoclinic'
-  lattice.scale  = 1.0
+  lattice.scale  = scale
   lattice.set_cell = (1.000000, 0.000000, -0.167935),\
                      (0.000000, 0.930556, 0.000000),\
                      (0.000000, 0.000000, 0.510176)
@@ -945,12 +1026,15 @@ def 'p14'():
   lattice.find_space_group()
   return lattice
 
-def 'p11'():
-  """ Return instance of a 'p11' lattice. """  
+def p11(scale=1e0):
+  """ ABX3 lattice p11.
+
+      :Param scale: Should be given in angstrom.
+  """
   from lada.crystal._crystal import Lattice
   lattice = Lattice()
   lattice.name   = '11, P 1 21/m 1, monoclinic'
-  lattice.scale  = 1.0
+  lattice.scale  = scale
   lattice.set_cell = (1.000000, 0.000000, -0.200038),\
                      (0.000000, 1.123695, 0.000000),\
                      (0.000000, 0.000000, 1.817741)
@@ -977,12 +1061,15 @@ def 'p11'():
   lattice.find_space_group()
   return lattice
 
-def 'p148'():
-  """ Return instance of a 'p148' lattice. """  
+def p148(scale=1e0):
+  """ ABX3 lattice p148.
+
+      :Param scale: Should be given in angstrom.
+  """
   from lada.crystal._crystal import Lattice
   lattice = Lattice()
   lattice.name   = '148, R -3 R, rhombohedral'
-  lattice.scale  = 1.0
+  lattice.scale  = scale
   lattice.set_cell = (1.000000, 0.572146, 0.572146),\
                      (0.000000, 0.820152, 0.298475),\
                      (0.000000, 0.000000, 0.763912)
