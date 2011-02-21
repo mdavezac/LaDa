@@ -149,10 +149,10 @@ Module Escan
          open(unit=inputunit,file=escan_input%ecp%filepot,form='unformatted',status='old')
            rewind(inputunit)
            read(inputunit) escan_input%mesh, ierr ! number of nodes when written
-           if( ierr .ne. nnodes ) then
-             write (*,*) ierr, nnodes 
-             stop "Number of nodes used to write potential different from when reading it." 
-           endif
+!          if( ierr .ne. nnodes ) then
+!            write (*,*) ierr, nnodes 
+!            stop "Number of nodes used to write potential different from when reading it." 
+!          endif
            read(inputunit) lattice%rcell
          close(inputunit)
       end if
