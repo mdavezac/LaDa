@@ -1,14 +1,15 @@
 import pickle
-import matplotlib.pyplot as plt 
+# import matplotlib.pyplot as plt 
 
 class Projections(object):
   def __init__(self): object.__init__(self)
-  def __call__(self, outdir, **kwargs): 
+  def __call__(self, outdir, comm=None, **kwargs): 
     from os.path import join
     from lada.escan import KExtract
-    extract = KExtract(outdir)
+    extract = KExtract(outdir, comm=comm)
     for value in extract:
       filename = join(value.directory, "PROJECT_BS")
+      print "where: ", value.directory, filename
       a = self._project(value, filename, **kwargs)
 
   def _project(self, extract, filename = "projections", alpha = 1e0, **kwargs):
@@ -98,6 +99,7 @@ def plot_bands(extractor, offset = 0.05, labels = None, **kwargs):
   """ Tries and plots band-structure. """
   from numpy import dot, array, min, max, sqrt
   from numpy.linalg import norm
+  from matplotlib import pyplot as plt, rcParams
 
   old = extractor.unreduce
   extractor.unreduce = True
@@ -108,6 +110,11 @@ def plot_bands(extractor, offset = 0.05, labels = None, **kwargs):
   awidth    = kwargs.pop('awidth', 5.)
   type      = kwargs.pop('type', 'Si')
   alpha     = kwargs.pop('alpha', 1.)
+  facecolor = kwargs.pop('facecolor', bandcolor)
+  linewidth = kwargs.pop('linewdith', rcParams['lines.linewidth'])
+  bandwidth = kwargs.pop('bandwidth', linewidth)
+  c = float(len([0 for atom in extractor.structure.atoms if atom.type==type]))
+  c /= float(len(extractor.structure.atoms))
 
   # first finds breaking point.
   kpoints = extractor.kpoints
@@ -147,18 +154,30 @@ def plot_bands(extractor, offset = 0.05, labels = None, **kwargs):
     if add_offset:
       x[first:] += offset
       lines.append(x[first])
+  fermi = 0.5 * (extractor.vbm + extractor.cbm)
+  pldict = dict(kwargs)
+  pldict['color'] = bandcolor
+  pldict['facecolor'] = facecolor
+  pldict['linewidth'] = bandwidth
   for first, last in  zip(lims[:-1], lims[1:]):
     for band, si, ge in zip(y[first:last].T, si_projs[first:last].T.real, ge_projs[first:last].T.real):
-      width = (si if type == "Si" else ge)  / sqrt(si * si + ge * ge)
-      plt.fill_between(x, band + awidth * width, band - awidth * width,
-                       color=bandcolor, **kwargs)
+      width = (si if type == "Si" else ge)  / sqrt(si * si + ge * ge) / c
+      if float(band[0]) < float(fermi):
+        plt.fill_between(x[first:last], band, band - awidth * width, **pldict)
+  for first, last in  zip(lims[:-1], lims[1:]):
+    for band, si, ge in zip(y[first:last].T[::-1], si_projs[first:last].T.real[::-1], ge_projs[first:last].T.real[::-1]):
+      width = (si if type == "Si" else ge)  / sqrt(si * si + ge * ge) / c
+      if float(band[0]) > float(fermi):
+        plt.fill_between(x[first:last], band + awidth * width, band, **pldict)
 #   plt.plot(x[first:last], y[first:last], color=bandcolor, **kwargs)
-  for l in lines: plt.axvline(l, color='black', **kwargs)
+  for l in lines: plt.axvline(l, color='black', linewidth=rcParams['axes.linewidth'], **kwargs)
 
   # then plot vbm and cbm.
-  kwargs.pop('linestyle', None) 
-  plt.axhline(extractor.vbm, color=edgecolor, linestyle=edgestyle, **kwargs)
-  plt.axhline(extractor.cbm, color=edgecolor, linestyle=edgestyle, **kwargs)
+  kwargs['linestyle'] = linestyle
+  kwargs['color'] = edgecolor
+  kwargs['linewidth'] = rcParams['axes.linewidth']
+  plt.axhline(extractor.vbm, **kwargs)
+  plt.axhline(extractor.cbm, **kwargs)
 
 
 
@@ -179,6 +198,7 @@ def plot_bands(extractor, offset = 0.05, labels = None, **kwargs):
   extractor.unreduce = old
 
 # compute_bs()
+from boost.mpi import world
 # p = Projections()
-# p("results/projections")
+# p(".")
 # plot_bands(extract_bs, awidth=1)
