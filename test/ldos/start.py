@@ -20,7 +20,6 @@ def create_start(path, input='input.py', nall = 3, nrand = 5, nmax=100):
   from lada.crystal.binary import zinc_blende
   from lada.jobs import JobDict
   from lada.escan import read_input, exec_input, ReducedKDensity
-
   input = read_input(input)
   kescan = exec_input(repr(input.escan).replace('Escan', 'KEscan')).functional
 
