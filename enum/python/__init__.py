@@ -153,6 +153,13 @@ class Enum(Lattice):
                 specialized_database[v] = False
           if specialized_database[x]: yield x, smith, supercell, flavorbase
 
+  def as_structure(self, x, smith, supercell, flavorbase):
+    """ Creates structure from items yielded by xn. """
+    from numpy import dot
+    structure = self.to_structure(dot(self.cell, supercell.hermite))
+    as_structure(structure, x, flavorbase)
+    return structure
+
   def structures(self, *args, **kwargs):
     """ Yields inequivalent structures.
     
