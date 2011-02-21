@@ -1,4 +1,3 @@
-
 def fftmesh(cell, cutoff=20e0):
   """ FFT real-space mesh used by escan. """
   from numpy.linalg import norm
