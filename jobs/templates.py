@@ -85,7 +85,7 @@ def default_slurm( file, walltime = "05:45:00", mppwidth = 8, ppernode=8, accoun
              "#SBATCH --time={0}\n"\
              "#SBATCH -N {1}\n"\
              "#SBATCH -n {2}\n".format(walltime, nnodes, mppwidth, account)) 
-  if partition != None: file.write("#SBATCH -p {0}".format(partition))
+  if partition != None: file.write("#SBATCH -p {0}\n".format(partition))
   pbsdir = dirname(file.name)
   if name != None:
     file.write("#SBATCH -J {1} \n"\

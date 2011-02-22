@@ -149,10 +149,10 @@ Module Escan
          open(unit=inputunit,file=escan_input%ecp%filepot,form='unformatted',status='old')
            rewind(inputunit)
            read(inputunit) escan_input%mesh, ierr ! number of nodes when written
-           if( ierr .ne. nnodes ) then
-             write (*,*) ierr, nnodes 
-             stop "Number of nodes used to write potential different from when reading it." 
-           endif
+!          if( ierr .ne. nnodes ) then
+!            write (*,*) ierr, nnodes 
+!            stop "Number of nodes used to write potential different from when reading it." 
+!          endif
            read(inputunit) lattice%rcell
          close(inputunit)
       end if
@@ -223,7 +223,9 @@ Module Escan
 
       if( params%PotentialType .eq. 3 ) with_spinorbit = .true.
 
+      write(*,*) 'fft allocate', n1, n2, n3, nnodes
       call fft_allocate(n1,n2,n3,nnodes)
+      write(*,*) 'load allocate', ncolx, nnodes, mg_nx
       call load_allocate(ncolx,nnodes,mg_nx)
       allocate(gkk_n(mg_nx))
       allocate(wg_n(mg_nx))
@@ -237,6 +239,7 @@ Module Escan
                           params%Gsmooth, params%KineticScaling, &
                           params%kpoint(1), params%kpoint(2), params%kpoint(3) )
       endif
+      write(*,*) 'prepare 2'
 
       ! some mpi distribution checking.
       if(ngtotnod(inode)>mg_nx) then
@@ -245,13 +248,17 @@ Module Escan
          write(6,*)'Allocated no. = ',mg_nx
          call abort()
       end if
+      write(*,*) 'prepare 3'
 
       ! Set up index matrices for fft routinines 
       call fftprep_comp(n1,n2,n3)
+      write(*,*) 'prepare 4'
 
       deallocate(gkk_n)
+      write(*,*) 'prepare 5'
       if(      params%is_gamma .eqv. .false. &
           .or. params%with_spinorbit .eqv. .false. ) deallocate(inv_n)
+      write(*,*) 'prepare 6'
 
     end subroutine ! prepare_fft_and_allocate_arrays
 

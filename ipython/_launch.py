@@ -49,7 +49,7 @@ def launch_scattered(self, event):
   # gets queue (aka partition in slurm), if any.
   kwargs = {}
   if event.__dict__.get(queue, None) != None: kwargs[queue] = getattr(event, queue)
-  if which and event.debug: kwargs["partition"] = True
+  if which and event.debug: kwargs["partition"] = "inter"
 
   # creates list of dictionaries.
   pickles = set(event.pickle) - set([""])
