@@ -14,6 +14,11 @@ def launch_scattered(self, event):
   ip = self.api
   ip.user_ns.pop("_lada_error", None)
 
+  # where are we? important for default template.
+  which = "SNLCLUSTER" in environ
+  if which: which = environ["SNLCLUSTER"] in ["redrock", "redmesa"]
+  queue = "--account" if which else "--queue"
+
   # creates mppalloc function.
   try: mppalloc = ip.ev(event.nbprocs)
   except Exception as e: 
@@ -43,7 +48,7 @@ def launch_scattered(self, event):
 
   # gets queue (aka partition in slurm), if any.
   kwargs = {}
-  if event.__dict__.get('queue', None) != None: kwargs['queue'] = event.queue
+  if event.__dict__.get(queue, None) != None: kwargs[queue] = getattr(event, queue)
 
   # creates list of dictionaries.
   pickles = set(event.pickle) - set([""])
@@ -67,9 +72,6 @@ def launch_scattered(self, event):
       return
     jobdicts = [(current, path)]
 
-  # where are we? important for default template.
-  which = "SNLCLUSTER" in environ
-  if which: which = environ["SNLCLUSTER"] in ["redrock", "redmesa"]
   template = default_slurm if which else default_pbs
   # gets python script to launch in pbs.
   pyscript = jobs.__file__.replace(splitpath(jobs.__file__)[1], "runone.py")
