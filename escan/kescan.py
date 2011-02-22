@@ -207,13 +207,16 @@ class KEscan(Escan):
       if _in_call == True: # single calculation.
         return Escan.__call__(self, structure, outdir, comm, **kwargs)
 
+      from inspect import getargspec
       from copy import deepcopy
       from os.path import join
       from ..jobs import JobDict, Bleeder
 
       this = deepcopy(self)
       do_relax_kpoint = kwargs.pop('do_relax_kpoint', kwargs.pop('do_relax_kpoints', None))
+      arglist = getargspec(Escan.__call__)[0]
       for key, value in kwargs.iteritems():
+        if key in arglist: continue
         assert hasattr(this, key), TypeError("Unexpected keyword argument {0}.".format(key))
         setattr(this, key, value)
       if do_relax_kpoint != None: this.do_relax_kpoint = do_relax_kpoint
