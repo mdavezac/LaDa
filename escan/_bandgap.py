@@ -136,6 +136,21 @@ class ExtractAE(_ExtractE):
                     * dme.units * dme.units
     return (result * units).simplified, nstates
 
+  def dipole(self, degeneracy=1e-3, attenuate=False):
+    """ Computes oscillator strength between vbm and cbm. """
+    from numpy import dot
+    from numpy.linalg import det
+    result, nstates = None, 0
+    for wfnA in self.gwfns:
+      if abs(wfnA.eigenvalue - self.cbm) > degeneracy: continue
+      for wfnB in self.gwfns:
+        if abs(wfnB.eigenvalue - self.vbm) > degeneracy: continue
+        nstates += 1
+        dme = wfnA.braket(self.gvectors, wfnB, attenuate=attenuate) 
+        if result == None: result  = dot(dme, dme.conjugate()).real 
+        else:              result += dot(dme, dme.conjugate()).real
+    return result.simplified, nstates
+
   def __copy__(self):
     """ Returns a shallow copy of this object. """
     result = self.__class__(self)
@@ -242,6 +257,24 @@ class ExtractRefs(object):
         if result == None: result = dme / (wfnA.eigenvalue - wfnB.eigenvalue) 
         else: result += dme / (wfnA.eigenvalue - wfnB.eigenvalue) 
     return (units * result).simplified, nstates
+  
+  def oscillator_strength(self, degeneracy=1e-3, attenuate=False):
+    """ Computes oscillator strength between vbm and cbm. """
+    from numpy import all, abs, dot
+    from numpy.linalg import det
+
+    assert self.extract_vbm.gvectors.shape == self.extract_cbm.gvectors.shape
+    assert all( abs(self.extract_vbm.gvectors - self.extract_cbm.gvectors) < 1e-12 )
+    result, nstates = None, 0
+    for wfnA in self.extract_cbm.gwfns:
+      if abs(wfnA.eigenvalue - self.cbm) > degeneracy: continue
+      for wfnB in self.extract_vbm.gwfns:
+        if abs(wfnB.eigenvalue - self.vbm) > degeneracy: continue
+        nstates += 1
+        dme = wfnA.braket(self.extract_vbm.gvectors, wfnB, attenuate=attenuate)
+        if result == None: result  = dot(dme, dme.conjugate()).real 
+        else:              result += dot(dme, dme.conjugate()).real 
+    return result.simplified, nstates
 
   @property
   def success(self):
