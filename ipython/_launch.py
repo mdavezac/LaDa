@@ -17,7 +17,7 @@ def launch_scattered(self, event):
   # where are we? important for default template.
   which = "SNLCLUSTER" in environ
   if which: which = environ["SNLCLUSTER"] in ["redrock", "redmesa"]
-  queue = "--account" if which else "--queue"
+  queue = "account" if which else "queue"
 
   # creates mppalloc function.
   try: mppalloc = ip.ev(event.nbprocs)
