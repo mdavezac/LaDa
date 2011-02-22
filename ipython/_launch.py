@@ -49,6 +49,7 @@ def launch_scattered(self, event):
   # gets queue (aka partition in slurm), if any.
   kwargs = {}
   if event.__dict__.get(queue, None) != None: kwargs[queue] = getattr(event, queue)
+  if which and event.debug: kwargs["partition"] = True
 
   # creates list of dictionaries.
   pickles = set(event.pickle) - set([""])
@@ -172,6 +173,8 @@ def launch(self, event):
     scattered.add_argument( '--account', dest="account", choices=lada_queues,
                             default=(lada_queues[0] if len(lada_queues) > 0 else 'BES000'),
                             help="Account on which to launch job. Defaults to system default." )
+    scattered.add_argument( '--debug', dest="debug", action="store_true", 
+                            help="launches in interactive queue if present." )
   elif len(lada_queues) != 0: 
     scattered.add_argument( '--queue', dest="queue", choices=lada_queues, default=lada_queues[0],
                             help="Queue on which to launch job. Defaults to system default." )
@@ -215,6 +218,7 @@ def launch_completer(self, info):
       return lada_queues
     result = ['--force', '--walltime', '--nbprocs', '--help']
     if len(lada_queues) > 0: result.append(queue) 
+    if which: result.append("--debug")
     result = list(set(result) - set(data))
     result.extend( _glob_job_pickles(ip, info.symbol) )
     return result
