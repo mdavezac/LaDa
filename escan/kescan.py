@@ -335,3 +335,11 @@ class KEscan(Escan):
   do_relax_kpoints = do_relax_kpoint
   """ Alias for `KEscan.do_relax_kpoint`. """
 
+  def to_escan(self):
+    """ Converts to an `Escan` functional. """
+    from .functional import Escan
+    result = Escan()
+    result.__dict__.update(self.__dict__)
+    result.__dict__.pop('kpoints')
+    return result
+
