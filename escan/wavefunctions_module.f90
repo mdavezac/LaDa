@@ -16,6 +16,7 @@ module Wfns_module
   
       character(len=*), intent(in) :: filename            ! filename of escan input
       integer, intent(in) :: comm                      ! mpi communicator
+      call iaga_set_mpi(comm)
       ! Read parameters from file and sets common blocks
       call read_escaninput(filename, params, comm)
       call read_potentialinput(params, lattice)

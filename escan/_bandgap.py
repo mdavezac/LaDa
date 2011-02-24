@@ -14,13 +14,15 @@ def extract(outdir=".", comm = None):
   """
   from os.path import exists, join
   from ..vff import Extract as VffExtract
-  from boost.mpi import broadcast
 
-  is_root = True if comm == None else comm.rank == 0
+  is_mpi = False if comm == None else comm.rank > 1
+  is_root = comm.rank == 0 if is_mpi else True
 
   paths = join(outdir, "AE"), join(outdir, "VBM"), join(outdir, "CBM")
   if is_root: exists_paths = [exists(p) for p in paths]
-  if comm != None:
+  if is_mpi:
+    assert lada_with_mpi, RuntimeError("Lada being used without mpi.")
+    from boost.mpi import broadcast
     exists_paths = broadcast(comm, exists_paths if is_root else None, root=0)
   if exists_paths[0]: 
     result = ExtractAE( _ExtractE(paths[0], comm = comm) )
@@ -138,18 +140,15 @@ class ExtractAE(_ExtractE):
 
   def dipole(self, degeneracy=1e-3, attenuate=False):
     """ Computes oscillator strength between vbm and cbm. """
-    from numpy import dot
+    from numpy import array
     from numpy.linalg import det
-    result, nstates = None, 0
+    result = []
     for wfnA in self.gwfns:
       if abs(wfnA.eigenvalue - self.cbm) > degeneracy: continue
       for wfnB in self.gwfns:
         if abs(wfnB.eigenvalue - self.vbm) > degeneracy: continue
-        nstates += 1
-        dme = wfnA.braket(self.gvectors, wfnB, attenuate=attenuate) 
-        if result == None: result  = dot(dme, dme.conjugate()).real 
-        else:              result += dot(dme, dme.conjugate()).real
-    return result.simplified, nstates
+        result.append((wfnA.eigenvalue, wfnB.eigenvalue, wfnA.braket(self.gvectors, wfnB, attenuate=attenuate)))
+    return result
 
   def __copy__(self):
     """ Returns a shallow copy of this object. """

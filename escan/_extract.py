@@ -350,12 +350,15 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
         - one-dimensional array of real coefficients to smooth higher energy G-vectors.
         - one-dimensional array of integer indices to map G-vectors to -G.
     """
-    from os import remove
-    from os.path import exists, join
+    # check for mpi first
+    from .. import lada_with_mpi
+    assert lada_with_mpi, RuntimeError("Lada loaded without mpi. Cannot read wavefunctions.")
+    # then check for function.
+    from os.path import exists
     from numpy import sqrt
     from numpy.linalg import norm, det
-    from boost.mpi import world
     from quantities import angstrom, pi
+    from boost.mpi import world
     from ..opt import redirect
     from ..opt.changedir import Changedir
     from ..physics import a0, reduced_reciprocal_au
@@ -363,20 +366,32 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     from . import soH
 
     comm = self.comm if self.comm != None else world
+    is_root = comm.rank == 0 
     assert self.success
     assert self.nnodes == comm.size, \
            RuntimeError( "Must read wavefunctions with as many nodes as "\
                          "they were written to disk.")
+    comm.barrier()
     with Changedir(self.directory, comm=self.comm) as directory:
-      path = join(self.directory, self.functional.WAVECAR)
-      assert exists(path), IOError("{0} does not exist.".format(path))
+      if is_root: 
+        assert exists(self.functional.WAVECAR),\
+               IOError("{0} does not exist.".format(self.functional.WAVECAR))
+        if exists(self.functional._INCAR):
+          from shutil import copyfile
+          copyfile(self.functional._INCAR, ".lada_wavefunction_save_incar")
       self.functional._write_incar(self.comm, self.structure)
       if self.functional.potential == soH and norm(self.functional.kpoint):
         nbstates = self.functional.nbstates
       else: nbstates = self.functional.nbstates / 2
       with redirect(fout="") as streams:
         result = read_wavefunctions(self.functional, range(nbstates), comm, self.is_krammer)
-      remove(self.functional._INCAR)
+      if is_root and exists(".lada_wavefunction_save_incar"):
+        from shutil import move
+        move(".lada_wavefunction_save_incar", self.functional._INCAR)
+      elif is_root:
+        from os import remove
+        remove(self.functional._INCAR)
+    comm.barrier()
 
     cell = self.structure.cell * self.structure.scale * angstrom
     normalization = det(cell.rescale(a0)) 
