@@ -107,7 +107,7 @@ class Extract(object):
     from os.path import join, exists
     from pickle import load
 
-    is_mpi = self.comm != None
+    is_mpi = False if self.comm == None else self.comm.size > 1
     is_root = True if not is_mpi else self.comm.rank == 0
 
     if self.current_age == None: return None

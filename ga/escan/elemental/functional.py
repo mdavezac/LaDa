@@ -242,7 +242,7 @@ class Darwin:
 
   def print_nb_evals(self):
     """ Prints current number of evaluations. """
-    is_mpi = self.comm != None
+    is_mpi = False if self.comm == None else self.comm.size > 1
     do_print = 0 if not is_mpi else self.comm.do_print 
     if self.color != None:
       from boost.mpi import all_reduce

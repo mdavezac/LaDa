@@ -430,7 +430,7 @@ class Vff(object):
     if lada_with_mpi and comm == None: 
       from boost.mpi import world
       comm = world
-    is_mpi  = False if comm == None else comm.size > 1
+    is_mpi = False if comm == None else comm.size > 1
     is_root = comm.rank == 0 if is_mpi else True
     # bull shit. 
     assert len(self.lattice.sites) == 2, RuntimeError("Lattice is not zinc-blend")

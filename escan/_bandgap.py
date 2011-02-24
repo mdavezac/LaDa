@@ -15,12 +15,13 @@ def extract(outdir=".", comm = None):
   from os.path import exists, join
   from ..vff import Extract as VffExtract
 
-  is_mpi = False if comm == None else comm.rank > 1
+  is_mpi = False if comm == None else comm.size > 1
   is_root = comm.rank == 0 if is_mpi else True
 
   paths = join(outdir, "AE"), join(outdir, "VBM"), join(outdir, "CBM")
   if is_root: exists_paths = [exists(p) for p in paths]
   if is_mpi:
+    from .. import lada_with_mpi
     assert lada_with_mpi, RuntimeError("Lada being used without mpi.")
     from boost.mpi import broadcast
     exists_paths = broadcast(comm, exists_paths if is_root else None, root=0)

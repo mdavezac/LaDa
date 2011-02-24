@@ -93,7 +93,7 @@ class Bandgap(object):
     references = kwargs.pop("references", self.references)
     converter  = kwargs.pop( "converter",  self.converter)
     escan      = kwargs.pop(     "escan",      self.escan)
-    is_mpi = comm != None
+    is_mpi = False if comm == None else comm.rank > 1
     is_root = True if not is_mpi else comm.rank == 0
     if outdir == None: outdir = self.outdir
     elif outdir[0] != '/': outdir = join(self.outdir, outdir)

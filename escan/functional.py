@@ -495,7 +495,7 @@ class Escan(object):
     # Creates temporary input file and creates functional
     kpoint = (0,0,0,0,0) if norm(self.kpoint) < 1e-12\
              else self._get_kpoint(structure, comm, norun)
-    is_mpi = False if comm == None else comm.rank > 1
+    is_mpi = False if comm == None else comm.size > 1
     is_root = comm.rank == 0 if is_mpi else True
     if is_root:
       with open(self._INCAR, "w") as file:
@@ -543,7 +543,7 @@ class Escan(object):
     from os.path import basename
     from ..opt import redirect
 
-    is_mpi  = False if comm == None else comm.size > 1
+    is_mpi = False if comm == None else comm.size > 1
     self._write_incar(comm, structure, norun)
     if norun == False:
       with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 
@@ -563,7 +563,7 @@ class Escan(object):
     if norun == True: relaxed = structure.cell.copy()
     else:
       relaxed = zeros((3,3), dtype="float64")
-      is_mpi  = comm != None
+      is_mpi = False if comm == None else comm.size > 1
       is_root = comm.rank == 0 if is_mpi else True
       if is_root:
         with open(self._POSCAR, "r") as file:
