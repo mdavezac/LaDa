@@ -89,13 +89,16 @@ else:
     """ Tries and plots band-structure. """
     from numpy import dot, array, min, max
     from numpy.linalg import norm
+    from matplotlib import rcParams
 
     old = extractor.unreduce
     extractor.unreduce = True
 
     bandcolor = kwargs.pop('bandcolor', 'blue')
     edgecolor = kwargs.pop('edgecolor', 'red')
-    edgestyle = kwargs.pop('edgestyle', '--')
+    edgestyle = kwargs.pop('edgestyle', '-')
+    linewidth = kwargs.pop('linewidth', rcParams['lines.linewidth'])
+    bandwidth = kwargs.pop('bandwidth', linewidth)
 
     # first finds breaking point.
     kpoints = extractor.kpoints
@@ -131,13 +134,14 @@ else:
         x[first:] += offset
         lines.append(x[first])
     for first, last in  zip(lims[:-1], lims[1:]):
-      plt.plot(x[first:last], y[first:last], color=bandcolor, **kwargs)
-    for l in lines: plt.axvline(l, color='black', **kwargs)
+      plt.plot(x[first:last], y[first:last], color=bandcolor, linewidth=bandwidth,**kwargs)
 
     # then plot vbm and cbm.
-    kwargs.pop('linestyle', None) 
-    plt.axhline(extractor.vbm, color=edgecolor, linestyle=edgestyle, **kwargs)
-    plt.axhline(extractor.cbm, color=edgecolor, linestyle=edgestyle, **kwargs)
+    kwargs['linewidth'] = rcParams['axes.linewidth']
+    for l in lines: plt.axvline(l, color='black', **kwargs)
+    kwargs['linestyle'] = edgestyle
+    plt.axhline(extractor.vbm, color=edgecolor, **kwargs)
+    plt.axhline(extractor.cbm, color=edgecolor, **kwargs)
 
 
 
@@ -154,6 +158,9 @@ else:
              ValueError("Could not find as many breaking points as were provided labels.")
       axes.xaxis.set_ticks(lines[:len(labels)])
       axes.xaxis.set_ticklabels(labels)
+      for i in axes.xaxis.get_major_ticks():
+        i.tick1On=False
+        i.tick2On=False
 
     extractor.unreduce = old
 
@@ -165,7 +172,7 @@ else:
     from pickle import load, dump
 
     edgecolor = kwargs.pop('edgecolor', 'red')
-    edgestyle = kwargs.pop('edgestyle', '--')
+    edgestyle = kwargs.pop('edgestyle', '-')
 
     # first finds breaking point.
     istr = extractor.input_structure
