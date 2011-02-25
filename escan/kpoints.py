@@ -165,13 +165,10 @@ class KDensity(KGrid):
     cell = reduction(output.cell, recip=True) * output.scale
     density = self.density
     if hasattr(density, 'rescale'): density.rescale(1e0/Angstrom)
-    self.grid = [0,0,0]
 
-    for i in range(3):
-      self.grid[i] = norm(cell[:,i]) / self.density
-      self.grid[i] = int(max(1, floor(grid[i]+0.5)))
-
-    return KGrid._mnk(self, input, output)
+    self.grid = [int(max(1, floor(norm(a) / self.density+0.5))) for a in cell.T]
+    result = KGrid._mnk(self, input, output)
+    return result
  
   def __repr__(self):
     """ Represents this object. """
@@ -179,8 +176,8 @@ class KDensity(KGrid):
     is_zero = all( abs(array(self.offset)-array([0,0,0])) < 1e-12 )
     if is_zero:
       return '{0.__class__.__name__}({0.density}, relax={0.relax})'.format(self, repr(self.cell))
-    return '{0.__class__.__name__}(({1}, ({2[0]},{2[0]},{2[0]}), relax={0.relax})'\
-           .format(self, repr(self.cell), self.offset)
+    return '{0.__class__.__name__}({1}, ({2[0]},{2[0]},{2[0]}), relax={0.relax})'\
+           .format(self, self.density, self.offset)
 
 def _reduced_grids_factory(name, base):
   class ReducedKGrid(base): 

@@ -3,40 +3,21 @@
  
     This launch strategy will interactively compute each lada job. This will
     block the interpreter.
-""""
+""" 
 __docformat__ = "restructuredtext en"
 
-def interactive(self, event):
-  """ Launch scattered jobs: one job = one pbs script. """
+def launch(self, event, jobdicts):
+  """ Launch jobs interactively.
+
+      This call will block until each job is finished in turn.
+  """
   import re
-  from os.path import join
-  from ..opt.changedir import Changedir
-  from .. import lada_with_mpi
+  from os.path import join, dirname
+  from ... import lada_with_mpi
+  from ...opt.changedir import Changedir
   
   ip = self.api
   ip.user_ns.pop("_lada_error", None)
-
-  # creates list of dictionaries.
-  pickles = set(event.pickle) - set([""])
-  if len(pickles) > 0: 
-    jobdicts = []
-    for p in pickles:
-      try: d = jobs.load(path=p)
-      except: 
-        print "JobDict could not be loaded form {0}.".format(p)
-        return
-      jobdicts.append((d, p))
-  else: # current job dictionary.
-    current, path = _get_current_job_params(self, 2)
-    if current == None: return
-    if path == None: return
-    # saving pickle
-    saveto(self, path)
-    if "_lada_error" in ip.user_ns:
-      if ip.user_ns["_lada_error"] == "User said no save.":
-        print "Job-dictionary not saved = jobs not launched."
-      return
-    jobdicts = [(current, path)]
 
   kwargs = dict(event.kwargs) if event.kwargs != None else dict()
   if lada_with_mpi: 
@@ -56,7 +37,7 @@ def interactive(self, event):
           print "Job {0} completed successfully. It will not be relaunched.".format(name)
           continue
       print "Working on {0} in {1}.".format(name, path)
-      kwargs["outdir"] = join(path, name)
+      kwargs["outdir"] = join(dirname(path), name)
       job.compute(**kwargs)
 
 
@@ -65,19 +46,22 @@ def completer(self, info, data, computer):
   from .._explore import _glob_job_pickles
   if    (len(info.symbol) == 0 and data[-1] == "--kwargs") \
      or (len(info.symbol) > 0  and data[-2] == "--kwargs"):
-    return [u for u in ip.user_ns if u[0] != '_' and isinstance(ip.user_ns[u], dict)]
-  result = ['--kwargs', '--help']
+    return [u for u in iself.api.user_ns if u[0] != '_' and isinstance(self.api.user_ns[u], dict)]
+  result = ['--force', '--kwargs', '--help']
+  result.extend( _glob_job_pickles(self.api, info.symbol) )
   result = list(set(result) - set(data))
-  result.extend( _glob_job_pickles(ip, info.symbol) )
   return result
 
 def parser(self, subparsers, which, opalls):
   """ Adds subparser for interactive. """ 
   result = subparsers.add_parser( 'interactive',
-                                  description='Launches calculations interactively.',\
+                                  description="Launches calculations interactively.\n"\
+                                              "Each job will launched one after the other using "\
+                                              "all available processors (unless lada_with_mpi "\
+                                              "is false). This call is *blocking*.",
                                   parents=[opalls] )
   result.add_argument( '--kwargs', type=dict, default={}, dest="kwargs",
-                       help="Dictionary which contains arguments for the functionals."\
+                       help="Dictionary which contains arguments for the functionals. "\
                             "\"outdir\" and \"comm\" are added automatically. "\
                             "The functional must accept these arguments." )
   result.add_argument( '--force', action="store_true", dest="force", \

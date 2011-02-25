@@ -42,9 +42,9 @@ def create_start(path, input='input.py', nall = 3, nrand = 5, nmax=100):
 
     jobdict = jobs / structure.name
     jobdict.jobparams['structure'] = structure.copy()
-    jobdict.jobparams['fftmesh'] = fftmesh(structure.cell)
+    jobdict.jobparams['fft_mesh'] = fftmesh(structure.cell)
     jobdict.functional = kescan
-    jobdict.functional.kpoints = ReducedKDensity(1e0/20e0/sqrt(2e0), 0.5)
+    jobdict.functional.kpoints = ReducedKDensity(structure.scale/2e0/sqrt(2e0), (0.5, 0.5, 0.5))
     jobdict.functional.reference = None
 
   ip = get_ipy()

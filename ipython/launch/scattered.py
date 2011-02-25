@@ -4,18 +4,17 @@
     This launch strategy will send one pbs/slurm job per lada job.
 
     >>> %launch scattered --walltime 24:00:00 
-""""
+"""
 __docformat__ = "restructuredtext en"
 
-def launch(self, event):
+def launch(self, event, jobdicts):
   """ Launch scattered jobs: one job = one pbs script. """
   import re
   from os import environ
   from os.path import split as splitpath, join, exists, abspath, dirname
-  from ..opt.changedir import Changedir
-  from ..jobs.templates import default_pbs, default_slurm
-  from .. import jobs
-  from . import _get_current_job_params, saveto
+  from ...opt.changedir import Changedir
+  from ...jobs.templates import default_pbs, default_slurm
+  from .. import saveto
   ip = self.api
   ip.user_ns.pop("_lada_error", None)
 
@@ -23,6 +22,7 @@ def launch(self, event):
   which = "SNLCLUSTER" in environ
   if which: which = environ["SNLCLUSTER"] in ["redrock", "redmesa"]
   queue = "account" if which else "queue"
+  template = default_slurm if which else default_pbs
 
   # creates mppalloc function.
   try: mppalloc = ip.ev(event.nbprocs)
@@ -56,29 +56,6 @@ def launch(self, event):
   if event.__dict__.get(queue, None) != None: kwargs[queue] = getattr(event, queue)
   if which and event.debug: kwargs["partition"] = "inter"
 
-  # creates list of dictionaries.
-  pickles = set(event.pickle) - set([""])
-  if len(pickles) > 0: 
-    jobdicts = []
-    for p in pickles:
-      try: d = jobs.load(path=p)
-      except: 
-        print "JobDict could not be loaded form {0}.".format(p)
-        return
-      jobdicts.append((d, p))
-  else: # current job dictionary.
-    current, path = _get_current_job_params(self, 2)
-    if current == None: return
-    if path == None: return
-    # saving pickle
-    saveto(self, path)
-    if "_lada_error" in ip.user_ns:
-      if ip.user_ns["_lada_error"] == "User said no save.":
-        print "Job-dictionary not saved = jobs not launched."
-      return
-    jobdicts = [(current, path)]
-
-  template = default_slurm if which else default_pbs
   # gets python script to launch in pbs.
   pyscript = jobs.__file__.replace(splitpath(jobs.__file__)[1], "runone.py")
 
@@ -115,7 +92,10 @@ def launch(self, event):
 
 def completer(self, info, data, computer):
   """ Completer for scattered launcher. """
+  from ... import queues as lada_queues
   from .._explore import _glob_job_pickles
+  queue = "account" if computer else "queue"
+  ip = self.api
   if    (len(info.symbol) == 0 and data[-1] == "--walltime") \
      or (len(info.symbol) > 0  and data[-2] == "--walltime"):
     return [u for u in ip.user_ns if u[0] != '_' and isinstance(ip.user_ns[u], str)]
@@ -133,15 +113,18 @@ def completer(self, info, data, computer):
   result = ['--force', '--walltime', '--nbprocs', '--help']
   if len(lada_queues) > 0: result.append(queue) 
   if computer: result.append("--debug")
-  result = list(set(result) - set(data))
   result.extend( _glob_job_pickles(ip, info.symbol) )
+  result = list(set(result) - set(data))
   return result
 
 def parser(self, subparsers, which, opalls):
   """ Adds subparser for scattered. """ 
-  from .. import queues as lada_queues
-  result = subparsers.add_parser('scattered', description='Each calculation is a separate job.',\
-                                    parents=[opalls])
+  from ... import queues as lada_queues
+  result = subparsers.add_parser( 'scattered', 
+                                  description="A separate PBS/slurm script is created for each "\
+                                              "and every calculation in the jobdictionary "\
+                                              "(or dictioanaries).",
+                                  parents=[opalls])
   result.add_argument('--walltime', type=str, default="05:59:59", \
                          help='walltime for jobs. Should be in hh:mm:ss format.')
   result.add_argument( '--nbprocs', type=str, default="None", dest="nbprocs",
@@ -163,6 +146,7 @@ def parser(self, subparsers, which, opalls):
   elif len(lada_queues) != 0: 
     result.add_argument( '--queue', dest="queue", choices=lada_queues, default=lada_queues[0],
                          help="Queue on which to launch job. Defaults to system default." )
-  else: result.add_argument('--queue', dest="queue", type=str)
+  else: result.add_argument('--queue', dest="queue", type=str,
+                            help="Launches jobs on specific queue if present.")
   result.set_defaults(func=launch)
   return result

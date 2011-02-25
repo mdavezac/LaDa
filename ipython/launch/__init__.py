@@ -28,12 +28,13 @@ def launch(self, event):
 
   import argparse
   from os import environ
-  from .scattered import scattered_parser
-  from .interactive import interactive_parser
+  from ..jobs import load as load_jobs
+  from .. import _get_current_job_params, saveto
+  from .scattered import parser as scattered_parser
+  from .interactive import parser as interactive_parser
 
   which = "SNLCLUSTER" in environ
   if which: which = environ["SNLCLUSTER"] in ["redrock", "redmesa"]
-  queue = "--account" if which else "--queue"
 
   # main parser
   parser = argparse.ArgumentParser(prog='%launch')
@@ -54,7 +55,26 @@ def launch(self, event):
   # parse arguments
   try: args = parser.parse_args(event.split())
   except SystemExit as e: return None
-  else: args.func(self,args)
+
+  # creates list of dictionaries.
+  pickles = set(args.pickle) - set([""])
+  if len(pickles) > 0: 
+    jobdicts = []
+    for p in pickles:
+      try: d = load_jobs(path=p)
+      except Exception as e: 
+        print "JobDict could not be loaded form {0}.\n{e}\n".format(p,e=e)
+        return
+      jobdicts.append((d, p))
+  else: # current job dictionary.
+    current, path = _get_current_job_params(self, 2)
+    if current == None: return
+    if path == None: return
+    jobdicts = [(current, path)]
+  
+  # calls specialized function.
+  args.func(self,args, jobdicts)
+
 
 
 def completer(self, info):
@@ -65,13 +85,12 @@ def completer(self, info):
 
   which = "SNLCLUSTER" in environ
   if which: which = environ["SNLCLUSTER"] in ["redrock", "redmesa"]
-  queue = "--account" if which else "--queue"
   
   ip = self.api
   data = info.line.split()
   types = ["scattered", "interactive"]
   if len(data)  <= 2 and data[-1] not in types: return types 
-  if data[1] == "scattered": scattered_completer(self, info, data, which)
-  if data[1] == "interactive": interactive_completer(self, info, data, which)
+  if data[1] == "scattered": return scattered_completer(self, info, data, which)
+  if data[1] == "interactive": return interactive_completer(self, info, data, which)
   raise IPython.ipapi.TryNext
          
