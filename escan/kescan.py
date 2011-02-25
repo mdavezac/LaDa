@@ -183,7 +183,8 @@ class KEscan(Escan):
     from .kpoints import KContainer
     # case for simple containers.
     if kpoints == None: kpoints, multiplicity = [[0,0,0]], [1]
-    if not hasattr(kpoints, '__call__'): self.kpoints = KContainer(kpoints, multiplicity)
+    if hasattr(kpoints, '__call__'): self.kpoints = kpoints
+    else: self.kpoints = KContainer(kpoints, multiplicity)
     escan_copy = kwargs.pop("escan", None) 
 
     self.nbpools = nbpools
