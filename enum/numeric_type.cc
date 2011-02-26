@@ -95,11 +95,13 @@ namespace LaDa
         {
           LADA_ASSERT( i_atom->site != -1, "Site index not set.\n");
           LADA_ASSERT( i_atom->site >= 0 and i_atom->site < N, "site index out of range.\n" ); 
+          LADA_ASSERT( i_atom.site < _out.lattice.sites(), "Site index out-of-range." ) 
           if( site_index_map[i_atom->site] == N ) continue;
   
           size_t const enum_index = site_index_map[i_atom->site];
           math::rVector3d const pos( i_atom->pos - _out.lattice->sites[i_atom->site].pos );
           size_t const index = Crystal::get_linear_smith_index(transform, enum_index, pos);
+          LADA_ASSERT( index < bitstring.size(), "Bistring index out-of-range.")
           LADA_ASSERT
           (
             bitstring[index] < _out.lattice->sites[i_atom->site].type.size(),

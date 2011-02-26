@@ -20,6 +20,7 @@ BOOST_PYTHON_MODULE(_enumeration)
   namespace bp = boost::python;
   bp::scope scope;
   scope.attr("__doc__") = "This namespace is imported into lada.crystal.\n";
+  scope.attr("__docformat__") = "restructuretext en";
   bp::docstring_options doc_options(true, false);
   bp::handle<> math( bp::borrowed(PyImport_ImportModule("lada.math")) );
   bp::handle<> crystal( bp::borrowed(PyImport_ImportModule("lada.crystal")) );

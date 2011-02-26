@@ -577,8 +577,9 @@ class Vff(object):
     functional.check_input()
     
     with redirect_all(output=cout, error=cerr, append="True") as oestream:
-      result, stress = functional(comm, relax=self.relax) if lada_with_mpi\
-                       else functional(relax=self.relax)
+      from .. import lada_with_mpi
+      assert lada_with_mpi and comm != None, RuntimeError("Cannot run vff without mpi.")
+      result, stress = functional(comm, relax=self.relax)
     
     # unsets lattice.
     if old_lattice != None: old_lattice.set_as_crystal_lattice()
