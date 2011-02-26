@@ -393,7 +393,7 @@ class Escan(object):
     fftsize = self.fft_mesh[0] * self.fft_mesh[1] * self.fft_mesh[2]
     for m in range(comm.size, 0, -1):
       if fftsize % m == 0: break
-    norun = comm.rank > m
+    norun = comm.rank >= m
     result = comm.split(0 if norun else 1)
     return None if norun else result
 
