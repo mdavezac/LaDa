@@ -28,7 +28,7 @@ def launch(self, event):
 
   import argparse
   from os import environ
-  from ..jobs import load as load_jobs
+  from ...jobs import load as load_jobs
   from .. import _get_current_job_params, saveto
   from .scattered import parser as scattered_parser
   from .interactive import parser as interactive_parser

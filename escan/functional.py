@@ -478,8 +478,8 @@ class Escan(object):
 
     if norun == False:
       with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 
-        assert comm != None, RuntimeError('Cannot run genpot with lada_with_mpi == False.')
         from ._escan import _call_genpot
+        assert lada_with_mpi and comm != None, RuntimeError('Cannot run escan without mpi.')
         if is_mpi: comm.barrier()
         _call_genpot(comm)
 
@@ -547,7 +547,7 @@ class Escan(object):
     self._write_incar(comm, structure, norun)
     if norun == False:
       with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 
-        assert comm != None, RuntimeError('Cannot run escan without mpi communicator.')
+        assert lada_with_mpi and comm != None, RuntimeError('Cannot run escan without mpi.')
         from ._escan import _call_escan
         if is_mpi: comm.barrier()
         _call_escan(comm)
@@ -582,3 +582,18 @@ class Escan(object):
     else:
       kpoint = self.kpoint
     return 1, kpoint[0], kpoint[1], kpoint[2], structure.scale / float(a0.rescale(angstrom))
+
+  def copy(self, **kwargs):
+    """ Performs deep-copy of object. 
+
+	:Param kwargs: keyword arguments will overide the corresponding
+           attribute. The value of the keyword argument is *not* deepcopied. 
+           The attribute must exist. Attributes cannot be created here. 
+    """
+    from copy import deepcopy
+    result = deepcopy(self)
+    for key, value in kwargs.iteritems():
+      assert hasattr(result, key),\
+             ValueError("Attribute {0} does not exist and will not be created in copy.".format(key))
+      setattr(result, key, value)
+    return result

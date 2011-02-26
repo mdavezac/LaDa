@@ -157,7 +157,7 @@ class Enum(Lattice):
     """ Creates structure from items yielded by xn. """
     from numpy import dot
     structure = self.to_structure(dot(self.cell, supercell.hermite))
-    as_structure(structure, x, flavorbase)
+    as_structure(self, structure, x, flavorbase)
     return structure
 
   def structures(self, *args, **kwargs):
@@ -172,5 +172,5 @@ class Enum(Lattice):
     for x, smith, supercell, flavorbase in self.xn(*args, **kwargs):
       hermite = supercell.hermite
       if any(oldhermite != hermite): structure = self.to_structure(dot(self.cell, hermite))
-      as_structure(structure, x, flavorbase)
+      as_structure(self, structure, x, flavorbase)
       yield structure

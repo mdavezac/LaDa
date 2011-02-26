@@ -20,6 +20,7 @@ def create_start(path, input='input.py', nall = 3, nrand = 5, nmax=100):
   from lada.crystal.binary import zinc_blende
   from lada.jobs import JobDict
   from lada.escan import read_input, exec_input, ReducedKDensity
+  from lada.crystal import nb_valence_states
 
   input = read_input(input)
   kescan = exec_input(repr(input.escan).replace('Escan', 'KEscan')).functional
@@ -38,14 +39,15 @@ def create_start(path, input='input.py', nall = 3, nrand = 5, nmax=100):
   for i, structure in enumerate(chain(alls, strs)):
     structure.name = str(i)
     nSi = len([a.type for a in structure.atoms if a.type == 'Si'])
-    structure.scale = float(nSi) / float(n) * 5.45 + float(n - nSi) / float(n) * 5.65
+    structure.scale = float(nSi) / float(n) * 5.45 + float(n - nSi) / float(n) * 5.69
 
     jobdict = jobs / structure.name
     jobdict.jobparams['structure'] = structure.copy()
-    jobdict.jobparams['fft_mesh'] = fftmesh(structure.cell)
-    jobdict.functional = kescan
-    jobdict.functional.kpoints = ReducedKDensity(structure.scale/2e0/sqrt(2e0), (0.5, 0.5, 0.5))
+    jobdict.functional = kescan.copy()
+    jobdict.functional.kpoints = ReducedKDensity(structure.scale/10e0/sqrt(2e0), (0.5, 0.5, 0.5))
     jobdict.functional.reference = None
+    jobdict.functional.fft_mesh = fftmesh(structure.cell)
+    jobdict.functional.nbstates = int(nb_valence_states(structure) * 1.5+0.5)
 
   ip = get_ipy()
   ip.user_ns["current_jobdict"] = jobdict.root

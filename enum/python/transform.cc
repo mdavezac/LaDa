@@ -180,9 +180,9 @@ namespace LaDa
         bp::init<Crystal::SymmetryOperator const &, Crystal::Lattice const &>()
       ).def( bp::init<enumeration::Transform const&>() )
        .def("init", &init, (bp::arg("left"), bp::arg("smith")),
-            "Initializes the transform for a specific supercell.\n"
-            " - left is the left transform matrix from the Hermite to the Smith normal form.\n"
-            " - smith is the diagonal of the Smith normal form as an integer 3x1 numpy array.\n")
+            "Initializes the transform for a specific supercell.\n\n"
+            "- left is the left transform matrix from the Hermite to the Smith normal form.\n"
+            "- smith is the diagonal of the Smith normal form as an integer 3x1 numpy array.\n")
        .def("__call__", &call)
        .def("__str__", Python::tostream<enumeration::Transform>)
        .add_property("is_trivial", &enumeration::Transform::is_trivial,

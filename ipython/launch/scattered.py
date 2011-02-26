@@ -14,6 +14,7 @@ def launch(self, event, jobdicts):
   from os.path import split as splitpath, join, exists, abspath, dirname
   from ...opt.changedir import Changedir
   from ...jobs.templates import default_pbs, default_slurm
+  from ...jobs import __file__ as jobs_filename
   from .. import saveto
   ip = self.api
   ip.user_ns.pop("_lada_error", None)
@@ -57,7 +58,7 @@ def launch(self, event, jobdicts):
   if which and event.debug: kwargs["partition"] = "inter"
 
   # gets python script to launch in pbs.
-  pyscript = jobs.__file__.replace(splitpath(jobs.__file__)[1], "runone.py")
+  pyscript = jobs_filename.replace(splitpath(jobs_filename)[1], "runone.py")
 
   pbsscripts = []
   for current, path in jobdicts:

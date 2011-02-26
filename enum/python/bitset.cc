@@ -135,9 +135,15 @@ namespace LaDa
 
 
     template<class T_STR> 
-      inline void as_structure( T_STR &_out, e::t_uint _x,
+      inline void as_structure( Crystal::Lattice & lattice,
+                                T_STR &_out, e::t_uint _x,
                                 e::FlavorBase const &_fl )
-        { return e::integer_to_structure(_out, _x, _fl); }
+      {
+         Crystal::Lattice *old = _out.lattice;
+         _out.lattice = &lattice;
+         e::integer_to_structure(_out, _x, _fl); 
+         _out.lattice = old;
+      }
 
     struct flavor_iter
     {
@@ -211,29 +217,31 @@ namespace LaDa
         .def("next", &flavor_iter::next );
 
       bp::def("as_bitstring", &integer_to_bitstring, (bp::arg("integer"), bp::arg("flavorbase")),
-              "Converts an integer to a bitstring using flavorbase as  the basis.");
+              "Converts an integer to a bitstring using flavorbase as the basis.");
       bp::def("as_numpy", &integer_to_vector, (bp::arg("integer"), bp::arg("flavorbase")),
               "Converts an integer to a numpy array of unsigned integers "
-              " using flavorbase as  the basis.");
+              " using flavorbase as the basis.");
 
       bp::def
       (
         "as_structure", 
         &as_structure< Crystal::TStructure<std::string> >,
-        ( bp::arg("structure"), bp::arg("x"), bp::arg("flavorbase") )
+        (bp::arg("lattice"), bp::arg("structure"), bp::arg("x"), bp::arg("flavorbase") )
       );
       bp::def
       (
         "as_structure", 
         &as_structure<Crystal::Structure>,
-        ( bp::arg("structure"), bp::arg("x"), bp::arg("flavorbase") ),
+        (bp::arg("lattice"), bp::arg("structure"), bp::arg("x"), bp::arg("flavorbase") ),
         "Fills structure sites using index x.\n\n"
-        "@param structure: a crystal structure with correct number of atoms.\n"
-        "@type structure: L{crystal.Structure} or L{crystal.rStructure}.\n"
-        "@param x: index.\n"
-        "@type x: integer\n"
-        "@param flavorbase: the return from L{create_flavorbase}.\n"
-        "@type flavorbase: L{FlavorBase}\n"
+        ":Parameters:\n"
+        "  lattice : `crystal.Lattice`\n"
+        "    Lattice forming the backbone of the enumeration.\n"
+        "  structure : `crystal.Structure` or `crystal.rStructure`\n"
+        "    a crystal structure with correct number of atoms and lattice vectors.\n"
+        "    It will be decorated according to x on output.\n"
+        "   x : integer\n    index of the particular decoration.\n"
+        "   flavorbase : `FlavorBase`\n    the return from `create_flavorbase`.\n"
       );
       
       typedef boost::make_signed<e::t_uint>::type t_int;
