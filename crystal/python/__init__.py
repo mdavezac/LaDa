@@ -7,7 +7,7 @@ __all__ = [ 'FreezeAtom', 'which_site', 'Sites', 'SymmetryOperator', 'Lattice', 
             'nb_valence_states', 'to_voronoi', 'gaussian_projector', 'to_cell', 'to_origin', \
             'is_on_lattice', 
             # Below, only true python stuff
-            'deform_kpoints', 'specie_list', 'read_poscar', 'write_poscar', 'icsd_cif',\
+            'specie_list', 'read_poscar', 'write_poscar', 'icsd_cif',\
             'write_oldvff', 'read_oldvff', 'structure_to_lattice', 'fill_structure', \
             'A2BX4', 'bravais', 'gruber', 'vasp_ordered', 'binary', 'lattice_context' ]
 __docformat__ = "restructuredtext en"
@@ -32,31 +32,6 @@ except ImportError: pass # required vasp and jobs packages.
 else: __all__.append('defects')
 
 from contextlib import contextmanager
-
-
-def deform_kpoint(kpoint, ideal, relaxed):
-  """ Deform kpoints from ideal cell to relaxed cell. 
-
-
-      :Parameters:
-        kpoint : numpy array
-          The kpoint to deform in cartesian coordinates.
-        ideal : numpy 2d-array
-          The original (real-space) cell, as an ideal supercell of the lattice.
-        relaxed : numpy 2d-array
-          The relaxed (real-space) cell.
-
-      :return: the kpoint deformed from the ideal reciprocal cell to the
-               relaxed reciprocal cell, in cartesian coordinates.
-  """
-  from numpy import dot, matrix
-  from numpy.linalg import inv
-  k = dot(ideal.T, kpoint)
-  for i in range(3):
-    k[i] = float(k[i]) - float( int(k[i]) )
-    if k[i] < 0e0: k[i] += 1e0
-    if k[i] > 1e0-1e-6: k[i] = 0e0
-  return dot(inv(relaxed.T), k.T)
   
 def specie_list(structure):
   """ Returns minimal list of species in alphabetical order. """

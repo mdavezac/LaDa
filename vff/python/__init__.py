@@ -1,4 +1,6 @@
 """ Valence Force Field functional for zinc-blende materials """
+__docformat__ = "restructuredtext en"
+__all__ = ['exec_input', 'read_input', 'Extract', 'Vff']
 
 # imports C++ extension
 from ..opt.decorators import add_setter, broadcast_result, make_cached
@@ -21,24 +23,6 @@ def _get_script_text(file, name):
     if line.find(string) != -1: break;
     lines += line
   return header + lines
-
-def exec_input(filepath = "input.py", namespace = None):
-  """ Executes an input script including namespace for escan/vff. """ 
-  from ..opt import exec_input
-
-  dictionary = { "Vff": Vff }
-  if namespace != None: dictionary.update(namespace)
-  return exec_input(filepath, dictionary)
-
-def read_input(filepath = "input.py", namespace = None, name=None):
-  """ Reads an input file including namespace for escan/vff. """ 
-  from ..opt import read_input
-
-  dictionary = { "Vff": Vff }
-  if namespace != None:
-    dictionary.update(namespace)
-    if name == None and hasattr(namespace, '__name__'): namee = namespace.__name__
-  return read_input(filepath, dictionary)
 
 class Extract(AbstractExtractBase):
   """ Extracts vff results from output file. """
@@ -161,12 +145,10 @@ class Extract(AbstractExtractBase):
 
   @property
   @make_cached
-  def vff(self):
+  def functional(self):
     """ Greps vff functional from self.L{OUTCAR}. """
     from os.path import exists, join
     from cPickle import load
-    from numpy import array
-    from . import Vff
 
     # tries to read from pickle.
     path = self.FUNCCAR
@@ -182,9 +164,16 @@ class Extract(AbstractExtractBase):
     def get_vff(this):
       with self.__outcar__() as file: return _get_script_text(file, "Vff")
 
-    local_dict = {"lattice": self.lattice, "array": array, "minimizer": self.minimizer, "Vff": Vff}
-    input = exec_input(get_vff(self), namespace=local_dict)
-    return input,vff_functional if "vff_functional" in input else input.functional
+    input = exec_input(get_vff(self), {'minimizer': self.minimizer, 'lattice': self.lattice})
+    return input.vff_functional if "vff_functional" in input.__dict__ else input.functional
+  
+  @property
+  def vff(self):
+    """ Alias for functional. """
+    from warnings import warn
+    warn(DeprecationWarning('vff attribute is deprecated in favor of functional.'), stacklevel=2)
+    return self.functional
+
 
   def write_escan_input(self, filepath, structure = None):
     """ Prints escan input to file. """
@@ -261,12 +250,13 @@ class Vff(object):
   def add_bond(self, args):
     """ Adds/Modifies the bond parameter dictionary.
     
+        :param args: A tuple consisting of three elements.
+          - the first element of arg is one endpoint of the bond (say "In"), 
+          - the second element is another endpoint (say "N"),
+          - the last element is a sequence with at most 5 elements
+            defining the bond-stretching parameters (order 2 through 6).
+        
         >>> vff.add_bond = "A", "B", [d0, a2, a3, a4, a5, a6]
-        @param args: - the first element of arg is one endpoint of the bond (say "In"), 
-                     - the second element is another endpoint (say "N"),
-                     - the last element is a sequence with at most 5 elements
-                       defining the bond-stretching parameters (order 2 through 6).
-        @type args: "type1", "type2", sequence
     """
     assert len(args) == 3, RuntimeError("Bonds should be set with 3 parameters: %s." % (args))
     assert args[0] in [ u for site in self.lattice.sites for u in site.type ],\
@@ -290,35 +280,40 @@ class Vff(object):
   def set_bond(self, A, B, d0 = None, a2 = None, a3 = None, a4 = None, a5 = None, a6 = None):
     """ Adds/Modifies the bond parameter dictionary.
     
-        @param A: Endpoint specie.
-        @type A: str
-        @param B: Other endpoint species. 
-        @type B: str
-        @param d0: ideal bond-length.
-        @param a2: 2nd order bond-stretching parameter.
-        @param a3: 3rd order bond-stretching parameter.
-        @param a4: 4rd order bond-stretching parameter.
-        @param a5: 5rd order bond-stretching parameter.
-        @param a6: 6rd order bond-stretching parameter.
+        :Parameters: 
+          A : str
+            Atomic specie making up the first end of the bond.
+          B : str
+            Atomic specie making up the second end of the bond.
+          d0 : float
+            ideal bond-length.
+          a2 : float
+            2nd order bond-stretching parameter.
+          a3 : float
+            3rd order bond-stretching parameter.
+          a4 : float 
+            4th order bond-stretching parameter.
+          a5 : float 
+            5th order bond-stretching parameter.
+          a6 : float 
+            6th order bond-stretching parameter.
     """
     self.add_bond = A, B, [d0, a2, a3, a4, a5, a6]
-
-
-
 
   @add_setter
   def add_angle(self, args):
     """ Adds/Modifies the angle parameter dictionary.
     
+        :param args: Tuple of four elements.
+          - the first element of arg is one endpoint of the angle (say "In"), 
+          - the second element is middle of the angle (say "N"),
+          - the third element is the other endpoint (say "Ga"),
+          - the last element is a sequence with at most 7 elements
+            defining the bond-angle parameters. The first is the
+            gamma parameter, the second the sigma, and the others
+            the bond bending proper.
+
         >>> vff.add_angle = "A", "B", "C", [gamma, sigma, a2, a3, a4, a5, a6]
-        @param args: - the first element of arg is one endpoint of the angle (say "In"), 
-                     - the second element is middle of the angle (say "N"),
-                     - the third element is the other endpoint (say "Ga"),
-                     - the last element is a sequence with at most 7 elements
-                       defining the bond-angle parameters. The first is the
-                       gamma parameter, the second the sigma, and the others
-                       the bond bending proper.
-        @type args: "type1", "type2", "type3", sequence
     """
     assert len(args) == 4, RuntimeError("Angle should be set with 4 parameters: %s." % (args))
     assert args[0] in [ u for site in self.lattice.sites for u in site.type ],\
@@ -346,19 +341,30 @@ class Vff(object):
                       a3 = None, a4 = None, a5 = None, a6 = None):
     """ Adds/Modifies the angle parameter dictionary.
     
-        @param A: Endpoint specie.
-        @type A: str
-        @param B: Middle specie.
-        @type B: str
-        @param C: Endpoint specie.
-        @type C: str
-        @param gamma: S{gamma} parameter. Can be a number or a string starting with "tet".
-        @param sigma: S{sigma} parameter.
-        @param a2: 2nd order bond-angle parameter.
-        @param a3: 3rd order bond-angle parameter.
-        @param a4: 4rd order bond-angle parameter.
-        @param a5: 5rd order bond-angle parameter.
-        @param a6: 6rd order bond-angle parameter.
+        :Parameters: 
+          A : str
+            Atomic specie at one end of an angle.
+          B : str
+            Atomic specie at the center of the angle.
+          C : str
+            Atomic specie at the other end of an angle.
+          gamma : float or "tet"
+            Equilibrium angle |gamma|.
+          sigma : float
+            |sigma| parameter.
+          a2 : float
+            2nd order bond-angle parameter.
+          a3 : float
+            3rd order bond-angle parameter.
+          a4 : float
+            4th order bond-angle parameter.
+          a5 : float
+            5th order bond-angle parameter.
+          a6 : float
+            6th order bond-angle parameter.
+
+        .. |gamma|  unicode:: U+003B3 .. GREEK SMALL LETTER GAMMA
+        .. |sigma|  unicode:: U+003A3 .. GREEK SMALL LETTER SIGMA
     """
     self.add_angle = A,B, C, [gamma, sigma, a2, a3, a4, a5, a6]
 
@@ -586,3 +592,27 @@ class Vff(object):
     if self.direction != None and not hasattr(self.direction, "__len__"):
       structure.freeze = oldfreeze
     return result, stress
+
+def exec_input(filepath = "input.py", namespace = None):
+  """ Executes an input script including namespace for escan/vff. """ 
+  from ..opt import exec_input as opt_exec_input
+  from .. import minimizer
+
+  dictionary = {}
+  for key in __all__: dictionary[key] = globals()[key]
+  for key in minimizer.__all__: dictionary[key] = getattr(minimizer, key)
+  if namespace != None: dictionary.update(namespace)
+  return opt_exec_input(filepath, dictionary)
+
+def read_input(filepath = "input.py", namespace = None, name=None):
+  """ Reads an input file including namespace for escan/vff. """ 
+  from ..opt import opt_read_input
+  from .. import vff as __this__ 
+  from .. import minimizer
+
+  dictionary = {}
+  for key in __all__: dictionary[key] = globals()[key]
+  for key in minimizer.__all__: dictionary[key] = getattr(minimizer, key)
+  if namespace != None: dictionary.update(namespace)
+  return opt_read_input(filepath, dictionary)
+

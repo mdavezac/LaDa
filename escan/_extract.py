@@ -138,7 +138,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     from cPickle import load
     from ..opt.changedir import Changedir
     from ..vff import _get_script_text
-    from . import Escan, localH, nonlocalH, soH, AtomicPotential
+    from . import exec_input
     
     # tries to read from pickle.
     path = self.FUNCCAR
@@ -152,15 +152,10 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     @broadcast_result(attr=True, which=0)
     def get_functional(this):
       with self.__outcar__() as file: return _get_script_text(file, "Escan")
-    local_dict = { "lattice": self.lattice, "minimizer": self.minimizer,\
-                   "vff_functional": self.vff, "Escan": Escan, "localH": localH,\
-                   "nonlocalH": nonlocalH, "soH": soH, "AtomicPotential":AtomicPotential,\
-                   "array": array }
     # moves to output directory to get relative paths right.
-    with Changedir(self.directory, comm=self.comm) as cwd:
-      exec get_functional(self) in globals(), local_dict
-    return local_dict["escan_functional"] if "escan_functional" in local_dict\
-           else local_dict["functional"]
+    input = exec_input(get_functional(self), {'vff_functional': self.vff})
+    return input.escan_functional if "escan_functional" in input.__dict__\
+           else input.functional
 
   @property 
   def escan(self): 
@@ -451,6 +446,10 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     """ True if wavefunction has krammer degenerate equivalent. """
     return self.functional.is_krammer
 
+  @property
+  def vff(self):
+    """ Vff functional. """
+    return self._vffout.functional
 
   def __getattr__(self, name):
     """ Passes on public attributes to vff extractor, then to escan functional. """

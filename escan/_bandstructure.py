@@ -1,6 +1,6 @@
 """ Bandstructure plotting tools """
 __docformat__  = 'restructuredtext en'
-__all__ = ['band_structure', 'Extract']
+__all__ = ['BPoints', 'ReducedBPoints', 'plot_bands', 'plot_alloybands']
 
 from ..opt.decorators import broadcast_result, make_cached
 from ._extract import MassExtract

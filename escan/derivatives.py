@@ -23,6 +23,8 @@ class DDPoints(KPoints):
           relax : bool
             Whether kpoint should be relaxed from input to output vff
             structure. True by default.
+
+        .. |pi|  unicode:: U+003C0 .. GREEK SMALL LETTER PI
     """
     from numpy import array
 
@@ -38,6 +40,8 @@ class DDPoints(KPoints):
     """ Distance between interpolation points. 
 
         Units of ``2|pi|/a``, with ``a=structure.scale``.
+        
+        .. |pi|  unicode:: U+003C0 .. GREEK SMALL LETTER PI
     """
     self.relax = relax
     """ Whether to deform kpoints to the relaxed structure. """

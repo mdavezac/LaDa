@@ -1,14 +1,11 @@
 """ Interface module for ESCAN. """
 __docformat__ = "restructuredtext en"
-__all__ = [ "Extract", 'MassExtract', "bandgap", "extract_bg",
-            "dipole_matrix_element", "band_structure", "call_escan",
-            "Escan", "folded_spectrum", "all_electron", "soH", 
-            "nonlocalH", "localH", "AtomicPotential", "band_structure",
-            "extract_bg", 'ExtractBS', 'KEscan', 'KPoints', 'KGrid', 
-            'ReducedKGrid', 'ReducedKDensity', 'BPoints', 'ReducedBPoints', 
-            'soH', 'nonlocalH', 'localH', 'folded_spectrum', 'all_electron',
-            'read_input', 'exec_input', 'KExtract', 'plot_alloybands', 
-            'plot_bands', 'majority_representation']
+__all__ = [ "Extract", 'MassExtract', "bandgap", "extract_bg", "dipole_matrix_elements",
+            "call_escan", "Escan", "folded_spectrum", "all_electron", "soH", 
+            "nonlocalH", "localH", "AtomicPotential", "extract_bg", 'KEscan', 'KPoints', 
+            'KGrid', 'ReducedKGrid', 'ReducedKDensity', 'soH', 'nonlocalH', 'localH', 
+            'folded_spectrum', 'all_electron', 'read_input', 'exec_input', 'KExtract',  
+            'majority_representation', 'BPoints', 'ReducedBPoints', 'plot_bands', 'plot_alloybands']
 
 from ..opt import __load_escan_in_global_namespace__
 from lada import lada_with_mpi
@@ -21,11 +18,12 @@ if lada_with_mpi:
     import _escan
     _setdlopenflags(flags)
   else: import _escan
+
 from _bandstructure import plot_bands, BPoints, ReducedBPoints, plot_alloybands
 from _bandgap import bandgap, extract as extract_bg
 from _extract import Extract, MassExtract
 from _potential import soH, nonlocalH, localH, AtomicPotential
-from _methods import majority_representation
+from _methods import majority_representation, dipole_matrix_elements
 from functional import Escan, folded_spectrum, all_electron
 from kescan import KEscan, Extract as KExtract
 from kpoints import KGrid, ReducedKGrid, KPoints, ReducedKDensity
@@ -104,28 +102,24 @@ def call_escan(comm, atom="atom_input", pot="pot_input", escan="escan_input"):
   remove(escaninput)
 
 
-def exec_input(filepath = "input.py", namespace = None):
+def exec_input(script, namespace = None):
   """ Executes an input script including namespace for escan/vff. """ 
-  from ..vff import Vff
-  from ..opt import exec_input
-  from . import Escan, soH, nonlocalH, localH, folded_spectrum, all_electron
+  from ..opt import exec_input as opt_exec_input
+  from .. import vff
 
-  dictionary = { "Vff": Vff, "Escan": Escan, "soH": soH, \
-                 "nonlocalH": nonlocalH, "localH": localH, \
-                 "folded_spectrum": folded_spectrum, "all_electron": all_electron}
+  dictionary = {}
+  for key in vff.__all__: dictionary[key] = getattr(vff, key)
+  for key in __all__: dictionary[key] = globals()[key]
   if namespace != None: dictionary.update(namespace)
-  return exec_input(filepath, dictionary)
+  return opt_exec_input(script, dictionary)
 
-def read_input(filepath = "input.py", namespace = None, name=None):
+def read_input(filepath = "input.py", namespace = None):
   """ Reads an input file including namespace for escan/vff. """ 
-  from ..vff import Vff
-  from ..opt import read_input
-  from . import Escan, soH, nonlocalH, localH, folded_spectrum, all_electron
+  from ..opt import read_input as opt_read_input
+  from .. import vff
 
-  dictionary = { "Vff": Vff, "Escan": Escan, "soH": soH, \
-                 "nonlocalH": nonlocalH, "localH": localH, \
-                 "folded_spectrum": folded_spectrum, "all_electron": all_electron}
-  if namespace != None:
-    dictionary.update(namespace)
-    if name == None and hasattr(namespace, '__name__'): namee = namespace.__name__
-  return read_input(filepath, dictionary)
+  dictionary = {}
+  for key in vff.__all__: dictionary[key] = getattr(vff, key)
+  for key in __all__: dictionary[key] = globals()[key]
+  if namespace != None: dictionary.update(namespace)
+  return opt_read_input(filepath, dictionary)
