@@ -186,7 +186,7 @@ class Extract(AbstractExtractBase):
     except RuntimeError: pass
     self.lattice.set_as_crystal_lattice()
 
-    functional = self.vff._create_functional()
+    functional = self.functional._create_functional()
     functional.print_escan_input(expanduser(filepath), structure)
 
     if old_lattice != None: old_lattice.set_as_crystal_lattice()
@@ -540,7 +540,7 @@ class Vff(object):
     from _vff import Vff, LayeredVff
 
     if hasattr(self.direction, "__len__"):
-      functional = Layered()
+      functional = LayeredVff()
       functional.direction = self.direction
     else: functional = Vff()
     # minimizer variants are somewhat difficult to expose...
