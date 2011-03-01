@@ -1,6 +1,7 @@
 # davezac@hopper08:~/SiGe/old/jwluo/SiGe_SL_001/Si6Ge4_on_Ge/vff
 from operator import attrgetter
 from numpy import array, dot
+from numpy.linalg import det
 from quantities import angstrom
 from boost.mpi import world
 from lada.escan import read_input, bandgap
@@ -25,14 +26,16 @@ result = bandgap( input.escan, structure, comm=world, eref=None,
                   nbstates=6, direction = array([1., 0,0]) )
 print result.extract_vbm.eigenvalues
 print result.extract_cbm.eigenvalues
+volume = det(result.structure.cell*result.structure.scale/a0.rescale(angstrom))
+print "volume real space:", volume
 cbms = result.extract_cbm.gwfns 
 cbms = sorted(cbms, key=attrgetter("eigenvalue"))
 vbms = result.extract_vbm.gwfns 
 vbms = sorted(vbms, key=attrgetter("eigenvalue"))
 for vbm in vbms[::2]:
-  for cbm in cbms[::2]:
+  for cbm in cbms:
     dip = vbm.braket(result.extract_vbm.gvectors[:,0], cbm, attenuate=False)
-    print float((dip * dip.conjugate()).real), 
+    print float((dip * dip.conjugate()).real) * volume, 
   print
 # if world.rank == 0:
 #   dips = result.dipole()
