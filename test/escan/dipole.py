@@ -2,12 +2,13 @@
 from operator import attrgetter
 from numpy import array, dot
 from numpy.linalg import det
-from quantities import angstrom
+from quantities import angstrom, eV
 from boost.mpi import world
 from lada.escan import read_input, bandgap
 from lada.crystal import fill_structure, sort_layers, nb_valence_states
 from lada.crystal.binary import zinc_blende
-from lada.physics import a0
+from lada.physics import a0, reduced_reciprocal_au
+from numpy import pi
 
 input = read_input("input.py")
 cell = [[2.5,0,0],[0.5,0.5,0.5],[0,-0.5,0.5]]
@@ -24,20 +25,17 @@ input.escan.vff.direction = None
 result = bandgap( input.escan, structure, comm=world, eref=None, 
                   outdir="result/dipoles", references = (-0.2, 0.2),
                   nbstates=6, direction = array([1., 0,0]) )
-print result.extract_vbm.eigenvalues
-print result.extract_cbm.eigenvalues
 volume = det(result.structure.cell*result.structure.scale/a0.rescale(angstrom))
-print "volume real space:", volume
 cbms = result.extract_cbm.gwfns 
-cbms = sorted(cbms, key=attrgetter("eigenvalue"))
+# cbms = sorted(cbms, key=attrgetter("eigenvalue"))
 vbms = result.extract_vbm.gwfns 
-vbms = sorted(vbms, key=attrgetter("eigenvalue"))
-for vbm in vbms[::2]:
-  for cbm in cbms:
-    dip = vbm.braket(result.extract_vbm.gvectors[:,0], cbm, attenuate=False)
-    print float((dip * dip.conjugate()).real) * volume, 
-  print
-# if world.rank == 0:
-#   dips = result.dipole()
-#   for dip in dips:
-#     print dip[2]
+# vbms = sorted(vbms, key=attrgetter("eigenvalue"))
+units = pi ** 2 # / 4. #float(a0.rescale(angstrom) * a0.rescale(angstrom))
+dips = []
+for e0, e1, u in result.dipole():
+  dips.append((e0, e1, (u * u.conjugate()).real))
+check = [(array(0.168325) * eV, array(-0.49477701000000002) * eV, array([  1.43562357e-04,   1.04201091e-05,   1.95678721e-05]) * 1/a0**2), (array(0.168325) * eV, array(-0.49477701000000002) * eV, array([  4.20854765e-04,   1.67207771e-05,   7.57293883e-06]) * 1/a0**2), (array(0.168325) * eV, array(-0.49477701000000002) * eV, array([  4.20854765e-04,   1.67207771e-05,   7.57293883e-06]) * 1/a0**2), (array(0.168325) * eV, array(-0.49477701000000002) * eV, array([  1.43562357e-04,   1.04201091e-05,   1.95678721e-05]) * 1/a0**2)]
+for (e0, e1, a), (E0, E1, A) in zip(dips, check):
+  assert abs(e0-E0) < 1e-6
+  assert abs(e1-E1) < 1e-6
+  assert all(abs(a-A) < 1e-6)

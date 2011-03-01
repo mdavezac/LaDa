@@ -140,15 +140,16 @@ class ExtractAE(_ExtractE):
     return (result * units).simplified, nstates
 
   def dipole(self, degeneracy=1e-3, attenuate=False):
-    """ Computes oscillator strength between vbm and cbm. """
+    """ Computes dipole matrix element between vbm and cbm. """
     from numpy import array
     from numpy.linalg import det
-    result = []
+    from ..physics import a0
+    result, gvectors = [], self.extract_cbm.gvectors.rescale(1./a0)
     for wfnA in self.gwfns:
       if abs(wfnA.eigenvalue - self.cbm) > degeneracy: continue
       for wfnB in self.gwfns:
         if abs(wfnB.eigenvalue - self.vbm) > degeneracy: continue
-        result.append((wfnA.eigenvalue, wfnB.eigenvalue, wfnA.braket(self.gvectors, wfnB, attenuate=attenuate)))
+        result.append((wfnA.eigenvalue, wfnB.eigenvalue, wfnA.braket(gvectors, wfnB, attenuate=attenuate)))
     return result
 
   def __copy__(self):
@@ -258,23 +259,22 @@ class ExtractRefs(object):
         else: result += dme / (wfnA.eigenvalue - wfnB.eigenvalue) 
     return (units * result).simplified, nstates
   
-  def oscillator_strength(self, degeneracy=1e-3, attenuate=False):
-    """ Computes oscillator strength between vbm and cbm. """
+  def dipole(self, degeneracy=1e-3, attenuate=False):
+    """ Computes dipole matrix element between vbm and cbm. """
     from numpy import all, abs, dot
     from numpy.linalg import det
+    from ..physics import a0
 
     assert self.extract_vbm.gvectors.shape == self.extract_cbm.gvectors.shape
     assert all( abs(self.extract_vbm.gvectors - self.extract_cbm.gvectors) < 1e-12 )
-    result, nstates = None, 0
+    result, gvectors = [], self.extract_cbm.gvectors.rescale(1./a0)
     for wfnA in self.extract_cbm.gwfns:
       if abs(wfnA.eigenvalue - self.cbm) > degeneracy: continue
       for wfnB in self.extract_vbm.gwfns:
         if abs(wfnB.eigenvalue - self.vbm) > degeneracy: continue
-        nstates += 1
-        dme = wfnA.braket(self.extract_vbm.gvectors, wfnB, attenuate=attenuate)
-        if result == None: result  = dot(dme, dme.conjugate()).real 
-        else:              result += dot(dme, dme.conjugate()).real 
-    return result.simplified, nstates
+        dme = wfnA.braket(gvectors, wfnB, attenuate=attenuate)
+        result.append((wfnA.eigenvalue, wfnB.eigenvalue, wfnA.braket(gvectors, wfnB, attenuate=attenuate)))
+    return result
 
   @property
   def success(self):
