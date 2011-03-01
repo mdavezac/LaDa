@@ -1,11 +1,9 @@
 """ Module to extract esca and vff ouput. """
 __docformat__ = "restructuredtext en"
-__all__ = ['Extract', 'MassExtract']
+__all__ = ['MassExtract']
 
 from ..opt.decorators import broadcast_result, make_cached
 from ..opt import AbstractExtractBase, OutcarSearchMixin
-from ..jobs import AbstractMassExtractDirectories
-
 
 class Extract(AbstractExtractBase, OutcarSearchMixin):
   """ A class to extract data from ESCAN output files. 
@@ -473,46 +471,3 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     result.extend( [u for u in dir(self._vffout) if u[0] != "_"] )
     if self.success: result.extend( [u for u in dir(self.functional) if u[0] != "_"] )
     return list( set(result) - exclude )
-
-
-class MassExtract(AbstractMassExtractDirectories):
-  """ Extracts all escan calculations nested within a given input directory. """
-  Extract = staticmethod(Extract)
-  """ Extraction object for a single calculation. """
-  def __init__(self, path = ".", **kwargs):
-    """ Initializes AbstractMassExtractDirectories.
-    
-    
-        :Parameters:
-          path : str or None
-            Root directory for which to investigate all subdirectories.
-            If None, uses current working directory.
-          kwargs : dict
-            Keyword parameters passed on to AbstractMassExtractDirectories.
-
-        :kwarg naked_end: True if should return value rather than dict when only one item.
-        :kwarg unix_re: converts regex patterns from unix-like expression.
-    """
-    # this will throw on unknown kwargs arguments.
-    if 'Extract' not in kwargs: kwargs['Extract'] = Extract
-    super(MassExtract, self).__init__(path, **kwargs)
-    del self.__dict__['Extract']
-
-  def __iter_alljobs__(self):
-    """ Goes through all directories with a contcar. """
-    from os import walk, getcwd
-    from os.path import abspath, relpath, abspath, join
-
-    OUTCAR = self.Extract().OUTCAR
-    for dirpath, dirnames, filenames in walk(self.rootdir, topdown=True, followlinks=True):
-      if OUTCAR not in filenames: continue
-
-      try: result = self.Extract(join(self.rootdir, dirpath), comm = self.comm)
-      except: continue
-
-      yield join('/', relpath(dirpath, self.rootdir)), result
-      
-  def __is_calc_dir__(self, dirpath, dirnames, filenames):
-    """ Returns true this directory contains a calculation. """
-    OUTCAR = self.Extract().OUTCAR
-    return OUTCAR in filenames

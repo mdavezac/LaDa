@@ -130,7 +130,7 @@ class AbstractMassExtract(object):
     """ Returns a regular expression. """
     from re import compile
     from ..opt import convert_from_unix_re
-    return compile(pattern, flags) if not self.unix_re\
+    return compile(pattern + "(?=/|$)", flags) if not self.unix_re\
            else convert_from_unix_re(pattern)
 
   @abstractmethod

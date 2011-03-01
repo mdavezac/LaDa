@@ -21,7 +21,8 @@ if lada_with_mpi:
 
 from _bandstructure import plot_bands, BPoints, ReducedBPoints, plot_alloybands
 from _bandgap import bandgap, extract as extract_bg
-from _extract import Extract, MassExtract
+from _extract import Extract
+from _massextract import MassExtract
 from _potential import soH, nonlocalH, localH, AtomicPotential
 from _methods import majority_representation, dipole_matrix_elements
 from functional import Escan, folded_spectrum, all_electron

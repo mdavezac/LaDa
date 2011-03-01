@@ -3,7 +3,7 @@ __docformat__  = 'restructuredtext en'
 __all__ = ['BPoints', 'ReducedBPoints', 'plot_bands', 'plot_alloybands']
 
 from ..opt.decorators import broadcast_result, make_cached
-from ._extract import MassExtract
+from ._massextract import MassExtract
 from .kpoints import KPoints, _reduced_grids_factory
 
 class BPoints(KPoints):
