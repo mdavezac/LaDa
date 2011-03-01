@@ -33,8 +33,9 @@ def extract(outdir=".", comm = None):
                           _ExtractE(paths[2], comm = comm),
                           _ExtractE(outdir, comm = comm) )
     if result.success: return result
-  class NoBandGap(object):
-    def __init__(self): self.success = False
+  class NoBandGap(object): 
+    @property
+    def success(self): return False
   return NoBandGap()
 
 def bandgap(escan, structure, outdir=None, references=None, n=5, overwrite = False, **kwargs):
