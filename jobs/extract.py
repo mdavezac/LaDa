@@ -130,8 +130,10 @@ class AbstractMassExtract(object):
     """ Returns a regular expression. """
     from re import compile
     from ..opt import convert_from_unix_re
-    return compile(pattern + "(?=/|$)", flags) if not self.unix_re\
-           else convert_from_unix_re(pattern)
+    if self.unix_re: return convert_from_unix_re(pattern)
+    if len(pattern) == 0: return compile("", flags)
+    if pattern[-1] == '/' or pattern[-1] == '$': return compile(pattern, flags)
+    return compile(pattern + "(?=/|$)", flags)
 
   @abstractmethod
   def __iter_alljobs__(self):
