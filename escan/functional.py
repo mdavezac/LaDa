@@ -359,7 +359,7 @@ class Escan(object):
         if comm != None:
           from boost.mpi import world
           file.write("# Computing with {0} processors of {1}.\n".format(comm.size, world.size))
-        if len(structure.name) != 0: print "# Structure named ", structure.name 
+        if len(structure.name) != 0: file.write("# Structure named {0}.".format(structure.name))
         # changes directory to get relative paths.
         with Changedir(outdir, comm=comm) as outdir_wd:
           print >>file, repr(self)

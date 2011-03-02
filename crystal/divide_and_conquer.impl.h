@@ -52,8 +52,8 @@ namespace LaDa
         for( size_t i(0); i < 3; ++i )
         {
           const math::rVector3d column( cell.col(i) );
-          const types::t_real a( std::sqrt( column.squaredNorm() ) );
-          odist(i) = _overlap_distance/a;
+//         const types::t_real a( std::sqrt( column.squaredNorm() ) );
+          odist(i) = _overlap_distance; ///a;
         }
 
         // constructs template box.
