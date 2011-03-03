@@ -127,6 +127,13 @@ class Escan(object):
     """ If True, each node will print. """
 
   @property
+  def relax(self):
+    """ Whether or not to relax the structure with vff. """
+    return self.vff.relax
+  @relax.setter
+  def relax(self, value): self.vff.relax = value
+
+  @property
   def is_krammer(self):
     """ True if wavefunction is a spinor. """
     from numpy.linalg import norm

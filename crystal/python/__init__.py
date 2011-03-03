@@ -9,7 +9,8 @@ __all__ = [ 'FreezeAtom', 'which_site', 'Sites', 'SymmetryOperator', 'Lattice', 
             # Below, only true python stuff
             'specie_list', 'read_poscar', 'write_poscar', 'icsd_cif',\
             'write_oldvff', 'read_oldvff', 'structure_to_lattice', 'fill_structure', \
-            'A2BX4', 'bravais', 'gruber', 'vasp_ordered', 'binary', 'lattice_context' ]
+            'A2BX4', 'bravais', 'gruber', 'vasp_ordered', 'binary', 'lattice_context',
+            'layer_iterator' ]
 __docformat__ = "restructuredtext en"
 
 from _crystal import FreezeAtom, which_site, Site, SymmetryOperator, Lattice, to_cartesian,\
@@ -498,3 +499,53 @@ def lattice_context(lattice):
   yield oldlattice
   if oldlattice != None: oldlattice.set_as_crystal_lattice()
 
+
+def layer_iterator(structure, direction, tolerance=1e-12):
+  """ Iterates over layers and atoms in a layer. 
+
+      :Parameters: 
+        structure : `Structure`
+          The structure for which to iterator over atoms.
+        direction : 3d-vector
+          Periodicity vector. Defaults to the first column  vector of the structure.
+        tolerance : float
+          Maximum difference between two atoms in the same layer.
+  """
+  from operator import itemgetter
+  from numpy import array, dot
+  from . import LayerDepth, to_cell, to_voronoi
+
+  direction = array(direction)
+  if len(structure.atoms) <= 1: yield structure.atoms; return
+
+  # orders position with respect to direction.
+  positions = to_cell(array([atom.pos for atom in structure.atoms]), structure.cell)
+  projs = [(i, dot(pos, direction)) for i, pos in enumerate(positions)]
+  projs = sorted(projs, key=itemgetter(1))
+
+  # creates classes of positions.
+  result = [[projs[0]]]
+  for i, proj in projs[1:]:
+    if abs(proj - result[-1][-1][-1]) < tolerance: result[-1].append((i,proj))
+    else: result.append([(i,proj)])
+
+  # only one layer.
+  if len(result) == 1: yield structure.atoms; return
+  # Finds if first and last have atoms in common through periodicity
+  first, last = result[0], result[-1]
+  centered = to_voronoi(positions[[i for i, d in last]], structure.cell, positions[first[0][0]])
+  for j, pos in enumerate(centered[::-1]):
+    a0 = dot(pos, direction)
+    if any(abs(u[1]-a0) >= tolerance for u in first): continue
+    first.append( last.pop(len(centered)-j-1) )
+
+  # last layer got depleted.
+  if len(last) == 0: result.pop(-1) 
+  # only one layer.
+  if len(result) == 1: yield structure.atoms; return
+  # yield layer iterators.
+  for layer in result:
+    def inner_layer_iterator():
+      """ Iterates over atoms in a single layer. """
+      for index, norm in layer: yield structure.atoms[index]
+    yield inner_layer_iterator ()

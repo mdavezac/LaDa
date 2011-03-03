@@ -22,7 +22,6 @@ def create_start(path, input='input.py', nall = 3, nrand = 5, nmax=100):
   from lada.jobs import JobDict
   from lada.escan import read_input, exec_input, ReducedKDensity
   from lada.crystal import nb_valence_states
-  from lada.crystal.gruber import Reduction
 
   input = read_input(input)
   kescan = exec_input(repr(input.escan).replace('Escan', 'KEscan')).functional
@@ -32,9 +31,7 @@ def create_start(path, input='input.py', nall = 3, nrand = 5, nmax=100):
   enum.sites[1].type = 'Si', 'Ge'
   enum.scale = 5.45
   enum.find_space_group()
-  reduction = Reduction()
-  cell = reduction(enum.cell, recip=True) * enum.scale
-  density = 10e0 * max([1e0/norm(u) for u in inv(cell)])
+  density = 10e0 * max([1e0/norm(u) for u in inv(lattice.cell)])
 
   strs = [u for  n in range(nall, nrand) for u in enum.xn(n)]
   shuffle(strs)
