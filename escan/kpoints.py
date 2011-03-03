@@ -155,18 +155,18 @@ class KDensity(KGrid):
 
   def _mnk(self, input, output):
     """ Yields kpoints on the grid. """
-    from numpy.linalg import inv, norm
     from numpy import zeros, array, dot, floor
+    from numpy.linalg import inv, norm
+    from quantities import angstrom
     from ..crystal import fill_structure
     from ..crystal.gruber import Reduction
-    from quantities import angstrom
     
     reduction = Reduction()
     cell = reduction(output.cell, recip=True) * output.scale
     density = self.density
     if hasattr(density, 'rescale'): density.rescale(1e0/Angstrom)
 
-    self.grid = [int(max(1, floor(norm(a) / self.density+0.5))) for a in cell.T]
+    self.grid = [int(max(1, floor(norm(a) * self.density+0.5))) for a in inv(cell.T)]
     result = KGrid._mnk(self, input, output)
     return result
  

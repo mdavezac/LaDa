@@ -13,14 +13,16 @@ def fftmesh(cell, cutoff=20e0):
 def create_start(path, input='input.py', nall = 3, nrand = 5, nmax=100):
   """ Creates dictionary with input structures. """
   from random import shuffle
-  from math import sqrt
   from itertools import chain
   from IPython.ipapi import get as get_ipy
+  from numpy import sqrt
+  from numpy.linalg import norm, inv
   from lada.enumeration import Enum
   from lada.crystal.binary import zinc_blende
   from lada.jobs import JobDict
   from lada.escan import read_input, exec_input, ReducedKDensity
   from lada.crystal import nb_valence_states
+  from lada.crystal.gruber import Reduction
 
   input = read_input(input)
   kescan = exec_input(repr(input.escan).replace('Escan', 'KEscan')).functional
@@ -28,7 +30,11 @@ def create_start(path, input='input.py', nall = 3, nrand = 5, nmax=100):
   enum = Enum(zinc_blende())
   enum.sites[0].type = 'Si', 'Ge'
   enum.sites[1].type = 'Si', 'Ge'
+  enum.scale = 5.45
   enum.find_space_group()
+  reduction = Reduction()
+  cell = reduction(enum.cell, recip=True) * enum.scale
+  density = 10e0 * max([1e0/norm(u) for u in inv(cell)])
 
   strs = [u for  n in range(nall, nrand) for u in enum.xn(n)]
   shuffle(strs)
@@ -39,12 +45,12 @@ def create_start(path, input='input.py', nall = 3, nrand = 5, nmax=100):
   for i, structure in enumerate(chain(alls, strs)):
     structure.name = str(i)
     nSi = len([a.type for a in structure.atoms if a.type == 'Si'])
-    structure.scale = float(nSi) / float(n) * 5.45 + float(n - nSi) / float(n) * 5.69
+    structure.scale = float(nSi) / float(n) * enum.scale + float(n - nSi) / float(n) * 5.69
 
     jobdict = jobs / structure.name
     jobdict.jobparams['structure'] = structure.copy()
     jobdict.functional = kescan.copy()
-    jobdict.functional.kpoints = ReducedKDensity(structure.scale/10e0/sqrt(2e0), (0.5, 0.5, 0.5))
+    jobdict.functional.kpoints = ReducedKDensity(density, (0.5, 0.5, 0.5))
     jobdict.functional.reference = None
     jobdict.functional.fft_mesh = fftmesh(structure.cell)
     jobdict.functional.nbstates = int(nb_valence_states(structure) * 1.5+0.5)
