@@ -10,8 +10,30 @@ def fftmesh(cell, cutoff=20e0):
            result[2] + result[2] % 2
   return result
 
-def create_start(path, input='input.py', nall = 3, nrand = 5, nmax=100):
-  """ Creates dictionary with input structures. """
+def create_start(path, nall = 3, nrand = 5, nmax=100, density=10e0, input='input.py'):
+  """ Creates dictionary with input structures for Si/Ge. 
+  
+      :Parameters:
+        path : str
+          Path to output dictionary.
+        nall : int
+          All structure with ``nall`` (excluded) unit-cells are included in the final dictionary.
+        nrand : int
+          Structures between ``nall`` (included) and ``nrand`` (excluded) unit-cells are
+          also considered for inclusion in the final dictionary. However, only
+          ``nmax`` are randomly chosen in the end.
+        nmax : int
+          Structures between ``nall`` (included) and ``nrand`` (excluded) unit-cells are
+          also considered for inclusion in the final dictionary. However, only
+          ``nmax`` are randomly chosen in the end.
+        density : float
+          Kpoint density for escan calculations,
+        input : str
+          Path to input file containing escan functional.
+       
+      Creates a job-dictionary with a number of structures sampled from an
+      exhaustive list of structures to evaluate using escan.
+  """
   from random import shuffle
   from itertools import chain
   from IPython.ipapi import get as get_ipy
@@ -22,6 +44,7 @@ def create_start(path, input='input.py', nall = 3, nrand = 5, nmax=100):
   from lada.jobs import JobDict
   from lada.escan import read_input, exec_input, ReducedKDensity
   from lada.crystal import nb_valence_states
+  from lada.crystal.gruber import Reduction
 
   input = read_input(input)
   kescan = exec_input(repr(input.escan).replace('Escan', 'KEscan')).functional
@@ -31,7 +54,7 @@ def create_start(path, input='input.py', nall = 3, nrand = 5, nmax=100):
   enum.sites[1].type = 'Si', 'Ge'
   enum.scale = 5.45
   enum.find_space_group()
-  density = 10e0 * max([1e0/norm(u) for u in inv(lattice.cell)])
+  density = density * max([1e0/norm(u) for u in inv(enum.cell * enum.scale).T])
 
   strs = [u for  n in range(nall, nrand) for u in enum.xn(n)]
   shuffle(strs)
@@ -46,6 +69,7 @@ def create_start(path, input='input.py', nall = 3, nrand = 5, nmax=100):
 
     jobdict = jobs / structure.name
     jobdict.jobparams['structure'] = structure.copy()
+    jobdict.structure.cell = Reduction()(jobdict.structure.cell)
     jobdict.functional = kescan.copy()
     jobdict.functional.kpoints = ReducedKDensity(density, (0.5, 0.5, 0.5))
     jobdict.functional.reference = None

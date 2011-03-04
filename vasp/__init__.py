@@ -24,12 +24,12 @@ from specie import Specie
 from ..opt import __load_vasp_in_global_namespace__
 # somehow, mkls don't necessarily get loaded right... Intel linker does not add
 # them to libvasp.so. So we have to go through this shit. Same for libsci.so?
-if __load_vasp_in_global_namespace__:
-  from DLFCN import RTLD_NOW as _RTLD_NOW, RTLD_GLOBAL as _RTLD_GLOBAL
-  from sys import getdlopenflags as _getdlopenflags, setdlopenflags as _setdlopenflags
-  flags = _getdlopenflags()
-  _setdlopenflags(_RTLD_NOW|_RTLD_GLOBAL)
-  _setdlopenflags(flags)
+# if __load_vasp_in_global_namespace__:
+#   from DLFCN import RTLD_NOW as _RTLD_NOW, RTLD_GLOBAL as _RTLD_GLOBAL
+#   from sys import getdlopenflags as _getdlopenflags, setdlopenflags as _setdlopenflags
+#   flags = _getdlopenflags()
+#   _setdlopenflags(_RTLD_NOW|_RTLD_GLOBAL)
+#   _setdlopenflags(flags)
 
 try: 
   from _vasp import version, vasp as call_vasp

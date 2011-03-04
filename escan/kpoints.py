@@ -107,23 +107,21 @@ class KGrid(KPoints):
   def _mnk(self, input, output):
     """ Yields kpoints on the grid. """
     from numpy.linalg import inv, norm
-    from numpy import zeros, array, dot
-    invcell = output.cell.T
-    cell = inv(invcell)
+    from numpy import zeros, array, dot, multiply
+    from ..crystal.gruber import Reduction
     
-    if self.relax: deformation = dot(cell, input.cell.T)
+    if self.relax: deformation = dot(output.cell, input.cell.T)
+    offset = array(self.offset)
+    invgrid = array([1./float(u) for u in self.grid])
+    cell = inv(Reduction()(output.cell, recip=True)).T
 
     a = zeros((3,), dtype='float64')
     weight = 1e0 / float(self.grid[0] * self.grid[1] * self.grid[2])
     for x in xrange(self.grid[0]):
-      a[0] = float(x + self.offset[0]) / float(self.grid[0])
       for y in xrange(self.grid[1]):
-        a[1] = float(y + self.offset[1]) / float(self.grid[1]) 
         for z in xrange(self.grid[2]):
-          a[2] = float(z + self.offset[2]) / float(self.grid[2])
-          yield 1, (dot(deformation, a) if self.relax else a)
-          
-          
+          a = dot(cell, multiply(array([x,y,z]) + self.offset, invgrid))
+          yield 1, array((dot(deformation, a.T).T if self.relax else a).flat)
  
   def __repr__(self):
     """ Represents this object. """
@@ -156,17 +154,17 @@ class KDensity(KGrid):
   def _mnk(self, input, output):
     """ Yields kpoints on the grid. """
     from numpy import zeros, array, dot, floor
-    from numpy.linalg import inv, norm
+    from numpy.linalg import inv, norm, det
     from quantities import angstrom
     from ..crystal import fill_structure
     from ..crystal.gruber import Reduction
     
-    reduction = Reduction()
-    cell = reduction(output.cell, recip=True) * output.scale
+    cell = inv(Reduction()(output.cell,recip=True) * output.scale).T
+    assert abs(det(inv(output.cell*output.scale)) - det(cell)) < 1e-8
     density = self.density
     if hasattr(density, 'rescale'): density.rescale(1e0/Angstrom)
 
-    self.grid = [int(max(1, floor(norm(a) * self.density+0.5))) for a in inv(cell.T)]
+    self.grid = [int(max(1, floor(norm(a) * self.density+0.5))) for a in cell]
     result = KGrid._mnk(self, input, output)
     return result
  

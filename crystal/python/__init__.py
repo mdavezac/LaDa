@@ -507,7 +507,15 @@ def layer_iterator(structure, direction, tolerance=1e-12):
         structure : `Structure`
           The structure for which to iterator over atoms.
         direction : 3d-vector
-          Periodicity vector. Defaults to the first column  vector of the structure.
+          Growth direction vector, e.g. vector perpendicular to the layers.
+          Defaults to the first column vector of the structure.  It is
+          important that two cell-vectors of the structure are (or can be
+          transformed to be) perpendicular to the growth direction. Otherwise
+          it cannot be assured that layers are well defined, i.e. that each
+          atom belongs to a single (as in periodic) layer. This condition is
+          *not* enforced (no assertion) since it is not necessary, only
+          sufficient.  Note that the third vector need not be parallel to the
+          growth direction.
         tolerance : float
           Maximum difference between two atoms in the same layer.
   """

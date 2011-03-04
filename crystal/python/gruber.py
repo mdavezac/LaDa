@@ -22,7 +22,7 @@ class Reduction(object):
     from numpy import matrix
     from numpy.linalg import inv
 
-    cell = matrix(cell.copy())
+    cell = matrix(cell).copy()
     if recip: cell = inv(cell).T
 
     metrical = cell.T * cell

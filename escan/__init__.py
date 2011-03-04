@@ -9,16 +9,14 @@ __all__ = [ "Extract", 'MassExtract', "bandgap", "extract_bg", "dipole_matrix_el
 
 from ..opt import __load_escan_in_global_namespace__
 from lada import lada_with_mpi
-if lada_with_mpi:
-  if __load_escan_in_global_namespace__:
-    from DLFCN import RTLD_NOW as _RTLD_NOW, RTLD_GLOBAL as _RTLD_GLOBAL
-    from sys import getdlopenflags as _getdlopenflags, setdlopenflags as _setdlopenflags
-    flags = _getdlopenflags()
-    _setdlopenflags(_RTLD_NOW|_RTLD_GLOBAL)
-    import _escan
-    _setdlopenflags(flags)
-  else: import _escan
-
+# if lada_with_mpi:
+#   if __load_escan_in_global_namespace__:
+#     from DLFCN import RTLD_NOW as _RTLD_NOW, RTLD_GLOBAL as _RTLD_GLOBAL
+#     from sys import getdlopenflags as _getdlopenflags, setdlopenflags as _setdlopenflags
+#     flags = _getdlopenflags()
+#     _setdlopenflags(_RTLD_NOW|_RTLD_GLOBAL)
+#     import _escan
+#     _setdlopenflags(flags)
 from _bandstructure import plot_bands, BPoints, ReducedBPoints, plot_alloybands
 from _bandgap import bandgap, extract as extract_bg
 from _extract import Extract
