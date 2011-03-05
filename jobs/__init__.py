@@ -42,8 +42,9 @@ def save(jobdict, path = None, overwrite=False):
   """ 
   from os.path import exists
   from pickle import dump
-  from ..opt import open_exclusive
+  from ..opt import open_exclusive, RelativeDirectory
   if path == None: path = "pickled_jobdict"
+  path = "pickled_jobdict" if path == None else RelativeDirectory(path).path
   if exists(path) and not overwrite: 
     print path, "exists. Please delete first if you want to save the job dictionary."
     return
@@ -65,8 +66,8 @@ def load(path = None):
   """ 
   from os.path import exists
   from pickle import load as load_pickle
-  from ..opt import open_exclusive
-  if path == None: path = "pickled_jobdict"
+  from ..opt import open_exclusive, RelativeDirectory
+  path = "pickled_jobdict" if path == None else RelativeDirectory(path).path
   assert exists(path), IOError("File " + path + " does not exist.")
   with open_exclusive(path, "rb") as file: result = load_pickle(file)
   print "Loaded job list from", path, "."
