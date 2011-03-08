@@ -29,16 +29,16 @@ def default_pbs( file, walltime = "05:45:00", mppwidth = 8, queue = None, name =
   file.write("#! /bin/bash\n#PBS -l walltime={0},mppwidth={1}\n".format(walltime, mppwidth))
   if name != None: 
     file.write("#PBS -N {1}\n\n"\
+               "#PBS -V\n"\
                "#PBS -e {0}/err.{1}.$PBS_JOBID\n"\
                "#PBS -o {0}/out.{1}.$PBS_JOBID\n".format(pbsdir, name))
   else:
-    file.write("#PBS -e {0}/err.$PBS_JOBID\n"\
+    file.write("#PBS -V\n"\
+               "#PBS -e {0}/err.$PBS_JOBID\n"\
                "#PBS -o {0}/out.$PBS_JOBID\n".format(pbsdir))
   if queue != None: file.write("#PBS -q {0} \n".format(queue))
   if outdir == None: file.write("cd $PBS_O_WORKDIR\n")
   else: file.write("cd {0}\n".format(outdir))
-  for key, value in environ.items():
-    file.write("export {0}={1}\n".format(key, repr(value)))
 
   # aprun on Fucking Crays. mpirun everywhere else.
   file.write("aprun " if "NERSC_HOST" in environ else "mpirun ")

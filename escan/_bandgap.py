@@ -145,7 +145,7 @@ class ExtractAE(_ExtractE):
     from numpy import array
     from numpy.linalg import det
     from ..physics import a0
-    result, gvectors = [], self.extract_cbm.gvectors.rescale(1./a0)
+    result, gvectors = [], self.gvectors.rescale(1./a0)
     for wfnA in self.gwfns:
       if abs(wfnA.eigenvalue - self.cbm) > degeneracy: continue
       for wfnB in self.gwfns:
