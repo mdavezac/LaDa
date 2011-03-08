@@ -9,7 +9,7 @@ from ..opt import AbstractExtractBase
 from ..vasp.extract._common import Extract as ExtractCommonBase
 from ..vasp.extract._dft import Extract as ExtractDFTBase
 from ..vasp.extract._gw import Extract as ExtractGWBase
-from ..vasp.extract._mixin import SearchMixin
+from ..vasp.extract import SearchMixin
 
 
 class Manager(object): 
