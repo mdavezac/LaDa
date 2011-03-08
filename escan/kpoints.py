@@ -110,18 +110,20 @@ class KGrid(KPoints):
     from numpy import zeros, array, dot, multiply
     from ..crystal.gruber import Reduction
     
-    if self.relax: deformation = dot(output.cell, input.cell.T)
-    offset = array(self.offset)
     invgrid = array([1./float(u) for u in self.grid])
+    offset = multiply(array(self.offset), invgrid) - array([0.5,0.5,0.5])
     cell = inv(Reduction()(output.cell, recip=True)).T
+    if self.relax:
+      deformation = dot(output.cell, input.cell.T)
+      cell = dot(deformation, cell)
 
     a = zeros((3,), dtype='float64')
     weight = 1e0 / float(self.grid[0] * self.grid[1] * self.grid[2])
     for x in xrange(self.grid[0]):
       for y in xrange(self.grid[1]):
         for z in xrange(self.grid[2]):
-          a = dot(cell, multiply(array([x,y,z]) + self.offset, invgrid))
-          yield 1, array((dot(deformation, a.T).T if self.relax else a).flat)
+          a = dot(cell, multiply(array([x,y,z]), invgrid) + offset)
+          yield 1, array(a.flat)
  
   def __repr__(self):
     """ Represents this object. """
@@ -204,10 +206,10 @@ def _reduced_grids_factory(name, base):
       seen = []
       for mult, kpoint in base._mnk(self, input, output): 
         found = False
-        kpoint = to_origin(kpoint, recip.cell)
+        kpoint = to_voronoi(kpoint, recip.cell)
         for i, (count, vec) in enumerate(seen):
           for op in recip.space_group:
-            u = to_voronoi(op(kpoint), recip.cell, vec)
+            u = to_origin(op(kpoint), recip.cell, vec)
             if all(abs(u) < self.tolerance):
               found = True
               seen[i][0] += mult
@@ -233,10 +235,10 @@ def _reduced_grids_factory(name, base):
       seen = []
       for mult, kpoint in base._mnk(self, input, output): 
         found = False
-        kpoint = to_origin(kpoint, recip.cell)
+        kpoint = to_voronoi(kpoint, recip.cell)
         for i, (count, vec) in enumerate(seen):
           for op in recip.space_group:
-            u = to_voronoi(op(kpoint), recip.cell, vec)
+            u = to_origin(op(kpoint), recip.cell, vec)
             if all(abs(u) < self.tolerance):
               found = True
               seen[i][0] += mult
