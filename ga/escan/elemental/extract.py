@@ -26,11 +26,12 @@ class Extract(object):
 
   def __init__(self, directory = ".", comm = None):
     """ Initializes Extract object. """
-    from lada.opt import RelativeDirectory
+    from ....opt import RelativeDirectory
+    from ....mpi import Communicator
 
     self._directory = RelativeDirectory(path=directory, hook=self.uncache)
     """ GA directory. """
-    self.comm = comm
+    self.comm = Communicator(comm)
     """ MPI Communicator. """
 
   def _search_OUTCAR(self, regex, path=None):
@@ -107,20 +108,13 @@ class Extract(object):
     from os.path import join, exists
     from pickle import load
 
-    is_mpi = False if self.comm == None else self.comm.size > 1
-    is_root = True if not is_mpi else self.comm.rank == 0
-
     if self.current_age == None: return None
-    if is_root:
+    if self.comm.is_root:
       current_path = join(join(self.directory, self.current_age), self.FUNCCAR)
       assert exists(current_path), RuntimeError("File {0} does not exist.".format(current_path))
       with open(current_path, "rb") as file: result = load(file)
-      if is_mpi:
-        from boost.mpi import broadcast
-        broadcast(self.comm, result, 0)
-    elif is_mpi:
-      from boost.mpi import broadcast
-      result = broadcast(self.comm, None, 0)
+      self.comm.broadcast(result)
+    else: result = self.comm.broadcast()
     return result
 
   @property
@@ -166,8 +160,9 @@ class Extract(object):
   def solo(self):
     """ Returns extractor with no communicator. """
     from copy import deepcopy
+    from ....mpi import Communicator
     result = deepcopy(self)
-    result.comm = None
+    result.comm = Communicator(None)
     return result
 
   @property
@@ -295,8 +290,9 @@ class Extract(object):
   def solo(self):
     """ Returns a serial extractor (as opposed to MPI). """
     from copy import deepcopy
+    from ....mpi import Communicator
     result = deepcopy(self)
-    result.comm = None
+    result.comm = Communicator(None)
     return result
 
   def __getstate__(self):

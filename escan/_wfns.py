@@ -50,9 +50,8 @@ class rWavefunction(object):
         b = multiply(transpose(operator), ket.down) 
       else: b = multiply(operator, ket.down) 
       result += dot(b, a)
-    if self.comm != None:
-      from boost.mpi import all_reduce
-      return all_reduce(self.comm, result, lambda x,y: x+y) 
+    if self.comm.is_mpi:
+      return self.comm.all_reduce(result, lambda x,y: x+y) 
     else: return result
 
 class Wavefunction(rWavefunction):
@@ -105,7 +104,7 @@ def gtor_fourrier(wavefunctions, rvectors, gvectors, comm, axis=0):
           Two-dimensional array of g-space vectors, with each row a
           (g-)position. The input wavefunctions should be given with respect to
           these points, in the same order, etc.
-        comm : boost.mpi.communicator
+        comm : `mpi.communicator`
           communicator over which the wavefunctions are distributed.  The
           return wavefunctions will also be dirstributed over these processes.
         axis : integer
@@ -118,30 +117,28 @@ def gtor_fourrier(wavefunctions, rvectors, gvectors, comm, axis=0):
   import numpy as np
 
   # serial version
-  if comm == None:
+  if not comm.is_mpi:
     v = np.tensordot(rvectors, gvectors, ((1),(1))) 
     v = np.exp(-1j * v * (rvectors.units * gvectors.units).simplified)
     return np.tensordot(v, wavefunctions, ((1),(axis))) / np.sqrt(float(len(rvectors)))
 
   # mpi version
   else: 
-    from boost.mpi import broadcast, reduce, all_reduce
-
     result = None
     for node in range(comm.size):
       # sends rvectors from node to all
-      r = broadcast(comm, rvectors, node)
+      r = comm.broadcast(rvectors, node)
       # computes all exponentials exp(-i r.g), with r in first dim, and g in second.
       v = np.tensordot(r, gvectors, ((1),(1)))
       v = np.exp(-1j * v * (rvectors.units * gvectors.units).simplified)
       # computes fourrier transform for all wavefunctions simultaneously.
       dummy = np.tensordot(v, wavefunctions, ((1),(axis)))
       # reduce across processes
-      if node == comm.rank: result = reduce(comm, dummy, lambda x,y: x+y, node)
-      else: reduce(comm, dummy, lambda x,y: x+y, node)
+      if node == comm.rank: result = comm.reduce(dummy, lambda x,y: x+y, node)
+      else: comm.reduce(dummy, lambda x,y: x+y, node)
 
     assert not np.any(np.isnan(result))
-    norm = all_reduce(comm, len(rvectors), lambda x, y: x+y)
+    norm = comm.all_reduce(len(rvectors), lambda x, y: x+y)
     return result / np.sqrt(float(norm))
 
 
@@ -160,7 +157,7 @@ def rtog_fourrier(wavefunctions, rvectors, gvectors, comm, axis=0):
           Two-dimensional array of g-space vectors, with each row a
           (g-)position. The input wavefunctions should be given with respect to
           these points, in the same order, etc.
-        comm : boost.mpi.communicator
+        comm : `boost.mpi.communicator`
           communicator over which the wavefunctions are distributed.  The
           return wavefunctions will also be dirstributed over these processes.
         axis : integer
@@ -177,7 +174,7 @@ def rtog_fourrier(wavefunctions, rvectors, gvectors, comm, axis=0):
   assert not np.any(np.isnan(rvectors))
   result = None
   
-  if comm == None:
+  if not comm.is_mpi:
     v = np.tensordot(rvectors, gvectors, ((1),(1)))
     v = np.exp(1j * v * (rvectors.units * gvectors.units).simplified)
     last = wavefunctions.ndim-1
@@ -186,10 +183,9 @@ def rtog_fourrier(wavefunctions, rvectors, gvectors, comm, axis=0):
 
   # mpi version
   else: 
-    from boost.mpi import broadcast, reduce, all_reduce
     for node in range(comm.size):
       # sends rvectors from node to all
-      g = broadcast(comm, gvectors, node)
+      g = comm.broadcast(gvectors, node)
       # computes all exponentials exp(-i r.g), with g in first dim, and r in second.
       v = np.tensordot(rvectors, g, ((1),(1)))
       v = np.exp(1j * v * (rvectors.units * gvectors.units).simplified)
@@ -200,12 +196,12 @@ def rtog_fourrier(wavefunctions, rvectors, gvectors, comm, axis=0):
       dummy = np.dot(wavefunctions.swapaxes(axis, last), v).swapaxes(last, axis)
       # reduce across processes
       assert not np.any(np.isnan(dummy))
-      if node == comm.rank: result = reduce(comm, dummy, lambda x,y: x+y, node)
-      else: reduce(comm, dummy, lambda x,y: x+y, node)
+      if node == comm.rank: result = comm.reduce(dummy, lambda x,y: x+y, node)
+      else: comm.reduce(dummy, lambda x,y: x+y, node)
 
 
     assert not np.any(np.isnan(result))
     # gets normalization factor.
-    norm = all_reduce(comm, rvectors.shape[0], lambda x,y:x+y)
+    norm = comm.all_reduce(rvectors.shape[0], lambda x,y:x+y)
     assert norm != 0
     return result/ float(norm)

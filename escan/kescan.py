@@ -222,9 +222,6 @@ class KEscan(Escan):
         setattr(this, key, value)
       if do_relax_kpoint != None: this.do_relax_kpoint = do_relax_kpoint
 
-      is_mpi = False if comm == None else comm.size > 1
-      is_root = comm.rank == 0 if is_mpi else True
-
       # performs vff calculations
       vffrun = kwargs.pop('vffrun', None)
       genpotrun = kwargs.pop('genpotrun', None)
@@ -293,9 +290,10 @@ class KEscan(Escan):
         kpoints, of procs, and the fft mesh, in that order increasingly
         inclusive order. Returns 1 on failure.
     """
+    from ..mpi import Communicator
+    comm = Communicator(comm)
     if self.nbpools > 0: return min(comm.size, self.nbpools)
-    if comm == None: return 1
-    if comm.size == 1: return 1
+    if not comm.is_mpi: return 1
     if N == 1: return 1
 
     # finds divisors of N

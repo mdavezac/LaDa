@@ -20,7 +20,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
           directory : str or None
             Directory where escan output files are located. Defaults to current
             working directory if None.
-          comm : boost.mpi.communicator
+          comm : `mpi.Communicator`
             Communicator containing as many processes as were used to perform
             calculations. This is only mandatory when using wavefunctions in
             some way.
@@ -58,7 +58,8 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     return self._vffout.comm 
   @comm.setter
   def comm(self, value):
-    if hasattr(self, "_vffout"): self._vffout.comm = value
+    from ..mpi import Communicator
+    self._vffout.comm = Communicator(value)
 
   @property
   def kpoint(self):
@@ -351,14 +352,15 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     from numpy import sqrt
     from numpy.linalg import norm, det
     from quantities import angstrom, pi
-    from boost.mpi import world
+    from ..mpi import world
     from ..opt import redirect
     from ..opt.changedir import Changedir
     from ..physics import a0, reduced_reciprocal_au
     from ._escan import read_wavefunctions
     from . import soH
 
-    comm = self.comm if self.comm != None else world
+    comm = self.comm if self.comm.real else world
+    assert comm.real, ValueError("MPI needed to play with wavefunctions.")
     is_root = comm.rank == 0 
     assert self.success
     assert self.nnodes == comm.size, \

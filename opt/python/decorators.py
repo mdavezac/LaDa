@@ -14,22 +14,21 @@ def broadcast_result(key=False, attr=False, which=0):
     """
 
     def wrapped(*args, **kwargs):
+      from ..mpi import Communicator
       # removes comm argument
-      comm = kwargs.pop("comm", None)
+      comm = kwargs.pop("comm", Communicator(None))
       # nonetype case: each proc performs same action. Serial case.
-      if comm == None or comm.size == 1: return method(*args, **kwargs)
+      if not comm.is_mpi: return method(*args, **kwargs)
       # is an mpi process.
       error, result, exception = False, None, None
       if comm.rank == 0: # root process
-        from boost.mpi import world, broadcast
         try: result = method(*args, **kwargs)
         except Exception as exception:
-          broadcast(comm, (True, (str(exception), world.rank)), root=0)
+          comm.broadcast((True, (str(exception), world.rank)))
           raise
-        broadcast(comm, (False, result), root=0)
+        comm.broadcast((False, result))
       else:
-        from boost.mpi import broadcast
-        error, result = broadcast(comm, root=0)
+        error, result = comm.broadcast()
         assert not error, RuntimeError("Process %i reports an error: %s"  % (result[1], result[0]))
       return result
     wrapped.__name__ = method.__name__
@@ -53,18 +52,16 @@ def broadcast_result(key=False, attr=False, which=0):
              RuntimeError("Argument %i does not have communicator." %(which))
       comm = args[which].comm
       # nonetype and serial case: each proc performs same action. 
-      if comm == None or comm.size == 1: return method(*args, **kwargs)
+      if not comm.is_mpi: return method(*args, **kwargs)
       # is an mpi process.
       error, result, exception = False, None, None
       if comm.rank == 0: # root process
-        from boost.mpi import world, broadcast
         try: result = method(*args, **kwargs)
         except Exception as exception: error, result = True, (str(exception), world.rank)
-        broadcast(comm, (error, result), root=0)
+        comm.broadcast((error, result))
         assert not error, exception
       else:
-        from boost.mpi import broadcast
-        error, result = broadcast(comm, root=0)
+        error, result = comm.broadcast(comm)
         assert not error, RuntimeError("Process %i reports an error: %s"  % (result[1], result[0]))
       if __debug__: comm.barrier()
       return result

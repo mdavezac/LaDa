@@ -33,11 +33,11 @@ class Bleeder(object):
     self._filename = None
     """ Name of the temp file where the job-dictionary is stored. """
     directory = RelativeDirectory(directory).path
-    if self.is_root: 
+    if self.comm.is_root: 
       with NamedTemporaryFile(dir=directory, delete=False, prefix='ga_evaldict') as file:
         dump(jobdict, file)
         self._filename = file.name
-    self._filename = self.broadcast(self._filename)
+    self._filename = self.comm.broadcast(self._filename)
 
   @property 
   def pools(self):
@@ -46,59 +46,25 @@ class Bleeder(object):
   @pools.setter
   def pools(self, value):
     if value == None: self._pools = 1
-    elif not self.is_mpi: self._pools = 1
+    elif not self.comm.is_mpi: self._pools = 1
     elif value > self.comm.size: self._pools = self.comm.size
     else: self._pools = value
 
     self._local_comm = self.comm
-    if self.is_mpi and self._pools > 1: 
+    if self.comm.is_mpi and self._pools > 1: 
       self._local_comm = self.comm.split(self.comm.rank % self._pools) 
   @pools.deleter
   def pools(self): self.pools = None
 
   @property
-  def is_mpi(self): 
-    """ True if this is an mpi session. """
-    return False if self.comm == None else self.comm.size > 1
-  @property 
-  def is_root(self):
-    """ True if this process is the world root. """
-    return self.comm.rank == 0 if self.is_mpi else True
-  @property
   def comm(self):
     """ *World* communicator. """
     return self._comm
   
-  def broadcast(self, value):
-    """ Broadcasts from comm, if needed. """
-    if self.is_mpi:
-      from boost.mpi import broadcast
-      return broadcast(self.comm, value, 0)
-    return value
-  def barrier(self):
-    """ MPI barrier if needed. """
-    if self.is_mpi: self.comm.barrier()
-  @property
-  def is_local_root(self):
-    """ True if this process is the local root. """
-    return self.local_comm.rank == 0 if self.is_mpi else True
-  @property
-  def is_local_mpi(self):
-    """ True if local comm has more than one rank. """
-    return False if self.local_comm == None else self.local_comm.size > 1
   @property
   def local_comm(self): 
     """ Local communicator. """
     return self._local_comm
-  def local_broadcast(self, value):
-    """ Broadcasts from local comm, if needed. """
-    if self.is_local_mpi:
-      from boost.mpi import broadcast
-      return broadcast(self.local_comm, value, 0)
-    return value
-  def local_barrier(self):
-    """ Barrier over local processes. """
-    if self.is_local_mpi: self.local_mpi.barrier()
 
   def __iter__(self): 
     """ Iterates over all jobs until completion. 
@@ -112,7 +78,7 @@ class Bleeder(object):
     while True:
       # only local root reads stuff. 
       job = None
-      if self.is_local_root: 
+      if self.local_comm.is_root: 
         # acquire a lock first.
         with LockFile(self._filename) as lock:
           # checks for file existence. Done if no file.
@@ -128,7 +94,7 @@ class Bleeder(object):
               with open(self._filename, 'w') as file: dump(jobdict, file)
             else: job = None # no job was found.
       # for all nodes, broadcasts job.
-      job = self.local_broadcast(job)
+      job = self._local_comm.broadcast(job)
       # check for bailout.
       if job == None: break
 
@@ -136,7 +102,7 @@ class Bleeder(object):
       yield job
 
       # saves job and whatever modifications.
-      if self.is_local_root: 
+      if self.local_comm.is_root: 
         # acquire a lock first.
         with LockFile(self._filename) as lock:
           # Loads pickle.
@@ -152,9 +118,9 @@ class Bleeder(object):
     from os import remove
     from pickle import load as pickle_load
     from ..opt import LockFile
-    self.barrier()
+    self.comm.barrier()
     jobdict = None
-    if self.is_root:
+    if self.comm.is_root:
       # acquire a lock first.
       with LockFile(self._filename) as lock:
         # checks for file existence. Done if no file.
@@ -162,7 +128,7 @@ class Bleeder(object):
           # Loads pickle.
           with open(self._filename, 'r') as file: jobdict = pickle_load(file)
           remove(self._filename)
-    return self.broadcast(jobdict)
+    return self.comm.broadcast(jobdict)
 
   def itercompute(self, *args, **kwargs):
     """ Iterates over computable jobs. 

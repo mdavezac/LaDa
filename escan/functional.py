@@ -269,12 +269,9 @@ class Escan(object):
     from ..opt import copyfile
     from ..opt.changedir import Changedir
     from ..opt.tempdir import Tempdir
+    from ..mpi import Communicator
 
-    if lada_with_mpi and comm == None:
-      from boost.mpi import world
-      comm = world
-    is_mpi = False if comm == None else comm.size > 1
-    is_root = comm.rank == 0 if is_mpi else True
+    comm = Communicator(comm, with_world=True)
 
     if outdir == None: outdir = getcwd()
 
@@ -293,14 +290,11 @@ class Escan(object):
       else: raise NameError( "%s attribute unknown of escan." % (key) )
 
     # checks if outdir contains a successful run.
-    does_exist = exists(outdir) if is_root else None
-    if is_mpi: 
-      from boost.mpi import broadcast
-      does_exist, overwrite = broadcast(comm, (does_exist, overwrite), 0)
+    does_exist, overwrite = comm.broadcast((exists(outdir) if comm.is_root else None, overwrite))
     if does_exist and not overwrite:
       extract = this.Extract(directory=outdir, escan=this, comm=comm)
       if extract.success: return extract # in which case, returns extraction object.
-    if is_mpi: comm.barrier() # makes sure directory is not created by other proc!
+    comm.barrier() # makes sure directory is not created by other proc!
 
     # changes to temporary working directory
     if self.inplace: context = Changedir(outdir, comm=comm) 
@@ -308,7 +302,7 @@ class Escan(object):
     with context as this._tempdir: 
 
       # Saves FUNCCAR.
-      if is_root:
+      if comm.is_root:
         path = join(abspath(this._tempdir), this._FUNCCAR)
         with open(path, "w") as file: dump(this, file)
   
@@ -333,15 +327,13 @@ class Escan(object):
   def _cout(self, comm):
     """ Creates output name. """
     if self.OUTCAR == None: return "/dev/null"
-    if comm == None:   return self.OUTCAR
-    if comm.rank == 0: return self.OUTCAR
+    if comm.is_root: return self.OUTCAR
     return self.OUTCAR + "." + str(comm.rank) if self.print_from_all else "/dev/null"
 
   def _cerr(self, comm):
     """ Creates error name. """
     if self.ERRCAR == None: return "/dev/null"
-    if comm == None:   return self.ERRCAR
-    if comm.rank == 0: return self.ERRCAR
+    if comm.is_root: return self.ERRCAR
     return self.ERRCAR + "." + str(comm.rank) if self.print_from_all else "/dev/null"
 
 
@@ -363,8 +355,8 @@ class Escan(object):
       with open(cout, "w") as file: 
         print >>file, "# Escan calculation on ", time.strftime("%m/%d/%y", local_time),\
                       " at ", time.strftime("%I:%M:%S %p", local_time)
-        if comm != None:
-          from boost.mpi import world
+        if comm.is_mpi:
+          from ..mpi import world
           file.write("# Computing with {0} processors of {1}.\n".format(comm.size, world.size))
         if len(structure.name) != 0: file.write("# Structure named {0}.".format(structure.name))
         # changes directory to get relative paths.
@@ -396,7 +388,7 @@ class Escan(object):
 
   def _local_comm(self, comm):
     """ Communicator over which calculations are done. """
-    if comm == None or comm.size == 1: return comm
+    if not comm.is_mpi: return comm
     fftsize = self.fft_mesh[0] * self.fft_mesh[1] * self.fft_mesh[2]
     for m in range(comm.size, 0, -1):
       if fftsize % m == 0: break
@@ -410,9 +402,7 @@ class Escan(object):
     from ..vff import Extract as ExtractVff
     from ..opt import copyfile
 
-    is_root = comm.rank == 0 if comm != None else True
-
-    if is_root and self.vffrun != None:
+    if comm.is_root and self.vffrun != None:
       vffrun = self.vffrun.solo()
       POSCAR = join(vffrun.directory, vffrun.functional._POSCAR)
       rstr = vffrun.structure
@@ -426,12 +416,10 @@ class Escan(object):
     
     out = self.vff(structure, outdir=outdir, comm=comm, overwrite=overwrite)
     assert out.success, RuntimeError("VFF relaxation did not succeed.")
-    if is_root: out.solo().write_escan_input(self._POSCAR, out.solo().structure)
+    if comm.is_root: out.solo().write_escan_input(self._POSCAR, out.solo().structure)
 
     # copies vff output to stdout. This way, only one outcar.
-    is_mpi = False if comm == None else comm.size > 1
-    is_root = comm.rank == 0 if is_mpi else True
-    if is_root and out.OUTCAR != self.OUTCAR:
+    if comm.is_root and out.OUTCAR != self.OUTCAR:
       s = out.solo()
       with open(join(s.directory, s.OUTCAR)) as file_in: 
         with open(cout, "aw") as file_out: 
@@ -451,9 +439,7 @@ class Escan(object):
     from ..opt import redirect, copyfile
 
     # using genpot from previous run
-    is_mpi = False if comm == None else comm.size > 1
-    is_root = comm.rank == 0 if is_mpi else True
-    if is_root and self.genpotrun != None:
+    if comm.is_root and self.genpotrun != None:
       genpotrun = self.genpotrun.solo()
       POTCAR = join(genpotrun.directory, genpotrun.functional._POTCAR)
       potcar = self._POTCAR
@@ -466,7 +452,7 @@ class Escan(object):
     # Creates temporary input file and creates functional
     dnc_mesh = self.dnc_mesh if self.dnc_mesh != None else self.fft_mesh
     overlap_mesh = self.overlap_mesh if self.overlap_mesh != None else (0,0,0)
-    if is_root: 
+    if comm.is_root: 
       with open(self._GENCAR, "w") as file:
         file.write( "%s\n%i %i %i\n%i %i %i\n%i %i %i\n%f\n%i\n"\
                     % ( self._POSCAR, self.fft_mesh[0], self.fft_mesh[1], self.fft_mesh[2], \
@@ -485,9 +471,9 @@ class Escan(object):
 
     if norun == False:
       with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 
+        assert comm.real, RuntimeError('Cannot run escan without mpi.')
         from ._escan import _call_genpot
-        assert lada_with_mpi and comm != None, RuntimeError('Cannot run escan without mpi.')
-        if is_mpi: comm.barrier()
+        comm.barrier()
         _call_genpot(comm)
 
 
@@ -502,9 +488,7 @@ class Escan(object):
     # Creates temporary input file and creates functional
     kpoint = (0,0,0,0,0) if norm(self.kpoint) < 1e-12\
              else self._get_kpoint(structure, comm, norun)
-    is_mpi = False if comm == None else comm.size > 1
-    is_root = comm.rank == 0 if is_mpi else True
-    if is_root:
+    if comm.is_root:
       with open(self._INCAR, "w") as file:
         file.write('1 {0}\n'.format(self._POTCAR))
         file.write('2 {0.WAVECAR}\n3 {1}\n'.format(self, 1 if self.eref != None else 2) )
@@ -550,13 +534,12 @@ class Escan(object):
     from os.path import basename
     from ..opt import redirect
 
-    is_mpi = False if comm == None else comm.size > 1
     self._write_incar(comm, structure, norun)
     if norun == False:
       with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 
-        assert lada_with_mpi and comm != None, RuntimeError('Cannot run escan without mpi.')
+        assert comm.real, RuntimeError('Cannot run escan without mpi.')
         from ._escan import _call_escan
-        if is_mpi: comm.barrier()
+        comm.barrier()
         _call_escan(comm)
 
   def _get_kpoint(self, structure, comm, norun):
@@ -570,18 +553,14 @@ class Escan(object):
     if norun == True: relaxed = structure.cell.copy()
     else:
       relaxed = zeros((3,3), dtype="float64")
-      is_mpi = False if comm == None else comm.size > 1
-      is_root = comm.rank == 0 if is_mpi else True
-      if is_root:
+      if comm.is_root:
         with open(self._POSCAR, "r") as file:
           file.readline() # number of atoms.
           # lattice vector by lattice vector
           for i in range(3): 
             relaxed[:,i] = array([float(u) for u in file.readline().split()[:3]])
         relaxed = relaxed / structure.scale * float(a0.rescale(angstrom))
-      if is_mpi:
-        from boost.mpi import broadcast
-        relaxed = broadcast(comm, relaxed, 0)
+      relaxed = comm.broadcast(relaxed)
 
     input = structure.cell 
     if (norun != True) and self.do_relax_kpoint and any(abs(relaxed-input) > 1e-12):

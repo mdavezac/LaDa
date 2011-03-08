@@ -2,16 +2,13 @@
 
 def is_synced(comm):
   if not __debug__: return
-
-  from boost.mpi import broadcast
-  result = broadcast(comm, "Checking if processes are synced.", 0)
+  result = comm.broadcast("Checking if processes are synced.", 0)
   assert result == "Checking if processes are synced.", \
          RuntimeError("Processes are not synced: %s " % result) 
 
 def _check_population(self, population):
-  from boost.mpi import broadcast
   if not __debug__: return
-  new_pop = broadcast(self.comm, population, 0)
+  new_pop = self.comm.broadcast(population)
   for a, b in zip(new_pop, population):
     assert a == b, RuntimeError("Populations are not equivalent across processes.")
     ahas, bhas = hasattr(a, "fitness"), hasattr(b, "fitness")
@@ -25,7 +22,6 @@ def _check_population(self, population):
 
 def run(self):
   """ Performs a Genetic Algorithm search """
-  from boost.mpi import broadcast
   import standard
   import sys
  
@@ -56,7 +52,7 @@ def run(self):
     j = 0
     loop = True
     while loop:
-      indiv = broadcast(self.comm, self.Individual() if self.comm.rank == 0 else None, 0)
+      indiv = self.comm.broadcast(self.Individual() if self.comm.rank == 0 else None)
       loop = self.taboo(indiv)
       j += 1
       assert j < max(50*self.popsize, 100), "Could not create offspring.\n"
@@ -86,8 +82,8 @@ def run(self):
           assert j < max(10*self.popsize, 100), "Could not create offspring.\n"
         indiv.birth = self.current_gen
         self.offspring.append(indiv)
-      broadcast(self.comm, self.offspring, 0)
-    else: self.offspring = broadcast(self.comm, self.offspring, 0)
+      self.comm.broadcast(self.offspring)
+    else: self.offspring = self.comm.broadcast(self.offspring)
 
 
     # now evaluates population.
@@ -97,7 +93,7 @@ def run(self):
     if self.comm.rank == 0:
       self.population = sorted( self.population, self.cmp_indiv )[:len(self.population)-nboffspring]
       self.population.extend( self.offspring )
-    self.population = broadcast(self.comm, self.population, 0)
+    self.population = self.comm.broadcast(self.population)
 
     
     self.offspring = []

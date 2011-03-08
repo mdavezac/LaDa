@@ -9,7 +9,7 @@ class AbstractExtractBase(object):
   
       Defines a number of members common to all extraction classes:
         - directory: root directory where output should exist.
-        - comm : boost.mpi.communicator in case of mpi syncronization.
+        - comm : `mpi.Communicator`
   """
   __metaclass__ = ABCMeta
   def __init__(self, directory=None, comm=None):
@@ -25,11 +25,12 @@ class AbstractExtractBase(object):
 
     from os import getcwd
     from . import RelativeDirectory
+    from ..mpi import Communicator
 
     if directory == None: directory = getcwd()
     self._directory = RelativeDirectory(directory, hook=self.__directory_hook__)
     """ Directory where output should be found. """
-    self.comm = comm
+    self.comm = Communicator(comm)
     """ Communicator for extracting stuff. 
 
         All procs will get same results at end of extraction. 

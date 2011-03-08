@@ -33,7 +33,7 @@ def save(jobdict, path = None, overwrite=False):
       :keyword comm:
         Convenience parameter. Only root process actually saves.
         Other processes wait silently.
-      :type comm: boost.mpi.comm
+      :type comm: `mpi.Communicator`
       :keyword overwrite: if True, then overwrites file.
 
       This method first acquire an exclusive lock on the file before writing
@@ -57,7 +57,7 @@ def load(path = None):
  
       :keyword path: Filename of a pickled jobdictionary.
       :keyword comm: MPI processes for which to read job-dictionary.
-      :type comm: boost.mpi.communicator
+      :type comm: `mpi.communicator`
       :return: Returns a JobDict object.
 
       This method first acquire an exclusive lock (using os dependent lockf) on

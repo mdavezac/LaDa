@@ -12,7 +12,7 @@ def main():
   from os import getcwd, environ
   from os.path import expanduser, abspath, join, relpath
   from optparse import OptionParser
-  from boost.mpi import world
+  from lada.mpi import world
   from lada import jobs
   from lada.opt.changedir import Changedir
 

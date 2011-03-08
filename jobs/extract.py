@@ -359,7 +359,7 @@ class MassExtract(AbstractMassExtract):
           path : str or None
             Pickled jobdictioanary for which to extract stuff. If None, will
             attempt to use the current jobdictionary.
-          comm : boost.mpi.communicator or None
+          comm : `mpi.communicator`
             Optional communicator. How communicators are used will depend on
             each calculation's extractor.
           kwargs : dict
@@ -375,7 +375,6 @@ class MassExtract(AbstractMassExtract):
     from os.path import isdir, isfile, exists, dirname, abspath
 
     self.rootdir = path # Path to the job dictionary.
-    self.comm = comm
 
   @property
   def comm(self):
@@ -390,15 +389,18 @@ class MassExtract(AbstractMassExtract):
     return self._comm
   @comm.setter
   def comm(self, value):
+    from ..mpi import Communicator
+    value = Communicator(value)
     if self._cached_extractors != None:
       for e in self._cached_extractors.values(): e.comm = value
     self._comm = value
   @comm.deleter
   def comm(self):
+    from ..mpi import Communicator
     if self._cached_extractors != None:
       for e in self._cached_extractors.values():
-        if hasattr(e, "comm"): e.comm = None
-    self._comm = None
+        if hasattr(e, "comm"): e.comm = Communicator()
+    self._comm = Communicator()
 
   @property
   def view(self):
@@ -494,7 +496,7 @@ class AbstractMassExtractDirectories(AbstractMassExtract):
             If None, uses current working directory.
           Extract
             Extraction class to use within each calculation. 
-          comm : boost.mpi.communicator or None
+          comm : `mpi.communicator`
             Optional communicator. How communicators are used will depend on
             each calculation's extractor.
           kwargs : dict
@@ -531,15 +533,18 @@ class AbstractMassExtractDirectories(AbstractMassExtract):
     return self._comm
   @comm.setter
   def comm(self, value):
+    from ..mpi import Communicator
+    value = Communicator(value)
     if self._cached_extractors != None:
       for e in self._cached_extractors.values(): e.comm = value
     self._comm = value
   @comm.deleter
   def comm(self):
+    from ..mpi import Communicator
     if self._cached_extractors != None:
       for e in self._cached_extractors.values():
-        if hasattr(e, "comm"): e.comm = None
-    self._comm = None
+        if hasattr(e, "comm"): e.comm = Communicator()
+    self._comm = Communicator()
 
   @property
   def rootdir(self): 
