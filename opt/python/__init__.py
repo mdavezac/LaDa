@@ -544,7 +544,7 @@ def convert_from_unix_re(pattern):
   return compile(pattern)
     
 @broadcast_result(key=True)
-def copyfile(src, dest=None, nothrow=None, comm=None, symlink=False):
+def copyfile(src, dest=None, nothrow=None, comm=None, symlink=False, aslink=False):
   """ Copy ``src`` file onto ``dest`` directory or file.
 
       :kwarg src: Source file.
@@ -561,14 +561,21 @@ def copyfile(src, dest=None, nothrow=None, comm=None, symlink=False):
           - *none*: ``src`` can be None.
           - *null*: ``src`` can be '/dev/null'.
           - *never*: will never throw.
-
-
+      :kwarg symlink:  Creates link rather than actual hard-copy. Symlink are
+          created with relative paths given starting from the directory of
+          ``dest``.  Defaults to False.
+      :type symlink: bool
+      :kwarg aslink:  Creates link rather than actual hard-copy if ``src`` is
+          itself a link. Links to the file which ``src`` points to, not to
+          ``src`` itself. Defaults to False.
+      :type aslink: bool
 
       This function fails selectively, depending on what is in ``nothrow`` list.
   """
   try:
     from os import getcwd, symlink
-    from os.path import isdir, isfile, samefile, exists, basename, dirname, join
+    from os.path import isdir, isfile, samefile, exists, basename, dirname,\
+                        join, islink, realpath, relpath
     from shutil import copyfile as cpf
     if nothrow == None: nothrow = []
     if isinstance(nothrow, str): nothrow = nothrow.split()
@@ -595,7 +602,8 @@ def copyfile(src, dest=None, nothrow=None, comm=None, symlink=False):
     if exists(dest) and samefile(src, dest): 
       if 'same' in nothrow: return False
       raise IOError("{0} and {1} are the same file.".format(src, dest))
-    if symlink: symlink(src, dest)
+    if aslink and islink(src): symlink, src = True, realpath(src)
+    if symlink: symlink(relpath(src, dirname(dest)), dest)
     else: cpf(src, dest)
   except:
     if 'never' in nothrow: return False
