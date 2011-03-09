@@ -27,7 +27,11 @@ namespace CE
     namespace bblas = boost::numeric::ublas;
     const t_Structures :: value_type &structure = structures()[_n];
     const t_Weights :: value_type &weight = weights()[_n];
-    const std::string name = fs::path( structure.name ).leaf().string() ;
+#   if BOOST_FILESYSTEM_VERSION == 2
+      const std::string name = fs::path( structure.name ).leaf();
+#   else 
+      const std::string name = fs::path( structure.name ).leaf().string();
+#   endif
     const types::t_real target = structure.energy;
  
     types::t_real predic( bblas::inner_prod( _ecis, pis[_n] ) );

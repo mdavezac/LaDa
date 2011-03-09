@@ -460,9 +460,9 @@ class Escan(object):
       POTCAR = join(genpotrun.directory, genpotrun.functional._POTCAR)
       potcar = self._POTCAR
       copyfile(POTCAR, potcar, 'same exists', None, self.symlink)
-      copyfile(self.maskr, nothrow='same', None, self.symlink)
+      copyfile(self.maskr, nothrow='same', comm=None, symlink=self.symlink)
       for pot in self.atomic_potentials:
-        copyfile(pot.nonlocal, nothrow='none same', None, self.symlink)
+        copyfile(pot.nonlocal, nothrow='none same', comm=None, symlink=self.symlink)
     if self.genpotrun != None: return
 
     assert self.atomic_potentials != None, RuntimeError("Atomic potentials are not set.")
@@ -607,3 +607,14 @@ class Escan(object):
              ValueError("Attribute {0} does not exist and will not be created in copy.".format(key))
       setattr(result, key, value)
     return result
+
+  def __setstate__(self, value):
+    """ Takes care of different versions.
+ 
+        Earlier versions may not have all the attributes that now exist by
+        defaults. This routines adds them when unpickling.
+    """
+    self.__dict__.update(value)
+    self.symlink = True
+    for key, value in self.__class__().__dict__.iteritems():
+       if not hasattr(self, key): setattr(self, key, value)
