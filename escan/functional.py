@@ -416,11 +416,11 @@ class Escan(object):
       vffrun = self.vffrun.solo()
       POSCAR = join(vffrun.directory, vffrun.functional._POSCAR)
       rstr = vffrun.structure
-      if exists(POSCAR): copyfile(POSCAR, self._POSCAR, 'same', None)
+      if exists(POSCAR): copyfile(POSCAR, self._POSCAR, 'same', None, True)
       else: vffrun.write_escan_input(self._POSCAR, rstr)
       VFFCOUT = vffrun.functional.vff._cout(None)
       VFFCOUT = join(vffrun.directory, VFFCOUT)
-      copyfile(VFFCOUT, self.vff._cout(None), 'same exists null', None)
+      copyfile(VFFCOUT, self.vff._cout(comm), 'same exists null', None, True)
 
     if self.vffrun != None or norun == True: return
     
@@ -457,9 +457,10 @@ class Escan(object):
       genpotrun = self.genpotrun.solo()
       POTCAR = join(genpotrun.directory, genpotrun.functional._POTCAR)
       potcar = self._POTCAR
-      copyfile(POTCAR, potcar, 'same exists')
-      copyfile(self.maskr, nothrow='same')
-      for pot in self.atomic_potentials: copyfile(pot.nonlocal, nothrow='none same')
+      copyfile(POTCAR, potcar, 'same exists', None, True)
+      copyfile(self.maskr, nothrow='same', None, True)
+      for pot in self.atomic_potentials:
+        copyfile(pot.nonlocal, nothrow='none same', None, True)
     if self.genpotrun != None: return
 
     assert self.atomic_potentials != None, RuntimeError("Atomic potentials are not set.")
@@ -478,10 +479,10 @@ class Escan(object):
           file.write(basename(pot.filepath) + "\n") 
     for pot in self.atomic_potentials:
       # copy potential files as well.
-      copyfile(pot.filepath, nothrow='same', comm=comm)
-      copyfile(pot.nonlocal, nothrow='same None', comm=comm)
+      copyfile(pot.filepath, nothrow='same', comm=comm, symlink=True)
+      copyfile(pot.nonlocal, nothrow='same None', comm=comm, symlink=True)
 
-    copyfile(self.maskr, nothrow='same', comm=comm)
+    copyfile(self.maskr, nothrow='same', comm=comm, symlink=True)
 
     if norun == False:
       with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 

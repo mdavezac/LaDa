@@ -544,7 +544,7 @@ def convert_from_unix_re(pattern):
   return compile(pattern)
     
 @broadcast_result(key=True)
-def copyfile(src, dest=None, nothrow=None, comm=None):
+def copyfile(src, dest=None, nothrow=None, comm=None, symlink=False):
   """ Copy ``src`` file onto ``dest`` directory or file.
 
       :kwarg src: Source file.
@@ -567,7 +567,7 @@ def copyfile(src, dest=None, nothrow=None, comm=None):
       This function fails selectively, depending on what is in ``nothrow`` list.
   """
   try:
-    from os import getcwd
+    from os import getcwd, symlink
     from os.path import isdir, isfile, samefile, exists, basename, dirname, join
     from shutil import copyfile as cpf
     if nothrow == None: nothrow = []
@@ -595,7 +595,8 @@ def copyfile(src, dest=None, nothrow=None, comm=None):
     if exists(dest) and samefile(src, dest): 
       if 'same' in nothrow: return False
       raise IOError("{0} and {1} are the same file.".format(src, dest))
-    cpf(src, dest)
+    if symlink: symlink(src, dest)
+    else: cpf(src, dest)
   except:
     if 'never' in nothrow: return False
     raise
