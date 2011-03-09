@@ -94,7 +94,7 @@ class Bleeder(object):
               with open(self._filename, 'w') as file: dump(jobdict, file)
             else: job = None # no job was found.
       # for all nodes, broadcasts job.
-      job = self._local_comm.broadcast(job)
+      job = self.local_comm.broadcast(job)
       # check for bailout.
       if job == None: break
 

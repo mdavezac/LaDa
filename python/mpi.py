@@ -6,7 +6,7 @@
 __docformat__ = "restructuredtext en"
 __all__ = [ 'world', 'Communicator', 'world', 'all_gather', 'all_reduce', 'all_to_all',
             'broadcast', 'reduce', 'gather', 'NullComm']
-from .. import lada_with_mpi
+from . import lada_with_mpi
 
 def null_broadcast(comm, value=None, root=0): return value
 def null_gather(comm, value, root=0): return [value]
@@ -32,30 +32,23 @@ else:
                         gather as boost_gather
 
   def broadcast(comm, value=None, root=0):
-    from boost.mpi import broadcast as boost_broadcast
-    if comm == None: return value
-    if comm.size == 1: return value
-    return boost_broadcast(comm, value, root)
+    return boost_broadcast(comm, value, root) if comm.is_mpi else null_broadcast(comm, value)
   broadcast.__doc__ = boost_broadcast
   def reduce(comm, value, op, root=0):
-    from boost.mpi import reduce as boost_reduce
-    if comm == None: return value
-    if comm.size == 1: return value
-    return boost_reduce(comm, value, op, root)
+    return boost_reduce(comm, value, op, root) if comm.is_mpi else null_reduce(comm, value, op)
   reduce.__doc__ = boost_reduce
   def gather(comm, value, root=0):
-    from boost.mpi import 
-    if comm == None: return [value]
-    if comm.size == 1: return [value]
-    return boost_gather(comm, value, root)
+    return boost_gather(comm, value, root) if comm.is_mpi else null_gather(comm, value)
   gather.__doc__ = boost_gather
-  def barrier(comm):
-    if comm == Null: return
-    if comm.size == 1: return
-    comm.barrier()
   def real(self):
     """ True if a real mpi-communicator. """
     return True
+  def is_root(self):
+    """ True if self.rank == 0. """
+    return self.rank == 0
+  def is_mpi(self):
+    """ True if more than one proc. """
+    return self.size > 1
   BoostComm.all_gather = all_gather
   BoostComm.all_reduce = all_reduce
   BoostComm.all_to_all = all_to_all
@@ -63,6 +56,8 @@ else:
   BoostComm.reduce = reduce
   BoostComm.gather = gather
   BoostComm.real = property(real)
+  BoostComm.is_root = property(is_root)
+  BoostComm.is_mpi = property(is_mpi)
 
 class NullComm(object):
   """ Fake communicator for non-mpi stuff. """

@@ -46,11 +46,12 @@ def broadcast_result(key=False, attr=False, which=0):
     """
 
     def wrapped(*args, **kwargs):
+      from ..mpi import Communicator
       assert len(args) > which,\
              RuntimeError("Expected at least %i arguments, got %s." % (which, args))
       assert hasattr(args[which], "comm"),\
              RuntimeError("Argument %i does not have communicator." %(which))
-      comm = args[which].comm
+      comm = Communicator(args[which].comm)
       # nonetype and serial case: each proc performs same action. 
       if not comm.is_mpi: return method(*args, **kwargs)
       # is an mpi process.

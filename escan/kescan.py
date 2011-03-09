@@ -212,6 +212,7 @@ class KEscan(Escan):
       from copy import deepcopy
       from os.path import join
       from ..jobs import JobDict, Bleeder
+      from ..mpi import Communicator
 
       this = deepcopy(self)
       do_relax_kpoint = kwargs.pop('do_relax_kpoint', kwargs.pop('do_relax_kpoints', None))
@@ -221,6 +222,7 @@ class KEscan(Escan):
         assert hasattr(this, key), TypeError("Unexpected keyword argument {0}.".format(key))
         setattr(this, key, value)
       if do_relax_kpoint != None: this.do_relax_kpoint = do_relax_kpoint
+      comm = Communicator(comm, with_world=True)
 
       # performs vff calculations
       vffrun = kwargs.pop('vffrun', None)

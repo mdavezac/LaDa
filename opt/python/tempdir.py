@@ -37,7 +37,7 @@ class Tempdir:
         self._tempdir = join(self.workdir, self.debug)
         if not exists(self._tempdir): makedirs(self._tempdir)
     else: self._tempdir  = None
-    if self.comm.is_mpi
+    if self.comm.is_mpi:
       self._tempdir = self.comm.broadcast(self._tempdir)
       for i in range(1, self.comm.size):
         self.comm.barrier()

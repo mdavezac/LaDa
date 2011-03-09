@@ -408,9 +408,9 @@ class Escan(object):
       rstr = vffrun.structure
       if exists(POSCAR): copyfile(POSCAR, self._POSCAR, 'same', None)
       else: vffrun.write_escan_input(self._POSCAR, rstr)
-      VFFCOUT = vffrun.functional.vff._cout(None)
+      VFFCOUT = vffrun.functional.vff._cout(comm)
       VFFCOUT = join(vffrun.directory, VFFCOUT)
-      copyfile(VFFCOUT, self.vff._cout(None), 'same exists null', None)
+      copyfile(VFFCOUT, self.vff._cout(comm), 'same exists null', None)
 
     if self.vffrun != None or norun == True: return
     

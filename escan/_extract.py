@@ -59,7 +59,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
   @comm.setter
   def comm(self, value):
     from ..mpi import Communicator
-    self._vffout.comm = Communicator(value)
+    if hasattr(self, '_vffout'): self._vffout.comm = Communicator(value)
 
   @property
   def kpoint(self):
