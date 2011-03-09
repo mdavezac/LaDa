@@ -183,7 +183,7 @@ class Launch(Incar):
     if structure != None: self._system = structure
     elif not hasattr(self, "_system"): raise RuntimeError, "Internal bug.\n"
     outdir = getcwd() if outdir == None else RelativeDirectory(outdir).path
-    comm = Communicator(world, with_world=True)
+    comm = Communicator(comm, with_world=True)
 
     # creates temporary working directory
     if self.inplace: context = Changedir(outdir, comm=comm) 
