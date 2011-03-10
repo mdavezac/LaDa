@@ -110,7 +110,7 @@ else:
         Trolls through all subdirectories for vasp calculations, and organises
         results as a dictionary where keys are the name of the diretory.
     """
-    def __init__(self, path = None, Extract = None, **kwargs):
+    def __init__(self, path = None, Extract = None, nocalc=True, **kwargs):
       """ Initializes MassExtract.
       
       
@@ -120,6 +120,8 @@ else:
               If None, uses current working directory.
             Extract : `lada.vasp.Extract`
               Extraction class to use. 
+            nocal : bool
+              Avoids calculation directories relax_cellshape and relax_ions.
             kwargs : dict
               Keyword parameters passed on to AbstractMassExtract.
 
@@ -145,6 +147,11 @@ else:
       """ Name of the OUTCAR file. """
       assert exists(self.rootdir), RuntimeError("Path {0} does not exist.".format(self.rootdir))
       assert isdir(self.rootdir), RuntimeError("Path {0} is not a directory.".format(self.rootdir))
+      self._nocalc = nocalc
+      """ Avoids calculation directories.
+      
+          When set anew, results must uncached for change to take effect.
+      """
 
     @property
     def rootdir(self): 
@@ -159,6 +166,8 @@ else:
       from os.path import abspath, relpath, abspath, join
 
       for dirpath, dirnames, filenames in walk(self.rootdir, topdown=True, followlinks=True):
+        if self._nocalc:
+          dirnames[:] = [u for u in dirnames if u not in ['relax_cellshape', 'relax_ions']]
         if self.OUTCAR not in filenames: continue
 
         try: result = self.Extract(join(join(self.rootdir, dirpath), self.OUTCAR))

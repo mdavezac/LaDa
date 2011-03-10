@@ -460,7 +460,7 @@ class Extract(object):
     return self.valence-self.nelect
 
 
-  def iterfiles(**kwargs):
+  def iterfiles(self, **kwargs):
     """ iterates over input/output files. 
     
         :kwarg errors: Include stderr files.
@@ -479,20 +479,27 @@ class Extract(object):
         :type contcar: bool
     """
     from os.path import exists, join
+    from glob import iglob
+    from itertools import chain
     files = [self.OUTCAR, self.FUNCCAR]
     try: files.append(self.functional.STDOUT)
     except: pass
     if kwargs.get('errors', False): 
       try: files.append(self.functional.STDERR)
       except: pass
-    if kwargs.get('incar', False):   file.append('INCAR')
-    if kwargs.get('wavecar', False): file.append('WAVECAR')
-    if kwargs.get('doscar', False):  file.append('DOSCAR')
-    if kwargs.get('chgcar', False):  file.append('CHGCAR')
-    if kwargs.get('poscar', False):  file.append('POSCAR')
-    if kwargs.get('contcar', False): file.append('CONTCAR')
+    if kwargs.get('incar', False):   files.append('INCAR')
+    if kwargs.get('wavecar', False): files.append('WAVECAR')
+    if kwargs.get('doscar', False):  files.append('DOSCAR')
+    if kwargs.get('chgcar', False):  files.append('CHGCAR')
+    if kwargs.get('poscar', False):  files.append('POSCAR')
+    if kwargs.get('contcar', False): files.append('CONTCAR')
     for file in files:
       file = join(self.directory, file)
       if exists(file): yield file
+    # Add RelaxCellShape directories.
+    for dir in chain( iglob(join(self.directory, "relax_cellshape/[0-9][0-9]?")),
+                      iglob(join(self.directory, "relax_ions/[0-9][0-9]?")) ):
+      a = self.__class__(dir, comm=self.comm)
+      for file in a.iterfiles(**kwargs): yield file
 
 

@@ -191,6 +191,20 @@ class Extract(AbstractExtractBase):
 
     if old_lattice != None: old_lattice.set_as_crystal_lattice()
 
+  def iterfiles(self, **kwargs):
+    """ Iterates over output/input files.
+
+        :kwarg errors: Include stderr files.
+        :type errors: bool
+    """
+    from os.path import join, exists
+    files = [self.OUTCAR, self.FUNCCAR]
+    if kwargs.get("errors", False):
+      try: files.append(self.functional.ERRCAR)
+      except: pass
+    for file in files:
+      file = join(self.directory, file)
+      if exists(file): yield file
 
 class Vff(object): 
   """ Valence Force Field functional for zinc-blende materials """
@@ -592,21 +606,6 @@ class Vff(object):
     if self.direction != None and not hasattr(self.direction, "__len__"):
       structure.freeze = oldfreeze
     return result, stress
-
-  def iterfiles(self, **kwargs):
-    """ Iterates over output/input files.
-
-        :kwarg errors: Include stderr files.
-        :type errors: bool
-    """
-    from os.path import join, exists
-    files = [self.OUTCAR, self.FUNCCAR]
-    if kwargs.get("errors", False):
-      try: files.append(self.functional.ERRCAR)
-      except: pass
-    for file in files:
-      file = join(self.directory, file)
-      if exists(file): yield file
 
 def exec_input(filepath = "input.py", namespace = None):
   """ Executes an input script including namespace for escan/vff. """ 

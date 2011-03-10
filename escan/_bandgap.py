@@ -36,6 +36,10 @@ def extract(outdir=".", comm = None):
   class NoBandGap(object): 
     @property
     def success(self): return False
+    @property
+    def directory(self): return outdir
+    def __str__(self): return "NoBandGap({0})".format(outdir)
+    def __repr__(self): return "NoBandGap({0})".format(outdir)
   return NoBandGap()
 
 def bandgap(escan, structure, outdir=None, references=None, n=5, overwrite = False, **kwargs):
@@ -308,7 +312,8 @@ class ExtractRefs(object):
                                                comm  = self.comm,
                                                escan = self.extract_vbm.functional )
     except: pass
-    else: for file in extract.iterfiles(**kwargs): yield file
+    else:
+      for file in extract.iterfiles(**kwargs): yield file
 
 def _band_gap_refs_impl( escan, structure, outdir, references, n=5,\
                          overlap_factor=10e0, **kwargs):

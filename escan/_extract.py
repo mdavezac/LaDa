@@ -32,6 +32,8 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
 
     super(Extract, self).__init__(directory=directory, comm=None)
 
+    doextract = escan != None
+    if escan == None: escan = Escan()
     
     self.OUTCAR = escan.OUTCAR
     """ OUTCAR file to extract stuff from. """
@@ -40,9 +42,11 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     self.comm = comm
     
     # tries to get escan from file if possible.
-    if escan == None:
+    if doextract:
       try: escan = self.functional
-      except: escan = Escan()
+      except: pass
+      else: self.OUTCAR, self.FUNCCAR = escan.OUTCAR, escan._FUNCCAR
+
     self._vffout = VffExtract(directory, comm = None, vff = escan.vff)
     """ Private reference to vff extraction object. """
 

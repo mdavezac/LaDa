@@ -118,60 +118,6 @@ def current_jobname(self, arg):
   print ip.user_ns["current_jobdict"].name
   return
 
-def fakerun(self, event):
-  """ Creates job directory tree and input files without computing. """
-  from os.path import split as splitpath, exists, isdir, join
-  ip = self.api
-
-  current, path = _get_current_job_params(self, 2)
-  ip.user_ns.pop("_lada_error", None)
-  if current == None or path == None: return
-  if len(event.split()) > 1: 
-    print "fakerun does not take an argument."
-    return
-  elif len(event.split()) == 1: directory = event.split()[0]
-  else: directory = splitpath(path)[0]
-
-  if exists(directory) and not isdir(directory):
-    print "%s exists and is not a directory." % (directory)
-    return 
-  elif exists(directory):
-    a = ''
-    while a not in ['n', 'y']:
-      a = raw_input("%s exists. \n"\
-                    "Some input files could be overwritten.\n"\
-                    "Continue? [y/n]" % (directory))
-    if a == 'n': return
-  for dirname, job in current.iteritems():
-    if not job.is_tagged: job.compute(outdir=join(directory, dirname), norun=True)
-
-def run_current_jobdict(self, event):
-  """ Runs job dictionary interactively. """
-  from os.path import split as splitpath, exists, isdir, join
-  ip = self.api
-
-  current, path = _get_current_job_params(self, 2)
-  ip.user_ns.pop("_lada_error", None)
-  if current == None or path == None: return
-  if len(event.split()) > 1: 
-    print "fakerun does not take an argument."
-    return
-  elif len(event.split()) == 1: directory = event.split()[0]
-  else: directory = splitpath(path)[0]
-
-  if exists(directory) and not isdir(directory):
-    print "%s exists and is not a directory." % (directory)
-    return 
-  elif exists(directory):
-    a = ''
-    while a not in ['n', 'y']:
-      a = raw_input("%s exists. \n"\
-                    "Some input files could be overwritten.\n"\
-                    "Continue? [y/n]" % (directory))
-    if a == 'n': return
-  for dirname, job in current.iteritems():
-    if not job.is_tagged: job.compute(outdir=join(directory, dirname))
-
 if lada_with_slurm:
   def qstat(self, arg):
     """ squeue --user=`whoami` -o "%7i %.3C %3t  --   %50j" """
@@ -257,25 +203,24 @@ def ipy_init():
     from ._explore import explore, explore_completer
     from ._showme import showme, showme_completer
     from .launch import launch, completer as launch_completer
+    from .export import export, completer as export_completer
     
     ip = IPython.ipapi.get()
     ip.expose_magic("explore", explore)
     ip.expose_magic("goto", goto)
     ip.expose_magic("listjobs", listjobs)
-    ip.expose_magic("jobname", current_jobname)
-    ip.expose_magic("iterate", iterate)
     ip.expose_magic("showme", showme)
     ip.expose_magic("savejobs", saveto)
-    ip.expose_magic("fakerun", fakerun)
     ip.expose_magic("launch", launch)
-    ip.expose_magic("run_current_jobdict", run_current_jobdict)
+    ip.expose_magic("qstat", qstat)
+    ip.expose_magic("cancel_jobs", cancel_jobs)
+    ip.expose_magic("export", export)
     ip.set_hook('complete_command', goto_completer, re_key = '\s*%?goto')
     ip.set_hook('complete_command', showme_completer, re_key = '\s*%?showme')
     ip.set_hook('complete_command', explore_completer, re_key = '\s*%?explore')
     ip.set_hook('complete_command', launch_completer, re_key = '\s*%?launch')
-    ip.expose_magic("qstat", qstat)
-    ip.expose_magic("cancel_jobs", cancel_jobs)
     ip.set_hook('complete_command', cancel_completer, re_key = '\s*%?cancel_jobs')
+    ip.set_hook('complete_command', export_completer, re_key = '\s*%?export')
     
     for key in lada.__all__:
       if key[0] == '_': continue

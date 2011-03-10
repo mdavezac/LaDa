@@ -41,7 +41,6 @@ class MassExtract(AbstractMassExtractDirectories):
         if dirname in ['AE', 'CBM', 'VBM']: dirnames.pop(i)
         elif len(dirname) > 7 and dirname[:7] == 'kpoint_': dirnames.pop(i)
         i -= 1
-      if OUTCAR not in filenames: continue
 
       try: result = self.Extract(join(self.rootdir, dirpath), comm = self.comm)
       except: continue
@@ -62,7 +61,6 @@ class MassExtract(AbstractMassExtractDirectories):
     from os.path import dirname
     from ._extract import Extract as EscanExtract
     dir = dirpath[len(dirname(dirpath)):]
-    print dir, dirpath
     if dir in ['AE', 'VBM', 'CBM']: return False
     if len(dir) > 7 and dir[:7] == 'kpoint_': return False
     OUTCAR = EscanExtract().OUTCAR
@@ -90,10 +88,10 @@ class MassExtract(AbstractMassExtractDirectories):
     if directory == None: directory = getcwd()
     else: directory = RelativeDirectory(directory).path
     if not exists(directory): return ExtractEscanFail()
-    if not exists(join(directory, OUTCAR)): return ExtractEscanFail()
 
     # found bandgap calculation.
     if exists(join(directory, 'AE')): return extract_bg(directory, **kwargs)
+    if not exists(join(directory, OUTCAR)): return ExtractEscanFail()
     if exists(join(directory, 'CBM')) and exists(join(directory, 'VBM')):
       return extract_bg(directory, **kwargs)
 

@@ -579,7 +579,7 @@ def copyfile(src, dest=None, nothrow=None, comm=None, symlink=False, aslink=Fals
     from shutil import copyfile as cpf
     if nothrow == None: nothrow = []
     if isinstance(nothrow, str): nothrow = nothrow.split()
-    if nothrow == 'all': nothrow = 'exists', 'same', 'isfile', 'never', 'none', 'null'
+    if nothrow == 'all': nothrow = 'exists', 'same', 'isfile', 'none', 'null'
     nothrow = [u.lower() for u in nothrow]
     
     if src == None: 
@@ -598,10 +598,11 @@ def copyfile(src, dest=None, nothrow=None, comm=None, symlink=False, aslink=Fals
       if 'isfile' in nothrow: return False
       raise IOError("{0} is not a file.".format(src))
     # makes destination a file.
-    if exists(dest) and isdir(dest): dest = join(dest, basename(src))
-    if exists(dest) and samefile(src, dest): 
-      if 'same' in nothrow: return False
-      raise IOError("{0} and {1} are the same file.".format(src, dest))
+    if exists(dest):
+      if isdir(dest): dest = join(dest, basename(src))
+      if samefile(src, dest): 
+        if 'same' in nothrow: return False
+        raise IOError("{0} and {1} are the same file.".format(src, dest))
     if aslink and islink(src): symlink, src = True, realpath(src)
     if symlink: symlink(relpath(src, dirname(dest)), dest)
     else: cpf(src, dest)

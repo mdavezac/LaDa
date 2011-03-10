@@ -283,6 +283,7 @@ class Restart(SpecialVaspParam):
   def incar_string(self, *args, **kwargs):
     from os.path import join, exists
     from shutil import copy
+    from ...opt import copyfile
     from .. import files
     comm = kwargs.pop("comm", None)
     is_root = comm.rank == 0 if comm != None else True
@@ -311,10 +312,9 @@ class Restart(SpecialVaspParam):
         istart = "0   # start from scratch"
         icharg = "2   # superpositions of atomic densities"
       if is_root:
-        if exists( join(self.value.directory, files.EIGENVALUES) ):
-          copy(join(self.value.directory, files.EIGENVALUES), ".") 
-        if exists( join(self.value.directory, files.CONTCAR) ):
-          copy(join(self.value.directory, files.CONTCAR), files.POSCAR) 
+        copyfile(join(self.value.directory, files.EIGENVALUES), ".", nothrow='same exists') 
+        copyfile(join(self.value.directory, files.CONTCAR), files.POSCAR,
+                 nothrow='same exists', symlink=True) 
       if comm != None: comm.barrier()
 
 

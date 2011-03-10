@@ -25,7 +25,6 @@ def launch(self, event):
       >>> # then  launch.
       >>> %launch scattered --walltime "24:00:00"
   """ 
-
   import argparse
   from os import environ
   from ...jobs import load as load_jobs
