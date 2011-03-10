@@ -6,10 +6,20 @@ def export(self, event):
   """ Tars files from a calculation.  """
   import argparse
   import tarfile
-  from os.path import exists, isfile, extsep
+  from os import getcwd
+  from os.path import exists, isfile, extsep, relpath
   from ..opt import RelativeDirectory
 
-  parser = argparse.ArgumentParser(prog='%export')
+  parser = argparse.ArgumentParser(prog='%export',
+                     description='Exports input/output files from current jobdictionary. '\
+                                 'Depending on the extension of FILE, this will create '\
+                                 'a simple tar file, or a compressed tar file. Using the '\
+                                 'option --list, one can also obtain a list of all files '\
+                                 'which would go in the tar archive. '\
+                                 'Finally, this function only requires the \"collect\" '\
+                                 'exists in the usernamespace. It may have been declared '\
+                                 'from loading a jobdictionary using \"explore\", or directly '\
+                                 'with \"collect = vasp.MassExtract()\".' )
   parser.add_argument( 'filename', metavar='FILE', type=str, default='export.tar.gz',
                        nargs='?',
                        help='Path to the tarfile. Suffixes ".gz" and ".tgz" indicate '\
@@ -53,11 +63,15 @@ def export(self, event):
       print "Encoutered error while tarring file."
       print e
   else:
-    args.filename = RelativeDirectory(args.filename).relative
+    args.filename = relpath(RelativeDirectory(args.filename).path, getcwd())
     if exists(args.filename): 
       if not isfile(args.filename):
         print "{0} exists but is not a file. Aborting.".format(args.filename)
         return 
+      a = ''
+      while a not in ['n', 'y']:
+        a = raw_input("File {0} already exists.\nOverwrite? [y/n] ".format(args.filename))
+      if a == 'n': print "Aborted."; return
 
     if args.filename.find(extsep) == -1: endname = ''
     else: endname = args.filename[args.filename[::-1].find(extsep)-1:][1:]
@@ -71,6 +85,7 @@ def export(self, event):
       print "Encoutered error while tarring file."
       print e
     tarme.close()
+    print "Saved archive to {0}.".format(args.filename)
 
 def completer(self, event):
   """ Completer for export. """

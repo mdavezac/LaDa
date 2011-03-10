@@ -38,7 +38,8 @@ def explore(self, cmdl):
   ip.user_ns.pop("_lada_error", None)
   
   # options supported by all.
-  parser = argparse.ArgumentParser(prog='%explore')
+  parser = argparse.ArgumentParser(prog='%explore',
+                     description='Opens a job-dictionary from file.')
   group = parser.add_mutually_exclusive_group()
   group.add_argument( '--file', action="store_true", dest="is_file",
                       help='JOBDICT is a path to a job-dictionary stored on disk.' )
