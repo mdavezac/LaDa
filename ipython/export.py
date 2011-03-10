@@ -83,15 +83,16 @@ def completer(self, event):
   other = data - result
   if len(other) == 0: 
     for file in chain( iglob('*.tar'), iglob('*.tar.gz'), 
-                       iglob('*.tgz'), iglob('*.bz2?') ):
+                       iglob('*.tgz'), iglob('*.bz'), iglob('*.bz2') ):
       result.add(file)
     result |= set([u for u in self.api.magic("%mglob dir:*")])
   elif len(other) == 1: 
     other = other.__iter__().next()
-    string = "{0}*.tar {0}*.tar.gz {0}*.tgz {0}*.tar.bz2? dir:{0}*".format(other)
+    string = "{0}*.tar {0}*.tar.gz {0}*.tgz {0}*.tar.bz {0}*.tar.bz2 dir:{0}*".format(other)
     result |= set([u for u in self.api.magic("%mglob " + string)])
     if isdir(other) and other[-1] != '/':
-      string = "{0}/*.tar {0}/*.tar.gz {0}/*.tgz {0}/*.tar.bz2? dir:{0}/*".format(other)
+      string = "{0}/*.tar {0}/*.tar.gz {0}/*.tgz {0}/*.tar.bz "\
+               "{0}/*.tar.bz2 dir:{0}/*".format(other)
       result |= set([u for u in self.api.magic("%mglob " + string)])
   return list(result - data)
 

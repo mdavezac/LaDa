@@ -497,8 +497,10 @@ class Extract(object):
       file = join(self.directory, file)
       if exists(file): yield file
     # Add RelaxCellShape directories.
-    for dir in chain( iglob(join(self.directory, "relax_cellshape/[0-9][0-9]?")),
-                      iglob(join(self.directory, "relax_ions/[0-9][0-9]?")) ):
+    for dir in chain( iglob(join(self.directory, "relax_cellshape/[0-9]/")),
+                      iglob(join(self.directory, "relax_cellshape/[0-9][0-9]/")),
+                      iglob(join(self.directory, "relax_ions/[0-9]/")),
+                      iglob(join(self.directory, "relax_ions/[0-9][0-9]/")) ):
       a = self.__class__(dir, comm=self.comm)
       for file in a.iterfiles(**kwargs): yield file
 
