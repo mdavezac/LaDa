@@ -74,7 +74,7 @@ def export(self, event):
       if a == 'n': print "Aborted."; return
 
     if args.filename.find(extsep) == -1: endname = ''
-    else: endname = args.filename[args.filename[::-1].find(extsep)-1:][1:]
+    else: endname = args.filename[-args.filename[::-1].find(extsep)-1:][1:]
     if endname in ['gz', 'tgz']:   tarme = tarfile.open(args.filename, 'w:gz')
     elif endname in ['bz', 'bz2']: tarme = tarfile.open(args.filename, 'w:bz2')
     else:                          tarme = tarfile.open(args.filename, 'w')
