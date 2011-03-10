@@ -296,7 +296,19 @@ class ExtractRefs(object):
     """
     result = [u for u in dir(self.__class__) if u[0] != '_'] 
     result.extend(['extact_vff', 'extract_vbm', 'extract_cbm', 'structure', 'escan', 'vff'])
-    return list(set(result))
+
+  def iterfiles(self, **kwargs):
+    """ Iterates over output/input files.
+
+        Parameters are passed on to internal escan calculation.
+    """
+    for file in self.extract_vbm.iterfiles(**kwargs): yield file
+    for file in self.extract_cbm.iterfiles(**kwargs): yield file
+    try: extract = self.extract_vbm.__class__( dirname(self.directory), 
+                                               comm  = self.comm,
+                                               escan = self.extract_vbm.functional )
+    except: pass
+    else: for file in extract.iterfiles(**kwargs): yield file
 
 def _band_gap_refs_impl( escan, structure, outdir, references, n=5,\
                          overlap_factor=10e0, **kwargs):

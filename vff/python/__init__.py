@@ -593,6 +593,21 @@ class Vff(object):
       structure.freeze = oldfreeze
     return result, stress
 
+  def iterfiles(self, **kwargs):
+    """ Iterates over output/input files.
+
+        :kwarg errors: Include stderr files.
+        :type errors: bool
+    """
+    from os.path import join, exists
+    files = [self.OUTCAR, self.FUNCCAR]
+    if kwargs.get("errors", False):
+      try: files.append(self.functional.ERRCAR)
+      except: pass
+    for file in files:
+      file = join(self.directory, file)
+      if exists(file): yield file
+
 def exec_input(filepath = "input.py", namespace = None):
   """ Executes an input script including namespace for escan/vff. """ 
   from ..opt import exec_input as opt_exec_input

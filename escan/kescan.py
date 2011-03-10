@@ -69,16 +69,25 @@ class Extract(AbstractExtractBase):
     return all(job.success for job in self)
 
   @property
-  @make_cached
+  def vff(self):
+    """ Returns vff functional. """
+    return self._rootrun.vff
+  @property
   def structure(self):
     """ Returns vff output structure. """
-    return self.Extract(self.directory, comm=self.comm)._vffout.structure
-
+    return self._rootrun.structure
   @property
-  @make_cached
   def input_structure(self):
-    """ Returns vff output structure. """
-    return self.Extract(self.directory, comm=self.comm)._vffout.input_structure
+    """ Returns input output structure. """
+    return self._rootrun.input_structure
+  @property
+  def energy(self):
+    """ Returns VFF energy. """
+    return self._rootrun.energy
+  @property
+  def stress(self):
+    """ Returns VFF energy. """
+    return self._rootrun.stress
 
   def __getitem__(self, index):
     """ Forks between integer and str keys. """
@@ -159,9 +168,19 @@ class Extract(AbstractExtractBase):
     return cbm - lumo
 
   @property 
-  def vffrun(self):
-    if len(self._cached_jobs) == 0: self.__cache_jobs__()
-    return self._cached_jobs[0].vffrun
+  def _rootrun(self):
+    """ Vff extraction object. """
+    if '__rootrun' not in self.__dict__:
+      self.__rootrun = self.Extract(self.rootdir, comm = self.comm) 
+    return self.__rootrun
+
+  def iterfiles(self, **kwargs):
+    """ Iterates over output/input files.
+
+        Parameters are passed on to internal escan calculations.
+    """
+    for file in self._routrun.iterfiles(**kwargs): yield file
+    for file in super(KExtract, self).iterfiles(**kwargs): yield file
  
 class KEscan(Escan):
   """ A wrapper around Escan for computing many kpoints. """
@@ -343,4 +362,3 @@ class KEscan(Escan):
     result.__dict__.update(self.__dict__)
     result.__dict__.pop('kpoints')
     return result
-

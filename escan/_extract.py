@@ -32,15 +32,19 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
 
     super(Extract, self).__init__(directory=directory, comm=None)
 
-    if escan == None: escan = Escan()
     
-    self._vffout = VffExtract(directory, comm = None, vff = escan.vff)
-    """ Private reference to vff extraction object. """
     self.OUTCAR = escan.OUTCAR
     """ OUTCAR file to extract stuff from. """
     self.FUNCCAR = escan._FUNCCAR
     """ Pickle to FUNCCAR. """
     self.comm = comm
+    
+    # tries to get escan from file if possible.
+    if escan == None:
+      try: escan = self.functional
+      except: escan = Escan()
+    self._vffout = VffExtract(directory, comm = None, vff = escan.vff)
+    """ Private reference to vff extraction object. """
 
   def __funccar__(self):
     """ Returns path to FUNCCAR file.
@@ -471,3 +475,35 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     result.extend( [u for u in dir(self._vffout) if u[0] != "_"] )
     if self.success: result.extend( [u for u in dir(self.functional) if u[0] != "_"] )
     return list( set(result) - exclude )
+
+  def iterfiles(self, **kwargs):
+    """ Iterates over output/input files.
+
+        :kwarg errors: Include stderr files.
+        :type errors: bool
+        :kwarg wavecar: Include wavefunctions.
+        :type wavecar: bool
+        :kwarg potcar: Include potential.
+        :type potcar: bool
+        :kwarg poscar: Include atom.config file.
+        :type poscar: bool
+    """
+    from os.path import join, exists
+    files = [self.OUTCAR, self.FUNCCAR]
+    if kwargs.get("poscar", False):
+      try: files.append(self.functional._POSCAR)
+      except: pass
+    if kwargs.get("wavecar", False):
+      try: files.append(self.functional.WAVECAR)
+      except: pass
+    if kwargs.get("errors", False):
+      try: files.append(self.functional.ERRCAR)
+      except: pass
+    if kwargs.get("potcar", False):
+      try: files.append(self.functional._POTCAR)
+      except: pass
+    for file in files:
+      file = join(self.directory, file)
+      if exists(file): yield file
+    for file in self._vffout.iterfiles(**kwargs): yield file
+    

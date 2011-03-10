@@ -458,3 +458,41 @@ class Extract(object):
   def charge(self):
     """ Greps total charge in the system from OUTCAR."""
     return self.valence-self.nelect
+
+
+  def iterfiles(**kwargs):
+    """ iterates over input/output files. 
+    
+        :kwarg errors: Include stderr files.
+        :type errors: bool
+        :kwarg incar: Include INCAR file
+        :type incar: bool
+        :kwarg wavecar: Include WAVECAR file
+        :type wavecar: bool
+        :kwarg doscar: Include CHGCAR file
+        :type doscar: bool
+        :kwarg chgcar: Include CHGCAR file
+        :type chgcar: bool
+        :kwarg poscar: Include POSCAR file
+        :type poscar: bool
+        :kwarg contcar: Include CONTCAR file
+        :type contcar: bool
+    """
+    from os.path import exists, join
+    files = [self.OUTCAR, self.FUNCCAR]
+    try: files.append(self.functional.STDOUT)
+    except: pass
+    if kwargs.get('errors', False): 
+      try: files.append(self.functional.STDERR)
+      except: pass
+    if kwargs.get('incar', False):   file.append('INCAR')
+    if kwargs.get('wavecar', False): file.append('WAVECAR')
+    if kwargs.get('doscar', False):  file.append('DOSCAR')
+    if kwargs.get('chgcar', False):  file.append('CHGCAR')
+    if kwargs.get('poscar', False):  file.append('POSCAR')
+    if kwargs.get('contcar', False): file.append('CONTCAR')
+    for file in files:
+      file = join(self.directory, file)
+      if exists(file): yield file
+
+

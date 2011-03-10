@@ -339,6 +339,14 @@ class AbstractMassExtract(object):
           stacklevel=2 )
     return self.keys()
 
+  def iterfiles(self, **kwargs):
+    """ Iterates over output/input files. 
+
+        This is rerouted to all extraction objects.
+    """
+    for job in self.itervalues(): 
+      if hasattr(job, 'iterfiles'): 
+        for file in job.iterfiles(**kwargs): yield file 
 
 
 class MassExtract(AbstractMassExtract): 
