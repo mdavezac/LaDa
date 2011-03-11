@@ -577,11 +577,12 @@ def copyfile(src, dest=None, nothrow=None, comm=None, symlink=False, aslink=Fals
     from os.path import isdir, isfile, samefile, exists, basename, dirname,\
                         join, islink, realpath, relpath
     from shutil import copyfile as cpf
+    # sets up nothrow options.
     if nothrow == None: nothrow = []
     if isinstance(nothrow, str): nothrow = nothrow.split()
     if nothrow == 'all': nothrow = 'exists', 'same', 'isfile', 'none', 'null'
     nothrow = [u.lower() for u in nothrow]
-    
+    # checks and normalizes input.
     if src == None: 
       if 'none' in nothrow: return False
       raise IOError("Source is None.")
@@ -591,6 +592,7 @@ def copyfile(src, dest=None, nothrow=None, comm=None, symlink=False, aslink=Fals
       if 'null' in nothrow: return False
       raise IOError("Source is '/dev/null' but Destination is {0}.".format(destination))
 
+    # checks that input source file exists.
     if not exists(src): 
       if 'exists' in nothrow: return False
       raise IOError("{0} does not exist.".format(src))
@@ -598,11 +600,11 @@ def copyfile(src, dest=None, nothrow=None, comm=None, symlink=False, aslink=Fals
       if 'isfile' in nothrow: return False
       raise IOError("{0} is not a file.".format(src))
     # makes destination a file.
-    if exists(dest):
-      if isdir(dest): dest = join(dest, basename(src))
-      if samefile(src, dest): 
-        if 'same' in nothrow: return False
-        raise IOError("{0} and {1} are the same file.".format(src, dest))
+    if exists(dest) and isdir(dest): dest = join(dest, basename(src))
+    # checks if destination file and source file are the same.
+    if exists(dest) and samefile(src, dest): 
+      if 'same' in nothrow: return False
+      raise IOError("{0} and {1} are the same file.".format(src, dest))
     if aslink and islink(src): symlink, src = True, realpath(src)
     if symlink: symlink(relpath(src, dirname(dest)), dest)
     else: cpf(src, dest)
