@@ -173,9 +173,10 @@ def bleeder_evaluation(self, evaluator, pools, comm):
   if comm == None or comm.rank == 0: 
     for name, pop in [('off', self.offspring), ('pop', self.population)]:
       for index, indiv in enumerate(pop):
-        job = jobdict / '{0}/{1}'.format(name, index)
+        job = jobdict / '{0}.{1}'.format(name, index)
         job.functional = evaluator
         job.jobparams['indiv'] = indiv
+        job.jobparams['overwrite'] = True
         # lets not recompute already known individuals. Need to keep them as record though.
         if hasattr(indiv, "fitness"): job.tag() 
 
