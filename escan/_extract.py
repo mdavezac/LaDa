@@ -32,22 +32,14 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
 
     super(Extract, self).__init__(directory=directory, comm=None)
 
-    doextract = escan != None
     if escan == None: escan = Escan()
     
     self.OUTCAR = escan.OUTCAR
     """ OUTCAR file to extract stuff from. """
     self.FUNCCAR = escan._FUNCCAR
     """ Pickle to FUNCCAR. """
-    self.comm = comm
     
-    # tries to get escan from file if possible.
-    if doextract:
-      try: escan = self.functional
-      except: pass
-      else: self.OUTCAR, self.FUNCCAR = escan.OUTCAR, escan._FUNCCAR
-
-    self._vffout = VffExtract(directory, comm = None, vff = escan.vff)
+    self._vffout = VffExtract(directory, comm = comm, vff = escan.vff)
     """ Private reference to vff extraction object. """
 
   def __funccar__(self):
@@ -371,9 +363,8 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     assert comm.real, ValueError("MPI needed to play with wavefunctions.")
     is_root = comm.rank == 0 
     assert self.success
-    assert self.nnodes == comm.size, \
-           RuntimeError( "Must read wavefunctions with as many nodes as "\
-                         "they were written to disk.")
+    assert self.nnodes != 1, RuntimeError("Escan does not give correct answer when "\
+                                          "reading wavefunctions obtained without mpi.")
     comm.barrier()
     with Changedir(self.directory, comm=self.comm) as directory:
       if is_root: 

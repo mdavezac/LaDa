@@ -16,7 +16,7 @@ def broadcast_result(key=False, attr=False, which=0):
     def wrapped(*args, **kwargs):
       from ..mpi import Communicator
       # removes comm argument
-      comm = kwargs.pop("comm", Communicator(None))
+      comm = Communicator(kwargs.pop("comm", None))
       # nonetype case: each proc performs same action. Serial case.
       if not comm.is_mpi: return method(*args, **kwargs)
       # is an mpi process.
