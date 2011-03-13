@@ -14,17 +14,12 @@ def extract(outdir=".", comm = None):
   """
   from os.path import exists, join
   from ..vff import Extract as VffExtract
+  from ..mpi import Communicator
 
-  is_mpi = False if comm == None else comm.size > 1
-  is_root = comm.rank == 0 if is_mpi else True
+  comm = Communicator(comm)
 
   paths = join(outdir, "AE"), join(outdir, "VBM"), join(outdir, "CBM")
-  if is_root: exists_paths = [exists(p) for p in paths]
-  if is_mpi:
-    from .. import lada_with_mpi
-    assert lada_with_mpi, RuntimeError("Lada being used without mpi.")
-    from boost.mpi import broadcast
-    exists_paths = broadcast(comm, exists_paths if is_root else None, root=0)
+  exists_paths = comm.broadcast([exists(p) for p in paths] if comm.is_root else None)
   if exists_paths[0]: 
     result = ExtractAE( _ExtractE(paths[0], comm = comm) )
     if result.success: return result
@@ -59,7 +54,7 @@ def bandgap(escan, structure, outdir=None, references=None, n=5, overwrite = Fal
   from os import getcwd
   from os.path import abspath, exists, join
   from copy import deepcopy
-  from boost.mpi import world, broadcast
+  from ..mpi import Communicator
 
   assert "do_escan" not in kwargs,\
          ValueError("\"do_escan\" is not an admissible argument of bandgap.")
@@ -70,7 +65,7 @@ def bandgap(escan, structure, outdir=None, references=None, n=5, overwrite = Fal
   outdir    = abspath(outdir)
   overlap_factor = kwargs.pop("overlap_factor", 10e0)
 
-  comm = kwargs.pop("comm", world)
+  comm = Communicator(kwargs.pop("comm", None), with_world=True)
   if not overwrite:  # check for previous results.
     result = extract(outdir, comm)
     if result.success: return result

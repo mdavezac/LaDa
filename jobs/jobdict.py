@@ -77,40 +77,6 @@ class JobDict(object):
         >>> metod(whatever=value1, outdir="root_result_directory/subjoname1") 
 
 
-      The code above does not work if more than one pbs script is launched. In that case, we want:
-
-        >>> # somewhere the jobdict was created.
-        >>> jobdict.save("pickle")
-        >>> # somewhere else, most likely in another script, the jobs are executed.
-        >>> for job, name in jobs.bleed(comm=local_comm):
-        >>>    result = job.compute(outdir=name)
-
-      ``bleed`` makes sure that once a job is accepted, it will not be accessed
-      by any other process or pools of processes. ``bleed`` allows parallelization
-      over pbs scripts and pools of MPI processes. However, it does change the
-      ``jobdict`` saved to "pickle". This means that once all jobs are executed,
-      ``bleed`` will find that ``jobdict`` is empty. To undo these changes and
-      use the jobdict for, say, ouptut analysis, simply use ``iteritems``
-      where possible (single pbs script or interactive
-      sessions), or do:
-
-      >>> jobs.unbleed("pickle")
-
-      Beware, at this point, relaunching the job could overwrite, if the
-      functional allows it... In practice, bled and unbled jobs can also be
-      selected with:
-
-      >>> for job, outdir in job.walk_trough():
-      >>>   if job.is_tagged: # this job has been bled/tagged.
-      >>>        # do something.
-      >>>        job.untag() # this job will no longuer be considered bled/tagged.
-      >>>   else:  # this job was not previously bled/tagged.
-      >>>        # do something.
-      >>>        job.tag() # this job will now be considered bled/tagged.
-     
-
-
-
       Coding 
       ======
 

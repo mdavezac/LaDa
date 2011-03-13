@@ -22,12 +22,14 @@ class ExtractCommon(AbstractExtractBase, ExtractCommonBase, IOMixin, SearchMixin
           outcar : str or None
             Path to OUTCAR file. Can also be the directory if the OUTCAR is
             named "OUTCAR".
-          comm : boost.mpi.communicator
+          comm : `mpi.communicator`
             Processes over which to synchronize output gathering. 
     """
     from os.path import exists, isdir, basename, dirname
     from ...opt import RelativeDirectory
+    from ...mpi import Communicator
        
+    comm = Communicator(comm)
     if outcar != None:
       outcar = RelativeDirectory(outcar).path
       if exists(outcar) and not isdir(outcar):
@@ -66,7 +68,7 @@ def Extract(outcar=None, comm=None, **kwargs):
           outcar : str or None
             Path to OUTCAR file. Can also be the directory if the OUTCAR is
             named "OUTCAR".
-          comm : boost.mpi.communicator
+          comm : `mpi.communicator`
             Processes over which to synchronize output gathering. 
   """
   # checks if path or directory

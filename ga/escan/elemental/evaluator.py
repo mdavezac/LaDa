@@ -73,7 +73,7 @@ class Bandgap(object):
         :kwarg indiv: Individual to compute. Will be converted to a
           `lada.crystal.Structure` using `converter`.
         :kwarg outdir: Output directory. 
-        :kwarg comm: boost,mpi.communicator.
+        :kwarg comm: `mpi.Communicator`.
         :kwarg kwarg: converter, escan, references, outdir  can be overwridden
             on call. This will not affect calls further down the line. Other
             arguments are passed on to the lada.escan.bandgap` function on call.
@@ -88,13 +88,13 @@ class Bandgap(object):
     from os.path import join, exists
     from copy import deepcopy
     from ....escan import bandgap
+    from ....mpi import Communicator
 
     # takes into account input arguments.
     references = kwargs.pop("references", self.references)
     converter  = kwargs.pop( "converter",  self.converter)
     escan      = kwargs.pop(     "escan",      self.escan)
-    is_mpi = False if comm == None else comm.size > 1
-    is_root = True if not is_mpi else comm.rank == 0
+    comm       = Communicator(comm)
     if outdir == None: outdir = self.outdir
     elif outdir[0] != '/': outdir = join(self.outdir, outdir)
     outdir = join(outdir, str(self.nbcalc))
@@ -119,10 +119,10 @@ class Bandgap(object):
     indiv.vbm = out.vbm
     indiv.cbm = out.cbm
 
-    if self.keep_only_last and is_root and self._lastcalcdir != None:
+    if self.keep_only_last and comm.is_root and self._lastcalcdir != None:
       if exists(self._lastcalcdir): rmtree(self._lastcalcdir)
     self._lastcalcdir = outdir
-    if is_mpi: comm.barrier()
+    comm.barrier()
     
     # returns extractor
     return out

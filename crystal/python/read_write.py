@@ -12,7 +12,7 @@ def read_poscar(types=None, path=None):
        :kwarg path: Path to the POSCAR file. Can also be an object with
          file-like behavior.
        :type path: str or file object
-       :kwarg comm: boost.mpi.communicator over which to read structure.
+       :kwarg comm: `mpi.Communicator` over which to read structure.
       
       :return: `lada.crystal.Structure` instance.
   """ 
@@ -185,7 +185,7 @@ def read_oldvff(path):
         object with file-like behavior.
       :type path: str or file object.
 
-      :kwarg comm: boost.mpi.communicator over which to read structure.
+      :kwarg comm: `mpi.Communicator` over which to read structure.
       
       :return: `lada.crystal.Structure` instance.
   """ 

@@ -99,7 +99,7 @@ class Vasp(Launch):
             directory will be checked for restart status, eg whether
             calculations already exist. If None, then results are stored in
             current working directory.
-          comm : boost.mpi.communicator 
+          comm : `mpi.Communicator`
             Calculations are performed over this MPI communicator.  
           repat : list 
             list of files to save, above and beyond `files.minimal`. This is
@@ -128,9 +128,9 @@ class Vasp(Launch):
     from os.path import exists, isdir, join
     from numpy import abs
     from numpy.linalg import det
-    from boost.mpi import broadcast
     from ..crystal import specie_list, read_poscar
     from ..opt import RelativeDirectory
+    from ..mpi import Communicator
     from .files import CONTCAR
 
     # make this functor stateless.
@@ -150,7 +150,7 @@ class Vasp(Launch):
         except: structure = deepcopy(old_structure)
     else: structure = deepcopy(structure) 
 
-    is_root = True if comm == None else comm.rank == 0
+    comm = Communicator(comm)
 
     # if other keyword arguments are present, then they are assumed to be
     # attributes of self, with value to be changed before launch. 
@@ -165,7 +165,7 @@ class Vasp(Launch):
     if not overwrite:
       extract = self.Extract(comm = comm, outcar = outdir)
       if extract.success: return extract # in which case, returns extraction object.
-    if comm != None: comm.barrier() # sync all procs.
+    comm.barrier() # sync all procs.
     
     # Otherwise, performs calculation by calling base class functor.
     super(Vasp, this).__call__( structure=structure, outdir=outdir,\

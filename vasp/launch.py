@@ -81,10 +81,8 @@ class Launch(Incar):
     from ..crystal import write_poscar, specie_list
     from ..opt.changedir import Changedir
 
-    is_root = True if comm == None else comm.rank == 0
-
     # creates poscar file. Might be overwriten by restart.
-    if is_root:
+    if comm.is_root:
       with open(join(self._tempdir, files.POSCAR), "w") as poscar: 
         write_poscar(self._system, poscar, is_vasp_5)
 
@@ -97,7 +95,7 @@ class Launch(Incar):
     with Changedir(self._tempdir) as tmpdir:
       incar_lines = this.incar_lines(comm = comm)
 
-    if not is_root: return # don't have any more business here.
+    if not comm.is_root: return # don't have any more business here.
 
 
     # creates INCAR file. Note that POSCAR file might be overwritten here by Restart.
@@ -128,16 +126,15 @@ class Launch(Incar):
      # moves to working dir only now.
      stdout = join(self._tempdir, files.STDOUT) 
      stderr = join(self._tempdir, files.STDERR) 
-     is_notroot = False if comm == None else comm.rank != 0
-     if is_notroot and getattr(self, "print_from_all", False):
+     if (not comm.is_root) and getattr(self, "print_from_all", False):
        stdout += ".{0}".format(comm.rank)
        stderr += ".{0}".format(comm.rank)
-     elif is_notroot: 
+     elif not comm.is_root: 
        stdout = "/dev/null"
        stderr = "/dev/null"
      with Changedir(self._tempdir):
        with redirect(fout=stdout, ferr=stderr) as streams:
-         if comm != None: comm.barrier()
+         assert comm.real, ValueError("Cannot call vasp without mpi.")
          call_vasp(comm)
              
 #    with open(join(self._tempdir, files.STDOUT), "w") as stdout:
@@ -153,9 +150,7 @@ class Launch(Incar):
      from shutil import copy
      from . import files
 
-     is_root = True if comm == None else comm.rank == 0
-
-     if is_root: 
+     if comm.is_root: 
        if not exists(outdir): makedirs(outdir)
        if not exists(outdir): raise IOError, "%s directory does not exist." % (outdir)
        if not isdir(outdir):  raise IOError, "%s is not a directory." % (outdir)
@@ -165,15 +160,15 @@ class Launch(Incar):
          with open(files.INCAR, 'r') as incar: outcar.write(incar.read())
          outcar.write('\n################ END INCAR ################\n')
      
-     if comm != None: comm.barrier()
+     comm.barrier()
 
 
      notfound = []
      if realpath(self._tempdir) != realpath(outdir):
        for filename in set(repat).union(files.minimal):
-         if not is_root: filename = str("%s.%i" % (filename, comm.rank))
+         if not comm.is_root: filename = str("%s.%i" % (filename, comm.rank))
          if exists( join(self._tempdir, filename) ): copy( join(self._tempdir, filename), outdir )
-         elif is_root: notfound.append(filename)
+         elif comm.is_root: notfound.append(filename)
 
      if not norun: assert len(notfound) == 0, IOError("Files %s were not found.\n" % (notfound))
 
@@ -181,14 +176,14 @@ class Launch(Incar):
                 norun = False, keep_tempdir=False):
     from os import getcwd
     from shutil import copy2 as copy
-    from boost.mpi import world
     from ..opt import Tempdir, Changedir, RelativeDirectory
+    from ..mpi import Communicator
 
     # set up
     if structure != None: self._system = structure
     elif not hasattr(self, "_system"): raise RuntimeError, "Internal bug.\n"
     outdir = getcwd() if outdir == None else RelativeDirectory(outdir).path
-    if comm == None: comm = world
+    comm = Communicator(comm, with_world=True)
 
     # creates temporary working directory
     if self.inplace: context = Changedir(outdir, comm=comm) 

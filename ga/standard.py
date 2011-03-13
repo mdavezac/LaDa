@@ -164,13 +164,15 @@ def bleeder_evaluation(self, evaluator, pools, comm):
   """
   from operator import itemgetter
   from ..jobs import JobDict, Bleeder
+  from ..mpi import Communicator
 
+  comm = Communicator(comm)
   # creates job-dictionary.
   jobdict = JobDict()
     
   # goes throught individuals which need be evaluated
   # bleeder only looks at jobdict from root processs.
-  if comm == None or comm.rank == 0: 
+  if comm.is_root:
     for name, pop in [('off', self.offspring), ('pop', self.population)]:
       for index, indiv in enumerate(pop):
         job = jobdict / '{0}.{1}'.format(name, index)
@@ -186,7 +188,7 @@ def bleeder_evaluation(self, evaluator, pools, comm):
   bleeder = Bleeder(jobdict, pools, comm)
   for job in bleeder:
     fitness = evaluator(job.indiv, outdir=job.name[1:], comm=bleeder.local_comm)
-    job.indiv.fitness = bleeder.local_broadcast(fitness)
+    job.indiv.fitness = bleeder.local_comm.broadcast(fitness)
   
   # recovers population and offspring.
   jobdict = bleeder.cleanup()
@@ -237,12 +239,11 @@ def mpi_population_evaluation(self, evaluator, pools, comm = None):
     if hasattr(indiv, "fitness"): continue
     if index % pools == color: 
       fitness = evaluator(indiv, comm = local_comm)
-      if local_comm.rank == 0: gather_these.append( (indiv, fitness) )
+      if local_comm.is_root: gather_these.append( (indiv, fitness) )
 
   # gathers all newly computed individuals. 
-  if local_comm.rank == 0:
-    gather_these = all_gather(heads_comm, gather_these)
-  gather_these = broadcast(local_comm, gather_these, 0)
+  if local_comm.is_root: gather_these = heads_comm.all_gather(gather_these)
+  gather_these = local_comm.broadcast(gather_these)
 
   # now reinserts them into populations.
   for index, indiv in enumerate(chain(self.population, self.offspring)):
@@ -265,7 +266,9 @@ def mpi_population_evaluation(self, evaluator, pools, comm = None):
 
 def population_evaluation(self, evaluator, comm=None, pools=None):
   """ Chooses between MPI and serial evaluation. """
+  from ..mpi import Communicator
   is_serial = pools == 1 or (comm.size == 1 if comm != None else True)
+  comm = Communicator(comm)
   if is_serial: serial_population_evaluation(self, evaluator, comm = comm)
   else:         bleeder_evaluation(self, evaluator, min(pools, comm.size), comm)
 

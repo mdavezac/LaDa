@@ -13,9 +13,10 @@ class Tempdir:
          purposes.
   """
   def __init__(self, workdir = None, comm = None, keep = False, debug = None):
+    from ..mpi import Communicator
     self.workdir = workdir
     self.keep = keep
-    self.comm = comm
+    self.comm = Communicator(comm)
     self.debug = debug
 
   def __enter__(self):
@@ -24,11 +25,8 @@ class Tempdir:
     from os.path import exists, isdir, join
     from tempfile import mkdtemp
     from shutil import rmtree 
-    from boost.mpi import broadcast
 
-    is_root = self.comm == None
-    if self.comm != None: is_root = self.comm.rank == 0
-    if is_root:
+    if self.comm.is_root:
       if self.workdir != None:
         if not exists(self.workdir): makedirs(self.workdir)
         assert exists(self.workdir) and isdir(self.workdir),\
@@ -39,10 +37,8 @@ class Tempdir:
         self._tempdir = join(self.workdir, self.debug)
         if not exists(self._tempdir): makedirs(self._tempdir)
     else: self._tempdir  = None
-    if self.comm != None:
-      assert broadcast(self.comm, "Tempdir: am in sync", root = 0) == "Tempdir: am in sync", \
-             "Processes not in sync"
-      self._tempdir = broadcast(self.comm, value=self._tempdir, root=0)
+    if self.comm.is_mpi:
+      self._tempdir = self.comm.broadcast(self._tempdir)
       for i in range(1, self.comm.size):
         self.comm.barrier()
         if i != self.comm.rank: continue
@@ -51,7 +47,7 @@ class Tempdir:
            "Could not create temporary working directory."
     assert self.debug != None or len(listdir(self._tempdir)) == 0,\
            "Could not create temporary working directory."
-    if self.comm != None: self.comm.barrier() # syncs procs.
+    self.comm.barrier()
     return self._tempdir
 
   def __exit__(self, type, value, traceback):
@@ -59,7 +55,7 @@ class Tempdir:
     from shutil import rmtree
     from os.path import exists, isdir
     if self.keep: return
-    if self.comm != None:
+    if self.comm.is_mpi:
       for i in range(self.comm.size):
         self.comm.barrier()
         if not i == self.comm.rank: continue

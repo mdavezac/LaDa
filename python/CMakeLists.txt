@@ -1,4 +1,6 @@
-set(PYLADA_HEADERS debug.hpp misc.hpp numpy_types.h std_map.hpp std_map.impl.hpp std_vector.hpp xml.hpp)
+set(PYLADA_HEADERS debug.hpp misc.hpp numpy_types.h std_map.hpp 
+                   std_map.impl.hpp std_vector.hpp xml.hpp)
+set(PYLADA_PY mpi.py)
 
 if(NOT noinstall_headers)
   install(FILES ${PYLADA_HEADERS} DESTINATION include/LaDa/python)
@@ -52,4 +54,5 @@ configure_file (
  "${PROJECT_BINARY_DIR}/python/__init__.py"
 )
 install(FILES ${PROJECT_BINARY_DIR}/python/__init__.py DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada)
+install(FILES ${PYLADA_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada)
 

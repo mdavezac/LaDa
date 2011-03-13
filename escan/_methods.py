@@ -128,7 +128,7 @@ def LDOS(extract, positions):
       # reduce across processes
       if lada_with_mpi:
         from boost.mpi import reduce
-        rspace = reduce(comm, rspace, lambda x,y: x+y, 0)
+        rspace = comm.reduce(rspace, lambda x,y: x+y)
   
       if extract.is_krammer:
         rspace2 = rspace 
@@ -136,7 +136,7 @@ def LDOS(extract, positions):
         rspace[:,::2,:] = rspace2
         cj = extract.raw_wfns[extract.inverse_indices,:,:].conjugate()
         rspace2 = np.tensordot(v, cj, ((1),(0)))
-        rspace2 = reduce(comm, rspace, lambda x,y: x+y, 0)
+        rspace2 = comm.reduce(rspace, lambda x,y: x+y)
         rspace[:,1::2,:] = rspace2
       rspace = np.multiply(rspace, np.conjugate(rspace))
       if not extract.is_spinor: rspace = rspace[:,:,0]

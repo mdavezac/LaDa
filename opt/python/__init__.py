@@ -174,19 +174,16 @@ def exec_input( script, global_dict=None, local_dict = None,\
   from math import pi 
   from numpy import array, matrix, dot, sqrt, abs, ceil
   from numpy.linalg import norm, det
-  from lada import physics, crystal
+  from .. import physics, crystal
+  from ..mpi import world
   from . import Input
-  from .. import lada_with_mpi
   
   # Add some names to execution environment.
   if global_dict == None: global_dict = {}
   global_dict.update( { "environ": environ, "pi": pi, "array": array, "matrix": matrix, "dot": dot,\
                         "norm": norm, "sqrt": sqrt, "ceil": ceil, "abs": abs,  "physics": physics,\
-                        "expanduser": expanduser})
+                        "expanduser": expanduser, 'world': world})
   for key in crystal.__all__: global_dict[key] = getattr(crystal, key)
-  if lada_with_mpi: 
-    from boost.mpi import world
-    global_dict["world"] = world
   if local_dict == None: local_dict = {}
   # Executes input script.
   exec(script, global_dict, local_dict)

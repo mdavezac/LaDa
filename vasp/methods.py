@@ -87,7 +87,7 @@ class RelaxCellShape(object):
             The structure to relax with `vasp`.
           outdir
             Output directory passed on to the `vasp` functional.
-          comm : boost.mpi.communicator or None
+          comm : mpi.Communicator or None
             MPI communicator passed on to the `vasp` functional.
           kwargs 
             Other keywords will overide attributes of this instance of
@@ -102,6 +102,7 @@ class RelaxCellShape(object):
     from shutil import rmtree
     from ..opt import RelativeDirectory
     from ..crystal import vasp_ordered
+    from ..mpi import Communicator
 
     # make this function stateless.
     vasp = deepcopy(kwargs.pop("vasp", self.vasp))
@@ -118,8 +119,7 @@ class RelaxCellShape(object):
                        .format(self.ediffg, self.vasp.ediff))
     ediffg *= 1.2 * float(len(structure.atoms))
 
-    is_mpi = False if comm == None else comm.size > 1
-    is_root = comm.rank == 0 if is_mpi else True
+    comm = Communicator(comm)
 
     # updates vasp as much as possible.
     if "set_relaxation" in kwargs: 
@@ -218,7 +218,7 @@ class RelaxCellShape(object):
              )
     yield output
 
-    if output.success and (not keep_steps) and is_root:
+    if output.success and (not keep_steps) and comm.is_root:
       rmtree(join(outdir, "relax_cellshape"))
       rmtree(join(outdir, "relax_ions"))
 
@@ -252,12 +252,14 @@ class RelaxCellShape(object):
     from os import getcwd
     from os.path import exists
     from ..opt import RelativeDirectory
+    from ..mpi import Communicator
 
     outdir = getcwd() if outdir == None else RelativeDirectory(outdir).path
     if not overwrite:
       extract = self.Extract(outdir, comm=None)
       if extract.success: return extract
 
+    comm = Communicator(comm)
     for output in self.generator(structure, outdir=outdir,
                                  comm=comm, overwrite=overwrite, **kwargs): pass
     return output
@@ -265,10 +267,10 @@ class RelaxCellShape(object):
   def _norun(self, *args, **kwargs):
     """ Just creates directory for debugging. """
     from ..opt.changedir import Changedir
+    from ..mpi import Communicator
 
-    is_mpi = False if kwargs.get('comm', None) == None else kwargs['comm'].size > 1
-    is_root = kwargs['comm'].rank == 0 if is_mpi else True
-    if is_root:
+    comm = Communicator(kwargs.get('comm', None))
+    if comm.is_root:
       # creates a file describing the relaxation parameters.
       with Changedir(kwargs["outdir"]) as pwd:
         with open("relax_cell_shape_parameters", "w") as file:

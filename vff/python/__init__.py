@@ -427,14 +427,12 @@ class Vff(object):
   def _cout(self, comm):
     """ Creates output name. """
     if self.OUTCAR == None: return "/dev/null"
-    if comm == None:   return self.OUTCAR
-    if comm.rank == 0: return self.OUTCAR
+    if comm.is_root or not comm.is_mpi: return self.OUTCAR
     return self.OUTCAR + "." + str(comm.rank) if self.print_from_all else "/dev/null"
   def _cerr(self, comm):
     """ Creates error name. """
     if self.ERRCAR == None: return "/dev/null"
-    if comm == None:   return self.ERRCAR
-    if comm.rank == 0: return self.ERRCAR
+    if comm.is_root or not comm.is_mpi: return self.ERRCAR
     return self.ERRCAR + "." + str(comm.rank) if self.print_from_all else "/dev/null"
 
   def __call__(self, structure, outdir = None, comm = None, overwrite=False, **kwargs):
@@ -445,13 +443,9 @@ class Vff(object):
     from os import getcwd
     from os.path import exists, isdir, abspath, expanduser
     from ..opt.changedir import Changedir
-    from .. import lada_with_mpi
+    from ..mpi import Communicator, world
 
-    if lada_with_mpi and comm == None: 
-      from boost.mpi import world
-      comm = world
-    is_mpi = False if comm == None else comm.size > 1
-    is_root = comm.rank == 0 if is_mpi else True
+    comm = Communicator(comm, with_world=True)
     # bull shit. 
     assert len(self.lattice.sites) == 2, RuntimeError("Lattice is not zinc-blend")
     assert len(self.lattice.sites[0].type) > 0,\
@@ -488,14 +482,11 @@ class Vff(object):
 
 
     # checks if outdir contains a (wanted) successful run.
-    does_exist = exists(outdir) if is_root else None
-    if is_mpi: 
-      from boost.mpi import broadcast
-      does_exist, overwrite = broadcast(comm, (does_exist, overwrite), 0)
+    does_exist, overwrite = comm.broadcast((exists(outdir) if comm.is_root else None, overwrite))
     if does_exist and not overwrite:
       extract = Extract(comm = comm, directory = outdir, vff = this)
       if extract.success: return extract # in which case, returns extraction object.
-    if is_mpi: comm.barrier() # makes sure directory is not created by other proc!
+    comm.barrier() # makes sure directory is not created by other proc!
     
     with Changedir(outdir, comm = comm) as current_dir:
       # redirects C/C++/fortran streams
@@ -505,8 +496,7 @@ class Vff(object):
         # now for some input variables
         print >> file, "# VFF calculation on ", time.strftime("%m/%d/%y", local_time),\
                        " at ", time.strftime("%I:%M:%S %p", local_time)
-        if is_mpi: 
-          from boost.mpi import world
+        if comm.is_mpi: 
           print >> file, "# Using {0} processors of {1}.".format(comm.size, world.size)
         print >> file, "# Input Structure.\n{0}\n".format(repr(structure))
         print >> file, repr(this)
@@ -514,7 +504,7 @@ class Vff(object):
         # then calculations
 
       # Saves FUNCCAR.
-      if is_root:
+      if comm.is_root:
         with open(this._FUNCCAR, "w") as file: dump(this, file)
 
       result, stress = this._run(structure, comm)
@@ -597,8 +587,7 @@ class Vff(object):
     functional.check_input()
     
     with redirect_all(output=cout, error=cerr, append="True") as oestream:
-      from .. import lada_with_mpi
-      assert lada_with_mpi and comm != None, RuntimeError("Cannot run vff without mpi.")
+      assert comm.real, RuntimeError("Cannot run vff without mpi.")
       result, stress = functional(comm, relax=self.relax)
     
     # unsets lattice.

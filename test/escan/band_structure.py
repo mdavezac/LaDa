@@ -1,5 +1,4 @@
 from numpy import array
-from boost.mpi import world
 from lada.escan import read_input, exec_input, BPoints, ReducedBPoints
 from lada.crystal import nb_valence_states  
 from lada.crystal.binary import zinc_blende
@@ -17,6 +16,6 @@ structure.scale = 5.45
 
 kescan.fft_mesh = 14, 14, 14
 kescan.kpoints = ReducedBPoints(density=20) + (X, G) + (G, L)
-result = kescan( structure, comm=world, outdir='results/kescan', 
+result = kescan( structure, outdir='results/kescan', 
                  nbstates = nb_valence_states(structure) + 4,
                  eref = None )

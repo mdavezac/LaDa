@@ -231,6 +231,7 @@ class KEscan(Escan):
       from copy import deepcopy
       from os.path import join
       from ..jobs import JobDict, Bleeder
+      from ..mpi import Communicator
 
       this = deepcopy(self)
       do_relax_kpoint = kwargs.pop('do_relax_kpoint', kwargs.pop('do_relax_kpoints', None))
@@ -240,9 +241,7 @@ class KEscan(Escan):
         assert hasattr(this, key), TypeError("Unexpected keyword argument {0}.".format(key))
         setattr(this, key, value)
       if do_relax_kpoint != None: this.do_relax_kpoint = do_relax_kpoint
-
-      is_mpi = False if comm == None else comm.size > 1
-      is_root = comm.rank == 0 if is_mpi else True
+      comm = Communicator(comm, with_world=True)
 
       # performs vff calculations
       vffrun = kwargs.pop('vffrun', None)
@@ -312,9 +311,10 @@ class KEscan(Escan):
         kpoints, of procs, and the fft mesh, in that order increasingly
         inclusive order. Returns 1 on failure.
     """
+    from ..mpi import Communicator
+    comm = Communicator(comm)
     if self.nbpools > 0: return min(comm.size, self.nbpools)
-    if comm == None: return 1
-    if comm.size == 1: return 1
+    if not comm.is_mpi: return 1
     if N == 1: return 1
 
     # finds divisors of N

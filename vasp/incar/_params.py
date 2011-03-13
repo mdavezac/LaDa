@@ -101,9 +101,10 @@ class Npar(SpecialVaspParam):
   def incar_string(self, vasp, *args, **kwargs):
     from re import search
     from math import log
+    from ...mpi import Communicator
     if self.value == None: return None
-    if "comm" not in kwargs: return None
-    comm = kwargs["comm"] 
+    comm = Communicator(kwargs.get("comm", None))
+    if not comm.is_mpi: return None
     if     hasattr(self.value, "lower")\
        and search("power\s+of\s+2", self.value.lower()) != None:
       m = int(log(comm.size)/log(2))
@@ -246,12 +247,14 @@ class FFTGrid(SpecialVaspParam):
     from copy import deepcopy
     from .. import kpoints
     from ...opt.tempdir import Tempdir
+    from ...mpi import Communicator
     from ..extract import Extract
 
     try: return int(self.value[0]), int(self.value[1]), int(self.value[2])
     except IndexError: pass
     except ValueError: pass
 
+    comm = Communicator(kwargs.get('comm', None))
     vasp = deepcopy(vasp)
     with Tempdir(workdir=vasp._tempdir, keep=True, comm=comm) as vasp._tempdir:
       vasp.kpoints = kpoints.Gamma()
@@ -284,9 +287,9 @@ class Restart(SpecialVaspParam):
     from os.path import join, exists
     from shutil import copy
     from ...opt import copyfile
+    from ...mpi import Communicator
     from .. import files
-    comm = kwargs.pop("comm", None)
-    is_root = comm.rank == 0 if comm != None else True
+    comm = Communicator(kwargs.pop("comm", None))
     istart = "0   # start from scratch"
     icharg = "2   # superpositions of atomic densities"
     if self.value == None: istart = "0   # start from scratch"
@@ -295,29 +298,27 @@ class Restart(SpecialVaspParam):
       print "Restarting from scratch."
       istart = "0   # start from scratch"
     else:
-      if comm != None: comm.barrier()
+      comm.barrier()
       ewave = exists( join(self.value.directory, files.WAVECAR) )
       echarge = exists( join(self.value.directory, files.CHGCAR) )
       if ewave:
         path = join(self.value.directory, files.WAVECAR)
         istart = "1  # restart"
         icharg = "0   # from wavefunctions " + path
-        if is_root: copy(path, ".")
+        if comm.is_root: copy(path, ".")
       elif echarge:
         path = join(self.value.directory, files.CHGCAR)
         istart = "1  # restart"
         icharg = "1   # from charge " + path
-        if is_root: copy(path, ".")
+        if comm.is_root: copy(path, ".")
       else: 
         istart = "0   # start from scratch"
         icharg = "2   # superpositions of atomic densities"
       if is_root:
-        copyfile(join(self.value.directory, files.EIGENVALUES), ".", nothrow='same exists') 
+        copyfile(join(self.value.directory, files.EIGENVALUES), nothrow='same exists') 
         copyfile(join(self.value.directory, files.CONTCAR), files.POSCAR,
                  nothrow='same exists', symlink=True) 
       if comm != None: comm.barrier()
-
-
     return  "ISTART = %s\nICHARG = %s" % (istart, icharg)
 
 class UParams(SpecialVaspParam): 

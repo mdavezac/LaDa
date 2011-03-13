@@ -62,7 +62,6 @@ def compute_bs():
   from os.path import join
   from numpy import matrix, array
   from numpy.linalg import norm
-  from boost.mpi import world
   from lada.escan import read_input, exec_input, BPoints, ReducedBPoints
   from lada.crystal import nb_valence_states  
   from lada.vff import Vff
@@ -91,7 +90,7 @@ def compute_bs():
 
   kescan.fft_mesh = 14, 14, 14
   kescan.kpoints = ReducedBPoints(density=20) + (X, G) + (G, L)
-  result = kescan( structure, comm=world, outdir='results/projections', 
+  result = kescan( structure, outdir='results/projections', 
                    nbstates = nb_valence_states(structure) + 4,
                    eref = None )
 
@@ -198,7 +197,6 @@ def plot_bands(extractor, offset = 0.05, labels = None, **kwargs):
   extractor.unreduce = old
 
 # compute_bs()
-from boost.mpi import world
 # p = Projections()
 # p(".")
 # plot_bands(extract_bs, awidth=1)
