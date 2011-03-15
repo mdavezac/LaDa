@@ -443,7 +443,7 @@ class Vff(object):
     from os import getcwd
     from os.path import exists, isdir, abspath, expanduser
     from ..opt.changedir import Changedir
-    from ..mpi import Communicator, world
+    from ..mpi import Communicator
 
     comm = Communicator(comm, with_world=True)
     # bull shit. 
@@ -452,13 +452,6 @@ class Vff(object):
            RuntimeError("No atomic species given in lattice site 0.")
     assert len(self.lattice.sites[1].type) > 0,\
            RuntimeError("No atomic species given in lattice site 1.")
-    assert len(self.lattice.sites[1].type) < 3,\
-           RuntimeError("Lattice is not binary, pseudo-binary or quaternary.")
-    assert len(self.lattice.sites[0].type) < 3,\
-           RuntimeError("Lattice is not binary, pseudo-binary or quaternary.")
-    assert len(self.lattice.sites[1].type) < 3,\
-           RuntimeError("Lattice is not binary, pseudo-binary or quaternary.")
-    assert len(self.lattice.sites[0].type) != 1 or  len(self.lattice.sites[1].type) != 2
 
     timing = time.time() 
     local_time = time.localtime() 
