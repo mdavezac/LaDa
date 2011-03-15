@@ -14,14 +14,14 @@ def broadcast_result(key=False, attr=False, which=0):
     """
 
     def wrapped(*args, **kwargs):
-      from ..mpi import Communicator
+      from ..mpi import Communicator, world
       # removes comm argument
       comm = Communicator(kwargs.pop("comm", None))
       # nonetype case: each proc performs same action. Serial case.
       if not comm.is_mpi: return method(*args, **kwargs)
       # is an mpi process.
       error, result, exception = False, None, None
-      if comm.rank == 0: # root process
+      if comm.is_root:
         try: result = method(*args, **kwargs)
         except Exception as exception:
           comm.broadcast((True, (str(exception), world.rank)))
@@ -46,7 +46,7 @@ def broadcast_result(key=False, attr=False, which=0):
     """
 
     def wrapped(*args, **kwargs):
-      from ..mpi import Communicator
+      from ..mpi import Communicator, world
       assert len(args) > which,\
              RuntimeError("Expected at least %i arguments, got %s." % (which, args))
       assert hasattr(args[which], "comm"),\
@@ -56,7 +56,7 @@ def broadcast_result(key=False, attr=False, which=0):
       if not comm.is_mpi: return method(*args, **kwargs)
       # is an mpi process.
       error, result, exception = False, None, None
-      if comm.rank == 0: # root process
+      if comm.is_root:
         try: result = method(*args, **kwargs)
         except Exception as exception: error, result = True, (str(exception), world.rank)
         comm.broadcast((error, result))

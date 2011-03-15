@@ -29,11 +29,13 @@ class Extract(object):
   @property
   def is_dft(self):
     """ True if this is a DFT calculation, as opposed to GW. """
-    return self.algo not in ['gw', 'gw0', 'chi', 'scgw', 'scgw0'] 
+    try: return self.algo not in ['gw', 'gw0', 'chi', 'scgw', 'scgw0'] 
+    except: return False
   @property
   def is_gw(self):
     """ True if this is a GW calculation, as opposed to DFT. """
-    return self.algo in ['gw', 'gw0', 'chi', 'scgw', 'scgw0'] 
+    try: return self.algo in ['gw', 'gw0', 'chi', 'scgw', 'scgw0'] 
+    except: return False
     
 
   @property

@@ -102,7 +102,7 @@ class RelaxCellShape(object):
     from shutil import rmtree
     from ..opt import RelativeDirectory
     from ..crystal import vasp_ordered
-    from ..mpi import Communicator
+    from ..mpi import Communicator, world
 
     # make this function stateless.
     vasp = deepcopy(kwargs.pop("vasp", self.vasp))
@@ -119,7 +119,7 @@ class RelaxCellShape(object):
                        .format(self.ediffg, self.vasp.ediff))
     ediffg *= 1.2 * float(len(structure.atoms))
 
-    comm = Communicator(comm)
+    comm = Communicator(comm if comm != None else world)
 
     # updates vasp as much as possible.
     if "set_relaxation" in kwargs: 
@@ -144,7 +144,7 @@ class RelaxCellShape(object):
       params = kwargs.copy()
       params.update(first_trial)
     else: params = kwargs
-    if comm != None: comm.barrier()
+    comm.barrier()
     
     # performs relaxation calculations.
     while maxiter <= 0 or nb_steps < maxiter and vasp.relaxation.find("cellshape") != -1:
@@ -230,7 +230,7 @@ class RelaxCellShape(object):
             The structure to relax with `vasp`.
           outdir
             Output directory passed on to the `vasp` functional.
-          comm : boost.mpi.communicator or None
+          comm : mpi.communicator or None
             MPI communicator passed on to the `vasp` functional.
           overwrite : bool
 	    Wether to perform the calculation no matter what, or whether to
@@ -252,14 +252,14 @@ class RelaxCellShape(object):
     from os import getcwd
     from os.path import exists
     from ..opt import RelativeDirectory
-    from ..mpi import Communicator
+    from ..mpi import Communicator, world
 
     outdir = getcwd() if outdir == None else RelativeDirectory(outdir).path
+    comm = Communicator(comm if comm != None else world)
     if not overwrite:
-      extract = self.Extract(outdir, comm=None)
+      extract = self.Extract(outdir, comm=comm)
       if extract.success: return extract
 
-    comm = Communicator(comm)
     for output in self.generator(structure, outdir=outdir,
                                  comm=comm, overwrite=overwrite, **kwargs): pass
     return output

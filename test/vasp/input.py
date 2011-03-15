@@ -20,3 +20,6 @@ vasp.set_symmetries = "off"
 
 vasp.add_specie = "Rh", "pseudos/Rh", U("liechtenstein", "d", 3.3), 3
 
+first_trial = { "encut": 0.9 }
+relaxation_dof = "volume ionic cellshape"
+relaxer = RelaxCellShape( vasp, relaxation_dof, first_trial, maxiter=5)

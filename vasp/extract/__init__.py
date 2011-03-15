@@ -6,13 +6,13 @@
 """
 __docformat__  = 'restructuredtext en'
 __all__ = ['Extract']
-from ...opt import AbstractExtractBase, OutcarSearchMixin as SearchMixin
+from ...opt import AbstractExtractBase
 from ._common import Extract as ExtractCommonBase
 from ._dft import Extract as ExtractDFTBase
 from ._gw import Extract as ExtractGWBase
 from ._mixin import IOMixin
 
-class ExtractCommon(AbstractExtractBase, ExtractCommonBase, IOMixin, SearchMixin):
+class ExtractCommon(AbstractExtractBase, ExtractCommonBase, IOMixin):
   """ Extracts DFT data from an OUTCAR. """
   def __init__(self, outcar=None, comm=None, **kwargs):
     """ Initializes extraction object.
@@ -40,7 +40,6 @@ class ExtractCommon(AbstractExtractBase, ExtractCommonBase, IOMixin, SearchMixin
     AbstractExtractBase.__init__(self, directory, comm)
     ExtractCommonBase.__init__(self)
     IOMixin.__init__(self, directory, **kwargs)
-    SearchMixin.__init__(self)
 
   @property
   def success(self):
@@ -90,10 +89,10 @@ def Extract(outcar=None, comm=None, **kwargs):
       else: raise ValueError('Cannot use both outcar and OUTCAR keywords.')
     else: outcar = kwargs.pop('OUTCAR')
 
-  a = ExtractCommon(outcar=outcar, comm=comm, **kwargs)
-  try: which = ExtractDFT if a.is_dft else ExtractGW
-  except: which = ExtractCommon
-  return which(outcar=outcar, comm=comm, **kwargs)
+  result = ExtractCommon(outcar=outcar, comm=comm, **kwargs)
+  if result.is_dft: return ExtractDFT(outcar=outcar, comm=comm, **kwargs) 
+  elif result.is_gw: return ExtractGW(outcar=outcar, comm=comm, **kwargs) 
+  return result
 
 def ExtractGW_deprecated(*args, **kwargs):
   """ Deprecated. Please use vasp.Extract instead. """
