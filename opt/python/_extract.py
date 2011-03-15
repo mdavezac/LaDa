@@ -25,12 +25,13 @@ class AbstractExtractBase(object):
 
     from os import getcwd
     from . import RelativeDirectory
-    from ..mpi import Communicator
 
     if directory == None: directory = getcwd()
     self._directory = RelativeDirectory(directory, hook=self.__directory_hook__)
     """ Directory where output should be found. """
-    self.comm = Communicator(comm)
+    self.comm = comm
+  @property
+  def comm(self):
     """ Communicator for extracting stuff. 
 
         All procs will get same results at end of extraction. 
@@ -41,6 +42,11 @@ class AbstractExtractBase(object):
         >>> if comm.rank == 0: extract.success # will hang if comm.size != 1
         >>> if comm.rank == 0: extract.solo().success # Ok
     """
+    return self._comm
+  @comm.setter
+  def comm(self, value):
+    from ..mpi import Communicator
+    self._comm = Communicator(value)
   @property
   def directory(self):
     """ Directory where output should be found. """

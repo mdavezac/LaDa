@@ -378,11 +378,14 @@ class MassExtract(AbstractMassExtract):
         :kwarg naked_end: True if should return value rather than dict when only one item.
         :kwarg unix_re: converts regex patterns from unix-like expression.
     """
-    AbstractMassExtract.__init__(self, **kwargs)
-
     from os.path import isdir, isfile, exists, dirname, abspath
+    from ..mpi import Communicator
 
+    AbstractMassExtract.__init__(self, **kwargs)
     self.rootdir = path # Path to the job dictionary.
+
+    self._comm = Communicator(comm)
+    """ Private MPI communicator. """
 
   @property
   def comm(self):
@@ -478,7 +481,7 @@ class MassExtract(AbstractMassExtract):
     
     for name, job in self.jobdict.iteritems():
       if job.is_tagged: continue
-      try: extract = job.functional.Extract(join(self.rootdir, name), comm = self.comm)
+      try: extract = job.functional.Extract(join(self.rootdir, name), comm = self._comm)
       except: pass 
       else: yield job.name, extract
 
@@ -515,6 +518,7 @@ class AbstractMassExtractDirectories(AbstractMassExtract):
     """
     from os.path import exists, isdir
     from ..opt import RelativeDirectory
+    from ..mpi import Communicator
 
     # this will throw on unknown kwargs arguments.
     AbstractMassExtract.__init__(self,**kwargs)
@@ -526,7 +530,8 @@ class AbstractMassExtractDirectories(AbstractMassExtract):
     """ Root of the directory-tree to trawl for OUTCARs. """
     
     # mpi communicator is a property.
-    self.comm = comm
+    self._comm = Communicator(comm)
+    """ Private reference to global communicator. """
 
   @property
   def comm(self):
@@ -569,7 +574,7 @@ class AbstractMassExtractDirectories(AbstractMassExtract):
     for dirpath, dirnames, filenames in walk(self.rootdir, topdown=True, followlinks=True):
       if not self.__is_calc_dir__(dirpath, dirnames, filenames): continue
 
-      try: result = self.Extract(join(self.rootdir, dirpath), comm = self.comm)
+      try: result = self.Extract(join(self.rootdir, dirpath), comm = self._comm)
       except TypeError: # no comm keyword.  
         try: result = self.Extract(join(self.rootdir, dirpath))
         except: continue

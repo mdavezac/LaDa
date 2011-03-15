@@ -1,9 +1,10 @@
 from ....opt.decorators import make_cached, broadcast_result
+from ....opt import AbstractExtractBase, OutcarSearchMixin
 import re
 
 __all__  = ['Extract']
 
-class Extract(object): 
+class Extract(AbstractExtractBase, OutcarSearchMixin): 
   """ Extracts from ga ouput. """
   ordinals = ['first', 'second', 'third', 'fourth', 'fith', 'sixth',
               'seventh', 'eight', 'nineth', 'eleventh', 'twelfth',
@@ -24,61 +25,21 @@ class Extract(object):
                r"(\s*(array\(\[(?:\s*[0,1]\,|(?:\,\s*$^)\s*)*\s*[0,1]\s*\]\))"\
                r"\s*(\S+)\s*(\S+)?\s*\n)+", re.X|re.M)
 
-  def __init__(self, directory = ".", comm = None):
+  def __init__(self, directory = None, comm = None):
     """ Initializes Extract object. """
-    from ....opt import RelativeDirectory
-    from ....mpi import Communicator
+    AbstractExtractBase.__init__(self, directory, comm)
+    OutcarSearchMixin.__init__(self)
 
-    self._directory = RelativeDirectory(path=directory, hook=self.uncache)
-    """ GA directory. """
-    self.comm = Communicator(comm)
-    """ MPI Communicator. """
+  def __outcar__(self):
+    """ Returns path to OUTCAR file.
 
-  def _search_OUTCAR(self, regex, path=None):
-    """ Looks for all matches. """
+        :raise IOError: if the OUTCAR file does not exist. 
+    """
     from os.path import exists, join
-    from re import compile
-    from numpy import array
-
-    if path == None: 
-      assert self.current_age != None, IOError("No data to search. No GA run completed.")
-      path = join(join(self.directory, self.current_age), self.OUTCAR)
-    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
-
-    result = []
-    regex  = compile(regex)
-    with open(path, "r") as file:
-      for line in file: 
-        found = regex.search(line)
-        if found != None: yield found
-
-  def _find_first_OUTCAR(self, regex, path=None):
-    """ Returns first result from a regex. """
-    for first in self._search_OUTCAR(regex, path): return first
-    return None
-
-  def _rsearch_OUTCAR(self, regex, path=None):
-    """ Looks for all matches starting from the end. """
-    from os.path import exists, join
-    from re import compile
-    from numpy import array
-
-    if path == None: 
-      assert self.current_age != None, IOError("No data to search. No GA run completed.")
-      path = join(join(self.directory, self.current_age), self.OUTCAR)
-    if not exists(path): raise IOError, "File %s does not exist.\n" % (path)
-
-    result = []
-    regex  = compile(regex)
-    with open(path, "r") as file: lines = file.readlines()
-    for line in lines[::-1]:
-      found = regex.search(line)
-      if found != None: yield found
-
-  def _find_last_OUTCAR(self, regex, path=None):
-    """ Returns first result from a regex. """
-    for last in self._rsearch_OUTCAR(regex, path): return last
-    return None
+    if self.current_age == None: raise IOError("No data to search. No completed GA run found.")
+    path = join(join(self.directory, self.current_age), self.OUTCAR)
+    if not exists(path): raise IOError("Path {0} does not exist.\n".format(path))
+    return open(path, 'r')
 
   @property
   def directory(self):
@@ -135,6 +96,7 @@ class Extract(object):
   @broadcast_result(attr=True, which=0)
   def ages(self): 
     """ Returns existing ages. """
+    from re import compile, M as mult
     from os.path import exists, join
 
     results = []
@@ -144,26 +106,17 @@ class Extract(object):
       # check for existsnce of all files.
       if not all([exists(p) for p in dummy]): continue
       # checks for the nimber of generations.
-      first = self._find_first_OUTCAR( r"^\s*Starting\s+generation\s+(\d+)\s*$",\
-                                       join(join(self.directory, name), self.OUTCAR))
+      regex = compile(r"^\s*Starting\s+generation\s+(\d+)\s*$", mult)
+      with open(join(join(self.directory, name), self.OUTCAR), 'r') as file:
+        string = file.read()
+      first, last = None, 0
+      for found in re.finditer(regex, string):
+        if first == None: first = int(found.group(1)); continue
+        last = int(found.group(1))
       if first == None: continue
-      first = int(first.group(1))
-      last = self._find_last_OUTCAR( r"^\s*Starting\s+generation\s+(\d+)\s*$",\
-                                     join(join(self.directory, name), self.OUTCAR))
-      if last == None: continue
-      last = int(last.group(1))
       if last - first < 1: continue
       results.append(name)
     return results
-
-  @make_cached
-  def solo(self):
-    """ Returns extractor with no communicator. """
-    from copy import deepcopy
-    from ....mpi import Communicator
-    result = deepcopy(self)
-    result.comm = Communicator(None)
-    return result
 
   @property
   @make_cached
@@ -194,12 +147,6 @@ class Extract(object):
     for a, b in zip(self.ages, self.ordinals):
       if a != b: return True
     return True
-
-  def uncache(self): 
-    """ Uncaches results. """
-    from lada.opt.decorators  import uncache as opt_uncache
-    opt_uncache(self)
-
 
   @property
   @make_cached 
@@ -286,19 +233,3 @@ class Extract(object):
     """ Minimum set of individuals. """
     from operator import attrgetter
     return sorted(self.solo().uniques, key=attrgetter('fitness'))
-
-  def solo(self):
-    """ Returns a serial extractor (as opposed to MPI). """
-    from copy import deepcopy
-    from ....mpi import Communicator
-    result = deepcopy(self)
-    result.comm = Communicator(None)
-    return result
-
-  def __getstate__(self):
-    d = self.__dict__.copy()
-    d.pop("comm", None)
-    return d
-
-  def __setstate__(self, arg):
-    self.__dict__.update(arg)
