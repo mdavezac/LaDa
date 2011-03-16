@@ -15,7 +15,7 @@ def launch(self, event, jobdicts):
   from os.path import join, dirname
   from ... import lada_with_mpi
   from ...opt.changedir import Changedir
-  from ..mpi import world
+  from ...mpi import world
   
   ip = self.api
   ip.user_ns.pop("_lada_error", None)
