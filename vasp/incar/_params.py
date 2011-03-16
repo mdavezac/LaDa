@@ -314,7 +314,7 @@ class Restart(SpecialVaspParam):
       else: 
         istart = "0   # start from scratch"
         icharg = "2   # superpositions of atomic densities"
-      if is_root:
+      if comm.is_root:
         copyfile(join(self.value.directory, files.EIGENVALUES), nothrow='same exists') 
         copyfile(join(self.value.directory, files.CONTCAR), files.POSCAR,
                  nothrow='same exists', symlink=True) 
