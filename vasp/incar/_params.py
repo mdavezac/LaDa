@@ -318,7 +318,7 @@ class Restart(SpecialVaspParam):
         copyfile(join(self.value.directory, files.EIGENVALUES), nothrow='same exists') 
         copyfile(join(self.value.directory, files.CONTCAR), files.POSCAR,
                  nothrow='same exists', symlink=True) 
-      if comm != None: comm.barrier()
+      comm.barrier()
     return  "ISTART = %s\nICHARG = %s" % (istart, icharg)
 
 class UParams(SpecialVaspParam): 

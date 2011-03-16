@@ -443,7 +443,7 @@ class Vff(object):
     from os import getcwd
     from os.path import exists, isdir, abspath, expanduser
     from ..opt.changedir import Changedir
-    from ..mpi import Communicator
+    from ..mpi import Communicator, world
 
     comm = Communicator(comm, with_world=True)
     # bull shit. 

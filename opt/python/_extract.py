@@ -104,6 +104,7 @@ class AbstractExtractBase(object):
   def __getstate__(self):
     d = self.__dict__.copy()
     d.pop("comm", None)
+    d.pop("_comm", None)
     if "_directory" in d: d["_directory"].hook = None
     return d
 
