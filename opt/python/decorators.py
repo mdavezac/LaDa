@@ -1,5 +1,6 @@
 """ A subpackage with decorators """
 __docformat__ = "restructuredtext en"
+from .filecache import FileCache
 
 
 def broadcast_result(key=False, attr=False, which=0): 

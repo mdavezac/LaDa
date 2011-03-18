@@ -123,6 +123,22 @@ def print_offspring(self):
       print "    ", indiv, indiv.fitness
   return True
 
+def save_offspring(self):
+  """ Saves offspring to file.
+
+      First recovers offspring previously saved to file.
+      Then adds current offspring.
+  """
+  if self.comm.is_root: 
+    from os.path import exists
+    from pickle import load, dump
+    path, results = "OFFCAR", []
+    if exists(path): 
+      with open(path, 'r') as file: results = load(file)
+    result.append([u for u in offspring if u.birth == self.current_gen - 1])
+    with open(path, 'w') as file: dump(file)
+  return True
+
 def _check_generation( self ):
   """ returns false if maximum number of generations was passed. 
       

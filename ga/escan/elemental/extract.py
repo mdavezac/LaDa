@@ -17,6 +17,8 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
   """ Error filename. """
   FUNCCAR = "GA_FUNCCAR"
   """ Functional filename """
+  OFFCAR = "GA_OFFCAR"
+  """ Offspring file. """
 
   INDIV_PATTERN = re.compile(r"^\s*(array\(\[(?:\s*[0,1]\,|(?:\,\s*$^)\s*)*"\
                              r"\s*[0,1]\s*\]\))\s*(\S+)\s*(\S+)?\s*$", re.X|re.M)
@@ -157,29 +159,39 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     from numpy import array, abs
     from copy import deepcopy
     
-    result = []
-    individual = self.functional.Individual()
-    for age in self.ages: 
-      with open(join(join(self.directory, age), self.OUTCAR), "r") as file:
-        text = "".join(file.readlines())
 
-      # loop over Offspring blocks.
-      for gen_match in self.OFFSPRING_PATTERN.finditer(text):
-        result.append([])
-        # loop over inviduals
-        for indiv_match in self.INDIV_PATTERN.finditer(gen_match.group(0)):
-          # creates individual from grepped stuff.
-          individual.genes = eval(indiv_match.group(1))
-          individual.fitness = float(indiv_match.group(2))
-          # checks for pre-existing copies.
-          found_other = False
-          if len(result) >= 2: 
-            for other in result[-2]: 
-              if self.functional.cmp_indiv(individual, other) != 0: continue
-              if not self.functional.compare(individual, other): continue
-              found_other = True
-              break
-          result[-1].append( other if found_other else deepcopy(individual) )
+    def loop(_age):
+      path = join(join(self.root.path, _age), self.OFFCAR)
+      if exists(path):  # loads from OFFCAR
+        with open(path, "r") as file: 
+          for pop in load(file):
+            for indiv in pop: yield indiv
+      else:
+        individual = self.functional.Individual()
+        with open(join(join(self.root.path, _age), self.OUTCAR), "r") as file:
+          text = "".join(file.readlines())
+        
+        # loop over Offspring blocks.
+        for gen_match in self.OFFSPRING_PATTERN.finditer(text):
+          result.append([])
+          # loop over inviduals
+          for indiv_match in self.INDIV_PATTERN.finditer(gen_match.group(0)):
+            individual.genes = eval(indiv_match.group(1))
+            individual.fitness = float(indiv_match.group(2))
+            yield individual
+
+    result = []
+    for age in self.ages: 
+      for individual in loop(age):
+        # checks for pre-existing copies.
+        found_other = False
+        if len(result) >= 2: 
+          for other in result[-2]: 
+            if self.functional.cmp_indiv(individual, other) != 0: continue
+            if not self.functional.compare(individual, other): continue
+            found_other = True
+            break
+        result[-1].append( other if found_other else deepcopy(individual) )
       if len(result[-1]) == 0: result.pop(-1)
     return result
                
@@ -233,3 +245,26 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     """ Minimum set of individuals. """
     from operator import attrgetter
     return sorted(self.solo().uniques, key=attrgetter('fitness'))
+
+  def iterfiles(self, **kwargs):
+    """ Iterates over output/input files.
+
+        :kwarg errors: Include stderr files.
+        :type errors: bool
+        :kwarg offcar: Include file with offspring for each generation.
+        :type offcar: bool
+    """
+    from os.path import join, exists, isdir
+    files = [self.OUTCAR, self.FUNCCAR]
+    if kwargs.get("errors", False): files.append(self.ERRCAR)
+    if kwargs.get("offcar", False): files.append(self.OFFCAR)
+
+    for age in self.ages:
+      directory = join(self.directory, age)
+      if not exist(directory): continue
+      if not isdir(directory): continue
+      for file in files:
+        path = join(directory, file)
+        if exists(path): yield path
+    
+

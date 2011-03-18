@@ -1,6 +1,6 @@
 """ Submodule to compute bandgaps with escan. """
 __docformat__  = 'restructuredtext en'
-from ..opt.decorators import make_cached
+from ..opt.decorators import make_cached, FileCache
 from _extract import Extract as _ExtractE
 
 def extract(outdir=".", comm = None):
@@ -139,23 +139,38 @@ class ExtractAE(_ExtractE):
                     * dme.units * dme.units
     return (result * units).simplified, nstates
 
-  def dipole(self, degeneracy=1e-3, attenuate=False):
+  @FileCache('DIPOLECAR')
+  def dipole(self, degeneracy=-1e0, attenuate=False):
     """ Computes dipole matrix element between vbm and cbm. """
     from numpy import array
     from numpy.linalg import det
     from ..physics import a0
     result, gvectors = [], self.gvectors.rescale(1./a0)
     for wfnA in self.gwfns:
-      if abs(wfnA.eigenvalue - self.cbm) > degeneracy: continue
+      if degeneracy >= 0e0 and abs(wfnA.eigenvalue - self.cbm) > degeneracy: continue
       for wfnB in self.gwfns:
-        if abs(wfnB.eigenvalue - self.vbm) > degeneracy: continue
-        result.append((wfnA.eigenvalue, wfnB.eigenvalue, wfnA.braket(gvectors, wfnB, attenuate=attenuate)))
+        if degeneracy >= 0e0 and abs(wfnB.eigenvalue - self.vbm) > degeneracy: continue
+        result.append( (wfnA.eigenvalue, wfnB.eigenvalue,
+                        wfnA.braket(gvectors, wfnB, attenuate=attenuate)) )
     return result
 
   def __copy__(self):
     """ Returns a shallow copy of this object. """
     result = self.__class__(self)
     return result
+
+  def iterfiles(self, **kwargs):
+    """ Iterates over output/input files.
+
+        :kwarg dipolecar: Include dipole moment file.
+        :type dipolecar: bool
+
+        Parameters are passed on to internal escan calculation.
+    """
+    if kwargs.get('dipolecar', False): 
+      from os.path import exists, join
+      if exists(join(self.directory, 'DIPOLECAR')): yield join(self.directory, 'DIPOLECAR')
+    for file in _ExtractE.iterfiles(self, **kwargs): yield file
   
 def _band_gap_ae_impl(escan, structure, outdir, **kwargs):
   """ Computes bandgap of a structure using all-electron method. """
@@ -259,7 +274,8 @@ class ExtractRefs(object):
         else: result += dme / (wfnA.eigenvalue - wfnB.eigenvalue) 
     return (units * result).simplified, nstates
   
-  def dipole(self, degeneracy=1e-3, attenuate=False):
+  @FileCache('DIPOLECAR')
+  def dipole(self, degeneracy=-1e0, attenuate=False):
     """ Computes dipole matrix element between vbm and cbm. """
     from numpy import all, abs, dot
     from numpy.linalg import det
@@ -269,11 +285,12 @@ class ExtractRefs(object):
     assert all( abs(self.extract_vbm.gvectors - self.extract_cbm.gvectors) < 1e-12 )
     result, gvectors = [], self.extract_cbm.gvectors.rescale(1./a0)
     for wfnA in self.extract_cbm.gwfns:
-      if abs(wfnA.eigenvalue - self.cbm) > degeneracy: continue
+      if degeneracy >= 0e0 and abs(wfnA.eigenvalue - self.cbm) > degeneracy: continue
       for wfnB in self.extract_vbm.gwfns:
-        if abs(wfnB.eigenvalue - self.vbm) > degeneracy: continue
+        if degeneracy >= 0e0 and abs(wfnB.eigenvalue - self.vbm) > degeneracy: continue
         dme = wfnA.braket(gvectors, wfnB, attenuate=attenuate)
-        result.append((wfnA.eigenvalue, wfnB.eigenvalue, wfnA.braket(gvectors, wfnB, attenuate=attenuate)))
+        result.append( (wfnA.eigenvalue, wfnB.eigenvalue, 
+                       wfnA.braket(gvectors, wfnB, attenuate=attenuate)) )
     return result
 
   @property
@@ -299,8 +316,14 @@ class ExtractRefs(object):
   def iterfiles(self, **kwargs):
     """ Iterates over output/input files.
 
+        :kwarg dipolecar: Include dipole moment file.
+        :type dipolecar: bool
+
         Parameters are passed on to internal escan calculation.
     """
+    if kwargs.get('dipolecar', False): 
+      from os.path import exists, join
+      if exists(join(self.directory, 'DIPOLECAR')): yield join(self.directory, 'DIPOLECAR')
     for file in self.extract_vbm.iterfiles(**kwargs): yield file
     for file in self.extract_cbm.iterfiles(**kwargs): yield file
     try: extract = self.extract_vbm.__class__( dirname(self.directory), 
