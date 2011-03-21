@@ -171,7 +171,7 @@ class Extract(AbstractExtractBase):
   def _rootrun(self):
     """ Vff extraction object. """
     if '__rootrun' not in self.__dict__:
-      self.__rootrun = self.Extract(self.rootdir, comm = self.comm) 
+      self.__rootrun = self.Extract(self.directory, comm = self.comm) 
     return self.__rootrun
 
   def iterfiles(self, **kwargs):
