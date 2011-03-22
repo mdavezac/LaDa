@@ -95,7 +95,7 @@ def completer(self, info, data, computer):
   """ Completer for scattered launcher. """
   from ... import queues as lada_queues
   from .._explore import _glob_job_pickles
-  queue = "account" if computer else "queue"
+  queue = "--account" if computer else "--queue"
   ip = self.api
   if    (len(info.symbol) == 0 and data[-1] == "--walltime") \
      or (len(info.symbol) > 0  and data[-2] == "--walltime"):

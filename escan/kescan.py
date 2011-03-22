@@ -10,7 +10,7 @@ from ._extract import Extract as EscanExtract
 
 class Extract(AbstractExtractBase):
   """ Extraction class for KEscan. """
-  Extract = staticmethod(EscanExtract)
+  EscanExtract = staticmethod(EscanExtract)
   """ Escan extraction object. """
 
   def __init__(self, directory=None, comm=None, unreduce=True, **kwargs):
@@ -38,15 +38,15 @@ class Extract(AbstractExtractBase):
     paths = [ path for path in iglob(join(self.directory, 'kpoint_*/'))\
               if isdir(path) and regex.search(path) != None ]
     paths = sorted(paths, key=lambda x: int(regex.search(x).group(1)))
-    vffout = self.Extract(self.directory, comm=self.comm)._vffout
-    OUTCAR = self.Extract().OUTCAR
+    vffout = self.EscanExtract(self.directory, comm=self.comm)._vffout
+    OUTCAR = self.EscanExtract().OUTCAR
 
     result = []
     for path in paths:
       filenames = [basename(u) for u in iglob(join(path, '*')) if not isdir(u)]
       if OUTCAR not in filenames: continue
 
-      try: extractor = self.Extract(path, comm = self.comm)
+      try: extractor = self.EscanExtract(path, comm = self.comm)
       except: continue
 
       extractor._vffout = vffout
@@ -171,7 +171,7 @@ class Extract(AbstractExtractBase):
   def _rootrun(self):
     """ Vff extraction object. """
     if '__rootrun' not in self.__dict__:
-      self.__rootrun = self.Extract(self.directory, comm = self.comm) 
+      self.__rootrun = self.EscanExtract(self.directory, comm = self.comm) 
     return self.__rootrun
 
   def iterfiles(self, **kwargs):
@@ -179,8 +179,9 @@ class Extract(AbstractExtractBase):
 
         Parameters are passed on to internal escan calculations.
     """
-    for file in self._routrun.iterfiles(**kwargs): yield file
-    for file in super(KExtract, self).iterfiles(**kwargs): yield file
+    for file in self._rootrun.iterfiles(**kwargs): yield file
+    for kpoint_calc in self: 
+      for file in kpoint_calc.iterfiles(**kwargs): yield file
  
 class KEscan(Escan):
   """ A wrapper around Escan for computing many kpoints. """
