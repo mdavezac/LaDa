@@ -7,7 +7,7 @@ def export(self, event):
   import argparse
   import tarfile
   from os import getcwd
-  from os.path import exists, isfile, extsep, relpath
+  from os.path import exists, isfile, extsep, relpath, dirname, join
   from ..opt import RelativeDirectory
 
   parser = argparse.ArgumentParser(prog='%export',
@@ -20,7 +20,10 @@ def export(self, event):
                                  'exists in the usernamespace. It may have been declared '\
                                  'from loading a jobdictionary using \"explore\", or directly '\
                                  'with \"collect = vasp.MassExtract()\".' )
-  parser.add_argument( 'filename', metavar='FILE', type=str, default='export.tar.gz',
+  group = parser.add_mutually_exclusive_group(required=True)
+  group.add_argument( '--list', action="store_true", dest="aslist",
+                       help='Do not tar, return a list of all the files.' )
+  group.add_argument( 'filename', metavar='FILE', type=str, default='export.tar.gz',
                        nargs='?',
                        help='Path to the tarfile. Suffixes ".gz" and ".tgz" indicate '\
                             'gzip compression, whereas ".bz" and ".bz2" indicate bzip '\
@@ -39,8 +42,12 @@ def export(self, event):
                        help='Include POTCAR files.' )
   parser.add_argument( '--wavecar', action="store_true", dest="wavecar",
                        help='Include WAVECAR files.' )
-  parser.add_argument( '--list', action="store_true", dest="aslist",
-                       help='Do not tar, return a list of all the files.' )
+  group = parser.add_mutually_exclusive_group(required=False)
+  group.add_argument( '--down', action="store_true", dest="down",
+                       help='Tar from one directory down.' )
+  group.add_argument( '--from', type=str, dest="dir", default=None,
+                       help='Root directory from which to give filenames. '\
+                            'Defaults to current working directory.' )
 
   try: args = parser.parse_args(event.split())
   except SystemExit as e: return None
@@ -55,14 +62,23 @@ def export(self, event):
   jobdict = self.api.user_ns.get('current_jobdict_path', None)
   if args.aslist:
     from IPython.genutils import SList
+    directory = getcwd()
+    if args.down: directory = join(directory, '..')
+    elif args.dir != None: directory = RelativeDirectory(args.dir).path
     try: 
-      result = SList([file for file in self.api.user_ns['collect'].iterfiles(**kwargs)])
-      if jobdict != None: result.append(jobdict)
+      result = SList([relpath(file, directory) for file in self.api.user_ns['collect'].iterfiles(**kwargs)])
+      if jobdict != None: result.append(relpath(file, jobdict))
       return result
     except Exception as e:
       print "Encoutered error while tarring file."
       print e
   else:
+    if jobdict == None: 
+      print "Current job-dictionary does not have a path. Please call savejobs first."
+      return
+    directory = dirname(jobdict)
+    if args.down: directory = join(directory, '..')
+    elif args.dir != None: directory = RelativeDirectory(args.dir).path
     args.filename = relpath(RelativeDirectory(args.filename).path, getcwd())
     if exists(args.filename): 
       if not isfile(args.filename):
@@ -79,8 +95,9 @@ def export(self, event):
     elif endname in ['bz', 'bz2']: tarme = tarfile.open(args.filename, 'w:bz2')
     else:                          tarme = tarfile.open(args.filename, 'w')
     try: 
-      for file in self.api.user_ns['collect'].iterfiles(**kwargs): tarme.add(file)
-      if jobdict != None: tarme.add(jobdict)
+      for file in self.api.user_ns['collect'].iterfiles(**kwargs):
+        tarme.add(file, arcname=relpath(file, directory))
+      if jobdict != None: tarme.add(jobdict, arcname=relpath(jobdict, directory))
     except Exception as e:
       print "Encoutered error while tarring file."
       print e
@@ -92,23 +109,41 @@ def completer(self, event):
   from glob import iglob
   from itertools import chain
   from os.path import isdir
-  data = set(event.line.split()) - set(["export", "%export"])
+  data = event.line.split()
+  if    (len(event.symbol) == 0 and data[-1] == "--from") \
+     or (len(event.symbol) > 0  and data[-2] == "--from"):
+    current = '' if len(event.symbol) == 0 else data[-1]
+    result = set([u for u in self.api.magic("%mglob dir:{0}*".format(current))]) | set(['../'])
+    if isdir(current): result |= set([u for u in self.api.magic("%mglob dir:{0}/*".format(current))])
+    return result
+
+  data = set(data) - set(["export", "%export"])
   result = set(['--incar', '--doscar', '--poscar', '--chgcar', '--contcar', 
-                '--potcar', '--wavecar', '--list'])
-  other = data - result
-  if len(other) == 0: 
-    for file in chain( iglob('*.tar'), iglob('*.tar.gz'), 
-                       iglob('*.tgz'), iglob('*.bz'), iglob('*.bz2') ):
-      result.add(file)
-    result |= set([u for u in self.api.magic("%mglob dir:*")])
-  elif len(other) == 1: 
-    other = other.__iter__().next()
-    string = "{0}*.tar {0}*.tar.gz {0}*.tgz {0}*.tar.bz {0}*.tar.bz2 dir:{0}*".format(other)
-    result |= set([u for u in self.api.magic("%mglob " + string)])
-    if isdir(other) and other[-1] != '/':
-      string = "{0}/*.tar {0}/*.tar.gz {0}/*.tgz {0}/*.tar.bz "\
-               "{0}/*.tar.bz2 dir:{0}/*".format(other)
+                '--potcar', '--wavecar', '--list', '--down', '--from'])
+  if '--list' not in data:
+    other = event.line.split()
+    if '--from' in other:
+      i = other.index('--from')
+      if i + 1 < len(other): other.pop(i+1)
+    other =  [u for u in (set(other)-result-set(['export', '%export'])) if u[0] != '-']
+    if len(other) == 0:
+      for file in chain( iglob('*.tar'), iglob('*.tar.gz'), 
+                         iglob('*.tgz'), iglob('*.bz'), iglob('*.bz2') ):
+        result.add(file)
+      result |= set([u for u in self.api.magic("%mglob dir:*")])
+    elif len(other) == 1: 
+      result.discard('--list')
+      other = event.symbol
+      if '.' in other: other = other[:other.find('.')]
+      string = "{0}*.tar {0}*.tar.gz {0}*.tgz {0}*.tar.bz {0}*.tar.bz2 dir:{0}*".format(other)
       result |= set([u for u in self.api.magic("%mglob " + string)])
+      if isdir(other) and other[-1] != '/':
+        string = "{0}/*.tar {0}/*.tar.gz {0}/*.tgz {0}/*.tar.bz "\
+                 "{0}/*.tar.bz2 dir:{0}/*".format(other)
+        result |= set([u for u in self.api.magic("%mglob " + string)])
+  result = result - data
+  if '--down' in data: result.discard('--from')
+  if '--from' in data: result.discard('--down')
   return list(result - data)
 
 
