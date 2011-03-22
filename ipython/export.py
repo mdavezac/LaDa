@@ -120,21 +120,27 @@ def completer(self, event):
   data = set(data) - set(["export", "%export"])
   result = set(['--incar', '--doscar', '--poscar', '--chgcar', '--contcar', 
                 '--potcar', '--wavecar', '--list', '--down', '--from'])
-  other = [u for u in data - result if u[0] != '-']
-  if len(other) == 0 and '--list' not in data: 
-    for file in chain( iglob('*.tar'), iglob('*.tar.gz'), 
-                       iglob('*.tgz'), iglob('*.bz'), iglob('*.bz2') ):
-      result.add(file)
-    result |= set([u for u in self.api.magic("%mglob dir:*")])
-  elif len(other) == 1: 
-    result.discard('--list')
-    other = other.__iter__().next()
-    string = "{0}*.tar {0}*.tar.gz {0}*.tgz {0}*.tar.bz {0}*.tar.bz2 dir:{0}*".format(other)
-    result |= set([u for u in self.api.magic("%mglob " + string)])
-    if isdir(other) and other[-1] != '/':
-      string = "{0}/*.tar {0}/*.tar.gz {0}/*.tgz {0}/*.tar.bz "\
-               "{0}/*.tar.bz2 dir:{0}/*".format(other)
+  if '--list' not in data:
+    other = event.line.split()
+    if '--from' in other:
+      i = other.index('--from')
+      if i + 1 < len(other): other.pop(i+1)
+    other =  [u for u in (set(other)-result-set(['export', '%export'])) if u[0] != '-']
+    if len(other) == 0:
+      for file in chain( iglob('*.tar'), iglob('*.tar.gz'), 
+                         iglob('*.tgz'), iglob('*.bz'), iglob('*.bz2') ):
+        result.add(file)
+      result |= set([u for u in self.api.magic("%mglob dir:*")])
+    elif len(other) == 1: 
+      result.discard('--list')
+      other = event.symbol
+      if '.' in other: other = other[:other.find('.')]
+      string = "{0}*.tar {0}*.tar.gz {0}*.tgz {0}*.tar.bz {0}*.tar.bz2 dir:{0}*".format(other)
       result |= set([u for u in self.api.magic("%mglob " + string)])
+      if isdir(other) and other[-1] != '/':
+        string = "{0}/*.tar {0}/*.tar.gz {0}/*.tgz {0}/*.tar.bz "\
+                 "{0}/*.tar.bz2 dir:{0}/*".format(other)
+        result |= set([u for u in self.api.magic("%mglob " + string)])
   result = result - data
   if '--down' in data: result.discard('--from')
   if '--from' in data: result.discard('--down')
