@@ -131,7 +131,7 @@ def completer(self, event):
                          iglob('*.tgz'), iglob('*.bz'), iglob('*.bz2') ):
         result.add(file)
       result |= set([u for u in self.api.magic("%mglob dir:*")])
-    elif len(other) == 1: 
+    elif len(other) == 1 and len(event.symbol) != 0: 
       result.discard('--list')
       other = event.symbol
       if '.' in other: other = other[:other.find('.')]
