@@ -14,6 +14,9 @@ class JobParams(AbstractMassExtract):
           jobdict : None or JobDict
 	    The jobdictionary for which to get/set parameters. If None, will
             look for ipython's current_jobdict.
+          only_existing : bool
+            If true (default), then only existing parameters can be modified:
+            non-existing parameters will not be added.
           kwargs : dict
             Variable length keyword argument passed on to `AbstractMassExtract`.
 

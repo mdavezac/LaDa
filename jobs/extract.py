@@ -229,20 +229,26 @@ class AbstractMassExtract(object):
     children = set()
     if len(self.view) == 0 or self.view == '/':
       for name in self.iterkeys():
-        children.add(name[:1+name[1:].find('/')])
-    else:
-      for name in self.iterkeys():
-        where = regex.match(name)
-        if len(name) == where.end() +1: continue
-        first_index = name[where.end():].find('/')
-        if first_index == -1: continue
-        first_index += where.end() + 1
-        if first_index >= len(name): continue
-        end = name[first_index:].find('/')
-        if end == -1: children.add(name)
-        else: children.add(name[:end + first_index])
+        yield self.copy(view=name[:1+name[1:].find('/')])
+      return
     
-    for child in children: yield self.copy(view=child)
+    newdict = self.dicttype()
+    for name, value in self.iteritems(): newdict[name] = value
+    for name in self.iterkeys():
+      where = regex.match(name)
+      if len(name) == where.end() +1: continue
+      if where.end() == 0: first_index = name.find('/')
+      elif name[where.end()-1] == '/': first_index = 0
+      else: first_index = name[where.end():].find('/')
+      if first_index == -1: continue
+      first_index += where.end() + 1
+      if first_index >= len(name): continue
+      end = name[first_index:].find('/')
+      if end == -1: children.add(name)
+      else: children.add(name[:end + first_index])
+    
+    for child in children: 
+      yield self.copy(view=child, _cached_extractors=newdict)
 
   def grep(self, regex, flags=0, yield_match=False):
     """ Yields views for children with fullnames matching the regex.

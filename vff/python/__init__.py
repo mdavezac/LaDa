@@ -89,7 +89,8 @@ class Extract(AbstractExtractBase):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def energy(self):
-    """ Greps energy from self.L{OUTCAR}. """
+    """ Greps energy from OUTCAR [eV/structure]. """
+    from quantities import eV
     with self.__outcar__() as file:
       # find start of calculations.
       for line in file:
@@ -98,7 +99,7 @@ class Extract(AbstractExtractBase):
         if line.find("# Structure definition.") != -1: break;
       for line in file:
         if line.find("structure.energy") != -1:
-          return float(line.split()[2])
+          return float(line.split()[2]) * eV
 
   @property
   @make_cached

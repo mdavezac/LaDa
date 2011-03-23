@@ -155,20 +155,22 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
   @broadcast_result(attr=True, which=0)
   def offspring(self):
     """ List of bitstring + fitness for each offspring at each generation. """
-    from os.path import join
-    from numpy import array, abs
     from copy import deepcopy
     
 
     def loop(_age):
-      path = join(join(self.root.path, _age), self.OFFCAR)
+      from os.path import join, exists
+      from numpy import array
+      from quantities import *
+
+      path = join(join(self.directory, _age), self.OFFCAR)
       if exists(path):  # loads from OFFCAR
         with open(path, "r") as file: 
           for pop in load(file):
             for indiv in pop: yield indiv
       else:
         individual = self.functional.Individual()
-        with open(join(join(self.root.path, _age), self.OUTCAR), "r") as file:
+        with open(join(join(self.directory, _age), self.OUTCAR), "r") as file:
           text = "".join(file.readlines())
         
         # loop over Offspring blocks.
@@ -261,7 +263,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
 
     for age in self.ages:
       directory = join(self.directory, age)
-      if not exist(directory): continue
+      if not exists(directory): continue
       if not isdir(directory): continue
       for file in files:
         path = join(directory, file)
