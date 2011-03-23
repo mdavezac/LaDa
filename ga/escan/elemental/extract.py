@@ -161,7 +161,12 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     def loop(_age):
       from os.path import join, exists
       from numpy import array
-      from quantities import *
+      import quantities 
+
+      d = globals().copy()
+      d.update(locals())
+      d['array'] = array
+      d.update(quantities.__dict__)
 
       path = join(join(self.directory, _age), self.OFFCAR)
       if exists(path):  # loads from OFFCAR
@@ -178,7 +183,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
           result.append([])
           # loop over inviduals
           for indiv_match in self.INDIV_PATTERN.finditer(gen_match.group(0)):
-            individual.genes = eval(indiv_match.group(1))
+            individual.genes = eval(indiv_match.group(1), d)
             individual.fitness = float(indiv_match.group(2))
             yield individual
 
