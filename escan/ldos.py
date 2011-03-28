@@ -97,6 +97,13 @@ class Extract(KExtract):
     if exists(path): yield path
     for file in KExtract.iterfiles(self, **kwargs): yield file
 
+  @property 
+  def success(self):
+    """ True if successful run. """
+    from os.path import join, exists
+    if not exists(join(self.directory, 'LDOSCAR')): return False
+    return KExtract.success.__get__(self)
+
 class Functional(KEscan): 
   """ Functional to compute local density of states. """
   Extract = Extract
