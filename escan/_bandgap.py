@@ -311,7 +311,9 @@ class ExtractRefs(object):
         (tab-completion) integration. 
     """
     result = [u for u in dir(self.__class__) if u[0] != '_'] 
-    result.extend(['extact_vff', 'extract_vbm', 'extract_cbm', 'structure', 'escan', 'vff'])
+    result.extend([u for u in self.__dict__.keys() if u[0] != '_'])
+    result.extend(dir(self.extract_vff))
+    return result
 
   def iterfiles(self, **kwargs):
     """ Iterates over output/input files.

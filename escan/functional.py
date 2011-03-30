@@ -164,7 +164,11 @@ class Escan(object):
 
   @property
   def workdir(self): 
-    """ Reference to the maskr projector file. """
+    """ Directory where calculations are performed. 
+    
+        This variable is used only if inplace is False. By default,
+        calculations are inplace.
+    """
     return self._workdir.path
   @maskr.setter
   def workdir(self, value): self._workdir.path = value

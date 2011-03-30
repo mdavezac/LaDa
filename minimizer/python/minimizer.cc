@@ -95,7 +95,7 @@ namespace LaDa
 #       ifdef LADA_WITH_GSL
           , "gsl_bfgs", "gsl_bfgs2", "gsl_fr", "gsl_pr", "gsl_sd"
 #       endif
-#       ifdef LADA_WITH_MINUIT
+#       ifdef LADA_WITH_MINUIT2
           , "minuit2"
 #       endif
         );
