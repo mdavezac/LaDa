@@ -2,8 +2,8 @@
 __docformat__ = "restructuredtext en"
 __all__ = ['ldos', 'Extract', 'Functional']
 
-from .kescan import KEscan, KExtract
-from ..opt import make_cached, FileCached
+from . import KEscan, KExtract
+from ..opt import make_cached, FileCache
 
 
 class _ldosfunc(object):
@@ -62,27 +62,30 @@ class Extract(KExtract):
     """
     parent = kwargs.pop('parent', None)
     if parent != None:
-      assert len(kwargs) == 0 and len(args) == 0, 
+      assert len(kwargs) == 0 and len(args) == 0, \
              ValueError('Use of parent is exclusive')
-    KExtract.__init__(self, *args, *kwargs)
-    if parent != None: self.__dict__.update(parent)
+    KExtract.__init__(self, *args, **kwargs)
+    if parent != None: self.__dict__.update(parent.__dict__)
   
   @property
-  @FileCached('LDOSCAR')
+  @FileCache('LDOSCAR')
   def raw_ldos(self):
     """ Raw Local density of states for given sets of positions. """
-    from . import ldos as outer_ldos
+    from .ldos import ldos as outer_ldos
     return outer_ldos(self, self.positions, raw=True)
 
   @property
   @make_cached
   def ldos(self):
     """ Local density of states for `positions`. """
-    return _ldosesfunc(self.eigenvalues, self.raw_ldos)
+    return _ldosfunc(self.eigenvalues, self.raw_ldos)
    
   @property
   def positions(self):
     """ Positions for which to compute LDOS. """
+    from numpy import array
+    if self.functional.positions == None: return array([a.pos for a in self.structure.atoms])
+    if not hasattr(self.functional.positions, '__call__'): return self.functional.positions
     return self.funtional.positions(self.structure)
       
   
@@ -116,8 +119,8 @@ class Functional(KEscan):
           array of positions where to perform ldos. Can be None, in which case,
           it defaults to the atomic positions. Must also be pickleable.
     """
-    from quantities import angstrom
-    self.positions = kwargs.pop(positions, None)
+    KEscan.__init__(self, **kwargs)
+    self.positions = kwargs.pop('positions', None)
     """ Callable returning positions for local density of states.
 
         Should be None (in which case atomic positions are used) or a
@@ -130,9 +133,13 @@ class Functional(KEscan):
 
         All parameters are passed on to escan.
     """ 
-    out = KEscan.__call__(self, *args, **kwargs)
+    print "BEFORE call"
+    out = super(Functional, self).__call__(*args, **kwargs)
+    print "BEFORE extract"
     result = self.Extract(parent=out)
+    print "BEFORE LDOS"
     result.ldos # computes and saves ldos.
+    print "AFTER LDOS"
     return result
 
 

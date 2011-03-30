@@ -294,7 +294,7 @@ class Escan(object):
     # checks if outdir contains a successful run.
     does_exist, overwrite = comm.broadcast((exists(outdir) if comm.is_root else None, overwrite))
     if does_exist and not overwrite:
-      extract = this.Extract(directory=outdir, escan=this, comm=comm)
+      extract = Escan.Extract(directory=outdir, escan=this, comm=comm)
       if extract.success: return extract # in which case, returns extraction object.
     comm.barrier() # makes sure directory is not created by other proc!
 
