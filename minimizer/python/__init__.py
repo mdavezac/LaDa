@@ -29,7 +29,7 @@ class Minimizer(object):
   def type(self, value):
     from _minimizer import all_types
     assert value.lower() in all_types, \
-           RuntimeError("{0} is not a known/compiled minimizer. Use {1}.".format(name, all_types))
+           RuntimeError("{0} is not a known/compiled minimizer. Use {1}.".format(value, all_types))
     self._type = value.lower()
   @property 
   def strategy(self):

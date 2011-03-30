@@ -363,9 +363,6 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     assert comm.real, ValueError("MPI needed to play with wavefunctions.")
     is_root = comm.rank == 0 
     assert self.success
-    assert self.nnodes != 1, RuntimeError("Escan does not give correct answer when "\
-                                          "reading wavefunctions obtained without mpi.")
-    comm.barrier()
     with Changedir(self.directory, comm=self.comm) as directory:
       if is_root: 
         assert exists(self.functional.WAVECAR),\
