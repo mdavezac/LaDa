@@ -54,6 +54,7 @@ class Extract(AbstractExtractBase):
     if self._do_unreduce:
       self._cached_jobs = []
       for i in self.functional.kpoints.mapping(self.input_structure, self.structure):
+        assert i < len(result), RuntimeError('{0}, {1}, {2}'.format(self, i, len(result)))
         self._cached_jobs.append(result[i])
     else: self._cached_jobs = result
     return result
@@ -130,7 +131,6 @@ class Extract(AbstractExtractBase):
     """ Eigenvalues across all kpoints. """
     from numpy import array
     from quantities import eV
-    if len(self._cached_jobs) == 0: self.__cache_jobs__()
     return array([job.eigenvalues.rescale(eV) for job in self], dtype='float64') * eV
 
   @property
@@ -182,6 +182,7 @@ class Extract(AbstractExtractBase):
     for file in self._rootrun.iterfiles(**kwargs): yield file
     for kpoint_calc in self: 
       for file in kpoint_calc.iterfiles(**kwargs): yield file
+
  
 class KEscan(Escan):
   """ A wrapper around Escan for computing many kpoints. """
@@ -223,15 +224,12 @@ class KEscan(Escan):
 
   # need jobs package to run this code.
   if 'jobs' in all_lada_packages: 
-    def __call__(self, structure, outdir=None, comm=None, _in_call=False, **kwargs):
+    def __call__(self, structure, outdir=None, comm=None, **kwargs):
       """ Performs calculcations. """
-      if _in_call == True: # single calculation.
-        return Escan.__call__(self, structure, outdir, comm, **kwargs)
-
       from inspect import getargspec
       from copy import deepcopy
       from os.path import join
-      from ..jobs import JobDict, Bleeder
+      from ..jobs import JobDict, Bleeder, SuperCall
       from ..mpi import Communicator
 
       this = deepcopy(self)
@@ -244,12 +242,16 @@ class KEscan(Escan):
       if do_relax_kpoint != None: this.do_relax_kpoint = do_relax_kpoint
       comm = Communicator(comm, with_world=True)
 
+      if not kwargs.get('overwrite', False): 
+        extract = KEscan.Extract(directory=outdir, escan=this, comm=comm)
+        if extract.success: return extract
+
       # performs vff calculations
       vffrun = kwargs.pop('vffrun', None)
       genpotrun = kwargs.pop('genpotrun', None)
       if vffrun == None or genpotrun == None: 
-        out = Escan.__call__( this, structure, outdir, comm, do_escan=False,\
-                              vffrun = vffrun, genpotrun=genpotrun, **kwargs)
+        out = super(KEscan, this).__call__( structure, outdir, comm, do_escan=False,\
+                                            vffrun = vffrun, genpotrun=genpotrun, **kwargs )
         if vffrun    == None: vffrun    = out
         if genpotrun == None: genpotrun = out
 
@@ -260,12 +262,11 @@ class KEscan(Escan):
       jobdict = JobDict()
       for i, kpoint in enumerate(kpoints):
         job = jobdict / 'kpoint_{0}'.format(i)
-        job.functional = this
+        job.functional = SuperCall(KEscan, this)
         job.jobparams['kpoint']          = kpoint
         job.jobparams['structure']       = structure
         job.jobparams['do_relax_kpoint'] = False
         job.jobparams['outdir']          = join(outdir, job.name[1:])
-        job.jobparams['_in_call']        = True
         job.jobparams['vffrun']          = vffrun
         job.jobparams['genpotrun']       = genpotrun
       
