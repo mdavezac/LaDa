@@ -2,6 +2,7 @@
 __docformat__  = 'restructuredtext en'
 from ..opt.decorators import make_cached, FileCache
 from _extract import Extract as _ExtractE
+from . import Escan
 
 def extract(outdir=".", comm = None):
   """ Gets extraction object from directory structure. 
@@ -435,10 +436,47 @@ def _band_gap_refs_impl( escan, structure, outdir, references, n=5,\
     return _band_gap_ae_impl(escan, structure, outdir, **kwargs)
   return ExtractRefs(vbm_out, cbm_out, vffout)
 
+class Functional(Escan): 
+  """ Bandgap functional.
+  
+      Computes bandgap using either full diagonalization or two folded spectrum
+      calculations. Performs some checking so that a non-zero band-gap is
+      discored. see `bandgap` method.
+  """
+  Extract = staticmethod(extract_bg)
+  def __init__(self, *args, **kwargs):
+    """ Initializes an LDOS functional. 
+    
+        :param args: Any argument that works for `Escan`.
+        :param kwargs: Any keyword argument that works for `Escan`.
+    """
+    self.references = kwargs.pop('references', None)
+    """ References for folded spectrum calculation, or None for full diagonalization. 
 
+        In the first case, this is a tuple giving the two reference energies
+        (CBM and VBM) in eV.
+    """ 
+    self.n = kwargs.pop('n', 5)
+    """ Maximum number of trial folded-spectrum calculations. 
 
+        Beyond this, resorts to full diagonalization.
+    """ 
+    escan_copy = kwargs.pop('escan', None)
+    super(Functional, self).__init__(escan)
 
+    # copies parent functional.
+    if escan_copy != None:
+      from copy import deepcopy
+      self.__dict__.update(deepcopy(escan.__dict))
 
+  def __call__(self, structure, outdir=None, **kwargs):
+    """ Computes band-gap. 
 
-      
-
+        Parameters are passed on to `bandgap` method.
+    """
+    if 'references' not in kwargs: kwargs['references'] = self.references
+    if 'n' not in kwargs: kwargs['n'] = self.n
+    dipole = kwargs.pop('dipole', False)
+    result = bandgap(self, structure, outdir, **kwargs)
+    if dipole: result.dipole()
+    return result

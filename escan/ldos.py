@@ -119,7 +119,7 @@ class Functional(KEscan):
           array of positions where to perform ldos. Can be None, in which case,
           it defaults to the atomic positions. Must also be pickleable.
     """
-    KEscan.__init__(self, **kwargs)
+    super(Functional, self).__init__(**kwargs)
     self.positions = kwargs.pop('positions', None)
     """ Callable returning positions for local density of states.
 

@@ -24,7 +24,7 @@ class Escan(object):
     from ..opt import RelativeDirectory
     from ._potential import soH
 
-    object.__init__(self)
+    super(Escan, self).__init__()
     self.inplace = inplace
     """ If True calculations are performed in the output directory. """
     # checks inplace vs workdir
