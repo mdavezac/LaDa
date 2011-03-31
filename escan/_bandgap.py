@@ -2,7 +2,7 @@
 __docformat__  = 'restructuredtext en'
 from ..opt.decorators import make_cached, FileCache
 from _extract import Extract as _ExtractE
-from . import Escan
+from .functional import Escan
 
 def extract(outdir=".", comm = None):
   """ Gets extraction object from directory structure. 
@@ -443,7 +443,7 @@ class Functional(Escan):
       calculations. Performs some checking so that a non-zero band-gap is
       discored. see `bandgap` method.
   """
-  Extract = staticmethod(extract_bg)
+  Extract = staticmethod(extract)
   def __init__(self, *args, **kwargs):
     """ Initializes an LDOS functional. 
     
@@ -461,22 +461,30 @@ class Functional(Escan):
 
         Beyond this, resorts to full diagonalization.
     """ 
+    self.dipole = kwargs.pop('dipole', False)
+    """ Whether or not to compute dipole elements. """
     escan_copy = kwargs.pop('escan', None)
-    super(Functional, self).__init__(escan)
+    super(Functional, self).__init__(**kwargs)
 
     # copies parent functional.
     if escan_copy != None:
       from copy import deepcopy
-      self.__dict__.update(deepcopy(escan.__dict))
+      self.__dict__.update(deepcopy(escan_copy.__dict__))
 
   def __call__(self, structure, outdir=None, **kwargs):
     """ Computes band-gap. 
 
         Parameters are passed on to `bandgap` method.
     """
-    if 'references' not in kwargs: kwargs['references'] = self.references
-    if 'n' not in kwargs: kwargs['n'] = self.n
-    dipole = kwargs.pop('dipole', False)
-    result = bandgap(self, structure, outdir, **kwargs)
-    if dipole: result.dipole()
-    return result
+    if '_computing' in self.__dict__:
+      return super(Functional, Escan).__call__(structure, outdir, **kwargs)
+
+    self._computing = True
+    try: 
+      if 'references' not in kwargs: kwargs['references'] = self.references
+      if 'n' not in kwargs: kwargs['n'] = self.n
+      dipole = kwargs.pop('dipole', self.dipole)
+      result = bandgap(self, structure, outdir, **kwargs)
+      if dipole: result.dipole()
+      return result
+    finally: del self._computing
