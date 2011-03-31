@@ -144,7 +144,9 @@ namespace LaDa
           .def("append", &append_two,
                "Appends spin to current cluster.\n\n"
                "Input can consist of a `Spin`, a position and a site, "
-               "or a only the position (site defaults to 0)." );
+               "or a only the position (site defaults to 0)." )
+          .def_pickle( Python::pickle<CE::MLCluster>() );
+
       bp::class_<CE::MLCluster::Spin>("Spin", "A spin.")
         .def_readwrite("site", &CE::MLCluster::Spin::site, "Site index in lattice.")
         .add_property

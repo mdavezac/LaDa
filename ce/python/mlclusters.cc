@@ -178,7 +178,8 @@ namespace LaDa
           .def("__getitem__", &getvecitem, bp::return_internal_reference<>())
           .def("__setitem__", &setvecitem)
           .def("extend", &extend<CE::MLClusters>)
-          .def("extend", &extend2<CE::MLClusters>);
+          .def("extend", &extend2<CE::MLClusters>)
+          .def_pickle( Python::pickle<CE::MLClusters>() );
       bp::class_<CE::t_MLClusterClasses>
        (
           "MLClusterClasses", 
@@ -224,7 +225,8 @@ namespace LaDa
              " in which case a class is created using the current global lattice"
              ", or an MLClusters - in which case the case the class is added as is.")
         .def("extend", &extend<CE::t_MLClusterClasses>)
-        .def("extend", &extend2<CE::t_MLClusterClasses>);
+        .def("extend", &extend2<CE::t_MLClusterClasses>)
+        .def_pickle( Python::pickle<CE::t_MLClusterClasses>() );
       
       bp::register_ptr_to_python< boost::shared_ptr<CE::t_MLClusterClasses> >();
       bp::register_ptr_to_python< boost::shared_ptr<CE::MLClusters> >();
