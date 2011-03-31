@@ -217,9 +217,8 @@ class KEscan(Escan):
     super(KEscan, self).__init__(**kwargs)
 
     if escan_copy != None: # copy constructor from Escan instance. 
-      from copy import copy
-      for key, value in escan_copy.__dict__.items():
-        self.__dict__[key] = copy(value)
+      from copy import deepcopy
+      self.__dict__.update(deepcopy(escan_copy.__dict__))
 
 
   # need jobs package to run this code.
