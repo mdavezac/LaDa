@@ -214,7 +214,7 @@ class KEscan(Escan):
         If 0 or negative, then will try to determine it from number of kpoints,
         processors, and fft mesh.
     """
-    Escan.__init__(self, **kwargs)
+    super(KEscan, self).__init__(**kwargs)
 
     if escan_copy != None: # copy constructor from Escan instance. 
       from copy import copy
