@@ -10,26 +10,62 @@ module Wfns_module
   type(t_Escan), private :: params
 
   contains
-    subroutine init(filename, comm)
-      use Escan, only: read_escaninput, read_potentialinput, set_common_blocks, &
-                       prepare_fft_and_allocate_arrays, t_Lattice, t_Escan
+    subroutine init(filename, latscale, smooth, kinscal, kpoint, comm)
+      use data, only : mg_nx, gkk_n, wg_n, inv_n
+      use fft_data, only : fft_allocate, ncolx
+      use load_data, only: nr1x, nr2x, nr3x
+      use Escan, only: set_common_blocks, prepare_fft_and_allocate_arrays, pi
   
       character(len=*), intent(in) :: filename            ! filename of escan input
       integer, intent(in) :: comm                      ! mpi communicator
+      real(kind=8), intent(in) :: latscale, smooth, kinscal, kpoint(3)
+
+      integer, parameter :: inputunit = 9
+      real(kind=8) ::  AL(3,3), Ecut, vol, delta_k, volume
+      integer ikpt, inode, nnodes, n1, n2, n3, ng, ng_n, mx, nr, ierr, totg
+      integer if_so, mr, i
+      common /com123/n1,n2,n3,ng,ng_n,nr,mx,vol
+      common /mpi_data/inode,nnodes
+      common /comAD/AL,Ecut
+      common /comikpt/ikpt
+
       call iaga_set_mpi(comm)
+      params%ecp%comm_handle = comm
+      params%kpoint = kpoint * 2e0 * pi / latscale
+      params%KineticScaling = kinscal
+      params%lattice_scale = latscale
+
       ! Read parameters from file and sets common blocks
-      call read_escaninput(filename, params, comm)
-      call read_potentialinput(params, lattice)
+      if(inode .eq. 1) then
+        open(inputunit,file=filename,form='unformatted',status='old')
+          rewind(11)
+          read(inputunit) (params%mesh(i), i=1,3), params%ecp%mx,if_so,ikpt
+          read(inputunit) params%Ecutoff
+          read(inputunit) lattice%rcell
+        close(11)
+      endif
+      call mpi_bcast(params%mesh, 3, MPI_INTEGER, 0, comm, ierr)
+      call mpi_bcast(if_so, 1, MPI_INTEGER, 0, comm, ierr)
+      call mpi_bcast(ikpt, 1, MPI_INTEGER, 0, comm, ierr)
+      call mpi_bcast(mx, 1, MPI_INTEGER, 0, comm, ierr)
+      call mpi_bcast(params%Ecutoff, 1, MPI_REAL8, 0, comm, ierr)
+      call mpi_bcast(lattice%rcell, 9, MPI_REAL8, 0, comm, ierr)
+      params%with_spinorbit = .true.
+      if(if_so .eq. 0) params%with_spinorbit = .false.
+      params%is_gamma = .false.
+      if(ikpt .eq. 0) then 
+        params%is_gamma = .true.
+        params%kpoint = 0e0
+      endif
+
       call set_common_blocks(params, lattice)
-      ! prepares wavefunctions.
       call prepare_fft_and_allocate_arrays(params, lattice)
 
     end subroutine init
 
     ! Reads wavefunctions from current directory.
     subroutine read_wavefunctions(indices, wfns, gvecs, projs, inverse)
-      use Escan, only: read_escaninput, read_potentialinput, set_common_blocks, &
-                       prepare_fft_and_allocate_arrays, pi
+      use Escan, only: pi
       use data, only : mg_nx, wg_n, inv_n
       use load_data, only : ngtotnod, n1p_n, n2p_n, n3p_n
       ! indices of the wavefunctions.
