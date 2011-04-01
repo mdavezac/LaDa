@@ -9,42 +9,41 @@ from ..opt import make_cached, FileCache
 class _ldosfunc(object):
   """ Local density of states for a given set of positions within a given structure. """
   def __init__(self, eigs, rs):
-    self.eigs, self.rs = -np.multiply(eigs, eigs), rs.copy()
+    from numpy import multiply
+    self.eigs, self.rs = -multiply(eigs, eigs), rs.copy()
   def __call__(self, e, sigma=0.1):
-    return np.dot(self.rs, 1e0/sqrt(np.pi)/sigma * np.exp(-self.eigs/sigma/sigma))
+    from numpy import dot, pi, exp
+    return dot(self.rs, 1e0/sqrt(pi)/sigma * exp(-self.eigs/sigma/sigma))
 
 
 def ldos(extract, positions, raw=False):
   """ Local density of states from previous calculation """
-  import numpy as np
-  from .. import lada_with_mpi
+  from numpy import zeros, tensordot, multiply, conjugate, exp
 
-  extractors = extract if not hasattr(extract, "__iter__") else [extract]
+  extractors = extract if hasattr(extract, "__iter__") else [extract]
 
-  result = np.zeros(positions.shape[0], dtype="float64")
+  result = zeros(positions.shape[0], dtype="float64")
 
   for extract in  extractors:
-      # computes all exponentials exp(-i r.g), with r in first dim, and g in second.
-      v = np.exp(-1j * np.tensordot(positions, extract.gvectors, ((1),(1))))
-      # computes fourrier transform for all wavefunctions simultaneously.
-      rspace = np.tensordot(v, extract.raw_wfns, ((1),(0)))
-      # reduce across processes
-      if lada_with_mpi:
-        from boost.mpi import reduce
-        rspace = comm.reduce(rspace, lambda x,y: x+y)
+    # computes all exponentials exp(-i r.g), with r in first dim, and g in second.
+    v = exp(-1j * tensordot(positions, extract.gvectors, ((1),(1))))
+    # computes fourrier transform for all wavefunctions simultaneously.
+    rspace = tensordot(v, extract.raw_wfns, ((1),(0)))
+    # reduce across processes
+    rspace = extract.comm.reduce(rspace, lambda x,y: x+y)
   
-      if extract.is_krammer:
-        rspace2 = rspace 
-        rspace = zeros( (rspace.shape[0], rspace.shape[1]*2, rspace.shape[2]), dtype="complex64")
-        rspace[:,::2,:] = rspace2
-        cj = extract.raw_wfns[extract.inverse_indices,:,:].conjugate()
-        rspace2 = np.tensordot(v, cj, ((1),(0)))
-        rspace2 = comm.reduce(rspace, lambda x,y: x+y)
-        rspace[:,1::2,:] = rspace2
-      rspace = np.multiply(rspace, np.conjugate(rspace))
-      if not extract.is_spinor: rspace = rspace[:,:,0]
-      else: rspace = rspace[:,:,0] + rspace[:,:,1]
-      result += rspace
+    if extract.is_krammer:
+      rspace2 = rspace 
+      rspace = zeros( (rspace.shape[0], rspace.shape[1]*2, rspace.shape[2]), dtype="complex64")
+      rspace[:,::2,:] = rspace2
+      cj = extract.raw_wfns[extract.inverse_indices,:,:].conjugate()
+      rspace2 = tensordot(v, cj, ((1),(0)))
+      rspace2 = extract.comm.reduce(rspace, lambda x,y: x+y)
+      rspace[:,1::2,:] = rspace2
+    rspace = multiply(rspace, conjugate(rspace))
+    if not extract.is_spinor: rspace = rspace[:,:,0]
+    else: rspace = rspace[:,:,0] + rspace[:,:,1]
+    result += rspace
   result /= float(len(extractors))
   return result if raw else _ldosfunc(result)
 
