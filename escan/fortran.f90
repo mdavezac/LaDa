@@ -108,12 +108,13 @@ end subroutine
 
 
 ! prepares to read wavefunctions
-subroutine escan_wfns_init(n, filename, comm)
+subroutine escan_wfns_init(n, filename, latscale, smooth, kinscal, kpoint, comm)
   use wfns_module, only: init
   integer, intent(in) :: n                           ! length of filename
   character(len=n), intent(in) :: filename           ! filename of escan input
+  real(kind=8), intent(in) :: latscale, smooth, kinscal, kpoint(3)
   integer, intent(in) :: comm                     ! mpi communicator
-  call init(filename, comm)
+  call init(filename, latscale, smooth, kinscal, kpoint, comm)
 end subroutine escan_wfns_init
 ! cleanup module
 subroutine escan_wfns_cleanup
