@@ -1,7 +1,7 @@
 """ Interface module for ESCAN. """
 __docformat__ = "restructuredtext en"
 __all__ = [ "Extract", 'MassExtract', "bandgap", "extract_bg", 'ldos',
-            "Escan", "folded_spectrum", "all_electron", "soH", 'BandGap'
+            "Escan", "folded_spectrum", "all_electron", "soH", 'BandGap',
             "nonlocalH", "localH", "AtomicPotential", "extract_bg", 'KEscan', 'KPoints', 
             'KGrid', 'ReducedKGrid', 'ReducedKDensity', 'soH', 'nonlocalH', 'localH', 
             'folded_spectrum', 'all_electron', 'read_input', 'exec_input', 'KExtract',  
