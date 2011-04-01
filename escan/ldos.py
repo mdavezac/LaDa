@@ -28,7 +28,7 @@ def ldos(extract, positions, raw=False):
     # computes all exponentials exp(-i r.g), with r in first dim, and g in second.
     v = exp(-1j * tensordot(positions, extract.gvectors, ((1),(1))))
     # computes fourrier transform for all wavefunctions simultaneously.
-    rspace = tensordot(v, extract.raw_wfns, ((1),(0)))
+    rspace = tensordot(v, extract.raw_gwfns, ((1),(0)))
     # reduce across processes
     rspace = extract.comm.reduce(rspace, lambda x,y: x+y)
   
@@ -36,7 +36,7 @@ def ldos(extract, positions, raw=False):
       rspace2 = rspace 
       rspace = zeros( (rspace.shape[0], rspace.shape[1]*2, rspace.shape[2]), dtype="complex64")
       rspace[:,::2,:] = rspace2
-      cj = extract.raw_wfns[extract.inverse_indices,:,:].conjugate()
+      cj = extract.raw_gwfns[extract.inverse_indices,:,:].conjugate()
       rspace2 = tensordot(v, cj, ((1),(0)))
       rspace2 = extract.comm.reduce(rspace, lambda x,y: x+y)
       rspace[:,1::2,:] = rspace2

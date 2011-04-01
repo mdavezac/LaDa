@@ -534,12 +534,13 @@ class Vff(object):
     """ Creates the vff functional using cpp extension. """
     from tempfile import NamedTemporaryFile
     from os import remove
+    from numpy import array
     from ..minimizer._minimizer import Minimizer
     from _vff import Vff, LayeredVff
 
     if hasattr(self.direction, "__len__"):
       functional = LayeredVff()
-      functional.direction = self.direction
+      functional.direction = array(self.direction, dtype='float64')
     else: functional = Vff()
     # minimizer variants are somewhat difficult to expose...
     self.minimizer._copy_to_cpp(functional._minimizer)
