@@ -21,7 +21,7 @@ for i, atom in enumerate(structure.atoms):
   atom.type = 'Si' if i % 10 < 6 else 'Ge'
 
 result = bandgap( input.escan, structure, eref=None, 
-                  outdir="2/dipoles", references = (-0.2, 0.2),
+                  outdir="results/dipoles", references = (-0.2, 0.2),
                   nbstates=4, direction = array([1., 0,0]),
                   fft_mesh = (50,14,14) )
 

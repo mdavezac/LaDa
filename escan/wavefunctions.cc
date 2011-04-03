@@ -26,7 +26,7 @@ extern "C"
 {
   void FC_GLOBAL_(escan_wfns_init, ESCAN_WFNS_INIT)( int*, char const*, double const *,
                                                      double const *, double const *,
-                                                     double const *, MPI_Fint* );
+                                                     double const *, int const *, MPI_Fint* );
   void FC_GLOBAL_(escan_wfns_get_array_dimensions, ESCAN_WFNS_GET_ARRAY_DIMENSIONS)(int*, int*, int*);
   void FC_GLOBAL_(escan_wfns_read, ESCAN_WFNS_READ)
     (int*, int*, int*, int*, int const*, double*, double*, double*, int*);
@@ -86,14 +86,24 @@ namespace LaDa
 
     bp::tuple read_wavefunctions( bp::object const &_escan, 
                                   bp::object const &_indices, 
-                                  math::rVector3d const &_kpoint,
+                                  bp::object const &_kpoint,
                                   double _scale, 
                                   bm::communicator const &_comm ) 
     {
+      if (bp::len(_kpoint) != 3)
+      {
+        PyErr_SetString(PyExc_ValueError, "kpoint should be a sequence of three elements.");
+        bp::throw_error_already_set();
+        return bp::tuple();
+      }
+      double const kpoint[3] = { bp::extract<double>(_kpoint[0]),
+                                 bp::extract<double>(_kpoint[1]), 
+                                 bp::extract<double>(_kpoint[2]) };
       int const N = bp::extract<int>( _escan.attr("nbstates") );
       double const smooth = bp::extract<double>( _escan.attr("smooth") );
-      double const kinscal = bp::extract<double>( _escan.attr("kinscal") );
+      double const kinscal = bp::extract<double>( _escan.attr("kinetic_scaling") );
       bool const is_krammer = bp::extract<bool>( _escan.attr("is_krammer") );
+      int const pottype = bp::extract<int>(_escan.attr("potential") + 1);
       std::vector<int> indices;
       // extract indices.
       if( bp::len(_indices) == 0 )
@@ -142,14 +152,12 @@ namespace LaDa
       }
 
       // prepares to read wavefunctions
-      boost::mpi::communicator world;
-      std::string const orig = bp::extract<std::string>(_escan.attr("_INCAR"))();
+      std::string const orig = bp::extract<std::string>(_escan.attr("WAVECAR"))();
       int a(orig.size()), b(indices.size());
       MPI_Comm __commC = (MPI_Comm) ( _comm ) ;
       MPI_Fint __commF = MPI_Comm_c2f( __commC );
-      double const shit[3] = {_kpoint[0], _kpoint[1], _kpoint[2]};
       FC_GLOBAL_(escan_wfns_init, ESCAN_WFNS_INIT)( &a, orig.c_str(), &_scale, 
-                                                    &smooth, &kinscal, shit, &__commF);
+                                                    &smooth, &kinscal, kpoint, &pottype, &__commF);
       // gets dimensions.
       int n0, n1(indices.size()), n2, g0, g1(3);
       FC_GLOBAL_(escan_wfns_get_array_dimensions, ESCAN_WFNS_GET_ARRAY_dimensions)(&n0, &n2, &g0);

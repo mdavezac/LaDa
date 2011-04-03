@@ -365,7 +365,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     assert self.success
     kpoint = (0,0,0,0,0) if norm(self.functional.kpoint) < 1e-12\
              else self.functional._get_kpoint(self.structure, self.comm, False)
-    scale = self.structure.scale
+    scale, kpoint = kpoint[-1], kpoint[1:4]
     with Changedir(self.directory, comm=self.comm) as directory:
       if is_root: 
         assert exists(self.functional.WAVECAR),\
