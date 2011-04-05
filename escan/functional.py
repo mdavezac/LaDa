@@ -420,13 +420,14 @@ class Escan(object):
 
     if self.vffrun != None or norun == True: return
     
-    out = self.vff(structure, outdir=outdir, comm=comm, overwrite=overwrite)
-    assert out.success, RuntimeError("VFF relaxation did not succeed.")
-    if comm.is_root: out.solo().write_escan_input(self._POSCAR, out.solo().structure)
+    self.vffrun = self.vff(structure, outdir=outdir, comm=comm, overwrite=overwrite)
+    assert self.vffrun.success, RuntimeError("VFF relaxation did not succeed.")
+    if comm.is_root:
+      self.vffrun.solo().write_escan_input(self._POSCAR, self.vffrun.solo().structure)
 
     # copies vff output to stdout. This way, only one outcar.
-    if comm.is_root and out.OUTCAR != self.OUTCAR:
-      s = out.solo()
+    if comm.is_root and self.vffrun.OUTCAR != self.OUTCAR:
+      s = self.vffrun.solo()
       with open(join(s.directory, s.OUTCAR)) as file_in: 
         with open(cout, "aw") as file_out: 
           for line in file_in:
@@ -556,6 +557,7 @@ class Escan(object):
     from ..crystal import to_voronoi
     # first get relaxed cell
     if norun == True: relaxed = structure.cell.copy()
+    elif self.vffrun != None: relaxed = self.vffrun.structure.cell
     else:
       relaxed = zeros((3,3), dtype="float64")
       if comm.is_root:
