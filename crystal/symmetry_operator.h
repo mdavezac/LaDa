@@ -69,6 +69,8 @@ namespace LaDa
       //! Serializes a symmetry operator.
       template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
         { _ar & op; _ar & trans; }
+
+      SymmetryOperator inverse() const { return SymmetryOperator(~op, -(~op)*trans); }
     };
 
     inline std::ostream& operator<<( std::ostream& _stream, SymmetryOperator const &_sym )
