@@ -193,30 +193,55 @@ def _reduced_grids_factory(name, base):
       """ Criteria to determine whether two k-vectors are the same. """
       base.__init__(self, *args, **kwargs)
 
-    def _mnk(self, input, output):
-      """ Returns list of inequivalent vectors with multiplicity. """
+    def iter_equivalents(self, input, output):
+      """ Yields iterators over equivalent kpoints.
+      
+          :Parameters:
+            input 
+              Input structure as originally given before structural relaxation.
+            output
+              Output structure after structural relaxation, as used in
+              electronic structure calculation.
+
+           :result:
+             Yields an iterator over equivalent kpoints 
+             The iterator themselves yield 4-tuples:
+
+             - index in unreduced mesh
+             - multiplicity of unreduced kpoints
+             - unreduced kpoint
+             - operation to go to reduced kpoint. 
+      """
+      from numpy import dot
       from numpy.linalg import inv, norm
-      from ..crystal import Lattice, to_origin, to_voronoi
-      recip = Lattice()
-      recip.cell = inv(output.cell.T)
-      recip.add_site = (0,0,0), '0'
-      recip.find_space_group()
+      from ..crystal import Lattice, to_origin, to_voronoi, SymmetryOperator
+      lattice = output.to_lattice()
+      kcell = inv(lattice.cell).T
 
       # now checks whether symmetry kpoint exists or not.
       seen = []
-      for mult, kpoint in base._mnk(self, input, output): 
+      for j, (mult, kpoint) in enumerate(base._mnk(self, input, output)): 
         found = False
-        kpoint = to_voronoi(kpoint, recip.cell)
-        for i, (count, vec) in enumerate(seen):
-          for op in recip.space_group:
-            u = to_origin(op(kpoint), recip.cell, vec)
+        kpoint = to_voronoi(kpoint, kcell)
+        for i, others in enumerate(seen):
+          index, m, vec, op = others[0]
+          for op in lattice.space_group:
+            u = to_origin(dot(op.op, kpoint), kcell, vec)
             if all(abs(u) < self.tolerance):
               found = True
-              seen[i][0] += mult
+              seen[i].append((j, mult, kpoint, op))
               break
           if found: break
-        if found == False: seen.append([mult, kpoint.copy()])
-      return seen
+        if found == False: seen.append([(j, mult, kpoint.copy(), SymmetryOperator())])
+
+      for i, kpoints in enumerate(seen): yield kpoints.__iter__()
+
+    def _mnk(self, input, output):
+      """ Returns list of inequivalent vectors with multiplicity. """
+      for equivs in self.iter_equivalents(input, output):
+        index, m0, k0, op = equivs.next()
+        for index, m, k, op in equivs: m0 += m
+        yield m0, k
 
     def unreduced(self, input, output):
       """ Yields unreduced kpoints. """
@@ -224,30 +249,11 @@ def _reduced_grids_factory(name, base):
 
     def mapping(self, input, output):
       """ Yields index of unreduced kpoint in array of reduced kpoints. """
-      from numpy.linalg import inv, norm
-      from ..crystal import Lattice, to_origin, to_voronoi
-      recip = Lattice()
-      recip.cell = inv(output.cell.T)
-      recip.add_site = (0,0,0), '0'
-      recip.find_space_group()
-      
-      # now checks whether symmetry kpoint exists or not.
-      seen = []
-      for mult, kpoint in base._mnk(self, input, output): 
-        found = False
-        kpoint = to_voronoi(kpoint, recip.cell)
-        for i, (count, vec) in enumerate(seen):
-          for op in recip.space_group:
-            u = to_origin(op(kpoint), recip.cell, vec)
-            if all(abs(u) < self.tolerance):
-              found = True
-              seen[i][0] += mult
-              yield i
-              break
-          if found: break
-        if found == False:
-          seen.append([mult, kpoint.copy()])
-          yield len(seen)-1
+      from itertools import itemgetter
+      indices = []
+      for i, equivs in enumerate(self.iter_equivalents(input, output)):
+        indices.extend([(i, index) for index, m, k, op in equivs.next()])
+      for i, index in sorted(indices, key=itemgetter(1)): yield i
 
     def __repr__(self):
       """ Represents this object. """
@@ -256,6 +262,7 @@ def _reduced_grids_factory(name, base):
       result = result[:-1].rstrip()
       if result[-1] == '(': return result + 'tolerance={0})'.format(self.tolerance)
       return result + ', tolerance={0})'.format(self.tolerance)
+
   ReducedKGrid.__name__ = name
   ReducedKGrid.__doc__ = """ {0} reduced according to symmetries. """.format(base.__name__)
   ReducedKGrid.__module__ = base.__module__ 

@@ -100,7 +100,8 @@ namespace LaDa
              (bp::arg("matrix"), bp::arg("tolerance")=types::tolerance),
              "Returns true if the matrix is invariant through this rotation.")
         .def("__call__", &Crystal::SymmetryOperator::operator())
-        .def("__str__", &tostream<Crystal::SymmetryOperator>);
+        .def("__str__", &tostream<Crystal::SymmetryOperator>)
+        .add_property("inverse", &t_SOp::inverse, "Inverse operation.");
 
       expose_vector<Crystal::SymmetryOperator>
          ("Array", "An array of crystal.SymmetryOperator");

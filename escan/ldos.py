@@ -1,10 +1,17 @@
-""" Defines Local Density of States. """
+""" Defines Local Density of States.
+
+    Both a functional (`Functional`) and a function (`ldos`) are defined which
+    compute the Local Density of State.  The LDOS is obtaine as a Fourier
+    transform of the wavefunctions to the input real-space positions. In this
+    way, positions are not limited to the FFT mesh.
+
+    The functional returns an extraction object which caches the LDOS to file.
+"""
 __docformat__ = "restructuredtext en"
 __all__ = ['ldos', 'Extract', 'Functional']
 
-from lada.escan import KEscan, KExtract
-from lada.opt import make_cached, FileCache
-
+from .kescan import KEscan, Extract as KExtract
+from ..opt import make_cached, FileCache
 
 class _ldosfunc(object):
   """ Local density of states for a given set of positions within a given structure. """
@@ -67,24 +74,35 @@ def ldos(extractor, positions, raw=False):
           Whether to return the raw data or the LDOS itself, i.e. a function of
           the energy.
   """
-  from numpy import zeros, tensordot, multiply, conjugate, exp, concatenate
-  from .kescan import Extract as KExtract
+  from numpy import zeros, tensordot, multiply, conjugate, exp, concatenate, array
 
-  assert isinstance(extractor, 'KExtract'),\
+  assert isinstance(extractor, KExtract),\
          ValueError('extractor argument should be KExtract isntance.')
-  if hasattr(extractors, 'unreduce'): extractor = extractor.copy(unreduce=False)
 
-  perpoint, eigenvalues = [], []
-  
-  for extract in  extractors:
-    eigenvalues.append(extract.eigenvalues)
+  extractor = extractor.copy(unreduce=False)
+  istr, ostr = extractor.input_structure, extractor.structure
+  normalization = 0e0
+  perpoint = []
+  for i, equivs in enumerate(extractor.functional.kpoints.iter_equivalents(istr, ostr)):
+    # computes all positions including symmetry equivalents.
+    # Since we expect fewer real space points than fourrier space points,
+    # symmetric equivalents are added to real-space positions. 
+    # See for instance "Electronic Structure", Richard M. Martin, first
+    # edition, chapter 4 section 5.
+    extract = extractor[i]
+    equivs = [u for u in equivs]
+    operators = [op.inverse for index, m, k, op in equivs]
+    all_positions = array([op(u) for op in operators for u in positions])
+    multiplicities = [m for index, m, k, op in equivs]
+    normalization += sum(multiplicities)
+
     # creates array which may include krammer degenerate.
     if extract.is_krammer:
       inverse = conjugate(extract.raw_gwfns[extract.inverse_indices,:,:])
       gwfns = concatenate((extract.raw_gwfns, inverse), axis=1)
     else: gwfns = extract.raw_gwfns
     # computes all exponentials exp(-i r.g), with r in first dim, and g in second.
-    v = exp(-1j * tensordot(positions, extract.gvectors, ((1),(1))))
+    v = exp(-1j * tensordot(all_positions, extract.gvectors, ((1),(1))))
     # computes fourrier transform for all wavefunctions simultaneously.
     rspace = tensordot(v, gwfns, ((1),(0)))
     rspace = multiply(rspace, conjugate(rspace)).real
@@ -96,24 +114,21 @@ def ldos(extractor, positions, raw=False):
       assert rspace.shape[1] % 2 == 0
       # sum krammer degenerate states together since same eigenvalue.
       rspace = rspace[:,:rspace.shape[1]//2,:] + rspace[:,rspace.shape[1]//2:,:]
-    # concatenate results with other kpoints.
-    perpoint.append(rspace)
-  # Now sums over kpoints if necessary
-  if len(perpoint) > 1:
-    if not hasattr(extractor, 'functional'): multiplicity = ones(len(extractor))
-    elif not hasattr(extractor.functional, 'kpoints'): multiplicity = ones(len(extractor))
-    else:
-      input  = extractor.input_structure
-      output = extractor.structure
-      multiplicity = [m for m, k in extractor.functional.kpoints(input, output)]
-    assert len(multiplicity) == len(perpoint), (len(multiplicity), len(perpoint))
-    N = 1e0 / float(sum(multiplicity))
-    print "SUM ", 1e0/N
-    for m, kpoint in zip(multiplicity, perpoint): kpoint *= float(m) * N 
-    result = concatenate(perpoint, axis=1)
-  else: result = perpoint[0]
+    
+    # sum over equivalent kpoints. 
+    N = len(positions)
+    if abs(multiplicities[0] - 1e0) > 1e-12: rspace[:N, :] *= m
+    for j, m in enumerate(multiplicities[1:]):
+      if abs(m - 1e0) > 1e-12: rspace[:N, :] += m * rspace[(j+1)*N:(j+2)*N, :]
+      else: rspace[:N, :] += rspace[(j+1)*N:(j+2)*N, :]
+
+    # append to reduced kpoint ldos list.
+    perpoint.append(rspace[:N,:].copy())
+
+  # normalize results and concatenate.
+  result = concatenate(perpoint, axis=1) / float(normalization)
   
-  return result if raw else _ldosfunc(eigenvalues.flat, result)
+  return result if raw else _ldosfunc(extractor.eigenvalues.flat, result)
 
 
 
