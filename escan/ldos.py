@@ -2,50 +2,106 @@
 __docformat__ = "restructuredtext en"
 __all__ = ['ldos', 'Extract', 'Functional']
 
-from . import KEscan, KExtract
-from ..opt import make_cached, FileCache
+from lada.escan import KEscan, KExtract
+from lada.opt import make_cached, FileCache
 
 
 class _ldosfunc(object):
   """ Local density of states for a given set of positions within a given structure. """
-  def __init__(self, eigs, rs):
-    from numpy import multiply
-    self.eigs, self.rs = -multiply(eigs, eigs), rs.copy()
-  def __call__(self, e, sigma=0.1):
-    from numpy import dot, pi, exp
-    return dot(self.rs, 1e0/sqrt(pi)/sigma * exp(-self.eigs/sigma/sigma))
+  def __init__(self, eigenvalues, rs):
+    """ Initializes a local density of state functor. 
+    
+        :Parameters:
+          eigenvalues : numpy array
+            Vector of eigenvalues. Can be signed with a unit, or without, in
+            which case eV is assumed.
+          rs : numpy array
+            Matrix of densities per real-space position(row) and per band(column). 
+    """
+    from numpy import multiply, sqrt, pi
+    from quantities import eV
+    self.eigenvalues = eigenvalues
+    """ Vector of eigenvalues. """
+    self.rs = rs.copy()
+    """ Matrix of densities per real-space position(row) and per band(column). """
+    if not hasattr(self.eigenvalues, 'rescale'): self.eigenvalues *= eV 
+    else: self.eigenvalues = self.eigenvalues.rescale(eV)
+    self._inv_sqrt_pi = 1e0/sqrt(pi)
+    """ Normalization constant 1e0/sqrt(|pi|). 
+
+        .. |pi|  unicode:: U+003C0 .. GREEK SMALL LETTER PI
+    """
+
+  def __call__(self, energy, sigma=0.1):
+    """ Calls smearing function over densities.
+    
+        :Parameters: 
+          energy : float or scalar array
+            Energy at which to compute local density of states. This can be real
+            number, in which case it should be in eV, or a numpy scalar with a
+            unit (from quantity).
+          sigma : float or scalar array
+            Width at half maximum of the gaussian smearing. This can be real
+            number, in which case it should be in eV, or a numpy scalar with a
+            unit (from quantity).
+    """
+    from numpy import dot, exp
+    from quantities import eV
+    if not hasattr(sigma, 'rescale'): sigma *= eV
+    else: sigma = sigma.rescale(eV)
+    if not hasattr(energy, 'rescale'): energy *= eV
+    else: energy = energy.rescale(eV)
+    x = (energy - self.eigenvalues)/sigma
+    return dot(self.rs, self._inv_sqrt_pi/sigma * exp(-x*x))
 
 
-def ldos(extract, positions, raw=False):
+def ldos(extractor, positions, raw=False):
   """ Local density of states from previous calculation """
-  from numpy import zeros, tensordot, multiply, conjugate, exp
+  from numpy import zeros, tensordot, multiply, conjugate, exp, concatenate
 
-  extractors = extract if hasattr(extract, "__iter__") else [extract]
+  extractors = extractor if hasattr(extractor, "__iter__") else [extractor]
+  if hasattr(extractors, 'unreduce'): extractors = extrators.copy(unreduce=False)
 
-  result = zeros(positions.shape[0], dtype="float64")
-
+  perpoint = []
+  
   for extract in  extractors:
+    # creates array which may include krammer degenerate.
+    if extract.is_krammer:
+      inverse = conjugate(extract.raw_gwfns[extract.inverse_indices,:,:])
+      gwfns = concatenate((extract.raw_gwfns, inverse), axis=1)
+    else: gwfns = extract.raw_gwfns
     # computes all exponentials exp(-i r.g), with r in first dim, and g in second.
     v = exp(-1j * tensordot(positions, extract.gvectors, ((1),(1))))
     # computes fourrier transform for all wavefunctions simultaneously.
-    rspace = tensordot(v, extract.raw_gwfns, ((1),(0)))
-    # reduce across processes
-    rspace = extract.comm.reduce(rspace, lambda x,y: x+y)
-  
-    if extract.is_krammer:
-      rspace2 = rspace 
-      rspace = zeros( (rspace.shape[0], rspace.shape[1]*2, rspace.shape[2]), dtype="complex64")
-      rspace[:,::2,:] = rspace2
-      cj = extract.raw_gwfns[extract.inverse_indices,:,:].conjugate()
-      rspace2 = tensordot(v, cj, ((1),(0)))
-      rspace2 = extract.comm.reduce(rspace, lambda x,y: x+y)
-      rspace[:,1::2,:] = rspace2
-    rspace = multiply(rspace, conjugate(rspace))
+    rspace = tensordot(v, gwfns, ((1),(0)))
+    rspace = multiply(rspace, conjugate(rspace)).real
+    # Sum over spin channels if necessary.
     if not extract.is_spinor: rspace = rspace[:,:,0]
     else: rspace = rspace[:,:,0] + rspace[:,:,1]
-    result += rspace
-  result /= float(len(extractors))
-  return result if raw else _ldosfunc(result)
+    # Sum degenerate states if necessary.
+    if extract.is_krammer:
+      assert rspace.shape[1] % 2 == 0
+      # sum krammer degenerate states together since same eigenvalue.
+      rspace = rspace[:,:rspace.shape[1]//2,:] + rspace[:,rspace.shape[1]//2:,:]
+    # concatenate results with other kpoints.
+    perpoint.append(rspace)
+  # Now sums over kpoints if necessary
+  if len(perpoint) > 1:
+    if not hasattr(extractor, 'functional'): multiplicity = ones(len(extractor))
+    elif not hasattr(extractor.functional, 'kpoints'): multiplicity = ones(len(extractor))
+    else:
+      input  = extractor.input_structure
+      output = extractor.structure
+      multiplicity = [m for m, k in extractor.functional.kpoints(input, output)]
+    assert len(multiplicity) == len(perpoint), (len(multiplicity), len(perpoint))
+    result = zeros(perpoint[0].shape, dtype="float64")
+    N = 1e0 / float(sum(multiplicity))
+    for m, kpoint in zip(multiplicity, perpoint):
+      result += float(m) * N * kpoint
+  else: result = perpoint[0]
+  
+  return result if raw else _ldosfunc(extract.eigenvalues.flat, result)
+
 
 
 class Extract(KExtract):
@@ -70,14 +126,14 @@ class Extract(KExtract):
   @FileCache('LDOSCAR')
   def raw_ldos(self):
     """ Raw Local density of states for given sets of positions. """
-    from .ldos import ldos as outer_ldos
+    from ldos import ldos as outer_ldos
     return outer_ldos(self, self.positions, raw=True)
 
   @property
   @make_cached
   def ldos(self):
     """ Local density of states for `positions`. """
-    return _ldosfunc(self.eigenvalues, self.raw_ldos)
+    return _ldosfunc(self.eigenvalues.flat, self.raw_ldos)
    
   @property
   def positions(self):
@@ -132,13 +188,9 @@ class Functional(KEscan):
 
         All parameters are passed on to escan.
     """ 
-    print "BEFORE call"
     out = super(Functional, self).__call__(*args, **kwargs)
-    print "BEFORE extract"
     result = self.Extract(parent=out)
-    print "BEFORE LDOS"
     result.ldos # computes and saves ldos.
-    print "AFTER LDOS"
     return result
 
 
