@@ -56,15 +56,28 @@ class _ldosfunc(object):
 
 
 def ldos(extractor, positions, raw=False):
-  """ Local density of states from previous calculation """
+  """ Local density of states at given positions.
+  
+      :Parameters:
+        extractor 
+          Output from a `KEscan` or a `Functional`  calculation.
+        positions : nx3 array
+          Array with positions in real space where to compute LDOS.
+        raw : boolean
+          Whether to return the raw data or the LDOS itself, i.e. a function of
+          the energy.
+  """
   from numpy import zeros, tensordot, multiply, conjugate, exp, concatenate
+  from .kescan import Extract as KExtract
 
-  extractors = extractor if hasattr(extractor, "__iter__") else [extractor]
-  if hasattr(extractors, 'unreduce'): extractors = extrators.copy(unreduce=False)
+  assert isinstance(extractor, 'KExtract'),\
+         ValueError('extractor argument should be KExtract isntance.')
+  if hasattr(extractors, 'unreduce'): extractor = extractor.copy(unreduce=False)
 
-  perpoint = []
+  perpoint, eigenvalues = [], []
   
   for extract in  extractors:
+    eigenvalues.append(extract.eigenvalues)
     # creates array which may include krammer degenerate.
     if extract.is_krammer:
       inverse = conjugate(extract.raw_gwfns[extract.inverse_indices,:,:])
@@ -94,13 +107,13 @@ def ldos(extractor, positions, raw=False):
       output = extractor.structure
       multiplicity = [m for m, k in extractor.functional.kpoints(input, output)]
     assert len(multiplicity) == len(perpoint), (len(multiplicity), len(perpoint))
-    result = zeros(perpoint[0].shape, dtype="float64")
     N = 1e0 / float(sum(multiplicity))
-    for m, kpoint in zip(multiplicity, perpoint):
-      result += float(m) * N * kpoint
+    print "SUM ", 1e0/N
+    for m, kpoint in zip(multiplicity, perpoint): kpoint *= float(m) * N 
+    result = concatenate(perpoint, axis=1)
   else: result = perpoint[0]
   
-  return result if raw else _ldosfunc(extract.eigenvalues.flat, result)
+  return result if raw else _ldosfunc(eigenvalues.flat, result)
 
 
 
@@ -126,20 +139,21 @@ class Extract(KExtract):
   @FileCache('LDOSCAR')
   def raw_ldos(self):
     """ Raw Local density of states for given sets of positions. """
-    from .ldos import ldos as outer_ldos
+    from ldos import ldos as outer_ldos
     return outer_ldos(self, self.positions, raw=True)
 
   @property
   @make_cached
   def ldos(self):
     """ Local density of states for `positions`. """
-    return _ldosfunc(self.eigenvalues.flat, self.raw_ldos)
+    return _ldosfunc(self.copy(unreduce=False).eigenvalues.flat, self.raw_ldos)
    
   @property
   def positions(self):
     """ Positions for which to compute LDOS. """
     from numpy import array
-    if self.functional.positions == None: return array([a.pos for a in self.structure.atoms])
+    if getattr(self.functional, 'positions', None) == None:
+      return array([a.pos for a in self.structure.atoms])
     if not hasattr(self.functional.positions, '__call__'): return self.functional.positions
     return self.funtional.positions(self.structure)
       

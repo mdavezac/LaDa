@@ -89,12 +89,14 @@ class AbstractExtractBase(object):
 
         :param kwargs:
           Any keyword argument is set as an attribute of this object.
-          Does not check for existence or anything.
+          The attribute must exist.
     """
     if 'comm' in kwargs: kwargs["comm"], self.comm = self.comm, kwargs['comm']
     result = self.__copy__()
     if 'comm' in kwargs: kwargs["comm"], self.comm = self.comm, kwargs['comm']
-    for k, v in kwargs.iteritems(): setattr(result, k, v)
+    for k, v in kwargs.iteritems():
+      if not hasattr(self, k): raise RuntimeError('Attribute {0} does not exist.'.format(k))
+      setattr(result, k, v)
     return result
 
   def solo(self):
