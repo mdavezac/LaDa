@@ -11,7 +11,7 @@ class KPoints(object):
       following code holds true:
 
       >>> for count, kvec in kpoints_instance(structure): 
-      >>>   assert abs(dot(kvec, structure.cell[:,0]) * 2e0 * pi -1e0) < 1e-12
+      >>>   assert abs(exp(-2e0*pi*1j*dot(kvec, structure.cell[:,0])) -1e0) < 1e-12
 
       The code above assumes that structure is a valid `crystal.Structure`
       object.

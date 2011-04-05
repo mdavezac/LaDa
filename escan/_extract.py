@@ -363,25 +363,18 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     assert comm.real, ValueError("MPI needed to play with wavefunctions.")
     is_root = comm.rank == 0 
     assert self.success
+    kpoint = (0,0,0,0,0) if norm(self.functional.kpoint) < 1e-12\
+             else self.functional._get_kpoint(self.structure, self.comm, False)
+    scale, kpoint = kpoint[-1], kpoint[1:4]
     with Changedir(self.directory, comm=self.comm) as directory:
       if is_root: 
         assert exists(self.functional.WAVECAR),\
                IOError("{0} does not exist.".format(self.functional.WAVECAR))
-        if exists(self.functional._INCAR):
-          from shutil import copyfile
-          copyfile(self.functional._INCAR, ".lada_wavefunction_save_incar")
-      self.functional._write_incar(self.comm, self.structure)
       if self.functional.potential == soH and norm(self.functional.kpoint):
         nbstates = self.functional.nbstates
       else: nbstates = self.functional.nbstates / 2
       with redirect(fout="") as streams:
-        result = read_wavefunctions(self.functional, range(nbstates), comm, self.is_krammer)
-      if is_root and exists(".lada_wavefunction_save_incar"):
-        from shutil import move
-        move(".lada_wavefunction_save_incar", self.functional._INCAR)
-      elif is_root:
-        from os import remove
-        remove(self.functional._INCAR)
+        result = read_wavefunctions(self.functional, range(nbstates), kpoint, scale, comm)
     comm.barrier()
 
     cell = self.structure.cell * self.structure.scale * angstrom
