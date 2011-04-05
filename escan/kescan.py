@@ -124,7 +124,8 @@ class Extract(AbstractExtractBase):
       kpoints = self.functional.kpoints
       istr, ostr = self.input_structure, self.structure
       return array([m for m, k in kpoints.unreduced(istr, ostr)], dtype='float64')
-    return array((m for m in self.functional.kpoints.multiplicity), dtype='float64')
+    istr, ostr, kpoints = self.input_structure, self.structure, self.functional.kpoints
+    return array([m for m in kpoints.multiplicity(istr, ostr)], dtype='float64')
 
   @property
   def eigenvalues(self):
