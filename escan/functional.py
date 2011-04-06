@@ -476,7 +476,6 @@ class Escan(object):
       with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 
         assert comm.real, RuntimeError('Cannot run escan without mpi.')
         from ._escan import _call_genpot
-        comm.barrier()
         _call_genpot(comm)
 
 
@@ -542,7 +541,6 @@ class Escan(object):
       with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 
         assert comm.real, RuntimeError('Cannot run escan without mpi.')
         from ._escan import _call_escan
-        comm.barrier()
         _call_escan(comm)
 
   def _get_kpoint(self, structure, comm, norun):

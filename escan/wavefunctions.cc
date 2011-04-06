@@ -21,6 +21,7 @@
 
 #include "wavefunctions.hpp"
 
+#ifdef LADA_DO_ESCAN
 
 extern "C"
 {
@@ -346,3 +347,60 @@ namespace LaDa
 
   } // namespace python
 } // namespace LaDa
+#else 
+namespace LaDa
+{
+  namespace python
+  {
+    namespace bp = boost::python;
+    namespace bfs = boost::filesystem;
+    namespace bm = boost::mpi;
+
+    void read_wavefunctions(bp::object const&, bp::object::const &,
+                            bp::object const&, bp::object::const &)
+    {
+      PyErr_SetString(PyExc_ImportError, "Escan not found during compilation.");
+      bp::throw_error_already_set();
+    }
+
+    void to_realspace(bp::object const&, bp::object::const &, bp::object::const &)
+    {
+      PyErr_SetString(PyExc_ImportError, "Escan not found during compilation.");
+      bp::throw_error_already_set();
+    }
+
+    void expose_wfns()
+    {
+      import_array();
+      bp::def
+      (
+        "read_wavefunctions", 
+        &read_wavefunctions,
+        (bp::arg("escan"), bp::arg("indices"), bp::arg("comm"), bp::arg("iskrammer")),
+        "Context with temporary arrays to wavefunctions and corresponding g-vectors.\n\n"
+        ":Parameters:\n"
+        "  escan\n    Escan functional with which calculation were performed.\n"
+        "  indices\n    index or indices for which to recover the wavefunctions. "
+          "Indices of wavefunctions correspond to the eigenvalues "
+          "returned by the functional during calculation.\n"
+        "  comm\n    Communicator of same size as for calculations.\n"
+        "  iskrammer : bool\n    True if escan uses krammer defeneracy.\n\n"
+        ":return: (wavefunctions, g-vectors, projs, inverse).\n"
+          "  - an spin by N by x matrix holding the N wavefuntions/spinor.\n",
+          "  - a 3 by x matrix with each row a G-vector.\n"
+          "  - a 3 by x matrix with each row a R-vector.\n"
+          "  - one-dimensional array of real coefficients to smooth higher energy G-vectors.\n"
+          "  - one-dimensional array of integer indices to map G-vectors to -G.\n"
+      );
+      bp::def( "to_realspace", &to_realspace,
+               (bp::arg("escan"), bp::arg("wfns"), bp::arg("comm")),
+               "Returns wavefunctions in real-space.\n\n"
+               ":Parameters:\n"
+               "  escan\n    Escan functional.\n"
+               "  wfns : numpy array\n    Array of reciprocal-space wavefunctions.\n"
+               "  comm\n    boost mpi communicator.\n"
+               ":return: (numpy array real-space wfns, generator/array of positions\n");
+    }
+  }
+}
+#endif
