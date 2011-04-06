@@ -48,12 +48,12 @@ void just_call_genpot(boost::mpi::communicator const &_c)
   void just_call_genpot(boost::python::object const &_c)
   {
     PyErr_SetString(PyExc_ImportError, "Escan not found during compilation.");
-    bp::throw_error_already_set();
+    boost::python::throw_error_already_set();
   }
   void just_call_escan(boost::python::object const &_c)
   {
     PyErr_SetString(PyExc_ImportError, "Escan not found during compilation.");
-    bp::throw_error_already_set();
+    boost::python::throw_error_already_set();
   }
 #endif 
 

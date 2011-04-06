@@ -2,15 +2,13 @@ set( PYESCAN_PY
      _bandgap.py  _bandstructure.py  derivatives.py  _extract.py  __init__.py
      _methods.py  va.py  _wfns.py functional.py kescan.py _potential.py kpoints.py
      _massextract.py )
-if(DOESCAN)
+set(PYESCAN_HEADERS escan.hpp  wavefunctions.hpp)
+set(PYESCAN_SOURCES escan.cc python.cc wavefunctions.cc)
+if(FOUND_ESCAN)
   set(PYESCAN_F90 escan_types.f90 fortran.f90 wavefunctions_module.f90)
-  set(PYESCAN_HEADERS escan.hpp  wavefunctions.hpp)
-  set(PYESCAN_SOURCES escan.cc python.cc wavefunctions.cc)
-else(DOESCAN)
-  set(PYESCAN_F90)
-  set(PYESCAN_HEADERS escan.hpp  wavefunctions.hpp)
-  set(PYESCAN_SOURCES escan.cc python.cc wavefunctions.cc)
-endif(DOESCAN)
+else(FOUND_ESCAN)
+  set(PYESCAN_F90 "")
+endif(FOUND_ESCAN)
 
 python_add_module (pyescan ${PYESCAN_F90} ${PYESCAN_HEADERS} ${PYESCAN_SOURCES})
 

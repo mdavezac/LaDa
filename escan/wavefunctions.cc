@@ -356,17 +356,22 @@ namespace LaDa
     namespace bfs = boost::filesystem;
     namespace bm = boost::mpi;
 
-    void read_wavefunctions(bp::object const&, bp::object::const &,
-                            bp::object const&, bp::object::const &)
+    bp::tuple read_wavefunctions( bp::object const &_escan, 
+                                  bp::object const &_indices, 
+                                  bm::communicator const &_comm,
+                                  bool _is_krammer)
     {
       PyErr_SetString(PyExc_ImportError, "Escan not found during compilation.");
       bp::throw_error_already_set();
+      return bp::make_tuple();
     }
 
-    void to_realspace(bp::object const&, bp::object::const &, bp::object::const &)
+    bp::tuple to_realspace( bp::object const &_escan, bp::object const &_gwfns,
+                            bm::communicator const &_comm )
     {
       PyErr_SetString(PyExc_ImportError, "Escan not found during compilation.");
       bp::throw_error_already_set();
+      return bp::make_tuple();
     }
 
     void expose_wfns()
