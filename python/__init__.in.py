@@ -79,9 +79,11 @@ vasp_library = "libvasp.so"
 """
 
 # reads stuff from input file
-from os.path import exists
-from opt import RelativeDirectory
-if exists(RelativeDirectory('~/.lada').path):
+from os.path import exists, expanduser, expandvars
+path = expandvars(expanduser('~/.lada'))
+if exists(path):
   from opt import read_input
-  input = read_input(RelativeDirectory('~/.lada').path)
-  locals().update(input.__dict__)
+  with open(path, 'r') as file: string = file.read()
+  global_dict, local_dict = {}, {}
+  exec(script, global_dict, local_dict)
+  locals().update(local_dict)
