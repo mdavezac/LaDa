@@ -312,6 +312,7 @@ class ExtractRefs(object):
     """
     result = [u for u in dir(self.__class__) if u[0] != '_'] 
     result.extend(['extact_vff', 'extract_vbm', 'extract_cbm', 'structure', 'escan', 'vff'])
+    return result
 
   def iterfiles(self, **kwargs):
     """ Iterates over output/input files.
