@@ -84,7 +84,7 @@ class Launch(Incar):
     # creates poscar file. Might be overwriten by restart.
     if comm.is_root:
       with open(join(self._tempdir, files.POSCAR), "w") as poscar: 
-        write_poscar(self._system, poscar, is_vasp_5)
+        write_poscar(self._system, poscar, is_vasp_5())
 
     # creates incar file. Changedir makes sure that any calculations done to
     # obtain incar will happen in the tempdir. Only head node actually writes.

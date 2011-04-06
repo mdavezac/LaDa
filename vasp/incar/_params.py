@@ -162,7 +162,8 @@ class Algo(SpecialVaspParam):
   """ 
   def __init__(self, value): super(Algo, self).__init__(value)
   def incar_string(self, *args, **kwargs):
-    from .. import is_vasp_5
+    from .. import is_vasp_5 as _is5
+    is_vasp_5 = _is5()
     lower = self.value.lower().rstrip().lstrip()
     lower = lower.replace('_', '')
     lower = lower.replace('-', '')

@@ -22,33 +22,31 @@ from incar import Incar
 from kpoints import Density, Gamma
 from specie import Specie
 from ..opt import __load_vasp_in_global_namespace__
-# somehow, mkls don't necessarily get loaded right... Intel linker does not add
-# them to libvasp.so. So we have to go through this shit. Same for libsci.so?
-# if __load_vasp_in_global_namespace__:
-#   from DLFCN import RTLD_NOW as _RTLD_NOW, RTLD_GLOBAL as _RTLD_GLOBAL
-#   from sys import getdlopenflags as _getdlopenflags, setdlopenflags as _setdlopenflags
-#   flags = _getdlopenflags()
-#   _setdlopenflags(_RTLD_NOW|_RTLD_GLOBAL)
-#   _setdlopenflags(flags)
 
-try: 
-  from _vasp import version, vasp as call_vasp
-  import _vasp
-except ImportError: 
-  version = None
-  is_vasp_5 = True
-  def call_vasp(*args, **kwargs): 
-    """ Vasp Library not found. Raises RuntimeError.
-    
-        :keyword comm: dummy
-        :raise RuntimeError: on any call!
-    """
-    raise RuntimeError("VASP was not compiled into lada.")
-else:
-  is_vasp_5 = int(version[0]) == 5
+def version():
+  """ Vasp version as tuple (major, medium, minor). """
+  from lada import vasp_library
+  from _vasp import version as call_version, vasp as call_vasp
+  if vasp_library == None: raise RuntimeError("No vasp library specified.")
+  return call_version(vasp_library)
+
+def is_vasp_5():
   """ True if using vasp 5. """
-  is_vasp_4 = int(version[0]) == 4
+  try: return version()[0] == 5
+  except: return True
+def is_vasp_4():
   """ True if using vasp 4. """
+  try: return version()[0] == 5
+  except: return False
+
+def call_vasp(comm): 
+  """ Calls vasp library.  """
+  from lada import vasp_library, lada_with_mpi
+  if not lada_with_mpi: raise RuntimeError("Cannot call vasp without mpi.")
+
+  from _vasp import vasp
+  if vasp_library == None: raise RuntimeError("No vasp library specified.")
+  vasp(comm, vasp_library)
 
 __all__ = [ 'Launch', 'Extract', 'Incar', 'Density', 'Gamma', 'Specie',\
             'incar', 'extract', 'kpoints', 'methods' ]

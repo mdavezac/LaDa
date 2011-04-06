@@ -59,3 +59,29 @@ queues = []
     It is not required for slurm systems. 
     If empty, then %launch will not have a queue option.
 """
+
+genpot_library = "libgenpot.so"
+""" Default genpot library. 
+
+    The value for the default can be overriden by ~/.lada in the code below.
+"""
+
+escan_library = "libpescan.so"
+""" Default escan library. 
+
+    The value for the default can be overriden by ~/.lada in the code below.
+"""
+
+vasp_library = "libvasp.so"
+""" Default vasp library. 
+
+    The value for the default can be overriden by ~/.lada in the code below.
+"""
+
+# reads stuff from input file
+from os.path import exists
+from opt import RelativeDirectory
+if exists(RelativeDirectory('~/.lada').path):
+  from opt import read_input
+  input = read_input(RelativeDirectory('~/.lada').path)
+  locals().update(input.__dict__)
