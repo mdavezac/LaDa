@@ -241,7 +241,7 @@ def _reduced_grids_factory(name, base):
       for equivs in self.iter_equivalents(input, output):
         index, m0, k0, op = equivs.next()
         for index, m, k, op in equivs: m0 += m
-        yield m0, k
+        yield m0, k0
 
     def unreduced(self, input, output):
       """ Yields unreduced kpoints. """
@@ -249,10 +249,10 @@ def _reduced_grids_factory(name, base):
 
     def mapping(self, input, output):
       """ Yields index of unreduced kpoint in array of reduced kpoints. """
-      from itertools import itemgetter
+      from operator import itemgetter
       indices = []
       for i, equivs in enumerate(self.iter_equivalents(input, output)):
-        indices.extend([(i, index) for index, m, k, op in equivs.next()])
+        indices.extend([(i, index) for index, m, k, op in equivs])
       for i, index in sorted(indices, key=itemgetter(1)): yield i
 
     def __repr__(self):
