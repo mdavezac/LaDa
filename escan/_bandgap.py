@@ -513,7 +513,7 @@ class Functional(Escan):
         Parameters are passed on to `bandgap` method.
     """
     if '_computing' in self.__dict__:
-      return super(Functional, Escan).__call__(structure, outdir, **kwargs)
+      return super(Functional, self).__call__(structure, outdir, **kwargs)
 
     self._computing = True
     try: 
