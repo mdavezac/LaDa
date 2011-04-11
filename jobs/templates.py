@@ -2,7 +2,7 @@
 __docformat__ = "restructuredtext en"
 
 def default_pbs( file, walltime = "05:45:00", mppwidth = 8, queue = None, name = None, \
-                 pyscript = None, pickle = "job_pickle", outdir = None, **kwargs):
+                 pyscript = None, pickle = "job_pickle", outdir = None, header = None, **kwargs):
   """ Creates default pbs-script. Does not launch. 
 
       :Parameters:
@@ -37,6 +37,7 @@ def default_pbs( file, walltime = "05:45:00", mppwidth = 8, queue = None, name =
                "#PBS -e {0}/err.$PBS_JOBID\n"\
                "#PBS -o {0}/out.$PBS_JOBID\n".format(pbsdir))
   if queue != None: file.write("#PBS -q {0} \n".format(queue))
+  if header != None: file.write("{0}\n".format(header))
   if outdir == None: file.write("cd $PBS_O_WORKDIR\n")
   else: file.write("cd {0}\n".format(outdir))
 

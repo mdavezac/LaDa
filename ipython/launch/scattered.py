@@ -56,6 +56,8 @@ def launch(self, event, jobdicts):
   kwargs = {}
   if event.__dict__.get(queue, None) != None: kwargs[queue] = getattr(event, queue)
   if which and event.debug: kwargs["partition"] = "inter"
+  if environ.get('NERSC_HOST', 'none') == 'hopper2': 
+    kwargs['header'] = "\nsource {0}_mpi/bin/activate".format(environ['VIRTUAL_ENV'])
 
   # gets python script to launch in pbs.
   pyscript = jobs_filename.replace(splitpath(jobs_filename)[1], "runone.py")
