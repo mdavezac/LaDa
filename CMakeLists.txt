@@ -126,13 +126,13 @@ find_package(tinyxml REQUIRED)
 if("$ENV{NERSC_HOST}" STREQUAL "hopper")
   MESSAGE(STATUS "Working on hopper.")
   MESSAGE(STATUS "Crays being difficult beasts, options are set directly in CMakeLists.txt")
-  set(FORTRAN_RTLIBRARIES /opt/pgi/10.3.0/linux86-64/10.3/libso/libpgf90.so      
-                          /opt/pgi/10.3.0/linux86-64/10.3/libso/libpgf90_rpm1.so 
-                          /opt/pgi/10.3.0/linux86-64/10.3/libso/libpgf902.so     
-                          /opt/pgi/10.3.0/linux86-64/10.3/libso/libpgf90rtl.so   
-                          /opt/pgi/10.3.0/linux86-64/10.3/libso/libpgftnrtl.so  
-                          /opt/pgi/10.3.0/linux86-64/10.3/libso/libpgc.so  )
-  set(MPI_INCLUDE_PATH "/opt/cray/mpt/4.1.0.1/xt/seastar/mpich2-pgi64/include/")
+  set(FORTRAN_RTLIBRARIES /opt/pgi/default/linux86-64/10.3/libso/libpgf90.so      
+                          /opt/pgi/default/linux86-64/10.3/libso/libpgf90_rpm1.so 
+                          /opt/pgi/default/linux86-64/10.3/libso/libpgf902.so     
+                          /opt/pgi/default/linux86-64/10.3/libso/libpgf90rtl.so   
+                          /opt/pgi/default/linux86-64/10.3/libso/libpgftnrtl.so  
+                          /opt/pgi/default/linux86-64/10.3/libso/libpgc.so  )
+  set(MPI_INCLUDE_PATH "/opt/cray/mpt/default/xt/seastar/mpich2-pgi64/include/")
   set(MPI_COMPILER "CC")
   set(MPIEXEC "aprun")
   set(MPI_FOUND TRUE)
