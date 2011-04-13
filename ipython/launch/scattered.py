@@ -60,6 +60,16 @@ def launch(self, event, jobdicts):
   # gets python script to launch in pbs.
   pyscript = jobs_filename.replace(splitpath(jobs_filename)[1], "runone.py")
 
+  if environ.get('NERSC_HOST', 'none') == 'hopper2':
+    from os.path import basename, exists
+    name = basename(environ['VIRTUAL_ENV'])
+    pyscript = pyscript.replace('/{0}/'.format(name), '/{0}/'.format(name+"_mpi"))
+    assert exists(pyscript),\
+           RuntimeError("Could not find find file {0}.\n"\
+                        "{1}_mpi environment does not exist?\n"\
+                        "Or not actually on hopper2?".format(pyscript, name))
+    kwargs['header'] = "\nsource {0}_mpi/bin/activate".format(environ['VIRTUAL_ENV'])
+
   pbsscripts = []
   for current, path in jobdicts:
     # creates directory.

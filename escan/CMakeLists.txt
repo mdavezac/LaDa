@@ -2,9 +2,13 @@ set( PYESCAN_PY
      _bandgap.py  _bandstructure.py  derivatives.py  _extract.py  __init__.py
      _methods.py  va.py  _wfns.py functional.py kescan.py _potential.py kpoints.py
      _massextract.py ldos.py )
-set(PYESCAN_F90 escan_types.f90 fortran.f90 wavefunctions_module.f90)
 set(PYESCAN_HEADERS escan.hpp  wavefunctions.hpp)
 set(PYESCAN_SOURCES escan.cc python.cc wavefunctions.cc)
+if(ESCAN_FOUND)
+  set(PYESCAN_F90 escan_types.f90 fortran.f90 wavefunctions_module.f90)
+else(ESCAN_FOUND)
+  set(PYESCAN_F90 "")
+endif(ESCAN_FOUND)
 
 python_add_module (pyescan ${PYESCAN_F90} ${PYESCAN_HEADERS} ${PYESCAN_SOURCES})
 
@@ -12,9 +16,10 @@ include_directories( ${MPI_INCLUDE_PATH}
                      ${PYTHON_INCLUDE_DIRS} 
                      ${ESCAN_INCLUDE_DIRS}
                      ${NUMPY_INCLUDES} )
-target_link_libraries( pyescan ${Boost_PYTHON_LIBRARY} 
-                       ${Boost_SYSTEM_LIBRARY} 
-                       ${ESCAN_LIBRARY} ${GENPOT_LIBRARY})
+target_link_libraries( pyescan ${Boost_PYTHON_LIBRARY} ${Boost_SYSTEM_LIBRARY} )
+if(DOESCAN)
+  target_link_libraries(pyescan ${ESCAN_LIBRARY} ${GENPOT_LIBRARY})
+endif(DOESCAN)
 
 if (MPI_FOUND)
   include_directories(${MPI_INCLUDE_PATH})

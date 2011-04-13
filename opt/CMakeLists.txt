@@ -1,4 +1,4 @@
-set( LIBOPT_F90  fortran_redirect.f90)
+set( LIBOPT_F90  fortran_redirect.F90)
 set( LIBOPT_SOURCES  convex_hull.cc  errors.cc leave_many_out.cc path.cc tinyxml.cc )
 set( LIBOPT_HEADERS 
      algorithms.h convex_hull.h debug.h fitness_function.h function_base.h

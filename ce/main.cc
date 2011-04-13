@@ -102,7 +102,9 @@ int main(int argc, char *argv[])
   LADA_DO_NASSERT( not ce.Load(*child), "Error while reading Functional from input." )
   ce.add_equivalent_clusters();
  
+# ifdef LADA_MPI
   LADA_ROOT( (*world), OUTPUT << "Nb procs: " << world->size() << ENDLINE; )
+#endif 
   // do structure
   child = handle.FirstChild( "Job" ).FirstChild( "Structure" ).Element();
   for (; child; child = child->NextSiblingElement("Structure") )
