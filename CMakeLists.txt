@@ -105,13 +105,11 @@ endif(NOT CMAKE_PYINSTALL_PREFIX)
 
 # required packages
 #   -- boost packages
-if(NOT BOOST_ROOT)
-  if($ENV{BOOST_ROOT})
+if("${BOOST_ROOT}" STREQUAL "")
+  if ("$ENV{BOOST_ROOT}" STRGREATER "")
     set(BOOST_ROOT $ENV{BOOST_ROOT} CACHE PATH "Path to boost libraries and headers.")
-  else($ENV{BOOST_ROOT})
-    set(BOOST_ROOT $ENV{HOME}/usr CACHE PATH "Path to boost libraries and headers.")
-  endif($ENV{BOOST_ROOT})
-endif(NOT BOOST_ROOT)
+  endif ("$ENV{BOOST_ROOT}" STRGREATER "")
+endif("${BOOST_ROOT}" STREQUAL "")
 find_package( Boost 1.36.0 REQUIRED 
               COMPONENTS python mpi mpi_python program_options regex serialization system filesystem )
 include_directories(${Boost_INCLUDE_DIRS})
