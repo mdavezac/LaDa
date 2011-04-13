@@ -253,7 +253,7 @@ if( escan_functional )
   find_package(escan)
   if( DOESCAN )
     add_subdirectory(escan)
-    set(LADA_DO_ESCAN ${FOUND_ESCAN})
+    set(LADA_DO_ESCAN ${ESCAN_FOUND})
   endif( DOESCAN )
 endif( escan_functional )
 
