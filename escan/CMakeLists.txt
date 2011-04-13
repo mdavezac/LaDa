@@ -4,11 +4,11 @@ set( PYESCAN_PY
      _massextract.py )
 set(PYESCAN_HEADERS escan.hpp  wavefunctions.hpp)
 set(PYESCAN_SOURCES escan.cc python.cc wavefunctions.cc)
-if(FOUND_ESCAN)
+if(ESCAN_FOUND)
   set(PYESCAN_F90 escan_types.f90 fortran.f90 wavefunctions_module.f90)
-else(FOUND_ESCAN)
+else(ESCAN_FOUND)
   set(PYESCAN_F90 "")
-endif(FOUND_ESCAN)
+endif(ESCAN_FOUND)
 
 python_add_module (pyescan ${PYESCAN_F90} ${PYESCAN_HEADERS} ${PYESCAN_SOURCES})
 
