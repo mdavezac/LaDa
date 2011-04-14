@@ -105,7 +105,8 @@ namespace LaDa
       for(; i_cls != i_cls_end; ++i_cls) stream << *i_cls;
       std::string indented = stream.str();
       boost::algorithm::replace_all(indented, "\n", "\n   ");
-      return _stream << indented;
+      indented.erase(indented.size()-3);
+      return _stream << "   " << indented;
     }
     
     bool bypass_comment( std::istream & _sstr, std::string &_line )

@@ -12,6 +12,9 @@
 #include <boost/python/list.hpp>
 #include <boost/python/make_constructor.hpp>
 #include <boost/python/default_call_policies.hpp>
+#include <boost/python/self.hpp>
+#include <boost/python/other.hpp>
+#include <boost/python/operators.hpp>
 
 #include <python/numpy_types.h>
 #include <python/misc.hpp>
@@ -161,6 +164,31 @@ namespace LaDa
         std::copy( _b.begin(), _b.end(), std::back_inserter(_classes) ); 
       }
 
+    bool contains0(CE::MLClusters const &_self, CE::MLCluster const &_item)
+      { return _self.end() != std::find(_self.begin(), _self.end(), _item); }
+    bool contains1(CE::t_MLClusterClasses const &_self, CE::MLCluster const &_item)
+    {
+      CE::t_MLClusterClasses::const_iterator i_first = _self.begin();
+      CE::t_MLClusterClasses::const_iterator const i_end = _self.end();
+      for(; i_first != i_end; ++i_first)
+        if( contains0(*i_first, _item) ) return true;
+      return false;
+    }
+    bool contains2(CE::t_MLClusterClasses const &_self, CE::MLClusters const &_item)
+    {
+      if(_item.size() == 0)
+      {
+        CE::t_MLClusterClasses::const_iterator i_first = _self.begin();
+        CE::t_MLClusterClasses::const_iterator const i_end = _self.end();
+        for(; i_first != i_end; ++i_first)
+          if(i_first->size() == 0) return true;
+        return false;
+      }
+      return contains1(_self, _item.front());
+    }
+
+
+
 
     void expose_mlclusters()
     {
@@ -179,7 +207,9 @@ namespace LaDa
           .def("__setitem__", &setvecitem)
           .def("extend", &extend<CE::MLClusters>)
           .def("extend", &extend2<CE::MLClusters>)
-          .def_pickle( Python::pickle<CE::MLClusters>() );
+          .def_pickle( Python::pickle<CE::MLClusters>() )
+          .def("__contains__", &contains0, "True if contains a cluster.") 
+          .def(bp::self == bp::other<CE::MLClusters>());
       bp::class_<CE::t_MLClusterClasses>
        (
           "MLClusterClasses", 
@@ -226,6 +256,9 @@ namespace LaDa
              ", or an MLClusters - in which case the case the class is added as is.")
         .def("extend", &extend<CE::t_MLClusterClasses>)
         .def("extend", &extend2<CE::t_MLClusterClasses>)
+        .def("__contains__", &contains1)
+        .def("__contains__", &contains2,
+             "True if contains a cluster or class of clusters." )
         .def_pickle( Python::pickle<CE::t_MLClusterClasses>() );
       
       bp::register_ptr_to_python< boost::shared_ptr<CE::t_MLClusterClasses> >();
