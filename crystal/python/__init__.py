@@ -492,12 +492,14 @@ def gaussian_projector(positions, cell, center=(0,0,0), alpha=1e0):
 @contextmanager
 def lattice_context(lattice):
   """ Sets global lattice within a context. """
+  from _crystal import _nullify_global_lattice
   from . import Structure
   try: oldlattice = Structure().lattice
   except: oldlattice = None
   lattice.set_as_crystal_lattice()
   yield oldlattice
   if oldlattice != None: oldlattice.set_as_crystal_lattice()
+  else: _nullify_global_lattice()
 
 
 def layer_iterator(structure, direction, tolerance=1e-12):
