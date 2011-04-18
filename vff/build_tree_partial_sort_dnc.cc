@@ -25,50 +25,46 @@ namespace LaDa
            { return _a.second < _b.second; }
       };
 
-    bool Vff :: build_tree_partial_sort_dnc_( const Crystal::ConquerBox<t_Atom::t_Type>& _dnc,
-                                              types::t_real cutoff )
+    typedef Crystal::t_DNCBoxes :: shared_ptr DNCBoxes_ptr;
+    typedef Crystal::t_DNCBoxes :: value DNCBoxes;
+    bool Vff :: build_tree_partial_sort_dnc_(DNCBoxes_ptr _dnc, types::t_real cutoff)
     {
-      namespace bt = boost::tuples;
+      typedef math::iVector3d iVector3d;
+      typedef math::rVector3d rVector3d;
+      typedef math::rMatrix3d rMatrix3d;
       // Types needed for sorting first neighbors.
       typedef std::pair<size_t, types::t_real> t_Sortee;
       typedef std::vector<t_Sortee>  t_Sorted;
 
-      typedef Crystal::ConquerBox<t_Atom::t_Type> :: t_States t_States;
-      const t_States :: const_iterator i_state_begin = _dnc.begin();
-      const t_States :: const_iterator i_state_end = _dnc.end();
+      typedef DNCBoxes::t_Points::const_iterator t_point_cit;
+      const t_point_cit i_state_begin = _dnc.begin();
+      const t_point_cit i_state_end = _dnc.end();
       const math::rMatrix3d invcell(structure.cell.inverse());
 
       // loops over all centers in small box.
-      t_States :: const_iterator i_boxed( i_state_begin )'
+      t_point_cit i_boxed( i_state_begin )'
       for(i_boxed != i_state_end; ++i_boxed)
       {
         // skip states outside small box.
-        if( not bt::get<1>( *i_boxed ) ) continue; 
+        if(not i_boxed->in_small_box) continue; 
 
         // Gets central atom we will be looking at.
-        const size_t center_index( bt::get<0>( *i_boxed ) );
-        t_Center &center( centers_[ center_index ] );
+        const size_t center_index(i_boxed->index);
+        t_Center &center( centers_[center_index] );
 
         // Loop over all potential bonds in box.
-        size_t i(0);
-        t_States :: const_iterator i_potential_bond( i_state_begin );
-        for(; i_potential_bond != i_state_end; ++i_potential_bond, ++i )
+        t_point_cit i_bond(i_state_begin);
+        for(size_t i(0); i_bond != i_state_end; ++i_bond, ++i )
         {
-          
-
-          const math::rVector3d image(center.i_atom_->pos - bond.i_atom_->pos);
-          const math::rVector3d frac_image( invcell * image );
-          const math::rVector3d frac_centered
-          ( 
-            frac_image[0] - rint( frac_image[0] ),
-            frac_image[1] - rint( frac_image[1] ),
-            frac_image[2] - rint( frac_image[2] )
-          );
-          const types::t_real bond_size = (structure.cell * frac_centered).squaredNorm();
+          rVector3d const bond_pos(i_bond->trans + structure[i_bond->index]);
+          rVector3d const image( into_voronoi( center.i_atom_->pos - bond_pos,
+                                               structure.cell, invcell ) );
+          types::t_real const bond_size = image.squaredNorm();
           if( math::is_zero(bond_size) ) continue;
           if(bond_size > cutoff or sorted.size() < 4)
              sorted.push_back( t_Sortee(i, bond_size) );
         }
+
         LADA_DOASSERT(sorted.size() >= 4, "Could not find four bonds.");
         std::partial_sort(sorted.begin(), sorted.begin()+5, sorted.end());
         t_Sortee::const_iterator i_first = sorted.begin();

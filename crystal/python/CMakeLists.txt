@@ -3,12 +3,12 @@ set( PYCRYSTAL_PY  gruber.py  __init__.py A2BX4.py bravais.py binary.py
 set( PYCRYSTAL_HEADERS 
      atom.hpp  enumerate.hpp  lattice.hpp  layerdepth.hpp  neighbors.hpp
      read_structure.hpp  smith.hpp  structure.hpp  symmetry_operator.hpp
-     which_site.hpp misc.hpp )
+     which_site.hpp misc.hpp periodic_dnc.hpp )
 
 set( PYCRYSTAL_SOURCES
      atom.cc  enumerate.cc  lattice.cc  layerdepth.cc  neighbors.cc  python.cc
      read_structure.cc  smith.cc  structure.cc  symmetry_operator.cc
-     which_site.cc misc.cc )
+     which_site.cc misc.cc periodic_dnc.cc )
 
 
 include_directories(${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDES})

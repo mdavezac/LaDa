@@ -25,6 +25,7 @@
 #include "symmetry_operator.hpp"
 #include "which_site.hpp"
 #include "misc.hpp"
+#include "periodic_dnc.hpp"
 
 LaDa::types::t_real third_order(LaDa::math::rMatrix3d const & _matrix, LaDa::types::t_int _n)
 {
@@ -94,4 +95,5 @@ BOOST_PYTHON_MODULE(_crystal)
   LaDa::Python::expose_symmetry_operator();
   LaDa::Python::expose_which_site();
   LaDa::python::expose_misc();
+  LaDa::python::expose_periodic_dnc();
 }

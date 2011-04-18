@@ -2,7 +2,8 @@ set( LIBCRYSTAL_HEADERS
      atom.h divide_and_conquer.h epi_structure.h fractional_cartesian.h layerdepth.h 
      read_structure.h structure.impl.h compare_sites.h divide_and_conquer.impl.h 
      fill_structure.h neighbors.h smith.h symmetry_operator.h 
-     confsplit.h enumerate.h fourier.h lattice.h read_poscar.h structure.h which_site.h )
+     confsplit.h enumerate.h fourier.h lattice.h read_poscar.h structure.h which_site.h 
+     periodic_dnc.h periodic_dnc.impl.h )
 
 set( LIBCRYSTAL_SOURCES 
      confsplit.cc fill_structure.cc lattice.cc

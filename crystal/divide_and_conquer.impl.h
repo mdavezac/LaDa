@@ -35,27 +35,6 @@ namespace LaDa
         LADA_DOASSERT(result(1) < _n(1) and result(1) >= 0, "HERE 1\n")
         LADA_DOASSERT(result(2) < _n(2) and result(2) >= 0, "HERE 2\n")
         return (result(0) * _n(1) + result(1)) * _n(2) + result(2);
-//      return result.dot(_n);
-//       const math::rVector3d rfrac( _inv_str * _pos );
-//       const math::rVector3d ifrac
-//       (
-//         rfrac(0) - std::floor(rfrac(0) + roundoff),
-//         rfrac(1) - std::floor(rfrac(1) + roundoff),
-//         rfrac(2) - std::floor(rfrac(2) + roundoff) 
-//       );
-//       const math::rVector3d in_para( _str * ifrac );
-//       // Then finds out which box it belongs to.
-//       const math::rVector3d frac( _inv_cell * in_para );
-//       const types::t_int i( frac(0) + roundoff );
-//       const types::t_int j( frac(1) + roundoff );
-//       const types::t_int k( frac(2) + roundoff );
-//         if( not (i >= 0 and i < _n(0)) )
-//           std::cerr << i << " < 0 or " << i << " >= " << _n(0) << "  0\n"; 
-//         if( not (j >= 0 and j < _n(1)) )
-//           std::cerr << j << " < 0 or " << j << " >= " << _n(1) << "  1\n"; 
-//         if( not (k >= 0 and k < _n(2)) )
-//           std::cerr << k << " < 0 or " << k << " >= " << _n(2) << "  2\n"; 
-//       return types::t_int( ( i * _n(1) + j ) * _n(2) +  k );
       }
     }
 
@@ -78,7 +57,6 @@ namespace LaDa
         for( size_t i(0); i < 3; ++i )
         {
           const math::rVector3d column( cell.col(i) );
-//         const types::t_real a( std::sqrt( column.squaredNorm() ) );
           odist(i) = _overlap_distance; ///a;
         }
 
@@ -161,6 +139,7 @@ namespace LaDa
                 if( u != uu ) lb_set.insert( uu );
               }
           // inserts into large boxes.
+          if(lb_set.size() > 0) std::cout << u << " " << lb_set.size() <<  " " << index << "\n";
           std::set< size_t > :: const_iterator i_lb = lb_set.begin();
           const std::set< size_t > :: const_iterator i_lb_end = lb_set.end();
           for(; i_lb != i_lb_end; ++i_lb )
