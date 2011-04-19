@@ -85,5 +85,5 @@ if exists(path):
   from opt import read_input
   with open(path, 'r') as file: string = file.read()
   global_dict, local_dict = {}, {}
-  exec(script, global_dict, local_dict)
+  exec(string, global_dict, local_dict)
   locals().update(local_dict)
