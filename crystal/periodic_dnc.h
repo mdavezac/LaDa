@@ -25,10 +25,10 @@ namespace LaDa
         //! References a point in a periodic divide and conquer box.
         struct Point
         {
-          //! index in given structure.
-          size_t index; 
           //! Translation in cartesian coordinates.
           math::rVector3d translation;
+          //! index in given structure.
+          size_t index; 
           //! If true, then position is in small box.
           bool in_small_box;
         };
@@ -77,7 +77,7 @@ namespace LaDa
 
     inline bool operator==(DnCBoxes::Point const &_a, DnCBoxes::Point const &_b)
     {
-      return _a.index == _b.index and _a.in_small_box == _b.in_small_box 
+      return     _a.index == _b.index 
              and math::is_zero( (_a.translation - _b.translation).squaredNorm() );
     }
 

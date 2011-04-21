@@ -54,22 +54,28 @@ namespace LaDa
         container_.clear(); container_.resize(Nboxes);
 
         // Now adds points for each atom in each box.
-        math::rMatrix3d const inv_small_cell( cell.inverse() );
-        math::rMatrix3d const inv_str_cell( _structure.cell.inverse() );
+        math::rMatrix3d const invstr( _structure.cell.inverse() ); // inverse of structure 
+        math::rMatrix3d const invbox( cell.inverse() );   // inverse of small box.
         typename t_Atoms :: const_iterator i_atom = _structure.atoms.begin();
         typename t_Atoms :: const_iterator i_atom_end = _structure.atoms.end();
         for( size_t index(0); i_atom != i_atom_end; ++i_atom, ++index )
         {
           // Position inside structure cell.
-          rVector3d const incell( into_cell(i_atom->pos, _structure.cell, inv_str_cell) );
+          rVector3d const incell( into_cell(i_atom->pos, _structure.cell, invstr) );
           // Gets coordinate in mesh of small-boxes.
-          iVector3d const ifrac( inv_small_cell*incell + roundoff*rOnes ); 
+          iVector3d const ifrac
+            ( math::floor((invbox*incell + roundoff*rOnes).eval()).cast<types::t_int>() ); 
           // Computes index within cell of structure.
           types::t_int const u = LADA_INDEX(ifrac, _n);
           LADA_ASSERT( u < Nboxes, "Index out-of-range.\n" << u << " >= " << Nboxes << "\n" );
 
           // creates apropriate point in small-box. 
-          DnCBoxes::Point const orig = {index, incell - i_atom->pos, true};
+          DnCBoxes::Point const orig = {incell - i_atom->pos, index, true};
+          LADA_DOASSERT
+          (
+             container_[u].end() == std::find(container_[u].begin(), container_[u].end(), orig),
+             "WTF\n"
+          );
           container_[u].push_back(orig);
 
           // Finds out which other boxes it is contained in, including periodic images.
@@ -78,42 +84,38 @@ namespace LaDa
               for( types::t_int k(-1 ); k <= 1; ++k )
               {
                 if( i == 0 and j == 0 and k == 0 ) continue;
-                rVector3d const displaced(incell + rVector3d(i,j,k) * _overlap);
-                // Gets coordinate in mesh of small-boxes. 
-                iVector3d const oifrac(inv_small_cell*incell + roundoff*rOnes); 
+                rVector3d displaced(incell + rVector3d(i,j,k) * _overlap);
+                // Gets coordinate in mesh of structure cells.
+                iVector3d const strfrac
+                  ( math::floor((invstr*displaced + roundoff*rOnes).eval()).cast<types::t_int>() ); 
+                // True if this is an edge state.
+                bool const is_edge(strfrac(0) != 0 or strfrac(1) != 0 or strfrac(2) != 0);
+                // Gets coordinate in mesh of small-boxes.
+                displaced = into_cell(displaced, _structure.cell, invstr);
+                iVector3d const boxfrac( (invbox*displaced + roundoff*rOnes).cast<types::t_int>() ); 
                 // Computes index within cell of structure.
-                types::t_int uu = LADA_INDEX(oifrac, _n);
+                types::t_int const uu = LADA_INDEX(boxfrac, _n);
 
-                rVector3d overlaptrans(incell-i_atom->pos);
-                // If following test is true, then overlap point still in same small box.
-                if( u == uu ) continue;
-                // If following test is true, then we are looking at a periodic image.
-                else if(uu < 0 or uu >= Nboxes) 
-                {
-                  rVector3d const period
-                  (
-                    oifrac(0) < 0 ? 1: (oifrac(0) >= _n(0) ? -1: 1),
-                    oifrac(1) < 0 ? 1: (oifrac(1) >= _n(1) ? -1: 1),
-                    oifrac(2) < 0 ? 1: (oifrac(2) >= _n(2) ? -1: 1)
-                  );
-                  overlaptrans += _structure.cell*period;
-                  iVector3d const f(oifrac(0) % _n(0), oifrac(1) % _n(1), oifrac(2) % _n(2)); 
-                  iVector3d const ff
-                  (
-                     f(0) < 0 ? f(0) + _n(0): f(0),
-                     f(1) < 0 ? f(1) + _n(1): f(1),
-                     f(2) < 0 ? f(2) + _n(2): f(2)
-                  );
-                  uu = LADA_INDEX(ff, _n)
-                }
-                DnCBoxes::Point const overlap = {index, overlaptrans, false};
+                // Don't need to go any further: not an edge state of either
+                // small box or structure.
+                if(u == uu  and not is_edge) continue;
+
+                if( u == uu ) { LADA_ASSERT(strfrac.squaredNorm() != 0, "WTF")}
+                else { LADA_ASSERT(u != uu, "WTF") }
+                DnCBoxes::Point const overlap 
+                  = {
+                      incell - _structure.cell*strfrac.cast<types::t_real>() - i_atom->pos,
+                      index,
+                      false
+                    };
                 DnCBoxes::t_Box &box = container_[uu];
-                if( box.end() != std::find(box.begin(), box.end(), overlap) ) 
+                if( box.end() == std::find(box.begin(), box.end(), overlap) ) 
                   box.push_back(overlap);
               }
         }
         n_ = _n;
         overlap_ = _overlap;
+
       }
 #   undef LADA_INDEX
 

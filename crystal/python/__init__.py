@@ -5,7 +5,7 @@ __all__ = [ 'FreezeAtom', 'which_site', 'Sites', 'SymmetryOperator', 'Lattice', 
             'smith_normal_transform', 'get_space_group_symmetries', 'Neighbors', 'Neighbor', \
             'read_pifile_structure', 'LayerDepth', 'to_fractional', 'linear_smith_index', \
             'nb_valence_states', 'to_voronoi', 'gaussian_projector', 'to_cell', 'to_origin', \
-            'is_on_lattice', 
+            'is_on_lattice', 'dnc_iterator',
             # Below, only true python stuff
             'specie_list', 'read_poscar', 'write_poscar', 'icsd_cif',\
             'write_oldvff', 'read_oldvff', 'structure_to_lattice', 'fill_structure', \
@@ -19,6 +19,7 @@ from _crystal import FreezeAtom, which_site, Site, SymmetryOperator, Lattice, to
                      smith_normal_transform,  get_space_group_symmetries, Neighbors, Neighbor, \
                      read_pifile_structure, LayerDepth, to_fractional, linear_smith_index,\
                      nb_valence_states, to_voronoi, to_cell, to_origin, is_on_lattice, \
+                     dnc_iterator,\
                      rStructure, rAtom, Sites, Atoms, kAtoms, StringVector # this line not in __all__
 
 from lada.opt.decorators import add_setter
@@ -365,6 +366,7 @@ def lattice_to_structure(lattice, cell=None, subs=None):
           the lattice with 'Si' in the structure. If the lattice site can
           accomodate more than one atom than the last match will count.
   """
+  from copy import deepcopy
   from numpy import array
   from . import fill_structure
   if cell  == None: cell = lattice.cell
@@ -375,6 +377,9 @@ def lattice_to_structure(lattice, cell=None, subs=None):
   for key, value in subs.items():
     for atom in result.atoms:
       if key in lattice.sites[atom.site].type: atom.type = value
+  result.scale = lattice.scale
+  result.name  = lattice.name
+  result.__dict__.update(deepcopy(lattice.__dict__))
   return result
 Lattice.to_structure = lattice_to_structure
 
@@ -425,23 +430,25 @@ def fill_structure(cell, lattice = None):
   """
   from _crystal import _fill_structure_impl
   old_lattice = None
-  if lattice == None:
-    try: Structure().lattice
-    except RuntimeError:
-      raise RuntimeError("No lattice given on input of fill_structure" +
-                         "and global lattice not set either.")
-  else: 
-    # keeps track of old lattice.
-    try: old_lattice = Structure().lattice
-    except RuntimeError: pass
-    # sets this lattice as the global lattice.
-    lattice.set_as_crystal_lattice()
+  try:
+    if lattice == None:
+      try: Structure().lattice
+      except RuntimeError:
+        raise RuntimeError("No lattice given on input of fill_structure" +
+                           "and global lattice not set either.")
+    else: 
+      # keeps track of old lattice.
+      try: old_lattice = Structure().lattice
+      except RuntimeError: pass
+      # sets this lattice as the global lattice.
+      lattice.set_as_crystal_lattice()
 
-  # creates filled structure.
-  result = _fill_structure_impl(cell)
-
-  # Now resets old lattice.
-  if old_lattice != None: old_lattice.set_as_crystal_lattice()
+    # creates filled structure.
+    result = _fill_structure_impl(cell)
+  except: raise
+  finally: 
+    # Now resets old lattice.
+    if old_lattice != None: old_lattice.set_as_crystal_lattice()
   
   return result
 

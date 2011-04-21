@@ -27,6 +27,22 @@ namespace LaDa
     //! 3d-vector of integers. 
     typedef Eigen::Matrix<types::t_int, 3, 3> iMatrix3d;
 
+    //! Defines a floor function.
+    inline rMatrix3d floor(rMatrix3d const &_matrix)
+    {
+      rMatrix3d result;
+      for(size_t i(0); i < 3; ++i)
+        for(size_t j(0); j < 3; ++j)
+          result(i,j) = std::floor(_matrix(i,j));
+      return result;
+    }
+    //! Defines a floor function.
+    inline math::rVector3d floor(math::rVector3d const &_v) 
+    {
+      return math::rVector3d( std::floor(_v(0)), 
+                              std::floor(_v(1)), 
+                              std::floor(_v(2)) );
+    }
 
   } // namespace math
 } // namespace LaDa
