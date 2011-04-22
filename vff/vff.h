@@ -19,6 +19,7 @@
 #include <crystal/atom.h>
 #include <crystal/structure.h>
 #include <crystal/lattice.h>
+#include <crystal/periodic_dnc.h>
 #include <opt/types.h>
 #include <opt/function_base.h>
 #include <opt/debug.h>
@@ -152,6 +153,9 @@ namespace LaDa
         //! Builds first neighbor tree using two loops over centers and divide-n-conquer.
         bool build_tree_sort_dnc_( const Crystal::ConquerBox<t_Atom::t_Type>& _dnc, 
                                    const t_FirstNeighbors& _fn);
+        //! Builds first neighbor tree by sorting distances in divide and conquer box.
+        bool build_tree_partial_sort_dnc( const Crystal::DnCBoxes::value_type& _dnc, 
+                                          types::t_real _cutoff);
 
         //! \brief computes smith index.
         //! \details Defined in build_tree.cc.

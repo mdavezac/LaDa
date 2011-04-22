@@ -71,11 +71,6 @@ namespace LaDa
 
           // creates apropriate point in small-box. 
           DnCBoxes::Point const orig = {incell - i_atom->pos, index, true};
-          LADA_DOASSERT
-          (
-             container_[u].end() == std::find(container_[u].begin(), container_[u].end(), orig),
-             "WTF\n"
-          );
           container_[u].push_back(orig);
 
           // Finds out which other boxes it is contained in, including periodic images.
@@ -100,8 +95,6 @@ namespace LaDa
                 // small box or structure.
                 if(u == uu  and not is_edge) continue;
 
-                if( u == uu ) { LADA_ASSERT(strfrac.squaredNorm() != 0, "WTF")}
-                else { LADA_ASSERT(u != uu, "WTF") }
                 DnCBoxes::Point const overlap 
                   = {
                       incell - _structure.cell*strfrac.cast<types::t_real>() - i_atom->pos,

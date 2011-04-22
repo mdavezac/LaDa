@@ -36,6 +36,10 @@ namespace LaDa
         typedef std::vector<Point> t_Box;
         //! Defines a divide and conquer box.
         typedef std::vector<t_Box> t_Boxes;
+        //! Type of the iterators over boxes.
+        typedef t_Boxes::const_iterator const_iterator;
+        //! Type of the box.
+        typedef t_Box value_type;
 
         //! Does not initialize to avoid throwing.
         DnCBoxes() : n_(0,0,0) {}
@@ -52,9 +56,9 @@ namespace LaDa
         types::t_real overlap() const { return overlap_; }
         
         //! Iterator to the first divide and conquer box.
-        t_Boxes::const_iterator begin() const { return container_.begin(); }
+        const_iterator begin() const { return container_.begin(); }
         //! Iterator to the last divide and conquer box.
-        t_Boxes::const_iterator end() const { return container_.end(); }
+        const_iterator end() const { return container_.end(); }
         //! Number of boxes.
         size_t size() const { return container_.size(); }
 
@@ -63,6 +67,9 @@ namespace LaDa
         template<class T_TYPE>
           math::iVector3d guess_mesh( const Crystal::TStructure<T_TYPE> &_structure, 
                                       size_t _nperbox ) const; 
+
+        //! Returns nth box.
+        t_Box const & operator[](size_t _i) const { return container_[_i]; }
 
       protected:
         //! Definition of the mesh.
