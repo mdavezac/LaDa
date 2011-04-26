@@ -45,10 +45,8 @@ namespace LaDa
         DnCBoxes() : n_(0,0,0) {}
 
         //! Creates box.
-        template<class T_TYPE>
-          void init( Crystal::TStructure<T_TYPE> const &_structure,
-                     math::iVector3d const &_n,
-                     types::t_real _overlap);
+        void init( Crystal::TStructure< std::string > const &_structure,
+                   math::iVector3d const &_n, types::t_real _overlap);
 
         //! Returns size of mesh.
         math::iVector3d mesh() const { return n_; }
@@ -64,9 +62,8 @@ namespace LaDa
 
         //! \brief Guesses parameters of divide and conquer mesh base on the
         //!        desired number of atoms per box.
-        template<class T_TYPE>
-          math::iVector3d guess_mesh( const Crystal::TStructure<T_TYPE> &_structure, 
-                                      size_t _nperbox ) const; 
+        math::iVector3d guess_mesh( const Crystal::TStructure< std::string > &_structure, 
+                                    size_t _nperbox ) const; 
 
         //! Returns nth box.
         t_Box const & operator[](size_t _i) const { return container_[_i]; }
@@ -93,6 +90,5 @@ namespace LaDa
 
 } // namespace LaDa
 
-#include "periodic_dnc.impl.h"
 
 #endif

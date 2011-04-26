@@ -16,10 +16,10 @@ namespace LaDa
   namespace vff
   { 
     template<class T> 
-      class Compare
+      struct Compare
       {
-         Compare();
-         bool operator()(T const &_a, T const &_b)
+         Compare() {};
+         bool operator()(T const &_a, T const &_b) const
            { return _a.second < _b.second; }
       };
 
@@ -45,6 +45,9 @@ namespace LaDa
         // skip states outside small box.
         if(not i_boxed->in_small_box) continue; 
 
+        // Position of current atom being investigated.
+        rVector3d current_pos = structure.atoms[i_boxed->index].pos + i_boxed->translation;
+
         // Gets central atom we will be looking at.
         const size_t center_index(i_boxed->index);
         t_Center &center( centers_[center_index] );
@@ -54,19 +57,15 @@ namespace LaDa
         t_Sorted sorted;
         for(size_t i(0); i_bond != i_state_end; ++i_bond, ++i )
         {
-          rVector3d const bond_pos(structure.atoms[i_bond->index].pos);
-          rVector3d const image( Crystal::into_voronoi( center.i_atom_->pos - bond_pos,
-                                                        structure.cell, invcell ) );
-          types::t_real const bond_size = image.squaredNorm();
-          if( math::is_zero(bond_size) ) continue;
-//         if(bond_size > cutoff or sorted.size() < 4)
+          rVector3d const bond_pos(structure.atoms[i_bond->index].pos + i_bond->translation);
+          types::t_real const bond_size = (bond_pos - current_pos).squaredNorm(); 
+          if( bond_size > types::tolerance and (bond_size < cutoff or sorted.size() < 4) )
              sorted.push_back( t_Sortee(i, bond_size) );
         }
 
-        LADA_DOASSERT(sorted.size() >= 4, "Could not find four bonds.");
-        std::partial_sort(sorted.begin(), sorted.begin()+5, sorted.end());
-        std::cout << sorted.front().first << " " << sorted.front().second << "\n";
-        t_Sorted::const_iterator i_first = (++sorted.begin());
+        LADA_DOASSERT(sorted.size() > 4, "Could not find four bonds.");
+        std::partial_sort(sorted.begin(), sorted.begin()+4, sorted.end(), Compare<t_Sortee>());
+        t_Sorted::const_iterator i_first = sorted.begin();
         t_Sorted::const_iterator const i_end = i_first + 4;
         for(; i_first != i_end; ++i_first)
         {

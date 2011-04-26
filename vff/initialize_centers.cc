@@ -51,7 +51,6 @@ namespace LaDa
 
       // Tries to guess size of divide and conquer.
       const math::iVector3d nboxes(1, 1, 1); // Crystal::guess_dnc_params( structure, 100 ) );
-      std::cout << "Nboxes " << nboxes(0) << " " << nboxes(1) << " " << nboxes(2) << "\n";
       types::t_real n(   structure.atoms.size()
                        / types::t_real( nboxes(0) * nboxes(1) * nboxes(2) ) );
        if( _verbose )

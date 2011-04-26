@@ -75,6 +75,9 @@ namespace LaDa
     inline math::rVector3d round(math::rVector3d const &_v)
       { return math::rVector3d( round(_v(0)), round(_v(1)), round(_v(2)) ); }
 
+    //! Maximum component.
+    template<class T> inline T max( Eigen::Matrix<T, 3, 1>const &_v)
+      { return std::max(std::max(_v(0), _v(1)), _v(2)); }
 
   } // namespace math
 

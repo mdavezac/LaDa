@@ -100,6 +100,8 @@ namespace LaDa
         }
         return PointIterator(ptr_boxes, interval.first);
       }
+      math::iVector3d mesh() const { return ptr_boxes->mesh(); }
+      types::t_real overlap() const { return ptr_boxes->overlap(); }
     };
 
     inline bp::object pass_through(bp::object const& o) { return o; }
@@ -122,6 +124,8 @@ namespace LaDa
           bp::no_init
         )
         .def(bp::init< Crystal::TStructure<std::string> const&, int, types::t_real>() )
+        .def_readonly("mesh", &BoxIterator::mesh)
+        .def_readonly("overlap", &BoxIterator::overlap)
         .def("__iter__", &pass_through)
         .def("next", &BoxIterator::next);
 
