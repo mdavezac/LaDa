@@ -49,12 +49,15 @@ namespace LaDa
       t_FirstNeighbors fn;
       first_neighbors_( fn );
 
-      // Tries to guess size of divide and conquer.
-      const math::iVector3d nboxes(1, 1, 1); // Crystal::guess_dnc_params( structure, 100 ) );
-      types::t_real n(   structure.atoms.size()
-                       / types::t_real( nboxes(0) * nboxes(1) * nboxes(2) ) );
+       // Then creates boxes.
+       const types::t_real odist( 1.5e0 * std::sqrt( fn[0].front().squaredNorm() ) );
+       Crystal::DnCBoxes dncboxes;
+       // Tries to guess size of divide and conquer.
+       const math::iVector3d nboxes = dncboxes.guess_mesh( structure, 65 );
        if( _verbose )
        {
+         types::t_real n(   structure.atoms.size()
+                          / types::t_real( nboxes(0) * nboxes(1) * nboxes(2) ) );
          LADA_ROOT
          (
            comm,
@@ -63,9 +66,6 @@ namespace LaDa
                      << " boxes of " << n << " atoms each.\n";
          )
        }
-       // Then creates boxes.
-       const types::t_real odist( 1.5e0 * std::sqrt( fn[0].front().squaredNorm() ) );
-       Crystal::DnCBoxes dncboxes;
        dncboxes.init(structure, nboxes, odist);
        // Finally calls algorithm.
        Crystal::DnCBoxes::const_iterator i_box = dncboxes.begin();
