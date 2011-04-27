@@ -17,9 +17,9 @@ include_directories( ${MPI_INCLUDE_PATH}
                      ${ESCAN_INCLUDE_DIRS}
                      ${NUMPY_INCLUDES} )
 target_link_libraries( pyescan ${Boost_PYTHON_LIBRARY} ${Boost_SYSTEM_LIBRARY} )
-if(DOESCAN)
+if(ESCAN_FOUND)
   target_link_libraries(pyescan ${ESCAN_LIBRARY} ${GENPOT_LIBRARY})
-endif(DOESCAN)
+endif(ESCAN_FOUND)
 
 if (MPI_FOUND)
   include_directories(${MPI_INCLUDE_PATH})

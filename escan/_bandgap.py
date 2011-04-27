@@ -299,11 +299,15 @@ class ExtractRefs(object):
   def dipole(self, degeneracy=-1e0, attenuate=False):
     """ Computes dipole matrix element between vbm and cbm. """
     # gets result, possibly from cache file.
-    d2, a2, result = self._dipole(degeneracy, attenuate)
-    uncache  = degeneracy < 0e0 and d2 >= 0e0
-    uncache |= degeneracy >= 0e0 and d2 < 0e0
-    uncache |= abs(d2 - degeneracy) >= min(d2, degeneracy)
-    uncache |= a2 != attenuate
+    try:  d2, a2, result = self._dipole(degeneracy, attenuate)
+    except ValueError: # there might be an issue with older DIPOLECAR.
+      result = self._dipole(degeneracy, attenuate)
+      uncache = False
+    else:
+      uncache  = degeneracy < 0e0 and d2 >= 0e0
+      uncache |= degeneracy >= 0e0 and d2 < 0e0
+      uncache |= abs(d2 - degeneracy) >= min(d2, degeneracy)
+      uncache |= a2 != attenuate
     if uncache: 
       from os.path import join
       from os import remove

@@ -349,7 +349,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     assert lada_with_mpi, RuntimeError("Lada loaded without mpi. Cannot read wavefunctions.")
     # then check for function.
     from os.path import exists
-    from numpy import sqrt
+    from numpy import sqrt, abs
     from numpy.linalg import norm, det
     from quantities import angstrom, pi
     from ..mpi import world
@@ -378,7 +378,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     comm.barrier()
 
     cell = self.structure.cell * self.structure.scale * angstrom
-    normalization = det(cell.rescale(a0)) 
+    normalization = abs(det(cell.rescale(a0)))
     return result[0] * sqrt(normalization), result[1] * 0.5 / pi * reduced_reciprocal_au,\
            result[2] * a0, result[3], result[4]
 
