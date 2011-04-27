@@ -136,6 +136,7 @@ namespace LaDa
       _type = bondname(A, B);
       hard_sphere = boost::lexical_cast< types::t_real >( _node.Attribute("hard_sphere") );
       van_der_walls = boost::lexical_cast< types::t_real >( _node.Attribute("van_der_walls") );
+      return true;
     }
 
 

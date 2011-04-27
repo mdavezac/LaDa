@@ -49,6 +49,36 @@ namespace LaDa
       return is_integer(v); 
     }
 
+
+    //! Defines a floor function.
+    inline rMatrix3d floor(rMatrix3d const &_matrix)
+    {
+      rMatrix3d result;
+      for(size_t i(0); i < 3; ++i)
+        for(size_t j(0); j < 3; ++j)
+          result(i,j) = std::floor(_matrix(i,j));
+      return result;
+    }
+    //! Defines a floor function.
+    inline math::rVector3d floor(math::rVector3d const &_v) 
+    {
+      return math::rVector3d( std::floor(_v(0)), 
+                              std::floor(_v(1)), 
+                              std::floor(_v(2)) );
+    }
+
+    //! Rounding off.
+    inline types::t_real round(types::t_real r) 
+      { return (r > 0.0) ? std::floor(r + 0.5) : std::ceil(r - 0.5); }
+
+    //! Rounding off.
+    inline math::rVector3d round(math::rVector3d const &_v)
+      { return math::rVector3d( round(_v(0)), round(_v(1)), round(_v(2)) ); }
+
+    //! Maximum component.
+    template<class T> inline T max( Eigen::Matrix<T, 3, 1>const &_v)
+      { return std::max(std::max(_v(0), _v(1)), _v(2)); }
+
   } // namespace math
 
 } // namespace LaDa

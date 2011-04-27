@@ -2,6 +2,7 @@
 
 #include <cmath>
 
+#include <crystal/periodic_dnc.h>
 #include <crystal/divide_and_conquer.h>
 #include <crystal/neighbors.h>
 #include <math/misc.h>
@@ -48,12 +49,15 @@ namespace LaDa
       t_FirstNeighbors fn;
       first_neighbors_( fn );
 
-      // Tries to guess size of divide and conquer.
-      const math::iVector3d nboxes( Crystal::guess_dnc_params( structure, 30 ) );
-      types::t_real n(   structure.atoms.size()
-                       / types::t_real( nboxes(0) * nboxes(1) * nboxes(2) ) );
+       // Then creates boxes.
+       const types::t_real odist( 1.5e0 * std::sqrt( fn[0].front().squaredNorm() ) );
+       Crystal::DnCBoxes dncboxes;
+       // Tries to guess size of divide and conquer.
+       const math::iVector3d nboxes = dncboxes.guess_mesh( structure, 65 );
        if( _verbose )
        {
+         types::t_real n(   structure.atoms.size()
+                          / types::t_real( nboxes(0) * nboxes(1) * nboxes(2) ) );
          LADA_ROOT
          (
            comm,
@@ -62,20 +66,27 @@ namespace LaDa
                      << " boxes of " << n << " atoms each.\n";
          )
        }
-      // Then creates boxes.
-      const types::t_real odist( 1.5e0 * std::sqrt( fn[0].front().squaredNorm() ) );
-      Crystal::t_ConquerBoxes<t_Atom::t_Type> :: shared_ptr boxes
-      (
-        Crystal :: divide_and_conquer_boxes( structure, nboxes, odist )
-      );
-      // Finally calls algorithm.
-      typedef Crystal::t_ConquerBoxes<t_Atom::t_Type>::type::const_iterator t_cit;
-      t_cit i_box = boxes->begin();
-      t_cit i_box_end = boxes->end();
-      bool result( true );
-      for(; result and i_box != i_box_end; ++i_box )
-        result &= build_tree_sort_dnc_( *i_box, fn );
-      if( not result ) return false;
+       dncboxes.init(structure, nboxes, odist);
+       // Finally calls algorithm.
+       Crystal::DnCBoxes::const_iterator i_box = dncboxes.begin();
+       Crystal::DnCBoxes::const_iterator const i_box_end = dncboxes.end();
+       bool result = true;
+       for(; i_box != i_box_end; ++i_box) result &= build_tree_partial_sort_dnc(*i_box, odist);
+       if( not result ) return false;
+//     // Then creates boxes.
+//     const types::t_real odist( 1.5e0 * std::sqrt( fn[0].front().squaredNorm() ) );
+//     Crystal::t_ConquerBoxes<t_Atom::t_Type> :: shared_ptr boxes
+//     (
+//       Crystal :: divide_and_conquer_boxes( structure, nboxes, odist )
+//     );
+//     // Finally calls algorithm.
+//     typedef Crystal::t_ConquerBoxes<t_Atom::t_Type>::type::const_iterator t_cit;
+//     t_cit i_box = boxes->begin();
+//     t_cit i_box_end = boxes->end();
+//     bool result( true );
+//     for(; result and i_box != i_box_end; ++i_box )
+//       result &= build_tree_sort_dnc_( *i_box, fn );
+//     if( not result ) return false;
       
 
       if( _verbose ) 

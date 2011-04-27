@@ -1,7 +1,7 @@
 set( LIBVFF_HEADERS 
      data.h exceptions.h atomic_center.h functional.h layered.h with_minimizer.h vff.h )
 set( LIBVFF_SOURCES 
-     atomic_center.cc build_tree_smith.cc build_tree_sort.cc
+     atomic_center.cc build_tree_smith.cc build_tree_sort.cc build_tree_partial_sort_dnc.cc 
      build_tree_sort_dnc.cc functional.cc initialize_centers.cc layered.cc vff.cc )
 
 

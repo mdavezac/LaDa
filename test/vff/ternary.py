@@ -50,6 +50,6 @@ structure.scale = vff.lattice.scale + 0.1
 # print vff
 # print structure
 
-out = vff(structure, outdir = "work", comm = world, relax=True)
+out = vff(structure, outdir = "work", comm = world, relax=True, overwrite=True)
 print out.energy
 print out.structure

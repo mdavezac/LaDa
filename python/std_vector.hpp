@@ -146,7 +146,7 @@ namespace LaDa
 #         ifndef LADA_PYTHON_STD_VECTOR_NOPRINT
             .def( "__str__", &details::print<T_TYPE> )
 #         else
-#           undef rADA_PYTHON_STD_VECTOR_NOPRINT
+#           undef LADA_PYTHON_STD_VECTOR_NOPRINT
 #         endif
           .def( "append", &std::vector<T_TYPE> :: push_back, bp::with_custodian_and_ward<1,2>() ) 
           .def( "extend", &details::extend<T_TYPE> ) 

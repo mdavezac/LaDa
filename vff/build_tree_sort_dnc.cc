@@ -17,6 +17,13 @@ namespace LaDa
 {
   namespace vff
   { 
+    template<class T> 
+      class Compare
+      {
+         Compare();
+         bool operator()(T const &_a, T const &_b)
+           { return _a.second < _b.second; }
+      };
     bool Vff :: build_tree_sort_dnc_( const Crystal::ConquerBox<t_Atom::t_Type>& _dnc, 
                                       const t_FirstNeighbors & _fn )
     {
@@ -38,7 +45,7 @@ namespace LaDa
         LADA_BASSERT( site < structure.lattice->sites.size(),
                       exceptions::site_index() << exceptions::integer(site) );
         const size_t neigh_site( site == 0 ? 1: 0 );
-        const types::t_real cutoff = types::t_real(0.25) * _fn[site].front().squaredNorm();
+        const types::t_real cutoff = 0.25 * _fn[site].front().squaredNorm();
                    
         // loops over all potential bonds (in large box)
         for( t_States :: const_iterator i_bond( i_state_begin );
@@ -80,10 +87,38 @@ namespace LaDa
             center.translations.push_back( trans );
             center.do_translates.push_back( not math::is_zero(trans.squaredNorm()) );
 
-            if( center.bonds.size() == 4 ) break;
+            if(center.bonds.size() == 4) break;
           } // loop over neighbors
-          if( center.bonds.size() == 4 ) break;
+          if(center.bonds.size() == 4) break;
         } // loop over bonds
+        
+        // If four bonds, then OK.
+        if(center.bonds.size() == 4) continue;
+
+        // Otherwise, use only smallest bonds.
+        LADA_DOASSERT(center.size() > 4, "Could not find 4 bonds.");
+        // First creates list of distances to central atom.
+        typedef std::pair<size_t, types::t_real> t_Sortee;
+        typedef std::vector<t_Sortee> t_Sorted;
+        t_Sorted sorting;
+        t_Center :: const_iterator i_cfirst = center.begin();
+        t_Center :: const_iterator const i_cend = center.end();
+        for(size_t i(0); i_cfirst != i_cend; ++i_cfirst, ++i)
+          sorting.push_back( t_Sortee(i, i_cfirst.norm2()) );
+        // Then sort the first four and copies.
+        std::partial_sort(sorting.begin(), sorting.begin()+4, sorting.end());
+        t_Centers :: value_type other(structure, *center.i_atom_, center.index);
+        t_Sorted :: const_iterator i_first = sorting.begin();
+        t_Sorted :: const_iterator const i_end = sorting.begin() + 4;
+        for(; i_first != i_end; ++i_first)
+        {
+          other.bonds.push_back(center.bonds[i_first->first]);
+          other.translations.push_back(center.translations[i_first->first]);
+          other.do_translates.push_back(center.do_translates[i_first->first]);
+        }
+        center.bonds = other.bonds;
+        center.translations = other.translations;
+        center.do_translates = other.do_translates;
       } // loop over centers_ 
 
       return true;

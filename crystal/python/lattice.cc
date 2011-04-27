@@ -40,6 +40,11 @@ namespace LaDa
         Crystal::Structure::lattice = &_lattice;  
         Crystal::TStructure<std::string>::lattice = &_lattice;  
       }
+      void nullify_global_lattice()
+      {
+        Crystal::Structure::lattice = NULL;
+        Crystal::TStructure<std::string>::lattice = NULL;
+      }
 
       template< class T_TYPE >
         void fromXML(T_TYPE &_type, const std::string &_filename )
@@ -246,7 +251,7 @@ namespace LaDa
         "cell if not given on input.\n"
         "@type inv: numpy 3x3 float64 array.\n"
       );
+      bp::def("_nullify_global_lattice", &details::nullify_global_lattice);
     }
-
   }
 } // namespace LaDa

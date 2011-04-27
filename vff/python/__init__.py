@@ -177,20 +177,22 @@ class Extract(AbstractExtractBase):
 
 
   def write_escan_input(self, filepath, structure = None):
-    """ Prints escan input to file. """
-    from os.path import expanduser
-    if structure == None: structure = self.structure
-
-    # Saves global lattice if set.
-    old_lattice = None
-    try: old_lattice = structure.lattice
-    except RuntimeError: pass
-    self.lattice.set_as_crystal_lattice()
-
-    functional = self.functional._create_functional()
-    functional.print_escan_input(expanduser(filepath), structure)
-
-    if old_lattice != None: old_lattice.set_as_crystal_lattice()
+    """ Prints escan input to file. 
+    
+        :Parameters:
+          filepath : str
+            Writes escan input to this path. Accepts environment variables and
+            '~'.
+          structure : `crystal.Structure` or None
+            Will write this structure to file.
+    """
+    from ..opt import RelativeDirectory 
+    from ..crystal import lattice_context
+    with lattice_context(self.lattice):
+      if structure == None: structure = self.structure
+      filepath = RelativeDirectory(filepath).path
+      functional = self.functional._create_functional()
+      functional.print_escan_input(filepath, structure)
 
   def iterfiles(self, **kwargs):
     """ Iterates over output/input files.

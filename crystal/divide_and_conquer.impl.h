@@ -2,6 +2,8 @@
 #include <boost/tuple/tuple_io.hpp>
 #include <set>
 
+#include <opt/debug.h>
+
 namespace LaDa 
 {
   namespace Crystal 
@@ -16,20 +18,23 @@ namespace LaDa
       {
         // Puts atom back into parallelogram.
         const types::t_real roundoff = 1e1 * std::numeric_limits<types::t_real>::epsilon();
-        const math::rVector3d rfrac( _inv_str * _pos );
-        const math::rVector3d ifrac
+        const math::rVector3d rfrac( _inv_cell * _pos );
+        const math::iVector3d ifrac
         (
-          rfrac(0) - std::floor(rfrac(0) + roundoff),
-          rfrac(1) - std::floor(rfrac(1) + roundoff),
-          rfrac(2) - std::floor(rfrac(2) + roundoff) 
+          int(rfrac(0)+roundoff) % _n(0),
+          int(rfrac(1)+roundoff) % _n(1),
+          int(rfrac(2)+roundoff) % _n(2)
         );
-        const math::rVector3d in_para( _str * ifrac );
-        // Then finds out which box it belongs to.
-        const math::rVector3d frac( _inv_cell * in_para );
-        const types::t_int i( frac(0)  );
-        const types::t_int j( frac(1)  );
-        const types::t_int k( frac(2)  );
-        return types::t_int( ( i * _n(1) + j ) * _n(2) +  k );
+        const math::iVector3d result
+        (
+          ifrac(0) < 0 ? ifrac(0) + _n(0): ifrac(0),
+          ifrac(1) < 0 ? ifrac(1) + _n(1): ifrac(1),
+          ifrac(2) < 0 ? ifrac(2) + _n(2): ifrac(2)
+        );
+        LADA_DOASSERT(result(0) < _n(0) and result(0) >= 0, "HERE 0\n")
+        LADA_DOASSERT(result(1) < _n(1) and result(1) >= 0, "HERE 1\n")
+        LADA_DOASSERT(result(2) < _n(2) and result(2) >= 0, "HERE 2\n")
+        return (result(0) * _n(1) + result(1)) * _n(2) + result(2);
       }
     }
 
@@ -52,7 +57,6 @@ namespace LaDa
         for( size_t i(0); i < 3; ++i )
         {
           const math::rVector3d column( cell.col(i) );
-//         const types::t_real a( std::sqrt( column.squaredNorm() ) );
           odist(i) = _overlap_distance; ///a;
         }
 
@@ -125,11 +129,17 @@ namespace LaDa
                     inv_cell, displaced, _n 
                   ) 
                 );
+                if(uu >= result->size())
+                {
+                  std::cerr << "Index-out-of range: " << uu << ", " << result->size() << "\n";
+                  LADA_ASSERT(uu < result->size(), "");
+                }
                 // This condition stops a atom from being added simultateously
                 // a box and the large box in which the box is contained.
                 if( u != uu ) lb_set.insert( uu );
               }
           // inserts into large boxes.
+          if(lb_set.size() > 0) std::cout << u << " " << lb_set.size() <<  " " << index << "\n";
           std::set< size_t > :: const_iterator i_lb = lb_set.begin();
           const std::set< size_t > :: const_iterator i_lb_end = lb_set.end();
           for(; i_lb != i_lb_end; ++i_lb )
