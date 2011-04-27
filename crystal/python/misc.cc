@@ -76,7 +76,7 @@ namespace LaDa
       void operator()(math::rVector3d const &_orig) const
       {
         math::rVector3d const vec( Crystal::into_cell(_orig-center, cell, invcell) );
-        char const * const ptr_out = (char const * const)(PyArray_ITER_DATA(iterator.ptr()));
+        char const * const ptr_out = (char const *)(PyArray_ITER_DATA(iterator.ptr()));
         typedef mn::type<types::t_real>::np_type t_type;
         *(t_type*)(ptr_out)           = static_cast<t_type>(vec[0]);
         *(t_type*)(ptr_out + stride)  = static_cast<t_type>(vec[1]);
@@ -101,7 +101,7 @@ namespace LaDa
       void operator()(math::rVector3d const &_orig) const
       {
         math::rVector3d const vec( Crystal::zero_centered(_orig-center, cell, invcell) );
-        char const * const ptr_out = (char const * const)(PyArray_ITER_DATA(iterator.ptr()));
+        char const * const ptr_out = (char const *)(PyArray_ITER_DATA(iterator.ptr()));
         typedef mn::type<types::t_real>::np_type t_type;
         *(t_type*)(ptr_out)           = static_cast<t_type>(vec[0]);
         *(t_type*)(ptr_out + stride)  = static_cast<t_type>(vec[1]);
@@ -116,7 +116,7 @@ namespace LaDa
       void operator()(math::rVector3d const &_orig) const
       {
         math::rVector3d const mini( Crystal::into_voronoi(_orig-center, cell, invcell) );
-        char const * const ptr_out = (char const * const)(PyArray_ITER_DATA(iterator.ptr()));
+        char const * const ptr_out = (char const *)(PyArray_ITER_DATA(iterator.ptr()));
         typedef mn::type<types::t_real>::np_type t_type;
         *(t_type*)(ptr_out)           = static_cast<t_type>(mini[0]);
         *(t_type*)(ptr_out + stride)  = static_cast<t_type>(mini[1]);

@@ -186,6 +186,7 @@ namespace LaDa
 #     endif
       // now repacks into function::Base format
       pack_gradients(stress, _i_grad);
+      return energy;
     }
 
   } // namespace vff
