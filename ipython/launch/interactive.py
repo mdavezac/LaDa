@@ -11,10 +11,7 @@ def launch(self, event, jobdicts):
 
       This call will block until each job is finished in turn.
   """
-  import re
   from os.path import join, dirname
-  from ... import lada_with_mpi
-  from ...opt.changedir import Changedir
   from ...mpi import world
   
   ip = self.api
@@ -44,7 +41,7 @@ def completer(self, info, data, computer):
   from .._explore import _glob_job_pickles
   if    (len(info.symbol) == 0 and data[-1] == "--kwargs") \
      or (len(info.symbol) > 0  and data[-2] == "--kwargs"):
-    return [u for u in iself.api.user_ns if u[0] != '_' and isinstance(self.api.user_ns[u], dict)]
+    return [u for u in self.api.user_ns if u[0] != '_' and isinstance(self.api.user_ns[u], dict)]
   result = ['--force', '--kwargs', '--help']
   result.extend( _glob_job_pickles(self.api, info.symbol) )
   result = list(set(result) - set(data))

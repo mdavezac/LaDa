@@ -228,8 +228,9 @@ class AbstractMassExtract(object):
     if len(self.keys()) < 2: return 
     children = set()
     if len(self.view) == 0 or self.view == '/':
-      for name in self.iterkeys():
-        yield self.copy(view=name[:1+name[1:].find('/')])
+      children = set(['/' + name.split('/')[1] for name in self.iterkeys()])
+      for name in children:
+        yield self.copy(view=name)
       return
     
     newdict = self.dicttype()

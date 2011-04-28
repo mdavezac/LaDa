@@ -11,11 +11,10 @@ def launch(self, event, jobdicts):
   """ Launch scattered jobs: one job = one pbs script. """
   import re
   from os import environ
-  from os.path import split as splitpath, join, exists, abspath, dirname
+  from os.path import split as splitpath, join, abspath, dirname
   from ...opt.changedir import Changedir
   from ...jobs.templates import default_pbs, default_slurm
   from ...jobs import __file__ as jobs_filename
-  from .. import saveto
   ip = self.api
   ip.user_ns.pop("_lada_error", None)
 

@@ -73,7 +73,6 @@ class ForwardingDict(MutableMapping):
     if name not in self._attributes:
       raise AttributeError( "Attribute {0} not found in {1} instance."\
                             .format(name, self.__class__.__name__) )
-    found = False
     attrs = len(self._attr_list) > 0
     result = self.copy(append=name)
     for key, value in self.dictionary.iteritems():

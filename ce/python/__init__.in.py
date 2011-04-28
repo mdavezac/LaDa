@@ -2,7 +2,7 @@
 __docformat__ = "restructuredtext en"
 from _ce import Cubic, apply_rotation, apply_symmetry, equivalents,\
                 ClusterClasses, Clusters, Cluster, create_pairs, create_clusters, \
-                find_pis, MLCluster, MLCluster, MLClusterClasses 
+                find_pis, MLCluster, MLCluster, MLClusterClasses, ce_check
 from _fit import *
 
 def _lattdeco(method):
