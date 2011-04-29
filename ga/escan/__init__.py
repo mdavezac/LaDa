@@ -46,8 +46,7 @@ class CompareSuperCells(object):
     """ Converts individuals into structures. """
 
     try:
-      from ...enumeration import count_flavors, create_flavorbase,\
-                                 create_transforms, Translations
+      from ...enumeration import count_flavors, create_flavorbase, create_transforms
 
       self.smith = smith_normal_transform(lattice.cell, supercell)
       """ Smith normal transform tuple """

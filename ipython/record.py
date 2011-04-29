@@ -55,10 +55,13 @@ def record(self, cmdl):
                       help="Reloads variables from record into user namespace."\
                            "If no VAR are given, reload all records." )
 
+
   try: args = parser.parse_args(cmdl.split())
   except SystemExit:
     if '-h' in cmdl: print __doc__[__doc__.find('\n'):].replace('\n    ', '\n')
     return
+
+  if not (args.remove or args.list or args.load or args.view): args.update = True
   if args.namespace != None and not args.load: 
     parser.print_usage()
     print "\n--namespace argument has no effect except when reloading record."
@@ -73,14 +76,16 @@ def record(self, cmdl):
   # open record file.
   path = RelativeDirectory(args.filename).path
   if exists(path): 
-    with open(path, 'r') as file: dummy, values = load(file)
+    with open(path, 'r') as file:
+      keys = load(file)
+      if not args.list: dummy, values = load(file)
   elif args.remove or args.load or args.list or args.view:
     print "Path {0} does not exist.\nNo records yet.\n".format(args.filename)
     return
   else: values = {}
 
   has_changed = False
-  if args.list: return values.keys()
+  if args.list: return list(keys)
   if args.view: 
     if len(args.vars) == 0: args.vars = values.iterkeys()
     for var in args.vars:
@@ -128,7 +133,7 @@ def record(self, cmdl):
       try:string = str(values[key]) 
       except: print "Reloaded {0} from record {1}.".format(key, args.filename)
       else:
-        if len(string) > 30: string = string[25:] + "..."
+        if len(string) > 30: string = string[:25] + "..."
         if "\n" in string: string = string[:string.find('\n')] + "..."
         print "Reloaded {0}(={2}) from record {1}.".format(key, args.filename, string)
     return
@@ -147,7 +152,9 @@ def record(self, cmdl):
         has_changed = True
 
   if has_changed:
-    with open(path, 'w') as file: dump( ("This is a record.", values), file)
+    with open(path, 'w') as file:
+      dump( set(values.keys()), file )
+      dump( ("This is a record.", values), file)
 
          
 def completer(self, event): 
@@ -193,14 +200,14 @@ def completer(self, event):
       path = RelativeDirectory(data[index+1]).path
       known.pop(index + 1) 
     if exists(path): 
-      with open(path) as file: dummy, values = load(file)
+      with open(path) as file: keys = load(file)
       if '--namespace' in known:
         index = known.index('--namespace')
         if len(known) > index + 1: known.pop(index+1)
       if '-n' in known:
         index = known.index('-n')
         if len(known) > index + 1: known.pop(index+1)
-      result.extend(set(values.keys()) - set(known))
+      result.extend(keys - set(known))
   else:
     result.extend([u for u in self.api.user_ns.iterkeys() if u[0] != '_'])
   return result

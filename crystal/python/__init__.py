@@ -15,11 +15,11 @@ __docformat__ = "restructuredtext en"
 
 from _crystal import FreezeAtom, which_site, Site, SymmetryOperator, Lattice, to_cartesian,\
                      get_point_group_symmetries, read_structure, sort_layers, \
-                     smith_indices, kAtoms, Atom, kAtom, fold_vector, Structure, FreezeCell,\
+                     smith_indices, Atom, kAtom, fold_vector, Structure, FreezeCell,\
                      smith_normal_transform,  get_space_group_symmetries, Neighbors, Neighbor, \
                      read_pifile_structure, LayerDepth, to_fractional, linear_smith_index,\
                      nb_valence_states, to_voronoi, to_cell, to_origin, is_on_lattice, \
-                     rStructure, rAtom, Sites, Atoms, kAtoms, StringVector # this line not in __all__
+                     rStructure, rAtom, Sites, StringVector # this line not in __all__
 
 from lada.opt.decorators import add_setter
 from read_write import read_poscar, write_poscar, write_oldvff, read_oldvff, icsd_cif
