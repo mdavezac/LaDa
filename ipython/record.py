@@ -29,6 +29,7 @@ def record(self, cmdl):
   from pickle import load, dump, dumps
   from argparse import ArgumentParser
   from os.path import exists
+  from types import ModuleType
   from lada.opt import RelativeDirectory
   
   parser = ArgumentParser( prog="%record",
@@ -37,6 +38,9 @@ def record(self, cmdl):
                        help="Name of file where variables are recorded." )
   parser.add_argument( 'vars', metavar='VAR', type=str, nargs='*',
                        help='Name of the variable(s) to record or remove.' )
+  parser.add_argument( '--namespace', '-n', type=str, 
+                       help='Reloads records into a specific namespace'
+                            'rather than the global one.' )
   group = parser.add_mutually_exclusive_group()
   group.add_argument( '--remove', action="store_true", dest='remove',
                        help="Removes variable from record if present." )
@@ -48,15 +52,19 @@ def record(self, cmdl):
                        help="View a given record, if possible printable."
                             "If not VAR argument is given, all records are listed." )
   group.add_argument( '--load', action="store_true", dest='load',
-                       help="Reloads variables from record into user namespace."\
-                            "If no VAR are given, reload all records." )
+                      help="Reloads variables from record into user namespace."\
+                           "If no VAR are given, reload all records." )
 
   try: args = parser.parse_args(cmdl.split())
   except SystemExit:
     if '-h' in cmdl: print __doc__[__doc__.find('\n'):].replace('\n    ', '\n')
-    return None
+    return
+  if args.namespace != None and not args.load: 
+    parser.print_usage()
+    print "\n--namespace argument has no effect except when reloading record."
+    return
   if len(args.vars) == 0 and not (args.list or args.load or args.view):
-    parser.print_help()
+    parser.print_usage()
     print "\n*****************\n"\
           "At least on VAR argument required.\n"\
           "*****************"
@@ -66,7 +74,7 @@ def record(self, cmdl):
   path = RelativeDirectory(args.filename).path
   if exists(path): 
     with open(path, 'r') as file: dummy, values = load(file)
-  elif args.remove or args.load or args.list:
+  elif args.remove or args.load or args.list or args.view:
     print "Path {0} does not exist.\nNo records yet.\n".format(args.filename)
     return
   else: values = {}
@@ -102,11 +110,21 @@ def record(self, cmdl):
       has_changed = True
   elif args.load: 
     if len(args.vars) == 0: args.vars = values.iterkeys()
+    if args.namespace == None: namespace = self.api.user_ns
+    elif args.namespace in self.api.user_ns:
+      namespace = self.api.user_ns[args.namespace]
+      if not isinstance(namespace, dict):
+        if not hasattr(namespace, '__dict__'):
+          print "{0} is not a namespace or a dictionary.".format(args.namespace)
+        namespace = namespace.__dict__
+    else:
+      self.api.user_ns[args.namespace] = ModuleType(name=args.namespace)
+      namespace = self.api.user_ns[args.namespace].__dict__
     for key in args.vars:
       if key not in values:
         print "Could not find {0} in {1}.".format(key, args.filename)
         continue
-      self.api.user_ns[key] = values[key]
+      namespace[key] = values[key]
       try:string = str(values[key]) 
       except: print "Reloaded {0} from record {1}.".format(key, args.filename)
       else:
@@ -134,13 +152,19 @@ def record(self, cmdl):
          
 def completer(self, event): 
   """ Completer for %record magic function. """ 
-  from os.path import isdir
+  from lada.opt import RelativeDirectory
+  from pickle import load
+  from os.path import isdir, exists
 
   result = []
   data = event.line.split()[1:]
-  if '--file' not in data: result.append('--file') 
-  if len(set(['--list', '--view', '--load', '--remove', '--update']).intersection(set(data))) == 0:
-    result.extend(['--list', '--view', '--load', '--remove'])
+  if    (len(event.symbol) == 0 and len(data) > 0 and data[-1] == "--n") \
+     or (len(event.symbol) > 0  and len(data) > 1 and data[-2] == "--n") \
+     or (len(event.symbol) == 0 and len(data) > 0 and data[-1] == "--namespace") \
+     or (len(event.symbol) > 0  and len(data) > 1 and data[-2] == "--namespace"):
+   return [ key for key, value in self.api.user_ns.iteritems() \
+            if key[0] != '_' and hasattr(value, '__dict__') ]
+
   if    (len(event.symbol) == 0 and len(data) > 0 and data[-1] == "--file") \
      or (len(event.symbol) > 0  and len(data) > 1 and data[-2] == "--file"):
     other = event.symbol
@@ -151,6 +175,32 @@ def completer(self, event):
     if isdir(other) and other[-1] != '/':
       string = '%mglob "cont:This is a record." {0}/*'.format(other)
       result.extend([u for u in self.api.magic(string)])
+    return result
+
+  if '--file' not in data: result.append('--file') 
+  options = set(['--list', '--view', '--load', '--remove', '--update'])
+  if '-n' in data or '--namespace' in data and '--load' not in data:  result.append('--load') 
+  elif '--load' in data and '-n' not in data and '--namespace' not in data: 
+    result.append('--namespace')
+  elif len(options.intersection(set(data))) == 0:
+    result.extend(['--list', '--view', '--load', '--remove', '--namespace', '--update'])
+  if len(set(['--load', '--remove', '--view']).intersection(set(data))) != 0:
+    path = '.lada_record'
+    known = [u for u in data]
+    if '--file' in data: 
+      index = data.index('--file')
+      assert len(data) > index + 1
+      path = RelativeDirectory(data[index+1]).path
+      known.pop(index + 1) 
+    if exists(path): 
+      with open(path) as file: dummy, values = load(file)
+      if '--namespace' in known:
+        index = known.index('--namespace')
+        if len(known) > index + 1: known.pop(index+1)
+      if '-n' in known:
+        index = known.index('-n')
+        if len(known) > index + 1: known.pop(index+1)
+      result.extend(set(values.keys()) - set(known))
   else:
     result.extend([u for u in self.api.user_ns.iterkeys() if u[0] != '_'])
   return result
