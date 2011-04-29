@@ -9,7 +9,7 @@ def U(type = 1, l=2, U=0e0, J=0e0 ):
         type : 1|2|"liechtenstein"|"dudarev"
           A string or integer specifying the type of the Hubbard U. Defaults
           to 1.
-        l : 0|1|2|"s"|"p"|"d"
+        l : 0|1|2|3|"s"|"p"|"d"|"f"
           Channel for which to apply U. Defaults to 2.
         U : float
           Hubbard U. Defaults to 0.
@@ -29,9 +29,10 @@ def U(type = 1, l=2, U=0e0, J=0e0 ):
     if   l[0] == 's': l = 0
     elif l[0] == 'p': l = 1
     elif l[0] == 'd': l = 2
+    elif l[0] == 'f': l = 3
   try: l = int(l)
-  except: raise ValueError, "Moment l should be 0|1|2|s|p|d." 
-  if l < 1 or l > 2: raise ValueError, "Moment l should be 0|1|2|s|p|d." 
+  except: raise ValueError, "Moment l should be 0|1|2|3|s|p|d|f." 
+  if l < 1 or l > 3: raise ValueError, "Moment l should be 0|1|2|3|s|p|d|f." 
   return { "type": int(type), "l": l, "U": U, "J": J, "func": "U" }
 
 def nlep(type = 1, l=2, U0=0e0, U1=None ):
@@ -41,7 +42,7 @@ def nlep(type = 1, l=2, U0=0e0, U1=None ):
         type : 1|2|"liechtenstein"|"dudarev"
           A string or integer specifying the type of the Hubbard U. Defaults
           to 1.
-        l : 0|1|2|"s"|"p"|"d"
+        l : 0|1|2|3|"s"|"p"|"d"|"f"
           Channel for which to apply U. Defaults to 2.
         U0 : float
           First nlep parameter. Defaults to 0.
@@ -65,9 +66,10 @@ def nlep(type = 1, l=2, U0=0e0, U1=None ):
     if   l[0] == 's': l = 0
     elif l[0] == 'p': l = 1
     elif l[0] == 'd': l = 2
+    elif l[0] == 'f': l = 3
   try: l = int(l)
-  except: raise ValueError, "Moment l should be 0|1|2|s|p|d." 
-  if l < 0 or l > 2: raise ValueError, "Moment l should be 0|1|2|s|p|d." 
+  except: raise ValueError, "Moment l should be 0|1|2|3|s|p|d|f." 
+  if l < 0 or l > 3: raise ValueError, "Moment l should be 0|1|2|3|s|p|d|f." 
   elif U1 == None: 
     return { "type": int(type), "l": l, "U": U0, "func": "nlep" }
   else: 
