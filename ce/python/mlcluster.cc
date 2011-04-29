@@ -153,7 +153,9 @@ namespace LaDa
           .def("append", &append_two,
                "Appends spin to current cluster.\n\n"
                "Input can consist of a `Spin`, a position and a site, "
-               "or a only the position (site defaults to 0)." )
+               "or a only the position (site defaults to 0). "
+               "Note that the spin's position should be given *with respect to the origin,* "
+               "not in absolute coordinate." )
           .def_pickle( Python::pickle<CE::MLCluster>() )
           .def( "__contains__", &contains,
                 "True if a spin is contained in the cluster.\n\n"
