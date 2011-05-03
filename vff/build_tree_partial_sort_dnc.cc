@@ -63,7 +63,7 @@ namespace LaDa
              sorted.push_back( t_Sortee(i, bond_size) );
         }
 
-        LADA_DOASSERT(sorted.size() > 4, "Could not find four bonds.");
+        LADA_DOASSERT(sorted.size() >= 4, "Could not find four bonds.");
         std::partial_sort(sorted.begin(), sorted.begin()+4, sorted.end(), Compare<t_Sortee>());
         t_Sorted::const_iterator i_first = sorted.begin();
         t_Sorted::const_iterator const i_end = i_first + 4;

@@ -577,7 +577,11 @@ class Vff(object):
     cout, cerr = self._cout(comm), self._cerr(comm)
     with open(cerr, "w") as file: pass # file has not yet been opened
     with redirect_all(output=cout, error=cerr, append="True") as oestream:
+      # make `per atom` tolerance.
+      tolerance = self.minimizer.tolerance 
+      self.minimizer.tolerance = float(len(structure.atoms)) * tolerance
       functional = self._create_functional()
+      self.minimizer.tolerance = tolerance
     # now performs call
     functional.init(structure, dotree=True)
     functional.check_input()
