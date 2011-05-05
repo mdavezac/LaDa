@@ -3,6 +3,8 @@
 #include <limits>
 #include <set>
 
+#include <boost/numeric/conversion/converter.hpp>
+
 #include <opt/debug.h>
 #include <math/misc.h>
 
@@ -61,8 +63,6 @@ namespace LaDa
         typedef math::rVector3d rVector3d;
         typedef math::rMatrix3d rMatrix3d;
         typedef typename Crystal::TStructure< std::string > :: t_Atoms t_Atoms;
-        rVector3d const roundoff( 1e1 * std::numeric_limits<types::t_real>::epsilon()
-                                      * rVector3d::Ones() );
 
 
         // constructs cell of small small box
@@ -80,7 +80,6 @@ namespace LaDa
             _overlap / std::sqrt(cell.col(1).squaredNorm()),
             _overlap / std::sqrt(cell.col(2).squaredNorm())
           );
-        rVector3d const lb_edges(invstr*_overlap*rVector3d::Ones() + roundoff);
 
         // Constructs mesh of small boxes.
         const size_t Nboxes( _n(0) * _n(1) * _n(2) );
@@ -96,7 +95,7 @@ namespace LaDa
           rVector3d const fracincell(invbox * incell);
           LADA_DOASSERT(math::is_integer(invstr * (incell - i_atom->pos)), "WTF\n");
           // Gets coordinate in mesh of small-boxes.
-          iVector3d const __ifrac(math::floor(fracincell).cast<types::t_int>()); 
+          iVector3d const __ifrac(math::floor_int(fracincell));
           iVector3d const ifrac
             (
               __ifrac(0) + (__ifrac(0) < 0 ? _n(0): (__ifrac(0) >= _n(0)? -_n(0): 0)), 
@@ -120,8 +119,8 @@ namespace LaDa
                 if( i == 0 and j == 0 and k == 0 ) continue;
 
                 // First checks if on edge of small box.
-                rVector3d displaced = fracincell + sb_edges.cwise()*rVector3d(i,j,k) + roundoff;
-                iVector3d const __boxfrac( math::floor(displaced).cast<types::t_int>() );
+                rVector3d displaced = fracincell + sb_edges.cwise()*rVector3d(i,j,k);
+                iVector3d const __boxfrac( math::floor_int(displaced) );
                 iVector3d const boxfrac
                   ( 
                      ifrac(0) + (__boxfrac(0) == ifrac(0) ? 0: i),
@@ -157,7 +156,6 @@ namespace LaDa
                       index,
                       false
                     };
-                LADA_DOASSERT(math::is_integer(invstr * overlap.translation), "WTF2\n");
                 DnCBoxes::t_Box &box = container_[uu];
                 if( box.end() == std::find(box.begin(), box.end(), overlap) ) 
                   box.push_back(overlap);

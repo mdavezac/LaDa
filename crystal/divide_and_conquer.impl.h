@@ -1,4 +1,3 @@
-#include <limits>
 #include <boost/tuple/tuple_io.hpp>
 #include <set>
 
@@ -17,13 +16,12 @@ namespace LaDa
                                const math::iVector3d &_n )
       {
         // Puts atom back into parallelogram.
-        const types::t_real roundoff = 1e1 * std::numeric_limits<types::t_real>::epsilon();
         const math::rVector3d rfrac( _inv_cell * _pos );
         const math::iVector3d ifrac
         (
-          int(rfrac(0)+roundoff) % _n(0),
-          int(rfrac(1)+roundoff) % _n(1),
-          int(rfrac(2)+roundoff) % _n(2)
+          int(rfrac(0)+types::roundoff) % _n(0),
+          int(rfrac(1)+types::roundoff) % _n(1),
+          int(rfrac(2)+types::roundoff) % _n(2)
         );
         const math::iVector3d result
         (

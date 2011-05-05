@@ -1,8 +1,6 @@
 import _doc
 __doc__ = _doc.__doc__
 __docformat__ = "restructuredtext en"
-from contextlib  import contextmanager
-from ..jobs import MassExtract as Collect
 from .. import lada_with_slurm
 
 def _get_current_job_params(self, verbose=0):
@@ -164,8 +162,6 @@ def cancel_jobs(self, arg):
 
       >>> %cancel_jobs "anti-ferro"
   """
-  from subprocess import Popen, PIPE
-  
   arg = str(arg[1:-1])
   if len(arg) != 0: 
     result = qstat(self, arg)
@@ -199,7 +195,7 @@ def ipy_init():
   except: pass
   else:
     import lada
-    from ._goto import goto, iterate, goto_completer
+    from ._goto import goto, goto_completer
     from ._explore import explore, explore_completer
     from ._showme import showme, showme_completer
     from .launch import launch, completer as launch_completer

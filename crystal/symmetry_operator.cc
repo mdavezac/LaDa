@@ -18,11 +18,10 @@ namespace LaDa
     
     bool SymmetryOperator::invariant(math::rMatrix3d const &_mat, types::t_real _tolerance) const
     {
-      const types::t_real roundoff = 1e1 * std::numeric_limits<types::t_real>::epsilon();
       math::rMatrix3d const mat(_mat.inverse() * op * _mat);
       for(size_t i(0); i < 3; ++i)
         for(size_t j(0); j < 3; ++j)
-          if( std::abs( std::floor(roundoff+mat(i,j)) - mat(i,j) ) > types::tolerance ) 
+          if( std::abs( std::floor(types::roundoff+mat(i,j)) - mat(i,j) ) > types::tolerance ) 
             return false;
       return true;
     }

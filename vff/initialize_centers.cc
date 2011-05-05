@@ -71,7 +71,8 @@ namespace LaDa
        Crystal::DnCBoxes::const_iterator i_box = dncboxes.begin();
        Crystal::DnCBoxes::const_iterator const i_box_end = dncboxes.end();
        bool result = true;
-       for(; i_box != i_box_end; ++i_box) result &= build_tree_partial_sort_dnc(*i_box, odist);
+       for(; i_box != i_box_end; ++i_box)
+         result &= build_tree_partial_sort_dnc(*i_box, odist * odist);
        if( not result ) return false;
 //     // Then creates boxes.
 //     const types::t_real odist( 1.5e0 * std::sqrt( fn[0].front().squaredNorm() ) );
