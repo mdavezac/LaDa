@@ -1,10 +1,8 @@
 """ Miscellaneous """
 __docformat__  = 'restructuredtext en'
 from types import ModuleType
-from abc import ABCMeta, abstractmethod, abstractproperty
 from contextlib import contextmanager
 
-import _opt 
 from _opt import __load_vasp_in_global_namespace__, __load_escan_in_global_namespace__,\
                  cReals, _RedirectFortran, ConvexHull, ErrorTuple
 from changedir import Changedir
@@ -18,7 +16,7 @@ __all__ = [ '__load_vasp_in_global_namespace__', '__load_escan_in_global_namespa
             'cReals', 'ConvexHull', 'ErrorTuple', 'redirect_all', 'redirect', 'read_input',\
             'LockFile', 'acquire_lock', 'open_exclusive', 'RelativeDirectory', 'streams',
             'AbstractExtractBase', 'OutcarSearchMixin', 'convert_from_unix_re', 'OrderedDict', 
-            'exec_input', 'FileCache' ]
+            'exec_input', 'FileCache', 'Changedir', 'Tempdir', 'broadcast_result', 'make_cached' ]
 
 streams = _RedirectFortran.fortran
 """ Name of the streams. """
@@ -171,7 +169,7 @@ def exec_input( script, global_dict=None, local_dict = None,\
   """ Executes input script and returns local dictionary (as namespace instance). """
   # stuff to import into script.
   from os import environ
-  from os.path import abspath, expanduser, join, exists
+  from os.path import abspath, expanduser
   from math import pi 
   from numpy import array, matrix, dot, sqrt, abs, ceil
   from numpy.linalg import norm, det
@@ -181,9 +179,9 @@ def exec_input( script, global_dict=None, local_dict = None,\
   
   # Add some names to execution environment.
   if global_dict == None: global_dict = {}
-  global_dict.update( { "environ": environ, "pi": pi, "array": array, "matrix": matrix, "dot": dot,\
-                        "norm": norm, "sqrt": sqrt, "ceil": ceil, "abs": abs,  "physics": physics,\
-                        "expanduser": expanduser, 'world': world})
+  global_dict.update( { "environ": environ, "pi": pi, "array": array, "matrix": matrix, "dot": dot,
+                        "norm": norm, "sqrt": sqrt, "ceil": ceil, "abs": abs,  "det": det,
+                        "physics": physics, "expanduser": expanduser, 'world': world})
   for key in crystal.__all__: global_dict[key] = getattr(crystal, key)
   if local_dict == None: local_dict = {}
   # Executes input script.
@@ -222,7 +220,7 @@ class LockFile(object):
 
         Does not acquire lock at this stage. 
     """
-    from os.path import abspath, dirname, join
+    from os.path import abspath
     self.filename = abspath(filename)
     """ Name of file to lock. """
     self.timeout = timeout
@@ -275,7 +273,7 @@ class LockFile(object):
  
   @property
   def _parent_directory(self):
-    from os.path import abspath, dirname, join, basename
+    from os.path import abspath, dirname
     return dirname(abspath(self.filename))
 
   @property

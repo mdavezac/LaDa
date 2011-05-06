@@ -26,8 +26,6 @@ class DDPoints(KPoints):
 
         .. |pi|  unicode:: U+003C0 .. GREEK SMALL LETTER PI
     """
-    from numpy import array
-
     self.direction = direction
     """ Direction for which to compute derivatives. """
     self.center = center
@@ -154,7 +152,6 @@ def reciprocal( escan, structure, direction, outdir = None, comm = None, order =
       .. |pi|  unicode:: U+003C0 .. GREEK SMALL LETTER PI
 
   """
-  from os.path import join
   from numpy import array, sort
   from numpy.linalg import lstsq as np_lstsq
   from quantities import hartree

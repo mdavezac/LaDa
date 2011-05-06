@@ -10,6 +10,9 @@
 #include <boost/python/errors.hpp>
 #include <boost/python/return_value_policy.hpp>
 #include <boost/python/return_by_value.hpp>
+#include <boost/python/self.hpp>
+#include <boost/python/other.hpp>
+#include <boost/python/operators.hpp>
 
 #include "mlcluster.hpp"
 #include "../mlcluster.h"
@@ -126,6 +129,12 @@ namespace LaDa
       return result;
     }
 
+    bool contains(CE::MLCluster const &_self, CE::MLCluster::Spin const &_spin)
+    {
+      if(_self.origin == _spin) return true;
+      return _self.end() != std::find(_self.begin(), _self.end(), _spin); 
+    }
+
     void expose_mlcluster()
     {
       namespace bp = boost::python;
@@ -144,7 +153,16 @@ namespace LaDa
           .def("append", &append_two,
                "Appends spin to current cluster.\n\n"
                "Input can consist of a `Spin`, a position and a site, "
-               "or a only the position (site defaults to 0)." );
+               "or a only the position (site defaults to 0). "
+               "Note that the spin's position should be given *with respect to the origin,* "
+               "not in absolute coordinate." )
+          .def_pickle( Python::pickle<CE::MLCluster>() )
+          .def( "__contains__", &contains,
+                "True if a spin is contained in the cluster.\n\n"
+                "Does not  check for symmetric equivalents. "
+                "Wouldn't make any sense to do so." )
+          .def(bp::self == bp::other<CE::MLCluster>());
+
       bp::class_<CE::MLCluster::Spin>("Spin", "A spin.")
         .def_readwrite("site", &CE::MLCluster::Spin::site, "Site index in lattice.")
         .add_property
@@ -153,7 +171,8 @@ namespace LaDa
           make_getter(&CE::MLCluster::Spin::pos, bp::return_value_policy<bp::return_by_value>()),
           make_setter(&CE::MLCluster::Spin::pos, bp::return_value_policy<bp::return_by_value>()),
           "Relative position from origin. Numpy vector. Cartesian units." 
-        );
+        )
+        .def(bp::self == bp::other<CE::MLCluster::Spin>());
     }
 
   }

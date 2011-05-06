@@ -115,19 +115,13 @@ namespace LaDa
       {
         if( _tolerance <= 0e0 ) _tolerance = types::tolerance;
         // Checks that lattice has sites.
-        if( _lattice.sites.size() == 0 )
-        {
-          std::cerr << "Lattice does not contain sites.\n"
-                       "Will not compute symmetries for empty lattice.\n";
-          return boost::shared_ptr< std::vector<SymmetryOperator> >();
-        }
+        LADA_DOASSERT( _lattice.sites.size() != 0, 
+                       "Lattice does not contain sites.\n"
+                       "Will not compute symmetries for empty lattice.\n" );
         { // Checks that lattice is primitive.
           Lattice lat(_lattice);
-          if( not lat.make_primitive() )
-          {
-            std::cerr << "Lattice is not primitive.\nCannot compute symmetries.\n";
-            return boost::shared_ptr< std::vector<SymmetryOperator> >();
-          }
+          LADA_DOASSERT( lat.make_primitive(), 
+                         "Lattice is not primitive.\nCannot compute symmetries.\n" );
         }
 
         // Finds minimum translation.

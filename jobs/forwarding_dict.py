@@ -61,8 +61,15 @@ class ForwardingDict(MutableMapping):
   @property
   def _attributes(self):
     """ Returns attributes special to this ForwardingDict. """
+    from functools import reduce
+    from itertools import chain
+
     result = set()
-    for value in self.values(): result |= set(dir(value))
+    attrs = len(self._attr_list) > 0
+    for value in self.dictionary.itervalues():
+      if attrs: value = reduce(getattr, chain([value], self._attr_list))
+      result |= set(dir(value))
+      
     return result
 
   def __getattr__(self, name):
@@ -73,7 +80,6 @@ class ForwardingDict(MutableMapping):
     if name not in self._attributes:
       raise AttributeError( "Attribute {0} not found in {1} instance."\
                             .format(name, self.__class__.__name__) )
-    found = False
     attrs = len(self._attr_list) > 0
     result = self.copy(append=name)
     for key, value in self.dictionary.iteritems():
@@ -237,3 +243,11 @@ class ForwardingDict(MutableMapping):
     for k, v in self.iteritems():
       string += "  '{0}': {2}{1},\n".format(k, repr(v), "".join(" " for i in range(m-len(k))))
     return string + "}"
+
+  def __setstate__(self, state):
+    """ Reloads the state from a pickle. 
+
+        This is defined explicitely since otherwise, the call would go through
+        __getattr__ and start an infinite loop.
+    """ 
+    self.__dict__.update(state)

@@ -195,6 +195,8 @@ namespace LaDa
         else 
         { LADA_DOASSERT( check(i_found->type), "Two inequivalent sites at same position.\n" ); }
       }
+
+      while(not make_primitive());
       
       return false;
     }

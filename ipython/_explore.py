@@ -198,9 +198,9 @@ def _glob_ipy_user_ns(ip, arg):
 
 def _explore(self, args):
   """ Tries to open job-dictionary. """
-  from os.path import exists, abspath, dirname
+  from os.path import abspath
   from copy import deepcopy
-  from ..jobs import MassExtract, load, JobDict
+  from ..jobs import load, JobDict
   from ..jobs import JobParams, MassExtract as Collect
   from . import _get_current_job_params
 

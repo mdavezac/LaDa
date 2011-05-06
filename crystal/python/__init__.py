@@ -9,18 +9,18 @@ __all__ = [ 'FreezeAtom', 'which_site', 'Sites', 'SymmetryOperator', 'Lattice', 
             # Below, only true python stuff
             'specie_list', 'read_poscar', 'write_poscar', 'icsd_cif',\
             'write_oldvff', 'read_oldvff', 'structure_to_lattice', 'fill_structure', \
-            'A2BX4', 'bravais', 'gruber', 'vasp_ordered', 'binary', 'lattice_context',
-            'layer_iterator' ]
+            'A2BX4', 'ABX3', 'bravais', 'gruber', 'vasp_ordered', 'binary', 'lattice_context',
+            'layer_iterator', 'equivalence_iterator']
 __docformat__ = "restructuredtext en"
 
 from _crystal import FreezeAtom, which_site, Site, SymmetryOperator, Lattice, to_cartesian,\
                      get_point_group_symmetries, read_structure, sort_layers, \
-                     smith_indices, kAtoms, Atom, kAtom, fold_vector, Structure, FreezeCell,\
+                     smith_indices, Atom, kAtom, fold_vector, Structure, FreezeCell,\
                      smith_normal_transform,  get_space_group_symmetries, Neighbors, Neighbor, \
                      read_pifile_structure, LayerDepth, to_fractional, linear_smith_index,\
                      nb_valence_states, to_voronoi, to_cell, to_origin, is_on_lattice, \
                      dnc_iterator,\
-                     rStructure, rAtom, Sites, Atoms, kAtoms, StringVector # this line not in __all__
+                     rStructure, rAtom, Sites, StringVector # this line not in __all__
 
 from lada.opt.decorators import add_setter
 from read_write import read_poscar, write_poscar, write_oldvff, read_oldvff, icsd_cif
@@ -508,7 +508,6 @@ def lattice_context(lattice):
   if oldlattice != None: oldlattice.set_as_crystal_lattice()
   else: _nullify_global_lattice()
 
-
 def layer_iterator(structure, direction, tolerance=1e-12):
   """ Iterates over layers and atoms in a layer. 
 
@@ -566,3 +565,56 @@ def layer_iterator(structure, direction, tolerance=1e-12):
       """ Iterates over atoms in a single layer. """
       for index, norm in layer: yield structure.atoms[index]
     yield inner_layer_iterator ()
+
+
+def equivalence_iterator(structure, operations = None, tolerance=1e-6):
+  """ Yields iterators over equivalent atoms.
+  
+      :Parameters:
+        structure : `Structure` or `Lattice`
+          Structure or Lattice over which to iterate.
+        operations : Iterable over symmetry operations
+          A symmetry operation is a callable which takes a 3d-vector and
+          returns a 3d-vector. Equivalence is judged according to positions
+          only. In general, this parameter will be ``lattice.space_group``.
+          If None, the operations will be set as follows:
+          
+            - structure is a `Structure` instance: a lattice is created from
+              the structure, and its space group operations are used.
+            - structure is a `Lattice` instance: its space group operations are used.
+
+        tolerance : float
+          Two positions closer than ``tolerance`` are considered equivalent.
+  """
+  from numpy import array
+  from numpy.linalg import norm
+  from . import to_cell
+
+  if hasattr(structure, 'to_lattice'):
+    atoms = [u for u in enumerate(structure.atoms)]
+    is_structure = True
+    if operations == None: operations = structure.to_lattice().space_group
+  else:
+    atoms = [u for u in enumerate(structure.sites)]
+    is_structure = False
+    if operations == None: operations = structure.space_group
+   
+  while len(atoms):
+    i, atom = atoms.pop()
+    equivs = [i]
+    if len(atoms): 
+      for op in operations:
+        others = to_cell(array([u[1].pos for u in atoms]), structure.cell, op(atom.pos))
+        others = [i for i, pos in enumerate(others) if norm(pos) < tolerance]
+        for index in others:
+          i, pos = atoms.pop(index)
+          equivs.append(i)
+    if is_structure:
+      def inner_equivalence_iterator():
+        """ Iterates over equivalent atoms in a structure. """
+        for i in equivs: yield structure.atoms[i]
+    else:
+      def inner_equivalence_iterator():
+        """ Iterates over equivalent atoms in a structure. """
+        for i in equivs: yield structure.sites[i]
+    yield inner_equivalence_iterator()

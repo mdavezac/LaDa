@@ -1,7 +1,21 @@
-""" Cluster Expansion. """
+""" Cluster Expansion Module. """
 __docformat__ = "restructuredtext en"
-from _ce import *
+from _ce import Cubic, apply_rotation, apply_symmetry, equivalents,\
+                ClusterClasses, Clusters, Cluster, create_pairs, create_clusters, \
+                find_pis, MLCluster, MLCluster, MLClusterClasses, ce_check
 from _fit import *
+
+def _lattdeco(method):
+  """ Switches to self-owned lattice for duration of call. """
+  def wrapped(self, *args, **kwargs):
+    from ..crystal import lattice_context
+    with lattice_context(self.lattice) as oldlattice:
+      return method(self, *args, **kwargs)
+  wrapped.__name__ = method.__name__
+  wrapped.__doc__ = method.__doc__
+  wrapped.__module__ = method.__module__
+  if hasattr(method, '__dict__'): wrapped.__dict__.update(method.__dict__)
+  return wrapped
 
 ce_lattice_type = "@LATTICE_TYPE@"
 

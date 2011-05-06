@@ -6,15 +6,20 @@
 #include <algorithm>
 #include <iterator>
 
+#include <boost/python/def.hpp>
 #include <boost/python/class.hpp>
 #include <boost/python/register_ptr_to_python.hpp>
 #include <boost/python/return_internal_reference.hpp>
 #include <boost/python/list.hpp>
 #include <boost/python/make_constructor.hpp>
 #include <boost/python/default_call_policies.hpp>
+#include <boost/python/self.hpp>
+#include <boost/python/other.hpp>
+#include <boost/python/operators.hpp>
 
 #include <python/numpy_types.h>
 #include <python/misc.hpp>
+#include <math/misc.h>
 
 #include "mlclusters.hpp"
 #include "../mlclusters.h"
@@ -25,6 +30,87 @@ namespace LaDa
 {
   namespace Python
   {
+    bool check_cluster(CE::MLCluster const& _cls)
+    {
+      Crystal::Lattice * const lattice = Crystal::TStructure<std::string>::lattice;
+      if(lattice == NULL)
+      {
+        PyErr_SetString(PyExc_RuntimeError, "Could not determine global lattice.");
+        bp::throw_error_already_set();
+        return false;
+      }
+      if(_cls.origin.site < 0 or _cls.origin.site >= lattice->sites.size())
+      {
+        PyErr_SetString(PyExc_ValueError, "Site index of cluster origin is out of range.");
+        bp::throw_error_already_set();
+        return false;
+      }
+      if(lattice->sites[_cls.origin.site].type.size() < 2)
+      {
+        std::ostringstream sstr;
+        sstr << "Lattice site " << _cls.origin.site << " contains only one kind of atom:\n"
+             << "It is not a good cluster expansion site.\n";
+        PyErr_SetString(PyExc_ValueError, sstr.str().c_str());
+        bp::throw_error_already_set();
+        return false;
+      }
+      math::rMatrix3d const invcell = lattice->cell.inverse();
+      if( not math::is_integer(invcell * (_cls.origin.pos - lattice->sites[_cls.origin.site].pos)) )
+      {
+        PyErr_SetString( PyExc_ValueError, 
+                         "Cluster origin's site index and position do not correspond." );
+        bp::throw_error_already_set();
+        return false;
+      }
+      CE::MLCluster::const_iterator i_first = _cls.begin();
+      CE::MLCluster::const_iterator const i_end = _cls.end();
+      for(; i_first != i_end; ++i_first)
+      {
+        if(i_first->site < 0 or i_first->site >= lattice->sites.size())
+        {
+          PyErr_SetString(PyExc_ValueError, "Site index of cluster spin is out of range.");
+          bp::throw_error_already_set();
+          return false;
+        }
+        if(lattice->sites[i_first->site].type.size() < 2)
+        {
+          std::ostringstream sstr;
+          sstr << "Lattice site " << i_first->site << " contains only one kind of atom:\n"
+               << "It is not a good cluster expansion site.\n";
+          PyErr_SetString(PyExc_ValueError, sstr.str().c_str());
+          bp::throw_error_already_set();
+          return false;
+        }
+        math::rVector3d const pos =   i_first->pos 
+                                    + _cls.origin.pos
+                                    - lattice->sites[i_first->site].pos;
+        if( not math::is_integer(invcell * pos) )
+        {
+          PyErr_SetString( PyExc_ValueError, 
+                           "Cluster spin's site index and position do not correspond." );
+          bp::throw_error_already_set();
+          return false;
+        }
+      }
+      return true;
+    }
+    bool check_clusterclass(CE::MLClusters const& _cls)
+    {
+      CE::MLClusters::const_iterator i_first = _cls.begin();
+      CE::MLClusters::const_iterator const i_end = _cls.end();
+      for(; i_first != i_end; ++i_first)
+        if(not check_cluster(*i_first)) return false;
+      return true;
+    }
+    bool check_clusterclasses(CE::t_MLClusterClasses const& _cls)
+    {
+      CE::t_MLClusterClasses::const_iterator i_first = _cls.begin();
+      CE::t_MLClusterClasses::const_iterator const i_end = _cls.end();
+      for(; i_first != i_end; ++i_first)
+        if(not check_clusterclass(*i_first)) return false;
+      return true;
+    }
+    
     CE::MLClusters::const_reference getvecitem( const CE::MLClusters& _vec, types::t_int _i )
     {
       const types::t_int dim(  _vec.size() );
@@ -161,6 +247,31 @@ namespace LaDa
         std::copy( _b.begin(), _b.end(), std::back_inserter(_classes) ); 
       }
 
+    bool contains0(CE::MLClusters const &_self, CE::MLCluster const &_item)
+      { return _self.end() != std::find(_self.begin(), _self.end(), _item); }
+    bool contains1(CE::t_MLClusterClasses const &_self, CE::MLCluster const &_item)
+    {
+      CE::t_MLClusterClasses::const_iterator i_first = _self.begin();
+      CE::t_MLClusterClasses::const_iterator const i_end = _self.end();
+      for(; i_first != i_end; ++i_first)
+        if( contains0(*i_first, _item) ) return true;
+      return false;
+    }
+    bool contains2(CE::t_MLClusterClasses const &_self, CE::MLClusters const &_item)
+    {
+      if(_item.size() == 0)
+      {
+        CE::t_MLClusterClasses::const_iterator i_first = _self.begin();
+        CE::t_MLClusterClasses::const_iterator const i_end = _self.end();
+        for(; i_first != i_end; ++i_first)
+          if(i_first->size() == 0) return true;
+        return false;
+      }
+      return contains1(_self, _item.front());
+    }
+
+
+
 
     void expose_mlclusters()
     {
@@ -178,7 +289,10 @@ namespace LaDa
           .def("__getitem__", &getvecitem, bp::return_internal_reference<>())
           .def("__setitem__", &setvecitem)
           .def("extend", &extend<CE::MLClusters>)
-          .def("extend", &extend2<CE::MLClusters>);
+          .def("extend", &extend2<CE::MLClusters>)
+          .def_pickle( Python::pickle<CE::MLClusters>() )
+          .def("__contains__", &contains0, "True if contains a cluster.") 
+          .def(bp::self == bp::other<CE::MLClusters>());
       bp::class_<CE::t_MLClusterClasses>
        (
           "MLClusterClasses", 
@@ -224,10 +338,21 @@ namespace LaDa
              " in which case a class is created using the current global lattice"
              ", or an MLClusters - in which case the case the class is added as is.")
         .def("extend", &extend<CE::t_MLClusterClasses>)
-        .def("extend", &extend2<CE::t_MLClusterClasses>);
+        .def("extend", &extend2<CE::t_MLClusterClasses>)
+        .def("__contains__", &contains1)
+        .def("__contains__", &contains2,
+             "True if contains a cluster or class of clusters." )
+        .def_pickle( Python::pickle<CE::t_MLClusterClasses>() );
       
       bp::register_ptr_to_python< boost::shared_ptr<CE::t_MLClusterClasses> >();
       bp::register_ptr_to_python< boost::shared_ptr<CE::MLClusters> >();
+
+      bp::def("ce_check", &check_clusterclasses);
+      bp::def("ce_check", &check_clusterclass);
+      bp::def( "ce_check", &check_cluster, 
+               "Checks validity of cluster(s) against current global lattice.\n\n"
+               "This routine merely checks that the spins in a cluster points "\
+               "correctly to lattice poistions and so forth." );
     }
 
   }

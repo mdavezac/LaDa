@@ -123,7 +123,6 @@ if lada_with_slurm:
     from IPython.genutils import SList
     from getpass import getuser
 
-    ip = self.api
     # finds user name.
     whoami = getuser()
     squeue = Popen(["squeue", "--user=" + whoami, "-o", "\"%7i %.3C %3t    %j\""], stdout=PIPE)
@@ -200,6 +199,7 @@ def ipy_init():
     from ._showme import showme, showme_completer
     from .launch import launch, completer as launch_completer
     from .export import export, completer as export_completer
+    from .record import record, completer as record_completer
     
     ip = IPython.ipapi.get()
     ip.expose_magic("explore", explore)
@@ -211,12 +211,14 @@ def ipy_init():
     ip.expose_magic("qstat", qstat)
     ip.expose_magic("cancel_jobs", cancel_jobs)
     ip.expose_magic("export", export)
+    ip.expose_magic("record", record)
     ip.set_hook('complete_command', goto_completer, re_key = '\s*%?goto')
     ip.set_hook('complete_command', showme_completer, re_key = '\s*%?showme')
     ip.set_hook('complete_command', explore_completer, re_key = '\s*%?explore')
     ip.set_hook('complete_command', launch_completer, re_key = '\s*%?launch')
     ip.set_hook('complete_command', cancel_completer, re_key = '\s*%?cancel_jobs')
     ip.set_hook('complete_command', export_completer, re_key = '\s*%?export')
+    ip.set_hook('complete_command', record_completer, re_key = '\s*%?record')
     
     for key in lada.__all__:
       if key[0] == '_': continue

@@ -3,7 +3,6 @@
 def showme(self, event):
   """ Edits functional and/or structure. """
   from os import remove, stat
-  from os.path import join
   from tempfile import NamedTemporaryFile
   from ..opt import read_input
   from ..crystal import write_poscar, read_poscar, Structure
@@ -20,13 +19,6 @@ def showme(self, event):
   if len(args) == 0: 
     print "What should I show you?"
     return
-  # showme *whatever* in *where*
-  if len(args) == 2:
-    old = current.name 
-    try:
-      goto(self, args[1]) # goto *where*
-      showme(self, args[0]) # show *whatever*
-    finally: goto(self, old) # go back.
   # showme *whatever*
   elif len(args) == 1:
     arg = args[0]
