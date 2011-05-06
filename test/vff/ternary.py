@@ -1,5 +1,4 @@
-import sys 
-from boost.mpi import world
+from lada.mpi import world
 from lada.vff import Vff
 from lada.crystal import Structure, FreezeCell
 

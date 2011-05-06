@@ -15,7 +15,6 @@ def launch(self, event, jobdicts):
   from ...opt.changedir import Changedir
   from ...jobs.templates import default_pbs, default_slurm
   from ...jobs import __file__ as jobs_filename
-  from .. import saveto
   ip = self.api
   ip.user_ns.pop("_lada_error", None)
 
@@ -24,6 +23,9 @@ def launch(self, event, jobdicts):
   if which: which = environ["SNLCLUSTER"] in ["redrock", "redmesa"]
   queue = "account" if which else "queue"
   template = default_slurm if which else default_pbs
+  if environ["NERSC_HOST"] == "hopper2":  # special for crays.
+    from ...jobs.templates import hopper_pbs
+    template = hopper_pbs
 
   # creates mppalloc function.
   try: mppalloc = ip.ev(event.nbprocs)
@@ -68,7 +70,6 @@ def launch(self, event, jobdicts):
            RuntimeError("Could not find find file {0}.\n"\
                         "{1}_mpi environment does not exist?\n"\
                         "Or not actually on hopper2?".format(pyscript, name))
-    kwargs['header'] = "\nsource {0}_mpi/bin/activate".format(environ['VIRTUAL_ENV'])
 
   pbsscripts = []
   for current, path in jobdicts:
