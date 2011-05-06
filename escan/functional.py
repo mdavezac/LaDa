@@ -1,7 +1,6 @@
 """ ESCAN functional wrapper. """
 __docformat__ = "restructuredtext en"
 __all__ = [ 'Functional', 'folded_spectrum', 'all_electron']
-from .. import lada_with_mpi
 from ..opt.decorators import add_setter
 from ._extract import Extract
 
@@ -24,7 +23,7 @@ class Escan(object):
     from ..opt import RelativeDirectory
     from ._potential import soH
 
-    object.__init__(self)
+    super(Escan, self).__init__()
     self.inplace = inplace
     """ If True calculations are performed in the output directory. """
     # checks inplace vs workdir
@@ -164,7 +163,11 @@ class Escan(object):
 
   @property
   def workdir(self): 
-    """ Reference to the maskr projector file. """
+    """ Directory where calculations are performed. 
+    
+        This variable is used only if inplace is False. By default,
+        calculations are inplace.
+    """
     return self._workdir.path
   @maskr.setter
   def workdir(self, value): self._workdir.path = value
@@ -202,7 +205,6 @@ class Escan(object):
     self.atomic_potentials.append( AtomicPotential(*args) )
 
   def __repr__(self):
-    from os.path import relpath
     from ._potential import localH, nonlocalH, soH
     result  = str(self.vff).replace("functional", "vff_functional")
     result += "# Escan definition.\n"
@@ -265,10 +267,9 @@ class Escan(object):
     """ Performs calculation """
     from copy import deepcopy
     from os import getcwd
-    from os.path import exists, isdir, abspath, basename, join, expanduser
-    from shutil import rmtree
+    from os.path import exists, join
     from cPickle import dump
-    from ..opt import copyfile
+    from ..opt import copyfile, RelativeDirectory
     from ..opt.changedir import Changedir
     from ..opt.tempdir import Tempdir
     from ..mpi import Communicator
@@ -279,7 +280,7 @@ class Escan(object):
 
     # make this functor stateless.
     this      = deepcopy(self)
-    outdir    = abspath(expanduser(outdir))
+    outdir    = RelativeDirectory(outdir).path
 
     # if other keyword arguments are present, then they are assumed to be
     # attributes of self, with value to use for calculations launch. 
@@ -294,7 +295,7 @@ class Escan(object):
     # checks if outdir contains a successful run.
     does_exist, overwrite = comm.broadcast((exists(outdir) if comm.is_root else None, overwrite))
     if does_exist and not overwrite:
-      extract = this.Extract(directory=outdir, escan=this, comm=comm)
+      extract = Escan.Extract(directory=outdir, escan=this, comm=comm)
       if extract.success: return extract # in which case, returns extraction object.
     comm.barrier() # makes sure directory is not created by other proc!
 
@@ -305,7 +306,7 @@ class Escan(object):
 
       # Saves FUNCCAR.
       if comm.is_root:
-        path = join(abspath(this._tempdir), this._FUNCCAR)
+        path = RelativeDirectory(join(this._tempdir, this._FUNCCAR)).path
         with open(path, "w") as file: dump(this, file)
   
       # performs calculation.
@@ -342,7 +343,6 @@ class Escan(object):
   def _run(self, structure, outdir, comm, overwrite, norun, do_vff, do_genpot):
     """ Performs escan calculation. """
     import time
-    from os.path import join
     from ..opt.changedir import Changedir
 
     if self.genpotrun != None and self.vffrun != None and self.do_escan == False:
@@ -400,8 +400,7 @@ class Escan(object):
 
   def _run_vff(self, structure, outdir, comm, cout, overwrite, norun):
     """ Gets atomic input ready, with or without relaxation. """
-    from os.path import join, samefile, exists
-    from ..vff import Extract as ExtractVff
+    from os.path import join, exists
     from ..opt import copyfile
 
     if comm.is_root and self.vffrun != None:
@@ -416,13 +415,14 @@ class Escan(object):
 
     if self.vffrun != None or norun == True: return
     
-    out = self.vff(structure, outdir=outdir, comm=comm, overwrite=overwrite)
-    assert out.success, RuntimeError("VFF relaxation did not succeed.")
-    if comm.is_root: out.solo().write_escan_input(self._POSCAR, out.solo().structure)
+    self.vffrun = self.vff(structure, outdir=outdir, comm=comm, overwrite=overwrite)
+    assert self.vffrun.success, RuntimeError("VFF relaxation did not succeed.")
+    if comm.is_root:
+      self.vffrun.solo().write_escan_input(self._POSCAR, self.vffrun.solo().structure)
 
     # copies vff output to stdout. This way, only one outcar.
-    if comm.is_root and out.OUTCAR != self.OUTCAR:
-      s = out.solo()
+    if comm.is_root and self.vffrun.OUTCAR != self.OUTCAR:
+      s = self.vffrun.solo()
       with open(join(s.directory, s.OUTCAR)) as file_in: 
         with open(cout, "aw") as file_out: 
           for line in file_in:
@@ -437,7 +437,7 @@ class Escan(object):
 
   def _run_genpot(self, comm, outdir, norun):
     """ Runs genpot only """
-    from os.path import basename, exists, join, samefile
+    from os.path import basename, join
     from ..opt import redirect, copyfile
 
     # using genpot from previous run
@@ -533,7 +533,6 @@ class Escan(object):
 
   def _run_escan(self, comm, structure, norun):
     """ Runs escan only """
-    from os.path import basename
     from ..opt import redirect
 
     self._write_incar(comm, structure, norun)
@@ -545,13 +544,13 @@ class Escan(object):
 
   def _get_kpoint(self, structure, comm, norun):
     """ Returns deformed or undeformed kpoint. """
-    from numpy import abs, sum, zeros, array, any, dot
+    from numpy import abs, zeros, array, any, dot
     from numpy.linalg import inv
     from quantities import angstrom
     from ..physics import a0
-    from ..crystal import to_voronoi
     # first get relaxed cell
     if norun == True: relaxed = structure.cell.copy()
+    elif self.vffrun != None: relaxed = self.vffrun.structure.cell
     else:
       relaxed = zeros((3,3), dtype="float64")
       if comm.is_root:
@@ -595,3 +594,7 @@ class Escan(object):
     self.symlink = True
     for key, value in self.__class__().__dict__.iteritems():
        if not hasattr(self, key): setattr(self, key, value)
+
+
+Functional = Escan
+""" Alias for the Escan functional. """

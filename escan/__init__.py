@@ -1,7 +1,7 @@
 """ Interface module for ESCAN. """
 __docformat__ = "restructuredtext en"
-__all__ = [ "Extract", 'MassExtract', "bandgap", "extract_bg", "dipole_matrix_elements",
-            "Escan", "folded_spectrum", "all_electron", "soH", 
+__all__ = [ "Extract", 'MassExtract', "bandgap", "extract_bg", 'ldos',
+            "Escan", "folded_spectrum", "all_electron", "soH", 'BandGap',
             "nonlocalH", "localH", "AtomicPotential", "extract_bg", 'KEscan', 'KPoints', 
             'KGrid', 'ReducedKGrid', 'ReducedKDensity', 'soH', 'nonlocalH', 'localH', 
             'folded_spectrum', 'all_electron', 'read_input', 'exec_input', 'KExtract',  
@@ -9,14 +9,15 @@ __all__ = [ "Extract", 'MassExtract', "bandgap", "extract_bg", "dipole_matrix_el
 
 from ..opt import __load_escan_in_global_namespace__
 from _bandstructure import plot_bands, BPoints, ReducedBPoints, plot_alloybands
-from _bandgap import bandgap, extract as extract_bg
+from _bandgap import bandgap, extract as extract_bg, Functional as BandGap
 from _extract import Extract
 from _massextract import MassExtract
 from _potential import soH, nonlocalH, localH, AtomicPotential
-from _methods import majority_representation, dipole_matrix_elements
+from _methods import majority_representation
 from functional import Escan, folded_spectrum, all_electron
 from kescan import KEscan, Extract as KExtract
 from kpoints import KGrid, ReducedKGrid, KPoints, ReducedKDensity
+import ldos
 
 
 def exec_input(script, namespace = None):

@@ -1,7 +1,7 @@
 set( PYESCAN_PY
      _bandgap.py  _bandstructure.py  derivatives.py  _extract.py  __init__.py
      _methods.py  va.py  _wfns.py functional.py kescan.py _potential.py kpoints.py
-     _massextract.py )
+     _massextract.py ldos.py )
 set(PYESCAN_HEADERS escan.hpp  wavefunctions.hpp)
 set(PYESCAN_SOURCES escan.cc python.cc wavefunctions.cc)
 if(ESCAN_FOUND)
@@ -17,9 +17,9 @@ include_directories( ${MPI_INCLUDE_PATH}
                      ${ESCAN_INCLUDE_DIRS}
                      ${NUMPY_INCLUDES} )
 target_link_libraries( pyescan ${Boost_PYTHON_LIBRARY} ${Boost_SYSTEM_LIBRARY} )
-if(DOESCAN)
+if(ESCAN_FOUND)
   target_link_libraries(pyescan ${ESCAN_LIBRARY} ${GENPOT_LIBRARY})
-endif(DOESCAN)
+endif(ESCAN_FOUND)
 
 if (MPI_FOUND)
   include_directories(${MPI_INCLUDE_PATH})

@@ -18,9 +18,6 @@ class Extract(AbstractExtractBase):
     AbstractExtractBase.__init__(self, directory, comm=comm)
     self.unreduce = unreduce
     """ Unreduced kpoints if True and if kpoints scheme sports a mapping method. """
-    self.__dict__['_cached_jobs'] = None
-    self._cached_jobs = []
-    """ List of cached jobs. """
 
   @property
   def _do_unreduce(self):
@@ -28,45 +25,56 @@ class Extract(AbstractExtractBase):
     if self.unreduce == False: return False
     return hasattr(self.functional.kpoints, 'mapping')
 
-  def __cache_jobs__(self):
-    """ Creates cache of extraction objects. """
-    from glob import iglob
-    from re import compile
-    from os.path import isdir, join, basename, relpath
+  @property
+  def _joblist(self):
+    """ List of cached jobs. 
 
-    regex = compile(r'kpoint_(\d+)/')
-    paths = [ path for path in iglob(join(self.directory, 'kpoint_*/'))\
-              if isdir(path) and regex.search(path) != None ]
-    paths = sorted(paths, key=lambda x: int(regex.search(x).group(1)))
-    vffout = self.EscanExtract(self.directory, comm=self.comm)._vffout
-    OUTCAR = self.EscanExtract().OUTCAR
-
-    result = []
-    for path in paths:
-      filenames = [basename(u) for u in iglob(join(path, '*')) if not isdir(u)]
-      if OUTCAR not in filenames: continue
-
-      try: extractor = self.EscanExtract(path, comm = self.comm)
-      except: continue
-
-      extractor._vffout = vffout
-      result.append(extractor)
+        This property will return a reduced or unreduced list of cached jobs.
+    """
+    if '_cached_joblist' not in self.__dict__:
+      from glob import iglob
+      from re import compile
+      from os.path import isdir, join, basename, relpath
+      
+      regex = compile(r'kpoint_(\d+)/')
+      paths = [ path for path in iglob(join(self.directory, 'kpoint_*/'))\
+                if isdir(path) and regex.search(path) != None ]
+      paths = sorted(paths, key=lambda x: int(regex.search(x).group(1)))
+      vffout = self.EscanExtract(self.directory, comm=self.comm)._vffout
+      OUTCAR = self.EscanExtract().OUTCAR
+      
+      result = []
+      for path in paths:
+        filenames = [basename(u) for u in iglob(join(path, '*')) if not isdir(u)]
+        if OUTCAR not in filenames: continue
+      
+        try: extractor = self.EscanExtract(path, comm = self.comm)
+        except: continue
+      
+        extractor._vffout = vffout
+        result.append(extractor)
+      self.__dict__['_cached_joblist'] = result
+    
     if self._do_unreduce:
-      self._cached_jobs = []
-      for i in self.functional.kpoints.mapping(self.input_structure, self.structure):
-        self._cached_jobs.append(result[i])
-    else: self._cached_jobs = result
-    return result
+      if '_cached_ujoblist' not in self.__dict__:
+        result = []
+        for i in self.functional.kpoints.mapping(self.input_structure, self.structure):
+          assert i < len(self._cached_joblist),\
+                 RuntimeError('{0}, {1}, {2}'.format(self, i, len(result)))
+          result.append(self._cached_joblist[i])
+        self.__dict__['_cached_ujoblist'] = result
+      return self._cached_ujoblist
 
+    return self._cached_joblist
+        
 
   @property 
   def success(self):
     """ True if jobs are successfull. """
     try: 
-      if len(self._cached_jobs) == 0: self.__cache_jobs__()
-      if len(self._cached_jobs) == 0: return False
+      if len(self._joblist) != len(self.multiplicities): return False
+      return all(job.success for job in self)
     except: return False
-    return all(job.success for job in self)
 
   @property
   def vff(self):
@@ -90,47 +98,65 @@ class Extract(AbstractExtractBase):
     return self._rootrun.stress
 
   def __getitem__(self, index):
-    """ Forks between integer and str keys. """
-    if len(self._cached_jobs) == 0: self.__cache_jobs__()
-    return self._cached_jobs[index]
+    """ Returns extraction object of given kpoint calculation. """
+    return self._joblist[index]
  
   def __len__(self):
     """ Number of kpoint calculations. """
-    if len(self._cached_jobs) == 0: self.__cache_jobs__()
-    return len(self._cached_jobs)
+    return len(self._joblist)
 
   def __iter__(self): 
     """ Iterates through individual kpoint calculations. """
-    if len(self._cached_jobs) == 0: self.__cache_jobs__()
-    return self._cached_jobs.__iter__()
+    return self._joblist.__iter__()
+
+  @property
+  def _knm(self):
+    """ kpoint and multiplicities. """
+    if self._do_unreduce:
+      if '_cached_uknm' not in self.__dict__:
+        kpoints = self.functional.kpoints
+        istr, ostr = self.input_structure, self.structure
+        self.__dict__['_cached_uknm'] = [(m,k) for m, k in kpoints.unreduced(istr, ostr)]
+      return self._cached_uknm
+    else: 
+      if '_cached_knm' not in self.__dict__:
+        kpoints = self.functional.kpoints
+        istr, ostr = self.input_structure, self.structure
+        self.__dict__['_cached_knm'] = [(m,k) for m, k in kpoints(istr, ostr)]
+      return self._cached_knm
 
   @property
   def kpoints(self):
-    """ kpoint values. """
+    """ Kpoints in the escan run. 
+
+        Depending on ``unreduce`` attribute, the kpoints are unreduced or not.
+    """
     from numpy import array
-    if self._do_unreduce:
-      kpoints = self.functional.kpoints
-      istr, ostr = self.input_structure, self.structure
-      return array([k for m, k in kpoints.unreduced(istr, ostr)], dtype='float64')
-    if len(self._cached_jobs) == 0: self.__cache_jobs__()
-    return array([job.kpoint for job in self], dtype='float64')
+    return array([k for m, k in self._knm])
+
+  @property 
+  def _computed_kpoints(self):
+    """ Kpoints as grepped from calculation.
+
+        These k-points include relaxation. They are given as computed in
+        calculation, rather than from the functional. Probably more of a
+        debugging value.
+    """
+    from numpy import array
+    return array([u.kpoint for u in self])
 
   @property
   def multiplicity(self):
     """ Multiplicity of the kpoints. """
-    from numpy import array, ones
-    if self._do_unreduce: 
-      kpoints = self.functional.kpoints
-      istr, ostr = self.input_structure, self.structure
-      return array([m for m, k in kpoints.unreduced(istr, ostr)], dtype='float64')
-    return array((m for m in self.functional.kpoints.multiplicity), dtype='float64')
+    from numpy import array
+    return array([m for m, k in self._knm])
+  multiplicities = multiplicity
 
   @property
   def eigenvalues(self):
     """ Eigenvalues across all kpoints. """
     from numpy import array
     from quantities import eV
-    if len(self._cached_jobs) == 0: self.__cache_jobs__()
     return array([job.eigenvalues.rescale(eV) for job in self], dtype='float64') * eV
 
   @property
@@ -142,6 +168,8 @@ class Extract(AbstractExtractBase):
   @property
   def vbm(self): 
     """ Returns energy at vbm. """
+    if self.functional.eref != None:
+      raise RuntimeError('Cannot extract VBM from folded spectrum calculation.')
     from numpy import array, max
     from ..crystal import nb_valence_states
     nbe = nb_valence_states(self.structure)
@@ -150,6 +178,8 @@ class Extract(AbstractExtractBase):
   @property
   def cbm(self): 
     """ Returns energy at vbm. """
+    if self.functional.eref != None:
+      raise RuntimeError('Cannot extract CBM from folded spectrum calculation.')
     from numpy import array, min
     from ..crystal import nb_valence_states
     nbe = nb_valence_states(self.structure)
@@ -182,6 +212,13 @@ class Extract(AbstractExtractBase):
     for file in self._rootrun.iterfiles(**kwargs): yield file
     for kpoint_calc in self: 
       for file in kpoint_calc.iterfiles(**kwargs): yield file
+
+  def uncache(self):
+    """ Uncaches extracted values. """
+    super(KExtract, self).uncache()
+    for name in ['_cached_knm', '_cached_uknm', '_cached_joblist', '_cached_ujoblist']:
+      self.__dict__.pop(name, None)
+
  
 class KEscan(Escan):
   """ A wrapper around Escan for computing many kpoints. """
@@ -213,25 +250,21 @@ class KEscan(Escan):
         If 0 or negative, then will try to determine it from number of kpoints,
         processors, and fft mesh.
     """
-    Escan.__init__(self, **kwargs)
+    super(KEscan, self).__init__(**kwargs)
 
     if escan_copy != None: # copy constructor from Escan instance. 
-      from copy import copy
-      for key, value in escan_copy.__dict__.items():
-        self.__dict__[key] = copy(value)
+      from copy import deepcopy
+      self.__dict__.update(deepcopy(escan_copy.__dict__))
 
 
   # need jobs package to run this code.
   if 'jobs' in all_lada_packages: 
-    def __call__(self, structure, outdir=None, comm=None, _in_call=False, **kwargs):
+    def __call__(self, structure, outdir=None, comm=None, **kwargs):
       """ Performs calculcations. """
-      if _in_call == True: # single calculation.
-        return Escan.__call__(self, structure, outdir, comm, **kwargs)
-
       from inspect import getargspec
       from copy import deepcopy
       from os.path import join
-      from ..jobs import JobDict, Bleeder
+      from ..jobs import JobDict, Bleeder, SuperCall
       from ..mpi import Communicator
 
       this = deepcopy(self)
@@ -244,12 +277,18 @@ class KEscan(Escan):
       if do_relax_kpoint != None: this.do_relax_kpoint = do_relax_kpoint
       comm = Communicator(comm, with_world=True)
 
+      if not kwargs.get('overwrite', False): 
+        extract = KEscan.Extract(directory=outdir, escan=this, comm=comm)
+        if extract.success: return extract
+
       # performs vff calculations
       vffrun = kwargs.pop('vffrun', None)
       genpotrun = kwargs.pop('genpotrun', None)
       if vffrun == None or genpotrun == None: 
-        out = Escan.__call__( this, structure, outdir, comm, do_escan=False,\
-                              vffrun = vffrun, genpotrun=genpotrun, **kwargs)
+        kargs = kwargs.copy() # makes sure we don't include do_escan twice.
+        kargs['do_escan'] = False
+        out = super(KEscan, this).__call__( structure, outdir, comm, 
+                                            vffrun = vffrun, genpotrun=genpotrun, **kargs )
         if vffrun    == None: vffrun    = out
         if genpotrun == None: genpotrun = out
 
@@ -260,12 +299,11 @@ class KEscan(Escan):
       jobdict = JobDict()
       for i, kpoint in enumerate(kpoints):
         job = jobdict / 'kpoint_{0}'.format(i)
-        job.functional = this
+        job.functional = SuperCall(KEscan, this)
         job.jobparams['kpoint']          = kpoint
         job.jobparams['structure']       = structure
         job.jobparams['do_relax_kpoint'] = False
         job.jobparams['outdir']          = join(outdir, job.name[1:])
-        job.jobparams['_in_call']        = True
         job.jobparams['vffrun']          = vffrun
         job.jobparams['genpotrun']       = genpotrun
       

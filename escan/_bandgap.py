@@ -2,6 +2,7 @@
 __docformat__  = 'restructuredtext en'
 from ..opt.decorators import make_cached, FileCache
 from _extract import Extract as _ExtractE
+from .functional import Escan
 
 def extract(outdir=".", comm = None):
   """ Gets extraction object from directory structure. 
@@ -139,9 +140,30 @@ class ExtractAE(_ExtractE):
                     * dme.units * dme.units
     return (result * units).simplified, nstates
 
-  @FileCache('DIPOLECAR')
+
   def dipole(self, degeneracy=-1e0, attenuate=False):
     """ Computes dipole matrix element between vbm and cbm. """
+    # gets result, possibly from cache file.
+    d2, a2, result = self._dipole(degeneracy, attenuate)
+    uncache  = degeneracy < 0e0 and d2 >= 0e0
+    uncache |= degeneracy >= 0e0 and d2 < 0e0
+    uncache |= abs(d2 - degeneracy) >= min(d2, degeneracy)
+    uncache |= a2 != attenuate
+    if uncache: 
+      from os.path import join
+      from os import remove
+      remove(join(self.directory, "DIPOLECAR"))
+      return self._dipole(degeneracy, attenuate)[-1]
+    return result
+    
+
+  @FileCache('DIPOLECAR')
+  def _dipole(self, degeneracy=-1e0, attenuate=False):
+    """ Computes dipole matrix element between vbm and cbm. 
+    
+        This routine caches results in a file. The routine above should check
+        that the arguments are the same.
+    """
     from numpy import array
     from numpy.linalg import det
     from ..physics import a0
@@ -152,7 +174,7 @@ class ExtractAE(_ExtractE):
         if degeneracy >= 0e0 and abs(wfnB.eigenvalue - self.vbm) > degeneracy: continue
         result.append( (wfnA.eigenvalue, wfnB.eigenvalue,
                         wfnA.braket(gvectors, wfnB, attenuate=attenuate)) )
-    return result
+    return degeneracy, attenuate, result
 
   def __copy__(self):
     """ Returns a shallow copy of this object. """
@@ -274,8 +296,27 @@ class ExtractRefs(object):
         else: result += dme / (wfnA.eigenvalue - wfnB.eigenvalue) 
     return (units * result).simplified, nstates
   
-  @FileCache('DIPOLECAR')
   def dipole(self, degeneracy=-1e0, attenuate=False):
+    """ Computes dipole matrix element between vbm and cbm. """
+    # gets result, possibly from cache file.
+    try:  d2, a2, result = self._dipole(degeneracy, attenuate)
+    except ValueError: # there might be an issue with older DIPOLECAR.
+      result = self._dipole(degeneracy, attenuate)
+      uncache = False
+    else:
+      uncache  = degeneracy < 0e0 and d2 >= 0e0
+      uncache |= degeneracy >= 0e0 and d2 < 0e0
+      uncache |= abs(d2 - degeneracy) >= min(d2, degeneracy)
+      uncache |= a2 != attenuate
+    if uncache: 
+      from os.path import join
+      from os import remove
+      remove(join(self.directory, "DIPOLECAR"))
+      return self._dipole(degeneracy, attenuate)[-1]
+    return result
+    
+  @FileCache('DIPOLECAR')
+  def _dipole(self, degeneracy=-1e0, attenuate=False):
     """ Computes dipole matrix element between vbm and cbm. """
     from numpy import all, abs, dot
     from numpy.linalg import det
@@ -291,7 +332,7 @@ class ExtractRefs(object):
         dme = wfnA.braket(gvectors, wfnB, attenuate=attenuate)
         result.append( (wfnA.eigenvalue, wfnB.eigenvalue, 
                        wfnA.braket(gvectors, wfnB, attenuate=attenuate)) )
-    return result
+    return degeneracy, attenuate, result
 
   @property
   def success(self):
@@ -311,7 +352,8 @@ class ExtractRefs(object):
         (tab-completion) integration. 
     """
     result = [u for u in dir(self.__class__) if u[0] != '_'] 
-    result.extend(['extact_vff', 'extract_vbm', 'extract_cbm', 'structure', 'escan', 'vff'])
+    result.extend([u for u in self.__dict__.keys() if u[0] != '_'])
+    result.extend(dir(self.extract_vff))
     return result
 
   def iterfiles(self, **kwargs):
@@ -434,10 +476,55 @@ def _band_gap_refs_impl( escan, structure, outdir, references, n=5,\
     return _band_gap_ae_impl(escan, structure, outdir, **kwargs)
   return ExtractRefs(vbm_out, cbm_out, vffout)
 
+class Functional(Escan): 
+  """ Bandgap functional.
+  
+      Computes bandgap using either full diagonalization or two folded spectrum
+      calculations. Performs some checking so that a non-zero band-gap is
+      discored. see `bandgap` method.
+  """
+  Extract = staticmethod(extract)
+  def __init__(self, *args, **kwargs):
+    """ Initializes an LDOS functional. 
+    
+        :param args: Any argument that works for `Escan`.
+        :param kwargs: Any keyword argument that works for `Escan`.
+    """
+    self.references = kwargs.pop('references', None)
+    """ References for folded spectrum calculation, or None for full diagonalization. 
 
+        In the first case, this is a tuple giving the two reference energies
+        (CBM and VBM) in eV.
+    """ 
+    self.n = kwargs.pop('n', 5)
+    """ Maximum number of trial folded-spectrum calculations. 
 
+        Beyond this, resorts to full diagonalization.
+    """ 
+    self.dipole = kwargs.pop('dipole', False)
+    """ Whether or not to compute dipole elements. """
+    escan_copy = kwargs.pop('escan', None)
+    super(Functional, self).__init__(**kwargs)
 
+    # copies parent functional.
+    if escan_copy != None:
+      from copy import deepcopy
+      self.__dict__.update(deepcopy(escan_copy.__dict__))
 
+  def __call__(self, structure, outdir=None, **kwargs):
+    """ Computes band-gap. 
 
-      
+        Parameters are passed on to `bandgap` method.
+    """
+    if '_computing' in self.__dict__:
+      return super(Functional, self).__call__(structure, outdir, **kwargs)
 
+    self._computing = True
+    try: 
+      if 'references' not in kwargs: kwargs['references'] = self.references
+      if 'n' not in kwargs: kwargs['n'] = self.n
+      dipole = kwargs.pop('dipole', self.dipole)
+      result = bandgap(self, structure, outdir, **kwargs)
+      if dipole: result.dipole()
+      return result
+    finally: del self._computing

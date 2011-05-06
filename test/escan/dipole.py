@@ -28,8 +28,5 @@ result = bandgap( input.escan, structure, eref=None,
 tot = array([0e0] * 3)  / a0 / a0
 for e0, e1, u in result.dipole(degeneracy = 5e1 * input.escan.tolerance, attenuate=False):
   tot += (u * u.conjugate()).real
-if result.extract_vbm.nnodes == 1: # different from MPI! escan bug...
-  check = array([1.13781377e-03,   5.90701883e-05,   5.90701874e-05]) * 1/a0**2
-else: 
-  check = array([ 0.00033923,  0.00153695,  0.00153694]) * 1/a0**2
-assert all( abs(check - tot) < min(abs(check))*1e-3 ), abs(check-tot)
+check = array([1.13753549e-03,   5.87932303e-05,   5.87932303e-05]) * 1/a0**2
+for a, b in zip(abs(check - tot), abs(check)*1e-2): assert a < max(b, 1e-6), (a, b)
