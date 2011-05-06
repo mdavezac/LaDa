@@ -240,8 +240,9 @@ namespace LaDa
         "  structure : `crystal.Structure` or `crystal.rStructure`\n"
         "    a crystal structure with correct number of atoms and lattice vectors.\n"
         "    It will be decorated according to x on output.\n"
-        "   x : integer\n    index of the particular decoration.\n"
-        "   flavorbase : `FlavorBase`\n    the return from `create_flavorbase`.\n"
+        "  x : integer\n    index of the particular decoration.\n"
+        "  flavorbase : `_enumeration.FlavorBase`\n" 
+        "    the return from `_enumeration.create_flavorbase`.\n"
       );
       
       typedef boost::make_signed<e::t_uint>::type t_int;

@@ -57,7 +57,7 @@ def load(path = None):
  
       :keyword path: Filename of a pickled jobdictionary.
       :keyword comm: MPI processes for which to read job-dictionary.
-      :type comm: `mpi.communicator`
+      :type comm: `mpi.Communicator`
       :return: Returns a JobDict object.
 
       This method first acquire an exclusive lock (using os dependent lockf) on

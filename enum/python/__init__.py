@@ -69,10 +69,11 @@ class Enum(Lattice):
             the loop, and the other whether to set that entry in the database to
             True or False. If the second item is None, then the database entry
             is untouched.
-         :return: Yields a tuple consisting of x, the hermite cell, and the flavorbase.
+            
+        :return: Yields a tuple consisting of x, the hermite cell, and the flavorbase.
     """
     from numpy import dot
-    from _enumeration import LabelExchange, create_flavorbase, Translation, Database, as_numpy
+    from _enumeration import LabelExchange, create_flavorbase, Translation, Database
     assert len(self.sites) > 0, ValueError("No sites in lattice.")
     nsites = self.nsites
     assert nsites > 0, ValueError("Current lattice does not have sites with multiple occupation.")
@@ -119,7 +120,6 @@ class Enum(Lattice):
 
       # checks supercell dependent transforms.
       for nsupercell, supercell in enumerate(smith.supercells):
-        mine = []
         # creates list of transformation which leave the supercell invariant.
         cell = dot(self.cell, supercell.hermite)
         specialized = []
@@ -164,7 +164,7 @@ class Enum(Lattice):
     """ Yields inequivalent structures.
     
         Parameters are those of `Enum.xn`.
-        This generator yields actual `crystal.Structure.`
+        This generator yields actual `crystal.Structure`.
     """
     from numpy import zeros, any, dot
     from _enumeration import as_structure

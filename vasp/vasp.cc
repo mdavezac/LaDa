@@ -123,22 +123,10 @@ void expose_vasp()
     "vasp",                                                          
     &vasp,                                                         
     (bp::arg("comm"), bp::arg("library")),                                            
-    "Makes a call to vasp, given the handle to a communicator.\n\n"      
-    ":Parameters:\n"
-    "  comm\n    The processes which vasp will use.\n"         
-    "  library : str\n    A string containing the name of the vasp library.\n\n"
-    "POSCAR, INCAR, IBZKPT, and other input files are expected in the current "
-    "working directory.\n"
-  );                                                                    
-  bp::def                                                               
-  (                                                                     
-    "vasp",                                                          
-    &vasp,                                                         
-    (bp::arg("comm"), bp::arg("library")),                                            
 #   ifdef LADA_MPI
       "Makes a call to vasp, given the handle to a communicator.\n\n"      
       ":Parameters:\n"
-      "  comm\n    The processes which vasp will use.\n"         
+      "  comm\n    The process communicator which vasp will use.\n"         
       "  library : str\n    A string containing the name of the vasp library.\n\n"
       "POSCAR, INCAR, IBZKPT, and other input files are expected in the current "
       "working directory.\n"

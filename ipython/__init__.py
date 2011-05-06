@@ -1,7 +1,7 @@
 import _doc
 __doc__ = _doc.__doc__
 __docformat__ = "restructuredtext en"
-from .. import lada_with_slurm
+from lada import lada_with_slurm
 
 def _get_current_job_params(self, verbose=0):
   """ Returns a tuple with current job, filename, directory. """

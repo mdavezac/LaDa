@@ -374,7 +374,7 @@ class MassExtract(AbstractMassExtract):
           path : str or None
             Pickled jobdictioanary for which to extract stuff. If None, will
             attempt to use the current jobdictionary.
-          comm : `mpi.communicator`
+          comm : `mpi.Communicator`
             Optional communicator. How communicators are used will depend on
             each calculation's extractor.
           kwargs : dict
@@ -385,7 +385,6 @@ class MassExtract(AbstractMassExtract):
         :kwarg naked_end: True if should return value rather than dict when only one item.
         :kwarg unix_re: converts regex patterns from unix-like expression.
     """
-    from os.path import isdir, isfile, exists, dirname, abspath
     from ..mpi import Communicator
 
     AbstractMassExtract.__init__(self, **kwargs)
@@ -514,7 +513,7 @@ class AbstractMassExtractDirectories(AbstractMassExtract):
             If None, uses current working directory.
           Extract
             Extraction class to use within each calculation. 
-          comm : `mpi.communicator`
+          comm : `mpi.Communicator`
             Optional communicator. How communicators are used will depend on
             each calculation's extractor.
           kwargs : dict
@@ -523,7 +522,6 @@ class AbstractMassExtractDirectories(AbstractMassExtract):
         :kwarg naked_end: True if should return value rather than dict when only one item.
         :kwarg unix_re: converts regex patterns from unix-like expression.
     """
-    from os.path import exists, isdir
     from ..opt import RelativeDirectory
     from ..mpi import Communicator
 
@@ -575,8 +573,8 @@ class AbstractMassExtractDirectories(AbstractMassExtract):
 
   def __iter_alljobs__(self):
     """ Goes through all directories with a contcar. """
-    from os import walk, getcwd
-    from os.path import abspath, relpath, abspath, join
+    from os import walk
+    from os.path import relpath, join
 
     for dirpath, dirnames, filenames in walk(self.rootdir, topdown=True, followlinks=True):
       if not self.__is_calc_dir__(dirpath, dirnames, filenames): continue

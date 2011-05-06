@@ -25,7 +25,7 @@ class _ldosfunc(object):
           rs : numpy array
             Matrix of densities per real-space position(row) and per band(column). 
     """
-    from numpy import multiply, sqrt, pi
+    from numpy import sqrt, pi
     from quantities import eV
     self.eigenvalues = eigenvalues
     """ Vector of eigenvalues. """
@@ -74,7 +74,7 @@ def ldos(extractor, positions, raw=False):
           Whether to return the raw data or the LDOS itself, i.e. a function of
           the energy.
   """
-  from numpy import zeros, tensordot, multiply, conjugate, exp, concatenate, array
+  from numpy import tensordot, multiply, conjugate, exp, concatenate, array
 
   assert isinstance(extractor, KExtract),\
          ValueError('extractor argument should be KExtract isntance.')
@@ -158,12 +158,6 @@ class Extract(KExtract):
     return outer_ldos(self, self.positions, raw=True)
 
   @property
-  @make_cached
-  def ldos(self):
-    """ Local density of states for `positions`. """
-    return _ldosfunc(self.copy(unreduce=False).eigenvalues.flat, self.raw_ldos)
-   
-  @property
   def positions(self):
     """ Positions for which to compute LDOS. """
     from numpy import array
@@ -171,8 +165,13 @@ class Extract(KExtract):
       return array([a.pos for a in self.structure.atoms])
     if not hasattr(self.functional.positions, '__call__'): return self.functional.positions
     return self.funtional.positions(self.structure)
-      
-  
+
+  @property
+  @make_cached
+  def ldos(self):
+    """ Local density of states for ``positions``. """
+    return _ldosfunc(self.copy(unreduce=False).eigenvalues.flat, self.raw_ldos)
+   
   def iterfiles(self, **kwargs):
     """ Iterates through exportable files. 
 

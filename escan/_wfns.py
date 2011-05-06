@@ -1,11 +1,8 @@
 """ Classes to handle ESCAN wavefunctions. """
 __docformat__  = 'restructuredtext en'
 
-
-from ..opt.decorators import broadcast_result, make_cached
-from ._extract import Extract
-
 class rWavefunction(object):
+  """ Defines the wavefunction of a single band in realspace. """
   is_gspace = False
   """ False since this is a r-space wavefunction. """
 
@@ -104,7 +101,7 @@ def gtor_fourrier(wavefunctions, rvectors, gvectors, comm, axis=0):
           Two-dimensional array of g-space vectors, with each row a
           (g-)position. The input wavefunctions should be given with respect to
           these points, in the same order, etc.
-        comm : `mpi.communicator`
+        comm : `mpi.Communicator`
           communicator over which the wavefunctions are distributed.  The
           return wavefunctions will also be dirstributed over these processes.
         axis : integer
@@ -113,7 +110,6 @@ def gtor_fourrier(wavefunctions, rvectors, gvectors, comm, axis=0):
           (though simultaneous, implementation wise) fourrier transform will be
           performed over this axis for all other axis. 0 by default.
   """
-  from quantities import pi
   import numpy as np
 
   # serial version
@@ -157,7 +153,7 @@ def rtog_fourrier(wavefunctions, rvectors, gvectors, comm, axis=0):
           Two-dimensional array of g-space vectors, with each row a
           (g-)position. The input wavefunctions should be given with respect to
           these points, in the same order, etc.
-        comm : `boost.mpi.communicator`
+        comm : `mpi.Communicator`
           communicator over which the wavefunctions are distributed.  The
           return wavefunctions will also be dirstributed over these processes.
         axis : integer
@@ -166,7 +162,6 @@ def rtog_fourrier(wavefunctions, rvectors, gvectors, comm, axis=0):
           (though simultaneous, implementation wise) fourrier transform will be
           performed over this axis for all other axis. 0 by default.
   """
-  from quantities import pi
   import numpy as np
 
   assert not np.any(np.isnan(wavefunctions))

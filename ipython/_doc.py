@@ -426,8 +426,8 @@
 
     The typical hight-thoughput script is organized around to files: 
     
-    - input.py : an input file where all relevant parameters are gathered.
-    - test.py  : the script itself. 
+      - input.py : an input file where all relevant parameters are gathered.
+      - test.py  : the script itself. 
 
     Here is how you can retrieve and set up these scripts on **redmesa**:
 
@@ -518,11 +518,18 @@
     >>> import test
     >>> test.nonmagnetic_wave("savemehere", "input.py")
 
-    - The first line imports the test script in memory.
-    - The second line creates the job-dictionary and saves it to the file *savemehere*.
+      - The first line imports the test script in memory.
+      - The second line creates the job-dictionary and saves it to the file *savemehere*.
 
     At this point, you can examine and launch the job-dictionary, as explainged
     in sections `Prep-ing up: Exploring and modifying a job-dictionary before
     launch`_ and `Launching highthoughput calculations`_.
 
+    Miscellaneous
+    -------------
+
+    Saving/Reloading variables from a post-processing calculation
+    +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 """
+from record import __doc__ as __record_doc__
+__doc__ += __record_doc__[__record_doc__.find('\n',2):]

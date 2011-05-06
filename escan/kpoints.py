@@ -203,18 +203,18 @@ def _reduced_grids_factory(name, base):
               Output structure after structural relaxation, as used in
               electronic structure calculation.
 
-           :result:
-             Yields an iterator over equivalent kpoints 
-             The iterator themselves yield 4-tuples:
+          :return:
+            Yields an iterator over equivalent kpoints 
+            The iterator themselves yield 4-tuples:
 
-             - index in unreduced mesh
-             - multiplicity of unreduced kpoints
-             - unreduced kpoint
-             - operation to go to reduced kpoint. 
+            - index in unreduced mesh
+            - multiplicity of unreduced kpoints
+            - unreduced kpoint
+            - operation to go to reduced kpoint. 
       """
       from numpy import dot
-      from numpy.linalg import inv, norm
-      from ..crystal import Lattice, to_origin, to_voronoi, SymmetryOperator
+      from numpy.linalg import inv
+      from ..crystal import to_origin, to_voronoi, SymmetryOperator
       lattice = output.to_lattice()
       kcell = inv(lattice.cell).T
 

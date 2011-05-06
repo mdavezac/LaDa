@@ -3,7 +3,7 @@
 
     At present, we have mpi and non-mpi paradigma.
 """
-__docformat__ = "restructuredtext en"
+# __docformat__ = "restructuredtext en"
 __all__ = [ 'world', 'Communicator', 'world', 'all_gather', 'all_reduce', 'all_to_all',
             'broadcast', 'reduce', 'gather', 'NullComm']
 from . import lada_with_mpi
@@ -33,13 +33,13 @@ else:
 
   def broadcast(comm, value=None, root=0):
     return boost_broadcast(comm, value, root) if comm.is_mpi else null_broadcast(comm, value)
-  broadcast.__doc__ = boost_broadcast
+  broadcast.__doc__ = boost_broadcast.__doc__
   def reduce(comm, value, op, root=0):
     return boost_reduce(comm, value, op, root) if comm.is_mpi else null_reduce(comm, value, op)
-  reduce.__doc__ = boost_reduce
+  reduce.__doc__ = boost_reduce.__doc__
   def gather(comm, value, root=0):
     return boost_gather(comm, value, root) if comm.is_mpi else null_gather(comm, value)
-  gather.__doc__ = boost_gather
+  gather.__doc__ = boost_gather.__doc__
   def real(self):
     """ True if a real mpi-communicator. """
     return True

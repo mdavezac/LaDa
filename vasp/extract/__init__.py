@@ -22,7 +22,7 @@ class ExtractCommon(AbstractExtractBase, ExtractCommonBase, IOMixin):
           outcar : str or None
             Path to OUTCAR file. Can also be the directory if the OUTCAR is
             named "OUTCAR".
-          comm : `mpi.communicator`
+          comm : `mpi.Communicator`
             Processes over which to synchronize output gathering. 
     """
     from os.path import exists, isdir, basename, dirname
@@ -67,7 +67,7 @@ def Extract(outcar=None, comm=None, **kwargs):
           outcar : str or None
             Path to OUTCAR file. Can also be the directory if the OUTCAR is
             named "OUTCAR".
-          comm : `mpi.communicator`
+          comm : `mpi.Communicator`
             Processes over which to synchronize output gathering. 
   """
   # checks if path or directory
@@ -121,7 +121,7 @@ else:
               If None, uses current working directory.
             Extract : `lada.vasp.Extract`
               Extraction class to use. 
-            nocal : bool
+            nocalc : bool
               Avoids calculation directories relax_cellshape and relax_ions.
             kwargs : dict
               Keyword parameters passed on to AbstractMassExtract.

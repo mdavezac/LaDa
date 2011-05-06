@@ -65,7 +65,7 @@ class Extract(AbstractExtractBase):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def structure(self):
-    """ Greps structure from self.L{OUTCAR}. """
+    """ Greps structure from OUTCAR. """
     with self.__outcar__() as file:
       # find start of calculations.
       for line in file:
@@ -77,7 +77,7 @@ class Extract(AbstractExtractBase):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def input_structure(self):
-    """ Greps input structure from self.L{OUTCAR}. """
+    """ Greps input structure from OUTCAR. """
     with self.__outcar__() as file:
       # find start of calculations.
       for line in file:
@@ -105,7 +105,7 @@ class Extract(AbstractExtractBase):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def stress(self):
-    """ Greps stress from self.L{OUTCAR}. """
+    """ Greps stress from OUTCAR. """
     from numpy import array
     result = []
     with self.__outcar__() as file:
@@ -130,8 +130,7 @@ class Extract(AbstractExtractBase):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def lattice(self):
-    """ Greps lattice from self.L{OUTCAR}. """
-    from lada.crystal import Lattice
+    """ Greps lattice from OUTCAR. """
     with self.__outcar__() as file: script = _get_script_text(file, "Lattice")
     return exec_input(script).lattice
 
@@ -139,15 +138,14 @@ class Extract(AbstractExtractBase):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def minimizer(self):
-    """ Greps minimizer from self.L{OUTCAR}. """
-    from ..minimizer import Minimizer
+    """ Greps minimizer from OUTCAR. """
     with self.__outcar__() as file: script = _get_script_text(file, "Minimizer")
     return exec_input(script).minimizer
 
   @property
   @make_cached
   def functional(self):
-    """ Greps vff functional from self.L{OUTCAR}. """
+    """ Greps vff functional from OUTCAR. """
     from os.path import exists, join
     from cPickle import load
 
@@ -245,7 +243,6 @@ class Vff(object):
     """ File where to redirect output. """
     self.ERRCAR = "vff_err" 
     """ File where to redirect errors. """
-    from cPickle import dump
     self._FUNCCAR = "VFFCAR" 
     """ Pickle file to which functional is saved. """
     self._workdir = workdir
@@ -267,13 +264,14 @@ class Vff(object):
   def add_bond(self, args):
     """ Adds/Modifies the bond parameter dictionary.
     
-        :param args: A tuple consisting of three elements.
+        >>> vff.add_bond = "A", "B", [d0, a2, a3, a4, a5, a6]
+
+        Takes a tuple consisting of three elements as argument:
+
           - the first element of arg is one endpoint of the bond (say "In"), 
           - the second element is another endpoint (say "N"),
           - the last element is a sequence with at most 5 elements
             defining the bond-stretching parameters (order 2 through 6).
-        
-        >>> vff.add_bond = "A", "B", [d0, a2, a3, a4, a5, a6]
     """
     assert len(args) == 3, RuntimeError("Bonds should be set with 3 parameters: %s." % (args))
     assert args[0] in [ u for site in self.lattice.sites for u in site.type ],\
@@ -321,7 +319,10 @@ class Vff(object):
   def add_angle(self, args):
     """ Adds/Modifies the angle parameter dictionary.
     
-        :param args: Tuple of four elements.
+        >>> vff.add_angle = "A", "B", "C", [gamma, sigma, a2, a3, a4, a5, a6]
+
+        Takes a tuple of four elements as argument:
+            
           - the first element of arg is one endpoint of the angle (say "In"), 
           - the second element is middle of the angle (say "N"),
           - the third element is the other endpoint (say "Ga"),
@@ -329,8 +330,6 @@ class Vff(object):
             defining the bond-angle parameters. The first is the
             gamma parameter, the second the sigma, and the others
             the bond bending proper.
-
-        >>> vff.add_angle = "A", "B", "C", [gamma, sigma, a2, a3, a4, a5, a6]
     """
     assert len(args) == 4, RuntimeError("Angle should be set with 4 parameters: %s." % (args))
     assert args[0] in [ u for site in self.lattice.sites for u in site.type ],\
@@ -444,7 +443,7 @@ class Vff(object):
     from cPickle import dump
     from copy import deepcopy
     from os import getcwd
-    from os.path import exists, isdir, abspath, expanduser
+    from os.path import exists, abspath, expanduser
     from ..opt.changedir import Changedir
     from ..mpi import Communicator, world
 
@@ -534,10 +533,7 @@ class Vff(object):
 
   def _create_functional(self):
     """ Creates the vff functional using cpp extension. """
-    from tempfile import NamedTemporaryFile
-    from os import remove
     from numpy import array
-    from ..minimizer._minimizer import Minimizer
     from _vff import Vff, LayeredVff
 
     if hasattr(self.direction, "__len__"):
@@ -559,9 +555,6 @@ class Vff(object):
      
   def _run(self, structure, comm):
     """ Performs actual calculation. """
-    from copy import deepcopy
-    from _vff import Vff, LayeredVff
-    from .. import lada_with_mpi
     from ..opt import redirect_all
 
     # Saves global lattice if set.
@@ -611,7 +604,6 @@ def exec_input(filepath = "input.py", namespace = None):
 def read_input(filepath = "input.py", namespace = None, name=None):
   """ Reads an input file including namespace for escan/vff. """ 
   from ..opt import opt_read_input
-  from .. import vff as __this__ 
   from .. import minimizer
 
   dictionary = {}
