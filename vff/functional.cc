@@ -24,9 +24,7 @@ namespace LaDa
     {
       math::rMatrix3d strain;
       unpack_variables( _arg, strain );
-      types::t_real result = Vff::energy();
-      std::cout << "result: " << result << "\n";
-      return result;
+      return Vff::energy();
     }
 
     // Unpacks opt::Function_Base::variables into Vff::Functional format
@@ -40,7 +38,6 @@ namespace LaDa
 
       // compute resulting cell vectors
       structure.cell = _strain * structure0.cell;
-      std::cout << structure.cell << "\n\n";
       unpack_positions( i_x, _strain );
     }
 

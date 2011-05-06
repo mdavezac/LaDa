@@ -18,7 +18,7 @@ namespace LaDa
     typedef std::complex<types::t_real> t_complex; //!< a complex real type
     const t_real tolerance = 1.e-12; //!< all purpose tolerance global
     //! roundoff term for numerical noise crap.
-    types::t_real const roundoff(5e1 * std::numeric_limits<types::t_real>::epsilon());
+    types::t_real const roundoff(5e3 * std::numeric_limits<types::t_real>::epsilon());
   }
 } // namespace LaDa
 #endif

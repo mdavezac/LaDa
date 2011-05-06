@@ -7,11 +7,13 @@ from lada.crystal.binary import zinc_blende
 from lada.crystal import dnc_iterator
 
 cell = array([[10.0, 0.5, 0.5], [0.0, 0.0, 0.5], [0.0, 0.5, 0.0]], dtype="float64")
+cell = array([[-13. ,   0. ,   0.5], [ 13. ,   0. ,   0.5], [  0. ,  19. ,   0. ]])
+
 structure = zinc_blende().to_structure(cell) #diag([10,1,1]))
 # print structure
 # print dnc_iterator(structure, 45, 1.5).mesh
 result = [False for u in structure.atoms]
-for box in dnc_iterator(structure, 15, 0.9):
+for box in dnc_iterator(structure, 15, 0.8):
 
   all = [u for u in box]
   small_box = [(j, structure.atoms[i].pos + trans) for j, (i, trans, f) in enumerate(all) if f == True]
