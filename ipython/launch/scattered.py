@@ -23,7 +23,7 @@ def launch(self, event, jobdicts):
   if which: which = environ["SNLCLUSTER"] in ["redrock", "redmesa"]
   queue = "account" if which else "queue"
   template = default_slurm if which else default_pbs
-  if environ["NERSC_HOST"] == "hopper2":  # special for crays.
+  if environ.get("NERSC_HOST", None) == "hopper2":  # special for crays.
     from ...jobs.templates import hopper_pbs
     template = hopper_pbs
 
@@ -62,7 +62,7 @@ def launch(self, event, jobdicts):
   # gets python script to launch in pbs.
   pyscript = jobs_filename.replace(splitpath(jobs_filename)[1], "runone.py")
 
-  if environ.get('NERSC_HOST', 'none') == 'hopper2':
+  if environ.get('NERSC_HOST', None) == 'hopper2':
     from os.path import basename, exists
     name = basename(environ['VIRTUAL_ENV'])
     pyscript = pyscript.replace('/{0}/'.format(name), '/{0}/'.format(name+"_mpi"))
