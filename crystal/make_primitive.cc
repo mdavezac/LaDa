@@ -166,7 +166,7 @@ namespace LaDa
               LADA_ASSERT(trial.determinant() > 0, "Shouldn't happen.\n");
             }
             // Checks that original cell is a supercell.
-            if( not math::is_integer((!new_cell) * cell) ) continue;
+            if( not math::is_integer( ((!new_cell) * cell).eval() ) ) continue;
 
             // Checks that all lattice sites are integers.
             volume = std::abs(det);

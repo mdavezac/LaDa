@@ -37,11 +37,6 @@ namespace LaDa
           if( not is_integer(x(i,j)) ) return false;
       return true;
     }
-    //! True if the obect is composed of integers.
-    template< class T1, class T2, int T3>
-      inline bool is_integer(Eigen::Product<T1, T2, T3> const &x)
-        { return is_integer( x.eval() ); }
-
 
     //! True if two vectors are periodic images with respect to a cell.
     inline bool are_periodic_images( math::rVector3d const &_a,

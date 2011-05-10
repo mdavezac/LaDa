@@ -153,7 +153,7 @@ namespace LaDa
                {
                  math::rVector3d shift = atom_pos - *i_cpos_center;
                  
-                 if ( not math::is_integer( lattice->cell.inverse()*shift)) continue;
+                 if ( not math::is_integer( (lattice->cell.inverse()*shift).eval() ) ) continue;
                  
                  // finds atom to which "point" is equivalent
                  Crystal::Structure::t_Atoms::const_iterator i_equiv = str.atoms.begin();
