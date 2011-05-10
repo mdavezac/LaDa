@@ -62,7 +62,7 @@ namespace LaDa
         typedef math::iVector3d iVector3d;
         typedef math::rVector3d rVector3d;
         typedef math::rMatrix3d rMatrix3d;
-        typedef typename Crystal::TStructure< std::string > :: t_Atoms t_Atoms;
+        typedef Crystal::TStructure< std::string > :: t_Atoms t_Atoms;
 
 
         // constructs cell of small small box
@@ -86,8 +86,8 @@ namespace LaDa
         container_.clear(); container_.resize(Nboxes);
 
         // Now adds points for each atom in each box.
-        typename t_Atoms :: const_iterator i_atom = _structure.atoms.begin();
-        typename t_Atoms :: const_iterator i_atom_end = _structure.atoms.end();
+        t_Atoms :: const_iterator i_atom = _structure.atoms.begin();
+        t_Atoms :: const_iterator i_atom_end = _structure.atoms.end();
         for( size_t index(0); i_atom != i_atom_end; ++i_atom, ++index )
         {
           // Position inside structure cell.
