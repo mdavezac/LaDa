@@ -246,8 +246,10 @@ class Escan(object):
     elif self.potential == soH:
       result += "functional.{0: <{1}} = soH\n".format('potential', max_length)
     else: raise RuntimeError("unknown hamiltonnian {0}.".format(soH))
-    for pot in self.atomic_potentials:
-      result += "functional.{0: <{1}} = {2}\n".format('add_potential', max_length, repr(pot))
+    if self.atomic_potentials != None:
+      for pot in self.atomic_potentials:
+        result += "functional.{0: <{1}} = {2}\n".format('add_potential', max_length, repr(pot))
+    else: result += "functional.{0: <{1}} = {2}\n".format('atomic_potential', max_length, repr(None))
     if self.inplace == False: 
       result += "functional.{0: <{1}} = {2}\n"\
                 .format('workdir', max_length, repr(self._workdir.unexpanded))

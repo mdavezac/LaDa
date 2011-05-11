@@ -8,6 +8,7 @@ def export(self, event):
   import tarfile
   from os import getcwd
   from os.path import exists, isfile, extsep, relpath, dirname, join
+  from glob import iglob
   from ..opt import RelativeDirectory
 
   parser = argparse.ArgumentParser(prog='%export',
@@ -48,6 +49,11 @@ def export(self, event):
   group.add_argument( '--from', type=str, dest="dir", default=None,
                        help='Root directory from which to give filenames. '\
                             'Defaults to current working directory.' )
+  group.add_argument( '--with', type=str, dest="others", nargs='*',
+                       help='Adds pattern or filename to files to export.'\
+                            'Any file in any visited directory matching the given pattern '\
+                            'will be added to the archive. This options can be given more than '\
+                            'once if different file patterns are required.' )
 
   try: args = parser.parse_args(event.split())
   except SystemExit as e: return None
@@ -95,8 +101,20 @@ def export(self, event):
     elif endname in ['bz', 'bz2']: tarme = tarfile.open(args.filename, 'w:bz2')
     else:                          tarme = tarfile.open(args.filename, 'w')
     try: 
+      directories = set()
+      allfiles = set()
       for file in self.api.user_ns['collect'].iterfiles(**kwargs):
+        if file in allfiles: continue
+        allfiles.add(file)
         tarme.add(file, arcname=relpath(file, directory))
+        directories.add(dirname(file))
+      for dir in directories:
+        for pattern in args.others:
+          for sfile in iglob(join(dir, pattern)):
+            if file in allfiles: continue
+            allfiles.append(file)
+            if not exists(file): continue
+            tarme.add(sfile, arcname=relpath(sfile, directory))
       if jobdict != None: tarme.add(jobdict, arcname=relpath(jobdict, directory))
     except Exception as e:
       print "Encoutered error while tarring file."
@@ -117,9 +135,15 @@ def completer(self, event):
     if isdir(current): result |= set([u for u in self.api.magic("%mglob dir:{0}/*".format(current))])
     return result
 
+  if    (len(event.symbol) == 0 and len(data) > 0 and data[-1] == "--with") \
+     or (len(event.symbol) > 0  and len(data) > 1 and data[-2] == "--with"):
+     return []
+
   data = set(data) - set(["export", "%export"])
   result = set(['--incar', '--doscar', '--poscar', '--chgcar', '--contcar', 
-                '--potcar', '--wavecar', '--list', '--down', '--from'])
+                '--potcar', '--wavecar', '--list', '--down', '--from', '--with'])
+
+
   if '--list' not in data:
     other = event.line.split()
     if '--from' in other:
@@ -141,9 +165,10 @@ def completer(self, event):
         string = "{0}/*.tar {0}/*.tar.gz {0}/*.tgz {0}/*.tar.bz "\
                  "{0}/*.tar.bz2 dir:{0}/*".format(other)
         result |= set([u for u in self.api.magic("%mglob " + string)])
-  result = result - data
+
+  result = result - data 
   if '--down' in data: result.discard('--from')
   if '--from' in data: result.discard('--down')
-  return list(result - data)
+  return list(result) + ['--with']
 
 
