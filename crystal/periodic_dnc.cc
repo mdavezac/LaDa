@@ -93,7 +93,7 @@ namespace LaDa
           // Position inside structure cell.
           rVector3d const incell( into_cell(i_atom->pos, _structure.cell, invstr) );
           rVector3d const fracincell(invbox * incell);
-          LADA_DOASSERT(math::is_integer(invstr * (incell - i_atom->pos)), "WTF\n");
+          LADA_DOASSERT(math::is_integer( (invstr * (incell - i_atom->pos)).eval() ), "WTF\n");
           // Gets coordinate in mesh of small-boxes.
           iVector3d const __ifrac(math::floor_int(fracincell));
           iVector3d const ifrac
@@ -119,7 +119,12 @@ namespace LaDa
                 if( i == 0 and j == 0 and k == 0 ) continue;
 
                 // First checks if on edge of small box.
-                rVector3d displaced = fracincell + sb_edges.cwise()*rVector3d(i,j,k);
+#               ifndef LADA_WITH_EIGEN3
+                  rVector3d displaced = fracincell + sb_edges.cwise()*rVector3d(i,j,k);
+#               else
+                  rVector3d displaced =   fracincell
+                                        + (sb_edges.array()*rVector3d(i,j,k).array()).matrix();
+#               endif
                 iVector3d const __boxfrac( math::floor_int(displaced) );
                 iVector3d const boxfrac
                   ( 

@@ -56,11 +56,20 @@ namespace Eigen
   inline Matrix<t_real, 3, 3> operator!(Matrix<t_real, 3, 3> const &_mat)
     { return _mat.inverse(); }
 
-  //! Transpose operation of real matrix.
-  inline Eigen::Transpose< Matrix<t_real, 3, 3> > operator~(Matrix<t_real, 3, 3> const &_mat)
-    { return _mat.transpose(); }
-  //! Transpose operation of integer matrix.
-  inline Eigen::Transpose< Matrix<t_int, 3, 3> > operator~(Matrix<t_int, 3, 3> const &_mat)
-    { return _mat.transpose(); }
+# ifndef LADA_WITH_EIGEN3 
+    //! Transpose operation of real matrix.
+    inline Eigen::Transpose< Matrix<t_real, 3, 3> > operator~(Matrix<t_real, 3, 3> const &_mat)
+      { return _mat.transpose(); }
+    //! Transpose operation of integer matrix.
+    inline Eigen::Transpose< Matrix<t_int, 3, 3> > operator~(Matrix<t_int, 3, 3> const &_mat)
+      { return _mat.transpose(); }
+# else
+    //! Transpose operation of real matrix.
+    inline LaDa::math::rMatrix3d::ConstTransposeReturnType
+      operator~(LaDa::math::rMatrix3d const &_mat) { return _mat.transpose(); }
+    //! Transpose operation of integer matrix.
+    inline LaDa::math::iMatrix3d::ConstTransposeReturnType
+      operator~(LaDa::math::iMatrix3d const &_mat) { return _mat.transpose(); }
+# endif
 }
 #endif

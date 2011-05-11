@@ -55,7 +55,8 @@ namespace LaDa
         return false;
       }
       math::rMatrix3d const invcell = lattice->cell.inverse();
-      if( not math::is_integer(invcell * (_cls.origin.pos - lattice->sites[_cls.origin.site].pos)) )
+      math::rVector3d const & check_pos = lattice->sites[_cls.origin.site].pos;
+      if( not math::is_integer( (invcell * (_cls.origin.pos - check_pos)).eval() ) )
       {
         PyErr_SetString( PyExc_ValueError, 
                          "Cluster origin's site index and position do not correspond." );
@@ -84,7 +85,7 @@ namespace LaDa
         math::rVector3d const pos =   i_first->pos 
                                     + _cls.origin.pos
                                     - lattice->sites[i_first->site].pos;
-        if( not math::is_integer(invcell * pos) )
+        if( not math::is_integer( (invcell * pos).eval() ) )
         {
           PyErr_SetString( PyExc_ValueError, 
                            "Cluster spin's site index and position do not correspond." );

@@ -35,12 +35,18 @@ def hopper_pbs( file, walltime = "05:45:00", mppwidth = 8, queue = None, name = 
     file.write("#PBS -e {0}/err.$PBS_JOBID\n"\
                "#PBS -o {0}/out.$PBS_JOBID\n".format(pbsdir))
   if queue != None: file.write("#PBS -q {0} \n".format(queue))
-  file.write( "export XTPE_LINK_TYPE=dynamic\n"\
+  file.write( "export NERSC_HOST=`/usr/common/usg/bin/nersc_host`\n"\
+              "if [ -f /opt/modules/default/etc/modules.sh ]\n"\
+              "then\n"\
+              ". /opt/modules/default/etc/modules.sh\n"\
+              "fi\n"\
+              "SCRATCH=`/usr/common/nsg/sbin/mkscrdir`; export SCRATCH\n"\
+              "SCRATCH2=`/usr/common/nsg/sbin/mkscrdir2`; export SCRATCH2\n"\
+              "GSCRATCH=\"/global/scratch/sd/${USER}\"; export GSCRATCH\n"\
               "export CRAY_ROOTFS=DSL\n\n"\
               "module unload xt-libsci\n"\
               "module load python\n"\
-              "module unload PrgEnv-pgi >& /dev/null\n"\
-              "module load PrgEnv-gnu\n"\
+              "module swap PrgEnv-pgi PrgEnv-gnu>& /dev/null\n"\
               "module unload xt-shmem >& /dev/null\n"\
               "module load xt-mpich2\n\n" )
 

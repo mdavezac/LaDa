@@ -631,7 +631,7 @@ namespace LaDa
       TStructure<std::string>::t_Atoms:: const_iterator i_string = _string.atoms.begin();
       for(; i_real != i_real_end; ++i_string, ++i_real )
         _string.lattice->convert_StrAtom_to_Atom( *i_string, *i_real );
-      if( math::is_integer(_real.lattice->cell.inverse() * _real.cell) )
+      if( math::is_integer( (_real.lattice->cell.inverse() * _real.cell).eval() ) )
       {
         _real.find_k_vectors();
 #       if __GNUC__ >= 4 and __GNUC_MINOR__ >= 5

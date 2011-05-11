@@ -114,8 +114,9 @@ find_package( Boost 1.36.0 REQUIRED
               COMPONENTS python mpi mpi_python program_options regex serialization system filesystem )
 include_directories(${Boost_INCLUDE_DIRS})
 #   -- eigen2
-find_package( eigen2 REQUIRED )
-include_directories(${eigen2_INCLUDE_DIR})
+find_package( eigen REQUIRED )
+include_directories(${eigen_INCLUDE_DIR})
+set(LADA_WITH_EIGEN3 ${is_eigen3})
 #   -- tinyxml
 find_package(tinyxml REQUIRED)
 

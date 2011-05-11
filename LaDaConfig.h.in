@@ -11,3 +11,4 @@
 #define LADA_GLOBAL_LOAD @load_python_stuff_globally@
 #cmakedefine LADA_DO_PYTHON
 #cmakedefine LADA_DO_ESCAN
+#cmakedefine LADA_WITH_EIGEN3 

@@ -72,7 +72,7 @@ namespace LaDa
       }
       _struct.freeze = Crystal::Structure::FREEZE_NONE;
       if( _check_lattice )
-        LADA_DOASSERT( math::is_integer(inv_cell * _struct.cell),
+        LADA_DOASSERT( math::is_integer( (inv_cell * _struct.cell).eval() ),
                        "Structure cell is not supercell of lattice." );
       // now atoms.
       types::t_int nfound(0);
@@ -92,7 +92,8 @@ namespace LaDa
         a.freeze = Structure::t_Atom::FREEZE_NONE;
         a.site = 0;
         if( _check_lattice )
-          LADA_DOASSERT(math::is_integer(inv_cell * a.pos), "Atomic position is not on lattice.")
+          LADA_DOASSERT( math::is_integer( (inv_cell * a.pos).eval() ),
+                         "Atomic position is not on lattice." )
         _struct.atoms.push_back(a);
       }
       LADA_NASSERT( nfound != N,    "Could find only " << nfound << " of " 
@@ -183,7 +184,7 @@ namespace LaDa
           _structure.cell(j,i)
             = boost::lexical_cast<types::t_real>( *i_tok ) * 0.5e0;
         }
-      LADA_ASSERT( math::is_integer(inv_cell * _structure.cell),
+      LADA_ASSERT( math::is_integer( (inv_cell * _structure.cell).eval() ),
                    "Structure cell is not supercell of lattice." );
 
       // read atoms position.
@@ -219,7 +220,8 @@ namespace LaDa
             atom.pos(i) = boost::lexical_cast<Crystal::Structure::t_Atom::t_Type> 
                                              ( *i_tok ) * 0.5e0;
           }
-          LADA_ASSERT(math::is_integer(inv_cell * atom.pos), "Atomic position is not on lattice.")
+          LADA_ASSERT( math::is_integer( (inv_cell * atom.pos).eval() ), 
+                       "Atomic position is not on lattice." )
           _structure.atoms.push_back( atom );
           if( _structure.atoms.size() == N ) break;
         }

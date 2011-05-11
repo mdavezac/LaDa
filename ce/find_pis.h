@@ -121,7 +121,7 @@ namespace LaDa
                 types::t_real fig(1);
                 std::vector<math::rVector3d> :: const_iterator i_vec = i_vec_begin;
                 math::rVector3d const shift( i_first->pos - *i_center);
-                if ( not math::is_integer( _str.lattice->cell.inverse()*shift) ) continue;
+                if ( not math::is_integer( (_str.lattice->cell.inverse()*shift).eval() ) ) continue;
                 for(; i_vec != i_vec_end; ++i_vec) // loop over cluster spins.
                 {
                   math::rVector3d const site_pos(*i_vec + shift);
@@ -217,7 +217,7 @@ namespace LaDa
               {
                 math::rVector3d shift = i_atom->pos - *i_cpos_center;
                 
-                if ( not math::is_integer( _str.lattice->cell.inverse()*shift) ) continue;
+                if ( not math::is_integer( (_str.lattice->cell.inverse()*shift).eval() ) ) continue;
                 
                 // finds atom to which lattice site is equivalent
                 Crystal::Structure::t_Atoms::const_iterator i_equiv = _str.atoms.begin();
