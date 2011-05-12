@@ -88,7 +88,7 @@ namespace LaDa
           void push_back( t_String const& _name, t_String const &_value = "" )
           { 
             Option op; op.name = _name; op.value = _value;
-            return t_Options::push_back( op);
+            t_Options::push_back( op);
           }
           //! Insert an option.
           template< class T_TYPE >

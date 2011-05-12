@@ -45,29 +45,29 @@ struct A
     };
 };
 
-namespace LaDa
-{
-  namespace load_n_save
-  {
-    template< class T_DATA >
-      struct lns_access
-      {
-        template< class T_ARCHIVE >
-          bool operator()( T_ARCHIVE const &_ar, T_DATA &_data ) const
-          {
-            return _ar &
-              (
-                lns::section("A") 
-                  << (
-                          lns::option("a", lns::tag=lns::required, lns::action=_data.a)
-                        + lns::option("b", lns::action=_data.b)
-                        + lns::option("c", lns::action=_data.c)
-                     )
-              );
-          }
-      };
-  }
-}
+// namespace LaDa
+// {
+//   namespace load_n_save
+//   {
+//     template< class T_DATA >
+//       struct lns_access
+//       {
+//         template< class T_ARCHIVE >
+//           bool operator()( T_ARCHIVE const &_ar, T_DATA &_data ) const
+//           {
+//             return _ar &
+//               (
+//                 lns::section("A") 
+//                   << (
+//                           lns::option("a", lns::tag=lns::required, lns::action=_data.a)
+//                         + lns::option("b", lns::action=_data.b)
+//                         + lns::option("c", lns::action=_data.c)
+//                      )
+//               );
+//           }
+//       };
+//   }
+// }
 
 int main(int argc, char *argv[]) 
 {
@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
 //                              + lns::option( "z", lns::default_=1e-5, lns::action=z )
 //                            );
   std::string string
-    = "<A x=4 y=\"3e-5\" z=3 freeze=\"yz\" />\n";
+    = "<A aa=4 b=\"3e-5\" c=t />\n";
 //  = "<Atom x=4 y=0 z=\"-3.1416\" freeze=\"xyz\" />\n";
 
   boost::shared_ptr< lns::tree::Base > xml( lns::xml::parse( string ) );

@@ -1,7 +1,3 @@
-//
-//  Version: $Id: section.h 1266 2009-08-10 05:01:26Z davezac $
-//
-
 #ifndef _LADA_LNS_XPR_SECTION_H_
 #define _LADA_LNS_XPR_SECTION_H_
 
@@ -120,7 +116,7 @@ namespace LaDa
             return sstr.str();
           }
   
-        } // namespace details.
+      } // namespace details.
 
       //! Operator node.
       class Section
