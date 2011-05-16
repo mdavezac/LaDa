@@ -1,7 +1,6 @@
 """ Escan wrapper to compute many eigen k-points. """
 __docformat__ = "restructuredtext en"
 __all__ = ['KEscan', 'Extract']
-from abc import ABCMeta, abstractmethod
 from .functional import Escan
 from .. import __all__ as all_lada_packages
 from ..opt import AbstractExtractBase
@@ -34,7 +33,7 @@ class Extract(AbstractExtractBase):
     if '_cached_joblist' not in self.__dict__:
       from glob import iglob
       from re import compile
-      from os.path import isdir, join, basename, relpath
+      from os.path import isdir, join, basename
       
       regex = compile(r'kpoint_(\d+)/')
       paths = [ path for path in iglob(join(self.directory, 'kpoint_*/'))\
@@ -167,23 +166,66 @@ class Extract(AbstractExtractBase):
 
   @property
   def vbm(self): 
-    """ Returns energy at vbm. """
+    """ Energy at valence band minimum. """
     if self.functional.eref != None:
       raise RuntimeError('Cannot extract VBM from folded spectrum calculation.')
-    from numpy import array, max
+    from numpy import max
     from ..crystal import nb_valence_states
     nbe = nb_valence_states(self.structure)
     return max(self.eigenvalues[:, nbe-2:nbe])
 
   @property
   def cbm(self): 
-    """ Returns energy at vbm. """
+    """ Energy at conduction band minimum. """
     if self.functional.eref != None:
       raise RuntimeError('Cannot extract CBM from folded spectrum calculation.')
-    from numpy import array, min
+    from numpy import min
     from ..crystal import nb_valence_states
     nbe = nb_valence_states(self.structure)
     return min(self.eigenvalues[:, nbe:nbe+2])
+
+  @property
+  def gap(self):
+    """ Gap between the VBM and CBM. """
+    return self.cbm - self.vbm
+
+  @property
+  def cbm_direct_gap(self):
+    """ Gap between the CBM and valence band at the same kpoint. """
+    if self.functional.eref != None:
+      raise RuntimeError('Cannot extract CBM from folded spectrum calculation.')
+    from numpy import argmin
+    from ..crystal import nb_valence_states
+    nbe = nb_valence_states(self.structure)
+    i = argmin(self.eigenvalues[:, nbe:nbe+2])
+    return self.eigenvalues[:, nbe:nbe+2].flat[i] - self.eigenvalues[:,nbe-2:nbe].flat[i]
+
+  @property
+  def vbm_direct_gap(self):
+    """ Gap between the VBM and conduction band at the same kpoint. """
+    if self.functional.eref != None:
+      raise RuntimeError('Cannot extract VBM from folded spectrum calculation.')
+    from numpy import argmax
+    from ..crystal import nb_valence_states
+    nbe = nb_valence_states(self.structure)
+    i = argmax(self.eigenvalues[:, nbe-2:nbe])
+    return self.eigenvalues[:, nbe:nbe+2].flat[i] - self.eigenvalues[:,nbe-2:nbe].flat[i]
+
+  @property
+  def gamma_gap(self):
+    """ Gap at Gamma if computed. """
+    if self.functional.eref != None:
+      raise RuntimeError('Cannot extract VBM from folded spectrum calculation.')
+    from numpy import min, max
+    from ..crystal import nb_valence_states
+
+    for kindex, kpoint in enumerate(self.kpoints):
+      if all(abs(kpoint) < 1e-12): break
+    if not all(abs(kpoint) < 1e-12):
+      raise RuntimeError('Could not find Gamma in computed kpoints.')
+
+    nbe = nb_valence_states(self.structure)
+    return min(self.eigenvalues[kindex, nbe:nbe+2]) - max(self.eigenvalues[kindex, nbe-2:nbe])
 
   @property 
   def directness(self):

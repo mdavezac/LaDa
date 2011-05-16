@@ -78,7 +78,6 @@ namespace LaDa
     }
     bp::str xcrysden_str( Crystal::TStructure<std::string> const & _str )
     {
-      if( not _str.lattice ) return bp::str("");
       std::ostringstream sstr;
       sstr << "CRYSTAL\nPRIMVEC\n" << ( (~_str.cell) * _str.scale ) << "\nPRIMCOORD\n" 
                 << _str.atoms.size() << " 1 \n";  
