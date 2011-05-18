@@ -261,7 +261,8 @@ class Escan(object):
     module = self.__class__.__module__ 
     classname = self.__class__.__name__ 
     header = "from numpy import array\n"\
-             "from lada.escan import {0}, soH, localH, nonlocalH\n".format(classname)
+             "from lada.escan import soH, localH, nonlocalH\n"\
+             "from {1} import {0}\n".format(classname, module)
     return header + result
 
   def __call__(self, structure, outdir = None, comm = None, overwrite=False, \

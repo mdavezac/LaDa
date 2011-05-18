@@ -399,7 +399,7 @@ class KEscan(Escan):
     if N == 1: return 1
 
     # finds divisors of N
-    pools = [i for i in range(1, N+1) if N % i == 0 and comm.size / i > 0]
+    pools = [i for i in range(1, N+1) if N % i == 0 and comm.size // i > 0]
     if len(pools) == 1: return pools[-1]
     if len(pools) == 0: return 1
 
