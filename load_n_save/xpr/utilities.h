@@ -1,7 +1,7 @@
 //
 //  Version: $Id: utilities.h 1268 2009-08-12 04:56:27Z davezac $
 //
-#if !BOOST_PP_IS_ITERATING
+#ifndef BOOST_PP_IS_ITERATING
 # ifndef _LADA_LNS_XPR_UTILITIES_H_
 #   define _LADA_LNS_XPR_UTILITIES_H_
 
@@ -39,7 +39,7 @@
         const parameter::parameter<details::tag_tag, size_t const&> tag = {};
         const parameter::parameter<details::default_tag> default_ = {};
         const parameter::parameter<details::action_tag> action = {};
-        xpr::Section section( t_String const& _name ) 
+        inline xpr::Section section( t_String const& _name ) 
         {
           xpr::regular_data data;
           data.name = _name;
@@ -51,7 +51,7 @@
           return section;
         }
         
-        xpr::Option option( t_String const& _name )
+        inline xpr::Option option( t_String const& _name )
           { return xpr::Option(_name); }
 
         template< class T_TYPE > xpr::Section ext( T_TYPE &_a ) 

@@ -1,4 +1,5 @@
 set( LIBLNS_HEADERS 
+     string_type.h
      action/enum.h action/string_to_type.h action/type_to_regex.h
      initializer/tagged_options.h initializer/tagged_sections.h
      initializer/section_.h initializer/option_.h

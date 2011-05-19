@@ -72,8 +72,9 @@ struct A
 int main(int argc, char *argv[]) 
 {
   
-  LaDa::Crystal::Atom atom;
-  A a;
+  LaDa::Crystal::StrAtom atom;
+  atom.pos[0] = 5;
+// A a;
 // lns::xpr::Section sec = lns::section( "Atom")
 //                         << (
 //                                lns::option( "x", lns::action=x )
@@ -81,17 +82,18 @@ int main(int argc, char *argv[])
 //                              + lns::option( "z", lns::default_=1e-5, lns::action=z )
 //                            );
   std::string string
-    = "<A aa=4 b=\"3e-5\" c=t />\n";
+//   = "<A aa=4 b=\"3e-5\" c=t />\n";
 //  = "<Atom x=4 y=0 z=\"-3.1416\" freeze=\"xyz\" />\n";
+    = "<Atom pos=\"0 0 -3.1416\" type=Au freeze=\"xyz\" />\n";
 
   boost::shared_ptr< lns::tree::Base > xml( lns::xml::parse( string ) );
   std::cout << (bool) xml << "\n";
   if( not (bool) xml ) return 0;
       
   lns::load::Load loader;
-  bool result = loader( *xml, lns::ext(a) );
-// std::cout << "result: " << atom << "\n";
-  std::cout << "result: " << result << " " << a.a << " " << a.b << " " << a.c << "\n";
+  bool result = loader( *xml, lns::ext(atom) );
+  std::cout << "result: " << atom << "\n";
+// std::cout << "result: " << result << " " << a.a << " " << a.b << " " << a.c << "\n";
 
 
   return 0;
