@@ -1,11 +1,4 @@
-//
-//  Version: $Id: option.cc 1250 2009-07-26 21:04:07Z davezac $
-//
-
-
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include  <boost/xpressive/regex_algorithms.hpp>
 #include  <boost/xpressive/regex_compiler.hpp>

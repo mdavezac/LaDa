@@ -1,9 +1,7 @@
-#ifndef _LADA_LNS_XPR_SECTION_H_
-#define _LADA_LNS_XPR_SECTION_H_
+#ifndef LADA_LNS_XPR_SECTION_H
+#define LADA_LNS_XPR_SECTION_H
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <boost/xpressive/detail/utility/tracking_ptr.hpp>
 #include <boost/lexical_cast.hpp>

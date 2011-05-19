@@ -1,14 +1,7 @@
-//
-//  Version: $Id: printer.h 1167 2009-06-07 23:22:42Z davezac $
-//
+#ifndef LADA_LOADNSAVE_XML_FORMAT_H
+#define LADA_LOADNSAVE_XML_FORMAT_H
 
-#ifndef _LADA_LOADNSAVE_XML_FORMAT_H_
-#define _LADA_LOADNSAVE_XML_FORMAT_H_
-
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-
+#include "LaDaConfig.h"
 #include "../tree/tree.h"
 
 namespace LaDa 

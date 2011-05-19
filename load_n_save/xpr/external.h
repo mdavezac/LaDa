@@ -1,13 +1,7 @@
-//
-//  Version: $Id: external.h 1250 2009-07-26 21:04:07Z davezac $
-//
+#ifndef LADA_LNS_XPR_SECTIONDATA_H
+#define LADA_LNS_XPR_SECTIONDATA_H
 
-#ifndef _LADA_LNS_XPR_SECTIONDATA_H_
-#define _LADA_LNS_XPR_SECTIONDATA_H_
-
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <boost/lexical_cast.hpp>
 

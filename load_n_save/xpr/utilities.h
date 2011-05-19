@@ -1,13 +1,8 @@
-//
-//  Version: $Id: utilities.h 1268 2009-08-12 04:56:27Z davezac $
-//
 #ifndef BOOST_PP_IS_ITERATING
-# ifndef _LADA_LNS_XPR_UTILITIES_H_
-#   define _LADA_LNS_XPR_UTILITIES_H_
+# ifndef   LADA_LNS_XPR_UTILITIES_H
+#   define LADA_LNS_XPR_UTILITIES_H
 
-#   ifdef HAVE_CONFIG_H
-#     include <config.h>
-#   endif
+#   include "LaDaConfig.h"
 
 #   include <boost/preprocessor/iteration/iterate.hpp>
 #   include <boost/preprocessor/repetition/enum_binary_params.hpp>

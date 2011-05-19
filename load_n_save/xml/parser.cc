@@ -1,11 +1,4 @@
-//
-//  Version: $Id: parser.cc 1226 2009-07-13 06:28:01Z davezac $
-//
-
-
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <iostream>
 

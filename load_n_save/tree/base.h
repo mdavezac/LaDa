@@ -1,13 +1,7 @@
-//
-//  Version: $Id: base.h 1260 2009-08-03 04:15:14Z davezac $
-//
+#ifndef LADA_LNS_PARSED_TREE_BASE_H
+#define LADA_LNS_PARSED_TREE_BASE_H
 
-#ifndef _LADA_LNS_PARSED_TREE_BASE_H_
-#define _LADA_LNS_PARSED_TREE_BASE_H_
-
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <iostream>
 #include <string>

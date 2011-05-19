@@ -1,13 +1,7 @@
-//
-//  Version: $Id: action.h 1293 2009-09-08 05:51:37Z davezac $
-//
+#ifndef LADA_LNS_ACTION_H
+#define LADA_LNS_ACTION_H
 
-#ifndef _LADA_LNS_ACTION_H_
-#define _LADA_LNS_ACTION_H_
-
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <boost/utility/enable_if.hpp>
 

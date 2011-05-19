@@ -1,13 +1,7 @@
-//
-//  Version: $Id: parser.h 1226 2009-07-13 06:28:01Z davezac $
-//
+#ifndef LADA_LOADNSAVE_XML_PRINTER_H
+#define LADA_LOADNSAVE_XML_PRINTER_H
 
-#ifndef _LADA_LOADNSAVE_XML_PRINTER_H_
-#define _LADA_LOADNSAVE_XML_PRINTER_H_
-
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include "../tree/section.h"
 

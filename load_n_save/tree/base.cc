@@ -1,11 +1,4 @@
-//
-//  Version: $Id: base.cc 1227 2009-07-14 02:17:07Z davezac $
-//
-
-
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <iostream>
 

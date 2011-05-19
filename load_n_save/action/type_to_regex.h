@@ -1,14 +1,7 @@
-//
-//  Version: $Id: type_to_regex.h 1293 2009-09-08 05:51:37Z davezac $
-//
+#ifndef LADA_LOADNSAVE_XPR_TYPE_TO_REGEX_H
+#define LADA_LOADNSAVE_XPR_TYPE_TO_REGEX_H
 
-#ifndef _LADA_LOADNSAVE_XPR_TYPE_TO_REGEX_H_
-#define _LADA_LOADNSAVE_XPR_TYPE_TO_REGEX_H_
-
-
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits/is_integral.hpp>

@@ -1,13 +1,7 @@
-//
-//  Version: $Id: load.h 1266 2009-08-10 05:01:26Z davezac $
-//
+#ifndef LADA_LOADNSAVE_LOAD_LOAD_H
+#define LADA_LOADNSAVE_LOAD_LOAD_H
 
-#ifndef _LADA_LOADNSAVE_LOAD_LOAD_H_
-#define _LADA_LOADNSAVE_LOAD_LOAD_H_
-
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include "../tree/tree.h"
 #include "../xpr/section.h"

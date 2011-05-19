@@ -1,13 +1,7 @@
-//
-//  Version: $Id: string_to_type.h 1293 2009-09-08 05:51:37Z davezac $
-//
+#ifndef LADA_LOADNSAVE_XPR_STRING_TO_TYPE_H
+#define LADA_LOADNSAVE_XPR_STRING_TO_TYPE_H
 
-#ifndef _LADA_LOADNSAVE_XPR_STRING_TO_TYPE_H_
-#define _LADA_LOADNSAVE_XPR_STRING_TO_TYPE_H_
-
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <boost/utility/enable_if.hpp>
 #include <boost/type_traits/is_integral.hpp>

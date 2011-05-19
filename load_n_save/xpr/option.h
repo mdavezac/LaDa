@@ -1,13 +1,7 @@
-//
-//  Version: $Id: option.h 1268 2009-08-12 04:56:27Z davezac $
-//
+#ifndef LADA_LNS_XPR_TREE_OPTION_H
+#define LADA_LNS_XPR_TREE_OPTION_H
 
-#ifndef _LADA_LNS_XPR_TREE_OPTION_H_
-#define _LADA_LNS_XPR_TREE_OPTION_H_
-
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <boost/utility/enable_if.hpp>
 

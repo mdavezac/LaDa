@@ -1,13 +1,7 @@
-//
-//  Version: $Id: tags.h 1167 2009-06-07 23:22:42Z davezac $
-//
+#ifndef LADA_LNS_XML_TAGS_H
+#define LADA_LNS_XML_TAGS_H
 
-#ifndef _LADA_LNS_XML_TAGS_H_
-#define _LADA_LNS_XML_TAGS_H_
-
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 namespace LaDa 
 {

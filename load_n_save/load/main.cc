@@ -1,9 +1,4 @@
-//
-//  Version: $Id: main.cc 1293 2009-09-08 05:51:37Z davezac $
-//
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #define __PROGNAME__ "loadnsave"
 

@@ -1,13 +1,7 @@
-//
-//  Version: $Id: section.h 1266 2009-08-10 05:01:26Z davezac $
-//
+#ifndef LADA_LOADNSAVE_PARSER_BASE_SECTION_H
+#define LADA_LOADNSAVE_PARSER_BASE_SECTION_H
 
-#ifndef _LADA_LOADNSAVE_PARSER_BASE_SECTION_H_
-#define _LADA_LOADNSAVE_PARSER_BASE_SECTION_H_
-
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include "../string_type.h"
 

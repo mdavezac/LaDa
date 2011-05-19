@@ -1,9 +1,4 @@
-//
-//  Version: $Id: main.cc 1167 2009-06-07 23:22:42Z davezac $
-//
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <iostream>
 

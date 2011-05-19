@@ -1,14 +1,7 @@
-//
-//  Version: $Id: enum.h 1268 2009-08-12 04:56:27Z davezac $
-//
+#ifndef LADA_LOADNSAVE_BITWISE_MAP_ACTION_H
+#define LADA_LOADNSAVE_BITWISE_MAP_ACTION_H
 
-#ifndef _LADA_LOADNSAVE_BITWISE_MAP_ACTION_H_
-#define _LADA_LOADNSAVE_BITWISE_MAP_ACTION_H_
-
-
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <map>
 #include <boost/xpressive/regex_compiler.hpp>

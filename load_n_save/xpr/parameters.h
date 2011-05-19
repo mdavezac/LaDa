@@ -1,12 +1,7 @@
-//
-//  Version: $Id: parameters.h 1250 2009-07-26 21:04:07Z davezac $
-//
-#ifndef _LADA_LNS_XPR_PARAMETERS_H_
-#define _LADA_LNS_XPR_PARAMETERS_H_
+#ifndef LADA_LNS_XPR_PARAMETERS_H
+#define LADA_LNS_XPR_PARAMETERS_H
 
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
+#include "LaDaConfig.h"
 
 #include <boost/type_traits/is_same.hpp>
 #include <boost/fusion/include/deref.hpp>
