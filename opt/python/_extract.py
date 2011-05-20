@@ -1,7 +1,7 @@
 """ Holds base classes and mixins for extraction objects. """
 __docformat__ = "restructuredtext en"
-__all__ = ['AbstractExtratBase', 'OutcarSearchMixin']
-from abc import ABCMeta, abstractmethod, abstractproperty
+__all__ = ['AbstractExtractBase', 'OutcarSearchMixin']
+from abc import ABCMeta, abstractproperty
 from .decorators import broadcast_result
 
 class AbstractExtractBase(object):
@@ -116,7 +116,6 @@ class AbstractExtractBase(object):
     if hasattr(self, "_directory"): self._directory.hook = self.uncache
 
   def __repr__(self):
-    from os.path import relpath
     return "{0}(\"{1}\")".format(self.__class__.__name__, self._directory.unexpanded)
 
 def _search_factory(name, filename, module):
@@ -140,11 +139,8 @@ def _search_factory(name, filename, module):
 
   def _search_OUTCAR(self, regex, flags=0):
     """ Looks for all matches. """
-    from os.path import exists, join
     from re import compile, M as moultline
-    from numpy import array
 
-    result = []
     regex  = compile(regex, flags)
     with getattr(self, __outcar__.__name__)() as file:
       if moultline & flags: 
@@ -163,11 +159,8 @@ def _search_factory(name, filename, module):
 
   def _rsearch_OUTCAR(self, regex, flags=0):
     """ Looks for all matches starting from the end. """
-    from os.path import exists, join
     from re import compile, M as moultline
-    from numpy import array
 
-    result = []
     regex  = compile(regex)
     with getattr(self, __outcar__.__name__)() as file:
       lines = file.read() if moultline & flags else file.readlines()

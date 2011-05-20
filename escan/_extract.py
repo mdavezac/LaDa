@@ -1,6 +1,6 @@
 """ Module to extract esca and vff ouput. """
 __docformat__ = "restructuredtext en"
-__all__ = ['MassExtract']
+__all__ = ['Extract']
 
 from ..opt.decorators import broadcast_result, make_cached
 from ..opt import AbstractExtractBase, OutcarSearchMixin
@@ -67,8 +67,9 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     from numpy import array, zeros, pi
     from quantities import angstrom
     from ..physics import a0
-    regex = r'\s*ikpt,akx,aky,akz\s+(\d+)\s+(\S+)\s+(\S+)\s+(\S+)'
-    result = self._find_first_OUTCAR(regex)
+    from re import M
+    regex = r'\s*ikpt,akx,aky,akz\s+(\d+)\s+(\S+)\s+(?:\n\s+)?\s+(?:\n\s+)?(\S+)\s+(?:\n\s+)?(\S+)'
+    result = self._find_first_OUTCAR(regex, M)
     assert result != None,\
            RuntimeError('Could not find kpoint in file {0};'.format(self.__outcar__().name))
     if result.group(1) == '0': return zeros((3,), dtype='float64')
@@ -76,10 +77,10 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
            * (self.structure.scale * angstrom).rescale(a0).magnitude
 
   
-  def __directory__hook__(self):
+  def __directory_hook__(self):
     """ Called whenever the directory changes. """
     super(Extract, self).__directory_hook__()
-    self._vffout.directory = value
+    self._vffout.directory = self.directory
 
   def uncache(self): 
     """ Uncache values. """
@@ -114,7 +115,6 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
         At this point, checks for files and 
     """
     from re import compile
-    from os.path import exists, join
     do_escan_re = compile(r'functional\.do_escan\s*=')
 
     try:
@@ -132,15 +132,11 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
   @make_cached
   def functional(self):
     """ Greps escan functional from OUTCAR. """
-    from os.path import exists, join
-    from numpy import array
     from cPickle import load
-    from ..opt.changedir import Changedir
     from ..vff import _get_script_text
     from . import exec_input
     
     # tries to read from pickle.
-    path = self.FUNCCAR
     try:
       with self.__funccar__() as file: result = load(file)
     except: pass 
@@ -233,7 +229,6 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
   def nnodes(self):
     """ Greps eigenvalue convergence errors from OUTCAR. """
     from os.path import exists, join
-    from numpy import array
     path = self.OUTCAR
     if len(self.directory): path = join(self.directory, self.OUTCAR)
     assert exists(path), RuntimeError("Could not find file %s:" % (path))
@@ -363,9 +358,11 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     assert comm.real, ValueError("MPI needed to play with wavefunctions.")
     is_root = comm.rank == 0 
     assert self.success
-    kpoint = (0,0,0,0,0) if norm(self.functional.kpoint) < 1e-12\
-             else self.functional._get_kpoint(self.structure, self.comm, False)
-    scale, kpoint = kpoint[-1], kpoint[1:4]
+    print "WTF 0"
+    kpoint = self.functional.kpoint
+    print "WTF 1"
+    scale = self.structure.scale / float(a0.rescale(angstrom))
+    print "WTF 2", scale, kpoint
     with Changedir(self.directory, comm=self.comm) as directory:
       if is_root: 
         assert exists(self.functional.WAVECAR),\
@@ -373,8 +370,8 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
       if self.functional.potential == soH and norm(self.functional.kpoint):
         nbstates = self.functional.nbstates
       else: nbstates = self.functional.nbstates / 2
-      with redirect(fout="") as streams:
-        result = read_wavefunctions(self.functional, range(nbstates), kpoint, scale, comm)
+#     with redirect(fout="") as streams:
+      result = read_wavefunctions(self.functional, range(nbstates), kpoint, scale, comm)
     comm.barrier()
 
     cell = self.structure.cell * self.structure.scale * angstrom

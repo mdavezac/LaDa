@@ -27,7 +27,7 @@ class _ldosfunc(object):
     """
     from numpy import sqrt, pi
     from quantities import eV
-    self.eigenvalues = eigenvalues
+    self.eigenvalues = eigenvalues.copy()
     """ Vector of eigenvalues. """
     self.rs = rs.copy()
     """ Matrix of densities per real-space position(row) and per band(column). """
@@ -38,6 +38,8 @@ class _ldosfunc(object):
 
         .. |pi|  unicode:: U+003C0 .. GREEK SMALL LETTER PI
     """
+    print "4. ", self.eigenvalues.shape
+    print "5. ", self.rs.shape
 
   def __call__(self, energy, sigma=0.1):
     """ Calls smearing function over densities.
@@ -52,11 +54,11 @@ class _ldosfunc(object):
             number, in which case it should be in eV, or a numpy scalar with a
             unit (from quantity).
     """
-    from numpy import dot, exp
+    from numpy import dot, exp, array
     from quantities import eV
     if not hasattr(sigma, 'rescale'): sigma *= eV
     else: sigma = sigma.rescale(eV)
-    if not hasattr(energy, 'rescale'): energy *= eV
+    if not hasattr(energy, 'rescale'): energy = array(energy) * eV
     else: energy = energy.rescale(eV)
     x = (energy - self.eigenvalues)/sigma
     return dot(self.rs, self._inv_sqrt_pi/sigma * exp(-x*x))
@@ -74,7 +76,7 @@ def ldos(extractor, positions, raw=False):
           Whether to return the raw data or the LDOS itself, i.e. a function of
           the energy.
   """
-  from numpy import tensordot, multiply, conjugate, exp, concatenate, array
+  from numpy import tensordot, multiply, conjugate, exp, concatenate, array, rollaxis
 
   assert isinstance(extractor, KExtract),\
          ValueError('extractor argument should be KExtract isntance.')
@@ -84,7 +86,6 @@ def ldos(extractor, positions, raw=False):
   normalization = 0e0
   perpoint = []
   for i, equivs in enumerate(extractor.functional.kpoints.iter_equivalents(istr, ostr)):
-    print i
     # computes all positions including symmetry equivalents.
     # Since we expect fewer real space points than fourrier space points,
     # symmetric equivalents are added to real-space positions. 
@@ -104,9 +105,13 @@ def ldos(extractor, positions, raw=False):
     else: gwfns = extract.raw_gwfns
     # computes all exponentials exp(-i r.g), with r in first dim, and g in second.
     v = exp(-1j * tensordot(all_positions, extract.gvectors, ((1),(1))))
+    print "gvectors.shape", extract.gvectors.shape
+    print "all_positions.shape", array(all_positions).shape
+    print "v.shape", v.shape
     # computes fourrier transform for all wavefunctions simultaneously.
     rspace = tensordot(v, gwfns, ((1),(0)))
     rspace = multiply(rspace, conjugate(rspace)).real
+    print "rspace.shape", rspace.shape
     # Sum over spin channels if necessary.
     if not extract.is_spinor: rspace = rspace[:,:,0]
     else: rspace = rspace[:,:,0] + rspace[:,:,1]
@@ -118,18 +123,22 @@ def ldos(extractor, positions, raw=False):
     
     # sum over equivalent kpoints. 
     N = len(positions)
-    if abs(multiplicities[0] - 1e0) > 1e-12: rspace[:N, :] *= m
+    if abs(multiplicities[0] - 1e0) > 1e-12: rspace[:N, :] *= multiplicities[0]
     for j, m in enumerate(multiplicities[1:]):
       if abs(m - 1e0) > 1e-12: rspace[:N, :] += m * rspace[(j+1)*N:(j+2)*N, :]
       else: rspace[:N, :] += rspace[(j+1)*N:(j+2)*N, :]
 
     # append to reduced kpoint ldos list.
     perpoint.append(rspace[:N,:].copy())
+    print "last.shape", perpoint[-1].shape
 
   # normalize results and concatenate.
-  result = concatenate(perpoint, axis=1) / float(normalization)
+  result = rollaxis(perpoint, 0,-1) / float(normalization)
   
-  return result if raw else _ldosfunc(extractor.eigenvalues.flat, result)
+  print "1. ", extractor.eigenvalues.shape
+  print "2. ", extractor.eigenvalues.shape
+  print "3. ", result.shape
+  return result if raw else _ldosfunc(extractor.eigenvalues, result)
 
 
 
