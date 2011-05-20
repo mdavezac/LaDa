@@ -16,7 +16,7 @@ namespace LaDa
     void Vff :: first_neighbors_( std::vector< std::vector< math::rVector3d > >& _fn )
     {
       const size_t Nsites( structure.lattice->sites.size() );
-      LADA_DO_NASSERT( Nsites != 2, "Expected two sites for VFF.\n" )
+//     LADA_DO_NASSERT( Nsites != 2, "Expected two sites for VFF.\n" )
       typedef std::vector< std::vector< math::rVector3d > > t_FirstNeighbors;
       _fn.resize( structure.lattice->sites.size() );
       foreach( const Crystal::Lattice::t_Site &site, structure.lattice->sites )

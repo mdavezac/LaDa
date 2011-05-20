@@ -149,10 +149,9 @@ def default_slurm( file, walltime = "05:45:00", mppwidth = 8, ppernode=8, accoun
 
   if account == None: account = "BES000"
   file.write("#! /bin/bash\n"\
-             "#SBATCH --account={3}\n"\
+             "#SBATCH --account={2}\n"\
              "#SBATCH --time={0}\n"\
-             "#SBATCH -N {1}\n"\
-             "#SBATCH -n {2}\n".format(walltime, nnodes, mppwidth, account)) 
+             "#SBATCH -N {1}\n".format(walltime, nnodes, account)) 
   if partition != None: file.write("#SBATCH -p {0}\n".format(partition))
   pbsdir = dirname(file.name)
   if name != None:

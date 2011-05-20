@@ -274,8 +274,8 @@ class Vff(object):
             defining the bond-stretching parameters (order 2 through 6).
     """
     assert len(args) == 3, RuntimeError("Bonds should be set with 3 parameters: %s." % (args))
-    assert args[0] in [ u for site in self.lattice.sites for u in site.type ],\
-           RuntimeError( "Type %s is not in lattice." % (args[0]))
+#   assert args[0] in [ u for site in self.lattice.sites for u in site.type ],\
+#          RuntimeError( "Type %s is not in lattice." % (args[0]))
     assert args[1] in [ u for site in self.lattice.sites for u in site.type ],\
            RuntimeError( "Type %s is not in lattice." % (args[1]))
 
@@ -448,8 +448,8 @@ class Vff(object):
     from ..mpi import Communicator, world
 
     comm = Communicator(comm, with_world=True)
-    # bull shit. 
-    assert len(self.lattice.sites) == 2, RuntimeError("Lattice is not zinc-blend")
+    # Makes sure the lattice is doable
+#   assert len(self.lattice.sites) == 2, RuntimeError("Lattice is not zinc-blend")
     assert len(self.lattice.sites[0].type) > 0,\
            RuntimeError("No atomic species given in lattice site 0.")
     assert len(self.lattice.sites[1].type) > 0,\
