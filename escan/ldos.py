@@ -84,6 +84,7 @@ def ldos(extractor, positions, raw=False):
   normalization = 0e0
   perpoint = []
   for i, equivs in enumerate(extractor.functional.kpoints.iter_equivalents(istr, ostr)):
+    print i
     # computes all positions including symmetry equivalents.
     # Since we expect fewer real space points than fourrier space points,
     # symmetric equivalents are added to real-space positions. 
@@ -113,7 +114,7 @@ def ldos(extractor, positions, raw=False):
     if extract.is_krammer:
       assert rspace.shape[1] % 2 == 0
       # sum krammer degenerate states together since same eigenvalue.
-      rspace = rspace[:,:rspace.shape[1]//2,:] + rspace[:,rspace.shape[1]//2:,:]
+      rspace = rspace[:,:rspace.shape[1]//2] + rspace[:,rspace.shape[1]//2:]
     
     # sum over equivalent kpoints. 
     N = len(positions)
