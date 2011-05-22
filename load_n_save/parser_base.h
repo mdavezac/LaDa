@@ -3,7 +3,7 @@
 
 #include "LaDaConfig.h"
 
-#include "../string_type.h"
+#include "string_type.h"
 
 namespace LaDa 
 {

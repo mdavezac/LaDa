@@ -7,7 +7,7 @@
 
 #include "../access.h"
 #include "../string_type.h"
-#include "../parser_base/section.h"
+#include "../parser_base.h"
 
 namespace LaDa 
 {

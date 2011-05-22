@@ -8,7 +8,7 @@
 
 #include "../string_type.h"
 #include "../tags.h"
-#include "../parser_base/section.h"
+#include "../parser_base.h"
 #include "../sequencer/binary.h"
 #include "option.h"
 #include "subsections.h"

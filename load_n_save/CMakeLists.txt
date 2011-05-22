@@ -1,10 +1,9 @@
 set( LIBLNS_HEADERS 
-     string_type.h tags.h access.h
+     string_type.h tags.h access.h parser_base.h
      action/action_base.h action/enum.h action/string_to_type.h
      action/type_to_regex.h action/push_back.h
      load/load.h 
      save/save.h
-     parser_base/section.h
      sequencer/binary_const_iterator.h sequencer/binary.h
      sequencer/binary_range.h 
      tree/base.h tree/section.h
