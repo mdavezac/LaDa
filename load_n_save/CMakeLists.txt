@@ -1,8 +1,7 @@
 set( LIBLNS_HEADERS 
-     string_type.h
-     action/enum.h action/string_to_type.h action/type_to_regex.h
-     initializer/tagged_options.h initializer/tagged_sections.h
-     initializer/section_.h initializer/option_.h
+     string_type.h tags.h access.h
+     action/action_base.h action/enum.h action/string_to_type.h
+     action/type_to_regex.h action/push_back.h
      load/load.h 
      save/save.h
      parser_base/section.h
@@ -10,7 +9,7 @@ set( LIBLNS_HEADERS
      sequencer/binary_range.h 
      tree/base.h tree/section.h
      xml/parser.h xml/printer.h xml/tags.h
-     xpr/option.h xpr/section.h )
+     xpr/option.h xpr/section.h xpr/section_data.h xpr/subsections.h xpr/parameters.h )
 
 set( LIBLNS_SOURCES 
      load/option.cc load/section.cc
