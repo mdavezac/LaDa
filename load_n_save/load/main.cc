@@ -7,7 +7,10 @@
 #include "../tags.h"
 #include "../xpr/utilities.h"
 #include "../xml/parser.h"
+#include "../xml/printer.h"
 #include "../action/enum.h"
+
+#include "../save/save.h"
 
 namespace lns = LaDa :: load_n_save;
 struct A
@@ -79,7 +82,7 @@ int main(int argc, char *argv[])
   std::string string
 //   = "<A aa=4 b=\"3e-5\" c=t />\n";
 //  = "<Atom x=4 y=0 z=\"-3.1416\" freeze=\"xyz\" />\n";
-    = "<Atom pos=\"0 0 -3.1416\" type=Au freeze=\"xyz\" />\n";
+    = "<Atom x=0 y=0 z=\"-3.1416\" type=Au freeze=\"xyz\" />\n";
 
   boost::shared_ptr< lns::tree::Base > xml( lns::xml::parse( string ) );
   std::cout << (bool) xml << "\n";
@@ -88,7 +91,13 @@ int main(int argc, char *argv[])
   lns::load::Load loader;
   bool result = loader( *xml, lns::ext(atom) );
   std::cout << "result: " << atom << "\n";
-// std::cout << "result: " << result << " " << a.a << " " << a.b << " " << a.c << "\n";
+  
+
+  lns::save::Save saver;
+   boost::shared_ptr< lns::tree::Base > other(saver(lns::ext(atom)));
+   std::cout << "\n ? \n";
+   lns::xml::print(std::cout, *other);
+   std::cout << "\n ? \n";
 
 
   return 0;

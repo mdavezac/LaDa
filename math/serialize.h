@@ -3,8 +3,12 @@
 
 #include "LaDaConfig.h"
 
+#include <sstream>
+
 #include "eigen.h"
+
 #include <load_n_save/action/string_to_type.h>
+#include <load_n_save/action/type_to_string.h>
 #include <load_n_save/action/type_to_regex.h>
 namespace boost {
   namespace serialization {
@@ -79,6 +83,15 @@ namespace LaDa
         _value[2] = boost::lexical_cast<types::t_real>( c );
 
         return true;
+      }
+    };
+    template<> struct TypeToString<math::rVector3d, void>
+    {
+      static t_String apply(math::rVector3d const &_value)
+      {
+        std::ostringstream sstr;
+        sstr << _value(0) << " " << _value(1) << " " << _value(2);
+        return sstr.str();
       }
     };
   }

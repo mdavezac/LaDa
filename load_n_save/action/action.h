@@ -9,6 +9,7 @@
 
 #include "action_base.h"
 #include "type_to_regex.h"
+#include "type_to_string.h"
 #include "string_to_type.h"
 
 namespace LaDa 
@@ -59,6 +60,8 @@ namespace LaDa
               { return TypeToRegex<t_Type>::apply(); }
             //! Puts default value into action.
             virtual bool assign_default() const { variable_ = default_; return true; }
+            //! Prints to string.
+            virtual t_String str() const { return TypeToString<t_Type>::apply(variable_); }
      
           private:
             bool string_to_type_(t_String const& _str, boost::mpl::bool_<false> const& ) const
@@ -97,8 +100,10 @@ namespace LaDa
             virtual bool operator()( t_String const& _str ) const
               { return string_to_type_(_str, typename details::dummy<T_TYPE>::type() ); }
             //! Parses a value to the action.
-            virtual t_String operator()() const
+            virtual t_String operator()() const 
               { return TypeToRegex<t_Type>::apply(); }
+            //! Prints to string.
+            virtual t_String str() const { return TypeToString<t_Type>::apply(variable_); }
      
           private:
             bool string_to_type_(t_String const& _str, boost::mpl::bool_<false> const& ) const
@@ -136,6 +141,8 @@ namespace LaDa
               { return action_(); }
             //! Puts default value into action.
             virtual bool assign_default() const { return action_.assign_default(default_); }
+            //! Puts default value into action.
+            virtual t_String str() const { return action_.str(); }
      
           private:
             //! Variable the action holds.
@@ -169,6 +176,8 @@ namespace LaDa
             //! Parses a value to the action.
             virtual t_String operator()() const
               { return action_(); }
+            //! Puts default value into action.
+            virtual t_String str() const { return action_.str(); }
      
           private:
             //! Variable the action holds.

@@ -13,7 +13,7 @@ namespace LaDa
 {
   namespace load_n_save
   {
-    namespace load
+    namespace save
     {
       //! Links text with operators for loading purposes.
       class Save 
@@ -28,8 +28,7 @@ namespace LaDa
           Save( Save const &_c ) : verbose(_c.verbose) {}
 
           //! Returns an in put/output tree.
-          boost::shared_ptr<tree::Section> operator()(xpr::Section const& _sec ) const
-            { return Section()(_sec).tree(); }
+          boost::shared_ptr<tree::Base> operator()(xpr::Section const& _sec ) const;
      
           //! Loads an archive.
           bool is_loading() const { return false; } 
@@ -37,54 +36,36 @@ namespace LaDa
         protected:
           //! Class for parsing a section.
           class Section;
-          //! Class for parsing an option.
-          class Option;
       };
 
-      class Load :: Section : public parser_base::Section
+      class Save :: Section : public parser_base::Section
       {
         public:
           //! Constructor.
-          Section() : tree_(new tree::Section) {}
+          Section(boost::shared_ptr<tree::Section> const &_tree) : tree_(_tree) {}
           //! Copy constructor.
-          Section(Section & _c) : tree_(_c.tree) {}
+          Section(Section & _c) : tree_(_c.tree_) {}
 
           bool operator()(xpr::Section const& _sec) const
             { return operator&(_sec); }
           virtual bool operator&( xpr::Section const& _sec ) const
             { return _sec.parse(*this); }
 
-          //! Loads an archive.
+          //! Saves an archive.
           bool is_loading() const { return false; } 
 
           //! Parses content.
-          virtual bool content( xpr::Section const & _sec, t_String const &_name = "" ) const;
+          virtual bool content( xpr::Section const & _sec, t_String const &_name = "" ) const
+            { LADA_DOASSERT(false, ""); return false; }
           //! Double dispatch.
           virtual bool regular( xpr::Section const &_sec, xpr::regular_data const&_data ) const;
           //! Returns the current tree;
           boost::shared_ptr<tree::Section> tree() const { return tree_; }
 
         protected:
+          //! Parses content of an expression range;
+          template<class T> bool content_(T const &_range) const;
           //! Reference to the tree being built.
-          boost::shared_ptr<tree::Section> tree_;
-      };
-
-      class Load :: Option 
-      {
-          friend class Section;
-        public:
-          //! Parsing Constructor.
-          Option( Section const &_c) : tree_(_c.tree_) {}
-          //! Copy Constructor.
-          Option( Option const &_c ) : tree_(_c.tree_) {}
-
-          //! Starts parsing.
-          bool operator()( t_String const& _name, xpr::Option const& _sec ) const;
-
-        protected:
-          //! Checks a value against a regex.
-          bool parse_( t_String const& _regex, t_String const &_value ) const;
-          //! Xml-like tree.
           boost::shared_ptr<tree::Section> tree_;
       };
 

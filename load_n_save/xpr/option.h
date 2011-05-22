@@ -38,6 +38,8 @@ namespace LaDa
           t_String action() const { return action_ ? (*action_)(): ""; }
           //! Assigns a default value if it exists.
           bool assign_default() const { return action_ ? action_->assign_default(): false; }
+          //! Assigns a default value if it exists.
+          t_String str() const { return action_ ? action_->str(): ""; }
           //! Sets the action.
           template< class T0, class T1 >
             typename boost::disable_if< action_::is_special_action<T0> > :: type 

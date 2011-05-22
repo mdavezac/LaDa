@@ -45,6 +45,9 @@ namespace LaDa
             template<class T>
               bool assign_default( T const& _default ) const
                 { var_ = _default; return true; }
+
+            //! Prints a value
+            virtual t_String str() const;
      
           protected:
             //! Holds reference to variable.
@@ -87,6 +90,23 @@ namespace LaDa
             result +=   "|" + i_first->first;
           result +=   ")";
           if( inclusive_ ) result += "+";
+          return result;
+        }
+
+      template<class T_TYPE>
+        t_String Enum<T_TYPE>::str() const
+        {
+          typename t_map::const_iterator i_first = map_.begin();
+          typename t_map::const_iterator const i_end = map_.end();
+          if( i_first == i_end ) return "";
+          // first checks that one variable does not fit the value.
+          for(; i_first != i_end; ++i_first)
+            if(var_ == i_first->second) return i_first->first;
+          LADA_DOASSERT(not inclusive_, "Unknown value.");
+          // otherwise, makes a compound statement.
+          t_String result;
+          for(i_first = map_.begin(); i_first != i_end; ++i_first)
+            if(var_ & i_first->second) result += i_first->first;
           return result;
         }
      

@@ -39,7 +39,7 @@ namespace LaDa
       //! \brief Xml node.
       //! \details Holds xml tag name, options and subnodes. Allows parsing from
       //!          string and direct manipulation of the xml tree.
-      class Section : public details::Base<Section>, public details::Options<Option>
+      class Section : public virtual details::Base<Section>, public virtual details::Options<Option>
       {
           //! Type of option tree.
           typedef details::Options<Option> t_Options;

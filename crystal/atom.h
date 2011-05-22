@@ -133,10 +133,10 @@ namespace LaDa
                         && lns::option("y", lns::tag=lns::required, lns::action=pos[1])
                         && lns::option("z", lns::tag=lns::required, lns::action=pos[2])
                       ) || lns::option("pos", lns::tag=lns::required, lns::action=pos)
-                      && lns::option("freeze", lns::action=lns::enum_(freeze, freeze_map),
+                    )
+                 << lns::option("freeze", lns::action=lns::enum_(freeze, freeze_map),
                                      lns::default_=FREEZE_NONE)
-                      && lns::option("type", lns::tag=lns::required, lns::action=type)
-                    ) );
+                 << lns::option("type", lns::tag=lns::required, lns::action=type) );
             return _ar & section;
           }
       private:

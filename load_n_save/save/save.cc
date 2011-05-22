@@ -3,7 +3,6 @@
 #include <boost/iterator/filter_iterator.hpp>
 
 #include "save.h"
-#include "../xml/printer.h"
 #include "../sequencer/binary_range.h"
 
 namespace LaDa 
@@ -17,10 +16,7 @@ namespace LaDa
         boost::shared_ptr<tree::Base> result(new tree::Base);
         boost::shared_ptr<tree::Section> text(new tree::Section(""));
         Save::Section section(text); section(_sec);
-        std::cout << "\nhere\n";
-        xml::print(std::cout, *text);
-        std::cout << "\nhere\n";
-        text->tree::Base::swap(*result);
+        result->push_back(*text);
         return result;
       }
 

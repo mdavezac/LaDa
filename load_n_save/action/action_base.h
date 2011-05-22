@@ -34,6 +34,8 @@ namespace LaDa
         virtual t_String operator()() const = 0;
         //! Assigns default value to action.
         virtual bool assign_default() const { return false; }
+        //! Prints a value
+        virtual t_String str() const = 0;
       };
 
     } // namespace action_.

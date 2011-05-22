@@ -3,7 +3,8 @@ set( LIBLNS_HEADERS
      action/enum.h action/string_to_type.h action/type_to_regex.h
      initializer/tagged_options.h initializer/tagged_sections.h
      initializer/section_.h initializer/option_.h
-     load/load.h
+     load/load.h 
+     save/save.h
      parser_base/section.h
      sequencer/binary_const_iterator.h sequencer/binary.h
      sequencer/binary_range.h 
@@ -13,6 +14,7 @@ set( LIBLNS_HEADERS
 
 set( LIBLNS_SOURCES 
      load/option.cc load/section.cc
+     save/save.cc
      sequencer/binary.cc 
      xml/parser.cc xml/printer.cc
      xpr/section.cc )
