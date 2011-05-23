@@ -344,7 +344,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     assert lada_with_mpi, RuntimeError("Lada loaded without mpi. Cannot read wavefunctions.")
     # then check for function.
     from os.path import exists
-    from numpy import sqrt, abs
+    from numpy import sqrt, abs, array
     from numpy.linalg import norm, det
     from quantities import angstrom, pi
     from ..mpi import world
@@ -358,11 +358,8 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     assert comm.real, ValueError("MPI needed to play with wavefunctions.")
     is_root = comm.rank == 0 
     assert self.success
-    print "WTF 0"
-    kpoint = self.functional.kpoint
-    print "WTF 1"
+    kpoint = array(self.functional.kpoint, dtype="float64")
     scale = self.structure.scale / float(a0.rescale(angstrom))
-    print "WTF 2", scale, kpoint
     with Changedir(self.directory, comm=self.comm) as directory:
       if is_root: 
         assert exists(self.functional.WAVECAR),\
@@ -370,8 +367,8 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
       if self.functional.potential == soH and norm(self.functional.kpoint):
         nbstates = self.functional.nbstates
       else: nbstates = self.functional.nbstates / 2
-#     with redirect(fout="") as streams:
-      result = read_wavefunctions(self.functional, range(nbstates), kpoint, scale, comm)
+      with redirect(fout="") as streams:
+        result = read_wavefunctions(self.functional, range(nbstates), kpoint, scale, comm)
     comm.barrier()
 
     cell = self.structure.cell * self.structure.scale * angstrom

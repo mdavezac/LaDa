@@ -38,8 +38,6 @@ class _ldosfunc(object):
 
         .. |pi|  unicode:: U+003C0 .. GREEK SMALL LETTER PI
     """
-    print "4. ", self.eigenvalues.shape
-    print "5. ", self.rs.shape
 
   def __call__(self, energy, sigma=0.1):
     """ Calls smearing function over densities.
@@ -60,8 +58,8 @@ class _ldosfunc(object):
     else: sigma = sigma.rescale(eV)
     if not hasattr(energy, 'rescale'): energy = array(energy) * eV
     else: energy = energy.rescale(eV)
-    x = (energy - self.eigenvalues)/sigma
-    return dot(self.rs, self._inv_sqrt_pi/sigma * exp(-x*x))
+    y = array([ [(E - e)/sigma for e in energy] for E in self.eigenvalues])
+    return dot(self.rs, self._inv_sqrt_pi/sigma * exp(-y*y))
 
 
 def ldos(extractor, positions, raw=False):
@@ -105,13 +103,9 @@ def ldos(extractor, positions, raw=False):
     else: gwfns = extract.raw_gwfns
     # computes all exponentials exp(-i r.g), with r in first dim, and g in second.
     v = exp(-1j * tensordot(all_positions, extract.gvectors, ((1),(1))))
-    print "gvectors.shape", extract.gvectors.shape
-    print "all_positions.shape", array(all_positions).shape
-    print "v.shape", v.shape
     # computes fourrier transform for all wavefunctions simultaneously.
     rspace = tensordot(v, gwfns, ((1),(0)))
     rspace = multiply(rspace, conjugate(rspace)).real
-    print "rspace.shape", rspace.shape
     # Sum over spin channels if necessary.
     if not extract.is_spinor: rspace = rspace[:,:,0]
     else: rspace = rspace[:,:,0] + rspace[:,:,1]
@@ -130,14 +124,11 @@ def ldos(extractor, positions, raw=False):
 
     # append to reduced kpoint ldos list.
     perpoint.append(rspace[:N,:].copy())
-    print "last.shape", perpoint[-1].shape
 
   # normalize results and concatenate.
-  result = rollaxis(perpoint, 0,-1) / float(normalization)
+  result = rollaxis(array(perpoint), 0,-1) / float(normalization)
+  result = array([u.flatten() for u in result])
   
-  print "1. ", extractor.eigenvalues.shape
-  print "2. ", extractor.eigenvalues.shape
-  print "3. ", result.shape
   return result if raw else _ldosfunc(extractor.eigenvalues, result)
 
 
@@ -180,7 +171,7 @@ class Extract(KExtract):
   @make_cached
   def ldos(self):
     """ Local density of states for ``positions``. """
-    return _ldosfunc(self.copy(unreduce=False).eigenvalues.flat, self.raw_ldos)
+    return _ldosfunc(self.copy(unreduce=False).eigenvalues.flatten(), self.raw_ldos)
    
   def iterfiles(self, **kwargs):
     """ Iterates through exportable files. 
