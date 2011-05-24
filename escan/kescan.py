@@ -261,6 +261,29 @@ class Extract(AbstractExtractBase):
     for name in ['_cached_knm', '_cached_uknm', '_cached_joblist', '_cached_ujoblist']:
       self.__dict__.pop(name, None)
 
+  def dos(self, energy, sigma=0.1):
+    """ Computes density of states for given energies and smearing. 
+
+        :Parameters:
+          energy : float or scalar array
+            Energy at which to compute the density of states. This can be real
+            number, in which case it should be in eV, or a numpy scalar with a
+            unit (from quantity).
+          sigma : float or scalar array
+            Width at half maximum of the gaussian smearing. This can be real
+            number, in which case it should be in eV, or a numpy scalar with a
+            unit (from quantity).
+    """
+    from numpy import exp, array, sqrt, pi
+    from numpy.linalg import det
+    from quantities import eV
+    if not hasattr(sigma, 'rescale'): sigma *= eV
+    else: sigma = sigma.rescale(eV)
+    if not hasattr(energy, 'rescale'): energy = array(energy) * eV
+    else: energy = energy.rescale(eV)
+    y = array([ [(E - e)/sigma for e in energy] for E in self.eigenvalues.flatten()])
+    return det(self.structure.cell)/sigma/sqrt(pi)/float(y.shape[0]) * sum(exp(-y*y)) 
+
  
 class KEscan(Escan):
   """ A wrapper around Escan for computing many kpoints. """

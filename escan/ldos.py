@@ -15,7 +15,7 @@ from ..opt import make_cached, FileCache
 
 class _ldosfunc(object):
   """ Local density of states for a given set of positions within a given structure. """
-  def __init__(self, eigenvalues, rs):
+  def __init__(self, eigenvalues, rs, volume):
     """ Initializes a local density of state functor. 
     
         :Parameters:
@@ -24,6 +24,8 @@ class _ldosfunc(object):
             which case eV is assumed.
           rs : numpy array
             Matrix of densities per real-space position(row) and per band(column). 
+          volume : scalar
+            Volume of the brillouin zone.
     """
     from numpy import sqrt, pi
     from quantities import eV
@@ -33,8 +35,10 @@ class _ldosfunc(object):
     """ Matrix of densities per real-space position(row) and per band(column). """
     if not hasattr(self.eigenvalues, 'rescale'): self.eigenvalues *= eV 
     else: self.eigenvalues = self.eigenvalues.rescale(eV)
-    self._inv_sqrt_pi = 1e0/sqrt(pi)
-    """ Normalization constant 1e0/sqrt(|pi|). 
+    self.normalization = float(volume) / float(self.eigenvalues.shape[0]) / sqrt(pi)
+    """ Normalization for LDOS.
+    
+        brillouin zone volume / number of k-points / sqrt(|pi|). 
 
         .. |pi|  unicode:: U+003C0 .. GREEK SMALL LETTER PI
     """
@@ -59,7 +63,7 @@ class _ldosfunc(object):
     if not hasattr(energy, 'rescale'): energy = array(energy) * eV
     else: energy = energy.rescale(eV)
     y = array([ [(E - e)/sigma for e in energy] for E in self.eigenvalues])
-    return dot(self.rs, self._inv_sqrt_pi/sigma * exp(-y*y))
+    return dot(self.rs, exp(-y*y)) * (float(self.normalization) / sigma)
 
 
 def ldos(extractor, positions, raw=False):
@@ -75,6 +79,7 @@ def ldos(extractor, positions, raw=False):
           the energy.
   """
   from numpy import tensordot, multiply, conjugate, exp, concatenate, array, rollaxis
+  from numpy.linalg import det, inv
 
   assert isinstance(extractor, KExtract),\
          ValueError('extractor argument should be KExtract isntance.')
@@ -129,7 +134,8 @@ def ldos(extractor, positions, raw=False):
   result = rollaxis(array(perpoint), 0,-1) / float(normalization)
   result = array([u.flatten() for u in result])
   
-  return result if raw else _ldosfunc(extractor.eigenvalues, result)
+  return result if raw \
+         else _ldosfunc(extractor.eigenvalues, result, det(inv(extractor.structure.cell)))
 
 
 
@@ -171,7 +177,9 @@ class Extract(KExtract):
   @make_cached
   def ldos(self):
     """ Local density of states for ``positions``. """
-    return _ldosfunc(self.copy(unreduce=False).eigenvalues.flatten(), self.raw_ldos)
+    from numpy.linalg import det, inv
+    volume = det(inv(self.structure.cell))
+    return _ldosfunc(self.copy(unreduce=False).eigenvalues.flatten(), self.raw_ldos, volume)
    
   def iterfiles(self, **kwargs):
     """ Iterates through exportable files. 
