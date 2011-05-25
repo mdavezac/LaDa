@@ -1,6 +1,6 @@
 """ A GA subpackage defining standard genetic operator for elemental alloys. """
-
-__all__ = [ 'evaluator', 'Individual', 'Crossover', 'Mutation', 'Converter',
+__docformat__ = "restructuredtext en"
+__all__ = [ 'Individual', 'Crossover', 'Mutation', 'Converter',
             'LayeredConverter', 'extract', 'functional']
 
 from ...bitstring import Individual as BitstringIndividual, \
@@ -81,12 +81,15 @@ class Converter(object):
   def __init__(self, supercell, lattice):
     """ Initializes a functor for bitstring to crystal structure conversion. 
 
-        Structure().L{lattice<crystal.Structure.lattice>} must be set. 
-        @param supercell: are the lattice-vectors of the supercell making up the
-          elemental superlattice. The epitaxial direction must be given by the
-          first column vector.
-        @type supercell: 3x3 float64 numpy array.
-        @param lattice: lattice from which to create supercell.
+        :Parameters:
+          supercell 
+            are the lattice-vectors of the supercell making up the
+            elemental superlattice. The epitaxial direction must be given by the
+            first column vector.
+          lattice
+            lattice from which to create supercell.
+
+        The global lattice `crystal.Structure.lattice` must be set. 
     """
     from lada.crystal import LayerDepth, sort_layers, Structure, fill_structure
     super(Converter, self).__init__()
@@ -116,11 +119,11 @@ class Converter(object):
     return len(self.structure.atoms)
 
   def __call__(self, object):
-    """ Conversion function for structures and bitstring. 
+    """ Converts to and from structures and bitstring. 
 
-        If object is L{crystal.Structure<lada.crystal.Structure>}-like, then converts
-        to a bitstring.  Otherwise, expects a bitstring which is converted to
-        an L{crystal.Structure<lada.crystal.Structure>}.
+        :Parameters:
+          object : `crystal.Structure` or sequence
+            Structure (bitstring) to convert to a bitstring (Structure).
     """
     from numpy import array
     from lada.crystal import Structure
@@ -151,14 +154,17 @@ class LayeredConverter(object):
   """ Converts a bitstring into an actual superlattice structure, and vice-versa. """
 
   def __init__(self, supercell, lattice):
-    """ Initializes a functor for bitstring to crystal structure conversion. 
+    """ Initializes a functor for bitstring to crystal superlattice conversion. 
 
-        Structure().L{lattice<crystal.Structure.lattice>} must be set. 
-        @param supercell: are the lattice-vectors of the supercell making up the
-          elemental superlattice. The epitaxial direction must be given by the
-          first column vector.
-        @type supercell: 3x3 float64 numpy array.
-        @param lattice: lattice from which to create supercell.
+        :Parameters:
+          supercell 
+            are the lattice-vectors of the supercell making up the
+            elemental superlattice. The epitaxial direction must be given by the
+            first column vector.
+          lattice
+            lattice from which to create supercell.
+
+        The global lattice `crystal.Structure.lattice` must be set. 
     """
     from lada.crystal import LayerDepth, sort_layers, Structure, fill_structure
     super(LayeredConverter, self).__init__()
@@ -198,11 +204,11 @@ class LayeredConverter(object):
     return len([0 for u in generator(self.structure, all=False)]) 
     
   def __call__(self, object):
-    """ Conversion function for structures and bitstring. 
+    """ Converts to and from structures and bitstring. 
 
-        If object is L{crystal.Structure<lada.crystal.Structure>}-like, then converts
-        to a bitstring.  Otherwise, expects a bitstring which is converted to
-        an L{crystal.Structure<lada.crystal.Structure>}.
+        :Parameters:
+          object : `crystal.Structure` or sequence
+            Structure (bitstring) to convert to a bitstring (Structure).
     """
     from numpy import array
     from lada.crystal import Structure, LayerDepth
@@ -237,4 +243,4 @@ class LayeredConverter(object):
   def __repr__(self):
     return "from {0} import {1}\n{2}\nsupercell = {3}\nconverter = {1}(supercell, lattice)"\
            .format(self.__class__.__module__, self.__class__.__name__,
-                   repr(lattice), repr(self.structure.cell))
+                   repr(self.lattice), repr(self.structure.cell))

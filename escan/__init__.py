@@ -7,7 +7,6 @@ __all__ = [ "Extract", 'MassExtract', "bandgap", "extract_bg", 'ldos',
             'folded_spectrum', 'all_electron', 'read_input', 'exec_input', 'KExtract',  
             'majority_representation', 'BPoints', 'ReducedBPoints', 'plot_bands', 'plot_alloybands']
 
-from ..opt import __load_escan_in_global_namespace__
 from _bandstructure import plot_bands, BPoints, ReducedBPoints, plot_alloybands
 from _bandgap import bandgap, extract as extract_bg, Functional as BandGap
 from _extract import Extract

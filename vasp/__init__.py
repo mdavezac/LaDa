@@ -17,16 +17,15 @@
 """
 __docformat__ = "restructuredtext en"
 from launch import Launch
-from extract import Extract, ExtractGW_deprecated as ExtractGW
+from extract import Extract
 from incar import Incar
 from kpoints import Density, Gamma
 from specie import Specie
-from ..opt import __load_vasp_in_global_namespace__
 
 def version():
   """ Vasp version as tuple (major, medium, minor). """
   from lada import vasp_library
-  from _vasp import version as call_version, vasp as call_vasp
+  from _vasp import version as call_version
   if vasp_library == None: raise RuntimeError("No vasp library specified.")
   return call_version(vasp_library)
 
@@ -52,7 +51,7 @@ __all__ = [ 'Launch', 'Extract', 'Incar', 'Density', 'Gamma', 'Specie',\
             'incar', 'extract', 'kpoints', 'methods' ]
 try: from extract import MassExtract
 except ImportError: pass
-else: __all__.append('MassExtract')
+else: __all__.append(MassExtract.__class__.__name__)
     
 class Vasp(Launch):
   """ Interface to VASP code.
@@ -123,7 +122,7 @@ class Vasp(Launch):
     """ 
     from copy import deepcopy
     from os import getcwd
-    from os.path import exists, isdir, join
+    from os.path import exists, join
     from numpy import abs
     from numpy.linalg import det
     from ..crystal import specie_list, read_poscar
@@ -233,8 +232,9 @@ class Vasp(Launch):
     # adds user modules above repr string.
     header = ""
     for name in sorted(modules.keys()):
-      header += "from %s import %s" % (name, modules[name][0])
-      for v in modules[name][1:]: header += ", %s" % (v)
+      mods = list(set(modules[name]))
+      header += "from %s import %s" % (name, mods[0])
+      for v in mods[1:]: header += ", %s" % (v)
       header += "\n"
     return header + string
 
@@ -251,7 +251,7 @@ def read_input(filepath="input.py", namespace=None):
       It add a few names to the input-file's namespace. 
   """
   from ..opt import read_input
-  from . import Vasp, specie, files
+  from . import Vasp, specie
   from methods import RelaxCellShape
   from extract import Extract
 

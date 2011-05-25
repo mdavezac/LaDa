@@ -1,15 +1,13 @@
 """ Contains evaluators for ESCAN properties """
 __docformat__ = "restructuredtext en"
-from numpy import array as np_array
 from ....opt.decorators import count_calls
 
-
-__all__ = ['cound_calls', 'Bandgap', 'Dipole', 'EffectiveMass']
+__all__ = ['Bandgap', 'Dipole', 'EffectiveMass']
 
   
 class Bandgap(object):
   """ An evaluator function for direct bandgaps. """
-  def __init__(self, converter, escan, outdir = None, references = None, \
+  def __init__(self, converter, functional, outdir = None, references = None, \
                keep_only_last = True, **kwargs):
     """ Initializes the bandgap object. 
 
@@ -17,18 +15,18 @@ class Bandgap(object):
           converter : `lada.ga.escan.elemental.Converter`
             is a functor which converts between a bitstring and a
             `lada.crystal.Structure`, and vice versa.
-          escan : `lada.escan.Escan`
-            escan functional.
+          functional 
+            some escan functional or meta-functional.
           outdir : str or None
             Directory where to perform calculations. Defaults to None. 
           references
-	    Reference energies for band-gap calculations. See
+	          Reference energies for band-gap calculations. See
             `lada.escan.bandgap`. Defaults to None.
           keep_only_last : boolean
-	    If true, only the last calculation is kept. Limits the space
+	          If true, only the last calculation is kept. Limits the space
             required for ESCAN optimizations.
           kwargs
-            Other keyword arguments to be passed to the bandgap routine.
+            Other keyword arguments to be passed to the functional.
     """
     from copy import deepcopy
     from ....opt import RelativeDirectory
@@ -37,14 +35,8 @@ class Bandgap(object):
 
     self.converter = converter 
     """ Conversion functor between structures and bitstrings. """
-    self.escan = escan
-    """ Escan functional """
-    self.references = references 
-    """ References to compute bandgap.
-    
-        Can be None (all-electron method), a 2-tuple of reference values
-        (folded-spectrum), or a callable returnin a 2-tuple when given a structure.
-    """
+    self.escan = functional
+    """ Escan functional or meta-functional. """
     self.keep_only_last = keep_only_last
     """ Whethere to keep only last calculations or all. """
     self.kwargs = deepcopy(kwargs)
@@ -64,7 +56,8 @@ class Bandgap(object):
 
   def __len__(self):
     """ Returns length of bitstring. """
-    return len(self.converter)
+    if hasattr(self.converter, '__len__'): return len(self.converter)
+    raise AttributeError("{0} has not len attribute.".format(self.__class__.__name__))
 
   @count_calls('nbcalc', 0)
   def run(self, indiv, outdir = None, comm = None, **kwargs):
@@ -87,13 +80,11 @@ class Bandgap(object):
     from shutil import rmtree
     from os.path import join, exists
     from copy import deepcopy
-    from ....escan import bandgap
     from ....mpi import Communicator
 
     # takes into account input arguments.
-    references = kwargs.pop("references", self.references)
     converter  = kwargs.pop( "converter",  self.converter)
-    escan      = kwargs.pop(     "escan",      self.escan)
+    escan      = kwargs.pop("functional", self.escan)
     comm       = Communicator(comm)
     if outdir == None: outdir = self.outdir
     elif outdir[0] != '/': outdir = join(self.outdir, outdir)
@@ -106,11 +97,9 @@ class Bandgap(object):
     dictionary.update(kwargs) 
     dictionary["comm"]       = comm 
     dictionary["outdir"]     = outdir
-    dictionary["references"] = self.references(structure) if hasattr(references, "__call__")\
-                               else references
     if "overwrite" not in dictionary: dictionary["overwrite"]  = True
     # performs calculation.
-    out = bandgap(escan, structure, **dictionary)
+    out = self.escan(structure, **dictionary)
 
     # saves some stuff
     indiv.epi_energy = out.energy
@@ -137,13 +126,11 @@ class Bandgap(object):
   def __getstate__(self):
     from pickle import dumps
     d = self.__dict__.copy()
-    references = self.references
-    try:  dumps(d["references"])
+    try:  dumps(d.get("references", None))
     except TypeError: 
       raise RuntimeError("Cannot pickle references in Bandgap evaluator.")
     return d
   def __setstate__(self, arg):
-    from pickle import loads
     self.__dict__.update(arg)
 
   def __repr__(self): 
@@ -152,7 +139,7 @@ class Bandgap(object):
     for key, value in self.__dict__.items():
       if key[0] == '_': continue
       if key == 'converter': continue
-      if key == 'escan': continue
+      if key == 'functional': continue
       if key == 'outdir': continue
       try: r = repr(value).rstrip().lstrip()
       except: continue

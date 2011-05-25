@@ -1,7 +1,7 @@
 set( PYESCAN_PY
      _bandgap.py  _bandstructure.py  derivatives.py  _extract.py  __init__.py
      _methods.py  va.py  _wfns.py functional.py kescan.py _potential.py kpoints.py
-     _massextract.py ldos.py )
+     _massextract.py ldos.py fftmesh.py )
 set(PYESCAN_HEADERS escan.hpp  wavefunctions.hpp)
 set(PYESCAN_SOURCES escan.cc python.cc wavefunctions.cc)
 if(ESCAN_FOUND)

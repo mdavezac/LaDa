@@ -1,7 +1,7 @@
 """ Extraction module for escan elemental GA. """
 __docformat__ = "restructuredtext en"
-from ....opt.decorators import make_cached, broadcast_result
-from ....opt import AbstractExtractBase, OutcarSearchMixin
+from ...opt.decorators import make_cached, broadcast_result
+from ...opt import AbstractExtractBase, OutcarSearchMixin
 import re
 
 __all__  = ['Extract']

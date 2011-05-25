@@ -1,7 +1,7 @@
 """ Package to enumerate structural decorations of a lattice. """
 __docformat__ = "restructuredtext en"
-__all__ = ['Enum', 'as_structure', 'as_numpy']
-from _enumeration import as_structure, as_numpy   
+__all__ = ['Enum', 'as_structure', 'as_numpy', 'find_all_cells']
+from _enumeration import as_structure, as_numpy, find_all_cells
 from ..crystal import Lattice
 
 class Enum(Lattice):
@@ -48,12 +48,11 @@ class Enum(Lattice):
 
   def supercells(self, n):
     """ Iterates over supercells. """
-    from _enumeration import find_all_cells
     for cell in find_all_cells(self, n): yield cell
 
   def smiths(self, n):
     """ Iterates over smith groups. """
-    from _enumeration import find_all_cells, create_smith_groups
+    from _enumeration import create_smith_groups
     supercells = find_all_cells(self, n)
     for smith in create_smith_groups(self, supercells): yield smith
 

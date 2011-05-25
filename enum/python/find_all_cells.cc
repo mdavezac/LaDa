@@ -26,13 +26,51 @@ namespace LaDa
   
   namespace Python
   {
+    struct IterAllCells
+    {
+      boost::shared_ptr< std::vector<math::rMatrix3d> > cells;
+      int i;
+      IterAllCells ( boost::shared_ptr< std::vector<math::rMatrix3d> > const &_cells)
+                   : cells(_cells), i(-1) {}
+      IterAllCells ( IterAllCells const &_c)
+                   : cells(_c.cells), i(_c.i) {}
+      math::rMatrix3d next()
+      {
+        if( (not cells) )
+        {
+          PyErr_SetString(PyExc_RuntimeError, "Cells not set."); 
+          bp::throw_error_already_set();
+          return math::rMatrix3d::Zero();
+        }
+        ++i;
+        if( i >= cells->size() )
+        {
+          PyErr_SetString(PyExc_StopIteration, "Out-of-range."); 
+          bp::throw_error_already_set();
+          return math::rMatrix3d::Zero();
+        }
+        return (*cells)[i];
+      }
+    };
+    IterAllCells find_all_cells(LaDa::Crystal::Lattice const &_lat, size_t _n)
+    {
+      boost::shared_ptr< std::vector<math::rMatrix3d> > 
+        cells = LaDa::enumeration::find_all_cells(_lat, _n);
+      if(not cells)
+      {
+        PyErr_SetString(PyExc_RuntimeError, "Could not create list of cells.");
+        bp::throw_error_already_set();
+      }
+      return IterAllCells(cells);
+    }
+
     boost::shared_ptr< std::vector<enumeration::SmithGroup> >
       create_smith_groups1( Crystal::Lattice const &_lattice, size_t _nmax)
         { return enumeration::create_smith_groups( _lattice, _nmax); }
     boost::shared_ptr< std::vector<enumeration::SmithGroup> >
       create_smith_groups2( Crystal::Lattice const &_lattice,
-                            boost::shared_ptr< std::vector<math::rMatrix3d> > const & _s )
-        { return enumeration::create_smith_groups( _lattice, _s); }
+                            IterAllCells const & _s )
+        { return enumeration::create_smith_groups( _lattice, _s.cells); }
 
     enumeration::SmithGroup::Supercell* create( boost::python::tuple const &_tuple)
     {
@@ -56,17 +94,22 @@ namespace LaDa
         return new enumeration::SmithGroup::Supercell();
       }
     }
+
+    inline bp::object pass_through(bp::object const& o) { return o; }
+
     void expose_find_all_cells()
     {
       namespace bp = boost::python;
+      bp::class_<IterAllCells>("_IterAllCells", bp::no_init)
+        .def("__iter__", &pass_through)
+        .def("next", &IterAllCells::next);
+
       bp::def
       (
         "find_all_cells", 
-        &LaDa::enumeration::find_all_cells,
+        &find_all_cells,
         "Finds all cells of a certain size for a given lattice."
       );
-
-      bp::register_ptr_to_python< boost::shared_ptr< std::vector<math::rMatrix3d> > >();
 
       bp::def
       (

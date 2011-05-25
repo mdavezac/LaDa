@@ -23,57 +23,24 @@ class Darwin(object):
         :Parameters:
           evaluator : `lada.ga.escan.elemental.Bandgap`
             Functional which uses vff and escan for evaluating physical properties.
-        :Kwarg crossover:
-          Crossover object. Defaults to `lada.ga.escan.elemental.Crossover` ``(rate=0.5)``.
-        :Kwarg mutation:
-          Mutation object. `lada.ga.elemental.Mutation` ``(rate=2e0/float(len(.evaluator))``
-        :Kwarg cm_rate:
-          Crossover vs Mutation rate. Defaults to 0.1.
         :Kwarg rate: 
           Offspring rate. Defaults to ``max(0.1, 1/popsize)``.
         :Kwarg popsize: 
           Population size. Defaults to 100.
         :Kwarg maxgen: 
           Maximum number of generations. Defaults to 0.
-        :Kwarg mean_conc:
-          Mean concentration of individuals on random initialization. 
-        :Kwarg stddev_conc:
-          Standard deviation of concentration of individuals on random initialization.
         :Kwarg current_gen:
           Current generation. Defaults to 0 or to whatever is in the restart.
     """
-    from .. import CompareSuperCells
-    from . import Crossover, Mutation
     super(Darwin, self).__init__()
 
     self.evaluator = evaluator
     """ Evaluator object taking an individual and computing its fitness. """
-    lattice = self.evaluator.escan.vff.lattice
-    try: 
-      unit_cell = self.evaluator.converter.structure.cell
-      self.compare = CompareSuperCells(lattice, unit_cell, self.evaluator.converter)
-      """ Compares two different individuals. """
-    except AttributeError: pass
-
-
-    # mating operations
-    self.cm_rate = kwargs.pop("cm_rate", 0.1)
-    """ Crossover versus Mutation rate. """
-    self.crossover = kwargs.pop("crossover", Crossover(rate=0.5))
-    """ Crossover operator. """
-    self.mutation = kwargs.pop("mutation", Mutation(rate=2e0/float(len(self.evaluator))))
-    """ Mutation operator. """
 
     # other parameters
     self.popsize = kwargs.pop("popsize", 100)
     self.rate    = kwargs.pop("rate", max(1e0/(float(self.popsize)-0.5), 0.1))
     self.max_gen = kwargs.pop("max_generations", kwargs.pop("max_gen", 0))
-
-    # Parameters for starting population.
-    self.mean_conc = kwargs.pop("mean_conc", 0.5)
-    """ Mean concentration of individuals on random initialization. """
-    self.stddev_conc = kwargs.pop("stddev_conc", 0.5)
-    """ Standard deviation of concentration of individuals on random initialization. """
 
     self.current_gen = kwargs.pop("current_gen", 0)
     """ Current generation. """
@@ -92,7 +59,7 @@ class Darwin(object):
     
         Defined as a property to avoid hassle with __getstate__
     """
-    from ...standard import print_offspring, average_fitness, best
+    from ..standard import print_offspring, average_fitness, best
     return [ print_offspring, 
              average_fitness,
              best,
@@ -116,24 +83,8 @@ class Darwin(object):
 
   def evaluation(self):
     """ Evaluates population. """
-    from ...standard import population_evaluation
+    from ..standard import population_evaluation
     population_evaluation(self, self.evaluator, self.comm, self.pools)
-
-  def mating(self, *args, **kwargs):
-    """ Calls mating operations. Removes hash code. """
-    from .. import CompareSuperCells
-    from ...standard import Mating
-     
-    # construct sequential mating operator.
-    mating = Mating(sequential=False)
-    mating.add(self.crossover, rate=self.cm_rate)
-    mating.add(self.mutation,  rate=1-self.cm_rate) 
-    # calls mating operator.
-    result = mating(self, *args, **kwargs)
-    # removes any hash-code.
-    CompareSuperCells.remove_hashcode(result)
-    return result
-
 
   def taboo(self, indiv):
     """ No two individuals in the population and the offspring are the same. """
@@ -141,22 +92,6 @@ class Darwin(object):
     for a in chain(self.population, self.offspring):
       if self.compare(a, indiv): return True
     return False
-
-  def Individual(self):
-    """ Generates an individual (with mpi) """
-    from . import Individual
-    from numpy.random import normal, shuffle
-    result = Individual(size=len(self.evaluator))
-    if self.mean_conc == None or self.stddev_conc == None: return result
-    N = 0
-    while N == result.genes.size or N == 0:
-      x = normal(self.mean_conc, self.stddev_conc)
-      if x >= 1 or x <= 0e0: continue
-      N = int(x * float(result.genes.size))
-    result.genes[:N] = 1 # second type of appropriate site in lattice.
-    result.genes[N:] = 0 # first type of appropriate site in lattice.
-    shuffle(result.genes)
-    return result
 
   @staticmethod
   def cmp_indiv(a, b, tolerance = 1e-12 ):
@@ -243,7 +178,7 @@ class Darwin(object):
   def print_nb_evals(self):
     """ Prints current number of evaluations. """
     if self.color != None:
-      from boost.mpi import all_reduce
+      from ...mpi import all_reduce
       local_comm = self.comm.split(self.color)
       heads_comm = self.comm.split(1 if local_comm.rank == 0 else 2)
       nbcalc = all_reduce(heads_comm, getattr(self.evaluator, "nbcalc", 0), lambda x,y: x+y)
@@ -269,9 +204,9 @@ class Darwin(object):
     from os import getcwd
     from os.path import join
     from copy import deepcopy
-    from boost.mpi import world
-    from ... import darwin as search
-    from ....opt import redirect, RelativeDirectory, Changedir
+    from ...mpi import world
+    from .. import darwin as search
+    from ...opt import redirect, RelativeDirectory, Changedir
 
     local_time = time.localtime() 
     self.start_time = time.time() 
@@ -330,21 +265,19 @@ class Darwin(object):
 
   def __repr__(self):
     """ Returns representation of this instance. """
-    return "from {0} import {1}\n{2}\n{3}\n{4}\n\n"\
-           "functional = {1}(evaluator, crossover=crossover, mutation=mutation)\n"\
-           "functional.pools       = {5.pools}\n"\
-           "functional.cm_rate     = {5.cm_rate}\n"\
-           "functional.popsize     = {5.popsize}\n"\
-           "functional.max_gen     = {5.max_gen}\n"\
-           "functional.age         = {5.age}\n"\
-           "functional.current_gen = {5.current_gen}\n"\
-           "functional.mean_conc   = {5.mean_conc}\n"\
-           "functional.stddev_conc = {5.stddev_conc}\n"\
+    return "from {0} import {1}\n{2}\n"\
+           "functional = {1}(evaluator)\n"\
+           "functional.pools       = {3.pools}\n"\
+           "functional.cm_rate     = {3.cm_rate}\n"\
+           "functional.popsize     = {3.popsize}\n"\
+           "functional.max_gen     = {3.max_gen}\n"\
+           "functional.age         = {3.age}\n"\
+           "functional.current_gen = {3.current_gen}\n"\
+           "functional.mean_conc   = {3.mean_conc}\n"\
+           "functional.stddev_conc = {3.stddev_conc}\n"\
            .format( self.__class__.__module__, 
                     self.__class__.__name__,
                     repr(self.evaluator),
-                    repr(self.crossover).replace("ga_operator", "crossover"),
-                    repr(self.mutation).replace("ga_operator", "mutation"),
                     self )
 
 

@@ -14,7 +14,6 @@ def extract(outdir=".", comm = None):
       successfull extraction object.
   """
   from os.path import exists, join
-  from ..vff import Extract as VffExtract
   from ..mpi import Communicator
 
   comm = Communicator(comm)
@@ -53,7 +52,7 @@ def bandgap(escan, structure, outdir=None, references=None, n=5, overwrite = Fal
       cannot be made sense of, an electron-calculation is performed.
   """
   from os import getcwd
-  from os.path import abspath, exists, join
+  from os.path import abspath
   from copy import deepcopy
   from ..mpi import Communicator
 
@@ -122,8 +121,7 @@ class ExtractAE(_ExtractE):
   def oscillator_strength(self, degeneracy=1e-3, attenuate=False):
     """ Computes oscillator strength between vbm and cbm. """
     from numpy import dot
-    from numpy.linalg import det
-    from ..physics import a0, electronic_mass, h_bar
+    from ..physics import electronic_mass, h_bar
     result, nstates = None, 0
     units = 2e0/3e0 * h_bar**2 / electronic_mass
     for wfnA in self.gwfns:
@@ -164,8 +162,6 @@ class ExtractAE(_ExtractE):
         This routine caches results in a file. The routine above should check
         that the arguments are the same.
     """
-    from numpy import array
-    from numpy.linalg import det
     from ..physics import a0
     result, gvectors = [], self.gvectors.rescale(1./a0)
     for wfnA in self.gwfns:
@@ -206,6 +202,9 @@ def _band_gap_ae_impl(escan, structure, outdir, **kwargs):
   nbstates = kwargs.pop("nbstates", escan.nbstates)
   if nbstates == None: nbstates = 4
   if nbstates == 0: nbstates = 4
+  if hasattr(nbstates, '__getitem__'):
+    assert len(nbstates) > 1, ValueError("Not sure what nbstates is.")
+    nbstates = max(nbstates)
   nbstates = nbstates  + nb_valence_states(structure)
   extract = escan( structure, outdir = outdir, eref = None,\
                    nbstates = nbstates, **kwargs)
@@ -278,8 +277,7 @@ class ExtractRefs(object):
   def oscillator_strength(self, degeneracy=1e-3, attenuate=False):
     """ Computes oscillator strength between vbm and cbm. """
     from numpy import all, abs, dot
-    from numpy.linalg import det
-    from ..physics import a0, electronic_mass, h_bar
+    from ..physics import electronic_mass, h_bar
 
     assert self.extract_vbm.gvectors.shape == self.extract_cbm.gvectors.shape
     assert all( abs(self.extract_vbm.gvectors - self.extract_cbm.gvectors) < 1e-12 )
@@ -318,8 +316,7 @@ class ExtractRefs(object):
   @FileCache('DIPOLECAR')
   def _dipole(self, degeneracy=-1e0, attenuate=False):
     """ Computes dipole matrix element between vbm and cbm. """
-    from numpy import all, abs, dot
-    from numpy.linalg import det
+    from numpy import all, abs
     from ..physics import a0
 
     assert self.extract_vbm.gvectors.shape == self.extract_cbm.gvectors.shape
@@ -379,8 +376,7 @@ class ExtractRefs(object):
 def _band_gap_refs_impl( escan, structure, outdir, references, n=5,\
                          overlap_factor=10e0, **kwargs):
   """ Computes band-gap using two references. """
-  from os.path import join, exists
-  from shutil import copyfile
+  from os.path import join
   from numpy import array, argmax
   
   # check/correct input arguments
@@ -410,20 +406,24 @@ def _band_gap_refs_impl( escan, structure, outdir, references, n=5,\
   while iter < n and continue_loop:
     # computes vbm
     if recompute[0]:
+      try: n = nbstates[0]
+      except: n = nbstates
       vbm_out = escan\
                 (
                   structure, outdir=join(outdir,"VBM"), \
                   eref=vbm_ref, overwrite=True, vffrun=vffrun,\
-                  genpotrun=genpotrun, nbstates=nbstates, **kwargs 
+                  genpotrun=genpotrun, nbstates=n, **kwargs 
                 )
       vbm_eigs = vbm_out.eigenvalues.copy()
     # computes cbm
     if recompute[1]:
+      try: n = nbstates[1]
+      except: n = nbstates
       cbm_out = escan\
                 (
                   structure, outdir=join(outdir, "CBM"), \
                   eref=cbm_ref, overwrite=True, vffrun=vffrun,
-                  genpotrun=genpotrun, nbstates=nbstates, **kwargs
+                  genpotrun=genpotrun, nbstates=n, **kwargs
                 )
       cbm_eigs = cbm_out.eigenvalues.copy()
     recompute = [False, False] # by default, does not recompute

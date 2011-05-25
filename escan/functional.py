@@ -22,6 +22,7 @@ class Escan(object):
     from ..vff import Vff
     from ..opt import RelativeDirectory
     from ._potential import soH
+    from .fftmesh import SmallCells
 
     super(Escan, self).__init__()
     self.inplace = inplace
@@ -76,7 +77,7 @@ class Escan(object):
     """ real-space projector cutoff. """
     self.atomic_potentials = None
     """ Parameters to atomic potentials. """
-    self.fft_mesh = (18, 18, 18)
+    self.fft_mesh = SmallCells()
     """ Fourrier Transform mesh. """
     self.dnc_mesh = None
     """ Divide and conquer mesh.
@@ -253,6 +254,7 @@ class Escan(object):
     if self.inplace == False: 
       result += "functional.{0: <{1}} = {2}\n"\
                 .format('workdir', max_length, repr(self._workdir.unexpanded))
+
     result += string.format(**values)
     result += 'functional.{0: <{1}} = {2}\n'.format('maskr', max_length, self._maskr.repr())
     result += _string.format(**values)
@@ -263,6 +265,8 @@ class Escan(object):
     header = "from numpy import array\n"\
              "from lada.escan import soH, localH, nonlocalH\n"\
              "from {1} import {0}\n".format(classname, module)
+    if hasattr(self.fft_mesh, '__call__'): 
+      header += "from {0.__module__} import {0.__name__}\n".format(self.fft_mesh.__class__)
     return header + result
 
   def __call__(self, structure, outdir = None, comm = None, overwrite=False, \
@@ -371,9 +375,9 @@ class Escan(object):
       
       # makes calls to run
       if do_vff: self._run_vff(structure, outdir, comm, cout, overwrite, norun)
-      local_comm = self._local_comm(comm)
+      local_comm = self._local_comm(self.vffrun.structure, comm)
       if local_comm != None:
-        if do_genpot: self._run_genpot(local_comm, outdir, norun)
+        if do_genpot: self._run_genpot(self.vffrun.structure, local_comm, outdir, norun)
         if self.do_escan: self._run_escan(local_comm, structure, norun)
 
       # don't print timeing if not running.
@@ -391,10 +395,12 @@ class Escan(object):
         extract = Extract(comm=comm, directory = outdir, escan = self)
         assert extract.success, RuntimeError("Escan calculations did not complete.")
 
-  def _local_comm(self, comm):
+  def _local_comm(self, structure, comm):
     """ Communicator over which calculations are done. """
     if not comm.is_mpi: return comm
-    fftsize = self.fft_mesh[0] * self.fft_mesh[1] * self.fft_mesh[2]
+    fftmesh = self.fft_mesh
+    if hasattr(fftmesh, '__call__'): fftmesh = fftmesh(self, structure, comm)
+    fftsize = fftmesh[0] * fftmesh[1]
     for m in range(comm.size, 0, -1):
       if fftsize % m == 0: break
     norun = comm.rank >= m
@@ -438,7 +444,7 @@ class Escan(object):
           print >>file_out, line[:-1]
 
 
-  def _run_genpot(self, comm, outdir, norun):
+  def _run_genpot(self, structure, comm, outdir, norun):
     """ Runs genpot only """
     from os.path import basename, join
     from ..opt import redirect, copyfile
@@ -456,12 +462,16 @@ class Escan(object):
 
     assert self.atomic_potentials != None, RuntimeError("Atomic potentials are not set.")
     # Creates temporary input file and creates functional
-    dnc_mesh = self.dnc_mesh if self.dnc_mesh != None else self.fft_mesh
-    overlap_mesh = self.overlap_mesh if self.overlap_mesh != None else (0,0,0)
+    if hasattr(self.fft_mesh, '__call__'):
+      fft_mesh, dnc_mesh, overlap_mesh = self.fft_mesh(self, structure, comm)
+    else:
+      fft_mesh = self.fft_mesh
+      dnc_mesh = self.dnc_mesh if self.dnc_mesh != None else self.fft_mesh
+      overlap_mesh = self.overlap_mesh if self.overlap_mesh != None else (0,0,0)
     if comm.is_root: 
       with open(self._GENCAR, "w") as file:
         file.write( "%s\n%i %i %i\n%i %i %i\n%i %i %i\n%f\n%i\n"\
-                    % ( self._POSCAR, self.fft_mesh[0], self.fft_mesh[1], self.fft_mesh[2], \
+                    % ( self._POSCAR, fft_mesh[0], fft_mesh[1], fft_mesh[2], \
                         dnc_mesh[0], dnc_mesh[1], dnc_mesh[2],\
                         overlap_mesh[0], overlap_mesh[1], overlap_mesh[2], self.cutoff,\
                         len(self.atomic_potentials) ))
@@ -594,7 +604,7 @@ class Escan(object):
         defaults. This routines adds them when unpickling.
     """
     self.__dict__.update(value)
-    self.symlink = True
+    self.symlink = self.__dict__.get('symlink', True)
     for key, value in self.__class__().__dict__.iteritems():
        if not hasattr(self, key): setattr(self, key, value)
 
