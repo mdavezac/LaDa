@@ -3,9 +3,9 @@ __docformat__ = "restructuredtext en"
 __all__ = ['Darwin']
 
 # from ..elemental.extract import Extract as GAExtract
-from ..functional import Darwin as ElementalDarwin
+from ..functional import Darwin as EscanDarwin
 
-class Darwin(ElementalDarwin):
+class Darwin(EscanDarwin):
   """ GA functional for optimizations of epitaxial structures. """
 
   def __init__(self, evaluator, **kwargs): 
@@ -82,7 +82,6 @@ class Darwin(ElementalDarwin):
               "functional.nmin        = {0.nmin}\n"\
               "functional.popsize     = {0.popsize}\n"\
               "functional.max_gen     = {0.max_gen}\n"\
-              "functional.age         = {2}\n"\
               "functional.current_gen = {0.current_gen}\n"\
               "functional.rate        = {0.rate}\n"\
               "functional.rootworkdir = {1}\n"\
