@@ -9,12 +9,12 @@ class Individual(BitstringIndividual):
       Comparison between two individuals expect that a bitstring represents an
       elemental nanowires.
   """
-  def __init__(self, Nmin=0, Nmax=20):
+  def __init__(self, nmin=0, nmax=20):
     """ Initializes a bitstring individual randomly. """
     from random import randint
     import numpy
 
-    self.size = randint(Nmin, Nmax)
+    self.size = randint(nmin, nmax)
     super(Individual, self).__init__(self.size)
     self.genes = numpy.array([ int(randint(0,1)) for i in xrange(self.size) ], dtype="int")
   
@@ -30,7 +30,7 @@ def exec_input(script, namespace = None):
   from ....escan import exec_input as escan_exec_input
   from functional import Darwin
   from converter import Converter
-  from ..elemental.evaluator import Bandgap as BandGapEvaluator, Dipole as DipoleEvaluator
+  from ..evaluator import Bandgap as BandGapEvaluator, Dipole as DipoleEvaluator
 
   dictionary = {}
   if namespace != None: dictionary.update(namespace)
@@ -46,7 +46,7 @@ def read_input(filepath = "input.py", namespace = None):
   from ....escan import read_input as escan_read_input
   from functional import Darwin
   from converter import Converter
-  from ..elemental.evaluator import Bandgap as BandGapEvaluator, Dipole as DipoleEvaluator
+  from ..evaluator import Bandgap as BandGapEvaluator, Dipole as DipoleEvaluator
 
   dictionary = {}
   if namespace != None: dictionary.update(namespace)

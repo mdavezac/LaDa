@@ -23,7 +23,6 @@ def _check_population(self, population):
 def run(self):
   """ Performs a Genetic Algorithm search """
   import standard
-  import sys
  
   # runs the checkpoints
   def checkpoints():
@@ -68,7 +67,7 @@ def run(self):
   # generational loop
   while checkpoints(): 
     if self.comm.do_print:
-      print "Starting generation ", self.current_gen
+      print "\nStarting generation ", self.current_gen
 
     # tries and creates offspring.
     if self.comm.rank == 0:

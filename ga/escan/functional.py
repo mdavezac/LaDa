@@ -52,6 +52,15 @@ class Darwin(object):
 
     self.age = None
     """ Current historical age (e.g. number of restarts). """
+
+  @property
+  def rootworkdir(self):
+    """ Root of the working directory where actual calculations are carried out. """
+    return self.evaluator._outdir.envvar
+
+  @rootworkdir.setter
+  def rootworkdir(self, value):
+    self.evaluator._outdir.envvar = value
     
   @property
   def checkpoints(self):
@@ -66,10 +75,10 @@ class Darwin(object):
              self.__class__.print_nb_evals,
              self.__class__.save,
              self.__class__.timing,
-             self.__class__.check_generations,
+             self.__class__.end_of_time,
              self.__class__.flush_out ]
 
-  def check_generations(self): 
+  def end_of_time(self): 
     """ Returns False if the maximum number of generations has been reached. """
     return self.current_gen < self.max_gen if self.max_gen >= 0 else True
 
@@ -149,12 +158,14 @@ class Darwin(object):
 
   def save(self):
     """ Saves current status. """
+    from ..standard import append_population
     from pickle import dump
 
     # only one proc should print.
     is_root = self.comm.rank == 0 if hasattr(self, "comm") else True
     if is_root:
       with open(self.FUNCCAR, "wb") as file: dump(self, file)
+    append_population(self, self.population, self.Extract.OFFCAR)
     return True
 
   @property
@@ -229,8 +240,6 @@ class Darwin(object):
     self.age = self.Extract(outdir.path, comm).next_age
     self.evaluator._outdir.relative = outdir.relative
     self.evaluator.outdir = join(self.evaluator.outdir, self.age)
-#   if self.color != None: 
-#     self.evaluator.outdir = join(self.evaluator.outdir, "pool_{0}".format(self.color))
 
     # now goes to work
     with Changedir(join(outdir.path, self.age), comm=comm) as cwd:
@@ -273,12 +282,11 @@ class Darwin(object):
            "functional.max_gen     = {3.max_gen}\n"\
            "functional.age         = {3.age}\n"\
            "functional.current_gen = {3.current_gen}\n"\
-           "functional.mean_conc   = {3.mean_conc}\n"\
-           "functional.stddev_conc = {3.stddev_conc}\n"\
+           "functional.rootworkdir = {4}\n"\
            .format( self.__class__.__module__, 
                     self.__class__.__name__,
                     repr(self.evaluator),
-                    self )
+                    self, repr(self.rootworkdir) )
 
 
 

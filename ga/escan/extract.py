@@ -163,6 +163,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     def loop(_age):
       from os.path import join, exists
       from numpy import array
+      from pickle import load
       import quantities 
 
       d = globals().copy()
@@ -174,6 +175,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
       if exists(path):  # loads from OFFCAR
         with open(path, "r") as file: 
           for pop in load(file):
+            result.append([])
             for indiv in pop: yield indiv
       else:
         individual = self.functional.Individual()
@@ -202,7 +204,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
             break
         result[-1].append( other if found_other else deepcopy(individual) )
       if len(result[-1]) == 0: result.pop(-1)
-    return result
+    return result if len(result) > 0 else None
                
   @property
   @make_cached 

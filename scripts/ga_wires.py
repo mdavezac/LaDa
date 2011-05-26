@@ -26,7 +26,7 @@ def create_jobs(path, inputpath="input.py", **kwargs):
 
   jobdict = JobDict()
   for core_type in input.core_types:
-    for Nmin, Nmax in input.ranges:
+    for nmin, nmax in input.ranges:
       for trial in xrange(input.nb_trials):
         # create conversion object from bitstring to nanowires and back.
         converter = Converter( input.vff.lattice, growth=input.growth_direction,
@@ -36,14 +36,16 @@ def create_jobs(path, inputpath="input.py", **kwargs):
         evaluator = input.Evaluator(converter, input.escan)
         
         # create GA functional itself.
-        functional = Darwin(evaluator, Nmin=Nmin, Nmax=Nmax, **input.__dict__)
+        functional = Darwin(evaluator, nmin=nmin, nmax=nmax, **input.__dict__)
         functional.popsize     = input.population_size
         functional.max_gen     = input.max_generations
         functional.rate        = input.offspring_rate
         functional.pools       = input.pools
+        if input.rootworkdir != None: functional.rootworkdir = input.rootworkdir
     
-        gajob = jobdict / "{0}_core/{2}_{3}/trial_{1}".format(core_type, trial, Nmin, Nmax)
+        gajob = jobdict / "{0}_core/{2}_{3}/trial_{1}".format(core_type, trial, nmin, nmax)
         gajob.functional = functional
+
 
 
   # saves jobs.

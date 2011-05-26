@@ -37,20 +37,20 @@ class Individual(object):
 class VariableSizeCrossover(object):
   """ A crossover operation. """
 
-  def __init__(self, rate = 0.5, Nmin = -1, Nmax = -1):
+  def __init__(self, nmin = -1, nmax = -1):
     """ Initializes crossover. 
 
         :Parameter:
-          Nmin : int
+          nmin : int
             Minimum size of  a bitstring. Only used if two bitstrings differ in
             size.
-          Nmin : int
+          nmin : int
             Minimum size of  a bitstring. Only used if two bitstrings differ in
             size.
     """
-    self.Nmin = Nmin
+    self.nmin = nmin
     """ Minimum bitstring size. """
-    self.Nmax = Nmax
+    self.nmax = nmax
     """ Maximum bitstring size. """
 
   def __call__(self, a, b):
@@ -66,24 +66,23 @@ class VariableSizeCrossover(object):
     """
     from copy import deepcopy
     from random import randint
+    from numpy import array
 
-    if len(b.genes) == 0 or len(a.genes) == 0:
-      return deepcopy(a if self.rate <= 0.5 else b)
-    
     result = deepcopy(a)
+    a = [u for u in a.genes]
+    b = [u for u in b.genes]
     nmin = 0 if self.nmin == -1 else self.nmin
-    nmax = min(len(a.indiv.genes), len(b.indiv.genes))
+    nmax = min(len(a), len(b))
     if self.nmax != -1 and nmax < self.nmax: nmax = self.nmax
     assert nmin < nmax, RuntimeError("Cannot perform crossover.")
     i = randint(nmin, nmax)
-    result.genes = result.genes.__class__(list(a.genes[:i]) + list(b.genes[i:]))
+    result.genes = array( a[:i] + b[i:] )
     if hasattr(result, "fitness"): delattr(result, "fitness")
 
     return result
   
   def __repr__(self):
-    return "from {0} import {1}\nga_operator = {1}({2.Nmin}, {2.Nmax})"\
-           .format(self.__class__.__module__, self.__class__.__name__, self)
+    return "{0.__class__.__name__}({0.nmin}, {0.nmax})".format(self)
 
 class Crossover(object):
   """ A crossover operation. """
@@ -107,8 +106,7 @@ class Crossover(object):
     return a
 
   def __repr__(self):
-    return "from {0} import {1}\nga_operator = {1}({2})"\
-           .format(self.__class__.__module__, self.__class__.__name__, self.rate)
+    return "{0.__class__.__name__}({0.rate})".format(self)
 
 class Mutation(object):
   """ A mutation operation. """
@@ -127,6 +125,7 @@ class Mutation(object):
     """ Returns invidual with mutated genes. """
     from random import uniform
     
+    if len(indiv.genes) == 0: return indiv
     rate = self.rate if self.rate >= 0e0 else -float(self.rate)/float(len(indiv.genes))
     for i in xrange(len(indiv.genes)):
       if uniform(0, 1)  < rate:
@@ -135,8 +134,7 @@ class Mutation(object):
     return indiv
 
   def __repr__(self):
-    return "from {0} import {1}\nga_operator = {1}({2})"\
-           .format(self.__class__.__module__, self.__class__.__name__, self.rate)
+    return "{0.__class__.__name__}({0.rate})".format(self)
 SwapMutation = Mutation
 """ Fixed-size bitstring mutation operation. """
 
@@ -163,30 +161,24 @@ class GrowthMutation(object):
 
   def __call__(self, indiv):
     """ Inserts extra bit in bitstring. """
-    from random import randint, choice
-    from itertools import chain
+    from numpy import array
+    from random import randint
 
     nmin =  1 if self.nmin != -1 and len(indiv.genes) <= self.nmin else -len(indiv.genes)
     nmax = -1 if self.nmax != -1 and len(indiv.genes) >= self.nmax else len(indiv.genes)
     if nmin > nmax: return indiv
 
-    if nmin < 0 and nmax > 0: 
-          n = choice( chain(xrange(nmin, 0), xrange(1, nmax)) )
-    else: n = randint(nmin, nmax)
-    if n < 0: # negative => remove bit
-      l = list(indiv.genes)
-      l.pop(n)
-    else:     # positive => add bit
-      l = list(indiv.genes)
-      l.insert(randint[0,2], n)
-    indiv.genes = indiv.genes.__class__(l)
+    n = randint(nmin, nmax)
+    l = [u for u in indiv.genes]
+    if n < 0:  l.pop(-n-1)
+    else: l.insert(n, randint(0, 1))
+    indiv.genes = array(l)
      
     if hasattr(indiv, "fitness"): delattr(indiv, "fitness")
     return indiv
 
   def __repr__(self):
-    return "from {0} import {1}\nga_operator = {1}({2.Nmin, 2.Nmax})"\
-           .format(self.__class__.__module__, self.__class__.__name__)
+    return "{0.__class__.__name__}({0.nmin}, {0.nmax})".format(self)
     
 
 

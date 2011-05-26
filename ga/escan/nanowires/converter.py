@@ -97,7 +97,7 @@ class Converter(object):
     atomic_shells = self.layer_iterator(nanowire, center, self.growth)
     for shell_index, atoms in enumerate(atomic_shells):
       # finds the type, taking care whether we are inside or outside the nanowire.
-      type = self.types[shells[shell_index]] if shell_index < len(shells) else self.passivant
+      type = self.types[int(shells[shell_index])] if shell_index < len(shells) else self.passivant
       # sets the atoms in that layer to the correct type.
       for atom in atoms: atom.type = type
 
@@ -164,10 +164,8 @@ class Converter(object):
  
   def __repr__(self):
     """ Returns string python code representing this object. """
-    return "from {0} import {1}\n{2}\n"\
-           "converter = {1}( lattice, growth={3},\n"\
-           "                 core_radius={4}, core_type={5},\n"\
-           "                 types={6} )"\
-           .format(self.__class__.__module__, self.__class__.__name__,
-                   repr(self.lattice), repr(self.growth), repr(self.core_radius), 
-                   repr(self.core_type), repr(self.types))
+    return "from {0.__class__.__module__} import {0.__class__.__name__}\n"\
+           "converter = {0.__class__.__name__}( lattice, growth={1},\n"\
+           "                 core_radius={0.core_radius}, core_type='{0.core_type}',\n"\
+           "                 types={2} )"\
+           .format(self, repr(self.growth), repr(self.types))

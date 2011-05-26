@@ -14,9 +14,9 @@ class Darwin(ElementalDarwin):
         :Parameters:
           evaluator : `lada.ga.escan.elemental.Bandgap`
             Functional which uses vff and escan for evaluating physical properties.
-        :Kwarg Nmax: 
+        :Kwarg nmax: 
           Maximum size of bitstrings. Defaults to 20.
-        :Kwarg Nmin: 
+        :Kwarg nmin: 
           Minimum size of bitstrings.
         :Kwarg crossover_rate:
           Rate for crossover operation
@@ -36,9 +36,9 @@ class Darwin(ElementalDarwin):
     from ...standard import Mating
     from ...bitstring import VariableSizeCrossover, SwapMutation, GrowthMutation
     # add parameters from this GA.
-    self.Nmin = kwargs.pop('Nmin', -1)
+    self.nmin = kwargs.pop('nmin', -1)
     """ Minimum bistring size. """
-    self.Nmax = kwargs.pop('Nmax', 20)
+    self.nmax = kwargs.pop('nmax', 20)
     """ Maximum bistring size. """
 
     # calls parent constructor.
@@ -51,10 +51,14 @@ class Darwin(ElementalDarwin):
     """ Rate for swap-like mutations over other operations. """
     self.growth_rate = kwargs.pop('growth_rate', 0.8)
     """ Rate for growth-like mutations over other operations. """
-    self.mating = Mating(sequential=False)
-    if self.crossover_rate > 0e0: self.mating.add(VariableSizeCrossover(self.Nmin, self.Nmax))    
-    if self.swap_rate > 0e0:      self.mating.add(SwapMutation(-1))
-    if self.growth_rate > 0e0:    self.mating.add(GrowthMutation(self.Nmin, self.Nmax))    
+    self.matingops = Mating(sequential=False)
+    if self.crossover_rate > 0e0: self.matingops.add(VariableSizeCrossover(self.nmin, self.nmax))
+    if self.swap_rate > 0e0:      self.matingops.add(SwapMutation(-1))
+    if self.growth_rate > 0e0:    self.matingops.add(GrowthMutation(self.nmin, self.nmax))
+
+  def mating(self):
+    """ Calls mating operations. """
+    return self.matingops(self)
 
   def compare(self, a, b):
     """ Compares two bitstrings. """
@@ -65,8 +69,22 @@ class Darwin(ElementalDarwin):
   def Individual(self):
     """ Generates an individual (with mpi) """
     from . import Individual
-    return Individual(Nmax=self.Nmax, Nmin=self.Nmin)
+    return Individual(nmax=self.nmax, nmin=self.nmin)
 
   def __repr__(self):
     """ Returns representation of this instance. """
-    raise NotImplementedError("Cannot represent this functional.")
+    header = "from {0.__class__.__module__} import {0.__class__.__name__}\n".format(self)
+    string = repr(self.evaluator) + "\n" + repr(self.matingops) + "\n"
+    string += "functional = {0.__class__.__name__}(evaluator)\n"\
+              "functional.matingops   = mating\n"\
+              "functional.pools       = {0.pools}\n"\
+              "functional.nmax        = {0.nmax}\n"\
+              "functional.nmin        = {0.nmin}\n"\
+              "functional.popsize     = {0.popsize}\n"\
+              "functional.max_gen     = {0.max_gen}\n"\
+              "functional.age         = {2}\n"\
+              "functional.current_gen = {0.current_gen}\n"\
+              "functional.rate        = {0.rate}\n"\
+              "functional.rootworkdir = {1}\n"\
+              .format(self, repr(self.rootworkdir), repr(self.age))
+    return header + string

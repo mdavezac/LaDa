@@ -1,21 +1,35 @@
 from lada.escan import fftmesh
 # sets up input stuff
 vff = Vff()
-vff.lattice.set_types = ("Si", "Ge"), ("Si","Ge")
-vff.lattice.scale = 5.45
+vff.lattice.set_types = ("Si", "Ge", "Hg"), ("Si","Ge","Hg")
 vff.add_bond = "Si", "Si", (2.35905923, 45.375785351, -150.363195485, 519.230157133)
 vff.add_bond = "Ge", "Ge", (2.44167023, 37.816422666, -124.830189020, 250.179861133)
 vff.add_bond = "Si", "Ge", (2.39642606, 41.875535703, -145.994430120, 366.853558523)
+vff.add_bond = "Hg", "Hg", (2.35905923,  7.000000000)
+vff.add_bond = "Si", "Hg", (2.35905923,  7.000000000)
+vff.add_bond = "Ge", "Hg", (2.44167023,  7.000000000)
 vff.add_angle = "Si", "Si", "Si", ("tet", 0, 12.579328566, 44.930324684, 359.422663897)
 vff.add_angle = "Ge", "Ge", "Ge", ("tet", 0, 10.383093493, 55.677487481)
 vff.add_angle = "Si", "Ge", "Si", ("tet", 0, 11.902809727, 20.193404352)
 vff.add_angle = "Ge", "Si", "Ge", ("tet", 0, 11.902809727, 20.193404352)
 vff.add_angle = "Si", "Si", "Ge", ("tet", 0, 12.245971457, 32.561864518, 179.706525419)
 vff.add_angle = "Si", "Ge", "Ge", ("tet", 0, 11.147853920, 37.930591733)
+vff.add_angle = "Hg", "Hg", "Hg", ("tet", 0,  3.000000000)
+vff.add_angle = "Si", "Hg", "Si", ("tet", 0,  3.000000000)
+vff.add_angle = "Ge", "Hg", "Ge", ("tet", 0,  3.000000000)
+vff.add_angle = "Si", "Hg", "Hg", ("tet", 0,  3.000000000)
+vff.add_angle = "Hg", "Hg", "Ge", ("tet", 0,  3.000000000)
+vff.add_angle = "Ge", "Hg", "Si", ("tet", 0,  3.000000000)
+vff.add_angle = "Hg", "Si", "Hg", ("tet", 0,  3.000000000)
+vff.add_angle = "Hg", "Si", "Si", ("tet", 0,  3.000000000)
+vff.add_angle = "Hg", "Si", "Ge", ("tet", 0,  3.000000000)
+vff.add_angle = "Hg", "Ge", "Hg", ("tet", 0,  3.000000000)
+vff.add_angle = "Hg", "Ge", "Ge", ("tet", 0,  3.000000000)
+vff.add_angle = "Hg", "Ge", "Si", ("tet", 0,  3.000000000)
 vff.minimizer.verbose = True
-vff.minimizer.type = "frprmn"
-vff.minimizer.itermax = 4000
-vff.minimizer.tolerance = 1e-5
+vff.minimizer.type = "gsl_bfgs2"
+vff.minimizer.itermax = 6000
+vff.minimizer.tolerance = 1e-2
 vff.minimizer.uncertainties = 1e-3
 
 escan = BandGap()
@@ -36,15 +50,34 @@ escan.kpoint                = array([0,0,0])
 escan.dnc_mesh              = None
 escan.overlap_mesh          = None
 escan.potential             = soH
-escan.add_potential         = "test_input/pseudos/vq.Si", "test_input/pseudos/vwr.pso",\
-                              0,0,0,0.0495
-escan.add_potential         = "test_input/pseudos/vq.Ge", "test_input/pseudos/vwr.pso",\
-                              0,0,0,0.2774
-escan.add_potential         = "test_input/pseudos/vq.SiGe.Si", "test_input/pseudos/vwr.pso",\
-                              0,0,0,0.0495
-escan.add_potential         = "test_input/pseudos/vq.SiGe.Ge", "test_input/pseudos/vwr.pso",\
-                              0,0,0,0.2774
-escan.maskr                 = "test_input/pseudos/maskr"
+escan.maskr                 = "$HOME/nanowires/pseudos/maskr"
+escan.add_potential         = "$HOME/nanowires/pseudos/vq.Ge32032",\
+                              "$HOME/nanowires/pseudos/vwr.pso",\
+                              0.0,0.0,0.0,0.2774
+escan.add_potential         = "$HOME/nanowires/pseudos/vq.Ge32014",\
+                              "$HOME/nanowires/pseudos/vwr.pso",\
+                              0.0,0.0,0.0,0.2774
+escan.add_potential         = "$HOME/nanowires/pseudos/vq.Ge32080",\
+                              "$HOME/nanowires/pseudos/vwr.pso",\
+                              0.0,0.0,0.0,0.2774
+escan.add_potential         = "$HOME/nanowires/pseudos/vq.Si14014",\
+                              "$HOME/nanowires/pseudos/vwr.pso",\
+                              0.0,0.0,0.0,0.0475
+escan.add_potential         = "$HOME/nanowires/pseudos/vq.Si14032",\
+                              "$HOME/nanowires/pseudos/vwr.pso",\
+                              0.0,0.0,0.0,0.0475
+escan.add_potential         = "$HOME/nanowires/pseudos/vq.Si14080",\
+                              "$HOME/nanowires/pseudos/vwr.pso",\
+                              0.0,0.0,0.0,0.0475
+escan.add_potential         = "$HOME/nanowires/pseudos/vq.psdH80080",\
+                              "$HOME/nanowires/pseudos/vwr.pso",\
+                              0.0,0.0,0.0,0.0495
+escan.add_potential         = "$HOME/nanowires/pseudos/vq.psdH80014",\
+                              "$HOME/nanowires/pseudos/vwr.pso",\
+                              0.0,0.0,0.0,0.0495
+escan.add_potential         = "$HOME/nanowires/pseudos/vq.psdH80032",\
+                              "$HOME/nanowires/pseudos/vwr.pso",\
+                              0.0,0.0,0.0,0.0495
 escan.references            = None
 escan.nbstates              = (2, 4)
 
@@ -74,9 +107,9 @@ swap_rate = 0.1
 growth_rate = 0.1
 """ Rate of growth/shrink-type mutations over other operations. """
 
-offspring_rate = 0.1
+offspring_rate = 0.2
 """ Rate of new offspring creation per generation. """
-population_size = 50
+population_size = 10
 """ Size of the population. """
 
 max_generations = -1
@@ -85,3 +118,12 @@ max_generations = -1
 pools = 5
 """ Number of pools of processor with which to perform calculations. """
 
+rootworkdir = "$SCRATCH"
+""" Root of the directory where calculations are performed. 
+   
+    If None, then calculations and ouput are performed in the same directory tree.
+    If something like "$SCRATCH", then calculations are perfomed in a directory
+    where the root is defined by the environment variable SCRATCH, whereas
+    output would be on a similar directory tree rooted in, most likely, the
+    user's home directory.
+"""

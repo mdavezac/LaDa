@@ -61,7 +61,6 @@ class Taboo(object):
 
   def __call__(self, darwin, indiv):
     """ Returns true if any one operator returns true. """
-    import sys
     for taboo in self.taboos:
       if taboo(darwin, indiv): return True
 
@@ -73,8 +72,8 @@ def tournament( self, size = 2 ):
   list_ = range(len(self.population))
   random.shuffle(list_)
   list_ = list_[:size]
-  result = 0
-  for b in list_:
+  result = list_[0]
+  for b in list_[1:]:
     if self.cmp_indiv(self.population[b], self.population[result]):
       result = b;
   return result
@@ -117,14 +116,15 @@ def print_population(self):
 
 def print_offspring(self):
   if not self.comm.do_print: return True
-  print "  Offspring: "
+  string = ''
   for indiv in self.population:
     if indiv.birth == self.current_gen - 1: 
-      print "    ", indiv, indiv.fitness
+      string += "    {0} {0.fitness}\n".format(indiv)
+  if len(string) != 0: print "  Offspring: \n", string
   return True
 
-def save_offspring(self):
-  """ Saves offspring to file.
+def append_population(self, population, path):
+  """ Appends population  to file.
 
       First recovers offspring previously saved to file.
       Then adds current offspring.
@@ -132,11 +132,12 @@ def save_offspring(self):
   if self.comm.is_root: 
     from os.path import exists
     from pickle import load, dump
-    path, results = "OFFCAR", []
+    results = []
     if exists(path): 
       with open(path, 'r') as file: results = load(file)
-    result.append([u for u in offspring if u.birth == self.current_gen - 1])
-    with open(path, 'w') as file: dump(file)
+      results.append([u for u in population if u.birth == self.current_gen - 1])
+    else: results = [population]
+    with open(path, 'w') as file: dump(results, file)
   return True
 
 def _check_generation( self ):
@@ -307,14 +308,6 @@ class Mating(object):
     self.sequential = sequential
     """ If true, operators are applied sequentially. """
 
-  def __repr__(self):
-    string =  "from {0} import {1}".format(self.__class__.__module__, self.__class__.__name__)
-    string +=  "mating = {0}({1})".format(self.__class__.__name__, self.sequential)
-    for function, rate, n in self.operators:
-      string += "mating.add({0}, {1})".format(repr(self.function), self.rate)
-    return string
-
-
   def add(self, function, rate=1):
     """ Adds a mating operator, with a given rate, to the current list. """
     # checks for number of arguments to function.
@@ -346,13 +339,13 @@ class Mating(object):
 
       # calls binaries
       b = individuals[0]
-      while( b not in individuals ): b = darwin.population[darwin.selection(darwin)]
+      while( b in individuals ): b = darwin.population[darwin.selection(darwin)]
       individuals.append(b)
       if n == 2: return function( individuals[0], individuals[1] )
 
       # calls ternaries
       b = individuals[0]
-      while( b not in individuals ): b = darwin.population[darwin.selection(darwin)]
+      while( b in individuals ): b = darwin.population[darwin.selection(darwin)]
       individuals.append(b)
       if n == 3: return function( individuals[0], individuals[1], individuals[2] )
 
@@ -378,6 +371,26 @@ class Mating(object):
     assert indiv != None, "%s" % (self.sequential)
     return indiv
 
+  def __repr__(self):
+    """ String representating the mating operator. """
+    modules = {self.__class__.__module__: set([self.__class__.__name__])}
+    string = "mating = {0.__class__.__name__}(sequential={1})\n"\
+             .format(self, repr(self.sequential))
+    for operator, rate, n in self.operators:
+      module = operator.__class__.__module__ 
+      if module not in modules: modules[module] = set()
+      modules[module].add(operator.__class__.__name__)
+      string += "mating.add({0}, rate={1})\n".format(repr(operator), rate)
+    header = ""
+    for key, values in modules.iteritems():
+      values = list(values)
+      header += "from {0} import {1}".format(key, values[0])
+      for value in values[1:]: header += ", {0}".format(value)
+      header += "\n"
+    return header + string
+
+
+
 
 def add_checkpoint(self, _chk):
   """ Adds a checkpoint to self.checkpoints. """
@@ -401,7 +414,6 @@ def fill_attributes(self):
       - "max_gen" defaults to 100, or current_gen+100 if max_gen > current_gen.
       - "cmp_indiv" defaults to standard.cmp_indiv
   """
-  import darwin 
   # must have an evaluation function.
   assert hasattr(self, "evaluation"), "No evaluation function!" 
 
