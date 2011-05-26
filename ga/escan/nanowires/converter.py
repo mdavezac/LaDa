@@ -55,9 +55,9 @@ class Converter(object):
   def all_shells(self, bitstring):
     """ Returns an array with all shells, including core. """
     from numpy import concatenate, zeros
-    core = zeros((self.core_radius,), dtype=bitstring.dtype)
+    core = zeros(shape=(self.core_radius,), dtype=getattr(bitstring, 'dtype', 'int64'))
     core[:] = self.types.index(self.core_type)
-    return concatenate((core, bitstring.copy()))
+    return concatenate((core, bitstring))
 
   def superstructure(self, shells):
     """ Returns an empty superstructure of the correct size.
@@ -119,7 +119,7 @@ class Converter(object):
       # add to list of types.
       result.append( self.types.index(atom.type) )
 
-    return array(result)
+    return array(result[self.core_radius:])
 
   def layer_iterator(self, structure, center, direction):
     """ Yields iterators over concentric nanowire shells. 
