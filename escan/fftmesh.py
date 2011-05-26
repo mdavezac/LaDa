@@ -70,7 +70,7 @@ class Nanowire(object):
       mesh[0], mesh[1], dummy = min(all_prods, key = itemgetter(2))
 
     # then determines parameters of smaller mesh.
-    smesh = mesh[0] // 3, mesh[1] // 3, mesh[2]
+    smesh = mesh if mesh[0] <= 500 else (mesh[0] // 3, mesh[1] // 3, mesh[2])
     if mesh[0] % smesh[0] != 0: smesh[0] += smesh[0] - mesh[0] % smesh[0]
     if mesh[1] % smesh[1] != 0: smesh[1] += smesh[1] - mesh[1] % smesh[1]
 
