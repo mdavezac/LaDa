@@ -524,7 +524,9 @@ class Functional(Escan):
       if 'references' not in kwargs: kwargs['references'] = self.references
       if 'n' not in kwargs: kwargs['n'] = self.n
       dipole = kwargs.pop('dipole', self.dipole)
-      result = bandgap(self, structure, outdir, **kwargs)
+      escan = Escan()
+      escan.__dict__.update(self.__dict__)
+      result = bandgap(escan, structure, outdir, **kwargs)
       if dipole: result.dipole()
       return result
     finally: del self._computing
