@@ -62,7 +62,7 @@ class Converter(object):
      if all( abs(array(self.growth) - [1,1,0]) < 1e-12 ):
        cell = array([[-l_xy, 0, 0.5],[l_xy, 0, 0.5], [0, l_plane, 0]]) 
        return self.lattice.to_structure(cell)
-     raise NotImplementedError("Unknown growth direction {0}.".format(growth))
+     raise NotImplementedError("Unknown growth direction {0}.".format(self.growth))
 
   def all_shells(self, bitstring):
     """ Returns an array with all shells, including core. """
@@ -146,5 +146,6 @@ class Converter(object):
     return "from {0.__class__.__module__} import {0.__class__.__name__}\n"\
            "converter = {0.__class__.__name__}( lattice, growth={1},\n"\
            "                 core_radius={0.core_radius}, core_type='{0.core_type}',\n"\
-           "                 types={2} )"\
+           "                 types={2}, thickness={0.thickness}, passivant={3}, \n"\
+           "                 separation={0.separation} )"\
            .format(self, repr(self.growth), repr(self.types))
