@@ -400,7 +400,7 @@ class Escan(object):
     if not comm.is_mpi: return comm
     fftmesh = self.fft_mesh
     if hasattr(fftmesh, '__call__'): fftmesh = fftmesh(self, structure, comm)
-    fftsize = fftmesh[0] * fftmesh[1]
+    fftsize = fftmesh[0][0] * fftmesh[0][1]
     for m in range(comm.size, 0, -1):
       if fftsize % m == 0: break
     norun = comm.rank >= m
