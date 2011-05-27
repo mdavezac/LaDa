@@ -58,7 +58,6 @@ def symmetrically_inequivalent_sites(lattice, type):
 
 def first_shell(structure, pos, tolerance=0.25):
   """ Iterates though first neighbor shell. """
-  from numpy.linalg import inv, norm
   from .. import Neighbors
 
   neighs = [n for n in Neighbors(structure, 12, pos)]
@@ -91,9 +90,6 @@ def coordination_inequivalent_sites(lattice, type, tolerance=0.25):
 
       :return: indices of inequivalent sites.
   """
-  from numpy.linalg import inv, norm
-  from .. import Neighbors
-
   # all sites with occupation "type". 
   sites = [(i, site) for i, site in enumerate(lattice.sites) if type in site.type]
 
@@ -115,7 +111,7 @@ def non_interstitials(structure, indices, mods):
 
   cation_regex  = compile(r'^\s*cations?\s*$')
   vacancy_regex = compile(r'^\s*vacanc(?:y|ies)\s*$')
-  specie_regex  = compile(r'^\s*[A-Z][a-z]?(?:\d+)\s*$')
+  specie_regex  = compile(r'^\s*[A-Z][a-z]?(?:\d+)?\s*$')
 
   # modify input to something which makes sense and check it.
   if mods == None: all_mods = [None]
@@ -257,8 +253,6 @@ def any_defect(structure, lattice, type, subs, tolerance=0.25):
           structure.
   """
   from re import compile
-  from copy import deepcopy
-  from numpy import dot
 
   specie_regex = compile(r'^\s*[A-Z][a-z]?\s*$')
   id_regex     = compile(r'^\s*([A-Z][a-z]?)(\d+)\s*$')
@@ -481,7 +475,7 @@ def potential_alignment(defect, host, maxdiff=0.5, first_shell=True, tolerance=0
       :note: The return *does* include the charge factor.
   """
   from itertools import chain
-  from numpy import abs, zeros, array, mean
+  from numpy import abs, array, mean
   from quantities import eV
   from . import reindex_sites, first_shell as ffirst_shell
 
@@ -546,8 +540,7 @@ def third_order_charge_correction(structure, charge = None, n = 30, epsilon = 1.
 
       :return: third order correction  to the energy in eV. Should be *added* to total energy.
   """
-  from numpy import array
-  from quantities import elementary_charge, eV, pi, angstrom, dimensionless
+  from quantities import elementary_charge, eV, pi, angstrom
   from ...physics import a0, Ry
   from .._crystal import third_order
 
@@ -579,7 +572,6 @@ def first_order_charge_correction(structure, charge=None, epsilon=1e0, cutoff=20
 
       :return: Electrostatic energy in eV.
   """
-  from numpy.linalg import norm
   from quantities import elementary_charge, eV
   from .. import Structure
   from ...physics import Ry
@@ -645,7 +637,6 @@ def magnetic_neighborhood(structure, defect, species):
 
        :return: indices of the neighboring atoms in the point-defect `structure`.
    """
-   from numpy import array
    from numpy.linalg import norm
    from . import Neighbors
 
@@ -707,7 +698,6 @@ def electron_bins(n, atomic_types):
 
 def magmom(indices, moments, nbatoms):
   """ Yields a magmom string from knowledge of which moments are non-zero. """
-  from operator import itemgetter
   s = [0 for i in range(nbatoms)]
   for i, m in zip(indices, moments): s[i] = m
   compact = [[1, s[0]]]
@@ -804,8 +794,7 @@ def low_spin_states(structure, defect, species, extrae, do_integer=True, do_aver
       :return: yields (indices, moments) where the former index the relevant
                atoms in `structure` and latter are their respective moments.
   """
-
-  from numpy import array, abs, all, any
+  from numpy import array, abs, all
 
   history = []
   def check_history(*args):
@@ -856,7 +845,7 @@ def high_spin_states(structure, defect, species, extrae, do_integer=True, do_ave
       :return: yields (indices, moments) where the former index the relevant
                atoms in `structure` and latter are their respective moments.
   """
-  from numpy import array, abs, all, any
+  from numpy import array, abs, all
 
   def is_d(t): 
     """ Determines whether an atomic specie is transition metal. """
