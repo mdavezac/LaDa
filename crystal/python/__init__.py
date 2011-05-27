@@ -529,7 +529,7 @@ def layer_iterator(structure, direction, tolerance=1e-12):
   """
   from operator import itemgetter
   from numpy import array, dot
-  from . import LayerDepth, to_cell, to_voronoi
+  from . import to_cell, to_voronoi
 
   direction = array(direction)
   if len(structure.atoms) <= 1: yield structure.atoms; return
@@ -618,3 +618,32 @@ def equivalence_iterator(structure, operations = None, tolerance=1e-6):
         """ Iterates over equivalent atoms in a structure. """
         for i in equivs: yield structure.sites[i]
     yield inner_equivalence_iterator()
+
+
+def shell_iterator(structure, center, direction, thickness=0.05):
+  """ Iterates over cylindrical shells of atoms. """
+  from operator import itemgetter
+  from numpy import array, dot
+  from numpy.linalg import norm
+
+  direction = array(direction)/norm(array(direction))
+  if len(structure.atoms) <= 1: yield structure.atoms; return
+
+  # orders position with respect to direction.
+  positions = to_voronoi(array([atom.pos - center for atom in structure.atoms]), structure.cell)
+  projs = [(i, norm(pos - dot(pos, direction)*direction)) for i, pos in enumerate(positions)]
+  projs = sorted(projs, key=itemgetter(1))
+
+  # creates classes of positions.
+  result = {}
+  for i, proj in projs[1:]:
+    index = int(proj/thickness+1e-12)
+    if index in result: result[index].append(i)
+    else: result[index] = [i]
+
+  for key, layer in sorted(result.iteritems(), key=itemgetter(0)):
+    def inner_layer_iterator():
+      """ Iterates over atoms in a single layer. """
+      for index in layer: yield structure.atoms[index]
+    yield inner_layer_iterator()
+

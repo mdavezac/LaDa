@@ -3,17 +3,29 @@ __docformat__ = "restructuredtext en"
 class Converter(object):
   """ Converts to and from bitstrings and nanowires. """
 
-  def __init__(self, lattice, growth=(0,0,1), core_radius=2, core_type=0, types=['Si', 'Ge']):
+  def __init__( self, lattice, growth=(0,0,1), core_radius=2,\
+                core_type='Si', types=['Si', 'Ge'], thickness=0.35,
+                separation=3, passivant='Hg' ):
     """ Initializes a multi-shell wire.
 
         :Parameters:
-          lattice = 
-          growth 
+          lattice 
+            Lattice making up the backbone of the nanowire.
+          growth : (0,0,1) or (1, 1, 0)
             Growth direction of the wire.
-          core_radius 
+          core_radius : float
             radius of the core. 
-          core_type
+          core_type : str
             Type of the core.
+          types : list of str
+            Types of atoms in the nanowire. It is used to determine what
+            integer correspond to in a bitstring. 
+          thickness : float
+            Thickness of a shell. 
+          separation : int
+            Distance between the edge of a nanowire and the edge of the cell.
+          passsivant : str
+            Type of the passivant/barrier.
     """
     from copy import deepcopy
 
@@ -32,25 +44,25 @@ class Converter(object):
 
         Serves to determine what 0 and 1 correspond to in bitstring.
     """
-    self.passivant = 'Hg' 
+    self.passivant = passivant
     """ Type of the passivant. """
+    self.thickness = thickness
+    """ Thickness of a shell in units of `Lattice.scale`. """
+    self.separation = separation
+    """ Number of shells between nanowire and end of cell. """
 
   def supercell(self, l_plane):
      """ Constructs supercell. """
-     from numpy import array, all, abs, round
-     from numpy.linalg import norm
-     growth = self.growth / norm(self.growth)
-     l_plane = int(round(l_plane))
-     if all( abs(growth - [0,0,1]) < 1e-12 ):
-       # Lattice vector in the column!
+     from numpy import array, all, abs, round, sqrt
+     l_xy = int(round(l_plane/sqrt(2.0)+0.5))
+     l_plane = int(round(l_plane+0.5))
+     if all( abs(array(self.growth) - [0,0,1]) < 1e-12 ):
        cell = array([[l_plane, 0, 0],[0, l_plane, 0], [0, 0, 1.0]])
-       return self.lattice.to_structure(cell, subs={'A':'Hg', 'B':'Hg'})
-     if all( abs(growth - [1,1,0]) < 1e-12 ):
-       l_xy = int(round(l_plane*sqrt(2)))/2.0
-       # Lattice vector in the column!
+       return self.lattice.to_structure(cell)
+     if all( abs(array(self.growth) - [1,1,0]) < 1e-12 ):
        cell = array([[-l_xy, 0, 0.5],[l_xy, 0, 0.5], [0, l_plane, 0]]) 
-       return self.lattice.to_structure(cell, subs={'A':'Hg', 'B':'Hg'})
-     raise NotImplementedError()
+       return self.lattice.to_structure(cell)
+     raise NotImplementedError("Unknown growth direction {0}.".format(growth))
 
   def all_shells(self, bitstring):
     """ Returns an array with all shells, including core. """
@@ -64,10 +76,10 @@ class Converter(object):
     
         The atoms in the superstructure are correctly centered.
     """
-    from numpy import sqrt, dot, floor
+    from numpy import dot, floor
     from numpy.linalg import inv
     # constructs the super-structure which will contain the nanowire
-    structure = self.supercell(len(shells) * sqrt(2.)/4.0 * 2 + 3)
+    structure = self.supercell( (len(shells) + self.separation) * self.thickness * 2.)
     
     # Centers atoms in the supercell of the superstructure.
     invcell = inv(structure.cell) 
@@ -85,6 +97,7 @@ class Converter(object):
   def to_wire(self, bitstring):
     """ Returns a structure constructed from a bitstring. """
     from numpy import dot
+    from ....crystal import shell_iterator
     # creates an array of shell types, including nanowire core.
     shells = self.all_shells(bitstring)
     # create the superstructure which will contain the nanowire.
@@ -94,7 +107,7 @@ class Converter(object):
     center = dot(nanowire.cell, [0.5,0.5,0])
 
     # now iterates over atoms in each shell.
-    atomic_shells = self.layer_iterator(nanowire, center, self.growth)
+    atomic_shells = shell_iterator(nanowire, center, self.growth, self.thickness)
     for shell_index, atoms in enumerate(atomic_shells):
       # finds the type, taking care whether we are inside or outside the nanowire.
       type = self.types[int(shells[shell_index])] if shell_index < len(shells) else self.passivant
@@ -106,12 +119,13 @@ class Converter(object):
   def to_bitstring(self, nanowire):
     """ Constructs a bitstring from a nanowire. """
     from numpy import array, dot
+    from ....crystal import shell_iterator
 
     result = []
     # finds the center of the cell (and nanowire).
     center = dot(nanowire.cell, [0.5,0.5,0])
     # loop over shells in nanowire.
-    for layer in self.layer_iterator(nanowire, center, self.growth):
+    for layer in shell_iterator(nanowire, center, self.growth, self.thickness):
       # gets first atom in layer. 
       atom = layer.next() 
       # break from loop if we reached passivant.
@@ -121,41 +135,6 @@ class Converter(object):
 
     return array(result[self.core_radius:])
 
-  def layer_iterator(self, structure, center, direction):
-    """ Yields iterators over concentric nanowire shells. 
-
-        Can be use in a double for-loop to initialize or resolve a nano-wire
-        type.
-    """ 
-    from numpy.linalg import norm
-    from numpy import dot, sqrt
-
-    # make sure the vector is normalized.
-    direction = direction / norm(direction) 
-    # layers is a dictionary, where the keys are the shell indices, and
-    # the values a list of atoms in the respective shells.
-    layers = {}
-    for i, atom in enumerate(structure.atoms):
-      # vector from center to atom, eg with cartesian coordinates at center.
-      pos = atom.pos - center
-      # radial distance in cylindrical coordinates, where center is the
-      # origin and direction is the z-direction.
-      radial_vector = pos - dot(pos, direction) * direction
-      radial_norm = norm(radial_vector) * 4e0/sqrt(2e0) # in ML along 011
-      # finally, computes shell_index
-      shell_index = int(radial_norm+1e-12)
-      # add atomic index to shell_index layer.
-      if shell_index not in layers: layers[shell_index] = [i]
-      else: layers[shell_index].append(i)
-
-    # now loops over shells we just determined, from zero to last.
-    for key in sorted(layers.iterkeys()):
-      # and yield an iterator over atoms in that shell.
-      def iterator():
-        """ Iterator over atoms in a single shell. """
-        for i in layers[key]: yield structure.atoms[i]
-      yield iterator()
-  
   def __call__(self, object):
     """ Converts to and from structures and bitstring. """
     if hasattr(object, 'cell'): return self.to_bitstring(object)

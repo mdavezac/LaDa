@@ -84,6 +84,8 @@ escan.nbstates              = (2, 4)
 
 growth_direction = (0,0,1)
 """ Growth direction. """
+thickness = 0.35
+""" Shell thickness. """
 core_radius = 2
 """ Radius of the nanowire core. """
 core_types = ['Si', 'Ge']

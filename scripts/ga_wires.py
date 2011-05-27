@@ -31,7 +31,8 @@ def create_jobs(path, inputpath="input.py", **kwargs):
         # create conversion object from bitstring to nanowires and back.
         converter = Converter( input.vff.lattice, growth=input.growth_direction,
                                core_radius=input.core_radius, core_type=core_type,
-                               types = list(types) )
+                               types = list(types), thickness=input.thickness,
+                               sep = input.separation )
         # create objective fucntion.
         evaluator = input.Evaluator(converter, input.escan)
         
