@@ -52,8 +52,6 @@ class VariableSizeCrossover(object):
     """ Minimum bitstring size. """
     self.nmax = nmax
     """ Maximum bitstring size. """
-    self.step = step
-    """ Steps when growing/shrinking array. """
 
   def __call__(self, a, b):
     """ Create new individual from a and b using bitstring crossover. 
@@ -71,29 +69,20 @@ class VariableSizeCrossover(object):
     from numpy import array
 
     result = deepcopy(a)
-    step = getattr(self, 'step', 1)
     a = [u for u in a.genes]
     b = [u for u in b.genes]
-    if len(a) == len(b):
-      i = randint(0, len(b)-1)
-      a = a[:i] + b[i:]
-    elif len(a) == 0:  
-      j = randint(0, len(b))
-      a = b[:j]
-    elif len(b) == 0: pass
-    elif len(a) > len(b):
-      j = randint(max(0, self.nmin), len(b)) 
-      j -= j % step
-      a = a[:j] + b[j:]
-    else: 
-      j = randint(max(0, self.nmin), len(b)) 
-      j -= j % step
-      i = randint(0, min(len(a), j-1))
-      a = a[:i] + b[i:j]
+    if len(a) <= 1 : return deepcopy(b)
+    if len(b) <= 1 : return deepcopy(a) 
+    if len(a) <= 3 and len(b) <= 3: a = a[:1] + b[1:]
+    elif len(a) <= 3: a += b[3:]
+    elif len(b) <= 3: a = b + a[3:]
+    else:
+      i = randint(1, min(len(a), len(b))-2)
+      j = randint(i+1, min(len(a), len(b)))
+      a = a[:i] + b[i:j] + a[j:]
     result.genes  = array(a)
     assert len(result.genes) >= self.nmin 
     assert len(result.genes) <= self.nmax
-    assert len(result.genes) % step == 0, (step, len(result.genes), result.genes)
     if hasattr(result, "fitness"): delattr(result, "fitness")
 
     return result

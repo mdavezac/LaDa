@@ -65,15 +65,6 @@ class Darwin(EscanDarwin):
     if len(a.genes) != len(b.genes): return False
     return all( a.genes == b.genes )
 
-  def taboo(self, indiv):
-    """ No two individuals in the population and the offspring are the same. """
-    from itertools import chain
-    assert len(indiv.genes) >= self.nmin and len(indiv.genes) <= self.nmax,\
-           (indiv.genes, len(indiv.genes), self.nmin, self.nmax)
-    for a in chain(self.population, self.offspring):
-      if self.compare(a, indiv): return True
-    return False
-
   def Individual(self):
     """ Generates an individual (with mpi) """
     from . import Individual
