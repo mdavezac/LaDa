@@ -37,7 +37,7 @@ class Individual(object):
 class VariableSizeCrossover(object):
   """ A crossover operation. """
 
-  def __init__(self, nmin = -1, nmax = -1):
+  def __init__(self, nmin = -1, nmax = -1, step=2):
     """ Initializes crossover. 
 
         :Parameter:
@@ -52,6 +52,8 @@ class VariableSizeCrossover(object):
     """ Minimum bitstring size. """
     self.nmax = nmax
     """ Maximum bitstring size. """
+    self.step = step
+    """ Steps when growing/shrinking array. """
 
   def __call__(self, a, b):
     """ Create new individual from a and b using bitstring crossover. 
@@ -69,14 +71,29 @@ class VariableSizeCrossover(object):
     from numpy import array
 
     result = deepcopy(a)
+    step = getattr(self, 'step', 1)
     a = [u for u in a.genes]
     b = [u for u in b.genes]
-    nmin = 0 if self.nmin == -1 else self.nmin
-    nmax = min(len(a), len(b))
-    if self.nmax != -1 and nmax < self.nmax: nmax = self.nmax
-    assert nmin < nmax, RuntimeError("Cannot perform crossover.")
-    i = randint(nmin, nmax)
-    result.genes = array( a[:i] + b[i:] )
+    if len(a) == len(b):
+      i = randint(0, len(b)-1)
+      a = a[:i] + b[i:]
+    elif len(a) == 0:  
+      j = randint(0, len(b))
+      a = b[:j]
+    elif len(b) == 0: pass
+    elif len(a) > len(b):
+      j = randint(max(0, self.nmin), len(b)) 
+      j -= j % step
+      a = a[:j] + b[j:]
+    else: 
+      j = randint(max(0, self.nmin), len(b)) 
+      j -= j % step
+      i = randint(0, min(len(a), j-1))
+      a = a[:i] + b[i:j]
+    result.genes  = array(a)
+    assert len(result.genes) >= self.nmin 
+    assert len(result.genes) <= self.nmax
+    assert len(result.genes) % step == 0, (step, len(result.genes), result.genes)
     if hasattr(result, "fitness"): delattr(result, "fitness")
 
     return result
@@ -141,7 +158,7 @@ SwapMutation = Mutation
 
 class GrowthMutation(object):
   """ Mutation which inserts a bit in the bitstring. """
-  def __init__(self, nmin = -1, nmax = -1):
+  def __init__(self, nmin = -1, nmax = -1, step=1):
     """ Initiatizes the bit insertion.
 
         :Parameters:
@@ -158,21 +175,29 @@ class GrowthMutation(object):
     """ Minimum bistring size. """ 
     assert self.nmin < self.nmax or self.nmin == -1 or self.nmax == -1,\
            ValueError("nmin and nmax are incorrect.")
+    self.step = step
+    """ By how much to grow or shrink. """
 
   def __call__(self, indiv):
     """ Inserts extra bit in bitstring. """
     from numpy import array
     from random import randint
 
-    nmin =  1 if self.nmin != -1 and len(indiv.genes) <= self.nmin else -len(indiv.genes)
-    nmax = -1 if self.nmax != -1 and len(indiv.genes) >= self.nmax else len(indiv.genes)
-    if nmin > nmax: return indiv
-
-    n = randint(nmin, nmax)
+    step = getattr(self, 'step', 1)
     l = [u for u in indiv.genes]
-    if n < 0:  l.pop(-n-1)
-    else: l.insert(n, randint(0, 1))
+    if randint(0,1) == 0 and\
+       ( (self.nmin == -1 and len(l) >= step - 1) or \
+         (self.nmin != -1 and len(l) >= step - 1 + self.nmin) ):
+      nmin = self.nmin if self.nmin != -1 else 0
+      i = randint(nmin, len(l)-step)
+      for j in xrange(step): l.pop(i)
+    elif self.nmax == -1 or (len(l) <= self.nmax - step): 
+      i = randint(0, len(l))
+      j = randint(0, 1)
+      for i in xrange(self.step): l.insert(i, j)
     indiv.genes = array(l)
+    assert len(indiv.genes) >= self.nmin or self.nmin == -1
+    assert len(indiv.genes) <= self.nmax or self.nmax == -1
      
     if hasattr(indiv, "fitness"): delattr(indiv, "fitness")
     return indiv

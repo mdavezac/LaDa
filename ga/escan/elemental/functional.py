@@ -13,78 +13,72 @@ class Darwin(EscanDarwin):
         :Parameters:
           evaluator : `lada.ga.escan.elemental.Bandgap`
             Functional which uses vff and escan for evaluating physical properties.
-        :Kwarg crossover:
-          Crossover object. Defaults to `lada.ga.escan.elemental.Crossover` ``(rate=0.5)``.
-        :Kwarg mutation:
-          Mutation object. `lada.ga.elemental.Mutation` ``(rate=2e0/float(len(.evaluator))``
-        :Kwarg cm_rate:
-          Crossover vs Mutation rate. Defaults to 0.1.
+        :Kwarg nmax: 
+          Maximum size of bitstrings. Defaults to 20.
+        :Kwarg nmin: 
+          Minimum size of bitstrings.
+        :Kwarg crossover_rate:
+          Rate for crossover operation
+        :Kwarg swap_rate:
+          Rate for specie-swap mutation-operation
+        :Kwarg growth_rate:
+          Rate for the mutation operator where layers are inserted or removed.
         :Kwarg rate: 
           Offspring rate. Defaults to ``max(0.1, 1/popsize)``.
         :Kwarg popsize: 
           Population size. Defaults to 100.
         :Kwarg maxgen: 
           Maximum number of generations. Defaults to 0.
-        :Kwarg mean_conc:
-          Mean concentration of individuals on random initialization. 
-        :Kwarg stddev_conc:
-          Standard deviation of concentration of individuals on random initialization.
         :Kwarg current_gen:
           Current generation. Defaults to 0 or to whatever is in the restart.
     """
     from .. import CompareSuperCells
-    from . import Crossover, Mutation
+    from .operators import Crossover, GrowthMutation, SwapMutation
+    from ...standard import Mating
     super(Darwin, self).__init__(evaluator, **kwargs)
 
-    lattice = self.evaluator.escan.vff.lattice
-    unit_cell = self.evaluator.converter.structure.cell
-    self.compare = CompareSuperCells(lattice, unit_cell, self.evaluator.converter)
-    """ Compares two different individuals. """
+    # add parameters from this GA.
+    self.nmin = kwargs.pop('nmin', -1)
+    """ Minimum bistring size. """
+    self.nmax = kwargs.pop('nmax', 20)
+    """ Maximum bistring size. """
 
-    # mating operations
-    self.cm_rate = kwargs.pop("cm_rate", 0.1)
-    """ Crossover versus Mutation rate. """
-    self.crossover = kwargs.pop("crossover", Crossover(rate=0.5))
-    """ Crossover operator. """
-    self.mutation = kwargs.pop("mutation", Mutation(rate=2e0/float(len(self.evaluator))))
-    """ Mutation operator. """
+    # creates mating operation.
+    self.crossover_rate = kwargs.pop('crossover_rate', 0.8)
+    """ Rate for crossover over other operations. """
+    self.swap_rate = kwargs.pop('swap_rate', 0.8)
+    """ Rate for swap-like mutations over other operations. """
+    self.growth_rate = kwargs.pop('growth_rate', 0.8)
+    """ Rate for growth-like mutations over other operations. """
+    self.matingops = Mating(sequential=False)
+    if self.crossover_rate > 0e0: self.matingops.add(Crossover(self.nmin, self.nmax, step=2))
+    if self.swap_rate > 0e0:      self.matingops.add(SwapMutation(-1))
+    if self.growth_rate > 0e0:    self.matingops.add(GrowthMutation(self.nmin, self.nmax, step=2))
 
-    # Parameters for starting population.
-    self.mean_conc = kwargs.pop("mean_conc", 0.5)
-    """ Mean concentration of individuals on random initialization. """
-    self.stddev_conc = kwargs.pop("stddev_conc", 0.5)
-    """ Standard deviation of concentration of individuals on random initialization. """
+  def mating(self):
+    """ Calls mating operations. """
+    return self.matingops(self)
 
-  def mating(self, *args, **kwargs):
-    """ Calls mating operations. Removes hash code. """
-    from .. import CompareSuperCells
-    from ...standard import Mating
-     
-    # construct sequential mating operator.
-    mating = Mating(sequential=False)
-    mating.add(self.crossover, rate=self.cm_rate)
-    mating.add(self.mutation,  rate=1-self.cm_rate) 
-    # calls mating operator.
-    result = mating(self, *args, **kwargs)
-    # removes any hash-code.
-    CompareSuperCells.remove_hashcode(result)
-    return result
+  def compare(self, a, b):
+    """ Compares two bitstrings. """
+    from numpy import all
+    if len(a.genes) != len(b.genes): return False
+    return all( a.genes == b.genes )
 
+  def taboo(self, indiv):
+    """ No two individuals in the population and the offspring are the same. """
+    from itertools import chain
+    assert len(indiv.genes) >= self.nmin and len(indiv.genes) <= self.nmax,\
+           (indiv.genes, len(indiv.genes), self.nmin, self.nmax)
+    for a in chain(self.population, self.offspring):
+      if self.compare(a, indiv): return True
+    return False
 
   def Individual(self):
     """ Generates an individual (with mpi) """
     from . import Individual
-    from numpy.random import normal, shuffle
-    result = Individual(size=len(self.evaluator))
-    if self.mean_conc == None or self.stddev_conc == None: return result
-    N = 0
-    while N == result.genes.size or N == 0:
-      x = normal(self.mean_conc, self.stddev_conc)
-      if x >= 1 or x <= 0e0: continue
-      N = int(x * float(result.genes.size))
-    result.genes[:N] = 1 # second type of appropriate site in lattice.
-    result.genes[N:] = 0 # first type of appropriate site in lattice.
-    shuffle(result.genes)
+    result = Individual(nmax=self.nmax, nmin=self.nmin)
+    assert len(result.genes) >= self.nmin and len(result.genes) <= self.nmax
     return result
 
   def __repr__(self):
@@ -101,8 +95,5 @@ class Darwin(EscanDarwin):
               "functional.rate        = {0.rate}\n"\
               "functional.rootworkdir = {1}\n"\
               "functional.current_gen = {0.current_gen}\n"\
-              "functional.mean_conc   = {0.mean_conc}\n"\
-              "functional.stddev_conc = {0.stddev_conc}\n"\
-              "functional.cm_rate     = {0.cm_rate}\n"\
               .format(self, repr(self.rootworkdir), repr(self.age))
     return header + string

@@ -31,7 +31,7 @@ class Converter(object):
     """ Constructs supercell. """
     from numpy import array, all, abs
     if all( abs(array(self.growth) - [0,0,1]) < 1e-12 ):
-      assert n % 2 == 0, ValueError("Must have even number of layers.")
+      assert n % 2 == 0, ValueError("Must have even number of layers. {0}".format(n))
       if n % 4 == 0:
         cell = array([[1, 0.5, 0], [0, 0.5, 0], [0, 0, n//4]], dtype='float64')
       else: 
@@ -41,7 +41,7 @@ class Converter(object):
     
     return self.lattice.to_structure(cell)
     
-  def to_wire(self, bitstring):
+  def to_superlattice(self, bitstring):
     """ Returns a structure constructed from a bitstring. """
     from ....crystal import layer_iterator
     # create the superstructure which will contain the superlattices.
@@ -49,6 +49,9 @@ class Converter(object):
 
     # now iterates over atoms in each layer.
     for shell_index, atoms in enumerate(layer_iterator(superlattice, self.growth)):
+      assert shell_index < len(bitstring), (len(bitstring), superlattice.cell)
+      assert bitstring[shell_index] in [0, 1], (len(bitstring), superlattice.cell)
+
       # finds the type, taking care whether we are inside or outside the superlattice.
       type = self.types[int(bitstring[shell_index])]
       # sets the atoms in that layer to the correct type.
@@ -74,8 +77,8 @@ class Converter(object):
   def __call__(self, object):
     """ Converts to and from structures and bitstring. """
     if hasattr(object, 'cell'): return self.to_bitstring(object)
-    elif hasattr(object, 'genes'): return self.to_wire(object.genes)
-    return self.to_wire(object)
+    elif hasattr(object, 'genes'): return self.to_superlattice(object.genes)
+    return self.to_superlattice(object)
  
   def __repr__(self):
     """ Returns string python code representing this object. """
