@@ -111,9 +111,9 @@ def export(self, event):
       for dir in directories:
         for pattern in args.others:
           for sfile in iglob(join(dir, pattern)):
-            if file in allfiles: continue
-            allfiles.append(file)
-            if not exists(file): continue
+            if sfile in allfiles: continue
+            allfiles.add(sfile)
+            if not exists(sfile): continue
             tarme.add(sfile, arcname=relpath(sfile, directory))
       if jobdict != None: tarme.add(jobdict, arcname=relpath(jobdict, directory))
     except Exception as e:
