@@ -117,8 +117,9 @@ def ldos(extractor, positions, raw=False):
     # Sum degenerate states if necessary.
     if extract.is_krammer:
       assert rspace.shape[1] % 2 == 0
-      # sum krammer degenerate states together since same eigenvalue.
-      rspace = rspace[:,:rspace.shape[1]//2] + rspace[:,rspace.shape[1]//2:]
+      # reorder array same as eigenvalues.
+      result = array([ (rspace[:,i//2] if i % 2 == 0 else rspace[:,i//2+rspace.shape[1]//2])\
+                       for i in xrange(rspace.shape[1]) ])
     
     # sum over equivalent kpoints. 
     N = len(positions)
