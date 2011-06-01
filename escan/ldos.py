@@ -66,7 +66,7 @@ class _ldosfunc(object):
     return dot(self.rs, exp(-y*y)) * (float(self.normalization) / sigma)
 
 
-def ldos(extractor, positions, raw=False):
+def ldos(extractor, positions, raw=False, comm=None):
   """ Local density of states at given positions.
   
       :Parameters:
@@ -78,7 +78,7 @@ def ldos(extractor, positions, raw=False):
           Whether to return the raw data or the LDOS itself, i.e. a function of
           the energy.
   """
-  from numpy import tensordot, multiply, conjugate, exp, concatenate, array, rollaxis
+  from numpy import tensordot, multiply, conjugate, exp, concatenate, array, rollaxis, sum
   from numpy.linalg import det, inv
 
   assert isinstance(extractor, KExtract),\
@@ -134,6 +134,7 @@ def ldos(extractor, positions, raw=False):
   # normalize results and concatenate.
   result = rollaxis(array(perpoint), 0,-1) / float(normalization)
   result = array([u.flatten() for u in result])
+  if comm != None: result = comm.all_reduce(result, sum)
   
   return result if raw \
          else _ldosfunc(extractor.eigenvalues, result, det(inv(extractor.structure.cell)))
@@ -163,7 +164,7 @@ class Extract(KExtract):
   def raw_ldos(self):
     """ Raw Local density of states for given sets of positions. """
     from ldos import ldos as outer_ldos
-    return outer_ldos(self, self.positions, raw=True)
+    return outer_ldos(self, self.positions, raw=True, comm=self.comm)
 
   @property
   def positions(self):

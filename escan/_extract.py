@@ -62,19 +62,21 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     if hasattr(self, '_vffout'): self._vffout.comm = Communicator(value)
 
   @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
   def kpoint(self):
     """ K-point in this calculation. """
     from numpy import array, zeros, pi
     from quantities import angstrom
     from ..physics import a0
     from re import M
-    regex = r'\s*ikpt,akx,aky,akz\s+(\d+)\s+(\S+)\s+(?:\n\s+)?\s+(?:\n\s+)?(\S+)\s+(?:\n\s+)?(\S+)'
+    regex = r'\s*ikpt,akx,aky,akz\s+(\d+)\s+(\S+)\s+(?:\n\s+)?(\S+)\s+(?:\n\s+)?(\S+)'
     result = self._find_first_OUTCAR(regex, M)
     assert result != None,\
            RuntimeError('Could not find kpoint in file {0};'.format(self.__outcar__().name))
     if result.group(1) == '0': return zeros((3,), dtype='float64')
     return array([result.group(2), result.group(3), result.group(4)], dtype='float64') / 2e0 / pi\
-           * (self.structure.scale * angstrom).rescale(a0).magnitude
+           * (self.solo().structure.scale * angstrom).rescale(a0).magnitude
 
   
   def __directory_hook__(self):
@@ -344,20 +346,52 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     assert lada_with_mpi, RuntimeError("Lada loaded without mpi. Cannot read wavefunctions.")
     # then check for function.
     from os.path import exists
-    from numpy import sqrt, abs, array
+    from numpy import sqrt, abs, array, zeros
     from numpy.linalg import norm, det
     from quantities import angstrom, pi
-    from ..mpi import world
     from ..opt import redirect
     from ..opt.changedir import Changedir
     from ..physics import a0, reduced_reciprocal_au
     from ._escan import read_wavefunctions
     from . import soH
 
-    comm = self.comm if self.comm.real else world
-    assert comm.real, ValueError("MPI needed to play with wavefunctions.")
-    is_root = comm.rank == 0 
-    assert self.success
+    assert self.comm.real, ValueError("MPI needed to play with wavefunctions.")
+    is_root = self.comm.rank == 0 
+    assert self.success, RuntimeError("Run was unsuccessful. Cannot read wavefunctions.")
+    assert self.comm.size >= self.nnodes or norm(self.kpoint) < 1e-12,\
+           RuntimeError( "Cannot read wavefunctions with fewer procs "\
+                         "({0} < {1}) than written when not at Gamma."\
+                         .format(self.comm.size, self.nnodes) )
+    # case where we need same number  of procs for reading as writing.
+    if norm(self.kpoint) < 1e-12 and self.comm.size != self.nnodes:
+      local_comm = self.comm.split(self.comm.rank < self.nnodes)
+      if self.comm.rank < self.nnodes: 
+        this = self.copy(comm=local_comm)
+        result = this._raw_gwfn_data
+        # get head node to broadcast shapes to other comms.
+        if self.comm.is_root: self.comm.broadcast(local_comm.rank, root=0)
+        else: self.comm.broadcast(root=0)
+        local_comm = self.comm.split(self.comm.rank < self.nnodes or self.comm.is_root)
+        if self.comm.is_root: 
+          local_comm.broadcast([r.shape for r in result], root=local_comm.rank)
+          local_comm.broadcast([r.dtype for r in result], root=local_comm.rank)
+          local_comm.broadcast([getattr(r, 'units', 1) for r in result], root=local_comm.rank)
+        return result
+      else: 
+        # gets array shape, type, units from head node, and create empty
+        # arrays for these nodes to use instead.
+        rootrank = self.comm.broadcast(root=0)
+        local_comm = self.comm.split(self.comm.rank < self.nnodes or self.comm.is_root)
+        shapes = local_comm.broadcast(root=rootrank)
+        dtypes = local_comm.broadcast(root=rootrank)
+        units = local_comm.broadcast(root=rootrank)
+        x = 0
+        return zeros(shape=(shapes[0][0], shapes[0][1], x), dtype=dtypes[0]) * units[0],\
+               zeros(shape=(shapes[1][0], x), dtype=dtypes[1]) * units[1],\
+               zeros(shape=(shapes[2][0], x), dtype=dtypes[2]) * units[2],\
+               zeros(shape=(x), dtype=dtypes[3]) * units[3],\
+               zeros(shape=(x), dtype=dtypes[4]) * units[4]
+                          
     kpoint = array(self.functional.kpoint, dtype="float64")
     scale = self.structure.scale / float(a0.rescale(angstrom))
     with Changedir(self.directory, comm=self.comm) as directory:
@@ -368,8 +402,8 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
         nbstates = self.functional.nbstates
       else: nbstates = self.functional.nbstates / 2
       with redirect(fout="") as streams:
-        result = read_wavefunctions(self.functional, range(nbstates), kpoint, scale, comm)
-    comm.barrier()
+        result = read_wavefunctions(self.functional, range(nbstates), kpoint, scale, self.comm)
+    self.comm.barrier()
 
     cell = self.structure.cell * self.structure.scale * angstrom
     normalization = abs(det(cell.rescale(a0)))

@@ -4,7 +4,7 @@
     At present, we have mpi and non-mpi paradigma.
 """
 # __docformat__ = "restructuredtext en"
-__all__ = [ 'world', 'Communicator', 'world', 'all_gather', 'all_reduce', 'all_to_all',
+__all__ = [ 'Communicator', 'world', 'all_gather', 'all_reduce', 'all_to_all',
             'broadcast', 'reduce', 'gather', 'NullComm']
 from . import lada_with_mpi
 
