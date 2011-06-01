@@ -31,6 +31,11 @@ class Darwin(object):
           Maximum number of generations. Defaults to 0.
         :Kwarg current_gen:
           Current generation. Defaults to 0 or to whatever is in the restart.
+        :Kwarg pools:
+          Number of pools over which to perform calculations. 
+        :Kwarg rootworkdir:
+          Root of the working directory where actual calculations are carried
+          out. Defaults to $SCRACTH
     """
     super(Darwin, self).__init__()
 
@@ -52,6 +57,10 @@ class Darwin(object):
 
     self.age = None
     """ Current historical age (e.g. number of restarts). """
+
+    self.pools = kwargs.pop("pools", 1)
+    """ Number of pools of processors over which to perform calculations. """
+    self.rootworkdir = kwargs.pop("rootworkdir", "$SCRACTH")
 
   @property
   def rootworkdir(self):

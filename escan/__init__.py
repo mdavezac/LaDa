@@ -5,7 +5,8 @@ __all__ = [ "Extract", 'MassExtract', "bandgap", "extract_bg", 'ldos',
             "nonlocalH", "localH", "AtomicPotential", "extract_bg", 'KEscan', 'KPoints', 
             'KGrid', 'ReducedKGrid', 'ReducedKDensity', 'soH', 'nonlocalH', 'localH', 
             'folded_spectrum', 'all_electron', 'read_input', 'exec_input', 'KExtract',  
-            'majority_representation', 'BPoints', 'ReducedBPoints', 'plot_bands', 'plot_alloybands']
+            'majority_representation', 'BPoints', 'ReducedBPoints', 'plot_bands', 'plot_alloybands',
+            'fftmesh']
 
 from _bandstructure import plot_bands, BPoints, ReducedBPoints, plot_alloybands
 from _bandgap import bandgap, extract as extract_bg, Functional as BandGap
@@ -17,6 +18,7 @@ from functional import Escan, folded_spectrum, all_electron
 from kescan import KEscan, Extract as KExtract
 from kpoints import KGrid, ReducedKGrid, KPoints, ReducedKDensity
 import ldos
+import fftmesh
 
 
 def exec_input(script, namespace = None):

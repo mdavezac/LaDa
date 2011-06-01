@@ -32,7 +32,6 @@ class Darwin(EscanDarwin):
         :Kwarg current_gen:
           Current generation. Defaults to 0 or to whatever is in the restart.
     """
-    from .. import CompareSuperCells
     from .operators import Crossover, GrowthMutation, SwapMutation
     from ...standard import Mating
     super(Darwin, self).__init__(evaluator, **kwargs)
