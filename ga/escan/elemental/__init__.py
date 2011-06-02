@@ -42,6 +42,7 @@ class Individual(BitstringIndividual):
       if found: return True
 
       # inversion + periodicity 
+      if dosym != 1: continue
       found = True
       for j in range(N):
         if j % dosym != 0: continue
