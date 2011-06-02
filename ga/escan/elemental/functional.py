@@ -31,6 +31,9 @@ class Darwin(EscanDarwin):
           Maximum number of generations. Defaults to 0.
         :Kwarg current_gen:
           Current generation. Defaults to 0 or to whatever is in the restart.
+        :Kwarg dosyum:
+          Whether to look for inversion/translation symmetries using the simplistic
+          implementation of Individual.
     """
     from .operators import Crossover, GrowthMutation, SwapMutation
     from ...standard import Mating
@@ -53,6 +56,9 @@ class Darwin(EscanDarwin):
     if self.crossover_rate > 0e0: self.matingops.add(Crossover(self.nmin, self.nmax, step=2))
     if self.swap_rate > 0e0:      self.matingops.add(SwapMutation(-1))
     if self.growth_rate > 0e0:    self.matingops.add(GrowthMutation(self.nmin, self.nmax, step=2))
+    if dosym in kwargs:
+      self.dosym = kwargs.pop('dosym')
+      """ Whether or not to use simplistic symmetries when comparing individuals. """
 
   def mating(self):
     """ Calls mating operations. """
@@ -67,7 +73,7 @@ class Darwin(EscanDarwin):
   def Individual(self):
     """ Generates an individual (with mpi) """
     from . import Individual
-    result = Individual(nmax=self.nmax, nmin=self.nmin)
+    result = Individual(nmax=self.nmax, nmin=self.nmin, dosym=getattr(self, 'dosym', False))
     assert len(result.genes) >= self.nmin and len(result.genes) <= self.nmax
     return result
 
@@ -86,4 +92,6 @@ class Darwin(EscanDarwin):
               "functional.rootworkdir = {1}\n"\
               "functional.current_gen = {0.current_gen}\n"\
               .format(self, repr(self.rootworkdir), repr(self.age))
+    if getattr(self, 'dosym', False): 
+      string += "functional.dosym       = {0.dosym}".format(self)
     return header + string

@@ -11,7 +11,7 @@ class Individual(BitstringIndividual):
       Comparison between two individuals expect that a bitstring represents an
       elemental superlattice, with translation and inversion symmetries.
   """
-  def __init__(self, nmin=0, nmax=20, step=2): 
+  def __init__(self, nmin=0, nmax=20, step=2, dosym=False): 
     """ Initializes a bitstring individual randomly. """
     from random import randint
     import numpy
@@ -20,18 +20,22 @@ class Individual(BitstringIndividual):
     self.size = randint(nmin//2, nmax//2) * 2
     super(Individual, self).__init__(self.size)
     self.genes = numpy.array([ int(randint(0,1)) for i in xrange(self.size) ], dtype="int")
+    self.dosym = dosym
 
   def __eq__(self, a): 
     """ Compares two elemental superlattices. """
 
     if a == None: return False
     if len(a.genes) != len(self.genes): return False
+    if getattr(self, 'dosym', False): return all(a.genes - self.genes == 0) 
+    dosym = getattr(self, 'dosym', 1)
     
     N = len(a.genes)
     for i in range(N):
       # periodicity
       found = True
       for j in range(N):
+        if j % dosym != 0: continue
         if a.genes[ (i+j) % N ] != self.genes[j]:
           found = False
           break
@@ -40,10 +44,10 @@ class Individual(BitstringIndividual):
       # inversion + periodicity 
       found = True
       for j in range(N):
+        if j % dosym != 0: continue
         if a.genes[ -((i+j) % N) ] != self.genes[j]:
           found = False
           break
       if found: return True
 
     return False
-
