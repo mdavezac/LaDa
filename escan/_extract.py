@@ -70,8 +70,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     from quantities import angstrom
     from ..physics import a0
     from re import M
-    regex = r'\s*ikpt,akx,aky,akz\s+(\d+)\s+(\S+)\s+(?:\n\s+)?(\S+)\s+(?:\n\s+)?(\S+)'
-    result = self._find_first_OUTCAR(regex, M)
+    result = self._find_first_OUTCAR(r'\s*ikpt,akx,aky,akz\s+(\d+)' + 3*r'\s+(\S+)', M)
     assert result != None,\
            RuntimeError('Could not find kpoint in file {0};'.format(self.__outcar__().name))
     if result.group(1) == '0': return zeros((3,), dtype='float64')
@@ -102,6 +101,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
           Any keyword argument is set as an attribute of this object.
     """
     result = self.__copy__()
+    if 'comm' in kwargs: result.comm = kwargs.pop('comm')
     for k, v in kwargs.items():
       if hasattr(result._vffout, k):
         setattr(result._vffout, k, v)
@@ -346,7 +346,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     assert lada_with_mpi, RuntimeError("Lada loaded without mpi. Cannot read wavefunctions.")
     # then check for function.
     from os.path import exists
-    from numpy import sqrt, abs, array, zeros
+    from numpy import sqrt, abs, array
     from numpy.linalg import norm, det
     from quantities import angstrom, pi
     from ..opt import redirect
@@ -362,35 +362,12 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
            RuntimeError( "Cannot read wavefunctions with fewer procs "\
                          "({0} < {1}) than written when not at Gamma."\
                          .format(self.comm.size, self.nnodes) )
+
     # case where we need same number  of procs for reading as writing.
-    if norm(self.kpoint) < 1e-12 and self.comm.size != self.nnodes:
+    if norm(self.kpoint) > 1e-12 and self.comm.size != self.nnodes:
       local_comm = self.comm.split(self.comm.rank < self.nnodes)
-      if self.comm.rank < self.nnodes: 
-        this = self.copy(comm=local_comm)
-        result = this._raw_gwfn_data
-        # get head node to broadcast shapes to other comms.
-        if self.comm.is_root: self.comm.broadcast(local_comm.rank, root=0)
-        else: self.comm.broadcast(root=0)
-        local_comm = self.comm.split(self.comm.rank < self.nnodes or self.comm.is_root)
-        if self.comm.is_root: 
-          local_comm.broadcast([r.shape for r in result], root=local_comm.rank)
-          local_comm.broadcast([r.dtype for r in result], root=local_comm.rank)
-          local_comm.broadcast([getattr(r, 'units', 1) for r in result], root=local_comm.rank)
-        return result
-      else: 
-        # gets array shape, type, units from head node, and create empty
-        # arrays for these nodes to use instead.
-        rootrank = self.comm.broadcast(root=0)
-        local_comm = self.comm.split(self.comm.rank < self.nnodes or self.comm.is_root)
-        shapes = local_comm.broadcast(root=rootrank)
-        dtypes = local_comm.broadcast(root=rootrank)
-        units = local_comm.broadcast(root=rootrank)
-        x = 0
-        return zeros(shape=(shapes[0][0], shapes[0][1], x), dtype=dtypes[0]) * units[0],\
-               zeros(shape=(shapes[1][0], x), dtype=dtypes[1]) * units[1],\
-               zeros(shape=(shapes[2][0], x), dtype=dtypes[2]) * units[2],\
-               zeros(shape=(x), dtype=dtypes[3]) * units[3],\
-               zeros(shape=(x), dtype=dtypes[4]) * units[4]
+      return self.copy(comm=local_comm)._raw_gwfns_data if self.comm.rank < self.nnodes \
+             else (None, None, None, None, None)
                           
     kpoint = array(self.functional.kpoint, dtype="float64")
     scale = self.structure.scale / float(a0.rescale(angstrom))

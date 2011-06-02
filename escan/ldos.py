@@ -66,7 +66,7 @@ class _ldosfunc(object):
     return dot(self.rs, exp(-y*y)) * (float(self.normalization) / sigma)
 
 
-def ldos(extractor, positions, raw=False, comm=None):
+def ldos(extractor, positions, raw=False):
   """ Local density of states at given positions.
   
       :Parameters:
@@ -78,7 +78,8 @@ def ldos(extractor, positions, raw=False, comm=None):
           Whether to return the raw data or the LDOS itself, i.e. a function of
           the energy.
   """
-  from numpy import tensordot, multiply, conjugate, exp, concatenate, array, rollaxis, sum
+  from numpy import tensordot, multiply, conjugate, exp, concatenate,\
+                    array, rollaxis, sum, add, zeros
   from numpy.linalg import det, inv
 
   assert isinstance(extractor, KExtract),\
@@ -89,52 +90,58 @@ def ldos(extractor, positions, raw=False, comm=None):
   normalization = 0e0
   perpoint = []
   for i, equivs in enumerate(extractor.functional.kpoints.iter_equivalents(istr, ostr)):
-    # computes all positions including symmetry equivalents.
-    # Since we expect fewer real space points than fourrier space points,
-    # symmetric equivalents are added to real-space positions. 
-    # See for instance "Electronic Structure", Richard M. Martin, first
-    # edition, chapter 4 section 5.
+
     extract = extractor[i]
-    equivs = [u for u in equivs]
-    operators = [op.inverse for index, m, k, op in equivs]
-    all_positions = array([op(u) for op in operators for u in positions])
-    multiplicities = [m for index, m, k, op in equivs]
-    normalization += sum(multiplicities)
 
-    # creates array which may include krammer degenerate.
-    if extract.is_krammer:
-      inverse = conjugate(extract.raw_gwfns[extract.inverse_indices,:,:])
-      gwfns = concatenate((extract.raw_gwfns, inverse), axis=1)
-    else: gwfns = extract.raw_gwfns
-    # computes all exponentials exp(-i r.g), with r in first dim, and g in second.
-    v = exp(-1j * tensordot(all_positions, extract.gvectors, ((1),(1))))
-    # computes fourrier transform for all wavefunctions simultaneously.
-    rspace = tensordot(v, gwfns, ((1),(0)))
-    rspace = multiply(rspace, conjugate(rspace)).real
-    # Sum over spin channels if necessary.
-    if not extract.is_spinor: rspace = rspace[:,:,0]
-    else: rspace = rspace[:,:,0] + rspace[:,:,1]
-    # Sum degenerate states if necessary.
-    if extract.is_krammer:
-      assert rspace.shape[1] % 2 == 0
-      # reorder array same as eigenvalues.
-      result = array([ (rspace[:,i//2] if i % 2 == 0 else rspace[:,i//2+rspace.shape[1]//2])\
-                       for i in xrange(rspace.shape[1]) ])
-    
-    # sum over equivalent kpoints. 
-    N = len(positions)
-    if abs(multiplicities[0] - 1e0) > 1e-12: rspace[:N, :] *= multiplicities[0]
-    for j, m in enumerate(multiplicities[1:]):
-      if abs(m - 1e0) > 1e-12: rspace[:N, :] += m * rspace[(j+1)*N:(j+2)*N, :]
-      else: rspace[:N, :] += rspace[(j+1)*N:(j+2)*N, :]
-
-    # append to reduced kpoint ldos list.
-    perpoint.append(rspace[:N,:].copy())
+    # checks that this proc can return wavefunctions. 
+    is_null = extract.raw_gwfns == None
+    Neigs, Npos = extract.eigenvalues.shape[0], len(positions)
+    extract = extract.copy(comm=extract.comm.split(0 if is_null else 1))
+    if is_null: perpoint.append(zeros(shape=(Npos, Neigs)))
+    else: 
+      # computes all positions including symmetry equivalents.
+      # Since we expect fewer real space points than fourrier space points,
+      # symmetric equivalents are added to real-space positions. 
+      # See for instance "Electronic Structure", Richard M. Martin, first
+      # edition, chapter 4 section 5.
+      equivs = [u for u in equivs]
+      operators = [op.inverse for index, m, k, op in equivs]
+      all_positions = array([op(u) for op in operators for u in positions])
+      multiplicities = [m for index, m, k, op in equivs]
+      normalization += sum(multiplicities)
+  
+      # creates array which may include krammer degenerate.
+      if extract.is_krammer:
+        inverse = conjugate(extract.raw_gwfns[extract.inverse_indices,:,:])
+        gwfns = concatenate((extract.raw_gwfns, inverse), axis=1)
+      else: gwfns = extract.raw_gwfns
+      # computes all exponentials exp(-i r.g), with r in first dim, and g in second.
+      v = exp(-1j * tensordot(all_positions, extract.gvectors, ((1),(1))))
+      # computes fourrier transform for all wavefunctions simultaneously.
+      rspace = tensordot(v, gwfns, ((1),(0)))
+      rspace = multiply(rspace, conjugate(rspace)).real
+      # Sum over spin channels if necessary.
+      if not extract.is_spinor: rspace = rspace[:,:,0]
+      else: rspace = rspace[:,:,0] + rspace[:,:,1]
+      # Sum degenerate states if necessary.
+      if extract.is_krammer:
+        assert rspace.shape[1] % 2 == 0
+        # reorder array same as eigenvalues.
+        result = array([ (rspace[:,i//2] if i % 2 == 0 else rspace[:,i//2+rspace.shape[1]//2])\
+                         for i in xrange(rspace.shape[1]) ])
+      
+      # sum over equivalent kpoints. 
+      if abs(multiplicities[0] - 1e0) > 1e-12: rspace[:Npos, :] *= multiplicities[0]
+      for j, m in enumerate(multiplicities[1:]):
+        if abs(m - 1e0) > 1e-12: rspace[:Npos, :] += m * rspace[(j+1)*Npos:(j+2)*Npos, :]
+        else: rspace[:Npos, :] += rspace[(j+1)*Npos:(j+2)*Npos, :]
+  
+      # append to reduced kpoint ldos list.
+      perpoint.append(rspace[:Npos,:].copy())
 
   # normalize results and concatenate.
   result = rollaxis(array(perpoint), 0,-1) / float(normalization)
-  result = array([u.flatten() for u in result])
-  if comm != None: result = comm.all_reduce(result, sum)
+  result = extractor.comm.all_reduce(array([u.flatten() for u in result]), add)
   
   return result if raw \
          else _ldosfunc(extractor.eigenvalues, result, det(inv(extractor.structure.cell)))
@@ -164,7 +171,7 @@ class Extract(KExtract):
   def raw_ldos(self):
     """ Raw Local density of states for given sets of positions. """
     from ldos import ldos as outer_ldos
-    return outer_ldos(self, self.positions, raw=True, comm=self.comm)
+    return outer_ldos(self, self.positions, raw=True)
 
   @property
   def positions(self):
