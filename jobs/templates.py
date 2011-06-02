@@ -62,7 +62,7 @@ def hopper_pbs( file, walltime = "05:45:00", mppwidth = 8, queue = None, name = 
   else: file.write("cd {0}\n".format(outdir))
 
   # aprun on fucking Cray prima donas. mpirun everywhere else.
-  file.write("aprun" if environ.get('NERSC_HOST', 'other') == 'hopper2' else 'mpirun')
+  file.write("aprun" if environ.get('NERSC_HOST', 'other') == 'hopper' else 'mpirun')
   file.write(" -n {0} python {1} ".format(mppwidth, pyscript) )
   for key, value in kwargs.items(): 
     if value == None: file.write(" --{0}".format(key))
@@ -110,7 +110,7 @@ def default_pbs( file, walltime = "05:45:00", mppwidth = 8, queue = None, name =
   else: file.write("cd {0}\n".format(outdir))
 
   # aprun on fucking Cray prima donas. mpirun everywhere else.
-  file.write("aprun" if environ.get('NERSC_HOST', 'other') == 'hopper2' else 'mpirun')
+  file.write("aprun" if environ.get('NERSC_HOST', 'other') == 'hopper' else 'mpirun')
   file.write(" -n {0} python {1} ".format(mppwidth, pyscript) )
   for key, value in kwargs.items(): 
     if value == None: file.write(" --{0}".format(key))
