@@ -114,6 +114,7 @@ namespace LaDa
         void print_xml( TiXmlElement* const node ) const;
         //! Compares the position of two atoms.
         template< class TTYPE > bool operator < ( const Atom_Type<TTYPE> &_atom ) const;
+        //! To load and save to xml-like input.
         template<class T_ARCHIVE>
           bool lns_access(T_ARCHIVE const &_ar) 
           {

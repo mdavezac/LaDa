@@ -110,8 +110,16 @@ namespace LaDa
       Section operator<<( Section _a, Section const& _b )
       {
         LADA_DOASSERT( not _a.incomplete(), "Inserting into incomplete section.\n" )
-        merge_all( _a, _b );
-        _a.sequence() &= _b.sequence();
+        if(_b.incomplete() )
+        {
+          merge_all( _a, _b );
+          _a.sequence() &= _b.sequence();
+        }
+        else
+        {
+          _a.push_back(_b);
+          _a.sequence() &= "1";
+        }
         return _a;
       }
 

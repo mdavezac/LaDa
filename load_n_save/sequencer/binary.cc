@@ -94,23 +94,21 @@ namespace LaDa
 
       }
 
-#     ifdef _LADADEBUG
-        std::ostream& operator<<( std::ostream &_stream, Binary const& _s )
-        {
-          Binary::const_iterator i_first( _s.begin() );
-          Binary::const_iterator const i_end( _s.end() );
-          for(; i_first != i_end; ++i_first )
-            switch(*i_first)
-            {
-              case first_object: _stream << '1'; break;
-              case second_object: _stream << '2'; break;
-              case start_group: _stream << '('; break;
-              case end_group: _stream << ')'; break;
-              case or_: _stream << '|'; break;
-            }
-          return _stream;
-        }
-#     endif
+      std::ostream& operator<<( std::ostream &_stream, Binary const& _s )
+      {
+        Binary::const_iterator i_first( _s.begin() );
+        Binary::const_iterator const i_end( _s.end() );
+        for(; i_first != i_end; ++i_first )
+          switch(*i_first)
+          {
+            case first_object: _stream << '1'; break;
+            case second_object: _stream << '2'; break;
+            case start_group: _stream << '('; break;
+            case end_group: _stream << ')'; break;
+            case or_: _stream << '|'; break;
+          }
+        return _stream;
+      }
 
     } // namespace sequencer.
   } // namespace load_n_save

@@ -1,7 +1,6 @@
 set( LIBLNS_HEADERS 
      string_type.h tags.h access.h parser_base.h
-     action/action_base.h action/enum.h action/string_to_type.h
-     action/type_to_regex.h action/push_back.h
+     action/type_to_regex.h action/push_back.h action/fusion.h
      load/load.h 
      save/save.h
      sequencer/binary_const_iterator.h sequencer/binary.h
@@ -34,7 +33,7 @@ if(NOT disable_executables)
 # target_link_libraries(main_exe lns)
 # add_executable(initializer_exe initializer/main.cc)
   add_executable(load_exe load/main.cc)
-  target_link_libraries(load_exe lns)
+  target_link_libraries(load_exe lns ${Boost_SYSTEM_LIBRARY})
   add_executable(xml_exe xml/main.cc)
   target_link_libraries(xml_exe lns)
 # add_executable(xpr_exe xpr/main.cc)

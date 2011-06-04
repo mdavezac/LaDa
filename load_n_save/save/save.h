@@ -55,8 +55,7 @@ namespace LaDa
           bool is_loading() const { return false; } 
 
           //! Parses content.
-          virtual bool content( xpr::Section const & _sec, t_String const &_name = "" ) const
-            { LADA_DOASSERT(false, ""); return false; }
+          virtual bool content( xpr::Section const & _sec, t_String const &_name = "" ) const;
           //! Double dispatch.
           virtual bool regular( xpr::Section const &_sec, xpr::regular_data const&_data ) const;
           //! Returns the current tree;

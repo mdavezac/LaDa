@@ -106,7 +106,7 @@ namespace LaDa
           t_String SectionImpl<T_SECTION>::print(t_String const& _depth, t_String const &_tab ) const
           {
             std::ostringstream sstr;
-            if( data_ ) sstr << "Base:\n";
+            if( not data_ ) sstr << "Base:\n";
             else sstr << data_->print( _depth, _tab );
             t_String newdepth = _depth + _tab;
             sstr << newdepth << "subsections: "

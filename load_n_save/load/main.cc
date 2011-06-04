@@ -4,6 +4,7 @@
 
 #include "load.h"
 #include "crystal/atom.h"
+#include "crystal/structure.h"
 #include "../tags.h"
 #include "../xpr/utilities.h"
 #include "../xml/parser.h"
@@ -70,6 +71,7 @@ struct A
 int main(int argc, char *argv[]) 
 {
   
+  LaDa::Crystal::Structure structure;
   LaDa::Crystal::StrAtom atom;
   atom.pos[0] = 5;
 // A a;
@@ -82,22 +84,32 @@ int main(int argc, char *argv[])
   std::string string
 //   = "<A aa=4 b=\"3e-5\" c=t />\n";
 //  = "<Atom x=4 y=0 z=\"-3.1416\" freeze=\"xyz\" />\n";
-    = "<Atom x=0 y=0 z=\"-3.1416\" type=Au freeze=\"xyz\" />\n";
+//   = "<Atom x=0 y=0 z=\"-3.1416\" type=Au freeze=\"xyz\" />\n";
+    = "<Structure>\n"
+      "  <Cell r0=\"1 1 0\"\n"
+      "        r1=\"0 1 0\"\n"
+      "        r2=\"0 0 1\"/>\n"
+      "</Structure>\n";
+//   = "<Structure>\n"
+//     "  <Cell row=\"1 0 0\" \n" 
+//     "        row=\"0 1 0\"  \n" 
+//     "        row=\"0 0 1\"/>\n" 
+//     "</Structure>\n";
 
   boost::shared_ptr< lns::tree::Base > xml( lns::xml::parse( string ) );
   std::cout << (bool) xml << "\n";
   if( not (bool) xml ) return 0;
       
   lns::load::Load loader;
-  bool result = loader( *xml, lns::ext(atom) );
-  std::cout << "result: " << atom << "\n";
+  bool result = loader( *xml, lns::ext(structure) );
+  std::cout << "result: " << result << "\n" << structure << "\n";
   
 
   lns::save::Save saver;
-   boost::shared_ptr< lns::tree::Base > other(saver(lns::ext(atom)));
-   std::cout << "\n ? \n";
-   lns::xml::print(std::cout, *other);
-   std::cout << "\n ? \n";
+  boost::shared_ptr< lns::tree::Base > other(saver(lns::ext(structure)));
+  std::cout << "\n ? \n";
+  lns::xml::print(std::cout, *other);
+  std::cout << "\n ? \n";
 
 
   return 0;

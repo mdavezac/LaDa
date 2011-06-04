@@ -113,23 +113,23 @@
       BOOST_STATIC_ASSERT(( no_default::value or (not no_action::value) ));
       BOOST_STATIC_ASSERT(( boost::is_reference<t_action>::type::value or no_action::value ));
       BOOST_STATIC_ASSERT(( boost::is_reference<t_default>::type::value or no_default::value ));
-      BOOST_STATIC_ASSERT
-      (( 
-            (
-              not boost::is_const
-                  < 
-                    typename boost::remove_reference<t_action>::type
-                  > :: type :: value
-            )
-         or no_action::value
-         or action_::is_special_action
-            < 
-              typename boost::remove_const
-              <
-                typename boost::remove_reference<t_action> :: type
-              > :: type
-            > :: value
-      ));
+    // BOOST_STATIC_ASSERT
+    // (( 
+    //       (
+    //         not boost::is_const
+    //             < 
+    //               typename boost::remove_reference<t_action>::type
+    //             > :: type :: value
+    //       )
+    //    or no_action::value
+    //    or action_::is_special_action
+    //       < 
+    //         typename boost::remove_const
+    //         <
+    //           typename boost::remove_reference<t_action> :: type
+    //         > :: type
+    //       > :: value
+    // ));
       BOOST_STATIC_ASSERT
       (( 
          (

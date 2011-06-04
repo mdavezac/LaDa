@@ -31,7 +31,7 @@ namespace LaDa
       template<class T>
         bool Save::Section :: content_(T const &_range) const
         {
-          bool error = false;
+          bool is_good = true;
           OpAndRange::value_type i_first(_range.first);
           OpAndRange::value_type const &i_end(_range.second);
           for(; i_first != i_end; ++i_first )
@@ -39,8 +39,12 @@ namespace LaDa
             {
               boost::shared_ptr<tree::Section> treesec(new tree::Section(""));
               Save::Section section(treesec);
-              if( not i_first.first()->parse(section) ) return false;
-              treesec->copy_to(*tree_);
+              if( not i_first.first()->parse(section) )
+              {
+                is_good = false;
+                continue;
+              }
+              tree_->push_back(*treesec);
             }
             else if( i_first.is_second() )
               tree_->push_back( i_first.second()->name, i_first.second()->str() );
@@ -48,10 +52,10 @@ namespace LaDa
             { 
               OpAndRange::value_type i_group(_range.first);
               find_group_end( i_group, i_end );
-              if( not content_(OpAndRange(++i_first, i_group)) ) error = true;
+              if( not content_(OpAndRange(++i_first, i_group)) ) is_good = false;
               i_first = i_group;
             }
-          return error;
+          return is_good;
         }
 
       bool Save::Section :: regular( xpr::Section const & _sec, xpr::regular_data const &_data ) const
@@ -67,6 +71,17 @@ namespace LaDa
         );
         return content_(range);
       }
+      bool Save::Section :: content( xpr::Section const & _sec, t_String const &_name) const
+      {
+        OpAndRange const range
+        (
+          _sec.sequence().begin(), _sec.sequence().end(),
+          _sec.subsections_begin(), _sec.subsections_end(),
+          _sec.options_begin(), _sec.options_end() 
+        );
+        return content_(range);
+      }
+
 
 
     } // namespace save.

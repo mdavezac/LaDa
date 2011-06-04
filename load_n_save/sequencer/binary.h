@@ -11,9 +11,7 @@
 #endif
 
 #include <list>
-#ifdef _LADADEBUG
-# include<iostream>
-#endif 
+#include<iostream>
 
 #include <opt/debug.h>
 
@@ -57,13 +55,8 @@ namespace LaDa
           void transform_( std::string const &_str );
       };
 
-#     ifdef _LADADEBUG
-        std::ostream& operator<<( std::ostream &_stream, Binary const& _s );
-#      define LADA_PRINT(a) std::cout << a << "\n";
-#     else
-#      define LADA_PRINT(a)
-#     endif
-
+      //! Dumps sequence to stream.
+      std::ostream& operator<<( std::ostream &_stream, Binary const& _s );
 
 
       //! Joins two sequences via an || operator.
@@ -71,11 +64,9 @@ namespace LaDa
       {
         _a.push_back(or_); 
         std::copy( _b.begin(), _b.end(), std::back_inserter(_a) );
-        LADA_PRINT(_a); 
       }
       //! Joins two sequences via an && operator.
       void operator&=( Binary &_a, Binary const &_b );
-#    undef LADA_PRINT
   
       //! \brief If *\a_first == start_group, returns iterator at close of parenthesis,
       //!       returns \a _first otherwise.

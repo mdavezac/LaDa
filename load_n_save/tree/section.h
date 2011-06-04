@@ -96,6 +96,8 @@ namespace LaDa
           //! Copies a section.
           void copy_to( Section& _c ) const
             { t_Subsections::copy_to(_c); t_Options::copy_to(_c); _c.name = name; _c.fresh = fresh; }
+          //! Adds subsection.
+          void push_back( Section& _c ) { t_Subsections::push_back(_c); }
       };
 
       typedef details::Base<Section> Base;

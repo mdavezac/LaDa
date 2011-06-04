@@ -11,6 +11,7 @@
 #include <math.h>
 #include <boost/filesystem/path.hpp>
 #include <boost/serialization/serialization.hpp>
+#include <boost/fusion/tuple/tuple_tie.hpp>
 
 
 #include <tinyxml/tinyxml.h>
@@ -20,8 +21,13 @@
 #include <opt/tinyxml.h>
 #include <math/eigen.h>
 
+
 #include "atom.h"
 #include "lattice.h"
+
+#include <load_n_save/xpr/utilities.h>
+#include <load_n_save/action/fusion.h>
+#include <load_n_save/xpr/push_back.h>
 
 namespace LaDa 
 {
@@ -141,6 +147,56 @@ namespace LaDa
       
       //! Sets the site index of each atom according to Structure::lattice.
       bool set_site_indices();
+      //! To load and save to xml-like input.
+      template<class T_ARCHIVE>
+        bool lns_access(T_ARCHIVE const &_ar) 
+        {
+          namespace lns = LaDa :: load_n_save;
+          namespace bf = boost::fusion;
+          std::map<std::string, LaDa::types::t_unsigned> freeze_map;
+          freeze_map["none"] = FREEZE_NONE;
+          freeze_map["a0"]   = FREEZE_A0;
+          freeze_map["a1"]   = FREEZE_A1;
+          freeze_map["a2"]   = FREEZE_A2;
+          freeze_map["all"]  = FREEZE_ALL;
+#         ifdef LADA_TIE
+#            error LADA_TIE already defined.
+#         endif
+#         define LADA_TIE(i) bf::tie(cell(i,0), cell(i,1), cell(i,2))
+#         ifdef LADA_TOE
+#            error LADA_TOE already defined.
+#         endif
+#         define LADA_TOE(i) bf::tie(cell(0,i), cell(1,i), cell(2,i))
+//        lns::xpr::Section const first =
+//             (     lns::option("r0", lns::tag=lns::required, lns::action=LADA_TIE(0))
+//                && lns::option("r1", lns::tag=lns::required, lns::action=LADA_TIE(1))
+//                && lns::option("r2", lns::tag=lns::required, lns::action=LADA_TIE(2)) )
+//         lns::xpr::Section const second =
+//             (    lns::option("a0", lns::tag=lns::required, lns::action=LADA_TOE(0))
+//               && lns::option("a1", lns::tag=lns::required, lns::action=LADA_TOE(1))
+//               && lns::option("a2", lns::tag=lns::required, lns::action=LADA_TOE(2)));
+          lns::xpr::Section const seccell = lns::section("Cell") 
+            << (
+                    (    lns::option("r0", lns::tag=lns::required, lns::action=LADA_TIE(0))
+                      && lns::option("r1", lns::tag=lns::required, lns::action=LADA_TIE(1))
+                      && lns::option("r2", lns::tag=lns::required, lns::action=LADA_TIE(2)) )
+                 || (    lns::option("a0", lns::tag=lns::required, lns::action=LADA_TOE(0))
+                      && lns::option("a1", lns::tag=lns::required, lns::action=LADA_TOE(1))
+                      && lns::option("a2", lns::tag=lns::required, lns::action=LADA_TOE(2))  )
+               );
+#         undef LADA_TIE
+#         undef LADA_TOE
+          lns::xpr::Section const section =
+            lns::section("Structure")  
+              << ( seccell && lns::push_back(atoms) )
+              << lns::option("name", lns::action=name, lns::default_="")
+              << lns::option("energy", lns::action=energy, lns::default_=0)
+              << lns::option("weight", lns::action=weight, lns::default_=0)
+              << lns::option("freeze", lns::action=lns::enum_(freeze, freeze_map),
+                             lns::default_=FREEZE_NONE)
+              << lns::option("scale", lns::action=scale, lns::default_=1e0);
+          return _ar & section;
+        }
 
       private:
         //! Serializes a structure.
@@ -234,6 +290,11 @@ namespace LaDa
       std::ostream& print_xyz( std::ostream &_stream,
                                const std::string &_name = "" ) const;
       
+      //! Not found for some reason.
+      template<class T_ARCHIVE>
+        bool lns_access(T_ARCHIVE const &_ar) 
+          { TStructure<types::t_real> :: lns_access(_ar); }
+
       protected:
         //! Finds parent node.
         const TiXmlElement* find_node( const TiXmlElement &_element );
