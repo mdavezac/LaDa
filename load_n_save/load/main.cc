@@ -105,11 +105,11 @@ int main(int argc, char *argv[])
   std::cout << "result: " << result << "\n" << structure << "\n";
   
 
-  lns::save::Save saver;
-  boost::shared_ptr< lns::tree::Base > other(saver(lns::ext(structure)));
-  std::cout << "\n ? \n";
-  lns::xml::print(std::cout, *other);
-  std::cout << "\n ? \n";
+// lns::save::Save saver;
+// boost::shared_ptr< lns::tree::Base > other(saver(lns::ext(structure)));
+// std::cout << "\n ? \n";
+// lns::xml::print(std::cout, *other);
+// std::cout << "\n ? \n";
 
 
   return 0;

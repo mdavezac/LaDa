@@ -30,6 +30,8 @@ namespace LaDa
         virtual bool content( xpr::Section const&, t_String const& _n = "" ) const = 0;
         //! Parses subsections.
         virtual bool operator&( xpr::Section const& ) const = 0;
+        //! Whether this is a loading or saving section.
+        virtual bool is_loading() const = 0;
       };
 
     } // namespace parser_base

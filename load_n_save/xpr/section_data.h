@@ -4,6 +4,7 @@
 #include "LaDaConfig.h"
 
 #include <boost/lexical_cast.hpp>
+#include <boost/type_traits/remove_const.hpp>
 
 #include "../access.h"
 #include "../string_type.h"
@@ -61,7 +62,7 @@ namespace LaDa
                 { return "External type.\n"; }
               //! Parsing double dispatch.
               virtual bool parse( parser_base::Section const& _parser, T_SECTION const & ) const
-                { return Access<T_DATA>::call( _parser, data_ ); }
+                { return Access< typename boost::remove_const<T_DATA>::type >::call( _parser, data_ ); }
             private:
               //! The data itself
               T_DATA &data_;

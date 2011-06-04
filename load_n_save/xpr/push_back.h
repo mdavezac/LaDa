@@ -4,6 +4,7 @@
 #include "LaDaConfig.h"
 
 #include "utilities.h"
+#include "../action/shared_ptr.h"
 
 namespace LaDa 
 {
@@ -25,7 +26,7 @@ namespace LaDa
                 if(_ar.is_loading())
                 {
                   typename T::value_type value;
-                  while(_ar & value) container_.push_back(ext(value));
+                  while(_ar & ext(value)) container_.push_back(value);
                   return true;
                 }
                 else 
@@ -50,7 +51,7 @@ namespace LaDa
               {
                 LADA_ASSERT(not _ar.is_loading(), "Cannot load into constant container.")
                 typename  T::value_type value;
-                while(_ar & value) container_.push_back(ext(value));
+                while(_ar & ext(value)) container_.push_back(value);
                 return true;
               }
             T const &container_;
@@ -60,9 +61,12 @@ namespace LaDa
     } // namespace xpr
     template<class T>
       xpr::Section push_back(T const &_container)
-      { return ext(xpr::details::PushBack<T const>(_container)); }
-    template<class T> xpr::Section push_back(T const &_container)
-      { return ext(xpr::details::PushBack<T>(_container)); }
+      { return ext(copy(xpr::details::PushBack<T const>(_container))); }
+    template<class T> xpr::Section push_back(T &_container)
+    {
+      xpr::details::PushBack<T> data(_container);
+      return ext(copy(data)); 
+    }
   } // namespace load_n_save
 } // namespace LaDa
 #endif

@@ -31,7 +31,7 @@ namespace LaDa
           boost::shared_ptr<tree::Base> operator()(xpr::Section const& _sec ) const;
      
           //! Loads an archive.
-          bool is_loading() const { return false; } 
+          virtual bool is_loading() const { return false; } 
 
         protected:
           //! Class for parsing a section.
@@ -52,7 +52,7 @@ namespace LaDa
             { return _sec.parse(*this); }
 
           //! Saves an archive.
-          bool is_loading() const { return false; } 
+          virtual bool is_loading() const { return false; } 
 
           //! Parses content.
           virtual bool content( xpr::Section const & _sec, t_String const &_name = "" ) const;

@@ -20,14 +20,14 @@
 #include <opt/types.h>
 #include <opt/tinyxml.h>
 #include <math/eigen.h>
+#include <load_n_save/xpr/utilities.h>
+#include <load_n_save/action/fusion.h>
+#include <load_n_save/xpr/push_back.h>
 
 
 #include "atom.h"
 #include "lattice.h"
 
-#include <load_n_save/xpr/utilities.h>
-#include <load_n_save/action/fusion.h>
-#include <load_n_save/xpr/push_back.h>
 
 namespace LaDa 
 {

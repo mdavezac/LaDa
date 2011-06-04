@@ -41,7 +41,7 @@ namespace LaDa
           bool operator()( tree::Section const& _tree, xpr::Section const& _sec ) const;
      
           //! Loads an archive.
-          bool is_loading() const { return true; } 
+          virtual bool is_loading() const { return true; } 
       };
 
       class Load :: Section : public parser_base::Section
@@ -68,7 +68,7 @@ namespace LaDa
             { return _sec.parse(*this); }
 
           //! Loads an archive.
-          bool is_loading() const { return true; } 
+          virtual bool is_loading() const { return true; } 
 
           //! Parses content.
           virtual bool content( xpr::Section const & _sec, t_String const &_name = "" ) const;
