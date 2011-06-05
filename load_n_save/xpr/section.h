@@ -80,8 +80,9 @@ namespace LaDa
             t_String print(t_String const& _depth, t_String const& _tab) const;
 
             //! Parsing double dispatch.
-            bool parse( parser_base::Section const& _sec, T_SECTION const& _this ) const
-              { return data_ ? data_->parse( _sec, _this ): _sec.content(_this); }
+            bool parse( parser_base::Section const& _sec,
+                        T_SECTION const& _this, version_type _version) const
+              { return data_ ? data_->parse(_sec, _this, _version): _sec.content(_this); }
 
             //! Acquires \a _sec as subsections.
             void push_back( Section const& _sec, SectionImpl & _impl )
@@ -212,8 +213,8 @@ namespace LaDa
           bool incomplete() const { return not impl_->data_; }
 
           //! Parsing double dispatch.
-          bool parse( parser_base::Section const& _sec ) const
-            { return impl_->parse(_sec, *this); }
+          bool parse(parser_base::Section const& _sec, version_type _version) const
+            { return impl_->parse(_sec, *this, _version); }
 
           //! Returns reference to sequencer list.
           sequencer::Binary& sequence() const { return *impl_->sequence_; }

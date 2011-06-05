@@ -6,6 +6,7 @@
 #include "../tree/tree.h"
 #include "../xpr/section.h"
 #include "../string_type.h"
+#include "../access.h"
 
 namespace LaDa 
 {
@@ -36,9 +37,13 @@ namespace LaDa
           Load( Load const &_c ) : verbose(_c.verbose) {}
 
           //! Starts parsing.
-          bool operator()( tree::Base const& _tree, xpr::Section const& _sec ) const;
+          bool operator()( tree::Base const& _tree,
+                           xpr::Section const& _sec, 
+                           version_type _version = 0u ) const;
           //! Starts parsing.
-          bool operator()( tree::Section const& _tree, xpr::Section const& _sec ) const;
+          bool operator()( tree::Section const& _tree, 
+                           xpr::Section const& _sec, 
+                           version_type _version = 0u ) const;
      
           //! Loads an archive.
           virtual bool is_loading() const { return true; } 
@@ -50,22 +55,23 @@ namespace LaDa
           friend class Option;
         public:
           //! Constructor.
-          Section   ( tree::Section const& _tree, bool _verbose ) 
-                  : tree_(_tree), verbose_(_verbose), grammar_only_(false) {}
+          Section   ( tree::Section const& _tree, bool _verbose, version_type _version ) 
+                  : tree_(_tree), version_(_version), verbose_(_verbose), grammar_only_(false) {}
           //! Parsing Constructor.
-          Section   ( Section const &_c, tree::Section const& _tree ) 
-                  : tree_(_tree), verbose_(_c.verbose_), grammar_only_(true) {}
+          Section   ( Section const &_c, tree::Section const& _tree, version_type _version ) 
+                  : tree_(_tree), version_(_version), verbose_(_c.verbose_), grammar_only_(true) {}
           //! Copy Constructor.
           Section   ( Section const &_c )
-                  : tree_(_c.tree_), verbose_(_c.verbose_), grammar_only_(_c.grammar_only_) {}
+                  : tree_(_c.tree_), version_(_c.version_),
+                    verbose_(_c.verbose_), grammar_only_(_c.grammar_only_) {}
 
           //! Starts parsing.
-          bool operator()( xpr::Section const& _sec ) const
+          bool operator()(xpr::Section const& _sec ) const
             { return operator&(_sec); }
 
           //! Starts parsing.
           virtual bool operator&( xpr::Section const& _sec ) const
-            { return _sec.parse(*this); }
+            { return _sec.parse(*this, version_); }
 
           //! Loads an archive.
           virtual bool is_loading() const { return true; } 
@@ -81,6 +87,8 @@ namespace LaDa
 
           //! Xml-like tree.
           tree::Section const &tree_;
+          //! Version of this archive.
+          version_type version_;
           //! Verbose or quiet output.
           bool verbose_;
           //! Whether to parse options or simply check syntax.
@@ -113,15 +121,19 @@ namespace LaDa
           bool grammar_only_;
       };
 
-      inline bool Load::operator()( tree::Base const& _tree, xpr::Section const& _sec ) const
+      inline bool Load::operator()( tree::Base const& _tree,
+                                    xpr::Section const& _sec,
+                                    version_type _version ) const
       {
         tree::Base base(_tree);
         tree::Section text("");
         text.tree::Base::swap(base);
-        return Section(text, verbose)(_sec); 
+        return Section(text, verbose, _version)(_sec); 
       }
-      inline bool Load::operator()( tree::Section const& _tree, xpr::Section const& _sec ) const
-        { return Section(_tree, verbose)(_sec); }
+      inline bool Load::operator()( tree::Section const& _tree,
+                                    xpr::Section const& _sec,
+                                    version_type _version ) const
+        { return Section(_tree, verbose, _version)(_sec); }
     } // namespace initializer.
   } // namespace load_n_save
 } // namespace LaDa

@@ -116,7 +116,7 @@ namespace LaDa
         template< class TTYPE > bool operator < ( const Atom_Type<TTYPE> &_atom ) const;
         //! To load and save to xml-like input.
         template<class T_ARCHIVE>
-          bool lns_access(T_ARCHIVE const &_ar) 
+          bool lns_access(T_ARCHIVE &_ar, const unsigned int _version) 
           {
             namespace lns = LaDa :: load_n_save;
             std::map<std::string, LaDa::types::t_unsigned> freeze_map;

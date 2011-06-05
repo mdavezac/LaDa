@@ -96,6 +96,8 @@ int main(int argc, char *argv[])
 //     "        row=\"0 0 1\"/>\n" 
 //     "</Structure>\n";
 
+// boost::shared_ptr< LaDa::Crystal::Structure::t_Atom > a(new LaDa::Crystal::Structure::t_Atom);
+// lns::ext(a);
   boost::shared_ptr< lns::tree::Base > xml( lns::xml::parse( string ) );
   std::cout << (bool) xml << "\n";
   if( not (bool) xml ) return 0;

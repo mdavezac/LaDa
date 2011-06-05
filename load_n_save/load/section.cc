@@ -79,7 +79,7 @@ namespace LaDa
         {
           if( not i_first->fresh ) continue;
 
-          Section parser(*this, *i_first);
+          Section parser(*this, *i_first, version_);
           if( not parser.id_options_(_data.name, _sec) ) continue;
           
           found = true;
@@ -156,7 +156,7 @@ namespace LaDa
             {
               Load::Section section(_self);
               section.grammar_only_ = _grammar_only;
-              if( not i_first.first()->parse(section) ) return false;
+              if( not i_first.first()->parse(section, section.version_) ) return false;
             }
             else if( i_first.is_second() )
             {

@@ -1,56 +1,68 @@
-//
-//  Version: $Id: access.h 1250 2009-07-26 21:04:07Z davezac $
-//
+#ifndef LADA_LNS_ACCESS_H
+#define LADA_LNS_ACCESS_H
 
-#ifndef _LADA_LNS_ACCESS_H_
-#define _LADA_LNS_ACCESS_H_
+#include "LaDaConfig.h"
 
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
+#include <boost/serialization/strong_typedef.hpp>
+#include <boost/serialization/pfto.hpp>
 
 namespace LaDa 
 {
   namespace load_n_save
   {
-    namespace parser_base
-    {
-      struct Section;
-    }
-    //! Non-intrusive external access. 
-    template<class T_DATA> struct lns_access;
+    // Defines version type for overloading.
+    typedef unsigned int version_type;
+    typedef BOOST_PFTO version_type long_version_type;
+    BOOST_STRONG_TYPEDEF(version_type, pfto_version_type);
+    
 
-    //! \brief A metafunctor using SNIFAE to dectect whether a type has
-    //!        an lns_access method.
-    template< class T_DATA >
-      class Access
-      {
-          //! \brief Structure can be instantiated only for certain class.
-          //! \details Class U must have a member with the correct signature.
-          //!          Function Test then determines the name of this member.
-          template<class U, bool (U::*)( parser_base::Section const & )> struct SFINAE {};
-          //! This overload can be instantiated only with the correct class and class member.
-          template<class U> static char Test(SFINAE<U, &U::lns_access >*);
-          //! This overload can be instantiated with any class.
-          template<class U> static int Test(...);
-          //! The resulting value.
-          static const bool value = sizeof(Test<T_DATA>(0)) == sizeof(char);
-        public:
-          //! Makes member or external function call.
-          static bool call( parser_base::Section const& _parser, T_DATA& _data ) 
-            { return call_<T_DATA>( _parser, _data, boost::mpl::bool_<value>() ); }
-        protected:
-          //! Calls member function.
-          template<class T> 
-            static bool call_( parser_base::Section const& _parser, 
-                               T& _data, boost::mpl::bool_<true> ) 
-             { return _data.lns_access( _parser ); }
-          //! External function.
-          template< class T> 
-            static bool call_( parser_base::Section const& _parser,
-                               T& _data, boost::mpl::bool_<false> ) 
-             { return lns_access<T_DATA>()( _parser, _data ); }
-      };
+    //! Intrusive external access. 
+    struct access
+    {
+      template<class T_ARCHIVE, class T> 
+        static inline bool lns_access(T_ARCHIVE &_ar, T &_var, version_type const _version)
+          { return _var.lns_access(_ar, _version); }
+    };
+    
+    // default implementation - call the member function "serialize"
+    template<class Archive, class T>
+      inline bool lns_access( Archive & ar, T & t, long_version_type const file_version )
+        { access::lns_access(ar, t, static_cast<unsigned int>(file_version)); }
+
+    // Taken from boost/serialization/serialization.hpp
+    // layer 3 - move call into serialization namespace so that ADL will function
+    // in the manner we desire.
+    //
+    // on compilers which don't implement ADL. only the current namespace
+    // i.e. boost::serialization will be searched.
+    // 
+    // on compilers which DO implement ADL
+    // serialize overrides can be in any of the following
+    // 
+    // 1) same namepace as Archive
+    // 2) same namespace as T
+    // 3) boost::serialization
+    //
+    // Due to Martin Ecker
+    template<class Archive, class T>
+      inline bool lns_access_adl( Archive & ar, T & t, version_type const file_version )
+      { 
+        // note usage of function overloading to delay final resolution
+        // until the point of instantiation.  This works around the two-phase
+        // lookup "feature" which inhibits redefintion of a default function
+        // template implementation. Due to Robert Ramey
+        //
+        // Note that this trick generates problems for compiles which don't support
+        // PFTO, suppress it here.  As far as we know, there are no compilers
+        // which fail to support PFTO while supporting two-phase lookup.
+        #if ! defined(BOOST_NO_FUNCTION_TEMPLATE_ORDERING)
+            pfto_version_type const v(file_version);
+            lns_access(ar, t, v);
+        #else
+            lns_access(ar, t, file_version);
+        #endif
+      }
+
   } // namespace load_n_save
 } // namespace LaDa
 

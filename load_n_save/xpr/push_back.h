@@ -21,7 +21,7 @@ namespace LaDa
             PushBack(T &_container) : container_(_container) {}
             PushBack(PushBack<T> const &_c) : container_(_c.container_) {}
             template<class T_ARCHIVE>
-              bool lns_access(T_ARCHIVE const &_ar)
+              bool lns_access(T_ARCHIVE &_ar, const unsigned int)
               {
                 if(_ar.is_loading())
                 {
@@ -32,8 +32,8 @@ namespace LaDa
                 else 
                 {
                   bool is_good = true;
-                  typename T::const_iterator i_first = container_.begin();
-                  typename T::const_iterator i_end = container_.end();
+                  typename T::iterator i_first = container_.begin();
+                  typename T::iterator i_end = container_.end();
                   for(; i_first != i_end; ++i_first) is_good &= _ar & ext(*i_first);  
                   return is_good;
                 }
@@ -47,7 +47,7 @@ namespace LaDa
             PushBack(T const &_container) : container_(_container) {}
             PushBack(PushBack<T> const &_c) : container_(_c.container_) {}
             template<class T_ARCHIVE>
-              bool lns_access(T_ARCHIVE const &_ar)
+              bool lns_access(T_ARCHIVE &_ar, const unsigned int)
               {
                 LADA_ASSERT(not _ar.is_loading(), "Cannot load into constant container.")
                 typename  T::value_type value;

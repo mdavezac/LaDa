@@ -149,7 +149,7 @@ namespace LaDa
       bool set_site_indices();
       //! To load and save to xml-like input.
       template<class T_ARCHIVE>
-        bool lns_access(T_ARCHIVE const &_ar) 
+        bool lns_access(T_ARCHIVE &_ar, load_n_save::version_type const _version) 
         {
           namespace lns = LaDa :: load_n_save;
           namespace bf = boost::fusion;
@@ -167,14 +167,6 @@ namespace LaDa
 #            error LADA_TOE already defined.
 #         endif
 #         define LADA_TOE(i) bf::tie(cell(0,i), cell(1,i), cell(2,i))
-//        lns::xpr::Section const first =
-//             (     lns::option("r0", lns::tag=lns::required, lns::action=LADA_TIE(0))
-//                && lns::option("r1", lns::tag=lns::required, lns::action=LADA_TIE(1))
-//                && lns::option("r2", lns::tag=lns::required, lns::action=LADA_TIE(2)) )
-//         lns::xpr::Section const second =
-//             (    lns::option("a0", lns::tag=lns::required, lns::action=LADA_TOE(0))
-//               && lns::option("a1", lns::tag=lns::required, lns::action=LADA_TOE(1))
-//               && lns::option("a2", lns::tag=lns::required, lns::action=LADA_TOE(2)));
           lns::xpr::Section const seccell = lns::section("Cell") 
             << (
                     (    lns::option("r0", lns::tag=lns::required, lns::action=LADA_TIE(0))
@@ -290,10 +282,11 @@ namespace LaDa
       std::ostream& print_xyz( std::ostream &_stream,
                                const std::string &_name = "" ) const;
       
-      //! Not found for some reason.
-      template<class T_ARCHIVE>
-        bool lns_access(T_ARCHIVE const &_ar) 
-          { TStructure<types::t_real> :: lns_access(_ar); }
+//     //! Not found for some reason.
+//     template<class T_ARCHIVE>
+//       bool lns_access(const T_ARCHIVE &_ar, load_n_save::version_type const & _version) 
+//         { return TStructure<types::t_real> :: lns_access(_ar, _version); }
+      using TStructure<types::t_real> :: lns_access;
 
       protected:
         //! Finds parent node.

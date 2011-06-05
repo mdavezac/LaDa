@@ -8,6 +8,7 @@
 #include "../tree/tree.h"
 #include "../xpr/section.h"
 #include "../string_type.h"
+#include "../access.h"
 
 namespace LaDa 
 {
@@ -28,7 +29,8 @@ namespace LaDa
           Save( Save const &_c ) : verbose(_c.verbose) {}
 
           //! Returns an in put/output tree.
-          boost::shared_ptr<tree::Base> operator()(xpr::Section const& _sec ) const;
+          boost::shared_ptr<tree::Base> operator()( xpr::Section const& _sec,
+                                                    version_type _version = 0u ) const;
      
           //! Loads an archive.
           virtual bool is_loading() const { return false; } 
@@ -42,14 +44,15 @@ namespace LaDa
       {
         public:
           //! Constructor.
-          Section(boost::shared_ptr<tree::Section> const &_tree) : tree_(_tree) {}
+          Section   (boost::shared_ptr<tree::Section> const &_tree, version_type _version)
+                  : tree_(_tree), version_(_version) {}
           //! Copy constructor.
-          Section(Section & _c) : tree_(_c.tree_) {}
+          Section(Section & _c) : tree_(_c.tree_), version_(_c.version_) {}
 
           bool operator()(xpr::Section const& _sec) const
             { return operator&(_sec); }
           virtual bool operator&( xpr::Section const& _sec ) const
-            { return _sec.parse(*this); }
+            { return _sec.parse(*this, version_); }
 
           //! Saves an archive.
           virtual bool is_loading() const { return false; } 
@@ -66,6 +69,8 @@ namespace LaDa
           template<class T> bool content_(T const &_range) const;
           //! Reference to the tree being built.
           boost::shared_ptr<tree::Section> tree_;
+          //! Version of this archive.
+          version_type version_;
       };
 
     } // namespace initializer.

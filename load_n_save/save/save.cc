@@ -11,11 +11,11 @@ namespace LaDa
   {
     namespace save
     {
-      boost::shared_ptr<tree::Base> Save::operator()(xpr::Section const& _sec ) const
+      boost::shared_ptr<tree::Base> Save::operator()(xpr::Section const& _sec, version_type _version) const
       { 
         boost::shared_ptr<tree::Base> result(new tree::Base);
         boost::shared_ptr<tree::Section> text(new tree::Section(""));
-        Save::Section section(text); section(_sec);
+        Save::Section section(text, _version); section(_sec);
         result->push_back(*text);
         return result;
       }
@@ -38,8 +38,8 @@ namespace LaDa
             if( i_first.is_first() )
             {
               boost::shared_ptr<tree::Section> treesec(new tree::Section(""));
-              Save::Section section(treesec);
-              if( not i_first.first()->parse(section) )
+              Save::Section section(treesec, section.version_);
+              if( not i_first.first()->parse(section, section.version_) )
               {
                 is_good = false;
                 continue;

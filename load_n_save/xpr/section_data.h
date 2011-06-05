@@ -38,7 +38,8 @@ namespace LaDa
             //! Returns a print-out string.
             virtual t_String print(t_String const &_depth, t_String const &_tab) const = 0;
             //! Parsing double dispatch.
-            virtual bool parse( parser_base::Section const&, T_SECTION const& _sec ) const = 0;
+            virtual bool parse( parser_base::Section const&,
+                                T_SECTION const& _sec, version_type _version ) const = 0;
           };
 
         //! Holds section data.
@@ -61,8 +62,9 @@ namespace LaDa
               virtual t_String print(t_String const &_depth, t_String const &_tab) const
                 { return "External type.\n"; }
               //! Parsing double dispatch.
-              virtual bool parse( parser_base::Section const& _parser, T_SECTION const & ) const
-                { return Access< typename boost::remove_const<T_DATA>::type >::call( _parser, data_ ); }
+              virtual bool parse( parser_base::Section const& _parser, 
+                                  T_SECTION const &, version_type _version ) const
+                { return LaDa::load_n_save::lns_access_adl( _parser, data_, _version ); }
             private:
               //! The data itself
               T_DATA &data_;
@@ -92,7 +94,8 @@ namespace LaDa
                        + _depth + _tab + "tag:  " + tag + "\n";
               }
               //! Parsing double dispatch.
-              virtual bool parse( parser_base::Section const& _parser, T_SECTION const &this_ ) const
+              virtual bool parse( parser_base::Section const& _parser,
+                                  T_SECTION const &this_, version_type ) const
                 { return _parser.regular(this_, data_); }
             private:
               //! The data itself
