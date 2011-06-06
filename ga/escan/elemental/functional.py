@@ -56,7 +56,7 @@ class Darwin(EscanDarwin):
     if self.crossover_rate > 0e0: self.matingops.add(Crossover(self.nmin, self.nmax, step=2))
     if self.swap_rate > 0e0:      self.matingops.add(SwapMutation(-1))
     if self.growth_rate > 0e0:    self.matingops.add(GrowthMutation(self.nmin, self.nmax, step=2))
-    if dosym in kwargs:
+    if 'dosym' in kwargs:
       self.dosym = kwargs.pop('dosym')
       """ Whether or not to use simplistic symmetries when comparing individuals. """
 
