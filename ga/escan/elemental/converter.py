@@ -38,7 +38,10 @@ class Converter(object):
         cell = array([[1, 0.5, 0], [0, 0.5, 0.5], [0, 0, n//4 + 0.5]], dtype='float64')
     elif all( abs(array(self.growth) - [1,1,0]) < 1e-12 ):
       assert n % 2 == 0, ValueError("Must have even number of layers. {0}".format(n))
-      cell = array([[n * 0.5, -0.5, 0], [n * 0.5, 0.5, 0], [0, 0, 1]], dtype='float64')
+      if n % 4 == 0:
+        cell = array([[(n//2) * 0.5, -0.5, 0], [(n//2) * 0.5, 0.5, 0], [0, 0, 1]], dtype='float64')
+      elif n % 2 == 0:
+        cell = array([[((n-2)//2) * 0.5, -0.5, 0], [((n-2)//2) * 0.5+0.5, 0.5, 0], [0.5, 0, 1]], dtype='float64')
     else:
       raise NotImplementedError("Unknown growth direction {0}.".format(self.growth))
     
