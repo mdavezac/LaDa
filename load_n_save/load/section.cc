@@ -4,6 +4,7 @@
 
 #include "load.h"
 #include "../tags.h"
+#include "../exceptions.h"
 #include "../sequencer/binary_range.h"
 
 namespace LaDa 
@@ -80,35 +81,30 @@ namespace LaDa
           if( not i_first->fresh ) continue;
 
           Section parser(*this, *i_first, version_);
-          if( not parser.id_options_(_data.name, _sec) ) continue;
+          if( parser.id_options_(_data.name, _sec) )
+          {
+            found = true;
+            break;
+          }
+        }
           
-          found = true;
-          if( grammar_only_ ) break;
-
-          // parses section.
-          parser.grammar_only_ = false;
-          if( not parser.content(_sec, _data.name) ) parse_error = true;
-          i_first->fresh = false; // marks section as read.
-          details::print_unknowns( _data.name, *i_first );
-
-          break;
+        if( grammar_only_ ) return found;
+        if( not found )
+        {
+          if(_data.tag & load_n_save::required)
+            BOOST_THROW_EXCEPTION(error::required_section_not_found() << error::section_name(_data.name));
+          BOOST_THROW_EXCEPTION(error::section_not_found() << error::section_name(_data.name));
         }
+
+        // parses section.
+        Section parser(*this, *i_first, version_);
+        parser.grammar_only_ = false;
+        parse_error = not parser.content(_sec, _data.name);
+        i_first->fresh = false; // marks section as read.
+        details::print_unknowns( _data.name, *i_first );
         
-
-        if( found )
-        {
-          if( verbose_ and parse_error )
-            std::cerr << "Found section " + _data.name + " but could not parse it.\n";
-          return not parse_error;
-        }
-        if( _data.tag & load_n_save::required)
-        {
-          if( verbose_ and (not grammar_only_) )
-            std::cerr << "Did not find required section " + _data.name + ".\n";
-          return false;
-        }
-
-        return true;
+        if(parse_error) BOOST_THROW_EXCEPTION(error::section_parse_error() << error::section_name(_data.name));
+        return not parse_error;
       }
 
       bool Load::Section :: id_options_(t_String const &_name, xpr::Section const& _sec ) const
@@ -136,9 +132,11 @@ namespace LaDa
           OpAndRange range(_range);
           for(; (bool)range; ++range )
           {
-            found = content2(_self, range, _name, true);
-            if( found ) break;
+            try { found = content2(_self, range, _name, true); }
+            catch(error::required_option_not_found &_e) { continue; }
+            if(found) break; // don't want to go through loop and incrementation.
           }
+
           // not found, or not parsing now.
           if( (not found) or _grammar_only ) return found;
         
@@ -164,11 +162,12 @@ namespace LaDa
               option.grammar_only_ = _grammar_only;
               if( option(_name, *i_first.second() ) ) continue;
               // if here, "error" occured. 
-              if(     i_first.second()->tag & load_n_save::required
-                  and  _self.verbose_
-                  and (not _grammar_only) )
-                std::cerr << "Could not find required option " << i_first.second()->name 
-                          << " in section " + _name + ".\n";
+              if( i_first.second()->tag & load_n_save::required and (not _grammar_only) )
+                BOOST_THROW_EXCEPTION
+                (
+                  error::required_option_not_found() << error::option_name(i_first.second()->name)
+                                                     << error::section_name(_name)
+                );
               return false;
             }
             else if( i_first.is_start_group() )
@@ -179,9 +178,7 @@ namespace LaDa
               if( not found ) error = true;
               i_first = i_group;
             }
-#           ifdef _LADADEBUG
-              else { __THROW_ERROR("Should not be here.\n"); }
-#           endif
+            else BOOST_THROW_EXCEPTION(error::internal());
           return  not error;
         }
 
@@ -231,7 +228,7 @@ namespace LaDa
             }
 #           ifdef _LADADEBUG
               else if( i_first.is_first() ) continue;
-              else { __THROW_ERROR("Should not be here.\n"); }
+              else BOOST_THROW_EXCEPTION(error::internal());
 #           endif
           return  t_ReturnId(has_id,has_id);
         }

@@ -4,8 +4,9 @@
 #include  <boost/xpressive/regex_compiler.hpp>
 #include  <boost/algorithm/string/trim.hpp>
 
-#include "load.h"
 #include "../tags.h"
+#include "../exceptions.h"
+#include "load.h"
 
 namespace LaDa 
 {
@@ -40,20 +41,21 @@ namespace LaDa
         bool const is_required( _op.tag & load_n_save::required );
         if( found )
         {
-          if( verbose_ and parse_error and (not is_id) )
-            std::cerr <<   "Found option " + _op.name 
-                         + " in section " + _name + " but could not parse it.\n"
-                         + "regex: " + _op.action() + ".\n"
-                         + "value: " + i_first->value + ".\n";
+          if(parse_error and (not is_id))
+            BOOST_THROW_EXCEPTION
+            ( 
+               error::option_parse_error() << error::option_name(_op.name)
+                                           << error::section_name(_op.name) 
+            );
           return not parse_error;
         }
-        if( is_required )
-        {
-          if( verbose_ and (not grammar_only_) )
-            std::cerr <<   "Did not find required option " + _op.name 
-                         + " in section " + _name + ".\n";
-          return false;
-        }
+        if( is_required and not grammar_only_ )
+          BOOST_THROW_EXCEPTION
+          ( 
+             error::required_option_not_found() << error::option_name(_op.name)
+                                                << error::section_name(_op.name) 
+          );
+        else if(is_required) return false;
         if( is_id ) return false;
 
         // assigns default value if it exits.

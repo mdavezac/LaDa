@@ -180,7 +180,7 @@ namespace LaDa
 #         undef LADA_TOE
           lns::xpr::Section const section =
             lns::section("Structure")  
-              << ( seccell && lns::push_back(atoms) )
+              << ( seccell  && lns::push_back(atoms) )
               << lns::option("name", lns::action=name, lns::default_="")
               << lns::option("energy", lns::action=energy, lns::default_=0)
               << lns::option("weight", lns::action=weight, lns::default_=0)

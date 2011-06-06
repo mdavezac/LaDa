@@ -15,7 +15,6 @@
 
 #   include <opt/debug.h>
 #   include "../string_type.h"
-#   include "../action/shared_ptr.h"
 #   include "parameters.h"
 #   include "section.h"
 #   include "option.h"
@@ -60,8 +59,7 @@
         template< class T_TYPE > xpr::Section ext( boost::shared_ptr<T_TYPE> const &_a ) 
         {
           xpr::Section result;
-          boost::shared_ptr<T_TYPE> a(_a);
-          result.set_data(a);
+          result.set_data(_a);
           return result;
         }
 

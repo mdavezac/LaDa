@@ -32,7 +32,7 @@ namespace LaDa
         bx::sregex const string_regex = bx::as_xpr('\"') >> *bx::_s >> (bx::s1=*(~bx::as_xpr('\"')))
                                                          >> *bx::_s >> '\"';
         bx::sregex const option 
-          = ( (bx::s1=+bx::alnum) >> *bx::_s >> !( '=' >> *bx::_s >> (bx::s2=(string_regex | +bx::alnum)) ) );
+          = ( (bx::s1=+bx::alnum) >> *bx::_s >> !( '=' >> *bx::_s >> (bx::s2=(string_regex | +(bx::alnum | '.'))) ) );
         bx::sregex const empty = *(bx::_s | bx::_n);
         
         bx::smatch match;

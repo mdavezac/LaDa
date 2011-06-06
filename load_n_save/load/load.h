@@ -121,19 +121,6 @@ namespace LaDa
           bool grammar_only_;
       };
 
-      inline bool Load::operator()( tree::Base const& _tree,
-                                    xpr::Section const& _sec,
-                                    version_type _version ) const
-      {
-        tree::Base base(_tree);
-        tree::Section text("");
-        text.tree::Base::swap(base);
-        return Section(text, verbose, _version)(_sec); 
-      }
-      inline bool Load::operator()( tree::Section const& _tree,
-                                    xpr::Section const& _sec,
-                                    version_type _version ) const
-        { return Section(_tree, verbose, _version)(_sec); }
     } // namespace initializer.
   } // namespace load_n_save
 } // namespace LaDa

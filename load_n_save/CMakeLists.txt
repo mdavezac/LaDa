@@ -11,7 +11,7 @@ set( LIBLNS_HEADERS
      xpr/option.h xpr/section.h xpr/section_data.h xpr/subsections.h xpr/parameters.h )
 
 set( LIBLNS_SOURCES 
-     load/option.cc load/section.cc
+     load/option.cc load/section.cc load/load.cc
      save/save.cc
      sequencer/binary.cc 
      xml/parser.cc xml/printer.cc

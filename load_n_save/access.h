@@ -27,7 +27,7 @@ namespace LaDa
     // default implementation - call the member function "serialize"
     template<class Archive, class T>
       inline bool lns_access( Archive & ar, T & t, long_version_type const file_version )
-        { access::lns_access(ar, t, static_cast<unsigned int>(file_version)); }
+        { return access::lns_access(ar, t, static_cast<unsigned int>(file_version)); }
 
     // Taken from boost/serialization/serialization.hpp
     // layer 3 - move call into serialization namespace so that ADL will function
@@ -57,9 +57,9 @@ namespace LaDa
         // which fail to support PFTO while supporting two-phase lookup.
         #if ! defined(BOOST_NO_FUNCTION_TEMPLATE_ORDERING)
             pfto_version_type const v(file_version);
-            lns_access(ar, t, v);
+            return lns_access(ar, t, v);
         #else
-            lns_access(ar, t, file_version);
+            return lns_access(ar, t, file_version);
         #endif
       }
 
