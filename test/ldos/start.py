@@ -37,13 +37,11 @@ def create_start(path, nall = 3, nrand = 5, nmax=100, density=10e0, input='input
   from random import shuffle
   from itertools import chain
   from IPython.ipapi import get as get_ipy
-  from numpy import sqrt
   from numpy.linalg import norm, inv
   from lada.enumeration import Enum
   from lada.crystal.binary import zinc_blende
   from lada.jobs import JobDict
   from lada.escan import read_input, exec_input, ReducedKDensity
-  from lada.crystal import nb_valence_states
   from lada.crystal.gruber import Reduction
 
   input = read_input(input)
@@ -74,7 +72,7 @@ def create_start(path, nall = 3, nrand = 5, nmax=100, density=10e0, input='input
     jobdict.functional.kpoints = ReducedKDensity(density, (0.5, 0.5, 0.5))
     jobdict.functional.reference = None
     jobdict.functional.fft_mesh = fftmesh(structure.cell)
-    jobdict.functional.nbstates = int(nb_valence_states(structure) * 1.5+0.5)
+    jobdict.functional.nbstates = int(len(structure.atoms) * 4 * 1.5+0.5)
 
   ip = get_ipy()
   ip.user_ns["current_jobdict"] = jobdict.root

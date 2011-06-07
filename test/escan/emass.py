@@ -1,6 +1,6 @@
 from math import fabs as abs
 from numpy import array
-from lada.crystal import fill_structure, nb_valence_states
+from lada.crystal import fill_structure
 from lada.vff import Vff
 from lada.escan import Escan, soH 
 from lada.escan.derivatives import reciprocal
@@ -11,7 +11,7 @@ input = read_input("input.py", local_dict = {"Vff": Vff, "Escan": Escan, "soH": 
 G = array([0,0,0], dtype="float64")
 X = array([0,0,1], dtype="float64")
 structure = fill_structure(input.vff.lattice.cell, input.vff.lattice)
-input.escan.nbstates = nb_valence_states(structure) + 4
+input.escan.nbstates = len(structure.atoms) * 4 + 4
 input.escan.tolerance = 1e-12
 
 result = reciprocal( input.escan, structure, X, outdir="results/emass/100", \

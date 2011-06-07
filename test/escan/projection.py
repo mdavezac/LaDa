@@ -57,15 +57,9 @@ class Projections(object):
       yield self._project(value, filename, **kwargs)
 
 def compute_bs():
-  import pickle
-  from sys import exit
-  from os.path import join
-  from numpy import matrix, array
-  from numpy.linalg import norm
-  from lada.escan import read_input, exec_input, BPoints, ReducedBPoints
-  from lada.crystal import nb_valence_states  
+  from numpy import array
+  from lada.escan import read_input, exec_input, ReducedBPoints
   from lada.vff import Vff
-  from lada.crystal import fill_structure, sort_layers, FreezeCell, nb_valence_states  
 
   # reads input file.
   input = read_input("input.py")
@@ -91,7 +85,7 @@ def compute_bs():
   kescan.fft_mesh = 14, 14, 14
   kescan.kpoints = ReducedBPoints(density=20) + (X, G) + (G, L)
   result = kescan( structure, outdir='results/projections', 
-                   nbstates = nb_valence_states(structure) + 4,
+                   nbstates = len(structure.atoms) * 4 + 4,
                    eref = None )
 
 def plot_bands(extractor, offset = 0.05, labels = None, **kwargs):

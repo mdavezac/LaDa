@@ -170,8 +170,7 @@ class Extract(AbstractExtractBase):
     if self.functional.eref != None:
       raise RuntimeError('Cannot extract VBM from folded spectrum calculation.')
     from numpy import max
-    from ..crystal import nb_valence_states
-    nbe = nb_valence_states(self.structure)
+    nbe = len(self.structure.atoms) * 4
     return max(self.eigenvalues[:, nbe-2:nbe])
 
   @property
@@ -180,8 +179,7 @@ class Extract(AbstractExtractBase):
     if self.functional.eref != None:
       raise RuntimeError('Cannot extract CBM from folded spectrum calculation.')
     from numpy import min
-    from ..crystal import nb_valence_states
-    nbe = nb_valence_states(self.structure)
+    nbe = len(self.structure.atoms) * 4
     return min(self.eigenvalues[:, nbe:nbe+2])
 
   @property
@@ -195,8 +193,7 @@ class Extract(AbstractExtractBase):
     if self.functional.eref != None:
       raise RuntimeError('Cannot extract CBM from folded spectrum calculation.')
     from numpy import argmin
-    from ..crystal import nb_valence_states
-    nbe = nb_valence_states(self.structure)
+    nbe = len(self.structure.atoms) * 4
     i = argmin(self.eigenvalues[:, nbe:nbe+2])
     return self.eigenvalues[:, nbe:nbe+2].flat[i] - self.eigenvalues[:,nbe-2:nbe].flat[i]
 
@@ -206,8 +203,7 @@ class Extract(AbstractExtractBase):
     if self.functional.eref != None:
       raise RuntimeError('Cannot extract VBM from folded spectrum calculation.')
     from numpy import argmax
-    from ..crystal import nb_valence_states
-    nbe = nb_valence_states(self.structure)
+    nbe = len(self.structure.atoms) * 4
     i = argmax(self.eigenvalues[:, nbe-2:nbe])
     return self.eigenvalues[:, nbe:nbe+2].flat[i] - self.eigenvalues[:,nbe-2:nbe].flat[i]
 
@@ -217,25 +213,23 @@ class Extract(AbstractExtractBase):
     if self.functional.eref != None:
       raise RuntimeError('Cannot extract VBM from folded spectrum calculation.')
     from numpy import min, max
-    from ..crystal import nb_valence_states
 
     for kindex, kpoint in enumerate(self.kpoints):
       if all(abs(kpoint) < 1e-12): break
     if not all(abs(kpoint) < 1e-12):
       raise RuntimeError('Could not find Gamma in computed kpoints.')
 
-    nbe = nb_valence_states(self.structure)
+    nbe = len(self.structure.atoms) * 4
     return min(self.eigenvalues[kindex, nbe:nbe+2]) - max(self.eigenvalues[kindex, nbe-2:nbe])
 
   @property 
   def directness(self):
     """ Difference in energy between the CBM at Gamma and the LUMO. """
     from numpy.linalg import norm
-    from ..crystal import nb_valence_states
     lumo = self.cbm
     gamma = min((job for job in self.values()), key=lambda x: norm(x.escan.kpoint))
     if norm(gamma.escan.kpoint) > 1e-6: raise RuntimeError("Gamma point not found.")
-    nbe = nb_valence_states(self.structure)
+    nbe = len(self.structure.atoms) * 4
     cbm = min(gamma.eigenvalues[nbe], gamma.eigenvalues[nbe+1])
     return cbm - lumo
 

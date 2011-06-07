@@ -57,13 +57,11 @@ def create_sl(path, direction, nmin, nmax, nstep, x=0.5, density=10e0, input='in
           Path to input file containing escan functional.
   """
   from IPython.ipapi import get as get_ipy
-  from numpy import array
   from numpy.linalg import norm, inv
   from lada.jobs import JobDict
   from lada.escan import read_input, exec_input, ReducedKDensity
   from lada.crystal.binary import zinc_blende
-  from lada.crystal.gruber import Reduction
-  from lada.crystal import nb_valence_states, layer_iterator
+  from lada.crystal import layer_iterator
 
   ip = get_ipy()
 
@@ -99,7 +97,7 @@ def create_sl(path, direction, nmin, nmax, nstep, x=0.5, density=10e0, input='in
     jobdict.functional.kpoints = ReducedKDensity(density, (0.5, 0.5, 0.5))
     jobdict.functional.reference = None
     jobdict.functional.fft_mesh = fftmesh(structure.cell)
-    jobdict.functional.nbstates = int(nb_valence_states(structure) * 1.5+0.5)
+    jobdict.functional.nbstates = int(len(structure.atoms) * 4 * 1.5+0.5)
 
   if 'current_jobdict' not in ip.user_ns: ip.user_ns["current_jobdict"] = rootjobs
   ip.magic("savejobs " + path)
