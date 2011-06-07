@@ -2,6 +2,7 @@
 #define LADA_LOADNSAVE_LOAD_LOAD_H
 
 #include "LaDaConfig.h"
+#include <opt/types.h>
 
 #include "../tree/tree.h"
 #include "../xpr/section.h"
@@ -56,13 +57,15 @@ namespace LaDa
         public:
           //! Constructor.
           Section   ( tree::Section const& _tree, bool _verbose, version_type _version ) 
-                  : tree_(_tree), version_(_version), verbose_(_verbose), grammar_only_(false) {}
+                  : tree_(_tree), version_(_version), recurrence_(-1), 
+                    verbose_(_verbose), grammar_only_(false) {}
           //! Parsing Constructor.
           Section   ( Section const &_c, tree::Section const& _tree, version_type _version ) 
-                  : tree_(_tree), version_(_version), verbose_(_c.verbose_), grammar_only_(true) {}
+                  : tree_(_tree), version_(_version), recurrence_(_c.recurrence_), 
+                    verbose_(_c.verbose_), grammar_only_(true) {}
           //! Copy Constructor.
           Section   ( Section const &_c )
-                  : tree_(_c.tree_), version_(_c.version_),
+                  : tree_(_c.tree_), version_(_c.version_), recurrence_(_c.recurrence_),
                     verbose_(_c.verbose_), grammar_only_(_c.grammar_only_) {}
 
           //! Starts parsing.
@@ -80,6 +83,14 @@ namespace LaDa
           virtual bool content( xpr::Section const & _sec, t_String const &_name = "" ) const;
           //! Double dispatch.
           virtual bool regular( xpr::Section const &_sec, xpr::regular_data const&_data ) const;
+          //! Starts recurrence;
+          virtual void start_recurrence() const { recurrence_ = 0; }
+          //! Increments recurrence.
+          virtual void step_recurrence() const { ++recurrence_; }
+          //! Starts recurrence;
+          virtual void stop_recurrence() const { recurrence_ = 0; }
+          //! Whether actually parsing or simply looking at grammar.
+          virtual bool grammar_only() const { return grammar_only_; }
 
         protected:
           //! Checks id_options.
@@ -89,6 +100,8 @@ namespace LaDa
           tree::Section const &tree_;
           //! Version of this archive.
           version_type version_;
+          //! Recurrence count.
+          mutable types::t_int recurrence_;
           //! Verbose or quiet output.
           bool verbose_;
           //! Whether to parse options or simply check syntax.

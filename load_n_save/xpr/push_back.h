@@ -28,9 +28,18 @@ namespace LaDa
                 if(_ar.is_loading())
                 {
                   typename T::value_type value;
-                  try { while( _ar & ext(value) ) container_.push_back(value); }
+                  _ar.start_recurrence();
+                  try
+                  { 
+                    while( _ar & ext(value) )
+                    {
+                      _ar.step_recurrence();
+                      if(not _ar.grammar_only()) container_.push_back(value); 
+                    }
+                  }
                   catch( error::section_not_found &_e)
                   { 
+                    _ar.stop_recurrence();
                     if(required_ == 0u) return true;
                     if(container_.size() >= required_) return true;
                     std::string const * section_name
@@ -40,6 +49,7 @@ namespace LaDa
                       error::too_few_sections() << error::section_name(*section_name) 
                     );
                   }
+                  _ar.stop_recurrence();
                   if(container_.size() < required_)
                     BOOST_THROW_EXCEPTION( error::too_few_sections() );
                   return true;
@@ -49,7 +59,8 @@ namespace LaDa
                   bool is_good = true;
                   typename T::iterator i_first = container_.begin();
                   typename T::iterator i_end = container_.end();
-                  for(; i_first != i_end; ++i_first) is_good &= _ar & ext(*i_first);  
+                  for(; i_first != i_end; ++i_first)
+                    is_good &= _ar & ext(*i_first);  
                   return is_good;
                 }
               }

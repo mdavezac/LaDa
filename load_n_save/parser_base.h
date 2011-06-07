@@ -32,6 +32,14 @@ namespace LaDa
         virtual bool operator&( xpr::Section const& ) const = 0;
         //! Whether this is a loading or saving section.
         virtual bool is_loading() const = 0;
+        //! Starts recurrence;
+        virtual void start_recurrence() const = 0;
+        //! Increments recurrence.
+        virtual void step_recurrence() const = 0;
+        //! Starts recurrence;
+        virtual void stop_recurrence() const = 0;
+        //! Whether actually parsing or simply looking at grammar.
+        virtual bool grammar_only() const = 0;
       };
 
     } // namespace parser_base

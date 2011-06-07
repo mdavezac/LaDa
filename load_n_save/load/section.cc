@@ -76,9 +76,10 @@ namespace LaDa
 
         bool found(false);
         bool parse_error(false);
-        for(; i_first != i_last; ++i_first )
+        for(types::t_int i(0); i_first != i_last; ++i_first, ++i)
         {
           if( not i_first->fresh ) continue;
+          if(recurrence_ >= 0 and i < recurrence_) continue;
 
           Section parser(*this, *i_first, version_);
           if( parser.id_options_(_data.name, _sec) )

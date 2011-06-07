@@ -45,7 +45,7 @@ namespace LaDa
             BOOST_THROW_EXCEPTION
             ( 
                error::option_parse_error() << error::option_name(_op.name)
-                                           << error::section_name(_op.name) 
+                                           << error::section_name(_name) 
             );
           return not parse_error;
         }
@@ -53,7 +53,7 @@ namespace LaDa
           BOOST_THROW_EXCEPTION
           ( 
              error::required_option_not_found() << error::option_name(_op.name)
-                                                << error::section_name(_op.name) 
+                                                << error::section_name(_name) 
           );
         else if(is_required) return false;
         if( is_id ) return false;

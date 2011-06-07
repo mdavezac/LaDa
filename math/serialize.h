@@ -69,12 +69,10 @@ namespace LaDa
                                >> !( (bx::set='d','D','e','E') >> !sig)
                                >> +bx::_d;
         bx::sregex rep = (bx::set='d','D','E');  \
-        std::cout << _string << "\n";
         bx::sregex re =    (bx::s1 = (!sig >> +bx::_d >> !exp) ) >> +bx::_s 
                         >> (bx::s2 = (!sig >> +bx::_d >> !exp) ) >> +bx::_s 
                         >> (bx::s3 = (!sig >> +bx::_d >> !exp) );
         if( not bx::regex_match( _string, what, re ) ) return false;
-        std::cout << what[1];
         std::string const a( bx::regex_replace( std::string(what[1]), rep, std::string("e") ) );
         std::string const b( bx::regex_replace( std::string(what[2]), rep, std::string("e") ) );
         std::string const c( bx::regex_replace( std::string(what[3]), rep, std::string("e") ) );

@@ -63,6 +63,14 @@ namespace LaDa
           virtual bool regular( xpr::Section const &_sec, xpr::regular_data const&_data ) const;
           //! Returns the current tree;
           boost::shared_ptr<tree::Section> tree() const { return tree_; }
+          //! Starts recurrence;
+          virtual void start_recurrence() const {};
+          //! Increments recurrence.
+          virtual void step_recurrence() const {};
+          //! Starts recurrence;
+          virtual void stop_recurrence() const {};
+          //! Whether actually parsing or simply looking at grammar.
+          virtual bool grammar_only() const {return false;}
 
         protected:
           //! Parses content of an expression range;
