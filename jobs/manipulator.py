@@ -38,6 +38,13 @@ class JobParams(AbstractMassExtract):
     self.only_existing = kwargs.get('only_existing', default.only_existing)
     """ Only modifies parameter which already exist. """
 
+
+  @property
+  def addattr(self):
+    """ Returns manipulator with ability to *add new* attributes. """
+    return self.copy(only_existing=False)
+    
+
   @property
   def jobdict(self):
     """ Jobdictionary for which to get/set parameters. """
