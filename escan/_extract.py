@@ -375,9 +375,9 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
       if is_root: 
         assert exists(self.functional.WAVECAR),\
                IOError("{0} does not exist.".format(self.functional.WAVECAR))
-      if self.functional.potential == soH and norm(self.functional.kpoint):
-        nbstates = self.functional.nbstates
-      else: nbstates = self.functional.nbstates / 2
+      nbstates = self.functional.nbstates
+      if self.functional.potential != soH or norm(self.functional.kpoint) < 1e-6:
+        nbstates = max(1, self.nbstates/2)
       with redirect(fout="") as streams:
         result = read_wavefunctions(self.functional, range(nbstates), kpoint, scale, self.comm)
     self.comm.barrier()

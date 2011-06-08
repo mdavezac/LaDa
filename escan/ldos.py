@@ -81,6 +81,7 @@ def ldos(extractor, positions, raw=False):
   from numpy import tensordot, multiply, conjugate, exp, concatenate,\
                     array, rollaxis, sum, add, zeros
   from numpy.linalg import det, inv
+  from pickle import dump
 
   assert isinstance(extractor, KExtract),\
          ValueError('extractor argument should be KExtract isntance.')
@@ -89,9 +90,9 @@ def ldos(extractor, positions, raw=False):
   istr, ostr = extractor.input_structure, extractor.structure
   normalization = 0e0
   perpoint = []
-  for i, equivs in enumerate(extractor.functional.kpoints.iter_equivalents(istr, ostr)):
+  for n, equivs in enumerate(extractor.functional.kpoints.iter_equivalents(istr, ostr)):
 
-    extract = extractor[i]
+    extract = extractor[n]
 
     # checks that this proc can return wavefunctions. 
     is_null = extract.raw_gwfns == None
