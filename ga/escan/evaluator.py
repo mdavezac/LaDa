@@ -192,7 +192,7 @@ class Dipole(Bandgap):
     """ Computes the oscillator strength. """
     out = super(Dipole, self).run(indiv, *args, **kwargs)
     degeneracy = getattr(self, 'degeneracy', 1e-3)
-    indiv.oscillator_strength, indiv.osc_nbstates
+    indiv.oscillator_strength, indiv.osc_nbstates\
       = out.oscillator_strength(degeneracy=degeneracy)
     return indiv.oscillator_strength
 
