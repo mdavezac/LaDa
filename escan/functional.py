@@ -330,7 +330,7 @@ class Escan(object):
                          this.vff._cout(comm),
                          this.vff._cerr(comm),
                          this.WAVECAR if comm.rank == 0  else None ]:
-            copyfile(file, this._tempdir, 'same exists null', None, aslink=False)
+            copyfile(file, this._tempdir, 'same exists null', None, aslink=True)
   
     return self.Extract(comm = comm, directory = outdir, escan = this)
 

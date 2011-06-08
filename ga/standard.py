@@ -179,7 +179,6 @@ def bleeder_evaluation(self, evaluator, pools, comm):
         comm  : None or boost.mpi.communicator
           Communication object. 
   """
-  from operator import itemgetter
   from ..jobs import JobDict, Bleeder
   from ..mpi import Communicator
 

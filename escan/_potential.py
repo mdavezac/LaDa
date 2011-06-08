@@ -54,7 +54,6 @@ class AtomicPotential(object):
 
   def __repr__(self):
     """ Tuple representation of self. """
-    from os.path import relpath
     result = '"{0}"'.format(self._filepath.unexpanded)
     if self.nonlocal == None: result += ", None"
     else: result += ', "%s"' % (self._nonlocal.unexpanded)

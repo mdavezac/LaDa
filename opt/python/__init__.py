@@ -561,7 +561,7 @@ def copyfile(src, dest=None, nothrow=None, comm=None, symlink=False, aslink=Fals
           created with relative paths given starting from the directory of
           ``dest``.  Defaults to False.
       :type symlink: bool
-      :kwarg aslink:  Creates link rather than actual hard-copy if ``src`` is
+      :kwarg aslink:  Creates link rather than actual hard-copy *if* ``src`` is
           itself a link. Links to the file which ``src`` points to, not to
           ``src`` itself. Defaults to False.
       :type aslink: bool
