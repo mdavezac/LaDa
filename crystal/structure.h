@@ -178,15 +178,16 @@ namespace LaDa
                );
 #         undef LADA_TIE
 #         undef LADA_TOE
+          t_Atom atom;
           lns::xpr::Section const section =
             lns::section("Structure")  
-              << ( seccell  && lns::push_back(atoms) )
-              << lns::option("name", lns::action=name, lns::default_="")
-              << lns::option("energy", lns::action=energy, lns::default_=0)
-              << lns::option("weight", lns::action=weight, lns::default_=0)
-              << lns::option("freeze", lns::action=lns::enum_(freeze, freeze_map),
-                             lns::default_=FREEZE_NONE)
-              << lns::option("scale", lns::action=scale, lns::default_=1e0);
+              << ( seccell  && lns::push_back(atoms) );
+            // << lns::option("name", lns::action=name, lns::default_="")
+            // << lns::option("energy", lns::action=energy, lns::default_=0)
+            // << lns::option("weight", lns::action=weight, lns::default_=0)
+            // << lns::option("freeze", lns::action=lns::enum_(freeze, freeze_map),
+            //                lns::default_=FREEZE_NONE)
+            // << lns::option("scale", lns::action=scale, lns::default_=1e0);
           return _ar & section;
         }
 

@@ -56,12 +56,13 @@ namespace LaDa
                 }
                 else 
                 {
-                  bool is_good = true;
                   typename T::iterator i_first = container_.begin();
                   typename T::iterator i_end = container_.end();
-                  for(; i_first != i_end; ++i_first)
-                    is_good &= _ar & ext(*i_first);  
-                  return is_good;
+                  if(i_first == i_end) return true;
+                  xpr::Section section(ext(*i_first));
+                  for(++i_first; i_first != i_end; ++i_first)
+                    section = section && ext(*i_first);  
+                  return _ar & section;
                 }
               }
             T &container_;

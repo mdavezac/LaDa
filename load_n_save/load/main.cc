@@ -28,6 +28,7 @@ int main(int argc, char *argv[])
       "        a2=\"0 0 1\"/>\n"
       "  <Atom pos=\"0 0  3.1416\" type=Pd freeze=\"xyz\" />\n"
       "  <Atom pos=\"0 0  -3.1416\" type=Au freeze=\"xyz\" />\n"
+      "  <Atom pos=\"-1 0  -3.1416\" type=Au />\n"
       "</Structure>\n";
 //   = "<Structure>\n"
 //     "  <Cell row=\"1 0 0\" \n" 

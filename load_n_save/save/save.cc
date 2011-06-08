@@ -15,7 +15,8 @@ namespace LaDa
       { 
         boost::shared_ptr<tree::Base> result(new tree::Base);
         boost::shared_ptr<tree::Section> text(new tree::Section(""));
-        Save::Section section(text, _version); section(_sec);
+        Save::Section section(text, _version);
+        section(_sec);
         result->push_back(*text);
         return result;
       }
@@ -44,7 +45,17 @@ namespace LaDa
                 is_good = false;
                 continue;
               }
-              tree_->push_back(*treesec);
+              if(treesec->name.empty())
+              {
+                tree::Section::const_iterator::option i_option =  treesec->options_begin();
+                tree::Section::const_iterator::option const i_option_end =  treesec->options_end();
+                for(; i_option != i_option_end; ++i_option) tree_->push_back(*i_option);
+                tree::Section::const_iterator::subsection i_section =  treesec->subsections_begin();
+                tree::Section::const_iterator::subsection const i_section_end =  treesec->subsections_end();
+                for(; i_section != i_section_end; ++i_section) tree_->push_back(*i_section);
+              }
+              else
+               tree_->push_back(*treesec);
             }
             else if( i_first.is_second() )
               tree_->push_back( i_first.second()->name, i_first.second()->str() );

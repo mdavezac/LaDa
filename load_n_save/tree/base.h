@@ -105,6 +105,12 @@ namespace LaDa
       
               //! Insert a subsection.
               void push_back( const t_Section &_value );
+              //! Clears subsections.
+              void clear()
+              {
+                boost::shared_ptr<t_Subsections> dummy;
+                subsections_.swap(dummy);
+              }
       
               //! Copies a section.
               void copy_to( Base& _c ) const;
@@ -170,6 +176,8 @@ namespace LaDa
               { return impl_.copy_to( _op.impl_ ); }
             //! Swaps to objects.
             void swap( Options& _c ) { impl_.swap(_c.impl_); }
+            //! clears options.
+            void clear() { impl_.clear(); }
         };
 
       template<class T_SECTION, class T_FILTER>

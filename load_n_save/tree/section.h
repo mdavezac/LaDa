@@ -97,7 +97,11 @@ namespace LaDa
           void copy_to( Section& _c ) const
             { t_Subsections::copy_to(_c); t_Options::copy_to(_c); _c.name = name; _c.fresh = fresh; }
           //! Adds subsection.
-          void push_back( Section& _c ) { t_Subsections::push_back(_c); }
+          void push_back( Section const& _c ) { t_Subsections::push_back(_c); }
+          //! Adds option.
+          void push_back( Option const& _c ) { t_Options::push_back(_c); }
+          //! Clears options and subsections.
+          void clear() { t_Subsections::clear(); t_Options::clear(); }
       };
 
       typedef details::Base<Section> Base;
