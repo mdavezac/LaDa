@@ -34,7 +34,8 @@ def create_jobs(path, inputpath="input.py", **kwargs):
                                types = list(types), thickness=input.thickness,
                                sep = input.separation )
         # create objective fucntion.
-        evaluator = input.Evaluator(converter, input.escan)
+        evaluator = input.Evaluator( converter, input.escan,
+                                     degeneracy = input.__dict__.get('degeneracy', 1e-3) )
         
         # create GA functional itself.
         functional = Darwin(evaluator, nmin=nmin, nmax=nmax, **input.__dict__)

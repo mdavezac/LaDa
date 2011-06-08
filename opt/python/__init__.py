@@ -604,7 +604,9 @@ def copyfile(src, dest=None, nothrow=None, comm=None, symlink=False, aslink=Fals
     if aslink and islink(src): symlink, src = True, realpath(src)
     if symlink:
       if exists(dest): remove(dest)
-      symlink(relpath(src, dirname(dest)), dest)
+      if relpath(src, dirname(dest)).count("../") == relpath(src, '/').count("../"):
+        symlink(src, realpath(dest))
+      else: symlink(relpath(src, dirname(dest)), dest)
     else: cpf(src, dest)
   except:
     if 'never' in nothrow: return False

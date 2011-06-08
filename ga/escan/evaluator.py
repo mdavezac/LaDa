@@ -108,6 +108,7 @@ class Bandgap(object):
     indiv.vbm = out.vbm
     indiv.cbm = out.cbm
 
+    comm.barrier()
     if self.keep_only_last and comm.is_root and self._lastcalcdir != None:
       if exists(self._lastcalcdir): rmtree(self._lastcalcdir)
     self._lastcalcdir = outdir
@@ -183,12 +184,16 @@ class Dipole(Bandgap):
   """
   def __init__(self, *args, **kwargs): 
     """ Initializes the dipole element evaluator.  """
+    self.degeneracy = kwargs.pop("degeneracy")
+    """ Degeneracy parameter for oscillator strength. """
     super(Dipole, self).__init__(*args, **kwargs)
 
   def __call__(self, indiv, *args, **kwargs):
     """ Computes the oscillator strength. """
     out = super(Dipole, self).run(indiv, *args, **kwargs)
-    indiv.oscillator_strength, indiv.osc_nbstates = out.oscillator_strength()
+    degeneracy = getattr(self, 'degeneracy', 1e-3)
+    indiv.oscillator_strength, indiv.osc_nbstates
+      = out.oscillator_strength(degeneracy=degeneracy)
     return indiv.oscillator_strength
 
 

@@ -80,6 +80,7 @@ escan.add_potential         = "$HOME/nanowires/pseudos/vq.psdH80032",\
                               0.0,0.0,0.0,0.0495
 escan.references            = None
 escan.nbstates              = (2, 4)
+degeneracy                  = 1e-3 # in eV
 
 
 growth_direction = (0,0,1)

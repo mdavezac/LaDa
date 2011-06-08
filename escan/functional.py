@@ -125,7 +125,7 @@ class Escan(object):
     """
     self.print_from_all = False
     """ If True, each node will print. """
-    self.symlink = True
+    self.symlink = False
     """ Prefer symlink to actual copy where possible. """
 
   @property
@@ -330,7 +330,7 @@ class Escan(object):
                          this.vff._cout(comm),
                          this.vff._cerr(comm),
                          this.WAVECAR if comm.rank == 0  else None ]:
-            copyfile(file, this._tempdir, 'same exists null', None, aslink=True)
+            copyfile(file, this._tempdir, 'same exists null', None, aslink=False)
   
     return self.Extract(comm = comm, directory = outdir, escan = this)
 
@@ -489,6 +489,7 @@ class Escan(object):
       with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 
         assert comm.real, RuntimeError('Cannot run escan without mpi.')
         from ._escan import _call_genpot
+        comm.barrier()
         _call_genpot(comm)
 
 

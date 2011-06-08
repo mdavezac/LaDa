@@ -42,6 +42,8 @@ class Launch(Incar):
     """ If True calculations are performed in the output directory. """
     self.print_from_all = False
     """ If True, will print from all nodes rather than just root. """
+    self.symlink = kwargs.pop('symlink', False)
+    """ If True, prefers symlinks where possible. """
 
     # checks inplace vs workdir
     if self.inplace: 
