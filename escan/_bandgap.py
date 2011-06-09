@@ -324,7 +324,6 @@ class ExtractRefs(object):
       if degeneracy >= 0e0 and abs(wfnA.eigenvalue - self.cbm) > degeneracy: continue
       for wfnB in self.extract_vbm.gwfns:
         if degeneracy >= 0e0 and abs(wfnB.eigenvalue - self.vbm) > degeneracy: continue
-        dme = wfnA.braket(gvectors, wfnB, attenuate=attenuate)
         result.append( (wfnA.eigenvalue, wfnB.eigenvalue, 
                        wfnA.braket(gvectors, wfnB, attenuate=attenuate)) )
     return degeneracy, attenuate, result

@@ -569,7 +569,7 @@ def copyfile(src, dest=None, nothrow=None, comm=None, symlink=False, aslink=Fals
       This function fails selectively, depending on what is in ``nothrow`` list.
   """
   try:
-    from os import getcwd, symlink, remove
+    from os import getcwd, symlink as ln, remove
     from os.path import isdir, isfile, samefile, exists, basename, dirname,\
                         join, islink, realpath, relpath
     from shutil import copyfile as cpf
@@ -605,8 +605,8 @@ def copyfile(src, dest=None, nothrow=None, comm=None, symlink=False, aslink=Fals
     if symlink:
       if exists(dest): remove(dest)
       if relpath(src, dirname(dest)).count("../") == relpath(src, '/').count("../"):
-        symlink(src, realpath(dest))
-      else: symlink(relpath(src, dirname(dest)), dest)
+        ln(src, realpath(dest))
+      else: ln(relpath(src, dirname(dest)), dest)
     else: cpf(src, dest)
   except:
     if 'never' in nothrow: return False
