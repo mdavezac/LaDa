@@ -12,3 +12,4 @@
 #cmakedefine LADA_DO_PYTHON
 #cmakedefine LADA_DO_ESCAN
 #cmakedefine LADA_WITH_EIGEN3 
+#cmakedefine LADA_WITH_LNS 

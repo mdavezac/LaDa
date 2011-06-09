@@ -1,5 +1,5 @@
 set( LIBLNS_HEADERS 
-     string_type.h tags.h access.h parser_base.h
+     lns.h string_type.h tags.h access.h parser_base.h
      action/type_to_regex.h action/push_back.h action/fusion.h
      action/shared_ptr.h
      load/load.h 

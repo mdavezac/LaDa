@@ -18,8 +18,9 @@
 #include <math/fuzzy.h>
 
 #include <math/serialize.h>
-#include <load_n_save/xpr/utilities.h>
-#include <load_n_save/action/enum.h>
+# ifdef LADA_WITH_LNS
+#  include <load_n_save/lns.h>
+# endif
 
 namespace LaDa
 {
@@ -114,32 +115,34 @@ namespace LaDa
         void print_xml( TiXmlElement* const node ) const;
         //! Compares the position of two atoms.
         template< class TTYPE > bool operator < ( const Atom_Type<TTYPE> &_atom ) const;
-        //! To load and save to xml-like input.
-        template<class T_ARCHIVE>
-          bool lns_access(T_ARCHIVE &_ar, const unsigned int _version) 
-          {
-            namespace lns = LaDa :: load_n_save;
-            std::map<std::string, LaDa::types::t_unsigned> freeze_map;
-            freeze_map["none"] = FREEZE_NONE;
-            freeze_map["x"] = FREEZE_X;
-            freeze_map["y"] = FREEZE_Y;
-            freeze_map["z"] = FREEZE_Z;
-            freeze_map["t"] = FREEZE_T;
-            freeze_map["cartesian"] = FREEZE_CARTESIANS;
-            freeze_map["all"] = FREEZE_ALL;
-            lns::xpr::Section const section = 
-                         (  lns::section("Atom") 
-                 << ( lns::option("pos", lns::tag=lns::required, lns::action=pos) || (
-                           lns::option("x", lns::tag=lns::required, lns::action=pos[0])
-                        && lns::option("y", lns::tag=lns::required, lns::action=pos[1])
-                        && lns::option("z", lns::tag=lns::required, lns::action=pos[2])
-                      ) 
-                    )
-                 << lns::option("freeze", lns::action=lns::enum_(freeze, freeze_map),
-                                     lns::default_=FREEZE_NONE)
-                 << lns::option("type", lns::tag=lns::required, lns::action=type) );
-            return _ar & section;
-          }
+#       ifdef LADA_WITH_LNS
+          //! To load and save to xml-like input.
+          template<class T_ARCHIVE>
+            bool lns_access(T_ARCHIVE &_ar, const unsigned int _version) 
+            {
+              namespace lns = LaDa :: load_n_save;
+              std::map<std::string, LaDa::types::t_unsigned> freeze_map;
+              freeze_map["none"] = FREEZE_NONE;
+              freeze_map["x"] = FREEZE_X;
+              freeze_map["y"] = FREEZE_Y;
+              freeze_map["z"] = FREEZE_Z;
+              freeze_map["t"] = FREEZE_T;
+              freeze_map["cartesian"] = FREEZE_CARTESIANS;
+              freeze_map["all"] = FREEZE_ALL;
+              lns::xpr::Section const section = 
+                           (  lns::section("Atom") 
+                   << ( lns::option("pos", lns::tag=lns::required, lns::action=pos) || (
+                             lns::option("x", lns::tag=lns::required, lns::action=pos[0])
+                          && lns::option("y", lns::tag=lns::required, lns::action=pos[1])
+                          && lns::option("z", lns::tag=lns::required, lns::action=pos[2])
+                        ) 
+                      )
+                   << lns::option("freeze", lns::action=lns::enum_(freeze, freeze_map),
+                                       lns::default_=FREEZE_NONE)
+                   << lns::option("type", lns::tag=lns::required, lns::action=type) );
+              return _ar & section;
+            }
+#       endif
       private:
         //! Serializes an atom.
         template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version);

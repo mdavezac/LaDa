@@ -283,7 +283,10 @@ if(enum_package)
 endif(enum_package)
 
 if(loadnsave)
+  set(LADA_WITH_LNS True)
   add_subdirectory(load_n_save)
+else(loadnsave)
+  set(LADA_WITH_LNS False)
 endif(loadnsave)
 
 if(separables_functional)
