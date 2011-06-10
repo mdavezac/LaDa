@@ -53,13 +53,13 @@ class VariableSizeCrossover(object):
     self.nmax = nmax
     """ Maximum bitstring size. """
 
-  def __call__(self, a, b):
-    """ Create new individual from a and b using bitstring crossover. 
+  def __call__(self, first, second):
+    """ Create new individual from ``first`` and ``second`` using bitstring crossover. 
     
         :Parameter:
-          a 
+          first 
             First parent individual.
-          b 
+          second 
             This is the other parent individual.
 
         :return: An offspring individual.
@@ -68,11 +68,10 @@ class VariableSizeCrossover(object):
     from random import randint
     from numpy import array
 
-    result = deepcopy(a)
-    a = [u for u in a.genes]
-    b = [u for u in b.genes]
-    if len(a) <= 1 : return deepcopy(b)
-    if len(b) <= 1 : return deepcopy(a) 
+    a = [u for u in first.genes]
+    b = [u for u in second.genes]
+    if len(a) <= 1 : return deepcopy(second)
+    if len(b) <= 1 : return deepcopy(first) 
     if len(a) <= 3 and len(b) <= 3: a = a[:1] + b[1:]
     elif len(a) <= 3: a += b[3:]
     elif len(b) <= 3: a = b + a[3:]
@@ -80,6 +79,7 @@ class VariableSizeCrossover(object):
       i = randint(1, min(len(a), len(b))-2)
       j = randint(i+1, min(len(a), len(b)))
       a = a[:i] + b[i:j] + a[j:]
+    result = deepcopy(first)
     result.genes  = array(a)
     assert len(result.genes) >= self.nmin 
     assert len(result.genes) <= self.nmax
@@ -175,8 +175,8 @@ class GrowthMutation(object):
     step = getattr(self, 'step', 1)
     l = [u for u in indiv.genes]
     if randint(0,1) == 0 and\
-       ( (self.nmin == -1 and len(l) >= step - 1) or \
-         (self.nmin != -1 and len(l) >= step - 1 + self.nmin) ):
+       ( (self.nmin == -1 and len(l) > step - 1) or \
+         (self.nmin != -1 and len(l) > step - 1 + self.nmin) ):
       nmin = self.nmin if self.nmin != -1 else 0
       i = randint(nmin, len(l)-step)
       for j in xrange(step): l.pop(i)

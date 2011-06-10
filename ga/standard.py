@@ -354,7 +354,12 @@ class Mating(object):
     if self.sequential: # choose any operator depending on rate.
       while indiv == None: # makes sure we don't bypass all mating operations
         for function, rate, n in self.operators:
-          if random.random() < rate: indiv = call_function( function, n, indiv )
+          if random.random() < rate:
+            indiv = call_function( function, n, indiv )
+            assert hasattr(indiv, 'genes'),\
+                   RuntimeError( "Object returned by {0}.{1} is not an individual."\
+                                 .format( function.__class__.__module__,\
+                                          function.__class__.__name__ ) )
     else: # choose only one operator.
       max = 0e0
       for function, rate, n in self.operators: max += rate
@@ -364,6 +369,10 @@ class Mating(object):
       for function, rate, n in self.operators:
         if r <= last + rate:
           indiv = call_function( function, n )
+          assert hasattr(indiv, 'genes'),\
+                 RuntimeError( "Object returned by {0}.{1} is not an individual."\
+                               .format( function.__class__.__module__,\
+                                        function.__class__.__name__ ) )
           break
         last += rate
 
