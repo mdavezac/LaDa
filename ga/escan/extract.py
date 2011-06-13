@@ -264,7 +264,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
         :type offcar: bool
     """
     from os.path import join, exists, isdir
-    files = [self.OUTCAR, self.FUNCCAR]
+    files = [self.OUTCAR, self.FUNCCAR, self.OFFCAR]
     if kwargs.get("errors", False): files.append(self.ERRCAR)
     if kwargs.get("offcar", False): files.append(self.OFFCAR)
 
