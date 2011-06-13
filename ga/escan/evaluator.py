@@ -184,16 +184,17 @@ class Dipole(Bandgap):
   """
   def __init__(self, *args, **kwargs): 
     """ Initializes the dipole element evaluator.  """
-    self.degeneracy = kwargs.pop("degeneracy")
+    self.degeneracy = kwargs.pop("degeneracy", 1e-3)
     """ Degeneracy parameter for oscillator strength. """
     super(Dipole, self).__init__(*args, **kwargs)
 
-  def __call__(self, indiv, *args, **kwargs):
+  def __call__(self, indiv, outdir=None, comm=None, **kwargs):
     """ Computes the oscillator strength. """
-    out = super(Dipole, self).run(indiv, *args, **kwargs)
+    out = super(Dipole, self).run(indiv, outdir, comm, **kwargs)
     degeneracy = getattr(self, 'degeneracy', 1e-3)
     indiv.oscillator_strength, indiv.osc_nbstates\
       = out.oscillator_strength(degeneracy=degeneracy)
+    comm.barrier() 
     return indiv.oscillator_strength
 
 

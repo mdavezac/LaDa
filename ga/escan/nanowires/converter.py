@@ -148,4 +148,4 @@ class Converter(object):
            "                 core_radius={0.core_radius}, core_type='{0.core_type}',\n"\
            "                 types={2}, thickness={0.thickness}, passivant={3}, \n"\
            "                 separation={0.separation} )"\
-           .format(self, repr(self.growth), repr(self.types))
+           .format(self, repr(self.growth), repr(self.types), repr(self.passivant))

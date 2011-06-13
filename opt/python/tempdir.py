@@ -12,19 +12,23 @@ class Tempdir:
       @param keep: when True, does not destroy directory on exit, eg for debug
          purposes.
   """
-  def __init__(self, workdir = None, comm = None, keep = False, debug = None):
+  def __init__( self, workdir = None, comm = None, keep = False, debug = None,
+                prefix='tmp', suffix=''):
     from ..mpi import Communicator
     self.workdir = workdir
     self.keep = keep
     self.comm = Communicator(comm)
     self.debug = debug
+    self.prefix = prefix
+    """ See tempfile.mkstemp. """
+    self.suffix = suffix
+    """ See tempfile.mkstemp. """
 
   def __enter__(self):
     """ Creates temporary directory """
     from os import mkdir, listdir, makedirs
     from os.path import exists, isdir, join
     from tempfile import mkdtemp
-    from shutil import rmtree 
 
     if self.comm.is_root:
       if self.workdir != None:
@@ -32,7 +36,7 @@ class Tempdir:
         assert exists(self.workdir) and isdir(self.workdir),\
                "Could not create working directory."
       if self.debug == None: 
-        self._tempdir = mkdtemp(dir=self.workdir)
+        self._tempdir = mkdtemp(dir=self.workdir, suffix=self.suffix, prefix=self.prefix)
       else:
         self._tempdir = join(self.workdir, self.debug)
         if not exists(self._tempdir): makedirs(self._tempdir)

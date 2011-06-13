@@ -32,7 +32,7 @@ def create_jobs(path, inputpath="input.py", **kwargs):
         converter = Converter( input.vff.lattice, growth=input.growth_direction,
                                core_radius=input.core_radius, core_type=core_type,
                                types = list(types), thickness=input.thickness,
-                               sep = input.separation )
+                               sep = input.__dict__.get('separation', 1) )
         # create objective fucntion.
         evaluator = input.Evaluator( converter, input.escan,
                                      degeneracy = input.__dict__.get('degeneracy', 1e-3) )
