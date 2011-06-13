@@ -118,7 +118,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
         if first == None: first = int(found.group(1)); continue
         last = int(found.group(1))
       if first == None: continue
-      if last - first < 1: continue
+      if last - first < 1 and (last != 0 or first != 0): continue
       results.append(name)
     return results
 
