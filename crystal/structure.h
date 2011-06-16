@@ -32,27 +32,10 @@ namespace LaDa
 {
   namespace Crystal
   {
-    //! \cond
-    class Lattice;
-    //! \endcond
-
-    namespace details
-    {
-      struct Structure
-      {
-        //! A pointer to the lattice,
-        static Crystal::Lattice *lattice;
-      };
-
-    }
-
     //! \brief Defines a periodic structure for a specific lattice.
     //! \details The definition is mostly sufficient and self contain. It include:
     //!          - Structure::cell the lattice cell
     //!          - Structure::atoms all atomic positions and occupations
-    //!          - Structure::k_vecs all reciprocal-space vectors within the
-    //!                                  first brillouin zone of the lattice
-    //!                                  unit-cell.
     //!          - Structure::lattice a \a static pointer to the lattice. Static,
     //!                               because \e a \e priori we will work within
     //!                               a fixed lattice. Of course, this could
@@ -69,14 +52,11 @@ namespace LaDa
     //! \xmlinput A structure can load and save itself to and from XML. See \ref
     //!           TagStructure. It is better to load the lattice first and the
     //!           structure(s) second.
-    template < class T_TYPE >
-    struct TStructure : public details::Structure
+    struct Structure
     {
       friend class boost::serialization::access;
-      //! The atomic type
-      typedef Atom_Type<T_TYPE>  t_Atom;
       //! The type of the collection of atoms. 
-      typedef std::vector< t_Atom >     t_Atoms;
+      typedef std::vector<Atom>     t_Atoms;
 
       //! Tags to freeze cell coordinates.
       enum t_FreezeCell
@@ -100,7 +80,7 @@ namespace LaDa
       //! The unit-cell of the structure in cartesian coordinate.
       math::rMatrix3d cell;
       //! The atomic position in cartesian unit and their occupation.
-      std::vector< Atom_Type<T_TYPE> > atoms;
+      t_Atoms atoms;
       //! Just an old variable with the number of the structure in those NREL PI files.
       std::string name;
       //! The energy of the structure, whatever (and if) it is computed with.
@@ -115,37 +95,20 @@ namespace LaDa
       public: 
 
       //! Constructor
-      TStructure() : name(""), energy(0), weight(1), freeze(FREEZE_NONE) {};
-      //! Constructor. Loads itself from XML node \a _element.
-      TStructure   ( const TiXmlElement &_element )
-                 : name(""), energy(0), weight(1), freeze(FREEZE_NONE)
-        { Load( _element ); };
+      Structure() : name(""), energy(0), weight(1), freeze(FREEZE_NONE) {};
       //! Copy Constructor
-      TStructure   ( const TStructure<T_TYPE> &_str )
-                 : cell(_str.cell), atoms(_str.atoms), name(_str.name), 
-                   energy(_str.energy), weight(_str.weight),
-                   freeze(_str.freeze), scale( _str.scale ) {}
+      Structure   ( const Structure &_str )
+                : cell(_str.cell), atoms(_str.atoms), name(_str.name), 
+                  energy(_str.energy), weight(_str.weight),
+                  freeze(_str.freeze), scale( _str.scale ) {}
       //! Destructor.
-      ~TStructure () {};
-
-      //! Prints a structure to a stream.
-      void print_out( std::ostream &stream ) const;
-      //! Prints a structure to a string
-      const std::string string() const
-        { std::ostringstream sstr; print_out(sstr); return sstr.str(); }
-
-      //! Loads a structure from XML.
-      bool Load( const TiXmlElement &_element );
-      //! Saves a structure to XML.
-      void print_xml( TiXmlElement &_node ) const;
+      ~Structure () {};
 
       //! \brief Equates to \e geometic structure.
       //! \details The unit-cell and the atomic positions are compared, but not
       //!           the occupations.
-      bool operator== (const TStructure<T_TYPE> &_str ) const;
+      bool operator== (const Structure &_str ) const;
       
-      //! Sets the site index of each atom according to Structure::lattice.
-      bool set_site_indices();
 #     ifdef LADA_WITH_LNS
         //! To load and save to xml-like input.
         template<class T_ARCHIVE>
