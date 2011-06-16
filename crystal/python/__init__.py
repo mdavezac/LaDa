@@ -636,7 +636,7 @@ def shell_iterator(structure, center, direction, thickness=0.05):
 
   # creates classes of positions.
   result = {}
-  for i, proj in projs[1:]:
+  for i, proj in projs:
     index = int(proj/thickness+1e-12)
     if index in result: result[index].append(i)
     else: result[index] = [i]

@@ -119,32 +119,29 @@ class ExtractAE(_ExtractE):
 
   def oscillator_strength(self, degeneracy=1e-3, attenuate=False):
     """ Computes oscillator strength between vbm and cbm. """
-    from numpy import dot
+    from numpy import abs, dot
     from ..physics import electronic_mass, h_bar
-    result, nstates = None, 0
+
     units = 2e0/3e0 * h_bar**2 / electronic_mass
-    for wfnA in self.gwfns:
-      if abs(wfnA.eigenvalue - self.cbm) > degeneracy: continue
-      for wfnB in self.gwfns:
-        if abs(wfnB.eigenvalue - self.vbm) > degeneracy: continue
-        nstates += 1
-        dme = wfnA.braket(self.gvectors, wfnB, attenuate=attenuate) 
-        if result == None: 
-          result = dot(dme, dme.conjugate()).real / (wfnA.eigenvalue - wfnB.eigenvalue) \
-                   * dme.units * dme.units
-        else: 
-          result += dot(dme, dme.conjugate()).real / (wfnA.eigenvalue - wfnB.eigenvalue) \
-                    * dme.units * dme.units
-    return (result * units).simplified, nstates
+    result, nstates = None, 0
+    for eigA, eigB, dipole in self.dipole(degeneracy, attenuate):
+      if abs(eigA - self.cbm) > degeneracy: continue
+      if abs(eigB - self.vbm) > degeneracy: continue
+      nstates += 1
+      dipole = dot(dipole, dme.conjugate()).real * dipole.units * dipole.units
+      if result == None: result = dme / (eigsA - eigsB) 
+      else: result += dme / (eigsA - eigsB) 
+    return (units * result).simplified, nstates
 
 
   def dipole(self, degeneracy=-1e0, attenuate=False):
     """ Computes dipole matrix element between vbm and cbm. """
     # gets result, possibly from cache file.
     d2, a2, result = self._dipole(degeneracy, attenuate)
+
     uncache  = degeneracy < 0e0 and d2 >= 0e0
-    uncache |= degeneracy >= 0e0 and d2 < 0e0
-    uncache |= abs(d2 - degeneracy) >= min(d2, degeneracy)
+    if d2 > 0e0 and degeneracy > 0e0: 
+      uncache |= abs(d2 - degeneracy) >= min(d2, degeneracy) and d2 < degeneracy
     uncache |= a2 != attenuate
     if uncache: 
       from os.path import join
@@ -274,22 +271,18 @@ class ExtractRefs(object):
 
   def oscillator_strength(self, degeneracy=1e-3, attenuate=False):
     """ Computes oscillator strength between vbm and cbm. """
-    from numpy import all, abs, dot
+    from numpy import abs, dot
     from ..physics import electronic_mass, h_bar
 
-    assert self.extract_vbm.gvectors.shape == self.extract_cbm.gvectors.shape
-    assert all( abs(self.extract_vbm.gvectors - self.extract_cbm.gvectors) < 1e-12 )
     units = 2e0/3e0 * h_bar**2 / electronic_mass
     result, nstates = None, 0
-    for wfnA in self.extract_cbm.gwfns:
-      if abs(wfnA.eigenvalue - self.cbm) > degeneracy: continue
-      for wfnB in self.extract_vbm.gwfns:
-        if abs(wfnB.eigenvalue - self.vbm) > degeneracy: continue
-        nstates += 1
-        dme = wfnA.braket(self.extract_vbm.gvectors, wfnB, attenuate=attenuate)
-        dme = dot(dme, dme.conjugate()).real * dme.units * dme.units
-        if result == None: result = dme / (wfnA.eigenvalue - wfnB.eigenvalue) 
-        else: result += dme / (wfnA.eigenvalue - wfnB.eigenvalue) 
+    for eigA, eigB, dipole in self.dipole(degeneracy, attenuate=attenuate):
+      if abs(eigA - self.cbm) > degeneracy: continue
+      if abs(eigB - self.vbm) > degeneracy: continue
+      nstates += 1
+      dipole = dot(dipole, dme.conjugate()).real * dipole.units * dipole.units
+      if result == None: result = dme / (eigsA - eigsB) 
+      else: result += dme / (eigsA - eigsB) 
     return (units * result).simplified, nstates
   
   def dipole(self, degeneracy=-1e0, attenuate=False):
@@ -301,8 +294,8 @@ class ExtractRefs(object):
       uncache = False
     else:
       uncache  = degeneracy < 0e0 and d2 >= 0e0
-      uncache |= degeneracy >= 0e0 and d2 < 0e0
-      uncache |= abs(d2 - degeneracy) >= min(d2, degeneracy)
+      if d2 > 0e0 and degeneracy > 0e0: 
+        uncache |= abs(d2 - degeneracy) >= min(d2, degeneracy) and d2 < degeneracy
       uncache |= a2 != attenuate
     if uncache: 
       from os.path import join
