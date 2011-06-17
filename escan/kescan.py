@@ -245,9 +245,12 @@ class Extract(AbstractExtractBase):
 
         Parameters are passed on to internal escan calculations.
     """
+    from glob import iglob 
+    from os.path import join
     for file in self._rootrun.iterfiles(**kwargs): yield file
-    for kpoint_calc in self: 
-      for file in kpoint_calc.iterfiles(**kwargs): yield file
+    for kpoint_dir in iglob(join(self.directory, "kpoint_*")): 
+      kpoint = EscanExtract(kpoint_dir)
+      for file in kpoint.iterfiles(**kwargs): yield file
 
   def uncache(self):
     """ Uncaches extracted values. """

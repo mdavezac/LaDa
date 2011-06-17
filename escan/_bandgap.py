@@ -128,7 +128,7 @@ class ExtractAE(_ExtractE):
       if abs(eigA - self.cbm) > degeneracy: continue
       if abs(eigB - self.vbm) > degeneracy: continue
       nstates += 1
-      dipole = dot(dipole, dme.conjugate()).real * dipole.units * dipole.units
+      dme = dot(dipole, dipole.conjugate()).real * dipole.units * dipole.units
       if result == None: result = dme / (eigsA - eigsB) 
       else: result += dme / (eigsA - eigsB) 
     return (units * result).simplified, nstates
@@ -280,7 +280,7 @@ class ExtractRefs(object):
       if abs(eigA - self.cbm) > degeneracy: continue
       if abs(eigB - self.vbm) > degeneracy: continue
       nstates += 1
-      dipole = dot(dipole, dme.conjugate()).real * dipole.units * dipole.units
+      dme = dot(dipole, dipole.conjugate()).real * dipole.units * dipole.units
       if result == None: result = dme / (eigsA - eigsB) 
       else: result += dme / (eigsA - eigsB) 
     return (units * result).simplified, nstates
