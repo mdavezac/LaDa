@@ -356,7 +356,6 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     from . import soH
 
     assert self.comm.real, ValueError("MPI needed to play with wavefunctions.")
-    is_root = self.comm.rank == 0 
     assert self.success, RuntimeError("Run was unsuccessful. Cannot read wavefunctions.")
     assert self.comm.size >= self.nnodes or norm(self.kpoint) < 1e-12,\
            RuntimeError( "Cannot read wavefunctions with fewer procs "\
@@ -372,9 +371,8 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     kpoint = array(self.functional.kpoint, dtype="float64")
     scale = self.structure.scale / float(a0.rescale(angstrom))
     with Changedir(self.directory, comm=self.comm) as directory:
-      if is_root: 
-        assert exists(self.functional.WAVECAR),\
-               IOError("{0} does not exist.".format(self.functional.WAVECAR))
+      assert exists(self.functional.WAVECAR),\
+             IOError("{0} does not exist.".format(self.functional.WAVECAR))
       nbstates = self.functional.nbstates
       if self.functional.potential != soH or norm(self.functional.kpoint) < 1e-6:
         nbstates = max(1, self.nbstates/2)

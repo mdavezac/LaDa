@@ -37,3 +37,4 @@ class Changedir:
 
     assert exists(self.oldpwd) and isdir(self.oldpwd), "Old directory does not exist anymore."
     chdir(self.oldpwd)
+    self.comm.barrier()

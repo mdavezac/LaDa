@@ -202,7 +202,7 @@ class Darwin(object):
       local_comm = self.comm.split(self.color)
       heads_comm = self.comm.split(1 if local_comm.rank == 0 else 2)
       nbcalc = all_reduce(heads_comm, getattr(self.evaluator, "nbcalc", 0), lambda x,y: x+y)
-    else: nbcalc = self.evaluator.nbcalc
+    else: nbcalc = getattr(self.evaluator, "nbcalc", 0)
     
     if self.do_print: print "  Number of functional evaluations: ", nbcalc
 
