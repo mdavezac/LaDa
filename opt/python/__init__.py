@@ -606,7 +606,9 @@ def copyfile(src, dest=None, nothrow=None, comm=None, symlink=False, aslink=Fals
       if exists(dest): remove(dest)
       if relpath(src, dirname(dest)).count("../") == relpath(src, '/').count("../"):
         ln(src, realpath(dest))
-      else: ln(relpath(src, dirname(dest)), dest)
+      else:
+        with Changedir(dirname(dest)) as cwd:
+           ln(relpath(src, dirname(dest)), basename(dest))
     else: cpf(src, dest)
   except:
     if 'never' in nothrow: return False

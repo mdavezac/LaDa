@@ -112,15 +112,20 @@ class DDPoints(KPoints):
 ReducedDDPoints    = _reduced_grids_factory('ReducedDDPoints', DDPoints)
 
 
-def reciprocal( escan, structure, direction, outdir = None, comm = None, order = 1, \
+def reciprocal( escan, structure, outdir = None, comm = None, direction=(0,0,1), order = 1, \
                 nbpoints = None, stepsize = 1e-2, center = None, lstsq = None, **kwargs ):
   """ Computes effective mass for a given direction.
 
       :Parameters:
-        structure : `crystal.Structure`
-          The structure for wich to compute effective masses.
         escan : `Escan` or `KEscan`
           Emiprical pseudo-potential functional.
+        structure : `crystal.Structure`
+          The structure for wich to compute effective masses.
+        outdir : str
+          Directory where to save results of calculation.
+        comm : `lada.mpi.Communicator` or None
+          MPI communicator containing processes with which to perform
+          calculation.
         direction : 3-tuple 
           direction for which to compute derivatives.
         order : int
@@ -170,6 +175,8 @@ def reciprocal( escan, structure, direction, outdir = None, comm = None, order =
 
   # performs calculations.
   out = escan(structure, outdir=outdir, comm=comm, kpoints=kpoints, **kwargs)
+  # makes sure we have parameters. 
+  for k in kpoints(out.input_structure, out.structure): continue
 
   # sorts eigenvalues at each kpoint and rescales to hartree.
   measurements = sort(out.eigenvalues.rescale(hartree), axis=1) 

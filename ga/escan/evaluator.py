@@ -200,18 +200,58 @@ class Dipole(Bandgap):
 
 class EffectiveMass(Bandgap):
   """ Evaluates effective mass. """
-  def __init__(self, *args, **kwargs): 
-    """ Initializes the dipole element evaluator.  """
-    from numpy import array
-    super(EffectiveMass, self).__init__(*args, **kwargs)
+  def __init__( self, direction=(0,0,1), nbpoints=None, stepsize=1e-2, \
+                center=None, lstsq=None, **kwargs ):
+    """ Computes effective mass for a given direction.
+    
+        :Parameters:
+          type : "e" or "h"
+            Whether to compute electronic or effective mass.
+          direction : 3-tuple 
+            direction for which to compute effective mass.
+          nbpoints : int
+            Number of points with wich to compute derivatives.
+            Should be at least order + 1. Default = order + 1. 
+          stepsize : float
+            Distance between interpolation points. Default = 1e-2.
+            Units of ``2|pi|/a``, with ``a=structure.scale``.
+          center : 3-tuple
+            k-point where to take derivative. Units of ``2|pi|/a``, with
+            ``a=structure.scale``.
+          lstsq 
+            Linear least square method. The first two parameters should
+            be same as numpy.linalg.lstsq. Other parameters can be passed as extra
+            parameters. Defaults to numpy.linalg.lstsq.
+          kwargs 
+            Extra parameters which are passed on first to escan (if escan
+            object has an attribute with the same name), then to the linear least
+            square fit method. Note that this will *not* change the external escan
+            object.  This function is stateless. 
+    
+        .. |pi|  unicode:: U+003C0 .. GREEK SMALL LETTER PI
+    """
+    self.type      = "e"
+    """ Whethe to compute electronic or hole effective masses. """
+    self.direction = direction
+    """ Direction for which to compute effective mass. """
+    self.nbpoints = nbpoints
+    """ Number of points with which to perform least-square fit. Defaults to 3. """
+    self.stepsize = stepsize
+    """ Distance between interpolation points. Default = 1e-2.
 
-    # isolates effective mass parameters.
-    self.emass_dict = { "direction": array([0,0,1]), "order": 2, "nbpoints": None,
-                        "stepsize": 1e-2, "lstsq": None }
-    for key in self.emass_dict.keys():
-      if key in self.kwargs: self.emass_dict[key] = self.kwargs.pop(key)
-    # some sanity checks.
-    assert self.emass_dict["order"] >= 2
+        Units of ``2|pi|/a``, with ``a=structure.scale``.
+
+        .. |pi|  unicode:: U+003C0 .. GREEK SMALL LETTER PI
+    """
+    self.center = center
+    """ k-point for which to compute effective mass. """
+    self.lstsq = lstsq
+    """ Least square fit method to use when computing effective mass. 
+    
+        If None, will default ot numpy.linalg.lstsq. Otherwise, it should be a
+        pickleable-callable, or suffer the consequences.
+    """
+    super(EffectiveMass, self).__init__(**kwargs)
 
   def __call__(self, indiv, comm=None, **kwargs):
     """ Computes electronic effective mass. """

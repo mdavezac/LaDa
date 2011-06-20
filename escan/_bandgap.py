@@ -501,13 +501,13 @@ class Functional(Escan):
       from copy import deepcopy
       self.__dict__.update(deepcopy(escan_copy.__dict__))
 
-  def __call__(self, structure, outdir=None, **kwargs):
+  def __call__(self, structure, outdir=None, comm=None, **kwargs):
     """ Computes band-gap. 
 
         Parameters are passed on to `bandgap` method.
     """
     if '_computing' in self.__dict__:
-      return super(Functional, self).__call__(structure, outdir, **kwargs)
+      return super(Functional, self).__call__(structure, outdir, comm, **kwargs)
 
     self._computing = True
     try: 
@@ -516,7 +516,7 @@ class Functional(Escan):
       dipole = kwargs.pop('dipole', self.dipole)
       escan = Escan()
       escan.__dict__.update(self.__dict__)
-      result = bandgap(escan, structure, outdir, **kwargs)
+      result = bandgap(escan, structure, outdir, comm=comm, **kwargs)
       if dipole: result.dipole()
       return result
     finally: del self._computing
