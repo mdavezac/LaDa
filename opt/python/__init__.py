@@ -78,12 +78,20 @@ class _RedirectAll:
   def __exit__(self, *wargs):
     import os
     import sys
+    # close file descriptor for on-disk file.
     try: self.file.close()
-    except: pass
-    if self.unit == streams.input:    os.dup2(self.old, sys.__stdin__.fileno()) 
-    elif self.unit == streams.output: os.dup2(self.old, sys.__stdout__.fileno())
-    elif self.unit == streams.error:  os.dup2(self.old, sys.__stderr__.fileno())
-    else: raise RuntimeError("Unknown redirection unit.")
+    except OSError: pass
+    # returns standard stream to original file/
+    try:
+      if self.unit == streams.input:    os.dup2(self.old, sys.__stdin__.fileno()) 
+      elif self.unit == streams.output: os.dup2(self.old, sys.__stdout__.fileno())
+      elif self.unit == streams.error:  os.dup2(self.old, sys.__stderr__.fileno())
+      else: raise RuntimeError("Unknown redirection unit.")
+    except OSError: pass
+    finally: 
+      # close duplicate of original standard stream.
+      try: os.close(self.old)
+      except OSError: pass
 
 def redirect_all(output=None, error=None, input=None, append = False):
   """ A context manager to redirect inputs, outputs, and errors. 
@@ -606,7 +614,9 @@ def copyfile(src, dest=None, nothrow=None, comm=None, symlink=False, aslink=Fals
       if exists(dest): remove(dest)
       if relpath(src, dirname(dest)).count("../") == relpath(src, '/').count("../"):
         ln(src, realpath(dest))
-      else: ln(relpath(src, dirname(dest)), dest)
+      else:
+        with Changedir(dirname(dest)) as cwd:
+           ln(relpath(src, dirname(dest)), basename(dest))
     else: cpf(src, dest)
   except:
     if 'never' in nothrow: return False
