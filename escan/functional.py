@@ -206,6 +206,8 @@ class Escan(object):
     self.atomic_potentials.append( AtomicPotential(*args) )
 
   def __repr__(self):
+    """ Prints this object as an executable python script. """
+    from operator import itemgetter
     from ._potential import localH, nonlocalH, soH
     result  = str(self.vff).replace("functional", "vff_functional")
     result += "# Escan definition.\n"
@@ -213,7 +215,7 @@ class Escan(object):
 
     # create format string for public data members.
     max_length, string, _string, values = len('add_potential'), '', '', {}
-    for key, value in self.__dict__.items():
+    for key, value in sorted(self.__dict__.items(), key=itemgetter(0)):
       if key[0] == '_': continue
       if key == 'potential': continue
       if key == 'workdir': continue
@@ -227,7 +229,7 @@ class Escan(object):
       string += 'functional.{{{0}: <{{_mxlgth_repr_}}}} = {1}\n'.format(key, r)
       values[key] = key
     # create format string for private data members.
-    for key, value in self.__dict__.items():
+    for key, value in sorted(self.__dict__.items(), key=itemgetter(0)):
       if key[0] != '_': continue
       if key == '_workdir': continue
       if key == '_maskr': continue
