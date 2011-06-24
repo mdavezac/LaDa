@@ -188,8 +188,9 @@ class Functional(Bandgap):
         Parameters are passed on to `dervatives.reciprocal` method.
     """
     from os import symlink
-    from os.path import join, exists, relpath, dirname
-    from ..opt import copyfile
+    from os.path import join, exists, relpath, dirname, basename
+    from ..opt import Changedir
+    from ..mpi import Communicator
     from .derivatives import reciprocal
     if '_computing' in self.__dict__:
       return super(Functional, self).__call__(structure, outdir, comm, **kwargs)
@@ -200,11 +201,12 @@ class Functional(Bandgap):
     stepsize  = kwargs.pop('stepsize', self.stepsize)
     center    = kwargs.pop('center', self.center)
     lstsq     = kwargs.pop('lstsq', self.lstsq)
+    if comm == None: comm = Communicator(comm)
 
     # copy functional with current type
     this = self.copy(type=type)
 
-    # first computes bandgap.
+    # symlinks files from bandgap calculations.
     if bandgap != None:  # in this case, just links to previous calculations.
       assert bandgap.success,\
              RuntimeError( "Input bandgap calculations at {0} were not successfull."\
@@ -212,20 +214,20 @@ class Functional(Bandgap):
       result = self.Extract(outdir, comm, unreduce=True, bandgap=bandgap)
       directory = bandgap.directory
       if bandgap.is_ae: directory = dirname(directory)
-      for file in bandgap.iterfiles(): 
-        name = join(result.directory, relpath(file, bandgap.directory))
-        print file, name, relpath(file, bandgap.directory), bandgap.__class__.__module__
-        if not exists(name): # tries and links to earliest directory.
-          alldirs = relpath(file, bandgap.directory).split('/')
-          src, dest, done = bandgap.directory, result.directory, False
-          for now in alldirs:
-            src, dest = join(src, now), join(dest, now)
-            if not exists(dest):
-              copyfile(src, dest, symlink=True)
-              done = True
-              break
-    assert False
+      if comm.is_root: 
+        for file in bandgap.iterfiles(): 
+          name = join(result.directory, relpath(file, bandgap.directory))
+          if not exists(name): # tries and links to earliest directory.
+            alldirs = relpath(file, bandgap.directory).split('/')
+            src, dest = bandgap.directory, result.directory
+            for now in alldirs:
+              src, dest = join(src, now), join(dest, now)
+              with Changedir(dirname(dest)) as cwd:
+                if not exists(basename(dest)):
+                  symlink(relpath(src, dirname(dest)), basename(dest))
+                  break
 
+    # computes bandgap.
     bandgap = super(Functional, this).__call__(structure, outdir, comm, **kwargs)
 
     assert bandgap.success, RuntimeError("Could not compute bandgap.")
@@ -241,20 +243,6 @@ class Functional(Bandgap):
 
     # creates extraction object.
     result = self.Extract(outdir, comm, unreduce=True, bandgap=bandgap)
-
-    # makes sure bandgap directory exists.
-    if bandgap != None: 
-      if bandgap.is_ae:
-        if not exists(join(result.directory, "AE")):
-          symlink(join(bandgap.directory, "AE"), join(result.directory, "AE"))
-      else: 
-        if not exists(join(result.directory, "VBM")):
-          symlink(join(bandgap.directory, "VBM"), join(result.directory, "VBM"))
-        if not exists(join(result.directory, "CBM")):
-          symlink(join(bandgap.directory, "CBM"), join(result.directory, "CBM"))
-         
-        if not exists(join(result.directory, "vff_out")):
-          symlink(join(bandgap.directory, "vff_out"), join(result.directory, "CBM"))
 
     # Effective mass extractor.
     return self.Extract(outdir, comm, unreduce=True, bandgap=bandgap)

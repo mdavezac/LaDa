@@ -77,14 +77,14 @@ def bandgap(escan, structure, outdir=None, references=None, n=5, overwrite = Fal
          else _band_gap_refs_impl(escan, structure, outdir, references, n, \
                                   overlap_factor=overlap_factor, **kwargs) 
 
-class ExtractAE(_ExtractE):
+class ExtractAE(object):
   """ Band-gap extraction class. """
   is_ae = True
   """ This was an all-electron bandgap calculation. """
   def __init__(self, extract):
-    super(ExtractAE, self).__init__(extract.directory, extract.comm, escan=extract.functional)
-    self.OUTCAR = extract.OUTCAR
-    self.FUNCCAR = extract.FUNCCAR
+    """ Initializes extraction object for all-electron bandgaps. """
+    self.__dict__['_extract'] = extract
+    super(ExtractAE, self).__init__()
 
   @property
   def bandgap(self):
@@ -146,7 +146,7 @@ class ExtractAE(_ExtractE):
     if uncache: 
       from os.path import join
       from os import remove
-      remove(join(self.directory, "DIPOLECAR"))
+      remove(join(self._extract.directory, "DIPOLECAR"))
       return self._dipole(degeneracy, attenuate)[-1]
     return result
     
@@ -183,8 +183,25 @@ class ExtractAE(_ExtractE):
     """
     if kwargs.get('dipolecar', False): 
       from os.path import exists, join
-      if exists(join(self.directory, 'DIPOLECAR')): yield join(self.directory, 'DIPOLECAR')
-    for file in _ExtractE.iterfiles(self, **kwargs): yield file
+      if exists(join(self._extract.directory, 'DIPOLECAR')):
+        yield join(self._extract.directory, 'DIPOLECAR')
+    for file in self._extract.iterfiles(**kwargs): yield file
+
+  @property
+  def directory(self):
+    """ Directory containing the results. """
+    from os.path import dirname, realpath
+    return dirname(realpath(self._extract.directory))
+
+
+  def __getattr__(self, name):
+    """ Passes on result to extract object. """
+    return getattr(self._extract, name)
+
+  def __dir__(self):
+    """ All public attributes in this object. """
+    return   [u for u in dir(self.__class__) if u[0] != '_'] \
+           + [u for u in dir(self._extract) if u[0] != '_']
   
 def _band_gap_ae_impl(escan, structure, outdir, **kwargs):
   """ Computes bandgap of a structure using all-electron method. """

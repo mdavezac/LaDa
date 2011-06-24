@@ -66,8 +66,9 @@ class DDPoints(KPoints):
     assert self.order > 0, ValueError("Order of derivative should be positive.")
 
     nbpoints  = max(self.order+1, self.nbpoints)
-    direction = array(self.direction) 
-    center    = array(self.center) if self.center != None else zeros((3,), dtype="float64")
+    direction = array(self.direction, dtype="float64") 
+    center    = array(self.center, dtype="float64") if self.center != None\
+                else zeros((3,), dtype="float64")
     if self.relax:
       deformation = dot(inv(output.cell.T), input.cell.T)
       direction = dot(deformation, direction)
@@ -165,7 +166,7 @@ def reciprocal( escan, structure, outdir = None, comm = None, direction=(0,0,1),
   # takes care of default parameters.
   if not isinstance(escan, KEscan): escan = KEscan(escan=escan)
   if center == None: center = kwargs.pop("kpoint", escan.kpoint)
-  center = array(center)
+  center = array(center, dtype="float64")
   relax = kwargs.pop("do_relax_kpoint", escan.do_relax_kpoint)
   if outdir == None: outdir = "reciprocal"
   if lstsq == None: lstsq = np_lstsq
