@@ -13,7 +13,17 @@ class Extract(AbstractExtractBase):
   """ Escan extraction object. """
 
   def __init__(self, directory=None, comm=None, unreduce=True, **kwargs):
-    """ Initializes the extraction object. """
+    """ Initializes the extraction object. 
+    
+        :Parameters:
+          directory : str
+            Directory where calculations are saved.
+          comm : None or `lada.mpi.Communicator`
+            MPI Communicator grouping processes participating in the calculation.
+          underduce : bool
+            Whether to iterate over all k-points, or only over k-points in the
+            irreducible wedge. Iterates over all k-points by default.
+    """
     AbstractExtractBase.__init__(self, directory, comm=comm)
     self.unreduce = unreduce
     """ Unreduced kpoints if True and if kpoints scheme sports a mapping method. """
@@ -167,6 +177,7 @@ class Extract(AbstractExtractBase):
   @property
   def vbm(self): 
     """ Energy at valence band minimum. """
+    print "WTF"
     if self.functional.eref != None:
       raise RuntimeError('Cannot extract VBM from folded spectrum calculation.')
     from numpy import max
@@ -183,7 +194,7 @@ class Extract(AbstractExtractBase):
     return min(self.eigenvalues[:, nbe:nbe+2])
 
   @property
-  def gap(self):
+  def bandgap(self):
     """ Gap between the VBM and CBM. """
     return self.cbm - self.vbm
 

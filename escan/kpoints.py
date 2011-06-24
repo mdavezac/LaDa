@@ -70,7 +70,7 @@ class KContainer(object):
         If ``self.relax`` is True, then kpoints are relaxed from the input cell
         to the relaxed output cell.
     """
-    from numpy import dot, abs
+    from numpy import dot
     from numpy.linalg import inv
 
     if self.relax: deformation = dot(inv(output.cell.T), input.cell.T)
@@ -106,7 +106,7 @@ class KGrid(KPoints):
 
   def _mnk(self, input, output):
     """ Yields kpoints on the grid. """
-    from numpy.linalg import inv, norm
+    from numpy.linalg import inv
     from numpy import zeros, array, dot, multiply
     from ..crystal.gruber import Reduction
     
@@ -123,7 +123,7 @@ class KGrid(KPoints):
       for y in xrange(self.grid[1]):
         for z in xrange(self.grid[2]):
           a = dot(cell, multiply(array([x,y,z]), invgrid) + offset)
-          yield 1, array(a.flat)
+          yield weight, array(a.flat)
  
   def __repr__(self):
     """ Represents this object. """
@@ -148,17 +148,14 @@ class KDensity(KGrid):
 
   def __init__(self, density, offset = None, relax=True):
     """ Initializes unreduced KGrid. """
-    from numpy import array
     KGrid.__init__(self, relax=relax, offset=offset)
     self.density = density
     """ 1-dimensional density in cartesian coordinates (1/Angstrom). """
 
   def _mnk(self, input, output):
     """ Yields kpoints on the grid. """
-    from numpy import zeros, array, dot, floor
+    from numpy import floor
     from numpy.linalg import inv, norm, det
-    from quantities import angstrom
-    from ..crystal import fill_structure
     from ..crystal.gruber import Reduction
     
     cell = inv(Reduction()(output.cell,recip=True) * output.scale).T

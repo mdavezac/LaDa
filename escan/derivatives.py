@@ -66,8 +66,9 @@ class DDPoints(KPoints):
     assert self.order > 0, ValueError("Order of derivative should be positive.")
 
     nbpoints  = max(self.order+1, self.nbpoints)
-    direction = array(self.direction) 
-    center    = array(self.center) if self.center != None else zeros((3,), dtype="float64")
+    direction = array(self.direction, dtype="float64") 
+    center    = array(self.center, dtype="float64") if self.center != None\
+                else zeros((3,), dtype="float64")
     if self.relax:
       deformation = dot(inv(output.cell.T), input.cell.T)
       direction = dot(deformation, direction)
@@ -112,15 +113,20 @@ class DDPoints(KPoints):
 ReducedDDPoints    = _reduced_grids_factory('ReducedDDPoints', DDPoints)
 
 
-def reciprocal( escan, structure, direction, outdir = None, comm = None, order = 1, \
+def reciprocal( escan, structure, outdir = None, comm = None, direction=(0,0,1), order = 1, \
                 nbpoints = None, stepsize = 1e-2, center = None, lstsq = None, **kwargs ):
   """ Computes effective mass for a given direction.
 
       :Parameters:
-        structure : `crystal.Structure`
-          The structure for wich to compute effective masses.
         escan : `Escan` or `KEscan`
           Emiprical pseudo-potential functional.
+        structure : `crystal.Structure`
+          The structure for wich to compute effective masses.
+        outdir : str
+          Directory where to save results of calculation.
+        comm : `lada.mpi.Communicator` or None
+          MPI communicator containing processes with which to perform
+          calculation.
         direction : 3-tuple 
           direction for which to compute derivatives.
         order : int
@@ -160,7 +166,7 @@ def reciprocal( escan, structure, direction, outdir = None, comm = None, order =
   # takes care of default parameters.
   if not isinstance(escan, KEscan): escan = KEscan(escan=escan)
   if center == None: center = kwargs.pop("kpoint", escan.kpoint)
-  center = array(center)
+  center = array(center, dtype="float64")
   relax = kwargs.pop("do_relax_kpoint", escan.do_relax_kpoint)
   if outdir == None: outdir = "reciprocal"
   if lstsq == None: lstsq = np_lstsq
@@ -170,6 +176,8 @@ def reciprocal( escan, structure, direction, outdir = None, comm = None, order =
 
   # performs calculations.
   out = escan(structure, outdir=outdir, comm=comm, kpoints=kpoints, **kwargs)
+  # makes sure we have parameters. 
+  for k in kpoints(out.input_structure, out.structure): continue
 
   # sorts eigenvalues at each kpoint and rescales to hartree.
   measurements = sort(out.eigenvalues.rescale(hartree), axis=1) 

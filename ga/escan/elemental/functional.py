@@ -89,9 +89,10 @@ class Darwin(EscanDarwin):
               "functional.max_gen     = {0.max_gen}\n"\
               "functional.current_gen = {0.current_gen}\n"\
               "functional.rate        = {0.rate}\n"\
-              "functional.rootworkdir = {1}\n"\
               "functional.current_gen = {0.current_gen}\n"\
-              .format(self, repr(self.rootworkdir), repr(self.age))
+              "functional.age         = {1}\n"\
+              .format(self, repr(self.age))
     if getattr(self, 'dosym', False): 
-      string += "functional.dosym       = {0.dosym}".format(self)
+      string += "functional.dosym       = {0.dosym}\n".format(self)
+    string += "# functional.rootworkdir, please set evaluator.outdir instead\n"
     return header + string

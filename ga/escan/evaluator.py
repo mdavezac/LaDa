@@ -136,8 +136,9 @@ class Bandgap(object):
 
   def __repr__(self): 
     """ Returns representation of evaluator. """
+    from operator import itemgetter
     max_length, string, _string, values = 0, '', '', {}
-    for key, value in self.__dict__.items():
+    for key, value in sorted(self.__dict__.items(), key=itemgetter(0)):
       if key[0] == '_': continue
       if key == 'converter': continue
       if key == 'escan': continue
@@ -150,7 +151,7 @@ class Bandgap(object):
       string += 'evaluator.{{{0}: <{{_mxlgth_repr_}}}} = {1}\n'.format(key, r)
       values[key] = key
     # create format string for private data members.
-    for key, value in self.__dict__.items():
+    for key, value in sorted(self.__dict__.items(), key=itemgetter(0)):
       if key[0] != '_': continue
       if key == '_outdir': continue
       try: r = repr(value).rstrip().lstrip()
@@ -200,51 +201,28 @@ class Dipole(Bandgap):
 
 class EffectiveMass(Bandgap):
   """ Evaluates effective mass. """
-  def __init__(self, *args, **kwargs): 
-    """ Initializes the dipole element evaluator.  """
-    from numpy import array
-    super(EffectiveMass, self).__init__(*args, **kwargs)
+  def __init__( self, n=0, **kwargs ):
+    """ Computes effective mass for a given direction. 
 
-    # isolates effective mass parameters.
-    self.emass_dict = { "direction": array([0,0,1]), "order": 2, "nbpoints": None,
-                        "stepsize": 1e-2, "lstsq": None }
-    for key in self.emass_dict.keys():
-      if key in self.kwargs: self.emass_dict[key] = self.kwargs.pop(key)
-    # some sanity checks.
-    assert self.emass_dict["order"] >= 2
+        For other keyword arguments, see `Bandgap`.
+    
+        :Parameters:
+          n : int or callable
+            Index of the band for which to compute effective mass.
+            If callable, takes the extraction object on input and should return
+            a number.
+    """
+    self.n = n
+    """ Index of the band for which to compute effective mass.
 
-  def __call__(self, indiv, comm=None, **kwargs):
+        Can also be a callable taking the extraction object on input and
+        returning a number.
+    """
+    super(EffectiveMass, self).__init__(**kwargs)
+
+  def __call__(self, indiv, outdir=None, comm=None, **kwargs):
     """ Computes electronic effective mass. """
-    from copy import deepcopy
-    from ...escan import derivatives
-
-    # isolates effective mass parameters.
-    emass_dict = {}
-    for key in self.emass_dict.keys():
-      emass_dict[key] = kwargs.pop(key, self.emass_dict[key])
-
-    # now gets bandgap.
-    out = super(EffectiveMass, self).run(indiv, comm=comm, **kwargs)
-    assert out.success, RuntimeError("error in %s" % (out.directory))
-
-    # then prepares parameters for effective mass. 
-    # at this point, electronic effective mass, for no good reasons.
-    dictionary = deepcopy(self.kwargs)
-    dictionary.update(kwargs) 
-    dictionary.update(self.emass_dict) 
-    dictionary.update(emass_dict) 
-    dictionary["outdir"]     = out.directory + "/emass"
-    dictionary["eref"]       = out.cbm
-    dictionary["structure"]  = out.structure
-    # removes band-gap stuff
-    dictionary.pop("references", None)
-    dictionary.pop("n", None)
-    dictionary.pop("overlap_factor", None)
-    # at this point, only compute one state.
-    dictionary["nbstates"] = 1
-
-    # computes effective mass.
-    results = derivatives.reciprocal(self.escan, comm=comm, **dictionary)
-
-    indiv.emass_vbm =  1e0/results[0][2,0]
-    return indiv.emass_vbm
+    out = super(EffectiveMass, self).run(indiv, outdir, comm, **kwargs)
+    indiv.eigenvalues = out.eigenvalues
+    indiv.mass = self.n(out) if hasattr(self.n, "__call__") else out.mass[self.n]
+    return indiv.mass

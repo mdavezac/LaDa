@@ -268,8 +268,7 @@ class Darwin(object):
 
   def __str__(self):
     return "Replacement rate: %f\nPopulation size: %i\nMaximum number of generations: %i\n" \
-           "Size of each individuals: %i\n"\
-           % (self.rate, self.popsize, self.max_gen, len(self.evaluator))
+           % (self.rate, self.popsize, self.max_gen)
 
   def __getstate__(self):
     """ Returns current state. """
@@ -289,13 +288,13 @@ class Darwin(object):
            "functional.cm_rate     = {3.cm_rate}\n"\
            "functional.popsize     = {3.popsize}\n"\
            "functional.max_gen     = {3.max_gen}\n"\
-           "functional.age         = {3.age}\n"\
+           "functional.age         = {4}\n"\
            "functional.current_gen = {3.current_gen}\n"\
-           "functional.rootworkdir = {4}\n"\
+           "# functional.rootworkdir, please set evaluator.outdir instead\n"\
            .format( self.__class__.__module__, 
                     self.__class__.__name__,
                     repr(self.evaluator),
-                    self, repr(self.rootworkdir) )
+                    self, repr(self.age) )
 
 
 
