@@ -201,7 +201,7 @@ class Functional(Bandgap):
     stepsize  = kwargs.pop('stepsize', self.stepsize)
     center    = kwargs.pop('center', self.center)
     lstsq     = kwargs.pop('lstsq', self.lstsq)
-    if comm == None: comm = Communicator(comm)
+    if comm == None: comm = Communicator(comm, with_world=True)
 
     # copy functional with current type
     this = self.copy(type=type)

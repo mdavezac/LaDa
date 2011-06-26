@@ -25,13 +25,3 @@ result = input.escan( structure, direction=(1,1,1), outdir="results/hmass/111", 
                       do_relax_kpoint=False, type = "h", bandgap=orig.extract_bg )
 assert abs(result.mass[0] - 0.6885) < 0.01 # Gamma conduction heavy hmass (111 direction)
 assert abs(result.mass[2] - 0.1460) < 0.01 # Gamma conduction light hmass (111 direction)
-
-# result = reciprocal( input.escan, structure, X, outdir="results/emass/100", \
-#                      order = 2, do_relax_kpoint=False )
-# assert abs(1e0 / result[0][2,8] - 0.4381) < 0.01 # Gamma conduction emass 
-# assert abs(-1e0 / result[0][2,7] - 0.2769) < 0.01 # Gamma conduction heavy hmass (100 direction)
-# assert abs(-1e0 / result[0][2,5] - 0.2059) < 0.01 # Gamma conduction light hmass (100 direction)
-# result = reciprocal( input.escan, structure, array([1e0, 1, 1]), outdir="results/emass/111", \
-#                      order = 2, do_relax_kpoint=False )
-# assert abs(-1e0 / result[0][2,7] - 0.6885) < 0.01 # Gamma conduction heavy hmass (111 direction)
-# assert abs(-1e0 / result[0][2,5] - 0.1460) < 0.01 # Gamma conduction light hmass (111 direction)

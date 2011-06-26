@@ -381,7 +381,7 @@ class KEscan(Escan):
         job.jobparams['genpotrun']       = genpotrun
       
       directory = '.' if outdir == None else outdir
-      bleeder = Bleeder(jobdict, this._pools(len(kpoints), comm), comm, directory=directory)
+      bleeder = Bleeder(jobdict, this._pools(len(kpoints), structure, comm), comm, directory=directory)
       for result, job in bleeder.itercompute(**kwargs): continue
       bleeder.cleanup()
 
@@ -416,7 +416,7 @@ class KEscan(Escan):
        result.append(kpoint)
      return result
 
-  def _pools(self, N, comm):
+  def _pools(self, N, structure, comm):
     """ Optimizes number of pools. 
     
         Tries to find the largest number of pools which divides the number of
@@ -440,7 +440,9 @@ class KEscan(Escan):
     if len(pools) == 0: return 1
 
     # checks for pools which best divide mesh size
-    fftsize = self.fft_mesh[0] * self.fft_mesh[1] * self.fft_mesh[2]
+    fftmesh = self.fft_mesh
+    if hasattr(fftmesh, '__call__'): fftmesh, dummy, dummy = fftmesh(self, structure, comm)
+    fftsize = fftmesh[0] * fftmesh[1]
     pools = [i for i in pools if fftsize % (comm.size / i) == 0]
     if len(pools) >= 1: return pools[-1]
     return 1
