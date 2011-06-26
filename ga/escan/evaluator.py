@@ -225,4 +225,4 @@ class EffectiveMass(Bandgap):
     out = super(EffectiveMass, self).run(indiv, outdir, comm, **kwargs)
     indiv.eigenvalues = out.eigenvalues
     indiv.mass = self.n(out) if hasattr(self.n, "__call__") else out.mass[self.n]
-    return indiv.mass
+    return indiv.mass * 10e0 if indiv.mass < 0e0 else indiv.mass
