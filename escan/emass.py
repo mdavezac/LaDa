@@ -171,6 +171,16 @@ class Functional(Bandgap):
     """
     super(Functional, self).__init__(**kwargs)
 
+  @staticmethod
+  def _make_directions(direction):
+    """ Makes direction the correct duck-type. """
+    assert hasattr(direction, '__len__'), ValueError("Unknown type for direction.")
+    assert len(direction) > 0, ValueError("Length of direction is less than one.")
+    if not hasattr(direction[0], '__len__'): direction = [direction]
+    for dir in direction: 
+      assert len(dir) == 3, IndexError("Unexpected length for direction.")
+    return direction
+
   def __call__(self, structure, outdir=None, comm=None, bandgap=None, **kwargs):
     """ Computes effective mass.
 
@@ -196,7 +206,7 @@ class Functional(Bandgap):
       return super(Functional, self).__call__(structure, outdir, comm, **kwargs)
 
     type      = kwargs.pop('type', self.type)
-    direction = kwargs.pop('direction', self.direction)
+    direction = self._make_direction(kwargs.pop('direction', self.direction))
     nbpoints  = kwargs.pop('nbpoints', self.nbpoints)
     stepsize  = kwargs.pop('stepsize', self.stepsize)
     center    = kwargs.pop('center', self.center)
@@ -229,7 +239,6 @@ class Functional(Bandgap):
 
     # computes bandgap.
     bandgap = super(Functional, this).__call__(structure, outdir, comm, **kwargs)
-
     assert bandgap.success, RuntimeError("Could not compute bandgap.")
     
     # then figures out appropriate reference.
@@ -237,9 +246,11 @@ class Functional(Bandgap):
     elif type == "h": eref = bandgap.vbm + bandgap.bandgap / 4e0
     
     # performs calculation.
-    reciprocal(this, structure, outdir, direction=direction,
-               nbpoints=nbpoints, stepsize=stepsize, center=center, 
-               lstsq=lstsq, eref=eref, order=2, **kwargs)
+    for dir in self.direction:
+      directory = "{0}/{1[0]}{1[1]}{1[2]}".format(bandgap.outdir, dir)
+      reciprocal(this, structure, outdir, direction=direction,
+                 nbpoints=nbpoints, stepsize=stepsize, center=center, 
+                 lstsq=lstsq, eref=eref, order=2, **kwargs)
 
     # creates extraction object.
     result = self.Extract(outdir, comm, unreduce=True, bandgap=bandgap)

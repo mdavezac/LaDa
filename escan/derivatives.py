@@ -26,6 +26,7 @@ class DDPoints(KPoints):
 
         .. |pi|  unicode:: U+003C0 .. GREEK SMALL LETTER PI
     """
+    super(DDPoints, self).__init__()
     self.direction = direction
     """ Direction for which to compute derivatives. """
     self.center = center
@@ -113,6 +114,53 @@ class DDPoints(KPoints):
 ReducedDDPoints    = _reduced_grids_factory('ReducedDDPoints', DDPoints)
 
 
+class ChainedDDPoints(KPoints):
+  """ Chains together different directions.
+  
+      The points is to only use those calculations which are necessary.
+  """
+  def __init__(self, direction = None, *args, **kwargs):
+    """ Initializes a set of chained directions. 
+    
+        The first argument, ``direction``, can now be a list of directions. 
+    """
+    super(ChainedDDPoints, self).__init__()
+    assert hasattr(direction, '__len__'), ValueError("Unknown type for direction.")
+    assert len(direction) > 0, ValueError("Length of direction is less than one.")
+    if not hasattr(direction[0], '__len__'): direction = [direction]
+    for dir in direction: 
+      assert len(dir) == 3, IndexError("Unexpected length for direction.")
+    self.ddpoints = [DDPoints(dir, *args, **kwargs) for dir in self.directions]
+    """ List of DDPoints instances to chain. """
+
+  @property
+  def directions(self):
+    """ List of all directions. """
+    return [u.direction for u in self.ddpoints]
+
+  def __repr__(self): 
+    """ Returns string representing this object. """
+    from copy import copy
+    a = copy(self.ddpoints[0])
+    a.direction = self.directions 
+    return repr(self.ddpoints[0]).replace("DDPoints", self.__class__.__name__)
+
+  @property
+  def parameters(self):
+    """ List of parameters for each direction. """
+    return [u.measurements for u in self.ddpoints]
+
+
+  def _mnk(self, input, output):
+    """ Yields lines of k-points to perform numerical derivation. """
+    from itertools import chain
+    for dummy in chain(u._mnk(input, output) for u in self.ddpoints): yield dummy
+
+
+ReducedChainedDDPoints  = _reduced_grids_factory('ReducedChainedDDPoints', ChainedDDPoints)
+
+
+
 def reciprocal( escan, structure, outdir = None, comm = None, direction=(0,0,1), order = 1, \
                 nbpoints = None, stepsize = 1e-2, center = None, lstsq = None, **kwargs ):
   """ Computes effective mass for a given direction.
@@ -127,7 +175,7 @@ def reciprocal( escan, structure, outdir = None, comm = None, direction=(0,0,1),
         comm : `lada.mpi.Communicator` or None
           MPI communicator containing processes with which to perform
           calculation.
-        direction : 3-tuple 
+        direction : 3-tuple or list of 3-tuple
           direction for which to compute derivatives.
         order : int
           Highest order derivative to perform. Defaults to 1.
