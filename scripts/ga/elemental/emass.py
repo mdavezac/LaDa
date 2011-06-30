@@ -25,8 +25,8 @@ def gajobs(path, inputpath = "input.py"):
             if direction == "perp": escan.direction = input.growth_direction
             elif all(array(input.growth_direction) - (0,0,1) == (0,0,0)):
               escan.direction = (1, 0, 0)
-            elif all(array(input.growth_direction) - (1,1,1) == (0,0,0)):
-              escan.direction = (-1, 1, 0)
+            elif all(array(input.growth_direction) - (1,1,0) == (0,0,0)):
+              escan.direction = (0, 0, 1)
             else: raise ValueError("Unknown growth direction.")
             if type == "ee": escan.type = "e"
             elif type == "hh" or type == "lh": escan.type = "h"
