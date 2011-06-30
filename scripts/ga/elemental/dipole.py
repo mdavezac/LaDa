@@ -33,7 +33,8 @@ def gajobs(path, inputpath = "input.py"):
                                **getattr(input, 'kwargs', {}) )
         functional = Functional(evaluator, **kwargs)
 
-        gajob = jobdict / "{4[0]}{4[1]}{4[2]}/scale_{0:.2f}/{1}_{2}/trial_{3}".format(scale, nmin, nmax, trial, input.growth_direction)
+        gajob = jobdict / "{4[0]}{4[1]}{4[2]}/scale_{0:.2f}/{1}_{2}/trial_{3}"\
+                          .format(scale, nmin, nmax, trial, input.growth_direction)
         gajob.functional = functional 
 
   ip = IPython.ipapi.get()

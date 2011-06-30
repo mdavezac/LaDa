@@ -124,19 +124,67 @@ class ChainedDDPoints(KPoints):
     
         The first argument, ``direction``, can now be a list of directions. 
     """
+    from numpy import array
     super(ChainedDDPoints, self).__init__()
-    assert hasattr(direction, '__len__'), ValueError("Unknown type for direction.")
-    assert len(direction) > 0, ValueError("Length of direction is less than one.")
-    if not hasattr(direction[0], '__len__'): direction = [direction]
-    for dir in direction: 
-      assert len(dir) == 3, IndexError("Unexpected length for direction.")
-    self.ddpoints = [DDPoints(dir, *args, **kwargs) for dir in self.directions]
+    direction = array(direction, dtype="float64")
+    if direction.ndim == 1: direction = array([direction])
+    self.ddpoints = [DDPoints(dir, *args, **kwargs) for dir in direction]
     """ List of DDPoints instances to chain. """
+
+  @property
+  def center(self):
+    """ Point at which to take derivative. """
+    return self.ddpoints[0].center
+  @center.setter
+  def center(self, value):
+    from numpy import array
+    value = array(value, dtype='float64')
+    for u in self.ddpoints: u.center = value
+
+  @property
+  def order(self):
+    """ Order of the derivative. """
+    return self.ddpoints[0].order
+  @order.setter
+  def order(self, value):
+    from numpy import array
+    value = array(value, dtype='float64')
+    for u in self.ddpoints: u.order = value
+
+  @property
+  def nbpoints(self):
+    """ Number of points to use in computing derivative. """
+    return self.ddpoints[0].nbpoints
+  @nbpoints.setter
+  def nbpoints(self, value):
+    for u in self.ddpoints: u.nbpoints = value
+
+  @property
+  def stepsize(self):
+    """ Distance between interpolation points. 
+
+        Units of ``2|pi|/a``, with ``a=structure.scale``.
+        
+        .. |pi|  unicode:: U+003C0 .. GREEK SMALL LETTER PI
+    """
+    return self.ddpoints[0].stepsize
+  @stepsize.setter
+  def stepsize(self, value):
+    for u in self.ddpoints: u.stepsize = value
+
+  @property
+  def relax(self):
+    """ Whether to deform kpoints to the relaxed structure. """
+    return self.ddpoints[0].relax
+  @relax.setter
+  def relax(self, value):
+    for u in self.ddpoints: u.stepsize = value
 
   @property
   def directions(self):
     """ List of all directions. """
-    return [u.direction for u in self.ddpoints]
+    from numpy import array
+    return array([u.direction for u in self.ddpoints])
 
   def __repr__(self): 
     """ Returns string representing this object. """
@@ -148,13 +196,14 @@ class ChainedDDPoints(KPoints):
   @property
   def parameters(self):
     """ List of parameters for each direction. """
-    return [u.measurements for u in self.ddpoints]
-
+    from numpy import array
+    return array([u.parameters for u in self.ddpoints])
 
   def _mnk(self, input, output):
     """ Yields lines of k-points to perform numerical derivation. """
-    from itertools import chain
-    for dummy in chain(u._mnk(input, output) for u in self.ddpoints): yield dummy
+    for point in self.ddpoints:
+      for result in point._mnk(input, output): 
+        yield result
 
 
 ReducedChainedDDPoints  = _reduced_grids_factory('ReducedChainedDDPoints', ChainedDDPoints)
@@ -209,18 +258,22 @@ def reciprocal( escan, structure, outdir = None, comm = None, direction=(0,0,1),
   from numpy import array, sort
   from numpy.linalg import lstsq as np_lstsq
   from quantities import hartree
-  from .kescan import KEscan
+# from .kescan import KEscan
 
   # takes care of default parameters.
-  if not isinstance(escan, KEscan): escan = KEscan(escan=escan)
+# if not isinstance(escan, KEscan): escan = KEscan(escan=escan)
   if center == None: center = kwargs.pop("kpoint", escan.kpoint)
   center = array(center, dtype="float64")
   relax = kwargs.pop("do_relax_kpoint", escan.do_relax_kpoint)
   if outdir == None: outdir = "reciprocal"
   if lstsq == None: lstsq = np_lstsq
+  direction = array(direction, dtype="float64")
 
   # creates kpoints object.
-  kpoints = ReducedDDPoints(direction, center, order, nbpoints, stepsize, relax)
+  if direction.ndim == 2:
+    kpoints = ReducedChainedDDPoints(direction, center, order, nbpoints, stepsize, relax)
+  else: 
+    kpoints = ReducedDDPoints(direction, center, order, nbpoints, stepsize, relax)
 
   # performs calculations.
   out = escan(structure, outdir=outdir, comm=comm, kpoints=kpoints, **kwargs)
@@ -231,6 +284,13 @@ def reciprocal( escan, structure, outdir = None, comm = None, direction=(0,0,1),
   measurements = sort(out.eigenvalues.rescale(hartree), axis=1) 
   
   # finally, performs least-square fit and returns everything.
-  result = lstsq( kpoints.parameters, measurements )
+  if direction.ndim == 2: # for each direction.
+    result = []
+    nbpoints = max(kpoints.order+1, kpoints.nbpoints)
+    for i in xrange(direction.shape[0]):
+      j, k = i * nbpoints, (i+1) * nbpoints
+      result.append(lstsq(kpoints.parameters[i,:,:], measurements[j:k, :]))
+    return result
+  # or for the lone direction.
+  return lstsq( kpoints.parameters, measurements )
 
-  return result
