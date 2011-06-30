@@ -1,7 +1,6 @@
 import _doc
 __doc__ = _doc.__doc__
 __docformat__ = "restructuredtext en"
-from lada import lada_with_slurm
 
 def _get_current_job_params(self, verbose=0):
   """ Returns a tuple with current job, filename, directory. """
@@ -116,40 +115,6 @@ def current_jobname(self, arg):
   print ip.user_ns["current_jobdict"].name
   return
 
-if lada_with_slurm:
-  def qstat(self, arg):
-    """ squeue --user=`whoami` -o "%7i %.3C %3t  --   %50j" """
-    from subprocess import Popen, PIPE
-    from IPython.genutils import SList
-    from getpass import getuser
-
-    # finds user name.
-    whoami = getuser()
-    squeue = Popen(["squeue", "--user=" + whoami, "-o", "\"%7i %.3C %3t    %j\""], stdout=PIPE)
-    result = squeue.stdout.read().rstrip().split('\n')
-    result = SList([u[1:-1] for u in result[1:]])
-    return result.grep(str(arg[1:-1]))
-else:
-  def qstat(self, arg):
-    """ Prints jobs of current user. """
-    from subprocess import Popen, PIPE
-    from getpass import getuser
-    from BeautifulSoup import BeautifulSoup
-    from IPython.genutils import SList
-    xml = Popen('qstat -xf'.split(), stdout=PIPE).communicate()[0]
-    parser = BeautifulSoup(xml)
-    user = getuser()
-  
-    def func(x):
-      if x.name != 'job': return False
-      if x.job_state.contents[0] == 'C': return False
-      return x.job_owner.contents[0].find(user) != -1
-    result = SList() 
-    for job in parser.findAll(func):
-      result.append( "{0.job_id.contents[0]:>10} {0.mppwidth.contents[0]:>4} "\
-                     "{0.job_state.contents[0]:>3}  --  {0.job_name.contents[0]}".format(job) )
-    return result.grep(str(arg[1:-1]))
-
 def cancel_completer(self, info):
   return qstat(self, info.symbol).fields(-1)[1:]
 
@@ -161,6 +126,8 @@ def cancel_jobs(self, arg):
 
       >>> %cancel_jobs "anti-ferro"
   """
+  from lada import lada_with_slurm
+  from .qstat import qstat
   arg = str(arg[1:-1])
   if len(arg) != 0: 
     result = qstat(self, arg)
@@ -200,6 +167,7 @@ def ipy_init():
     from .launch import launch, completer as launch_completer
     from .export import export, completer as export_completer
     from .record import record, completer as record_completer
+    from .qstat import qstat
     
     ip = IPython.ipapi.get()
     ip.expose_magic("explore", explore)
