@@ -1,22 +1,18 @@
-#ifndef _ATOM_H_
-#define _ATOM_H_
+#ifndef LADA_CRYSTAL_ATOM_H
+#define LADA_CRYSTAL_ATOM_H
 
 #include "LaDaConfig.h"
 
 #include <boost/serialization/base_object.hpp>
 
-# ifdef LADA_WITH_LNS
-#  include <load_n_save/xpr/base.h>
-# endif
-
 #include "atom_base.h"
+#include "atom_freeze.h"
 
 namespace LaDa
 {
   namespace Crystal
   {
-
-    //! \brief Describes an atom.
+    //! \brief Describes an atom where the type is a vector.
     //! \details An atom consists of a position, a type, and frozen status
     //!          variable. The position should always be in cartesian units. The
     //!          type can be anything, from a string with the symbol of the atom,
@@ -26,50 +22,38 @@ namespace LaDa
     //!          The frozen status variable indicate which, if any, coordinate
     //!          should not be touched deuring optimization. There are a number
     //!          of possibilities:
-    //!            - Atom_Type::FREEZE_NONE indicate that no coordinate is
+    //!            - frozen::NONE indicate that no coordinate is
     //!                                     frozen.
-    //!            - Atom_Type::FREEZE_X indicate that the cartesian x coordinate
+    //!            - frozen::X indicate that the cartesian x coordinate
     //!                                  is frozen.
-    //!            - Atom_Type::FREEZE_Y indicate that the cartesian y coordinate
+    //!            - frozen::Y indicate that the cartesian y coordinate
     //!                                  is frozen.
-    //!            - Atom_Type::FREEZE_Z indicate that the cartesian z coordinate
+    //!            - frozen::Z indicate that the cartesian z coordinate
     //!                                  is frozen.
-    //!            - Atom_Type::FREEZE_T indicate that the occupation is frozen.
+    //!            - frozen::T indicate that the occupation is frozen.
     //!            - Any combination of the above.
     //!            .
     //! \warning The default equality comparison operator compares positions only (not
     //!          occupation).
-    class Atom : public AtomBase<std::string> 
+    class Atom : public AtomBase< std::vector<std::string> >, public AtomFreezeMixin
     {
       friend class boost::serialization::access;
+#     ifdef LADA_WITH_LNS
+        //! To load and save to xml-like input.
+        friend class load_n_save::access; 
+#     endif
       public:
-        //! The type of the occupation
-        typedef T_TYPE t_Type;
-
-        //! Tags to freeze cell coordinates.
-        enum t_FreezeAtom
-        {
-          FREEZE_NONE =  0, //!< Freeze no atomic coordinate.
-          FREEZE_X   =  1,  //!< Freeze x coordinate.
-          FREEZE_Y   =  2,  //!< Freeze y coordinate.
-          FREEZE_Z   =  4,  //!< Freeze z coordinate.
-          FREEZE_T   =  8,  //!< Freeze type.
-          FREEZE_CARTESIANS  =  7,  //!< Freeze cartesians coordinates.
-          FREEZE_ALL =  15,  //!< Freeze all.
-        };
-
-      public:
-        //! The frozen status
-        types::t_unsigned freeze;
+        //! Type of the atomic type.
+        typedef std::vector<std::string> t_Type;
         
         //! Constructor
-        Atom() : AtomBase<std::string>(), freeze(FREEZE_NONE) {};
+        Atom() : AtomBase<t_Type>(), AtomFreezeMixin() {};
         //! Constructor and Initializer
         explicit  Atom_Type( const math::rVector3d &_pos, t_Type _type) 
-                    : AtomBase<std::string>(_pos, _type), freeze(FREEZE_NONE) {};
+                    : AtomBase<t_Type>(_pos, _type), AtomFreezeMixin(_type) {};
         //! Copy Constructor
-        Atom(const Atom &_c ) : AtomBase<std::string>(_c), freeze(_c.freeze) {};
-
+        Atom(const Atom &_c ) : AtomBase<t_Type>(_c), AtomFreezeMixin(_c) {};
+    
       private:
         //! Serializes an atom.
         template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version);
@@ -83,8 +67,8 @@ namespace LaDa
       void Atom :: serialize( ARCHIVE & _ar, const unsigned int _version)
       {
         namespace bs = boost::serialization;
-        _ar & bs::base_object< AtomBase<std::string> >(*this);
-        _ar & freeze;
+        _ar & bs::base_object< AtomBase<t_Type> >(*this);
+        _ar & bs::base_object<AtomFreezeMixin>(*this); 
       }
 #   ifdef LADA_WITH_LNS
       //! To load and save to xml-like input.
@@ -92,20 +76,9 @@ namespace LaDa
         bool Atom :: lns_access(T_ARCHIVE &_ar, const unsigned int _version) 
         {
           namespace lns = LaDa :: load_n_save;
-          std::map<std::string, LaDa::types::t_unsigned> freeze_map;
-          freeze_map["none"] = FREEZE_NONE;
-          freeze_map["x"] = FREEZE_X;
-          freeze_map["y"] = FREEZE_Y;
-          freeze_map["z"] = FREEZE_Z;
-          freeze_map["t"] = FREEZE_T;
-          freeze_map["cartesian"] = FREEZE_CARTESIANS;
-          freeze_map["all"] = FREEZE_ALL;
-          return _ar & 
-                 ( 
-                   lns::base< AtomBase<std::string> >(*_this) 
-                    << lns::option("freeze", lns::action=lns::enum_(freeze, freeze_map),
-                                        lns::default_=FREEZE_NONE)
-                 );
+          typedef AtomBase<t_Type> t1;
+          typedef AtomFreezeMixin  t2;
+          return _ar & (lns::base<t1>(*this) << lns::base<t2>(*this)); 
         }
 #   endif
 
