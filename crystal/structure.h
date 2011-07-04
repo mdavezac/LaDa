@@ -3,163 +3,195 @@
 
 #include "LaDaConfig.h"
 
-#include <vector>
-#include <ostream>
-#include <fstream>
-#include <string>
-#include <complex>
-#include <math.h>
-#include <boost/filesystem/path.hpp>
-#include <boost/serialization/serialization.hpp>
-#include <boost/fusion/tuple/tuple_tie.hpp>
-
-
-#include <tinyxml/tinyxml.h>
-#include <exception>
-
-#include <opt/types.h>
-#include <opt/tinyxml.h>
-#include <math/eigen.h>
-#ifdef LADA_WITH_LNS
-# include <load_n_save/lns.h>
-#endif
-
-#include "atom.h"
-#include "lattice.h"
+#include "structure_data.h"
 
 
 namespace LaDa 
 {
-  namespace Crystal
+  namespace crystal
   {
-    //! \brief Defines a periodic structure for a specific lattice.
-    //! \details The definition is mostly sufficient and self contain. It include:
-    //!          - Structure::cell the lattice cell
-    //!          - Structure::atoms all atomic positions and occupations
-    //!          - Structure::lattice a \a static pointer to the lattice. Static,
-    //!                               because \e a \e priori we will work within
-    //!                               a fixed lattice. Of course, this could
-    //!                               change at some pointe, so it is well
-    //!                               advised to use an instance to access the
-    //!                               lattice.
-    //!          - Structure::scale The scale in which the atomic positions and
-    //!                             unit-cell are given. This should generally be
-    //!                             the same as the scalar of the lattice.
-    //!          - Structure::freeze which indicates which cartesian unit of the
-    //!                              unit-cell should be frozen during
-    //!                              optimization (say throug Vff).
-    //!          .
-    //! \xmlinput A structure can load and save itself to and from XML. See \ref
-    //!           TagStructure. It is better to load the lattice first and the
-    //!           structure(s) second.
-    struct Structure
+    // Dummy declaration.
+    template<class TYPE> class TemplateStructure;
+
+    //! Dumps structure to string.
+    template< class T_TYPE >
+      std::ostream& operator<<(std::ostream &_stream, TemplateStructure<T_TYPE> const &_str);
+
+    //! Wraps around a shared pointer containing structure data.
+    template<class TYPE> class TemplateStructure 
     {
-      friend class boost::serialization::access;
-      //! The type of the collection of atoms. 
-      typedef std::vector<Atom>     t_Atoms;
+        friend class boost::serialization::access;
+#       ifdef LADA_WITH_LNS
+          friend class load_n_save::access;
+#       endif
+        friend template< class T_TYPE >
+          std::ostream& operator<<(std::ostream &_stream, TemplateStructure<T_TYPE> const &_str);
+      public:
+        //! Namespace for the frozen dof.
+        typedef typename StructureData<TYPE> :: frozen frozen;
+        //! Type of the iterator.
+        typedef typename StructureData<TYPE>::t_Atoms::iterator iterator;
+        //! Type of the constant iterator.
+        typedef typename StructureData<TYPE>::t_Atoms::const_iterator const_iterator;
+        //! Type of the reverse iterator.
+        typedef typename StructureData<TYPE>::t_Atoms::reverse_iterator reverse_iterator;
+        //! Type of the reverse constant iterator.
+        typedef typename StructureData<TYPE>::t_Atoms::reverse_const_iterator reverse_const_iterator;
+        //! Type of the atoms.
+        typedef typename StructureData<TYPE>::t_Atoms::value_type value_type;
+        //! Type of the reference to the atoms.
+        typedef typename StructureData<TYPE>::t_Atoms::reference reference;
+        //! Type of the constant reference to the atoms.
+        typedef typename StructureData<TYPE>::t_Atoms::const_reference const_reference;
+        //! Type of the size.
+        typedef typename StructureData<TYPE>::t_Atoms::size_type size_type;
+        //! Type of the differnce.
+        typedef typename StructureData<TYPE>::t_Atoms::difference_type difference_type;
+        //! Type of the pointer to the atoms.
+        typedef typename StructureData<TYPE>::t_Atoms::pointer_type pointer_type;
+        //! Type of the constant pointer to the atoms.
+        typedef typename StructureData<TYPE>::t_Atoms::const_pointer_type const_pointer_type;
+        //! Type of the allocator used for the atoms.
+        typedef typename StructureData<TYPE>::t_Atoms::allocator_type allocator_type;
 
-      //! Tags to freeze cell coordinates.
-      enum t_FreezeCell
-      {
-        FREEZE_NONE =   0, //!< Freeze no coordinate of the unit-cell
-        FREEZE_XX   =   1, //!< Freeze (0,0)
-        FREEZE_XY   =   2, //!< Freeze (0,1) 
-        FREEZE_XZ   =   4, //!< Freeze (0,2)
-        FREEZE_YX   =   8, //!< Freeze (0,1) 
-        FREEZE_YY   =  16, //!< Freeze (1,1) 
-        FREEZE_YZ   =  32, //!< Freeze (1,2) 
-        FREEZE_ZX   =  64, //!< Freeze (2,2)
-        FREEZE_ZY   = 128, //!< Freeze (2,2)
-        FREEZE_ZZ   = 256, //!< Freeze (2,2)
-        FREEZE_ALL  = 511, //!< Freeze all coordinates 
-        FREEZE_A0   =  73, //!< Freeze all coordinates 
-        FREEZE_A1   = 146, //!< Freeze all coordinates 
-        FREEZE_A2   = 292, //!< Freeze all coordinates 
-      };
+        //! Constructor
+        TemplateStructure() : impl_(new StructureData<TYPE>()) {};
+        //! Copy Constructor
+        TemplateStructure   ( const TemplateStructure &_str )
+                          : impl_(new StructureData<TYPE>(_c.impl_)) {}
+        //! Destructor.
+        ~TemplateStructure () {};
 
-      //! The unit-cell of the structure in cartesian coordinate.
-      math::rMatrix3d cell;
-      //! The atomic position in cartesian unit and their occupation.
-      t_Atoms atoms;
-      //! Just an old variable with the number of the structure in those NREL PI files.
-      std::string name;
-      //! The energy of the structure, whatever (and if) it is computed with.
-      types::t_real energy;
-      //! Weight of structure in "some" set.
-      types::t_real weight;
-      //! The frozen coordinates of the unit-cell.
-      types::t_unsigned freeze;
-      //! The scale in which cartesian units are given.
-      types::t_real scale;
+        //! Returns const reference to cell.
+        rMatrix3d const & cell() const { return impl_->cell; }
+        //! Returns reference to cell.
+        rMatrix3d & cell() const { return impl_->cell; }
+        //! Returns const reference to name.
+        std::string const & name() const { return impl_->name; }
+        //! Returns reference to name.
+        std::string & name() const { return impl_->name; }
+        //! Returns const reference to energy.
+        types::t_real const & energy() const { return impl_->energy; }
+        //! Returns reference to energy.
+        types::t_real & energy() const { return impl_->energy; }
+        //! Returns const reference to weight.
+        types::t_real const & weight() const { return impl_->weight; }
+        //! Returns reference to weight.
+        types::t_real & weight() const { return impl_->weight; }
+        //! Returns const reference to scale.
+        types::t_real const & scale() const { return impl_->scale; }
+        //! Returns reference to scale.
+        types::t_real & scale() const { return impl_->scale; }
+        //! Returns const reference to freeze (frozen degrees of freedom).
+        types::t_unsigned const & freeze() const { return impl_->freeze; }
+        //! Returns reference to freeze.
+        types::t_unsigned & freeze() const { return impl_->freeze; }
 
-      public: 
+        //! Shallow copy, e.g. refers to same data.
+        TemplateStructure shallow_copy() const
+        {
+          TemplateStructure result; result.impl_ = impl_; 
+          return result;
+        }
+        //! Swaps content of two structures.
+        void swap(TemplateStructure &_structure) { impl_.swap(_other.impl_); }
 
-      //! Constructor
-      Structure() : name(""), energy(0), weight(1), freeze(FREEZE_NONE) {};
-      //! Copy Constructor
-      Structure   ( const Structure &_str )
-                : cell(_str.cell), atoms(_str.atoms), name(_str.name), 
-                  energy(_str.energy), weight(_str.weight),
-                  freeze(_str.freeze), scale( _str.scale ) {}
-      //! Destructor.
-      ~Structure () {};
+        //! Iterator to the atoms.
+        iterator begin() { return impl_->atoms.begin(); }
+        //! Iterator to the atoms.
+        iterator end() { return impl_->atoms.end(); }
+        //! Iterator to the atoms.
+        reverse_iterator rbegin() { return impl_->atoms.rbegin(); }
+        //! Iterator to the atoms.
+        reverse_iterator rend() { return impl_->atoms.rend(); }
+        //! Iterator to the atoms.
+        const_iterator begin() const { return impl_->atoms.begin(); }
+        //! Iterator to the atoms.
+        const_iterator end() const { return impl_->atoms.end(); }
+        //! Iterator to the atoms.
+        reverse_const_iterator rbegin() const { return impl_->atoms.rbegin(); }
+        //! Iterator to the atoms.
+        reverse_const_iterator rend() const { return impl_->atoms.rend(); }
+        //! Number of atoms.
+        size_type size() const { return impl_->atoms.size(); }
+        //! Maximum number of atoms.
+        size_type max_size() const { return impl_->atoms.max_size(); }
+        //! Number of atoms.
+        void resize(size_type _n) { impl_->atoms.size(_n); }
+        //! Number of atoms.
+        void resize(size_type _n, const_reference _obj) { impl_->atoms.size(_n, _obj); }
+        //! Attempts to reserve memory for atoms.
+        void reserve(size_type _n) { impl_->atoms.reserve(_n); }
+        //! Reserved memory.
+        size_type capacity() const { return impl_->atoms.capacity(); }
+        //! Whether any atoms are in the structure.
+        bool empty() const { return impbool empty(); }
+        //! Returns nth atom.
+        reference operator[](size_type _n) { return impl_->atoms[_n]; }
+        //! Returns nth atom.
+        const_reference operator[](size_type _n) const { return impl_->atoms[_n]; }
+        //! Returns nth atom.
+        reference at(size_type _n) { return impl_->atoms.at(_n); }
+        //! Returns nth atom.
+        const_reference at(size_type _n) const { return impl_->atoms.at(_n); }
+        //! Returns nth atom.
+        reference front() { return impl_->atoms.front(); }
+        //! Returns nth atom.
+        const_reference front() const { return impl_->atoms.front(); }
+        //! Returns nth atom.
+        reference back() { return impl_->atoms.back(); }
+        //! Returns nth atom.
+        const_reference back() const { return impl_->atoms.back(); }
+        //! Replaces content of the container.
+        template <class InputIterator>
+          void assign(InputIterator _first, InputIterator _last)
+          { impl_->atoms.assign(_first, _last); }
+        //! Replaces content of the container.
+        void assign(size_type _n, const_reference _u) { impl_->atoms.assign(_n, _u); }
+        //! Adds atom at end of container.
+        void push_back(const_reference _u) { impl_->atoms.push_back(_u); }
+        //! Deletes last element. 
+        void pop_back() { impl_->atoms.pop_back(); }
+        //! Inserts atoms in container at given position.
+        template <class InputIterator>
+          void insert(iterator _pos, InputIterator _first, InputIterator _last)
+          { impl_->atoms.insert(_pos, _first, _last); }
+        //! Inserts one atom at given position.
+        iterator insert(iterator _pos, const_reference x) { impl_->atoms.insert(_pos, x); }
+        //! Inserts n atom at given position.
+        void insert(iterator _pos, size_type _n, const_reference x)
+          { impl_->atoms.insert(_pos, _n, x); }
+        //! Erases atom at given positions.
+        iterator erase(iterator _pos) { return impl_->atoms.erase(_pos); }
+        //! Erases range of atoms at given positions.
+        iterator erase(iterator _first, iterator _last) { return impl_->atoms.erase(_first, _last); }
+        //! Clears all atoms from structure.
+        void clear() { impl_->atoms.clear(); }
+        //! Returns allocator object used to construct atom container.
+        allocator_type get_allocator() const { return impl_->atoms.get_allocator(); }
 
-      //! \brief Equates to \e geometic structure.
-      //! \details The unit-cell and the atomic positions are compared, but not
-      //!           the occupations.
-      bool operator== (const Structure &_str ) const;
-      
+
+      private:
+        //! Serializes a structure.
+        template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
+          { ar & impl_; }
 #     ifdef LADA_WITH_LNS
         //! To load and save to xml-like input.
         template<class T_ARCHIVE>
           bool lns_access(T_ARCHIVE &_ar, load_n_save::version_type const _version) 
           {
-            namespace lns = LaDa :: load_n_save;
-            namespace bf = boost::fusion;
-            std::map<std::string, LaDa::types::t_unsigned> freeze_map;
-            freeze_map["none"] = FREEZE_NONE;
-            freeze_map["a0"]   = FREEZE_A0;
-            freeze_map["a1"]   = FREEZE_A1;
-            freeze_map["a2"]   = FREEZE_A2;
-            freeze_map["all"]  = FREEZE_ALL;
-#           ifdef LADA_TIE
-#              error LADA_TIE already defined.
-#           endif
-#           define LADA_TIE(i) bf::tie(cell(i,0), cell(i,1), cell(i,2))
-#           ifdef LADA_TOE
-#              error LADA_TOE already defined.
-#           endif
-#           define LADA_TOE(i) bf::tie(cell(0,i), cell(1,i), cell(2,i))
-            lns::xpr::Section const seccell = lns::section("Cell") 
-              << (
-                      (    lns::option("r0", lns::tag=lns::required, lns::action=LADA_TIE(0))
-                        && lns::option("r1", lns::tag=lns::required, lns::action=LADA_TIE(1))
-                        && lns::option("r2", lns::tag=lns::required, lns::action=LADA_TIE(2)) )
-                   || (    lns::option("a0", lns::tag=lns::required, lns::action=LADA_TOE(0))
-                        && lns::option("a1", lns::tag=lns::required, lns::action=LADA_TOE(1))
-                        && lns::option("a2", lns::tag=lns::required, lns::action=LADA_TOE(2))  )
-                 );
-#           undef LADA_TIE
-#           undef LADA_TOE
-            t_Atom atom;
-            lns::xpr::Section const section =
-              lns::section("Structure")  
-                << ( seccell  && lns::push_back(atoms) );
-              // << lns::option("name", lns::action=name, lns::default_="")
-              // << lns::option("energy", lns::action=energy, lns::default_=0)
-              // << lns::option("weight", lns::action=weight, lns::default_=0)
-              // << lns::option("freeze", lns::action=lns::enum_(freeze, freeze_map),
-              //                lns::default_=FREEZE_NONE)
-              // << lns::option("scale", lns::action=scale, lns::default_=1e0);
-            return _ar & section;
+            if( _ar.is_loading() )
+            {
+              boost::shared_ptr< StructureData<TYPE> > dummy(impl_);
+              impl_.reset(new StructureData<TYPE>());
+            }
+            return _ar & *impl_;
           }
 #     endif
-
-      private:
-        //! Serializes a structure.
-        template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version);
+        //! Holds data.
+        boost::shared_ptr< StructureData<TYPE> > impl_;
     };
-    
+
     struct Structure : public TStructure< types::t_real >
     {
       friend class boost::serialization::access;
@@ -188,8 +220,7 @@ namespace LaDa
       //! Destructor.
       ~Structure () {};
 
-      //! Prints a structure to a stream.
-      void print_out( std::ostream &stream ) const;
+
       //! Prints a structure to a string
       const std::string string() const
         { std::ostringstream sstr; print_out(sstr); return sstr.str(); }

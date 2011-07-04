@@ -1,28 +1,24 @@
 #include <boost/lambda/lambda.hpp>
-#include <boost/serialization/base_object.hpp>
 
 namespace LaDa
 {
-  namespace Crystal
+  namespace crystal
   {
-    template<class T_TYPE> template< class ARCHIVE >
-      void TStructure<T_TYPE> :: serialize( ARCHIVE & _ar, const unsigned int _version)
-      {
-        _ar & cell;
-        _ar & atoms;
-        _ar & name;
-        _ar & energy;
-        _ar & weight;
-        _ar & freeze;
-        _ar & scale;
-      }
-    template< class ARCHIVE >
-      void Structure :: serialize( ARCHIVE & _ar, const unsigned int _version)
-      {
-        _ar & boost::serialization::base_object< TStructure<types::t_real> >(*this);
-        _ar & k_vecs;
-      }
+    template< class T_TYPE >
+      std::ostream& operator<<(std::ostream &_stream, TemplateStructure<T_TYPE> const &_str)
+        { return _stream << *_str.impl_; }
 
+    template<class TYPE> template<class T_ARCHIVE>
+      bool TemplateStructure :: lns_access(T_ARCHIVE &_ar, load_n_save::version_type const _version) 
+      {
+        if( _ar.is_loading() )
+        {
+          boost::shared_ptr< StructureData<TYPE> > dummy(impl_);
+          impl_.reset(new StructureData<TYPE>());
+        }
+        return _ar & *impl_;
+      }
+    
     //! \cond
     void  find_range( const math::rMatrix3d &A, math::iVector3d &kvec );
 
@@ -105,226 +101,5 @@ namespace LaDa
       }
 
 
-    template< class T_TYPE >
-      void TStructure<T_TYPE> :: print_out (std::ostream &stream) const
-      {
-        namespace bl = boost::lambda;
-        stream << "\n Structure, scale: " << scale << ", Volume: "
-               << cell.determinant()
-               << ", Cell\n"
-               << std::fixed << std::setprecision(5)
-               << "   " << std::setw(9) << cell(0,0)
-               << "   " << std::setw(9) << cell(0,1)
-               << "   " << std::setw(9) << cell(0,2) << "\n"
-               << "   " << std::setw(9) << cell(1,0)
-               << "   " << std::setw(9) << cell(1,1)
-               << "   " << std::setw(9) << cell(1,2) << "\n"
-               << "   " << std::setw(9) << cell(2,0)
-               << "   " << std::setw(9) << cell(2,1)
-               << "   " << std::setw(9) << cell(2,2) << "\n"
-               << "\n   Atoms:\n";
-                
-        
-        stream << " Structure atoms\n";
-        std::for_each( atoms.begin(), atoms.end(),
-                       bl::var(stream) << bl::_1 << "\n" );
-      }
-
-    template< class T_TYPE >
-      bool TStructure<T_TYPE> :: Load( const TiXmlElement &_element )
-      {
-        const TiXmlElement *child, *parent;
-        double d; math::rVector3d vec;
-        int i;
-   
-        // Find first XML "Structure" node (may be _element from start, or a child of _element)
-        std::string str = _element.Value();
-        if ( str.compare("Structure" ) != 0 )
-          parent = _element.FirstChildElement("Structure");
-        else
-          parent = &_element;
-        LADA_DO_NASSERT( not parent, "Could not find Structure tag in xml.\n" )
-   
-        // read PI name if available
-        name = "";
-        if ( parent->Attribute("name") )
-          name = parent->Attribute("name");
-        energy = 1.0;
-        if ( not parent->Attribute("energy", &d) )
-          energy = 666.666;
-        energy = types::t_real(d);
-        weight = 1.0;
-        if ( parent->Attribute("energy", &d) )
-          energy = types::t_real(d);
-   
-        // reads in cell
-        child = parent->FirstChildElement( "Cell" );
-        LADA_DO_NASSERT( not child, "Unit-cell not found in structure input\n")
-        child = child->FirstChildElement( "row" );
-        freeze = FREEZE_NONE;
-        for (i=0 ; child and i<3; child=child->NextSiblingElement( "row" ), i++ )
-        {
-          d=1.0; LADA_DO_NASSERT( not child->Attribute("x", &d),
-                             "Incomplete cell in structure tag.\n" ); vec(0) = d;
-          d=1.0; LADA_DO_NASSERT( not child->Attribute("y", &d),
-                             "Incomplete cell in structure tag.\n"); vec(1) = d;
-          d=1.0; LADA_DO_NASSERT( not child->Attribute("z", &d),
-                             "Incomplete cell in structure tag.\n"); vec(2) = d;
-          cell.row(i) = vec;
-          if ( child->Attribute("freeze") )
-          {
-            str = child->Attribute("freeze");
-            if ( str.find("all") != std::string::npos )
-              switch( i )
-              {
-                default:
-                case 0: freeze |= FREEZE_XX | FREEZE_XY | FREEZE_XZ; break;
-                case 1: freeze |= FREEZE_XY | FREEZE_YY | FREEZE_YZ; break;
-                case 2: freeze |= FREEZE_XZ | FREEZE_YZ | FREEZE_ZZ; break;
-              }
-            else
-            {
-              if ( str.find("x") != std::string::npos )
-                switch( i )
-                {
-                  default:
-                  case 0: freeze |= FREEZE_XX; break;
-                  case 1: freeze |= FREEZE_XY; break;
-                  case 2: freeze |= FREEZE_XZ; break;
-                }
-              if ( str.find("y") != std::string::npos )
-                switch( i )
-                {
-                  default:
-                  case 0: freeze |= FREEZE_XY; break;
-                  case 1: freeze |= FREEZE_YY; break;
-                  case 2: freeze |= FREEZE_YZ; break;
-                }
-              if ( str.find("z") != std::string::npos )
-                switch( i )
-                {
-                  default:
-                  case 0: freeze |= FREEZE_XZ; break;
-                  case 1: freeze |= FREEZE_YZ; break;
-                  case 2: freeze |= FREEZE_ZZ; break;
-                }
-            }  
-          }
-        }
-        LADA_DO_NASSERT(i != 3, "More than three row for unit-cell in input\n")
-   
-        scale = 0;
-        parent->Attribute("scale", &scale);
-        if ( not scale ) scale = 2.0;
-   
-        // reads in atoms
-        child = parent->FirstChildElement( "Atom" );
-        atoms.clear();
-        for (; child; child=child->NextSiblingElement( "Atom" ) )
-        {
-          t_Atom atom;
-          LADA_TRY_ASSERT( atom.Load( *child ), "Could not read atom from input.\n" )
-          atoms.push_back(atom);
-        }
-   
-        return true;
-      }
-      
-    template< class T_TYPE >
-      void TStructure< T_TYPE > :: print_xml( TiXmlElement &_node ) const
-      {
-        TiXmlElement *child, *parent, *structure;
-   
-        // insert cell
-        structure = &_node;
-        std::string name = structure->Value(); 
-        if ( name.compare("Structure") )
-        {
-          structure = new TiXmlElement( "Structure" );
-          _node.LinkEndChild( structure );
-        }
-        parent = new TiXmlElement( "Cell" );
-        structure->LinkEndChild( parent );
-        structure->SetAttribute("N", atoms.size() );
-        structure->SetDoubleAttribute("energy", energy );
-        structure->SetDoubleAttribute("weight", weight );
-        structure->SetAttribute("name", name );
-        
-        for (int i=0; i < 3; ++i)
-        {
-          child = new TiXmlElement( "row" );
-          child->SetDoubleAttribute( "x", cell.row(i)(0) );
-          child->SetDoubleAttribute( "y", cell.row(i)(1) );
-          child->SetDoubleAttribute( "z", cell.row(i)(2) );
-          parent->LinkEndChild(child);
-          if ( i == 0 and
-               freeze & FREEZE_XX or 
-               freeze & FREEZE_XY or
-               freeze & FREEZE_XZ )
-          {
-             std::ostringstream ss(""); 
-             if ( freeze & (FREEZE_XX | FREEZE_XY | FREEZE_XZ ) )
-               ss << "all";
-             else
-             {
-               if ( freeze & FREEZE_XX )
-                 ss << "x";
-               if ( freeze & FREEZE_XY )
-                 ss << "y";
-               if ( freeze & FREEZE_XZ )
-                 ss << "z";
-             }
-             _node.SetAttribute( "freeze", ss.str().c_str() );
-          }
-          else if ( i == 1 and
-                    freeze & FREEZE_XY or 
-                    freeze & FREEZE_YY or
-                    freeze & FREEZE_YZ )
-          {
-             std::ostringstream ss(""); 
-             if ( freeze & (FREEZE_XY | FREEZE_YY | FREEZE_YZ ) )
-               ss << "all";
-             else
-             {
-               if ( freeze & FREEZE_XY )
-                 ss << "x";
-               if ( freeze & FREEZE_YY )
-                 ss << "y";
-               if ( freeze & FREEZE_YZ )
-                 ss << "z";
-             }
-             _node.SetAttribute( "freeze", ss.str().c_str() );
-          }
-          else if ( i == 2 and
-                    freeze & FREEZE_XZ or 
-                    freeze & FREEZE_YZ or
-                    freeze & FREEZE_ZZ )
-          {
-             std::ostringstream ss(""); 
-             if ( freeze & (FREEZE_XZ | FREEZE_YZ | FREEZE_YZ ) )
-               ss << "all";
-             else
-             {
-               if ( freeze & FREEZE_XZ )
-                 ss << "x";
-               if ( freeze & FREEZE_YZ )
-                 ss << "y";
-               if ( freeze & FREEZE_ZZ )
-                 ss << "z";
-             }
-             _node.SetAttribute( "freeze", ss.str().c_str() );
-          }
-        } // end of for (int i=0; i < 3; ++i) over cell vectors
-   
-        typename t_Atoms :: const_iterator i_atom = atoms.begin();
-        typename t_Atoms :: const_iterator i_atom_end = atoms.end();
-        for (; i_atom != i_atom_end; ++i_atom) 
-        {
-          TiXmlElement *xml_atom = new TiXmlElement("Atom");
-          i_atom->print_xml(xml_atom);
-          structure->LinkEndChild(xml_atom);
-        }
-   
-      }
   }
 } // namespace LaDa

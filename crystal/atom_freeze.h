@@ -46,7 +46,7 @@ namespace LaDa
         };
 
         //! The frozen status
-        frozen::type freeze;
+        types::t_unsigned freeze;
 
         //! Constructor.
         AtomFreezeMixin(frozen::type _in = frozen::None) : freeze(_in) {}
