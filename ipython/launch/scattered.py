@@ -38,7 +38,7 @@ def launch(self, event, jobdicts):
       """ Returns number of processes for this job. """
       N = len(job.structure.atoms) # number of atoms.
       if N % 2 == 1: N -= 1
-      return N  
+      return max(N, 1)  
 
   # gets walltime.
   if re.match("\s*(\d{1,3}):(\d{1,2}):(\d{1,2})\s*", event.walltime) == None:
