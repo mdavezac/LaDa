@@ -108,13 +108,16 @@ def export(self, event):
         allfiles.add(file)
         tarme.add(file, arcname=relpath(file, directory))
         directories.add(dirname(file))
-      for dir in directories:
+      # adds files from "with" argument.
+      if hasattr(args.others, "__iter__"):
         for pattern in args.others:
-          for sfile in iglob(join(dir, pattern)):
-            if sfile in allfiles: continue
-            allfiles.add(sfile)
-            if not exists(sfile): continue
-            tarme.add(sfile, arcname=relpath(sfile, directory))
+          for dir in directories:
+            for sfile in iglob(join(dir, pattern)):
+              if sfile in allfiles: continue
+              allfiles.add(sfile)
+              if not exists(sfile): continue
+              tarme.add(sfile, arcname=relpath(sfile, directory))
+      # adds current job dictionary.
       if jobdict != None: tarme.add(jobdict, arcname=relpath(jobdict, directory))
     except Exception as e:
       print "Encoutered error while tarring file."
