@@ -1,11 +1,10 @@
 #! python
 """ Runs one job from the jobtree. """
 def main():
-  import cPickle
   import re 
   from sys import path as python_path
   from os import getcwd, environ
-  from os.path import expanduser, abspath, join, relpath
+  from os.path import abspath, join, relpath
   from optparse import OptionParser
   from lada.mpi import world
   from lada import jobs
@@ -58,7 +57,6 @@ def main():
       out = job.compute(comm=world, outdir=outdir, workdir=workdir, inplace=False)
 
 if __name__ == "__main__":
-  from sys import stderr
   import traceback
   from boost.mpi import Exception as mpiException, abort, world
   try: main()

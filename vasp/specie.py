@@ -137,7 +137,6 @@ class Specie(object):
   @property
   def valence(self):
     """ Number of valence electrons specified by pseudo-potential """ 
-    import re
     self.potcar_exists()
     with self.read_potcar() as potcar:
       potcar.readline()

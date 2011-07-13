@@ -51,6 +51,15 @@ class rWavefunction(object):
       return self.comm.all_reduce(result, lambda x,y: x+y) 
     else: return result
 
+  @property
+  def density(self):
+    """ Returns partial density. """
+    from numpy import multiply, conjugate
+    result = multiply(self.up, conjugate(self.up))
+    if self.down != None: result += multiply(self.down, conjugate(self.down))
+    return result.real
+
+
 class Wavefunction(rWavefunction):
   is_gspace = True
   """ True since this is a g-space wavefunction. """

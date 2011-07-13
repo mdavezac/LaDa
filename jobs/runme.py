@@ -6,11 +6,10 @@
     mpi-processes is controlled by program option pools.
 """ 
 def main():
-  import cPickle
   import re 
   from sys import path as python_path
   from os import getcwd, environ
-  from os.path import expanduser, abspath, join, relpath
+  from os.path import abspath, join, relpath
   from optparse import OptionParser
   from lada.mpi import world
   from lada import jobs

@@ -81,7 +81,6 @@ def ldos(extractor, positions, raw=False):
   from numpy import tensordot, multiply, conjugate, exp, concatenate,\
                     array, rollaxis, sum, add, zeros
   from numpy.linalg import det, inv
-  from pickle import dump
 
   assert isinstance(extractor, KExtract),\
          ValueError('extractor argument should be KExtract isntance.')
