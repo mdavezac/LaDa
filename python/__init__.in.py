@@ -70,9 +70,10 @@ vasp_library = "libvasp.so"
 """
 
 
-if "ipython" in __all__:
+# The variables defined below are only needed for the ipython interface.
+if @with_ipython@:
   from os import environ
-  from ...jobs.templates import default_pbs, default_slurm
+  from .jobs.templates import default_pbs, default_slurm
 
   lada_with_slurm = 'SNLCLUSTER' in environ 
   """ If True use slurm as ressource manager, else use openpbs. """
@@ -124,6 +125,7 @@ if "ipython" in __all__:
   elif environ.get("NERSC_HOST", "none") == "carver":
     queues = "debug", "regular", "low"
     resource_string = "nnodes={1}:ppn=8"
+
 
 # reads stuff from input file
 from os.path import exists, expanduser, expandvars

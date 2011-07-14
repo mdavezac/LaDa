@@ -29,7 +29,7 @@ def default_pbs( file, walltime = "05:45:00", mppwidth = 8, ppernode = 8, queue 
   pbsdir = abspath(dirname(file.name))
   nnodes = mppwidth//8 if mppwidth % 8 == 0 else mppwidth//8 + 1
   file.write("#! /bin/bash\n#PBS -l walltime={0}\n".format(walltime))
-  file.write("#PBS -l" + resource_string.format(mppwidth, nnodes, ppernode) + "\n")
+  file.write("#PBS -l " + resource_string.format(mppwidth, nnodes, ppernode) + "\n")
   if name != None: 
     file.write("#PBS -N {1}\n\n"\
                "#PBS -V\n"\

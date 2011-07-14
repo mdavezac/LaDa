@@ -11,6 +11,11 @@ if(MPI_FOUND)
   set(do_use_mpi "True")
 endif(MPI_FOUND)
 
+set(with_ipython "False")
+if(ipython_interface)
+  set(with_ipython "True")
+endif(ipython_interface)
+
 
 set(which_packages "'math', 'opt', 'crystal', 'physics', 'periodic_table'")
 if(pcm_functional) 
