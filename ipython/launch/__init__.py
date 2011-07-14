@@ -26,14 +26,10 @@ def launch(self, event):
       >>> %launch scattered --walltime "24:00:00"
   """ 
   import argparse
-  from os import environ
   from ...jobs import load as load_jobs
-  from .. import _get_current_job_params, saveto
+  from .. import _get_current_job_params
   from .scattered import parser as scattered_parser
   from .interactive import parser as interactive_parser
-
-  which = "SNLCLUSTER" in environ
-  if which: which = environ["SNLCLUSTER"] in ["redrock", "redmesa"]
 
   # main parser
   parser = argparse.ArgumentParser(prog='%launch')
@@ -48,8 +44,8 @@ def launch(self, event):
   subparsers = parser.add_subparsers(help='Launches one job per untagged calculations')
 
   # launch scattered.
-  scattered_parser(self, subparsers, which, opalls) 
-  interactive_parser(self, subparsers, which, opalls) 
+  scattered_parser(self, subparsers, opalls) 
+  interactive_parser(self, subparsers, opalls) 
 
   # parse arguments
   try: args = parser.parse_args(event.split())
@@ -78,18 +74,14 @@ def launch(self, event):
 
 def completer(self, info):
   """ Completion for launchers. """
-  from os import environ
   from .scattered import completer as scattered_completer
   from .interactive import completer as interactive_completer
+  from IPython.ipapi import TryNext
 
-  which = "SNLCLUSTER" in environ
-  if which: which = environ["SNLCLUSTER"] in ["redrock", "redmesa"]
-  
-  ip = self.api
   data = info.line.split()
   types = ["scattered", "interactive"]
   if len(data)  <= 2 and data[-1] not in types: return types 
-  if data[1] == "scattered": return scattered_completer(self, info, data, which)
-  if data[1] == "interactive": return interactive_completer(self, info, data, which)
-  raise IPython.ipapi.TryNext
+  if data[1] == "scattered": return scattered_completer(self, info, data)
+  if data[1] == "interactive": return interactive_completer(self, info, data)
+  raise TryNext
          

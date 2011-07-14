@@ -36,7 +36,7 @@ def launch(self, event, jobdicts):
       job.compute(**kwargs)
 
 
-def completer(self, info, data, computer):
+def completer(self, info, data):
   """ Completer for scattered launcher. """
   from .._explore import _glob_job_pickles
   if    (len(info.symbol) == 0 and data[-1] == "--kwargs") \
@@ -47,7 +47,7 @@ def completer(self, info, data, computer):
   result = list(set(result) - set(data))
   return result
 
-def parser(self, subparsers, which, opalls):
+def parser(self, subparsers, opalls):
   """ Adds subparser for interactive. """ 
   result = subparsers.add_parser( 'interactive',
                                   description="Launches calculations interactively.\n"\

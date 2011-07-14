@@ -102,21 +102,21 @@ def completer(self, info, data):
   if    (len(info.symbol) == 0 and data[-1] == "--prefix") \
      or (len(info.symbol) > 0  and data[-2] == "--prefix"):
     return []
-  if    (len(info.symbol) == 0 and data[-1] == "queue") \
-     or (len(info.symbol) > 0  and data[-2] == "queue"):
+  if    (len(info.symbol) == 0 and data[-1] == "--queue") \
+     or (len(info.symbol) > 0  and data[-2] == "--queue"):
     return queues
-  if    (len(info.symbol) == 0 and data[-1] == "account") \
-     or (len(info.symbol) > 0  and data[-2] == "account"):
+  if    (len(info.symbol) == 0 and data[-1] == "--account") \
+     or (len(info.symbol) > 0  and data[-2] == "--account"):
     return accounts
   result = ['--force', '--walltime', '--nbprocs', '--help']
-  if len(queues) > 0: result.append("queue") 
-  if len(accounts) > 0: result.append("account") 
+  if len(queues) > 0: result.append("--queue") 
+  if len(accounts) > 0: result.append("--account") 
   if debug_queue != None: result.append("--debug")
   result.extend( _glob_job_pickles(ip, info.symbol) )
   result = list(set(result) - set(data))
   return result
 
-def parser(self, subparsers, which, opalls):
+def parser(self, subparsers, opalls):
   """ Adds subparser for scattered. """ 
   from ... import queues, accounts, debug_queue
   result = subparsers.add_parser( 'scattered', 

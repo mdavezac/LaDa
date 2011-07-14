@@ -124,7 +124,7 @@ if @with_ipython@:
     resource_string = "mppwidth={0}"
   elif environ.get("NERSC_HOST", "none") == "carver":
     queues = "debug", "regular", "low"
-    resource_string = "nnodes={1}:ppn=8"
+    resource_string = "nodes={1}:ppn=8"
 
 
 # reads stuff from input file
