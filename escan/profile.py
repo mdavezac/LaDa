@@ -21,7 +21,7 @@ def linear_profile(extract, direction=(0,0,1), nbpoints=20, sigma=None, indices=
       and a gaussian in fourier space. Comes down to an interpolation in
       real-space.
   """
-  from numpy import dot, max, pi, arange, array, tensordot, exp, multiply, sum
+  from numpy import dot, max, arange, array, tensordot, exp, multiply, sum
   from numpy.linalg import inv, norm
   from quantities import angstrom
   from lada.physics import a0
@@ -34,14 +34,13 @@ def linear_profile(extract, direction=(0,0,1), nbpoints=20, sigma=None, indices=
 
   # first computes intersection of direction and cell.  At the end, we should
   # end up in a0, knowing the structure cell should be in angstrom.
-  direction = array(direction)
   udir = direction / norm(direction)
   dir = dot(inv(extract.structure.cell), direction)
   direction = direction/max(abs(dir)) * extract.structure.scale * angstrom.rescale(a0)
 
   # then creates array of points along direction.
   zpoints = arange(nbpoints+1, dtype="float64").reshape(nbpoints+1, 1) / float(nbpoints)
-  zpoints = multiply(zpoints, direction) 
+  zpoints = multiply(zpoints, direction.magnitude) * direction.units
   x =  sum(zpoints*udir, axis=1).rescale(angstrom) 
 
   # computes sigma in g-space.
@@ -50,20 +49,24 @@ def linear_profile(extract, direction=(0,0,1), nbpoints=20, sigma=None, indices=
   gsigma = 1e0/sigma
 
   # finds gvectors with zero components in directions perpendicular to direction.
+  # dot does not work well with units.
   gvectors = extract.gvectors
-  nonzero = (gvectors - dot(gvectors, udir).reshape(gvectors.shape[0], 1) * udir)**2
+  nonzero = (gvectors - dot(gvectors.magnitude, udir).reshape(gvectors.shape[0], 1) * udir * gvectors.units)**2
   nonzero = sum(nonzero, axis=1) < 1e-12
   gvectors = extract.gvectors[nonzero, :]
 
   # computes all exponentials exp(-i r.g), with r in first dim, and g in second.
-  translations = exp(2e0*pi*1j * tensordot(zpoints, gvectors, ((1),(1))))
+  # tensordot does not conserve units. Must do it by hand.
+  units = (zpoints.units * gvectors.units).simplified
+  translations = exp(1j * tensordot(zpoints, gvectors, ((1),(1))) * units)
 
   # creates gaussian x translations matrix.
-  gpoints = (dot(gvectors, udir) / gsigma).simplified
+  gpoints = (dot(gvectors.magnitude, udir) * gvectors.units / gsigma).simplified
   gaussians = multiply(exp(-gpoints**2), translations)
 
   # fourrier operator to get auto-correlation function in g-space.
-  fourier = exp(-2e0*pi*1j * tensordot(extract.rvectors, gvectors, ((1),(1))))
+  units = (extract.rvectors.units * gvectors.units).simplified
+  fourier = exp(-1j * tensordot(extract.rvectors, gvectors, ((1),(1))) * units)
 
   # finally computes profile in fourier space.
   results = []

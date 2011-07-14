@@ -81,6 +81,7 @@ def ldos(extractor, positions, raw=False):
   from numpy import tensordot, multiply, conjugate, exp, concatenate,\
                     array, rollaxis, sum, add, zeros
   from numpy.linalg import det, inv
+  from quantities import angstrom
 
   assert isinstance(extractor, KExtract),\
          ValueError('extractor argument should be KExtract isntance.')
@@ -106,7 +107,7 @@ def ldos(extractor, positions, raw=False):
       # edition, chapter 4 section 5.
       equivs = [u for u in equivs]
       operators = [op.inverse for index, m, k, op in equivs]
-      all_positions = array([op(u) for op in operators for u in positions])
+      all_positions = array([op(u) * getattr(u, "units", angstrom) for op in operators for u in positions])
       multiplicities = [m for index, m, k, op in equivs]
       normalization += sum(multiplicities)
   
@@ -116,7 +117,9 @@ def ldos(extractor, positions, raw=False):
         gwfns = concatenate((extract.raw_gwfns, inverse), axis=1)
       else: gwfns = extract.raw_gwfns
       # computes all exponentials exp(-i r.g), with r in first dim, and g in second.
-      v = exp(-1j * tensordot(all_positions, extract.gvectors, ((1),(1))))
+      # units are not conserved by tensordot, so must do it by hand.
+      units = (all_positions.units * extract.gvectors.units).simplified
+      v = exp(-1j * tensordot(all_positions, extract.gvectors, ((1),(1))) * units)
       # computes fourrier transform for all wavefunctions simultaneously.
       rspace = tensordot(v, gwfns, ((1),(0)))
       rspace = multiply(rspace, conjugate(rspace)).real
@@ -177,8 +180,9 @@ class Extract(KExtract):
   def positions(self):
     """ Positions for which to compute LDOS. """
     from numpy import array
+    from quantities import angstrom
     if getattr(self.functional, 'positions', None) == None:
-      return array([a.pos for a in self.structure.atoms])
+      return array([a.pos * self.structure.scale * angstrom for a in self.structure.atoms])
     if not hasattr(self.functional.positions, '__call__'): return self.functional.positions
     return self.funtional.positions(self.structure)
 
