@@ -118,14 +118,15 @@ def completer(self, info, data):
 
 def parser(self, subparsers, opalls):
   """ Adds subparser for scattered. """ 
-  from ... import queues, accounts, debug_queue
+  from ... import queues, accounts, debug_queue, default_walltime
   result = subparsers.add_parser( 'scattered', 
                                   description="A separate PBS/slurm script is created for each "\
                                               "and every calculation in the jobdictionary "\
                                               "(or dictioanaries).",
                                   parents=[opalls])
-  result.add_argument('--walltime', type=str, default="05:59:59", \
-                         help='walltime for jobs. Should be in hh:mm:ss format.')
+  result.add_argument('--walltime', type=str, default=default_walltime, \
+                         help='walltime for jobs. Should be in hh:mm:ss format. '\
+                              'Defaults to ' + default_walltime + '.')
   result.add_argument( '--nbprocs', type=str, default="None", dest="nbprocs",
                        help="Can be an integer, in which case it specifies "\
                             " the number of processes to exectute jobs with. "\

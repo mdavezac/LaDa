@@ -108,6 +108,9 @@ def ldos(extractor, positions, raw=False):
       equivs = [u for u in equivs]
       operators = [op.inverse for index, m, k, op in equivs]
       all_positions = array([op(u) * getattr(u, "units", angstrom) for op in operators for u in positions])
+      for u in all_positions: 
+        if hasattr(u, "units"): u.rescale(angstrom)
+      all_positions = array(all_positions) * angstrom
       multiplicities = [m for index, m, k, op in equivs]
       normalization += sum(multiplicities)
   

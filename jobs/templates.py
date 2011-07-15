@@ -1,9 +1,9 @@
 """ Templates for job submissal. """
 __docformat__ = "restructuredtext en"
 
-def default_pbs( file, walltime = "05:45:00", mppwidth = 8, ppernode = 8, queue = None, \
-                account = None, name = None,  pyscript = None, pickle = "job_pickle", \
-                outdir = None, header = None, **kwargs):
+def default_pbs( file, walltime=None, mppwidth=8, ppernode=8, queue=None, \
+                 account=None, name=None,  pyscript=None, pickle="job_pickle", \
+                 outdir=None, **kwargs):
   """ Creates pbs-script for carver at nersc. Does not launch. 
 
       :Parameters:
@@ -11,20 +11,30 @@ def default_pbs( file, walltime = "05:45:00", mppwidth = 8, ppernode = 8, queue 
           File object to which to write. 
         walltime
          must be a string in "hh:mm:ss" format, or anything
-         acceptable to the PBS implementation.
+         acceptable to the PBS implementation. If None, defaults to `lada.default_walltime`.
         mppwidth
           Number of processes (not processors) to use.
+        ppernode 
+          Number of processes per node.
         queue
           Queue to use
+        account
+          Account under which to charge computer time, if any.
         name
           Name of the job.
         pyscript
           Python script to launch. Default: L{runme.py}
         pickle
-          Filename of job-tree pickle.
+          Filename of job-dictionary pickle.
+        outdir 
+          Directory where to start calculations.
+        kwargs
+          Further arguments are appended at the end of mpirun.
   """
   from os.path import dirname, abspath
-  from .. import mpirun_exe, resource_string
+  from .. import mpirun_exe, resource_string, default_walltime
+
+  if walltime == None: walltime = default_walltime 
 
   pbsdir = abspath(dirname(file.name))
   nnodes = mppwidth//8 if mppwidth % 8 == 0 else mppwidth//8 + 1
@@ -41,7 +51,6 @@ def default_pbs( file, walltime = "05:45:00", mppwidth = 8, ppernode = 8, queue 
                "#PBS -o {0}/out.$PBS_JOBID\n".format(pbsdir))
   if queue != None: file.write("#PBS -q {0} \n".format(queue))
   if account != None: file.write("#PBS -A {0} \n".format(account))
-  if header != None: file.write("{0}\n".format(header))
   if outdir == None: file.write("cd $PBS_O_WORKDIR\n")
   else: file.write("cd {0}\n".format(outdir))
 
@@ -52,9 +61,9 @@ def default_pbs( file, walltime = "05:45:00", mppwidth = 8, ppernode = 8, queue 
     else:             file.write(" --{0} {1}".format(key, value))
   file.write(" " + pickle + "\n")
 
-def default_slurm( file, walltime = "05:45:00", mppwidth = 8, ppernode=8, account = None,\
-                   name = None, pyscript = None,  pickle = "job_pickle",\
-                   outdir = None, partition = None, **kwargs):
+def default_slurm( file, walltime = "05:45:00", mppwidth = 8, ppernode=8, account=None,\
+                   name=None, pyscript=None,  pickle="job_pickle", queue=None, \
+                   outdir=None, **kwargs):
   """ Creates default slurm-script. Does not launch. 
 
       :Parameters:
@@ -75,20 +84,25 @@ def default_slurm( file, walltime = "05:45:00", mppwidth = 8, ppernode=8, accoun
           Python script to launch. Default: L{runme.py}
         pickle
           Filename of job-tree pickle.
-        partition 
-          Possible partition within which to launch jobs.
+        queue 
+          Possible queue/partition within which to launch jobs.
+        outdir 
+          Working directory where to start job.
+        kwargs
+          Further arguments are appended at the end of mpirun.
   """
   from os.path import abspath, dirname
-  from .. import mpirun_exe, resource_string
+  from .. import mpirun_exe, resource_string, default_walltime
 
+  if walltime == None: walltime = default_walltime 
   nnodes = mppwidth // ppernode + (0 if mppwidth % ppernode == 0 else 1)
 
   if account == None: account = "BES000"
   file.write("#! /bin/bash\n"\
              "#SBATCH --account={1}\n"\
              "#SBATCH --time={0}\n".format(walltime, account)) 
-  file.write(resource_string.format(mppwidth, nnodes, ppernode))
-  if partition != None: file.write("#SBATCH -p {0}\n".format(partition))
+  file.write("#SBATCH " + resource_string.format(mppwidth, nnodes, ppernode) + "\n")
+  if queue != None: file.write("#SBATCH -p {0}\n".format(queue))
   pbsdir = dirname(file.name)
   if name != None:
     file.write("#SBATCH -J {1} \n"\

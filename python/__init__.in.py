@@ -35,6 +35,12 @@
 
     In the works.
     Please see `lada.vasp` for a more in-depth description.
+
+    Setting defaults:
+    -----------------
+
+    All global variables below can be changed within "$HOME/.lada". This file
+    is read only once, when first importing lada into python.  
 """
 __docformat__ = "restructuredtext en"
 __all__ = [@which_packages@]
@@ -75,6 +81,9 @@ if @with_ipython@:
   from os import environ
   from .jobs.templates import default_pbs, default_slurm
 
+  default_walltime = "06:00:00"
+  """ Default walltime when launching jobs. """
+
   lada_with_slurm = 'SNLCLUSTER' in environ 
   """ If True use slurm as ressource manager, else use openpbs. """
   queues = []
@@ -114,7 +123,7 @@ if @with_ipython@:
 
   if environ.get("SNLCLUSTER", "none") in ["redrock", "redmesa"]: 
     template_pbs = default_slurm
-    debug_queue = "partition", "inter"
+    debug_queue = "queue", "inter"
     accounts = ["BES000"]
     qsub_exe = "sbatch"
     resource_string = "-N {1}"
