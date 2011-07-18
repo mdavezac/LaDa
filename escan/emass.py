@@ -2,8 +2,7 @@
 __docformat__ = "restructuredtext en"
 __all__ = ["Functional", "Extract"]
 from ..opt.decorators import make_cached
-from ._bandgap import Functional as Bandgap
-from .kescan import Extract as KExtract
+from .kescan import Extract as KExtract, KEscan
 
 class Extract(KExtract):
   """ Extraction object for effective mass functional. """
@@ -59,6 +58,17 @@ class Extract(KExtract):
     """ Computes dipole element between vbm and cbm. """
     return self.extract_bg.dipole(*args, **kwargs)
 
+  @property 
+  def _is_array(self):
+    """ True if direction is array of directions. """
+    from numpy import array
+    direction = array(self.functional.direction)
+    return direction.ndim == 2
+  @property
+  def _nbpoints(self):
+    """ Meaningful number of points. """
+    return max(3, self.functional.nbpoints)
+
   @property
   @make_cached
   def derivatives(self): 
@@ -86,8 +96,18 @@ class Extract(KExtract):
     m = min([len(e) for e in eigs])
     eigs = array([ e[:m] for e in eigs ]) * hartree
     measurements = sort(eigs, axis=1) 
-    for k in self.functional.kpoints(self.input_structure, self.structure): continue
-    return lstsq(self.functional.kpoints.parameters, measurements)[0]
+    # makes sure that parameters are constructed.
+    kpoints = self.functional.kpoints
+    for k in kpoints(self.input_structure, self.structure): continue
+    # depending on format of input directions, returns derivatives.
+    if self._is_array:
+      result = []
+      parameters = kpoints.parameters
+      for i in xrange(kpoints.directions.shape[0]):
+        j, k = i * self._nbpoints, (i+1) * self._nbpoints
+        result.append(lstsq(parameters[i,:,:], measurements[j:k, :])[0])
+      return array(result)
+    return lstsq(kpoints.parameters, measurements)[0]
 
   @property
   def eigenvalues(self): 
@@ -96,8 +116,12 @@ class Extract(KExtract):
         These eigenvalues are the result of the least-square-fit.
     """
     from quantities import eV, hartree
-    result = (self.derivatives[0,:] * hartree).rescale(eV)
-    return result if self.type == "e" else result[::-1]
+    if self._is_array:
+      result = (self.derivatives[:,0,:] * hartree).rescale(eV)
+      return result if self.type == "e" else result[:,::-1]
+    else:
+      result = (self.derivatives[0,:] * hartree).rescale(eV) 
+      return result if self.type == "e" else result[::-1]
 
   @property
   def mass(self): 
@@ -108,9 +132,12 @@ class Extract(KExtract):
     """
     assert self.type == "e" or self.type == "h",\
            RuntimeError("Unknown type {0}.".format(self.type))
-    return 1e0/self.derivatives[2,:] if self.type == "e" else -1e0/self.derivatives[2,::-1]
+    if self._is_array:
+      return 1e0/self.derivatives[:,2,:] if self.type == "e" else -1e0/self.derivatives[:,2,::-1]
+    else:
+      return 1e0/self.derivatives[2,:] if self.type == "e" else -1e0/self.derivatives[2,::-1]
 
-class Functional(Bandgap):
+class Functional(KEscan):
   """ Effective mass functional. 
   
       The effective mass is computed for a given set of bands, for the VBM, or
@@ -118,7 +145,7 @@ class Functional(Bandgap):
   """
   Extract = Extract
   """ Extraction object for the effective-mass functional. """
-  def __init__( self, direction=(0,0,1), nbpoints=None, stepsize=1e-2, \
+  def __init__( self, direction=(0,0,1), nbpoints=0, stepsize=1e-2, \
                 center=None, lstsq=None, **kwargs ):
     """ Computes effective mass for a given direction.
     
@@ -148,9 +175,10 @@ class Functional(Bandgap):
     
         .. |pi|  unicode:: U+003C0 .. GREEK SMALL LETTER PI
     """
+    from numpy import array
     self.type      = "e"
     """ Whethe to compute electronic or hole effective masses. """
-    self.direction = direction
+    self.direction = array(direction, dtype="float64")
     """ Direction for which to compute effective mass. """
     self.nbpoints = nbpoints
     """ Number of points with which to perform least-square fit. Defaults to 3. """
@@ -171,6 +199,37 @@ class Functional(Bandgap):
     """
     super(Functional, self).__init__(**kwargs)
 
+  @property
+  def kpoints(self):
+    """ KPoint derived class for effective mass. """
+    from numpy import array
+    from .derivatives import ReducedDDPoints, ReducedChainedDDPoints
+
+    kwargs = { "direction": array(self.direction, dtype="float64"),
+               "center": self.center,
+               "order": 2,
+               "nbpoints": max(self.nbpoints, 3),
+               "stepsize": self.stepsize,
+               "relax": self.do_relax_kpoint }
+
+    return ReducedChainedDDPoints(**kwargs) if kwargs['direction'].ndim == 2 \
+           else ReducedDDPoints(**kwargs)
+  @kpoints.setter
+  def kpoints(self, value): pass
+    
+  @property 
+  def center(self):
+    """ k-point for which to compute effective mass. 
+    
+        This object is owned by the functional, i.e. a copy of ``something`` is
+        created when setting ``self.direction = something``.
+    """
+    return self.kpoint
+  @center.setter
+  def center(self, value):
+    from numpy import array
+    self.kpoint = array(value, dtype="float64")
+
   def __call__(self, structure, outdir=None, comm=None, bandgap=None, **kwargs):
     """ Computes effective mass.
 
@@ -187,63 +246,59 @@ class Functional(Bandgap):
             If given, should be the return from a bandgap calculation.
         Parameters are passed on to `dervatives.reciprocal` method.
     """
-    from os import symlink
-    from os.path import join, exists, relpath, dirname, basename
-    from ..opt import Changedir
     from ..mpi import Communicator
-    from .derivatives import reciprocal
+    from ._bandgap import Functional as Bandgap
     if '_computing' in self.__dict__:
       return super(Functional, self).__call__(structure, outdir, comm, **kwargs)
 
-    type      = kwargs.pop('type', self.type)
-    direction = kwargs.pop('direction', self.direction)
-    nbpoints  = kwargs.pop('nbpoints', self.nbpoints)
-    stepsize  = kwargs.pop('stepsize', self.stepsize)
-    center    = kwargs.pop('center', self.center)
-    lstsq     = kwargs.pop('lstsq', self.lstsq)
     if comm == None: comm = Communicator(comm, with_world=True)
 
-    # copy functional with current type
-    this = self.copy(type=type)
+    # copy functional with current type. noadd keyword makes sure that only
+    # known attributes are added.
+    this = self.copy(noadd=True, **kwargs)
 
     # symlinks files from bandgap calculations.
-    if bandgap != None:  # in this case, just links to previous calculations.
-      assert bandgap.success,\
-             RuntimeError( "Input bandgap calculations at {0} were not successfull."\
-                           .format(bandgap.directory) )
-      result = self.Extract(outdir, comm, unreduce=True, bandgap=bandgap)
-      directory = bandgap.directory
-      if bandgap.is_ae: directory = dirname(directory)
-      if comm.is_root: 
-        for file in bandgap.iterfiles(): 
-          name = join(result.directory, relpath(file, bandgap.directory))
-          if not exists(name): # tries and links to earliest directory.
-            alldirs = relpath(file, bandgap.directory).split('/')
-            src, dest = bandgap.directory, result.directory
-            for now in alldirs:
-              src, dest = join(src, now), join(dest, now)
-              with Changedir(dirname(dest)) as cwd:
-                if not exists(basename(dest)):
-                  symlink(relpath(src, dirname(dest)), basename(dest))
-                  break
+    if bandgap != None: this._link_bg_files(bandgap, outdir, comm)
 
     # computes bandgap.
-    bandgap = super(Functional, this).__call__(structure, outdir, comm, **kwargs)
-
+    bandgap_func = Bandgap(escan=this)
+    bandgap = bandgap_func(structure, outdir, comm, **kwargs)
     assert bandgap.success, RuntimeError("Could not compute bandgap.")
     
     # then figures out appropriate reference.
-    if type == "e":   eref = bandgap.cbm - bandgap.bandgap / 4e0
-    elif type == "h": eref = bandgap.vbm + bandgap.bandgap / 4e0
+    if this.type == "e":   eref = bandgap.cbm - bandgap.bandgap / 4e0
+    elif this.type == "h": eref = bandgap.vbm + bandgap.bandgap / 4e0
+    else: raise ValueError("Unknown mass type {0}.".format(this.type))
     
     # performs calculation.
-    reciprocal(this, structure, outdir, direction=direction,
-               nbpoints=nbpoints, stepsize=stepsize, center=center, 
-               lstsq=lstsq, eref=eref, order=2, **kwargs)
-
-    # creates extraction object.
-    result = self.Extract(outdir, comm, unreduce=True, bandgap=bandgap)
+    kout = super(Functional, this).__call__(structure, outdir, comm=comm, eref=eref, **kwargs)
 
     # Effective mass extractor.
     return self.Extract(outdir, comm, unreduce=True, bandgap=bandgap)
 
+
+  def _link_bg_files(self, bandgap, outdir, comm):
+    """ Creates link to band-gap files in output directory. """
+    from os import symlink
+    from os.path import join, exists, relpath, dirname, basename
+    from ..opt import Changedir
+
+    if bandgap == None: return
+    assert bandgap.success,\
+           RuntimeError( "Input bandgap calculations at {0} were not successfull."\
+                         .format(bandgap.directory) )
+    result = self.Extract(outdir, comm, unreduce=True, bandgap=bandgap)
+    directory = bandgap.directory
+    if bandgap.is_ae: directory = dirname(directory)
+    if comm.is_root: 
+      for file in bandgap.iterfiles(): 
+        name = join(result.directory, relpath(file, bandgap.directory))
+        if not exists(name): # tries and links to earliest directory.
+          alldirs = relpath(file, bandgap.directory).split('/')
+          src, dest = bandgap.directory, result.directory
+          for now in alldirs:
+            src, dest = join(src, now), join(dest, now)
+            with Changedir(dirname(dest)) as cwd:
+              if not exists(basename(dest)):
+                symlink(relpath(src, dirname(dest)), basename(dest))
+                break

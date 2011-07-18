@@ -20,7 +20,7 @@ class KPoints(object):
   """
   __metaclass__ = ABCMeta
 
-  def __init__(self): object.__init__(self)
+  def __init__(self): super(KPoints, self).__init__()
 
   @abstractmethod
   def _mnk(self, input, output):
@@ -223,7 +223,11 @@ def _reduced_grids_factory(name, base):
         for i, others in enumerate(seen):
           index, m, vec, op = others[0]
           for op in lattice.space_group:
-            u = to_origin(dot(op.op, kpoint), kcell, vec)
+            try: 
+              u = to_origin(dot(op.op, kpoint), kcell, vec)
+            except ValueError:
+              print kpoint
+              raise
             if all(abs(u) < self.tolerance):
               found = True
               seen[i].append((j, mult, kpoint, op))

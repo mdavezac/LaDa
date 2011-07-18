@@ -222,7 +222,11 @@ class EffectiveMass(Bandgap):
 
   def __call__(self, indiv, outdir=None, comm=None, **kwargs):
     """ Computes electronic effective mass. """
+    from numpy import average
     out = super(EffectiveMass, self).run(indiv, outdir, comm, **kwargs)
     indiv.eigenvalues = out.eigenvalues
-    indiv.mass = self.n(out) if hasattr(self.n, "__call__") else out.mass[self.n]
+    indiv.masses = out.mass
+    if hasattr(self.n, "__call__"): indiv.mass = self.n(out)
+    elif out.mass.ndim == 2: indiv.mass = average(out.mass[:,self.n])
+    else: indiv.mass = out.mass[self.n]
     return indiv.mass * 10e0 if indiv.mass < 0e0 else indiv.mass

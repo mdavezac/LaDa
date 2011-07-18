@@ -24,9 +24,9 @@ def gajobs(path, inputpath = "input.py"):
             escan.vff.lattice.scale = scale
             if direction == "perp": escan.direction = input.growth_direction
             elif all(array(input.growth_direction) - (0,0,1) == (0,0,0)):
-              escan.direction = (1, 0, 0)
+              escan.direction = (1, 0, 0), (0, 1, 0)
             elif all(array(input.growth_direction) - (1,1,0) == (0,0,0)):
-              escan.direction = (0, 0, 1)
+              escan.direction = (0, 0, 1), (-1, 1, 0)
             else: raise ValueError("Unknown growth direction.")
             if type == "ee": escan.type = "e"
             elif type == "hh" or type == "lh": escan.type = "h"
@@ -43,7 +43,7 @@ def gajobs(path, inputpath = "input.py"):
                                    functional = escan, 
                                    **getattr(input, 'kwargs', {}) )
             functional = Functional(evaluator, **kwargs)
-            if type == "lh": functional.n = 2
+            functional.n = slice(2,4) if type == "lh" else slice(0,2)
     
             name = "{0[0]}{0[1]}{0[2]}/{1}/{2}/"\
                    .format(input.growth_direction, direction, type)

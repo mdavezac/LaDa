@@ -588,15 +588,19 @@ class Escan(object):
   def copy(self, **kwargs):
     """ Performs deep-copy of object. 
 
-	:Param kwargs: keyword arguments will overide the corresponding
-           attribute. The value of the keyword argument is *not* deepcopied. 
-           The attribute must exist. Attributes cannot be created here. 
+				:Param kwargs: keyword arguments will overide the corresponding
+                 attribute. The value of the keyword argument is *not* deepcopied. 
+                 The attribute must exist. Attributes cannot be created here. 
     """
     from copy import deepcopy
     result = deepcopy(self)
+    noadd = kwargs.pop('noadd', None)
     for key, value in kwargs.iteritems():
-      assert hasattr(result, key),\
-             ValueError("Attribute {0} does not exist and will not be created in copy.".format(key))
+      if not hasattr(result, key):
+        if noadd == None:
+          raise ValueError( "Attribute {0} does not exist "\
+                            "and will not be created in copy.".format(key))
+        elif noadd == True: continue
       setattr(result, key, value)
     return result
 
