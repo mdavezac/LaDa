@@ -266,11 +266,12 @@ class Functional(KEscan):
     assert bandgap.success, RuntimeError("Could not compute bandgap.")
     
     # then figures out appropriate reference.
-    if type == "e":   eref = bandgap.cbm - bandgap.bandgap / 4e0
-    elif type == "h": eref = bandgap.vbm + bandgap.bandgap / 4e0
+    if this.type == "e":   eref = bandgap.cbm - bandgap.bandgap / 4e0
+    elif this.type == "h": eref = bandgap.vbm + bandgap.bandgap / 4e0
+    else: raise ValueError("Unknown mass type {0}.".format(this.type))
     
     # performs calculation.
-    kout = super(Functional, this).__call__(structure, outdir, comm=comm, **kwargs)
+    kout = super(Functional, this).__call__(structure, outdir, comm=comm, eref=eref, **kwargs)
 
     # Effective mass extractor.
     return self.Extract(outdir, comm, unreduce=True, bandgap=bandgap)
