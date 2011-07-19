@@ -8,7 +8,7 @@ __all__ = ['Bandgap', 'Dipole', 'EffectiveMass']
 class Bandgap(object):
   """ An evaluator function for direct bandgaps. """
   def __init__(self, converter, functional, outdir = None, references = None, \
-               keep_only_last = True, **kwargs):
+               keep_only_last = True, sizedependent = -1, **kwargs):
     """ Initializes the bandgap object. 
 
         :Parameters: 
@@ -25,6 +25,9 @@ class Bandgap(object):
           keep_only_last : boolean
 	          If true, only the last calculation is kept. Limits the space
             required for ESCAN optimizations.
+          sizedependent : float
+            If strictly postive, then number of states is the product of this
+            number and the number of bits in the bitstring.
           kwargs
             Other keyword arguments to be passed to the functional.
     """
@@ -41,6 +44,13 @@ class Bandgap(object):
     """ Whethere to keep only last calculations or all. """
     self.kwargs = deepcopy(kwargs)
     """ Additional arguments to be passed to the bandgap functional. """
+    self.sizedependent = sizedependent
+    """ Floating points to compute a size-dependent number of states. 
+ 
+        If strictly postive, then number of states is the product of this
+        number and the number of bits in the bitstring. 
+    """
+
 
     self._outdir = RelativeDirectory(path=outdir)
     """ Location of output directory. """
@@ -98,6 +108,9 @@ class Bandgap(object):
     dictionary["comm"]       = comm 
     dictionary["outdir"]     = outdir
     if "overwrite" not in dictionary: dictionary["overwrite"]  = True
+    if getattr(self, "sizedependent", -1) > 0.0:
+      dictionary["nbstates"] = float(len(indiv.genes)) * self.sizedependent
+      dictionary["nbstates"] = 2*(int(dictionary["nbstates"]+1.5)//2)
     # performs calculation.
     out = escan(structure, **dictionary)
 
@@ -196,7 +209,9 @@ class Dipole(Bandgap):
     indiv.oscillator_strength, indiv.osc_nbstates\
       = out.oscillator_strength(degeneracy=degeneracy)
     comm.barrier() 
-    return indiv.oscillator_strength
+    return indiv.oscillator_strength / float(len(indiv.genes))\
+           if getattr(self, "sizedependent", -1)  > 0e0 \
+           else indiv.oscillator_strength
 
 
 class EffectiveMass(Bandgap):
