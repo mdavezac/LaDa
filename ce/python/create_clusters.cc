@@ -35,7 +35,7 @@ namespace LaDa
 
       bp::def
       (
-        "create_clusters",
+        "_create_clusters",
         &create_clusters,
         (
           bp::arg("lattice"),

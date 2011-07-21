@@ -89,7 +89,6 @@ class Fit():
         Expects structure.energy to hold the target energy, 
         and structure.weight the weight of the fitting set in the structure.
     """
-    from . import find_pis
     import numpy
     
     # resize array to fit structure.
@@ -105,7 +104,7 @@ class Fit():
       self._weights.resize((len(self._weights)+1,))
       self._str_onoff.resize((len(self._str_onoff)+1,))
       self._pis.resize((self._pis.shape[0]+1, self._pis.shape[1]))
-      self._structures.append(structure)
+      elf._structures.append(structure)
 
     # computes pis and adds data
     self._pis[-1,:] = self._classes.pis(structure)
@@ -179,10 +178,7 @@ class Fit():
     """ Reads a directory containing LDAs.dat file and adds the structures to the fitting set. 
         The structure files should exist in the same directory.
     """
-    import os.path
-    import re
     from . import read_mbce_structures
-
     for structure in read_mbce_structures(path): self.add_structure(structure)
     
 

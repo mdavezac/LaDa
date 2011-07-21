@@ -1,7 +1,7 @@
 """ Cluster Expansion Module. """
 __docformat__ = "restructuredtext en"
 from _ce import Cubic, apply_rotation, apply_symmetry, equivalents,\
-                ClusterClasses, Clusters, Cluster, create_pairs, create_clusters, \
+                ClusterClasses, Clusters, Cluster, create_pairs, \
                 find_pis, MLCluster, MLCluster, MLClusterClasses, ce_check
 from _fit import *
 
@@ -25,12 +25,12 @@ def read_jtypes(path, lattice, pairs = 0):
   from numpy import array
   from ..crystal import lattice_context
   from ..crystal.bravais import bcc, fcc
-  from . import MLCluster, MLClusters, MLClusterClasses, create_clusters
+  from . import MLCluster, MLClusterClasses, _create_clusters
 
   if lattice == "bcc": lattice = bcc(); lattice.sites[0].type = "A", "B"
   elif lattice == "fcc": lattice = fcc(); lattice.sites[0].type = "A", "B"
   with lattice_context(lattice) as oldlattice:
-    if pairs > 0: result = create_clusters(lattice, 2, pairs) 
+    if pairs > 0: result = _create_clusters(lattice, 2, pairs) 
     else: result = MLClusterClasses()
     J0 = compile(r"^\s*J0(?:\s|#)*$\s*0\s+0(?:\s|#)*$", multline)
     J1 = compile(r"^\s*J1(?:\s|#)*$\s*1\s+1(?:\s|#)*$\s*0\s+0\s+0(?:\s|#)*$", multline)
@@ -82,4 +82,36 @@ def read_mbce_structures(directory):
       if len(line.split()) < 2: continue
       result.append( read_mbce_structure(join(directory, line.split()[0])) )
       result[-1].energy = float(line.split()[1])
+  return result
+
+def cluster_factory(lattice, **keywords):
+  from re import compile, match
+  from . import _create_clusters
+
+  # checks that keywords are well formed.
+  key_regex = compile("B(\d+)")
+  for key in keywords.keys(): 
+    a_re = match(key_regex, key)
+    assert a_re != None, "Keyword %s is not of the form B(\d+)" % (key)
+    assert a_re.end() == len(key), "Keyword %s is not of the form B(\d+)" % (key)
+    assert int(a_re.group(1)) > 1, "Cannot understand keyword %s" % (key)
+    assert keywords[key] > 0, "Cannot understand input %s=%i" % (key, keywords[key])
+
+  # sanity check.
+  assert len(keywords) > 0, "No keywords found on input. Can't construct clusters.\n"
+
+  keys = sorted(keywords.keys(), cmp)
+
+  # now creates multi-lattice clusters, along with index bookkeeping.
+  result = _create_clusters(lattice, nth_shell=0, order=0, site=0) # J0
+  # creates J1 for these sites.
+  for site in _equivalent_sites(lattice):
+    result.extend(_create_clusters(lattice, nth_shell=0, order=1, site=site))
+  # creates many bodies.
+  for site in _equivalent_sites(lattice):
+    for key in keys:
+      regex = match(key_regex, key)
+      order = int(regex.group(1))
+      shell = keywords[key]
+      result.extend(_create_clusters(lattice, nth_shell=shell, order=order, site=site))
   return result

@@ -22,7 +22,7 @@ class Eval:
     from os.path import exists, join
     from re import compile, match
     from random import shuffle
-    from ...ce import create_clusters as Clusters, PairRegulatedFit
+    from ...ce import _create_clusters as Clusters, PairRegulatedFit
 
     self.lattice = lattice
 
@@ -71,7 +71,7 @@ class Eval:
       print "Found input set %s:\n" % (set_path)
       file = open(set_path, "r")
       for line in file:
-        self._sets.append( [int(i) for i in line.spli()] )
+        self._sets.append( [int(i) for i in line.split()] )
         print "  ", self._sets[-1]
         for i in self._sets[-1]:
           assert i < nstr, "Index in set is larger than the number of structures.\n"
