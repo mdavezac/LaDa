@@ -332,15 +332,13 @@ def _copy(self):
 Lattice.deepcopy   = _copy
 Structure.deepcopy = _copy
 
-def structure_to_lattice(structure, primitive=True, spacegroup=True):
+def structure_to_lattice(structure, primitive=True):
   """ Converts a structure object to a lattice object.
   
       :Parameters:
         primitive : boolean
           If True, then will try and create a primitive lattice from the
           structure. If False, keeps the structure as it is.
-        spacegroup: boolean
-          If True, attempts to compute space-group symmetry operations.
   """
   result = Lattice()
   result.cell = structure.cell.copy()
@@ -350,8 +348,9 @@ def structure_to_lattice(structure, primitive=True, spacegroup=True):
     result.add_site = atom.pos, atom.type
     result.sites[-1].freeze = atom.freeze
 
-  if primitive: result.make_primitive()
-  if spacegroup: result.find_space_group()
+  if primitive:
+    result.make_primitive()
+    result.find_space_group()
   # adds  additional components to lattice.
   result.__dict__.update(structure.__dict__) 
   return result

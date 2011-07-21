@@ -215,7 +215,7 @@ namespace LaDa
 
       MLCluster :: t_Spins :: const_iterator i_spin = _cls.begin();
       MLCluster :: t_Spins :: const_iterator const i_last = _cls.end();
-      for ( ; i_spin != i_last; ++i_spin) _stream << " " << *i_spin << "\n";
+      for ( ; i_spin != i_last; ++i_spin) _stream << "   " << *i_spin << "\n";
       return _stream;
     }
   } // namespace CE
