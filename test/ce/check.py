@@ -1,9 +1,8 @@
 #! /usr/bin/python
 def enum( _n, _lattice ):
   import numpy as np
-  from lada import enumeration, crystal
+  from lada import enumeration
   from math import pow
-  import time
 
   supercells = enumeration.find_all_cells(_lattice, _n)
   smiths = enumeration.create_smith_groups(_lattice, supercells)
@@ -72,31 +71,21 @@ def enum( _n, _lattice ):
 
 def list_all_structures( _n0, _n1 ):
 
-  from lada import enumeration, crystal
-  from math import pow
-  import time
+  from lada import crystal
 
   lattice = crystal.Structure().lattice
-  species = ("K", "Rb")
 
-  nconf = 1
-  t0 = time.time()
-  nconf = 0
   result = []
   for n in range(_n0, _n1):
-    npern = 0
     oldsupercell = None
     for x, smith, supercell, flavorbase in enum(n, lattice):
       if oldsupercell == None or oldsupercell != supercell:
-        npern = 0
         result.append( (supercell, flavorbase, smith, []) )
         oldsupercell = supercell
       result[-1][3].append(x)
   return lattice, result
 
 def choose_structures( _howmany, _min = 2, _max = 9 ):
-  import os
-  import shutil
   import random
   import numpy as np
   from lada import crystal, enumeration
@@ -139,11 +128,8 @@ def convert(_classes):
   return result
 
 def main():
-  from lada import ce, crystal
-  from math import fabs
+  from lada import ce
   import boost.mpi as mpi
-  import numpy
-  import pyublas
   from numpy import array
   from lada.crystal.bravais import fcc
 
