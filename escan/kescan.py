@@ -282,16 +282,24 @@ class Extract(AbstractExtractBase):
             number, in which case it should be in eV, or a numpy scalar with a
             unit (from quantity).
     """
-    from numpy import exp, array, sqrt, pi
+    from numpy import exp, array, sqrt, pi, dot, sum
     from numpy.linalg import det
     from quantities import eV
     if not hasattr(sigma, 'rescale'): sigma *= eV
     else: sigma = sigma.rescale(eV)
-    if not hasattr(energy, 'rescale'): energy = array(energy) * eV
-    else: energy = energy.rescale(eV)
-    y = array([ [(E - e)/sigma for e in energy] for E in self.eigenvalues.flatten()])
-    return det(self.structure.cell)/sigma/sqrt(pi)/float(y.shape[0]) * sum(exp(-y*y)) 
+    if not hasattr(energy, 'rescale'): energy = array(energy, dtype="float64") * eV
+    else: energy = array(energy, dtype="float64") * energy.units.rescale(eV)
 
+    # create unreduce extractor iterating over inequivalent kpoints only.
+    extractor = self.copy(unreduce=False)
+    # get multiplicities.
+    istr, ostr = self.input_structure, self.structure
+    mult = array([m for m, k in extractor.functional.kpoints(istr, ostr)], dtype="float64")
+    # reshape eigenvalues so we can create an array of eigs - e
+    y = extractor.eigenvalues.reshape(  *(list(extractor.eigenvalues.shape)+[1]) ) - energy
+    # compute exponentials.
+    return sum(dot(exp(-y**2/sigma**2).T, mult), axis=1) \
+           / det(self.structure.cell)/sigma.magnitude/sqrt(pi)/float(extractor.eigenvalues.size)
  
 class KEscan(Escan):
   """ A wrapper around Escan for computing many kpoints. """

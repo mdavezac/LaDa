@@ -170,13 +170,13 @@ class Algo(SpecialVaspParam):
     if lower == "veryfast": value = "Very_Fast" if not is_vasp_5 else 'VeryFast'
     elif lower in ["fast", 'f']: value = "Fast"
     elif lower in ["normal", 'n']: value = "Normal"
+    elif lower in ["damped", 'd']: value = "Damped"
     elif lower == "none" and is_vasp_5: value = "None"
     # below this VASP 5 only options.
     elif not is_vasp_5: raise ValueError, "algo value (%s) is invalid.\n" % (self.value)
     elif lower == "nothing": value = "Nothing"
     elif lower in ["all", 'a']: value = "All"
     elif lower in ["conjugate", 'c']: value = "Conjugate"
-    elif lower in ["damped", 'd']: value = "Damped"
     elif lower in ["subrot", 's']: value = "Subrot"
     elif lower in ["eigenval", 'e']: value = "Eigenval"
     elif lower == "chi":  value = "chi"
