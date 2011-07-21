@@ -28,7 +28,6 @@ class Launch(Incar):
             A string describing the kpoint mesh (in VASP's KPOINT format), or a
             callable returning such a string.
     """
-    from os import getcwd
     from ..opt import RelativeDirectory
     super(Launch, self).__init__() 
 
