@@ -312,6 +312,19 @@ class LockFile(object):
     """ Releases lock if still held. """
     if self.owns_lock and self.is_locked: self.release()
 
+  def remove_stale(self, comm = None):
+    """ Removes a stale lock. """
+    from os import rmdir
+    from os.path import exists
+    from ..mpi import Communicator
+    comm = Communicator(comm)
+    comm.barrier()
+    if exists(self.lock_directory):
+      try: rmdir(self.lock_directory)
+      except: pass
+    comm.barrier()
+      
+
 def acquire_lock(filename, sleep=0.5):
   """ Alias for a `LockFile` context. 
 
