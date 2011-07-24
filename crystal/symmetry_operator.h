@@ -83,19 +83,106 @@ namespace LaDa
                   SymmetryOperator const &_b, 
                   SymmetryOperator &_out );
 
+    //! \typedef Vector of symmetry operations making up a space-group.
+    typedef std::vector<SymmetryOperator> t_SpaceGroup;
 
     //! \brief Returns point symmetries of a cell (except identity).
     //! \details Rotations are determined from G-vector triplets with the same
     //!          norm as the unit-cell vectors.
     //! \see Taken from Enum code, PRB 77, 224115 (2008).
     boost::shared_ptr< std::vector<SymmetryOperator> >
-      get_point_group_symmetries( math::rMatrix3d const &_cell, types::t_real _tolerance = -1e0 );
+      get_cell_symmetries( math::rMatrix3d const &_cell, types::t_real _tolerance = -1e0 );
 
-    //! \brief returns space-group symmetries of a lattice.
+    //! \brief Finds and stores space group operations.
+    //! \param[in] _structure The structure for which to find the space group.
+    //! \param[in] _tol acceptable tolerance when determining symmetries.
+    //!             -1 implies that types::tolerance is used.
+    //! \retval spacegroup Shared pointer to a t_SpaceGroup vector containing
+    //!         the symmetry operations for the given structure.
     //! \warning Works for primitive lattices only.
     //! \see Taken from Enum code, PRB 77, 224115 (2008).
-    boost::shared_ptr< std::vector<SymmetryOperator> >
-      get_space_group_symmetries( Lattice const &_lattice, types::t_real _tolerance = -1e0 );
+    template<class T_TYPE> boost::shared_ptr<t_SpaceGroup>
+      get_space_group(TemplateStructure<T_TYPE> const &_lattice, types::t_real _tolerance = -1e0);
+      {
+        if( _tolerance <= 0e0 ) _tolerance = types::tolerance;
+        // Checks that lattice has sites.
+        LADA_DOASSERT( _lattice.sites.size() != 0, 
+                       "Lattice does not contain sites.\n"
+                       "Will not compute symmetries for empty lattice.\n" );
+        { // Checks that lattice is primitive.
+          Lattice lat(_lattice);
+          LADA_DOASSERT( lat.make_primitive(), 
+                         "Lattice is not primitive.\nCannot compute symmetries.\n" );
+        }
+
+        // Finds minimum translation.
+        Lattice::t_Sites sites(_lattice.sites);
+        math::rVector3d translation(sites.front().pos);
+        math::rMatrix3d const invcell(!_lattice.cell);
+        // Creates a list of sites centered in the cell.
+        foreach( Lattice::t_Site &site, sites )
+          site.pos = into_cell(site.pos-translation, _lattice.cell, invcell);
+
+        // gets point group.
+        boost::shared_ptr< std::vector<SymmetryOperator> >
+          pg = get_point_group_symmetries(_lattice.cell);
+        boost::shared_ptr< std::vector<SymmetryOperator> > 
+          result( new std::vector<SymmetryOperator> );
+        result->reserve(pg->size());
+             
+        // lists sites of same type as sites.front()
+        std::vector<math::rVector3d> translations;
+        CompareSites compsites(sites.front(), _tolerance);
+        foreach( Lattice::t_Site const &site, sites )
+          if( compsites(site.type) ) translations.push_back(site.pos);
+        
+
+        // applies point group symmetries and finds out if they are part of the space-group.
+        foreach(SymmetryOperator &op, *pg)
+        {
+          // loop over possible translations.
+          std::vector<math::rVector3d> :: const_iterator i_trial = translations.begin();
+          std::vector<math::rVector3d> :: const_iterator const i_trial_end = translations.end();
+          for(; i_trial != i_trial_end; ++i_trial)
+          {
+            // possible translation.
+            op.trans = *i_trial;
+            Lattice::t_Sites::const_iterator i_site = sites.begin();
+            Lattice::t_Sites::const_iterator const i_site_end = sites.end();
+            for(; i_site != i_site_end; ++i_site)
+            {
+              CompareSites transformed(*i_site, _tolerance);
+              transformed.pos = into_cell(op(i_site->pos), _lattice.cell, invcell);
+              Lattice::t_Sites::const_iterator const
+                i_found( std::find_if(sites.begin(), sites.end(), transformed) );
+              if(i_found == sites.end()) break;
+              if( not transformed(i_found->type) ) break;
+            } // loop over all sites.
+
+            if(i_site == i_site_end) break; // found a mapping
+          } // loop over trial translations.
+
+          if(i_trial != i_trial_end)
+            result->push_back(SymmetryOperator(op.op, op.trans-op.op*translation+translation) );
+        // else
+        // {
+        //   std::cout << op.op << "\n";
+        //   std::vector<math::rVector3d> :: const_iterator i_trial = translations.begin();
+        //   std::vector<math::rVector3d> :: const_iterator const i_trial_end = translations.end();
+        //   for(; i_trial != i_trial_end; ++i_trial)
+        //     foreach( Lattice::t_Site const & site, sites )
+        //     {
+        //       math::rVector3d pos = into_cell(op.op * sites.front().pos, _lattice.cell, invcell);
+        //       pos = into_cell( *i_trial - pos, _lattice.cell, invcell );
+        //       pos =op.op * site.pos + pos;
+        //       std::cout << "              " << into_cell(pos, _lattice.cell, invcell)<< "\n";
+        //     }
+        //   std::cout << "\n";
+        // }
+        } // loop over point group.
+
+        return result;
+      } 
   }
 }
 

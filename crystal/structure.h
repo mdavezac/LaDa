@@ -178,15 +178,7 @@ namespace LaDa
 #     ifdef LADA_WITH_LNS
         //! To load and save to xml-like input.
         template<class T_ARCHIVE>
-          bool lns_access(T_ARCHIVE &_ar, load_n_save::version_type const _version) 
-          {
-            if( _ar.is_loading() )
-            {
-              boost::shared_ptr< StructureData<TYPE> > dummy(impl_);
-              impl_.reset(new StructureData<TYPE>());
-            }
-            return _ar & *impl_;
-          }
+          bool lns_access(T_ARCHIVE &_ar, load_n_save::version_type const _version);
 #     endif
         //! Holds data.
         boost::shared_ptr< StructureData<TYPE> > impl_;
@@ -196,16 +188,18 @@ namespace LaDa
       std::ostream& operator<<(std::ostream &_stream, TemplateStructure<T_TYPE> const &_str)
         { return _stream << *_str.impl_; }
 
-    template<class TYPE> template<class T_ARCHIVE>
-      bool TemplateStructure :: lns_access(T_ARCHIVE &_ar, load_n_save::version_type const _version) 
-      {
-        if( _ar.is_loading() )
+#   ifdef LADA_WITH_LNS
+      template<class TYPE> template<class T_ARCHIVE>
+        bool TemplateStructure :: lns_access(T_ARCHIVE &_ar, load_n_save::version_type const _version) 
         {
-          boost::shared_ptr< StructureData<TYPE> > dummy(impl_);
-          impl_.reset(new StructureData<TYPE>());
+          if( _ar.is_loading() )
+          {
+            boost::shared_ptr< StructureData<TYPE> > dummy(impl_);
+            impl_.reset(new StructureData<TYPE>());
+          }
+          return _ar & *impl_;
         }
-        return _ar & *impl_;
-      }
+#   endif
   } // namespace crystal
 } // namespace LaDa
 
