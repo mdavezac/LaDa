@@ -18,7 +18,8 @@
 
 namespace LaDa 
 {
-  namespace Crystal {
+  namespace Crystal 
+  {
 
     //! Reads structure in NREL format.
     void read_structure( Structure &_struct, const boost::filesystem::path &_path,
