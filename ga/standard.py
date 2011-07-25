@@ -74,7 +74,7 @@ def tournament( self, size = 2 ):
   list_ = list_[:size]
   result = list_[0]
   for b in list_[1:]:
-    if self.cmp_indiv(self.population[b], self.population[result]):
+    if self.comparison(self.population[b], self.population[result]) == -1:
       result = b;
   return result
 

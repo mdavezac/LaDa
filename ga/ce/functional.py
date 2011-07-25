@@ -5,7 +5,6 @@ from ..functional import Darwin as StandardDarwin
 
 class Darwin(StandardDarwin):
   """ Main GA functional for CE. """
-  HISTORYCAR
   def __init__(self, evaluator, **kwargs):
     """ Initializes a GA functional. 
          
@@ -20,15 +19,50 @@ class Darwin(StandardDarwin):
           Maximum number of generations. Defaults to 0.
         :Kwarg current_gen:
           Current generation. Defaults to 0 or to whatever is in the restart.
-        :Kwarg rootworkdir:
-          Root of the working directory where actual calculations are carried
-          out. Defaults to $SCRACTH
     """
-    from ..history import History
+    from . import Crossover, Mutation
+    from ..standard import Mating
     # remove pools.
     kwargs.pop("pools", None)
+    kwargs.pop("rootworkdir", None)
 
     super(Darwin, self).__init__(evaluator, **kwargs)
 
-    self.history = History(HISTORYCAR
-    
+    # creates mating operation.
+    self.crossover_rate = kwargs.pop('crossover_rate', 0.8)
+    """ Rate for crossover over other operations. """
+    self.swap_rate = kwargs.pop('swap_rate', 0.8)
+    """ Rate for swap-like mutations over other operations. """
+    self.matingops = Mating(sequential=False)
+    self.matingops.add(Crossover(), self.crossover_rate)
+    self.matingops.add(Mutation(), 1-self.crossover_rate)
+
+  def mating(self):
+    """ Calls mating operations. """
+    return self.matingops(self)
+
+  def compare(self, a, b):
+    """ Compares two bitstrings. """
+    return a == b
+
+  def Individual(self):
+    """ Generates an individual (with mpi) """
+    from . import Individual
+    N = len(self.evaluator.clusters)
+    result = Individual(N, mean=int(0.5 * N))
+    return result
+
+  def __call__(self, comm = None, outdir = None, inplace=None, **kwargs):
+    """ Runs/Restart GA. """
+    from ...mpi import Communicator
+    comm = Communicator(comm)
+    self.pools = comm.size
+    return super(Darwin, self).__call__(comm, outdir, inplace, **kwargs)
+
+  @property
+  def rootworkdir(self):
+    """ Root of the working directory where actual calculations are carried out. """
+    raise RuntimeError("No rootworkdir necessary for CE.")
+
+  @rootworkdir.setter
+  def rootworkdir(self, value): pass

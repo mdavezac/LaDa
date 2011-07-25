@@ -300,9 +300,9 @@ class AbstractMassExtract(object):
     return d
 
   def __setstate__(self, arg):
+    if "_rootdir" in arg: arg["_rootdir"].hook = self.uncache
     self.__dict__.update(arg)
     self.comm = None
-    if "_rootdir" in d: d["_rootdir"].hook = self.uncache
        
   def solo(self):
     """ Extraction on a single process.

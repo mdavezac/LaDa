@@ -6,8 +6,19 @@ __all__ = ['Darwin', 'maximize', 'minimize']
 def maximize(indivA, indivB, tolerance=1e-12):
   """ Compares two individuals. 
 
-      Returns 1 if the fitness of ``indivA`` is *smaller* then the fitness of
-      ``indivB``, and 0 if both individuals are comparable.
+      This method can be used to *maximize* the objective function during the GA
+      evolution.
+
+      :Parameters:
+        indivA 
+          Individual with a scalar fitness attribute.
+        indivB 
+          Individual with a scalar fitness attribute.
+
+      :return:
+        - 1 if ``indivA.fitness < indivB.fitness``
+        - 0 if ``indivA.fitness == indivB.fitness``
+        - 1 if ``indivA.fitness > indivB.fitness``
   """
   from math import fabs
   a, b = indivA.fitness, indivA.fitness
@@ -19,14 +30,26 @@ def maximize(indivA, indivB, tolerance=1e-12):
 def minimize(indivA, indivB, tolerance=1e-12):
   """ Compares two individuals. 
 
-      Returns 1 if the fitness of ``indivA`` is *smaller* then the fitness of ``indivB``.
+      This method can be used to *minimize* the objective function during the GA
+      evolution.
+
+      :Parameters:
+        indivA 
+          Individual with a scalar fitness attribute.
+        indivB 
+          Individual with a scalar fitness attribute.
+
+      :return:
+        - 1 if ``indivA.fitness > indivB.fitness``
+        - 0 if ``indivA.fitness == indivB.fitness``
+        - 1 if ``indivA.fitness < indivB.fitness``
   """
   from math import fabs
   a, b = indivA.fitness, b.fitness
   if hasattr(b, 'rescale') and hasattr(a, 'magnitude'):
     a, b = a.magnitude, b.rescale(a.units).magnitude
   if fabs(a-b) <  tolerance: return 0
-  return 1 if float(a-b) < 0 else -1
+  return -1 if float(a-b) < 0 else 1
 
 class Darwin(object): 
   """ GA functional for optimizations of epitaxial structures. """
@@ -67,6 +90,7 @@ class Darwin(object):
         :Kwarg history:
           If true, will use history in taboo.
     """
+    from .history import History
     super(Darwin, self).__init__()
 
     self.evaluator = evaluator
@@ -112,7 +136,7 @@ class Darwin(object):
     
         Defined as a property to avoid hassle with __getstate__
     """
-    from ..standard import print_offspring, average_fitness, best
+    from .standard import print_offspring, average_fitness, best
     return [ print_offspring, 
              average_fitness,
              best,
@@ -136,7 +160,7 @@ class Darwin(object):
 
   def evaluation(self):
     """ Evaluates population. """
-    from ..standard import population_evaluation
+    from .standard import population_evaluation
     population_evaluation(self, self.evaluator, self.comm, self.pools)
 
   def taboo(self, indiv):
@@ -191,7 +215,7 @@ class Darwin(object):
 
   def save(self):
     """ Saves current status. """
-    from ..standard import append_population
+    from .standard import append_population
     from pickle import dump
 
     # only one proc should print.
@@ -222,7 +246,7 @@ class Darwin(object):
   def print_nb_evals(self):
     """ Prints current number of evaluations. """
     if self.color != None:
-      from ...mpi import all_reduce
+      from ..mpi import all_reduce
       local_comm = self.comm.split(self.color)
       heads_comm = self.comm.split(1 if local_comm.rank == 0 else 2)
       nbcalc = all_reduce(heads_comm, getattr(self.evaluator, "nbcalc", 0), lambda x,y: x+y)
@@ -248,9 +272,9 @@ class Darwin(object):
     from os import getcwd
     from os.path import join
     from copy import deepcopy
-    from ...mpi import world
-    from .. import darwin as search
-    from ...opt import redirect, RelativeDirectory, Changedir
+    from ..mpi import world
+    from . import darwin as search
+    from ..opt import redirect, RelativeDirectory, Changedir
 
     local_time = time.localtime() 
     self.start_time = time.time() 
@@ -264,15 +288,18 @@ class Darwin(object):
     if len(kwargs.keys()) > 0: 
       this = deepcopy(self)
       for key, value in kwargs.items():
-        assert hasattr(self, key), TypeError("Unknown argument {0}.".format(key))
-        setattr(self, key, value)
+        if hasattr(self, key): setattr(self, key, value)
+        elif hasattr(self.evaluator, key): setattr(self.evaluator, key, value)
+        else: assert hasattr(self, key), TypeError("Unknown argument {0}.".format(key))
       this(comm=comm)
       return
 
     # gets current age
     self.age = self.Extract(outdir.path, comm).next_age
-    self.evaluator._outdir.relative = outdir.relative
-    self.evaluator.outdir = join(self.evaluator.outdir, self.age)
+    # sets directory for calculations according to newly read age.
+    if hasattr(self.evaluator, "outdir"): 
+      self.evaluator._outdir.relative = outdir.relative
+      self.evaluator.outdir = join(self.evaluator.outdir, self.age)
 
     # now goes to work
     with Changedir(join(outdir.path, self.age), comm=comm) as cwd:
@@ -303,10 +330,15 @@ class Darwin(object):
   def __setstate__(self, state):
     """ Resets current state. """
     self.__dict__.update(state)
+    # takes care of older pickles.
+    if not hasattr(self, "comparison"): self.comparison = maximize
+    if not hasattr(self, "history"):    self.history    = None
 
   def __repr__(self):
     """ Returns representation of this instance. """
     return "from {0} import {1}\n{2}\n"\
+           "from {3.comparison.__module__} import {3.comparison.__name__}\n"\
+           "from {3.history.__module__} import {3.history.__name__}\n"\
            "functional = {1}(evaluator)\n"\
            "functional.pools       = {3.pools}\n"\
            "functional.cm_rate     = {3.cm_rate}\n"\
@@ -314,11 +346,13 @@ class Darwin(object):
            "functional.max_gen     = {3.max_gen}\n"\
            "functional.age         = {4}\n"\
            "functional.current_gen = {3.current_gen}\n"\
+           "functional.comparison  = {3.comparison.__name__}\n"\
+           "functional.history     = {5}\n"\
            "# functional.rootworkdir, please set evaluator.outdir instead\n"\
            .format( self.__class__.__module__, 
                     self.__class__.__name__,
                     repr(self.evaluator),
-                    self, repr(self.age) )
+                    self, repr(self.age), repr(self.history) )
 
 
 

@@ -22,9 +22,11 @@ class Evaluator(object):
             number of training vs validation sets.
     """
     from re import compile, match
-    from numpy import array
     from random import shuffle
+    from numpy import array
     from ...ce import cluster_factory
+
+    super(Evaluator, self).__init__()
 
     self.lattice = lattice
     """ Back-bone lattice of the Ising model. """
@@ -44,7 +46,7 @@ class Evaluator(object):
 
     self._structures = structures
     """ List of structures. """
-    self._pis = self.clusters.pis(self.structures, self.lattice)
+    self._pis = array([self.clusters.pis(s, self.lattice) for s in self.structures], dtype="float64")
     """ List of pis for input structures. """
 
     # creates or assigns energies as needed.
@@ -61,15 +63,17 @@ class Evaluator(object):
     indices = []
     for i in range(nsets):
       if len(indices) == 0:
-        indices = shuffle(range(len(self.structures)))
+        indices = range(len(self.structures))
+        shuffle(indices)
       if len(indices) >= n:
-        self._crosets.append(indices[:n])
+        crosets.append(indices[:n])
         indices = indices[n:]
       if len(indices) < n: 
-        self._crosets.append(indices)
-        u = n - len(self._crosets[-1])
-        indices = shuffle(range(len(self.structures)))
-        self._crosets[-1].extend(indices[:u])
+        crosets.append(indices)
+        u = n - len(crosets[-1])
+        indices = range(len(self.structures))
+        shuffle(indices)
+        crosets[-1].extend(indices[:u])
         indices = indices[u:]
     self.crosets = array(crosets)
     """ List of cross-validation sets. """
@@ -107,11 +111,12 @@ class Evaluator(object):
   def crosets(self):
     """ List of sets for which to perform cross-validation. """
     return self._crosets
-  @crosets.setter(self, value):
+  @crosets.setter
+  def crosets(self, value):
     """ Sets list of cross-validation sets. """
-    from numpy import argmin, array
+    from numpy import argmin, argmax, array
     assert argmin(value) >= 0, ValueError("Cross-validation sets cannot contain negative indices.")
-    assert argmax(value) < len(self.pis.structures),
+    assert argmax(value) < len(self.structures),\
            ValueError("Cross-validation sets cannot contain indices "\
                       "larger than the number of structures.")
     self._crosets = array(value).copy()
@@ -149,10 +154,11 @@ class Evaluator(object):
       
     return scores
 
-  def __call__(self, indiv, comm=None, outdir=None):
+  def __call__(self, indiv, comm=None, outdir=None, **kwargs):
     """ Evaluates cross validation scores for current gene-set. """
     from numpy import mean
-    indiv.cvscores = self.run(indiv.genes)
+    this = self.copy(**kwargs)
+    indiv.cvscores = this.run(indiv.genes)
     indiv.fitness = mean(indiv.cvscores)
     return indiv.fitness
 
@@ -170,36 +176,47 @@ class Evaluator(object):
     string += "evaluator.energies = {0}\n".format(repr(list(self.energies)))
     return string
 
+  def copy(self, **kwargs):
+    """ Performs deep-copy of object. 
+
+				:Param kwargs: keyword arguments will overide the corresponding
+                 attribute. The value of the keyword argument is *not* deepcopied. 
+                 The attribute must exist. Attributes cannot be created here. 
+    """
+    from copy import deepcopy
+    result = deepcopy(self)
+    noadd = kwargs.pop('noadd', None)
+    for key, value in kwargs.iteritems():
+      if not hasattr(result, key):
+        if noadd == None:
+          raise ValueError( "Attribute {0} does not exist "\
+                            "and will not be created in copy.".format(key))
+        elif noadd == True: continue
+      setattr(result, key, value)
+    return result
+
 class LocalSearchEvaluator(Evaluator):
   """ Performs simple minded local search. """
-  def __init__( self, comparison, lattice, structures, taboos=None, energies=None, lmo=0.33333, nsets=5,
-                maxiter=-1, maxeval=-1, taboos=None, **keywords):
+  def __init__( self, lattice, structures, taboos=None, energies=None, lmo=0.33333, nsets=5,
+                maxiter=-1, maxeval=-1, **keywords):
     """ Initializes the local search functional.
     
         :Parameters:
-          darwin 
-            Darwin functional. 
           maxiter : int
             Maximum number of iterations.
           maxeval : int
             Maximum number of evaluations.
     """
     super(LocalSearchEvaluator, self).__init__(lattice, structures, energies, lmo, nsets, **keywords)
-    self.taboos = taboos
-    """ Checks whether an object is taboo. """
-    self.comparison = comparison
-    """ Comparison functional. """
     self.maxiter = maxiter
     """ Maximum number of iterations. """
     self.maxeval = maxeval
     """ Maximum number of evaluations. """
-    self.history = history
-    """ An object against which to check previously existing individuals. """
 
   def __call__(self, indiv):
     """ Performs a simple minded local search. """
     # case without optimization.
-    if self.maxiter == 0: return super(LocalSearchEvaluator, self).__call__(other)
+    if self.maxiter == 0: return super(LocalSearchEvaluator, self).__call__(self)
 
     from random import shuffle
     from copy import deepcopy
@@ -213,15 +230,16 @@ class LocalSearchEvaluator(Evaluator):
           and (self.maxeval < 0 or evaluation < self.maxeval):
 
       changed = False
-      for i in shuffle(range(indiv.maxsize)):
+      indices = range(indiv.maxsize)
+      shuffle(indices)
+      for i in indices:
         other = deepcopy(indiv)
         if i in other.genes: other.genes.remove(i)
         else: other.genes.add(i)
-        if self.taboo != None:
-          if self.taboo(indiv): continue
+        if self.darwin.taboo(indiv): continue
         super(LocalSearchEvaluator, self).__call__(other)
         evaluation += 1
-        if not self.comparison(indiv, other): 
+        if not self.darwin.comparison(indiv, other): 
           indiv = other
           changed = True
         if self.maxeval > 0 and evaluation < self.maxeval: break
@@ -230,6 +248,7 @@ class LocalSearchEvaluator(Evaluator):
       iteration += 1
 
     return indiv
+
   def __repr__(self):
     """ Throws! Cannot represent itself. """
     raise NotImplementedError("Evaluation object cannot represent itself. """)

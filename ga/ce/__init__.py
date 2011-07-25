@@ -1,8 +1,8 @@
 """ Crossover operations for CE. """
 __docformat__ = "restructuredtext en"
-__all__ = ["Crossover", "Evaluator", "Indiv", "Functional"]
+__all__ = ["Crossover", "Evaluator", "Indiv", "Functional", "Mutation"]
 from evaluator import Evaluator
-from ..bistring import SwapMutation
+from ..bitstring import SwapMutation
 
 class Individual(object):
   """ Individual of a ga for CE. 
@@ -26,6 +26,7 @@ class Individual(object):
             Clusters that are never in the individual.
     """ 
     from random import randint
+    super(Individual, self).__init__()
     self.maxsize = maxsize
     """ Maximum size of an individual. """
 
@@ -60,6 +61,7 @@ class Crossover(object):
           alwaysoff : None or sequence
             Clusters that are never in the individual.
     """
+    super(Crossover, self).__init__()
     assert rateA > 0 and rateA < 1.0, ValueError("rateA should be in ]0, 1[")
 
     self.rateA = rateA

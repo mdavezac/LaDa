@@ -44,7 +44,7 @@ def run(self):
   assert hasattr(self, "rate"), "No rate attribute.\n"
   assert hasattr(self, "mating"), "No mating functor.\n"
   assert hasattr(self, "offspring"), "No offspring attribute.\n"
-  assert hasattr(self, "cmp_indiv"), "No cmp_indiv operation.\n"
+  assert hasattr(self, "comparison"), "No comparison operation.\n"
 
   # creates population if it does not exist.
   while len(self.population) < self.popsize:
@@ -94,9 +94,9 @@ def run(self):
       from sys import version_info
       if version_info.major > 2:
         from functools import cmp_to_key
-        self.population = sorted(self.population, cmp_to_key(self.cmp_indiv))[:len(self.population)-nboffspring]
+        self.population = sorted(self.population, cmp_to_key(self.comparison))[:len(self.population)-nboffspring]
       else: 
-        self.population = sorted(self.population, cmp=self.cmp_indiv)[:len(self.population)-nboffspring]
+        self.population = sorted(self.population, cmp=self.comparison)[:len(self.population)-nboffspring]
       self.population.extend( self.offspring )
     self.population = self.comm.broadcast(self.population)
 

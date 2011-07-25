@@ -1,10 +1,10 @@
 """ GA as a functional, for use with ladajobs. """
 __docformat__ = "restructuredtext en"
-from ..functional import Darwin as EscanDarwin
+from ...functional import Darwin as DarwinBase
 
 __all__ = ['Darwin']
 
-class Darwin(EscanDarwin): 
+class Darwin(DarwinBase): 
   """ GA functional for optimizations of epitaxial structures. """
 
   def __init__(self, evaluator, **kwargs): 
@@ -53,9 +53,13 @@ class Darwin(EscanDarwin):
     self.growth_rate = kwargs.pop('growth_rate', 0.8)
     """ Rate for growth-like mutations over other operations. """
     self.matingops = Mating(sequential=False)
-    if self.crossover_rate > 0e0: self.matingops.add(Crossover(self.nmin, self.nmax, step=2))
-    if self.swap_rate > 0e0:      self.matingops.add(SwapMutation(-1))
-    if self.growth_rate > 0e0:    self.matingops.add(GrowthMutation(self.nmin, self.nmax, step=2))
+    """ Container/Functor which calls the mating operations. """
+    if self.crossover_rate > 0e0:
+      self.matingops.add(Crossover(self.nmin, self.nmax, step=2), self.crossover_rate)
+    if self.swap_rate > 0e0:     
+      self.matingops.add(SwapMutation(-1), self.swap_rate)
+    if self.growth_rate > 0e0:   
+      self.matingops.add(GrowthMutation(self.nmin, self.nmax, step=2), self.growth_rate)
     if 'dosym' in kwargs:
       self.dosym = kwargs.pop('dosym')
       """ Whether or not to use simplistic symmetries when comparing individuals. """
@@ -79,7 +83,9 @@ class Darwin(EscanDarwin):
 
   def __repr__(self):
     """ Returns representation of this instance. """
-    header = "from {0.__class__.__module__} import {0.__class__.__name__}\n".format(self)
+    header = "from {0.__class__.__module__} import {0.__class__.__name__}\n"\
+             "from {0.comparison.__module__} import {0.comparison.__name__}\n"\
+             "from {0.history.__module__} import {0.history.__name__}\n".format(self)
     string = repr(self.evaluator) + "\n" + repr(self.matingops) + "\n"
     string += "functional = {0.__class__.__name__}(evaluator)\n"\
               "functional.pools       = {0.pools}\n"\
@@ -90,8 +96,10 @@ class Darwin(EscanDarwin):
               "functional.current_gen = {0.current_gen}\n"\
               "functional.rate        = {0.rate}\n"\
               "functional.current_gen = {0.current_gen}\n"\
+              "functional.comparison  = {0.comparison.__name__}\n"\
               "functional.age         = {1}\n"\
-              .format(self, repr(self.age))
+              "functional.history     = {2}\n"\
+              .format(self, repr(self.age), repr(self.history))
     if getattr(self, 'dosym', False): 
       string += "functional.dosym       = {0.dosym}\n".format(self)
     string += "# functional.rootworkdir, please set evaluator.outdir instead\n"

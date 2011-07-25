@@ -1,47 +1,42 @@
 """ Creates job-dictionary of GA jobs. """
-def gajobs(path, inputpath = "input.py"):
-  from copy import deepcopy
-  import IPython.ipapi
+def gajobs(path, inputpath = "input.py", collector=None):
+  from weakref import proxy
 
+  import IPython.ipapi
+  from numpy import array, arange
+  from quantities import eV
+
+  from lada.ga.functional import maximize, minimize
   from lada.ga.ce.functional import Darwin as Functional
   from lada.ga.ce.evaluator  import LocalSearchEvaluator as Evaluator
   from lada.jobs import JobDict
   from lada.escan import MassExtract
-  from lada.ce import read_input, cluster_factory
+  from lada.ce import read_input
 
   # reads input file.
-  input = read_input(inputpath)
+  input = read_input(inputpath, {"maximize": maximize, "minimize": minimize, "eV": eV, "arange": arange})
 
-  extractor  = [extract for extract in MassExtract(input.directory) if extract.success]
-  structures = [extract.structure for extract in extractor]
-  dos        = array([extract.dos(extract, input.sigma) for extract]
-  evaluator  = Evaluator(lattice, structure, dos[0], **input.clusters)
-
-
+  if collector == None: collector = MassExtract(input.directory)
+  extractor  = [extract for extract in collector.values() if extract.success]
+  structures = [extract.input_structure for extract in extractor]
+  dos_values = array([extract.dos(input.energies, input.sigma) for extract in extractor]).T
+  evaluator  = Evaluator(input.lattice, structures, dos_values[0], **input.clusters)
 
 
   jobdict = JobDict()
-  for energy in input.energies:
+  for energy, energies in zip(input.energies, dos_values):
     for trial in input.trials:
-      escan = deepcopy(input.escan)
-      escan.vff.lattice.scale = scale
-
-      converter = Converter(growth=input.growth_direction, lattice=escan.vff.lattice)
-      
       kwargs = { "popsizse": input.population_size, "rate": input.offspring_rate,
-                 "max_gen": input.max_generations, "pools": input.pools,
-                 "crossover_rate": input.crossover_rate, "swap_rate": input.swap_rate, 
-                 "growth_rate": input.growth_rate, "nmin": nmin, "nmax": nmax,
-                 "dosym": input.dosym, "rootworkdir": "$SCRATCH" }
-      kwargs.update(getattr(input, 'kwargs', {}))
-      evaluator = Evaluator( converter = converter, 
-                             functional = escan, 
-                             **getattr(input, 'kwargs', {}) )
+                 "max_gen": input.max_generations, 
+                 "crossover_rate": input.crossover_rate, "history": input.history,
+                 "comparison": input.comparison, "rootworkdir": "$SCRATCH" }
       functional = Functional(evaluator, **kwargs)
+      evaluator.darwin = proxy(functional)
 
-      gajob = jobdict / "{4[0]}{4[1]}{4[2]}/scale_{0:.2f}/{1}_{2}/trial_{3}"\
-                        .format(scale, nmin, nmax, trial, input.growth_direction)
+      gajob = jobdict / "dos_{0}/trial_{1}".format(energy, trial)
+      print "dos_{0}/trial_{1}".format(energy, trial)
       gajob.functional = functional 
+      gajob.jobparams["energies"] = energies
 
   ip = IPython.ipapi.get()
   ip.user_ns["current_jobdict"] = jobdict

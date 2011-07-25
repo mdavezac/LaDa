@@ -1,8 +1,12 @@
 """ Cluster Expansion Module. """
 __docformat__ = "restructuredtext en"
+__all__ = [ "Cubic", "apply_rotation", "apply_symmetry", "equivalents", 
+            "ClusterClasses", "Clusters", "Cluster", "create_pairs", 
+            "find_pis", "MLCluster", "MLClusters", "MLClusterClasses",
+            "ce_check" ]
 from _ce import Cubic, apply_rotation, apply_symmetry, equivalents,\
                 ClusterClasses, Clusters, Cluster, create_pairs, \
-                find_pis, MLCluster, MLCluster, MLClusterClasses, ce_check
+                find_pis, MLCluster, MLClusters, MLClusterClasses, ce_check
 from _fit import *
 
 def _lattdeco(method):
@@ -144,23 +148,19 @@ def cluster_factory(lattice, J0=True, J1=True, **mb):
   return result
 
 def exec_input(script, namespace = None):
-  """ Executes an input script including namespace for escan/vff. """ 
+  """ Executes an input script including namespace for cluster expansion. """ 
   from ..opt import exec_input as opt_exec_input
-  from .. import vff
 
   dictionary = {}
-  for key in vff.__all__: dictionary[key] = getattr(vff, key)
   for key in __all__: dictionary[key] = globals()[key]
   if namespace != None: dictionary.update(namespace)
   return opt_exec_input(script, dictionary)
 
 def read_input(filepath = "input.py", namespace = None):
-  """ Reads an input file including namespace for escan/vff. """ 
+  """ Reads an input file including namespace for cluster expansion. """ 
   from ..opt import read_input as opt_read_input
-  from .. import vff
 
   dictionary = {}
-  for key in vff.__all__: dictionary[key] = getattr(vff, key)
   for key in __all__: dictionary[key] = globals()[key]
   if namespace != None: dictionary.update(namespace)
   return opt_read_input(filepath, dictionary)
