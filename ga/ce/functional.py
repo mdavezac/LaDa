@@ -5,6 +5,7 @@ from ..functional import Darwin as StandardDarwin
 
 class Darwin(StandardDarwin):
   """ Main GA functional for CE. """
+  HISTORYCAR
   def __init__(self, evaluator, **kwargs):
     """ Initializes a GA functional. 
          
@@ -19,11 +20,15 @@ class Darwin(StandardDarwin):
           Maximum number of generations. Defaults to 0.
         :Kwarg current_gen:
           Current generation. Defaults to 0 or to whatever is in the restart.
-        :Kwarg pools:
-          Number of pools over which to perform calculations. 
         :Kwarg rootworkdir:
           Root of the working directory where actual calculations are carried
           out. Defaults to $SCRACTH
     """
+    from ..history import History
+    # remove pools.
+    kwargs.pop("pools", None)
+
     super(Darwin, self).__init__(evaluator, **kwargs)
+
+    self.history = History(HISTORYCAR
     

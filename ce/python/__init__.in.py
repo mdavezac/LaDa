@@ -142,3 +142,25 @@ def cluster_factory(lattice, J0=True, J1=True, **mb):
       if result == None: result = dummy
       else: result.extend(dummy)
   return result
+
+def exec_input(script, namespace = None):
+  """ Executes an input script including namespace for escan/vff. """ 
+  from ..opt import exec_input as opt_exec_input
+  from .. import vff
+
+  dictionary = {}
+  for key in vff.__all__: dictionary[key] = getattr(vff, key)
+  for key in __all__: dictionary[key] = globals()[key]
+  if namespace != None: dictionary.update(namespace)
+  return opt_exec_input(script, dictionary)
+
+def read_input(filepath = "input.py", namespace = None):
+  """ Reads an input file including namespace for escan/vff. """ 
+  from ..opt import read_input as opt_read_input
+  from .. import vff
+
+  dictionary = {}
+  for key in vff.__all__: dictionary[key] = getattr(vff, key)
+  for key in __all__: dictionary[key] = globals()[key]
+  if namespace != None: dictionary.update(namespace)
+  return opt_read_input(filepath, dictionary)

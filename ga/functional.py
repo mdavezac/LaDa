@@ -40,6 +40,8 @@ class Darwin(object):
   """ Error filename. """
   FUNCCAR = GAExtract.FUNCCAR
   """ Functional filename. """
+  HISTORY = GAExtract.HISTORY
+  """ File with all and any considered individuals. """
 
   def __init__(self, evaluator, **kwargs): 
     """ Initializes a GA functional. 
@@ -62,6 +64,8 @@ class Darwin(object):
           out. Defaults to $SCRACTH
         :Kwarg comparison:
           Function to compare two individual. 
+        :Kwarg history:
+          If true, will use history in taboo.
     """
     super(Darwin, self).__init__()
 
@@ -87,7 +91,11 @@ class Darwin(object):
     self.pools = kwargs.pop("pools", 1)
     """ Number of pools of processors over which to perform calculations. """
     self.rootworkdir = kwargs.pop("rootworkdir", "$SCRACTH")
-    """
+    """ Root directory where calculations are performed. """
+    self.comparison = kwargs.pop("comparison", maximize)
+    """ Comparison operator between individuals. """
+    self.history = None if kwargs.pop("history", False) else History(self.HISTORY)
+    """ Holds list of visited candidates, if any. """
 
   @property
   def rootworkdir(self):
@@ -136,6 +144,8 @@ class Darwin(object):
     from itertools import chain
     for a in chain(self.population, self.offspring):
       if self.compare(a, indiv): return True
+    if getattr(self, "history", None) != None: # check whether a history object exists.
+      if self.history(indiv): return True
     return False
 
   def restart(self, outdir, comm = None):

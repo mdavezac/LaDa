@@ -2,6 +2,7 @@
 __docformat__ = "restructuredtext en"
 __all__ = ["Crossover", "Evaluator", "Indiv", "Functional"]
 from evaluator import Evaluator
+from ..bistring import SwapMutation
 
 class Individual(object):
   """ Individual of a ga for CE. 
@@ -69,8 +70,6 @@ class Crossover(object):
     """ Clusters that are always in the individual. """
     self.alwaysoff = alwaysoff if alwaysoff != None else set()
     """ Clusters that are never in the individual. """
-
-
  
   def __call__(self, a, b):
     """ Create an offspring from two parents. """
@@ -106,60 +105,55 @@ class Crossover(object):
     string += ")"
     return string
 
-class LocalSearch(object):
-  """ Performs simple minded local search. """
-  def __init__(self, darwin, maxiter=-1, maxeval=-1):
-    """ Initializes the local search functional.
-    
+class Mutation(SwapMutation):
+  """ Mutation operator for CE.
+
+      Creates a bitstring mutation. 
+  """
+  def __init__(self, size, rate=0.1, alwayson=None, alwaysoff=None):
+    """ Initializes mutation operation. 
+
         :Parameters:
-          darwin 
-            Darwin functional. 
-          maxiter : int
-            Maximum number of iterations.
-          maxeval : int
-            Maximum number of evaluations.
+          size : int
+            Number of clusters in the optimization.
+          rate : float
+            Mutation rate for each bit in the bitstring.
+          alwayson : None or sequence
+            Clusters which are always on.
+          alwaysoff : None or sequence
+            Clusters which are always off.
     """
-    self.darwin = darwin
-    """ Darwin functional. """
-    self.maxiter = maxiter
-    """ Maximum number of iterations. """
-    self.maxeval = maxeval
-    """ Maximum number of evaluations. """
-
+    super(Mutation, self).__init__(rate)
+    self.size = size
+    """ Size of the bitstring. """
+    self.alwayson = alwayson if alwayson != None else set()
+    """ Clusters that are always in the individual. """
+    self.alwaysoff = alwaysoff if alwaysoff != None else set()
+    """ Clusters that are never in the individual. """
+ 
   def __call__(self, indiv):
-    """ Performs a simple minded local search. """
-    from random import shuffle
+    """ Returns invidual with mutated genes. """
+    from numpy import array
     from copy import deepcopy
+
     indiv = deepcopy(indiv)
-
-    if not hasattr(indiv, "fitness"): self.evaluator(indiv)
-    iteration, evaluation = 0, 0
-    indiv.genes = set(indiv.genes)
-
-    while     (self.maxiter < 0 or iteration < self.maxiter) \
-          and (self.maxeval < 0 or evaluation < self.maxeval):
-
-      changed = False
-      for i in shuffle(range(indiv.maxsize)):
-        other = deepcopy(indiv)
-        if i in other.genes: other.genes.remove(i)
-        else: other.genes.add(i)
-        if hasattr(self.darwin, "history"):
-          if self.darwin.history(indiv): continue
-        self.evaluator(other)
-        evaluation += 1
-        if not self.comparison(indiv, other): 
-          indiv = other
-          changed = True
-        if self.maxeval > 0 and evaluation < self.maxeval: break
-
-      if not changed: break
-      iteration += 1
-
+    indiv.genes = array([(i in indiv.genes) for i in range(self.size)])
+    indiv = super(Mutation, self).__init__(indiv)
+    indiv.genes = list((set([i for i, u in enumerate(indiv.genes) if u]) | self.alwayson) - self.alwaysoff)
     return indiv
-        
 
-
-
-    
-
+  def __repr__(self):
+    """ Dumps this object to string. """
+    string = "{0.__class__.__name__}({0.size}, {0.rate}".format(self)
+    continuous = True
+    if len(self.alwayson) > 0:
+      string += ", "
+      if not continuous: string += "alwayson="
+      string += repr(list(self.alwayson))
+    else: continuous = False
+    if len(self.alwaysoff) > 0:
+      string += ", "
+      if not continuous: string += "alwaysoff="
+      string += repr(list(self.alwaysoff))
+    string += ")"
+    return string

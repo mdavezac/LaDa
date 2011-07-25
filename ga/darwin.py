@@ -90,7 +90,13 @@ def run(self):
 
     # finally, sort and replace.
     if self.comm.rank == 0:
-      self.population = sorted( self.population, self.cmp_indiv )[:len(self.population)-nboffspring]
+      # deal with differences in function sorted between python versions.
+      from sys import version_info
+      if version_info.major > 2:
+        from functools import cmp_to_key
+        self.population = sorted(self.population, cmp_to_key(self.cmp_indiv))[:len(self.population)-nboffspring]
+      else: 
+        self.population = sorted(self.population, cmp=self.cmp_indiv)[:len(self.population)-nboffspring]
       self.population.extend( self.offspring )
     self.population = self.comm.broadcast(self.population)
 

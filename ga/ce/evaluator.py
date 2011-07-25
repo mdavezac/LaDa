@@ -5,7 +5,22 @@ __docformat__ = "restructuredtext en"
 class Evaluator(object):
   """ Evaluator class for cluster expansion. """
   def __init__(self, lattice, structures, energies=None, lmo=0.33333, nsets=5, **keywords):
-    """ Creates and evaluator for cluster expansion.  """
+    """ Creates and evaluator for cluster expansion.  
+        
+        :Parameters:
+          lattice 
+            Back-bone lattice for the generalized Ising model.
+          structures
+            List of structures forming the fitting and training sets.
+          energies 
+            List of energies for the structures. Alternatively, the energies
+            can be taken from the corresponding attibute of each structure in
+            the list.
+          lmo : float
+            ratio of training vs validation structures for each set.
+          nsets : int
+            number of training vs validation sets.
+    """
     from re import compile, match
     from numpy import array
     from random import shuffle
@@ -155,6 +170,66 @@ class Evaluator(object):
     string += "evaluator.energies = {0}\n".format(repr(list(self.energies)))
     return string
 
+class LocalSearchEvaluator(Evaluator):
+  """ Performs simple minded local search. """
+  def __init__( self, comparison, lattice, structures, taboos=None, energies=None, lmo=0.33333, nsets=5,
+                maxiter=-1, maxeval=-1, taboos=None, **keywords):
+    """ Initializes the local search functional.
+    
+        :Parameters:
+          darwin 
+            Darwin functional. 
+          maxiter : int
+            Maximum number of iterations.
+          maxeval : int
+            Maximum number of evaluations.
+    """
+    super(LocalSearchEvaluator, self).__init__(lattice, structures, energies, lmo, nsets, **keywords)
+    self.taboos = taboos
+    """ Checks whether an object is taboo. """
+    self.comparison = comparison
+    """ Comparison functional. """
+    self.maxiter = maxiter
+    """ Maximum number of iterations. """
+    self.maxeval = maxeval
+    """ Maximum number of evaluations. """
+    self.history = history
+    """ An object against which to check previously existing individuals. """
 
-      
+  def __call__(self, indiv):
+    """ Performs a simple minded local search. """
+    # case without optimization.
+    if self.maxiter == 0: return super(LocalSearchEvaluator, self).__call__(other)
 
+    from random import shuffle
+    from copy import deepcopy
+    indiv = deepcopy(indiv)
+
+    if not hasattr(indiv, "fitness"): self.evaluator(indiv)
+    iteration, evaluation = 0, 0
+    indiv.genes = set(indiv.genes)
+
+    while     (self.maxiter < 0 or iteration < self.maxiter) \
+          and (self.maxeval < 0 or evaluation < self.maxeval):
+
+      changed = False
+      for i in shuffle(range(indiv.maxsize)):
+        other = deepcopy(indiv)
+        if i in other.genes: other.genes.remove(i)
+        else: other.genes.add(i)
+        if self.taboo != None:
+          if self.taboo(indiv): continue
+        super(LocalSearchEvaluator, self).__call__(other)
+        evaluation += 1
+        if not self.comparison(indiv, other): 
+          indiv = other
+          changed = True
+        if self.maxeval > 0 and evaluation < self.maxeval: break
+
+      if not changed: break
+      iteration += 1
+
+    return indiv
+  def __repr__(self):
+    """ Throws! Cannot represent itself. """
+    raise NotImplementedError("Evaluation object cannot represent itself. """)
