@@ -198,56 +198,86 @@ class Evaluator(object):
 class LocalSearchEvaluator(Evaluator):
   """ Performs simple minded local search. """
   def __init__( self, lattice, structures, taboos=None, energies=None, lmo=0.33333, nsets=5,
-                maxiter=-1, maxeval=-1, **keywords):
+                maxiter=-1, maxeval=-1, exclude=None, **keywords):
     """ Initializes the local search functional.
     
         :Parameters:
+          lattice 
+            Back-bone lattice for the generalized Ising model.
+          structures
+            List of structures forming the fitting and training sets.
+          energies 
+            List of energies for the structures. Alternatively, the energies
+            can be taken from the corresponding attibute of each structure in
+            the list.
+          lmo : float
+            ratio of training vs validation structures for each set.
+          nsets : int
+            number of training vs validation sets.
           maxiter : int
             Maximum number of iterations.
           maxeval : int
             Maximum number of evaluations.
+          exclude : sequence or None
+            Clusters to exclude from optimization.
     """
     super(LocalSearchEvaluator, self).__init__(lattice, structures, energies, lmo, nsets, **keywords)
     self.maxiter = maxiter
     """ Maximum number of iterations. """
     self.maxeval = maxeval
     """ Maximum number of evaluations. """
+    self.exclude = set(exclude) if exclude != None else set()
+    """ Clusters/bits to exclude from optimization. """
 
-  def __call__(self, indiv):
+  def __call__(self, indiv, comm=None, outdir=None, verbose=False, **kwargs):
     """ Performs a simple minded local search. """
     # case without optimization.
-    if self.maxiter == 0: return super(LocalSearchEvaluator, self).__call__(self)
+
+    if self.maxiter == 0:
+      if verbose: print "no local search."
+      return super(LocalSearchEvaluator, self).__call__(indiv, comm=comm, outdir=outdir, **kwargs)
 
     from random import shuffle
     from copy import deepcopy
     indiv = deepcopy(indiv)
 
-    if not hasattr(indiv, "fitness"): self.evaluator(indiv)
+    if not hasattr(indiv, "fitness"):
+      super(LocalSearchEvaluator, self).__call__(indiv, comm=comm, outdir=outdir, **kwargs)
     iteration, evaluation = 0, 0
     indiv.genes = set(indiv.genes)
+    if verbose:
+      print "Local search:\n  maxiter = {0}\n  maxeval {1}\n start {2} -- {3}\n"\
+            .format(self.maxiter, self.maxeval, indiv.genes, indiv.fitness)
 
+    indices = [u for u in xrange(indiv.maxsize) if u not in self.exclude]
     while     (self.maxiter < 0 or iteration < self.maxiter) \
           and (self.maxeval < 0 or evaluation < self.maxeval):
 
+      if verbose: print "** Iteration {0} **".format(iteration)
+
       changed = False
-      indices = range(indiv.maxsize)
       shuffle(indices)
+      current = indiv.fitness
       for i in indices:
         other = deepcopy(indiv)
         if i in other.genes: other.genes.remove(i)
         else: other.genes.add(i)
-        if self.darwin.taboo(indiv): continue
-        super(LocalSearchEvaluator, self).__call__(other)
+        if self.darwin.taboo(other): continue
+        super(LocalSearchEvaluator, self).__call__(other, comm=comm, outdir=outdir, **kwargs)
+        self.darwin.taboo(other) # update with fitness for later analysis.
         evaluation += 1
-        if not self.darwin.comparison(indiv, other): 
+        if self.darwin.comparison(indiv, other) == 1: 
           indiv = other
           changed = True
         if self.maxeval > 0 and evaluation < self.maxeval: break
+      if verbose: print "change {0}, current {1}.".format(indiv.fitness - current, indiv.fitness)
 
       if not changed: break
       iteration += 1
 
-    return indiv
+    indiv.genes = sorted(indiv.genes)
+    if verbose: print "end local search: {0} {1}.\n".format(indiv.genes, indiv.fitness)
+    return indiv.fitness
 
   def __repr__(self):
     """ Throws! Cannot represent itself. """

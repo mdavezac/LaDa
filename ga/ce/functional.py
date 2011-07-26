@@ -19,12 +19,18 @@ class Darwin(StandardDarwin):
           Maximum number of generations. Defaults to 0.
         :Kwarg current_gen:
           Current generation. Defaults to 0 or to whatever is in the restart.
+        :Kwarg alwayson:
+          Always leave these figures on.
+        :Kwarg alwaysoff:
+          Always leave these figures off.
     """
     from . import Crossover, Mutation
     from ..standard import Mating
     # remove pools.
     kwargs.pop("pools", None)
     kwargs.pop("rootworkdir", None)
+    alwayson = kwargs.pop("alwayson", None)
+    alwaysoff = kwargs.pop("alwaysoff", None)
 
     super(Darwin, self).__init__(evaluator, **kwargs)
 
@@ -32,18 +38,18 @@ class Darwin(StandardDarwin):
     self.crossover_rate = kwargs.pop('crossover_rate', 0.8)
     """ Rate for crossover over other operations. """
     self.swap_rate = kwargs.pop('swap_rate', 0.8)
-    """ Rate for swap-like mutations over other operations. """
+    """ Rate for swap-like mutationns over other operations. """
     self.matingops = Mating(sequential=False)
-    self.matingops.add(Crossover(), self.crossover_rate)
-    self.matingops.add(Mutation(), 1-self.crossover_rate)
+    self.matingops.add(Crossover(alwayson=alwayson, alwaysoff=alwaysoff), self.crossover_rate)
+    self.matingops.add( Mutation(len(evaluator.clusters), alwayson=alwayson, alwaysoff=alwaysoff),\
+                        1-self.crossover_rate )
+    if alwayson == None and alwaysoff != None: self.evaluator.exclude = set(alwaysoff)
+    elif alwayson != None and alwaysoff == None: self.evaluator.exclude = set(alwayson)
+    elif alwayson != None and alwaysoff != None: self.evaluator.exclude = set(alwayson) | set(alwaysoff)
 
   def mating(self):
     """ Calls mating operations. """
     return self.matingops(self)
-
-  def compare(self, a, b):
-    """ Compares two bitstrings. """
-    return a == b
 
   def Individual(self):
     """ Generates an individual (with mpi) """
@@ -52,12 +58,12 @@ class Darwin(StandardDarwin):
     result = Individual(N, mean=int(0.5 * N))
     return result
 
-  def __call__(self, comm = None, outdir = None, inplace=None, **kwargs):
+  def __call__(self, comm = None, outdir = None, **kwargs):
     """ Runs/Restart GA. """
     from ...mpi import Communicator
     comm = Communicator(comm)
     self.pools = comm.size
-    return super(Darwin, self).__call__(comm, outdir, inplace, **kwargs)
+    return super(Darwin, self).__call__(comm, outdir, **kwargs)
 
   @property
   def rootworkdir(self):

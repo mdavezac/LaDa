@@ -88,7 +88,7 @@ def read_mbce_structures(directory):
       result[-1].energy = float(line.split()[1])
   return result
 
-def cluster_factory(lattice, J0=True, J1=True, **mb):
+def cluster_factory(lattice, J0=False, J1=False, **mb):
   """ Returns class of cluster classes. 
 
       :Parameters:
@@ -114,7 +114,7 @@ def cluster_factory(lattice, J0=True, J1=True, **mb):
     assert a_re != None, "Keyword %s is not of the form B(\d+)" % (key)
     assert a_re.end() == len(key), "Keyword %s is not of the form B(\d+)" % (key)
     assert int(a_re.group(1)) > 1, "Cannot understand keyword %s" % (key)
-    assert mb[key] > 0, "Cannot understand input %s=%i" % (key, mb[key])
+    assert mb[key] >= 0, "Cannot understand input %s=%i" % (key, mb[key])
 
   # sanity check.
   assert len(mb) > 0 or J0 or J1, ValueError("No clusters to create.")
@@ -139,10 +139,10 @@ def cluster_factory(lattice, J0=True, J1=True, **mb):
   # creates many bodies.
   for site in equiv_sites:
     for key in sorted(mb.keys(), cmp):
+      if mb[key] == 0: continue
       regex = match(key_regex, key)
       order = int(regex.group(1))
-      shell = mb[key]
-      dummy = _create_clusters(lattice, nth_shell=shell, order=order, site=site)
+      dummy = _create_clusters(lattice, nth_shell=mb[key], order=order, site=site)
       if result == None: result = dummy
       else: result.extend(dummy)
   return result

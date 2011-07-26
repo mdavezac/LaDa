@@ -21,8 +21,6 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
   """ Functional filename """
   OFFCAR = "GA_OFFCAR"
   """ Offspring file. """
-  HISTORY = "GA_HISTCAR"
-  """ File with all and any considered individuals. """
 
   INDIV_PATTERN = re.compile(r"^\s*(array\(\[(?:\s*[0,1]\,|(?:\,\s*$^)\s*)*"\
                              r"\s*[0,1]\s*\]\))\s*(\S+)\s*(\S+)?\s*$", re.X|re.M)
@@ -276,7 +274,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
         :type offcar: bool
     """
     from os.path import join, exists, isdir
-    files = [self.OUTCAR, self.FUNCCAR, self.OFFCAR, self.HISTORY]
+    files = [self.OUTCAR, self.FUNCCAR, self.OFFCAR]
     if kwargs.get("errors", False): files.append(self.ERRCAR)
     if kwargs.get("offcar", False): files.append(self.OFFCAR)
 
@@ -287,5 +285,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
       for file in files:
         path = join(directory, file)
         if exists(path): yield path
+    if exists(self.functional.history.filepath): 
+      yield self.functional.history.filepath
     
 

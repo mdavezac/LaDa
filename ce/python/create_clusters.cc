@@ -50,8 +50,13 @@ namespace LaDa
           bp::arg("nth_shell"),
           bp::arg("site") = 0
         ),
-        "Returns an array of arrays of equivalent clusters of given order, origin,"
-        " and maximum distance (in number of shells) from the origin."
+        "Creates arrays of equivalence clusters for given order, origin, and distance.\n\n"
+        ":Parameters:\n"
+        "  lattice\n    Back-bone lattice of the Ising-model.\n" 
+        "  order : int\n    Size of the cluster of interest, eg "\
+            "on-site, pair, or higher-order interaction.\n"
+        "  nth_shell\n    Clusters include spins up to nth shell removed (inclusive).\n" 
+        "  site\n    Origin of the cluster in the case of multi-site lattices.\n" 
       );
     }
 

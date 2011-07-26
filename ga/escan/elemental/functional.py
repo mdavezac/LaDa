@@ -68,11 +68,6 @@ class Darwin(DarwinBase):
     """ Calls mating operations. """
     return self.matingops(self)
 
-  def compare(self, a, b):
-    """ Compares two bitstrings. """
-    from numpy import all
-    if len(a.genes) != len(b.genes): return False
-    return all( a.genes == b.genes )
 
   def Individual(self):
     """ Generates an individual (with mpi) """

@@ -7,7 +7,7 @@ for site in lattice.sites: site.type = "Si", "Ge"
 directory = "../start"
 """ Input directories with calculations. """
 
-clusters = {"J0":True, "J1":True, "B2":12, "B3":5, "B4":3, "B5":2}
+clusters = {"J0":True, "J1":True, "B2":12, "B3":4, "B4":2, "B5":2}
 
 # GA parameters.
 population_size = 100
@@ -20,7 +20,7 @@ crossover_rate = 0.75
 """ Rate of crossover over other operations. """
 trials = range(3)
 """ Number of trial GA runs. """
-comparison = maximize
+comparison = minimize
 """ What we are trying to do with the fitness. """
 history = True
 """ Whether to keep track of candidates in order never to visit twice. """
@@ -34,3 +34,8 @@ maxiter = -1
 """ Maximum of iterations during local search. """
 maxeval = -1
 """ Maximum of evaluations during local search. """
+
+alwayson = [0, 1]
+""" Always leave these figures on. """
+alwaysoff = []
+""" Always leave these figures off. """

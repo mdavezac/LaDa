@@ -18,10 +18,10 @@ def maximize(indivA, indivB, tolerance=1e-12):
       :return:
         - 1 if ``indivA.fitness < indivB.fitness``
         - 0 if ``indivA.fitness == indivB.fitness``
-        - 1 if ``indivA.fitness > indivB.fitness``
+        - -1 if ``indivA.fitness > indivB.fitness``
   """
   from math import fabs
-  a, b = indivA.fitness, indivA.fitness
+  a, b = indivA.fitness, indivB.fitness
   if hasattr(b, 'rescale') and hasattr(a, 'magnitude'):
     a, b = a.magnitude, b.rescale(a.units).magnitude
   if fabs(a-b) <  tolerance: return 0
@@ -42,10 +42,10 @@ def minimize(indivA, indivB, tolerance=1e-12):
       :return:
         - 1 if ``indivA.fitness > indivB.fitness``
         - 0 if ``indivA.fitness == indivB.fitness``
-        - 1 if ``indivA.fitness < indivB.fitness``
+        - -1 if ``indivA.fitness < indivB.fitness``
   """
   from math import fabs
-  a, b = indivA.fitness, b.fitness
+  a, b = indivA.fitness, indivB.fitness
   if hasattr(b, 'rescale') and hasattr(a, 'magnitude'):
     a, b = a.magnitude, b.rescale(a.units).magnitude
   if fabs(a-b) <  tolerance: return 0
@@ -63,8 +63,6 @@ class Darwin(object):
   """ Error filename. """
   FUNCCAR = GAExtract.FUNCCAR
   """ Functional filename. """
-  HISTORY = GAExtract.HISTORY
-  """ File with all and any considered individuals. """
 
   def __init__(self, evaluator, **kwargs): 
     """ Initializes a GA functional. 
@@ -86,7 +84,7 @@ class Darwin(object):
           Root of the working directory where actual calculations are carried
           out. Defaults to $SCRACTH
         :Kwarg comparison:
-          Function to compare two individual. 
+          Function to compare the fitness of two individual. 
         :Kwarg history:
           If true, will use history in taboo.
     """
@@ -118,7 +116,7 @@ class Darwin(object):
     """ Root directory where calculations are performed. """
     self.comparison = kwargs.pop("comparison", maximize)
     """ Comparison operator between individuals. """
-    self.history = None if kwargs.pop("history", False) else History(self.HISTORY)
+    self.history = History() if kwargs.pop("history", False) else None 
     """ Holds list of visited candidates, if any. """
 
   @property
@@ -166,10 +164,10 @@ class Darwin(object):
   def taboo(self, indiv):
     """ No two individuals in the population and the offspring are the same. """
     from itertools import chain
-    for a in chain(self.population, self.offspring):
-      if self.compare(a, indiv): return True
     if getattr(self, "history", None) != None: # check whether a history object exists.
       if self.history(indiv): return True
+    for a in chain(self.population, self.offspring):
+      if a == indiv: return True
     return False
 
   def restart(self, outdir, comm = None):
@@ -266,7 +264,7 @@ class Darwin(object):
     return True
 
 
-  def __call__(self, comm = None, outdir = None, inplace=None, **kwargs):
+  def __call__(self, comm = None, outdir = None, **kwargs):
     """ Runs/Restart  GA """
     import time
     from os import getcwd
@@ -278,8 +276,8 @@ class Darwin(object):
 
     local_time = time.localtime() 
     self.start_time = time.time() 
-    outdir = RelativeDirectory(outdir)
     if outdir == None: outdir = getcwd()
+    outdir = RelativeDirectory(outdir)
     # mpi stuff
     self.comm = comm if comm != None else world
     self.comm.do_print = self.do_print
@@ -291,7 +289,7 @@ class Darwin(object):
         if hasattr(self, key): setattr(self, key, value)
         elif hasattr(self.evaluator, key): setattr(self.evaluator, key, value)
         else: assert hasattr(self, key), TypeError("Unknown argument {0}.".format(key))
-      this(comm=comm)
+      this(outdir=outdir.path, comm=comm)
       return
 
     # gets current age
@@ -300,6 +298,11 @@ class Darwin(object):
     if hasattr(self.evaluator, "outdir"): 
       self.evaluator._outdir.relative = outdir.relative
       self.evaluator.outdir = join(self.evaluator.outdir, self.age)
+    # sets directory for history file. This should be conserved across runs,
+    # hence it is not on the scratch.
+    if self.history != None:
+      self.history.directory = outdir.path 
+      self.history.remove_stale(comm)
 
     # now goes to work
     with Changedir(join(outdir.path, self.age), comm=comm) as cwd:
