@@ -141,6 +141,7 @@ class Evaluator(object):
 
     # loops over cross-validation sets.
     scores = []
+    fits   = []
     for croset, fitset in zip(self.crosets, self.fitsets): 
       # pis, energies in cross-validation set.
       cropis = pis[croset, :]
@@ -150,16 +151,17 @@ class Evaluator(object):
       fitene = self.energies[fitset]
       # performs fitting.
       interactions = lstsq(fitpis, fitene)[0]
-      scores.append(sum((dot(cropis, interactions) - croene)**2))
+      scores.append(dot(cropis, interactions) - croene)
+      fits.append(dot(fitpis, interactions) - fitene)
       
-    return scores
+    return scores, fits
 
   def __call__(self, indiv, comm=None, outdir=None, **kwargs):
     """ Evaluates cross validation scores for current gene-set. """
     from numpy import mean
     this = self.copy(**kwargs)
-    indiv.cvscores = this.run(indiv.genes)
-    indiv.fitness = mean(indiv.cvscores)
+    indiv.cvscores, indiv.trainings = this.run(indiv.genes)
+    indiv.fitness = mean(indiv.cvscores**2)
     return indiv.fitness
 
   def __repr__(self):
@@ -228,8 +230,7 @@ class LocalSearchEvaluator(Evaluator):
     """ Maximum number of evaluations. """
     self.exclude = set(exclude) if exclude != None else set()
     """ Clusters/bits to exclude from optimization. """
-
-  def __call__(self, indiv, comm=None, outdir=None, verbose=False, **kwargs):
+ __call__(self, indiv, comm=None, outdir=None, verbose=False, **kwargs):
     """ Performs a simple minded local search. """
     # case without optimization.
 
