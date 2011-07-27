@@ -26,6 +26,7 @@ class Individual(BitstringIndividual):
     """ Compares two elemental superlattices. """
 
     if a == None: return False
+    if not hasattr(a, "genes"): return False
     if len(a.genes) != len(self.genes): return False
     if getattr(self, 'dosym', False): return all(a.genes - self.genes == 0) 
     dosym = getattr(self, 'dosym', 1)

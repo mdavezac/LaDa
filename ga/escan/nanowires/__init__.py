@@ -22,6 +22,7 @@ class Individual(BitstringIndividual):
     """ Compares two elemental nanowires. """
     from numpy import all
     if a == None: return False
+    if not hasattr(a, "genes"): return False
     if len(a.genes) != len(self.genes): return False
     return all(self.genes == a.genes)
 

@@ -43,9 +43,38 @@ class Darwin(StandardDarwin):
     self.matingops.add(Crossover(alwayson=alwayson, alwaysoff=alwaysoff), self.crossover_rate)
     self.matingops.add( Mutation(len(evaluator.clusters), alwayson=alwayson, alwaysoff=alwaysoff),\
                         1-self.crossover_rate )
-    if alwayson == None and alwaysoff != None: self.evaluator.exclude = set(alwaysoff)
-    elif alwayson != None and alwaysoff == None: self.evaluator.exclude = set(alwayson)
-    elif alwayson != None and alwaysoff != None: self.evaluator.exclude = set(alwayson) | set(alwaysoff)
+    self._alwayson, self._alwaysoff = set(), set()
+    self.alwayson = alwayson
+    """ Clusters which are always on. """
+    self.alwaysoff = alwaysoff
+    """ Clusters which are always off. """
+
+  @property
+  def alwayson(self):
+    """ Clusters which are always on. """
+    return self._alwayson
+  @property
+  def alwaysoff(self):
+    """ Clusters which are always off. """
+    return self._alwaysoff
+  @alwayson.setter
+  def alwayson(self, value):
+    self._alwayson = set(value) if value != None else set()
+    for function, dummy, dummy in self.matingops.operators:
+      if hasattr(function, "alwayson"): setattr(function, "alwayson", self._alwayson)
+    self.evaluator.exclude = self._alwayson | self._alwaysoff
+  @alwaysoff.setter
+  def alwaysoff(self, value):
+    self._alwaysoff = set(value) if value != None else set()
+    for function, dummy, dummy in self.matingops.operators:
+      if hasattr(function, "alwaysoff"): setattr(function, "alwaysoff", self._alwaysoff)
+    self.evaluator.exclude = self._alwayson | self._alwaysoff
+
+
+  def taboo(self, indiv):
+    """ Makes sure that sets are not empty. """
+    if len(indiv.genes) == 0: return True
+    return super(Darwin, self).taboo(indiv)
 
   def mating(self):
     """ Calls mating operations. """
@@ -55,7 +84,7 @@ class Darwin(StandardDarwin):
     """ Generates an individual (with mpi) """
     from . import Individual
     N = len(self.evaluator.clusters)
-    result = Individual(N, mean=int(0.5 * N))
+    result = Individual(N, mean=int(0.5 * N), alwayson=self.alwayson, alwaysoff=self.alwaysoff)
     return result
 
   def __call__(self, comm = None, outdir = None, **kwargs):

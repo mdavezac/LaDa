@@ -1,5 +1,7 @@
 """ Holds evaluation functions for cluster expansion. """
 __docformat__ = "restructuredtext en"
+__all__ = ["Evaluator"]
+from ...opt.decorators import count_calls
 
 
 class Evaluator(object):
@@ -50,11 +52,8 @@ class Evaluator(object):
     """ List of pis for input structures. """
 
     # creates or assigns energies as needed.
-    self._energies = energies
+    self.energies = energies if energies != None else array([s.energy for e in self.structures])
     """ List of energies for each structure. """
-    if self._energies == None: self._energies = array([s.energy for e in self.structures])
-    assert len(self.energies) == len(self.structures),\
-           ValueError("Inequivalent number of structures and energies on input.")
 
     # creates sets.
     assert lmo > 0e0 and lmo < 1e0, ValueError("Leave-many-out ratio should be between 0 and 1.")
@@ -97,15 +96,20 @@ class Evaluator(object):
   @property
   def energies(self):
     """ List of energies for known list of structures. """
-    return self._energies
+    return self._normalized_energies
   @energies.setter
   def energies(self, values):
     """ List of energies for known list of structures. """
-    from numpy import array
+    from numpy import array, mean, std
+    if values == None:
+      del self._energies
+      self._normalized_energies = None
+      return
     values = array(values).copy()
     assert len(values) == len(self.structures),\
            ValueError("There should be as many energies as structure.")
     self._energies = values
+    self._normalized_energies = (self._energies - mean(self._energies)) / std(self._energies)
 
   @property
   def crosets(self):
@@ -129,9 +133,10 @@ class Evaluator(object):
     return self._fitsets
 
 
+  @count_calls('nbcalc', 0)
   def run(self, genes):
     """ Computes cross validations for given set of clusters. """
-    from numpy import sum, dot, array
+    from numpy import dot, array
     from numpy.linalg import lstsq
 
     # creates boolean array from genes.
@@ -140,8 +145,7 @@ class Evaluator(object):
     pis = self.pis[:,genes]
 
     # loops over cross-validation sets.
-    scores = []
-    fits   = []
+    scores, fits = [], []
     for croset, fitset in zip(self.crosets, self.fitsets): 
       # pis, energies in cross-validation set.
       cropis = pis[croset, :]
@@ -150,11 +154,16 @@ class Evaluator(object):
       fitpis = pis[fitset,:]
       fitene = self.energies[fitset]
       # performs fitting.
-      interactions = lstsq(fitpis, fitene)[0]
+      try: interactions = lstsq(fitpis, fitene)
+      except:
+        print "Encountered error in least-square fit."
+        print fitpis.shape, fitene.shape, self.pis.shape, genes
+        raise
+      else: interactions = interactions[0]
       scores.append(dot(cropis, interactions) - croene)
       fits.append(dot(fitpis, interactions) - fitene)
       
-    return scores, fits
+    return array(scores), array(fits)
 
   def __call__(self, indiv, comm=None, outdir=None, **kwargs):
     """ Evaluates cross validation scores for current gene-set. """
@@ -165,18 +174,8 @@ class Evaluator(object):
     return indiv.fitness
 
   def __repr__(self):
-    """ Representation of this structure. """
-    string += repr(self.lattice)
-    string += "structures = []\n"
-    for structure in self.structure:
-      string += repr(structure)
-      string += "structures.append(structure)\n"
-    string += "evaluator = {0.__class__.__name__}(lattice, structures, ".format(self)
-    for key, value in self._args: string += "{0}={1}".format(key, value)
-    string += ")\n"
-    string += "evaluator.crosets = {0}\n".format(repr(list(self.crosets)))
-    string += "evaluator.energies = {0}\n".format(repr(list(self.energies)))
-    return string
+    """ Throws. """
+    raise NotImplementedError("Cannot represent itself.")
 
   def copy(self, **kwargs):
     """ Performs deep-copy of object. 
@@ -230,7 +229,8 @@ class LocalSearchEvaluator(Evaluator):
     """ Maximum number of evaluations. """
     self.exclude = set(exclude) if exclude != None else set()
     """ Clusters/bits to exclude from optimization. """
- __call__(self, indiv, comm=None, outdir=None, verbose=False, **kwargs):
+
+  def __call__(self, indiv, comm=None, outdir=None, verbose=False, **kwargs):
     """ Performs a simple minded local search. """
     # case without optimization.
 

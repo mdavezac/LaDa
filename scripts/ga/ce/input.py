@@ -10,11 +10,11 @@ directory = "../start"
 clusters = {"J0":True, "J1":True, "B2":12, "B3":4, "B4":2, "B5":2}
 
 # GA parameters.
-population_size = 100
+population_size = 20
 """ Size of the GA population """
 max_generations = -1
 """ Maximum number of generations """
-offspring_rate  = 0.1
+offspring_rate  = 0.25
 """ Rate at which offspring are created. """
 crossover_rate = 0.75
 """ Rate of crossover over other operations. """
@@ -24,6 +24,8 @@ comparison = minimize
 """ What we are trying to do with the fitness. """
 history = True
 """ Whether to keep track of candidates in order never to visit twice. """
+histlimit = int(1.5*population_size)
+""" Maximum number of individuals to keep in history. """
 
 energies = arange(11, dtype="float64") / 10. * 5 - 2.5
 """ Energies over which to perform DOS. """ 
@@ -32,7 +34,7 @@ sigma = 0.1 * eV
 
 maxiter = -1
 """ Maximum of iterations during local search. """
-maxeval = -1
+maxeval = 50
 """ Maximum of evaluations during local search. """
 
 alwayson = [0, 1]

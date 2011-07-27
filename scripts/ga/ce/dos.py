@@ -27,9 +27,10 @@ def gajobs(path, inputpath = "input.py", collector=None):
   for energy, energies in zip(input.energies, dos_values):
     for trial in input.trials:
       kwargs = { "popsizse": input.population_size, "rate": input.offspring_rate,
-                 "max_gen": input.max_generations, 
-                 "crossover_rate": input.crossover_rate, "history": input.history,
-                 "comparison": input.comparison, "rootworkdir": "$SCRATCH" }
+                 "max_gen": input.max_generations, "crossover_rate": input.crossover_rate, 
+                 "history": input.history, "histlimit": input.histlimit,
+                 "comparison": input.comparison, "rootworkdir": "$SCRATCH",
+                 "alwayson": input.alwayson, "alwaysoff": input.alwaysoff }
       functional = Functional(evaluator, **kwargs)
       evaluator.darwin = proxy(functional)
 

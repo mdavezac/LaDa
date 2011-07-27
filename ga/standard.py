@@ -108,6 +108,7 @@ def best(self):
   return True
 
 def print_population(self):
+  """ Print population to output stream. """
   if not self.comm.do_print: return True
   print "  Population: "
   for indiv in self.population:
@@ -115,6 +116,7 @@ def print_population(self):
   return True
 
 def print_offspring(self):
+  """ Print offspring to output stream. """
   if not self.comm.do_print: return True
   string = ''
   for indiv in self.population:

@@ -1,7 +1,7 @@
 """ Crossover operations for CE. """
 __docformat__ = "restructuredtext en"
 __all__ = ["Crossover", "Evaluator", "Indiv", "Functional", "Mutation"]
-from evaluator import Evaluator
+from .evaluator import Evaluator
 from ..bitstring import SwapMutation
 
 class Individual(object):
@@ -9,6 +9,8 @@ class Individual(object):
 
       Consists of a bag of ``on`` clusters.
   """
+  __slots__ = "genes", "fitness", "birth", "cvscores", "trainings", "maxsize"
+
   def __init__(self, maxsize, mean, stddev=None, alwayson=None, alwaysoff=None):
     """ Creates a CE individual. 
 
@@ -30,7 +32,7 @@ class Individual(object):
     self.maxsize = maxsize
     """ Maximum size of an individual. """
 
-    if stddev == None: stddev = maxsize // 2
+    if stddev == None: stddev = maxsize // 4
     if alwayson == None: alwayson = set()
     if alwaysoff == None: alwaysoff = set()
     genes = set([randint(0, maxsize-1) for u in xrange(randint(max(0, mean-stddev), min(maxsize-1, mean+stddev)))])
@@ -39,7 +41,20 @@ class Individual(object):
 
   def __eq__(self, other):
     """ True if two individuals are the same. """
+    if not hasattr(other, "genes"): return False
     return set(self.genes) == set(other.genes)
+
+  def __str__(self):
+    return str(sorted(list(self.genes)))
+
+  def __getstate__(self):
+    """ Returns current state. """
+    result = [(i, getattr(self, slot)) for i, slot in enumerate(self.__slots__) if hasattr(self, slot)] 
+    return tuple(result)
+  def __setstate__(self, state):
+    """ Resets from save state. """
+    for i, value in state: setattr(self, self.__slots__[i], value)
+    
   
 class Crossover(object):
   """ Crossover operator for CE.
@@ -68,9 +83,9 @@ class Crossover(object):
     """ How many genes to take from parent A. """
     self.rateB = rateB if rateB != None else 1 - rateA
     """ How many genes to take from parent B. """
-    self.alwayson = alwayson if alwayson != None else set()
+    self.alwayson = set(alwayson) if alwayson != None else set()
     """ Clusters that are always in the individual. """
-    self.alwaysoff = alwaysoff if alwaysoff != None else set()
+    self.alwaysoff = set(alwaysoff) if alwaysoff != None else set()
     """ Clusters that are never in the individual. """
  
   def __call__(self, a, b):
@@ -78,11 +93,13 @@ class Crossover(object):
     from copy import deepcopy
     from random import shuffle, random
 
-    a,  = list(a.genes), list(b.genes)
-    a = shuffle(list(a))[:min(len(a), int(len(a)*random(self.rateA)+0.5))]
-    b = shuffle(list(b))[:min(len(b), int(len(b)*random(self.rateB)+0.5))]
-
     result = deepcopy(a)
+    a, b = list(a.genes), list(b.genes)
+    shuffle(a)
+    shuffle(b)
+    a = a[:min(float(len(a)), int(len(a)*random()*self.rateA+0.5))]
+    b = b[:min(float(len(b)), int(len(b)*random()*self.rateB+0.5))]
+
     if hasattr(result, "fitness"): delattr(result, "fitness")
     result.genes = list( (set(a+b) | self.alwayson) - self.alwaysoff )
 
@@ -128,9 +145,9 @@ class Mutation(SwapMutation):
     super(Mutation, self).__init__(rate)
     self.size = size
     """ Size of the bitstring. """
-    self.alwayson = alwayson if alwayson != None else set()
+    self.alwayson = set(alwayson) if alwayson != None else set()
     """ Clusters that are always in the individual. """
-    self.alwaysoff = alwaysoff if alwaysoff != None else set()
+    self.alwaysoff = set(alwaysoff) if alwaysoff != None else set()
     """ Clusters that are never in the individual. """
  
   def __call__(self, indiv):
@@ -140,7 +157,7 @@ class Mutation(SwapMutation):
 
     indiv = deepcopy(indiv)
     indiv.genes = array([(i in indiv.genes) for i in range(self.size)])
-    indiv = super(Mutation, self).__init__(indiv)
+    indiv = super(Mutation, self).__call__(indiv)
     indiv.genes = list((set([i for i, u in enumerate(indiv.genes) if u]) | self.alwayson) - self.alwaysoff)
     return indiv
 

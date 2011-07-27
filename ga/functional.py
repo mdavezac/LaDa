@@ -87,6 +87,9 @@ class Darwin(object):
           Function to compare the fitness of two individual. 
         :Kwarg history:
           If true, will use history in taboo.
+        :KWarg histlimit:
+          Number of invididuals kept in history. Limits the size of history to
+          allow for faster processing.
     """
     from .history import History
     super(Darwin, self).__init__()
@@ -118,6 +121,7 @@ class Darwin(object):
     """ Comparison operator between individuals. """
     self.history = History() if kwargs.pop("history", False) else None 
     """ Holds list of visited candidates, if any. """
+    if "histlimit" in kwargs: self.history.limit = kwargs.pop("histlimit")
 
   @property
   def rootworkdir(self):
@@ -134,8 +138,9 @@ class Darwin(object):
     
         Defined as a property to avoid hassle with __getstate__
     """
-    from .standard import print_offspring, average_fitness, best
+    from .standard import print_offspring, average_fitness, best, print_population
     return [ print_offspring, 
+             print_population,
              average_fitness,
              best,
              self.__class__.print_nb_evals,
@@ -164,10 +169,10 @@ class Darwin(object):
   def taboo(self, indiv):
     """ No two individuals in the population and the offspring are the same. """
     from itertools import chain
-    if getattr(self, "history", None) != None: # check whether a history object exists.
-      if self.history(indiv): return True
     for a in chain(self.population, self.offspring):
       if a == indiv: return True
+    if getattr(self, "history", None) != None: # check whether a history object exists.
+      if self.history(indiv): return True
     return False
 
   def restart(self, outdir, comm = None):
