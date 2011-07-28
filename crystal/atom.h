@@ -3,14 +3,13 @@
 
 #include "LaDaConfig.h"
 
-#include <boost/serialization/base_object.hpp>
 
 #include "atom_base.h"
 #include "atom_freeze.h"
 
 namespace LaDa
 {
-  namespace Crystal
+  namespace crystal
   {
     //! \brief Describes an atom where the type is a vector.
     //! \details An atom consists of a position, a type, and frozen status
@@ -86,6 +85,78 @@ namespace LaDa
     {
       return stream << static_cast< AtomBase<std::string> >(_atom) 
                     << "  freeze: " << freeze;
+    }
+
+    namespace details
+    {
+      template<class T_CONTAINER>
+        struct is_container : public boost::mpl::false_ {};
+      template< template<class A, class B> class T_CONTAINER, class TYPE, class ALLOC>
+        struct is_container<T_CONTAINER<TYPE, ALLOC> >: public boost::mpl::true_ {};
+      //! Allows easy structure initialization.
+      template<class T_TYPE, class ENABLE>  struct add_atom;
+      //! Allows easy structure initialization for non-container types.
+      template<class T_TYPE>  
+        struct add_atom<T_TYPE, boost::disable_if< typename is_container<T_TYPE>::type >
+        {
+          //! Atom container.
+          std::vector<T_TYPE> &container_;
+          //! Constructor.
+          add_atom(std::vector<T_TYPE> &_in) : container_(_in) {}
+          //! adder itself.
+          void operator( types::t_real _x, types::t_real _y, types::t_real _z, T_TYPE const &_type)
+          { 
+            Atom<T_TYPE> atom;
+            atom.pos[0] = _x; atom.pos[1] = _y; atom.pos[2] = _z; 
+            atom.type = _type;
+            container_.push_back(_type);
+          }
+        };
+      //! Allows easy structure initialization.
+      template<class T_TYPE>  
+        struct add_atom<T_TYPE, boost::enable_if< typename is_container<T_TYPE>::type >
+        {
+          //! Atom container.
+          std::vector<T_TYPE> &container_;
+          //! Constructor.
+          add_atom(std::vector<T_TYPE> &_in) : container_(_in) {}
+#         ifdef LADA_TEXT
+#           error LADA_TEXT already defined
+#         endif
+#         ifdef LADA_OPERATOR
+#           error LADA_OPERATOR already defined
+#         endif
+#         define LADA_TEXT(z, n, text) atom.type.push_back(_t ## n);
+#         define LADA_OPERATOR(z, n, _)\
+            void operator( types::t_real _x, types::t_real _y, types::t_real _z,      \
+                           BOOST_PP_ENUM_PARAMS(BOOST_PP_INC(n), t_Type const &_t) )  \
+            {                                                                         \
+              Atom<T_TYPE> atom;                                                      \
+              atom.pos[0] = _x; atom.pos[1] = _y; atom.pos[2] = _z;                   \
+              BOOST_PP_REPEAT_ ## z(BOOST_PP_INC(n), LADA_TEXT, nil)                  \
+              container_.push_back(atom);                                             \
+            }
+          BOOST_PP_REPEAT(5, LADA_OPERATOR, nil)
+#         undef LADA_TEXT
+#         undef LADA_OPERATOR
+        };
+
+      template<class T_DERIVED, class T_TYPE, class ENABLE> struct call_add_atom
+      template<class T_DERIVED, class T_TYPE> 
+      struct call_add_atom<T_DERIVED, T_TYPE, typename boost::disable_if< is_container<T_TYPE>::type >
+      {
+        boost::assign::list_inserter<details::add_atom>                           \
+          add_atom( types::t_real _x, types::t_real _y, types::t_real _z,         \
+                    BOOST_PP_ENUM_PARAMS(BOOST_PP_INC(n), t_Type const &_t) )     \
+          {                                                                       \
+            namespace ba = boost::assign;                                         \
+            return ba::list_inserter(details::add_atom(atoms))                    \
+                     ( _x, _y, _z,                                                \
+                       BOOST_PP_ENUM_PARAMS(BOOST_PP_INC(n), _t) );               \
+          }
+        
+      };
+       
     }
 
   } // namespace Crystal

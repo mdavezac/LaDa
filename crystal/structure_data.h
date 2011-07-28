@@ -16,13 +16,14 @@
 #endif
 
 #include "atom.h"
+#include "add_atom.h"
 
 
 namespace LaDa 
 {
   namespace crystal
   {
-    template<class TYPE> struct StructureData
+    template<class TYPE> struct StructureData : details::call_add_atom<StructureData, T_TYPE>
     {
       friend class boost::serialization::access;
 #     ifdef LADA_WITH_LNS
@@ -82,6 +83,9 @@ namespace LaDa
         template<class T_ARCHIVE>
           bool lns_access(T_ARCHIVE &_ar, load_n_save::version_type const _version);
 #     endif
+      //! Add an atom in the structure.
+      StructureData<T_TYPE> &add_atom(Atom<TYPE> &_in)
+        { atoms.push_back(_in); *return this; }
     };
 
 #     ifdef LADA_WITH_LNS

@@ -18,10 +18,10 @@
 
 namespace LaDa
 {
-  namespace Crystal 
+  namespace crystal 
   {
     //! \cond
-    class Lattice;
+    template<class T_TYPE> class TemplateStructure;
     //! \endcond
     
 
@@ -105,9 +105,9 @@ namespace LaDa
       get_space_group(TemplateStructure<T_TYPE> const &_lattice, types::t_real _tolerance = -1e0);
       {
         if( _tolerance <= 0e0 ) _tolerance = types::tolerance;
-        // Checks that lattice has sites.
-        LADA_DOASSERT( _lattice.sites.size() != 0, 
-                       "Lattice does not contain sites.\n"
+        // Checks that lattice has atoms.
+        LADA_DOASSERT( _lattice.atoms.size() != 0, 
+                       "Lattice does not contain atoms.\n"
                        "Will not compute symmetries for empty lattice.\n" );
         { // Checks that lattice is primitive.
           Lattice lat(_lattice);
@@ -116,11 +116,11 @@ namespace LaDa
         }
 
         // Finds minimum translation.
-        Lattice::t_Sites sites(_lattice.sites);
-        math::rVector3d translation(sites.front().pos);
+        Lattice::t_Sites atoms(_lattice.atoms);
+        math::rVector3d translation(atoms.front().pos);
         math::rMatrix3d const invcell(!_lattice.cell);
-        // Creates a list of sites centered in the cell.
-        foreach( Lattice::t_Site &site, sites )
+        // Creates a list of atoms centered in the cell.
+        foreach( Lattice::t_Site &site, atoms )
           site.pos = into_cell(site.pos-translation, _lattice.cell, invcell);
 
         // gets point group.
@@ -130,10 +130,10 @@ namespace LaDa
           result( new std::vector<SymmetryOperator> );
         result->reserve(pg->size());
              
-        // lists sites of same type as sites.front()
+        // lists atoms of same type as atoms.front()
         std::vector<math::rVector3d> translations;
-        CompareSites compsites(sites.front(), _tolerance);
-        foreach( Lattice::t_Site const &site, sites )
+        CompareSites compsites(atoms.front(), _tolerance);
+        foreach( Lattice::t_Site const &site, atoms )
           if( compsites(site.type) ) translations.push_back(site.pos);
         
 
@@ -147,38 +147,23 @@ namespace LaDa
           {
             // possible translation.
             op.trans = *i_trial;
-            Lattice::t_Sites::const_iterator i_site = sites.begin();
-            Lattice::t_Sites::const_iterator const i_site_end = sites.end();
+            Lattice::t_Sites::const_iterator i_site = atoms.begin();
+            Lattice::t_Sites::const_iterator const i_site_end = atoms.end();
             for(; i_site != i_site_end; ++i_site)
             {
               CompareSites transformed(*i_site, _tolerance);
               transformed.pos = into_cell(op(i_site->pos), _lattice.cell, invcell);
               Lattice::t_Sites::const_iterator const
-                i_found( std::find_if(sites.begin(), sites.end(), transformed) );
-              if(i_found == sites.end()) break;
+                i_found( std::find_if(atoms.begin(), atoms.end(), transformed) );
+              if(i_found == atoms.end()) break;
               if( not transformed(i_found->type) ) break;
-            } // loop over all sites.
+            } // loop over all atoms.
 
             if(i_site == i_site_end) break; // found a mapping
           } // loop over trial translations.
 
           if(i_trial != i_trial_end)
             result->push_back(SymmetryOperator(op.op, op.trans-op.op*translation+translation) );
-        // else
-        // {
-        //   std::cout << op.op << "\n";
-        //   std::vector<math::rVector3d> :: const_iterator i_trial = translations.begin();
-        //   std::vector<math::rVector3d> :: const_iterator const i_trial_end = translations.end();
-        //   for(; i_trial != i_trial_end; ++i_trial)
-        //     foreach( Lattice::t_Site const & site, sites )
-        //     {
-        //       math::rVector3d pos = into_cell(op.op * sites.front().pos, _lattice.cell, invcell);
-        //       pos = into_cell( *i_trial - pos, _lattice.cell, invcell );
-        //       pos =op.op * site.pos + pos;
-        //       std::cout << "              " << into_cell(pos, _lattice.cell, invcell)<< "\n";
-        //     }
-        //   std::cout << "\n";
-        // }
         } // loop over point group.
 
         return result;
