@@ -111,7 +111,7 @@ if("${BOOST_ROOT}" STREQUAL "")
   endif ("$ENV{BOOST_ROOT}" STRGREATER "")
 endif("${BOOST_ROOT}" STREQUAL "")
 find_package( Boost 1.36.0 REQUIRED 
-              COMPONENTS python mpi mpi_python program_options regex serialization system filesystem )
+              COMPONENTS program_options regex serialization system filesystem )
 include_directories(${Boost_INCLUDE_DIRS})
 #   -- eigen2
 find_package( eigen REQUIRED )
@@ -170,6 +170,7 @@ endif("$ENV{NERSC_HOST}" STREQUAL "hopper")
 
 if( MPI_FOUND )
   set(LADA_MPI TRUE)
+  find_package(Boost 1.36.0 REQUIRED COMPONENTS mpi)
 endif( MPI_FOUND )
   
 
@@ -241,6 +242,10 @@ if(python_bindings)
     set(DOPYTHON False)
   endif(PYTHONLIBS_FOUND)
   find_package(numpy REQUIRED)
+  find_package(Boost 1.36.0 REQUIRED COMPONENTS python)
+  if(LADA_MPI)
+    find_package(Boost 1.36.0 REQUIRED COMPONENTS mpi_python)
+  endif(LADA_MPI)
 endif(python_bindings)
 
 if( vasp_functional )
