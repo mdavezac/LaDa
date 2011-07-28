@@ -199,7 +199,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
         if len(result) >= 2: 
           for other in result[-2]: 
             if self.functional.comparison(individual, other) != 0: continue
-            if not self.functional.compare(individual, other): continue
+            if individual != other: continue
             found_other = True
             break
         result[-1].append( other if found_other else deepcopy(individual) )
@@ -243,11 +243,10 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     """ Make list of unique individuals from different lists. """
     from itertools import chain
     results = []
-    compare = self.functional.compare
     for indiv in chain(*args):
       i = id(indiv)
       if any( i == id(o) for o in results ): continue
-      if not any( compare(indiv, o) for o in results ): results.append(indiv)
+      if not any(indiv == o for o in results ): results.append(indiv)
     return results
 
   @property

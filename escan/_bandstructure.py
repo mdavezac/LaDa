@@ -1,9 +1,7 @@
 """ Bandstructure plotting tools """
 __docformat__  = 'restructuredtext en'
-__all__ = ['BPoints', 'ReducedBPoints', 'plot_bands', 'plot_alloybands']
+__all__ = ['BPoints', 'ReducedBPoints', 'InnerBPoints', 'ReducedInnerBPoints', 'plot_bands', 'plot_alloybands']
 
-from ..opt.decorators import broadcast_result, make_cached
-from ._massextract import MassExtract
 from .kpoints import KPoints, _reduced_grids_factory
 
 class BPoints(KPoints):
@@ -23,7 +21,7 @@ class BPoints(KPoints):
   def _mnk(self, input, output):
     """ Yields lines of k-points with appropriate density. """
     from numpy import any, abs, dot
-    from numpy.linalg import norm, inv
+    from numpy.linalg import inv
 
     if len(self.lines) == 0: return
     if self.relax: deformation = dot(inv(output.cell.T), input.cell.T)
@@ -67,14 +65,79 @@ class BPoints(KPoints):
 
   def __repr__(self):
     """ Returns representation of this object. """
-    compare = BPoints()
     string = '{0.__class__.__name__}(None, {0.density}, {0.relax}, {0.mink})'.format(self)
     for start, end in self.lines:
       string += '+([{0[0]},{0[1]},{0[2]}], [{1[0]},{1[1]},{1[2]}])'.format(start, end)
     return string
+
+class InnerBPoints(BPoints):
+  """ Cuts off band-structure directions to fit inside first Brillouin Zone. """
+  def __init__(self, *args, **kwargs):
+    """ See BPoints for parameters. """
+    self.tolerance = kwargs.pop("tolerance", 1e-12)
+    """ Convergence criteria for determining inside/outside BZ criteria. """
+    super(InnerBPoints, self).__init__(*args, **kwargs)
+
+  def _mnk(self, input, output):
+    """ Yields lines of k-points with appropriate density. """
+    from numpy import any, abs, dot, array
+    from numpy.linalg import inv
+
+    if len(self.lines) == 0: return
+    if self.relax: deformation = dot(inv(output.cell.T), input.cell.T)
+    kcell = inv(input.structure.cell).T
     
+    last_end = self.lines[0][0] + 10e0 
+    for start, end in self.lines:
+      start, end = array(start, dtype="float64"), array(end, dtype="float64")
+      start, end = self._to_first_bz(start, end, kcell, self.tolerance)
+      if any(abs(last_end-start) > 1e-12):
+        yield 1e0, (dot(deformation, start) if self.relax else start)
+      last_end = end
+      for kpoint in self._line(start, end):
+        yield 1e0, (dot(deformation, kpoint) if self.relax else kpoint)
+
+  def _halfline(self, start, direction, kcell, tolerance):
+    """ Finds intersection with BZ if start is in BZ. """
+    from numpy import norm
+    from ..crystal import to_voronoi
+    is_inside = lambda x: norm(x - to_voronoi(x, kcell)) < tolerance
+    if not is_inside(start): raise ValueError("Starting point is not inside first BZ.")
+
+    direction = direction / norm(direction)
+    xin, xout = 0, sum([norm(k) for k in kcell.T])
+    xlast = xout
+    result = start + direction * xmed
+    last_inside = is_inside(result)
+    if last_inside: raise RuntimeError("Could not find outside point.")
+
+    while abs(xlast - xout) > tolerance:
+      if is_inside(start + direction * 0.5 * (xout - xin)): xin  = 0.5 * (xout - xin)
+      else:                                                 xout = 0.5 * (xout - xin)
+    return start + direction * xin
+
+  def _to_first_bz(self, first, last, kcell, tolerance=1e-12):
+    """ Computes endpoints of directions inside first bz. """
+    from numpy import norm
+    from ..crystal import to_voronoi
+    is_inside = lambda x: norm(x - to_voronoi(x, kcell)) < tolerance
+
+    startin, lastin = is_inside(start), is_inside(start)
+    if not (startin or lastin): # neither point is inside the first BZ
+      # translate start into the cell, then figure out other point, keeping direction constant.
+      direction = last - start
+      start = to_voronoi(start, kcell)
+      last = self._halfline(start, direction, kcell, tolerance)
+      # then figure out first point as well.
+      start = self._halfline(last, -direction, kcell, tolerance)
+    elif startin and not lastin: # one point is in first BZ, figure out the other.
+      last = self._halfline(start, last-start, kcell, tolerance)
+    elif (not startin) and lastin: # one point is in first BZ, figure out the other.
+      start = self._halfline(last, start-last, kcell, tolerance)
+    return start, last
 
 ReducedBPoints = _reduced_grids_factory('ReducedBPoints', BPoints)
+ReducedInnerBPoints = _reduced_grids_factory('ReducedInnerBPoints', InnerBPoints)
 
 try: import matplotlib.pyplot as plt 
 except: 
@@ -87,7 +150,7 @@ except:
 else:
   def plot_bands(extractor, offset = 0.05, labels = None, **kwargs):
     """ Tries and plots band-structure. """
-    from numpy import dot, array, min, max
+    from numpy import array, min, max
     from numpy.linalg import norm
     from matplotlib import rcParams
 
@@ -166,10 +229,9 @@ else:
 
   def plot_alloybands(extractor, multicell, tolerance=1e-6, **kwargs):
     """ Plots alloy band-structure using the majority representation. """
-    from numpy import dot, array, min, max
+    from numpy import array, min, max
     from numpy.linalg import norm
     from . import majority_representation
-    from pickle import load, dump
 
     edgecolor = kwargs.pop('edgecolor', 'red')
     edgestyle = kwargs.pop('edgestyle', '-')
