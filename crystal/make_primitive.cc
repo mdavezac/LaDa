@@ -64,15 +64,15 @@ namespace LaDa
         for(int j(-1); j < 2; ++j)
           for(int k(-1); k < 2; ++k)
           {
-            math::rVector3d const translated = _cell * (orig + math::rVector3d(i,j,k));
-            types::t_real const d(translated.squaredNorm());
+            math::rVector3d const translated = orig + math::rVector3d(i,j,k);
+            types::t_real const d( (_cell*translated).squaredNorm() );
             if( math::gt(min_norm, d) )
             {
               min_norm = d;
               result = translated;
             }
           }
-      return result;
+      return _cell * result;
     }
 
     bool Lattice::make_primitive(types::t_real _tolerance)

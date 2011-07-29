@@ -85,7 +85,7 @@ class InnerBPoints(BPoints):
 
     if len(self.lines) == 0: return
     if self.relax: deformation = dot(inv(output.cell.T), input.cell.T)
-    kcell = inv(input.structure.cell).T
+    kcell = inv(input.cell).T
     
     last_end = self.lines[0][0] + 10e0 
     for start, end in self.lines:
@@ -99,15 +99,16 @@ class InnerBPoints(BPoints):
 
   def _halfline(self, start, direction, kcell, tolerance):
     """ Finds intersection with BZ if start is in BZ. """
-    from numpy import norm
+    from numpy.linalg import norm
     from ..crystal import to_voronoi
     is_inside = lambda x: norm(x - to_voronoi(x, kcell)) < tolerance
-    if not is_inside(start): raise ValueError("Starting point is not inside first BZ.")
+    if not is_inside(start):
+      raise ValueError("Starting point is not inside first BZ. {0}, {1}.".format(start, to_voronoi(start, kcell)))
 
     direction = direction / norm(direction)
     xin, xout = 0, sum([norm(k) for k in kcell.T])
     xlast = xout
-    result = start + direction * xmed
+    result = start + direction * xout
     last_inside = is_inside(result)
     if last_inside: raise RuntimeError("Could not find outside point.")
 
@@ -116,9 +117,9 @@ class InnerBPoints(BPoints):
       else:                                                 xout = 0.5 * (xout - xin)
     return start + direction * xin
 
-  def _to_first_bz(self, first, last, kcell, tolerance=1e-12):
+  def _to_first_bz(self, start, last, kcell, tolerance=1e-12):
     """ Computes endpoints of directions inside first bz. """
-    from numpy import norm
+    from numpy.linalg import norm
     from ..crystal import to_voronoi
     is_inside = lambda x: norm(x - to_voronoi(x, kcell)) < tolerance
 
