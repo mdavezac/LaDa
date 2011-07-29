@@ -44,37 +44,38 @@ namespace LaDa
           CARTESIANS =  7,  //!< Freeze cartesians coordinates.
           ALL        =  15, //!< Freeze all.
         };
-
-        //! The frozen status
-        types::t_unsigned freeze;
-
-        //! Constructor.
-        AtomFreezeMixin(frozen::type _in = frozen::None) : freeze(_in) {}
-        //! Copy constructor.
-        AtomFreezeMixin(AtomFreezeMixin const &_c) : freeze(_c.freeze) {}
-
-        //! Serializes the status.
-        template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
-          { _ar & freeze; }
-#         ifdef LADA_WITH_LNS
-            //! To load and save to xml-like input.
-            template<class T_ARCHIVE> bool lns_access(T_ARCHIVE &_ar, const unsigned int _version);
-            {
-              namespace lns = LaDa :: load_n_save;
-              std::map<std::string, LaDa::types::t_unsigned> freeze_map;
-              freeze_map["none"]      = frozen::NONE;
-              freeze_map["x"]         = frozen::X;
-              freeze_map["y"]         = frozen::Y;
-              freeze_map["z"]         = frozen::Z;
-              freeze_map["t"]         = frozen::T;
-              freeze_map["cartesian"] = frozen::CARTESIANS;
-              freeze_map["all"]       = frozen::ALL;
-              return _ar & lns::option( "freeze",
-                                        lns::action=lns::enum_(freeze, freeze_map),
-                                        lns::default_=frozen::NONE );
-            }
-#         endif
       };
+
+      //! The frozen status
+      types::t_unsigned freeze;
+
+      //! Constructor.
+      AtomFreezeMixin(frozen::type _in = frozen::NONE) : freeze(_in) {}
+      //! Copy constructor.
+      AtomFreezeMixin(AtomFreezeMixin const &_c) : freeze(_c.freeze) {}
+
+      //! Serializes the status.
+      template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
+        { _ar & freeze; }
+#       ifdef LADA_WITH_LNS
+          //! To load and save to xml-like input.
+          template<class T_ARCHIVE> bool lns_access(T_ARCHIVE &_ar, const unsigned int _version);
+          {
+            namespace lns = LaDa :: load_n_save;
+            std::map<std::string, LaDa::types::t_unsigned> freeze_map;
+            freeze_map["none"]      = frozen::NONE;
+            freeze_map["x"]         = frozen::X;
+            freeze_map["y"]         = frozen::Y;
+            freeze_map["z"]         = frozen::Z;
+            freeze_map["t"]         = frozen::T;
+            freeze_map["cartesian"] = frozen::CARTESIANS;
+            freeze_map["all"]       = frozen::ALL;
+            return _ar & lns::option( "freeze",
+                                      lns::action=lns::enum_(freeze, freeze_map),
+                                      lns::default_=frozen::NONE );
+          }
+#       endif
+      
     };
   }
 }

@@ -3,6 +3,8 @@
 
 #include "LaDaConfig.h"
 
+#include <boost/shared_ptr.hpp>
+
 #include "structure_data.h"
 
 
@@ -18,14 +20,16 @@ namespace LaDa
       std::ostream& operator<<(std::ostream &_stream, TemplateStructure<T_TYPE> const &_str);
 
     //! Wraps around a shared pointer containing structure data.
-    template<class TYPE> class TemplateStructure 
+    template<class TYPE> class TemplateStructure :
+       public details::call_add_atom2< TemplateStructure<TYPE> >
     {
+        friend class details::call_add_atom2<TemplateStructure, TYPE>;
         friend class boost::serialization::access;
 #       ifdef LADA_WITH_LNS
           friend class load_n_save::access;
 #       endif
-        friend template< class T_TYPE >
-          std::ostream& operator<<(std::ostream &_stream, TemplateStructure<T_TYPE> const &_str);
+        template<class T> friend
+          std::ostream& operator<<(std::ostream &_stream, TemplateStructure<T> const &_str);
       public:
         //! Namespace for the frozen dof.
         typedef typename StructureData<TYPE> :: frozen frozen;
@@ -36,7 +40,7 @@ namespace LaDa
         //! Type of the reverse iterator.
         typedef typename StructureData<TYPE>::t_Atoms::reverse_iterator reverse_iterator;
         //! Type of the reverse constant iterator.
-        typedef typename StructureData<TYPE>::t_Atoms::reverse_const_iterator reverse_const_iterator;
+        typedef typename StructureData<TYPE>::t_Atoms::const_reverse_iterator const_reverse_iterator;
         //! Type of the atoms.
         typedef typename StructureData<TYPE>::t_Atoms::value_type value_type;
         //! Type of the reference to the atoms.
@@ -48,53 +52,47 @@ namespace LaDa
         //! Type of the differnce.
         typedef typename StructureData<TYPE>::t_Atoms::difference_type difference_type;
         //! Type of the pointer to the atoms.
-        typedef typename StructureData<TYPE>::t_Atoms::pointer_type pointer_type;
-        //! Type of the constant pointer to the atoms.
-        typedef typename StructureData<TYPE>::t_Atoms::const_pointer_type const_pointer_type;
+        typedef typename StructureData<TYPE>::t_Atoms::pointer pointer;
         //! Type of the allocator used for the atoms.
         typedef typename StructureData<TYPE>::t_Atoms::allocator_type allocator_type;
 
         //! Constructor
         TemplateStructure() : impl_(new StructureData<TYPE>()) {};
         //! Copy Constructor
-        TemplateStructure   ( const TemplateStructure &_str )
-                          : impl_(new StructureData<TYPE>(_c.impl_)) {}
+        TemplateStructure(const TemplateStructure &_c) : impl_(_c.impl_) {}
         //! Destructor.
         ~TemplateStructure () {};
 
         //! Returns const reference to cell.
-        rMatrix3d const & cell() const { return impl_->cell; }
+        math::rMatrix3d const & cell() const { return impl_->cell; }
         //! Returns reference to cell.
-        rMatrix3d & cell() const { return impl_->cell; }
+        math::rMatrix3d & cell() { return impl_->cell; }
         //! Returns const reference to name.
         std::string const & name() const { return impl_->name; }
         //! Returns reference to name.
-        std::string & name() const { return impl_->name; }
+        std::string & name() { return impl_->name; }
         //! Returns const reference to energy.
         types::t_real const & energy() const { return impl_->energy; }
         //! Returns reference to energy.
-        types::t_real & energy() const { return impl_->energy; }
+        types::t_real & energy() { return impl_->energy; }
         //! Returns const reference to weight.
         types::t_real const & weight() const { return impl_->weight; }
         //! Returns reference to weight.
-        types::t_real & weight() const { return impl_->weight; }
+        types::t_real & weight() { return impl_->weight; }
         //! Returns const reference to scale.
         types::t_real const & scale() const { return impl_->scale; }
         //! Returns reference to scale.
-        types::t_real & scale() const { return impl_->scale; }
+        types::t_real & scale() { return impl_->scale; }
         //! Returns const reference to freeze (frozen degrees of freedom).
         types::t_unsigned const & freeze() const { return impl_->freeze; }
         //! Returns reference to freeze.
-        types::t_unsigned & freeze() const { return impl_->freeze; }
+        types::t_unsigned & freeze() { return impl_->freeze; }
 
         //! Shallow copy, e.g. refers to same data.
-        TemplateStructure shallow_copy() const
-        {
-          TemplateStructure result; result.impl_ = impl_; 
-          return result;
-        }
+        TemplateStructure clone() const
+          { return TemplateStructure(new StructureData<TYPE>(*impl_)); }
         //! Swaps content of two structures.
-        void swap(TemplateStructure &_structure) { impl_.swap(_other.impl_); }
+        void swap(TemplateStructure &_other) { impl_.swap(_other.impl_); }
 
         //! Iterator to the atoms.
         iterator begin() { return impl_->atoms.begin(); }
@@ -109,9 +107,9 @@ namespace LaDa
         //! Iterator to the atoms.
         const_iterator end() const { return impl_->atoms.end(); }
         //! Iterator to the atoms.
-        reverse_const_iterator rbegin() const { return impl_->atoms.rbegin(); }
+        const_reverse_iterator rbegin() const { return impl_->atoms.rbegin(); }
         //! Iterator to the atoms.
-        reverse_const_iterator rend() const { return impl_->atoms.rend(); }
+        const_reverse_iterator rend() const { return impl_->atoms.rend(); }
         //! Number of atoms.
         size_type size() const { return impl_->atoms.size(); }
         //! Maximum number of atoms.
@@ -125,7 +123,7 @@ namespace LaDa
         //! Reserved memory.
         size_type capacity() const { return impl_->atoms.capacity(); }
         //! Whether any atoms are in the structure.
-        bool empty() const { return impbool empty(); }
+        bool empty() const { return impl_->empty(); }
         //! Returns nth atom.
         reference operator[](size_type _n) { return impl_->atoms[_n]; }
         //! Returns nth atom.
@@ -169,12 +167,17 @@ namespace LaDa
         void clear() { impl_->atoms.clear(); }
         //! Returns allocator object used to construct atom container.
         allocator_type get_allocator() const { return impl_->atoms.get_allocator(); }
-
+        //! Initializer for cell.
+        details::SetCell< boost::mpl::int_<1> > set_cell(types::t_real _x, types::t_real _y, types::t_real _z)
+          { return impl_->set_cell(_x, _y, _z); }
+        //! Initializer for cell.
+        details::SetCell< boost::mpl::int_<1> > set_cell(math::rVector3d _pos)
+          { return impl_->set_cell(_pos); }
 
       private:
         //! Serializes a structure.
         template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
-          { ar & impl_; }
+          { _ar & impl_; }
 #     ifdef LADA_WITH_LNS
         //! To load and save to xml-like input.
         template<class T_ARCHIVE>

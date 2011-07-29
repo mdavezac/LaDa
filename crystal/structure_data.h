@@ -23,7 +23,8 @@ namespace LaDa
 {
   namespace crystal
   {
-    template<class TYPE> struct StructureData : details::call_add_atom<StructureData, T_TYPE>
+    template<class TYPE> struct StructureData : 
+       public details::call_add_atom< StructureData<TYPE> >
     {
       friend class boost::serialization::access;
 #     ifdef LADA_WITH_LNS
@@ -53,6 +54,10 @@ namespace LaDa
 
       //! The type of the collection of atoms. 
       typedef std::vector< Atom<TYPE> > t_Atoms;
+      //! The type of the collection of atoms. 
+      typedef Atom<TYPE> value_type;
+      //! Type of the species
+      typedef TYPE t_Type;
 
       //! The unit-cell of the structure in cartesian coordinate.
       math::rMatrix3d cell;
@@ -72,10 +77,10 @@ namespace LaDa
       //! Constructor
       StructureData() : name(""), energy(0), weight(1), freeze(frozen::NONE) {};
       //! Copy Constructor
-      StructureData()   (const StructureData &_str)
-                      : cell(_str.cell), atoms(_str.atoms), name(_str.name), 
-                        energy(_str.energy), weight(_str.weight),
-                        freeze(_str.freeze), scale( _str.scale ) {}
+      StructureData   (const StructureData &_str)
+                    : cell(_str.cell), atoms(_str.atoms), name(_str.name), 
+                      energy(_str.energy), weight(_str.weight),
+                      freeze(_str.freeze), scale( _str.scale ) {}
       //! Serializes a structure.
       template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version);
 #     ifdef LADA_WITH_LNS
@@ -83,9 +88,12 @@ namespace LaDa
         template<class T_ARCHIVE>
           bool lns_access(T_ARCHIVE &_ar, load_n_save::version_type const _version);
 #     endif
-      //! Add an atom in the structure.
-      StructureData<T_TYPE> &add_atom(Atom<TYPE> &_in)
-        { atoms.push_back(_in); *return this; }
+      //! Initializer for cell.
+      details::SetCell< boost::mpl::int_<1> > set_cell(types::t_real _x, types::t_real _y, types::t_real _z)
+        { return details::SetCell< boost::mpl::int_<0> >(cell)(_x, _y, _z); }
+      //! Initializer for cell.
+      details::SetCell< boost::mpl::int_<1> > set_cell(math::rVector3d _pos)
+        { return details::SetCell< boost::mpl::int_<0> >(cell)(_pos); }
     };
 
 #     ifdef LADA_WITH_LNS
@@ -136,25 +144,26 @@ namespace LaDa
       std::ostream& operator<<(std::ostream &_stream, StructureData<T_TYPE> const &_str)
       {
         namespace bl = boost::lambda;
-        stream << "\n Structure, scale: " << _str.scale << ", Volume: "
-               << _str.cell.determinant()
-               << ", Cell\n"
-               << std::fixed << std::setprecision(5)
-               << "   " << std::setw(9) << _str.cell(0,0)
-               << "   " << std::setw(9) << _str.cell(0,1)
-               << "   " << std::setw(9) << _str.cell(0,2) << "\n"
-               << "   " << std::setw(9) << _str.cell(1,0)
-               << "   " << std::setw(9) << _str.cell(1,1)
-               << "   " << std::setw(9) << _str.cell(1,2) << "\n"
-               << "   " << std::setw(9) << _str.cell(2,0)
-               << "   " << std::setw(9) << _str.cell(2,1)
-               << "   " << std::setw(9) << _str.cell(2,2) << "\n"
-               << "\n   Atoms:\n";
+        _stream << "\n Structure, scale: " << _str.scale << ", Volume: "
+                << _str.cell.determinant()
+                << ", Cell\n"
+                << std::fixed << std::setprecision(5)
+                << "   " << std::setw(9) << _str.cell(0,0)
+                << "   " << std::setw(9) << _str.cell(0,1)
+                << "   " << std::setw(9) << _str.cell(0,2) << "\n"
+                << "   " << std::setw(9) << _str.cell(1,0)
+                << "   " << std::setw(9) << _str.cell(1,1)
+                << "   " << std::setw(9) << _str.cell(1,2) << "\n"
+                << "   " << std::setw(9) << _str.cell(2,0)
+                << "   " << std::setw(9) << _str.cell(2,1)
+                << "   " << std::setw(9) << _str.cell(2,2) << "\n"
+                << "\n   Atoms:\n";
                 
         
-        stream << " Structure atoms\n";
-        std::for_each( atoms.begin(), atoms.end(),
-                       bl::var(stream) << bl::_1 << "\n" );
+        _stream << " Structure atoms\n";
+        std::for_each( _str.atoms.begin(), _str.atoms.end(),
+                       bl::var(_stream) << bl::_1 << "\n" );
+        return _stream;
       }
 
     
