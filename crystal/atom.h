@@ -87,7 +87,7 @@ namespace LaDa
     template<class T_TYPE> 
       inline std::ostream& operator<< (std::ostream &stream, Atom<T_TYPE> const &_atom)
       {
-        return stream << *static_cast<AtomBase<T_TYPE> const*>(&_atom)
+        return stream << (*static_cast<AtomBase<T_TYPE> const*>(&_atom))
                       << "  freeze: " << _atom.freeze;
       }
 

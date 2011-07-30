@@ -3,6 +3,8 @@
 
 #include "LaDaConfig.h"
 
+#include <sstream>
+
 #include <boost/utility/enable_if.hpp>
 #include <boost/mpl/bool.hpp>
 
@@ -20,19 +22,20 @@ namespace LaDa
         struct is_container<T_CONTAINER<TYPE, ALLOC> >: public boost::mpl::true_ {};
 
       template <class T>
-        typename boost::disable_if<is_container<T>, std::ostream&>::type
-          print_container(std::ostream& _stream, T const &_in) { return _stream << _in; }
+        typename boost::disable_if<is_container<T>, std::string>::type
+          print_container(T const &_in) { return std::ostringstream(_in).str(); }
       template <class T>
-        typename boost::enable_if<is_container<T>, std::ostream&>::type
-          print_container(std::ostream& _stream, T const &_in)
+        typename boost::enable_if<is_container<T>, std::string>::type
+          print_container(T const &_in)
           {
-            if(_in.size() == 0) return _stream;
-            _stream << _in.front();
-            if(_in.size() == 1) return _stream;
+            if(_in.size() == 0) return "";
+            if(_in.size() == 1) return std::ostringstream(_in.front()).str();
+            std::ostringstream sstr;
+            sstr << _in.front();
             typename T::const_iterator i_first = _in.begin();
             typename T::const_iterator const i_end = _in.end();
-            for(++i_first; i_first != i_end; ++i_first) _stream << ", " << *i_first;
-            return _stream;
+            for(++i_first; i_first != i_end; ++i_first) sstr << ", " << *i_first;
+            return sstr.str();
           }
     }
 

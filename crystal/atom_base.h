@@ -100,11 +100,8 @@ namespace LaDa
       return _stream << std::fixed << std::setprecision(5)
                      << std::setw(8) << _in.pos[0] << "  "
                      << std::setw(8) << _in.pos[1] << "  " 
-                     << std::setw(8) << _in.pos[2]
-                     << details::print_container(_stream, _in.type);
-//     stream << "  type: " << std::setw(16)
-//            << math::traits::Quantity< T_TYPE > :: print(type);
-//     return stream;
+                     << std::setw(8) << _in.pos[2] << "  "
+                     << details::print_container(_in.type);
     }
 
 

@@ -1,5 +1,5 @@
-#ifndef _ISING_CE_STRUCTURE_H_
-#define _ISING_CE_STRUCTURE_H_
+#ifndef LADA_CRYSTAL_STRUCTUREDATA_H
+#define LADA_CRYSTAL_STRUCTUREDATA_H
 
 #include "LaDaConfig.h"
 
@@ -16,15 +16,15 @@
 #endif
 
 #include "atom.h"
+#include "traits.h"
 #include "add_atom.h"
-
 
 namespace LaDa 
 {
   namespace crystal
   {
-    template<class TYPE> struct StructureData : 
-       public details::call_add_atom< StructureData<TYPE> >
+    template<class T_TYPE> struct StructureData : 
+       public details::call_add_atom<StructureData, T_TYPE>
     {
       friend class boost::serialization::access;
 #     ifdef LADA_WITH_LNS
@@ -51,13 +51,13 @@ namespace LaDa
           A2   = 292, //!< Freeze all coordinates 
         };
       };
-
-      //! The type of the collection of atoms. 
-      typedef std::vector< Atom<TYPE> > t_Atoms;
-      //! The type of the collection of atoms. 
-      typedef Atom<TYPE> value_type;
-      //! Type of the species
-      typedef TYPE t_Type;
+      
+      //! \typedef Type of the species
+      typedef typename traits::StructureData<T_TYPE>::t_Type t_Type;
+      //! \typedef The type of the collection of atoms. 
+      typedef typename traits::StructureData<T_TYPE>::t_Atom t_Atom;
+      //! \typedef The type of the collection of atoms. 
+      typedef typename traits::StructureData<T_TYPE>::t_Atoms t_Atoms;
 
       //! The unit-cell of the structure in cartesian coordinate.
       math::rMatrix3d cell;
@@ -94,11 +94,15 @@ namespace LaDa
       //! Initializer for cell.
       details::SetCell< boost::mpl::int_<1> > set_cell(math::rVector3d _pos)
         { return details::SetCell< boost::mpl::int_<0> >(cell)(_pos); }
+      //! Returns nth atom.
+      typename t_Atoms::reference operator[](size_t _n) { return atoms[_n]; }
+      //! Returns nth atom.
+      typename t_Atoms:: const_reference operator[](size_t _n) const { return atoms[_n]; }
     };
 
 #     ifdef LADA_WITH_LNS
-        template<class TYPE> template<class T_ARCHIVE>
-          bool StructureData<TYPE>::lns_access(T_ARCHIVE &_ar, load_n_save::version_type const _version) 
+        template<class T_TYPE> template<class T_ARCHIVE>
+          bool StructureData<T_TYPE>::lns_access(T_ARCHIVE &_ar, load_n_save::version_type const _version) 
           {
             namespace lns = LaDa :: load_n_save;
             namespace bf = boost::fusion;

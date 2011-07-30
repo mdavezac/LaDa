@@ -13,17 +13,17 @@ namespace LaDa
   namespace crystal
   {
     // Dummy declaration.
-    template<class TYPE> class TemplateStructure;
+    template<class T_TYPE> class TemplateStructure;
 
     //! Dumps structure to string.
     template< class T_TYPE >
       std::ostream& operator<<(std::ostream &_stream, TemplateStructure<T_TYPE> const &_str);
 
     //! Wraps around a shared pointer containing structure data.
-    template<class TYPE> class TemplateStructure :
-       public details::call_add_atom2< TemplateStructure<TYPE> >
+    template<class T_TYPE> class TemplateStructure :
+       public details::call_add_atom2<TemplateStructure, T_TYPE>
     {
-        friend class details::call_add_atom2<TemplateStructure, TYPE>;
+        friend class details::call_add_atom2<TemplateStructure, T_TYPE>;
         friend class boost::serialization::access;
 #       ifdef LADA_WITH_LNS
           friend class load_n_save::access;
@@ -31,33 +31,39 @@ namespace LaDa
         template<class T> friend
           std::ostream& operator<<(std::ostream &_stream, TemplateStructure<T> const &_str);
       public:
+        //! \typedef Type of the species
+        typedef typename traits::StructureData<T_TYPE>::t_Type t_Type;
+        //! \typedef The type of the collection of atoms. 
+        typedef typename traits::StructureData<T_TYPE>::t_Atom t_Atom;
+        //! \typedef The type of the collection of atoms. 
+        typedef typename traits::StructureData<T_TYPE>::t_Atoms t_Atoms;
         //! Namespace for the frozen dof.
-        typedef typename StructureData<TYPE> :: frozen frozen;
+        typedef typename StructureData<T_TYPE>::frozen frozen;
         //! Type of the iterator.
-        typedef typename StructureData<TYPE>::t_Atoms::iterator iterator;
+        typedef typename t_Atoms::iterator iterator;
         //! Type of the constant iterator.
-        typedef typename StructureData<TYPE>::t_Atoms::const_iterator const_iterator;
+        typedef typename t_Atoms::const_iterator const_iterator;
         //! Type of the reverse iterator.
-        typedef typename StructureData<TYPE>::t_Atoms::reverse_iterator reverse_iterator;
+        typedef typename t_Atoms::reverse_iterator reverse_iterator;
         //! Type of the reverse constant iterator.
-        typedef typename StructureData<TYPE>::t_Atoms::const_reverse_iterator const_reverse_iterator;
+        typedef typename t_Atoms::const_reverse_iterator const_reverse_iterator;
         //! Type of the atoms.
-        typedef typename StructureData<TYPE>::t_Atoms::value_type value_type;
+        typedef typename t_Atoms::value_type value_type;
         //! Type of the reference to the atoms.
-        typedef typename StructureData<TYPE>::t_Atoms::reference reference;
+        typedef typename t_Atoms::reference reference;
         //! Type of the constant reference to the atoms.
-        typedef typename StructureData<TYPE>::t_Atoms::const_reference const_reference;
+        typedef typename t_Atoms::const_reference const_reference;
         //! Type of the size.
-        typedef typename StructureData<TYPE>::t_Atoms::size_type size_type;
+        typedef typename t_Atoms::size_type size_type;
         //! Type of the differnce.
-        typedef typename StructureData<TYPE>::t_Atoms::difference_type difference_type;
+        typedef typename t_Atoms::difference_type difference_type;
         //! Type of the pointer to the atoms.
-        typedef typename StructureData<TYPE>::t_Atoms::pointer pointer;
+        typedef typename t_Atoms::pointer pointer;
         //! Type of the allocator used for the atoms.
-        typedef typename StructureData<TYPE>::t_Atoms::allocator_type allocator_type;
+        typedef typename t_Atoms::allocator_type allocator_type;
 
         //! Constructor
-        TemplateStructure() : impl_(new StructureData<TYPE>()) {};
+        TemplateStructure() : impl_(new StructureData<T_TYPE>()) {};
         //! Copy Constructor
         TemplateStructure(const TemplateStructure &_c) : impl_(_c.impl_) {}
         //! Destructor.
@@ -90,7 +96,7 @@ namespace LaDa
 
         //! Shallow copy, e.g. refers to same data.
         TemplateStructure clone() const
-          { return TemplateStructure(new StructureData<TYPE>(*impl_)); }
+          { return TemplateStructure(new StructureData<T_TYPE>(*impl_)); }
         //! Swaps content of two structures.
         void swap(TemplateStructure &_other) { impl_.swap(_other.impl_); }
 
@@ -174,6 +180,11 @@ namespace LaDa
         details::SetCell< boost::mpl::int_<1> > set_cell(math::rVector3d _pos)
           { return impl_->set_cell(_pos); }
 
+        //! Access to cell parameters
+        types::t_real operator()(size_t i, size_t j) const { return cell()(i,j); }
+        //! Access to cell parameters
+        types::t_real& operator()(size_t i, size_t j) { return cell()(i,j); }
+
       private:
         //! Serializes a structure.
         template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
@@ -184,7 +195,7 @@ namespace LaDa
           bool lns_access(T_ARCHIVE &_ar, load_n_save::version_type const _version);
 #     endif
         //! Holds data.
-        boost::shared_ptr< StructureData<TYPE> > impl_;
+        boost::shared_ptr< StructureData<T_TYPE> > impl_;
     };
 
     template< class T_TYPE >
@@ -192,13 +203,13 @@ namespace LaDa
         { return _stream << *_str.impl_; }
 
 #   ifdef LADA_WITH_LNS
-      template<class TYPE> template<class T_ARCHIVE>
+      template<class T_TYPE> template<class T_ARCHIVE>
         bool TemplateStructure :: lns_access(T_ARCHIVE &_ar, load_n_save::version_type const _version) 
         {
           if( _ar.is_loading() )
           {
-            boost::shared_ptr< StructureData<TYPE> > dummy(impl_);
-            impl_.reset(new StructureData<TYPE>());
+            boost::shared_ptr< StructureData<T_TYPE> > dummy(impl_);
+            impl_.reset(new StructureData<T_TYPE>());
           }
           return _ar & *impl_;
         }

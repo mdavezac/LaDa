@@ -11,11 +11,8 @@
 #include <boost/mpl/next.hpp>
 #include <boost/mpl/int.hpp>
 
-#define BOOST_ASSIGN_MAX_PARAMS 8
-#include <boost/assign/list_inserter.hpp>
-
-#include "atom.h"
 #include "is_container.h"
+#include "traits.h"
 
 namespace LaDa
 {
@@ -23,168 +20,134 @@ namespace LaDa
   {
     namespace details
     {
-      //! Allows easy structure initialization.
-      template<class T_TYPE, class ENABLE=void>  struct AddAtom;
-      //! Allows easy structure initialization for non-container types.
-      template<class T_TYPE>  
-        struct AddAtom<T_TYPE,
-           typename boost::disable_if< is_container<typename T_TYPE::t_Type> >::type >
-        {
-          //! type of the species.
-          typedef typename T_TYPE::t_Type specie_type;
-          //! Atom container.
-          std::vector<T_TYPE> &container_;
-          //! Constructor.
-          AddAtom(std::vector<T_TYPE> &_in) : container_(_in) {}
-          //! adder itself.
-          void operator()(types::t_real _x, types::t_real _y, types::t_real _z, specie_type const &_type)
-          { 
-            T_TYPE atom;
-            atom.pos[0] = _x; atom.pos[1] = _y; atom.pos[2] = _z; 
-            atom.type = _type;
-            container_.push_back(_type);
-          }
-          void operator()(T_TYPE const &_in) { container_.push_back(_in); }
-        };
-      //! Allows easy structure initialization.
-      template<class T_TYPE>  
-        struct AddAtom<T_TYPE, 
-           typename boost::enable_if< is_container<typename T_TYPE::t_Type> >::type >
-        {
-          //! type of the species.
-          typedef typename T_TYPE::t_Type specie_type;
-          //! Atom container.
-          std::vector<T_TYPE> &container_;
-          //! Constructor.
-          AddAtom(std::vector<T_TYPE> &_in) : container_(_in) {}
-#         ifdef LADA_TEXT
-#           error LADA_TEXT already defined
-#         endif
-#         ifdef LADA_OPERATOR
-#           error LADA_OPERATOR already defined
-#         endif
-#         define LADA_TEXT(z, n, text) atom.type.push_back(_t ## n);
-#         define LADA_OPERATOR(z, n, _)\
-            void operator()( types::t_real _x, types::t_real _y, types::t_real _z,      \
-                             BOOST_PP_ENUM_PARAMS(BOOST_PP_INC(n), specie_type const &_t) )  \
-            {                                                                           \
-              T_TYPE atom;                            \
-              atom.pos[0] = _x; atom.pos[1] = _y; atom.pos[2] = _z;                     \
-              BOOST_PP_REPEAT_ ## z(BOOST_PP_INC(n), LADA_TEXT, nil)                    \
-              container_.push_back(atom);                                               \
-            }
-          BOOST_PP_REPEAT(5, LADA_OPERATOR, nil)
-#         undef LADA_TEXT
-#         undef LADA_OPERATOR
-          void operator()(T_TYPE const &_in) { container_.push_back(_in); }
-        };
-
-      template<class T_DERIVED>
-        struct call_add_atom_base
-        {
-          typedef AddAtom<typename T_DERIVED::value_type> t_Add; 
-          boost::assign::list_inserter<t_Add>
-            add_atom(typename T_DERIVED::value_type const &_in)
-            {
-              namespace ba = boost::assign;
-              typename T_DERIVED::t_Atoms const &atoms =
-                static_cast<T_DERIVED*>(this)->atoms;
-              return ba::list_inserter<t_Add>(t_Add(atoms))(_in);
-            }
-        };
-
-      template<class T_DERIVED, class ENABLE=void> struct call_add_atom;
-      template<class T_DERIVED>
+#     ifdef LADA_TEXT
+#       error LADA_TEXT already defined
+#     endif
+#     ifdef LADA_OPERATOR
+#       error LADA_OPERATOR already defined
+#     endif
+      //! \brief Class to easily add an atom to a StructureData instance.
+      //! \details We want three different points.
+      //!            - We should be able to distinguish between structures
+      //!              where the type is a scalar and those where it is a container.
+      //!            - When considering scalar types, the structure should only
+      //!              contain add_atom functions with 4 arguments (3
+      //!              positions, 1 type). When considering a container type,
+      //!              the structure should contain multiple overloaded add_atoms functions.
+      //!            - add_atom should be member functions.
+      //!            .
+      //!          To deal with the first two points, eg scalar vs container
+      //!          issues, we use boost::enable_if to instantiate only the
+      //!          correct version of add_atom. To deal the third point, we
+      //!          incorporate the functions using the curriously recurring
+      //!          template idiom.
+      template<template <class> class T_DERIVED, class T_TYPE, class ENABLE=void> struct call_add_atom;
+      //! Specializatio for scalar types and StructureData.
+      template<template <class> class T_DERIVED, class T_TYPE> 
         struct call_add_atom<  
-                               T_DERIVED, 
-                               typename boost::disable_if
-                                 <is_container<typename T_DERIVED::t_Type> >::type
-                            > :  public call_add_atom_base<T_DERIVED>
+                               T_DERIVED, T_TYPE,
+                               typename boost::disable_if< is_container<T_TYPE> >::type
+                            > 
         {
-          typedef typename T_DERIVED::t_Type specie;
-//         typedef AddAtom<typename T_DERIVED::value_type> t_Add; 
-          // boost::assign::list_inserter<t_Add>
-          void add_atom( types::t_real _x, types::t_real _y, types::t_real _z, specie const &_t)
-            {}
-          //   namespace ba = boost::assign;
-          //   typename T_DERIVED::t_Atoms const &atoms =
-          //     static_cast<T_DERIVED*>(this)->atoms;
-          //   return ba::list_inserter<t_Add>(t_Add(atoms))(_x, _y, _z,_t);
-          // }
+          typedef typename traits::StructureData<T_TYPE>::t_Atom t_Atom;
+          call_add_atom& add_atom(types::t_real _x, types::t_real _y, types::t_real _z, T_TYPE const &_t)
+          {
+            t_Atom atom;
+            atom.pos[0] = _x; atom.pos[1] = _y; atom.pos[2] = _z; 
+            atom.type = _t;
+            static_cast<T_DERIVED<T_TYPE>*>(this)->atoms.push_back(atom);
+            return *this;
+          }
+          call_add_atom& add_atom(t_Atom const &_in)
+          {
+            static_cast<T_DERIVED<T_TYPE>*>(this)->atoms.push_back(_in);
+            return *this;
+          }
         };
-      template<class T_DERIVED>
+      //! Specializatio for container types and StructureData.
+      template<template<class> class T_DERIVED, class T_TYPE>
         struct call_add_atom<
-                               T_DERIVED, 
-                               typename boost::enable_if
-                                   <is_container<typename T_DERIVED::value_type::t_Type> >::type
-                            > :  public call_add_atom_base<T_DERIVED>
+                               T_DERIVED, T_TYPE,
+                               typename boost::enable_if< is_container<T_TYPE> >::type
+                            >
         {
-          typedef typename T_DERIVED::value_type::t_Type specie;
-          typedef AddAtom<typename T_DERIVED::value_type> t_Add; 
+          typedef typename traits::StructureData<T_TYPE>::t_Atom t_Atom;
+          typedef typename T_TYPE::value_type specie;
 #         define LADA_TEXT(z, n, text) atom.type.push_back(_t ## n);
 #         define LADA_OPERATOR(z, n, _)                                               \
-            boost::assign::list_inserter<t_Add> \
+            call_add_atom&                                                            \
               add_atom( types::t_real _x, types::t_real _y, types::t_real _z,         \
                         BOOST_PP_ENUM_PARAMS(BOOST_PP_INC(n), specie const &_t) )     \
               {                                                                       \
-                namespace ba = boost::assign;                                         \
-                typename T_DERIVED::t_Atoms const &atoms =                    \
-                  static_cast<T_DERIVED*>(this)->atoms;                       \
-                return ba::list_inserter<t_Add>(t_Add(atoms))   \
-                         ( _x, _y, _z,                                                \
-                           BOOST_PP_ENUM_PARAMS(BOOST_PP_INC(n), _t) );               \
+                t_Atom atom;                                                          \
+                atom.pos[0] = _x; atom.pos[1] = _y; atom.pos[2] = _z;                 \
+                BOOST_PP_REPEAT_ ## z(BOOST_PP_INC(n), LADA_TEXT, nil)                \
+                static_cast<T_DERIVED<T_TYPE>*>(this)->atoms.push_back(atom);         \
+                return *this;                                                         \
               }
           BOOST_PP_REPEAT(5, LADA_OPERATOR, nil)
 #         undef LADA_TEXT
 #         undef LADA_OPERATOR
+          call_add_atom& add_atom(t_Atom const &_in)
+          {
+            static_cast<T_DERIVED<T_TYPE>*>(this)->atoms.push_back(_in);
+            return *this;
+          }
         };
 
-      template<class T_DERIVED> struct call_add_atom2_base
-      {
-        typedef AddAtom<typename T_DERIVED::value_type> t_Add; 
-        boost::assign::list_inserter<t_Add>
-          add_atom(typename T_DERIVED::value_type const &_in)
-            { return static_cast<T_DERIVED*>(this)->impl_->add_atom(_in); }
-      };
-      template<class T_DERIVED, class ENABLE=void> struct call_add_atom2;
-      template<class T_DERIVED>
-        struct call_add_atom2< 
-                                T_DERIVED,
-                                typename boost::disable_if
-                                   < is_container<typename T_DERIVED::value_type::t_Type> >::type
-                             > : public call_add_atom2_base<T_DERIVED>
+      //! Replicates class call_add_atom for TemplateStructure.
+      template<template <class> class T_DERIVED, class T_TYPE, class ENABLE=void> struct call_add_atom2;
+      //! Specializatio for scalar types and TemplateStructure.
+      template<template <class> class T_DERIVED, class T_TYPE> 
+        struct call_add_atom2<  
+                                T_DERIVED, T_TYPE,
+                                typename boost::disable_if< is_container<T_TYPE> >::type
+                             > 
         {
-          //! type of the species.
-          typedef typename T_DERIVED::value_type::t_Type specie;
-          typedef AddAtom<typename T_DERIVED::value_type> t_Add; 
-          boost::assign::list_inserter<t_Add>
-            add_atom( types::t_real _x, types::t_real _y, types::t_real _z, specie const &_t)
-              { return static_cast<T_DERIVED*>(this)->impl_->add_atom(_x, _y, _z, _t); }
+          typedef typename traits::StructureData<T_TYPE>::t_Atom t_Atom;
+          call_add_atom2& add_atom( types::t_real _x, types::t_real _y, types::t_real _z,
+                                    T_TYPE const &_t )
+          {
+            static_cast<T_DERIVED<T_TYPE>*>(this)->impl_->add_atom(_x, _y, _z, _t);
+            return *this;
+          }
+          call_add_atom2& add_atom(t_Atom const &_in)
+          {
+            static_cast<T_DERIVED<T_TYPE>*>(this)->impl_->add_atom(_in);
+            return *this;
+          }
         };
-      template<class T_DERIVED>
+      //! Specializatio for container types and TemplateStructure.
+      template<template<class> class T_DERIVED, class T_TYPE>
         struct call_add_atom2<
-                                T_DERIVED, 
-                                typename boost::enable_if
-                                   < is_container<typename T_DERIVED::value_type::t_Type> >::type
-                             > : public call_add_atom2_base<T_DERIVED>
+                                T_DERIVED, T_TYPE,
+                                typename boost::enable_if< is_container<T_TYPE> >::type
+                             >
         {
-          //! type of the species.
-          typedef typename T_DERIVED::value_type::t_Type specie;
-          typedef AddAtom<typename T_DERIVED::value_type> t_Add; 
+          typedef typename traits::StructureData<T_TYPE>::t_Atom t_Atom;
+          typedef call_add_atom2<T_DERIVED, T_TYPE> &t_Return;
+          typedef typename T_TYPE::value_type specie;
 #         define LADA_TEXT(z, n, text) atom.type.push_back(_t ## n);
-#         define LADA_OPERATOR(z, n, _)                                                 \
-            boost::assign::list_inserter<t_Add> \
-              add_atom( types::t_real _x, types::t_real _y, types::t_real _z,           \
-                        BOOST_PP_ENUM_PARAMS(BOOST_PP_INC(n), specie const &_t) )      \
-              {                                                                         \
-                return static_cast<T_DERIVED*>(this)->impl_                     \
-                   ->add_atom(_x, _y, _z, BOOST_PP_ENUM_PARAMS(BOOST_PP_INC(n), _t));   \
+#         define LADA_OPERATOR(z, n, _)                                                  \
+            t_Return add_atom( types::t_real _x, types::t_real _y, types::t_real _z,     \
+                               BOOST_PP_ENUM_PARAMS(BOOST_PP_INC(n), specie const &_t) ) \
+              {                                                                          \
+                static_cast<T_DERIVED<T_TYPE>*>(this)->                                  \
+                  impl_->add_atom( _x, _y, _z,                                           \
+                                   BOOST_PP_ENUM_PARAMS(BOOST_PP_INC(n), _t) );          \
+                return *this;                                                            \
               }
           BOOST_PP_REPEAT(5, LADA_OPERATOR, nil)
 #         undef LADA_TEXT
 #         undef LADA_OPERATOR
+          t_Return add_atom(t_Atom const &_in)
+          {
+            static_cast<T_DERIVED<T_TYPE>*>(this)->impl_->add_atom(_in);
+            return *this;
+          }
         };
-       
+
+      //! Easily sets the cell parameters of a StructureData and TemplateData.
       template<class D = boost::mpl::int_<0> >
         class SetCell
         {
@@ -209,6 +172,9 @@ namespace LaDa
           private:
             math::rMatrix3d &cell_;
         };
+      //! \brief Easily sets the cell parameters of a StructureData and TemplateData.
+      //! \details This one returns void, so that only three instances of
+      //!          SetCell can be called.
       template<> class SetCell< boost::mpl::int_<2> >
       {
         public:
