@@ -1,4 +1,4 @@
-set(TYPES  0 1 2)
+set(TYPES  0 1 2 3)
 set(STRS StructureData TemplateStructure)
 foreach(STR ${STRS})
   foreach(TYPE ${TYPES})

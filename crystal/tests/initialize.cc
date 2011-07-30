@@ -18,6 +18,8 @@ int main()
     LADA_TEST_STRUCTURE< std::vector<std::string> > structure;
 # elif LADA_TEST_INCTYPE == 2
     LADA_TEST_STRUCTURE<int> structure;
+# elif LADA_TEST_INCTYPE == 3
+    LADA_TEST_STRUCTURE< std::vector<int> > structure;
 # endif
   structure.set_cell(-0.5,0.5,0.5)
                     (0.5,-0.5,0.5)
@@ -31,6 +33,9 @@ int main()
 # elif LADA_TEST_INCTYPE == 2
     structure.add_atom(0,0,0, 1);
     structure.add_atom(0.25,0.25,0.25, 15);
+# elif LADA_TEST_INCTYPE == 3
+    structure.add_atom(0,0,0, 1);
+    structure.add_atom(0.25,0.25,0.25, -2, 15);
 # endif
   for(size_t i(0); i < 3; ++i)
   {
@@ -52,6 +57,12 @@ int main()
 # elif LADA_TEST_INCTYPE == 2
     LADA_DOASSERT(structure[0].type == 1, "structure atom data incorrect.");
     LADA_DOASSERT(structure[1].type == 15, "structure atom data incorrect.");
+# elif LADA_TEST_INCTYPE == 3
+    LADA_DOASSERT(structure[0].type.size() == 1, "structure atom data incorrect.");
+    LADA_DOASSERT(structure[0].type[0] == 1, "structure atom data incorrect.");
+    LADA_DOASSERT(structure[1].type.size() == 2, "structure atom data incorrect.");
+    LADA_DOASSERT(structure[1].type[0] == -2, "structure atom data incorrect.");
+    LADA_DOASSERT(structure[1].type[1] == 15, "structure atom data incorrect.");
 # endif
   return 0;
 }
