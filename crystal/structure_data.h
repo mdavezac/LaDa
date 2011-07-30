@@ -98,6 +98,10 @@ namespace LaDa
       typename t_Atoms::reference operator[](size_t _n) { return atoms[_n]; }
       //! Returns nth atom.
       typename t_Atoms:: const_reference operator[](size_t _n) const { return atoms[_n]; }
+      //! Access to cell parameters
+      types::t_real operator()(size_t i, size_t j) const { return cell(i,j); }
+      //! Access to cell parameters
+      types::t_real& operator()(size_t i, size_t j) { return cell(i,j); }
     };
 
 #     ifdef LADA_WITH_LNS
