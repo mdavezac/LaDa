@@ -10,9 +10,7 @@
 #include "../xml/parser.h"
 #include "../xml/printer.h"
 #include "../save/save.h"
-#include "../action/enum.h"
 #include "../exceptions.h"
-#include "../action/fusion.h"
 
 #include "math/serialize.h"
 

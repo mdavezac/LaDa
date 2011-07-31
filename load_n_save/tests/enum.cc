@@ -51,11 +51,8 @@ namespace here
           freeze_map["y"]         = frozen::Y;
           freeze_map["z"]         = frozen::Z;
           freeze_map["t"]         = frozen::T;
-          if(_ar.is_loading())
-          {
-            freeze_map["cartesian"] = frozen::CARTESIANS;
-            freeze_map["all"]       = frozen::ALL;
-          }
+          freeze_map["cartesian"] = frozen::CARTESIANS;
+          freeze_map["all"]       = frozen::ALL;
           return _ar & lns::section("A") 
                           << lns::option( "i",
                                           lns::action=lns::enum_(i, freeze_map, inclusive),
@@ -73,10 +70,21 @@ int main(int argc, char *argv[])
   lns::load::Load loader;
   bool result;
 
+  a.i = here::frozen::X|here::frozen::Y|here::frozen::Z;
   boost::shared_ptr< lns::tree::Base > other(saver(lns::ext(a)));
   std::ostringstream sstr;
   lns::xml::print(sstr, *other);
   std::string xmlstring = sstr.str();
+  boost::algorithm::erase_all(xmlstring, "\n");
+  boost::algorithm::trim(xmlstring);
+  std::cout << xmlstring << "\n";
+  LADA_DOASSERT(xmlstring == "<A i=\"cartesian\"/>", "Error in output.");
+
+  a.i = here::frozen::X|here::frozen::Y;
+  other = saver(lns::ext(a));
+  std::ostringstream sstr2;
+  lns::xml::print(sstr2, *other);
+  xmlstring = sstr2.str();
   boost::algorithm::erase_all(xmlstring, "\n");
   boost::algorithm::trim(xmlstring);
   LADA_DOASSERT(xmlstring == "<A i=\"xy\"/>", "Error in output.");

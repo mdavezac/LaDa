@@ -3,9 +3,19 @@
 
 #include "LaDaConfig.h"
 
+#include <cmath>
 #include <map>
+#include <algorithm>
+#include <iterator>
+#include <utility>
+
 #include <boost/xpressive/regex_compiler.hpp>
 #include <boost/xpressive/regex_algorithms.hpp>
+#include <boost/phoenix/bind/bind_member_variable.hpp>
+#include <boost/phoenix/bind/bind_function.hpp>
+#include <boost/phoenix/operator/comparision.hpp>
+#include <boost/phoenix/core/argument.hpp>
+
 #include "../string_type.h"
 #include "action_base.h"
 
@@ -47,9 +57,19 @@ namespace LaDa
                 { var_ = _default; return true; }
 
             //! Prints a value
-            virtual t_String str() const;
+            virtual t_String str() const
+              { return str(typename boost::is_unsigned<T_TYPE>::type()); }
      
           protected:
+            //! \brief specialization for unsigned integers.
+            //! \details Makes sure that in the case of inclusive variables, we
+            //!          start from the smallest and end up with the largest
+            //!          integer.  This way, compound statements can be
+            //!          correctly detected, X|Y == "xy", whithout also
+            //!          including compound statements such as "all" if "all" == "xyz". 
+            t_String str(boost::mpl::bool_<true>) const;
+            //! general case
+            t_String str(boost::mpl::bool_<false>) const;
             //! Holds reference to variable.
             T_TYPE &var_;
             //! Holds a constant reference to the map.
@@ -94,7 +114,7 @@ namespace LaDa
         }
 
       template<class T_TYPE>
-        t_String Enum<T_TYPE>::str() const
+        t_String Enum<T_TYPE>::str(boost::mpl::bool_<false>) const
         {
           typename t_map::const_iterator i_first = map_.begin();
           typename t_map::const_iterator const i_end = map_.end();
@@ -105,13 +125,52 @@ namespace LaDa
           if(not inclusive_)
             BOOST_THROW_EXCEPTION( error::enum_transcript_error() 
                                        << error::option_name("Cannot parse enum input.") );
-          // otherwise, makes a compound statement from values in 2^n.
           t_String result;
           for(i_first = map_.begin(); i_first != i_end; ++i_first)
             if(var_ & i_first->second) result += i_first->first;
           return result;
         }
-     
+
+      template<class T_TYPE>
+        t_String Enum<T_TYPE>::str(boost::mpl::bool_<true>) const
+        {
+          namespace bp = boost::phoenix;
+          namespace bpp = boost::phoenix::placeholders;
+          typename t_map::const_iterator i_first = map_.begin();
+          typename t_map::const_iterator const i_end = map_.end();
+          T_TYPE var(var_);
+          if( i_first == i_end ) return "";
+
+          // first checks that one variable does not fit the value.
+          for(; i_first != i_end; ++i_first)
+            if(var == i_first->second) return i_first->first;
+          if(not inclusive_)
+            BOOST_THROW_EXCEPTION( error::enum_transcript_error() 
+                                       << error::option_name("Cannot parse enum input.") );
+
+          // Sort key-values according to absolute value of the value.
+          typedef typename std::pair<typename t_map::key_type, typename t_map::mapped_type> vt;
+          std::vector<vt> sorted(map_.size());
+          typename std::vector<vt>::iterator i_sorted = sorted.begin();
+          typename std::vector<vt>::iterator i_sorted_end = sorted.begin();
+          for(i_first = map_.begin(); i_first != i_end; ++i_first, ++i_sorted)
+          {
+            i_sorted->first = i_first->first;
+            i_sorted->second = i_first->second;
+          }
+          std::sort( sorted.begin(), sorted.end(),
+                     bp::bind(&vt::second, bpp::arg1) < bp::bind(&vt::second, bpp::arg2) );
+          t_String result("");
+          i_sorted = sorted.begin();
+          i_sorted_end = sorted.end();
+          for(; i_sorted != i_sorted_end; ++i_sorted)
+            if(var & i_sorted->second)
+            {
+              var -= i_sorted->second;
+              result += i_sorted->first;
+            }
+          return result;
+        }
     } // namespace action.
     
     //! Returns an Enum action.
