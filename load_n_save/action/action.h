@@ -184,6 +184,34 @@ namespace LaDa
             T_ACTION const &action_;
         };
 
+      //! \brief Class for id-type actions.
+      //! \details This action makes sure that an id is an id.
+      class IdAction : public ActionBase
+      {
+        public:
+          //! Type the action holds.
+          typedef t_String t_Type;
+     
+          //! Constructor.
+          IdAction(t_String const &_var) : variable_(_var) {}
+          //! Copy constructor.
+          IdAction(IdAction const &_c) : variable_(_c.variable_) {}
+          //! Virtual destructor.
+          virtual ~IdAction() {};
+          //! Parses a value to the action.
+          virtual bool operator()( t_String const& _str ) const { return true; }
+          //! Parses a value to the action.
+          virtual t_String operator()() const { return variable_; }
+          //! Puts default value into action.
+          virtual bool assign_default() const { return false; }
+          //! Prints to string.
+          virtual t_String str() const { return variable_; }
+     
+        private:
+          //! Variable the action holds.
+          t_String variable_;
+      };
+
       namespace details
       {
          template<class T> struct dummy { typedef boost::mpl::bool_<false> type; };

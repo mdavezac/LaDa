@@ -6,6 +6,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/type_traits/remove_const.hpp>
 
+#include "../tags.h"
 #include "../access.h"
 #include "../string_type.h"
 #include "../parser_base.h"
@@ -22,7 +23,7 @@ namespace LaDa
         //! Name of the section.
         t_String name;
         //! Tags of the section.
-        size_t tag;
+        tags tag;
         //! Help of the section.
         t_String help;
       };
@@ -40,6 +41,8 @@ namespace LaDa
             //! Parsing double dispatch.
             virtual bool parse( parser_base::Section const&,
                                 T_SECTION const& _sec, version_type _version ) const = 0;
+            //! Returns tag of this section.
+            virtual tags tag() const { return unavailable; }
           };
 
         //! Holds section data.
@@ -122,6 +125,8 @@ namespace LaDa
               virtual bool parse( parser_base::Section const& _parser,
                                   T_SECTION const &this_, version_type ) const
                 { return _parser.regular(this_, data_); }
+              //! Returns tag of this section.
+              tags tag() const { return data_.tag; }
             private:
               //! The data itself
               regular_data data_;

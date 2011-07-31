@@ -102,8 +102,10 @@ namespace LaDa
           // first checks that one variable does not fit the value.
           for(; i_first != i_end; ++i_first)
             if(var_ == i_first->second) return i_first->first;
-          LADA_DOASSERT(not inclusive_, "Unknown value.");
-          // otherwise, makes a compound statement.
+          if(not inclusive_)
+            BOOST_THROW_EXCEPTION( error::enum_transcript_error() 
+                                       << error::option_name("Cannot parse enum input.") );
+          // otherwise, makes a compound statement from values in 2^n.
           t_String result;
           for(i_first = map_.begin(); i_first != i_end; ++i_first)
             if(var_ & i_first->second) result += i_first->first;

@@ -13,6 +13,7 @@
 #include <math/eigen.h>
 #ifdef LADA_WITH_LNS
 # include <load_n_save/lns.h>
+# include "load_n_save/action/fusion.h"
 #endif
 
 #include "atom.h"

@@ -1,9 +1,5 @@
-//
-//  Version: $Id: tags.h 1250 2009-07-26 21:04:07Z davezac $
-//
-
-#ifndef _LADA_LNS_TAGS_H_
-#define _LADA_LNS_TAGS_H_
+#ifndef LADA_LNS_TAGS_H
+#define LADA_LNS_TAGS_H
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -15,8 +11,10 @@ namespace LaDa
   {
     enum tags
     {
-      required = 1, //!< Required by a section.
-      id       = 2  //!< Helps identify a section. Options only.
+      unavailable = -1, //!< Reserved.
+      optional    =  0, //!< Optional section or option.
+      required    =  1, //!< Required section or option.
+      idoption    =  2  //!< Helps identify a section. Options only.
     };
   };
 } // namespace LaDa

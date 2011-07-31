@@ -45,7 +45,11 @@ namespace LaDa
           bool operator()( tree::Section const& _tree, 
                            xpr::Section const& _sec, 
                            version_type _version = 0u ) const;
-     
+          //! Starts parsing. Does not catch errors.
+          bool nocatch( tree::Base const& _tree,
+                        xpr::Section const& _sec, 
+                        version_type _version = 0u ) const;
+          
           //! Loads an archive.
           virtual bool is_loading() const { return true; } 
       };

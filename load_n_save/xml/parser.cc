@@ -9,6 +9,7 @@
 #include <boost/xpressive/regex_algorithms.hpp>
 
 #include "../tree/tree.h"
+#include "../exceptions.h"
 
 #include "parser.h"
 #include "tags.h"
@@ -47,10 +48,15 @@ namespace LaDa
           { 
             if( _tags & tags::VALIDATE )
             {
+              std::ostringstream sstr;
               size_t const l( _line + std::count( ofirst, _first, '\n' ) );
-              std::cerr << "Could not parse options in " << _tag_name << ", line " << l << ":\n";
-              std::for_each( _first, _last, std::cerr << boost::lambda::_1 );
-              std::cerr << "\n";
+              std::for_each( _first, _last, sstr << boost::lambda::_1 );
+              BOOST_THROW_EXCEPTION
+              ( 
+                 error::unparsable_option() << error::section_name(_tag_name) 
+                                            << error::option_name(sstr.str())
+                                            << error::line_number(l) 
+              );
             }
             result = false;
             break;
@@ -59,8 +65,11 @@ namespace LaDa
               and (not bx::regex_match( match.prefix().first, match.prefix().second, empty)) )
           {
             size_t const l( _line + std::count( ofirst, match.prefix().first, '\n' ) );
-            std::cerr << "Unexpected text in tag " << _tag_name << ", line " << l << ":\n" 
-                      << match.prefix().str() << "\n";
+            BOOST_THROW_EXCEPTION
+            ( 
+               error::no_end_tag() << error::section_name(_tag_name) 
+                                   << error::line_number(l) 
+            );
             result = false;
           }
  
@@ -98,7 +107,10 @@ namespace LaDa
           {
             if( not ( _tags & tags::VALIDATE ) ) break;
             size_t const l( _line + std::count( ofirst, _first, '\n' ) );
-            std::cerr << "Could not find xml tag beyond line " << l << ".\n";
+            BOOST_THROW_EXCEPTION
+            ( 
+               error::no_xml_tag() << error::line_number(l) 
+            );
             result = false;
             break;
           }
@@ -107,9 +119,23 @@ namespace LaDa
           {
             size_t const l1( _line + std::count( ofirst, match.prefix().first, '\n' ) );
             size_t const l2( _line + std::count( ofirst, match.prefix().second, '\n' ) );
-            if( l1 == l2 ) std::cerr << "Unknown input on line " << l1 << ".\n";
-            else std::cerr << "Unknown input on lines " << l1  << " to " << l2 << ".\n";
-            std::cerr << match.prefix().str() << "\n";
+            if( l1 == l2 )
+            { 
+              BOOST_THROW_EXCEPTION
+              ( 
+                error::no_xml_tag() << error::line_number(l1)
+                                    << error::section_name(match.prefix().str()) 
+              );
+            } 
+            else 
+            { 
+              BOOST_THROW_EXCEPTION
+              ( 
+                error::no_xml_tag() << error::line_number(l1)
+                                    << error::line_number(l2)
+                                    << error::section_name(match.prefix().str()) 
+              );
+            } 
             result = false;
           }
           std::string const tag_name( match[1].str() );
@@ -120,7 +146,11 @@ namespace LaDa
           {
             if( not ( _tags & tags::VALIDATE ) ) break;
             size_t const l( _line + std::count( ofirst, tag_begin, '\n' ) );
-            std::cerr << "Could not find end of tag " << tag_name << " on line " << l << ".\n";
+            BOOST_THROW_EXCEPTION
+            ( 
+              error::no_end_tag() << error::line_number(l)
+                                  << error::section_name(tag_name)
+            );
             result = false;
             break;
           }
@@ -148,7 +178,11 @@ namespace LaDa
           {
             if( not (_tags & tags::VALIDATE) ) continue;
             size_t const l( _line + std::count( ofirst, tag_begin, '\n' ) );
-            std::cerr << "Could not find end of tag " << tag_name << " on line " << l << ".\n";
+            BOOST_THROW_EXCEPTION
+            ( 
+              error::no_end_tag() << error::line_number(l)
+                                  << error::section_name(tag_name)
+            );
             result = false;
             _first = tag_end + 1;
             continue;

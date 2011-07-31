@@ -11,8 +11,7 @@
 #   include <boost/type_traits/remove_const.hpp>
 #   include <boost/type_traits/remove_reference.hpp>
     
-#   include<boost/tokenizer.hpp>
-    
+#   include<boost/algorithm/string/split.hpp>
     
 #   include <boost/fusion/algorithm/iteration/for_each.hpp>
 #   include <boost/fusion/algorithm/iteration/accumulate.hpp>
@@ -131,9 +130,12 @@
           static bool apply( t_String const& _string, t_type &_value )
           {
             namespace bf = boost::fusion;
-            boost::tokenizer<> tok(_string);
-            boost::tokenizer<>::iterator i_first = tok.begin();
-            boost::tokenizer<>::iterator i_last = tok.end();
+            namespace ba = boost::algorithm;
+            std::vector<std::string> splitted;
+            ba::split(splitted, _string, ba::is_any_of(" "), ba::token_compress_on);
+            std::vector<std::string>::const_iterator i_first = splitted.begin();
+            std::vector<std::string>::const_iterator const i_last = splitted.end();
+            i_first = splitted.begin();
             typedef typename bf::result_of::begin<t_type>::type t_ifirst;
             typedef typename bf::result_of::end<t_type>::type t_ilast;
             typedef typename bf::result_of::equal_to<t_ifirst, t_ilast>::type t_test;

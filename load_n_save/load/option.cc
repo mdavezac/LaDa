@@ -37,7 +37,7 @@ namespace LaDa
           break;
         } 
 
-        bool const is_id( _op.tag & load_n_save::id );
+        bool const is_id( _op.tag & load_n_save::idoption );
         bool const is_required( _op.tag & load_n_save::required );
         if( found )
         {
@@ -49,13 +49,13 @@ namespace LaDa
             );
           return not parse_error;
         }
-        if( is_required and not grammar_only_ )
+        if( is_required )
           BOOST_THROW_EXCEPTION
           ( 
              error::required_option_not_found() << error::option_name(_op.name)
                                                 << error::section_name(_name) 
           );
-        else if(is_required) return false;
+//       else if(is_required) return false;
         if( is_id ) return false;
 
         // assigns default value if it exits.

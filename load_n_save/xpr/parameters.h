@@ -64,6 +64,17 @@ namespace LaDa
             details::assigned_parameter<T_TAG, T_TYPE&> operator=( T_TYPE& _type ) const
               { details::assigned_parameter<T_TAG, T_TYPE&> result = { _type }; return result; }
         };
+      template<class T_TAG>
+        struct parameter<T_TAG, load_n_save::tags>
+        {
+          typedef T_TAG t_Tag;
+          template<class T_TYPE>
+            details::assigned_parameter<T_TAG, T_TYPE const&> operator=( T_TYPE const& _type ) const
+              { details::assigned_parameter<T_TAG, T_TYPE const&> result = { _type }; return result; }
+          template<class T_TYPE>
+            details::assigned_parameter<T_TAG, T_TYPE&> operator=( T_TYPE& _type ) const
+              { details::assigned_parameter<T_TAG, T_TYPE&> result = { _type }; return result; }
+        };
 
       namespace details
       {

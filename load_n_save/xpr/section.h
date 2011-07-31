@@ -219,6 +219,9 @@ namespace LaDa
           //! Returns reference to sequencer list.
           sequencer::Binary& sequence() const { return *impl_->sequence_; }
 
+          //! Returns tag.
+          tags tag() const { return impl_->data_->tag(); }
+
         private:
           //! Handle to the body.
           t_Tracking impl_;

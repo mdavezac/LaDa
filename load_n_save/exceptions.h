@@ -19,6 +19,11 @@ namespace LaDa
       //! Internal error.
       struct internal: virtual boost::exception, virtual std::exception {};
 
+      //! Thrown when a section is explicitely given an invalid tag.
+      struct invalid_section_tag : virtual internal {};
+      //! Thrown when an option is explicitely given an invalid tag.
+      struct invalid_option_tag : virtual internal {};
+
       //! Root of section exceptions.
       struct section: virtual boost::exception, virtual std::exception {};
       //! Thrown when a required section is not found.
@@ -38,11 +43,26 @@ namespace LaDa
       struct required_option_not_found: virtual option_not_found {}; 
       //! Thrown when parsing did not succeed.
       struct option_parse_error: virtual option {};
+      //! Thrown when parsing did not succeed.
+      struct enum_transcript_error: virtual option_parse_error {};
+
+      //! Root of excepetions when parsing xml strings.
+      struct parser_error : virtual boost::exception, virtual std::exception {};
+      //! Thrown when end of tag cannot be found.
+      struct no_end_tag : virtual parser_error {};
+      //! Thrown when option cannot be parsed.
+      struct unparsable_option : virtual parser_error {};
+      //! Thrown when no xml tag is found beyond a given line.
+      struct no_xml_tag : virtual parser_error {};
+      //! Thrown when input cannot be parsed.
+      struct unparsable_text : virtual parser_error {};
 
       //! Name of the section
       typedef boost::error_info<struct lns_sec_name,std::string> section_name;
       //! Name of the section
       typedef boost::error_info<struct lns_op_name,std::string> option_name;
+      //! Line number.
+      typedef boost::error_info<struct lns_line_number, size_t> line_number;
     }
   }
 }

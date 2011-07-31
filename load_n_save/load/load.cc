@@ -12,14 +12,20 @@ namespace LaDa
   {
     namespace load
     {
-      bool Load::operator()( tree::Base const& _tree,
-                             xpr::Section const& _sec,
-                             version_type _version ) const
+      bool Load::nocatch( tree::Base const& _tree,
+                          xpr::Section const& _sec,
+                          version_type _version ) const
       {
         tree::Base base(_tree);
         tree::Section text("");
         text.tree::Base::swap(base);
-        try { return Section(text, verbose, _version)(_sec); }
+        return Section(text, verbose, _version)(_sec);
+      }
+      bool Load::operator()( tree::Base const& _tree,
+                             xpr::Section const& _sec,
+                             version_type _version ) const
+      {
+        try { return nocatch(_tree, _sec, _version); }
         catch(error::internal &_e)
         {
           std::cerr << "Caught internal error:\n" << boost::diagnostic_information(_e);

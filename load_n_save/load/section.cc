@@ -27,10 +27,10 @@ namespace LaDa
         struct content_impl
         {
           typedef std::pair<bool, bool> t_ReturnId;
-          t_ReturnId static id( Load::Section const& _self,
+          t_ReturnId static parseid( Load::Section const& _self,
                                 OpAndRange const&_range,
                                 t_String const &_name );
-          t_ReturnId static id2( Load::Section const& _self, 
+          t_ReturnId static parseid2( Load::Section const& _self, 
                                  OpAndRange const &_range,
                                  t_String const &_name);
           bool static content( Load::Section const& _self, OpAndRange const&_range, 
@@ -94,7 +94,7 @@ namespace LaDa
         {
           if(_data.tag & load_n_save::required)
             BOOST_THROW_EXCEPTION(error::required_section_not_found() << error::section_name(_data.name));
-          BOOST_THROW_EXCEPTION(error::section_not_found() << error::section_name(_data.name));
+          return false;
         }
 
         // parses section.
@@ -117,7 +117,7 @@ namespace LaDa
           _sec.options_begin(), _sec.options_end() 
         );
 
-        details::content_impl::t_ReturnId found = details::content_impl::id( *this, range, _name );
+        details::content_impl::t_ReturnId found = details::content_impl::parseid( *this, range, _name );
         if( found.first or (not found.second) ) return true;
         return false;
       }
@@ -131,12 +131,21 @@ namespace LaDa
         {
           bool found = false;
           OpAndRange range(_range);
+          bool caught_required_option = false;
+          bool caught_required_section = false;
+          error::required_option_not_found errop;
+          error::required_section_not_found errsec;
           for(; (bool)range; ++range )
           {
             try { found = content2(_self, range, _name, true); }
-            catch(error::required_option_not_found &_e) { continue; }
+            catch(error::required_option_not_found &_e)
+              { errop = _e; caught_required_option=true; continue; }
+            catch(error::required_section_not_found &_e)
+              { errsec = _e; caught_required_section=true; continue; }
             if(found) break; // don't want to go through loop and incrementation.
           }
+          if(caught_required_section and not found) BOOST_THROW_EXCEPTION(errsec);
+          if(caught_required_option and not found) BOOST_THROW_EXCEPTION(errop);
 
           // not found, or not parsing now.
           if( (not found) or _grammar_only ) return found;
@@ -155,7 +164,12 @@ namespace LaDa
             {
               Load::Section section(_self);
               section.grammar_only_ = _grammar_only;
-              if( not i_first.first()->parse(section, section.version_) ) return false;
+              if( i_first.first()->parse(section, section.version_) ) continue;
+              if( i_first.first()->tag() & load_n_save::required and (not _grammar_only) )
+                BOOST_THROW_EXCEPTION
+                (
+                  error::required_section_not_found() << error::section_name(_name)
+                );
             }
             else if( i_first.is_second() )
             {
@@ -183,7 +197,7 @@ namespace LaDa
           return  not error;
         }
 
-        content_impl::t_ReturnId content_impl::id( Load::Section const& _self,
+        content_impl::t_ReturnId content_impl::parseid( Load::Section const& _self,
                                                    OpAndRange const &_range,
                                                    t_String const &_name )
         {
@@ -192,7 +206,7 @@ namespace LaDa
           OpAndRange range(_range);
           for(; (bool)range; ++range )
           {
-            found = id2(_self, range, _name);
+            found = parseid2(_self, range, _name);
             if( found.first and found.second ) return found;
             if( not found.second ) possible_noid = true;
           }
@@ -200,7 +214,7 @@ namespace LaDa
           return found;
         };
 
-        content_impl::t_ReturnId content_impl::id2( Load::Section const& _self,
+        content_impl::t_ReturnId content_impl::parseid2( Load::Section const& _self,
                                                     OpAndRange const &_range, 
                                                     t_String const &_name) 
         {
@@ -210,7 +224,7 @@ namespace LaDa
           for(; i_first != i_end; ++i_first )
             if( i_first.is_second() )
             {
-              if( not (i_first.second()->tag & load_n_save::id) ) continue;
+              if( not (i_first.second()->tag & load_n_save::idoption) ) continue;
               has_id = true;
               Load::Option option(_self); option.grammar_only_ = true;
               bool const found = option(_name, *i_first.second() );
@@ -220,7 +234,7 @@ namespace LaDa
             { 
               OpAndRange::value_type i_group(_range.first);
               find_group_end( i_group, i_end );
-              t_ReturnId const found = id( _self, OpAndRange(++i_first, i_group), _name );
+              t_ReturnId const found = parseid( _self, OpAndRange(++i_first, i_group), _name );
 
               if( (not found.first) and found.second ) return t_ReturnId(false, true);
 

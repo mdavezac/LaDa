@@ -7,6 +7,7 @@
 
 #include "../string_type.h"
 #include "../action/action.h"
+#include "../tags.h"
 
 namespace LaDa 
 {
@@ -27,7 +28,7 @@ namespace LaDa
 
           //! Constructor.
           Option   ( const t_String _name = "" )
-                 : name(_name), tag(0), help(""), action_() {}
+                 : name(_name), tag(optional), help(""), action_() {}
           //! Copy Constructor.
           Option   ( Option const& _c )
                  : name(_c.name), tag(_c.tag), help(_c.help), action_(_c.action_) {}
@@ -53,6 +54,9 @@ namespace LaDa
           //! Deletes action.
           void set_action( boost::mpl::false_, boost::mpl::false_ )
             { boost::shared_ptr<action_::ActionBase>().swap( action_ ); }
+          //! Deletes action.
+          void set_action(action_::IdAction const &_action)
+            { action_.reset( new action_::IdAction(_action) ); }
         protected:
           //! Action.
           boost::shared_ptr<action_::ActionBase> action_;

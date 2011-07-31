@@ -4,6 +4,8 @@
 
 #   include "LaDaConfig.h"
 
+#   include <sstream>
+
 #   include <boost/preprocessor/iteration/iterate.hpp>
 #   include <boost/preprocessor/repetition/enum_binary_params.hpp>
 #   include <boost/preprocessor/repetition/enum_trailing_binary_params.hpp>
@@ -15,9 +17,12 @@
 
 #   include <opt/debug.h>
 #   include "../string_type.h"
+#   include "../tags.h"
+#   include "../exceptions.h"
 #   include "parameters.h"
 #   include "section.h"
 #   include "option.h"
+#   include "../action/action.h"
 
     namespace LaDa 
     {
@@ -29,17 +34,19 @@
           struct tag_tag {};
           struct default_tag {};
           struct action_tag {};
+          struct id_tag {};
         }
         const parameter::parameter<details::help_tag, std::string const&> help = {};
-        const parameter::parameter<details::tag_tag, size_t const&> tag = {};
+        const parameter::parameter<details::tag_tag, load_n_save::tags> tag = {};
         const parameter::parameter<details::default_tag> default_ = {};
         const parameter::parameter<details::action_tag> action = {};
+        const parameter::parameter<details::id_tag> id = {};
         inline xpr::Section section( t_String const& _name ) 
         {
           xpr::regular_data data;
           data.name = _name;
           data.help = "";
-          data.tag = 0;
+          data.tag = required;
         
           xpr::Section section;
           section.set_data( data );
@@ -62,6 +69,17 @@
           result.set_data(_a);
           return result;
         }
+        namespace details
+        {
+          void set_id_action(xpr::Option &_op, boost::mpl::bool_<false>) {}
+          template<class T>
+          void set_id_action(xpr::Option &_op, T const &_id)
+          {
+            _op.tag = idoption;
+            std::ostringstream sstr; sstr << _id;
+            _op.set_action(action_::IdAction(sstr.str()));
+          }
+        }
 
         
 #       define BOOST_PP_ITERATION_PARAMS_1 (3, (1, 4, <load_n_save/xpr/utilities.h>))
@@ -83,12 +101,15 @@
         xpr::regular_data data;
         data.name = _name;
         parameter::get_param( help, data.help, "", vec );
-        parameter::get_param( tag, data.tag, 0, vec );
+        parameter::get_param( tag, data.tag, required, vec );
+        if(data.tag == unavailable or data.tag == idoption)
+          BOOST_THROW_EXCEPTION(error::invalid_section_tag());
 
         xpr::Section section;
         section.set_data( data );
         return section;
       }
+
 
   template<BOOST_PP_ENUM_PARAMS(SIZE, class T)>
     xpr::Option option( t_String const& _name  
@@ -115,28 +136,23 @@
                   typename boost::fusion::result_of::end<t_Vector>::type
                 )
               > :: type t_default;
+      typedef typename parameter::details::GetParam<details::id_tag> :: template result
+              <
+                parameter::details::GetParam<details::id_tag>
+                (
+                  typename boost::fusion::result_of::begin<t_Vector>::type,
+                  typename boost::fusion::result_of::end<t_Vector>::type
+                )
+              > :: type t_id;
       typedef typename boost::is_same<t_default, boost::mpl::bool_<false> > :: type no_default;
       typedef typename boost::is_same<t_action, boost::mpl::bool_<false> > :: type no_action;
+      typedef typename boost::is_same<t_id, boost::mpl::bool_<false> > :: type no_id;
+      typedef typename boost::is_convertible<t_id, t_String > :: type has_id;
+      BOOST_STATIC_ASSERT((    ((not no_id::value) and no_action::value and no_default::value)
+                            or no_id::value ));
       BOOST_STATIC_ASSERT(( no_default::value or (not no_action::value) ));
       BOOST_STATIC_ASSERT(( boost::is_reference<t_action>::type::value or no_action::value ));
       BOOST_STATIC_ASSERT(( boost::is_reference<t_default>::type::value or no_default::value ));
-    // BOOST_STATIC_ASSERT
-    // (( 
-    //       (
-    //         not boost::is_const
-    //             < 
-    //               typename boost::remove_reference<t_action>::type
-    //             > :: type :: value
-    //       )
-    //    or no_action::value
-    //    or action_::is_special_action
-    //       < 
-    //         typename boost::remove_const
-    //         <
-    //           typename boost::remove_reference<t_action> :: type
-    //         > :: type
-    //       > :: value
-    // ));
       BOOST_STATIC_ASSERT
       (( 
          (
@@ -150,15 +166,21 @@
 
       xpr::Option op( _name );
       parameter::get_param( help, op.help, "", vec );
-      parameter::get_param( tag, op.tag, 0, vec );
-      op.set_action( parameter::get_param(action, vec), parameter::get_param(default_, vec) );
+      parameter::get_param( tag, op.tag, required, vec );
+      if((not no_default::value) and op.tag & required ) op.tag = optional;
+      if(op.tag == unavailable or op.tag == idoption)
+        BOOST_THROW_EXCEPTION(error::invalid_section_tag());
+      if((not no_id::value))
+        details::set_id_action(op, parameter::get_param(id, vec));
+      else
+        op.set_action( parameter::get_param(action, vec), parameter::get_param(default_, vec) );
 
       // dynamic assertions.
       LADA_ASSERT( not (op.tag & load_n_save::required and (not no_default::value)),
                    "Required option " + op.name + " cannot have default value.\n" );
-      LADA_ASSERT( not (op.tag & load_n_save::id and (not no_default::value)),
+      LADA_ASSERT( not (op.tag & load_n_save::idoption and (not no_default::value)),
                    "Id option " + op.name + " cannot have default value.\n" );
-      LADA_ASSERT( not (op.tag & load_n_save::id and op.tag & load_n_save::required),
+      LADA_ASSERT( not (op.tag & load_n_save::idoption and op.tag & load_n_save::required),
                    "Option " + op.name + " cannot be both required and id.\n" );
       return op;
     }
