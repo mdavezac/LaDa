@@ -3,6 +3,7 @@
 
 #include <vector>
 
+#include<boost/algorithm/string/classification.hpp>
 #include<boost/algorithm/string/split.hpp>
 
 #include "string_to_type.h"

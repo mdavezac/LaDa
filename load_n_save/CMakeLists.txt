@@ -1,7 +1,6 @@
 set( LIBLNS_HEADERS 
      lns.h string_type.h tags.h access.h parser_base.h
      action/type_to_regex.h action/push_back.h action/fusion.h
-     action/shared_ptr.h
      load/load.h 
      save/save.h
      sequencer/binary_const_iterator.h sequencer/binary.h

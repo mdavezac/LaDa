@@ -71,7 +71,7 @@ namespace LaDa
             //! Variable the action holds.
             t_Type &variable_;
             //! Variable the action holds.
-            t_Default const& default_;
+            t_Default default_;
         };
 
       //! \brief Class for a standard action without default.
@@ -117,7 +117,7 @@ namespace LaDa
       //! \brief Virtualizes calls to special actions with a default.
       //! \details Special actions are helper classes to perform complex actions
       //!          upon the value of a text option, such as options with finite
-      //!          number of values, or pushing the value into a vector.
+      //!          number of values.
       template< class T_ACTION, class T_DEFAULT >
         struct SpecialAction : public ActionBase
         {
@@ -146,9 +146,9 @@ namespace LaDa
      
           private:
             //! Variable the action holds.
-            T_ACTION const &action_;
+            T_ACTION action_;
             //! Variable the action holds.
-            t_Default const& default_;
+            t_Default default_;
         };
 
       //! \brief Virtualizes calls to special actions without a default.
@@ -181,7 +181,7 @@ namespace LaDa
      
           private:
             //! Variable the action holds.
-            T_ACTION const &action_;
+            T_ACTION action_;
         };
 
       //! \brief Class for id-type actions.

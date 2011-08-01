@@ -6,7 +6,6 @@
 #include <boost/exception/get_error_info.hpp>
 #include "../exceptions.h"
 #include "utilities.h"
-// #include "../xpr/shared_ptr.h"
 
 namespace LaDa 
 {

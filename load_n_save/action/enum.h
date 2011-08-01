@@ -37,7 +37,7 @@ namespace LaDa
             //! \brief Constructor. 
             //! \params _var
             Enum   ( T_TYPE &_var, t_map const& _map, bool _incl = true )
-                 : var_(_var), map_(_map), inclusive_(_incl) {} 
+                 : var_(_var), map_(new t_map(_map)), inclusive_(_incl) {} 
             //! CopyConstructor. 
             Enum( Enum const &_c) : var_(_c.var_), map_(_c.map_), inclusive_(_c.inclusive_) {} 
             //! Parses string into variable.
@@ -69,7 +69,7 @@ namespace LaDa
             //! Holds reference to variable.
             T_TYPE &var_;
             //! Holds a constant reference to the map.
-            t_map const &map_;
+            boost::shared_ptr<t_map> map_;
             //! Whether should match one or many items of the map
             bool inclusive_;
         };
@@ -79,8 +79,8 @@ namespace LaDa
         { 
           var_ = T_TYPE(0);
           namespace bx = boost::xpressive;
-          typename t_map::const_iterator i_first = map_.begin();
-          typename t_map::const_iterator const i_end = map_.end();
+          typename t_map::const_iterator i_first = map_->begin();
+          typename t_map::const_iterator const i_end = map_->end();
           bx::sregex re;
           bool found(false);
           for(; i_first != i_end and (inclusive_ or not found); ++i_first)
@@ -98,8 +98,8 @@ namespace LaDa
         t_String Enum<T_TYPE>::operator()() const
         {
           t_String result;
-          typename t_map::const_iterator i_first = map_.begin();
-          typename t_map::const_iterator const i_end = map_.end();
+          typename t_map::const_iterator i_first = map_->begin();
+          typename t_map::const_iterator const i_end = map_->end();
           if( i_first == i_end ) return "";
           result +=   "(" + i_first->first;
           for(++i_first; i_first != i_end; ++i_first)
@@ -112,8 +112,8 @@ namespace LaDa
       template<class T_TYPE>
         t_String Enum<T_TYPE>::str(boost::mpl::bool_<false>) const
         {
-          typename t_map::const_iterator i_first = map_.begin();
-          typename t_map::const_iterator const i_end = map_.end();
+          typename t_map::const_iterator i_first = map_->begin();
+          typename t_map::const_iterator const i_end = map_->end();
           if( i_first == i_end ) return "";
           // first checks that one variable does not fit the value.
           for(; i_first != i_end; ++i_first)
@@ -122,7 +122,7 @@ namespace LaDa
             BOOST_THROW_EXCEPTION( error::enum_transcript_error() 
                                        << error::option_name("Cannot parse enum input.") );
           t_String result;
-          for(i_first = map_.begin(); i_first != i_end; ++i_first)
+          for(i_first = map_->begin(); i_first != i_end; ++i_first)
             if(var_ & i_first->second) result += i_first->first;
           return result;
         }
@@ -137,8 +137,8 @@ namespace LaDa
       template<class T_TYPE>
         t_String Enum<T_TYPE>::str(boost::mpl::bool_<true>) const
         {
-          typename t_map::const_iterator i_first = map_.begin();
-          typename t_map::const_iterator const i_end = map_.end();
+          typename t_map::const_iterator i_first = map_->begin();
+          typename t_map::const_iterator const i_end = map_->end();
           T_TYPE var(var_);
           if( i_first == i_end ) return "";
 
@@ -151,10 +151,10 @@ namespace LaDa
 
           // Sort key-values according to absolute value of the value.
           typedef typename std::pair<typename t_map::key_type, typename t_map::mapped_type> vt;
-          std::vector<vt> sorted(map_.size());
+          std::vector<vt> sorted(map_->size());
           typename std::vector<vt>::iterator i_sorted = sorted.begin();
           typename std::vector<vt>::iterator i_sorted_end = sorted.begin();
-          for(i_first = map_.begin(); i_first != i_end; ++i_first, ++i_sorted)
+          for(i_first = map_->begin(); i_first != i_end; ++i_first, ++i_sorted)
           {
             i_sorted->first = i_first->first;
             i_sorted->second = i_first->second;

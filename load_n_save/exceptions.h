@@ -37,6 +37,8 @@ namespace LaDa
 
       //! Cannot merge a recurrent expresion, such as push_back.
       struct cannot_merge_recurrent : virtual internal {};
+      //! Cannot load or save an empty shared ptr. 
+      struct empty_shared_ptr : virtual internal {};
 
       //! Root of option exceptions.
       struct option: virtual boost::exception, virtual std::exception {};

@@ -64,12 +64,6 @@
         }
         xpr::Section ext(xpr::Section _a) { return _a; }
 
-        template< class T_TYPE > xpr::Section ext( boost::shared_ptr<T_TYPE> const &_a ) 
-        {
-          xpr::Section result;
-          result.set_data(_a);
-          return result;
-        }
         namespace details
         {
           void set_id_action(xpr::Option &_op, boost::mpl::bool_<false>) {}

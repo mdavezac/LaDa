@@ -10,6 +10,7 @@
 #include "../access.h"
 #include "../string_type.h"
 #include "../parser_base.h"
+#include "../exceptions.h"
 
 namespace LaDa 
 {
@@ -67,7 +68,10 @@ namespace LaDa
               //! Parsing double dispatch.
               virtual bool parse( parser_base::Section const& _parser, 
                                   T_SECTION const &, version_type _version ) const
-                { return LaDa::load_n_save::lns_access_adl( _parser, *data_, _version ); }
+              {
+                if(not data_) BOOST_THROW_EXCEPTION(error::empty_shared_ptr());
+                return LaDa::load_n_save::lns_access_adl( _parser, *data_, _version ); 
+              }
             private:
               //! The data itself
               boost::shared_ptr<T_DATA> data_;

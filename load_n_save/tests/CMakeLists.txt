@@ -56,3 +56,7 @@ add_executable(merge merge.cc)
 ADD_TEST(merge ${CMAKE_CURRENT_BINARY_DIR}/merge)
 target_link_libraries(merge lns)
 
+add_executable(shared_ptr shared_ptr.cc)
+ADD_TEST(shared_ptr ${CMAKE_CURRENT_BINARY_DIR}/shared_ptr)
+target_link_libraries(shared_ptr lns)
+
