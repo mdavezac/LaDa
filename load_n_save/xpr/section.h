@@ -116,6 +116,34 @@ namespace LaDa
           }
   
       } // namespace details.
+ 
+      //! \cond
+      class Section;
+      //! \endcond 
+
+      //! Two sections of equivalent depth.
+      Section operator&&( Section _a, Section _b );
+      //! Two options of equivalent depth.
+      Section operator&&( Option const& _a, Option const &_b );
+      //! Content and an option of equivalent depth.
+      Section operator&&( Section _a, Option const &_b );
+      //! Content and an option of equivalent depth.
+      Section operator&&( Option const& _b, Section _a );
+
+      //! Two options.
+      Section operator||( Option const &_a, Option const &_b );
+      //! Content and an option of equivalent depth
+      Section operator||( Section _a, Option const &_b );
+      //! Content and an option of equivalent depth
+      Section operator||( Option const &_b, Section _a );
+      //! Two sections of equivalent depth.
+      Section operator||( Section _a, Section _b );
+       
+    
+      //! Insert subsection.
+      Section operator<<( Section _a, Section const& _b );
+      //! Insert option.
+      Section operator<<( Section _a, Option const& _b );
 
       //! Operator node.
       class Section
@@ -216,41 +244,23 @@ namespace LaDa
           bool parse(parser_base::Section const& _sec, version_type _version) const
             { return impl_->parse(_sec, *this, _version); }
 
+          //! Returns true if has data.
+          bool has_data() const { return impl_->data_; }
+
           //! Returns reference to sequencer list.
           sequencer::Binary& sequence() const { return *impl_->sequence_; }
 
           //! Returns tag.
           tags tag() const { return impl_->data_->tag(); }
 
+          //! Merges input's subsections and options into self.
+          Section merge(Section const &_in);
+
         private:
           //! Handle to the body.
           t_Tracking impl_;
       };
 
- 
-      //! Two sections of equivalent depth.
-      Section operator&&( Section _a, Section _b );
-      //! Two options of equivalent depth.
-      Section operator&&( Option const& _a, Option const &_b );
-      //! Content and an option of equivalent depth.
-      Section operator&&( Section _a, Option const &_b );
-      //! Content and an option of equivalent depth.
-      Section operator&&( Option const& _b, Section _a );
-
-      //! Two options.
-      Section operator||( Option const &_a, Option const &_b );
-      //! Content and an option of equivalent depth
-      Section operator||( Section _a, Option const &_b );
-      //! Content and an option of equivalent depth
-      Section operator||( Option const &_b, Section _a );
-      //! Two sections of equivalent depth.
-      Section operator||( Section _a, Section _b );
-       
-    
-      //! Insert subsection.
-      Section operator<<( Section _a, Section const& _b );
-      //! Insert option.
-      Section operator<<( Section _a, Option const& _b );
 
     } // namespace xpr
   } // namespace load_n_save

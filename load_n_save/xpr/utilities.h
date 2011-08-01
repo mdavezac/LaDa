@@ -62,6 +62,7 @@
           result.set_data( _a );
           return result;
         }
+        xpr::Section ext(xpr::Section _a) { return _a; }
 
         template< class T_TYPE > xpr::Section ext( boost::shared_ptr<T_TYPE> const &_a ) 
         {
@@ -111,6 +112,30 @@
       }
 
 
+  //! \brief Creates an xml option.
+  //! \details This function takes a string as first argument: the name of the
+  //!          xml option/attribute. A number of keyword arguments are allowed:
+  //!            - tags=optional, if it is safe for the option not to be found
+  //!                   in the xml input file.
+  //!            - default_=value, where the value is assigned to the
+  //!                   action if the option is not found in the inoput file.
+  //!                   This keyword implies the one above.
+  //!            - action=variable or special action, defines the action to be
+  //!                   taken when the option is found in the document. If a
+  //!                   variable, the value of the option is assigned to it.
+  //!                   Note the this variable *cannot* be local. It must be
+  //!                   defined when going out of scope. Special action allow
+  //!                   for different possibilities, such as setting the
+  //!                   numerical value of an enum type from strings, as in
+  //!                   enum.h.
+  //!            - help=string. Not yet supported. Reserved for future use.
+  //!            - id=string. This allows XML tags to defined by their internal
+  //!                   attributes. For instance all functionals could be found
+  //!                   within separate <Functional> tags, but each ontaining a
+  //!                   type attribute with a specific value, eg "vasp", "vff",
+  //!                   etc. The parser will then check the existence of this
+  //!                   attribute within the tag, and its value, before
+  //!                   atempting to parse the xml it.
   template<BOOST_PP_ENUM_PARAMS(SIZE, class T)>
     xpr::Option option( t_String const& _name  
                         BOOST_PP_ENUM_TRAILING_BINARY_PARAMS(SIZE, T, const& _t) )

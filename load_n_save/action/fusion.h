@@ -19,10 +19,9 @@
 #   include <boost/fusion/tuple.hpp>
     
     
-#   include "../action/string_to_type.h"
-#   include "../action/type_to_string.h"
-#   include "../action/type_to_regex.h"
-#   include "../action/type_to_regex.h"
+#   include "string_to_type.h"
+#   include "type_to_string.h"
+#   include "type_to_regex.h"
 #   include "../string_type.h"
     
     namespace LaDa
@@ -135,7 +134,6 @@
             ba::split(splitted, _string, ba::is_any_of(" "), ba::token_compress_on);
             std::vector<std::string>::const_iterator i_first = splitted.begin();
             std::vector<std::string>::const_iterator const i_last = splitted.end();
-            i_first = splitted.begin();
             typedef typename bf::result_of::begin<t_type>::type t_ifirst;
             typedef typename bf::result_of::end<t_type>::type t_ilast;
             typedef typename bf::result_of::equal_to<t_ifirst, t_ilast>::type t_test;

@@ -35,6 +35,9 @@ namespace LaDa
       //! Thrown when parsing did not succeed.
       struct section_parse_error: virtual section {};
 
+      //! Cannot merge a recurrent expresion, such as push_back.
+      struct cannot_merge_recurrent : virtual internal {};
+
       //! Root of option exceptions.
       struct option: virtual boost::exception, virtual std::exception {};
       //! Thrown when a required option is not found.

@@ -8,7 +8,8 @@ set( LIBLNS_HEADERS
      sequencer/binary_range.h 
      tree/base.h tree/section.h
      xml/parser.h xml/printer.h xml/tags.h
-     xpr/option.h xpr/section.h xpr/section_data.h xpr/subsections.h xpr/parameters.h )
+     xpr/option.h xpr/section.h xpr/section_data.h xpr/subsections.h xpr/parameters.h 
+     xpr/merge.h xpr/utilities.h )
 
 set( LIBLNS_SOURCES 
      load/option.cc load/section.cc load/load.cc

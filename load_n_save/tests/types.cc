@@ -8,32 +8,31 @@
 #include "../xpr/utilities.h"
 #include "../xml/parser.h"
 #include "../xml/printer.h"
-
 #include "../save/save.h"
 
 using namespace LaDa;
 namespace lns = LaDa :: load_n_save;
 
-#if LADA_INC_TYPE == 0
+#if LADA_TEST_TYPE == 0
 #  define LADA_TYPE int
 #  define LADA_INIT 1
 #  define LADA_XML "<A attr=\"1\"/>"
 #  define LADA_TWICE a.type == 2
 #  define LADA_RELOAD a.type == 1
-#elif LADA_INC_TYPE == 1
+#elif LADA_TEST_TYPE == 1
 #  define LADA_TYPE std::string
 #  define LADA_INIT "hello"
 #  define LADA_XML "<A attr=\"hello\"/>"
 #  define LADA_TWICE a.type == "hellohello"
 #  define LADA_RELOAD a.type == "hello"
-#elif LADA_INC_TYPE == 2
+#elif LADA_TEST_TYPE == 2
 #  include <math/serialize.h>
 #  define LADA_TYPE math::rVector3d
 #  define LADA_INIT math::rVector3d(1.5,0.5,1.5)
 #  define LADA_XML "<A attr=\"1.5 0.5 1.5\"/>"
 #  define LADA_TWICE (a.type-math::rVector3d(3,1,3)).squaredNorm() < 1e-12
 #  define LADA_RELOAD (a.type-math::rVector3d(1.5,0.5,1.5)).squaredNorm() < 1e-12
-#elif LADA_INC_TYPE == 3
+#elif LADA_TEST_TYPE == 3
 #  include <math/serialize.h>
 #  define LADA_TYPE LaDa::types::t_real
 #  define LADA_INIT -3.1416

@@ -29,11 +29,13 @@ namespace LaDa
                 {
                   typename T::value_type value;
                   _ar.start_recurrence();
+                  size_t i(0);
                   try
                   { 
                     while( _ar & ext(value) )
                     {
                       _ar.step_recurrence();
+                      ++i;
                       if(not _ar.grammar_only()) container_.push_back(value); 
                     }
                   }
@@ -41,8 +43,8 @@ namespace LaDa
                   { 
                     _ar.stop_recurrence();
                     if(required_ == 0u) return true;
-                    if(container_.size() >= required_) return true;
-                    std::string const * section_name
+                    if(i >= required_) return true;
+                    std::string const * section_name 
                       = boost::get_error_info<error::section_name>(_e);
                     BOOST_THROW_EXCEPTION
                     ( 
@@ -50,7 +52,7 @@ namespace LaDa
                     );
                   }
                   _ar.stop_recurrence();
-                  if(container_.size() < required_)
+                  if(i < required_)
                     BOOST_THROW_EXCEPTION( error::too_few_sections() );
                   return true;
                 }

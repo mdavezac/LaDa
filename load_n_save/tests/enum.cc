@@ -77,7 +77,6 @@ int main(int argc, char *argv[])
   std::string xmlstring = sstr.str();
   boost::algorithm::erase_all(xmlstring, "\n");
   boost::algorithm::trim(xmlstring);
-  std::cout << xmlstring << "\n";
   LADA_DOASSERT(xmlstring == "<A i=\"cartesian\"/>", "Error in output.");
 
   a.i = here::frozen::X|here::frozen::Y;
@@ -122,6 +121,11 @@ int main(int argc, char *argv[])
   xml = lns::xml::parse("<A i=\"z\"/>");
   LADA_DOASSERT(loader( *xml, lns::ext(a) ), "Could not reload.");
   LADA_DOASSERT(a.i == here::frozen::Z, "error when reloading");
+
+  a.i = here::frozen::X;
+  xml = lns::xml::parse("<A />");
+  LADA_DOASSERT(loader( *xml, lns::ext(a) ), "Could not reload.");
+  LADA_DOASSERT(a.i == here::frozen::NONE, "error when reloading");
 
   return 0;
 }

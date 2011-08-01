@@ -36,6 +36,14 @@ namespace LaDa
         merge_options( _a, _b );
         merge_subsections( _a, _b );
       }
+
+      Section Section::merge(Section const &_in)
+      {
+        merge_all(*this, _in);
+        sequence() &= _in.sequence();
+        return *this;
+      }
+
       Section sum( Section _a, Section _b, bool _andop )
       {
         bool const a_incomplete( _a.incomplete() );

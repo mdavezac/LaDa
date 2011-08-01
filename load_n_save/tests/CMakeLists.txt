@@ -8,7 +8,7 @@ foreach(ACCESS ${ACCESSES})
                     LADA_INTERNAL LADA_TEST_TYPE=${TYPE})
     elseif(${ACCESS} STREQUAL external)
       set_property( TARGET type${ACCESS}${TYPE} PROPERTY COMPILE_DEFINITIONS
-                    LADA_TEST_STRUCTURE=${STR} LADA_INC_TYPE=${TYPE})
+                    LADA_TEST_STRUCTURE=${STR} LADA_TEST_TYPE=${TYPE})
     endif(${ACCESS} STREQUAL intra)
     ADD_TEST(type${ACCESS}${TYPE} ${CMAKE_CURRENT_BINARY_DIR}/type${ACCESS}${TYPE})
     target_link_libraries(type${ACCESS}${TYPE} lns)
@@ -39,5 +39,20 @@ add_executable(default default.cc)
 ADD_TEST(default ${CMAKE_CURRENT_BINARY_DIR}/default)
 target_link_libraries(default lns)
 
+set(TYPES  0 1 2)
+foreach(TYPE ${TYPES})
+  add_executable(vector_action${TYPE} vector_action.cc)
+  set_property( TARGET vector_action${TYPE} PROPERTY COMPILE_DEFINITIONS
+                LADA_TEST_TYPE=${TYPE})
+  target_link_libraries(vector_action${ACCESS}${TYPE} lns)
+  ADD_TEST(vector_action${TYPE} ${CMAKE_CURRENT_BINARY_DIR}/vector_action${TYPE})
+endforeach(TYPE)
 
+add_executable(push_back push_back.cc)
+ADD_TEST(push_back ${CMAKE_CURRENT_BINARY_DIR}/push_back)
+target_link_libraries(push_back lns)
+
+add_executable(merge merge.cc)
+ADD_TEST(merge ${CMAKE_CURRENT_BINARY_DIR}/merge)
+target_link_libraries(merge lns)
 
