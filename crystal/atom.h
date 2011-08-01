@@ -5,6 +5,10 @@
 
 #include <boost/serialization/base_object.hpp>
 
+#ifdef LADA_WITH_LNS
+#  include "load_n_save/xpr/utilities.h"
+#  include "load_n_save/xpr/merge.h"
+#endif
 
 #include "atom_base.h"
 #include "atom_freeze.h"
@@ -80,7 +84,7 @@ namespace LaDa
           namespace lns = LaDa :: load_n_save;
           typedef AtomBase<T_TYPE> t1;
           typedef AtomFreezeMixin  t2;
-          return _ar & (lns::base<t1>(*this) << lns::base<t2>(*this)); 
+          return _ar & lns::merge(*static_cast<t1*>(this), *static_cast<t2*>(this)); 
         }
 #   endif
 

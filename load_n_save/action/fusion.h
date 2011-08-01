@@ -12,6 +12,7 @@
 #   include <boost/type_traits/remove_reference.hpp>
     
 #   include<boost/algorithm/string/split.hpp>
+#   include<boost/algorithm/string/classification.hpp>
     
 #   include <boost/fusion/algorithm/iteration/for_each.hpp>
 #   include <boost/fusion/algorithm/iteration/accumulate.hpp>

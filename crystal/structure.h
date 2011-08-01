@@ -5,6 +5,10 @@
 
 #include <boost/shared_ptr.hpp>
 
+#ifdef LADA_WITH_LNS
+# include <load_n_save/xpr/utilities.h>
+#endif
+
 #include "structure_data.h"
 
 
@@ -189,11 +193,11 @@ namespace LaDa
         //! Serializes a structure.
         template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
           { _ar & impl_; }
-#     ifdef LADA_WITH_LNS
-        //! To load and save to xml-like input.
-        template<class T_ARCHIVE>
-          bool lns_access(T_ARCHIVE &_ar, load_n_save::version_type const _version);
-#     endif
+#       ifdef LADA_WITH_LNS
+          //! To load and save to xml-like input.
+          template<class T_ARCHIVE>
+            bool lns_access(T_ARCHIVE &_ar, load_n_save::version_type const _version);
+#       endif
         //! Holds data.
         boost::shared_ptr< StructureData<T_TYPE> > impl_;
     };
@@ -204,14 +208,10 @@ namespace LaDa
 
 #   ifdef LADA_WITH_LNS
       template<class T_TYPE> template<class T_ARCHIVE>
-        bool TemplateStructure :: lns_access(T_ARCHIVE &_ar, load_n_save::version_type const _version) 
+        bool TemplateStructure<T_TYPE> :: lns_access(T_ARCHIVE &_ar, load_n_save::version_type const _version) 
         {
-          if( _ar.is_loading() )
-          {
-            boost::shared_ptr< StructureData<T_TYPE> > dummy(impl_);
-            impl_.reset(new StructureData<T_TYPE>());
-          }
-          return _ar & *impl_;
+          if(not impl_) impl_.reset(new StructureData<T_TYPE>());
+          return _ar & load_n_save::ext(impl_);
         }
 #   endif
   } // namespace crystal

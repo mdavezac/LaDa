@@ -4,7 +4,8 @@
 #include "LaDaConfig.h"
 
 # ifdef LADA_WITH_LNS
-#  include <load_n_save/xpr/base.h>
+#  include <load_n_save/xpr/utilities.h>
+#  include <load_n_save/action/enum.h>
 # endif
 
 namespace LaDa
@@ -59,7 +60,7 @@ namespace LaDa
         { _ar & freeze; }
 #       ifdef LADA_WITH_LNS
           //! To load and save to xml-like input.
-          template<class T_ARCHIVE> bool lns_access(T_ARCHIVE &_ar, const unsigned int _version);
+          template<class T_ARCHIVE> bool lns_access(T_ARCHIVE &_ar, const unsigned int _version)
           {
             namespace lns = LaDa :: load_n_save;
             std::map<std::string, LaDa::types::t_unsigned> freeze_map;
@@ -70,9 +71,10 @@ namespace LaDa
             freeze_map["t"]         = frozen::T;
             freeze_map["cartesian"] = frozen::CARTESIANS;
             freeze_map["all"]       = frozen::ALL;
-            return _ar & lns::option( "freeze",
-                                      lns::action=lns::enum_(freeze, freeze_map),
-                                      lns::default_=frozen::NONE );
+            return _ar & ( lns::section("AtomFreeze") 
+                << lns::option( "freeze",
+                                lns::action=lns::enum_(freeze, freeze_map),
+                                lns::default_=frozen::NONE ) );
           }
 #       endif
       

@@ -17,9 +17,10 @@
 #include <math/fuzzy.h>
 
 #include <math/serialize.h>
-# ifdef LADA_WITH_LNS
-#  include <load_n_save/lns.h>
-# endif
+#ifdef LADA_WITH_LNS
+#  include "load_n_save/xpr/utilities.h"
+#  include "load_n_save/action/vector.h"
+#endif
 #include "is_container.h"
 
 namespace LaDa
@@ -82,16 +83,16 @@ namespace LaDa
 #   ifdef LADA_WITH_LNS
       //! To load and save to xml-like input.
       template<class T_TYPE> template<class T_ARCHIVE>
-        bool AtomBase<T_TYPE> lns_access(T_ARCHIVE &_ar, const unsigned int _version) 
+        bool AtomBase<T_TYPE> :: lns_access(T_ARCHIVE &_ar, const unsigned int _version) 
         {
           namespace lns = LaDa :: load_n_save;
           return _ar & 
                  (
                    lns::section("Atom")
-                     << lns::option( "pos", lns::tag=lns::required, lns::action=pos,
+                     << lns::option( "pos", lns::action=pos,
                                      lns::help="Cartesian position in Anstrom." )
-//                    << lns::option( "type", lns::tag=lns::required, lns::action=type,
-//                                    lns::help="Atomic specie, or any string." )
+                     << lns::option( "type", lns::action=type,
+                                     lns::help="Atomic specie, or any string." )
                  );
          }
 #   endif
