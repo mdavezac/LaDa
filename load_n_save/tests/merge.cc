@@ -62,10 +62,8 @@ namespace here
       template<class T_ARCHIVE>
         bool lns_access(T_ARCHIVE &_ar, load_n_save::version_type const _version)
         {
-          lns::xpr::Section first = lns::merge(static_cast<A*>(this), static_cast<B*>(this));
-          lns::xpr::Section second = (lns::section("C") << lns::option("f", lns::action=f));
-          return _ar & lns::merge(first, second);
-              
+          return _ar & lns::merge( lns::merge(static_cast<A*>(this), static_cast<B*>(this)),
+                                   lns::section("C") << lns::option("f", lns::action=f) );
         }
   };
 }

@@ -78,6 +78,16 @@ namespace LaDa
     //! \brief Merges a section into the first section.
     //! \details Useful to add new objects from a derived class into the
     //! section declared by its base. 
+    template<class T0, class T1> xpr::Section merge(T0 const &_merger, const T1 &_mergee)
+    {
+      boost::shared_ptr< xpr::details::Merge<const T0, const T1> >
+        ptr(new xpr::details::Merge<const T0, const T1>(_merger, _mergee) );
+      return ext(ptr);
+    }
+
+    //! \brief Merges a section into the first section.
+    //! \details Useful to add new objects from a derived class into the
+    //! section declared by its base. 
     template<class T0, class T1> xpr::Section merge(T0 &_merger, T1 &_mergee)
     {
       boost::shared_ptr< xpr::details::Merge<T0, T1> >

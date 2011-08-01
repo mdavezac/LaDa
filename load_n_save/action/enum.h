@@ -11,10 +11,6 @@
 
 #include <boost/xpressive/regex_compiler.hpp>
 #include <boost/xpressive/regex_algorithms.hpp>
-#include <boost/phoenix/bind/bind_member_variable.hpp>
-#include <boost/phoenix/bind/bind_function.hpp>
-#include <boost/phoenix/operator/comparision.hpp>
-#include <boost/phoenix/core/argument.hpp>
 
 #include "../string_type.h"
 #include "action_base.h"
@@ -131,11 +127,16 @@ namespace LaDa
           return result;
         }
 
+      namespace details
+      {
+        template<class T>
+          bool sort_second( typename T::value_type const &_a,
+                            typename T::value_type const &_b  ) 
+            {return _a.second < _b.second; }
+      };
       template<class T_TYPE>
         t_String Enum<T_TYPE>::str(boost::mpl::bool_<true>) const
         {
-          namespace bp = boost::phoenix;
-          namespace bpp = boost::phoenix::placeholders;
           typename t_map::const_iterator i_first = map_.begin();
           typename t_map::const_iterator const i_end = map_.end();
           T_TYPE var(var_);
@@ -158,8 +159,7 @@ namespace LaDa
             i_sorted->first = i_first->first;
             i_sorted->second = i_first->second;
           }
-          std::sort( sorted.begin(), sorted.end(),
-                     bp::bind(&vt::second, bpp::arg1) < bp::bind(&vt::second, bpp::arg2) );
+          std::sort(sorted.begin(), sorted.end(), &details::sort_second<t_map>); 
           t_String result("");
           i_sorted = sorted.begin();
           i_sorted_end = sorted.end();
