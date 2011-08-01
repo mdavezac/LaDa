@@ -107,14 +107,13 @@ class InnerBPoints(BPoints):
 
     direction = direction / norm(direction)
     xin, xout = 0, sum([norm(k) for k in kcell.T])
-    xlast = xout
     result = start + direction * xout
     last_inside = is_inside(result)
     if last_inside: raise RuntimeError("Could not find outside point.")
 
-    while abs(xlast - xout) > tolerance:
-      if is_inside(start + direction * 0.5 * (xout - xin)): xin  = 0.5 * (xout - xin)
-      else:                                                 xout = 0.5 * (xout - xin)
+    while abs(xout - xin) > tolerance:
+      if is_inside(start + direction * 0.5 * (xout + xin)): xin  = 0.5 * (xout + xin)
+      else:                                                 xout = 0.5 * (xout + xin)
     return start + direction * xin
 
   def _to_first_bz(self, start, last, kcell, tolerance=1e-12):
