@@ -9,8 +9,7 @@
 #include <boost/serialization/serialization.hpp>
 
 
-#include <opt/types.h>
-#include <math/eigen.h>
+#include <math/setcell.h>
 #ifdef LADA_WITH_LNS
 # include <load_n_save/xpr/push_back.h>
 # include <load_n_save/action/fusion.h>
@@ -91,11 +90,13 @@ namespace LaDa
           bool lns_access(T_ARCHIVE &_ar, load_n_save::version_type const _version);
 #     endif
       //! Initializer for cell.
-      details::SetCell< boost::mpl::int_<1> > set_cell(types::t_real _x, types::t_real _y, types::t_real _z)
-        { return details::SetCell< boost::mpl::int_<0> >(cell)(_x, _y, _z); }
+      math::details::SetCell< boost::mpl::int_<1> >
+        set_cell(types::t_real _x, types::t_real _y, types::t_real _z)
+          { return math::details::SetCell< boost::mpl::int_<0> >(cell)(_x, _y, _z); }
       //! Initializer for cell.
-      details::SetCell< boost::mpl::int_<1> > set_cell(math::rVector3d _pos)
-        { return details::SetCell< boost::mpl::int_<0> >(cell)(_pos); }
+      math::details::SetCell< boost::mpl::int_<1> >
+        set_cell(math::rVector3d _pos)
+          { return math::details::SetCell< boost::mpl::int_<0> >(cell)(_pos); }
       //! Returns nth atom.
       typename t_Atoms::reference operator[](size_t _n) { return atoms[_n]; }
       //! Returns nth atom.

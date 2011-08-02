@@ -24,19 +24,61 @@ namespace LaDa
         return result;
       }
 
-    //! True if the number is an integer.
-    inline bool is_integer(types::t_real const &x) { return is_zero(x - std::floor(x+0.1)); }
-    //! True if the vector is composed of integers.
-    inline bool is_integer(math::rVector3d const &x)
-      { return is_integer(x.x()) and is_integer(x.z()) and is_integer(x.y()); }
-    //! True if the matrix is composed of integers.
-    inline bool is_integer(math::rMatrix3d const &x)
-    {
-      for(size_t i(0); i < 3; ++i)
-        for(size_t j(0); j < 3; ++j)
-          if( not is_integer(x(i,j)) ) return false;
-      return true;
-    }
+#   ifdef LADA_MACRO
+#     error LADA_MACRO already defined.
+#   endif
+#   define LADA_MACRO(name, type, default_) \
+      inline bool name(type const &x, default_ ) \
+        { return name(x(0), _tol) and name(x(1), _tol) and name(x(2), _tol); }   \
+      inline bool name(math::rVector3d const &x) \
+        { return name(x(0)) and name(x(1)) and name(x(2)); }   
+    LADA_MACRO(is_integer,  math::rVector3d, types::t_real _tol = types::tolerance);
+    LADA_MACRO(is_null,     math::rVector3d, types::t_real _tol = types::tolerance);
+    LADA_MACRO(is_identity, math::rVector3d, types::t_real _tol = types::tolerance);
+    LADA_MACRO(is_integer,  math::iVector3d, types::t_int _tol = 0);
+    LADA_MACRO(is_null,     math::iVector3d, types::t_int _tol = 0);
+    LADA_MACRO(is_identity, math::iVector3d, types::t_int _tol = 0);
+#   undef LADA_MACRO
+#   define LADA_MACRO(name, type, default_) \
+      inline bool name(type const &x, default_)         \
+      {                                                 \
+        for(size_t i(0); i < 3; ++i)                    \
+          for(size_t j(0); j < 3; ++j)                  \
+            if( not name(x(i,j), _tol) ) return false;  \
+        return true;                                    \
+      }                                                 \
+      inline bool name(type const &x)                   \
+      {                                                 \
+        for(size_t i(0); i < 3; ++i)                    \
+          for(size_t j(0); j < 3; ++j)                  \
+            if( not name(x(i,j)) ) return false;        \
+        return true;                                    \
+      }
+    LADA_MACRO(is_integer, math::rMatrix3d, types::t_real _tol = types::tolerance)
+    LADA_MACRO(is_null,    math::rMatrix3d, types::t_real _tol = types::tolerance)
+    LADA_MACRO(is_integer, math::iMatrix3d, types::t_int _tol = 0)
+    LADA_MACRO(is_null,    math::iMatrix3d, types::t_int _tol = 0)
+#   undef LADA_MACRO
+#   define LADA_MACRO(name, type, default_) \
+      inline bool name(type const &x, default_)         \
+      {                                                 \
+        for(size_t i(0); i < 3; ++i)                    \
+          for(size_t j(0); j < 3; ++j)                  \
+            if( i ==j and not name(x(i,j), _tol) ) return false;  \
+           else if( not is_null(x(i,j), _tol) ) return false;  \
+        return true;                                    \
+      }                                                 \
+      inline bool name(type const &x)                   \
+      {                                                 \
+        for(size_t i(0); i < 3; ++i)                    \
+          for(size_t j(0); j < 3; ++j)                  \
+            if( i == j not name(x(i,j)) ) return false; \
+            if( not is_null(x(i,j)) ) return false;     \
+        return true;                                    \
+      }
+    LADA_MACRO(is_unity, math::rMatrix3d, types::t_real _tol = types::tolerance)
+    LADA_MACRO(is_unity, math::iMatrix3d, types::t_int _tol = 0)
+#   undef LADA_MACRO
 
     //! True if two vectors are periodic images with respect to a cell.
     inline bool are_periodic_images( math::rVector3d const &_a,

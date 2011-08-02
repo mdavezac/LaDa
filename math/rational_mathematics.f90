@@ -1,3 +1,4 @@
+! Lifted from Hart and Forcades' enum.
 MODULE rational_mathematics
   implicit none
   private

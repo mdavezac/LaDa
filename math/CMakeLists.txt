@@ -1,8 +1,8 @@
 set( LIBMATH_F90 rational_mathematics.f90 )
 set( LIBMATH_HEADERS 
      compare_norms.h eigen.h fuzzy.h lambda.impl.h misc.h modifiers.h random.h serialize.h
-     smith_normal_form.h traits.h )
-set( LIBMATH_SOURCES random.cc  smith_normal_form.cc )
+     smith_normal_form.h traits.h symmetry_operator.h )
+set( LIBMATH_SOURCES random.cc  smith_normal_form.cc symmetry_operator.cc )
     
 add_library (mathlib SHARED ${LIBMATH_SOURCES} ${LIBMATH_F90} ${LIBMATH_HEADERS})
 target_link_libraries(mathlib ${tinyxml_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} 
@@ -25,3 +25,8 @@ endif(NOT noinstall_headers)
 if(python_bindings)
   add_subdirectory(python)
 endif(python_bindings)
+
+if(compile_tests OR compile_debug_tests)
+  add_subdirectory(tests)
+endif(compile_tests OR compile_debug_tests)
+

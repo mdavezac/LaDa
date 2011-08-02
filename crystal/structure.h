@@ -176,11 +176,13 @@ namespace LaDa
         //! Returns allocator object used to construct atom container.
         allocator_type get_allocator() const { return impl_->atoms.get_allocator(); }
         //! Initializer for cell.
-        details::SetCell< boost::mpl::int_<1> > set_cell(types::t_real _x, types::t_real _y, types::t_real _z)
-          { return impl_->set_cell(_x, _y, _z); }
+        math::details::SetCell< boost::mpl::int_<1> >
+          set_cell(types::t_real _x, types::t_real _y, types::t_real _z)
+            { return impl_->set_cell(_x, _y, _z); }
         //! Initializer for cell.
-        details::SetCell< boost::mpl::int_<1> > set_cell(math::rVector3d _pos)
-          { return impl_->set_cell(_pos); }
+        math::details::SetCell< boost::mpl::int_<1> >
+          set_cell(math::rVector3d _pos)
+            { return impl_->set_cell(_pos); }
 
         //! Access to cell parameters
         types::t_real operator()(size_t i, size_t j) const { return cell()(i,j); }

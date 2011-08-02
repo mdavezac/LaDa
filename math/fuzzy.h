@@ -3,6 +3,9 @@
 
 #include "LaDaConfig.h"
 
+#include <boost/utility/enable_if.hpp>
+#include <boost/traits/is_integral.hpp>
+
 #include <opt/types.h>
 #include "eigen.h"
 
@@ -11,86 +14,129 @@ namespace LaDa
   //! Namespace for mathematical primitives.
   namespace math
   {
-    //! \brief returns true if \f$ \_a  < \_b \f$
-    //! \details if \a T_ARG is a types::real, return true if 
-    //! \f$|\_a - \_b| < \f$ types::tolerance or\f$ \_a  < \_b \f$
-    template< class T_ARG >
-    inline bool leq( const T_ARG _a, const T_ARG _b ) { return _a <= _b; }
-    //! \brief returns true if \f$ \_a  > \_b \f$
-    //! \details if \a T_ARG is a types::real, return true if 
-    //! \f$|\_a - \_b| < \f$ types::tolerance or \f$ \_a  > \_b \f$
-    template< class T_ARG >
-    inline bool geq( const T_ARG _a, const T_ARG _b ) { return _a >= _b; }
-    //! \brief returns true if \f$ \_a  < \_b \f$
-    //! \details if \a T_ARG is a types::real, return true if 
-    //! \f$|\_a - \_b| > \f$ types::tolerance, and \f$ \_a  < \_b \f$
-    template< class T_ARG >
-    inline bool le( const T_ARG _a, const T_ARG _b ) { return _a < _b; }
-    //! \brief returns true if \f$ \_a  > \_b \f$
-    //! \details if \a T_ARG is a types::real, return true if 
-    //! \f$|\_a - \_b| > \f$ types::tolerance, and \f$ \_a  > \_b \f$
-    template< class T_ARG >
-    inline bool gt( const T_ARG _a, const T_ARG _b ) { return _a > _b; }
-    //! \brief returns true if \f$ \_a  == \_b \f$
-    //! \details if \a T_ARG is a types::real, return true if 
-    //! \f$|\_a - \_b| > \f$ types::tolerance, and \f$ \_a  > \_b \f$
-    template< class T_ARG >
-    inline bool eq( const T_ARG _a, const T_ARG _b ) { return _a == _b; }
-    //! \brief returns true if \f$ \_a  != \_b \f$
-    //! \details if \a T_ARG is a types::real, return true if 
-    //! \f$|\_a - \_b| >= \f$ types::tolerance.
-    template< class T_ARG >
-    inline bool neq( const T_ARG _a, const T_ARG _b ) { return _a != _b; }
+#   ifdef LADA_INTEGRAL
+#     error LADA_INTEGRAL already defined.
+#   endif
+#   ifdef LADA_REAL
+#     error LADA_REAL already defined.
+#   endif
+#   define LADA_INTEGRAL typename boost::enable_if<boost::is_integral<T_ARG>, bool> :: type
+#   define LADA_REAL typename boost::disable_if<boost::is_integral<T_ARG>, bool> :: type
+    //! \brief True if \f$|\_a - \_b| < \_tol\f$.
+    //! \details _tol should be positive. This function implements fuzzy math
+    //!               across most numeric types.
+    template< class T_ARG>
+    inline LADA_REAL eq( const T_ARG _a, const T_ARG _b, T_ARG const _tol = types::tolerance )
+      { return std::abs(_a-b) < _tol; }
+    //! \brief True if \f$|\_a - \_b| < \_tol\f$.
+    //! \details _tol should be positive. This function implements fuzzy math
+    //!               across most numeric types.
+    template< class T_ARG>
+    inline LADA_INTEGRAL eq( const T_ARG _a, const T_ARG _b, T_ARG const _tol)
+      { return std::abs(_a-b) < _tol; }
+    //! \brief True if \f$\_a == \_b|\f$.
+    //! \details _tol should be positive. This function implements fuzzy math
+    //!               across most numeric types.
+    template< class T_ARG>
+    inline LADA_INTEGRAL eq( const T_ARG _a, const T_ARG _b) { return _a == b; }
+
+    //! \brief True if \f$|\_a - \_b| < \_tol\f$ or \f$\_a < \_b|\f$.
+    //! \details _tol should be positive. This function implements fuzzy math
+    //!               across most numeric types.
+    template< class T_ARG>
+    inline LADA_REAL leq( const T_ARG _a, const T_ARG _b, T_ARG const _tol = types::tolerance )
+      { return _a <= _b or eq(_a, _b); }
+    //! \brief True if \f$|\_a - \_b| < \_tol\f$ or \f$\_a < \_b|\f$.
+    //! \details _tol should be positive. This function implements fuzzy math
+    //!               across most numeric types.
+    template< class T_ARG>
+    inline LADA_INTEGRAL leq( const T_ARG _a, const T_ARG _b, T_ARG const _tol)
+      { return _a <= _b or eq(_a, _b); }
+    //! \brief True if \f$\_a <= \_b|\f$.
+    //! \details _tol should be positive. This function implements fuzzy math
+    //!               across most numeric types.
+    template< class T_ARG>
+    inline LADA_INTEGRAL leq( const T_ARG _a, const T_ARG _b) { return _a <= b; }
+
+    //! \brief True if \f$|\_a - \_b| < \_tol\f$ or \f$\_a > \_b|\f$.
+    //! \details _tol should be positive. This function implements fuzzy math
+    //!               across most numeric types.
+    template< class T_ARG>
+    inline LADA_REAL geq( const T_ARG _a, const T_ARG _b, T_ARG const _tol = types::tolerance )
+      { return _a >= _b or eq(_a, _b); }
+    //! \brief True if \f$|\_a - \_b| < \_tol\f$ or \f$\_a > \_b|\f$.
+    //! \details _tol should be positive. This function implements fuzzy math
+    //!               across most numeric types.
+    template< class T_ARG>
+    inline LADA_INTEGRAL geq( const T_ARG _a, const T_ARG _b, T_ARG const _tol)
+      { return _a >= _b or eq(_a, _b); }
+    //! \brief True if \f$\_a >= \_b|\f$.
+    //! \details _tol should be positive. This function implements fuzzy math
+    //!               across most numeric types.
+    template< class T_ARG>
+    inline LADA_INTEGRAL geq( const T_ARG _a, const T_ARG _b) { return _a >= b; }
+
+    //! \brief True if \f$|\_a - \_b| > \_tol\f$ and \f$\_a < \_b|\f$.
+    //! \details _tol should be positive. This function implements fuzzy math
+    //!               across most numeric types.
+    template< class T_ARG>
+    inline bool le( const T_ARG _a, const T_ARG _b)   { return not geq(_a, _b); }
+    //! \brief True if \f$|\_a - \_b| > \_tol\f$ and \f$\_a < \_b|\f$.
+    //! \details _tol should be positive. This function implements fuzzy math
+    //!               across most numeric types.
+    template< class T_ARG>
+    inline bool le( const T_ARG _a, const T_ARG _b, const T_ARG _tol)   { return not geq(_a, _b, _tol); }
+
+    //! \brief True if \f$|\_a - \_b| > \_tol\f$ and \f$\_a > \_b|\f$.
+    //! \details _tol should be positive. This function implements fuzzy math
+    //!               across most numeric types.
+    template< class T_ARG>
+    inline bool gt( const T_ARG _a, const T_ARG _b)   { return not leq(_a, _b); }
+    //! \brief True if \f$|\_a - \_b| > \_tol\f$ and \f$\_a > \_b|\f$.
+    //! \details _tol should be positive. This function implements fuzzy math
+    //!               across most numeric types.
+    template< class T_ARG>
+    inline bool gt( const T_ARG _a, const T_ARG _b, const T_ARG _tol)   { return not leq(_a, _b, _tol); }
+
+    //! \brief True if \f$|\_a - \_b| > \_tol\f$.
+    //! \details _tol should be positive. This function implements fuzzy math
+    //!               across most numeric types.
+    template< class T_ARG>
+    inline bool gt( const T_ARG _a, const T_ARG _b)   { return not eq(_a, _b); }
+    //! \brief True if \f$|\_a - \_b| > \_tol\f$.
+    //! \details _tol should be positive. This function implements fuzzy math
+    //!               across most numeric types.
+    template< class T_ARG>
+    inline bool gt( const T_ARG _a, const T_ARG _b, const T_ARG _tol)   { return not eq(_a, _b, _tol); }
+    
+    //! True if the number is an integer.
+    template<class T_ARG>
+    inline LADA_REAL is_integer(T_ARG x, T_ARG _tol = types::tolerance)
+        { return eq(x, std::floor(x+0.1), _tol); }
+    //! True if the number is an integer.
+    template<class T_ARG> inline LADA_INTEGRAL is_integer(T_ARG, T_ARG) { return true; }
+    //! True if the number is an integer.
+    template<class T_ARG> inline LADA_INTEGRAL is_integer(T_ARG) { return true; }
+
     //! \brief returns true if \a _a  == 0.
     //! \details if \a T_ARG is a types::real, return true if 
     //!          \a _a < types::tolerance.
-    template< class T_ARG > bool is_zero( T_ARG const &_a );
+    template<classT_ARG > bool is_null(T_ARG _a, T_ARG _tol) { return eq(_a, T_ARG(0), _tol); }
+    //! \brief returns true if \a _a  == 0.
+    //! \details if \a T_ARG is a types::real, return true if 
+    //!          \a _a < types::tolerance.
+    template<classT_ARG > bool is_null(T_ARG _a) { return eq(_a, T_ARG(0)); }
 
-    //! Is a vector zero.
-    template<> inline bool is_zero( rVector3d const &_a ) { return is_zero( _a.squaredNorm() );  }
-    //! Is a vector zero.
-    template<> inline bool is_zero( iVector3d const &_a )
-    {
-      if( _a(0) != 0 ) return false;
-      if( _a(1) != 0 ) return false;
-      return _a(2) == 0;
-    }
-    //! Is a matrix zero.
-    template<> inline bool is_zero( rMatrix3d const &_a )
-    {
-      for(size_t i(0); i < 3; ++i)
-        for(size_t j(0); j < 3; ++j)
-          if( not is_zero(_a(i,j)) ) return false;
-      return true;
-    }
-    template<class T> inline bool is_zero(T const &_a ) { return math::eq( _a, T(0) ); }
-
-    //! \cond
-    template<>
-    inline bool leq<types::t_real>( const types::t_real _a,
-                                    const types::t_real _b ) 
-      { return std::abs(_a - _b) < types::tolerance or _a < _b; }
-    template<>
-    inline bool geq<types::t_real>( const types::t_real _a,
-                                    const types::t_real _b ) 
-      { return std::abs(_a - _b) < types::tolerance or _a > _b; }
-    template<>
-    inline bool le<types::t_real>( const types::t_real _a,
-                                   const types::t_real _b ) 
-      { return std::abs(_a - _b) > types::tolerance and _a < _b; }
-    template<>
-    inline bool gt<types::t_real>( const types::t_real _a,
-                                   const types::t_real _b ) 
-      { return std::abs(_a - _b) > types::tolerance and _a > _b; }
-    template<>
-    inline bool eq<types::t_real>( const types::t_real _a,
-                                   const types::t_real _b ) 
-      { return std::abs( _a - _b ) <  types::tolerance; }
-    template<>
-    inline bool neq<types::t_real>( const types::t_real _a,
-                                    const types::t_real _b ) 
-      { return std::abs( _a - _b ) >=  types::tolerance; }
-    //! \endcond
+    //! \brief returns true if \a _a  == 0.
+    //! \details if \a T_ARG is a types::real, return true if 
+    //!          \a _a < types::tolerance.
+    template<classT_ARG > bool is_unity(T_ARG _a, T_ARG _tol) { return eq(_a, T_ARG(1), _tol); }
+    //! \brief returns true if \a _a  == 0.
+    //! \details if \a T_ARG is a types::real, return true if 
+    //!          \a _a < types::tolerance.
+    template<classT_ARG > bool is_unity(T_ARG _a) { return eq(_a, T_ARG(1)); }
+#   undef LADA_INTEGRAL
+#   undef LADA_REAL
   } // namepace math
 } // namespace LaDa
 
