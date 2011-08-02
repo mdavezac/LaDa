@@ -15,7 +15,7 @@ namespace LaDa
     math::rVector3d to_spherical( math::rVector3d const &_a )
     {
       types::t_real const  rho = std::sqrt( _a[0]*_a[0] + _a[1]*_a[1] + _a[2]*_a[2] );
-      return math::is_zero(rho) ? 
+      return math::is_null(rho) ? 
                math::rVector3d(0,0,0):
                math::rVector3d
                (

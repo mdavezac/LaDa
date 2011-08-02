@@ -98,7 +98,7 @@ namespace LaDa
 
     template< class T_TYPE >
       atomic_potential::numeric_type neg_pow( Functions::arg_type::first_type const _x, T_TYPE  _i )
-        { return math::is_zero(_x) ? 1e0/types::tolerance: std::pow(_x, _i); }
+        { return math::is_null(_x) ? 1e0/types::tolerance: std::pow(_x, _i); }
 
     template<class T_TYPE>
       void push_back_pow( Functions &_func, T_TYPE _pow, 
@@ -133,7 +133,7 @@ namespace LaDa
                          bp::tuple const &_tuple, bool _which )
     {
       namespace bl = boost::lambda;
-      if( math::is_zero(_n) )
+      if( math::is_null(_n) )
       {
         PyErr_SetString( PyExc_ValueError, "Wave number cannot be zero.\n");
         bp::throw_error_already_set();

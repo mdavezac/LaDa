@@ -144,7 +144,7 @@ namespace LaDa
           } // loop over classes of clusters.
         } // loop over atomic positions.
 #       ifdef LADA_DEBUG
-          foreach(types::t_real &o, _out) if( math::is_zero(o) ) o = 0e0;
+          foreach(types::t_real &o, _out) if( math::is_null(o) ) o = 0e0;
 #       endif
       }
 

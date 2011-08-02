@@ -34,11 +34,11 @@ namespace LaDa
 
       i_vec = vectors.begin();
       math::rVector3d shift( (!Crystal::Structure::lattice->cell) * (*i_vec) );
-      shift(0) -= std::floor(shift(0)); if( math::is_zero(shift(0)-1e0) ) shift(0) = 0e0;
-      shift(1) -= std::floor(shift(1)); if( math::is_zero(shift(1)-1e0) ) shift(1) = 0e0;
-      shift(2) -= std::floor(shift(2)); if( math::is_zero(shift(2)-1e0) ) shift(2) = 0e0;
+      shift(0) -= std::floor(shift(0)); if( math::is_null(shift(0)-1e0) ) shift(0) = 0e0;
+      shift(1) -= std::floor(shift(1)); if( math::is_null(shift(1)-1e0) ) shift(1) = 0e0;
+      shift(2) -= std::floor(shift(2)); if( math::is_null(shift(2)-1e0) ) shift(2) = 0e0;
       shift = Crystal::Structure::lattice->cell * shift - (*i_vec);
-      if( math::is_zero(shift.squaredNorm()) ) return;
+      if( math::is_null(shift.squaredNorm()) ) return;
       for(; i_vec != i_last; ++i_vec ) *i_vec -= shift; 
     }
 
@@ -121,7 +121,7 @@ namespace LaDa
       CompPairs( math::rVector3d const &_a ) : pos(_a) {}
       CompPairs( CompPairs const &_a ) : pos(_a.pos) {}
       bool operator()(Cluster const& _a) const
-        { return math::is_zero( (_a.vectors[1]-pos).squaredNorm() ); }
+        { return math::is_null( (_a.vectors[1]-pos).squaredNorm() ); }
     };
 
    
@@ -238,7 +238,7 @@ namespace LaDa
         t_cit const i_op_end = _lat.space_group.end();
         for (; i_op != i_op_end; ++i_op )
         {
-          if( not math::is_zero(i_op->trans.squaredNorm()) ) continue;
+          if( not math::is_null(i_op->trans.squaredNorm()) ) continue;
           // initialize a new cluster to object pointed by i_old_list
           Cluster transfo_cluster( *i_old_list );
           
@@ -266,9 +266,9 @@ namespace LaDa
       cmp(cmp const &_c): pos(_c.pos) {}
       bool operator()(math::rVector3d const &_a) const
       {
-        if( not math::is_zero( pos[0] - _a[0] ) ) return false;
-        if( not math::is_zero( pos[1] - _a[1] ) ) return false;
-        return  math::is_zero( pos[2] - _a[2] );
+        if( not math::is_null( pos[0] - _a[0] ) ) return false;
+        if( not math::is_null( pos[1] - _a[1] ) ) return false;
+        return  math::is_null( pos[2] - _a[2] );
       }
       math::rVector3d const &pos;
     };

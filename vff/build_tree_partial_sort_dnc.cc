@@ -75,7 +75,7 @@ namespace LaDa
           const math::rVector3d
             trans( math::round(invcell * (point.translation - i_boxed->translation)));
           center.translations.push_back( trans );
-          center.do_translates.push_back( not math::is_zero(trans.squaredNorm()) );
+          center.do_translates.push_back( not math::is_null(trans.squaredNorm()) );
         }
 
       } // loop over points in box.

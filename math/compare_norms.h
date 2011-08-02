@@ -27,7 +27,7 @@ namespace LaDa
           { return math::le( (_a - vec).squaredNorm(), (_b - vec).squaredNorm() ); }
         //! Returns true if \a _a = norm::compare::vec.
         bool operator()( math::rVector3d &_a ) const
-          { return math::is_zero( (_a - vec).squaredNorm() ); } 
+          { return math::is_null( (_a - vec).squaredNorm() ); } 
     };
   }
 } // namespace LaDa

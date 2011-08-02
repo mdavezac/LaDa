@@ -71,7 +71,7 @@ namespace LaDa
       for(; i_first != i_end; ++i_first)
       {
         // Checks if norm has changed.
-        if( not math::is_zero(i_first->distance - current_norm) )
+        if( not math::is_null(i_first->distance - current_norm) )
         {
           current_norm = i_first->distance;
           ++first_of_size;
@@ -92,7 +92,7 @@ namespace LaDa
             LADA_ASSERT( which_site( (*i_op)(pos), !_lat.cell, _lat.sites) != -1, "error" );
             LADA_ASSERT( which_site(vec + origin, !_lat.cell, _lat.sites) != -1, "error" );
             for(i_begin = clusters->begin(); not_found and i_begin != i_end; ++i_begin)
-              if( math::is_zero( (vec - i_begin->vectors[1]).squaredNorm() ) ) not_found = false;
+              if( math::is_null( (vec - i_begin->vectors[1]).squaredNorm() ) ) not_found = false;
           }
         } 
 

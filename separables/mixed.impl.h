@@ -269,11 +269,11 @@ namespace LaDa
             for(; n < size_t(i_cluster->size()); ++n ) 
             {
               const math::rVector3d &pos( (*i_cluster)[n] );
-              if( math::is_zero(pos) ) continue;
+              if( math::is_null(pos) ) continue;
               typename T_POSITIONS :: const_iterator i_pos = _positions.begin();
               typename T_POSITIONS :: const_iterator i_pos_end = _positions.end();
               for(; i_pos != i_pos_end; ++i_pos )
-                if( math::is_zero((*i_pos - pos).eval()) ) break;
+                if( math::is_null((*i_pos - pos).eval()) ) break;
               if( i_pos == i_pos_end ) break;
             }
             if( n == size_t( i_cluster->size() ) ) break;

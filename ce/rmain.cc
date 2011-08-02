@@ -256,7 +256,7 @@ int main(int argc, char *argv[])
     LaDa::CE::Fit< LaDa::CE::FittingPolicy::PairReg<> > fit;
     fit.alpha = pairreg.first;
     fit.tcoef = pairreg.second;
-    fit.do_pairreg = ( not LaDa::math::is_zero( pairreg.second ) and maxpairs );
+    fit.do_pairreg = ( not LaDa::math::is_null( pairreg.second ) and maxpairs );
     fit.laksreg = not volkerreg;
     fit.verbose = verbosity >= detailederrors;
     reg.cgs.verbose = verbosity >= outermin;

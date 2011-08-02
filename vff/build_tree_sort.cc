@@ -54,7 +54,7 @@ namespace LaDa
               rint( frac_image[2] ) 
             );
             i_center->translations.push_back( trans );
-            i_center->do_translates.push_back( not math::is_zero(trans.squaredNorm()) );
+            i_center->do_translates.push_back( not math::is_null(trans.squaredNorm()) );
 
             if( i_center->bonds.size() == 4 ) break;
           } // loop over neighbors

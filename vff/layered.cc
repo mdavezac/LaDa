@@ -79,7 +79,7 @@ namespace LaDa
       for( size_t i(0); i < 3; ++i )
         for( size_t j(0); j < 3; ++j )
         {
-          if( math::is_zero( template_strain(i,j) ) ) continue;
+          if( math::is_null( template_strain(i,j) ) ) continue;
           *i_var += template_strain(i,j) * strain(i,j);
           ++n;
         }

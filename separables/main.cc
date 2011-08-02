@@ -328,7 +328,7 @@ int main(int argc, char *argv[])
     );
   mixed.cefit().alpha = alpha;
   mixed.cefit().tcoef = tcoef;
-  mixed.cefit().do_pairreg = ( not LaDa::math::is_zero( alpha ) and maxpairs );
+  mixed.cefit().do_pairreg = ( not LaDa::math::is_null( alpha ) and maxpairs );
   mixed.cefit().laksreg = not volkerreg;
   mixed.cefit().verbose = verbosity >= print_checks;
   // initializes collapse part.

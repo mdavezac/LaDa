@@ -26,7 +26,7 @@ namespace LaDa
                            :: apply_to_dim_n_rank( _sep.coefficients(),
                                                    config, result, _d, _r,
                                                    bl::_1 = bl::_2 );
-              return not math::is_zero( result ) ?
+              return not math::is_null( result ) ?
                        scales_(_r, _kv) / result:
                        factor_from_scratch( _kv, _r, _d, _sep, _confs );
             }
@@ -170,7 +170,7 @@ namespace LaDa
                        const t_Configurations &_confs ) const
             {
               typename t_Matrix :: value_type result( dimsplit_[_kv](_r,_d) );
-              return not math::is_zero( result ) ?
+              return not math::is_null( result ) ?
                        scales_(_r, _kv) / result:
                        factor_from_scratch( _kv, _r, _d );
             }
@@ -204,7 +204,7 @@ namespace LaDa
           :: operator()( const t_Separables& _sep, T_MATRIX &_A,
                          T_VECTOR &_b, size_t _dim ) const
           {
-            if( math::is_zero( lambda ) ) return; 
+            if( math::is_null( lambda ) ) return; 
             typedef typename t_Separables :: t_Vector :: const_iterator t_cit;
             t_cit i_norm = _sep.norms.begin();
             t_cit i_norm_end = _sep.norms.end();
@@ -221,7 +221,7 @@ namespace LaDa
           :: operator()( const t_Separables &_sep, T_MATRIX &_A,
                          T_VECTOR &_b, size_t _dim ) const
           {
-            if( math::is_zero( lambda ) ) return; 
+            if( math::is_null( lambda ) ) return; 
             const size_t D( t_Separables :: t_Mapping :: D );
             typedef typename t_Separables :: t_Vector :: const_iterator t_cit;
             t_cit i_norm = _sep.norms.begin();

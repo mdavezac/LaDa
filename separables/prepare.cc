@@ -39,7 +39,7 @@ namespace LaDa
       syms.reserve( N );
       for( types::t_int i(0); i < N; ++i )
       {
-        if( not math::is_zero(_lat.space_group[i].trans) ) continue;
+        if( not math::is_null(_lat.space_group[i].trans) ) continue;
         math::rMatrix3d &op = _lat.space_group[i].op;
         syms.push_back( op );
       }
@@ -249,7 +249,7 @@ namespace LaDa
               a[0] += 0.05e0; a[0] -= std::floor(a[0]); a[0] -= 0.05e0;
               a[1] += 0.05e0; a[1] -= std::floor(a[1]); a[1] -= 0.05e0;
               a[2] += 0.05e0; a[2] -= std::floor(a[2]); a[2] -= 0.05e0;
-              if( math::is_zero(a) ) break; 
+              if( math::is_null(a) ) break; 
             }
             LADA_DO_NASSERT( i_found == shifted_fracs.end(),
                         "Could not find equivalent position.\n" ) 

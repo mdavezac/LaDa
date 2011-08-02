@@ -144,13 +144,13 @@ namespace LaDa
     template<int D> boost::shared_ptr<Models::Clj::t_Arg>
       __call__(Models::Clj const & _clj, Models::Clj::t_Arg const &_in)
       {
-        if( math::is_zero(_in.scale) )
+        if( math::is_null(_in.scale) )
         {
           PyErr_SetString(PyExc_ValueError, "Scale of input structure is zero.");
           bp::throw_error_already_set();
           return boost::shared_ptr<Models::Clj::t_Arg>();
         }
-        if( math::is_zero(_in.cell.determinant()) )
+        if( math::is_null(_in.cell.determinant()) )
         {
           PyErr_SetString(PyExc_ValueError, "Volume of input structure is zero.");
           bp::throw_error_already_set();

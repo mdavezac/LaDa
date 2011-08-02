@@ -82,7 +82,7 @@ namespace LaDa
     inline bool operator==(DnCBoxes::Point const &_a, DnCBoxes::Point const &_b)
     {
       return     _a.index == _b.index 
-             and math::is_zero( (_a.translation - _b.translation).squaredNorm() );
+             and math::is_null( (_a.translation - _b.translation).squaredNorm() );
     }
 
 

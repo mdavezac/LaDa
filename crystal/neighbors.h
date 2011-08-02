@@ -152,7 +152,7 @@ retry:
                {
                   neighbor.pos = _structure.cell * ( centered + math::rVector3d(x,y,z) );
                   neighbor.distance = neighbor.pos.norm();
-                  if( math::is_zero( neighbor.distance ) ) continue;
+                  if( math::is_null( neighbor.distance ) ) continue;
        
                   t_Neighbors :: iterator i_found 
                   (

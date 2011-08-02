@@ -137,7 +137,7 @@ namespace LaDa
             rint( dfrac(2) )
           );
           i_center->translations.push_back( frac );
-          i_center->do_translates.push_back( not math::is_zero(frac.squaredNorm()) );
+          i_center->do_translates.push_back( not math::is_null(frac.squaredNorm()) );
         }
       }
       LADA_ENDGROUP

@@ -269,7 +269,7 @@ namespace LaDa
           };
           
           // avoid origin.
-          if( math::is_zero( spin.pos.squaredNorm() ) ) continue;
+          if( math::is_null( spin.pos.squaredNorm() ) ) continue;
           cluster.push_back(spin);
         }
 

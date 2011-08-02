@@ -49,7 +49,7 @@ namespace LaDa
         Skip(math::rVector3d const &_vec) : vec(_vec) {}
         Skip(Skip const &_c) : vec(_c.vec) {}
         template<class WHATNOT>  bool operator()(WHATNOT const& _vec) const
-          { return math::is_zero( (_vec.first - vec).squaredNorm() ); }
+          { return math::is_null( (_vec.first - vec).squaredNorm() ); }
       };
     }
     //! \endcond
@@ -139,14 +139,14 @@ namespace LaDa
       size_t i( n.first );
       for(; i_pair != i_pair_end and i > 0; ++i_pair )
       {
-        if( math::is_zero(i_pair->first) ) continue; 
+        if( math::is_null(i_pair->first) ) continue; 
         --i;
       }
       LADA_DO_NASSERT( i_pair == i_pair_end, "Insufficient number of atoms considered.\n" )
 
       while( i_pair != i_pair_end )
       {
-        if( math::is_zero(i_pair->first) ) { ++i_pair; continue; }
+        if( math::is_null(i_pair->first) ) { ++i_pair; continue; }
 
         const types::t_real current_norm = i_pair->first;
         _positions.resize( _positions.size() + 1 );
@@ -190,7 +190,6 @@ namespace LaDa
         if( i_xpositions->size() == 1 ) ++i_ypositions; 
         // Pointers are defined explicitely as a workaround for commercial
         // compilers, such as pgi.
-        bool (*ptr_is_zero)( types::t_real const & ) = &math::is_zero<types::t_real>;
         const t_Positions :: value_type :: const_iterator 
           max_x_element = details::max_element
                           (
@@ -210,7 +209,7 @@ namespace LaDa
         foreach( const t_Position yPos, *i_ypositions )
         {
           if( math::neq( yPos.first.dot(x), max_x_scalar_pos ) ) continue;
-          if( math::is_zero( (yPos.first - xPos.first).squaredNorm() ) ) continue;
+          if( math::is_null( (yPos.first - xPos.first).squaredNorm() ) ) continue;
           ypossibles.push_back( yPos );
         }
 

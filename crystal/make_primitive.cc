@@ -101,9 +101,9 @@ namespace LaDa
         math::rVector3d const translation( into_cell(i_site->pos - compsites.pos, cell, inv) );
         
         // loop on null translation.
-        if(     math::is_zero(translation(0))
-            and math::is_zero(translation(1)) 
-            and math::is_zero(translation(2)) ) continue;
+        if(     math::is_null(translation(0))
+            and math::is_null(translation(1)) 
+            and math::is_null(translation(2)) ) continue;
 
         // checks that it leaves the lattice invariant.
         t_Sites :: const_iterator i_mapping = copy.sites.begin();
@@ -155,7 +155,7 @@ namespace LaDa
 
             // singular matrix?
             types::t_real const det(trial.determinant());
-            if( math::is_zero(det) ) continue;
+            if( math::is_null(det) ) continue;
             // Volume smaller than current new_cell?
             if( math::geq( std::abs(det), volume) ) continue;
             // Direct matrix?
@@ -177,7 +177,7 @@ namespace LaDa
       // Found the new cell with smallest volume (e.g. primivite)
       LADA_ASSERT
       (
-        not math::is_zero(cell.determinant() - new_cell.determinant() ), 
+        not math::is_null(cell.determinant() - new_cell.determinant() ), 
         "Could not find primitive cell.\n"
       );
 

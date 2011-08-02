@@ -24,9 +24,9 @@ namespace LaDa
         for( size_t i(0); i_first != i_end; ++i, ++i_first )
         {
           math::rVector3d pos( _inv_cell * (_pos - i_first->pos) );
-          if( not math::is_zero(pos(0)-std::floor(pos(0)+types::roundoff)) ) continue;
-          if( not math::is_zero(pos(1)-std::floor(pos(1)+types::roundoff)) ) continue;
-          if( math::is_zero(pos(2)-std::floor(pos(2)+types::roundoff)) ) return i;
+          if( not math::is_null(pos(0)-std::floor(pos(0)+types::roundoff)) ) continue;
+          if( not math::is_null(pos(1)-std::floor(pos(1)+types::roundoff)) ) continue;
+          if( math::is_null(pos(2)-std::floor(pos(2)+types::roundoff)) ) return i;
         }
         return -1;
       };
