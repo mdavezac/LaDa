@@ -5,6 +5,7 @@
 #   include "LaDaConfig.h"
 
 #   include <sstream>
+#   include <string>
 
 #   include <boost/preprocessor/iteration/iterate.hpp>
 #   include <boost/preprocessor/repetition/enum_binary_params.hpp>
@@ -35,6 +36,21 @@
           struct default_tag {};
           struct action_tag {};
           struct id_tag {};
+
+          //! Transforms char[] into strings. Leaves others unchanged.
+          template<class T> struct dt 
+          { 
+            static T const & apply(T const &_in) { return _in; }
+          };
+          //! Transforms char[] into strings. Leaves others unchanged.
+          template<size_t D> struct dt<const char(&)[D]>
+          {
+            static std::string apply(const char (&_in)[D])
+            { 
+              return _in; 
+            }
+          };
+          
         }
         const parameter::parameter<details::help_tag, std::string const&> help = {};
         const parameter::parameter<details::tag_tag, load_n_save::tags> tag = {};
@@ -192,7 +208,8 @@
       if((not no_id::value))
         details::set_id_action(op, parameter::get_param(id, vec));
       else
-        op.set_action( parameter::get_param(action, vec), parameter::get_param(default_, vec) );
+        op.set_action( parameter::get_param(action, vec),
+                       details::dt<t_default>::apply(parameter::get_param(default_, vec)) );
 
       // dynamic assertions.
       LADA_ASSERT( not (op.tag & load_n_save::required and (not no_default::value)),

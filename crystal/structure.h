@@ -41,8 +41,6 @@ namespace LaDa
         typedef typename traits::StructureData<T_TYPE>::t_Atom t_Atom;
         //! \typedef The type of the collection of atoms. 
         typedef typename traits::StructureData<T_TYPE>::t_Atoms t_Atoms;
-        //! Namespace for the frozen dof.
-        typedef typename StructureData<T_TYPE>::frozen frozen;
         //! Type of the iterator.
         typedef typename t_Atoms::iterator iterator;
         //! Type of the constant iterator.

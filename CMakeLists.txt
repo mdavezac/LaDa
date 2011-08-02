@@ -1,5 +1,4 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
-ENABLE_TESTING()
 project (LaDa)
 set (LaDa_VERSION_MAJOR 5)
 set (LaDa_VERSION_MINOR 0)
@@ -33,7 +32,12 @@ option(ga_package             "Installs GA python module."                 off)
 option(python_bindings        "Include python bindings."                   off)
 option(ipython_interface      "Include IPython interface."                 off)
 option(ladabase_package       "Install ladabase package for pymongo."      off)
+option(compile_tests          "compile tests."                             off)
+option(compile_debug_tests    "fast way to debug new tests"                off)
 
+if(compile_tests OR compile_debug_tests)
+  ENABLE_TESTING()
+endif(compile_tests OR compile_debug_tests)
 
 # Location where cmake first looks for cmake modules.
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)

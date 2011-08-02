@@ -25,6 +25,27 @@ namespace LaDa
 {
   namespace crystal
   {
+    //! Namespace for frozen structure enum.
+    struct frozenstr
+    {
+      enum type
+      {
+        NONE =   0, //!< Freeze no coordinate of the unit-cell
+        XX   =   1, //!< Freeze (0,0)
+        XY   =   2, //!< Freeze (0,1) 
+        XZ   =   4, //!< Freeze (0,2)
+        YX   =   8, //!< Freeze (0,1) 
+        YY   =  16, //!< Freeze (1,1) 
+        YZ   =  32, //!< Freeze (1,2) 
+        ZX   =  64, //!< Freeze (2,2)
+        ZY   = 128, //!< Freeze (2,2)
+        ZZ   = 256, //!< Freeze (2,2)
+        ALL  = 511, //!< Freeze all coordinates 
+        A0   =  73, //!< Freeze all coordinates 
+        A1   = 146, //!< Freeze all coordinates 
+        A2   = 292, //!< Freeze all coordinates 
+      };
+    };
     template<class T_TYPE> struct StructureData : 
        public details::call_add_atom<StructureData, T_TYPE>
     {
@@ -32,27 +53,6 @@ namespace LaDa
 #     ifdef LADA_WITH_LNS
         friend class load_n_save::access;
 #     endif
-      //! Namespace for frozen enum.
-      struct frozen
-      {
-        enum type
-        {
-          NONE =   0, //!< Freeze no coordinate of the unit-cell
-          XX   =   1, //!< Freeze (0,0)
-          XY   =   2, //!< Freeze (0,1) 
-          XZ   =   4, //!< Freeze (0,2)
-          YX   =   8, //!< Freeze (0,1) 
-          YY   =  16, //!< Freeze (1,1) 
-          YZ   =  32, //!< Freeze (1,2) 
-          ZX   =  64, //!< Freeze (2,2)
-          ZY   = 128, //!< Freeze (2,2)
-          ZZ   = 256, //!< Freeze (2,2)
-          ALL  = 511, //!< Freeze all coordinates 
-          A0   =  73, //!< Freeze all coordinates 
-          A1   = 146, //!< Freeze all coordinates 
-          A2   = 292, //!< Freeze all coordinates 
-        };
-      };
       
       //! \typedef Type of the species
       typedef typename traits::StructureData<T_TYPE>::t_Type t_Type;
@@ -77,7 +77,7 @@ namespace LaDa
       t_Atoms atoms;
 
       //! Constructor
-      StructureData() : name(""), energy(0), weight(1), freeze(frozen::NONE) {};
+      StructureData() : name(""), energy(0), weight(1), scale(1), freeze(frozenstr::NONE) {};
       //! Copy Constructor
       StructureData   (const StructureData &_str)
                     : cell(_str.cell), atoms(_str.atoms), name(_str.name), 
@@ -113,11 +113,11 @@ namespace LaDa
           namespace lns = LaDa :: load_n_save;
           namespace bf = boost::fusion;
           std::map<std::string, LaDa::types::t_unsigned> freeze_map;
-          freeze_map["none"] = frozen::NONE;
-          freeze_map["a0"]   = frozen::A0;
-          freeze_map["a1"]   = frozen::A1;
-          freeze_map["a2"]   = frozen::A2;
-          freeze_map["all"]  = frozen::ALL;
+          freeze_map["none"] = frozenstr::NONE;
+          freeze_map["a0"]   = frozenstr::A0;
+          freeze_map["a1"]   = frozenstr::A1;
+          freeze_map["a2"]   = frozenstr::A2;
+          freeze_map["all"]  = frozenstr::ALL;
 #         ifdef LADA_TIE
 #            error LADA_TIE already defined.
 #         endif
@@ -139,11 +139,11 @@ namespace LaDa
 #         undef LADA_TOE
           lns::xpr::Section const section =
             lns::section("Structure")  
-              << lns::option("name", lns::action=name)
+              << lns::option("name", lns::action=name, lns::default_="")
               << lns::option("energy", lns::action=energy, lns::default_=0)
               << lns::option("weight", lns::action=weight, lns::default_=0)
               << lns::option("freeze", lns::action=lns::enum_(freeze, freeze_map),
-                             lns::default_=frozen::NONE)
+                             lns::default_=frozenstr::NONE)
               << lns::option("scale", lns::action=scale, lns::default_=1e0)
               << ( ( seccell )  && lns::push_back(atoms) );
           return _ar & section;

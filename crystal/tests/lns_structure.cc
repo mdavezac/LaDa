@@ -15,14 +15,34 @@
 
 #include "../structure.h"
 
+#if LADA_TEST_STRUCTURE == 0
+#  define LADA_STRUCTURE StructureData
+#  define LADA_CALL 
+#  define LADA_ATOMS .atoms
+#elif LADA_TEST_STRUCTURE == 1
+#  define LADA_STRUCTURE TemplateStructure
+#  define LADA_CALL   ()
+#  define LADA_ATOMS 
+#endif
 #if LADA_TEST_INCTYPE == 0
 #  define LADA_TYPE std::string 
 #  define LADA_TYPE_INIT1 "Au"
 #  define LADA_TYPE_INIT2 "Pd"
+#  define LADA_XML "<Structure name=\"\" energy=\"0\" weight=\"1\" freeze=\"none\" scale=\"1\">  <Cell r0=\"-0.5 0.5 0.5\" r1=\"0.5 -0.5 0.5\" r2=\"0.5 0.5 -0.5\"/>  <Atom pos=\"0 0 0\" type=\"Au\" freeze=\"none\"/>  <Atom pos=\"0.25 0.25 0.25\" type=\"Pd\" freeze=\"none\"/></Structure>"
+#  define LADA_FIRST_SIZE true
+#  define LADA_FIRST_TYPE structure LADA_ATOMS [0].type == "Au"
+#  define LADA_SECOND_SIZE true
+#  define LADA_SECOND_TYPE structure LADA_ATOMS [1].type == "Pd"
 #elif LADA_TEST_INCTYPE == 1
 #  define LADA_TYPE std::vector<std::string>
 #  define LADA_TYPE_INIT1 "Au"
 #  define LADA_TYPE_INIT2 "Au", "Pd"
+#  define LADA_XML "<Structure name=\"\" energy=\"0\" weight=\"1\" freeze=\"none\" scale=\"1\">  <Cell r0=\"-0.5 0.5 0.5\" r1=\"0.5 -0.5 0.5\" r2=\"0.5 0.5 -0.5\"/>  <Atom pos=\"0 0 0\" type=\"Au\" freeze=\"none\"/>  <Atom pos=\"0.25 0.25 0.25\" type=\"Au Pd\" freeze=\"none\"/></Structure>"
+#  define LADA_FIRST_SIZE structure LADA_ATOMS [0].type.size() == 1
+#  define LADA_FIRST_TYPE structure LADA_ATOMS [0].type[0] == "Au"
+#  define LADA_SECOND_SIZE structure LADA_ATOMS [1].type.size() == 2
+#  define LADA_SECOND_TYPE     structure LADA_ATOMS [1].type[0] == "Au" \
+                           and structure LADA_ATOMS [1].type[1] == "Pd"
 #endif
 
 using namespace std;
@@ -31,7 +51,7 @@ int main()
   using namespace LaDa;
   using namespace LaDa::crystal;
   namespace lns = LaDa::load_n_save;
-  LADA_TEST_STRUCTURE< LADA_TYPE > structure;
+  LADA_STRUCTURE< LADA_TYPE > structure;
 
   structure.set_cell(-0.5,0.5,0.5)
                     (0.5,-0.5,0.5)
@@ -48,17 +68,35 @@ int main()
   std::string xmlstring = sstr.str();
   boost::algorithm::erase_all(xmlstring, "\n");
   boost::algorithm::trim(xmlstring);
-  std::cout << xmlstring << "\n";
-// LADA_DOASSERT(xmlstring == LADA_XML, "Error in output.");
-//
-// atom.pos = math::rVector3d(0,0,0);
-// atom.freeze = Atom< LADA_TYPE >::frozen::NONE;
-// LADA_CLEAR_TYPE;
-// other = lns::xml::parse( sstr.str() );
-// lns::load::Load loader;
-// bool result = loader( *other, lns::ext(atom) );
-// LADA_DOASSERT((atom.pos - math::rVector3d(0.5,-0.5,0.5)).squaredNorm() < 1e-12, "Could not reload pos.\n");
-// LADA_DOASSERT(atom.freeze == Atom< LADA_TYPE >::frozen::X, "Could not reload freeze.\n");
-// LADA_DOASSERT_TYPE
+  LADA_DOASSERT(xmlstring == LADA_XML, "Error in output.");
+
+  structure.set_cell(0,0,0)
+                    (0,0,0)
+                    (0,0,0);
+  structure.energy LADA_CALL= 666e0;
+  structure.weight LADA_CALL= 666e0;
+  structure.scale  LADA_CALL= 666e0;
+  structure.freeze LADA_CALL= frozenstr::XX; 
+  structure LADA_ATOMS .clear();
+  other = lns::xml::parse( sstr.str() );
+  lns::load::Load loader;
+  bool result = loader( *other, lns::ext(structure) );
+  for(size_t i(0); i < 3; ++i)
+    for(size_t j(0); j < 3; ++j)
+      LADA_DOASSERT( std::abs(structure.cell LADA_CALL (i,j) - (i==j ? -0.5:0.5)) < 1e-12,
+                     "Could not reload cell.\n" )
+  LADA_DOASSERT( std::abs(structure.energy LADA_CALL ) < 1e-12, "Could not reload energy.\n")
+  LADA_DOASSERT( std::abs(structure.weight LADA_CALL -1) < 1e-12, "Could not reload weight.\n")
+  LADA_DOASSERT( std::abs(structure.scale LADA_CALL -1) < 1e-12, "Could not reload scale.\n")
+  LADA_DOASSERT( structure.freeze LADA_CALL == frozenstr::NONE, "Could not reload frozen.\n")
+  LADA_DOASSERT( structure LADA_ATOMS .size() == 2, "Could not reload two atoms.\n")
+  LADA_DOASSERT( (structure LADA_ATOMS [0].pos).squaredNorm() < 1e-12,
+                 "Could not reload first position.\n") 
+  LADA_DOASSERT( (structure LADA_ATOMS [1].pos - math::rVector3d(0.25,0.25,0.25)).squaredNorm() < 1e-12,
+                 "Could not reload second position.\n") 
+  LADA_DOASSERT( LADA_FIRST_SIZE, "Could not reload all first species.\n") 
+  LADA_DOASSERT( LADA_FIRST_TYPE, "Could not reload first type.\n") 
+  LADA_DOASSERT( LADA_SECOND_SIZE, "Could not reload all second species.\n") 
+  LADA_DOASSERT( LADA_SECOND_TYPE, "Could not reload first type.\n") 
   return 0;
 }
