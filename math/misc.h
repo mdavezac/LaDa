@@ -9,6 +9,7 @@
 #include <opt/types.h>
 #include "eigen.h"
 #include "fuzzy.h"
+#include "exceptions.h"
 
 namespace LaDa
 {
@@ -27,58 +28,106 @@ namespace LaDa
 #   ifdef LADA_MACRO
 #     error LADA_MACRO already defined.
 #   endif
-#   define LADA_MACRO(name, type, default_) \
-      inline bool name(type const &x, default_ ) \
-        { return name(x(0), _tol) and name(x(1), _tol) and name(x(2), _tol); }   \
-      inline bool name(math::rVector3d const &x) \
-        { return name(x(0)) and name(x(1)) and name(x(2)); }   
-    LADA_MACRO(is_integer,  math::rVector3d, types::t_real _tol = types::tolerance);
-    LADA_MACRO(is_null,     math::rVector3d, types::t_real _tol = types::tolerance);
-    LADA_MACRO(is_identity, math::rVector3d, types::t_real _tol = types::tolerance);
-    LADA_MACRO(is_integer,  math::iVector3d, types::t_int _tol = 0);
-    LADA_MACRO(is_null,     math::iVector3d, types::t_int _tol = 0);
-    LADA_MACRO(is_identity, math::iVector3d, types::t_int _tol = 0);
+#   define LADA_MACRO(name, default_) \
+      template<class T_DERIVED>                                                   \
+        inline bool name( Eigen::DenseBase<T_DERIVED> const & _in,                \
+                          typename Eigen::DenseBase<T_DERIVED>::RealScalar const &_tol ) \
+        {                                                                         \
+          for(size_t i(0); i < _in.rows(); ++i)                                   \
+            for(size_t j(0); j < _in.cols(); ++j)                                 \
+              if(not name(_in.coeff(i,j), _tol)) return false;                    \
+          return true;                                                            \
+        }                                                                         \
+      template<class T_DERIVED>                                                   \
+        inline bool name(Eigen::DenseBase<T_DERIVED> const & _in)                 \
+        {                                                                         \
+          for(size_t i(0); i < _in.rows(); ++i)                                   \
+            for(size_t j(0); j < _in.cols(); ++j)                                 \
+              if(not name(_in.coeff(i,j))) return false;                          \
+          return true;                                                            \
+        }
+    LADA_MACRO(is_integer, types::t_real _tol = types::tolerance);
+    LADA_MACRO(is_null,    types::t_real _tol = types::tolerance);
 #   undef LADA_MACRO
-#   define LADA_MACRO(name, type, default_) \
-      inline bool name(type const &x, default_)         \
-      {                                                 \
-        for(size_t i(0); i < 3; ++i)                    \
-          for(size_t j(0); j < 3; ++j)                  \
-            if( not name(x(i,j), _tol) ) return false;  \
-        return true;                                    \
-      }                                                 \
-      inline bool name(type const &x)                   \
-      {                                                 \
-        for(size_t i(0); i < 3; ++i)                    \
-          for(size_t j(0); j < 3; ++j)                  \
-            if( not name(x(i,j)) ) return false;        \
-        return true;                                    \
+    //! True if an eigen array or matrix is the identity.
+    template<class T_DERIVED>
+      inline bool is_identity( Eigen::DenseBase<T_DERIVED> const & _in,
+                               typename Eigen::DenseBase<T_DERIVED>::RealScalar const &_tol )
+      {
+        if(_in.cols() == 1)
+        {
+          for(size_t j(0); j < _in.cols(); ++j)
+            if(not is_identity(_in.coeff(j,0), _tol)) return false;
+        }
+        else 
+        {
+          for(size_t i(0); i < _in.rows(); ++i)
+            for(size_t j(0); j < _in.cols(); ++j)
+              if(i==j) { if( not is_identity(_in.coeff(i,j), _tol)) return false; }
+              else if(not is_null(_in.coeff(i,j), _tol)) return false;
+        }
+        return true;
       }
-    LADA_MACRO(is_integer, math::rMatrix3d, types::t_real _tol = types::tolerance)
-    LADA_MACRO(is_null,    math::rMatrix3d, types::t_real _tol = types::tolerance)
-    LADA_MACRO(is_integer, math::iMatrix3d, types::t_int _tol = 0)
-    LADA_MACRO(is_null,    math::iMatrix3d, types::t_int _tol = 0)
-#   undef LADA_MACRO
-#   define LADA_MACRO(name, type, default_) \
-      inline bool name(type const &x, default_)         \
-      {                                                 \
-        for(size_t i(0); i < 3; ++i)                    \
-          for(size_t j(0); j < 3; ++j)                  \
-            if( i ==j and not name(x(i,j), _tol) ) return false;  \
-           else if( not is_null(x(i,j), _tol) ) return false;  \
-        return true;                                    \
-      }                                                 \
-      inline bool name(type const &x)                   \
-      {                                                 \
-        for(size_t i(0); i < 3; ++i)                    \
-          for(size_t j(0); j < 3; ++j)                  \
-            if( i == j not name(x(i,j)) ) return false; \
-            if( not is_null(x(i,j)) ) return false;     \
-        return true;                                    \
+    //! True if an eigen array or matrix is the identity.
+    template<class T_DERIVED>
+      inline bool is_identity(Eigen::DenseBase<T_DERIVED> const & _in)
+      {
+        if(_in.cols() == 1)
+        {
+          for(size_t j(0); j < _in.rows(); ++j)
+            if(not is_identity(_in.coeff(j,0))) return false;
+        }
+        else 
+        {
+          for(size_t i(0); i < _in.rows(); ++i)
+            for(size_t j(0); j < _in.cols(); ++j)
+              if(i==j) { if( not is_identity(_in.coeff(i,j))) return false; }
+              else if(not is_null(_in.coeff(i,j))) return false;
+        }
+        return true;
       }
-    LADA_MACRO(is_unity, math::rMatrix3d, types::t_real _tol = types::tolerance)
-    LADA_MACRO(is_unity, math::iMatrix3d, types::t_int _tol = 0)
-#   undef LADA_MACRO
+    //! True if two eigen arrays or matrices are equal, according to math::eq(). 
+    template<class T_DERIVED0, class T_DERIVED1> 
+      inline bool eq( Eigen::DenseBase<T_DERIVED0> const & _a,
+                      Eigen::DenseBase<T_DERIVED1> const & _b,
+                      typename Eigen::DenseBase<T_DERIVED0>::RealScalar const &_tol )
+      {
+        typedef typename Eigen::DenseBase<T_DERIVED0>::RealScalar t_real0;
+        typedef typename Eigen::DenseBase<T_DERIVED1>::RealScalar t_real1;
+        BOOST_STATIC_ASSERT((boost::is_same<t_real0, t_real1>::value));
+        if(_a.rows() != _b.rows() or _a.cols() != _b.cols())
+          BOOST_THROW_EXCEPTION(error::array_of_different_sizes());
+        for(size_t i(0); i < _a.rows(); ++i)
+          for(size_t j(0); j < _a.cols(); ++j)
+            if(not eq(_a.coeff(i,j), _b.coeff(i,j), _tol)) return false;
+        return true;
+      }
+    //! True if two eigen arrays or matrices are equal, according to math::eq(). 
+    template<class T_DERIVED0, class T_DERIVED1>
+      inline bool eq( Eigen::DenseBase<T_DERIVED0> const & _a,
+                      Eigen::DenseBase<T_DERIVED1> const & _b )
+      {
+        typedef typename Eigen::DenseBase<T_DERIVED0>::RealScalar t_real0;
+        typedef typename Eigen::DenseBase<T_DERIVED1>::RealScalar t_real1;
+        BOOST_STATIC_ASSERT((boost::is_same<t_real0, t_real1>::value));
+        if(_a.rows() != _b.rows() or _a.cols() != _b.cols())
+          BOOST_THROW_EXCEPTION(error::array_of_different_sizes());
+        for(size_t i(0); i < _a.rows(); ++i)
+          for(size_t j(0); j < _a.cols(); ++j)
+            if(not eq(_a.coeff(i,j), _b.coeff(i,j))) return false;
+        return true;
+      }
+    //! True if two eigen arrays or matrices are not equal, according to math::eq(). 
+    template<class T_DERIVED0, class T_DERIVED1> 
+      inline bool neq( Eigen::DenseBase<T_DERIVED0> const & _a,
+                       Eigen::DenseBase<T_DERIVED1> const & _b,
+                       typename Eigen::DenseBase<T_DERIVED0>::RealScalar const &_tol )
+        { return not eq(_a, _b, _tol); }
+    //! True if two eigen arrays or matrices are not equal, according to math::eq(). 
+    template<class T_DERIVED0, class T_DERIVED1> 
+      inline bool neq( Eigen::DenseBase<T_DERIVED0> const & _a,
+                       Eigen::DenseBase<T_DERIVED1> const & _b )
+        { return not eq(_a, _b); }
 
     //! True if two vectors are periodic images with respect to a cell.
     inline bool are_periodic_images( math::rVector3d const &_a,
