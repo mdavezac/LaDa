@@ -5,23 +5,22 @@
 
 #include <boost/serialization/serialization.hpp>
 
+
 #include <opt/debug.h>
 #include <opt/types.h>
 
 #include "fuzzy.h"
 #include "misc.h"
-#include "serialize.h"
 #include "set_cell.h"
 
+namespace Eigen
+{
+}
 
 namespace LaDa
 {
-  namespace crystal 
+  namespace math
   {
-    //! \cond
-    template<class T_TYPE> class TemplateStructure;
-    //! \endcond
-    
 
     //! A symmetry operator.
     struct SymmetryOperator

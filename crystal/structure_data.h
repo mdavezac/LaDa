@@ -48,6 +48,7 @@ namespace LaDa
     template<class T_TYPE> struct StructureData : 
        public details::call_add_atom<StructureData, T_TYPE>
     {
+      EIGEN_MAKE_ALIGNED_OPERATOR_NEW
       friend class boost::serialization::access;
 #     ifdef LADA_WITH_LNS
         friend class load_n_save::access;

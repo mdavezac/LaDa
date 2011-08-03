@@ -11,6 +11,9 @@ namespace LaDa
 {
   namespace math
   {
+    //! \f$\pi\f$
+    const types::t_real pi = 3.1415926535897932384626433832795028841971693993751058209749445920;
+
     //! 3d-vector of reals. 
     typedef Eigen::Matrix<types::t_real, 3, 1> rVector3d;
     //! 3d-vector of integers. 
@@ -26,6 +29,18 @@ namespace LaDa
     typedef Eigen::Matrix<types::t_real, 3, 3> rMatrix3d;
     //! 3d-vector of integers. 
     typedef Eigen::Matrix<types::t_int, 3, 3> iMatrix3d;
+
+    //! \typedef type of the angle axis object to initialize roations.
+    typedef Eigen::AngleAxis<types::t_real> AngleAxis;
+    //! \typedef type of the translation objects.
+    typedef Eigen::Translation<types::t_real, 3> Translation;
+#   ifndef LADA_WITH_EIGEN3 
+      //! \typedef type of the affine transformations.
+      typedef Eigen::Transform<types::t_real, 3> Affine3d;
+#   else
+      //! \typedef type of the affine transformations.
+      typedef Eigen::Transform<types::t_real, 3, Eigen::Isometry> Affine3d;
+#   endif
   } // namespace math
 } // namespace LaDa
 
@@ -36,13 +51,6 @@ namespace Eigen
   typedef LaDa::types::t_real t_real;
   //! Integer type.
   typedef LaDa::types::t_int t_int;
-
-// //! Dot product of real vectors.
-// inline t_real operator*(Matrix<t_real, 3, 1> const &_a, Matrix<t_real, 3, 1> const &_b)
-//   { return _a.dot(_b); }
-// //! Dot product of integer vectors.
-// inline t_real operator*(Matrix<t_int, 3, 1> const &_a, Matrix<t_int, 3, 1> const &_b)
-//   { return _a.dot(_b); }
 
   //! Cross product of real vectors.
   inline Matrix<t_real, 3, 1> operator^(Matrix<t_real, 3, 1> const &_a, Matrix<t_real, 3, 1> const &_b)
@@ -64,12 +72,10 @@ namespace Eigen
     inline Eigen::Transpose< Matrix<t_int, 3, 3> > operator~(Matrix<t_int, 3, 3> const &_mat)
       { return _mat.transpose(); }
 # else
-    //! Transpose operation of real matrix.
-    inline LaDa::math::rMatrix3d::ConstTransposeReturnType
-      operator~(LaDa::math::rMatrix3d const &_mat) { return _mat.transpose(); }
-    //! Transpose operation of integer matrix.
-    inline LaDa::math::iMatrix3d::ConstTransposeReturnType
-      operator~(LaDa::math::iMatrix3d const &_mat) { return _mat.transpose(); }
+    //! Transpose operation of matrix.
+    template<class T_DERIVED>
+      inline typename MatrixBase<T_DERIVED>::ConstTransposeReturnType
+        operator~(MatrixBase<T_DERIVED> const &_mat) { return _mat.transpose(); }
 # endif
 }
 #endif

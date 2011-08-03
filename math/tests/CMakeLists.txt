@@ -8,6 +8,7 @@ if(NOT compile_debug_tests)
                   LADA_TEST_INCTYPE=${TYPE})
     ADD_TEST(fuzzy${TYPE} ${CMAKE_CURRENT_BINARY_DIR}/fuzzy${TYPE})
   endforeach(TYPE)
+
   set(TYPES 0 1 2 3)
   foreach(TYPE ${TYPES})
     add_executable(fuzzyeigen${TYPE} fuzzyeigen.cc)
@@ -17,4 +18,33 @@ if(NOT compile_debug_tests)
     ADD_TEST(fuzzyeigen${TYPE} ${CMAKE_CURRENT_BINARY_DIR}/fuzzyeigen${TYPE})
   endforeach(TYPE)
 
+  set(LADA_XS 2 5)
+  set(LADA_YS 3 4)
+  set(TYPES 0 1)
+  foreach(LADA_X ${LADA_XS})
+    foreach(LADA_Y ${LADA_YS})
+      foreach(TYPE ${TYPES})
+        add_executable(serialize${TYPE}-${LADA_X}${LADA_Y} serialize.cc)
+        target_link_libraries(serialize${TYPE}-${LADA_X}${LADA_Y} mathlib)
+        set_property( TARGET serialize${TYPE}-${LADA_X}${LADA_Y} PROPERTY COMPILE_DEFINITIONS
+                      LADA_TEST_INCTYPE=${TYPE} LADA_X=${LADA_X} LADA_Y=${LADA_Y})
+        ADD_TEST( serialize${TYPE}-${LADA_X}${LADA_Y}
+                  ${CMAKE_CURRENT_BINARY_DIR}/serialize${TYPE}-${LADA_X}${LADA_Y})
+      endforeach(TYPE)
+    endforeach(LADA_Y ${LADA_YS})
+  endforeach(LADA_X ${LADA_XS})
+
+  set(TYPES 6 7 8 9)
+  foreach(TYPE ${TYPES})
+    add_executable(serialize${TYPE} serialize.cc)
+    target_link_libraries(serialize${TYPE} mathlib)
+    set_property( TARGET serialize${TYPE} PROPERTY COMPILE_DEFINITIONS
+                  LADA_TEST_INCTYPE=${TYPE} )
+    ADD_TEST( serialize${TYPE} ${CMAKE_CURRENT_BINARY_DIR}/serialize${TYPE})
+  endforeach(TYPE)
+
 endif(NOT compile_debug_tests)
+
+    add_executable(serialize_affine serialize_affine.cc)
+    target_link_libraries(serialize_affine mathlib)
+    ADD_TEST( serialize_affine ${CMAKE_CURRENT_BINARY_DIR}/serialize_affine)

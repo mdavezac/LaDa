@@ -3,6 +3,7 @@
 
 #include "LaDaConfig.h"
 
+#include <boost/preprocessor/repetition/repeat.hpp>
 #include <sstream>
 
 #include "eigen.h"
@@ -16,30 +17,43 @@
 namespace boost {
   namespace serialization {
 
+#   ifdef LADA_MACRO
+#     error LADA_MACRO already defined.
+#   endif
+#   ifdef LADA_SEQX
+#     error LADA_SEQX already defined.
+#   endif
+#   ifdef LADA_SEQY
+#     error LADA_SEQY already defined.
+#   endif
+#   define LADA_SEQY (1)(2)(3)(4)(5)\
+                     (1)(2)(3)(4)(5)\
+                     (1)(2)(3)(4)(5)\
+                     (1)(2)(3)(4)(5)
+#   define LADA_SEQX (2)(2)(2)(2)(2)\
+                     (3)(3)(3)(3)(3)\
+                     (4)(4)(4)(4)(4)\
+                     (5)(5)(5)(5)(5)
+#   define LADA_MACRO(z, n, type) \
+      template<class Archive>       \
+        void serialize(Archive & _ar, \
+            Eigen::Matrix<type, BOOST_PP_SEQ_ELEM(n, LADA_SEQX), BOOST_PP_SEQ_ELEM(n, LADA_SEQY)>& _g, \
+            const unsigned int _version) \
+        { \
+          for(size_t i(0); i < BOOST_PP_SEQ_ELEM(n, LADA_SEQX); ++i) \
+            for(size_t j(0); j < BOOST_PP_SEQ_ELEM(n, LADA_SEQY); ++j) \
+              _ar & _g(i,j); \
+        }
+    BOOST_PP_REPEAT(20, LADA_MACRO, LaDa::types::t_real)
+    BOOST_PP_REPEAT(20, LADA_MACRO, LaDa::types::t_int)
+#   undef LADA_MACRO
+#   undef LADA_SEQX
+#   undef LADA_SEQY
+
     //! Serializes eigen real vectors.
     template<class Archive>
-    void serialize(Archive & ar, LaDa::math::rVector3d & g, const unsigned int version)
-     { ar & g.x(); ar & g.y(); ar & g.z(); }
-     //! Serializes eigen integer vectors.
-    template<class Archive>
-    void serialize(Archive & ar, LaDa::math::iVector3d & g, const unsigned int version)
-     { ar & g.x(); ar & g.y(); ar & g.z(); }
-    //! Serializes eigen real matrices.
-    template<class Archive>
-    void serialize(Archive & ar, LaDa::math::rMatrix3d & g, const unsigned int version)
-    {
-      for(size_t i(0); i < 3; ++i)
-        for(size_t j(0); j < 3; ++j)
-          ar & g(i,j);
-    }
-    //! Serializes eigen integer matrices.
-    template<class Archive>
-    void serialize(Archive & ar, LaDa::math::iMatrix3d & g, const unsigned int version)
-    {
-      for(size_t i(0); i < 3; ++i)
-        for(size_t j(0); j < 3; ++j)
-          ar & g(i,j);
-    }
+      void serialize(Archive & _ar, LaDa::math::Affine3d & _g, const unsigned int _version)
+       { _ar & _g.matrix(); }
   }
 }
 

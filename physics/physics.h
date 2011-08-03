@@ -17,13 +17,6 @@
 
 namespace LaDa
 {
-  //! For mathematical constants
-  namespace math
-  {
-    //! \f$\pi\f$
-    const types::t_real pi = 3.1415926535897932384626433832795028841971693993751058209749445920;
-  }
-
   //! Physical constants and affiliate routines.
   namespace Physics 
   {

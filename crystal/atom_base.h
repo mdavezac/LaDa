@@ -53,6 +53,7 @@ namespace LaDa
 #       endif
         template<class T> friend std::ostream& operator<<(std::ostream&, AtomBase<T>const &);
         public:
+          EIGEN_MAKE_ALIGNED_OPERATOR_NEW
           //! The type of the occupation
           typedef T_TYPE t_Type;
       
