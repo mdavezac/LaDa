@@ -55,6 +55,5 @@ int main()
                "Did not compare as expected.");
   LADA_ASSERT( neq(eig, eig * AngleAxis(types::tolerance, rVector3d::UnitX()), types::tolerance),
                "Did not compare as expected.");
-
   return 0;
 }
