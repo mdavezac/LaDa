@@ -5,12 +5,18 @@ __vasp_database_name__ = 'vasp'
 __OUTCARS_prefix__ = 'OUTCARs'
 
 from ..jobs import AbstractMassExtract
-from ..opt import AbstractExtractBase
+from ..opt import AbstractExtractBase, OutcarSearchMixin
 from ..vasp.extract._common import Extract as ExtractCommonBase
 from ..vasp.extract._dft import Extract as ExtractDFTBase
 from ..vasp.extract._gw import Extract as ExtractGWBase
-from ..vasp.extract import SearchMixin
 
+def get_username():
+  """ Returns username from $HOME/.lada file. """
+  import lada
+
+  if not hasattr(lada, "username"):
+    raise RuntimeError("Cannot push OUTCAR if nobody is to blame.\n"\
+                       "Please add 'username = \"your name\"' to $HOME/.lada.")
 
 class Manager(object): 
   """ Holds data regarding database management. """
@@ -66,7 +72,6 @@ class Manager(object):
     from os.path import exists
     from os.path import isfile
     from hashlib import sha512
-    from getpass import getuser
     from os import uname
     from ..opt import RelativeDirectory
     path = RelativeDirectory(filepath).path
@@ -81,7 +86,7 @@ class Manager(object):
       print "{0} already in database. Please use 'ladabase.update'.".format(filepath)
       return
     if 'filename' not in kwargs: kwargs['filename'] = filepath
-    if 'uploader' not in kwargs: kwargs['uploader'] = getuser()
+    if 'uploader' not in kwargs: kwargs['uploader'] = get_username()
     if 'host'     not in kwargs: kwargs['host']     = uname()[1]
     return self.outcars.put(string, sha512=hash, **kwargs)
 
@@ -105,6 +110,7 @@ class Manager(object):
     if not self.outcars.exists(sha512=hash): 
       print "{0} not found in database. Please use 'ladabase.push'.".format(filepath)
       return 
+    kwargs["uploader"] = get_username()
     self.files.update({'sha512': hash}, {'$set': kwargs})
     return self.files.find_one({'sha512':hash})['_id']
 
@@ -177,29 +183,21 @@ class StreamFSDoc(object):
            RuntimeError("ladabase object not found in user namespace.")
     return ip.user_ns['ladabase']
 
-class IOMixin(object): 
-  """ Defines IO for ladabase object. """
-  def __init__(self, id_or_doc):
-    object.__init__(self)
-    self._id = id_or_doc['_id'] if isinstance(id_or_doc, dict) else id_or_dcoc
-    
+class ExtractCommon(AbstractExtractBase, ExtractCommonBase, OutcarSearchMixin):
+  """ Extracts DFT data from an OUTCAR. """
+  def __init__(self, id_or_doc, comm=None, **kwargs):
+    """ Initializes extraction object. """
+    AbstractExtractBase.__init__(self, comm=comm)
+    ExtractCommonBase.__init__(self)
+    OutcarSearchMixin.__init__(self)
+    self._id = id_or_doc['_id'] if isinstance(id_or_doc) else id_or_doc
+
   def __outcar__(self):
     return StreamFSDoc(self._id)
   def __funccar__(self):
     raise IOError('FUNCCARs are not stored in the database.')
   def __contcar__(self):
     raise IOError('CONTCARs are not stored in the database.')
-
-
-class ExtractCommon(AbstractExtractBase, ExtractCommonBase, IOMixin, SearchMixin):
-  """ Extracts DFT data from an OUTCAR. """
-  def __init__(self, id_or_doc, comm=None, **kwargs):
-    """ Initializes extraction object. """
-    from os.path import exists, isdir, basename, dirname
-    AbstractExtractBase.__init__(self, comm=comm)
-    ExtractCommonBase.__init__(self)
-    IOMixin.__init__(self, id_or_doc, **kwargs)
-    SearchMixin.__init__(self)
 
 class ExtractDFT(ExtractCommon, ExtractDFTBase):
   """ Extracts DFT data from an OUTCAR. """
@@ -241,10 +239,6 @@ class MassExtract(AbstractMassExtract):
         :kwarg naked_end: True if should return value rather than dict when only one item.
         :kwarg unix_re: converts regex patterns from unix-like expression.
     """
-    from os import getcwd
-    from os.path import exists, isdir
-    from ..opt import RelativeDirectory
-
     # this will throw on unknown kwargs arguments.
     super(MassExtract, self).__init__(**kwargs)
 

@@ -75,6 +75,12 @@ vasp_library = "libvasp.so"
     The value for the default can be overriden by ~/.lada in the code below.
 """
 
+represent_structure_with_POSCAR = False
+""" If true, then structures are represented using POSCAR format. 
+
+    If False, then uses normal python representation.
+"""
+
 
 # The variables defined below are only needed for the ipython interface.
 if @with_ipython@:

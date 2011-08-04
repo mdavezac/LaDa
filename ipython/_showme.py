@@ -7,7 +7,7 @@ def showme(self, event):
   from ..opt import read_input
   from ..crystal import write_poscar, read_poscar, Structure
   from . import _get_current_job_params
-  from . import represent_structure_with_POSCAR
+  from lada import represent_structure_with_POSCAR
   ip = self.api
   # gets dictionary, path.
   current, path = _get_current_job_params(self, 1)
