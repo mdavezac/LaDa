@@ -66,10 +66,10 @@ namespace Eigen
 
 # ifndef LADA_WITH_EIGEN3 
     //! Transpose operation of real matrix.
-    inline Eigen::Transpose< Matrix<t_real, 3, 3> > operator~(Matrix<t_real, 3, 3> const &_mat)
+    inline Transpose< Matrix<t_real, 3, 3> > operator~(Matrix<t_real, 3, 3> const &_mat)
       { return _mat.transpose(); }
     //! Transpose operation of integer matrix.
-    inline Eigen::Transpose< Matrix<t_int, 3, 3> > operator~(Matrix<t_int, 3, 3> const &_mat)
+    inline Transpose< Matrix<t_int, 3, 3> > operator~(Matrix<t_int, 3, 3> const &_mat)
       { return _mat.transpose(); }
 # else
     //! Transpose operation of matrix.

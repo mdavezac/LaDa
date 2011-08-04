@@ -119,7 +119,10 @@ namespace LaDa
       }
     //! True if two symmetry operations are equal.
     inline bool eq( Affine3d const & _a, Affine3d const & _b )
-      { return eq(_a.matrix(), _b.matrix()); }
+      { return eq(_a.linear(), _b.linear()) and eq(_a.translation(), _b.translation()); }
+    //! True if two symmetry operations are equal.
+    inline bool eq( Affine3d const & _a, Affine3d const & _b, Affine3d::Scalar const &_tol )
+      { return eq(_a.linear(), _b.linear(), _tol) and eq(_a.translation(), _b.translation(), _tol); }
     //! True if two eigen arrays or matrices are not equal, according to math::eq(). 
     template<class T_DERIVED0, class T_DERIVED1> 
       inline bool neq( Eigen::DenseBase<T_DERIVED0> const & _a,
@@ -132,7 +135,10 @@ namespace LaDa
                        Eigen::DenseBase<T_DERIVED1> const & _b )
         { return not eq(_a, _b); }
     //! True if two symmetry operations are not equal.
-    inline bool neq( Affine3d const & _a, Affine3d const & _b ) { return neq(_a, _b); }
+    inline bool neq( Affine3d const & _a, Affine3d const & _b ) { return not eq(_a, _b); }
+    //! True if two symmetry operations are not equal.
+    inline bool neq( Affine3d const & _a, Affine3d const & _b, Affine3d::Scalar const &_tol )
+        { return not eq(_a, _b, _tol); }
 
     //! True if two vectors are periodic images with respect to a cell.
     inline bool are_periodic_images( math::rVector3d const &_a,

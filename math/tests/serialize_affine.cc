@@ -36,21 +36,25 @@ int main()
   LADA_DOASSERT(math::eq(eig, eig2), "Could not reload eig.\n");
   
   rVector3d vec(1, 0, 0);
-  eig =   AngleAxis( pi / 2,  rVector3d::UnitZ())
+  eig =   AngleAxis( pi / 2,  rVector3d::UnitX())
         * Translation(0, 0, 0);
-  LADA_ASSERT( eq(eig*vec, rVector3d(0, 1, 0)), "Did not rotate as anticipated.\n");
-  eig *= AngleAxis( pi / 2,  rVector3d::UnitY());
+  LADA_ASSERT( eq(eig*vec, rVector3d(1, 0, 0)), "Did not rotate as anticipated.\n");
+  eig = AngleAxis( pi / 2,  rVector3d::UnitY());
   LADA_ASSERT( eq(eig*vec, rVector3d(0, 0, -1)), "Did not rotate as anticipated.\n");
-  eig = Translation(0, 1.5, 0) * eig; 
-  eig2 = eig;
-  eig3 = eig;
-  LADA_ASSERT( eq(eig*vec, rVector3d(0, 1.5, -1)), "Did not rotate as anticipated.\n");
-  eig *= AngleAxis( -pi / 2,  rVector3d::UnitZ());
-  LADA_ASSERT( eq(eig*vec, rVector3d(1, 1.5,  0)), "Did not rotate as anticipated.\n");
-  eig2 *= AngleAxis( -pi / 2,  rVector3d::UnitX());
-  LADA_ASSERT( eq(eig2*vec, rVector3d(0, 1.5,  -1)), "Did not rotate as anticipated.\n");
-  eig3 *= AngleAxis( -pi / 2,  rVector3d::UnitX());
-  LADA_ASSERT( eq(eig3*vec, rVector3d(0, 1.5,  -1)), "Did not rotate as anticipated.\n");
+  eig = AngleAxis( pi / 2,  rVector3d::UnitZ());
+  LADA_ASSERT( eq(eig*vec, rVector3d(0, 1, 0)), "Did not rotate as anticipated.\n");
+  eig = AngleAxis( pi / 2,  rVector3d::UnitZ()) * Translation(0,0.5,0);
+  LADA_ASSERT( eq(eig*vec, rVector3d(-0.5, 1, 0)), "Did not rotate as anticipated.\n");
+  eig = AngleAxis( pi / 2,  rVector3d::UnitZ());
+  eig = Translation(0,0.5,0) * eig;
+  LADA_ASSERT( eq(eig*vec, rVector3d(0, 1.5, 0)), "Did not rotate as anticipated.\n");
+  LADA_ASSERT( eq(eig, eig), "Did not compare as expected."); 
+  LADA_ASSERT( neq(eig, eig * Translation(0,-0.5,0)), "Did not compare as expected.");
+  LADA_ASSERT( neq(eig, eig * AngleAxis(pi/4, rVector3d::UnitX())), "Did not compare as expected.");
+  LADA_ASSERT( eq(eig, eig * AngleAxis(types::tolerance, rVector3d::UnitX()), 8. * types::tolerance),
+               "Did not compare as expected.");
+  LADA_ASSERT( neq(eig, eig * AngleAxis(types::tolerance, rVector3d::UnitX()), types::tolerance),
+               "Did not compare as expected.");
 
   return 0;
 }

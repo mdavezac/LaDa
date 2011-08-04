@@ -21,6 +21,18 @@ namespace LaDa
 {
   namespace math
   {
+    //! True if invariant by this transform. Ignores translation.
+    bool inline invariant(Affine3d const&_a, rMatrix3d const &_m) { return eq(_m, _a.linear() * _m); }
+    //! True if invariant by this transform. Ignores translation.
+    bool inline invariant(Affine3d const&_a, rMatrix3d const &_m, types::t_real const &_tol) 
+      { return eq(_m, _a.linear() * _m, _tol); }
+    //! True if invariant by this transform.
+    bool inline invariant(Affine3d const&_a, rVector3d const &_m) { return eq(_m, _a * _m); }
+    //! True if invariant by this transform.
+    bool inline invariant(Affine3d const&_a, rVector3d const &_m, types::t_real const &_tol) 
+      { return eq(_m, _a * _m, _tol); }
+    //! Checks if this is a pure rotation. 
+    bool is_rotation(Affine3d const &_a) { return is_null(_a.translation); }
 
     //! A symmetry operator.
     struct SymmetryOperator
