@@ -1,5 +1,5 @@
-#ifndef LADA_LNS_EXCEPTIONS_H_
-#define LADA_LNS_EXCEPTIONS_H_
+#ifndef LADA_LNS_EXCEPTIONS_H
+#define LADA_LNS_EXCEPTIONS_H
 
 #include "LaDaConfig.h"
 

@@ -9,7 +9,7 @@
 
 namespace LaDa
 {
-  namespace Crystal 
+  namespace crystal 
   {
     math::rVector3d into_cell( math::rVector3d const &_vec, 
                                math::rMatrix3d const &_cell, 
@@ -71,5 +71,3 @@ namespace LaDa
 
   } // namespace Crystal
 } // namespace LaDa
-  
-#endif

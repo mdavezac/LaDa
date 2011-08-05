@@ -36,3 +36,6 @@ if(NOT compile_debug_tests)
 
 endif(NOT compile_debug_tests)
 
+        add_executable(utilities utilities.cc)
+        target_link_libraries(utilities crystal)
+        ADD_TEST(utilities ${CMAKE_CURRENT_BINARY_DIR}/utilities)

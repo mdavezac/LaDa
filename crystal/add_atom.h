@@ -147,7 +147,7 @@ namespace LaDa
           }
         };
 
-
+    } //namespace details
   } // namespace Crystal
 } // namespace LaDa
   

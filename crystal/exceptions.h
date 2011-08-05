@@ -1,5 +1,5 @@
-#ifndef LADA_LNS_EXCEPTIONS_H_
-#define LADA_LNS_EXCEPTIONS_H_
+#ifndef LADA_CRYSTAL_EXCEPTIONS_H
+#define LADA_CRYSTAL_EXCEPTIONS_H
 
 #include "LaDaConfig.h"
 
@@ -23,6 +23,8 @@ namespace LaDa
       struct input: virtual boost::exception, virtual std::exception {};
       //! Thrown when a function requires the structure have only one specie per atom.
       struct too_many_species: virtual input {};
+      //! Thrown when structure does not contain atomic sites.
+      struct empty_structure: virtual input {};
 
 //     //! Name of the section
 //     typedef boost::error_info<struct lns_sec_name,std::string> section_name;

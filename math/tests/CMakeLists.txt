@@ -43,12 +43,12 @@ if(NOT compile_debug_tests)
     ADD_TEST( serialize${TYPE} ${CMAKE_CURRENT_BINARY_DIR}/serialize${TYPE})
   endforeach(TYPE)
 
+  add_executable(serialize_affine serialize_affine.cc)
+  target_link_libraries(serialize_affine mathlib)
+  ADD_TEST( serialize_affine ${CMAKE_CURRENT_BINARY_DIR}/serialize_affine)
+
+  add_executable(symtests symtests.cc)
+  target_link_libraries(symtests mathlib)
+  ADD_TEST( symtests ${CMAKE_CURRENT_BINARY_DIR}/symtests)
+
 endif(NOT compile_debug_tests)
-
-    add_executable(serialize_affine serialize_affine.cc)
-    target_link_libraries(serialize_affine mathlib)
-    ADD_TEST( serialize_affine ${CMAKE_CURRENT_BINARY_DIR}/serialize_affine)
-
-    add_executable(symtests symtests.cc)
-    target_link_libraries(symtests mathlib)
-    ADD_TEST( symtests ${CMAKE_CURRENT_BINARY_DIR}/symtests)

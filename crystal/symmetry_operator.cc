@@ -9,44 +9,12 @@ namespace LaDa
 
   namespace Crystal 
   {
-
-    void compose( SymmetryOperator const &_a, SymmetryOperator const &_b, SymmetryOperator &_out )
-    {
-      _out.op = _a.op * _b.op;
-      _out.trans = _a.trans + _a.op * _b.trans;
-    }
-    
-    bool SymmetryOperator::invariant(math::rMatrix3d const &_mat, types::t_real _tolerance) const
-    {
-      math::rMatrix3d const mat(_mat.inverse() * op * _mat);
-      for(size_t i(0); i < 3; ++i)
-        for(size_t j(0); j < 3; ++j)
-          if( std::abs( std::floor(types::roundoff+mat(i,j)) - mat(i,j) ) > types::tolerance ) 
-            return false;
-      return true;
-    }
-
-    // returns true if matrix is the identity.
-    bool is_identity( math::rMatrix3d const &_cell, types::t_real _tolerance )
-    {
-      if( std::abs(_cell(0,0)-1e0) > _tolerance ) return false;
-      if( std::abs(_cell(1,1)-1e0) > _tolerance ) return false;
-      if( std::abs(_cell(2,2)-1e0) > _tolerance ) return false;
-      if( std::abs(_cell(0,1)) > _tolerance ) return false;
-      if( std::abs(_cell(0,2)) > _tolerance ) return false;
-      if( std::abs(_cell(1,0)) > _tolerance ) return false;
-      if( std::abs(_cell(1,2)) > _tolerance ) return false;
-      if( std::abs(_cell(2,0)) > _tolerance ) return false;
-      if( std::abs(_cell(2,1)) > _tolerance ) return false;
-      return true;
-    }
-
     //! Returns point symmetries of a cell, except identity.
     boost::shared_ptr<t_SpaceGroup>
       get_cell_symmetries( math::rMatrix3d const &_cell, types::t_real _tolerance )
       {
         if( _tolerance <= 0e0 ) _tolerance = types::tolerance;
-        boost::shared_ptr<t_SpaceGroup> result( new std::vector<SymmetryOperator> ); 
+        boost::shared_ptr<t_SpaceGroup> result(new t_SpaceGroup); 
         
         // Finds out how far to look.
         types::t_real const volume( std::abs(_cell.determinant()) );
@@ -91,16 +59,16 @@ namespace LaDa
               rotation.col(2) = rot_a2;
 
               // checks that this the rotation is not singular.
-              if( std::abs(rotation.determinant()) < _tolerance ) continue;
+              if( math::is_null(rotation.determinant(), _tolerance) ) continue;
 
               rotation = rotation * inv_cell;
               // avoids identity.
-              if( is_identity(rotation, _tolerance) ) continue;
+              if( math::is_identity(rotation, _tolerance) ) continue;
               // checks that the rotation is a rotation.
-              if( not is_identity(rotation * (~rotation), _tolerance) ) continue;
+              if( not math::is_identity(rotation * (~rotation), _tolerance) ) continue;
 
               // adds to vector of symmetries.
-              SymmetryOperator symop(rotation);
+              SymmetryOperator symop; symop.linear() = rotation;
               if( result->end() == std::find( result->begin(), result->end(), symop) )
                 result->push_back( symop );
             }

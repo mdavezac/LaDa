@@ -9,13 +9,14 @@
 #include <boost/serialization/serialization.hpp>
 
 
-#include <math/setcell.h>
+#include <math/set_cell.h>
 #ifdef LADA_WITH_LNS
 # include <load_n_save/xpr/push_back.h>
 # include <load_n_save/action/fusion.h>
 # include <load_n_save/action/vector.h>
 #endif
 
+#include "add_atom.h"
 #include "atom.h"
 #include "traits.h"
 #include "add_atom.h"

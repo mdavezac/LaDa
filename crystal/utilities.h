@@ -4,14 +4,9 @@
 #include "LaDaConfig.h"
 
 
-#include <vector>
-
-#include <tinyxml/tinyxml.h>
-
-#include <opt/debug.h>
 #include <opt/types.h>
-#include <math/eigen.h>
-#include "structure.h"
+#include <math/misc.h>
+#include "atom.h"
 
 namespace LaDa
 {
@@ -23,7 +18,7 @@ namespace LaDa
                                math::rMatrix3d const &_cell, 
                                math::rMatrix3d const &_inv);
     //! Refolds a periodic vector into the unit cell.
-    math::rVector3d into_cell( math::rVector3d const &_vec, 
+    inline math::rVector3d into_cell( math::rVector3d const &_vec, 
                                math::rMatrix3d const &_cell )
       { return into_cell(_vec, _cell, _cell.inverse()); }
     
@@ -33,7 +28,7 @@ namespace LaDa
                                   math::rMatrix3d const &_cell, 
                                   math::rMatrix3d const &_inv);
     //! Refolds a periodic vector into the voronoi cell (eg first BZ or WignerSeitz).
-    math::rVector3d into_voronoi( math::rVector3d const &_vec, 
+    inline math::rVector3d into_voronoi( math::rVector3d const &_vec, 
                                   math::rMatrix3d const &_cell )
       { return into_voronoi(_vec, _cell, _cell.inverse()); }
 
@@ -50,7 +45,7 @@ namespace LaDa
     //! \details Since the vector is refolded in fractional coordinates, it may
     //!          or may not be the vector with smallest norm. Use math::rVector3d
     //!          into_voronoi() to get the equivalent vector with smallest norm.
-    math::rVector3d zero_centered( math::rVector3d const &_vec, 
+    inline math::rVector3d zero_centered( math::rVector3d const &_vec, 
                                    math::rMatrix3d const &_cell )
       { return zero_centered(_vec, _cell, _cell.inverse()); }
 
@@ -58,10 +53,7 @@ namespace LaDa
     inline bool are_periodic_images( math::rVector3d const &_a,
                                      math::rVector3d const &_b, 
                                      math::rMatrix3d const &_inv_cell )
-    {
-      math::rVector3d v = _inv_cell * (_a - _b); 
-      return is_integer(v); 
-    }
+     { return math::is_integer(_inv_cell * (_a - _b)); }
 
     //! \brief Compares species and positions in a structure.
     //! \details Expects the atomic types to be sequences.
@@ -69,7 +61,7 @@ namespace LaDa
       struct CompareSites
       {
         //! \typedef the type of the atoms held by a structure.
-        typedef typename TemplateStructure<T_TYPE>::t_Atoms::value_type t_Atom
+        typedef Atom<T_TYPE> t_Atom;
         //! \brief Constructor
         //! \param[in] _site Site containing the species against which to check.
         //! \param[in] _tolerance when comparing atomic positions. If negative,
@@ -94,11 +86,7 @@ namespace LaDa
           }
         //! Compares the position of site to input site.
         bool operator()( t_Atom const& _site ) const
-        {
-          return     std::abs(_site.pos(0)-pos_(0)) < tolerance_ 
-                 and std::abs(_site.pos(1)-pos_(1)) < tolerance_ 
-                 and std::abs(_site.pos(2)-pos_(2)) < tolerance_;
-        }
+          { return math::eq(_site.pos, pos_, tolerance_); }
       
         private:
           //! \var set containing input species.

@@ -189,8 +189,8 @@ include_directories("${PROJECT_BINARY_DIR}")
 # the most basic stuff to compile/include
 add_subdirectory(opt)
 add_subdirectory(math)
-# add_subdirectory(crystal)
-# add_subdirectory(physics)
+add_subdirectory(crystal)
+add_subdirectory(physics)
 
 # checks for package dependencies.
 if(ladabase_package)
