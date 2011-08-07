@@ -103,7 +103,7 @@ namespace LaDa
                      << std::setw(8) << _in.pos[0] << "  "
                      << std::setw(8) << _in.pos[1] << "  " 
                      << std::setw(8) << _in.pos[2] << "  "
-                     << details::print_container(_in.type);
+                     << details::print_occupation(_in.type);
     }
 
 

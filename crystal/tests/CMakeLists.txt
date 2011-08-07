@@ -40,11 +40,20 @@ if(NOT compile_debug_tests)
 
 endif(NOT compile_debug_tests)
 
-  set(TYPES  0 1 2)
+  set(TYPES 0 1 2 3 4 5)
   foreach(TYPE ${TYPES})
     add_executable(compare${TYPE} compare.cc)
     target_link_libraries(compare${TYPE} crystal)
     set_property( TARGET compare${TYPE} PROPERTY COMPILE_DEFINITIONS
                   LADA_TEST_INCTYPE=${TYPE})
     ADD_TEST(compare${TYPE} ${CMAKE_CURRENT_BINARY_DIR}/compare${TYPE})
+  endforeach(TYPE)
+
+  set(TYPES 0 1 2 3 4 5)
+  foreach(TYPE ${TYPES})
+    add_executable(is_container${TYPE} is_container.cc)
+    target_link_libraries(is_container${TYPE} crystal)
+    set_property( TARGET is_container${TYPE} PROPERTY COMPILE_DEFINITIONS
+                  LADA_TEST_INCTYPE=${TYPE})
+    ADD_TEST(is_container${TYPE} ${CMAKE_CURRENT_BINARY_DIR}/is_container${TYPE})
   endforeach(TYPE)

@@ -4,7 +4,7 @@
 
 #include "LaDaConfig.h"
 
-#include <set>
+#include <algorithm>
 
 #include <boost/type_traits/is_convertible.hpp>
 #include <boost/type_traits/is_floating_point.hpp>
@@ -12,7 +12,6 @@
 #include <boost/mpl/or.hpp>
 #include <boost/foreach.hpp>
 
-#include <set>
 #include "atom.h"
 #include "is_container.h"
 #include "utilities.h"
@@ -66,7 +65,7 @@ namespace LaDa
           //! Compares floating point occupations.
           template<class T>
             typename boost::enable_if<boost::is_floating_point<T>, bool>::type
-              cmp_(T const &_type) const { return eq(_type, type, T(tolerance)); }
+              cmp_(T const &_type) const { return math::eq(_type, type, T(tolerance)); }
           math::rVector3d pos;
           types::t_real tolerance;
           T_TYPE type;
@@ -81,7 +80,7 @@ namespace LaDa
           {
             tolerance = _tolerance < 0e0 ? types::tolerance: _tolerance;
             pos = _site.pos;
-            std::copy(_site.type.begin(), _site.type.end(), std::inserter(type, type.begin()));
+            std::copy(_site.type.begin(), _site.type.end(), std::back_inserter(type));
           }
           //! Copy constructor.
           CompareSites( CompareSites const &_c ): type(_c.type), pos(_c.pos), tolerance(_c.tolerance) {}
@@ -94,6 +93,15 @@ namespace LaDa
             { return operator()(_site.type) and operator()(_site.pos); }
 
           private:
+          template<class T>
+            struct Cmp_
+            {
+              Cmp_(typename T::value_type const &_a, typename T::value_type _tol) : a(_a), tolerance(_tol) {};
+              bool operator()(typename T::value_type const &_b) const
+              { return math::eq(a, _b, tolerance); }
+              typename T::value_type const & a;
+              typename T::value_type tolerance;
+            };
           //! Compares string or integer occupations.
           template<class T>
             typename boost::enable_if
@@ -105,26 +113,25 @@ namespace LaDa
               >::type cmp_( T const &_type ) const
               { 
                 foreach(typename T::value_type const &_t, _type)
-                  if( type.find(_t) != type.end() ) return false;
+                  if( std::find(type.begin(), type.end(), _t) == type.end() ) return false;
+                foreach(typename T_TYPE::value_type const &_t, type)
+                  if( std::find(_type.begin(), _type.end(), _t) == _type.end() ) return false;
                 return true;
               }
           //! Compares floating point occupations.
           template<class T>
-            typename boost::enable_if< boost::is_floating_point<T>, bool>::type
+            typename boost::enable_if< boost::is_floating_point<typename T::value_type>, bool>::type
               cmp_( T const _type ) const
               {
-                typename std::set<typename T::value_type> :: const_iterator const i_end = type.end();
                 foreach(typename T::value_type const &_t, _type)
-                {
-                  typename std::set<typename T::value_type> :: const_iterator i_first = type.begin();
-                  for(; i_first != i_end; ++i_first)
-                    if( neq(*i_first, _t, tolerance) ) return false;
-                }
+                  if( std::find_if(type.begin(), type.end(), Cmp_<T>(_t, tolerance)) == type.end() ) return false;
+                foreach(typename T_TYPE::value_type const &_t, type)
+                  if( std::find_if(_type.begin(), _type.end(), Cmp_<T>(_t, tolerance)) == _type.end() ) return false;
                 return true;
               }
           math::rVector3d pos;
           types::t_real tolerance;
-          std::set<typename T_TYPE::value_type> type;
+          T_TYPE type;
         };
     }
 
