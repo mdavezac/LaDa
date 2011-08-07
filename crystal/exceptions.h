@@ -26,8 +26,8 @@ namespace LaDa
       //! Thrown when structure does not contain atomic sites.
       struct empty_structure: virtual input {};
 
-//     //! Name of the section
-//     typedef boost::error_info<struct lns_sec_name,std::string> section_name;
+      //! Error string
+      typedef boost::error_info<struct lns_sec_name,std::string> string;
 //     //! Name of the section
 //     typedef boost::error_info<struct lns_op_name,std::string> option_name;
     }

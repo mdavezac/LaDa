@@ -189,6 +189,13 @@ namespace LaDa
         //! Access to cell parameters
         types::t_real& operator()(size_t i, size_t j) { return cell()(i,j); }
 
+        //! \brief True if both structures refer to the same object in memory.
+        //! \details Does not compare values, just memory objects.
+        bool is_same(TemplateStructure const &_in) { return impl_ == _in.impl; }
+
+        //! Returns  structure volume.
+        types::t_real volume() const { return std::abs(impl_->cell.determinant()); }
+
       private:
         //! Serializes a structure.
         template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
