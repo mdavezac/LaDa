@@ -37,10 +37,10 @@ namespace LaDa
         t_Atoms :: iterator i_atom_end = structure.atoms.end();
         for(types::t_unsigned index=0; i_atom != i_atom_end; ++i_atom, ++index )
         {
-          if(i_atom->site == -1)
-            try { i_atom->site = structure.lattice->get_atom_site_index(*i_atom); }
-            catch(std::exception &e)
-              { BOOST_THROW_EXCEPTION(exceptions::site_index() << exceptions::string(e.what())); }
+        // if(i_atom->site == -1)
+        //   try { i_atom->site = structure.lattice->get_atom_site_index(*i_atom); }
+        //   catch(std::exception &e)
+        //     { BOOST_THROW_EXCEPTION(exceptions::site_index() << exceptions::string(e.what())); }
           centers_.push_back( AtomicCenter( structure, *i_atom, index ) );
         }
       }

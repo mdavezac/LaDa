@@ -120,7 +120,7 @@ class Incar(object):
     self.algo        = Algo("normal")
     self.precision   = Precision("accurate")
     self.ediff       = Ediff(1e-4)
-    self.ediffg      = Ediff(None)
+    self.ediffg      = Ediff(None, "ediffg")
     self.encut       = Encut(None)
     self.fftgrid     = FFTGrid(None)
     self.restart     = Restart(None)

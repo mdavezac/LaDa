@@ -205,10 +205,17 @@ class Ediff(SpecialVaspParam):
       This tolerance is multiplied by the number of atoms in the system. This
       makes tolerance consistent from one system to the next.
   """
-  def __init__(self, value): super(Ediff, self).__init__(value)
+  def __init__(self, value, name="ediff"):
+    """ Creates *per atom* tolerance. """
+    super(Ediff, self).__init__(value)
+    self.name = name
   def incar_string(self, vasp, *args, **kwargs):
-    return "EDIFF = %f " % (self.value * float(len(vasp._system.atoms)))
-
+    return "{0} = {1} ".format(getattr(self, "name", "ediff").upper(), self.value * float(len(vasp._system.atoms)))
+  def __repr__(self):
+    """ Representation of Ediff. """
+    name = getattr(self, "name", "ediff")
+    if name == "ediff": return "{0.__class__.__name__}({1})".format(self, repr(self.value))
+    return "{0.__class__.__name__}({1}, {2})".format(self, repr(self.value), repr(name))
 
 class Encut(SpecialVaspParam):
   """ Defines cutoff factor for calculation. 
