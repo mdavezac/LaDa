@@ -37,7 +37,7 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
     assert len(lattice.name) != 0, ValueError("Lattice has no name.")
   
   # regex
-  specie_regex = compile("([A-Z][a-z]?)2([A-Z][a-z]?)([A-Z][a-z]?)4")
+  specie_regex = compile("([A-Z][a-z]?)([A-Z][a-z]?)([A-Z][a-z]?)")
 
   # Job dictionary.
   jobdict = JobDict()
@@ -50,6 +50,9 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
 
     # creates dictionary to replace A2BX4 with meaningfull species.
     match = specie_regex.match(material)
+    print match.group(1)
+    print match.group(2)
+    print match.group(3)
     assert match != None, RuntimeError("Incorrect material " + material + ".")
     # checks species are known to vasp functional
     for i in range(1, 4):
