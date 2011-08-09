@@ -26,11 +26,9 @@
 """
 def record(self, cmdl):
   """ Records variables to file. """
-  from pickle import load, dump, dumps
   from argparse import ArgumentParser
-  from os.path import exists
   from types import ModuleType
-  from lada.opt import RelativeDirectory
+  from lada.record import Record
   
   parser = ArgumentParser( prog="%record",
                            description="Allows to rapidly store and reload information to disk.")
@@ -74,25 +72,17 @@ def record(self, cmdl):
     return 
 
   # open record file.
-  path = RelativeDirectory(args.filename).path
-  if exists(path): 
-    with open(path, 'r') as file:
-      keys = load(file)
-      if not args.list: dummy, values = load(file)
-  elif args.remove or args.load or args.list or args.view:
-    print "Path {0} does not exist.\nNo records yet.\n".format(args.filename)
-    return
-  else: values = {}
+  record = Record(args.filename)
 
-  has_changed = False
-  if args.list: return list(keys)
+  attributes = dir(record)
+  if args.list: return attributes
   if args.view: 
-    if len(args.vars) == 0: args.vars = values.iterkeys()
+    if len(args.vars) == 0: args.vars = attributes
     for var in args.vars:
-      if var not in values:
+      if var not in attributes:
         print "Could not find {0} in {1}.".format(var, args.filename)
         continue
-      try: string = str(values[var])
+      try: string = str(getattr(record, var))
       except: 
         print "{0} in record {1} is not printable.".format(var, args.filename)
         continue
@@ -103,18 +93,19 @@ def record(self, cmdl):
   elif args.remove: 
     # Remove argumenst from record.
     for var in set(args.vars):
-      if var not in values: 
+      if var not in attributes: 
         print "{0} could not be found in record file {1}.".format(var, args.filename)
         continue
-      try: string = str(values.pop(var))
+      value = getattr(record, var)
+      delattr(record, var)
+      try: string = value
       except: print "Removing {0} from record {1}.".format(var, args.filename)
       else:
         if len(string) > 30: string = string[:25] + "..."
         if "\n" in string: string = string[:string.find('\n')] + "..."
         print "Removing {0}(={1}) from record {2}".format(var, string, args.filename)
-      has_changed = True
   elif args.load: 
-    if len(args.vars) == 0: args.vars = values.iterkeys()
+    if len(args.vars) == 0: args.vars = attributes
     if args.namespace == None: namespace = self.api.user_ns
     elif args.namespace in self.api.user_ns:
       namespace = self.api.user_ns[args.namespace]
@@ -125,12 +116,13 @@ def record(self, cmdl):
     else:
       self.api.user_ns[args.namespace] = ModuleType(name=args.namespace)
       namespace = self.api.user_ns[args.namespace].__dict__
+    allattr = record._allattr()
     for key in args.vars:
-      if key not in values:
+      if key not in allattr:
         print "Could not find {0} in {1}.".format(key, args.filename)
         continue
-      namespace[key] = values[key]
-      try:string = str(values[key]) 
+      namespace[key] = getattr(record, key)
+      try:string = namespace[key]
       except: print "Reloaded {0} from record {1}.".format(key, args.filename)
       else:
         if len(string) > 30: string = string[:25] + "..."
@@ -145,17 +137,7 @@ def record(self, cmdl):
         print "Could not find {0} in user namespace.".format(key)
         continue
       # checks the argument can be pickled.
-      try: dumps(self.api.user_ns[key])
-      except:  print "{0} is not pickleable.".format(key)
-      else:
-        values[key] = self.api.user_ns[key]
-        has_changed = True
-
-  if has_changed:
-    with open(path, 'w') as file:
-      dump( set(values.keys()), file )
-      dump( ("This is a record.", values), file)
-
+      setattr(record, key, self.api.user_ns[key])
          
 def completer(self, event): 
   """ Completer for %record magic function. """ 

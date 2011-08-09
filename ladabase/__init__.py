@@ -17,6 +17,13 @@ def get_username():
   if not hasattr(lada, "username"):
     raise RuntimeError("Cannot push OUTCAR if nobody is to blame.\n"\
                        "Please add 'username = \"your name\"' to $HOME/.lada.")
+def get_ladabase(): 
+  """ Return connector to the database. """
+  from IPython.ipapi import get as get_ipy
+  ip = get_ipy()
+  assert 'ladabase' in ip.user_ns, \
+         RuntimeError("ladabase object not found in user namespace.")
+  return ip.user_ns['ladabase']
 
 class Manager(object): 
   """ Holds data regarding database management. """
@@ -57,77 +64,41 @@ class Manager(object):
   def outcars_prefix(self):
     """ Name of the OUTCAR GridFS collection. """
     return self._outcars_prefix
+  @property
+  def funccars_prefix(self):
+    """ Name of the OUTCAR GridFS collection. """
+    return self._outcars_prefix
 
   @property 
   def files(self):
-    """ Return the files collection. """
+    """ Return the OUTCAR files collection. """
     return getattr(self.database, '{0}.files'.format(self.outcars_prefix))
 
-  def push(self, filepath, **kwargs):
+  def push(self, filename, outcar, **kwargs):
     """ Pushes OUTCAR to database. 
 
         :raise ValueError:  if the corresponding object is not found.
         :raise IOError:  if the path does not exist or is not a file.
     """
-    from os.path import exists
-    from os.path import isfile
     from hashlib import sha512
     from os import uname
-    from ..opt import RelativeDirectory
-    path = RelativeDirectory(filepath).path
 
-    assert exists(path), ValueError('{0} does not exist.'.format(path))
-    assert isfile(path), ValueError('{0} is not a file.'.format(path))
 
-    with open(path, 'r') as file: string = file.read()
-    hash = sha512(string).hexdigest()
+    hash = sha512(outcar).hexdigest()
 
     if self.outcars.exists(sha512=hash): 
-      print "{0} already in database. Please use 'ladabase.update'.".format(filepath)
-      return
-    if 'filename' not in kwargs: kwargs['filename'] = filepath
+      print "{0} already in database. Please use 'ladabase.update'.".format(filename)
+      return 
+    if 'filename' not in kwargs: kwargs['filename'] = filename
     if 'uploader' not in kwargs: kwargs['uploader'] = get_username()
     if 'host'     not in kwargs: kwargs['host']     = uname()[1]
-    return self.outcars.put(string, sha512=hash, **kwargs)
-
-  def update(self, filepath, **kwargs):
-    """ Update a database entry. 
-
-        :raise ValueError:  if the corresponding object is not found.
-        :raise IOError:  if the path does not exist or is not a file.
-    """
-    from os.path import exists, isfile
-    from hashlib import sha512
-    from ..opt import RelativeDirectory
-
-    path = RelativeDirectory(filepath).path
-    assert exists(path), ValueError('{0} does not exist.'.format(path))
-    assert isfile(path), ValueError('{0} is not a file.'.format(path))
-
-    with open(path, 'r') as file: string = file.read()
-    hash = sha512(string).hexdigest()
-
-    if not self.outcars.exists(sha512=hash): 
-      print "{0} not found in database. Please use 'ladabase.push'.".format(filepath)
-      return 
-    kwargs["uploader"] = get_username()
-    self.files.update({'sha512': hash}, {'$set': kwargs})
-    return self.files.find_one({'sha512':hash})['_id']
-
-  def delete(self, filepath):
-    """ Deletes an entry corresponding to the input file. """
-    from os.path import exists, isfile
-    from hashlib import sha512
-    from ..opt import RelativeDirectory
-
-    path = RelativeDirectory(filepath).path
-    assert exists(path), ValueError('{0} does not exist.'.format(path))
-    assert isfile(path), ValueError('{0} is not a file.'.format(path))
-
-    with open(path, 'r') as file: string = file.read()
-    hash = sha512(string).hexdigest()
-
-    for u in self.database.files.find({'sha512':hash}): self.outcars.delete(u['_id'])
+    compression = kwargs.get('compression', None)
+    kwargs['compression'] = compression
+    if compression == "bz2": 
+      from bz2 import compress
+      return self.outcars.put(compress(outcar), sha512=hash, **kwargs)
+    elif compression == None: return self.outcars.put(outcar, sha512=hash, **kwargs)
+    else: raise ValueError("Invalid compression format {0}.".format(compression))
 
   def find_fromfile(self, path):
     """ Returns the database object corresponding to this file.
@@ -153,16 +124,14 @@ class Manager(object):
 
     return self.files.find_one({'sha512': hash})
 
-class StreamFSDoc(object):
-  """ Read-only streamed database file which behaves like  a file object. """
-  def __init__(self, _id):
+class StringStream(object):
+  """ Converts string to file-like object. """
+  def __init__(self, *args, **kwargs):
     """ Initializes the object using the stream. """
     from cStringIO import StringIO
-    object.__init__(self)
-    self._id = _id['_id'] if isinstance(_id, dict) else _id
-    a = [f for f in self.ladabase.files.find({'_id': self._id})] 
-    assert len(a) == 1, RuntimeError('Could not find object')
-    self._stringio = StringIO(self.ladabase.outcars.get(self._id).read())
+    super(StringStream, self).__init__()
+    self._stringio = StringIO(*args, **kwargs)
+    """ String-as-a-filestream. """
 
   def __enter__(self):
     """ Makes this a context returning a cStringIO. """
@@ -173,52 +142,69 @@ class StreamFSDoc(object):
 
   def __getattr__(self, name):
     """ Forwards to stringio. """
-    return getattr(self.stringio, name)
-
-  @property 
-  def ladabase(self):
-    from IPython.ipapi import get as get_ipy
-    ip = get_ipy()
-    assert 'ladabase' in ip.user_ns, \
-           RuntimeError("ladabase object not found in user namespace.")
-    return ip.user_ns['ladabase']
+    return getattr(self._stringio, name)
 
 class ExtractCommon(AbstractExtractBase, ExtractCommonBase, OutcarSearchMixin):
   """ Extracts DFT data from an OUTCAR. """
-  def __init__(self, id_or_doc, comm=None, **kwargs):
+  def __init__(self, filter, comm=None, **kwargs):
     """ Initializes extraction object. """
     AbstractExtractBase.__init__(self, comm=comm)
     ExtractCommonBase.__init__(self)
     OutcarSearchMixin.__init__(self)
-    self._id = id_or_doc['_id'] if isinstance(id_or_doc) else id_or_doc
+    filter = filter if isinstance(filter, dict) else {'_id': filter}
+    n = [u for u in get_ladabase().files.find(filter)]
+    if len(n) != 1: raise ValueError("{0} OUTCARS found from current filter.\n".format(len(n)))
+    self._element = n[0]
+    """ Elements in database associated with current OUTCAR. """
 
   def __outcar__(self):
-    return StreamFSDoc(self._id)
+    if self.compression == "bz2":  
+      from bz2 import decompress
+      return StringStream(decompress(get_ladabase().outcars.get(self._element['_id']).read()))
+    elif self.compression.lower() == "none":
+      return get_ladabase().outcars.get(self._element['_id'])
   def __funccar__(self):
     raise IOError('FUNCCARs are not stored in the database.')
   def __contcar__(self):
     raise IOError('CONTCARs are not stored in the database.')
 
+  def __getattr__(self, name):
+    """ Adds read-only properties corresponding to database metadata. """
+    if name in self._element: return self._element[name]
+    raise AttributeError()
+
+  def __dir__(self):
+    """ Attributes in this object. """
+    result = set([u for u in self._element.keys() if u[0] != '_'] + ['_id', 'success']) \
+             | set([u for u in dir(self.__class__) if u[0] != '_'])
+    return list(result)
+
+
+  @property
+  def success(self):
+    """ True if calculation was successfull. """
+    return ExtractCommonBase.success.__get__(self)
+
 class ExtractDFT(ExtractCommon, ExtractDFTBase):
   """ Extracts DFT data from an OUTCAR. """
-  def __init__(self, id_or_doc, comm=None, **kwargs):
+  def __init__(self, filter, comm=None, **kwargs):
     """ Initializes extraction object. """
-    ExtractCommon.__init__(self, id_or_doc, comm, **kwargs)
+    ExtractCommon.__init__(self, filter, comm, **kwargs)
     ExtractDFTBase.__init__(self)
 
 class ExtractGW(ExtractCommon, ExtractGWBase):
   """ Extracts GW data from an OUTCAR. """
-  def __init__(self, id_or_doc, comm=None, **kwargs):
+  def __init__(self, filter, comm=None, **kwargs):
     """ Initializes extraction object. """
-    ExtractCommon.__init__(self, id_or_doc, comm, **kwargs)
+    ExtractCommon.__init__(self, filter, comm, **kwargs)
     ExtractGWBase.__init__(self)
 
-def VaspExtract(id_or_doc, *args, **kwargs): 
+def VaspExtract(filter, *args, **kwargs): 
   """ Chooses between DFT or GW extraction object, depending on OUTCAR. """
-  a = ExtractCommon(id_or_doc, *args, **kwargs)
+  a = ExtractCommon(filter, *args, **kwargs)
   try: which = ExtractDFT if a.is_dft else ExtractGW
   except: which = ExtractCommon
-  return which(id_or_doc, *args, **kwargs)
+  return which(filter, *args, **kwargs)
 
 class MassExtract(AbstractMassExtract):
   """ Propagates vasp extractors from all subdirectories.
@@ -247,12 +233,7 @@ class MassExtract(AbstractMassExtract):
 
 
   @property 
-  def ladabase(self):
-    from IPython.ipapi import get as get_ipy
-    ip = get_ipy()
-    assert 'ladabase' in ip.user_ns, \
-           RuntimeError("ladabase object not found in user namespace.")
-    return ip.user_ns['ladabase']
+  def ladabase(self): return get_ladabase()
 
   def __iter_alljobs__(self):
     """ Goes through all directories with an OUTVAR. """
@@ -269,7 +250,11 @@ class MassExtract(AbstractMassExtract):
 
 def ipy_init():
   from IPython.ipapi import get as get_ipy
+  from .ipython import push, amend
   ip = get_ipy()
 
   manager = Manager()
   ip.user_ns['ladabase'] = manager
+  ip.expose_magic("push", push)
+  ip.expose_magic("amend", amend)
+

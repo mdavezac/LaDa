@@ -66,7 +66,6 @@ class Extract(object):
         Then checks that timing stuff is present at end of OUTCAR.
     """
     from os.path import exists, join
-    import re
 
     for path in [self.OUTCAR]:
       if not exists(join(self.directory, path)): return False
