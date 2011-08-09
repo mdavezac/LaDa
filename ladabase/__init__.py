@@ -1,29 +1,8 @@
 """ PyMongo interface. """
-__pymongo_host__ = 'localhost'
-__pymongo_port__ = 27017
-__vasp_database_name__ = 'vasp'
-__OUTCARS_prefix__ = 'OUTCARs'
+__all__ = ['Manager', 'MassExtract', 'VaspExtract', 'ipy_init']
 
-from ..jobs import AbstractMassExtract
-from ..opt import AbstractExtractBase, OutcarSearchMixin
-from ..vasp.extract._common import Extract as ExtractCommonBase
-from ..vasp.extract._dft import Extract as ExtractDFTBase
-from ..vasp.extract._gw import Extract as ExtractGWBase
-
-def get_username():
-  """ Returns username from $HOME/.lada file. """
-  import lada
-
-  if not hasattr(lada, "username"):
-    raise RuntimeError("Cannot push OUTCAR if nobody is to blame.\n"\
-                       "Please add 'username = \"your name\"' to $HOME/.lada.")
-def get_ladabase(): 
-  """ Return connector to the database. """
-  from IPython.ipapi import get as get_ipy
-  ip = get_ipy()
-  assert 'ladabase' in ip.user_ns, \
-         RuntimeError("ladabase object not found in user namespace.")
-  return ip.user_ns['ladabase']
+from .extract import VaspExtract
+from .massextract import MassExtract
 
 class Manager(object): 
   """ Holds data regarding database management. """
@@ -31,15 +10,16 @@ class Manager(object):
     """ Initializes a connection and database. """
     from pymongo import Connection
     from gridfs import GridFS
+    from .. import pymongo_host, pymongo_port, vasp_database_name,  OUTCARS_prefix
     super(Manager, self).__init__()
 
-    self._host = host if host != None else __pymongo_host__
+    self._host = host if host != None else pymongo_host
     """ Host where the database is hosted. """
-    self._port = port if port != None else __pymongo_port__
+    self._port = port if port != None else pymongo_port
     """ Port of the host where the database is hosted. """
-    self._vaspbase_name = database if database != None else __vasp_database_name__
+    self._vaspbase_name = database if database != None else vasp_database_name
     """ Name of the vasp database. """
-    self._outcars_prefix = prefix if prefix != None else __OUTCARS_prefix__
+    self._outcars_prefix = prefix if prefix != None else OUTCARS_prefix
     """ Name of the OUTCAR database. """
     self.connection = Connection(self._host, self._port)
     """ Holds connection to pymongo. """
@@ -82,6 +62,7 @@ class Manager(object):
     """
     from hashlib import sha512
     from os import uname
+    from .misc import get_username
 
 
     hash = sha512(outcar).hexdigest()
@@ -124,137 +105,27 @@ class Manager(object):
 
     return self.files.find_one({'sha512': hash})
 
-class StringStream(object):
-  """ Converts string to file-like object. """
-  def __init__(self, *args, **kwargs):
-    """ Initializes the object using the stream. """
-    from cStringIO import StringIO
-    super(StringStream, self).__init__()
-    self._stringio = StringIO(*args, **kwargs)
-    """ String-as-a-filestream. """
-
-  def __enter__(self):
-    """ Makes this a context returning a cStringIO. """
-    return self._stringio
-  def __exit__(self, *args, **kwargs):
-    """ Makes this a context returning a cStringIO. """
-    self._stringio.close()
-
-  def __getattr__(self, name):
-    """ Forwards to stringio. """
-    return getattr(self._stringio, name)
-
-class ExtractCommon(AbstractExtractBase, ExtractCommonBase, OutcarSearchMixin):
-  """ Extracts DFT data from an OUTCAR. """
-  def __init__(self, filter, comm=None, **kwargs):
-    """ Initializes extraction object. """
-    AbstractExtractBase.__init__(self, comm=comm)
-    ExtractCommonBase.__init__(self)
-    OutcarSearchMixin.__init__(self)
-    filter = filter if isinstance(filter, dict) else {'_id': filter}
-    n = [u for u in get_ladabase().files.find(filter)]
-    if len(n) != 1: raise ValueError("{0} OUTCARS found from current filter.\n".format(len(n)))
-    self._element = n[0]
-    """ Elements in database associated with current OUTCAR. """
-
-  def __outcar__(self):
-    if self.compression == "bz2":  
-      from bz2 import decompress
-      return StringStream(decompress(get_ladabase().outcars.get(self._element['_id']).read()))
-    elif self.compression.lower() == "none":
-      return get_ladabase().outcars.get(self._element['_id'])
-  def __funccar__(self):
-    raise IOError('FUNCCARs are not stored in the database.')
-  def __contcar__(self):
-    raise IOError('CONTCARs are not stored in the database.')
-
-  def __getattr__(self, name):
-    """ Adds read-only properties corresponding to database metadata. """
-    if name in self._element: return self._element[name]
-    raise AttributeError()
-
-  def __dir__(self):
-    """ Attributes in this object. """
-    result = set([u for u in self._element.keys() if u[0] != '_'] + ['_id', 'success']) \
-             | set([u for u in dir(self.__class__) if u[0] != '_'])
-    return list(result)
-
-
-  @property
-  def success(self):
-    """ True if calculation was successfull. """
-    return ExtractCommonBase.success.__get__(self)
-
-class ExtractDFT(ExtractCommon, ExtractDFTBase):
-  """ Extracts DFT data from an OUTCAR. """
-  def __init__(self, filter, comm=None, **kwargs):
-    """ Initializes extraction object. """
-    ExtractCommon.__init__(self, filter, comm, **kwargs)
-    ExtractDFTBase.__init__(self)
-
-class ExtractGW(ExtractCommon, ExtractGWBase):
-  """ Extracts GW data from an OUTCAR. """
-  def __init__(self, filter, comm=None, **kwargs):
-    """ Initializes extraction object. """
-    ExtractCommon.__init__(self, filter, comm, **kwargs)
-    ExtractGWBase.__init__(self)
-
-def VaspExtract(filter, *args, **kwargs): 
-  """ Chooses between DFT or GW extraction object, depending on OUTCAR. """
-  a = ExtractCommon(filter, *args, **kwargs)
-  try: which = ExtractDFT if a.is_dft else ExtractGW
-  except: which = ExtractCommon
-  return which(filter, *args, **kwargs)
-
-class MassExtract(AbstractMassExtract):
-  """ Propagates vasp extractors from all subdirectories.
-  
-      Trolls through all subdirectories for vasp calculations, and organises
-      results as a dictionary where keys are the name of the diretory.
-  """
-  def __init__(self, Extract = None, **kwargs):
-    """ Initializes MassExtract.
-    
-    
-        :Parameters:
-          Extract : `lada.vasp.Extract`
-            Extraction class to use. 
-          kwargs : dict
-            Keyword parameters passed on to AbstractMassExtract.
-
-        :kwarg naked_end: True if should return value rather than dict when only one item.
-        :kwarg unix_re: converts regex patterns from unix-like expression.
-    """
-    # this will throw on unknown kwargs arguments.
-    super(MassExtract, self).__init__(**kwargs)
-
-    self.Extract = Extract if Extract != None else VaspExtract
-    """ Extraction class to use. """
-
-
-  @property 
-  def ladabase(self): return get_ladabase()
-
-  def __iter_alljobs__(self):
-    """ Goes through all directories with an OUTVAR. """
-
-    for doc in self.ladabase.files.find():
-      yield str(doc['_id']), self.Extract(doc)
-
-  def __copy__(self):
-    """ Returns a shallow copy. """
-    result = self.__class__(self.Extract)
-    result.__dict__.update(self.__dict__)
-    return result
+  def __contains__(self, path):
+    """ True if path already in database. """
+    from os.path import exists
+    from hashlib import sha512
+    from ..opt import RelativeDirectory
+    path = RelativeDirectory(path).path
+    if not exists(path): ValueError("File {0} does not exist.".format(path))
+    with open(path, 'r') as file: string = file.read()
+    hash = sha512(string).hexdigest()
+    return self.outcars.exists(sha512=hash)
 
 
 def ipy_init():
   from IPython.ipapi import get as get_ipy
   from .ipython import push, amend
+  from .filter import init as filter_init
   ip = get_ipy()
 
   manager = Manager()
   ip.user_ns['ladabase'] = manager
   ip.expose_magic("push", push)
   ip.expose_magic("amend", amend)
+  filter_init(ip)
 

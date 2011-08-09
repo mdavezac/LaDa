@@ -81,6 +81,15 @@ represent_structure_with_POSCAR = False
     If False, then uses normal python representation.
 """
 
+readonly_jobparams = False
+""" Whether items can be modified in parallel using attribute syntax. """
+naked_end = True
+""" Whether last item is returned as is or wrapped in ForwardingDict. """
+only_existing_jobparams = True
+""" Whether attributes can be added or only modified. """
+unix_re  = True
+""" If True, then all regex matching is done using unix-command-line patterns. """
+
 
 # The variables defined below are only needed for the ipython interface.
 if @with_ipython@:
@@ -140,6 +149,13 @@ if @with_ipython@:
   elif environ.get("NERSC_HOST", "none") == "carver":
     queues = "debug", "regular", "low"
     resource_string = "nodes={1}:ppn=8"
+
+# the variables below are only needed by ladabase.
+if @with_ladabase@:
+  pymongo_host       = 'localhost'
+  pymongo_port       = 27017
+  vasp_database_name = 'vasp'
+  OUTCARS_prefix     = 'OUTCARs'
 
 
 # reads stuff from input file

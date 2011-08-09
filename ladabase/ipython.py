@@ -24,10 +24,10 @@ def get_file_list(self, args):
 def push(self, cmdl):
   """ Pushes directory with OUTCARs or single OUTCAR to the database. """
   import argparse
-  from os import getcwd, uname
+  from os import getcwd
   from os.path import relpath
-  from ..ladabase import get_username
   from IPython.ipapi import TryNext
+  from ..vasp import Extract
   from ..record import Record
   import re
 
@@ -47,7 +47,16 @@ def push(self, cmdl):
   except SystemExit as e: return None
 
   # list all structures.
-  files = get_file_list(self, args)
+  files = []
+  for file in get_file_list(self, args):
+    if file in ladabase: print "File {0} is already in the database.".format(file)
+    if not Extract(file).success:
+      print "File {0} is not a successful calculation.".format(file)
+    else: files.append(file)
+  if len(files) == 0: 
+    print "Nothing to add to database."
+    return
+
 
   # gets a comment to go with the push.
   notefile = self.shell.mktempfile()
@@ -71,8 +80,7 @@ def push(self, cmdl):
   for file in files: 
     with open(file, 'r') as outcar:
       added = ladabase.push( relpath(file, getcwd()), outcar.read(), 
-                             compression=compression, comment=comment,
-                             username=get_username(), host=uname()[1] )
+                             compression=compression, comment=comment )
       if added != None:
         just_added.append(added)
         print "Pushed {0}.".format(file, getcwd())
@@ -88,9 +96,10 @@ def push(self, cmdl):
 
 def amend(self, cmdl):
   """ Pushes directory with OUTCARs or single OUTCAR to the database. """
-  from ..record import Record
+  from IPython.ipapi import TryNext
   from hashlib import sha512
-  import re
+  from re import sub as replace
+  from ..record import Record
 
   if 'ladabase' not in self.api.user_ns:
     print "Could not find ladabase instance."
@@ -118,7 +127,7 @@ def amend(self, cmdl):
   if hash == sha512(comment.replace(' ', '').replace('\n', '')).hexdigest():
     print "No change made to comment. Aborting."
     return
-  stripped = re.sub('#.*\n', '\n', comment)
+  stripped = replace('#.*\n', '\n', comment)
   if len(stripped.replace('\n','').replace(' ', '')) == 0: 
     print "Empty comment. Aborting."
     return
