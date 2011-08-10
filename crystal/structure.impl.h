@@ -248,7 +248,7 @@ namespace LaDa
         structure->SetAttribute("N", atoms.size() );
         structure->SetDoubleAttribute("energy", energy );
         structure->SetDoubleAttribute("weight", weight );
-        structure->SetAttribute("name", name );
+        structure->SetAttribute("name", name.c_str() );
         
         for (int i=0; i < 3; ++i)
         {

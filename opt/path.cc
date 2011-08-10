@@ -27,9 +27,9 @@ namespace LaDa
 
       result_type operator()(std::string const &val) const
       {
-        char *orig_ = get_current_dir_name();
+        char *orig_ = getcwd(NULL, 10024);
         chdir(val.c_str());
-        char *result_ = get_current_dir_name();
+        char *result_ = getcwd(NULL, 10024);
         std::string const result = result_;
         free(result_);
         chdir(orig_);

@@ -4,7 +4,7 @@ include_directories(MPI_INCLUDE_PATH)
 
 python_add_module (pyvasp vasp.cc )
 include_directories(${PYTHON_INCLUDE_DIRS})
-target_link_libraries(pyvasp ${Boost_PYTHON_LIBRARY})
+target_link_libraries(pyvasp ${Boost_PYTHON_LIBRARY} ${PYTHON_LIBRARY})
 if(MPI_FOUND)
    include_directories(${MPI_INCLUDE_PATH})
   target_link_libraries(pyvasp ${MPI_LIBRARIES} ${Boost_MPI_LIBRARY} )
