@@ -27,13 +27,12 @@ namespace LaDa
 
       result_type operator()(std::string const &val) const
       {
-        char *orig_ = getcwd(NULL, 10024);
+        char orig_[3024], result_[3024];
+        getcwd(orig_, 3024);
         chdir(val.c_str());
-        char *result_ = getcwd(NULL, 10024);
+        getcwd(result_, 10024);
         std::string const result = result_;
-        free(result_);
         chdir(orig_);
-        free(orig_);
         return result;
       }
     };
