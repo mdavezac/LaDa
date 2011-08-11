@@ -615,7 +615,7 @@ def charge_corrections(structure, **kwargs):
       .. __:  http://dx.doi.org/10.1103/PhysRevB.78.235104
   """
   return   first_order_charge_correction(structure, **kwargs) \
-         + third_order_charge_correction(structure, **kwargs) \
+         - third_order_charge_correction(structure, **kwargs) \
 
 def magnetic_neighborhood(structure, defect, species):
    """ Finds magnetic neighberhood of a defect. 
