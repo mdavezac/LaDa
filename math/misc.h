@@ -148,10 +148,13 @@ namespace LaDa
     inline bool are_periodic_images( math::rVector3d const &_a,
                                      math::rVector3d const &_b, 
                                      math::rMatrix3d const &_inv_cell )
-    {
-      math::rVector3d v = _inv_cell * (_a - _b); 
-      return is_integer(v); 
-    }
+     { return math::is_integer(_inv_cell * (_a - _b)); }
+    //! True if two vectors are periodic images with respect to a cell.
+    inline bool are_periodic_images( math::rVector3d const &_a,
+                                     math::rVector3d const &_b, 
+                                     math::rMatrix3d const &_inv_cell,
+                                     types::t_real _tol )
+     { return math::is_integer(_inv_cell * (_a - _b), _tol); }
 
 
     //! Defines a floor function.

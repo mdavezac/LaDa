@@ -5,7 +5,7 @@
 
 #include <iostream>
 
-#include <root_exceptions.h>
+#include <math/exceptions.h>
 
 
 namespace LaDa
@@ -16,8 +16,11 @@ namespace LaDa
     struct too_many_species: virtual input {};
     //! Thrown when structure does not contain atomic sites.
     struct empty_structure: virtual input {};
+
+    //! Thrown when the number of atoms in a supercell does not match the lattice.
+    struct incommensurate_number_of_sites: virtual unideal_lattice, virtual input {};
     //! Thrown when the site index has not been initialized.
-    struct uninitialized_site_index: virtual input {};
+    struct incorrect_site_index: virtual unideal_lattice {};
   }
 }
 

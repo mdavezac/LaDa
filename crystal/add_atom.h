@@ -63,6 +63,9 @@ namespace LaDa
             static_cast<T_DERIVED<T_TYPE>*>(this)->atoms.push_back(_in);
             return *this;
           }
+          template<class TD> 
+            call_add_atom& add_atom(Eigen::DenseBase<TD> const &_pos, T_TYPE const &_t)
+              { return add_atom(_pos(0), _pos(1), _pos(2), _t); }
         };
       //! Specializatio for container types and StructureData.
       template<template<class> class T_DERIVED, class T_TYPE>
@@ -84,7 +87,14 @@ namespace LaDa
                 BOOST_PP_REPEAT_ ## z(BOOST_PP_INC(n), LADA_TEXT, nil)                \
                 static_cast<T_DERIVED<T_TYPE>*>(this)->atoms.push_back(atom);         \
                 return *this;                                                         \
-              }
+              }                                                                       \
+            template<class TD>                                                        \
+              call_add_atom&                                                          \
+                add_atom( Eigen::DenseBase<TD> const &_pos,                           \
+                          BOOST_PP_ENUM_PARAMS(BOOST_PP_INC(n), specie const &_t) )   \
+                { return add_atom(_pos(0), _pos(1), _pos(2),                          \
+                      BOOST_PP_ENUM_PARAMS(BOOST_PP_INC(n), _t) ); }                  \
+       
           BOOST_PP_REPEAT(5, LADA_OPERATOR, nil)
 #         undef LADA_TEXT
 #         undef LADA_OPERATOR
@@ -116,6 +126,9 @@ namespace LaDa
             static_cast<T_DERIVED<T_TYPE>*>(this)->impl_->add_atom(_in);
             return *this;
           }
+          template<class TD> 
+            call_add_atom2& add_atom(Eigen::DenseBase<TD> const &_pos, T_TYPE const &_t)
+              { return add_atom(_pos(0), _pos(1), _pos(2), _t); }
         };
       //! Specializatio for container types and TemplateStructure.
       template<template<class> class T_DERIVED, class T_TYPE>
@@ -136,7 +149,13 @@ namespace LaDa
                   impl_->add_atom( _x, _y, _z,                                           \
                                    BOOST_PP_ENUM_PARAMS(BOOST_PP_INC(n), _t) );          \
                 return *this;                                                            \
-              }
+              }                                                                          \
+            template<class TD>                                                           \
+              t_Return                                                                   \
+                add_atom( Eigen::DenseBase<TD> const &_pos,                              \
+                          BOOST_PP_ENUM_PARAMS(BOOST_PP_INC(n), specie const &_t) )      \
+                { return add_atom(_pos(0), _pos(1), _pos(2),                             \
+                      BOOST_PP_ENUM_PARAMS(BOOST_PP_INC(n), _t) ); }                     
           BOOST_PP_REPEAT(5, LADA_OPERATOR, nil)
 #         undef LADA_TEXT
 #         undef LADA_OPERATOR

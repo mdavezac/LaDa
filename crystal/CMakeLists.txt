@@ -1,6 +1,6 @@
 set( LIBCRYSTAL_HEADERS 
      atom.h structure.h structure_data.h add_atom.h is_container.h
-     utilities.h compare_sites.h)
+     utilities.h compare_sites.h compare_atoms.h)
 #    atom.h divide_and_conquer.h epi_structure.h fractional_cartesian.h layerdepth.h 
 #    read_structure.h structure.impl.h compare_sites.h divide_and_conquer.impl.h 
 #    fill_structure.h neighbors.h smith.h symmetry_operator.h 
@@ -18,6 +18,7 @@ set_target_properties(crystal PROPERTIES OUTPUT_NAME lada_crystal)
 if(loadnsave)
   target_link_libraries(crystal lns)
 endif(loadnsave)
+target_link_libraries(crystal mathlib)
 install(TARGETS crystal DESTINATION lib64)
 
 if(NOT noinstall_headers)

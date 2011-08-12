@@ -11,6 +11,7 @@
 using namespace std;
 int main()
 {
+  using namespace LaDa;
   using namespace LaDa::crystal;
 # if LADA_TEST_INCTYPE == 0
     LADA_TEST_STRUCTURE<std::string> structure;
@@ -25,17 +26,17 @@ int main()
                     (0.5,-0.5,0.5)
                     (0.5,0.5,-0.5);
 # if LADA_TEST_INCTYPE == 0
-    structure.add_atom(0,0,0, "Au");
-    structure.add_atom(0.25,0.25,0.25, "Pd");
+    structure.add_atom(0,0,0, "Au") 
+             .add_atom(math::rVector3d::Ones() * 0.25, "Pd");
 # elif LADA_TEST_INCTYPE == 1
-    structure.add_atom(0,0,0, "Au");
-    structure.add_atom(0.25,0.25,0.25, "Au", "Pd");
+    structure.add_atom(0,0,0, "Au")
+             .add_atom(math::rVector3d::Ones() * 0.25, "Au", "Pd");
 # elif LADA_TEST_INCTYPE == 2
-    structure.add_atom(0,0,0, 1);
-    structure.add_atom(0.25,0.25,0.25, 15);
+    structure.add_atom(0,0,0, 1)
+             .add_atom(math::rVector3d::Ones() * 0.25, 15);
 # elif LADA_TEST_INCTYPE == 3
-    structure.add_atom(0,0,0, 1);
-    structure.add_atom(0.25,0.25,0.25, -2, 15);
+    structure.add_atom(0,0,0, 1)
+             .add_atom(math::rVector3d::Ones() * 0.25, 1, 15);
 # endif
   for(size_t i(0); i < 3; ++i)
   {
@@ -61,7 +62,7 @@ int main()
     LADA_DOASSERT(structure[0].type.size() == 1, "structure atom data incorrect.");
     LADA_DOASSERT(structure[0].type[0] == 1, "structure atom data incorrect.");
     LADA_DOASSERT(structure[1].type.size() == 2, "structure atom data incorrect.");
-    LADA_DOASSERT(structure[1].type[0] == -2, "structure atom data incorrect.");
+    LADA_DOASSERT(structure[1].type[0] ==  1, "structure atom data incorrect.");
     LADA_DOASSERT(structure[1].type[1] == 15, "structure atom data incorrect.");
 # endif
   return 0;

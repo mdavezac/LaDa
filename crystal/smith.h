@@ -5,70 +5,20 @@
 
 #include <boost/tuple/tuple.hpp>
 
+#include <math/smith_normal_form.h>
 #include "structure.h"
 
 namespace LaDa 
 {
-  namespace Crystal 
+  namespace crystal 
   {
-    //! The type holding the smith transform.
-    typedef boost::tuples::tuple<math::rMatrix3d, math::iVector3d> t_SmithTransform;
-
-    //! Returns smith transform.
-    t_SmithTransform get_smith_transform( math::rMatrix3d const &_lat_cell,
-                                          math::rMatrix3d const &_str_cell );
-    //! Returns smith transform.
-    template< class T_TYPE >
-      t_SmithTransform get_smith_transform( Crystal::TStructure<T_TYPE> const &_structure )
-      {
-        LADA_DO_NASSERT( _structure.lattice == NULL, "Lattice not set in structure.\n" );
-        return get_smith_transform( _structure.lattice->cell, _structure.cell ); 
-      }
-
-    //! Computes smith indices of position \a _pos.
-    math::iVector3d get_smith_index( t_SmithTransform const &_transformation,
-                                     math::rVector3d  const &_pos );
-
-    //! Computes linear smith index from non-linear smith index.
-    inline size_t get_linear_smith_index( math::iVector3d const &_extent,
-                                          math::iVector3d  const &_index )
-      { return _index(2) + _extent(2) * ( _index(1) + _index(0) * _extent(1) ); }
-
-    //! Computes linear smith index from non-linear smith index, including sites.
-    inline size_t get_linear_smith_index( math::iVector3d const &_extent,
-                                          size_t const &_site_index,
-                                          math::iVector3d  const &_index )
-      { return _index(2)+_extent(2)*(_index(1)+_extent(1)*(_index(0)+_site_index*_extent(0))); }
-
-    //! Computes linear smith index of position \a _pos.
-    inline size_t get_linear_smith_index( t_SmithTransform const &_transformation,
-                                          math::rVector3d  const &_pos )
-    {
-      return get_linear_smith_index
-             (
-               boost::tuples::get<1>(_transformation),
-               get_smith_index( _transformation, _pos )
-             );
-    }
-    //! Computes linear smith index of position \a _pos.
-    inline size_t get_linear_smith_index( t_SmithTransform const &_transformation,
-                                          size_t const &_site_index,
-                                          math::rVector3d  const &_pos )
-    {
-      return get_linear_smith_index
-             (
-               boost::tuples::get<1>(_transformation),
-               _site_index,
-               get_smith_index( _transformation, _pos )
-             );
-    }
     //! Computes linear smith index of position \a _pos.
     template<class T_TYPE>
-      size_t get_linear_smith_index( t_SmithTransform const &_transformation,
-                                     Crystal::Atom_Type<T_TYPE> &_atom ) 
+      size_t linear_smith_index( t_SmithTransform const &_transformation,
+                                 Crystal::Atom_Type<T_TYPE> &_atom ) 
       {
-        LADA_ASSERT( _atom.site != -1, "Site index not set.\n");
-        return get_linear_smith_index
+        if(_atom.site < 0) BOOST_THROW_EXCEPTION( error::incorrect_site_index() );
+        return math::linear_smith_index
                (
                  boost::tuples::get<1>(_transformation),
                  _atom.site,
@@ -76,12 +26,54 @@ namespace LaDa
                );
       }
 
-    inline bool are_periodic_images( t_SmithTransform const &_transformation, 
-                                     math::rVector3d const &_a, math::rVector3d const &_b )
-      { return get_smith_index(_transformation, _a - _b) == math::iVector3d(0,0,0); }
 
-    //! Computes map of smith indices.
-    void get_smith_map( Crystal::Structure const &_str, std::vector< std::vector<size_t> > &_out);
+    //! \brief Computes map of smith indices.
+    //! \param [in] _lattice: Backbone lattice.
+    //! \param [in] _supercell: Supercell of the lattice. The site indices of
+    //!                         each atom must correspond to the index of the
+    //!                         site in the backbone lattice.
+    //! \param [out] _map: Two-dimensional matrix where rows (inner vector) corresponds to
+    //!                    atomic sites indexed by their linear smith index,
+    //!                    and columns (outer vector) to lattice sites. The
+    //!                    value of each element is the corresponding index
+    //!                    into the supercell's list of atoms.
+    template<class T_TYPE>
+      void smith_map( Crystal::TemplateStructure<T_TYPE> const &_lattice,
+                      Crystal::TemplateStructure<T_TYPE> const &_supercell,
+                      std::vector< std::vector<size_t> > &_map )
+      {
+        // finds map for atomic positions.
+        Crystal::t_SmithTransform const
+          transform( get_smith_transform(_lattice.cell(), _supercell.cell()) );
+     
+        if(_supercell.size() % _lattice.size() != 0)
+          BOOST_THROW_EXCEPTION(error::incommensurate_number_of_sites());
+        size_t const Nat( _str.atoms.size() );
+        size_t const N( Nat / _str.lattice->sites.size() );
+        _map.clear();
+        _map.resize(_str.lattice->sites.size(), std::vector<size_t>(N, Nat)); 
+     
+        Crystal::Structure::t_Atoms::const_iterator i_first = _str.atoms.begin();
+        Crystal::Structure::t_Atoms::const_iterator const i_end = _str.atoms.end();
+        for(size_t i(0); i_first != i_end; ++i_first, ++i)
+        {
+          if(i_first->site < 0 or i_first->site >= _str.lattice->sites.size())
+            BOOST_THROW_EXCEPTION(incorrect_site_index());
+          
+          math::rVector3d const pos( i_first->pos - _str.lattice->sites[i_first->site].pos );
+          size_t const smith( Crystal::get_linear_smith_index(transform, pos) );
+#         ifdef LADA_DEBUG
+            if(smith >= N) BOOST_THROW_EXCEPTION(error::internal());
+            if(_map[i_first->site][smith]!=Nat) BOOST_THROW_EXCEPTION(error::internal());
+#         endif
+          _map[i_first->site][smith] = i;
+        }
+#       ifdef LADA_DEBUG
+          for( size_t site(0), j(0); site < _str.lattice->sites.size(); ++site )
+            for( size_t i(0); i < N; ++i, ++j )
+              if(_map[site][i] == Nat) BOOST_THROW_EXCEPTION(error::internal())
+#       endif
+    }
   } // namespace Crystal
 
 } // namespace LaDa

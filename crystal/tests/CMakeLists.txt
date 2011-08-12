@@ -34,8 +34,6 @@ if(NOT compile_debug_tests)
     ADD_TEST(is_container${TYPE} ${CMAKE_CURRENT_BINARY_DIR}/is_container${TYPE})
   endforeach(TYPE)
 
-endif(NOT compile_debug_tests)
-
   if(loadnsave)
     set(TYPES  0 1)
     foreach(TYPE ${TYPES})
@@ -58,3 +56,9 @@ endif(NOT compile_debug_tests)
       endforeach(TYPE)
     endforeach(STR)
   endif(loadnsave)
+
+  add_executable(supercell supercell.cc)
+  target_link_libraries(supercell crystal)
+  ADD_TEST(supercell ${CMAKE_CURRENT_BINARY_DIR}/supercell)
+
+endif(NOT compile_debug_tests)

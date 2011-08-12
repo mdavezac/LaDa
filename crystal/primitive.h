@@ -1,3 +1,5 @@
+#ifndef LADA_CRYSTAL_PRIMITIVE_H
+#define LADA_CRYSTAL_PRIMITIVE_H
 #include "LaDaConfig.h"
 
 #include <cmath>
@@ -22,18 +24,21 @@ namespace LaDa
   {
     //! Returns the primitive unit structure. 
     template<class T_TYPE>
-      TemplateStructure<T_TYPE> primitive(TemplateStructure<T_TYPE> const &_structure, types::t_real _tolerance = -1e0)
+      TemplateStructure<T_TYPE> primitive( TemplateStructure<T_TYPE> const &_structure,
+                                           types::t_real _tolerance = -1e0 )
       {
         if( _tolerance < 0e0 ) _tolerance = types::tolerance;
         if( _structure.size() == 0 ) BOOST_THROW_EXCEPTIONS(error::empty_structure());
 
         // copies lattice.
+        typedef TemplateStructure<T_TYPE> t_Sites;
         TemplateStructure<T_TYPE> result(_structure.clone());
         bool is_primitive = true;
   
         // moves sites into unit-cell.
-        math::rMatrix3d const inv(result.cell.inverse());
-        foreach(t_Site &_site, result) _site.pos = into_cell(_site.pos, result.cell, inv);
+        math::rMatrix3d const inv(result.cell().inverse());
+        foreach(typename TemplateStructure<T_TYPE>::t_Atoms &atom, result)
+          atom.pos = into_cell(atom.pos, result.cell(), inv);
   
         // Then compares fractional translations from site 0 to sites of same type.
         std::vector<math::rVector3d> translations;
@@ -46,26 +51,25 @@ namespace LaDa
           if( not compsites(i_site->type) ) continue;
   
           // creates translation.
-          math::rVector3d const translation( into_cell(i_site->pos - compsites.pos, result.cell, inv) );
+          math::rVector3d const translation(i_site->pos - compsites.pos);
           
           // loop on null translation.
-          if( math::is_null(translation) ) continue;
+          if( math::is_null(translation, _tolerance) ) continue;
   
           // checks that it leaves the lattice invariant.
           t_Sites :: const_iterator i_mapping = _structure.begin();
           for(; i_mapping != i_site_end; ++i_mapping)
           {
             CompareSites<T_TYPE> check(*i_mapping, _tolerance);
-            check.pos = into_cell( i_mapping->pos + translation, result.cell, inv );
+            check.pos = into_cell( i_mapping->pos + translation, result.cell(), inv );
   
-            if( std::find_if(_structure.begin(), _structure.end(), check)
-                  == result.end() ) break;
+            if( std::find_if(_structure.begin(), _structure.end(), check) == result.end() ) break;
           }
   
           if( i_mapping != i_site_end ) continue;
   
           // adds translation to vector. This lattice is not primitive.
-          translations.push_back( translation );
+          translations.push_back(to_voronoi(translation));
           is_primitive = false;
         }
   
@@ -73,15 +77,15 @@ namespace LaDa
         if( is_primitive ) return _structure;
   
         // adds original translations.
-        translations.push_back( result.cell.col(0) );
-        translations.push_back( result.cell.col(1) );
-        translations.push_back( result.cell.col(2) );
+        translations.push_back( result.cell().col(0) );
+        translations.push_back( result.cell().col(1) );
+        translations.push_back( result.cell().col(2) );
   
         // Loops over possible primitive cells.
         typedef std::vector<math::rVector3d> :: const_iterator t_cit;
         t_cit const i_vec_begin( translations.begin() );
         t_cit const i_vec_end( translations.end() );
-        math::rMatrix3d new_cell = result.cell;
+        math::rMatrix3d new_cell = result.cell();
         types::t_real volume = std::abs(new_cell.determinant());
         for( t_cit i_first(i_vec_begin); i_first != i_vec_end; ++i_first )
           for( t_cit i_second(i_vec_begin); i_second != i_vec_end; ++i_second )
@@ -109,7 +113,7 @@ namespace LaDa
                 LADA_ASSERT(trial.determinant() > 0, "Shouldn't happen.\n");
               }
               // Checks that original cell is a supercell.
-              if( not math::is_integer(new_cell.inverse() * result.cell, _tolerance) ) continue;
+              if( not math::is_integer(new_cell.inverse() * result.cell(), _tolerance) ) continue;
   
               // Checks that all lattice sites are integers.
               volume = std::abs(det);
@@ -124,12 +128,12 @@ namespace LaDa
   
         // now creates new lattice.
         result.clear();
-        result.cell = new_cell;
-        math::rMatrix3d const inv_cell(result.cell.inverse());
+        result.cell() = new_cell;
+        math::rMatrix3d const inv_cell(result.cell().inverse());
         for(i_site = _structure.begin(); i_site != i_site_end; ++i_site)
         {
           CompareSites<T_TYPE> check(*i_site, _tolerance);
-          check.pos = into_cell(check.pos, result.cell, inv_cell);
+          check.pos = into_cell(check.pos, result.cell(), inv_cell);
           t_Sites::const_iterator i_found = std::find_if(result.begin(), result.end(), check);
           if( i_found == sites.end() )
           {
@@ -141,6 +145,6 @@ namespace LaDa
         return result;
       }
 
-  } // namespace Crystal
-
+  } // namespace crystal
 } // namespace LaDa
+#endif

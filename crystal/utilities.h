@@ -49,12 +49,6 @@ namespace LaDa
                                    math::rMatrix3d const &_cell )
       { return zero_centered(_vec, _cell, _cell.inverse()); }
 
-    //! True if two vectors are periodic images with respect to a cell.
-    inline bool are_periodic_images( math::rVector3d const &_a,
-                                     math::rVector3d const &_b, 
-                                     math::rMatrix3d const &_inv_cell )
-     { return math::is_integer(_inv_cell * (_a - _b)); }
-
     //! \brief Compares species and positions in a structure.
     //! \details Expects the atomic types to be sequences.
     template<class T_TYPE>

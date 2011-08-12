@@ -17,8 +17,8 @@ namespace LaDa
   namespace math
   {
     
-    void smith_normal_form( math::iMatrix3d& _S, math::iMatrix3d & _L,
-                            const math::iMatrix3d& _M, math::iMatrix3d &_R )
+    void smith_normal_form( iMatrix3d& _S, iMatrix3d & _L,
+                            const iMatrix3d& _M, iMatrix3d &_R )
     {
       types::t_int s[9], l[9], m[9], r[9];
       for( size_t i(0); i < 3; ++i )
@@ -39,13 +39,13 @@ namespace LaDa
         }
     }
 
-    math::iVector3d smith_index( t_SmithTransform const &_transformation,
-                                 math::rVector3d  const &_pos )
+    iVector3d smith_index( t_SmithTransform const &_transformation,
+                           rVector3d  const &_pos )
     {
       namespace bt = boost::tuples;
-      math::iVector3d result;
-      const math::rVector3d pos( bt::get<0>( _transformation ) * _pos );
-      const math::iVector3d int_pos
+      iVector3d result;
+      const rVector3d pos( bt::get<0>( _transformation ) * _pos );
+      const iVector3d int_pos
       (
         types::t_int( rint( pos(0) ) ),
         types::t_int( rint( pos(1) ) ),
@@ -54,7 +54,7 @@ namespace LaDa
       for( size_t i(0); i < 3; ++i )
       {
 #       ifdef LADA_DEBUG
-          if( math::neq(pos(i), types::t_real(int_pos(i))) )
+          if( neq(pos(i), types::t_real(int_pos(i))) )
             BOOST_THROW_EXCEPTION(error::off_lattice_position());
 #       endif
         result(i) = int_pos(i) % bt::get<1>(_transformation)(i);
@@ -63,23 +63,23 @@ namespace LaDa
       return result;
     }
 
-    t_SmithTransform smith_transform( math::rMatrix3d const &_unitcell,
-                                      math::rMatrix3d const &_supercell )
+    t_SmithTransform smith_transform( rMatrix3d const &_unitcell,
+                                      rMatrix3d const &_supercell )
     {
       namespace bt = boost::tuples;
       t_SmithTransform result;
-      math::iMatrix3d left, right, smith;
-      const math::rMatrix3d inv_lat( !_unitcell );
-      const math::rMatrix3d inv_lat_cell( inv_lat * _supercell );
-      math::iMatrix3d int_cell;
+      iMatrix3d left, right, smith;
+      const rMatrix3d inv_lat( !_unitcell );
+      const rMatrix3d inv_lat_cell( inv_lat * _supercell );
+      iMatrix3d int_cell;
       for( size_t i(0); i < 3; ++i )
         for( size_t j(0); j < 3; ++j )
         {
           int_cell(i,j) = types::t_int( rint( inv_lat_cell(i,j) ) ); 
-          if( math::neq(types::t_real(int_cell(i,j)), inv_lat_cell(i,j), 1e-2) )
+          if( neq(types::t_real(int_cell(i,j)), inv_lat_cell(i,j), 1e-2) )
             BOOST_THROW_EXCEPTION( error::not_a_supercell() );
         }
-      math::smith_normal_form( smith, left, int_cell, right );
+      smith_normal_form( smith, left, int_cell, right );
       for( size_t i(0); i < 3; ++i )
       {
         for( size_t j(0); j < 3; ++j )

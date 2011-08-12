@@ -52,5 +52,11 @@ int main()
 # if LADA_TEST_TYPE > 1
     LADA_DOASSERT(not is_integer(LADA_UNITY + LADA_SMALL, LADA_TOL), "unexpected integer.")
 # endif
+# if LADA_TEST_TYPE == 3
+    matrix << 0, 0.5, 0.5, 0.5, 0, 0.5, 0.5, 0.5, 0;
+    LADA_ASSERT(are_periodic_images( rVector3d(0.5, 0.25, 0.5),
+                                     rVector3d(0.5, 0.25, 0.5) + matrix * rVector3d(1, -10, 2),
+                                     matrix.inverse() ), "NOT PERIODIC.\n" );
+# endif
   return 0;
 }
