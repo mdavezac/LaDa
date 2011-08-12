@@ -28,7 +28,7 @@
 #  define LADA_TYPE std::string 
 #  define LADA_TYPE_INIT1 "Au"
 #  define LADA_TYPE_INIT2 "Pd"
-#  define LADA_XML "<Structure name=\"\" energy=\"0\" weight=\"1\" freeze=\"none\" scale=\"1\">  <Cell r0=\"-0.5 0.5 0.5\" r1=\"0.5 -0.5 0.5\" r2=\"0.5 0.5 -0.5\"/>  <Atom pos=\"0 0 0\" type=\"Au\" freeze=\"none\"/>  <Atom pos=\"0.25 0.25 0.25\" type=\"Pd\" freeze=\"none\"/></Structure>"
+#  define LADA_XML "<Structure name=\"\" energy=\"0\" weight=\"1\" freeze=\"none\" scale=\"1\">  <Cell r0=\"-0.5 0.5 0.5\" r1=\"0.5 -0.5 0.5\" r2=\"0.5 0.5 -0.5\"/>  <Atom pos=\"0 0 0\" type=\"Au\" freeze=\"none\" site=\"0\"/>  <Atom pos=\"0.25 0.25 0.25\" type=\"Pd\" freeze=\"none\" site=\"-1\"/></Structure>"
 #  define LADA_FIRST_SIZE true
 #  define LADA_FIRST_TYPE structure LADA_ATOMS [0].type == "Au"
 #  define LADA_SECOND_SIZE true
@@ -37,7 +37,7 @@
 #  define LADA_TYPE std::vector<std::string>
 #  define LADA_TYPE_INIT1 "Au"
 #  define LADA_TYPE_INIT2 "Au", "Pd"
-#  define LADA_XML "<Structure name=\"\" energy=\"0\" weight=\"1\" freeze=\"none\" scale=\"1\">  <Cell r0=\"-0.5 0.5 0.5\" r1=\"0.5 -0.5 0.5\" r2=\"0.5 0.5 -0.5\"/>  <Atom pos=\"0 0 0\" type=\"Au\" freeze=\"none\"/>  <Atom pos=\"0.25 0.25 0.25\" type=\"Au Pd\" freeze=\"none\"/></Structure>"
+#  define LADA_XML "<Structure name=\"\" energy=\"0\" weight=\"1\" freeze=\"none\" scale=\"1\">  <Cell r0=\"-0.5 0.5 0.5\" r1=\"0.5 -0.5 0.5\" r2=\"0.5 0.5 -0.5\"/>  <Atom pos=\"0 0 0\" type=\"Au\" freeze=\"none\" site=\"0\"/>  <Atom pos=\"0.25 0.25 0.25\" type=\"Au Pd\" freeze=\"none\" site=\"-1\"/></Structure>"
 #  define LADA_FIRST_SIZE structure LADA_ATOMS [0].type.size() == 1
 #  define LADA_FIRST_TYPE structure LADA_ATOMS [0].type[0] == "Au"
 #  define LADA_SECOND_SIZE structure LADA_ATOMS [1].type.size() == 2
@@ -58,6 +58,7 @@ int main()
                     (0.5,0.5,-0.5);
   structure.add_atom(0,0,0, LADA_TYPE_INIT1);
   structure.add_atom(0.25,0.25,0.25, LADA_TYPE_INIT2);
+  structure[0].site = 0;
 
 
   // print to xml
@@ -98,5 +99,7 @@ int main()
   LADA_DOASSERT( LADA_FIRST_TYPE, "Could not reload first type.\n") 
   LADA_DOASSERT( LADA_SECOND_SIZE, "Could not reload all second species.\n") 
   LADA_DOASSERT( LADA_SECOND_TYPE, "Could not reload first type.\n") 
+  LADA_DOASSERT( structure LADA_ATOMS[0].site == 0, "Could not reload first site index.\n") 
+  LADA_DOASSERT( structure LADA_ATOMS[1].site == -1, "Could not reload second site index.\n") 
   return 0;
 }

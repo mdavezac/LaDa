@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
   a = here::A();
   xml = lns::xml::parse( str3 );
   try {  loader.nocatch( *xml, lns::ext(a) ); }
-  catch(lns::error::section_not_found &_e)  { result = false; }
+  catch(error::section_not_found &_e)  { result = false; }
   LADA_DOASSERT(result == false, "This should not have loaded.")
   
   b = here::B();

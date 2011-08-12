@@ -5,32 +5,19 @@
 
 #include <iostream>
 
-#include <boost/throw_exception.hpp>
-#include <boost/exception/error_info.hpp>
-#include <boost/exception/info.hpp>
+#include <root_exceptions.h>
 
 
 namespace LaDa
 {
-  namespace crystal
+  namespace error
   {
-    namespace error
-    {
-      //! Internal error.
-      struct internal: virtual boost::exception, virtual std::exception {};
-
-      //! Root of input errors.
-      struct input: virtual boost::exception, virtual std::exception {};
-      //! Thrown when a function requires the structure have only one specie per atom.
-      struct too_many_species: virtual input {};
-      //! Thrown when structure does not contain atomic sites.
-      struct empty_structure: virtual input {};
-
-      //! Error string
-      typedef boost::error_info<struct lns_sec_name,std::string> string;
-//     //! Name of the section
-//     typedef boost::error_info<struct lns_op_name,std::string> option_name;
-    }
+    //! Thrown when a function requires the structure have only one specie per atom.
+    struct too_many_species: virtual input {};
+    //! Thrown when structure does not contain atomic sites.
+    struct empty_structure: virtual input {};
+    //! Thrown when the site index has not been initialized.
+    struct uninitialized_site_index: virtual input {};
   }
 }
 

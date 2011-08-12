@@ -95,8 +95,10 @@ namespace LaDa
         typedef typename Eigen::DenseBase<T_DERIVED0>::RealScalar t_real0;
         typedef typename Eigen::DenseBase<T_DERIVED1>::RealScalar t_real1;
         BOOST_STATIC_ASSERT((boost::is_same<t_real0, t_real1>::value));
-        if(_a.rows() != _b.rows() or _a.cols() != _b.cols())
-          BOOST_THROW_EXCEPTION(error::array_of_different_sizes());
+#       ifdef LADA_DEBUG
+          if(_a.rows() != _b.rows() or _a.cols() != _b.cols())
+            BOOST_THROW_EXCEPTION(error::array_of_different_sizes());
+#       endif
         for(size_t i(0); i < _a.rows(); ++i)
           for(size_t j(0); j < _a.cols(); ++j)
             if(not eq(_a.coeff(i,j), _b.coeff(i,j), _tol)) return false;
@@ -110,8 +112,10 @@ namespace LaDa
         typedef typename Eigen::DenseBase<T_DERIVED0>::RealScalar t_real0;
         typedef typename Eigen::DenseBase<T_DERIVED1>::RealScalar t_real1;
         BOOST_STATIC_ASSERT((boost::is_same<t_real0, t_real1>::value));
-        if(_a.rows() != _b.rows() or _a.cols() != _b.cols())
-          BOOST_THROW_EXCEPTION(error::array_of_different_sizes());
+#       ifdef LADA_DEBUG
+          if(_a.rows() != _b.rows() or _a.cols() != _b.cols())
+            BOOST_THROW_EXCEPTION(error::array_of_different_sizes());
+#       endif
         for(size_t i(0); i < _a.rows(); ++i)
           for(size_t j(0); j < _a.cols(); ++j)
             if(not eq(_a.coeff(i,j), _b.coeff(i,j))) return false;

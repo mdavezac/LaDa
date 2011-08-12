@@ -330,3 +330,7 @@ configure_file (
  "${PROJECT_BINARY_DIR}/LaDaConfig.h"
 )
 
+# adds root_exception to install.
+if(NOT noinstall_headers)
+  install(FILES root_exceptions.h DESTINATION include/LaDa)
+endif(NOT noinstall_headers)

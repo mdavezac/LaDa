@@ -51,14 +51,18 @@ namespace LaDa
       public:
         //! Type of the atomic type.
         typedef T_TYPE t_Type;
+        //! \brief Site index.
+        //! \details Used to reference atomic sites in a supercell versus
+        //!          atomic sites in a reference lattice.
+        types::t_int site;
         
         //! Constructor
-        Atom() : AtomBase<t_Type>(), AtomFreezeMixin(frozen::NONE) {};
+        Atom() : AtomBase<t_Type>(), AtomFreezeMixin(frozen::NONE), site(-1) {};
         //! Constructor and Initializer
         explicit  Atom( const math::rVector3d &_pos, t_Type _type) 
-                    : AtomBase<t_Type>(_pos, _type), AtomFreezeMixin(frozen::NONE) {};
+                    : AtomBase<t_Type>(_pos, _type), AtomFreezeMixin(frozen::NONE), site(-1) {};
         //! Copy Constructor
-        Atom(const Atom &_c ) : AtomBase<t_Type>(_c), AtomFreezeMixin(_c) {};
+        Atom(const Atom &_c ) : AtomBase<t_Type>(_c), AtomFreezeMixin(_c), site(_c.site) {};
     
       private:
         //! Serializes an atom.
@@ -75,6 +79,7 @@ namespace LaDa
         namespace bs = boost::serialization;
         _ar & bs::base_object< AtomBase<T_TYPE> >(*this);
         _ar & bs::base_object<AtomFreezeMixin>(*this); 
+        _ar & site;
       }
 #   ifdef LADA_WITH_LNS
       //! To load and save to xml-like input.
@@ -84,7 +89,9 @@ namespace LaDa
           namespace lns = LaDa :: load_n_save;
           typedef AtomBase<T_TYPE> t1;
           typedef AtomFreezeMixin  t2;
-          return _ar & lns::merge(*static_cast<t1*>(this), *static_cast<t2*>(this)); 
+          return _ar & 
+            lns::merge( lns::merge(*static_cast<t1*>(this), *static_cast<t2*>(this)), 
+                        (lns::section("SITE") << lns::option("site", lns::action=site, lns::default_=-1)) );
         }
 #   endif
 

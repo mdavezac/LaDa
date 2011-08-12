@@ -107,14 +107,14 @@ int main(int argc, char *argv[])
   a.i = here::frozen::NONE;
   xml = lns::xml::parse("<A i=\"cartsian\"/>");
   try { loader.nocatch( *xml, lns::ext(a) ); }
-  catch(lns::error::option_parse_error &_e) { result = false; }
+  catch(error::option_parse_error &_e) { result = false; }
   LADA_DOASSERT(result == false, "did not throw as expected.");
 
   a.i = here::frozen::NONE;
   a.inclusive = false;
   xml = lns::xml::parse("<A i=\"xy\"/>");
   try { loader.nocatch( *xml, lns::ext(a) ); }
-  catch(lns::error::option_parse_error &_e) { result = false; }
+  catch(error::option_parse_error &_e) { result = false; }
   LADA_DOASSERT(result == false, "did not throw as expected.");
 
   a.i = here::frozen::NONE;

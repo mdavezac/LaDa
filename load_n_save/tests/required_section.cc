@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
 
   xml = lns::xml::parse( str3 );
   try {  loader.nocatch( *xml, lns::ext(c) ); }
-  catch(lns::error::required_section_not_found &_e)  { result = false; }
+  catch(error::required_section_not_found &_e)  { result = false; }
   LADA_DOASSERT(result == false, "This should not have loaded.")
 
   return 0;

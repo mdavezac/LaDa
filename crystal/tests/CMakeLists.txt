@@ -11,6 +11,31 @@ if(NOT compile_debug_tests)
     endforeach(TYPE)
   endforeach(STR)
 
+
+  add_executable(utilities utilities.cc)
+  target_link_libraries(utilities crystal)
+  ADD_TEST(utilities ${CMAKE_CURRENT_BINARY_DIR}/utilities)
+
+  set(TYPES 0 1 2 3 4 5)
+  foreach(TYPE ${TYPES})
+    add_executable(compare${TYPE} compare.cc)
+    target_link_libraries(compare${TYPE} crystal)
+    set_property( TARGET compare${TYPE} PROPERTY COMPILE_DEFINITIONS
+                  LADA_TEST_INCTYPE=${TYPE})
+    ADD_TEST(compare${TYPE} ${CMAKE_CURRENT_BINARY_DIR}/compare${TYPE})
+  endforeach(TYPE)
+
+  set(TYPES 0 1 2 3 4 5)
+  foreach(TYPE ${TYPES})
+    add_executable(is_container${TYPE} is_container.cc)
+    target_link_libraries(is_container${TYPE} crystal)
+    set_property( TARGET is_container${TYPE} PROPERTY COMPILE_DEFINITIONS
+                  LADA_TEST_INCTYPE=${TYPE})
+    ADD_TEST(is_container${TYPE} ${CMAKE_CURRENT_BINARY_DIR}/is_container${TYPE})
+  endforeach(TYPE)
+
+endif(NOT compile_debug_tests)
+
   if(loadnsave)
     set(TYPES  0 1)
     foreach(TYPE ${TYPES})
@@ -33,27 +58,3 @@ if(NOT compile_debug_tests)
       endforeach(TYPE)
     endforeach(STR)
   endif(loadnsave)
-
-  add_executable(utilities utilities.cc)
-  target_link_libraries(utilities crystal)
-  ADD_TEST(utilities ${CMAKE_CURRENT_BINARY_DIR}/utilities)
-
-endif(NOT compile_debug_tests)
-
-  set(TYPES 0 1 2 3 4 5)
-  foreach(TYPE ${TYPES})
-    add_executable(compare${TYPE} compare.cc)
-    target_link_libraries(compare${TYPE} crystal)
-    set_property( TARGET compare${TYPE} PROPERTY COMPILE_DEFINITIONS
-                  LADA_TEST_INCTYPE=${TYPE})
-    ADD_TEST(compare${TYPE} ${CMAKE_CURRENT_BINARY_DIR}/compare${TYPE})
-  endforeach(TYPE)
-
-  set(TYPES 0 1 2 3 4 5)
-  foreach(TYPE ${TYPES})
-    add_executable(is_container${TYPE} is_container.cc)
-    target_link_libraries(is_container${TYPE} crystal)
-    set_property( TARGET is_container${TYPE} PROPERTY COMPILE_DEFINITIONS
-                  LADA_TEST_INCTYPE=${TYPE})
-    ADD_TEST(is_container${TYPE} ${CMAKE_CURRENT_BINARY_DIR}/is_container${TYPE})
-  endforeach(TYPE)

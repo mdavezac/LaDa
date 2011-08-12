@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
   a.cell = math::rMatrix3d::Zero();
   xml = lns::xml::parse("<Cell r0=\"-0.5 0.5 0.5\" a1=\"1.5 -0.5 0.5\" a2=\"0.5 0.5 -0.5\"/>" );
   try { loader.nocatch( *xml, lns::ext(a) ); }
-  catch(lns::error::required_option_not_found &_e) { result = false; }
+  catch(error::required_option_not_found &_e) { result = false; }
 
   return 0;
 }

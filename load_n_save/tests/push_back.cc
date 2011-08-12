@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
   result = true;
   xml = lns::xml::parse(xmlstring);
   try {loader.nocatch( *xml, lns::ext(a) ); }
-  catch(lns::error::too_few_sections &_e) { result = false; }
+  catch(error::too_few_sections &_e) { result = false; }
   LADA_DOASSERT(result == false, "Did not fail as expected.")
 
   return 0;

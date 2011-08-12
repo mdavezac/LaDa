@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
   result = true;
   xml = lns::xml::parse("<A attr=\"goodbye\"/>");
   try { loader.nocatch(*xml, lns::ext(null)); }
-  catch(lns::error::empty_shared_ptr &_e) { result = false; }
+  catch(error::empty_shared_ptr &_e) { result = false; }
   LADA_DOASSERT(result == false, "Did not fail as expected.\n");
   return 0;
 }
