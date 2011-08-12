@@ -24,7 +24,7 @@ escan.fftmesh               = fftmesh.SmallCells()
 escan.cutoff                = 8.2
 escan.smooth                = 1.0
 escan.kinetic_scaling       = 1.0
-escan.nbstates              = 10
+escan.nbstates              = 6
 escan.itermax               = 20
 escan.nlines                = 200
 escan.tolerance             = 1e-6
@@ -66,13 +66,19 @@ pools = 5
     each calculation, they  are for the user to figure out.
 """
 
-scales = [5.45, 5.55, 5.65]
+scales = [5.55, 5.60]
 """ Substrate lattice parameter. """
 trials = range(3)
 """ Number of trials per configuration space. """
-ranges = [(26, 42)]
+ranges = [(20, 42)]
 """ Size of the period in the configuration space. """
 growth_direction = (0,0,1)
 """ Epitaxial direction of the superlattice. """
 dosym = 1
 """ How to handle translation/inversion symmetries by individual. """
+rootworkdir = "$SCRATCH"
+""" Root directory where calculations are actually performed. """
+sizedependent = 0.25 
+""" The number of states depends on the size of the bistring. """
+
+kwargs = {"degeneracy": 0.003}

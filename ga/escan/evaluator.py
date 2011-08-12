@@ -47,8 +47,8 @@ class Bandgap(object):
     self.sizedependent = sizedependent
     """ Floating points to compute a size-dependent number of states. 
  
-        If strictly postive, then number of states is the product of this
-        number and the number of bits in the bitstring. 
+        If strictly postive, then number of states is the sum of escan.nbstates
+        with  the product between this number and the size of the bitstring.
     """
 
 
@@ -109,7 +109,7 @@ class Bandgap(object):
     dictionary["outdir"]     = outdir
     if "overwrite" not in dictionary: dictionary["overwrite"]  = True
     if getattr(self, "sizedependent", -1) > 0.0:
-      dictionary["nbstates"] = float(len(indiv.genes)) * self.sizedependent
+      dictionary["nbstates"] = float(len(indiv.genes)) * self.sizedependent + self.escan.nbstates
       dictionary["nbstates"] = 2*(int(dictionary["nbstates"]+1.5)//2)
     # performs calculation.
     out = escan(structure, **dictionary)
@@ -206,6 +206,7 @@ class Dipole(Bandgap):
     """ Computes the oscillator strength. """
     out = super(Dipole, self).run(indiv, outdir, comm, **kwargs)
     degeneracy = getattr(self, 'degeneracy', 1e-3)
+    indiv.dipoles = out.dipole(degeneracy=degeneracy)
     indiv.oscillator_strength, indiv.osc_nbstates\
       = out.oscillator_strength(degeneracy=degeneracy)
     comm.barrier() 

@@ -26,7 +26,7 @@ def gajobs(path, inputpath = "input.py"):
                    "max_gen": input.max_generations, "pools": input.pools,
                    "crossover_rate": input.crossover_rate, "swap_rate": input.swap_rate, 
                    "growth_rate": input.growth_rate, "nmin": nmin, "nmax": nmax,
-                   "dosym": input.dosym, "rootworkdir": "$SCRATCH" }
+                   "dosym": input.dosym, "rootworkdir": input.rootworkdir }
         kwargs.update(getattr(input, 'kwargs', {}))
         evaluator = Evaluator( converter = converter, 
                                functional = escan, 
