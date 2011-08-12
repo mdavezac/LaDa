@@ -51,4 +51,8 @@ if(NOT compile_debug_tests)
   target_link_libraries(symtests mathlib)
   ADD_TEST( symtests ${CMAKE_CURRENT_BINARY_DIR}/symtests)
 
+  add_executable(smith smith.cc)
+  target_link_libraries(smith mathlib)
+  ADD_TEST( smith ${CMAKE_CURRENT_BINARY_DIR}/smith)
+
 endif(NOT compile_debug_tests)
