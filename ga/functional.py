@@ -269,8 +269,18 @@ class Darwin(object):
     return True
 
 
-  def __call__(self, comm = None, outdir = None, **kwargs):
-    """ Runs/Restart  GA """
+  def __call__(self, comm = None, outdir = None, inplace=False, **kwargs):
+    """ Runs/Restart  GA 
+
+        :Parameters:
+          comm : mpi.Communicator
+            MPI communicator when doing mpi. None otherwise.
+          outdir : str
+            Path to the output directory. Defaults to the current working
+            directory.
+          inplace : bool
+            Ignored. Where calculations are performed depends on rootworkdir. 
+    """
     import time
     from os import getcwd
     from os.path import join
