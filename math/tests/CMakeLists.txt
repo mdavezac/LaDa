@@ -56,3 +56,7 @@ if(NOT compile_debug_tests)
   ADD_TEST( smith ${CMAKE_CURRENT_BINARY_DIR}/smith)
 
 endif(NOT compile_debug_tests)
+
+  add_executable(gruber gruber.cc)
+  target_link_libraries(gruber mathlib)
+  ADD_TEST( gruber ${CMAKE_CURRENT_BINARY_DIR}/gruber)

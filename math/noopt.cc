@@ -8,9 +8,9 @@ namespace LaDa
   {
     namespace details
     {
-
-      bool no_opt_change_test(types::t_real const &_new, types::t_real const &_last, types::t_real const &_multiplier)
+      bool no_opt_change_test(types::t_real _new, types::t_real _last)
       {
+        types::t_real const multiplier = 16e0;
         types::t_real const m_new = _multiplier * _new;
         types::t_real const diff = _new - _last;
         types::t_real const m_new_plus_diff = m_new + diff;
