@@ -53,7 +53,7 @@ namespace LaDa
                              const math::rVector3d &_x, 
                              const t_Position& _a1, 
                              const t_Position& _a2 ) const
-          { return math::le( _a1.first.dot(_x), _a2.first.dot(_x) ); }
+          { return math::lt( _a1.first.dot(_x), _a2.first.dot(_x) ); }
         //! \brief Compares positions indexed as integers, given the coordinate system.
         //! \note Does not compare norms of \a _a1 - \a _origin and \a _a2 - \a _origin,
         //!       E.g. does not implement complete comparison rule. 

@@ -65,26 +65,26 @@ namespace LaDa
 
       bool step()
       {
-        if(ge(a, b) or (eq(a, b) and ge(std::abs(d), std::abs(e)))) n1_action();
-        if(ge(b, c) or (eq(b, c) and ge(std::abs(e), std::abs(f)))) { n2_action(); return true; }
-        if(def_gt_0()) n3_action()
+        if(gt(a, b) or (eq(a, b) and gt(std::abs(d), std::abs(e)))) n1_action();
+        if(gt(b, c) or (eq(b, c) and gt(std::abs(e), std::abs(f)))) { n2_action(); return true; }
+        if(def_gt_0()) n3_action();
         else
         { 
           n4_action();
           if(not is_changing()) return false;
         }
-        if(    ge( std::abs(d), b) 
+        if(    gt( std::abs(d), b) 
             or (eq(d, b)  and lt(e+e, f)) 
             or (eq(d, -b) and lt(f, 0e0)) ) { n5_action(); return true; } 
-        if(    ge( std::abs(e), a) 
+        if(    gt( std::abs(e), a) 
             or (eq(e, a)  and lt(d+d, f)) 
             or (eq(e, -a) and lt(f, 0e0)) ) { n6_action(); return true; } 
-        if(    ge( std::abs(f), a) 
+        if(    gt( std::abs(f), a) 
             or (eq(f, a)  and lt(d+d, e)) 
             or (eq(f, -a) and lt(e, 0e0)) ) { n7_action(); return true; } 
         if(    lt(d+e+f+a+b, 0e0)
             or (eq(f, a)  and lt(d+d, e)) 
-            or (eq(d+e+f+a+b, 0e0) and ge(a+a+e+f, 0e0))) { n8_action(); return true; }
+            or (eq(d+e+f+a+b, 0e0) and gt(a+a+e+e+f, 0e0))) { n8_action(); return true; }
         return false;
       }
 
@@ -105,10 +105,10 @@ namespace LaDa
                       types::t_real a10, types::t_real a11,  types::t_real a12, 
                       types::t_real a20, types::t_real a21,  types::t_real a22 )
       {
+        if(itermax != 0 and iterations >= itermax) BOOST_THROW_EXCEPTION(error::stop_iteration());
         rMatrix3d update;
         update << a00, a01, a02, a10, a11, a12, a20, a21, a22;
-        if(iterations != 0 and iterations >= itermax) BOOST_THROW_EXCEPTION(error::stop_iteration());
-        rinv *= _cell;
+        rinv *= update;
         ++iterations;
       }
 
@@ -129,9 +129,9 @@ namespace LaDa
       void n3_action()
       {
         types::t_int i(1), j(1), k(1);
-        if (lt(d, 0)) i = -1;
-        if (lt(e, 0)) j = -1;
-        if (lt(f, 0)) k = -1;
+        if (lt(d, 0e0)) i = -1;
+        if (lt(e, 0e0)) j = -1;
+        if (lt(f, 0e0)) k = -1;
         cb_update(i, 0, 0, 0, j, 0, 0, 0, k);
         d = std::abs(d);
         e = std::abs(e);
@@ -141,9 +141,9 @@ namespace LaDa
       {
         iVector3d vec(1,1,1);
         size_t z(-1);
-        if(ge(d, 0)) vec(0) = -1; else if( eq(d, 0) ) z = 0; 
-        if(ge(e, 0)) vec(1) = -1; else if( eq(e, 0) ) z = 1; 
-        if(ge(f, 0)) vec(2) = -1; else if( eq(f, 0) ) z = 2; 
+        if(gt(d, 0e0)) vec(0) = -1; else if( eq(d, 0e0) ) z = 0; 
+        if(gt(e, 0e0)) vec(1) = -1; else if( eq(e, 0e0) ) z = 1; 
+        if(gt(f, 0e0)) vec(2) = -1; else if( eq(f, 0e0) ) z = 2; 
         if( vec(0) * vec(1) * vec(2) < 0)
         {
           if(z < 0) BOOST_THROW_EXCEPTION(error::internal());
@@ -157,7 +157,7 @@ namespace LaDa
 
       void n5_action()
       {
-        if(d > 0): 
+        if(d > 0)
         {
           cb_update(1,0,0,0,1,-1,0,0,1);
           c += b - d;
@@ -174,7 +174,7 @@ namespace LaDa
       }
       void n6_action()
       {
-        if(e > 0): 
+        if(e > 0)
         {
           cb_update(1,0,-1,0,1,0,0,0,1);
           c += a - e;
@@ -191,7 +191,7 @@ namespace LaDa
       }
       void n7_action()
       {
-        if(f > 0): 
+        if(f > 0)
         {
           cb_update(1,-1,0,0,1,0,0,0,1);
           b += a - f;
@@ -209,15 +209,16 @@ namespace LaDa
       void n8_action()
       {
         cb_update(1,0,1,0,1,1,0,0,1);
-        c += a + b + e + f;
-        d += b + f;
-        e += a + f;
+        c += a + b + d + e + f;
+        d += b + b + f;
+        e += a + a + f;
       }
     };
 
     //! Computes the Niggli cell of a lattice.
     rMatrix3d gruber(rMatrix3d const &_in, size_t itermax)
     {
+      return Gruber(itermax)(_in); 
       try { return Gruber(itermax)(_in); }
       catch(error::stop_iteration &_e) { return rMatrix3d::Zero(); }
     }

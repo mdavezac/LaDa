@@ -68,7 +68,7 @@ namespace LaDa
               { return math::gt(x, _x); }
             //! Compares (Fuzzy math) the \e x axis coordinate with \a _x
             bool x_lesser( const types::t_real _x ) const 
-              { return math::le(x, _x); }
+              { return math::lt(x, _x); }
             private:
               //! Serializes a point.
               template<class Archive> void serialize(Archive & _ar, const unsigned int _version)

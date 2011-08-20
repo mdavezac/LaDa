@@ -32,11 +32,11 @@ namespace LaDa
       result(2) -= std::floor(5e-1+result(2)+types::roundoff);
       // numerical stability check.
       if( math::eq(result(0), 5e-1) ) result(0) = -5e-1;
-      else if( math::le(result(0), -5e-1)) result(0) += 1e0;
+      else if( math::lt(result(0), -5e-1)) result(0) += 1e0;
       if( math::eq(result(1), 5e-1) ) result(1) = -5e-1;
-      else if( math::le(result(1), -5e-1)) result(1) += 1e0;
+      else if( math::lt(result(1), -5e-1)) result(1) += 1e0;
       if( math::eq(result(2), 5e-1) ) result(2) = -5e-1;
-      else if( math::le(result(2), -5e-1)) result(2) += 1e0;
+      else if( math::lt(result(2), -5e-1)) result(2) += 1e0;
       return _cell * result;
     }
 

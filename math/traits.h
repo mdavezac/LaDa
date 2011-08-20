@@ -218,9 +218,9 @@ namespace LaDa
           //! true is Quantity::t_Quantity is a vector 
           const static bool is_vector = Dim<t_Quantity> :: is_vector;
  
-          //! Incorporates math::le
-          static bool le( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
-            { return math::le(_a,_b); }
+          //! Incorporates math::lt
+          static bool lt( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
+            { return math::lt(_a,_b); }
           //! Incorporates math::leq
           static bool leq( const t_ScalarQuantity _a, const t_ScalarQuantity _b ) 
             { return math::leq(_a,_b); }

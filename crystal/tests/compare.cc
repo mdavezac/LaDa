@@ -42,25 +42,25 @@ int main()
   LADA_INIT_TYPE0;
   LADA_INIT_TYPE1;
   std::cout << a << "\n";
-  LADA_ASSERT(not compare_sites(a)(b.type), "equivalent.\n");
-  LADA_ASSERT(not compare_sites(a)(b.pos), "equivalent.\n");
-  LADA_ASSERT(not compare_sites(a)(b), "equivalent.\n");
-  LADA_ASSERT(compare_sites(a)(a.pos), "not equivalent.\n");
-  LADA_ASSERT(compare_sites(a)(a.type), "not equivalent.\n");
-  LADA_ASSERT(compare_sites(a)(a), "not equivalent.\n");
+  LADA_DOASSERT(not compare_sites(a)(b.type), "equivalent.\n");
+  LADA_DOASSERT(not compare_sites(a)(b.pos), "equivalent.\n");
+  LADA_DOASSERT(not compare_sites(a)(b), "equivalent.\n");
+  LADA_DOASSERT(compare_sites(a)(a.pos), "not equivalent.\n");
+  LADA_DOASSERT(compare_sites(a)(a.type), "not equivalent.\n");
+  LADA_DOASSERT(compare_sites(a)(a), "not equivalent.\n");
   b.pos = a.pos;
-  LADA_ASSERT(not compare_sites(a)(b), "equivalent.\n");
-  LADA_ASSERT(compare_sites(a)(b.pos), "not equivalent.\n");
+  LADA_DOASSERT(not compare_sites(a)(b), "equivalent.\n");
+  LADA_DOASSERT(compare_sites(a)(b.pos), "not equivalent.\n");
   b.pos += rVector3d::UnitX();
   b.type = a.type;
-  LADA_ASSERT(not compare_sites(a)(b), "equivalent.\n");
-  LADA_ASSERT(compare_sites(a)(b.type), "not equivalent.\n");
+  LADA_DOASSERT(not compare_sites(a)(b), "equivalent.\n");
+  LADA_DOASSERT(compare_sites(a)(b.type), "not equivalent.\n");
   b.pos = a.pos;
-  LADA_ASSERT(compare_sites(a)(b), "equivalent.\n");
+  LADA_DOASSERT(compare_sites(a)(b), "equivalent.\n");
 # if LADA_TEST_INCTYPE >= 3
   b.type.pop_back();
-  LADA_ASSERT(not compare_sites(a)(b), "equivalent.\n");
-  LADA_ASSERT(not compare_sites(b)(a), "equivalent.\n");
+  LADA_DOASSERT(not compare_sites(a)(b), "equivalent.\n");
+  LADA_DOASSERT(not compare_sites(b)(a), "equivalent.\n");
 # endif 
 
   return 0;

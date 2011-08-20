@@ -112,7 +112,7 @@ namespace LaDa
         normedpairs.begin(), normedpairs.begin() + n.second, normedpairs.end(),
         boost::bind
         (
-          &math::le<types::t_real>, 
+          &math::lt<types::t_real>, 
           boost::bind( &t_normedpair::first, _1), 
           boost::bind( &t_normedpair::first, _2) 
         )

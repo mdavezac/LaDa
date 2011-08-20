@@ -86,12 +86,12 @@ namespace LaDa
     //! \details _tol should be positive. This function implements fuzzy math
     //!               across most numeric types.
     template< class T_ARG>
-    inline LADA_ARITH le(T_ARG const& _a, T_ARG const& _b)   { return not geq(_a, _b); }
+    inline LADA_ARITH lt(T_ARG const& _a, T_ARG const& _b)   { return not geq(_a, _b); }
     //! \brief True if \f$|\_a - \_b| > \_tol\f$ and \f$\_a < \_b|\f$.
     //! \details _tol should be positive. This function implements fuzzy math
     //!               across most numeric types.
     template< class T_ARG>
-    inline LADA_ARITH le(T_ARG const& _a, T_ARG const& _b, T_ARG const& _tol)   { return not geq(_a, _b, _tol); }
+    inline LADA_ARITH lt(T_ARG const& _a, T_ARG const& _b, T_ARG const& _tol)   { return not geq(_a, _b, _tol); }
 
     //! \brief True if \f$|\_a - \_b| > \_tol\f$ and \f$\_a > \_b|\f$.
     //! \details _tol should be positive. This function implements fuzzy math

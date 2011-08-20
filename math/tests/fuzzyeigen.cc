@@ -54,7 +54,7 @@ int main()
 # endif
 # if LADA_TEST_TYPE == 3
     matrix << 0, 0.5, 0.5, 0.5, 0, 0.5, 0.5, 0.5, 0;
-    LADA_ASSERT(are_periodic_images( rVector3d(0.5, 0.25, 0.5),
+    LADA_DOASSERT(are_periodic_images( rVector3d(0.5, 0.25, 0.5),
                                      rVector3d(0.5, 0.25, 0.5) + matrix * rVector3d(1, -10, 2),
                                      matrix.inverse() ), "NOT PERIODIC.\n" );
 # endif

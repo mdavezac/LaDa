@@ -208,7 +208,7 @@ int main(int argc, char *argv[])
   std::cout << "\n";
 
   // consistency checks.
-  LADA_NASSERT( LaDa::math::le(pairreg.second, 0e0), "Coefficient \"t\" cannot negative.\n" )
+  LADA_NASSERT( LaDa::math::lt(pairreg.second, 0e0), "Coefficient \"t\" cannot negative.\n" )
 
   // Loads lattice
   boost::shared_ptr< LaDa::Crystal::Lattice >

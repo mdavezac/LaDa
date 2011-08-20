@@ -24,7 +24,7 @@ namespace LaDa
         //! \brief returns true if the norm of \a _a - norm::compare::vec is
         //!        smaller than the norm pf \a _b - norm::compare::vec.
         bool operator()( math::rVector3d &_a, math::rVector3d &_b ) const
-          { return math::le( (_a - vec).squaredNorm(), (_b - vec).squaredNorm() ); }
+          { return math::lt( (_a - vec).squaredNorm(), (_b - vec).squaredNorm() ); }
         //! Returns true if \a _a = norm::compare::vec.
         bool operator()( math::rVector3d &_a ) const
           { return math::is_null( (_a - vec).squaredNorm() ); } 

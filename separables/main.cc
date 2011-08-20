@@ -236,7 +236,7 @@ int main(int argc, char *argv[])
   const bool J1( vm.count("J1") > 0 );
   const bool gusfile( vm.count("gus") > 0 );
   const bool rmpairs( vm.count("rm") > 0 );
-  LADA_NASSERT( LaDa::math::le(tcoef, 0e0), "Coefficient \"t\" cannot negative.\n" )
+  LADA_NASSERT( LaDa::math::lt(tcoef, 0e0), "Coefficient \"t\" cannot negative.\n" )
   const LaDa::types::t_unsigned bestof( vm["bestof"].as<LaDa::types::t_unsigned>() );
   LADA_DO_NASSERT( bestof == 0, "0 jobs to be performed..." )
   const LaDa::types::t_unsigned which( vm["which"].as<LaDa::types::t_unsigned>() );

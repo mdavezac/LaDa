@@ -43,10 +43,10 @@ int main()
   using namespace LaDa;
   using namespace LaDa::crystal;
   using namespace LaDa::math;
-  LADA_ASSERT(details::is_container<LADA_TYPE>::value == LADA_TEST, "Did not complete test.\n");
+  LADA_DOASSERT(details::is_container<LADA_TYPE>::value == LADA_TEST, "Did not complete test.\n");
   LADA_TYPE var;
   LADA_INIT_TYPE;
-  LADA_ASSERT(details::print_occupation(var) == LADA_STRING_TEST, "Did not print.\n");
+  LADA_DOASSERT(details::print_occupation(var) == LADA_STRING_TEST, "Did not print.\n");
 
   return 0;
 }
