@@ -9,13 +9,6 @@ class Extract(object):
   def __init__(self):
     """ Initializes the extraction class. """
     object.__init__(self)
-    
-  @property
-  def exports(self):
-    """ List of files to export. """
-    from os.path import join, exists
-    return [ join(self.directory, u) for u in [self.OUTCAR, self.FUNCCAR] \
-             if exists(join(self.directory, u)) ]
 
   @property 
   @make_cached
@@ -66,7 +59,6 @@ class Extract(object):
         Then checks that timing stuff is present at end of OUTCAR.
     """
     from os.path import exists, join
-    import re
 
     for path in [self.OUTCAR]:
       if not exists(join(self.directory, path)): return False
@@ -437,7 +429,6 @@ class Extract(object):
   @make_cached
   def valence(self):
     """ Greps total energy from OUTCAR."""
-    from numpy import array
     ionic = self.ionic_charges
     species = self.species
     atoms = [u.type for u in self.structure.atoms]
@@ -460,6 +451,14 @@ class Extract(object):
   def charge(self):
     """ Greps total charge in the system from OUTCAR."""
     return self.valence-self.nelect
+
+  @property
+  @make_cached
+  def nbands(self):
+    """ Number of bands in calculation. """
+    result = self._find_first_OUTCAR("""NBANDS\s*=\s*(\d+)""")
+    assert result != None, RuntimeError("Could not find NBANDS in OUTCAR.")
+    return int(result.group(1))
 
 
   def iterfiles(self, **kwargs):

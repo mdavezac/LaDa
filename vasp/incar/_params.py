@@ -1,5 +1,8 @@
 """ Standard parameter types for use as attributes in Incar """
 __docformat__ = "restructuredtext en"
+__all__ = [ "SpecialVaspParam", "NElect", "Algo", "Precision", "Ediff",\
+            "Encut", "FFTGrid", "Restart", "UParams", "IniWave",\
+            "Magmom", 'Npar', 'Boolean', 'Integer' ]
 from ...opt.decorators import broadcast_result
 class SpecialVaspParam(object): 
   """ Type checking class. """
@@ -137,6 +140,7 @@ class NElect(SpecialVaspParam):
     # constructs dictionnary of valence charge
     valence = {}
     for key, value in vasp.species.items():
+      print key, value
       valence[key] = value.valence
     # sums up charge.
     return fsum( valence[atom.type] for atom in vasp._system.atoms )
@@ -326,6 +330,8 @@ class Restart(SpecialVaspParam):
         copyfile(join(self.value.directory, files.EIGENVALUES), nothrow='same exists') 
         copyfile(join(self.value.directory, files.CONTCAR), files.POSCAR,
                  nothrow='same exists', symlink=getattr(args[0], 'symlink', False)) 
+        copyfile(join(self.value.directory, files.WAVEDER), files.WAVEDER,
+                 nothrow='same exists', symlink=getattr(args[0], 'symlink', False)) 
       comm.barrier()
     return  "ISTART = %s\nICHARG = %s" % (istart, icharg)
 
@@ -397,6 +403,64 @@ class IniWave(SpecialVaspParam):
     if self.value == "1" or self.value == "random": result = 1
     elif self.value == "0" or self.value == "jellium": result = 0
     else: raise ValueError("iniwave cannot be set to " + self.value + ".")
-    return "INIWAVE = %i\n"  % (value)
+    return "INIWAVE = {0}\n".format(result)
 
 
+class Boolean(SpecialVaspParam):
+  """ Any boolean vasp parameters. 
+  
+      Python is very liberal in how it converts any object to a boolean, eg an
+      empty dictionary is false while non-empty dictionary is true.
+      In order to keep this behavior, the value given to this parameter is kept
+      as is as long as possible, and converted only when writing the incar. The
+      only difference with the python behavior is that if using strings (which generally
+      evaluate to true or depending whether or not they are empty), these must
+      be "True" or "False", or variations thereoff. The empty string will
+      evaluate to the VASP default (eg equivalent to using None).
+  """
+  def __init__(self, key, value):
+    super(Boolean, self).__init__(value)
+    self.key = key
+    """ VASP key corresponding to this input. """
+  @property
+  def value(self):
+    return self._value
+  @value.setter
+  def value(self, value):
+    if isinstance(value, str):
+      assert    len(value) == 0 \
+             or value.lower == "true"[:len(value)] \
+             or value.lower() == "false"[:len(value)], \
+             TypeError("Cannot interpret string {0} as a boolean.".format(value))
+    self._value = value
+  @broadcast_result(key=True)
+  def incar_string(self, vasp, *args, **kwargs):
+    value = self._value
+    if isinstance(value, str):
+      if len(value) == 0: value == None 
+      elif value.lower() == "true"[:len(value)]: value = True
+      else: value = False
+    if self.value == None: return None
+    return "{0} = {1}".format(self.key.upper(), ".TRUE." if bool(self.value) else ".FALSE.")
+
+class Integer(SpecialVaspParam):
+  """ Any integer vasp parameters. 
+  
+      The value is always of type integer. Other types are converted to an
+      integer where possible, and will throw TypeError otherwise.
+  """
+  def __init__(self, key, value):
+    super(Integer, self).__init__(value)
+    self.key = key
+    """ VASP key corresponding to this input. """
+  @property 
+  def value(self): return self._value
+  @value.setter
+  def value(self, value):
+    if value is None: self._value = None; return
+    try: self._value = int(value)
+    except: raise TypeError("Could not evaluate {0} as an integer.".format(value))
+  @broadcast_result(key=True)
+  def incar_string(self, vasp, *args, **kwargs):
+    if self.value is None: return None
+    return "{0} = {1}".format(self.key.upper(), self.value)
