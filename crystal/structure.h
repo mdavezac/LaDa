@@ -34,6 +34,8 @@ namespace LaDa
 #       endif
         template<class T> friend
           std::ostream& operator<<(std::ostream &_stream, TemplateStructure<T> const &_str);
+        //! Copy Constructor
+        TemplateStructure(StructureData<T_TYPE> &_c) : impl_(new StructureData<T_TYPE>(_c)) {}
       public:
         //! \typedef Type of the species
         typedef typename traits::StructureData<T_TYPE>::t_Type t_Type;
@@ -66,7 +68,7 @@ namespace LaDa
 
         //! Constructor
         TemplateStructure() : impl_(new StructureData<T_TYPE>()) {};
-        //! Copy Constructor
+        //! Cloning Constructor
         TemplateStructure(const TemplateStructure &_c) : impl_(_c.impl_) {}
         //! Destructor.
         ~TemplateStructure () {};
@@ -96,9 +98,8 @@ namespace LaDa
         //! Returns reference to freeze.
         types::t_unsigned & freeze() { return impl_->freeze; }
 
-        //! Shallow copy, e.g. refers to same data.
-        TemplateStructure clone() const
-          { return TemplateStructure(new StructureData<T_TYPE>(*impl_)); }
+        //! Deep copy of a structure.
+        TemplateStructure copy() const { return TemplateStructure(*impl_); }
         //! Swaps content of two structures.
         void swap(TemplateStructure &_other) { impl_.swap(_other.impl_); }
 
@@ -196,6 +197,8 @@ namespace LaDa
         //! Returns  structure volume.
         types::t_real volume() const { return std::abs(impl_->cell.determinant()); }
 
+        //! Transforms a structure according to an affine transformation.
+        TemplateStructure transform(math::Affine3d const &_affine);
       private:
         //! Serializes a structure.
         template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
@@ -221,6 +224,19 @@ namespace LaDa
           return _ar & load_n_save::ext(impl_);
         }
 #   endif
+    //! Transforms a structure according to an affine transformation.
+    template<class T_TYPE> 
+      TemplateStructure<T_TYPE> TemplateStructure<T_TYPE>::transform(math::Affine3d const &_affine)
+      {
+        TemplateStructure<T_TYPE> result = copy();
+        result.cell() = _affine.linear() * cell();
+        iterator i_first = result.begin();
+        iterator const i_end = result.end();
+        for(; i_first != i_end;  ++i_first)
+          i_first->pos = _affine * i_first->pos;
+        return result;
+      }
+
   } // namespace crystal
 } // namespace LaDa
 

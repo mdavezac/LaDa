@@ -14,7 +14,7 @@ int main()
 
   rMatrix3d cell, mult;
   cell << 0, 0.5, 0.5, 0.5, 0, 0.5, 0.5, 0.5, 0;
-  types::t_int const lim(3);
+  types::t_int const lim(LADA_LIM);
   Eigen::Matrix<types::t_real, 6, 1> params;
   params << 0.5, 0.5, 0.5, 0.5, 0.5, 0.5;
 
