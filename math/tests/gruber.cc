@@ -14,9 +14,13 @@ int main()
 
   rMatrix3d cell, mult;
   cell << 0, 0.5, 0.5, 0.5, 0, 0.5, 0.5, 0.5, 0;
-// std::cout << gruber(cell) <<"\n";
-// LADA_DOASSERT(eq(cell, gruber(cell)), "Did not leave cell as is.\n");
-  types::t_int const lim(5);
+  types::t_int const lim(3);
+  Eigen::Matrix<types::t_real, 6, 1> params;
+  params << 0.5, 0.5, 0.5, 0.5, 0.5, 0.5;
+
+  LADA_DOASSERT(eq(cell, gruber(cell)), "Did not leave cell as is.\n");
+  LADA_DOASSERT(eq(gruber_parameters(cell), params), "Did not leave cell as is.\n");
+
   bool cont = true;
   for(types::t_int a00(-lim); a00 <= lim and cont; ++a00)
   for(types::t_int a01(-lim); a01 <= lim and cont; ++a01)
@@ -33,6 +37,7 @@ int main()
     rMatrix3d const gruberred = gruber(cell*mult);
     LADA_DOASSERT(is_integer(gruberred * cell.inverse()), "not a sublattice.\n")
     LADA_DOASSERT(is_integer(cell * gruberred.inverse()), "not a sublattice.\n")
+    LADA_DOASSERT(eq(gruber_parameters(cell), params), "not a sublattice.\n")
   }
   
   return 0;

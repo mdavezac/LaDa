@@ -17,12 +17,14 @@ namespace LaDa
     struct Gruber
     {
       rMatrix3d cell, rinv; 
+      types::t_real tol;
       size_t itermax;
       types::t_int nochange, iterations;
       types::t_real a, b, c, d, e, f;
       types::t_real last_a, last_b, last_c; 
-      Gruber   (types::t_int _itermax)
-             : cell(rMatrix3d::Zero()), itermax(_itermax), nochange(0)  {}
+      Gruber   (types::t_int _itermax, types::t_real _tol)
+             : cell(rMatrix3d::Zero()), tol(_tol), 
+               itermax(_itermax), nochange(0)  {}
 
       rMatrix3d operator()(rMatrix3d const &_in) 
       {
@@ -55,36 +57,44 @@ namespace LaDa
       void def_test(int &_zero, int &_positive)
       {
         _zero = 0; _positive = 0;
-        if(lt(0e0, d)) _positive += 1;
-        else if(eq(d, 0e0)) _zero += 1;
-        if(lt(0e0, e)) _positive += 1;
-        else if(eq(e, 0e0)) _zero += 1;
-        if(lt(0e0, f)) _positive += 1;
-        else if(eq(f, 0e0)) _zero += 1;
+        if(lt(0e0, d, tol)) _positive += 1;
+        else if(eq(d, 0e0, tol)) _zero += 1;
+        if(lt(0e0, e, tol)) _positive += 1;
+        else if(eq(e, 0e0, tol)) _zero += 1;
+        if(lt(0e0, f, tol)) _positive += 1;
+        else if(eq(f, 0e0, tol)) _zero += 1;
       }
 
       bool step()
       {
-        if(gt(a, b) or (eq(a, b) and gt(std::abs(d), std::abs(e)))) n1_action();
-        if(gt(b, c) or (eq(b, c) and gt(std::abs(e), std::abs(f)))) { n2_action(); return true; }
+        if(    gt(a, b, tol)
+            or (eq(a, b, tol) and gt(std::abs(d), std::abs(e), tol)))
+          n1_action();
+        if( gt(b, c, tol) 
+            or (eq(b, c, tol) and gt(std::abs(e), std::abs(f), tol)))
+          { n2_action(); return true; }
         if(def_gt_0()) n3_action();
         else
         { 
           n4_action();
           if(not is_changing()) return false;
         }
-        if(    gt( std::abs(d), b) 
-            or (eq(d, b)  and lt(e+e, f)) 
-            or (eq(d, -b) and lt(f, 0e0)) ) { n5_action(); return true; } 
-        if(    gt( std::abs(e), a) 
-            or (eq(e, a)  and lt(d+d, f)) 
-            or (eq(e, -a) and lt(f, 0e0)) ) { n6_action(); return true; } 
-        if(    gt( std::abs(f), a) 
-            or (eq(f, a)  and lt(d+d, e)) 
-            or (eq(f, -a) and lt(e, 0e0)) ) { n7_action(); return true; } 
-        if(    lt(d+e+f+a+b, 0e0)
-            or (eq(f, a)  and lt(d+d, e)) 
-            or (eq(d+e+f+a+b, 0e0) and gt(a+a+e+e+f, 0e0))) { n8_action(); return true; }
+        if(    gt(std::abs(d), b, tol) 
+            or (eq(d, b, tol)  and lt(e+e, f, tol)) 
+            or (eq(d, -b, tol) and lt(f, 0e0, tol)) )
+          { n5_action(); return true; } 
+        if(    gt(std::abs(e), a, tol) 
+            or (eq(e, a, tol)  and lt(d+d, f, tol)) 
+            or (eq(e, -a, tol) and lt(f, 0e0, tol)) )
+         { n6_action(); return true; } 
+        if(    gt(std::abs(f), a, tol) 
+            or (eq(f, a, tol)  and lt(d+d, e, tol)) 
+            or (eq(f, -a, tol) and lt(e, 0e0, tol)) )
+          { n7_action(); return true; } 
+        if(    lt(d+e+f+a+b, 0e0, tol)
+            or (eq(f, a, tol)  and lt(d+d, e, tol)) 
+            or (eq(d+e+f+a+b, 0e0, tol) and gt(a+a+e+e+f, 0e0, tol)))
+          { n8_action(); return true; }
         return false;
       }
 
@@ -105,7 +115,8 @@ namespace LaDa
                       types::t_real a10, types::t_real a11,  types::t_real a12, 
                       types::t_real a20, types::t_real a21,  types::t_real a22 )
       {
-        if(itermax != 0 and iterations >= itermax) BOOST_THROW_EXCEPTION(error::stop_iteration());
+        if(itermax != 0 and iterations >= itermax)
+          BOOST_THROW_EXCEPTION(error::stop_iteration());
         rMatrix3d update;
         update << a00, a01, a02, a10, a11, a12, a20, a21, a22;
         rinv *= update;
@@ -129,9 +140,9 @@ namespace LaDa
       void n3_action()
       {
         types::t_int i(1), j(1), k(1);
-        if (lt(d, 0e0)) i = -1;
-        if (lt(e, 0e0)) j = -1;
-        if (lt(f, 0e0)) k = -1;
+        if (lt(d, 0e0, tol)) i = -1;
+        if (lt(e, 0e0, tol)) j = -1;
+        if (lt(f, 0e0, tol)) k = -1;
         cb_update(i, 0, 0, 0, j, 0, 0, 0, k);
         d = std::abs(d);
         e = std::abs(e);
@@ -141,10 +152,10 @@ namespace LaDa
       {
         iVector3d vec(1,1,1);
         size_t z(-1);
-        if(gt(d, 0e0)) vec(0) = -1; else if( eq(d, 0e0) ) z = 0; 
-        if(gt(e, 0e0)) vec(1) = -1; else if( eq(e, 0e0) ) z = 1; 
-        if(gt(f, 0e0)) vec(2) = -1; else if( eq(f, 0e0) ) z = 2; 
-        if( vec(0) * vec(1) * vec(2) < 0)
+        if(gt(d, 0e0, tol)) vec(0) = -1; else if( eq(d, 0e0, tol) ) z = 0; 
+        if(gt(e, 0e0, tol)) vec(1) = -1; else if( eq(e, 0e0, tol) ) z = 1; 
+        if(gt(f, 0e0, tol)) vec(2) = -1; else if( eq(f, 0e0, tol) ) z = 2; 
+        if(vec(0) * vec(1) * vec(2) < 0)
         {
           if(z < 0) BOOST_THROW_EXCEPTION(error::internal());
           vec(z) = -1;
@@ -216,12 +227,22 @@ namespace LaDa
     };
 
     //! Computes the Niggli cell of a lattice.
-    rMatrix3d gruber(rMatrix3d const &_in, size_t itermax)
-    {
-      return Gruber(itermax)(_in); 
-      try { return Gruber(itermax)(_in); }
-      catch(error::stop_iteration &_e) { return rMatrix3d::Zero(); }
+    rMatrix3d gruber(rMatrix3d const &_in, size_t itermax, types::t_real _tol)
+    { 
+      if(is_null(_in, _tol)) BOOST_THROW_EXCEPTION(error::singular_matrix());
+      return Gruber(itermax, _tol)(_in); 
     }
+
+    Eigen::Matrix<types::t_real, 6, 1>
+      gruber_parameters(rMatrix3d const &_in, size_t itermax, types::t_real _tol)
+      {
+        if(is_null(_in, _tol)) BOOST_THROW_EXCEPTION(error::singular_matrix());
+        Gruber gruber(itermax, _tol);
+        gruber(_in);
+        Eigen::Matrix<types::t_real, 6, 1> result;
+        result << gruber.a, gruber.b, gruber.c, gruber.d, gruber.e, gruber.f;
+        return result;
+      }
 
   }
 }

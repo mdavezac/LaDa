@@ -27,7 +27,9 @@ namespace LaDa
     math::rVector3d into_voronoi( math::rVector3d const &_vec, 
                                   math::rMatrix3d const &_cell, 
                                   math::rMatrix3d const &_inv);
-    //! Refolds a periodic vector into the voronoi cell (eg first BZ or WignerSeitz).
+    //! \brief Refolds a periodic vector into the voronoi cell (eg first BZ or WignerSeitz).
+    //! \details May fail if the matrix is a weird parameterization of the
+    //!          lattice. It is best to use a grubber(...) cell . 
     inline math::rVector3d into_voronoi( math::rVector3d const &_vec, 
                                   math::rMatrix3d const &_cell )
       { return into_voronoi(_vec, _cell, _cell.inverse()); }
