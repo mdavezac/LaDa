@@ -91,10 +91,13 @@ def Extract(outcar=None, comm=None, **kwargs):
   # checks for GW calculations.
   outcar = getcwd() if outcar == None else RelativeDirectory(outcar).path
   if exists(join(outcar, 'GW')):
+    from os.path import basename
     from glob import iglob
     from re import match
-    maxi = max(int(u) for u in iglob("*") if match(r"\d+", u) and isdir(u))
-    outcar = join(outcar, join("GW", str(maxi)))
+    outcar = join(outcar, 'GW')
+    gwiters = [ int(basename(u)) for u in iglob(join(outcar, "[0-9]*"))\
+                if match(r"\d+", basename(u)) and isdir(u) ]
+    if len(gwiters) > 0: outcar = join(outcar, str(max(gwiters)))
 
   result = ExtractCommon(outcar=outcar, comm=comm, **kwargs)
   if result.is_dft: return ExtractDFT(outcar=outcar, comm=comm, **kwargs) 

@@ -19,8 +19,8 @@ functional.addgrid      = True
 functional.set_smearing = "metal", 0.01
 functional.relaxation   = "static"
 functional.nbands       = 20
-functional.vasp_library = "libvasp-4.6.so"
+functional.vasp_library = "libvasp-5.2.11.so"
 
 functional.add_specie = "Si", "pseudos/Si"
 
-result = functional(lattice.to_structure(), outdir="results", comm=world)
+# result = functional(lattice.to_structure(), outdir="results", comm=world)

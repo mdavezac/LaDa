@@ -47,7 +47,7 @@ def is_vasp_5(vasp_library=None):
   except: return True
 def is_vasp_4(vasp_library=None):
   """ True if using vasp 4. """
-  try: return version(vasp_library)[0] == 5
+  try: return version(vasp_library)[0] == 4
   except: return False
 
 def call_vasp(vasp_library=None, comm=None, minversion=0): 

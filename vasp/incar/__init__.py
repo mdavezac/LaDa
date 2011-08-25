@@ -2,10 +2,10 @@
 __docformat__ = "restructuredtext en"
 __all__ = [ "SpecialVaspParam", "NElect", "Algo", "Precision", "Ediff",\
             "Encut", "FFTGrid", "Restart", "UParams", "IniWave",\
-            "Incar", "Magmom", 'Npar', 'Boolean', 'Integer' ]
+            "Incar", "Magmom", 'Npar', 'Boolean', 'Integer', 'Choices', 'PrecFock' ]
 from _params import SpecialVaspParam, NElect, Algo, Precision, Ediff,\
                     Encut, FFTGrid, Restart, UParams, IniWave, Magmom,\
-                    Npar, Boolean, Integer
+                    Npar, Boolean, Integer, PrecFock
 from ...opt.decorators import add_setter
 
 
@@ -142,8 +142,8 @@ class Incar(object):
     self.magmom      = Magmom()
     self.npar        = Npar(None)
     self.lwave       = Boolean("lwave", None)
-    self.precfock    = Boolean("precfock", None)
-    self.LRPA        = Boolean("lrpa", None)
+    self.precfock    = PrecFock(None)
+    self.lrpa        = Boolean("lrpa", None)
     self.loptics     = Boolean("loptics", None)
     self.lpead       = Boolean("lpead", None)
     self.nelm        = Integer("nelm", None)

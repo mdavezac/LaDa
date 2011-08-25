@@ -29,8 +29,9 @@ class Functional(Launch):
     """ Initializes vasp class. """
     super(Functional, self).__init__(self, **kwargs)
 
-    self.restart_from_contcar = True
+    self.restart_from_contcar = kwargs.pop('restart_from_contcar', True)
     """ If True and self.CONTCAR exists in directory, will restart from it. """
+
     # copies values from other functional.
     if vasp != None: 
       self.params.update(vasp.params)
@@ -40,6 +41,10 @@ class Functional(Launch):
         elif key == 'params': continue
         elif key == 'special': continue
         elif hasattr(self, key): setattr(self, key, value)
+
+    # sets all known keywords as attributes.
+    for key, value in kwargs.iteritems():
+      if hasattr(self, key): setattr(self, key, value)
 
   def __call__( self, structure, outdir = None, comm = None, repat = None,\
                 overwrite=False, keep_tempdir=False, minversion=0, **kwargs ):
