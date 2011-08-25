@@ -159,9 +159,8 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     """ List of bitstring + fitness for each offspring at each generation. """
     from copy import deepcopy
     
-
     def loop(_age):
-      from os.path import join, exists
+      from os.path import join
       from numpy import array
       from pickle import load
       import quantities 
@@ -172,12 +171,12 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
       d.update(quantities.__dict__)
 
       path = join(join(self.directory, _age), self.OFFCAR)
-      if exists(path):  # loads from OFFCAR
+      try: 
         with open(path, "r") as file: 
           for pop in load(file):
             result.append([])
             for indiv in pop: yield indiv
-      else:
+      except:
         individual = self.functional.Individual()
         with open(join(join(self.directory, _age), self.OUTCAR), "r") as file:
           text = "".join(file.readlines())
@@ -275,7 +274,6 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     from os.path import join, exists, isdir
     files = [self.OUTCAR, self.FUNCCAR, self.OFFCAR]
     if kwargs.get("errors", False): files.append(self.ERRCAR)
-    if kwargs.get("offcar", False): files.append(self.OFFCAR)
 
     for age in self.ages:
       directory = join(self.directory, age)
