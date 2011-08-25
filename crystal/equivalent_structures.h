@@ -19,15 +19,15 @@ namespace LaDa
 {
   namespace crystal 
   {
-    //! \brief Returns true if two lattices are equivalent. 
-    //! \details Rotations are taken into account. Hence two lattices need not
-    //!          be on the same cartesian basis. A supercell is *not*
-    //!          equivalent to its lattice, unless it is a trivial supercell.
+    //! \brief Returns true if two structures are equivalent. 
+    //! \details Two structures are equivalent in a crystallographic sense,
+    //!          e.g. without reference to cartesian coordinates or possible
+    //!          motif rotations which leave the lattice itself invariant. A
+    //!          supercell is *not* equivalent to its lattice, unless it is a
+    //!          trivial supercell.
     //! \param[in] _a: The first structure.
     //! \param[in] _b: The second structure.
     //! \param[in] with_scale: whether to take the scale into account. Defaults to true.
-    //! \param[in] with_invariants: whether to take lattice point-group
-    //!            operations into account. These may end-up rotatiting the motif.
     //! \param[in] tolerance: Tolerance when comparing distances. Defaults to
     //!            types::t_real. It is in the same units as the structures scales, if
     //!            that is taken into account, otherwise, it is in the same
@@ -36,7 +36,6 @@ namespace LaDa
       bool equivalent( TemplateStructure<T_TYPE> const &_a,
                        TemplateStructure<T_TYPE> const &_b,
                        bool with_scale = true,
-                       bool with_invariants = true,
                        types::t_real _tol = types::tolerance )
       {
         // different number of atoms.
@@ -58,16 +57,34 @@ namespace LaDa
         math::rMatrix3d const rot = cellA * cellB.inverse();
         if(not math::is_identity(rot * (~rot), 2*_tol)) return false;
         if(math::neq(rot.determinant(), 1e0, 3*_tol))  return false;
-
+        
         // Now checks atomic sites. 
         // first computes point-group symmetries.
-        boost::shared_ptr<t_SpaceGroup> pg;
-        if(with_invariants) pg  = cell_invariants(cellA);
-        else
-        { 
-          pg.reset(new t_SpaceGroup(1));
-          pg->front() = math::AngleAxis(0, math::rVector3d::UnitX());
-        }
+        boost::shared_ptr<t_SpaceGroup> pg = cell_invariants(cellA);
+        
+        // Computes possible translations, looking at only one type of site-occupation.
+        CompareSites<T_TYPE> const siteocc(_a[0], _tol);
+        math::rVector3d transA(0,0,0);
+        size_t nA(0);
+        foreach(typename TemplateStructure<T_TYPE>::const_reference atomA, _a)
+          if(siteocc(atomA.type))
+          {
+            transA += into_voronoi(atomA.pos * scaleA, cellA, invA);
+            ++nA;
+          }
+        transA /= types::t_real(nA);
+        math::rVector3d transB(0,0,0);
+        size_t nB = 0;
+        foreach(typename TemplateStructure<T_TYPE>::const_reference atomB, _b)
+          if(siteocc(atomB.type))
+          {
+            transB += into_voronoi(atomB.pos * scaleB, cellB, invB);
+            ++nB;
+            if(nB > nA) return false;
+          }
+        transB /= types::t_real(nB);
+
+        // loop over possible motif rotations.
         foreach(math::Affine3d const &invariant, *pg)
         {
           // creates a vector referencing B atomic sites.
@@ -75,21 +92,14 @@ namespace LaDa
           typedef std::list<size_t> t_List;
           t_List atomsA;
           for(size_t i(0); i < _a.size(); ++i) atomsA.push_back(i);
-          math::rVector3d transA(0,0,0);
-          foreach(typename TemplateStructure<T_TYPE>::const_reference atomA, _a)
-            transA += into_voronoi(atomA.pos * scaleA, cellA, invA);
-          transA /= types::t_real(_a.size());
-          math::rVector3d transB(0,0,0);
-          foreach(typename TemplateStructure<T_TYPE>::const_reference atomB, _b)
-            transB += into_voronoi(atomB.pos * scaleB, cellB, invB);
-          transB /= types::t_real(_a.size());
+
+          math::rMatrix3d const rotation = invariant.linear() * rot;
           
-          math::rMatrix3d const rotation = rot;
           typename TemplateStructure<T_TYPE>::const_iterator i_b = _b.begin();
           typename TemplateStructure<T_TYPE>::const_iterator const i_bend = _b.end();
           for(; i_b != i_bend; ++i_b)
           {
-            math::rVector3d const pos = rotation * (into_voronoi(i_b->pos*scaleB, cellB, invB)-transB);
+            math::rVector3d const pos = rotation * (into_voronoi(i_b->pos*scaleB, cellB, invB) - transB);
             typename t_List :: iterator i_first =  atomsA.begin();
             typename t_List :: iterator i_end = atomsA.end();
             for(; i_first != i_end; ++i_first)

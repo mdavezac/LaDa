@@ -67,12 +67,17 @@ if(NOT compile_debug_tests)
 
 endif(NOT compile_debug_tests)
 
+
   add_executable(equivalent_structures equivalent_structures.cc)
   target_link_libraries(equivalent_structures crystal)
   ADD_TEST(equivalent_structures ${CMAKE_CURRENT_BINARY_DIR}/equivalent_structures)
 
-
 # add_executable(primitive primitive.cc)
 # target_link_libraries(primitive crystal)
+# if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+#   set_property(TARGET primitive PROPERTY COMPILE_DEFINITIONS LADA_LIM=6)
+# else(${CMAKE_BUILD_TYPE} STREQUAL "Debug") 
+#   set_property(TARGET primitive PROPERTY COMPILE_DEFINITIONS LADA_LIM=5)
+# endif(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 # ADD_TEST(primitive ${CMAKE_CURRENT_BINARY_DIR}/primitive)
 

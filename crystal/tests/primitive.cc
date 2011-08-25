@@ -5,6 +5,7 @@
 
 #include "../supercell.h"
 #include "../primitive.h"
+#include "../equivalent_structures.h"
 
 using namespace std;
 int main()
@@ -17,9 +18,9 @@ int main()
                   (0.5,0,0.5)
                   (0.5,0.5,0);
   lattice.add_atom(0,0,0, "Si")
-         .add_atom(0.5,0.5,0.5, "Si", "Ge");
+         .add_atom(0.25,0.25,0.25, "Si", "Ge");
   rMatrix3d cell;
-  size_t nmax= 8;
+  size_t nmax= LADA_LIM;
   bool cont = true;
   for(size_t a(1); a <= nmax and cont; ++a)
   {
@@ -34,7 +35,7 @@ int main()
       // Iterates over values of a such that a * b * c == nmax
       size_t const c( Ndiv_a/b);
       cell(2,2) = c;
-      if( a * b *c != nmax ) BOOST_THROW_EXCEPTION(LaDa::error::internal())
+      if( a * b *c != nmax ) BOOST_THROW_EXCEPTION(LaDa::error::internal());
       for(size_t d(0); d < b and cont; ++d) 
       {
         cell(1,0) = d;
@@ -44,12 +45,22 @@ int main()
           for(size_t f(0); f < c and cont; ++f) 
           {
             cell(2,1) = f;
-            structure = supercell(lattice, cell);
-            std::cout << structure << "\n";
-            LADA_DOASSERT(is_integer(structure.cell() * lattice.cell().inverse()), "Not a sublattice.");
-            LADA_DOASSERT(is_integer(lattice.cell() * structure.cell().inverse()), "Not a sublattice.");
-            LADA_DOASSERT(eq(lattice.cell().determinant(), structure.cell().derterminant()), "Not primitive.");
-            cont = false;
+            TemplateStructure< std::vector<std::string> > structure = supercell(lattice, cell);
+            structure = primitive(structure);
+            if( not is_integer(structure.cell() * lattice.cell().inverse()) )
+            {
+              std::cout << cell << "\n";
+              std::cout << structure << "\n";
+            }
+            LADA_DOASSERT(is_integer(structure.cell() * lattice.cell().inverse()), "Not a sublattice.\n");
+            LADA_DOASSERT(is_integer(lattice.cell() * structure.cell().inverse()), "Not a sublattice.\n");
+            LADA_DOASSERT(eq(lattice.cell().determinant(), structure.cell().determinant()), "Not primitive.\n");
+            if(not equivalent(lattice, structure, false, true, 1e-5))
+            {
+              std::cout << cell << "\n";
+              std::cout << structure << "\n";
+            }
+            LADA_DOASSERT(equivalent(lattice, structure, false, true, 1e-5), "Not equivalent.\n");
           } // f
         } // e
       } // d
