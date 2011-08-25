@@ -61,11 +61,16 @@ if(NOT compile_debug_tests)
   target_link_libraries(supercell crystal)
   ADD_TEST(supercell ${CMAKE_CURRENT_BINARY_DIR}/supercell)
 
+  add_executable(cellinvariants cellinvariants.cc)
+  target_link_libraries(cellinvariants crystal)
+  ADD_TEST(cellinvariants ${CMAKE_CURRENT_BINARY_DIR}/cellinvariants)
+
 endif(NOT compile_debug_tests)
 
   add_executable(equivalent_structures equivalent_structures.cc)
   target_link_libraries(equivalent_structures crystal)
   ADD_TEST(equivalent_structures ${CMAKE_CURRENT_BINARY_DIR}/equivalent_structures)
+
 
 # add_executable(primitive primitive.cc)
 # target_link_libraries(primitive crystal)
