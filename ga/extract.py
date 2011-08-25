@@ -284,7 +284,8 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
       for file in files:
         path = join(directory, file)
         if exists(path): yield path
-    if exists(self.functional.history.filepath): 
-      yield self.functional.history.filepath
+    if self.functional.history != None: 
+      if exists(self.functional.history.filepath): 
+        yield self.functional.history.filepath
     
 
