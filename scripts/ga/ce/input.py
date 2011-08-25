@@ -10,7 +10,7 @@ directory = "../start"
 clusters = {"J0":True, "J1":True, "B2":12, "B3":4, "B4":2, "B5":2}
 
 # GA parameters.
-population_size = 20
+population_size = 8
 """ Size of the GA population """
 max_generations = -1
 """ Maximum number of generations """

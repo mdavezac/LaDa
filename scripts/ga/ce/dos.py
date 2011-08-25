@@ -26,7 +26,7 @@ def gajobs(path, inputpath = "input.py", collector=None):
   jobdict = JobDict()
   for energy, energies in zip(input.energies, dos_values):
     for trial in input.trials:
-      kwargs = { "popsizse": input.population_size, "rate": input.offspring_rate,
+      kwargs = { "popsize": input.population_size, "rate": input.offspring_rate,
                  "max_gen": input.max_generations, "crossover_rate": input.crossover_rate, 
                  "history": input.history, "histlimit": input.histlimit,
                  "comparison": input.comparison, "rootworkdir": "$SCRATCH",

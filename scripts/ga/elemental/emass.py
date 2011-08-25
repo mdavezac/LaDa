@@ -34,7 +34,7 @@ def gajobs(path, inputpath = "input.py"):
     
             converter = Converter(growth=input.growth_direction, lattice=escan.vff.lattice)
             
-            kwargs = { "popsizse": input.population_size, "rate": input.offspring_rate,
+            kwargs = { "popsize": input.population_size, "rate": input.offspring_rate,
                        "max_gen": input.max_generations, "pools": input.pools,
                        "crossover_rate": input.crossover_rate, "swap_rate": input.swap_rate, 
                        "growth_rate": input.growth_rate, "nmin": nmin, "nmax": nmax,
