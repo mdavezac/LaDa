@@ -198,7 +198,7 @@ namespace LaDa
         types::t_real volume() const { return std::abs(impl_->cell.determinant()); }
 
         //! Transforms a structure according to an affine transformation.
-        TemplateStructure transform(math::Affine3d const &_affine);
+        TemplateStructure transform(math::Affine3d const &_affine) const;
       private:
         //! Serializes a structure.
         template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
@@ -226,7 +226,7 @@ namespace LaDa
 #   endif
     //! Transforms a structure according to an affine transformation.
     template<class T_TYPE> 
-      TemplateStructure<T_TYPE> TemplateStructure<T_TYPE>::transform(math::Affine3d const &_affine)
+      TemplateStructure<T_TYPE> TemplateStructure<T_TYPE>::transform(math::Affine3d const &_affine) const
       {
         TemplateStructure<T_TYPE> result = copy();
         result.cell() = _affine.linear() * cell();

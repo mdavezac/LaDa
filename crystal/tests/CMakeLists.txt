@@ -65,12 +65,12 @@ if(NOT compile_debug_tests)
   target_link_libraries(cellinvariants crystal)
   ADD_TEST(cellinvariants ${CMAKE_CURRENT_BINARY_DIR}/cellinvariants)
 
-endif(NOT compile_debug_tests)
-
-
   add_executable(equivalent_structures equivalent_structures.cc)
   target_link_libraries(equivalent_structures crystal)
   ADD_TEST(equivalent_structures ${CMAKE_CURRENT_BINARY_DIR}/equivalent_structures)
+
+endif(NOT compile_debug_tests)
+
 
 # add_executable(primitive primitive.cc)
 # target_link_libraries(primitive crystal)

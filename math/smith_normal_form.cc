@@ -53,8 +53,10 @@ namespace LaDa
       );
       for( size_t i(0); i < 3; ++i )
       {
-        if( neq(pos(i), types::t_real(int_pos(i))) )
-          BOOST_THROW_EXCEPTION(error::off_lattice_position());
+#       ifdef LADA_DEBUG
+          if( neq(pos(i), types::t_real(int_pos(i))) )
+            BOOST_THROW_EXCEPTION(error::off_lattice_position());
+#       endif
         result(i) = int_pos(i) % bt::get<1>(_transformation)(i);
         if( result(i) < 0 ) result(i) += bt::get<1>(_transformation)(i);
       }

@@ -3,6 +3,8 @@
 #include "LaDaConfig.h"
 
 #include <list>
+#include <vector>
+#include <algorithm>
 
 #include <boost/foreach.hpp>
 
@@ -19,6 +21,27 @@ namespace LaDa
 {
   namespace crystal 
   {
+    namespace details
+    {
+      template<class T_TYPE> 
+        int min_test(TemplateStructure<T_TYPE> const &_a)
+        {
+          std::vector<size_t> mini(_a.size(), 1);
+          std::vector<size_t>::iterator i_fmin = mini.begin();
+          typename TemplateStructure<T_TYPE>::const_iterator i_first = _a.begin();
+          typename TemplateStructure<T_TYPE>::const_iterator const i_end = _a.end();
+          for(; i_first != i_end; ++i_first, ++i_fmin)
+          {
+            if(*i_fmin > 1) continue;
+            CompareSites<T_TYPE> cmp(*i_first);
+            typename TemplateStructure<T_TYPE>::const_iterator i_second = i_first + 1;
+            std::vector<size_t>::iterator i_smin = i_fmin + 1;
+            for(; i_second != i_end; ++i_second, ++i_smin)
+              if(cmp(i_second->type)) ++(*i_fmin), ++(*i_smin);
+          }
+          return std::min_element(mini.begin(), mini.end()) - mini.begin();
+        }
+    }
     //! \brief Returns true if two structures are equivalent. 
     //! \details Two structures are equivalent in a crystallographic sense,
     //!          e.g. without reference to cartesian coordinates or possible
@@ -61,13 +84,17 @@ namespace LaDa
         // Now checks atomic sites. 
         // first computes point-group symmetries.
         boost::shared_ptr<t_SpaceGroup> pg = cell_invariants(cellA);
+        // then find the occupation type with the smallest number of occurences.
+        typename TemplateStructure<T_TYPE>::const_reference minatom = _a[details::min_test(_a)];
+        CompareSites<T_TYPE> mincheck(minatom, _tol);
         
         // Computes possible translations, looking at only one type of site-occupation.
-        CompareSites<T_TYPE> const siteocc(_a[0], _tol);
+        // The center of gravity will tell us about a possible translation of
+        // the cartesian basis.
         math::rVector3d transA(0,0,0);
         size_t nA(0);
         foreach(typename TemplateStructure<T_TYPE>::const_reference atomA, _a)
-          if(siteocc(atomA.type))
+          if(mincheck(atomA.type))
           {
             transA += into_voronoi(atomA.pos * scaleA, cellA, invA);
             ++nA;
@@ -76,7 +103,7 @@ namespace LaDa
         math::rVector3d transB(0,0,0);
         size_t nB = 0;
         foreach(typename TemplateStructure<T_TYPE>::const_reference atomB, _b)
-          if(siteocc(atomB.type))
+          if(mincheck(atomB.type))
           {
             transB += into_voronoi(atomB.pos * scaleB, cellB, invB);
             ++nB;

@@ -32,9 +32,9 @@ namespace LaDa
       {
         template <int> struct dummy { dummy(int) {} };
         //! Constructor.
-        CompareSites(Atom<T_TYPE> const &_site, types::t_real _tolerance = -1e0 )
+        CompareSites(Atom<T_TYPE> const &_site, types::t_real _tolerance = types::tolerance )
         {
-          tolerance = _tolerance < 0e0 ? types::tolerance: _tolerance;
+          tolerance = _tolerance;
           pos = _site.pos;
           type = _site.type;
         }
@@ -155,7 +155,7 @@ namespace LaDa
 
     //! Returns a functor to compare sites according to positions and/or occupations.
     template<class T_TYPE>
-      CompareSites<T_TYPE> compare_sites(Atom<T_TYPE> const &_origin, types::t_real _tolerance = -1e0)
+      CompareSites<T_TYPE> compare_sites(Atom<T_TYPE> const &_origin, types::t_real _tolerance = types::tolerance)
         { return CompareSites<T_TYPE>(_origin, _tolerance); }
 
 

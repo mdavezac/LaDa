@@ -37,9 +37,11 @@ int main()
               "Are not perioric images.\n")
 
   bool result = false;
-  try { periodic_images(transform, rVector3d(1, -0.575, 0.578), rVector3d(2, 0.575, 0.578)); }
-  catch( error::off_lattice_position &_e ) { result = true; }
-  LADA_DOASSERT(result, "Did not catch exception.");
+# ifdef LADA_DEBUG
+    try { periodic_images(transform, rVector3d(1, -0.575, 0.578), rVector3d(2, 0.575, 0.578)); }
+    catch( error::off_lattice_position &_e ) { result = true; }
+    LADA_DOASSERT(result, "Did not catch exception.");
+# endif
   result = true;
   try { periodic_images(transform, rVector3d(1, -0.575, 0.578), rVector3d(2, 0.575, 0.578)); }
   catch( error::unideal_lattice &_e ) { result = true; }

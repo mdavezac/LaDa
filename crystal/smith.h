@@ -44,7 +44,7 @@ namespace LaDa
       {
         // finds map for atomic positions.
         Crystal::t_SmithTransform const
-          transform( get_smith_transform(_lattice.cell(), _supercell.cell()) );
+          transform(smith_transform(_lattice.cell(), _supercell.cell()));
      
         if(_supercell.size() % _lattice.size() != 0)
           BOOST_THROW_EXCEPTION(error::incommensurate_number_of_sites());
