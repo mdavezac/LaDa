@@ -3,7 +3,7 @@ def gajobs(path, inputpath = "input.py", collector=None):
   from weakref import proxy
 
   import IPython.ipapi
-  from numpy import array, arange
+  from numpy import array, arange, any, isnan
   from quantities import eV
 
   from lada.ga.functional import maximize, minimize
@@ -19,8 +19,10 @@ def gajobs(path, inputpath = "input.py", collector=None):
   if collector == None: collector = MassExtract(input.directory)
   extractor  = [extract for extract in collector.values() if extract.success]
   structures = [extract.input_structure for extract in extractor]
+  for e in extractor: assert not any(isnan(e.eigenvalues))
   dos_values = array([extract.dos(input.energies, input.sigma) for extract in extractor]).T
-  evaluator  = Evaluator(input.lattice, structures, dos_values[0], **input.clusters)
+  assert not any(isnan(dos_values))
+  evaluator  = Evaluator(input.lattice, structures, energies=dos_values[0], **input.clusters)
 
 
   jobdict = JobDict()

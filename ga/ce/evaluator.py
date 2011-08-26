@@ -25,7 +25,7 @@ class Evaluator(object):
     """
     from re import compile, match
     from random import shuffle
-    from numpy import array
+    from numpy import array, any, isnan
     from ...ce import cluster_factory
 
     super(Evaluator, self).__init__()
@@ -54,6 +54,7 @@ class Evaluator(object):
     # creates or assigns energies as needed.
     self.energies = energies if energies != None else array([s.energy for e in self.structures])
     """ List of energies for each structure. """
+    assert not any(isnan(self.energies))
 
     # creates sets.
     assert lmo > 0e0 and lmo < 1e0, ValueError("Leave-many-out ratio should be between 0 and 1.")
@@ -198,7 +199,7 @@ class Evaluator(object):
 
 class LocalSearchEvaluator(Evaluator):
   """ Performs simple minded local search. """
-  def __init__( self, lattice, structures, taboos=None, energies=None, lmo=0.33333, nsets=5,
+  def __init__( self, lattice, structures, energies=None, taboos=None, lmo=0.33333, nsets=5,
                 maxiter=-1, maxeval=-1, exclude=None, **keywords):
     """ Initializes the local search functional.
     
