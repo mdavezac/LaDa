@@ -36,9 +36,22 @@ class History(object):
      return join(self.directory, self.filename)
 
    def remove_stale(self, comm=None):
-     """ Remove possible stale lock. """
+     """ Remove possibly stale lock and/or corrupt history file. """
+     from os import remove
+     from pickle import load
      from ..opt import LockFile
-     LockFile(self.filepath).remove_stale(comm)
+     from ..mpi import Communicator
+     lock = LockFile(self.filepath)
+     lock.remove_stale(comm)
+     comm = Communicator(comm)
+     if comm.is_root:
+       lock.lock()
+       try: 
+         with open(self.filepath, "r") as file: result = load(file)
+       except:
+         try: remove(self.filepath)
+         except: pass
+     comm.barrier()
 
    def _update(self, hist, other):
      """ Returns other with updated attributes from history. """
