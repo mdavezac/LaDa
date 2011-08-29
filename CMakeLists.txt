@@ -233,6 +233,7 @@ endif(minimizer_libs)
 
 if(python_bindings)
   if(PYTHONLIBS_FOUND)
+    add_subdirectory(hull)
     add_subdirectory(python)
     add_subdirectory(periodic_table)
     set(LADA_DO_PYTHON TRUE)

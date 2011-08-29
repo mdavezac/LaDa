@@ -27,6 +27,12 @@ class Manager(object):
     """ Database within pymongo. """
     self.outcars = GridFS(self.database, self.outcars_prefix)
     """ GridFS object for OUTCARs. """
+    self.comments = self.database["{0}.comments".format(self.outcars_prefix)]
+    """ Collection of comments attached when adding OUTCAR's to a file. """
+    self.files = self.database["{0}.files".format(self.outcars_prefix)]
+    """ OUTCAR files collection. """
+    self.extracted = self.database["extracted"]
+    """ Collection with pre-extracted values from the outcar. """
 
   @property
   def host(self):
@@ -44,17 +50,8 @@ class Manager(object):
   def outcars_prefix(self):
     """ Name of the OUTCAR GridFS collection. """
     return self._outcars_prefix
-  @property
-  def funccars_prefix(self):
-    """ Name of the OUTCAR GridFS collection. """
-    return self._outcars_prefix
 
-  @property 
-  def files(self):
-    """ Return the OUTCAR files collection. """
-    return getattr(self.database, '{0}.files'.format(self.outcars_prefix))
-
-  def push(self, filename, outcar, **kwargs):
+  def push(self, filename, outcar, comment, **kwargs):
     """ Pushes OUTCAR to database. 
 
         :raise ValueError:  if the corresponding object is not found.
@@ -64,9 +61,15 @@ class Manager(object):
     from os import uname
     from .misc import get_username
 
+    assert len(comment.replace(' ', '').replace('\n', '')) != 0,\
+           ValueError("Cannot push file if comment is empty.")
+    
+    try: kwargs["comment"] = self.comments.find({'text': comment}).next()
+    except StopIteration: # add comment to database
+      kwargs["comment"] = self.comments.insert({'text': comment})
+      print kwargs['comment']
 
     hash = sha512(outcar).hexdigest()
-
     if self.outcars.exists(sha512=hash): 
       print "{0} already in database. Please use 'ladabase.update'.".format(filename)
       return 
@@ -115,6 +118,7 @@ class Manager(object):
     with open(path, 'r') as file: string = file.read()
     hash = sha512(string).hexdigest()
     return self.outcars.exists(sha512=hash)
+
 
 
 def ipy_init():

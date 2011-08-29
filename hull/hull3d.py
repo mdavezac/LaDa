@@ -70,8 +70,6 @@ class Triangle(object):
         
         :raise ValueError: if some points are colinear.
     """
-    from itertools import combinations
-
     if sample == None: return
     assert len(sample.shape) != 1, ValueError("Sample too small.")
     assert sample.shape[0] == self.dimension + 1, ValueError("Sample should contain 3 vectors.")
@@ -115,7 +113,7 @@ class Triangle(object):
 
   def volume(self, vertex):
     """ Whether a vertex can be seen by this facet. """
-    from numpy import ones, dot, concatenate
+    from numpy import ones, dot
     from numpy.linalg import det
     basis = self._basis()
     d = ones((self.dimension+2, self.dimension+2), dtype="float64")
@@ -169,7 +167,7 @@ class Hull3d(object):
         Base consists of first d vertices which are on the hull. Vertices which
         are minimum or maximum for any one direction must be on the hull.
     """
-    from numpy import argmin, argmax, ones, dot
+    from numpy import argmin, argmax, dot
     origin = self.basis[-1]
 
     # finds index of convex-hull points first.
@@ -188,8 +186,7 @@ class Hull3d(object):
 
   def _dome(self, sample, base):
     """ Creates one side of the convex hull. """
-    from numpy import ones, dot, repeat, argmax, concatenate, array
-    from numpy.linalg import det
+    from numpy import argmax, concatenate, array
 
     # now creates list of volumes.
     dists = array([base.volume(u) for u in sample])
@@ -208,7 +205,7 @@ class Hull3d(object):
 
   def _horizon(self, deleting):
     """ Iterates over horizon edges. """
-    from numpy import min, all
+    from numpy import all
     def compare(a, b):
       if all( abs(a[0]-b[0]) < self.tolerance ):
         return all( abs(a[1]-b[1]) < self.tolerance )
@@ -227,7 +224,6 @@ class Hull3d(object):
 
   def mesh(self):
     """ Returns triangular mesh data for mayavi. """
-    from numpy import array
     x, y, z, vertices = [], [], [], []
     for i, facet in enumerate(self.facets):
       x.extend(facet.vertices[:, 0])
@@ -235,6 +231,26 @@ class Hull3d(object):
       z.extend(facet.vertices[:, 2])
       vertices.append((i*3, i*3+1, i*3+2))
     return x, y, z, vertices
+
+  def projected(self, direction, tolerance):
+    """ Iterates over facets which are facing the given direction. """
+    from numpy.linalg import norm, array
+    from numpy import dot
+    # finds largest extent in given direction.
+    direction = array(direction.copy(), dtype="float64") / norm(direction)
+    dist = dot(direction, self.facets[0].vertices[0])
+    for facet in self.facets:
+      for vertex in facet.vertices:
+        d = dot(direction, vertex)
+        if d > dist: dist = d
+    # this point should be outside the hull and on the projected side.
+    outside = direction * abs(d)
+    # now yields only those facets with positive volumes.
+    for facet in self.facets:
+      if facet.volume(outside) <= tolerance: continue 
+      yield facet
+
+
  
 
 def _test(n=5):

@@ -47,12 +47,13 @@ def push(self, cmdl):
   except SystemExit as e: return None
 
   # list all structures.
-  files = []
+  files, errors = [], ""
   for file in get_file_list(self, args):
     if file in ladabase: print "File {0} is already in the database.".format(file)
-    if not Extract(file).success:
-      print "File {0} is not a successful calculation.".format(file)
-    else: files.append(file)
+    extract = Extract(file)
+    if not extract.success:
+      errors += "**** File {0} is not a successful calculation.\n".format(file)
+    else: files.append((file, extract))
   if len(files) == 0: 
     print "Nothing to add to database."
     return
@@ -62,7 +63,7 @@ def push(self, cmdl):
   notefile = self.shell.mktempfile()
   with open(notefile, "w") as file:
     file.write('\n# files simultaneously pushed to the database:\n')
-    for filename in files: file.write('#   ' + relpath(filename, getcwd()) + '\n')
+    for filename, extract in files: file.write('#   ' + relpath(filename, getcwd()) + '\n')
 
   try: self.shell.hooks.editor(notefile, 0)
   except TryNext:
@@ -77,10 +78,12 @@ def push(self, cmdl):
   compression = None if args.compression.lower() == "none" else args.compression
 
   just_added = []
-  for file in files: 
+  for file, extract in files: 
     with open(file, 'r') as outcar:
-      added = ladabase.push( relpath(file, getcwd()), outcar.read(), 
-                             compression=compression, comment=comment )
+      kwargs = {'compression': compression, 'comment':comment}
+      kwargs['is_dft'] =  extract.is_dft
+      kwargs['is_gw'] =  extract.is_gw
+      added = ladabase.push( relpath(file, getcwd()), outcar.read(), **kwargs)
       if added != None:
         just_added.append(added)
         print "Pushed {0}.".format(file, getcwd())
@@ -92,6 +95,7 @@ def push(self, cmdl):
     _pushed.append((just_added, comment, compression))
     record._pushed = _pushed
   else: record._pushed = [(just_added, comment, compression)]
+  if len(errors) != 0: print "\n", errors
 
 
 def amend(self, cmdl):

@@ -1,7 +1,10 @@
 """ Extracts VASP-GW output """
 __docformat__  = 'restructuredtext en'
-__all__ = ['Extrat']
-from ...opt.decorators import make_cached, broadcast_result
+__all__ = ['Extract']
+from ...opt.decorators import make_cached
+from ...opt.json import array as json_array, array_with_unit as json_array_with_unit
+from quantities import eV
+
 class Extract(object):
   """ Implementation of GW extractor. """
 
@@ -10,6 +13,7 @@ class Extract(object):
     object.__init__(self)
 
   @property
+  @json_array_with_unit("float64", eV)
   def eigenvalues(self):
     """ Deprecated. """
     from warnings import warn
@@ -18,6 +22,7 @@ class Extract(object):
     return self.qp_eigenvalues
 
   @property
+  @json_array_with_unit("float64", eV)
   @make_cached
   def dft_eigenvalues(self):
     """ Greps DFT eigenvalues from OUTCAR.
@@ -27,11 +32,11 @@ class Extract(object):
         cases, the leading dimension are the kpoints, followed by the bands.
     """
     from numpy import array
-    from quantities import eV
     if self.ispin == 2: return array(self._spin_polarized_values(1), dtype="float64") * eV
     return array(self._unpolarized_values(1), dtype="float64") * eV
 
   @property
+  @json_array_with_unit("float64", eV)
   @make_cached
   def qp_eigenvalues(self):
     """ Greps quasi-particle eigenvalues from OUTCAR.
@@ -41,11 +46,11 @@ class Extract(object):
         cases, the leading dimension are the kpoints, followed by the bands.
     """
     from numpy import array
-    from quantities import eV
     if self.ispin == 2: return array(self._spin_polarized_values(1), dtype="float64") * eV
     return array(self._unpolarized_values(2), dtype="float64") * eV
 
   @property
+  @json_array_with_unit("float64", eV)
   @make_cached
   def self_energies(self):
     """ Greps self-energies of each eigenvalue from OUTCAR.
@@ -55,11 +60,11 @@ class Extract(object):
         cases, the leading dimension are the kpoints, followed by the bands.
     """
     from numpy import array
-    from quantities import eV
     if self.ispin == 2: return array(self._spin_polarized_values(1), dtype="float64") * eV
     return array(self._unpolarized_values(3), dtype="float64") * eV
 
   @property
+  @json_array("float64")
   @make_cached
   def occupations(self):
     """ Greps occupations from OUTCAR.
@@ -69,6 +74,5 @@ class Extract(object):
         cases, the leading dimension are the kpoints, followed by the bands.
     """
     from numpy import array
-    from quantities import eV
-    if self.ispin == 2: return array(self._spin_polarized_values(1), dtype="float64") * eV
-    return array(self._unpolarized_values(3), dtype="float64") * eV
+    if self.ispin == 2: return array(self._spin_polarized_values(1), dtype="float64")
+    return array(self._unpolarized_values(3), dtype="float64")

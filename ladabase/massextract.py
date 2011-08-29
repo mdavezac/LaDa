@@ -87,7 +87,7 @@ class MassExtract(object):
     """ Goes through database. """
     from .misc import get_ladabase
     for doc in get_ladabase().files.find():
-      yield str(doc['_id']), self.Extract(doc)
+      yield str(doc['_id']), self.Extract({'_id': doc['_id']})
 
   @property
   def _extractors(self):

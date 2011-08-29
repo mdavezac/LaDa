@@ -153,9 +153,13 @@ if @with_ipython@:
 # the variables below are only needed by ladabase.
 if @with_ladabase@:
   pymongo_host       = 'localhost'
+  """ Host of the mongo database. """
   pymongo_port       = 27017
+  """ Port to access the mongo database. """
   vasp_database_name = 'vasp'
+  """ Name of the database. """
   OUTCARS_prefix     = 'OUTCARs'
+  """ Name of the collection of OUTCAR files. """
 
 
 # reads stuff from input file

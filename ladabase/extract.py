@@ -31,14 +31,25 @@ class ExtractCommon(AbstractExtractBase, ExtractCommonBase, OutcarSearchMixin):
   """ Extracts DFT data from an OUTCAR. """
   def __init__(self, filter, comm=None, **kwargs):
     """ Initializes extraction object. """
+    from bson import ObjectId
     from .misc import get_ladabase
     AbstractExtractBase.__init__(self, comm=comm)
     ExtractCommonBase.__init__(self)
     OutcarSearchMixin.__init__(self)
-    filter = filter if isinstance(filter, dict) else {'_id': filter}
-    n = [u for u in get_ladabase().files.find(filter)]
-    if len(n) != 1: raise ValueError("{0} OUTCARS found from current filter.\n".format(len(n)))
-    self._element = n[0]
+    # figure out how the filter has been specified.
+    filter = filter if isinstance(filter, dict) else {'_id': ObjectId(filter)}
+    # retrives first element with that filter.
+    iterator = get_ladabase().files.find(filter)
+    try: element = iterator.next()
+    except StopIteration:
+      raise ValueError("Could not find database document answering "\
+                       "to the following filter:\n{0}.\n".format(filter))
+    try: iterator.next()
+    except StopIteration: pass
+    else:
+      raise ValueError("Found more than one document answering "\
+                       "to the following filter:\n{0}.".format(filter))
+    self._element = element
     """ Elements in database associated with current OUTCAR. """
 
   def __outcar__(self):
@@ -58,7 +69,8 @@ class ExtractCommon(AbstractExtractBase, ExtractCommonBase, OutcarSearchMixin):
 
   def __getattr__(self, name):
     """ Adds read-only properties corresponding to database metadata. """
-    if name in self._element: return self._element[name]
+    if name == "comment": return self._element["comment"]["text"]
+    if name in self._element: return self._element[name] 
     raise AttributeError()
 
   def __dir__(self):
@@ -67,11 +79,14 @@ class ExtractCommon(AbstractExtractBase, ExtractCommonBase, OutcarSearchMixin):
              | set([u for u in dir(self.__class__) if u[0] != '_'])
     return list(result)
 
-
   @property
   def success(self):
     """ True if calculation was successfull. """
     return ExtractCommonBase.success.__get__(self)
+
+  def __repr__(self):
+    """ Representation of this object. """
+    return "{0.__class__.__name__}(\"{0._id}\")".format(self)
 
 class ExtractDFT(ExtractCommon, ExtractDFTBase):
   """ Extracts DFT data from an OUTCAR. """

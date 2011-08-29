@@ -98,7 +98,7 @@ def record(self, cmdl):
         continue
       value = getattr(record, var)
       delattr(record, var)
-      try: string = value
+      try: string = str(value)
       except: print "Removing {0} from record {1}.".format(var, args.filename)
       else:
         if len(string) > 30: string = string[:25] + "..."
@@ -122,7 +122,7 @@ def record(self, cmdl):
         print "Could not find {0} in {1}.".format(key, args.filename)
         continue
       namespace[key] = getattr(record, key)
-      try:string = namespace[key]
+      try:string = str(namespace[key])
       except: print "Reloaded {0} from record {1}.".format(key, args.filename)
       else:
         if len(string) > 30: string = string[:25] + "..."
