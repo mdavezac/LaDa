@@ -20,6 +20,7 @@
 #ifdef LADA_WITH_LNS
 #  include "load_n_save/xpr/utilities.h"
 #  include "load_n_save/action/vector.h"
+#  include "load_n_save/action/set.h"
 #endif
 #include "is_container.h"
 
@@ -65,6 +66,10 @@ namespace LaDa
           
           //! Constructor
           AtomBase() : pos(math::rVector3d(0,0,0)), type() {};
+          //! Constructor
+          template<class T_DERIVED>
+            AtomBase   (Eigen::DenseBase<T_DERIVED> const &_pos, t_Type const &_in)
+                     : pos(_pos), type(_in) {}
           //! Constructor and Initializer
           explicit AtomBase   ( const math::rVector3d &_pos, t_Type _type) 
                             : pos(_pos), type(_type) {};

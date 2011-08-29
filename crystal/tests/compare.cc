@@ -28,6 +28,10 @@
 #  define LADA_TYPE std::vector<types::t_real>
 #  define LADA_INIT_TYPE0 a.type.push_back(0e0); a.type.push_back(5e0);
 #  define LADA_INIT_TYPE1 b.type.push_back(0e0);
+#elif LADA_TEST_INCTYPE == 6
+#  define LADA_TYPE std::set<std::string>
+#  define LADA_INIT_TYPE0 a.type.insert("Au"); a.type.insert("Pd");
+#  define LADA_INIT_TYPE1 b.type.insert("Au");
 #endif
 
 using namespace std;
@@ -57,7 +61,7 @@ int main()
   LADA_DOASSERT(compare_sites(a)(b.type), "not equivalent.\n");
   b.pos = a.pos;
   LADA_DOASSERT(compare_sites(a)(b), "equivalent.\n");
-# if LADA_TEST_INCTYPE >= 3
+# if LADA_TEST_INCTYPE >= 3 and LADA_TEST_INCTYPE <= 5
   b.type.pop_back();
   LADA_DOASSERT(not compare_sites(a)(b), "equivalent.\n");
   LADA_DOASSERT(not compare_sites(b)(a), "equivalent.\n");

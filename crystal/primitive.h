@@ -42,7 +42,7 @@ namespace LaDa
   
         // Then compares fractional translations from site 0 to sites of same type.
         std::vector<math::rVector3d> translations;
-        CompareSites<T_TYPE> const compsites(result.front(), _tolerance);
+        CompareOccupations<T_TYPE> const compsites(result.front().type);
         math::rVector3d const center = result.front().pos;
         typename t_Sites :: const_iterator i_site = _structure.begin();
         typename t_Sites :: const_iterator const i_site_end = _structure.end();
@@ -130,21 +130,29 @@ namespace LaDa
           BOOST_THROW_EXCEPTION(
               error::internal() << error::string("Found translation but no primitive cell."));
   
-        // now creates new lattice.
+        // now creates new lattice. Averages site positions.
         result.clear();
         result.cell() = math::gruber(new_cell);
         math::rMatrix3d const inv_cell(result.cell().inverse());
+        types::t_real const ratio = result.volume() / _structure.volume();
         for(i_site = _structure.begin(); i_site != i_site_end; ++i_site)
         {
           math::rVector3d const pos = into_cell(i_site->pos, result.cell(), inv_cell); 
           CompareSites<T_TYPE> const check(pos, i_site->type, _tolerance);
-          typename t_Sites::const_iterator i_found = std::find_if(result.begin(), result.end(), check);
+          typename t_Sites::iterator i_found = std::find_if(result.begin(), result.end(), check);
           if( i_found == result.end() )
           {
             result.push_back(*i_site);
-            result.back().pos = pos;
+            result.back().pos = pos * ratio;
+          }
+          else
+          {
+            i_found->pos += i_site->pos * ratio;
           }
         }
+        if(_structure.size() % result.size() == 0) BOOST_THROW_EXCEPTION(error::internal());
+        if(math::neq(types::t_real(_structure.size()/result.size()), _structure.volume()/result.volume()))
+          BOOST_THROW_EXCEPTION(error::internal());
   
         return result;
       }

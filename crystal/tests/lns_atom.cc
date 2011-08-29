@@ -34,6 +34,18 @@
 #  define LADA_DOASSERT_SITE LADA_DOASSERT(atom.site == -1, "Wrong site index.\n");
 #  define LADA_XML2 "<Atom pos=\"0.5 -0.5 0.5\" type=\"Au Pd\" freeze=\"x\" site=\"1\"/>"
 #  define LADA_DOASSERT_SITE2 LADA_DOASSERT(atom.site == 1, "Wrong site index.\n");
+#elif LADA_TEST_INCTYPE == 2
+#  define LADA_TYPE std::set<std::string> 
+#  define LADA_INIT_TYPE atom.type.insert("Au"); atom.type.insert("Pd");
+#  define LADA_CLEAR_TYPE atom.type.clear();
+#  define LADA_XML "<Atom pos=\"0.5 -0.5 0.5\" type=\"Au Pd\" freeze=\"x\" site=\"-1\"/>"
+#  define LADA_DOASSERT_TYPE \
+    { LADA_TYPE cmp; cmp.insert("Au"); cmp.insert("Pd");                \
+      LADA_DOASSERT(atom.type.size() == 2, "Wrong number of types.\n");\
+      LADA_DOASSERT(atom.type == cmp, "Wrong first type.\n"); }
+#  define LADA_DOASSERT_SITE LADA_DOASSERT(atom.site == -1, "Wrong site index.\n");
+#  define LADA_XML2 "<Atom pos=\"0.5 -0.5 0.5\" type=\"Au Pd\" freeze=\"x\" site=\"1\"/>"
+#  define LADA_DOASSERT_SITE2 LADA_DOASSERT(atom.site == 1, "Wrong site index.\n");
 #endif
 using namespace std;
 int main()

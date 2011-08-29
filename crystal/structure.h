@@ -25,9 +25,9 @@ namespace LaDa
 
     //! Wraps around a shared pointer containing structure data.
     template<class T_TYPE> class TemplateStructure :
-       public details::call_add_atom2<TemplateStructure, T_TYPE>
+       public details::AddAtomMixin<TemplateStructure, T_TYPE>
     {
-        friend class details::call_add_atom2<TemplateStructure, T_TYPE>;
+        friend class details::AddAtomMixinBase<TemplateStructure, T_TYPE>;
         friend class boost::serialization::access;
 #       ifdef LADA_WITH_LNS
           friend class load_n_save::access;
@@ -200,6 +200,8 @@ namespace LaDa
         //! Transforms a structure according to an affine transformation.
         TemplateStructure transform(math::Affine3d const &_affine) const;
       private:
+        //! used by AddAtomMixin to reach the atoms.
+        t_Atoms & atoms() { return impl_->atoms; }
         //! Serializes a structure.
         template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
           { _ar & impl_; }

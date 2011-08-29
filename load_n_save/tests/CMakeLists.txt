@@ -48,6 +48,15 @@ if(NOT compile_debug_tests)
 
   set(TYPES  0 1 2)
   foreach(TYPE ${TYPES})
+    add_executable(set_action${TYPE} set_action.cc)
+    set_property( TARGET set_action${TYPE} PROPERTY COMPILE_DEFINITIONS
+                  LADA_TEST_TYPE=${TYPE})
+    target_link_libraries(set_action${ACCESS}${TYPE} lns)
+    ADD_TEST(set_action${TYPE} ${CMAKE_CURRENT_BINARY_DIR}/set_action${TYPE})
+  endforeach(TYPE)
+
+  set(TYPES  0 1 2)
+  foreach(TYPE ${TYPES})
     add_executable(vector_action${TYPE} vector_action.cc)
     set_property( TARGET vector_action${TYPE} PROPERTY COMPILE_DEFINITIONS
                   LADA_TEST_TYPE=${TYPE})

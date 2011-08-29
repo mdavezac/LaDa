@@ -57,6 +57,10 @@ namespace LaDa
         types::t_int site;
         
         //! Constructor
+        template<class T_DERIVED>
+          Atom   (Eigen::DenseBase<T_DERIVED> const &_pos, t_Type const &_in)
+               : AtomBase<t_Type>(_pos, _in), AtomFreezeMixin(frozen::NONE), site(-1) {};
+        //! Constructor
         Atom() : AtomBase<t_Type>(), AtomFreezeMixin(frozen::NONE), site(-1) {};
         //! Constructor and Initializer
         explicit  Atom( const math::rVector3d &_pos, t_Type _type) 

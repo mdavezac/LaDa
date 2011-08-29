@@ -109,7 +109,7 @@ int main()
             (0.5,0,0.5)
             (0.5,0.5,0);
   A.add_atom(0,0,0, "Si")
-   .add_atom(0.25,0.25,0.25, "Si", "Ge");
+            (0.25,0.25,0.25, "Si", "Ge");
   basis(A, A);
 
   A[0].type.clear(); A[0].type.push_back("Si");

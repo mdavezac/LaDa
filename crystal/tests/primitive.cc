@@ -5,7 +5,6 @@
 
 #include "../supercell.h"
 #include "../primitive.h"
-#include "../equivalent_structures.h"
 
 using namespace std;
 int main()
@@ -13,13 +12,15 @@ int main()
   using namespace LaDa;
   using namespace LaDa::crystal;
   using namespace LaDa::math;
+  typedef TemplateStructure< std::vector<std::string> > t_Str; 
   TemplateStructure< std::vector<std::string> > lattice; 
   lattice.set_cell(0,0.5,0.5)
                   (0.5,0,0.5)
                   (0.5,0.5,0);
   lattice.add_atom(0,0,0, "Si")
-         .add_atom(0.25,0.25,0.25, "Si", "Ge");
+                  (0.25,0.25,0.25, "Si", "Ge");
   rMatrix3d cell;
+
   size_t nmax= LADA_LIM;
   bool cont = true;
   for(size_t a(1); a <= nmax and cont; ++a)
@@ -47,20 +48,23 @@ int main()
             cell(2,1) = f;
             TemplateStructure< std::vector<std::string> > structure = supercell(lattice, cell);
             structure = primitive(structure);
-            if( not is_integer(structure.cell() * lattice.cell().inverse()) )
+            if( not eq(lattice.cell().determinant(), structure.cell().determinant(), 1e-5) )
             {
-              std::cout << cell << "\n";
-              std::cout << structure << "\n";
+              std::cout << cell << "\n\n";
+              std::cout << structure.cell() << "\n\n";
+              std::cout << lattice.cell().inverse() * structure.cell() << "\n\n";
             }
-            LADA_DOASSERT(is_integer(structure.cell() * lattice.cell().inverse()), "Not a sublattice.\n");
-            LADA_DOASSERT(is_integer(lattice.cell() * structure.cell().inverse()), "Not a sublattice.\n");
-            LADA_DOASSERT(eq(lattice.cell().determinant(), structure.cell().determinant()), "Not primitive.\n");
-            if(not equivalent(lattice, structure, false, true, 1e-5))
+            LADA_DOASSERT(eq(lattice.cell().determinant(), structure.cell().determinant(), 1e-5), "Not primitive.\n");
+            LADA_DOASSERT(is_integer(structure.cell() * lattice.cell().inverse(), 1e-5), "Not a sublattice.\n");
+            LADA_DOASSERT(is_integer(lattice.cell() * structure.cell().inverse(), 1e-5), "Not a sublattice.\n");
+            t_Str::const_iterator i_atom = structure.begin();
+            t_Str::const_iterator const i_atom_end = structure.end();
+            for(; i_atom != i_atom_end; ++i_atom)
             {
-              std::cout << cell << "\n";
-              std::cout << structure << "\n";
+              LADA_DOASSERT(compare_sites(lattice[i_atom->site])(i_atom->type), "Inequivalent occupation.\n");
+              LADA_DOASSERT( is_integer(lattice.cell().inverse()*(i_atom->pos - lattice[i_atom->site].pos), 1e-5),
+                             "Inequivalent positions.\n") 
             }
-            LADA_DOASSERT(equivalent(lattice, structure, false, true, 1e-5), "Not equivalent.\n");
           } // f
         } // e
       } // d

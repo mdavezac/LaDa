@@ -19,7 +19,7 @@ int main()
                   (0.5,0,0.5)
                   (0.5,0.5,0);
   lattice.add_atom(0,0,0, "Ge") 
-         .add_atom(0.25,0.25,0.25, "Si","Ge");
+                  (0.25,0.25,0.25, "Si","Ge");
   lattice[0].freeze = Atom<TYPE>::frozen::X;
 
   rMatrix3d matrix;

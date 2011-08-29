@@ -1,52 +1,48 @@
 
 #include "LaDaConfig.h"
-#include<iostream>
-#include<string>
-#include<vector>
+#include <iostream>
+#include <string>
+#include <vector>
 
-#include "../compare_sites.h"
-#if LADA_TEST_INCTYPE == 0
-#  define LADA_TYPE std::string
-#  define LADA_TEST false
-#  define LADA_INIT_TYPE var = "Au";
-#  define LADA_STRING_TEST "Au"
-#elif LADA_TEST_INCTYPE == 1
-#  define LADA_TYPE int
-#  define LADA_TEST false
-#  define LADA_INIT_TYPE var = 0;
-#  define LADA_STRING_TEST "0"
-#elif LADA_TEST_INCTYPE == 2
-#  define LADA_TYPE types::t_real
-#  define LADA_TEST false
-#  define LADA_INIT_TYPE var = 0.0;
-#  define LADA_STRING_TEST "0"
-#elif LADA_TEST_INCTYPE == 3
-#  define LADA_TYPE std::vector<std::string>
-#  define LADA_TEST true
-#  define LADA_INIT_TYPE var.push_back("Au"); var.push_back("Pd");
-#  define LADA_STRING_TEST "Au, Pd"
-#elif LADA_TEST_INCTYPE == 4
-#  define LADA_TYPE std::vector<int>
-#  define LADA_TEST true
-#  define LADA_INIT_TYPE var.push_back(0); var.push_back(5);
-#  define LADA_STRING_TEST "0, 5"
-#elif LADA_TEST_INCTYPE == 5
-#  define LADA_TYPE std::vector<types::t_real>
-#  define LADA_TEST true
-#  define LADA_INIT_TYPE var.push_back(0e0); var.push_back(5e0);
-#  define LADA_STRING_TEST "0, 5"
-#endif
+#include <opt/types.h>
+#include <opt/debug.h>
+
+#include "../is_container.h"
 
 using namespace std;
+template<class T> void check(T const &_var, bool _cont, bool _set, bool _string, 
+                             std::string const &_str)
+{
+  using namespace LaDa::crystal::details;
+  LADA_DOASSERT(is_container<T>::value == _cont, "");
+  LADA_DOASSERT(is_set<T>::value == _set, "");
+  LADA_DOASSERT(is_string<T>::value == _string, "");
+  LADA_DOASSERT(is_nonstring_scalar<T>::value == not (_cont or _set or _string), "");
+  LADA_DOASSERT(is_scalar<T>::value == not (_cont or _set), "");
+  LADA_DOASSERT(print_occupation(_var) == _str, "");
+}
 int main()
 {
   using namespace LaDa;
   using namespace LaDa::crystal;
-  using namespace LaDa::math;
-  LADA_DOASSERT(details::is_container<LADA_TYPE>::value == LADA_TEST, "Did not complete test.\n");
-  LADA_TYPE var;
-  LADA_INIT_TYPE;
-  LADA_DOASSERT(details::print_occupation(var) == LADA_STRING_TEST, "Did not print.\n");
+
+  check<std::string>("Au", false, false, true, "Au");
+  check<int>(1, false, false, false, "1");
+  check<types::t_real>(3.1416, false, false, false, "3.1416");
+
+  { std::vector<std::string> var(2); var[0] = "Au"; var[1] = "Pd"; 
+    check(var, true, false, false, "Au, Pd"); }
+  { std::vector<int> var(2); var[0] = 0; var[1] = 1; 
+    check(var, true, false, false, "0, 1"); }
+  { std::vector<types::t_real> var(2); var[0] = 0e0; var[1] = 3.1416; 
+    check(var, true, false, false, "0, 3.1416"); }
+
+  { std::set<std::string> var; var.insert("Au"); var.insert("Pd"); 
+    check(var, false, true, false, "Au, Pd"); }
+  { std::set<int> var; var.insert(0); var.insert(1); 
+    check(var, false, true, false, "0, 1"); }
+  { std::set<types::t_real> var; var.insert(0e0); var.insert(3.1416); 
+    check(var, false, true, false, "0, 3.1416"); }
 
   return 0;
 }

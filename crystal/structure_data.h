@@ -19,7 +19,6 @@
 #include "add_atom.h"
 #include "atom.h"
 #include "traits.h"
-#include "add_atom.h"
 
 namespace LaDa 
 {
@@ -46,8 +45,7 @@ namespace LaDa
         A2   = 292, //!< Freeze all coordinates 
       };
     };
-    template<class T_TYPE> struct StructureData : 
-       public details::call_add_atom<StructureData, T_TYPE>
+    template<class T_TYPE> struct StructureData 
     {
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
       friend class boost::serialization::access;

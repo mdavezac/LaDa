@@ -33,7 +33,7 @@ namespace LaDa
           for(; i_first != i_end; ++i_first, ++i_fmin)
           {
             if(*i_fmin > 1) continue;
-            CompareSites<T_TYPE> cmp(*i_first);
+            CompareOccupations<T_TYPE> cmp(i_first->type);
             typename TemplateStructure<T_TYPE>::const_iterator i_second = i_first + 1;
             std::vector<size_t>::iterator i_smin = i_fmin + 1;
             for(; i_second != i_end; ++i_second, ++i_smin)
@@ -86,7 +86,7 @@ namespace LaDa
         boost::shared_ptr<t_SpaceGroup> pg = cell_invariants(cellA);
         // then find the occupation type with the smallest number of occurences.
         typename TemplateStructure<T_TYPE>::const_reference minatom = _a[details::min_test(_a)];
-        CompareSites<T_TYPE> mincheck(minatom, _tol);
+        CompareOccupations<T_TYPE> mincheck(minatom.type);
         
         // Computes possible translations, looking at only one type of site-occupation.
         // The center of gravity will tell us about a possible translation of
@@ -132,7 +132,7 @@ namespace LaDa
             for(; i_first != i_end; ++i_first)
             {
               if( not math::is_integer(invA * (pos - _a[*i_first].pos*scaleA + transA), 4*_tol) ) continue;
-              CompareSites<T_TYPE> const cmp(*i_b, _tol);
+              CompareOccupations<T_TYPE> const cmp(i_b->type);
               if( cmp(_a[*i_first].type) ) break;
             }
             if(i_first == i_end) break;
