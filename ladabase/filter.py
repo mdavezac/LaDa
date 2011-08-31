@@ -7,11 +7,11 @@ def filters(self, cmdl):
   from .massextract import MassExtract
 
   if not hasattr(lada, "filters_stack"):
-    lada.filters_stack = [("True", MassExtract(namespace=ip.user_ns))]
+    lada.filters_stack = [("True", MassExtract(namespace=ip.user_ns, mongofilter={'groundstates': {'$exists:1'}}))]
   stack = lada.filters_stack
 
   # empty commandline. Print filters.
-  if len(cmdl.replace(' ', '')): cmld = "--view"
+  if len(cmdl.rstrip()) == 0: cmdl = "--view"
 
   parser = argparse.ArgumentParser(prog='%filter',
                      formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -32,8 +32,24 @@ including the \".\" (dot) and hit TAB.
 """ )
 
   group = parser.add_mutually_exclusive_group()
-  group.add_argument( 'exprs', type=str, nargs="*", default="",
-                       help='Python expression returning True or False.')
+  group0 = group.add_argument_group()
+  group0.add_argument( 'exprs', type=str, nargs="*", default="",
+                        help='Python expression returning True or False.')
+  group0.add_argument( '--mongofilter', action="store_true",
+                       dest="mongofilter", 
+                       help='Mongo filter (fast) defining documents over which '  \
+                            'further filters (slow) trawl. Changing this value '  \
+                            'resets the stack of (slow) filters. It should be a ' \
+                            'dictionary (or a string defining a dictionary) '     \
+                            'honoring the pymongo syntax. Google "mongodb '       \
+                            'query". Most values available with collect are '     \
+                            'also available as direct attributes of the '         \
+                            'database, eg: {"species": {"%all": ["Ni", "In", '    \
+                            '"O"]}}. Note that "$" has a special significance '   \
+                            'for both mongodb and ipython. As such, they must be '\
+                            'replaced with "%" signs. The above is a valid query '\
+                            'which will match all systems containing only the '   \
+                            'relevant element (including binaries). ')
   group.add_argument( '--iterate', action="store_true", 
                        dest="iterate", help='Iterates over current job.' )
   group.add_argument( '--view', action="store_true", 
@@ -43,19 +59,16 @@ including the \".\" (dot) and hit TAB.
   group.add_argument( '--outcar', action="store_true", 
                        dest="outcar", help='View current OUTCAR, if there is only one.' )
 
-  try: args = parser.parse_args(cmdl.split())
-  except SystemExit as e:
-    
-    return None
+
+
+  try: args = parser.parse_args(cmdl.replace("%", "$").split())
+  except SystemExit as e: return None
 
   if args.view: 
-    if len(stack) == 1:
-      print "No filters yet."
-    else:
-      print "Filters:"
-      for i, (filter, value) in enumerate(stack):
-        if i == 0: continue
-        else: print "{0:>2}. {1}".format(i, filter)
+    print "Filters:\n{0:>2}. {1}".format(0, repr(stack[0][1].mongofilter))
+    for i, (filter, value) in enumerate(stack[1:]):
+      if i == 0: continue
+      else: print "{0:>2}. {1}".format(i, filter)
   elif args.iterate: 
     if not hasattr(lada, "iterstack"): lada.iterstack = 0
     else: stack.pop(-1)
@@ -79,7 +92,7 @@ including the \".\" (dot) and hit TAB.
         filename = None
         with NamedTemporaryFile("w", delete=False) as file:
           filename = file.name
-          with stack[-1][1].values()[0].__outcar__() as foutcar:
+          with stack[-1][1].values()[0].raw.__outcar__() as foutcar:
             file.write(foutcar.read())
         self.api.system("less {0}\n".format(filename))
       except: raise
@@ -88,6 +101,12 @@ including the \".\" (dot) and hit TAB.
         if filename != None:
          try: remove(filename)
          except: pass
+  elif args.mongofilter: 
+    mongofilter = eval(" ".join(args.exprs).replace("%%", "$"), self.api.user_ns)
+    dictionary = self.api.user_ns.copy()
+    dictionary.pop("all", None)
+    dictionary.pop("$all", None)
+    stack = [["True", MassExtract(namespace=self.api.user_ns, mongofilter=mongofilter)]]
   else: 
     if hasattr(lada, "iterstack"): del lada.iterstack
     cmdl = " ".join(args.exprs)
@@ -110,7 +129,7 @@ including the \".\" (dot) and hit TAB.
 
 def completer(self, event):
   """ Completer for filter magic function. """
-  return ["--iterate", "--view", "--pop"]
+  return ["--iterate", "--view", "--pop", "--outcar", '--mongofilter']
 
 def init(ip):
   """ Initializes filters stuff. """
@@ -119,6 +138,6 @@ def init(ip):
   ip.expose_magic("filters", filters)
   ip.set_hook('complete_command', completer, re_key = '\s*%?filter')
   if not hasattr(lada, "filters_stack"):
-    lada.filters_stack = [("True", MassExtract(namespace=ip.user_ns))]
+    lada.filters_stack = [("True", MassExtract(namespace=ip.user_ns, mongofilter={'groundstate': {'$exists': 1}}))]
   ip.user_ns["collect"] = lada.filters_stack[-1][1]
 

@@ -79,7 +79,7 @@ class Decode(dict):
 
   def __setitem__(self, key, value):
     """ Sets dictionary items. """
-    from .extract import VaspExtract
+    from .vasp import VaspExtract
     # value has already been set.
     assert key not in self, RuntimeError("Values are read-only.")
 
@@ -107,12 +107,10 @@ class Decode(dict):
                  | set([k for k in self.keys() if k[0] != '_']) \
                  | set(['_id']) )
 
-
-
 def to_secondary(collection='extracted', filter=None, items=None, update=False):
   """ Extracts value to secondary database. """
   from . import Manager
-  from .extract import VaspExtract
+  from .vasp import VaspExtract
   ladabase = Manager()
   encoder = Encode()
   collection = ladabase.database[collection]

@@ -1,12 +1,12 @@
 """ Mass extraction object for ladabase. """
 __all__ = ['MassExtract']
-from .extract import VaspExtract
+from .extracted import Decode
 
 class MassExtract(object): 
   """ Propagates extraction methods from different jobs. """
-  Extract = staticmethod(VaspExtract)
+  Extract = staticmethod(Decode)
   """ Extraction class. """
-  def __init__(self, filters=None, namespace=None, **kwargs):
+  def __init__(self, filters=None, namespace=None, mongofilter=None, **kwargs):
     """ Initializes extraction object. 
 
         :Parameters:
@@ -28,6 +28,8 @@ class MassExtract(object):
     """ List of extration objects. """
     self.namespace = {} if namespace == None else namespace
     """ Namespace with which to perform evaluation. """
+    self.mongofilter = mongofilter
+    """ A mongo filter (fast) to act as the base of further (slow) filters. """
 
   def uncache(self): 
     """ Uncache values. """
@@ -85,9 +87,11 @@ class MassExtract(object):
 
   def __iter_alljobs__(self):
     """ Goes through database. """
-    from .misc import get_ladabase
-    for doc in get_ladabase().files.find():
-      yield str(doc['_id']), self.Extract({'_id': doc['_id']})
+    from . import Manager
+    ladabase = Manager()
+    collection = ladabase.database["extracted"]
+    for doc in collection.find(self.mongofilter, as_class=self.Extract):
+      yield str(doc['_id']), doc
 
   @property
   def _extractors(self):
@@ -138,7 +142,7 @@ class MassExtract(object):
     """ Returns a view of the current job-dictionary. """
     if isinstance(filters, str): filters = [filters]
     result = self.__class__(namespace = self.namespace)
-    extractor = self.__class__(namespace = self.namespace, filters=filters)
+    extractor = self.__class__(namespace = self.namespace, filters=filters, mongofilter=self.mongofilter)
     extractor._cached_extractors = self._cached_extractors
     result._cached_extractors = {}
     for key, value in extractor.iteritems(): result._cached_extractors[key] = value

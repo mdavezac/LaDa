@@ -1,7 +1,7 @@
 """ PyMongo interface. """
 __all__ = ['Manager', 'MassExtract', 'VaspExtract', 'ipy_init']
 
-from .extract import VaspExtract
+from .vasp import VaspExtract
 from .massextract import MassExtract
 
 class Manager(object): 

@@ -1,7 +1,8 @@
 """ Tags ground-states. """
+__docformat__ = "restructuredtext en"
+__all__ = ['convexhull', 'groundstates']
 
-
-def _add_elements(collection='extracted'):
+def add_elements(collection='extracted'):
   """ Adds elemental energies. """
   from itertools import chain
   from quantities import eV
@@ -79,7 +80,7 @@ def merge_queries(d, filters):
     else: d[key] = value
   return d
 
-def convex_hull(species, collection="extracted", filters=None, withargs=False, tolerance=0.003, verbose=False):
+def convexhull(species, collection="extracted", filters=None, withargs=False, tolerance=0.003, verbose=False):
   """ Determines convex-hull of given specie set. """
   from numpy import multiply, sum, array
   from ..hull import Hull3d
@@ -121,7 +122,7 @@ def convex_hull(species, collection="extracted", filters=None, withargs=False, t
   return hull, systems
 
 
-def create_groundstates(collection="extracted", field="groundstate", tolerance=0.003, filters=None):
+def groundstates(collection="extracted", field="groundstate", tolerance=0.003, filters=None):
   """ Trolls database to find all groundstates. """
   from time import time
   from numpy import abs
@@ -150,8 +151,8 @@ def create_groundstates(collection="extracted", field="groundstate", tolerance=0
     group = list(group)
     print "Working on {0}.".format(group)
     timing = time()
-    hull, systems = convex_hull( group, collection=collection, filters=filters,
-                                 withargs=True, tolerance=tolerance, verbose=True )
+    hull, systems = convexhull( group, collection=collection, filters=filters,
+                                withargs=True, tolerance=tolerance, verbose=True )
     timing = time() - timing
     hour = int(float(timing/3600e0))
     minute = int(float((timing - hour*3600)/60e0))
