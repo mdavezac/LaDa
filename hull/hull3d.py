@@ -22,14 +22,14 @@ def create_basis(sample, tolerance=1e-12):
   origin = max(sample, key=lambda x: norm(x-endpoint))
   basis = [(endpoint-origin) / norm(endpoint-origin)]
 
-  def perpendicular(current):
+  def perpendicular(current, base):
     """ Returns vector perpendicular to basis. """
     result = current - origin
-    for a in basis: result -= dot(result, a) * a
+    for a in base: result -= dot(result, a) * a
     return result
 
   while True:
-    perps = [perpendicular(v) for v in sample]
+    perps = [perpendicular(v, basis) for v in sample]
     next = max(perps, key = lambda x: norm(x))
     if norm(next) < tolerance: break
     basis.append(next / norm(next))
@@ -70,13 +70,15 @@ class Triangle(object):
         
         :raise ValueError: if some points are colinear.
     """
+    from numpy import cross
+    from numpy.linalg import norm
     if sample == None: return
     assert len(sample.shape) != 1, ValueError("Sample too small.")
     assert sample.shape[0] == self.dimension + 1, ValueError("Sample should contain 3 vectors.")
 
     # check that points are non-colinear
-    b = create_basis(sample, self.tolerance) 
-    assert b.shape[0] == self.dimension + 1
+    assert norm(cross(sample[1] - sample[0], sample[2] - sample[0])) > 1e-8,\
+           ValueError("Triangle points are co-linear.")
 
     # sets vertices and dimension.
     self._vertices = sample
@@ -232,26 +234,54 @@ class Hull3d(object):
       vertices.append((i*3, i*3+1, i*3+2))
     return x, y, z, vertices
 
-  def projected(self, direction, tolerance):
+  def projected(self, direction = (0,0,-1), tolerance = 1e-12):
     """ Iterates over facets which are facing the given direction. """
-    from numpy.linalg import norm, array
-    from numpy import dot
+    from numpy.linalg import norm
+    from numpy import array, sum
     # finds largest extent in given direction.
-    direction = array(direction.copy(), dtype="float64") / norm(direction)
-    dist = dot(direction, self.facets[0].vertices[0])
-    for facet in self.facets:
-      for vertex in facet.vertices:
-        d = dot(direction, vertex)
-        if d > dist: dist = d
+    direction = array(direction, dtype="float64").copy() / norm(direction)
     # this point should be outside the hull and on the projected side.
-    outside = direction * abs(d)
     # now yields only those facets with positive volumes.
     for facet in self.facets:
-      if facet.volume(outside) <= tolerance: continue 
+      if facet.volume(direction + sum(facet.vertices, axis=0)/3e0) <= tolerance: continue 
       yield facet
 
+  def distance(self, points):
+    """ Distance from convex-hull. 
 
- 
+        Assumes that the last coordinate is the direction of the projection.
+        Which facet to choose from (eg the triangle projected on xy plane) is
+        determined from the barycentric method. As such, it is expected that
+        the points are located in the xy plane within the projection of the
+        convex-hull, and not beyond it.
+    """
+    from numpy import array, any, dot
+    from numpy.linalg import inv, det
+
+    points  = array(points)
+    onepoint = points.ndim == 1
+    if onepoint: points = points.reshape(1, 3)
+    result = [None for u in xrange(points.shape[0])]
+
+    for facet in self.projected():
+
+      # determines inversion matrix.
+      A, B, C =  facet.vertices
+      cell = array([B-A, C-A, [0,0,1]]).T
+      if abs(det(cell)) < 1e-8: continue
+      cell = inv(cell)
+
+      # loop over points.
+      for i, point in enumerate(points):
+        if result[i] != None: continue
+        # determines if point is in triangle using barycentric method
+        coords = dot(cell, (point-A))
+        if any(coords[:2] > (1e0 + 1e-12)) or any(coords[:2] < -1e-12): continue
+        result[i] = coords[2]
+
+    for r in result:  assert r != None
+    return result[0] if onepoint else result
+
 
 def _test(n=5):
   """ Tests hull. """
@@ -266,4 +296,5 @@ def _test(n=5):
   hull = Hull3d(points)
   return hull, points
   
+
 

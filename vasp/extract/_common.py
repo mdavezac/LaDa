@@ -332,8 +332,10 @@ class Extract(object):
     result = self._find_first_OUTCAR(r"""^\s*SYSTEM\s*=.*$""")
     assert result != None, RuntimeError("Could not extract SYSTEM title from OUTCAR.")
     result = result.group(0)
-    result = result[result.index('=')+1:]
-    return result.rstrip().lstrip()
+    result = result[result.index('=')+1:].rstrip().lstrip()
+    if result[0] == '"': result = result[1:]
+    if result[-1] == '"': result = result[:-1]
+    return result
 
   @broadcast_result(attr=True, which=0)
   def _unpolarized_values(self, which):

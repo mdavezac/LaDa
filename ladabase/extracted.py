@@ -119,7 +119,8 @@ def to_secondary(collection='extracted', filter=None, items=None, update=False):
   for element in ladabase.files.find(filter):
     extract = VaspExtract(element)
     encoded = encoder(extract)
-    indatabase = [k for k in collection.find(extract._id)]
+
+    indatabase = [k for k in collection.find({'_id': extract._id})]
     if len(indatabase) == 1:
       if update: encoded['_id'] = indatabase[0]['_id']
       else: continue
