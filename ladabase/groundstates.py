@@ -62,7 +62,7 @@ def _add_elements(collection='extracted'):
   collection = ladabase.database[collection]
   for key, value in chain(mus_final.iteritems(), mus_fix.iteritems()):
     indatabase = [k for k in collection.find({'elemental': key})]
-    r = {'total_energies': value.magnitude.tolist(), 'elemental': key}
+    r = {'total_energy': value.magnitude.tolist(), 'elemental': key}
     if len(indatabase) == 1: r['_id'] = indatabase[0]['_id']
     elif len(indatabase) > 1: 
       raise RuntimeError('found more than one items corresponding to the element {0}.'.format(key))
@@ -79,29 +79,35 @@ def merge_queries(d, filters):
     else: d[key] = value
   return d
 
-def convex_hull(species, collection="extracted", filters=None, withargs=False, tolerance=0.003):
+def convex_hull(species, collection="extracted", filters=None, withargs=False, tolerance=0.003, verbose=False):
   """ Determines convex-hull of given specie set. """
   from numpy import multiply, sum, array
   from ..hull import Hull3d
+  from . import Manager
   assert len(species) == 3
   
+  if isinstance(collection, str):
+    ladabase = Manager()
+    collection = ladabase.database[collection]
+
   # list of all systems with elements of interest.
   query = merge_queries({'species': {'$all': species}}, filters)
   fields = ['total_energy', 'species', 'ions_per_specie', 'system']
   systems = [k for k in collection.find(query, fields=fields)]
 
   # correctly ordered list of elemental energies.
-  elementals = [collection.find_one({'elemental': k})['total_energies'] for k in species]
+  elementals = [collection.find_one({'elemental': k})['total_energy'] for k in species]
   # loop over systems an add a concentration.
   def point3d(group, stoechiometry, energy):
     """ Computes concentration from species and stoeckiometry. """
     stoechiometry = array([(0 if u not in group else float(stoechiometry[group.index(u)])) for u in species])
     energy -= sum(multiply(elementals, stoechiometry))
     N = float(sum(stoechiometry))
-    return stoechiometry[0] / N, stoechiometry[1] / N, energy / N
+    return [stoechiometry[0] / N, stoechiometry[1] / N, energy / N]
 
   points = [ point3d(system['species'], system['ions_per_specie'], system['total_energy']) \
              for system in systems ]
+  if verbose: print "  Found {0} points, excluding elementals.".format(len(points))
   points.append([1, 0, 0])
   points.append([0, 1, 0])
   points.append([0, 0, 0])
@@ -109,12 +115,15 @@ def convex_hull(species, collection="extracted", filters=None, withargs=False, t
   # creates and returns convex hull.
   hull = Hull3d(points, tolerance=tolerance**2)
   if not withargs: return hull
-  for system, point in zip(systems, points): system['distance'] = hull.distance(point)
+  for system, point in zip(systems, points):
+    system['distance'] = hull.distance(point)
+    system['deltaH'] = point[2]
   return hull, systems
 
 
 def create_groundstates(collection="extracted", field="groundstate", tolerance=0.003, filters=None):
   """ Trolls database to find all groundstates. """
+  from time import time
   from numpy import abs
   from . import Manager
 
@@ -139,17 +148,24 @@ def create_groundstates(collection="extracted", field="groundstate", tolerance=0
   # now loop over 3d convex-hulls.
   for group in threes:
     group = list(group)
+    print "Working on {0}.".format(group)
+    timing = time()
     hull, systems = convex_hull( group, collection=collection, filters=filters,
-                                 withargs=True, tolerance=tolerance )
+                                 withargs=True, tolerance=tolerance, verbose=True )
+    timing = time() - timing
+    hour = int(float(timing/3600e0))
+    minute = int(float((timing - hour*3600)/60e0))
+    second = (timing - hour*3600-minute*60)
+    print "  created-convex hull in {0:2>}:{0:2>}:{0:12.8e}.".format(hour, minute, second)
     for system in systems:
       if abs(system['distance']) <= tolerance: 
         collection.update( {'_id': system['_id']},
-                           {'$set': {field: 1, 'distance': system['distance']}})
+                           {'$set': {field: 1, 'distance': system['distance'], 'deltaH': system['deltaH']}})
       else:
         collection.update( {'_id': system['_id']},
-                           {'$unset': {field: 1}, '$set': {'distance': system['distance']}})
+                           { '$unset': {field: 1},
+                             '$set': {'distance': system['distance'], 'deltaH': system['deltaH']} } )
     
-
   # no twos yet.
   # twoiter = collection.find( { 'species': {'$size': 2},
   #                              'total_energy': {'$exists': 1} },

@@ -159,8 +159,10 @@ class Hull3d(object):
     if sample == None: return;
     base = self._start(sample)
     self._facets = [base]
+    self.indent = "  "
     self._dome(sample, self._facets[-1])
     self._facets.append(base.inverted())
+    self.indent = "  "
     self._dome(sample, self._facets[-1])
 
   def _start(self, sample):
@@ -201,9 +203,13 @@ class Hull3d(object):
       volumes = [facet.volume(pivot) for facet in self._facets]
       deleting = [facet for facet, vol in zip(self._facets, volumes) if vol >= -self.tolerance]
       self._facets = [facet for facet, vol in zip(self._facets, volumes) if vol < -self.tolerance]
+      N = len(self._facets)
       for edge in self._horizon(deleting):
         self._facets.append( Triangle(concatenate((edge, [pivot]))) )
-      for facet in self._facets: self._dome(outer, facet)
+      for facet in self._facets[N:len(self._facets)]:
+        self.indent += "  "
+        self._dome(outer, facet)
+        self.indent = self.indent[:-2]
 
   def _horizon(self, deleting):
     """ Iterates over horizon edges. """
@@ -276,7 +282,7 @@ class Hull3d(object):
         if result[i] != None: continue
         # determines if point is in triangle using barycentric method
         coords = dot(cell, (point-A))
-        if any(coords[:2] > (1e0 + 1e-12)) or any(coords[:2] < -1e-12): continue
+        if any(coords[:2] < -1e-12) or sum(coords[:2]) > 1e0: continue
         result[i] = coords[2]
 
     for r in result:  assert r != None
