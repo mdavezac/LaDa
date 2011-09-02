@@ -27,7 +27,7 @@ class JobParams(AbstractMassExtract):
         :kwarg dynamic: Whether to choose a slower but more dynamic caching
                         method. True by default.
     """
-    from . import default_params as default
+    from .. import only_existing_jobparams as only_existing
     if 'dynamic' not in kwargs: kwargs['dynamic'] = True
     AbstractMassExtract.__init__(self, **kwargs)
 
@@ -35,7 +35,7 @@ class JobParams(AbstractMassExtract):
     self._jobdict = jobdict
     """ Job-dictionary for which to get/set parameters. """
     super(JobParams, self).__setattr__("only_existing", None)
-    self.only_existing = kwargs.get('only_existing', default.only_existing)
+    self.only_existing = kwargs.get('only_existing', only_existing)
     """ Only modifies parameter which already exist. """
 
 

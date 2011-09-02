@@ -10,15 +10,13 @@
 __docformat__ = "restructuredtext en"
 __all__ = ['JobDict', 'walk_through', 'save', 'load', 'MassExtract',
            'AbstractMassExtract', 'AbstractMassExtractDirectories', 'Bleeder',
-           'default_params', 'JobParams', 'SuperCall']
+           'JobParams', 'SuperCall']
 
 from ..opt.decorators import broadcast_result
 from .bleeder import Bleeder
 from .jobdict import JobDict, SuperCall
 from .manipulator import JobParams
 from .extract import AbstractMassExtract, MassExtract, AbstractMassExtractDirectories
-import default_params
-DefaultParams = default_params
 
 @broadcast_result(key=True)
 def save(jobdict, path = None, overwrite=False): 
