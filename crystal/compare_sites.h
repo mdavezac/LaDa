@@ -195,7 +195,7 @@ namespace LaDa
     //! Returns a functor to compare sites according to positions and/or occupations.
     template<class T_TYPE>
       CompareOccupations<T_TYPE> compare_occupations(T_TYPE const &_origin)
-        { return CompareOccupations<T_TYPE>(_origin.type); }
+        { return CompareOccupations<T_TYPE>(_origin); }
   } // namespace Crystal
 } // namespace LaDa
 #endif

@@ -48,13 +48,14 @@ int main()
             cell(2,1) = f;
             TemplateStructure< std::vector<std::string> > structure = supercell(lattice, cell);
             structure = primitive(structure);
-            if( not eq(lattice.cell().determinant(), structure.cell().determinant(), 1e-5) )
+            if( not eq(lattice.cell().determinant(), structure.cell().determinant(), 1e-8) )
             {
               std::cout << cell << "\n\n";
               std::cout << structure.cell() << "\n\n";
               std::cout << lattice.cell().inverse() * structure.cell() << "\n\n";
             }
-            LADA_DOASSERT(eq(lattice.cell().determinant(), structure.cell().determinant(), 1e-5), "Not primitive.\n");
+            LADA_DOASSERT( eq(lattice.cell().determinant(), structure.cell().determinant(), 1e-5),\
+                           "Not primitive.\n");
             LADA_DOASSERT(is_integer(structure.cell() * lattice.cell().inverse(), 1e-5), "Not a sublattice.\n");
             LADA_DOASSERT(is_integer(lattice.cell() * structure.cell().inverse(), 1e-5), "Not a sublattice.\n");
             t_Str::const_iterator i_atom = structure.begin();

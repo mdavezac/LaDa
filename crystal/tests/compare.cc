@@ -41,7 +41,7 @@ int main()
   using namespace LaDa::crystal;
   using namespace LaDa::math;
   Atom< LADA_TYPE > a, b;
-  a.pos = rVector3d(0.1, 0.2, 0.1);
+  a.pos = rVector3d(-0.75, -0.75, -0.75);
   b.pos = rVector3d(0.3, 0.2, 0.1);
   LADA_INIT_TYPE0;
   LADA_INIT_TYPE1;
@@ -52,6 +52,12 @@ int main()
   LADA_DOASSERT(compare_sites(a)(a.pos), "not equivalent.\n");
   LADA_DOASSERT(compare_sites(a)(a.type), "not equivalent.\n");
   LADA_DOASSERT(compare_sites(a)(a), "not equivalent.\n");
+  LADA_DOASSERT(not compare_sites(b)(a.type), "equivalent.\n");
+  LADA_DOASSERT(not compare_sites(b)(a.pos), "equivalent.\n");
+  LADA_DOASSERT(not compare_sites(b)(a), "equivalent.\n");
+  LADA_DOASSERT(compare_sites(b)(b.pos), "not equivalent.\n");
+  LADA_DOASSERT(compare_sites(b)(b.type), "not equivalent.\n");
+  LADA_DOASSERT(compare_sites(b)(b), "not equivalent.\n");
   b.pos = a.pos;
   LADA_DOASSERT(not compare_sites(a)(b), "equivalent.\n");
   LADA_DOASSERT(compare_sites(a)(b.pos), "not equivalent.\n");
@@ -60,7 +66,8 @@ int main()
   LADA_DOASSERT(not compare_sites(a)(b), "equivalent.\n");
   LADA_DOASSERT(compare_sites(a)(b.type), "not equivalent.\n");
   b.pos = a.pos;
-  LADA_DOASSERT(compare_sites(a)(b), "equivalent.\n");
+  LADA_DOASSERT(compare_sites(a)(b), "not equivalent.\n");
+  LADA_DOASSERT(not compare_sites(a)(b.pos+math::rVector3d(1e1*types::tolerance,0,0)), "equivalent.\n");
 # if LADA_TEST_INCTYPE >= 3 and LADA_TEST_INCTYPE <= 5
   b.type.pop_back();
   LADA_DOASSERT(not compare_sites(a)(b), "equivalent.\n");

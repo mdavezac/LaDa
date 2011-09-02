@@ -134,23 +134,34 @@ namespace LaDa
         result.clear();
         result.cell() = math::gruber(new_cell);
         math::rMatrix3d const inv_cell(result.cell().inverse());
-        types::t_real const ratio = result.volume() / _structure.volume();
         for(i_site = _structure.begin(); i_site != i_site_end; ++i_site)
         {
           math::rVector3d const pos = into_cell(i_site->pos, result.cell(), inv_cell); 
           CompareSites<T_TYPE> const check(pos, i_site->type, _tolerance);
-          typename t_Sites::iterator i_found = std::find_if(result.begin(), result.end(), check);
+//         std::cout << ~pos << " " << *i_site << "\n";
+//         std::cout << result << "\n\n";
+          typename t_Sites::iterator i_found = result.begin(); 
+          typename t_Sites::iterator const i_fend = result.end(); 
+          for(; i_found != i_fend; ++i_found)
+            if(check(i_found->pos)) break;
           if( i_found == result.end() )
           {
+            if( result.size() >  1 )
+            std::cout << ~pos << " " << ~result.back().pos << " - " 
+                      << compare_positions(pos, _tolerance)(result.back().pos) << " "
+                      << compare_occupations(i_site->type)(result.back().type) << "\n";
             result.push_back(*i_site);
-            result.back().pos = pos * ratio;
-          }
-          else
-          {
-            i_found->pos += i_site->pos * ratio;
+            result.back().pos = pos;
           }
         }
-        if(_structure.size() % result.size() == 0) BOOST_THROW_EXCEPTION(error::internal());
+        std::cout << _structure.size() << " " << result.size() << " "
+                  << _structure.volume() << " " << result.volume() << "\n";
+        if(_structure.size() % result.size() != 0) BOOST_THROW_EXCEPTION(error::internal());
+        std::cout << types::t_real(_structure.size()/result.size()) << " "
+                  << _structure.volume()/result.volume() << "\n"
+                  << _structure.size() << " " << result.size() << " "
+                  << _structure.volume() << " " << result.volume() << "\n";
+        if(math::neq(types::t_real(_structure.size()/result.size()), _structure.volume()/result.volume()))
         if(math::neq(types::t_real(_structure.size()/result.size()), _structure.volume()/result.volume()))
           BOOST_THROW_EXCEPTION(error::internal());
   
