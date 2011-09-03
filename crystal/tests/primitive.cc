@@ -13,7 +13,7 @@ int main()
   using namespace LaDa::crystal;
   using namespace LaDa::math;
   typedef TemplateStructure< std::vector<std::string> > t_Str; 
-  TemplateStructure< std::vector<std::string> > lattice; 
+  TemplateStructure< std::vector<std::string> > lattice, lat; 
   lattice.set_cell(0,0.5,0.5)
                   (0.5,0,0.5)
                   (0.5,0.5,0);
@@ -46,26 +46,45 @@ int main()
           for(size_t f(0); f < c and cont; ++f) 
           {
             cell(2,1) = f;
-            TemplateStructure< std::vector<std::string> > structure = supercell(lattice, cell);
-            structure = primitive(structure);
-            if( not eq(lattice.cell().determinant(), structure.cell().determinant(), 1e-8) )
-            {
-              std::cout << cell << "\n\n";
-              std::cout << structure.cell() << "\n\n";
-              std::cout << lattice.cell().inverse() * structure.cell() << "\n\n";
+            { 
+              TemplateStructure< std::vector<std::string> > structure = supercell(lattice, cell);
+              structure = primitive(structure, 1e-8);
+              LADA_DOASSERT( eq(lattice.cell().determinant(), structure.cell().determinant(), 1e-5),\
+                             "Not primitive.\n");
+              LADA_DOASSERT(is_integer(structure.cell() * lattice.cell().inverse(), 1e-5), "Not a sublattice.\n");
+              LADA_DOASSERT(is_integer(lattice.cell() * structure.cell().inverse(), 1e-5), "Not a sublattice.\n");
+              t_Str::const_iterator i_atom = structure.begin();
+              t_Str::const_iterator const i_atom_end = structure.end();
+              for(; i_atom != i_atom_end; ++i_atom)
+              {
+                LADA_DOASSERT(compare_sites(lattice[i_atom->site])(i_atom->type), "Inequivalent occupation.\n");
+                LADA_DOASSERT( is_integer(lattice.cell().inverse()*(i_atom->pos - lattice[i_atom->site].pos), 1e-5),
+                               "Inequivalent positions.\n") 
+              }
             }
-            LADA_DOASSERT( eq(lattice.cell().determinant(), structure.cell().determinant(), 1e-5),\
-                           "Not primitive.\n");
-            LADA_DOASSERT(is_integer(structure.cell() * lattice.cell().inverse(), 1e-5), "Not a sublattice.\n");
-            LADA_DOASSERT(is_integer(lattice.cell() * structure.cell().inverse(), 1e-5), "Not a sublattice.\n");
-            t_Str::const_iterator i_atom = structure.begin();
-            t_Str::const_iterator const i_atom_end = structure.end();
-            for(; i_atom != i_atom_end; ++i_atom)
+
+           lattice[1].type.clear();
+           lattice[1].type.push_back("Si");
             {
-              LADA_DOASSERT(compare_sites(lattice[i_atom->site])(i_atom->type), "Inequivalent occupation.\n");
-              LADA_DOASSERT( is_integer(lattice.cell().inverse()*(i_atom->pos - lattice[i_atom->site].pos), 1e-5),
-                             "Inequivalent positions.\n") 
+              TemplateStructure< std::vector<std::string> >structure = supercell(lattice, cell);
+              structure = primitive(structure, 1e-8);
+              LADA_DOASSERT( eq(lattice.cell().determinant(), structure.cell().determinant(), 1e-5),\
+                             "Not primitive.\n");
+              LADA_DOASSERT(is_integer(structure.cell() * lattice.cell().inverse(), 1e-5), "Not a sublattice.\n");
+              LADA_DOASSERT(is_integer(lattice.cell() * structure.cell().inverse(), 1e-5), "Not a sublattice.\n");
+              t_Str::const_iterator i_atom = structure.begin();
+              t_Str::const_iterator const i_atom_end = structure.end();
+              for(; i_atom != i_atom_end; ++i_atom)
+              {
+                LADA_DOASSERT(compare_sites(lattice[i_atom->site])(i_atom->type), "Inequivalent occupation.\n");
+                LADA_DOASSERT( is_integer(lattice.cell().inverse()*(i_atom->pos - lattice[i_atom->site].pos), 1e-5),
+                               "Inequivalent positions.\n") 
+              }
             }
+ 
+           lattice[1].type.clear();
+           lattice[1].type.push_back("Si");
+           lattice[1].type.push_back("Ge");
           } // f
         } // e
       } // d

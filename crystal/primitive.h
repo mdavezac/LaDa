@@ -52,22 +52,21 @@ namespace LaDa
           if( not compsites(i_site->type) ) continue;
   
           // creates translation.
-          math::rVector3d const translation(i_site->pos - center);
+          math::rVector3d const translation = into_voronoi(i_site->pos - center, cell, inv);
           
           // loop on null translation.
           if( math::is_null(translation, _tolerance) ) continue;
   
           // checks that it leaves the lattice invariant.
           typename t_Sites :: const_iterator i_mapping = _structure.begin();
+          typename t_Sites::iterator const i_fend = result.end(); 
           for(; i_mapping != i_site_end; ++i_mapping)
           {
-            CompareSites<T_TYPE> const check
-              (
-                into_cell( i_mapping->pos + translation, cell, inv ),
-                i_mapping->type, _tolerance
-              );
-  
-            if( std::find_if(_structure.begin(), _structure.end(), check) == result.end() ) break;
+            math::rVector3d const pos = into_cell(i_mapping->pos + translation, cell, inv);
+            CompareSites<T_TYPE> const cmp(pos, i_mapping->type, _tolerance);
+            typename t_Sites::iterator i_found = result.begin(); 
+            for(; i_found != i_fend; ++i_found) if(cmp(*i_found)) break;
+            if(i_found == i_fend) break;
           }
   
           if( i_mapping != i_site_end ) continue;
@@ -106,18 +105,21 @@ namespace LaDa
   
               // singular matrix?
               types::t_real const det(trial.determinant());
-              if( math::is_null(det) ) continue;
+              if( math::is_null(det, 3e0*_tolerance) ) continue;
               // Volume smaller than current new_cell?
-              if( math::geq(std::abs(det), volume) ) continue;
+              if( math::geq(std::abs(det), volume, 3e0 * _tolerance) ) continue;
               // Direct matrix?
               if( det < 0e0 )
               {
                 trial.col(2) = *i_second;
                 trial.col(1) = *i_third;
-                LADA_ASSERT(trial.determinant() > 0, "Shouldn't happen.\n");
+#               ifdef LADA_DEBUG
+                  if(trial.determinant() < types::tolerance)
+                    BOOST_THROW_EXCEPTION(error::internal() << error::string("Negative volume."));
+#               endif
               }
               // Checks that original cell is a supercell.
-              if( not math::is_integer(new_cell.inverse() * result.cell(), _tolerance) ) continue;
+              if( not math::is_integer(trial.inverse() * result.cell(), _tolerance) ) continue;
   
               // Checks that all lattice sites are integers.
               volume = std::abs(det);
@@ -138,32 +140,26 @@ namespace LaDa
         {
           math::rVector3d const pos = into_cell(i_site->pos, result.cell(), inv_cell); 
           CompareSites<T_TYPE> const check(pos, i_site->type, _tolerance);
-//         std::cout << ~pos << " " << *i_site << "\n";
-//         std::cout << result << "\n\n";
           typename t_Sites::iterator i_found = result.begin(); 
           typename t_Sites::iterator const i_fend = result.end(); 
           for(; i_found != i_fend; ++i_found)
-            if(check(i_found->pos)) break;
-          if( i_found == result.end() )
           {
-            if( result.size() >  1 )
-            std::cout << ~pos << " " << ~result.back().pos << " - " 
-                      << compare_positions(pos, _tolerance)(result.back().pos) << " "
-                      << compare_occupations(i_site->type)(result.back().type) << "\n";
+            if(check(*i_found)) break;
+          }
+          if( i_found == i_fend )
+          {
             result.push_back(*i_site);
             result.back().pos = pos;
           }
         }
-        std::cout << _structure.size() << " " << result.size() << " "
-                  << _structure.volume() << " " << result.volume() << "\n";
-        if(_structure.size() % result.size() != 0) BOOST_THROW_EXCEPTION(error::internal());
-        std::cout << types::t_real(_structure.size()/result.size()) << " "
-                  << _structure.volume()/result.volume() << "\n"
-                  << _structure.size() << " " << result.size() << " "
-                  << _structure.volume() << " " << result.volume() << "\n";
+        if(_structure.size() % result.size() != 0)
+          BOOST_THROW_EXCEPTION
+          ( 
+             error::internal() 
+               << error::string("Nb of atoms in output not multiple of input.")
+          );
         if(math::neq(types::t_real(_structure.size()/result.size()), _structure.volume()/result.volume()))
-        if(math::neq(types::t_real(_structure.size()/result.size()), _structure.volume()/result.volume()))
-          BOOST_THROW_EXCEPTION(error::internal());
+          BOOST_THROW_EXCEPTION(error::internal() << error::string("Size and volumes do not match."));
   
         return result;
       }

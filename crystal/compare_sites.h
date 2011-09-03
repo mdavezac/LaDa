@@ -38,7 +38,7 @@ namespace LaDa
           CompareOccupations(CompareOccupations const &_c) : reference_(_c.reference_) {}
           //! Performs comparison.
           bool operator()( T_TYPE const& _type ) const { return cmp_<T_TYPE>(_type); }
-        private:
+        protected:
           //! Object to which to compare.
           T_TYPE reference_;
           //! Compares string or integer occupation.
@@ -71,7 +71,7 @@ namespace LaDa
           CompareOccupations(CompareOccupations const &_c) : reference_(_c.reference_) {}
           //! Performs comparison.
           bool operator()( T_TYPE const& _type ) const { return cmp_<T_TYPE>(_type); }
-        private:
+        protected:
           //! Object to which to compare.
           T_TYPE reference_;
           //! Compares string or integer occupations.
@@ -128,7 +128,7 @@ namespace LaDa
           CompareOccupations(CompareOccupations const &_c) : reference_(_c.reference_) {}
           //! Performs comparison.
           bool operator()( T_TYPE const& _type ) const { return _type == reference_; }
-        private:
+        protected:
           //! Object to which to compare.
           T_TYPE reference_;
       };
@@ -137,9 +137,10 @@ namespace LaDa
     struct ComparePositions
     {
       public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
         //! Constructor.
         template<class T_DERIVED>
-        ComparePositions   (Eigen::DenseBase<T_DERIVED> const &_ref, types::t_real _tol=types::tolerance)
+        ComparePositions   ( Eigen::DenseBase<T_DERIVED> const &_ref, types::t_real _tol=types::tolerance)
                          : reference_(_ref), tolerance_(_tol) {}
         //! Copy constructor.
         ComparePositions(ComparePositions const &_c) : reference_(_c.reference_), tolerance_(_c.tolerance_) {}
@@ -147,11 +148,38 @@ namespace LaDa
         template<class T_DERIVED>
           bool operator()(Eigen::DenseBase<T_DERIVED> const& _pos) const
             { return math::eq(_pos, reference_, tolerance_); }
-      private:
+      protected:
         //! Object to which to compare.
         math::rVector3d reference_;
         //! Tolerance for comparison.
         types::t_real tolerance_;
+    };
+    
+    //! Comparison positions with tolerance a function of distance.
+    struct RelComparePositions
+    {
+      public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+        //! Constructor.
+        template<class T_DERIVED>
+        RelComparePositions   ( Eigen::DenseBase<T_DERIVED> const &_ref,
+                                types::t_real _linear=types::tolerance,
+                                types::t_real _constant=types::tolerance )
+                            : reference_(_ref), linear_(_linear), constant_(_constant) {}
+        //! Performs comparison.
+        template<class T_DERIVED>
+          bool operator()(Eigen::DenseBase<T_DERIVED> const& _pos) const
+            { return math::eq(_pos, reference_, linear_ * (_pos-reference_).norm() + constant_); }
+        //! Performs comparison.
+        bool operator()(math::rVector3d const& _pos) const
+          { return math::eq(_pos, reference_, linear_ * (_pos-reference_).norm() + constant_); }
+      protected:
+        //! Object to which to compare.
+        math::rVector3d reference_;
+        //! Linear tolerance, with respect to norm. 
+        types::t_real linear_;
+        //! constant tolerance
+        types::t_real constant_;
     };
 
     //! Compares both position and types.
@@ -162,11 +190,11 @@ namespace LaDa
         CompareSites   (Atom<T_TYPE> const _atom, types::t_real _tol=types::tolerance) 
                      : CompareOccupations<T_TYPE>(_atom.type), ComparePositions(_atom.pos, _tol) {}
         template<class T>
-        CompareSites   ( Eigen::DenseBase<T> const _pos,
+        CompareSites   ( Eigen::DenseBase<T> const &_pos,
                          T_TYPE const &_type, 
                          types::t_real _tol=types::tolerance ) 
                      : CompareOccupations<T_TYPE>(_type), ComparePositions(_pos, _tol) {}
-
+        CompareSites(CompareSites const &_c) : CompareOccupations<T_TYPE>(_c), ComparePositions(_c) {}
         //! Compares both position and types.
         bool operator()(Atom<T_TYPE> const& _atom) const
           { return     CompareOccupations<T_TYPE>::operator()(_atom.type)
@@ -180,6 +208,34 @@ namespace LaDa
             { return ComparePositions::operator()(_pos); }
       };
 
+    //! Compares both position and types.
+    template<class T_TYPE>
+      struct RelCompareSites : public CompareOccupations<T_TYPE>, public RelComparePositions
+      {
+        //! Constructor.
+        RelCompareSites   ( Atom<T_TYPE> const _atom,
+                            types::t_real _linear=types::tolerance, 
+                            types::t_real _constant=types::tolerance ) 
+                        : CompareOccupations<T_TYPE>(_atom.type), 
+                          RelComparePositions(_atom.pos, _linear, _constant) {}
+        template<class T>
+        RelCompareSites   ( Eigen::DenseBase<T> const &_pos,
+                            T_TYPE const &_type, 
+                            types::t_real _linear=types::tolerance,
+                            types::t_real _constant=types::tolerance ) 
+                        : CompareOccupations<T_TYPE>(_type), RelComparePositions(_pos, _linear, _constant) {}
+        //! Compares both position and types.
+        bool operator()(Atom<T_TYPE> const& _atom) const
+          { return     CompareOccupations<T_TYPE>::operator()(_atom.type)
+                   and RelComparePositions::operator()(_atom.pos); }
+        //! Performs comparison.
+        bool operator()( T_TYPE const& _type ) const
+          { return CompareOccupations<T_TYPE>::operator()(_type); }
+        //! Performs comparison.
+        template<class T_DERIVED>
+          bool operator()(Eigen::DenseBase<T_DERIVED> const& _pos) const
+            { return RelComparePositions::operator()(_pos); }
+      };
 
 
     //! Returns a functor to compare sites according to positions and/or occupations.
@@ -187,6 +243,19 @@ namespace LaDa
       CompareSites<T_TYPE> compare_sites( Atom<T_TYPE> const &_origin,
                                           types::t_real _tolerance = types::tolerance )
         { return CompareSites<T_TYPE>(_origin, _tolerance); }
+    //! Returns a functor to compare sites according to positions and/or occupations.
+    template<class T, class T_TYPE>
+      CompareSites<T_TYPE> compare_sites( Eigen::DenseBase<T> const &_pos, 
+                                          T_TYPE const &_type, 
+                                          types::t_real _tolerance = types::tolerance )
+        { return CompareSites<T_TYPE>(_pos, _type, _tolerance); }
+    //! Returns a functor to compare sites according to positions and/or occupations.
+    template<class T, class T_TYPE>
+      RelCompareSites<T_TYPE> relcompare_sites( Eigen::DenseBase<T> const &_pos, 
+                                                T_TYPE const &_type, 
+                                                types::t_real _linear = types::tolerance,
+                                                types::t_real _constant = types::tolerance )
+        { return RelCompareSites<T_TYPE>(_pos, _type, _linear, _constant); }
     //! Returns a functor to compare sites according to positions.
     template<class T_TYPE>
       ComparePositions compare_positions( Eigen::DenseBase<T_TYPE> const &_origin,

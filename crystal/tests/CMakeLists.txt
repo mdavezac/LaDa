@@ -52,6 +52,15 @@ if(NOT compile_debug_tests)
     ADD_TEST(init${TYPE} ${CMAKE_CURRENT_BINARY_DIR}/init${TYPE})
   endforeach(TYPE)
 
+  set(TYPES 0 1 2 3 4 5 6)
+  foreach(TYPE ${TYPES})
+    add_executable(compare${TYPE} compare.cc)
+    target_link_libraries(compare${TYPE} crystal)
+    set_property( TARGET compare${TYPE} PROPERTY COMPILE_DEFINITIONS
+                  LADA_TEST_INCTYPE=${TYPE})
+    ADD_TEST(compare${TYPE} ${CMAKE_CURRENT_BINARY_DIR}/compare${TYPE})
+  endforeach(TYPE)
+
 endif(NOT compile_debug_tests)
 
   add_executable(primitive primitive.cc)
@@ -62,12 +71,3 @@ endif(NOT compile_debug_tests)
     set_property(TARGET primitive PROPERTY COMPILE_DEFINITIONS LADA_LIM=9)
   endif(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
   ADD_TEST(primitive ${CMAKE_CURRENT_BINARY_DIR}/primitive)
-
-  set(TYPES 0 1 2 3 4 5 6)
-  foreach(TYPE ${TYPES})
-    add_executable(compare${TYPE} compare.cc)
-    target_link_libraries(compare${TYPE} crystal)
-    set_property( TARGET compare${TYPE} PROPERTY COMPILE_DEFINITIONS
-                  LADA_TEST_INCTYPE=${TYPE})
-    ADD_TEST(compare${TYPE} ${CMAKE_CURRENT_BINARY_DIR}/compare${TYPE})
-  endforeach(TYPE)
