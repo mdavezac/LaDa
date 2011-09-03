@@ -12,14 +12,19 @@ int main()
   using namespace LaDa;
   using namespace LaDa::crystal;
   using namespace LaDa::math;
-  typedef TemplateStructure< std::vector<std::string> > t_Str; 
-  TemplateStructure< std::vector<std::string> > lattice, lat; 
+  typedef TemplateStructure< LADA_TYPE > t_Str; 
+  TemplateStructure< LADA_TYPE > lattice, lat; 
   lattice.set_cell(0,0.5,0.5)
                   (0.5,0,0.5)
                   (0.5,0.5,0);
   lattice.add_atom(0,0,0, "Si")
                   (0.25,0.25,0.25, "Si", "Ge");
-  rMatrix3d cell;
+  lat.set_cell(0,0.5,0.5)
+              (0.5,0,0.5)
+              (0.5,0.5,0);
+  lat.add_atom(0,0,0, "Si")
+              (0.25,0.25,0.25, "Si");
+  rMatrix3d cell = rMatrix3d::Zero();
 
   size_t nmax= LADA_LIM;
   bool cont = true;
@@ -47,7 +52,7 @@ int main()
           {
             cell(2,1) = f;
             { 
-              TemplateStructure< std::vector<std::string> > structure = supercell(lattice, cell);
+              TemplateStructure< LADA_TYPE > structure = supercell(lattice, lattice.cell()*cell);
               structure = primitive(structure, 1e-8);
               LADA_DOASSERT( eq(lattice.cell().determinant(), structure.cell().determinant(), 1e-5),\
                              "Not primitive.\n");
@@ -63,28 +68,22 @@ int main()
               }
             }
 
-           lattice[1].type.clear();
-           lattice[1].type.push_back("Si");
             {
-              TemplateStructure< std::vector<std::string> >structure = supercell(lattice, cell);
+              TemplateStructure< LADA_TYPE >structure = supercell(lat, cell);
               structure = primitive(structure, 1e-8);
-              LADA_DOASSERT( eq(lattice.cell().determinant(), structure.cell().determinant(), 1e-5),\
+              LADA_DOASSERT( eq(lat.cell().determinant(), structure.cell().determinant(), 1e-5),\
                              "Not primitive.\n");
-              LADA_DOASSERT(is_integer(structure.cell() * lattice.cell().inverse(), 1e-5), "Not a sublattice.\n");
-              LADA_DOASSERT(is_integer(lattice.cell() * structure.cell().inverse(), 1e-5), "Not a sublattice.\n");
+              LADA_DOASSERT(is_integer(structure.cell() * lat.cell().inverse(), 1e-5), "Not a sublattice.\n");
+              LADA_DOASSERT(is_integer(lat.cell() * structure.cell().inverse(), 1e-5), "Not a sublattice.\n");
               t_Str::const_iterator i_atom = structure.begin();
               t_Str::const_iterator const i_atom_end = structure.end();
               for(; i_atom != i_atom_end; ++i_atom)
               {
-                LADA_DOASSERT(compare_sites(lattice[i_atom->site])(i_atom->type), "Inequivalent occupation.\n");
-                LADA_DOASSERT( is_integer(lattice.cell().inverse()*(i_atom->pos - lattice[i_atom->site].pos), 1e-5),
+                LADA_DOASSERT(compare_sites(lat[i_atom->site])(i_atom->type), "Inequivalent occupation.\n");
+                LADA_DOASSERT( is_integer(lat.cell().inverse()*(i_atom->pos - lat[i_atom->site].pos), 1e-5),
                                "Inequivalent positions.\n") 
               }
             }
- 
-           lattice[1].type.clear();
-           lattice[1].type.push_back("Si");
-           lattice[1].type.push_back("Ge");
           } // f
         } // e
       } // d

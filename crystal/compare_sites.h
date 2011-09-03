@@ -137,7 +137,6 @@ namespace LaDa
     struct ComparePositions
     {
       public:
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
         //! Constructor.
         template<class T_DERIVED>
         ComparePositions   ( Eigen::DenseBase<T_DERIVED> const &_ref, types::t_real _tol=types::tolerance)
@@ -159,7 +158,6 @@ namespace LaDa
     struct RelComparePositions
     {
       public:
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
         //! Constructor.
         template<class T_DERIVED>
         RelComparePositions   ( Eigen::DenseBase<T_DERIVED> const &_ref,
