@@ -1,6 +1,6 @@
 set( LIBCRYSTAL_HEADERS 
      atom.h structure.h structure_data.h add_atom.h is_container.h
-     utilities.h compare_sites.h space_group.h neighbors.h)
+     utilities.h compare_sites.h space_group.h neighbors.h map_sites.h)
 #    atom.h divide_and_conquer.h epi_structure.h fractional_cartesian.h layerdepth.h 
 #    read_structure.h structure.impl.h compare_sites.h divide_and_conquer.impl.h 
 #    fill_structure.h neighbors.h smith.h symmetry_operator.h 

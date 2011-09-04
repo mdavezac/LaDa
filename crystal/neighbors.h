@@ -61,16 +61,20 @@ namespace LaDa
          math::rVector3d origin;
          //! tolerance to use in comparisons.
          types::t_real tolerance;
+         //! Whethe to include atom at distance "zero".
+         bool with_self;
 
          //! Constructor.
          template<class T>
            Neighbors   ( size_t _nmax,
                          Eigen::DenseBase<T> const &_vec,
-                         types::t_real _tol = types::tolerance )
-                     : nmax(_nmax), origin(_vec), tolerance(_tol) {};
+                         types::t_real _tol = types::tolerance,
+                         bool _ws = false )
+                     : nmax(_nmax), origin(_vec), tolerance(_tol), with_self(_ws) {};
          //! Constructor.
          Neighbors   ( size_t _nmax = 0 )
-                   : nmax(_nmax), origin(math::rVector3d::Zero()), tolerance(types::tolerance) {};
+                   : nmax(_nmax), origin(math::rVector3d::Zero()), 
+                     tolerance(types::tolerance), with_self(false) {};
          //! returns iterator to first neighbor list.
          const_iterator begin() const { return neighbors_.begin(); }
          //! constructs first neighbor list and returns first iterator.
@@ -146,7 +150,7 @@ retry:
                {
                   neighbor.pos = cell * ( centered + math::rVector3d(x,y,z) );
                   neighbor.distance = neighbor.pos.norm();
-                  if( math::is_null(neighbor.distance, tolerance) ) continue;
+                  if( (not with_self) and math::is_null(neighbor.distance, tolerance) ) continue;
        
                   t_Neighbors :: iterator i_found 
                   (

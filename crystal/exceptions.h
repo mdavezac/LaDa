@@ -25,6 +25,8 @@ namespace LaDa
     struct incorrect_site_index: virtual crystal, virtual unideal_lattice {};
     //! Thrown when a lattice is not primitive.
     struct not_primitive : virtual crystal, virtual input {};
+    //! Thrown when two atomic sites occupy the same position.
+    struct two_sites_at_same_position : virtual crystal, virtual input {};
   }
 }
 
