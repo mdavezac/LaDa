@@ -1,10 +1,9 @@
-#ifndef _LADA_CRYSTAL_NEIGHBORS_H_
-#define _LADA_CRYSTAL_NEIGHBORS_H_
+#ifndef LADA_CRYSTAL_NEIGHBORS_H
+#define LADA_CRYSTAL_NEIGHBORS_H
 
 #include "LaDaConfig.h"
 
-#include <vector>
-#include <utility>
+#include <list>
 #include <algorithm>
 
 #include <boost/lambda/lambda.hpp>
@@ -12,6 +11,7 @@
 #include <opt/types.h>
 #include <opt/debug.h>
 #include <math/fuzzy.h>
+#include <math/gruber.h>
 
 #include "structure.h"
 
@@ -27,7 +27,7 @@ namespace LaDa
   //! \endcond
 # endif
 
-  namespace Crystal
+  namespace crystal
   {
      //! Holds neigbor data.
      struct Neighbor
@@ -59,31 +59,24 @@ namespace LaDa
          size_t nmax;
          //! The origin from which to compute neighbors.
          math::rVector3d origin;
+         //! tolerance to use in comparisons.
+         types::t_real tolerance;
 
          //! Constructor.
-         Neighbors   (size_t _nmax = 0, math::rVector3d const &_vec = math::rVector3d(0,0,0) )
-                   : nmax(_nmax), origin(_vec) {};
+         template<class T>
+           Neighbors   ( size_t _nmax,
+                         Eigen::DenseBase<T> const &_vec,
+                         types::t_real _tol = types::tolerance )
+                     : nmax(_nmax), origin(_vec), tolerance(_tol) {};
+         //! Constructor.
+         Neighbors   ( size_t _nmax = 0 )
+                   : nmax(_nmax), origin(math::rVector3d::Zero()), tolerance(types::tolerance) {};
          //! returns iterator to first neighbor list.
          const_iterator begin() const { return neighbors_.begin(); }
          //! constructs first neighbor list and returns first iterator.
          template<class T_TYPE> 
-           const_iterator begin(Crystal::TStructure<T_TYPE> const& _str) 
+           const_iterator begin(TemplateStructure<T_TYPE> const& _str) 
              { create_neighbors_list_(_str); return begin(); }
-         const_iterator begin(Lattice const &_lat)
-         {
-           Crystal::Structure structure;
-           structure.cell = _lat.cell;
-           structure.scale = _lat.scale;
-           size_t i(0);
-           foreach( Lattice::t_Site const &site, _lat.sites )
-           {
-             Crystal::Structure::t_Atom atom(site.pos, 0);
-             atom.site = i;
-             structure.atoms.push_back(atom);
-             ++i;
-           }
-           return begin(structure);
-         }
          //! returns end of neighbors list.
          const_iterator end() const { return neighbors_.end(); }
          //! Returns size of neighbors list.
@@ -96,29 +89,30 @@ namespace LaDa
 
          //! Creates list of atoms.
          template<class T_TYPE>
-           void create_neighbors_list_(Crystal::TStructure<T_TYPE> const& _str);
+           void create_neighbors_list_(TemplateStructure<T_TYPE> const& _str);
          //! List of neighbors.
          t_Neighbors neighbors_;
      };
 
      template<class T_TYPE>
-       void Neighbors :: create_neighbors_list_(Crystal::TStructure<T_TYPE> const& _structure)
+       void Neighbors :: create_neighbors_list_(TemplateStructure<T_TYPE> const& _structure)
        {
-         const types::t_int N( _structure.atoms.size() );
+         const types::t_int N( _structure.size() );
          neighbors_.clear();
          
-         math::rMatrix3d const inv_cell( !_structure.cell );
-         typedef Crystal::TStructure<T_TYPE> t_Structure;
+         math::rMatrix3d const cell = math::gruber(_structure.cell(), 3e0*tolerance);
+         math::rMatrix3d const inv_cell( !cell );
+         typedef TemplateStructure<T_TYPE> t_Structure;
          Neighbor neighbor;
-         types::t_real const volume( std::abs(_structure.cell.determinant()) );
+         types::t_real const volume(_structure.volume());
          size_t list_max_size(nmax+2);
 retry: 
          size_t size(0);
          neighbor.index = 0;
          // Finds out how far to look.
-         math::rVector3d const a0( _structure.cell.col(0) );
-         math::rVector3d const a1( _structure.cell.col(1) );
-         math::rVector3d const a2( _structure.cell.col(2) );
+         math::rVector3d const a0(cell.col(0));
+         math::rVector3d const a1(cell.col(1));
+         math::rVector3d const a2(cell.col(2));
          types::t_real const max_norm
            = std::max( a0.norm(), std::max(a1.norm(), a2.norm()) );
          types::t_real const r
@@ -135,8 +129,8 @@ retry:
          while( n0 * n1 * n2 * 8 * N < list_max_size ) { ++n0; ++n1; ++n2; }
 
 
-         typename t_Structure::t_Atoms::const_iterator i_atom = _structure.atoms.begin();
-         typename t_Structure::t_Atoms::const_iterator i_atom_end = _structure.atoms.end();
+         typename t_Structure::t_Atoms::const_iterator i_atom = _structure.begin();
+         typename t_Structure::t_Atoms::const_iterator i_atom_end = _structure.end();
          for(; i_atom != i_atom_end; ++i_atom, ++neighbor.index ) 
          {
            math::rVector3d const frac( inv_cell * (i_atom->pos - origin) );
@@ -150,9 +144,9 @@ retry:
              for( types::t_int y(-n1); y <= n1; ++y )
                for( types::t_int z(-n2); z <= n2; ++z )
                {
-                  neighbor.pos = _structure.cell * ( centered + math::rVector3d(x,y,z) );
+                  neighbor.pos = cell * ( centered + math::rVector3d(x,y,z) );
                   neighbor.distance = neighbor.pos.norm();
-                  if( math::is_null( neighbor.distance ) ) continue;
+                  if( math::is_null(neighbor.distance, tolerance) ) continue;
        
                   t_Neighbors :: iterator i_found 
                   (
@@ -183,13 +177,19 @@ retry:
          // Removes atoms beyon nth position which are not at same distance as nth position.
          t_Neighbors::iterator i_last = neighbors_.begin();
          t_Neighbors::iterator const i_end = neighbors_.end();
-         LADA_ASSERT( neighbors_.size() > nmax, "Supercell too small.\n");
+#        ifdef LADA_DEBUG
+           if(neighbors_.size() <= nmax) 
+             BOOST_THROW_EXCEPTION( error::internal() << error::string("Supercell too small.\n"));
+#        endif
          size_t i(1);
          for(; i < nmax; ++i, ++i_last );
-         LADA_DOASSERT( i_last != i_end, "Supercell too small.\n");
+#        ifdef LADA_DEBUG
+           if(i_last == i_end)
+             BOOST_THROW_EXCEPTION( error::internal() << error::string("Supercell too small.\n"));
+#        endif
          types::t_real const dist(i_last->distance);
          for(++i_last; i_last != i_end; ++i_last, ++i) 
-           if( math::gt(i_last->distance, dist) ) break;
+           if( math::gt(i_last->distance, dist, tolerance) ) break;
          if( i_last == i_end )
          {
            neighbors_.clear();
@@ -198,13 +198,7 @@ retry:
          }
          neighbors_.resize(i);
        };
-     
-    //! Reduces list of positions to first neighbors of first position.
-    void find_first_neighbors( std::vector< math::rVector3d > &_positions,
-                               const math::rMatrix3d &_cell,
-                               const size_t _n );
-
-  } // end of Crystal namespace.
+  } // end of crystal namespace.
 } // namespace LaDa
 
 #endif

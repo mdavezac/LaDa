@@ -62,14 +62,18 @@ if(NOT compile_debug_tests)
   target_link_libraries(supercell crystal)
   ADD_TEST(supercell ${CMAKE_CURRENT_BINARY_DIR}/supercell)
 
+  add_executable(primitive primitive.cc)
+  target_link_libraries(primitive crystal)
+  if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+    set_property(TARGET primitive PROPERTY COMPILE_DEFINITIONS LADA_LIM=5 LADA_TYPE=std::set<std::string>)
+  else(${CMAKE_BUILD_TYPE} STREQUAL "Debug") 
+    set_property(TARGET primitive PROPERTY COMPILE_DEFINITIONS LADA_LIM=9 LADA_TYPE=std::set<std::string>)
+  endif(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+  ADD_TEST(primitive ${CMAKE_CURRENT_BINARY_DIR}/primitive)
+
+  add_executable(neighbors neighbors.cc)
+  set_property(TARGET neighbors PROPERTY COMPILE_DEFINITIONS LADA_TYPE=std::set<std::string>)
+  target_link_libraries(neighbors crystal)
+  ADD_TEST(supercell ${CMAKE_CURRENT_BINARY_DIR}/neighbors)
+
 endif(NOT compile_debug_tests)
-
-
-add_executable(primitive primitive.cc)
-target_link_libraries(primitive crystal)
-if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-  set_property(TARGET primitive PROPERTY COMPILE_DEFINITIONS LADA_LIM=5 LADA_TYPE=std::set<std::string>)
-else(${CMAKE_BUILD_TYPE} STREQUAL "Debug") 
-  set_property(TARGET primitive PROPERTY COMPILE_DEFINITIONS LADA_LIM=9 LADA_TYPE=std::set<std::string>)
-endif(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-ADD_TEST(primitive ${CMAKE_CURRENT_BINARY_DIR}/primitive)
