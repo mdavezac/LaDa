@@ -199,6 +199,10 @@ namespace LaDa
 
         //! Transforms a structure according to an affine transformation.
         TemplateStructure transform(math::Affine3d const &_affine) const;
+
+        //! True if both structures refer to same data.
+        bool is_clone(TemplateStructure<T_TYPE> const &_in) const { return impl_ == _in.impl_; }
+
       private:
         //! used by AddAtomMixin to reach the atoms.
         t_Atoms & atoms() { return impl_->atoms; }

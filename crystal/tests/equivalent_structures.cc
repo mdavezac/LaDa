@@ -16,7 +16,7 @@
 using namespace LaDa;
 using namespace LaDa::crystal;
 using namespace LaDa::math;
-typedef TemplateStructure< std::vector<std::string> > t_Str;
+typedef TemplateStructure< LADA_TYPE > t_Str;
 #define LADA_RAND(s) types::t_real(rand()%s)/types::t_real(s)
 
 void scale(t_Str const &_A, t_Str const &_B)
@@ -98,6 +98,15 @@ void decoration(t_Str const &_A, t_Str const &_B, t_Str const _latt)
   }
 }
 
+void push_back(std::vector<std::string> &_in, std::string const &_type)
+  { _in.push_back(_type); }
+void push_back(std::set<std::string> &_in, std::string const &_type)
+  { _in.insert(_type); }
+void set(std::vector<std::string> &_in, std::string const &_type)
+  { _in[0] = _type; }
+void set(std::set<std::string> &_in, std::string const &_type)
+  { _in.clear(); _in.insert(_type); }
+
 int main()
 {
   types::t_int const seed = time(NULL);
@@ -112,15 +121,15 @@ int main()
             (0.25,0.25,0.25, "Si", "Ge");
   basis(A, A);
 
-  A[0].type.clear(); A[0].type.push_back("Si");
-  A[1].type.clear(); A[1].type.push_back("Si");
+  A[0].type.clear(); push_back(A[0].type, "Si");
+  A[1].type.clear(); push_back(A[1].type, "Si");
   t_Str latt = A.copy();
   rMatrix3d cell;
   cell << 3, 0, 0, 0, 0.5, -0.5, 0, 0.5, 0.5;
   A = supercell(latt, cell);
-  A[0].type[0] = "Ge";
-  A[1].type[0] = "Ge";
-  A[3].type[0] = "Ge";
+  set(A[0].type, "Ge");
+  set(A[1].type, "Ge");
+  set(A[3].type, "Ge");
 
   decoration(A, A, latt);
 
@@ -131,7 +140,7 @@ int main()
     t_Str::iterator i_atom = A.begin();
     t_Str::iterator const i_end = A.end();
     types::t_real const x = LADA_RAND(100) * 0.5;
-    for(; i_atom != i_end; ++i_atom) i_atom->type[0] = LADA_RAND(100) > x ? "Si": "Ge";
+    for(; i_atom != i_end; ++i_atom) set(i_atom->type, LADA_RAND(100) > x ? "Si": "Ge");
     decoration(A, A, latt);
   }
  
@@ -147,7 +156,7 @@ int main()
     t_Str::iterator i_atom = A.begin();
     t_Str::iterator const i_end = A.end();
     types::t_real const x = LADA_RAND(100) * 0.5;
-    for(; i_atom != i_end; ++i_atom) i_atom->type[0] = LADA_RAND(100) > x ? "Si": "Ge";
+    for(; i_atom != i_end; ++i_atom) set(i_atom->type, LADA_RAND(100) > x ? "Si": "Ge");
     decoration(A, A, latt);
   }
 

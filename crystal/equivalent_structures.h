@@ -127,12 +127,13 @@ namespace LaDa
           for(; i_b != i_bend; ++i_b)
           {
             math::rVector3d const pos = rotation * (into_voronoi(i_b->pos*scaleB, cellB, invB) - transB);
+            CompareOccupations<T_TYPE> const cmp(i_b->type);
             typename t_List :: iterator i_first =  atomsA.begin();
-            typename t_List :: iterator i_end = atomsA.end();
+            typename t_List :: iterator const i_end = atomsA.end();
+            if(i_first == i_end) return false;
             for(; i_first != i_end; ++i_first)
             {
               if( not math::is_integer(invA * (pos - _a[*i_first].pos*scaleA + transA), 4*_tol) ) continue;
-              CompareOccupations<T_TYPE> const cmp(i_b->type);
               if( cmp(_a[*i_first].type) ) break;
             }
             if(i_first == i_end) break;
@@ -142,6 +143,7 @@ namespace LaDa
         }
         return false;
       }
+    
   } // namespace crystal
 } // namespace LaDa
 #endif

@@ -69,27 +69,33 @@
           return section;
         }
         
+        //! Helper function which creates an lns option.
         inline xpr::Option option( t_String const& _name )
           { return xpr::Option(_name); }
 
+        //! Helper function which creates an lns section.
         template< class T_TYPE > xpr::Section ext( T_TYPE &_a ) 
         {
           xpr::Section result;
           result.set_data( _a );
           return result;
         }
-        xpr::Section ext(xpr::Section _a) { return _a; }
+        //! \brief Helper function which "fails" to creates an lns section.
+        //! \details This is helpfull when an object is returned which may
+        //!          already be an lns section. In that case calling section a
+        //!          second time will not have undesired effects.
+        inline xpr::Section ext(xpr::Section _a) { return _a; }
 
         namespace details
         {
-          void set_id_action(xpr::Option &_op, boost::mpl::bool_<false>) {}
+          inline void set_id_action(xpr::Option &_op, boost::mpl::bool_<false>) {}
           template<class T>
-          void set_id_action(xpr::Option &_op, T const &_id)
-          {
-            _op.tag = idoption;
-            std::ostringstream sstr; sstr << _id;
-            _op.set_action(action_::IdAction(sstr.str()));
-          }
+            void set_id_action(xpr::Option &_op, T const &_id)
+            {
+              _op.tag = idoption;
+              std::ostringstream sstr; sstr << _id;
+              _op.set_action(action_::IdAction(sstr.str()));
+            }
         }
 
         

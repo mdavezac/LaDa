@@ -1,5 +1,5 @@
-#ifndef _LADA_CRYSTAL_SMITH_H_
-#define _LADA_CRYSTAL_SMITH_H_
+#ifndef LADA_CRYSTAL_SMITH_H
+#define LADA_CRYSTAL_SMITH_H
 
 #include "LaDaConfig.h"
 
@@ -14,7 +14,7 @@ namespace LaDa
   {
     //! Computes linear smith index of position \a _pos.
     template<class T_TYPE>
-      size_t linear_smith_index( t_SmithTransform const &_transformation,
+      size_t linear_smith_index( math::t_SmithTransform const &_transformation,
                                  Crystal::Atom_Type<T_TYPE> &_atom ) 
       {
         if(_atom.site < 0) BOOST_THROW_EXCEPTION( error::incorrect_site_index() );
@@ -38,12 +38,12 @@ namespace LaDa
     //!                    value of each element is the corresponding index
     //!                    into the supercell's list of atoms.
     template<class T_TYPE>
-      void smith_map( Crystal::TemplateStructure<T_TYPE> const &_lattice,
-                      Crystal::TemplateStructure<T_TYPE> const &_supercell,
+      void smith_map( TemplateStructure<T_TYPE> const &_lattice,
+                      TemplateStructure<T_TYPE> const &_supercell,
                       std::vector< std::vector<size_t> > &_map )
       {
         // finds map for atomic positions.
-        Crystal::t_SmithTransform const
+        math::t_SmithTransform const
           transform(smith_transform(_lattice.cell(), _supercell.cell()));
      
         if(_supercell.size() % _lattice.size() != 0)
@@ -53,8 +53,8 @@ namespace LaDa
         _map.clear();
         _map.resize(_str.lattice->sites.size(), std::vector<size_t>(N, Nat)); 
      
-        Crystal::Structure::t_Atoms::const_iterator i_first = _str.atoms.begin();
-        Crystal::Structure::t_Atoms::const_iterator const i_end = _str.atoms.end();
+        typename TemplateStructure<T_TYPE>::const_iterator i_first = _str.begin();
+        typename TemplateStructure<T_TYPE>::const_iterator const i_end = _str.end();
         for(size_t i(0); i_first != i_end; ++i_first, ++i)
         {
           if(i_first->site < 0 or i_first->site >= _str.lattice->sites.size())

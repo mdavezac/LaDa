@@ -1,6 +1,5 @@
 if(NOT compile_debug_tests)
 
-
   add_executable(utilities utilities.cc)
   target_link_libraries(utilities crystal)
   ADD_TEST(utilities ${CMAKE_CURRENT_BINARY_DIR}/utilities)
@@ -33,10 +32,6 @@ if(NOT compile_debug_tests)
   target_link_libraries(cellinvariants crystal)
   ADD_TEST(cellinvariants ${CMAKE_CURRENT_BINARY_DIR}/cellinvariants)
 
-  add_executable(equivalent_structures equivalent_structures.cc)
-  target_link_libraries(equivalent_structures crystal)
-  ADD_TEST(equivalent_structures ${CMAKE_CURRENT_BINARY_DIR}/equivalent_structures)
-
   add_executable(is_container is_container.cc)
   target_link_libraries(is_container crystal)
   ADD_TEST(is_container ${CMAKE_CURRENT_BINARY_DIR}/is_container)
@@ -57,23 +52,41 @@ if(NOT compile_debug_tests)
     ADD_TEST(compare${TYPE} ${CMAKE_CURRENT_BINARY_DIR}/compare${TYPE})
   endforeach(TYPE)
 
-  add_executable(supercell supercell.cc)
-  set_property(TARGET supercell PROPERTY COMPILE_DEFINITIONS LADA_TYPE=std::set<std::string>)
-  target_link_libraries(supercell crystal)
-  ADD_TEST(supercell ${CMAKE_CURRENT_BINARY_DIR}/supercell)
+  set(TYPES "set" "vector")
+  foreach(TYPE ${TYPES})
 
-  add_executable(primitive primitive.cc)
-  target_link_libraries(primitive crystal)
-  if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-    set_property(TARGET primitive PROPERTY COMPILE_DEFINITIONS LADA_LIM=5 LADA_TYPE=std::set<std::string>)
-  else(${CMAKE_BUILD_TYPE} STREQUAL "Debug") 
-    set_property(TARGET primitive PROPERTY COMPILE_DEFINITIONS LADA_LIM=9 LADA_TYPE=std::set<std::string>)
-  endif(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-  ADD_TEST(primitive ${CMAKE_CURRENT_BINARY_DIR}/primitive)
+    add_executable(supercell_${TYPE} supercell.cc)
+    set_property(TARGET supercell_${TYPE} PROPERTY COMPILE_DEFINITIONS LADA_TYPE=std::${TYPE}<std::string>)
+    target_link_libraries(supercell_${TYPE} crystal)
+    ADD_TEST(supercell_${TYPE} ${CMAKE_CURRENT_BINARY_DIR}/supercell_${TYPE})
 
-  add_executable(neighbors neighbors.cc)
-  set_property(TARGET neighbors PROPERTY COMPILE_DEFINITIONS LADA_TYPE=std::set<std::string>)
-  target_link_libraries(neighbors crystal)
-  ADD_TEST(supercell ${CMAKE_CURRENT_BINARY_DIR}/neighbors)
+    add_executable(primitive_${TYPE} primitive.cc)
+    target_link_libraries(primitive_${TYPE} crystal)
+    if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+      set_property( TARGET primitive_${TYPE} PROPERTY COMPILE_DEFINITIONS
+                    LADA_LIM=5 LADA_TYPE=std::${TYPE}<std::string> )
+    else(${CMAKE_BUILD_TYPE} STREQUAL "Debug") 
+      set_property( TARGET primitive_${TYPE} PROPERTY COMPILE_DEFINITIONS
+                    LADA_LIM=9 LADA_TYPE=std::${TYPE}<std::string> )
+    endif(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+    ADD_TEST(primitive_${TYPE} ${CMAKE_CURRENT_BINARY_DIR}/primitive_${TYPE})
+
+    add_executable(neighbors_${TYPE} neighbors.cc)
+    set_property(TARGET neighbors_${TYPE} PROPERTY COMPILE_DEFINITIONS LADA_TYPE=std::${TYPE}<std::string>)
+    target_link_libraries(neighbors_${TYPE} crystal)
+    ADD_TEST(supercell ${CMAKE_CURRENT_BINARY_DIR}/neighbors_${TYPE})
+
+    add_executable(equivalent_structures_${TYPE} equivalent_structures.cc)
+    set_property( TARGET equivalent_structures_${TYPE} PROPERTY COMPILE_DEFINITIONS
+                  LADA_TYPE=std::${TYPE}<std::string> )
+    target_link_libraries(equivalent_structures_${TYPE} crystal)
+    ADD_TEST(equivalent_structures_${TYPE} ${CMAKE_CURRENT_BINARY_DIR}/equivalent_structures_${TYPE})
+
+    add_executable(space_group_${TYPE} space_group.cc)
+    set_property(TARGET space_group_${TYPE} PROPERTY COMPILE_DEFINITIONS LADA_TYPE=std::${TYPE}<std::string>)
+    target_link_libraries(space_group_${TYPE} crystal)
+    ADD_TEST(space_group_${TYPE} ${CMAKE_CURRENT_BINARY_DIR}/space_group_${TYPE})
+
+  endforeach(TYPE ${TYPES})
 
 endif(NOT compile_debug_tests)
