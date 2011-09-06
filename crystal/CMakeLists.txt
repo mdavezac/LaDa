@@ -1,13 +1,14 @@
 set( LIBCRYSTAL_HEADERS 
      atom.h structure.h structure_data.h add_atom.h is_container.h
-     utilities.h compare_sites.h space_group.h neighbors.h map_sites.h)
+     utilities.h compare_sites.h space_group.h neighbors.h map_sites.h 
+     periodic_dnc.h )
 #    atom.h divide_and_conquer.h epi_structure.h fractional_cartesian.h layerdepth.h 
 #    read_structure.h structure.impl.h compare_sites.h divide_and_conquer.impl.h 
 #    fill_structure.h neighbors.h smith.h symmetry_operator.h 
 #    confsplit.h enumerate.h fourier.h lattice.h read_poscar.h structure.h which_site.h 
 #    periodic_dnc.h )
 
-set( LIBCRYSTAL_SOURCES utilities.cc space_group.cc)
+set( LIBCRYSTAL_SOURCES utilities.cc space_group.cc periodic_dnc.cc)
 #    structure.cc )
 #    confsplit.cc fill_structure.cc lattice.cc periodic_dnc.cc
 #    read_structure.cc structure.cc epi_structure.cc neighbors.cc
