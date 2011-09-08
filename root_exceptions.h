@@ -26,7 +26,7 @@ namespace LaDa
     //!        users would see.
     struct internal: virtual root {};
     //! out-of-range error.
-    struct out_of_range: virtual internal, virtual std::out_of_range {};
+    struct out_of_range: virtual internal {};
     //! \brief end-of-iteration error.
     //! \details Should be used to avoid infinit loops. 
     struct stop_iteration: virtual internal {};

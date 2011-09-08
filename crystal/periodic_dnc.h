@@ -61,13 +61,6 @@ namespace LaDa
         //! Number of boxes.
         size_t size() const { return container_.size(); }
 
-        //! \brief Guesses parameters of divide and conquer mesh base on the
-        //!        desired number of atoms per box.
-        template<class T_TYPE>
-          math::iVector3d guess_mesh( TemplateStructure<T_TYPE> const &_structure, 
-                                      size_t _nperbox ) const
-          { return guess_mesh_(math::gruber(_structure.cell()), _structure.size(), _nperbox); }
-
         //! Returns nth box.
         const_reference operator[](size_t _i) const { return container_[_i]; }
 
@@ -80,9 +73,6 @@ namespace LaDa
         math::rMatrix3d small_cell_;
         //! Mesh of small-cells.
         t_Boxes container_;
-
-        //! Untemplated version
-        math::iVector3d guess_mesh(math::rMatrix3d const &_cell, size_t _N, size_t _nperbox) const;
     };
 
     inline bool operator==(DnCBoxes::Point const &_a, DnCBoxes::Point const &_b)
@@ -90,6 +80,16 @@ namespace LaDa
       return     _a.index == _b.index 
              and math::is_null( (_a.translation - _b.translation).squaredNorm() );
     }
+
+
+    //! \brief Guesses parameters of divide and conquer mesh base on the
+    //!        desired number of atoms per box.
+    math::iVector3d guess_mesh(math::rMatrix3d const &_cell, size_t _N, size_t _nperbox);
+    //! \brief Guesses parameters of divide and conquer mesh base on the
+    //!        desired number of atoms per box.
+    template<class T_TYPE>
+      math::iVector3d guess_mesh(TemplateStructure<T_TYPE> const &_structure, size_t _nperbox) 
+      { return guess_mesh(_structure.cell(), _structure.size(), _nperbox); }
 
 
 #   ifdef LADA_INDEX
@@ -111,7 +111,7 @@ namespace LaDa
         // constructs cell of small small box
         math::rMatrix3d const strcell( math::gruber(_structure.cell()) );
         math::rMatrix3d cell(strcell);
-        for( size_t i(0); i < 3; ++i ) cell.col(i) *= 1e0 / types::t_real( _n(i) );
+        for( size_t i(0); i < 3; ++i ) cell.col(i) /= types::t_real( _n(i) );
         
         // Inverse matrices.
         math::rMatrix3d const invstr(strcell.inverse()); // inverse of structure 
@@ -131,7 +131,7 @@ namespace LaDa
 
         // Now adds points for each atom in each box.
         const_iterator i_atom = _structure.begin();
-        const_iterator i_atom_end = _structure.end();
+        const_iterator const i_atom_end = _structure.end();
         for( size_t index(0); i_atom != i_atom_end; ++i_atom, ++index )
         {
           // Position inside structure cell.
@@ -148,7 +148,7 @@ namespace LaDa
           // Computes index within cell of structure.
           types::t_int const u = LADA_INDEX(ifrac, _n);
 #         ifdef LADA_DEBUG
-            if(u < 0 or u >=0 Nboxes) BOOST_THROW_EXCEPTION(error::out_of_range());
+            if(u < 0 or u >= Nboxes) BOOST_THROW_EXCEPTION(error::out_of_range());
 #         endif
 
           // creates apropriate point in small-box. 
@@ -194,7 +194,7 @@ namespace LaDa
                   );
                 types::t_int const uu = LADA_INDEX(modboxfrac, _n);
 #               ifdef LADA_DEBUG
-                  if(uu < 0 or uy >=0 container_.size()) BOOST_THROW_EXCEPTION(error::out_of_range());
+                  if(uu < 0 or uu >= container_.size()) BOOST_THROW_EXCEPTION(error::out_of_range());
 #               endif
 
                 // Don't need to go any further: not an edge state of either

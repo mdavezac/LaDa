@@ -4,6 +4,9 @@
 #include <vector>
 #include <set>
 
+#include <cstdlib>
+#include <time.h>
+
 #include <boost/foreach.hpp>
 
 #include "../periodic_dnc.h"
@@ -45,26 +48,41 @@ void set(std::set<std::string> &_in, std::string const &_type)
   { _in.clear(); _in.insert(_type); }
 
 LaDa::math::iVector3d indices_( LaDa::math::rMatrix3d const &_invcell,
-                                LaDa::math::rVector3d const &_pos )
+                                LaDa::math::rVector3d const &_pos,
+                                LaDa::math::iVector3d const &_n )
 {
   using namespace LaDa::math;
   rVector3d const frac(_invcell * _pos);
-  return iVector3d(std::floor(frac(0)+1e-12), std::floor(frac(1)+1e-12), std::floor(frac(1)+1e-12));
+  iVector3d const __ifrac(floor_int(frac));
+  iVector3d const ifrac
+    (
+      __ifrac(0) + (__ifrac(0) < 0 ? _n(0): (__ifrac(0) >= _n(0)? -_n(0): 0)), 
+      __ifrac(1) + (__ifrac(1) < 0 ? _n(1): (__ifrac(1) >= _n(1)? -_n(1): 0)), 
+      __ifrac(2) + (__ifrac(2) < 0 ? _n(2): (__ifrac(2) >= _n(2)? -_n(2): 0))
+    );
+  iVector3d const neg(__ifrac(0) % _n(0), __ifrac(1) % _n(1), __ifrac(2) % _n(2));
+  iVector3d const other
+      ( 
+        neg(0) < 0 ? neg(0) + _n(0): neg(0),
+        neg(1) < 0 ? neg(1) + _n(1): neg(1),
+        neg(2) < 0 ? neg(2) + _n(2): neg(2)
+      );
+  LADA_DOASSERT(other == ifrac, ~other << " | " << ~ifrac << " | " << ~_n << " | " << ~__ifrac << "\n");
+  return other;
 }
 
-int main()
+void check(LaDa::crystal::TemplateStructure< LADA_TYPE > const &_structure)
 {
   using namespace LaDa;
-  using namespace LaDa::crystal;
   using namespace LaDa::math;
-  TemplateStructure< LADA_TYPE > lattice = b5(0.36); 
-  math::rMatrix3d cell;
-  cell << 5, 0, 0, 0, 1, 0, 0, 0, 1;
-  TemplateStructure< LADA_TYPE > structure = supercell(lattice, lattice.cell() * cell);
-  cell(0,0) = 1;
-  math::rMatrix3d invcell(cell.inverse());
+  using namespace LaDa::crystal;
+  iVector3d const params = guess_mesh(_structure, 30);
+  rMatrix3d invcell(gruber(_structure.cell()));
+  for(size_t i(0); i < 3; ++i) invcell.col(i) /= types::t_real(params(i));
+  invcell = invcell.inverse().eval();
+
   DnCBoxes dnc;
-  dnc.init(structure, iVector3d(5, 1, 1), 0.125);
+  dnc.init(_structure, params, 0.125);
   DnCBoxes::const_iterator i_box = dnc.begin();
   DnCBoxes::const_iterator i_box_end = dnc.end();
   for(size_t i(0); i_box != i_box_end; ++i_box, ++i)
@@ -73,25 +91,47 @@ int main()
     DnCBoxes::value_type::const_iterator const i_point_end = i_box->end();
     for(; i_point != i_point_end; ++i_point)
       if(i_point->in_small_box) break;
-    LADA_DOASSERT(i_point != i_point_end, "No points in box.\n")
-    iVector3d indices = indices_(invcell, i_point->translation + structure[i_point->index].pos);
-    std::cout << ~indices << "\n";
-    continue;
+    LADA_DOASSERT(i_point != i_point_end, "No points in box.\n");
+    iVector3d const index = indices_(invcell, i_point->translation + _structure[i_point->index].pos, params);
     for(i_point = i_box->begin(); i_point != i_point_end; ++i_point)
+    {
+      iVector3d const pi( indices_(invcell, i_point->translation + _structure[i_point->index].pos, params) );
       if(i_point->in_small_box)
-      {
-        LADA_DOASSERT(math::eq( indices_(invcell, i_point->translation + structure[i_point->index].pos),
-                                indices ), "Not in same box.\n");
-      }
+        { LADA_DOASSERT(math::eq(pi, index ), "Not in same box.\n"); }
       else
       {
-        iVector3d const other = indices_(invcell, i_point->translation + structure[i_point->index].pos);
-        std::cout << "   - " << ~other << "\n";
-        LADA_DOASSERT(    std::abs(other(0) - indices(0)) == 5 
-                       or std::abs(other(0) - indices(0)) == 1, "Found in unexpected box.\n");
-        LADA_DOASSERT(other(1) == indices(1), "Found in unexpected box.\n");
-        LADA_DOASSERT(other(2) == indices(1), "Found in unexpected box.\n");
+        bool found = false;
+        for(size_t i(0); i < 3; ++i)
+          if(std::abs(pi(i) - index(i)) == 1) found = true;
+          else if( params(i) > 1 and std::abs(pi(i) - index(i)) == params(i) - 1) found = true;
+          else if( params(i) == 1 ) found = true;
+        LADA_DOASSERT(found, "point in large box also in small box.\n")
       }
+    }
+  }
+}
+
+int main()
+{
+  using namespace LaDa;
+  using namespace LaDa::crystal;
+  using namespace LaDa::math;
+  TemplateStructure< LADA_TYPE > lattice = b5(0.36); 
+
+  check(lattice);
+
+
+  types::t_int const seed = time(NULL);
+  std::cout << seed << "\n";
+  srand(seed);
+  math::rMatrix3d cell;
+  for(size_t k(0); k < 10; ++k)
+  {
+    for(size_t i(0); i < 3; ++i)
+      for(size_t j(0); j < 3; ++j)
+        cell(i, j) = rand() % 20 - 10;
+    TemplateStructure< LADA_TYPE > structure = supercell(lattice, lattice.cell() * cell);
+    check(structure);
   }
 
   return 0;

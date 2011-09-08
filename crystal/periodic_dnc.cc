@@ -11,12 +11,13 @@ namespace LaDa
 {
   namespace crystal 
   {
-      math::iVector3d DnCBoxes::guess_mesh( math::rMatrix3d const &_cell, size_t _N, size_t _nperbox ) const
+      math::iVector3d guess_mesh( math::rMatrix3d const &_cell, size_t _N, size_t _nperbox )
       {
+        math::rMatrix3d const cell(math::gruber(_cell));
         types::t_real const alpha = 0.5;
-        types::t_real const c0 = std::sqrt( _cell.col(0).squaredNorm() );
-        types::t_real const c1 = std::sqrt( _cell.col(1).squaredNorm() );
-        types::t_real const c2 = std::sqrt( _cell.col(2).squaredNorm() );
+        types::t_real const c0 = std::sqrt( cell.col(0).squaredNorm() );
+        types::t_real const c1 = std::sqrt( cell.col(1).squaredNorm() );
+        types::t_real const c2 = std::sqrt( cell.col(2).squaredNorm() );
 
         int const Nboxes = int(std::floor(types::t_real(_N)/types::t_real(_nperbox) + 0.5));
         if(Nboxes == 0) return math::iVector3d::Ones();
