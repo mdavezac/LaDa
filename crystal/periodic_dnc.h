@@ -134,25 +134,28 @@ namespace LaDa
         const_iterator const i_atom_end = _structure.end();
         for( size_t index(0); i_atom != i_atom_end; ++i_atom, ++index )
         {
-          // Position inside structure cell.
-          rVector3d const incell( into_cell(i_atom->pos, strcell, invstr) );
-          rVector3d const fracincell(invbox * incell);
-          // Gets coordinate in mesh of small-boxes.
-          iVector3d const __ifrac(math::floor_int(fracincell));
+          // Gets coordinate in mesh of small-boxes. Only works because cell
+          // and boxes are commensurate.
+          rVector3d const rfrac(invbox*i_atom->pos);
+          iVector3d const _ifrac(math::floor_int(rfrac));
+          iVector3d const __ifrac(_ifrac(0) % _n(0), _ifrac(1) % _n(1), _ifrac(2) % _n(2));
           iVector3d const ifrac
             (
-              __ifrac(0) + (__ifrac(0) < 0 ? _n(0): (__ifrac(0) >= _n(0)? -_n(0): 0)), 
-              __ifrac(1) + (__ifrac(1) < 0 ? _n(1): (__ifrac(1) >= _n(1)? -_n(1): 0)), 
-              __ifrac(2) + (__ifrac(2) < 0 ? _n(2): (__ifrac(2) >= _n(2)? -_n(2): 0))
+              __ifrac(0) < 0 ? __ifrac(0) + _n(0): __ifrac(0), 
+              __ifrac(1) < 0 ? __ifrac(1) + _n(1): __ifrac(1), 
+              __ifrac(2) < 0 ? __ifrac(2) + _n(2): __ifrac(2)
             );
           // Computes index within cell of structure.
           types::t_int const u = LADA_INDEX(ifrac, _n);
 #         ifdef LADA_DEBUG
+            for(size_t i(0); i < 3; ++i)
+              if(ifrac(i) < 0 or ifrac(i) >= _n(i))
+                BOOST_THROW_EXCEPTION(error::out_of_range());
             if(u < 0 or u >= Nboxes) BOOST_THROW_EXCEPTION(error::out_of_range());
 #         endif
 
           // creates apropriate point in small-box. 
-          DnCBoxes::Point const orig = {incell - i_atom->pos, index, true};
+          DnCBoxes::Point const orig = {cell * (ifrac - _ifrac).cast<math::rMatrix3d::Scalar>(), index, true};
           container_[u].push_back(orig);
 
           // Finds out which other boxes it is contained in, including periodic images.
@@ -164,17 +167,16 @@ namespace LaDa
 
                 // First checks if on edge of small box.
 #               ifndef LADA_WITH_EIGEN3
-                  rVector3d displaced = fracincell + sb_edges.cwise()*rVector3d(i,j,k);
+                  rVector3d displaced = rfrac + sb_edges.cwise()*rVector3d(i,j,k);
 #               else
-                  rVector3d displaced =   fracincell
+                  rVector3d displaced =   rfrac
                                         + (sb_edges.array()*rVector3d(i,j,k).array()).matrix();
 #               endif
-                iVector3d const __boxfrac( math::floor_int(displaced) );
                 iVector3d const boxfrac
                   ( 
-                     ifrac(0) + (__boxfrac(0) == ifrac(0) ? 0: i),
-                     ifrac(1) + (__boxfrac(1) == ifrac(1) ? 0: j), 
-                     ifrac(2) + (__boxfrac(2) == ifrac(2) ? 0: k)
+                    math::floor_int(displaced(0)) == _ifrac(0) ? ifrac(0): ifrac(0) + i,
+                    math::floor_int(displaced(1)) == _ifrac(1) ? ifrac(1): ifrac(1) + j, 
+                    math::floor_int(displaced(2)) == _ifrac(2) ? ifrac(2): ifrac(2) + k
                   );
                 // Now checks if small box is at edge of periodic structure. 
                 iVector3d const strfrac
@@ -203,7 +205,7 @@ namespace LaDa
 
                 DnCBoxes::Point const overlap 
                   = {
-                      incell + strcell*strfrac.cast<types::t_real>() - i_atom->pos,
+                      orig.translation + strcell*strfrac.cast<math::rMatrix3d::Scalar>(),
                       index,
                       false
                     };

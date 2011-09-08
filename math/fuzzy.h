@@ -7,6 +7,7 @@
 #include <boost/type_traits/is_integral.hpp>
 #include <boost/type_traits/is_arithmetic.hpp>
 #include <boost/type_traits/is_floating_point.hpp>
+#include <boost/numeric/conversion/converter.hpp>
 
 #include <opt/types.h>
 #include "eigen.h"
@@ -143,6 +144,19 @@ namespace LaDa
     //! \details if \a T_ARG is a types::real, return true if 
     //!          \a _a < types::tolerance.
     template<class T_ARG> inline LADA_ARITH is_identity(T_ARG const& _a) { return eq(_a, T_ARG(1)); }
+
+    //! Casts to lower integer using boost::numeric.
+    template<class T_ARG>
+      inline typename boost::enable_if<boost::is_integral<T_ARG>, T_ARG> :: type 
+        floor_int(T_ARG const &_a) { return _a; }
+    //! Casts to lower integer using boost::numeric.
+    template<class T_ARG> 
+      inline typename boost::enable_if<boost::is_floating_point<T_ARG>, types::t_int> :: type 
+        floor_int(T_ARG const &_a)
+        { 
+          typedef boost::numeric::converter<types::t_int,types::t_real> converter;
+          return converter::nearbyint( std::floor(_a + types::roundoff) );
+        }
 #   undef LADA_INTEGRAL
 #   undef LADA_REAL
 #   undef LADA_ARITH

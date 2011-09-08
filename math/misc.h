@@ -3,7 +3,6 @@
 
 #include "LaDaConfig.h"
 
-#include <boost/numeric/conversion/converter.hpp>
 #include <limits>
 
 #include <opt/types.h>
@@ -187,16 +186,8 @@ namespace LaDa
       { return std::max(std::max(_v(0), _v(1)), _v(2)); }
 
     //! Casts to lower integer accounting for numerical noise.
-    template<int D> inline Eigen::Matrix<types::t_int, D, 1> 
-      floor_int( Eigen::Matrix<types::t_real, D, 1> const &_t )
-      { 
-        typedef boost::numeric::converter<types::t_int,types::t_real> converter;
-        Eigen::Matrix<types::t_int, D, 1> result;
-        for(int i(0); i < D; ++i)
-          result(i) = converter::nearbyint( std::floor(_t(i) + types::roundoff) );
-             
-        return result;
-      }
+    inline iVector3d floor_int(rVector3d const &_t )
+      { return iVector3d(floor_int(_t(0)), floor_int(_t(1)), floor_int(_t(2))); }
 
   } // namespace math
 

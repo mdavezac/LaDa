@@ -67,7 +67,7 @@ LaDa::math::iVector3d indices_( LaDa::math::rMatrix3d const &_invcell,
         neg(1) < 0 ? neg(1) + _n(1): neg(1),
         neg(2) < 0 ? neg(2) + _n(2): neg(2)
       );
-  LADA_DOASSERT(other == ifrac, ~other << " | " << ~ifrac << " | " << ~_n << " | " << ~__ifrac << "\n");
+// LADA_DOASSERT(other == ifrac, ~other << " | " << ~ifrac << " | " << ~_n << " | " << ~__ifrac << "\n");
   return other;
 }
 
