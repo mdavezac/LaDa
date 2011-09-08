@@ -11,7 +11,7 @@
 
 namespace LaDa
 {
-  namespace Crystal 
+  namespace crystal 
   {
     //! Returns the site index.
     template< class T_VECPOS >
@@ -30,6 +30,6 @@ namespace LaDa
         }
         return -1;
       };
-  } // namespace Crystal
+  } // namespace crystal
 } // namespace LaDa
 #endif
