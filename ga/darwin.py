@@ -91,8 +91,8 @@ def run(self):
     # finally, sort and replace.
     if self.comm.rank == 0:
       # deal with differences in function sorted between python versions.
-      from sys import version_info
-      if version_info.major > 2:
+      from platform import python_version_tuple
+      if python_version_tuple[0] > 2:
         from functools import cmp_to_key
         self.population = sorted(self.population, cmp_to_key(self.comparison))[:len(self.population)-nboffspring]
       else: 
