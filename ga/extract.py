@@ -179,7 +179,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
       except:
         individual = self.functional.Individual()
         with open(join(join(self.directory, _age), self.OUTCAR), "r") as file:
-          text = "".join(file.readlines())
+          text = file.read()
         
         # loop over Offspring blocks.
         for gen_match in self.OFFSPRING_PATTERN.finditer(text):

@@ -47,17 +47,19 @@ def run(self):
   assert hasattr(self, "comparison"), "No comparison operation.\n"
 
   # creates population if it does not exist.
-  while len(self.population) < self.popsize:
-    j = 0
-    loop = True
-    while loop:
-      indiv = self.comm.broadcast(self.Individual() if self.comm.rank == 0 else None)
-      loop = self.taboo(indiv)
-      j += 1
-      assert j < max(50*self.popsize, 100), "Could not create offspring.\n"
-    indiv.birth = self.current_gen
-    self.population.append(indiv)
-
+  if self.comm.is_root: 
+    while len(self.population) < self.popsize:
+      j = 0
+      loop = True
+      while loop:
+        indiv = self.Individual()
+        loop = self.taboo(indiv)
+        j += 1
+        assert j < max(50*self.popsize, 100), "Could not create offspring.\n"
+      indiv.birth = self.current_gen
+      self.population.append(indiv)
+  self.population = self.comm.broadcast(self.population)
+  
   # evaluates population if need be.
   self.evaluation() 
 
