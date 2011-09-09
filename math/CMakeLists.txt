@@ -1,7 +1,7 @@
 set( LIBMATH_F90 rational_mathematics.f90 )
 set( LIBMATH_HEADERS 
      compare_norms.h eigen.h fuzzy.h lambda.impl.h misc.h modifiers.h random.h serialize.h
-     smith_normal_form.h traits.h symmetry_operator.h gruber.h )
+     smith_normal_form.h symmetry_operator.h gruber.h )
 set( LIBMATH_SOURCES random.cc  smith_normal_form.cc gruber.cc noopt.cc)
     
 add_library (mathlib SHARED ${LIBMATH_SOURCES} ${LIBMATH_F90} ${LIBMATH_HEADERS})

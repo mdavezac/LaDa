@@ -37,7 +37,7 @@
     Please see `lada.vasp` for a more in-depth description.
 """
 __docformat__ = "restructuredtext en"
-__all__ = [@which_packages@]
+__all__ = ["exceptions", @which_packages@]
 from os import environ
 
 version_info = (@LaDa_VERSION_MAJOR@, @LaDa_VERSION_MINOR@)

@@ -14,11 +14,12 @@
 #include <string>
 
 #include <opt/types.h>
+#include <math/eigen.h>
 
 namespace LaDa
 {
   //! Physical constants and affiliate routines.
-  namespace Physics 
+  namespace physics 
   {
     //! Returns the the bhor radius \f$a_0\f$ in "A", "nm", "m", or "cm".
     types::t_real a0( const std::string &_str );
@@ -42,7 +43,7 @@ namespace LaDa
 
     
     //! Atomic numbers, symbols, and affiliate routines.
-    namespace Atomic
+    namespace atomic
     {
       //! Returns the atomic number from an atomic symbol
       types::t_unsigned Z(const std::string &_str);
@@ -59,7 +60,7 @@ namespace LaDa
   }
 
   //! \cond
-  namespace Physics 
+  namespace physics 
   {
     inline types::t_real a0( const std::string &_str )
     {
@@ -143,7 +144,7 @@ namespace LaDa
       else throw std::runtime_error( "Unknown Unit for vacuum permittivity." );
     }
 
-    namespace Atomic
+    namespace atomic
     {
       inline types::t_unsigned Z(const std::string &_str)
       {

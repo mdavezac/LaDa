@@ -12,7 +12,7 @@ if(MPI_FOUND)
 endif(MPI_FOUND)
 
 
-set(which_packages "'math', 'opt', 'crystal', 'physics', 'periodic_table'")
+set(which_packages "'math', 'opt', 'crystal'") #, 'physics', 'periodic_table'")
 if(pcm_functional) 
   set(which_packages "${which_packages}, 'pcm'")
 endif(pcm_functional) 
@@ -56,3 +56,11 @@ configure_file (
 install(FILES ${PROJECT_BINARY_DIR}/python/__init__.py DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada)
 install(FILES ${PYLADA_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada)
 
+include_directories(${PYTHON_INCLUDE_DIRS})
+python_add_module (pyexceptions "" "exceptions.cc")
+mark_as_advanced(PYTHON_ENABLE_MODULE_pyexceptions)
+mark_as_advanced(PYTHON_MODULE_pyexceptions_BUILD_SHARED)
+# set_target_properties(pyexceptions PROPERTIES PREFIX "_")
+set_target_properties(pyexceptions PROPERTIES OUTPUT_NAME exceptions)
+target_link_libraries(pyexceptions crystal ${Boost_PYTHON_LIBRARY})
+install(TARGETS pyexceptions DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada)

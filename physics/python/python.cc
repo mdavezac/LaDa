@@ -22,27 +22,27 @@ namespace LaDa
     void expose_physics()
     {
       namespace bp = boost::python;
-      bp::def("Z", Physics::Atomic::Z,
+      bp::def("Z", physics::atomic::Z,
               "Given an atomic symbol, returns the atomic number.");
-      bp::def("Symbol", Physics::Atomic::Symbol,
+      bp::def("Symbol", physics::atomic::Symbol,
               "Given an atomic number, returns the atomic symbol.");
-      types::t_unsigned (*ptr_charge) (const std::string &) = &Physics::Atomic::Charge;
+      types::t_unsigned (*ptr_charge) (const std::string &) = &physics::atomic::Charge;
       bp::def("Charge", ptr_charge,
               "Given an atomic symbol, returns the number of valence electrons." );
-      bp::def("Mass", Physics::Atomic::Mass,
+      bp::def("Mass", physics::atomic::Mass,
               "Given an atomic symbol, returns the atomic mass.");
-      bp::def("a0", Physics::a0,
+      bp::def("a0", physics::a0,
               "Returns the Bhor radius in A, nm, m, or cm" );
-      bp::def("Hartree", Physics::Hartree,
+      bp::def("Hartree", physics::Hartree,
               "Returns the Hartree energy in eV, Rydberg, or Hartree" );
-      bp::def("Rydberg", Physics::Rydberg,
+      bp::def("Rydberg", physics::Rydberg,
               "Returns the Rydberg energy in eV, Rydberg, or Hartree" );
-      bp::def("emass", Physics::emass, "Returns the mass of the electron in eV, amu, kg, g, MeV." );
-      bp::def("hbar", Physics::hbar, "Returns hbar in  eV*s, erg*s, J*s." );
-      bp::def("planck", Physics::Planck, "Returns the Planck constant in  eV*s, erg*s, J*s, Ry, H." );
-      bp::def("vacuum_permittivity", Physics::vacuum_permittivity,\
+      bp::def("emass", physics::emass, "Returns the mass of the electron in eV, amu, kg, g, MeV." );
+      bp::def("hbar", physics::hbar, "Returns hbar in  eV*s, erg*s, J*s." );
+      bp::def("planck", physics::Planck, "Returns the Planck constant in  eV*s, erg*s, J*s, Ry, H." );
+      bp::def("vacuum_permittivity", physics::vacuum_permittivity,\
               "Returns the permittivity of vacuum in mks, SI, and au.");
-      bp::def("e", Physics::e,\
+      bp::def("e", physics::e,\
               "Returns the elementary charge in mks, SI, cgs, and au.");
     }
 
