@@ -7,8 +7,7 @@
 #include <stdexcept>
 
 #include <boost/throw_exception.hpp>
-#include <boost/exception/error_info.hpp>
-#include <boost/exception/info.hpp>
+#include <boost/exception/all.hpp>
 
 
 namespace LaDa
@@ -29,7 +28,7 @@ namespace LaDa
     struct out_of_range: virtual internal {};
     //! \brief end-of-iteration error.
     //! \details Should be used to avoid infinit loops. 
-    struct stop_iteration: virtual internal {};
+    struct infinite_loop: virtual internal {};
 
     //! Convenience error info type to capture strings.
     typedef boost::error_info<struct string_info,std::string> string;

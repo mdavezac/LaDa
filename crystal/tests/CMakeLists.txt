@@ -92,12 +92,12 @@ if(NOT compile_debug_tests)
     target_link_libraries(map_sites_${TYPE} crystal)
     ADD_TEST(map_sites_${TYPE} ${CMAKE_CURRENT_BINARY_DIR}/map_sites_${TYPE})
 
-  endforeach(TYPE ${TYPES})
-
-endif(NOT compile_debug_tests)
-
-    set(TYPE "set")
     add_executable(periodic_dnc_${TYPE} periodic_dnc.cc)
     set_property(TARGET periodic_dnc_${TYPE} PROPERTY COMPILE_DEFINITIONS LADA_TYPE=std::${TYPE}<std::string>)
     target_link_libraries(periodic_dnc_${TYPE} crystal)
     ADD_TEST(periodic_dnc_${TYPE} ${CMAKE_CURRENT_BINARY_DIR}/periodic_dnc_${TYPE})
+
+  endforeach(TYPE ${TYPES})
+
+endif(NOT compile_debug_tests)
+

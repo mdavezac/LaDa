@@ -9,7 +9,6 @@
 #include <boost/type_traits/is_floating_point.hpp>
 #include <boost/type_traits/is_integral.hpp>
 #include <boost/mpl/or.hpp>
-#include <boost/foreach.hpp>
 
 #include "atom.h"
 #include "is_container.h"
@@ -84,10 +83,14 @@ namespace LaDa
                 bool
               >::type cmp_( T const &_type ) const
               { 
-                foreach(typename T::value_type const &_t, _type)
-                  if( std::find(reference_.begin(), reference_.end(), _t) == reference_.end() ) return false;
-                foreach(typename T_TYPE::value_type const &_t, reference_)
-                  if( std::find(_type.begin(), _type.end(), _t) == _type.end() ) return false;
+                typename T::const_iterator i_first0 = _type.begin();
+                typename T::const_iterator const i_end0 = _type.end();
+                typename T::const_iterator i_first1 = reference_.begin();
+                typename T::const_iterator const i_end1 = reference_.end();
+                for(; i_first0 != i_end0; ++i_first0)
+                  if( std::find(i_first1, i_end1, *i_first0) == i_end1 ) return false;
+                for(i_first0=_type.begin(); i_first1 != i_end1; ++i_first1)
+                  if( std::find(i_first0, i_end0, *i_first1) == i_end0 ) return false;
                 return true;
               }
           //! Compares floating point occupations.
@@ -95,19 +98,23 @@ namespace LaDa
             typename boost::enable_if< boost::is_floating_point<typename T::value_type>, bool>::type
               cmp_( T const _type ) const
               {
-                foreach(typename T::value_type const &_t, _type)
+                typename T::const_iterator i_first0 = _type.begin();
+                typename T::const_iterator const i_end0 = _type.end();
+                typename T::const_iterator i_first1 = reference_.begin();
+                typename T::const_iterator const i_end1 = reference_.end();
+                for(; i_first0 != i_end0; ++i_first0)
                 {
                   typename T::const_iterator const i_found
-                    = std::find_if( reference_.begin(), reference_.end(),
-                                    CompareOccupations<typename T::value_type>(_t) );
-                  if( i_found == reference_.end() ) return false;
+                    = std::find_if( i_first1, i_end1, 
+                                    CompareOccupations<typename T::value_type>(*i_first0) );
+                  if( i_found == i_end1 ) return false;
                 }
-                foreach(typename T_TYPE::value_type const &_t, reference_)
+                for(i_first0=_type.begin(); i_first1 != i_end1; ++i_first1)
                 {
                   typename T::const_iterator const i_found
-                    = std::find_if( _type.begin(), _type.end(),
-                                    CompareOccupations<typename T::value_type>(_t));
-                  if( i_found == _type.end() ) return false;
+                    = std::find_if( i_first0, i_end0, 
+                                    CompareOccupations<typename T::value_type>(*i_first1));
+                  if( i_found == i_end0 ) return false;
                 }
                 return true;
               }

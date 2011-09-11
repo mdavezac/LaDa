@@ -58,15 +58,23 @@ namespace LaDa
 
         // Adds triplets which are rotations.
         math::rMatrix3d const inv_cell(_cell.inverse());
-        foreach( math::rVector3d const & rot_a0, gvectors[0] )
-          foreach( math::rVector3d const & rot_a1, gvectors[1] )
-            foreach( math::rVector3d const & rot_a2, gvectors[2] )
+        t_vector::const_iterator i_a0 = gvectors[0].begin();
+        t_vector::const_iterator const i_a0_end = gvectors[0].end();
+        t_vector::const_iterator const i_a1_end = gvectors[1].end();
+        t_vector::const_iterator const i_a2_end = gvectors[2].end();
+        for(; i_a0 != i_a0_end; ++i_a0)
+        {
+          t_vector::const_iterator i_a1 = gvectors[1].begin();
+          for(; i_a1 != i_a1_end; ++i_a1)
+          {
+            t_vector::const_iterator i_a2 = gvectors[2].begin();
+            for(; i_a2 != i_a2_end; ++i_a2)
             {
               // creates matrix.
               math::rMatrix3d rotation;
-              rotation.col(0) = rot_a0;
-              rotation.col(1) = rot_a1;
-              rotation.col(2) = rot_a2;
+              rotation.col(0) = *i_a0;
+              rotation.col(1) = *i_a1;
+              rotation.col(2) = *i_a2;
 
               // checks that this the rotation is not singular.
               if( math::is_null(rotation.determinant(), _tolerance) ) continue;
@@ -82,6 +90,8 @@ namespace LaDa
               if( result->end() == std::find_if(result->begin(), result->end(), Cmp(symop, _tolerance)) )
                 result->push_back( symop );
             }
+          }
+        }
         return result;
       }
 

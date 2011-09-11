@@ -4,8 +4,6 @@
 
 #include <cmath>
 
-#include <boost/foreach.hpp>
-
 #include <Eigen/LU> 
 
 #include <math/fuzzy.h>
@@ -37,8 +35,10 @@ namespace LaDa
   
         // moves sites into unit-cell.
         math::rMatrix3d const inv(cell.inverse());
-        foreach(typename TemplateStructure<T_TYPE>::reference atom, result)
-          atom.pos = into_cell(atom.pos, cell, inv);
+        typename TemplateStructure<T_TYPE>::iterator i_atom = result.begin();
+        typename TemplateStructure<T_TYPE>::iterator const i_atom_end = result.end();
+        for(; i_atom != i_atom_end; ++i_atom)
+          i_atom->pos = into_cell(i_atom->pos, cell, inv);
   
         // Then compares fractional translations from site 0 to sites of same type.
         std::vector<math::rVector3d> translations;

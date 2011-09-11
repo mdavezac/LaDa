@@ -57,8 +57,10 @@ namespace LaDa
         math::rMatrix3d const cell(math::gruber(_lattice.cell()));
         math::rMatrix3d const invcell(!cell);
         // Creates a list of atoms centered in the cell.
-        foreach(typename TemplateStructure<T_TYPE>::reference site, atoms)
-          site.pos = into_cell(site.pos-translation, cell, invcell);
+        typename TemplateStructure<T_TYPE>::iterator i_site = atoms.begin();
+        typename TemplateStructure<T_TYPE>::iterator const i_site_end = atoms.end();
+        for(; i_site != i_site_end; ++i_site)
+          i_site->pos = into_cell(i_site->pos-translation, cell, invcell);
  
         // gets point group.
         boost::shared_ptr<t_SpaceGroup> pg = cell_invariants(_lattice.cell());
@@ -68,12 +70,14 @@ namespace LaDa
         // lists atoms of same type as atoms.front()
         std::vector<math::rVector3d> translations;
         CompareOccupations<T_TYPE> const compsites(atoms.front().type);
-        foreach(typename TemplateStructure<T_TYPE>::const_reference site, atoms)
-          if(compsites(site.type)) translations.push_back(site.pos);
+        for(i_site = atoms.begin(); i_site != i_site_end; ++i_site)
+          if(compsites(i_site->type)) translations.push_back(i_site->pos);
         
  
         // applies point group symmetries and finds out if they are part of the space-group.
-        foreach(t_SpaceGroup::reference op, *pg)
+        t_SpaceGroup::iterator i_op = pg->begin();
+        t_SpaceGroup::iterator const i_op_end = pg->end();
+        for(; i_op != i_op_end; ++i_op)
         {
           // loop over possible translations.
           std::vector<math::rVector3d> :: const_iterator i_trial = translations.begin();
@@ -84,12 +88,12 @@ namespace LaDa
           for(; i_trial != i_trial_end; ++i_trial)
           {
             // possible translation.
-            op.translation() = *i_trial;
+            i_op->translation() = *i_trial;
             // Checks that this is a mapping of the lattice upon itself.
             const_iterator i_unmapped = i_atoms_begin;
             for(; i_unmapped != i_atoms_end; ++i_unmapped)
             {
-              CompareSites<T_TYPE> const transformed( into_cell(op*i_unmapped->pos, cell, invcell), 
+              CompareSites<T_TYPE> const transformed( into_cell((*i_op)*i_unmapped->pos, cell, invcell), 
                                                       i_unmapped->type, _tolerance );
               const_iterator i_mapping = i_atoms_begin;
               for(; i_mapping != i_atoms_end; ++i_mapping)
@@ -103,7 +107,7 @@ namespace LaDa
           } // loop over trial translations.
  
           // Found transformation which maps lattice upon itself if condition is true.
-          if(i_trial != i_trial_end) result->push_back(op);
+          if(i_trial != i_trial_end) result->push_back((*i_op));
         } // loop over point group.
  
         return result;
