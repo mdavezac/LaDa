@@ -20,7 +20,7 @@
 
 namespace LaDa
 {
-  namespace Python
+  namespace python
   {
     namespace bp = boost::python;
     template< class T_TYPE >

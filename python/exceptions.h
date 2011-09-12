@@ -6,6 +6,7 @@
 #include <boost/python/handle.hpp>
 #include <boost/python/str.hpp>
 #include <boost/python/exception_translator.hpp>
+#include <boost/exception/diagnostic_information.hpp>
 
 namespace LaDa
 {
@@ -16,17 +17,22 @@ namespace LaDa
       class PyException
       {
         public:
-          PyException   (std::string const &_name, std::string _doc)
-                      : name_(_name), doc_(_doc) {}; 
-          boost::python::object const &get() const
+          PyException() {}
+          boost::python::object const &initialize(std::string const &_name, std::string const &_doc) 
           {
-            static std::string name = name_;
-            static std::string doc = doc_;
-            static boost::python::object exception_(boost::python::handle<>(
-              PyErr_NewExceptionWithDoc(&name[0], &doc[0], NULL, NULL) ) );
+            static bool is_first = true;
+            if(is_first)
+            {
+              namespace bp = boost::python;
+              name_ = _name;
+              doc_ = _doc;
+              exception_ = bp::object(bp::handle<>(bp::borrowed(
+                PyErr_NewExceptionWithDoc(&name_[0], &doc_[0], NULL, NULL) ) ) );
+              is_first = false;
+            }
             return exception_;
           }
-          
+
           void operator()(T const &_e) const
           {
             std::string message = boost::diagnostic_information(_e);
@@ -35,24 +41,34 @@ namespace LaDa
               message += "Encountered an " + name_ + " error.";
             else 
               message += "Encountered a " + name_ + " error.";
-            PyErr_SetString(get().ptr(), message.c_str());
+            PyErr_SetString(exception_.ptr(), message.c_str());
           }
+
+          static void throw_error(std::string const &_message)
+          {
+            PyErr_SetString(exception_.ptr(), _message.c_str());
+            boost::python::throw_error_already_set();
+          };
+
+          static boost::python::object const & exception() { return exception_; }
 
         private:
           std::string name_;
           std::string doc_;
+          //! static exception object. Act as global.
+          static boost::python::object exception_;
       };
+    template<class T> boost::python::object PyException<T>::exception_ = boost::python::object();
 #   ifdef LADA_REGISTER_PYEXCEPT
 #     error LADA_REGISTER_PYEXCEPT already defined.
 #   endif
 #   define LADA_REGISTER_PYEXCEPT(T, n, doc, scope)\
     { \
       std::string name = n; \
-      ::LaDa::python::PyException<T> e(name, doc); \
+      ::LaDa::python::PyException<T> e; \
+      e.initialize(name, doc); \
       boost::python::register_exception_translator<T>(e);\
-      if(name.rfind('.') != std::string::npos)\
-        scope.attr(name.substr(name.rfind('.')+1).c_str()) = e.get();\
-      else scope(name) = e.get();\
+      scope.attr(name.substr(name.rfind('.')+1).c_str()) = ::LaDa::python::PyException<T>::exception();\
     }
   }
 }

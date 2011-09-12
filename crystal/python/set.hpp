@@ -7,7 +7,7 @@ namespace LaDa
 {
   namespace python
   {
-    void expose_atom();
+    void expose_set();
   }
-} 
+}
 #endif

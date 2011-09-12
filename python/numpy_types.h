@@ -11,6 +11,9 @@
 #include <numpy/arrayobject.h>
 #include <numpy/npy_common.h>
 
+#include <root_exceptions.h>
+#include "python/exceptions.h"
+
 
 namespace LaDa
 {
@@ -181,7 +184,8 @@ namespace LaDa
           PyObject *result = PyArray_SimpleNewFromData(1, dims, type<T>::value, _ptr);
           if( result == NULL or PyErr_Occurred() != NULL ) 
           {
-            if(PyErr_Occurred() == NULL) PyErr_SetString(PyExc_RuntimeError, "Could not create numpy array");
+            if(PyErr_Occurred() == NULL)
+              python::PyException<error::internal>::throw_error("Could not create numpy array");
             boost::python::throw_error_already_set();
             return boost::python::object();
           }
