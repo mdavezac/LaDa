@@ -5,6 +5,8 @@
 #include <boost/python/object.hpp>
 #include <boost/python/handle.hpp>
 #include <boost/python/str.hpp>
+#include <boost/python/tuple.hpp>
+#include <boost/python/dict.hpp>
 #include <boost/python/exception_translator.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 
@@ -18,16 +20,24 @@ namespace LaDa
       {
         public:
           PyException() {}
-          boost::python::object const &initialize(std::string const &_name, std::string const &_doc) 
+          boost::python::object const &initialize( std::string const &_name, 
+                                                   std::string const &_doc, 
+                 boost::python::tuple const &_bases
+                   = boost::python::make_tuple(boost::python::object(
+                       boost::python::handle<>(
+                         PyExc_StandardError))) ) 
           {
             static bool is_first = true;
             if(is_first)
             {
               namespace bp = boost::python;
+              bp::dict d;
+              d["__doc__"] = bp::str(_doc);
+              d["name"] = bp::str(_name);
               name_ = _name;
               doc_ = _doc;
               exception_ = bp::object(bp::handle<>(bp::borrowed(
-                PyErr_NewExceptionWithDoc(&name_[0], &doc_[0], NULL, NULL) ) ) );
+                PyErr_NewExceptionWithDoc(&name_[0], &doc_[0], _bases.ptr(), d.ptr()) ) ) );
               is_first = false;
             }
             return exception_;
@@ -62,11 +72,22 @@ namespace LaDa
 #   ifdef LADA_REGISTER_PYEXCEPT
 #     error LADA_REGISTER_PYEXCEPT already defined.
 #   endif
+#   ifdef LADA_REGISTER_PYEXCEPT_WITH_BASE
+#     error LADA_REGISTER_PYEXCEPT_WITH_BASE already defined.
+#   endif
 #   define LADA_REGISTER_PYEXCEPT(T, n, doc, scope)\
     { \
       std::string name = n; \
       ::LaDa::python::PyException<T> e; \
       e.initialize(name, doc); \
+      boost::python::register_exception_translator<T>(e);\
+      scope.attr(name.substr(name.rfind('.')+1).c_str()) = ::LaDa::python::PyException<T>::exception();\
+    }
+#   define LADA_REGISTER_PYEXCEPT_WITH_BASE(T, n, doc, scope, base)\
+    { \
+      std::string name = n; \
+      ::LaDa::python::PyException<T> e; \
+      e.initialize(name, doc, bp::make_tuple(base)); \
       boost::python::register_exception_translator<T>(e);\
       scope.attr(name.substr(name.rfind('.')+1).c_str()) = ::LaDa::python::PyException<T>::exception();\
     }

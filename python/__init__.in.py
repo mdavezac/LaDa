@@ -37,7 +37,8 @@
     Please see `lada.vasp` for a more in-depth description.
 """
 __docformat__ = "restructuredtext en"
-__all__ = ["exceptions", @which_packages@]
+__all__ = ["error", @which_packages@]
+import error
 from os import environ
 
 version_info = (@LaDa_VERSION_MAJOR@, @LaDa_VERSION_MINOR@)
@@ -79,10 +80,10 @@ vasp_library = "libvasp.so"
 """
 
 # reads stuff from input file
-from os.path import exists, expanduser, expandvars
-if exists(expandvars(expanduser('~/.lada'))):
-  from opt import read_input
-  with open(expandvars(expanduser('~/.lada')), 'r') as file: string = file.read()
-  global_dict, local_dict = {}, {}
-  exec(string, global_dict, local_dict)
-  locals().update(local_dict)
+# from os.path import exists, expanduser, expandvars
+# if exists(expandvars(expanduser('~/.lada'))):
+#   from opt import read_input
+#   with open(expandvars(expanduser('~/.lada')), 'r') as file: string = file.read()
+#   global_dict, local_dict = {}, {}
+#   exec(string, global_dict, local_dict)
+#   locals().update(local_dict)

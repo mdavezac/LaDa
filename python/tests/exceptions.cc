@@ -15,6 +15,12 @@ void dothrow_message()
   std::string message = "This is a message.";
   BOOST_THROW_EXCEPTION(::LaDa::error::LADA_TYPE() << LaDa::error::string(message)); 
 }
+void dopythrow_message()
+{
+  ::LaDa::python::PyException< ::LaDa::error::LADA_TYPE >::throw_error("This is another message.");
+  std::string message = "This is a message.";
+  BOOST_THROW_EXCEPTION(::LaDa::error::LADA_TYPE() << LaDa::error::string(message)); 
+}
 
 
 BOOST_PYTHON_MODULE(LADA_MODULE)
@@ -22,4 +28,5 @@ BOOST_PYTHON_MODULE(LADA_MODULE)
   bp::def("nothrow", &nothrow);
   bp::def("dothrow_nomessage", &dothrow_nomessage);
   bp::def("dothrow_message", &dothrow_message);
+  bp::def("dopythrow_message", &dopythrow_message);
 }

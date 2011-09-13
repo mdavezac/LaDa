@@ -1,7 +1,6 @@
 include_directories(${PYTHON_INCLUDE_DIRS})
 
 if(NOT compile_debug_tests)
-endif(NOT compile_debug_tests)
 
   set(TYPES root input internal out_of_range infinite_loop)
   foreach(TYPE ${TYPES})
@@ -19,3 +18,4 @@ endif(NOT compile_debug_tests)
     add_test(exception_${TYPE} python ${CMAKE_CURRENT_BINARY_DIR}/exception_${TYPE}.py)
   endforeach(TYPE ${TYPES})
 
+endif(NOT compile_debug_tests)

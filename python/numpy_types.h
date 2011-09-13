@@ -173,7 +173,7 @@ namespace LaDa
           case NPY_USHORT    : return sizeof(type<npy_ushort>::np_type) > sizeof(T);
           default: break;
         };
-        throw;
+        python::PyException<error::internal>::throw_error("Unknown numpy array type.");
       }
      
       //! Returns python object from array.
@@ -199,7 +199,7 @@ namespace LaDa
         if( result == NULL or PyErr_Occurred() != NULL ) 
         {
           if(PyErr_Occurred() == NULL)
-            PyErr_SetString(PyExc_RuntimeError, "Could not create numpy array");
+            python::PyException<error::internal>::throw_error("Could not create numpy array");
           boost::python::throw_error_already_set();
           return boost::python::object();
         }
@@ -233,8 +233,7 @@ namespace LaDa
       {
         if( PyArray_Check(_ob.ptr()) ) return true;
         
-        PyErr_SetString(PyExc_ValueError, "Argument is not a numpy array.\n");
-        boost::python::throw_error_already_set();
+        python::PyException<error::input>::throw_error("Argument is not a numpy array.\n");
         return false;
       }
       inline bool check_is_complex_array(boost::python::object const &_ob)
@@ -242,8 +241,7 @@ namespace LaDa
         if(not check_is_array(_ob)) return  false;
         if(math::numpy::is_complex(_ob.ptr())) return true;
         
-        PyErr_SetString(PyExc_ValueError, "Argument is not a cmplex numpy array.\n");
-        boost::python::throw_error_already_set();
+        python::PyException<error::input>::throw_error("Argument is not a complex numpy array.\n");
         return false;
       }
 
@@ -311,8 +309,7 @@ namespace LaDa
               return static_cast<T>(*((type<npy_ushort>::np_type*)     ptr_data));
             default: break;
           };
-          PyErr_SetString(PyExc_ValueError, "Unknown numpy type on input.");
-          boost::python::throw_error_already_set();
+          python::PyException<error::input>::throw_error("Unknown numpy type on input.");
           return T(-1);
         }
     }
