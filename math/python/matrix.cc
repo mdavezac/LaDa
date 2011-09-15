@@ -267,7 +267,7 @@ namespace LaDa
 
     void expose_eigen_matrices()
     {
-      using namespace LaDa::Python;
+      using namespace LaDa::python;
       import_array(); // needed for NumPy 
 
       
@@ -276,8 +276,8 @@ namespace LaDa
       Matrix3x_to_python_array<math::iMatrix3d>();
       Matrix3x_from_python_array<math::iMatrix3d>();
 
-      expose_vector<math::rMatrix3d>("_rMatrix3dVector", "Exposes std::vector<math::rMatrix3d>.");
-      expose_vector<math::iMatrix3d>("_iMatrix3dVector", "Exposes std::vector<math::rMatrix3d>.");
+//     expose_vector<math::rMatrix3d>("_rMatrix3dVector", "Exposes std::vector<math::rMatrix3d>.");
+//     expose_vector<math::iMatrix3d>("_iMatrix3dVector", "Exposes std::vector<math::rMatrix3d>.");
     }
   }
 }

@@ -259,7 +259,7 @@ namespace LaDa
 
     void expose_eigen_vectors()
     {
-      using namespace LaDa::Python;
+      using namespace LaDa::python;
       import_array(); // needed for NumPy 
       
       Vector3x_to_python_array<math::rVector3d>();
@@ -267,8 +267,8 @@ namespace LaDa
       Vector3x_to_python_array<math::iVector3d>();
       Vector3x_from_python_array<math::iVector3d>();
   
-      expose_vector<math::rVector3d>("_rVector3dVector", "Exposes std::vector<math::rVector3d>.");
-      expose_vector<math::iVector3d>("_iVector3dVector", "Exposes std::vector<math::iVector3d>.");
+//     expose_vector<math::rVector3d>("_rVector3dVector", "Exposes std::vector<math::rVector3d>.");
+//     expose_vector<math::iVector3d>("_iVector3dVector", "Exposes std::vector<math::iVector3d>.");
     }
   }
 }

@@ -18,55 +18,66 @@
 #include <boost/python/return_arg.hpp>
 #include <boost/python/str.hpp>
 
+#include <root_exceptions.h>
 #include <opt/debug.h>
+
+#include "exceptions.h"
 
 namespace LaDa
 {
-  namespace Python
+  namespace python
   {
     namespace bp = boost::python;
     namespace details
     {
-      template< class T_TYPE > std::vector<T_TYPE>* default_constructor();
-      template< class T_TYPE > 
-        std::vector<T_TYPE>* copy_constructor( const std::vector<T_TYPE>& _ob );
-      template< class T_TYPE >
-        std::vector<T_TYPE>* object_constructor( const boost::python::list& _ob );
-      template< class T_TYPE >
-        std::string print( const std::vector<T_TYPE>& _ob );
+      template<class T> std::auto_ptr< std::vector<T> > default_constructor()
+        { return std::auto_ptr< std::vector<T> >(new std::vector<T>); }
+      template<class T> std::auto_ptr< std::vector<T> > copy_constructor(std::vector<T> const &_c)
+        { return std::auto_ptr< std::vector<T> >(new std::vector<T>(_c)); }
       template<class T>
-        void extend( std::vector<T> & _self, bp::object const &_object )
+        std::auto_ptr< std::vector<T> > constructor(bp::object _b)
         {
-          size_t const N = bp::len(_object);
-          for(size_t i(0); i < N; ++i)
-            try { _self.push_back(  bp::extract<T>(_object[i]) ); }
-            catch(std::exception &_e)
-            {
-              PyErr_SetString
-              ( 
-                PyExc_RuntimeError,
-                ("Could not extract object.\n" + std::string(_e.what())).c_str()
-              );
-              bp::throw_error_already_set();
-            }
+          std::auto_ptr< std::vector<T> > result(new std::vector<T>);
+          if(not PyObject_HasAttrString(_b.ptr(), "__iter__"))
+            PyException<error::AttributeError>::throw_error("Object does not implement __iter__.");
+          bp::stl_input_iterator<T> i_first(_b);
+          bp::stl_input_iterator<T> const i_end;
+          for(; i_first != i_end; ++i_first) result->push_back(*i_first);
+          return result;
+        }
+      template<class T>
+        std::string __str__( const std::vector<T>& _ob )
+        {
+          if(_ob.size() == 0) return "[]";
+          std::ostringstream sstr;
+          typename std::vector<T>::const_iterator i_first = _ob.begin();
+          typename std::vector<T>::const_iterator const i_end = _ob.end();
+          sstr << "[ " << *i_first;
+          for(++i_first; i_first != i_end; ++i_first)
+            sstr << ", " << *i_first;
+          sstr << "]";
+          return sstr.str();
+        }
+      template<class T>
+        void extend( std::vector<T> & _self, bp::object _o)
+        {
+          if(not PyObject_HasAttrString(_o.ptr(), "__iter__"))
+            python::PyException<error::AttributeError>::throw_error("Object does not implement __iter__.");
+          bp::stl_input_iterator<T> i_first(_o);
+          bp::stl_input_iterator<T> const i_end;
+          for(; i_first != i_end; ++i_first) _self.push_back(*i_first);
         }
       template<class T>
         bp::object pop_last( std::vector<T> &_self )
-          { return pop(_self, -1); } 
+          { return pop(_self, _self.size()-1); } 
       template<class T>
         bp::object pop( std::vector<T> &_self, int _i )
         {
           if( _i < 0 ) _i += _self.size();
           if( _i < 0 or _i >= _self.size() )
-          {
-            PyErr_SetString(PyExc_IndexError, "Index out-of-range.\n");
-            bp::throw_error_already_set();
-            return bp::object();
-          }
-          typename std::vector<T> :: iterator i_var = _self.begin();
-          for(size_t i(0); i < _i; ++i) ++i_var; 
-          bp::object result(*i_var);
-          _self.erase(i_var);
+            python::PyException<error::IndexError>::throw_error("Index out range in pop.");
+          bp::object result(_self[_i]);
+          _self.erase(_self.begin() + _i);
           return result;
         }
       template<class T>
@@ -74,124 +85,76 @@ namespace LaDa
         {
           if( _i < 0 ) _i += _self.size();
           if( _i < 0 or _i >= _self.size() )
-          {
-            PyErr_SetString(PyExc_IndexError, "Index out-of-range.\n");
-            bp::throw_error_already_set();
-            return;
-          }
-          typename std::vector<T> :: iterator i_var = _self.begin();
-          for(size_t i(0); i < _i; ++i) ++i_var; 
-          _self.insert(i_var, _t);
+            python::PyException<error::IndexError>::throw_error("Index out range in insert.");
+          _self.insert(_self.begin()+_i, _t);
         }
-
+ 
       template<class T>
         int index(std::vector<T> &_self, T const &_t )
         {
           typename std::vector<T>::const_iterator i_found = 
              std::find(_self.begin(), _self.end(), _t);
           if(i_found == _self.end()) 
-          {
-            PyErr_SetString(PyExc_ValueError, "object not in list.");
-            bp::throw_error_already_set();
-            return -1;
-          }
+            python::PyException<error::KeyError>::throw_error("Object not in list");
           return i_found - _self.begin();
         }
-//     template<class T>
-//       void sort(std::vector<T> &_self)
-//       {
-//         std::sort(_self.begin(), _self.end());
-//       }
+      template<class T>
+        void sort(std::vector<T> &_self)
+          { std::sort(_self.begin(), _self.end()); }
       template<class T>
         void reverse(std::vector<T> &_self) 
-        {
-          std::reverse(_self.begin(), _self.end());
-        }
+          { std::reverse(_self.begin(), _self.end()); }
       template<class T>
         int count(std::vector<T> const &_self, T const &_t) 
-        {
-          return std::count(_self.begin(), _self.end(), _t);
-        }
+          { return std::count(_self.begin(), _self.end(), _t); }
       template<class T>
         void remove(std::vector<T> &_self, T const &_t) 
         {
           typename std::vector<T>::iterator i_found = 
              std::find(_self.begin(), _self.end(), _t);
           if(i_found == _self.end()) 
-          {
-            PyErr_SetString(PyExc_ValueError, "object not in list.");
-            bp::throw_error_already_set();
-            return;
-          }
+            python::PyException<error::KeyError>::throw_error("Object not in list");
           _self.erase(i_found);
         }
+      template<class T>
+        bool equal(std::vector<T> const &_a, bp::object _b)
+        {
+          if(not PyObject_HasAttrString(_b.ptr(), "__iter__"))
+            python::PyException<error::AttributeError>::throw_error("Object does not implement __iter__.");
+          bp::stl_input_iterator<T> i_first(_b);
+          bp::stl_input_iterator<T> const i_end;
+          typename std::vector<T>::const_iterator i_in = _a.begin();
+          typename std::vector<T>::const_iterator const i_in_end = _a.end();
+          for(; i_first != i_end and i_in != i_in_end; ++i_first, ++i_in) 
+            if(*i_in != *i_first) return false;
+          return i_in == i_in_end and i_first == i_end;
+        }
     }
 
-    template< class T_TYPE >
-      bp::class_< std::vector<T_TYPE> > expose_vector( const std::string &_name,
-                                                       const std::string &_docstring )
+    template<class T>
+      bp::class_< std::vector<T> > expose_vector( const std::string &_name,
+                                                  const std::string &_docstring )
       {
-        typedef typename boost::mpl::if_
-             < 
-               boost::is_class<T_TYPE>,
-               bp::return_internal_reference<>,
-               bp::return_value_policy<bp::return_by_value>
-             > :: type t_policies;
-        bp::class_< std::vector<T_TYPE> > result( _name.c_str(), _docstring.c_str() );
-        result
-          .def( "__init__", bp::make_constructor( details::default_constructor< T_TYPE > ) )
-          .def( "__init__", bp::make_constructor( details::copy_constructor< T_TYPE > ) )
-          .def( "__init__", bp::make_constructor( details::object_constructor< T_TYPE > ) )
-          .def( bp::vector_indexing_suite< std::vector<T_TYPE>, false >() )
-#         ifndef LADA_PYTHON_STD_VECTOR_NOPRINT
-            .def( "__str__", &details::print<T_TYPE> )
-#         else
-#           undef LADA_PYTHON_STD_VECTOR_NOPRINT
-#         endif
-          .def( "append", &std::vector<T_TYPE> :: push_back, bp::with_custodian_and_ward<1,2>() ) 
-          .def( "extend", &details::extend<T_TYPE> ) 
-          .def( "pop", &details::pop_last<T_TYPE> ) 
-          .def( "pop", &details::pop<T_TYPE> ) 
-          .def( "insert", &details::insert<T_TYPE> ) 
-          .def( "remove", &details::remove<T_TYPE> ) 
-          .def( "index", &details::index<T_TYPE> ) 
-          .def( "reverse", &details::reverse<T_TYPE> ) 
-//         .def( "sort", &details::sort<T_TYPE> ) 
-          .def( "count", &details::count<T_TYPE> ) 
-          .def( "clear", &std::vector<T_TYPE> :: clear );
-        return result;
+        return bp::class_< std::vector<T> >( _name.c_str(), _docstring.c_str() )
+           .def( "__init__", bp::make_constructor(details::default_constructor<T>) )
+           .def( "__init__", bp::make_constructor(details::copy_constructor<T>) )
+           .def( "__init__", bp::make_constructor(details::constructor<T>) )
+           .def( bp::vector_indexing_suite< std::vector<T>, false >() )
+           .def( "__str__", &details::__str__<T> )
+           .def( "append", &std::vector<T> :: push_back)
+           .def( "extend", &details::extend<T> ) 
+           .def( "pop", &details::pop_last<T> ) 
+           .def( "pop", &details::pop<T> ) 
+           .def( "insert", &details::insert<T> ) 
+           .def( "remove", &details::remove<T> ) 
+           .def( "index", &details::index<T> ) 
+           .def( "reverse", &details::reverse<T> ) 
+           .def( "sort", &details::sort<T> ) 
+           .def( "count", &details::count<T> ) 
+           .def( "__eq__", &details::equal<T> ) 
+           .def( "clear", &std::vector<T> :: clear );
       }
 
-    namespace details
-    {
-      template< class T_TYPE > std::vector<T_TYPE>* default_constructor()
-        { return new std::vector<T_TYPE>; }
-      template< class T_TYPE > 
-        std::vector<T_TYPE>* copy_constructor( const std::vector<T_TYPE>& _ob )
-        { return new std::vector<T_TYPE>(_ob); }
-      template< class T_TYPE >
-        std::vector<T_TYPE>* object_constructor( const boost::python::list& _ob )
-        {
-          namespace bp = boost::python;
-          const size_t n( bp::len( _ob ) );
-          std::vector<T_TYPE>* result = new std::vector<T_TYPE>;
-          result->reserve( n );
-          for( size_t i(0); i < n; ++i )
-            result->push_back( bp::extract<T_TYPE>( _ob[i] ) );
-          return result;
-        }
-
-      template< class T_TYPE >
-        std::string print( const std::vector<T_TYPE>& _ob )
-        {
-          std::ostringstream sstr;
-          typename std::vector<T_TYPE>::const_iterator i_var = _ob.begin();
-          typename std::vector<T_TYPE>::const_iterator i_var_end = _ob.end();
-          for(; i_var != i_var_end; ++i_var )
-            sstr << (*i_var) << " ";
-          return sstr.str();
-        }
-    }
   }
 } // namespace LaDa
 #endif

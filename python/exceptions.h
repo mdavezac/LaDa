@@ -10,8 +10,24 @@
 #include <boost/python/exception_translator.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 
+#include <root_exceptions.h>
+
 namespace LaDa
 {
+  namespace error
+  {
+    //! Attribute error thrown explicitely by lada.
+    struct AttributeError: virtual input {};
+    //! Key error thrown explicitely by lada.
+    struct KeyError: virtual input, virtual out_of_range {};
+    //! Value error thrown explicitely by lada.
+    struct ValueError: virtual input {};
+    //! Index error thrown explicitely by lada.
+    struct IndexError: virtual input {};
+    //! Argument error thrown explicitely by lada.
+    struct ArgumentError: virtual input {};
+  }
+
   namespace python
   {
     // Class to declare and register c++ to python exceptions.
@@ -87,7 +103,7 @@ namespace LaDa
     { \
       std::string name = n; \
       ::LaDa::python::PyException<T> e; \
-      e.initialize(name, doc, bp::make_tuple(base)); \
+      e.initialize(name, doc, base); \
       boost::python::register_exception_translator<T>(e);\
       scope.attr(name.substr(name.rfind('.')+1).c_str()) = ::LaDa::python::PyException<T>::exception();\
     }

@@ -33,7 +33,7 @@ namespace LaDa
     bool isdisjoint(type const &_a, bp::object _b)
     {
       if(not PyObject_HasAttrString(_b.ptr(), "__iter__"))
-        python::PyException<error::root>::throw_error("Object is not a sequence.");
+        python::PyException<error::ArgumentError>::throw_error("Object is not a sequence.");
       bp::stl_input_iterator<type::value_type> i_first(_b);
       bp::stl_input_iterator<type::value_type> const i_end;
       for(; i_first != i_end; ++i_first)
@@ -44,10 +44,7 @@ namespace LaDa
     bool issubset(type const &_a, bp::object _b)
     {
       if(PyObject_HasAttrString(_b.ptr(), "__contains__") == 0)
-      {
-        PyErr_SetString(PyExc_AttributeError, "No __contains__ protocol.");
-        bp::throw_error_already_set();
-      }
+        python::PyException<error::ArgumentError>::throw_error("No __contains__ protocol.");
       bp::object contains = _b.attr("__contains__");
       type::const_iterator i_first = _a.begin();
       type::const_iterator const i_end = _a.end();
@@ -58,17 +55,14 @@ namespace LaDa
     bool istruesubset(type const &_a, bp::object _b)
     {
       if(PyObject_HasAttrString(_b.ptr(), "__len__") == 0)
-      {
-        PyErr_SetString(PyExc_AttributeError, "No __len__ protocol.");
-        bp::throw_error_already_set();
-      }
+        python::PyException<error::ArgumentError>::throw_error("No __len__ protocol.");
       if( _a.size() >= bp::len(_b) ) return false;
       return issubset(_a, _b);
     }
     bool issuperset(type const &_a, bp::object _b)
     {
       if(not PyObject_HasAttrString(_b.ptr(), "__iter__"))
-        python::PyException<error::root>::throw_error("Object is not a sequence.");
+        python::PyException<error::ArgumentError>::throw_error("No __iter__ protocol.");
       bp::stl_input_iterator<type::value_type> i_first(_b);
       bp::stl_input_iterator<type::value_type> const i_end;
       for(; i_first != i_end; ++i_first)
@@ -78,10 +72,7 @@ namespace LaDa
     bool istruesuperset(type const &_a, bp::object _b)
     {
       if(PyObject_HasAttrString(_b.ptr(), "__len__") == 0)
-      {
-        PyErr_SetString(PyExc_AttributeError, "No __len__ protocol.");
-        bp::throw_error_already_set();
-      }
+        python::PyException<error::ArgumentError>::throw_error("No __len__ protocol.");
       if( _a.size() <= bp::len(_b) ) return false;
       return issuperset(_a, _b);
     }
@@ -89,7 +80,7 @@ namespace LaDa
     void insert_(type &_inout, bp::object _b)
     {
       if(not PyObject_HasAttrString(_b.ptr(), "__iter__"))
-        python::PyException<error::root>::throw_error("Object is not a sequence.");
+        python::PyException<error::ArgumentError>::throw_error("No __iter__ protocol.");
       bp::stl_input_iterator<type::value_type> i_first(_b);
       bp::stl_input_iterator<type::value_type> const i_end;
       for(; i_first != i_end; ++i_first) _inout.insert(*i_first);
@@ -117,7 +108,7 @@ namespace LaDa
     void isub(type &_a, bp::object _b)
     {
       if(not PyObject_HasAttrString(_b.ptr(), "__iter__"))
-        python::PyException<error::root>::throw_error("Object is not a sequence.");
+        python::PyException<error::ArgumentError>::throw_error("No __iter__ protocol.");
       bp::stl_input_iterator<type::value_type> i_first(_b);
       bp::stl_input_iterator<type::value_type> const i_end;
       for(; i_first != i_end; ++i_first)
@@ -169,14 +160,14 @@ namespace LaDa
     {
       type::iterator i_found = _a.find(_key);
       if(i_found == _a.end())
-        PyException<error::out_of_range>::throw_error("Key not in set.");
+        python::PyException<error::KeyError>::throw_error("Atomic specie not in set.");
       _a.erase(i_found);
     }
     type::value_type pop(type &_a, type::value_type const &_key)
     {
       type::iterator i_found = _a.find(_key);
       if(i_found == _a.end())
-        PyException<error::out_of_range>::throw_error("Key not in set.");
+        python::PyException<error::KeyError>::throw_error("Atomic specie not in set.");
       return _key;
     }
     void discard(type &_a, type::value_type const &_key)

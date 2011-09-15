@@ -7,7 +7,7 @@ set( PYCRYSTAL_HEADERS
    #    which_site.hpp misc.hpp periodic_dnc.hpp )
 
 set( PYCRYSTAL_SOURCES
-     python.cc set.cc )
+     python.cc set.cc atom.cc )
    #    atom.cc  enumerate.cc  lattice.cc  layerdepth.cc  neighbors.cc  python.cc
    #    read_structure.cc  smith.cc  structure.cc  symmetry_operator.cc
    #    which_site.cc misc.cc periodic_dnc.cc )

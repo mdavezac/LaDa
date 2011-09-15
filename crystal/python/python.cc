@@ -13,11 +13,12 @@
 // #include <opt/types.h>
 // #include <physics/physics.h>
 // #include <crystal/structure.h>
+#include <python/std_vector.hpp>
 
+#include "atom.hpp"
 #include "set.hpp"
 // #include "lattice.hpp"
 // #include "structure.hpp"
-// #include "atom.hpp"
 // #include "read_structure.hpp"
 // #include "enumerate.hpp"
 // #include "smith.hpp"
@@ -86,8 +87,9 @@ BOOST_PYTHON_MODULE(_crystal)
 // bp::def( "nb_valence_states", &nb_valence_states, bp::arg("structure"), 
 //          "Returns the number of `escan` valence states in a structure." );
 
+  LaDa::python::expose_vector<std::string>("VectorStr", "Interface to Cpp vectors of string.");
   LaDa::python::expose_set();
-// LaDa::Python::expose_atom();
+  LaDa::python::expose_atom();
 // LaDa::Python::expose_structure();
 // LaDa::Python::expose_lattice();
 // LaDa::Python::expose_read_structure();

@@ -12,7 +12,7 @@
 #include <numpy/npy_common.h>
 
 #include <root_exceptions.h>
-#include "python/exceptions.h"
+#include "exceptions.h"
 
 
 namespace LaDa
@@ -173,7 +173,7 @@ namespace LaDa
           case NPY_USHORT    : return sizeof(type<npy_ushort>::np_type) > sizeof(T);
           default: break;
         };
-        python::PyException<error::internal>::throw_error("Unknown numpy array type.");
+        python::PyException<error::ValueError>::throw_error("Unknown numpy array type.");
       }
      
       //! Returns python object from array.
@@ -233,7 +233,7 @@ namespace LaDa
       {
         if( PyArray_Check(_ob.ptr()) ) return true;
         
-        python::PyException<error::input>::throw_error("Argument is not a numpy array.\n");
+        python::PyException<error::ValueError>::throw_error("Argument is not a numpy array.\n");
         return false;
       }
       inline bool check_is_complex_array(boost::python::object const &_ob)
@@ -241,7 +241,7 @@ namespace LaDa
         if(not check_is_array(_ob)) return  false;
         if(math::numpy::is_complex(_ob.ptr())) return true;
         
-        python::PyException<error::input>::throw_error("Argument is not a complex numpy array.\n");
+        python::PyException<error::ValueError>::throw_error("Argument is not a complex numpy array.\n");
         return false;
       }
 
@@ -309,7 +309,7 @@ namespace LaDa
               return static_cast<T>(*((type<npy_ushort>::np_type*)     ptr_data));
             default: break;
           };
-          python::PyException<error::input>::throw_error("Unknown numpy type on input.");
+          python::PyException<error::ValueError>::throw_error("Unknown numpy type on input.");
           return T(-1);
         }
     }

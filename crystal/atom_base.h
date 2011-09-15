@@ -11,6 +11,8 @@
 #include <iostream>
 
 #include <boost/serialization/access.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/set.hpp>
 
 #include <opt/types.h>
 #include <math/eigen.h>
