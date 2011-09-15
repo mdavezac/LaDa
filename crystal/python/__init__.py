@@ -1,4 +1,124 @@
-# from ._docstring import __doc__ 
+from ._docstring import __doc__ 
+__all__ = ['FreezeAtom', 'Atom']
+
+from _crystal import FreezeAtom
+
+def Atom(*args, **kwargs):
+  """ Initialize an atom. 
+
+      :Parameters:
+        position : list
+          Atomic coordinates.  These quantities are accessible as a keyword or
+          as the first three arguments of the constructor. 
+        type
+          For atoms with set or vector types, this is a list of strings representing atomic species.
+          For atom with a single string type, this is a single string. Note
+          that type can be set using the 4th (to nth for vector and sets)
+          arguments rather than this keyword argument. 
+        site : int
+          Site index. Can only be attained via a keyword only.
+        freeze : int
+          Site index. Can only be attained via a keyword only.
+        atomtype : str
+          Defines the atomic type:
+            - str: Atomic type is a single string representing a single atomic
+                   specie per site.
+            - set: Atomic type is a set of strings representing many possible
+                   atomic occupation for this site.
+            - list: Atomic type is a list of strings representing many
+                    possible atomic occupation for this site.
+
+        There are three kinds of atoms. The scalar kind accept only a single
+        atomic specie per atomic site, defined in the type attribute. This is
+        usefull for defining structures in 90% of applications. However, it may
+        be necessary to define a lattice where an atomic site can be occupied
+        by any number of species. A lattice is usefull, for instance, in alloy
+        applications such as cluster expansion. In that case, two different
+        objects are offered, one where the atomic type is list, and the other
+        where it is set. 
+
+        There are several ways of constructing atoms, either directly via
+        arguments, or via keywords.
+
+        >>> a = Atom(0.25,0.25,0.25, "Au") 
+        >>> b = Atom(0.25,0.25,0.25, "Au", "Pd") 
+        >>> c = Atom(0.25,0.25,0.25, type="Au") 
+        >>> d = Atom(0.25,0.25,0.25, type=["Au", "Pd"]) 
+        >>> e = Atom(position=(0.25,0.25,0.25), type=set(["Au", "Pd"])) 
+
+        `a` above is an atom where occupation must be a single atomic specie.
+        The position is given by the first three arguments and the occupation
+        by the fourth.
+
+        `b` above is an atom where occupation is a *list* of atomic species.
+        The position is given by the first three arguments and the occupation
+        by the fourth to nth.
+
+        `c` above is an atom where occupation must be a single atomic specie.
+        The position is given by the first three arguments and the occupation
+        is given by the keyword argument ``type``.
+
+        `d` above is an atom where occupation is a *list* of atomic species.
+        The position is given by the first three arguments and the occupation
+        is given by the keyword argument ``type``.
+
+        `e` above is an atom where occupation is a *set* of atomic species,
+        e.g. a list of unique items, with no duplicates. Both position and type
+        are given through keyword arguments.
+
+        Keyword and argument can mixed and matched. 
+  """
+  from .. import error
+  from _crystal import AtomStr, AtomVec, AtomSet, SpecieSet
+  position = [0,0,0]
+  if len(args) > 0:
+    if hasattr(args[0], "__iter__"): 
+      if len(args[0]) == 3:
+        position = [args[0][0], args[0][1], args[0][2]]
+        args = args[1:]
+        assert "position" not in kwargs,\
+               error.ArgumentError("Position given both in argument and keyword argument.")
+      else: raise error.ArgumentError("Unknown argument type {0}.".format(args[0]))
+    elif len(args) > 2:
+      position = args[:3]
+      args = args[3:]
+      assert "position" not in kwargs,\
+             error.ArgumentError("Position given both in argument and keyword argument.")
+    else: raise error.ArgumentError("Incorrect number of arguments in Atom.")
+  elif "position" in kwargs: position = kwargs["position"]
+
+  type, atomic_type = "", "scalar"
+  if len(args) == 1:
+    type, atomic_type = args[0], "scalar"
+    assert "type" not in kwargs,\
+           error.ArgumentError("Type given both in argument and keyword argument.")
+  elif len(args) > 1:
+    type, atomic_type = args, "vector"
+    assert "type" not in kwargs,\
+           error.ArgumentError("Type given both in argument and keyword argument.")
+  elif "type" in kwargs:
+    type = kwargs["type"]
+    if isinstance(type, str): atomic_type = "scalar"
+    elif isinstance(type, set) or isinstance(type, SpecieSet): atomic_type = "set"
+    else: atomic_type = "list"
+
+  if kwargs.get("atomic_type", atomic_type) != atomic_type:
+    if atomic_type == "scalar": atomic_type = kwargs["atomic_type"]
+    else: raise error.ArgumentError("Requested a scalar atom but gave {0} atomic species.".format(len(args)))
+
+  if atomic_type == "scalar": atomic_type = AtomStr
+  elif atomic_type == "list": atomic_type = AtomVec
+  elif atomic_type == "set": atomic_type = AtomSet
+  
+  args = list(position) + list(type)
+  kwargs.pop("position", None)
+  kwargs.pop("type", None)
+  return atomic_type(*args, **kwargs)
+
+
+
+
+
 # __all__ = [ 'FreezeAtom', 'which_site', 'Sites', 'SymmetryOperator', 'Lattice', 'to_cartesian',\
 #             'get_point_group_symmetries', 'read_structure', 'sort_layers', 'Site', \
 #             'smith_indices', 'Atom', 'kAtom', 'fold_vector', 'Structure', 'FreezeCell',\
