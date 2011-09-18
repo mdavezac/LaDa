@@ -25,7 +25,7 @@ namespace LaDa
     //! Index error thrown explicitely by lada.
     struct IndexError: virtual input {};
     //! Argument error thrown explicitely by lada.
-    struct ArgumentError: virtual input {};
+    struct TypeError: virtual input {};
   }
 
   namespace python

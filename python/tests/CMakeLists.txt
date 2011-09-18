@@ -19,7 +19,7 @@ endif(NOT compile_debug_tests)
     add_test(exception_${TYPE} python ${CMAKE_CURRENT_BINARY_DIR}/exception_${TYPE}.py)
   endforeach(TYPE ${TYPES})
 
-  set(TYPES AttributeError KeyError ValueError IndexError)
+  set(TYPES AttributeError KeyError ValueError IndexError TypeError)
   foreach(TYPE ${TYPES})
     python_add_module (exception_${TYPE} "" "exceptions.cc")
     set_property( TARGET exception_${TYPE} PROPERTY COMPILE_DEFINITIONS

@@ -45,7 +45,7 @@ BOOST_PYTHON_MODULE(error)
   LADA_REGISTER_PYEXCEPT_WITH_BASE( IndexError, "lada.error.IndexError",
                           "Index errors explicitely thrown by lada.", scope,
                           bp::make_tuple(PyException<input>::exception(), bp::object(bp::handle<>(PyExc_IndexError))));
-  LADA_REGISTER_PYEXCEPT_WITH_BASE( ArgumentError, "lada.error.ArgumentError",
+  LADA_REGISTER_PYEXCEPT_WITH_BASE( TypeError, "lada.error.TypeError",
                           "Argument errors explicitely thrown by lada.", scope,
-                          bp::make_tuple(PyException<input>::exception(), bp::object(bp::handle<>(PyExc_IndexError))));
+                          bp::make_tuple(PyException<input>::exception(), bp::object(bp::handle<>(PyExc_TypeError))));
 }

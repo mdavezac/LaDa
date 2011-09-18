@@ -33,7 +33,7 @@ namespace LaDa
     bool isdisjoint(type const &_a, bp::object _b)
     {
       if(not PyObject_HasAttrString(_b.ptr(), "__iter__"))
-        python::PyException<error::ArgumentError>::throw_error("Object is not a sequence.");
+        python::PyException<error::TypeError>::throw_error("Object is not a sequence.");
       bp::stl_input_iterator<type::value_type> i_first(_b);
       bp::stl_input_iterator<type::value_type> const i_end;
       for(; i_first != i_end; ++i_first)
@@ -44,7 +44,7 @@ namespace LaDa
     bool issubset(type const &_a, bp::object _b)
     {
       if(PyObject_HasAttrString(_b.ptr(), "__contains__") == 0)
-        python::PyException<error::ArgumentError>::throw_error("No __contains__ protocol.");
+        python::PyException<error::TypeError>::throw_error("No __contains__ protocol.");
       bp::object contains = _b.attr("__contains__");
       type::const_iterator i_first = _a.begin();
       type::const_iterator const i_end = _a.end();
@@ -55,14 +55,14 @@ namespace LaDa
     bool istruesubset(type const &_a, bp::object _b)
     {
       if(PyObject_HasAttrString(_b.ptr(), "__len__") == 0)
-        python::PyException<error::ArgumentError>::throw_error("No __len__ protocol.");
+        python::PyException<error::TypeError>::throw_error("No __len__ protocol.");
       if( _a.size() >= bp::len(_b) ) return false;
       return issubset(_a, _b);
     }
     bool issuperset(type const &_a, bp::object _b)
     {
       if(not PyObject_HasAttrString(_b.ptr(), "__iter__"))
-        python::PyException<error::ArgumentError>::throw_error("No __iter__ protocol.");
+        python::PyException<error::TypeError>::throw_error("No __iter__ protocol.");
       bp::stl_input_iterator<type::value_type> i_first(_b);
       bp::stl_input_iterator<type::value_type> const i_end;
       for(; i_first != i_end; ++i_first)
@@ -72,7 +72,7 @@ namespace LaDa
     bool istruesuperset(type const &_a, bp::object _b)
     {
       if(PyObject_HasAttrString(_b.ptr(), "__len__") == 0)
-        python::PyException<error::ArgumentError>::throw_error("No __len__ protocol.");
+        python::PyException<error::TypeError>::throw_error("No __len__ protocol.");
       if( _a.size() <= bp::len(_b) ) return false;
       return issuperset(_a, _b);
     }
@@ -80,7 +80,7 @@ namespace LaDa
     void insert_(type &_inout, bp::object _b)
     {
       if(not PyObject_HasAttrString(_b.ptr(), "__iter__"))
-        python::PyException<error::ArgumentError>::throw_error("No __iter__ protocol.");
+        python::PyException<error::TypeError>::throw_error("No __iter__ protocol.");
       bp::stl_input_iterator<type::value_type> i_first(_b);
       bp::stl_input_iterator<type::value_type> const i_end;
       for(; i_first != i_end; ++i_first) _inout.insert(*i_first);
@@ -108,7 +108,7 @@ namespace LaDa
     void isub(type &_a, bp::object _b)
     {
       if(not PyObject_HasAttrString(_b.ptr(), "__iter__"))
-        python::PyException<error::ArgumentError>::throw_error("No __iter__ protocol.");
+        python::PyException<error::TypeError>::throw_error("No __iter__ protocol.");
       bp::stl_input_iterator<type::value_type> i_first(_b);
       bp::stl_input_iterator<type::value_type> const i_end;
       for(; i_first != i_end; ++i_first)

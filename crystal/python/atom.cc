@@ -29,16 +29,19 @@ namespace LaDa
   namespace python
   {
     namespace bp = boost::python;
-    typedef crystal::traits::StructureData< std::set<std::string> >::t_Atom t_Atom;
+    template<class T> struct atom
+    {
+      typedef typename crystal::traits::StructureData<T>::t_Atom type;
+    };
     template<class T> 
-      bp::object get_pos(typename crystal::traits::StructureData<T>::t_Atom &_in)
+      bp::object get_pos(typename atom<T>::type &_in)
         { return math::numpy::array_from_ptr<math::rVector3d::Scalar>(_in.pos.data(), 3); }
     template<class T> 
       void set_pos( typename crystal::traits::StructureData<T>::t_Atom &_in,
                     boost::python::object const &_pos )
       {
         if(bp::len(_pos) != 3)
-          PyException<error::ValueError>::throw_error("Input object is not a sequence of 3.");
+          PyException<error::TypeError>::throw_error("Input object is not a sequence of 3.");
         _in.pos[0] = boost::python::extract<math::rVector3d::Scalar>(_pos[0]);
         _in.pos[1] = boost::python::extract<math::rVector3d::Scalar>(_pos[1]);
         _in.pos[2] = boost::python::extract<math::rVector3d::Scalar>(_pos[2]);
@@ -51,7 +54,7 @@ namespace LaDa
       extract_type1(bp::object _in, T &_type)
       {
         if(bp::len(_in) > 1) 
-          PyException<error::ValueError>::throw_error("Atomic type needs be a scalar.");
+          PyException<error::TypeError>::throw_error("Atomic type needs be a scalar.");
         _type = bp::extract<T>(_in); 
       }
     template<class T> typename boost::enable_if< crystal::details::is_set<T>, void >::type
@@ -73,14 +76,21 @@ namespace LaDa
         { extract_type0(_in, _type); }
 
     template<class T>
-      std::auto_ptr<typename crystal::traits::StructureData<T>::t_Atom> 
+      std::string scalar_kind(typename atom<T>::type const &) { return "scalar"; }
+    template<class T>
+      std::string list_kind(typename atom<T>::type const &) { return "list"; }
+    template<class T>
+      std::string set_kind(typename atom<T>::type const &) { return "set"; }
+
+    template<class T>
+      std::auto_ptr<typename atom<T>::type> 
         constructor(bp::tuple _args, bp::dict _kwargs) 
         {
-          typedef typename crystal::traits::StructureData<T>::t_Atom t_Atom;
+          typedef typename atom<T>::type t_Atom;
           std::auto_ptr<t_Atom> result(new t_Atom);
           if(bp::len(_args) == 0 and bp::len(_kwargs) == 0) return result;
           if(bp::len(_args) >= 3 and _kwargs.has_key("position"))
-            PyException<error::KeyError>::throw_error
+            PyException<error::TypeError>::throw_error
                ("Position provided both in tuple and keyword argument.");
           else if(bp::len(_args) >= 3 or _kwargs.has_key("position"))
           {
@@ -88,14 +98,14 @@ namespace LaDa
             if(_kwargs.has_key("position")) pos = _kwargs.get("position");
             else pos = _args.slice(bp::slice_nil(), 3);
             if(bp::len(pos) != 3) 
-              PyException<error::ValueError>::throw_error
+              PyException<error::TypeError>::throw_error
                 ("Position is not a list of three scalars.");
             result->pos[0] = boost::python::extract<math::rVector3d::Scalar>(pos[0]);
             result->pos[1] = boost::python::extract<math::rVector3d::Scalar>(pos[1]);
             result->pos[2] = boost::python::extract<math::rVector3d::Scalar>(pos[2]);
           }
           if(bp::len(_args) > 3 and _kwargs.has_key("type"))
-            PyException<error::KeyError>::throw_error
+            PyException<error::TypeError>::throw_error
                ("Types provided both in tuple and keyword argument.");
           else if(bp::len(_args) == 4 or _kwargs.has_key("type"))
           {
@@ -113,55 +123,55 @@ namespace LaDa
           return result;
         }
 
-
     template< class T_TYPE >
-      void expose_typed_atom( const std::string &_name,
-                              const std::string &_ds,
-                              const std::string &_typeds )
-      {
-        namespace bp = boost::python;
-        typedef typename crystal::traits::StructureData< T_TYPE >::t_Atom t_Atom;
-        bp::class_< t_Atom >
-        ( 
-          _name.c_str(), 
+      bp::class_<typename atom<T_TYPE>::type>
+        expose_typed_atom( const std::string &_name,
+                                const std::string &_ds,
+                                const std::string &_typeds )
+        {
+          namespace bp = boost::python;
+          typedef typename crystal::traits::StructureData< T_TYPE >::t_Atom t_Atom;
+          return bp::class_< t_Atom >
           ( 
-              _ds 
-            +  "\nThis object can be constructed from:\n\n"
-               "- with no argument\n"
-               "- another `" + _name + "` object (deepcopy)\n"
-               "- a numpy 1d-vector of length 3, in which ``self.pos``" 
-                 " is the only variable to be set.\n"
-               "- same as above + a type value.\n"
-               "- same as above + a site index.\n"
-          ).c_str()
-        ).def(bp::init<t_Atom const &>())
-         .def( "__init__", bp::raw_constructor(&constructor<T_TYPE>),
-               ( "Initialize an " + _name + ".\n\n"
-                 ":Parameters:\n"
-                 "  position : list\n    Atomic coordinates. "
-                 "These quantities are accessible as a keyword or as the first "
-                 "three arguments of the constructor.\n"
-                 "  type\n    For AtomVec and AtomSet, this is a "
-                 "list of string representing atomic species. For AtomStr, this "
-                 "a single string. Can be accessed both as a keyword, or as the "
-                 "4th argument (to nth argument, in case of AtomVec and "
-                 "AtomSet) of the constructor.\n"
-                 "  site : int\n    Site index. Can only be attained via a keyword only."
-                 "  freeze : int\n    Site index. Can only be attained via a keyword only.").c_str())
-         .add_property
-         (
-           "pos", 
-           bp::make_function(&get_pos<T_TYPE>, bp::with_custodian_and_ward_postcall<1, 0>()),
-           &set_pos<T_TYPE>,
-           "A 1-dimensional numpy array of length 3 containing atomic position in cartesian units."
-         )
-         .def_readwrite( "site",   &t_Atom::site,
-                         "index of the \"site\" as referenced by a LaDa.Lattice object." )
-         .def_readwrite( "freeze", &t_Atom::freeze )
-         .def_readwrite( "type", &t_Atom::type )
-         .def_pickle( python::pickle< t_Atom >() )
-         .def( "__str__",  &tostream<t_Atom> );
-      }
+            _name.c_str(), 
+            ( 
+                _ds 
+              +  "\nThis object can be constructed from:\n\n"
+                 "- with no argument\n"
+                 "- another `" + _name + "` object (deepcopy)\n"
+                 "- a numpy 1d-vector of length 3, in which ``self.pos``" 
+                   " is the only variable to be set.\n"
+                 "- same as above + a type value.\n"
+                 "- same as above + a site index.\n"
+            ).c_str()
+          ).def(bp::init<t_Atom const &>())
+           .def( "__init__", bp::raw_constructor(&constructor<T_TYPE>),
+                 ( "Initialize an " + _name + ".\n\n"
+                   ":Parameters:\n"
+                   "  position : list\n    Atomic coordinates. "
+                   "These quantities are accessible as a keyword or as the first "
+                   "three arguments of the constructor.\n"
+                   "  type\n    For AtomVec and AtomSet, this is a "
+                   "list of string representing atomic species. For AtomStr, this "
+                   "a single string. Can be accessed both as a keyword, or as the "
+                   "4th argument (to nth argument, in case of AtomVec and "
+                   "AtomSet) of the constructor.\n"
+                   "  site : int\n    Site index. Can only be attained via a keyword only."
+                   "  freeze : int\n    Site index. Can only be attained via a keyword only.").c_str())
+           .add_property
+           (
+             "pos", 
+             bp::make_function(&get_pos<T_TYPE>, bp::with_custodian_and_ward_postcall<1, 0>()),
+             &set_pos<T_TYPE>,
+             "A 1-dimensional numpy array of length 3 containing atomic position in cartesian units."
+           )
+           .def_readwrite( "site",   &t_Atom::site,
+                           "index of the \"site\" as referenced by a LaDa.Lattice object." )
+           .def_readwrite( "freeze", &t_Atom::freeze )
+           .def_readwrite( "type", &t_Atom::type )
+           .def_pickle( python::pickle< t_Atom >() )
+           .def( "__str__",  &tostream<t_Atom> );
+        }
 
     void expose_atom()
     {
@@ -186,20 +196,20 @@ namespace LaDa
         "A set is a collection of unique strings.",
         "set of strings representing the atomic specie(s) at this site.\n\n"
         "This is a set in the sense of a collection of unique strings."
-      );
+      ).add_property("kind", &set_kind< std::set<std::string> >, "Occupation is a set of strings.");
       expose_typed_atom< std::vector<std::string> >
       (
         "AtomVec", 
         "Atom for which the type is specified as a list of strings.",
         "List of atomic species."
-      );
+      ).add_property("kind", &list_kind< std::vector<std::string> >, "Occupation is a list of strings.");
       expose_typed_atom<std::string>
       (
         "AtomStr", 
         "Atom for which the type is specified as a strings.\n\n"
         "A set is a collection of unique strings.",
         "String representing the occupation."
-      );
+      ).add_property("kind", &scalar_kind<std::string>, "Occupation is a string.");
     }
   }
 } // namespace LaDa

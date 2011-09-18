@@ -2,6 +2,8 @@ from ._docstring import __doc__
 __all__ = ['FreezeAtom', 'Atom']
 
 from _crystal import FreezeAtom
+# modify internal atom classes below, for instance by adding python functions.
+import _modify_atom_classes
 
 def Atom(*args, **kwargs):
   """ Initialize an atom. 
@@ -10,7 +12,7 @@ def Atom(*args, **kwargs):
         position : list
           Atomic coordinates.  These quantities are accessible as a keyword or
           as the first three arguments of the constructor. 
-        type
+        type 
           For atoms with set or vector types, this is a list of strings representing atomic species.
           For atom with a single string type, this is a single string. Note
           that type can be set using the 4th (to nth for vector and sets)
@@ -76,44 +78,49 @@ def Atom(*args, **kwargs):
       if len(args[0]) == 3:
         position = [args[0][0], args[0][1], args[0][2]]
         args = args[1:]
-        assert "position" not in kwargs,\
-               error.ArgumentError("Position given both in argument and keyword argument.")
-      else: raise error.ArgumentError("Unknown argument type {0}.".format(args[0]))
+        if "position" in kwargs: 
+          raise error.TypeError("Position given both in argument and keyword argument.")
+      else: raise error.TypeError("Unknown argument type {0}.".format(args[0]))
     elif len(args) > 2:
       position = args[:3]
       args = args[3:]
-      assert "position" not in kwargs,\
-             error.ArgumentError("Position given both in argument and keyword argument.")
-    else: raise error.ArgumentError("Incorrect number of arguments in Atom.")
+      if "position" in kwargs: 
+        raise error.TypeError("Position given both in argument and keyword argument.")
+    else: raise error.TypeError("Incorrect number of arguments in Atom.")
   elif "position" in kwargs: position = kwargs["position"]
 
-  type, atomic_type = "", "scalar"
+  type, kind = "", "scalar"
   if len(args) == 1:
-    type, atomic_type = args[0], "scalar"
-    assert "type" not in kwargs,\
-           error.ArgumentError("Type given both in argument and keyword argument.")
+    type = args[0]
+    if isinstance(type, str): kind = "scalar"
+    elif isinstance(type, set) or isinstance(type, SpecieSet): kind = "set"
+    else: kind = "list"
+    if "type" in kwargs: 
+      raise error.TypeError("Type given both in argument and keyword argument.")
   elif len(args) > 1:
-    type, atomic_type = args, "vector"
-    assert "type" not in kwargs,\
-           error.ArgumentError("Type given both in argument and keyword argument.")
+    type, kind = args, "list"
+    if "type" in kwargs: 
+      raise error.TypeError("Type given both in argument and keyword argument.")
   elif "type" in kwargs:
     type = kwargs["type"]
-    if isinstance(type, str): atomic_type = "scalar"
-    elif isinstance(type, set) or isinstance(type, SpecieSet): atomic_type = "set"
-    else: atomic_type = "list"
+    if isinstance(type, str): kind = "scalar"
+    elif isinstance(type, set) or isinstance(type, SpecieSet): kind = "set"
+    else: kind = "list"
 
-  if kwargs.get("atomic_type", atomic_type) != atomic_type:
-    if atomic_type == "scalar": atomic_type = kwargs["atomic_type"]
-    else: raise error.ArgumentError("Requested a scalar atom but gave {0} atomic species.".format(len(args)))
+  if kwargs.get("kind", kind) != kind:
+    if kind == "scalar" and len(args) > 1:
+      raise error.TypeError("Requested a scalar atom but gave {0} atomic species.".format(len(args)))
+    kind = kwargs["kind"]
 
-  if atomic_type == "scalar": atomic_type = AtomStr
-  elif atomic_type == "list": atomic_type = AtomVec
-  elif atomic_type == "set": atomic_type = AtomSet
+  if kind == "scalar": kind = AtomStr
+  elif kind == "list": kind = AtomVec
+  elif kind == "set": kind = AtomSet
+  else: raise error.ValueError("Unknown atom type {0}.".format(kind))
   
-  args = list(position) + list(type)
-  kwargs.pop("position", None)
-  kwargs.pop("type", None)
-  return atomic_type(*args, **kwargs)
+  if kind in ["set", "list"] and isinstance(type, str):  type = [type]
+  kwargs["position"] = position
+  kwargs["type"] = type
+  return kind(**kwargs)
 
 
 

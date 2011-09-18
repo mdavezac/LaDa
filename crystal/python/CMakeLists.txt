@@ -1,5 +1,5 @@
 set( PYCRYSTAL_PY  gruber.py  __init__.py A2BX4.py bravais.py binary.py 
-     read_write.py _docstring.py ABX3.py )
+     read_write.py _docstring.py ABX3.py _modify_atom_classes.py)
 set( PYCRYSTAL_HEADERS 
      set.hpp )
    #    atom.hpp  enumerate.hpp  lattice.hpp  layerdepth.hpp  neighbors.hpp
