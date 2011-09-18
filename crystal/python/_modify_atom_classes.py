@@ -37,3 +37,17 @@ def cast(self, kind, force=False):
 AtomSet.cast = cast
 AtomVec.cast = cast
 AtomStr.cast = cast
+
+def _repr(self):
+  """ Represents an atom. """
+  result = "Atom({0.pos[0]}, {0.pos[1]}, {0.pos[2]}".format(self)
+  if self.kind == "scalar": result += ", {0}".format(repr(self.type))
+  elif self.kind == "list": result += ", {0}".format(repr(list(self.type)))
+  elif self.kind == "set": result += ", {0}, kind=\"set\"".format(repr(list(self.type)))
+  if self.site != -1: result += ", site={0}".format(self.site)
+  if self.freeze != 0: result += ", freeze={0}".format(self.freeze)
+  result += ")"
+  return result
+AtomStr.__repr__ = _repr
+AtomVec.__repr__ = _repr
+AtomSet.__repr__ = _repr
