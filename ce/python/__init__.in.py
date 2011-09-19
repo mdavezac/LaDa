@@ -29,7 +29,7 @@ def read_jtypes(path, lattice, pairs = 0):
   from numpy import array
   from ..crystal import lattice_context
   from ..crystal.bravais import bcc, fcc
-  from . import MLCluster, MLClusterClasses, _create_clusters
+  from _ce import _create_clusters
 
   if lattice == "bcc": lattice = bcc(); lattice.sites[0].type = "A", "B"
   elif lattice == "fcc": lattice = fcc(); lattice.sites[0].type = "A", "B"
