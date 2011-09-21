@@ -55,9 +55,6 @@ class Launch(Incar):
     if self.inplace: 
       assert workdir == None, ValueError("Cannot use both workdir and inplace attributes.")
 
-    # sets all other keywords as attributes.
-    for key in kwargs.keys(): setattr(self, key, kwargs[key])
-
   @property
   def workdir(self):
     """ Directory where calculations are performed. 
