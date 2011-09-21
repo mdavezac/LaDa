@@ -548,7 +548,8 @@ def convert_from_unix_re(pattern):
   return compile(pattern)
     
 @broadcast_result(key=True)
-def copyfile(src, dest=None, nothrow=None, comm=None, symlink=False, aslink=False):
+def copyfile( src, dest=None, nothrow=None, comm=None,\
+              symlink=False, aslink=False, nocopyempty=False ):
   """ Copy ``src`` file onto ``dest`` directory or file.
 
       :kwarg src: Source file.
@@ -573,13 +574,15 @@ def copyfile(src, dest=None, nothrow=None, comm=None, symlink=False, aslink=Fals
           itself a link. Links to the file which ``src`` points to, not to
           ``src`` itself. Defaults to False.
       :type aslink: bool
+      :kwarg nocopyempty: Does not perform copy if file is empty. Defaults to False.
+      :type nocopyempty: bool
 
       This function fails selectively, depending on what is in ``nothrow`` list.
   """
   try:
     from os import getcwd, symlink as ln, remove
     from os.path import isdir, isfile, samefile, exists, basename, dirname,\
-                        join, islink, realpath, relpath
+                        join, islink, realpath, relpath, getsize
     from shutil import copyfile as cpf
     # sets up nothrow options.
     if nothrow == None: nothrow = []
@@ -609,6 +612,8 @@ def copyfile(src, dest=None, nothrow=None, comm=None, symlink=False, aslink=Fals
     if exists(dest) and samefile(src, dest): 
       if 'same' in nothrow: return False
       raise IOError("{0} and {1} are the same file.".format(src, dest))
+    if nocopyempty and isfile(src):
+      if getsize(src) == 0: return
     if aslink and islink(src): symlink, src = True, realpath(src)
     if symlink:
       if exists(dest): remove(dest)

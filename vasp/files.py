@@ -26,6 +26,8 @@ OUTCAR = "OUTCAR"
 """ Name of the output file. """
 FUNCCAR = "FUNCCAR"
 """ Name of the pickled functional. """
+WAVEDER = "WAVEDER"
+""" Name of GW-required file. """
 
 minimal = [OUTCAR, CONTCAR, STDOUT, STDERR, FUNCCAR]
 """ The minimum number of files to still have the results of the run.

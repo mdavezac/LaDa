@@ -1,12 +1,15 @@
 """ Standard parameter types for use as attributes in Incar """
 __docformat__ = "restructuredtext en"
+__all__ = [ "SpecialVaspParam", "NElect", "Algo", "Precision", "Ediff",\
+            "Encut", "FFTGrid", "Restart", "UParams", "IniWave",\
+            "Magmom", 'Npar', 'Boolean', 'Integer', 'Choices', 'PrecFock' ]
 from ...opt.decorators import broadcast_result
 class SpecialVaspParam(object): 
   """ Type checking class. """
   def __init__(self, value): 
     super(SpecialVaspParam, self).__init__()
     self.value = value
-  def __repr__(self): return "%s(%s)" % (self.__class__.__name__, repr(self.value))
+  def __repr__(self): return "{0.__class__.__name__}(1)".format(self, repr(self.value))
 
 class Magmom(SpecialVaspParam):
   """ Prints magmom to INCAR. 
@@ -161,19 +164,23 @@ class Algo(SpecialVaspParam):
       Can be \"very fast\", \"fast\", or \"normal\" (default). 
   """ 
   def __init__(self, value): super(Algo, self).__init__(value)
-  def incar_string(self, *args, **kwargs):
-    from .. import is_vasp_5 as _is5
-    is_vasp_5 = _is5()
+  def incar_string(self, vasp, *args, **kwargs):
+    from .. import is_vasp_4 as _is4
+    is_vasp_4 = _is4(vasp.vasp_library)
     lower = self.value.lower().rstrip().lstrip()
     lower = lower.replace('_', '')
     lower = lower.replace('-', '')
-    if lower == "veryfast": value = "Very_Fast" if not is_vasp_5 else 'VeryFast'
+    if lower == "veryfast": value = "Very_Fast" if is_vasp_4 else 'VeryFast'
     elif lower in ["fast", 'f']: value = "Fast"
     elif lower in ["normal", 'n']: value = "Normal"
     elif lower in ["damped", 'd']: value = "Damped"
-    elif lower == "none" and is_vasp_5: value = "None"
+    elif lower == "none" and is_vasp_4: value = "None"
     # below this VASP 5 only options.
-    elif not is_vasp_5: raise ValueError, "algo value (%s) is invalid.\n" % (self.value)
+    elif is_vasp_4\
+         and lower in ["nothing", "all", "conjugate", "subrot",
+                       "eigenval", "gw", "gw0", "chi", "scgw", 
+                       "scgw0"]: 
+      raise ValueError, "algo value ({0}) is not valid with VASP 4.\n".format(self.value)
     elif lower == "nothing": value = "Nothing"
     elif lower in ["all", 'a']: value = "All"
     elif lower in ["conjugate", 'c']: value = "Conjugate"
@@ -291,7 +298,7 @@ class Restart(SpecialVaspParam):
   """
   def __init__(self, value): super(Restart, self).__init__(value)
 
-  def incar_string(self, *args, **kwargs):
+  def incar_string(self, vasp, *args, **kwargs):
     from os.path import join, exists
     from shutil import copy
     from ...opt import copyfile
@@ -324,8 +331,11 @@ class Restart(SpecialVaspParam):
         icharg = "2   # superpositions of atomic densities"
       if comm.is_root:
         copyfile(join(self.value.directory, files.EIGENVALUES), nothrow='same exists') 
-        copyfile(join(self.value.directory, files.CONTCAR), files.POSCAR,
-                 nothrow='same exists', symlink=getattr(args[0], 'symlink', False)) 
+        copyfile(join(self.value.directory, files.CONTCAR), files.POSCAR,\
+                 nothrow='same exists', symlink=getattr(vasp, 'symlink', False),\
+                 nocopyempty=True) 
+        copyfile(join(self.value.directory, files.WAVEDER), files.WAVEDER,
+                 nothrow='same exists', symlink=getattr(vasp, 'symlink', False)) 
       comm.barrier()
     return  "ISTART = %s\nICHARG = %s" % (istart, icharg)
 
@@ -397,6 +407,133 @@ class IniWave(SpecialVaspParam):
     if self.value == "1" or self.value == "random": result = 1
     elif self.value == "0" or self.value == "jellium": result = 0
     else: raise ValueError("iniwave cannot be set to " + self.value + ".")
-    return "INIWAVE = %i\n"  % (value)
+    return "INIWAVE = {0}\n".format(result)
 
 
+class Boolean(SpecialVaspParam):
+  """ Any boolean vasp parameters. 
+  
+      Python is very liberal in how it converts any object to a boolean, eg an
+      empty dictionary is false while non-empty dictionary is true.
+      In order to keep this behavior, the value given to this parameter is kept
+      as is as long as possible, and converted only when writing the incar. The
+      only difference with the python behavior is that if using strings (which generally
+      evaluate to true or depending whether or not they are empty), these must
+      be "True" or "False", or variations thereoff. The empty string will
+      evaluate to the VASP default (eg equivalent to using None).
+  """
+  def __init__(self, key, value):
+    super(Boolean, self).__init__(value)
+    self.key = key
+    """ VASP key corresponding to this input. """
+  @property
+  def value(self):
+    return self._value
+  @value.setter
+  def value(self, value):
+    if isinstance(value, str):
+      assert    len(value) == 0 \
+             or value.lower == "true"[:len(value)] \
+             or value.lower() == "false"[:len(value)], \
+             TypeError("Cannot interpret string {0} as a boolean.".format(value))
+    self._value = value
+  @broadcast_result(key=True)
+  def incar_string(self, vasp, *args, **kwargs):
+    value = self._value
+    if isinstance(value, str):
+      if len(value) == 0: value == None 
+      elif value.lower() == "true"[:len(value)]: value = True
+      else: value = False
+    if self.value == None: return None
+    return "{0} = {1}".format(self.key.upper(), ".TRUE." if bool(self.value) else ".FALSE.")
+  def __repr__(self):
+    """ Representation of this object. """
+    return "{0.__class__.__name__}({1}, {2})".format(self, repr(self.key), repr(self.value))
+
+class Integer(SpecialVaspParam):
+  """ Any integer vasp parameters. 
+  
+      The value is always of type integer. Other types are converted to an
+      integer where possible, and will throw TypeError otherwise.
+  """
+  def __init__(self, key, value):
+    super(Integer, self).__init__(value)
+    self.key = key
+    """ VASP key corresponding to this input. """
+  @property 
+  def value(self): return self._value
+  @value.setter
+  def value(self, value):
+    if value is None: self._value = None; return
+    try: self._value = int(value)
+    except: raise TypeError("Could not evaluate {0} as an integer.".format(value))
+  @broadcast_result(key=True)
+  def incar_string(self, vasp, *args, **kwargs):
+    if self.value is None: return None
+    return "{0} = {1}".format(self.key.upper(), self.value)
+  def __repr__(self):
+    """ Representation of this object. """
+    return "{0.__class__.__name__}({1}, {2})".format(self, repr(self.key), repr(self.value))
+
+class Choices(SpecialVaspParam):
+  """ Vasp parameters with a limited set of choices. """
+  def __init__(self, key, choices, default=None):
+    """ Initializes the Choices-type vasp parameters.
+
+        :Parameters: 
+          key : str
+	    Name of the VASP parameter, e.g. "precfock". It needs not be in
+            uppercase. In fact, lower case is preferred for being more pythonic.
+          choices : dictionary of lists
+	    Each key is an allowed VASP input for this parameter. To each key
+	    is associated a list (or set), with allowable forms which will
+	    translate to the key in the incar. A modified copy of this
+	    dictionary is owned by the instance being initialized. All keys and
+            items should be meaningfully convertible to strings.
+          default 
+            allowable option from choices. Defaults to None.
+    """
+    self.key = key
+    """ VASP key corresponding to this input. """
+    self.choices = {}
+    """ Allowable set of choices. """
+    for key, items in choices.iteritems():
+      self.choices[key] = set([str(u).lower() for u in items] + [str(key).lower()])
+    super(Choices, self).__init__(default)
+
+  @property
+  def value(self): return self._value
+  @value.setter
+  def value(self, value):
+    if value is None: self._value = None
+    value == str(value).lower() # transform to lower string.
+    for key, items in self.choices.iteritems():
+      if value in items: self._value = key; break
+  @broadcast_result(key=True)
+  def incar_string(self, *args, **kwargs):
+    if self.value is None: return None
+    return "{0} = {1}".format(self.key.upper(), self.value)
+  def __repr__(self):
+    """ Representation of this object. """
+    return "{0.__class__.__name__}({1}, {2}, {3})"\
+           .format(self, repr(self.key), repr(self.choices), repr(self.value))
+
+class PrecFock(Choices):
+  """ Sets up PRECFOCK parameter. 
+      
+      Allowable options are:
+
+      - L or low:      coarse grid for HF, normal augmentation charge.
+      - M or medium:   normal grid for HF, normal augmentation charge.
+      - F or fast:     coarse grid for HF, soft augmentation charge. 
+      - N or normal:   PREC=N grid for HF, soft augmentation charge. 
+      - A or accurate: PREC=A grid for HF, soft augmentation charge.
+  """
+  def __init__(self, value=None):
+    """ Initializes PRECFOCK parameter. """
+    choices = { 'L': ['low'], 'M': ['medium'], 'F': ['fast'],
+                'N': ['normal'], 'A': ['accurate'] }
+    super(PrecFock, self).__init__("precfock", choices, value)
+  def __repr__(self):
+    """ Representation of this object. """
+    return "{0.__class__.__name__}({1})".format(self, repr(self.value))

@@ -10,7 +10,7 @@ class Extract(object):
   def __init__(self):
     """ Initializes the extraction class. """
     object.__init__(self)
-    
+
   @property 
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -449,6 +449,14 @@ class Extract(object):
   def charge(self):
     """ Greps total charge in the system from OUTCAR."""
     return self.valence-self.nelect
+
+  @property
+  @make_cached
+  def nbands(self):
+    """ Number of bands in calculation. """
+    result = self._find_first_OUTCAR("""NBANDS\s*=\s*(\d+)""")
+    assert result != None, RuntimeError("Could not find NBANDS in OUTCAR.")
+    return int(result.group(1))
 
 
   def iterfiles(self, **kwargs):
