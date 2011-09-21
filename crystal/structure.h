@@ -4,6 +4,7 @@
 #include "LaDaConfig.h"
 
 #include <boost/shared_ptr.hpp>
+#include <boost/serialization/shared_ptr.hpp>
 
 #ifdef LADA_WITH_LNS
 # include <load_n_save/xpr/utilities.h>
@@ -77,6 +78,10 @@ namespace LaDa
         math::rMatrix3d const & cell() const { return impl_->cell; }
         //! Returns reference to cell.
         math::rMatrix3d & cell() { return impl_->cell; }
+        //! Returns const reference to cell.
+        math::rMatrix3d::Scalar const & cell(size_t i, size_t j) const { return impl_->cell(i, j); }
+        //! Returns reference to cell.
+        math::rMatrix3d::Scalar & cell(size_t i, size_t j) { return impl_->cell(i, j); }
         //! Returns const reference to name.
         std::string const & name() const { return impl_->name; }
         //! Returns reference to name.

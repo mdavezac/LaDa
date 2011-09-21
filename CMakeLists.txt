@@ -117,7 +117,7 @@ if("${BOOST_ROOT}" STREQUAL "")
   endif ("$ENV{BOOST_ROOT}" STRGREATER "")
 endif("${BOOST_ROOT}" STREQUAL "")
 find_package( Boost 1.36.0 REQUIRED 
-              COMPONENTS python mpi mpi_python program_options regex serialization system filesystem )
+              COMPONENTS python mpi mpi_python program_options regex serialization system filesystem)
 include_directories(${Boost_INCLUDE_DIRS})
 #   -- eigen2
 find_package( eigen REQUIRED )
@@ -334,3 +334,4 @@ configure_file (
 if(NOT noinstall_headers)
   install(FILES root_exceptions.h DESTINATION include/LaDa)
 endif(NOT noinstall_headers)
+

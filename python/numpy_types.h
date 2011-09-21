@@ -191,6 +191,21 @@ namespace LaDa
           }
           return boost::python::object(boost::python::handle<>(result));
         }
+      //! Returns python object from array.
+      template<class T>
+        boost::python::object array_from_ptr(T *_ptr, size_t n0, size_t n1)
+        {
+          npy_intp dims[2] = {n0, n1};
+          PyObject *result = PyArray_SimpleNewFromData(2, dims, type<T>::value, _ptr);
+          if( result == NULL or PyErr_Occurred() != NULL ) 
+          {
+            if(PyErr_Occurred() == NULL)
+              python::PyException<error::internal>::throw_error("Could not create numpy array");
+            boost::python::throw_error_already_set();
+            return boost::python::object();
+          }
+          return boost::python::object(boost::python::handle<>(result));
+        }
 
       inline boost::python::object _create_array( npy_intp ndims, npy_intp dims[],
                                                   int _type, bool is_fortran = false )

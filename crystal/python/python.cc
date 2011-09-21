@@ -12,13 +12,11 @@
 // #include <math/eigen.h>
 // #include <opt/types.h>
 // #include <physics/physics.h>
-// #include <crystal/structure.h>
 #include <python/std_vector.hpp>
 
 #include "atom.hpp"
 #include "set.hpp"
-// #include "lattice.hpp"
-// #include "structure.hpp"
+#include "structure.hpp"
 // #include "read_structure.hpp"
 // #include "enumerate.hpp"
 // #include "smith.hpp"
@@ -90,6 +88,7 @@ BOOST_PYTHON_MODULE(_crystal)
   LaDa::python::expose_vector<std::string>("VectorStr", "Interface to Cpp vectors of string.");
   LaDa::python::expose_set();
   LaDa::python::expose_atom();
+  LaDa::python::expose_structure();
 // LaDa::Python::expose_structure();
 // LaDa::Python::expose_lattice();
 // LaDa::Python::expose_read_structure();

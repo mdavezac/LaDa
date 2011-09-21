@@ -16,10 +16,6 @@
 #include <python/raw_constructor.hpp>
 
 #include "../atom.h"
-#include "../traits.h"
-#include "../is_container.h"
-
-
 
 #include "atom.hpp"
 
@@ -38,42 +34,35 @@ namespace LaDa
         { return math::numpy::array_from_ptr<math::rVector3d::Scalar>(_in.pos.data(), 3); }
     template<class T> 
       void set_pos( typename crystal::traits::StructureData<T>::t_Atom &_in,
-                    boost::python::object const &_pos )
+                    boost::python::object _pos )
       {
-        if(bp::len(_pos) != 3)
-          PyException<error::TypeError>::throw_error("Input object is not a sequence of 3.");
-        _in.pos[0] = boost::python::extract<math::rVector3d::Scalar>(_pos[0]);
-        _in.pos[1] = boost::python::extract<math::rVector3d::Scalar>(_pos[1]);
-        _in.pos[2] = boost::python::extract<math::rVector3d::Scalar>(_pos[2]);
+        bp::object i_elems( bp::handle<>(PyObject_GetIter(_pos.ptr())) );
+        if(i_elems.ptr() == Py_None)
+        {
+          PyErr_Clear();
+          PyException<error::ValueError>::throw_error("Input is not a sequence.");
+        }
+        size_t i(0);
+        for(; i < 3; ++i)
+          if(PyObject *element = PyIter_Next(i_elems.ptr()))
+          {
+            if(PyFloat_Check(element))
+              _in.pos(i) = PyFloat_AS_DOUBLE(element);
+            if(PyInt_Check(element))
+              _in.pos(i) = (math::rMatrix3d::Scalar) PyInt_AS_LONG(element);
+            else
+              PyException<error::ValueError>::throw_error("Input is not a sequence of 3 floats.");
+            Py_DECREF(element);
+          }
+        if(PyErr_Occurred()) return;
+        if(i != 3) PyException<error::ValueError>::throw_error("Input is not a sequence of 3 floats.");
+        if(PyObject *element = PyIter_Next(i_elems.ptr()))
+        {
+          Py_DECREF(element);
+          PyException<error::ValueError>::throw_error
+            ( "Input seems to be a sequence of n floats, with n > 3. Expected n == 3." );
+        }
       }
-
-    template<class T> typename boost::enable_if< crystal::details::is_scalar<T>, void >::type
-      extract_type0(bp::object _in, T &_type)
-        { _type = bp::extract<T>(_in); }
-    template<class T> typename boost::enable_if< crystal::details::is_scalar<T> , void>::type
-      extract_type1(bp::object _in, T &_type)
-      {
-        if(bp::len(_in) > 1) 
-          PyException<error::TypeError>::throw_error("Atomic type needs be a scalar.");
-        _type = bp::extract<T>(_in); 
-      }
-    template<class T> typename boost::enable_if< crystal::details::is_set<T>, void >::type
-      extract_type0(bp::object _in, T &_type)
-      {
-        bp::stl_input_iterator<typename T::value_type> i_first(_in);
-        bp::stl_input_iterator<typename T::value_type> const i_end;
-        for(; i_first != i_end; ++i_first) _type.insert(*i_first);
-      }
-    template<class T> typename boost::enable_if< crystal::details::is_container<T>, void >::type
-      extract_type0(bp::object _in, T &_type)
-      {
-        bp::stl_input_iterator<typename T::value_type> i_first(_in);
-        bp::stl_input_iterator<typename T::value_type> const i_end;
-        for(; i_first != i_end; ++i_first) _type.push_back(*i_first);
-      }
-    template<class T> typename boost::enable_if< crystal::details::is_iterable<T> , void>::type
-      extract_type1(bp::object _in, T &_type)
-        { extract_type0(_in, _type); }
 
     template<class T>
       std::string scalar_kind(typename atom<T>::type const &) { return "scalar"; }
@@ -112,10 +101,10 @@ namespace LaDa
             bp::object type;
             if(_kwargs.has_key("type")) type = _kwargs.get("type");
             else type = _args[3];
-            extract_type0(type, result->type);
+            details::extract_type0(type, result->type);
           }
           else if(bp::len(_args) > 4)
-            extract_type1(_args.slice(3, bp::slice_nil()), result->type);
+            details::extract_type1(_args.slice(3, bp::slice_nil()), result->type);
           if(_kwargs.has_key("freeze"))
             result->freeze = bp::extract<int>(_kwargs.get("freeze"));
           if(_kwargs.has_key("site"))

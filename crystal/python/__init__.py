@@ -1,7 +1,7 @@
 from ._docstring import __doc__ 
-__all__ = ['FreezeAtom', 'Atom']
+__all__ = ['FreezeAtom', 'Atom', 'FreezeCell']
 
-from _crystal import FreezeAtom
+from _crystal import FreezeAtom, FreezeCell
 # modify internal atom classes below, for instance by adding python functions.
 import _modify_atom_classes
 
@@ -122,8 +122,40 @@ def Atom(*args, **kwargs):
   kwargs["type"] = type
   return kind(**kwargs)
 
+def Structure(cell=None, scale=1e0, energy=0e0, weight=1e0, freeze=0, kind="scalar"):
+  """ Returns a structure.
 
+      :Parameters: 
+        cell 
+          Cell vectors of the structure. Defaults to identity.
+        scale 
+          Scale of the cartesian units of the cell and atomic positions.
+          Default to 1 angstrom.
+        energy
+          Energy of the structure. Defaults to 0eV.
+        weight 
+          Weight of the structure in fitting sets. Defaults to 1.
+        freeze
+          Frozen coordinates of the cell. see ``FreezeCell``.
+        kind  
+          Defines allowed occupations of atomic positions: 
+            - "scalar": occupation is defined by a string.
+            - "list": occupation is defined by a list of strings.
+            - "set": occupation is defined by a set of strings.
+  """
+  from ._crystal import StructureStr, StructureVec, StructureSet
+  from .. import error
+  if kind == "scalar": result = StructureStr()
+  elif kind == "list": result = StructureVec()
+  elif kind == "set":  result = StructureSet()
+  else: raise error.ValueError("Unknown kind {0}.".format(kind))
 
+  if cell != None: result.cell = cell
+  if scale != 1e0: result.scale = scale
+  if abs(energy - 0e0) > 1e-12: result.energy = energy
+  if abs(weight - 1e0) > 1e-12: result.weight = weight
+  if abs(freeze - 1e0) > 1e-12: result.freeze = freeze
+  return result
 
 
 # __all__ = [ 'FreezeAtom', 'which_site', 'Sites', 'SymmetryOperator', 'Lattice', 'to_cartesian',\

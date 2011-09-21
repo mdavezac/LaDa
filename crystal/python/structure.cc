@@ -1,344 +1,218 @@
 #include "LaDaConfig.h"
 
-#include <sstream>
-#include <complex>
-
-#include <boost/shared_ptr.hpp>
-
 #include <boost/python/class.hpp>
-#include <boost/python/def.hpp>
-#include <boost/python/tuple.hpp>
 #include <boost/python/enum.hpp>
-#include <boost/python/str.hpp>
-#include <boost/python/other.hpp>
-#include <boost/python/self.hpp>
-#include <boost/python/operators.hpp>
-#include <boost/python/make_constructor.hpp>
-#include <boost/python/return_value_policy.hpp>
-#include <boost/python/return_by_value.hpp>
-#include <boost/python/reference_existing_object.hpp>
-#include <boost/python/register_ptr_to_python.hpp>
-#ifdef LADA_MPI
-# include <boost/mpi/python.hpp>
-#endif
-#include <boost/serialization/serialization.hpp>
-#include <boost/serialization/vector.hpp>
-#include <boost/serialization/complex.hpp>
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
+#include <boost/python/make_function.hpp>
+#include <boost/python/raw_function.hpp>
+#include <boost/python/return_internal_reference.hpp>
+#include <boost/python/with_custodian_and_ward.hpp>
 
-#include <boost/filesystem/operations.hpp>
-
-#include <opt/types.h>
-#include <opt/debug.h>
+#include <python/numpy_types.h>
 #include <python/misc.hpp>
-#include <python/xml.hpp>
-#include <math/serialize.h>
-
-#include <physics/physics.h>
+#include <python/exceptions.h>
 
 #include "../structure.h"
-#include "../fill_structure.h"
-#include "../which_site.h"
-#include "../lattice.h"
-#include "../fractional_cartesian.h"
 
 #include "structure.hpp"
+#include "add_atom.hpp"
+#include "structure_contains.hpp"
 
 
 namespace LaDa
 {
-  namespace Python
+  namespace python
   {
     namespace bp = boost::python;
-    namespace XML
-    {
-      template<> std::string nodename<Crystal::Structure>()  { return "Structure"; }
-      template<> std::string nodename< Crystal::TStructure<std::string> >() 
-        { return nodename<Crystal::Structure>(); }
-    }
 
-    template< class BULL >
-    Crystal::Lattice const* return_crystal_lattice( BULL & )
-    {
-      if( not Crystal::Structure::lattice )
-      {
-        PyErr_SetString(PyExc_RuntimeError, "Crystal::Structure::lattice has not been set.\n");
-        bp::throw_error_already_set();
-        return NULL;
-      }
-      return Crystal::Structure::lattice; 
-    }
-
-    bp::str xcrysden( Crystal::Structure const & _str )
-    {
-      std::ostringstream sstr;
-      _str.print_xcrysden( sstr ); 
-      return bp::str( sstr.str().c_str() );
-    }
-    bp::str xcrysden_str( Crystal::TStructure<std::string> const & _str )
-    {
-      if( not _str.lattice ) return bp::str("");
-      std::ostringstream sstr;
-      sstr << "CRYSTAL\nPRIMVEC\n" << ( (~_str.cell) * _str.scale ) << "\nPRIMCOORD\n" 
-                << _str.atoms.size() << " 1 \n";  
-      Crystal::TStructure<std::string>::t_Atoms :: const_iterator i_atom = _str.atoms.begin();
-      Crystal::TStructure<std::string>::t_Atoms :: const_iterator i_atom_end = _str.atoms.end();
-      for(; i_atom != i_atom_end; ++i_atom )
-      {
-        sstr << " " << Physics::Atomic::Z(i_atom->type) 
-             << " " << ( i_atom->pos[0] * _str.scale ) << " "
-             << " " << ( i_atom->pos[1] * _str.scale ) << " "
-             << " " << ( i_atom->pos[2] * _str.scale ) << "\n";
-      }
-      return bp::str( sstr.str().c_str() );
-    }
-
-    template< class T_STRUCTURE >
-      T_STRUCTURE* empty()
-      {
-        T_STRUCTURE* result = new T_STRUCTURE(); 
-        if( result->lattice ) result->scale = result->lattice->scale;
-        return result;
-      }
-    
-    template< class T_STRUCTURE >
-      T_STRUCTURE* copy( T_STRUCTURE const &_o )
-      {
-        T_STRUCTURE* result = new T_STRUCTURE( _o ); 
-        if( result->lattice ) result->scale = result->lattice->scale;
-        return result;
-      }
-
-    Crystal::TStructure<std::string>* real_to_string( Crystal::Structure const &_s )
-    {
-      Crystal::TStructure<std::string>* result = new Crystal::TStructure<std::string>(); 
-      Crystal::convert_real_to_string_structure( _s, *result );     
-      return result;
-    }
-    Crystal::Structure* string_to_real( Crystal::TStructure<std::string> const &_s )
-    {
-      Crystal::Structure* result = new Crystal::Structure(); 
-      Crystal::convert_string_to_real_structure( _s, *result );     
-      return result;
-    }
-
-    template<class T_STRUCTURE> 
-      T_STRUCTURE* fromXML(std::string const &_path)
-      {
-        namespace bfs = boost::filesystem;
-        if( not bfs::exists(_path) )
-        {
-          PyErr_SetString(PyExc_IOError, (_path + " does not exist.\n").c_str());
-          bp::throw_error_already_set();
-          return NULL;
-        }
-        T_STRUCTURE* result = new T_STRUCTURE;
-        try
-        { 
-          if(not result->Load(_path))
-          {
-            PyErr_SetString(PyExc_IOError, ("Could not load structure from " + _path).c_str());
-            delete result;
-            result = NULL;
-            bp::throw_error_already_set();
-          }
-        }
-        catch(std::exception &_e)
-        {
-          PyErr_SetString(PyExc_IOError, ("Could not load structure from " + _path).c_str());
-          delete result;
-          result = NULL;
-          bp::throw_error_already_set();
-        }
-        return result;
-      }
-
-    template<class T_STRUCTURE>
-      boost::shared_ptr<T_STRUCTURE> fill_structure(T_STRUCTURE const &_str)
-      {
-        boost::shared_ptr<T_STRUCTURE> result( new T_STRUCTURE(_str) );
-        if( not result->lattice ) 
-        {
-          PyErr_SetString(PyExc_RuntimeError, "lada.crystal.lattice not set.\n");
-          bp::throw_error_already_set();
-          boost::shared_ptr<T_STRUCTURE> b;
-          result.swap(b);
-        }
-        else if( not Crystal::fill_structure(*result) )
-        {
-          PyErr_SetString(PyExc_RuntimeError, "Could not create fill in structure.\n");
-          bp::throw_error_already_set();
-          boost::shared_ptr<T_STRUCTURE> b;
-          result.swap(b);
-        }
-        return result;
-      }
-    boost::shared_ptr< Crystal::TStructure<std::string> >
-      fill_cell(math::rMatrix3d const& _cell)
-      {
-        typedef Crystal::TStructure<std::string> t_structure;
-        t_structure str;
-        str.cell = _cell;
-        boost::shared_ptr< t_structure > result(fill_structure<t_structure>(str));
-        if( not result ) return result;
-        result->scale = result->lattice->scale;
-        return result;
-      }
-      
     template<class T>
-      void reindex_sites(T &_str, Crystal::Lattice const * const _lattice)
+      bp::object get_cell(crystal::TemplateStructure<T> &_str ) 
+        { return math::numpy::array_from_ptr<math::rMatrix3d::Scalar>(_str.cell().data(), 3u, 3u); }
+    template< class T>
+      void set_cell(crystal::TemplateStructure<T> &_str, bp::object _cell)
       {
-        Crystal::Lattice * const old_lattice = _str.lattice;
-        Crystal::Lattice const * const lattice(_lattice ? _lattice: old_lattice);
-  
-        if(lattice == NULL)
+        bp::object i_row( bp::handle<>(PyObject_GetIter(_cell.ptr())) );
+        if(i_row.ptr() == Py_None)
         {
-          PyErr_SetString(PyExc_RuntimeError, "No lattice on input, and no default lattice.");
-          bp::throw_error_already_set();
-          return;
+          PyErr_Clear();
+          PyException<error::ValueError>::throw_error("Input is not a sequence.");
         }
-  
-        typename T::t_Atoms::iterator i_first = _str.atoms.begin();
-        typename T::t_Atoms::iterator const i_end = _str.atoms.end();
-        std::ostringstream sstr;
-        math::rMatrix3d const inv_cell(!_str.cell);
-        for(; i_first != i_end; ++i_first)
+        size_t i(0);
+        for(; i < 3; ++i)
+          if(PyObject *row = PyIter_Next(i_row.ptr()))
+          {
+            bp::object i_element( bp::handle<>(PyObject_GetIter(row)) );
+            if(i_element.ptr() == Py_None)
+            {
+              PyErr_Clear();
+              PyException<error::ValueError>::throw_error("Input is not a 3x3 sequence.");
+            }
+            size_t j(0);
+            for(; j < 3; ++j)
+              if(PyObject *element = PyIter_Next(i_element.ptr()))
+              {
+                if(PyFloat_Check(element))
+                  _str.cell(i,j) = PyFloat_AS_DOUBLE(element);
+                else if(PyInt_Check(element))
+                  _str.cell(i,j) = (math::rMatrix3d::Scalar) PyInt_AS_LONG(element);
+                else
+                  PyException<error::ValueError>::throw_error("Input is not a 3x3 sequence of floats.");
+                Py_DECREF(element);
+              }
+              else break;
+            if(PyErr_Occurred()) return;
+            if(j != 3) PyException<error::ValueError>::throw_error("Input is not a 3 by 3 sequence.");
+            if(PyObject *element = PyIter_Next(i_element.ptr()))
+            {
+              Py_DECREF(element);
+              PyException<error::ValueError>::throw_error
+                ( "Input seems to be a 3xn sequence, with n > 3. Expected n == 3." );
+            }
+            Py_DECREF(row);
+          }
+          else break;
+        if(PyErr_Occurred()) return;
+        if(i != 3) PyException<error::ValueError>::throw_error("Input is not a 3 by 3 sequence.");
+        if(PyObject *row = PyIter_Next(i_row.ptr()))
         {
-          i_first->site = Crystal::which_site(i_first->pos, inv_cell, lattice->sites);
-          if(i_first->site == -1) sstr << (i_first - _str.atoms.begin()) << ' ';
+          Py_DECREF(row);
+          PyException<error::ValueError>::throw_error
+            ( "Input seems to be a nx3 sequence, with n > 3. Expected n == 3." );
         }
-        if(sstr.str().size() != 0) 
+      }
+    template<class T> 
+      types::t_real get_scale(crystal::TemplateStructure<T> &_in) { return _in.scale(); }
+    template<class T> 
+      void set_scale(crystal::TemplateStructure<T> &_in, types::t_real &_e) { _in.scale() = _e; }
+    template<class T> 
+      types::t_real get_energy(crystal::TemplateStructure<T> &_in) { return _in.energy(); }
+    template<class T> 
+      void set_energy(crystal::TemplateStructure<T> &_in, types::t_real &_e) { _in.energy() = _e; }
+    template<class T> 
+      types::t_real get_weight(crystal::TemplateStructure<T> &_in) { return _in.weight(); }
+    template<class T> 
+      void set_weight(crystal::TemplateStructure<T> &_in, bp::object const _e)
+        { _in.weight() = bp::extract<types::t_real>(_e); }
+    template<class T> 
+      std::string get_name(crystal::TemplateStructure<T> &_in) { return _in.name(); }
+    template<class T> 
+      void set_name(crystal::TemplateStructure<T> &_in, std::string const &_e) { _in.name() = _e; }
+    template<class T> 
+      types::t_unsigned get_freeze(crystal::TemplateStructure<T> &_in) { return _in.freeze(); }
+    template<class T> 
+      void set_freeze(crystal::TemplateStructure<T> &_in, types::t_unsigned const &_e) { _in.freeze() = _e; }
+    template<class T>
+      std::string scalar_kind(crystal::TemplateStructure<T> const &) { return "scalar"; }
+    template<class T>
+      std::string list_kind(crystal::TemplateStructure<T> const &) { return "list"; }
+    template<class T>
+      std::string set_kind(crystal::TemplateStructure<T> const &) { return "set"; }
+
+    template<class T>
+      int __len__(crystal::TemplateStructure<T> const &_str) { return _str.size(); }
+    template<class T>
+      typename crystal::TemplateStructure<T>::reference 
+        __getitem__(crystal::TemplateStructure<T> &_str, int _i)
         {
-          PyErr_SetString( PyExc_RuntimeError,
-                           ("Could not relate atoms to lattice sites.\n  " + sstr.str()).c_str() );
-          bp::throw_error_already_set();
-          return;
+          if(_i < 0) _i += _str.size();
+          if(_i < 0 or _i >= _str.size())
+            PyException<error::IndexError>::throw_error("Index out of range.");
+          return _str[_i];
         }
-  
-        _str.lattice = old_lattice;
+    //! Constructs and calls AddAtom functor.
+    template<class T>
+      bp::object add_atom(bp::tuple const &_args, bp::dict const &_kwargs)
+      {
+        crystal::TemplateStructure<T> structure = bp::extract< crystal::TemplateStructure<T> >(_args[0]);
+        AddAtom<T> addatom(structure);
+        bp::object result(addatom);
+        addatom(bp::tuple(_args.slice(1, bp::slice_nil())), _kwargs);
+        return bp::object(result);
       }
 
-
-    template< class T>
-      math::rMatrix3d get_cell( T const &_str ) { return _str.cell; }
-    template< class T>
-      void set_cell( T &_str, math::rMatrix3d const &_cell) {_str.cell = _cell; }
-
-    template<class T_STRUCTURE>
-      bp::class_<T_STRUCTURE>   expose( std::string const &_name,
-                                        std::string const &_desc, 
-                                        std::string const &_type ) 
-      {
-        return bp::class_<T_STRUCTURE>( _name.c_str(), _desc.c_str() )
-          .def( bp::init<T_STRUCTURE const&>() )
-          .def( "__init__", bp::make_constructor( fromXML<Crystal::Structure> ) )
-          .add_property
-          (
-            "cell",
-            bp::make_function
+    template<class T>
+      bp::class_< crystal::TemplateStructure<T> > 
+        expose( std::string const &_name, std::string const &_desc ) 
+        {
+          return bp::class_<crystal::TemplateStructure<T> >( _name.c_str(), _desc.c_str() )
+            .add_property
             (
-              &get_cell<T_STRUCTURE>, 
-              bp::return_value_policy<bp::return_by_value>()
-            ), &set_cell<T_STRUCTURE>, 
-            "Cell vectors in cartesian coordinates.\n\n"
-            "Units are ``self.scale``. The latter should be in angstrom, "
-            "though use quantities package is not possible here."
-          )
-          .def_readwrite( "_atoms",   &T_STRUCTURE::atoms,
-                          (   "The list of atoms of type L{" + _type
-                            + "}, in units of self.{scale<" + _name + ">}.").c_str() )
-          .def_readwrite( "energy",  &T_STRUCTURE::energy, "Holds a real value." )
-          .def_readwrite( "weight",  &T_STRUCTURE::weight,
-                          "Optional weight for fitting purposes." )
-          .def_readwrite( "scale",   &T_STRUCTURE::scale,
-                          "A scaling factor for atomic-positions and cell-vectors.\n\n"
-                          "Should always be in ansgtrom. No exceptions allowed." )
-          .def_readwrite( "name", &T_STRUCTURE::name, "Holds a string." )
-          .def( "__str__",  &print< T_STRUCTURE > ) 
-          .def( "fromXML",  &XML::from< T_STRUCTURE >, bp::arg("file"),
-                "Loads a structure from an XML file." )
-          .def( "toXML",  &XML::to< T_STRUCTURE >, bp::arg("file"),
-                "Adds a tag to an XML file describing this structure."  )
-          .def( "xcrysden", &xcrysden_str, "Outputs in XCrysden format." )
-          .def_readwrite( "freeze", &T_STRUCTURE::freeze,
-                           "Tags to freeze coordinates when relaxing structure.\n\n" 
-                           "See `FreezeCell` for possible values." 
-                        )
-          .def(bp::self == bp::other<T_STRUCTURE>())
-          .add_property
-          ( 
-            "lattice",
-            bp::make_function
-            (
-              &return_crystal_lattice< T_STRUCTURE >,
-              bp::return_value_policy<bp::reference_existing_object>()
-            ),
-            "References the lattice within which this structure is defined."
-            " Read, but do not write to this object." 
-          ) 
-          .def_pickle( Python::pickle< T_STRUCTURE >() )
-          .def( "reindex_sites", &reindex_sites<T_STRUCTURE>, bp::arg("lattice") = NULL,
-                "Sets site index in atoms to match the input lattice." );
-      }
+              "cell",
+              bp::make_function(&get_cell<T>, bp::with_custodian_and_ward_postcall<1, 0>()),
+              &set_cell<T>, 
+              "Cell vectors in cartesian coordinates.\n\n"
+              "Units are ``self.scale``. The latter should be in angstrom, "
+              "though use quantities package is not possible here."
+            )
+            .add_property( "energy",  &get_energy<T>, &set_energy<T>, "Energy of the structure." )
+            .add_property( "scale",  &get_scale<T>, &set_scale<T>, "Scale of the cartesian units in Angstrom." )
+            .add_property( "weight",  &get_weight<T>, &set_weight<T>, "Weight of the structure in fitting algorithms." )
+            .add_property( "name",  &get_name<T>, &set_name<T>, "Name of the structure." )
+            .add_property( "freeze", &get_freeze<T>, &set_freeze<T>,
+                             "Tags to freeze coordinates when relaxing structure.\n\n" 
+                             "See `FreezeCell` for possible values." 
+                          )
+            .def( "__len__", &__len__<T>, "Number of atoms in structure." )
+            .def( "__getitem__", &__getitem__<T>, 
+                  bp::return_internal_reference<>() )
+            .def( "add_atom", bp::raw_function(&add_atom<T>, 1),
+                  "Adds atom to structure.\n\n"
+                  "See `lada.crystal.Atom` for parameter details."
+                  "The ``kind`` parameter is not supported however (or meaningful). "
+                  "The calls to this function can be chained as follows:\n\n"
+                  ">>> structure.add_atom(0,0,0,\"Au\")\n"
+                  ">>>                   (0.25,0.25,0.25,\"Pd\")\n" )
+            .def( "__contains__", &details::contains<T>, 
+                  "Returns True if a structure contains the given object.\n\n"
+                  "The exact behavior depends on the type of the object and on the structure kind.\n"
+                  " - list or set of species: ``structure.kind`` must 'list' or 'set'. "
+                  "Returns True if an atomic site contains exactly that set of species.\n"
+                  " - str: ``structure.kind`` must be 'scalar'. "
+                  "Returns True if an atomic site is occupied by that specie.\n" 
+                  " - sequence of three numbers (numpy array, list, ...): "
+                  "Returns True if there exists a corresponding atomic site or periodic image. "
+                  "In units of ``structure.scale``.\n"
+                  " - object with 'pos' and 'type' attributes: combines the above.")
+            .def_pickle( python::pickle< crystal::TemplateStructure<T> >() );
+        }
 
     void expose_structure()
     {
-      typedef Crystal::Structure::t_FreezeCell t_FreezeCell;
-      bp::enum_<t_FreezeCell>( "FreezeCell", "Tags to freeze cell coordinates." )
-        .value( "none", Crystal::Structure::FREEZE_NONE )
-        .value(   "xx", Crystal::Structure::FREEZE_XX )
-        .value(   "xy", Crystal::Structure::FREEZE_XY )
-        .value(   "xz", Crystal::Structure::FREEZE_XZ )
-        .value(   "yx", Crystal::Structure::FREEZE_YX )
-        .value(   "yy", Crystal::Structure::FREEZE_YY )
-        .value(   "yz", Crystal::Structure::FREEZE_YZ )
-        .value(   "zx", Crystal::Structure::FREEZE_ZX )
-        .value(   "zy", Crystal::Structure::FREEZE_ZY )
-        .value(   "zz", Crystal::Structure::FREEZE_ZZ )
-        .value(  "all", Crystal::Structure::FREEZE_ALL )
-        .value(  "a0", Crystal::Structure::FREEZE_A0 )
-        .value(  "a1", Crystal::Structure::FREEZE_A1 )
-        .value(  "a2", Crystal::Structure::FREEZE_A2 )
+      import_array(); // needed for NumPy 
+      bp::enum_<crystal::frozenstr::type>( "FreezeCell", "Tags to freeze cell coordinates." )
+        .value( "none", crystal::frozenstr::NONE )
+        .value(   "xx", crystal::frozenstr::XX )
+        .value(   "xy", crystal::frozenstr::XY )
+        .value(   "xz", crystal::frozenstr::XZ )
+        .value(   "yx", crystal::frozenstr::YX )
+        .value(   "yy", crystal::frozenstr::YY )
+        .value(   "yz", crystal::frozenstr::YZ )
+        .value(   "zx", crystal::frozenstr::ZX )
+        .value(   "zy", crystal::frozenstr::ZY )
+        .value(   "zz", crystal::frozenstr::ZZ )
+        .value(  "all", crystal::frozenstr::ALL )
+        .value(  "a0", crystal::frozenstr::A0 )
+        .value(  "a1", crystal::frozenstr::A1 )
+        .value(  "a2", crystal::frozenstr::A2 )
         .export_values();
 
-      expose< Crystal::Structure >
+      expose_add_atom<std::string>("_AddAtomStr");
+      expose<std::string>
       (
-        "rStructure", 
-        "Defines a structure.\n\nGenerally, it is a super-cell of a `Lattice` object.",
-        "rAtom"
-      ).def( "__init__", bp::make_constructor( string_to_real ) )
-       .def_readwrite( "k_vecs",  &Crystal::Structure::k_vecs,
-                       "The list of reciprocal-space vectors."
-                       " It is constructure with respected to a LaDa.Lattice object.\n"  ) 
-       .def( "concentration", &Crystal::Structure::get_concentration, "Returns concentration." )
-       .def( bp::self == bp::other<Crystal::Structure>() );
-      bp::register_ptr_to_python< boost::shared_ptr<Crystal::Structure> >();
-      expose< Crystal::TStructure<std::string> >
+        "StructureStr", 
+        "Defines a structure for wich atomic occupations are strings."
+      ).add_property("kind", &scalar_kind<std::string>, "Occupations are strings.");
+      expose_add_atom< std::vector<std::string> >("_AddAtomVec");
+      expose< std::vector<std::string> >
       (
-        "Structure", 
-        "Defines a structure.\n\nGenerally, it is a super-cell of a `Lattice` object.",
-        "Atom"
-      ).def( "__init__", bp::make_constructor( real_to_string ) );
-      bp::register_ptr_to_python< boost::shared_ptr< Crystal::TStructure<std::string> > >();
-
-      bp::def("to_cartesian", &Crystal::to_cartesian<std::string>,
-              "Transforms a structure from cartesian to fractional coordinates.\n" );
-      bp::def("to_fractional", &Crystal::to_fractional<std::string>,
-              "Transforms a structure from fractional to cartesian coordinates.\n" );
-
-      bp::def("_fill_structure_impl", &fill_structure<Crystal::Structure>);
-      bp::def("_fill_structure_impl", &fill_cell);
-      bp::def
+        "StructureVec", 
+        "Defines a structure for wich atomic occupations are lists of strings."
+      ).add_property("kind", &list_kind< std::vector<std::string> >, "Occupations is lists of strings.");
+      expose_add_atom< std::set<std::string> >("_AddAtomSet");
+      expose< std::set<std::string> >
       (
-        "_fill_structure_impl", 
-        &fill_structure< Crystal::TStructure<std::string> >,
-        "Returns a structure from knowledge of cell and lattice.\n\n"
-        "The argument can be of type `Structure`, `rStructure`, "
-        "or a numpy 3x3 float64 array. In the second case, the return is "
-        "also a `rStructure`. In all other cases, the return is an `Structure`.\n"
-        ":raise RuntimeError: If the filled structure could not be created.\n" 
-      );
+        "StructureSet", 
+        "Defines a structure for wich atomic occupations are lists of strings."
+      ).add_property("kind", &set_kind< std::set<std::string> >, "Occupations is sets of strings.");
     }
 
   }

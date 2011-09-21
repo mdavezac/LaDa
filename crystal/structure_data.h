@@ -107,6 +107,17 @@ namespace LaDa
       types::t_real& operator()(size_t i, size_t j) { return cell(i,j); }
     };
 
+    template<class T_TYPE> template<class ARCHIVE> 
+      void StructureData<T_TYPE> :: serialize(ARCHIVE & _ar, const unsigned int _version)
+      {
+        _ar & cell;
+        _ar & weight;
+        _ar & energy;
+        _ar & scale;
+        _ar & freeze;
+        _ar & atoms;
+      };
+
 #   ifdef LADA_WITH_LNS
       template<class T_TYPE> template<class T_ARCHIVE>
         bool StructureData<T_TYPE>::lns_access(T_ARCHIVE &_ar, load_n_save::version_type const _version) 

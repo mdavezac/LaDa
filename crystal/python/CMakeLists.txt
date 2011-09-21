@@ -1,13 +1,13 @@
 set( PYCRYSTAL_PY  gruber.py  __init__.py A2BX4.py bravais.py binary.py 
      read_write.py _docstring.py ABX3.py _modify_atom_classes.py)
 set( PYCRYSTAL_HEADERS 
-     set.hpp )
+     set.hpp atom.hpp structure.hpp add_atom.hpp structure_contains.hpp)
    #    atom.hpp  enumerate.hpp  lattice.hpp  layerdepth.hpp  neighbors.hpp
    #    read_structure.hpp  smith.hpp  structure.hpp  symmetry_operator.hpp
    #    which_site.hpp misc.hpp periodic_dnc.hpp )
 
 set( PYCRYSTAL_SOURCES
-     python.cc set.cc atom.cc )
+     python.cc set.cc atom.cc structure.cc )
    #    atom.cc  enumerate.cc  lattice.cc  layerdepth.cc  neighbors.cc  python.cc
    #    read_structure.cc  smith.cc  structure.cc  symmetry_operator.cc
    #    which_site.cc misc.cc periodic_dnc.cc )
@@ -15,7 +15,7 @@ set( PYCRYSTAL_SOURCES
 
 include_directories(${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDES})
 python_add_module (pycrystal ${PYCRYSTAL_HEADERS} ${PYCRYSTAL_SOURCES})
-target_link_libraries(pycrystal crystal ${Boost_PYTHON_LIBRARY})
+target_link_libraries(pycrystal crystal ${Boost_PYTHON_LIBRARY} ${Boost_SERIALIZATION_LIBRARY})
 mark_as_advanced(PYTHON_ENABLE_MODULE_pycrystal)
 mark_as_advanced(PYTHON_MODULE_pycrystal_BUILD_SHARED)
 set_target_properties(pycrystal PROPERTIES PREFIX "_")
