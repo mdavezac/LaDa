@@ -110,6 +110,7 @@ namespace LaDa
     template<class T_TYPE> template<class ARCHIVE> 
       void StructureData<T_TYPE> :: serialize(ARCHIVE & _ar, const unsigned int _version)
       {
+        _ar & name;
         _ar & cell;
         _ar & weight;
         _ar & energy;

@@ -80,24 +80,24 @@ namespace LaDa
         }
       }
     template<class T> 
-      types::t_real get_scale(crystal::TemplateStructure<T> &_in) { return _in.scale(); }
+      types::t_real get_scale(crystal::TemplateStructure<T> const &_in) { return _in.scale(); }
     template<class T> 
-      void set_scale(crystal::TemplateStructure<T> &_in, types::t_real &_e) { _in.scale() = _e; }
+      void set_scale(crystal::TemplateStructure<T> &_in, types::t_real _e) { _in.scale() = _e; }
     template<class T> 
-      types::t_real get_energy(crystal::TemplateStructure<T> &_in) { return _in.energy(); }
+      types::t_real get_energy(crystal::TemplateStructure<T> const &_in) { return _in.energy(); }
     template<class T> 
-      void set_energy(crystal::TemplateStructure<T> &_in, types::t_real &_e) { _in.energy() = _e; }
+      void set_energy(crystal::TemplateStructure<T> &_in, types::t_real _e) { _in.energy() = _e; }
     template<class T> 
-      types::t_real get_weight(crystal::TemplateStructure<T> &_in) { return _in.weight(); }
+      types::t_real get_weight(crystal::TemplateStructure<T> const &_in) { return _in.weight(); }
     template<class T> 
-      void set_weight(crystal::TemplateStructure<T> &_in, bp::object const _e)
-        { _in.weight() = bp::extract<types::t_real>(_e); }
+      void set_weight(crystal::TemplateStructure<T> &_in, types::t_real _e)
+        { _in.weight() = _e; }
     template<class T> 
-      std::string get_name(crystal::TemplateStructure<T> &_in) { return _in.name(); }
+      std::string get_name(crystal::TemplateStructure<T> const &_in) { return _in.name(); }
     template<class T> 
       void set_name(crystal::TemplateStructure<T> &_in, std::string const &_e) { _in.name() = _e; }
     template<class T> 
-      types::t_unsigned get_freeze(crystal::TemplateStructure<T> &_in) { return _in.freeze(); }
+      types::t_unsigned get_freeze(crystal::TemplateStructure<T> const &_in) { return _in.freeze(); }
     template<class T> 
       void set_freeze(crystal::TemplateStructure<T> &_in, types::t_unsigned const &_e) { _in.freeze() = _e; }
     template<class T>

@@ -122,7 +122,7 @@ def Atom(*args, **kwargs):
   kwargs["type"] = type
   return kind(**kwargs)
 
-def Structure(cell=None, scale=1e0, energy=0e0, weight=1e0, freeze=0, kind="scalar"):
+def Structure(cell=None, scale=1e0, energy=0e0, weight=1, freeze=0, name="", kind="scalar"):
   """ Returns a structure.
 
       :Parameters: 
@@ -151,10 +151,11 @@ def Structure(cell=None, scale=1e0, energy=0e0, weight=1e0, freeze=0, kind="scal
   else: raise error.ValueError("Unknown kind {0}.".format(kind))
 
   if cell != None: result.cell = cell
-  if scale != 1e0: result.scale = scale
-  if abs(energy - 0e0) > 1e-12: result.energy = energy
-  if abs(weight - 1e0) > 1e-12: result.weight = weight
-  if abs(freeze - 1e0) > 1e-12: result.freeze = freeze
+  result.energy = energy;
+  result.scale = scale;
+  result.weight = weight;
+  result.freeze = freeze;
+  result.name = name;
   return result
 
 
