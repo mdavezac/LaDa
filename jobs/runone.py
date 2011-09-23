@@ -4,27 +4,30 @@ def main():
   import re 
   from sys import path as python_path
   from os import getcwd, environ
-  from os.path import abspath, join, relpath
-  from optparse import OptionParser
-  from lada.mpi import world
+  from os.path import abspath, join, relpath, exists
+  from argparse import ArgumentParser
   from lada import jobs
   from lada.opt.changedir import Changedir
 
   # below would go additional imports.
 
-  parser = OptionParser( description = re.sub("\\s+", " ", __doc__[1:]),\
-                         usage = "usage: %prog [options] filename_1 .. filename_n" )
-  parser.add_option( "--jobid", dest="n", default=1, \
-                     help="Job number", metavar="N", type="int" )
-  parser.add_option( "--relative", dest="relative", default=None, \
-                     help="Perform calculations in a directory relative "
-                          "current, but starting at RELATIVE, rather than HOME.",
-                     metavar="RELATIVE" )
-  parser.add_option( "--ppath", dest="ppath", default=None, \
-                     help="Directory to add to python path",
-                     metavar="Directory" )
+  parser = ArgumentParser( prog="runone", description = re.sub("\\s+", " ", __doc__[1:]))
+  parser.add_argument( "--jobid", dest="n", default=1, \
+                       help="Job number", metavar="N", type="int" )
+  parser.add_argument( "--relative", dest="relative", default=None, \
+                       help="Perform calculations in a directory relative "
+                            "current, but starting at RELATIVE, rather than HOME.",
+                       metavar="RELATIVE" )
+  parser.add_argument( "--ppath", dest="ppath", default=None, \
+                       help="Directory to add to python path",
+                       metavar="Directory" )
+  parser.add_argument('--external', action="store_true", dest="external", \
+                      help="Launches jobs as external program, not library. Only for VASP at this point.")
+  parser.add_argument('-nprocs', dest="nprocs", default=1,\
+                      help="Number of processors with which to launch job.")
+  parser.add_argument('pickle', metavar='FILE', type=str, help='Path to a jobdictionary.')
 
-  try: (options, args) = parser.parse_args()
+  try: options = parser.parse_args()
   except SystemExit: return
 
   # is workdir relative
@@ -38,23 +41,31 @@ def main():
   # additional path to look into.
   if options.ppath != None: python_path.append(options.ppath)
 
-  if len(args) == 0:
-    print "No pickle specified on input. Eg, need a filename on input."
+  if not exists(options.pickle): 
+    print "Could not find file {0}.".format(options.pickle)
     return
 
+  # whether to launch programs externally or internally.
+  if options.external: 
+    from lada.mpi import NullComm
+    comm = NullComm(options.nprocs)
+  else:
+    from lada.mpi import world
+    comm = world
+  
   # loop over all jobs -- Needs communicator!
-  jobdict = jobs.load(args[0],comm=world)
+  jobdict = jobs.load(options.pickle, comm=comm)
   for i, (outdir, job) in enumerate(jobdict.iteritems()):
     if i != options.n: continue
     if options.relative == None: 
-      out = job.compute(comm=world, outdir=outdir, inplace=True)
+      job.compute(comm=comm, outdir=outdir, inplace=True, external=options.external)
     else:
       # Computes relative path... made complicated by cray's compute vs head node setup.
       workdir = abspath(outdir)
       with Changedir(environ["HOME"]) as cwd:
         workdir = join(environ[options.relative], relpath(workdir, getcwd()))
       # now pass on relative workdir, where HOME is substituted by options.relative.
-      out = job.compute(comm=world, outdir=outdir, workdir=workdir, inplace=False)
+      job.compute(comm=comm, outdir=outdir, workdir=workdir, inplace=False, external=options.external)
 
 if __name__ == "__main__":
   import traceback

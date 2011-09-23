@@ -9,7 +9,7 @@ class SpecialVaspParam(object):
   def __init__(self, value): 
     super(SpecialVaspParam, self).__init__()
     self.value = value
-  def __repr__(self): return "{0.__class__.__name__}(1)".format(self, repr(self.value))
+  def __repr__(self): return "{0.__class__.__name__}({1})".format(self, repr(self.value))
 
 class Magmom(SpecialVaspParam):
   """ Prints magmom to INCAR. 

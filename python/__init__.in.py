@@ -68,12 +68,22 @@ escan_library = "libpescan.so"
 
     The value for the default can be overriden by ~/.lada in the code below.
 """
+launch_escan_as_library = True
+""" Wether to launch escan/genpot as library or program. """
+escan_program = "escanCNL"
+""" Path of escan binary (only needed if launching as external program). """
+genpot_program = "getVLarg"
+""" Path of genpot binary (only needed if launching as external program). """
 
 vasp_library = "libvasp.so"
 """ Default vasp library. 
 
     The value for the default can be overriden by ~/.lada in the code below.
 """
+launch_vasp_as_library = True
+""" Wether to launch vasp as library or program. """
+vasp_program = "vasp"
+""" Path of vasp binary executable (if launching as external program). """
 
 represent_structure_with_POSCAR = False
 """ If true, then structures are represented using POSCAR format. 
@@ -89,6 +99,9 @@ only_existing_jobparams = True
 """ Whether attributes can be added or only modified. """
 unix_re  = True
 """ If True, then all regex matching is done using unix-command-line patterns. """
+
+mpirun_exe = "mpirun -n {nprocs} {program}"
+""" Command-line to launch external mpi programs. """
 
 
 # The variables defined below are only needed for the ipython interface.
@@ -118,8 +131,6 @@ if @with_ipython@:
 
   template_pbs = default_pbs
   """ Template pbs script to use. Depends on machine. """
-  mpirun_exe = "mpirun"
-  """ Name of mpirun-like executable. """
 
   debug_queue = "queue", "debug"
   """ How to select the debug queue. 
@@ -142,10 +153,13 @@ if @with_ipython@:
     accounts = ["BES000"]
     qsub_exe = "sbatch"
     resource_string = "-N {1}"
+
   elif environ.get("NERSC_HOST", "none") == "hopper":
-    mpirun_exe = "aprun"
     queues = "debug", "regular", "low", "premimum"
     resource_string = "mppwidth={0}"
+    mpirun_exe = "aprun -np {nprocs} numa_wrapper -ppn={ppernode} {program}"
+    """ Command-line to launch external mpi programs. """
+
   elif environ.get("NERSC_HOST", "none") == "carver":
     queues = "debug", "regular", "low"
     resource_string = "nodes={1}:ppn=8"

@@ -77,7 +77,7 @@ def launch(self, event, jobdicts):
       with open(pbsscripts[-1], "w") as file: 
         template_pbs( file, outdir=abspath(splitpath(path)[0]), jobid=i, mppwidth=mppwidth, name=name,\
                       pickle=splitpath(path)[1], pyscript=pyscript, ppath=".", walltime=walltime,\
-                      **kwargs )
+                      external=event.external, **kwargs )
     print "Created scattered jobs in {0}.pbs.".format(path)
 
   if event.nolaunch: return
@@ -108,7 +108,7 @@ def completer(self, info, data):
   if    (len(info.symbol) == 0 and data[-1] == "--account") \
      or (len(info.symbol) > 0  and data[-2] == "--account"):
     return accounts
-  result = ['--force', '--walltime', '--nbprocs', '--help']
+  result = ['--force', '--walltime', '--nbprocs', '--help', '--external']
   if len(queues) > 0: result.append("--queue") 
   if len(accounts) > 0: result.append("--account") 
   if debug_queue != None: result.append("--debug")
@@ -136,7 +136,7 @@ def parser(self, subparsers, opalls):
   result.add_argument('--prefix', action="store", type=str, help="Adds prefix to job name.")
   result.add_argument('--nolaunch', action="store_true", dest="nolaunch")
   result.add_argument('--force', action="store_true", dest="force", \
-                         help="Launches all untagged jobs, even those which completed successfully.")
+                      help="Launches all untagged jobs, even those which completed successfully.")
   if len(accounts) != 0:
     result.add_argument( '--account', dest="account", choices=accounts, default=accounts[0],
                          help="Account on which to launch job. Defaults to system default." )

@@ -3,7 +3,7 @@ __docformat__ = "restructuredtext en"
 
 def default_pbs( file, walltime=None, mppwidth=8, ppernode=8, queue=None, \
                  account=None, name=None,  pyscript=None, pickle="job_pickle", \
-                 outdir=None, **kwargs):
+                 outdir=None, external=False, **kwargs):
   """ Creates pbs-script for carver at nersc. Does not launch. 
 
       :Parameters:
@@ -28,6 +28,9 @@ def default_pbs( file, walltime=None, mppwidth=8, ppernode=8, queue=None, \
           Filename of job-dictionary pickle.
         outdir 
           Directory where to start calculations.
+        external
+          Whether computations are launched as libraries or external jobs.
+          If external, then the main script is launched without MPI.
         kwargs
           Further arguments are appended at the end of mpirun.
   """
@@ -55,7 +58,10 @@ def default_pbs( file, walltime=None, mppwidth=8, ppernode=8, queue=None, \
   else: file.write("cd {0}\n".format(outdir))
 
   # aprun on fucking Cray prima donas. mpirun everywhere else.
-  file.write("{2} -n {0} python {1} ".format(mppwidth, pyscript, mpirun_exe) )
+  if external:
+    file.write("python {0} --nprocs {1}".format(pyscript, mppwidth))
+  else:
+    file.write(mpirun_exe.format(mppwidth, "python {0}".format(pyscript)) )
   for key, value in kwargs.items(): 
     if value == None: file.write(" --{0}".format(key))
     else:             file.write(" --{0} {1}".format(key, value))
@@ -63,7 +69,7 @@ def default_pbs( file, walltime=None, mppwidth=8, ppernode=8, queue=None, \
 
 def default_slurm( file, walltime = "05:45:00", mppwidth = 8, ppernode=8, account=None,\
                    name=None, pyscript=None,  pickle="job_pickle", queue=None, \
-                   outdir=None, **kwargs):
+                   outdir=None, external=False, **kwargs):
   """ Creates default slurm-script. Does not launch. 
 
       :Parameters:
@@ -113,8 +119,10 @@ def default_slurm( file, walltime = "05:45:00", mppwidth = 8, ppernode=8, accoun
                "#SBATCH -o \"{0}/out.%j\"\n".format(pbsdir))
   if outdir != None: file.write("#SBATCH -D {0}\n".format(abspath(outdir)))
 
-  file.write( "{3} -np {0} numa_wrapper -ppn={1} python {2} "\
-              .format(mppwidth, ppernode, pyscript, mpirun_exe) )
+  if external:
+    file.write("python {0} --nprocs {1}".format(pyscript, mppwidth))
+  else:
+    file.write(mpirun_exe.format(nprocs=mppwidth, ppernode=ppernode, program="python {0}".format(pyscript)) )
   for key, value in kwargs.items(): 
     if value == None: file.write(" --{0}".format(key))
     else:             file.write(" --{0} {1}".format(key, value))

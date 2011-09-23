@@ -17,6 +17,19 @@ def null_all_reduce(comm, value, op): return value
 def null_all_to_all(comm, value=None): return [value]
 def null_barrier(comm): pass
 
+def external(comm, program, out=None, err=None, nprocs=None, append=False):
+  """ Launches an external program. """  
+  from popen2 import Popen
+  from .. import mpirun
+  if out != None: file_out = open(out, "a" if append else "w")
+  if err != None: file_err = open(err, "a" if append else "w")
+  if nprocs == None: nprocs = comm.size()
+  try:
+    vasp_proc = Popen(mpirun(nprocs, program), stdout=file_out, stderr=file_err, shell = True)
+    vasp_proc.wait()
+  finally:
+    file_out.close()
+    file_err.close()
 
 if not lada_with_mpi:
   broadcast = null_broadcast
@@ -49,6 +62,8 @@ else:
   def is_mpi(self):
     """ True if more than one proc. """
     return self.size > 1
+
+
   BoostComm.all_gather = all_gather
   BoostComm.all_reduce = all_reduce
   BoostComm.all_to_all = all_to_all
@@ -58,6 +73,7 @@ else:
   BoostComm.real = property(real)
   BoostComm.is_root = property(is_root)
   BoostComm.is_mpi = property(is_mpi)
+  BoostComm.external = external
 
 class NullComm(object):
   """ Fake communicator for non-mpi stuff. """
@@ -67,12 +83,13 @@ class NullComm(object):
   def is_root(self): return True
   @property
   def rank(self): return 0
-  @property
-  def size(self): return 1
   @property 
   def real(self): return False
   
-  def __init__(self): object.__init__(self)
+  def __init__(self, size=1):
+    object.__init__(self)
+    self.size = 1
+    """ Number of processes to launch in external mode. """
   broadcast  = null_broadcast
   gather     = null_gather
   reduce     = null_reduce
@@ -85,6 +102,7 @@ class NullComm(object):
   def __ne__(self, value): return not self.__eq__(value)
   def __setstate__(self, value): self.__dict__.update(value)
   def __getstate__(self): return self.__dict__.copy()
+  external = external
 
 
 if not lada_with_mpi: world, Communicator = NullComm(), NullComm
