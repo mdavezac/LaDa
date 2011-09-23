@@ -128,8 +128,9 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
           if line.find("FINAL eigen energies, in eV") != -1: good += 1
           elif do_escan_re.search(line) != None: is_do_escan = eval(line.split()[-1])
           elif line.find("# Computed ESCAN in:") != -1: good += 1; break
-      if not ((good == 2 and is_do_escan) or (good == 1 and not is_do_escan)): return False
-      return not any(isnan(self.solo().eigenvalues))
+      if good == 1 and not is_do_escan: return True
+      if good == 2 and is_do_escan: return not any(isnan(self.solo().eigenvalues))
+      return False
     except: return False
 
   @property
