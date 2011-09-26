@@ -377,7 +377,7 @@ def band_filling(defect, host, **kwargs):
     dummy = multiply(dummy, defect.occupations)
   elif defect.eigenvalues.ndim == 2:
     dummy = multiply(defect.eigenvalues-cbm, defect.multiplicity[:, newaxis])
-    dummy = 2e0 * multiply(dummy, defect.occupations)
+    dummy = multiply(dummy, defect.occupations)
   result = -sum(dummy[defect.eigenvalues > cbm])
 
   vbm = host.vbm + potal
@@ -386,7 +386,7 @@ def band_filling(defect, host, **kwargs):
     dummy = multiply(dummy, 1e0-defect.occupations)
   elif defect.eigenvalues.ndim == 2:
     dummy = multiply(vbm-defect.eigenvalues, defect.multiplicity[:, newaxis])
-    dummy = 2e0 * multiply(dummy, 1e0-defect.occupations)
+    dummy = multiply(dummy, 2e0-defect.occupations)
   result -= sum(dummy[defect.eigenvalues < vbm])
 
   return -result.rescale(eV) / sum(defect.multiplicity)
