@@ -472,14 +472,11 @@ def potential_alignment(defect, host, maxdiff=0.5, first_shell=True, tolerance=0
       the electrostatic potential differ to far from the average electrostatic
       potential for each lattice site (parameterized by maxdiff).
 
-      :note: The return *does* include the charge factor.
   """
   from itertools import chain
   from numpy import abs, array, mean
   from quantities import eV
   from . import reindex_sites, first_shell as ffirst_shell
-
-  if abs(defect.charge) < 1e-12: return 0 * eV
 
   dstr = defect.structure
   hstr = host.structure
@@ -513,9 +510,9 @@ def potential_alignment(defect, host, maxdiff=0.5, first_shell=True, tolerance=0
     else: acceptable[maximum[0]] = False
 
   iterable = zip(defect.electropot, dstr.atoms, acceptable)
-  return mean([ (e - host.electropot[a.site]).rescale(eV).magnitude\
-                for e, a, ok in iterable if ok ]) * eV * defect.charge
 
+  return mean([ (e - host.electropot[a.site]).rescale(eV).magnitude\
+                for e, a, ok in iterable if ok ]) * eV
 
 
 def third_order_charge_correction(structure, charge = None, n = 30, epsilon = 1.0, **kwargs):
