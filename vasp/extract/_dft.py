@@ -348,11 +348,12 @@ class Extract(object):
     for i, line in enumerate(lines[::-1]):
       if regex.search(line) != None: break
     assert -i + 2 < len(lines), RuntimeError("Could not find average atomic potential in file.")
+    regex = compile(r"""(?:\s|\d){8}\s*(-?\d+\.\d+)""")
     result = []
     for line in lines[-i+2:]:
       data = line.split()
       if len(data) == 0: break
-      result.extend( [float(u) for i, u in enumerate(data) if i % 2 == 1] )
+      result.extend([m.group(1) for m in regex.finditer(line)])
         
     return array(result, dtype="float64") * eV
 
