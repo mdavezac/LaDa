@@ -75,6 +75,21 @@ vasp_library = "libvasp.so"
     The value for the default can be overriden by ~/.lada in the code below.
 """
 
+represent_structure_with_POSCAR = False
+""" If true, then structures are represented using POSCAR format. 
+
+    If False, then uses normal python representation.
+"""
+
+readonly_jobparams = False
+""" Whether items can be modified in parallel using attribute syntax. """
+naked_end = True
+""" Whether last item is returned as is or wrapped in ForwardingDict. """
+only_existing_jobparams = True
+""" Whether attributes can be added or only modified. """
+unix_re  = True
+""" If True, then all regex matching is done using unix-command-line patterns. """
+
 
 # The variables defined below are only needed for the ipython interface.
 if @with_ipython@:
@@ -134,6 +149,17 @@ if @with_ipython@:
   elif environ.get("NERSC_HOST", "none") == "carver":
     queues = "debug", "regular", "low"
     resource_string = "nodes={1}:ppn=8"
+
+# the variables below are only needed by ladabase.
+if @with_ladabase@:
+  pymongo_host       = 'localhost'
+  """ Host of the mongo database. """
+  pymongo_port       = 27017
+  """ Port to access the mongo database. """
+  vasp_database_name = 'vasp'
+  """ Name of the database. """
+  OUTCARS_prefix     = 'OUTCARs'
+  """ Name of the collection of OUTCAR files. """
 
 
 # reads stuff from input file

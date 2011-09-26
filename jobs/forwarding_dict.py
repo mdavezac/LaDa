@@ -11,16 +11,16 @@ class ForwardingDict(MutableMapping):
   def __init__(self, dictionary = None, _attr_list=None, ordered=True, **kwargs):
     """ Initializes a ForwardingDict instance. """
     from ..opt import OrderedDict
-    from . import default_params as default
+    from .. import naked_end, only_existing_jobparams as only_existing, readonly_jobparams as readonly
     self._is_initializing_forwarding_dict = True
     """ Tells get/setattr that Forwarding dict is being initialized. """
     super(ForwardingDict, self).__init__()
 
-    self.readonly      = kwargs.pop('readonly', default.readonly)
+    self.readonly      = kwargs.pop('readonly', readonly)
     """ Whether items can be modified in parallel using attribute syntax. """
-    self.naked_end     = kwargs.pop('naked_end', default.naked_end)
+    self.naked_end     = kwargs.pop('naked_end', naked_end)
     """ Whether last item is returned as is or wrapped in ForwardingDict. """
-    self.only_existing = kwargs.pop('only_existing', default.only_existing)
+    self.only_existing = kwargs.pop('only_existing', only_existing)
     """ Whether attributes can be added or only modified. """
     self._attr_list    = [] if _attr_list == None else _attr_list
     """ List of attributes of attributes, from oldest parent to youngest grandkid. """

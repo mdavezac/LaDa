@@ -1,6 +1,6 @@
 set(PYLADA_HEADERS debug.hpp misc.hpp numpy_types.h std_map.hpp 
                    std_map.impl.hpp std_vector.hpp xml.hpp)
-set(PYLADA_PY mpi.py)
+set(PYLADA_PY mpi.py record.py)
 
 if(NOT noinstall_headers)
   install(FILES ${PYLADA_HEADERS} DESTINATION include/LaDa/python)
@@ -12,6 +12,7 @@ if(MPI_FOUND)
 endif(MPI_FOUND)
 
 set(with_ipython "False")
+set(with_ladabase "False")
 if(ipython_interface)
   set(with_ipython "True")
 endif(ipython_interface)
@@ -52,6 +53,7 @@ if(ga_package)
   set(which_packages "${which_packages}, 'ga'")
 endif(ga_package) 
 if(ladabase_package) 
+  set(with_ladabase "True")
   set(which_packages "${which_packages}, 'ladabase'")
 endif(ladabase_package) 
 configure_file (

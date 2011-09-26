@@ -28,8 +28,8 @@ class Hull2d(object):
   @vertices.setter
   def vertices(self, sample):
     """ Taken from literate programming website. """
-    from numpy import array, abs, argmin, dot, concatenate
-    from numpy.linalg import det, norm
+    from numpy import array, dot, concatenate
+    from numpy.linalg import norm
     # case where vertices are None.
     if sample == None: self._vertices = None; return
     sample = array(sample) # copy to  a numpy array.

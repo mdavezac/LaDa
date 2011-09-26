@@ -28,16 +28,16 @@ class AbstractMassExtract(object):
         :Kwarg naked_end: True if should return value rather than dict when only one item.
         :Kwarg unix_re: converts regex patterns from unix-like expression.
     """
-    from . import default_params as default
+    from .. import naked_end, unix_re
     from ..opt import OrderedDict
 
     object.__init__(self)
 
-    self.naked_end = kwargs.pop('naked_end', default.naked_end)
+    self.naked_end = kwargs.pop('naked_end', naked_end)
     """ If True and dict to return contains only one item, returns value itself. """
     self.view = view
     """ The pattern which job-names should match. """
-    self.unix_re = kwargs.pop('unix_re', default.unix_re)
+    self.unix_re = kwargs.pop('unix_re', unix_re)
     """ If True, then all regex matching is done using unix-command-line patterns. """
     self.excludes = excludes
     assert len(kwargs) == 0, ValueError("Unkwnown keyword arguments:{0}.".format(kwargs.keys()))
@@ -221,10 +221,8 @@ class AbstractMassExtract(object):
   @property
   def children(self):
     """ next set of minimal regex. """
-    from os.path import join, normpath
     regex = self._regex_pattern(self.view)
 
-    jobs = self.keys()
     if len(self.keys()) < 2: return 
     children = set()
     if len(self.view) == 0 or self.view == '/':

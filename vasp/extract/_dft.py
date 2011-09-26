@@ -2,6 +2,9 @@
 __docformat__  = 'restructuredtext en'
 __all__ = ['Extract']
 from ...opt.decorators import make_cached, broadcast_result
+from ...opt.json import array as json_array, unit as json_unit,\
+                        array_with_unit as json_array_with_unit
+from quantities import eV, kbar as kB
 
 class Extract(object):
   """ Implementation class for extracting data from VASP output """
@@ -11,23 +14,23 @@ class Extract(object):
     object.__init__(self)
     
   @property
+  @json_unit(eV)
   @make_cached
   @broadcast_result(attr=True, which=0)
   def energy_sigma0(self):
     """ Greps total energy extrapolated to $\sigma=0$ from OUTCAR. """
-    from quantities import eV
     regex = """energy\s+without\s+entropy\s*=\s*(\S+)\s+energy\(sigma->0\)\s+=\s+(\S+)"""
     result = self._find_last_OUTCAR(regex) 
     assert result != None, RuntimeError("Could not find sigma0 energy in OUTCAR")
     return float(result.group(2)) * eV
 
   @property
+  @json_array_with_unit("float64", eV)
   @make_cached
   @broadcast_result(attr=True, which=0)
   def energies_sigma0(self):
     """ Greps total energy extrapolated to $\sigma=0$ from OUTCAR. """
     from numpy import array
-    from quantities import eV
     regex = """energy\s+without\s+entropy\s*=\s*(\S+)\s+energy\(sigma->0\)\s+=\s+(\S+)"""
     try: result = [float(u.group(2)) for u in self._search_OUTCAR(regex)]
     except TypeError: raise RuntimeError("Could not find energies in OUTCAR")
@@ -35,12 +38,12 @@ class Extract(object):
     return array(result) * eV
 
   @property
+  @json_array_with_unit("float64", eV)
   @make_cached
   @broadcast_result(attr=True, which=0)
   def all_total_energies(self):
     """ Greps total energies for all electronic steps from OUTCAR."""
     from numpy import array
-    from quantities import eV
     regex = """energy\s+without\s+entropy =\s*(\S+)\s+energy\(sigma->0\)\s+=\s+(\S+)"""
     try: result = [float(u.group(1)) for u in self._search_OUTCAR(regex)]
     except TypeError: raise RuntimeError("Could not find energies in OUTCAR")
@@ -48,6 +51,7 @@ class Extract(object):
     return array(result) * eV
 
   @property
+  @json_array_with_unit("float64", eV)
   def cbm(self):
     """ Returns Condunction Band Minimum. """
     from numpy import min
@@ -61,6 +65,7 @@ class Extract(object):
       return min(self.eigenvalues[:, self.valence/2])
 
   @property
+  @json_array_with_unit("float64", eV)
   def vbm(self):
     """ Returns Valence Band Maximum. """
     from numpy import max
@@ -74,12 +79,12 @@ class Extract(object):
       return max(self.eigenvalues[:, self.valence/2-1])
 
   @property
+  @json_array_with_unit("float64", eV)
   @make_cached
   @broadcast_result(attr=True, which=0)
   def total_energies(self):
     """ Greps total energies for all ionic steps from OUTCAR."""
     from numpy import array
-    from quantities import eV
     regex = """energy\s+without\s+entropy=\s*(\S+)\s+energy\(sigma->0\)\s+=\s+(\S+)"""
     try: result = [float(u.group(1)) for u in self._search_OUTCAR(regex)]
     except TypeError: raise RuntimeError("Could not find energies in OUTCAR")
@@ -87,27 +92,25 @@ class Extract(object):
     return array(result) * eV
 
   @property
+  @json_unit(eV)
   @make_cached
   @broadcast_result(attr=True, which=0)
   def total_energy(self):
     """ Greps total energy from OUTCAR."""
-    from quantities import eV
     regex = """energy\s+without\s+entropy=\s*(\S+)\s+energy\(sigma->0\)\s+=\s+(\S+)"""
     result = self._find_last_OUTCAR(regex) 
     assert result != None, RuntimeError("Could not find energy in OUTCAR")
     return float(result.group(1)) * eV
 
-  @property
-  def energy(self): 
-    """ Alias for total_energy. """
-    return self.total_energy
+  energy = total_energy
+  """ Alias for total_energy. """
 
   @property
+  @json_unit(eV)
   @make_cached
   @broadcast_result(attr=True, which=0)
   def fermi_energy(self):
     """ Greps fermi energy from OUTCAR. """
-    from quantities import eV
     regex = r"""E-fermi\s*:\s*(\S+)"""
     result = self._find_last_OUTCAR(regex) 
     assert result != None, RuntimeError("Could not find fermi energy in OUTCAR")
@@ -134,11 +137,11 @@ class Extract(object):
     return float(result.group(1))
 
   @property
+  @json_array_with_unit("float64", kB)
   @make_cached
   @broadcast_result(attr=True, which=0)
   def pressures(self):
     """ Greps all pressures from OUTCAR """
-    from quantities import kbar as kB
     regex = r"""external\s+pressure\s*=\s*(\S+)\s*kB\s+Pullay\s+stress\s*=\s*(\S+)\s*kB"""
     try: result = [float(u.group(1)) for u in self._search_OUTCAR(regex)]
     except TypeError: raise RuntimeError("Could not find pressures in OUTCAR")
@@ -146,6 +149,7 @@ class Extract(object):
     return result * kB
 
   @property
+  @json_unit(kB)
   @make_cached
   @broadcast_result(attr=True, which=0)
   def pressure(self):
@@ -177,6 +181,7 @@ class Extract(object):
     return float(result.group(2))
 
   @property
+  @json_unit(kB)
   @make_cached
   @broadcast_result(attr=True, which=0)
   def pulay_pressure(self):
@@ -192,10 +197,8 @@ class Extract(object):
   @broadcast_result(attr=True, which=0)
   def fft(self):
     """ Greps recommended or actual fft setting from OUTCAR. """
-    from os.path import exists, join
     from re import compile, search, X as re_X
 
-    result = None
     with self.__outcar__() as file:
 
       # find start
@@ -261,7 +264,6 @@ class Extract(object):
         The total is not included. Implementation also used for magnetization.
     """
     import re 
-    from os.path import exists, join
     from numpy import array
 
     result = []
@@ -279,6 +281,7 @@ class Extract(object):
     return array(result, dtype="float64")
 
   @property
+  @json_array("float64")
   @make_cached
   @broadcast_result(attr=True, which=0)
   def partial_charges(self):
@@ -291,6 +294,7 @@ class Extract(object):
     return self._get_partial_charges_magnetization(r"""\s*total\s+charge\s*$""")
 
   @property
+  @json_array("float64")
   @make_cached
   @broadcast_result(attr=True, which=0)
   def magnetization(self):
@@ -303,6 +307,7 @@ class Extract(object):
     return self._get_partial_charges_magnetization(r"""^\s*magnetization\s*\(x\)\s*$""")
 
   @property
+  @json_array_with_unit("float64", eV)
   @make_cached
   def eigenvalues(self):
     """ Greps eigenvalues from OUTCAR. 
@@ -312,11 +317,11 @@ class Extract(object):
         cases, the leading dimension are the kpoints, followed by the bands.
     """
     from numpy import array
-    from quantities import eV
     if self.ispin == 2: return array(self._spin_polarized_values(1), dtype="float64") * eV
     return array(self._unpolarized_values(1), dtype="float64") * eV
 
   @property
+  @json_array("float64")
   @make_cached
   def occupations(self):
     """ Greps occupations from OUTCAR. 
@@ -330,14 +335,13 @@ class Extract(object):
     return array(self._unpolarized_values(2), dtype="float64") 
 
   @property
+  @json_array_with_unit("float64", eV)
   @make_cached
   @broadcast_result(attr=True, which=0)
   def electropot(self):
     """ Greps average atomic electrostatic potentials from OUTCAR. """
-    from os.path import exists, join
     from re import compile, X as reX
     from numpy import array
-    from quantities import eV
 
     with self.__outcar__() as file: lines = file.readlines()
     regex = compile(r"""average\s+\(electrostatic\)\s+potential\s+at\s+core""", reX)
@@ -353,6 +357,7 @@ class Extract(object):
     return array(result, dtype="float64") * eV
 
   @property 
+  @json_array("float64")
   @make_cached
   @broadcast_result(attr=True, which=0)
   def electronic_dielectric_constant(self):
@@ -370,6 +375,7 @@ class Extract(object):
     return array([result.group(i) for i in range(1,10)], dtype='float64').reshape((3,3))
 
   @property 
+  @json_array("float64")
   @make_cached
   @broadcast_result(attr=True, which=0)
   def ionic_dielectric_constant(self):
@@ -387,6 +393,7 @@ class Extract(object):
     return array([result.group(i) for i in range(1,10)], dtype='float64').reshape((3,3))
 
   @property 
+  @json_array("float64")
   def dielectric_constant(self):
     """ Dielectric constant of the material. """
     return  self.electronic_dielectric_constant + self.ionic_dielectric_constant

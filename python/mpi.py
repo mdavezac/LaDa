@@ -98,4 +98,4 @@ def Communicator(comm = None, with_world=False):
   if comm == None: return world if with_world else NullComm() 
   if isinstance(comm, BoostComm): return comm
   if isinstance(comm, NullComm): return comm
-  raise ValueError("Unknown communicator type.")
+  raise ValueError("Unknown communicator type {0}, {1}.".format(type(comm), comm))
