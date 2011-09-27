@@ -21,7 +21,7 @@ def external(comm, program, out=None, err=None, nprocs=None, ppernode=None, appe
   """ Launches an external program. """  
   from subprocess import Popen
   from shlex import split as split_cmd
-  from .. import mpirun_exe, cpus_per_node
+  from . import mpirun_exe, cpus_per_node
 
   if nprocs == None: nprocs = comm.size
   if ppernode == None: ppernode = cpus_per_node

@@ -48,7 +48,7 @@ class Launch(Incar):
     """
     self.program = vasp_program
     """ Name/fullpath of vasp program. """
-    self.launch_library = launch_vasp_as_library
+    self.launch_as_library = launch_vasp_as_library
     """ Whether to launch vasp as library(True) or a program(False). """
 
     # checks inplace vs workdir

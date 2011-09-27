@@ -7,4 +7,6 @@ input = read_input("input.py")
 
 structure = fill_structure(input.lattice.cell, input.lattice)
 
+input.relaxer.vasp.launch_library = False
+input.relaxer.vasp.vasp_program = "vasp"
 input.relaxer(structure, outdir="results")
