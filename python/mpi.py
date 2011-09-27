@@ -30,7 +30,7 @@ def external(comm, program, out=None, err=None, nprocs=None, ppernode=None, appe
   file_out = open(out, "a" if append else "w") if out != None else None 
   file_err = open(err, "a" if append else "w") if err != None else None 
   try:
-    vasp_proc = Popen(split_cmd(cmd), stdout=file_out, stderr=file_err, shell = True)
+    vasp_proc = Popen(split_cmd(cmd), stdout=file_out, stderr=file_err)
     vasp_proc.wait()
   finally:
     file_out.close()
@@ -93,7 +93,7 @@ class NullComm(object):
   
   def __init__(self, size=1):
     object.__init__(self)
-    self.size = 1
+    self.size = size
     """ Number of processes to launch in external mode. """
   broadcast  = null_broadcast
   gather     = null_gather

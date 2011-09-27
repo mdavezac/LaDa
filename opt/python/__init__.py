@@ -653,5 +653,5 @@ def total_memory():
 def which(program):
   """ Gets location of program using system command which. """
   from subprocess import Popen, PIPE
-  output = Popen(["which", program], out=PIPE).communicate()[0]
+  output = Popen(["which", program], stdout=PIPE).communicate()[0]
   return output if output[-1] != '\n' else output[:-1]
