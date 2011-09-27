@@ -113,11 +113,11 @@ class Incar(object):
     self.add_param = "lcorr",       None
     self.add_param = "nupdown",     None
     self.add_param = "loptics",     None
-    self.add_param = "lmaxmix",     None
+    self.add_param = "lmaxmix",     4
     # objects derived from SpecialVaspParams will be recognized as such and can
     # be added without further fuss.
     self.nelect      = NElect(0)
-    self.algo        = Algo("normal")
+    self.algo        = Algo("fast")
     self.precision   = Precision("accurate")
     self.ediff       = Ediff(1e-4)
     self.ediffg      = Ediff(None, "ediffg")

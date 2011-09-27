@@ -10,13 +10,6 @@ class Extract(object):
     """ Initializes the extraction class. """
     object.__init__(self)
     
-  @property
-  def exports(self):
-    """ List of files to export. """
-    from os.path import join, exists
-    return [ join(self.directory, u) for u in [self.OUTCAR, self.FUNCCAR] \
-             if exists(join(self.directory, u)) ]
-
   @property 
   @make_cached
   @broadcast_result(attr=True, which=0)
