@@ -197,9 +197,3 @@ def ipy_init():
       if 'ipy_init' in getattr(getattr(lada, key), '__dict__'): 
         x = __import__('lada.{0}'.format(key), fromlist='ipy_init')
         x.ipy_init()
-
-represent_structure_with_POSCAR = False
-""" If true, then structures are represented using POSCAR format. 
-
-    If False, then uses normal python representation.
-"""

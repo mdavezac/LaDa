@@ -2,6 +2,7 @@
 __docformat__  = 'restructuredtext en'
 __all__ = ['Extract']
 from ...opt.decorators import make_cached, broadcast_result
+from ...opt.json import array as json_array, pickled as json_pickled
 
 class Extract(object):
   """ Implementation class for extracting data from VASP output """
@@ -32,6 +33,7 @@ class Extract(object):
     
 
   @property
+  @json_pickled
   @make_cached
   @broadcast_result(attr=True, which=0)
   def functional(self):
@@ -59,7 +61,6 @@ class Extract(object):
         Then checks that timing stuff is present at end of OUTCAR.
     """
     from os.path import exists, join
-    import re
 
     for path in [self.OUTCAR]:
       if not exists(join(self.directory, path)): return False
@@ -95,8 +96,9 @@ class Extract(object):
         atoms.append(dot(cell, array(data, dtype='float64')))
 
     return cell, atoms
-
+ 
   @property
+  @json_pickled
   @make_cached
   def starting_structure(self):
     """ Structure at start of calculations. """
@@ -135,8 +137,6 @@ class Extract(object):
     from re import compile
     from numpy import array, zeros
 
-    species_in = self.species
-
     cell = zeros((3,3), dtype="float64")
     atoms = []
 
@@ -159,11 +159,11 @@ class Extract(object):
     return cell, atoms
 
   @property
+  @json_pickled
   @make_cached
   def structure(self):
     """ Greps structure and total energy from OUTCAR. """
-    from re import compile
-    from numpy import array, zeros
+    from numpy import array
     from quantities import eV
     from ...crystal import Structure
 
@@ -171,7 +171,6 @@ class Extract(object):
       return self.starting_structure
 
 
-    species_in = self.species
     try: cell, atoms = self._structure_data
     except: return self.contcar_structure
 
@@ -197,17 +196,17 @@ class Extract(object):
     return structure
 
   @property
+  @json_pickled
   @make_cached
   def contcar_structure(self):
     """ Greps structure from CONTCAR. """
-    from os.path import exists, join
     from ...crystal import read_poscar
     from quantities import eV
 
     species_in = self.species
 
     result = read_poscar(species_in, self.__contcar__(), comm=self.comm)
-    structure.energy = float(self.total_energy.rescale(eV)) if self.is_dft else 0e0
+    result.energy = float(self.total_energy.rescale(eV)) if self.is_dft else 0e0
     return result
 
   @property
@@ -218,6 +217,8 @@ class Extract(object):
     result = self._find_first_OUTCAR(r"""\s*ions\s+per\s+type\s*=.*$""")
     if result == None: return None
     return [int(u) for u in result.group(0).split()[4:]]
+  stoechiometry = ions_per_specie
+  """ Alias for `ions_per_specie`. """
 
   @property
   @make_cached
@@ -254,6 +255,7 @@ class Extract(object):
     return int(result.group(1))
 
   @property
+  @json_array("float64")
   @make_cached
   @broadcast_result(attr=True, which=0)
   def kpoints(self):
@@ -261,8 +263,7 @@ class Extract(object):
     
         Numpy array where each row is a k-vector in cartesian units. 
     """
-    from os.path import exists, join
-    from re import compile, search 
+    from re import compile
     from numpy import array
 
     result = []
@@ -281,12 +282,12 @@ class Extract(object):
     return array(result, dtype="float64") 
 
   @property
+  @json_array("float64")
   @make_cached
   @broadcast_result(attr=True, which=0)
   def multiplicity(self):
     """ Greps multiplicity of each k-point from OUTCAR. """
-    from os.path import exists, join
-    from re import compile, search 
+    from re import compile
     from numpy import array
 
     result = []
@@ -332,16 +333,16 @@ class Extract(object):
     result = self._find_first_OUTCAR(r"""^\s*SYSTEM\s*=.*$""")
     assert result != None, RuntimeError("Could not extract SYSTEM title from OUTCAR.")
     result = result.group(0)
-    result = result[result.index('=')+1:]
-    return result.rstrip().lstrip()
+    result = result[result.index('=')+1:].rstrip().lstrip()
+    if result[0] == '"': result = result[1:]
+    if result[-1] == '"': result = result[:-1]
+    return result
 
   @broadcast_result(attr=True, which=0)
   def _unpolarized_values(self, which):
     """ Returns spin-unpolarized eigenvalues and occupations. """
-    from re import compile, search, finditer
+    from re import compile, finditer
     import re
-    from os.path import exists, join
-    from numpy import array
 
     with self.__outcar__() as file: lines = file.readlines()
     # Finds last first kpoint.
@@ -373,10 +374,8 @@ class Extract(object):
   @broadcast_result(attr=True, which=0)
   def _spin_polarized_values(self, which):
     """ Returns spin-polarized eigenvalues and occupations. """
-    from re import compile, search, finditer
+    from re import compile, finditer
     import re
-    from os.path import exists, join
-    from numpy import array
 
     with self.__outcar__() as file: lines = file.readlines()
     # Finds last spin components.
@@ -420,17 +419,15 @@ class Extract(object):
   @broadcast_result(attr=True, which=0)
   def ionic_charges(self):
     """ Greps ionic_charges from OUTCAR."""
-    from numpy import array
     regex = """^\s*ZVAL\s*=\s*(.*)$"""
     result = self._find_last_OUTCAR(regex) 
     assert result != None, RuntimeError("Could not find ionic_charges in OUTCAR")
-    return array([float(u) for u in result.group(1).split()])
+    return [float(u) for u in result.group(1).split()]
 
   @property
   @make_cached
   def valence(self):
     """ Greps total energy from OUTCAR."""
-    from numpy import array
     ionic = self.ionic_charges
     species = self.species
     atoms = [u.type for u in self.structure.atoms]
