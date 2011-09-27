@@ -649,3 +649,9 @@ def total_memory():
       found = mem_re.search(line)
       if found != None: return int(found.group(1))
   raise MemoryError("Could not determine total memory from /proc/meminfo.")
+
+def which(program):
+  """ Gets location of program using system command which. """
+  from subprocess import Popen, PIPE
+  output = Popen(["which", program], out=PIPE).communicate()[0]
+  return output if output[-1] != '\n' else output[:-1]
