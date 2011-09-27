@@ -458,7 +458,7 @@ class Escan(object):
   def _run_genpot(self, structure, comm, outdir, norun):
     """ Runs genpot only """
     from os.path import basename, join
-    from ..opt import redirect, copyfile
+    from ..opt import redirect, copyfile, which
 
     # using genpot from previous run
     if comm.is_root and self.genpotrun != None:
@@ -503,7 +503,10 @@ class Escan(object):
           from ._escan import _call_genpot
           comm.barrier()
           _call_genpot(comm)
-      else: comm.external(self.genpot_program, out=self._cout(comm), err=self._cerr(comm), append=True)
+      else:
+        try: program = which(self.genpot_program)
+        except: program = self.genpot_program
+        comm.external(program, out=self._cout(comm), err=self._cerr(comm), append=True)
 
 
   def _write_incar(self, comm, structure, norun=False):
@@ -560,7 +563,7 @@ class Escan(object):
 
   def _run_escan(self, comm, structure, norun):
     """ Runs escan only """
-    from ..opt import redirect
+    from ..opt import redirect, which
 
     self._write_incar(comm, structure, norun)
     if norun == False:
@@ -569,7 +572,10 @@ class Escan(object):
           assert comm.real, RuntimeError('Cannot run escan without mpi.')
           from ._escan import _call_escan
           _call_escan(comm)
-      else: comm.external(self.escan_program, out=self._cout(comm), err=self._cerr(comm), append=True)
+      else:
+        try: program = which(self.escan_program)
+        except: program = self.escan_program
+        comm.external(program, out=self._cout(comm), err=self._cerr(comm), append=True)
 
   def _get_kpoint(self, structure, comm, norun):
     """ Returns deformed or undeformed kpoint. """

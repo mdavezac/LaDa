@@ -70,7 +70,7 @@ def default_pbs( file, walltime=None, mppwidth=8, ppernode=None, queue=None, \
   if external:
     file.write("python {0} --nprocs {1}".format(pyscript, mppwidth))
   else:
-    file.write(mpirun_exe.format(mppwidth, "python {0}".format(pyscript)) )
+    file.write(mpirun_exe.format(nprocs=mppwidth, program="python {0}".format(pyscript)) )
   for key, value in kwargs.items(): 
     if value == None: file.write(" --{0}".format(key))
     else:             file.write(" --{0} {1}".format(key, value))

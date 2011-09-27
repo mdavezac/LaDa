@@ -124,7 +124,7 @@ class Launch(Incar):
      from os.path import join
      from . import files
      from . import call_vasp
-     from ..opt import redirect
+     from ..opt import redirect, which
      from ..opt.changedir import Changedir
      # moves to working dir only now.
      stdout = join(self._tempdir, files.STDOUT) 
@@ -140,7 +140,10 @@ class Launch(Incar):
            with redirect(fout=stdout, ferr=stderr) as streams:
              assert comm.real, ValueError("Cannot call vasp without mpi.")
              call_vasp(self.vasp_library, comm, minversion)
-         else: comm.external(self.program, out=stdout, err=stderr)
+         else:
+           try: program = which(self.path)
+           except: program = self.program
+           comm.external(program, out=stdout, err=stderr)
              
   def _postrun(self, repat, outdir, comm, norun):
      """ Copies files back to outdir """

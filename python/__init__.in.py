@@ -153,6 +153,8 @@ if @with_ipython@:
     accounts = ["BES000"]
     qsub_exe = "sbatch"
     resource_string = "-N {1}"
+    cpus_per_node = 8
+    """ Number of cpus per node. """
 
   elif environ.get("NERSC_HOST", "none") == "hopper":
     queues = "debug", "regular", "low", "premimum"

@@ -17,15 +17,20 @@ def null_all_reduce(comm, value, op): return value
 def null_all_to_all(comm, value=None): return [value]
 def null_barrier(comm): pass
 
-def external(comm, program, out=None, err=None, nprocs=None, append=False):
+def external(comm, program, out=None, err=None, nprocs=None, ppernode=None, append=False):
   """ Launches an external program. """  
-  from popen2 import Popen
-  from .. import mpirun
-  if out != None: file_out = open(out, "a" if append else "w")
-  if err != None: file_err = open(err, "a" if append else "w")
-  if nprocs == None: nprocs = comm.size()
+  from subprocess import Popen
+  from shlex import split as split_cmd
+  from .. import mpirun_exe, cpus_per_node
+
+  if nprocs == None: nprocs = comm.size
+  if ppernode == None: ppernode = cpus_per_node
+  cmd = mpirun_exe.format(nprocs=nprocs, ppernode=ppernode, program=program)
+
+  file_out = open(out, "a" if append else "w") if out != None else None 
+  file_err = open(err, "a" if append else "w") if err != None else None 
   try:
-    vasp_proc = Popen(mpirun(nprocs, program), stdout=file_out, stderr=file_err, shell = True)
+    vasp_proc = Popen(split_cmd(cmd), stdout=file_out, stderr=file_err, shell = True)
     vasp_proc.wait()
   finally:
     file_out.close()
