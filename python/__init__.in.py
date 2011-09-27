@@ -159,6 +159,8 @@ if @with_ipython@:
     resource_string = "mppwidth={0}"
     mpirun_exe = "aprun -np {nprocs} numa_wrapper -ppn={ppernode} {program}"
     """ Command-line to launch external mpi programs. """
+    cpus_per_node = 24
+    """ Number of cpus per node. """
 
   elif environ.get("NERSC_HOST", "none") == "carver":
     queues = "debug", "regular", "low"
@@ -184,3 +186,8 @@ if exists(expandvars(expanduser('~/.lada'))):
   global_dict, local_dict = {}, {}
   exec(string, global_dict, local_dict)
   locals().update(local_dict)
+
+if "cpus_per_node" not in locals(): 
+  from opt import cpus_per_node as ppn
+  cpus_per_node = ppn()
+  """ Number of processes per node. """

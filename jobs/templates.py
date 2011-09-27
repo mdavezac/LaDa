@@ -1,9 +1,9 @@
 """ Templates for job submissal. """
 __docformat__ = "restructuredtext en"
 
-def default_pbs( file, walltime=None, mppwidth=8, ppernode=8, queue=None, \
+def default_pbs( file, walltime=None, mppwidth=8, ppernode=None, queue=None, \
                  account=None, name=None,  pyscript=None, pickle="job_pickle", \
-                 outdir=None, external=False, **kwargs):
+                 outdir=None, external=False, memlim=None, **kwargs):
   """ Creates pbs-script for carver at nersc. Does not launch. 
 
       :Parameters:
@@ -15,7 +15,7 @@ def default_pbs( file, walltime=None, mppwidth=8, ppernode=8, queue=None, \
         mppwidth
           Number of processes (not processors) to use.
         ppernode 
-          Number of processes per node.
+          Number of processes per node. If None, uses `lada.cpus_per_node` in lada.
         queue
           Queue to use
         account
@@ -31,13 +31,17 @@ def default_pbs( file, walltime=None, mppwidth=8, ppernode=8, queue=None, \
         external
           Whether computations are launched as libraries or external jobs.
           If external, then the main script is launched without MPI.
+        memlim
+          Memory limits to impose with ulimit. If 0, don't impose limits.
+          If negative, guess from /proc/meminfo and number of processes per node.
         kwargs
           Further arguments are appended at the end of mpirun.
   """
   from os.path import dirname, abspath
-  from .. import mpirun_exe, resource_string, default_walltime
+  from .. import mpirun_exe, resource_string, default_walltime, cpus_per_node
 
   if walltime == None: walltime = default_walltime 
+  if ppernode == None: ppernode = cpus_per_node
 
   pbsdir = abspath(dirname(file.name))
   nnodes = mppwidth//8 if mppwidth % 8 == 0 else mppwidth//8 + 1
@@ -56,6 +60,11 @@ def default_pbs( file, walltime=None, mppwidth=8, ppernode=8, queue=None, \
   if account != None: file.write("#PBS -A {0} \n".format(account))
   if outdir == None: file.write("cd $PBS_O_WORKDIR\n")
   else: file.write("cd {0}\n".format(outdir))
+  if memlim < 0:
+    file.write( "ulimit -v `python -c \"from lada.opt import total_memory; total_memory() / {0}\n\"`"\
+                .format(ppernode) )
+  elif memlim > 0:
+    file.write( "ulimit -v {0}".format(memlim) )
 
   # aprun on fucking Cray prima donas. mpirun everywhere else.
   if external:
@@ -67,9 +76,9 @@ def default_pbs( file, walltime=None, mppwidth=8, ppernode=8, queue=None, \
     else:             file.write(" --{0} {1}".format(key, value))
   file.write(" " + pickle + "\n")
 
-def default_slurm( file, walltime = "05:45:00", mppwidth = 8, ppernode=8, account=None,\
+def default_slurm( file, walltime = "05:45:00", mppwidth = 8, ppernode=None, account=None,\
                    name=None, pyscript=None,  pickle="job_pickle", queue=None, \
-                   outdir=None, external=False, **kwargs):
+                   outdir=None, external=False, memlim=None, **kwargs):
   """ Creates default slurm-script. Does not launch. 
 
       :Parameters:
@@ -81,7 +90,7 @@ def default_slurm( file, walltime = "05:45:00", mppwidth = 8, ppernode=8, accoun
         mppwidth
           umber of processes (not processors) to use.
         ppernode
-          Number of processes per node.
+          Number of processes per node. If None, uses `lada.cpus_per_node`.
         account
           Account to use. Defaults to BES000.
         name
@@ -94,13 +103,17 @@ def default_slurm( file, walltime = "05:45:00", mppwidth = 8, ppernode=8, accoun
           Possible queue/partition within which to launch jobs.
         outdir 
           Working directory where to start job.
+        memlim
+          Memory limits to impose with ulimit. If None, don't impose limits.
+          If "guess", guess from /proc/meminfo and number of processes per node.
         kwargs
           Further arguments are appended at the end of mpirun.
   """
   from os.path import abspath, dirname
-  from .. import mpirun_exe, resource_string, default_walltime
+  from .. import mpirun_exe, resource_string, default_walltime, cpus_per_node
 
   if walltime == None: walltime = default_walltime 
+  if ppernode == None: ppernode = cpus_per_node
   nnodes = mppwidth // ppernode + (0 if mppwidth % ppernode == 0 else 1)
 
   if account == None: account = "BES000"
@@ -118,6 +131,11 @@ def default_slurm( file, walltime = "05:45:00", mppwidth = 8, ppernode=8, accoun
     file.write("#SBATCH -e \"{0}/err.%j\"\n"\
                "#SBATCH -o \"{0}/out.%j\"\n".format(pbsdir))
   if outdir != None: file.write("#SBATCH -D {0}\n".format(abspath(outdir)))
+  if memlim == "guess":
+    file.write( "ulimit -v `python -c \"from lada.opt import total_memory; total_memory() / {0}\n\"`"\
+                .format(ppernode) )
+  elif memlim != None: 
+    file.write( "ulimit -v {0}".format(memlim) )
 
   if external:
     file.write("python {0} --nprocs {1}".format(pyscript, mppwidth))

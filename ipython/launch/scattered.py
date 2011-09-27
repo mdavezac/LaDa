@@ -45,7 +45,9 @@ def launch(self, event, jobdicts):
     return
 
   # gets queue (aka partition in slurm), if any.
-  kwargs = {} 
+  kwargs = { "ppernode": event.ppn,
+             "memlim": event.memlim,
+             "external": event.external } 
   if event.__dict__.get("queue", None) != None: kwargs["queue"] = getattr(event, "queue")
   if event.__dict__.get("account", None) != None: kwargs["account"] = getattr(event, "account")
   if event.debug:
@@ -77,7 +79,7 @@ def launch(self, event, jobdicts):
       with open(pbsscripts[-1], "w") as file: 
         template_pbs( file, outdir=abspath(splitpath(path)[0]), jobid=i, mppwidth=mppwidth, name=name,\
                       pickle=splitpath(path)[1], pyscript=pyscript, ppath=".", walltime=walltime,\
-                      external=event.external, **kwargs )
+                      **kwargs )
     print "Created scattered jobs in {0}.pbs.".format(path)
 
   if event.nolaunch: return
@@ -119,6 +121,7 @@ def completer(self, info, data):
 def parser(self, subparsers, opalls):
   """ Adds subparser for scattered. """ 
   from ... import queues, accounts, debug_queue, default_walltime
+  from ... import cpus_per_node
   result = subparsers.add_parser( 'scattered', 
                                   description="A separate PBS/slurm script is created for each "\
                                               "and every calculation in the jobdictionary "\
@@ -137,6 +140,11 @@ def parser(self, subparsers, opalls):
   result.add_argument('--nolaunch', action="store_true", dest="nolaunch")
   result.add_argument('--force', action="store_true", dest="force", \
                       help="Launches all untagged jobs, even those which completed successfully.")
+  result.add_argument( '--memlim', dest="memlim", default="guess",
+                       help="Memory limit per process imposed by ulimit. "\
+                            "\"guess\" lets lada make an uneducated guess. ")
+  result.add_argument( '--ppn', dest="ppn", default= cpus_per_node,
+                       help="Number of processes per node.")
   if len(accounts) != 0:
     result.add_argument( '--account', dest="account", choices=accounts, default=accounts[0],
                          help="Account on which to launch job. Defaults to system default." )

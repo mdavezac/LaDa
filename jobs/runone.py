@@ -23,7 +23,7 @@ def main():
                        metavar="Directory" )
   parser.add_argument('--external', action="store_true", dest="external", \
                       help="Launches jobs as external program, not library. Only for VASP at this point.")
-  parser.add_argument('-nprocs', dest="nprocs", default=1,\
+  parser.add_argument('--nprocs', dest="nprocs", default=1,\
                       help="Number of processors with which to launch job.")
   parser.add_argument('pickle', metavar='FILE', type=str, help='Path to a jobdictionary.')
 
