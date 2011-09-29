@@ -326,12 +326,69 @@ def _copy(self):
 Lattice.copy   = _copy
 Structure.copy = _copy
 
-def _copy(self): 
+def _deepcopy(self): 
   """ Returns an exact clone. """
   from copy import deepcopy
   return deepcopy(self)
-Lattice.deepcopy   = _copy
-Structure.deepcopy = _copy
+Lattice.deepcopy   = _deepcopy
+Structure.deepcopy = _deepcopy
+
+def atom_to_dict(atom):
+  """ Transforms atom to dictionary. """
+  return { "pos": atom.pos.tolist(),
+           "site": atom.site,
+           "freeze": atom.freeze,
+           "type": atom.type }
+
+def dict_to_atom(dictionary):
+  """ Transforms dictionary to atom. """
+  from numpy import array
+  if not set(["pos", "site", "freeze", "type"]).issubset(dictionary.iterkeys()):
+    raise ValueError("Dictionary cannot  be translated to structure.")
+  result = Atom()
+  result.pos = array(dictionary["pos"], dtype="float64")
+  result.site = dictionary["site"]
+  result.type = dictionary["type"]
+  result.freeze = dictionary["freeze"]
+  return result
+
+def structure_to_dict(structure):
+  """ Transforms structure to dictionary. """
+  result = { "cell": structure.cell.tolist(),
+             "scale": structure.scale,
+             "weight": structure.weight,
+             "energy": structure.energy,
+             "name": structure.name,
+             "size": len(structure.atoms) }
+  for key, value in structure.__dict__.iteritems():
+    if key in result:
+      raise RuntimeError("Structure contains attribute and property with same name {0}.".format(key))
+    if hasattr(value, "tolist"): result[key] = value.tolist()
+    else: result[key] = value
+  for i, atom in enumerate(structure.atoms):
+    result[str(i)] = atom_to_dict(atom)
+  return result
+
+def dict_to_structure(dictionary):
+  """ Transforms dictionary to structure. """
+  from numpy import array
+  result = Structure()
+  dictionary = dictionary.copy()
+  if not set(["cell", "scale", "weight", "energy", "name", "size"]).issubset(dictionary.iterkeys()):
+    raise ValueError("Dictionary cannot  be translated to structure.")
+  if not set(xrange(dictionary["size"])).issubset(dictionary.iterkeys()): 
+    raise ValueError("Dictionary cannot  be translated to structure.")
+
+  result.cell = array(dictionary.pop("cell"), dtype="float64")
+  result.scale = dictionary.pop("scale")
+  result.weight = dictionary.pop("weight")
+  result.energy = dictionary.pop("energy")
+  result.name = dictionary.pop("name")
+  for i in xrange(dictionary.pop("size")):
+    result.atoms.append(dict_to_atom(dictionary.pop(str(i))))
+  for key, value in dictionary.iteritems(): result[key] = value 
+  return result
+
 
 def structure_to_lattice(structure, primitive=True, spacegroup=True):
   """ Converts a structure object to a lattice object.

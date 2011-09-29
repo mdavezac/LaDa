@@ -2,7 +2,9 @@
 __docformat__  = 'restructuredtext en'
 __all__ = ['Extract']
 from ...opt.decorators import make_cached
-from ...opt.json import array as json_array, array_with_unit as json_array_with_unit
+from ...opt.json import array as json_array,\
+                        array_with_unit as json_array_with_unit,\
+                        section as json_section
 from quantities import eV
 
 class Extract(object):
@@ -22,6 +24,7 @@ class Extract(object):
     return self.qp_eigenvalues
 
   @property
+  @json_section("output")
   @json_array_with_unit("float64", eV)
   @make_cached
   def dft_eigenvalues(self):
@@ -36,6 +39,7 @@ class Extract(object):
     return array(self._unpolarized_values(1), dtype="float64") * eV
 
   @property
+  @json_section("output")
   @json_array_with_unit("float64", eV)
   @make_cached
   def qp_eigenvalues(self):
@@ -50,6 +54,7 @@ class Extract(object):
     return array(self._unpolarized_values(2), dtype="float64") * eV
 
   @property
+  @json_section("output")
   @json_array_with_unit("float64", eV)
   @make_cached
   def self_energies(self):
@@ -64,6 +69,7 @@ class Extract(object):
     return array(self._unpolarized_values(3), dtype="float64") * eV
 
   @property
+  @json_section("output")
   @json_array("float64")
   @make_cached
   def occupations(self):

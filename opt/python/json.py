@@ -1,5 +1,15 @@
 """ Module to decorate properties with json transcripters. """
 
+def section(name):
+  """ Adds name of section where this property should be located in json. 
+  
+      None means data should be added to head dictionary.
+  """
+  def add_section_name(function): 
+    function.section = name
+    return function
+  return add_section_name 
+
 def unit(unit):
   """ Creates JSON transfer functions wich remove/add units. """
   def to_json(object):
@@ -59,4 +69,11 @@ def pickled(function):
     return loads(str(object))
   function.to_json = to_json
   function.from_json = from_json
+  return function
+
+def structure(function):
+  """ Adds structure to dict transformation to json. """
+  from ..crystal import structure_to_dict, dict_to_structure
+  function.to_json = structure_to_dict
+  function.from_json = dict_to_structure
   return function
