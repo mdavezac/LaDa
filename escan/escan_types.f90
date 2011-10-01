@@ -247,7 +247,6 @@ Module Escan
       end if
 
       ! Set up index matrices for fft routinines 
-      call fftprep_comp(n1,n2,n3)
 
       deallocate(gkk_n)
       if(      params%is_gamma .eqv. .false. &

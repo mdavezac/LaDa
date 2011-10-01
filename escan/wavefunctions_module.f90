@@ -11,9 +11,6 @@ module Wfns_module
 
   contains
     subroutine init(filename, latscale, smooth, kinscal, kpoint, pottype, comm)
-      use data, only : mg_nx, gkk_n, wg_n, inv_n
-      use fft_data, only : fft_allocate, ncolx
-      use load_data, only: nr1x, nr2x, nr3x
       use Escan, only: set_common_blocks, prepare_fft_and_allocate_arrays, pi
   
       character(len=*), intent(in) :: filename            ! filename of escan input
@@ -147,6 +144,10 @@ module Wfns_module
 
     subroutine wfns_cleanup
       use escan, only: escan_cleanup
+      use fft_data, only: fftw_flag1,fftw_flag2,fftw_flag3
+      fftw_flag1 = 0
+      fftw_flag2 = 0
+      fftw_flag3 = 0
       call escan_cleanup
     end subroutine wfns_cleanup
 end module Wfns_module
