@@ -16,6 +16,7 @@
 #include "structure.hpp"
 #include "add_atom.hpp"
 #include "structure_contains.hpp"
+#include "structure_getitem.hpp"
 
 
 namespace LaDa
@@ -34,7 +35,7 @@ namespace LaDa
         if(i_row.ptr() == Py_None)
         {
           PyErr_Clear();
-          PyException<error::ValueError>::throw_error("Input is not a sequence.");
+          PyException<error::TypeError>::throw_error("Input is not a sequence.");
         }
         size_t i(0);
         for(; i < 3; ++i)
@@ -44,7 +45,7 @@ namespace LaDa
             if(i_element.ptr() == Py_None)
             {
               PyErr_Clear();
-              PyException<error::ValueError>::throw_error("Input is not a 3x3 sequence.");
+              PyException<error::TypeError>::throw_error("Input is not a 3x3 sequence.");
             }
             size_t j(0);
             for(; j < 3; ++j)
@@ -55,16 +56,16 @@ namespace LaDa
                 else if(PyInt_Check(element))
                   _str.cell(i,j) = (math::rMatrix3d::Scalar) PyInt_AS_LONG(element);
                 else
-                  PyException<error::ValueError>::throw_error("Input is not a 3x3 sequence of floats.");
+                  PyException<error::TypeError>::throw_error("Input is not a 3x3 sequence of floats.");
                 Py_DECREF(element);
               }
               else break;
             if(PyErr_Occurred()) return;
-            if(j != 3) PyException<error::ValueError>::throw_error("Input is not a 3 by 3 sequence.");
+            if(j != 3) PyException<error::TypeError>::throw_error("Input is not a 3 by 3 sequence.");
             if(PyObject *element = PyIter_Next(i_element.ptr()))
             {
               Py_DECREF(element);
-              PyException<error::ValueError>::throw_error
+              PyException<error::TypeError>::throw_error
                 ( "Input seems to be a 3xn sequence, with n > 3. Expected n == 3." );
             }
             Py_DECREF(row);
@@ -109,15 +110,6 @@ namespace LaDa
 
     template<class T>
       int __len__(crystal::TemplateStructure<T> const &_str) { return _str.size(); }
-    template<class T>
-      typename crystal::TemplateStructure<T>::reference 
-        __getitem__(crystal::TemplateStructure<T> &_str, int _i)
-        {
-          if(_i < 0) _i += _str.size();
-          if(_i < 0 or _i >= _str.size())
-            PyException<error::IndexError>::throw_error("Index out of range.");
-          return _str[_i];
-        }
     //! Constructs and calls AddAtom functor.
     template<class T>
       bp::object add_atom(bp::tuple const &_args, bp::dict const &_kwargs)
@@ -152,8 +144,6 @@ namespace LaDa
                              "See `FreezeCell` for possible values." 
                           )
             .def( "__len__", &__len__<T>, "Number of atoms in structure." )
-            .def( "__getitem__", &__getitem__<T>, 
-                  bp::return_internal_reference<>() )
             .def( "add_atom", bp::raw_function(&add_atom<T>, 1),
                   "Adds atom to structure.\n\n"
                   "See `lada.crystal.Atom` for parameter details."
@@ -161,17 +151,17 @@ namespace LaDa
                   "The calls to this function can be chained as follows:\n\n"
                   ">>> structure.add_atom(0,0,0,\"Au\")\n"
                   ">>>                   (0.25,0.25,0.25,\"Pd\")\n" )
-            .def( "__contains__", &details::contains<T>, 
-                  "Returns True if a structure contains the given object.\n\n"
-                  "The exact behavior depends on the type of the object and on the structure kind.\n"
-                  " - list or set of species: ``structure.kind`` must 'list' or 'set'. "
-                  "Returns True if an atomic site contains exactly that set of species.\n"
-                  " - str: ``structure.kind`` must be 'scalar'. "
-                  "Returns True if an atomic site is occupied by that specie.\n" 
-                  " - sequence of three numbers (numpy array, list, ...): "
-                  "Returns True if there exists a corresponding atomic site or periodic image. "
-                  "In units of ``structure.scale``.\n"
-                  " - object with 'pos' and 'type' attributes: combines the above.")
+//           .def( "__contains__", &details::contains<T>, 
+//                 "Returns True if a structure contains the given object.\n\n"
+//                 "The exact behavior depends on the type of the object and on the structure kind.\n"
+//                 " - list or set of species: ``structure.kind`` must 'list' or 'set'. "
+//                 "Returns True if an atomic site contains exactly that set of species.\n"
+//                 " - str: ``structure.kind`` must be 'scalar'. "
+//                 "Returns True if an atomic site is occupied by that specie.\n" 
+//                 " - sequence of three numbers (numpy array, list, ...): "
+//                 "Returns True if there exists a corresponding atomic site or periodic image. "
+//                 "In units of ``structure.scale``.\n"
+//                 " - object with 'pos' and 'type' attributes: combines the above.")
             .def_pickle( python::pickle< crystal::TemplateStructure<T> >() );
         }
 
@@ -200,19 +190,22 @@ namespace LaDa
       (
         "StructureStr", 
         "Defines a structure for wich atomic occupations are strings."
-      ).add_property("kind", &scalar_kind<std::string>, "Occupations are strings.");
+      ).add_property("kind", &scalar_kind<std::string>, "Occupations are strings.")
+       .def(details::StructureIndexing<std::string>());
       expose_add_atom< std::vector<std::string> >("_AddAtomVec");
       expose< std::vector<std::string> >
       (
         "StructureVec", 
         "Defines a structure for wich atomic occupations are lists of strings."
-      ).add_property("kind", &list_kind< std::vector<std::string> >, "Occupations is lists of strings.");
+      ).add_property("kind", &list_kind< std::vector<std::string> >, "Occupations is lists of strings.")
+       .def(details::StructureIndexing< std::set<std::string> >());
       expose_add_atom< std::set<std::string> >("_AddAtomSet");
       expose< std::set<std::string> >
       (
         "StructureSet", 
         "Defines a structure for wich atomic occupations are lists of strings."
-      ).add_property("kind", &set_kind< std::set<std::string> >, "Occupations is sets of strings.");
+      ).add_property("kind", &set_kind< std::set<std::string> >, "Occupations is sets of strings.")
+       .def(details::StructureIndexing< std::vector<std::string> >());
     }
 
   }

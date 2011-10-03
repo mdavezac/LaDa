@@ -3,6 +3,7 @@
 #include "LaDaConfig.h"
 
 #include <boost/mpl/int.hpp>
+#include <boost/mpl/next.hpp>
 #include "eigen.h"
 
 namespace LaDa

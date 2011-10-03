@@ -5,6 +5,7 @@
 #include <boost/python/module.hpp>
 #include <boost/python/docstring_options.hpp>
 #include <boost/python/scope.hpp>
+#include <boost/python/borrowed.hpp>
 
 #include "exceptions.h"
 
@@ -35,17 +36,30 @@ BOOST_PYTHON_MODULE(error)
 
   LADA_REGISTER_PYEXCEPT_WITH_BASE( ValueError, "lada.error.ValueError",
                           "Value errors explicitely thrown by lada.", scope,
-                          bp::make_tuple(PyException<input>::exception(), bp::object(bp::handle<>(PyExc_ValueError))));
+                          bp::make_tuple( PyException<input>::exception(), 
+                                          bp::object(bp::borrowed<>(PyExc_ValueError))));
   LADA_REGISTER_PYEXCEPT_WITH_BASE( KeyError, "lada.error.KeyError",
                           "Key errors explicitely thrown by lada.", scope,
-                          bp::make_tuple(PyException<input>::exception(), bp::object(bp::handle<>(PyExc_KeyError))));
+                          bp::make_tuple( PyException<input>::exception(), 
+                                          bp::object(bp::borrowed<>(PyExc_KeyError))));
   LADA_REGISTER_PYEXCEPT_WITH_BASE( AttributeError, "lada.error.AttributeError",
                           "Attribute errors explicitely thrown by lada.", scope,
-                          bp::make_tuple(PyException<input>::exception(), bp::object(bp::handle<>(PyExc_AttributeError))));
+                          bp::make_tuple( PyException<input>::exception(),
+                                          bp::object(bp::borrowed<>(PyExc_AttributeError))));
   LADA_REGISTER_PYEXCEPT_WITH_BASE( IndexError, "lada.error.IndexError",
                           "Index errors explicitely thrown by lada.", scope,
-                          bp::make_tuple(PyException<input>::exception(), bp::object(bp::handle<>(PyExc_IndexError))));
+                          bp::make_tuple( PyException<input>::exception(),
+                                          bp::object(bp::borrowed<>(PyExc_IndexError))));
   LADA_REGISTER_PYEXCEPT_WITH_BASE( TypeError, "lada.error.TypeError",
                           "Argument errors explicitely thrown by lada.", scope,
-                          bp::make_tuple(PyException<input>::exception(), bp::object(bp::handle<>(PyExc_TypeError))));
+                          bp::make_tuple( PyException<input>::exception(), 
+                                          bp::object(bp::borrowed<>(PyExc_TypeError))) );
+  LADA_REGISTER_PYEXCEPT_WITH_BASE( NotImplementedError, "lada.error.NotImplementedError",
+                          "Stuff that has not yet been implemented.", scope,
+                          bp::make_tuple( PyException<internal>::exception(),
+                                          bp::object(bp::borrowed<>(PyExc_NotImplementedError))));
+  LADA_REGISTER_PYEXCEPT_WITH_BASE( InternalError, "lada.error.InternalError",
+                          "Internal error.", scope,
+                          bp::make_tuple( PyException<internal>::exception(),
+                                          bp::object(bp::borrowed<>(PyExc_RuntimeError))));
 }

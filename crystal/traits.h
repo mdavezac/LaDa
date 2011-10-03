@@ -23,7 +23,7 @@ namespace LaDa
         //! \typedef The type of the collection of atoms. 
         typedef std::vector<t_Atom> t_Atoms;
       };
-    };
+    }
   }
 }
 #endif

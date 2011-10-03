@@ -18,7 +18,7 @@ namespace LaDa
     {
       rMatrix3d cell, rinv; 
       types::t_real tol;
-      size_t itermax;
+      types::t_int itermax;
       types::t_int nochange, iterations;
       types::t_real a, b, c, d, e, f;
       types::t_real last_a, last_b, last_c; 
@@ -39,7 +39,6 @@ namespace LaDa
         f = 2e0 * metric(0,1);
         rinv = rMatrix3d::Identity(); 
         nochange = 0;
-        size_t iter(0); 
         last_a = -a;
         last_b = -b;
         last_c = -c;

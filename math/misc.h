@@ -32,21 +32,21 @@ namespace LaDa
         inline bool name( Eigen::DenseBase<T_DERIVED> const & _in,                \
                           typename Eigen::DenseBase<T_DERIVED>::RealScalar const &_tol ) \
         {                                                                         \
-          for(size_t i(0); i < _in.rows(); ++i)                                   \
-            for(size_t j(0); j < _in.cols(); ++j)                                 \
+          for(int i(0); i < _in.rows(); ++i)                                   \
+            for(int j(0); j < _in.cols(); ++j)                                 \
               if(not name(_in.coeff(i,j), _tol)) return false;                    \
           return true;                                                            \
         }                                                                         \
       template<class T_DERIVED>                                                   \
         inline bool name(Eigen::DenseBase<T_DERIVED> const & _in)                 \
         {                                                                         \
-          for(size_t i(0); i < _in.rows(); ++i)                                   \
-            for(size_t j(0); j < _in.cols(); ++j)                                 \
+          for(int i(0); i < _in.rows(); ++i)                                   \
+            for(int j(0); j < _in.cols(); ++j)                                 \
               if(not name(_in.coeff(i,j))) return false;                          \
           return true;                                                            \
         }
-    LADA_MACRO(is_integer, types::t_real _tol = types::tolerance);
-    LADA_MACRO(is_null,    types::t_real _tol = types::tolerance);
+    LADA_MACRO(is_integer, types::t_real _tol = types::tolerance)
+    LADA_MACRO(is_null,    types::t_real _tol = types::tolerance)
 #   undef LADA_MACRO
     //! True if an eigen array or matrix is the identity.
     template<class T_DERIVED>
@@ -55,13 +55,13 @@ namespace LaDa
       {
         if(_in.cols() == 1)
         {
-          for(size_t j(0); j < _in.cols(); ++j)
+          for(int j(0); j < _in.cols(); ++j)
             if(not is_identity(_in.coeff(j,0), _tol)) return false;
         }
         else 
         {
-          for(size_t i(0); i < _in.rows(); ++i)
-            for(size_t j(0); j < _in.cols(); ++j)
+          for(int i(0); i < _in.rows(); ++i)
+            for(int j(0); j < _in.cols(); ++j)
               if(i==j) { if( not is_identity(_in.coeff(i,j), _tol)) return false; }
               else if(not is_null(_in.coeff(i,j), _tol)) return false;
         }
@@ -73,13 +73,13 @@ namespace LaDa
       {
         if(_in.cols() == 1)
         {
-          for(size_t j(0); j < _in.rows(); ++j)
+          for(int j(0); j < _in.rows(); ++j)
             if(not is_identity(_in.coeff(j,0))) return false;
         }
         else 
         {
-          for(size_t i(0); i < _in.rows(); ++i)
-            for(size_t j(0); j < _in.cols(); ++j)
+          for(int i(0); i < _in.rows(); ++i)
+            for(int j(0); j < _in.cols(); ++j)
               if(i==j) { if( not is_identity(_in.coeff(i,j))) return false; }
               else if(not is_null(_in.coeff(i,j))) return false;
         }
@@ -98,8 +98,8 @@ namespace LaDa
           if(_a.rows() != _b.rows() or _a.cols() != _b.cols())
             BOOST_THROW_EXCEPTION(error::array_of_different_sizes());
 #       endif
-        for(size_t i(0); i < _a.rows(); ++i)
-          for(size_t j(0); j < _a.cols(); ++j)
+        for(int i(0); i < _a.rows(); ++i)
+          for(int j(0); j < _a.cols(); ++j)
             if(not eq(_a.coeff(i,j), _b.coeff(i,j), _tol)) return false;
         return true;
       }
@@ -115,8 +115,8 @@ namespace LaDa
           if(_a.rows() != _b.rows() or _a.cols() != _b.cols())
             BOOST_THROW_EXCEPTION(error::array_of_different_sizes());
 #       endif
-        for(size_t i(0); i < _a.rows(); ++i)
-          for(size_t j(0); j < _a.cols(); ++j)
+        for(int i(0); i < _a.rows(); ++i)
+          for(int j(0); j < _a.cols(); ++j)
             if(not eq(_a.coeff(i,j), _b.coeff(i,j))) return false;
         return true;
       }
@@ -160,8 +160,8 @@ namespace LaDa
     inline rMatrix3d floor(rMatrix3d const &_matrix)
     {
       rMatrix3d result;
-      for(size_t i(0); i < 3; ++i)
-        for(size_t j(0); j < 3; ++j)
+      for(int i(0); i < 3; ++i)
+        for(int j(0); j < 3; ++j)
           result(i,j) = std::floor(_matrix(i,j));
       return result;
     }

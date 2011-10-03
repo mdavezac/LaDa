@@ -3,8 +3,10 @@
 
 #include "LaDaConfig.h"
 
-#include <boost/preprocessor/repetition/repeat.hpp>
 #include <sstream>
+
+#include <boost/preprocessor/repetition/repeat.hpp>
+#include <boost/preprocessor/seq/elem.hpp>
 
 #include "eigen.h"
 

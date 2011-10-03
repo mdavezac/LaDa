@@ -1,162 +1,162 @@
 from ._docstring import __doc__ 
-__all__ = ['FreezeAtom', 'Atom', 'FreezeCell']
+# __all__ = ['FreezeAtom', 'Atom', 'FreezeCell']
 
-from _crystal import FreezeAtom, FreezeCell
+from _crystal import FreezeAtom, AtomStr, AtomVec, AtomSet #FreezeCell, 
 # modify internal atom classes below, for instance by adding python functions.
-import _modify_atom_classes
+# import _modify_atom_classes
 
-def Atom(*args, **kwargs):
-  """ Initialize an atom. 
+# def Atom(*args, **kwargs):
+#   """ Initialize an atom. 
 
-      :Parameters:
-        position : list
-          Atomic coordinates.  These quantities are accessible as a keyword or
-          as the first three arguments of the constructor. 
-        type 
-          For atoms with set or vector types, this is a list of strings representing atomic species.
-          For atom with a single string type, this is a single string. Note
-          that type can be set using the 4th (to nth for vector and sets)
-          arguments rather than this keyword argument. 
-        site : int
-          Site index. Can only be attained via a keyword only.
-        freeze : int
-          Site index. Can only be attained via a keyword only.
-        atomtype : str
-          Defines the atomic type:
-            - str: Atomic type is a single string representing a single atomic
-                   specie per site.
-            - set: Atomic type is a set of strings representing many possible
-                   atomic occupation for this site.
-            - list: Atomic type is a list of strings representing many
-                    possible atomic occupation for this site.
+#       :Parameters:
+#         position : list
+#           Atomic coordinates.  These quantities are accessible as a keyword or
+#           as the first three arguments of the constructor. 
+#         type 
+#           For atoms with set or vector types, this is a list of strings representing atomic species.
+#           For atom with a single string type, this is a single string. Note
+#           that type can be set using the 4th (to nth for vector and sets)
+#           arguments rather than this keyword argument. 
+#         site : int
+#           Site index. Can only be attained via a keyword only.
+#         freeze : int
+#           Site index. Can only be attained via a keyword only.
+#         atomtype : str
+#           Defines the atomic type:
+#             - str: Atomic type is a single string representing a single atomic
+#                    specie per site.
+#             - set: Atomic type is a set of strings representing many possible
+#                    atomic occupation for this site.
+#             - list: Atomic type is a list of strings representing many
+#                     possible atomic occupation for this site.
 
-        There are three kinds of atoms. The scalar kind accept only a single
-        atomic specie per atomic site, defined in the type attribute. This is
-        usefull for defining structures in 90% of applications. However, it may
-        be necessary to define a lattice where an atomic site can be occupied
-        by any number of species. A lattice is usefull, for instance, in alloy
-        applications such as cluster expansion. In that case, two different
-        objects are offered, one where the atomic type is list, and the other
-        where it is set. 
+#         There are three kinds of atoms. The scalar kind accept only a single
+#         atomic specie per atomic site, defined in the type attribute. This is
+#         usefull for defining structures in 90% of applications. However, it may
+#         be necessary to define a lattice where an atomic site can be occupied
+#         by any number of species. A lattice is usefull, for instance, in alloy
+#         applications such as cluster expansion. In that case, two different
+#         objects are offered, one where the atomic type is list, and the other
+#         where it is set. 
 
-        There are several ways of constructing atoms, either directly via
-        arguments, or via keywords.
+#         There are several ways of constructing atoms, either directly via
+#         arguments, or via keywords.
 
-        >>> a = Atom(0.25,0.25,0.25, "Au") 
-        >>> b = Atom(0.25,0.25,0.25, "Au", "Pd") 
-        >>> c = Atom(0.25,0.25,0.25, type="Au") 
-        >>> d = Atom(0.25,0.25,0.25, type=["Au", "Pd"]) 
-        >>> e = Atom(position=(0.25,0.25,0.25), type=set(["Au", "Pd"])) 
+#         >>> a = Atom(0.25,0.25,0.25, "Au") 
+#         >>> b = Atom(0.25,0.25,0.25, "Au", "Pd") 
+#         >>> c = Atom(0.25,0.25,0.25, type="Au") 
+#         >>> d = Atom(0.25,0.25,0.25, type=["Au", "Pd"]) 
+#         >>> e = Atom(position=(0.25,0.25,0.25), type=set(["Au", "Pd"])) 
 
-        `a` above is an atom where occupation must be a single atomic specie.
-        The position is given by the first three arguments and the occupation
-        by the fourth.
+#         `a` above is an atom where occupation must be a single atomic specie.
+#         The position is given by the first three arguments and the occupation
+#         by the fourth.
 
-        `b` above is an atom where occupation is a *list* of atomic species.
-        The position is given by the first three arguments and the occupation
-        by the fourth to nth.
+#         `b` above is an atom where occupation is a *list* of atomic species.
+#         The position is given by the first three arguments and the occupation
+#         by the fourth to nth.
 
-        `c` above is an atom where occupation must be a single atomic specie.
-        The position is given by the first three arguments and the occupation
-        is given by the keyword argument ``type``.
+#         `c` above is an atom where occupation must be a single atomic specie.
+#         The position is given by the first three arguments and the occupation
+#         is given by the keyword argument ``type``.
 
-        `d` above is an atom where occupation is a *list* of atomic species.
-        The position is given by the first three arguments and the occupation
-        is given by the keyword argument ``type``.
+#         `d` above is an atom where occupation is a *list* of atomic species.
+#         The position is given by the first three arguments and the occupation
+#         is given by the keyword argument ``type``.
 
-        `e` above is an atom where occupation is a *set* of atomic species,
-        e.g. a list of unique items, with no duplicates. Both position and type
-        are given through keyword arguments.
+#         `e` above is an atom where occupation is a *set* of atomic species,
+#         e.g. a list of unique items, with no duplicates. Both position and type
+#         are given through keyword arguments.
 
-        Keyword and argument can mixed and matched. 
-  """
-  from .. import error
-  from _crystal import AtomStr, AtomVec, AtomSet, SpecieSet
-  position = [0,0,0]
-  if len(args) > 0:
-    if hasattr(args[0], "__iter__"): 
-      if len(args[0]) == 3:
-        position = [args[0][0], args[0][1], args[0][2]]
-        args = args[1:]
-        if "position" in kwargs: 
-          raise error.TypeError("Position given both in argument and keyword argument.")
-      else: raise error.TypeError("Unknown argument type {0}.".format(args[0]))
-    elif len(args) > 2:
-      position = args[:3]
-      args = args[3:]
-      if "position" in kwargs: 
-        raise error.TypeError("Position given both in argument and keyword argument.")
-    else: raise error.TypeError("Incorrect number of arguments in Atom.")
-  elif "position" in kwargs: position = kwargs["position"]
+#         Keyword and argument can mixed and matched. 
+#   """
+#   from .. import error
+#   from _crystal import AtomStr, AtomVec, AtomSet, SpecieSet
+#   position = [0,0,0]
+#   if len(args) > 0:
+#     if hasattr(args[0], "__iter__"): 
+#       if len(args[0]) == 3:
+#         position = [args[0][0], args[0][1], args[0][2]]
+#         args = args[1:]
+#         if "position" in kwargs: 
+#           raise error.TypeError("Position given both in argument and keyword argument.")
+#       else: raise error.TypeError("Unknown argument type {0}.".format(args[0]))
+#     elif len(args) > 2:
+#       position = args[:3]
+#       args = args[3:]
+#       if "position" in kwargs: 
+#         raise error.TypeError("Position given both in argument and keyword argument.")
+#     else: raise error.TypeError("Incorrect number of arguments in Atom.")
+#   elif "position" in kwargs: position = kwargs["position"]
 
-  type, kind = "", "scalar"
-  if len(args) == 1:
-    type = args[0]
-    if isinstance(type, str): kind = "scalar"
-    elif isinstance(type, set) or isinstance(type, SpecieSet): kind = "set"
-    else: kind = "list"
-    if "type" in kwargs: 
-      raise error.TypeError("Type given both in argument and keyword argument.")
-  elif len(args) > 1:
-    type, kind = args, "list"
-    if "type" in kwargs: 
-      raise error.TypeError("Type given both in argument and keyword argument.")
-  elif "type" in kwargs:
-    type = kwargs["type"]
-    if isinstance(type, str): kind = "scalar"
-    elif isinstance(type, set) or isinstance(type, SpecieSet): kind = "set"
-    else: kind = "list"
+#   type, kind = "", "scalar"
+#   if len(args) == 1:
+#     type = args[0]
+#     if isinstance(type, str): kind = "scalar"
+#     elif isinstance(type, set) or isinstance(type, SpecieSet): kind = "set"
+#     else: kind = "list"
+#     if "type" in kwargs: 
+#       raise error.TypeError("Type given both in argument and keyword argument.")
+#   elif len(args) > 1:
+#     type, kind = args, "list"
+#     if "type" in kwargs: 
+#       raise error.TypeError("Type given both in argument and keyword argument.")
+#   elif "type" in kwargs:
+#     type = kwargs["type"]
+#     if isinstance(type, str): kind = "scalar"
+#     elif isinstance(type, set) or isinstance(type, SpecieSet): kind = "set"
+#     else: kind = "list"
 
-  if kwargs.get("kind", kind) != kind:
-    if kind == "scalar" and len(args) > 1:
-      raise error.TypeError("Requested a scalar atom but gave {0} atomic species.".format(len(args)))
-    kind = kwargs["kind"]
+#   if kwargs.get("kind", kind) != kind:
+#     if kind == "scalar" and len(args) > 1:
+#       raise error.TypeError("Requested a scalar atom but gave {0} atomic species.".format(len(args)))
+#     kind = kwargs["kind"]
 
-  if kind == "scalar": kind = AtomStr
-  elif kind == "list": kind = AtomVec
-  elif kind == "set": kind = AtomSet
-  else: raise error.ValueError("Unknown atom type {0}.".format(kind))
-  
-  if kind in ["set", "list"] and isinstance(type, str):  type = [type]
-  kwargs["position"] = position
-  kwargs["type"] = type
-  return kind(**kwargs)
+#   if kind == "scalar": kind = AtomStr
+#   elif kind == "list": kind = AtomVec
+#   elif kind == "set": kind = AtomSet
+#   else: raise error.ValueError("Unknown atom type {0}.".format(kind))
+#   
+#   if kind in ["set", "list"] and isinstance(type, str):  type = [type]
+#   kwargs["position"] = position
+#   kwargs["type"] = type
+#   return kind(**kwargs)
 
-def Structure(cell=None, scale=1e0, energy=0e0, weight=1, freeze=0, name="", kind="scalar"):
-  """ Returns a structure.
+# def Structure(cell=None, scale=1e0, energy=0e0, weight=1, freeze=0, name="", kind="scalar"):
+#   """ Returns a structure.
 
-      :Parameters: 
-        cell 
-          Cell vectors of the structure. Defaults to identity.
-        scale 
-          Scale of the cartesian units of the cell and atomic positions.
-          Default to 1 angstrom.
-        energy
-          Energy of the structure. Defaults to 0eV.
-        weight 
-          Weight of the structure in fitting sets. Defaults to 1.
-        freeze
-          Frozen coordinates of the cell. see ``FreezeCell``.
-        kind  
-          Defines allowed occupations of atomic positions: 
-            - "scalar": occupation is defined by a string.
-            - "list": occupation is defined by a list of strings.
-            - "set": occupation is defined by a set of strings.
-  """
-  from ._crystal import StructureStr, StructureVec, StructureSet
-  from .. import error
-  if kind == "scalar": result = StructureStr()
-  elif kind == "list": result = StructureVec()
-  elif kind == "set":  result = StructureSet()
-  else: raise error.ValueError("Unknown kind {0}.".format(kind))
+#       :Parameters: 
+#         cell 
+#           Cell vectors of the structure. Defaults to identity.
+#         scale 
+#           Scale of the cartesian units of the cell and atomic positions.
+#           Default to 1 angstrom.
+#         energy
+#           Energy of the structure. Defaults to 0eV.
+#         weight 
+#           Weight of the structure in fitting sets. Defaults to 1.
+#         freeze
+#           Frozen coordinates of the cell. see ``FreezeCell``.
+#         kind  
+#           Defines allowed occupations of atomic positions: 
+#             - "scalar": occupation is defined by a string.
+#             - "list": occupation is defined by a list of strings.
+#             - "set": occupation is defined by a set of strings.
+#   """
+#   from ._crystal import StructureStr, StructureVec, StructureSet
+#   from .. import error
+#   if kind == "scalar": result = StructureStr()
+#   elif kind == "list": result = StructureVec()
+#   elif kind == "set":  result = StructureSet()
+#   else: raise error.ValueError("Unknown kind {0}.".format(kind))
 
-  if cell != None: result.cell = cell
-  result.energy = energy;
-  result.scale = scale;
-  result.weight = weight;
-  result.freeze = freeze;
-  result.name = name;
-  return result
+#   if cell != None: result.cell = cell
+#   result.energy = energy;
+#   result.scale = scale;
+#   result.weight = weight;
+#   result.freeze = freeze;
+#   result.name = name;
+#   return result
 
 
 # __all__ = [ 'FreezeAtom', 'which_site', 'Sites', 'SymmetryOperator', 'Lattice', 'to_cartesian',\

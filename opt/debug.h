@@ -34,7 +34,14 @@
 #define LADA_TRY_ASSERT(condition, error) \
           LADA_TRY_CODE( LADA_DO_NASSERT( condition, "" ), error )
 #define LADA_ASSERT(a,b) LADA_NASSERT( (not (a) ), b)
-#define LADA_DOASSERT(a,b) LADA_DO_NASSERT( (not (a) ), b)
+#define LADA_DOASSERT(a,b) \
+        { \
+          if((not (a)))\
+          { \
+            std::cerr << __FILE__ << ", line: " << __LINE__ << "\n" << b; \
+            throw 0;\
+          }\
+        }
 #define LADA_TRY_BEGIN try {
 #define LADA_TRY_END( code, error ) } LADA_CATCHCODE( code, error ) 
 #define LADA_COMMA ,

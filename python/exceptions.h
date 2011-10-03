@@ -26,6 +26,10 @@ namespace LaDa
     struct IndexError: virtual input {};
     //! Argument error thrown explicitely by lada.
     struct TypeError: virtual input {};
+    //! Not implemented error thrown explicitely by lada.
+    struct NotImplementedError: virtual internal {};
+    //! Internal error thrown explicitely by lada.
+    struct InternalError: virtual internal {};
   }
 
   namespace python

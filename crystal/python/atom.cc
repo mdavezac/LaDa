@@ -2,9 +2,10 @@
 
 #include <set>
 
-#include <boost/python.hpp>
+#include <boost/python/has_back_reference.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <boost/python/errors.hpp>
+#include <boost/python/reference_existing_object.hpp>
 #include <boost/python/return_value_policy.hpp>
 #include <boost/python/return_by_value.hpp>
 #include <boost/python/stl_iterator.hpp>
@@ -19,6 +20,23 @@
 
 #include "atom.hpp"
 
+namespace boost
+{
+  namespace python
+  {
+    // So boost python knows how to call the constructors.
+    template<>
+      struct has_back_reference<typename LaDa::crystal::traits::StructureData<std::string>::t_Atom> : mpl::true_ {};
+    // So boost python knows how to call the constructors.
+    template<>
+      struct has_back_reference<
+        typename LaDa::crystal::traits::StructureData< std::vector<std::string> >::t_Atom> : mpl::true_ {};
+    // So boost python knows how to call the constructors.
+    template<>
+      struct has_back_reference<
+        typename LaDa::crystal::traits::StructureData< std::set<std::string> >::t_Atom> : mpl::true_ {};
+  }
+}
 
 namespace LaDa
 {
@@ -31,37 +49,25 @@ namespace LaDa
     };
     template<class T> 
       bp::object get_pos(typename atom<T>::type &_in)
-        { return math::numpy::array_from_ptr<math::rVector3d::Scalar>(_in.pos.data(), 3); }
+      {
+        std::cout << "HERE\n";
+        std::cout << ~_in.pos << "\n";
+        std::cout << "THERE\n";
+        if(_in.self().ptr() != Py_None)
+        {
+           typename bp::reference_existing_object::apply<typename atom<T>::type const*>::type converter;
+           bp::object self = bp::object(bp::handle<>(converter(&_in)));
+           self.attr("_set_self")();
+        }
+        return math::numpy::array_from_ptr<math::rVector3d::Scalar>(_in.pos.data(), 3, _in.self().ptr()); 
+      }
     template<class T> 
       void set_pos( typename crystal::traits::StructureData<T>::t_Atom &_in,
                     boost::python::object _pos )
       {
-        bp::object i_elems( bp::handle<>(PyObject_GetIter(_pos.ptr())) );
-        if(i_elems.ptr() == Py_None)
-        {
-          PyErr_Clear();
-          PyException<error::ValueError>::throw_error("Input is not a sequence.");
-        }
-        size_t i(0);
-        for(; i < 3; ++i)
-          if(PyObject *element = PyIter_Next(i_elems.ptr()))
-          {
-            if(PyFloat_Check(element))
-              _in.pos(i) = PyFloat_AS_DOUBLE(element);
-            if(PyInt_Check(element))
-              _in.pos(i) = (math::rMatrix3d::Scalar) PyInt_AS_LONG(element);
-            else
-              PyException<error::ValueError>::throw_error("Input is not a sequence of 3 floats.");
-            Py_DECREF(element);
-          }
-        if(PyErr_Occurred()) return;
-        if(i != 3) PyException<error::ValueError>::throw_error("Input is not a sequence of 3 floats.");
-        if(PyObject *element = PyIter_Next(i_elems.ptr()))
-        {
-          Py_DECREF(element);
-          PyException<error::ValueError>::throw_error
-            ( "Input seems to be a sequence of n floats, with n > 3. Expected n == 3." );
-        }
+        if(not is_position(_pos)) 
+          PyException<error::TypeError>::throw_error("Input could not be converted to position.");
+        extract_position(_pos, _in.pos);
       }
 
     template<class T>
@@ -71,46 +77,73 @@ namespace LaDa
     template<class T>
       std::string set_kind(typename atom<T>::type const &) { return "set"; }
 
+//   template<class T>
+//     std::auto_ptr<typename atom<T>::type> constructor(bp::tuple _args, bp::dict _kwargs)
+//     {
+//       if(pb::len(_args)) == 0
+//     }
+
+//   template<class T>
+//     std::auto_ptr<typename atom<T>::type> 
+//       constructor(bp::tuple _args, bp::dict _kwargs) 
+//       {
+//         typedef typename atom<T>::type t_Atom;
+//         std::auto_ptr<t_Atom> result(new t_Atom);
+//         int current_index = 0;
+//         if(bp::len(_args) == 0 and bp::len(_kwargs) == 0) return result;
+//         else if(bp::len(_args) == 0) extract_atom(_kwargs, *result);
+//         else if(is_position(_args[0]))
+//         {
+//           if(_kwargs.has_key("pos")) 
+//             PyException<error::TypeError>("Constructor given position as argument and tuple.");
+//           _kwargs["pos"] = _args[0];
+//           current_index = 1;
+//         }
+//         else if(bp::len(_args) >= 3)
+//         {
+//           if(is_position(_args.slice(0, 3)))
+//           {
+//             if(_kwargs.has_key("pos")) 
+//               PyException<error::TypeError>("Constructor given position as argument and tuple.");
+//             _kwargs["pos"] = _args.slice(0, 3);
+//             current_index = 3
+//           }
+//           else if(not _kwargs.has_key("pos"))
+//             PyException<error::ValueError>::throw_error
+//         }
+//         else if(not _kwargs.has_key("pos"))
+//           PyException<error::ValueError>::throw_error
+//              ("Could not find position in arguments nor in keyword arguments.");
+//         else if(bp::len(_args) == 4 or _kwargs.has_key("type"))
+//         {
+//           bp::object type;
+//           if(_kwargs.has_key("type")) type = _kwargs.get("type");
+//           else type = _args[3];
+//           extract_specie(type, result->type);
+//         }
+//         else if(bp::len(_args) > 4)
+//           details::extract_type1(_args.slice(3, bp::slice_nil()), result->type);
+//         if(_kwargs.has_key("freeze"))
+//           result->freeze = bp::extract<int>(_kwargs.get("freeze"));
+//         if(_kwargs.has_key("site"))
+//           result->site = bp::extract<int>(_kwargs.get("site"));
+//         bp::stl_iterator<std::string> i_key(_kwargs.keys());
+//         bp::stl_iterator<std::string> const i_key_end;
+//         for(size_t i(0); i_key != i_key_end; ++i_key)
+//           if(*i_key != "pos" and *i_key != "site" and *i_key != "freeze" and *i_key != "type")
+//             result->__dict__[*i_key] = _kwargs.get(*i_key);
+//
+//         return result;
+//       }
+
     template<class T>
-      std::auto_ptr<typename atom<T>::type> 
-        constructor(bp::tuple _args, bp::dict _kwargs) 
-        {
-          typedef typename atom<T>::type t_Atom;
-          std::auto_ptr<t_Atom> result(new t_Atom);
-          if(bp::len(_args) == 0 and bp::len(_kwargs) == 0) return result;
-          if(bp::len(_args) >= 3 and _kwargs.has_key("position"))
-            PyException<error::TypeError>::throw_error
-               ("Position provided both in tuple and keyword argument.");
-          else if(bp::len(_args) >= 3 or _kwargs.has_key("position"))
-          {
-            bp::object pos;
-            if(_kwargs.has_key("position")) pos = _kwargs.get("position");
-            else pos = _args.slice(bp::slice_nil(), 3);
-            if(bp::len(pos) != 3) 
-              PyException<error::TypeError>::throw_error
-                ("Position is not a list of three scalars.");
-            result->pos[0] = boost::python::extract<math::rVector3d::Scalar>(pos[0]);
-            result->pos[1] = boost::python::extract<math::rVector3d::Scalar>(pos[1]);
-            result->pos[2] = boost::python::extract<math::rVector3d::Scalar>(pos[2]);
-          }
-          if(bp::len(_args) > 3 and _kwargs.has_key("type"))
-            PyException<error::TypeError>::throw_error
-               ("Types provided both in tuple and keyword argument.");
-          else if(bp::len(_args) == 4 or _kwargs.has_key("type"))
-          {
-            bp::object type;
-            if(_kwargs.has_key("type")) type = _kwargs.get("type");
-            else type = _args[3];
-            details::extract_type0(type, result->type);
-          }
-          else if(bp::len(_args) > 4)
-            details::extract_type1(_args.slice(3, bp::slice_nil()), result->type);
-          if(_kwargs.has_key("freeze"))
-            result->freeze = bp::extract<int>(_kwargs.get("freeze"));
-          if(_kwargs.has_key("site"))
-            result->site = bp::extract<int>(_kwargs.get("site"));
-          return result;
-        }
+      void set_self(bp::back_reference<typename atom<T>::type&> _ref)
+      {
+        if(_ref.get().self().ptr() == Py_None)
+          _ref.get().set_self(_ref.source().ptr());
+        else if(_ref.get().self().ptr() != _ref.source().ptr())
+          PyException<error::InternalError>::throw_error("back_reference and self do not point to same object.");
+      }
 
     template< class T_TYPE >
       bp::class_<typename atom<T_TYPE>::type>
@@ -133,32 +166,34 @@ namespace LaDa
                  "- same as above + a type value.\n"
                  "- same as above + a site index.\n"
             ).c_str()
-          ).def(bp::init<t_Atom const &>())
-           .def( "__init__", bp::raw_constructor(&constructor<T_TYPE>),
-                 ( "Initialize an " + _name + ".\n\n"
-                   ":Parameters:\n"
-                   "  position : list\n    Atomic coordinates. "
-                   "These quantities are accessible as a keyword or as the first "
-                   "three arguments of the constructor.\n"
-                   "  type\n    For AtomVec and AtomSet, this is a "
-                   "list of string representing atomic species. For AtomStr, this "
-                   "a single string. Can be accessed both as a keyword, or as the "
-                   "4th argument (to nth argument, in case of AtomVec and "
-                   "AtomSet) of the constructor.\n"
-                   "  site : int\n    Site index. Can only be attained via a keyword only."
-                   "  freeze : int\n    Site index. Can only be attained via a keyword only.").c_str())
+          )//.def(bp::init<t_Atom const &>())
+          //.def( "__init__", bp::raw_constructor(&constructor<T_TYPE>),
+          //      ( "Initialize an " + _name + ".\n\n"
+          //        ":Parameters:\n"
+          //        "  pos : list\n    Atomic coordinates. "
+          //        "These quantities are accessible as a keyword or as the first "
+          //        "three arguments of the constructor.\n"
+          //        "  type\n    For AtomVec and AtomSet, this is a "
+          //        "list of string representing atomic species. For AtomStr, this "
+          //        "a single string. Can be accessed both as a keyword, or as the "
+          //        "4th argument (to nth argument, in case of AtomVec and "
+          //        "AtomSet) of the constructor.\n"
+          //        "  site : int\n    Site index. Can only be attained via a keyword only."
+          //        "  freeze : int\n    Site index. Can only be attained via a keyword only.").c_str())
            .add_property
-           (
-             "pos", 
-             bp::make_function(&get_pos<T_TYPE>, bp::with_custodian_and_ward_postcall<1, 0>()),
-             &set_pos<T_TYPE>,
-             "A 1-dimensional numpy array of length 3 containing atomic position in cartesian units."
-           )
+             (
+               "pos", 
+               bp::make_function(&get_pos<T_TYPE>, bp::with_custodian_and_ward_postcall<1, 0>()),
+               &set_pos<T_TYPE>,
+               "A 1-dimensional numpy array of length 3 containing atomic position in cartesian units."
+             )
            .def_readwrite( "site",   &t_Atom::site,
                            "index of the \"site\" as referenced by a LaDa.Lattice object." )
            .def_readwrite( "freeze", &t_Atom::freeze )
            .def_readwrite( "type", &t_Atom::type )
            .def_pickle( python::pickle< t_Atom >() )
+           .add_property("_self", &t_Atom::self)
+           .def("_set_self", &set_self<T_TYPE>)
            .def( "__str__",  &tostream<t_Atom> );
         }
 
@@ -199,6 +234,7 @@ namespace LaDa
         "A set is a collection of unique strings.",
         "String representing the occupation."
       ).add_property("kind", &scalar_kind<std::string>, "Occupation is a string.");
+      bp::register_ptr_to_python< std::auto_ptr<atom<std::string>::type> >();
     }
   }
 } // namespace LaDa
