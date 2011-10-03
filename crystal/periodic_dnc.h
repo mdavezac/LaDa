@@ -126,7 +126,7 @@ namespace LaDa
           );
 
         // Constructs mesh of small boxes.
-        const size_t Nboxes( _n(0) * _n(1) * _n(2) );
+        const types::t_int Nboxes( _n(0) * _n(1) * _n(2) );
         container_.clear(); container_.resize(Nboxes);
 
         // Now adds points for each atom in each box.
@@ -136,7 +136,7 @@ namespace LaDa
         {
           // Gets coordinate in mesh of small-boxes. Only works because cell
           // and boxes are commensurate.
-          rVector3d const rfrac(invbox*i_atom->pos);
+          rVector3d const rfrac(invbox*i_atom->pos());
           iVector3d const _ifrac(math::floor_int(rfrac));
           iVector3d const __ifrac(_ifrac(0) % _n(0), _ifrac(1) % _n(1), _ifrac(2) % _n(2));
           iVector3d const ifrac
@@ -196,7 +196,8 @@ namespace LaDa
                   );
                 types::t_int const uu = LADA_INDEX(modboxfrac, _n);
 #               ifdef LADA_DEBUG
-                  if(uu < 0 or uu >= container_.size()) BOOST_THROW_EXCEPTION(error::out_of_range());
+                  if(uu < 0 or uu >= types::t_int(container_.size()))
+                    BOOST_THROW_EXCEPTION(error::out_of_range());
 #               endif
 
                 // Don't need to go any further: not an edge state of either

@@ -38,32 +38,32 @@ namespace LaDa
         typename TemplateStructure<T_TYPE>::iterator i_atom = result.begin();
         typename TemplateStructure<T_TYPE>::iterator const i_atom_end = result.end();
         for(; i_atom != i_atom_end; ++i_atom)
-          i_atom->pos = into_cell(i_atom->pos, cell, inv);
+          i_atom->pos() = into_cell(i_atom->pos(), cell, inv);
   
         // Then compares fractional translations from site 0 to sites of same type.
         std::vector<math::rVector3d> translations;
-        CompareOccupations<T_TYPE> const compsites(result.front().type);
-        math::rVector3d const center = result.front().pos;
+        CompareOccupations<T_TYPE> const compsites(result.front()->type);
+        math::rVector3d const center = result.front()->pos;
         typename t_Sites :: const_iterator i_site = _structure.begin();
         typename t_Sites :: const_iterator const i_site_end = _structure.end();
         for(; i_site != i_site_end; ++i_site )
         {
           // Translations are created from equivalent sites only.
-          if( not compsites(i_site->type) ) continue;
+          if( not compsites(i_site->type()) ) continue;
   
           // creates translation.
-          math::rVector3d const translation = into_voronoi(i_site->pos - center, cell, inv);
+          math::rVector3d const translation = into_voronoi(i_site->pos() - center, cell, inv);
           
           // loop on null translation.
           if( math::is_null(translation, _tolerance) ) continue;
   
           // checks that it leaves the lattice invariant.
           typename t_Sites :: const_iterator i_mapping = _structure.begin();
-          typename t_Sites::iterator const i_fend = result.end(); 
+          typename t_Sites :: const_iterator const i_fend = result.end(); 
           for(; i_mapping != i_site_end; ++i_mapping)
           {
-            math::rVector3d const pos = into_cell(i_mapping->pos + translation, cell, inv);
-            CompareSites<T_TYPE> const cmp(pos, i_mapping->type, _tolerance);
+            math::rVector3d const pos = into_cell(i_mapping->pos() + translation, cell, inv);
+            CompareSites<T_TYPE> const cmp(pos, i_mapping->type(), _tolerance);
             typename t_Sites::iterator i_found = result.begin(); 
             for(; i_found != i_fend; ++i_found) if(cmp(*i_found)) break;
             if(i_found == i_fend) break;
@@ -132,24 +132,24 @@ namespace LaDa
           BOOST_THROW_EXCEPTION(
               error::internal() << error::string("Found translation but no primitive cell."));
   
-        // now creates new lattice. Averages site positions.
+        // now creates new lattice.
         result.clear();
         result.cell() = math::gruber(new_cell);
         math::rMatrix3d const inv_cell(result.cell().inverse());
         for(i_site = _structure.begin(); i_site != i_site_end; ++i_site)
         {
-          math::rVector3d const pos = into_cell(i_site->pos, result.cell(), inv_cell); 
-          CompareSites<T_TYPE> const check(pos, i_site->type, _tolerance);
-          typename t_Sites::iterator i_found = result.begin(); 
-          typename t_Sites::iterator const i_fend = result.end(); 
+          math::rVector3d const pos = into_cell(i_site->pos(), result.cell(), inv_cell); 
+          CompareSites<T_TYPE> const check(pos, i_site->type(), _tolerance);
+          typename t_Sites::const_iterator i_found = result.begin(); 
+          typename t_Sites::const_iterator const i_fend = result.end(); 
           for(; i_found != i_fend; ++i_found)
           {
             if(check(*i_found)) break;
           }
           if( i_found == i_fend )
           {
-            result.push_back(*i_site);
-            result.back().pos = pos;
+            result.push_back(i_site->copy());
+            result.back()->pos = pos;
           }
         }
         if(_structure.size() % result.size() != 0)

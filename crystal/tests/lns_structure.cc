@@ -71,7 +71,7 @@ int main()
                     (0.5,0.5,-0.5);
   structure.add_atom(0,0,0, LADA_TYPE_INIT1)
                     (0.25,0.25,0.25, LADA_TYPE_INIT2);
-  structure[0].site = 0;
+  structure[0].site() = 0;
 
 
   // print to xml
@@ -104,15 +104,15 @@ int main()
   LADA_DOASSERT( std::abs(structure.scale LADA_CALL -1) < 1e-12, "Could not reload scale.\n")
   LADA_DOASSERT( structure.freeze LADA_CALL == frozenstr::NONE, "Could not reload frozen.\n")
   LADA_DOASSERT( structure LADA_ATOMS .size() == 2, "Could not reload two atoms.\n")
-  LADA_DOASSERT( (structure LADA_ATOMS [0].pos).squaredNorm() < 1e-12,
+  LADA_DOASSERT( (structure LADA_ATOMS [0].pos()).squaredNorm() < 1e-12,
                  "Could not reload first position.\n") 
-  LADA_DOASSERT( (structure LADA_ATOMS [1].pos - math::rVector3d(0.25,0.25,0.25)).squaredNorm() < 1e-12,
+  LADA_DOASSERT( (structure LADA_ATOMS [1].pos() - math::rVector3d(0.25,0.25,0.25)).squaredNorm() < 1e-12,
                  "Could not reload second position.\n") 
   LADA_DOASSERT( LADA_FIRST_SIZE, "Could not reload all first species.\n") 
   LADA_DOASSERT( LADA_FIRST_TYPE, "Could not reload first type.\n") 
   LADA_DOASSERT( LADA_SECOND_SIZE, "Could not reload all second species.\n") 
   LADA_DOASSERT( LADA_SECOND_TYPE, "Could not reload first type.\n") 
-  LADA_DOASSERT( structure LADA_ATOMS[0].site == 0, "Could not reload first site index.\n") 
-  LADA_DOASSERT( structure LADA_ATOMS[1].site == -1, "Could not reload second site index.\n") 
+  LADA_DOASSERT( structure LADA_ATOMS[0].site() == 0, "Could not reload first site index.\n") 
+  LADA_DOASSERT( structure LADA_ATOMS[1].site() == -1, "Could not reload second site index.\n") 
   return 0;
 }

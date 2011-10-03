@@ -39,14 +39,16 @@ namespace LaDa
       const math::rMatrix3d inv_cell( _cell.inverse() );
       const math::rVector3d origin( _positions[0] );
       types::t_real mindist = -1e0;
-      foreach( math::rVector3d &pos, _positions )
+      std::vector<math::vector3d> :: const_iterator i_pos = _positions.begin();
+      std::vector<math::vector3d> :: const_iterator const i_pos_end = _positions.end();
+      for(; i_pos != i_pos_end; ++i_pos)
       {
-        pos -= origin;
-        pos = inv_cell * pos;
+        *i_pos -= origin;
+        *i_pos = inv_cell * (*i_pos);
         for( size_t i(0); i < 3; ++i )
-          pos[i] = pos[i] - rint(pos[i]);
-        pos = _cell * pos;
-        const types::t_real d(pos.squaredNorm());
+          (*i_pos)(i) = (*i_pos)(i) - rint((*i_pos)(i));
+        *i_pos = _cell * (*i_pos);
+        const types::t_real d(i_pos->squaredNorm());
         if( d < types::tolerance ) continue;
         if( mindist > d  or mindist < 0e0 ) mindist = d;
       }

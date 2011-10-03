@@ -25,18 +25,19 @@
 #  include "load_n_save/action/set.h"
 #endif
 #include "is_container.h"
+#include "atom_freeze.h"
 
 namespace LaDa
 {
   namespace crystal
   {
     //!\cond
-    template<class T> class AtomBase;
+    template<class T> class AtomData;
     //!\endcon
 
 
     //! Dumps atom to stream.
-    template<class T> std::ostream& operator<<(std::ostream&, AtomBase<T>const &);
+    template<class T> std::ostream& operator<<(std::ostream&, AtomData<T>const &);
 
     //! \brief Describes an atom.
     //! \details An atom consists of a position and a type. The position should
@@ -48,39 +49,44 @@ namespace LaDa
     //! \warning The default equality comparison operator compares positions only (not
     //!          occupation or site ).
     template<class T_TYPE>
-      class AtomBase
+      class AtomData: public AtomFreezeMixin
       {
         friend class boost::serialization::access;
 #       ifdef LADA_WITH_LNS
           friend class load_n_save::access;
 #       endif
-        template<class T> friend std::ostream& operator<<(std::ostream&, AtomBase<T>const &);
+        template<class T> friend std::ostream& operator<<(std::ostream&, AtomData<T>const &);
         public:
           //! The type of the occupation
           typedef T_TYPE t_Type;
-      
-        public:
           //! The atomic position in cartesian coordinate.
           math::rVector3d pos;
           //! The atomic occupation.
           t_Type  type;
+          //! \brief Site index.
+          //! \details Used to reference atomic sites in a supercell versus
+          //!          atomic sites in a reference lattice.
+          types::t_int site;
           
           //! Constructor
-          AtomBase() : pos(math::rVector3d(0,0,0)), type() {};
+          AtomData() : AtomFreezeMixin(frozen::NONE), pos(math::rVector3d(0,0,0)), type(), site(-1) {};
           //! Constructor
           template<class T_DERIVED>
-            AtomBase   (Eigen::DenseBase<T_DERIVED> const &_pos, t_Type const &_in)
-                     : pos(_pos), type(_in) {}
-          //! Constructor and Initializer
-          explicit AtomBase   ( const math::rVector3d &_pos, t_Type _type) 
-                            : pos(_pos), type(_type) {};
+            AtomData   ( Eigen::DenseBase<T_DERIVED> const &_pos, t_Type const &_in,
+                         types::t_int _site = -1, types::t_unsigned _freeze = frozen::NONE )
+                     : AtomFreezeMixin(_freeze), pos(_pos), type(_in), site(_site) {}
           //! Copy Constructor
-          AtomBase(const AtomBase &_c) : pos(_c.pos), type(_c.type) {};
+          AtomData   (const AtomData &_c)
+                   : AtomFreezeMixin(_c), pos(_c.pos), type(_c.type), site(_c.site) {}
       
         private:
           //! Serializes an atom.
           template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
-            { _ar & pos; _ar & type; }
+          {
+             namespace bs = boost::serialization;
+             _ar & bs::base_object< AtomData<T_TYPE> >(*this);
+             _ar & pos; _ar & type; _ar & site;
+          }
 #         ifdef LADA_WITH_LNS
             //! To load and save to xml-like input.
             template<class T_ARCHIVE> bool lns_access(T_ARCHIVE &_ar, const unsigned int _version);
@@ -90,9 +96,10 @@ namespace LaDa
 #   ifdef LADA_WITH_LNS
       //! To load and save to xml-like input.
       template<class T_TYPE> template<class T_ARCHIVE>
-        bool AtomBase<T_TYPE> :: lns_access(T_ARCHIVE &_ar, const unsigned int _version) 
+        bool AtomData<T_TYPE> :: lns_access(T_ARCHIVE &_ar, const unsigned int _version) 
         {
           namespace lns = LaDa :: load_n_save;
+          typedef AtomFreezeMixin  t1;
           return _ar & 
                  (
                    lns::section("Atom")
@@ -100,10 +107,15 @@ namespace LaDa
                                      lns::help="Cartesian position in Anstrom." )
                      << lns::option( "type", lns::action=type,
                                      lns::help="Atomic specie, or any string." )
+                     << lns::option( "site", lns::action=type,
+                                     lns::help="Atomic site w.r.t. to a lattice." )
+                     << lns::option( "site", lns::action=type,
+                                     lns::help="Atomic site w.r.t. to a lattice." )
+                     << lns::merge(*static_cast<t1*>(this)) 
                  );
          }
 #   endif
-    template<class T> std::ostream& operator<<(std::ostream& _stream, AtomBase<T>const & _in)
+    template<class T> std::ostream& operator<<(std::ostream& _stream, AtomData<T>const & _in)
     {
       return _stream << std::fixed << std::setprecision(5)
                      << std::setw(8) << _in.pos[0] << "  "

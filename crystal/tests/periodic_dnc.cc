@@ -9,6 +9,7 @@
 
 #include <boost/foreach.hpp>
 
+#include <opt/debug.h>
 #include "../periodic_dnc.h"
 #include "../supercell.h"
 
@@ -85,17 +86,22 @@ void check(LaDa::crystal::TemplateStructure< LADA_TYPE > const &_structure)
   dnc.init(_structure, params, 0.125);
   DnCBoxes::const_iterator i_box = dnc.begin();
   DnCBoxes::const_iterator i_box_end = dnc.end();
+  std::cout << ~params << "\n";
+  std::cout << _structure.cell() << "\n";
   for(size_t i(0); i_box != i_box_end; ++i_box, ++i)
   {
     DnCBoxes::value_type::const_iterator i_point = i_box->begin();
     DnCBoxes::value_type::const_iterator const i_point_end = i_box->end();
     for(; i_point != i_point_end; ++i_point)
       if(i_point->in_small_box) break;
-    LADA_DOASSERT(i_point != i_point_end, "No points in box.\n");
-    iVector3d const index = indices_(invcell, i_point->translation + _structure[i_point->index].pos, params);
+    if(i_point == i_point_end)
+    {
+      throw;
+    }
+    iVector3d const index = indices_(invcell, i_point->translation + _structure[i_point->index]->pos, params);
     for(i_point = i_box->begin(); i_point != i_point_end; ++i_point)
     {
-      iVector3d const pi( indices_(invcell, i_point->translation + _structure[i_point->index].pos, params) );
+      iVector3d const pi( indices_(invcell, i_point->translation + _structure[i_point->index]->pos, params) );
       if(i_point->in_small_box)
         { LADA_DOASSERT(math::eq(pi, index ), "Not in same box.\n"); }
       else
@@ -121,7 +127,7 @@ int main()
   check(lattice);
 
 
-  types::t_int const seed = time(NULL);
+  types::t_int const seed = 1317585876; //time(NULL); // error 1317585909; // long 1317585876
   std::cout << seed << "\n";
   srand(seed);
   math::rMatrix3d cell;
@@ -131,6 +137,7 @@ int main()
       for(size_t j(0); j < 3; ++j)
         cell(i, j) = rand() % 20 - 10;
     TemplateStructure< LADA_TYPE > structure = supercell(lattice, lattice.cell() * cell);
+    std::cout << "natoms: " << structure.size() << "\n";
     check(structure);
   }
 

@@ -5,6 +5,7 @@
 
 #include <boost/foreach.hpp>
 #include "../space_group.h"
+#include <opt/debug.h>
 
 int main()
 {

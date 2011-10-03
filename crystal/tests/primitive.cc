@@ -3,8 +3,17 @@
 #include<string>
 #include<vector>
 
+#include <opt/debug.h>
 #include "../supercell.h"
 #include "../primitive.h"
+
+#if LADA_INCREMENT == 0
+#  define LADA_INIT 
+#elif LADA_INCREMENT == 1
+#  define LADA_INIT , "Si"
+#elif LADA_INCREMENT == 2
+#  define LADA_INIT , "Si"
+#endif
 
 using namespace std;
 int main()
@@ -18,7 +27,7 @@ int main()
                   (0.5,0,0.5)
                   (0.5,0.5,0);
   lattice.add_atom(0,0,0, "Si")
-                  (0.25,0.25,0.25, "Si", "Ge");
+                  (0.25,0.25,0.25, "Ge" LADA_INIT);
   lat.set_cell(0,0.5,0.5)
               (0.5,0,0.5)
               (0.5,0.5,0);
@@ -51,39 +60,26 @@ int main()
           for(size_t f(0); f < c and cont; ++f) 
           {
             cell(2,1) = f;
-            { 
-              TemplateStructure< LADA_TYPE > structure = supercell(lattice, lattice.cell()*cell);
-              structure = primitive(structure, 1e-8);
-              LADA_DOASSERT( eq(lattice.cell().determinant(), structure.cell().determinant(), 1e-5),\
-                             "Not primitive.\n");
-              LADA_DOASSERT(is_integer(structure.cell() * lattice.cell().inverse(), 1e-5), "Not a sublattice.\n");
-              LADA_DOASSERT(is_integer(lattice.cell() * structure.cell().inverse(), 1e-5), "Not a sublattice.\n");
-              t_Str::const_iterator i_atom = structure.begin();
-              t_Str::const_iterator const i_atom_end = structure.end();
-              for(; i_atom != i_atom_end; ++i_atom)
-              {
-                LADA_DOASSERT(compare_sites(lattice[i_atom->site])(i_atom->type), "Inequivalent occupation.\n");
-                LADA_DOASSERT( is_integer(lattice.cell().inverse()*(i_atom->pos - lattice[i_atom->site].pos), 1e-5),
-                               "Inequivalent positions.\n") 
-              }
+
+            TemplateStructure< LADA_TYPE > structure = supercell(lattice, lattice.cell()*cell);
+            structure = primitive(structure, 1e-8);
+            LADA_DOASSERT( eq(lattice.cell().determinant(), structure.cell().determinant(), 1e-5),\
+                           "Not primitive.\n");
+            LADA_DOASSERT(is_integer(structure.cell() * lattice.cell().inverse(), 1e-5), "Not a sublattice.\n");
+            LADA_DOASSERT(is_integer(lattice.cell() * structure.cell().inverse(), 1e-5), "Not a sublattice.\n");
+            t_Str::const_iterator i_atom = structure.begin();
+            t_Str::const_iterator const i_atom_end = structure.end();
+            for(; i_atom != i_atom_end; ++i_atom)
+            {
+              if(not compare_occupations(lattice[i_atom->site()]->type)(i_atom->type()))
+                std::cout << structure.cell() << "\n" << lattice[i_atom->site()] << "\n" << *i_atom << "\n";
+              LADA_DOASSERT(compare_occupations(lattice[i_atom->site()]->type)
+                                               (i_atom->type()), "Inequivalent occupation.\n");
+              LADA_DOASSERT( is_integer(   lattice.cell().inverse() 
+                                         * (i_atom->pos() - lattice[i_atom->site()]->pos), 1e-5),
+                             "Inequivalent positions.\n") 
             }
 
-            {
-              TemplateStructure< LADA_TYPE >structure = supercell(lat, cell);
-              structure = primitive(structure, 1e-8);
-              LADA_DOASSERT( eq(lat.cell().determinant(), structure.cell().determinant(), 1e-5),\
-                             "Not primitive.\n");
-              LADA_DOASSERT(is_integer(structure.cell() * lat.cell().inverse(), 1e-5), "Not a sublattice.\n");
-              LADA_DOASSERT(is_integer(lat.cell() * structure.cell().inverse(), 1e-5), "Not a sublattice.\n");
-              t_Str::const_iterator i_atom = structure.begin();
-              t_Str::const_iterator const i_atom_end = structure.end();
-              for(; i_atom != i_atom_end; ++i_atom)
-              {
-                LADA_DOASSERT(compare_sites(lat[i_atom->site])(i_atom->type), "Inequivalent occupation.\n");
-                LADA_DOASSERT( is_integer(lat.cell().inverse()*(i_atom->pos - lat[i_atom->site].pos), 1e-5),
-                               "Inequivalent positions.\n") 
-              }
-            }
           } // f
         } // e
       } // d

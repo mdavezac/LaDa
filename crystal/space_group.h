@@ -17,7 +17,7 @@
 
 #include "structure.h"
 #include "exceptions.h"
-#include "primitive.h"
+#include "compare_sites.h"
 
 namespace LaDa
 {
@@ -53,14 +53,14 @@ namespace LaDa
  
         // Finds minimum translation.
         TemplateStructure<T_TYPE> atoms = _lattice.copy();
-        math::rVector3d translation(atoms.front().pos);
+        math::rVector3d translation(atoms.front()->pos);
         math::rMatrix3d const cell(math::gruber(_lattice.cell()));
         math::rMatrix3d const invcell(!cell);
         // Creates a list of atoms centered in the cell.
         typename TemplateStructure<T_TYPE>::iterator i_site = atoms.begin();
         typename TemplateStructure<T_TYPE>::iterator const i_site_end = atoms.end();
         for(; i_site != i_site_end; ++i_site)
-          i_site->pos = into_cell(i_site->pos-translation, cell, invcell);
+          i_site->pos() = into_cell(i_site->pos()-translation, cell, invcell);
  
         // gets point group.
         boost::shared_ptr<t_SpaceGroup> pg = cell_invariants(_lattice.cell());
@@ -69,9 +69,9 @@ namespace LaDa
              
         // lists atoms of same type as atoms.front()
         std::vector<math::rVector3d> translations;
-        CompareOccupations<T_TYPE> const compsites(atoms.front().type);
+        CompareOccupations<T_TYPE> const compsites(atoms.front()->type);
         for(i_site = atoms.begin(); i_site != i_site_end; ++i_site)
-          if(compsites(i_site->type)) translations.push_back(i_site->pos);
+          if(compsites(i_site->type())) translations.push_back(i_site->pos());
         
  
         // applies point group symmetries and finds out if they are part of the space-group.
@@ -93,8 +93,8 @@ namespace LaDa
             const_iterator i_unmapped = i_atoms_begin;
             for(; i_unmapped != i_atoms_end; ++i_unmapped)
             {
-              CompareSites<T_TYPE> const transformed( into_cell((*i_op)*i_unmapped->pos, cell, invcell), 
-                                                      i_unmapped->type, _tolerance );
+              CompareSites<T_TYPE> const transformed( into_cell((*i_op)*i_unmapped->pos(), cell, invcell), 
+                                                      i_unmapped->type(), _tolerance );
               const_iterator i_mapping = i_atoms_begin;
               for(; i_mapping != i_atoms_end; ++i_mapping)
                 if(transformed(*i_mapping)) break;

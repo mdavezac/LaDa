@@ -3,8 +3,6 @@
 
 #include "LaDaConfig.h"
 
-#include <boost/shared_ptr.hpp>
-#include <boost/serialization/shared_ptr.hpp>
 
 #ifdef LADA_WITH_LNS
 # include <load_n_save/xpr/utilities.h>
@@ -28,7 +26,7 @@ namespace LaDa
     template<class T_TYPE> class TemplateStructure :
        public details::AddAtomMixin<TemplateStructure, T_TYPE>
     {
-        friend class details::AddAtomMixinBase<TemplateStructure, T_TYPE>;
+        friend class details::AddAtomMixinBase< ::LaDa::crystal::TemplateStructure, T_TYPE>;
         friend class boost::serialization::access;
 #       ifdef LADA_WITH_LNS
           friend class load_n_save::access;
@@ -104,9 +102,15 @@ namespace LaDa
         types::t_unsigned & freeze() { return impl_->freeze; }
 
         //! Deep copy of a structure.
-        TemplateStructure copy() const { return TemplateStructure(*impl_); }
+        TemplateStructure copy() const;
         //! Swaps content of two structures.
         void swap(TemplateStructure &_other) { impl_.swap(_other.impl_); }
+        //! Returns pointer to implementation.
+        StructureData<T_TYPE>* get() const { return impl_.get(); }
+        //! Points to data.
+        StructureData<T_TYPE> const* operator->() const { return impl_.get(); }
+        //! Points to data.
+        StructureData<T_TYPE>* operator->() { return impl_.get(); }
 
         //! Iterator to the atoms.
         iterator begin() { return impl_->atoms.begin(); }
@@ -235,7 +239,7 @@ namespace LaDa
           return _ar & load_n_save::ext(impl_);
         }
 #   endif
-    //! Transforms a structure according to an affine transformation.
+    // Transforms a structure according to an affine transformation.
     template<class T_TYPE> 
       TemplateStructure<T_TYPE> TemplateStructure<T_TYPE>::transform(math::Affine3d const &_affine) const
       {
@@ -244,7 +248,24 @@ namespace LaDa
         iterator i_first = result.begin();
         iterator const i_end = result.end();
         for(; i_first != i_end;  ++i_first)
-          i_first->pos = _affine * i_first->pos;
+          i_first->pos() = _affine * i_first->pos();
+        return result;
+      }
+    // Deep copy of this structure.
+    template<class T_TYPE> 
+      TemplateStructure<T_TYPE> TemplateStructure<T_TYPE>::copy() const
+      {
+        TemplateStructure<T_TYPE> result;
+        result->cell = cell();
+        result->weight = weight();
+        result->energy = energy();
+        result->name   = name();
+        result->freeze = freeze();
+        result->scale  = scale();
+        result.reserve(size());
+        const_iterator i_first = begin();
+        const_iterator const i_end = end();
+        for(; i_first != i_end;  ++i_first) result.push_back(i_first->copy());
         return result;
       }
 

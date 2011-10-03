@@ -26,7 +26,7 @@ namespace LaDa
         if( _tolerance <= 0e0 ) _tolerance = types::tolerance;
         boost::shared_ptr<t_SpaceGroup> result(new t_SpaceGroup); 
         result->reserve(48);
-        result->push_back(math::Affine3d(math::AngleAxis(0, math::rVector3d::UnitX())));
+        result->push_back(math::Affine3d(math::Affine3d::Identity()));
         
         // Finds out how far to look.
         types::t_real const volume( std::abs(_cell.determinant()) );

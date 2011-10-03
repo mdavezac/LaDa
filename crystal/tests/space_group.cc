@@ -5,9 +5,11 @@
 
 #include <boost/foreach.hpp>
 
+#include <opt/debug.h>
 #include "../space_group.h"
 #include "../structure.h"
 #include "../equivalent_structures.h"
+#include "../primitive.h"
 
 namespace LaDa
 {
@@ -59,15 +61,15 @@ namespace LaDa
       TemplateStructure< LADA_TYPE >::const_iterator const i_bend = _b.end();
       for(; i_b != i_bend; ++i_b)
       {
-        math::rVector3d const pos = into_voronoi(i_b->pos*scaleB, cellA, invA);
-        CompareOccupations< LADA_TYPE > const cmp(i_b->type);
+        math::rVector3d const pos = into_voronoi(i_b->pos()*scaleB, cellA, invA);
+        CompareOccupations< LADA_TYPE > const cmp(i_b->type());
         t_List :: iterator i_first =  atomsA.begin();
         t_List :: iterator const i_end = atomsA.end();
         if(i_first == i_end) return false;
         for(; i_first != i_end; ++i_first)
         {
-          if( not math::is_integer(invA * (pos - _a[*i_first].pos*scaleA), 4*_tol) ) continue;
-          if( cmp(_a[*i_first].type) ) break;
+          if( not math::is_integer(invA * (pos - _a[*i_first]->pos*scaleA), 4*_tol) ) continue;
+          if( cmp(_a[*i_first]->type) ) break;
         }
         if(i_first == i_end) break;
         atomsA.erase(i_first);

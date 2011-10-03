@@ -8,11 +8,8 @@
 
 #include <math/misc.h>
 #include <math/fuzzy.h>
-
-#include <boost/foreach.hpp>
-
-#include <math/fuzzy.h>
 #include <math/smith_normal_form.h>
+
 #include "structure.h"
 #include "compare_sites.h"
 #include "exceptions.h"
@@ -30,7 +27,10 @@ namespace LaDa
       {
         namespace bt = boost::tuples;
         TemplateStructure<T_TYPE> result; 
-        result.cell() = _supercell;
+        result->cell = _supercell;
+        result->scale = _lattice->scale;
+        if(_lattice->name.size() != 0) result->name = "supercell of " + _lattice->name;
+        result->energy = _lattice->energy * types::t_real(result.size())/types::t_real(_lattice.size());
 
         math::t_SmithTransform transform = math::smith_transform( _lattice.cell(), result.cell());
       
@@ -43,22 +43,19 @@ namespace LaDa
         t_citerator const i_site_begin = _lattice.begin();
         t_citerator const i_site_end = _lattice.end();
         
-        for( size_t i(0); i < smith(0); ++i )
-          for( size_t j(0); j < smith(1); ++j )
-            for( size_t k(0); k < smith(2); ++k )
+        for( math::iVector3d::Scalar i(0); i < smith(0); ++i )
+          for( math::iVector3d::Scalar j(0); j < smith(1); ++j )
+            for( math::iVector3d::Scalar k(0); k < smith(2); ++k )
             {
               // in cartesian.
               const math::rVector3d vec( factor * math::rVector3d(i,j,k) );
             
               // adds all lattice sites.
-              size_t l(0);
+              types::t_unsigned l(0);
               for( t_citerator i_site(i_site_begin); i_site != i_site_end; ++i_site, ++l)
               {
-                Atom<T_TYPE> atom;
-                atom.pos    = into_cell(vec+i_site->pos, result.cell(), inv_cell);
-                atom.type   = i_site->type;
-                atom.freeze = i_site->freeze;
-                atom.site   = l;
+                Atom<T_TYPE> atom( into_cell(vec+i_site->pos(), result->cell, inv_cell),
+                                   i_site->type(), l, i_site->freeze() );
                 result.push_back(atom);
               }
             }

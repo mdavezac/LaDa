@@ -6,8 +6,6 @@
 #include <vector>
 #include <algorithm>
 
-#include <boost/foreach.hpp>
-
 #include <math/misc.h>
 #include <math/fuzzy.h>
 #include <math/gruber.h>
@@ -33,11 +31,11 @@ namespace LaDa
           for(; i_first != i_end; ++i_first, ++i_fmin)
           {
             if(*i_fmin > 1) continue;
-            CompareOccupations<T_TYPE> cmp(i_first->type);
+            CompareOccupations<T_TYPE> cmp(i_first->type());
             typename TemplateStructure<T_TYPE>::const_iterator i_second = i_first + 1;
             std::vector<size_t>::iterator i_smin = i_fmin + 1;
             for(; i_second != i_end; ++i_second, ++i_smin)
-              if(cmp(i_second->type)) ++(*i_fmin), ++(*i_smin);
+              if(cmp(i_second->type())) ++(*i_fmin), ++(*i_smin);
           }
           return std::min_element(mini.begin(), mini.end()) - mini.begin();
         }
@@ -86,33 +84,37 @@ namespace LaDa
         boost::shared_ptr<t_SpaceGroup> pg = cell_invariants(cellA);
         // then find the occupation type with the smallest number of occurences.
         typename TemplateStructure<T_TYPE>::const_reference minatom = _a[details::min_test(_a)];
-        CompareOccupations<T_TYPE> mincheck(minatom.type);
+        CompareOccupations<T_TYPE> mincheck(minatom->type);
         
         // Computes possible translations, looking at only one type of site-occupation.
         // The center of gravity will tell us about a possible translation of
         // the cartesian basis.
         math::rVector3d transA(0,0,0);
         size_t nA(0);
-        foreach(typename TemplateStructure<T_TYPE>::const_reference atomA, _a)
-          if(mincheck(atomA.type))
+        typename TemplateStructure<T_TYPE>::const_iterator i_atom = _a.begin(); 
+        typename TemplateStructure<T_TYPE>::const_iterator i_atom_end = _a.end(); 
+        for(; i_atom != i_atom_end; ++i_atom)
+          if(mincheck(i_atom->type()))
           {
-            transA += into_voronoi(atomA.pos * scaleA, cellA, invA);
+            transA += into_voronoi(i_atom->pos() * scaleA, cellA, invA);
             ++nA;
           }
         transA /= types::t_real(nA);
         math::rVector3d transB(0,0,0);
         size_t nB = 0;
-        foreach(typename TemplateStructure<T_TYPE>::const_reference atomB, _b)
-          if(mincheck(atomB.type))
+        for(i_atom = _b.begin(), i_atom_end =_b.end(); i_atom != i_atom_end; ++i_atom)
+          if(mincheck(i_atom->type()))
           {
-            transB += into_voronoi(atomB.pos * scaleB, cellB, invB);
+            transB += into_voronoi(i_atom->pos() * scaleB, cellB, invB);
             ++nB;
             if(nB > nA) return false;
           }
         transB /= types::t_real(nB);
 
         // loop over possible motif rotations.
-        foreach(math::Affine3d const &invariant, *pg)
+        t_SpaceGroup::iterator i_op = pg->begin();
+        t_SpaceGroup::iterator const i_op_end = pg->end();
+        for(; i_op != i_op_end; ++i_op)
         {
           // creates a vector referencing B atomic sites.
           // Items from this list will be removed as they are found.
@@ -120,21 +122,21 @@ namespace LaDa
           t_List atomsA;
           for(size_t i(0); i < _a.size(); ++i) atomsA.push_back(i);
 
-          math::rMatrix3d const rotation = invariant.linear() * rot;
+          math::rMatrix3d const rotation = i_op->linear() * rot;
           
           typename TemplateStructure<T_TYPE>::const_iterator i_b = _b.begin();
           typename TemplateStructure<T_TYPE>::const_iterator const i_bend = _b.end();
           for(; i_b != i_bend; ++i_b)
           {
-            math::rVector3d const pos = rotation * (into_voronoi(i_b->pos*scaleB, cellB, invB) - transB);
-            CompareOccupations<T_TYPE> const cmp(i_b->type);
+            math::rVector3d const pos = rotation * (into_voronoi(i_b->pos()*scaleB, cellB, invB) - transB);
+            CompareOccupations<T_TYPE> const cmp(i_b->type());
             typename t_List :: iterator i_first =  atomsA.begin();
             typename t_List :: iterator const i_end = atomsA.end();
             if(i_first == i_end) return false;
             for(; i_first != i_end; ++i_first)
             {
-              if( not math::is_integer(invA * (pos - _a[*i_first].pos*scaleA + transA), 4*_tol) ) continue;
-              if( cmp(_a[*i_first].type) ) break;
+              if( not math::is_integer(invA * (pos - _a[*i_first]->pos*scaleA + transA), 4*_tol) ) continue;
+              if( cmp(_a[*i_first]->type) ) break;
             }
             if(i_first == i_end) break;
             atomsA.erase(i_first);

@@ -12,6 +12,7 @@
 #include <opt/debug.h>
 #include <math/fuzzy.h>
 #include <math/gruber.h>
+#include <root_exceptions.h>
 
 #include "structure.h"
 
@@ -70,11 +71,11 @@ namespace LaDa
                          Eigen::DenseBase<T> const &_vec,
                          types::t_real _tol = types::tolerance,
                          bool _ws = false )
-                     : nmax(_nmax), origin(_vec), tolerance(_tol), with_self(_ws) {};
+                     : nmax(_nmax), origin(_vec), tolerance(_tol), with_self(_ws) {}
          //! Constructor.
          Neighbors   ( size_t _nmax = 0 )
                    : nmax(_nmax), origin(math::rVector3d::Zero()), 
-                     tolerance(types::tolerance), with_self(false) {};
+                     tolerance(types::tolerance), with_self(false) {}
          //! returns iterator to first neighbor list.
          const_iterator begin() const { return neighbors_.begin(); }
          //! constructs first neighbor list and returns first iterator.
@@ -109,9 +110,9 @@ namespace LaDa
          typedef TemplateStructure<T_TYPE> t_Structure;
          Neighbor neighbor;
          types::t_real const volume(_structure.volume());
-         size_t list_max_size(nmax+2);
+         types::t_int list_max_size(nmax+2);
 retry: 
-         size_t size(0);
+         types::t_int size(0);
          neighbor.index = 0;
          // Finds out how far to look.
          math::rVector3d const a0(cell.col(0));
@@ -133,11 +134,15 @@ retry:
          while( n0 * n1 * n2 * 8 * N < list_max_size ) { ++n0; ++n1; ++n2; }
 
 
+         types::t_real max_distance( 1.2 * std::pow(volume/types::t_real(N), 2e0/3e0)
+                                         * types::t_real(list_max_size * list_max_size) );
          typename t_Structure::t_Atoms::const_iterator i_atom = _structure.begin();
          typename t_Structure::t_Atoms::const_iterator i_atom_end = _structure.end();
          for(; i_atom != i_atom_end; ++i_atom, ++neighbor.index ) 
          {
-           math::rVector3d const frac( inv_cell * (i_atom->pos - origin) );
+           math::rVector3d const start = into_voronoi(i_atom->pos()-origin, cell, inv_cell);
+           if(start.squaredNorm() > max_distance) continue;
+           math::rVector3d const frac( inv_cell * start );
            math::rVector3d const centered
            ( 
              frac(0) - std::floor( frac(0) + 0.500000001e0 ),
@@ -201,7 +206,7 @@ retry:
            goto retry;
          }
          neighbors_.resize(i);
-       };
+       }
   } // end of crystal namespace.
 } // namespace LaDa
 

@@ -43,7 +43,7 @@ namespace LaDa
           Z          =  4,  //!< Freeze z coordinate.
           T          =  8,  //!< Freeze type.
           CARTESIANS =  7,  //!< Freeze cartesians coordinates.
-          ALL        =  15, //!< Freeze all.
+          ALL        =  15  //!< Freeze all.
         };
       };
 
@@ -51,7 +51,7 @@ namespace LaDa
       types::t_unsigned freeze;
 
       //! Constructor.
-      AtomFreezeMixin(frozen::type _in = frozen::NONE) : freeze(_in) {}
+      AtomFreezeMixin(types::t_unsigned _in = frozen::NONE) : freeze(_in) {}
       //! Copy constructor.
       AtomFreezeMixin(AtomFreezeMixin const &_c) : freeze(_c.freeze) {}
 

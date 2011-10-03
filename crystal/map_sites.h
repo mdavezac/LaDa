@@ -6,10 +6,10 @@
 #include <math/misc.h>
 #include <math/gruber.h>
 
+#include "utilities.h"
 #include "structure.h"
-#include "neighbors.h"
 #include "exceptions.h"
-#include "supercell.h"
+#include "compare_sites.h"
 
 
 namespace LaDa 
@@ -29,37 +29,69 @@ namespace LaDa
       bool map_sites( TemplateStructure<T_TYPE> const &_mapper, TemplateStructure<T_TYPE> &_mappee,
                       bool _withocc = true, types::t_real _tolerance = types::tolerance )
       {
+        if(_mapper.size() == 0) 
+          BOOST_THROW_EXCEPTION(error::input() << error::string("Empty mapper structure."));
+        if(_mappee.size() == 0) 
+          BOOST_THROW_EXCEPTION(error::input() << error::string("Empty mappee structure."));
+
         math::rMatrix3d const cell = math::gruber(_mapper.cell());
-        math::rMatrix3d const intcell_ = cell.inverse() * _mappee.cell();
+        math::rMatrix3d const invcell = cell.inverse();
+        
+        // check that mappee_ is a supercell of mapper_.
+        types::t_real const ratio = _mappee->scale / _mapper->scale;
+        types::t_real tolerance = _tolerance * ratio;
+        math::rMatrix3d const intcell_ = invcell * _mappee.cell() * ratio;
+        std::cout << _mappee->scale << " " << _mapper->scale << "\n";
+        std::cout << _mappee->cell << "\n\n";
+        std::cout << _mapper->cell << "\n\n";
+        std::cout << intcell_ << "\n";
         if(not math::is_integer(intcell_, _tolerance))
           BOOST_THROW_EXCEPTION(error::not_a_supercell());
-        math::rMatrix3d intcell;
-        for(size_t i(0); i < 3; ++i)
-          for(size_t j(0); j < 3; ++j)
-            intcell(i, j) = std::floor(intcell_(i,j) + 0.2);
-        TemplateStructure<T_TYPE> lattice = supercell(_mapper, cell * intcell);
-        lattice.cell() *= lattice.scale();
-        lattice.scale() = 1e0;
-        math::rMatrix3d const transform = lattice.cell() * _mappee.cell().inverse() * _mappee.scale();
 
-        types::t_real tolerance = _tolerance * _mappee.scale();
+        // Copy mapper sites to a vector, making sure positiosn are in cell.
+        std::vector<math::rVector3d> sites; 
+        typename TemplateStructure<T_TYPE>::const_iterator i_mapper_site = _mapper.begin();
+        typename TemplateStructure<T_TYPE>::const_iterator const i_mapper_site_end = _mapper.end();
+        for(; i_mapper_site != i_mapper_site_end; ++i_mapper_site)
+          sites.push_back(into_cell(i_mapper_site->pos(), cell, invcell));
+
+        // loop over atoms in mappee and assign sites.
         bool allmapped = true;
         typename TemplateStructure<T_TYPE>::iterator i_atom = _mappee.begin();
         typename TemplateStructure<T_TYPE>::iterator const i_atom_end = _mappee.end();
+        std::vector<math::rVector3d>::const_iterator const i_site_end = sites.begin();
         for(; i_atom != i_atom_end; ++i_atom)
         {
-          Neighbors neighbors(2, transform * i_atom->pos, _tolerance, true);
-          Neighbors::const_iterator i_first = neighbors.begin(lattice);
-          Neighbor const & first = *i_first;
-          Neighbor const & second = *(++i_first);
-          std::cout << first.distance << " " << second.distance << "\n";
-          if( math::eq(first.distance, second.distance, tolerance) )
+          // loop over lattice sites, find two first neighbors.
+          types::t_int fneigh_index = -1;
+          types::t_int sneigh_index = -1;
+          types::t_real fneigh_dist = -1;
+          types::t_real sneigh_dist = -1;
+          std::vector<math::rVector3d>::const_iterator i_site = sites.begin();
+          for(size_t i(0); i_site != i_site_end; ++i_site, ++i)
+          {
+            types::t_real const norm 
+              = into_voronoi(ratio*i_atom->pos()-(*i_site), cell, invcell).squaredNorm();
+            if(fneigh_dist > norm or fneigh_index == -1) 
+            {
+              sneigh_dist = fneigh_dist;
+              sneigh_index = fneigh_index;
+              fneigh_dist = norm;
+              fneigh_index = i;
+            }
+            else if(sneigh_dist > norm or sneigh_index == -1)
+            {
+              sneigh_dist = norm;
+              sneigh_index = i;
+            }
+          }
+          if( math::eq(fneigh_dist, sneigh_dist, tolerance) and sneigh_index != -1)
             BOOST_THROW_EXCEPTION(error::two_sites_at_same_position());
-          if(first.distance > tolerance)
-            { i_atom->site = -1; allmapped = false; }
-          else if(_withocc and (not compare_occupations(lattice[first.index].type)(i_atom->type)))
-            { i_atom->site = -1; allmapped = false; }
-          else i_atom->site = lattice[first.index].site;
+          if(fneigh_dist > tolerance)
+            { i_atom->site() = -1; allmapped = false; }
+          else if(_withocc and (not compare_occupations(_mapper[fneigh_index]->type)(i_atom->type())))
+            { i_atom->site() = -1; allmapped = false; }
+          else i_atom->site() = fneigh_index;
         }
         return allmapped;
       }

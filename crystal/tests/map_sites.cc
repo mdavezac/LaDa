@@ -4,9 +4,9 @@
 #include <vector>
 #include <set>
 
-#include <boost/foreach.hpp>
-
+#include <opt/debug.h>
 #include "../map_sites.h"
+#include "../supercell.h"
 
 namespace LaDa
 {
@@ -38,6 +38,8 @@ namespace LaDa
   }
 }
 
+void set(std::string &_in, std::string const &_type)
+  { _in = _type; }
 void set(std::vector<std::string> &_in, std::string const &_type)
   { _in[0] = _type; }
 void set(std::set<std::string> &_in, std::string const &_type)
@@ -55,24 +57,26 @@ int main()
   TemplateStructure< LADA_TYPE > super = supercell(lattice, lattice.cell() * cell);
   TemplateStructure< LADA_TYPE > checkme = super.copy();
   checkme.scale() *= 0.5;
+  std::cout << "ch" << checkme.cell() << "\n\n";
   checkme.cell() *= 2e0;
-  for(size_t i(0); i < checkme.size(); ++i) checkme[i].pos *= 2e0;;
+  std::cout << "ch" << checkme.cell() << "\n\n";
+  for(size_t i(0); i < checkme.size(); ++i) checkme[i]->pos *= 2e0;;
 
   LADA_DOASSERT(map_sites(lattice, checkme) == true, "Should have mapped all sites."); 
   for(size_t i(0); i < checkme.size(); ++i)
-    LADA_DOASSERT(checkme[i].site == super[i].site, "Site indices do not correspond.");
+    LADA_DOASSERT(checkme[i]->site == super[i]->site, "Site indices do not correspond.");
 
-  set(checkme.front().type, "Ge");
+  set(checkme.front()->type, "Ge");
   LADA_DOASSERT(map_sites(lattice, checkme) == false, "Should not have mapped all sites."); 
   for(size_t i(1); i < checkme.size()-1; ++i)
-    LADA_DOASSERT(checkme[i].site == super[i].site, "Site indices do not correspond.");
-  LADA_DOASSERT(checkme[0].site == -1, "Site should not be mapped.");
+    LADA_DOASSERT(checkme[i]->site == super[i]->site, "Site indices do not correspond.");
+  LADA_DOASSERT(checkme[0]->site == -1, "Site should not be mapped.");
  
   checkme.add_atom(0.5, 0.5, 0.125, "Si"); 
   LADA_DOASSERT(map_sites(lattice, checkme, false) == false, "Should not have mapped all sites."); 
   for(size_t i(0); i < checkme.size()-1; ++i)
-    LADA_DOASSERT(checkme[i].site == super[i].site, "Site indices do not correspond.");
-  LADA_DOASSERT(checkme[checkme.size()-1].site == -1, "Site should not be mapped.");
+    LADA_DOASSERT(checkme[i]->site == super[i]->site, "Site indices do not correspond.");
+  LADA_DOASSERT(checkme[checkme.size()-1]->site == -1, "Site should not be mapped.");
 
   return 0;
 }

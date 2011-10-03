@@ -3,7 +3,13 @@
 
 #include "LaDaConfig.h"
 
+#include <boost/shared_ptr.hpp>
+#include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/base_object.hpp>
+#ifdef LADA_DO_PYTHON
+#  include <boost/python/object.hpp>
+#  include <boost/python/borrowed.hpp>
+#endif
 
 #ifdef LADA_WITH_LNS
 #  include "load_n_save/xpr/utilities.h"
@@ -11,7 +17,6 @@
 #endif
 
 #include "atom_base.h"
-#include "atom_freeze.h"
 
 namespace LaDa
 {
@@ -27,7 +32,7 @@ namespace LaDa
     //!          The frozen status variable indicate which, if any, coordinate
     //!          should not be touched deuring optimization. There are a number
     //!          of possibilities:
-    //!            - frozen::NONE indicate that no coordinate is
+    //!            - frozen::None indicate that no coordinate is
     //!                                     frozen.
     //!            - frozen::X indicate that the cartesian x coordinate
     //!                                  is frozen.
@@ -41,70 +46,119 @@ namespace LaDa
     //! \warning The default equality comparison operator compares positions only (not
     //!          occupation).
     template<class T_TYPE>
-    class Atom : public AtomBase<T_TYPE>, public AtomFreezeMixin
+    class Atom
     {
       friend class boost::serialization::access;
 #     ifdef LADA_WITH_LNS
         //! To load and save to xml-like input.
         friend class load_n_save::access; 
 #     endif
-      public:
-        //! Type of the atomic type.
+      public: 
+        //! Type of the species.
         typedef T_TYPE t_Type;
-        //! \brief Site index.
-        //! \details Used to reference atomic sites in a supercell versus
-        //!          atomic sites in a reference lattice.
-        types::t_int site;
-        
+
+        // Macro to initialize self in constructor.
+#       ifdef LADA_SELF
+#         error LADA_SELF already defined
+#       endif
+#       ifdef LADA_DO_PYTHON
+#         define LADA_SELF(object) , self_(object)
+#       else
+#         define LADA_SELF(object)
+#       endif
         //! Constructor
         template<class T_DERIVED>
-          Atom   (Eigen::DenseBase<T_DERIVED> const &_pos, t_Type const &_in)
-               : AtomBase<t_Type>(_pos, _in), AtomFreezeMixin(frozen::NONE), site(-1) {};
+          Atom   ( Eigen::DenseBase<T_DERIVED> const &_pos, t_Type const &_in,
+                   types::t_int _site = -1, types::t_unsigned _freeze = AtomFreezeMixin::frozen::NONE )
+               : atom_(new AtomData<T_TYPE>(_pos, _in, _site, _freeze)) LADA_SELF(Py_None) {}
         //! Constructor
-        Atom() : AtomBase<t_Type>(), AtomFreezeMixin(frozen::NONE), site(-1) {};
-        //! Constructor and Initializer
-        explicit  Atom( const math::rVector3d &_pos, t_Type _type) 
-                    : AtomBase<t_Type>(_pos, _type), AtomFreezeMixin(frozen::NONE), site(-1) {};
+        Atom() : atom_(new AtomData<T_TYPE>) LADA_SELF(Py_None) {}
         //! Copy Constructor
-        Atom(const Atom &_c ) : AtomBase<t_Type>(_c), AtomFreezeMixin(_c), site(_c.site) {};
+        Atom(const Atom &_c ) : atom_(_c.atom_) LADA_SELF(_c.self_)
+        {
+#         ifdef LADA_DO_PYTHON
+            if(self_ != Py_None) Py_INCREF(self_)
+#         endif
+        };
+#       undef LADA_SELF
+#       ifdef LADA_DO_PYTHON
+          //! Constructor
+          Atom   (PyObject *_self)
+               : atom_(new AtomData<T_TYPE>), self_(_self) {}
+            { if(self_ != Py_None) Py_INCREF(self_); };
+          //! Returns self object.
+          boost::python::object self() const
+          { 
+            namespace bp = boost::python;
+            return bp::object(bp::borrowed<>(self_)); 
+          }
+          //! Sets python back reference if it is currently null.
+          void set_self(PyObject *_self)
+          {
+            if(self_ != Py_None) return;
+            self_ = _self; Py_INCREF(_self); 
+          }
+#       endif
+          //! Points to owned data.
+          AtomData<T_TYPE> const* operator->() const { return atom_.get(); }
+          //! Points to owned data.
+          AtomData<T_TYPE>* operator->() { return atom_.get(); }
+          //! Points to owned data.
+          AtomData<T_TYPE>* get() const { return atom_.get(); }
+          //! Swaps data of two atoms.
+          void swap(Atom &_in) const { return atom_.swap(_in.atom_); }
+          //! \brief Return a (deep) copy of this atom.
+          //! \details Return does not share data with this atom. 
+          //!          Use constructor to obtain that behavior.
+          Atom copy() const
+            { return Atom<T_TYPE>(atom_->pos, atom_->type, atom_->site, atom_->freeze); }
+          //! Returns type.
+          T_TYPE const & type() const { return atom_->type; }
+          //! Returns type.
+          T_TYPE & type() { return atom_->type; }
+          //! Returns position.
+          math::rVector3d const & pos() const { return atom_->pos; }
+          //! Returns position.
+          math::rVector3d & pos() { return atom_->pos; }
+          //! Returns atomic site index w.r.t to another structure.
+          types::t_int const & site() const { return atom_->site; }
+          //! Returns atomic site index w.r.t to another structure.
+          types::t_int & site() { return atom_->site; }
+          //! Returns freeze parameter.
+          types::t_unsigned const & freeze() const { return atom_->freeze; }
+          //! Returns freeze parameter.
+          types::t_unsigned & freeze() { return atom_->freeze; }
     
       private:
         //! Serializes an atom.
-        template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version);
+        template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
+          { _ar & atom_; }
 #       ifdef LADA_WITH_LNS
           //! To load and save to xml-like input.
           template<class T_ARCHIVE> bool lns_access(T_ARCHIVE &_ar, const unsigned int _version);
 #       endif
+#       ifdef LADA_DO_PYTHON
+          //! Pointer to python object referencing this object.
+          PyObject *self_;
+#       endif
+          //! \brief This object owns it own data. 
+          //! \details Makes python memory management much easier.
+          boost::shared_ptr< AtomData<T_TYPE> > atom_;
     };
 
-    template<class T_TYPE> template< class ARCHIVE >
-      void Atom<T_TYPE> :: serialize( ARCHIVE & _ar, const unsigned int _version)
-      {
-        namespace bs = boost::serialization;
-        _ar & bs::base_object< AtomBase<T_TYPE> >(*this);
-        _ar & bs::base_object<AtomFreezeMixin>(*this); 
-        _ar & site;
-      }
 #   ifdef LADA_WITH_LNS
       //! To load and save to xml-like input.
       template<class T_TYPE> template<class T_ARCHIVE>
         bool Atom<T_TYPE> :: lns_access(T_ARCHIVE &_ar, const unsigned int _version) 
         {
-          namespace lns = LaDa :: load_n_save;
-          typedef AtomBase<T_TYPE> t1;
-          typedef AtomFreezeMixin  t2;
-          return _ar & 
-            lns::merge( lns::merge(*static_cast<t1*>(this), *static_cast<t2*>(this)), 
-                        (lns::section("SITE") << lns::option("site", lns::action=site, lns::default_=-1)) );
+          if(not atom_) atom_.reset(new AtomData<T_TYPE>());
+          return _ar & load_n_save::ext(atom_);
         }
 #   endif
 
     template<class T_TYPE> 
       inline std::ostream& operator<< (std::ostream &stream, Atom<T_TYPE> const &_atom)
-      {
-        return stream << (*static_cast<AtomBase<T_TYPE> const*>(&_atom))
-                      << "  freeze: " << _atom.freeze;
-      }
+        { return stream << *_atom.get(); }
 
   } // namespace Crystal
 } // namespace LaDa

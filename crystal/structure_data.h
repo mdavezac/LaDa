@@ -42,7 +42,7 @@ namespace LaDa
         ALL  = 511, //!< Freeze all coordinates 
         A0   =  73, //!< Freeze all coordinates 
         A1   = 146, //!< Freeze all coordinates 
-        A2   = 292, //!< Freeze all coordinates 
+        A2   = 292  //!< Freeze all coordinates 
       };
     };
     template<class T_TYPE> struct StructureData 
@@ -117,7 +117,7 @@ namespace LaDa
         _ar & scale;
         _ar & freeze;
         _ar & atoms;
-      };
+      }
 
 #   ifdef LADA_WITH_LNS
       template<class T_TYPE> template<class T_ARCHIVE>

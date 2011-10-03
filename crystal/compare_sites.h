@@ -193,7 +193,7 @@ namespace LaDa
       {
         //! Constructor.
         CompareSites   (Atom<T_TYPE> const _atom, types::t_real _tol=types::tolerance) 
-                     : CompareOccupations<T_TYPE>(_atom.type), ComparePositions(_atom.pos, _tol) {}
+                     : CompareOccupations<T_TYPE>(_atom->type), ComparePositions(_atom->pos, _tol) {}
         template<class T>
         CompareSites   ( Eigen::DenseBase<T> const &_pos,
                          T_TYPE const &_type, 
@@ -202,8 +202,8 @@ namespace LaDa
         CompareSites(CompareSites const &_c) : CompareOccupations<T_TYPE>(_c), ComparePositions(_c) {}
         //! Compares both position and types.
         bool operator()(Atom<T_TYPE> const& _atom) const
-          { return     CompareOccupations<T_TYPE>::operator()(_atom.type)
-                   and ComparePositions::operator()(_atom.pos); }
+          { return     CompareOccupations<T_TYPE>::operator()(_atom->type)
+                   and ComparePositions::operator()(_atom->pos); }
         //! Performs comparison.
         bool operator()( T_TYPE const& _type ) const
           { return CompareOccupations<T_TYPE>::operator()(_type); }
@@ -221,8 +221,8 @@ namespace LaDa
         RelCompareSites   ( Atom<T_TYPE> const _atom,
                             types::t_real _linear=types::tolerance, 
                             types::t_real _constant=types::tolerance ) 
-                        : CompareOccupations<T_TYPE>(_atom.type), 
-                          RelComparePositions(_atom.pos, _linear, _constant) {}
+                        : CompareOccupations<T_TYPE>(_atom->type), 
+                          RelComparePositions(_atom->pos, _linear, _constant) {}
         template<class T>
         RelCompareSites   ( Eigen::DenseBase<T> const &_pos,
                             T_TYPE const &_type, 
@@ -231,8 +231,8 @@ namespace LaDa
                         : CompareOccupations<T_TYPE>(_type), RelComparePositions(_pos, _linear, _constant) {}
         //! Compares both position and types.
         bool operator()(Atom<T_TYPE> const& _atom) const
-          { return     CompareOccupations<T_TYPE>::operator()(_atom.type)
-                   and RelComparePositions::operator()(_atom.pos); }
+          { return     CompareOccupations<T_TYPE>::operator()(_atom->type)
+                   and RelComparePositions::operator()(_atom->pos); }
         //! Performs comparison.
         bool operator()( T_TYPE const& _type ) const
           { return CompareOccupations<T_TYPE>::operator()(_type); }

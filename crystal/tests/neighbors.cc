@@ -83,7 +83,7 @@ int main()
   typename t_Str::const_iterator i_atom_end = lattice.end();
   for(; i_atom != i_atom_end; ++i_atom)
   { 
-    neighbors.origin = i_atom->pos;
+    neighbors.origin = i_atom->pos();
     Neighbors::const_iterator i_first = neighbors.begin(lattice);
     Neighbors::const_iterator i_end = neighbors.end();
     check(i_first, i_end);
@@ -96,7 +96,7 @@ int main()
   i_atom_end = lattice.end();
   for(; i_atom != i_atom_end; ++i_atom)
   { 
-    neighbors.origin = i_atom->pos;
+    neighbors.origin = i_atom->pos();
     Neighbors::const_iterator i_first = neighbors.begin(lattice);
     Neighbors::const_iterator i_end = neighbors.end();
     check(i_first, i_end);

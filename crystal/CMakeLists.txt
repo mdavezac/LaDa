@@ -1,5 +1,5 @@
 set( LIBCRYSTAL_HEADERS 
-     atom.h structure.h structure_data.h add_atom.h is_container.h
+     atom.h atom_base.h atom_freeze.h structure.h structure_data.h add_atom.h is_container.h
      utilities.h compare_sites.h space_group.h neighbors.h map_sites.h 
      periodic_dnc.h )
 #    atom.h divide_and_conquer.h epi_structure.h fractional_cartesian.h layerdepth.h 
@@ -27,6 +27,7 @@ if(NOT noinstall_headers)
 endif(NOT noinstall_headers)
 
 if(python_bindings)
+  include_directories(${PYTHON_INCLUDE_DIRS})
   add_subdirectory(python)
   add_subdirectory(defects)
 endif(python_bindings)

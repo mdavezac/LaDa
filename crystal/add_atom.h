@@ -36,20 +36,20 @@ namespace LaDa
 #     endif
       template<class T_TYPE, class Enable=void> struct AddAtom;
 
-#     define LADA_BASIC                                                                             \
-        typedef T_TYPE t_Type;                                                                      \
-        typedef typename traits::StructureData<t_Type>::t_Atom t_Atom;                              \
-        typedef typename traits::StructureData<t_Type>::t_Atoms t_Atoms;                            \
-        typedef typename std::back_insert_iterator<t_Atoms> t_Inserter;                             \
-        AddAtom(t_Inserter const &_inserter) : inserter_(_inserter) {}                              \
-        AddAtom(AddAtom const &_c) : inserter_(_c.inserter_) {}                                     \
-        AddAtom operator()(types::t_real _x, types::t_real _y, types::t_real _z, T_TYPE const &_t)  \
-          { return operator()(math::rVector3d(_x, _y, _z), _t); }                                   \
-        template<class TD>                                                                          \
-          AddAtom operator()(Eigen::DenseBase<TD> const &_pos, T_TYPE const &_t)                    \
-            { return operator()(t_Atom(_pos, _t)); }                                                \
-        AddAtom operator()(t_Atom const& _in) { *inserter_ = _in; ++inserter_; return *this; }      \
-        private:                                                                                    \
+#     define LADA_BASIC                                                                               \
+        typedef T_TYPE t_Type;                                                                        \
+        typedef typename traits::StructureData<t_Type>::t_Atom t_Atom;                                \
+        typedef typename traits::StructureData<t_Type>::t_Atoms t_Atoms;                              \
+        typedef typename std::back_insert_iterator<t_Atoms> t_Inserter;                               \
+        AddAtom(t_Inserter const &_inserter) : inserter_(_inserter) {}                                \
+        AddAtom(AddAtom const &_c) : inserter_(_c.inserter_) {}                                       \
+        AddAtom operator()(types::t_real _x, types::t_real _y, types::t_real _z, T_TYPE const &_t)    \
+          { return operator()(math::rVector3d(_x, _y, _z), _t); }                                     \
+        template<class TD>                                                                            \
+          AddAtom operator()(Eigen::DenseBase<TD> const &_pos, T_TYPE const &_t)                      \
+            { return operator()(t_Atom(_pos, _t)); }                                                  \
+        AddAtom operator()(t_Atom const& _in) { *inserter_ = _in.copy(); ++inserter_; return *this; } \
+        private:                                                                                      \
          t_Inserter inserter_;
        
 
@@ -60,7 +60,7 @@ namespace LaDa
           typename boost::enable_if< details::is_scalar<T_TYPE> >::type
         > 
         {
-          LADA_BASIC;
+          LADA_BASIC
         };
 
       //! Actually performs atom addition, specialize for iterables.
@@ -70,7 +70,7 @@ namespace LaDa
           typename boost::enable_if< details::is_iterable<T_TYPE> >::type
         >
       {
-        LADA_BASIC;
+        LADA_BASIC
         public:
         typedef typename is_container<t_Type>::type cont_or_set;
         typedef typename t_Type::const_reference specie_cref;
@@ -125,7 +125,7 @@ namespace LaDa
             AddAtom<T_TYPE> add_atom(Eigen::DenseBase<TD> const &_pos, T_TYPE const &_t)      
               { return add_atom(t_Atom(_pos, _t)); }                                          
           AddAtom<T_TYPE> add_atom(t_Atom const& _in)
-            { return AddAtom<T_TYPE>(this->back_inserter())(_in); }
+            { return AddAtom<T_TYPE>(this->back_inserter())(_in.copy()); }
           protected:
           std::back_insert_iterator<t_Atoms> back_inserter() 
             { return std::back_inserter(static_cast<T_DERIVED<T_TYPE>*>(this)->atoms()); }
