@@ -90,13 +90,15 @@ void check(LaDa::crystal::TemplateStructure< LADA_TYPE > const &_structure)
   std::cout << _structure.cell() << "\n";
   for(size_t i(0); i_box != i_box_end; ++i_box, ++i)
   {
+    std::cout << "i: " << i << "\n";
     DnCBoxes::value_type::const_iterator i_point = i_box->begin();
     DnCBoxes::value_type::const_iterator const i_point_end = i_box->end();
     for(; i_point != i_point_end; ++i_point)
       if(i_point->in_small_box) break;
     if(i_point == i_point_end)
     {
-      throw;
+      std::cerr << "No points in box.\n";
+      throw 0;
     }
     iVector3d const index = indices_(invcell, i_point->translation + _structure[i_point->index]->pos, params);
     for(i_point = i_box->begin(); i_point != i_point_end; ++i_point)

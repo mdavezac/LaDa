@@ -141,7 +141,7 @@ void set(std::set<std::string> &_in, std::string const &_type)
 
 int main()
 {
-  types::t_int const seed = time(NULL);
+  types::t_int const seed = 555; //time(NULL);
   std::cout << seed << "\n";
   srand(seed);
 
