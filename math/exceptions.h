@@ -22,7 +22,9 @@ namespace LaDa
     //! Thrown when a structure is not a supercell of an ideal lattice.
     struct not_a_supercell: virtual math, virtual unideal_lattice {};
     //! Thrown when a matrix is singular.
-    struct singular_matrix: virtual math {};
+    struct singular_matrix: virtual math, virtual input {};
+    //! Thrown when a matrix has a negative determinant.
+    struct negative_volume: virtual math, virtual input {};
   }
 }
 

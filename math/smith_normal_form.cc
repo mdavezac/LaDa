@@ -66,6 +66,17 @@ namespace LaDa
     t_SmithTransform smith_transform( rMatrix3d const &_unitcell,
                                       rMatrix3d const &_supercell )
     {
+      if(std::abs(_unitcell.determinant()) < 1e-8)
+        BOOST_THROW_EXCEPTION(error::singular_matrix() << error::string("Unit-cell is singular."));
+      if(std::abs(_supercell.determinant()) < 1e-8)
+        BOOST_THROW_EXCEPTION(error::singular_matrix() << error::string("Supercell is singular."));
+      if(_unitcell.determinant() < 1e-8)
+        BOOST_THROW_EXCEPTION( error::negative_volume()
+                                 << error::string("Unit-cell volume is negative."));
+      namespace bt = boost::tuples;
+      if(_supercell.determinant() < 1e-8)
+        BOOST_THROW_EXCEPTION( error::negative_volume()
+                                 << error::string("Supercell volume is negative."));
       namespace bt = boost::tuples;
       t_SmithTransform result;
       iMatrix3d left, right, smith;

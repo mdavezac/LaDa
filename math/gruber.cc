@@ -28,6 +28,7 @@ namespace LaDa
 
       rMatrix3d operator()(rMatrix3d const &_in) 
       {
+        if(std::abs(_in.determinant()) < 1e-6) BOOST_THROW_EXCEPTION(error::singular_matrix());
         iterations = 0;
         cell = _in;
         rMatrix3d metric = (~cell) * cell;

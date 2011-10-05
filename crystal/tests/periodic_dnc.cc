@@ -86,20 +86,13 @@ void check(LaDa::crystal::TemplateStructure< LADA_TYPE > const &_structure)
   dnc.init(_structure, params, 0.125);
   DnCBoxes::const_iterator i_box = dnc.begin();
   DnCBoxes::const_iterator i_box_end = dnc.end();
-  std::cout << ~params << "\n";
-  std::cout << _structure.cell() << "\n";
   for(size_t i(0); i_box != i_box_end; ++i_box, ++i)
   {
-    std::cout << "i: " << i << "\n";
     DnCBoxes::value_type::const_iterator i_point = i_box->begin();
     DnCBoxes::value_type::const_iterator const i_point_end = i_box->end();
     for(; i_point != i_point_end; ++i_point)
       if(i_point->in_small_box) break;
-    if(i_point == i_point_end)
-    {
-      std::cerr << "No points in box.\n";
-      throw 0;
-    }
+    LADA_DOASSERT(i_point != i_point_end, "No points in box.\n");
     iVector3d const index = indices_(invcell, i_point->translation + _structure[i_point->index]->pos, params);
     for(i_point = i_box->begin(); i_point != i_point_end; ++i_point)
     {
@@ -129,17 +122,21 @@ int main()
   check(lattice);
 
 
-  types::t_int const seed = 1317585876; //time(NULL); // error 1317585909; // long 1317585876
+  types::t_int const seed = time(NULL);
   std::cout << seed << "\n";
   srand(seed);
   math::rMatrix3d cell;
   for(size_t k(0); k < 10; ++k)
   {
-    for(size_t i(0); i < 3; ++i)
-      for(size_t j(0); j < 3; ++j)
-        cell(i, j) = rand() % 20 - 10;
+    do
+    {
+      cell << rand()%20-10, rand()%20-10, rand()%20-10,
+              rand()%20-10, rand()%20-10, rand()%20-10,
+              rand()%20-10, rand()%20-10, rand()%20-10;
+    } while( is_null(cell.determinant()) );
+    while(std::abs(cell.determinant()) < 1e-8);
+    if(cell.determinant() < 0) cell.col(0).swap(cell.col(1));
     TemplateStructure< LADA_TYPE > structure = supercell(lattice, lattice.cell() * cell);
-    std::cout << "natoms: " << structure.size() << "\n";
     check(structure);
   }
 
