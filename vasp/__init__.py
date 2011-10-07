@@ -81,7 +81,7 @@ def read_input(filepath="input.py", namespace=None):
       It add a few names to the input-file's namespace. 
   """
   from ..opt import read_input
-  from .species import specie
+  from . import specie
   from .functional import Functional
   from .methods import RelaxCellShape
   from .extract import Extract

@@ -45,7 +45,9 @@ def launch(self, event, jobdicts):
     return
 
   # gets queue (aka partition in slurm), if any.
-  kwargs = {} 
+  kwargs = { "ppernode": event.ppn,
+             "memlim": event.memlim,
+             "external": event.external } 
   if event.__dict__.get("queue", None) != None: kwargs["queue"] = getattr(event, "queue")
   if event.__dict__.get("account", None) != None: kwargs["account"] = getattr(event, "account")
   if event.debug:
@@ -108,7 +110,7 @@ def completer(self, info, data):
   if    (len(info.symbol) == 0 and data[-1] == "--account") \
      or (len(info.symbol) > 0  and data[-2] == "--account"):
     return accounts
-  result = ['--force', '--walltime', '--nbprocs', '--help']
+  result = ['--force', '--walltime', '--nbprocs', '--help', '--external']
   if len(queues) > 0: result.append("--queue") 
   if len(accounts) > 0: result.append("--account") 
   if debug_queue != None: result.append("--debug")
@@ -119,6 +121,7 @@ def completer(self, info, data):
 def parser(self, subparsers, opalls):
   """ Adds subparser for scattered. """ 
   from ... import queues, accounts, debug_queue, default_walltime
+  from ... import cpus_per_node
   result = subparsers.add_parser( 'scattered', 
                                   description="A separate PBS/slurm script is created for each "\
                                               "and every calculation in the jobdictionary "\
@@ -136,7 +139,12 @@ def parser(self, subparsers, opalls):
   result.add_argument('--prefix', action="store", type=str, help="Adds prefix to job name.")
   result.add_argument('--nolaunch', action="store_true", dest="nolaunch")
   result.add_argument('--force', action="store_true", dest="force", \
-                         help="Launches all untagged jobs, even those which completed successfully.")
+                      help="Launches all untagged jobs, even those which completed successfully.")
+  result.add_argument( '--memlim', dest="memlim", default="guess",
+                       help="Memory limit per process imposed by ulimit. "\
+                            "\"guess\" lets lada make an uneducated guess. ")
+  result.add_argument( '--ppn', dest="ppn", default= cpus_per_node, type=int,
+                       help="Number of processes per node.")
   if len(accounts) != 0:
     result.add_argument( '--account', dest="account", choices=accounts, default=accounts[0],
                          help="Account on which to launch job. Defaults to system default." )

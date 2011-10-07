@@ -9,11 +9,8 @@ from ..opt.decorators import add_setter
 class Launch(Incar):
   """ A class to launch a single vasp calculation """
 
-  # program = "vasp.mpi"
-  # """ shell command to launch vasp. """
-
   def __init__( self, inplace = True, workdir = None, species = None, \
-                kpoints = Density(), vasp_library=None, **kwargs ):
+                kpoints = Density(), **kwargs ):
     """ Initializes Launch instance.
 
         :Parameters:
@@ -27,10 +24,9 @@ class Launch(Incar):
           kpoints : str or callable
             A string describing the kpoint mesh (in VASP's KPOINT format), or a
             callable returning such a string.
-          vasp_library : str
-            Path to vasp library.
     """
     from ..opt import RelativeDirectory
+    from .. import launch_vasp_as_library, vasp_library, vasp_program
     super(Launch, self).__init__() 
 
     self._workdir = RelativeDirectory(workdir)
@@ -50,6 +46,10 @@ class Launch(Incar):
     
         If None, then use global default `lada.vasp_library`.
     """
+    self.program = vasp_program
+    """ Name/fullpath of vasp program. """
+    self.launch_as_library = launch_vasp_as_library
+    """ Whether to launch vasp as library(True) or a program(False). """
 
     # checks inplace vs workdir
     if self.inplace: 
@@ -124,7 +124,7 @@ class Launch(Incar):
      from os.path import join
      from . import files
      from . import call_vasp
-     from ..opt import redirect
+     from ..opt import redirect, which
      from ..opt.changedir import Changedir
      # moves to working dir only now.
      stdout = join(self._tempdir, files.STDOUT) 
@@ -136,16 +136,15 @@ class Launch(Incar):
        stdout = "/dev/null"
        stderr = "/dev/null"
      with Changedir(self._tempdir):
-       with redirect(fout=stdout, ferr=stderr) as streams:
-         assert comm.real, ValueError("Cannot call vasp without mpi.")
-         call_vasp(self.vasp_library, comm, minversion)
+       if self.launch_as_library: 
+         with redirect(fout=stdout, ferr=stderr) as streams:
+           assert comm.real, ValueError("Cannot call vasp without mpi.")
+           call_vasp(self.vasp_library, comm, minversion)
+       else:
+         try: program = which(self.path)
+         except: program = self.program
+         comm.external(program, out=stdout, err=stderr)
              
-#    with open(join(self._tempdir, files.STDOUT), "w") as stdout:
-#      with open(join(self._tempdir, files.STDERR), "w") as stderr:
-#        vasp_proc = Popen( self.program, cwd = self._tempdir, \
-#                           stdout = stdout, stderr = stderr, shell = True )
-#        vasp_proc.wait() # Wait for completion. Could set a timer here.
-
   def _postrun(self, repat, outdir, comm, norun):
      """ Copies files back to outdir """
      from os.path import exists, join, isdir, realpath

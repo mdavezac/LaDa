@@ -23,6 +23,7 @@ class Escan(object):
     from ..opt import RelativeDirectory
     from ._potential import soH
     from .fftmesh import SmallCells
+    from .. import launch_escan_as_library, escan_program, genpot_program
 
     super(Escan, self).__init__()
     self.inplace = inplace
@@ -127,6 +128,12 @@ class Escan(object):
     """ If True, each node will print. """
     self.symlink = False
     """ Prefer symlink to actual copy where possible. """
+    self.escan_program = escan_program
+    """ Name/fullpath of vasp program. """
+    self.genpot_program = genpot_program
+    """ Name/fullpath of vasp program. """
+    self.launch_library = launch_escan_as_library
+    """ Whether to launch escan/genpot as library(True) or a program(False). """
 
   @property
   def relax(self):
@@ -379,8 +386,10 @@ class Escan(object):
       if do_vff: self._run_vff(structure, outdir, comm, cout, overwrite, norun)
       local_comm = self._local_comm(self.vffrun.structure, comm)
       if local_comm != None:
-        if do_genpot: self._run_genpot(self.vffrun.structure, local_comm, outdir, norun)
-        if self.do_escan: self._run_escan(local_comm, structure, norun)
+        if do_genpot:
+          self._run_genpot(self.vffrun.structure, local_comm, outdir, norun)
+        if self.do_escan:
+          self._run_escan(local_comm, structure, norun)
 
       # don't print timeing if not running.
       if norun == True: return
@@ -449,7 +458,7 @@ class Escan(object):
   def _run_genpot(self, structure, comm, outdir, norun):
     """ Runs genpot only """
     from os.path import basename, join
-    from ..opt import redirect, copyfile
+    from ..opt import redirect, copyfile, which
 
     # using genpot from previous run
     if comm.is_root and self.genpotrun != None:
@@ -488,11 +497,16 @@ class Escan(object):
     copyfile(self.maskr, nothrow='same', comm=comm, symlink=self.symlink)
 
     if norun == False:
-      with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 
-        assert comm.real, RuntimeError('Cannot run escan without mpi.')
-        from ._escan import _call_genpot
-        comm.barrier()
-        _call_genpot(comm)
+      if self.launch_library:
+        with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 
+          assert comm.real, RuntimeError('Cannot run escan without mpi.')
+          from ._escan import _call_genpot
+          comm.barrier()
+          _call_genpot(comm)
+      else:
+        try: program = which(self.genpot_program)
+        except: program = self.genpot_program
+        comm.external(program, out=self._cout(comm), err=self._cerr(comm), append=True)
 
 
   def _write_incar(self, comm, structure, norun=False):
@@ -549,14 +563,19 @@ class Escan(object):
 
   def _run_escan(self, comm, structure, norun):
     """ Runs escan only """
-    from ..opt import redirect
+    from ..opt import redirect, which
 
     self._write_incar(comm, structure, norun)
     if norun == False:
-      with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 
-        assert comm.real, RuntimeError('Cannot run escan without mpi.')
-        from ._escan import _call_escan
-        _call_escan(comm)
+      if self.launch_library:
+        with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 
+          assert comm.real, RuntimeError('Cannot run escan without mpi.')
+          from ._escan import _call_escan
+          _call_escan(comm)
+      else:
+        try: program = which(self.escan_program)
+        except: program = self.escan_program
+        comm.external(program, out=self._cout(comm), err=self._cerr(comm), append=True)
 
   def _get_kpoint(self, structure, comm, norun):
     """ Returns deformed or undeformed kpoint. """

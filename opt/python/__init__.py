@@ -627,3 +627,31 @@ def copyfile( src, dest=None, nothrow=None, comm=None,\
     if 'never' in nothrow: return False
     raise
   else: return True
+
+
+def cpus_per_node():
+  """ Greps /proc/cpuinfo to figure out the number of cpus per node. """
+  from re import compile
+  cpu_re = compile("processor\s*:\s*(\d+)")
+  ncpus = 0
+  with open("/proc/cpuinfo", "r") as file:
+    for line in file:
+      if cpu_re.search(line) != None: ncpus += 1
+  if ncpus == 0: raise RuntimeError("Could not determine number of cpus.")
+  return ncpus
+    
+def total_memory():
+  """ Greps /proc/meminfo to figure out the memory per node. """
+  from re import compile
+  mem_re = compile("MemTotal\s*:\s*(\d+)\s*kB")
+  with open("/proc/meminfo", "r") as file:
+    for line in file:
+      found = mem_re.search(line)
+      if found != None: return int(found.group(1))
+  raise MemoryError("Could not determine total memory from /proc/meminfo.")
+
+def which(program):
+  """ Gets location of program using system command which. """
+  from subprocess import Popen, PIPE
+  output = Popen(["which", program], stdout=PIPE).communicate()[0]
+  return output if output[-1] != '\n' else output[:-1]

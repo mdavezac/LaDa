@@ -101,6 +101,7 @@ class Functional(Launch):
     repat     = deepcopy(repat)  if repat != None else []
     norun     = kwargs.pop("norun", False)
     # makes functor stateless/reads structure from CONTCAR if requested and appropriate.
+    if "external" in kwargs: this.launch_as_library = not kwargs.pop("external")
     if kwargs.pop("restart_from_contcar", self.restart_from_contcar): 
       path = join(outdir, CONTCAR)
       if exists(path):
@@ -167,7 +168,7 @@ class Functional(Launch):
     for name, value in self.special.items():
       if value.value == None: continue
       assert isinstance(value, SpecialVaspParam)
-      string += "functional.%s = %s\n" % (name, value)
+      string += "functional.{0} = {1}\n".format(name, repr(value))
       module = value.__class__.__module__ 
       classname = value.__class__.__name__ 
       if module in modules: modules[module].append(classname)

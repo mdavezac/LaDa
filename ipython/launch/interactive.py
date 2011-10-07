@@ -19,6 +19,7 @@ def launch(self, event, jobdicts):
 
   kwargs = dict(event.kwargs) if event.kwargs != None else dict()
   kwargs['comm'] = world
+  kwargs["external"] = event.external
 
   for current, path in jobdicts:
     # start computations.

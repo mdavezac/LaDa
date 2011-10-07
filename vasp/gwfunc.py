@@ -34,6 +34,9 @@ class GWFunctional(VaspFunctional):
 
 	    These default value are always present unless specifically
 	    overriden. Finally, parameters in ``kwargs`` take precedence.
+      The "npar" parameter is set to the number of processes (comm.size) when
+      performing GW calculations. This cannot be overriden at this time since
+      VASP bails out on any other value.
           vasp : None or vasp functional
 	    If ``vasp`` is present, it will be cloned into this instance, e.g.
 	    the parameters of this instance will be the same as those of
@@ -46,6 +49,9 @@ class GWFunctional(VaspFunctional):
             those from ``vasp``, ``empties``, and ``gwparams``.
     """
     from copy import deepcopy
+
+    super(GWFunctional, self).__init__(**kwargs)
+
     self.empties = {'loptics': True}
     """ Parameters for empty bands DFT calculations. """
     if empties != None: self.empties.update(empties)
@@ -58,7 +64,6 @@ class GWFunctional(VaspFunctional):
     for key in deepcopy(self.gwparams): 
       if key in kwargs: del self.gwparams[key]
     """ Parameters for actual GW calculations. """
-    super(GWFunctional, self).__init__(**kwargs)
     self.gwiterations = gwiterations
     """ Number of gwiterations to perform. """
     
@@ -79,14 +84,17 @@ class GWFunctional(VaspFunctional):
     if 'minversion' in kwargs:
       assert kwargs.pop('minversion') >= 5, \
              ValueError("Requested vasp version < 5 for GW calculations.")
+    if "npar" in kwargs: 
+      empties["npar"] = kwargs.pop("npar")
+    gwparams["npar"] = comm.size
 
     # Performs empty band calculation.
     # check for existence of empty bands calculations.
     empty_bands = self.Extract(join(outdir, join("GW", "empties")), comm=comm)
     if overwrite == False and not empty_bands.success:
-      empties_func = VaspFunctional(vasp=self, **self.empties)
+      empties_func = VaspFunctional(vasp=self, **empties)
       # check that we are performing DFT calculation, otherwise gets default.
-      if empties_func.algo not in ['gw', 'gw0', 'chi', 'scgw', 'scgw0']: 
+      if empties_func.algo in ['gw', 'gw0', 'chi', 'scgw', 'scgw0']: 
         empties_func.algo = VaspFunctional().algo
       assert empties_func.relaxation == "static", ValueError("Cannot perform relaxation in GW.")
       assert empties_func.loptics, ValueError("Cannot perform GW calculations without loptics=True.")
@@ -103,7 +111,8 @@ class GWFunctional(VaspFunctional):
 
     kwargs['restart'] = empty_bands
     for iteration in xrange(self.gwiterations): 
-      gwfunc = VaspFunctional(vasp=self, **self.gwparams)
+      gwfunc = VaspFunctional(vasp=self, **gwparams)
+      assert gwfunc.npar == comm.size
       assert gwfunc.relaxation == "static", ValueError("Cannot perform relaxation in GW.")
       assert gwfunc.loptics, ValueError("Cannot perform GW calculations without loptics=True.")
       assert gwfunc.algo in ['gw', 'gw0', 'scgw', 'scgw0', 'chi'], \
