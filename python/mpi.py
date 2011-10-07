@@ -110,7 +110,7 @@ class NullComm(object):
   external = external
 
 
-if not lada_with_mpi: world, Communicator = NullComm(), NullComm
+if not lada_with_mpi: world, BoostComm = NullComm(), NullComm
 
 def Communicator(comm = None, with_world=False): 
   """ Communication object.
@@ -118,7 +118,8 @@ def Communicator(comm = None, with_world=False):
 
       In most case, this will wrap either none or a boost.mpi communicator.
   """
-  if comm == None: return world if with_world else NullComm() 
-  if isinstance(comm, BoostComm): return comm
-  if isinstance(comm, NullComm): return comm
-  raise ValueError("Unknown communicator type {0}, {1}.".format(type(comm), comm))
+  if comm is None:
+    return world if with_world else NullComm() 
+  if not (isinstance(comm, BoostComm) or isinstance(comm, NullComm)):
+    raise ValueError("Unknown communicator type {0}, {1}.".format(type(comm), comm))
+  return comm

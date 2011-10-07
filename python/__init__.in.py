@@ -152,21 +152,21 @@ if @with_ipython@:
     debug_queue = "queue", "inter"
     accounts = ["BES000"]
     qsub_exe = "sbatch"
-    resource_string = "-N {1}"
+    resource_string = "-N {nnodes}"
+    mpirun_exe = "mpirun -np {nprocs} numa_wrapper -ppn={ppernode} {program}"
     cpus_per_node = 8
     """ Number of cpus per node. """
 
   elif environ.get("NERSC_HOST", "none") == "hopper":
     queues = "debug", "regular", "low", "premimum"
-    resource_string = "mppwidth={0}"
-    mpirun_exe = "aprun -np {nprocs} numa_wrapper -ppn={ppernode} {program}"
+    resource_string = "mppwidth={nprocs}"
+    mpirun_exe = "aprun -n {nprocs} {program}"
     """ Command-line to launch external mpi programs. """
     cpus_per_node = 24
     """ Number of cpus per node. """
 
   elif environ.get("NERSC_HOST", "none") == "carver":
     queues = "debug", "regular", "low"
-    resource_string = "nodes={1}:ppn=8"
 
 # the variables below are only needed by ladabase.
 if @with_ladabase@:

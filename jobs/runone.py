@@ -13,7 +13,7 @@ def main():
 
   parser = ArgumentParser( prog="runone", description = re.sub("\\s+", " ", __doc__[1:]))
   parser.add_argument( "--jobid", dest="n", default=1, \
-                       help="Job number", metavar="N", type="int" )
+                       help="Job number", metavar="N", type=int )
   parser.add_argument( "--relative", dest="relative", default=None, \
                        help="Perform calculations in a directory relative "
                             "current, but starting at RELATIVE, rather than HOME.",
@@ -23,7 +23,7 @@ def main():
                        metavar="Directory" )
   parser.add_argument('--external', action="store_true", dest="external", \
                       help="Launches jobs as external program, not library. Only for VASP at this point.")
-  parser.add_argument('--nprocs', dest="nprocs", default=1,\
+  parser.add_argument('--nprocs', dest="nprocs", default=1, type=int,\
                       help="Number of processors with which to launch job.")
   parser.add_argument('pickle', metavar='FILE', type=str, help='Path to a jobdictionary.')
 
@@ -68,24 +68,26 @@ def main():
       job.compute(comm=comm, outdir=outdir, workdir=workdir, inplace=False, external=options.external)
 
 if __name__ == "__main__":
-  import traceback
-  from boost.mpi import Exception as mpiException, abort, world
-  try: main()
-  except mpiException as e: 
-    for i in range(world.size): 
-      if i == world.rank:
+  from sys import argv
+  if "--external" in argv:
+    import lada
+    lada.lada_with_mpi = False
+    main()
+  else:
+    import traceback
+    from boost.mpi import Exception as mpiException, abort
+    from lada.mpi import world
+    try: main()
+    except mpiException as e: 
+      if world.is_root: 
         traceback.print_exc()
         file.stderr("Encountered mpi exception %s."% (e))
         print 
-      world.barrier()
-    abort(0)
-    raise
-  except: # other exceptions
-    for i in range(world.size): 
-      if i == world.rank:
+      abort(0)
+      raise
+    except: # other exceptions
+      if world.is_root: 
         traceback.print_exc()
         print 
-      world.barrier()
-    abort(0)
-    raise
-
+      abort(0)
+      raise

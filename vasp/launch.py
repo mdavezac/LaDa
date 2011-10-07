@@ -135,15 +135,15 @@ class Launch(Incar):
      elif not comm.is_root: 
        stdout = "/dev/null"
        stderr = "/dev/null"
-       with Changedir(self._tempdir):
-         if self.launch_as_library: 
-           with redirect(fout=stdout, ferr=stderr) as streams:
-             assert comm.real, ValueError("Cannot call vasp without mpi.")
-             call_vasp(self.vasp_library, comm, minversion)
-         else:
-           try: program = which(self.path)
-           except: program = self.program
-           comm.external(program, out=stdout, err=stderr)
+     with Changedir(self._tempdir):
+       if self.launch_as_library: 
+         with redirect(fout=stdout, ferr=stderr) as streams:
+           assert comm.real, ValueError("Cannot call vasp without mpi.")
+           call_vasp(self.vasp_library, comm, minversion)
+       else:
+         try: program = which(self.path)
+         except: program = self.program
+         comm.external(program, out=stdout, err=stderr)
              
   def _postrun(self, repat, outdir, comm, norun):
      """ Copies files back to outdir """

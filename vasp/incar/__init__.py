@@ -237,11 +237,14 @@ class Incar(object):
         symmetry operation. 
     """
     if value == None: self.isym = None
-    elif str(value).lower() == "off" or str(value) == "0": self.params["isym"] = 0
-    elif "isym" in self.params:
-      if self.isym == 0: self.isym = None
-      self.symprec = value
-    else: self.symprec = value
+    elif str(value).lower() == "off" or value is "0" or value is False: self.params["isym"] = 0
+    elif str(value).lower() == "on" or value is True or value is True:
+       self.symprec = None
+       self.isym = None
+    elif isinstance(value, float): 
+       self.symprec = value
+       self.isym = None
+    else: raise ValueError("Uknown value when setting symmetries ({0}).".format(value))
 
   @add_setter
   def set_smearing(self, args):

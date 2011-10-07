@@ -143,7 +143,7 @@ def parser(self, subparsers, opalls):
   result.add_argument( '--memlim', dest="memlim", default="guess",
                        help="Memory limit per process imposed by ulimit. "\
                             "\"guess\" lets lada make an uneducated guess. ")
-  result.add_argument( '--ppn', dest="ppn", default= cpus_per_node,
+  result.add_argument( '--ppn', dest="ppn", default= cpus_per_node, type=int,
                        help="Number of processes per node.")
   if len(accounts) != 0:
     result.add_argument( '--account', dest="account", choices=accounts, default=accounts[0],

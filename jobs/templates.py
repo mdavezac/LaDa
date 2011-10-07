@@ -46,7 +46,7 @@ def default_pbs( file, walltime=None, mppwidth=8, ppernode=None, queue=None, \
   pbsdir = abspath(dirname(file.name))
   nnodes = mppwidth//8 if mppwidth % 8 == 0 else mppwidth//8 + 1
   file.write("#! /bin/bash\n#PBS -l walltime={0}\n".format(walltime))
-  file.write("#PBS -l " + resource_string.format(mppwidth, nnodes, ppernode) + "\n")
+  file.write("#PBS -l " + resource_string.format(nprocs=mppwidth, nnodes=nnodes, ppn=ppernode) + "\n")
   if name != None: 
     file.write("#PBS -N {1}\n\n"\
                "#PBS -V\n"\
@@ -61,14 +61,14 @@ def default_pbs( file, walltime=None, mppwidth=8, ppernode=None, queue=None, \
   if outdir == None: file.write("cd $PBS_O_WORKDIR\n")
   else: file.write("cd {0}\n".format(outdir))
   if memlim < 0:
-    file.write( "ulimit -v `python -c \"from lada.opt import total_memory; total_memory() / {0}\n\"`"\
+    file.write( "ulimit -v `python -c \"from lada.opt import total_memory; print total_memory() / {0}\"`\n"\
                 .format(ppernode) )
   elif memlim > 0:
     file.write( "ulimit -v {0}".format(memlim) )
 
   # aprun on fucking Cray prima donas. mpirun everywhere else.
   if external:
-    file.write("python {0} --nprocs {1}".format(pyscript, mppwidth))
+    file.write("python {0} --nprocs {1} --external".format(pyscript, mppwidth))
   else:
     file.write(mpirun_exe.format(nprocs=mppwidth, program="python {0}".format(pyscript)) )
   for key, value in kwargs.items(): 
@@ -120,7 +120,7 @@ def default_slurm( file, walltime = "05:45:00", mppwidth = 8, ppernode=None, acc
   file.write("#! /bin/bash\n"\
              "#SBATCH --account={1}\n"\
              "#SBATCH --time={0}\n".format(walltime, account)) 
-  file.write("#SBATCH " + resource_string.format(mppwidth, nnodes, ppernode) + "\n")
+  file.write("#SBATCH " + resource_string.format(nprocs=mppwidth, nnodes=nnodes, ppn=ppernode) + "\n")
   if queue != None: file.write("#SBATCH -p {0}\n".format(queue))
   pbsdir = dirname(file.name)
   if name != None:
@@ -132,13 +132,13 @@ def default_slurm( file, walltime = "05:45:00", mppwidth = 8, ppernode=None, acc
                "#SBATCH -o \"{0}/out.%j\"\n".format(pbsdir))
   if outdir != None: file.write("#SBATCH -D {0}\n".format(abspath(outdir)))
   if memlim == "guess":
-    file.write( "ulimit -v `python -c \"from lada.opt import total_memory; total_memory() / {0}\n\"`"\
+    file.write( "ulimit -v `python -c \"from lada.opt import total_memory; print total_memory() / {0}\"`\n"\
                 .format(ppernode) )
   elif memlim != None: 
     file.write( "ulimit -v {0}".format(memlim) )
 
   if external:
-    file.write("python {0} --nprocs {1}".format(pyscript, mppwidth))
+    file.write("python {0} --nprocs {1} --external".format(pyscript, mppwidth))
   else:
     file.write(mpirun_exe.format(nprocs=mppwidth, ppernode=ppernode, program="python {0}".format(pyscript)) )
   for key, value in kwargs.items(): 
