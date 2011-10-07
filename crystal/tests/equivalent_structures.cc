@@ -185,6 +185,7 @@ int main()
               rand()%10-5, rand()%10-5, rand()%10-5;
     } while( is_null(cell.determinant()) );
     if(cell.determinant() < 0) cell.col(0).swap(cell.col(1));
+//   if(i < 4) continue;
     std::cout << "natoms: " << cell.determinant() / latt.cell().determinant()
               << " cell\n" << cell << "\n";
     A = supercell(latt, latt.cell() * cell);

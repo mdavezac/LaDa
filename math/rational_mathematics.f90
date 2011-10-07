@@ -17,12 +17,13 @@ MODULE rational_mathematics
     ! Smith normal form (M), left (A) & right (B) transforms
     integer, intent(out), dimension(3,3) :: M, A, B 
 
-    integer i, minm, maxidx, minidx, multiple, j, nondividx(2), check(9)
+    integer i, minm, maxidx, minidx, multiple, j, nondividx(2), check(9), u
     logical Ldiv(2,2)
 
     A = 0; B = 0; M = H ! M starts out as H, the input matrix
     forall(i=1:3); A(i,i) = 1; B(i,i) = 1; end forall ! A & B = identity
 
+    print *, "M", M
     j = 1 ! Keep track of which row/col we are on
     do ! Keep doing steps (1) and (2) until all elements in j-th row and column are
        ! zero except the one on the diagonal. When j == 1, if the (1,1) element doesn't
@@ -57,25 +58,31 @@ MODULE rational_mathematics
        !print *,"column operations"
        !(2) Use column operations to zero out first row
        ! Divide the colum with the smallest value into the largest
+       print *, ""
        do while (count(M(j,:)/=0) > 1) ! Keep going until only 1 non-zero element in row 1
+          print *, "2. count ", count(M(j,:)/=0), j, M(j, :)
           !call printAMB(A,M,B)
           call get_minmax_indices(M(j,:),minidx,maxidx)
           minm = M(j,minidx)
           ! Subtract a multiple of the column containing the smallest element from
           ! the row containing the largest element
           multiple = M(j,maxidx)/minm ! Factor to multiply by
+          print *, "  multiple", multiple
     !      !print *, "Min:",minm,"maxindex",maxidx,"minindex",minidx
           M(:,maxidx) = M(:,maxidx) - multiple*M(:,minidx)
           B(:,maxidx) = B(:,maxidx) - multiple*B(:,minidx)
+          print *, "         ", count(M(j,:)/=0), M(j, :)
           if (any(matmul(matmul(A,H),B)/=M)) stop "COLS: Transformation matrices didn't work"
+          print *, ""
           !read(*,*)
        enddo ! End of step 2
+       print *, "?? count ", count(M(j,:)/=0), j, M(j, :)
        !call printAMB(A,M,B)
        !print *, "End of step 2"
        if (M(j,j)<0) then ! Change signs
           M(:,j) = -M(:,j); B(:,j) = -B(:,j)
        elseif (M(j,j) == 0) then;call swap_column(M,B,j)
-          !print *, "column swap"
+           print *, "column swap"
           !call printAMB(A,M,B)
        endif
        if (count(M(j,:)/=0) > 1 .or. count(M(:,j)/=0) > 1) cycle
@@ -84,6 +91,7 @@ MODULE rational_mathematics
 
        Ldiv = mod(M(2:,2:),M(1,1)) == 0
        if (j==1 .and. any(Ldiv .eqv. .false.)) then! Add the offending row to row 1 
+          print *, "WTF"
           nondividx = maxloc(mod(M(2:,2:),M(1,1))) ! Find one of the elements that isn't 
           M(1,:) = M(1,:) + M(nondividx(1)+1,:)    ! divided by the diagonal element, and 
           A(1,:) = A(1,:) + A(nondividx(1)+1,:)    ! add the row it's in to row 1

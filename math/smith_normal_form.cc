@@ -1,6 +1,7 @@
 #include "LaDaConfig.h"
 #include "FCMangle.h"
 
+#include <boost/math/common_factor_rt.hpp>
 #include <opt/types.h>
 #include "smith_normal_form.h"
 #include "fuzzy.h"
@@ -101,6 +102,56 @@ namespace LaDa
 
       return result;
     }
+
+    template<class T0, class T1, class T2, class T3>
+    void smith_transform( Eigen::MatrixBase<T0> const &_out, 
+                          Eigen::MatrixBase<T1> &_left,
+                          Eigen::MatrixBase<T2> &_right,
+                          Eigen::MatrixBase<T2> &_smith )
+    {
+      // loop over diagonal elements.
+      size_t jt = 0;
+      { // step 1 in wikipedia page, for columns.
+        
+        // find column index with at least one non-zero entry.
+        for(; jt < M.cols() and M.col(jt) != 0; ++jt);
+        if(jt == M.cols()) return;
+        // swap two rows if condition is true.
+        if(M(t, jt) == 0) 
+        {
+          size_t k(1);
+          for(; k < M.rows() and M(k, jt) == 0; ++k);
+#         ifdef LADA_DEBUG
+            if(k == M.rows())
+              BOOST_THROW_EXCEPTION( error::internal()
+                                       << error::string("Could not find non-zero element."));
+#         endif
+          M.row(0).swap(M.row(k));
+          _left.row(0).swap(_left.row(k));
+        }
+      }
+
+      { // step 2 in wikipedia page, for columns.
+        size_t k(1);
+        for(; k < M.rows() and M(t, jt) % M(k, jt) == 0; ++k);
+        if(k != M.rows())
+        {
+        }
+      }
+
+    }
+
+    void smith_transform( iMatrix3d const &_out, iMatrix3d &_left,
+                          iMatrix3d const &_right, iMatrix3d &_smith )
+    {
+      // set up the system _out = _left * _smith * _right.
+      _left  = iMatrix3d::Identity();
+      _right = iMatrix3d::Identity();
+      _smith = _out;
+
+      smith_transform_impl(_out, _left, _right, _smith);
+    }
+
    
   } // namespace Crystal
 
