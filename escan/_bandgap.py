@@ -22,12 +22,12 @@ def extract(outdir=".", comm = None):
   exists_paths = comm.broadcast([exists(p) for p in paths] if comm.is_root else None)
   if exists_paths[0]: 
     result = ExtractAE( _ExtractE(paths[0], comm = comm) )
-    if result.success: return result
+    return result
   elif exists_paths[1] and exists_paths[2]:
     result = ExtractRefs( _ExtractE(paths[1], comm = comm),\
                           _ExtractE(paths[2], comm = comm),
                           _ExtractE(outdir, comm = comm) )
-    if result.success: return result
+    return result
   class NoBandGap(object): 
     @property
     def success(self): return False

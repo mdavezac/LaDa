@@ -44,20 +44,22 @@ def run(self):
   assert hasattr(self, "rate"), "No rate attribute.\n"
   assert hasattr(self, "mating"), "No mating functor.\n"
   assert hasattr(self, "offspring"), "No offspring attribute.\n"
-  assert hasattr(self, "cmp_indiv"), "No cmp_indiv operation.\n"
+  assert hasattr(self, "comparison"), "No comparison operation.\n"
 
   # creates population if it does not exist.
-  while len(self.population) < self.popsize:
-    j = 0
-    loop = True
-    while loop:
-      indiv = self.comm.broadcast(self.Individual() if self.comm.rank == 0 else None)
-      loop = self.taboo(indiv)
-      j += 1
-      assert j < max(50*self.popsize, 100), "Could not create offspring.\n"
-    indiv.birth = self.current_gen
-    self.population.append(indiv)
-
+  if self.comm.is_root: 
+    while len(self.population) < self.popsize:
+      j = 0
+      loop = True
+      while loop:
+        indiv = self.Individual()
+        loop = self.taboo(indiv)
+        j += 1
+        assert j < max(50*self.popsize, 100), "Could not create offspring.\n"
+      indiv.birth = self.current_gen
+      self.population.append(indiv)
+  self.population = self.comm.broadcast(self.population)
+  
   # evaluates population if need be.
   self.evaluation() 
 
@@ -90,7 +92,13 @@ def run(self):
 
     # finally, sort and replace.
     if self.comm.rank == 0:
-      self.population = sorted( self.population, self.cmp_indiv )[:len(self.population)-nboffspring]
+      # deal with differences in function sorted between python versions.
+      from platform import python_version_tuple
+      if python_version_tuple[0] > 2:
+        from functools import cmp_to_key
+        self.population = sorted(self.population, cmp_to_key(self.comparison))[:len(self.population)-nboffspring]
+      else: 
+        self.population = sorted(self.population, cmp=self.comparison)[:len(self.population)-nboffspring]
       self.population.extend( self.offspring )
     self.population = self.comm.broadcast(self.population)
 

@@ -116,6 +116,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
         
         At this point, checks for files and 
     """
+    from numpy import any, isnan
     from re import compile
     do_escan_re = compile(r'functional\.do_escan\s*=')
 
@@ -127,7 +128,9 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
           if line.find("FINAL eigen energies, in eV") != -1: good += 1
           elif do_escan_re.search(line) != None: is_do_escan = eval(line.split()[-1])
           elif line.find("# Computed ESCAN in:") != -1: good += 1; break
-      return (good == 2 and is_do_escan) or (good == 1 and not is_do_escan)
+      if good == 1 and not is_do_escan: return True
+      if good == 2 and is_do_escan: return not any(isnan(self.solo().eigenvalues))
+      return False
     except: return False
 
   @property

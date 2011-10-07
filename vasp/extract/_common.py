@@ -499,6 +499,8 @@ class Extract(object):
         :type poscar: bool
         :kwarg contcar: Include CONTCAR file
         :type contcar: bool
+        :kwarg procar: Include PROCAR file
+        :type procar: bool
     """
     from os.path import exists, join
     from glob import iglob
@@ -515,6 +517,7 @@ class Extract(object):
     if kwargs.get('chgcar', False):  files.append('CHGCAR')
     if kwargs.get('poscar', False):  files.append('POSCAR')
     if kwargs.get('contcar', False): files.append('CONTCAR')
+    if kwargs.get('procar', False): files.append('PROCAR')
     for file in files:
       file = join(self.directory, file)
       if exists(file): yield file

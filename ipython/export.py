@@ -43,6 +43,8 @@ def export(self, event):
                        help='Include POTCAR files.' )
   parser.add_argument( '--wavecar', action="store_true", dest="wavecar",
                        help='Include WAVECAR files.' )
+  parser.add_argument( '--procar', action="store_true", dest="procar",
+                       help='Include PROCAR files.' )
   group = parser.add_mutually_exclusive_group(required=False)
   group.add_argument( '--down', action="store_true", dest="down",
                        help='Tar from one directory down.' )
@@ -58,33 +60,49 @@ def export(self, event):
   try: args = parser.parse_args(event.split())
   except SystemExit as e: return None
 
-  if 'collect' not in self.api.user_ns:
+  collect = self.api.user_ns.get('collect', None)
+  rootdir = getattr(collect, 'rootdir', None)
+  if collect == None:
     print "Could not find 'collect' object in user namespace."
     print "Please load a job-dictionary."
     return
 
   kwargs = args.__dict__.copy()
   kwargs.pop('filename', None)
-  jobdict = self.api.user_ns.get('current_jobdict_path', None)
+
+  if rootdir == None: 
+    if hasattr(self.api.user_ns.get('collect', None), 'rootdir'): 
+      rootdir = self.api.user_ns.get('collect').rootdir
+  directory = getcwd() if rootdir == None else dirname(rootdir)
+
+  if args.down: directory = join(directory, '..')
+  elif args.dir != None: directory = RelativeDirectory(args.dir).path
+
+  # set of directories visited.
+  directories = set()
+  # set of files to tar
+  allfiles = set()
+  for file in collect.iterfiles(**kwargs):
+    allfiles.add(file)
+    directories.add(dirname(file))
+  # adds files from "with" argument.
+  if hasattr(args.others, "__iter__"):
+    for pattern in args.others:
+      for dir in directories:
+        for sfile in iglob(join(dir, pattern)):
+          if exists(sfile) and isfile(sfile): allfiles.add(sfile)
+  # adds current job dictionary.
+  if 'current_jobdict_path' in self.api.user_ns:
+    if isfile(self.api.user_ns['current_jobdict_path']):
+      allfiles.add(self.api.user_ns['current_jobdict_path'])
+
+  # now tar or list files.
   if args.aslist:
     from IPython.genutils import SList
     directory = getcwd()
-    if args.down: directory = join(directory, '..')
-    elif args.dir != None: directory = RelativeDirectory(args.dir).path
-    try: 
-      result = SList([relpath(file, directory) for file in self.api.user_ns['collect'].iterfiles(**kwargs)])
-      if jobdict != None: result.append(relpath(file, jobdict))
-      return result
-    except Exception as e:
-      print "Encoutered error while tarring file."
-      print e
+    return SList([relpath(file, directory) for file in allfiles])
   else:
-    if jobdict == None: 
-      print "Current job-dictionary does not have a path. Please call savejobs first."
-      return
-    directory = dirname(jobdict)
-    if args.down: directory = join(directory, '..')
-    elif args.dir != None: directory = RelativeDirectory(args.dir).path
+    # get filename of tarfile.
     args.filename = relpath(RelativeDirectory(args.filename).path, getcwd())
     if exists(args.filename): 
       if not isfile(args.filename):
@@ -95,33 +113,14 @@ def export(self, event):
         a = raw_input("File {0} already exists.\nOverwrite? [y/n] ".format(args.filename))
       if a == 'n': print "Aborted."; return
 
+    # figure out the type of the tarfile.
     if args.filename.find(extsep) == -1: endname = ''
     else: endname = args.filename[-args.filename[::-1].find(extsep)-1:][1:]
     if endname in ['gz', 'tgz']:   tarme = tarfile.open(args.filename, 'w:gz')
     elif endname in ['bz', 'bz2']: tarme = tarfile.open(args.filename, 'w:bz2')
     else:                          tarme = tarfile.open(args.filename, 'w')
-    try: 
-      directories = set()
-      allfiles = set()
-      for file in self.api.user_ns['collect'].iterfiles(**kwargs):
-        if file in allfiles: continue
-        allfiles.add(file)
-        tarme.add(file, arcname=relpath(file, directory))
-        directories.add(dirname(file))
-      # adds files from "with" argument.
-      if hasattr(args.others, "__iter__"):
-        for pattern in args.others:
-          for dir in directories:
-            for sfile in iglob(join(dir, pattern)):
-              if sfile in allfiles: continue
-              allfiles.add(sfile)
-              if not exists(sfile): continue
-              tarme.add(sfile, arcname=relpath(sfile, directory))
-      # adds current job dictionary.
-      if jobdict != None: tarme.add(jobdict, arcname=relpath(jobdict, directory))
-    except Exception as e:
-      print "Encoutered error while tarring file."
-      print e
+    for file in allfiles:
+      tarme.add(file, arcname=relpath(file, directory))
     tarme.close()
     print "Saved archive to {0}.".format(args.filename)
 
@@ -144,7 +143,7 @@ def completer(self, event):
 
   data = set(data) - set(["export", "%export"])
   result = set(['--incar', '--doscar', '--poscar', '--chgcar', '--contcar', 
-                '--potcar', '--wavecar', '--list', '--down', '--from', '--with'])
+                '--potcar', '--wavecar', '--procar', '--list', '--down', '--from', '--with'])
 
 
   if '--list' not in data:

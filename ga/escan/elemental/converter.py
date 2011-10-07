@@ -33,7 +33,7 @@ class Converter(object):
     if all( abs(array(self.growth) - [0,0,1]) < 1e-12 ):
       assert n % 2 == 0, ValueError("Must have even number of layers. {0}".format(n))
       if n % 4 == 0:
-        cell = array([[1, 0.5, 0], [0, 0.5, 0], [0, 0, n//4]], dtype='float64')
+        cell = array([[0.5, -0.5, 0], [0.5, 0.5, 0], [0, 0, n//4]], dtype='float64')
       else: 
         cell = array([[1, 0.5, 0], [0, 0.5, 0.5], [0, 0, n//4 + 0.5]], dtype='float64')
     elif all( abs(array(self.growth) - [1,1,0]) < 1e-12 ):

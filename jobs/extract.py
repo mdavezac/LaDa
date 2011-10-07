@@ -298,9 +298,9 @@ class AbstractMassExtract(object):
     return d
 
   def __setstate__(self, arg):
+    if "_rootdir" in arg: arg["_rootdir"].hook = self.uncache
     self.__dict__.update(arg)
     self.comm = None
-    if "_rootdir" in d: d["_rootdir"].hook = self.uncache
        
   def solo(self):
     """ Extraction on a single process.
@@ -601,5 +601,6 @@ class AbstractMassExtractDirectories(AbstractMassExtract):
     from copy import copy
     result = self.__class__(self.rootdir)
     for k, v in self.__dict__.items():
-      if k != '_rootdir': result.__dict__[k] = copy(v)
+      if k == 'dicttype': result.__dict__[k] = v
+      elif k != '_rootdir': result.__dict__[k] = copy(v)
     return result

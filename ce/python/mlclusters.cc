@@ -193,6 +193,19 @@ namespace LaDa
         result += (*i_pi) * i_class->eci;
       return result;
     }
+    types::t_real call_wl( CE::t_MLClusterClasses const &_cls,
+                           Crystal::TStructure<std::string> const &_str,
+                           Crystal::Lattice &_lat )
+    {
+      Crystal::Lattice *old0 = Crystal::Structure::lattice;
+      Crystal::Lattice *old1 = Crystal::TStructure<std::string>::lattice;
+      Crystal::Structure::lattice = &_lat;
+      Crystal::TStructure<std::string>::lattice = &_lat;
+      types::t_real result = call(_cls, _str);
+      Crystal::Structure::lattice = old0;
+      Crystal::TStructure<std::string>::lattice = old1;
+      return result;
+    }
      
     boost::python::object  pis( CE::t_MLClusterClasses const &_cls,
                                 Crystal::TStructure<std::string> const &_str )
@@ -202,6 +215,19 @@ namespace LaDa
       Crystal::convert_string_to_real_structure(_str, str);
       CE::find_pis(_cls, str, pis_);
       return math::numpy::copy_1darray(pis_);
+    }
+    boost::python::object  pis_wl( CE::t_MLClusterClasses const &_cls,
+                                   Crystal::TStructure<std::string> const &_str,
+                                   Crystal::Lattice &_lat )
+    {
+      Crystal::Lattice *old0 = Crystal::Structure::lattice;
+      Crystal::Lattice *old1 = Crystal::TStructure<std::string>::lattice;
+      Crystal::Structure::lattice = &_lat;
+      Crystal::TStructure<std::string>::lattice = &_lat;
+      boost::python::object result = pis(_cls, _str);
+      Crystal::Structure::lattice = old0;
+      Crystal::TStructure<std::string>::lattice = old1;
+      return result;
     }
 
     boost::shared_ptr<CE::t_MLClusterClasses> init2( Crystal::Lattice const &_lat,
@@ -330,8 +356,23 @@ namespace LaDa
         .def("__str__", &tostream<CE::t_MLClusterClasses> )
         .def("clear", &CE::t_MLClusterClasses :: clear )
         .def("__len__", &CE::t_MLClusterClasses::size)
-        .def("__call__", &call, "Returns energy of structure.\n")
-        .def("pis", &pis, "Return numpy vector corresponding to structure pis.\n")
+        .def("__call__", &call)
+        .def("__call__", &call_wl, (bp::arg("structure"), bp::arg("lattice")),
+             "Computes the energy of a given structure. \n\n"
+             ":Parameters:\n"
+             "  structure: `crystal.Structure`\n"
+             "    Structure for which to get pis.\n" 
+             "  lattice: `crystal.Lattice`\n"
+             "    Back-bone lattice of the Ising Hamiltonian.\n" )
+        .def("pis", &pis)
+        .def("pis", &pis_wl, (bp::arg("structure"), bp::arg("lattice")),
+             "Computes the figures for a given structure. \n\n"
+             ":Parameters:\n"
+             "  structure: `crystal.Structure`\n"
+             "    Structure for which to get pis.\n" 
+             "  lattice: `crystal.Lattice`\n"
+             "    Back-bone lattice of the Ising Hamiltonian. " 
+             ":return: numpy vector corresponding to structure pis.\n")
         .def("append", &append)
         .def("append", &appends, bp::args("cluster") = CE::MLClusters(),
              "Appends cluster to object.\n\n"

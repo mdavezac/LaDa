@@ -27,8 +27,9 @@
       - self.rate * self.popsize is the number of offspring at each
         generation. At this point, all offspring are indiscreminately entered in
         the next population.
-      - self.cmp_indiv compares the fitness of two individuals. By default,
-        this GA minimizes.
+      - self.comparison compares the fitness of two individuals A and B, and
+        returns 1 if A is better than B, zero if they are equivalent, and -1 if
+        B is better than A.
       - self.Individual is a class (not an instance) defining individuals. It
         should contain an __init__ function which randomly initializes the
         individual. By default, and instance of self.Individual should have

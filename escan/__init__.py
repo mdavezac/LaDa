@@ -6,9 +6,10 @@ __all__ = [ "Extract", 'MassExtract', "bandgap", "extract_bg", 'ldos',
             'KGrid', 'ReducedKGrid', 'ReducedKDensity', 'soH', 'nonlocalH', 'localH', 
             'folded_spectrum', 'all_electron', 'read_input', 'exec_input', 'KExtract',  
             'majority_representation', 'BPoints', 'ReducedBPoints', 'plot_bands', 'plot_alloybands',
-            'fftmesh', 'EMassFunctional', 'EMassExtract' ]
+            'fftmesh', 'EMassFunctional', 'EMassExtract', 'InnerBPoints', 'ReducedInnerBPoints' ]
 
-from _bandstructure import plot_bands, BPoints, ReducedBPoints, plot_alloybands
+from _bandstructure import plot_bands, BPoints, ReducedBPoints,\
+                           plot_alloybands, InnerBPoints, ReducedInnerBPoints
 from _bandgap import bandgap, extract as extract_bg, Functional as BandGap
 from emass import Functional as EMassFunctional, Extract as EMassExtract
 from _extract import Extract

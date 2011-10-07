@@ -104,7 +104,7 @@ class Fit():
       self._weights.resize((len(self._weights)+1,))
       self._str_onoff.resize((len(self._str_onoff)+1,))
       self._pis.resize((self._pis.shape[0]+1, self._pis.shape[1]))
-      elf._structures.append(structure)
+      self._structures.append(structure)
 
     # computes pis and adds data
     self._pis[-1,:] = self._classes.pis(structure)
@@ -297,7 +297,7 @@ class PairRegulatedFit(Fit):
 
     return A, b 
 
-def leave_one_out( fitter ):
+def leave_one_out(fitter, exclude=None):
   """ Performs leave-many out on fitter using the given sets. 
       Returns a matrix where each line contains the fitted and predicted structures.
       The predictions are the diagonal elements.
@@ -305,9 +305,17 @@ def leave_one_out( fitter ):
   import numpy
 
   ncls, nstr = fitter.size()  
+  
+  nloo = nstr
+  if hasattr(exclude, "__call__"): 
+    nloo = len([0 for i, str in enumerate(fitter._structures) if not exclude(i, str)])
+  elif hasattr(exclude, "__contains__"): 
+    nloo = len([0 for i in xrange(nstr) if i not in exclude])
+
 
   # matrix which holds errors for all structures. 
-  errors = numpy.zeros( (nstr,nstr), dtype='float64')
+  training = numpy.zeros( (nloo,nstr-1), dtype='float64')
+  preds = numpy.zeros( (nloo, 1), dtype='float64')
   # fitting matrices from which to get errors.
   fitter.extinguish_structure() 
   A_all, b_all = fitter()
@@ -315,13 +323,21 @@ def leave_one_out( fitter ):
   b_all = b_all[:nstr].copy()
 
   # loop over fitting sets.
+  j = 0
   for i in xrange(nstr):
+    if hasattr(exclude, "__call__"):
+      if exclude(i, fitter._structures[i]): continue
+    elif hasattr(exclude, "__contains__"): 
+      if i in exclude: continue
     fitter.extinguish_structure(i)
     A, b = fitter()
     x, residues, rank, s = numpy.linalg.lstsq(A, b)
-    errors[i, :] = numpy.dot(A_all, x) - b_all
+    fitted = numpy.dot(A_all, x) - b_all
+    training[j, :] = fitted[[k for k in xrange(nstr) if k != i]]
+    preds[j, 0] = fitted[i]
+    j += 1
 
-  return errors
+  return training, preds
 
 
 def leave_many_out( fitter, sets ):
