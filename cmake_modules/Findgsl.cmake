@@ -8,6 +8,7 @@ find_path(_GSL_INCLUDE_DIRS
   gsl_matrix.h
   PATHS
   $ENV{GSL_INCLUDE_DIRS}
+  $ENV{GSL_DIR}/include
   ${INCLUDE_INSTALL_DIR}
   PATH_SUFFIXES
   gsl
@@ -17,12 +18,16 @@ FIND_LIBRARY(_GSL_LIBRARY
   gsl
   PATH
   $ENV{GSL_LIBRARY_DIR}
+  $ENV{GSL_INCLUDE_DIR}/../lib
+  $ENV{GSL_DIR}/lib
 )
 
 FIND_LIBRARY(_GSLCBLAS_LIBRARY
   gslcblas
   PATH
   $ENV{GSL_LIBRARY_DIR}
+  $ENV{GSL_INCLUDE_DIR}/../lib
+  $ENV{GSL_DIR}/lib
 )
 
 
