@@ -384,7 +384,10 @@ class Escan(object):
         print >>file, "# Performing calculations. "
       
       # makes calls to run
-      if do_vff: self._run_vff(structure, outdir, comm, cout, overwrite, norun)
+      if do_vff:
+        vffcomm = comm.split(comm.is_root)
+        if comm.is_root: self._run_vff(structure, outdir, vffcomm, cout, overwrite, norun)
+        comm.barrier()
       local_comm = self._local_comm(self.vffrun.structure, comm)
       if local_comm != None:
         if do_genpot:
