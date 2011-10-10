@@ -132,7 +132,7 @@ class Escan(object):
     """ Name/fullpath of vasp program. """
     self.genpot_program = genpot_program
     """ Name/fullpath of vasp program. """
-    self.launch_library = launch_escan_as_library
+    self.launch_as_library = launch_escan_as_library
     """ Whether to launch escan/genpot as library(True) or a program(False). """
 
   @property
@@ -302,6 +302,7 @@ class Escan(object):
     # attributes of self, with value to use for calculations launch. 
     # If an attribute cannot be found to exist in escan, then vff attributes
     # are checked, and lastly vff.minimizer attributes.
+    if "external" in kwargs: this.launch_as_library = not kwargs.pop("external")
     for key in kwargs.keys():
       if hasattr(this, key): setattr(this, key, kwargs[key])
       elif hasattr(this.vff, key): setattr(this.vff, key, kwargs[key])
@@ -497,7 +498,7 @@ class Escan(object):
     copyfile(self.maskr, nothrow='same', comm=comm, symlink=self.symlink)
 
     if norun == False:
-      if self.launch_library:
+      if self.launch_as_library:
         with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 
           assert comm.real, RuntimeError('Cannot run escan without mpi.')
           from ._escan import _call_genpot
@@ -567,7 +568,7 @@ class Escan(object):
 
     self._write_incar(comm, structure, norun)
     if norun == False:
-      if self.launch_library:
+      if self.launch_as_library:
         with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 
           assert comm.real, RuntimeError('Cannot run escan without mpi.')
           from ._escan import _call_escan
@@ -629,8 +630,12 @@ class Escan(object):
         Earlier versions may not have all the attributes that now exist by
         defaults. This routines adds them when unpickling.
     """
+    from .. import launch_escan_as_library, escan_program, genpot_program
     self.__dict__.update(value)
     self.symlink = self.__dict__.get('symlink', True)
+    self.launch_as_library = self.__dict__.pop('launch_as_library', launch_escan_as_library)
+    self.escan_program = self.__dict__.pop('escan_program', escan_program)
+    self.genpot_program = self.__dict__.pop('genpot_program', genpot_program)
     for key, value in self.__class__().__dict__.iteritems():
        if not hasattr(self, key): setattr(self, key, value)
 

@@ -230,8 +230,6 @@ class Launch(Incar):
         Takes care of older pickle versions.
     """
     Incar.__setstate__(self, args)
-    if "print_from_all" not in self.__dict__:
-      self.__dict__["print_from_all"] = False
-    if "vasp_library" not in self.__dict__:
-      self.__dict__["vasp_library"] = None
+    for key, value in self.__class__().__dict__.iteritems():
+       if not hasattr(self, key): setattr(self, key, value)
 
