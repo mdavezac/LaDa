@@ -2,10 +2,10 @@
 __docformat__ = "restructuredtext en"
 __all__ = [ "SpecialVaspParam", "NElect", "Algo", "Precision", "Ediff",\
             "Encut", "FFTGrid", "Restart", "UParams", "IniWave",\
-            "Incar", "Magmom", 'Npar' ]
+            "Incar", "Magmom", 'Npar', 'Boolean', 'Integer', 'Choices', 'PrecFock' ]
 from _params import SpecialVaspParam, NElect, Algo, Precision, Ediff,\
                     Encut, FFTGrid, Restart, UParams, IniWave, Magmom,\
-                    Npar
+                    Npar, Boolean, Integer, PrecFock
 from ...opt.decorators import add_setter
 
 
@@ -31,7 +31,7 @@ class Incar(object):
              - 1 would mean +1 electron
              - -1 would mean +1 hole
              - etc
-         - ``algo``: electronic minimization. Can be \"very fast\", \"fast\", or \"normal\" (default). 
+         - ``algo``: electronic minimization. Can be \"very fast\", \"fast\" (default), or \"normal\".
          - ``precision``: sets accuracy of calculation. Can be \"accurate\"
            (default), \"low\", \"medium\", \"high\".
          - ``ediff``: sets the tolerance per atom of electronic minimization.
@@ -51,8 +51,17 @@ class Incar(object):
          - ``addgrid``: Defaults to None.
          - ``nupdown``: Defaults to None.
          - ``loptics``: Defaults to None.
-         - ``lmaxmix``: Defaults to None.
+         - ``lmaxmix``: Defaults to 4.
          - ``magmom``: Defaults to None.
+         - ``weimin``: Defaults to 0.
+         - ``lwave`` : Defaults to None. 
+         - ``lmaxfockae``: Defaults to None.
+         - ``nomega``: Defaults to None.
+         - ``precfock``: Defaults to None.
+         - ``encutgw``: Defaults to None.
+         - ``lrpa``: Defaults to None.
+         - ``lpead``: Defaults to None.
+         - ``nelm``: Defaults to None.
          - ``restart``: the return from previous vasp run to use as restart. 
 
              >> save_this_object = vasp(some parameters) # makes a vasp call.
@@ -112,8 +121,12 @@ class Incar(object):
     self.add_param = "symprec",     None
     self.add_param = "lcorr",       None
     self.add_param = "nupdown",     None
-    self.add_param = "loptics",     None
     self.add_param = "lmaxmix",     4
+    self.add_param = "weimin",      0
+    self.add_param = "lmaxfockae",  None
+    self.add_param = "nomega",      None
+    self.add_param = "encutgw",     None
+    self.add_param = "encutlf",     None
     # objects derived from SpecialVaspParams will be recognized as such and can
     # be added without further fuss.
     self.nelect      = NElect(0)
@@ -128,6 +141,12 @@ class Incar(object):
     self.iniwave     = IniWave(None)
     self.magmom      = Magmom()
     self.npar        = Npar(None)
+    self.lwave       = Boolean("lwave", None)
+    self.precfock    = PrecFock(None)
+    self.lrpa        = Boolean("lrpa", None)
+    self.loptics     = Boolean("loptics", None)
+    self.lpead       = Boolean("lpead", None)
+    self.nelm        = Integer("nelm", None)
 
 
   def incar_lines(self, *args, **kwargs):
@@ -218,11 +237,14 @@ class Incar(object):
         symmetry operation. 
     """
     if value == None: self.isym = None
-    elif str(value).lower() == "off" or str(value) == "0": self.params["isym"] = 0
-    elif "isym" in self.params:
-      if self.isym == 0: self.isym = None
-      self.symprec = value
-    else: self.symprec = value
+    elif str(value).lower() == "off" or value is "0" or value is False: self.params["isym"] = 0
+    elif str(value).lower() == "on" or value is True or value is True:
+       self.symprec = None
+       self.isym = None
+    elif isinstance(value, float): 
+       self.symprec = value
+       self.isym = None
+    else: raise ValueError("Uknown value when setting symmetries ({0}).".format(value))
 
   @add_setter
   def set_smearing(self, args):
@@ -391,4 +413,3 @@ class Incar(object):
     super(Incar, self).__setattr__("params", args[1])
     super(Incar, self).__setattr__("special", args[2])
     d = self.__dict__.update(args[0])
-

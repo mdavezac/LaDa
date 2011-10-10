@@ -1,8 +1,12 @@
 """ Cluster Expansion Module. """
 __docformat__ = "restructuredtext en"
+__all__ = [ "Cubic", "apply_rotation", "apply_symmetry", "equivalents", 
+            "ClusterClasses", "Clusters", "Cluster", "create_pairs", 
+            "find_pis", "MLCluster", "MLClusters", "MLClusterClasses",
+            "ce_check" ]
 from _ce import Cubic, apply_rotation, apply_symmetry, equivalents,\
                 ClusterClasses, Clusters, Cluster, create_pairs, \
-                find_pis, MLCluster, MLCluster, MLClusterClasses, ce_check
+                find_pis, MLCluster, MLClusters, MLClusterClasses, ce_check
 from _fit import *
 
 def _lattdeco(method):
@@ -25,7 +29,7 @@ def read_jtypes(path, lattice, pairs = 0):
   from numpy import array
   from ..crystal import lattice_context
   from ..crystal.bravais import bcc, fcc
-  from . import MLCluster, MLClusterClasses, _create_clusters
+  from _ce import _create_clusters
 
   if lattice == "bcc": lattice = bcc(); lattice.sites[0].type = "A", "B"
   elif lattice == "fcc": lattice = fcc(); lattice.sites[0].type = "A", "B"
@@ -84,34 +88,79 @@ def read_mbce_structures(directory):
       result[-1].energy = float(line.split()[1])
   return result
 
-def cluster_factory(lattice, **keywords):
+def cluster_factory(lattice, J0=False, J1=False, **mb):
+  """ Returns class of cluster classes. 
+
+      :Parameters:
+        lattice : `lada.crystal.Lattice`
+          The backbone lattice on which the Ising model is created.
+        J0 : boolean
+          If True, adds zero order term.
+        J1 : boolean
+          If True, adds on-site terms.
+        **mb: 
+          All other many body terms, where the keys should be "B2", "B3", "Bn",
+          where n is the order of the many-body interaction, and the values is
+          the number of shells to look for.
+  """
   from re import compile, match
-  from . import _create_clusters
+  from ._ce import _create_clusters
+  from ..crystal import which_site
 
   # checks that keywords are well formed.
   key_regex = compile("B(\d+)")
-  for key in keywords.keys(): 
+  for key in mb.keys(): 
     a_re = match(key_regex, key)
     assert a_re != None, "Keyword %s is not of the form B(\d+)" % (key)
     assert a_re.end() == len(key), "Keyword %s is not of the form B(\d+)" % (key)
     assert int(a_re.group(1)) > 1, "Cannot understand keyword %s" % (key)
-    assert keywords[key] > 0, "Cannot understand input %s=%i" % (key, keywords[key])
+    assert mb[key] >= 0, "Cannot understand input %s=%i" % (key, mb[key])
 
   # sanity check.
-  assert len(keywords) > 0, "No keywords found on input. Can't construct clusters.\n"
+  assert len(mb) > 0 or J0 or J1, ValueError("No clusters to create.")
 
-  keys = sorted(keywords.keys(), cmp)
+  # computes equivalent sites.
+  equiv_sites = set( i for i in range(len(lattice.sites)) ) 
+  for i, site in enumerate(lattice.sites):
+    if i not in equiv_sites: continue
+    for op in lattice.space_group:
+      j = which_site( op(site.pos), lattice )
+      if j != i and j in requiv_sites: equiv_sites.remove(j)
 
+  result = None
   # now creates multi-lattice clusters, along with index bookkeeping.
-  result = _create_clusters(lattice, nth_shell=0, order=0, site=0) # J0
+  if J0: result = _create_clusters(lattice, nth_shell=0, order=0, site=0) # J0
   # creates J1 for these sites.
-  for site in _equivalent_sites(lattice):
-    result.extend(_create_clusters(lattice, nth_shell=0, order=1, site=site))
+  if J1: 
+    for site in equiv_sites:
+      dummy = _create_clusters(lattice, nth_shell=0, order=1, site=site)
+      if result == None: result = dummy
+      else: result.extend(dummy)
   # creates many bodies.
-  for site in _equivalent_sites(lattice):
-    for key in keys:
+  for site in equiv_sites:
+    for key in sorted(mb.keys(), cmp):
+      if mb[key] == 0: continue
       regex = match(key_regex, key)
       order = int(regex.group(1))
-      shell = keywords[key]
-      result.extend(_create_clusters(lattice, nth_shell=shell, order=order, site=site))
+      dummy = _create_clusters(lattice, nth_shell=mb[key], order=order, site=site)
+      if result == None: result = dummy
+      else: result.extend(dummy)
   return result
+
+def exec_input(script, namespace = None):
+  """ Executes an input script including namespace for cluster expansion. """ 
+  from ..opt import exec_input as opt_exec_input
+
+  dictionary = {}
+  for key in __all__: dictionary[key] = globals()[key]
+  if namespace != None: dictionary.update(namespace)
+  return opt_exec_input(script, dictionary)
+
+def read_input(filepath = "input.py", namespace = None):
+  """ Reads an input file including namespace for cluster expansion. """ 
+  from ..opt import read_input as opt_read_input
+
+  dictionary = {}
+  for key in __all__: dictionary[key] = globals()[key]
+  if namespace != None: dictionary.update(namespace)
+  return opt_read_input(filepath, dictionary)

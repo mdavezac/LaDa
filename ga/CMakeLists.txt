@@ -1,9 +1,9 @@
-set(PYGA_PY darwin.py random_search.py  standard.py bitstring.py)
+set(PYGA_PY darwin.py random_search.py  standard.py bitstring.py functional.py extract.py history.py)
 
 set(which_gapackages "'bitstring', 'standard', 'darwin', 'random_search'")
 
 if(ce_functional)
-  set(PYGA_PY ${PYGA_PY} ce.py)
+  add_subdirectory(ce)
   set(which_gapackages "${which_gapackages}, 'ce'")
 endif(ce_functional)
 

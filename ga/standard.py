@@ -74,7 +74,7 @@ def tournament( self, size = 2 ):
   list_ = list_[:size]
   result = list_[0]
   for b in list_[1:]:
-    if self.cmp_indiv(self.population[b], self.population[result]):
+    if self.comparison(self.population[b], self.population[result]) == -1:
       result = b;
   return result
 
@@ -108,6 +108,7 @@ def best(self):
   return True
 
 def print_population(self):
+  """ Print population to output stream. """
   if not self.comm.do_print: return True
   print "  Population: "
   for indiv in self.population:
@@ -115,6 +116,7 @@ def print_population(self):
   return True
 
 def print_offspring(self):
+  """ Print offspring to output stream. """
   if not self.comm.do_print: return True
   string = ''
   for indiv in self.population:

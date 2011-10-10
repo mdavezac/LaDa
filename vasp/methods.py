@@ -96,7 +96,6 @@ class RelaxCellShape(object):
             Otherwise, the keywords are passed on to the `vasp` functional.
     """
     from copy import deepcopy
-    from math import fabs 
     from os import getcwd
     from os.path import join
     from shutil import rmtree
