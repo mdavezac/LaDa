@@ -54,50 +54,28 @@ namespace LaDa
         friend class load_n_save::access; 
 #     endif
       public: 
+        //! Type of the contained data.
+        typedef AtomData<T_TYPE> element_type;
         //! Type of the species.
         typedef T_TYPE t_Type;
 
-        // Macro to initialize self in constructor.
-#       ifdef LADA_SELF
-#         error LADA_SELF already defined
-#       endif
-#       ifdef LADA_DO_PYTHON
-#         define LADA_SELF(object) , self_(object)
-#       else
-#         define LADA_SELF(object)
-#       endif
         //! Constructor
         template<class T_DERIVED>
           Atom   ( Eigen::DenseBase<T_DERIVED> const &_pos, t_Type const &_in,
                    types::t_int _site = -1, types::t_unsigned _freeze = AtomFreezeMixin::frozen::NONE )
-               : atom_(new AtomData<T_TYPE>(_pos, _in, _site, _freeze)) LADA_SELF(Py_None) {}
+               : atom_(new AtomData<T_TYPE>(_pos, _in, _site, _freeze)) {}
         //! Constructor
-        Atom() : atom_(new AtomData<T_TYPE>) LADA_SELF(Py_None) {}
+        Atom() : atom_(new AtomData<T_TYPE>)  {}
         //! Copy Constructor
-        Atom(const Atom &_c ) : atom_(_c.atom_) LADA_SELF(_c.self_)
-        {
-#         ifdef LADA_DO_PYTHON
-            if(self_ != Py_None) Py_INCREF(self_)
-#         endif
-        };
-#       undef LADA_SELF
+        Atom(const Atom &_c ) : atom_(_c.atom_) {}
 #       ifdef LADA_DO_PYTHON
           //! Constructor
           Atom   (PyObject *_self)
-               : atom_(new AtomData<T_TYPE>), self_(_self) {}
-            { if(self_ != Py_None) Py_INCREF(self_); };
+               : atom_(new AtomData<T_TYPE>(_self)) {}
           //! Returns self object.
-          boost::python::object self() const
-          { 
-            namespace bp = boost::python;
-            return bp::object(bp::borrowed<>(self_)); 
-          }
+          boost::python::object self() const { return atom_->self(); }
           //! Sets python back reference if it is currently null.
-          void set_self(PyObject *_self)
-          {
-            if(self_ != Py_None) return;
-            self_ = _self; Py_INCREF(_self); 
-          }
+          void set_self(PyObject *_self) { atom_->set_self(_self); }
 #       endif
           //! Points to owned data.
           AtomData<T_TYPE> const* operator->() const { return atom_.get(); }
@@ -136,10 +114,6 @@ namespace LaDa
 #       ifdef LADA_WITH_LNS
           //! To load and save to xml-like input.
           template<class T_ARCHIVE> bool lns_access(T_ARCHIVE &_ar, const unsigned int _version);
-#       endif
-#       ifdef LADA_DO_PYTHON
-          //! Pointer to python object referencing this object.
-          PyObject *self_;
 #       endif
           //! \brief This object owns it own data. 
           //! \details Makes python memory management much easier.

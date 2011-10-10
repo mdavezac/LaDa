@@ -24,17 +24,22 @@ namespace boost
 {
   namespace python
   {
-    // So boost python knows how to call the constructors.
-    template<>
-      struct has_back_reference<typename LaDa::crystal::traits::StructureData<std::string>::t_Atom> : mpl::true_ {};
-    // So boost python knows how to call the constructors.
-    template<>
-      struct has_back_reference<
-        typename LaDa::crystal::traits::StructureData< std::vector<std::string> >::t_Atom> : mpl::true_ {};
-    // So boost python knows how to call the constructors.
-    template<>
-      struct has_back_reference<
-        typename LaDa::crystal::traits::StructureData< std::set<std::string> >::t_Atom> : mpl::true_ {};
+    template<class T> struct pointee< LaDa::crystal::Atom<T> > 
+    {
+      typedef LaDa::crystal::AtomData<T> type;
+    };
+
+//     // So boost python knows how to call the constructors.
+//     template<>
+//       struct has_back_reference<typename LaDa::crystal::traits::StructureData<std::string>::t_Atom> : mpl::true_ {};
+//     // So boost python knows how to call the constructors.
+//     template<>
+//       struct has_back_reference<
+//         typename LaDa::crystal::traits::StructureData< std::vector<std::string> >::t_Atom> : mpl::true_ {};
+//     // So boost python knows how to call the constructors.
+//     template<>
+//       struct has_back_reference<
+//         typename LaDa::crystal::traits::StructureData< std::set<std::string> >::t_Atom> : mpl::true_ {};
   }
 }
 
@@ -46,18 +51,16 @@ namespace LaDa
     template<class T> struct atom
     {
       typedef typename crystal::traits::StructureData<T>::t_Atom type;
+      typedef typename type::element_type element;
     };
     template<class T> 
       bp::object get_pos(typename atom<T>::type &_in)
       {
-        std::cout << "HERE\n";
-        std::cout << ~_in.pos << "\n";
-        std::cout << "THERE\n";
-        if(_in.self().ptr() != Py_None)
+        if(_in.self().ptr() == Py_None)
         {
-           typename bp::reference_existing_object::apply<typename atom<T>::type const*>::type converter;
-           bp::object self = bp::object(bp::handle<>(converter(&_in)));
-           self.attr("_set_self")();
+           typename bp::reference_existing_object::apply<typename atom<T>::element *>::type converter;
+           converter(_in.get());
+//          self.attr("_set_self")();
         }
         return math::numpy::array_from_ptr<math::rVector3d::Scalar>(_in.pos.data(), 3, _in.self().ptr()); 
       }
@@ -146,14 +149,15 @@ namespace LaDa
       }
 
     template< class T_TYPE >
-      bp::class_<typename atom<T_TYPE>::type>
+      bp::class_<typename atom<T_TYPE>::element, typename atom<T_TYPE>::type, boost::noncopyable>
         expose_typed_atom( const std::string &_name,
                                 const std::string &_ds,
                                 const std::string &_typeds )
         {
           namespace bp = boost::python;
           typedef typename crystal::traits::StructureData< T_TYPE >::t_Atom t_Atom;
-          return bp::class_< t_Atom >
+          typedef typename t_Atom::element_type t_Element;
+          return bp::class_<t_Element, t_Atom, boost::noncopyable>
           ( 
             _name.c_str(), 
             ( 
@@ -166,7 +170,7 @@ namespace LaDa
                  "- same as above + a type value.\n"
                  "- same as above + a site index.\n"
             ).c_str()
-          )//.def(bp::init<t_Atom const &>())
+          ); //.def(bp::init<t_Atom const &>())
           //.def( "__init__", bp::raw_constructor(&constructor<T_TYPE>),
           //      ( "Initialize an " + _name + ".\n\n"
           //        ":Parameters:\n"
@@ -180,21 +184,20 @@ namespace LaDa
           //        "AtomSet) of the constructor.\n"
           //        "  site : int\n    Site index. Can only be attained via a keyword only."
           //        "  freeze : int\n    Site index. Can only be attained via a keyword only.").c_str())
-           .add_property
-             (
-               "pos", 
-               bp::make_function(&get_pos<T_TYPE>, bp::with_custodian_and_ward_postcall<1, 0>()),
-               &set_pos<T_TYPE>,
-               "A 1-dimensional numpy array of length 3 containing atomic position in cartesian units."
-             )
-           .def_readwrite( "site",   &t_Atom::site,
-                           "index of the \"site\" as referenced by a LaDa.Lattice object." )
-           .def_readwrite( "freeze", &t_Atom::freeze )
-           .def_readwrite( "type", &t_Atom::type )
-           .def_pickle( python::pickle< t_Atom >() )
-           .add_property("_self", &t_Atom::self)
-           .def("_set_self", &set_self<T_TYPE>)
-           .def( "__str__",  &tostream<t_Atom> );
+//          .add_property
+//            (
+//              "pos", 
+//              bp::make_function(&get_pos<T_TYPE>, bp::with_custodian_and_ward_postcall<1, 0>()),
+//              &set_pos<T_TYPE>,
+//              "A 1-dimensional numpy array of length 3 containing atomic position in cartesian units."
+//            )
+//          .def_readwrite( "site",   &t_Element::site,
+//                          "index of the \"site\" as referenced by a LaDa.Lattice object." )
+//          .def_readwrite( "freeze", &t_Element::freeze )
+//          .def_readwrite( "type", &t_Element::type );
+//          .def_pickle( python::pickle< t_Element >() )
+//          .def("_set_self", &set_self<T_TYPE>)
+//          .def( "__str__",  &tostream<t_Element> );
         }
 
     void expose_atom()
@@ -220,21 +223,21 @@ namespace LaDa
         "A set is a collection of unique strings.",
         "set of strings representing the atomic specie(s) at this site.\n\n"
         "This is a set in the sense of a collection of unique strings."
-      ).add_property("kind", &set_kind< std::set<std::string> >, "Occupation is a set of strings.");
-      expose_typed_atom< std::vector<std::string> >
-      (
-        "AtomVec", 
-        "Atom for which the type is specified as a list of strings.",
-        "List of atomic species."
-      ).add_property("kind", &list_kind< std::vector<std::string> >, "Occupation is a list of strings.");
-      expose_typed_atom<std::string>
-      (
-        "AtomStr", 
-        "Atom for which the type is specified as a strings.\n\n"
-        "A set is a collection of unique strings.",
-        "String representing the occupation."
-      ).add_property("kind", &scalar_kind<std::string>, "Occupation is a string.");
-      bp::register_ptr_to_python< std::auto_ptr<atom<std::string>::type> >();
+      ); //.add_property("kind", &set_kind< std::set<std::string> >, "Occupation is a set of strings.");
+//     expose_typed_atom< std::vector<std::string> >
+//     (
+//       "AtomVec", 
+//       "Atom for which the type is specified as a list of strings.",
+//       "List of atomic species."
+//     ).add_property("kind", &list_kind< std::vector<std::string> >, "Occupation is a list of strings.");
+//     expose_typed_atom<std::string>
+//     (
+//       "AtomStr", 
+//       "Atom for which the type is specified as a strings.\n\n"
+//       "A set is a collection of unique strings.",
+//       "String representing the occupation."
+//     ).add_property("kind", &scalar_kind<std::string>, "Occupation is a string.");
+//     bp::register_ptr_to_python< std::auto_ptr<atom<std::string>::type> >();
     }
   }
 } // namespace LaDa
