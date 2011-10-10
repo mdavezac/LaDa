@@ -24,8 +24,7 @@ namespace LaDa
     //! \throw error::not_a_supercell if `_unitcell.inverse() * supercell` is
     //!        not an integer matrix, e.g. supercell is not actually a
     //!        supercell of the lattice.
-    //! \throw error::negative_volume if either matrix has a negative volume.
-    //!        Currently can't find smith normal form for these matrices.
+    //! \throw error::singular_matrix if either matrix is singular.
     t_SmithTransform smith_transform( rMatrix3d const &_unitcell,
                                       rMatrix3d const &_supercell );
 
@@ -66,6 +65,7 @@ namespace LaDa
                smith_index( _transformation, _pos )
              );
     }
+
   } // namespace opt
 
 } // namespace LaDa

@@ -60,8 +60,8 @@ if(NOT compile_debug_tests)
     math(EXPR INCREMENT "${INCREMENT} + 1")
 
   endforeach(TYPE ${TYPES})
-
 endif(NOT compile_debug_tests)
+
 
 MACRO(SET_TYPE increment typename typedef)
   if(${increment} EQUAL 0)
@@ -79,17 +79,17 @@ endmacro(SET_TYPE)
   foreach(INCREMENT   1 2)
     SET_TYPE(INCREMENT TYPENAME TYPE)
 
-#   add_executable(copy_atom${TYPENAME} copy_atom.cc)
-#   set_property( TARGET copy_atom${TYPENAME} PROPERTY COMPILE_DEFINITIONS
-#     LADA_INCREMENT=${INCREMENT} LADA_TYPE=${TYPE})
-#   target_link_libraries(copy_atom${TYPENAME} crystal)
-#   ADD_TEST(copy_atom${TYPENAME} ${CMAKE_CURRENT_BINARY_DIR}/copy_atom${TYPENAME})
+    add_executable(copy_atom${TYPENAME} copy_atom.cc)
+    set_property( TARGET copy_atom${TYPENAME} PROPERTY COMPILE_DEFINITIONS
+      LADA_INCREMENT=${INCREMENT} LADA_TYPE=${TYPE})
+    target_link_libraries(copy_atom${TYPENAME} crystal)
+    ADD_TEST(copy_atom${TYPENAME} ${CMAKE_CURRENT_BINARY_DIR}/copy_atom${TYPENAME})
 
-#   add_executable(copy_structure${TYPENAME} copy_structure.cc)
-#   set_property( TARGET copy_structure${TYPENAME} PROPERTY COMPILE_DEFINITIONS
-#                 LADA_INCREMENT=${INCREMENT} LADA_TYPE=${TYPE})
-#   target_link_libraries(copy_structure${TYPENAME} crystal)
-#   ADD_TEST(copy_structure${TYPENAME} ${CMAKE_CURRENT_BINARY_DIR}/copy_structure${TYPENAME})
+    add_executable(copy_structure${TYPENAME} copy_structure.cc)
+    set_property( TARGET copy_structure${TYPENAME} PROPERTY COMPILE_DEFINITIONS
+                  LADA_INCREMENT=${INCREMENT} LADA_TYPE=${TYPE})
+    target_link_libraries(copy_structure${TYPENAME} crystal)
+    ADD_TEST(copy_structure${TYPENAME} ${CMAKE_CURRENT_BINARY_DIR}/copy_structure${TYPENAME})
 
     add_executable(supercell_${TYPENAME} supercell.cc)
     set_property( TARGET supercell_${TYPENAME} PROPERTY COMPILE_DEFINITIONS
@@ -132,11 +132,11 @@ endmacro(SET_TYPE)
     target_link_libraries(periodic_dnc${TYPENAME} crystal)
     ADD_TEST(periodic_dnc${TYPENAME} ${CMAKE_CURRENT_BINARY_DIR}/periodic_dnc${TYPENAME})
 
-#   add_executable(map_sites${TYPENAME} map_sites.cc)
-#   set_property( TARGET map_sites${TYPENAME} PROPERTY COMPILE_DEFINITIONS
-#                 LADA_INCREMENT=${INCREMENT} LADA_TYPE=${TYPE})
-#   target_link_libraries(map_sites${TYPENAME} crystal)
-#   ADD_TEST(map_sites${TYPENAME} ${CMAKE_CURRENT_BINARY_DIR}/map_sites${TYPENAME})
+    add_executable(map_sites${TYPENAME} map_sites.cc)
+    set_property( TARGET map_sites${TYPENAME} PROPERTY COMPILE_DEFINITIONS
+                  LADA_INCREMENT=${INCREMENT} LADA_TYPE=${TYPE})
+    target_link_libraries(map_sites${TYPENAME} crystal)
+    ADD_TEST(map_sites${TYPENAME} ${CMAKE_CURRENT_BINARY_DIR}/map_sites${TYPENAME})
 
 
   endforeach(INCREMENT)

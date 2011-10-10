@@ -51,10 +51,6 @@ if(NOT compile_debug_tests)
   target_link_libraries(symtests mathlib)
   ADD_TEST( symtests ${CMAKE_CURRENT_BINARY_DIR}/symtests)
 
-  add_executable(smith smith.cc)
-  target_link_libraries(smith mathlib)
-  ADD_TEST( smith ${CMAKE_CURRENT_BINARY_DIR}/smith)
-
   add_executable(gruber gruber.cc)
   target_link_libraries(gruber mathlib)
   if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
@@ -65,3 +61,12 @@ if(NOT compile_debug_tests)
   ADD_TEST( gruber ${CMAKE_CURRENT_BINARY_DIR}/gruber)
 
 endif(NOT compile_debug_tests)
+
+  add_executable(smith_form smith_form.cc)
+  target_link_libraries(smith_form mathlib)
+  ADD_TEST( smith_form ${CMAKE_CURRENT_BINARY_DIR}/smith_form)
+
+  add_executable(smith smith.cc)
+  target_link_libraries(smith mathlib)
+  ADD_TEST( smith ${CMAKE_CURRENT_BINARY_DIR}/smith)
+

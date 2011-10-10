@@ -141,7 +141,7 @@ void set(std::set<std::string> &_in, std::string const &_type)
 
 int main()
 {
-  types::t_int const seed = 1317785207; //time(NULL);
+  types::t_int const seed = time(NULL); // 1317785207; 
   std::cout << seed << "\n";
   srand(seed);
 
@@ -186,8 +186,6 @@ int main()
     } while( is_null(cell.determinant()) );
     if(cell.determinant() < 0) cell.col(0).swap(cell.col(1));
 //   if(i < 4) continue;
-    std::cout << "natoms: " << cell.determinant() / latt.cell().determinant()
-              << " cell\n" << cell << "\n";
     A = supercell(latt, latt.cell() * cell);
     t_Str::iterator i_atom = A.begin();
     t_Str::iterator const i_end = A.end();

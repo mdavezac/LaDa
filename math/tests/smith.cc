@@ -22,9 +22,11 @@ int main()
   rMatrix3d unitcell, supercell, testcell;
   unitcell << 0, 0.5, 0.5, 0.5, 0, 0.5, 0.5, 0.5, 0;
 
-  supercell << 1, 0, 0, 0, 1, 0, 0, 0, 1;
+  supercell << 1, 0, 0,
+               0, 1, 0,
+               0, 0, 1;
   transform = smith_transform(unitcell, supercell);
-  testcell << -1, 1, 1, 0, 2, 0, 0, 0, 2;
+  testcell << 1, 1, -1, 0, 2, 0, 0, 0, 2;
   LADA_DOASSERT(eq(transform.get<0>(), testcell), "Incorrect transform.\n")
   LADA_DOASSERT(eq(transform.get<1>(), iVector3d(1, 2, 2)), "Incorrect quotient.\n")
   LADA_DOASSERT(eq(smith_index(transform, rVector3d(1, -0.5, 0.5)), iVector3d(0, 1, 1)),
@@ -58,15 +60,17 @@ int main()
   catch( error::root &_e ) { result = true; }
   LADA_DOASSERT(result, "Did not catch exception.");
   
-  supercell << 3, 5, 0, 0, -1, 0, -2, -2, 1;
+  supercell <<  3, 0,  5,
+                0, 0, -1,
+               -2, 1, -2;
   supercell = unitcell * supercell;
   transform = smith_transform(unitcell, supercell);
-  testcell << 0, 2, 0, 1, -1, 1, 5, 1, 3;
+  testcell << 0, 2, 0, 1, 5, -1, -2, -4, 0;
   LADA_DOASSERT(eq(transform.get<0>(), testcell), "Incorrect transform.\n")
   LADA_DOASSERT(eq(transform.get<1>(), iVector3d(1, 1, 3)), "Incorrect quotient.\n")
   LADA_DOASSERT(eq(smith_index(transform, rVector3d(1, -0.5, 0.5)), iVector3d(0, 0, 0)),
                "Incorrect smith index.\n" )
-  LADA_DOASSERT(eq(smith_index(transform, rVector3d(-2, 0.5, 0.5)), iVector3d(0, 0, 1)),
+  LADA_DOASSERT(eq(smith_index(transform, rVector3d(-2, 0.5, 0.5)), iVector3d(0, 0, 2)),
                "Incorrect smith index.\n" )
   LADA_DOASSERT(not periodic_images(transform, rVector3d(1, -0.5, 0.5), rVector3d(-2, 0.5, 0.5)),
               "Are not perioric images.\n")

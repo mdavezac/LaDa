@@ -1,10 +1,9 @@
-set( LIBMATH_F90 rational_mathematics.f90 )
 set( LIBMATH_HEADERS 
      compare_norms.h eigen.h fuzzy.h lambda.impl.h misc.h modifiers.h serialize.h
      smith_normal_form.h symmetry_operator.h gruber.h )
 set( LIBMATH_SOURCES smith_normal_form.cc gruber.cc noopt.cc)
     
-add_library (mathlib SHARED ${LIBMATH_SOURCES} ${LIBMATH_F90} ${LIBMATH_HEADERS})
+add_library (mathlib SHARED ${LIBMATH_SOURCES} ${LIBMATH_HEADERS})
 target_link_libraries(mathlib ${Boost_SERIALIZATION_LIBRARY} ${Boost_REGEX_LIBRARY})
 set_target_properties(mathlib PROPERTIES OUTPUT_NAME lada_math)
 install(TARGETS mathlib DESTINATION lib64)
