@@ -28,34 +28,34 @@
 #  define LADA_TYPE std::string 
 #  define LADA_TYPE_INIT1 "Au"
 #  define LADA_TYPE_INIT2 "Pd"
-#  define LADA_XML "<Structure name=\"\" energy=\"0\" weight=\"1\" freeze=\"none\" scale=\"1\">  <Cell r0=\"-0.5 0.5 0.5\" r1=\"0.5 -0.5 0.5\" r2=\"0.5 0.5 -0.5\"/>  <Atom pos=\"0 0 0\" type=\"Au\" freeze=\"none\" site=\"0\"/>  <Atom pos=\"0.25 0.25 0.25\" type=\"Pd\" freeze=\"none\" site=\"-1\"/></Structure>"
+#  define LADA_XML "<Structure name=\"\" energy=\"0\" weight=\"1\" freeze=\"none\" scale=\"1\">  <Cell r0=\"-0.5 0.5 0.5\" r1=\"0.5 -0.5 0.5\" r2=\"0.5 0.5 -0.5\"/>  <Atom pos=\"0 0 0\" type=\"Au\" site=\"0\" freeze=\"none\"/>  <Atom pos=\"0.25 0.25 0.25\" type=\"Pd\" site=\"-1\" freeze=\"none\"/></Structure>"
 #  define LADA_FIRST_SIZE true
-#  define LADA_FIRST_TYPE structure LADA_ATOMS [0].type == "Au"
+#  define LADA_FIRST_TYPE structure LADA_ATOMS [0]->type == "Au"
 #  define LADA_SECOND_SIZE true
-#  define LADA_SECOND_TYPE structure LADA_ATOMS [1].type == "Pd"
+#  define LADA_SECOND_TYPE structure LADA_ATOMS [1]->type == "Pd"
 #elif LADA_TEST_INCTYPE == 1
 #  define LADA_TYPE std::vector<std::string>
 #  define LADA_TYPE_INIT1 "Au"
 #  define LADA_TYPE_INIT2 "Au", "Pd"
-#  define LADA_XML "<Structure name=\"\" energy=\"0\" weight=\"1\" freeze=\"none\" scale=\"1\">  <Cell r0=\"-0.5 0.5 0.5\" r1=\"0.5 -0.5 0.5\" r2=\"0.5 0.5 -0.5\"/>  <Atom pos=\"0 0 0\" type=\"Au\" freeze=\"none\" site=\"0\"/>  <Atom pos=\"0.25 0.25 0.25\" type=\"Au Pd\" freeze=\"none\" site=\"-1\"/></Structure>"
-#  define LADA_FIRST_SIZE structure LADA_ATOMS [0].type.size() == 1
-#  define LADA_FIRST_TYPE structure LADA_ATOMS [0].type[0] == "Au"
-#  define LADA_SECOND_SIZE structure LADA_ATOMS [1].type.size() == 2
-#  define LADA_SECOND_TYPE     structure LADA_ATOMS [1].type[0] == "Au" \
-                           and structure LADA_ATOMS [1].type[1] == "Pd"
+#  define LADA_XML "<Structure name=\"\" energy=\"0\" weight=\"1\" freeze=\"none\" scale=\"1\">  <Cell r0=\"-0.5 0.5 0.5\" r1=\"0.5 -0.5 0.5\" r2=\"0.5 0.5 -0.5\"/>  <Atom pos=\"0 0 0\" type=\"Au\" site=\"0\" freeze=\"none\"/>  <Atom pos=\"0.25 0.25 0.25\" type=\"Au Pd\" site=\"-1\" freeze=\"none\"/></Structure>"
+#  define LADA_FIRST_SIZE structure LADA_ATOMS [0]->type.size() == 1
+#  define LADA_FIRST_TYPE structure LADA_ATOMS [0]->type[0] == "Au"
+#  define LADA_SECOND_SIZE structure LADA_ATOMS [1]->type.size() == 2
+#  define LADA_SECOND_TYPE     structure LADA_ATOMS [1]->type[0] == "Au" \
+                           and structure LADA_ATOMS [1]->type[1] == "Pd"
 #elif LADA_TEST_INCTYPE == 2
 #  define LADA_TYPE std::set<std::string>
 #  define LADA_TYPE_INIT1 "Au"
 #  define LADA_TYPE_INIT2 "Au", "Pd"
-#  define LADA_XML "<Structure name=\"\" energy=\"0\" weight=\"1\" freeze=\"none\" scale=\"1\">  <Cell r0=\"-0.5 0.5 0.5\" r1=\"0.5 -0.5 0.5\" r2=\"0.5 0.5 -0.5\"/>  <Atom pos=\"0 0 0\" type=\"Au\" freeze=\"none\" site=\"0\"/>  <Atom pos=\"0.25 0.25 0.25\" type=\"Au Pd\" freeze=\"none\" site=\"-1\"/></Structure>"
+#  define LADA_XML "<Structure name=\"\" energy=\"0\" weight=\"1\" freeze=\"none\" scale=\"1\">  <Cell r0=\"-0.5 0.5 0.5\" r1=\"0.5 -0.5 0.5\" r2=\"0.5 0.5 -0.5\"/>  <Atom pos=\"0 0 0\" type=\"Au\" site=\"0\" freeze=\"none\"/>  <Atom pos=\"0.25 0.25 0.25\" type=\"Au Pd\" site=\"-1\" freeze=\"none\"/></Structure>"
   template<class T> LADA_TYPE create_set(T const &_t)
     { LADA_TYPE result; result.insert(_t); return result; }
   template<class T> LADA_TYPE create_set(T const &_t, T const &_t1)
     { LADA_TYPE result; result.insert(_t); result.insert(_t1); return result; }
-#  define LADA_FIRST_SIZE structure LADA_ATOMS [0].type.size() == 1
-#  define LADA_FIRST_TYPE structure LADA_ATOMS [0].type == create_set("Au")
-#  define LADA_SECOND_SIZE structure LADA_ATOMS [1].type.size() == 2
-#  define LADA_SECOND_TYPE structure LADA_ATOMS [1].type == create_set("Au", "Pd")
+#  define LADA_FIRST_SIZE structure LADA_ATOMS [0]->type.size() == 1
+#  define LADA_FIRST_TYPE structure LADA_ATOMS [0]->type == create_set("Au")
+#  define LADA_SECOND_SIZE structure LADA_ATOMS [1]->type.size() == 2
+#  define LADA_SECOND_TYPE structure LADA_ATOMS [1]->type == create_set("Au", "Pd")
 #endif
 
 using namespace std;

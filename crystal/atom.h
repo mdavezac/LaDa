@@ -151,7 +151,7 @@ namespace LaDa
       template<class T_TYPE> template<class T_ARCHIVE>
         bool Atom<T_TYPE> :: lns_access(T_ARCHIVE &_ar, const unsigned int _version) 
         {
-          if(not atom_) atom_.reset(new AtomData<T_TYPE>());
+          if(_ar.is_loading() or not atom_) atom_.reset(new AtomData<T_TYPE>());
           return _ar & load_n_save::ext(atom_);
         }
 #   endif

@@ -1,3 +1,16 @@
+MACRO(SET_TYPE increment typename typedef)
+  if(${increment} EQUAL 0)
+    set(${typename} Str)
+    set(${typedef} std::string)
+  elseif(${increment} EQUAL 1)
+    set(${typename} Vec)
+    set(${typedef} std::vector<std::string>)
+  elseif(${increment} EQUAL 2)
+    set(${typename} Set)
+    set(${typedef} std::set<std::string>)
+  endif(${increment} EQUAL 0)
+endmacro(SET_TYPE)
+
 if(NOT compile_debug_tests)
 
   add_executable(utilities utilities.cc)
@@ -52,31 +65,7 @@ if(NOT compile_debug_tests)
     ADD_TEST(compare${TYPE} ${CMAKE_CURRENT_BINARY_DIR}/compare${TYPE})
   endforeach(TYPE)
 
-  set(TYPES "set" "vector")
-  set(INCREMENT 0)
-  foreach(TYPE ${TYPES})
-
-
-    math(EXPR INCREMENT "${INCREMENT} + 1")
-
-  endforeach(TYPE ${TYPES})
-endif(NOT compile_debug_tests)
-
-
-MACRO(SET_TYPE increment typename typedef)
-  if(${increment} EQUAL 0)
-    set(${typename} Str)
-    set(${typedef} std::string)
-  elseif(${increment} EQUAL 1)
-    set(${typename} Vec)
-    set(${typedef} std::vector<std::string>)
-  elseif(${increment} EQUAL 2)
-    set(${typename} Set)
-    set(${typedef} std::set<std::string>)
-  endif(${increment} EQUAL 0)
-endmacro(SET_TYPE)
-
-  foreach(INCREMENT   1 2)
+  foreach(INCREMENT 0 1 2)
     SET_TYPE(INCREMENT TYPENAME TYPE)
 
     add_executable(copy_atom${TYPENAME} copy_atom.cc)
@@ -140,3 +129,5 @@ endmacro(SET_TYPE)
 
 
   endforeach(INCREMENT)
+
+endif(NOT compile_debug_tests)

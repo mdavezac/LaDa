@@ -60,8 +60,6 @@ if(NOT compile_debug_tests)
   endif(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
   ADD_TEST( gruber ${CMAKE_CURRENT_BINARY_DIR}/gruber)
 
-endif(NOT compile_debug_tests)
-
   add_executable(smith_form smith_form.cc)
   target_link_libraries(smith_form mathlib)
   ADD_TEST( smith_form ${CMAKE_CURRENT_BINARY_DIR}/smith_form)
@@ -69,4 +67,6 @@ endif(NOT compile_debug_tests)
   add_executable(smith smith.cc)
   target_link_libraries(smith mathlib)
   ADD_TEST( smith ${CMAKE_CURRENT_BINARY_DIR}/smith)
+
+endif(NOT compile_debug_tests)
 

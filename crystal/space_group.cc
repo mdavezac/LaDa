@@ -86,7 +86,9 @@ namespace LaDa
               if( not math::is_identity(rotation * (~rotation), _tolerance) ) continue;
 
               // adds to vector of symmetries.
-              math::Affine3d symop; symop.linear() = rotation;
+              math::Affine3d symop;
+              symop.linear() = rotation;
+              symop.translation() = math::rVector3d::Zero();
               if( result->end() == std::find_if(result->begin(), result->end(), Cmp(symop, _tolerance)) )
                 result->push_back( symop );
             }

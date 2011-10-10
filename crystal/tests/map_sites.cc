@@ -57,12 +57,10 @@ int main()
   TemplateStructure< LADA_TYPE > super = supercell(lattice, lattice.cell() * cell);
   TemplateStructure< LADA_TYPE > checkme = super.copy();
   checkme.scale() *= 0.5;
-  std::cout << "ch" << checkme.cell() << "\n\n";
   checkme.cell() *= 2e0;
-  std::cout << "ch" << checkme.cell() << "\n\n";
   for(size_t i(0); i < checkme.size(); ++i) checkme[i]->pos *= 2e0;;
 
-  LADA_DOASSERT(map_sites(lattice, checkme) == true, "Should have mapped all sites."); 
+  LADA_DOASSERT(map_sites(lattice, checkme) == true, "Should have mapped all sites.\n"); 
   for(size_t i(0); i < checkme.size(); ++i)
     LADA_DOASSERT(checkme[i]->site == super[i]->site, "Site indices do not correspond.");
 

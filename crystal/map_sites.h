@@ -39,12 +39,8 @@ namespace LaDa
         
         // check that mappee_ is a supercell of mapper_.
         types::t_real const ratio = _mappee->scale / _mapper->scale;
-        types::t_real tolerance = _tolerance * ratio;
+        types::t_real tolerance = _tolerance / _mapper->scale;
         math::rMatrix3d const intcell_ = invcell * _mappee.cell() * ratio;
-        std::cout << _mappee->scale << " " << _mapper->scale << "\n";
-        std::cout << _mappee->cell << "\n\n";
-        std::cout << _mapper->cell << "\n\n";
-        std::cout << intcell_ << "\n";
         if(not math::is_integer(intcell_, _tolerance))
           BOOST_THROW_EXCEPTION(error::not_a_supercell());
 
@@ -59,7 +55,7 @@ namespace LaDa
         bool allmapped = true;
         typename TemplateStructure<T_TYPE>::iterator i_atom = _mappee.begin();
         typename TemplateStructure<T_TYPE>::iterator const i_atom_end = _mappee.end();
-        std::vector<math::rVector3d>::const_iterator const i_site_end = sites.begin();
+        std::vector<math::rVector3d>::const_iterator const i_site_end = sites.end();
         for(; i_atom != i_atom_end; ++i_atom)
         {
           // loop over lattice sites, find two first neighbors.
@@ -87,8 +83,7 @@ namespace LaDa
           }
           if( math::eq(fneigh_dist, sneigh_dist, tolerance) and sneigh_index != -1)
             BOOST_THROW_EXCEPTION(error::two_sites_at_same_position());
-          if(fneigh_dist > tolerance)
-            { i_atom->site() = -1; allmapped = false; }
+          if(fneigh_dist > tolerance) { i_atom->site() = -1; allmapped = false; }
           else if(_withocc and (not compare_occupations(_mapper[fneigh_index]->type)(i_atom->type())))
             { i_atom->site() = -1; allmapped = false; }
           else i_atom->site() = fneigh_index;

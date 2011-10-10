@@ -100,19 +100,17 @@ namespace LaDa
         {
           namespace lns = LaDa :: load_n_save;
           typedef AtomFreezeMixin  t1;
-          return _ar & 
+          lns::xpr::Section main = 
                  (
                    lns::section("Atom")
                      << lns::option( "pos", lns::action=pos,
                                      lns::help="Cartesian position in Anstrom." )
                      << lns::option( "type", lns::action=type,
                                      lns::help="Atomic specie, or any string." )
-                     << lns::option( "site", lns::action=type,
+                     << lns::option( "site", lns::action=site,
                                      lns::help="Atomic site w.r.t. to a lattice." )
-                     << lns::option( "site", lns::action=type,
-                                     lns::help="Atomic site w.r.t. to a lattice." )
-                     << lns::merge(*static_cast<t1*>(this)) 
                  );
+           return _ar & lns::merge(main, *static_cast<t1*>(this));
          }
 #   endif
     template<class T> std::ostream& operator<<(std::ostream& _stream, AtomData<T>const & _in)
