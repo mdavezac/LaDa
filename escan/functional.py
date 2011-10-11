@@ -384,10 +384,7 @@ class Escan(object):
         print >>file, "# Performing calculations. "
       
       # makes calls to run
-      if do_vff:
-        vffcomm = comm.split(comm.is_root)
-        if comm.is_root: self._run_vff(structure, outdir, vffcomm, cout, overwrite, norun)
-        comm.barrier()
+      if do_vff: self._run_vff(structure, outdir, comm, cout, overwrite, norun)
       local_comm = self._local_comm(self.vffrun.structure, comm)
       if local_comm != None:
         if do_genpot:
@@ -439,7 +436,10 @@ class Escan(object):
 
     if self.vffrun != None or norun == True: return
     
-    self.vffrun = self.vff(structure, outdir=outdir, comm=comm, overwrite=overwrite)
+    vffcomm = comm.split(comm.is_root)
+    if comm.is_root: self.vff(structure, outdir=outdir, comm=vffcomm, overwrite=overwrite)
+    comm.barrier()
+    self.vffrun = self.vff.Extract(outdir, comm=comm)
     assert self.vffrun.success, RuntimeError("VFF relaxation did not succeed.")
     if comm.is_root:
       self.vffrun.solo().write_escan_input(self._POSCAR, self.vffrun.solo().structure)

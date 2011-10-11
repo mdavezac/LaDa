@@ -209,6 +209,8 @@ class Extract(AbstractExtractBase):
 
 class Vff(object): 
   """ Valence Force Field functional for zinc-blende materials """
+  Extract = Extract
+  """ Extraction class for vff. """
   def __init__(self, workdir = None):
     """ Initializes a valence force field functional. """
     from ..crystal.binary import zinc_blende
