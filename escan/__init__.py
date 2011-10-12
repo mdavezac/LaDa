@@ -31,7 +31,7 @@ def exec_input(script, namespace = None):
   dictionary = {}
   for key in vff.__all__: dictionary[key] = getattr(vff, key)
   for key in __all__: dictionary[key] = globals()[key]
-  if namespace != None: dictionary.update(namespace)
+  if namespace is not None: dictionary.update(namespace)
   return opt_exec_input(script, dictionary)
 
 def read_input(filepath = "input.py", namespace = None):
@@ -42,5 +42,5 @@ def read_input(filepath = "input.py", namespace = None):
   dictionary = {}
   for key in vff.__all__: dictionary[key] = getattr(vff, key)
   for key in __all__: dictionary[key] = globals()[key]
-  if namespace != None: dictionary.update(namespace)
+  if namespace is not None: dictionary.update(namespace)
   return opt_read_input(filepath, dictionary)

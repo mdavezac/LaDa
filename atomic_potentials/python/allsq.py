@@ -43,7 +43,7 @@ class Allsq(object):
         _collapse.update(j, x) 
 
       iter, e = self.call(_collapse)
-      if best_e == None or best_e > e:
+      if best_e is None or best_e > e:
         which = i
         best_e = e
         best_iter = iter

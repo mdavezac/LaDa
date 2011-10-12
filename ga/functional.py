@@ -171,7 +171,7 @@ class Darwin(object):
     from itertools import chain
     for a in chain(self.population, self.offspring):
       if a == indiv: return True
-    if getattr(self, "history", None) != None: # check whether a history object exists.
+    if getattr(self, "history", None) is not None: # check whether a history object exists.
       if self.history(indiv): return True
     return False
 
@@ -180,9 +180,9 @@ class Darwin(object):
     from os.path import exists, join
 
     # sanity check.
-    if self.age == self.ordinals[0] or self.age == None: return
+    if self.age == self.ordinals[0] or self.age is None: return
 
-    if comm == None and hasattr(self, "comm"): comm = self.comm
+    if comm is None and hasattr(self, "comm"): comm = self.comm
     
     # creates extraction object
     extract = self.Extract(outdir, comm)
@@ -232,7 +232,7 @@ class Darwin(object):
   def do_print(self):
     """ Wether this process prints. """
     if not hasattr(self, "comm"): return True
-    if self.comm == None: return True
+    if self.comm is None: return True
     return self.comm.rank == 0
 
     
@@ -241,14 +241,14 @@ class Darwin(object):
     """ Returns color of this process and None if not pooled or MPI. """
     if self.pools < 2:            return None
     if not hasattr(self, "comm"): return None
-    if self.comm == None:         return None
+    if self.comm is None:         return None
     pools = self.pools if self.comm.size >= self.pools else self.comm.size
     return self.comm.rank % pools
 
 
   def print_nb_evals(self):
     """ Prints current number of evaluations. """
-    if self.color != None:
+    if self.color is not None:
       from ..mpi import all_reduce
       local_comm = self.comm.split(self.color)
       heads_comm = self.comm.split(1 if local_comm.rank == 0 else 2)
@@ -291,10 +291,10 @@ class Darwin(object):
 
     local_time = time.localtime() 
     self.start_time = time.time() 
-    if outdir == None: outdir = getcwd()
+    if outdir is None: outdir = getcwd()
     outdir = RelativeDirectory(outdir)
     # mpi stuff
-    self.comm = comm if comm != None else world
+    self.comm = comm if comm is not None else world
     self.comm.do_print = self.do_print
 
     # takes care of keyword arguments:
@@ -316,7 +316,7 @@ class Darwin(object):
       self.evaluator.outdir = join(self.evaluator.outdir, self.age)
     # sets directory for history file. This should be conserved across runs,
     # hence it is not on the scratch.
-    if self.history != None:
+    if self.history is not None:
       self.history.directory = outdir.path 
       self.history.remove_stale(comm)
 

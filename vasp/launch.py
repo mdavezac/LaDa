@@ -31,7 +31,7 @@ class Launch(Incar):
 
     self._workdir = RelativeDirectory(workdir)
     """ Filesystem location where temporary calculations are performed.  """
-    self.species = species if species != None else {}
+    self.species = species if species is not None else {}
     """ Species in the system. """
     self.kpoints = kpoints
     """ kpoints for which to perform calculations. """
@@ -53,7 +53,7 @@ class Launch(Incar):
 
     # checks inplace vs workdir
     if self.inplace: 
-      assert workdir == None, ValueError("Cannot use both workdir and inplace attributes.")
+      assert workdir is None, ValueError("Cannot use both workdir and inplace attributes.")
 
   @property
   def workdir(self):
@@ -87,7 +87,8 @@ class Launch(Incar):
     # creates poscar file. Might be overwriten by restart.
     if comm.is_root:
       with open(join(self._tempdir, files.POSCAR), "w") as poscar: 
-        write_poscar(self._system, poscar, is_vasp_5(self.vasp_library))
+        which_type = is_vasp_5(self.vasp_library) if self.launch_as_library else False
+        write_poscar(self._system, poscar, which_type)
 
     # creates incar file. Changedir makes sure that any calculations done to
     # obtain incar will happen in the tempdir. Only head node actually writes.
@@ -141,7 +142,7 @@ class Launch(Incar):
            assert comm.real, ValueError("Cannot call vasp without mpi.")
            call_vasp(self.vasp_library, comm, minversion)
        else:
-         try: program = which(self.path)
+         try: program = which(self.program)
          except: program = self.program
          comm.external(program, out=stdout, err=stderr)
              
@@ -181,11 +182,11 @@ class Launch(Incar):
     from ..mpi import Communicator
 
     # set up
-    if structure != None: self._system = structure
+    if structure is not None: self._system = structure
     elif not hasattr(self, "_system"): raise RuntimeError, "Internal bug.\n"
-    outdir = getcwd() if outdir == None else RelativeDirectory(outdir).path
+    outdir = getcwd() if outdir is None else RelativeDirectory(outdir).path
     comm = Communicator(comm, with_world=True)
-    repat = [] if repat == None else repat
+    repat = [] if repat is None else repat
 
     # creates temporary working directory
     if self.inplace: context = Changedir(outdir, comm=comm) 

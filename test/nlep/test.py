@@ -48,7 +48,7 @@ class Objective(object):
     self._nbcalls = 0
     self.outdir = outdir
     self.comm = comm
-    if self.comm == None: self.comm = world
+    if self.comm is None: self.comm = world
     if self.comm.rank == 0:
       if exists(self.outdir): rmtree(self.outdir)
       makedirs(self.outdir)

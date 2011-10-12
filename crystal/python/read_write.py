@@ -23,12 +23,12 @@ def read_poscar(types=None, path=None):
   from . import Structure, Atom, specie_list
 
   # if types is not none, converts to a list of strings.
-  if types != None:
+  if types is not None:
     if isinstance(types, str): types = [types] # can't see another way of doing this...
     elif not hasattr(types, "__getitem__"): types = [str(types)] # single lone vasp.specie.Specie
     else: types = [str(s) for s in types]
       
-  if path == None: path = "POSCAR"
+  if path is None: path = "POSCAR"
   assert exists(path), IOError("Could not find path %s." % (path))
   if isdir(path):
     assert exists(join(path, "POSCAR")), IOError("Could not find POSCAR in %s." % (path))
@@ -59,13 +59,13 @@ def read_poscar(types=None, path=None):
         break
     if is_vasp_5:
       text_types = deepcopy(line)
-      if types != None:
+      if types is not None:
         assert set(text_types) in set(types) or set(text_types) == set(types), \
                RuntimeError( "Unknown species in poscar: {0} not in {1}."\
                              .format(set(text_types), set(types)) )
       types = text_types
       line = poscar.readline().split()
-    assert types != None, RuntimeError("No atomic species given in POSCAR or input.")
+    assert types is not None, RuntimeError("No atomic species given in POSCAR or input.")
     #  checks/reads for number of each specie
     assert len(types) >= len(line), RuntimeError("Too many atomic species in POSCAR.")
     nb_atoms = [int(u) for u in line]
@@ -115,7 +115,7 @@ def write_poscar(structure, file, vasp5=False, substitute=None):
   for i in range(3): file.write("  %f %f %f\n" % tuple(structure.cell[:,i].flat))
   species = specie_list(structure)
   if vasp5: 
-    if substitute != None:
+    if substitute is not None:
       for s in species: file.write(" "+ substitute.pop(s,s) +" ")
     else: 
       for s in species: file.write(" "+s+" ")
@@ -213,7 +213,7 @@ def read_oldvff(path):
   string = path.read()
   cell_match = re_cell.search(string)
   pos_match  = re_pos.search(string)
-  assert cell_match != None and pos_match != None,\
+  assert cell_match is not None and pos_match is not None,\
          IOError('File {0} does not seem to be a vff input file.'.format(path.name))
 
   # creates structure.
@@ -225,7 +225,7 @@ def read_oldvff(path):
     result.add_atom = data[1:4], data[0]
 
   scale_match = search(r'>\s*out\s*-?\s*put\s*\n\s*(\S+)', string, multline)
-  if scale_match != None:
+  if scale_match is not None:
     result.scale = float((array(scale_match.group(1), dtype='float64') * a0).rescale(AA))
   else: result.scale = 1 
 

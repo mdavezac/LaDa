@@ -21,7 +21,7 @@ class Extract(object):
     """ Greps total energy extrapolated to $\sigma=0$ from OUTCAR. """
     regex = """energy\s+without\s+entropy\s*=\s*(\S+)\s+energy\(sigma->0\)\s+=\s+(\S+)"""
     result = self._find_last_OUTCAR(regex) 
-    assert result != None, RuntimeError("Could not find sigma0 energy in OUTCAR")
+    assert result is not None, RuntimeError("Could not find sigma0 energy in OUTCAR")
     return float(result.group(2)) * eV
 
   @property
@@ -99,7 +99,7 @@ class Extract(object):
     """ Greps total energy from OUTCAR."""
     regex = """energy\s+without\s+entropy=\s*(\S+)\s+energy\(sigma->0\)\s+=\s+(\S+)"""
     result = self._find_last_OUTCAR(regex) 
-    assert result != None, RuntimeError("Could not find energy in OUTCAR")
+    assert result is not None, RuntimeError("Could not find energy in OUTCAR")
     return float(result.group(1)) * eV
 
   energy = total_energy
@@ -113,7 +113,7 @@ class Extract(object):
     """ Greps fermi energy from OUTCAR. """
     regex = r"""E-fermi\s*:\s*(\S+)"""
     result = self._find_last_OUTCAR(regex) 
-    assert result != None, RuntimeError("Could not find fermi energy in OUTCAR")
+    assert result is not None, RuntimeError("Could not find fermi energy in OUTCAR")
     return float(result.group(1)) * eV
 
   @property
@@ -123,7 +123,7 @@ class Extract(object):
     """ Returns magnetic moment from OUTCAR. """
     regex = r"""^\s*number\s+of\s+electron\s+(\S+)\s+magnetization\s+(\S+)\s*$"""
     result = self._find_last_OUTCAR(regex) 
-    assert result != None, RuntimeError("Could not find magnetic moment in OUTCAR")
+    assert result is not None, RuntimeError("Could not find magnetic moment in OUTCAR")
     return float(result.group(2))
 
   @property
@@ -133,7 +133,7 @@ class Extract(object):
     """ Returns magnetic moment from OUTCAR. """
     regex = r"""^\s*number\s+of\s+electron\s+(\S+)\s+magnetization\s+(\S+)\s*$"""
     result = self._find_last_OUTCAR(regex) 
-    assert result != None, RuntimeError("Could not find number of electrons in OUTCAR")
+    assert result is not None, RuntimeError("Could not find number of electrons in OUTCAR")
     return float(result.group(1))
 
   @property
@@ -157,7 +157,7 @@ class Extract(object):
     from quantities import kbar as kB
     regex = r"""external\s+pressure\s*=\s*(\S+)\s*kB\s+Pullay\s+stress\s*=\s*(\S+)\s*kB"""
     result = self._find_last_OUTCAR(regex) 
-    assert result != None, RuntimeError("Could not find pressure in OUTCAR")
+    assert result is not None, RuntimeError("Could not find pressure in OUTCAR")
     return float(result.group(1)) * kB
 
   @property
@@ -167,7 +167,7 @@ class Extract(object):
     """ Greps alpha+bet from OUTCAR """
     regex = r"""^\s*E-fermi\s*:\s*(\S+)\s+XC\(G=0\)\s*:\s*(\S+)\s+alpha\+bet\s*:(\S+)\s*$"""
     result = self._find_last_OUTCAR(regex) 
-    assert result != None, RuntimeError("Could not find alpha+bet in OUTCAR")
+    assert result is not None, RuntimeError("Could not find alpha+bet in OUTCAR")
     return float(result.group(3))
 
   @property
@@ -177,7 +177,7 @@ class Extract(object):
     """ Greps XC(G=0) from OUTCAR """
     regex = r"""^\s*E-fermi\s*:\s*(\S+)\s+XC\(G=0\)\s*:\s*(\S+)\s+alpha\+bet\s*:(\S+)\s*$"""
     result = self._find_last_OUTCAR(regex) 
-    assert result != None, RuntimeError("Could not find xc(G=0) in OUTCAR")
+    assert result is not None, RuntimeError("Could not find xc(G=0) in OUTCAR")
     return float(result.group(2))
 
   @property
@@ -189,7 +189,7 @@ class Extract(object):
     """ Greps pressure from OUTCAR """
     regex = r"""external\s+pressure\s*=\s*(\S+)\s*kB\s+Pullay\s+stress\s*=\s*(\S+)\s*kB"""
     result = self._find_last_OUTCAR(regex) 
-    assert result != None, RuntimeError("Could not find pulay pressure in OUTCAR")
+    assert result is not None, RuntimeError("Could not find pulay pressure in OUTCAR")
     return float(result.group(2)) * kB
 
   @property
@@ -216,7 +216,7 @@ class Extract(object):
       fft = [None, None, None]
       for line in file:
         p = ng_regex.search(line)
-        if p != None:
+        if p is not None:
           if p.group(1) == 'X':
             fft[0] = int(p.group(2)) 
             allset += 1
@@ -229,7 +229,7 @@ class Extract(object):
           if allset == 3: break;
           continue;
         p = g_regex.search(line)
-        if p != None:
+        if p is not None:
           if p.group(1) == 'X':
             fft[0] = int(p.group(2)) 
             allset += 1
@@ -242,13 +242,13 @@ class Extract(object):
           if allset == 3: break;
           continue
         p = found_regex.search(line)
-        if p != None:
+        if p is not None:
           fft = [ int(p.group(1)), int(p.group(2)), int(p.group(3)) ]
           break;
 
-      assert fft[0] != None, "File %s is incomplete or incoherent.\n" % (path)
-      assert fft[1] != None, "File %s is incomplete or incoherent.\n" % (path)
-      assert fft[2] != None, "File %s is incomplete or incoherent.\n" % (path)
+      assert fft[0] is not None, "File %s is incomplete or incoherent.\n" % (path)
+      assert fft[1] is not None, "File %s is incomplete or incoherent.\n" % (path)
+      assert fft[2] is not None, "File %s is incomplete or incoherent.\n" % (path)
 
       multiple = 8
       for i in range(3):
@@ -270,13 +270,13 @@ class Extract(object):
     with self.__outcar__() as file: lines = file.readlines()
     found = re.compile(grep) 
     for index in xrange(1, len(lines)+1):
-      if found.search(lines[-index]) != None: break 
+      if found.search(lines[-index]) is not None: break 
     if index == len(lines): return None
     index -= 4
     line_re = re.compile(r"""^\s*\d+\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s*$""")
     for i in xrange(0, index): 
       match = line_re.match(lines[-index+i])
-      if match == None: break
+      if match is None: break
       result.append([float(match.group(j)) for j in range(1, 5)])
     return array(result, dtype="float64")
 
@@ -346,7 +346,7 @@ class Extract(object):
     with self.__outcar__() as file: lines = file.readlines()
     regex = compile(r"""average\s+\(electrostatic\)\s+potential\s+at\s+core""", reX)
     for i, line in enumerate(lines[::-1]):
-      if regex.search(line) != None: break
+      if regex.search(line) is not None: break
     assert -i + 2 < len(lines), RuntimeError("Could not find average atomic potential in file.")
     regex = compile(r"""(?:\s|\d){8}\s*(-?\d+\.\d+)""")
     result = []
@@ -372,7 +372,7 @@ class Extract(object):
             r"\s*(\S+)\s+(\S+)\s+(\S+)\s*\n"\
             r"\s*-+\s*\n"
     result = self._find_last_OUTCAR(regex, multline)
-    assert result != None, RuntimeError('Could not find dielectric tensor in output.')
+    assert result is not None, RuntimeError('Could not find dielectric tensor in output.')
     return array([result.group(i) for i in range(1,10)], dtype='float64').reshape((3,3))
 
   @property 
@@ -390,7 +390,7 @@ class Extract(object):
             r"\s*(\S+)\s+(\S+)\s+(\S+)\s*\n"\
             r"\s*-+\s*\n"
     result = self._find_last_OUTCAR(regex, multline)
-    assert result != None, RuntimeError('Could not find dielectric tensor in output.')
+    assert result is not None, RuntimeError('Could not find dielectric tensor in output.')
     return array([result.group(i) for i in range(1,10)], dtype='float64').reshape((3,3))
 
   @property 

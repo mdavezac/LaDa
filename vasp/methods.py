@@ -110,15 +110,15 @@ class RelaxCellShape(object):
     first_trial = kwargs.pop("first_trial", self.first_trial)
     maxiter = kwargs.pop("maxiter", self.maxiter)
     keep_steps = kwargs.pop("keep_steps", self.keep_steps)
-    outdir = getcwd() if outdir == None else RelativeDirectory(outdir).path
+    outdir = getcwd() if outdir is None else RelativeDirectory(outdir).path
     ediffg = self.vasp.ediffg
-    if ediffg == None: ediffg = 1e1 * self.vasp.ediff
+    if ediffg is None: ediffg = 1e1 * self.vasp.ediff
     elif ediffg < self.vasp.ediff: 
       raise ValueError("Parameter ediffg({0}) is smaller than ediffg({1})."\
                        .format(self.ediffg, self.vasp.ediff))
     ediffg *= 1.2 * float(len(structure.atoms))
 
-    comm = Communicator(comm if comm != None else world)
+    comm = Communicator(comm if comm is not None else world)
 
     # updates vasp as much as possible.
     if "set_relaxation" in kwargs: 
@@ -139,7 +139,7 @@ class RelaxCellShape(object):
     nb_steps, output = 0, None
    
     # sets parameter dictionary for first trial.
-    if first_trial != None:
+    if first_trial is not None:
       params = kwargs.copy()
       params.update(first_trial)
     else: params = kwargs
@@ -168,7 +168,7 @@ class RelaxCellShape(object):
       if abs(energies) < ediffg: break
 
     # Does not perform ionic calculation if convergence not reached.
-    if output != None:
+    if output is not None:
       assert output.success, RuntimeError("VASP calculations did not complete.")
       if output.total_energies.shape[0] >= 2:
         energies = output.total_energies[-2] - output.total_energies[-1:]
@@ -198,7 +198,7 @@ class RelaxCellShape(object):
       if abs(energies) < ediffg: break
 
     # Does not perform static calculation if convergence not reached.
-    if output != None:
+    if output is not None:
       assert output.success, RuntimeError("VASP calculations did not complete.")
       if output.total_energies.shape[0] >= 2:
         energies = output.total_energies[-2] - output.total_energies[-1:]
@@ -253,8 +253,8 @@ class RelaxCellShape(object):
     from ..opt import RelativeDirectory
     from ..mpi import Communicator, world
 
-    outdir = getcwd() if outdir == None else RelativeDirectory(outdir).path
-    comm = Communicator(comm if comm != None else world)
+    outdir = getcwd() if outdir is None else RelativeDirectory(outdir).path
+    comm = Communicator(comm if comm is not None else world)
     if not overwrite:
       extract = self.Extract(outdir, comm=comm)
       if extract.success: return extract

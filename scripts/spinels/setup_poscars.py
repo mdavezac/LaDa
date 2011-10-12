@@ -19,11 +19,11 @@ def create_structure_dir(structure, prefix=None):
 
   # create directory
   dirname = structure.name
-  if prefix != None: dirname = join(prefix, dirname)
+  if prefix is not None: dirname = join(prefix, dirname)
   u = 1
   while exists(dirname) :
     dirname = "%s-%i" % (structure.name, u) 
-    if prefix != None: dirname = join(prefix, dirname)
+    if prefix is not None: dirname = join(prefix, dirname)
     u += 1
 
   # create directory, POSCAR, and sendme 

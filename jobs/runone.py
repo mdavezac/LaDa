@@ -31,7 +31,7 @@ def main():
   except SystemExit: return
 
   # is workdir relative
-  if options.relative != None: 
+  if options.relative is not None: 
     # get path relative to home.
     if options.relative not in environ:
       print "Error: could not find environment variable", options.relative, "."
@@ -39,7 +39,7 @@ def main():
       options.relative = None
 
   # additional path to look into.
-  if options.ppath != None: python_path.append(options.ppath)
+  if options.ppath is not None: python_path.append(options.ppath)
 
   if not exists(options.pickle): 
     print "Could not find file {0}.".format(options.pickle)
@@ -57,7 +57,7 @@ def main():
   jobdict = jobs.load(options.pickle, comm=comm)
   for i, (outdir, job) in enumerate(jobdict.iteritems()):
     if i != options.n: continue
-    if options.relative == None: 
+    if options.relative is None: 
       job.compute(comm=comm, outdir=outdir, inplace=True, external=options.external)
     else:
       # Computes relative path... made complicated by cray's compute vs head node setup.

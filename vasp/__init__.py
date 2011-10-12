@@ -28,8 +28,8 @@ from .gwfunc import GWFunctional as GWVasp
 def _vasplib(vasp_library=None):
   """ Returns vasp library string. """
   from lada import vasp_library as global_vasp_lib
-  if vasp_library == None: vasp_library = global_vasp_lib
-  if vasp_library == None: raise RuntimeError("No vasp library specified.")
+  if vasp_library is None: vasp_library = global_vasp_lib
+  if vasp_library is None: raise RuntimeError("No vasp library specified.")
   return vasp_library
 
 def version(vasp_library=None, minversion=0):
@@ -89,5 +89,5 @@ def read_input(filepath="input.py", namespace=None):
   # names we need to create input.
   input_dict = { "Vasp": Functional, "GWVasp": GWVasp, "U": specie.U, "nlep": specie.nlep, 
                  "RelaxCellShape": RelaxCellShape, 'Extract': Extract }
-  if namespace != None: input_dict.update(namespace)
+  if namespace is not None: input_dict.update(namespace)
   return read_input(filepath, input_dict)

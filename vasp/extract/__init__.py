@@ -30,7 +30,7 @@ class ExtractCommon(AbstractExtractBase, ExtractCommonBase, IOMixin):
     from ...mpi import Communicator
        
     comm = Communicator(comm)
-    if outcar != None:
+    if outcar is not None:
       outcar = RelativeDirectory(outcar).path
       if exists(outcar) and not isdir(outcar):
         kwargs['OUTCAR'] = basename(outcar)
@@ -76,7 +76,7 @@ def Extract(outcar=None, comm=None, **kwargs):
   # checks if path or directory
   if 'directory' in kwargs: 
     from warnings import warn
-    assert outcar == None, ValueError('Cannot use both directory and outcar keyword arguments.')
+    assert outcar is None, ValueError('Cannot use both directory and outcar keyword arguments.')
     outcar = kwargs.pop('directory')
     warn( DeprecationWarning( 'directory keyword is deprecated in favor of '
                               'outcar keyword in vasp extraction objects.'),\
@@ -85,11 +85,11 @@ def Extract(outcar=None, comm=None, **kwargs):
     from warnings import warn
     warn( DeprecationWarning('OUTCAR keyword is deprecated in favor of outcar keyword.'),
           stacklevel=2)
-    assert outcar == None, ValueError('Cannot use both outcar and OUTCAR keywords.')
+    assert outcar is None, ValueError('Cannot use both outcar and OUTCAR keywords.')
     outcar = kwargs.pop('OUTCAR')
 
   # checks for GW calculations.
-  outcar = getcwd() if outcar == None else RelativeDirectory(outcar).path
+  outcar = getcwd() if outcar is None else RelativeDirectory(outcar).path
   if exists(join(outcar, 'GW')):
     from os.path import basename
     from glob import iglob
@@ -147,10 +147,10 @@ else:
       # this will throw on unknown kwargs arguments.
       jobs.AbstractMassExtract.__init__(self, **kwargs)
 
-      self.Extract = Extract if Extract != None else VaspExtract
+      self.Extract = Extract if Extract is not None else VaspExtract
       """ Extraction class to use. """
 
-      if path == None: path = getcwd()
+      if path is None: path = getcwd()
       self._rootdir = RelativeDirectory(path, hook=self.uncache)
       """ Root of the directory-tree to trawl for OUTCARs. """
       

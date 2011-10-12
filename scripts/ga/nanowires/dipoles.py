@@ -43,7 +43,7 @@ def create_jobs(path, inputpath="input.py", **kwargs):
         functional.max_gen     = input.max_generations
         functional.rate        = input.offspring_rate
         functional.pools       = input.pools
-        if input.rootworkdir != None: functional.rootworkdir = input.rootworkdir
+        if input.rootworkdir is not None: functional.rootworkdir = input.rootworkdir
     
         gajob = jobdict / "{0}_core/{2}_{3}/trial_{1}".format(core_type, trial, nmin, nmax)
         gajob.functional = functional

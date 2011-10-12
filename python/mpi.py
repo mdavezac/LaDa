@@ -23,12 +23,12 @@ def external(comm, program, out=None, err=None, nprocs=None, ppernode=None, appe
   from shlex import split as split_cmd
   from . import mpirun_exe, cpus_per_node
 
-  if nprocs == None: nprocs = comm.size
-  if ppernode == None: ppernode = cpus_per_node
+  if nprocs is None: nprocs = comm.size
+  if ppernode is None: ppernode = cpus_per_node
   cmd = mpirun_exe.format(nprocs=nprocs, ppernode=ppernode, program=program)
 
-  file_out = open(out, "a" if append else "w") if out != None else None 
-  file_err = open(err, "a" if append else "w") if err != None else None 
+  file_out = open(out, "a" if append else "w") if out is not None else None 
+  file_err = open(err, "a" if append else "w") if err is not None else None 
   try:
     vasp_proc = Popen(split_cmd(cmd), stdout=file_out, stderr=file_err)
     vasp_proc.wait()
@@ -103,7 +103,7 @@ class NullComm(object):
   all_reduce = null_all_reduce
   all_to_all = null_all_to_all
   def barrier(self): pass
-  def __eq__(self, value): return value == None or isinstance(value, NullComm)
+  def __eq__(self, value): return value is None or isinstance(value, NullComm)
   def __ne__(self, value): return not self.__eq__(value)
   def __setstate__(self, value): self.__dict__.update(value)
   def __getstate__(self): return self.__dict__.copy()

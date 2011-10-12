@@ -71,7 +71,7 @@ def add_elements(collection='extracted'):
       
 def merge_queries(d, filters):
   """ Merge filters into d. """
-  if filters == None: return d
+  if filters is None: return d
   for key, value in filters.iteritems():
     if key in d:
       if isinstance(d[key], dict) and isinstance(value, dict):

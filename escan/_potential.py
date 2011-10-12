@@ -21,21 +21,21 @@ class AtomicPotential(object):
         Path is a relative directory for added transferability from computer to
         computer.
     """
-    self._nonlocal = None if nonlocal == None else RelativeDirectory(nonlocal)
+    self._nonlocal = None if nonlocal is None else RelativeDirectory(nonlocal)
     """ Private path to non-local part, or None. 
     
         Path is a relative directory for added transferability from computer to
         computer.
     """
-    self.s =  s if s != None else 0
+    self.s =  s if s is not None else 0
     """ s parameter """
-    self.p =  p if p != None else 0
+    self.p =  p if p is not None else 0
     """ p parameter """
-    self.d =  d if d != None else 0
+    self.d =  d if d is not None else 0
     """ d parameter """
-    self.pnl = pnl if pnl != None else 0
+    self.pnl = pnl if pnl is not None else 0
     """ p non-local parameter """
-    self.dnl = dnl if dnl != None else 0
+    self.dnl = dnl if dnl is not None else 0
     """ d non-local parameter """
 
   @property
@@ -55,7 +55,7 @@ class AtomicPotential(object):
   def __repr__(self):
     """ Tuple representation of self. """
     result = '"{0}"'.format(self._filepath.unexpanded)
-    if self.nonlocal == None: result += ", None"
+    if self.nonlocal is None: result += ", None"
     else: result += ', "%s"' % (self._nonlocal.unexpanded)
     result += ", %f, %f, %f, %f, %f" % (self.s, self.p, self.d, self.pnl, self.dnl)
     return result

@@ -84,7 +84,7 @@ def push(self, cmdl):
       kwargs['is_dft'] =  extract.is_dft
       kwargs['is_gw'] =  extract.is_gw
       added = ladabase.push( relpath(file, getcwd()), outcar.read(), **kwargs)
-      if added != None:
+      if added is not None:
         just_added.append(added)
         print "Pushed {0}.".format(file, getcwd())
 

@@ -22,11 +22,11 @@ class MassExtract(object):
 
     self.naked_end = kwargs.pop('naked_end', naked_end)
     """ If True and dict to return contains only one item, returns value itself. """
-    self.filters = [] if filters == None else filters
+    self.filters = [] if filters is None else filters
     """ The filters which jobs should match. """
     self._cached_extractors = None
     """ List of extration objects. """
-    self.namespace = {} if namespace == None else namespace
+    self.namespace = {} if namespace is None else namespace
     """ Namespace with which to perform evaluation. """
     self.mongofilter = mongofilter
     """ A mongo filter (fast) to act as the base of further (slow) filters. """
@@ -96,7 +96,7 @@ class MassExtract(object):
   @property
   def _extractors(self):
     """ Goes through all jobs and collects Extract if available. """
-    if self._cached_extractors != None: return self._cached_extractors
+    if self._cached_extractors is not None: return self._cached_extractors
     result = {}
     for name, extract in self.__iter_alljobs__(): result[name] = extract
     self._cached_extractors = result

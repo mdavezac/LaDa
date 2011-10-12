@@ -12,7 +12,7 @@ def showme(self, event):
   # gets dictionary, path.
   current, path = _get_current_job_params(self, 1)
   ip.user_ns.pop("_lada_error", None)
-  if current == None: return
+  if current is None: return
   # splits argumetns, removes decorative keywords.
   args = [u for u in event.split() if u not in ["in"]]
   # nothing to do.
@@ -31,7 +31,7 @@ def showme(self, event):
         filename = file.name
         # editing INCAR.
         if arg.lower() == "functional":
-          if current.functional == None: # case where no job is defined.
+          if current.functional is None: # case where no job is defined.
             file.write("# There are currently no actual jobs defined here.\n"\
                        "functional = None\njobparams={}\n")
           else: # case where a functional exists.
@@ -88,7 +88,7 @@ def showme(self, event):
             current.jobparams["structure"] = globals["structure"]
             
     finally:
-      if filename != None:
+      if filename is not None:
         try: remove(filename)
         except: pass
 
@@ -110,7 +110,7 @@ def _showme_pbs(self, which):
     else: filename = filenames[ sorted(numbers, key=itemgetter(1))[-1][0] ]
   else: filename = join(path + ".pbs", filename[1:] + ".pbs")
   
-  if filename == None or (not exists(filename)):  print "Could not find {0}.".format(which); return
+  if filename is None or (not exists(filename)):  print "Could not find {0}.".format(which); return
 
   ip.system("less {0}".format(filename))
 

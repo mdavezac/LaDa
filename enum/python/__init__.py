@@ -17,7 +17,7 @@ class Enum(Lattice):
             Tolerance with which to find crystal symmetries. 
     """
     Lattice.__init__(self)
-    if lattice == None: return
+    if lattice is None: return
 
     from copy import deepcopy
     # Copies information from lattice if provided.
@@ -95,9 +95,9 @@ class Enum(Lattice):
         if not database[x]: continue
 
         # callback
-        if callback != None:
+        if callback is not None:
           loop, entry = callback(x, flavorbase, smith)
-          if entry != None: database[x] = entry
+          if entry is not None: database[x] = entry
           if not loop: continue
 
         # check for supercell independent transforms.
