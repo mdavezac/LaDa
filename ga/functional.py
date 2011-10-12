@@ -298,6 +298,7 @@ class Darwin(object):
     self.comm.do_print = self.do_print
 
     # takes care of keyword arguments:
+    kwargs.pop("external", None)
     if len(kwargs.keys()) > 0: 
       this = deepcopy(self)
       for key, value in kwargs.items():
