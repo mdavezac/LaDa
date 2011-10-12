@@ -2,6 +2,21 @@
 
 #include <set>
 
+#include <boost/get_pointer.hpp>
+#include "../atom.h"
+namespace boost
+{
+  namespace python { 
+    template<class T> struct pointee< LaDa::crystal::Atom<T> > 
+    {
+      typedef LaDa::crystal::AtomData<T> type;
+    };
+namespace objects {
+  inline LaDa::crystal::AtomData< std::set<std::string> >* get_pointer(LaDa::crystal::Atom< std::set<std::string> > const &_atom)
+   { return _atom.get(); }
+}}}
+
+
 #include <boost/python/has_back_reference.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <boost/python/errors.hpp>
@@ -16,7 +31,6 @@
 #include <python/misc.hpp>
 #include <python/raw_constructor.hpp>
 
-#include "../atom.h"
 
 #include "atom.hpp"
 
@@ -24,10 +38,6 @@ namespace boost
 {
   namespace python
   {
-    template<class T> struct pointee< LaDa::crystal::Atom<T> > 
-    {
-      typedef LaDa::crystal::AtomData<T> type;
-    };
 
 //     // So boost python knows how to call the constructors.
 //     template<>
