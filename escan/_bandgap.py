@@ -15,8 +15,10 @@ def extract(outdir=".", comm = None):
   """
   from os.path import exists, join
   from ..mpi import Communicator
+  from ..opt import RelativeDirectory
 
   comm = Communicator(comm)
+  outdir = RelativeDirectory(outdir).path
 
   paths = join(outdir, "AE"), join(outdir, "VBM"), join(outdir, "CBM")
   exists_paths = comm.broadcast([exists(p) for p in paths] if comm.is_root else None)

@@ -31,9 +31,7 @@ def extract_all(directory=None, **kwargs):
   elif not exists(join(directory, OUTCAR)): return ExtractEscanFail()
   else: result = Extract(directory, **kwargs)
   
-  # found some kind of escan calculation. Tries to figure it out from the functional.
-  try: return result.functional.Extract(directory, **kwargs)
-  except: return result
+  return result
 
 
 class MassExtract(AbstractMassExtractDirectories):
@@ -64,7 +62,7 @@ class MassExtract(AbstractMassExtractDirectories):
   def __iter_alljobs__(self):
     """ Goes through all directories with a contcar. """
     from os import walk
-    from os.path import relpath, join, dirname
+    from os.path import relpath, join
     from ._extract import Extract as EscanExtract
 
     self.__dict__['__attributes'] = set()
