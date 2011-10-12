@@ -38,15 +38,15 @@ class Magmom(SpecialVaspParam):
   @broadcast_result(key=True)
   def incar_string(self, vasp, *args, **kwargs):
     """ Prints the magmom string if requested. """
-    if self.value == None: return None
+    if self.value is None: return None
     if vasp.ispin == 1: return None
     if len(self.value.rstrip().lstrip()) == 0: return None
     if self.value.lower() == "magmom":
       magmom = self._from_attr(vasp, "magmom",  *args, **kwargs)
-      return "MAGMOM = {0}".format(magmom) if magmom != None else None
-    elif self._regex.match(self.value) != None:
+      return "MAGMOM = {0}".format(magmom) if magmom is not None else None
+    elif self._regex.match(self.value) is not None:
       magmom = self._from_attr(vasp, self._regex.match(self.value).group(1),  *args, **kwargs)
-      return "MAGMOM = {0}".format(magmom) if magmom != None else None
+      return "MAGMOM = {0}".format(magmom) if magmom is not None else None
     return "MAGMOM = {0}".format(self.value)
 
   def _from_attr(self, vasp, name, *args, **kwargs):
@@ -57,7 +57,7 @@ class Magmom(SpecialVaspParam):
            ValueError("vasp functional does not have a _system attribute.")
     if not hasattr(vasp._system, name): return None
     magmom = getattr(vasp._system, name)
-    if magmom == None: return None
+    if magmom is None: return None
     if isinstance(magmom, str): return magmom
     
     # magmom should be a list of moments.
@@ -105,11 +105,11 @@ class Npar(SpecialVaspParam):
     from re import search
     from math import log
     from ...mpi import Communicator
-    if self.value == None: return None
+    if self.value is None: return None
     comm = Communicator(kwargs.get("comm", None))
     if not comm.is_mpi: return None
     if     hasattr(self.value, "lower")\
-       and search("power\s+of\s+2", self.value.lower()) != None:
+       and search("power\s+of\s+2", self.value.lower()) is not None:
       m = int(log(comm.size)/log(2))
       for i in range(m, -1, -1):
         if comm.size % 2**i == 0: return "NPAR = {0}".format(2**i)
@@ -307,7 +307,7 @@ class Restart(SpecialVaspParam):
     comm = Communicator(kwargs.pop("comm", None))
     istart = "0   # start from scratch"
     icharg = "2   # superpositions of atomic densities"
-    if self.value == None: istart = "0   # start from scratch"
+    if self.value is None: istart = "0   # start from scratch"
     elif not self.value.success:
       print "Could not find successful run in directory %s." % (self.value.directory)
       print "Restarting from scratch."
@@ -344,7 +344,7 @@ class UParams(SpecialVaspParam):
   def __init__(self, value):
     import re
     
-    if value == None: value = None
+    if value is None: value = None
     elif hasattr(value, "lower"): 
       value = value.lower() 
       if value == "off": value = 0
@@ -441,10 +441,10 @@ class Boolean(SpecialVaspParam):
   def incar_string(self, vasp, *args, **kwargs):
     value = self._value
     if isinstance(value, str):
-      if len(value) == 0: value == None 
+      if len(value) == 0: value is None 
       elif value.lower() == "true"[:len(value)]: value = True
       else: value = False
-    if self.value == None: return None
+    if self.value is None: return None
     return "{0} = {1}".format(self.key.upper(), ".TRUE." if bool(self.value) else ".FALSE.")
   def __repr__(self):
     """ Representation of this object. """

@@ -48,7 +48,7 @@ class JobParams(AbstractMassExtract):
   @property
   def jobdict(self):
     """ Jobdictionary for which to get/set parameters. """
-    return self._ipy_jobdict if self._jobdict == None else self._jobdict.root
+    return self._ipy_jobdict if self._jobdict is None else self._jobdict.root
   @jobdict.setter
   def jobdict(self, value): self._jobdict = value
   @jobdict.deleter
@@ -57,7 +57,7 @@ class JobParams(AbstractMassExtract):
   @property
   def _is_ipy_global(self):
     """ True if working on global dictionary. """
-    if self._jobdict != None: return False
+    if self._jobdict is not None: return False
     try: from IPython.ipapi import get as get_ipy
     except ImportError: return False
     else: return True
@@ -120,7 +120,7 @@ class JobParams(AbstractMassExtract):
 
         If None, then no match required. Should be a string, not an re object.
     """
-    if self._view == None:
+    if self._view is None:
       try: from IPython.ipapi import get as get_ipy
       except ImportError: raise AttributeError("path not set.")
       ip = get_ipy()

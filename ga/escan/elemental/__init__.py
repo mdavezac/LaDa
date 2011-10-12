@@ -25,7 +25,7 @@ class Individual(BitstringIndividual):
   def __eq__(self, a): 
     """ Compares two elemental superlattices. """
 
-    if a == None: return False
+    if a is None: return False
     if not hasattr(a, "genes"): return False
     if len(a.genes) != len(self.genes): return False
     if getattr(self, 'dosym', False): return all(a.genes - self.genes == 0) 

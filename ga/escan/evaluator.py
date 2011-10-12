@@ -96,7 +96,7 @@ class Bandgap(object):
     converter  = kwargs.pop( "converter",  self.converter)
     escan      = kwargs.pop("functional", self.escan)
     comm       = Communicator(comm)
-    if outdir == None: outdir = self.outdir
+    if outdir is None: outdir = self.outdir
     elif outdir[0] != '/': outdir = join(self.outdir, outdir)
     outdir = join(outdir, str(self.nbcalc))
  
@@ -122,7 +122,7 @@ class Bandgap(object):
     indiv.cbm = out.cbm
 
     comm.barrier()
-    if self.keep_only_last and comm.is_root and self._lastcalcdir != None:
+    if self.keep_only_last and comm.is_root and self._lastcalcdir is not None:
       if exists(self._lastcalcdir): rmtree(self._lastcalcdir)
     self._lastcalcdir = outdir
     comm.barrier()

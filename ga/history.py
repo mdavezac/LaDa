@@ -15,7 +15,7 @@ class History(object):
      """ Initializes a history object. """
      from ..opt import RelativeDirectory
 
-     self.filename = filename if filename != None else self.HISTORYCAR
+     self.filename = filename if filename is not None else self.HISTORYCAR
      """ file where history is saved. """
      self._directory = RelativeDirectory(directory)
      """ Directory where history file is saved. """

@@ -50,7 +50,7 @@ for i in ineqs:
 # then pairs figures.
 clusters = None
 for i in ineqs:
-  if clusters == None:
+  if clusters is None:
     clusters = create_clusters(lattice, nth_shell=shell, order=2, site=i)
   else: 
     clusters.extend(create_clusters(lattice, nth_shell=shell, order=2, site=i))

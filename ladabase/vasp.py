@@ -58,7 +58,7 @@ class ExtractCommon(AbstractExtractBase, ExtractCommonBase, OutcarSearchMixin):
     if self.compression == "bz2":  
       from bz2 import decompress
       return StringStream(decompress(get_ladabase().outcars.get(self._element['_id']).read()))
-    elif self.compression == None: 
+    elif self.compression is None: 
       return StringStream(get_ladabase().outcars.get(self._element['_id']).read())
     elif self.compression.lower() == "none":
       return StringStream(get_ladabase().outcars.get(self._element['_id']).read())

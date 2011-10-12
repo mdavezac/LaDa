@@ -40,7 +40,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
         :raise IOError: if the OUTCAR file does not exist. 
     """
     from os.path import exists, join
-    if self.current_age == None: raise IOError("No data to search. No completed GA run found.")
+    if self.current_age is None: raise IOError("No data to search. No completed GA run found.")
     path = join(join(self.directory, self.current_age), self.OUTCAR)
     if not exists(path): raise IOError("Path {0} does not exist.\n".format(path))
     return open(path, 'r')
@@ -73,7 +73,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     from os.path import join, exists
     from pickle import load
 
-    if self.current_age == None: return None
+    if self.current_age is None: return None
     if self.comm.is_root:
       current_path = join(join(self.directory, self.current_age), self.FUNCCAR)
       assert exists(current_path), RuntimeError("File {0} does not exist.".format(current_path))
@@ -90,7 +90,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
   @property
   def next_age(self):
     """ Next GA age (eg next run). """
-    if self.current_age == None: return self.ordinals[0] 
+    if self.current_age is None: return self.ordinals[0] 
     index = self.ordinals.index(self.current_age) + 1
     assert index < len(self.ordinals), RuntimeError("Ran out of ordinals.")
     return self.ordinals[index]
@@ -115,9 +115,9 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
         string = file.read()
       first, last = None, 0
       for found in re.finditer(regex, string):
-        if first == None: first = int(found.group(1)); continue
+        if first is None: first = int(found.group(1)); continue
         last = int(found.group(1))
-      if first == None: continue
+      if first is None: continue
       if last - first < 1 and (last != 0 or first != 0): continue
       results.append(name)
     return results
@@ -128,7 +128,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
   def start_generation(self):
     """ Generation at start of run. """
     found = self._find_first_OUTCAR("^\s*Starting\s+generation\s+(\d+)\s*$")
-    return int(found.group(1)) if found != None else None
+    return int(found.group(1)) if found is not None else None
 
   @property
   @make_cached
@@ -136,7 +136,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
   def last_generation(self):
     """ Generation at end of run. """
     found = self._find_last_OUTCAR("^\s*Starting\s+generation\s+(\d+)\s*$")
-    return int(found.group(1)) if found != None else None
+    return int(found.group(1)) if found is not None else None
 
   @property
   def current_gen(self):
@@ -282,7 +282,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
       for file in files:
         path = join(directory, file)
         if exists(path): yield path
-    if self.functional.history != None: 
+    if self.functional.history is not None: 
       if exists(self.functional.history.filepath): 
         yield self.functional.history.filepath
     

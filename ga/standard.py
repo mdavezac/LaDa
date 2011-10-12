@@ -102,7 +102,7 @@ def best(self):
   if not self.comm.do_print: return True
   best = None
   for indiv in self.population:
-    if best == None or  self.cmp_indiv( best, indiv ) == 1: 
+    if best is None or  self.cmp_indiv( best, indiv ) == 1: 
       best = indiv
   print "  Best Individual: ", best, best.fitness
   return True
@@ -229,7 +229,7 @@ def mpi_population_evaluation(self, evaluator, pools, comm = None):
   from boost.mpi import broadcast, scatter, all_gather, world
   from itertools import chain
   # split communicator along number of pools
-  if pools == None: pools = comm.size
+  if pools is None: pools = comm.size
   if pools > comm.size: pools = comm.size
   color = comm.rank % pools
   local_comm = comm.split(color)
@@ -285,7 +285,7 @@ def mpi_population_evaluation(self, evaluator, pools, comm = None):
 def population_evaluation(self, evaluator, comm=None, pools=None):
   """ Chooses between MPI and serial evaluation. """
   from ..mpi import Communicator
-  is_serial = pools == 1 or (comm.size == 1 if comm != None else True)
+  is_serial = pools == 1 or (comm.size == 1 if comm is not None else True)
   comm = Communicator(comm)
   if is_serial: serial_population_evaluation(self, evaluator, comm = comm)
   else:         bleeder_evaluation(self, evaluator, min(pools, comm.size), comm)
@@ -332,7 +332,7 @@ class Mating(object):
       if n == -1: return function(darwin)
 
       individuals = []
-      if indiv != None: individuals.append(indiv)
+      if indiv is not None: individuals.append(indiv)
       else: individuals.append( deepcopy(darwin.population[darwin.selection(darwin)]) )
 
       # calls unaries
@@ -354,7 +354,7 @@ class Mating(object):
 
     indiv = None
     if self.sequential: # choose any operator depending on rate.
-      while indiv == None: # makes sure we don't bypass all mating operations
+      while indiv is None: # makes sure we don't bypass all mating operations
         for function, rate, n in self.operators:
           if random.random() < rate:
             indiv = call_function( function, n, indiv )
@@ -378,7 +378,7 @@ class Mating(object):
           break
         last += rate
 
-    assert indiv != None, "%s" % (self.sequential)
+    assert indiv is not None, "%s" % (self.sequential)
     return indiv
 
   def __repr__(self):

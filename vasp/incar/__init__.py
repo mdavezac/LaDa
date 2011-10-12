@@ -161,12 +161,12 @@ class Incar(object):
     # Calls them first in case they change normal key/value pairs.
     specials = []
     for key, value in self.special.items():
-      if value.value == None: continue
+      if value.value is None: continue
       line = value.incar_string(self, *args, **kwargs)
-      if line != None: specials.append(line + "\n")
+      if line is not None: specials.append(line + "\n")
     # prints key/value pairs
     for key, value in self.params.items():
-      if value == None: continue
+      if value is None: continue
       if isinstance(value, bool):  value = ".TRUE." if value else ".FALSE."
       else: 
         try: value = str(value)
@@ -236,7 +236,7 @@ class Incar(object):
         Can be "off" or a float corresponding to the tolerance used to determine
         symmetry operation. 
     """
-    if value == None: self.isym = None
+    if value is None: self.isym = None
     elif str(value).lower() == "off" or value is "0" or value is False: self.params["isym"] = 0
     elif str(value).lower() == "on" or value is True or value is True:
        self.symprec = None
@@ -267,7 +267,7 @@ class Incar(object):
         - insulator is equivalent to "tetra bloechl".
         - if x is omitted a default value of 0.2eV is used.
     """
-    if args == None: 
+    if args is None: 
       self.ismear, self.sigma = None, None
       return
 
@@ -278,7 +278,7 @@ class Incar(object):
     has_third = len(args) > 2
     third = args[2] if len(args) > 2 else None
 
-    if first == None:
+    if first is None:
       self.ismear = None
       if has_second: self.sigma = None
     elif first == "fermi" or first == "-1":    
@@ -324,10 +324,10 @@ class Incar(object):
         - third (optional) argument is ibrion
         - fourth (optional) argument is potim.
     """
-    nsw = 0 if self.nsw == None else self.nsw
-    if self.ibrion == None: ibrion = -1 if nsw < 0 else 0
+    nsw = 0 if self.nsw is None else self.nsw
+    if self.ibrion is None: ibrion = -1 if nsw < 0 else 0
     else: ibrion = self.ibrion
-    if self.isif == None: isif = 0 if ibrion == 0 else 2
+    if self.isif is None: isif = 0 if ibrion == 0 else 2
     else: isif = self.isif
    
     if nsw < 2 or ibrion == -1: return "static"
@@ -343,9 +343,9 @@ class Incar(object):
     import re
 
     dof =  args.lower() if isinstance(args,str) else str(args[0]).lower()
-    ionic = re.search( "ion(ic|s)?", dof ) != None
-    cellshape = re.search( "cell(\s+|-|_)?(?:shape)?", dof ) != None
-    volume = re.search( "volume", dof ) != None
+    ionic = re.search( "ion(ic|s)?", dof ) is not None
+    cellshape = re.search( "cell(\s+|-|_)?(?:shape)?", dof ) is not None
+    volume = re.search( "volume", dof ) is not None
 
     nsw, ibrion, potim = None, None, None
     if not isinstance(args, str):
@@ -358,12 +358,12 @@ class Incar(object):
     if (not ionic) and (not cellshape) and (not volume):
       self.params["isif"] = 1
       self.params["ibrion"] = -1
-      assert ibrion == None or ibrion == -1, \
+      assert ibrion is None or ibrion == -1, \
              ValueError("Cannot set ibrion to anything but -1 for static calculations.")
-      assert nsw  == None or nsw == 0, \
+      assert nsw  is None or nsw == 0, \
              ValueError("static calculation with nsw > 0 is way too creative.")
       self.params["nsw"] = None
-      if potim != None: self.params["potim"] = potim
+      if potim is not None: self.params["potim"] = potim
 
     else: # Some kind of relaxations. 
       # ionic calculation.
@@ -377,18 +377,18 @@ class Incar(object):
         raise RuntimeError, "VASP does not allow relaxation of atomic position"\
                             "and volume at constant cell-shape.\n"
 
-      if ibrion == None and self.params["ibrion"] in [None, -1]: self.params["ibrion"] = 2
-      elif ibrion != None: 
+      if ibrion is None and self.params["ibrion"] in [None, -1]: self.params["ibrion"] = 2
+      elif ibrion is not None: 
         assert ibrion != -1, ValueError("Cannot set ibrion to -1 with strain relaxations.")
         assert ibrion != 0 or self.params["isif"] == 1,\
                ValueError("Cannot set ibrion to 0 with strain relaxations.")
         self.params["ibrion"] = ibrion
-      if nsw != None:
+      if nsw is not None:
         assert nsw > 0, ValueError("Cannot set nse < 1 and perform strain relaxations.")
         self.params["nsw"] = nsw
-      elif self.params["nsw"] == None or self.params["nsw"] == 0: self.params["nsw"] = 50
-      if potim != None: self.params["potim"] = potim
-      if self.ediffg != None and self.ediffg < self.ediff: self.ediffg = None
+      elif self.params["nsw"] is None or self.params["nsw"] == 0: self.params["nsw"] = 50
+      if potim is not None: self.params["potim"] = potim
+      if self.ediffg is not None and self.ediffg < self.ediff: self.ediffg = None
 
   @add_setter
   def set_relaxation(self, value):

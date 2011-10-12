@@ -70,7 +70,7 @@ def nlep(type = 1, l=2, U0=0e0, U1=None ):
   try: l = int(l)
   except: raise ValueError, "Moment l should be 0|1|2|3|s|p|d|f." 
   if l < 0 or l > 3: raise ValueError, "Moment l should be 0|1|2|3|s|p|d|f." 
-  elif U1 == None: 
+  elif U1 is None: 
     return { "type": int(type), "l": l, "U": U0, "func": "nlep" }
   else: 
     return { "type": int(type), "l": l, "U0": U0, "U1": U1, "func": "enlep" }
@@ -102,8 +102,8 @@ class Specie(object):
     from ..opt import RelativeDirectory
 
     self._directory = RelativeDirectory(directory)
-    if oxidation != None: self.oxidation = oxidation
-    if U == None: self.U = []
+    if oxidation is not None: self.oxidation = oxidation
+    if U is None: self.U = []
     elif isinstance(U, dict): self.U = [U]
     else: self.U = [u for u in U] # takes care of any kind of iterator.
 
@@ -131,7 +131,7 @@ class Specie(object):
     with self.read_potcar() as potcar:
       r = re.compile("ENMAX\s+=\s+(\S+);\s+ENMIN")
       p = r.search(potcar.read())
-      if p == None: raise AssertionError, "Could not retrieve ENMAX from " + self.directory
+      if p is None: raise AssertionError, "Could not retrieve ENMAX from " + self.directory
       return float( p.group(1) )
   
   @property

@@ -17,7 +17,7 @@ class Extract(object):
   def algo(self):
     """ Returns the kind of algorithms. """
     result = self._find_first_OUTCAR(r"""^\s*ALGO\s*=\s*(\S+)\s*""")
-    if result == None: return 'Normal'
+    if result is None: return 'Normal'
     return result.group(1).lower()
 
   @property
@@ -66,7 +66,7 @@ class Extract(object):
       if not exists(join(self.directory, path)): return False
       
     regex = r"""General\s+timing\s+and\s+accounting\s+informations\s+for\s+this\s+job"""
-    return self._find_last_OUTCAR(regex) != None
+    return self._find_last_OUTCAR(regex) is not None
 
 
   @broadcast_result(attr=True, which=0)
@@ -85,11 +85,11 @@ class Extract(object):
       cell_re = compile(r"""^\s*direct\s+lattice\s+vectors\s+""")
       atom_re = compile(r"""^\s*position\s+of\s+ions\s+in\s+fractional\s+coordinates""")
       for line in file:
-        if cell_re.search(line) != None: break
+        if cell_re.search(line) is not None: break
       for i in range(3):
         cell[:,i] = array(file.next().split()[:3], dtype='float64')
       for line in file:
-        if atom_re.search(line) != None: break
+        if atom_re.search(line) is not None: break
       for line in file:
         data = line.split()
         if len(data) != 3: break
@@ -146,9 +146,9 @@ class Extract(object):
     atom_re = compile(r"""^\s*POSITION\s+""")
     cell_re = compile(r"""^\s*direct\s+lattice\s+vectors\s+""")
     for index, line in enumerate(lines[::-1]):
-      if atom_re.search(line) != None: atom_index = index - 1
-      if cell_re.search(line) != None: cell_index = index; break
-    assert atom_index != None and cell_index != None,\
+      if atom_re.search(line) is not None: atom_index = index - 1
+      if cell_re.search(line) is not None: cell_index = index; break
+    assert atom_index is not None and cell_index is not None,\
            RuntimeError("Could not find structure description in OUTCAR.")
     for i in range(3):
       cell[:,i] = [float(u) for u in lines[-cell_index+i].split()[:3]]
@@ -215,7 +215,7 @@ class Extract(object):
   def ions_per_specie(self):
     """ Greps species from OUTCAR. """
     result = self._find_first_OUTCAR(r"""\s*ions\s+per\s+type\s*=.*$""")
-    if result == None: return None
+    if result is None: return None
     return [int(u) for u in result.group(0).split()[4:]]
   stoechiometry = ions_per_specie
   """ Alias for `ions_per_specie`. """
@@ -233,7 +233,7 @@ class Extract(object):
   def isif(self):
     """ Greps ISIF from OUTCAR. """
     result = self._find_first_OUTCAR(r"""\s*ISIF\s*=\s*(-?\d+)\s+""")
-    if result == None: return None
+    if result is None: return None
     return int(result.group(1))
   
   @property
@@ -242,7 +242,7 @@ class Extract(object):
   def nsw(self):
     """ Greps NSW from OUTCAR. """
     result = self._find_first_OUTCAR(r"""\s*NSW\s*=\s*(-?\d+)\s+""")
-    if result == None: return None
+    if result is None: return None
     return int(result.group(1))
 
   @property
@@ -251,7 +251,7 @@ class Extract(object):
   def ibrion(self):
     """ Greps IBRION from OUTCAR. """
     result = self._find_first_OUTCAR(r"""\s*IBRION\s*=\s*(-?\d+)\s+""")
-    if result == None: return None
+    if result is None: return None
     return int(result.group(1))
 
   @property
@@ -272,12 +272,12 @@ class Extract(object):
     with self.__outcar__() as file:
       found = 0
       for line in file:
-        if found_generated.search(line) != None: found = 1; break
-        elif found_read.search(line) != None: found = 2; break
+        if found_generated.search(line) is not None: found = 1; break
+        elif found_read.search(line) is not None: found = 2; break
       if found == 1:
         found = compile(r"""Following\s+cartesian\s+coordinates:""")
         for line in file:
-          if found.search(line) != None: break
+          if found.search(line) is not None: break
         file.next()
         for line in file:
           data = line.split()
@@ -308,12 +308,12 @@ class Extract(object):
     with self.__outcar__() as file:
       found = 0
       for line in file:
-        if found_generated.search(line) != None: found = 1; break
-        elif found_read.search(line) != None: found = 2; break
+        if found_generated.search(line) is not None: found = 1; break
+        elif found_read.search(line) is not None: found = 2; break
       if found == 1:
         found = compile(r"""Following\s+cartesian\s+coordinates:""")
         for line in file:
-          if found.search(line) != None: break
+          if found.search(line) is not None: break
         file.next()
         for line in file:
           data = line.split()
@@ -333,7 +333,7 @@ class Extract(object):
   def ispin(self):
     """ Greps ISPIN from OUTCAR. """
     result = self._find_first_OUTCAR(r"""^\s*ISPIN\s*=\s*(1|2)\s+""")
-    assert result != None, RuntimeError("Could not extract ISPIN from OUTCAR.")
+    assert result is not None, RuntimeError("Could not extract ISPIN from OUTCAR.")
     return int(result.group(1))
 
   @property
@@ -342,7 +342,7 @@ class Extract(object):
   def name(self):
     """ Greps POSCAR title from OUTCAR. """
     result = self._find_first_OUTCAR(r"""^\s*POSCAR\s*=.*$""")
-    assert result != None, RuntimeError("Could not extract POSCAR title from OUTCAR.")
+    assert result is not None, RuntimeError("Could not extract POSCAR title from OUTCAR.")
     result = result.group(0)
     result = result[result.index('=')+1:]
     return result.rstrip().lstrip()
@@ -353,7 +353,7 @@ class Extract(object):
   def system(self):
     """ Greps system title from OUTCAR. """
     result = self._find_first_OUTCAR(r"""^\s*SYSTEM\s*=.*$""")
-    assert result != None, RuntimeError("Could not extract SYSTEM title from OUTCAR.")
+    assert result is not None, RuntimeError("Could not extract SYSTEM title from OUTCAR.")
     result = result.group(0)
     result = result[result.index('=')+1:].rstrip().lstrip()
     if result[0] == '"': result = result[1:]
@@ -372,8 +372,8 @@ class Extract(object):
     found = None
     for i, line in enumerate(lines[::-1]):
       found = spin_comp1_re.match(line)
-      if found != None: break
-    assert found != None, RuntimeError("Could not extract eigenvalues/occupation from OUTCAR.")
+      if found is not None: break
+    assert found is not None, RuntimeError("Could not extract eigenvalues/occupation from OUTCAR.")
 
     # now greps actual results.
     if self.is_dft:
@@ -405,14 +405,14 @@ class Extract(object):
     spins = [None,None]
     for i, line in enumerate(lines[::-1]):
       found = spin_comp1_re.match(line)
-      if found == None: continue
+      if found is None: continue
       if found.group(1) == '1': 
-        assert spins[1] != None, \
+        assert spins[1] is not None, \
                RuntimeError("Could not find two spin components in OUTCAR.")
         spins[0] = i
         break
       else:  spins[1] = i
-    assert spins[0] != None and spins[1] != None,\
+    assert spins[0] is not None and spins[1] is not None,\
            RuntimeError("Could not extract eigenvalues/occupation from OUTCAR.")
 
     # now greps actual results.
@@ -443,7 +443,7 @@ class Extract(object):
     """ Greps ionic_charges from OUTCAR."""
     regex = """^\s*ZVAL\s*=\s*(.*)$"""
     result = self._find_last_OUTCAR(regex) 
-    assert result != None, RuntimeError("Could not find ionic_charges in OUTCAR")
+    assert result is not None, RuntimeError("Could not find ionic_charges in OUTCAR")
     return [float(u) for u in result.group(1).split()]
 
   @property
@@ -464,7 +464,7 @@ class Extract(object):
     """ Greps nelect from OUTCAR."""
     regex = """^\s*NELECT\s*=\s*(\S+)\s+total\s+number\s+of\s+electrons\s*$"""
     result = self._find_last_OUTCAR(regex) 
-    assert result != None, RuntimeError("Could not find energy in OUTCAR")
+    assert result is not None, RuntimeError("Could not find energy in OUTCAR")
     return float(result.group(1)) 
 
   @property
@@ -478,7 +478,7 @@ class Extract(object):
   def nbands(self):
     """ Number of bands in calculation. """
     result = self._find_first_OUTCAR("""NBANDS\s*=\s*(\d+)""")
-    assert result != None, RuntimeError("Could not find NBANDS in OUTCAR.")
+    assert result is not None, RuntimeError("Could not find NBANDS in OUTCAR.")
     return int(result.group(1))
 
 

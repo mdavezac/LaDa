@@ -95,7 +95,7 @@ def ldos(extractor, positions, raw=False):
     extract = extractor[n]
 
     # checks that this proc can return wavefunctions. 
-    is_null = extract.raw_gwfns == None
+    is_null = extract.raw_gwfns is None
     Neigs, Npos = extract.eigenvalues.shape[0], len(positions)
     extract = extract.copy(comm=extract.comm.split(0 if is_null else 1))
     if is_null: perpoint.append(zeros(shape=(Npos, Neigs)))
@@ -166,11 +166,11 @@ class Extract(KExtract):
         properties to a KExtract object.
     """
     parent = kwargs.pop('parent', None)
-    if parent != None:
+    if parent is not None:
       assert len(kwargs) == 0 and len(args) == 0, \
              ValueError('Use of parent is exclusive')
     KExtract.__init__(self, *args, **kwargs)
-    if parent != None: self.__dict__.update(parent.__dict__)
+    if parent is not None: self.__dict__.update(parent.__dict__)
   
   @property
   @FileCache('LDOSCAR')
@@ -184,7 +184,7 @@ class Extract(KExtract):
     """ Positions for which to compute LDOS. """
     from numpy import array
     from quantities import angstrom
-    if getattr(self.functional, 'positions', None) == None:
+    if getattr(self.functional, 'positions', None) is None:
       return array([a.pos * self.structure.scale * angstrom for a in self.structure.atoms])
     if not hasattr(self.functional.positions, '__call__'): return self.functional.positions
     return self.funtional.positions(self.structure)

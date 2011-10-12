@@ -47,7 +47,7 @@ class Extract(AbstractExtractBase):
       
       regex = compile(r'kpoint_(\d+)/')
       paths = [ path for path in iglob(join(self.directory, 'kpoint_*/'))\
-                if isdir(path) and regex.search(path) != None ]
+                if isdir(path) and regex.search(path) is not None ]
       paths = sorted(paths, key=lambda x: int(regex.search(x).group(1)))
       vffout = self.EscanExtract(self.directory, comm=self.comm)._vffout
       OUTCAR = self.EscanExtract().OUTCAR
@@ -178,7 +178,7 @@ class Extract(AbstractExtractBase):
   def vbm(self): 
     """ Energy at valence band minimum. """
     print "WTF"
-    if self.functional.eref != None:
+    if self.functional.eref is not None:
       raise RuntimeError('Cannot extract VBM from folded spectrum calculation.')
     from numpy import max
     nbe = len(self.structure.atoms) * 4
@@ -187,7 +187,7 @@ class Extract(AbstractExtractBase):
   @property
   def cbm(self): 
     """ Energy at conduction band minimum. """
-    if self.functional.eref != None:
+    if self.functional.eref is not None:
       raise RuntimeError('Cannot extract CBM from folded spectrum calculation.')
     from numpy import min
     nbe = len(self.structure.atoms) * 4
@@ -201,7 +201,7 @@ class Extract(AbstractExtractBase):
   @property
   def cbm_direct_gap(self):
     """ Gap between the CBM and valence band at the same kpoint. """
-    if self.functional.eref != None:
+    if self.functional.eref is not None:
       raise RuntimeError('Cannot extract CBM from folded spectrum calculation.')
     from numpy import argmin
     nbe = len(self.structure.atoms) * 4
@@ -211,7 +211,7 @@ class Extract(AbstractExtractBase):
   @property
   def vbm_direct_gap(self):
     """ Gap between the VBM and conduction band at the same kpoint. """
-    if self.functional.eref != None:
+    if self.functional.eref is not None:
       raise RuntimeError('Cannot extract VBM from folded spectrum calculation.')
     from numpy import argmax
     nbe = len(self.structure.atoms) * 4
@@ -221,7 +221,7 @@ class Extract(AbstractExtractBase):
   @property
   def gamma_gap(self):
     """ Gap at Gamma if computed. """
-    if self.functional.eref != None:
+    if self.functional.eref is not None:
       raise RuntimeError('Cannot extract VBM from folded spectrum calculation.')
     from numpy import min, max
 
@@ -320,7 +320,7 @@ class KEscan(Escan):
     """
     from .kpoints import KContainer
     # case for simple containers.
-    if kpoints == None: kpoints, multiplicity = [[0,0,0]], [1]
+    if kpoints is None: kpoints, multiplicity = [[0,0,0]], [1]
     if hasattr(kpoints, '__call__'): self.kpoints = kpoints
     else: self.kpoints = KContainer(kpoints, multiplicity)
     escan_copy = kwargs.pop("escan", None) 
@@ -333,7 +333,7 @@ class KEscan(Escan):
     """
     super(KEscan, self).__init__(**kwargs)
 
-    if escan_copy != None: # copy constructor from Escan instance. 
+    if escan_copy is not None: # copy constructor from Escan instance. 
       from copy import deepcopy
       self.__dict__.update(deepcopy(escan_copy.__dict__))
 
@@ -355,7 +355,7 @@ class KEscan(Escan):
         if key in arglist: continue
         assert hasattr(this, key), TypeError("Unexpected keyword argument {0}.".format(key))
         setattr(this, key, value)
-      if do_relax_kpoint != None: this.do_relax_kpoint = do_relax_kpoint
+      if do_relax_kpoint is not None: this.do_relax_kpoint = do_relax_kpoint
       comm = Communicator(comm, with_world=True)
 
       if not kwargs.get('overwrite', False): 
@@ -365,13 +365,13 @@ class KEscan(Escan):
       # performs vff calculations
       vffrun = kwargs.pop('vffrun', None)
       genpotrun = kwargs.pop('genpotrun', None)
-      if vffrun == None or genpotrun == None: 
+      if vffrun is None or genpotrun is None: 
         kargs = kwargs.copy() # makes sure we don't include do_escan twice.
         kargs['do_escan'] = False
         out = super(KEscan, this).__call__( structure, outdir, comm, 
                                             vffrun = vffrun, genpotrun=genpotrun, **kargs )
-        if vffrun    == None: vffrun    = out
-        if genpotrun == None: genpotrun = out
+        if vffrun    is None: vffrun    = out
+        if genpotrun is None: genpotrun = out
 
   
       # create list of kpoints.
@@ -388,7 +388,7 @@ class KEscan(Escan):
         job.jobparams['vffrun']          = vffrun
         job.jobparams['genpotrun']       = genpotrun
       
-      directory = '.' if outdir == None else outdir
+      directory = '.' if outdir is None else outdir
       bleeder = Bleeder(jobdict, this._pools(len(kpoints), structure, comm), comm, directory=directory)
       for result, job in bleeder.itercompute(**kwargs): continue
       bleeder.cleanup()
@@ -406,7 +406,7 @@ class KEscan(Escan):
      """ Returns list of kpoints. """
      from numpy import zeros, array
      # case where kpoints is None.
-     if kpoints == None: return [zeros((3,1), dtype='float64')]
+     if kpoints is None: return [zeros((3,1), dtype='float64')]
      # case where kpoints is already a single vector.
      if hasattr(kpoints, '__len__'):
        if len(kpoints) == 0: return [zeros((3,1), dtype='float64')]

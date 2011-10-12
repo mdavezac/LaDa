@@ -53,7 +53,7 @@ class _RedirectAll:
   def __init__(self, unit, filename, append):
     self.unit = unit
     self.filename = filename
-    if self.filename == None: self.filename = ""
+    if self.filename is None: self.filename = ""
     if self.filename == "/dev/null": self.filename = ""
     self.append = append
   def __enter__(self):
@@ -109,7 +109,7 @@ def redirect_all(output=None, error=None, input=None, append = False):
   from contextlib import nested
   result = []
   for value, unit in [ (output, streams.output), (error, streams.error), (input, streams.input) ]:
-    if value == None: continue
+    if value is None: continue
     result.append( _RedirectAll(unit=unit, filename=value, append=append) )
   return nested(*result)
 
@@ -136,10 +136,10 @@ def redirect(fout=None, ferr=None, fin=None, pyout=None, pyerr=None, pyin=None, 
   from contextlib import nested
   result = []
   for value, unit in [ (fout, streams.output), (ferr, streams.error), (fin, streams.input) ]:
-    if value == None: continue
+    if value is None: continue
     result.append( _RedirectFortran(unit=unit, filename=value, append=append) )
   for value, unit in [ (pyout, streams.output), (pyerr, streams.error), (pyin, streams.input) ]:
-    if value == None: continue
+    if value is None: continue
     result.append( _RedirectPy(unit=unit, filename=value, append=append) )
   return nested(*result)
 
@@ -186,22 +186,22 @@ def exec_input( script, global_dict=None, local_dict = None,\
   from . import Input
   
   # Add some names to execution environment.
-  if global_dict == None: global_dict = {}
+  if global_dict is None: global_dict = {}
   global_dict.update( { "environ": environ, "pi": pi, "array": array, "matrix": matrix, "dot": dot,
                         "norm": norm, "sqrt": sqrt, "ceil": ceil, "abs": abs,  "det": det,
                         "physics": physics, "expanduser": expanduser, 'world': world})
   for key in crystal.__all__: global_dict[key] = getattr(crystal, key)
-  if local_dict == None: local_dict = {}
+  if local_dict is None: local_dict = {}
   # Executes input script.
   exec(script, global_dict, local_dict)
 
   # Makes sure expected paths are absolute.
-  if paths != None:
+  if paths is not None:
     for path in paths:
       if path not in local_dict: continue
       local_dict[path] = abspath(expanduser(local_dict[path]))
     
-  if name == None: name = 'None'
+  if name is None: name = 'None'
   result = Input(name)
   result.update(local_dict)
   return result
@@ -258,14 +258,14 @@ class LockFile(object):
       # if fails, then another process already created it. Just keep looping.
       except error: 
         self._owns_lock = False
-        if self.timeout != None:
+        if self.timeout is not None:
           assert time.time() - start_time < self.timeout, \
                  RuntimeError("Could not acquire lock on %s." % (filename))
         time.sleep(self.sleep)
 
   def __enter__(self):
     """ Enters context. """
-    assert self.timeout == None, RuntimeError("Cannot use LockFile as a context with timeout.")
+    assert self.timeout is None, RuntimeError("Cannot use LockFile as a context with timeout.")
     self.lock()
     return self
 
@@ -389,7 +389,7 @@ class RelativeDirectory(object):
 
       If envvar is set to None in any single instance, than this value takes
       over. Since it is a class attribute, it should be global to all instances
-      with ``self.envvar == None``. 
+      with ``self.envvar is None``. 
   """
   def __init__(self, path=None, envvar=None, hook=None):
     """ Initializes the relative directory. 
@@ -429,12 +429,12 @@ class RelativeDirectory(object):
   @property
   def relative(self):
     """ Path relative to fixed point. """
-    return self._relative if self._relative != None else ""
+    return self._relative if self._relative is not None else ""
   @relative.setter
   def relative(self, value):
     """ Path relative to fixed point. """
     from os.path import expandvars, expanduser
-    if value == None: value = ""
+    if value is None: value = ""
     value = expandvars(expanduser(value.rstrip().lstrip()))
     assert value[0] != '/', ValueError('Cannot set "relative" attribute with absolute path.')
     self._relative = value if len(value) else None
@@ -446,12 +446,12 @@ class RelativeDirectory(object):
     from os import getcwd
     from os.path import expanduser, expandvars, normpath
     from . import Changedir
-    if self._envvar == None:
+    if self._envvar is None:
        with Changedir(expanduser(self.global_envvar)) as pwd: return getcwd()
     return normpath(expandvars(expanduser(self._envvar)))
   @envvar.setter
   def envvar(self, value):
-    if value == None: self._envvar = None
+    if value is None: self._envvar = None
     elif len(value.rstrip().lstrip()) == 0: self._envvar = None
     else: self._envvar = value
     self.hook(self.path)
@@ -460,13 +460,13 @@ class RelativeDirectory(object):
   def path(self):
     """ Returns absolute path, including fixed-point. """
     from os.path import join, normpath
-    if self._relative == None: return self.envvar
+    if self._relative is None: return self.envvar
     return normpath(join(self.envvar, self._relative))
   @path.setter
   def path(self, value):
     from os.path import relpath, expandvars, expanduser
     from os import getcwd
-    if value == None: value = getcwd()
+    if value is None: value = getcwd()
     if isinstance(value, tuple) and len(value) == 2: 
       self.envvar = value[0]
       self.relative = value[1]
@@ -479,14 +479,14 @@ class RelativeDirectory(object):
   def unexpanded(self):
     """ Unexpanded path (eg with envvar as is). """
     from os.path import join
-    e = self.global_envvar if self._envvar == None else self._envvar
-    return e if self._relative == None else join(e, self._relative)
+    e = self.global_envvar if self._envvar is None else self._envvar
+    return e if self._relative is None else join(e, self._relative)
 
 
   @property
   def hook(self):
     from inspect import ismethod, getargspec
-    if self._hook == None: return lambda x: None
+    if self._hook is None: return lambda x: None
     N = len(getargspec(self._hook)[0])
     if ismethod(self._hook): N -= 1
     if N == 0: return lambda x: self._hook()
@@ -495,14 +495,14 @@ class RelativeDirectory(object):
   def hook(self, value): 
     from inspect import ismethod, getargspec, isfunction
 
-    if value == None: 
+    if value is None: 
       self._hook = None
       return
     assert ismethod(value) or isfunction(value), \
            TypeError("hook is not a function or bound method.")
     N = len(getargspec(value)[0])
     if ismethod(value):
-      assert value.im_self != None,\
+      assert value.im_self is not None,\
              TypeError("hook callable cannot be an unbound method.")
       N -= 1
     assert N < 2, TypeError("hook callable cannot have more than one argument.")
@@ -598,15 +598,15 @@ def copyfile( src, dest=None, nothrow=None, comm=None,\
                         join, islink, realpath, relpath, getsize
     from shutil import copyfile as cpf
     # sets up nothrow options.
-    if nothrow == None: nothrow = []
+    if nothrow is None: nothrow = []
     if isinstance(nothrow, str): nothrow = nothrow.split()
     if nothrow == 'all': nothrow = 'exists', 'same', 'isfile', 'none', 'null'
     nothrow = [u.lower() for u in nothrow]
     # checks and normalizes input.
-    if src == None: 
+    if src is None: 
       if 'none' in nothrow: return False
       raise IOError("Source is None.")
-    if dest == None: dest = getcwd()
+    if dest is None: dest = getcwd()
     if dest == '/dev/null': return True
     if src  == '/dev/null':
       if 'null' in nothrow: return False
@@ -649,7 +649,7 @@ def cpus_per_node():
   ncpus = 0
   with open("/proc/cpuinfo", "r") as file:
     for line in file:
-      if cpu_re.search(line) != None: ncpus += 1
+      if cpu_re.search(line) is not None: ncpus += 1
   if ncpus == 0: raise RuntimeError("Could not determine number of cpus.")
   return ncpus
     
@@ -660,7 +660,7 @@ def total_memory():
   with open("/proc/meminfo", "r") as file:
     for line in file:
       found = mem_re.search(line)
-      if found != None: return int(found.group(1))
+      if found is not None: return int(found.group(1))
   raise MemoryError("Could not determine total memory from /proc/meminfo.")
 
 def which(program):

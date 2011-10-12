@@ -63,8 +63,8 @@ class Fit():
 
       
     # creates arrays if they are not provided.
-    if A == None: A = numpy.zeros((x,y), dtype='float64')
-    if b == None: b = numpy.zeros((x,), dtype='float64')
+    if A is None: A = numpy.zeros((x,y), dtype='float64')
+    if b is None: b = numpy.zeros((x,), dtype='float64')
 
     # checks arrays have correct size
     assert A.shape == (x, y), "A does not have correct shape.\n"
@@ -92,7 +92,7 @@ class Fit():
     import numpy
     
     # resize array to fit structure.
-    if self._pis == None:  # on-offs for clusters.
+    if self._pis is None:  # on-offs for clusters.
       nclasses = len(self._classes)
       self._pis = numpy.zeros((1, nclasses), dtype='float64').copy()
       self._energies = numpy.zeros((1,), dtype='float64').copy()
@@ -122,7 +122,7 @@ class Fit():
     """
 
     if on == "all": self._str_onoff[:] = True
-    if n != None: self._str_onoff[n] = False
+    if n is not None: self._str_onoff[n] = False
 
   def extinguish_cluster(self, n = None, on = "all", mask=False):
     """ Extinguishes cluster class at index n (n can be a list of indices).
@@ -131,7 +131,7 @@ class Fit():
     """
 
     if on == "all": self._cls_onoff[:] = not mask
-    if n != None: self._cls_onoff[n] = mask
+    if n is not None: self._cls_onoff[n] = mask
 
   def assign_genome(self, n):
     """ Assigns a bitstring genome for fitting.
@@ -283,8 +283,8 @@ class PairRegulatedFit(Fit):
 
       
     # creates arrays if they are not provided.
-    if A == None: A = zeros((xreg,y), dtype='float64')
-    if b == None: b = zeros((xreg,), dtype='float64')
+    if A is None: A = zeros((xreg,y), dtype='float64')
+    if b is None: b = zeros((xreg,), dtype='float64')
 
 
     # calls base class

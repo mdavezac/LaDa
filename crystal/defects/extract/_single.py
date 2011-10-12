@@ -18,7 +18,7 @@ class _ChargedStateNavigation(object):
     super(_ChargedStateNavigation, self).__init__()
     # extraction object.
     self.extract = extract.copy(unix_re=False)
-    if self.extract.excludes == None: self.extract.excludes = [".*relax_*"]
+    if self.extract.excludes is None: self.extract.excludes = [".*relax_*"]
     else: self.extract.excludes.append(".*relax_*$")
 
     self._host = host
@@ -30,7 +30,7 @@ class _ChargedStateNavigation(object):
     """ Dimensionless dielectric constant. """
     self.pa_kwargs = pa_kwargs 
     """ Potential alignment parameter. """
-    if self.pa_kwargs == None: self.pa_kwargs = {}
+    if self.pa_kwargs is None: self.pa_kwargs = {}
 
   @property
   def epsilon(self):
@@ -75,7 +75,7 @@ class _ChargedStateNavigation(object):
         if abs(d - 1e0) < 1e-8: continue
         invrotmat = inv(rotmat)
         if all( abs(rotmat.T - invrotmat) < 1e-8 ): found = i; break
-      if found == None: 
+      if found is None: 
         from .. import charge_corrections
         c = charge_corrections( job.structure, charge=job.charge, 
                                 epsilon=self.epsilon, n=40, cutoff=45. )
@@ -162,8 +162,8 @@ class _ChargedStateNavigation(object):
   @property
   def host(self):
     """ Returns extraction object towards the host. """
-    if self._host == None: 
-      host = self.extract['../..' if self._is_site == None else '../../..']
+    if self._host is None: 
+      host = self.extract['../..' if self._is_site is None else '../../..']
       host = self.copy(excludes=[".*PointDefects"], naked_end=False)
       host.excludes.extend(host.excludes)
       lowest = sorted(child.total_energies.iteritems(), key=itemgetter(1))[0][0]
@@ -177,30 +177,30 @@ class _ChargedStateNavigation(object):
     """ Returns site number or None. """
     from re import match
     regex = match(r"site_(\d+)", self.extract.view.split('/')[-1])
-    return int(regex.group(1)) if regex != None else None
+    return int(regex.group(1)) if regex is not None else None
 
   @property 
   def name(self):
     """ Name of the defect. """
-    return self.extract.view.split('/')[-2 if self._site != None else -1]
+    return self.extract.view.split('/')[-2 if self._site is not None else -1]
 
   @property
   def is_vacancy(self):
     """ True if this is a vacancy. """
     from re import match
-    return match("vacancy_[A-Z][a-z]?", self.name) != None
+    return match("vacancy_[A-Z][a-z]?", self.name) is not None
 
   @property
   def is_interstitial(self):
     """ True if this is an interstitial. """
     from re import match
-    return match("[A-Z][a-z]?_interstitial_\S+", self.name) != None
+    return match("[A-Z][a-z]?_interstitial_\S+", self.name) is not None
 
   @property
   def is_substitution(self):
     """ True if this is a substitution. """
     from re import match
-    return match("[A-Z][a-z]?_on_[A-Z][a-z]?", self.name) != None
+    return match("[A-Z][a-z]?_on_[A-Z][a-z]?", self.name) is not None
 
   @property
   def n(self):
@@ -255,7 +255,7 @@ class Single(_ChargedStateNavigation):
         :return: Chemical potential of this defect. Value is always in eV.
     """
     from quantities import eV
-    if mu == None: return 0 * eV 
+    if mu is None: return 0 * eV 
     result = 0e0 * eV
     n = self.n
     for specie, value in self.n:
@@ -390,7 +390,7 @@ class Single(_ChargedStateNavigation):
     from re import match
     if self.is_interstitial:
       site = self._site
-      if site == None:
+      if site is None:
         found = match("([A-Z][a-z]?)_interstitial_(.+)$", self.name) 
         return r"{0}$^{{(i)}}_{{ \mathrm{{ {1} }} }}$"\
                .format(found.group(1), found.group(2).replace('_', r"\_"))
@@ -401,7 +401,7 @@ class Single(_ChargedStateNavigation):
     if self.is_substitution:
       found = match("([A-Z][a-z]?)_on_([A-Z][a-z]?)", self.name) 
       site = self._site
-      if site == None:
+      if site is None:
         return r"{0}$_{{ \mathrm{{ {1} }} }}$".format(found.group(1), found.group(2))
       else:
         return r"{0}$_{{ \mathrm{{ {1} }}_{{ {2} }} }}$"\
@@ -409,7 +409,7 @@ class Single(_ChargedStateNavigation):
     if self.is_vacancy:
       found = match("vacancy_([A-Z][a-z]?)", self.name) 
       site = self._site
-      if site == None:
+      if site is None:
         return r"$\square_{{ \mathrm{{ {0} }} }}$".format(found.group(1))
       else:
         return r"$\square_{{ \mathrm{{ {0} }}_{{{1}}} }}$".format(found.group(1), site)

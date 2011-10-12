@@ -201,8 +201,8 @@ def lattice_symmetry(cell, tiny = 1e-8):
     from numpy.linalg import det
     from numpy import zeros, matrix
 
-    if transformation == None: transformation = matrix(zeros((3,3),dtype="float64"))
-    if axis == None: axis = (2,2) 
+    if transformation is None: transformation = matrix(zeros((3,3),dtype="float64"))
+    if axis is None: axis = (2,2) 
     
     next_axis = None
     if axis[1] != -2: next_axis = (axis[0], axis[1]-1)
@@ -210,7 +210,7 @@ def lattice_symmetry(cell, tiny = 1e-8):
 
     for i in range(-2,3):
       transformation[axis] = i
-      if next_axis != None:
+      if next_axis is not None:
         for transformation in unimodular_transform(transformation, next_axis):
           if det(transformation) == 1: yield transformation
       elif det(transformation) == 1: yield transformation

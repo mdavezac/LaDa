@@ -60,7 +60,7 @@ def record(self, cmdl):
     return
 
   if not (args.remove or args.list or args.load or args.view): args.update = True
-  if args.namespace != None and not args.load: 
+  if args.namespace is not None and not args.load: 
     parser.print_usage()
     print "\n--namespace argument has no effect except when reloading record."
     return
@@ -106,7 +106,7 @@ def record(self, cmdl):
         print "Removing {0}(={1}) from record {2}".format(var, string, args.filename)
   elif args.load: 
     if len(args.vars) == 0: args.vars = attributes
-    if args.namespace == None: namespace = self.api.user_ns
+    if args.namespace is None: namespace = self.api.user_ns
     elif args.namespace in self.api.user_ns:
       namespace = self.api.user_ns[args.namespace]
       if not isinstance(namespace, dict):
