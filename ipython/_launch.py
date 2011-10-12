@@ -24,7 +24,7 @@ def launch_scattered(self, event):
   except Exception as e: 
     print "Could not make sense of --nbprocs argument {0}.\n{1}".format(event.nbprocs, e)
     return
-  if mppalloc == None:
+  if mppalloc is None:
     def mppalloc(job): 
       """ Returns number of processes for this job. """
       N = len(job.structure.atoms) # number of atoms.
@@ -32,14 +32,14 @@ def launch_scattered(self, event):
       return N  
 
   # gets walltime.
-  if re.match("\s*(\d{1,3}):(\d{1,2}):(\d{1,2})\s*", event.walltime) == None:
+  if re.match("\s*(\d{1,3}):(\d{1,2}):(\d{1,2})\s*", event.walltime) is None:
     try: walltime = ip.ev(event.walltime)
     except Exception as e: 
       print "Could not make sense of --walltime argument {0}.\n{1}".format(event.walltime, e)
       return
   else: walltime = event.walltime
   walltime = re.match("\s*(\d{1,3}):(\d{1,2}):(\d{1,2})\s*", walltime)
-  if walltime != None:
+  if walltime is not None:
     a, b, c = walltime.group(1), walltime.group(2), walltime.group(3)
     walltime = "{0:0>2}:{1:0>2}:{2:0>2}".format(a, b, c)
   else: 
@@ -48,7 +48,7 @@ def launch_scattered(self, event):
 
   # gets queue (aka partition in slurm), if any.
   kwargs = {}
-  if event.__dict__.get(queue, None) != None: kwargs[queue] = getattr(event, queue)
+  if event.__dict__.get(queue, None) is not None: kwargs[queue] = getattr(event, queue)
   if which and event.debug: kwargs["partition"] = "inter"
 
   # creates list of dictionaries.
@@ -63,8 +63,8 @@ def launch_scattered(self, event):
       jobdicts.append((d, p))
   else: # current job dictionary.
     current, path = _get_current_job_params(self, 2)
-    if current == None: return
-    if path == None: return
+    if current is None: return
+    if path is None: return
     # saving pickle
     saveto(self, path)
     if "_lada_error" in ip.user_ns:

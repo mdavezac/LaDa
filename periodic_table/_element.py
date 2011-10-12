@@ -110,7 +110,7 @@ class Element(object):
     for name in self.__dict__:
       if name[0] == '_': continue
       s = getattr(self, name)
-      if s != None: string += "  - {0}: {1}.\n".format(name, str(s))
+      if s is not None: string += "  - {0}: {1}.\n".format(name, str(s))
     
     return string
 
@@ -251,5 +251,5 @@ class Element(object):
     for name in self.__dict__:
       if name[0] == '_': continue
       s = getattr(self, name)
-      if s != None: result[name] = s
+      if s is not None: result[name] = s
     return "{0}(**{1})".format(self.__class__.__name__, result)

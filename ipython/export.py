@@ -62,7 +62,7 @@ def export(self, event):
 
   collect = self.api.user_ns.get('collect', None)
   rootdir = getattr(collect, 'rootdir', None)
-  if collect == None:
+  if collect is None:
     print "Could not find 'collect' object in user namespace."
     print "Please load a job-dictionary."
     return
@@ -70,13 +70,13 @@ def export(self, event):
   kwargs = args.__dict__.copy()
   kwargs.pop('filename', None)
 
-  if rootdir == None: 
+  if rootdir is None: 
     if hasattr(self.api.user_ns.get('collect', None), 'rootdir'): 
       rootdir = self.api.user_ns.get('collect').rootdir
-  directory = getcwd() if rootdir == None else dirname(rootdir)
+  directory = getcwd() if rootdir is None else dirname(rootdir)
 
   if args.down: directory = join(directory, '..')
-  elif args.dir != None: directory = RelativeDirectory(args.dir).path
+  elif args.dir is not None: directory = RelativeDirectory(args.dir).path
 
   # set of directories visited.
   directories = set()

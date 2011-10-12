@@ -33,7 +33,7 @@ class Functional(Launch):
     """ If True and self.CONTCAR exists in directory, will restart from it. """
 
     # copies values from other functional.
-    if vasp != None: 
+    if vasp is not None: 
       self.params.update(vasp.params)
       self.special.update(vasp.special)
       for key, value in vasp.__dict__.iteritems():
@@ -97,8 +97,8 @@ class Functional(Launch):
 
     # make this functor stateless.
     this      = deepcopy(self)
-    outdir    = getcwd() if outdir == None else RelativeDirectory(outdir).path
-    repat     = deepcopy(repat)  if repat != None else []
+    outdir    = getcwd() if outdir is None else RelativeDirectory(outdir).path
+    repat     = deepcopy(repat)  if repat is not None else []
     norun     = kwargs.pop("norun", False)
     # makes functor stateless/reads structure from CONTCAR if requested and appropriate.
     if "external" in kwargs: this.launch_as_library = not kwargs.pop("external")
@@ -156,7 +156,7 @@ class Functional(Launch):
     modules[self.__class__.__module__] = [self.__class__.__name__]
     # now go through vasp parameters and print them out.
     for name, value in self.params.items():
-      if value == None: continue
+      if value is None: continue
       # if a special parameter, then is non-default.
       if name in params: string += "functional.%s = %s\n" % (name, repr(value))
       else:
@@ -166,7 +166,7 @@ class Functional(Launch):
         if module in modules: modules[module].append(classname)
         else: modules[module] = [classname]
     for name, value in self.special.items():
-      if value.value == None: continue
+      if value.value is None: continue
       assert isinstance(value, SpecialVaspParam)
       string += "functional.{0} = {1}\n".format(name, repr(value))
       module = value.__class__.__module__ 

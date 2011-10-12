@@ -45,7 +45,7 @@ class Bleeder(object):
     return self._pools
   @pools.setter
   def pools(self, value):
-    if value == None: self._pools = 1
+    if value is None: self._pools = 1
     elif not self.comm.is_mpi: self._pools = 1
     elif value > self.comm.size: self._pools = self.comm.size
     else: self._pools = value
@@ -96,7 +96,7 @@ class Bleeder(object):
       # for all nodes, broadcasts job.
       job = self.local_comm.broadcast(job)
       # check for bailout.
-      if job == None: break
+      if job is None: break
 
       # yield job.
       yield job

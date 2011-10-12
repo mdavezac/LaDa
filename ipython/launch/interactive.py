@@ -17,7 +17,7 @@ def launch(self, event, jobdicts):
   ip = self.api
   ip.user_ns.pop("_lada_error", None)
 
-  kwargs = dict(event.kwargs) if event.kwargs != None else dict()
+  kwargs = dict(event.kwargs) if event.kwargs is not None else dict()
   kwargs['comm'] = world
   kwargs["external"] = event.external
 

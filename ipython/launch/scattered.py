@@ -22,7 +22,7 @@ def launch(self, event, jobdicts):
   except Exception as e: 
     print "Could not make sense of --nbprocs argument {0}.\n{1}".format(event.nbprocs, e)
     return
-  if mppalloc == None:
+  if mppalloc is None:
     def mppalloc(job): 
       """ Returns number of processes for this job. """
       N = len(job.structure.atoms) # number of atoms.
@@ -30,14 +30,14 @@ def launch(self, event, jobdicts):
       return max(N, 1)  
 
   # gets walltime.
-  if re.match("\s*(\d{1,3}):(\d{1,2}):(\d{1,2})\s*", event.walltime) == None:
+  if re.match("\s*(\d{1,3}):(\d{1,2}):(\d{1,2})\s*", event.walltime) is None:
     try: walltime = ip.ev(event.walltime)
     except Exception as e: 
       print "Could not make sense of --walltime argument {0}.\n{1}".format(event.walltime, e)
       return
   else: walltime = event.walltime
   walltime = re.match("\s*(\d{1,3}):(\d{1,2}):(\d{1,2})\s*", walltime)
-  if walltime != None:
+  if walltime is not None:
     a, b, c = walltime.group(1), walltime.group(2), walltime.group(3)
     walltime = "{0:0>2}:{1:0>2}:{2:0>2}".format(a, b, c)
   else: 
@@ -48,10 +48,10 @@ def launch(self, event, jobdicts):
   kwargs = { "ppernode": event.ppn,
              "memlim": event.memlim,
              "external": event.external } 
-  if event.__dict__.get("queue", None) != None: kwargs["queue"] = getattr(event, "queue")
-  if event.__dict__.get("account", None) != None: kwargs["account"] = getattr(event, "account")
+  if event.__dict__.get("queue", None) is not None: kwargs["queue"] = getattr(event, "queue")
+  if event.__dict__.get("account", None) is not None: kwargs["account"] = getattr(event, "account")
   if event.debug:
-    assert debug_queue != None, RuntimeError("debug_queue global variable has not been set.")
+    assert debug_queue is not None, RuntimeError("debug_queue global variable has not been set.")
     kwargs[debug_queue[0]] = debug_queue[1]
 
   # gets python script to launch in pbs.
@@ -113,7 +113,7 @@ def completer(self, info, data):
   result = ['--force', '--walltime', '--nbprocs', '--help', '--external']
   if len(queues) > 0: result.append("--queue") 
   if len(accounts) > 0: result.append("--account") 
-  if debug_queue != None: result.append("--debug")
+  if debug_queue is not None: result.append("--debug")
   result.extend( _glob_job_pickles(ip, info.symbol) )
   result = list(set(result) - set(data))
   return result
@@ -155,7 +155,7 @@ def parser(self, subparsers, opalls):
                          help="Queue on which to launch job. Defaults to system default." )
   else: result.add_argument('--queue', dest="queue", type=str,
                             help="Launches jobs on specific queue if present.")
-  if debug_queue != None:
+  if debug_queue is not None:
     result.add_argument( '--debug', dest="debug", action="store_true", 
                          help="launches in interactive queue if present." )
   result.set_defaults(func=launch)

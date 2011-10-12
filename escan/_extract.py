@@ -32,7 +32,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
 
     super(Extract, self).__init__(directory=directory, comm=None)
 
-    if escan == None: escan = Escan()
+    if escan is None: escan = Escan()
     
     self.OUTCAR = escan.OUTCAR
     """ OUTCAR file to extract stuff from. """
@@ -71,7 +71,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     from ..physics import a0
     from re import M
     result = self._find_first_OUTCAR(r'\s*ikpt,akx,aky,akz\s+(\d+)' + 3*r'\s+(\S+)', M)
-    assert result != None,\
+    assert result is not None,\
            RuntimeError('Could not find kpoint in file {0};'.format(self.__outcar__().name))
     if result.group(1) == '0': return zeros((3,), dtype='float64')
     return array([result.group(2), result.group(3), result.group(4)], dtype='float64') / 2e0 / pi\
@@ -126,7 +126,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
       with self.__outcar__() as file:
         for line in file:
           if line.find("FINAL eigen energies, in eV") != -1: good += 1
-          elif do_escan_re.search(line) != None: is_do_escan = eval(line.split()[-1])
+          elif do_escan_re.search(line) is not None: is_do_escan = eval(line.split()[-1])
           elif line.find("# Computed ESCAN in:") != -1: good += 1; break
       if good == 1 and not is_do_escan: return True
       if good == 2 and is_do_escan: return not any(isnan(self.solo().eigenvalues))

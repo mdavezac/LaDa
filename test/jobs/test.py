@@ -26,7 +26,7 @@ local_comm = world.split(world.rank % options.pools)
 functional = Functional()
 
 # Creates dictionary
-if options.loadme == None or options.saveme != None:
+if options.loadme is None or options.saveme is not None:
   job_dictionary = jobs.JobDict()
   for caps in ["A", "B", "C", "D"]:
     capsjob = job_dictionary / caps
@@ -48,22 +48,22 @@ if options.loadme == None or options.saveme != None:
 else: job_dictionary = jobs.load(options.loadme, comm=world)
 
 # saves dictionary
-if options.saveme != None:
+if options.saveme is not None:
   jobs.save(jobdict=job_dictionary, path=options.saveme, overwrite=True, comm=world)
 # writes pbs stuff.
-if options.pbs != None and world.rank == 0:
+if options.pbs is not None and world.rank == 0:
   jobs.pbs_script( outdir="results", jobdict=job_dictionary, pools=options.pools,\
                    queue="regular", mppwidth=world.size, python_path=getcwd() ) 
 
 # Computes all jobs.
-if options.loadme == None and options.saveme == None and options.pbs == None:
+if options.loadme is None and options.saveme is None and options.pbs is None:
   for outdir, job in job_dictionary.iteritems():
     # launch jobs and stores result
     result = job.compute(outdir=join('results', outdir))
     # Root process of pool prints result.
     if local_comm.rank == 0: print result, "\n"
 # Executes jobs using jobs.bleed
-elif options.loadme != None: 
+elif options.loadme is not None: 
   for job, outdir in jobs.bleed(options.loadme, outdir=options.pbs, comm=local_comm):
     # decides on the same waittime for all processes.
     waittime = broadcast(local_comm, random.randint(0,2), 0)

@@ -54,13 +54,13 @@ class GWFunctional(VaspFunctional):
 
     self.empties = {'loptics': True}
     """ Parameters for empty bands DFT calculations. """
-    if empties != None: self.empties.update(empties)
+    if empties is not None: self.empties.update(empties)
     for key in deepcopy(self.empties): 
       if key in kwargs: del self.empties[key]
     self.gwparams = { "algo": "gw", "lmaxfockae": 4, "nomega": 64, "precfock": 'fast',
                       "encutgw": 150, "encutlf": 150, "lrpa": True, "nelm": 1, "loptics": True,
                       "lpead": True }
-    if gwparams != None: self.gwparams.update(gwparams)
+    if gwparams is not None: self.gwparams.update(gwparams)
     for key in deepcopy(self.gwparams): 
       if key in kwargs: del self.gwparams[key]
     """ Parameters for actual GW calculations. """
@@ -75,7 +75,7 @@ class GWFunctional(VaspFunctional):
     from copy import deepcopy
     from ..opt import RelativeDirectory
     
-    outdir = getcwd() if outdir == None else RelativeDirectory(outdir).path
+    outdir = getcwd() if outdir is None else RelativeDirectory(outdir).path
     empties = deepcopy(self.empties)
     if 'empties' in kwargs: empties.update(kwargs.pop('empties'))
     gwparams = deepcopy(self.gwparams)

@@ -77,7 +77,7 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
     print "No current job-dictionary." 
     return
   jobdict = ip.user_ns["current_jobdict"].root
-  if path == None:
+  if path is None:
     if "current_jobdict_path" not in ip.user_ns:
       print "No known path for current dictionary and no path specified on input."
       return
@@ -97,13 +97,13 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
       file.write(jobdict.nonmaginput)
       file.flush()
       input.update(read_input(file.name))
-  if inputpath != None:
+  if inputpath is not None:
     input.update(read_input(inputpath))
     with open(inputpath, "r") as file: jobdict.maginput = file.read()
   input.update(kwargs)
 
   # saves inputfile to jobdictioanry if needed.
-  if inputpath != None:
+  if inputpath is not None:
     input.update(read_input(inputpath))
     with open(inputpath, "r") as file: jobdict.pointdefectinput = file.read()
   # saves current script tof file.
@@ -166,9 +166,9 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
             else: 
               jstruct.magmom = [0 for u in superstructure.atoms]
             # now modifies according to structure.
-            if B == None or B.lower() == 'none': # interstitial:
+            if B is None or B.lower() == 'none': # interstitial:
               jstruct.magmom.append(moment)
-            elif defect.type == None or defect.type.lower() == 'none':
+            elif defect.type is None or defect.type.lower() == 'none':
               vacancy_moment(input.vasp.species, jstruct, defect, B, nb_extrae)
             else: 
               jstruct.magmom[defect.index] = moment
@@ -266,7 +266,7 @@ def deduce_moment(type, species):
       returns ``[0]``. If it exists and is a scalar, returns ``[moment]``. And
       if already is a list, returns as is.
   """
-  if type == None or type.lower() == 'none': return [0]
+  if type is None or type.lower() == 'none': return [0]
   if not isinstance(type, str): type = type[0]
   if not hasattr(species[type], "moment"): return [0]
   if not hasattr(species[type].moment, "__iter__"):
@@ -292,8 +292,8 @@ def charged_states(species, material, Atype, Btype):
   mat_regex = compile('([A-Z][a-z]?)2([A-Z][a-z]?)O4')
   found = mat_regex.match(material)
   A, B = found.group(1), found.group(2)
-  Aox = species[Atype].oxidation if Atype != None and Atype.lower() != 'none' else 0
-  Box = species[Btype].oxidation if Btype != None and Btype.lower() != 'none' else 0
+  Aox = species[Atype].oxidation if Atype is not None and Atype.lower() != 'none' else 0
+  Box = species[Btype].oxidation if Btype is not None and Btype.lower() != 'none' else 0
   if hasattr(Aox, '__iter__'): Aox = Aox[1 if Atype == A else 0]
   if hasattr(Box, '__iter__'): Box = Box[1 if Btype == A else 0]
 

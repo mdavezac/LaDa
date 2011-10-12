@@ -16,7 +16,7 @@ def gajobs(path, inputpath = "input.py", collector=None):
   # reads input file.
   input = read_input(inputpath, {"maximize": maximize, "minimize": minimize, "eV": eV, "arange": arange})
 
-  if collector == None: collector = MassExtract(input.directory)
+  if collector is None: collector = MassExtract(input.directory)
   extractor  = [extract for extract in collector.values() if extract.success]
   structures = [extract.input_structure for extract in extractor]
   for e in extractor: assert not any(isnan(e.eigenvalues))

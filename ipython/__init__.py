@@ -24,7 +24,7 @@ def listjobs(self, arg):
   ip = self.api
   current, path = _get_current_job_params(self, 1)
   ip.user_ns.pop("_lada_error", None)
-  if current == None: return
+  if current is None: return
   if len(arg) != 0:
     if arg == "all": 
       for job in current.root.itervalues():
@@ -63,13 +63,13 @@ def saveto(self, event):
   # gets dictionary, path.
   current, path = _get_current_job_params(self, 1)
   ip.user_ns.pop("_lada_error", None)
-  if current == None:
+  if current is None:
     ip.user_ns["_lada_error"] = "No job-dictionary to save."
     print ip.user_ns["_lada_error"] 
     return
   args = [u for u in event.split() ]
   if len(args) == 0: 
-    if path == None: 
+    if path is None: 
       ip.user_ns["_lada_error"] = "No current job-dictionary path.\n"\
                                   "Please specify on input, eg"\
                                   ">saveto this/path/filename"

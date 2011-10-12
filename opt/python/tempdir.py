@@ -31,11 +31,11 @@ class Tempdir:
     from tempfile import mkdtemp
 
     if self.comm.is_root:
-      if self.workdir != None:
+      if self.workdir is not None:
         if not exists(self.workdir): makedirs(self.workdir)
         assert exists(self.workdir) and isdir(self.workdir),\
                "Could not create working directory."
-      if self.debug == None: 
+      if self.debug is None: 
         self._tempdir = mkdtemp(dir=self.workdir, suffix=self.suffix, prefix=self.prefix)
       else:
         self._tempdir = join(self.workdir, self.debug)
@@ -49,7 +49,7 @@ class Tempdir:
         if not exists(self._tempdir): mkdir(self._tempdir)
     assert exists(self._tempdir) and isdir(self._tempdir),\
            "Could not create temporary working directory."
-    assert self.debug != None or len(listdir(self._tempdir)) == 0,\
+    assert self.debug is not None or len(listdir(self._tempdir)) == 0,\
            "Could not create temporary working directory."
     self.comm.barrier()
     return self._tempdir

@@ -16,7 +16,7 @@ def leave_many_out( _sumofseps, _collapse, _structures, ratio=0.33333, \
   def get_max( _list ):
     result = None
     for i, u in enumerate(_list):
-      if result == None: result = (i, u)
+      if result is None: result = (i, u)
       elif u > result[1]: result = (i, u)
     return result
 

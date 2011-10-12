@@ -59,13 +59,13 @@ class Darwin(StandardDarwin):
     return self._alwaysoff
   @alwayson.setter
   def alwayson(self, value):
-    self._alwayson = set(value) if value != None else set()
+    self._alwayson = set(value) if value is not None else set()
     for function, dummy, dummy in self.matingops.operators:
       if hasattr(function, "alwayson"): setattr(function, "alwayson", self._alwayson)
     self.evaluator.exclude = self._alwayson | self._alwaysoff
   @alwaysoff.setter
   def alwaysoff(self, value):
-    self._alwaysoff = set(value) if value != None else set()
+    self._alwaysoff = set(value) if value is not None else set()
     for function, dummy, dummy in self.matingops.operators:
       if hasattr(function, "alwaysoff"): setattr(function, "alwaysoff", self._alwaysoff)
     self.evaluator.exclude = self._alwayson | self._alwaysoff

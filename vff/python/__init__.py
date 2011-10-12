@@ -30,12 +30,12 @@ class Extract(AbstractExtractBase):
     """ Initializes the extraction class. """
     super(Extract, self).__init__(directory=directory, comm=comm)
 
-    self.OUTCAR = vff.OUTCAR if vff != None else Vff().OUTCAR
+    self.OUTCAR = vff.OUTCAR if vff is not None else Vff().OUTCAR
     """ Filename of the OUTCAR file from VASP.
      
         Data will be read from directory/OUTCAR. 
     """
-    self.FUNCCAR = vff._FUNCCAR if vff != None else Vff()._FUNCCAR
+    self.FUNCCAR = vff._FUNCCAR if vff is not None else Vff()._FUNCCAR
     """ Pickle filename for the functional. """
 
   def __outcar__(self):
@@ -187,7 +187,7 @@ class Extract(AbstractExtractBase):
     from ..opt import RelativeDirectory 
     from ..crystal import lattice_context
     with lattice_context(self.lattice):
-      if structure == None: structure = self.structure
+      if structure is None: structure = self.structure
       filepath = RelativeDirectory(filepath).path
       functional = self.functional._create_functional()
       functional.print_escan_input(filepath, structure)
@@ -255,7 +255,7 @@ class Vff(object):
   def _get_workdir(self): return self._workdir
   def _set_workdir(self, workdir):
     from os.path import abspath, expanduser
-    self._workdir = abspath(expanduser(workdir)) if workdir != None else None
+    self._workdir = abspath(expanduser(workdir)) if workdir is not None else None
   workdir = property( _get_workdir, _set_workdir, 
                       """ Working directory where calculations are performed. 
                       
@@ -289,7 +289,7 @@ class Vff(object):
            RuntimeError("To few or too many parameters: %s." % (params))
     if name in self.bonds: # replaces none value with known value
       for old, new in zip(self.bonds[name], params):
-        if old == None: old = new
+        if old is None: old = new
     if len(params) < 6: params.extend( 0 for u in range(6-len(params)) )
     
     self.bonds[name] = params
@@ -349,7 +349,7 @@ class Vff(object):
            RuntimeError("To few or too many parameters: %s." % (params))
     if name in self.angles: # replaces none value with known value
       for old, new in zip(self.angles[name], params):
-        if old == None: old = new
+        if old is None: old = new
     if str(params[0]).lower()[:3] == "tet": params[0] = -1e0/3e0
     if len(params) < 7: params.extend( 0e0 for u in range(7-len(params)) )
 
@@ -397,7 +397,7 @@ class Vff(object):
     result += "functional.print_from_all = {0}\n".format(repr(self.print_from_all))
     result += "functional.OUTCAR = '%s'\n" % (self.OUTCAR)
     result += "functional.ERRCAR = '%s'\n" % (self.ERRCAR)
-    if self.direction == None or hasattr(self.direction, "__len__"):
+    if self.direction is None or hasattr(self.direction, "__len__"):
       result += "functional.direction = %s\n" % (repr(self.direction))
     else: result += "functional.direction = %i\n" % (int(self.direction))
     result += "functional.relax = %s\n" % ("True" if self.relax else "False")
@@ -430,12 +430,12 @@ class Vff(object):
 
   def _cout(self, comm):
     """ Creates output name. """
-    if self.OUTCAR == None: return "/dev/null"
+    if self.OUTCAR is None: return "/dev/null"
     if comm.is_root or not comm.is_mpi: return self.OUTCAR
     return self.OUTCAR + "." + str(comm.rank) if self.print_from_all else "/dev/null"
   def _cerr(self, comm):
     """ Creates error name. """
-    if self.ERRCAR == None: return "/dev/null"
+    if self.ERRCAR is None: return "/dev/null"
     if comm.is_root or not comm.is_mpi: return self.ERRCAR
     return self.ERRCAR + "." + str(comm.rank) if self.print_from_all else "/dev/null"
 
@@ -461,7 +461,7 @@ class Vff(object):
     local_time = time.localtime() 
 
     # gets absolute path.
-    outdir = abspath(expanduser(outdir)) if outdir != None else getcwd()
+    outdir = abspath(expanduser(outdir)) if outdir is not None else getcwd()
 
     # make this functor stateless.
     this      = deepcopy(self)
@@ -513,7 +513,7 @@ class Vff(object):
         # finally, the dam results.
         file.write("# Result of VFF calculations.\n")
         file.write(repr(result))
-        if stress != None: 
+        if stress is not None: 
           file.write( "\nstress: ({0[0]}, {0[1]}, {0[2]}),\\"\
                       "\n        ({1[0]}, {1[1]}, {1[2]}),\\"\
                       "\n        ({2[0]}, {2[1]}, {2[2]})\n"\
@@ -566,7 +566,7 @@ class Vff(object):
     self.lattice.set_as_crystal_lattice()
     # if direction is not None and not an array, then should be a combination
     # of FreezeCell integers.
-    if self.direction != None and not hasattr(self.direction, "__len__"):
+    if self.direction is not None and not hasattr(self.direction, "__len__"):
       oldfreeze = structure.freeze
       structure.freeze = self.direction
     
@@ -587,8 +587,8 @@ class Vff(object):
       result, stress = functional(comm, relax=self.relax)
     
     # unsets lattice.
-    if old_lattice != None: old_lattice.set_as_crystal_lattice()
-    if self.direction != None and not hasattr(self.direction, "__len__"):
+    if old_lattice is not None: old_lattice.set_as_crystal_lattice()
+    if self.direction is not None and not hasattr(self.direction, "__len__"):
       structure.freeze = oldfreeze
     return result, stress
 
@@ -600,7 +600,7 @@ def exec_input(filepath = "input.py", namespace = None):
   dictionary = {}
   for key in __all__: dictionary[key] = globals()[key]
   for key in minimizer.__all__: dictionary[key] = getattr(minimizer, key)
-  if namespace != None: dictionary.update(namespace)
+  if namespace is not None: dictionary.update(namespace)
   return opt_exec_input(filepath, dictionary)
 
 def read_input(filepath = "input.py", namespace = None, name=None):
@@ -611,6 +611,6 @@ def read_input(filepath = "input.py", namespace = None, name=None):
   dictionary = {}
   for key in __all__: dictionary[key] = globals()[key]
   for key in minimizer.__all__: dictionary[key] = getattr(minimizer, key)
-  if namespace != None: dictionary.update(namespace)
+  if namespace is not None: dictionary.update(namespace)
   return opt_read_input(filepath, dictionary)
 

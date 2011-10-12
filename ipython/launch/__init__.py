@@ -65,8 +65,8 @@ def launch(self, event):
       jobdicts.append((d, p))
   else: # current job dictionary.
     current, path = _get_current_job_params(self, 2)
-    if current == None: return
-    if path == None: return
+    if current is None: return
+    if path is None: return
     jobdicts = [(current, path)]
   
   # calls specialized function.

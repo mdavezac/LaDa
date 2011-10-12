@@ -57,12 +57,12 @@ class Secant:
 
   def next(self):
 
-    if self.result[0] == None: 
+    if self.result[0] is None: 
       self._check_convergence() # StopIteration thrown here if at all.
       self.result = ( (self._first[0] + self._end[0])/2, None )
       return self.result[0]
 
-    assert y != None, "sety has not been called.\n"
+    assert y is not None, "sety has not been called.\n"
 
     a = self.result[1] < self._end[1] 
     b = self._first[1] < self.result[1] 

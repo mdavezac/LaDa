@@ -32,9 +32,9 @@ class Individual(object):
     self.maxsize = maxsize
     """ Maximum size of an individual. """
 
-    if stddev == None: stddev = maxsize // 4
-    if alwayson == None: alwayson = set()
-    if alwaysoff == None: alwaysoff = set()
+    if stddev is None: stddev = maxsize // 4
+    if alwayson is None: alwayson = set()
+    if alwaysoff is None: alwaysoff = set()
     genes = set([randint(0, maxsize-1) for u in xrange(randint(max(0, mean-stddev), min(maxsize-1, mean+stddev)))])
     self.genes = list( (genes | alwayson) - alwaysoff)
     """ On clusters. """
@@ -81,11 +81,11 @@ class Crossover(object):
 
     self.rateA = rateA
     """ How many genes to take from parent A. """
-    self.rateB = rateB if rateB != None else 1 - rateA
+    self.rateB = rateB if rateB is not None else 1 - rateA
     """ How many genes to take from parent B. """
-    self.alwayson = set(alwayson) if alwayson != None else set()
+    self.alwayson = set(alwayson) if alwayson is not None else set()
     """ Clusters that are always in the individual. """
-    self.alwaysoff = set(alwaysoff) if alwaysoff != None else set()
+    self.alwaysoff = set(alwaysoff) if alwaysoff is not None else set()
     """ Clusters that are never in the individual. """
  
   def __call__(self, a, b):
@@ -145,9 +145,9 @@ class Mutation(SwapMutation):
     super(Mutation, self).__init__(rate)
     self.size = size
     """ Size of the bitstring. """
-    self.alwayson = set(alwayson) if alwayson != None else set()
+    self.alwayson = set(alwayson) if alwayson is not None else set()
     """ Clusters that are always in the individual. """
-    self.alwaysoff = set(alwaysoff) if alwaysoff != None else set()
+    self.alwaysoff = set(alwaysoff) if alwaysoff is not None else set()
     """ Clusters that are never in the individual. """
  
   def __call__(self, indiv):

@@ -43,8 +43,8 @@ def read_jtypes(path, lattice, pairs = 0):
                  r"(?:\s*\d+\s+\d+\s+\d+(?:\s|#)*)*$", multline)
   
     with open(path, "r") as file: text = file.read()
-    if J0.search(text) != None: result.append()
-    if J1.search(text) != None: result.append(MLCluster())
+    if J0.search(text) is not None: result.append()
+    if J1.search(text) is not None: result.append(MLCluster())
     for manybody in mb.finditer(text):
       cluster = MLCluster()
       cluster.origin.site = 0
@@ -111,7 +111,7 @@ def cluster_factory(lattice, J0=False, J1=False, **mb):
   key_regex = compile("B(\d+)")
   for key in mb.keys(): 
     a_re = match(key_regex, key)
-    assert a_re != None, "Keyword %s is not of the form B(\d+)" % (key)
+    assert a_re is not None, "Keyword %s is not of the form B(\d+)" % (key)
     assert a_re.end() == len(key), "Keyword %s is not of the form B(\d+)" % (key)
     assert int(a_re.group(1)) > 1, "Cannot understand keyword %s" % (key)
     assert mb[key] >= 0, "Cannot understand input %s=%i" % (key, mb[key])
@@ -134,7 +134,7 @@ def cluster_factory(lattice, J0=False, J1=False, **mb):
   if J1: 
     for site in equiv_sites:
       dummy = _create_clusters(lattice, nth_shell=0, order=1, site=site)
-      if result == None: result = dummy
+      if result is None: result = dummy
       else: result.extend(dummy)
   # creates many bodies.
   for site in equiv_sites:
@@ -143,7 +143,7 @@ def cluster_factory(lattice, J0=False, J1=False, **mb):
       regex = match(key_regex, key)
       order = int(regex.group(1))
       dummy = _create_clusters(lattice, nth_shell=mb[key], order=order, site=site)
-      if result == None: result = dummy
+      if result is None: result = dummy
       else: result.extend(dummy)
   return result
 
@@ -153,7 +153,7 @@ def exec_input(script, namespace = None):
 
   dictionary = {}
   for key in __all__: dictionary[key] = globals()[key]
-  if namespace != None: dictionary.update(namespace)
+  if namespace is not None: dictionary.update(namespace)
   return opt_exec_input(script, dictionary)
 
 def read_input(filepath = "input.py", namespace = None):
@@ -162,5 +162,5 @@ def read_input(filepath = "input.py", namespace = None):
 
   dictionary = {}
   for key in __all__: dictionary[key] = globals()[key]
-  if namespace != None: dictionary.update(namespace)
+  if namespace is not None: dictionary.update(namespace)
   return opt_read_input(filepath, dictionary)

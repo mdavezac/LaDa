@@ -24,9 +24,9 @@ class Encode(object):
         if not is_descriptor(value): continue
         attrs.add(key)
         value = getattr(value, 'fget', None)
-        if value == None: continue
+        if value is None: continue
         value = getattr(value, 'to_json', None)
-        if value == None: continue
+        if value is None: continue
         items[key] = value
   
   def __call__(self, extractor, items=None):
@@ -34,7 +34,7 @@ class Encode(object):
     jsons, attrs = self._from_json[0], self._attrs[0]
     if extractor.is_dft: jsons, attrs = self._from_json[1], self._attrs[1]
     elif extractor.is_dft: jsons, attrs = self._from_json[2], self._attrs[2]
-    if items == None: items = attrs
+    if items is None: items = attrs
 
     result = {}
     for key in items:
@@ -72,9 +72,9 @@ class Decode(dict):
         value = getattr(extractor, key)
         if not is_descriptor(value): continue
         value = getattr(value, 'fget', None)
-        if value == None: continue
+        if value is None: continue
         value = getattr(value, 'from_json', None)
-        if value == None: continue
+        if value is None: continue
         self._from_json[key] = value
 
   def __setitem__(self, key, value):

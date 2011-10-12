@@ -179,7 +179,7 @@ def plot_bands(extractor, offset = 0.05, labels = None, **kwargs):
   plt.ylim(ylims)
   axes = plt.gca()
   axes.yaxis.set_ticks_position('both')
-  if labels == None: axes.xaxis.set_ticks([])
+  if labels is None: axes.xaxis.set_ticks([])
   else:
     lines.insert(0, 0)
     lines.append(x[-1])

@@ -39,7 +39,7 @@ class Evaluator(object):
     for key, value in keywords.iteritems(): 
       if key == "J0": args[key] = value
       elif key == "J1": args[key] = value
-      elif match(key_regex, key) != None: args[key] = value
+      elif match(key_regex, key) is not None: args[key] = value
     for key in args.iterkeys(): del keywords[key]
     self._clusters = cluster_factory(self.lattice, **args) 
     """ List of clusters. """
@@ -52,7 +52,7 @@ class Evaluator(object):
     """ List of pis for input structures. """
 
     # creates or assigns energies as needed.
-    self.energies = energies if energies != None else array([s.energy for e in self.structures])
+    self.energies = energies if energies is not None else array([s.energy for e in self.structures])
     """ List of energies for each structure. """
     assert not any(isnan(self.energies))
 
@@ -102,7 +102,7 @@ class Evaluator(object):
   def energies(self, values):
     """ List of energies for known list of structures. """
     from numpy import array, mean, std
-    if values == None:
+    if values is None:
       del self._energies
       self._normalized_energies = None
       return
@@ -190,7 +190,7 @@ class Evaluator(object):
     noadd = kwargs.pop('noadd', None)
     for key, value in kwargs.iteritems():
       if not hasattr(result, key):
-        if noadd == None:
+        if noadd is None:
           raise ValueError( "Attribute {0} does not exist "\
                             "and will not be created in copy.".format(key))
         elif noadd == True: continue
@@ -228,7 +228,7 @@ class LocalSearchEvaluator(Evaluator):
     """ Maximum number of iterations. """
     self.maxeval = maxeval
     """ Maximum number of evaluations. """
-    self.exclude = set(exclude) if exclude != None else set()
+    self.exclude = set(exclude) if exclude is not None else set()
     """ Clusters/bits to exclude from optimization. """
 
   def __call__(self, indiv, comm=None, outdir=None, verbose=False, **kwargs):

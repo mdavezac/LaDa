@@ -21,12 +21,12 @@ class Individual(object):
     from numpy import array
 
     super(Individual, self).__init__()
-    if size == None: size = self.size
+    if size is None: size = self.size
     self.genes = array([ randint(0,1) for i in xrange(size) ])
   
   def __eq__(self, a): 
     from math import fabs
-    if a == None: return False
+    if a is None: return False
     for i, u in enumerate(a.genes):
       if fabs( self.genes[i] - u ) > 1e-18: return False
     return True

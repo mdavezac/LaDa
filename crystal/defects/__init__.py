@@ -114,16 +114,16 @@ def non_interstitials(structure, indices, mods):
   specie_regex  = compile(r'^\s*[A-Z][a-z]?(?:\d+)?\s*$')
 
   # modify input to something which makes sense and check it.
-  if mods == None: all_mods = [None]
+  if mods is None: all_mods = [None]
   elif isinstance(mods, str): all_mods = [mods]
   else: all_mods = mods
   mods = []
   whatthehell = []
   for type in all_mods:
-    if type == None: mods.append(None)
-    elif cation_regex.match(type.lower()) != None:  mods.extend(_cationic_species(structure)) 
-    elif vacancy_regex.match(type.lower()) != None: mods.append(None)
-    elif specie_regex.match(type) != None: mods.append(type)
+    if type is None: mods.append(None)
+    elif cation_regex.match(type.lower()) is not None:  mods.extend(_cationic_species(structure)) 
+    elif vacancy_regex.match(type.lower()) is not None: mods.append(None)
+    elif specie_regex.match(type) is not None: mods.append(type)
     else: whatthehell.append(type)
   assert len(whatthehell) == 0,\
          ValueError('Cannot understand following specie types: {0}.'.format(whatthehell))
@@ -138,7 +138,7 @@ def non_interstitials(structure, indices, mods):
     for modif in mods:
       result = deepcopy(structure)
       if modif == input_atom.type: continue # can't substitute with self.
-      if modif == None: 
+      if modif is None: 
         result.atoms.pop(j)
         name = "vacancy_{0}".format(input_atom.type)
         output_atom = deepcopy(input_atom)
@@ -199,24 +199,24 @@ def iterdefects(structure, lattice, defects, tolerance=0.25):
   already_cations    = False
 
   for key, value in defects.items():
-    if key == None: keys = [None]
-    elif interstitial_regex.match(key.lower()) != None: keys = [None]
-    elif cation_regex.match(key.lower()) != None:
+    if key is None: keys = [None]
+    elif interstitial_regex.match(key.lower()) is not None: keys = [None]
+    elif cation_regex.match(key.lower()) is not None:
       assert already_cations == False, ValueError('Can only have one cation tag.')
       already_cations = True
       keys = _cationic_species(structure)
-    elif cation_id_regex.match(key.lower()) != None:
+    elif cation_id_regex.match(key.lower()) is not None:
       assert already_cations == False, ValueError('Can only have one cation tag.')
       already_cations = True
       d = int(cation_id_regex.match(key.lower()).group(1))
       keys = ['{0}{1}'.format(k, d) for k in _cationic_species(structure)]
-    elif cation_coord_regex.match(key.lower()) != None:
+    elif cation_coord_regex.match(key.lower()) is not None:
       assert already_cations == False, ValueError('Can only have one cation tag.')
       already_cations = True
       keys = ['{0} coord'.format(k) for k in _cationic_species(structure)]
     else: keys = [key]
     for type in keys:
-      assert type == None or type_regex.match(type) != None,\
+      assert type is None or type_regex.match(type) is not None,\
              ValueError("Cannot understand type {0}.".format(type))
       for result in any_defect(structure, lattice, type, value, tolerance): yield result
 
@@ -261,10 +261,10 @@ def any_defect(structure, lattice, type, subs, tolerance=0.25):
   # Interstitials.
   if hasattr(type, 'rstrip'): type = type.rstrip()
   if hasattr(type, 'lstrip'): type = type.lstrip()
-  if type == None or type.lower() in ['interstitial', 'interstitials', 'none']: 
+  if type is None or type.lower() in ['interstitial', 'interstitials', 'none']: 
     for result in interstitials(structure, lattice, subs): yield result
   # Old: looking for specific atoms.
-  elif id_regex.match(type) != None:
+  elif id_regex.match(type) is not None:
     # looks for atom to modify
     found = id_regex.match(type)
     type, index = found.group(1), int(found.group(2)) 
@@ -279,9 +279,9 @@ def any_defect(structure, lattice, type, subs, tolerance=0.25):
     assert atom.site == i, ValueError('Could not find atomic-site.')
     for result in non_interstitials(structure, index, subs): yield result
   # O, Mn ... but not O1: looking for symmetrically inequivalent sites.
-  elif specie_regex.match(type) != None: 
+  elif specie_regex.match(type) is not None: 
     for result in inequiv_non_interstitials(structure, lattice, type, subs, False, tolerance): yield result
-  elif coord_regex.match(type) != None: 
+  elif coord_regex.match(type) is not None: 
     for result in inequiv_non_interstitials(structure, lattice, type, subs, True, tolerance): yield result
   else: raise ValueError("Don't understand defect type {0}".format(type))
 
@@ -319,13 +319,13 @@ def charged_states(species, A, B):
   """
   if A == 'None': A = None
   if B == 'None': B = None
-  assert A != None or B != None, ValueError("Both A and B cannot be None")
+  assert A is not None or B is not None, ValueError("Both A and B cannot be None")
 
-  if A == None:   # vacancy! Charge states are in 0 to -B.oxidation.
+  if A is None:   # vacancy! Charge states are in 0 to -B.oxidation.
     B = species[B]
     max_charge = -B.oxidation if hasattr(B, "oxidation") else 0
     min_charge = 0
-  elif B == None: # interstial! Charge states are in 0, A.oxidation.
+  elif B is None: # interstial! Charge states are in 0, A.oxidation.
     A = species[A[0]]
     max_charge = A.oxidation if hasattr(A, "oxidation") else 0
     min_charge = 0
@@ -495,7 +495,7 @@ def potential_alignment(defect, host, maxdiff=0.5, first_shell=True, tolerance=0
       for n in ffirst_shell(dstr, atom.pos, tolerance=tolerance):
         acceptable[n.index] = False
   
-  while maxdiff != None and maxdiff < 0.:
+  while maxdiff is not None and maxdiff < 0.:
     average = [[] for a in hstr.atoms]
     for epot, atom, ok in zip(defect.electropot, dstr.atoms, acceptable):
       if not ok: continue
@@ -505,7 +505,7 @@ def potential_alignment(defect, host, maxdiff=0.5, first_shell=True, tolerance=0
     diff = [ (None if not ok else (e - average[a.site]).rescale(eV)) \
   	     for e, a, ok in zip(defect.electropot, dstr.atoms, acceptable) ]
 
-    maximum = max(enumerate(diff), key=lambda x: (0 if x[1] == None else abs(x[1])))
+    maximum = max(enumerate(diff), key=lambda x: (0 if x[1] is None else abs(x[1])))
     if abs(maximum[1]) < maxdiff: break
     else: acceptable[maximum[0]] = False
 
@@ -541,7 +541,7 @@ def third_order_charge_correction(structure, charge = None, n = 30, epsilon = 1.
   from ...physics import a0, Ry
   from .._crystal import third_order
 
-  if charge == None: charge = 1e0
+  if charge is None: charge = 1e0
   elif charge == 0: return 0e0 * eV
   if hasattr(charge, "units"):  charge  = float(charge.rescale(elementary_charge))
   if hasattr(epsilon, "units"): epsilon = float(epsilon.simplified)
@@ -580,7 +580,7 @@ def first_order_charge_correction(structure, charge=None, epsilon=1e0, cutoff=20
                        "Please compile LaDa with pcm enabled.\n"))
     return 
 
-  if charge == None: charge = 1
+  if charge is None: charge = 1
   elif charge == 0: return 0e0 * eV
   if hasattr(charge, "units"): charge = float(charge.rescale(elementary_charge))
 
@@ -804,13 +804,13 @@ def low_spin_states(structure, defect, species, extrae, do_integer=True, do_aver
 
   if do_integer: 
     for indices, tote in electron_counting(structure, defect, species, extrae):
-      if tote == None: continue # non-magnetic case
+      if tote is None: continue # non-magnetic case
       indices, moments = array(indices), array(tote) % 2
       if all(abs(moments) < 1e-12): continue # non - magnetic case
       if check_history(indices, moments): yield indices, moments
   if do_average: 
     for indices, tote in electron_counting(structure, defect, species, 0):
-      if tote == None: continue # non-magnetic case
+      if tote is None: continue # non-magnetic case
       if len(indices) < 2: continue
       indices, moments = array(indices), array(tote) % 2 + extrae / float(len(tote))
       if all(abs(moments) < 1e-12): continue # non - magnetic case
@@ -865,7 +865,7 @@ def high_spin_states(structure, defect, species, extrae, do_integer=True, do_ave
   
   if do_integer: 
     for indices, tote in electron_counting(structure, defect, species, extrae):
-      if tote == None: continue # non-magnetic case
+      if tote is None: continue # non-magnetic case
       
       types = [structure.atoms[i].type for i in indices]
       indices, moments = array(indices), array(determine_moments(tote, types))
@@ -874,7 +874,7 @@ def high_spin_states(structure, defect, species, extrae, do_integer=True, do_ave
 
   if do_average: 
     for indices, tote in electron_counting(structure, defect, species, 0):
-      if tote == None: continue # non-magnetic case
+      if tote is None: continue # non-magnetic case
       if len(indices) < 2: continue
 
       types = [structure.atoms[i].type for i in indices]
@@ -906,6 +906,6 @@ def magname(moments, prefix=None, suffix=None):
   if len(moments) == 0: return "paramagnetic"
   string = str(moments[0])
   for m in moments[1:]: string += "_" + str(m)
-  if prefix != None: string = prefix + "_" + string
-  if suffix != None: string += "_" + suffix
+  if prefix is not None: string = prefix + "_" + string
+  if suffix is not None: string += "_" + suffix
   return string

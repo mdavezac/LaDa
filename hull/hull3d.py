@@ -72,7 +72,7 @@ class Triangle(object):
     """
     from numpy import cross
     from numpy.linalg import norm
-    if sample == None: return
+    if sample is None: return
     assert len(sample.shape) != 1, ValueError("Sample too small.")
     assert sample.shape[0] == self.dimension + 1, ValueError("Sample should contain 3 vectors.")
 
@@ -156,7 +156,7 @@ class Hull3d(object):
   
   def _create_facets(self, sample):
     """ Creates convex-hull from sample. """
-    if sample == None: return;
+    if sample is None: return;
     base = self._start(sample)
     self._facets = [base]
     self.indent = "  "
@@ -279,13 +279,13 @@ class Hull3d(object):
 
       # loop over points.
       for i, point in enumerate(points):
-        if result[i] != None: continue
+        if result[i] is not None: continue
         # determines if point is in triangle using barycentric method
         coords = dot(cell, (point-A))
         if any(coords[:2] < -1e-12) or sum(coords[:2]) > 1e0: continue
         result[i] = coords[2]
 
-    for r in result:  assert r != None
+    for r in result:  assert r is not None
     return result[0] if onepoint else result
 
 

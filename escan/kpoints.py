@@ -58,7 +58,7 @@ class KContainer(object):
     """ Sequence of kpoints. """
     self.multiplicity = multiplicity
     """ Sequence with the multiplicity of the respective kpoints. """
-    if self.multiplicity == None:
+    if self.multiplicity is None:
       self.multiplicity = [1e0 / len(self.kpoints) for k in self.kpoints]
     else: self.multiplicity = [m for m in self.multiplicity]
     self.relax = relax
@@ -96,9 +96,9 @@ class KGrid(KPoints):
     """ Initializes unreduced KGrid. """
     from numpy import array
     KPoints.__init__(self)
-    self.grid = grid if grid != None else array([1,1,1])
+    self.grid = grid if grid is not None else array([1,1,1])
     """ Grid dimensions in reciprocal space. """
-    self.offset = offset if offset != None else array([0,0,0])
+    self.offset = offset if offset is not None else array([0,0,0])
     """ Offset from Gamma of the grid. """
     self.relax = relax
     """ Whether to deform kpoints to the relaxed structure. """

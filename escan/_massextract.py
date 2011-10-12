@@ -20,7 +20,7 @@ def extract_all(directory=None, **kwargs):
   class ExtractEscanFail(object):
     @property
     def success(self): return False
-  if directory == None: directory = getcwd()
+  if directory is None: directory = getcwd()
   else: directory = RelativeDirectory(directory).path
   if not exists(directory): return ExtractEscanFail()
 
