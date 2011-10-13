@@ -7,10 +7,13 @@ set( PYCRYSTAL_HEADERS
    #    which_site.hpp misc.hpp periodic_dnc.hpp )
 
 set( PYCRYSTAL_SOURCES
-     python.cc set.cc atom.cc )# structure.cc )
+     python.cc set.cc )# structure.cc )
    #    atom.cc  enumerate.cc  lattice.cc  layerdepth.cc  neighbors.cc  python.cc
    #    read_structure.cc  smith.cc  structure.cc  symmetry_operator.cc
    #    which_site.cc misc.cc periodic_dnc.cc )
+
+set(PYATOM_HEADERS atom_cdi.hpp atom_type.hpp atom_getset.hpp )
+set(PYATOM_SOURCES atom_module.cc)
 
 
 include_directories(${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDES})
@@ -22,6 +25,13 @@ set_target_properties(pycrystal PROPERTIES PREFIX "_")
 set_target_properties(pycrystal PROPERTIES OUTPUT_NAME crystal)
 install(FILES ${PYCRYSTAL_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/crystal)
 install(TARGETS pycrystal DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/crystal)
+
+python_add_module (pyatom ${PYATOM_HEADERS} ${PYATOM_SOURCES})
+target_link_libraries(pyatom crystal ${PYTHON_LIBRARY} ${Boost_PYTHON_LIBRARY} )
+mark_as_advanced(PYTHON_ENABLE_MODULE_pyatom)
+mark_as_advanced(PYTHON_MODULE_pyatom_BUILD_SHARED)
+set_target_properties(pyatom PROPERTIES OUTPUT_NAME atom)
+install(TARGETS pyatom DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/crystal)
 
 if(MPI_FOUND)
   include_directories(${MPI_INCLUDE_PATH})

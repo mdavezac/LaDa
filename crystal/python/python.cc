@@ -87,7 +87,7 @@ BOOST_PYTHON_MODULE(_crystal)
 
   LaDa::python::expose_vector<std::string>("VectorStr", "Interface to Cpp vectors of string.");
   LaDa::python::expose_set();
-  LaDa::python::expose_atom();
+// LaDa::python::expose_atom();
 // LaDa::python::expose_structure();
 // LaDa::Python::expose_structure();
 // LaDa::Python::expose_lattice();

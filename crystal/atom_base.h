@@ -82,28 +82,28 @@ namespace LaDa
 #         endif
           //! Constructor
           AtomData() : AtomFreezeMixin(frozen::NONE), pos(math::rVector3d(0,0,0)),
-                       type(), site(-1) LADA_SELF(Py_None) {};
+                       type(), site(-1) LADA_SELF(NULL) {};
           //! Constructor
           template<class T_DERIVED>
             AtomData   ( Eigen::DenseBase<T_DERIVED> const &_pos, t_Type const &_in,
                          types::t_int _site = -1, types::t_unsigned _freeze = frozen::NONE )
                      : AtomFreezeMixin(_freeze), pos(_pos), type(_in), site(_site)
-                       LADA_SELF(Py_None) {}
+                       LADA_SELF(NULL) {}
           //! Copy Constructor
           AtomData   (const AtomData &_c)
                    : AtomFreezeMixin(_c), pos(_c.pos), type(_c.type), site(_c.site)
-                     LADA_SELF(Py_None) {}
+                     LADA_SELF(NULL) {}
 #         ifdef LADA_DO_PYTHON
             //! Constructor including python wrapper.
             AtomData   (PyObject *_self) 
                      : AtomFreezeMixin(frozen::NONE), pos(math::rVector3d(0,0,0)),
                        type(), site(-1) LADA_SELF(_self)
-              { if(_self != Py_None) Py_INCREF(_self); };
+              { if(_self != NULL) Py_INCREF(_self); };
             //! Copy constructor including python wrapper.
             AtomData   (PyObject *_self, AtomData const &_c) 
                      : AtomFreezeMixin(_c), pos(_c.pos), type(_c.type), site(_c.site)
                        LADA_SELF(self_)
-              { if(_self != Py_None) Py_INCREF(_self); };
+              { if(_self != NULL) Py_INCREF(_self); };
             //! Returns self object.
             boost::python::object self() const
             { 
@@ -111,11 +111,12 @@ namespace LaDa
               return bp::object(bp::borrowed<>(self_)); 
             }
             //! Sets python back reference if it is currently null.
-            void set_self(PyObject *_self)
+            int set_self(PyObject *_self)
             {
-              if(_self == Py_None) return;
-              if(self_ != Py_None) return;
+              if(_self == NULL) return 0;
+              if(self_ != NULL) return -1;
               self_ = _self; Py_INCREF(_self); 
+              return 0;
             }
 #         endif
 #         undef LADA_SELF
