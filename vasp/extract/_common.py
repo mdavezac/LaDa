@@ -2,7 +2,7 @@
 __docformat__  = 'restructuredtext en'
 __all__ = ['Extract']
 from ...opt.decorators import make_cached, broadcast_result
-from ...opt.json import array as json_array, pickled as json_pickled
+from ...opt.json import array as json_array, structure as json_structure, section as json_section
 
 class Extract(object):
   """ Implementation class for extracting data from VASP output """
@@ -21,11 +21,13 @@ class Extract(object):
     return result.group(1).lower()
 
   @property
+  @json_section("input")
   def is_dft(self):
     """ True if this is a DFT calculation, as opposed to GW. """
     try: return self.algo not in ['gw', 'gw0', 'chi', 'scgw', 'scgw0'] 
     except: return False
   @property
+  @json_section("input")
   def is_gw(self):
     """ True if this is a GW calculation, as opposed to DFT. """
     try: return self.algo in ['gw', 'gw0', 'chi', 'scgw', 'scgw0'] 
@@ -33,7 +35,6 @@ class Extract(object):
     
 
   @property
-  @json_pickled
   @make_cached
   @broadcast_result(attr=True, which=0)
   def functional(self):
@@ -75,8 +76,6 @@ class Extract(object):
     from re import compile
     from numpy import array, zeros, dot
 
-    species_in = self.species
-
     cell = zeros((3,3), dtype="float64")
     atoms = []
 
@@ -98,7 +97,6 @@ class Extract(object):
     return cell, atoms
 
   @property
-  @json_pickled
   @make_cached
   def starting_structure(self):
     """ Structure at start of calculations. """
@@ -118,11 +116,11 @@ class Extract(object):
     structure.energy = 0e0
     structure.cell = cell
     structure.scale = 1e0
-    assert len(self.species) == len(self.ions_per_specie),\
+    assert len(self.species) == len(self.stoechiometry),\
            RuntimeError("Number of species and of ions per specie incoherent.")
-    assert len(atoms) == sum(self.ions_per_specie),\
+    assert len(atoms) == sum(self.stoechiometry),\
            RuntimeError('Number of atoms per specie does not sum to number of atoms.')
-    for specie, n in zip(self.species,self.ions_per_specie):
+    for specie, n in zip(self.species,self.stoechiometry):
       for i in range(n): structure.add_atom = atoms.pop(0), specie
 
     if (self.isif == 0 or self.nsw == 0 or self.ibrion == -1) and self.is_dft:
@@ -159,7 +157,8 @@ class Extract(object):
     return cell, atoms
 
   @property
-  @json_pickled
+  @json_section(None)
+  @json_structure
   @make_cached
   def structure(self):
     """ Greps structure and total energy from OUTCAR. """
@@ -187,16 +186,15 @@ class Extract(object):
     structure.energy = float(self.total_energy.rescale(eV)) if self.is_dft else 0e0
     structure.cell = array(cell, dtype="float64")
     structure.scale = 1e0
-    assert len(self.species) == len(self.ions_per_specie),\
+    assert len(self.species) == len(self.stoechiometry),\
            RuntimeError("Number of species and of ions per specie incoherent.")
-    for specie, n in zip(self.species,self.ions_per_specie):
+    for specie, n in zip(self.species,self.stoechiometry):
       for i in range(n):
         structure.add_atom = array(atoms.pop(0), dtype="float64"), specie
 
     return structure
 
   @property
-  @json_pickled
   @make_cached
   def contcar_structure(self):
     """ Greps structure from CONTCAR. """
@@ -210,17 +208,20 @@ class Extract(object):
     return result
 
   @property
+  @json_section("input")
   @make_cached
   @broadcast_result(attr=True, which=0)
-  def ions_per_specie(self):
-    """ Greps species from OUTCAR. """
+  def stoechiometry(self):
+    """ Stoechiometry of the compound. """
     result = self._find_first_OUTCAR(r"""\s*ions\s+per\s+type\s*=.*$""")
     if result is None: return None
     return [int(u) for u in result.group(0).split()[4:]]
-  stoechiometry = ions_per_specie
-  """ Alias for `ions_per_specie`. """
+  def ions_per_specie(self): 
+    """ Alias for stoechiometry. """
+    return self.stoechiometry()
 
   @property
+  @json_section("input")
   @make_cached
   @broadcast_result(attr=True, which=0)
   def species(self):
@@ -228,6 +229,7 @@ class Extract(object):
     return tuple([ u.group(1) for u in self._search_OUTCAR(r"""VRHFIN\s*=\s*(\S+)\s*:""") ])
 
   @property
+  @json_section("input")
   @make_cached
   @broadcast_result(attr=True, which=0)
   def isif(self):
@@ -237,6 +239,7 @@ class Extract(object):
     return int(result.group(1))
   
   @property
+  @json_section("input")
   @make_cached
   @broadcast_result(attr=True, which=0)
   def nsw(self):
@@ -246,6 +249,7 @@ class Extract(object):
     return int(result.group(1))
 
   @property
+  @json_section("input")
   @make_cached
   @broadcast_result(attr=True, which=0)
   def ibrion(self):
@@ -255,6 +259,7 @@ class Extract(object):
     return int(result.group(1))
 
   @property
+  @json_section("input")
   @json_array("float64")
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -292,6 +297,7 @@ class Extract(object):
         return array(result, dtype="float64") 
 
   @property
+  @json_section("input")
   @json_array("float64")
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -328,6 +334,7 @@ class Extract(object):
         return array([round(r*float(len(result))) for r in result], dtype="float64")
 
   @property 
+  @json_section("input")
   @make_cached
   @broadcast_result(attr=True, which=0)
   def ispin(self):
@@ -337,6 +344,7 @@ class Extract(object):
     return int(result.group(1))
 
   @property
+  @json_section("input")
   @make_cached
   @broadcast_result(attr=True, which=0)
   def name(self):
@@ -437,6 +445,7 @@ class Extract(object):
     return results
 
   @property
+  @json_section("input")
   @make_cached
   @broadcast_result(attr=True, which=0)
   def ionic_charges(self):
@@ -447,9 +456,10 @@ class Extract(object):
     return [float(u) for u in result.group(1).split()]
 
   @property
+  @json_section("input")
   @make_cached
   def valence(self):
-    """ Greps total energy from OUTCAR."""
+    """ Greps number of valence bands from OUTCAR."""
     ionic = self.ionic_charges
     species = self.species
     atoms = [u.type for u in self.structure.atoms]
@@ -458,6 +468,7 @@ class Extract(object):
     return result
   
   @property
+  @json_section("input")
   @make_cached
   @broadcast_result(attr=True, which=0)
   def nelect(self):
@@ -468,6 +479,7 @@ class Extract(object):
     return float(result.group(1)) 
 
   @property
+  @json_section("input")
   @make_cached
   def charge(self):
     """ Greps total charge in the system from OUTCAR."""
@@ -528,5 +540,3 @@ class Extract(object):
                       iglob(join(self.directory, "relax_ions/[0-9][0-9]/")) ):
       a = self.__class__(dir, comm=self.comm)
       for file in a.iterfiles(**kwargs): yield file
-
-
