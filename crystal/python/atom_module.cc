@@ -24,6 +24,7 @@ using namespace LaDa::python;
 extern "C" struct AtomStr
 {
   PyObject_HEAD
+  PyArrayObject *position;
   boost::shared_ptr< LaDa::crystal::AtomData< std::string > > atom;
 };
 

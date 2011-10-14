@@ -19,15 +19,15 @@ namespace LaDa
        if(not bp::extract<math::rMatrix3d::Scalar>(_index[0]).check()) return false;
        if(not bp::extract<math::rMatrix3d::Scalar>(_index[1]).check()) return false;
        if(not bp::extract<math::rMatrix3d::Scalar>(_index[2]).check()) return false;
-       return false;
+       return true;
      }
      //! Converts object to atom. No type checking.
      inline void extract_position(boost::python::object const &_pos, math::rVector3d &_out)
      {
        namespace bp = boost::python;
        _out(0) = bp::extract<math::rMatrix3d::Scalar>(_pos[0]);
-       _out(1) = bp::extract<math::rMatrix3d::Scalar>(_pos[0]);
-       _out(2) = bp::extract<math::rMatrix3d::Scalar>(_pos[0]);
+       _out(1) = bp::extract<math::rMatrix3d::Scalar>(_pos[1]);
+       _out(2) = bp::extract<math::rMatrix3d::Scalar>(_pos[2]);
      }
    }
 } 

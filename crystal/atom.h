@@ -68,44 +68,36 @@ namespace LaDa
         Atom() : atom_(new AtomData<T_TYPE>)  {}
         //! Copy Constructor
         Atom(const Atom &_c ) : atom_(_c.atom_) {}
-#       ifdef LADA_DO_PYTHON
-          //! Constructor
-          Atom   (PyObject *_self)
-               : atom_(new AtomData<T_TYPE>(_self)) {}
-          //! Returns self object.
-          boost::python::object self() const { return atom_->self(); }
-          //! Sets python back reference if it is currently null.
-          void set_self(PyObject *_self) { atom_->set_self(_self); }
-#       endif
-          //! Points to owned data.
-          AtomData<T_TYPE> const* operator->() const { return atom_.get(); }
-          //! Points to owned data.
-          AtomData<T_TYPE>* operator->() { return atom_.get(); }
-          //! Points to owned data.
-          AtomData<T_TYPE>* get() const { return atom_.get(); }
-          //! Swaps data of two atoms.
-          void swap(Atom &_in) const { return atom_.swap(_in.atom_); }
-          //! \brief Return a (deep) copy of this atom.
-          //! \details Return does not share data with this atom. 
-          //!          Use constructor to obtain that behavior.
-          Atom copy() const
-            { return Atom<T_TYPE>(atom_->pos, atom_->type, atom_->site, atom_->freeze); }
-          //! Returns type.
-          T_TYPE const & type() const { return atom_->type; }
-          //! Returns type.
-          T_TYPE & type() { return atom_->type; }
-          //! Returns position.
-          math::rVector3d const & pos() const { return atom_->pos; }
-          //! Returns position.
-          math::rVector3d & pos() { return atom_->pos; }
-          //! Returns atomic site index w.r.t to another structure.
-          types::t_int const & site() const { return atom_->site; }
-          //! Returns atomic site index w.r.t to another structure.
-          types::t_int & site() { return atom_->site; }
-          //! Returns freeze parameter.
-          types::t_unsigned const & freeze() const { return atom_->freeze; }
-          //! Returns freeze parameter.
-          types::t_unsigned & freeze() { return atom_->freeze; }
+
+        //! Points to owned data.
+        AtomData<T_TYPE> const* operator->() const { return atom_.get(); }
+        //! Points to owned data.
+        AtomData<T_TYPE>* operator->() { return atom_.get(); }
+        //! Points to owned data.
+        AtomData<T_TYPE>* get() const { return atom_.get(); }
+        //! Swaps data of two atoms.
+        void swap(Atom &_in) const { return atom_.swap(_in.atom_); }
+        //! \brief Return a (deep) copy of this atom.
+        //! \details Return does not share data with this atom. 
+        //!          Use constructor to obtain that behavior.
+        Atom copy() const
+          { return Atom<T_TYPE>(atom_->pos, atom_->type, atom_->site, atom_->freeze); }
+        //! Returns type.
+        T_TYPE const & type() const { return atom_->type; }
+        //! Returns type.
+        T_TYPE & type() { return atom_->type; }
+        //! Returns position.
+        math::rVector3d const & pos() const { return atom_->pos; }
+        //! Returns position.
+        math::rVector3d & pos() { return atom_->pos; }
+        //! Returns atomic site index w.r.t to another structure.
+        types::t_int const & site() const { return atom_->site; }
+        //! Returns atomic site index w.r.t to another structure.
+        types::t_int & site() { return atom_->site; }
+        //! Returns freeze parameter.
+        types::t_unsigned const & freeze() const { return atom_->freeze; }
+        //! Returns freeze parameter.
+        types::t_unsigned & freeze() { return atom_->freeze; }
     
       private:
         //! Serializes an atom.
@@ -115,9 +107,9 @@ namespace LaDa
           //! To load and save to xml-like input.
           template<class T_ARCHIVE> bool lns_access(T_ARCHIVE &_ar, const unsigned int _version);
 #       endif
-          //! \brief This object owns it own data. 
-          //! \details Makes python memory management much easier.
-          boost::shared_ptr< AtomData<T_TYPE> > atom_;
+        //! \brief This object owns it own data. 
+        //! \details Makes python memory management much easier.
+        boost::shared_ptr< AtomData<T_TYPE> > atom_;
     };
 
 #   ifdef LADA_WITH_LNS

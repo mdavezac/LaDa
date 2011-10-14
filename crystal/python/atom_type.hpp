@@ -19,7 +19,7 @@ static PyTypeObject AtomStrType = {
     0,                         /*tp_getattro*/
     0,                         /*tp_setattro*/
     0,                         /*tp_as_buffer*/
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC, /*tp_flags*/
     "Atom for which the type is specified as a strings.\n\n"
       "__init__ accepts different kind of input.\n"
       "  - The position can be given as:\n" 
@@ -39,8 +39,8 @@ static PyTypeObject AtomStrType = {
       "  - All other keyword arguments become attributes. "
            "In other words, one could add ``magnetic=0.5`` if one wanted to "
            "specify the magnetic moment of an atom.\n",
-    0,		               /* tp_traverse */
-    0,		               /* tp_clear */
+    (traverseproc)traverse,    /* tp_traverse */
+    (inquiry)gcclear,          /* tp_clear */
     0,		               /* tp_richcompare */
     0,		               /* tp_weaklistoffset */
     0,		               /* tp_iter */

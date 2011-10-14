@@ -204,7 +204,7 @@ namespace LaDa
             boost::python::throw_error_already_set();
             return boost::python::object();
           }
-          if(_base != Py_None)
+          if(_base != Py_None and _base != NULL)
           {
             PyArrayObject* array = (PyArrayObject*)result;
             array->base = _base;
