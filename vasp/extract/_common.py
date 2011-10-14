@@ -1,8 +1,10 @@
 """ Subpackage containing extraction methods for VASP common to both GW and DFT. """
 __docformat__  = 'restructuredtext en'
 __all__ = ['Extract']
+from quantities import g, cm
 from ...opt.decorators import make_cached, broadcast_result
-from ...opt.json import array as json_array, structure as json_structure, section as json_section
+from ...opt.json import array as json_array, structure as json_structure, section as json_section, \
+                        unit as json_unit
 
 class Extract(object):
   """ Implementation class for extracting data from VASP output """
@@ -193,6 +195,91 @@ class Extract(object):
         structure.add_atom = array(atoms.pop(0), dtype="float64"), specie
 
     return structure
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def LDAUType(self):
+    """ Type of LDA+U performed. """
+    type = int(self._find_first_OUTCAR(r"""LDAUTYPE\s*=\s*(\d+)""").group(1))
+    if type == 1: return "liechtenstein"
+    elif type == 2: return "dudarev"
+    return type
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def HubbardU_NLEP(self):
+    """ Hubbard U/NLEP parameters. """
+    from ..specie import U as ldaU, nlep
+    from re import M
+    species = tuple([ u.group(1) for u in self._search_OUTCAR(r"""VRHFIN\s*=\s*(\S+)\s*:""") ])
+    type = int(self._find_first_OUTCAR(r"""LDAUTYPE\s*=\s*(\d+)""").group(1))
+
+    # first look for standard VASP parameters.
+    groups = r"""\s*((?:(?:\+|-)?\d+(?:\.\d+)?\s*)+)\s*\n"""
+    regex = r"""\s*angular\s+momentum\s+for\s+each\s+species\s+LDAUL\s+=""" + groups \
+          + r"""\s*U\s+\(eV\)\s+for\s+each\s+species\s+LDAUU\s+="""         + groups \
+          + r"""\s*J\s+\(eV\)\s+for\s+each\s+species\s+LDAUJ\s+="""         + groups
+    result = {k: [] for k in species}
+    for found in self._search_OUTCAR(regex, M):
+      moment = found.group(1).split()
+      LDAU   = found.group(2).split()
+      LDAJ   = found.group(3).split()
+      for specie, m, U, J in zip(species, moment, LDAU, LDAJ):
+        if int(m) != -1: result[specie].append(ldaU(type, int(m), float(U), float(J)))
+    for key in result.keys():
+      if len(result[key]) == 0: del result[key]
+    if len(result) != 0: return result
+
+    # then look for nlep parameters.
+    regex = r"""\s*angular\s+momentum\s+for\s+each\s+species,\s+LDAU#\s*(?:\d+)\s*:\s*L\s*=""" + groups \
+          + r"""\s*U\s+\(eV\)\s+for\s+each\s+species,\s+LDAU\#\s*(?:\d+)\s*:\s*U\s*=""" + groups \
+          + r"""\s*J\s+\(eV\)\s+for\s+each\s+species,\s+LDAU\#\s*(?:\d+)\s*:\s*J\s*=""" + groups \
+          + r"""\s*nlep\s+for\s+each\s+species,\s+LDAU\#\s*(?:\d+)\s*:\s*O\s*=""" + groups 
+    result = {k: [] for k in species}
+    for found in self._search_OUTCAR(regex, M):
+      moment = found.group(1).split()
+      LDAU   = found.group(2).split()
+      LDAJ   = found.group(3).split()
+      funcs  = found.group(4).split()
+      for specie, m, U, J, func in zip(species, moment, LDAU, LDAJ, funcs):
+        if int(m) == -1: continue
+        if int(func) == 1: result[specie].append(ldaU(type, int(m), float(U), float(J)))
+        else: result[specie].append(nlep(type, int(m), float(U), float(J)))
+    for key in result.keys():
+      if len(result[key]) == 0: del result[key]
+    return result
+
+  @property
+  @make_cached
+  def potcar_title(self):
+    """ Title of the first POTCAR. """
+    return self._find_first_OUTCAR(r"""POTCAR:.*""").group(0).split()[1]
+
+
+  @property
+  @make_cached
+  def volume(self): 
+    """ Unit-cell volume. """
+    from numpy import abs
+    from numpy.linalg import det
+    from quantities import angstrom
+    return abs(self.structure.scale * det(self.structure.cell)) * angstrom**3
+
+  @property
+  @json_section("metadata")
+  @json_unit(g/cm**3)
+  @make_cached
+  def density(self):
+    """ Computes density of the material. """
+    from quantities import atomic_mass_unit as amu
+    from ... import periodic_table as pt
+    result = 0e0 * amu;
+    for atom, n in zip(self.species, self.stoechiometry): 
+      if atom not in pt.__dict__: return None;
+      result += pt.__dict__[atom].atomic_weight * float(n) * amu 
+    return (result / self.volume).rescale(g/cm**3)
 
   @property
   @make_cached
