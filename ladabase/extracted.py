@@ -24,13 +24,11 @@ class Encode(object):
         if not is_descriptor(value): continue
         value = getattr(value, 'fget', None)
         if value == None: continue
-        if not hasattr(value, 'section'): continue
         section[key] = getattr(value, 'section', None)
-        json = getattr(value, 'to_json', None)
-        if json == None: continue
-        items[key] = json 
+        if getattr(value, 'to_json', None) is not None:
+          items[key] = getattr(value, 'to_json') 
   
-  def __call__(self, extractor, items=None):
+  def __call__(self, extractor, items):
     """ Returns dictionary of encoded values. """
     jsons, sections = self.from_json[0].copy(), self.sections[0].copy()
     if extractor.is_dft:
@@ -39,7 +37,6 @@ class Encode(object):
     elif extractor.is_gw:
       jsons.update(self.from_json[2])
       sections.update(self.sections[2])
-    if items == None: items = sections.keys()
 
     result = {}
     for key in items:
@@ -132,21 +129,56 @@ class Decode(dict):
                  | set([k for k in self.keys() if k[0] != '_']) \
                  | set(['_id']) )
 
+
 def to_secondary(collection='extracted', filter=None, items=None, update=False):
   """ Extracts value to secondary database. """
+  from .. import periodic_table as pt
+  from ..crystal.read_write import castep
   from . import Manager
   from .vasp import VaspExtract
+  from .mu_data import enthalpy
   ladabase = Manager()
   encoder = Encode()
   collection = ladabase.database[collection]
   for element in ladabase.files.find(filter):
-    extract = VaspExtract(element)
-    encoded = encoder(extract)
 
-    indatabase = [k for k in collection.find({'_id': extract._id})]
-    if len(indatabase) == 1:
-      if update: encoded['_id'] = indatabase[0]['_id']
-      else: continue
-    elif len(indatabase) > 1:
+    if not update:
+      if collection.find_one({'metadata': {'raw': element['_id']}}) != None: continue
+
+    extract = VaspExtract(element)
+    encoded = {'input': {}, 'output': {}, 'metadata': {}}
+    # create dictionary with computational details.
+    encoded['input'] = encoder(extract, ['stoechiometry', 'species', 'ispin', 'algo', 'encut',
+                                         'nelect', 'HubbardU_NLEP', 'pseudopotential'])['input']
+    try: value = extract.reciprocal_volume.magtnitude.tolist() / float(sum(extract.multiplicity))
+    except: pass
+    else: encoded['input']['kpoint_density'] = value
+    print element['_id']
+    encoded['input']['corrections'] = extract.HubbardU_NLEP
+    # create dictionary with output.
+    encoded['output'] = encoder(extract, ['total_energy', 'vbm', 'cbm', 'pressure'])['output']
+    encoded['output']['total_energy'] /= float(sum(encoded['input']['stoechiometry']))
+    encoded['output']['gap'] = encoded['output']['cbm'] - encoded['output']['vbm']
+    try: value = extract.density.magnitude.tolist()
+    except: pass
+    else: encoded['output']['density'] = value
+    # creates dictionary with metadata.
+    encoded['metadata']['raw'] = extract._id
+    if not (extract.is_dft or extract.is_gw):  encoded['metadata']['functional'] = 'unknown'
+    else: encoded['metadata']['functional'] = 'dft' if extract.is_dft else 'gw'
+    value = enthalpy(extract)
+    if value is not None: encoded['metadata']['Enthalpy'] = value
+    encoded['metadata']['structure'] = castep(extract.structure)
+
+    encoded['metadata']['formula'] = ""
+    def sortme(args):
+      specie = pt.__dict__[args[0]]
+      return (specie.column + specie.row * 0.01) if args[0] in pt.__dict__ else 20
+    for a, n in sorted([(a, n) for a, n in zip(extract.species, extract.stoechiometry)], key=sortme):
+      encoded['metadata']['formula'] += "{0}{1}".format(a, n)
+
+    indatabase = [k for k in collection.find({'metadata': {'raw': element['_id']}})]
+    if len(indatabase) > 1: 
       raise RuntimeError('found more than one items corresponding to the same object {0}.'.format(extract._id))
+    elif len(indatabase) == 1: encoded['_id'] = indatabase[0]['_id']
     collection.save(encoded)

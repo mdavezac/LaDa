@@ -14,7 +14,7 @@ def unit(unit):
   """ Creates JSON transfer functions wich remove/add units. """
   def to_json(object):
     """ Removes unit from object. """
-    return float(object.magnitude)
+    return object.rescale(unit).magnitude.tolist()
   def from_json(object):
     """ Adds unit to object. """
     return object * unit

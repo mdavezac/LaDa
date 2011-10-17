@@ -1,7 +1,28 @@
 """ Congregates all read/write python routines. """
 __docformat__ = "restructuredtext en"
-__all__ = ['read_poscar', 'write_poscar', 'write_oldvff', 'read_oldvff', 'icsd_cif']
+__all__ = ['read_poscar', 'write_poscar', 'write_oldvff', 'read_oldvff', 'icsd_cif', 'castep']
 from lada.opt.decorators import broadcast_result
+
+@broadcast_result(key=True)
+def castep(structure, file=None):
+  """ Writes castep input. """
+  string = "%BLOCK LATTICE_CART\n" \
+           "  {0[0]} {0[1]} {0[2]}\n" \
+           "  {1[0]} {1[1]} {1[2]}\n" \
+           "  {2[0]} {2[1]} {2[2]}\n" \
+           "%ENDBLOCK LATTICE_CART\n\n"\
+           "%BLOCK POSITIONS_ABS\n".format(*structure.cell.T)
+  for atom in structure.atoms:
+    string += "  {0.type} {0.pos[0]} {0.pos[1]} {0.pos[2]}\n".format(atom)
+  string += "%ENDBLOCK POSITION_ABS\n"
+  if file == None: return string
+  elif isinstance(file, str): 
+    from ..opt import RelativeDirectory
+    with open(RelativeDirectory(file).path, 'w') as file: file.write(string)
+  else: file.write(string)
+  
+
+
 
 @broadcast_result(key=True)
 def read_poscar(types=None, path=None):

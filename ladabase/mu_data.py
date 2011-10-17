@@ -60,25 +60,30 @@ original_paper = ['O', 'S', 'Se', 'N', 'P', 'As', 'Mg', 'Ca', 'Zn', 'Cd', 'Ga', 
 def enthalpy(extract):
   """ Returns enthalpy if compuational parameters are ok, else None. """
   from quantities import eV
-  from .. import periodic_table as pt
 
-  if not extract.is_dft: return False, False
-  if extract.pseudotential != 'PAW_PBE': return False, False
-  if extract.encut.rescale(eV).magnitude > 339.0: return False, False
+  if not extract.is_dft: return None
+  if extract.pseudopotential != 'PAW_PBE': return None
+  if extract.encut.rescale(eV).magnitude < 339.0: return None
   for specie in extract.species:
     if specie not in elemental_mus: return None
     U = None
     if specie in ["Cu", "Ag"]: U = 5 # in eV
-    elif pt.__dict__[specie].row >= 3 or pt.__dict__[specie].row <= 11: U = 3 # in eV
-    if U == None and specie in extract.HubbardU_NLEP: return False, False
+    elif specie in [ "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni",\
+                     "Y", "Zr", "Nb", "Rh", "Pd", \
+                     "La", "Hf", "Ta", "Ir", "Pt", "Au" ]: U = 3 # eV
+    if U == None and specie in extract.HubbardU_NLEP: return None
     elif U != None:
-      if specie not in extract.HubbardU_NLEP: return False, False
-      if len(extract.HubbardU_NLEP[specie]) != 1: return False, False
-      if extract.HubbardU_NLEP["type"] != "dudarev": return False, False
-      if extract.HubbardU_NLEP["l"] != 2: return False, False
-      if extract.HubbardU_NLEP["func"] != "U": return False, False
-      if abs(extract.HubbardU_NLEP["J"]) > 1e-3: return False, False
-      if abs(extract.HubbardU_NLEP["U"]-U) > 1e-3: return False, False
-  result = extract.energy - sum([n * elemental_mus[s] for n, s in zip(extract.stoechiometry, extract.species)])
+      if specie not in extract.HubbardU_NLEP: return None
+      if len(extract.HubbardU_NLEP[specie]) != 1: return None
+      params = extract.HubbardU_NLEP[specie][0]
+      if params["type"] != 2: return None # "dudarev"
+      if params["l"] != 2: return None
+      if params["func"] != "U": return None
+      if abs(params["J"]) > 1e-3: return None
+      if abs(params["U"]-U) > 1e-3: return None
+  units = extract.energy.units
+  result = -sum([ n * elemental_mus[s].rescale(units).magnitude.tolist() \
+                  for n, s in zip(extract.stoechiometry, extract.species) ])
+  result += extract.energy.magnitude.tolist()
   return result / float(sum(extract.stoechiometry))
 

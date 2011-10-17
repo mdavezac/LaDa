@@ -1,7 +1,7 @@
 """ Subpackage containing extraction methods for VASP common to both GW and DFT. """
 __docformat__  = 'restructuredtext en'
 __all__ = ['Extract']
-from quantities import g, cm
+from quantities import g, cm, eV
 from ...opt.decorators import make_cached, broadcast_result
 from ...opt.json import array as json_array, structure as json_structure, section as json_section, \
                         unit as json_unit
@@ -35,6 +35,14 @@ class Extract(object):
     try: return self.algo in ['gw', 'gw0', 'chi', 'scgw', 'scgw0'] 
     except: return False
     
+  @property 
+  @json_section("input")
+  @json_unit(eV)
+  @broadcast_result(attr=True, which=0)
+  def encut(self):
+    """ Energy cutoff. """
+    return float(self._find_first_OUTCAR(r"ENCUT\s*=\s*(\S+)").group(1)) * eV
+
 
   @property
   @make_cached
@@ -65,8 +73,9 @@ class Extract(object):
     """
     from os.path import exists, join
 
-    for path in [self.OUTCAR]:
-      if not exists(join(self.directory, path)): return False
+    if hasattr(self, "OUTCAR"): 
+      for path in [self.OUTCAR]:
+        if not exists(join(self.directory, path)): return False
       
     regex = r"""General\s+timing\s+and\s+accounting\s+informations\s+for\s+this\s+job"""
     return self._find_last_OUTCAR(regex) is not None
@@ -77,6 +86,7 @@ class Extract(object):
     """ Structure at start of calculations. """
     from re import compile
     from numpy import array, zeros, dot
+    from numpy.linalg import inv
 
     cell = zeros((3,3), dtype="float64")
     atoms = []
@@ -87,8 +97,14 @@ class Extract(object):
       atom_re = compile(r"""^\s*position\s+of\s+ions\s+in\s+fractional\s+coordinates""")
       for line in file:
         if cell_re.search(line) is not None: break
+      data = []
       for i in range(3):
-        cell[:,i] = array(file.next().split()[:3], dtype='float64')
+        data.append(file.next().split())
+      try: 
+        for i in range(3): cell[:,i] = array(data[i][:3], dtype='float64')
+      except: 
+        for i in range(3): cell[i, :] = array(data[i][-3:], dtype='float64')
+        cell = inv(cell)
       for line in file:
         if atom_re.search(line) is not None: break
       for line in file:
@@ -135,6 +151,7 @@ class Extract(object):
   def _structure_data(self):
     """ Greps cell and positions from OUTCAR. """
     from re import compile
+    from numpy.linalg import inv
     from numpy import array, zeros
 
     cell = zeros((3,3), dtype="float64")
@@ -150,6 +167,11 @@ class Extract(object):
       if cell_re.search(line) is not None: cell_index = index; break
     assert atom_index is not None and cell_index is not None,\
            RuntimeError("Could not find structure description in OUTCAR.")
+    try: 
+      for i in range(3): cell[:,i] = array(lines[-cell_index+i].split()[:3], dtype="float64")
+    except: 
+      for i in range(3): cell[i,:] = array(lines[-cell_index+i].split()[-3:], dtype="float64")
+      cell = inv(cell)
     for i in range(3):
       cell[:,i] = [float(u) for u in lines[-cell_index+i].split()[:3]]
     while atom_index > 0 and len(lines[-atom_index].split()) == 6:
@@ -197,11 +219,14 @@ class Extract(object):
     return structure
 
   @property
+  @json_section("input")
   @make_cached
   @broadcast_result(attr=True, which=0)
   def LDAUType(self):
     """ Type of LDA+U performed. """
-    type = int(self._find_first_OUTCAR(r"""LDAUTYPE\s*=\s*(\d+)""").group(1))
+    type = self._find_first_OUTCAR(r"""LDAUTYPE\s*=\s*(\d+)""")
+    if type == None: return 0
+    type = int(type.group(1))
     if type == 1: return "liechtenstein"
     elif type == 2: return "dudarev"
     return type
@@ -213,8 +238,11 @@ class Extract(object):
     """ Hubbard U/NLEP parameters. """
     from ..specie import U as ldaU, nlep
     from re import M
+    type = self._find_first_OUTCAR(r"""LDAUTYPE\s*=\s*(\d+)""")
+    if type == None: return {}
+    type = int(type.group(1))
+
     species = tuple([ u.group(1) for u in self._search_OUTCAR(r"""VRHFIN\s*=\s*(\S+)\s*:""") ])
-    type = int(self._find_first_OUTCAR(r"""LDAUTYPE\s*=\s*(\d+)""").group(1))
 
     # first look for standard VASP parameters.
     groups = r"""\s*((?:(?:\+|-)?\d+(?:\.\d+)?\s*)+)\s*\n"""
@@ -252,13 +280,15 @@ class Extract(object):
     return result
 
   @property
+  @json_section("input")
   @make_cached
-  def potcar_title(self):
+  def pseudopotential(self):
     """ Title of the first POTCAR. """
     return self._find_first_OUTCAR(r"""POTCAR:.*""").group(0).split()[1]
 
 
   @property
+  @json_section("input")
   @make_cached
   def volume(self): 
     """ Unit-cell volume. """
@@ -267,8 +297,18 @@ class Extract(object):
     from quantities import angstrom
     return abs(self.structure.scale * det(self.structure.cell)) * angstrom**3
 
+  @property 
+  @json_section("input")
+  @make_cached
+  def reciprocal_volume(self):
+    """ Reciprocal space volume (including 2pi). """
+    from numpy import abs, pi
+    from numpy.linalg import det, inv
+    from quantities import angstrom
+    return abs(det(inv(self.structure.scale * self.structure.cell))) * (2e0*pi/angstrom)**3
+
   @property
-  @json_section("metadata")
+  @json_section("output")
   @json_unit(g/cm**3)
   @make_cached
   def density(self):
