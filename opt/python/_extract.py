@@ -77,7 +77,7 @@ class AbstractExtractBase(object):
   def __copy__(self):
     """ Returns a shallow copy of this object. """
     from . import RelativeDirectory
-    result = self.__class__()
+    result = self.__class__(directory=self.directory)
     result.__dict__ = self.__dict__.copy()
     result._directory = RelativeDirectory( self._directory.path,\
                                            self._directory._envvar, 

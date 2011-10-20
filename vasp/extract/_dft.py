@@ -3,7 +3,8 @@ __docformat__  = 'restructuredtext en'
 __all__ = ['Extract']
 from ...opt.decorators import make_cached, broadcast_result
 from ...opt.json import array as json_array, unit as json_unit,\
-                        array_with_unit as json_array_with_unit
+                        array_with_unit as json_array_with_unit,\
+                        section as json_section
 from quantities import eV, kbar as kB
 
 class Extract(object):
@@ -14,6 +15,7 @@ class Extract(object):
     object.__init__(self)
     
   @property
+  @json_section("output")
   @json_unit(eV)
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -25,6 +27,7 @@ class Extract(object):
     return float(result.group(2)) * eV
 
   @property
+  @json_section("output")
   @json_array_with_unit("float64", eV)
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -38,6 +41,7 @@ class Extract(object):
     return array(result) * eV
 
   @property
+  @json_section("output")
   @json_array_with_unit("float64", eV)
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -51,6 +55,7 @@ class Extract(object):
     return array(result) * eV
 
   @property
+  @json_section("output")
   @json_array_with_unit("float64", eV)
   def cbm(self):
     """ Returns Condunction Band Minimum. """
@@ -65,6 +70,7 @@ class Extract(object):
       return min(self.eigenvalues[:, self.valence/2])
 
   @property
+  @json_section("output")
   @json_array_with_unit("float64", eV)
   def vbm(self):
     """ Returns Valence Band Maximum. """
@@ -79,6 +85,7 @@ class Extract(object):
       return max(self.eigenvalues[:, self.valence/2-1])
 
   @property
+  @json_section("output")
   @json_array_with_unit("float64", eV)
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -92,6 +99,7 @@ class Extract(object):
     return array(result) * eV
 
   @property
+  @json_section("output")
   @json_unit(eV)
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -106,6 +114,7 @@ class Extract(object):
   """ Alias for total_energy. """
 
   @property
+  @json_section("output")
   @json_unit(eV)
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -117,6 +126,7 @@ class Extract(object):
     return float(result.group(1)) * eV
 
   @property
+  @json_section("output")
   @make_cached
   @broadcast_result(attr=True, which=0)
   def moment(self):
@@ -127,6 +137,7 @@ class Extract(object):
     return float(result.group(2))
 
   @property
+  @json_section("input")
   @make_cached
   @broadcast_result(attr=True, which=0)
   def nb_electrons(self):
@@ -137,6 +148,7 @@ class Extract(object):
     return float(result.group(1))
 
   @property
+  @json_section("output")
   @json_array_with_unit("float64", kB)
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -149,6 +161,7 @@ class Extract(object):
     return result * kB
 
   @property
+  @json_section("output")
   @json_unit(kB)
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -161,6 +174,7 @@ class Extract(object):
     return float(result.group(1)) * kB
 
   @property
+  @json_section("output")
   @make_cached
   @broadcast_result(attr=True, which=0)
   def alphabet(self):
@@ -171,6 +185,7 @@ class Extract(object):
     return float(result.group(3))
 
   @property
+  @json_section("output")
   @make_cached
   @broadcast_result(attr=True, which=0)
   def xc_g0(self):
@@ -181,6 +196,7 @@ class Extract(object):
     return float(result.group(2))
 
   @property
+  @json_section("output")
   @json_unit(kB)
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -281,6 +297,7 @@ class Extract(object):
     return array(result, dtype="float64")
 
   @property
+  @json_section("output")
   @json_array("float64")
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -294,6 +311,7 @@ class Extract(object):
     return self._get_partial_charges_magnetization(r"""\s*total\s+charge\s*$""")
 
   @property
+  @json_section("output")
   @json_array("float64")
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -307,6 +325,7 @@ class Extract(object):
     return self._get_partial_charges_magnetization(r"""^\s*magnetization\s*\(x\)\s*$""")
 
   @property
+  @json_section("output")
   @json_array_with_unit("float64", eV)
   @make_cached
   def eigenvalues(self):
@@ -321,6 +340,7 @@ class Extract(object):
     return array(self._unpolarized_values(1), dtype="float64") * eV
 
   @property
+  @json_section("output")
   @json_array("float64")
   @make_cached
   def occupations(self):
@@ -335,6 +355,7 @@ class Extract(object):
     return array(self._unpolarized_values(2), dtype="float64") 
 
   @property
+  @json_section("output")
   @json_array_with_unit("float64", eV)
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -358,6 +379,7 @@ class Extract(object):
     return array(result, dtype="float64") * eV
 
   @property 
+  @json_section("output")
   @json_array("float64")
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -376,6 +398,7 @@ class Extract(object):
     return array([result.group(i) for i in range(1,10)], dtype='float64').reshape((3,3))
 
   @property 
+  @json_section("output")
   @json_array("float64")
   @make_cached
   @broadcast_result(attr=True, which=0)
@@ -394,6 +417,7 @@ class Extract(object):
     return array([result.group(i) for i in range(1,10)], dtype='float64').reshape((3,3))
 
   @property 
+  @json_section("output")
   @json_array("float64")
   def dielectric_constant(self):
     """ Dielectric constant of the material. """
