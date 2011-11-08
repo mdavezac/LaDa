@@ -15,7 +15,7 @@
 #include <python/std_vector.hpp>
 
 #include "atom.hpp"
-#include "set.hpp"
+// #include "set.hpp"
 #include "structure.hpp"
 // #include "read_structure.hpp"
 // #include "enumerate.hpp"
@@ -86,7 +86,7 @@ BOOST_PYTHON_MODULE(_crystal)
 //          "Returns the number of `escan` valence states in a structure." );
 
   LaDa::python::expose_vector<std::string>("VectorStr", "Interface to Cpp vectors of string.");
-  LaDa::python::expose_set();
+// LaDa::python::expose_set();
 // LaDa::python::expose_atom();
 // LaDa::python::expose_structure();
 // LaDa::Python::expose_structure();

@@ -111,6 +111,12 @@ namespace LaDa
       boost::python::register_exception_translator<T>(e);\
       scope.attr(name.substr(name.rfind('.')+1).c_str()) = ::LaDa::python::PyException<T>::exception();\
     }
+#   ifdef LADA_PYERROR
+#     error LADA_PYERROR already  defined. 
+#   endif
+#   define LADA_PYERROR(EXCEPTION, MESSAGE) \
+      PyErr_SetString( ::LaDa::python::PyException< ::LaDa::error::EXCEPTION >::exception().ptr(), \
+                       MESSAGE )
   }
 }
 # endif 

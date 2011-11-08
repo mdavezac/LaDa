@@ -35,23 +35,33 @@ extern "C" struct AtomStr
 #include "atom_cdi.hpp"
 // atom type declaration.
 #include "atom_type.hpp"
+// set interface
+#include "set.hpp"
 
 #ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
 # define PyMODINIT_FUNC void
 #endif
 
-static PyMethodDef AtomStr_methods[] = { {NULL} };
+static PyMethodDef atomstr_methods[] = 
+  {
+    {"_new_set", (PyCFunction)set_new_set, METH_VARARGS,
+     "Creates new set. For debugging only.\n\n"
+     "Sets should only ever be obtained from an atom structure, and never created from scratch." },
+    NULL
+  };
 
 PyMODINIT_FUNC initatom(void) 
 {
   import_array(); // needed for NumPy 
-  PyObject* m;
 
-  if (PyType_Ready(&AtomStrType) < 0) return;
+  if (PyType_Ready(&atomstr_type) < 0) return;
+  if (PyType_Ready(&set_type) < 0) return;
+  Py_INCREF(&atomstr_type);
+  Py_INCREF(&set_type);
 
-  m = Py_InitModule3("atom", AtomStr_methods,
-                     "Example module that creates an extension type.");
+  char const doc[] =  "Wrapper around C++ atom class, and affiliates.";
+  PyObject* module = Py_InitModule3("atom", atomstr_methods, doc);
 
-  Py_INCREF(&AtomStrType);
-  PyModule_AddObject(m, "Atom", (PyObject *)&AtomStrType);
+  PyModule_AddObject(module, "AtomStr", (PyObject *)&atomstr_type);
+  PyModule_AddObject(module, "_Set", (PyObject *)&set_type);
 }

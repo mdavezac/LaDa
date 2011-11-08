@@ -1,4 +1,4 @@
-static PyTypeObject AtomStrType = {
+static PyTypeObject atomstr_type = {
     PyObject_HEAD_INIT(NULL)
     0,                         /*ob_size*/
     "atom.AtomStr",            /*tp_name*/
@@ -53,7 +53,7 @@ static PyTypeObject AtomStrType = {
     0,                         /* tp_descr_get */
     0,                         /* tp_descr_set */
     0,                         /* tp_dictoffset */
-    (initproc)AtomStr_init,      /* tp_init */
+    (initproc)AtomStr_init,    /* tp_init */
     0,                         /* tp_alloc */
-    AtomStr_new,                 /* tp_new */
+    AtomStr_new,               /* tp_new */
 };
