@@ -231,7 +231,7 @@ def _explore(self, args):
 
   jobdict, new_path = None, None
   if args.is_file or not args.is_expression:
-    try: jobdict = load(args.jobdict)
+    try: jobdict = load(args.jobdict, timeout=60)
     except: jobdict = None
     else: new_path = abspath(args.jobdict)
   if jobdict is None and (args.is_expression or not args.is_file):

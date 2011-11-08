@@ -94,18 +94,21 @@ def run(self):
     if self.comm.rank == 0:
       # deal with differences in function sorted between python versions.
       from platform import python_version_tuple
-      if python_version_tuple[0] > 2:
+      if python_version_tuple()[0] > 2:
         from functools import cmp_to_key
-        self.population = sorted(self.population, cmp_to_key(self.comparison))[:len(self.population)-nboffspring]
+        self.population = sorted(self.population, key=cmp_to_key(self.comparison))
       else: 
-        self.population = sorted(self.population, cmp=self.comparison)[:len(self.population)-nboffspring]
-      self.population.extend( self.offspring )
+        self.population = sorted(self.population, cmp=self.comparison)
+      # Inserts individual one by one ensuring they do not yet exist in the
+      # population. This ensures that duplicates are not allowed.
+      for indiv in self.offspring:
+        if any(indiv == u for u in self.population): continue
+        self.population.pop(-1)
+        self.population.insert(0, indiv)
     self.population = self.comm.broadcast(self.population)
-
     
     self.offspring = []
     self.current_gen += 1 
-
 
   # final stuff before exiting.
   if hasattr(self, "final"): self.final()

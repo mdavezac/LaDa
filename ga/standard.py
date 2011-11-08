@@ -112,7 +112,7 @@ def print_population(self):
   if not self.comm.do_print: return True
   print "  Population: "
   for indiv in self.population:
-    print "    ", indiv, indiv.fitness
+    print "    ", indiv, getattr(indiv, 'fitness', None)
   return True
 
 def print_offspring(self):
@@ -178,7 +178,7 @@ def bleeder_evaluation(self, evaluator, pools, comm):
           An object capable of evaluating individuals.
         pools
           The number of pools of processes to create.
-        comm  : None or boost.mpi.communicator
+        comm  : None or lada.mpi.communicator
           Communication object. 
   """
   from ..jobs import JobDict, Bleeder
@@ -194,7 +194,7 @@ def bleeder_evaluation(self, evaluator, pools, comm):
     for name, pop in [('off', self.offspring), ('pop', self.population)]:
       for index, indiv in enumerate(pop):
         job = jobdict / '{0}/{1}'.format(name, index)
-        job.functional = evaluator
+        job._functional = evaluator
         job.jobparams['indiv'] = indiv
         job.jobparams['overwrite'] = True
         # lets not recompute already known individuals. Need to keep them as record though.
@@ -222,11 +222,11 @@ def mpi_population_evaluation(self, evaluator, pools, comm = None):
       :Param pools:
         Number of pools of processors across which to split evaluations.
       :Param comm: 
-        group boost.mpi.communicator.
+        group lada.mpi.communicator.
 
       Only individuals without a ``fitness`` attribute are evaluated. 
   """
-  from boost.mpi import broadcast, scatter, all_gather, world
+  from ..mpi import world
   from itertools import chain
   # split communicator along number of pools
   if pools is None: pools = comm.size
@@ -237,7 +237,7 @@ def mpi_population_evaluation(self, evaluator, pools, comm = None):
 
   def check_pops(this, population):
     if not __debug__: return
-    new_pop = broadcast(this.comm, population, 0)
+    new_pop = this.comm.broadcast(population, 0)
     assert len(new_pop) == len(population),\
            RuntimeError("Populations across processes have different lengths.")
     for a, b in zip(new_pop, population):
@@ -251,28 +251,36 @@ def mpi_population_evaluation(self, evaluator, pools, comm = None):
     this.comm.barrier()
 
 
-  gather_these = []
+  gather_these, indices, which_color = [], [], 0
   # Now goes throught individuals which need be evaluated
   for index, indiv in enumerate(chain(self.population, self.offspring)):
     if hasattr(indiv, "fitness"): continue
-    if index % pools == color: 
-      fitness = evaluator(indiv, comm = local_comm)
-      if local_comm.is_root: gather_these.append( (indiv, fitness) )
+    indices.append(index)
+    if which_color == color: 
+      indiv.fitness = evaluator(indiv, comm = local_comm)
+      if local_comm.is_root: gather_these.append(indiv)
+    which_color = (which_color+1) % pools
 
   # gathers all newly computed individuals. 
   if local_comm.is_root: gather_these = heads_comm.all_gather(gather_these)
   gather_these = local_comm.broadcast(gather_these)
 
   # now reinserts them into populations.
-  for index, indiv in enumerate(chain(self.population, self.offspring)):
-    if hasattr(indiv, "fitness"): continue
-    assert len(gather_these) > index % pools, \
-           RuntimeError("%s > %i %% %i" % (len(gather_these), index, pools))
-    assert len(gather_these[index % pools]) != 0
-    a, fitness = gather_these[index % pools].pop(0)
-    indiv.__dict__.update(a.__dict__)
-    indiv.fitness = fitness
+  nbpop, which_color = len(self.population), 0
+  for index in indices:
+    # sanity checks.
+    assert len(gather_these[which_color]) != 0
+
+    # assignss computed individual back into corresponding population.
+    if index >= nbpop: # object belongs to population.
+      self.offspring[index-nbpop] = gather_these[which_color].pop(0)
+    else: # object belongs to offspring
+      self.population[index] = gather_these[which_color].pop(0)
+    which_color = (which_color+1) % pools
+
   comm.barrier()
+
+  # sanity check.
   for index, indiv in enumerate(chain(self.population, self.offspring)):
     if hasattr(indiv, "fitness"): continue
     assert False, "should not be here"
@@ -282,7 +290,7 @@ def mpi_population_evaluation(self, evaluator, pools, comm = None):
   check_pops(self, self.offspring)
   world.barrier()
 
-def population_evaluation(self, evaluator, comm=None, pools=None):
+def population_evaluation(self, evaluator, pools=None, comm=None):
   """ Chooses between MPI and serial evaluation. """
   from ..mpi import Communicator
   is_serial = pools == 1 or (comm.size == 1 if comm is not None else True)

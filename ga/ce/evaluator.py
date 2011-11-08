@@ -234,9 +234,8 @@ class LocalSearchEvaluator(Evaluator):
   def __call__(self, indiv, comm=None, outdir=None, verbose=False, **kwargs):
     """ Performs a simple minded local search. """
     # case without optimization.
-
     if self.maxiter == 0:
-      if verbose: print "no local search (comm {0}).".format(comm.rank)
+      if verbose:  print "no local search (comm {0}).".format(comm.rank)
       return super(LocalSearchEvaluator, self).__call__(indiv, comm=comm, outdir=outdir, **kwargs)
 
     from random import shuffle
@@ -255,7 +254,8 @@ class LocalSearchEvaluator(Evaluator):
     while     (self.maxiter < 0 or iteration < self.maxiter) \
           and (self.maxeval < 0 or evaluation < self.maxeval):
 
-      if verbose: print "** Iteration {0} (comm {1})**".format(iteration, comm.rank)
+      if verbose:
+        print "** Iteration {0} (comm {1})**".format(iteration, comm.rank)
 
       changed = False
       shuffle(indices)
@@ -272,13 +272,16 @@ class LocalSearchEvaluator(Evaluator):
           indiv = other
           changed = True
         if self.maxeval > 0 and evaluation < self.maxeval: break
-      if verbose: print "change {0}, current {1} (comm {2}).".format(indiv.fitness - current, indiv.fitness, comm.rank)
+      if verbose:
+        print "change {0}, current {1} (comm {2}).".format(indiv.fitness - current, indiv.fitness, comm.rank)
 
       if not changed: break
       iteration += 1
 
     indiv.genes = sorted(indiv.genes)
-    if verbose: print "end local search: {0} {1} (comm {2}).\n".format(indiv.genes, indiv.fitness, comm.rank)
+    if verbose:
+      print "end local search: {0} {1} (comm {2}).\n".format(indiv.genes, indiv.fitness, comm.rank)
+
     return indiv.fitness
 
   def __repr__(self):

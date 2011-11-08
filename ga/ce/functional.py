@@ -87,12 +87,17 @@ class Darwin(StandardDarwin):
     result = Individual(N, mean=int(0.5 * N), alwayson=self.alwayson, alwaysoff=self.alwaysoff)
     return result
 
-  def __call__(self, comm = None, outdir = None, **kwargs):
-    """ Runs/Restart GA. """
-    from ...mpi import Communicator
-    comm = Communicator(comm)
-    self.pools = comm.size
-    return super(Darwin, self).__call__(comm, outdir, **kwargs)
+  def _further_setup(self):
+    """ Last minute setup. """
+    from weakref import proxy
+    self.pools = self.comm.size
+    self.evaluator.darwin = proxy(self)
+
+
+  def evaluation(self):
+    """ Evaluates population. """
+    from ..standard import mpi_population_evaluation
+    mpi_population_evaluation(self, self.evaluator, self.pools, self.comm)
 
   @property
   def rootworkdir(self):

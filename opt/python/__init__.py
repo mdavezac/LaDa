@@ -216,7 +216,7 @@ class LockFile(object):
       *Beware* of mpi problems! `LockFile` is (purposefully) not mpi aware.
       If used unwisely, processes will lock each other out.
   """
-  def __init__(self, filename, timeout = None, sleep = 0.5):
+  def __init__(self, filename, timeout = None, sleep = 0.05):
     """ Creates a lock object. 
 
         :Parameters:
@@ -259,13 +259,12 @@ class LockFile(object):
       except error: 
         self._owns_lock = False
         if self.timeout is not None:
-          assert time.time() - start_time < self.timeout, \
-                 RuntimeError("Could not acquire lock on %s." % (filename))
+          if time.time() - start_time > self.timeout:
+            raise RuntimeError("Could not acquire lock on file {0}.".format(self.filename))
         time.sleep(self.sleep)
 
   def __enter__(self):
     """ Enters context. """
-    assert self.timeout is None, RuntimeError("Cannot use LockFile as a context with timeout.")
     self.lock()
     return self
 
@@ -325,16 +324,16 @@ class LockFile(object):
     comm.barrier()
       
 
-def acquire_lock(filename, sleep=0.5):
+def acquire_lock(filename, sleep=0.5, timeout=None):
   """ Alias for a `LockFile` context. 
 
       *Beware* of mpi problems! `LockFile` is (purposefully) not mpi aware.
       Only the root node should use this method.
   """
-  return LockFile(filename, sleep=sleep)
+  return LockFile(filename, sleep=sleep, timeout=timeout)
 
 @contextmanager
-def open_exclusive(filename, mode="r", sleep = 0.5):
+def open_exclusive(filename, mode="r", sleep = 0.5, timeout=None):
   """ Opens file while checking for advisory lock.
 
       This context uses `LockFile` to first obtain a lock.
@@ -342,7 +341,7 @@ def open_exclusive(filename, mode="r", sleep = 0.5):
       Only the root node should use this method.
   """
   # Enter context.
-  with LockFile(filename, sleep=sleep) as lock:
+  with LockFile(filename, sleep=sleep, timeout=timeout) as lock:
     yield open(filename, mode)
 
 class RelativeDirectory(object):

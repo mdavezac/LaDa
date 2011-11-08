@@ -160,17 +160,17 @@ class Darwin(object):
     stdout.flush()
     try: fsync(stdout)
     except: pass
+    return True
 
   def evaluation(self):
     """ Evaluates population. """
     from .standard import population_evaluation
-    population_evaluation(self, self.evaluator, self.comm, self.pools)
+    population_evaluation(self, self.evaluator, self.pools, self.comm)
 
   def taboo(self, indiv):
     """ No two individuals in the population and the offspring are the same. """
     from itertools import chain
-    for a in chain(self.population, self.offspring):
-      if a == indiv: return True
+    if any(indiv == a for a in chain(self.population, self.offspring)): return True
     if getattr(self, "history", None) is not None: # check whether a history object exists.
       if self.history(indiv): return True
     return False
@@ -289,52 +289,57 @@ class Darwin(object):
     from . import darwin as search
     from ..opt import redirect, RelativeDirectory, Changedir
 
+    # make call stateless.
+    this = deepcopy(self)
+
     local_time = time.localtime() 
-    self.start_time = time.time() 
+    this.start_time = time.time() 
     if outdir is None: outdir = getcwd()
     outdir = RelativeDirectory(outdir)
     # mpi stuff
-    self.comm = comm if comm is not None else world
-    self.comm.do_print = self.do_print
+    this.comm = comm if comm is not None else world
+    this.comm.do_print = this.do_print
 
     # takes care of keyword arguments:
     kwargs.pop("external", None)
     if len(kwargs.keys()) > 0: 
-      this = deepcopy(self)
       for key, value in kwargs.items():
-        if hasattr(self, key): setattr(self, key, value)
-        elif hasattr(self.evaluator, key): setattr(self.evaluator, key, value)
-        else: assert hasattr(self, key), TypeError("Unknown argument {0}.".format(key))
-      this(outdir=outdir.path, comm=comm)
-      return
+        if hasattr(this, key): setattr(this, key, value)
+        elif hasattr(this.evaluator, key): setattr(this.evaluator, key, value)
+        else: assert hasattr(this, key), TypeError("Unknown argument {0}.".format(key))
 
     # gets current age
-    self.age = self.Extract(outdir.path, comm).next_age
+    this.age = this.Extract(outdir.path, comm).next_age
     # sets directory for calculations according to newly read age.
-    if hasattr(self.evaluator, "outdir"): 
-      self.evaluator._outdir.relative = outdir.relative
-      self.evaluator.outdir = join(self.evaluator.outdir, self.age)
+    if hasattr(this.evaluator, "outdir"): 
+      this.evaluator._outdir.relative = outdir.relative
+      this.evaluator.outdir = join(this.evaluator.outdir, this.age)
     # sets directory for history file. This should be conserved across runs,
     # hence it is not on the scratch.
-    if self.history is not None:
-      self.history.directory = outdir.path 
-      self.history.remove_stale(comm)
+    if this.history is not None:
+      this.history.directory = outdir.path 
+      this.history.remove_stale(comm)
+
 
     # now goes to work
-    with Changedir(join(outdir.path, self.age), comm=comm) as cwd:
-      pyout = self.OUTCAR if self.do_print else '/dev/null'
-      pyerr = self.ERRCAR if self.do_print else '/dev/null'
+    with Changedir(join(outdir.path, this.age), comm=comm) as cwd:
+      pyout = this.OUTCAR if this.do_print else this.OUTCAR + str(comm.rank) # '/dev/null'
+      pyerr = this.ERRCAR if this.do_print else this.OUTCAR + str(comm.rank) # '/dev/null'
       with redirect(pyout=pyout, pyerr=pyerr) as streams:
-        if self.do_print:
+        if this.do_print:
           print "# GA calculation on ", time.strftime("%m/%d/%y", local_time),\
                 " at ", time.strftime("%I:%M:%S %p", local_time)
         # reloads if necessary
-        if self.age != self.ordinals[0]: self.restart(outdir.path, comm=comm)
+        if this.age != this.ordinals[0]: this.restart(outdir.path, comm=comm)
+        # call back for further setting up in derived class.
+        this._further_setup()
         # runs.
-        search.run(self)
-        self.timing()
+        search.run(this)
+        this.timing()
         
-    del self.comm
+  def _further_setup(self): 
+    """ Derived class can override this function for last minute setup. """
+    pass
 
   def __str__(self):
     return "Replacement rate: %f\nPopulation size: %i\nMaximum number of generations: %i\n" \

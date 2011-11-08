@@ -11,7 +11,7 @@ class History(object):
    """ Default history filename. """
 
 
-   def __init__(self, filename = None, directory=None, limit=-1):
+   def __init__(self, filename = None, directory=None, limit=-1, timeout=None):
      """ Initializes a history object. """
      from ..opt import RelativeDirectory
 
@@ -20,7 +20,9 @@ class History(object):
      self._directory = RelativeDirectory(directory)
      """ Directory where history file is saved. """
      self.limit = limit
-     """ MAximum size of history. """
+     """ Maximum size of history. """
+     self.timeout = timeout
+     """ Timeout when trying to acquire history file. """
 
    @property
    def directory(self):
@@ -41,7 +43,7 @@ class History(object):
      from pickle import load
      from ..opt import LockFile
      from ..mpi import Communicator
-     lock = LockFile(self.filepath)
+     lock = LockFile(self.filepath, timeout=self.timeout)
      lock.remove_stale(comm)
      comm = Communicator(comm)
      if comm.is_root:
@@ -67,7 +69,8 @@ class History(object):
      from pickle import load, dump
      from os.path import exists
      from ..opt import acquire_lock
-     with acquire_lock(self.filepath) as lock:
+
+     with acquire_lock(self.filepath, timeout=self.timeout) as lock:
 
        if not exists(self.filepath):
          with open(self.filepath, "w") as file: dump([indiv], file)
@@ -89,7 +92,7 @@ class History(object):
      from copy import deepcopy
      from ..opt import acquire_lock
      if not exists(self.filepath): return 
-     with acquire_lock(self.filepath) as lock:
+     with acquire_lock(self.filepath, timeout=self.timeout) as lock:
        with open(self.filepath, "r") as file: history = load(file)
        if indiv in history:
          result = deepcopy(indiv)
@@ -106,7 +109,7 @@ class History(object):
      from os.path import exists
      from ..opt import acquire_lock
      if not exists(self.filepath): return 
-     with acquire_lock(self.filepath) as lock:
+     with acquire_lock(self.filepath, timeout=self.timeout) as lock:
        with open(self.filepath, "r") as file: history = load(file)
        try: history[history.index(indiv)] = indiv
        except ValueError: raise ValueError("Individual not in history.")
@@ -118,7 +121,7 @@ class History(object):
      from pickle import load
      from os.path import exists
      if not exists(self.filepath): return False
-     with acquire_lock(self.filepath) as lock:
+     with acquire_lock(self.filepath, timeout=self.timeout) as lock:
        with open(self.filepath, "r") as file: history = load(file)
        return indiv in history
 
@@ -129,7 +132,7 @@ class History(object):
      from copy import deepcopy
      from ..opt import acquire_lock
      if not exists(self.filepath): return 
-     with acquire_lock(self.filepath) as lock:
+     with acquire_lock(self.filepath, timeout=self.timeout) as lock:
        with open(self.filepath, "r") as file: history = load(file)
        if indiv in history: 
          result = deepcopy(indiv)
@@ -144,7 +147,7 @@ class History(object):
      from os.path import exists
      from ..opt import acquire_lock
      if not exists(self.filepath): return []
-     with acquire_lock(self.filepath) as lock:
+     with acquire_lock(self.filepath, timeout=self.timeout) as lock:
        with open(self.filepath, "r") as file: return load(file)
 
    @property
@@ -162,10 +165,10 @@ class History(object):
      from os.path import exists, getsize
      from ..opt import acquire_lock
      if not exists(self.filepath): return 0
-     with acquire_lock(self.filepath) as lock: return getsize(self.filepath)
+     with acquire_lock(self.filepath, timeout=self.timeout) as lock: return getsize(self.filepath)
      return str(size) + " " + suffix
 
    def __repr__(self):
      """ Python representation of this object. """
-     return "{0.__class__.__name__}({1}, {2}, {0.limit})"\
+     return "{0.__class__.__name__}({1}, {2}, {0.limit}, {0.timeout})"\
             .format(self, repr(self.filename), repr(self.directory))
