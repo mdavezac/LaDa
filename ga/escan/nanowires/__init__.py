@@ -21,7 +21,8 @@ class Individual(BitstringIndividual):
   def __eq__(self, a): 
     """ Compares two elemental nanowires. """
     from numpy import all
-    if a == None: return False
+    if a is None: return False
+    if not hasattr(a, "genes"): return False
     if len(a.genes) != len(self.genes): return False
     return all(self.genes == a.genes)
 
@@ -33,7 +34,7 @@ def exec_input(script, namespace = None):
   from ..evaluator import Bandgap as BandGapEvaluator, Dipole as DipoleEvaluator
 
   dictionary = {}
-  if namespace != None: dictionary.update(namespace)
+  if namespace is not None: dictionary.update(namespace)
   dictionary['Individual'] = Individual
   dictionary['Darwin'] = Darwin
   dictionary['Converter'] = Converter
@@ -49,7 +50,7 @@ def read_input(filepath = "input.py", namespace = None):
   from ..evaluator import Bandgap as BandGapEvaluator, Dipole as DipoleEvaluator
 
   dictionary = {}
-  if namespace != None: dictionary.update(namespace)
+  if namespace is not None: dictionary.update(namespace)
   dictionary['Individual'] = Individual
   dictionary['Darwin'] = Darwin
   dictionary['Converter'] = Converter

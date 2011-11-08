@@ -79,7 +79,7 @@ def list_all_structures( _n0, _n1 ):
   for n in range(_n0, _n1):
     oldsupercell = None
     for x, smith, supercell, flavorbase in enum(n, lattice):
-      if oldsupercell == None or oldsupercell != supercell:
+      if oldsupercell is None or oldsupercell != supercell:
         result.append( (supercell, flavorbase, smith, []) )
         oldsupercell = supercell
       result[-1][3].append(x)

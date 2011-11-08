@@ -31,7 +31,7 @@ class Facet(object):
     from itertools import combinations
     from hull3d import create_basis
 
-    if sample == None: return
+    if sample is None: return
     assert len(sample.shape) != 1, ValueError("Sample too small.")
     assert sample.shape[0] == self.dimension + 1, ValueError("Sample should contain 3 vectors.")
 
@@ -103,7 +103,7 @@ class HullNd(object):
   
   def _create_facets(self, sample):
     """ Creates convex-hull from sample. """
-    if sample == None: return;
+    if sample is None: return;
     base = self._start(sample)
     self._facets = [base]
     self._dome(sample, self._facets[-1])

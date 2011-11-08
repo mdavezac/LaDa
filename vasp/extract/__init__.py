@@ -30,7 +30,7 @@ class ExtractCommon(AbstractExtractBase, ExtractCommonBase, IOMixin):
     from ...mpi import Communicator
        
     comm = Communicator(comm)
-    if outcar != None:
+    if outcar is not None:
       outcar = RelativeDirectory(outcar).path
       if exists(outcar) and not isdir(outcar):
         kwargs['OUTCAR'] = basename(outcar)
@@ -70,24 +70,34 @@ def Extract(outcar=None, comm=None, **kwargs):
           comm : `mpi.Communicator`
             Processes over which to synchronize output gathering. 
   """
+  from os import getcwd
+  from os.path import exists, isdir, join
+  from ...opt import RelativeDirectory
   # checks if path or directory
   if 'directory' in kwargs: 
     from warnings import warn
-    assert outcar == None, ValueError('Cannot use both directory and outcar keyword arguments.')
+    assert outcar is None, ValueError('Cannot use both directory and outcar keyword arguments.')
     outcar = kwargs.pop('directory')
     warn( DeprecationWarning( 'directory keyword is deprecated in favor of '
                               'outcar keyword in vasp extraction objects.'),\
           stacklevel=2)
   if 'OUTCAR' in kwargs: 
-    from os.path import join
     from warnings import warn
     warn( DeprecationWarning('OUTCAR keyword is deprecated in favor of outcar keyword.'),
           stacklevel=2)
-    if outcar != None:
-      if (exists(outcar) and isdir(outcar)) or (not exists(outcar)):
-        outcar = join(outcar, kwargs.pop('OUTCAR')) 
-      else: raise ValueError('Cannot use both outcar and OUTCAR keywords.')
-    else: outcar = kwargs.pop('OUTCAR')
+    assert outcar is None, ValueError('Cannot use both outcar and OUTCAR keywords.')
+    outcar = kwargs.pop('OUTCAR')
+
+  # checks for GW calculations.
+  outcar = getcwd() if outcar is None else RelativeDirectory(outcar).path
+  if exists(join(outcar, 'GW')):
+    from os.path import basename
+    from glob import iglob
+    from re import match
+    outcar = join(outcar, 'GW')
+    gwiters = [ int(basename(u)) for u in iglob(join(outcar, "[0-9]*"))\
+                if match(r"\d+", basename(u)) and isdir(u) ]
+    if len(gwiters) > 0: outcar = join(outcar, str(max(gwiters)))
 
   result = ExtractCommon(outcar=outcar, comm=comm, **kwargs)
   if result.is_dft: return ExtractDFT(outcar=outcar, comm=comm, **kwargs) 
@@ -137,10 +147,10 @@ else:
       # this will throw on unknown kwargs arguments.
       jobs.AbstractMassExtract.__init__(self, **kwargs)
 
-      self.Extract = Extract if Extract != None else VaspExtract
+      self.Extract = Extract if Extract is not None else VaspExtract
       """ Extraction class to use. """
 
-      if path == None: path = getcwd()
+      if path is None: path = getcwd()
       self._rootdir = RelativeDirectory(path, hook=self.uncache)
       """ Root of the directory-tree to trawl for OUTCARs. """
       
@@ -163,12 +173,13 @@ else:
 
     def __iter_alljobs__(self):
       """ Goes through all directories with an OUTVAR. """
-      from os import walk, getcwd
-      from os.path import abspath, relpath, abspath, join
+      from os import walk
+      from os.path import relpath, join
 
       for dirpath, dirnames, filenames in walk(self.rootdir, topdown=True, followlinks=True):
         if self._nocalc:
           dirnames[:] = [u for u in dirnames if u not in ['relax_cellshape', 'relax_ions']]
+          if 'GW' in dirnames: continue
         if self.OUTCAR not in filenames: continue
 
         try: result = self.Extract(join(join(self.rootdir, dirpath), self.OUTCAR))

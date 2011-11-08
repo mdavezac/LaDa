@@ -1,4 +1,5 @@
-set(PYVASP_PY methods.py files.py __init__.py kpoints.py launch.py _nosetests.py specie.py)
+set(PYVASP_PY methods.py files.py __init__.py kpoints.py launch.py _nosetests.py
+              specie.py functional.py gwfunc.py)
 
 include_directories(MPI_INCLUDE_PATH)
 
@@ -19,3 +20,4 @@ install(FILES ${PYVASP_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/vasp)
 
 add_subdirectory(incar)
 add_subdirectory(extract)
+add_subdirectory(nlep)

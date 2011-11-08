@@ -3,9 +3,9 @@ __docformat__ = "restructuredtext en"
 __all__ = ['Darwin']
 
 # from ..elemental.extract import Extract as GAExtract
-from ..functional import Darwin as EscanDarwin
+from ...functional import Darwin as DarwinBase
 
-class Darwin(EscanDarwin):
+class Darwin(DarwinBase):
   """ GA functional for optimizations of epitaxial structures. """
 
   def __init__(self, evaluator, **kwargs): 
@@ -52,19 +52,16 @@ class Darwin(EscanDarwin):
     self.growth_rate = kwargs.pop('growth_rate', 0.8)
     """ Rate for growth-like mutations over other operations. """
     self.matingops = Mating(sequential=False)
-    if self.crossover_rate > 0e0: self.matingops.add(VariableSizeCrossover(self.nmin, self.nmax))
-    if self.swap_rate > 0e0:      self.matingops.add(SwapMutation(-1))
-    if self.growth_rate > 0e0:    self.matingops.add(GrowthMutation(self.nmin, self.nmax))
+    if self.crossover_rate > 0e0:
+      self.matingops.add(VariableSizeCrossover(self.nmin, self.nmax), self.crossover_rate)
+    if self.swap_rate > 0e0:     
+      self.matingops.add(SwapMutation(-1), self.swap_rate)
+    if self.growth_rate > 0e0:   
+      self.matingops.add(GrowthMutation(self.nmin, self.nmax), self.growth_rate)
 
   def mating(self):
     """ Calls mating operations. """
     return self.matingops(self)
-
-  def compare(self, a, b):
-    """ Compares two bitstrings. """
-    from numpy import all
-    if len(a.genes) != len(b.genes): return False
-    return all( a.genes == b.genes )
 
   def Individual(self):
     """ Generates an individual (with mpi) """
@@ -73,7 +70,9 @@ class Darwin(EscanDarwin):
 
   def __repr__(self):
     """ Returns representation of this instance. """
-    header = "from {0.__class__.__module__} import {0.__class__.__name__}\n".format(self)
+    header = "from {0.__class__.__module__} import {0.__class__.__name__}\n"\
+             "from {0.comparison.__module__} import {0.comparison.__name__}\n"\
+             "from {0.history.__module__} import {0.history.__name__}\n".format(self)
     string = repr(self.evaluator) + "\n" + repr(self.matingops) + "\n"
     string += "functional = {0.__class__.__name__}(evaluator)\n"\
               "functional.matingops   = mating\n"\
@@ -85,6 +84,8 @@ class Darwin(EscanDarwin):
               "functional.current_gen = {0.current_gen}\n"\
               "functional.rate        = {0.rate}\n"\
               "functional.age         = {1}\n"\
+              "functional.comparison  = {0.comparison.__name__}\n"\
+              "functional.history     = {2}\n"\
               "# functional.rootworkdir, please set evaluator.outdir instead\n"\
-              .format(self, repr(self.age))
+              .format(self, repr(self.age), repr(history))
     return header + string

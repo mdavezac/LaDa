@@ -68,7 +68,7 @@ class DDPoints(KPoints):
 
     nbpoints  = max(self.order+1, self.nbpoints)
     direction = array(self.direction, dtype="float64") 
-    center    = array(self.center, dtype="float64") if self.center != None\
+    center    = array(self.center, dtype="float64") if self.center is not None\
                 else zeros((3,), dtype="float64")
     if self.relax:
       deformation = dot(inv(output.cell.T), input.cell.T)
@@ -98,8 +98,8 @@ class DDPoints(KPoints):
 
   def __repr__(self):
     result = '{0.__class__.__name__}({1}'.format(self, repr(self.direction))
-    do_key = self.center == None
-    if self.center != None: result += ', {0}'.format(repr(self.center))
+    do_key = self.center is None
+    if self.center is not None: result += ', {0}'.format(repr(self.center))
     if self.order != 2:
       result += ', {1}{0}'.format(repr(self.relax), 'relax=' if do_key else '') 
     else: do_key = True
@@ -262,11 +262,11 @@ def reciprocal( escan, structure, outdir = None, comm = None, direction=(0,0,1),
 
   # takes care of default parameters.
 # if not isinstance(escan, KEscan): escan = KEscan(escan=escan)
-  if center == None: center = kwargs.pop("kpoint", escan.kpoint)
+  if center is None: center = kwargs.pop("kpoint", escan.kpoint)
   center = array(center, dtype="float64")
   relax = kwargs.pop("do_relax_kpoint", escan.do_relax_kpoint)
-  if outdir == None: outdir = "reciprocal"
-  if lstsq == None: lstsq = np_lstsq
+  if outdir is None: outdir = "reciprocal"
+  if lstsq is None: lstsq = np_lstsq
   direction = array(direction, dtype="float64")
 
   # creates kpoints object.

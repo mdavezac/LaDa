@@ -98,7 +98,7 @@ including the \".\" (dot) and hit TAB.
       except: raise
       finally:
         from os import remove
-        if filename != None:
+        if filename is not None:
          try: remove(filename)
          except: pass
   elif args.mongofilter: 

@@ -10,11 +10,11 @@ def goto(self, arg):
   current, path = _get_current_job_params(self, 1)
   ip.user_ns.pop("_lada_error", None)
     
-  if current == None: 
+  if current is None: 
     print "No current jobs."
     return
   if len(arg.split()) == 0:
-    if path == None:
+    if path is None:
       print "Current position in job dictionary:", current.name
     else:
       print "Current position in job dictionary:", current.name
@@ -36,7 +36,7 @@ def goto(self, arg):
   elif args[0] == "previous": return iterate(self, "previous")
   elif args[0] == "reset":    return iterate(self, "reset")
   elif args[0] == "pbs":
-   if path == None: 
+   if path is None: 
      ip.user_ns["_lada_error"] = "Cannot go to pbs dir: default dictionary path not set."\
                                  "\nPlease user \"savejobs\"."
      print ip.user_ns["_lada_error"]
@@ -72,7 +72,7 @@ def goto(self, arg):
   if not good:
     print '**** Current job and subjobs are all off; '\
           'jobparams (except onoff) and collect will not work.'
-  if path == None: return
+  if path is None: return
   dir = join(splitpath(path)[0], current.name[1:]) 
   if exists(dir): chdir(dir)
   return
@@ -83,7 +83,7 @@ def iterate(self, event):
   from . import _get_current_job_params
   ip = self.api
   current, path = _get_current_job_params(self, 1)
-  if current == None: return
+  if current is None: return
 
   args = event.split()
   if len(args) > 1: 
@@ -126,11 +126,11 @@ def goto_completer(self, event):
   from . import _get_current_job_params
   ip = self.api
   current, path = _get_current_job_params(self, 0)
-  if current == None: raise IPython.ipapi.TryNext
+  if current is None: raise IPython.ipapi.TryNext
   if len(event.line.split()) > 2: raise IPython.ipapi.TryNext
 
   has_pbs = False
-  if path != None:
+  if path is not None:
     if exists(path + ".pbs") and isdir(path + ".pbs"):
       has_pbs = True
 
@@ -147,7 +147,7 @@ def goto_completer(self, event):
     result = [a + "/" for a in current.children.keys()]
     result.extend(["/", "next", "reset"])
     if has_pbs: result.append("pbs")
-    if current.parent != None: result.append("../")
+    if current.parent is not None: result.append("../")
     if "_lada_subjob_iterated" in ip.user_ns:
       if len(ip.user_ns["_lada_subjob_iterated"]): result.append("previous")
     return result

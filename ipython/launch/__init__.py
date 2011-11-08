@@ -38,6 +38,8 @@ def launch(self, event):
   opalls.add_argument( 'pickle', metavar='FILE', type=str, nargs='*', default="", 
                        help='Optional path to a jobdictionary. If not present, the '\
                             'currently loaded job-dictionary will be launched.')
+  opalls.add_argument( '--external', action="store_true", dest="external", \
+                       help="Launches jobs as external program, not library." )
 
 
   # subparsers
@@ -63,12 +65,12 @@ def launch(self, event):
       jobdicts.append((d, p))
   else: # current job dictionary.
     current, path = _get_current_job_params(self, 2)
-    if current == None: return
-    if path == None: return
+    if current is None: return
+    if path is None: return
     jobdicts = [(current, path)]
   
   # calls specialized function.
-  args.func(self,args, jobdicts)
+  args.func(self, args, jobdicts)
 
 
 

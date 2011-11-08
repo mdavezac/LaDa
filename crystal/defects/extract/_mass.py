@@ -34,11 +34,11 @@ class _MaterialNavigator(AbstractMassExtract):
   @property 
   def epsilon(self): 
     """ Dimensionless dielectric constant. """
-    if self._epsilon != None: return self._epsilon
+    if self._epsilon is not None: return self._epsilon
     if '/dielectric' in self.massextract and len(self.massextract['dielectric']) == 1:
       from numpy import trace
       epsilon = self.massextract.copy(naked_end=True)['dielectric'].dielectric_constant
-      if epsilon == None: return 1
+      if epsilon is None: return 1
       if len(epsilon) != 3: return 1
       self.epsilon = trace(epsilon)/3e0
       return self._epsilon

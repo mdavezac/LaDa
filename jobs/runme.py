@@ -32,7 +32,7 @@ def main():
   (options, args) = parser.parse_args()
 
   # is workdir relative
-  if options.relative != None: 
+  if options.relative is not None: 
     # get path relative to home.
     if options.relative not in environ:
       print "Error: could not find environment variable", options.relative, "."
@@ -40,7 +40,7 @@ def main():
       options.relative = None
 
   # additional path to look into.
-  if options.ppath != None: python_path.append(options.ppath)
+  if options.ppath is not None: python_path.append(options.ppath)
 
   if len(args) == 0:
     print "No pickle specified on input. Eg, need a filename on input."
@@ -51,7 +51,7 @@ def main():
 
   # loop over all jobs
   for outdir, job in jobs.bleed(args[0], comm=local_comm):
-    if options.relative == None: 
+    if options.relative is None: 
       out = job.compute(comm=local_comm, outdir=outdir, inplace=True)
     else:
       # Computes relative path... made complicated by cray's compute vs head node setup.

@@ -23,7 +23,7 @@ class VA(object):
     import os
     import tempfile
 
-    if dir != None: self.dir = dir
+    if dir is not None: self.dir = dir
     if order != self.order: self.order = order
 
     self.vff.structure = structure
@@ -36,7 +36,7 @@ class VA(object):
         self._size += 1
         self._which.append(i)
 
-    if self.dir == None:
+    if self.dir is None:
       tempfile.tempdir = self.directory
       self.dir = tempfile.mkdtemp()
 
@@ -73,7 +73,7 @@ class VA(object):
     import numpy as np
     from os.path import join as make_path
 
-    assert self._size != None
+    assert self._size is not None
 
     run_vff = self._setx(x)
 

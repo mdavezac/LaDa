@@ -26,7 +26,7 @@ class AbstractExtractBase(object):
     from os import getcwd
     from . import RelativeDirectory
 
-    if directory == None: directory = getcwd()
+    if directory is None: directory = getcwd()
     self._directory = RelativeDirectory(directory, hook=self.__directory_hook__)
     """ Directory where output should be found. """
     self.comm = comm
@@ -77,7 +77,7 @@ class AbstractExtractBase(object):
   def __copy__(self):
     """ Returns a shallow copy of this object. """
     from . import RelativeDirectory
-    result = self.__class__()
+    result = self.__class__(directory=self.directory)
     result.__dict__ = self.__dict__.copy()
     result._directory = RelativeDirectory( self._directory.path,\
                                            self._directory._envvar, 
@@ -148,7 +148,7 @@ def _search_factory(name, filename, module):
       else:
         for line in file: 
           found = regex.search(line)
-          if found != None: yield found
+          if found is not None: yield found
   _search_OUTCAR.__name__ = '_search_{0}'.format(filename.upper())
 
   def _find_first_OUTCAR(self, regex, flags=0):
@@ -169,7 +169,7 @@ def _search_factory(name, filename, module):
     else:
       for line in lines[::-1]:
         found = regex.search(line)
-        if found != None: yield found
+        if found is not None: yield found
   _rsearch_OUTCAR.__name__ = '_rsearch_{0}'.format(filename.upper())
 
   def _find_last_OUTCAR(self, regex, flags=0):

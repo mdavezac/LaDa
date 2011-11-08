@@ -9,7 +9,7 @@ class Extract(KExtract):
   def __init__(self, directory=None, comm=None, bandgap=None, **kwargs):
     """ Initializes the extraction object. """
     super(Extract, self).__init__(directory, comm, **kwargs)
-    if bandgap != None: self._extract_bg = bandgap
+    if bandgap is not None: self._extract_bg = bandgap
   
   @property
   def type(self): 
@@ -81,7 +81,7 @@ class Extract(KExtract):
     from numpy.linalg import lstsq as np_lstsq
     from quantities import hartree
     lstsq = self.functional.lstsq
-    if lstsq == None: lstsq = np_lstsq
+    if lstsq is None: lstsq = np_lstsq
 
     # constructs matrix of eigenvalues with cbm or vbm only.
     eigs = []
@@ -251,14 +251,14 @@ class Functional(KEscan):
     if '_computing' in self.__dict__:
       return super(Functional, self).__call__(structure, outdir, comm, **kwargs)
 
-    if comm == None: comm = Communicator(comm, with_world=True)
+    if comm is None: comm = Communicator(comm, with_world=True)
 
     # copy functional with current type. noadd keyword makes sure that only
     # known attributes are added.
     this = self.copy(noadd=True, **kwargs)
 
     # symlinks files from bandgap calculations.
-    if bandgap != None: this._link_bg_files(bandgap, outdir, comm)
+    if bandgap is not None: this._link_bg_files(bandgap, outdir, comm)
 
     # computes bandgap.
     bandgap_func = Bandgap(escan=this)
@@ -283,7 +283,7 @@ class Functional(KEscan):
     from os.path import join, exists, relpath, dirname, basename
     from ..opt import Changedir
 
-    if bandgap == None: return
+    if bandgap is None: return
     assert bandgap.success,\
            RuntimeError( "Input bandgap calculations at {0} were not successfull."\
                          .format(bandgap.directory) )

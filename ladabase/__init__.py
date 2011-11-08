@@ -6,22 +6,24 @@ from .massextract import MassExtract
 
 class Manager(object): 
   """ Holds data regarding database management. """
-  def __init__(self, host=None, port=None, database=None, prefix=None): 
+  def __init__(self, host=None, port=None, database=None, username=None, prefix=None): 
     """ Initializes a connection and database. """
     from pymongo import Connection
     from gridfs import GridFS
-    from .. import pymongo_host, pymongo_port, vasp_database_name,  OUTCARS_prefix
+    from .. import pymongo_host, pymongo_port, vasp_database_name,  OUTCARS_prefix, pymongo_username
     super(Manager, self).__init__()
 
-    self._host = host if host != None else pymongo_host
+    self._host = host if host is not None else pymongo_host
     """ Host where the database is hosted. """
-    self._port = port if port != None else pymongo_port
+    self._port = port if port is not None else pymongo_port
     """ Port of the host where the database is hosted. """
-    self._vaspbase_name = database if database != None else vasp_database_name
+    self._vaspbase_name = database if database is not None else vasp_database_name
     """ Name of the vasp database. """
-    self._outcars_prefix = prefix if prefix != None else OUTCARS_prefix
+    self._outcars_prefix = prefix if prefix is not None else OUTCARS_prefix
+    """ Username for database. """
+    self._username = username if username is not None else pymongo_username
     """ Name of the OUTCAR database. """
-    self.connection = Connection(self._host, self._port)
+    self.connection = Connection(host=self._host, port=self._port)
     """ Holds connection to pymongo. """
     self.database = getattr(self.connection, self._vaspbase_name)
     """ Database within pymongo. """
@@ -81,7 +83,7 @@ class Manager(object):
     if compression == "bz2": 
       from bz2 import compress
       return self.outcars.put(compress(outcar), sha512=hash, **kwargs)
-    elif compression == None: return self.outcars.put(outcar, sha512=hash, **kwargs)
+    elif compression is None: return self.outcars.put(outcar, sha512=hash, **kwargs)
     else: raise ValueError("Invalid compression format {0}.".format(compression))
 
   def find_fromfile(self, path):

@@ -29,7 +29,7 @@ def linear_profile(extract, direction=(0,0,1), nbpoints=20, sigma=None, indices=
   direction = array(direction, dtype="float64")
   assert norm(direction) > 1e-12, ValueError("Direction cannot be null.")
   assert hasattr(extract, "gwfns"), ValueError("extract does not seem to be an escan extraction object.")
-  if indices == None: indices = range(extract.gwfns)
+  if indices is None: indices = range(extract.gwfns)
   assert nbpoints > 1, ValueError("The number of points should be strictly larger than 1.")
 
   # first computes intersection of direction and cell.  At the end, we should
@@ -44,7 +44,7 @@ def linear_profile(extract, direction=(0,0,1), nbpoints=20, sigma=None, indices=
   x =  sum(zpoints*udir, axis=1).rescale(angstrom) 
 
   # computes sigma in g-space.
-  if sigma == None: sigma = 0.75 * norm(zpoints[1] - zpoints[0]) * zpoints.units
+  if sigma is None: sigma = 0.75 * norm(zpoints[1] - zpoints[0]) * zpoints.units
   if not hasattr(sigma, "units"): sigma *= angstrom.rescale(a0)
   gsigma = 1e0/sigma
 
@@ -104,7 +104,7 @@ def linear_rprofile(extract, direction=(0,0,1), nbpoints=20, sigma=0.2, indices=
   direction = array(direction, dtype="float64")
   assert norm(direction) > 1e-12, ValueError("Direction cannot be null.")
   assert hasattr(extract, "gwfns"), ValueError("extract does not seem to be an escan extraction object.")
-  if indices == None: indices = range(extract.gwfns)
+  if indices is None: indices = range(extract.gwfns)
   assert nbpoints > 1, ValueError("The number of points should be strictly larger than 1.")
 
   # first computes intersection of direction and cell.  At the end, we should
@@ -118,7 +118,7 @@ def linear_rprofile(extract, direction=(0,0,1), nbpoints=20, sigma=0.2, indices=
   zpoints = arange(nbpoints+1, dtype="float64").reshape(nbpoints+1, 1) / float(nbpoints)
   zpoints = multiply(zpoints, direction) 
   x =  sum(zpoints*udir, axis=1).rescale(angstrom) 
-  if sigma == None: sigma = 0.75 * norm(zpoints[1] - zpoints[0]) * zpoints.units
+  if sigma is None: sigma = 0.75 * norm(zpoints[1] - zpoints[0]) * zpoints.units
   if not hasattr(sigma, "units"): sigma *= angstrom.rescale(a0)
 
   zpoints = sum(zpoints*udir, axis=1) 

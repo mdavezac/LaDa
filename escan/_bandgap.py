@@ -15,19 +15,21 @@ def extract(outdir=".", comm = None):
   """
   from os.path import exists, join
   from ..mpi import Communicator
+  from ..opt import RelativeDirectory
 
   comm = Communicator(comm)
+  outdir = RelativeDirectory(outdir).path
 
   paths = join(outdir, "AE"), join(outdir, "VBM"), join(outdir, "CBM")
   exists_paths = comm.broadcast([exists(p) for p in paths] if comm.is_root else None)
   if exists_paths[0]: 
     result = ExtractAE( _ExtractE(paths[0], comm = comm) )
-    if result.success: return result
+    return result
   elif exists_paths[1] and exists_paths[2]:
     result = ExtractRefs( _ExtractE(paths[1], comm = comm),\
                           _ExtractE(paths[2], comm = comm),
                           _ExtractE(outdir, comm = comm) )
-    if result.success: return result
+    return result
   class NoBandGap(object): 
     @property
     def success(self): return False
@@ -61,7 +63,7 @@ def bandgap(escan, structure, outdir=None, references=None, n=5, overwrite = Fal
 
   escan = deepcopy(escan)
          
-  if outdir == None: outdir = getcwd()
+  if outdir is None: outdir = getcwd()
   outdir    = abspath(outdir)
   overlap_factor = kwargs.pop("overlap_factor", 10e0)
 
@@ -73,7 +75,7 @@ def bandgap(escan, structure, outdir=None, references=None, n=5, overwrite = Fal
   
   kwargs["overwrite"] = overwrite
   kwargs["comm"] = comm
-  return _band_gap_ae_impl(escan, structure, outdir, **kwargs) if references == None\
+  return _band_gap_ae_impl(escan, structure, outdir, **kwargs) if references is None\
          else _band_gap_refs_impl(escan, structure, outdir, references, n, \
                                   overlap_factor=overlap_factor, **kwargs) 
 
@@ -129,7 +131,7 @@ class ExtractAE(object):
       if abs(eigB - self.vbm) > degeneracy: continue
       nstates += 1
       dme = dot(dipole, dipole.conjugate()).real * dipole.units * dipole.units
-      if result == None: result = dme / (eigA - eigB) 
+      if result is None: result = dme / (eigA - eigB) 
       else: result += dme / (eigA - eigB) 
     return (units * result).simplified, nstates
 
@@ -208,11 +210,11 @@ def _band_gap_ae_impl(escan, structure, outdir, **kwargs):
   from os.path import join
   
   if "eref" in kwargs:
-    assert kwargs["eref"] == None, ValueError("Unexpected eref argument when computing bandgap.")
+    assert kwargs["eref"] is None, ValueError("Unexpected eref argument when computing bandgap.")
     del kwargs["eref"]
   outdir = join(outdir, "AE")
   nbstates = kwargs.pop("nbstates", escan.nbstates)
-  if nbstates == None: nbstates = 4
+  if nbstates is None: nbstates = 4
   if nbstates == 0: nbstates = 4
   if hasattr(nbstates, '__getitem__'):
     assert len(nbstates) > 1, ValueError("Not sure what nbstates is.")
@@ -298,7 +300,7 @@ class ExtractRefs(object):
       if abs(eigB - self.vbm) > degeneracy: continue
       nstates += 1
       dme = dot(dipole, dipole.conjugate()).real * dipole.units * dipole.units
-      if result == None: result = dme / (eigA - eigB) 
+      if result is None: result = dme / (eigA - eigB) 
       else: result += dme / (eigA - eigB) 
     return (units * result).simplified, nstates
   
@@ -391,7 +393,7 @@ def _band_gap_refs_impl( escan, structure, outdir, references, n=5,\
   nbstates = kwargs.pop("nbstates", escan.nbstates)
   if nbstates < 2: nbstates = 2
   if "eref" in kwargs:
-    assert kwargs["eref"] == None, ValueError("Unexpected eref argument when computing bandgap.")
+    assert kwargs["eref"] is None, ValueError("Unexpected eref argument when computing bandgap.")
     del kwargs["eref"]
   vffrun = kwargs.pop("vffrun", escan.vffrun)
   genpotrun = kwargs.pop("genpotrun", escan.genpotrun)
@@ -401,11 +403,11 @@ def _band_gap_refs_impl( escan, structure, outdir, references, n=5,\
   if vbm_ref > cbm_ref: cbm_ref, vbm_ref = references
 
   # first computes vff and genpot unless given.
-  if genpotrun == None or vffrun == None: 
+  if genpotrun is None or vffrun is None: 
     vffout = escan( structure, outdir=outdir, do_escan=False, genpotrun=genpotrun,\
                     vffrun=vffrun, **kwargs )
-    if genpotrun == None: genpotrun = vffout
-    if vffrun == None: vffrun = vffout
+    if genpotrun is None: genpotrun = vffout
+    if vffrun is None: vffrun = vffout
   else: vffout = vffrun
 
   iter, continue_loop = 0, True
@@ -514,7 +516,7 @@ class Functional(Escan):
     super(Functional, self).__init__(**kwargs)
 
     # copies parent functional.
-    if escan_copy != None:
+    if escan_copy is not None:
       from copy import deepcopy
       self.__dict__.update(deepcopy(escan_copy.__dict__))
 

@@ -17,6 +17,24 @@ def null_all_reduce(comm, value, op): return value
 def null_all_to_all(comm, value=None): return [value]
 def null_barrier(comm): pass
 
+def external(comm, program, out=None, err=None, nprocs=None, ppernode=None, append=False):
+  """ Launches an external program. """  
+  from subprocess import Popen
+  from shlex import split as split_cmd
+  from . import mpirun_exe, cpus_per_node
+
+  if nprocs is None: nprocs = comm.size
+  if ppernode is None: ppernode = cpus_per_node
+  cmd = mpirun_exe.format(nprocs=nprocs, ppernode=ppernode, program=program)
+
+  file_out = open(out, "a" if append else "w") if out is not None else None 
+  file_err = open(err, "a" if append else "w") if err is not None else None 
+  try:
+    vasp_proc = Popen(split_cmd(cmd), stdout=file_out, stderr=file_err)
+    vasp_proc.wait()
+  finally:
+    file_out.close()
+    file_err.close()
 
 if not lada_with_mpi:
   broadcast = null_broadcast
@@ -49,6 +67,8 @@ else:
   def is_mpi(self):
     """ True if more than one proc. """
     return self.size > 1
+
+
   BoostComm.all_gather = all_gather
   BoostComm.all_reduce = all_reduce
   BoostComm.all_to_all = all_to_all
@@ -58,6 +78,7 @@ else:
   BoostComm.real = property(real)
   BoostComm.is_root = property(is_root)
   BoostComm.is_mpi = property(is_mpi)
+  BoostComm.external = external
 
 class NullComm(object):
   """ Fake communicator for non-mpi stuff. """
@@ -67,12 +88,13 @@ class NullComm(object):
   def is_root(self): return True
   @property
   def rank(self): return 0
-  @property
-  def size(self): return 1
   @property 
   def real(self): return False
   
-  def __init__(self): object.__init__(self)
+  def __init__(self, size=1):
+    object.__init__(self)
+    self.size = size
+    """ Number of processes to launch in external mode. """
   broadcast  = null_broadcast
   gather     = null_gather
   reduce     = null_reduce
@@ -81,13 +103,14 @@ class NullComm(object):
   all_reduce = null_all_reduce
   all_to_all = null_all_to_all
   def barrier(self): pass
-  def __eq__(self, value): return value == None or isinstance(value, NullComm)
+  def __eq__(self, value): return value is None or isinstance(value, NullComm)
   def __ne__(self, value): return not self.__eq__(value)
   def __setstate__(self, value): self.__dict__.update(value)
   def __getstate__(self): return self.__dict__.copy()
+  external = external
 
 
-if not lada_with_mpi: world, Communicator = NullComm(), NullComm
+if not lada_with_mpi: world, BoostComm = NullComm(), NullComm
 
 def Communicator(comm = None, with_world=False): 
   """ Communication object.
@@ -95,7 +118,8 @@ def Communicator(comm = None, with_world=False):
 
       In most case, this will wrap either none or a boost.mpi communicator.
   """
-  if comm == None: return world if with_world else NullComm() 
-  if isinstance(comm, BoostComm): return comm
-  if isinstance(comm, NullComm): return comm
-  raise ValueError("Unknown communicator type {0}, {1}.".format(type(comm), comm))
+  if comm is None:
+    return world if with_world else NullComm() 
+  if not (isinstance(comm, BoostComm) or isinstance(comm, NullComm)):
+    raise ValueError("Unknown communicator type {0}, {1}.".format(type(comm), comm))
+  return comm

@@ -74,16 +74,16 @@ def _add_atom(which, container):
     assert pos.size == 3, RuntimeError("First argument is not a sequence of 3." % (args))
     type = None
     if len(args) > 1: type = args[1]
-    if type == None:
+    if type is None:
       result = which()
       result.pos = pos
     else: result = which(pos, type)
 
     # now everything should be well behaved.
     if len(args) > 2: 
-      if args[2] != None: result.site = args[2]
+      if args[2] is not None: result.site = args[2]
     if len(args) > 3:
-      if args[2] != None: result.freeze = args[3]
+      if args[2] is not None: result.freeze = args[3]
     getattr(self, container).append(result)
 
   _fun.__doc__ = _add_atom.__doc__
@@ -111,7 +111,7 @@ def _add_atoms(which):
   """
   def _func(self, args):
     for arg in args:
-      if arg != None:   setattr(self, which, arg)
+      if arg is not None:   setattr(self, which, arg)
   _func.__doc__ = _add_atoms.__doc__
   return _func
 Structure.add_atoms = add_setter( _add_atoms("add_atom") )
@@ -159,8 +159,8 @@ def _set_types(self, args):
   """
   assert len(args) <= len(self.sites), RuntimeError("More tuples of types than sites: %s" % (args))
   for types, site in zip(args, self.sites):
-    if types == None: continue
-    types = [u for u in types if u != None]
+    if types is None: continue
+    types = [u for u in types if u is not None]
     if len(types) == 0: continue
     site.type.clear()
     for type in types: site.type.append(type)
@@ -326,22 +326,77 @@ def _copy(self):
 Lattice.copy   = _copy
 Structure.copy = _copy
 
-def _copy(self): 
+def _deepcopy(self): 
   """ Returns an exact clone. """
   from copy import deepcopy
   return deepcopy(self)
-Lattice.deepcopy   = _copy
-Structure.deepcopy = _copy
+Lattice.deepcopy   = _deepcopy
+Structure.deepcopy = _deepcopy
 
-def structure_to_lattice(structure, primitive=True, spacegroup=True):
+def atom_to_dict(atom):
+  """ Transforms atom to dictionary. """
+  return { "pos": atom.pos.tolist(),
+           "site": atom.site,
+           "freeze": atom.freeze,
+           "type": atom.type }
+
+def dict_to_atom(dictionary):
+  """ Transforms dictionary to atom. """
+  from numpy import array
+  if not set(["pos", "site", "freeze", "type"]).issubset(dictionary.iterkeys()):
+    raise ValueError("Dictionary cannot  be translated to structure.")
+  result = Atom()
+  result.pos = array(dictionary["pos"], dtype="float64")
+  result.site = dictionary["site"]
+  result.type = dictionary["type"]
+  result.freeze = dictionary["freeze"]
+  return result
+
+def structure_to_dict(structure):
+  """ Transforms structure to dictionary. """
+  result = { "cell": structure.cell.tolist(),
+             "scale": structure.scale,
+             "weight": structure.weight,
+             "energy": structure.energy,
+             "name": structure.name,
+             "size": len(structure.atoms) }
+  for key, value in structure.__dict__.iteritems():
+    if key in result:
+      raise RuntimeError("Structure contains attribute and property with same name {0}.".format(key))
+    if hasattr(value, "tolist"): result[key] = value.tolist()
+    else: result[key] = value
+  for i, atom in enumerate(structure.atoms):
+    result[str(i)] = atom_to_dict(atom)
+  return result
+
+def dict_to_structure(dictionary):
+  """ Transforms dictionary to structure. """
+  from numpy import array
+  result = Structure()
+  dictionary = dictionary.copy()
+  if not set(["cell", "scale", "weight", "energy", "name", "size"]).issubset(dictionary.iterkeys()):
+    raise ValueError("Dictionary cannot  be translated to structure.")
+  if not set(xrange(dictionary["size"])).issubset(dictionary.iterkeys()): 
+    raise ValueError("Dictionary cannot  be translated to structure.")
+
+  result.cell = array(dictionary.pop("cell"), dtype="float64")
+  result.scale = dictionary.pop("scale")
+  result.weight = dictionary.pop("weight")
+  result.energy = dictionary.pop("energy")
+  result.name = dictionary.pop("name")
+  for i in xrange(dictionary.pop("size")):
+    result.atoms.append(dict_to_atom(dictionary.pop(str(i))))
+  for key, value in dictionary.iteritems(): result[key] = value 
+  return result
+
+
+def structure_to_lattice(structure, primitive=True):
   """ Converts a structure object to a lattice object.
   
       :Parameters:
         primitive : boolean
           If True, then will try and create a primitive lattice from the
           structure. If False, keeps the structure as it is.
-        spacegroup: boolean
-          If True, attempts to compute space-group symmetry operations.
   """
   result = Lattice()
   result.cell = structure.cell.copy()
@@ -351,8 +406,9 @@ def structure_to_lattice(structure, primitive=True, spacegroup=True):
     result.add_site = atom.pos, atom.type
     result.sites[-1].freeze = atom.freeze
 
-  if primitive: result.make_primitive()
-  if spacegroup: result.find_space_group()
+  if primitive:
+    result.make_primitive()
+    result.find_space_group()
   # adds  additional components to lattice.
   result.__dict__.update(structure.__dict__) 
   return result
@@ -378,9 +434,9 @@ def lattice_to_structure(lattice, cell=None, subs=None):
   from copy import deepcopy
   from numpy import array
   from . import fill_structure
-  if cell  == None: cell = lattice.cell
+  if cell  is None: cell = lattice.cell
   else: cell = array(cell, dtype='float64').reshape((3,3))
-  if subs == None: subs = {}
+  if subs is None: subs = {}
 
   result = fill_structure(cell, lattice)
   for key, value in subs.items():
@@ -404,7 +460,7 @@ def vasp_ordered(structure, attributes=None):
           Defaults to ``["magmom"]``.
   """
   from copy import deepcopy
-  if attributes == None: attributes = ["magmom"]
+  if attributes is None: attributes = ["magmom"]
   elif "magmom" not in attributes and hasattr(attributes, "append"):
     attributes.append("magmom")
 
@@ -440,7 +496,7 @@ def fill_structure(cell, lattice = None):
   from _crystal import _fill_structure_impl
   old_lattice = None
   try:
-    if lattice == None:
+    if lattice is None:
       try: Structure().lattice
       except RuntimeError:
         raise RuntimeError("No lattice given on input of fill_structure" +
@@ -457,7 +513,7 @@ def fill_structure(cell, lattice = None):
   except: raise
   finally: 
     # Now resets old lattice.
-    if old_lattice != None: old_lattice.set_as_crystal_lattice()
+    if old_lattice is not None: old_lattice.set_as_crystal_lattice()
   
   return result
 
@@ -490,7 +546,7 @@ def gaussian_projector(positions, cell, center=(0,0,0), alpha=1e0):
   if hasattr(positions, "units"): length_units = positions.units
   elif hasattr(center, "units"):  length_units = center.units
   elif hasattr(cell, "units"):    length_units = cell.units
-  if length_units != None:
+  if length_units is not None:
     if hasattr(cell, "units"):
       try: cell = cell.rescale(length_units)
       except: raise ValueError("Cell and positions have incompatible units.")
@@ -514,7 +570,7 @@ def lattice_context(lattice):
   except: oldlattice = None
   lattice.set_as_crystal_lattice()
   yield oldlattice
-  if oldlattice != None: oldlattice.set_as_crystal_lattice()
+  if oldlattice is not None: oldlattice.set_as_crystal_lattice()
   else: _nullify_global_lattice()
 
 def layer_iterator(structure, direction, tolerance=1e-12):
@@ -602,11 +658,11 @@ def equivalence_iterator(structure, operations = None, tolerance=1e-6):
   if hasattr(structure, 'to_lattice'):
     atoms = [u for u in enumerate(structure.atoms)]
     is_structure = True
-    if operations == None: operations = structure.to_lattice().space_group
+    if operations is None: operations = structure.to_lattice().space_group
   else:
     atoms = [u for u in enumerate(structure.sites)]
     is_structure = False
-    if operations == None: operations = structure.space_group
+    if operations is None: operations = structure.space_group
    
   while len(atoms):
     i, atom = atoms.pop()

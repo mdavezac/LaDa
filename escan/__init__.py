@@ -6,9 +6,10 @@ __all__ = [ "Extract", 'MassExtract', "bandgap", "extract_bg", 'ldos',
             'KGrid', 'ReducedKGrid', 'ReducedKDensity', 'soH', 'nonlocalH', 'localH', 
             'folded_spectrum', 'all_electron', 'read_input', 'exec_input', 'KExtract',  
             'majority_representation', 'BPoints', 'ReducedBPoints', 'plot_bands', 'plot_alloybands',
-            'fftmesh', 'EMassFunctional', 'EMassExtract' ]
+            'fftmesh', 'EMassFunctional', 'EMassExtract', 'InnerBPoints', 'ReducedInnerBPoints' ]
 
-from _bandstructure import plot_bands, BPoints, ReducedBPoints, plot_alloybands
+from _bandstructure import plot_bands, BPoints, ReducedBPoints,\
+                           plot_alloybands, InnerBPoints, ReducedInnerBPoints
 from _bandgap import bandgap, extract as extract_bg, Functional as BandGap
 from emass import Functional as EMassFunctional, Extract as EMassExtract
 from _extract import Extract
@@ -30,7 +31,7 @@ def exec_input(script, namespace = None):
   dictionary = {}
   for key in vff.__all__: dictionary[key] = getattr(vff, key)
   for key in __all__: dictionary[key] = globals()[key]
-  if namespace != None: dictionary.update(namespace)
+  if namespace is not None: dictionary.update(namespace)
   return opt_exec_input(script, dictionary)
 
 def read_input(filepath = "input.py", namespace = None):
@@ -41,5 +42,5 @@ def read_input(filepath = "input.py", namespace = None):
   dictionary = {}
   for key in vff.__all__: dictionary[key] = getattr(vff, key)
   for key in __all__: dictionary[key] = globals()[key]
-  if namespace != None: dictionary.update(namespace)
+  if namespace is not None: dictionary.update(namespace)
   return opt_read_input(filepath, dictionary)
