@@ -346,7 +346,7 @@ def charged_states(species, A, B):
     yield -charge, oxdir
 
 
-def band_filling(defect, host, **kwargs):
+def band_filling(defect, host, vbm=None, cbm=None, potal=None, **kwargs):
   """ Returns band-filling corrrection. 
 
       :Parameters: 
@@ -357,6 +357,9 @@ def band_filling(defect, host, **kwargs):
         host 
           An output extraction object as returned by the vasp functional when
           computing the host matrix.
+        vbm, cbm, potal
+          float or None, in eV
+          Default None.
         kwargs 
           Parameters are passed on to potential alignment calculations.
          
@@ -369,9 +372,10 @@ def band_filling(defect, host, **kwargs):
   from numpy import sum, multiply, newaxis
   from quantities import eV
 
-  potal = potential_alignment(defect, host, **kwargs)
+  potal = potential_alignment(defect, host, **kwargs) if potal == None else potal*eV
 
-  cbm = host.cbm + potal
+  cbm = (host.cbm if cbm == None else cbm*eV) + potal
+
   if defect.eigenvalues.ndim == 3:
     dummy = multiply(defect.eigenvalues-cbm, defect.multiplicity[newaxis,:,newaxis])
     dummy = multiply(dummy, defect.occupations)
@@ -380,7 +384,8 @@ def band_filling(defect, host, **kwargs):
     dummy = multiply(dummy, defect.occupations)
   result = -sum(dummy[defect.eigenvalues > cbm])
 
-  vbm = host.vbm + potal
+  vbm = (host.vbm if vbm == None else vbm*eV) + potal
+
   if defect.eigenvalues.ndim == 3:
     dummy = multiply(vbm-defect.eigenvalues, defect.multiplicity[newaxis,:,newaxis])
     dummy = multiply(dummy, 1e0-defect.occupations)
@@ -420,10 +425,13 @@ def explore_defect(defect, host, **kwargs):
   """
   from copy import deepcopy
   from lada.crystal.defects import reindex_sites
+  from lada.crystal import structure_to_lattice
   
   dstr = defect.structure.copy()
   hstr = host.structure
-  reindex_sites(dstr, hstr.to_lattice(), **kwargs)
+  # modified by Haowei: using the p1 structure for reindexing and potential_alignment 
+  hlat_p1 = structure_to_lattice(hstr, primitive=False, spacegroup=False)
+  reindex_sites(dstr, hlat_p1, **kwargs)
 
   result = {'interstitial': [], 'substitution': [], 'vacancy': []}
   # looks for intersitials and substitutionals.
@@ -432,15 +440,16 @@ def explore_defect(defect, host, **kwargs):
       result['interstitial'].append(i)
     elif atom.type != hstr.atoms[atom.site].type: 
       result['substitution'].append(i)
+
   # looks for vacancies.
-  filled = hstr.to_lattice().to_structure(dstr.cell)
-  reindex_sites(filled, dstr.to_lattice(), **kwargs)
+  filled = hlat_p1.to_structure(dstr.cell)
+  reindex_sites(filled, dstr, **kwargs)
   for atom in filled.atoms:
     if atom.site != -1: continue
     result['vacancy'].append(deepcopy(atom))
   return result
 
-def potential_alignment(defect, host, maxdiff=0.5, first_shell=True, tolerance=0.25):
+def potential_alignment(defect, host, maxdiff=None, first_shell=False, tolerance=0.25):
   """ Returns potential alignment correction. 
 
       :Parameters:
@@ -451,18 +460,20 @@ def potential_alignment(defect, host, maxdiff=0.5, first_shell=True, tolerance=0
         host 
           An output extraction object as returned by the vasp functional when
           computing the host matrix.
-        maxdiff : float or None
+        maxdiff : float or None, in eV(?)
           Maximum difference between the electrostatic potential of an atom and
           the equivalent host electrostatic potential beyond which that atom is
           considered pertubed by the defect.
           If None or negative, then differences in electrostatice potentials
           are not considered.
-        first_shell : bool
+          Default 0.5.
+        first_shell : bool 
           If true then removes from potential alignment the first neighbor of
           defect atoms.
+          Default False.
         tolerance
           Passed on to `reindex_sites`.
-
+          Default 0.25.  
       :return: The potential alignment in eV (without charge factor).
 
       Returns average difference of the electrostatic potential of the
@@ -474,13 +485,20 @@ def potential_alignment(defect, host, maxdiff=0.5, first_shell=True, tolerance=0
 
   """
   from itertools import chain
-  from numpy import abs, array, mean
+  from numpy import abs, array, mean, any
   from quantities import eV
   from . import reindex_sites, first_shell as ffirst_shell
+  from lada.crystal import structure_to_lattice
 
   dstr = defect.structure
   hstr = host.structure
-  reindex_sites(dstr, hstr.to_lattice(), tolerance=tolerance)
+  # modified by Haowei: uring the p1 structure for potential alignment
+  # this is necessary for two reasons:
+  # 1, the host unit cell may be a *supercell* due to the magnetic structure  
+  # 2, in the conventional defect calculations, we run the calculation for host using the same supercell as defect calculations
+  #    but this should not be a problem if the calculations are converged very well
+  hlat_p1 = structure_to_lattice(hstr, primitive=False, spacegroup=False)
+  reindex_sites(dstr, hlat_p1, tolerance=tolerance)
   defects = explore_defect(defect, host, tolerance=tolerance)
   acceptable = [True for a in dstr.atoms]
   # make interstitials and substitutionals unaceptable.
@@ -494,20 +512,23 @@ def potential_alignment(defect, host, maxdiff=0.5, first_shell=True, tolerance=0
     for atom in defects['vacancy']:
       for n in ffirst_shell(dstr, atom.pos, tolerance=tolerance):
         acceptable[n.index] = False
-  
-  while maxdiff is not None and maxdiff < 0.:
-    average = [[] for a in hstr.atoms]
-    for epot, atom, ok in zip(defect.electropot, dstr.atoms, acceptable):
-      if not ok: continue
-      average[atom.site].append(epot.rescale(eV).magnitude)
-    average = array([mean(v) for v in average]) * eV
-  
-    diff = [ (None if not ok else (e - average[a.site]).rescale(eV)) \
-  	     for e, a, ok in zip(defect.electropot, dstr.atoms, acceptable) ]
 
-    maximum = max(enumerate(diff), key=lambda x: (0 if x[1] is None else abs(x[1])))
-    if abs(maximum[1]) < maxdiff: break
-    else: acceptable[maximum[0]] = False
+  # make a deepcopy for backup 
+  raw_acceptable = list(acceptable)
+  if maxdiff != None and maxdiff > 0.0:
+    # directly compare the atomic site between the host and defect cell/supercell
+    diff_dh = [ (0.0 * eV if not ok else abs(e - host.electropot[a.site]).rescale(eV)) \
+         for e, a, ok in zip(defect.electropot, dstr.atoms, acceptable) ]
+  
+    for ixx in range(len(acceptable)):
+      if acceptable[ixx] == False: pass
+      elif float(diff_dh[ixx].magnitude) > maxdiff: acceptable[ixx] = False
+
+  if not any(acceptable):
+    # if some one try to use maxdiff = 0.0000000001, @&#(@&#(#@^@
+    print "WARNING: maxdiff is too small! Jump to maxdiff=None"
+    # return to the default one, which accept all the atomic sites except the defect sites
+    acceptable = list(raw_acceptable) 
 
   iterable = zip(defect.electropot, dstr.atoms, acceptable)
 

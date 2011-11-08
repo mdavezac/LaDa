@@ -174,7 +174,9 @@ if @with_ladabase@:
   """ Host of the mongo database. """
   pymongo_port       = 27017
   """ Port to access the mongo database. """
-  vasp_database_name = 'vasp'
+  pymongo_username   = "mdadcast"
+  """ Username to access mongo database. """
+  vasp_database_name = 'cid'
   """ Name of the database. """
   OUTCARS_prefix     = 'OUTCARs'
   """ Name of the collection of OUTCAR files. """

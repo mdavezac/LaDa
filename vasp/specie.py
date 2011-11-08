@@ -35,7 +35,9 @@ def U(type = 1, l=2, U=0e0, J=0e0 ):
   if l < 1 or l > 3: raise ValueError, "Moment l should be 0|1|2|3|s|p|d|f." 
   return { "type": int(type), "l": l, "U": U, "J": J, "func": "U" }
 
-def nlep(type = 1, l=2, U0=0e0, U1=None ):
+
+def nlep(type = 1, l=2, U0=0e0, U1=None, fitU0=False, fitU1=False, 
+         U0_range=5, U1_range=5) :
   """ Creates `nlep`_ parameters 
 
       :Parameters:
@@ -48,6 +50,8 @@ def nlep(type = 1, l=2, U0=0e0, U1=None ):
           First nlep parameter. Defaults to 0.
         U1 : float
           Second (e)nlep parameter. Defaults to 0.
+        fitU0, fitU1 : govern whether these are free params w.r.t fitting potentials
+        U0_range, U1_range : fitting bounds
 
       `Non Local External Potentials`__ attempt to correct in part for the
       band-gap problem. It was proposed in PRB **77**, 241201(R) (2008).
@@ -71,10 +75,9 @@ def nlep(type = 1, l=2, U0=0e0, U1=None ):
   except: raise ValueError, "Moment l should be 0|1|2|3|s|p|d|f." 
   if l < 0 or l > 3: raise ValueError, "Moment l should be 0|1|2|3|s|p|d|f." 
   elif U1 is None: 
-    return { "type": int(type), "l": l, "U": U0, "func": "nlep" }
+    return { "type": int(type), "l": l, "U": U0, "func": "nlep", "fitU0":fitU0,  "fitU":fitU0, "U_range":U0_range}
   else: 
-    return { "type": int(type), "l": l, "U0": U0, "U1": U1, "func": "enlep" }
-
+    return { "type": int(type), "l": l, "U0": U0, "U1": U1, "func": "enlep", "fitU0":fitU0, "fitU1":fitU1, "U0_range":U0_range, "U1_range":U1_range}
 
 class Specie(object):
   """ Holds atomic specie information.

@@ -20,3 +20,4 @@ install(FILES ${PYVASP_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/vasp)
 
 add_subdirectory(incar)
 add_subdirectory(extract)
+add_subdirectory(nlep)
