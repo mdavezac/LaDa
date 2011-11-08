@@ -249,7 +249,8 @@ class Extract(object):
     regex = r"""\s*angular\s+momentum\s+for\s+each\s+species\s+LDAUL\s+=""" + groups \
           + r"""\s*U\s+\(eV\)\s+for\s+each\s+species\s+LDAUU\s+="""         + groups \
           + r"""\s*J\s+\(eV\)\s+for\s+each\s+species\s+LDAUJ\s+="""         + groups
-    result = {k: [] for k in species}
+    result = {} 
+    for k in species: result[k] = []
     for found in self._search_OUTCAR(regex, M):
       moment = found.group(1).split()
       LDAU   = found.group(2).split()
@@ -265,7 +266,8 @@ class Extract(object):
           + r"""\s*U\s+\(eV\)\s+for\s+each\s+species,\s+LDAU\#\s*(?:\d+)\s*:\s*U\s*=""" + groups \
           + r"""\s*J\s+\(eV\)\s+for\s+each\s+species,\s+LDAU\#\s*(?:\d+)\s*:\s*J\s*=""" + groups \
           + r"""\s*nlep\s+for\s+each\s+species,\s+LDAU\#\s*(?:\d+)\s*:\s*O\s*=""" + groups 
-    result = {k: [] for k in species}
+    result = {} 
+    for k in species: result[k] = []
     for found in self._search_OUTCAR(regex, M):
       moment = found.group(1).split()
       LDAU   = found.group(2).split()
