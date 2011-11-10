@@ -7,7 +7,7 @@ set( PYCRYSTAL_HEADERS
    #    which_site.hpp misc.hpp periodic_dnc.hpp )
 
 set( PYCRYSTAL_SOURCES
-     python.cc set.cc )# structure.cc )
+     python.cc )# structure.cc )
    #    atom.cc  enumerate.cc  lattice.cc  layerdepth.cc  neighbors.cc  python.cc
    #    read_structure.cc  smith.cc  structure.cc  symmetry_operator.cc
    #    which_site.cc misc.cc periodic_dnc.cc )
@@ -31,7 +31,13 @@ target_link_libraries(pyatom crystal ${PYTHON_LIBRARY} ${Boost_PYTHON_LIBRARY} )
 mark_as_advanced(PYTHON_ENABLE_MODULE_pyatom)
 mark_as_advanced(PYTHON_MODULE_pyatom_BUILD_SHARED)
 set_target_properties(pyatom PROPERTIES OUTPUT_NAME atom)
-install(TARGETS pyatom DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/crystal)
+install(TARGETS pyatom DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/crystal/cppwrappers)
+configure_file (
+ "${PROJECT_SOURCE_DIR}/crystal/python/wrappers_init.py"
+ "${PROJECT_BINARY_DIR}/crystal/python/__init__.py"
+)
+install( FILES ${PROJECT_BINARY_DIR}/crystal/python/__init__.py DESTINATION
+         ${CMAKE_PYINSTALL_PREFIX}/lada/crystal/cppwrappers)
 
 if(MPI_FOUND)
   include_directories(${MPI_INCLUDE_PATH})

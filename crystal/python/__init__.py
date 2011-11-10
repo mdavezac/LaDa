@@ -1,7 +1,7 @@
 from ._docstring import __doc__ 
 # __all__ = ['FreezeAtom', 'Atom', 'FreezeCell']
 
-from _crystal import FreezeAtom, AtomStr, AtomVec, AtomSet #FreezeCell, 
+# from _crystal import FreezeAtom, AtomStr, AtomVec, AtomSet #FreezeCell, 
 # modify internal atom classes below, for instance by adding python functions.
 # import _modify_atom_classes
 

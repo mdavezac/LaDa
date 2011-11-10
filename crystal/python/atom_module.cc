@@ -63,5 +63,6 @@ PyMODINIT_FUNC initatom(void)
   PyObject* module = Py_InitModule3("atom", atomstr_methods, doc);
 
   PyModule_AddObject(module, "AtomStr", (PyObject *)&atomstr_type);
-  PyModule_AddObject(module, "_Set", (PyObject *)&set_type);
+  PyModule_AddObject(module, "Set", (PyObject *)&set_type);
+  PyModule_AddObject(module, "SetIterator", (PyObject *)&setiterator_type);
 }

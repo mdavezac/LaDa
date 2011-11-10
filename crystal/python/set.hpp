@@ -30,18 +30,26 @@ extern "C"
   static PyObject* set_union(Set* _a, PyObject* _b);
   //! Reflection of union_().
   static PyObject* set_update(Set* _a, PyObject* _b);
+  //! Reflection of union_().
+  static PyObject* set_ior(Set *_a, PyObject *_tuple);
   //! Returns intersection of two sets.
   static PyObject* set_intersection(Set* _a, PyObject* _b);
   //! Reflection of difference().
   static PyObject* set_difference_update(Set* _a, PyObject* _b);
+  //! Reflection of difference().
+  static PyObject* set_isub(Set* _a, PyObject* _b);
   //! Creates a copy of _a from which anything contained in _b has been removed.
   static PyObject* set_difference(Set* _a, PyObject* _b);
   //! Equivalent to std::set_symmetric_difference.
   static PyObject* set_symmetric_difference(Set* _a, PyObject* _b);
   //! Reflection of symmetric_difference.
+  static PyObject* set_symmetric_difference_update(Set *_a, PyObject *_b);
+  //! Reflection of symmetric_difference.
   static PyObject* set_ixor(Set *_a, PyObject *_b);
   //! Reflection of intersection().
   static PyObject* set_intersection_update(Set *_a, PyObject *_b);
+  //! Reflection of intersection().
+  static PyObject* set_iand(Set *_a, PyObject *_b);
   //! Adds key to set.
   static PyObject* set_add(Set* _a, PyObject* _key);
   //! Removes key from set.
@@ -63,7 +71,7 @@ extern "C"
   //! Returns Py_False if ``_b`` == ``_a``.
   static PyObject* set_nequal(Set* _a, PyObject *_b);
   //! Function to deallocate a string atom.
-  static PyObject* set_dealloc(Set *_self);
+  static void set_dealloc(Set *_self);
   //! Returns size of set.
   static Py_ssize_t set_size(Set* _in);
 
@@ -211,37 +219,43 @@ static PyObject* from_cpp_set_(std::set<std::string> const &_set)
 
 static PyObject* set_update(Set *_a, PyObject *_tuple)
 {
+  if(PyString_Check(_tuple) == 1) 
+  {
+    _a->ptr_set->insert(PyString_AS_STRING(_tuple));
+    Py_RETURN_NONE;
+  }
   PyObject* arg_iterator = PyObject_GetIter(_tuple);
-  if(arg_iterator == NULL) return NULL;
+  if(arg_iterator == NULL)
+  { 
+    std::cout << "error " << (PyErr_Occurred() != NULL) << "\n";
+    return NULL;
+  }
   while(PyObject* i_arg = PyIter_Next(arg_iterator))
   {
-    if(PyString_Check(i_arg) == 1) _a->ptr_set->insert(PyString_AS_STRING(i_arg));
-    else if(PyObject* seq_iterator = PyObject_GetIter(i_arg))
-    {
-      while(PyObject *i_str = PyIter_Next(seq_iterator))
-      {
-        char * const string = PyString_AsString(i_str);
-        Py_DECREF(i_str);
-        if(string == NULL) break; 
-        _a->ptr_set->insert(string);
-      }
-      Py_DECREF(seq_iterator);
-    }
-    else LADA_PYERROR(TypeError, "Could not make sense of argument.");
+    char * const string = PyString_AsString(i_arg);
     Py_DECREF(i_arg);
-    if(PyErr_Occurred() != NULL) break;
+    if(string == NULL) break; 
+    _a->ptr_set->insert(string);
   }
   Py_DECREF(arg_iterator);
   if(PyErr_Occurred() != NULL) return NULL;
   Py_RETURN_NONE;
 }
+static PyObject* set_ior(Set *_a, PyObject *_tuple)
+{
+  PyObject * const result = set_update(_a, _tuple);
+  if(result == NULL) return NULL;
+  Py_XDECREF(result);
+  Py_INCREF(_a);
+  return (PyObject *)_a;
+}
 
 static PyObject* set_union(Set* _a, PyObject* _b)
 {
   std::set<std::string> bset = *_a->ptr_set; 
-  Set* a; a->ptr_set = &bset;
-  set_update(a, _b);
-  return from_cpp_set_(*a->ptr_set);
+  Set a; a.ptr_set = &bset;
+  set_update(&a, _b);
+  return from_cpp_set_(*a.ptr_set);
 }
 
 static PyObject* set_intersection_update(Set* _a, PyObject *_b)
@@ -278,6 +292,14 @@ static PyObject* set_intersection_update(Set* _a, PyObject *_b)
   Py_DECREF(arg_iterator);
   if(PyErr_Occurred() != NULL) return NULL;
   Py_RETURN_NONE;
+}
+static PyObject* set_intersection_update(Set* _a, PyObject *_b)
+{
+  PyObject * const result = set_intersection_update(_a, _tuple);
+  if(result == NULL) return NULL;
+  Py_XDECREF(result);
+  Py_INCREF(_a);
+  return (PyObject *)_a;
 }
 
 static PyObject* set_intersection(Set* _a, PyObject* _b)
@@ -321,7 +343,14 @@ static PyObject* set_difference_update(Set *_a, PyObject *_b)
   if(PyErr_Occurred() != NULL) return NULL;
   Py_RETURN_NONE;
 }
-
+static PyObject* set_isub(Set *_a, PyObject *_b)
+{
+  PyObject * const result = set_difference_update(_a, _tuple);
+  if(result == NULL) return NULL;
+  Py_XDECREF(result);
+  Py_INCREF(_a);
+  return (PyObject *)_a;
+}
 static PyObject* set_difference(Set* _a, PyObject* _b)
 {
   std::set<std::string> bset = *_a->ptr_set; 
@@ -330,7 +359,7 @@ static PyObject* set_difference(Set* _a, PyObject* _b)
   return from_cpp_set_(*a->ptr_set);
 }
 
-static PyObject* set_ixor(Set *_a, PyObject *_b)
+static PyObject* set_symmetric_difference_update(Set *_a, PyObject *_b)
 {
   std::set<std::string> bset, result;
   if(PyObject* return_ = to_cpp_set_(_b, bset)) Py_DECREF(return_); 
@@ -339,6 +368,14 @@ static PyObject* set_ixor(Set *_a, PyObject *_b)
   std::set_symmetric_difference(_a->ptr_set->begin(), _a->ptr_set->end(), bset.begin(), bset.end(), inserter);
   *_a->ptr_set = result;
   Py_RETURN_NONE;
+}
+static PyObject* set_ixor(Set *_a, PyObject *_b)
+{
+  PyObject * const result = set_symmetric_difference_update(_a, _tuple);
+  if(result == NULL) return NULL;
+  Py_XDECREF(result);
+  Py_INCREF(_a);
+  return (PyObject *)_a;
 }
 static PyObject* set_symmetric_difference(Set* _a, PyObject* _b)
 {
@@ -424,7 +461,7 @@ static PyObject* set_str(Set* _a)
   return PyString_FromString(sstr.str().c_str());
 }
 // Function to deallocate a string atom.
-static PyObject* set_dealloc(Set *_self)
+static void set_dealloc(Set *_self)
 {
   if(_self->ptr_base != NULL)
   {
@@ -435,7 +472,6 @@ static PyObject* set_dealloc(Set *_self)
   }
   else if(_self->ptr_set != NULL) { delete _self->ptr_set; }
   _self->ob_type->tp_free((PyObject*)_self);
-  Py_RETURN_NONE;
 }
 
 static Py_ssize_t set_size(Set* _in)
@@ -448,7 +484,7 @@ static PyMethodDef set_methods[] = {
      "Returns true if self is a subset of the input set." },
     {"issuperset", (PyCFunction)set_issuperset, METH_O,
      "Returns true if self is a superset of the input set." },
-    {"union", (PyCFunction)set_union, METH_VARARGS,
+    {"union", (PyCFunction)set_union, METH_O,
      "Returns union of self and input set." },
     {"intersection", (PyCFunction)set_intersection, METH_VARARGS,
      "Returns intersection of self and input set." },
@@ -458,13 +494,13 @@ static PyMethodDef set_methods[] = {
      "Returns symmetric_difference of self and input set." },
     {"copy", (PyCFunction)set_as_set, METH_NOARGS, 
      "Returns a copy of self (as python intrinsic type)." },
-    {"update", (PyCFunction)set_update, METH_VARARGS,
+    {"update", (PyCFunction)set_update, METH_O,
      "Adds objects in sequence to self." },
     {"difference_update", (PyCFunction)set_difference_update, METH_VARARGS,
      "Removes objects in input from self." },
     {"intersection_update", (PyCFunction)set_intersection_update, METH_VARARGS,
      "self becomes intersection of self and input sequences." },
-    {"symmetric_difference_update", (PyCFunction)set_ixor, METH_VARARGS,
+    {"symmetric_difference_update", (PyCFunction)set_symmetric_difference_update, METH_VARARGS,
      "self becomes symmetric difference of self and input sequences." },
     {"add", (PyCFunction)set_add, METH_O, "Adds key to occupation set." },
     {"remove", (PyCFunction)set_remove, METH_O, "Removes key to occupation set." },
@@ -481,12 +517,29 @@ static PySequenceMethods set_as_sequence = {
     (lenfunc) set_size, 0, 0, 0, 0, 0, 0,
     (objobjproc) set_contains, 0, 0
   };
+
+static PyNumberMethods set_as_number = { 
+     (binaryfunc) set_union, (binaryfunc) set_difference,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+     binaryfunc (set_intersection),
+     binaryfunc (set_symmetric_difference),
+     binaryfunc (set_union),
+     0, 0, 0, 0, 0, 0, 
+     binaryfunc (set_ior),
+     binaryfunc (set_isub),
+     0, 0, 0, 0, 0, 0, 
+     binaryfunc (set_iand),
+     binaryfunc (set_ixor),
+     binaryfunc (set_ior),
+     0, 0, 0, 0, 0
+}; 
+
   
 
 static PyTypeObject set_type = {
     PyObject_HEAD_INIT(NULL)
     0,                         /*ob_size*/
-    "atom._Set",               /*tp_name*/
+    "atom.Set",                /*tp_name*/
     sizeof(Set),               /*tp_basicsize*/
     0,                         /*tp_itemsize*/
     (destructor)set_dealloc,   /*tp_dealloc*/
@@ -495,7 +548,7 @@ static PyTypeObject set_type = {
     0,                         /*tp_setattr*/
     0,                         /*tp_compare*/
     (reprfunc)set_repr,        /*tp_repr*/
-    0,                         /*tp_as_number*/
+    &set_as_number,
     &set_as_sequence,          /*tp_as_sequence*/
     0,                         /*tp_as_mapping*/
     0,                         /*tp_hash */
@@ -504,7 +557,7 @@ static PyTypeObject set_type = {
     0,                         /*tp_getattro*/
     0,                         /*tp_setattro*/
     0,                         /*tp_as_buffer*/
-    Py_TPFLAGS_DEFAULT,        /*tp_flags*/
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_CHECKTYPES,
     "Atomic occupation of a site.\n\n"
     "Wrapper around a C++ object. It works exactly like a python set, with the "
     "restriction that it can only contain strings. It cannot be created. It always "
