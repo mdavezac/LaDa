@@ -62,6 +62,11 @@ def run(self):
   
   # evaluates population if need be.
   self.evaluation() 
+  # now makes sure evaluation did not create twins.
+  dummy, self.population = self.population, []
+  for indiv in dummy:
+    if any(indiv == u for u in self.population): continue
+    self.population.append(indiv)
 
   # Number of offspring per generation.
   nboffspring = max(int(float(self.popsize)*self.rate), 1)
@@ -103,8 +108,9 @@ def run(self):
       # population. This ensures that duplicates are not allowed.
       for indiv in self.offspring:
         if any(indiv == u for u in self.population): continue
-        self.population.pop(-1)
         self.population.insert(0, indiv)
+        # In case population smaller than expected, use conditional.
+        if len(self.population) > self.popsize: self.population.pop(-1)
     self.population = self.comm.broadcast(self.population)
     
     self.offspring = []
