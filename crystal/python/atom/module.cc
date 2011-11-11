@@ -25,6 +25,8 @@ extern "C" struct AtomStr
 {
   PyObject_HEAD
   PyArrayObject *position;
+  PyObject* dictionary;
+  PyObject* weakreflist;
   boost::shared_ptr< LaDa::crystal::AtomData< std::string > > atom;
 };
 
@@ -54,9 +56,13 @@ PyMODINIT_FUNC initatom(void)
 {
   import_array(); // needed for NumPy 
 
+  atomstr_type.tp_getattro = PyObject_GenericGetAttr;
+  atomstr_type.tp_setattro = PyObject_GenericSetAttr;
+
   if (PyType_Ready(&atomstr_type) < 0) return;
   if (PyType_Ready(&set_type) < 0) return;
   if (PyType_Ready(&setiterator_type) < 0) return;
+
   Py_INCREF(&atomstr_type);
   Py_INCREF(&set_type);
   Py_INCREF(&setiterator_type);

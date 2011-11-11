@@ -4,7 +4,7 @@ static PyTypeObject atomstr_type = {
     "atom.AtomStr",            /*tp_name*/
     sizeof(AtomStr),             /*tp_basicsize*/
     0,                         /*tp_itemsize*/
-    (destructor)AtomStr_Dealloc, /*tp_dealloc*/
+    (destructor)atomstr_Dealloc, /*tp_dealloc*/
     0,                         /*tp_print*/
     0,                         /*tp_getattr*/
     0,                         /*tp_setattr*/
@@ -42,18 +42,18 @@ static PyTypeObject atomstr_type = {
     (traverseproc)traverse,    /* tp_traverse */
     (inquiry)gcclear,          /* tp_clear */
     0,		               /* tp_richcompare */
-    0,		               /* tp_weaklistoffset */
+    offsetof(AtomStr, weakreflist), /* tp_weaklistoffset */
     0,		               /* tp_iter */
     0,		               /* tp_iternext */
     0,                         /* tp_methods */
     0,                         /* tp_members */
-    AtomStr_getsetters,        /* tp_getset */
+    atomstr_getsetters,        /* tp_getset */
     0,                         /* tp_base */
     0,                         /* tp_dict */
     0,                         /* tp_descr_get */
     0,                         /* tp_descr_set */
-    0,                         /* tp_dictoffset */
-    (initproc)AtomStr_init,    /* tp_init */
+    offsetof(AtomStr, dictionary),/* tp_dictoffset */
+    (initproc)atomstr_init,    /* tp_init */
     0,                         /* tp_alloc */
-    AtomStr_new,               /* tp_new */
+    atomstr_new,               /* tp_new */
 };

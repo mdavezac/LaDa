@@ -70,6 +70,15 @@ namespace LaDa
           //! \details Used to reference atomic sites in a supercell versus
           //!          atomic sites in a reference lattice.
           types::t_int site;
+#         ifdef LADA_PYDICT
+#           error LADA_PYDICT already defined.
+#         endif
+#         ifdef LADA_PYTHON
+            PyObject *pydict;
+#           define LADA_PYDICT , pydict(NULL)
+#         else 
+#           define LADA_PYDICT
+#         endif
 
           //! Constructor
           AtomData() : AtomFreezeMixin(frozen::NONE), pos(math::rVector3d(0,0,0)),
@@ -78,10 +87,14 @@ namespace LaDa
           template<class T_DERIVED>
             AtomData   ( Eigen::DenseBase<T_DERIVED> const &_pos, t_Type const &_in,
                          types::t_int _site = -1, types::t_unsigned _freeze = frozen::NONE )
-                     : AtomFreezeMixin(_freeze), pos(_pos), type(_in), site(_site) {}
+                     : AtomFreezeMixin(_freeze), pos(_pos), type(_in), site(_site) LADA_PYDICT {}
           //! Copy Constructor
           AtomData   (const AtomData &_c)
-                   : AtomFreezeMixin(_c), pos(_c.pos), type(_c.type), site(_c.site) {}
+                   : AtomFreezeMixin(_c), pos(_c.pos), type(_c.type), site(_c.site) LADA_PYDICT {}
+#         undef LADA_PYDICT
+#         ifdef LADA_PYTHON
+          ~AtomData() { Py_XDECREF(pydict); }
+#         endif
       
         private:
           //! Serializes an atom.

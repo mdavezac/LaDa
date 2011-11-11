@@ -1,11 +1,11 @@
 extern "C" 
 { 
   //! Function to deallocate a string atom.
-  static void AtomStr_Dealloc(AtomStr *_self);
+  static void atomstr_Dealloc(AtomStr *_self);
   //! Function to allocate a string atom.
-  static PyObject* AtomStr_new(PyTypeObject *_type, PyObject *_args, PyObject *_kwargs);
+  static PyObject* atomstr_new(PyTypeObject *_type, PyObject *_args, PyObject *_kwargs);
   //! Function to initialize a string atom.
-  static int AtomStr_init(AtomStr* _self, PyObject* _args, PyObject *_kwargs);
+  static int atomstr_init(AtomStr* _self, PyObject* _args, PyObject *_kwargs);
   //! Traverses to back-reference.
   static int traverse(AtomStr *_self, visitproc _visit, void *_arg);
   //! Clears back reference.
@@ -13,8 +13,11 @@ extern "C"
 }
 
 // Function to deallocate a string atom.
-static void AtomStr_Dealloc(AtomStr *_self)
+static void atomstr_Dealloc(AtomStr *_self)
 {
+  if(_self->weakreflist != NULL)
+    PyObject_ClearWeakRefs((PyObject *) _self);
+
   gcclear(_self);
   boost::shared_ptr< LaDa::crystal::AtomData< std::string > > dummy;
   dummy.swap(_self->atom);
@@ -22,11 +25,14 @@ static void AtomStr_Dealloc(AtomStr *_self)
 }
 
 //! Function to allocate a string atom.
-static PyObject* AtomStr_new(PyTypeObject *_type, PyObject *_args, PyObject *_kwargs)
+static PyObject* atomstr_new(PyTypeObject *_type, PyObject *_args, PyObject *_kwargs)
 {
+  PyObject *const pydict = PyDict_New();
+  if(pydict == NULL) return NULL;
   AtomStr *self;
   self = (AtomStr*)_type->tp_alloc(_type, 0);
   if(self == NULL) return NULL;
+  self->weakreflist = NULL;
   boost::shared_ptr< crystal::AtomData<std::string> > dummy(new LaDa::crystal::AtomData<std::string>);
   if(not dummy)
   {
@@ -36,6 +42,7 @@ static PyObject* AtomStr_new(PyTypeObject *_type, PyObject *_args, PyObject *_kw
     return NULL;
   } 
   self->atom.swap(dummy);
+  self->dictionary = pydict;
 
   // create numpy array referencing position.
   npy_intp dims[1] = {3};
@@ -58,7 +65,7 @@ static PyObject* AtomStr_new(PyTypeObject *_type, PyObject *_args, PyObject *_kw
 }
 
 // Function to initialize a string atom.
-static int AtomStr_init(AtomStr* _self, PyObject* _args, PyObject *_kwargs)
+static int atomstr_init(AtomStr* _self, PyObject* _args, PyObject *_kwargs)
 {
   try
   {

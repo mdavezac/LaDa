@@ -1,31 +1,31 @@
 extern "C"
 {
   //! Returns position as a numpy array. 
-  static PyObject* AtomStr_getpos(AtomStr *_self, void *closure);
+  static PyObject* atomstr_getpos(AtomStr *_self, void *closure);
   //! Sets position from a sequence of three numbers.
-  static int AtomStr_setpos(AtomStr *_self, PyObject *_value, void *_closure);
+  static int atomstr_setpos(AtomStr *_self, PyObject *_value, void *_closure);
   //! Returns the atomic type. 
-  static PyObject* AtomStr_getsite(AtomStr *_self, void *closure);
+  static PyObject* atomstr_getsite(AtomStr *_self, void *closure);
   //! Sets the atomic type.
-  static int AtomStr_setsite(AtomStr *_self, PyObject *_value, void *_closure);
+  static int atomstr_setsite(AtomStr *_self, PyObject *_value, void *_closure);
   // Returns the freeze flag.
-  static PyObject* AtomStr_getfreeze(AtomStr *_self, void *closure);
+  static PyObject* atomstr_getfreeze(AtomStr *_self, void *closure);
   //! Sets the freeze flag from an unsigned.
-  static int AtomStr_setfreeze(AtomStr *_self, PyObject *_value, void *_closure);
+  static int atomstr_setfreeze(AtomStr *_self, PyObject *_value, void *_closure);
   // Returns the type of the atom.
-  static PyObject* AtomStr_gettype(AtomStr *_self, void *closure);
+  static PyObject* atomstr_gettype(AtomStr *_self, void *closure);
   //! Sets the type from a string.
-  static int AtomStr_settype(AtomStr *_self, PyObject *_value, void *_closure);
+  static int atomstr_settype(AtomStr *_self, PyObject *_value, void *_closure);
 }
 
 // Returns position as a numpy array. 
-static PyObject* AtomStr_getpos(AtomStr *_self, void *closure)
+static PyObject* atomstr_getpos(AtomStr *_self, void *closure)
 {
   Py_INCREF(_self->position);
   return (PyObject*)_self->position; 
 }
 // Sets position from a sequence of three numbers.
-static int AtomStr_setpos(AtomStr *_self, PyObject *_value, void *_closure)
+static int atomstr_setpos(AtomStr *_self, PyObject *_value, void *_closure)
 {
   bp::object pos(bp::handle<>(bp::borrowed(_value)));
   if(not is_position(pos)) 
@@ -39,10 +39,10 @@ static int AtomStr_setpos(AtomStr *_self, PyObject *_value, void *_closure)
 }
 
 // Returns the atomic type. 
-static PyObject* AtomStr_getsite(AtomStr *_self, void *closure)
+static PyObject* atomstr_getsite(AtomStr *_self, void *closure)
   { return PyInt_FromLong(_self->atom->site); }
 // Sets the atomic type.
-static int AtomStr_setsite(AtomStr *_self, PyObject *_value, void *_closure)
+static int atomstr_setsite(AtomStr *_self, PyObject *_value, void *_closure)
 {
   long const result = PyInt_AsLong(_value);
   if(result == -1 and PyErr_Occurred() != NULL) return -1;
@@ -50,13 +50,13 @@ static int AtomStr_setsite(AtomStr *_self, PyObject *_value, void *_closure)
   return 0;
 }
 // Returns the freeze flag.
-static PyObject* AtomStr_getfreeze(AtomStr *_self, void *closure)
+static PyObject* atomstr_getfreeze(AtomStr *_self, void *closure)
 {
   long result = _self->atom->freeze;
   return PyInt_FromLong(result);
 }
 // Sets the freeze flag from an unsigned.
-static int AtomStr_setfreeze(AtomStr *_self, PyObject *_value, void *_closure)
+static int atomstr_setfreeze(AtomStr *_self, PyObject *_value, void *_closure)
 {
   long const result = PyInt_AsLong(_value);
   if(result == -1 and PyErr_Occurred() != NULL) return -1;
@@ -69,9 +69,9 @@ static int AtomStr_setfreeze(AtomStr *_self, PyObject *_value, void *_closure)
   _self->atom->freeze = result;
   return 0;
 }
-static PyObject *AtomStr_gettype(AtomStr *_self, void *closure)
+static PyObject *atomstr_gettype(AtomStr *_self, void *closure)
   { return PyString_FromString(_self->atom->type.c_str()); }
-static int AtomStr_settype(AtomStr *_self, PyObject *_value, void *closure)
+static int atomstr_settype(AtomStr *_self, PyObject *_value, void *closure)
 {
   bp::object type(bp::borrowed<>(_value));
   if(not is_specie<std::string>(type))
@@ -98,11 +98,11 @@ static char type_name[] = "type";
 
 extern "C" 
 {
-  static PyGetSetDef AtomStr_getsetters[] = {
-      {posname, (getter)AtomStr_getpos, (setter)AtomStr_setpos, posdoc, NULL},
-      {sitename, (getter)AtomStr_getsite, (setter)AtomStr_setsite, sitedoc, NULL},
-      {freezename, (getter)AtomStr_getfreeze, (setter)AtomStr_setfreeze, freezedoc, NULL}, 
-      {type_name, (getter)AtomStr_gettype, (setter)AtomStr_settype, typedoc, NULL}, 
+  static PyGetSetDef atomstr_getsetters[] = {
+      {posname, (getter)atomstr_getpos, (setter)atomstr_setpos, posdoc, NULL},
+      {sitename, (getter)atomstr_getsite, (setter)atomstr_setsite, sitedoc, NULL},
+      {freezename, (getter)atomstr_getfreeze, (setter)atomstr_setfreeze, freezedoc, NULL}, 
+      {type_name, (getter)atomstr_gettype, (setter)atomstr_settype, typedoc, NULL}, 
       {NULL}  /* Sentinel */
   };
 }
