@@ -8,8 +8,8 @@
 
 #include <math/python/python.hpp>
 
-#include "../traits.h"
-#include "../is_container.h"
+#include "../../traits.h"
+#include "../../is_container.h"
 
 namespace LaDa
 {

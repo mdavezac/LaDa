@@ -1,7 +1,7 @@
 set( PYCRYSTAL_PY  gruber.py  __init__.py A2BX4.py bravais.py binary.py 
      read_write.py _docstring.py ABX3.py _modify_atom_classes.py)
 set( PYCRYSTAL_HEADERS 
-     set.hpp atom.hpp structure.hpp add_atom.hpp structure_contains.hpp)
+     structure.hpp add_atom.hpp structure_contains.hpp)
    #    atom.hpp  enumerate.hpp  lattice.hpp  layerdepth.hpp  neighbors.hpp
    #    read_structure.hpp  smith.hpp  structure.hpp  symmetry_operator.hpp
    #    which_site.hpp misc.hpp periodic_dnc.hpp )
@@ -12,8 +12,9 @@ set( PYCRYSTAL_SOURCES
    #    read_structure.cc  smith.cc  structure.cc  symmetry_operator.cc
    #    which_site.cc misc.cc periodic_dnc.cc )
 
-set(PYATOM_HEADERS atom_cdi.hpp atom_type.hpp atom_getset.hpp )
-set(PYATOM_SOURCES atom_module.cc)
+set(PYATOM_HEADERS atom/cdi.hpp atom/type.hpp atom/getset.hpp atom/set.hpp
+                   atom/set_iterator.hpp atom/extract_species.h )
+set(PYATOM_SOURCES atom/module.cc)
 
 
 include_directories(${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDES})

@@ -11,7 +11,7 @@
 #include <python/exceptions.h>
 #include <python/numpy_types.h>
 
-#include "../atom.h"
+#include "../../atom.h"
 #include "extract_species.h"
 
 namespace bp = boost::python;
@@ -30,11 +30,11 @@ extern "C" struct AtomStr
 
 
 // atom getters/settters.
-#include "atom_getset.hpp"
+#include "getset.hpp"
 // creation, deallocation, initialization.
-#include "atom_cdi.hpp"
+#include "cdi.hpp"
 // atom type declaration.
-#include "atom_type.hpp"
+#include "type.hpp"
 // set interface
 #include "set.hpp"
 
