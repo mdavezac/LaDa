@@ -13,7 +13,7 @@ extern "C"
   //! Returns next object.
   static PyObject* setiterator_next(SetIterator* _in);
   //! Function to deallocate a string atom.
-  static dealloc setiterator_dealloc(Set *_self);
+  static void setiterator_dealloc(SetIterator *_self);
   //! Creates iterator.
   static PyObject* setiterator_create(Set* _in);
 };
@@ -22,17 +22,17 @@ static PyObject* setiterator_iter(PyObject* _in) { Py_INCREF(_in); return _in; }
 // Returns next object.
 static PyObject* setiterator_next(SetIterator* _in)
 {
-  if(_in->i_first != _in->ptr_set->end()) 
+  if(_in->i_first != _in->ptr_set->ptr_set->end()) 
   {
     if(_in->is_first) _in->is_first = false; else ++_in->i_first;
-    if(_in->i_first != _in->ptr_set->end()) 
-      return PyString_FromString(i_first->c_str());
+    if(_in->i_first != _in->ptr_set->ptr_set->end()) 
+      return PyString_FromString(_in->i_first->c_str());
   }
   PyErr_SetNone(PyExc_StopIteration);
   return NULL;
 }
 //! Function to deallocate a string atom.
-static dealloc setiterator_dealloc(SetIterator *_self)
+static void setiterator_dealloc(SetIterator *_self)
 {
   Set* dummy = _self->ptr_set;
   _self->ptr_set = NULL;
@@ -56,7 +56,7 @@ static PyTypeObject setiterator_type = {
     0,                         /*tp_as_mapping*/
     0,                         /*tp_hash */
     0,                         /*tp_call*/
-    (reprfunc)set_str,         /*tp_str*/
+    0,                         /*tp_str*/
     0,                         /*tp_getattro*/
     0,                         /*tp_setattro*/
     0,                         /*tp_as_buffer*/
@@ -73,12 +73,12 @@ static PyTypeObject setiterator_type = {
 // Creates iterator.
 static PyObject* setiterator_create(Set* _in)
 {
-  SetIterator *input = NULL;
-  result = PyObject_New(Set, (&setiterator_type));
+  SetIterator *result = NULL;
+  result = PyObject_New(SetIterator, (&setiterator_type));
   if(result == NULL) return NULL;
   result->ptr_set = _in;
   Py_INCREF((PyObject*)result->ptr_set);
-  result->i_first = _in->begin();
+  result->i_first = _in->ptr_set->begin();
   result->is_first = true;
   return (PyObject*) result;
 }

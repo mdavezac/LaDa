@@ -56,8 +56,10 @@ PyMODINIT_FUNC initatom(void)
 
   if (PyType_Ready(&atomstr_type) < 0) return;
   if (PyType_Ready(&set_type) < 0) return;
+  if (PyType_Ready(&setiterator_type) < 0) return;
   Py_INCREF(&atomstr_type);
   Py_INCREF(&set_type);
+  Py_INCREF(&setiterator_type);
 
   char const doc[] =  "Wrapper around C++ atom class, and affiliates.";
   PyObject* module = Py_InitModule3("atom", atomstr_methods, doc);

@@ -41,6 +41,7 @@ BOOST_PYTHON_MODULE(error)
   LADA_REGISTER_PYEXCEPT_WITH_BASE( KeyError, "lada.error.KeyError",
                           "Key errors explicitely thrown by lada.", scope,
                           bp::make_tuple( PyException<input>::exception(), 
+                                          PyException<out_of_range>::exception(),
                                           bp::object(bp::borrowed<>(PyExc_KeyError))));
   LADA_REGISTER_PYEXCEPT_WITH_BASE( AttributeError, "lada.error.AttributeError",
                           "Attribute errors explicitely thrown by lada.", scope,

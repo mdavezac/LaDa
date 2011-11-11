@@ -84,6 +84,8 @@ extern "C"
   static PyObject* set_new_set(PyObject*, PyObject*);
 };
 
+#include "set_iterator.hpp"
+
 static int set_contains(Set* _in, PyObject* _key)
 {
   char *const string = PyString_AsString(_key);
@@ -293,9 +295,9 @@ static PyObject* set_intersection_update(Set* _a, PyObject *_b)
   if(PyErr_Occurred() != NULL) return NULL;
   Py_RETURN_NONE;
 }
-static PyObject* set_intersection_update(Set* _a, PyObject *_b)
+static PyObject* set_iand(Set* _a, PyObject *_b)
 {
-  PyObject * const result = set_intersection_update(_a, _tuple);
+  PyObject * const result = set_intersection_update(_a, _b);
   if(result == NULL) return NULL;
   Py_XDECREF(result);
   Py_INCREF(_a);
@@ -305,9 +307,11 @@ static PyObject* set_intersection_update(Set* _a, PyObject *_b)
 static PyObject* set_intersection(Set* _a, PyObject* _b)
 {
   std::set<std::string> bset = *_a->ptr_set; 
-  Set* a; a->ptr_set = &bset;
-  set_intersection_update(a, _b);
-  return from_cpp_set_(*a->ptr_set);
+  Set a; a.ptr_set = &bset;
+  PyObject *const result = set_intersection_update(&a, _b);
+  if(result == NULL) return result;
+  Py_DECREF(result);
+  return from_cpp_set_(*a.ptr_set);
 }
 
 static PyObject* set_difference_update(Set *_a, PyObject *_b)
@@ -345,18 +349,20 @@ static PyObject* set_difference_update(Set *_a, PyObject *_b)
 }
 static PyObject* set_isub(Set *_a, PyObject *_b)
 {
-  PyObject * const result = set_difference_update(_a, _tuple);
+  PyObject * const result = set_difference_update(_a, _b);
   if(result == NULL) return NULL;
-  Py_XDECREF(result);
+  Py_DECREF(result);
   Py_INCREF(_a);
   return (PyObject *)_a;
 }
 static PyObject* set_difference(Set* _a, PyObject* _b)
 {
   std::set<std::string> bset = *_a->ptr_set; 
-  Set* a; a->ptr_set = &bset;
-  set_difference_update(a, _b);
-  return from_cpp_set_(*a->ptr_set);
+  Set a; a.ptr_set = &bset;
+  PyObject *const result = set_difference_update(&a, _b);
+  if(result == NULL) return NULL;
+  Py_DECREF(result);
+  return from_cpp_set_(*a.ptr_set);
 }
 
 static PyObject* set_symmetric_difference_update(Set *_a, PyObject *_b)
@@ -371,7 +377,7 @@ static PyObject* set_symmetric_difference_update(Set *_a, PyObject *_b)
 }
 static PyObject* set_ixor(Set *_a, PyObject *_b)
 {
-  PyObject * const result = set_symmetric_difference_update(_a, _tuple);
+  PyObject * const result = set_symmetric_difference_update(_a, _b);
   if(result == NULL) return NULL;
   Py_XDECREF(result);
   Py_INCREF(_a);
@@ -382,8 +388,9 @@ static PyObject* set_symmetric_difference(Set* _a, PyObject* _b)
   std::set<std::string> aset;
   aset = *_a->ptr_set;
   Set result; result.ptr_set = &aset;
-  if(PyObject* return_ = set_ixor(&result, _b)) Py_DECREF(return_);
-  else return NULL;
+  PyObject* const return_ = set_ixor(&result, _b);
+  if(return_ == NULL) return NULL;
+  Py_DECREF(return_);
   return from_cpp_set_(aset);
 }
 static PyObject* set_add(Set* _a, PyObject* _key)
@@ -508,7 +515,7 @@ static PyMethodDef set_methods[] = {
       "Removes key to occupation set.\n\n"
       "Unlike ``pop`` or ``remove``, does not throw if occupation is not present." },
     {"pop", (PyCFunction)set_pop, METH_O, "Removes key to occupation set and returns it." },
-    {"clear", (PyCFunction)set_clear, METH_O, "Clears occupation set." },
+    {"clear", (PyCFunction)set_clear, METH_NOARGS, "Clears occupation set." },
     {"__eq__", (PyCFunction)set_equal, METH_O, "Checks whether two sets are equal." },
     {NULL}  /* Sentinel */
 };
@@ -566,7 +573,7 @@ static PyTypeObject set_type = {
     0,                         /* tp_clear */
     (richcmpfunc)set_richcmp,  /* tp_richcompare */
     0,		               /* tp_weaklistoffset */
-    0,		               /* tp_iter */
+    (getiterfunc)setiterator_create,  /* tp_iter */
     0,		               /* tp_iternext */
     set_methods                /* tp_methods */
 };
