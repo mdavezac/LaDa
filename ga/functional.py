@@ -323,8 +323,8 @@ class Darwin(object):
 
     # now goes to work
     with Changedir(join(outdir.path, this.age), comm=comm) as cwd:
-      pyout = this.OUTCAR if this.do_print else this.OUTCAR + str(comm.rank) # '/dev/null'
-      pyerr = this.ERRCAR if this.do_print else this.OUTCAR + str(comm.rank) # '/dev/null'
+      pyout = this.OUTCAR if this.do_print else '/dev/null' # this.OUTCAR + str(comm.rank) # 
+      pyerr = this.ERRCAR if this.do_print else '/dev/null' # this.OUTCAR + str(comm.rank) # 
       with redirect(pyout=pyout, pyerr=pyerr) as streams:
         if this.do_print:
           print "# GA calculation on ", time.strftime("%m/%d/%y", local_time),\
