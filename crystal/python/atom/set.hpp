@@ -82,6 +82,18 @@ extern "C"
   //! \details Sets should not be created from scratch. They are meant to wrap
   //!          atomic site occupations only.
   static PyObject* set_new_set(PyObject*, PyObject*);
+  //! \brief Returns union of two sets.
+  //! \details Checks which a and b is a Set from this extension.
+  static PyObject* set_or(PyObject* _a, PyObject* _b);
+  //! \brief Returns intersection of two sets.
+  //! \details Checks which a and b is a Set from this extension.
+  static PyObject* set_and(PyObject* _a, PyObject* _b);
+  //! \brief Returns symmetric difference of two sets.
+  //! \details Checks which a and b is a Set from this extension.
+  static PyObject* set_xor(PyObject* _a, PyObject* _b);
+  //! \brief Returns difference of two sets.
+  //! \details Checks which a and b is a Set from this extension.
+  static PyObject* set_sub(PyObject* _a, PyObject* _b);
 };
 
 #include "set_iterator.hpp"
@@ -526,11 +538,11 @@ static PySequenceMethods set_as_sequence = {
   };
 
 static PyNumberMethods set_as_number = { 
-     (binaryfunc) set_union, (binaryfunc) set_difference,
+     (binaryfunc) set_or, (binaryfunc) set_sub,
      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-     binaryfunc (set_intersection),
-     binaryfunc (set_symmetric_difference),
-     binaryfunc (set_union),
+     binaryfunc (set_and),
+     binaryfunc (set_xor),
+     binaryfunc (set_or),
      0, 0, 0, 0, 0, 0, 
      binaryfunc (set_ior),
      binaryfunc (set_isub),
@@ -607,3 +619,62 @@ static PyObject* set_new_set(PyObject* _module, PyObject* _in)
     Py_XDECREF(result);
     return NULL;
 };
+
+static PyObject* set_or(PyObject* _a, PyObject* _b)
+{
+  if(_a->ob_type == &set_type) { return set_union((Set*)_a, _b); }
+  if(_b->ob_type == &set_type) { return set_union((Set*)_b, _a); }
+  LADA_PYERROR(TypeError, "Neither input is a lada.crystal.atom.Set");
+  return NULL;
+}
+static PyObject* set_and(PyObject* _a, PyObject* _b)
+{
+  if(_a->ob_type == &set_type) { return set_intersection((Set*)_a, _b); }
+  if(_b->ob_type == &set_type) { return set_intersection((Set*)_b, _a); }
+  LADA_PYERROR(TypeError, "Neither input is a lada.crystal.atom.Set");
+  return NULL;
+}
+static PyObject* set_xor(PyObject* _a, PyObject* _b)
+{
+  if(_a->ob_type == &set_type) { return set_symmetric_difference((Set*)_a, _b); }
+  if(_b->ob_type == &set_type) { return set_symmetric_difference((Set*)_b, _a); }
+  LADA_PYERROR(TypeError, "Neither input is a lada.crystal.atom.Set");
+  return NULL;
+}
+static PyObject* set_sub(PyObject* _a, PyObject* _b)
+{
+  if(_a->ob_type == &set_type) { return set_difference((Set*)_a, _b); }
+  if(_b->ob_type != &set_type)
+  {
+    LADA_PYERROR(TypeError, "Neither input is a lada.crystal.atom.Set");
+    return NULL;
+  }
+  // set pointer to C++ set.
+  std::set<std::string> const * const b = ((Set*)_b)->ptr_set;
+  // construct result set.
+  PyObject* builtin = PyImport_ImportModule("__builtin__");
+  if(builtin == NULL) return NULL;
+  PyObject* dict = PyModule_GetDict(builtin); 
+  PyObject* result = PyRun_String("set()", Py_eval_input, dict, NULL);
+  Py_DECREF(builtin);
+  if(result == NULL) return NULL;
+  // loop over objects in a. Adds to result if not in b.
+  PyObject* arg_iterator = PyObject_GetIter(_a);
+  if(arg_iterator == NULL) { Py_DECREF(result); return NULL; }
+  char method[] = "add";
+  char format[] = "O";
+  while(PyObject* i_arg = PyIter_Next(arg_iterator))
+  {
+    char * const string = PyString_AsString(i_arg);
+    if(string == NULL) { Py_DECREF(i_arg); break; }
+    if(b->count(string) == 0) Py_XDECREF(PyObject_CallMethod(result, method, format, i_arg));
+    Py_DECREF(i_arg);
+    if(PyErr_Occurred() != NULL) break;
+  }
+  Py_DECREF(arg_iterator);
+  if(PyErr_Occurred() == NULL) return result;
+
+  Py_DECREF(result);
+  return NULL;
+}
+
