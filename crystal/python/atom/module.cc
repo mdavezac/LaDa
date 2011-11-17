@@ -56,8 +56,13 @@ PyMODINIT_FUNC initatom(void)
 {
   import_array(); // needed for NumPy 
 
+  // set generic attributes for atom.
   atomstr_type.tp_getattro = PyObject_GenericGetAttr;
   atomstr_type.tp_setattro = PyObject_GenericSetAttr;
+
+  // set Set's base.
+  set_type.tp_base = PySet_Type;
+
 
   if (PyType_Ready(&atomstr_type) < 0) return;
   if (PyType_Ready(&set_type) < 0) return;

@@ -172,23 +172,6 @@ static PyObject* set_nequal(Set* _a, PyObject *_b)
 }
 
 
-static PyObject *set_richcmp(PyObject *_a, PyObject *_b, int _op)
-{
-  PyObject *result = NULL;
-  switch(_op)
-  {
-    case Py_LT: result = set_istruesubset((Set*)_a, _b); break;
-    case Py_LE: result = set_issubset((Set*)_a, _b); break;
-    case Py_EQ: result = set_equal((Set*)_a, _b); break;
-    case Py_NE: result = set_nequal((Set*)_a, _b); break;
-    case Py_GT: result = set_istruesuperset((Set*)_a, _b); break;
-    case Py_GE: result = set_issuperset((Set*)_a, _b); break;
-    default: break;
-  };
-  if(result == NULL) LADA_PYERROR(internal, "Unknown rich comparison.");
-  return result;
-}
-
 static PyObject* to_cpp_set_(PyObject* _a, std::set<std::string> &_out)
 {
   if(PyString_Check(_a))
@@ -212,21 +195,17 @@ static PyObject* to_cpp_set_(PyObject* _a, std::set<std::string> &_out)
 }
 static PyObject* from_cpp_set_(std::set<std::string> const &_set)
 {
-  PyObject* builtin = PyImport_ImportModule("__builtin__");
-  if(builtin == NULL) return NULL;
-  PyObject* dict = PyModule_GetDict(builtin); 
-  PyObject* result = PyRun_String("set()", Py_eval_input, dict, NULL);
-  Py_DECREF(builtin);
-  if(result == NULL) return NULL;
   std::set<std::string>::const_iterator i_first = _set.begin();
   std::set<std::string>::const_iterator const i_end = _set.end();
-  char method[] = "add";
-  char format[] = "s";
+  PyObject* result = PySet_New(NULL);
+  if(result == NULL) return NULL;
   for(; i_first != i_end; ++i_first)
   {
-    PyObject *return_ = PyObject_CallMethod(result, method, format, i_first->c_str());
-    if(return_ == NULL) return NULL;
-    Py_DECREF(return_);
+    PyObject* string = PyString_FromString(i_first->c_str());
+    if(string == NULL) { Py_DECREF(result); return NULL; }
+    int const return_ = PySet_Add(result, string);
+    Py_DECREF(string);
+    if(return_ == 0) return NULL;
   }
   return result;
 }
@@ -528,7 +507,6 @@ static PyMethodDef set_methods[] = {
       "Unlike ``pop`` or ``remove``, does not throw if occupation is not present." },
     {"pop", (PyCFunction)set_pop, METH_O, "Removes key to occupation set and returns it." },
     {"clear", (PyCFunction)set_clear, METH_NOARGS, "Clears occupation set." },
-    {"__eq__", (PyCFunction)set_equal, METH_O, "Checks whether two sets are equal." },
     {NULL}  /* Sentinel */
 };
 
@@ -652,11 +630,7 @@ static PyObject* set_sub(PyObject* _a, PyObject* _b)
   // set pointer to C++ set.
   std::set<std::string> const * const b = ((Set*)_b)->ptr_set;
   // construct result set.
-  PyObject* builtin = PyImport_ImportModule("__builtin__");
-  if(builtin == NULL) return NULL;
-  PyObject* dict = PyModule_GetDict(builtin); 
-  PyObject* result = PyRun_String("set()", Py_eval_input, dict, NULL);
-  Py_DECREF(builtin);
+  PyObject* result = PySet_New(NULL);
   if(result == NULL) return NULL;
   // loop over objects in a. Adds to result if not in b.
   PyObject* arg_iterator = PyObject_GetIter(_a);
@@ -676,5 +650,22 @@ static PyObject* set_sub(PyObject* _a, PyObject* _b)
 
   Py_DECREF(result);
   return NULL;
+}
+
+static PyObject *set_richcmp(PyObject *_a, PyObject *_b, int _op)
+{
+  PyObject *result = NULL;
+  switch(_op)
+  {
+    case Py_LT: result = set_istruesubset((Set*)_a, _b); break;
+    case Py_LE: result = set_issubset((Set*)_a, _b); break;
+    case Py_EQ: result = set_equal((Set*)_a, _b); break;
+    case Py_NE: result = set_nequal((Set*)_a, _b); break;
+    case Py_GT: result = set_istruesuperset((Set*)_a, _b); break;
+    case Py_GE: result = set_issuperset((Set*)_a, _b); break;
+    default: break;
+  };
+  if(result == NULL) LADA_PYERROR(internal, "Unknown rich comparison.");
+  return result;
 }
 
