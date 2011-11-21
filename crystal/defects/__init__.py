@@ -179,7 +179,7 @@ def interstitials(structure, lattice, interstitials):
     result = deepcopy(structure)
     result.add_atom = dot(lattice.cell, position), type
     result.name = "{0}_interstitial_{1}".format(type, name)
-    defect = deepcopy(structure.atoms[-1])
+    defect = deepcopy(result.atoms[-1])
     defect.index = -1
     yield result, defect, 'None'
 
