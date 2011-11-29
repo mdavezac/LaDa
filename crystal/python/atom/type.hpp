@@ -1,10 +1,10 @@
-static PyTypeObject atomstr_type = {
+static PyTypeObject LADA_NAME(type) = {
     PyObject_HEAD_INIT(NULL)
     0,                         /*ob_size*/
     "atom.AtomStr",            /*tp_name*/
-    sizeof(AtomStr),             /*tp_basicsize*/
+    sizeof(LADA_TYPE),             /*tp_basicsize*/
     0,                         /*tp_itemsize*/
-    (destructor)atomstr_Dealloc, /*tp_dealloc*/
+    (destructor)LADA_NAME(dealloc), /*tp_dealloc*/
     0,                         /*tp_print*/
     0,                         /*tp_getattr*/
     0,                         /*tp_setattr*/
@@ -39,21 +39,21 @@ static PyTypeObject atomstr_type = {
       "  - All other keyword arguments become attributes. "
            "In other words, one could add ``magnetic=0.5`` if one wanted to "
            "specify the magnetic moment of an atom.\n",
-    (traverseproc)traverse,    /* tp_traverse */
-    (inquiry)gcclear,          /* tp_clear */
+    (traverseproc)LADA_NAME(traverse),    /* tp_traverse */
+    (inquiry)LADA_NAME(gcclear),          /* tp_clear */
     0,		               /* tp_richcompare */
-    offsetof(AtomStr, weakreflist), /* tp_weaklistoffset */
+    offsetof(LADA_TYPE, weakreflist), /* tp_weaklistoffset */
     0,		               /* tp_iter */
     0,		               /* tp_iternext */
     0,                         /* tp_methods */
     0,                         /* tp_members */
-    atomstr_getsetters,        /* tp_getset */
+    LADA_NAME(getsetters),        /* tp_getset */
     0,                         /* tp_base */
     0,                         /* tp_dict */
     0,                         /* tp_descr_get */
     0,                         /* tp_descr_set */
-    offsetof(AtomStr, dictionary),/* tp_dictoffset */
-    (initproc)atomstr_init,    /* tp_init */
-    0,                         /* tp_alloc */
-    atomstr_new,               /* tp_new */
+    offsetof(LADA_TYPE, dictionary),/* tp_dictoffset */
+    (initproc)LADA_NAME(init),    /* tp_init */
+    0,                            /* tp_alloc */
+    LADA_NAME(new),               /* tp_new */
 };

@@ -9,9 +9,9 @@ extern "C"
   };
   //! Returns Py_True if key is contained in the set.
   static int sequence_contains(Sequence* _in, PyObject* _key);
-  //! Converts python object to an std::set<std::string>.
-  static PyObject* to_cpp_sequence_(PyObject* _self, std::set<std::string> &_out);
-  //! Converts an  std::set<std::string> to a python set.
+  //! Converts python object to an std::vector<std::string>.
+  static PyObject* to_cpp_sequence_(PyObject* _a, std::vector<std::string> &_out);
+  //! Converts an  std::vector<std::string> to a python set.
   static PyObject* from_cpp_sequence_(std::vector<std::string> const &_seq);
   //! Converts a Sequence to a python list.
   static PyObject* sequence_as_list(Sequence* _self) { return from_cpp_sequence_(*_self->ptr_seq); }
@@ -64,6 +64,10 @@ extern "C"
   static PyObject* sequence_sort(Sequence* _self);
   //! Reverse list in place.
   static PyObject* sequence_reverse(Sequence* _self);
+  //! garbage collection.
+  static int sequence_traverse(Sequence *self, visitproc visit, void *arg);
+  //! garbage collection.
+  static int sequence_gcclear(Sequence *_self);
 };
 
 #include "sequence_iterator.hpp"
@@ -76,27 +80,6 @@ static int sequence_contains(Sequence* _in, PyObject* _key)
   return 0;
 }
 
-static PyObject* to_cpp_sequence_(PyObject* _self, std::vector<std::string> &_out)
-{
-  if(PyString_Check(_self))
-  {
-    _out.push_back(PyString_AS_STRING(_self));
-    Py_RETURN_NONE;
-  }
-
-  PyObject* iterator = PyObject_GetIter(_self);
-  if(iterator == NULL) return NULL;
-  while(PyObject* item = PyIter_Next(iterator))
-  {
-    char *const string = PyString_AsString(item);
-    Py_DECREF(item);
-    if(string == NULL) break;
-    _out.push_back(string);
-  }
-  Py_DECREF(iterator);
-  if(PyErr_Occurred() != NULL) return NULL;
-  Py_RETURN_NONE;
-}
 static PyObject* from_cpp_sequence_(std::vector<std::string> const &_seq)
 {
   std::vector<std::string>::const_iterator i_first = _seq.begin();
@@ -195,14 +178,8 @@ static PyObject* sequence_repr(Sequence* _self)
 // Function to deallocate a string atom.
 static void sequence_dealloc(Sequence *_self)
 {
-  if(_self->ptr_base != NULL)
-  {
-    PyObject *dummy = _self->ptr_base;
-    _self->ptr_base = NULL;
-    Py_DECREF(dummy);
-    _self->ptr_seq = NULL;
-  }
-  else if(_self->ptr_seq != NULL) { delete _self->ptr_seq; }
+  if(_self->ptr_base == NULL and _self->ptr_seq != NULL) delete _self->ptr_seq;
+  sequence_gcclear(_self);
   _self->ob_type->tp_free((PyObject*)_self);
 }
 
@@ -334,9 +311,9 @@ static int sequence_traverse(Sequence *self, visitproc visit, void *arg)
   return 0;
 }
 
-static int sequence_gcclear(Sequence *_self)
+static int sequence_gcclear(Sequence *self)
 { 
-  Py_CLEAR(_self->ptr_base);
+  Py_CLEAR(self->ptr_base);
   return 0;
 }
 
@@ -390,13 +367,13 @@ static PyTypeObject sequence_type = {
     0,                                                       /*tp_getattro*/
     0,                                                       /*tp_setattro*/
     0,                                                       /*tp_as_buffer*/
-    Py_TPFLAGS_DEFAULT,
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
     "Atomic occupation of a site.\n\n"
     "Wrapper around a C++ object. It works exactly like a python list, with the "
     "restriction that it can only contain strings. It cannot be created. It always "
     "references the occupation of an atom.",
     (traverseproc)sequence_traverse,                         /* tp_traverse */
-    (inquiry)gcclear,                                        /* tp_clear */
+    (inquiry)sequence_gcclear,                               /* tp_clear */
     (richcmpfunc)sequence_richcmp,                           /* tp_richcompare */
     0,		                                             /* tp_weaklistoffset */
     (getiterfunc)sequenceiterator_create,                    /* tp_iter */
@@ -410,7 +387,7 @@ static PyObject* sequence_new_sequence(PyObject* _module, PyObject* _in)
   PyObject *input = NULL;
   if(not PyArg_UnpackTuple(_in, "_new_sequence", 0, 1, &input)) goto error;
   // creates new object and check result.
-  result = PyObject_New(Sequence, (&sequence_type));
+  result = (Sequence*)sequence_type.tp_alloc(&sequence_type, 0);
   if(result == NULL) goto error;
   
   // on success initializes object.
@@ -537,5 +514,31 @@ static PyObject* sequence_extend(Sequence* _self, PyObject* _b)
     }
     Py_DECREF(iterator);
   }
+  Py_RETURN_NONE;
+}
+
+static PyObject* to_cpp_sequence_(PyObject* _a, std::vector<std::string> &_out)
+{
+  if(PyString_Check(_a))
+  {
+    _out.push_back(PyString_AS_STRING(_a));
+    Py_RETURN_NONE;
+  }
+  else if(_a->ob_type == &sequence_type)
+  {
+    _out = *((Sequence*)_a)->ptr_seq;
+    Py_RETURN_NONE;
+  }
+  PyObject* iterator = PyObject_GetIter(_a);
+  if(iterator == NULL) return NULL;
+  while(PyObject* item = PyIter_Next(iterator))
+  {
+    char *const string = PyString_AsString(item);
+    Py_DECREF(item);
+    if(string == NULL) break;
+    _out.push_back(string);
+  }
+  Py_DECREF(iterator);
+  if(PyErr_Occurred() != NULL) return NULL;
   Py_RETURN_NONE;
 }

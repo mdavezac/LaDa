@@ -10,15 +10,16 @@ gc.collect()
 b, c, d = ['Au', 'Pd'], (0, 0, 0), (1,0,0)
 assert gc.get_count() == c
 a = Sequence(b)
+assert gc.is_tracked(a)
 gc.collect()
 assert gc.get_count() == c
 del a
-assert gc.get_count() == d
 gc.collect()
 assert gc.get_count() == c
+assert len(gc.garbage) == 0
 
 # test sequence to list transformation.
-assert list(Sequence()) == [];
+assert list(Sequence()) == []
 assert list(Sequence(['Au', 'Pd'])) == ['Au', 'Pd'];
 
 # test all possible comparison operators.

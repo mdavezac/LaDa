@@ -22,6 +22,9 @@ namespace lp = LaDa::python;
 using namespace LaDa;
 using namespace LaDa::python;
 
+// sequence interface
+#include "sequence.hpp"
+
 //! Structure holding shared pointer to an atom.
 extern "C" struct AtomStr
 {
@@ -31,7 +34,30 @@ extern "C" struct AtomStr
   PyObject* weakreflist;
   boost::shared_ptr< LaDa::crystal::AtomData< std::string > > atom;
 };
+//! Structure holding shared pointer to an atom.
+extern "C" struct AtomSequence
+{
+  PyObject_HEAD
+  PyArrayObject *position;
+  Sequence *sequence;
+  PyObject* dictionary;
+  PyObject* weakreflist;
+  boost::shared_ptr< LaDa::crystal::AtomData< std::vector<std::string> > > atom;
+};
 
+
+#ifdef LADA_NAME
+#  error LADA_NAME already defined
+#endif
+#ifdef LADA_TYPE
+#  error LADA_TYPE already defined
+#endif
+#ifdef LADA_ATOM_NUMBER
+#  error LADA_ATOM_NUMBER already defined
+#endif
+#define LADA_ATOM_NUMBER 0
+#define LADA_TYPE AtomStr
+#define LADA_NAME(name) atomstr_ ## name
 
 // atom getters/settters.
 #include "getset.hpp"
@@ -39,10 +65,10 @@ extern "C" struct AtomStr
 #include "cdi.hpp"
 // atom type declaration.
 #include "type.hpp"
-// set interface
-#include "set.hpp"
-// sequence interface
-#include "sequence.hpp"
+
+#undef LADA_NAME
+#undef LADA_TYPE
+#undef LADA_ATOM_NUMBER
 
 #ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
 # define PyMODINIT_FUNC void
@@ -50,9 +76,6 @@ extern "C" struct AtomStr
 
 static PyMethodDef atomstr_methods[] = 
   {
-    {"_new_set", (PyCFunction)set_new_set, METH_VARARGS,
-     "Creates new set. For debugging only.\n\n"
-     "Sets should only ever be obtained from an atom structure, and never created from scratch." },
     {"_new_sequence", (PyCFunction)sequence_new_sequence, METH_VARARGS,
      "Creates new sequence. For debugging only.\n\n"
      "Sequences should only ever be obtained from an atom structure, and never created from scratch." },
@@ -79,6 +102,6 @@ PyMODINIT_FUNC initatom(void)
   PyObject* module = Py_InitModule3("atom", atomstr_methods, doc);
 
   PyModule_AddObject(module, "AtomStr", (PyObject *)&atomstr_type);
-  PyModule_AddObject(module, "Set", (PyObject *)&sequence_type);
-  PyModule_AddObject(module, "SetIterator", (PyObject *)&sequenceiterator_type);
+  PyModule_AddObject(module, "Sequence", (PyObject *)&sequence_type);
+  PyModule_AddObject(module, "SequenceIterator", (PyObject *)&sequenceiterator_type);
 }
