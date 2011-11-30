@@ -1,7 +1,6 @@
 """ IPython magic functions to interact with the OUTCAR database. """
 
 """ List of files previously pushed to ladabase. """
-
 def get_file_list(self, args):
   """ Returns list of files to act upon. """
   from os.path import exists, isfile, join, isdir
@@ -29,12 +28,13 @@ def push(self, cmdl):
   from IPython.ipapi import TryNext
   from ..vasp import Extract
   from ..record import Record
+  from .misc import get_username, get_ladabase
   import re
 
-  if 'ladabase' not in self.api.user_ns:
-    print "Could not find ladabase instance."
-    return
-  ladabase = self.api.user_ns['ladabase']
+  try: ladabase = get_ladabase()
+  except RuntimeError as e: print e; return; 
+  try: get_username()
+  except RuntimeError as e: print e; return; 
   
   parser = argparse.ArgumentParser(prog='%push',
                      description='Push single OUTCAR or directory of OUTCARS to ladabase. ')
