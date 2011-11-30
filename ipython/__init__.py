@@ -57,8 +57,7 @@ def listjobs(self, arg):
 def saveto(self, event):
   """ Saves current job to current filename and directory. """
   from os.path import exists, abspath, isfile
-  from .. import jobs
-  from ..jobs import JobParams, MassExtract as Collect
+  from ..jobs import JobParams, MassExtract as Collect, save as savejobs
   ip = self.api
   # gets dictionary, path.
   current, path = _get_current_job_params(self, 1)
@@ -86,7 +85,7 @@ def saveto(self, event):
       if a == 'n':
        ip.user_ns["_lada_error"] = "User said no save."
        return
-    jobs.save(current.root, path, overwrite=True) 
+    savejobs(current.root, path, overwrite=True, timeout=10) 
   elif len(args) == 1:
     if exists(args[0]): 
       if not isfile(args[0]): 
@@ -99,7 +98,7 @@ def saveto(self, event):
       if a == 'n':
        ip.user_ns["_lada_error"] = "User said no save."
        return
-    jobs.save(current.root, args[0], overwrite=True) 
+    savejobs(current.root, args[0], overwrite=True, timeout=10) 
     ip.user_ns["current_jobdict_path"] = abspath(args[0])
     if "collect" not in ip.user_ns: ip.user_ns["collect"] = Collect(dynamic=True)
     if "jobparams" not in ip.user_ns: ip.user_ns["jobparams"] = JobParams()
