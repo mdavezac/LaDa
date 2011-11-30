@@ -177,7 +177,6 @@ class Extract(AbstractExtractBase):
   @property
   def vbm(self): 
     """ Energy at valence band minimum. """
-    print "WTF"
     if self.functional.eref is not None:
       raise RuntimeError('Cannot extract VBM from folded spectrum calculation.')
     from numpy import max

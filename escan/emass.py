@@ -145,7 +145,7 @@ class Functional(KEscan):
   """
   Extract = Extract
   """ Extraction object for the effective-mass functional. """
-  def __init__( self, direction=(0,0,1), nbpoints=0, stepsize=1e-2, \
+  def __init__( self, direction=None, nbpoints=0, stepsize=1e-2, \
                 center=None, lstsq=None, **kwargs ):
     """ Computes effective mass for a given direction.
     
@@ -154,6 +154,7 @@ class Functional(KEscan):
             Whether to compute electronic or effective mass.
           direction : 3-tuple 
             direction for which to compute effective mass.
+            Defaults to (0,0,1).
           nbpoints : int
             Number of points with wich to compute derivatives.
             Should be at least order + 1. Default = order + 1. 
@@ -163,6 +164,7 @@ class Functional(KEscan):
           center : 3-tuple
             k-point where to take derivative. Units of ``2|pi|/a``, with
             ``a=structure.scale``.
+            Defaults to (0,0,0).
           lstsq 
             Linear least square method. The first two parameters should
             be same as numpy.linalg.lstsq. Other parameters can be passed as extra
@@ -176,6 +178,9 @@ class Functional(KEscan):
         .. |pi|  unicode:: U+003C0 .. GREEK SMALL LETTER PI
     """
     from numpy import array
+    if center is None: center = (0, 0, 0)
+    if direction is None: direction = (0, 0, 1)
+
     self.type      = "e"
     """ Whethe to compute electronic or hole effective masses. """
     self.direction = array(direction, dtype="float64")
@@ -189,8 +194,6 @@ class Functional(KEscan):
 
         .. |pi|  unicode:: U+003C0 .. GREEK SMALL LETTER PI
     """
-    self.center = center
-    """ k-point for which to compute effective mass. """
     self.lstsq = lstsq
     """ Least square fit method to use when computing effective mass. 
     
@@ -198,6 +201,10 @@ class Functional(KEscan):
         pickleable-callable, or suffer the consequences.
     """
     super(Functional, self).__init__(**kwargs)
+    
+    # gotta be after super call, otherwise overwritten.
+    self.center = center
+    """ k-point for which to compute effective mass. """
 
   @property
   def kpoints(self):
