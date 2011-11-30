@@ -130,7 +130,7 @@ class Decode(dict):
                  | set(['_id']) )
 
 
-def to_secondary(collection='extracted', filter=None, items=None, update=False):
+def to_secondary(collection='extracted', filter=None, items=None, update=False, fromextracted=False):
   """ Extracts value to secondary database. """
   from .. import periodic_table as pt
   from ..crystal.read_write import castep
@@ -140,24 +140,27 @@ def to_secondary(collection='extracted', filter=None, items=None, update=False):
   ladabase = Manager()
   encoder = Encode()
   collection = ladabase.database[collection]
-  for element in ladabase.files.find(filter):
+  iterator = ladabase.files.find(filter) if not fromextracted else collection.find(filter)
+  for element in iterator:
 
-    if not update:
-      if collection.find_one({'metadata': {'raw': element['_id']}}) != None: continue
-
+    if fromextracted:
+      encoded, element = element, ladabase.files.find_one({'_id': element['metadata']['raw']}) 
+    else: 
+      encoded = collection.find_one({'metadata.raw': element['_id']})
+      if (not update) and encoded != None: continue
+      elif encoded == None: encoded = {'input': {}, 'output': {}, 'metadata': {}}
+      
     extract = VaspExtract(element)
-    encoded = {'input': {}, 'output': {}, 'metadata': {}}
     # create dictionary with computational details.
-    encoded['input'] = encoder(extract, ['stoechiometry', 'species', 'ispin', 'algo', 'encut',
-                                         'nelect', 'HubbardU_NLEP', 'pseudopotential'])['input']
+    encoded['input'] = encoder(extract, ['ispin', 'algo', 'encut',
+                                         'nelect', 'HubbardU_NLEP', 'pseudopotential'])['input'] 
     try: value = extract.reciprocal_volume.magtnitude.tolist() / float(sum(extract.multiplicity))
     except: pass
     else: encoded['input']['kpoint_density'] = value
-    print element['_id']
     encoded['input']['corrections'] = extract.HubbardU_NLEP
     # create dictionary with output.
     encoded['output'] = encoder(extract, ['total_energy', 'vbm', 'cbm', 'pressure'])['output']
-    encoded['output']['total_energy'] /= float(sum(encoded['input']['stoechiometry']))
+    encoded['output']['total_energy'] /= float(sum(extract.stoechiometry))
     encoded['output']['gap'] = encoded['output']['cbm'] - encoded['output']['vbm']
     try: value = extract.density.magnitude.tolist()
     except: pass
@@ -171,14 +174,12 @@ def to_secondary(collection='extracted', filter=None, items=None, update=False):
     encoded['metadata']['structure'] = castep(extract.structure)
 
     encoded['metadata']['formula'] = ""
+    encoded['input']['species'] = {}
     def sortme(args):
       specie = pt.__dict__[args[0]]
       return (specie.column + specie.row * 0.01) if args[0] in pt.__dict__ else 20
     for a, n in sorted([(a, n) for a, n in zip(extract.species, extract.stoechiometry)], key=sortme):
       encoded['metadata']['formula'] += "{0}{1}".format(a, n)
+      encoded['input']['species'][a] = n
 
-    indatabase = [k for k in collection.find({'metadata': {'raw': element['_id']}})]
-    if len(indatabase) > 1: 
-      raise RuntimeError('found more than one items corresponding to the same object {0}.'.format(extract._id))
-    elif len(indatabase) == 1: encoded['_id'] = indatabase[0]['_id']
     collection.save(encoded)
