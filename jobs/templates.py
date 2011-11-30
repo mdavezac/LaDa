@@ -131,11 +131,11 @@ def default_slurm( file, walltime = "05:45:00", mppwidth = 8, ppernode=None, acc
     file.write("#SBATCH -e \"{0}/err.%j\"\n"\
                "#SBATCH -o \"{0}/out.%j\"\n".format(pbsdir))
   if outdir is not None: file.write("#SBATCH -D {0}\n".format(abspath(outdir)))
-  if memlim == "guess":
-    file.write( "ulimit -v `python -c \"from lada.opt import total_memory; print total_memory() / {0}\"`\n"\
-                .format(ppernode) )
-  elif memlim is not None: 
-    file.write( "ulimit -v {0}".format(memlim) )
+# if memlim == "guess":
+#   file.write( "ulimit -v `python -c \"from lada.opt import total_memory; print total_memory() / {0}\"`\n"\
+#               .format(ppernode) )
+# elif memlim is not None: 
+#   file.write( "ulimit -v {0}".format(memlim) )
 
   if external:
     file.write("python {0} --nprocs {1} --external".format(pyscript, mppwidth))
