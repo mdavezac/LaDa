@@ -304,6 +304,7 @@ class Escan(object):
     # are checked, and lastly vff.minimizer attributes.
     if "external" in kwargs: this.launch_as_library = not kwargs.pop("external")
     for key in kwargs.keys():
+      if key == "external": continue
       if hasattr(this, key): setattr(this, key, kwargs[key])
       elif hasattr(this.vff, key): setattr(this.vff, key, kwargs[key])
       elif hasattr(this.vff.minimizer, key): setattr(this.vff.minimizer, key, kwargs[key])

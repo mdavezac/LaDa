@@ -352,6 +352,7 @@ class KEscan(Escan):
       do_relax_kpoint = kwargs.pop('do_relax_kpoint', kwargs.pop('do_relax_kpoints', None))
       arglist = getargspec(Escan.__call__)[0]
       for key, value in kwargs.iteritems():
+        if key == "external": continue
         if key in arglist: continue
         assert hasattr(this, key), TypeError("Unexpected keyword argument {0}.".format(key))
         setattr(this, key, value)
