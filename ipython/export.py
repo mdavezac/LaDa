@@ -29,7 +29,7 @@ def export(self, event):
                        help='Path to the tarfile. Suffixes ".gz" and ".tgz" indicate '\
                             'gzip compression, whereas ".bz" and ".bz2" indicate bzip '\
                             'compression. Otherwise, no compression is used.')
-  parser.add_argument( '--incar', action="store_true", dest=" incar",
+  parser.add_argument( '--incar', action="store_true", dest="incar",
                        help='Include INCAR files.' )
   parser.add_argument( '--doscar', action="store_true", dest="doscar",
                        help='Include DOSCAR files.' )
