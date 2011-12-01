@@ -388,7 +388,8 @@ class Incar(object):
         self.params["nsw"] = nsw
       elif self.params["nsw"] is None or self.params["nsw"] == 0: self.params["nsw"] = 50
       if potim is not None: self.params["potim"] = potim
-      if self.ediffg is not None and self.ediffg < self.ediff: self.ediffg = None
+      if self.ediffg is not None:
+        if self.ediffg < self.ediff and self.ediffg > 0: self.ediffg = None
 
   @add_setter
   def set_relaxation(self, value):
