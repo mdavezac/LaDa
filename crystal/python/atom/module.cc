@@ -29,7 +29,6 @@ using namespace LaDa::python;
 extern "C" struct AtomStr
 {
   PyObject_HEAD
-  PyArrayObject *position;
   PyObject* dictionary;
   PyObject* weakreflist;
   boost::shared_ptr< LaDa::crystal::AtomData< std::string > > atom;
@@ -38,7 +37,6 @@ extern "C" struct AtomStr
 extern "C" struct AtomSequence
 {
   PyObject_HEAD
-  PyArrayObject *position;
   Sequence *sequence;
   PyObject* dictionary;
   PyObject* weakreflist;

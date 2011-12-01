@@ -43,17 +43,6 @@ static PyObject* LADA_NAME(new)(PyTypeObject *_type, PyObject *_args, PyObject *
   self->atom.swap(dummy);
   self->dictionary = pydict;
 
-  // create numpy array referencing position.
-  npy_intp dims[1] = {3};
-  int const value = math::numpy::type<math::rVector3d::Scalar>::value;
-  self->position = (PyArrayObject*) PyArray_SimpleNewFromData(1, dims, value, self->atom->pos.data());
-  if(self->position == NULL)
-  {
-    Py_DECREF(self);
-    return NULL;
-  } 
-  self->position->base = (PyObject*)self;
-  Py_INCREF(self); // Increfed as base of array.
 
 # if LADA_ATOM_NUMBER == 1
     self->sequence = (Sequence*)sequence_type.tp_alloc(sequence_type, 0);
@@ -294,8 +283,6 @@ static int LADA_NAME(init)(LADA_TYPE* _self, PyObject* _args, PyObject *_kwargs)
 static int LADA_NAME(traverse)(LADA_TYPE *self, visitproc visit, void *arg)
 {
   Py_VISIT(self->dictionary);
-  Py_VISIT(self->position);
-  Py_VISIT(self->position->base);
 # if LADA_ATOM_NUMBER == 1
     Py_VISIT(self->sequence);
 # endif
@@ -305,7 +292,6 @@ static int LADA_NAME(traverse)(LADA_TYPE *self, visitproc visit, void *arg)
 static int LADA_NAME(gcclear)(LADA_TYPE *self)
 { 
   Py_CLEAR(self->dictionary);
-  Py_CLEAR(self->position);
 # if LADA_ATOM_NUMBER == 1
     Py_CLEAR(self->sequence);
 # endif
