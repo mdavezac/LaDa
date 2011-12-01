@@ -204,7 +204,7 @@ class Precision(SpecialVaspParam):
     value = self.value.lower()
     if value not in ["accurate", "lower", "medium", "high"]:
       raise ValueError, "PRECISION value (%s) is not allowed." % (self.key)
-    return "PRECISION = " + str(self.value)
+    return "PREC = " + str(self.value)
 
 class Ediff(SpecialVaspParam):
   """ Sets the convergence criteria (per atom) for electronic minimization.
