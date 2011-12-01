@@ -116,7 +116,7 @@ class RelaxCellShape(object):
     elif energy_convergence < 0: energy_convergence = 1e1 * self.vasp.ediff * float(len(structure.atoms))
     elif energy_convergence < self.vasp.ediff: 
       raise ValueError("Energy convergence criteria ediffg({0}) is smaller than ediff({1})."\
-                       .format(self.ediffg, self.vasp.ediff))
+                       .format(self.vasp.ediffg, self.vasp.ediff))
 
     comm = Communicator(comm if comm is not None else world)
 
