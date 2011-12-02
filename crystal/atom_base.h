@@ -73,7 +73,7 @@ namespace LaDa
 #         ifdef LADA_PYDICT
 #           error LADA_PYDICT already defined.
 #         endif
-#         ifdef LADA_PYTHON
+#         ifdef LADA_DO_PYTHON
             PyObject *pydict;
 #           define LADA_PYDICT , pydict(NULL)
 #         else 
@@ -82,7 +82,7 @@ namespace LaDa
 
           //! Constructor
           AtomData() : AtomFreezeMixin(frozen::NONE), pos(math::rVector3d(0,0,0)),
-                       type(), site(-1) {}
+                       type(), site(-1) LADA_PYDICT {}
           //! Constructor
           template<class T_DERIVED>
             AtomData   ( Eigen::DenseBase<T_DERIVED> const &_pos, t_Type const &_in,
@@ -90,10 +90,54 @@ namespace LaDa
                      : AtomFreezeMixin(_freeze), pos(_pos), type(_in), site(_site) LADA_PYDICT {}
           //! Copy Constructor
           AtomData   (const AtomData &_c)
-                   : AtomFreezeMixin(_c), pos(_c.pos), type(_c.type), site(_c.site) LADA_PYDICT {}
+                   : AtomFreezeMixin(_c), pos(_c.pos), type(_c.type), site(_c.site)
+          {
+#           ifdef LADA_DO_PYTHON
+              if(_c.pydict == NULL and pydict != NULL) 
+              {
+                PyObject *dummy = pydict;
+                pydict = NULL;
+                Py_XDECREF(pydict);
+              }
+              else if(_c.pydict != NULL)
+              {
+                if(pydict == NULL) pydict = PyDict_New();
+                else PyDict_Clear(pydict);
+                if(pydict == NULL) return;
+                if(PyDict_Size(_c.pydict) == 0) return;
+                PyObject *key, *value;
+                Py_ssize_t pos = 0;
+                PyObject* copymod = PyImport_ImportModule("copy");
+                if(copymod == NULL) return;
+                PyObject *deepcopystr = PyString_FromString("deepcopy");
+                if(not deepcopystr) { Py_DECREF(copymod); return; }
+                while(PyDict_Next(pydict, &pos, &key, &value))
+                {
+                  PyObject* copied = PyObject_CallMethodObjArgs(copymod, deepcopystr, value);
+                  if(PyErr_Occurred() != NULL) goto error;
+                  if(PyDict_SetItem(pydict, key, copied) >= 0) continue;
+                  error:
+                    Py_XDECREF(copied);
+                    Py_DECREF(copymod); 
+                    Py_DECREF(deepcopystr);
+                    return;
+                }
+                Py_DECREF(copymod);
+                Py_DECREF(deepcopystr);
+              }
+#           endif
+          }
 #         undef LADA_PYDICT
-#         ifdef LADA_PYTHON
-          ~AtomData() { Py_XDECREF(pydict); }
+#         ifdef LADA_DO_PYTHON
+          ~AtomData()
+          { 
+            if(pydict != NULL)
+            {
+              PyObject *dummy = pydict;
+              pydict = NULL;
+              Py_DECREF(dummy); 
+            }
+          }
 #         endif
       
         private:

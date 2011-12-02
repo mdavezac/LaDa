@@ -6,10 +6,6 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/base_object.hpp>
-#ifdef LADA_DO_PYTHON
-#  include <boost/python/object.hpp>
-#  include <boost/python/borrowed.hpp>
-#endif
 
 #ifdef LADA_WITH_LNS
 #  include "load_n_save/xpr/utilities.h"

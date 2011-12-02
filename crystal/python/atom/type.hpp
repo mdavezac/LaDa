@@ -16,8 +16,8 @@ static PyTypeObject LADA_NAME(type) = {
     0,                         /*tp_hash */
     0,                         /*tp_call*/
     0,                         /*tp_str*/
-    0,                         /*tp_getattro*/
-    0,                         /*tp_setattro*/
+    LADA_NAME(getattro),       /*tp_getattro*/
+    LADA_NAME(setattro),       /*tp_setattro*/
     0,                         /*tp_as_buffer*/
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC, /*tp_flags*/
     "Atom for which the type is specified as a strings.\n\n"
@@ -52,7 +52,7 @@ static PyTypeObject LADA_NAME(type) = {
     0,                         /* tp_dict */
     0,                         /* tp_descr_get */
     0,                         /* tp_descr_set */
-    offsetof(LADA_TYPE, dictionary),/* tp_dictoffset */
+    0,                         /* tp_dictoffset, dictionary is not reached this way. Must be null. */
     (initproc)LADA_NAME(init),    /* tp_init */
     0,                            /* tp_alloc */
     LADA_NAME(new),               /* tp_new */

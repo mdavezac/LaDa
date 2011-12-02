@@ -3,11 +3,11 @@
 #include <iterator> 
 
 #include <Python.h>
-#include <boost/python/tuple.hpp>
-#include <boost/python/dict.hpp>
-#include <boost/python/borrowed.hpp>
-#include <boost/python/slice.hpp>
-#include <boost/python/slice_nil.hpp>
+// #include <boost/python/tuple.hpp>
+// #include <boost/python/dict.hpp>
+// #include <boost/python/borrowed.hpp>
+// #include <boost/python/slice.hpp>
+// #include <boost/python/slice_nil.hpp>
 
 #include <math/python/python.hpp>
 #include <python/exceptions.h>
@@ -29,7 +29,6 @@ using namespace LaDa::python;
 extern "C" struct AtomStr
 {
   PyObject_HEAD
-  PyObject* dictionary;
   PyObject* weakreflist;
   boost::shared_ptr< LaDa::crystal::AtomData< std::string > > atom;
 };
@@ -38,7 +37,6 @@ extern "C" struct AtomSequence
 {
   PyObject_HEAD
   Sequence *sequence;
-  PyObject* dictionary;
   PyObject* weakreflist;
   boost::shared_ptr< LaDa::crystal::AtomData< std::vector<std::string> > > atom;
 };
@@ -56,14 +54,24 @@ extern "C" struct AtomSequence
 #define LADA_ATOM_NUMBER 0
 #define LADA_TYPE AtomStr
 #define LADA_NAME(name) atomstr_ ## name
-
 // atom getters/settters.
 #include "getset.hpp"
 // creation, deallocation, initialization.
 #include "cdi.hpp"
 // atom type declaration.
 #include "type.hpp"
-
+#undef LADA_NAME
+#undef LADA_TYPE
+#undef LADA_ATOM_NUMBER
+#define LADA_ATOM_NUMBER 1
+#define LADA_TYPE AtomSequence
+#define LADA_NAME(name) atomsequence_ ## name
+// atom getters/settters.
+#include "getset.hpp"
+// creation, deallocation, initialization.
+#include "cdi.hpp"
+// atom type declaration.
+#include "type.hpp"
 #undef LADA_NAME
 #undef LADA_TYPE
 #undef LADA_ATOM_NUMBER
@@ -85,14 +93,19 @@ PyMODINIT_FUNC initatom(void)
   import_array(); // needed for NumPy 
 
   // set generic attributes for atom.
-  atomstr_type.tp_getattro = PyObject_GenericGetAttr;
-  atomstr_type.tp_setattro = PyObject_GenericSetAttr;
+// atomstr_type.tp_getattro = PyObject_GenericGetAttr;
+// atomstr_type.tp_setattro = PyObject_GenericSetAttr;
+// atomsequence_type.tp_getattro = PyObject_GenericGetAttr;
+// atomsequence_type.tp_setattro = PyObject_GenericSetAttr;
+  sequence_type.tp_free = PyObject_GC_Del;
 
   if (PyType_Ready(&atomstr_type) < 0) return;
+  if (PyType_Ready(&atomsequence_type) < 0) return;
   if (PyType_Ready(&sequence_type) < 0) return;
   if (PyType_Ready(&sequenceiterator_type) < 0) return;
 
   Py_INCREF(&atomstr_type);
+  Py_INCREF(&atomsequence_type);
   Py_INCREF(&sequence_type);
   Py_INCREF(&sequenceiterator_type);
 
@@ -100,6 +113,7 @@ PyMODINIT_FUNC initatom(void)
   PyObject* module = Py_InitModule3("atom", atomstr_methods, doc);
 
   PyModule_AddObject(module, "AtomStr", (PyObject *)&atomstr_type);
+  PyModule_AddObject(module, "AtomSequence", (PyObject *)&atomsequence_type);
   PyModule_AddObject(module, "Sequence", (PyObject *)&sequence_type);
   PyModule_AddObject(module, "SequenceIterator", (PyObject *)&sequenceiterator_type);
 }

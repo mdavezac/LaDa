@@ -178,7 +178,12 @@ static PyObject* sequence_repr(Sequence* _self)
 // Function to deallocate a string atom.
 static void sequence_dealloc(Sequence *_self)
 {
-  if(_self->ptr_base == NULL and _self->ptr_seq != NULL) delete _self->ptr_seq;
+  if(_self->ptr_base == NULL and _self->ptr_seq != NULL)
+  {
+    std::vector<std::string> *dummy = _self->ptr_seq;
+    _self->ptr_seq = NULL;
+    delete dummy;
+  }
   sequence_gcclear(_self);
   _self->ob_type->tp_free((PyObject*)_self);
 }
@@ -387,7 +392,7 @@ static PyObject* sequence_new_sequence(PyObject* _module, PyObject* _in)
   PyObject *input = NULL;
   if(not PyArg_UnpackTuple(_in, "_new_sequence", 0, 1, &input)) goto error;
   // creates new object and check result.
-  result = (Sequence*)sequence_type.tp_alloc(&sequence_type, 0);
+  result = PyObject_GC_New(Sequence, &sequence_type);
   if(result == NULL) goto error;
   
   // on success initializes object.
@@ -398,6 +403,7 @@ static PyObject* sequence_new_sequence(PyObject* _module, PyObject* _in)
     LADA_PYERROR(internal, "Could not create sequence.");
     goto error;
   }
+  PyObject_GC_Track(result);
   if(input != NULL)
   {
     if(PyObject* return_ = to_cpp_sequence_(input, *result->ptr_seq)) Py_DECREF(return_);
@@ -413,6 +419,13 @@ static PyObject* sequence_new_sequence(PyObject* _module, PyObject* _in)
 
 static inline int sequence_cmp_object(Sequence *_self, PyObject *_b)
 {
+  if(PyString_Check(_b) == 1)
+  {
+    char const * const string = PyString_AsString(_b);
+    if(_self->ptr_seq->size() == 0) return std::string(string) == "" ? 0: -1;
+    if(_self->ptr_seq->front() == string) return 0;
+    return _self->ptr_seq->front() < string ? -1: 1;
+  }
   PyObject* iterator = PyObject_GetIter(_b);
   if(iterator == NULL) return -2;
   // loop until we find a strictly < or strictly > comparison.

@@ -19,21 +19,25 @@ static void LADA_NAME(dealloc)(LADA_TYPE *_self)
     PyObject_ClearWeakRefs((PyObject *) _self);
 
   LADA_NAME(gcclear)(_self);
-  boost::shared_ptr< LaDa::crystal::AtomData< std::string > > dummy;
-  dummy.swap(_self->atom);
   _self->ob_type->tp_free((PyObject*)_self);
 }
 
 //! Function to allocate a string atom.
 static PyObject* LADA_NAME(new)(PyTypeObject *_type, PyObject *_args, PyObject *_kwargs)
 {
-  PyObject *const pydict = PyDict_New();
-  if(pydict == NULL) return NULL;
   LADA_TYPE *self;
   self = (LADA_TYPE*)_type->tp_alloc(_type, 0);
   if(self == NULL) return NULL;
+  // set everything to null, just in case we exit to fast.
   self->weakreflist = NULL;
-  boost::shared_ptr< crystal::AtomData<std::string> > dummy(new LaDa::crystal::AtomData<std::string>);
+  // Now starts setting things up.
+# if LADA_ATOM_NUMBER == 0
+    boost::shared_ptr< crystal::AtomData<std::string> > dummy(new LaDa::crystal::AtomData<std::string>);
+# elif LADA_ATOM_NUMBER == 1
+    self->sequence = NULL;
+    boost::shared_ptr< crystal::AtomData< std::vector<std::string> > >
+      dummy(new LaDa::crystal::AtomData< std::vector<std::string> >);
+# endif
   if(not dummy)
   {
     Py_DECREF(self);
@@ -41,19 +45,18 @@ static PyObject* LADA_NAME(new)(PyTypeObject *_type, PyObject *_args, PyObject *
     return NULL;
   } 
   self->atom.swap(dummy);
-  self->dictionary = pydict;
 
 
 # if LADA_ATOM_NUMBER == 1
-    self->sequence = (Sequence*)sequence_type.tp_alloc(sequence_type, 0);
+    self->sequence = PyObject_GC_New(Sequence, &sequence_type);
     if(self->sequence == NULL)
     {
-      Py_DECREF(self->position);
       Py_DECREF(self);
       return NULL;
     }
     self->sequence->ptr_seq = &self->atom->type;
-    self->sequence->ptr_base = self;
+    self->sequence->ptr_base = (PyObject*)self;
+    PyObject_GC_Track(self->sequence);
     Py_INCREF(self); // increfed because of sequence base.
 # endif
 
@@ -157,7 +160,7 @@ static int LADA_NAME(init)(LADA_TYPE* _self, PyObject* _args, PyObject *_kwargs)
             }
             if(char * const string = PyString_AsString(inner_item))
             {
-              _self->atom->type.push_back(inner_item);
+              _self->atom->type.push_back(string);
               found_type = true;
             }
             else
@@ -206,7 +209,8 @@ static int LADA_NAME(init)(LADA_TYPE* _self, PyObject* _args, PyObject *_kwargs)
 #   if LADA_ATOM_NUMBER == 0
       if(PyString_Check(type) == 1) _self->atom->type = PyString_AS_STRING(type);
 #   elif LADA_ATOM_NUMBER == 1
-      if(PyObject* return_ = to_cpp_sequence_(input, self->atom->type)) Py_DECREF(return_);
+      _self->atom->type.clear();
+      if(PyObject* return_ = to_cpp_sequence_(type, _self->atom->type)) Py_DECREF(return_);
 #   endif
     else 
     {
@@ -276,24 +280,26 @@ static int LADA_NAME(init)(LADA_TYPE* _self, PyObject* _args, PyObject *_kwargs)
     PyDict_DelItemString(_kwargs, "freeze");
   }
   // Now additional attributes.
-  int const result = PyDict_Merge(_self->dictionary, _kwargs, 1);
+  int const result = PyDict_Merge(_self->atom->pydict, _kwargs, 1);
   return result;
 }
 
 static int LADA_NAME(traverse)(LADA_TYPE *self, visitproc visit, void *arg)
 {
-  Py_VISIT(self->dictionary);
 # if LADA_ATOM_NUMBER == 1
-    Py_VISIT(self->sequence);
+   Py_VISIT(self->sequence);
 # endif
+  Py_VISIT(self->atom->pydict);
   return 0;
 }
 
 static int LADA_NAME(gcclear)(LADA_TYPE *self)
 { 
-  Py_CLEAR(self->dictionary);
 # if LADA_ATOM_NUMBER == 1
-    Py_CLEAR(self->sequence);
+   Py_CLEAR(self->sequence);
 # endif
+  // Following line basically calls Py_CLEAR if atom shared pointer is not
+  // owned anymore.
+  if(self->atom) self->atom.reset(); 
   return 0;
 }
