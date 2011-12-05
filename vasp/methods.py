@@ -111,12 +111,32 @@ class RelaxCellShape(object):
     maxiter = kwargs.pop("maxiter", self.maxiter)
     keep_steps = kwargs.pop("keep_steps", self.keep_steps)
     outdir = getcwd() if outdir is None else RelativeDirectory(outdir).path
-    energy_convergence = self.vasp.ediffg
-    if energy_convergence is None: energy_convergence = 1e1 * self.vasp.ediff * float(len(structure.atoms))
-    elif energy_convergence < 0: energy_convergence = 1e1 * self.vasp.ediff * float(len(structure.atoms))
-    elif energy_convergence < self.vasp.ediff: 
+
+    # convergence criteria and behavior.
+    convergence = kwargs.get('convergence', getattr(self, 'convergence', self.vasp.ediffg))
+    if convergence is None: convergence = 1e1 * self.vasp.ediff * float(len(structure.atoms))
+    elif hasattr(convergence, "__call__"): pass
+    elif convergence > 0 and convergence < self.vasp.ediff: 
       raise ValueError("Energy convergence criteria ediffg({0}) is smaller than ediff({1})."\
                        .format(self.vasp.ediffg, self.vasp.ediff))
+    if hasattr(convergence, "__call__"):
+      def is_converged(extractor):  
+        if extractor is None: return True
+        if not extractor.success: raise RuntimeError("VASP calculation did not succeed.")
+        return convergence(extractor)
+    else:
+      if convergence > 0e0:
+        def is_converged(extractor):
+          if extractor is None: return True
+          if not extractor.success: raise RuntimeError("VASP calculation did not succeed.")
+          if extractor.total_energies.shape[0] < 2: return False
+          return abs(extractor.total_energies[-2] - extractor.total_energies[-1:]) < convergence
+      else:
+        def is_converged(extractor):
+          if extractor is None: return True
+          if not extractor.success: raise RuntimeError("VASP calculation did not succeed.")
+          return max(abs(output.forces)) > abs(convergence)
+
 
     comm = Communicator(comm if comm is not None else world)
 
@@ -131,7 +151,7 @@ class RelaxCellShape(object):
      
     # does not run code. Just creates directory.
     if kwargs.pop("norun", False): 
-      this = RelaxCellShape(vasp, relaxation, first_trial, maxiter)
+      this = RelaxCellShape(vasp, vasp.relaxation, first_trial, maxiter)
       yield this._norun(structure, outdir=outdir, comm=comm, **kwargs)
       return
 
@@ -144,6 +164,7 @@ class RelaxCellShape(object):
       params.update(first_trial)
     else: params = kwargs
     comm.barrier()
+
     
     # performs relaxation calculations.
     while maxiter <= 0 or nb_steps < maxiter and vasp.relaxation.find("cellshape") != -1:
@@ -163,17 +184,12 @@ class RelaxCellShape(object):
       
       nb_steps += 1
       if nb_steps == 1 and len(first_trial) != 0: params = kwargs; continue
-      if output.total_energies.shape[0] < 2: break
-      energies = output.total_energies[-2] - output.total_energies[-1:]
-      if abs(energies) < energy_convergence: break
+      # check for convergence.
+      if is_converged(output): break;
 
     # Does not perform ionic calculation if convergence not reached.
-    if output is not None:
-      assert output.success, RuntimeError("VASP calculations did not complete.")
-      if output.total_energies.shape[0] >= 2:
-        energies = output.total_energies[-2] - output.total_energies[-1:]
-        assert abs(energies) < energy_convergence, \
-               RuntimeError("Could not converge cell-shape in {0} iterations.".format(maxiter))
+    if not is_converged(output): 
+      raise RuntimeError("Could not converge cell-shape in {0} iterations.".format(maxiter))
 
     # performs ionic calculation. 
     while maxiter <= 0 or nb_steps < maxiter + 1 and vasp.relaxation.find("ionic") != -1:
@@ -193,17 +209,12 @@ class RelaxCellShape(object):
 
       nb_steps += 1
       if nb_steps == 1 and len(first_trial) != 0: params = kwargs; continue
-      if output.total_energies.shape[0] < 2: break
-      energies = output.total_energies[-2] - output.total_energies[-1:]
-      if abs(energies) < energy_convergence: break
+      # check for convergence.
+      if is_converged(output): break;
 
     # Does not perform static calculation if convergence not reached.
-    if output is not None:
-      assert output.success, RuntimeError("VASP calculations did not complete.")
-      if output.total_energies.shape[0] >= 2:
-        energies = output.total_energies[-2] - output.total_energies[-1:]
-        assert abs(energies) < energy_convergence, \
-               RuntimeError("Could not converge ions in {0} iterations.".format(maxiter))
+    if not is_converged(output): 
+      raise RuntimeError("Could not converge ions in {0} iterations.".format(maxiter))
 
     # performs final calculation outside relaxation directory. 
     output = vasp\
