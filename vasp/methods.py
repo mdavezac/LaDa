@@ -135,7 +135,7 @@ class RelaxCellShape(object):
         def is_converged(extractor):
           if extractor is None: return True
           if not extractor.success: raise RuntimeError("VASP calculation did not succeed.")
-          return max(abs(output.forces)) > abs(convergence)
+          return max(abs(output.forces)) < abs(convergence)
 
 
     comm = Communicator(comm if comm is not None else world)
@@ -260,7 +260,6 @@ class RelaxCellShape(object):
         use `generator` instead.
     """ 
     from os import getcwd
-    from os.path import exists
     from ..opt import RelativeDirectory
     from ..mpi import Communicator, world
 
