@@ -80,6 +80,19 @@ class Extract(object):
     regex = r"""General\s+timing\s+and\s+accounting\s+informations\s+for\s+this\s+job"""
     return self._find_last_OUTCAR(regex) is not None
 
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def datetime(self):
+    """ Greps execution date and time. """
+    from datetime import datetime
+    regex = r"""executed on .*\n"""
+    result = self._find_first_OUTCAR(regex)
+    if result is None: return
+    result = result.group(0)
+    result = result[result.find('date')+4:].rstrip().lstrip()
+    return datetime.strptime(result, '%Y.%m.%d  %H:%M:%S')
+
 
   @broadcast_result(attr=True, which=0)
   def _starting_structure_data(self):

@@ -422,3 +422,27 @@ class Extract(object):
   def dielectric_constant(self):
     """ Dielectric constant of the material. """
     return  self.electronic_dielectric_constant + self.ionic_dielectric_constant
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def forces(self):
+    """ Forces on each atom. """
+    from numpy import array
+    from quantities import angstrom
+    from re import compile
+    result = []
+    regex = compile('POSITION\\s*TOTAL-FORCE')
+    with self.__outcar__() as file:
+      doline = -1
+      for line in file: 
+        if doline > 0: 
+          try: data = [float(u) for u in line.split()[-3:]]
+          except: doline = -1
+          else: result.append(data)
+        elif doline == 0: doline += 1
+        elif regex.search(line) != None: 
+          result = []
+          doline = 0 
+    return array(result) * eV / angstrom
+
