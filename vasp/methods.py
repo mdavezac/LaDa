@@ -133,9 +133,10 @@ class RelaxCellShape(object):
           return abs(extractor.total_energies[-2] - extractor.total_energies[-1:]) < convergence
       else:
         def is_converged(extractor):
+          from numpy import max, abs, all
           if extractor is None: return True
           if not extractor.success: raise RuntimeError("VASP calculation did not succeed.")
-          return max(abs(output.forces)) < abs(convergence)
+          return all(max(abs(output.forces)) < abs(convergence))
 
 
     comm = Communicator(comm if comm is not None else world)
