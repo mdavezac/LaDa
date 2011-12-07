@@ -130,8 +130,6 @@ def generate_fere_summary(filters=3, tempname="ladabaseextracteditersystemtempna
   elif filters is None: filters = {'metadata.Enthalpy': {'$exists': True}}
 
   for species in iter_fere_ternaries(extracted, filters, tempname):
-    # remove previously existing items in summary collection.
-    fere_summary.remove({'metadata.species': species})
   
     # find thermodynamically stable compounds.
     if 'metadata.date_added' in filters: del filters['metadata.date_added']
@@ -143,43 +141,29 @@ def generate_fere_summary(filters=3, tempname="ladabaseextracteditersystemtempna
     # find all compounds for this system.
     query = {'metadata.Enthalpy': {'$exists': True},
              'metadata.species': {'$not': {'$elemMatch': {'$nin': species}}}}
-    unstable_ids = [u['_id'] for u in ladabase.extracted.find(query)]
-    stable_ids = []
+    allids = [u['_id'] for u in ladabase.extracted.find(query)]
+    document = { '_id': ''.join(species),
+                 'species': species,
+                 'mus_diagram': { 'formulae': [],
+                                  'polyhedra': [],
+                                  'extracted_ids': [],
+                                  'x': species[0],
+                                  'y': species[1]
+                            },
+                 'extracted_ids': allids,
+               }
+
     # loop over stable compounds only.
-    newdocs = []
     for indices, id in zip(hrep.ininc[:Nsystems], ids):
       if len(indices) == 0: continue
       assert all(array(hrep.is_vertex)[indices] == 1)
       poly = contour(hrep.generators[indices][:, [0, 1]])
-      unstable_ids.remove(id)
-      stable_ids.append(id)
 
       element = extracted.find_one({'_id': id})
-      newdoc = {'metadata': { 'formula': element['metadata']['formula'],
-                              'date_generated': element['metadata']['date_generated'],
-                              'operator': element['metadata']['operator'],
-                              'functional': element['metadata']['functional'],
-                              'species': element['metadata']['species']
-                            },
-                'input': { 'encut': element['input']['encut'],
-                           'pseudopotential': element['input']['pseudopotential'],
-                           'structure': element['input']['structure']
-                         },
-                'output': { 'gap': element['output']['gap'],
-                            'stability_region': [u for u in zip(poly[:, 0], poly[:, 1])],
-                            'density': element['output']['density'] 
-                          }
-              }
-      if 'kpoint_density' in element['input']: 
-        newdoc['input']['kpoint_density'] = element['input']['kpoint_density']
-      if 'pressure' in element['output']: 
-        newdoc['output']['pressure'] = element['output']['pressure'],
-      newdocs.append(newdoc)
-      fere_summary.save(newdoc)
-    setme = {'$set': {'related': {'unstable': unstable_ids, 'stable': [u['_id'] for u in newdocs]}}}
-    for doc in newdocs: fere_summary.update({'_id': doc['_id']}, setme)
-    setme = {'$set': {'tracked.fere_summary': [u['_id'] for u in newdocs]}}
-    for id in unstable_ids: extracted.update({'_id': id}, setme)
-    setme = {'$set': {'tracked.fere_summary': [u['_id'] for u in newdocs]}}
-    for id in stable_ids: extracted.update({'_id': id}, setme)
+      document['mus_diagram']['formulae'].append(element['metadata']['formula'])
+      document['mus_diagram']['extracted_ids'].append(element['_id'])
+      document['mus_diagram']['polyhedra'].append([u for u in zip(poly[:, 0], poly[:, 1])])
 
+    fere_summary.save(document)
+    setme = {'$set': {'tracked.fere_summary': document['mus_diagram']['extracted_ids']}}
+    for id in allids: extracted.update({'_id': id}, setme)
