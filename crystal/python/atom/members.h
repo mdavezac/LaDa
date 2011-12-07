@@ -135,19 +135,8 @@ PyObject *LADA_NAME(deepcopy)(LADA_TYPE* _self, PyObject* _memo)
 // Implements shallow copy.
 PyObject *LADA_NAME(shallowcopy)(LADA_TYPE* _self)
 {
-# if LADA_ATOM_NUMBER == 0
-    LADA_TYPE* result = (LADA_TYPE*)PyAtomStr_New();
-# elif LADA_ATOM_NUMBER == 1
-    LADA_TYPE* result = (LADA_TYPE*)PyAtomSequence_New();
-# endif
-  if(not result) return NULL;
-  result->atom = _self->atom;
-# if LADA_ATOM_NUMBER == 1
-    result->sequence->ptr_seq = &result->atom->type;
-    result->sequence->ptr_atom = result->atom;
-# endif
-
-  return (PyObject*)result;
+  Py_INCREF(_self);
+  return (PyObject*)_self;
 }
 
 // Creates dictionary from atom with shallow copies.
