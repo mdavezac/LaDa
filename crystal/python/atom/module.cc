@@ -13,8 +13,7 @@
 #include <python/exceptions.h>
 #include <python/numpy_types.h>
 
-#include "../../atom.h"
-#include "extract_species.h"
+#include "atom.h"
 
 namespace bp = boost::python;
 namespace lp = LaDa::python;
@@ -24,23 +23,6 @@ using namespace LaDa::python;
 
 // sequence interface
 #include "sequence.hpp"
-
-//! Structure holding shared pointer to an atom.
-extern "C" struct AtomStr
-{
-  PyObject_HEAD
-  PyObject* weakreflist;
-  boost::shared_ptr< LaDa::crystal::AtomData< std::string > > atom;
-};
-//! Structure holding shared pointer to an atom.
-extern "C" struct AtomSequence
-{
-  PyObject_HEAD
-  Sequence *sequence;
-  PyObject* weakreflist;
-  boost::shared_ptr< LaDa::crystal::AtomData< std::vector<std::string> > > atom;
-};
-
 
 #ifdef LADA_NAME
 #  error LADA_NAME already defined
@@ -97,7 +79,7 @@ PyMODINIT_FUNC initatom(void)
 // atomstr_type.tp_setattro = PyObject_GenericSetAttr;
 // atomsequence_type.tp_getattro = PyObject_GenericGetAttr;
 // atomsequence_type.tp_setattro = PyObject_GenericSetAttr;
-  sequence_type.tp_free = PyObject_GC_Del;
+// sequence_type.tp_free = PyObject_GC_Del;
 
   if (PyType_Ready(&atomstr_type) < 0) return;
   if (PyType_Ready(&atomsequence_type) < 0) return;

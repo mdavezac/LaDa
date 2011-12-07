@@ -97,7 +97,7 @@ namespace LaDa
               {
                 PyObject *dummy = pydict;
                 pydict = NULL;
-                Py_XDECREF(pydict);
+                Py_XDECREF(dummy);
               }
               else if(_c.pydict != NULL)
               {

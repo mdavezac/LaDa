@@ -1,7 +1,7 @@
 set( PYCRYSTAL_PY  gruber.py  __init__.py A2BX4.py bravais.py binary.py 
      read_write.py _docstring.py ABX3.py _modify_atom_classes.py)
 set( PYCRYSTAL_HEADERS 
-     structure.hpp add_atom.hpp structure_contains.hpp)
+     structure.hpp add_atom.hpp structure_contains.hpp atom/atom.h )
    #    atom.hpp  enumerate.hpp  lattice.hpp  layerdepth.hpp  neighbors.hpp
    #    read_structure.hpp  smith.hpp  structure.hpp  symmetry_operator.hpp
    #    which_site.hpp misc.hpp periodic_dnc.hpp )
@@ -27,11 +27,10 @@ set_target_properties(pycrystal PROPERTIES OUTPUT_NAME crystal)
 install(FILES ${PYCRYSTAL_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/crystal)
 install(TARGETS pycrystal DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/crystal)
 
-python_add_module (pyatom ${PYATOM_HEADERS} ${PYATOM_SOURCES})
+add_library (pyatom SHARED ${PYATOM_HEADERS} ${PYATOM_SOURCES})
 target_link_libraries(pyatom crystal ${PYTHON_LIBRARY} ${Boost_PYTHON_LIBRARY} )
-mark_as_advanced(PYTHON_ENABLE_MODULE_pyatom)
-mark_as_advanced(PYTHON_MODULE_pyatom_BUILD_SHARED)
 set_target_properties(pyatom PROPERTIES OUTPUT_NAME atom)
+set_target_properties(pyatom PROPERTIES PREFIX "")
 install(TARGETS pyatom DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/crystal/cppwrappers)
 configure_file (
  "${PROJECT_SOURCE_DIR}/crystal/python/wrappers_init.py"
@@ -39,6 +38,18 @@ configure_file (
 )
 install( FILES ${PROJECT_BINARY_DIR}/crystal/python/__init__.py DESTINATION
          ${CMAKE_PYINSTALL_PREFIX}/lada/crystal/cppwrappers)
+# python_add_module (pyatom ${PYATOM_HEADERS} ${PYATOM_SOURCES})
+# target_link_libraries(pyatom crystal ${PYTHON_LIBRARY} ${Boost_PYTHON_LIBRARY} )
+# mark_as_advanced(PYTHON_ENABLE_MODULE_pyatom)
+# mark_as_advanced(PYTHON_MODULE_pyatom_BUILD_SHARED)
+# set_target_properties(pyatom PROPERTIES OUTPUT_NAME atom)
+# install(TARGETS pyatom DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/crystal/cppwrappers)
+# configure_file (
+#  "${PROJECT_SOURCE_DIR}/crystal/python/wrappers_init.py"
+#  "${PROJECT_BINARY_DIR}/crystal/python/__init__.py"
+# )
+# install( FILES ${PROJECT_BINARY_DIR}/crystal/python/__init__.py DESTINATION
+#          ${CMAKE_PYINSTALL_PREFIX}/lada/crystal/cppwrappers)
 
 if(MPI_FOUND)
   include_directories(${MPI_INCLUDE_PATH})

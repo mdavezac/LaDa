@@ -1,55 +1,19 @@
-from lada.crystal import @TYPE@
-from atom_self_@TYPE@ import get_new_object, get_new_atom, get_reference,\
-                              get_incorrect_reference, check_back_reference, get_pointer,\
-                              change_pos
+# Check that wrappers around a c++-created instance work and that the dictionary is
+# conserved for the life of the c++ object, rather that of the python wrapper.
+from numpy import abs, all
+from lada.crystal.cppwrappers.atom import @PYTYPE@
+from atom_self_@TYPE@ import get_new_object, get_static_object
+a = get_static_object()
+a.pos = [0.1, 0.1, 0.1] # set the whole array.
+a.pos[1] = 0.2          # set a single item.
+a.type = 'Au' if "@PYTYPE@" == "AtomStr" else ['Au', 'Pd'] # set whole array
+a.m = 0.5 # add other attribute.
+i = id(a.__dict__) # keep track of __dict__'s id to check identity later on.
+del a # delete wrapper.
+b = get_static_object() # gets the same c++ object back
+assert all(abs(b.pos - [0.1, 0.2, 0.1]) < 1e-12)
+assert b.type == 'Au' if "@PYTYPE@" == "AtomStr" else ['Au', 'Ga']
+assert id(b.__dict__) == i
+assert hasattr(b, 'm')
+assert abs(b.m - 0.5) < 1e-12
 
-a = @TYPE@()
-assert id(a) == id(a._self)
-check_back_reference(a, a)
-a.magnetic = 5
-assert getattr(a._self, "magnetic", None) == 5
-
-# a = get_new_object()
-# assert id(a) == id(a._self)
-# check_back_reference(a, a)
-# a.magnetic = 5
-# assert getattr(a._self, "magnetic", None) == 5
-
-# a = get_new_atom()
-# assert id(a) == id(a._self)
-# check_back_reference(a, a)
-# a.magnetic = 5
-# assert getattr(a._self, "magnetic", None) == 5
-
-# a = get_incorrect_reference()
-# assert a._self == None
-# a.pos[0] = 1
-# b = get_incorrect_reference()
-# print abs(b.pos[0] - 0e0)
-
-a = get_reference()
-assert id(a) == id(a._self)
-check_back_reference(a, a)
-b = get_reference()
-assert id(a) == id(b)
-check_back_reference(a, b)
-check_back_reference(b, a)
-a.magnetic = 5
-assert getattr(a._self, "magnetic", None) == 5
-assert getattr(b, "magnetic", None) == 5
-# assert abs(a.pos[0]-0e0) < 1e-12
-a.type.add("Au")
-del a
-print "WWW"
-# assert abs(b.pos[0]-0e0) < 1e-12
-print "WWW2"
-# change_pos(a)
-print "WWW3"
-# assert abs(b.pos[0]-1e0) < 1e-12
-print "WWW4"
-
-# a = get_pointer()
-# assert id(a) == id(a._self)
-# check_back_reference(a, a)
-# change_pos(a)
-# assert abs(a.pos[0]-1e0) < 1e-12

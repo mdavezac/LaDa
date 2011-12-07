@@ -13,6 +13,15 @@
 #endif
 
 #include "atom_base.h"
+#ifdef LADA_DO_PYTHON
+  #include <Python.h>
+
+  namespace LaDa { namespace crystal { 
+    template<class T_TYPE> class Atom;
+  } }
+  template<class T> PyObject* PyAtom_FromAtom(LaDa::crystal::Atom<T> const &_atom);
+#endif
+  
 
 namespace LaDa
 {
@@ -49,6 +58,9 @@ namespace LaDa
         //! To load and save to xml-like input.
         friend class load_n_save::access; 
 #     endif
+#     ifdef LADA_DO_PYTHON
+        friend PyObject* PyAtom_FromAtom<>(Atom const &_atom);
+#     endif
       public: 
         //! Type of the contained data.
         typedef AtomData<T_TYPE> element_type;
@@ -63,7 +75,9 @@ namespace LaDa
         //! Constructor
         Atom() : atom_(new AtomData<T_TYPE>)  {}
         //! Copy Constructor
-        Atom(const Atom &_c ) : atom_(_c.atom_) {}
+        Atom(Atom const &_c ) : atom_(_c.atom_) {}
+        //! Takes hold of atomic data.
+        Atom(boost::shared_ptr<element_type> const& _c) : atom_(_c) {}
 
         //! Points to owned data.
         AtomData<T_TYPE> const* operator->() const { return atom_.get(); }
@@ -94,6 +108,27 @@ namespace LaDa
         types::t_unsigned const & freeze() const { return atom_->freeze; }
         //! Returns freeze parameter.
         types::t_unsigned & freeze() { return atom_->freeze; }
+#       ifdef LADA_DO_PYTHON
+          //! \brief Returns borrowed reference to python dictionary. 
+          //! \brief The python dictionary may created at this point, despite
+          //!        the const attribute.  Will not throw, but may return NULL
+          //!        on error, with a python exception set.
+          PyObject* pydict() const
+          {
+            if(atom_->pydict == NULL) atom_->pydict = PyDict_New();
+            return atom_->pydict;
+          }
+          //! \brief Sets the python attribute dictionary.
+          //! \note The reference to _dict is stolen. Your job to increment the
+          //!       reference count correctly. The current dictionary, however,
+          //!       is decre'f if it exists.
+          void pydict(PyObject *_dict) const
+          {
+            PyObject *dummy = atom_->pydict;
+            atom_->pydict = _dict;
+            Py_XDECREF(dummy);
+          }
+#       endif
     
       private:
         //! Serializes an atom.
@@ -105,7 +140,7 @@ namespace LaDa
 #       endif
         //! \brief This object owns it own data. 
         //! \details Makes python memory management much easier.
-        boost::shared_ptr< AtomData<T_TYPE> > atom_;
+        boost::shared_ptr<element_type> atom_;
     };
 
 #   ifdef LADA_WITH_LNS

@@ -1,12 +1,5 @@
 extern "C"
 {
-  //! Structure holding shared pointer to an atom.
-  struct Sequence
-  { 
-    PyObject_HEAD
-    PyObject* ptr_base;
-    std::vector< std::string > *ptr_seq;
-  };
   //! Returns Py_True if key is contained in the set.
   static int sequence_contains(Sequence* _in, PyObject* _key);
   //! Converts python object to an std::vector<std::string>.
@@ -178,13 +171,8 @@ static PyObject* sequence_repr(Sequence* _self)
 // Function to deallocate a string atom.
 static void sequence_dealloc(Sequence *_self)
 {
-  if(_self->ptr_base == NULL and _self->ptr_seq != NULL)
-  {
-    std::vector<std::string> *dummy = _self->ptr_seq;
-    _self->ptr_seq = NULL;
-    delete dummy;
-  }
-  sequence_gcclear(_self);
+  _self->ptr_atom.reset();
+  _self->ptr_seq = NULL;
   _self->ob_type->tp_free((PyObject*)_self);
 }
 
@@ -310,17 +298,6 @@ static PyObject* sequence_reverse(Sequence* _self)
   std::reverse(_self->ptr_seq->begin(), _self->ptr_seq->end());
   Py_RETURN_NONE;
 }
-static int sequence_traverse(Sequence *self, visitproc visit, void *arg)
-{
-  Py_VISIT(self->ptr_base);
-  return 0;
-}
-
-static int sequence_gcclear(Sequence *self)
-{ 
-  Py_CLEAR(self->ptr_base);
-  return 0;
-}
 
 
 static PyMethodDef sequence_methods[] = {
@@ -351,7 +328,7 @@ static PySequenceMethods sequence_as_sequence = {
     (ssizeargfunc) sequence_inplacerepeat
 };
 
-static PyTypeObject sequence_type = {
+PyTypeObject sequence_type = {
     PyObject_HEAD_INIT(NULL)
     0,                                                       /*ob_size*/
     "atom.Sequence",                                         /*tp_name*/
@@ -372,13 +349,14 @@ static PyTypeObject sequence_type = {
     0,                                                       /*tp_getattro*/
     0,                                                       /*tp_setattro*/
     0,                                                       /*tp_as_buffer*/
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
+    Py_TPFLAGS_HAVE_SEQUENCE_IN | Py_TPFLAGS_HAVE_INPLACEOPS | Py_TPFLAGS_HAVE_RICHCOMPARE
+      | Py_TPFLAGS_HAVE_ITER | Py_TPFLAGS_HAVE_CLASS,
     "Atomic occupation of a site.\n\n"
     "Wrapper around a C++ object. It works exactly like a python list, with the "
     "restriction that it can only contain strings. It cannot be created. It always "
     "references the occupation of an atom.",
-    (traverseproc)sequence_traverse,                         /* tp_traverse */
-    (inquiry)sequence_gcclear,                               /* tp_clear */
+    0,//(traverseproc)sequence_traverse,                         /* tp_traverse */
+    0,//(inquiry)sequence_gcclear,                               /* tp_clear */
     (richcmpfunc)sequence_richcmp,                           /* tp_richcompare */
     0,		                                             /* tp_weaklistoffset */
     (getiterfunc)sequenceiterator_create,                    /* tp_iter */
@@ -392,18 +370,18 @@ static PyObject* sequence_new_sequence(PyObject* _module, PyObject* _in)
   PyObject *input = NULL;
   if(not PyArg_UnpackTuple(_in, "_new_sequence", 0, 1, &input)) goto error;
   // creates new object and check result.
-  result = PyObject_GC_New(Sequence, &sequence_type);
+  result = PyObject_New(Sequence, &sequence_type);
   if(result == NULL) goto error;
   
+  typedef LaDa::crystal::AtomData< std::vector<std::string> > t_Atom;
+  new(&result->ptr_atom) boost::shared_ptr<t_Atom>;
   // on success initializes object.
-  result->ptr_base = NULL;
   result->ptr_seq = new (std::nothrow) std::vector<std::string>;
   if(result->ptr_seq == NULL) 
   {
     LADA_PYERROR(internal, "Could not create sequence.");
     goto error;
   }
-  PyObject_GC_Track(result);
   if(input != NULL)
   {
     if(PyObject* return_ = to_cpp_sequence_(input, *result->ptr_seq)) Py_DECREF(return_);

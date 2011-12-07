@@ -3,7 +3,12 @@ extern "C"
   //! Function to deallocate a string atom.
   static void LADA_NAME(dealloc)(LADA_TYPE *_self);
   //! Function to allocate a string atom.
-  static PyObject* LADA_NAME(new)(PyTypeObject *_type, PyObject *_args, PyObject *_kwargs);
+  static PyObject* LADA_NAME(new)(PyTypeObject *_type, PyObject *_args, PyObject *_kwargs)
+#    if LADA_ATOM_NUMBER == 0
+       { return PyAtomStr_New(); }
+#    elif LADA_ATOM_NUMBER == 1
+       { return PyAtomSequence_New(); }
+#    endif
   //! Function to initialize a string atom.
   static int LADA_NAME(init)(LADA_TYPE* _self, PyObject* _args, PyObject *_kwargs);
   //! Traverses to back-reference.
@@ -22,45 +27,46 @@ static void LADA_NAME(dealloc)(LADA_TYPE *_self)
   _self->ob_type->tp_free((PyObject*)_self);
 }
 
-//! Function to allocate a string atom.
-static PyObject* LADA_NAME(new)(PyTypeObject *_type, PyObject *_args, PyObject *_kwargs)
+// Creates a new atom and its wrapper.
+#if LADA_ATOM_NUMBER == 0
+  PyObject* PyAtomStr_New()
+#elif LADA_ATOM_NUMBER == 1
+  PyObject* PyAtomSequence_New()
+#endif
 {
-  LADA_TYPE *self;
-  self = (LADA_TYPE*)_type->tp_alloc(_type, 0);
-  if(self == NULL) return NULL;
+  LADA_TYPE* result = (LADA_TYPE*)LADA_NAME(type).tp_alloc(&LADA_NAME(type), 0);
+  if(result == NULL) return NULL;
+  
   // set everything to null, just in case we exit to fast.
-  self->weakreflist = NULL;
+  result->weakreflist = NULL;
   // Now starts setting things up.
 # if LADA_ATOM_NUMBER == 0
-    boost::shared_ptr< crystal::AtomData<std::string> > dummy(new LaDa::crystal::AtomData<std::string>);
+    typedef LaDa::crystal::AtomData<std::string> t_Atom;
 # elif LADA_ATOM_NUMBER == 1
-    self->sequence = NULL;
-    boost::shared_ptr< crystal::AtomData< std::vector<std::string> > >
-      dummy(new LaDa::crystal::AtomData< std::vector<std::string> >);
+    result->sequence = NULL;
+    typedef LaDa::crystal::AtomData< std::vector<std::string> > t_Atom;
 # endif
-  if(not dummy)
+  result->atom.reset(new(std::nothrow) t_Atom);
+  if(not result->atom)
   {
-    Py_DECREF(self);
+    Py_DECREF(result);
     LADA_PYERROR(internal, "Could not create atom.\n" );
     return NULL;
-  } 
-  self->atom.swap(dummy);
-
-
+  }
 # if LADA_ATOM_NUMBER == 1
-    self->sequence = PyObject_GC_New(Sequence, &sequence_type);
-    if(self->sequence == NULL)
+    result->sequence = PyObject_New(Sequence, &sequence_type);
+    if(result->sequence == NULL)
     {
-      Py_DECREF(self);
+      Py_DECREF(result);
       return NULL;
     }
-    self->sequence->ptr_seq = &self->atom->type;
-    self->sequence->ptr_base = (PyObject*)self;
-    PyObject_GC_Track(self->sequence);
-    Py_INCREF(self); // increfed because of sequence base.
+    result->sequence->ptr_seq = &result->atom->type;
+    // something weird here. Seems that the constructor for the boost shared pointer was never called.
+    // Perfome in-place construction using new.
+    // According to boost, should never throw.
+    new(&result->sequence->ptr_atom) boost::shared_ptr<t_Atom>(result->atom); 
 # endif
-
-  return (PyObject*) self;
+  return (PyObject*) result;
 }
 
 // Function to initialize a string atom.
@@ -286,9 +292,8 @@ static int LADA_NAME(init)(LADA_TYPE* _self, PyObject* _args, PyObject *_kwargs)
 
 static int LADA_NAME(traverse)(LADA_TYPE *self, visitproc visit, void *arg)
 {
-# if LADA_ATOM_NUMBER == 1
-   Py_VISIT(self->sequence);
-# endif
+  // in case of AtomSequence, self->sequence->atom also owns referencet to
+  // pydict, but it is already visited below, so no need to put it twice.
   Py_VISIT(self->atom->pydict);
   return 0;
 }
@@ -296,7 +301,9 @@ static int LADA_NAME(traverse)(LADA_TYPE *self, visitproc visit, void *arg)
 static int LADA_NAME(gcclear)(LADA_TYPE *self)
 { 
 # if LADA_ATOM_NUMBER == 1
-   Py_CLEAR(self->sequence);
+  // Technically not necessay here, as opposed to putting it in dealloc, but
+  // this works and keeps actual deallocation in one place.
+  Py_CLEAR(self->sequence);
 # endif
   // Following line basically calls Py_CLEAR if atom shared pointer is not
   // owned anymore.

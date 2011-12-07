@@ -1,22 +1,5 @@
-import gc
 from lada.crystal.cppwrappers.atom import _new_sequence as Sequence
 from lada import error
-
-# check garbage collection. 
-# Sequences own a reference to their parent atoms. It is null here, but we
-# should still check that garbage collection work in this case. 
-assert gc.isenabled()
-gc.collect()
-b, c, d = ['Au', 'Pd'], (0, 0, 0), (1,0,0)
-assert gc.get_count() == c
-a = Sequence(b)
-assert gc.is_tracked(a)
-gc.collect()
-assert gc.get_count() == c
-del a
-gc.collect()
-assert gc.get_count() == c
-assert len(gc.garbage) == 0
 
 # test sequence to list transformation.
 assert list(Sequence()) == []

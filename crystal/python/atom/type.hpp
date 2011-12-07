@@ -1,4 +1,4 @@
-static PyTypeObject LADA_NAME(type) = {
+PyTypeObject LADA_NAME(type) = {
     PyObject_HEAD_INIT(NULL)
     0,                         /*ob_size*/
     "atom.AtomStr",            /*tp_name*/

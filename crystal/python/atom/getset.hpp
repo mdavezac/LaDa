@@ -50,6 +50,11 @@ static PyObject* LADA_NAME(getpos)(LADA_TYPE *_self, void *closure)
 // Sets position from a sequence of three numbers.
 static int LADA_NAME(setpos)(LADA_TYPE *_self, PyObject *_value, void *_closure)
 {
+  if(_value == NULL)
+  {
+    LADA_PYERROR(TypeError, "Cannot delete pos attribute.");
+    return -1;
+  }
   if(PyArray_Check(_value))
   {
     PyObject* iterator = PyArray_IterNew(_value);
@@ -143,6 +148,11 @@ static PyObject* LADA_NAME(getsite)(LADA_TYPE *_self, void *closure)
 // Sets the atomic type.
 static int LADA_NAME(setsite)(LADA_TYPE *_self, PyObject *_value, void *_closure)
 {
+  if(_value == NULL)
+  {
+    LADA_PYERROR(TypeError, "Cannot delete site attribute.");
+    return -1;
+  }
   long const result = PyInt_AsLong(_value);
   if(result == -1 and PyErr_Occurred() != NULL) return -1;
   _self->atom->site = result;
@@ -157,6 +167,11 @@ static PyObject* LADA_NAME(getfreeze)(LADA_TYPE *_self, void *closure)
 // Sets the freeze flag from an unsigned.
 static int LADA_NAME(setfreeze)(LADA_TYPE *_self, PyObject *_value, void *_closure)
 {
+  if(_value == NULL)
+  {
+    LADA_PYERROR(TypeError, "Cannot delete freeze attribute.");
+    return -1;
+  }
   long const result = PyInt_AsLong(_value);
   if(result == -1 and PyErr_Occurred() != NULL) return -1;
   if(result < 0)
@@ -173,6 +188,11 @@ static int LADA_NAME(setfreeze)(LADA_TYPE *_self, PyObject *_value, void *_closu
     { return PyString_FromString(_self->atom->type.c_str()); }
   static int LADA_NAME(settype)(LADA_TYPE *_self, PyObject *_value, void *closure)
   {
+    if(_value == NULL)
+    {
+      LADA_PYERROR(TypeError, "Cannot delete type attribute.");
+      return -1;
+    }
     if(char * const string = PyString_AsString(_value))
     {
       _self->atom->type = string;
@@ -184,7 +204,15 @@ static int LADA_NAME(setfreeze)(LADA_TYPE *_self, PyObject *_value, void *_closu
   static PyObject *LADA_NAME(gettype)(LADA_TYPE *_self, void *closure) 
     { Py_INCREF(_self->sequence); return (PyObject*) _self->sequence; }
   static int LADA_NAME(settype)(LADA_TYPE *_self, PyObject *_value, void *closure)
-    { to_cpp_sequence_(_value, _self->atom->type); return 0;}
+  { 
+    if(_value == NULL)
+    {
+      LADA_PYERROR(TypeError, "Cannot delete type attribute.");
+      return -1;
+    }
+    to_cpp_sequence_(_value, _self->atom->type);
+    return 0;
+  }
 # endif
 // Gets dictionary.
 static PyObject* LADA_NAME(getdict)(LADA_TYPE *_self, void *_closure)
@@ -200,10 +228,9 @@ static PyObject* LADA_NAME(getdict)(LADA_TYPE *_self, void *_closure)
 // Sets dictionary.
 static int LADA_NAME(setdict)(LADA_TYPE *_self, PyObject *_value, void *_closure)
 {
-  PyObject* dummy = _self->atom->pydict;
+  Py_XDECREF(_self->atom->pydict);
   _self->atom->pydict = _value;
-  Py_XINCREF(dummy);
-  Py_XDECREF(dummy);
+  Py_XINCREF(_value);
   return 0;
 }
 
