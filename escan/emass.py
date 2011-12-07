@@ -237,7 +237,7 @@ class Functional(KEscan):
     from numpy import array
     self.kpoint = array(value, dtype="float64")
 
-  def __call__(self, structure, outdir=None, comm=None, bandgap=None, **kwargs):
+  def __call__(self, structure, outdir=None, comm=None, bandgap=None, references=None, n=5, **kwargs):
     """ Computes effective mass.
 
         :Parameters: 
@@ -251,6 +251,10 @@ class Functional(KEscan):
             calculations.
           bandgap 
             If given, should be the return from a bandgap calculation.
+          references
+            For bandgap calculation, as necessary. See BandGap.
+          n
+            For bandgap calculation, as necessary. See BandGap.
         Parameters are passed on to `dervatives.reciprocal` method.
     """
     from ..mpi import Communicator
@@ -268,7 +272,7 @@ class Functional(KEscan):
     if bandgap is not None: this._link_bg_files(bandgap, outdir, comm)
 
     # computes bandgap.
-    bandgap_func = Bandgap(escan=this)
+    bandgap_func = Bandgap(escan=this, references=references, n=n)
     bandgap = bandgap_func(structure, outdir, comm, **kwargs)
     assert bandgap.success, RuntimeError("Could not compute bandgap.")
     
