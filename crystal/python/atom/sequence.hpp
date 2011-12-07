@@ -302,7 +302,7 @@ static PyObject* sequence_reverse(Sequence* _self)
 
 static PyMethodDef sequence_methods[] = {
     {"copy", (PyCFunction)sequence_as_list, METH_NOARGS, 
-     "Returns a copy of self (as python intrinsic type)." },
+     "Returns a copy of the sequence as a python list." },
     {"append", (PyCFunction)sequence_append, METH_O, "Appends specie to list." },
     {"extend", (PyCFunction)sequence_extend, METH_O, "Extend list with another list of species." },
     {"insert", (PyCFunction)sequence_insert, METH_VARARGS, "Insert specie at given position." },

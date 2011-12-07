@@ -38,6 +38,8 @@ using namespace LaDa::python;
 #define LADA_NAME(name) atomstr_ ## name
 // atom getters/settters.
 #include "getset.hpp"
+// atom member functions.
+#include "members.h"
 // creation, deallocation, initialization.
 #include "cdi.hpp"
 // atom type declaration.
@@ -50,6 +52,8 @@ using namespace LaDa::python;
 #define LADA_NAME(name) atomsequence_ ## name
 // atom getters/settters.
 #include "getset.hpp"
+// atom member functions.
+#include "members.h"
 // creation, deallocation, initialization.
 #include "cdi.hpp"
 // atom type declaration.
@@ -62,7 +66,7 @@ using namespace LaDa::python;
 # define PyMODINIT_FUNC void
 #endif
 
-static PyMethodDef atomstr_methods[] = 
+static PyMethodDef atom_methods[] = 
   {
     {"_new_sequence", (PyCFunction)sequence_new_sequence, METH_VARARGS,
      "Creates new sequence. For debugging only.\n\n"
@@ -92,7 +96,7 @@ PyMODINIT_FUNC initatom(void)
   Py_INCREF(&sequenceiterator_type);
 
   char const doc[] =  "Wrapper around C++ atom class, and affiliates.";
-  PyObject* module = Py_InitModule3("atom", atomstr_methods, doc);
+  PyObject* module = Py_InitModule3("atom", atom_methods, doc);
 
   PyModule_AddObject(module, "AtomStr", (PyObject *)&atomstr_type);
   PyModule_AddObject(module, "AtomSequence", (PyObject *)&atomsequence_type);

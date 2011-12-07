@@ -286,8 +286,9 @@ static int LADA_NAME(init)(LADA_TYPE* _self, PyObject* _args, PyObject *_kwargs)
     PyDict_DelItemString(_kwargs, "freeze");
   }
   // Now additional attributes.
-  int const result = PyDict_Merge(_self->atom->pydict, _kwargs, 1);
-  return result;
+  if(_kwargs == NULL) return 0;
+  _self->atom->pydict = PyDict_New();
+  return PyDict_Merge(_self->atom->pydict, _kwargs, 1);
 }
 
 static int LADA_NAME(traverse)(LADA_TYPE *self, visitproc visit, void *arg)

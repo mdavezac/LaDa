@@ -1,15 +1,30 @@
+static PyMethodDef LADA_NAME(methods)[] = {
+    {"copy", (PyCFunction)LADA_NAME(copy), METH_NOARGS, "Returns a deepcopy of the atom." },
+    {"cast", (PyCFunction)LADA_NAME(cast), METH_NOARGS,
+             "If a string atom, returns a sequence atom, and vice-versa." },
+    {"to_dict", (PyCFunction)LADA_NAME(to_dict), METH_NOARGS,
+                "Returns a dictionary with shallow copies of items." },
+    {"__copy__", (PyCFunction)LADA_NAME(shallowcopy), METH_NOARGS, "Shallow copy of an atom." },
+    {"__deepcopy__", (PyCFunction)LADA_NAME(deepcopy), METH_O, "Deep copy of an atom." },
+    {NULL}  /* Sentinel */
+};
+
 PyTypeObject LADA_NAME(type) = {
     PyObject_HEAD_INIT(NULL)
     0,                         /*ob_size*/
-    "atom.AtomStr",            /*tp_name*/
-    sizeof(LADA_TYPE),             /*tp_basicsize*/
+#   if LADA_ATOM_NUMBER == 0
+      "atom.AtomStr",          /*tp_name*/
+#   elif LADA_ATOM_NUMBER == 1
+      "atom.AtomSequence",     /*tp_name*/
+#   endif
+    sizeof(LADA_TYPE),         /*tp_basicsize*/
     0,                         /*tp_itemsize*/
     (destructor)LADA_NAME(dealloc), /*tp_dealloc*/
     0,                         /*tp_print*/
     0,                         /*tp_getattr*/
     0,                         /*tp_setattr*/
     0,                         /*tp_compare*/
-    0,                         /*tp_repr*/
+    (reprfunc)LADA_NAME(repr), /*tp_repr*/
     0,                         /*tp_as_number*/
     0,                         /*tp_as_sequence*/
     0,                         /*tp_as_mapping*/
@@ -45,7 +60,7 @@ PyTypeObject LADA_NAME(type) = {
     offsetof(LADA_TYPE, weakreflist), /* tp_weaklistoffset */
     0,		               /* tp_iter */
     0,		               /* tp_iternext */
-    0,                         /* tp_methods */
+    LADA_NAME(methods),        /* tp_methods */
     0,                         /* tp_members */
     LADA_NAME(getsetters),        /* tp_getset */
     0,                         /* tp_base */

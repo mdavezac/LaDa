@@ -210,6 +210,7 @@ static int LADA_NAME(setfreeze)(LADA_TYPE *_self, PyObject *_value, void *_closu
       LADA_PYERROR(TypeError, "Cannot delete type attribute.");
       return -1;
     }
+    _self->atom->type.clear();
     to_cpp_sequence_(_value, _self->atom->type);
     return 0;
   }

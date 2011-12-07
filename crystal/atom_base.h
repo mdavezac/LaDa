@@ -101,27 +101,12 @@ namespace LaDa
               }
               else if(_c.pydict != NULL)
               {
-                if(pydict == NULL) pydict = PyDict_New();
-                else PyDict_Clear(pydict);
-                if(pydict == NULL) return;
-                if(PyDict_Size(_c.pydict) == 0) return;
-                PyObject *key, *value;
-                Py_ssize_t pos = 0;
+                if(pydict != NULL) { Py_DECREF(pydict); pydict = NULL; }
                 PyObject* copymod = PyImport_ImportModule("copy");
                 if(copymod == NULL) return;
                 PyObject *deepcopystr = PyString_FromString("deepcopy");
                 if(not deepcopystr) { Py_DECREF(copymod); return; }
-                while(PyDict_Next(pydict, &pos, &key, &value))
-                {
-                  PyObject* copied = PyObject_CallMethodObjArgs(copymod, deepcopystr, value);
-                  if(PyErr_Occurred() != NULL) goto error;
-                  if(PyDict_SetItem(pydict, key, copied) >= 0) continue;
-                  error:
-                    Py_XDECREF(copied);
-                    Py_DECREF(copymod); 
-                    Py_DECREF(deepcopystr);
-                    return;
-                }
+                pydict = PyObject_CallMethodObjArgs(copymod, deepcopystr, _c.pydict, NULL);
                 Py_DECREF(copymod);
                 Py_DECREF(deepcopystr);
               }

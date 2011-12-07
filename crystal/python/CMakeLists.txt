@@ -13,7 +13,7 @@ set( PYCRYSTAL_SOURCES
    #    which_site.cc misc.cc periodic_dnc.cc )
 
 set(PYATOM_HEADERS atom/cdi.hpp atom/type.hpp atom/getset.hpp atom/set.hpp
-                   atom/set_iterator.hpp atom/extract_species.h )
+                   atom/set_iterator.hpp atom/extract_species.h atom/members.h)
 set(PYATOM_SOURCES atom/module.cc)
 
 
