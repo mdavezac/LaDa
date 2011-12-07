@@ -182,8 +182,16 @@ if @with_ladabase@:
   """ Name of the collection of OUTCAR files. """
 
 
-# reads stuff from input file
-from os.path import exists, expanduser, expandvars
+# reads stuff from global configuration file located in directory of package.
+from os.path import exists, expanduser, expandvars, dirname, join
+if exists(join(dirname(__file__), 'config')): 
+  from opt import read_input
+  with open(join(dirname(__file__), 'config'), 'r') as file: string = file.read()
+  global_dict, local_dict = {}, {}
+  exec(string, global_dict, local_dict)
+  locals().update(local_dict)
+
+# reads stuff from user configuration file.
 if exists(expandvars(expanduser('~/.lada'))):
   from opt import read_input
   with open(expandvars(expanduser('~/.lada')), 'r') as file: string = file.read()

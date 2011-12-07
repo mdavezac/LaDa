@@ -3,21 +3,19 @@
 """ List of files previously pushed to ladabase. """
 def get_file_list(self, args):
   """ Returns list of files to act upon. """
-  from os.path import exists, isfile, join, isdir
+  from os.path import isfile, join, isdir
+  from glob import iglob
+  from itertools import chain
   from ..vasp import MassExtract
   files = []
-  for var in args.outcar:
-    if exists(var): # case where this is a directory or file.
-      if isfile(var): # case where this is a file.
-        files.append(var)
-      elif isdir(var): # case where this is a directory.
-        for extract in MassExtract(var).values():
-          files.append(join(extract.directory, extract.OUTCAR))
-      else: raise ValueError("Could not make sense of {0}.".format(var))
-    elif var in self.api.user_ns: 
-      for extract in self.api.user_ns[var]: files.append(join(extract.directory, extract.OUTCAR))
+  for var in chain(*(iglob(v) for v in args.outcar)):
+    if isfile(var): # case where this is a file.
+      files.append(var)
+    elif isdir(var): # case where this is a directory.
+      for extract in MassExtract(var).values():
+        files.append(join(extract.directory, extract.OUTCAR))
+    else: raise ValueError("Could not make sense of {0}.".format(var))
   return files
-
 
 
 def push(self, cmdl):
@@ -29,7 +27,10 @@ def push(self, cmdl):
   from ..vasp import Extract
   from ..record import Record
   from .misc import get_username, get_ladabase
+  from .extracted import Encode, generate_extracted_item
   import re
+
+  encoder = Encode()
 
   try: ladabase = get_ladabase()
   except RuntimeError as e: print e; return; 
@@ -81,10 +82,9 @@ def push(self, cmdl):
   for file, extract in files: 
     with open(file, 'r') as outcar:
       kwargs = {'compression': compression, 'comment':comment}
-      kwargs['is_dft'] =  extract.is_dft
-      kwargs['is_gw'] =  extract.is_gw
       added = ladabase.push( relpath(file, getcwd()), outcar.read(), **kwargs)
       if added is not None:
+        generate_extracted_item(ladabase.database['extracted'], added, encoder)
         just_added.append(added)
         print "Pushed {0}.".format(file, getcwd())
 

@@ -24,6 +24,7 @@ def iter_fere_ternaries(collection="extracted", filters=None, tempname="ladabase
   """
   from pymongo.code import Code
   from . import Manager
+  from .extracted import sort_species
   if isinstance(collection, str):
     ladabase = Manager()
     collection = ladabase.database[collection]
@@ -38,7 +39,7 @@ def iter_fere_ternaries(collection="extracted", filters=None, tempname="ladabase
   filters = merge_queries({'metadata.Enthalpy': {'$exists': True}}, filters)
   results = collection.map_reduce(map, reduce, tempname, query=filters)
   # loop over results. This has identified all possible ternary FERE systems.
-  for result in results.find(): yield result['value']['species']
+  for result in results.find(): yield sort_species(result['value']['species'])
   results.drop()
 
 
@@ -54,12 +55,12 @@ def iter_lowest_energy(species, collection="extracted", filters=None):
 
   # construct query defining the system.
   query = {'metadata.Enthalpy': {'$exists': True}}
-  query['$or'] = [{'input.species.{0}'.format(specie): {'$exists': True}} for specie in species]
+  query['metadata.species'] = {'$not': {'$elemMatch': {'$nin': species}}}
   query = merge_queries(query, filters)
 
   # loops over systems, checking for concentration and enthalpy.
   systems = [ [r['_id'], r['metadata']['Enthalpy'], [r['input']['species'].get(i, 0) for i in species]]\
-              for r in collection.find(query) if set(r['input']['species'].keys()) <= set(species) ]
+              for r in collection.find(query) ]
   # construct list with unique concentrations.
   result = []
   while len(systems) > 0:
@@ -111,65 +112,74 @@ def contour(vertices):
   thetas = sorted(enumerate(thetas), key=itemgetter(1))
   return array([vertices[u[0]] for u in thetas])
  
-def plot_projected(species, projection="O", collection="extracted", filters=None):
-  """ Plots convex-hull projected along direction ''projection''. """
-  from numpy import identity, concatenate, zeros, array, mean
+def generate_fere_summary(filters=3, tempname="ladabaseextracteditersystemtempname"):
+  """ Creates FERE ground-states, as well as single-stoechiometry items, in summary database. """
+  from datetime import datetime, timedelta
+  from numpy import concatenate, identity, zeros, array
   from polyhedron import Hrep
+  from . import Manager
 
-  # figure out which dimension to project out.
-  dims, Odim = [0, 1, 2], 0
-  for Odim, specie in enumerate(species): 
-    if str(specie) == str(projection): dims.pop(Odim);  break
+  ladabase = Manager()
+  extracted = ladabase.database['extracted']
+  fere_summary = ladabase.database['fere_summary']
 
-  # loop over system with some stability
-  A, ids = half_space_representation(species, collection=collection, filters=filters)
-  Nsystems, Nvariables = A.shape[0], A.shape[1]-1
-  A = concatenate((A, concatenate((identity(Nvariables), zeros((Nvariables, 1))), axis=1)))
-  hrep = Hrep(A[:, :-1], -A[:, -1])
+  # Works on last added only
+  if isinstance(filters, int): 
+    filters = {'metadata.date_added': {'$gte': datetime.now() - timedelta(3)},
+               'metadata.Enthalpy': {'$exists': True}}
+  elif filters is None: filters = {'metadata.Enthalpy': {'$exists': True}}
 
-  contours = []
-  for indices in hrep.ininc[:Nsystems]:
-    if len(indices) == 0: continue
-    assert all(array(hrep.is_vertex)[indices] == 1)
-    contours.append(contour(hrep.generators[indices][:,dims]))
+  for species in iter_fere_ternaries(extracted, filters, tempname):
+    # remove previously existing items in summary collection.
+    fere_summary.remove({'metadata.species': species})
+  
+    # find thermodynamically stable compounds.
+    if 'metadata.date_added' in filters: del filters['metadata.date_added']
+    A, ids = half_space_representation(species, collection=extracted, filters=filters)
+    Nsystems, Nvariables = A.shape[0], A.shape[1]-1
+    A = concatenate((A, concatenate((identity(Nvariables), zeros((Nvariables, 1))), axis=1)))
+    hrep = Hrep(A[:, :-1], -A[:, -1])
 
-  if isinstance(collection, str):
-    from . import Manager
-    ladabase = Manager()
-    collection = ladabase.database[collection]
+    # find all compounds for this system.
+    query = {'metadata.Enthalpy': {'$exists': True},
+             'metadata.species': {'$not': {'$elemMatch': {'$nin': species}}}}
+    unstable_ids = [u['_id'] for u in ladabase.extracted.find(query)]
+    stable_ids = []
+    # loop over stable compounds only.
+    newdocs = []
+    for indices, id in zip(hrep.ininc[:Nsystems], ids):
+      if len(indices) == 0: continue
+      assert all(array(hrep.is_vertex)[indices] == 1)
+      poly = contour(hrep.generators[indices][:, [0, 1]])
+      unstable_ids.remove(id)
+      stable_ids.append(id)
 
-  if len(contours) > 0:
-    from matplotlib import pyplot as plt, rcParams
-    rcParams['text.usetex'] = True
+      element = extracted.find_one({'_id': id})
+      newdoc = {'metadata': { 'formula': element['metadata']['formula'],
+                              'date_generated': element['metadata']['date_generated'],
+                              'operator': element['metadata']['operator'],
+                              'functional': element['metadata']['functional'],
+                              'species': element['metadata']['species']
+                            },
+                'input': { 'encut': element['input']['encut'],
+                           'pseudopotential': element['input']['pseudopotential'],
+                           'structure': element['input']['structure']
+                         },
+                'output': { 'gap': element['output']['gap'],
+                            'stability_region': [u for u in zip(poly[:, 0], poly[:, 1])],
+                            'density': element['output']['density'] 
+                          }
+              }
+      if 'kpoint_density' in element['input']: 
+        newdoc['input']['kpoint_density'] = element['input']['kpoint_density']
+      if 'pressure' in element['output']: 
+        newdoc['output']['pressure'] = element['output']['pressure'],
+      newdocs.append(newdoc)
+      fere_summary.save(newdoc)
+    setme = {'$set': {'related': {'unstable': unstable_ids, 'stable': [u['_id'] for u in newdocs]}}}
+    for doc in newdocs: fere_summary.update({'_id': doc['_id']}, setme)
+    setme = {'$set': {'tracked.fere_summary': [u['_id'] for u in newdocs]}}
+    for id in unstable_ids: extracted.update({'_id': id}, setme)
+    setme = {'$set': {'tracked.fere_summary': [u['_id'] for u in newdocs]}}
+    for id in stable_ids: extracted.update({'_id': id}, setme)
 
-    colors = 'rgb'
-    markers = 'x+d'
-    figure = plt.figure()
-    for (i, c), id in zip(enumerate(contours), ids):
-      plt.fill(c[:,dims[0]], c[:, dims[1]], fc=colors[i % len(colors)])
-      x, y = mean(c[:, dims[0]]), mean(c[:, dims[1]])
-      data = collection.find_one({'_id': id})
-      stoech = array([data['input']['species'][s] for s in species])
-      reduce = True
-      while reduce:
-        reduce = False
-        for i in xrange(min(stoech), 1, -1):
-          if all(stoech % i == 0): 
-            stoech /= i
-            reduce = True
-      formula = ""
-      for s, n in zip(species, stoech):
-        if n == 1: formula += s
-        elif n < 10: formula += "{0}$_{1}$".format(s, n)
-        else: formula += "{0}$_{{{1}}}$".format(s, n)
-      plt.text(x, y, formula)
-    limits = array([u for i, u in enumerate(hrep.generators) if hrep.is_vertex[i] == 1])
-    plt.xlim((min(limits[:, dims[0]]), max(limits[:, dims[0]])))
-    plt.ylim((min(limits[:, dims[1]]), max(limits[:, dims[1]])))
-
-    plt.suptitle("Projected stability regions of groundstates", fontsize=16)
-    plt.title("Projection along $\\Delta\\mu_{{{0}}}$ axis.".format(projection))
-    plt.xlabel("$\\Delta\\mu_{{{0}}}$ (eV)".format(species[dims[0]]))
-    plt.xlabel("$\\Delta\\mu_{{{0}}}$ (eV)".format(species[dims[1]]))
-
-    plt.show()

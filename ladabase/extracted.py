@@ -129,14 +129,90 @@ class Decode(dict):
                  | set([k for k in self.keys() if k[0] != '_']) \
                  | set(['_id']) )
 
-
-def to_secondary(collection='extracted', filter=None, items=None, update=False, fromextracted=False):
-  """ Extracts value to secondary database. """
+def sort_species(species): 
+  """ Sort species in specific way. """
   from .. import periodic_table as pt
+  def sortme(args):
+    if args not in pt.__dict__: return 20
+    specie = pt.__dict__[args]
+    return (specie.column + specie.row * 0.01) 
+  return sorted(species, key=sortme)
+def create_formula(species, stoechiometry):
+  """ Creates a minimum formula. """
+  from numpy import array
+  stoechiometry = array(stoechiometry)
+  reduce = True
+  while reduce:
+    reduce = False
+    for i in xrange(min(stoechiometry), 1, -1):
+      if all(stoechiometry % i == 0): 
+        stoechiometry /= i
+        reduce = True
+  result = ""
+  for s, n in zip(species, stoechiometry):
+    result += s if n == 1 else "{0}<sub>{1}</sub>".format(s, n)
+  return result
+
+
+def generate_extracted_item(collection, item, encoder=None, encoded=None):
+  """ Extracts value to secondary database. """
+  from numpy import array
   from ..crystal.read_write import castep
-  from . import Manager
   from .vasp import VaspExtract
   from .mu_data import enthalpy
+
+  if encoder is None: encoder = Encode()
+  if encoded is None: encoded = {'input': {}, 'output': {}, 'metadata': {}}
+  extract = VaspExtract(item)
+  # create dictionary with computational details.
+  encoded['input'] = encoder(extract, ['ispin', 'algo', 'encut',
+                                       'nelect', 'HubbardU_NLEP', 'pseudopotential'])['input'] 
+  try: value = extract.reciprocal_volume.magtnitude.tolist() / float(sum(extract.multiplicity))
+  except: pass
+  else: encoded['input']['kpoint_density'] = value
+  encoded['input']['corrections'] = extract.HubbardU_NLEP
+  # create dictionary with output.
+  encoded['output'] = encoder(extract, ['total_energy', 'vbm', 'cbm', 'pressure'])['output']
+  encoded['output']['total_energy'] /= float(sum(extract.stoechiometry))
+  encoded['output']['gap'] = encoded['output']['cbm'] - encoded['output']['vbm']
+  try: value = extract.density.magnitude.tolist()
+  except: pass
+  else: encoded['output']['density'] = value
+  # creates dictionary with metadata.
+  encoded['metadata']['raw'] = extract._id
+  if not (extract.is_dft or extract.is_gw):  encoded['metadata']['functional'] = 'unknown'
+  else: encoded['metadata']['functional'] = 'dft' if extract.is_dft else 'gw'
+  value = enthalpy(extract)
+  if value is not None: encoded['metadata']['Enthalpy'] = value
+  encoded['input']['structure'] = castep(extract.structure)
+
+  encoded['input']['species'] = {}
+  for s, n in zip(extract.species, extract.stoechiometry): encoded['input']['species'][s] = n 
+  species = sort_species(extract.species)
+  stoechiometry = array([encoded['input']['species'][s] for s in species])
+  encoded['metadata']['formula'] = create_formula(species, stoechiometry)
+  encoded['metadata']['species'] = species
+
+  encoded['metadata']['operator'] = extract.uploader
+  encoded['metadata']['date_generated'] = extract.datetime
+  encoded['metadata']['date_added'] = extract.datetime.now()
+  encoded['metadata']['functional'] = "dft" if extract.is_dft else "gw"
+  additional = [False, False]
+  for values in extract.HubbardU_NLEP.itervalues():
+    for value in values: 
+      if value['func'] == 'U' and (abs(value['U']) > 1e-12 or abs(value['J']) > 1e-12):
+        additional[0] = True
+      elif value['func'] == 'nlep' and (abs(value['U']) > 1e-12 or abs(value['J']) > 1e-12):
+        additional[1] = True
+  if additional[0]: encoded['metadata']['functional'] += "+U"
+  if additional[1]: encoded['metadata']['functional'] += "+nlep"
+
+  collection.save(encoded)
+  return encoded
+
+def generate_extracted(collection='extracted', filter=None, items=None, update=False, fromextracted=False):
+  """ Extracts value to secondary database. """
+  from . import Manager
   ladabase = Manager()
   encoder = Encode()
   collection = ladabase.database[collection]
@@ -149,37 +225,4 @@ def to_secondary(collection='extracted', filter=None, items=None, update=False, 
       encoded = collection.find_one({'metadata.raw': element['_id']})
       if (not update) and encoded != None: continue
       elif encoded == None: encoded = {'input': {}, 'output': {}, 'metadata': {}}
-      
-    extract = VaspExtract(element)
-    # create dictionary with computational details.
-    encoded['input'] = encoder(extract, ['ispin', 'algo', 'encut',
-                                         'nelect', 'HubbardU_NLEP', 'pseudopotential'])['input'] 
-    try: value = extract.reciprocal_volume.magtnitude.tolist() / float(sum(extract.multiplicity))
-    except: pass
-    else: encoded['input']['kpoint_density'] = value
-    encoded['input']['corrections'] = extract.HubbardU_NLEP
-    # create dictionary with output.
-    encoded['output'] = encoder(extract, ['total_energy', 'vbm', 'cbm', 'pressure'])['output']
-    encoded['output']['total_energy'] /= float(sum(extract.stoechiometry))
-    encoded['output']['gap'] = encoded['output']['cbm'] - encoded['output']['vbm']
-    try: value = extract.density.magnitude.tolist()
-    except: pass
-    else: encoded['output']['density'] = value
-    # creates dictionary with metadata.
-    encoded['metadata']['raw'] = extract._id
-    if not (extract.is_dft or extract.is_gw):  encoded['metadata']['functional'] = 'unknown'
-    else: encoded['metadata']['functional'] = 'dft' if extract.is_dft else 'gw'
-    value = enthalpy(extract)
-    if value is not None: encoded['metadata']['Enthalpy'] = value
-    encoded['metadata']['structure'] = castep(extract.structure)
-
-    encoded['metadata']['formula'] = ""
-    encoded['input']['species'] = {}
-    def sortme(args):
-      specie = pt.__dict__[args[0]]
-      return (specie.column + specie.row * 0.01) if args[0] in pt.__dict__ else 20
-    for a, n in sorted([(a, n) for a, n in zip(extract.species, extract.stoechiometry)], key=sortme):
-      encoded['metadata']['formula'] += "{0}{1}".format(a, n)
-      encoded['input']['species'][a] = n
-
-    collection.save(encoded)
+    generate_extracted_item(collection, element, encoder, encoded)

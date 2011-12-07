@@ -6,6 +6,7 @@ def get_username():
   if not hasattr(lada, "username"):
     raise RuntimeError("Cannot push OUTCAR if nobody is to blame.\n"\
                        "Please add 'username = \"your name\"' to $HOME/.lada.")
+  return lada.username
 
 def get_ladabase(): 
   """ Return connector to the database. """
