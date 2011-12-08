@@ -331,7 +331,7 @@ static PySequenceMethods sequence_as_sequence = {
 PyTypeObject sequence_type = {
     PyObject_HEAD_INIT(NULL)
     0,                                                       /*ob_size*/
-    "atom.Sequence",                                         /*tp_name*/
+    "lada.crystal.cppwrappers.atom.Sequence",                /*tp_name*/
     sizeof(Sequence),                                        /*tp_basicsize*/
     0,                                                       /*tp_itemsize*/
     (destructor)sequence_dealloc,                            /*tp_dealloc*/

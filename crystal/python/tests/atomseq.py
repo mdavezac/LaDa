@@ -79,3 +79,11 @@ b.type = ['Pd']
 b.pos += 1
 assert a.type == ["Au", 'Pd'] and a.site == -1 and a.freeze == 0 and all(a.pos == 0)
 assert getattr(a, 'm', 1) == 0
+
+from pickle import loads, dumps
+a = AtomSeq(pos=[0, 1, 2], type=["Au", 'Pd'], site=0, freeze=1, m=6)
+b = loads(dumps(a))
+assert all(abs(b.pos - [0, 1, 2]) < 1e-12) and b.type == ['Au', 'Pd'] and b.site == 0 and b.freeze == 1\
+       and len(b.__dict__) == 1 and b.__dict__.get('m', None) == 6
+b = loads(dumps((a, a)))
+assert b[0] is b[1]

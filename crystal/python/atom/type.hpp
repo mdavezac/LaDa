@@ -6,6 +6,9 @@ static PyMethodDef LADA_NAME(methods)[] = {
                 "Returns a dictionary with shallow copies of items." },
     {"__copy__", (PyCFunction)LADA_NAME(shallowcopy), METH_NOARGS, "Shallow copy of an atom." },
     {"__deepcopy__", (PyCFunction)LADA_NAME(deepcopy), METH_O, "Deep copy of an atom." },
+    {"__getstate__", (PyCFunction)LADA_NAME(getstate), METH_NOARGS, "Implements pickle protocol." },
+    {"__setstate__", (PyCFunction)LADA_NAME(setstate), METH_O, "Implements pickle protocol." },
+    {"__reduce__", (PyCFunction)LADA_NAME(reduce), METH_NOARGS, "Implements pickle protocol." },
     {NULL}  /* Sentinel */
 };
 
@@ -13,9 +16,9 @@ PyTypeObject LADA_NAME(type) = {
     PyObject_HEAD_INIT(NULL)
     0,                         /*ob_size*/
 #   if LADA_ATOM_NUMBER == 0
-      "atom.AtomStr",          /*tp_name*/
+      "lada.crystal.cppwrappers.atom.AtomStr",      /*tp_name*/
 #   elif LADA_ATOM_NUMBER == 1
-      "atom.AtomSequence",     /*tp_name*/
+      "lada.crystal.cppwrappers.atom.AtomSequence", /*tp_name*/
 #   endif
     sizeof(LADA_TYPE),         /*tp_basicsize*/
     0,                         /*tp_itemsize*/

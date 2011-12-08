@@ -12,6 +12,12 @@ extern "C"
   static PyObject* LADA_NAME(deepcopy)(LADA_TYPE* _self, PyObject* _memo);
   //! Implements shallow copy.
   static PyObject* LADA_NAME(shallowcopy)(LADA_TYPE* _self);
+  //! Implements getstate for pickling.
+  static PyObject* LADA_NAME(getstate)(LADA_TYPE* _self);
+  //! Implements setstate for pickling.
+  static PyObject* LADA_NAME(setstate)(LADA_TYPE* _self, PyObject *_dict);
+  //! Implements reduce for pickling.
+  static PyObject* LADA_NAME(reduce)(LADA_TYPE* _self);
 }
 
 //! Returns a representation of the object.
@@ -19,7 +25,7 @@ PyObject* LADA_NAME(repr)(LADA_TYPE* _self)
 {
   std::string name(_self->ob_type->tp_name);
   std::ostringstream result;
-  result << name.substr(name.find('.')+1) << "("
+  result << name.substr(name.rfind('.')+1) << "("
          << _self->atom->pos(0) << ", "
          << _self->atom->pos(1) << ", "
          << _self->atom->pos(2);
@@ -169,4 +175,68 @@ PyObject *LADA_NAME(to_dict)(LADA_TYPE* _self)
   error: 
     Py_DECREF(result);
     return NULL;
+}
+
+// Implements __reduce__ for pickling.
+PyObject* LADA_NAME(reduce)(LADA_TYPE* _self)
+{
+  PyObject *result = PyTuple_New(3);
+  if(result == NULL) return NULL;
+  Py_INCREF(&LADA_NAME(type));
+  if(PyTuple_SET_ITEM(result, 0, (PyObject*)&LADA_NAME(type)) < 0) { Py_DECREF(result); return NULL; }
+  PyObject *tuple = PyTuple_New(0);
+  if(tuple == NULL) { Py_DECREF(result); return NULL; }
+  if(PyTuple_SET_ITEM(result, 1, tuple) < 0) { Py_DECREF(result); return NULL; }
+  PyObject *state = LADA_NAME(getstate)(_self);
+  if(state == NULL) { Py_DECREF(result); return NULL; }
+  if(PyTuple_SET_ITEM(result, 2, state) < 0) { Py_DECREF(result); return NULL; }
+  return result;
+}
+// Implements setstate for pickling.
+PyObject* LADA_NAME(getstate)(LADA_TYPE* _self)
+{
+# if LADA_ATOM_NUMBER == 0
+    return LADA_NAME(to_dict)(_self);
+# elif LADA_ATOM_NUMBER == 1
+    PyObject *result = LADA_NAME(to_dict)(_self);
+    if(result == NULL) return NULL; 
+    PyObject *seq = from_cpp_sequence_(_self->atom->type);
+    if(seq == NULL) { Py_DECREF(result); return NULL; }
+    if(PyDict_SetItemString(result, "type", seq) < 0) 
+    {
+      Py_DECREF(seq);
+      Py_DECREF(result);
+      return NULL;
+    }
+    Py_DECREF(seq);
+    return result;
+# endif
+}
+
+// Implements setstate for pickling.
+PyObject* LADA_NAME(setstate)(LADA_TYPE* _self, PyObject *_dict)
+{
+# ifdef LADA_PARSE
+#   error LADA_PARSE already exists.
+# endif
+# define LADA_PARSE(name)                                                            \
+    if(PyObject *item = PyDict_GetItemString(_dict, #name))                          \
+      LADA_NAME(set ## name)(_self, item, NULL);                                     \
+    else { LADA_PYERROR(internal, "Could not unpickle " #name "."); return NULL; }   \
+    if( PyDict_DelItemString(_dict, #name) < 0)                                      \
+      { LADA_PYERROR(internal, "Could not delete " #name " item when unpickling."); return NULL; }                   
+  LADA_PARSE(pos);
+  LADA_PARSE(freeze);
+  LADA_PARSE(site);
+  LADA_PARSE(type);
+# undef LADA_PARSE
+
+  Py_XDECREF(_self->atom->pydict);
+  if(PyDict_Size(_dict) == 0) _self->atom->pydict = NULL;
+  else 
+  {
+    _self->atom->pydict = _dict;
+    Py_INCREF(_dict);
+  }
+  Py_RETURN_NONE;
 }
