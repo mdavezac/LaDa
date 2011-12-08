@@ -11,7 +11,7 @@ def get_mem():
   return int(output)
 
 def mklist():
-  result = [@PYTYPE@() for u in range(1000)]
+  result = [@PYTYPE@() for u in range(1)]
   for b in result: b.m, b.type = [b], ['Au', 'Pd'] if "@PYTYPE@" == "AtomSequence" else 'Au'
   b = [(u.pos, u.type) for u in result]
   return result, b

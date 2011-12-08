@@ -128,6 +128,8 @@ namespace LaDa
             atom_->pydict = _dict;
             Py_XDECREF(dummy);
           }
+          //! Returns a refence to a wrapper around this object.
+          PyObject* pyself() const { return PyAtom_FromAtom(*this); }
 #       endif
     
       private:

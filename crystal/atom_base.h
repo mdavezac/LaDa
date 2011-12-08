@@ -74,8 +74,26 @@ namespace LaDa
 #           error LADA_PYDICT already defined.
 #         endif
 #         ifdef LADA_DO_PYTHON
+            //! \brief Reference to python attribute dictionary.
+            //! \details A reference is owned by this object. This way, the
+            //!          dictionary of attributes, once created is never lost
+            //!          over the course of the atom's life, whatever may
+            //!          happen to python wrappers around the atom.
             PyObject *pydict;
-#           define LADA_PYDICT , pydict(NULL)
+            //! \brief Borrowed reference to a python wrapper around this object.
+            //! \details To avoid impossible ownership cycles, this reference
+            //!          is not owned by the atom object. Rather, whenever a
+            //!          wrapper is created, the reference is checked for
+            //!          existence first. If it is NULL, a new wrapper is
+            //!          created and a this reference is made to point to it.
+            //!          However, it is not incref'ed and thus not owned. Upon
+            //!          destruction of the python wrapper, this reference is
+            //!          set to NULL. By carefully using only the provided
+            //!          PyAtom_FromAtom, it is possible to ensure that there
+            //!          are never more than one wrapper around, and that
+            //!          pyself always points to a valid memory.
+            PyObject *pyself;
+#           define LADA_PYDICT , pydict(NULL), pyself(NULL)
 #         else 
 #           define LADA_PYDICT
 #         endif
@@ -93,6 +111,7 @@ namespace LaDa
                    : AtomFreezeMixin(_c), pos(_c.pos), type(_c.type), site(_c.site)
           {
 #           ifdef LADA_DO_PYTHON
+              pyself = NULL;
               if(_c.pydict == NULL and pydict != NULL) 
               {
                 PyObject *dummy = pydict;

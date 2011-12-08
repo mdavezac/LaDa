@@ -22,8 +22,13 @@ static void LADA_NAME(dealloc)(LADA_TYPE *_self)
 {
   if(_self->weakreflist != NULL)
     PyObject_ClearWeakRefs((PyObject *) _self);
+ 
+  // Reference to wrapper in the wrapped object is not owned by the wrapped
+  // object. It is set to NULL when the wrapper is destroyed. 
+  if(_self->atom) _self->atom->pyself = NULL;
 
   LADA_NAME(gcclear)(_self);
+
   _self->ob_type->tp_free((PyObject*)_self);
 }
 
@@ -66,6 +71,9 @@ static void LADA_NAME(dealloc)(LADA_TYPE *_self)
     // According to boost, should never throw.
     new(&result->sequence->ptr_atom) boost::shared_ptr<t_Atom>(result->atom); 
 # endif
+  // Reference to wrapper in the wrapped object is not owned by the wrapped
+  // object. It is set to NULL when the wrapper is destroyed. 
+  result->atom->pyself = (PyObject*)result;
   return (PyObject*) result;
 }
 

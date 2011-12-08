@@ -22,18 +22,17 @@ using namespace LaDa;
 # define NewAtom PyAtomSequence_New
 # define LADA_MODULE atom_self_1
 #endif
+static Atom atom;
 
 bp::object get_new_object() { return bp::object(bp::handle<>(NewAtom())); }
-bp::object get_static_object()
-{
-  static Atom atom;
-  return bp::object(bp::handle<>(PyAtom_FromAtom(atom))); 
-}
+bp::object get_static_object() { return bp::object(bp::handle<>(PyAtom_FromAtom(atom))); }
+bool self_is_null() { return atom->pyself == NULL; }
 
 BOOST_PYTHON_MODULE(LADA_MODULE)
 {
   bp::def("get_new_object", &get_new_object);
   bp::def("get_static_object", &get_static_object);
+  bp::def("self_is_null", &self_is_null);
 }
 #undef NewAtom
 #undef LADA_MODULE

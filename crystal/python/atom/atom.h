@@ -80,6 +80,9 @@ template<> PyObject* PyAtom_FromAtom<std::string>(LaDa::crystal::Atom<std::strin
     LADA_PYERROR(internal, "Invalid atom.\n");
     return NULL;
   }
+  // check for existence of a wrapper first.
+  if(_atom->pyself) { Py_INCREF(_atom->pyself); return _atom->pyself; }
+
   AtomStr* result = (AtomStr*)atomsequence_type.tp_alloc(&atomstr_type, 0);
   if(result == NULL) return NULL;
   
@@ -90,6 +93,8 @@ template<> PyObject* PyAtom_FromAtom<std::string>(LaDa::crystal::Atom<std::strin
   // According to boost, should never throw.
   new(&result->atom) boost::shared_ptr<t_Atom>(_atom.atom_); 
   
+  // Now sets internal reference, but no incref'ing.
+  _atom.atom_->pyself = (PyObject*)result;
   return (PyObject*) result;
 }
 //! Creates an atom wrapper instance around a pre-existing atom.
@@ -101,6 +106,9 @@ template<> PyObject* PyAtom_FromAtom< std::vector<std::string> >
     LADA_PYERROR(internal, "Invalid atom.\n");
     return NULL;
   }
+  // check for existence of a wrapper first.
+  if(_atom->pyself) { Py_INCREF(_atom->pyself); return _atom->pyself; }
+
   AtomSequence* result = (AtomSequence*)atomsequence_type.tp_alloc(&atomsequence_type, 0);
   if(result == NULL) return NULL;
   
@@ -125,6 +133,82 @@ template<> PyObject* PyAtom_FromAtom< std::vector<std::string> >
   // According to boost, should never throw.
   new(&result->sequence->ptr_atom) boost::shared_ptr<t_Atom>(result->atom); 
 
+  // Now sets internal reference, but no incref'ing.
+  _atom.atom_->pyself = (PyObject*)result;
+  return (PyObject*) result;
+}
+
+//! \brief Creates an atom wrapper instance.
+//! \brief The attribute dictionary is created on call only. It may not yet
+//!         exist. g++ warns against non-template friend functions of template
+//!         classes. Hence using templated form here although it doesn't make
+//!         much sense.
+template<class T> PyObject* PyAtom_FromAtom(boost::shared_ptr< LaDa::crystal::AtomData<T> > const &_atom);
+
+//! Creates an atom wrapper instance around a pre-existing atom.
+template<> PyObject* PyAtom_FromAtom<std::string>
+   (boost::shared_ptr< LaDa::crystal::AtomData<std::string> > const &_atom)
+{
+  if(not _atom) 
+  {
+    LADA_PYERROR(internal, "Invalid atom.\n");
+    return NULL;
+  }
+  // check for existence of a wrapper first.
+  if(_atom->pyself) { Py_INCREF(_atom->pyself); return _atom->pyself; }
+
+  AtomStr* result = (AtomStr*)atomsequence_type.tp_alloc(&atomstr_type, 0);
+  if(result == NULL) return NULL;
+  
+  // set everything to null, just in case we exit to fast.
+  result->weakreflist = NULL;
+  // Now starts setting things up.
+  typedef LaDa::crystal::AtomData<std::string> t_Atom;
+  // According to boost, should never throw.
+  new(&result->atom) boost::shared_ptr<t_Atom>(_atom); 
+  
+  // Now sets internal reference, but no incref'ing.
+  _atom->pyself = (PyObject*)result;
+  return (PyObject*) result;
+}
+//! Creates an atom wrapper instance around a pre-existing atom.
+template<> PyObject* PyAtom_FromAtom< std::vector<std::string> >
+  (boost::shared_ptr< LaDa::crystal::AtomData< std::vector<std::string> > > const &_atom)
+{
+  if(not _atom) 
+  {
+    LADA_PYERROR(internal, "Invalid atom.\n");
+    return NULL;
+  }
+  // check for existence of a wrapper first.
+  if(_atom->pyself) { Py_INCREF(_atom->pyself); return _atom->pyself; }
+
+  AtomSequence* result = (AtomSequence*)atomsequence_type.tp_alloc(&atomsequence_type, 0);
+  if(result == NULL) return NULL;
+  
+  // set everything to null, just in case we exit to fast.
+  result->weakreflist = NULL;
+  result->sequence = NULL;
+  // Now starts setting things up.
+  typedef LaDa::crystal::AtomData< std::vector<std::string> > t_Atom;
+  // According to boost, should never throw.
+  new(&result->atom) boost::shared_ptr<t_Atom>(_atom); 
+  
+  result->sequence = (Sequence*)PyObject_New(Sequence, &sequence_type);
+  if(result->sequence == NULL)
+  {
+    Py_DECREF(result);
+    return NULL;
+  }
+  result->sequence->ptr_seq = &result->atom->type;
+  typedef LaDa::crystal::AtomData< std::vector<std::string> > t_Atom;
+  // something weird here. Seems that the constructor for the boost shared pointer was never called.
+  // Perfome in-place construction using new.
+  // According to boost, should never throw.
+  new(&result->sequence->ptr_atom) boost::shared_ptr<t_Atom>(result->atom); 
+
+  // Now sets internal reference, but no incref'ing.
+  _atom->pyself = (PyObject*)result;
   return (PyObject*) result;
 }
 
