@@ -78,13 +78,6 @@ PyMODINIT_FUNC initatom(void)
 {
   import_array(); // needed for NumPy 
 
-  // set generic attributes for atom.
-// atomstr_type.tp_getattro = PyObject_GenericGetAttr;
-// atomstr_type.tp_setattro = PyObject_GenericSetAttr;
-// atomsequence_type.tp_getattro = PyObject_GenericGetAttr;
-// atomsequence_type.tp_setattro = PyObject_GenericSetAttr;
-// sequence_type.tp_free = PyObject_GC_Del;
-
   if (PyType_Ready(&atomstr_type) < 0) return;
   if (PyType_Ready(&atomsequence_type) < 0) return;
   if (PyType_Ready(&sequence_type) < 0) return;
@@ -95,7 +88,7 @@ PyMODINIT_FUNC initatom(void)
   Py_INCREF(&sequence_type);
   Py_INCREF(&sequenceiterator_type);
 
-  char const doc[] =  "Wrapper around C++ atom class, and affiliates.";
+  char const doc[] =  "Wrapper around C++ atom class and affiliates.";
   PyObject* module = Py_InitModule3("atom", atom_methods, doc);
 
   PyModule_AddObject(module, "AtomStr", (PyObject *)&atomstr_type);

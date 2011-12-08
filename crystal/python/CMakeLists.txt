@@ -12,8 +12,8 @@ set( PYCRYSTAL_SOURCES
    #    read_structure.cc  smith.cc  structure.cc  symmetry_operator.cc
    #    which_site.cc misc.cc periodic_dnc.cc )
 
-set(PYATOM_HEADERS atom/cdi.hpp atom/type.hpp atom/getset.hpp atom/set.hpp
-                   atom/set_iterator.hpp atom/extract_species.h atom/members.h)
+set(PYATOM_HEADERS atom/cdi.hpp atom/type.hpp atom/getset.hpp atom/sequence.hpp
+                   atom/sequence_iterator.hpp atom/members.h atom/atom.h)
 set(PYATOM_SOURCES atom/module.cc)
 
 

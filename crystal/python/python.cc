@@ -14,7 +14,6 @@
 // #include <physics/physics.h>
 #include <python/std_vector.hpp>
 
-#include "atom.hpp"
 // #include "set.hpp"
 #include "structure.hpp"
 // #include "read_structure.hpp"
