@@ -1,5 +1,5 @@
 # Check memory is deallocated. 
-from lada.crystal.cppwrappers.atom import @PYTYPE@
+from lada.crystal.cppwrappers import @PYTYPE@
 import gc
 from os import system, getpid
 gc.set_debug(gc.DEBUG_OBJECTS | gc.DEBUG_UNCOLLECTABLE)

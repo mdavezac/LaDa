@@ -74,14 +74,63 @@ namespace LaDa
       types::t_unsigned freeze;
       //! The atomic position in cartesian unit and their occupation.
       t_Atoms atoms;
+#     ifdef LADA_PYDICT 
+#       error LADA_PYDICT already defined.
+#     endif
+#     ifndef LADA_DO_PYTHON
+#       define LADA_PYDICT 
+#     else
+#       define LADA_PYDICT , pydict(NULL), pyself(NULL)
+        //! Reference to python attribute dictionary owned by this instance.
+        PyObject *pydict;
+        //! Reference to python wrapper. Not owned by this instance.
+        PyObject *pyself;
+#     endif
 
       //! Constructor
-      StructureData() : name(""), energy(0), weight(1), scale(1), freeze(frozenstr::NONE) {};
+      StructureData() : name(""), energy(0), weight(1), scale(1), freeze(frozenstr::NONE)
+                        LADA_PYDICT {};
       //! Copy Constructor
       StructureData   (const StructureData &_str)
                     : cell(_str.cell), atoms(_str.atoms), name(_str.name), 
                       energy(_str.energy), weight(_str.weight),
-                      freeze(_str.freeze), scale( _str.scale ) {}
+                      freeze(_str.freeze), scale( _str.scale ) 
+                      LADA_PYDICT
+      {
+#       ifdef LADA_DO_PYTHON
+          pyself = NULL;
+          if(_str.pydict == NULL and pydict != NULL) 
+          {
+            PyObject *dummy = pydict;
+            pydict = NULL;
+            Py_XDECREF(dummy);
+          }
+          else if(_str.pydict != NULL)
+          {
+            if(pydict != NULL) { Py_DECREF(pydict); pydict = NULL; }
+            PyObject* copymod = PyImport_ImportModule("copy");
+            if(copymod == NULL) return;
+            PyObject *deepcopystr = PyString_FromString("deepcopy");
+            if(not deepcopystr) { Py_DECREF(copymod); return; }
+            pydict = PyObject_CallMethodObjArgs(copymod, deepcopystr, _str.pydict, NULL);
+            Py_DECREF(copymod);
+            Py_DECREF(deepcopystr);
+          }
+#       endif
+      }
+#     undef LADA_PYDICT
+#     ifdef LADA_DO_PYTHON
+        //! Destructor. 
+        ~StructureData() 
+        {
+            if(pydict != NULL)
+            {
+              PyObject *dummy = pydict;
+              pydict = NULL;
+              Py_DECREF(dummy); 
+            }
+         }
+#     endif
       //! Serializes a structure.
       template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version);
 #     ifdef LADA_WITH_LNS

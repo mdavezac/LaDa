@@ -16,9 +16,9 @@ PyTypeObject LADA_NAME(type) = {
     PyObject_HEAD_INIT(NULL)
     0,                         /*ob_size*/
 #   if LADA_ATOM_NUMBER == 0
-      "lada.crystal.cppwrappers.atom.AtomStr",      /*tp_name*/
+      "lada.crystal.cppwrappers.AtomStr",      /*tp_name*/
 #   elif LADA_ATOM_NUMBER == 1
-      "lada.crystal.cppwrappers.atom.AtomSequence", /*tp_name*/
+      "lada.crystal.cppwrappers.AtomSequence", /*tp_name*/
 #   endif
     sizeof(LADA_TYPE),         /*tp_basicsize*/
     0,                         /*tp_itemsize*/

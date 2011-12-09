@@ -1,6 +1,6 @@
 import gc
 from numpy import all
-from lada.crystal.cppwrappers.atom import AtomStr
+from lada.crystal.cppwrappers import AtomStr
 
 # Try correct initialization. Check for garbage collection.
 a = AtomStr()

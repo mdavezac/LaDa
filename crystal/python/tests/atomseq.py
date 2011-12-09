@@ -1,5 +1,5 @@
 from numpy import all
-from lada.crystal.cppwrappers.atom import AtomSequence as AtomSeq
+from lada.crystal.cppwrappers import AtomSequence as AtomSeq
 
 # Try correct initialization. 
 a = AtomSeq()

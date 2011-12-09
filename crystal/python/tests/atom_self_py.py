@@ -1,7 +1,7 @@
 # Check that wrappers around a c++-created instance work and that the dictionary is
 # conserved for the life of the c++ object, rather that of the python wrapper.
 from numpy import abs, all
-from lada.crystal.cppwrappers.atom import @PYTYPE@
+from lada.crystal.cppwrappers import @PYTYPE@
 from atom_self_@TYPE@ import get_new_object, get_static_object, self_is_null
 
 # Returns wrapper to a static object in atom_self extension.

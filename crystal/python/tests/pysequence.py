@@ -1,4 +1,4 @@
-from lada.crystal.cppwrappers.atom import _new_sequence as Sequence
+from lada.crystal.cppwrappers import _new_sequence as Sequence
 from lada import error
 
 # test sequence to list transformation.

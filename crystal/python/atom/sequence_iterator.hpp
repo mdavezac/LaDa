@@ -42,7 +42,7 @@ static void seqiterator_dealloc(SequenceIterator *_self)
 static PyTypeObject sequenceiterator_type = {
     PyObject_HEAD_INIT(NULL)
     0,                                          /*ob_size*/
-    "lada.crystal.cppwrappers.atom.SequenceIterator",  /*tp_name*/
+    "lada.crystal.cppwrappers.SequenceIterator",/*tp_name*/
     sizeof(SequenceIterator),                   /*tp_basicsize*/
     0,                                          /*tp_itemsize*/
     (destructor)seqiterator_dealloc,            /*tp_dealloc*/
