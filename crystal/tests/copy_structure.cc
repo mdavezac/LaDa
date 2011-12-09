@@ -38,7 +38,7 @@ int main()
   using namespace LaDa;
   using namespace LaDa::crystal;
   using namespace LaDa::math;
-  TemplateStructure< LADA_TYPE > lattice;
+  Structure< LADA_TYPE > lattice;
   lattice.set_cell(0,0.5,0.5)
                   (0.5,0,0.5)
                   (0.5,0.5,0);
@@ -54,7 +54,7 @@ int main()
   lattice->freeze = frozenstr::XX;
   lattice->name = "hello";
 
-  TemplateStructure< LADA_TYPE > c = lattice.copy();
+  Structure< LADA_TYPE > c = lattice.copy();
   LADA_DOASSERT(is_null(c->cell - lattice->cell), "Different cells.\n");
   LADA_DOASSERT(is_null(c->energy - lattice->energy), "Different energies.\n");
   LADA_DOASSERT(is_null(c->weight - lattice->weight), "Different weights.\n");

@@ -71,8 +71,8 @@ int main()
   using namespace LaDa;
   using namespace LaDa::crystal;
   using namespace LaDa::math;
-  typedef TemplateStructure< LADA_TYPE > t_Str; 
-  TemplateStructure< LADA_TYPE > lattice;
+  typedef Structure< LADA_TYPE > t_Str; 
+  Structure< LADA_TYPE > lattice;
   Neighbors neighbors(36);
   lattice.set_cell(0,0.5,0.5)
                   (0.5,0,0.5)

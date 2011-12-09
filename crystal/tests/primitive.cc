@@ -21,8 +21,8 @@ int main()
   using namespace LaDa;
   using namespace LaDa::crystal;
   using namespace LaDa::math;
-  typedef TemplateStructure< LADA_TYPE > t_Str; 
-  TemplateStructure< LADA_TYPE > lattice, lat; 
+  typedef Structure< LADA_TYPE > t_Str; 
+  Structure< LADA_TYPE > lattice, lat; 
   lattice.set_cell(0,0.5,0.5)
                   (0.5,0,0.5)
                   (0.5,0.5,0);
@@ -61,7 +61,7 @@ int main()
           {
             cell(2,1) = f;
 
-            TemplateStructure< LADA_TYPE > structure = supercell(lattice, lattice.cell()*cell);
+            Structure< LADA_TYPE > structure = supercell(lattice, lattice.cell()*cell);
             structure = primitive(structure, 1e-8);
             LADA_DOASSERT( eq(lattice.cell().determinant(), structure.cell().determinant(), 1e-5),\
                            "Not primitive.\n");

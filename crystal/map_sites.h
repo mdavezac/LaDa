@@ -26,7 +26,7 @@ namespace LaDa
     //! \return True if mapping is successful, False if all sites could not be mapped. 
     //!         Since in the case of defects, incomplete mappings may be what is wanted, 
     template<class T_TYPE>
-      bool map_sites( TemplateStructure<T_TYPE> const &_mapper, TemplateStructure<T_TYPE> &_mappee,
+      bool map_sites( Structure<T_TYPE> const &_mapper, Structure<T_TYPE> &_mappee,
                       bool _withocc = true, types::t_real _tolerance = types::tolerance )
       {
         if(_mapper.size() == 0) 
@@ -46,15 +46,15 @@ namespace LaDa
 
         // Copy mapper sites to a vector, making sure positiosn are in cell.
         std::vector<math::rVector3d> sites; 
-        typename TemplateStructure<T_TYPE>::const_iterator i_mapper_site = _mapper.begin();
-        typename TemplateStructure<T_TYPE>::const_iterator const i_mapper_site_end = _mapper.end();
+        typename Structure<T_TYPE>::const_iterator i_mapper_site = _mapper.begin();
+        typename Structure<T_TYPE>::const_iterator const i_mapper_site_end = _mapper.end();
         for(; i_mapper_site != i_mapper_site_end; ++i_mapper_site)
           sites.push_back(into_cell(i_mapper_site->pos(), cell, invcell));
 
         // loop over atoms in mappee and assign sites.
         bool allmapped = true;
-        typename TemplateStructure<T_TYPE>::iterator i_atom = _mappee.begin();
-        typename TemplateStructure<T_TYPE>::iterator const i_atom_end = _mappee.end();
+        typename Structure<T_TYPE>::iterator i_atom = _mappee.begin();
+        typename Structure<T_TYPE>::iterator const i_atom_end = _mappee.end();
         std::vector<math::rVector3d>::const_iterator const i_site_end = sites.end();
         for(; i_atom != i_atom_end; ++i_atom)
         {

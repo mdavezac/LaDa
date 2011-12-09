@@ -5,11 +5,11 @@ namespace LaDa
   namespace crystal
   {
     template< class T_TYPE >
-      std::ostream& operator<<(std::ostream &_stream, TemplateStructure<T_TYPE> const &_str)
+      std::ostream& operator<<(std::ostream &_stream, Structure<T_TYPE> const &_str)
         { return _stream << *_str.impl_; }
 
     template<class TYPE> template<class T_ARCHIVE>
-      bool TemplateStructure :: lns_access(T_ARCHIVE &_ar, load_n_save::version_type const _version) 
+      bool Structure :: lns_access(T_ARCHIVE &_ar, load_n_save::version_type const _version) 
       {
         if( _ar.is_loading() )
         {

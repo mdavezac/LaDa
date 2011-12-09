@@ -38,7 +38,7 @@ int main()
   using namespace LaDa;
   using namespace LaDa::crystal;
   using namespace LaDa::math;
-  TemplateStructure< LADA_TYPE > lattice;
+  Structure< LADA_TYPE > lattice;
   lattice.set_cell(0,0.5,0.5)
                   (0.5,0,0.5)
                   (0.5,0.5,0);
@@ -49,7 +49,7 @@ int main()
   rMatrix3d matrix;
   matrix << -1, 1, 1, 1, -1, 1, 1, 1, -1;
 
-  TemplateStructure< LADA_TYPE > result;
+  Structure< LADA_TYPE > result;
   result = supercell(lattice, lattice.cell() * matrix);
   LADA_DOASSERT(is_identity(result.cell()), "Unexpected supercell.");
   LADA_DOASSERT(eq(result[0]->pos, rVector3d(0.00000, 0.00000, 0.00000)), "Incorrect position.\n")
@@ -60,8 +60,8 @@ int main()
   LADA_DOASSERT(eq(result[5]->pos, rVector3d(0.75000, 0.75000, 0.25000)), "Incorrect position.\n")
   LADA_DOASSERT(eq(result[6]->pos, rVector3d(0.00000, 0.50000, 0.50000)), "Incorrect position.\n")
   LADA_DOASSERT(eq(result[7]->pos, rVector3d(0.25000, 0.75000, 0.75000)), "Incorrect position.\n")
-  TemplateStructure< LADA_TYPE > :: const_iterator i_atom = result.begin();
-  TemplateStructure< LADA_TYPE > :: const_iterator const i_atom_end = result.begin();
+  Structure< LADA_TYPE > :: const_iterator i_atom = result.begin();
+  Structure< LADA_TYPE > :: const_iterator const i_atom_end = result.begin();
   for(; i_atom != i_atom_end; ++i_atom)
   {
     if(are_periodic_images(lattice[0]->pos, i_atom->pos(), lattice.cell().inverse()))

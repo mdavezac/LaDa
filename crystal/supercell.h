@@ -22,11 +22,11 @@ namespace LaDa
   {
 
     template<class T_TYPE, class T_DERIVED>
-      TemplateStructure<T_TYPE> supercell( TemplateStructure<T_TYPE> const &_lattice,
+      Structure<T_TYPE> supercell( Structure<T_TYPE> const &_lattice,
                                            Eigen::DenseBase<T_DERIVED> const &_supercell )
       {
         namespace bt = boost::tuples;
-        TemplateStructure<T_TYPE> result; 
+        Structure<T_TYPE> result; 
         result->cell = _supercell;
         result->scale = _lattice->scale;
         if(_lattice->name.size() != 0) result->name = "supercell of " + _lattice->name;
@@ -38,8 +38,8 @@ namespace LaDa
         const math::rMatrix3d factor(bt::get<0>(transform).inverse());
         math::rMatrix3d inv_cell( result.cell().inverse() ); 
         result.reserve(smith(0)*smith(1)*smith(2)*_lattice.size());
-        typedef typename TemplateStructure<T_TYPE>::iterator t_iterator;
-        typedef typename TemplateStructure<T_TYPE>::const_iterator t_citerator;
+        typedef typename Structure<T_TYPE>::iterator t_iterator;
+        typedef typename Structure<T_TYPE>::const_iterator t_citerator;
         t_citerator const i_site_begin = _lattice.begin();
         t_citerator const i_site_end = _lattice.end();
         

@@ -16,25 +16,27 @@ namespace LaDa
   namespace crystal
   {
     // Dummy declaration.
-    template<class T_TYPE> class TemplateStructure;
+    template<class T_TYPE> class Structure;
 
     //! Dumps structure to string.
     template< class T_TYPE >
-      std::ostream& operator<<(std::ostream &_stream, TemplateStructure<T_TYPE> const &_str);
+      std::ostream& operator<<(std::ostream &_stream, Structure<T_TYPE> const &_str);
 
     //! Wraps around a shared pointer containing structure data.
-    template<class T_TYPE> class TemplateStructure :
-       public details::AddAtomMixin<TemplateStructure, T_TYPE>
+    template<class T_TYPE> class Structure :
+       public details::AddAtomMixin<Structure, T_TYPE>
     {
-        friend class details::AddAtomMixinBase< ::LaDa::crystal::TemplateStructure, T_TYPE>;
+        friend class details::AddAtomMixinBase< ::LaDa::crystal::Structure, T_TYPE>;
         friend class boost::serialization::access;
 #       ifdef LADA_WITH_LNS
           friend class load_n_save::access;
 #       endif
         template<class T> friend
-          std::ostream& operator<<(std::ostream &_stream, TemplateStructure<T> const &_str);
+          std::ostream& operator<<(std::ostream &_stream, Structure<T> const &_str);
         //! Copy Constructor
-        TemplateStructure(StructureData<T_TYPE> &_c) : impl_(new StructureData<T_TYPE>(_c)) {}
+        Structure(StructureData<T_TYPE> &_c) : impl_(new StructureData<T_TYPE>(_c)) {}
+        //! Copy Constructor
+        Structure(boost::shared_ptr< StructureData<T_TYPE> > &_c) : impl_(_c) {}
       public:
         //! \typedef Type of the species
         typedef typename traits::StructureData<T_TYPE>::t_Type t_Type;
@@ -66,11 +68,11 @@ namespace LaDa
         typedef typename t_Atoms::allocator_type allocator_type;
 
         //! Constructor
-        TemplateStructure() : impl_(new StructureData<T_TYPE>()) {};
+        Structure() : impl_(new StructureData<T_TYPE>()) {};
         //! Cloning Constructor
-        TemplateStructure(const TemplateStructure &_c) : impl_(_c.impl_) {}
+        Structure(const Structure &_c) : impl_(_c.impl_) {}
         //! Destructor.
-        ~TemplateStructure () {};
+        ~Structure () {};
 
         //! Returns const reference to cell.
         math::rMatrix3d const & cell() const { return impl_->cell; }
@@ -102,9 +104,9 @@ namespace LaDa
         types::t_unsigned & freeze() { return impl_->freeze; }
 
         //! Deep copy of a structure.
-        TemplateStructure copy() const;
+        Structure copy() const;
         //! Swaps content of two structures.
-        void swap(TemplateStructure &_other) { impl_.swap(_other.impl_); }
+        void swap(Structure &_other) { impl_.swap(_other.impl_); }
         //! Returns pointer to implementation.
         StructureData<T_TYPE>* get() const { return impl_.get(); }
         //! Points to data.
@@ -201,16 +203,16 @@ namespace LaDa
 
         //! \brief True if both structures refer to the same object in memory.
         //! \details Does not compare values, just memory objects.
-        bool is_same(TemplateStructure const &_in) { return impl_ == _in.impl; }
+        bool is_same(Structure const &_in) { return impl_ == _in.impl; }
 
         //! Returns  structure volume.
         types::t_real volume() const { return std::abs(impl_->cell.determinant()); }
 
         //! Transforms a structure according to an affine transformation.
-        TemplateStructure transform(math::Affine3d const &_affine) const;
+        Structure transform(math::Affine3d const &_affine) const;
 
         //! True if both structures refer to same data.
-        bool is_clone(TemplateStructure<T_TYPE> const &_in) const { return impl_ == _in.impl_; }
+        bool is_clone(Structure<T_TYPE> const &_in) const { return impl_ == _in.impl_; }
 
       private:
         //! used by AddAtomMixin to reach the atoms.
@@ -228,12 +230,12 @@ namespace LaDa
     };
 
     template< class T_TYPE >
-      std::ostream& operator<<(std::ostream &_stream, TemplateStructure<T_TYPE> const &_str)
+      std::ostream& operator<<(std::ostream &_stream, Structure<T_TYPE> const &_str)
         { return _stream << *_str.impl_; }
 
 #   ifdef LADA_WITH_LNS
       template<class T_TYPE> template<class T_ARCHIVE>
-        bool TemplateStructure<T_TYPE> :: lns_access(T_ARCHIVE &_ar, load_n_save::version_type const _version) 
+        bool Structure<T_TYPE> :: lns_access(T_ARCHIVE &_ar, load_n_save::version_type const _version) 
         {
           if(not impl_) impl_.reset(new StructureData<T_TYPE>());
           return _ar & load_n_save::ext(impl_);
@@ -241,9 +243,9 @@ namespace LaDa
 #   endif
     // Transforms a structure according to an affine transformation.
     template<class T_TYPE> 
-      TemplateStructure<T_TYPE> TemplateStructure<T_TYPE>::transform(math::Affine3d const &_affine) const
+      Structure<T_TYPE> Structure<T_TYPE>::transform(math::Affine3d const &_affine) const
       {
-        TemplateStructure<T_TYPE> result = copy();
+        Structure<T_TYPE> result = copy();
         result.cell() = _affine.linear() * cell();
         iterator i_first = result.begin();
         iterator const i_end = result.end();
@@ -253,9 +255,9 @@ namespace LaDa
       }
     // Deep copy of this structure.
     template<class T_TYPE> 
-      TemplateStructure<T_TYPE> TemplateStructure<T_TYPE>::copy() const
+      Structure<T_TYPE> Structure<T_TYPE>::copy() const
       {
-        TemplateStructure<T_TYPE> result;
+        Structure<T_TYPE> result;
         result->cell = cell();
         result->weight = weight();
         result->energy = energy();

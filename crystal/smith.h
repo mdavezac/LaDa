@@ -38,8 +38,8 @@ namespace LaDa
     //!                    value of each element is the corresponding index
     //!                    into the supercell's list of atoms.
     template<class T_TYPE>
-      void smith_map( TemplateStructure<T_TYPE> const &_lattice,
-                      TemplateStructure<T_TYPE> const &_supercell,
+      void smith_map( Structure<T_TYPE> const &_lattice,
+                      Structure<T_TYPE> const &_supercell,
                       std::vector< std::vector<size_t> > &_map )
       {
         // finds map for atomic positions.
@@ -53,8 +53,8 @@ namespace LaDa
         _map.clear();
         _map.resize(_str.lattice->sites.size(), std::vector<size_t>(N, Nat)); 
      
-        typename TemplateStructure<T_TYPE>::const_iterator i_first = _str.begin();
-        typename TemplateStructure<T_TYPE>::const_iterator const i_end = _str.end();
+        typename Structure<T_TYPE>::const_iterator i_first = _str.begin();
+        typename Structure<T_TYPE>::const_iterator const i_end = _str.end();
         for(size_t i(0); i_first != i_end; ++i_first, ++i)
         {
           if(i_first->site < 0 or i_first->site >= _str.lattice->sites.size())

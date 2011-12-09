@@ -42,7 +42,7 @@ namespace LaDa
     //! \warning Works for primitive lattices only.
     //! \see Taken from Enum code, PRB 77, 224115 (2008).
     template<class T_TYPE> boost::shared_ptr<t_SpaceGroup>
-      space_group(TemplateStructure<T_TYPE> const &_lattice, types::t_real _tolerance = -1e0)
+      space_group(Structure<T_TYPE> const &_lattice, types::t_real _tolerance = -1e0)
       {
         if(_tolerance <= 0e0) _tolerance = types::tolerance;
         // Checks that lattice has atoms.
@@ -52,13 +52,13 @@ namespace LaDa
         
  
         // Finds minimum translation.
-        TemplateStructure<T_TYPE> atoms = _lattice.copy();
+        Structure<T_TYPE> atoms = _lattice.copy();
         math::rVector3d translation(atoms.front()->pos);
         math::rMatrix3d const cell(math::gruber(_lattice.cell()));
         math::rMatrix3d const invcell(!cell);
         // Creates a list of atoms centered in the cell.
-        typename TemplateStructure<T_TYPE>::iterator i_site = atoms.begin();
-        typename TemplateStructure<T_TYPE>::iterator const i_site_end = atoms.end();
+        typename Structure<T_TYPE>::iterator i_site = atoms.begin();
+        typename Structure<T_TYPE>::iterator const i_site_end = atoms.end();
         for(; i_site != i_site_end; ++i_site)
           i_site->pos() = into_cell(i_site->pos()-translation, cell, invcell);
  
@@ -82,7 +82,7 @@ namespace LaDa
           // loop over possible translations.
           std::vector<math::rVector3d> :: const_iterator i_trial = translations.begin();
           std::vector<math::rVector3d> :: const_iterator const i_trial_end = translations.end();
-          typedef typename TemplateStructure<T_TYPE>::const_iterator const_iterator;
+          typedef typename Structure<T_TYPE>::const_iterator const_iterator;
           const_iterator const i_atoms_begin = atoms.begin();
           const_iterator const i_atoms_end = atoms.end();
           for(; i_trial != i_trial_end; ++i_trial)

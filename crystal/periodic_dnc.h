@@ -46,7 +46,7 @@ namespace LaDa
 
         //! Creates box.
         template<class T_TYPE>
-          void init( TemplateStructure<T_TYPE> const &_structure,
+          void init( Structure<T_TYPE> const &_structure,
                      math::iVector3d const &_n, types::t_real _overlap);
 
         //! Returns size of mesh.
@@ -88,7 +88,7 @@ namespace LaDa
     //! \brief Guesses parameters of divide and conquer mesh base on the
     //!        desired number of atoms per box.
     template<class T_TYPE>
-      math::iVector3d guess_mesh(TemplateStructure<T_TYPE> const &_structure, size_t _nperbox) 
+      math::iVector3d guess_mesh(Structure<T_TYPE> const &_structure, size_t _nperbox) 
       { return guess_mesh(_structure.cell(), _structure.size(), _nperbox); }
 
 
@@ -98,7 +98,7 @@ namespace LaDa
 #   define LADA_INDEX(a, b) (a(0) * b(1) + a(1)) * b(2) + a(2);
 
     template<class T_TYPE>
-      void DnCBoxes::init( const TemplateStructure<T_TYPE> &_structure, 
+      void DnCBoxes::init( const Structure<T_TYPE> &_structure, 
                            const math::iVector3d &_n,
                            const types::t_real _overlap )
       {
@@ -106,7 +106,7 @@ namespace LaDa
         typedef math::iVector3d iVector3d;
         typedef math::rVector3d rVector3d;
         typedef math::rMatrix3d rMatrix3d;
-        typedef typename crystal::TemplateStructure<T_TYPE> :: const_iterator const_iterator;
+        typedef typename crystal::Structure<T_TYPE> :: const_iterator const_iterator;
 
         // constructs cell of small small box
         math::rMatrix3d const strcell( math::gruber(_structure.cell()) );

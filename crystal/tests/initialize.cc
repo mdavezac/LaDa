@@ -106,7 +106,7 @@ int main()
 {
   using namespace LaDa;
   using namespace LaDa::crystal;
-  TemplateStructure< TYPE > structure;
+  Structure< TYPE > structure;
   structure.set_cell(-0.5,0.5,0.5)
                     (0.5,-0.5,0.5)
                     (0.5,0.5,-0.5);

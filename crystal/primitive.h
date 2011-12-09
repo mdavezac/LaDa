@@ -21,22 +21,22 @@ namespace LaDa
   {
     //! Returns the primitive unit structure. 
     template<class T_TYPE>
-      TemplateStructure<T_TYPE> primitive( TemplateStructure<T_TYPE> const &_structure,
+      Structure<T_TYPE> primitive( Structure<T_TYPE> const &_structure,
                                            types::t_real _tolerance = -1e0 )
       {
         if( _tolerance < 0e0 ) _tolerance = types::tolerance;
         if( _structure.size() == 0 ) BOOST_THROW_EXCEPTION(error::empty_structure());
 
         // copies lattice.
-        typedef TemplateStructure<T_TYPE> t_Sites;
-        TemplateStructure<T_TYPE> result(_structure.copy());
+        typedef Structure<T_TYPE> t_Sites;
+        Structure<T_TYPE> result(_structure.copy());
         math::rMatrix3d cell = math::gruber(result.cell());
         bool is_primitive = true;
   
         // moves sites into unit-cell.
         math::rMatrix3d const inv(cell.inverse());
-        typename TemplateStructure<T_TYPE>::iterator i_atom = result.begin();
-        typename TemplateStructure<T_TYPE>::iterator const i_atom_end = result.end();
+        typename Structure<T_TYPE>::iterator i_atom = result.begin();
+        typename Structure<T_TYPE>::iterator const i_atom_end = result.end();
         for(; i_atom != i_atom_end; ++i_atom)
           i_atom->pos() = into_cell(i_atom->pos(), cell, inv);
   

@@ -12,9 +12,9 @@ namespace LaDa
 {
   namespace crystal
   {
-    TemplateStructure< LADA_TYPE > b5(types::t_real u)
+    Structure< LADA_TYPE > b5(types::t_real u)
     {
-      TemplateStructure< LADA_TYPE > lattice;
+      Structure< LADA_TYPE > lattice;
       types::t_real const x(u), y(0.25 - u);
       lattice.set_cell(0, 0.5, 0.5)
                       (0.5, 0, 0.5)
@@ -50,12 +50,12 @@ int main()
   using namespace LaDa;
   using namespace LaDa::crystal;
   using namespace LaDa::math;
-  TemplateStructure< LADA_TYPE > lattice = b5(0.36); 
+  Structure< LADA_TYPE > lattice = b5(0.36); 
   math::rMatrix3d cell;
   cell << 5, 2, -5, 0, 2, 3, -3, 0, 1;
   lattice.scale() = 2e0;
-  TemplateStructure< LADA_TYPE > super = supercell(lattice, lattice.cell() * cell);
-  TemplateStructure< LADA_TYPE > checkme = super.copy();
+  Structure< LADA_TYPE > super = supercell(lattice, lattice.cell() * cell);
+  Structure< LADA_TYPE > checkme = super.copy();
   checkme.scale() *= 0.5;
   checkme.cell() *= 2e0;
   for(size_t i(0); i < checkme.size(); ++i) checkme[i]->pos *= 2e0;;

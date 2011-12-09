@@ -28,8 +28,8 @@ namespace LaDa
     //!            types::t_real. It is in the same units as the structures scales, if
     //!            that is taken into account, otherwise, it is in the same
     //!            units as _a.scale.
-    bool equivalent_lattices( TemplateStructure< LADA_TYPE > const &_a,
-                              TemplateStructure< LADA_TYPE > const &_b,
+    bool equivalent_lattices( Structure< LADA_TYPE > const &_a,
+                              Structure< LADA_TYPE > const &_b,
                               bool with_scale = true,
                               types::t_real _tol = types::tolerance )
     {
@@ -57,8 +57,8 @@ namespace LaDa
       t_List atomsA;
       for(size_t i(0); i < _a.size(); ++i) atomsA.push_back(i);
 
-      TemplateStructure< LADA_TYPE >::const_iterator i_b = _b.begin();
-      TemplateStructure< LADA_TYPE >::const_iterator const i_bend = _b.end();
+      Structure< LADA_TYPE >::const_iterator i_b = _b.begin();
+      Structure< LADA_TYPE >::const_iterator const i_bend = _b.end();
       for(; i_b != i_bend; ++i_b)
       {
         math::rVector3d const pos = into_voronoi(i_b->pos()*scaleB, cellA, invA);
@@ -78,9 +78,9 @@ namespace LaDa
       return false;
     }
 
-    TemplateStructure< LADA_TYPE > b5(types::t_real u)
+    Structure< LADA_TYPE > b5(types::t_real u)
     {
-      TemplateStructure< LADA_TYPE > lattice;
+      Structure< LADA_TYPE > lattice;
       types::t_real const x(u), y(0.25 - u);
       lattice.set_cell(0, 0.5, 0.5)
                       (0.5, 0, 0.5)
@@ -110,7 +110,7 @@ int main()
   using namespace LaDa;
   using namespace LaDa::crystal;
   using namespace LaDa::math;
-  TemplateStructure< LADA_TYPE > lattice;
+  Structure< LADA_TYPE > lattice;
   lattice.set_cell(0, 0.5, 0.5)
                   (0.5, 0, 0.5)
                   (0.5, 0.5, 0);
@@ -120,7 +120,7 @@ int main()
   foreach(t_SpaceGroup::const_reference aff, *sg)
   {
     LADA_DOASSERT(math::is_null(aff.translation()), "Non-zero translation.\n");
-    TemplateStructure<LADA_TYPE> transformed = lattice.transform(aff);
+    Structure<LADA_TYPE> transformed = lattice.transform(aff);
     equivalent_lattices(lattice, transformed);
   }
   
@@ -129,7 +129,7 @@ int main()
   LADA_DOASSERT(sg->size() == 48, "Improper number of rotations.");
   foreach(t_SpaceGroup::const_reference aff, *sg)
   {
-    TemplateStructure<LADA_TYPE> transformed = lattice.transform(aff);
+    Structure<LADA_TYPE> transformed = lattice.transform(aff);
     equivalent_lattices(lattice, transformed);
   }
 
@@ -138,7 +138,7 @@ int main()
   LADA_DOASSERT(sg->size() == 48, "Improper number of rotations.");
   foreach(t_SpaceGroup::const_reference aff, *sg)
   {
-    TemplateStructure<LADA_TYPE> transformed = lattice.transform(aff);
+    Structure<LADA_TYPE> transformed = lattice.transform(aff);
     equivalent_lattices(lattice, transformed);
   }
   return 0;

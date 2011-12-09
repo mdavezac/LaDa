@@ -17,7 +17,7 @@
 using namespace LaDa;
 using namespace LaDa::crystal;
 using namespace LaDa::math;
-typedef TemplateStructure< LADA_TYPE > t_Str;
+typedef Structure< LADA_TYPE > t_Str;
 #define LADA_RAND(s) types::t_real(rand()%s)/types::t_real(s)
 #if LADA_INCREMENT == 0
 #  define LADA_INIT "Si"

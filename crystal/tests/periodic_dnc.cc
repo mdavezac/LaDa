@@ -17,9 +17,9 @@ namespace LaDa
 {
   namespace crystal
   {
-    TemplateStructure< LADA_TYPE > b5(types::t_real u)
+    Structure< LADA_TYPE > b5(types::t_real u)
     {
-      TemplateStructure< LADA_TYPE > lattice;
+      Structure< LADA_TYPE > lattice;
       types::t_real const x(u), y(0.25 - u);
       lattice.set_cell(0, 0.5, 0.5)
                       (0.5, 0, 0.5)
@@ -72,7 +72,7 @@ LaDa::math::iVector3d indices_( LaDa::math::rMatrix3d const &_invcell,
   return other;
 }
 
-void check(LaDa::crystal::TemplateStructure< LADA_TYPE > const &_structure)
+void check(LaDa::crystal::Structure< LADA_TYPE > const &_structure)
 {
   using namespace LaDa;
   using namespace LaDa::math;
@@ -117,7 +117,7 @@ int main()
   using namespace LaDa;
   using namespace LaDa::crystal;
   using namespace LaDa::math;
-  TemplateStructure< LADA_TYPE > lattice = b5(0.36); 
+  Structure< LADA_TYPE > lattice = b5(0.36); 
 
   check(lattice);
 
@@ -136,7 +136,7 @@ int main()
     } while( is_null(cell.determinant()) );
     while(std::abs(cell.determinant()) < 1e-8);
     if(cell.determinant() < 0) cell.col(0).swap(cell.col(1));
-    TemplateStructure< LADA_TYPE > structure = supercell(lattice, lattice.cell() * cell);
+    Structure< LADA_TYPE > structure = supercell(lattice, lattice.cell() * cell);
     check(structure);
   }
 

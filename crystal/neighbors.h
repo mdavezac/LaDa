@@ -80,7 +80,7 @@ namespace LaDa
          const_iterator begin() const { return neighbors_.begin(); }
          //! constructs first neighbor list and returns first iterator.
          template<class T_TYPE> 
-           const_iterator begin(TemplateStructure<T_TYPE> const& _str) 
+           const_iterator begin(Structure<T_TYPE> const& _str) 
              { create_neighbors_list_(_str); return begin(); }
          //! returns end of neighbors list.
          const_iterator end() const { return neighbors_.end(); }
@@ -94,20 +94,20 @@ namespace LaDa
 
          //! Creates list of atoms.
          template<class T_TYPE>
-           void create_neighbors_list_(TemplateStructure<T_TYPE> const& _str);
+           void create_neighbors_list_(Structure<T_TYPE> const& _str);
          //! List of neighbors.
          t_Neighbors neighbors_;
      };
 
      template<class T_TYPE>
-       void Neighbors :: create_neighbors_list_(TemplateStructure<T_TYPE> const& _structure)
+       void Neighbors :: create_neighbors_list_(Structure<T_TYPE> const& _structure)
        {
          const types::t_int N( _structure.size() );
          neighbors_.clear();
          
          math::rMatrix3d const cell = math::gruber(_structure.cell(), 3e0*tolerance);
          math::rMatrix3d const inv_cell( !cell );
-         typedef TemplateStructure<T_TYPE> t_Structure;
+         typedef Structure<T_TYPE> t_Structure;
          Neighbor neighbor;
          types::t_real const volume(_structure.volume());
          types::t_int list_max_size(nmax+2);

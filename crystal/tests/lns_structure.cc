@@ -20,7 +20,7 @@
 #  define LADA_CALL 
 #  define LADA_ATOMS .atoms
 #elif LADA_TEST_STRUCTURE == 1
-#  define LADA_STRUCTURE TemplateStructure
+#  define LADA_STRUCTURE Structure
 #  define LADA_CALL   ()
 #  define LADA_ATOMS 
 #endif

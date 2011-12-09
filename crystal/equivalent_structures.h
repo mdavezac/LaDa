@@ -22,17 +22,17 @@ namespace LaDa
     namespace details
     {
       template<class T_TYPE> 
-        int min_test(TemplateStructure<T_TYPE> const &_a)
+        int min_test(Structure<T_TYPE> const &_a)
         {
           std::vector<size_t> mini(_a.size(), 1);
           std::vector<size_t>::iterator i_fmin = mini.begin();
-          typename TemplateStructure<T_TYPE>::const_iterator i_first = _a.begin();
-          typename TemplateStructure<T_TYPE>::const_iterator const i_end = _a.end();
+          typename Structure<T_TYPE>::const_iterator i_first = _a.begin();
+          typename Structure<T_TYPE>::const_iterator const i_end = _a.end();
           for(; i_first != i_end; ++i_first, ++i_fmin)
           {
             if(*i_fmin > 1) continue;
             CompareOccupations<T_TYPE> cmp(i_first->type());
-            typename TemplateStructure<T_TYPE>::const_iterator i_second = i_first + 1;
+            typename Structure<T_TYPE>::const_iterator i_second = i_first + 1;
             std::vector<size_t>::iterator i_smin = i_fmin + 1;
             for(; i_second != i_end; ++i_second, ++i_smin)
               if(cmp(i_second->type())) ++(*i_fmin), ++(*i_smin);
@@ -54,8 +54,8 @@ namespace LaDa
     //!            that is taken into account, otherwise, it is in the same
     //!            units as _a.scale.
     template<class T_TYPE> 
-      bool equivalent( TemplateStructure<T_TYPE> const &_a,
-                       TemplateStructure<T_TYPE> const &_b,
+      bool equivalent( Structure<T_TYPE> const &_a,
+                       Structure<T_TYPE> const &_b,
                        bool with_scale = true,
                        types::t_real _tol = types::tolerance )
       {
@@ -83,7 +83,7 @@ namespace LaDa
         // first computes point-group symmetries.
         boost::shared_ptr<t_SpaceGroup> pg = cell_invariants(cellA);
         // then find the occupation type with the smallest number of occurences.
-        typename TemplateStructure<T_TYPE>::const_reference minatom = _a[details::min_test(_a)];
+        typename Structure<T_TYPE>::const_reference minatom = _a[details::min_test(_a)];
         CompareOccupations<T_TYPE> mincheck(minatom->type);
         
         // Computes possible translations, looking at only one type of site-occupation.
@@ -91,8 +91,8 @@ namespace LaDa
         // the cartesian basis.
         math::rVector3d transA(0,0,0);
         size_t nA(0);
-        typename TemplateStructure<T_TYPE>::const_iterator i_atom = _a.begin(); 
-        typename TemplateStructure<T_TYPE>::const_iterator i_atom_end = _a.end(); 
+        typename Structure<T_TYPE>::const_iterator i_atom = _a.begin(); 
+        typename Structure<T_TYPE>::const_iterator i_atom_end = _a.end(); 
         for(; i_atom != i_atom_end; ++i_atom)
           if(mincheck(i_atom->type()))
           {
@@ -124,8 +124,8 @@ namespace LaDa
 
           math::rMatrix3d const rotation = i_op->linear() * rot;
           
-          typename TemplateStructure<T_TYPE>::const_iterator i_b = _b.begin();
-          typename TemplateStructure<T_TYPE>::const_iterator const i_bend = _b.end();
+          typename Structure<T_TYPE>::const_iterator i_b = _b.begin();
+          typename Structure<T_TYPE>::const_iterator const i_bend = _b.end();
           for(; i_b != i_bend; ++i_b)
           {
             math::rVector3d const pos = rotation * (into_voronoi(i_b->pos()*scaleB, cellB, invB) - transB);
