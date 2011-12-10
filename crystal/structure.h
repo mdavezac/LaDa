@@ -35,8 +35,6 @@ namespace LaDa
           std::ostream& operator<<(std::ostream &_stream, Structure<T> const &_str);
         //! Copy Constructor
         Structure(StructureData<T_TYPE> &_c) : impl_(new StructureData<T_TYPE>(_c)) {}
-        //! Copy Constructor
-        Structure(boost::shared_ptr< StructureData<T_TYPE> > &_c) : impl_(_c) {}
       public:
         //! \typedef Type of the species
         typedef typename traits::StructureData<T_TYPE>::t_Type t_Type;
@@ -71,6 +69,8 @@ namespace LaDa
         Structure() : impl_(new StructureData<T_TYPE>()) {};
         //! Cloning Constructor
         Structure(const Structure &_c) : impl_(_c.impl_) {}
+        //! Cloning Constructor
+        Structure(boost::shared_ptr< StructureData<T_TYPE> > const &_c) : impl_(_c) {}
         //! Destructor.
         ~Structure () {};
 

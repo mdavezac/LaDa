@@ -1,14 +1,14 @@
 set( LIBCRYSTAL_HEADERS 
      atom.h atom_base.h atom_freeze.h structure.h structure_data.h add_atom.h is_container.h
      utilities.h compare_sites.h space_group.h neighbors.h map_sites.h 
-     periodic_dnc.h )
+     periodic_dnc.h cast.h)
 #    atom.h divide_and_conquer.h epi_structure.h fractional_cartesian.h layerdepth.h 
 #    read_structure.h structure.impl.h compare_sites.h divide_and_conquer.impl.h 
 #    fill_structure.h neighbors.h smith.h symmetry_operator.h 
 #    confsplit.h enumerate.h fourier.h lattice.h read_poscar.h structure.h which_site.h 
 #    periodic_dnc.h )
 
-set( LIBCRYSTAL_SOURCES utilities.cc space_group.cc periodic_dnc.cc)
+set( LIBCRYSTAL_SOURCES utilities.cc space_group.cc periodic_dnc.cc cast.cc)
 #    structure.cc )
 #    confsplit.cc fill_structure.cc lattice.cc periodic_dnc.cc
 #    read_structure.cc structure.cc epi_structure.cc neighbors.cc
@@ -19,6 +19,10 @@ set_target_properties(crystal PROPERTIES OUTPUT_NAME lada_crystal)
 if(loadnsave)
   target_link_libraries(crystal lns)
 endif(loadnsave)
+if(python_bindings)
+  include_directories(${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDES})
+  target_link_libraries(crystal ${Boost_PYTHON_LIBRARIES} ${PYTHON_LIBRARY})
+endif(python_bindings)
 target_link_libraries(crystal mathlib)
 install(TARGETS crystal DESTINATION lib64)
 

@@ -1,11 +1,14 @@
 static PyMethodDef LADA_NAME(methods)[] = {
-//   {"copy", (PyCFunction)LADA_NAME(copy), METH_NOARGS, "Returns a deepcopy of the atom." },
-//   {"cast", (PyCFunction)LADA_NAME(cast), METH_NOARGS,
-//            "If a string atom, returns a sequence atom, and vice-versa." },
+    {"copy", (PyCFunction)LADA_NAME(copy), METH_NOARGS, "Returns a deepcopy of the structure." },
+    {"cast", (PyCFunction)LADA_NAME(cast), METH_VARARGS,
+             "If a string structure, returns a sequence structure, and vice-versa.\n\n"
+             ":Parameters:\n"
+             "  sep : string\n"
+             "   Separator between atomic species. Defaults to a comma." },
 //   {"to_dict", (PyCFunction)LADA_NAME(to_dict), METH_NOARGS,
 //               "Returns a dictionary with shallow copies of items." },
-//   {"__copy__", (PyCFunction)LADA_NAME(shallowcopy), METH_NOARGS, "Shallow copy of an atom." },
-//   {"__deepcopy__", (PyCFunction)LADA_NAME(deepcopy), METH_O, "Deep copy of an atom." },
+   {"__copy__", (PyCFunction)LADA_NAME(shallowcopy), METH_NOARGS, "Shallow copy of an atom." },
+   {"__deepcopy__", (PyCFunction)LADA_NAME(deepcopy), METH_O, "Deep copy of an atom." },
 //   {"__getstate__", (PyCFunction)LADA_NAME(getstate), METH_NOARGS, "Implements pickle protocol." },
 //   {"__setstate__", (PyCFunction)LADA_NAME(setstate), METH_O, "Implements pickle protocol." },
 //   {"__reduce__", (PyCFunction)LADA_NAME(reduce), METH_NOARGS, "Implements pickle protocol." },
@@ -53,17 +56,19 @@ PyTypeObject LADA_NAME(type) = {
            "It is expected, though not enforced, that ``structure.scale * structure.cell`` "
            "is in angstrom and cartesian coordinates. Eventually, such an arbitrary decision "
            "should lead to fewer mistakes.\n"
+      " scale : float\n"
+      "   Real number indicating the scale of the atoms and the cell of the structure. "
+          "It is expected, though not enforced, that ``structure.scale * structure.cell`` "
+          "is in angstrom and cartesian coordinates. Eventually, such an arbitrary decision "
+          "should lead to fewer mistakes.\n"
       " name : string\n"
       "   A string with the name of the structure.\n"  
       " energy : float\n"
       "   Real number indicating the energy of a structure, e.g. for fitting purposes.\n"  
       " weight : float\n"
       "   Real number indicating the weight of a structure in a fitting set, for instance.\n"  
-      " scale : float\n"
-      "   Real number indicating the scale of the atoms and the cell of the structure. "
-          "It is expected, though not enforced, that ``structure.scale * structure.cell`` "
-          "is in angstrom and cartesian coordinates. Eventually, such an arbitrary decision "
-          "should lead to fewer mistakes.\n"
+      " freeze : integer\n"
+      "   A mask specifying which coordinates are frozen during VFF relaxation.\n"
       " **kwargs\n"
       "   Further keyword arguments are assigned as attributes of the structure instance.\n\n"
       "Note that atoms cannot be set using __init__. "

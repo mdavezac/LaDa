@@ -8,6 +8,8 @@
 #include <python/exceptions.h>
 #include <python/numpy_types.h>
 
+#include "../cast.h"
+
 #include "atom/atom.h"
 
 namespace lp = LaDa::python;

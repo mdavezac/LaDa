@@ -69,55 +69,19 @@ namespace LaDa
           //! Copy constructor.
           CompareOccupations(CompareOccupations const &_c) : reference_(_c.reference_) {}
           //! Performs comparison.
-          bool operator()( T_TYPE const& _type ) const { return cmp_<T_TYPE>(_type); }
+          bool operator()( T_TYPE const& _type ) const 
+          { 
+            if(_type.size() != reference_.size()) return false;
+            typename T_TYPE::const_iterator i_first0 = _type.begin();
+            typename T_TYPE::const_iterator const i_end0 = _type.end();
+            typename T_TYPE::const_iterator i_first1 = reference_.begin();
+            for(; i_first0 != i_end0; ++i_first0, ++i_first1)
+              if(not CompareOccupations<typename T_TYPE::value_type>(*i_first0)(*i_first1)) return false;
+            return true;
+          }
         protected:
           //! Object to which to compare.
           T_TYPE reference_;
-          //! Compares string or integer occupations.
-          template<class T>
-            typename boost::enable_if
-              < 
-                typename boost::mpl::or_
-                  < boost::is_convertible<typename T::value_type, std::string>,
-                    boost::is_integral<typename T::value_type> > :: type,
-                bool
-              >::type cmp_( T const &_type ) const
-              { 
-                typename T::const_iterator i_first0 = _type.begin();
-                typename T::const_iterator const i_end0 = _type.end();
-                typename T::const_iterator i_first1 = reference_.begin();
-                typename T::const_iterator const i_end1 = reference_.end();
-                for(; i_first0 != i_end0; ++i_first0)
-                  if( std::find(i_first1, i_end1, *i_first0) == i_end1 ) return false;
-                for(i_first0=_type.begin(); i_first1 != i_end1; ++i_first1)
-                  if( std::find(i_first0, i_end0, *i_first1) == i_end0 ) return false;
-                return true;
-              }
-          //! Compares floating point occupations.
-          template<class T>
-            typename boost::enable_if< boost::is_floating_point<typename T::value_type>, bool>::type
-              cmp_( T const _type ) const
-              {
-                typename T::const_iterator i_first0 = _type.begin();
-                typename T::const_iterator const i_end0 = _type.end();
-                typename T::const_iterator i_first1 = reference_.begin();
-                typename T::const_iterator const i_end1 = reference_.end();
-                for(; i_first0 != i_end0; ++i_first0)
-                {
-                  typename T::const_iterator const i_found
-                    = std::find_if( i_first1, i_end1, 
-                                    CompareOccupations<typename T::value_type>(*i_first0) );
-                  if( i_found == i_end1 ) return false;
-                }
-                for(i_first0=_type.begin(); i_first1 != i_end1; ++i_first1)
-                {
-                  typename T::const_iterator const i_found
-                    = std::find_if( i_first0, i_end0, 
-                                    CompareOccupations<typename T::value_type>(*i_first1));
-                  if( i_found == i_end0 ) return false;
-                }
-                return true;
-              }
       };
 
     //! Comparison of set types.

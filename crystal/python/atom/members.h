@@ -1,9 +1,24 @@
 extern "C" 
 {
+# if LADA_ATOM_NUMBER == 0
+    //! Implements atom representation. 
+    static int LADA_NAME(repr_impl)(LaDa::crystal::AtomData<std::string> const &_atom, std::ostringstream &_sstr);
+# elif LADA_ATOM_NUMBER == 1
+    //! Implements atom representation. 
+    static int LADA_NAME(repr_impl)( LaDa::crystal::AtomData< std::vector<std::string> > const &_atom, 
+                                     std::ostringstream &_sstr );
+# endif
   //! Returns a representation of the object.
-  static PyObject* LADA_NAME(repr)(LADA_TYPE* _self);
+  static PyObject* LADA_NAME(repr)(LADA_TYPE* _self)
+  {
+    std::string name(_self->ob_type->tp_name);
+    std::ostringstream sstr;
+    sstr << name.substr(name.rfind('.')+1);
+    if(LADA_NAME(repr_impl)(*_self->atom, sstr) < 0) return NULL;
+    return PyString_FromString(sstr.str().c_str());
+  }
   //! If a string atom, returns a sequence, and vice-versa.
-  static PyObject* LADA_NAME(cast)(LADA_TYPE* _self);
+  static PyObject* LADA_NAME(cast)(LADA_TYPE* _self, PyObject* _sep);
   //! Returns a deepcopy of the atom.
   static PyObject* LADA_NAME(copy)(LADA_TYPE* _self);
   //! Returns a dictionary with same info as atom.
@@ -20,50 +35,55 @@ extern "C"
   static PyObject* LADA_NAME(reduce)(LADA_TYPE* _self);
 }
 
+# if LADA_ATOM_NUMBER == 0
+// Implements atom representation. 
+  static int LADA_NAME(repr_impl)(LaDa::crystal::AtomData<std::string> const &_atom, std::ostringstream &_sstr)
+# elif LADA_ATOM_NUMBER == 1
+// Implements atom representation. 
+  static int LADA_NAME(repr_impl)( LaDa::crystal::AtomData< std::vector<std::string> > const &_atom, 
+                                   std::ostringstream &_sstr )
+# endif
 //! Returns a representation of the object.
-PyObject* LADA_NAME(repr)(LADA_TYPE* _self)
 {
-  std::string name(_self->ob_type->tp_name);
-  std::ostringstream result;
-  result << name.substr(name.rfind('.')+1) << "("
-         << _self->atom->pos(0) << ", "
-         << _self->atom->pos(1) << ", "
-         << _self->atom->pos(2);
-  if(_self->atom->type.size() > 0) 
+  _sstr << "("
+         << _atom.pos(0) << ", "
+         << _atom.pos(1) << ", "
+         << _atom.pos(2);
+  if(_atom.type.size() > 0) 
 #   if LADA_ATOM_NUMBER == 0
-      result << ", \'" << _self->atom->type << "\'";
+      _sstr << ", \'" << _atom.type << "\'";
 #   elif LADA_ATOM_NUMBER == 1
       {
-        std::vector<std::string>::const_iterator i_first = _self->atom->type.begin();
-        std::vector<std::string>::const_iterator const i_end = _self->atom->type.end();
-        for(; i_first != i_end; ++i_first) result << ", \'" << *i_first << "\'";
+        std::vector<std::string>::const_iterator i_first = _atom.type.begin();
+        std::vector<std::string>::const_iterator const i_end = _atom.type.end();
+        for(; i_first != i_end; ++i_first) _sstr << ", \'" << *i_first << "\'";
       }
 #   endif
-  if(_self->atom->site != -1)  result << ", site=" << _self->atom->site;
-  if(_self->atom->freeze != 0) result << ", freeze=" << _self->atom->freeze;
-  if(_self->atom->pydict != NULL)
+  if(_atom.site != -1)  _sstr << ", site=" << _atom.site;
+  if(_atom.freeze != 0) _sstr << ", freeze=" << _atom.freeze;
+  if(_atom.pydict != NULL)
   {
-    if(PyDict_Size(_self->atom->pydict) > 0)
+    if(PyDict_Size(_atom.pydict) > 0)
     {
       PyObject *key, *value;
       Py_ssize_t pos = 0;
-      while (PyDict_Next(_self->atom->pydict, &pos, &key, &value)) 
+      while (PyDict_Next(_atom.pydict, &pos, &key, &value)) 
       {
         PyObject* repr = PyObject_Repr(value);
-        if(repr == NULL) return NULL;
-        result << ", " << PyString_AsString(key) << "=" << PyString_AsString(repr);
+        if(repr == NULL) return -1;
+        _sstr << ", " << PyString_AsString(key) << "=" << PyString_AsString(repr);
         Py_DECREF(repr);
-        if(PyErr_Occurred() != NULL) return NULL;
+        if(PyErr_Occurred() != NULL) return -1;
       }
     }
   }
-  result << ")";
-  return PyString_FromString(result.str().c_str());
+  _sstr << ")";
+  return 0;
 }
 
 
 // If a string atom, returns a sequence, and vice-versa.
-PyObject *LADA_NAME(cast)(LADA_TYPE *_self)
+PyObject *LADA_NAME(cast)(LADA_TYPE *_self, PyObject* _sep)
 {
 # if LADA_ATOM_NUMBER == 0
     AtomSequence* result = (AtomSequence*)PyAtomSequence_New();
@@ -71,30 +91,25 @@ PyObject *LADA_NAME(cast)(LADA_TYPE *_self)
     AtomStr* result = (AtomStr*)PyAtomStr_New();
 # endif
   if(not result) return NULL;
-  result->atom->pos = _self->atom->pos;
-  result->atom->freeze = _self->atom->freeze;
-  result->atom->site = _self->atom->site;
-  if(_self->atom->type.size() > 0)
-#   if LADA_ATOM_NUMBER == 1
-      result->atom->type = LaDa::crystal::details::print_occupation(_self->atom->type);
-#   elif LADA_ATOM_NUMBER == 0
-      result->atom->type.push_back(_self->atom->type);
-#   endif
-  if(_self->atom->pydict != NULL)
+  Py_ssize_t const N(PyTuple_Size(_sep));
+  if(N > 1)
   {
-    if(PyDict_Size(_self->atom->pydict) > 0)
-    {  
-      Py_XDECREF(result->atom->pydict);
-      result->atom->pydict = NULL;
-      PyObject* copymod = PyImport_ImportModule("copy");
-      if(copymod == NULL) { Py_DECREF(result); return NULL; }
-      PyObject *deepcopystr = PyString_FromString("deepcopy");
-      if(not deepcopystr) { Py_DECREF(result); Py_DECREF(copymod); return NULL; }
-      result->atom->pydict = PyObject_CallMethodObjArgs(copymod, deepcopystr, _self->atom->pydict, NULL);
-      Py_DECREF(copymod);
-      Py_DECREF(deepcopystr);
-      if(not result->atom->pydict) { Py_DECREF(result); return NULL; }
-    }
+    Py_DECREF(result);
+    LADA_PYERROR(TypeError, "Input should consist of a single string.");
+    return NULL;
+  }
+  if(N == 1)
+  { 
+    PyObject *separator = PyTuple_GetItem(_sep, 0);
+    char * const sep = PyString_AsString(separator);
+    if(sep == NULL) { Py_DECREF(result); return NULL; }
+    LaDa::crystal::cast(*_self->atom, *result->atom, sep);
+  }
+  else LaDa::crystal::cast(*_self->atom, *result->atom);
+  if(PyErr_Occurred() != NULL)
+  {
+    Py_DECREF(result);
+    result = NULL;
   }
   return (PyObject*)result;
 }

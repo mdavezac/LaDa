@@ -1,7 +1,13 @@
 static PyMethodDef LADA_NAME(methods)[] = {
     {"copy", (PyCFunction)LADA_NAME(copy), METH_NOARGS, "Returns a deepcopy of the atom." },
-    {"cast", (PyCFunction)LADA_NAME(cast), METH_NOARGS,
-             "If a string atom, returns a sequence atom, and vice-versa." },
+    {"cast", (PyCFunction)LADA_NAME(cast), METH_VARARGS,
+             "If a string atom, returns a sequence atom, and vice-versa.\n\n"
+             ":Parameters:\n"
+             "  sep : string\n"
+             "   Separator between atomic species. Defaults to a comma. "
+             "When converting to a sequence from a string, this separator "
+             "will split the atomic species. It is a regex in the boost::regex format. "
+             "When going from sequences to strings, the separator is placed between species."  },
     {"to_dict", (PyCFunction)LADA_NAME(to_dict), METH_NOARGS,
                 "Returns a dictionary with shallow copies of items." },
     {"__copy__", (PyCFunction)LADA_NAME(shallowcopy), METH_NOARGS, "Shallow copy of an atom." },

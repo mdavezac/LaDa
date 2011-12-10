@@ -72,6 +72,14 @@ a = AtomSeq(0.1, 0.1, 0.1, ['Au', 'Pd'], m=0, site=0, freeze=1).cast()
 assert a.__class__.__name__ == 'AtomStr' and a.type == 'Au, Pd' and a.site == 0 \
        and a.freeze == 1 and all(abs(a.pos - 0.1) < 1e-12) and len(a.__dict__) == 1 \
        and getattr(a, 'm', 1) == 0
+a = AtomSeq(0.1, 0.1, 0.1, ['Au', 'Pd', 'V'], m=0, site=0, freeze=1).cast('| ').cast('\\|')
+assert a.__class__.__name__ == 'AtomSequence' and a.type == ['Au', 'Pd', 'V'] and a.site == 0 \
+       and a.freeze == 1 and all(abs(a.pos - 0.1) < 1e-12) and len(a.__dict__) == 1 \
+       and getattr(a, 'm', 1) == 0
+a = AtomSeq(0.1, 0.1, 0.1, ['Au', 'Pd', 'V'], m=0, site=0, freeze=1).cast().cast()
+assert a.__class__.__name__ == 'AtomSequence' and a.type == ['Au', 'Pd', 'V'] and a.site == 0 \
+       and a.freeze == 1 and all(abs(a.pos - 0.1) < 1e-12) and len(a.__dict__) == 1 \
+       and getattr(a, 'm', 1) == 0
 
 b = AtomSeq(['Au', 'Pd'], m=0)
 a = b.copy()
