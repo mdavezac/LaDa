@@ -2,48 +2,41 @@ extern "C"
 {
 # if LADA_ATOM_NUMBER == 0
     //! Implements atom representation. 
-    static int LADA_NAME(repr_impl)(LaDa::crystal::AtomData<std::string> const &_atom, std::ostringstream &_sstr);
+    static int LADA_ATOM_NAME(repr_impl)(LaDa::crystal::AtomData<std::string> const &_atom, std::ostringstream &_sstr);
 # elif LADA_ATOM_NUMBER == 1
     //! Implements atom representation. 
-    static int LADA_NAME(repr_impl)( LaDa::crystal::AtomData< std::vector<std::string> > const &_atom, 
+    static int LADA_ATOM_NAME(repr_impl)( LaDa::crystal::AtomData< std::vector<std::string> > const &_atom, 
                                      std::ostringstream &_sstr );
 # endif
   //! Returns a representation of the object.
-  static PyObject* LADA_NAME(repr)(LADA_TYPE* _self)
+  static PyObject* LADA_ATOM_NAME(repr)(LADA_ATOM_TYPE* _self)
   {
     std::string name(_self->ob_type->tp_name);
     std::ostringstream sstr;
     sstr << name.substr(name.rfind('.')+1);
-    if(LADA_NAME(repr_impl)(*_self->atom, sstr) < 0) return NULL;
+    if(LADA_ATOM_NAME(repr_impl)(*_self->atom, sstr) < 0) return NULL;
     return PyString_FromString(sstr.str().c_str());
   }
   //! If a string atom, returns a sequence, and vice-versa.
-  static PyObject* LADA_NAME(cast)(LADA_TYPE* _self, PyObject* _sep);
+  static PyObject* LADA_ATOM_NAME(cast)(LADA_ATOM_TYPE* _self, PyObject* _sep);
   //! Returns a deepcopy of the atom.
-  static PyObject* LADA_NAME(copy)(LADA_TYPE* _self);
+  static PyObject* LADA_ATOM_NAME(copy)(LADA_ATOM_TYPE* _self);
   //! Returns a dictionary with same info as atom.
-  static PyObject* LADA_NAME(to_dict)(LADA_TYPE* _self);
+  static PyObject* LADA_ATOM_NAME(to_dict)(LADA_ATOM_TYPE* _self);
   //! Implements deepcopy.
-  static PyObject* LADA_NAME(deepcopy)(LADA_TYPE* _self, PyObject* _memo);
+  static PyObject* LADA_ATOM_NAME(deepcopy)(LADA_ATOM_TYPE* _self, PyObject* _memo);
   //! Implements shallow copy.
-  static PyObject* LADA_NAME(shallowcopy)(LADA_TYPE* _self);
+  static PyObject* LADA_ATOM_NAME(shallowcopy)(LADA_ATOM_TYPE* _self);
   //! Implements getstate for pickling.
-  static PyObject* LADA_NAME(getstate)(LADA_TYPE* _self);
+  static PyObject* LADA_ATOM_NAME(getstate)(LADA_ATOM_TYPE* _self);
   //! Implements setstate for pickling.
-  static PyObject* LADA_NAME(setstate)(LADA_TYPE* _self, PyObject *_dict);
+  static PyObject* LADA_ATOM_NAME(setstate)(LADA_ATOM_TYPE* _self, PyObject *_dict);
   //! Implements reduce for pickling.
-  static PyObject* LADA_NAME(reduce)(LADA_TYPE* _self);
+  static PyObject* LADA_ATOM_NAME(reduce)(LADA_ATOM_TYPE* _self);
 }
 
-# if LADA_ATOM_NUMBER == 0
 // Implements atom representation. 
-  static int LADA_NAME(repr_impl)(LaDa::crystal::AtomData<std::string> const &_atom, std::ostringstream &_sstr)
-# elif LADA_ATOM_NUMBER == 1
-// Implements atom representation. 
-  static int LADA_NAME(repr_impl)( LaDa::crystal::AtomData< std::vector<std::string> > const &_atom, 
-                                   std::ostringstream &_sstr )
-# endif
-//! Returns a representation of the object.
+static int LADA_ATOM_NAME(repr_impl)(LADA_INNERTYPE const &_atom, std::ostringstream &_sstr)
 {
   _sstr << "("
          << _atom.pos(0) << ", "
@@ -83,7 +76,7 @@ extern "C"
 
 
 // If a string atom, returns a sequence, and vice-versa.
-PyObject *LADA_NAME(cast)(LADA_TYPE *_self, PyObject* _sep)
+PyObject *LADA_ATOM_NAME(cast)(LADA_ATOM_TYPE *_self, PyObject* _sep)
 {
 # if LADA_ATOM_NUMBER == 0
     AtomSequence* result = (AtomSequence*)PyAtomSequence_New();
@@ -115,24 +108,24 @@ PyObject *LADA_NAME(cast)(LADA_TYPE *_self, PyObject* _sep)
 }
 
 // Returns a deepcopy of the atom.
-PyObject *LADA_NAME(copy)(LADA_TYPE* _self)
+PyObject *LADA_ATOM_NAME(copy)(LADA_ATOM_TYPE* _self)
 {
 # if LADA_ATOM_NUMBER == 0
-    LADA_TYPE* result = (LADA_TYPE*)PyAtomStr_New();
+    LADA_ATOM_TYPE* result = (LADA_ATOM_TYPE*)PyAtomStr_New();
 # elif LADA_ATOM_NUMBER == 1
-    LADA_TYPE* result = (LADA_TYPE*)PyAtomSequence_New();
+    LADA_ATOM_TYPE* result = (LADA_ATOM_TYPE*)PyAtomSequence_New();
 # endif
   *result->atom = *_self->atom;
   if(PyErr_Occurred() != NULL) {Py_DECREF(result); return NULL;}
   return (PyObject*)result;
 }
 // Implements deepcopy of the atom.
-PyObject *LADA_NAME(deepcopy)(LADA_TYPE* _self, PyObject* _memo)
+PyObject *LADA_ATOM_NAME(deepcopy)(LADA_ATOM_TYPE* _self, PyObject* _memo)
 {
 # if LADA_ATOM_NUMBER == 0
-    LADA_TYPE* result = (LADA_TYPE*)PyAtomStr_New();
+    LADA_ATOM_TYPE* result = (LADA_ATOM_TYPE*)PyAtomStr_New();
 # elif LADA_ATOM_NUMBER == 1
-    LADA_TYPE* result = (LADA_TYPE*)PyAtomSequence_New();
+    LADA_ATOM_TYPE* result = (LADA_ATOM_TYPE*)PyAtomSequence_New();
 # endif
   result->atom->pos = _self->atom->pos;
   result->atom->type = _self->atom->type;
@@ -154,14 +147,14 @@ PyObject *LADA_NAME(deepcopy)(LADA_TYPE* _self, PyObject* _memo)
   return (PyObject*)result;
 }
 // Implements shallow copy.
-PyObject *LADA_NAME(shallowcopy)(LADA_TYPE* _self)
+PyObject *LADA_ATOM_NAME(shallowcopy)(LADA_ATOM_TYPE* _self)
 {
   Py_INCREF(_self);
   return (PyObject*)_self;
 }
 
 // Creates dictionary from atom with shallow copies.
-PyObject *LADA_NAME(to_dict)(LADA_TYPE* _self)
+PyObject *LADA_ATOM_NAME(to_dict)(LADA_ATOM_TYPE* _self)
 {
   PyObject* result = PyDict_New();
   if(not result) return NULL;
@@ -170,7 +163,7 @@ PyObject *LADA_NAME(to_dict)(LADA_TYPE* _self)
 #   error LADA_ADDITEM already defined.
 # endif
 # define LADA_ADDITEM(string) \
-    item = LADA_NAME(get ## string)((LADA_TYPE*)_self, NULL);           \
+    item = LADA_ATOM_NAME(get ## string)((LADA_ATOM_TYPE*)_self, NULL);           \
     if(item == NULL) goto error;                                        \
     if(PyDict_SetItemString(result, #string, item) < 0) goto erroritem; \
     Py_DECREF(item);
@@ -193,27 +186,27 @@ PyObject *LADA_NAME(to_dict)(LADA_TYPE* _self)
 }
 
 // Implements __reduce__ for pickling.
-PyObject* LADA_NAME(reduce)(LADA_TYPE* _self)
+PyObject* LADA_ATOM_NAME(reduce)(LADA_ATOM_TYPE* _self)
 {
   PyObject *result = PyTuple_New(3);
   if(result == NULL) return NULL;
-  Py_INCREF(&LADA_NAME(type));
-  if(PyTuple_SET_ITEM(result, 0, (PyObject*)&LADA_NAME(type)) < 0) { Py_DECREF(result); return NULL; }
+  Py_INCREF(&LADA_ATOM_NAME(type));
+  if(PyTuple_SET_ITEM(result, 0, (PyObject*)&LADA_ATOM_NAME(type)) < 0) { Py_DECREF(result); return NULL; }
   PyObject *tuple = PyTuple_New(0);
   if(tuple == NULL) { Py_DECREF(result); return NULL; }
   if(PyTuple_SET_ITEM(result, 1, tuple) < 0) { Py_DECREF(result); return NULL; }
-  PyObject *state = LADA_NAME(getstate)(_self);
+  PyObject *state = LADA_ATOM_NAME(getstate)(_self);
   if(state == NULL) { Py_DECREF(result); return NULL; }
   if(PyTuple_SET_ITEM(result, 2, state) < 0) { Py_DECREF(result); return NULL; }
   return result;
 }
-// Implements setstate for pickling.
-PyObject* LADA_NAME(getstate)(LADA_TYPE* _self)
+// Implements getstate for pickling.
+PyObject* LADA_ATOM_NAME(getstate)(LADA_ATOM_TYPE* _self)
 {
 # if LADA_ATOM_NUMBER == 0
-    return LADA_NAME(to_dict)(_self);
+    return LADA_ATOM_NAME(to_dict)(_self);
 # elif LADA_ATOM_NUMBER == 1
-    PyObject *result = LADA_NAME(to_dict)(_self);
+    PyObject *result = LADA_ATOM_NAME(to_dict)(_self);
     if(result == NULL) return NULL; 
     PyObject *seq = from_cpp_sequence_(_self->atom->type);
     if(seq == NULL) { Py_DECREF(result); return NULL; }
@@ -229,29 +222,44 @@ PyObject* LADA_NAME(getstate)(LADA_TYPE* _self)
 }
 
 // Implements setstate for pickling.
-PyObject* LADA_NAME(setstate)(LADA_TYPE* _self, PyObject *_dict)
+PyObject* LADA_ATOM_NAME(setstate)(LADA_ATOM_TYPE* _self, PyObject *_dict)
 {
+  // deletes current dictionary.
+  if(_self->atom->pydict != NULL)
+  {
+    PyObject *dummy = _self->atom->pydict;
+    _self->atom->pydict = NULL;
+    Py_DECREF(dummy);
+  }
+
+  PyObject *key, *value;
+  Py_ssize_t pos = 0;
 # ifdef LADA_PARSE
 #   error LADA_PARSE already exists.
 # endif
 # define LADA_PARSE(name)                                                            \
-    if(PyObject *item = PyDict_GetItemString(_dict, #name))                          \
-      LADA_NAME(set ## name)(_self, item, NULL);                                     \
-    else { LADA_PYERROR(internal, "Could not unpickle " #name "."); return NULL; }   \
-    if( PyDict_DelItemString(_dict, #name) < 0)                                      \
-      { LADA_PYERROR(internal, "Could not delete " #name " item when unpickling."); return NULL; }                   
-  LADA_PARSE(pos);
-  LADA_PARSE(freeze);
-  LADA_PARSE(site);
-  LADA_PARSE(type);
-# undef LADA_PARSE
-
-  Py_XDECREF(_self->atom->pydict);
-  if(PyDict_Size(_dict) == 0) _self->atom->pydict = NULL;
-  else 
+    if(index == #name)                                                               \
+    {                                                                                \
+      if(LADA_ATOM_NAME(set ## name)(_self, value, NULL) < 0)                        \
+      {                                                                              \
+        PyErr_Clear();                                                               \
+        LADA_PYERROR(ValueError, "Could not unpickle attribute " #name ".");         \
+        return NULL;                                                                 \
+      }                                                                              \
+    }                                                                                
+  while (PyDict_Next(_dict, &pos, &key, &value)) 
   {
-    _self->atom->pydict = _dict;
-    Py_INCREF(_dict);
+    if(PyString_Check(key))
+    {
+      char const * const index = PyString_AsString(key);
+      LADA_PARSE(pos)
+      else LADA_PARSE(freeze)
+      else LADA_PARSE(site)
+      else LADA_PARSE(type)
+      else if(LADA_ATOM_NAME(setattro)((PyObject*)_self, key, value) < 0) return NULL;
+    }
+    else if(LADA_ATOM_NAME(setattro)((PyObject*)_self, key, value) < 0) return NULL;
   }
+# undef LADA_PARSE
   Py_RETURN_NONE;
 }

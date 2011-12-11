@@ -213,6 +213,29 @@ namespace LaDa
 
         //! True if both structures refer to same data.
         bool is_clone(Structure<T_TYPE> const &_in) const { return impl_ == _in.impl_; }
+#       ifdef LADA_DO_PYTHON
+          //! \brief Returns borrowed reference to python dictionary. 
+          //! \brief The python dictionary may created at this point, despite
+          //!        the const attribute.  Will not throw, but may return NULL
+          //!        on error, with a python exception set.
+          PyObject* pydict() const
+          {
+            if(impl_->pydict == NULL) impl_->pydict = PyDict_New();
+            return impl_->pydict;
+          }
+          //! \brief Sets the python attribute dictionary.
+          //! \note The reference to _dict is stolen. Your job to increment the
+          //!       reference count correctly. The current dictionary, however,
+          //!       is decre'f if it exists.
+          void pydict(PyObject *_dict) const
+          {
+            PyObject *dummy = impl_->pydict;
+            impl_->pydict = _dict;
+            Py_XDECREF(dummy);
+          }
+          //! Returns a refence to a wrapper around this object.
+          PyObject* pyself() const { return PyStructure_FromStructure(*this); }
+#       endif
 
       private:
         //! used by AddAtomMixin to reach the atoms.

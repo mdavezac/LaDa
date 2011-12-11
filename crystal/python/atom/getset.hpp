@@ -1,43 +1,43 @@
 extern "C"
 {
   //! Returns position as a numpy array. 
- static PyObject* LADA_NAME(getpos)(LADA_TYPE *_self, void *closure);
+ static PyObject* LADA_ATOM_NAME(getpos)(LADA_ATOM_TYPE *_self, void *closure);
   //! Sets position from a sequence of three numbers.
-  static int LADA_NAME(setpos)(LADA_TYPE *_self, PyObject *_value, void *_closure);
+  static int LADA_ATOM_NAME(setpos)(LADA_ATOM_TYPE *_self, PyObject *_value, void *_closure);
   //! Returns the atomic type. 
-  static PyObject* LADA_NAME(getsite)(LADA_TYPE *_self, void *closure);
+  static PyObject* LADA_ATOM_NAME(getsite)(LADA_ATOM_TYPE *_self, void *closure);
   //! Sets the atomic type.
-  static int LADA_NAME(setsite)(LADA_TYPE *_self, PyObject *_value, void *_closure);
+  static int LADA_ATOM_NAME(setsite)(LADA_ATOM_TYPE *_self, PyObject *_value, void *_closure);
   // Returns the freeze flag.
-  static PyObject* LADA_NAME(getfreeze)(LADA_TYPE *_self, void *closure);
+  static PyObject* LADA_ATOM_NAME(getfreeze)(LADA_ATOM_TYPE *_self, void *closure);
   //! Sets the freeze flag from an unsigned.
-  static int LADA_NAME(setfreeze)(LADA_TYPE *_self, PyObject *_value, void *_closure);
+  static int LADA_ATOM_NAME(setfreeze)(LADA_ATOM_TYPE *_self, PyObject *_value, void *_closure);
   // Returns the type of the atom.
-  static PyObject* LADA_NAME(gettype)(LADA_TYPE *_self, void *closure);
+  static PyObject* LADA_ATOM_NAME(gettype)(LADA_ATOM_TYPE *_self, void *closure);
   //! Sets the type from a string.
-  static int LADA_NAME(settype)(LADA_TYPE *_self, PyObject *_value, void *_closure);
+  static int LADA_ATOM_NAME(settype)(LADA_ATOM_TYPE *_self, PyObject *_value, void *_closure);
   //! Gets dictionary.
-  static PyObject* LADA_NAME(getdict)(LADA_TYPE *_self, void *_closure);
+  static PyObject* LADA_ATOM_NAME(getdict)(LADA_ATOM_TYPE *_self, void *_closure);
   //! Sets dictionary.
-  static int LADA_NAME(setdict)(LADA_TYPE *_self, PyObject *_value, void *_closure);
+  static int LADA_ATOM_NAME(setdict)(LADA_ATOM_TYPE *_self, PyObject *_value, void *_closure);
   //! \brief Gets an attribute.
   //! \details Calls python's _PyObject_GenericGetAttrWithDict(...) with dict
   //!          set to the one contained in atom. This way, we are sure there is
   //!          a single dictionary across all wrappers of the same atom.  If
   //!          atom's does not already exist, creates it.
-  static PyObject * LADA_NAME(getattro)(PyObject *obj, PyObject *name);
+  static PyObject * LADA_ATOM_NAME(getattro)(PyObject *obj, PyObject *name);
   //! \brief sets an attribute.
   //! \details Calls python's _PyObject_GenericGetAttrWithDict(...) with dict
   //!          set to the one contained in atom. This way, we are sure there is
   //!          a single dictionary across all wrappers of the same atom.  If
   //!          atom's does not already exist, creates it.
-  static int LADA_NAME(setattro)(PyObject *obj, PyObject *name, PyObject *value);
+  static int LADA_ATOM_NAME(setattro)(PyObject *obj, PyObject *name, PyObject *value);
 }
 
 // Returns position as a numpy array. 
 // Numpy does not implement python's cyclic garbage, hence new wrapper need be
 // created each call.
-static PyObject* LADA_NAME(getpos)(LADA_TYPE *_self, void *closure)
+static PyObject* LADA_ATOM_NAME(getpos)(LADA_ATOM_TYPE *_self, void *closure)
 {
   npy_intp dims[1] = {3};
   int const value = math::numpy::type<math::rVector3d::Scalar>::value;
@@ -48,7 +48,7 @@ static PyObject* LADA_NAME(getpos)(LADA_TYPE *_self, void *closure)
   return (PyObject*)result;
 }
 // Sets position from a sequence of three numbers.
-static int LADA_NAME(setpos)(LADA_TYPE *_self, PyObject *_value, void *_closure)
+static int LADA_ATOM_NAME(setpos)(LADA_ATOM_TYPE *_self, PyObject *_value, void *_closure)
 {
   if(_value == NULL)
   {
@@ -143,10 +143,10 @@ static int LADA_NAME(setpos)(LADA_TYPE *_self, PyObject *_value, void *_closure)
 }
 
 // Returns the atomic type. 
-static PyObject* LADA_NAME(getsite)(LADA_TYPE *_self, void *closure)
+static PyObject* LADA_ATOM_NAME(getsite)(LADA_ATOM_TYPE *_self, void *closure)
   { return PyInt_FromLong(_self->atom->site); }
 // Sets the atomic type.
-static int LADA_NAME(setsite)(LADA_TYPE *_self, PyObject *_value, void *_closure)
+static int LADA_ATOM_NAME(setsite)(LADA_ATOM_TYPE *_self, PyObject *_value, void *_closure)
 {
   if(_value == NULL)
   {
@@ -159,13 +159,13 @@ static int LADA_NAME(setsite)(LADA_TYPE *_self, PyObject *_value, void *_closure
   return 0;
 }
 // Returns the freeze flag.
-static PyObject* LADA_NAME(getfreeze)(LADA_TYPE *_self, void *closure)
+static PyObject* LADA_ATOM_NAME(getfreeze)(LADA_ATOM_TYPE *_self, void *closure)
 {
   long result = _self->atom->freeze;
   return PyInt_FromLong(result);
 }
 // Sets the freeze flag from an unsigned.
-static int LADA_NAME(setfreeze)(LADA_TYPE *_self, PyObject *_value, void *_closure)
+static int LADA_ATOM_NAME(setfreeze)(LADA_ATOM_TYPE *_self, PyObject *_value, void *_closure)
 {
   if(_value == NULL)
   {
@@ -184,9 +184,9 @@ static int LADA_NAME(setfreeze)(LADA_TYPE *_self, PyObject *_value, void *_closu
   return 0;
 }
 # if LADA_ATOM_NUMBER == 0
-  static PyObject *LADA_NAME(gettype)(LADA_TYPE *_self, void *closure)
+  static PyObject *LADA_ATOM_NAME(gettype)(LADA_ATOM_TYPE *_self, void *closure)
     { return PyString_FromString(_self->atom->type.c_str()); }
-  static int LADA_NAME(settype)(LADA_TYPE *_self, PyObject *_value, void *closure)
+  static int LADA_ATOM_NAME(settype)(LADA_ATOM_TYPE *_self, PyObject *_value, void *closure)
   {
     if(_value == NULL)
     {
@@ -201,9 +201,9 @@ static int LADA_NAME(setfreeze)(LADA_TYPE *_self, PyObject *_value, void *_closu
     return -1;
   }
 # elif LADA_ATOM_NUMBER == 1
-  static PyObject *LADA_NAME(gettype)(LADA_TYPE *_self, void *closure) 
+  static PyObject *LADA_ATOM_NAME(gettype)(LADA_ATOM_TYPE *_self, void *closure) 
     { Py_INCREF(_self->sequence); return (PyObject*) _self->sequence; }
-  static int LADA_NAME(settype)(LADA_TYPE *_self, PyObject *_value, void *closure)
+  static int LADA_ATOM_NAME(settype)(LADA_ATOM_TYPE *_self, PyObject *_value, void *closure)
   { 
     if(_value == NULL)
     {
@@ -216,7 +216,7 @@ static int LADA_NAME(setfreeze)(LADA_TYPE *_self, PyObject *_value, void *_closu
   }
 # endif
 // Gets dictionary.
-static PyObject* LADA_NAME(getdict)(LADA_TYPE *_self, void *_closure)
+static PyObject* LADA_ATOM_NAME(getdict)(LADA_ATOM_TYPE *_self, void *_closure)
 {
   if(_self->atom->pydict == NULL)
   {
@@ -227,7 +227,7 @@ static PyObject* LADA_NAME(getdict)(LADA_TYPE *_self, void *_closure)
   return _self->atom->pydict; 
 }
 // Sets dictionary.
-static int LADA_NAME(setdict)(LADA_TYPE *_self, PyObject *_value, void *_closure)
+static int LADA_ATOM_NAME(setdict)(LADA_ATOM_TYPE *_self, PyObject *_value, void *_closure)
 {
   Py_XDECREF(_self->atom->pydict);
   _self->atom->pydict = _value;
@@ -235,52 +235,52 @@ static int LADA_NAME(setdict)(LADA_TYPE *_self, PyObject *_value, void *_closure
   return 0;
 }
 
-static PyObject * LADA_NAME(getattro)(PyObject *obj, PyObject *name)
+static PyObject * LADA_ATOM_NAME(getattro)(PyObject *obj, PyObject *name)
 {
-  if(((LADA_TYPE*)obj)->atom->pydict == NULL)
+  if(((LADA_ATOM_TYPE*)obj)->atom->pydict == NULL)
   {
-    ((LADA_TYPE*)obj)->atom->pydict = PyDict_New();
-    if(((LADA_TYPE*)obj)->atom->pydict == NULL) return NULL;
+    ((LADA_ATOM_TYPE*)obj)->atom->pydict = PyDict_New();
+    if(((LADA_ATOM_TYPE*)obj)->atom->pydict == NULL) return NULL;
   }
-  return _PyObject_GenericGetAttrWithDict(obj, name, ((LADA_TYPE*)obj)->atom->pydict);
+  return _PyObject_GenericGetAttrWithDict(obj, name, ((LADA_ATOM_TYPE*)obj)->atom->pydict);
 }
-static int LADA_NAME(setattro)(PyObject *obj, PyObject *name, PyObject *value)
+static int LADA_ATOM_NAME(setattro)(PyObject *obj, PyObject *name, PyObject *value)
 {
-  if(((LADA_TYPE*)obj)->atom->pydict == NULL)
+  if(((LADA_ATOM_TYPE*)obj)->atom->pydict == NULL)
   {
-    ((LADA_TYPE*)obj)->atom->pydict = PyDict_New();
-    if(((LADA_TYPE*)obj)->atom->pydict == NULL) return -1;
+    ((LADA_ATOM_TYPE*)obj)->atom->pydict = PyDict_New();
+    if(((LADA_ATOM_TYPE*)obj)->atom->pydict == NULL) return -1;
   }
-  return _PyObject_GenericSetAttrWithDict(obj, name, value, ((LADA_TYPE*)obj)->atom->pydict);
+  return _PyObject_GenericSetAttrWithDict(obj, name, value, ((LADA_ATOM_TYPE*)obj)->atom->pydict);
 }
 
-static char LADA_NAME(posdoc)[] = "Position in cartesian coordinates.";
-static char LADA_NAME(posname)[] = "pos";
-static char LADA_NAME(sitedoc)[] = "Site index (integer).\n\n"
+static char LADA_ATOM_NAME(posdoc)[] = "Position in cartesian coordinates.";
+static char LADA_ATOM_NAME(posname)[] = "pos";
+static char LADA_ATOM_NAME(sitedoc)[] = "Site index (integer).\n\n"
                         "Generally given for a supercell with respect to a backbone lattice."
                         "It is -1 if not initialized, and positive or zero otherwise."
                         "It refers to the original atom in the lattice.";
-static char LADA_NAME(dict_doc)[] = "Atom dictionary holding python attributes.";
+static char LADA_ATOM_NAME(dict_doc)[] = "Atom dictionary holding python attributes.";
 # if LADA_ATOM_NUMBER  == 0
-  static char LADA_NAME(typedoc)[] = "Atomic specie. Must be a string.";
+  static char LADA_ATOM_NAME(typedoc)[] = "Atomic specie. Must be a string.";
 # elif LADA_ATOM_NUMBER == 1
-  static char LADA_NAME(typedoc)[] = "List of atomic species.";
+  static char LADA_ATOM_NAME(typedoc)[] = "List of atomic species.";
 # endif 
-static char LADA_NAME(sitename)[] = "site";
-static char LADA_NAME(freezedoc)[] = "Mask to freeze position or type (unsigned integer).";
-static char LADA_NAME(freezename)[] = "freeze";
-static char LADA_NAME(type_name)[] = "type";
-static char LADA_NAME(dict_name)[] = "__dict__";
+static char LADA_ATOM_NAME(sitename)[] = "site";
+static char LADA_ATOM_NAME(freezedoc)[] = "Mask to freeze position or type (unsigned integer).";
+static char LADA_ATOM_NAME(freezename)[] = "freeze";
+static char LADA_ATOM_NAME(type_name)[] = "type";
+static char LADA_ATOM_NAME(dict_name)[] = "__dict__";
 
 extern "C" 
 {
-  static PyGetSetDef LADA_NAME(getsetters)[] = {
-      {LADA_NAME(posname),    (getter)LADA_NAME(getpos), (setter)LADA_NAME(setpos), LADA_NAME(posdoc), NULL},
-      {LADA_NAME(sitename),   (getter)LADA_NAME(getsite), (setter)LADA_NAME(setsite), LADA_NAME(sitedoc), NULL},
-      {LADA_NAME(freezename), (getter)LADA_NAME(getfreeze),
-                              (setter)LADA_NAME(setfreeze), LADA_NAME(freezedoc), NULL}, 
-      {LADA_NAME(type_name),  (getter)LADA_NAME(gettype), (setter)LADA_NAME(settype), LADA_NAME(typedoc), NULL}, 
-      {LADA_NAME(dict_name),  (getter)LADA_NAME(getdict), (setter)LADA_NAME(setdict), LADA_NAME(typedoc), NULL}, 
+  static PyGetSetDef LADA_ATOM_NAME(getsetters)[] = {
+      {LADA_ATOM_NAME(posname),    (getter)LADA_ATOM_NAME(getpos), (setter)LADA_ATOM_NAME(setpos), LADA_ATOM_NAME(posdoc), NULL},
+      {LADA_ATOM_NAME(sitename),   (getter)LADA_ATOM_NAME(getsite), (setter)LADA_ATOM_NAME(setsite), LADA_ATOM_NAME(sitedoc), NULL},
+      {LADA_ATOM_NAME(freezename), (getter)LADA_ATOM_NAME(getfreeze),
+                              (setter)LADA_ATOM_NAME(setfreeze), LADA_ATOM_NAME(freezedoc), NULL}, 
+      {LADA_ATOM_NAME(type_name),  (getter)LADA_ATOM_NAME(gettype), (setter)LADA_ATOM_NAME(settype), LADA_ATOM_NAME(typedoc), NULL}, 
+      {LADA_ATOM_NAME(dict_name),  (getter)LADA_ATOM_NAME(getdict), (setter)LADA_ATOM_NAME(setdict), LADA_ATOM_NAME(typedoc), NULL}, 
       {NULL}  /* Sentinel */
   };
 }

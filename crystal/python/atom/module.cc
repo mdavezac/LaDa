@@ -24,18 +24,18 @@ using namespace LaDa::python;
 // sequence interface
 #include "sequence.hpp"
 
-#ifdef LADA_NAME
-#  error LADA_NAME already defined
+#ifdef LADA_ATOM_NAME
+#  error LADA_ATOM_NAME already defined
 #endif
-#ifdef LADA_TYPE
-#  error LADA_TYPE already defined
+#ifdef LADA_ATOM_TYPE
+#  error LADA_ATOM_TYPE already defined
 #endif
 #ifdef LADA_ATOM_NUMBER
 #  error LADA_ATOM_NUMBER already defined
 #endif
 #define LADA_ATOM_NUMBER 0
-#define LADA_TYPE AtomStr
-#define LADA_NAME(name) atomstr_ ## name
+#define LADA_ATOM_TYPE AtomStr
+#define LADA_ATOM_NAME(name) atomstr_ ## name
 // atom getters/settters.
 #include "getset.hpp"
 // atom member functions.
@@ -44,12 +44,12 @@ using namespace LaDa::python;
 #include "cdi.hpp"
 // atom type declaration.
 #include "type.hpp"
-#undef LADA_NAME
-#undef LADA_TYPE
+#undef LADA_ATOM_NAME
+#undef LADA_ATOM_TYPE
 #undef LADA_ATOM_NUMBER
 #define LADA_ATOM_NUMBER 1
-#define LADA_TYPE AtomSequence
-#define LADA_NAME(name) atomsequence_ ## name
+#define LADA_ATOM_TYPE AtomSequence
+#define LADA_ATOM_NAME(name) atomsequence_ ## name
 // atom getters/settters.
 #include "getset.hpp"
 // atom member functions.
@@ -58,8 +58,8 @@ using namespace LaDa::python;
 #include "cdi.hpp"
 // atom type declaration.
 #include "type.hpp"
-#undef LADA_NAME
-#undef LADA_TYPE
+#undef LADA_ATOM_NAME
+#undef LADA_ATOM_TYPE
 #undef LADA_ATOM_NUMBER
 
 #ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */

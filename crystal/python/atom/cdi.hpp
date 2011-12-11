@@ -1,24 +1,24 @@
 extern "C" 
 { 
   //! Function to deallocate a string atom.
-  static void LADA_NAME(dealloc)(LADA_TYPE *_self);
+  static void LADA_ATOM_NAME(dealloc)(LADA_ATOM_TYPE *_self);
   //! Function to allocate a string atom.
-  static PyObject* LADA_NAME(new)(PyTypeObject *_type, PyObject *_args, PyObject *_kwargs)
+  static PyObject* LADA_ATOM_NAME(new)(PyTypeObject *_type, PyObject *_args, PyObject *_kwargs)
 #    if LADA_ATOM_NUMBER == 0
        { return PyAtomStr_New(); }
 #    elif LADA_ATOM_NUMBER == 1
        { return PyAtomSequence_New(); }
 #    endif
   //! Function to initialize a string atom.
-  static int LADA_NAME(init)(LADA_TYPE* _self, PyObject* _args, PyObject *_kwargs);
+  static int LADA_ATOM_NAME(init)(LADA_ATOM_TYPE* _self, PyObject* _args, PyObject *_kwargs);
   //! Traverses to back-reference.
-  static int LADA_NAME(traverse)(LADA_TYPE *_self, visitproc _visit, void *_arg);
+  static int LADA_ATOM_NAME(traverse)(LADA_ATOM_TYPE *_self, visitproc _visit, void *_arg);
   //! Clears back reference.
-  static int LADA_NAME(gcclear)(LADA_TYPE *_self);
+  static int LADA_ATOM_NAME(gcclear)(LADA_ATOM_TYPE *_self);
 }
 
 // Function to deallocate a string atom.
-static void LADA_NAME(dealloc)(LADA_TYPE *_self)
+static void LADA_ATOM_NAME(dealloc)(LADA_ATOM_TYPE *_self)
 {
   if(_self->weakreflist != NULL)
     PyObject_ClearWeakRefs((PyObject *) _self);
@@ -27,7 +27,7 @@ static void LADA_NAME(dealloc)(LADA_TYPE *_self)
   // object. It is set to NULL when the wrapper is destroyed. 
   if(_self->atom) _self->atom->pyself = NULL;
 
-  LADA_NAME(gcclear)(_self);
+  LADA_ATOM_NAME(gcclear)(_self);
 
   _self->ob_type->tp_free((PyObject*)_self);
 }
@@ -39,7 +39,7 @@ static void LADA_NAME(dealloc)(LADA_TYPE *_self)
   PyObject* PyAtomSequence_New()
 #endif
 {
-  LADA_TYPE* result = (LADA_TYPE*)LADA_NAME(type).tp_alloc(&LADA_NAME(type), 0);
+  LADA_ATOM_TYPE* result = (LADA_ATOM_TYPE*)LADA_ATOM_NAME(type).tp_alloc(&LADA_ATOM_NAME(type), 0);
   if(result == NULL) return NULL;
   
   // set everything to null, just in case we exit to fast.
@@ -78,7 +78,7 @@ static void LADA_NAME(dealloc)(LADA_TYPE *_self)
 }
 
 // Function to initialize a string atom.
-static int LADA_NAME(init)(LADA_TYPE* _self, PyObject* _args, PyObject *_kwargs)
+static int LADA_ATOM_NAME(init)(LADA_ATOM_TYPE* _self, PyObject* _args, PyObject *_kwargs)
 {
   int found_position = 0;
   bool found_type = false;
@@ -299,7 +299,7 @@ static int LADA_NAME(init)(LADA_TYPE* _self, PyObject* _args, PyObject *_kwargs)
   return PyDict_Merge(_self->atom->pydict, _kwargs, 1);
 }
 
-static int LADA_NAME(traverse)(LADA_TYPE *self, visitproc visit, void *arg)
+static int LADA_ATOM_NAME(traverse)(LADA_ATOM_TYPE *self, visitproc visit, void *arg)
 {
   // in case of AtomSequence, self->sequence->atom also owns referencet to
   // pydict, but it is already visited below, so no need to put it twice.
@@ -307,7 +307,7 @@ static int LADA_NAME(traverse)(LADA_TYPE *self, visitproc visit, void *arg)
   return 0;
 }
 
-static int LADA_NAME(gcclear)(LADA_TYPE *self)
+static int LADA_ATOM_NAME(gcclear)(LADA_ATOM_TYPE *self)
 { 
 # if LADA_ATOM_NUMBER == 1
   // Technically not necessay here, as opposed to putting it in dealloc, but
