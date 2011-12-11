@@ -123,7 +123,7 @@ static int LADA_NAME(setcell)(LADA_TYPE *_self, PyObject *_value, void *_closure
       if(i >= 3) 
       {
         LADA_PYERROR(TypeError, "Not a 3x3 matrix of numbers.");
-        goto outer_error:
+        goto outer_error;
       }
       if(PyObject *i_inner = PyObject_GetIter(outer))
       {
@@ -133,14 +133,14 @@ static int LADA_NAME(setcell)(LADA_TYPE *_self, PyObject *_value, void *_closure
           if(j >= 3) 
           {
             LADA_PYERROR(TypeError, "Not a 3x3 matrix of numbers.");
-            goto inner_error:
+            goto inner_error;
           }
-          if(PyInt_Check(item) == 1) _self->structure->cell(i, j) = PyInt_AS_LONG(item);
-          else if(PyFloat_Check(item) == 1) _self->structure->cell(i, j) = PyInt_AS_LONG(item);
+          if(PyInt_Check(inner) == 1) _self->structure->cell(i, j) = PyInt_AS_LONG(inner);
+          else if(PyFloat_Check(inner) == 1) _self->structure->cell(i, j) = PyInt_AS_LONG(inner);
           else
           { 
             LADA_PYERROR(TypeError, "Object should contains numbers only.");
-            goto inner_error:
+            goto inner_error;
           }
           Py_DECREF(inner);
           ++j;
@@ -157,7 +157,7 @@ static int LADA_NAME(setcell)(LADA_TYPE *_self, PyObject *_value, void *_closure
       else
       { 
         LADA_PYERROR(TypeError, "Object should contains numbers only.");
-        goto outer_error:
+        goto outer_error;
       }
       Py_DECREF(outer);
       continue;
@@ -172,7 +172,7 @@ static int LADA_NAME(setcell)(LADA_TYPE *_self, PyObject *_value, void *_closure
 }
 // Returns the name of the structure.
 static PyObject* LADA_NAME(getname)(LADA_TYPE *_self, void *closure)
-  { return PyString_FromString(_self->structure->name->c_str()); }
+  { return PyString_FromString(_self->structure->name.c_str()); }
 // Sets the name of the structure from a string.
 static int LADA_NAME(setname)(LADA_TYPE *_self, PyObject *_value, void *_closure)
 {
@@ -181,7 +181,7 @@ static int LADA_NAME(setname)(LADA_TYPE *_self, PyObject *_value, void *_closure
     LADA_PYERROR(TypeError, "Cannot delete name attribute.");
     return -1;
   }
-  if(char const * const result = PyString_FromString(_value)) _self->structure->name = result;
+  if(char const * const result = PyString_AsString(_value)) _self->structure->name = result;
   else return -1;
   return 0;
 }

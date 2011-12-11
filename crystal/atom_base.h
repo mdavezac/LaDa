@@ -101,11 +101,6 @@ namespace LaDa
           //! Constructor
           AtomData() : AtomFreezeMixin(frozen::NONE), pos(math::rVector3d(0,0,0)),
                        type(), site(-1) LADA_PYDICT {}
-          //! Constructor
-          template<class T_DERIVED>
-            AtomData   ( Eigen::DenseBase<T_DERIVED> const &_pos, t_Type const &_in,
-                         types::t_int _site = -1, types::t_unsigned _freeze = frozen::NONE )
-                     : AtomFreezeMixin(_freeze), pos(_pos), type(_in), site(_site) LADA_PYDICT {}
           //! Copy Constructor
           AtomData   (const AtomData &_c)
                    : AtomFreezeMixin(_c), pos(_c.pos), type(_c.type), site(_c.site)

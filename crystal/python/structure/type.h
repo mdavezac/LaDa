@@ -72,7 +72,7 @@ PyTypeObject LADA_NAME(type) = {
       " **kwargs\n"
       "   Further keyword arguments are assigned as attributes of the structure instance.\n\n"
       "Note that atoms cannot be set using __init__. "
-      "Atoms should be specified after initializing the structure instance, using ``add_atom``.\n"
+      "Atoms should be specified after initializing the structure instance, using ``add_atom``.\n",
     (traverseproc)LADA_NAME(traverse),    /* tp_traverse */
     (inquiry)LADA_NAME(gcclear),          /* tp_clear */
     0,		               /* tp_richcompare */

@@ -11,6 +11,7 @@
 #include "../cast.h"
 
 #include "atom/atom.h"
+#include "structure/structure.h"
 
 namespace lp = LaDa::python;
 
@@ -20,8 +21,11 @@ using namespace LaDa::python;
 // sequence interface
 #include "atom/sequence.hpp"
 
-#ifdef LADA_INNERTYPE
-#  error LADA_INNERTYPE already defined
+#ifdef LADA_ATOM_CTYPE
+#  error LADA_ATOM_CTYPE already defined
+#endif
+#ifdef LADA_CTYPE
+#  error LADA_CTYPE already defined
 #endif
 #ifdef LADA_NAME
 #  error LADA_NAME already defined
@@ -39,8 +43,11 @@ using namespace LaDa::python;
 #  error LADA_ATOM_NUMBER already defined
 #endif
 #define LADA_ATOM_NUMBER 0
+#define LADA_TYPE StructureStr
+#define LADA_CTYPE LaDa::crystal::StructureData<std::string>
+#define LADA_NAME(name) structurestr_ ## name
 #define LADA_ATOM_TYPE AtomStr
-#define LADA_INNERTYPE LaDa::crystal::AtomData<std::string> 
+#define LADA_ATOM_CTYPE LaDa::crystal::AtomData<std::string> 
 #define LADA_ATOM_NAME(name) atomstr_ ## name
 // atom getters/settters.
 #include "atom/getset.hpp"
@@ -50,14 +57,28 @@ using namespace LaDa::python;
 #include "atom/cdi.hpp"
 // atom type declaration.
 #include "atom/type.hpp"
+// structure getters/settters.
+#include "structure/getset.h"
+// structure member functions.
+#include "structure/members.h"
+// creation, deallocation, initialization.
+#include "structure/cdi.h"
+// structure type declaration.
+#include "structure/type.h"
 #undef LADA_ATOM_NAME
 #undef LADA_ATOM_TYPE
-#undef LADA_INNERTYPE
+#undef LADA_ATOM_CTYPE
+#undef LADA_NAME
+#undef LADA_TYPE
+#undef LADA_CTYPE
 #undef LADA_ATOM_NUMBER
 #define LADA_ATOM_NUMBER 1
-#define LADA_INNERTYPE LaDa::crystal::AtomData< std::vector<std::string> >
+#define LADA_ATOM_CTYPE LaDa::crystal::AtomData< std::vector<std::string> >
 #define LADA_ATOM_TYPE AtomSequence
 #define LADA_ATOM_NAME(name) atomsequence_ ## name
+#define LADA_CTYPE LaDa::crystal::StructureData< std::vector<std::string> >
+#define LADA_TYPE StructureSequence
+#define LADA_NAME(name) structuresequence_ ## name
 // atom getters/settters.
 #include "atom/getset.hpp"
 // atom member functions.
@@ -66,10 +87,21 @@ using namespace LaDa::python;
 #include "atom/cdi.hpp"
 // atom type declaration.
 #include "atom/type.hpp"
+// structure getters/settters.
+#include "structure/getset.h"
+// structure member functions.
+#include "structure/members.h"
+// creation, deallocation, initialization.
+#include "structure/cdi.h"
+// structure type declaration.
+#include "structure/type.h"
 #undef LADA_NAME
-#undef LADA_TYPE
-#undef LADA_INNERTYPE
+#undef LADA_ATOM_TYPE
+#undef LADA_ATOM_CTYPE
 #undef LADA_ATOM_NUMBER
+#undef LADA_TYPE
+#undef LADA_CTYPE
+#undef LADA_NUMBER
 
 #ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
 # define PyMODINIT_FUNC void

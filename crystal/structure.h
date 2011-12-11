@@ -9,6 +9,14 @@
 #endif
 
 #include "structure_data.h"
+#ifdef LADA_DO_PYTHON
+  #include <Python.h>
+
+  namespace LaDa { namespace crystal { 
+    template<class T_TYPE> class Structure;
+  } }
+  template<class T> PyObject* PyStructure_FromStructure(LaDa::crystal::Structure<T> const &_structure);
+#endif
 
 
 namespace LaDa 
@@ -31,6 +39,9 @@ namespace LaDa
 #       ifdef LADA_WITH_LNS
           friend class load_n_save::access;
 #       endif
+#     ifdef LADA_DO_PYTHON
+        friend PyObject* PyStructure_FromStructure<>(Structure const &_structure);
+#     endif
         template<class T> friend
           std::ostream& operator<<(std::ostream &_stream, Structure<T> const &_str);
         //! Copy Constructor

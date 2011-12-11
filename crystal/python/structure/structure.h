@@ -1,3 +1,5 @@
+#ifndef LADA_CRYSTAL_PYTHON_STRUCTURE_STRUCTURE_H
+#define LADA_CRYSTAL_PYTHON_STRUCTURE_STRUCTURE_H
 #include <Python.h>
 #include "../../structure.h"
 
@@ -98,7 +100,7 @@ template<class T> PyObject* PyStructure_FromStructure
     new(&result->structure) boost::shared_ptr<t_Structure>(_structure dotstructure);       \
                                                                                            \
     /* Now sets internal reference, but no incref'ing. */                                  \
-    /* Note that using dotstructure (.structure_) allows access to an otherwise            \
+    /* Note that using dotstructure (.impl_) allows access to an otherwise                 \
      * constant variable. The beauty of using pointers. */                                 \
     _structure dotstructure->pyself = (PyObject*)result;                                   \
     return (PyObject*) result;
@@ -107,7 +109,7 @@ template<class T> PyObject* PyStructure_FromStructure
 template<> PyObject* PyStructure_FromStructure<std::string>
   (LaDa::crystal::Structure<std::string> const &_structure)
 {
-  LADA_DECLARE(std::string, str, Str, .structure_);
+  LADA_DECLARE(std::string, str, Str, .impl_);
 }
 //! Creates a structure wrapper instance around a pre-existing structure.
 template<> PyObject* PyStructure_FromStructure<std::string>
@@ -119,7 +121,7 @@ template<> PyObject* PyStructure_FromStructure<std::string>
 template<> PyObject* PyStructure_FromStructure< std::vector<std::string> >
   (LaDa::crystal::Structure< std::vector<std::string> > const &_structure)
 {
-  LADA_DECLARE( std::vector<std::string>, sequence, Sequence, .structure_);
+  LADA_DECLARE( std::vector<std::string>, sequence, Sequence, .impl_);
 }
 //! Creates a structure wrapper instance around a pre-existing structure.
 template<> PyObject* PyStructure_FromStructure< std::vector<std::string> >
@@ -135,3 +137,4 @@ template<> PyObject* PyStructure_FromStructure< std::vector<std::string> >
 extern "C" PyObject* PyStructureStr_New();
 //! Creates a new structure and its wrapper.
 extern "C" PyObject* PyStructureSequence_New();
+#endif

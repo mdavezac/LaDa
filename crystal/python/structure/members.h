@@ -41,15 +41,17 @@ PyObject* LADA_NAME(repr)(LADA_TYPE* _self)
   // Including python dynamic attributes.
   if(_self->structure->pydict != NULL)
   {
-    if(PyDict_Size(_atom->pydict) > 0)
+    if(PyDict_Size(_self->structure->pydict) > 0)
     {
       PyObject *key, *value;
       Py_ssize_t pos = 0;
-      while (PyDict_Next(_atom->pydict, &pos, &key, &value)) 
+      while (PyDict_Next(_self->structure->pydict, &pos, &key, &value)) 
       {
         PyObject* repr = PyObject_Repr(value);
         if(repr == NULL) return NULL;
-        _sstr << ", " << PyString_AsString(key) << "=" << PyString_AsString(repr);
+        result << ", " << PyString_AsString(key);
+        if(PyErr_Occurred() != NULL) {Py_DECREF(repr); return NULL;}
+        result << "=" << PyString_AsString(repr);
         Py_DECREF(repr);
         if(PyErr_Occurred() != NULL) return NULL;
       }
@@ -70,30 +72,26 @@ PyObject* LADA_NAME(repr)(LADA_TYPE* _self)
          << ", " << _self->structure->cell(2, 2) 
          << "] ]\n";
 # if LADA_ATOM_NUMBER == 0
-    typedef LaDa::crystal::StructureData<std::string>::const_iterator t_cit;
+    typedef LaDa::crystal::StructureData<std::string>::t_Atoms::const_iterator t_cit;
 # elif LADA_ATOM_NUMBER == 1
-    typedef LaDa::crystal::StructureData< std::vector<std::string> >::const_iterator t_cit;
+    typedef LaDa::crystal::StructureData< std::vector<std::string> >::t_Atoms::const_iterator t_cit;
 # endif
   // Then add atoms.
-  t_cit i_first = _self->structure->begin();
-  t_cit const i_end = _self->structure->end();
+  t_cit i_first = _self->structure->atoms.begin();
+  t_cit const i_end = _self->structure->atoms.end();
   result << "structure.add_atom";
-  atomstr_repr_impl(*i_first, result);
+  LADA_ATOM_NAME(repr_impl)(*i_first->get(), result);
   for(; i_first != i_end; ++i_first)
   {
     result << "                  ";
-#   if LADA_ATOM_NUMBER == 0
-      atomstr_repr_impl(*i_first, result);
-#   elif LADA_ATOM_NUMBER == 1
-      atomsequence_repr_impl(*i_first, result);
-#   endif    
+    LADA_ATOM_NAME(repr_impl)(*i_first->get(), result);
     result << "\\\n";
   }
   return PyString_FromString(result.str().c_str());
 }
 
 // If a string structure, returns a sequence, and vice-versa.
-PyObject *LADA_NAME(cast)(LADA_TYPE *_self, LADA_TYPE *_sep)
+PyObject *LADA_NAME(cast)(LADA_TYPE *_self, PyObject *_sep)
 {
 # if LADA_ATOM_NUMBER == 0
     StructureSequence* result = (StructureSequence*)PyStructureSequence_New();
@@ -111,11 +109,11 @@ PyObject *LADA_NAME(cast)(LADA_TYPE *_self, LADA_TYPE *_sep)
   if(N == 1)
   { 
     PyObject *separator = PyTuple_GetItem(_sep, 0);
-    char * const sep = PyString_FromString(separator);
+    char * const sep = PyString_AsString(separator);
     if(sep == NULL) { Py_DECREF(result); return NULL; }
-    LaDa::crystal::cast(*_self->structure, result->structure, sep);
+    LaDa::crystal::cast(*_self->structure, *result->structure, sep);
   }
-  else LaDa::crystal::cast(*_self->structure, result->structure);
+  else LaDa::crystal::cast(*_self->structure, *result->structure);
   if(PyErr_Occurred() != NULL)
   {
     Py_DECREF(result);
@@ -128,9 +126,9 @@ PyObject *LADA_NAME(cast)(LADA_TYPE *_self, LADA_TYPE *_sep)
 PyObject *LADA_NAME(copy)(LADA_TYPE* _self)
 {
 # if LADA_ATOM_NUMBER == 0
-    StructureSequence* result = (StructureSequence*)PyStructureSequence_New();
-# elif LADA_ATOM_NUMBER == 1
     StructureStr* result = (StructureStr*)PyStructureStr_New();
+# elif LADA_ATOM_NUMBER == 1
+    StructureSequence* result = (StructureSequence*)PyStructureSequence_New();
 # endif
   *result->structure = *_self->structure;
   if(PyErr_Occurred() != NULL) {Py_DECREF(result); return NULL;}
@@ -140,11 +138,30 @@ PyObject *LADA_NAME(copy)(LADA_TYPE* _self)
 PyObject *LADA_NAME(deepcopy)(LADA_TYPE* _self, PyObject* _memo)
 {
 # if LADA_ATOM_NUMBER == 0
-    StructureSequence* result = (StructureSequence*)PyStructureSequence_New();
-# elif LADA_ATOM_NUMBER == 1
     StructureStr* result = (StructureStr*)PyStructureStr_New();
+# elif LADA_ATOM_NUMBER == 1
+    StructureSequence* result = (StructureSequence*)PyStructureSequence_New();
 # endif
-  *result->structure = *_self->structure;
+  result->structure->cell   = _self->structure->cell;
+  result->structure->scale  = _self->structure->scale;
+  result->structure->freeze = _self->structure->freeze;
+  result->structure->name   = _self->structure->name;
+  result->structure->weight = _self->structure->weight;
+  result->structure->energy = _self->structure->energy;
+  if(_self->structure->pydict != NULL)
+  {
+    Py_XDECREF(result->structure->pydict);
+    result->structure->pydict = NULL;
+    PyObject* copymod = PyImport_ImportModule("copy");
+    if(copymod == NULL) { Py_DECREF(result); return NULL; }
+    PyObject *deepcopystr = PyString_FromString("deepcopy");
+    if(deepcopystr == NULL) { Py_DECREF(result); Py_DECREF(copymod); return NULL; }
+    result->structure->pydict =
+      PyObject_CallMethodObjArgs(copymod, deepcopystr, _self->structure->pydict, _memo, NULL);
+    Py_DECREF(copymod);
+    Py_DECREF(deepcopystr);
+    if(result->structure->pydict == NULL) { Py_DECREF(result); return NULL; }
+  }
   return (PyObject*)result;
 }
 // Implements shallow copy.
@@ -165,8 +182,9 @@ PyObject *LADA_NAME(to_dict)(LADA_TYPE* _self)
 # endif
 # define LADA_ADDITEM(string) \
     item = LADA_NAME(get ## string)((LADA_TYPE*)_self, NULL);           \
-    if(item == NULL) goto error;                                        \
-    if(PyDict_SetItemString(result, #string, item) < 0) goto erroritem; \
+    if(item == NULL) { Py_DECREF(result); return NULL; }                \
+    if(PyDict_SetItemString(result, #string, item) < 0)                 \
+      { Py_DECREF(result); Py_DECREF(item); return NULL; }              \
     Py_DECREF(item);
   PyObject* LADA_ADDITEM(cell);
   LADA_ADDITEM(name);
@@ -176,16 +194,16 @@ PyObject *LADA_NAME(to_dict)(LADA_TYPE* _self)
   LADA_ADDITEM(freeze);
 #  undef LADA_ADDITEM
 
-  LADA_INNERTYPE::t_Atoms::const_iterator i_atom = _self->structure->begin();
-  LADA_INNERTYPE::t_Atoms::const_iterator const i_end = _self->structure->end();
+  LADA_CTYPE::t_Atoms::const_iterator i_atom = _self->structure->atoms.begin();
+  LADA_CTYPE::t_Atoms::const_iterator const i_end = _self->structure->atoms.end();
   for(long i(0); i_atom != i_end; ++i_atom, ++i)
   {
     // First, get wrapper to atom.
     // Necessary since items describing the atom will refer to it.
-    LADA_ATOM_TYPE* atom = PyAtom_FromAtom(*i_atom);
+    LADA_ATOM_TYPE* atom = (LADA_ATOM_TYPE*)PyAtom_FromAtom(*i_atom);
     if(atom == NULL) { Py_DECREF(result); return NULL; }
     // Then gets dictionary description.
-    PyObject *dict = LADA_ATOM_NAME(todict)(atom);
+    PyObject *dict = LADA_ATOM_NAME(to_dict)(atom);
     if(dict == NULL) { Py_DECREF(atom); Py_DECREF(result); return NULL; }
     // Then create pyobject index.
     PyObject *index = PyInt_FromLong(i);
@@ -201,12 +219,6 @@ PyObject *LADA_NAME(to_dict)(LADA_TYPE* _self)
   if(_self->structure->pydict != NULL) PyDict_Merge(result, _self->structure->pydict, 1);
 
   return result;
-
-  erroritem:
-    Py_DECREF(item);
-  error: 
-    Py_DECREF(result);
-    return NULL;
 }
 
 // Implements __reduce__ for pickling.
@@ -253,7 +265,8 @@ PyObject* LADA_NAME(setstate)(LADA_TYPE* _self, PyObject *_dict)
   try { _self->structure->atoms.resize(N); }
   catch(std::exception &error)
   {
-    LADA_PYERROR(internal, ("Encountered error while resizing atoms: " + error.what()).c_str());
+    LADA_PYERROR( internal, 
+                  (std::string("Encountered error while resizing atoms: ") + error.what()).c_str() );
     return NULL;
   }
   // some macros to avoid repeating ourselves and to get Str vs Sequence right.
@@ -281,7 +294,7 @@ PyObject* LADA_NAME(setstate)(LADA_TYPE* _self, PyObject *_dict)
         LADA_PYERROR(internal, "Encountered negative index in dictionary.");
         return NULL;
       }
-      LADA_ATOM_TYPE *atom = PyAtom_FromAtom(_self->structure->atoms[i]);
+      LADA_ATOM_TYPE *atom = (LADA_ATOM_TYPE*)PyAtom_FromAtom(_self->structure->atoms[i]);
       if(atom == NULL) return NULL;
       if(LADA_ATOM_NAME(setstate)(atom, value) < 0) return NULL;
     }

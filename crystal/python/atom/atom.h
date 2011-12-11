@@ -1,3 +1,5 @@
+#ifndef LADA_CRYSTAL_PYTHON_ATOM_STRUCTURE_H
+#define LADA_CRYSTAL_PYTHON_ATOM_STRUCTURE_H
 #include <Python.h>
 #include "../../atom.h"
 
@@ -156,3 +158,4 @@ LADA_DECLARE(std::vector<std::string>, sequence, Sequence,
 extern "C" PyObject* PyAtomStr_New();
 //! Creates a new atom and its wrapper.
 extern "C" PyObject* PyAtomSequence_New();
+#endif

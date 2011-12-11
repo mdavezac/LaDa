@@ -1,13 +1,7 @@
 extern "C" 
 {
-# if LADA_ATOM_NUMBER == 0
-    //! Implements atom representation. 
-    static int LADA_ATOM_NAME(repr_impl)(LaDa::crystal::AtomData<std::string> const &_atom, std::ostringstream &_sstr);
-# elif LADA_ATOM_NUMBER == 1
-    //! Implements atom representation. 
-    static int LADA_ATOM_NAME(repr_impl)( LaDa::crystal::AtomData< std::vector<std::string> > const &_atom, 
-                                     std::ostringstream &_sstr );
-# endif
+  //! Implements atom representation. 
+  static int LADA_ATOM_NAME(repr_impl)(LADA_ATOM_CTYPE const &_atom, std::ostringstream &_sstr);
   //! Returns a representation of the object.
   static PyObject* LADA_ATOM_NAME(repr)(LADA_ATOM_TYPE* _self)
   {
@@ -36,7 +30,7 @@ extern "C"
 }
 
 // Implements atom representation. 
-static int LADA_ATOM_NAME(repr_impl)(LADA_INNERTYPE const &_atom, std::ostringstream &_sstr)
+static int LADA_ATOM_NAME(repr_impl)(LADA_ATOM_CTYPE const &_atom, std::ostringstream &_sstr)
 {
   _sstr << "("
          << _atom.pos(0) << ", "

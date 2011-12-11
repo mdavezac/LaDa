@@ -72,13 +72,13 @@ static int LADA_NAME(init)(LADA_TYPE* _self, PyObject* _args, PyObject *_kwargs)
 # ifdef LADA_SET
 #  error LADA_SET already defined
 # endif
-# if LADA_SET(attr, default_)                                              \
+# define LADA_SET(attr, default_)                                          \
     {                                                                      \
       /* Check for keyword argument first. */                              \
       PyObject* item = PyDict_GetItemString(_kwargs, #attr);               \
       bool const iskw = item != NULL;                                      \
       /* If not a keyword, checked for next unparsed argument. */          \
-      if(N > i and not iskw) cell = PyTuple_GetItem(_args, i);             \
+      if(N > i and not iskw) item = PyTuple_GetItem(_args, i);             \
       if(item != NULL)                                                     \
       {                                                                    \
         /* Check if we can set the object using standard get/set method */ \
@@ -111,7 +111,7 @@ static int LADA_NAME(init)(LADA_TYPE* _self, PyObject* _args, PyObject *_kwargs)
   // Now additional attributes.
   if(_kwargs == NULL) return 0;
   _self->structure->pydict = PyDict_New();
-  return PyDict_Merge(_self->atom->pydict, _kwargs, 1);
+  return PyDict_Merge(_self->structure->pydict, _kwargs, 1);
 }
 
 static int LADA_NAME(traverse)(LADA_TYPE *self, visitproc visit, void *arg)

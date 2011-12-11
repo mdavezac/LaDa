@@ -44,14 +44,11 @@ static void LADA_ATOM_NAME(dealloc)(LADA_ATOM_TYPE *_self)
   
   // set everything to null, just in case we exit to fast.
   result->weakreflist = NULL;
-  // Now starts setting things up.
-# if LADA_ATOM_NUMBER == 0
-    typedef LaDa::crystal::AtomData<std::string> t_Atom;
-# elif LADA_ATOM_NUMBER == 1
+# if LADA_ATOM_NUMBER == 1
     result->sequence = NULL;
-    typedef LaDa::crystal::AtomData< std::vector<std::string> > t_Atom;
 # endif
-  result->atom.reset(new(std::nothrow) t_Atom);
+  // Now starts setting things up.
+  result->atom.reset(new(std::nothrow) LADA_ATOM_CTYPE);
   if(not result->atom)
   {
     Py_DECREF(result);
@@ -69,7 +66,7 @@ static void LADA_ATOM_NAME(dealloc)(LADA_ATOM_TYPE *_self)
     // something weird here. Seems that the constructor for the boost shared pointer was never called.
     // Perfome in-place construction using new.
     // According to boost, should never throw.
-    new(&result->sequence->ptr_atom) boost::shared_ptr<t_Atom>(result->atom); 
+    new(&result->sequence->ptr_atom) boost::shared_ptr<LADA_ATOM_CTYPE>(result->atom); 
 # endif
   // Reference to wrapper in the wrapped object is not owned by the wrapped
   // object. It is set to NULL when the wrapper is destroyed. 
