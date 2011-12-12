@@ -217,6 +217,9 @@ class Ediff(SpecialVaspParam):
     super(Ediff, self).__init__(value)
     self.name = name
   def incar_string(self, vasp, *args, **kwargs):
+    if self.value is None: return 
+    if self.value < 0: 
+      return "{0} = {1} ".format(getattr(self, "name", "ediff").upper(), self.value)
     return "{0} = {1} ".format(getattr(self, "name", "ediff").upper(), self.value * float(len(vasp._system.atoms)))
   def __repr__(self):
     """ Representation of Ediff. """
