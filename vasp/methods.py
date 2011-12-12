@@ -111,6 +111,7 @@ class RelaxCellShape(object):
     maxiter = kwargs.pop("maxiter", self.maxiter)
     keep_steps = kwargs.pop("keep_steps", self.keep_steps)
     outdir = getcwd() if outdir is None else RelativeDirectory(outdir).path
+    nofail = kwargs.pop('nofail', False)
 
     # convergence criteria and behavior.
     convergence = kwargs.get('convergence', getattr(self, 'convergence', self.vasp.ediffg))
@@ -189,7 +190,7 @@ class RelaxCellShape(object):
       if is_converged(output): break;
 
     # Does not perform ionic calculation if convergence not reached.
-    if not is_converged(output): 
+    if nofail == False and is_converged(output) == False: 
       raise RuntimeError("Could not converge cell-shape in {0} iterations.".format(maxiter))
 
     # performs ionic calculation. 
@@ -214,7 +215,7 @@ class RelaxCellShape(object):
       if is_converged(output): break;
 
     # Does not perform static calculation if convergence not reached.
-    if not is_converged(output): 
+    if nofail == False and is_converged(output) == False: 
       raise RuntimeError("Could not converge ions in {0} iterations.".format(maxiter))
 
     # performs final calculation outside relaxation directory. 
