@@ -1,3 +1,9 @@
+static PyMappingMethods LADA_NAME(as_mapping)[] = {
+   (lenfunc)LADA_NAME(size), 
+   (binaryfunc) LADA_NAME(getitem), 
+   NULL 
+};
+
 static PyMethodDef LADA_NAME(methods)[] = {
     {"copy", (PyCFunction)LADA_NAME(copy), METH_NOARGS, "Returns a deepcopy of the structure." },
     {"cast", (PyCFunction)LADA_NAME(cast), METH_VARARGS,
@@ -5,13 +11,18 @@ static PyMethodDef LADA_NAME(methods)[] = {
              ":Parameters:\n"
              "  sep : string\n"
              "   Separator between atomic species. Defaults to a comma." },
-//   {"to_dict", (PyCFunction)LADA_NAME(to_dict), METH_NOARGS,
-//               "Returns a dictionary with shallow copies of items." },
-   {"__copy__", (PyCFunction)LADA_NAME(shallowcopy), METH_NOARGS, "Shallow copy of an atom." },
-   {"__deepcopy__", (PyCFunction)LADA_NAME(deepcopy), METH_O, "Deep copy of an atom." },
-//   {"__getstate__", (PyCFunction)LADA_NAME(getstate), METH_NOARGS, "Implements pickle protocol." },
-//   {"__setstate__", (PyCFunction)LADA_NAME(setstate), METH_O, "Implements pickle protocol." },
-//   {"__reduce__", (PyCFunction)LADA_NAME(reduce), METH_NOARGS, "Implements pickle protocol." },
+    {"to_dict", (PyCFunction)LADA_NAME(to_dict), METH_NOARGS,
+                "Returns a dictionary with shallow copies of items." },
+    {"__copy__", (PyCFunction)LADA_NAME(shallowcopy), METH_NOARGS, "Shallow copy of an atom." },
+    {"__deepcopy__", (PyCFunction)LADA_NAME(deepcopy), METH_O, "Deep copy of an atom." },
+    {"__getstate__", (PyCFunction)LADA_NAME(getstate), METH_NOARGS, "Implements pickle protocol." },
+    {"__setstate__", (PyCFunction)LADA_NAME(setstate), METH_O, "Implements pickle protocol." },
+    {"__reduce__", (PyCFunction)LADA_NAME(reduce), METH_NOARGS, "Implements pickle protocol." },
+    {"add_atom", (PyCFunction)LADA_NAME(add_atom), METH_KEYWORDS,
+                 "Adds an atom to a structure.\n"
+                 "The parameters can be either an atom, a reference (not a copy) too which "
+                 "is added to the structure, or it accepts the same arguments and keywords "
+                 "as `Atom.__init__`" },
     {NULL}  /* Sentinel */
 };
 
@@ -33,7 +44,7 @@ PyTypeObject LADA_NAME(type) = {
     (reprfunc)LADA_NAME(repr), /*tp_repr*/
     0,                         /*tp_as_number*/
     0,                         /*tp_as_sequence*/
-    0,                         /*tp_as_mapping*/
+    LADA_NAME(as_mapping),     /*tp_as_mapping*/
     0,                         /*tp_hash */
     0,                         /*tp_call*/
     0,                         /*tp_str*/

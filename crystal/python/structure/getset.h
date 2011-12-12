@@ -128,15 +128,15 @@ static int LADA_NAME(setcell)(LADA_TYPE *_self, PyObject *_value, void *_closure
       if(PyObject *i_inner = PyObject_GetIter(outer))
       {
         size_t j(0);
-        while(PyObject* inner = PyObject_GetIter(i_inner))
+        while(PyObject* inner = PyIter_Next(i_inner))
         {
           if(j >= 3) 
           {
             LADA_PYERROR(TypeError, "Not a 3x3 matrix of numbers.");
             goto inner_error;
           }
-          if(PyInt_Check(inner) == 1) _self->structure->cell(i, j) = PyInt_AS_LONG(inner);
-          else if(PyFloat_Check(inner) == 1) _self->structure->cell(i, j) = PyInt_AS_LONG(inner);
+          if(PyInt_Check(inner)) _self->structure->cell(j, i) = PyInt_AS_LONG(inner);
+          else if(PyFloat_Check(inner)) _self->structure->cell(j, i) = PyFloat_AS_DOUBLE(inner);
           else
           { 
             LADA_PYERROR(TypeError, "Object should contains numbers only.");
@@ -160,6 +160,7 @@ static int LADA_NAME(setcell)(LADA_TYPE *_self, PyObject *_value, void *_closure
         goto outer_error;
       }
       Py_DECREF(outer);
+      ++i;
       continue;
       outer_error:
         Py_DECREF(i_outer);
@@ -194,7 +195,7 @@ static int LADA_NAME(setweight)(LADA_TYPE *_self, PyObject *_value, void *_closu
 {
   if(_value == NULL) 
   {
-    LADA_PYERROR(TypeError, "Cannot delete name attribute.");
+    LADA_PYERROR(TypeError, "Cannot delete weight attribute.");
     return -1;
   }
   if(PyFloat_Check(_value)) _self->structure->weight = PyFloat_AS_DOUBLE(_value);
@@ -211,7 +212,7 @@ static int LADA_NAME(setscale)(LADA_TYPE *_self, PyObject *_value, void *_closur
 {
   if(_value == NULL) 
   {
-    LADA_PYERROR(TypeError, "Cannot delete name attribute.");
+    LADA_PYERROR(TypeError, "Cannot delete scale attribute.");
     return -1;
   }
   if(PyFloat_Check(_value)) _self->structure->scale = PyFloat_AS_DOUBLE(_value);
@@ -227,7 +228,7 @@ static int LADA_NAME(setenergy)(LADA_TYPE *_self, PyObject *_value, void *_closu
 {
   if(_value == NULL) 
   {
-    LADA_PYERROR(TypeError, "Cannot delete name attribute.");
+    LADA_PYERROR(TypeError, "Cannot delete energy attribute.");
     return -1;
   }
   if(PyFloat_Check(_value)) _self->structure->energy = PyFloat_AS_DOUBLE(_value);
@@ -330,6 +331,7 @@ extern "C"
       LADA_DECLARE(weight),
       LADA_DECLARE(energy),
       LADA_DECLARE(scale),
+      LADA_DECLARE(name), 
       LADA_DECLARE(dict), 
       {NULL}
   };

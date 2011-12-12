@@ -63,6 +63,8 @@ using namespace LaDa::python;
 #include "structure/members.h"
 // creation, deallocation, initialization.
 #include "structure/cdi.h"
+// Mapping methods.
+#include "structure/mapping.h"
 // structure type declaration.
 #include "structure/type.h"
 #undef LADA_ATOM_NAME
@@ -93,6 +95,8 @@ using namespace LaDa::python;
 #include "structure/members.h"
 // creation, deallocation, initialization.
 #include "structure/cdi.h"
+// Mapping methods.
+#include "structure/mapping.h"
 // structure type declaration.
 #include "structure/type.h"
 #undef LADA_NAME
@@ -119,11 +123,15 @@ PyMODINIT_FUNC initcppwrappers(void)
 {
   import_array(); // needed for NumPy 
 
+  if (PyType_Ready(&structurestr_type) < 0) return;
+  if (PyType_Ready(&structuresequence_type) < 0) return;
   if (PyType_Ready(&atomstr_type) < 0) return;
   if (PyType_Ready(&atomsequence_type) < 0) return;
   if (PyType_Ready(&sequence_type) < 0) return;
   if (PyType_Ready(&sequenceiterator_type) < 0) return;
 
+  Py_INCREF(&structurestr_type);
+  Py_INCREF(&structuresequence_type);
   Py_INCREF(&atomstr_type);
   Py_INCREF(&atomsequence_type);
   Py_INCREF(&sequence_type);
@@ -132,6 +140,8 @@ PyMODINIT_FUNC initcppwrappers(void)
   char const doc[] =  "Wrapper around C++ atom/structure class and affiliates.";
   PyObject* module = Py_InitModule3("cppwrappers", crystal_methods, doc);
 
+  PyModule_AddObject(module, "StructureStr", (PyObject *)&structurestr_type);
+  PyModule_AddObject(module, "StructureSequence", (PyObject *)&structuresequence_type);
   PyModule_AddObject(module, "AtomStr", (PyObject *)&atomstr_type);
   PyModule_AddObject(module, "AtomSequence", (PyObject *)&atomsequence_type);
   PyModule_AddObject(module, "Sequence", (PyObject *)&sequence_type);

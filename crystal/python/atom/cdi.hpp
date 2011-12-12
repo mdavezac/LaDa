@@ -3,12 +3,7 @@ extern "C"
   //! Function to deallocate a string atom.
   static void LADA_ATOM_NAME(dealloc)(LADA_ATOM_TYPE *_self);
   //! Function to allocate a string atom.
-  static PyObject* LADA_ATOM_NAME(new)(PyTypeObject *_type, PyObject *_args, PyObject *_kwargs)
-#    if LADA_ATOM_NUMBER == 0
-       { return PyAtomStr_New(); }
-#    elif LADA_ATOM_NUMBER == 1
-       { return PyAtomSequence_New(); }
-#    endif
+  static PyObject* LADA_ATOM_NAME(new)(PyTypeObject *_type, PyObject *_args, PyObject *_kwargs);
   //! Function to initialize a string atom.
   static int LADA_ATOM_NAME(init)(LADA_ATOM_TYPE* _self, PyObject* _args, PyObject *_kwargs);
   //! Traverses to back-reference.
@@ -40,6 +35,43 @@ static void LADA_ATOM_NAME(dealloc)(LADA_ATOM_TYPE *_self)
 #endif
 {
   LADA_ATOM_TYPE* result = (LADA_ATOM_TYPE*)LADA_ATOM_NAME(type).tp_alloc(&LADA_ATOM_NAME(type), 0);
+  if(result == NULL) return NULL;
+  
+  // set everything to null, just in case we exit to fast.
+  result->weakreflist = NULL;
+# if LADA_ATOM_NUMBER == 1
+    result->sequence = NULL;
+# endif
+  // Now starts setting things up.
+  result->atom.reset(new(std::nothrow) LADA_ATOM_CTYPE);
+  if(not result->atom)
+  {
+    Py_DECREF(result);
+    LADA_PYERROR(internal, "Could not create atom.\n" );
+    return NULL;
+  }
+# if LADA_ATOM_NUMBER == 1
+    result->sequence = PyObject_New(Sequence, &sequence_type);
+    if(result->sequence == NULL)
+    {
+      Py_DECREF(result);
+      return NULL;
+    }
+    result->sequence->ptr_seq = &result->atom->type;
+    // something weird here. Seems that the constructor for the boost shared pointer was never called.
+    // Perfome in-place construction using new.
+    // According to boost, should never throw.
+    new(&result->sequence->ptr_atom) boost::shared_ptr<LADA_ATOM_CTYPE>(result->atom); 
+# endif
+  // Reference to wrapper in the wrapped object is not owned by the wrapped
+  // object. It is set to NULL when the wrapper is destroyed. 
+  result->atom->pyself = (PyObject*)result;
+  return (PyObject*) result;
+}
+
+static PyObject* LADA_ATOM_NAME(new)(PyTypeObject *_type, PyObject *_args, PyObject *_kwargs)
+{
+  LADA_ATOM_TYPE* result = (LADA_ATOM_TYPE*)_type->tp_alloc(_type, 0);
   if(result == NULL) return NULL;
   
   // set everything to null, just in case we exit to fast.

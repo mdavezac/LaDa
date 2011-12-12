@@ -19,6 +19,8 @@ extern "C"
   static PyObject* LADA_NAME(setstate)(LADA_TYPE* _self, PyObject *_dict);
   //! Implements reduce for pickling.
   static PyObject* LADA_NAME(reduce)(LADA_TYPE* _self);
+  //! Implements add atom.
+  static PyObject* LADA_NAME(add_atom)(LADA_TYPE* _self, PyObject* _args, PyObject* _kwargs);
 }
 
 //! Returns a representation of the object.
@@ -31,7 +33,7 @@ PyObject* LADA_NAME(repr)(LADA_TYPE* _self)
   // Add most attributes in constructor.
   result << _self->structure->scale;
   if(_self->structure->name != "")
-    result << ", " << _self->structure->name;
+    result << ", '" << _self->structure->name << "'";
   if(std::abs(_self->structure->weight - 1e0) > 1e-12)
     result << ", weight=" << _self->structure->weight;
   if(std::abs(_self->structure->energy) > 1e-12)
@@ -70,22 +72,19 @@ PyObject* LADA_NAME(repr)(LADA_TYPE* _self)
          <<         _self->structure->cell(2, 0)
          << ", " << _self->structure->cell(2, 1) 
          << ", " << _self->structure->cell(2, 2) 
-         << "] ]\n";
-# if LADA_ATOM_NUMBER == 0
-    typedef LaDa::crystal::StructureData<std::string>::t_Atoms::const_iterator t_cit;
-# elif LADA_ATOM_NUMBER == 1
-    typedef LaDa::crystal::StructureData< std::vector<std::string> >::t_Atoms::const_iterator t_cit;
-# endif
+         << "] ]";
   // Then add atoms.
-  t_cit i_first = _self->structure->atoms.begin();
-  t_cit const i_end = _self->structure->atoms.end();
-  result << "structure.add_atom";
-  LADA_ATOM_NAME(repr_impl)(*i_first->get(), result);
-  for(; i_first != i_end; ++i_first)
+  if(_self->structure->atoms.size() > 0)
   {
-    result << "                  ";
+    LADA_CTYPE::t_Atoms::const_iterator i_first = _self->structure->atoms.begin();
+    LADA_CTYPE::t_Atoms::const_iterator const i_end = _self->structure->atoms.end();
+    result << "\nstructure.add_atom";
     LADA_ATOM_NAME(repr_impl)(*i_first->get(), result);
-    result << "\\\n";
+    for(++i_first; i_first != i_end; ++i_first)
+    {
+      result << "\\\n                  ";
+      LADA_ATOM_NAME(repr_impl)(*i_first->get(), result);
+    }
   }
   return PyString_FromString(result.str().c_str());
 }
@@ -313,4 +312,45 @@ PyObject* LADA_NAME(setstate)(LADA_TYPE* _self, PyObject *_dict)
   }
 # undef LADA_PARSE
   Py_RETURN_NONE;
+}
+
+// Implements add atom.
+static PyObject* LADA_NAME(add_atom)(LADA_TYPE* _self, PyObject* _args, PyObject* _kwargs)
+{
+  // Check first that _args is not a tuple containing an atom.
+  if(PyTuple_Size(_args) == 1)
+  {
+    LADA_ATOM_TYPE* wrapper = (LADA_ATOM_TYPE*)PyTuple_GET_ITEM(_args, 0);
+#   if LADA_ATOM_NUMBER == 0
+      if(PyAtomStr_Check(wrapper)) 
+#   elif LADA_ATOM_NUMBER == 1
+      if(PyAtomSequence_Check(wrapper)) 
+#   endif
+    {
+      if(_kwargs != NULL)
+      {
+        LADA_PYERROR(TypeError, "Cannot insert an atom and motify in-place.");
+        return NULL;
+      }
+      if(not wrapper->atom)
+      {
+        LADA_PYERROR(internal, "Should never find an empty atom. Internal bug.");
+        return NULL;
+      }
+      _self->structure->atoms.push_back(LADA_CTYPE::t_Atom(wrapper->atom));
+      return PyObject_GetAttrString((PyObject*)_self, "add_atom");
+    }
+  }
+  // create new atom and its wrapper.
+  LADA_CTYPE::t_Atom atom;
+  LADA_ATOM_TYPE* wrapper = (LADA_ATOM_TYPE*)PyAtom_FromAtom(atom);
+  if(wrapper == NULL) return NULL;
+  // Then initialize it.
+  bool const error = LADA_ATOM_NAME(init)(wrapper, _args, _kwargs) < 0;
+  Py_DECREF(wrapper);
+  if(error) return NULL;
+  // Add it to the container.
+  _self->structure->atoms.push_back(atom);
+  // Finally, returns this very function for chaining.
+  return PyObject_GetAttrString((PyObject*)_self, "add_atom");
 }

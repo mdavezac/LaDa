@@ -45,12 +45,7 @@ static void LADA_NAME(dealloc)(LADA_TYPE *_self)
   // set everything to null, just in case we exit to fast.
   result->weakreflist = NULL;
   // Now starts setting things up.
-# if LADA_ATOM_NUMBER == 0
-    typedef LaDa::crystal::StructureData<std::string> t_Structure;
-# elif LADA_ATOM_NUMBER == 1
-    typedef LaDa::crystal::StructureData< std::vector<std::string> > t_Structure;
-# endif
-  result->structure.reset(new(std::nothrow) t_Structure);
+  result->structure.reset(new(std::nothrow) LADA_CTYPE);
   if(not result->structure)
   {
     Py_DECREF(result);
@@ -75,7 +70,8 @@ static int LADA_NAME(init)(LADA_TYPE* _self, PyObject* _args, PyObject *_kwargs)
 # define LADA_SET(attr, default_)                                          \
     {                                                                      \
       /* Check for keyword argument first. */                              \
-      PyObject* item = PyDict_GetItemString(_kwargs, #attr);               \
+      PyObject* item = _kwargs != NULL ?                                   \
+          PyDict_GetItemString(_kwargs, #attr): NULL;                      \
       bool const iskw = item != NULL;                                      \
       /* If not a keyword, checked for next unparsed argument. */          \
       if(N > i and not iskw) item = PyTuple_GetItem(_args, i);             \
@@ -92,10 +88,7 @@ static int LADA_NAME(init)(LADA_TYPE* _self, PyObject* _args, PyObject *_kwargs)
           PyErr_Clear();                                                   \
           _self->structure->attr = default_;                               \
         }                                                                  \
-        /* Increment unparsed argument position */                         \
-        if(not iskw) ++i;                                                  \
-        /* Remove keyword argument to make adding dynamic python attribute \
-         * easier later on. */                                             \
+        else if(not iskw) ++i;                                             \
         else if(PyDict_DelItemString(_kwargs, #attr) == -1) return -1;     \
       }                                                                    \
       /* Neither keyword nor argument: set to default. */                  \
