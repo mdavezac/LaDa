@@ -51,7 +51,7 @@ class Extract(AbstractExtractBase):
       paths = sorted(paths, key=lambda x: int(regex.search(x).group(1)))
       vffout = self.EscanExtract(self.directory, comm=self.comm)._vffout
       OUTCAR = self.EscanExtract().OUTCAR
-      
+     
       result = []
       for path in paths:
         filenames = [basename(u) for u in iglob(join(path, '*')) if not isdir(u)]

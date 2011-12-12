@@ -236,6 +236,7 @@ class LocalSearchEvaluator(Evaluator):
     # case without optimization.
     if self.maxiter == 0:
       if verbose:  print "no local search (comm {0}).".format(comm.rank)
+      else:  print "no local search (comm {0}).".format(comm.rank)
       return super(LocalSearchEvaluator, self).__call__(indiv, comm=comm, outdir=outdir, **kwargs)
 
     from random import shuffle

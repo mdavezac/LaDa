@@ -28,11 +28,11 @@ class Extract(KExtract):
 
   @property
   def extract_bg(self, *args, **kwargs):
-    """ Computes dipole element between vbm and cbm. """
+    """ Band-gap extractor object. """
     if hasattr(self, "_extract_bg"): return self._extract_bg
     from . import extract_bg as ebg
     e = ebg(self.directory, self.comm)
-    assert e.success, RuntimeError("Could not extract bandgap from calculations.")
+    assert e.success, RuntimeError("Could not extract bandgap from calculations at {0}.".format(self.directory))
     return e
 
   @property 
@@ -136,6 +136,15 @@ class Extract(KExtract):
       return 1e0/self.derivatives[:,2,:] if self.type == "e" else -1e0/self.derivatives[:,2,::-1]
     else:
       return 1e0/self.derivatives[2,:] if self.type == "e" else -1e0/self.derivatives[2,::-1]
+  
+  def iterfiles(self, **kwargs):
+    """ Iterates over output/input files.
+
+        Parameters are passed on to internal escan calculations.
+    """
+    from itertools import chain
+    return chain( self.extract_bg.iterfiles(**kwargs), 
+                  super(Extract, self).iterfiles(**kwargs) )
 
 class Functional(KEscan):
   """ Effective mass functional. 
@@ -205,6 +214,7 @@ class Functional(KEscan):
     # gotta be after super call, otherwise overwritten.
     self.center = center
     """ k-point for which to compute effective mass. """
+    self.__dict__.pop('kpoints', None)
 
   @property
   def kpoints(self):
@@ -283,6 +293,11 @@ class Functional(KEscan):
     
     # performs calculation.
     kout = super(Functional, this).__call__(structure, outdir, comm=comm, eref=eref, **kwargs)
+    # Saves FUNCCAR.
+    if comm.is_root:
+      from os.path import join
+      from cPickle import dump
+      with open(join(kout.directory, this._FUNCCAR), "w") as file: dump(this, file)
 
     # Effective mass extractor.
     return self.Extract(outdir, comm, unreduce=True, bandgap=bandgap)
