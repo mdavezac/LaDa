@@ -117,7 +117,8 @@ class RelaxCellShape(object):
     convergence = kwargs.get('convergence', getattr(self, 'convergence', self.vasp.ediffg))
     if convergence is None: convergence = 1e1 * self.vasp.ediff * float(len(structure.atoms))
     elif hasattr(convergence, "__call__"): pass
-    elif convergence > 0 and convergence < self.vasp.ediff: 
+    elif convergence > 0: convergence *= float(len(structure.atoms))
+    if convergence > 0 and convergence < self.vasp.ediff: 
       raise ValueError("Energy convergence criteria ediffg({0}) is smaller than ediff({1})."\
                        .format(self.vasp.ediffg, self.vasp.ediff))
     if hasattr(convergence, "__call__"):
