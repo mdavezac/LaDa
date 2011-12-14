@@ -129,6 +129,10 @@ def generate_fere_summary(filters=3, tempname="ladabaseextracteditersystemtempna
                'metadata.Enthalpy': {'$exists': True}}
   elif filters is None: filters = {'metadata.Enthalpy': {'$exists': True}}
 
+  if extracted.find_one(filters) is None: 
+    print "No records found which statisfy the input filters."
+    print filters
+    return
   for species in iter_fere_ternaries(extracted, filters, tempname):
   
     # find thermodynamically stable compounds.
@@ -153,6 +157,11 @@ def generate_fere_summary(filters=3, tempname="ladabaseextracteditersystemtempna
                  'extracted_ids': allids,
                }
 
+    # unsets groundstate status, and sets to tracked.
+    setme = {'$set': {'tracked.fere_summary': document['_id']},
+             '$unset': {'output.stability': 1}}
+    for id in allids: extracted.update({'_id': id}, setme)
+
     # loop over stable compounds only.
     for indices, id in zip(hrep.ininc[:Nsystems], ids):
       if len(indices) == 0: continue
@@ -160,10 +169,12 @@ def generate_fere_summary(filters=3, tempname="ladabaseextracteditersystemtempna
       poly = contour(hrep.generators[indices][:, [0, 1]])
 
       element = extracted.find_one({'_id': id})
+      # update fere document.
       document['mus_diagram']['formulae'].append(element['metadata']['formula'])
       document['mus_diagram']['extracted_ids'].append(element['_id'])
       document['mus_diagram']['polyhedra'].append([u for u in zip(poly[:, 0], poly[:, 1])])
+      # adds groundstate flag.
+      extracted.update({'_id': element['_id']},{'$set': {'output.stability': True}})
+      
 
     fere_summary.save(document)
-    setme = {'$set': {'tracked.fere_summary': document['mus_diagram']['extracted_ids']}}
-    for id in allids: extracted.update({'_id': id}, setme)

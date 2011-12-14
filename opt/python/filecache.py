@@ -62,6 +62,8 @@ class FileCache(object):
     """ Removes file if it exists. """
     from os import remove
     from os.path import exists
-    if exists(path): remove(path)
+    if exists(self.filename):
+      try: remove(self.filename)
+      except: pass
 
   

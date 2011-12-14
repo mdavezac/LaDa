@@ -52,14 +52,14 @@ class GWFunctional(VaspFunctional):
 
     super(GWFunctional, self).__init__(**kwargs)
 
-    self.empties = {'loptics': True}
+    self.empties = {'loptics': True, 'lwave': True}
     """ Parameters for empty bands DFT calculations. """
     if empties is not None: self.empties.update(empties)
     for key in deepcopy(self.empties): 
       if key in kwargs: del self.empties[key]
     self.gwparams = { "algo": "gw", "lmaxfockae": 4, "nomega": 64, "precfock": 'fast',
                       "encutgw": 150, "encutlf": 150, "lrpa": True, "nelm": 1, "loptics": True,
-                      "lpead": True }
+                      "lpead": True, 'lwave': True }
     if gwparams is not None: self.gwparams.update(gwparams)
     for key in deepcopy(self.gwparams): 
       if key in kwargs: del self.gwparams[key]

@@ -2,7 +2,7 @@
 __docformat__ = "restructuredtext en"
 __all__ = ['Extract']
 
-from ..opt.decorators import broadcast_result, make_cached
+from ..opt.decorators import broadcast_result, make_cached, FileCache
 from ..opt import AbstractExtractBase, OutcarSearchMixin
 
 class Extract(AbstractExtractBase, OutcarSearchMixin):
@@ -445,6 +445,108 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
   def vff(self):
     """ Vff functional. """
     return self._vffout.functional
+
+  @FileCache('DIPOLESCAR')
+  def _dipoles(self, attenuate=False):
+    """ Computes dipole matrix element between all states.
+    
+        This routine caches results in a file. The routine above should check
+        that the arguments are the same.
+    """
+    from numpy import zeros
+    result = zeros(shape=(len(self.eigenvalues), len(self.eigenvalues), 3), dtype="complex64")
+    gvectors = self.gvectors
+    for i, wfnA in enumerate(self.gwfns):
+      for j, wfnB in enumerate(self.gwfns):
+        if j <= i: continue
+        result[i, j, :] = wfnA.braket(gvectors, wfnB, attenuate=attenuate)
+    for i in range(len(self.gwfns)):
+      for j in range(len(self.gwfns)):
+        if j < i: result[i, j, :] = result[j, i, :].conjugate()
+    result = result * self.gvectors.units
+    return attenuate, result
+
+
+  def effective_mass_tensor(self, attenuate=False, degeneracy=1e-8):
+    """ Returns list of effective mass tensor (1/m_xy) for each band. """
+    from numpy import zeros, outer, identity
+    from lada.physics import electronic_mass, h_bar
+
+    # gets dipoles.
+    dipoles = zeros((len(self.eigenvalues), len(self.eigenvalues), 3), dtype="complex64") #self.dipoles(attenuate)
+    gvectors = self.gvectors
+    for i, wfnA in enumerate(self.gwfns):
+      for j, wfnB in enumerate(self.gwfns):
+        dipoles[i, j, :] = wfnA.braket(gvectors, wfnB, attenuate=attenuate)
+    dipoles = dipoles * gvectors.units
+
+    # then computes second order terms.
+    result = zeros(shape=(len(self.eigenvalues), 3,3), dtype="float64")
+    for i, eigA in enumerate(self.eigenvalues):
+      for j, eigB in enumerate(self.eigenvalues):
+        if abs(eigA - eigB) < degeneracy: continue
+        vector = (dipoles[j, i, :] - dipoles[i, i, :].real) * h_bar**2/electronic_mass
+        result[i, :, :] += 2 * outer(vector.conjugate(), vector).real / (eigA - eigB)
+    
+    units = (dipoles.units * h_bar**2 / electronic_mass)**2 / self.eigenvalues.units / h_bar**2
+    return identity(3)/electronic_mass + result * units
+
+  def dipoles(self, attenuate=False):
+    """ Computes dipole matrix element between vbm and cbm. """
+    # gets result, possibly from cache file.
+    a2, result = self._dipoles(attenuate)
+
+    uncache = a2 != attenuate
+    if uncache: 
+      from os.path import join
+      from os import remove
+      try: remove(join(self.directory, "DIPOLESCAR"))
+      except: pass
+      return self._dipoles(attenuate)[-1]
+    return result
+
+# def effective_mass_tensor(self, attenuate=False, degeneracy=1e-3):
+#   """ Computes effective masses tensor using to dipole matrix elements. """
+#   from numpy import array, dot, multiply, sum, mean, zeros, identity
+#   from numpy.linalg import inv
+#   from quantities import dimensionless
+#   from ..physics import electronic_mass, h_bar
+
+#   # compute dipoles.
+#   dipoles = self.dipoles(attenuate)
+#   # create equivalent array with units/(e0 - e1)
+#   units = 2e0 * h_bar**2 / electronic_mass 
+#   factor = array([ [ (units/(e0 -e1) if abs(e0 - e1) > 1e-8 else 0) for e1 in self.eigenvalues ]\
+#                    for e0 in self.eigenvalues ]) * units.units / self.eigenvalues.units
+
+#   # In case of degenerate subspaces, we should average of different values. 
+#   # First figure out what the degeneracy classes are.
+#   classes = [[0]]
+#   for i, (first, second) in enumerate(zip(self.eigenvalues[:-1], self.eigenvalues[1:])): 
+#     if abs(first - second) < degeneracy and degeneracy > 0e0: classes[-1].append(i+1)
+#     else: classes.append([i+1])
+#   classes = [r for r in classes if len(r) > 1]
+
+#   # now computes all oscillator strengths.
+#   result = zeros((3,3,len(self.eigenvalues)), dtype="float64")
+#   for i in xrange(3):
+#     x = zeros((3,),dtype="float64"); x[i] = 1e0
+#     px = dot(dipoles, x)
+#     for j in xrange(3):
+#       y = zeros((3,),dtype="float64"); y[j] = 1e0
+#       py = dot(dipoles, y)
+#       dummy = multiply(multiply(px.conjugate(), py).real, factor).simplified 
+#       assert dummy.units == dimensionless
+#       dummy = sum(dummy, axis=1)
+#       for class_ in classes:
+#         dummy[class_] = mean(dummy[class_])
+#         dummy[class_] = mean(dummy[class_])
+#       result[i,j,:] = dummy
+
+#   # and return result.
+#   for i in range(len(self.eigenvalues)):
+#     result[:,:, i] = 1/(result[:, :, i] + identity(3))
+#   return electronic_mass * result
 
   def __getattr__(self, name):
     """ Passes on public attributes to vff extractor, then to escan functional. """

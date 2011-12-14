@@ -141,7 +141,7 @@ class Incar(object):
     self.iniwave     = IniWave(None)
     self.magmom      = Magmom()
     self.npar        = Npar(None)
-    self.lwave       = Boolean("lwave", None)
+    self.lwave       = Boolean("lwave", False)
     self.precfock    = PrecFock(None)
     self.lrpa        = Boolean("lrpa", None)
     self.loptics     = Boolean("loptics", None)
