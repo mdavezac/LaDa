@@ -17,19 +17,21 @@ namespace LaDa
   namespace error
   {
     //! Attribute error thrown explicitely by lada.
-    struct AttributeError: virtual input {};
+    struct AttributeError: virtual input, virtual pyerror {};
     //! Key error thrown explicitely by lada.
-    struct KeyError: virtual input, virtual out_of_range {};
+    struct KeyError: virtual input, virtual out_of_range, virtual pyerror {};
     //! Value error thrown explicitely by lada.
-    struct ValueError: virtual input {};
+    struct ValueError: virtual input, virtual pyerror {};
     //! Index error thrown explicitely by lada.
-    struct IndexError: virtual input {};
+    struct IndexError: virtual input, virtual pyerror {};
     //! Argument error thrown explicitely by lada.
-    struct TypeError: virtual input {};
+    struct TypeError: virtual input, virtual pyerror {};
     //! Not implemented error thrown explicitely by lada.
-    struct NotImplementedError: virtual internal {};
+    struct NotImplementedError: virtual internal, virtual pyerror {};
     //! Internal error thrown explicitely by lada.
-    struct InternalError: virtual internal {};
+    struct InternalError: virtual internal, virtual pyerror {};
+    //! Subclasses python's ImportError.
+    struct ImportError: virtual internal, virtual pyerror {};
   }
 
   namespace python

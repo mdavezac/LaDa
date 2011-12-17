@@ -1,4 +1,4 @@
-from ._docstring import __doc__ 
+# from ._docstring import __doc__ 
 # __all__ = ['FreezeAtom', 'Atom', 'FreezeCell']
 
 # from _crystal import FreezeAtom, AtomStr, AtomVec, AtomSet #FreezeCell, 

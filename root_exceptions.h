@@ -6,6 +6,8 @@
 #include <string>
 #include <stdexcept>
 
+#include <Python.h>
+
 #include <boost/throw_exception.hpp>
 #include <boost/exception/all.hpp>
 
@@ -30,8 +32,16 @@ namespace LaDa
     //! \details Should be used to avoid infinit loops. 
     struct infinite_loop: virtual internal {};
 
+    //! \brief Internal error thrown when encountering a python exception.
+    //! \details 
+    struct pyerror : virtual internal {};
+
     //! Convenience error info type to capture strings.
     typedef boost::error_info<struct string_info,std::string> string;
+    //! \brief Convenience error infor type to capture python objects.
+    //! \details No increffing or decreffing. A python exception should already
+    //!          exist.
+    typedef boost::error_info<struct string_info,PyObject*> pyobject;
   }
 }
 

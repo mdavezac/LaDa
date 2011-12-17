@@ -64,4 +64,8 @@ BOOST_PYTHON_MODULE(error)
                           "Internal error.", scope,
                           bp::make_tuple( PyException<internal>::exception(),
                                           bp::object(bp::borrowed<>(PyExc_RuntimeError))));
+  LADA_REGISTER_PYEXCEPT_WITH_BASE( ImportError, "lada.error.ImportError",
+                          "Import error.", scope,
+                          bp::make_tuple( PyException<internal>::exception(),
+                                          bp::object(bp::borrowed<>(PyExc_ImportError))));
 }

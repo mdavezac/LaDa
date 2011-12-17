@@ -12,7 +12,7 @@
 
 #include <Eigen/Geometry>
 
-#include <python/std_vector.hpp>
+// #include <python/std_vector.hpp>
 #include <python/numpy_types.h>
 
 #include "../eigen.h"

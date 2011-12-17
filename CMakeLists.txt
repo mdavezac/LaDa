@@ -334,4 +334,3 @@ configure_file (
 if(NOT noinstall_headers)
   install(FILES root_exceptions.h DESTINATION include/LaDa)
 endif(NOT noinstall_headers)
-

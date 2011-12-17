@@ -3,161 +3,129 @@
 
 #include "LaDaConfig.h"
 
-#include <boost/shared_ptr.hpp>
-#include <boost/serialization/shared_ptr.hpp>
-#include <boost/serialization/base_object.hpp>
+#include <boost/python/object.hpp>
 
-#ifdef LADA_WITH_LNS
-#  include "load_n_save/xpr/utilities.h"
-#  include "load_n_save/xpr/merge.h"
-#endif
+#include <python/exceptions.h>
 
 #include "atom_base.h"
-#ifdef LADA_DO_PYTHON
-  #include <Python.h>
-
-  namespace LaDa { namespace crystal { 
-    template<class T_TYPE> class Atom;
-  } }
-  template<class T> PyObject* PyAtom_FromAtom(LaDa::crystal::Atom<T> const &_atom);
-#endif
-  
 
 namespace LaDa
 {
   namespace crystal
   {
-    //! \brief Describes an atom where the type is a vector.
-    //! \details An atom consists of a position, a type, and frozen status
-    //!          variable. The position should always be in cartesian units. The
-    //!          type can be anything, from a string with the symbol of the atom,
-    //!          to an double wich codes for the atomic type somehow, to a vector
-    //!          of strings which describe the possible occupations of the atomic
-    //!          position. To this end, the type is a template type \a T_TYPE.
-    //!          The frozen status variable indicate which, if any, coordinate
-    //!          should not be touched deuring optimization. There are a number
-    //!          of possibilities:
-    //!            - frozen::None indicate that no coordinate is
-    //!                                     frozen.
-    //!            - frozen::X indicate that the cartesian x coordinate
-    //!                                  is frozen.
-    //!            - frozen::Y indicate that the cartesian y coordinate
-    //!                                  is frozen.
-    //!            - frozen::Z indicate that the cartesian z coordinate
-    //!                                  is frozen.
-    //!            - frozen::T indicate that the occupation is frozen.
-    //!            - Any combination of the above.
-    //!            .
-    //! \warning The default equality comparison operator compares positions only (not
-    //!          occupation).
-    template<class T_TYPE>
+    //! \brief Holds a reference to the underlying python atom
+    //! \details This wrapper makes it easy to interact with the python object.
+    //!          It should be used throughout any c++ code. Mainly, it makes
+    //!          sure Py_INCREF and Py_DECREF are called accordingly.
     class Atom
     {
-      friend class boost::serialization::access;
-#     ifdef LADA_WITH_LNS
-        //! To load and save to xml-like input.
-        friend class load_n_save::access; 
-#     endif
-#     ifdef LADA_DO_PYTHON
-        friend PyObject* PyAtom_FromAtom<>(Atom const &_atom);
-#     endif
       public: 
-        //! Type of the contained data.
-        typedef AtomData<T_TYPE> element_type;
-        //! Type of the species.
-        typedef T_TYPE t_Type;
-
         //! Constructor
-        template<class T_DERIVED>
-          Atom   ( Eigen::DenseBase<T_DERIVED> const &_pos, t_Type const &_in,
-                   types::t_int _site = -1, types::t_unsigned _freeze = AtomFreezeMixin::frozen::NONE )
-               : atom_(new AtomData<T_TYPE>(_pos, _in, _site, _freeze)) {}
-        //! Constructor
-        Atom() : atom_(new AtomData<T_TYPE>)  {}
-        //! Copy Constructor
-        Atom(Atom const &_c ) : atom_(_c.atom_) {}
-        //! Takes hold of atomic data.
-        Atom(boost::shared_ptr<element_type> const& _c) : atom_(_c) {}
+        Atom() { atom_ = PyAtom_New(); }
+        //! Acquires ownership of an atom.
+        Atom(Atom const &_c ) { LADA_ACQUIRE_PYOBJECT(atom_, _c.atom_, AtomData); }
+        //! Shallow copy Constructor
+        Atom(AtomData *_data ) { LADA_ACQUIRE_PYOBJECT(atom_, _data, AtomData); }
+        //! Destructor.
 
         //! Points to owned data.
-        AtomData<T_TYPE> const* operator->() const { return atom_.get(); }
+        AtomData const* operator->() const { return atom_; }
         //! Points to owned data.
-        AtomData<T_TYPE>* operator->() { return atom_.get(); }
-        //! Points to owned data.
-        AtomData<T_TYPE>* get() const { return atom_.get(); }
+        AtomData* operator->() { return atom_; }
         //! Swaps data of two atoms.
-        void swap(Atom &_in) const { return atom_.swap(_in.atom_); }
+        void swap(Atom &_in) { return std::swap(atom_, _in.atom_); }
+        //! Acquires another atom. 
+        void reset(PyObject *_in) 
+        {
+          if(_in != NULL and not PyAtom_Check(_in))
+          {
+            LADA_PYERROR(TypeError, "Cannot acquire object which is not an Atom or subclass.");
+            BOOST_THROW_EXCEPTION(error::pyerror() << error::pyobject(_in));
+          }
+          PyObject *dummy = (PyObject*)atom_;
+          atom_ = (AtomData*)_in;
+          Py_XINCREF(atom_);
+          Py_XDECREF(dummy);
+        }
+        //! True if the atom is valid.
+        bool is_valid() const { return atom_ != NULL; }
         //! \brief Return a (deep) copy of this atom.
         //! \details Return does not share data with this atom. 
         //!          Use constructor to obtain that behavior.
-        Atom copy() const
-          { return Atom<T_TYPE>(atom_->pos, atom_->type, atom_->site, atom_->freeze); }
-        //! Returns type.
-        T_TYPE const & type() const { return atom_->type; }
-        //! Returns type.
-        T_TYPE & type() { return atom_->type; }
-        //! Returns position.
-        math::rVector3d const & pos() const { return atom_->pos; }
-        //! Returns position.
-        math::rVector3d & pos() { return atom_->pos; }
-        //! Returns atomic site index w.r.t to another structure.
-        types::t_int const & site() const { return atom_->site; }
-        //! Returns atomic site index w.r.t to another structure.
-        types::t_int & site() { return atom_->site; }
-        //! Returns freeze parameter.
-        types::t_unsigned const & freeze() const { return atom_->freeze; }
-        //! Returns freeze parameter.
-        types::t_unsigned & freeze() { return atom_->freeze; }
-#       ifdef LADA_DO_PYTHON
-          //! \brief Returns borrowed reference to python dictionary. 
-          //! \brief The python dictionary may created at this point, despite
-          //!        the const attribute.  Will not throw, but may return NULL
-          //!        on error, with a python exception set.
-          PyObject* pydict() const
+        //!          The user should check that the atom is valid.
+        Atom copy() const { return Atom(PyAtom_Copy(atom_)); } 
+        //! \brief Returns a new reference to a python attribute. 
+        //! \details An python exception is set if attribute does not exist, and the
+        //!          function returns null.
+        inline PyObject* pyattr(std::string const &_name) 
+          { return PyObject_GetAttrString((PyObject*)atom_, _name.c_str()); }
+        //! \brief Returns a new reference to a python attribute. 
+        //! \details An exception is set if attribute does not exist, and the
+        //!          function returns null.
+        inline PyObject* pyattr(PyObject* _name)
+          { return PyObject_GetAttr((PyObject*)atom_, _name); }
+        //! \brief   Sets an attribute.
+        //! \details If cannot convert object using boost, then returns false
+        //!          and sets a python exception.
+        template<class T> 
+          inline bool pyattr(std::string const &_name, T const &_in) 
           {
-            if(atom_->pydict == NULL) atom_->pydict = PyDict_New();
-            return atom_->pydict;
+            try
+            {
+              boost::python::object object(_in);
+              return PyObject_SetAttrString((PyObject*)atom_, _name.c_str(), _in.ptr()) == 0;
+            }
+            catch(std::exception &e) 
+            {
+              LADA_PYERROR(internal, ("Could not set atomic attribute " + _name
+                                      + ": " + e.what()).c_str() );
+              return false;
+            }
           }
-          //! \brief Sets the python attribute dictionary.
-          //! \note The reference to _dict is stolen. Your job to increment the
-          //!       reference count correctly. The current dictionary, however,
-          //!       is decre'f if it exists.
-          void pydict(PyObject *_dict) const
+        //! \brief   Sets an attribute.
+        //! \details If cannot convert object using boost, then returns false
+        //!          and sets a python exception.
+        template<class T> 
+          inline bool pyattr(PyObject* _name, T const &_in) 
           {
-            PyObject *dummy = atom_->pydict;
-            atom_->pydict = _dict;
-            Py_XDECREF(dummy);
+            try
+            {
+              boost::python::object object(_in);
+              return PyObject_SetAttr((PyObject*)atom_, _name, _in.ptr()) == 0;
+            }
+            catch(std::exception &e) 
+            {
+              LADA_PYERROR(internal, (std::string("Could not set atomic attribute: ") + e.what()).c_str() );
+              return false;
+            }
           }
-          //! Returns a refence to a wrapper around this object.
-          PyObject* pyself() const { return PyAtom_FromAtom(*this); }
-#       endif
+        //! \brief Sets/Deletes attribute.
+        inline bool pyattr(std::string const& _name, PyObject *_in)
+          { return PyObject_SetAttrString((PyObject*)atom_, _name.c_str(), _in) == 0; }
+        //! \brief Sets/Deletes attribute.
+        inline bool pyattr(PyObject* _name, PyObject *_in)
+          { return PyObject_SetAttr((PyObject*)atom_, _name, _in) == 0; }
+        //! returns borrowed reference to object.
+        PyObject* borrowed() const { return (PyObject*)atom_; }
+        //! returns new reference to object.
+        PyObject* new_ref() const { Py_XINCREF(atom_); return (PyObject*)atom_; }
     
       private:
-        //! Serializes an atom.
-        template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
-          { _ar & atom_; }
-#       ifdef LADA_WITH_LNS
-          //! To load and save to xml-like input.
-          template<class T_ARCHIVE> bool lns_access(T_ARCHIVE &_ar, const unsigned int _version);
-#       endif
-        //! \brief This object owns it own data. 
-        //! \details Makes python memory management much easier.
-        boost::shared_ptr<element_type> atom_;
+        //! Holds a python reference to the atom.
+        AtomData* atom_;
     };
 
-#   ifdef LADA_WITH_LNS
-      //! To load and save to xml-like input.
-      template<class T_TYPE> template<class T_ARCHIVE>
-        bool Atom<T_TYPE> :: lns_access(T_ARCHIVE &_ar, const unsigned int _version) 
-        {
-          if(_ar.is_loading() or not atom_) atom_.reset(new AtomData<T_TYPE>());
-          return _ar & load_n_save::ext(atom_);
-        }
-#   endif
-
-    template<class T_TYPE> 
-      inline std::ostream& operator<< (std::ostream &stream, Atom<T_TYPE> const &_atom)
-        { return stream << *_atom.get(); }
+    //! \brief Dumps representation of atom.
+    //! \details Will throw c++ exceptions if python calls fail. Does not clear
+    //!          python exceptions.
+    inline std::ostream& operator<< (std::ostream &stream, Atom const &_atom)
+    {
+      PyObject* const repr = PyObject_Repr(_atom.borrowed());
+      if(not repr) BOOST_THROW_EXCEPTION(error::internal());
+      char const * const result = PyString_AS_STRING(repr);
+      if(not result) BOOST_THROW_EXCEPTION(error::internal()); 
+      return stream << result;
+    }
 
   } // namespace Crystal
 } // namespace LaDa

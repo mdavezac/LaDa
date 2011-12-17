@@ -9,7 +9,7 @@ set_target_properties(mathlib PROPERTIES OUTPUT_NAME lada_math)
 install(TARGETS mathlib DESTINATION lib64)
 SET_SOURCE_FILES_PROPERTIES(noopt.cc PROPERTIES COMPILE_FLAGS -O0)
 
-include_directories(${tinyxml_INCLUDE_DIRS})
+include_directories(${tinyxml_INCLUDE_DIRS} ${PYTHON_INCLUDE_DIRS})
 if(MPI_FOUND)
   include_directories(${MPI_INCLUDE_PATH})
   if(MPI_LIBRARY) # crays make things complicated.
