@@ -35,3 +35,8 @@ if(NOT compile_debug_tests)
   endforeach(TYPE ${TYPES})
 
 endif(NOT compile_debug_tests)
+
+  add_library (quantity SHARED "quantity.cc")
+  target_link_libraries(quantity ${PYTHON_LIBRARY} ${Boost_PYTHON_LIBRARY} pyerror)
+  set_target_properties(quantity PROPERTIES PREFIX "_")
+  add_test(quantity python ${CMAKE_CURRENT_SOURCE_DIR}/quantity.py ${CMAKE_CURRENT_BINARY_DIR})

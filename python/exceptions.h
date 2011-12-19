@@ -32,6 +32,8 @@ namespace LaDa
     struct InternalError: virtual internal, virtual pyerror {};
     //! Subclasses python's ImportError.
     struct ImportError: virtual internal, virtual pyerror {};
+    //! Subclasses python's ImportError.
+    struct RuntimeError: virtual internal, virtual pyerror {};
   }
 
   namespace python
@@ -91,28 +93,6 @@ namespace LaDa
           static boost::python::object exception_;
       };
     template<class T> boost::python::object PyException<T>::exception_ = boost::python::object();
-#   ifdef LADA_REGISTER_PYEXCEPT
-#     error LADA_REGISTER_PYEXCEPT already defined.
-#   endif
-#   ifdef LADA_REGISTER_PYEXCEPT_WITH_BASE
-#     error LADA_REGISTER_PYEXCEPT_WITH_BASE already defined.
-#   endif
-#   define LADA_REGISTER_PYEXCEPT(T, n, doc, scope)\
-    { \
-      std::string name = n; \
-      ::LaDa::python::PyException<T> e; \
-      e.initialize(name, doc); \
-      boost::python::register_exception_translator<T>(e);\
-      scope.attr(name.substr(name.rfind('.')+1).c_str()) = ::LaDa::python::PyException<T>::exception();\
-    }
-#   define LADA_REGISTER_PYEXCEPT_WITH_BASE(T, n, doc, scope, base)\
-    { \
-      std::string name = n; \
-      ::LaDa::python::PyException<T> e; \
-      e.initialize(name, doc, base); \
-      boost::python::register_exception_translator<T>(e);\
-      scope.attr(name.substr(name.rfind('.')+1).c_str()) = ::LaDa::python::PyException<T>::exception();\
-    }
 #   ifdef LADA_PYERROR
 #     error LADA_PYERROR already  defined. 
 #   endif

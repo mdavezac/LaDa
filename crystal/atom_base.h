@@ -18,9 +18,9 @@
         Py_XDECREF(dummy);                \
       }
 
-//! Returns true if an object is a string atom or subtype.
+//! Returns true if an object is an atom or subtype.
 #define PyAtom_Check(object) PyObject_TypeCheck(object, LaDa::crystal::atom_type())
-//! Returns true if an object is a string atom.
+//! Returns true if an object is an atom.
 #define PyAtom_CheckExact(object) object->ob_type == LaDa::crystal::atom_type()
 
 namespace LaDa
@@ -29,7 +29,8 @@ namespace LaDa
   {
     extern "C"
     {
-      //! Describes basic atom type. Should be a POD.
+      //! \brief Describes basic atom type. 
+      //! \details This is a python object. 
       struct AtomData
       {
         PyObject_HEAD

@@ -10,6 +10,28 @@
 #include "exceptions.h"
 
 namespace bp = boost::python;
+#   ifdef LADA_REGISTER_PYEXCEPT
+#     error LADA_REGISTER_PYEXCEPT already defined.
+#   endif
+#   ifdef LADA_REGISTER_PYEXCEPT_WITH_BASE
+#     error LADA_REGISTER_PYEXCEPT_WITH_BASE already defined.
+#   endif
+#   define LADA_REGISTER_PYEXCEPT(T, n, doc, scope)\
+    { \
+      std::string name = n; \
+      ::LaDa::python::PyException<T> e; \
+      e.initialize(name, doc); \
+      boost::python::register_exception_translator<T>(e);\
+      scope.attr(name.substr(name.rfind('.')+1).c_str()) = ::LaDa::python::PyException<T>::exception();\
+    }
+#   define LADA_REGISTER_PYEXCEPT_WITH_BASE(T, n, doc, scope, base)\
+    { \
+      std::string name = n; \
+      ::LaDa::python::PyException<T> e; \
+      e.initialize(name, doc, base); \
+      boost::python::register_exception_translator<T>(e);\
+      scope.attr(name.substr(name.rfind('.')+1).c_str()) = ::LaDa::python::PyException<T>::exception();\
+    }
 
 BOOST_PYTHON_MODULE(error)
 {
@@ -68,4 +90,11 @@ BOOST_PYTHON_MODULE(error)
                           "Import error.", scope,
                           bp::make_tuple( PyException<internal>::exception(),
                                           bp::object(bp::borrowed<>(PyExc_ImportError))));
+  LADA_REGISTER_PYEXCEPT_WITH_BASE( ImportError, "lada.error.RuntimeError",
+                          "Runtime error.", scope,
+                          bp::make_tuple( PyException<internal>::exception(),
+                                          bp::object(bp::borrowed<>(PyExc_RuntimeError))));
 }
+
+#undef LADA_REGISTER_PYECXCEPT
+#undef LADA_REGISTER_PYECXCEPT_WITH_BASE
