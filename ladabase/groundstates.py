@@ -77,7 +77,7 @@ def iter_lowest_energy(species, collection="extracted", filters=None):
 def half_space_representation(species, collection="extracted", filters=None):
   """ Half-space representation for a given system. 
   
-      Returns a 3-tuple consisting of the stoechiometry matrix A,
+      Returns a 3-tuple consisting of the stoichiometry matrix A,
       the corresponding formation enthalpy vector E, and a identification
       vector listing the corresponding systems in the database.
       The inequalities are set up such that A |Delta||mu| <= E, with
@@ -113,7 +113,7 @@ def contour(vertices):
   return array([vertices[u[0]] for u in thetas])
  
 def generate_fere_summary(filters=3, tempname="ladabaseextracteditersystemtempname"):
-  """ Creates FERE ground-states, as well as single-stoechiometry items, in summary database. """
+  """ Creates FERE ground-states, as well as single-stoichiometry items, in summary database. """
   from datetime import datetime, timedelta
   from numpy import concatenate, identity, zeros, array
   from polyhedron import Hrep

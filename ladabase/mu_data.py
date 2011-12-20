@@ -83,9 +83,9 @@ def enthalpy(extract):
       if abs(params["U"]-U) > 1e-3: return None
   units = extract.energy.units
   result = -sum([ n * elemental_mus[s].rescale(units).magnitude.tolist() \
-                  for n, s in zip(extract.stoechiometry, extract.species) ])
+                  for n, s in zip(extract.stoichiometry, extract.species) ])
   result += extract.energy.magnitude.tolist()
-  return result / float(sum(extract.stoechiometry))
+  return result / float(sum(extract.stoichiometry))
 
 def delta_mu_O(p,t):
   """ Evolution in pressure and temperature of mu oxygen.

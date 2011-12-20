@@ -137,19 +137,19 @@ def sort_species(species):
     specie = pt.__dict__[args]
     return (specie.column + specie.row * 0.01) 
   return sorted(species, key=sortme)
-def create_formula(species, stoechiometry):
+def create_formula(species, stoichiometry):
   """ Creates a minimum formula. """
   from numpy import array
-  stoechiometry = array(stoechiometry)
+  stoichiometry = array(stoichiometry)
   reduce = True
   while reduce:
     reduce = False
-    for i in xrange(min(stoechiometry), 1, -1):
-      if all(stoechiometry % i == 0): 
-        stoechiometry /= i
+    for i in xrange(min(stoichiometry), 1, -1):
+      if all(stoichiometry % i == 0): 
+        stoichiometry /= i
         reduce = True
   result = ""
-  for s, n in zip(species, stoechiometry):
+  for s, n in zip(species, stoichiometry):
     result += s if n == 1 else "{0}<sub>{1}</sub>".format(s, n)
   return result
 
@@ -173,7 +173,7 @@ def generate_extracted_item(collection, item, encoder=None, encoded=None):
   encoded['input']['corrections'] = extract.HubbardU_NLEP
   # create dictionary with output.
   encoded['output'] = encoder(extract, ['total_energy', 'vbm', 'cbm', 'pressure'])['output']
-  encoded['output']['total_energy'] /= float(sum(extract.stoechiometry))
+  encoded['output']['total_energy'] /= float(sum(extract.stoichiometry))
   encoded['output']['gap'] = encoded['output']['cbm'] - encoded['output']['vbm']
   try: value = extract.density.magnitude.tolist()
   except: pass
@@ -187,10 +187,10 @@ def generate_extracted_item(collection, item, encoder=None, encoded=None):
   encoded['input']['structure'] = castep(extract.structure)
 
   encoded['input']['species'] = {}
-  for s, n in zip(extract.species, extract.stoechiometry): encoded['input']['species'][s] = n 
+  for s, n in zip(extract.species, extract.stoichiometry): encoded['input']['species'][s] = n 
   species = sort_species(extract.species)
-  stoechiometry = array([encoded['input']['species'][s] for s in species])
-  encoded['metadata']['formula'] = create_formula(species, stoechiometry)
+  stoichiometry = array([encoded['input']['species'][s] for s in species])
+  encoded['metadata']['formula'] = create_formula(species, stoichiometry)
   encoded['metadata']['species'] = species
 
   encoded['metadata']['operator'] = extract.uploader

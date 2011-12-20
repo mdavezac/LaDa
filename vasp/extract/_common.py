@@ -147,11 +147,11 @@ class Extract(object):
     structure.energy = 0e0
     structure.cell = cell
     structure.scale = 1e0
-    assert len(self.species) == len(self.stoechiometry),\
+    assert len(self.species) == len(self.stoichiometry),\
            RuntimeError("Number of species and of ions per specie incoherent.")
-    assert len(atoms) == sum(self.stoechiometry),\
+    assert len(atoms) == sum(self.stoichiometry),\
            RuntimeError('Number of atoms per specie does not sum to number of atoms.')
-    for specie, n in zip(self.species,self.stoechiometry):
+    for specie, n in zip(self.species,self.stoichiometry):
       for i in range(n): structure.add_atom = atoms.pop(0), specie
 
     if (self.isif == 0 or self.nsw == 0 or self.ibrion == -1) and self.is_dft:
@@ -223,9 +223,9 @@ class Extract(object):
     structure.energy = float(self.total_energy.rescale(eV)) if self.is_dft else 0e0
     structure.cell = array(cell, dtype="float64")
     structure.scale = 1e0
-    assert len(self.species) == len(self.stoechiometry),\
+    assert len(self.species) == len(self.stoichiometry),\
            RuntimeError("Number of species and of ions per specie incoherent.")
-    for specie, n in zip(self.species,self.stoechiometry):
+    for specie, n in zip(self.species,self.stoichiometry):
       for i in range(n):
         structure.add_atom = array(atoms.pop(0), dtype="float64"), specie
 
@@ -331,7 +331,7 @@ class Extract(object):
     from quantities import atomic_mass_unit as amu
     from ... import periodic_table as pt
     result = 0e0 * amu;
-    for atom, n in zip(self.species, self.stoechiometry): 
+    for atom, n in zip(self.species, self.stoichiometry): 
       if atom not in pt.__dict__: return None;
       result += pt.__dict__[atom].atomic_weight * float(n) * amu 
     return (result / self.volume).rescale(g/cm**3)
@@ -353,14 +353,15 @@ class Extract(object):
   @json_section("input")
   @make_cached
   @broadcast_result(attr=True, which=0)
-  def stoechiometry(self):
+  def stoichiometry(self):
     """ Stoechiometry of the compound. """
     result = self._find_first_OUTCAR(r"""\s*ions\s+per\s+type\s*=.*$""")
     if result is None: return None
     return [int(u) for u in result.group(0).split()[4:]]
+  @property
   def ions_per_specie(self): 
-    """ Alias for stoechiometry. """
-    return self.stoechiometry
+    """ Alias for stoichiometry. """
+    return self.stoichiometry
 
   @property
   @json_section("input")
