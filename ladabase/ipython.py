@@ -22,7 +22,8 @@ def push(self, cmdl):
   """ Pushes directory with OUTCARs or single OUTCAR to the database. """
   try: from .. import ladabase_root_push
   except: return 
-  try: from .. import username
+  try: from .. import username as pymongo_username
+  
   except:
     print "Could not find username. Please edit the file '~/.lada', and add:"
     print ">>> username = \"Jane Doe\""
@@ -34,9 +35,9 @@ def push(self, cmdl):
   import argparse
   import tarfile 
   from datetime import datetime
-  from getpass import getusername
   from os import getcwd
   from os.path import relpath, join
+  from getpass import getusername
   from IPython.ipapi import TryNext
   from ..vasp import Extract
   from .misc import get_username, get_ladabase
@@ -98,7 +99,7 @@ def push(self, cmdl):
     file.write(stripped + "\n")
     for path, extract in file:
       file.write("# file: {0}\n".format(relpath(path, directory)))
-    file.write("# operator: {0}\n".format(username))
+    file.write("# operator: {0}\n".format(pymongo_username))
 
   for file, extract in files:
     tarme.add(file, arcname=relpath(file, directory))

@@ -44,7 +44,6 @@
 """
 __docformat__ = "restructuredtext en"
 __all__ = [@which_packages@]
-from os import environ
 
 version_info = (@LaDa_VERSION_MAJOR@, @LaDa_VERSION_MINOR@)
 """ Tuple containing version info. """
@@ -55,151 +54,47 @@ lada_with_mpi = @do_use_mpi@
 
     If False, should try and avoid loading MPI related stuff.
 """
-# right now just check for redmesa or redrock. 
 
-genpot_library = "libgenpot.so"
-""" Default genpot library. 
+# reads stuff from global configuration files.
+global_dict = {"ladamodules": __all__}
+if "jobs" in __all__ and "ipython" in __all__: 
+  from lada.jobs.templates import default_pbs, default_slurm
+  from opt import cpus_per_node
+  globals["default_pbs"]   = default_pbs
+  globals["default_slurm"] = default_slurm
+  globals["cpus_per_node"] = cpus_per_node
+  del default_pbs
+  del default_slurm
+  del cpus_per_node
 
-    The value for the default can be overriden by ~/.lada in the code below.
-"""
-
-escan_library = "libpescan.so"
-""" Default escan library. 
-
-    The value for the default can be overriden by ~/.lada in the code below.
-"""
-launch_escan_as_library = True
-""" Wether to launch escan/genpot as library or program. """
-escan_program = "escanCNL"
-""" Path of escan binary (only needed if launching as external program). """
-genpot_program = "getVLarg"
-""" Path of genpot binary (only needed if launching as external program). """
-
-vasp_library = "libvasp.so"
-""" Default vasp library. 
-
-    The value for the default can be overriden by ~/.lada in the code below.
-"""
-launch_vasp_as_library = True
-""" Wether to launch vasp as library or program. """
-vasp_program = "vasp"
-""" Path of vasp binary executable (if launching as external program). """
-
-represent_structure_with_POSCAR = False
-""" If true, then structures are represented using POSCAR format. 
-
-    If False, then uses normal python representation.
-"""
-
-readonly_jobparams = False
-""" Whether items can be modified in parallel using attribute syntax. """
-naked_end = True
-""" Whether last item is returned as is or wrapped in ForwardingDict. """
-only_existing_jobparams = True
-""" Whether attributes can be added or only modified. """
-unix_re  = True
-""" If True, then all regex matching is done using unix-command-line patterns. """
-
-mpirun_exe = "mpirun -n {nprocs} {program}"
-""" Command-line to launch external mpi programs. """
-
-
-# The variables defined below are only needed for the ipython interface.
-if @with_ipython@:
-  from os import environ
-  from .jobs.templates import default_pbs, default_slurm
-
-  default_walltime = "06:00:00"
-  """ Default walltime when launching jobs. """
-
-  lada_with_slurm = 'SNLCLUSTER' in environ 
-  """ If True use slurm as ressource manager, else use openpbs. """
-  queues = []
-  """ List of slurm or pbs queues allowed for use. 
-
-      This is used by ipython's %launch magic function. 
-      It is not required for slurm systems. 
-      If empty, then %launch will not have a queue option.
-  """
-  accounts = []
-  """ List of slurm or pbs accounts allowed for use. 
-
-      This is used by ipython's %launch magic function. 
-      It is not required for slurm systems. 
-      If empty, then %launch will not have a queue option.
-  """
-
-  template_pbs = default_pbs
-  """ Template pbs script to use. Depends on machine. """
-
-  debug_queue = "queue", "debug"
-  """ How to select the debug queue. 
-
-      First part of the tuple is the keyword argument to modify when calling
-      the pbs job, and the second is its value.
-  """
-  qsub_exe = "qsub"
-  """ Qsub executable. """
-  resource_string = "nodes={1}:ppn={2}" 
-  """ Format string to specify computational resources. 
-      
-      The first argument is total number of processes, the second the number of
-      nodes itself, the third the number of processes per node.
-  """
-
-  if environ.get("SNLCLUSTER", "none") in ["redrock", "redmesa"]: 
-    template_pbs = default_slurm
-    debug_queue = "queue", "inter"
-    accounts = ["BES000"]
-    qsub_exe = "sbatch"
-    resource_string = "-N {nnodes}"
-    mpirun_exe = "mpirun -np {nprocs} numa_wrapper -ppn={ppernode} {program}"
-    cpus_per_node = 8
-    """ Number of cpus per node. """
-
-  elif environ.get("NERSC_HOST", "none") == "hopper":
-    queues = "debug", "regular", "low", "premimum"
-    resource_string = "mppwidth={nprocs}"
-    mpirun_exe = "aprun -n {nprocs} {program}"
-    """ Command-line to launch external mpi programs. """
-    cpus_per_node = 24
-    """ Number of cpus per node. """
-
-  elif environ.get("NERSC_HOST", "none") == "carver":
-    queues = "debug", "regular", "low"
-
-# the variables below are only needed by ladabase.
-if @with_ladabase@:
-  pymongo_host       = 'localhost'
-  """ Host of the mongo database. """
-  pymongo_port       = 27017
-  """ Port to access the mongo database. """
-  pymongo_username   = "mdadcast"
-  """ Username to access mongo database. """
-  vasp_database_name = 'cid'
-  """ Name of the database. """
-  OUTCARS_prefix     = 'OUTCARs'
-  """ Name of the collection of OUTCAR files. """
-
-
-# reads stuff from global configuration file located in directory of package.
+# first configuration files installed with lada.
 from os.path import exists, expanduser, expandvars, dirname, join
-if exists(join(dirname(__file__), 'config')): 
-  from opt import read_input
-  with open(join(dirname(__file__), 'config'), 'r') as file: string = file.read()
-  global_dict, local_dict = {}, {}
-  exec(string, global_dict, local_dict)
+from glob import iglob
+from os import environ
+for filename in iglob(join(join(dirname(__file__), "config"), "*.py")):
+  local_dict = {}
+  execfile(filename, global_dict, local_dict)
   locals().update(local_dict)
 
-# reads stuff from user configuration file.
+# then configuration files installed in a global config directory.
+if "LADA_CONFIG_DIR" in environ: 
+  for filename in iglob(join(environ["LADA_CONFIG_DIR"], "*.py")):
+    local_dict = {}
+    execfile(filename, global_dict, local_dict)
+    locals().update(local_dict)
+
+# then user configuration file.
 if exists(expandvars(expanduser('~/.lada'))):
-  from opt import read_input
-  with open(expandvars(expanduser('~/.lada')), 'r') as file: string = file.read()
-  global_dict, local_dict = {}, {}
-  exec(string, global_dict, local_dict)
+  local_dict = {}
+  execfile(expandvars(expanduser('~/.lada'), global_dict, local_dict)
   locals().update(local_dict)
 
-if "cpus_per_node" not in locals(): 
-  from opt import cpus_per_node as ppn
-  cpus_per_node = ppn()
-  """ Number of processes per node. """
+# clean up namespace
+del global_dict
+del exists
+del expanduser
+del expandvars
+del dirname
+del join
+del iglob
+del environ
