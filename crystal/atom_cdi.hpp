@@ -94,10 +94,6 @@ namespace LaDa
         return -1;
       }
  
-      // loop over dictionary and insert keywords. 
-     //Py_CLEAR(_self->pydict);
-     //_self->pydict = PyDict_New();
-     //if(_self->pydict == NULL) return -1;
       PyObject *key, *value;
       Py_ssize_t pos = 0;
       while (PyDict_Next(_kwargs, &pos, &key, &value)) 

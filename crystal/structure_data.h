@@ -6,6 +6,7 @@
 #include <vector>
 #include <ostream>
 
+#include <python/quantity.h>
 #include "atom.h"
 
 //! Returns true if an object is a struture or subtype.
@@ -33,8 +34,8 @@ namespace LaDa
         PyObject *weakreflist;
         //! Holds python attribute dictionary.
         PyObject *pydict;
-        //! The scale in which cartesian units are given.
-        PyObject* scale;
+        //! The scale in which cartesian units are given. Units of ansgtroms.
+        types::t_real scale;
         //! The unit-cell of the structure in cartesian coordinate.
         math::rMatrix3d cell;
         //! Vector of atom wrappers.

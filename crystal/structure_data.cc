@@ -33,7 +33,7 @@ namespace LaDa
       StructureData* result = (StructureData*) structure_type()->tp_alloc(structure_type(), 0);
       if(not result) return NULL;
       result->weakreflist = NULL;
-      result->scale = get_unit_angstrom();
+      result->scale = 1e0;
       new(&result->cell) LaDa::math::rMatrix3d(LaDa::math::rMatrix3d::Zero());
       result->pydict = PyDict_New();
       if(result->pydict == NULL) { Py_DECREF(result); return NULL; }
@@ -45,7 +45,7 @@ namespace LaDa
       StructureData* result = (StructureData*)_type->tp_alloc(_type, 0);
       if(not result) return NULL;
       result->weakreflist = NULL;
-      result->scale = get_unit_angstrom();
+      result->scale = 1e0;
       new(&result->cell) LaDa::math::rMatrix3d(LaDa::math::rMatrix3d::Zero());
       result->pydict = PyDict_New();
       if(result->pydict == NULL) { Py_DECREF(result); return NULL; }
@@ -60,16 +60,11 @@ namespace LaDa
       result->weakreflist = NULL;
       new(&result->pos) LaDa::math::rVector3d(_self->pos);
       result->pydict = NULL;
-      result->scale = NULL;
+      result->scale = _self->scale;
       PyObject* copymod = PyImport_ImportModule("copy");
       if(copymod == NULL) return NULL;
       PyObject *deepcopystr = PyString_FromString("deepcopy");
       if(not deepcopystr) { Py_DECREF(copymod); return NULL; }
-      if(_memo == NULL)
-        result->scale = PyObject_CallMethodObjArgs(copymod, deepcopystr, _self->scale, NULL);
-      else 
-        result->scale = PyObject_CallMethodObjArgs(copymod, deepcopystr, _self->scale, _memo, NULL);
-      if(result->scale == NULL) { Py_DECREF(result);  result == NULL; }
       else if(_self->pydict != NULL)
       {
         if(_memo == NULL)
@@ -105,8 +100,9 @@ namespace LaDa
                              "reference an object (say a list or numpy array). "
                              "``structure.cell = some_list`` will copy the values of ``some_list``. "),
           LADA_DECLARE(scale, "Scale factor of this structure.\n"
-                             "Should be None or a (factor of a) unit given by "
-                             "the python package *quantities*."),
+                              "Should be a number or unit given by "
+                              "the python package *quantities*. In that case, "
+                              "it is converted to angstroms. "),
           {NULL}  /* Sentinel */
       };
 #     undef LADA_DECLARE
