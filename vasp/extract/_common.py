@@ -360,7 +360,7 @@ class Extract(object):
     return [int(u) for u in result.group(0).split()[4:]]
   def ions_per_specie(self): 
     """ Alias for stoechiometry. """
-    return self.stoechiometry()
+    return self.stoechiometry
 
   @property
   @json_section("input")

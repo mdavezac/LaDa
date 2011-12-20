@@ -50,7 +50,7 @@ namespace LaDa
       }
     template<class T> 
       void init( T &_self, typename Crystal::TStructure<std::string> const &_str,
-                 bool _doinit, bool _verbose = false )
+                 bool _doinit, bool _verbose )
       { 
         _self.VffBase().structure = _str;
         try { _self.init(_doinit, _verbose); }
@@ -86,7 +86,7 @@ namespace LaDa
                            LADA_MPI_CODE(boost::mpi::communicator const &_comm LADA_COMMA)
                            bool _doinit, bool relax )
       { 
-        init(_self, _str, _doinit);
+        init(_self, _str, _doinit, false);
         return __call__<T>(_self, LADA_MPI_CODE(_comm LADA_COMMA) relax);
       }
 
@@ -263,8 +263,8 @@ namespace LaDa
           "``structure.energy``.\n"
         )
        .def("check_input", &check_input<T>)
-       .def( "init",  &init<T>, (bp::arg("structure"), bp::arg("dotree") = true,
-                                 bp::arg("verbose")=false), 
+       .def( "init",  &init<T>,
+               (bp::arg("structure"), bp::arg("dotree") = true, bp::arg("verbose")=false), 
              "Initializes the functional for the current structure." ) 
        .def( "print_escan_input",  &print_escan_input<T>,
              (bp::arg("file"), bp::arg("structure") = bp::object()), 
