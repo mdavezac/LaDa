@@ -85,7 +85,7 @@ def _get_local_push_parser():
                      description='Push single OUTCAR or directory of OUTCARS to ladabase. ')
   parser.add_argument( 'directories', metavar='DIR/OUTCAR', type=str, nargs='*',
                        help='Job dictionary, OUTCAR file, or root directory.' )
-  parser.add_argument( '--list', action="store_true", help='List files which will be pushed.' )
+  parser.add_argument( '--list', action="store_true", help='List files which will be pushed and exits.' )
   parser.add_argument( '--norecurrence', action="store_true", help='Do not walk into subdirectory.')
   parser.add_argument( '--pattern', type=str, nargs=1, default=None,
                        help='When searching within directories, examine only files '\
@@ -126,7 +126,8 @@ def local_push(self, cmdl):
   commands.extend(cmdl.split())
   syscall(commands, stdout=open(filename + ".log", 'w'), stderr=STDOUT)
 
-  print "Working in background. Please use --list to see which files are being pushed."
+  print "Working in background. "
+  print "See", (filename + ".log"), "for files being pushed, or you use --list option."
   print "You can log out at this point."
 
 def get_file_list(self, args):

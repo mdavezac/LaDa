@@ -189,9 +189,15 @@ def ipy_init():
 
     if 'ladabase' in lada.__all__: 
       def push(self, cmdl):
+        """ Magic function to push to database. 
+
+            This detour makes sure ladabase is only loaded on call, 
+            thus speeding up load time when starting ipython.
+        """
         from lada.ladabase import ipython
         return getattr(ipython, lada.which_database_push)(self, cmdl)
       ip.expose_magic("push", push)
+      # Don't try and start the pymongo interface unless explicitly requested.
       if lada.ladabase_doconnect: 
         from ladabase import Manager
         try: manager = Manager()
@@ -205,3 +211,6 @@ def ipy_init():
         if key == "jobs": ip.user_ns['ladajobs'] = mods.jobs
         elif key == "ladabase": ip.user_ns['ladabase_module'] = mods.ladabase
         else: ip.user_ns[key] = getattr(mods, key)
+    else:
+      print "Lada modules were not loaded into user namespace."
+      print "Lada interface (explore...) is available."
