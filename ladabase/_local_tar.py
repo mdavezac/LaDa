@@ -3,8 +3,9 @@
     As a stand-alone script so we can call from Popen with nohup.
 """
 from sys import stderr, exit
-from os import fork, getcwd
-from os.path import relpath
+from os import fork, getcwd, chmod, remove
+from stat import S_IRGRP, S_IWGRP, S_IRUSR, S_IWUSR
+from os.path import relpath, dirname
 from shutil import move
 from lada.ladabase.ipython import _walk_files, _get_local_push_parser
 import tarfile 
@@ -27,10 +28,18 @@ except OSError as error:
 
 # now gets list of files.
 tarme = tarfile.open(args.tarfile + "_partial" + ".tgz", 'w:gz')
-cwd = getcwd()
-for file in _walk_files(args):
-  print file
-  tarme.add(file, arcname=relpath(file, cwd))
-tarme.close()
+try:
+  for rootdir, file in _walk_files(args):
+    print file
+    tarme.add(file, arcname=relpath(file, dirname(rootdir)))
+  tarme.close()
+except: 
+  remove(args.tarfile + "_partial" + ".tgz")
+  remove(args.tarfile + "_partial" + ".comment")
+  print >>stderr, "Error while searching and taring output files."
+  exit(1)
 
 move(args.tarfile + "_partial" + ".tgz", args.tarfile + ".tgz")
+chmod(args.tarfile + ".tgz", S_IRGRP|S_IWGRP|S_IRUSR|S_IWUSR)
+chmod(args.tarfile + ".log", S_IRGRP|S_IWGRP|S_IRUSR|S_IWUSR)
+chmod(args.tarfile + ".comment", S_IRGRP|S_IWGRP|S_IRUSR|S_IWUSR)

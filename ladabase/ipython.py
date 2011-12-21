@@ -3,7 +3,7 @@
 def _getcomment(self, filename = None):
   """ Gets comment from user. """
   from sys import stderr
-  from os import fdopen
+  from os import fdopen, remove
   from socket import gethostname
   from IPython.ipapi import TryNext
   try: from .. import username
@@ -29,12 +29,12 @@ def _getcomment(self, filename = None):
     print "Could not open editor."
     return
   with open(filename, "r") as file: comment = file.read()
-  stripped = re.sub('#.*\n', '', comment)
-  if len(stripped.replace('\n','').replace(' ', '')) == 0: 
+  stripped = re.sub('#.*(?:\n|$)', '', comment, re.M)
+  stripped = stripped.replace('\n','').replace(' ', '')
+  if len(stripped) == 0: 
+    remove(filename)
     print "Empty comment. Aborting."
     return
-  with open(filename, 'a') as file:
-    file.write("\n# operator: {0}\n# hostname: {1}".format(username, gethostname()))
   return filename
 
 def _walk_files(args):
@@ -44,6 +44,7 @@ def _walk_files(args):
   from glob import iglob
   from re import compile, search
   from ..vasp import Extract
+  from ..opt import RelativeDirectory
 
   excludes = [compile('relax_cellshape'), compile('relax_ions')]
   if args.exclude is not None:
@@ -51,13 +52,14 @@ def _walk_files(args):
 
   for input in args.directories:
     if any(search(i, input) is not None for i in excludes): continue
+    input = RelativeDirectory(input).path
     for path in iglob(input):
       if any(search(i, path) is not None for i in excludes): continue
       if isfile(path): 
         extract = Extract(path)
         if not extract.success: continue
         if extract.relaxation != "static": continue
-        yield path
+        yield input, path
       elif isdir(path): 
         for root, dirs, files in walk(path):
           if args.norecurrence: dirs[:] = []
@@ -68,7 +70,7 @@ def _walk_files(args):
               extract = Extract(file)
               if not extract.success: continue
               if extract.relaxation != "static": continue
-              yield file
+              yield input, file
           else:
             for file in files:
               file = join(root, file)
@@ -76,7 +78,7 @@ def _walk_files(args):
               extract = Extract(file)
               if not extract.success: continue
               if extract.relaxation != "static": continue
-              yield file
+              yield input, file
 
 def _get_local_push_parser():
   """ Returns parser for local push. """

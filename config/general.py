@@ -7,5 +7,5 @@ only_existing_jobparams = True
 """ Whether attributes can be added or only modified. """
 unix_re  = True
 """ If True, then all regex matching is done using unix-command-line patterns. """
-auto_import_modules = ['crystal', 'escan', 'vasp']
+auto_import_modules = []
 """ Modules to import when starting ipython. """

@@ -206,7 +206,7 @@ def ipy_init():
 
     if len(lada.auto_import_modules) > 0: 
       mods = __import__('lada', globals(), locals(), lada.auto_import_modules)
-      for key in lada.auto_import_modules:
+      for key in set(lada.auto_import_modules) & set(lada.__all__):
         print "Importing", key, "from lada into namespace."
         if key == "jobs": ip.user_ns['ladajobs'] = mods.jobs
         elif key == "ladabase": ip.user_ns['ladabase_module'] = mods.ladabase

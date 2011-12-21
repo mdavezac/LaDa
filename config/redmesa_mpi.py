@@ -1,5 +1,8 @@
+if "ladabase" in globals()["ladamodules"]:
+  local_push_dir = "/projects/nrel/cid/database_tmp"
+  """ Local directory where database stuff is pushed. """
 if "jobs" in globals()["ladamodules"]:
-  template_pbs = globals["default_slurm"]
+  template_pbs = globals()["default_slurm"]
   """ Template pbs script to use. Depends on machine. """
   debug_queue = "queue", "inter"
   """ How to select the debug queue. 
