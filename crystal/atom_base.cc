@@ -11,6 +11,7 @@
 #include <math/python/python.hpp>
 #include <python/exceptions.h>
 #include <python/numpy_types.h>
+#include <python/object.h>
 
 #include "atom_base.h"
 
@@ -49,6 +50,14 @@ namespace LaDa
       Py_INCREF(Py_None);
       result->pydict = PyDict_New();
       if(result->pydict == NULL) { Py_DECREF(result); return NULL; }
+      return result;
+    }
+    //! Creates a new atom with a given type, also calling initialization.
+    AtomData* PyAtom_NewFromArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs)
+    {
+      AtomData* result = PyAtom_NewWithArgs(_type, _args, _kwargs);
+      if(result == NULL) return NULL;
+      if(_type->tp_init((PyObject*)result, _args, _kwargs) < 0) {Py_DECREF(result); return NULL; }
       return result;
     }
 

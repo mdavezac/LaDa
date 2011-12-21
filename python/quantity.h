@@ -21,6 +21,8 @@ namespace LaDa
         //! Private, can't happen cause it would have to throw. 
         Quantity(Object const &) {} 
       public:
+        //! Acquires a python reference.
+        Quantity(PyObject* _in = NULL) : Object(_in) {}
         //! \brief Sets quantity from given scale and units.
         //! \details Does not throw, but reference may be invalid after call.
         Quantity(types::t_real _in, std::string const &_units) : Object()

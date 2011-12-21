@@ -9,6 +9,7 @@
 #include <python/numpy_types.h>
 
 #include "atom.h"
+#include "structure_data.h"
 
 namespace lp = LaDa::python;
 
@@ -27,11 +28,14 @@ PyMODINIT_FUNC initcppwrappers(void)
   import_array(); // needed for NumPy 
 
   if (PyType_Ready(LaDa::crystal::atom_type()) < 0) return;
+  if (PyType_Ready(LaDa::crystal::structure_type()) < 0) return;
 
   Py_INCREF(LaDa::crystal::atom_type());
+  Py_INCREF(LaDa::crystal::structure_type());
 
   char const doc[] =  "Wrapper around C++ atom/structure class and affiliates.";
   PyObject* module = Py_InitModule3("cppwrappers", crystal_methods, doc);
 
   PyModule_AddObject(module, "Atom", (PyObject *)LaDa::crystal::atom_type());
+  PyModule_AddObject(module, "Structure", (PyObject *)LaDa::crystal::structure_type());
 }

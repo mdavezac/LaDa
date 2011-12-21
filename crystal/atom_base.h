@@ -48,6 +48,8 @@ namespace LaDa
       AtomData* PyAtom_New();
       //! Creates a new atom with a given type.
       AtomData* PyAtom_NewWithArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs);
+      //! Creates a new atom with a given type, also calling initialization.
+      AtomData* PyAtom_NewFromArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs);
       //! Creates a deepcopy of atom.
       AtomData *PyAtom_Copy(AtomData* _self, PyObject *_memo = NULL);
       // Returns pointer to atom type.

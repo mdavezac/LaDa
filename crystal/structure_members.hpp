@@ -34,19 +34,19 @@ namespace LaDa
       name = name.substr(name.rfind('.')+1);
       std::ostringstream result;
       // Create structure variable first.
-      result << name << "( "
+      result << "structure = " << name << "( "
              <<         _self->cell(0, 0)
              << ", " << _self->cell(0, 1) 
              << ", " << _self->cell(0, 2) 
-             << ",\\\n" << std::string(name.size()+2, ' ')
+             << ",\\\n" << std::string(name.size()+14, ' ')
              <<         _self->cell(1, 0)
              << ", " << _self->cell(1, 1) 
              << ", " << _self->cell(1, 2) 
-             << ",\\\n" << std::string(name.size()+2, ' ')
+             << ",\\\n" << std::string(name.size()+14, ' ')
              <<         _self->cell(2, 0)
              << ", " << _self->cell(2, 1) 
              << ", " << _self->cell(2, 2)
-             << ",\\\n" << std::string(name.size()+2, ' ')
+             << ",\\\n" << std::string(name.size()+14, ' ')
              << "scale=" << _self->scale;
           
       // Including python dynamic attributes.
@@ -68,18 +68,30 @@ namespace LaDa
           }
         }
       }
-      result << ")";
+      result << " )";
       // Then add atoms.
       if(_self->atoms.size() > 0)
       {
         std::vector<Atom>::const_iterator i_first = _self->atoms.begin();
         std::vector<Atom>::const_iterator const i_end = _self->atoms.end();
-        result << "\\\n" << std::string(name.size(), ' ') << ".add_atom";
-        lada_atom_repr_impl(&(*i_first), result);
+        result << "\n" << "structure.add_atom";
+        {
+          python::Object const atomstr = PyObject_Repr(*i_first);
+          if(not atomstr) return NULL;
+          std::string const atom = PyString_AsString(atomstr);
+          if(atom.empty()) return NULL;
+          else if(atom.substr(0, 4) == "Atom") result << atom.substr(4);
+          else result << "(" << atom << ")";
+        }
+        std::string const empty("\\\n" + std::string(18, ' '));
         for(++i_first; i_first != i_end; ++i_first)
         {
-          result << "\\\n" << std::string(name.size() + 9, ' ');
-          lada_atom_repr_impl(*(*i_first), result);
+          python::Object atomstr = PyObject_Repr(*i_first);
+          if(not atomstr) return NULL;
+          std::string atom = PyString_AsString(atomstr);
+          if(atom.empty()) return NULL;
+          else if(atom.substr(0, 4) == "Atom") result << empty << atom.substr(4);
+          else result << empty << "(" << atom << ")";
         }
       }
       return PyString_FromString(result.str().c_str());
@@ -93,23 +105,24 @@ namespace LaDa
   
       python::Object const cell = structure_getcell(_self, NULL);
       if(not cell) return NULL;
-      if(PyDict_SetItem(result, "cell", cell) < 0) return NULL;
+      if(PyDict_SetItemString(result, "cell", cell) < 0) return NULL;
       python::Object const scale = structure_getscale(_self, NULL);
       if(not scale) return NULL;
-      if(PyDict_SetItem(result, "scale", scale) < 0) return NULL;
+      if(PyDict_SetItemString(result, "scale", scale) < 0) return NULL;
   
       std::vector<Atom>::const_iterator i_atom = _self->atoms.begin();
       std::vector<Atom>::const_iterator const i_end = _self->atoms.end();
+      char mname[] = "to_dict";
       for(long i(0); i_atom != i_end; ++i_atom, ++i)
       {
         // Gets dictionary description.
-        python::Object const item = lada_atom_to_dict(atom);
+        python::Object const item = PyObject_CallMethod((PyObject*)&(*i_atom), mname, NULL);
         if(not item) return NULL;
         // Then create pyobject index.
         python::Object const index = PyInt_FromLong(i);
         if(not index) return NULL;
         // finally, adds to dictionary.
-        if(PyDict_SetItem(result, index, dict) < 0) return NULL;
+        if(PyDict_SetItem(result, index, item) < 0) return NULL;
       }
       // Merge attribute dictionary if it exists.
       if(_self->pydict != NULL and PyDict_Merge(result, _self->pydict, 1) < 0) return NULL;
@@ -121,21 +134,21 @@ namespace LaDa
     PyObject* structure_reduce(StructureData* _self)
     {
       // Creates return tuple of three elements.
-      python::Object result = PyTuple_New(3);
-      if(not result) return NULL;
-      // first element is the object type.
-      if(PyTuple_SET_ITEM(result, 0, PyObject_Type((PyObject*)_self)) < 0) return NULL;
+      python::Object type = PyObject_Type((PyObject*)_self);
+      if(not type) return NULL;
+      // Second element is a null tuple, argument to the callable type above.
       python::Object tuple = PyTuple_New(0);
       if(not tuple) return NULL;
-      if(PyTuple_SET_ITEM(result, 1, tuple.release()) < 0) return NULL;
-      python::Object state = structure_getstate(_self);
+      // Third element is the state of this object.
+      char getstate[] = "__getstate__";
+      python::Object state = PyObject_CallMethod((PyObject*)_self, getstate, NULL, NULL);
       if(not state) return NULL;
-      if(PyTuple_SET_ITEM(result, 2, state.release()) < 0) return NULL;
-      return result.release();
+
+      return PyTuple_Pack(3, type.borrowed(), tuple.borrowed(), state.borrowed());
     }
 
     // Implements getstate for pickling.
-    PyObject* structure_getstate(AtomData* _self)
+    PyObject* structure_getstate(StructureData* _self)
     {
       // get cell attribute.
       python::Object cell = structure_getcell(_self, NULL);
@@ -144,7 +157,7 @@ namespace LaDa
       python::Object scale = structure_getscale(_self, NULL);
       if(not scale) return NULL;
       // get python dynamic attributes.
-      python::Object dict = _self->pydict == NULL ? Py_NONE: PyDict_New();
+      python::Object dict = _self->pydict == NULL ? Py_None: PyDict_New();
       if(not dict) return NULL;
       if(_self->pydict != NULL and PyDict_Merge(dict, _self->pydict, 0) < 0) return NULL;
       // get all atoms.
@@ -152,20 +165,15 @@ namespace LaDa
       if(not atoms) return NULL;
       std::vector<Atom>::const_iterator i_first = _self->atoms.begin();
       std::vector<Atom>::const_iterator const i_end = _self->atoms.end();
+      char mname[] = "__getstate__";
       for(Py_ssize_t i(0); i_first != i_end; ++i_first, ++i) 
       {
-        python::Object item = lada_atom_getstate(&(*i_first));
+        python::Object item = PyObject_CallMethod((PyObject*)&(*i_first), mname, NULL);
         if(not item) return NULL;
-        if(PyTuple_SET_ITEM(atoms, i, item.release()) < 0) return NULL;
+        if(PyTuple_SET_ITEM((PyObject*)atoms, i, item.release()) < 0) return NULL;
       }
 
-      // Now create tuple to hold them all.
-      python::Object const result = PyTuple_New(4);
-      if(PyTuple_SET_ITEM(result, 0, cell.release()) < 0) return NULL;
-      if(PyTuple_SET_ITEM(result, 1, scale.release()) < 0) return NULL;
-      if(PyTuple_SET_ITEM(result, 2, dict.release()) < 0) return NULL;
-      if(PyTuple_SET_ITEM(result, 3, atoms.release()) < 0) return NULL;
-      return result.release();
+      return PyTuple_Pack(4, cell.borrowed(), scale.borrowed(), dict.borrowed(), atoms.borrowed());
     }
 
     // Implements setstate for pickling.
@@ -192,16 +200,17 @@ namespace LaDa
         return NULL;
       }
       // then atoms.
-      Py_ssize_t const N(PyTuple_Size(_atoms));
+      Py_ssize_t const N(PyTuple_Size(atoms));
       _self->atoms.reserve(N);
       for(Py_ssize_t i(0); i < N; ++i)
       {
-        AtomData* atom = PyTuple_GET_ITEM(i);
+        AtomData* atom = (AtomData*)PyTuple_GET_ITEM(atoms, i);
         if(not PyAtom_Check(atom)) 
         {
           LADA_PYERROR(TypeError, "Expected an atom when unpickling.");
           return NULL;
         }
+        Py_INCREF(atom);
         _self->atoms.push_back(Atom(atom));
       }
       // finally, dictionary, so we can return without issue on error.
@@ -212,7 +221,7 @@ namespace LaDa
         _self->pydict = PyDict_New();
         if(_self->pydict == NULL) return NULL;
       }
-      if(PyDict_Merge(_self->pydict, dict, NULL) < 0) return NULL;
+      if(PyDict_Merge(_self->pydict, dict, 0) < 0) return NULL;
       Py_RETURN_NONE;
     }
 
@@ -230,20 +239,19 @@ namespace LaDa
             LADA_PYERROR(TypeError, "Cannot insert an atom and motify in-place.");
             return NULL;
           }
-          if(not wrapper->atom)
+          if(not wrapper)
           {
             LADA_PYERROR(internal, "Should never find an empty atom. Internal bug.");
             return NULL;
           }
+          Py_INCREF(wrapper);
           _self->atoms.push_back(Atom(wrapper));
           return PyObject_GetAttrString((PyObject*)_self, "add_atom");
         }
       }
       // create new atom and its wrapper.
-      Atom atom;
+      Atom atom(_args, _kwargs);
       if(not atom) return NULL;
-      // Then initialize it.
-      if(lada_atom_init(atom, _args, _kwargs) < 0) return NULL;
       // Add it to the container.
       _self->atoms.push_back(atom);
       // Finally, returns this very function for chaining.

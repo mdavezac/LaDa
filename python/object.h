@@ -23,7 +23,7 @@ namespace LaDa
         //! Copies a python reference.
         Object(Object const &_in) : object_(_in.object_) { Py_XINCREF(object_); }
         //! Decrefs a python reference on destruction.
-        ~Object() { Py_XDECREF(object_); }
+        ~Object() { Py_XDECREF(object_); object_ = NULL; }
         //! \brief Returns a borrowed reference. 
         //! \details Does not check for null.
         operator PyObject* () const { return object_; }

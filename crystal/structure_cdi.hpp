@@ -25,7 +25,7 @@ namespace LaDa
       _self->ob_type->tp_free((PyObject*)_self);
     }
   
-    // Function to initialize a string atom.
+    // Function to initialize an atom.
     static int structure_init(StructureData* _self, PyObject* _args, PyObject *_kwargs)
     {
       Py_ssize_t const N = PyTuple_Size(_args);
@@ -45,8 +45,9 @@ namespace LaDa
         if(item == NULL) return -1;
         if(structure_setcell(_self, item, NULL) < 0) return -1;
       }
-      else if(structure_setcell(_self, _args, NULL) < 0) return -1;
+      else if(N == 9 and structure_setcell(_self, _args, NULL) < 0) return -1;
 
+      if(_kwargs == NULL) return 0;
       PyObject *key, *value;
       Py_ssize_t pos = 0;
       while (PyDict_Next(_kwargs, &pos, &key, &value)) 

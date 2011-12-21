@@ -18,22 +18,19 @@ namespace LaDa
     //! \details This wrapper makes it easy to interact with the python object.
     //!          It should be used throughout any c++ code. Mainly, it makes
     //!          sure Py_INCREF and Py_DECREF are called accordingly.
-    class Atom : Object
+    class Atom : public python::Object
     {
       public: 
         //! Constructor
-        Atom() { object_ = PyAtom_New(); }
+        Atom() : Object() { object_ = (PyObject*)PyAtom_New(); }
         //! Acquires ownership of an atom.
-        Atom(Atom const &_c ) { LADA_ACQUIRE_PYOBJECT(object_, _c.object_, AtomData); }
+        Atom(Atom const &_c ) : Object(_c) {}
         //! Shallow copy Constructor
-        Atom(AtomData *_data ) { LADA_ACQUIRE_PYOBJECT(object_, _data, AtomData); }
-        //! Destructor.
-        ~AtomData() { Py_XDECREF(object_); object_ = NULL; }
+        Atom(AtomData *_data ) : Object((PyObject*)_data) {}
+        //! Full Initialization.
+        Atom(PyObject *_args, PyObject *_kwargs) : Object()
+          { object_ = (PyObject*)PyAtom_NewFromArgs(atom_type(), _args, _kwargs); }
 
-        //! Points to owned data.
-        AtomData const* operator->() const { return object_; }
-        //! Points to owned data.
-        AtomData* operator->() { return object_; }
         //! Swaps data of two atoms.
         void swap(Atom &_in) { return std::swap(object_, _in.object_); }
         //! Acquires another atom. 
@@ -45,7 +42,7 @@ namespace LaDa
             BOOST_THROW_EXCEPTION(error::pyerror() << error::pyobject(_in));
           }
           PyObject *dummy = (PyObject*)object_;
-          object_ = (AtomData*)_in;
+          object_ = (PyObject*)_in;
           Py_XINCREF(object_);
           Py_XDECREF(dummy);
         }
@@ -55,7 +52,7 @@ namespace LaDa
         //! \details Return does not share data with this atom. 
         //!          Use constructor to obtain that behavior.
         //!          The user should check that the atom is valid.
-        Atom copy() const { return Atom(PyAtom_Copy(object_)); } 
+        Atom copy() const { return Atom(PyAtom_Copy((AtomData*)object_)); } 
         //! \brief Returns a new reference to a python attribute. 
         //! \details An python exception is set if attribute does not exist, and the
         //!          function returns null.
@@ -107,10 +104,9 @@ namespace LaDa
         //! \brief Sets/Deletes attribute.
         inline bool pyattr(PyObject* _name, PyObject *_in)
           { return PyObject_SetAttr((PyObject*)object_, _name, _in) == 0; }
-    
-      private:
-        //! Holds a python reference to the atom.
-        AtomData* object_;
+
+        //! Returns borrowed reference to dictionary.
+        PyObject* dict() const { return ((AtomData*)object_)->pydict; }
     };
 
     //! \brief Dumps representation of atom.
@@ -124,7 +120,6 @@ namespace LaDa
       if(not result) BOOST_THROW_EXCEPTION(error::internal()); 
       return stream << result;
     }
-
   } // namespace Crystal
 } // namespace LaDa
   
