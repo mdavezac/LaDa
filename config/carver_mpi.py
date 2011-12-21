@@ -1,9 +1,8 @@
-if "jobs" not in globals()["ladamodules"] or "ipython" not in globals()["ladamodules"]: return
+if "jobs" in globals()["ladamodules"]:
+  queues = "debug", "regular", "low"
+  """ List of slurm or pbs queues allowed for use. 
 
-queues = "debug", "regular", "low"
-""" List of slurm or pbs queues allowed for use. 
-
-    This is used by ipython's %launch magic function. 
-    It is not required for slurm systems. 
-    If empty, then %launch will not have a queue option.
-"""
+      This is used by ipython's %launch magic function. 
+      It is not required for slurm systems. 
+      If empty, then %launch will not have a queue option.
+  """

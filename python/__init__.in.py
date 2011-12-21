@@ -57,12 +57,12 @@ lada_with_mpi = @do_use_mpi@
 
 # reads stuff from global configuration files.
 global_dict = {"ladamodules": __all__}
-if "jobs" in __all__ and "ipython" in __all__: 
+if "jobs" in __all__:
   from lada.jobs.templates import default_pbs, default_slurm
   from opt import cpus_per_node
-  globals["default_pbs"]   = default_pbs
-  globals["default_slurm"] = default_slurm
-  globals["cpus_per_node"] = cpus_per_node
+  global_dict["default_pbs"]   = default_pbs
+  global_dict["default_slurm"] = default_slurm
+  global_dict["cpus_per_node"] = cpus_per_node
   del default_pbs
   del default_slurm
   del cpus_per_node
@@ -74,20 +74,20 @@ from os import environ
 for filename in iglob(join(join(dirname(__file__), "config"), "*.py")):
   local_dict = {}
   execfile(filename, global_dict, local_dict)
-  locals().update(local_dict)
+  locals().update((k, v) for k, v in local_dict.iteritems() if k[0] != '_')
 
 # then configuration files installed in a global config directory.
 if "LADA_CONFIG_DIR" in environ: 
   for filename in iglob(join(environ["LADA_CONFIG_DIR"], "*.py")):
     local_dict = {}
     execfile(filename, global_dict, local_dict)
-    locals().update(local_dict)
+    locals().update((k, v) for k, v in local_dict.iteritems() if k[0] != '_')
 
 # then user configuration file.
 if exists(expandvars(expanduser('~/.lada'))):
   local_dict = {}
-  execfile(expandvars(expanduser('~/.lada'), global_dict, local_dict)
-  locals().update(local_dict)
+  execfile(expandvars(expanduser('~/.lada')), global_dict, local_dict)
+  locals().update((k, v) for k, v in local_dict.iteritems() if k[0] != '_')
 
 # clean up namespace
 del global_dict

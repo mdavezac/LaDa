@@ -389,6 +389,12 @@ class Extract(object):
     result = self._find_first_OUTCAR(r"""\s*NSW\s*=\s*(-?\d+)\s+""")
     if result is None: return None
     return int(result.group(1))
+  
+  @property
+  def relaxation(self): 
+    """ Returns the kind of relaxation performed in this calculation. """
+    from ..incar import Incar
+    return Incar.relaxation.__get__(self)
 
   @property
   @json_section("input")
