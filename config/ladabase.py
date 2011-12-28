@@ -14,7 +14,5 @@ if "ladabase" in globals()["ladamodules"]:
   """ Port to which to connect on host. """
   local_push_dir = "/tmp/database_tmp"
   """ Directory where files are pushed, before being pulled to redrock. """
-  which_database_push = "local_push"
-  """ Which function to use to push to database. """
   ladabase_doconnect = False
   """ Whether to connect to database when starting ipython. """

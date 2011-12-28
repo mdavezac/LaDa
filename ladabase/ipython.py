@@ -1,20 +1,22 @@
 """ IPython magic functions to interact with the OUTCAR database. """
 
-def _getcomment(self, filename = None):
+def _getcomment(self=None, filename = None):
   """ Gets comment from user. """
   from sys import stderr
   from os import fdopen, remove
   from socket import gethostname
-  from IPython.ipapi import TryNext
-  try: from .. import username
+  from IPython.ipapi import TryNext, get as get_ipy
+  try: from .. import database_username
   except ImportError:
-    print >>stderr, "Could not import username with which to tag files in database.\n"\
-                    "Please add `username = 'my full name'` in ~/.lada.\n"
+    print >>stderr, "Could not import database_username with which to tag files in database.\n"\
+                    "Please add `database_username = 'my full name'` in ~/.lada.\n"
     return
-  if len(username) == 0:
+  if len(database_username) == 0:
     print >>stderr, "Username with which to tag files in database is empty.\n"\
-                    "Please add `username = 'my full name'` in ~/.lada.\n"
+                    "Please add `database_username = 'my full name'` in ~/.lada.\n"
     return
+
+  if self == None: self = get_ipy()
 
   import re
   if filename is None:
@@ -23,7 +25,7 @@ def _getcomment(self, filename = None):
     notefile, filename = mkstemp()
     fdopen(notefile).close()
   with open(filename, 'w') as file:
-    file.write("\n# operator: {0}\n# hostname: {1}".format(username, gethostname()))
+    file.write("\n# operator: {0}\n# hostname: {1}".format(database_username, gethostname()))
   try: self.shell.hooks.editor(filename, 0)
   except TryNext:
     print "Could not open editor."
@@ -153,12 +155,12 @@ def push_database(self, cmdl):
   """ Pushes directory with OUTCARs or single OUTCAR to the database. """
   try: from .. import ladabase_root_push
   except: return 
-  try: from .. import username as pymongo_username
+  try: from .. import database_username
   
   except:
-    print "Could not find username. Please edit the file '~/.lada', and add:"
-    print ">>> username = \"Jane Doe\""
-    print "Without '>>>', with 'username' flushed left, and your name "\
+    print "Could not find database_username. Please edit the file '~/.lada', and add:"
+    print ">>> database_username = \"Jane Doe\""
+    print "Without '>>>', with 'database_username' flushed left, and your name "\
           "within explicit quotation marks on the right hand side." 
     return 
 
@@ -230,7 +232,7 @@ def push_database(self, cmdl):
     file.write(stripped + "\n")
     for path, extract in file:
       file.write("# file: {0}\n".format(relpath(path, directory)))
-    file.write("# operator: {0}\n".format(pymongo_username))
+    file.write("# operator: {0}\n".format(database_username))
 
   for file, extract in files:
     with open(file, 'r') as outcar:

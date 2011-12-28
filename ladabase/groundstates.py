@@ -1,6 +1,7 @@
 """ Tags ground-states. """
 __docformat__ = "restructuredtext en"
-__all__ = ['convexhull', 'groundstates']
+__all__ = ['generate_fere_summary', 'iter_fere_ternaries', 'check_fere_context']
+from contextlib import contextmanager
 
       
 def merge_queries(d, filters):
@@ -178,3 +179,19 @@ def generate_fere_summary(filters=3, tempname="ladabaseextracteditersystemtempna
       
 
     fere_summary.save(document)
+
+@contextmanager
+def check_fere_context(path):
+  """ Checks whether a file is FERE outcar file. 
+  
+      This context returns None if this is not a FERE calculation. If it is a
+      FERE calculation, it returns a valid extraction object.
+  """
+  from lada.vasp import Extract
+  from lada.ladabase.mu_data import enthalpy
+
+  extract = Extract(path)
+  if not extract.success: yield None              # checks if successfull OUTCAR.
+  elif enthalpy(extract) is None: yield None      # checks this is a FERE calculation.
+  else: yield extract
+  return 

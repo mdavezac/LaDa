@@ -58,10 +58,20 @@ original_paper = ['O', 'S', 'Se', 'N', 'P', 'As', 'Mg', 'Ca', 'Zn', 'Cd', 'Ga', 
 """ Atoms determined from original Stephan Lany paper. """
 
 def enthalpy(extract):
-  """ Returns enthalpy if compuational parameters are ok, else None. """
+  """ Returns enthalpy if compuational parameters are ok, else None. 
+  
+      A FERE calculation is performed in DFT with PBE functional and PAW
+      pseudo-potentials.  It is static (no ionic or cell-shape relaxation). A
+      given set of transition metals must have U = 3eV, and another two U = 5eV
+      (see code below).  The cutoff is expected to be at least 340 eV.
+
+      :returns: None if this is not a FERE calculation, and the enthalpy in eV
+                per atom if it is.
+  """
   from quantities import eV
 
   if not extract.is_dft: return None
+  if extract.relaxation != "static": return None 
   if extract.pseudopotential != 'PAW_PBE': return None
   if extract.encut.rescale(eV).magnitude < 339.0: return None
   for specie in extract.species:

@@ -210,7 +210,7 @@ def generate_extracted_item(collection, item, encoder=None, encoded=None):
   collection.save(encoded)
   return encoded
 
-def generate_extracted(collection='extracted', filter=None, items=None, update=False, fromextracted=False):
+def generate_extracted(collection='extracted', filter=None, update=False, fromextracted=False):
   """ Extracts value to secondary database. """
   from . import Manager
   ladabase = Manager()
