@@ -186,13 +186,31 @@ def ipy_init():
     ip.set_hook('complete_command', cancel_completer, re_key = '\s*%?cancel_jobs')
     ip.set_hook('complete_command', export_completer, re_key = '\s*%?export')
     ip.set_hook('complete_command', record_completer, re_key = '\s*%?record')
-    
-    for key in lada.__all__:
-      if key[0] == '_': continue
-      if key == "ipython": continue
-      if key == "jobs": ip.ex("from lada import jobs as ladajobs")
-      if key == "ladabase": ip.ex("from lada import ladabase as ladabase_module")
-      else: ip.ex("from lada import " + key)
-      if 'ipy_init' in getattr(getattr(lada, key), '__dict__'): 
-        x = __import__('lada.{0}'.format(key), fromlist='ipy_init')
-        x.ipy_init()
+
+    if 'ladabase' in lada.__all__ and getattr(lada, 'add_push_magic_function', False): 
+      def push(self, cmdl):
+        """ Magic function to push to database. 
+
+            This detour makes sure ladabase is only loaded on call, 
+            thus speeding up load time when starting ipython.
+        """
+        from lada.ladabase.push import push
+        return push(self, cmdl)
+      ip.expose_magic("push", push)
+      # Don't try and start the pymongo interface unless explicitly requested.
+      if lada.ladabase_doconnect: 
+        from lada.ladabase import Manager
+        try: manager = Manager()
+        except: pass
+        else: ip.user_ns['ladabase'] = manager
+
+    if len(lada.auto_import_modules) > 0: 
+      mods = __import__('lada', globals(), locals(), lada.auto_import_modules)
+      for key in set(lada.auto_import_modules) & set(lada.__all__):
+        print "Importing", key, "from lada into namespace."
+        if key == "jobs": ip.user_ns['ladajobs'] = mods.jobs
+        elif key == "ladabase": ip.user_ns['ladabase_module'] = mods.ladabase
+        else: ip.user_ns[key] = getattr(mods, key)
+    else:
+      print "Lada modules were not loaded into user namespace."
+      print "Lada interface (explore...) is available."

@@ -120,20 +120,3 @@ class Manager(object):
     with open(path, 'r') as file: string = file.read()
     hash = sha512(string).hexdigest()
     return self.outcars.exists(sha512=hash)
-
-
-
-def ipy_init():
-# try: from .. import ladabase_root_push, username
-# except: return 
-  from IPython.ipapi import get as get_ipy
-  from .ipython import push
-  from .filter import init as filter_init
-  ip = get_ipy()
-
-  try: manager = Manager()
-  except: return
-  ip.user_ns['ladabase'] = manager
-  ip.expose_magic("push", push)
-  filter_init(ip)
-
