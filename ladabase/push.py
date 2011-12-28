@@ -168,7 +168,7 @@ def walk_calc_files(args, context, iglob, walk):
           for file in files:
             if search(pattern, basename(file)) == None: continue
             with context(join(root, file)) as result:
-              if result is not None: yield result, relpath(join(root, file), dirname(root))
+              if result is not None: yield result, relpath(join(root, file), dirname(dirname(path)))
         continue
       with context(path) as result:
         if result is not None: yield result, relpath(path, dirname(path))
@@ -179,7 +179,6 @@ def push(self, cmdl):
   from paramiko import SSHClient, AutoAddPolicy
   from lada.ladabase import Manager
   from lada.ladabase.extracted import generate_extracted
-  from lada.ladabase.groundstates import generate_fere_summary
   from hashlib import sha512
   try: from .. import fullname
   except ImportError:
@@ -253,7 +252,7 @@ def push(self, cmdl):
   manager = Manager()
   outcardb = manager.files
   if args.algo == "fere": 
-    from lada.ladabase.groundstates import check_fere_context
+    from lada.ladabase.fere import check_fere_context, generate_fere_summary
     for extract, path in walk_calc_files(args, context(check_fere_context), iglob, walk):
       hash = sha512(extract.__outcar__().read()).hexdigest()
       if outcardb.find_one({'sha512': hash}) != None: 
