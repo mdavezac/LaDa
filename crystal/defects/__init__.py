@@ -430,7 +430,7 @@ def explore_defect(defect, host, **kwargs):
   dstr = defect.structure.copy()
   hstr = host.structure
   # modified by Haowei: using the p1 structure for reindexing and potential_alignment 
-  hlat_p1 = structure_to_lattice(hstr, primitive=False, spacegroup=False)
+  hlat_p1 = structure_to_lattice(hstr, primitive=False)
   reindex_sites(dstr, hlat_p1, **kwargs)
 
   result = {'interstitial': [], 'substitution': [], 'vacancy': []}
@@ -497,7 +497,7 @@ def potential_alignment(defect, host, maxdiff=None, first_shell=False, tolerance
   # 1, the host unit cell may be a *supercell* due to the magnetic structure  
   # 2, in the conventional defect calculations, we run the calculation for host using the same supercell as defect calculations
   #    but this should not be a problem if the calculations are converged very well
-  hlat_p1 = structure_to_lattice(hstr, primitive=False, spacegroup=False)
+  hlat_p1 = structure_to_lattice(hstr, primitive=False)
   reindex_sites(dstr, hlat_p1, tolerance=tolerance)
   defects = explore_defect(defect, host, tolerance=tolerance)
   acceptable = [True for a in dstr.atoms]
