@@ -204,7 +204,7 @@ def push(self, cmdl):
     return
  
   # gets comment. 
-  comment = "" #_getcomment(self, cmdl)
+  comment = _getcomment(self, cmdl)
   if comment is None: return
 
   # try connecting to host if requested.
