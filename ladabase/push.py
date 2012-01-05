@@ -128,7 +128,7 @@ def remote_iglob(path, ssh, sftp):
   dir, suffix = dirname(path), basename(path)
   for dir in ssh.exec_command("ls -d " + dir)[1].read()[:-1].split('\n'):
     paths = [join(dir, u) for u in sftp.listdir(dir)]
-    if len(suffix) != 0: paths = fnfilter(paths, path)
+    if len(suffix) != 0 and '~' not in path: paths = fnfilter(paths, path)
     for path in paths:
       try: attr = sftp.stat(path)
       except: continue
@@ -160,6 +160,7 @@ def walk_calc_files(args, context, iglob, walk):
 
   for input in args.directories:
     for path, isdir in iglob(input):
+      print path, isdir
       if any(search(i, path) is not None for i in excludes): continue
       if isdir: 
         for root, dirs, files in walk(path):
@@ -253,15 +254,20 @@ def push(self, cmdl):
   outcardb = manager.files
   if args.algo == "fere": 
     from lada.ladabase.fere import check_fere_context, generate_fere_summary
+    found = False
     for extract, path in walk_calc_files(args, context(check_fere_context), iglob, walk):
       hash = sha512(extract.__outcar__().read()).hexdigest()
       if outcardb.find_one({'sha512': hash}) != None: 
         print path, "is already in the database."
         continue
-      print "Pushing ", path
-      item = manager.push( path, extract.__outcar__(), comment, compression="bz2",\
+      with extract.__outcar__() as file: outcar = file.read()
+      item = manager.push( path, outcar, comment, compression="bz2",\
                            is_dft=extract.is_dft, id_gw=extract.is_gw )
+      found = True
       generate_extracted(filter=item)
+    if not found:
+      print "No new OUTCAR found. "
+      return
     generate_fere_summary(2)
   
 
