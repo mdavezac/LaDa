@@ -131,7 +131,7 @@ class RelaxCellShape(object):
         def is_converged(extractor):
           if extractor is None: return True
           if not extractor.success: raise RuntimeError("VASP calculation did not succeed.")
-          if extractor.total_energies.shape[0] < 2: return False
+          if extractor.total_energies.shape[0] < 2: return True
           return abs(extractor.total_energies[-2] - extractor.total_energies[-1:]) < convergence
       else:
         def is_converged(extractor):
