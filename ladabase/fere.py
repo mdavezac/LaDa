@@ -166,8 +166,19 @@ def generate_fere_summary(filters=3, tempname="ladabaseextracteditersystemtempna
     # loop over stable compounds only.
     for indices, id in zip(hrep.ininc[:Nsystems], ids):
       if len(indices) == 0: continue
-      assert all(array(hrep.is_vertex)[indices] == 1)
-      poly = contour(hrep.generators[indices][:, [0, 1]])
+      vertices = []
+      for index in indices:
+        if not hrep.is_vertex[index]: continue
+        vertices.append(hrep.generators[index, [0, 1]])
+        # add rays adjacent to points.
+        for neighbor in hrep.adj[index]:
+          if hrep.is_vertex[neighbor]: continue
+          if all(hrep.generators[neighbor, [0,1]] < 1e-8): continue
+          vertices.append(hrep.generators[index, [0, 1]] + 10*hrep.generators[neighbor, [0, 1]])
+      assert len(vertices) > 0
+      assert array(vertices).shape[1] == 2
+      # now determines contour.
+      poly = contour(array(vertices))
 
       element = extracted.find_one({'_id': id})
       # update fere document.

@@ -128,7 +128,9 @@ def remote_iglob(path, ssh, sftp):
   dir, suffix = dirname(path), basename(path)
   for dir in ssh.exec_command("ls -d " + dir)[1].read()[:-1].split('\n'):
     paths = [join(dir, u) for u in sftp.listdir(dir)]
-    if len(suffix) != 0 and '~' not in path: paths = fnfilter(paths, path)
+    if len(suffix) != 0:
+      if '~' not in path: paths = fnfilter(paths, path)
+      else: paths = fnfilter(paths, path.replace('~/', '*/'))
     for path in paths:
       try: attr = sftp.stat(path)
       except: continue
@@ -160,7 +162,6 @@ def walk_calc_files(args, context, iglob, walk):
 
   for input in args.directories:
     for path, isdir in iglob(input):
-      print path, isdir
       if any(search(i, path) is not None for i in excludes): continue
       if isdir: 
         for root, dirs, files in walk(path):
@@ -223,7 +224,7 @@ def push(self, cmdl):
       except KeyboardInterrupt:
         print "Aborting."
         return
-      except Exception as e: print e; continue
+      except Exception as e: print 'error', e; continue
       else: found = True; break
     if not found: 
       print "Could not connect to {0}".format(args.remote)
@@ -262,9 +263,10 @@ def push(self, cmdl):
         continue
       with extract.__outcar__() as file: outcar = file.read()
       item = manager.push( path, outcar, comment, compression="bz2",\
-                           is_dft=extract.is_dft, id_gw=extract.is_gw )
+                           is_dft=extract.is_dft, is_gw=extract.is_gw, uploader=username )
       found = True
-      generate_extracted(filter=item)
+      print "Pushing", path, "."
+      generate_extracted(filter={'_id': item})
     if not found:
       print "No new OUTCAR found. "
       return
