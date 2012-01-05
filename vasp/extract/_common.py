@@ -354,7 +354,7 @@ class Extract(object):
   @make_cached
   @broadcast_result(attr=True, which=0)
   def stoichiometry(self):
-    """ Stoechiometry of the compound. """
+    """ Stoichiometry of the compound. """
     result = self._find_first_OUTCAR(r"""\s*ions\s+per\s+type\s*=.*$""")
     if result is None: return None
     return [int(u) for u in result.group(0).split()[4:]]
