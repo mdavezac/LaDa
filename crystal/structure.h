@@ -3,307 +3,193 @@
 
 #include "LaDaConfig.h"
 
-
-#ifdef LADA_WITH_LNS
-# include <load_n_save/xpr/utilities.h>
-#endif
-
 #include "structure_data.h"
-#ifdef LADA_DO_PYTHON
-  #include <Python.h>
 
-  namespace LaDa { namespace crystal { 
-    template<class T_TYPE> class Structure;
-  } }
-  template<class T> PyObject* PyStructure_FromStructure(LaDa::crystal::Structure<T> const &_structure);
-#endif
 
 
 namespace LaDa 
 {
   namespace crystal
   {
-    // Dummy declaration.
-    template<class T_TYPE> class Structure;
-
-    //! Dumps structure to string.
-    template< class T_TYPE >
-      std::ostream& operator<<(std::ostream &_stream, Structure<T_TYPE> const &_str);
-
-    //! Wraps around a shared pointer containing structure data.
-    template<class T_TYPE> class Structure :
-       public details::AddAtomMixin<Structure, T_TYPE>
+    //! Wraps a python structure. 
+    class Structure : public python::Object
     {
-        friend class details::AddAtomMixinBase< ::LaDa::crystal::Structure, T_TYPE>;
-        friend class boost::serialization::access;
-#       ifdef LADA_WITH_LNS
-          friend class load_n_save::access;
-#       endif
-#     ifdef LADA_DO_PYTHON
-        friend PyObject* PyStructure_FromStructure<>(Structure const &_structure);
-#     endif
-        template<class T> friend
-          std::ostream& operator<<(std::ostream &_stream, Structure<T> const &_str);
-        //! Copy Constructor
-        Structure(StructureData<T_TYPE> &_c) : impl_(new StructureData<T_TYPE>(_c)) {}
       public:
-        //! \typedef Type of the species
-        typedef typename traits::StructureData<T_TYPE>::t_Type t_Type;
         //! \typedef The type of the collection of atoms. 
-        typedef typename traits::StructureData<T_TYPE>::t_Atom t_Atom;
+        typedef typename Atom t_Atom;
         //! \typedef The type of the collection of atoms. 
-        typedef typename traits::StructureData<T_TYPE>::t_Atoms t_Atoms;
-        //! Type of the iterator.
+        typedef typename std::vector<t_Atom> t_Atoms;
+        //! \typedef Type of the iterator.
         typedef typename t_Atoms::iterator iterator;
-        //! Type of the constant iterator.
+        //! \typedef Type of the constant iterator.
         typedef typename t_Atoms::const_iterator const_iterator;
-        //! Type of the reverse iterator.
+        //! \typedef Type of the reverse iterator.
         typedef typename t_Atoms::reverse_iterator reverse_iterator;
-        //! Type of the reverse constant iterator.
+        //! \typedef Type of the reverse constant iterator.
         typedef typename t_Atoms::const_reverse_iterator const_reverse_iterator;
-        //! Type of the atoms.
+        //! \typedef Type of the atoms.
         typedef typename t_Atoms::value_type value_type;
-        //! Type of the reference to the atoms.
+        //! \typedef Type of the reference to the atoms.
         typedef typename t_Atoms::reference reference;
-        //! Type of the constant reference to the atoms.
+        //! \typedef Type of the constant reference to the atoms.
         typedef typename t_Atoms::const_reference const_reference;
-        //! Type of the size.
+        //! \typedef Type of the size.
         typedef typename t_Atoms::size_type size_type;
-        //! Type of the differnce.
+        //! \typedef Type of the difference.
         typedef typename t_Atoms::difference_type difference_type;
-        //! Type of the pointer to the atoms.
+        //! \typedef Type of the pointer to the atoms.
         typedef typename t_Atoms::pointer pointer;
-        //! Type of the allocator used for the atoms.
+        //! \typedef Type of the allocator used for the atoms.
         typedef typename t_Atoms::allocator_type allocator_type;
 
         //! Constructor
-        Structure() : impl_(new StructureData<T_TYPE>()) {};
+        Structure() : Object() { object_ = (PyObject*) PyStructure_New(); }
         //! Cloning Constructor
-        Structure(const Structure &_c) : impl_(_c.impl_) {}
-        //! Cloning Constructor
-        Structure(boost::shared_ptr< StructureData<T_TYPE> > const &_c) : impl_(_c) {}
-        //! Destructor.
-        ~Structure () {};
+        Structure(const Structure &_c) : object_(_c) {}
+        //! Full Initialization.
+        Structure(PyObject *_args, PyObject *_kwargs) : Object()
+          { object_ = (PyObject*)PyStructure_NewFromArgs(atom_type(), _args, _kwargs); }
 
         //! Returns const reference to cell.
-        math::rMatrix3d const & cell() const { return impl_->cell; }
+        math::rMatrix3d const & cell() const { return ((StructureData*)object_)->cell; }
         //! Returns reference to cell.
-        math::rMatrix3d & cell() { return impl_->cell; }
+        math::rMatrix3d & cell() { return ((StructureData*)object_)->cell; }
         //! Returns const reference to cell.
-        math::rMatrix3d::Scalar const & cell(size_t i, size_t j) const { return impl_->cell(i, j); }
+        math::rMatrix3d::Scalar const & cell(size_t i, size_t j) const
+          { return ((StructureData*)object_)->cell(i, j); }
         //! Returns reference to cell.
-        math::rMatrix3d::Scalar & cell(size_t i, size_t j) { return impl_->cell(i, j); }
-        //! Returns const reference to name.
-        std::string const & name() const { return impl_->name; }
-        //! Returns reference to name.
-        std::string & name() { return impl_->name; }
-        //! Returns const reference to energy.
-        types::t_real const & energy() const { return impl_->energy; }
-        //! Returns reference to energy.
-        types::t_real & energy() { return impl_->energy; }
-        //! Returns const reference to weight.
-        types::t_real const & weight() const { return impl_->weight; }
-        //! Returns reference to weight.
-        types::t_real & weight() { return impl_->weight; }
+        math::rMatrix3d::Scalar & cell(size_t i, size_t j)
+          { return ((StructureData*)object_)->cell(i, j); }
         //! Returns const reference to scale.
-        types::t_real const & scale() const { return impl_->scale; }
+        types::t_real const & scale() const { return ((StructureData*)object_)->scale; }
         //! Returns reference to scale.
-        types::t_real & scale() { return impl_->scale; }
-        //! Returns const reference to freeze (frozen degrees of freedom).
-        types::t_unsigned const & freeze() const { return impl_->freeze; }
-        //! Returns reference to freeze.
-        types::t_unsigned & freeze() { return impl_->freeze; }
+        types::t_real & scale() { return ((StructureData*)object_)->scale; }
 
         //! Deep copy of a structure.
-        Structure copy() const;
+        Structure copy() const { return Structure(PyStructure_Copy((StructureData*)object_)); }
         //! Swaps content of two structures.
-        void swap(Structure &_other) { impl_.swap(_other.impl_); }
-        //! Returns pointer to implementation.
-        StructureData<T_TYPE>* get() const { return impl_.get(); }
+        void swap(Structure &_other) { std::swap(object_, _other.object_); }
         //! Points to data.
-        StructureData<T_TYPE> const* operator->() const { return impl_.get(); }
+        StructureData const* operator->() const { return (StructureData*)object_; }
         //! Points to data.
-        StructureData<T_TYPE>* operator->() { return impl_.get(); }
+        StructureData* operator->() { return (StructureData*)object_; }
 
         //! Iterator to the atoms.
-        iterator begin() { return impl_->atoms.begin(); }
+        iterator begin() { return ((StructureData*)object_)->atoms.begin(); }
         //! Iterator to the atoms.
-        iterator end() { return impl_->atoms.end(); }
+        iterator end() { return ((StructureData*)object_)->atoms.end(); }
         //! Iterator to the atoms.
-        reverse_iterator rbegin() { return impl_->atoms.rbegin(); }
+        reverse_iterator rbegin() { return ((StructureData*)object_)->atoms.rbegin(); }
         //! Iterator to the atoms.
-        reverse_iterator rend() { return impl_->atoms.rend(); }
+        reverse_iterator rend() { return ((StructureData*)object_)->atoms.rend(); }
         //! Iterator to the atoms.
-        const_iterator begin() const { return impl_->atoms.begin(); }
+        const_iterator begin() const { return ((StructureData*)object_)->atoms.begin(); }
         //! Iterator to the atoms.
-        const_iterator end() const { return impl_->atoms.end(); }
+        const_iterator end() const { return ((StructureData*)object_)->atoms.end(); }
         //! Iterator to the atoms.
-        const_reverse_iterator rbegin() const { return impl_->atoms.rbegin(); }
+        const_reverse_iterator rbegin() const { return ((StructureData*)object_)->atoms.rbegin(); }
         //! Iterator to the atoms.
-        const_reverse_iterator rend() const { return impl_->atoms.rend(); }
+        const_reverse_iterator rend() const { return ((StructureData*)object_)->atoms.rend(); }
         //! Number of atoms.
-        size_type size() const { return impl_->atoms.size(); }
+        size_type size() const { return ((StructureData*)object_)->atoms.size(); }
         //! Maximum number of atoms.
-        size_type max_size() const { return impl_->atoms.max_size(); }
+        size_type max_size() const { return ((StructureData*)object_)->atoms.max_size(); }
         //! Number of atoms.
-        void resize(size_type _n) { impl_->atoms.size(_n); }
+        void resize(size_type _n) { ((StructureData*)object_)->atoms.size(_n); }
         //! Number of atoms.
-        void resize(size_type _n, const_reference _obj) { impl_->atoms.size(_n, _obj); }
+        void resize(size_type _n, const_reference _obj) { ((StructureData*)object_)->atoms.size(_n, _obj); }
         //! Attempts to reserve memory for atoms.
-        void reserve(size_type _n) { impl_->atoms.reserve(_n); }
+        void reserve(size_type _n) { ((StructureData*)object_)->atoms.reserve(_n); }
         //! Reserved memory.
-        size_type capacity() const { return impl_->atoms.capacity(); }
+        size_type capacity() const { return ((StructureData*)object_)->atoms.capacity(); }
         //! Whether any atoms are in the structure.
-        bool empty() const { return impl_->empty(); }
+        bool empty() const { return ((StructureData*)object_)->empty(); }
         //! Returns nth atom.
-        reference operator[](size_type _n) { return impl_->atoms[_n]; }
+        reference operator[](size_type _n) { return ((StructureData*)object_)->atoms[_n]; }
         //! Returns nth atom.
-        const_reference operator[](size_type _n) const { return impl_->atoms[_n]; }
+        const_reference operator[](size_type _n) const { return ((StructureData*)object_)->atoms[_n]; }
         //! Returns nth atom.
-        reference at(size_type _n) { return impl_->atoms.at(_n); }
+        reference at(size_type _n) { return ((StructureData*)object_)->atoms.at(_n); }
         //! Returns nth atom.
-        const_reference at(size_type _n) const { return impl_->atoms.at(_n); }
+        const_reference at(size_type _n) const { return ((StructureData*)object_)->atoms.at(_n); }
         //! Returns nth atom.
-        reference front() { return impl_->atoms.front(); }
+        reference front() { return ((StructureData*)object_)->atoms.front(); }
         //! Returns nth atom.
-        const_reference front() const { return impl_->atoms.front(); }
+        const_reference front() const { return ((StructureData*)object_)->atoms.front(); }
         //! Returns nth atom.
-        reference back() { return impl_->atoms.back(); }
+        reference back() { return ((StructureData*)object_)->atoms.back(); }
         //! Returns nth atom.
-        const_reference back() const { return impl_->atoms.back(); }
+        const_reference back() const { return ((StructureData*)object_)->atoms.back(); }
         //! Replaces content of the container.
         template <class InputIterator>
           void assign(InputIterator _first, InputIterator _last)
-          { impl_->atoms.assign(_first, _last); }
+          { ((StructureData*)object_)->atoms.assign(_first, _last); }
         //! Replaces content of the container.
-        void assign(size_type _n, const_reference _u) { impl_->atoms.assign(_n, _u); }
+        void assign(size_type _n, const_reference _u) { ((StructureData*)object_)->atoms.assign(_n, _u); }
         //! Adds atom at end of container.
-        void push_back(const_reference _u) { impl_->atoms.push_back(_u); }
+        void push_back(const_reference _u) { ((StructureData*)object_)->atoms.push_back(_u); }
         //! Deletes last element. 
-        void pop_back() { impl_->atoms.pop_back(); }
+        void pop_back() { ((StructureData*)object_)->atoms.pop_back(); }
         //! Inserts atoms in container at given position.
         template <class InputIterator>
           void insert(iterator _pos, InputIterator _first, InputIterator _last)
-          { impl_->atoms.insert(_pos, _first, _last); }
+          { ((StructureData*)object_)->atoms.insert(_pos, _first, _last); }
         //! Inserts one atom at given position.
-        iterator insert(iterator _pos, const_reference x) { impl_->atoms.insert(_pos, x); }
+        iterator insert(iterator _pos, const_reference x) { ((StructureData*)object_)->atoms.insert(_pos, x); }
         //! Inserts n atom at given position.
         void insert(iterator _pos, size_type _n, const_reference x)
-          { impl_->atoms.insert(_pos, _n, x); }
+          { ((StructureData*)object_)->atoms.insert(_pos, _n, x); }
         //! Erases atom at given positions.
-        iterator erase(iterator _pos) { return impl_->atoms.erase(_pos); }
+        iterator erase(iterator _pos) { return ((StructureData*)object_)->atoms.erase(_pos); }
         //! Erases range of atoms at given positions.
-        iterator erase(iterator _first, iterator _last) { return impl_->atoms.erase(_first, _last); }
+        iterator erase(iterator _first, iterator _last)
+          { return ((StructureData*)object_)->atoms.erase(_first, _last); }
         //! Clears all atoms from structure.
-        void clear() { impl_->atoms.clear(); }
+        void clear() { ((StructureData*)object_)->atoms.clear(); }
         //! Returns allocator object used to construct atom container.
-        allocator_type get_allocator() const { return impl_->atoms.get_allocator(); }
-        //! Initializer for cell.
-        math::details::SetCell< boost::mpl::int_<1> >
-          set_cell(types::t_real _x, types::t_real _y, types::t_real _z)
-            { return impl_->set_cell(_x, _y, _z); }
-        //! Initializer for cell.
-        math::details::SetCell< boost::mpl::int_<1> >
-          set_cell(math::rVector3d _pos)
-            { return impl_->set_cell(_pos); }
-
-        //! Access to cell parameters
-        types::t_real operator()(size_t i, size_t j) const { return cell()(i,j); }
-        //! Access to cell parameters
-        types::t_real& operator()(size_t i, size_t j) { return cell()(i,j); }
+        allocator_type get_allocator() const { return ((StructureData*)object_)->atoms.get_allocator(); }
 
         //! \brief True if both structures refer to the same object in memory.
         //! \details Does not compare values, just memory objects.
-        bool is_same(Structure const &_in) { return impl_ == _in.impl; }
+        bool is_same(Structure const &_in) { return object_ == _in.object_; }
 
         //! Returns  structure volume.
-        types::t_real volume() const { return std::abs(impl_->cell.determinant()); }
+        types::t_real volume() const { return std::abs(((StructureData*)object_)->cell.determinant()); }
 
         //! Transforms a structure according to an affine transformation.
         Structure transform(math::Affine3d const &_affine) const;
 
-        //! True if both structures refer to same data.
-        bool is_clone(Structure<T_TYPE> const &_in) const { return impl_ == _in.impl_; }
-#       ifdef LADA_DO_PYTHON
-          //! \brief Returns borrowed reference to python dictionary. 
-          //! \brief The python dictionary may created at this point, despite
-          //!        the const attribute.  Will not throw, but may return NULL
-          //!        on error, with a python exception set.
-          PyObject* pydict() const
-          {
-            if(impl_->pydict == NULL) impl_->pydict = PyDict_New();
-            return impl_->pydict;
-          }
-          //! \brief Sets the python attribute dictionary.
-          //! \note The reference to _dict is stolen. Your job to increment the
-          //!       reference count correctly. The current dictionary, however,
-          //!       is decre'f if it exists.
-          void pydict(PyObject *_dict) const
-          {
-            PyObject *dummy = impl_->pydict;
-            impl_->pydict = _dict;
-            Py_XDECREF(dummy);
-          }
-          //! Returns a refence to a wrapper around this object.
-          PyObject* pyself() const { return PyStructure_FromStructure(*this); }
-#       endif
+        //! Returns borrowed reference to dictionary.
+        PyObject* dict() const { return ((StructureData*)object_)->pydict; }
 
-      private:
-        //! used by AddAtomMixin to reach the atoms.
-        t_Atoms & atoms() { return impl_->atoms; }
-        //! Serializes a structure.
-        template<class ARCHIVE> void serialize(ARCHIVE & _ar, const unsigned int _version)
-          { _ar & impl_; }
-#       ifdef LADA_WITH_LNS
-          //! To load and save to xml-like input.
-          template<class T_ARCHIVE>
-            bool lns_access(T_ARCHIVE &_ar, load_n_save::version_type const _version);
-#       endif
-        //! Holds data.
-        boost::shared_ptr< StructureData<T_TYPE> > impl_;
-    };
-
-    template< class T_TYPE >
-      std::ostream& operator<<(std::ostream &_stream, Structure<T_TYPE> const &_str)
-        { return _stream << *_str.impl_; }
-
-#   ifdef LADA_WITH_LNS
-      template<class T_TYPE> template<class T_ARCHIVE>
-        bool Structure<T_TYPE> :: lns_access(T_ARCHIVE &_ar, load_n_save::version_type const _version) 
+        //! Check if instance is an atom.
+        static bool check(PyObject *_str) { return PyStructure_Check(_str); }
+        //! Check if instance is an atom.
+        static bool check_exact(PyObject *_str) { return PyStructure_CheckExact(_str); }
+        //! \brief Acquires new reference to an object.
+        //! \details incref's reference first, unless null.
+        //!          If non-null checks that it is a subtype of Structure.
+        //! \throws error::TypeError if not an Structure or subtype, both cpp and python.
+        static Structure acquire(PyObject *_str) 
         {
-          if(not impl_) impl_.reset(new StructureData<T_TYPE>());
-          return _ar & load_n_save::ext(impl_);
+          if(_str == NULL) return Structure((StructureData*)_str);
+          if(not Structure::check(_str))
+          {
+            LADA_PYERROR_FORMAT( TypeError,
+                                 "Expected an Structure or subtype, not %.200s",
+                                 _str->ob_type->tp_name );
+            BOOST_THROW_EXCEPTION(error::TypeError());
+          }
+          Py_INCREF(_str);
+          return Structure((StructureData*)_str);
         }
-#   endif
-    // Transforms a structure according to an affine transformation.
-    template<class T_TYPE> 
-      Structure<T_TYPE> Structure<T_TYPE>::transform(math::Affine3d const &_affine) const
-      {
-        Structure<T_TYPE> result = copy();
-        result.cell() = _affine.linear() * cell();
-        iterator i_first = result.begin();
-        iterator const i_end = result.end();
-        for(; i_first != i_end;  ++i_first)
-          i_first->pos() = _affine * i_first->pos();
-        return result;
-      }
-    // Deep copy of this structure.
-    template<class T_TYPE> 
-      Structure<T_TYPE> Structure<T_TYPE>::copy() const
-      {
-        Structure<T_TYPE> result;
-        result->cell = cell();
-        result->weight = weight();
-        result->energy = energy();
-        result->name   = name();
-        result->freeze = freeze();
-        result->scale  = scale();
-        result.reserve(size());
-        const_iterator i_first = begin();
-        const_iterator const i_end = end();
-        for(; i_first != i_end;  ++i_first) result.push_back(i_first->copy());
-        return result;
-      }
+        //! \brief Acquires new reference to an object.
+        //! \details incref's reference first, unless null.
+        //!          Does not check object is Structure or subtype, and does not
+        //!          throw.
+        static Structure acquire_(PyObject *_str) 
+          { Py_XINCREF(_str); return Structure((StructureData*)_str); }
+    };
 
   } // namespace crystal
 } // namespace LaDa

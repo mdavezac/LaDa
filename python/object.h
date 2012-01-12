@@ -62,6 +62,58 @@ namespace LaDa
         //! \brief Acquires a new reference.
         //! \details First incref's the reference (unless null).
         static Object acquire(PyObject *_in) { Py_XINCREF(_in); return Object(_in); }
+
+        //! \brief Returns a new reference to a python attribute. 
+        //! \details A python exception is set if attribute does not exist, and the
+        //!          function returns null.
+        inline Object pyattr(std::string const &_name) 
+          { return Object(PyObject_GetAttrString((PyObject*)object_, _name.c_str())); }
+        //! \brief Returns a new reference to a python attribute. 
+        //! \details A python exception is set if attribute does not exist, and the
+        //!          function returns null.
+        inline Object pyattr(PyObject* _name)
+          { return Object(PyObject_GetAttr((PyObject*)object_, _name)); }
+        //! \brief   Sets an attribute.
+        //! \details If cannot convert object using boost, then returns false
+        //!          and sets a python exception.
+        template<class T> 
+          inline bool pyattr(std::string const &_name, T const &_in) 
+          {
+            try
+            {
+              boost::python::object object(_in);
+              return PyObject_SetAttrString((PyObject*)object_, _name.c_str(), _in.ptr()) == 0;
+            }
+            catch(std::exception &e) 
+            {
+              LADA_PYERROR(internal, ("Could not set atomic attribute " + _name
+                                      + ": " + e.what()).c_str() );
+              return false;
+            }
+          }
+        //! \brief   Sets an attribute.
+        //! \details If cannot convert object using boost, then returns false
+        //!          and sets a python exception.
+        template<class T> 
+          inline bool pyattr(PyObject* _name, T const &_in) 
+          {
+            try
+            {
+              boost::python::object object(_in);
+              return PyObject_SetAttr((PyObject*)object_, _name, _in.ptr()) == 0;
+            }
+            catch(std::exception &e) 
+            {
+              LADA_PYERROR(internal, (std::string("Could not set atomic attribute: ") + e.what()).c_str() );
+              return false;
+            }
+          }
+        //! \brief Sets/Deletes attribute.
+        inline bool pyattr(std::string const& _name, PyObject *_in)
+          { return PyObject_SetAttrString((PyObject*)object_, _name.c_str(), _in) == 0; }
+        //! \brief Sets/Deletes attribute.
+        inline bool pyattr(PyObject* _name, PyObject *_in)
+          { return PyObject_SetAttr((PyObject*)object_, _name, _in) == 0; }
       protected:
         //! Python reference.
         PyObject* object_;
@@ -73,6 +125,18 @@ namespace LaDa
     //! \brief Steals a reference to an object.
     //! \details Input is XINCREF'ed before the return wrappers is created. 
     inline Object steal(PyObject *_in) { return Object(_in); }
+
+    //! \brief Dumps representation of an object.
+    //! \details Will throw c++ exceptions if python calls fail. Does not clear
+    //!          python exceptions.
+    inline std::ostream& operator<< (std::ostream &stream, Object const &_ob)
+    {
+      PyObject* const repr = PyObject_Repr(_ob.borrowed());
+      if(not repr) BOOST_THROW_EXCEPTION(error::internal());
+      char const * const result = PyString_AS_STRING(repr);
+      if(not result) BOOST_THROW_EXCEPTION(error::internal()); 
+      return stream << result;
+    }
   }
 }
 #endif

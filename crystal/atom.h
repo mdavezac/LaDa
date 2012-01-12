@@ -55,60 +55,27 @@ namespace LaDa
         //!          Use constructor to obtain that behavior.
         //!          The user should check that the atom is valid.
         Atom copy() const { return Atom(PyAtom_Copy((AtomData*)object_)); } 
-        //! \brief Returns a new reference to a python attribute. 
-        //! \details An python exception is set if attribute does not exist, and the
-        //!          function returns null.
-        inline PyObject* pyattr(std::string const &_name) 
-          { return PyObject_GetAttrString((PyObject*)object_, _name.c_str()); }
-        //! \brief Returns a new reference to a python attribute. 
-        //! \details An exception is set if attribute does not exist, and the
-        //!          function returns null.
-        inline PyObject* pyattr(PyObject* _name)
-          { return PyObject_GetAttr((PyObject*)object_, _name); }
-        //! \brief   Sets an attribute.
-        //! \details If cannot convert object using boost, then returns false
-        //!          and sets a python exception.
-        template<class T> 
-          inline bool pyattr(std::string const &_name, T const &_in) 
-          {
-            try
-            {
-              boost::python::object object(_in);
-              return PyObject_SetAttrString((PyObject*)object_, _name.c_str(), _in.ptr()) == 0;
-            }
-            catch(std::exception &e) 
-            {
-              LADA_PYERROR(internal, ("Could not set atomic attribute " + _name
-                                      + ": " + e.what()).c_str() );
-              return false;
-            }
-          }
-        //! \brief   Sets an attribute.
-        //! \details If cannot convert object using boost, then returns false
-        //!          and sets a python exception.
-        template<class T> 
-          inline bool pyattr(PyObject* _name, T const &_in) 
-          {
-            try
-            {
-              boost::python::object object(_in);
-              return PyObject_SetAttr((PyObject*)object_, _name, _in.ptr()) == 0;
-            }
-            catch(std::exception &e) 
-            {
-              LADA_PYERROR(internal, (std::string("Could not set atomic attribute: ") + e.what()).c_str() );
-              return false;
-            }
-          }
-        //! \brief Sets/Deletes attribute.
-        inline bool pyattr(std::string const& _name, PyObject *_in)
-          { return PyObject_SetAttrString((PyObject*)object_, _name.c_str(), _in) == 0; }
-        //! \brief Sets/Deletes attribute.
-        inline bool pyattr(PyObject* _name, PyObject *_in)
-          { return PyObject_SetAttr((PyObject*)object_, _name, _in) == 0; }
 
         //! Returns borrowed reference to dictionary.
         PyObject* dict() const { return ((AtomData*)object_)->pydict; }
+
+        //! Points to data.
+        AtomData const* operator->() const { return (AtomData*)object_; }
+        //! Points to data.
+        AtomData* operator->() { return (AtomData*)object_; }
+
+        //! Returns const reference to pos.
+        math::rMatrix3d const & pos() const { return ((AtomData*)object_)->pos; }
+        //! Returns reference to pos.
+        math::rMatrix3d & pos() { return ((AtomData*)object_)->pos; }
+        //! Returns const reference to pos.
+        math::rMatrix3d::Scalar const & pos(size_t i) const { return ((AtomData*)object_)->pos(i); }
+        //! Returns reference to pos.
+        math::rMatrix3d::Scalar & pos(size_t i) { return ((AtomData*)object_)->pos(i); }
+
+        //! Returns type as a python object.
+        python::Object type() const { return python::Object::acquire((AtomData*)object_->type); }
+ 
 
         //! Check if instance is an atom.
         static bool check(PyObject *_atom) { return PyAtom_Check(_atom); }
@@ -138,18 +105,6 @@ namespace LaDa
         static Atom acquire_(PyObject *_atom) 
           { Py_XINCREF(_atom); return Atom((AtomData*)_atom); }
     };
-
-    //! \brief Dumps representation of atom.
-    //! \details Will throw c++ exceptions if python calls fail. Does not clear
-    //!          python exceptions.
-    inline std::ostream& operator<< (std::ostream &stream, Atom const &_atom)
-    {
-      PyObject* const repr = PyObject_Repr(_atom.borrowed());
-      if(not repr) BOOST_THROW_EXCEPTION(error::internal());
-      char const * const result = PyString_AS_STRING(repr);
-      if(not result) BOOST_THROW_EXCEPTION(error::internal()); 
-      return stream << result;
-    }
   } // namespace Crystal
 } // namespace LaDa
   
