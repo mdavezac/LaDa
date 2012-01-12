@@ -29,9 +29,11 @@ PyMODINIT_FUNC initcppwrappers(void)
 
   if (PyType_Ready(LaDa::crystal::atom_type()) < 0) return;
   if (PyType_Ready(LaDa::crystal::structure_type()) < 0) return;
+  if (PyType_Ready(LaDa::crystal::structureiterator_type()) < 0) return;
 
   Py_INCREF(LaDa::crystal::atom_type());
   Py_INCREF(LaDa::crystal::structure_type());
+  Py_INCREF(LaDa::crystal::structureiterator_type());
 
   char const doc[] =  "Wrapper around C++ atom/structure class and affiliates.";
   PyObject* module = Py_InitModule3("cppwrappers", crystal_methods, doc);

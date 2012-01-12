@@ -49,6 +49,8 @@ namespace LaDa
       StructureData *PyStructure_Copy(StructureData* _self, PyObject *_memo = NULL);
       // Returns pointer to structure type.
       PyTypeObject* structure_type();
+      //! Returns address of structure iterator type object.
+      PyTypeObject* structureiterator_type();
     }
 
   } // namespace Crystal

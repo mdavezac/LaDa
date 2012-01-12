@@ -18,21 +18,22 @@ namespace LaDa
     class Object 
     {
       public:
-        //! Acquires a python reference.
+        //! Steals a python reference.
         Object(PyObject* _in = NULL) : object_(_in) {}
         //! Copies a python reference.
-        Object(Object const &_in) : object_(_in.object_) { Py_XINCREF(object_); }
+        Object(Object const &_in) { Py_XINCREF(_in.object_); object_ = _in.object_; }
         //! Decrefs a python reference on destruction.
-        ~Object() { Py_XDECREF(object_); object_ = NULL; }
-        //! \brief Returns a borrowed reference. 
-        //! \details Does not check for null.
-        operator PyObject* () const { return object_; }
+        ~Object() { PyObject* dummy = object_; object_ = NULL; Py_XDECREF(dummy);}
+        //! Assignment operator. Gotta let go of current object.
+        void operator=(Object const &_in) { Object::reset(_in.borrowed()); }
+        //! Assignment operator. Gotta let go of current object.
+        void operator=(PyObject *_in) { Object::reset(_in); }
         //! Casts to bool to check validity of reference.
         operator bool() const { return object_ != NULL; }
         //! True if reference is valid.
         bool is_valid () const { return object_ != NULL; }
         //! \brief Resets the wrapped refence.
-        //! \details Decrefs the current object if needed.
+        //! \details Decrefs the current object if needed. Incref's the input object.
         void reset(PyObject *_in = NULL)
         {
           PyObject * const dummy(object_);
@@ -49,10 +50,18 @@ namespace LaDa
         //!          anymore. The reference should be stolen by the caller.
         PyObject* release() { PyObject *result(object_); object_ = NULL; return result; }
         //! Returns a new reference to object.
-        PyObject* new_ref() const { Py_XINCREF(object_); return object_; }
+        PyObject* new_ref() const
+        { 
+          if(object_ == NULL) return NULL; 
+          Py_INCREF(object_);
+          return object_; 
+        }
         //! Returns a borrowed reference to object.
         PyObject* borrowed() const { return object_; }
 
+        //! \brief Acquires a new reference.
+        //! \details First incref's the reference (unless null).
+        static Object acquire(PyObject *_in) { Py_XINCREF(_in); return Object(_in); }
       protected:
         //! Python reference.
         PyObject* object_;

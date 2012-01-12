@@ -20,6 +20,10 @@
 #include "structure_members.hpp"
 // creation, deallocation, initialization.
 #include "structure_cdi.hpp"
+// sequence functions.
+#include "structure_sequence.hpp"
+// iterator functions and type.
+#include "structure_iterator.hpp"
 
 namespace LaDa
 {
@@ -67,11 +71,16 @@ namespace LaDa
       if(not deepcopystr) { Py_DECREF(copymod); return NULL; }
       else if(_self->pydict != NULL)
       {
-        if(_memo == NULL)
-          result->pydict = PyObject_CallMethodObjArgs(copymod, deepcopystr, _self->pydict, NULL);
-        else
-          result->pydict = PyObject_CallMethodObjArgs(copymod, deepcopystr, _self->pydict, _memo, NULL);
+        result->pydict = PyObject_CallMethodObjArgs(copymod, deepcopystr, _self->pydict, _memo, NULL);
         if(result->pydict == NULL) { Py_DECREF(result);  result == NULL; }
+      }
+      std::vector<Atom>::const_iterator i_first = _self->atoms.begin();
+      std::vector<Atom>::const_iterator const i_end = _self->atoms.end();
+      for(; i_first != i_end; ++i_first)
+      {
+        Atom atom((AtomData*)PyObject_CallMethodObjArgs(copymod, deepcopystr, i_first->borrowed(), _memo, NULL));
+        if(not atom) return NULL;
+        result->atoms.push_back(atom);
       }
 
       Py_DECREF(copymod);
@@ -81,6 +90,23 @@ namespace LaDa
     // Returns pointer to structure type.
     PyTypeObject* structure_type()
     {
+      static PyMappingMethods structure_as_mapping = {
+          (lenfunc)structure_size,
+          (binaryfunc)structure_subscript,
+          (objobjargproc)structure_ass_subscript
+      };
+      static PySequenceMethods structure_as_sequence = {
+          (lenfunc)structure_size,                    /* sq_length */
+          (binaryfunc)NULL,                           /* sq_concat */
+          (ssizeargfunc)NULL,                         /* sq_repeat */
+          (ssizeargfunc)structure_getitem,            /* sq_item */
+          (ssizessizeargfunc)NULL,                    /* sq_slice */
+          (ssizeobjargproc)structure_setitem,         /* sq_ass_item */
+          (ssizessizeobjargproc)NULL,                 /* sq_ass_slice */
+          (objobjproc)NULL,                           /* sq_contains */
+          (binaryfunc)NULL,                           /* sq_inplace_concat */
+          (ssizeargfunc)NULL,                         /* sq_inplace_repeat */
+      };
 #     ifdef LADA_DECLARE
 #       error LADA_DECLARE already defined.
 #     endif
@@ -136,12 +162,41 @@ namespace LaDa
                         "initialize atoms in`lada.crystal.cppwrappers.Atom.__init__`."
                         "Finally, this function can be chained as follows:\n\n"
                         ">>> structure.add_atom(0,0,0, 'Au')\\\n"
-                        "...                   (0.25, 0.25, 0.25, ['Pd', 'Si'], m=5)\\\n"
-                        "...                   (atom_from_another_structure)\n\n"
+                        "...          .add_atom(0.25, 0.25, 0.25, ['Pd', 'Si'], m=5)\\\n"
+                        "...          .add_atom(atom_from_another_structure)\n\n"
                         "In the example above, both ``structure`` and the *other* structure will "
                         "reference the same atom (``atom_from_another_structure``). "
                         "Changing, say, that atom's type in one structure will also "
                         "change it in the other."),
+          LADA_DECLARE( insert, structure_insert, VARARGS, 
+                        "Inserts atom at given position.\n\n"
+                        ":Parameters:\n"                        
+                        "  index : int\n    Position at which to insert Atom.\n"
+                        "  atom : Atom\n    Atom or subtype to insert." ),
+          LADA_DECLARE(pop, structure_pop, O, "Removes and returns atom at given position."),
+          LADA_DECLARE(clear, structure_clear, NOARGS, "Removes all atoms from structure."),
+          LADA_DECLARE( extend, structure_extend, O, 
+                        "Appends list of atoms to structure.\n\n"
+                        "The argument is any iterable objects containing only atoms, "
+                        "including another Structure." ),
+          LADA_DECLARE(append, structure_append, O, "Appends an Atom or subtype to the structure.\n"),
+          LADA_DECLARE( __getitem__, structure_subscript, O|METH_COEXIST,
+                        "Retrieves atom or slice.\n\n"
+                        ":Parameters:\n"
+                        "  index : int or slice\n"
+                        "    If an integer, returns a refence to that atom. "
+                            "If a slice, returns a list with all atoms in that slice." ),
+          LADA_DECLARE( __setitem__, structure_setitemnormal, VARARGS|METH_COEXIST,
+                        "Sets atom or atoms.\n\n"
+                        ":Parameters:\n"
+                        "  index : int or slice\n"
+                        "    If an integers, sets that atom to the input value. "
+                        "    If a slice, then sets all atoms in refered to in the structure "
+                             "to the corresponding atom in the value.\n"
+                        "  value : Atom or iterable over Atom\n"
+                        "    If index is an integer, this should be an atom. "
+                            "If index is a slice, then this should be a sequence of atoms of "
+                            "the exact length of the slice."),
           {NULL}  /* Sentinel */
       };
 #     undef LADA_DECLARE
@@ -159,26 +214,27 @@ namespace LaDa
           0,                                 /*tp_compare*/
           (reprfunc)structure_repr,          /*tp_repr*/
           0,                                 /*tp_as_number*/
-          0,                                 /*tp_as_sequence*/
-          0,                                 /*tp_as_mapping*/
+          &structure_as_sequence,            /*tp_as_sequence*/
+          &structure_as_mapping,             /*tp_as_mapping*/
           0,                                 /*tp_hash */
           0,                                 /*tp_call*/
           0,                                 /*tp_str*/
           0,                                 /*tp_getattro*/
           0,                                 /*tp_setattro*/
           0,                                 /*tp_as_buffer*/
-          Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC, /*tp_flags*/
-          "Defines a structure.\n\n"
+          Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC | Py_TPFLAGS_HAVE_ITER, /*tp_flags*/
+          "Defines a structure.\n\n"         /*tp_doc*/
             "__init__ accepts different kind of input.\n"
             "  - if 9 numbers are given as arguments, these create the cell vectors, "
                  "where the first three numbers define the first row of the matrix"
-                 "(not the first cell vector, eg column\n"
+                 "(not the first cell vector, eg column).\n"
             "  - if only one object is given it should be the cell matrix.\n"
             "  - the cell can also be given as a keyword argument.\n"
             "  - the scale can only be given as a keyword argument.\n"
             "  - All other keyword arguments become attributes. "
                  "In other words, one could add ``magnetic=0.5`` if one wanted to "
-                 "specify the magnetic moment of a structure.\n\n"
+                 "specify the magnetic moment of a structure. It would later be "
+                 "accessible as an attribute, eg as ``structure.magnetic``.\n\n"
             "Note that the cell is always owned by the object. "
             "Two structures will not own the same cell object. "
             "The cell given on input is *copied*, *not* referenced. "
@@ -188,7 +244,7 @@ namespace LaDa
           (inquiry)structure_gcclear,        /* tp_clear */
           0,		                     /* tp_richcompare */
           offsetof(StructureData, weakreflist),   /* tp_weaklistoffset */
-          0,		                     /* tp_iter */
+          (getiterfunc)structureiterator_create,  /* tp_iter */
           0,		                     /* tp_iternext */
           methods,                           /* tp_methods */
           members,                           /* tp_members */
@@ -205,6 +261,42 @@ namespace LaDa
       if(dummy.tp_getattro == 0) dummy.tp_getattro = PyObject_GenericGetAttr;
       if(dummy.tp_setattro == 0) dummy.tp_setattro = PyObject_GenericSetAttr;
       return &dummy;
+    }
+
+    // Returns pointer to structure iterator type.
+    PyTypeObject* structureiterator_type()
+    { 
+      static PyTypeObject type = {
+          PyObject_HEAD_INIT(NULL)
+          0,                                          /*ob_size*/
+          "lada.crystal.cppwrappers.StructureIter",   /*tp_name*/
+          sizeof(StructureIterator),                  /*tp_basicsize*/
+          0,                                          /*tp_itemsize*/
+          (destructor)structureiterator_dealloc,      /*tp_dealloc*/
+          0,                                          /*tp_print*/
+          0,                                          /*tp_getattr*/
+          0,                                          /*tp_setattr*/
+          0,                                          /*tp_compare*/
+          0,                                          /*tp_repr*/
+          0,                                          
+          0,                                          /*tp_as_sequence*/
+          0,                                          /*tp_as_mapping*/
+          0,                                          /*tp_hash */
+          0,                                          /*tp_call*/
+          0,                                          /*tp_str*/
+          0,                                          /*tp_getattro*/
+          0,                                          /*tp_setattro*/
+          0,                                          /*tp_as_buffer*/
+          Py_TPFLAGS_HAVE_ITER,
+          "Iterator over atoms in a structure.",
+          0,                                          /* tp_traverse */
+          0,                                          /* tp_clear */
+          0,                                          /* tp_richcompare */
+          0,		                              /* tp_weaklistoffset */
+          (getiterfunc)structureiterator_iter,        /* tp_iter */
+          (iternextfunc)structureiterator_next,       /* tp_iternext */
+      };
+      return &type;
     }
   } // namespace Crystal
 } // namespace LaDa

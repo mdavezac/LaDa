@@ -1,5 +1,5 @@
 set(LIBCRYSTAL_HEADERS atom.h atom_base.h structure_data.h)
-set(LIBCRYSTAL_PYHEADERS atom_cdi.hpp atom_getset.hpp structure_cdi.hpp structure_getset.hpp)
+set(LIBCRYSTAL_PYHEADERS atom_cdi.hpp atom_getset.hpp structure_cdi.hpp structure_getset.hpp structure_sequence.hpp)
 set(LIBCRYSTAL_SOURCES atom_base.cc structure_data.cc )
 
 include_directories(${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDES})

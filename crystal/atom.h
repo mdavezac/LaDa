@@ -33,7 +33,9 @@ namespace LaDa
 
         //! Swaps data of two atoms.
         void swap(Atom &_in) { return std::swap(object_, _in.object_); }
-        //! Acquires another atom. 
+        //! \brief Acquires another atom. 
+        //! \throws error::TypeError, both c++ and python, when _in is not an
+        //!         Atom or subtype.
         void reset(PyObject *_in) 
         {
           if(_in != NULL and not PyAtom_Check(_in))
@@ -107,6 +109,34 @@ namespace LaDa
 
         //! Returns borrowed reference to dictionary.
         PyObject* dict() const { return ((AtomData*)object_)->pydict; }
+
+        //! Check if instance is an atom.
+        static bool check(PyObject *_atom) { return PyAtom_Check(_atom); }
+        //! Check if instance is an atom.
+        static bool check_exact(PyObject *_atom) { return PyAtom_CheckExact(_atom); }
+        //! \brief Acquires new reference to an object.
+        //! \details incref's reference first, unless null.
+        //!          If non-null checks that it is a subtype of Atom.
+        //! \throws error::TypeError if not an Atom or subtype, both cpp and python.
+        static Atom acquire(PyObject *_atom) 
+        {
+          if(_atom == NULL) return Atom((AtomData*)_atom);
+          if(not Atom::check(_atom))
+          {
+            LADA_PYERROR_FORMAT( TypeError,
+                                 "Expected an Atom or subtype, not %.200s",
+                                 _atom->ob_type->tp_name );
+            BOOST_THROW_EXCEPTION(error::TypeError());
+          }
+          Py_INCREF(_atom);
+          return Atom((AtomData*)_atom);
+        }
+        //! \brief Acquires new reference to an object.
+        //! \details incref's reference first, unless null.
+        //!          Does not check object is Atom or subtype, and does not
+        //!          throw.
+        static Atom acquire_(PyObject *_atom) 
+          { Py_XINCREF(_atom); return Atom((AtomData*)_atom); }
     };
 
     //! \brief Dumps representation of atom.

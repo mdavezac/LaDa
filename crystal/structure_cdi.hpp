@@ -58,12 +58,16 @@ namespace LaDa
     static int structure_traverse(StructureData *self, visitproc visit, void *arg)
     {
       Py_VISIT(self->pydict);
+      std::vector<Atom>::const_iterator i_first = self->atoms.begin();
+      std::vector<Atom>::const_iterator const i_end = self->atoms.end();
+      for(; i_first != i_end; ++i_first) Py_VISIT(i_first->borrowed());
       return 0;
     }
   
     static int structure_gcclear(StructureData *self)
     { 
       Py_CLEAR(self->pydict);
+      self->atoms.clear();
       return 0;
     }
   }

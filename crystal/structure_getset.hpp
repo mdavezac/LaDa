@@ -154,11 +154,11 @@ namespace LaDa
         LADA_PYERROR(TypeError, "Cannot delete scale attribute.");
         return -1;
       }
-      if(python::Quantity::isinstance(_value))
+      if(PyFloat_Check(_value)) _self->scale = PyFloat_AS_DOUBLE(_value); 
+      else if(PyInt_Check(_value)) _self->scale = PyInt_AS_LONG(_value); 
+      else if(python::Quantity::isinstance(_value))
         try { _self->scale = python::Quantity(_value).get("angstrom"); }
         catch(...) { return -1; }
-      else if(PyFloat_Check(_value)) _self->scale = PyFloat_AS_DOUBLE(_value); 
-      else if(PyInt_Check(_value)) _self->scale = PyInt_AS_LONG(_value); 
       else
       {
         LADA_PYERROR(TypeError, "Input to scale is not an acceptable type.");
