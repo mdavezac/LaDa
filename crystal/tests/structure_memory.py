@@ -1,6 +1,6 @@
 """ Check memory deallocation.
 
-    Creates cyclic references through an atom's dictionary.
+    Creates cyclic references through a structure's dictionary.
     A number of instances are created and gets difference in memory hogged by python.
     These instances are then deleted and gc.collect is called.
     We then go through a loop where the instantiation/creation steps are
@@ -24,9 +24,13 @@ def test(Class):
     return int(output)
 
   def mklist():
-    result = [Class(0.1, 0.2, 0.5) for u in range(1000)]
-    for b in result: b.m, b.type = ['Au', 'Pd']
-    b = [(u.pos, u.type) for u in result]
+    from numpy import identity
+    structure = Class(identity(3)*0.25, scale=5.45, m=5)\
+                 .add_atom(0,0,0, "Au")\
+                 .add_atom(0.5,0.5,0.5, "Au")
+    result = [structure for u in range(100)]
+    for r in result: r[0].parent = [r]
+    b = [u.cell for u in result]
     return result, b
 
   n = 10
@@ -52,17 +56,17 @@ def test(Class):
   assert len(gc.garbage) == 0
 
 if __name__ == "__main__": 
-  from lada.crystal.cppwrappers import Atom
+  from lada.crystal.cppwrappers import Structure
   from sys import argv, path 
   if len(argv) > 0: path.extend(argv[1:])
   
   # tries to run test with normal class.
-  test(Atom) 
+  test(Structure) 
  
   # tries to run test with other class. 
   # check passage through init.
   check_passage = False
-  class Subclass(Atom):
+  class Subclass(Structure):
     def __init__(self, *args, **kwargs):
       global check_passage
       check_passage = True

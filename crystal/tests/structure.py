@@ -154,6 +154,29 @@ def test_copy(Class, AtomClass):
   assert a is shallow(a)
   b = deepcopy(a)
   assert a is not b
+  assert b.__class__ is Class
+  assert all(abs(a.cell-b.cell) < 1e-8) and abs(a.scale-b.scale) < 1e-8 \
+         and a.__dict__ is not b.__dict__ and len(b.__dict__) == 1 \
+         and getattr(b, 'm', False) == True \
+         and len(b) == 3 
+  for i, j in zip(a, b):
+    assert i is not j
+    assert i.__class__ is j.__class__
+    assert all(abs(i.pos - j.pos) < 1e-8) and i.type == j.type
+    if len(i.__dict__) == 1: 
+      assert len(j.__dict__) == 1 and getattr(j, 'm', False) == True
+
+def test_pickle(Class, AtomClass):
+  """ Check pickling. """
+  from numpy import all, abs, array, identity
+  from pickle import loads, dumps
+  a = Class(identity(3)*2.5, scale=5.45, m=True)\
+        .add_atom(AtomClass(0,0,0, "Au"))\
+        .add_atom(AtomClass(0.25, 0.5, 0.25, "Au", "Pd", m=True))\
+        .add_atom(AtomClass(0.1, 0.1, 0.1, 6, m=True))
+  b = loads(dumps(a))
+  assert a is not b
+  assert b.__class__ is Class
   assert all(abs(a.cell-b.cell) < 1e-8) and abs(a.scale-b.scale) < 1e-8 \
          and a.__dict__ is not b.__dict__ and len(b.__dict__) == 1 \
          and getattr(b, 'm', False) == True \
@@ -192,6 +215,7 @@ if __name__ == "__main__":
   test_iterator(Structure, Atom) 
   test_sequence(Structure, Atom) 
   test_copy(Structure, Atom)
+  test_pickle(Structure, Atom)
 
 
   # tries to run test with other class. 
@@ -211,4 +235,5 @@ if __name__ == "__main__":
   test_iterator(StructureSubclass, AtomSubclass) 
   test_sequence(StructureSubclass, AtomSubclass) 
   test_copy(StructureSubclass, AtomSubclass)
+  test_pickle(StructureSubclass, AtomSubclass)
   assert check_passage[0] and check_passage[1]

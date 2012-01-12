@@ -16,14 +16,14 @@
 
 // structure getters/settters.
 #include "structure_getset.hpp"
+// iterator functions and type.
+#include "structure_iterator.hpp"
 // structure member functions.
 #include "structure_members.hpp"
 // creation, deallocation, initialization.
 #include "structure_cdi.hpp"
 // sequence functions.
 #include "structure_sequence.hpp"
-// iterator functions and type.
-#include "structure_iterator.hpp"
 
 namespace LaDa
 {
@@ -178,7 +178,7 @@ namespace LaDa
           LADA_DECLARE( extend, structure_extend, O, 
                         "Appends list of atoms to structure.\n\n"
                         "The argument is any iterable objects containing only atoms, "
-                        "including another Structure." ),
+                        "e.g. another Structure." ),
           LADA_DECLARE(append, structure_append, O, "Appends an Atom or subtype to the structure.\n"),
           LADA_DECLARE( __getitem__, structure_subscript, O|METH_COEXIST,
                         "Retrieves atom or slice.\n\n"

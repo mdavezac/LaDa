@@ -143,8 +143,10 @@ namespace LaDa
       char getstate[] = "__getstate__";
       python::Object state = PyObject_CallMethod((PyObject*)_self, getstate, NULL, NULL);
       if(not state) return NULL;
+      python::Object iterator = structureiterator_create(_self);
+      if(not iterator) return NULL;
 
-      return PyTuple_Pack(3, type.borrowed(), tuple.borrowed(), state.borrowed());
+      return PyTuple_Pack(4, type.borrowed(), tuple.borrowed(), state.borrowed(), iterator.borrowed());
     }
 
     // Implements getstate for pickling.
@@ -160,20 +162,8 @@ namespace LaDa
       python::Object dict = _self->pydict == NULL ? python::Object::acquire(Py_None): PyDict_New();
       if(not dict) return NULL;
       if(_self->pydict != NULL and PyDict_Merge(dict.borrowed(), _self->pydict, 0) < 0) return NULL;
-      // get all atoms.
-      python::Object atoms = PyTuple_New(_self->atoms.size());
-      if(not atoms) return NULL;
-      std::vector<Atom>::const_iterator i_first = _self->atoms.begin();
-      std::vector<Atom>::const_iterator const i_end = _self->atoms.end();
-      char mname[] = "__getstate__";
-      for(Py_ssize_t i(0); i_first != i_end; ++i_first, ++i) 
-      {
-        python::Object item = PyObject_CallMethod(i_first->borrowed(), mname, NULL);
-        if(not item) return NULL;
-        if(PyTuple_SET_ITEM(atoms.borrowed(), i, item.release()) < 0) return NULL;
-      }
 
-      return PyTuple_Pack(4, cell.borrowed(), scale.borrowed(), dict.borrowed(), atoms.borrowed());
+      return PyTuple_Pack(3, cell.borrowed(), scale.borrowed(), dict.borrowed());
     }
 
     // Implements setstate for pickling.
@@ -184,7 +174,7 @@ namespace LaDa
         LADA_PYERROR(TypeError, "Expected state to be a tuple.");
         return NULL;
       }
-      if(PyTuple_Size(_tuple) != 4)
+      if(PyTuple_Size(_tuple) != 3)
       {
         LADA_PYERROR(TypeError, "Expected state to be a 4-tuple.");
         return NULL;
@@ -193,25 +183,6 @@ namespace LaDa
       if(structure_setcell(_self, PyTuple_GET_ITEM(_tuple, 0), NULL) < 0) return NULL;
       if(structure_setscale(_self, PyTuple_GET_ITEM(_tuple, 1), NULL) < 0) return NULL;
 
-      PyObject *atoms = PyTuple_GetItem(_tuple, 3);
-      if(not PyTuple_Check(atoms)) 
-      {
-        LADA_PYERROR(TypeError, "Expected atom container to be a tuple.");
-        return NULL;
-      }
-      // then atoms.
-      Py_ssize_t const N(PyTuple_Size(atoms));
-      _self->atoms.reserve(N);
-      for(Py_ssize_t i(0); i < N; ++i)
-      {
-        AtomData* atom = (AtomData*)PyTuple_GET_ITEM(atoms, i);
-        if(not PyAtom_Check(atom)) 
-        {
-          LADA_PYERROR(TypeError, "Expected an atom when unpickling.");
-          return NULL;
-        }
-        _self->atoms.push_back(Atom::acquire_((PyObject*)atom));
-      }
       // finally, dictionary, so we can return without issue on error.
       PyObject *dict = PyTuple_GET_ITEM(_tuple, 2);
       if(dict == Py_None) { Py_RETURN_NONE; }
