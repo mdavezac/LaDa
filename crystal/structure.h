@@ -4,6 +4,7 @@
 #include "LaDaConfig.h"
 
 #include "structure_data.h"
+#include "atom.h"
 
 
 
@@ -16,39 +17,41 @@ namespace LaDa
     {
       public:
         //! \typedef The type of the collection of atoms. 
-        typedef typename Atom t_Atom;
+        typedef Atom t_Atom;
         //! \typedef The type of the collection of atoms. 
-        typedef typename std::vector<t_Atom> t_Atoms;
+        typedef std::vector<t_Atom> t_Atoms;
         //! \typedef Type of the iterator.
-        typedef typename t_Atoms::iterator iterator;
+        typedef t_Atoms::iterator iterator;
         //! \typedef Type of the constant iterator.
-        typedef typename t_Atoms::const_iterator const_iterator;
+        typedef t_Atoms::const_iterator const_iterator;
         //! \typedef Type of the reverse iterator.
-        typedef typename t_Atoms::reverse_iterator reverse_iterator;
+        typedef t_Atoms::reverse_iterator reverse_iterator;
         //! \typedef Type of the reverse constant iterator.
-        typedef typename t_Atoms::const_reverse_iterator const_reverse_iterator;
+        typedef t_Atoms::const_reverse_iterator const_reverse_iterator;
         //! \typedef Type of the atoms.
-        typedef typename t_Atoms::value_type value_type;
+        typedef t_Atoms::value_type value_type;
         //! \typedef Type of the reference to the atoms.
-        typedef typename t_Atoms::reference reference;
+        typedef t_Atoms::reference reference;
         //! \typedef Type of the constant reference to the atoms.
-        typedef typename t_Atoms::const_reference const_reference;
+        typedef t_Atoms::const_reference const_reference;
         //! \typedef Type of the size.
-        typedef typename t_Atoms::size_type size_type;
+        typedef t_Atoms::size_type size_type;
         //! \typedef Type of the difference.
-        typedef typename t_Atoms::difference_type difference_type;
+        typedef t_Atoms::difference_type difference_type;
         //! \typedef Type of the pointer to the atoms.
-        typedef typename t_Atoms::pointer pointer;
+        typedef t_Atoms::pointer pointer;
         //! \typedef Type of the allocator used for the atoms.
-        typedef typename t_Atoms::allocator_type allocator_type;
+        typedef t_Atoms::allocator_type allocator_type;
 
         //! Constructor
         Structure() : Object() { object_ = (PyObject*) PyStructure_New(); }
         //! Cloning Constructor
-        Structure(const Structure &_c) : object_(_c) {}
+        Structure(const Structure &_c) : Object(_c) {}
+        //! Shallow copy Constructor
+        Structure(StructureData *_data ) : Object((PyObject*)_data) {}
         //! Full Initialization.
         Structure(PyObject *_args, PyObject *_kwargs) : Object()
-          { object_ = (PyObject*)PyStructure_NewFromArgs(atom_type(), _args, _kwargs); }
+          { object_ = (PyObject*)PyStructure_NewFromArgs(structure_type(), _args, _kwargs); }
 
         //! Returns const reference to cell.
         math::rMatrix3d const & cell() const { return ((StructureData*)object_)->cell; }
@@ -95,15 +98,15 @@ namespace LaDa
         //! Maximum number of atoms.
         size_type max_size() const { return ((StructureData*)object_)->atoms.max_size(); }
         //! Number of atoms.
-        void resize(size_type _n) { ((StructureData*)object_)->atoms.size(_n); }
+        void resize(size_type _n) { ((StructureData*)object_)->atoms.resize(_n); }
         //! Number of atoms.
-        void resize(size_type _n, const_reference _obj) { ((StructureData*)object_)->atoms.size(_n, _obj); }
+        void resize(size_type _n, const_reference _obj) { ((StructureData*)object_)->atoms.resize(_n, _obj); }
         //! Attempts to reserve memory for atoms.
         void reserve(size_type _n) { ((StructureData*)object_)->atoms.reserve(_n); }
         //! Reserved memory.
         size_type capacity() const { return ((StructureData*)object_)->atoms.capacity(); }
         //! Whether any atoms are in the structure.
-        bool empty() const { return ((StructureData*)object_)->empty(); }
+        bool empty() const { return ((StructureData*)object_)->atoms.empty(); }
         //! Returns nth atom.
         reference operator[](size_type _n) { return ((StructureData*)object_)->atoms[_n]; }
         //! Returns nth atom.

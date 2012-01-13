@@ -11,7 +11,6 @@
 #include <math/smith_normal_form.h>
 
 #include "structure.h"
-#include "compare_sites.h"
 #include "exceptions.h"
 #include "utilities.h"
 
@@ -21,27 +20,35 @@ namespace LaDa
   namespace crystal 
   {
 
-    template<class T_TYPE, class T_DERIVED>
-      Structure<T_TYPE> supercell( Structure<T_TYPE> const &_lattice,
-                                           Eigen::DenseBase<T_DERIVED> const &_supercell )
+    template<class T_DERIVED>
+      Structure supercell(Structure const &_lattice, Eigen::DenseBase<T_DERIVED> const &_supercell)
       {
+        if(_lattice.size() == 0) 
+        {
+          BOOST_THROW_EXCEPTION(error::ValueError() << error::string("Lattice is empty."));
+          return Structure();
+        }
         namespace bt = boost::tuples;
-        Structure<T_TYPE> result; 
+        Structure result = _lattice.copy(); 
+        if(not result) 
+          BOOST_THROW_EXCEPTION(error::ValueError() << error::string("Could not deepcopy the lattice."));
+        result.clear();
         result->cell = _supercell;
-        result->scale = _lattice->scale;
-        if(_lattice->name.size() != 0) result->name = "supercell of " + _lattice->name;
-        result->energy = _lattice->energy * types::t_real(result.size())/types::t_real(_lattice.size());
-
+        result.pyattr("lattice", _lattice);
+        if(_lattice.hasattr("name") and PyString_Check(_lattice.pyattr("name").borrowed()) )
+        {
+          char *const attr = PyString_AS_STRING(_lattice.pyattr("name").borrowed());
+          if(attr != "" and not result.pyattr("name", "supercell of " + std::string(attr)) ) 
+            PyErr_Clear();
+        }
         math::t_SmithTransform transform = math::smith_transform( _lattice.cell(), result.cell());
       
         math::iVector3d &smith = bt::get<1>(transform);
         const math::rMatrix3d factor(bt::get<0>(transform).inverse());
         math::rMatrix3d inv_cell( result.cell().inverse() ); 
         result.reserve(smith(0)*smith(1)*smith(2)*_lattice.size());
-        typedef typename Structure<T_TYPE>::iterator t_iterator;
-        typedef typename Structure<T_TYPE>::const_iterator t_citerator;
-        t_citerator const i_site_begin = _lattice.begin();
-        t_citerator const i_site_end = _lattice.end();
+        Structure::const_iterator const i_site_begin = _lattice.begin();
+        Structure::const_iterator const i_site_end = _lattice.end();
         
         for( math::iVector3d::Scalar i(0); i < smith(0); ++i )
           for( math::iVector3d::Scalar j(0); j < smith(1); ++j )
@@ -51,11 +58,18 @@ namespace LaDa
               const math::rVector3d vec( factor * math::rVector3d(i,j,k) );
             
               // adds all lattice sites.
-              types::t_unsigned l(0);
-              for( t_citerator i_site(i_site_begin); i_site != i_site_end; ++i_site, ++l)
+              long l(0);
+              for(Structure::const_iterator i_site(i_site_begin); i_site != i_site_end; ++i_site, ++l)
               {
-                Atom<T_TYPE> atom( into_cell(vec+i_site->pos(), result->cell, inv_cell),
-                                   i_site->type(), l, i_site->freeze() );
+                Atom atom = i_site->copy();
+                if(not atom)
+                  BOOST_THROW_EXCEPTION(error::ValueError() << error::string("Could not deepcopy atom."));
+                atom->pos = into_cell(vec+i_site->pos(), result->cell, inv_cell);
+                python::Object site = PyInt_FromLong(l);
+                if(not site)
+                  BOOST_THROW_EXCEPTION(error::internal() << error::string("Could not create python integer."));
+                if(not atom.pyattr("site", site) ) 
+                  BOOST_THROW_EXCEPTION(error::internal() << error::string("Could set site index attribute."));
                 result.push_back(atom);
               }
             }

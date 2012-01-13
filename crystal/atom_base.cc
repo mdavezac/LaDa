@@ -9,6 +9,7 @@
 
 
 #include <math/python/python.hpp>
+#include <math/extract.h>
 #include <python/exceptions.h>
 #include <python/numpy_types.h>
 #include <python/object.h>

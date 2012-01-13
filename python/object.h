@@ -3,6 +3,8 @@
 
 #include <LaDaConfig.h>
 #include <Python.h>
+#include <boost/python/object.hpp>
+#include "exceptions.h"
 
 namespace LaDa 
 {
@@ -63,15 +65,18 @@ namespace LaDa
         //! \details First incref's the reference (unless null).
         static Object acquire(PyObject *_in) { Py_XINCREF(_in); return Object(_in); }
 
+        bool hasattr(std::string const &_name) const
+          { return PyObject_HasAttrString(object_, _name.c_str()); }
+
         //! \brief Returns a new reference to a python attribute. 
         //! \details A python exception is set if attribute does not exist, and the
         //!          function returns null.
-        inline Object pyattr(std::string const &_name) 
+        inline Object pyattr(std::string const &_name) const
           { return Object(PyObject_GetAttrString((PyObject*)object_, _name.c_str())); }
         //! \brief Returns a new reference to a python attribute. 
         //! \details A python exception is set if attribute does not exist, and the
         //!          function returns null.
-        inline Object pyattr(PyObject* _name)
+        inline Object pyattr(PyObject* _name) const
           { return Object(PyObject_GetAttr((PyObject*)object_, _name)); }
         //! \brief   Sets an attribute.
         //! \details If cannot convert object using boost, then returns false
@@ -82,7 +87,7 @@ namespace LaDa
             try
             {
               boost::python::object object(_in);
-              return PyObject_SetAttrString((PyObject*)object_, _name.c_str(), _in.ptr()) == 0;
+              return PyObject_SetAttrString((PyObject*)object_, _name.c_str(), object.ptr()) == 0;
             }
             catch(std::exception &e) 
             {
@@ -100,7 +105,7 @@ namespace LaDa
             try
             {
               boost::python::object object(_in);
-              return PyObject_SetAttr((PyObject*)object_, _name, _in.ptr()) == 0;
+              return PyObject_SetAttr((PyObject*)object_, _name, object.ptr()) == 0;
             }
             catch(std::exception &e) 
             {
@@ -110,10 +115,13 @@ namespace LaDa
           }
         //! \brief Sets/Deletes attribute.
         inline bool pyattr(std::string const& _name, PyObject *_in)
-          { return PyObject_SetAttrString((PyObject*)object_, _name.c_str(), _in) == 0; }
+          { return PyObject_SetAttrString(object_, _name.c_str(), _in) == 0; }
+        //! \brief Sets/Deletes attribute.
+        inline bool pyattr(std::string const& _name, python::Object const &_in)
+          { return PyObject_SetAttrString(object_, _name.c_str(), _in.borrowed()) == 0; }
         //! \brief Sets/Deletes attribute.
         inline bool pyattr(PyObject* _name, PyObject *_in)
-          { return PyObject_SetAttr((PyObject*)object_, _name, _in) == 0; }
+          { return PyObject_SetAttr(object_, _name, _in) == 0; }
       protected:
         //! Python reference.
         PyObject* object_;

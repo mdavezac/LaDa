@@ -1,6 +1,6 @@
 set( LIBMATH_HEADERS 
      compare_norms.h eigen.h fuzzy.h lambda.impl.h misc.h modifiers.h serialize.h
-     smith_normal_form.h symmetry_operator.h gruber.h )
+     smith_normal_form.h symmetry_operator.h gruber.h extract.h )
 set( LIBMATH_SOURCES smith_normal_form.cc gruber.cc noopt.cc)
     
 add_library (mathlib SHARED ${LIBMATH_SOURCES} ${LIBMATH_HEADERS})
@@ -20,10 +20,6 @@ endif(MPI_FOUND)
 if(NOT noinstall_headers)
   install(FILES ${LIBMATH_HEADERS} DESTINATION include/LaDa/math)
 endif(NOT noinstall_headers)
-
-if(python_bindings)
-  add_subdirectory(python)
-endif(python_bindings)
 
 if(compile_tests OR compile_debug_tests)
   add_subdirectory(tests)

@@ -8,7 +8,7 @@
 #include <numpy/arrayobject.h>
 
 
-#include <math/python/python.hpp>
+#include <math/extract.h>
 #include <python/exceptions.h>
 #include <python/numpy_types.h>
 
@@ -53,6 +53,15 @@ namespace LaDa
       new(&result->cell) LaDa::math::rMatrix3d(LaDa::math::rMatrix3d::Identity());
       result->pydict = PyDict_New();
       if(result->pydict == NULL) { Py_DECREF(result); return NULL; }
+      return result;
+    }
+
+    // Creates a new structure with a given type, also calling initialization.
+    StructureData* PyStructure_NewFromArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs)
+    {
+      StructureData* result = PyStructure_NewWithArgs(_type, _args, _kwargs);
+      if(result == NULL) return NULL;
+      if(_type->tp_init((PyObject*)result, _args, _kwargs) < 0) {Py_DECREF(result); return NULL; }
       return result;
     }
 

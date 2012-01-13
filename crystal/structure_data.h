@@ -45,6 +45,8 @@ namespace LaDa
       StructureData* PyStructure_New();
       //! Creates a new structure with a given type.
       StructureData* PyStructure_NewWithArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs);
+      //! Creates a new structure with a given type, also calling initialization.
+      StructureData* PyStructure_NewFromArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs);
       //! Creates a deepcopy of structure.
       StructureData *PyStructure_Copy(StructureData* _self, PyObject *_memo = NULL);
       // Returns pointer to structure type.

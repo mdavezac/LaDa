@@ -7,9 +7,13 @@
 #include <iterator> 
 
 #include <python/numpy_types.h>
+#include <math/extract.h>
 
 #include "atom.h"
 #include "structure_data.h"
+#include "structure.h"
+#include "supercell.h"
+#include "methods.hpp"
 
 namespace lp = LaDa::python;
 
@@ -21,7 +25,6 @@ using namespace LaDa::python;
 # define PyMODINIT_FUNC void
 #endif
 
-static PyMethodDef crystal_methods[] = {NULL};
 
 PyMODINIT_FUNC initcppwrappers(void) 
 {
@@ -36,7 +39,7 @@ PyMODINIT_FUNC initcppwrappers(void)
   Py_INCREF(LaDa::crystal::structureiterator_type());
 
   char const doc[] =  "Wrapper around C++ atom/structure class and affiliates.";
-  PyObject* module = Py_InitModule3("cppwrappers", crystal_methods, doc);
+  PyObject* module = Py_InitModule3("cppwrappers", LaDa::crystal::methods_table, doc);
 
   PyModule_AddObject(module, "Atom", (PyObject *)LaDa::crystal::atom_type());
   PyModule_AddObject(module, "Structure", (PyObject *)LaDa::crystal::structure_type());

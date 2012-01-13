@@ -65,16 +65,16 @@ namespace LaDa
         AtomData* operator->() { return (AtomData*)object_; }
 
         //! Returns const reference to pos.
-        math::rMatrix3d const & pos() const { return ((AtomData*)object_)->pos; }
+        math::rVector3d const & pos() const { return ((AtomData*)object_)->pos; }
         //! Returns reference to pos.
-        math::rMatrix3d & pos() { return ((AtomData*)object_)->pos; }
+        math::rVector3d & pos() { return ((AtomData*)object_)->pos; }
         //! Returns const reference to pos.
-        math::rMatrix3d::Scalar const & pos(size_t i) const { return ((AtomData*)object_)->pos(i); }
+        math::rVector3d::Scalar const & pos(size_t i) const { return ((AtomData*)object_)->pos(i); }
         //! Returns reference to pos.
-        math::rMatrix3d::Scalar & pos(size_t i) { return ((AtomData*)object_)->pos(i); }
+        math::rVector3d::Scalar & pos(size_t i) { return ((AtomData*)object_)->pos(i); }
 
         //! Returns type as a python object.
-        python::Object type() const { return python::Object::acquire((AtomData*)object_->type); }
+        python::Object type() const { return python::Object::acquire(((AtomData*)object_)->type); }
  
 
         //! Check if instance is an atom.
