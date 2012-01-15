@@ -82,15 +82,11 @@ BOOST_PYTHON_MODULE(error)
                           "Stuff that has not yet been implemented.", scope,
                           bp::make_tuple( PyException<internal>::exception(),
                                           bp::object(bp::borrowed<>(PyExc_NotImplementedError))));
-  LADA_REGISTER_PYEXCEPT_WITH_BASE( InternalError, "lada.error.InternalError",
-                          "Internal error.", scope,
-                          bp::make_tuple( PyException<internal>::exception(),
-                                          bp::object(bp::borrowed<>(PyExc_RuntimeError))));
   LADA_REGISTER_PYEXCEPT_WITH_BASE( ImportError, "lada.error.ImportError",
                           "Import error.", scope,
                           bp::make_tuple( PyException<internal>::exception(),
                                           bp::object(bp::borrowed<>(PyExc_ImportError))));
-  LADA_REGISTER_PYEXCEPT_WITH_BASE( ImportError, "lada.error.RuntimeError",
+  LADA_REGISTER_PYEXCEPT_WITH_BASE( InternalError, "lada.error.InternalError",
                           "Runtime error.", scope,
                           bp::make_tuple( PyException<internal>::exception(),
                                           bp::object(bp::borrowed<>(PyExc_RuntimeError))));

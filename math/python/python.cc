@@ -15,6 +15,7 @@
 #include "avogadro.hpp"
 #include "matrix.hpp"
 #include "../eigen.h"
+#include "../misc.h"
 
 void check_matrix_from_python(boost::python::object const &_object)
 {
@@ -43,6 +44,8 @@ LaDa::math::rVector3d check_topy_vector()
 {
   return LaDa::math::rVector3d::Identity();
 }
+bool is_integer1(LaDa::math::rVector3d const &_in) { return LaDa::math::is_integer(_in); }
+bool is_integer2(LaDa::math::rMatrix3d const &_in) { return LaDa::math::is_integer(_in); }
 
 BOOST_PYTHON_MODULE(math)
 {
@@ -55,6 +58,8 @@ BOOST_PYTHON_MODULE(math)
 
   LaDa::python::expose_eigen_vectors();
   LaDa::python::expose_eigen_matrices();
+  bp::def("is_integer", &is_integer1);
+  bp::def("is_integer", &is_integer2, "Returns True if the input vector or matrix is integer.");
 
   bp::def("check_extract", &check_matrix_from_python, "Check matrix extraction.");
   bp::def("check_frompy_to_cpp_mat", &check_from_python_mat, "Check automatic matrix extraction.");

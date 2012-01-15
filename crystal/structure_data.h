@@ -9,9 +9,11 @@
 #include <python/quantity.h>
 #include "atom.h"
 
-//! Returns true if an object is a struture or subtype.
+//! \def PyStructure_Check(object)
+//!      Returns true if an object is a struture or subtype.
 #define PyStructure_Check(object) PyObject_TypeCheck(object, LaDa::crystal::structure_type())
-//! Returns true if an object is a structure.
+//! \def PyStructure_CheckExact(object)
+//!      Returns true if an object is a structure.
 #define PyStructure_CheckExact(object) object->ob_type == LaDa::crystal::structure_type()
       
 

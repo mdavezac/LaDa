@@ -1,6 +1,7 @@
-set(LIBCRYSTAL_HEADERS atom.h atom_base.h structure_data.h)
-set(LIBCRYSTAL_PYHEADERS atom_cdi.hpp atom_getset.hpp structure_cdi.hpp structure_getset.hpp structure_sequence.hpp)
-set(LIBCRYSTAL_SOURCES atom_base.cc structure_data.cc )
+set(LIBCRYSTAL_HEADERS atom.h atom_base.h structure_data.h supercell.h primitive.h)
+set(LIBCRYSTAL_PYHEADERS atom_cdi.hpp atom_getset.hpp structure_cdi.hpp
+                         structure_getset.hpp structure_sequence.hpp)
+set(LIBCRYSTAL_SOURCES atom_base.cc structure_data.cc utilities.cc primitive.cc )
 
 include_directories(${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDES})
 add_library (crystal SHARED ${LIBCRYSTAL_HEADERS} ${LIBCRYSTAL_PYHEADERS} ${LIBCRYSTAL_SOURCES})

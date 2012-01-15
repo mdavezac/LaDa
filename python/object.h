@@ -78,11 +78,20 @@ namespace LaDa
         //!          function returns null.
         inline Object pyattr(PyObject* _name) const
           { return Object(PyObject_GetAttr((PyObject*)object_, _name)); }
+        //! \brief Sets/Deletes attribute.
+        inline bool pyattr(std::string const& _name, PyObject *_in)
+          { return PyObject_SetAttrString(object_, _name.c_str(), _in) == 0; }
+        //! \brief Sets/Deletes attribute.
+        inline bool pyattr(std::string const& _name, python::Object const &_in)
+          { return PyObject_SetAttrString(object_, _name.c_str(), _in.borrowed()) == 0; }
+        //! \brief Sets/Deletes attribute.
+        inline bool pyattr(PyObject* _name, PyObject *_in)
+          { return PyObject_SetAttr(object_, _name, _in) == 0; }
         //! \brief   Sets an attribute.
         //! \details If cannot convert object using boost, then returns false
         //!          and sets a python exception.
         template<class T> 
-          inline bool pyattr(std::string const &_name, T const &_in) 
+          inline bool pyattr_convert(std::string const &_name, T const &_in) 
           {
             try
             {
@@ -91,7 +100,7 @@ namespace LaDa
             }
             catch(std::exception &e) 
             {
-              LADA_PYERROR(internal, ("Could not set atomic attribute " + _name
+              LADA_PYERROR(InternalError, ("Could not set atomic attribute " + _name
                                       + ": " + e.what()).c_str() );
               return false;
             }
@@ -100,7 +109,7 @@ namespace LaDa
         //! \details If cannot convert object using boost, then returns false
         //!          and sets a python exception.
         template<class T> 
-          inline bool pyattr(PyObject* _name, T const &_in) 
+          inline bool pyattr_convert(PyObject* _name, T const &_in) 
           {
             try
             {
@@ -113,15 +122,44 @@ namespace LaDa
               return false;
             }
           }
-        //! \brief Sets/Deletes attribute.
-        inline bool pyattr(std::string const& _name, PyObject *_in)
-          { return PyObject_SetAttrString(object_, _name.c_str(), _in) == 0; }
-        //! \brief Sets/Deletes attribute.
-        inline bool pyattr(std::string const& _name, python::Object const &_in)
-          { return PyObject_SetAttrString(object_, _name.c_str(), _in.borrowed()) == 0; }
-        //! \brief Sets/Deletes attribute.
-        inline bool pyattr(PyObject* _name, PyObject *_in)
-          { return PyObject_SetAttr(object_, _name, _in) == 0; }
+
+        //! \brief Compares two objects for equality.
+        //! \details Looks for __eq__ in a. If not found, throws c++
+        //! exception.
+        bool operator==(python::Object const &_b) const
+        {
+          if(not hasattr("__eq__"))
+            LADA_PYTHROW(TypeError, "No __eq__ member function found when comparing objects.");
+          python::Object methodname = PyString_FromString("__eq__");
+          if(not methodname) LADA_PYTHROW(InternalError, "Could not create string.");
+          python::Object result = PyObject_CallMethodObjArgs(borrowed(), 
+                                                             methodname.borrowed(), _b.borrowed(), NULL);
+          if(not result) LADA_PYTHROW(TypeError, "Python exception thrown when comparing objects.");
+          // Try reflected operation.
+          if(result.borrowed() == Py_NotImplemented)
+          {
+            if(not _b.hasattr("__eq__"))
+            {
+              if(_b.borrowed()->ob_type != borrowed()->ob_type) return false;
+              LADA_PYTHROW(TypeError, "No implementation of equality between these two object has been found.");
+            }
+            result.reset( PyObject_CallMethodObjArgs(_b.borrowed(), 
+                                                     methodname.borrowed(), borrowed(), NULL) );
+            if(not result) LADA_PYTHROW(TypeError, "Python exception thrown when comparing objects.");
+            if(result.borrowed() == Py_NotImplemented)
+            {
+              if(_b.borrowed()->ob_type != borrowed()->ob_type) return false;
+              LADA_PYTHROW(TypeError, "No implementation of equality between these two object has been found.");
+            }
+          }
+          if(PyBool_Check(result.borrowed())) return result.borrowed() == Py_True;
+          if(PyInt_Check(result.borrowed())) return PyInt_AS_LONG(result.borrowed()) != 0;
+          LADA_PYTHROW(ValueError, "Could not make sense of return of comparison function.");
+        };
+        //! \brief Compares two objects for equality.
+        //! \details Looks for __eq__ in a. If not found, throws c++
+        //! exception.
+        bool operator!=(python::Object const &_b) const { return not operator==(_b); }
       protected:
         //! Python reference.
         PyObject* object_;

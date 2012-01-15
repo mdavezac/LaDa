@@ -152,8 +152,8 @@ namespace LaDa
         {
           if(not is_valid())
           {
-            LADA_PYERROR(RuntimeError, "Internal reference is not set.");
-            BOOST_THROW_EXCEPTION(error::RuntimeError());
+            LADA_PYERROR(InternalError, "Internal reference is not set.");
+            BOOST_THROW_EXCEPTION(error::InternalError());
           }
           // creates global/local dictionary in order to run code.
           Object const globals = Quantity::module(); 
@@ -175,8 +175,8 @@ namespace LaDa
         {
           if(not is_valid())
           {
-            LADA_PYERROR(RuntimeError, "Internal reference is not set.");
-            BOOST_THROW_EXCEPTION(error::RuntimeError());
+            LADA_PYERROR(InternalError, "Internal reference is not set.");
+            BOOST_THROW_EXCEPTION(error::InternalError());
           }
           // creates global/local dictionary in order to run code.
           Object const globals = Quantity::module(); 

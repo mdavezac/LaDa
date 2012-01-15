@@ -13,6 +13,9 @@ endif(NOT compile_debug_tests)
   add_test(structure python ${CMAKE_CURRENT_SOURCE_DIR}/structure.py ${CMAKE_CURRENT_BINARY_DIR})
   add_test(structure_memory python ${CMAKE_CURRENT_SOURCE_DIR}/structure_memory.py ${CMAKE_CURRENT_BINARY_DIR})
 
+  add_test(utilities python ${CMAKE_CURRENT_SOURCE_DIR}/utilities.py ${CMAKE_CURRENT_BINARY_DIR})
+  add_test(supercell python ${CMAKE_CURRENT_SOURCE_DIR}/structure_memory.py ${CMAKE_CURRENT_BINARY_DIR})
+
   #   python_add_module (atom_self "" "atom_self.cc")
   #   set_property(TARGET atom_self PROPERTY COMPILE_DEFINITIONS)
   #   mark_as_advanced(PYTHON_ENABLE_MODULE_atom_self)

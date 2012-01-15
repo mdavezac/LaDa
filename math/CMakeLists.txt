@@ -25,3 +25,4 @@ if(compile_tests OR compile_debug_tests)
   add_subdirectory(tests)
 endif(compile_tests OR compile_debug_tests)
 
+add_subdirectory(python)

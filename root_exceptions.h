@@ -42,6 +42,9 @@ namespace LaDa
     //! \details No increffing or decreffing. A python exception should already
     //!          exist.
     typedef boost::error_info<struct string_info,PyObject*> pyobject;
+    //! \brief Convenience error infor type to capture python exception.
+    //! \details Holds python exception to throw if no PyErr yet.
+    typedef boost::error_info<struct string_info,PyObject*> pyexcept;
   }
 }
 

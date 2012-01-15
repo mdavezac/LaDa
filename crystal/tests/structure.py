@@ -13,6 +13,18 @@ def test_init(Class):
   assert all(abs(a.cell - identity(3)*2.5) < 1e-8) and abs(a.scale - 5.45) < 1e0\
          and len(a.__dict__) == 0
 
+  a = Class(2.5, 0, 0, 0, 2.5, 0, 0, 0, 2.5, scale=5.45)
+  assert all(abs(a.cell - identity(3)*2.5) < 1e-8) and abs(a.scale - 5.45) < 1e0\
+         and len(a.__dict__) == 0
+  
+  a = Class([2.5, 0, 0], [0, 2.5, 0], [0, 0, 2.5], scale=5.45)
+  assert all(abs(a.cell - identity(3)*2.5) < 1e-8) and abs(a.scale - 5.45) < 1e0\
+         and len(a.__dict__) == 0
+
+  a = Class(cell=[[2.5, 0, 0], [0, 2.5, 0], [0, 0, 2.5]], scale=5.45)
+  assert all(abs(a.cell - identity(3)*2.5) < 1e-8) and abs(a.scale - 5.45) < 1e0\
+         and len(a.__dict__) == 0
+
   a = Class(identity(3)*2.5, scale=5.45, m=True)
   assert all(abs(a.cell - identity(3)*2.5) < 1e-8) and abs(a.scale - 5.45) < 1e0\
          and len(a.__dict__) == 1 and getattr(a, 'm', False)
@@ -41,6 +53,38 @@ def test_init(Class):
                    "           scale=5.45, m=True )\\\n"\
                    "  .add_atom(0, 0, 0, 'Au')\\\n"\
                    "  .add_atom(0.25, 0.5, 0.25, ['Au', 'Pd'], m=5)"
+def test_initerror(Class, AtomClass):
+  """ Checks initialization throws appropriately. """
+  from numpy import identity
+  from lada.error import TypeError
+
+  try: a = Class(identity(4)*2.5, scale=5.45)
+  except TypeError: pass
+  else: raise Exception("Should have thrown.")
+  try: a = Class("A", 0, 0, 0, 2.5, 0, 0, 0, 2.5)
+  except TypeError: pass
+  else: raise Exception("Should have thrown.")
+  try: a = Class(0, 0, 0, 2.5, 0, 0, 0, 2.5)
+  except TypeError: pass
+  else: raise Exception("Should have thrown.")
+  try: a = Class(2.5, 0, 0, 0, 0, 2.5, 0, 0, 0, 2.5)
+  except TypeError: pass
+  else: raise Exception("Should have thrown.")
+  try: a = Class([2.5, 0, 0, 0], [0, 2.5, 0], [0, 0, 2.5])
+  except TypeError: pass
+  else: raise Exception("Should have thrown.")
+  try: a = Class([2.5, 0, 0], [0, 2.5], [0, 0, 2.5])
+  except TypeError: pass
+  else: raise Exception("Should have thrown.")
+  try: a = Class([2.5, 0, 0], [0, 2.5, 0], [0, 0, 'A'])
+  except TypeError: pass
+  else: raise Exception("Should have thrown.")
+  try: a = Class([2.5, 0, 0], [0, 2.5, 0], [0, 0, 0], cell='a')
+  except TypeError: pass
+  else: raise Exception("Should have thrown.")
+  try: a = Class(cell='a')
+  except TypeError: pass
+  else: raise Exception("Should have thrown.")
 
 def test_sequence(Class, AtomClass):
   """ Test sequence methods. """
@@ -212,6 +256,7 @@ if __name__ == "__main__":
   
   # tries to run test with normal class.
   test_init(Structure) 
+  test_initerror(Structure, Atom)
   test_iterator(Structure, Atom) 
   test_sequence(Structure, Atom) 
   test_copy(Structure, Atom)
@@ -232,6 +277,7 @@ if __name__ == "__main__":
       check_passage[1] = True
       super(AtomSubclass, self).__init__(*args, **kwargs)
 
+  test_initerror(StructureSubclass, AtomSubclass)
   test_iterator(StructureSubclass, AtomSubclass) 
   test_sequence(StructureSubclass, AtomSubclass) 
   test_copy(StructureSubclass, AtomSubclass)

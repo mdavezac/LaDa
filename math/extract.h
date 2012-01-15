@@ -36,6 +36,7 @@ namespace LaDa
                   return false;                                                           \
                 }                                                                         \
                 _out(i/3, i%3) = *((TYPE*) PyArray_ITER_DATA(iterator.borrowed()));       \
+                PyArray_ITER_NEXT(iterator.borrowed());                                   \
               }                                                                           \
               if(PyArray_ITER_NOTDONE(iterator.borrowed()))                               \
               {                                                                           \
@@ -60,43 +61,68 @@ namespace LaDa
             return false;
           }
 #         undef LADA_NPYITER
-        }
+        } // numpy array
         else 
         {
           python::Object i_outer = PyObject_GetIter(_in);
           if(not i_outer) { return false; }
           python::Object outer(PyIter_Next(i_outer.borrowed()));
-          size_t i(0);
-          for( ; outer.is_valid() or i >= 3;
-               outer.reset(PyIter_Next(i_outer.borrowed())), ++i ) 
+          if(not outer.is_valid()) return false; 
+          if(not outer.hasattr("__iter__")) // except 9 in a row
           {
-            python::Object i_inner = PyObject_GetIter(outer.borrowed());
-            if(not i_inner) return false;
-            python::Object inner(PyIter_Next(i_inner.borrowed()));
-            size_t j(0);
-            for( ; inner.is_valid() or j >= 3;
-                 inner.reset(PyIter_Next(i_outer.borrowed())), ++j ) 
+            size_t i(0);
+            for( ; outer.is_valid() and i < 9;
+                 outer.reset(PyIter_Next(i_outer.borrowed())), ++i ) 
             {
-              if(PyInt_Check(inner.borrowed())) _out(j, i) = PyInt_AS_LONG(inner.borrowed());
-              else if(PyFloat_Check(inner.borrowed())) _out(j, i) = PyFloat_AS_DOUBLE(inner.borrowed());
+              if(PyInt_Check(outer.borrowed())) _out(i/3, i%3) = PyInt_AS_LONG(outer.borrowed());
+              else if(PyFloat_Check(outer.borrowed())) _out(i/3, i%3) = PyFloat_AS_DOUBLE(outer.borrowed());
               else
               { 
                 LADA_PYERROR(TypeError, "Object should contains numbers only.");
                 return false;
               }
-            } // inner loop.
-            if(inner.is_valid() or j != 3)
+            }
+            if(outer.is_valid() or i != 9)
+            {
+              LADA_PYERROR(TypeError, "Expected 9 (3x3) numbers in input.");
+              return false;
+            }
+          }    // 9 in a row.
+          else // expect 3 by 3
+          {
+            size_t i(0);
+            for( ; outer.is_valid() and i < 3;
+                 outer.reset(PyIter_Next(i_outer.borrowed())), ++i ) 
+            {
+              python::Object i_inner = PyObject_GetIter(outer.borrowed());
+              if(not i_inner) return false;
+              python::Object inner(PyIter_Next(i_inner.borrowed()));
+              if(not inner) return false;
+              size_t j(0);
+              for( ; inner.is_valid() and j < 3;
+                   inner.reset(PyIter_Next(i_inner.borrowed())), ++j ) 
+              {
+                if(PyInt_Check(inner.borrowed())) _out(j, i) = PyInt_AS_LONG(inner.borrowed());
+                else if(PyFloat_Check(inner.borrowed())) _out(j, i) = PyFloat_AS_DOUBLE(inner.borrowed());
+                else
+                { 
+                  LADA_PYERROR(TypeError, "Object should contains numbers only.");
+                  return false;
+                }
+              } // inner loop.
+              if(inner.is_valid() or j != 3)
+              {
+                LADA_PYERROR(TypeError, "Not a 3x3 matrix of numbers.");
+                return false;
+              }
+            } // outer loop.
+            if(outer.is_valid() or i != 3)
             {
               LADA_PYERROR(TypeError, "Not a 3x3 matrix of numbers.");
               return false;
             }
-          } // outer loop.
-          if(outer.is_valid() or i != 3)
-          {
-            LADA_PYERROR(TypeError, "Not a 3x3 matrix of numbers.");
-            return false;
           }
-        } // numpy array or sequence.
+        } // sequence.
         return true;
       }
     //! Converts an input sequence to a cell.

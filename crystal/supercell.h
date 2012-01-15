@@ -25,20 +25,19 @@ namespace LaDa
       {
         if(_lattice.size() == 0) 
         {
-          BOOST_THROW_EXCEPTION(error::ValueError() << error::string("Lattice is empty."));
+          LADA_PYTHROW(ValueError, "Lattice is empty.");
           return Structure();
         }
         namespace bt = boost::tuples;
         Structure result = _lattice.copy(); 
-        if(not result) 
-          BOOST_THROW_EXCEPTION(error::ValueError() << error::string("Could not deepcopy the lattice."));
+        if(not result) LADA_PYTHROW(ValueError, "Could not deepcopy the lattice.");
         result.clear();
         result->cell = _supercell;
         result.pyattr("lattice", _lattice);
         if(_lattice.hasattr("name") and PyString_Check(_lattice.pyattr("name").borrowed()) )
         {
           char *const attr = PyString_AS_STRING(_lattice.pyattr("name").borrowed());
-          if(attr != "" and not result.pyattr("name", "supercell of " + std::string(attr)) ) 
+          if(attr != "" and not result.pyattr_convert("name", "supercell of " + std::string(attr)) ) 
             PyErr_Clear();
         }
         math::t_SmithTransform transform = math::smith_transform( _lattice.cell(), result.cell());
@@ -62,14 +61,12 @@ namespace LaDa
               for(Structure::const_iterator i_site(i_site_begin); i_site != i_site_end; ++i_site, ++l)
               {
                 Atom atom = i_site->copy();
-                if(not atom)
-                  BOOST_THROW_EXCEPTION(error::ValueError() << error::string("Could not deepcopy atom."));
+                if(not atom) LADA_PYTHROW(ValueError, "Could not deepcopy atom.");
                 atom->pos = into_cell(vec+i_site->pos(), result->cell, inv_cell);
                 python::Object site = PyInt_FromLong(l);
-                if(not site)
-                  BOOST_THROW_EXCEPTION(error::internal() << error::string("Could not create python integer."));
+                if(not atom) LADA_PYTHROW(InternalError, "Could not create python integer.");
                 if(not atom.pyattr("site", site) ) 
-                  BOOST_THROW_EXCEPTION(error::internal() << error::string("Could set site index attribute."));
+                  LADA_PYTHROW(InternalError, "Could not set site index attribute.");
                 result.push_back(atom);
               }
             }

@@ -138,6 +138,8 @@ namespace LaDa
                               "Should be a number or unit given by "
                               "the python package *quantities*. In that case, "
                               "it is converted to angstroms. "),
+          { const_cast<char*>("volume"), (getter) structure_getvolume, NULL, 
+            const_cast<char*>("Volume of the structure.\n\nIncludes scale.") },
           {NULL}  /* Sentinel */
       };
 #     undef LADA_DECLARE

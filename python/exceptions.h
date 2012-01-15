@@ -28,12 +28,10 @@ namespace LaDa
     struct TypeError: virtual input, virtual pyerror {};
     //! Not implemented error thrown explicitely by lada.
     struct NotImplementedError: virtual internal, virtual pyerror {};
-    //! Internal error thrown explicitely by lada.
-    struct InternalError: virtual internal, virtual pyerror {};
     //! Subclasses python's ImportError.
     struct ImportError: virtual internal, virtual pyerror {};
     //! Subclasses python's ImportError.
-    struct RuntimeError: virtual internal, virtual pyerror {};
+    struct InternalError: virtual internal, virtual pyerror {};
   }
 
   namespace python
@@ -99,12 +97,35 @@ namespace LaDa
 #   ifdef LADA_PYERROR_FORMAT
 #     error LADA_PYERROR already  defined. 
 #   endif
+#   ifdef LADA_PYTHROW
+#     error LADA_PYERROR already  defined. 
+#   endif
+    //! \def LADA_PYERROR(EXCEPTION, MESSAGE)
+    //!      Raises a python exception with the interpreter, but no c++ exception.
+    //!      EXCEPTION should be an unqualified declared in python/exceptions.h.
 #   define LADA_PYERROR(EXCEPTION, MESSAGE) \
       PyErr_SetString( ::LaDa::python::PyException< ::LaDa::error::EXCEPTION >::exception().ptr(), \
                        MESSAGE )
+    //! \def LADA_PYERROR(EXCEPTION, MESSAGE)
+    //!      Raises a python exception with a formatted message, but no c++ exception.
+    //!      For formatting, see PyErr_Format from the python C API.
+    //!      EXCEPTION should be an unqualified declared in python/exceptions.h.
 #   define LADA_PYERROR_FORMAT(EXCEPTION, MESSAGE, OTHER) \
       PyErr_Format( ::LaDa::python::PyException< ::LaDa::error::EXCEPTION >::exception().ptr(), \
                     MESSAGE, OTHER )
+    //! \def LADA_PYTHROW(EXCEPTION, MESSAGE)
+    //!      Raises a boost exception where EXCEPTION is stored as pyexcetp and MESSAGE as string.
+    //!      EXCEPTION should be an unqualified declared in python/exceptions.h.
+    //!      This macro makes it easy to catch all thrown python exceptions in a single statement.
+#   define LADA_PYTHROW(EXCEPTION, MESSAGE)                                                   \
+    {                                                                                              \
+      PyObject * const exception                                                                   \
+         = ::LaDa::python::PyException< ::LaDa::error::EXCEPTION >::exception().ptr();             \
+      PyErr_SetString(exception, MESSAGE);                                                         \
+      BOOST_THROW_EXCEPTION( ::LaDa::error::EXCEPTION()                                            \
+                             << ::LaDa::error::pyexcept(exception)                                 \
+                             << ::LaDa::error::string(MESSAGE) );                                  \
+    }
   }
 }
 # endif 

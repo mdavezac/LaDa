@@ -13,6 +13,7 @@
 #include "structure_data.h"
 #include "structure.h"
 #include "supercell.h"
+#include "primitive.h"
 #include "methods.hpp"
 
 namespace lp = LaDa::python;

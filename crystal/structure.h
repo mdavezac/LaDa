@@ -157,7 +157,9 @@ namespace LaDa
         bool is_same(Structure const &_in) { return object_ == _in.object_; }
 
         //! Returns  structure volume.
-        types::t_real volume() const { return std::abs(((StructureData*)object_)->cell.determinant()); }
+        types::t_real volume() const
+          { return std::abs(((StructureData*)object_)->cell.determinant()) 
+                   * std::pow(((StructureData*)object_)->scale, 3); }
 
         //! Transforms a structure according to an affine transformation.
         Structure transform(math::Affine3d const &_affine) const;

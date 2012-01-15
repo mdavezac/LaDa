@@ -29,23 +29,25 @@ namespace LaDa
     static int structure_init(StructureData* _self, PyObject* _args, PyObject *_kwargs)
     {
       Py_ssize_t const N = PyTuple_Size(_args);
-      if(N > 1 and N != 9)
+      if(N != 0 and N != 1 and N != 9 and N != 3)
       {
         LADA_PYERROR(TypeError, "Unexpected argument: arguments should represent the cell "
                                 "and be given as a matrix, or as a series of 9 numbers." );
+        return -1;
       }
-      else if(N == 1)
+      if(N != 0 and _kwargs != NULL and PyDict_GetItemString(_kwargs, "cell") != NULL)
       {
-        if(_kwargs != NULL and PyDict_GetItemString(_kwargs, "cell") != NULL)
-        {
-          LADA_PYERROR(TypeError, "Cell given as both argument and keyword.");
-          return -1;
-        }
+        LADA_PYERROR(TypeError, "Cell given as both argument and keyword.");
+        return -1;
+      }
+      if(N == 1)
+      {
         PyObject *item = PyTuple_GetItem(_args, 0);
         if(item == NULL) return -1;
         if(structure_setcell(_self, item, NULL) < 0) return -1;
       }
       else if(N == 9 and structure_setcell(_self, _args, NULL) < 0) return -1;
+      else if(N == 3 and structure_setcell(_self, _args, NULL) < 0) return -1;
 
       if(_kwargs == NULL) return 0;
       PyObject *key, *value;

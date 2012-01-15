@@ -12,6 +12,9 @@ namespace LaDa
       static PyObject* structure_getscale(StructureData *_self, void *closure);
       //! Sets the scale from a number.
       static int structure_setscale(StructureData *_self, PyObject *_value, void *_closure);
+      //! Gets the volume of the structure
+      static PyObject* structure_getvolume(StructureData *_self, void *_closure)
+        { return PyFloat_FromDouble( std::abs(_self->cell.determinant()) * std::pow(_self->scale,3)); }
     }
   
     // Returns cell as a numpy array. 
