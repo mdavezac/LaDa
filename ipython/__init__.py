@@ -187,16 +187,17 @@ def ipy_init():
     ip.set_hook('complete_command', export_completer, re_key = '\s*%?export')
     ip.set_hook('complete_command', record_completer, re_key = '\s*%?record')
 
-    if 'ladabase' in lada.__all__ and getattr(lada, 'add_push_magic_function', False): 
-      def push(self, cmdl):
-        """ Magic function to push to database. 
-
-            This detour makes sure ladabase is only loaded on call, 
-            thus speeding up load time when starting ipython.
-        """
-        from lada.ladabase.push import push
-        return push(self, cmdl)
-      ip.expose_magic("push", push)
+    if 'ladabase' in lada.__all__:
+      if getattr(lada, 'add_push_magic_function', False): 
+        def push(self, cmdl):
+          """ Magic function to push to database. 
+  
+              This detour makes sure ladabase is only loaded on call, 
+              thus speeding up load time when starting ipython.
+          """
+          from lada.ladabase.push import push
+          return push(self, cmdl)
+        ip.expose_magic("push", push)
       # Don't try and start the pymongo interface unless explicitly requested.
       if lada.ladabase_doconnect: 
         from lada.ladabase import Manager

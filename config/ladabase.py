@@ -16,3 +16,9 @@ if "ladabase" in globals()["ladamodules"]:
   """ Directory where files are pushed, before being pulled to redrock. """
   ladabase_doconnect = False
   """ Whether to connect to database when starting ipython. """
+  add_push_magic_function = False
+  """ Whether to the %push magic function to the IPython interface. 
+  
+      Thanks to the paranoids with insecurity issues, it may not be possible to
+      access the database from just anywhere. Hence %push is machine dependent.  
+  """

@@ -1,5 +1,5 @@
 """ PyMongo interface. """
-__all__ = ['Manager', 'MassExtract', 'VaspExtract', 'ipy_init']
+__all__ = ['Manager', 'MassExtract', 'VaspExtract']
 
 from .vasp import VaspExtract
 from .massextract import MassExtract
@@ -35,6 +35,8 @@ class Manager(object):
     """ OUTCAR files collection. """
     self.extracted = self.database["extracted"]
     """ Collection with pre-extracted values from the outcar. """
+    self.fere = self.database["fere_summary"]
+    """ Collection with FERE ground-state analysis. """
 
   @property
   def host(self):

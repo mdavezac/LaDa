@@ -1,4 +1,4 @@
-""" Tags ground-states. """
+""" Creates FERE diagrams from the database input. """
 __docformat__ = "restructuredtext en"
 __all__ = ['generate_fere_summary', 'iter_fere_ternaries', 'check_fere_context']
 from contextlib import contextmanager
@@ -113,10 +113,10 @@ def contour(vertices):
   thetas = sorted(enumerate(thetas), key=itemgetter(1))
   return array([vertices[u[0]] for u in thetas])
  
-def generate_fere_summary(filters=3, tempname="ladabaseextracteditersystemtempname"):
+def generate_fere_summary(filters=None, tempname="ladabaseextracteditersystemtempname"):
   """ Creates FERE ground-states, as well as single-stoichiometry items, in summary database. """
   from datetime import datetime, timedelta
-  from numpy import concatenate, identity, zeros, array
+  from numpy import concatenate, identity, zeros, array, min, max
   from polyhedron import Hrep
   from . import Manager
 
@@ -126,9 +126,12 @@ def generate_fere_summary(filters=3, tempname="ladabaseextracteditersystemtempna
 
   # Works on last added only
   if isinstance(filters, int): 
-    filters = {'metadata.date_added': {'$gte': datetime.now() - timedelta(3)},
+    filters = {'metadata.date_added': {'$gte': datetime.now() - timedelta(filters)},
                'metadata.Enthalpy': {'$exists': True}}
   elif filters is None: filters = {'metadata.Enthalpy': {'$exists': True}}
+  elif isinstance(filters, list):
+    filters = {'metadata.Enthalpy': { '$exists': True}, 
+               'metadata.species': {'$not': {'$elemMatch': {'$nin': filters}}}}
 
   if extracted.find_one(filters) is None: 
     print "No records found which statisfy the input filters."
@@ -164,8 +167,9 @@ def generate_fere_summary(filters=3, tempname="ladabaseextracteditersystemtempna
     for id in allids: extracted.update({'_id': id}, setme)
 
     # loop over stable compounds only.
-    for indices, id in zip(hrep.ininc[:Nsystems], ids):
+    for j, (indices, id) in enumerate(zip(hrep.ininc[:Nsystems], ids)):
       if len(indices) == 0: continue
+      if not any([hrep.is_vertex[i] for i in indices]): continue
       vertices = []
       for index in indices:
         if not hrep.is_vertex[index]: continue
@@ -175,7 +179,7 @@ def generate_fere_summary(filters=3, tempname="ladabaseextracteditersystemtempna
           if hrep.is_vertex[neighbor]: continue
           if all(hrep.generators[neighbor, [0,1]] < 1e-8): continue
           vertices.append(hrep.generators[index, [0, 1]] + 10*hrep.generators[neighbor, [0, 1]])
-      assert len(vertices) > 0
+      assert len(vertices) > 0, species
       assert array(vertices).shape[1] == 2
       # now determines contour.
       poly = contour(array(vertices))
@@ -187,8 +191,19 @@ def generate_fere_summary(filters=3, tempname="ladabaseextracteditersystemtempna
       document['mus_diagram']['polyhedra'].append([u for u in zip(poly[:, 0], poly[:, 1])])
       # adds groundstate flag.
       extracted.update({'_id': element['_id']},{'$set': {'output.stability': True}})
-      
 
+      # If oxygen is an atom of this material, then add O diagram.
+      if 'O' in element['metadata']['species'] and len(element['metadata']['species']) > 2:
+        indexO = species.index('O')
+        generators = array([hrep.generators[i] for i in indices if hrep.is_vertex[i]])
+        # find range, does not yet look at rays.
+        minO = min(generators[:, indexO])
+        maxO = max(generators[:, indexO])
+        # Saves data to extracted collection.
+        # Checks if a oxygen ray is in this half-space
+        if Nsystems + indexO in indices: minO = float("-inf")
+        extracted.update({'_id': id}, {'$set': {'output.PT_diagram': [minO, maxO]}})
+      
     fere_summary.save(document)
 
 @contextmanager

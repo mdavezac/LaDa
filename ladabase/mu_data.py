@@ -1,4 +1,5 @@
 """ Elemental mus (FERE). """
+__docstring__ = "restructuredtext end"
 from quantities import eV
 
 elemental_mus = { 'Ag': -0.82700958541595615*eV,
@@ -94,20 +95,19 @@ def enthalpy(extract):
   result += extract.energy.magnitude.tolist()
   return result / float(sum(extract.stoichiometry))
 
-def delta_mu_O(p,t):
+def delta_muO(P,T):
   """ Evolution in pressure and temperature of mu oxygen.
   
       Scavenged from Stephan Lany.
 
       :Parameters:
-        p
+        P
           Pressure in atomospheres.
-        t 
+        T 
           Temperature in Kelvin.
   """
   from numpy import log
 
-  p=1e1**p
   t0=298.15
 
   h0o=8.68e0*1.0364e-2
@@ -116,7 +116,22 @@ def delta_mu_O(p,t):
   k=8.6174e-5
   cp2=3.5e0*k
   
-  dp2=0.5e0*k*t*log(p)
-  dmo=0.5e0*(h0o+cp2*(t-t0)-t*(s0o+cp2*log(t/t0)))
+  dp2=0.5e0*k*T*log(P)
+  dmo=0.5e0*(h0o+cp2*(T-t0)-T*(s0o+cp2*log(T/t0)))
 
   return dmo+dp2
+
+def partial_pressureO(delta_mu, T):
+  """ Partial pressure of oxygen with respect to chemical potential and temperature. """
+  from numpy import exp, log
+
+  t0=298.15
+
+  h0o=8.68e0*1.0364e-2
+  s0o=205.04e0*1.0364e-5
+  
+  k=8.6174e-5
+  cp2=3.5e0*k
+  
+  dmo=0.5e0*(h0o+cp2*(T-t0)-T*(s0o+cp2*log(T/t0)))
+  return exp( -2e0*(dmo - delta_mu) / (k*T) )
