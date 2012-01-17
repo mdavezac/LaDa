@@ -125,12 +125,16 @@ class RelaxCellShape(object):
       def is_converged(extractor):  
         if extractor is None: return True
         if not extractor.success: raise RuntimeError("VASP calculation did not succeed.")
+        i = int(extractor.directory.split('/')[-1]) + 1
+        if getattr(self, 'minrelsteps', i) > i: return False 
         return convergence(extractor)
     else:
       if convergence > 0e0:
         def is_converged(extractor):
           if extractor is None: return True
           if not extractor.success: raise RuntimeError("VASP calculation did not succeed.")
+          i = int(extractor.directory.split('/')[-1]) + 1
+          if getattr(self, 'minrelsteps', i) > i: return False 
           if extractor.total_energies.shape[0] < 2: return True
           return abs(extractor.total_energies[-2] - extractor.total_energies[-1:]) < convergence
       else:
@@ -138,6 +142,8 @@ class RelaxCellShape(object):
           from numpy import max, abs, all
           if extractor is None: return True
           if not extractor.success: raise RuntimeError("VASP calculation did not succeed.")
+          i = int(extractor.directory.split('/')[-1]) + 1
+          if getattr(self, 'minrelsteps', i) > i: return False
           return all(max(abs(output.forces)) < abs(convergence))
 
 
