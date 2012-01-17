@@ -11,7 +11,7 @@ def functional(outdir=None, comm=None, **kwargs):
   comm.barrier()
   with Changedir(outdir, comm) as cwd:
     if comm.is_root:
-      with open(join(cwd, 'out'), 'w') as file:
+      with open('out', 'w') as file:
         file.write("comm size : {0}\n".format(comm.size))
         file.write("kargs : {0}\n".format(kwargs))
 
