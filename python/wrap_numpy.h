@@ -1,18 +1,72 @@
-#ifndef LADA_MATH_EXTRACT 
-#define LADA_MATH_EXTRACT 
+#ifndef LADA_PYTHON_WRAP_NUMPY_H 
+#define LADA_PYTHON_WRAP_NUMPY_H 
 
 // Include numpy before including this file. 
 
 #include "LaDaConfig.h"
 
 #include <python/object.h>
-
-#include "eigen.h"
+#include <math/eigen.h>
+#include "numpy_types.h"
 
 namespace LaDa
 {
-  namespace math
+  namespace python
   {
+    //! Convert/wrap a matrix to numpy.
+    template<class T_DERIVED>
+      PyObject* wrap_to_numpy(Eigen::DenseBase<T_DERIVED> &_in, PyObject *_parent = NULL)
+      {
+        npy_intp dims[2] = { _in.rows(), _in.cols() };
+        typedef math::numpy::type<typename Eigen::DenseBase<T_DERIVED>::Scalar> t_ScalarType;
+        PyArrayObject *result = _parent == NULL ?
+          (PyArrayObject*) PyArray_SimpleNew(_in.cols() > 1? 2: 1, dims, t_ScalarType::value):
+          (PyArrayObject*) PyArray_SimpleNewFromData(_in.cols() > 1? 2: 1, dims, t_ScalarType::value, &_in(0,0));
+        if(result == NULL) return NULL;
+        // macro for row vs column major. The macro changed for npy >= 1.6
+#       ifdef LADA_MACRO
+#         error LADA_MACRO already defined
+#       endif
+#       ifdef NPY_ARRAY_C_CONTIGUOUS
+#         define LADA_MACRO NPY_ARRAY_C_CONTIGUOUS;
+#       else 
+#         define LADA_MACRO NPY_C_CONTIGUOUS
+#       endif
+        // If has a parent, do not copy data, just incref it as base.
+        if(_parent != NULL) 
+        {
+          // For some reason, eigen is column major, whereas c++ is generally row major.
+          if(result->flags & LADA_MACRO and not _in.IsRowMajor) 
+            result->flags -= LADA_MACRO;
+          else if((not (result->flags & LADA_MACRO)) and _in.IsRowMajor) 
+            result->flags |= LADA_MACRO;
+          Eigen::DenseCoeffsBase<T_DERIVED> const coeffs = _in;
+          if(_in.cols() == 1)
+            result->strides[0] = _in.innerStride() * sizeof(typename t_ScalarType::np_type);
+          else if(_in.IsRowMajor) 
+          {
+            result->strides[0] = _in.outerStride() * sizeof(typename t_ScalarType::np_type);
+            result->strides[1] = _in.innerStride() * sizeof(typename t_ScalarType::np_type);
+          }
+          else 
+          {
+            result->strides[0] = _in.innerStride() * sizeof(typename t_ScalarType::np_type);
+            result->strides[1] = _in.outerStride() * sizeof(typename t_ScalarType::np_type);
+          }
+          result->base = _parent;
+          Py_INCREF(_parent);
+        }
+        // otherwise, copy data.
+        else
+        {
+          for(size_t i(0); i < _in.rows(); ++i)
+            for(size_t j(0); j < _in.cols(); ++j)
+              *((typename t_ScalarType::np_type*)
+                  (result->data + i*result->strides[0] + j*result->strides[1])) = _in(i, j);
+        }
+#       undef LADA_MACRO
+        return (PyObject*)result;
+      }
     //! Converts an input sequence to a cell.
     template<class T_DERIVED>
       bool convert_to_matrix(PyObject *_in, Eigen::DenseBase<T_DERIVED> &_out)
@@ -38,9 +92,6 @@ namespace LaDa
           python::Object iterator = PyArray_IterNew(_in);
           if(not iterator) return false;
           int const type = PyArray_DESCR(_in)->type_num;
-#         ifdef LADA_NPYITER
-#           error LADA_NPYITER is already defined.
-#         endif
 #         define LADA_NPYITER(TYPE, NUM_TYPE)                                             \
             if(type == NUM_TYPE)                                                          \
             {                                                                             \
@@ -51,7 +102,7 @@ namespace LaDa
                   LADA_PYERROR(TypeError, "Numpy array too small.");                      \
                   return false;                                                           \
                 }                                                                         \
-                _out(i/N0, i%N0) = *((TYPE*) PyArray_ITER_DATA(iterator.borrowed()));     \
+                _out(i/N1, i%N1) = *((TYPE*) PyArray_ITER_DATA(iterator.borrowed()));     \
                 PyArray_ITER_NEXT(iterator.borrowed());                                   \
               }                                                                           \
               if(PyArray_ITER_NOTDONE(iterator.borrowed()))                               \
