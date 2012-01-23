@@ -7,13 +7,15 @@
 #include <iterator> 
 
 #include <python/numpy_types.h>
-#include <math/extract.h>
+#include <python/wrap_numpy.h>
 
 #include "atom.h"
 #include "structure_data.h"
 #include "structure.h"
 #include "supercell.h"
 #include "primitive.h"
+#include "space_group.h"
+#include "equivalent_structures.h"
 #include "methods.hpp"
 
 namespace lp = LaDa::python;

@@ -5,7 +5,8 @@ namespace LaDa
     extern "C"
     {
       //! Returns cell as a numpy array. 
-      static PyObject* structure_getcell(StructureData *_self, void *closure);
+      static PyObject* structure_getcell(StructureData *_self, void *closure)
+         { return python::wrap_to_numpy(_self->cell, (PyObject*)_self); }
       //! Sets cell from a sequence of 3x3 numbers.
       static int structure_setcell(StructureData *_self, PyObject *_value, void *_closure);
       // Returns the scale.
@@ -17,19 +18,6 @@ namespace LaDa
         { return PyFloat_FromDouble( std::abs(_self->cell.determinant()) * std::pow(_self->scale,3)); }
     }
   
-    // Returns cell as a numpy array. 
-    // Numpy does not implement python's cyclic garbage, hence new wrapper need be
-    // created each call.
-    static PyObject* structure_getcell(StructureData *_self, void *closure)
-    {
-      npy_intp dims[2] = {3, 3};
-      int const value = math::numpy::type<math::rMatrix3d::Scalar>::value;
-      PyArrayObject *result = (PyArrayObject*) PyArray_SimpleNewFromData(2, dims, value, _self->cell.data());
-      if(result == NULL) return NULL;
-      result->base = (PyObject*)_self;
-      Py_INCREF(_self); // Increfed as base of array.
-      return (PyObject*)result;
-    }
     // Sets cell from a sequence of three numbers.
     static int structure_setcell(StructureData *_self, PyObject *_value, void *_closure)
     {
@@ -38,7 +26,7 @@ namespace LaDa
         LADA_PYERROR(TypeError, "Cannot delete cell attribute.");
         return -1;
       }
-      return math::convert_to_cell(_value, _self->cell) ? 0: -1;
+      return python::convert_to_matrix(_value, _self->cell) ? 0: -1;
     }
   
     // Returns the scale of the structure.

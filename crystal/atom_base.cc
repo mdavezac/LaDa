@@ -9,7 +9,7 @@
 
 
 #include <math/python/python.hpp>
-#include <math/extract.h>
+#include <python/wrap_numpy.h>
 #include <python/exceptions.h>
 #include <python/numpy_types.h>
 #include <python/object.h>
@@ -34,8 +34,8 @@ namespace LaDa
       if(not result) return NULL;
       result->weakreflist = NULL;
       result->type = Py_None;
-      new(&result->pos) LaDa::math::rVector3d(0,0,0);
       Py_INCREF(Py_None);
+      new(&result->pos) LaDa::math::rVector3d(0,0,0);
       result->pydict = PyDict_New();
       if(result->pydict == NULL) { Py_DECREF(result); return NULL; }
       return result;
@@ -47,8 +47,8 @@ namespace LaDa
       if(not result) return NULL;
       result->weakreflist = NULL;
       result->type = Py_None;
-      new(&result->pos) LaDa::math::rVector3d(0,0,0);
       Py_INCREF(Py_None);
+      new(&result->pos) LaDa::math::rVector3d(0,0,0);
       result->pydict = PyDict_New();
       if(result->pydict == NULL) { Py_DECREF(result); return NULL; }
       return result;

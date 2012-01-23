@@ -1,6 +1,12 @@
 // Last update: timvdm 19 June 2009
 // Adapted from Avogadro open source molecular editor from the kde project.
 // (libavogadro/src/python/eigen.cpp)
+#include <Python.h>
+
+#define PY_ARRAY_UNIQUE_SYMBOL math_ARRAY_API
+#define NO_IMPORT_ARRAY
+#include <numpy/arrayobject.h>
+
 #include <iostream>
 
 #include <boost/type_traits/is_integral.hpp> 
@@ -12,7 +18,6 @@
 
 #include <Eigen/Geometry>
 
-// #include <python/std_vector.hpp>
 #include <python/numpy_types.h>
 
 #include "../eigen.h"
@@ -260,15 +265,10 @@ namespace LaDa
     void expose_eigen_vectors()
     {
       using namespace LaDa::python;
-      import_array(); // needed for NumPy 
-      
       Vector3x_to_python_array<math::rVector3d>();
       Vector3x_from_python_array<math::rVector3d>();
       Vector3x_to_python_array<math::iVector3d>();
       Vector3x_from_python_array<math::iVector3d>();
-  
-//     expose_vector<math::rVector3d>("_rVector3dVector", "Exposes std::vector<math::rVector3d>.");
-//     expose_vector<math::iVector3d>("_iVector3dVector", "Exposes std::vector<math::iVector3d>.");
     }
   }
 }

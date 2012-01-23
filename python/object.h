@@ -126,14 +126,18 @@ namespace LaDa
         //! \brief Compares two objects for equality.
         //! \details Looks for __eq__ in a. If not found, throws c++
         //! exception.
-        bool operator==(python::Object const &_b) const
+        bool operator==(PyObject *_b) const { return operator==(acquire(_b)); }
+        //! \brief Compares two objects for equality.
+        //! \details Looks for __eq__ in a. If not found, throws c++
+        //! exception.
+        bool operator==(Object const &_b) const
         {
           if(not hasattr("__eq__"))
             LADA_PYTHROW(TypeError, "No __eq__ member function found when comparing objects.");
-          python::Object methodname = PyString_FromString("__eq__");
+          Object methodname = PyString_FromString("__eq__");
           if(not methodname) LADA_PYTHROW(InternalError, "Could not create string.");
-          python::Object result = PyObject_CallMethodObjArgs(borrowed(), 
-                                                             methodname.borrowed(), _b.borrowed(), NULL);
+          Object result = PyObject_CallMethodObjArgs(borrowed(), 
+                                                     methodname.borrowed(), _b.borrowed(), NULL);
           if(not result) LADA_PYTHROW(TypeError, "Python exception thrown when comparing objects.");
           // Try reflected operation.
           if(result.borrowed() == Py_NotImplemented)
@@ -159,7 +163,11 @@ namespace LaDa
         //! \brief Compares two objects for equality.
         //! \details Looks for __eq__ in a. If not found, throws c++
         //! exception.
-        bool operator!=(python::Object const &_b) const { return not operator==(_b); }
+        bool operator!=(Object const &_b) const { return not operator==(_b); }
+        //! \brief Compares two objects for equality.
+        //! \details Looks for __eq__ in a. If not found, throws c++
+        //! exception.
+        bool operator!=(PyObject *_b) const { return operator!=(acquire(_b)); }
       protected:
         //! Python reference.
         PyObject* object_;
@@ -183,6 +191,11 @@ namespace LaDa
       if(not result) BOOST_THROW_EXCEPTION(error::internal()); 
       return stream << result;
     }
+    //! \brief Dumps representation of an object.
+    //! \details Will throw c++ exceptions if python calls fail. Does not clear
+    //!          python exceptions.
+    inline std::ostream& operator<< (std::ostream &stream, PyObject* _ob)
+      { return stream << Object::acquire(_ob); }
   }
 }
 #endif

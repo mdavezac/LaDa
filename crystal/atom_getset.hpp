@@ -35,7 +35,7 @@ namespace LaDa
         LADA_PYERROR(TypeError, "Cannot delete pos attribute.");
         return -1;
       }
-      return math::convert_to_vector(_value, _self->pos) ? 0: -1;
+      return python::convert_to_vector(_value, _self->pos) ? 0: -1;
     }
     // Returns type python object.
     PyObject* lada_atom_gettype(AtomData *_self, void *closure)

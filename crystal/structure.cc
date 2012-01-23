@@ -1,22 +1,11 @@
 #include "LaDaConfig.h"
 
-#include <algorithm>
-#include <sstream>
-#include <boost/lexical_cast.hpp>
-#include <boost/tuple/tuple_io.hpp>
-
-#include <Eigen/LU>
-
-#include <opt/tinyxml.h>
-#include <opt/ndim_iterator.h>
-#include <physics/physics.h>
-#include <math/misc.h>
+#include <Python.h>
+#define PY_ARRAY_UNIQUE_SYMBOL crystal_ARRAY_API
+#define NO_IMPORT_ARRAY
+#include <numpy/arrayobject.h>
 
 #include "structure.h"
-#include "fill_structure.h"
-#include "epi_structure.h"
-#include "fourier.h"
-#include "smith.h"
 
 namespace LaDa
 {
@@ -24,15 +13,13 @@ namespace LaDa
   namespace crystal 
   {
     // Transforms a structure according to an affine transformation.
-    Structure Structure::transform(math::Affine3d const &_affine) const
+    void Structure::transform(Eigen::Matrix<types::t_real, 4, 3> const &_affine)
     {
-      Structure result = copy();
-      result.cell() = _affine.linear() * cell();
-      iterator i_first = result.begin();
-      iterator const i_end = result.end();
+      cell() = _affine.block<3,3>(0,0) * cell();
+      iterator i_first = begin();
+      iterator const i_end = end();
       for(; i_first != i_end;  ++i_first)
-        i_first->pos() = _affine * i_first->pos();
-      return result;
+        i_first->pos() = _affine.block<3,3>(0, 0) * i_first->pos() + ~_affine.block<1, 3>(3, 0);
     }
   } // namespace Crystal
 

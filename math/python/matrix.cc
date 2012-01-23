@@ -1,4 +1,9 @@
 // Adapted from Avogadro open source molecular editor from the kde project. (libavogadro/src/python/eigen.cpp)
+#include <Python.h>
+#define PY_ARRAY_UNIQUE_SYMBOL math_ARRAY_API
+#define NO_IMPORT_ARRAY
+#include <numpy/arrayobject.h>
+
 #include <iostream>
 
 #include <boost/type_traits/is_integral.hpp> 
@@ -6,10 +11,10 @@
 #include <boost/python/detail/wrap_python.hpp>
 #include <boost/python/tuple.hpp>
 #include <boost/python/errors.hpp>
+#include <boost/python/to_python_converter.hpp>
 
 #include <Eigen/Geometry>
 
-#include <python/std_vector.hpp>
 #include <python/numpy_types.h>
 
 #include "../eigen.h"
@@ -268,16 +273,11 @@ namespace LaDa
     void expose_eigen_matrices()
     {
       using namespace LaDa::python;
-      import_array(); // needed for NumPy 
-
       
       Matrix3x_to_python_array<math::rMatrix3d>();
       Matrix3x_from_python_array<math::rMatrix3d>();
       Matrix3x_to_python_array<math::iMatrix3d>();
       Matrix3x_from_python_array<math::iMatrix3d>();
-
-//     expose_vector<math::rMatrix3d>("_rMatrix3dVector", "Exposes std::vector<math::rMatrix3d>.");
-//     expose_vector<math::iMatrix3d>("_iMatrix3dVector", "Exposes std::vector<math::rMatrix3d>.");
     }
   }
 }

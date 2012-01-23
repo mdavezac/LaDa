@@ -3,6 +3,11 @@
 
 #include "LaDaConfig.h"
 
+#define PY_ARRAY_UNIQUE_SYMBOL crystal_ARRAY_API
+#define NO_IMPORT_ARRAY
+#include <numpy/arrayobject.h>
+
+
 #include "structure_data.h"
 #include "atom.h"
 
@@ -162,7 +167,7 @@ namespace LaDa
                    * std::pow(((StructureData*)object_)->scale, 3); }
 
         //! Transforms a structure according to an affine transformation.
-        Structure transform(math::Affine3d const &_affine) const;
+        void transform(Eigen::Matrix<types::t_real, 4, 3> const &_affine);
 
         //! Returns borrowed reference to dictionary.
         PyObject* dict() const { return ((StructureData*)object_)->pydict; }

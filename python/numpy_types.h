@@ -1,5 +1,5 @@
-#ifndef LADA_NUMPY_TYPES
-#define LADA_NUMPY_TYPES
+#ifndef LADA_NUMPY_TYPES_H
+#define LADA_NUMPY_TYPES_H
 
 #include <iostream>
 

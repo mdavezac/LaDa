@@ -12,47 +12,54 @@
 
     The same is checked for a subclass of atom.
 """ 
-def test(Class): 
+def mklist(Class, N):
+  from numpy import identity
+  structure = Class(identity(3)*0.25, scale=5.45, m=5)\
+               .add_atom(0,0,0, "Au")\
+               .add_atom(0.5,0.5,0.5, "Au")
+  result = [structure for u in range(10*N)]
+  for r in result: r[0].parent = [r]
+  b = [u.cell for u in result]
+  return result, b
+
+def get_mem(id):
+  from subprocess import Popen, PIPE
+  output = Popen(["ps","--pid", "{0}".format(id), '-o', 'rss'], stdout=PIPE).communicate()[0].split('\n')[-2]
+  return int(output)
+
+def mem_per_structure(N):
+  import gc
+  from os import system, getpid
+  from lada.crystal.cppwrappers import Structure
+  id = getpid()
+  gc.set_debug(gc.DEBUG_OBJECTS | gc.DEBUG_UNCOLLECTABLE)
+  startmem = get_mem(id)
+  a = []
+  for i in range(N):
+    a.append(mklist(Structure, N))
+  mem = float(get_mem(id) - startmem)
+  del a
+  gc.collect()
+  assert mem > 0 # otherwise, test would be invalid.
+  return mem
+
+def test(Class, N, mem_per_structure): 
   import gc
   from os import system, getpid
   gc.set_debug(gc.DEBUG_OBJECTS | gc.DEBUG_UNCOLLECTABLE)
 
   id = getpid()
-  def get_mem():
-    from subprocess import Popen, PIPE
-    output = Popen(["ps","--pid", "{0}".format(id), '-o', 'rss'], stdout=PIPE).communicate()[0].split('\n')[-2]
-    return int(output)
 
-  def mklist():
-    from numpy import identity
-    structure = Class(identity(3)*0.25, scale=5.45, m=5)\
-                 .add_atom(0,0,0, "Au")\
-                 .add_atom(0.5,0.5,0.5, "Au")
-    result = [structure for u in range(100)]
-    for r in result: r[0].parent = [r]
-    b = [u.cell for u in result]
-    return result, b
-
-  n = 10
-  a = []
-  startmem = get_mem()
-  for i in range(n):
-    a.append(mklist())
-  mem = float(get_mem() - startmem) / float(n)
-  assert mem > 0 # otherwise, test would be invalid.
-  del a
-  gc.collect()
-   
-  startmem = get_mem()
-  for i in range(n*5): 
-    a, b = mklist()
+  startmem = get_mem(id)
+  for i in range(N*5): 
+    a, b = mklist(Class, N)
     # do deletion here, otherwise python might allocate extra memory to store our
     # objects, and the test would fail for reasons other than garbage collection.
     del a
     del b
     gc.collect()
-  mem2 = float(get_mem() - startmem)
-  assert mem2 < mem / 10.0
+  mem2 = float(get_mem(id) - startmem)
+  assert mem2 < mem_per_structure / 10.0
   assert len(gc.garbage) == 0
 
 if __name__ == "__main__": 
@@ -60,8 +67,10 @@ if __name__ == "__main__":
   from sys import argv, path 
   if len(argv) > 0: path.extend(argv[1:])
   
+  # gets mem_per_structure
+  mem = mem_per_structure(10)
   # tries to run test with normal class.
-  test(Structure) 
+  test(Structure, 10, mem) 
  
   # tries to run test with other class. 
   # check passage through init.
@@ -72,5 +81,5 @@ if __name__ == "__main__":
       check_passage = True
       super(Subclass, self).__init__(*args, **kwargs)
 
-  test(Subclass)
+  test(Subclass, 10, mem)
   assert check_passage

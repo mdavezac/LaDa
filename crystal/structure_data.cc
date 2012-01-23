@@ -1,19 +1,17 @@
 #include "LaDaConfig.h"
 
 #include <Python.h>
-#include "structmember.h"
-
+#include <structmember.h>
 #define PY_ARRAY_UNIQUE_SYMBOL crystal_ARRAY_API
 #define NO_IMPORT_ARRAY
 #include <numpy/arrayobject.h>
 
 
-#include <math/extract.h>
 #include <python/exceptions.h>
-#include <python/numpy_types.h>
+#include <python/wrap_numpy.h>
+#include <python/quantity.h>
 
 #include "structure_data.h"
-
 // structure getters/settters.
 #include "structure_getset.hpp"
 // iterator functions and type.
@@ -191,6 +189,13 @@ namespace LaDa
                         "The argument is any iterable objects containing only atoms, "
                         "e.g. another Structure." ),
           LADA_DECLARE(append, structure_append, O, "Appends an Atom or subtype to the structure.\n"),
+          LADA_DECLARE( transform, structure_transform, O, 
+                        "Transform a structure in-place.\n\n"
+                        "Applies an affine transformation to a structure. "
+                        "An affine transformation is a 4x3 matrix, where the upper 3 rows "
+                        "correspond to a rotation (applied first), and the last row to "
+                        "a translation (applied second).\n\n"
+                        ":Parameters:\n  matrix : 4x3 array\n    The affine transformation\n" ),
           LADA_DECLARE( __getitem__, structure_subscript, O|METH_COEXIST,
                         "Retrieves atom or slice.\n\n"
                         ":Parameters:\n"

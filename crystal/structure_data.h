@@ -3,10 +3,13 @@
 
 #include "LaDaConfig.h"
 
+#define PY_ARRAY_UNIQUE_SYMBOL crystal_ARRAY_API
+#define NO_IMPORT_ARRAY
+#include <numpy/arrayobject.h>
+
 #include <vector>
 #include <ostream>
 
-#include <python/quantity.h>
 #include "atom.h"
 
 //! \def PyStructure_Check(object)

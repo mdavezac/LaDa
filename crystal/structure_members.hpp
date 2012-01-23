@@ -25,6 +25,8 @@ namespace LaDa
       static PyObject* structure_reduce(StructureData* _self);
       //! Implements add atom.
       static PyObject* structure_add_atom(StructureData* _self, PyObject* _args, PyObject* _kwargs);
+      //! Implements structure affine transformation.
+      static PyObject* structure_transform(StructureData* _self, PyObject* _args);
     }
 
     //! Returns a representation of the object.
@@ -227,6 +229,18 @@ namespace LaDa
       // Finally, returns this very function for chaining.
       Py_INCREF(_self);
       return (PyObject*)_self;
+    }
+
+    static PyObject* structure_transform(StructureData* _self, PyObject* _args)
+    {
+      Eigen::Matrix<types::t_real, 4, 3> op;
+      if(not python::convert_to_matrix(_args, op)) return NULL;
+      _self->cell = op.block<3,3>(0,0) * _self->cell;
+      std::vector<Atom>::iterator i_atom = _self->atoms.begin();
+      std::vector<Atom>::iterator i_atom_end = _self->atoms.end();
+      for(; i_atom != i_atom_end; ++i_atom)
+        i_atom->pos() = op.block<3,3>(0,0) * i_atom->pos() + ~op.block<1, 3>(3, 0);
+      Py_RETURN_NONE;
     }
   }
 }

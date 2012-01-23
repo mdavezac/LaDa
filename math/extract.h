@@ -15,10 +15,26 @@ namespace LaDa
   {
     //! Converts an input sequence to a cell.
     template<class T_DERIVED>
-      bool convert_to_cell(PyObject *_in, Eigen::DenseBase<T_DERIVED> &_out)
+      bool convert_to_matrix(PyObject *_in, Eigen::DenseBase<T_DERIVED> &_out)
       {
+        size_t const N0(_out.rows());
+        size_t const N1(_out.cols());
         if(PyArray_Check(_in))
         {
+          if(PyArray_NDIM(_in) != 2)
+          {
+            npy_intp const n(PyArray_NDIM(_in));
+            LADA_PYERROR_FORMAT(TypeError, "Expected a 2d array, got %id", n);
+            return false;
+          }
+          if(PyArray_DIM(_in, 0) != N0 or PyArray_DIM(_in, 1) != N1)
+          {
+            npy_intp const n0(PyArray_DIM(_in, 0));
+            npy_intp const n1(PyArray_DIM(_in, 1));
+            PyErr_Format( ::LaDa::python::PyException< ::LaDa::error::TypeError >::exception().ptr(),
+                          "Expected a %ix%i array, got %ix%i", N0, N1, n0, n1);
+            return false;
+          }
           python::Object iterator = PyArray_IterNew(_in);
           if(not iterator) return false;
           int const type = PyArray_DESCR(_in)->type_num;
@@ -28,14 +44,14 @@ namespace LaDa
 #         define LADA_NPYITER(TYPE, NUM_TYPE)                                             \
             if(type == NUM_TYPE)                                                          \
             {                                                                             \
-              for(size_t i(0); i < 9; ++i)                                                \
+              for(size_t i(0); i < N0*N1; ++i)                                            \
               {                                                                           \
                 if(not PyArray_ITER_NOTDONE(iterator.borrowed()))                         \
                 {                                                                         \
                   LADA_PYERROR(TypeError, "Numpy array too small.");                      \
                   return false;                                                           \
                 }                                                                         \
-                _out(i/3, i%3) = *((TYPE*) PyArray_ITER_DATA(iterator.borrowed()));       \
+                _out(i/N0, i%N0) = *((TYPE*) PyArray_ITER_DATA(iterator.borrowed()));     \
                 PyArray_ITER_NEXT(iterator.borrowed());                                   \
               }                                                                           \
               if(PyArray_ITER_NOTDONE(iterator.borrowed()))                               \
@@ -71,11 +87,11 @@ namespace LaDa
           if(not outer.hasattr("__iter__")) // except 9 in a row
           {
             size_t i(0);
-            for( ; outer.is_valid() and i < 9;
+            for( ; outer.is_valid() and i < N0*N1;
                  outer.reset(PyIter_Next(i_outer.borrowed())), ++i ) 
             {
-              if(PyInt_Check(outer.borrowed())) _out(i/3, i%3) = PyInt_AS_LONG(outer.borrowed());
-              else if(PyFloat_Check(outer.borrowed())) _out(i/3, i%3) = PyFloat_AS_DOUBLE(outer.borrowed());
+              if(PyInt_Check(outer.borrowed())) _out(i/N0, i%N0) = PyInt_AS_LONG(outer.borrowed());
+              else if(PyFloat_Check(outer.borrowed())) _out(i/N0, i%N0) = PyFloat_AS_DOUBLE(outer.borrowed());
               else
               { 
                 LADA_PYERROR(TypeError, "Object should contains numbers only.");
@@ -84,14 +100,14 @@ namespace LaDa
             }
             if(outer.is_valid() or i != 9)
             {
-              LADA_PYERROR(TypeError, "Expected 9 (3x3) numbers in input.");
+              LADA_PYERROR(TypeError, "Expected 9 (NxN) numbers in input.");
               return false;
             }
-          }    // 9 in a row.
-          else // expect 3 by 3
+          }    // N0*N1 in a row.
+          else // expect N0 by N1
           {
             size_t i(0);
-            for( ; outer.is_valid() and i < 3;
+            for( ; outer.is_valid() and i < N0;
                  outer.reset(PyIter_Next(i_outer.borrowed())), ++i ) 
             {
               python::Object i_inner = PyObject_GetIter(outer.borrowed());
@@ -99,26 +115,26 @@ namespace LaDa
               python::Object inner(PyIter_Next(i_inner.borrowed()));
               if(not inner) return false;
               size_t j(0);
-              for( ; inner.is_valid() and j < 3;
+              for( ; inner.is_valid() and j < N1;
                    inner.reset(PyIter_Next(i_inner.borrowed())), ++j ) 
               {
-                if(PyInt_Check(inner.borrowed())) _out(j, i) = PyInt_AS_LONG(inner.borrowed());
-                else if(PyFloat_Check(inner.borrowed())) _out(j, i) = PyFloat_AS_DOUBLE(inner.borrowed());
+                if(PyInt_Check(inner.borrowed())) _out(i, j) = PyInt_AS_LONG(inner.borrowed());
+                else if(PyFloat_Check(inner.borrowed())) _out(i, j) = PyFloat_AS_DOUBLE(inner.borrowed());
                 else
                 { 
                   LADA_PYERROR(TypeError, "Object should contains numbers only.");
                   return false;
                 }
               } // inner loop.
-              if(inner.is_valid() or j != 3)
+              if(inner.is_valid() or j != N1)
               {
-                LADA_PYERROR(TypeError, "Not a 3x3 matrix of numbers.");
+                LADA_PYERROR(TypeError, "Not a NxN matrix of numbers.");
                 return false;
               }
             } // outer loop.
-            if(outer.is_valid() or i != 3)
+            if(outer.is_valid() or i != N1)
             {
-              LADA_PYERROR(TypeError, "Not a 3x3 matrix of numbers.");
+              LADA_PYERROR(TypeError, "Not a NxN matrix of numbers.");
               return false;
             }
           }
@@ -182,7 +198,7 @@ namespace LaDa
           if(not i_outer) { return false; }
           python::Object item(PyIter_Next(i_outer.borrowed()));
           size_t i(0);
-          for( ; item.is_valid() or i >= 3;
+          for( ; item.is_valid() and i < 3;
                item.reset(PyIter_Next(i_outer.borrowed())), ++i ) 
             if(PyInt_Check(item.borrowed()) == 1) _out[i] = PyInt_AS_LONG(item.borrowed());
             else if(PyFloat_Check(item.borrowed()) == 1) _out[i] = PyFloat_AS_DOUBLE(item.borrowed());
