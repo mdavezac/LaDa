@@ -266,7 +266,10 @@ def push(self, cmdl):
                            is_dft=extract.is_dft, is_gw=extract.is_gw, uploader=username )
       found = True
       print "Pushing", path, "."
-      generate_extracted(filter={'_id': item})
+      try: generate_extracted(filter={'_id': item})
+      except:
+        print "Could not extract values from ", path, "."
+        pass
     if not found:
       print "No new OUTCAR found. "
       return
