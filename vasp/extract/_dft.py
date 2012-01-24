@@ -57,17 +57,49 @@ class Extract(object):
   @property
   @json_section("output")
   @json_array_with_unit("float64", eV)
+  def fermi0K(self):
+    """ Fermi energy at zero kelvin.
+    
+        This procedure recomputes the fermi energy using a step-function. 
+        It avoids negative occupation numbers. As such, it may be different
+        from the fermi energy given by vasp, depeneding on the smearing and the
+        smearing function.
+    """
+    from operator import itemgetter
+    from numpy import rollaxis, sum
+
+    if self.ispin == 2: eigs = rollaxis(self.eigenvalues, 0, 2)
+    else: eigs = self.eigenvalues
+    array = [(e, m) for u, m in zip(eigs, self.multiplicity) for e in u.flat]
+    array = sorted(array, key=itemgetter(0))
+    occ = 0e0
+    factor = 1e0/float(sum(self.multiplicity))
+    if self.ispin == 1: factor *= 2e0
+    for i, (e, w) in enumerate(array):
+      occ += w*factor
+      if occ >= self.valence - 1e-8: return e * self.eigenvalues.units
+    return None
+
+  @property
+  def halfmetallic(self):
+    """ True if the material is half-metallic. """
+    from numpy import max, abs
+    if self.ispin == 1: return False
+
+    if self.cbm - self.vbm > 0.01 * self.cbm.units: return False
+
+    fermi = self.fermi0K
+    vbm0 = max(self.eigenvalues[0][self.eigenvalues[0]<=float(fermi)+1e-8]) 
+    vbm1 = max(self.eigenvalues[1][self.eigenvalues[1]<=float(fermi)+1e-8])
+    return abs(float(vbm0-vbm1)) > 2e0 * min(float(fermi - vbm0), float(fermi - vbm1))
+
+  @property
+  @json_section("output")
+  @json_array_with_unit("float64", eV)
   def cbm(self):
     """ Returns Condunction Band Minimum. """
     from numpy import min
-    if self.ispin == 2:
-      assert 2 * self.eigenvalues.shape[2] > self.valence + 2,\
-             RuntimeError("Not enough bands were computed.")
-      return min(self.eigenvalues[:, :, self.valence/2])
-    else:
-      assert 2 * self.eigenvalues.shape[1] > (self.valence/2) + 1,\
-             RuntimeError("Not enough bands were computed.")
-      return min(self.eigenvalues[:, self.valence/2])
+    return min(self.eigenvalues[self.eigenvalues>self.fermi0K+1e-8*self.fermi0K.units])
 
   @property
   @json_section("output")
@@ -75,14 +107,7 @@ class Extract(object):
   def vbm(self):
     """ Returns Valence Band Maximum. """
     from numpy import max
-    if self.ispin == 2:
-      assert 2 * self.eigenvalues.shape[2] > self.valence,\
-             RuntimeError("Not enough bands were computed.")
-      return max(self.eigenvalues[:, :, self.valence/2-1])
-    else:
-      assert 2 * self.eigenvalues.shape[1] > self.valence,\
-             RuntimeError("Not enough bands were computed.")
-      return max(self.eigenvalues[:, self.valence/2-1])
+    return max(self.eigenvalues[self.eigenvalues<=self.fermi0K+1e-8*self.fermi0K.units])
 
   @property
   @json_section("output")

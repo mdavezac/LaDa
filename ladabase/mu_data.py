@@ -72,6 +72,7 @@ def enthalpy(extract):
   if not extract.is_dft: return None
   if extract.relaxation != "static": return None 
   if extract.pseudopotential != 'PAW_PBE': return None
+  if len(extract.species) == 1: return None
   for specie in extract.species:
     if specie not in elemental_mus: return None
     U = None
