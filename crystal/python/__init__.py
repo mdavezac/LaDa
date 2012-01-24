@@ -30,9 +30,9 @@ import ABX
 import bravais
 import binary
 import gruber
-try: import defects
-except ImportError: pass # required vasp and jobs packages.
-else: __all__.append('defects')
+# try: import defects
+# except ImportError: pass # required vasp and jobs packages.
+# else: __all__.append('defects')
 
 from contextlib import contextmanager
   
