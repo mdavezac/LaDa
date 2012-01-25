@@ -534,12 +534,12 @@ class Extract(object):
 
     # now greps actual results.
     if self.is_dft:
-      kp_re = r"\s*k-point\s+(?:\d+)\s*:\s*(?:\S+)\s*(?:\S+)\s*(?:\S+)\n"\
+      kp_re = r"\s*k-point\s+(?:(?:\d|\*)+)\s*:\s*(?:\S+)\s*(?:\S+)\s*(?:\S+)\n"\
               r"\s*band\s+No\.\s+band\s+energies\s+occupation\s*\n"\
               r"(\s*(?:\d+)\s+(?:\S+)\s+(?:\S+)\s*\n)+"
       skip, cols = 2, 3
     else: 
-      kp_re = r"\s*k-point\s+(?:\d+)\s*:\s*(?:\S+)\s*(?:\S+)\s*(?:\S+)\n"\
+      kp_re = r"\s*k-point\s+(?:(?:\d|\*)+)\s*:\s*(?:\S+)\s*(?:\S+)\s*(?:\S+)\n"\
               r"\s*band\s+No\.\s+.*\n\n"\
               r"(\s*(?:\d+)\s+(?:\S+)\s+(?:\S+)\s+(?:\S+)\s+(?:\S+)"\
               r"\s+(?:\S+)\s+(?:\S+)\s+(?:\S+)\s*\n)+"
@@ -574,12 +574,12 @@ class Extract(object):
 
     # now greps actual results.
     if self.is_dft:
-      kp_re = r"\s*k-point\s+(?:\d+)\s*:\s*(?:\S+)\s*(?:\S+)\s*(?:\S+)\n"\
+      kp_re = r"\s*k-point\s+(?:(?:\d|\*)+)\s*:\s*(?:\S+)\s*(?:\S+)\s*(?:\S+)\n"\
               r"\s*band\s+No\.\s+band\s+energies\s+occupation\s*\n"\
               r"(\s*(?:\d+)\s+(?:\S+)\s+(?:\S+)\s*\n)+"
       skip, cols = 2, 3
     else: 
-      kp_re = r"\s*k-point\s+(?:\d+)\s*:\s*(?:\S+)\s*(?:\S+)\s*(?:\S+)\n"\
+      kp_re = r"\s*k-point\s+(?:(?:\d|\*)+)\s*:\s*(?:\S+)\s*(?:\S+)\s*(?:\S+)\n"\
               r"\s*band\s+No\.\s+.*\n\n"\
               r"(\s*(?:\d+)\s+(?:\S+)\s+(?:\S+)\s+(?:\S+)\s+(?:\S+)"\
               r"\s+(?:\S+)\s+(?:\S+)\s+(?:\S+)\s*\n)+"

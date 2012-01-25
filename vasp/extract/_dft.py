@@ -73,8 +73,7 @@ class Extract(object):
     array = [(e, m) for u, m in zip(eigs, self.multiplicity) for e in u.flat]
     array = sorted(array, key=itemgetter(0))
     occ = 0e0
-    factor = 1e0/float(sum(self.multiplicity))
-    if self.ispin == 1: factor *= 2e0
+    factor = 2e0/float(sum(self.multiplicity))
     for i, (e, w) in enumerate(array):
       occ += w*factor
       if occ >= self.valence - 1e-8: return e * self.eigenvalues.units
