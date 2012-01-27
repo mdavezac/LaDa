@@ -57,7 +57,7 @@ install(FILES ${PROJECT_BINARY_DIR}/python/__init__.py DESTINATION ${CMAKE_PYINS
 install(FILES ${PYLADA_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada)
 
 include_directories(${PYTHON_INCLUDE_DIRS})
-add_library (pyerror SHARED exceptions.cc exceptions.h object.h quantity.h wrap_numpy.h)
+add_library (pyerror SHARED exceptions.cc exceptions.h object.h quantity.h wrap_numpy.h wrap_numpy.h)
 target_link_libraries(pyerror ${Boost_PYTHON_LIBRARY})
 set_target_properties(pyerror PROPERTIES PREFIX "")
 set_target_properties(pyerror PROPERTIES OUTPUT_NAME error)

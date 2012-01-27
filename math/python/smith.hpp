@@ -5,7 +5,7 @@
 
 namespace LaDa
 {
-  namespace Python
+  namespace math
   {
     void expose_smith();
   }

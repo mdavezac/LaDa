@@ -10,58 +10,6 @@ namespace LaDa
 
   namespace math
   {
-
-    iVector3d smith_index( t_SmithTransform const &_transformation,
-                           rVector3d  const &_pos )
-    {
-      namespace bt = boost::tuples;
-      iVector3d result;
-      const rVector3d pos( bt::get<0>( _transformation ) * _pos );
-      const iVector3d int_pos
-      (
-        types::t_int( rint( pos(0) ) ),
-        types::t_int( rint( pos(1) ) ),
-        types::t_int( rint( pos(2) ) )
-      );
-      for( size_t i(0); i < 3; ++i )
-      {
-#       ifdef LADA_DEBUG
-          if( neq(pos(i), types::t_real(int_pos(i))) )
-            BOOST_THROW_EXCEPTION(error::off_lattice_position());
-#       endif
-        result(i) = int_pos(i) % bt::get<1>(_transformation)(i);
-        if( result(i) < 0 ) result(i) += bt::get<1>(_transformation)(i);
-      }
-      return result;
-    }
-
-    t_SmithTransform smith_transform( rMatrix3d const &_unitcell,
-                                      rMatrix3d const &_supercell )
-    {
-      if(std::abs(_unitcell.determinant()) < 1e-8)
-        BOOST_THROW_EXCEPTION(error::singular_matrix() << error::string("Unit-cell is singular."));
-      if(std::abs(_supercell.determinant()) < 1e-8)
-        BOOST_THROW_EXCEPTION(error::singular_matrix() << error::string("Supercell is singular."));
-      namespace bt = boost::tuples;
-      t_SmithTransform result;
-      iMatrix3d left, right, smith;
-      const rMatrix3d inv_lat( !_unitcell );
-      const rMatrix3d inv_lat_cell( inv_lat * _supercell );
-      iMatrix3d int_cell;
-      for( size_t i(0); i < 3; ++i )
-        for( size_t j(0); j < 3; ++j )
-        {
-          int_cell(i,j) = types::t_int( rint( inv_lat_cell(i,j) ) ); 
-          if( neq(types::t_real(int_cell(i,j)), inv_lat_cell(i,j), 1e-2) )
-            BOOST_THROW_EXCEPTION( error::not_a_supercell() );
-        }
-      smith_normal_form( smith, left, int_cell, right );
-      result.get<0>() = left.cast<types::t_real>() * (!_unitcell);
-      result.get<1>() = smith.diagonal();
-
-      return result;
-    }
-
     template<class T>
       bool one_nonzero(Eigen::MatrixBase<T> const &_in)
       {
@@ -229,15 +177,14 @@ namespace LaDa
         }
       }
     
-   void smith_normal_form( iMatrix3d& _S, iMatrix3d & _L,
-                           const iMatrix3d& _M, iMatrix3d &_R )
-   {
-     // set up the system _out = _left * _smith * _right.
-     _L  = iMatrix3d::Identity();
-     _R = iMatrix3d::Identity();
-     _S = _M;
-     smith_impl_(_M, _L, _R, _S);
-   }
-  } // namespace Crystal
-
+    void smith_normal_form( iMatrix3d& _S, iMatrix3d & _L,
+                            const iMatrix3d& _M, iMatrix3d &_R )
+    {
+      // set up the system _out = _left * _smith * _right.
+      _L  = iMatrix3d::Identity();
+      _R = iMatrix3d::Identity();
+      _S = _M;
+      smith_impl_(_M, _L, _R, _S);
+    }
+  } // namespace math
 } // namespace LaDa

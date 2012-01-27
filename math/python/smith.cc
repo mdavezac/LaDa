@@ -8,15 +8,13 @@
 #include <boost/python/def.hpp>
 #include <boost/python/errors.hpp>
 
-#include "../smith.h"
+#include "../smith_normal_form.h"
 
 
 namespace LaDa
 {
-  namespace Python
+  namespace math
   {
-
-    
     boost::python::tuple get_smith_transform( math::rMatrix3d const &_lat_cell,
                                               math::rMatrix3d const &_str_cell )
     {
@@ -24,7 +22,7 @@ namespace LaDa
       namespace bp = boost::python;
       try
       {
-        Crystal::t_SmithTransform result = Crystal::get_smith_transform( _lat_cell, _str_cell );
+        t_SmithTransform result = get_smith_transform( _lat_cell, _str_cell );
         return bp::make_tuple( bt::get<0>(result), bt::get<1>(result) );
       }
       catch(...)
@@ -39,13 +37,13 @@ namespace LaDa
       }
     }
     template< class T_TYPE  >
-    boost::python::tuple get_smith_transform_str( Crystal::TStructure<T_TYPE> const &_struct )
+    boost::python::tuple get_smith_transform_str( crystal::Structure const &_struct )
     {
       namespace bt = boost::tuples;
       namespace bp = boost::python;
       try
       {
-        Crystal::t_SmithTransform result = Crystal::get_smith_transform( _struct );
+        crystal::t_SmithTransform result = Crystal::get_smith_transform( _struct );
         return bp::make_tuple( bt::get<0>(result), bt::get<1>(result) );
       }
       catch(...)

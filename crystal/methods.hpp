@@ -539,8 +539,7 @@ namespace LaDa
          ":returns: python list of affine symmetry operations for the given structure. "
            "Each element is a 4x3 numpy array, with the first 3 rows "
            "forming the rotation, and the last row is the translation. "
-           "The affine transform is applied as rotation * vector + translation. "
-           "`cell_invariants` always returns isometries (translation is zero). " }, 
+           "The affine transform is applied as rotation * vector + translation. "},
         {"cell_invariants",  cell_invariants_wrapper, METH_VARARGS,
          "Finds and stores point group operations.\n\n"
          "Rotations are determined from G-vector triplets with the same "
@@ -555,7 +554,7 @@ namespace LaDa
            "Each element is a 4x3 numpy array, with the first 3 rows "
            "forming the rotation, and the last row is the translation. "
            "The affine transform is applied as rotation * vector + translation. "
-           "`cell_invariants` always returns isometries (translation is zero). " }, 
+           "`cell_invariants` always returns rotations (translation is zero). " }, 
         {"equivalent", (PyCFunction)equivalent_wrapper, METH_VARARGS | METH_KEYWORDS, 
           "Returns true if two structures are equivalent. \n\n"
           "Two structures are equivalent in a crystallographic sense, "

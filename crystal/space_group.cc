@@ -29,22 +29,7 @@ namespace LaDa
     {
       npy_intp dims[2] = {N0, N1};
       int const type = math::numpy::type<types::t_real>::value;
-      PyArrayObject *result = (PyArrayObject*)PyArray_SimpleNew(2, dims, type);
-#     ifdef LADA_MACRO
-#       error LADA_MACRO already defined
-#     endif
-#     ifdef NPY_ARRAY_C_CONTIGUOUS
-#       define LADA_MACRO NPY_ARRAY_C_CONTIGUOUS;
-#     else 
-#       define LADA_MACRO NPY_C_CONTIGUOUS
-#     endif
-      if(result->flags & LADA_MACRO)
-      {
-        result->flags -= LADA_MACRO;
-        std::swap(result->strides[0], result->strides[1]);
-        result->strides[1] = result->strides[1] / N1 * N0;
-      }
-#     undef LADA_MACRO
+      PyArrayObject *result = (PyArrayObject*)PyArray_ZEROS(2, dims, type, 1);
       return (PyObject*)result;
     }
     template<size_t N0, size_t N1>  PyObject* new_identity()
@@ -52,8 +37,7 @@ namespace LaDa
       PyArrayObject *result = (PyArrayObject*) new_matrix<N0, N1>();
       if(not result) return NULL;
       for(size_t i(0); i < N0; ++i)
-        for(size_t j(0); j < N1; ++j)
-          *((types::t_real*)(result->data + i*result->strides[0] + j*result->strides[1])) = i == j ? 1: 0;
+        *((types::t_real*)(result->data + i*result->strides[0] + i*result->strides[1])) = 1;
       return (PyObject*)result;
     }
 
@@ -150,8 +134,8 @@ namespace LaDa
             for(; item.is_valid() and doadd; item.reset(PyIter_Next(iterator.borrowed())))
             {
               // reinitializes operation map.
-              types::t_real *const symop = (types::t_real*)((PyArrayObject*)item.borrowed())->data;
-              Eigen::Map< Eigen::Matrix<types::t_real, 3, 3> > rotmap(symop);
+              types::t_real *const symop = (types::t_real*)PyArray_DATA(item.borrowed());
+              Eigen::Map<math::rMatrix3d> rotmap(symop);
               doadd = math::neq(rotmap, rotation, _tolerance);
             }
             if(not doadd) continue;
@@ -159,7 +143,7 @@ namespace LaDa
             // adds to vector of symmetries.
             python::Object symop = new_matrix<4, 3>();
             if(not symop) return NULL;
-            types::t_real * const symop_ = (types::t_real*)((PyArrayObject*)symop.borrowed())->data;
+            types::t_real * const symop_ = (types::t_real*)PyArray_DATA(symop.borrowed());
             Eigen::Map< Eigen::Matrix<types::t_real, 4, 3> > opmap(symop_);
             opmap.block<3,3>(0,0) = rotation;
             opmap.block<1,3>(3,0) = math::rVector3d::Zero();

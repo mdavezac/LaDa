@@ -118,13 +118,13 @@ namespace LaDa
     //!      EXCEPTION should be an unqualified declared in python/exceptions.h.
     //!      This macro makes it easy to catch all thrown python exceptions in a single statement.
 #   define LADA_PYTHROW(EXCEPTION, MESSAGE)                                                   \
-    {                                                                                              \
-      PyObject * const exception                                                                   \
-         = ::LaDa::python::PyException< ::LaDa::error::EXCEPTION >::exception().ptr();             \
-      PyErr_SetString(exception, MESSAGE);                                                         \
-      BOOST_THROW_EXCEPTION( ::LaDa::error::EXCEPTION()                                            \
-                             << ::LaDa::error::pyexcept(exception)                                 \
-                             << ::LaDa::error::string(MESSAGE) );                                  \
+    {                                                                                         \
+      PyObject * const exception                                                              \
+         = ::LaDa::python::PyException< ::LaDa::error::EXCEPTION >::exception().ptr();        \
+      PyErr_SetString(exception, MESSAGE);                                                    \
+      BOOST_THROW_EXCEPTION( ::LaDa::error::EXCEPTION()                                       \
+                             << ::LaDa::error::pyexcept(exception)                            \
+                             << ::LaDa::error::string(MESSAGE) );                             \
     }
   }
 }

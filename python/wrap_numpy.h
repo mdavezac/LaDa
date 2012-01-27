@@ -5,6 +5,8 @@
 
 #include "LaDaConfig.h"
 
+#include <boost/type_traits/is_floating_point.hpp>
+
 #include <python/object.h>
 #include <math/eigen.h>
 #include "numpy_types.h"
@@ -20,7 +22,7 @@ namespace LaDa
         npy_intp dims[2] = { _in.rows(), _in.cols() };
         typedef math::numpy::type<typename Eigen::DenseBase<T_DERIVED>::Scalar> t_ScalarType;
         PyArrayObject *result = _parent == NULL ?
-          (PyArrayObject*) PyArray_SimpleNew(_in.cols() > 1? 2: 1, dims, t_ScalarType::value):
+          (PyArrayObject*) PyArray_ZEROS(_in.cols() > 1? 2: 1, dims, t_ScalarType::value, _in.IsRowMajor):
           (PyArrayObject*) PyArray_SimpleNewFromData(_in.cols() > 1? 2: 1, dims, t_ScalarType::value, &_in(0,0));
         if(result == NULL) return NULL;
         // macro for row vs column major. The macro changed for npy >= 1.6
@@ -241,8 +243,10 @@ namespace LaDa
           }
       #   undef LADA_NPYITER
         }
-        else if(PyInt_Check(_in)) _out = math::rVector3d::Ones() * PyInt_AS_LONG(_in); 
-        else if(PyFloat_Check(_in)) _out = math::rVector3d::Ones() * PyFloat_AS_DOUBLE(_in); 
+        else if(PyInt_Check(_in)) _out = Eigen::DenseBase<T_DERIVED>::Ones() * PyInt_AS_LONG(_in); 
+        else if( boost::is_floating_point< typename Eigen::DenseBase<T_DERIVED> >::value 
+                 and PyFloat_Check(_in))
+          _out = Eigen::DenseBase<T_DERIVED>::Ones() * PyFloat_AS_DOUBLE(_in); 
         else
         {
           python::Object i_outer = PyObject_GetIter(_in);

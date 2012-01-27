@@ -8,8 +8,8 @@
 
 #include <math/misc.h>
 #include <math/fuzzy.h>
-#include <math/smith_normal_form.h>
 
+#include "smith.h"
 #include "structure.h"
 #include "exceptions.h"
 #include "utilities.h"
@@ -40,18 +40,18 @@ namespace LaDa
           if(attr != "" and not result.pyattr_convert("name", "supercell of " + std::string(attr)) ) 
             PyErr_Clear();
         }
-        math::t_SmithTransform transform = math::smith_transform( _lattice.cell(), result.cell());
+        SmithTransform transform( _lattice.cell(), result.cell());
+        if(not transform) return Structure();;
       
-        math::iVector3d &smith = bt::get<1>(transform);
-        const math::rMatrix3d factor(bt::get<0>(transform).inverse());
+        const math::rMatrix3d factor(transform.matrix().inverse());
         math::rMatrix3d inv_cell( result.cell().inverse() ); 
-        result.reserve(smith(0)*smith(1)*smith(2)*_lattice.size());
+        result.reserve(transform.size()*_lattice.size());
         Structure::const_iterator const i_site_begin = _lattice.begin();
         Structure::const_iterator const i_site_end = _lattice.end();
         
-        for( math::iVector3d::Scalar i(0); i < smith(0); ++i )
-          for( math::iVector3d::Scalar j(0); j < smith(1); ++j )
-            for( math::iVector3d::Scalar k(0); k < smith(2); ++k )
+        for( math::iVector3d::Scalar i(0); i < transform.vector()(0); ++i )
+          for( math::iVector3d::Scalar j(0); j < transform.vector()(1); ++j )
+            for( math::iVector3d::Scalar k(0); k < transform.vector()(2); ++k )
             {
               // in cartesian.
               const math::rVector3d vec( factor * math::rVector3d(i,j,k) );

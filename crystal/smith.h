@@ -3,77 +3,99 @@
 
 #include "LaDaConfig.h"
 
-#include <boost/tuple/tuple.hpp>
+#include <boost/type_traits/is_same.hpp>
+#include <boost/static_assert.hpp>
+
 
 #include <math/smith_normal_form.h>
+#include <python/object.h>
 #include "structure.h"
+#include "smith_data.h"
 
 namespace LaDa 
 {
   namespace crystal 
   {
-    //! Computes linear smith index of position \a _pos.
-    template<class T_TYPE>
-      size_t linear_smith_index( math::t_SmithTransform const &_transformation,
-                                 Crystal::Atom_Type<T_TYPE> &_atom ) 
+    //! Convenience wrapper around the smuth transform.
+    class SmithTransform : public python::Object
+    {
+        //! \brief Initializer constructor.
+        //! \details private so it cannot be constructed without a call throw
+        //! smith_transform.
+        SmithTransform(PyObject *_in) : python::Object(_in) {}
+        //! \brief Initializer constructor.
+        //! \details private so it cannot be constructed without a call throw
+        //! smith_transform.
+        SmithTransform() : python::Object() {}
+
+      public:
+        //! Copy constructor.
+        SmithTransform(const SmithTransform &_in) : python::Object(_in) {}
+        //! Initialization constructor.
+        template<class T0, class T1> 
+          SmithTransform( Eigen::DenseBase<T0> const &_lattice,
+                          Eigen::DenseBase<T1> const &_supercell )
+            { init_(_lattice, _supercell); }
+        //! Initialization constructor.
+        SmithTransform(Structure const &_lattice, Structure const &_supercell)
+          { init_(_lattice->cell, _supercell->cell); }
+
+        //! Returns constant reference to matrix object.
+        math::rMatrix3d const & matrix() const 
+          { return ((SmithTransformData* const)object_)->matrix; }
+        //! Returns reference to matrix object.
+        math::rMatrix3d & matrix() 
+          { return ((SmithTransformData*)object_)->matrix; }
+        //! Returns constant reference to vector object.
+        math::iVector3d const & vector() const 
+          { return ((SmithTransformData* const)object_)->vector; }
+        //! Returns reference to vector object.
+        math::iVector3d & vector() 
+          { return ((SmithTransformData*)object_)->vector; }
+
+#       include "smith_macro.hpp"
+        //! Computes smith indices of position \a _pos.
+        inline math::iVector3d indices(math::rVector3d const &_pos) const
+        {
+          LADA_SMITHTRANSFORM_SHARED1(vector(), matrix(), _pos, LADA_PYTHROW,);
+          return vector_result;
+        }
+        //! \brief Computes linear smith index from non-linear smith index.
+        inline size_t flat_index(math::iVector3d const &_index, int _site=-1)
+        {
+          LADA_SMITHTRANSFORM_SHARED0(vector(), _index, _site);
+          return flat_result;
+        }
+        //! Computes linear smith index of position \a _pos.
+        inline size_t flat_index(math::rVector3d const &_pos, int _site=-1)
+        {
+          LADA_SMITHTRANSFORM_SHARED1(vector(), matrix(), _pos, LADA_PYTHROW,);
+          LADA_SMITHTRANSFORM_SHARED0(vector(), vector_result, _site);
+          return flat_result;
+        }
+        //! Number of unit-cells in the supercell.
+        size_t size() const { return LADA_SMITHTRANSFORM_SHARED2(vector()); }
+#       include "smith_macro.hpp"
+      private:
+        //! creates a smith transform from scratch.
+        template<class T0, class T1> 
+          void init_(Eigen::DenseBase<T0> const &_lattice, Eigen::DenseBase<T1> const &_supercell);
+    };
+
+    template<class T0, class T1> 
+      void SmithTransform::init_( Eigen::DenseBase<T0> const &_lattice, 
+                                  Eigen::DenseBase<T1> const &_supercell )
       {
-        if(_atom.site < 0) BOOST_THROW_EXCEPTION( error::incorrect_site_index() );
-        return math::linear_smith_index
-               (
-                 boost::tuples::get<1>(_transformation),
-                 _atom.site,
-                 get_smith_index( _transformation, _atom.pos )
-               );
+        BOOST_STATIC_ASSERT((boost::is_same<typename Eigen::DenseBase<T0>::Scalar,
+                                            types::t_real>::value));
+        BOOST_STATIC_ASSERT((boost::is_same<typename Eigen::DenseBase<T1>::Scalar,
+                                            types::t_real>::value));
+        python::Object dummy(object_);
+        object_ = smithtransform_type()->tp_alloc(smithtransform_type(), 0);
+        if(not object_) return;
+        if(not smith_transform_init((SmithTransformData*)object_, _lattice, _supercell)) release();
       }
 
-
-    //! \brief Computes map of smith indices.
-    //! \param [in] _lattice: Backbone lattice.
-    //! \param [in] _supercell: Supercell of the lattice. The site indices of
-    //!                         each atom must correspond to the index of the
-    //!                         site in the backbone lattice.
-    //! \param [out] _map: Two-dimensional matrix where rows (inner vector) corresponds to
-    //!                    atomic sites indexed by their linear smith index,
-    //!                    and columns (outer vector) to lattice sites. The
-    //!                    value of each element is the corresponding index
-    //!                    into the supercell's list of atoms.
-    template<class T_TYPE>
-      void smith_map( Structure<T_TYPE> const &_lattice,
-                      Structure<T_TYPE> const &_supercell,
-                      std::vector< std::vector<size_t> > &_map )
-      {
-        // finds map for atomic positions.
-        math::t_SmithTransform const
-          transform(smith_transform(_lattice.cell(), _supercell.cell()));
-     
-        if(_supercell.size() % _lattice.size() != 0)
-          BOOST_THROW_EXCEPTION(error::incommensurate_number_of_sites());
-        size_t const Nat( _str.atoms.size() );
-        size_t const N( Nat / _str.lattice->sites.size() );
-        _map.clear();
-        _map.resize(_str.lattice->sites.size(), std::vector<size_t>(N, Nat)); 
-     
-        typename Structure<T_TYPE>::const_iterator i_first = _str.begin();
-        typename Structure<T_TYPE>::const_iterator const i_end = _str.end();
-        for(size_t i(0); i_first != i_end; ++i_first, ++i)
-        {
-          if(i_first->site < 0 or i_first->site >= _str.lattice->sites.size())
-            BOOST_THROW_EXCEPTION(incorrect_site_index());
-          
-          math::rVector3d const pos( i_first->pos - _str.lattice->sites[i_first->site].pos );
-          size_t const smith( Crystal::get_linear_smith_index(transform, pos) );
-#         ifdef LADA_DEBUG
-            if(smith >= N) BOOST_THROW_EXCEPTION(error::internal());
-            if(_map[i_first->site][smith]!=Nat) BOOST_THROW_EXCEPTION(error::internal());
-#         endif
-          _map[i_first->site][smith] = i;
-        }
-#       ifdef LADA_DEBUG
-          for( size_t site(0), j(0); site < _str.lattice->sites.size(); ++site )
-            for( size_t i(0); i < N; ++i, ++j )
-              if(_map[site][i] == Nat) BOOST_THROW_EXCEPTION(error::internal())
-#       endif
-    }
   } // namespace Crystal
 
 } // namespace LaDa
