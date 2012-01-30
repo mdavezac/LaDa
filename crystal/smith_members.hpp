@@ -51,10 +51,10 @@ namespace LaDa
     PyObject* smithtransform_getstate(SmithTransformData* _self)
     {
       // get cell attribute.
-      python::Object cell = smithtransform_getmatrix(_self, NULL);
+      python::Object cell = smithtransform_gettransform(_self, NULL);
       if(not cell) return NULL;
       // get scale attribute.
-      python::Object scale = smithtransform_getvector(_self, NULL);
+      python::Object scale = smithtransform_getquotient(_self, NULL);
       if(not scale) return NULL;
       return PyTuple_Pack(2, cell.borrowed(), scale.borrowed());
     }
@@ -73,8 +73,8 @@ namespace LaDa
         return NULL;
       }
       // first cell and scale.
-      if(not python::convert_to_matrix(PyTuple_GET_ITEM(_tuple, 0), _self->matrix)) return NULL;
-      if(not python::convert_to_vector(PyTuple_GET_ITEM(_tuple, 1), _self->vector)) return NULL;
+      if(not python::convert_to_matrix(PyTuple_GET_ITEM(_tuple, 0), _self->transform)) return NULL;
+      if(not python::convert_to_vector(PyTuple_GET_ITEM(_tuple, 1), _self->quotient)) return NULL;
       Py_RETURN_NONE;
     }
 
@@ -86,12 +86,12 @@ namespace LaDa
     {
       PyObject *posatom = NULL;
       int site = -1;
-      static char *kwlist[] = { const_cast<char*>("pos"), const_cast<char*>("site") };
+      static char *kwlist[] = { const_cast<char*>("pos"), const_cast<char*>("site"), NULL };
       if(not PyArg_ParseTupleAndKeywords(_args, _kwargs, "O|i:pos_index", kwlist, &posatom, site) )
         return NULL;
       math::iVector3d pos;
-      if(not python::convert_to_vector(_args, pos)) return NULL;
-      LADA_SMITHTRANSFORM_SHARED0(_self->vector, pos, site);
+      if(not python::convert_to_vector(posatom, pos)) return NULL;
+      LADA_SMITHTRANSFORM_SHARED0(_self->quotient, pos, site);
       return PyInt_FromLong(flat_result);
     }
     //! Computes flat smith index from non-flat smith index, including sites.
@@ -100,13 +100,13 @@ namespace LaDa
     {
       PyObject *posatom = NULL;
       int site = -1;
-      static char *kwlist[] = { const_cast<char*>("indices"), const_cast<char*>("site") };
+      static char *kwlist[] = { const_cast<char*>("indices"), const_cast<char*>("site"), NULL };
       if(not PyArg_ParseTupleAndKeywords(_args, _kwargs, "O|i:flat_index", kwlist, &posatom, &site) )
         return NULL;
       math::rVector3d pos;
-      if(not python::convert_to_vector(_args, pos)) return NULL;
-      LADA_SMITHTRANSFORM_SHARED1(_self->vector, _self->matrix, pos, LADA_PYERROR, return NULL);
-      LADA_SMITHTRANSFORM_SHARED0(_self->vector, vector_result, site);
+      if(not python::convert_to_vector(posatom, pos)) return NULL;
+      LADA_SMITHTRANSFORM_SHARED1(_self->quotient, _self->transform, pos, LADA_PYERROR, return NULL);
+      LADA_SMITHTRANSFORM_SHARED0(_self->quotient, vector_result, site);
       return PyInt_FromLong(flat_result);
     }
     // Computes smith indices of position \a _pos.
@@ -114,7 +114,7 @@ namespace LaDa
     {
       math::rVector3d pos;
       if(not python::convert_to_vector(_args, pos)) return NULL;
-      LADA_SMITHTRANSFORM_SHARED1(_self->vector, _self->matrix, pos, LADA_PYERROR, return NULL);
+      LADA_SMITHTRANSFORM_SHARED1(_self->quotient, _self->transform, pos, LADA_PYERROR, return NULL);
       return python::wrap_to_numpy(vector_result);
     }
     // undefs macros also used in smith.

@@ -30,7 +30,7 @@ namespace LaDa
     SmithTransformData* PySmithTransform_NewWithArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs)
     {
       SmithTransformData* result = (SmithTransformData*)_type->tp_alloc(_type, 0);
-      return NULL;
+      return result;
     }
 
     // Creates a new smithtransform with a given type, also calling initialization.
@@ -47,8 +47,8 @@ namespace LaDa
     {
       SmithTransformData* result = (SmithTransformData*)_self->ob_type->tp_alloc(_self->ob_type, 0);
       if(not result) return NULL;
-      new(&result->matrix) LaDa::math::rMatrix3d(_self->matrix);
-      new(&result->vector) LaDa::math::iVector3d(_self->vector);
+      new(&result->transform) LaDa::math::rMatrix3d(_self->transform);
+      new(&result->quotient) LaDa::math::iVector3d(_self->quotient);
       return result;
     }
     // Returns pointer to smithtransform type.
@@ -61,8 +61,8 @@ namespace LaDa
         {const_cast<char*>(#name), (getter) smithtransform_get ## name, NULL, const_cast<char*>(doc)}
       
       static PyGetSetDef getsetters[] = {
-          LADA_DECLARE(matrix, "Transformation matrix to go from position to smith index."),
-          LADA_DECLARE(vector, "Periodicity vector."),
+          LADA_DECLARE(transform, "Transformation matrix to go from position to smith index."),
+          LADA_DECLARE(quotient, "Periodicity quotient."),
           LADA_DECLARE(size, "Number of unitcells in the supercell."),
           {NULL}  /* Sentinel */
       };

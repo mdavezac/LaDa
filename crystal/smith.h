@@ -40,41 +40,41 @@ namespace LaDa
         SmithTransform(Structure const &_lattice, Structure const &_supercell)
           { init_(_lattice->cell, _supercell->cell); }
 
-        //! Returns constant reference to matrix object.
-        math::rMatrix3d const & matrix() const 
-          { return ((SmithTransformData* const)object_)->matrix; }
-        //! Returns reference to matrix object.
-        math::rMatrix3d & matrix() 
-          { return ((SmithTransformData*)object_)->matrix; }
-        //! Returns constant reference to vector object.
-        math::iVector3d const & vector() const 
-          { return ((SmithTransformData* const)object_)->vector; }
-        //! Returns reference to vector object.
-        math::iVector3d & vector() 
-          { return ((SmithTransformData*)object_)->vector; }
+        //! Returns constant reference to transform object.
+        math::rMatrix3d const & transform() const 
+          { return ((SmithTransformData* const)object_)->transform; }
+        //! Returns reference to transform object.
+        math::rMatrix3d & transform() 
+          { return ((SmithTransformData*)object_)->transform; }
+        //! Returns constant reference to quotient object.
+        math::iVector3d const & quotient() const 
+          { return ((SmithTransformData* const)object_)->quotient; }
+        //! Returns reference to quotient object.
+        math::iVector3d & quotient() 
+          { return ((SmithTransformData*)object_)->quotient; }
 
 #       include "smith_macro.hpp"
         //! Computes smith indices of position \a _pos.
         inline math::iVector3d indices(math::rVector3d const &_pos) const
         {
-          LADA_SMITHTRANSFORM_SHARED1(vector(), matrix(), _pos, LADA_PYTHROW,);
+          LADA_SMITHTRANSFORM_SHARED1(quotient(), transform(), _pos, LADA_PYTHROW,);
           return vector_result;
         }
         //! \brief Computes linear smith index from non-linear smith index.
         inline size_t flat_index(math::iVector3d const &_index, int _site=-1)
         {
-          LADA_SMITHTRANSFORM_SHARED0(vector(), _index, _site);
+          LADA_SMITHTRANSFORM_SHARED0(quotient(), _index, _site);
           return flat_result;
         }
         //! Computes linear smith index of position \a _pos.
         inline size_t flat_index(math::rVector3d const &_pos, int _site=-1)
         {
-          LADA_SMITHTRANSFORM_SHARED1(vector(), matrix(), _pos, LADA_PYTHROW,);
-          LADA_SMITHTRANSFORM_SHARED0(vector(), vector_result, _site);
+          LADA_SMITHTRANSFORM_SHARED1(quotient(), transform(), _pos, LADA_PYTHROW,);
+          LADA_SMITHTRANSFORM_SHARED0(quotient(), vector_result, _site);
           return flat_result;
         }
         //! Number of unit-cells in the supercell.
-        size_t size() const { return LADA_SMITHTRANSFORM_SHARED2(vector()); }
+        size_t size() const { return LADA_SMITHTRANSFORM_SHARED2(quotient()); }
 #       include "smith_macro.hpp"
       private:
         //! creates a smith transform from scratch.

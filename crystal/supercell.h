@@ -43,15 +43,15 @@ namespace LaDa
         SmithTransform transform( _lattice.cell(), result.cell());
         if(not transform) return Structure();;
       
-        const math::rMatrix3d factor(transform.matrix().inverse());
+        const math::rMatrix3d factor(transform.transform().inverse());
         math::rMatrix3d inv_cell( result.cell().inverse() ); 
         result.reserve(transform.size()*_lattice.size());
         Structure::const_iterator const i_site_begin = _lattice.begin();
         Structure::const_iterator const i_site_end = _lattice.end();
         
-        for( math::iVector3d::Scalar i(0); i < transform.vector()(0); ++i )
-          for( math::iVector3d::Scalar j(0); j < transform.vector()(1); ++j )
-            for( math::iVector3d::Scalar k(0); k < transform.vector()(2); ++k )
+        for( math::iVector3d::Scalar i(0); i < transform.quotient()(0); ++i )
+          for( math::iVector3d::Scalar j(0); j < transform.quotient()(1); ++j )
+            for( math::iVector3d::Scalar k(0); k < transform.quotient()(2); ++k )
             {
               // in cartesian.
               const math::rVector3d vec( factor * math::rVector3d(i,j,k) );

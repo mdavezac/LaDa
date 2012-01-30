@@ -35,10 +35,10 @@ namespace LaDa
         PyObject_HEAD 
         //! Holds python attribute dictionary.
         PyObject *pydict;
-        //! The unit-cell of the smithtransform in cartesian coordinate.
-        math::rMatrix3d matrix;
+        //! The transform to go the smith normal form.
+        math::rMatrix3d transform;
         //! Vector of atom wrappers.
-        math::iVector3d vector;
+        math::iVector3d quotient;
       };
       //! Creates a new smithtransform with a given type.
       SmithTransformData* PySmithTransform_NewWithArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs);

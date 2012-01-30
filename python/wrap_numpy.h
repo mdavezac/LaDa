@@ -22,7 +22,7 @@ namespace LaDa
         npy_intp dims[2] = { _in.rows(), _in.cols() };
         typedef math::numpy::type<typename Eigen::DenseBase<T_DERIVED>::Scalar> t_ScalarType;
         PyArrayObject *result = _parent == NULL ?
-          (PyArrayObject*) PyArray_ZEROS(_in.cols() > 1? 2: 1, dims, t_ScalarType::value, _in.IsRowMajor):
+          (PyArrayObject*) PyArray_ZEROS(_in.cols() > 1? 2: 1, dims, t_ScalarType::value, _in.IsRowMajor?0:1):
           (PyArrayObject*) PyArray_SimpleNewFromData(_in.cols() > 1? 2: 1, dims, t_ScalarType::value, &_in(0,0));
         if(result == NULL) return NULL;
         // macro for row vs column major. The macro changed for npy >= 1.6

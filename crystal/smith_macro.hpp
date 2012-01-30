@@ -10,10 +10,10 @@
 # ifdef LADA_SMITHTRANSFORM_SHARED2
 #   error LADA_SMITHTRANSFORM_SHARED2 already defined.
 # endif
-# define LADA_SMITHTRANSFORM_SHARED0(VECTOR, POS, SITE)             \
-    int const flat_result = SITE == -1 ?                            \
-           VECTOR(2) + VECTOR(2) * (POS(1) + POS(0) * VECTOR(1)):   \
-           VECTOR(2) + VECTOR(2) * (POS(1) + VECTOR(1) * (POS(0) + SITE * VECTOR(0))); 
+# define LADA_SMITHTRANSFORM_SHARED0(QUOTIENT, INDEX, SITE)                                      \
+    int const flat_result = SITE == -1 ?                                                         \
+           INDEX(2) + QUOTIENT(2) * (INDEX(1) + QUOTIENT(1)):                                    \
+           INDEX(2) + QUOTIENT(2) * (INDEX(1) + QUOTIENT(1) * (INDEX(0) + SITE * QUOTIENT(0))); 
   
 # define LADA_SMITHTRANSFORM_SHARED1(VECTOR, MATRIX, POS, ERROR, RETURN)   \
        math::iVector3d vector_result;                                      \
@@ -26,7 +26,7 @@
        );                                                                  \
        for( size_t i(0); i < 3; ++i )                                      \
        {                                                                   \
-         if( math::neq(POS(i), types::t_real(int_pos(i))) )                \
+         if( math::neq(pos_(i), types::t_real(int_pos(i))) )               \
          {                                                                 \
            ERROR(ValueError, "Position is not on the lattice.");           \
            RETURN;                                                         \
