@@ -36,7 +36,7 @@ namespace LaDa
     {
       PyArrayObject *result = (PyArrayObject*) new_matrix<N0, N1>();
       if(not result) return NULL;
-      for(size_t i(0); i < N0; ++i)
+      for(size_t i(0); i < std::min(N0, N1); ++i)
         *((types::t_real*)(result->data + i*result->strides[0] + i*result->strides[1])) = 1;
       return (PyObject*)result;
     }
