@@ -3,6 +3,10 @@ def scale(A, B):
   """ Check changes to scale. """
   from lada.crystal.cppwrappers import equivalent
   B = B.copy()
+  A.name = "A"
+  B.name = "B"
+  print A
+  print B
   assert equivalent(A, B)
   B.scale = 3.0;
   assert not equivalent(A, B)
@@ -16,11 +20,12 @@ def motif(A, B):
   """ Check changes in motif. """
   from numpy import dot
   from lada.crystal.cppwrappers import cell_invariants
-  for op in cell_invariants(A):
-    B = B.copy()
-    for atom in B:
-      atom.pos = dot(op[:3] * atom.pos)
-      scale(A, B)
+  for op in cell_invariants(A)[1:]:
+    print "op: ", op
+    C = B.copy()
+    for atom in C:
+      atom.pos = dot(op[:3], atom.pos)
+    scale(A, C)
 
 def basis(A, B):
   """ Adds rotation and translation of cartesian basis. """
@@ -28,22 +33,29 @@ def basis(A, B):
   from lada.crystal.cppwrappers import cell_invariants, transform
   from lada.math import Translation, Rotation
   from random import random
-  motif(A, transform(B, Rotation(0.5 * pi, [1,0,0])))
-  motif(A, transform(B, Rotation(-pi, [1,0,0])))
-  motif(A, transform(B, Rotation(-0.13*pi, [1,0,0])))
-  motif(A, transform(B, Translation([0.25, 0.25, 0.25])))
-  motif(A, transform(B, Rotation(random()*2*pi, [1, 0, 0]) \
-                        + Translation([random()-0.5,random()-0.5,random()-0.5])))
+  motif(A, B)
+# motif(A, transform(B, Rotation(0.5 * pi, [1,0,0])))
+# motif(A, transform(B, Rotation(-pi, [1,0,0])))
+# motif(A, transform(B, Rotation(-0.13*pi, [1,0,0])))
+# motif(A, transform(B, Translation([0.25, 0.25, 0.25])))
+# motif(A, transform(B, Rotation(random()*2*pi, [1, 0, 0]) \
+#                       + Translation([random()-0.5,random()-0.5,random()-0.5])))
 def decoration(A, B, lattice):
   """ Adds changes to the motif. """
+  from numpy import dot
+  from numpy.linalg import inv
   from lada.crystal.cppwrappers import SmithTransform
   from lada.math import is_integer
+  basis(A, B)
+  return
+
   smith = SmithTransform(lattice, A)
 
   # create map of atoms.
   indices = [-1] * len(A)
-  for atom, i in enumerate(A):
-    indices[smith.index(atom.pos-lattice[atom.site].pos, atom.site)] = i
+  for i, atom in enumerate(A):
+    u = smith.index(atom.pos-lattice[atom.site].pos, atom.site)
+    indices[u] = i
 
   # transform A according to all possible atom-atom translations.
   for atom in A:
@@ -56,19 +68,52 @@ def decoration(A, B, lattice):
       B[ indices[smith.index(vec, A[index].site)] ] = A[index]
     basis(A, B)
 
-def test():
+def test0():
   from lada.crystal.cppwrappers import Structure
 
   zb = Structure( 0,0.5,0.5,
                   0.5,0,0.5,
                   0.5,0.5,0 )\
                 .add_atom(0,0,0, "Si")\
-                .add_atom(0,0,0, "Si", "Ge")
+                .add_atom(0.25,0.25,0.25, "Si", "Ge")
   basis(zb, zb)
+
+def test1():
+  from lada.crystal.cppwrappers import Structure, supercell
+
+  zb = Structure( 0,0.5,0.5,
+                  0.5,0,0.5,
+                  0.5,0.5,0 )\
+                .add_atom(0,0,0, "Si")\
+                .add_atom(0.25,0.25,0.25, "Si")
+  sc = supercell(zb, [[3, 0, 0], [0, 0.5,-0.5], [0, 0.5, 0.5]])
+  sc[0].type = "Ge"
+  sc[1].type = "Ge"
+  sc[3].type = "Ge"
+  decoration(sc, sc, zb)
+
+def test2():
+  from random import random
+  from lada.crystal.cppwrappers import Structure, supercell
+
+  zb = Structure( 0,0.5,0.5,
+                  0.5,0,0.5,
+                  0.5,0.5,0 )\
+                .add_atom(0,0,0, "Si")\
+                .add_atom(0.25,0.25,0.25, "Si")
+  sc = supercell(zb, [[2, 0, 0], [0, 2,0], [0, 0, 2]])
+  del sc.lattice
+  for i in xrange(1):
+    x = random() * 0.5
+    for atom in sc:
+      atom.type = "Si" if x > random() else "Ge"
+    decoration(sc, sc, zb)
 
 if __name__ == "__main__":
   from sys import argv, path 
   from numpy import array
   if len(argv) > 0: path.extend(argv[1:])
   
-  test()
+# test0() # no decoration.
+# test1()
+  test2()

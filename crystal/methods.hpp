@@ -22,7 +22,6 @@ namespace LaDa
       if(N == 3 and not python::convert_to_matrix(PyTuple_GET_ITEM(_args, 2), invcell)) \
         return false;                                                                   \
       if(N == 2) invcell = cell.inverse();                                              \
-      /* create supercell. */                                                           \
       try                                                                               \
       {                                                                                 \
         math::rVector3d vector = NAME(a, cell, invcell);                                \
@@ -87,7 +86,6 @@ namespace LaDa
       if(not python::convert_to_vector(PyTuple_GET_ITEM(_args, 0), a)) return false;
       if(not python::convert_to_vector(PyTuple_GET_ITEM(_args, 1), b)) return false;
       if(not python::convert_to_matrix(PyTuple_GET_ITEM(_args, 2), invcell)) return false;
-      // create supercell.
       try
       { 
         if(N == 3 and math::are_periodic_images(a, b, invcell) ) Py_RETURN_TRUE;
@@ -139,12 +137,16 @@ namespace LaDa
       return NULL;
     }
     //! Wrapper around the supercell method.
-    PyObject* supercell_wrapper(PyObject *_module, PyObject *_args)
+    PyObject* supercell_wrapper(PyObject *_module, PyObject *_args, PyObject *_kwargs)
     {
       // check/convert input parameters.
       PyObject* lattice;
       PyObject* cellin;
-      if(not PyArg_UnpackTuple(_args, "supercell", 2, 2, &lattice, &cellin)) return NULL;
+      static char *kwlist[] = { const_cast<char*>("lattice"),
+                                const_cast<char*>("supercell"), NULL};
+      if(not PyArg_ParseTupleAndKeywords( _args, _kwargs, "OO:supercell", kwlist,
+                                          &lattice, &cellin) )
+        return NULL;
       if(not PyStructure_Check(lattice))
       {
         LADA_PYERROR(TypeError, "Input is not a crystal.Structure object."); 
@@ -206,7 +208,6 @@ namespace LaDa
       }
       types::t_real tolerance = N == 1 ? -1:
               ( PyInt_Check(tolobj) ? PyInt_AS_LONG(tolobj): PyFloat_AS_DOUBLE(tolobj) );
-      // create supercell.
       try { return primitive(lattice, tolerance).release(); } 
       // catch exceptions.
       catch(error::pyerror &e)
@@ -219,18 +220,18 @@ namespace LaDa
         if(exception == NULL)
         {
           LADA_PYERROR(InternalError, message ? message->c_str(): 
-                           ( "Caught exception while creating supercell: " + 
+                           ( "Caught exception while creating primitive lattice: " + 
                              std::string(e.what()) ).c_str() );
         }
         else if(message == NULL)
           PyErr_SetString( *exception, 
-                           ( "Caught exception while creating supercell: " + 
+                           ( "Caught exception while creating primitive structure: " + 
                              std::string(e.what()) ).c_str() );
         else PyErr_SetString(*exception, message->c_str());
       }
       catch(std::exception &e)
       {
-        std::string const message =  "Caught exception while creating supercell: "
+        std::string const message =  "Caught exception while creating primitive structure: "
                                      + std::string(e.what());
         LADA_PYERROR(InternalError, message.c_str()); 
       }
@@ -260,7 +261,6 @@ namespace LaDa
       }
       types::t_real tolerance = N == 1 ? -1:
               ( PyInt_Check(tolobj) ? PyInt_AS_LONG(tolobj): PyFloat_AS_DOUBLE(tolobj) );
-      // create supercell.
       try
       {
         if(is_primitive(lattice, tolerance)) Py_RETURN_TRUE;
@@ -277,178 +277,178 @@ namespace LaDa
         if(exception == NULL)
         {
           LADA_PYERROR(InternalError, message ? message->c_str(): 
-                           ( "Caught exception while creating supercell: " + 
+                           ( "Caught exception while testing whether structure is primitive: " + 
                              std::string(e.what()) ).c_str() );
         }
         else if(message == NULL)
           PyErr_SetString( *exception, 
-                           ( "Caught exception while creating supercell: " + 
+                           ( "Caught exception while testing whether structure is primitive: " + 
                              std::string(e.what()) ).c_str() );
         else PyErr_SetString(*exception, message->c_str());
       }
       catch(std::exception &e)
       {
-        std::string const message =  "Caught exception while creating supercell: "
-                                     + std::string(e.what());
-        LADA_PYERROR(InternalError, message.c_str()); 
-      }
-      catch(...) { LADA_PYERROR(InternalError, "Caught unknown c++ exception."); }
-      return NULL;
-    };
-
-    PyObject* cell_invariants_wrapper(PyObject *_module, PyObject *_args)
-    {
-      Py_ssize_t const N(PyTuple_Size(_args));
-      if(N != 1 and N != 2)
-      {
-        LADA_PYERROR(TypeError, "cell_invariants expects one or two arguments only.");
+          std::string const message =  "Caught exception while testing whether structure is primitive: "
+                                       + std::string(e.what());
+          LADA_PYERROR(InternalError, message.c_str()); 
+        }
+        catch(...) { LADA_PYERROR(InternalError, "Caught unknown c++ exception."); }
         return NULL;
-      }
-      PyObject * const arg0 = PyTuple_GET_ITEM(_args, 0);
-      math::rMatrix3d cell;
-      if(PyStructure_Check(arg0)) cell = ((StructureData*)arg0)->cell;
-      else if(not python::convert_to_matrix(arg0, cell)) return NULL;
-      types::t_real tolerance = types::tolerance;
-      if(N == 2)
+      };
+
+      PyObject* cell_invariants_wrapper(PyObject *_module, PyObject *_args)
       {
-        PyObject * const arg1 = PyTuple_GET_ITEM(_args, 1);
-        if(PyInt_Check(arg1)) tolerance = PyInt_AS_LONG(arg1);
-        else if(PyFloat_Check(arg1)) tolerance = PyFloat_AS_DOUBLE(arg1);
-        else
+        Py_ssize_t const N(PyTuple_Size(_args));
+        if(N != 1 and N != 2)
         {
-          LADA_PYERROR(TypeError, "Second argument to cell_invariants should a real number.");
+          LADA_PYERROR(TypeError, "cell_invariants expects one or two arguments only.");
           return NULL;
         }
-      }
-      return cell_invariants(cell, tolerance);
-    }
-    
-    PyObject* space_group_wrapper(PyObject *_module, PyObject *_args)
-    {
-      Py_ssize_t const N(PyTuple_Size(_args));
-      if(N != 1 and N != 2)
-      {
-        LADA_PYERROR(TypeError, "space_group expects one or two arguments only.");
-        return NULL;
-      }
-      PyObject * const arg0 = PyTuple_GET_ITEM(_args, 0);
-      if(not PyStructure_Check(arg0)) 
-      {
-        LADA_PYERROR(TypeError, "space_group expects a Structure as first argument.");
-        return NULL;
-      }
-      Structure structure = Structure::acquire(arg0); 
-      types::t_real tolerance = types::tolerance;
-      if(N == 2)
-      {
-        PyObject * const arg1 = PyTuple_GET_ITEM(_args, 1);
-        if(PyInt_Check(arg1)) tolerance = PyInt_AS_LONG(arg1);
-        else if(PyFloat_Check(arg1)) tolerance = PyFloat_AS_DOUBLE(arg1);
-        else
+        PyObject * const arg0 = PyTuple_GET_ITEM(_args, 0);
+        math::rMatrix3d cell;
+        if(PyStructure_Check(arg0)) cell = ((StructureData*)arg0)->cell;
+        else if(not python::convert_to_matrix(arg0, cell)) return NULL;
+        types::t_real tolerance = types::tolerance;
+        if(N == 2)
         {
-          LADA_PYERROR(TypeError, "Second argument to cell_invariants should a real number.");
+          PyObject * const arg1 = PyTuple_GET_ITEM(_args, 1);
+          if(PyInt_Check(arg1)) tolerance = PyInt_AS_LONG(arg1);
+          else if(PyFloat_Check(arg1)) tolerance = PyFloat_AS_DOUBLE(arg1);
+          else
+          {
+            LADA_PYERROR(TypeError, "Second argument to cell_invariants should a real number.");
+            return NULL;
+          }
+        }
+        return cell_invariants(cell, tolerance);
+      }
+      
+      PyObject* space_group_wrapper(PyObject *_module, PyObject *_args)
+      {
+        Py_ssize_t const N(PyTuple_Size(_args));
+        if(N != 1 and N != 2)
+        {
+          LADA_PYERROR(TypeError, "space_group expects one or two arguments only.");
           return NULL;
         }
-      }
-      return space_group(structure, tolerance);
-    }
-
-    PyObject* equivalent_wrapper(PyObject *_module, PyObject *_args, PyObject *_kwargs)
-    {
-      PyObject *scale = Py_True; 
-      PyObject *cartesian = Py_True;
-      types::t_real tolerance = types::tolerance;
-      PyObject *a = NULL;
-      PyObject *b = NULL;
-      static char *kwlist[] = { const_cast<char*>("a"),
-                                const_cast<char*>("b"), 
-                                const_cast<char*>("scale"), 
-                                const_cast<char*>("cartesian"), 
-                                const_cast<char*>("tolerance"), NULL};
-      if(not PyArg_ParseTupleAndKeywords( _args, _kwargs, "OO|OOd:equivalent", kwlist,
-                                          &a, &b, &scale, &cartesian, &tolerance) )
-        return NULL;
-      if(not PyStructure_Check(a))
-      {
-        LADA_PYERROR(TypeError, "equivalent: First argument should be a structure.");
-        return NULL;
-      }
-      if(not PyStructure_Check(b))
-      {
-        LADA_PYERROR(TypeError, "equivalent: second argument should be a structure.");
-        return NULL;
-      }
-      if(scale and not PyBool_Check(scale))
-      {
-        LADA_PYERROR(TypeError, "equivalent: scale should be True or False.");
-        return NULL;
-      }
-      if(cartesian and not PyBool_Check(cartesian))
-      {
-        LADA_PYERROR(TypeError, "equivalent: cartesian should be True or False.");
-        return NULL;
-      }
-      try
-      {
-        if( equivalent( Structure::acquire(a), Structure::acquire(b), 
-                        scale == Py_True ? true: false,
-                        cartesian == Py_True ? true: false,
-                        tolerance ) ) Py_RETURN_TRUE;
-        Py_RETURN_FALSE;
-      }
-      // catch exceptions.
-      catch(error::pyerror &e)
-      {
-        // Returns if python error already set.
-        if(PyErr_Occurred() != NULL) return NULL;
-        // Otherwise, throw our own
-        std::string const * message = boost::get_error_info<error::string>(e);
-        PyObject ** exception = boost::get_error_info<error::pyexcept>(e);
-        if(exception == NULL)
+        PyObject * const arg0 = PyTuple_GET_ITEM(_args, 0);
+        if(not PyStructure_Check(arg0)) 
         {
-          LADA_PYERROR(InternalError, message ? message->c_str(): 
-                           ( "equivalent -- caught following exception: " +
-                             std::string(e.what()) ).c_str() );
+          LADA_PYERROR(TypeError, "space_group expects a Structure as first argument.");
+          return NULL;
         }
-        else if(message == NULL)
-          PyErr_SetString( *exception, 
-                           ( "equivalent -- caught following exception: " +
-                             std::string(e.what()) ).c_str() );
-        else PyErr_SetString(*exception, message->c_str());
+        Structure structure = Structure::acquire(arg0); 
+        types::t_real tolerance = types::tolerance;
+        if(N == 2)
+        {
+          PyObject * const arg1 = PyTuple_GET_ITEM(_args, 1);
+          if(PyInt_Check(arg1)) tolerance = PyInt_AS_LONG(arg1);
+          else if(PyFloat_Check(arg1)) tolerance = PyFloat_AS_DOUBLE(arg1);
+          else
+          {
+            LADA_PYERROR(TypeError, "Second argument to cell_invariants should a real number.");
+            return NULL;
+          }
+        }
+        return space_group(structure, tolerance);
       }
-      catch(std::exception &e)
-      {
-        std::string const message =  "equivalent -- caught following exception: " 
-                                     + std::string(e.what());
-        LADA_PYERROR(InternalError, message.c_str()); 
-      }
-      catch(...)
-      { 
-        LADA_PYERROR(InternalError, "Caught unknown c++ exception in equivalent.");
-      }
-      return NULL;
-    }
 
-    PyObject* transform_wrapper(PyObject *_module, PyObject *_args, PyObject *_kwargs)
-    {
-      PyObject *transform_ = NULL; 
-      PyObject *structure_ = NULL;
-      static char *kwlist[] = { const_cast<char*>("structure"),
-                                const_cast<char*>("transform"), NULL};
-      if(not PyArg_ParseTupleAndKeywords( _args, _kwargs, "OO:transform", kwlist,
-                                          &structure_, &transform_) )
-        return NULL;
-      if(not PyStructure_Check(structure_))
+      PyObject* equivalent_wrapper(PyObject *_module, PyObject *_args, PyObject *_kwargs)
       {
-        LADA_PYERROR(TypeError, "structure: First argument should be a structure.");
+        PyObject *scale = Py_True; 
+        PyObject *cartesian = Py_True;
+        types::t_real tolerance = types::tolerance;
+        PyObject *a = NULL;
+        PyObject *b = NULL;
+        static char *kwlist[] = { const_cast<char*>("a"),
+                                  const_cast<char*>("b"), 
+                                  const_cast<char*>("scale"), 
+                                  const_cast<char*>("cartesian"), 
+                                  const_cast<char*>("tolerance"), NULL};
+        if(not PyArg_ParseTupleAndKeywords( _args, _kwargs, "OO|OOd:equivalent", kwlist,
+                                            &a, &b, &scale, &cartesian, &tolerance) )
+          return NULL;
+        if(not PyStructure_Check(a))
+        {
+          LADA_PYERROR(TypeError, "equivalent: First argument should be a structure.");
+          return NULL;
+        }
+        if(not PyStructure_Check(b))
+        {
+          LADA_PYERROR(TypeError, "equivalent: second argument should be a structure.");
+          return NULL;
+        }
+        if(scale and not PyBool_Check(scale))
+        {
+          LADA_PYERROR(TypeError, "equivalent: scale should be True or False.");
+          return NULL;
+        }
+        if(cartesian and not PyBool_Check(cartesian))
+        {
+          LADA_PYERROR(TypeError, "equivalent: cartesian should be True or False.");
+          return NULL;
+        }
+        try
+        {
+          if( equivalent( Structure::acquire(a), Structure::acquire(b), 
+                          scale == Py_True ? true: false,
+                          cartesian == Py_True ? true: false,
+                          tolerance ) ) Py_RETURN_TRUE;
+          Py_RETURN_FALSE;
+        }
+        // catch exceptions.
+        catch(error::pyerror &e)
+        {
+          // Returns if python error already set.
+          if(PyErr_Occurred() != NULL) return NULL;
+          // Otherwise, throw our own
+          std::string const * message = boost::get_error_info<error::string>(e);
+          PyObject ** exception = boost::get_error_info<error::pyexcept>(e);
+          if(exception == NULL)
+          {
+            LADA_PYERROR(InternalError, message ? message->c_str(): 
+                             ( "equivalent -- caught following exception: " +
+                               std::string(e.what()) ).c_str() );
+          }
+          else if(message == NULL)
+            PyErr_SetString( *exception, 
+                             ( "equivalent -- caught following exception: " +
+                               std::string(e.what()) ).c_str() );
+          else PyErr_SetString(*exception, message->c_str());
+        }
+        catch(std::exception &e)
+        {
+          std::string const message =  "equivalent -- caught following exception: " 
+                                       + std::string(e.what());
+          LADA_PYERROR(InternalError, message.c_str()); 
+        }
+        catch(...)
+        { 
+          LADA_PYERROR(InternalError, "Caught unknown c++ exception in equivalent.");
+        }
         return NULL;
       }
-      Eigen::Matrix<types::t_real, 4, 3> transform;
-      if(not python::convert_to_matrix(transform_, transform)) return NULL;
-      Structure structure = Structure::acquire(structure_).copy();
-      structure.transform(transform);
-      return structure.release();
-   }
+ 
+      PyObject* transform_wrapper(PyObject *_module, PyObject *_args, PyObject *_kwargs)
+      {
+        PyObject *transform_ = NULL; 
+        PyObject *structure_ = NULL;
+        static char *kwlist[] = { const_cast<char*>("structure"),
+                                  const_cast<char*>("transform"), NULL};
+        if(not PyArg_ParseTupleAndKeywords( _args, _kwargs, "OO:transform", kwlist,
+                                            &structure_, &transform_) )
+          return NULL;
+        if(not PyStructure_Check(structure_))
+        {
+          LADA_PYERROR(TypeError, "structure: First argument should be a structure.");
+          return NULL;
+        }
+        Eigen::Matrix<types::t_real, 4, 3> transform;
+        if(not python::convert_to_matrix(transform_, transform)) return NULL;
+        Structure structure = Structure::acquire(structure_).copy();
+        structure.transform(transform);
+        return structure.release();
+     }
       
        
     //! Methods table for crystal module.
@@ -497,7 +497,7 @@ namespace LaDa
          "    The *inverse* of the cell defining the periodicity.\n"
          "  tolerance : float\n"
          "    An *optional* floating point defining the tolerance. Defaults to 1e-8." }, 
-        {"supercell",  supercell_wrapper, METH_VARARGS,
+        {"supercell",  (PyCFunction)supercell_wrapper, METH_VARARGS | METH_KEYWORDS,
          "Creates a supercell of an input lattice.\n\n"
          ":Parameters:\n"
          "  lattice: `crystal.Structure`\n"  

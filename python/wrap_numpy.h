@@ -94,6 +94,9 @@ namespace LaDa
           python::Object iterator = PyArray_IterNew(_in);
           if(not iterator) return false;
           int const type = PyArray_DESCR(_in)->type_num;
+#         ifdef  LADA_NPYITER
+#           error LADA_NPYITER already defined
+#         endif
 #         define LADA_NPYITER(TYPE, NUM_TYPE)                                             \
             if(type == NUM_TYPE)                                                          \
             {                                                                             \
