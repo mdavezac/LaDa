@@ -9,3 +9,9 @@ unix_re  = True
 """ If True, then all regex matching is done using unix-command-line patterns. """
 auto_import_modules = []
 """ Modules to import when starting ipython. """
+try_import_matplotlib = False
+""" Whether to try and import matplotlib or not. 
+
+    It seems that matplotlib is installed hopper, with the dire consequences
+    one expects from Cray.
+"""

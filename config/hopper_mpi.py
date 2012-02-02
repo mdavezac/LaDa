@@ -16,3 +16,5 @@ if "jobs" in globals()["ladamodules"]:
   """ Command-line to launch external mpi programs. """
   cpus_per_node = 24
   """ Number of cpus per node. """
+
+try_import_matplotlib = False

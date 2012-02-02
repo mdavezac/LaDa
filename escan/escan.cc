@@ -31,10 +31,15 @@ void set_mpi(boost::mpi::communicator const &_c)
 
 void just_call_escan(boost::mpi::communicator const &_c)
 {
+  std::cout << "CALL ESCAN 0\n";
   Py_BEGIN_ALLOW_THREADS;
+  std::cout << "CALL ESCAN 1\n";
   set_mpi(_c);
+  std::cout << "CALL ESCAN 2\n";
   FC_GLOBAL_(iaga_just_call_escan, IAGA_JUST_CALL_ESCAN)();
+  std::cout << "CALL ESCAN 3\n";
   Py_END_ALLOW_THREADS;
+  std::cout << "CALL ESCAN 4\n";
 }
 
 void just_call_genpot(boost::mpi::communicator const &_c)
