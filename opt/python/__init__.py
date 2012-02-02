@@ -641,27 +641,30 @@ def copyfile( src, dest=None, nothrow=None, comm=None,\
     raise
   else: return True
 
-
 def cpus_per_node():
   """ Greps /proc/cpuinfo to figure out the number of cpus per node. """
   from re import compile
-  cpu_re = compile("processor\s*:\s*(\d+)")
-  ncpus = 0
-  with open("/proc/cpuinfo", "r") as file:
-    for line in file:
-      if cpu_re.search(line) is not None: ncpus += 1
-  if ncpus == 0: raise RuntimeError("Could not determine number of cpus.")
-  return ncpus
-    
+  try:
+    cpu_re = compile("processor\s*:\s*(\d+)")
+    ncpus = 0
+    with open("/proc/cpuinfo", "r") as file:
+      for line in file:
+        if cpu_re.search(line) is not None: ncpus += 1
+    if ncpus == 0: raise RuntimeError("Could not determine number of cpus.")
+    return ncpus
+  except: return 1
+
 def total_memory():
   """ Greps /proc/meminfo to figure out the memory per node. """
   from re import compile
-  mem_re = compile("MemTotal\s*:\s*(\d+)\s*kB")
-  with open("/proc/meminfo", "r") as file:
-    for line in file:
-      found = mem_re.search(line)
-      if found is not None: return int(found.group(1))
-  raise MemoryError("Could not determine total memory from /proc/meminfo.")
+  try:
+    mem_re = compile("MemTotal\s*:\s*(\d+)\s*kB")
+    with open("/proc/meminfo", "r") as file:
+      for line in file:
+        found = mem_re.search(line)
+        if found is not None: return int(found.group(1))
+    raise MemoryError("Could not determine total memory from /proc/meminfo.")
+  except: return 10e9
 
 def which(program):
   """ Gets location of program using system command which. """

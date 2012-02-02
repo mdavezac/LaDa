@@ -3,6 +3,7 @@ __docformat__  = 'restructuredtext en'
 __all__ = ['BPoints', 'ReducedBPoints', 'InnerBPoints', 'ReducedInnerBPoints', 'plot_bands', 'plot_alloybands']
 
 from .kpoints import KPoints, _reduced_grids_factory
+from lada import try_import_matplotlib
 
 class BPoints(KPoints):
   """ *Grid* of kpoints for bands-structure calculation. """
@@ -139,132 +140,141 @@ class InnerBPoints(BPoints):
 ReducedBPoints = _reduced_grids_factory('ReducedBPoints', BPoints)
 ReducedInnerBPoints = _reduced_grids_factory('ReducedInnerBPoints', InnerBPoints)
 
-def plot_bands(extractor, offset = 0.05, labels = None, **kwargs):
-  """ Tries and plots band-structure. """
-  from lada import try_import_matplotlib
-  if not try_import_matplotlib: 
-    raise ImportError("Cannot use plot_bands with matplotlib disabled. """)
-  import matplotlib.pyplot as plt 
-  from numpy import array, min, max
-  from numpy.linalg import norm
-  from matplotlib import rcParams
-
-  old = extractor.unreduce
-  extractor.unreduce = True
-
-  bandcolor = kwargs.pop('bandcolor', 'blue')
-  edgecolor = kwargs.pop('edgecolor', 'red')
-  edgestyle = kwargs.pop('edgestyle', '-')
-  linewidth = kwargs.pop('linewidth', rcParams['lines.linewidth'])
-  bandwidth = kwargs.pop('bandwidth', linewidth)
-
-  # first finds breaking point.
-  kpoints = extractor.kpoints
-  delta = kpoints[1:] - kpoints[:-1]
-  norms = [norm(delta[i,:]) for i in range(delta.shape[0])]
-  bk, offsets, x, lims = [0], [False], [], [0]
-  for i, d in enumerate(norms[1:]):
-    if abs(norms[i]-d) > 1e-6: 
-      if i == bk[-1] and i != 0:
-        offsets[-1] = True
-        bk[-1] += 1
-        lims.append(bk[-1])
-      else:
-        bk.append(i+1)
-        offsets.append(False)
-      x.append(0 if offsets[-1] else norms[i])
-    else: x.append(d)
-  bk.append(None)
-  offsets.append(False)
-  lims.append(None)
-  x.append(x[-1])
-
-  # then plot bands.
-  x = array([sum(x[:i]) for i in range(len(x)+1)])
-  y = array(extractor.eigenvalues)
-
-  # then line markers.
-  offset *= x[-1]
-  lines = []
-  for first, last, add_offset in zip(bk[:-1], bk[1:], offsets):
-    if first != 0: lines.append(x[first])
-    if add_offset:
-      x[first:] += offset
-      lines.append(x[first])
-  for first, last in  zip(lims[:-1], lims[1:]):
-    plt.plot(x[first:last], y[first:last], color=bandcolor, linewidth=bandwidth,**kwargs)
-
-  # then plot vbm and cbm.
-  kwargs['linewidth'] = rcParams['axes.linewidth']
-  for l in lines: plt.axvline(l, color='black', **kwargs)
-  kwargs['linestyle'] = edgestyle
-  plt.axhline(extractor.vbm, color=edgecolor, **kwargs)
-  plt.axhline(extractor.cbm, color=edgecolor, **kwargs)
-
-
-
-  plt.xlim((x[0], x[-1]))
-  ylims = min(y) - (max(y) - min(y))*0.05, max(y) + (max(y) - min(y))*0.05
-  plt.ylim(ylims)
-  axes = plt.gca()
-  axes.yaxis.set_ticks_position('both')
-  if labels is None: axes.xaxis.set_ticks([])
+if try_import_matplotlib:
+  try: import matplotlib.pyplot as plt 
+  except: 
+    def plot_bands(extractor, **kwargs):
+      """ Plots band-structure. """
+      raise ImportError("Cannot use plot_bands without matplotlib. """)
+    def plot_alloybands(extractor, multicell, tolerance=1e-6, **kwargs):
+      """ Plots alloy band-structure using the majority representation. """
+      raise ImportError("Cannot use plot_alloybands without matplotlib. """)
   else:
-    lines.insert(0, 0)
-    lines.append(x[-1])
-    assert len(labels) <= len(lines),\
-           ValueError("Could not find as many breaking points as were provided labels.")
-    axes.xaxis.set_ticks(lines[:len(labels)])
-    axes.xaxis.set_ticklabels(labels)
-    for i in axes.xaxis.get_major_ticks():
-      i.tick1On=False
-      i.tick2On=False
+    def plot_bands(extractor, offset = 0.05, labels = None, **kwargs):
+      """ Tries and plots band-structure. """
+      from numpy import array, min, max
+      from numpy.linalg import norm
+      from matplotlib import rcParams
 
-  extractor.unreduce = old
+      old = extractor.unreduce
+      extractor.unreduce = True
 
-def plot_alloybands(extractor, multicell, tolerance=1e-6, **kwargs):
-  """ Plots alloy band-structure using the majority representation. """
-  from lada import try_import_matplotlib
-  if not try_import_matplotlib: 
+      bandcolor = kwargs.pop('bandcolor', 'blue')
+      edgecolor = kwargs.pop('edgecolor', 'red')
+      edgestyle = kwargs.pop('edgestyle', '-')
+      linewidth = kwargs.pop('linewidth', rcParams['lines.linewidth'])
+      bandwidth = kwargs.pop('bandwidth', linewidth)
+
+      # first finds breaking point.
+      kpoints = extractor.kpoints
+      delta = kpoints[1:] - kpoints[:-1]
+      norms = [norm(delta[i,:]) for i in range(delta.shape[0])]
+      bk, offsets, x, lims = [0], [False], [], [0]
+      for i, d in enumerate(norms[1:]):
+        if abs(norms[i]-d) > 1e-6: 
+          if i == bk[-1] and i != 0:
+            offsets[-1] = True
+            bk[-1] += 1
+            lims.append(bk[-1])
+          else:
+            bk.append(i+1)
+            offsets.append(False)
+          x.append(0 if offsets[-1] else norms[i])
+        else: x.append(d)
+      bk.append(None)
+      offsets.append(False)
+      lims.append(None)
+      x.append(x[-1])
+
+      # then plot bands.
+      x = array([sum(x[:i]) for i in range(len(x)+1)])
+      y = array(extractor.eigenvalues)
+
+      # then line markers.
+      offset *= x[-1]
+      lines = []
+      for first, last, add_offset in zip(bk[:-1], bk[1:], offsets):
+        if first != 0: lines.append(x[first])
+        if add_offset:
+          x[first:] += offset
+          lines.append(x[first])
+      for first, last in  zip(lims[:-1], lims[1:]):
+        plt.plot(x[first:last], y[first:last], color=bandcolor, linewidth=bandwidth,**kwargs)
+
+      # then plot vbm and cbm.
+      kwargs['linewidth'] = rcParams['axes.linewidth']
+      for l in lines: plt.axvline(l, color='black', **kwargs)
+      kwargs['linestyle'] = edgestyle
+      plt.axhline(extractor.vbm, color=edgecolor, **kwargs)
+      plt.axhline(extractor.cbm, color=edgecolor, **kwargs)
+
+
+
+      plt.xlim((x[0], x[-1]))
+      ylims = min(y) - (max(y) - min(y))*0.05, max(y) + (max(y) - min(y))*0.05
+      plt.ylim(ylims)
+      axes = plt.gca()
+      axes.yaxis.set_ticks_position('both')
+      if labels is None: axes.xaxis.set_ticks([])
+      else:
+        lines.insert(0, 0)
+        lines.append(x[-1])
+        assert len(labels) <= len(lines),\
+               ValueError("Could not find as many breaking points as were provided labels.")
+        axes.xaxis.set_ticks(lines[:len(labels)])
+        axes.xaxis.set_ticklabels(labels)
+        for i in axes.xaxis.get_major_ticks():
+          i.tick1On=False
+          i.tick2On=False
+
+      extractor.unreduce = old
+
+    def plot_alloybands(extractor, multicell, tolerance=1e-6, **kwargs):
+      """ Plots alloy band-structure using the majority representation. """
+      from numpy import array, min, max
+      from numpy.linalg import norm
+      from . import majority_representation
+
+      edgecolor = kwargs.pop('edgecolor', 'red')
+      edgestyle = kwargs.pop('edgestyle', '-')
+
+      # first finds breaking point.
+      istr = extractor.input_structure
+      ostr = extractor.structure
+      kpoints = array([u[1] for u in extractor.functional.kpoints.unreduced(istr, ostr)])
+      delta = kpoints[1:] - kpoints[:-1]
+      norms = [norm(delta[i,:]) for i in range(delta.shape[0])]
+      bk = []
+      for i, d in enumerate(norms[1:]):
+        if abs(norms[i]-d) > 1e-6: bk.append(i+1)
+
+      # then plot bands.
+      xvalues = array([sum(norms[:i]) for i in range(len(norms)+1)])
+      args = [[],[],[]]
+      maj = majority_representation(extractor, multicell)
+      for values, x in zip(maj, xvalues):
+        for v in values: 
+          args[0].append(x)
+          args[1].append(v[0])
+          args[2].append(v[1])
+
+      # then line markers.
+      plt.hexbin(*args, **kwargs)
+      x = array([sum(norms[:i]) for i in range(len(norms)+1)])
+      for i in bk: plt.axvline(x[i], color='black', **kwargs)
+
+      kwargs.pop('linestyle', None) 
+      plt.axhline(extractor.vbm, color=edgecolor, linestyle=edgestyle, **kwargs)
+      plt.axhline(extractor.cbm, color=edgecolor, linestyle=edgestyle, **kwargs)
+
+      y = array(extractor.eigenvalues)
+      plt.xlim((x[0], x[-1]))
+      ylims = min(y) - (max(y) - min(y))*0.05, max(y) + (max(y) - min(y))*0.05
+      plt.ylim(ylims)
+else:
+  def plot_bands(extractor, **kwargs):
+    """ Plots band-structure. """
+    raise ImportError("Cannot use plot_bands without matplotlib. """)
+  def plot_alloybands(extractor, multicell, tolerance=1e-6, **kwargs):
+    """ Plots alloy band-structure using the majority representation. """
     raise ImportError("Cannot use plot_alloybands without matplotlib. """)
-  import matplotlib.pyplot as plt 
-  from numpy import array, min, max
-  from numpy.linalg import norm
-  from . import majority_representation
-
-  edgecolor = kwargs.pop('edgecolor', 'red')
-  edgestyle = kwargs.pop('edgestyle', '-')
-
-  # first finds breaking point.
-  istr = extractor.input_structure
-  ostr = extractor.structure
-  kpoints = array([u[1] for u in extractor.functional.kpoints.unreduced(istr, ostr)])
-  delta = kpoints[1:] - kpoints[:-1]
-  norms = [norm(delta[i,:]) for i in range(delta.shape[0])]
-  bk = []
-  for i, d in enumerate(norms[1:]):
-    if abs(norms[i]-d) > 1e-6: bk.append(i+1)
-
-  # then plot bands.
-  xvalues = array([sum(norms[:i]) for i in range(len(norms)+1)])
-  args = [[],[],[]]
-  maj = majority_representation(extractor, multicell)
-  for values, x in zip(maj, xvalues):
-    for v in values: 
-      args[0].append(x)
-      args[1].append(v[0])
-      args[2].append(v[1])
-
-  # then line markers.
-  plt.hexbin(*args, **kwargs)
-  x = array([sum(norms[:i]) for i in range(len(norms)+1)])
-  for i in bk: plt.axvline(x[i], color='black', **kwargs)
-
-  kwargs.pop('linestyle', None) 
-  plt.axhline(extractor.vbm, color=edgecolor, linestyle=edgestyle, **kwargs)
-  plt.axhline(extractor.cbm, color=edgecolor, linestyle=edgestyle, **kwargs)
-
-  y = array(extractor.eigenvalues)
-  plt.xlim((x[0], x[-1]))
-  ylims = min(y) - (max(y) - min(y))*0.05, max(y) + (max(y) - min(y))*0.05
-  plt.ylim(ylims)
