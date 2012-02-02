@@ -16,7 +16,8 @@ __all__ = [ '__load_vasp_in_global_namespace__', '__load_escan_in_global_namespa
             'cReals', 'ConvexHull', 'ErrorTuple', 'redirect_all', 'redirect', 'read_input',\
             'LockFile', 'acquire_lock', 'open_exclusive', 'RelativeDirectory', 'streams',
             'AbstractExtractBase', 'OutcarSearchMixin', 'convert_from_unix_re', 'OrderedDict', 
-            'exec_input', 'FileCache', 'Changedir', 'Tempdir', 'broadcast_result', 'make_cached' ]
+            'exec_input', 'FileCache', 'Changedir', 'Tempdir', 'broadcast_result', 'make_cached',
+            'load' ]
 
 streams = _RedirectFortran.fortran
 """ Name of the streams. """
