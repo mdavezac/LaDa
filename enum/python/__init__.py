@@ -53,7 +53,7 @@ class Enum(Lattice):
   def smiths(self, n):
     """ Iterates over smith groups. """
     from _enumeration import create_smith_groups
-    for smith in create_smith_groups(self, self.supercells): yield smith
+    for smith in create_smith_groups(self, self.supercells(n)): yield smith
 
   def xn(self, n, callback = None):
     """ Iterates over all decorations with n atoms. 

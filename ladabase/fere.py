@@ -145,7 +145,6 @@ def generate_fere_summary(filters=None, tempname="ladabaseextracteditersystemtem
     Nsystems, Nvariables = A.shape[0], A.shape[1]-1
     A = concatenate((A, concatenate((identity(Nvariables), zeros((Nvariables, 1))), axis=1)))
     hrep = Hrep(A[:, :-1], -A[:, -1])
-    print hrep
 
     # find all compounds for this system.
     query = {'metadata.Enthalpy': {'$exists': True},
@@ -165,7 +164,7 @@ def generate_fere_summary(filters=None, tempname="ladabaseextracteditersystemtem
     # unsets groundstate status, and sets to tracked.
     setme = {'$set': {'tracked.fere_summary': document['_id']},
              '$unset': {'output.stability': 1}}
-    for id in allids: extracted.update({'_id': id}, setme)
+    for id in allids: extracted.update({'_id': id}, setme, multi=False)
 
     # loop over stable compounds only and create list polyhedra and rays separately.
     # At the end of the day, we want stability polyhedra for plotting. 
@@ -173,6 +172,7 @@ def generate_fere_summary(filters=None, tempname="ladabaseextracteditersystemtem
     extracted_ids = []
     polyhedra = []
     ray_polyhedra = []
+    inincs = []
     for j, (indices, id) in enumerate(zip(hrep.ininc[:Nsystems], ids)):
       if len(indices) == 0: continue
       if not any([hrep.is_vertex[i] for i in indices]): continue
@@ -188,6 +188,7 @@ def generate_fere_summary(filters=None, tempname="ladabaseextracteditersystemtem
       extracted_ids.append(id)
       polyhedra.append(array(polyhedron).copy())
       ray_polyhedra.append(array(ray_polyhedron).copy())
+      inincs.append(indices)
 
     # can be nothing is stable.
     if len(polyhedra) == 0: continue 
@@ -196,15 +197,19 @@ def generate_fere_summary(filters=None, tempname="ladabaseextracteditersystemtem
     y_range = [min([min(u[:,1]) for u in polyhedra]), max([max(u[:, 1]) for u in polyhedra])]
     if x_range[1] - x_range[0] < 1e-8: x_range[0] -= 0.5
     else: 
-      if any(any(r[:, 0] >  1e-8) for r in ray_polyhedra if len(r) > 0): x_range[1] += (x_range[1] - x_range[0]) * 0.15
-      if any(any(r[:, 0] < -1e-8) for r in ray_polyhedra if len(r) > 0): x_range[0] -= (x_range[1] - x_range[0]) * 0.15
+      if any(any(r[:, 0] >  1e-8) for r in ray_polyhedra if len(r) > 0):
+        x_range[1] += (x_range[1] - x_range[0]) * 0.15
+      if any(any(r[:, 0] < -1e-8) for r in ray_polyhedra if len(r) > 0):
+        x_range[0] -= (x_range[1] - x_range[0]) * 0.15
     if y_range[1] - y_range[0] < 1e-8: y_range[0] -= 0.5
     else: 
-      if any(any(r[:, 1] >  1e-8) for r in ray_polyhedra if len(r) > 0): y_range[1] += (y_range[1] - y_range[0]) * 0.15
-      if any(any(r[:, 1] < -1e-8) for r in ray_polyhedra if len(r) > 0): y_range[0] -= (y_range[1] - y_range[0]) * 0.15
+      if any(any(r[:, 1] >  1e-8) for r in ray_polyhedra if len(r) > 0):
+        y_range[1] += (y_range[1] - y_range[0]) * 0.15
+      if any(any(r[:, 1] < -1e-8) for r in ray_polyhedra if len(r) > 0):
+        y_range[0] -= (y_range[1] - y_range[0]) * 0.15
 
     # finally adds ray vertices to polyhedra and adds relevant data to database.
-    for poly, rays, id in zip(polyhedra, ray_polyhedra, extracted_ids):
+    for poly, rays, id, indices in zip(polyhedra, ray_polyhedra, extracted_ids, inincs):
 
       # complete the list of vertices.
       vertices = list(poly)
@@ -232,19 +237,24 @@ def generate_fere_summary(filters=None, tempname="ladabaseextracteditersystemtem
       document['mus_diagram']['extracted_ids'].append(element['_id'])
       document['mus_diagram']['polyhedra'].append([u for u in zip(poly[:, 0], poly[:, 1])])
       # adds groundstate flag.
-      extracted.update({'_id': element['_id']},{'$set': {'output.stability': True}})
+      extracted.update({'_id': element['_id']},{'$set': {'output.stability': True}}, multi=False)
 
       # If oxygen is an atom of this material, then add O diagram.
-#     if 'O' in element['metadata']['species'] and len(element['metadata']['species']) > 2:
-#       indexO = species.index('O')
-#       generators = array([hrep.generators[i] for i in indices if hrep.is_vertex[i]])
-#       # find range, does not yet look at rays.
-#       minO = min(generators[:, indexO])
-#       maxO = max(generators[:, indexO])
-#       # Saves data to extracted collection.
-#       # Checks if a oxygen ray is in this half-space
-#       if Nsystems + indexO in indices: minO = float("-inf")
-#       extracted.update({'_id': id}, {'$set': {'output.PT_diagram': [minO, maxO]}})
+      if element['input']['species'].get('O', 0) > 0:
+        indexO = species.index('O')
+        generators = array([hrep.generators[i] for i in indices if hrep.is_vertex[i]])
+        # find range, does not yet look at rays.
+        minO = min(generators[:, indexO])
+        maxO = max(generators[:, indexO])
+        # Saves data to extracted collection.
+        # Checks if a oxygen ray is in this half-space
+        matspec = element['input']['species']
+        for ray in (hrep.generators[i] for i in indices if not hrep.is_vertex[i]):
+          if matspec.get(species[0], 0) > 0 and abs(ray[0]) > 1e-8: minO = float("-inf"); break
+          if matspec.get(species[1], 0) > 0 and abs(ray[1]) > 1e-8: minO = float("-inf"); break
+          if matspec.get(species[2], 0) > 0 and abs(ray[2]) > 1e-8: minO = float("-inf"); break
+        if minO == float("-inf"): print species, matspec, element['_id']
+        extracted.update({'_id': id}, {'$set': {'output.PT_diagram': [minO, maxO]}}, multi=False)
       
     fere_summary.save(document)
 
