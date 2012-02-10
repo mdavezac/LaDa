@@ -22,8 +22,12 @@ namespace LaDa
         PyObject_ClearWeakRefs((PyObject *) _self);
      
       lada_atom_gcclear(_self);
- 
-      _self->ob_type->tp_free((PyObject*)_self);
+
+      // Calls c++ destructor explicitely.
+      PyTypeObject *ob_type = _self->ob_type;
+      _self->~AtomData();
+
+      ob_type->tp_free((PyObject*)_self);
     }
  
     // Function to initialize a string atom.

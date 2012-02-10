@@ -134,7 +134,6 @@ int main()
               rand()%20-10, rand()%20-10, rand()%20-10,
               rand()%20-10, rand()%20-10, rand()%20-10;
     } while( is_null(cell.determinant()) );
-    while(std::abs(cell.determinant()) < 1e-8);
     if(cell.determinant() < 0) cell.col(0).swap(cell.col(1));
     Structure< LADA_TYPE > structure = supercell(lattice, lattice.cell() * cell);
     check(structure);

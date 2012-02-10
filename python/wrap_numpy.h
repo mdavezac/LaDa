@@ -17,6 +17,68 @@ namespace LaDa
   {
     //! Convert/wrap a matrix to numpy.
     template<class T_DERIVED>
+      PyObject* wrap_to_numpy(Eigen::DenseBase<T_DERIVED> const &_in, PyObject *_parent = NULL)
+      {
+        npy_intp dims[2] = { _in.rows(), _in.cols() };
+        typedef math::numpy::type<typename Eigen::DenseBase<T_DERIVED>::Scalar> t_ScalarType;
+        PyArrayObject *result = _parent == NULL ?
+          (PyArrayObject*) PyArray_ZEROS(_in.cols() > 1? 2: 1, dims, t_ScalarType::value, _in.IsRowMajor?0:1):
+          (PyArrayObject*) PyArray_SimpleNewFromData(_in.cols() > 1? 2: 1, dims, t_ScalarType::value,
+                                     (void*)(&_in(0,0)));
+        if(result == NULL) return NULL;
+        // macro for row vs column major. The macro changed for npy >= 1.6
+#       ifdef LADA_MACRO
+#         error LADA_MACRO already defined
+#       endif
+#       ifdef NPY_ARRAY_C_CONTIGUOUS
+#         define LADA_MACRO NPY_ARRAY_C_CONTIGUOUS;
+#       else 
+#         define LADA_MACRO NPY_C_CONTIGUOUS
+#       endif
+        // If has a parent, do not copy data, just incref it as base.
+        if(_parent != NULL) 
+        {
+          // For some reason, eigen is column major, whereas c++ is generally row major.
+          if(result->flags & LADA_MACRO and not _in.IsRowMajor) 
+            result->flags -= LADA_MACRO;
+          else if((not (result->flags & LADA_MACRO)) and _in.IsRowMajor) 
+            result->flags |= LADA_MACRO;
+          Eigen::DenseCoeffsBase<T_DERIVED> const coeffs = _in;
+          if(_in.cols() == 1)
+            result->strides[0] = _in.innerStride() * sizeof(typename t_ScalarType::np_type);
+          else if(_in.IsRowMajor) 
+          {
+            result->strides[0] = _in.outerStride() * sizeof(typename t_ScalarType::np_type);
+            result->strides[1] = _in.innerStride() * sizeof(typename t_ScalarType::np_type);
+          }
+          else 
+          {
+            result->strides[0] = _in.innerStride() * sizeof(typename t_ScalarType::np_type);
+            result->strides[1] = _in.outerStride() * sizeof(typename t_ScalarType::np_type);
+          }
+          result->base = _parent;
+          Py_INCREF(_parent);
+        }
+        // otherwise, copy data.
+        else
+        {
+          for(size_t i(0); i < _in.rows(); ++i)
+            for(size_t j(0); j < _in.cols(); ++j)
+              *((typename t_ScalarType::np_type*)
+                  (result->data + i*result->strides[0] + j*result->strides[1])) = _in(i, j);
+        }
+#       undef LADA_MACRO
+#       ifdef NPY_ARRAY_WRITEABLE
+#         define LADA_MACRO NPY_ARRAY_WRITEABLE
+#       else
+#         define LADA_MACRO NPY_WRITEABLE
+#       endif
+          if(result->flags & LADA_MACRO) result->flags -= LADA_MACRO;
+#       undef LADA_MACRO
+        return (PyObject*)result;
+      }
+    //! Convert/wrap a matrix to numpy.
+    template<class T_DERIVED>
       PyObject* wrap_to_numpy(Eigen::DenseBase<T_DERIVED> &_in, PyObject *_parent = NULL)
       {
         npy_intp dims[2] = { _in.rows(), _in.cols() };

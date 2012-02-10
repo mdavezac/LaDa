@@ -22,7 +22,11 @@ namespace LaDa
      
       structure_gcclear(_self);
   
-      _self->ob_type->tp_free((PyObject*)_self);
+      // calls destructor explicitely.
+      PyTypeObject* ob_type = _self->ob_type;
+      _self->~StructureData();
+
+      ob_type->tp_free((PyObject*)_self);
     }
   
     // Function to initialize an atom.

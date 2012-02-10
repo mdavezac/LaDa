@@ -121,10 +121,12 @@ namespace LaDa
     {                                                                                         \
       PyObject * const exception                                                              \
          = ::LaDa::python::PyException< ::LaDa::error::EXCEPTION >::exception().ptr();        \
-      PyErr_SetString(exception, MESSAGE);                                                    \
+      std::ostringstream sstr;                                                                \
+      sstr << "In " << __FILE__ << "(" << __LINE__ << "): " << MESSAGE;                       \
+      PyErr_SetString(exception, sstr.str().c_str());                                         \
       BOOST_THROW_EXCEPTION( ::LaDa::error::EXCEPTION()                                       \
                              << ::LaDa::error::pyexcept(exception)                            \
-                             << ::LaDa::error::string(MESSAGE) );                             \
+                             << ::LaDa::error::string(sstr.str()) );                          \
     }
   }
 }

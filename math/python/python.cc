@@ -21,12 +21,13 @@
 
 #include <python/numpy_types.h>
 #include <python/wrap_numpy.h>
-#include <math/fuzzy.h>
 
 #include "avogadro.hpp"
 #include "matrix.hpp"
 #include "../eigen.h"
 #include "../misc.h"
+#include "../fuzzy.h"
+#include "../gruber.h"
 
 void check_matrix_from_python(boost::python::object const &_object)
 {
@@ -162,12 +163,25 @@ BOOST_PYTHON_MODULE(math)
    "imports automatic conversions between numpy arrays and 3d-vectors and "
    "matrices.";
   bp::docstring_options doc_options(true, false);
+  LaDa::math::iVector3d (*ptr)(LaDa::math::rVector3d const &) = &LaDa::math::floor_int;
 
   LaDa::python::expose_eigen_vectors();
   LaDa::python::expose_eigen_matrices();
   bp::def("is_integer", &is_integer, "Returns True if the input vector or matrix is integer.");
+  bp::def("floor_int", ptr, "Returns floored input.");
   bp::def("Rotation", &Rotation1, "Returns rotation according to angle and axis as a 4x3 symmetry operation.");
   bp::def("Translation", &Translation, "Returns translation as last row of a 4x3 symmetry operation.");
+
+  bp::def( "gruber", &LaDa::math::gruber,
+           (bp::arg("cell"), bp::arg("itermax")=0, bp::arg("tolerance")=LaDa::types::tolerance),
+           "Determines Gruber cell of an input cell.\n\n"
+           "The Gruber cell is an optimal parameterization of a lattice, eg shortest "
+           "cell-vectors and angles closest to 90 degrees.\n\n"
+           ":Parameters:"
+           "  cell : numpy 3x3 array\n  The input lattice cell-vectors.\n"
+           "  itermax : integer\n  Maximum number of iterations. Defaults to 0, ie infinite.\n"
+           "  tolerance : float\n  Tolerance parameter when comparing real numbers. "
+              "Defaults to LaDa internals.\n" );
 
   bp::def("check_extract", &check_matrix_from_python, "Check matrix extraction.");
   bp::def("check_frompy_to_cpp_mat", &check_from_python_mat, "Check automatic matrix extraction.");

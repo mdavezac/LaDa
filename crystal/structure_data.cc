@@ -37,6 +37,7 @@ namespace LaDa
       result->weakreflist = NULL;
       result->scale = 1e0;
       new(&result->cell) LaDa::math::rMatrix3d(LaDa::math::rMatrix3d::Identity());
+      new(&result->atoms) std::vector<Atom>;
       result->pydict = PyDict_New();
       if(result->pydict == NULL) { Py_DECREF(result); return NULL; }
       return result;
@@ -49,6 +50,7 @@ namespace LaDa
       result->weakreflist = NULL;
       result->scale = 1e0;
       new(&result->cell) LaDa::math::rMatrix3d(LaDa::math::rMatrix3d::Identity());
+      new(&result->atoms) std::vector<Atom>;
       result->pydict = PyDict_New();
       if(result->pydict == NULL) { Py_DECREF(result); return NULL; }
       return result;
@@ -70,6 +72,7 @@ namespace LaDa
       if(not result) return NULL;
       result->weakreflist = NULL;
       new(&result->cell) LaDa::math::rMatrix3d(_self->cell);
+      new(&result->atoms) std::vector<Atom>;
       result->pydict = NULL;
       result->scale = _self->scale;
       PyObject* copymod = PyImport_ImportModule("copy");

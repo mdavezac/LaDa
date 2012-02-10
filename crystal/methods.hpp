@@ -449,6 +449,9 @@ namespace LaDa
         structure.transform(transform);
         return structure.release();
      }
+
+    //! Creates boxes.
+    PyObject* pyperiodic_dnc(PyObject* _module, PyObject* _args, PyObject *_kwargs);
       
        
     //! Methods table for crystal module.
@@ -584,6 +587,34 @@ namespace LaDa
           "  structure : `lada.crystal.Structure`\n    The structure to transform.\n"
           "  transform : 4x3 matrix\n    The rotation (applied first) is contained "
             "in the first three row and the translation (applied second) in the last row." },
+        {"periodic_dnc", (PyCFunction)pyperiodic_dnc, METH_VARARGS | METH_KEYWORDS, 
+          "Creates periodic divide-and-conquer boxes. \n\n"
+          "Creates a list of divide-and-conquer boxes for a periodic system. "
+          "Takes into account periodic images. In order to make sure that a box contains all "
+          "atoms relevant for a given calculation, it allows for an overlap, so that atoms "
+          "which are close (say close enough to form a bond) which are not nominally within the "
+          "are also referenced. In other words, the boxes have fuzzy limits. The return clearly "
+          "indicates whether an atom is truly within a box or merely sitting close by.\n\n"
+          ":Parameters:\n"
+          "  structure : `lada.crystal.Structure`\n    The structure to transform.\n"
+          "  nperbox : int\n    Number of atoms per box. Defaults to 20."
+               "Give either this or mesh, but not both.\n"
+          "  mesh : tuple of 3 integers\n"
+          "    Mesh parameters from which to  determine box. "
+               "Give either this or nperbox, but not both.\n"
+          "  overlap : float\n"
+          "    Size in units of the structure's scale attribute which determine atoms which are "
+              "close but not quite  within a box.\n"
+          "  return_mesh : bool\n    Optionally, returns mesh as first item of a two-tuple.\n"
+          ":returns: If ``return_mesh`` is false, returns a list of lists of 3-tuples "
+          "(atom, translation, insmallbox). Each inner list represents a single "
+          "divide-and-conquer box (+overlapping atoms). Each item within that "
+          "box contains a reference to an atom, a possible translation to push "
+          "the atom from its current position to its periodic image within the box, "
+          "and boolean which is true if the atom truly inside the box as opposed to "
+          "sitting just outside within the specified overlap. If ``return_mesh`` is true, "
+          "then returns a two-tuple consisting of the mesh and the list of lists "
+          "previously described.\n"},
         {NULL, NULL, 0, NULL}        /* Sentinel */
     }; // end of static method table.
   }
