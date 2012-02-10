@@ -56,6 +56,9 @@ def check(structure):
                     or  w == 1 for u, v, w in zip(pi, index, mesh) )
 
 def newstructure(i=10):
+  from numpy import zeros
+  from numpy.linalg import det
+  from random import randint
   from lada.crystal.cppwrappers import supercell
   
   lattice = b5()
@@ -67,7 +70,7 @@ def newstructure(i=10):
 
 
 
-def mayavi(structure):
+def mayavi(structure, N=10):
   """ import this module and run mayavi to see the divide and conquer boxes. 
   
       Enjoy and play around.
@@ -75,20 +78,29 @@ def mayavi(structure):
   from enthought.mayavi.mlab import points3d
   from lada.crystal.cppwrappers import periodic_dnc
 
-  mesh, boxes = periodic_dnc(structure, nperbox=30, overlap=0.35, return_mesh = True)
+  mesh, boxes = periodic_dnc(structure, nperbox=30, overlap=0.25, return_mesh = True)
 
   x, y, z, s = [], [], [], []
   for i, box in enumerate(boxes):
-    if i < 5: continue
+    if i == N: continue
+    x.extend([(atom.pos[0] + trans[0]) for atom, trans, inbox in box if inbox])
+    y.extend([(atom.pos[1] + trans[1]) for atom, trans, inbox in box if inbox])
+    z.extend([(atom.pos[2] + trans[2]) for atom, trans, inbox in box if inbox])
+    s.extend([0.5 for atom, trans, inbox in box if inbox])
+  points3d(x,y,z,s, scale_factor=0.1, colormap="copper")
+
+  x, y, z, s = [], [], [], []
+  for i, box in enumerate(boxes):
+    if i < N: continue
     x.extend([(atom.pos[0] + trans[0]) for atom, trans, inbox in box if inbox])
     y.extend([(atom.pos[1] + trans[1]) for atom, trans, inbox in box if inbox])
     z.extend([(atom.pos[2] + trans[2]) for atom, trans, inbox in box if inbox])
     s.extend([float(i+1) + (0. if inbox else 0.4) for atom, trans, inbox in box if inbox])
     break
-  points3d(x,y,z,s, scale_factor=0.002)
+  points3d(x,y,z,s, scale_factor=0.004, colormap="autumn")
   x, y, z, s = [], [], [], []
   for i, box in enumerate(boxes):
-    if i < 5: continue
+    if i < N: continue
     x.extend([(atom.pos[0] + trans[0]) for atom, trans, inbox in box if not inbox])
     y.extend([(atom.pos[1] + trans[1]) for atom, trans, inbox in box if not inbox])
     z.extend([(atom.pos[2] + trans[2]) for atom, trans, inbox in box if not inbox])
@@ -100,13 +112,13 @@ def mayavi(structure):
 if __name__ == "__main__":
   from sys import argv, path 
   from random import randint
-  from numpy import array, zeros
+  from numpy import zeros
   from numpy.linalg import det
   from lada.crystal.cppwrappers import supercell
   if len(argv) > 0: path.extend(argv[1:])
   
   lattice = b5()
-# check(lattice)
+  check(lattice)
 
   for i in xrange(10): 
     cell = zeros((3,3))
