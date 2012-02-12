@@ -1,87 +1,168 @@
 #include "LaDaConfig.h"
 
-#include <opt/debug.h>
+#include <Python.h>
+#define PY_ARRAY_UNIQUE_SYMBOL crystal_ARRAY_API
+#define NO_IMPORT_ARRAY
+
+#include <list>
+#include <algorithm>
+
 #include <math/fuzzy.h>
+#include <math/gruber.h>
+#include <python/wrap_numpy.h>
+
+#include "atom.h"
+#include "utilities.h"
 
 #include "neighbors.h"
 
 namespace LaDa
 {
 
-  namespace Crystal 
+  namespace crystal 
   {
-
-    //! \brief Strict weak ordering for distance from origin.
-    //! \details Comparison with origin is always false.
-    //!          This way, ends up a the end when sorting.
-    struct Order
+    //! Inserts a neighbor in a list.
+    static bool insert_neighbor_impl_( python::Object const &_list, 
+                                       Atom const &_ref,
+                                       math::rVector3d const &_pos,
+                                       types::t_real _distance,
+                                       Py_ssize_t _i )
     {
-      Order( types::t_real r ) : m(r) {}
-      Order( const Order &_c ) : m(_c.m) {}
-      bool operator()( const math::rVector3d& _a, const math::rVector3d &_b )
-      {
-        const types::t_real a = _a.squaredNorm();
-        const types::t_real b = _b.squaredNorm();
-        if( std::abs( a - b ) > m ) return a < b;
-        if( math::neq( _a[0], _b[0] ) ) return _a[0] < _b[0];
-        if( math::neq( _a[1], _b[1] ) ) return _a[1] < _b[1];
-        return _a[2] < _b[2];
-      }
-      types::t_real m;
-    };
-
-    void find_first_neighbors( std::vector< math::rVector3d > &_positions,
-                               const math::rMatrix3d &_cell,
-                               const size_t _n )
-    {
-      LADA_NASSERT( _positions.size() == 0, "Position vector is empty.\n" )
-      // first recenters around first atom.
-      const math::rMatrix3d inv_cell( _cell.inverse() );
-      const math::rVector3d origin( _positions[0] );
-      types::t_real mindist = -1e0;
-      std::vector<math::vector3d> :: const_iterator i_pos = _positions.begin();
-      std::vector<math::vector3d> :: const_iterator const i_pos_end = _positions.end();
-      for(; i_pos != i_pos_end; ++i_pos)
-      {
-        *i_pos -= origin;
-        *i_pos = inv_cell * (*i_pos);
-        for( size_t i(0); i < 3; ++i )
-          (*i_pos)(i) = (*i_pos)(i) - rint((*i_pos)(i));
-        *i_pos = _cell * (*i_pos);
-        const types::t_real d(i_pos->squaredNorm());
-        if( d < types::tolerance ) continue;
-        if( mindist > d  or mindist < 0e0 ) mindist = d;
-      }
-      math::iVector3d range
-      (
-        std::sqrt( _n * mindist / _cell.col(0).squaredNorm() ),
-        std::sqrt( _n * mindist / _cell.col(1).squaredNorm() ),
-        std::sqrt( _n * mindist / _cell.col(2).squaredNorm() )
-      ); 
-      _positions.reserve( _n + (2*range(0)+2) * (2*range(1)+1) * (2*range(2)+1) );
-      {
-        const std::vector< math::rVector3d > copy( _positions );
-        std::vector< math::rVector3d > :: const_iterator i_pos = copy.begin();
-        std::vector< math::rVector3d > :: const_iterator i_pos_end = copy.end();
-        for(; i_pos != i_pos_end; ++i_pos )
-        {
-          for( types::t_int i(-range(0) ); i <= range(0); ++i )
-            for( types::t_int j(-range(1) ); j <= range(1); ++j )
-              for( types::t_int k(-range(2) ); k <= range(2); ++k )
-              {
-                if( i == 0 and j == 0 and k == 0 ) continue;
-                const math::rVector3d d( (*i_pos) + _cell * math::rVector3d( i,j,k )  );
-                _positions.push_back( d );
-              }
-        }
-      }
-
-      // then resizes list of atoms to _n 
-      std::partial_sort( _positions.begin(), _positions.begin() + _n + 1, 
-                         _positions.end(), Order( mindist * 0.25 ) );
-      std::swap( _positions.front(), _positions[_n] );
-      _positions.resize( _n );
+      PyObject *pydist = PyFloat_FromDouble(_distance);
+      if(not pydist) return false;
+      PyObject* pypos = python::wrap_to_numpy(_pos);
+      if(not pypos) {Py_DECREF(pydist); return false; }
+      PyObject *tuple = PyTuple_Pack(3, _ref.borrowed(), pypos, pydist);
+      Py_DECREF(pypos); Py_DECREF(pydist);
+      if(not tuple) return NULL;
+      bool result = PyList_Insert(_list.borrowed(), _i, tuple) == 0;
+      Py_DECREF(tuple);
+      return result;
     }
+    //! Appends a neighbor in a list.
+    static bool append_neighbor_impl_( python::Object const &_list, 
+                                       Atom const &_ref,
+                                       math::rVector3d const &_pos,
+                                       types::t_real _distance )
+    {
+      PyObject *pydist = PyFloat_FromDouble(_distance);
+      if(not pydist) return false;
+      PyObject* pypos = python::wrap_to_numpy(_pos);
+      if(not pypos) {Py_DECREF(pydist); return false; }
+      PyObject *tuple = PyTuple_Pack(3, _ref.borrowed(), pypos, pydist);
+      Py_DECREF(pypos); Py_DECREF(pydist);
+      if(not tuple) return NULL;
+      bool result = PyList_Append(_list.borrowed(), tuple) == 0;
+      Py_DECREF(tuple);
+      return result;
+    }
+
+#   ifdef LADA_DISTANCE
+#     error LADA_DISTANCE already defined.
+#   endif
+    //! \macro LADA_DISTANCE returns distance attribute from nth item in list.
+#   define LADA_DISTANCE(list, n)  \
+      PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(PyList_GET_ITEM(list, n), 2))
+
+
+    PyObject* neighbors( crystal::Structure const &_structure, Py_ssize_t _nmax, 
+                         math::rVector3d const &_center,
+                         types::t_real _tolerance )
+    {
+      const types::t_int N( _structure.size() );
+      
+      math::rMatrix3d const cell = math::gruber(_structure.cell(), 3e0*_tolerance);
+      math::rMatrix3d const inv_cell( !cell );
+
+      types::t_real const volume(_structure.volume());
+      types::t_int list_max_size(_nmax+2);
+
+      python::Object result = PyList_New(0);
+      if(not result) return NULL;
+      
+      retry: 
+
+      types::t_int size(0);
+      // Finds out how far to look.
+      math::rVector3d const a0(cell.col(0));
+      math::rVector3d const a1(cell.col(1));
+      math::rVector3d const a2(cell.col(2));
+      types::t_real const max_norm
+        = std::max( a0.norm(), std::max(a1.norm(), a2.norm()) );
+      types::t_real const r
+      ( 
+        std::pow
+        (
+          std::max(1e0, types::t_real(list_max_size) / types::t_real(N)),
+          0.3333333333333
+        )
+      );
+      types::t_int n0( std::max(1.0, std::ceil(r*max_norm*a1.cross(a2).norm()/volume)) );
+      types::t_int n1( std::max(1.0, std::ceil(r*max_norm*a2.cross(a0).norm()/volume)) );
+      types::t_int n2( std::max(1.0, std::ceil(r*max_norm*a0.cross(a1).norm()/volume)) );
+      while( n0 * n1 * n2 * 8 * N < list_max_size ) { ++n0; ++n1; ++n2; }
+
+
+      types::t_real max_distance( 1.2 * std::pow(volume/types::t_real(N), 2e0/3e0)
+                                      * types::t_real(list_max_size * list_max_size) );
+      Structure::t_Atoms::const_iterator i_atom = _structure.begin();
+      Structure::t_Atoms::const_iterator i_atom_end = _structure.end();
+      for(; i_atom != i_atom_end; ++i_atom) 
+      {
+        math::rVector3d const start = into_voronoi(i_atom->pos()-_center, cell, inv_cell);
+        if(start.squaredNorm() > max_distance) continue;
+        for( types::t_int x(-n0); x <= n0; ++x )
+          for( types::t_int y(-n1); y <= n1; ++y )
+            for( types::t_int z(-n2); z <= n2; ++z )
+            {
+               math::rVector3d const pos = start + cell * math::rVector3d(x,y,z);
+               types::t_real const distance = pos.norm();
+               if(math::is_null(distance, _tolerance)) continue;
+      
+               Py_ssize_t i_found(0);
+               Py_ssize_t const N(PyList_GET_SIZE(result.borrowed()));
+               for(; i_found < N; ++i_found )
+               {
+                 double const dist = LADA_DISTANCE(result.borrowed(), i_found);
+                 if(distance < dist) break;
+               }
+               if( i_found != N)
+               {
+                 insert_neighbor_impl_(result, *i_atom, pos, distance, i_found);
+                 if( size < list_max_size ) ++size;
+                 else if(PySequence_DelItem(result.borrowed(), N) == -1) return NULL;
+               }
+               else if( size < list_max_size-1 )
+               {
+                 ++size;
+                 append_neighbor_impl_(result, *i_atom, pos, distance);
+               }
+            }
+      } // loop over atoms.
+      
+      // Removes atoms beyond nth position which are not at same distance as nth position.
+      // Also sets last item to last of same size as nmax.
+      Py_ssize_t const rN(PyList_GET_SIZE(result.borrowed()));
+      if(rN <= _nmax)
+      {
+        LADA_PYERROR(InternalError, "Supercell too small.");
+        return NULL;
+      }
+      types::t_real lastdist = LADA_DISTANCE(result.borrowed(), _nmax-1);
+      Py_ssize_t i(_nmax);
+      for(; i < rN; ++i) 
+        if(math::gt(LADA_DISTANCE(result.borrowed(), i), lastdist, _tolerance)) break;
+      if(i == rN)
+      {
+        result.reset(PyList_New(0));
+        if(not result) return NULL;
+        list_max_size += 20;
+        goto retry;
+      }
+      for(Py_ssize_t j(rN-1); j >= i; --j) PySequence_DelItem(result.borrowed(), j);
+      return result.release();
+    }
+#   undef LADA_DISTANCE
 
   } // namespace Crystal
 

@@ -450,8 +450,39 @@ namespace LaDa
         return structure.release();
      }
 
-    //! Creates boxes.
-    PyObject* pyperiodic_dnc(PyObject* _module, PyObject* _args, PyObject *_kwargs);
+    //! \brief Wrapper to python for periodic boundary divide and conquer.
+    //! \see  LaDa::crystal::periodic_dnc()
+   PyObject* pyperiodic_dnc(PyObject* _module, PyObject* _args, PyObject *_kwargs);
+    
+    //! \brief Wrapper to python for neighbor list creation.
+    //! \see  LaDa::crystal::neighbors()
+    static PyObject* pyneighbors(PyObject* _module, PyObject* _args, PyObject *_kwargs)
+    {
+      PyObject* structure = NULL; 
+      Py_ssize_t nmax = 0;
+      PyObject* _center = NULL;
+      double tolerance = types::tolerance;
+      static char *kwlist[] = { const_cast<char*>("structure"),
+                                const_cast<char*>("nmax"), 
+                                const_cast<char*>("center"), 
+                                const_cast<char*>("tolerance"), NULL };
+      if(not PyArg_ParseTupleAndKeywords( _args, _kwargs, "OIO|d:DnCBoxes", kwlist,
+                                          &structure, &nmax, &_center, &tolerance ) )
+        return NULL;
+      if(not PyStructure_Check(structure)) 
+      {
+        LADA_PYERROR(TypeError, "DnCBoxes: First argument should be a structure.");
+        return NULL;
+      }
+      math::rVector3d center(0,0,0);
+      if(PyAtom_Check(_center)) center = ((AtomData*)_center)->pos;
+      else if(not python::convert_to_vector(_center, center)) return NULL;
+      Structure struc = Structure::acquire(structure);
+      try { return neighbors(struc, nmax, center, tolerance); }
+      catch(...) {}
+      return NULL;
+    }
+
       
        
     //! Methods table for crystal module.
@@ -615,6 +646,26 @@ namespace LaDa
           "sitting just outside within the specified overlap. If ``return_mesh`` is true, "
           "then returns a two-tuple consisting of the mesh and the list of lists "
           "previously described.\n"},
+        {"neighbors", (PyCFunction)pyneighbors, METH_VARARGS | METH_KEYWORDS, 
+          "Returns list of neighbors to input position \n\n"
+          "Creates a list referencing neighbors of a given position in a structure. "
+          "In order to make this function well defined, it may return more atoms that "
+          "actually requested. For instance, in an fcc structure with center at "
+          "the origin, if asked for the 6 first neighbors, actually the first "
+          "twelve are returned since they are equidistant. The input tolerance "
+          "is the judge of equidistance.\n"
+          ":Parameters:\n"
+          "  structure : `lada.crystal.Structure`\n"
+          "    Structure from which to determine neighbors.\n"
+          "  nmax : int\n    Number of first neighbors to search for.\n"
+          "  center : sequence of three numbers\n"
+          "    Postition for which to determine first neighbors.\n"
+          "  tolerance : double\n"
+          "    Tolerance criteria for judging equidistance. "
+               "Defaults to LaDa hard-coded tolerance.\n\n" 
+          ":returns: A list of 3-tuples. The first item is a refence to the neighboring atom, "
+          "the second is the position of its relevant periodic image *relative* to the center, "
+          "the third is its distance from the center."},
         {NULL, NULL, 0, NULL}        /* Sentinel */
     }; // end of static method table.
   }

@@ -214,8 +214,8 @@ namespace LaDa
       return container.release();
     }
 #   undef LADA_INDEX
-
-    // Creates boxes.
+    //! \brief Wrapper to python for periodic boundary divide and conquer.
+    //! \see  LaDa::crystal::periodic_dnc()
     PyObject* pyperiodic_dnc(PyObject* _module, PyObject* _args, PyObject *_kwargs)
     {
       PyObject* structure = NULL; 
@@ -253,7 +253,7 @@ namespace LaDa
         if(not return_mesh) return result.release();
         python::Object pymesh = python::wrap_to_numpy(mesh);
         if(not pymesh) return NULL;
-        return PyTuple_Pack(2, pymesh.release(), result.release());
+        return PyTuple_Pack(2, pymesh.borrowed(), result.borrowed());
       }
       catch(...) {}
       return NULL;

@@ -21,7 +21,7 @@ def b5(u=0.25):
   return structure
 
 def indices(invcell, pos, n):
-  from numpy import cast, dot
+  from numpy import cast, dot, array
   from lada.math import floor_int
   int_fractional = cast["int64"](floor_int(dot(invcell, pos)))
   int_fractional = array([u + (ni if u < 0 else (-ni if u >= ni else 0)) for u, ni in zip(int_fractional, n)])
@@ -40,8 +40,6 @@ def check(structure):
   invcell[:, 1] /= float(mesh[1])
   invcell[:, 2] /= float(mesh[2])
   invcell = inv(invcell)
-  print mesh
-  print invcell
   for box in boxes:
     assert any(u[2] for u in box)
     for atom, trans, inbox in box:
@@ -111,11 +109,12 @@ def mayavi(structure, N=10):
 
 if __name__ == "__main__":
   from sys import argv, path 
+  if len(argv) > 0: path.extend(argv[1:])
+
   from random import randint
   from numpy import zeros
   from numpy.linalg import det
   from lada.crystal.cppwrappers import supercell
-  if len(argv) > 0: path.extend(argv[1:])
   
   lattice = b5()
   check(lattice)
