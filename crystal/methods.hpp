@@ -466,12 +466,12 @@ namespace LaDa
                                 const_cast<char*>("nmax"), 
                                 const_cast<char*>("center"), 
                                 const_cast<char*>("tolerance"), NULL };
-      if(not PyArg_ParseTupleAndKeywords( _args, _kwargs, "OIO|d:DnCBoxes", kwlist,
+      if(not PyArg_ParseTupleAndKeywords( _args, _kwargs, "OIO|d:neighbors", kwlist,
                                           &structure, &nmax, &_center, &tolerance ) )
         return NULL;
       if(not PyStructure_Check(structure)) 
       {
-        LADA_PYERROR(TypeError, "DnCBoxes: First argument should be a structure.");
+        LADA_PYERROR(TypeError, "neighbors: First argument should be a structure.");
         return NULL;
       }
       math::rVector3d center(0,0,0);
@@ -483,6 +483,40 @@ namespace LaDa
       return NULL;
     }
 
+    //! \brief Wrapper to python for coordination_shells list creation.
+    //! \see  LaDa::crystal::coordination_shells()
+    static PyObject* pycoordination_shells(PyObject* _module, PyObject* _args, PyObject *_kwargs)
+    {
+      PyObject* structure = NULL; 
+      Py_ssize_t nmax = 0;
+      PyObject* _center = NULL;
+      double tolerance = types::tolerance;
+      Py_ssize_t natoms = 0;
+      static char *kwlist[] = { const_cast<char*>("structure"),
+                                const_cast<char*>("nshells"), 
+                                const_cast<char*>("center"), 
+                                const_cast<char*>("tolerance"),
+                                const_cast<char*>("natoms"), NULL };
+      if(not PyArg_ParseTupleAndKeywords( _args, _kwargs, "OIO|dI:coordination_shells", kwlist,
+                                          &structure, &nmax, &_center, &tolerance, &natoms ) )
+        return NULL;
+      if(not PyStructure_Check(structure)) 
+      {
+        LADA_PYERROR(TypeError, "coordination_shells: First argument should be a structure.");
+        return NULL;
+      }
+      math::rVector3d center(0,0,0);
+      if(PyAtom_Check(_center)) center = ((AtomData*)_center)->pos;
+      else if(not python::convert_to_vector(_center, center)) return NULL;
+      Structure struc = Structure::acquire(structure);
+      try { return coordination_shells(struc, nmax, center, tolerance, natoms); }
+      catch(...)
+      {
+        if(not PyErr_Occurred())
+          LADA_PYERROR(InternalError, "Unknown c++ exception occurred.\n");
+      }
+      return NULL;
+    }
       
        
     //! Methods table for crystal module.
@@ -666,6 +700,24 @@ namespace LaDa
           ":returns: A list of 3-tuples. The first item is a refence to the neighboring atom, "
           "the second is the position of its relevant periodic image *relative* to the center, "
           "the third is its distance from the center."},
+        {"coordination_shells", (PyCFunction)pycoordination_shells, METH_VARARGS | METH_KEYWORDS, 
+          "Creates list of coordination shells up to given order.\n\n"
+          ":Parameters:\n"
+          "  structure : `lada.crystal.Structure`\n"
+          "    Structure from which to determine neighbors.\n"
+          "  nshells : unsigned integer\n    Number of shells to compute.\n"
+          "  center : sequence of three numbers\n"
+          "    Postition for which to determine shells.\n"
+          "  tolerance : double\n"
+          "    Tolerance criteria for judging equidistance. "
+               "Defaults to LaDa hard-coded tolerance.\n\n" 
+          "  natoms : unsigned integer\n"
+          "    Total number of neighbors to consider. Defaults to fcc + some security.\n\n"
+          ":returns: A list of lists of tuples. The outer list is over coordination shells. "
+                    "The inner list references the atoms in a shell. "
+                    "Each innermost tuple contains a reference to the atom in question, "
+                    "a translation vector to its periodic image inside the relevant shell, "
+                    "and the distance from the center to the relevant periodic image." },
         {NULL, NULL, 0, NULL}        /* Sentinel */
     }; // end of static method table.
   }

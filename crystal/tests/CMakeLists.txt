@@ -24,6 +24,8 @@ endif(NOT compile_debug_tests)
   add_test(space_group python ${CMAKE_CURRENT_SOURCE_DIR}/space_group.py ${CMAKE_CURRENT_BINARY_DIR})
   add_test(periodic_dnc python ${CMAKE_CURRENT_SOURCE_DIR}/periodic_dnc.py ${CMAKE_CURRENT_BINARY_DIR})
   add_test(neighbors python ${CMAKE_CURRENT_SOURCE_DIR}/neighbors.py ${CMAKE_CURRENT_BINARY_DIR})
+  add_test(coordination_shells python ${CMAKE_CURRENT_SOURCE_DIR}/coordination_shells.py
+           ${CMAKE_CURRENT_BINARY_DIR})
 
   #   python_add_module (atom_self "" "atom_self.cc")
   #   set_property(TARGET atom_self PROPERTY COMPILE_DEFINITIONS)

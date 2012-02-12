@@ -3,6 +3,7 @@
 #include <Python.h>
 #define PY_ARRAY_UNIQUE_SYMBOL crystal_ARRAY_API
 #define NO_IMPORT_ARRAY
+#include <numpy/arrayobject.h>
 
 #include <list>
 #include <algorithm>
