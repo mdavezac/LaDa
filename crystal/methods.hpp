@@ -517,6 +517,56 @@ namespace LaDa
       }
       return NULL;
     }
+    //! \brief Wrapper to python for split configuration creation.
+    //! \see  LaDa::crystal::splitconfigs_from_origin()
+    static PyObject* pysplitconfigs(PyObject* _module, PyObject* _args, PyObject *_kwargs)
+    {
+      PyObject* _structure = NULL; 
+      PyObject* _atom = NULL; 
+      PyObject* _configurations = NULL; 
+      int index = 0;
+      Py_ssize_t nmax = 0;
+      PyObject* configurations = NULL;
+      double tolerance = types::tolerance;
+      Py_ssize_t natoms = 0;
+      static char *kwlist[] = { const_cast<char*>("structure"),
+                                const_cast<char*>("center"), 
+                                const_cast<char*>("nmax"), 
+                                const_cast<char*>("configurations"), 
+                                const_cast<char*>("tolerance"), NULL };
+      if(not PyArg_ParseTupleAndKeywords( _args, _kwargs, "OOI|Od:splitconfigs", kwlist,
+                                          &_structure, &_atom, &nmax, &_configurations, &tolerance) )
+        return NULL;
+      if(not PyStructure_Check(_structure)) 
+      {
+        LADA_PYERROR(TypeError, "splitconfigs: structure argument should be a structure.");
+        return NULL;
+      }
+      if(not PyAtom_Check(_atom)) 
+      {
+        LADA_PYERROR(TypeError, "splitconfigs: center argument should be an atom.");
+        return NULL;
+      }
+      if(_configurations and not PyList_Check(_configurations)) 
+      {
+        LADA_PYERROR(TypeError, "splitconfigs: configurations argument should be an list.");
+        return NULL;
+      }
+      Structure structure = Structure::acquire(_structure);
+      Atom atom = Atom::acquire(_atom);
+      python::Object configs = python::Object::acquire(_configurations);
+      try
+      { 
+        if(not splitconfigs(structure, atom, nmax, configs, tolerance)) return NULL;
+        return configs.release();
+      }
+      catch(...)
+      {
+        if(not PyErr_Occurred())
+          LADA_PYERROR(InternalError, "splitconfigs: Unknown c++ exception occurred.\n");
+      }
+      return NULL;
+    }
       
        
     //! Methods table for crystal module.
@@ -716,8 +766,37 @@ namespace LaDa
           ":returns: A list of lists of tuples. The outer list is over coordination shells. "
                     "The inner list references the atoms in a shell. "
                     "Each innermost tuple contains a reference to the atom in question, "
-                    "a translation vector to its periodic image inside the relevant shell, "
-                    "and the distance from the center to the relevant periodic image." },
+                    "a vector from the center to the relevant periodic image of the atom, "
+                    "and finally, the associated distance." },
+        {"splitconfigs", (PyCFunction)pysplitconfigs, METH_VARARGS | METH_KEYWORDS, 
+          "Creates a split-configuration for a given structure and atomic origin.\n\n"
+          "Split-configurations are a symmetry-agnostic atom-centered "
+            "description of chemical environment. For details, see `d'Avezac, "
+            "Botts, Mohlenkamp, Zunger, SIAM J. Comput. *30* (2011) "
+            "<http://dx.doi.org/10.1137/100805959}>`.\n\n" 
+            ":Parameters:\n"
+            "  structure : `lada.crystal.Structure`\n"
+            "    Structure for which to create split-configurations.\n"
+            "  center : `lada.crystal.Atom`\n"
+            "    Atomic center for the origin of the configuration.\n"
+            "  nmax : unsigned integer\n"
+            "    Number of atoms (cutoff) to consider for inclusion in the split-configuration.\n"
+            "  configurations : None or same as return\n"
+            "    Defaults to None. Object where configurations should be stored. a list of "
+                "previously existing configurations. There is no error checking, so do not "
+                "mix and match.\n"
+            "  tolerance : float\n"
+            "    Tolerance criteria when comparing distances. Defaults to LaDa hard-coded.\n\n"
+            ":returns: ``[[[(atom, vector from center, distance from center), "
+              "...], weight], ...]``. "
+              "A list of splitted configuration. Each item in this list is "
+              "itself a list with two inner items. The first inner item is an "
+              "ordered list of references to atoms. The second inner item is "
+              "the weight for that configuration. The references to the atoms "
+              "are each a 3-tuple consisting of an actual reference to an "
+              "atom, a translation vector from the center of the configuration "
+              "to the atom's relevant periodic image, and a distance from the "
+              "center." },
         {NULL, NULL, 0, NULL}        /* Sentinel */
     }; // end of static method table.
   }

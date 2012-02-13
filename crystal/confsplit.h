@@ -7,81 +7,47 @@
 #include <utility>
 
 #include <opt/types.h>
-#include <opt/debug.h>
 
 #include "structure.h"
 
 namespace LaDa
 {
-  namespace Crystal
+  namespace crystal
   {
-    class SplitIntoConfs
-    {
-      protected: 
-        //! Type of the of a position.
-        typedef std::pair< math::rVector3d, size_t > t_Position;
-        //! Type of the container of positions.
-        typedef std::list< std::vector< t_Position > > t_Positions;
+    //! \brief Creates a split-configuration for a given structure and atomic origin.
+    //! \details Split-configurations are a symmetry-agnostic atom-centered
+    //!          description of chemical environment. For details, see
+    //!          \url{http://dx.doi.org/10.1137/100805959} "d'Avezac, Botts,
+    //!          Mohlenkamp, Zunger, SIAM J. Comput. \Bold{30} (2011)". 
+    //! \param[in] _structure Structure for which to create split-configurations.
+    //! \param[in] _index Index into _structure for the origin of the configuration.
+    //! \param[in] _nmax Number of atoms (cutoff) to consider for inclusion
+    //!                  in the split-configuration.
+    //! \param[inout] _configurations Object where configurations should be
+    //!       stored. It should a null object,  or a list of previously
+    //!       existing configurations. There is no error checking, so do not
+    //!       mix and match.
+    //! \param[in] _tolerance Tolerance criteria when comparing distances.
+    //! \return A list of splitted configuration. Each item in this list is
+    //!         itself a list with two inner items. The first inner item is an
+    //!         ordered list of references to atoms. The second inner item is
+    //!         the weight for that configuration. The references to the atoms
+    //!         are each a 3-tuple consisting of an actual reference to an
+    //!         atom, a translation vector from the center of the configuration
+    //!         to the atom's relevant periodic image, and a distance from the
+    //!         center. [[[(atom, vector from center, distance from center),
+    //!         ...], weight], ...]
+    bool splitconfigs( Structure const &_structure,
+                       Atom const &_origin,
+                       Py_ssize_t _nmax,
+                       python::Object &_configurations,
+                       types::t_real const _tolerance );
 
-      public:
-        //! Type of the pure bitset representing a configuration for a set symmetry.
-        typedef std::vector< t_Position > t_Bitset;
-        //! Type  containing a pure bitset and an attached coefficient.
-        typedef std::pair< t_Bitset, types::t_real > t_CoefBitset;
-        //! Type representing a set of configurations with all possible symmetries.
-        typedef std::vector< t_CoefBitset > t_Configurations;
-
-        //! Constructor
-        SplitIntoConfs() : n(0,0), structure(NULL) {}
-
-        //! Computes the configurations.
-        void operator()( const Structure &_structure, const size_t _n );
-        //! Computes the configurations.
-        void operator()( const Structure &_structure, const std::pair<size_t,size_t> _n );
-
-        //! Returns a constant to the computed configurations.
-        const t_Configurations& configurations() const { return configurations_; }
-        //! Clears results.
-        void clear() { configurations_.clear(); structure = NULL; }
-
-
-      protected: 
-        //! \brief Adds configurations, knowing the origin \a _i.
-        void from_origin( size_t _i );
-        //! \brief Compares positions indexed as integers, given the origin and x-axis.
-        bool compare_from_x( const math::rVector3d &_origin, 
-                             const math::rVector3d &_x, 
-                             const t_Position& _a1, 
-                             const t_Position& _a2 ) const
-          { return math::lt( _a1.first.dot(_x), _a2.first.dot(_x) ); }
-        //! \brief Compares positions indexed as integers, given the coordinate system.
-        //! \note Does not compare norms of \a _a1 - \a _origin and \a _a2 - \a _origin,
-        //!       E.g. does not implement complete comparison rule. 
-        bool compare_from_coords( const math::rVector3d &_origin, 
-                                  const math::rVector3d &_x, 
-                                  const math::rVector3d &_y, 
-                                  const math::rVector3d &_z, 
-                                  const t_Position& _a1, 
-                                  const t_Position& _a2 ) const; 
-        //! \brief Computes a list of atoms of the SplitIntoCoefs::n closest
-        //!        neighbors to the origin.
-        //! \params[in] _origin from which to compute distances.
-        //! \params[out] _positions a vector of vectors positions which are at
-        //!                            the same distance from the origin. E.g.
-        //!                            each internal vector contains all
-        //!                            positions on  a sphere.
-        void find_atoms_in_sphere( const math::rVector3d &_origin,
-                                   t_Positions &_positions );
-        //! The number of atoms to included in each configuration.
-        std::pair<size_t, size_t> n;
-        //! Structure for which configurations are computed.
-        const  Structure * structure;
-        //! The result.
-        t_Configurations configurations_;
-        //! The equivalent classes of positions.
-        t_Positions epositions;
-    };
-
+    //! \brief Function to compare split-configurations.
+    //! \details No error checking, so the input needs be correct, eg. 
+    //!          [[(atom, vect from center, distance from center), ...], weight]
+    bool compare_configurations( PyObject* const _a, PyObject* const _b, 
+                                 types::t_real _tolerance = types::tolerance );
   } // end of Crystal namespace.
 } // namespace LaDa
 
