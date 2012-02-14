@@ -190,7 +190,8 @@ def exec_input( script, global_dict=None, local_dict = None,\
   if global_dict is None: global_dict = {}
   global_dict.update( { "environ": environ, "pi": pi, "array": array, "matrix": matrix, "dot": dot,
                         "norm": norm, "sqrt": sqrt, "ceil": ceil, "abs": abs,  "det": det,
-                        "physics": physics, "expanduser": expanduser, 'world': world})
+                        "physics": physics, "expanduser": expanduser, 'world': world,
+                        "load": load })
   for key in crystal.__all__: global_dict[key] = getattr(crystal, key)
   if local_dict is None: local_dict = {}
   # Executes input script.
