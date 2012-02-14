@@ -325,6 +325,12 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     return result
 
   @property
+  def fft_mesh(self):
+    """ Returns gvector mesh. """
+    regex = self._find_first_OUTCAR(r"n1,n2,n3\s*=\s*(\d+)\s*(\d+)\s*(\d+)")
+    return int(regex.group(1)), int(regex.group(2)), int(regex.group(3))
+
+  @property
   def raw_rwfns(self):
     """ Raw real-space wavefunction data. """
     if not hasattr(self, "_raw_rwfns"): self.rwfns # creates data
@@ -467,6 +473,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     return attenuate, result
 
 
+  @FileCache('EMASSCAR')
   def effective_mass_tensor(self, attenuate=False, degeneracy=1e-8):
     """ Returns list of effective mass tensor (1/m_xy) for each band. """
     from numpy import zeros, outer, identity
@@ -584,7 +591,7 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
         :type poscar: bool
     """
     from os.path import join, exists
-    files = [self.OUTCAR, self.FUNCCAR]
+    files = [self.OUTCAR, self.FUNCCAR, "DIPOLESCAR", "EMASSCAR"]
     if kwargs.get("poscar", False):
       try: files.append(self.functional._POSCAR)
       except: pass

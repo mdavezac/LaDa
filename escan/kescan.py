@@ -20,11 +20,11 @@ class Extract(AbstractExtractBase):
             Directory where calculations are saved.
           comm : None or `lada.mpi.Communicator`
             MPI Communicator grouping processes participating in the calculation.
-          underduce : bool
+          unreduce : bool
             Whether to iterate over all k-points, or only over k-points in the
             irreducible wedge. Iterates over all k-points by default.
     """
-    AbstractExtractBase.__init__(self, directory, comm=comm)
+    super(Extract, self).__init__(directory, comm=comm, **kwargs)
     self.unreduce = unreduce
     """ Unreduced kpoints if True and if kpoints scheme sports a mapping method. """
 

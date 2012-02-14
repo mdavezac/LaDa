@@ -458,12 +458,13 @@ class MassExtract(AbstractMassExtract):
       self._rootdir = None
       return
     self._rootdir = RelativeDirectory(value, hook=self.uncache)
-    del self._jobdict
+    if hasattr(self, '_jobdict'): del self._jobdict
   @rootdir.deleter
   def rootdir(self): self._rootdir = None
 
   @property
   def jobdict(self):
+    from lada.jobs import load
     if self._rootdir is None: 
       try: from IPython.ipapi import get as get_ipy
       except ImportError: raise AttributeError("path not set.")

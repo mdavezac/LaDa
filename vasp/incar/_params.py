@@ -2,7 +2,7 @@
 __docformat__ = "restructuredtext en"
 __all__ = [ "SpecialVaspParam", "NElect", "Algo", "Precision", "Ediff",\
             "Encut", "FFTGrid", "Restart", "UParams", "IniWave",\
-            "Magmom", 'Npar', 'Boolean', 'Integer', 'Choices', 'PrecFock' ]
+            "Magmom", 'Npar', 'Boolean', 'Integer', 'Choices', 'PrecFock', 'NonScf']
 from ...opt.decorators import broadcast_result
 class SpecialVaspParam(object): 
   """ Type checking class. """
@@ -307,9 +307,10 @@ class Restart(SpecialVaspParam):
     from ...opt import copyfile
     from ...mpi import Communicator
     from .. import files
+    nonscf = getattr(getattr(self, 'nonscf', False), 'value', False)
     comm = Communicator(kwargs.pop("comm", None))
     istart = "0   # start from scratch"
-    icharg = "2   # superpositions of atomic densities"
+    icharg = "{0}   # superpositions of atomic densities".format(12 if nonscf else 2)
     if self.value is None: istart = "0   # start from scratch"
     elif not self.value.success:
       print "Could not find successful run in directory %s." % (self.value.directory)
@@ -322,16 +323,16 @@ class Restart(SpecialVaspParam):
       if ewave:
         path = join(self.value.directory, files.WAVECAR)
         istart = "1  # restart"
-        icharg = "0   # from wavefunctions " + path
+        icharg = "{0}   # from wavefunctions ".format(10 if nonscf else 0) + path
         if comm.is_root: copy(path, ".")
       elif echarge:
         path = join(self.value.directory, files.CHGCAR)
         istart = "1  # restart"
-        icharg = "1   # from charge " + path
+        icharg = "{0}   # from charge ".format(11 if nonscf else 1) + path
         if comm.is_root: copy(path, ".")
       else: 
         istart = "0   # start from scratch"
-        icharg = "2   # superpositions of atomic densities"
+        icharg = "{0}   # superpositions of atomic densities".format(12 if nonscf else 2)
       if comm.is_root:
         copyfile(join(self.value.directory, files.EIGENVALUES), nothrow='same exists') 
         copyfile(join(self.value.directory, files.CONTCAR), files.POSCAR,\
@@ -341,6 +342,26 @@ class Restart(SpecialVaspParam):
                  nothrow='same exists', symlink=getattr(vasp, 'symlink', False)) 
       comm.barrier()
     return  "ISTART = %s\nICHARG = %s" % (istart, icharg)
+
+class NonScf(SpecialVaspParam):
+  """ Return from previous run from which to restart.
+      
+      If None, then starts from scratch.
+  """
+  def __init__(self, value):  super(NonScf, self).__init__(value)
+  @property
+  def value(self): return self._value
+  @value.setter
+  def value(self, value):
+    if isinstance(value, str):
+      assert    len(value) == 0 \
+             or value.lower() == "true"[:len(value)] \
+             or value.lower() == "false"[:len(value)], \
+             TypeError("Cannot interpret string {0} as a boolean.".format(value))
+    self._value = value == True
+
+  def incar_string(self, vasp, *args, **kwargs): return None
+  def __repr__(self): return "{0.__class__.__name__}({0.value!r})".format(self)
 
 class UParams(SpecialVaspParam): 
   """ Prints U parameters if any found in species settings """
@@ -435,11 +456,11 @@ class Boolean(SpecialVaspParam):
   @value.setter
   def value(self, value):
     if isinstance(value, str):
-      assert    len(value) == 0 \
-             or value.lower == "true"[:len(value)] \
-             or value.lower() == "false"[:len(value)], \
-             TypeError("Cannot interpret string {0} as a boolean.".format(value))
-    self._value = value
+      if not (   len(value) == 0 \
+               or value.lower() == "true"[:len(value)] \
+               or value.lower() == "false"[:len(value)] ):
+        raise TypeError("Cannot interpret string {0} as a boolean.".format(value))
+    self._value = value == True
   @broadcast_result(key=True)
   def incar_string(self, vasp, *args, **kwargs):
     value = self._value
@@ -451,7 +472,7 @@ class Boolean(SpecialVaspParam):
     return "{0} = {1}".format(self.key.upper(), ".TRUE." if bool(self.value) else ".FALSE.")
   def __repr__(self):
     """ Representation of this object. """
-    return "{0.__class__.__name__}({1}, {2})".format(self, repr(self.key), repr(self.value))
+    return "{0.__class__.__name__}({1!r}, {2!r})".format(self, self.key, self.value)
 
 class Integer(SpecialVaspParam):
   """ Any integer vasp parameters. 

@@ -1,8 +1,6 @@
 import lada
 lada.lada_with_mpi = False
-from shutil import copy as copyfile
 from lada.crystal import fill_structure
-from lada.opt.changedir import Changedir
 from lada.vasp import read_input
 from lada.mpi import NullComm
 

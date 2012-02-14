@@ -66,7 +66,8 @@ def Extract(outcar=None, comm=None, **kwargs):
         :Parameters:
           outcar : str or None
             Path to OUTCAR file. Can also be the directory if the OUTCAR is
-            named "OUTCAR".
+            named "OUTCAR". Defaults to None, in which case it uses the current
+            working directory.
           comm : `mpi.Communicator`
             Processes over which to synchronize output gathering. 
   """

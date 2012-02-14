@@ -142,6 +142,15 @@ class Functional(Launch):
 
     return extract
 
+  def write_kpoints(self, file):
+    """ Writes kpoints to a stream. """
+    if isinstance(self.kpoints, str): file.write(self.kpoints)
+    elif hasattr(self.kpoints, "__call__"): file.write(self.kpoints(self))
+    else: # numpy array or such.
+      file.write("Explicit list of kpoints.\n{0}\nCartesian\n".format(len(self.kpoints)))
+      for kpoint in self.kpoints:
+        file.write("{0[0]} {0[1]} {0[2]} {1}\n".format(kpoint, 1 if len(kpoint) == 3 else kpoint[3]))
+
   def __repr__(self):
     """ Returns a python script representing this object. """
     from .incar._params import SpecialVaspParam

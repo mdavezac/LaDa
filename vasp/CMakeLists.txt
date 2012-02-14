@@ -1,5 +1,5 @@
 set(PYVASP_PY methods.py files.py __init__.py kpoints.py launch.py _nosetests.py
-              specie.py functional.py gwfunc.py)
+              specie.py functional.py gwfunc.py emass.py )
 
 include_directories(MPI_INCLUDE_PATH)
 

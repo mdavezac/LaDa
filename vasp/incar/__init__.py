@@ -5,7 +5,7 @@ __all__ = [ "SpecialVaspParam", "NElect", "Algo", "Precision", "Ediff",\
             "Incar", "Magmom", 'Npar', 'Boolean', 'Integer', 'Choices', 'PrecFock' ]
 from _params import SpecialVaspParam, NElect, Algo, Precision, Ediff,\
                     Encut, FFTGrid, Restart, UParams, IniWave, Magmom,\
-                    Npar, Boolean, Integer, PrecFock
+                    Npar, Boolean, Integer, PrecFock, NonScf
 from ...opt.decorators import add_setter
 
 
@@ -147,6 +147,7 @@ class Incar(object):
     self.loptics     = Boolean("loptics", None)
     self.lpead       = Boolean("lpead", None)
     self.nelm        = Integer("nelm", None)
+    self.nonscf      = NonScf(False)
 
 
   def incar_lines(self, *args, **kwargs):

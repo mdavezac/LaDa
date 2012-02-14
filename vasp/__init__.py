@@ -16,7 +16,8 @@
     compiled.
 """
 __docformat__ = "restructuredtext en"
-__all__ = ['GWVasp', 'Vasp', 'Extract', 'Density', 'Gamma', 'Specie']
+__all__ = [ 'GWVasp', 'Vasp', 'Extract', 'Density', 'Gamma', 'Specie',  \
+            'Launch', 'Incar' ]
 from .launch import Launch
 from .extract import Extract
 from .incar import Incar
@@ -61,8 +62,6 @@ def call_vasp(vasp_library=None, comm=None, minversion=0):
   version(vasp_library, minversion)
   vasp(comm, _vasplib(vasp_library))
 
-__all__ = [ 'Launch', 'Extract', 'Incar', 'Density', 'Gamma', 'Specie',\
-            'incar', 'extract', 'kpoints', 'methods' ]
 try: from extract import MassExtract
 except ImportError: pass
 else: __all__.append(MassExtract.__class__.__name__)

@@ -108,8 +108,7 @@ class Launch(Incar):
   
     # creates kpoints file
     with open(join(self._tempdir, files.KPOINTS), "w") as kp_file: 
-      kp_file.write( self.kpoints(self) if hasattr(self.kpoints, "__call__") \
-                     else self.kpoints + "\n" )
+      self.write_kpoints(kp_file)
   
     # creates POTCAR file
     with open(join(self._tempdir, files.POTCAR), 'w') as potcar:
