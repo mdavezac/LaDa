@@ -41,7 +41,7 @@ def read_poscar(types=None, path=None):
   from os.path import join, exists, isdir
   from copy import deepcopy
   from numpy import array, dot, transpose
-  from . import Structure, Atom, specie_list
+  from . import Structure, Atom
 
   # if types is not none, converts to a list of strings.
   if types is not None:
@@ -130,10 +130,11 @@ def write_poscar(structure, file, vasp5=False, substitute=None):
 
   from numpy import matrix, dot
   from . import specie_list
+  from . import FreezeAtom
 
   file.write(structure.name + "\n")
   file.write(str(structure.scale)+ "\n")
-  for i in range(3): file.write("  %f %f %f\n" % tuple(structure.cell[:,i].flat))
+  for i in range(3): file.write("  {0[0]} {0[1]} {0[2]}\n".format(structure.cell[:,i]))
   species = specie_list(structure)
   if vasp5: 
     if substitute is not None:
@@ -143,12 +144,23 @@ def write_poscar(structure, file, vasp5=False, substitute=None):
     file.write("\n")
   for s in species: 
     file.write(" %i " % (len([0 for atom in structure.atoms if atom.type == s])))
-  file.write("\nDirect\n")
   inv_cell = matrix(structure.cell).I
-  for s in species: 
-    for atom in structure.atoms:
-      if atom.type != s: continue
-      file.write( "  %f %f %f\n" % tuple(dot(inv_cell, atom.pos).flat))
+  if any([atom.freeze != FreezeAtom.none for atom in structure.atoms]):
+    file.write("\nselective dynamics\ndirect\n")
+    for s in species: 
+      for atom in structure.atoms:
+        if atom.type != s: continue
+        file.write( "  {0[0]} {0[1]} {0[2]} {1} {2} {3}\n"\
+                    .format( dot(inv_cell, atom.pos).tolist()[0],
+                             'T' if atom.freeze & FreezeAtom.x != 0 else 'F', 
+                             'T' if atom.freeze & FreezeAtom.y != 0 else 'F', 
+                             'T' if atom.freeze & FreezeAtom.z != 0 else 'F' ) )
+  else:
+    file.write("\ndirect\n")
+    for s in species: 
+      for atom in structure.atoms:
+        if atom.type != s: continue
+        file.write("  {0[0]} {0[1]} {0[2]}\n".format(dot(inv_cell, atom.pos).tolist()[0]))
   
 def write_oldvff(structure, file, disable_bonds=False):
   """ Writes a structure in the old vff format.

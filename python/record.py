@@ -64,7 +64,9 @@ class Record(object):
 
   def _allattr(self):
     """ Returns all attributes, both private and public. """
+    from os.path import exists
     from pickle import load
     from .opt import LockFile
     with LockFile(self.path) as lock:
+      if not exists(self.path): return []
       with open(self.path, 'r') as file: return list(load(file))
