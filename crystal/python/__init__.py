@@ -274,7 +274,7 @@ def _repr_lattstr(self, atoms="atoms", name="structure", add_atoms="add_atoms"):
                        type   = repr(atom.type),
                        wtype  = type_width)
     if atom.site >= 0 or atom.freeze != FreezeAtom.none:
-      if atom.site < 0: result += "None, "
+      if atom.site < 0: result += ", -1"
       else: result += ", {0: >{1}}".format(atom.site, site_width)
       if atom.freeze != FreezeAtom.none:
         result += ", {0: >{1}}".format(atom.freeze, freeze_width)

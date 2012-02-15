@@ -262,6 +262,7 @@ def reciprocal( vasp, structure, outdir = None, comm = None,
       .. |Gamma|  unicode:: U+00393 .. GREEK CAPITAL LETTER GAMMA
   """
   from copy import deepcopy
+  from os import getcwd
   from os.path import join
   from numpy import array, dot, append
   from numpy.linalg import inv
@@ -270,7 +271,7 @@ def reciprocal( vasp, structure, outdir = None, comm = None,
   # takes care of default parameters.
   if center is None: center = kwargs.pop("kpoint", [0,0,0])
   center = array(center, dtype="float64")
-  if outdir is None: outdir = "reciprocal"
+  if outdir is None: outdir = getcwd()
   if nbpoints == None: nbpoints = order + 1
   if nbpoints < order + 1:
     raise ValueError("Cannot compute taylor expansion of order {0} "\
@@ -297,7 +298,7 @@ def reciprocal( vasp, structure, outdir = None, comm = None,
   kwargs['restart'] = first
   kwargs['nonscf']  = True
   second = functional(first.structure, comm=comm, outdir=join(first.directory, "reciprocal"), **kwargs)
-  return Extract(outcar=outdir, comm=None, input=second, lstsq=lstsq, order=order)
+  return Extract(outcar=second.directory, comm=None, input=second, lstsq=lstsq, order=order)
 
 reciprocal.Extract = Extract
 """ Extractor class for the reciprocal method. """

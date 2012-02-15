@@ -183,7 +183,7 @@ class RelaxCellShape(object):
                  structure,
                  outdir = join(outdir, join("relax_cellshape", str(nb_steps))),
                  comm=comm,
-                 restart = output if nb_steps > 1 else None,
+                 restart = output,
                  **params
                )
       structure = output.structure
@@ -208,7 +208,7 @@ class RelaxCellShape(object):
                  outdir = join(outdir, join("relax_ions", str(nb_steps))),
                  comm=comm,
                  relaxation = "ionic",
-                 restart = output if nb_steps > 1 else None,
+                 restart = output,
                  **kwargs
                )
       structure = output.structure

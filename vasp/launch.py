@@ -161,6 +161,10 @@ class Launch(Incar):
          outcar.write('\n################ INCAR ################\n')
          with open(files.INCAR, 'r') as incar: outcar.write(incar.read())
          outcar.write('\n################ END INCAR ################\n')
+         outcar.write('\n################ CONTCAR ################\n')
+         with open(files.CONTCAR, 'r') as contcar: outcar.write(contcar.read())
+         outcar.write('\n################ END CONTCAR ################\n')
+
      
      comm.barrier()
 

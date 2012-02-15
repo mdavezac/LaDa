@@ -169,27 +169,40 @@ class Extract(object):
 
     cell = zeros((3,3), dtype="float64")
     atoms = []
-
     with self.__outcar__() as file: lines = file.readlines()
-
-    atom_index, cell_index = None, None
-    atom_re = compile(r"""^\s*POSITION\s+""")
-    cell_re = compile(r"""^\s*direct\s+lattice\s+vectors\s+""")
-    for index, line in enumerate(lines[::-1]):
-      if atom_re.search(line) is not None: atom_index = index - 1
-      if cell_re.search(line) is not None: cell_index = index; break
-    assert atom_index is not None and cell_index is not None,\
-           RuntimeError("Could not find structure description in OUTCAR.")
-    try: 
-      for i in range(3): cell[:,i] = array(lines[-cell_index+i].split()[:3], dtype="float64")
-    except: 
-      for i in range(3): cell[i,:] = array(lines[-cell_index+i].split()[-3:], dtype="float64")
-      cell = inv(cell)
-    for i in range(3):
-      cell[:,i] = [float(u) for u in lines[-cell_index+i].split()[:3]]
-    while atom_index > 0 and len(lines[-atom_index].split()) == 6:
-      atoms.append( array([float(u) for u in lines[-atom_index].split()[:3]], dtype="float64") )
-      atom_index -= 1
+    begin_contcar_re = compile(r"""#+\s+CONTCAR\s+#+""")
+    end_contcar_re = compile(r"""#+\s+END\s+CONTCAR\s+#+""")
+    start, end = None, None
+    for i, line in enumerate(lines[::-1]):
+      if begin_contcar_re.match(line) is not None: start = -i; break;
+      if end_contcar_re.match(line) is not None: end = -i
+    if start is not None and end is not None:
+      from StringIO import StringIO
+      from ...crystal import read_poscar
+      stringio = StringIO("".join(lines[start+1:end if end != 0 else -1]))
+      structure = read_poscar(types=self.solo().species, path=stringio)
+      cell = structure.cell
+      atoms = structure.atoms
+      
+    else: 
+      atom_index, cell_index = None, None
+      atom_re = compile(r"""^\s*POSITION\s+""")
+      cell_re = compile(r"""^\s*direct\s+lattice\s+vectors\s+""")
+      for index, line in enumerate(lines[::-1]):
+        if atom_re.search(line) is not None: atom_index = index - 1
+        if cell_re.search(line) is not None: cell_index = index; break
+      assert atom_index is not None and cell_index is not None,\
+             RuntimeError("Could not find structure description in OUTCAR.")
+      try: 
+        for i in range(3): cell[:,i] = array(lines[-cell_index+i].split()[:3], dtype="float64")
+      except: 
+        for i in range(3): cell[i,:] = array(lines[-cell_index+i].split()[-3:], dtype="float64")
+        cell = inv(cell)
+      for i in range(3):
+        cell[:,i] = [float(u) for u in lines[-cell_index+i].split()[:3]]
+      while atom_index > 0 and len(lines[-atom_index].split()) == 6:
+        atoms.append( array([float(u) for u in lines[-atom_index].split()[:3]], dtype="float64") )
+        atom_index -= 1
 
     return cell, atoms
 
@@ -207,7 +220,7 @@ class Extract(object):
       return self.starting_structure
 
 
-    try: cell, atoms = self._structure_data
+    try: cell, atoms = self._structure_data;
     except: return self.contcar_structure
 
     structure = Structure()
