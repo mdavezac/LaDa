@@ -1,4 +1,11 @@
 """ Checks neighbor routine. """
+def check_bcc():
+  """ Check on BCC structure. """
+  from lada.crystal.cppwrappers import Structure, neighbors
+  structure = Structure([[-0.5,0.5,0.5],[0.5,-0.5,0.5],[0.5,0.5,-0.5]])\
+                       .add_atom(0,0,0,"Mo")
+  print neighbors(structure, 12, [0,0,0])
+
 def check(structure, center, tolerance=1e-8):
   from numpy import abs, sqrt, all
   from lada.crystal.cppwrappers import neighbors

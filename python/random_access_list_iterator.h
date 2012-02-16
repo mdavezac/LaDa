@@ -36,28 +36,28 @@ namespace LaDa
         //! Deref operator.
         const reference operator*() const
         {
-          if(index_ < (int)PyList_GET_SIZE(object_) and index_ >= 0)
+          if(index_ >= (int)PyList_GET_SIZE(object_) or index_ < 0)
             LADA_PYTHROW(IndexError, "List iterator is out of range.");
           return PyList_GET_ITEM(object_, index_);
         }
         //! Deref operator.
         reference operator*()
         {
-          if(index_ < (int)PyList_GET_SIZE(object_) and index_ >= 0)
+          if(index_ >= (int)PyList_GET_SIZE(object_) or index_ < 0)
             LADA_PYTHROW(IndexError, "List iterator is out of range.");
           return PyList_GET_ITEM(object_, index_);
         }
         //! Deref operator.
         const pointer operator->() const
         {
-          if(index_ < (int)PyList_GET_SIZE(object_) and index_ >= 0)
+          if(index_ >= (int)PyList_GET_SIZE(object_) or index_ < 0)
             LADA_PYTHROW(IndexError, "List iterator is out of range.");
           return &PyList_GET_ITEM(object_, index_);
         }
         //! Deref operator.
         pointer operator->()
         {
-          if(index_ < (int)PyList_GET_SIZE(object_) and index_ >= 0)
+          if(index_ >= (int)PyList_GET_SIZE(object_) or index_ < 0)
             LADA_PYTHROW(IndexError, "List iterator is out of range.");
           return &PyList_GET_ITEM(object_, index_);
         }

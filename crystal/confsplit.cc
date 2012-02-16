@@ -1,5 +1,10 @@
 #include "LaDaConfig.h"
 
+#include <Python.h>
+#define PY_ARRAY_UNIQUE_SYMBOL crystal_ARRAY_API
+#define NO_IMPORT_ARRAY
+#include <numpy/arrayobject.h>
+
 #include <algorithm>
 
 #include <boost/bind.hpp>
@@ -7,6 +12,7 @@
 
 #include <math/fuzzy.h>
 #include <python/random_access_list_iterator.h>
+#include <python/random_access_tuple_iterator.h>
 #include <python/wrap_numpy.h>
 
 #include "coordination_shells.h"
@@ -16,49 +22,44 @@ namespace LaDa
 {
   namespace crystal
   {
-#   ifdef LADA_ADD_ITEM
-#     error LADA_ADD_ITEM already defined
+#   ifdef LADA_GET_TRANS
+#     error LADA_GET_TRANS already defined
 #   endif
-#   define LADA_ADD_ITEM(BITSET, INDEX, OBJECT)  \
-      if(PyList_SET_ITEM(BITSET.borrowed(), INDEX, OBJECT) != 0) return NULL;
-#   ifdef LADA_GET_POS
-#     error LADA_GET_POS already defined
-#   endif
-#   define LADA_GET_POS(NEIGH) ((AtomData*)PyTuple_GET_ITEM((PyTupleObject*)NEIGH, 0))->pos
+#   define LADA_GET_TRANS(NEIGH) \
+       (math::rVector3d::Scalar*)PyArray_DATA(PyTuple_GET_ITEM((PyTupleObject*)NEIGH, 1))
     namespace 
     {
-      //! creates new bitset.
-      PyObject* new_bitset(Py_ssize_t _n)
-      {
-        PyObject *result = PyList_New(2);
-        PyObject *list = PyList_New(_n);
-        if(not list) goto error;
-        if(PyList_SET_ITEM(result, 0, list) != 0) goto error;
-        error:
-          Py_DECREF(result);
-          return NULL;
-      }
+      typedef Eigen::Map<math::rVector3d> t_NpMap;
+      typedef python::RAList_iterator pylist_iter;
+      typedef python::RATuple_iterator pytuple_iter;
+      math::rVector3d normalized(math::rVector3d const &_in) { return _in / std::sqrt(_in.squaredNorm()); }
       
       //! Look for largest x element.
-      python::RAList_iterator max_xelement( python::RAList_iterator & _first,
-                                            python::RAList_iterator const & _last,
-                                            math::rVector3d const &_skip,
-                                            math::rVector3d const &_x )
+      pylist_iter max_xelement( pylist_iter & _first,
+                                pylist_iter const & _last,
+                                math::rVector3d const &_x )
       {
         if (_first == _last) return _first;
         do
         {
-          math::rVector3d const &vec(LADA_GET_POS(*_first));
-          if( not math::is_null( (_skip - vec).squaredNorm()) ) continue;
+          t_NpMap const trans(LADA_GET_TRANS(*_first));
+          if(not (math::is_null((_x - trans).squaredNorm()) or 
+                  math::is_null(_x.cross(trans).squaredNorm()))) break;
         }
         while (++_first != _last);
         if(_first == _last) return _last;
-        python::RAList_iterator _result = _first;
+        pylist_iter _result = _first;
+        t_NpMap resultpos(LADA_GET_TRANS(*_first));
         while (++_first != _last)
         {
-          math::rVector3d const &vec(LADA_GET_POS(*_first));
-          if(math::is_null( (_skip - vec).squaredNorm())) continue;
-          if(math::leq(LADA_GET_POS(*_result).dot(_x), vec.dot(_x))) _result = _first;
+          t_NpMap const vec(LADA_GET_TRANS(*_first));
+          if(math::is_null( (_x - vec).squaredNorm())) continue;
+          if(math::is_null(_x.cross(vec).squaredNorm())) continue;
+          if(math::lt(resultpos.dot(_x), vec.dot(_x)))
+          {
+            _result = _first;
+            new(&resultpos) t_NpMap(LADA_GET_TRANS(*_first));
+          }
         }
         return _result;
       }
@@ -74,8 +75,8 @@ namespace LaDa
         CmpFromCoord(CmpFromCoord const &_in) : x(_in.x), y(_in.y), z(_in.z) {}
         bool operator()(PyObject* const _a, PyObject* const _b) const
         {
-          math::rVector3d const &a = ((AtomData*)PyTuple_GET_ITEM(_a, 0))->pos;
-          math::rVector3d const &b = ((AtomData*)PyTuple_GET_ITEM(_b, 0))->pos;
+          t_NpMap const a(LADA_GET_TRANS(_a));
+          t_NpMap const b(LADA_GET_TRANS(_b));
           const types::t_real x1(a.dot(x)), x2(b.dot(x));
           if( math::neq(x1, x2) ) return math::gt(x1, x2);
           const types::t_real y1(a.dot(y)), y2(b.dot(y));
@@ -83,30 +84,74 @@ namespace LaDa
           return math::gt(a.dot(z), b.dot(z) );
         }
       };
-    } // unnamed namespace.
 
-    // Function to compare configurations.
-    bool compare_configurations(PyObject* const _a, PyObject* const _b, types::t_real _tolerance)
-    {
-      if(PyList_GET_SIZE(_a) != PyList_GET_SIZE(_b)) return false;
-      python::RAList_iterator i_first(_a, 0);
-      python::RAList_iterator i_cmp(_b, 0);
-      python::RAList_iterator i_end(_a);
-      for(; i_first != i_end; ++i_first, ++i_cmp)
+      //! Create tuple with atom and coordinates.
+      PyObject *create_tuple( PyObject *_neighbor, 
+                              types::t_real const _x,
+                              types::t_real const _y,
+                              types::t_real const _z )
       {
-        if(PyList_GET_ITEM(*i_first, 0) != PyList_GET_ITEM(*i_cmp, 0)) return false;
-        types::t_real const a = PyFloat_AS_DOUBLE(PyList_GET_ITEM(*i_first, 2));
-        types::t_real const b = PyFloat_AS_DOUBLE(PyList_GET_ITEM(*i_cmp, 2));
-        if( math::neq(a, b, _tolerance) ) return false;
-        Eigen::Map<math::rVector3d> const
-          veca((math::rVector3d::Scalar*)PyArray_DATA(PyList_GET_ITEM(*i_first, 1))),
-          vecb((math::rVector3d::Scalar*)PyArray_DATA(PyList_GET_ITEM(*i_cmp, 1)));
-        if(math::neq(veca[0], vecb[0], _tolerance)) return false;
-        if(math::neq(veca[1], vecb[1], _tolerance)) return false;
-        if(math::neq(veca[2], vecb[2], _tolerance)) return false;
+        python::Object result = PyTuple_New(2);
+        if(not result) return NULL;
+        // create numpy array.
+        math::rVector3d const vec(_x, _y, _z);
+        PyObject *array = python::wrap_to_numpy(vec);
+        if(not array) return NULL;
+        PyTuple_SET_ITEM(result.borrowed(), 1, (PyObject*)array);
+        PyObject* const atom = PyTuple_GetItem(_neighbor, 0);
+        Py_INCREF(atom);
+        PyTuple_SET_ITEM(result.borrowed(), 0, atom);
+        return result.release();
       }
-      return true;
-    };
+      //! Converts bitset to configuration.
+      PyObject *convert_bitset( std::vector<PyObject*> const &_bitset,
+                                math::rVector3d const &_x,
+                                math::rVector3d const &_y,
+                                math::rVector3d const &_z )
+      {
+        python::Object result = PyTuple_New(_bitset.size());
+        if(not result) return NULL;
+        std::vector<PyObject*>::const_iterator i_first = _bitset.begin();
+        std::vector<PyObject*>::const_iterator i_end = _bitset.end();
+        for(size_t i(0); i_first != i_end; ++i_first, ++i)
+        {
+          t_NpMap const vec(LADA_GET_TRANS(*i_first));
+          PyObject *item = create_tuple(*i_first, vec.dot(_x), vec.dot(_y), vec.dot(_z));
+          if(not item) return NULL;
+          PyTuple_SET_ITEM(result.borrowed(), i, item);
+        }
+        return result.release();
+      }
+
+      //! compare atomic types.
+      bool cmp_atom_types(PyObject *_a, PyObject *_b)
+      {
+        return Atom::acquire(PyTuple_GET_ITEM(_a, 0)).type() 
+                 == Atom::acquire(PyTuple_GET_ITEM(_b, 0)).type();
+      }
+
+      // Compare new conf to old
+      bool cmp_to_confs( PyObject *const _config,
+                         PyObject *const _bitset, 
+                         types::t_real _tolerance )
+      {
+        // compare configuration sizes.
+        PyObject * const bitsetA = PyTuple_GET_ITEM(_config, 0);
+        if(PyTuple_GET_SIZE(bitsetA) != PyTuple_GET_SIZE(_bitset)) return false;
+        pytuple_iter i_b(_bitset, 0), i_a(bitsetA, 0);
+        pytuple_iter i_end(_bitset);
+        for(; i_b != i_end; ++i_b, ++i_a)
+        {
+          if(not cmp_atom_types(*i_a, *i_b)) return false; 
+          t_NpMap const vecA(LADA_GET_TRANS(*i_a));
+          t_NpMap const vecB(LADA_GET_TRANS(*i_b));
+          if(math::neq(vecA(0), vecB(0), _tolerance)) { std::cout << ~vecA << " " << ~vecB << "\n"; return false; }
+          if(math::neq(vecA(1), vecB(1), _tolerance)) return false;
+          if(math::neq(vecA(2), vecB(2), _tolerance)) return false;
+        }
+        return true;
+      }
+    } // unnamed namespace.
 
     bool splitconfigs( Structure const &_structure,
                        Atom const &_origin,
@@ -123,57 +168,67 @@ namespace LaDa
         if(not _configurations) return false;
       }
 
-      // Creates new bitset and set origin as first of its references.
-      python::Object bitset = new_bitset(_nmax);
-      if(bitset)
+      // creates bitset and first item.
+      std::vector<PyObject*> bitset_list(_nmax);
+      // holds ref until end of call.
+      python::Object firstitem = PyTuple_New(3);
+      if(not firstitem) return false;
+      else
       {
+        bitset_list[0] = firstitem.borrowed();
+        PyTuple_SET_ITEM(firstitem.borrowed(), 0, _origin.new_ref());
         PyObject* pydist = PyFloat_FromDouble(0);
         if(not pydist) return false;
+        PyTuple_SET_ITEM(firstitem.borrowed(), 2, pydist);
         math::rVector3d const zero = math::rVector3d::Zero();
         PyObject* pytrans = python::wrap_to_numpy(zero);
-        if(not pytrans) {Py_DECREF(pydist); return false; }
-        PyObject* dummy = PyTuple_Pack(3, _origin.borrowed(), pytrans, pydist);
-        Py_DECREF(pydist); Py_DECREF(pytrans);
-        if(not dummy) return false;
-        LADA_ADD_ITEM(bitset, 0, dummy);
+        if(not pytrans) return false;
+        PyTuple_SET_ITEM(firstitem.borrowed(), 1, pytrans);
       }
-      else return false;
 
       const math::rVector3d origin(_origin->pos);
 
       python::Object epositions = coordination_shells(_structure, _nmax, origin, _tolerance);
 
       // loop over epositions defining x.
-      python::RAList_iterator i_xpositions(epositions.borrowed(), 0);
+      pylist_iter i_xpositions(epositions.borrowed(), 0);
       const types::t_real
         xweight( weight / types::t_real(PyList_GET_SIZE(*i_xpositions)) );
-      python::RAList_iterator i_xpos(*i_xpositions, 0);
-      python::RAList_iterator i_xpos_end(*i_xpositions);
-      for(; i_xpos != i_xpos_end; ++i_xpos)
+      pylist_iter i_xpos(*i_xpositions, 0);
+      pylist_iter i_xpos_end(*i_xpositions);
+      for(size_t n(0); i_xpos != i_xpos_end; ++i_xpos, ++n)
       {
-        math::rVector3d const &xpos(LADA_GET_POS(*i_xpos));
-        math::rVector3d const x(xpos - origin);
+        math::rVector3d const
+          x(normalized(t_NpMap(LADA_GET_TRANS(*i_xpos))));
 
         // finds positions defining y.
         // Stores possible y positions.
         std::vector<PyObject*> ypossibles;
-        python::RAList_iterator i_ypositions = i_xpositions;
+        pylist_iter i_ypositions = i_xpositions;
         if( PyList_GET_SIZE(*i_xpositions) == 1 ) ++i_ypositions; 
 
-        python::RAList_iterator i_ypos = python::RAList_iterator(*i_ypositions);
-        python::RAList_iterator const i_ypos_end = python::RAList_iterator(*i_ypositions);
-        python::RAList_iterator max_x_element = max_xelement( i_ypos, i_ypos_end, x, xpos);
-        if(max_x_element == i_ypos_end) 
+        pylist_iter max_x_element(i_ypositions);
+        // might have to go to next shell for linear molecules.
+        for(; i_ypositions != pylist_iter(epositions.borrowed()); ++i_ypositions) 
         {
-          LADA_PYERROR(InternalError, "Should not be here.");
+          pylist_iter i_ypos(*i_ypositions, 0), i_ypos_end(*i_ypositions);
+          max_x_element = max_xelement(i_ypos, i_ypos_end, x);
+          if(max_x_element != i_ypos_end) break;
+        }
+        if(i_ypositions == pylist_iter(epositions.borrowed())) 
+        {
+          LADA_PYERROR(ValueError, "Pathological molecules. Could not determine y coordinate.");
           return false;
         }
-        const types::t_real max_x_scalar_pos(LADA_GET_POS(*max_x_element).dot(x) );
-        for(i_ypos = python::RAList_iterator(*i_ypositions, 0); i_ypos != i_ypos_end; ++i_ypos)
+        const types::t_real max_x_scalar_pos
+          (t_NpMap(LADA_GET_TRANS(*max_x_element)).dot(x));
+        pylist_iter i_ypos = pylist_iter(*i_ypositions, 0);
+        pylist_iter const i_ypos_end = pylist_iter(*i_ypositions);
+        for(; i_ypos != i_ypos_end; ++i_ypos)
         {
-          math::rVector3d const &ypos = LADA_GET_POS(*i_ypos);
+          t_NpMap const ypos(LADA_GET_TRANS(*i_ypos));
           if( math::neq(ypos.dot(x), max_x_scalar_pos) ) continue;
-          if( math::is_null( (ypos - xpos).squaredNorm() ) ) continue;
+          if( math::is_null( (ypos - x).squaredNorm() ) ) continue;
           ypossibles.push_back(*i_ypos);
         }
 
@@ -184,10 +239,11 @@ namespace LaDa
         // loop over possible ys.
         //   Determine z from x and y.
         //   Basis is determined. Adds other atoms.
-        for(; i_ypossible != i_ypossible_end; ++i_ypossible)
+        for(size_t nn(0); i_ypossible != i_ypossible_end; ++i_ypossible, ++n)
         {
           // at this point, we can define the complete coordinate system.
-          const math::rVector3d y( ((AtomData*)PyTuple_GET_ITEM(*i_ypossible, 0))->pos - origin );
+          const math::rVector3d yvec(LADA_GET_TRANS(*i_ypossible) );
+          const math::rVector3d y(normalized(yvec - yvec.dot(x)*x));
           const math::rVector3d z( x.cross(y) );
 
           // atoms are now included in the list according to the following rule:
@@ -198,72 +254,70 @@ namespace LaDa
 
           // we iterate over coordination shells and add reference until nmax is reached.
           Py_ssize_t current_index = 1;
-          python::RAList_iterator i_shell(epositions.borrowed(), 0);
-          python::RAList_iterator const i_shell_end(epositions.borrowed());
+          pylist_iter i_shell(epositions.borrowed(), 0);
+          pylist_iter const i_shell_end(epositions.borrowed());
           for(; i_shell != i_shell_end; ++i_shell)
           {
             if( current_index == _nmax ) break;
 
-            const size_t edn( std::min(PyList_GET_SIZE(*i_shell), _nmax - current_index) );
-            if(edn == 1) // case where the shell contains only one atom ref.
+            Py_ssize_t const N(PyList_GET_SIZE(*i_shell));
+            if(N == 1) // case where the shell contains only one atom ref.
             {
-              LADA_ADD_ITEM(bitset, current_index++, *i_ypos);
+              bitset_list[current_index++] = PyList_GET_ITEM(*i_shell, 0);
               continue;
             }
+            Py_ssize_t const edn(std::min(N, _nmax - current_index));
 
+            // copy list to vector for sorting.
+            std::vector<PyObject*> sortme(N);
+            std::copy(pylist_iter(*i_shell, 0), pylist_iter(*i_shell), sortme.begin());
             // case where all atom in shell should be added.
-            if( edn <= _nmax - current_index ) 
-              std::sort
-              ( 
-                python::RAList_iterator(*i_shell, 0), python::RAList_iterator(*i_shell), 
-                CmpFromCoord(x, y, z) 
-              );
+            if(edn == N) 
+              std::sort(sortme.begin(), sortme.end(), CmpFromCoord(x, y, z));
             // case where only a few atoms in the shell should be added.
-            else std::partial_sort
-                 ( 
-                   python::RAList_iterator(*i_shell, 0),
-                   python::RAList_iterator(*i_shell, _nmax),
-                   python::RAList_iterator(*i_shell), 
-                   CmpFromCoord(x, y, z) 
-                 );
-            python::RAList_iterator i_addme(*i_shell, 0);
-            python::RAList_iterator const i_addme_end(*i_shell, edn);
-            for(; i_addme != i_addme_end; ++i_addme, ++current_index)
-            {
-              Py_INCREF(*i_addme);
-              LADA_ADD_ITEM(bitset, current_index, *i_addme);
-            }
+            else
+              std::partial_sort( sortme.begin(), sortme.begin() + edn, sortme.end(), 
+                                 CmpFromCoord(x, y, z) );
+            std::copy(sortme.begin(), sortme.begin() + edn, bitset_list.begin()+current_index);
+            current_index += edn;
           } // end of loop over positions at equivalent distance.
 
 
           // finally adds configuration.
-          python::RAList_iterator const i_conf_end(_configurations.borrowed());
-          python::RAList_iterator i_found = std::find_if
+          python::Object pybitset = convert_bitset(bitset_list, x, y, z);
+          pylist_iter const i_conf_end(_configurations.borrowed());
+          pylist_iter i_found = std::find_if
             (
-              python::RAList_iterator(_configurations.borrowed(), 0), i_conf_end,
-              boost::bind(compare_configurations, _1, bitset.borrowed(), _tolerance)
+              pylist_iter(_configurations.borrowed(), 0), i_conf_end,
+              boost::bind(cmp_to_confs, _1, pybitset.borrowed(), _tolerance)
             );
           if(i_found == i_conf_end) // add new bitset.
           {
-            PyObject *dummy = PyFloat_FromDouble(bitsetweight); 
-            if(not dummy) return false;
+            python::Object pyconf = PyTuple_New(2);
+            if(not pyconf) return false;
+            PyObject *pyweight = PyFloat_FromDouble(bitsetweight);
+            if(not pyweight) return false;
+            PyTuple_SET_ITEM(pyconf.borrowed(), 0, pybitset.new_ref());
+            PyTuple_SET_ITEM(pyconf.borrowed(), 1, pyweight);
             // should not have been set yet.
-            if(PyList_SET_ITEM(bitset.borrowed(), 1, dummy) != 0) return false;
-            PyList_Append(_configurations.borrowed(), bitset.borrowed());
+            if( PyList_Append(_configurations.borrowed(), pyconf.borrowed()) != 0)
+              return false;
           }
           else // add to pre-existing bitset.
           {
-            double const real = PyFloat_AS_DOUBLE(PyList_GET_ITEM(*i_found, 1));
+            PyObject * pyreal = PyTuple_GET_ITEM(*i_found, 1);
+            double const real = PyFloat_AS_DOUBLE(pyreal);
             if(PyErr_Occurred() != NULL) return false;
-            PyObject *dummy = PyFloat_FromDouble(bitsetweight); 
+            PyObject *dummy = PyFloat_FromDouble(bitsetweight+real); 
             if(not dummy) return false;
-            if(PyList_SET_ITEM(*i_found, 1, dummy) != 0) return false;
+            PyTuple_SET_ITEM(*i_found, 1, dummy);
+            Py_DECREF(pyreal);
           }
         } // end of loop over equivalent y coords.
       } // end of loop over equivalent  x coords.
       return true;
     }
-#   undef LADA_GET_POS
-#   undef LADA_ADD_ITEM
+    
+#   undef LADA_GET_TRANS
   } // namespace Crystal
 } // namespace LaDa

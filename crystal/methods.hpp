@@ -562,7 +562,7 @@ namespace LaDa
       }
       catch(...)
       {
-        if(not PyErr_Occurred())
+        if(PyErr_Occurred() == NULL)
           LADA_PYERROR(InternalError, "splitconfigs: Unknown c++ exception occurred.\n");
       }
       return NULL;
