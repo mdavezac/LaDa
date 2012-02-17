@@ -56,8 +56,9 @@ def read_poscar(types=None, path=None):
       assert exists(join(path, "POSCAR")), IOError("Could not find POSCAR in %s." % (path))
       path = join(path, "POSCAR")
   result = Structure()
-  filecontext = path if hasattr(path, "read") else open(path, 'r')
-  with filecontext as poscar:
+  poscar = path if hasattr(path, "read") else open(path, 'r')
+  
+  try:
     # gets name of structure
     result.name = poscar.readline().strip()
     if len(result.name) > 0:
@@ -109,6 +110,7 @@ def read_poscar(types=None, path=None):
         if selective_dynamics:
           for which, freeze in zip(line[3:], [FreezeAtom.x, FreezeAtom.y, FreezeAtom.z]):
             if which.lower()[0] == 't': result.atoms[-1].freeze |= freeze
+  finally: poscar.close()
             
   return result
     

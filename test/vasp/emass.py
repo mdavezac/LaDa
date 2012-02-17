@@ -6,13 +6,17 @@ from lada.mpi import world
 
 input = read_input("input.py")
 
-structure = fill_structure(dot(input.lattice.cell, [[-1,0,0],[1,0,1],[1,1,0]]), input.lattice)
-for atom in structure.atoms: atom.freeze = FreezeAtom.x
+structure = input.lattice.to_structure() 
+structure.scale = 5.4765747334613994
+# structure = fill_structure(dot(input.lattice.cell, [[-1,0,0],[1,0,1],[1,1,0]]), input.lattice)
+# for atom in structure.atoms: atom.freeze = FreezeAtom.x
 
+input.relaxer.vasp.ispin = 1
+input.relaxer.vasp.kpoints    = "Automatic generation\n0\nGamma\n4 4 4\n0 0 0"
 input.relaxer.vasp.launch_as_library = True
 input.relaxer.vasp.program = "vasp-4.6"
 input.relaxer.vasp.vasp_library = "libvasp-4.6.so"
 comm = world
 
 
-result = reciprocal(input.relaxer, structure, outdir="results", comm=comm)
+result = reciprocal(input.relaxer, structure, outdir="results", stepsize=0.1, order=4, comm=comm)

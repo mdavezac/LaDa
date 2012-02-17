@@ -161,6 +161,30 @@ class Extract(object):
   @property
   @make_cached
   @broadcast_result(attr=True, which=0)
+  def _structure_catted_contcar(self):
+    """ Greps cell and positions from OUTCAR. """
+    from re import compile
+    from StringIO import StringIO
+    from ...crystal import read_poscar
+
+    with self.__outcar__() as file: lines = file.readlines()
+    begin_contcar_re = compile(r"""#+\s+CONTCAR\s+#+""")
+    end_contcar_re = compile(r"""#+\s+END\s+CONTCAR\s+#+""")
+    start, end = None, None
+    for i, line in enumerate(lines[::-1]):
+      if begin_contcar_re.match(line) is not None: start = -i; break;
+      if end_contcar_re.match(line) is not None: end = -i
+
+    if start is None and end is None:
+      raise RuntimeError("Could not read catted contcar")
+
+    stringio = StringIO("".join(lines[start:end if end != 0 else -1]))
+    structure = read_poscar(types=self.solo().species, path=stringio)
+    return structure
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
   def _structure_data(self):
     """ Greps cell and positions from OUTCAR. """
     from re import compile
@@ -170,41 +194,25 @@ class Extract(object):
     cell = zeros((3,3), dtype="float64")
     atoms = []
     with self.__outcar__() as file: lines = file.readlines()
-    begin_contcar_re = compile(r"""#+\s+CONTCAR\s+#+""")
-    end_contcar_re = compile(r"""#+\s+END\s+CONTCAR\s+#+""")
-    start, end = None, None
-    for i, line in enumerate(lines[::-1]):
-      if begin_contcar_re.match(line) is not None: start = -i; break;
-      if end_contcar_re.match(line) is not None: end = -i
-    if start is not None and end is not None:
-      from StringIO import StringIO
-      from ...crystal import read_poscar
-      stringio = StringIO("".join(lines[start+1:end if end != 0 else -1]))
-      structure = read_poscar(types=self.solo().species, path=stringio)
-      cell = structure.cell
-      atoms = structure.atoms
       
-    else: 
-      atom_index, cell_index = None, None
-      atom_re = compile(r"""^\s*POSITION\s+""")
-      cell_re = compile(r"""^\s*direct\s+lattice\s+vectors\s+""")
-      for index, line in enumerate(lines[::-1]):
-        if atom_re.search(line) is not None: atom_index = index - 1
-        if cell_re.search(line) is not None: cell_index = index; break
-      assert atom_index is not None and cell_index is not None,\
-             RuntimeError("Could not find structure description in OUTCAR.")
-      try: 
-        for i in range(3): cell[:,i] = array(lines[-cell_index+i].split()[:3], dtype="float64")
-      except: 
-        for i in range(3): cell[i,:] = array(lines[-cell_index+i].split()[-3:], dtype="float64")
-        cell = inv(cell)
-      for i in range(3):
-        cell[:,i] = [float(u) for u in lines[-cell_index+i].split()[:3]]
-      while atom_index > 0 and len(lines[-atom_index].split()) == 6:
-        atoms.append( array([float(u) for u in lines[-atom_index].split()[:3]], dtype="float64") )
-        atom_index -= 1
-
-    return cell, atoms
+    atom_index, cell_index = None, None
+    atom_re = compile(r"""^\s*POSITION\s+""")
+    cell_re = compile(r"""^\s*direct\s+lattice\s+vectors\s+""")
+    for index, line in enumerate(lines[::-1]):
+      if atom_re.search(line) is not None: atom_index = index - 1
+      if cell_re.search(line) is not None: cell_index = index; break
+    assert atom_index is not None and cell_index is not None,\
+           RuntimeError("Could not find structure description in OUTCAR.")
+    try: 
+      for i in range(3): cell[:,i] = array(lines[-cell_index+i].split()[:3], dtype="float64")
+    except: 
+      for i in range(3): cell[i,:] = array(lines[-cell_index+i].split()[-3:], dtype="float64")
+      cell = inv(cell)
+    for i in range(3):
+      cell[:,i] = [float(u) for u in lines[-cell_index+i].split()[:3]]
+    while atom_index > 0 and len(lines[-atom_index].split()) == 6:
+      atoms.append( array([float(u) for u in lines[-atom_index].split()[:3]], dtype="float64") )
+      atom_index -= 1
 
   @property
   @json_section(None)
@@ -216,12 +224,15 @@ class Extract(object):
     from quantities import eV
     from ...crystal import Structure
 
+    try: return self._structure_catted_contcar
+    except: pass
+
     if self.isif == 0 or self.nsw == 0 or self.ibrion == -1:
       return self.starting_structure
 
-
     try: cell, atoms = self._structure_data;
-    except: return self.contcar_structure
+    except:
+      return self.contcar_structure
 
     structure = Structure()
     # tries to find adequate name for structure.

@@ -61,12 +61,15 @@ class Incar(object):
          - ``encutgw``: Defaults to None.
          - ``lrpa``: Defaults to None.
          - ``lpead``: Defaults to None.
-         - ``nelm``: Defaults to None.
+         - ``nelm``: Defaults to None. 
          - ``restart``: the return from previous vasp run to use as restart. 
 
              >> save_this_object = vasp(some parameters) # makes a vasp call.
              >> # make a second vasp using WAVECAR and whatnot from above call
              >> vasp(other parameters, ..., restart = save_this_object) 
+
+             Checks nonscf attribute to correctly perform non-self-consistent
+             calculation when required.
 
          - `relaxation`: sets degrees of freedom to relax. Easier to use
              than isif, nsw, and friends.
@@ -399,7 +402,6 @@ class Incar(object):
     warn( DeprecationWarning("set_relaxation is obsolete. Please use relaxation instead."), 
           stacklevel=2 )
     self.relaxation = value
-    
 
   def __iter__(self):
     """ Iterates over attribute names and values. """

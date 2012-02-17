@@ -2,7 +2,8 @@
 __docformat__ = "restructuredtext en"
 __all__ = [ "SpecialVaspParam", "NElect", "Algo", "Precision", "Ediff",\
             "Encut", "FFTGrid", "Restart", "UParams", "IniWave",\
-            "Magmom", 'Npar', 'Boolean', 'Integer', 'Choices', 'PrecFock', 'NonScf']
+            "Magmom", 'Npar', 'Boolean', 'Integer', 'Choices', 'PrecFock', \
+            'NonScf' ]
 from ...opt.decorators import broadcast_result
 class SpecialVaspParam(object): 
   """ Type checking class. """
@@ -302,12 +303,12 @@ class Restart(SpecialVaspParam):
   def __init__(self, value): super(Restart, self).__init__(value)
 
   def incar_string(self, vasp, *args, **kwargs):
-    from os.path import join, exists
+    from os.path import join, exists, getsize
     from shutil import copy
     from ...opt import copyfile
     from ...mpi import Communicator
     from .. import files
-    nonscf = getattr(getattr(self, 'nonscf', False), 'value', False)
+    nonscf = getattr(vasp, 'nonscf', False)
     comm = Communicator(kwargs.pop("comm", None))
     istart = "0   # start from scratch"
     icharg = "{0}   # superpositions of atomic densities".format(12 if nonscf else 2)
@@ -318,8 +319,12 @@ class Restart(SpecialVaspParam):
       istart = "0   # start from scratch"
     else:
       comm.barrier()
-      ewave = exists( join(self.value.directory, files.WAVECAR) )
       echarge = exists( join(self.value.directory, files.CHGCAR) )
+      if echarge: echarge = getsize(join(self.value.directory, files.CHGCAR)) != 0
+      ewave = exists( join(self.value.directory, files.WAVECAR) )
+      if ewave and echarge and nonscf: 
+        ewave = False # I suspect VASP will screw up otherwise.
+      if ewave: ewave = getsize(join(self.value.directory, files.WAVECAR)) != 0
       if ewave:
         path = join(self.value.directory, files.WAVECAR)
         istart = "1  # restart"

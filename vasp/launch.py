@@ -162,7 +162,10 @@ class Launch(Incar):
          with open(files.INCAR, 'r') as incar: outcar.write(incar.read())
          outcar.write('\n################ END INCAR ################\n')
          outcar.write('\n################ CONTCAR ################\n')
-         with open(files.CONTCAR, 'r') as contcar: outcar.write(contcar.read())
+         if self.isif == 0 or self.nsw == 0 or self.ibrion == -1:
+           with open(files.POSCAR, 'r') as contcar: outcar.write(contcar.read())
+         else:
+           with open(files.CONTCAR, 'r') as contcar: outcar.write(contcar.read())
          outcar.write('\n################ END CONTCAR ################\n')
 
      
