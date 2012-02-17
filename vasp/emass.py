@@ -201,7 +201,7 @@ class Extract(ExtractDFT):
     
 def reciprocal( vasp, structure, outdir = None, comm = None,
                 order = 2, nbpoints = None, stepsize = 1e-2, 
-                center = None, lstsq = None, eigtol = 1e-10, **kwargs ):
+                center = None, eigtol = 1e-10, **kwargs ):
   """ Computes k-space taylor expansion of the eigenvalues up to given order.
 
       First runs a vasp calculation using the first input argument, regardless
@@ -237,9 +237,6 @@ def reciprocal( vasp, structure, outdir = None, comm = None,
           Central k-point of the taylor expansion. This should be given in
           **reciprocal** units (eg coefficients to the reciprocal lattice
           vectors). Default is None and means |Gamma|.
-        lstsq  : method
-          Linear least square method. Passed on to the extractor object. 
-          Should return same as 
         eigtol : float
           Energy convergence criteria (ediffg) for static calculation.
         kwargs 
@@ -292,7 +289,7 @@ def reciprocal( vasp, structure, outdir = None, comm = None,
   kwargs['relaxation']  = "static"
   kwargs['ediff']       = eigtol / len(structure.atoms)
   second = functional(first.structure, comm=comm, outdir=join(first.directory, "reciprocal"), **kwargs)
-  return Extract(outcar=second.directory, comm=None, input=second, lstsq=lstsq, order=order)
+  return Extract(outcar=second.directory, comm=None, input=second)
 
 reciprocal.Extract = Extract
 """ Extractor class for the reciprocal method. """

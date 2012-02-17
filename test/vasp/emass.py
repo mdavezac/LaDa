@@ -7,7 +7,8 @@ from lada.mpi import world
 input = read_input("input.py")
 
 structure = input.lattice.to_structure() 
-structure.scale = 5.4765747334613994
+for atom in structure.atoms: atom.type = "Ge"
+structure.scale = 5.65
 # structure = fill_structure(dot(input.lattice.cell, [[-1,0,0],[1,0,1],[1,1,0]]), input.lattice)
 # for atom in structure.atoms: atom.freeze = FreezeAtom.x
 
