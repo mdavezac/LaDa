@@ -33,8 +33,6 @@ namespace LaDa
       struct SmithTransformData
       {
         PyObject_HEAD 
-        //! Holds python attribute dictionary.
-        PyObject *pydict;
         //! The transform to go the smith normal form.
         math::rMatrix3d transform;
         //! Vector of atom wrappers.

@@ -77,17 +77,26 @@ namespace LaDa
           LADA_DECLARE(__setstate__, smithtransform_setstate, O, "Implements pickle protocol."),
           LADA_DECLARE(__reduce__,   smithtransform_reduce, NOARGS, "Implements pickle protocol."),
           LADA_DECLARE( indices,   smithtransform_indices, O,
-                        "indices of input atomic position in cyclic Z-group." ),
+                        "indices of input atomic position in cyclic Z-group.\n\n"
+                        ":param vec: A 3d-vector in the sublattice of interest.\n"
+                        ":returns: The 3-d indices in the cyclic group.\n" ),
           LADA_DECLARE( flatten_indices,   smithtransform_flatten_indices, VARARGS | METH_KEYWORDS,
                        "Flattens cyclic Z-group indices.\n\n"
-                       ":Parameters:\n"
-                       "  indices : 3-tuple of integers\n  Indices in the cyclic Z-group."
-                       "  site : integer\n  Optional site index.\n" ),
+                       ":param indices: (3-tuple of integers)\n"
+                       "  Indices in the cyclic Z-group.\n"
+                       ":param site: (integer)\n"
+                       "   Optional site index. If there are more than one sublattice in "
+                          "the structure, then the flattened indices need to take this into "
+                          "account.\n" ),
           LADA_DECLARE( index,   smithtransform_flat_index, VARARGS | METH_KEYWORDS,
                        "Flat index into cyclic Z-group.\n\n"
-                       ":Parameters:\n"
-                       "  pos : 3 numbers\n  Atomic position.\n"
-                       "  site : integer\n  Optional site index." ),
+                       ":param pos: (3d-vector)\n"
+                       "    Atomic position with respect to the sublattice of interest. "
+                           "Do not forget to shift the sublattice back to the origin.\n"
+                       ":param site: (integer)\n"
+                       "   Optional site index. If there are more than one sublattice in "
+                          "the structure, then the flattened indices need to take this into "
+                          "account.\n" ),
           {NULL}  /* Sentinel */
       };
 #     undef LADA_DECLARE
@@ -117,12 +126,14 @@ namespace LaDa
           "Defines a smithtransform.\n\n"    /*tp_doc*/
             "The smith transform computes the cyclic group of supercell "
             "with respect to its backbone lattice. It can then be used to index "
-            "atoms in the supercell, irrespective of which periodic image is given. See "
-            "`Forcard and Hart <http://dx.doi.org/10.1103/PhysRevB.77.224115>` for more details.\n\n"
-            ":Parameters:\n"
-            "  lattice : `LaDa.crystal.Structure` or matrix\n    Defines the cyclic group.\n"
-            "  supercell : `LaDa.crystal.Structure` or matrix\n"
-            "    Supercell for which to compute cyclic group.",
+            "atoms in the supercell, irrespective of which periodic image is given [FH]_.\n\n"
+            ":param lattice: (:py:func:`Structure` or matrix)\n   Defines the cyclic group.\n"
+            ":param supercell: (:py:func:`Structure` or matrix)\n"
+            "    Supercell for which to compute cyclic group.\n\n"
+            ".. [FH] Gus L. Hart, Rodney W. Forcade, \n"
+            "        `Algorithm for generating derivative structures`,\n"
+            "        Phys. Rev. B **77**, 224115 (2008),\n"
+            "        http://dx.doi.org/10.1103/PhysRevB.77.224115>`",
           0,                                 /* tp_traverse */
           0,                                 /* tp_clear */
           0,		                     /* tp_richcompare */

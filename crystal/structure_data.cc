@@ -184,9 +184,8 @@ namespace LaDa
                         ":returns: The structure itself, so that add_atom methods can be chained."),
           LADA_DECLARE( insert, structure_insert, VARARGS, 
                         "Inserts atom at given position.\n\n"
-                        ":Parameters:\n"                        
-                        "  index: int\n    Position at which to insert Atom.\n"
-                        "  atom: Atom\n    Atom or subtype to insert." ),
+                        ":param index:\n    Position at which to insert the atom.\n"
+                        ":param atom: \n    :class:`Atom` or subtype to insert." ),
           LADA_DECLARE(pop, structure_pop, O, "Removes and returns atom at given position."),
           LADA_DECLARE(clear, structure_clear, NOARGS, "Removes all atoms from structure."),
           LADA_DECLARE( extend, structure_extend, O, 
@@ -200,25 +199,25 @@ namespace LaDa
                         "An affine transformation is a 4x3 matrix, where the upper 3 rows "
                         "correspond to a rotation (applied first), and the last row to "
                         "a translation (applied second).\n\n"
-                        ":Parameters:\n  matrix: 4x3 array\n    The affine transformation\n\n"
-                        ":returns: A new Structure (or derived) instance." ),
+                        ":param matrix:\n"
+                        "   Affine transformation defined as a 4x3 numpy array.\n\n"
+                        ":returns: A new :class:`Structure` (or derived) instance." ),
           LADA_DECLARE( __getitem__, structure_subscript, O|METH_COEXIST,
                         "Retrieves atom or slice.\n\n"
-                        ":Parameters:\n"
-                        "  index: int or slice\n"
+                        ":param index:\n"
                         "    If an integer, returns a refence to that atom. "
                             "If a slice, returns a list with all atoms in that slice." ),
           LADA_DECLARE( __setitem__, structure_setitemnormal, VARARGS|METH_COEXIST,
                         "Sets atom or atoms.\n\n"
-                        ":Parameters:\n"
-                        "  index: int or slice\n"
+                        ":param index:\n"
                         "    If an integers, sets that atom to the input value. "
                         "    If a slice, then sets all atoms in refered to in the structure "
                              "to the corresponding atom in the value.\n"
-                        "  value: :class:`Atom`\n"
-                        "    If index is an integer, this should be an atom. "
-                            "If index is a slice, then this should be a sequence of atoms of "
-                            "the exact length of the slice."),
+                        ":param value:\n"
+                        "    If index is an integer, this should be an :class:`atom <Atom>`. "
+                            "If index is a slice, then this should be a sequence of "
+                            ":class:`atoms <Atom>` of the exact length of the "
+                            "slice."),
           {NULL}  /* Sentinel */
       };
 #     undef LADA_DECLARE

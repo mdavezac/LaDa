@@ -1,7 +1,10 @@
 The crystal module
 ==================
 
-.. automodule:: lada.crystal
+.. automodule:: lada.crystal  
+.. moduleauthor:: Mayeul d'Avezac <mayeul.davezac@nrel.gov>
+
+.. seealso:: :ref:`crystal_ug`
 
 Classes
 -------
@@ -35,6 +38,21 @@ Structure
   .. automethod:: add_atom(...)->Structure
   .. automethod:: __getitem__()
   .. automethod:: __setitem__()
+
+
+SmithTransform
+~~~~~~~~~~~~~~
+
+.. autoclass:: SmithTransform
+
+  .. autoattribute:: quotient
+  .. autoattribute:: transform
+
+  .. automethod:: copy()->SmithTransform
+  .. automethod:: indices(position)->numpy.array
+  .. automethod:: flatten_indices(indices, index=0)->numpy.array
+  .. automethod:: index(position, index=0)->numpy.array
+
 
 Methods
 -------

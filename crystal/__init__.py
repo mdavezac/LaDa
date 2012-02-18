@@ -13,9 +13,8 @@ from cppwrappers import Structure, Atom, SmithTransform, zero_centered, into_vor
 def vasp_ordered(structure):
   """ Returns a structure with correct VASP order of ions.
   
-      :Parameters:
-        structure: :class:`Structure`
-          Structure for which to reorder atoms.
+      :param structure:
+          :class:`Structure` for which to reorder atoms.
   """
 
   from copy import deepcopy
@@ -27,11 +26,10 @@ def vasp_ordered(structure):
 def layer_iterator(structure, direction, tolerance=1e-12):
   """ Iterates over layers and atoms in a layer. 
 
-      :Parameters:
-        structure: :class:`Structure`
-          The structure for which to iterator over atoms.
-        direction: 3d-vector
-          Growth direction vector, e.g. vector perpendicular to the layers.
+      :param structure: 
+          :class:`Structure` for which to iterator over atoms.
+      :param direction:
+          3d-vector defining the growth direction, e.g. vector perpendicular to the layers.
           Defaults to the first column vector of the structure.  It is
           important that two cell-vectors of the structure are (or can be
           transformed to be) perpendicular to the growth direction. Otherwise
@@ -40,7 +38,7 @@ def layer_iterator(structure, direction, tolerance=1e-12):
           *not* enforced (no assertion) since it is not necessary, only
           sufficient.  Note that the third vector need not be parallel to the
           growth direction.
-        tolerance: float
+      :param tolerance: 
           Maximum difference between two atoms in the same layer.
 
       :returns: Yields iterators over atoms in a single epitaxial layer.
@@ -91,15 +89,15 @@ def equivalence_iterator(structure, operations = None, tolerance=1e-6):
       Only check that the position are equivalent. Does not check that the
       occupations are the same.
 
-      :Parameters:
-        structure: :class:`Structure` 
-          Structure or Lattice over which to iterate.
-        operations: Iterable over symmetry operations
+      :param structure:
+          :class:`Structure` over which to iterate.
+      :param operations: 
+          List of symmetry operations.
           A symmetry operation is 4x4 matrix where the upper block is a
           rotation and the lower block a translation. The translation is
           applied *after* the rotation. If None, the operations are obtained
           using:class:`space_group`.
-        tolerance: float
+      :param tolerance:
           Two positions closer than ``tolerance`` are considered equivalent.
       
       :returns: Yields iterators over atoms linked by space-group operations.
@@ -137,12 +135,11 @@ def shell_iterator(structure, center, direction, thickness=0.05):
   
       It allows to rapidly create core-shell nanowires.
   
-      :Parameters:
-        structure: :class:`Structure` 
-          Structure or Lattice over which to iterate.
-        center: 3d vector
-          Growth direction of the nanowire.
-        thickness: float
+      :param structure: 
+          :class:`Structure` over which to iterate.
+      :param center: 
+          3d-vector defining the growth direction of the nanowire.
+      :param thickness: 
           Thickness in units of ``structure.scale`` of an individual shell.
       
       :returns: Yields iterators over atoms in a single shell.

@@ -1,3 +1,4 @@
+.. _crystal_ug: 
 .. currentmodule:: lada.crystal
 
 Creating and Manipulating crystal structures
@@ -26,7 +27,7 @@ To start off, lets create the diamond crystal structure.
 >>> structure.add_atom(0.25, 0.25, 0.25, "C")
 
 The first line above imports the :class:`Structure` class from the
-:class:`crystal` module.  This class is the basic type which describes
+:py:mod:`crystal <lada.crystal>` module.  This class is the basic type which describes
 crystal structures in LaDa.  The second and subsequent lines creates diamond.
 The unit-cell is initialized within the first parenthesis. It must be given as
 a *matrix*: the cell-vectors are columns (not rows as in many other physics
@@ -246,8 +247,39 @@ False
 >>> is_primitive(primitive(conventional))
 True
 
-.. seealso:: :class:`supercell`, :class:`primitive`,
-             :class:`is_primitive`
+It is also possible to obtain the cyclic groups of a supercell with respect to
+its backbone lattice. In practice, it gives us a way to label an atom with
+respect to the group of periodic images it belongs to [HF]_. 
+
+>>> from random import randint
+>>> from numpy import array, all, abs
+>>> from lada.crystal import SmithTransform
+>>> # create smith transform.
+>>> st = SmithTransform(conventional)
+>>> # loop over random periodic images
+>>> for i in xrange(10):
+>>>   #
+>>>   # create a vector with respect to its corresponding lattice site.
+>>>   pos  = conventional[2].pos - lattice[ conventional[2].site ].pos
+>>>   # 
+>>>>  # random periodic image
+>>>   translation = array([randint(-20, 20), randint(-20, 20), randint(-20, 20)], dtype="float64")
+>>>   pos += dot(conventional.cell, translation)
+>>>   # get indices in cyclic group.
+>>>   indices = st.indices(pos)
+>>>   # yep, its the same as the original atom.
+>>>   assert all( abs( indices - [0, 0, 1] ) )
+
+We check that statement in the code above. An atomic site is shifted to random
+periodic images. Yet its cyclic indices remain the same. Note that Diamond has
+two sublattices. This means it has two cyclic group [HF2]_, one for each atomic site
+in the lattice. This is why the input to :py:func:`indices
+<SmithTransform.indices>` is a vector which has been
+translated back to the origin of its sublattice. We use the ``site`` attribute
+added to each atom by :py:func:`supercell` to make the translation. 
+
+.. seealso:: :py:func:`supercell`, :py:func:`primitive`,
+             :py:func:`is_primitive`, :py:class:`SmithTransform`
 
 
 Space-group operations
@@ -288,7 +320,7 @@ Structure( 0, 0.5, 0.5,\
 Of course, in this case the result is nothing more than a different
 parameterization of the same lattice.
 
-.. seealso:: :class:`space_group`, :class:`transform`
+.. seealso:: :py:func:`space_group`, :py:func:`transform`
 
 Neighbors and Coordination Shells
 ---------------------------------
@@ -325,7 +357,7 @@ shell.
 >>> len( coordination_shell(structure, 5, [0.125, 0.125, 0.125])[1] )
 6
 
-.. seealso:: :class:`neighbors`, :class:`coordination_shells`
+.. seealso:: :py:func:`neighbors`, :py:func:`coordination_shells`
 
 Input, output, saving to a file, sending as MPI message
 -------------------------------------------------------
@@ -348,7 +380,7 @@ retention. It transforms objects into a stream of characters which can be saved
 to disk, sent as MPI messages, or whatever suits your fancy, and then
 reinterpreted to become the same python objects all over again.
 As far as MPI is concerned, however, the best bet is to use `boost.mpi`_. This
-is a great python wrapper of the original MPI specifications. It truly makes
+is a great python wrapper around the original MPI specifications. It truly makes
 MPI easy.
 
 Conclusion
@@ -372,8 +404,8 @@ Core shell nanowires are nano-structures where a thin nanowire of, say,
 germanium, is coated with alternating layers of silicon and germanium. I will
 now show how a few lines of code creates all the building blocks needed to look
 at any possible arrangement of core-shells. This particular piece of code was
-used to optimize `light absorption at the band edges of Si/Ge core-shell
-nanowires`_. 
+used to optimize light absorption at the band edges of Si/Ge core-shell
+nanowires [ZALZ]_. 
 
 The point here is to create an `generator`_ which will allow us to iterate over
 shells in an outer loop and atoms (within the shell) in an inner loop. For
@@ -514,8 +546,22 @@ brain around the concept, makes it extremely easy.
 .. _representation: http://docs.python.org/library/functions.html#repr
 .. _pickle: http://docs.python.org/library/pickle.html 
 .. _boost.mpi: http://www.boost.org/doc/libs/1_35_0/doc/html/mpi/python.html
-.. _light absorption at the band edges of Si/Ge core-shell nanowires: http://dx.doi.org/10.1021/nl2040892
 .. _generator: http://docs.python.org/tutorial/classes.html#generators
 .. _yield: http://docs.python.org/tutorial/classes.html#generators
 .. _enumerate: http://docs.python.org/library/functions.html?highlight=enumerate#enumerate
 .. _getitem: http://docs.python.org/library/operator.html#operator.__getitem__
+
+.. [HF] Gus L. Hart, Rodney W. Forcade,
+        `Algorithm for generating derivative structures`,
+        Phys. Rev. B **77**, 224115 (2008),
+        http://dx.doi.org/10.1103/PhysRevB.77.224115
+.. [HF2] Gus L. Hart, Rodney W. Forcade,
+         `Generating derivative structures from multilattices: Algorithm and
+         application to hcp alloys`,
+         Phys. Rev. B **80**, 014120 (2009),
+         http://dx.doi.org/10.1103/PhysRevB.80.014120
+.. [ZALZ] Lijun Zhang, Mayeul d'Avezac, Jun-Wei Luo, Alex Zunger 
+          `Genomic Design of Strong Direct-Gap Optical Transition in Si/Ge
+          Core/Multishell Nanowires`,
+          Nano Lett. **12**, 984-991 (2012),
+          http://dx.doi.org/10.1021/nl2040892
