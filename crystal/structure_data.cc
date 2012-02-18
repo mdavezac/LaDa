@@ -129,7 +129,7 @@ namespace LaDa
                              "Unlike most ab-initio codes, cell-vectors are "
                              "given in column vector format. " 
                              "The cell does not yet have units. "
-                             "Units depend upon `lada.crystal.Structure.scale`. "
+                             "Units depend upon :class:`Structure.scale`. "
                              "Across lada, it is expected that a cell time "
                              "this scale are angstroms. Finally, the cell "
                              "is owned internally by the structure. It cannot be set to "
@@ -137,8 +137,9 @@ namespace LaDa
                              "``structure.cell = some_list`` will copy the values of ``some_list``. "),
           LADA_DECLARE(scale, "Scale factor of this structure.\n"
                               "Should be a number or unit given by "
-                              "the python package *quantities*. In that case, "
-                              "it is converted to angstroms. "),
+                              "the python package `quantities "
+                              "<http://packages.python.org/quantities/index.html>`_.\n\n"
+                              ".. note:: The scale is always converted to angstroms. "),
           { const_cast<char*>("volume"), (getter) structure_getvolume, NULL, 
             const_cast<char*>("Volume of the structure.\n\nIncludes scale.") },
           {NULL}  /* Sentinel */
@@ -171,7 +172,7 @@ namespace LaDa
                         "The argument to this function is either another atom, "
                         "in which case a reference to that atom is appended to "
                         "the structure. Or, it is any arguments used to "
-                        "initialize atoms in`lada.crystal.cppwrappers.Atom.__init__`."
+                        "initialize atoms in :class:`Atom`. "
                         "Finally, this function can be chained as follows:\n\n"
                         ">>> structure.add_atom(0,0,0, 'Au')\\\n"
                         "...          .add_atom(0.25, 0.25, 0.25, ['Pd', 'Si'], m=5)\\\n"
@@ -179,12 +180,13 @@ namespace LaDa
                         "In the example above, both ``structure`` and the *other* structure will "
                         "reference the same atom (``atom_from_another_structure``). "
                         "Changing, say, that atom's type in one structure will also "
-                        "change it in the other."),
+                        "change it in the other.\n\n"
+                        ":returns: The structure itself, so that add_atom methods can be chained."),
           LADA_DECLARE( insert, structure_insert, VARARGS, 
                         "Inserts atom at given position.\n\n"
                         ":Parameters:\n"                        
-                        "  index : int\n    Position at which to insert Atom.\n"
-                        "  atom : Atom\n    Atom or subtype to insert." ),
+                        "  index: int\n    Position at which to insert Atom.\n"
+                        "  atom: Atom\n    Atom or subtype to insert." ),
           LADA_DECLARE(pop, structure_pop, O, "Removes and returns atom at given position."),
           LADA_DECLARE(clear, structure_clear, NOARGS, "Removes all atoms from structure."),
           LADA_DECLARE( extend, structure_extend, O, 
@@ -198,21 +200,22 @@ namespace LaDa
                         "An affine transformation is a 4x3 matrix, where the upper 3 rows "
                         "correspond to a rotation (applied first), and the last row to "
                         "a translation (applied second).\n\n"
-                        ":Parameters:\n  matrix : 4x3 array\n    The affine transformation\n" ),
+                        ":Parameters:\n  matrix: 4x3 array\n    The affine transformation\n\n"
+                        ":returns: A new Structure (or derived) instance." ),
           LADA_DECLARE( __getitem__, structure_subscript, O|METH_COEXIST,
                         "Retrieves atom or slice.\n\n"
                         ":Parameters:\n"
-                        "  index : int or slice\n"
+                        "  index: int or slice\n"
                         "    If an integer, returns a refence to that atom. "
                             "If a slice, returns a list with all atoms in that slice." ),
           LADA_DECLARE( __setitem__, structure_setitemnormal, VARARGS|METH_COEXIST,
                         "Sets atom or atoms.\n\n"
                         ":Parameters:\n"
-                        "  index : int or slice\n"
+                        "  index: int or slice\n"
                         "    If an integers, sets that atom to the input value. "
                         "    If a slice, then sets all atoms in refered to in the structure "
                              "to the corresponding atom in the value.\n"
-                        "  value : Atom or iterable over Atom\n"
+                        "  value: :class:`Atom`\n"
                         "    If index is an integer, this should be an atom. "
                             "If index is a slice, then this should be a sequence of atoms of "
                             "the exact length of the slice."),
@@ -243,6 +246,9 @@ namespace LaDa
           0,                                 /*tp_as_buffer*/
           Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC | Py_TPFLAGS_HAVE_ITER, /*tp_flags*/
           "Defines a structure.\n\n"         /*tp_doc*/
+            "A structure is a special kind of sequence containing only "
+            ":class:`Atom`. It also sports attributes such a "
+            "cell and scale.\n\n"
             "__init__ accepts different kind of input.\n"
             "  - if 9 numbers are given as arguments, these create the cell vectors, "
                  "where the first three numbers define the first row of the matrix"
@@ -254,7 +260,7 @@ namespace LaDa
                  "In other words, one could add ``magnetic=0.5`` if one wanted to "
                  "specify the magnetic moment of a structure. It would later be "
                  "accessible as an attribute, eg as ``structure.magnetic``.\n\n"
-            "Note that the cell is always owned by the object. "
+            ".. note:: The cell is always owned by the object. "
             "Two structures will not own the same cell object. "
             "The cell given on input is *copied*, *not* referenced. "
             "All other attributes behave like other python attributes: "

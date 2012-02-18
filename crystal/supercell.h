@@ -33,7 +33,6 @@ namespace LaDa
         if(not result) LADA_PYTHROW(ValueError, "Could not deepcopy the lattice.");
         result.clear();
         result->cell = _supercell;
-        result.pyattr("lattice", _lattice);
         if(_lattice.hasattr("name") and PyString_Check(_lattice.pyattr("name").borrowed()) )
         {
           char *const attr = PyString_AS_STRING(_lattice.pyattr("name").borrowed());

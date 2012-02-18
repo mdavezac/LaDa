@@ -353,88 +353,88 @@ namespace LaDa
         return space_group(structure, tolerance);
       }
 
-      PyObject* equivalent_wrapper(PyObject *_module, PyObject *_args, PyObject *_kwargs)
-      {
-        PyObject *scale = Py_True; 
-        PyObject *cartesian = Py_True;
-        types::t_real tolerance = types::tolerance;
-        PyObject *a = NULL;
-        PyObject *b = NULL;
-        static char *kwlist[] = { const_cast<char*>("a"),
-                                  const_cast<char*>("b"), 
-                                  const_cast<char*>("scale"), 
-                                  const_cast<char*>("cartesian"), 
-                                  const_cast<char*>("tolerance"), NULL};
-        if(not PyArg_ParseTupleAndKeywords( _args, _kwargs, "OO|OOd:equivalent", kwlist,
-                                            &a, &b, &scale, &cartesian, &tolerance) )
-          return NULL;
-        if(not PyStructure_Check(a))
-        {
-          LADA_PYERROR(TypeError, "equivalent: First argument should be a structure.");
-          return NULL;
-        }
-        if(not PyStructure_Check(b))
-        {
-          LADA_PYERROR(TypeError, "equivalent: second argument should be a structure.");
-          return NULL;
-        }
-        if(scale and not PyBool_Check(scale))
-        {
-          LADA_PYERROR(TypeError, "equivalent: scale should be True or False.");
-          return NULL;
-        }
-        if(cartesian and not PyBool_Check(cartesian))
-        {
-          LADA_PYERROR(TypeError, "equivalent: cartesian should be True or False.");
-          return NULL;
-        }
-        try
-        {
-          if( equivalent( Structure::acquire(a), Structure::acquire(b), 
-                          scale == Py_True ? true: false,
-                          cartesian == Py_True ? true: false,
-                          tolerance ) ) Py_RETURN_TRUE;
-          Py_RETURN_FALSE;
-        }
-        // catch exceptions.
-        catch(error::pyerror &e)
-        {
-          // Returns if python error already set.
-          if(PyErr_Occurred() != NULL) return NULL;
-          // Otherwise, throw our own
-          std::string const * message = boost::get_error_info<error::string>(e);
-          PyObject ** exception = boost::get_error_info<error::pyexcept>(e);
-          if(exception == NULL)
-          {
-            LADA_PYERROR(InternalError, message ? message->c_str(): 
-                             ( "equivalent -- caught following exception: " +
-                               std::string(e.what()) ).c_str() );
-          }
-          else if(message == NULL)
-            PyErr_SetString( *exception, 
-                             ( "equivalent -- caught following exception: " +
-                               std::string(e.what()) ).c_str() );
-          else PyErr_SetString(*exception, message->c_str());
-        }
-        catch(std::exception &e)
-        {
-          std::string const message =  "equivalent -- caught following exception: " 
-                                       + std::string(e.what());
-          LADA_PYERROR(InternalError, message.c_str()); 
-        }
-        catch(...)
-        { 
-          LADA_PYERROR(InternalError, "Caught unknown c++ exception in equivalent.");
-        }
-        return NULL;
-      }
+//     PyObject* equivalent_wrapper(PyObject *_module, PyObject *_args, PyObject *_kwargs)
+//     {
+//       PyObject *scale = Py_True; 
+//       PyObject *cartesian = Py_True;
+//       types::t_real tolerance = types::tolerance;
+//       PyObject *a = NULL;
+//       PyObject *b = NULL;
+//       static char *kwlist[] = { const_cast<char*>("a"),
+//                                 const_cast<char*>("b"), 
+//                                 const_cast<char*>("scale"), 
+//                                 const_cast<char*>("cartesian"), 
+//                                 const_cast<char*>("tolerance"), NULL};
+//       if(not PyArg_ParseTupleAndKeywords( _args, _kwargs, "OO|OOd:equivalent", kwlist,
+//                                           &a, &b, &scale, &cartesian, &tolerance) )
+//         return NULL;
+//       if(not PyStructure_Check(a))
+//       {
+//         LADA_PYERROR(TypeError, "equivalent: First argument should be a structure.");
+//         return NULL;
+//       }
+//       if(not PyStructure_Check(b))
+//       {
+//         LADA_PYERROR(TypeError, "equivalent: second argument should be a structure.");
+//         return NULL;
+//       }
+//       if(scale and not PyBool_Check(scale))
+//       {
+//         LADA_PYERROR(TypeError, "equivalent: scale should be True or False.");
+//         return NULL;
+//       }
+//       if(cartesian and not PyBool_Check(cartesian))
+//       {
+//         LADA_PYERROR(TypeError, "equivalent: cartesian should be True or False.");
+//         return NULL;
+//       }
+//       try
+//       {
+//         if( equivalent( Structure::acquire(a), Structure::acquire(b), 
+//                         scale == Py_True ? true: false,
+//                         cartesian == Py_True ? true: false,
+//                         tolerance ) ) Py_RETURN_TRUE;
+//         Py_RETURN_FALSE;
+//       }
+//       // catch exceptions.
+//       catch(error::pyerror &e)
+//       {
+//         // Returns if python error already set.
+//         if(PyErr_Occurred() != NULL) return NULL;
+//         // Otherwise, throw our own
+//         std::string const * message = boost::get_error_info<error::string>(e);
+//         PyObject ** exception = boost::get_error_info<error::pyexcept>(e);
+//         if(exception == NULL)
+//         {
+//           LADA_PYERROR(InternalError, message ? message->c_str(): 
+//                            ( "equivalent -- caught following exception: " +
+//                              std::string(e.what()) ).c_str() );
+//         }
+//         else if(message == NULL)
+//           PyErr_SetString( *exception, 
+//                            ( "equivalent -- caught following exception: " +
+//                              std::string(e.what()) ).c_str() );
+//         else PyErr_SetString(*exception, message->c_str());
+//       }
+//       catch(std::exception &e)
+//       {
+//         std::string const message =  "equivalent -- caught following exception: " 
+//                                      + std::string(e.what());
+//         LADA_PYERROR(InternalError, message.c_str()); 
+//       }
+//       catch(...)
+//       { 
+//         LADA_PYERROR(InternalError, "Caught unknown c++ exception in equivalent.");
+//       }
+//       return NULL;
+//     }
  
       PyObject* transform_wrapper(PyObject *_module, PyObject *_args, PyObject *_kwargs)
       {
         PyObject *transform_ = NULL; 
         PyObject *structure_ = NULL;
         static char *kwlist[] = { const_cast<char*>("structure"),
-                                  const_cast<char*>("transform"), NULL};
+                                  const_cast<char*>("operation"), NULL};
         if(not PyArg_ParseTupleAndKeywords( _args, _kwargs, "OO:transform", kwlist,
                                             &structure_, &transform_) )
           return NULL;
@@ -461,7 +461,7 @@ namespace LaDa
       PyObject* structure = NULL; 
       Py_ssize_t nmax = 0;
       PyObject* _center = NULL;
-      double tolerance = types::tolerance;
+      double tolerance = 1e-8;
       static char *kwlist[] = { const_cast<char*>("structure"),
                                 const_cast<char*>("nmax"), 
                                 const_cast<char*>("center"), 
@@ -490,7 +490,7 @@ namespace LaDa
       PyObject* structure = NULL; 
       Py_ssize_t nmax = 0;
       PyObject* _center = NULL;
-      double tolerance = types::tolerance;
+      double tolerance = 1e-8;
       Py_ssize_t natoms = 0;
       static char *kwlist[] = { const_cast<char*>("structure"),
                                 const_cast<char*>("nshells"), 
@@ -527,7 +527,7 @@ namespace LaDa
       int index = 0;
       Py_ssize_t nmax = 0;
       PyObject* configurations = NULL;
-      double tolerance = types::tolerance;
+      double tolerance = 1e-8;
       Py_ssize_t natoms = 0;
       static char *kwlist[] = { const_cast<char*>("structure"),
                                 const_cast<char*>("center"), 
@@ -576,54 +576,53 @@ namespace LaDa
          "This may not be the vector with the smallest possible norm "
            "if the cell is very skewed.\n\n"
          ":Parameters:\n"
-         "  a : sequence of three numbers\n"
+         "  a: sequence of three numbers\n"
          "    The vector to fold back into the cell.\n"
-         "  cell : sequence of 3x3 numbers\n"
+         "  cell: sequence of 3x3 numbers\n"
          "    The cell defining the periodicity.\n"
-         "  invcell : sequence of 3x3 numbers\n"
+         "  invcell: sequence of 3x3 numbers\n"
          "    Optional. The *inverse* of the cell defining the periodicity. "
               "It is computed if not given on input. \n" },
         {"into_voronoi",  into_voronoi_wrapper, METH_VARARGS,
          "Returns Folds vector into first Brillouin zone of the input cell.\n\n"
          "This returns the periodic image with the smallest possible norm.\n\n"
          ":Parameters:\n"
-         "  a : sequence of three numbers\n"
+         "  a: sequence of three numbers\n"
          "    The vector to fold back into the cell.\n"
-         "  cell : sequence of 3x3 numbers\n"
+         "  cell: sequence of 3x3 numbers\n"
          "    The cell defining the periodicity.\n"
-         "  invcell : sequence of 3x3 numbers\n"
+         "  invcell: sequence of 3x3 numbers\n"
          "    Optional. The *inverse* of the cell defining the periodicity. "
               "It is computed if not given on input. \n" },
         {"into_cell",  into_cell_wrapper, METH_VARARGS,
          "Returns Folds vector into periodic the input cell.\n\n"
          ":Parameters:\n"
-         "  a : sequence of three numbers\n"
+         "  a: sequence of three numbers\n"
          "    The vector to fold back into the cell.\n"
-         "  cell : sequence of 3x3 numbers\n"
+         "  cell: sequence of 3x3 numbers\n"
          "    The cell defining the periodicity.\n"
-         "  invcell : sequence of 3x3 numbers\n"
+         "  invcell: sequence of 3x3 numbers\n"
          "    Optional. The *inverse* of the cell defining the periodicity. "
               "It is computed if not given on input. \n" },
         {"are_periodic_images",  are_periodic_images_wrapper, METH_VARARGS,
          "Returns True if first two arguments are periodic images according to third.\n\n"
          ":Parameters:\n"
-         "  a : sequence of three numbers\n"
+         "  a: sequence of three numbers\n"
          "    The first vector.\n"
-         "  b : sequence of three numbers\n"
+         "  b: sequence of three numbers\n"
          "    The second vector.\n"
-         "  invcell : sequence of 3x3 numbers\n"
+         "  invcell: sequence of 3x3 numbers\n"
          "    The *inverse* of the cell defining the periodicity.\n"
-         "  tolerance : float\n"
+         "  tolerance: float\n"
          "    An *optional* floating point defining the tolerance. Defaults to 1e-8." }, 
         {"supercell",  (PyCFunction)supercell_wrapper, METH_VARARGS | METH_KEYWORDS,
          "Creates a supercell of an input lattice.\n\n"
          ":Parameters:\n"
-         "  lattice: `crystal.Structure`\n"  
+         "  lattice: :class:`Structure`\n"  
          "    Lattice from which to create the supercell. Cannot be empty. Must be deepcopiable. \n"
-         "  cell : 3x3 sequence\n"
+         "  cell: 3x3 sequence\n"
          "    Cell in cartesian coordinates of the supercell.\n\n"
-         ":returns: A `crystal.Structure` representing the supercell. "
-           "It contains an attribute ``lattice`` which reference the input lattice. "
+         ":returns: A :class:`Structure` representing the supercell. "
            "If ``lattice`` contains an attribute ``name``, then the result's is set to "
            "\"supercell of ...\". " 
            "All other attributes of the lattice are deep-copied to the supercell. "
@@ -633,26 +632,26 @@ namespace LaDa
         {"primitive",  primitive_wrapper, METH_VARARGS,
          "Returns the primitive unit-cell lattice of an input lattice.\n\n"
          ":Parameters:\n"
-         "  lattice: `crystal.Structure`\n"  
+         "  lattice: :class:`Structure`\n"  
          "    Lattice for which to get primitive unit-cell lattice. Cannot be empty. Must be deepcopiable. \n"
-         "  tolerance : float\n"
+         "  tolerance: float\n"
          "    Optional. Tolerance when comparing positions. Defaults to 1e-8.\n\n"
-         ":returns: A new `crystal.Structure` representing the primitive lattice. " },
+         ":returns: A new :class:`Structure` representing the primitive lattice. " },
         {"is_primitive",  is_primitive_wrapper, METH_VARARGS,
          "Returns True if the lattice is primitive.\n\n"
          ":Parameters:\n"
-         "  lattice: `crystal.Structure`\n"  
+         "  lattice: :class:`Structure`\n"  
          "    Lattice for which to get primitive unit-cell lattice. Cannot be empty. Must be deepcopiable. \n"
-         "  tolerance : float\n"
+         "  tolerance: float\n"
          "    Optional. Tolerance when comparing positions. Defaults to 1e-8.\n\n"},
         {"space_group",  space_group_wrapper, METH_VARARGS,
          "Finds and stores point group operations.\n\n"
          " Raises a ValueError if the input  structure is not primitive. "
            "Implementation taken from Enum code, PRB 77, 224115 (2008). \n\n"
          ":Parameters:\n"
-         "  structure : `lada.crystal.Structure`\n"
+         "  structure: :class:`Structure`\n"
          "    The structure for which to find the point group.\n"
-         "  tolerance : float\n"
+         "  tolerance: float\n"
          "    acceptable tolerance when determining symmetries. Defaults to 1e-8.\n"
          ":returns: python list of affine symmetry operations for the given structure. "
            "Each element is a 4x3 numpy array, with the first 3 rows "
@@ -664,43 +663,43 @@ namespace LaDa
            "norm as the unit-cell vectors. "
            "Implementation taken from Enum code, PRB 77, 224115 (2008). \n\n"
          ":Parameters:\n"
-         "  structure : `lada.crystal.Structure`\n"
+         "  structure: :class:`Structure`\n"
          "    The structure for which to find the space group. Can also be a 3x3 matrix.\n"
-         "  tolerance : float\n"
+         "  tolerance: float\n"
          "    acceptable tolerance when determining symmetries. Defaults to 1e-8.\n"
          ":returns: python list of affine symmetry operations for the given structure. "
            "Each element is a 4x3 numpy array, with the first 3 rows "
            "forming the rotation, and the last row is the translation. "
            "The affine transform is applied as rotation * vector + translation. "
            "`cell_invariants` always returns rotations (translation is zero). " }, 
-        {"equivalent", (PyCFunction)equivalent_wrapper, METH_VARARGS | METH_KEYWORDS, 
-          "Returns true if two structures are equivalent. \n\n"
-          "Two structures are equivalent in a crystallographic sense, "
-          "e.g. without reference to cartesian coordinates or possible "
-          "motif rotations which leave the lattice itself invariant. A "
-          "supercell is *not* equivalent to its lattice, unless it is a "
-          "trivial supercell. An option is provided to allow "
-          "comparison within a single reference frame, i.e. per mathematical "
-          "definition of lattice.\n\n"
-          ":Parameters:\n"
-          "  a : `lada.crystal.Structure`\n    The first structure.\n"
-          "  b : `lada.crystal.Structure`\n    The second structure.\n"
-          "  scale : boolean\n"
-          "    whether to take the scale into account. Defaults to true.\n"
-          "  cartesian : boolean\n"
-          "    whether to take into account differences in cartesian "
-              "coordinates. Defaults to true. If False, then comparison is "
-              "according to mathematical definition of a lattice. If True, "
-              "comparison is according to crystallographic comparison.\n"
-          "  tolerance : float\n"
-          "    Tolerance when comparing distances. Defaults to 1e-8.  It is in "
-              "the same units as the structures scales, if that is taken into "
-              "account, otherwise, it is in the same units as ``a.scale``." },
+//       {"equivalent", (PyCFunction)equivalent_wrapper, METH_VARARGS | METH_KEYWORDS, 
+//         "Returns true if two structures are equivalent. \n\n"
+//         "Two structures are equivalent in a crystallographic sense, "
+//         "e.g. without reference to cartesian coordinates or possible "
+//         "motif rotations which leave the lattice itself invariant. A "
+//         "supercell is *not* equivalent to its lattice, unless it is a "
+//         "trivial supercell. An option is provided to allow "
+//         "comparison within a single reference frame, i.e. per mathematical "
+//         "definition of lattice.\n\n"
+//         ":Parameters:\n"
+//         "  a:  :class:`Structure`\n    The first structure.\n"
+//         "  b:  :class:`Structure`\n    The second structure.\n"
+//         "  scale: boolean\n"
+//         "    whether to take the scale into account. Defaults to true.\n"
+//         "  cartesian: boolean\n"
+//         "    whether to take into account differences in cartesian "
+//             "coordinates. Defaults to true. If False, then comparison is "
+//             "according to mathematical definition of a lattice. If True, "
+//             "comparison is according to crystallographic comparison.\n"
+//         "  tolerance: float\n"
+//         "    Tolerance when comparing distances. Defaults to 1e-8.  It is in "
+//             "the same units as the structures scales, if that is taken into "
+//             "account, otherwise, it is in the same units as ``a.scale``." },
         {"transform", (PyCFunction)transform_wrapper, METH_VARARGS | METH_KEYWORDS, 
           "Returns a copy of the structure transformed according to affine operation. \n\n"
           ":Parameters:\n"
-          "  structure : `lada.crystal.Structure`\n    The structure to transform.\n"
-          "  transform : 4x3 matrix\n    The rotation (applied first) is contained "
+          "  structure: :class:`Structure`\n    The structure to transform.\n"
+          "  operation: 4x3 matrix\n    The rotation (applied first) is contained "
             "in the first three row and the translation (applied second) in the last row." },
         {"periodic_dnc", (PyCFunction)pyperiodic_dnc, METH_VARARGS | METH_KEYWORDS, 
           "Creates periodic divide-and-conquer boxes. \n\n"
@@ -711,16 +710,16 @@ namespace LaDa
           "are also referenced. In other words, the boxes have fuzzy limits. The return clearly "
           "indicates whether an atom is truly within a box or merely sitting close by.\n\n"
           ":Parameters:\n"
-          "  structure : `lada.crystal.Structure`\n    The structure to transform.\n"
-          "  nperbox : int\n    Number of atoms per box. Defaults to 20."
-               "Give either this or mesh, but not both.\n"
-          "  mesh : tuple of 3 integers\n"
-          "    Mesh parameters from which to  determine box. "
-               "Give either this or nperbox, but not both.\n"
-          "  overlap : float\n"
+          "  structure: :class:`Structure`\n    The structure to transform.\n"
+          "  overlap: float\n"
           "    Size in units of the structure's scale attribute which determine atoms which are "
               "close but not quite  within a box.\n"
-          "  return_mesh : bool\n    Optionally, returns mesh as first item of a two-tuple.\n"
+          "  mesh: tuple of 3 integers\n"
+          "    Mesh parameters from which to  determine box. "
+               "Give either this or nperbox, but not both.\n"
+          "  nperbox: int\n    Number of atoms per box. Defaults to 20."
+               "Give either this or mesh, but not both.\n"
+          "  return_mesh: bool\n    Optionally, returns mesh as first item of a two-tuple.\n"
           ":returns: If ``return_mesh`` is false, returns a list of lists of 3-tuples "
           "(atom, translation, insmallbox). Each inner list represents a single "
           "divide-and-conquer box (+overlapping atoms). Each item within that "
@@ -737,31 +736,29 @@ namespace LaDa
           "actually requested. For instance, in an fcc structure with center at "
           "the origin, if asked for the 6 first neighbors, actually the first "
           "twelve are returned since they are equidistant. The input tolerance "
-          "is the judge of equidistance.\n"
+          "is the judge of equidistance.\n\n"
           ":Parameters:\n"
-          "  structure : `lada.crystal.Structure`\n"
+          "  structure: :class:`Structure`\n"
           "    Structure from which to determine neighbors.\n"
-          "  nmax : int\n    Number of first neighbors to search for.\n"
-          "  center : sequence of three numbers\n"
+          "  nmax: int\n    Number of first neighbors to search for.\n"
+          "  center: sequence of three numbers\n"
           "    Postition for which to determine first neighbors.\n"
-          "  tolerance : double\n"
-          "    Tolerance criteria for judging equidistance. "
-               "Defaults to LaDa hard-coded tolerance.\n\n" 
+          "  tolerance: double\n"
+          "    Tolerance criteria for judging equidistance.\n\n"
           ":returns: A list of 3-tuples. The first item is a refence to the neighboring atom, "
           "the second is the position of its relevant periodic image *relative* to the center, "
           "the third is its distance from the center."},
         {"coordination_shells", (PyCFunction)pycoordination_shells, METH_VARARGS | METH_KEYWORDS, 
           "Creates list of coordination shells up to given order.\n\n"
           ":Parameters:\n"
-          "  structure : `lada.crystal.Structure`\n"
+          "  structure: :class:`Structure`\n"
           "    Structure from which to determine neighbors.\n"
-          "  nshells : unsigned integer\n    Number of shells to compute.\n"
-          "  center : sequence of three numbers\n"
+          "  nshells: unsigned integer\n    Number of shells to compute.\n"
+          "  center: sequence of three numbers\n"
           "    Postition for which to determine shells.\n"
-          "  tolerance : double\n"
-          "    Tolerance criteria for judging equidistance. "
-               "Defaults to LaDa hard-coded tolerance.\n\n" 
-          "  natoms : unsigned integer\n"
+          "  tolerance: double\n"
+          "    Tolerance criteria for judging equidistance.\n\n"
+          "  natoms: unsigned integer\n"
           "    Total number of neighbors to consider. Defaults to fcc + some security.\n\n"
           ":returns: A list of lists of tuples. The outer list is over coordination shells. "
                     "The inner list references the atoms in a shell. "
@@ -771,32 +768,29 @@ namespace LaDa
         {"splitconfigs", (PyCFunction)pysplitconfigs, METH_VARARGS | METH_KEYWORDS, 
           "Creates a split-configuration for a given structure and atomic origin.\n\n"
           "Split-configurations are a symmetry-agnostic atom-centered "
-            "description of chemical environment. For details, see `d'Avezac, "
-            "Botts, Mohlenkamp, Zunger, SIAM J. Comput. *30* (2011) "
-            "<http://dx.doi.org/10.1137/100805959}>`.\n\n" 
+            "description of a chemical environment. For details, see `d'Avezac, "
+            "Botts, Mohlenkamp, Zunger, SIAM J. Comput. 30 (2011) "
+            "<http://dx.doi.org/10.1137/100805959>`_.\n\n" 
             ":Parameters:\n"
-            "  structure : `lada.crystal.Structure`\n"
+            "  structure: :class:`Structure`\n"
             "    Structure for which to create split-configurations.\n"
-            "  center : `lada.crystal.Atom`\n"
+            "  center: :class:`Atom`\n"
             "    Atomic center for the origin of the configuration.\n"
-            "  nmax : unsigned integer\n"
+            "  nmax: unsigned integer\n"
             "    Number of atoms (cutoff) to consider for inclusion in the split-configuration.\n"
-            "  configurations : None or same as return\n"
+            "  configurations: None or same as return\n"
             "    Defaults to None. Object where configurations should be stored. a list of "
                 "previously existing configurations. There is no error checking, so do not "
                 "mix and match.\n"
-            "  tolerance : float\n"
-            "    Tolerance criteria when comparing distances. Defaults to LaDa hard-coded.\n\n"
-            ":returns: ``[[[(atom, vector from center, distance from center), "
-              "...], weight], ...]``. "
+            "  tolerance: float\n"
+            "    Tolerance criteria when comparing distances. \n\n"
+            ":returns: "
               "A list of splitted configuration. Each item in this list is "
-              "itself a list with two inner items. The first inner item is an "
+              "itself a view, e.g. a list with two inner items. The first inner item is an "
               "ordered list of references to atoms. The second inner item is "
               "the weight for that configuration. The references to the atoms "
-              "are each a 3-tuple consisting of an actual reference to an "
-              "atom, a translation vector from the center of the configuration "
-              "to the atom's relevant periodic image, and a distance from the "
-              "center." },
+              "are each a 2-tuple consisting of an actual reference to an "
+              "atom, as well as the coordinates of that atom in the current view." },
         {NULL, NULL, 0, NULL}        /* Sentinel */
     }; // end of static method table.
   }

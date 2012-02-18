@@ -13,6 +13,7 @@ Contents:
 
    About <about>
    User Guide <userguide>
+   Python API <pyapi>
 
 Indices and tables
 ==================

@@ -1,193 +1,521 @@
+.. currentmodule:: lada.crystal
+
 Creating and Manipulating crystal structures
 ============================================
 
-First Step: Creating a crystal structure
-----------------------------------------
+A good way to learn is to play with LaDa directly in the python interpreter.
+Best of all, use the enhanced shell `ipython`_. It comes with many goodies. For
+instance tab-completion. Or inline help. E.g., once you have typed up the first
+example below, try ``structure.[TAB]`` and see what it tells you. Then try
+``structure?`` to print the description (`docstring`_) of structure. If setup
+right, you can even use it like an ordinary bash shell on `pythonic steroids`_.
+
+Playing with the crystal structure
+**********************************
+
+Initialization
+--------------
 
 To start off, lets create the diamond crystal structure.
 
 >>> from lada.crystal import Structure
->>> structure = Structure( [ [0, 0.5, 0.5],\
->>>                          [0.5, 0, 0.5],\
->>>                          [0.5, 0.5, 0] ] )
+>>> structure = Structure( [ [0, 0.5, 0.5],     \
+...                          [0.5, 0, 0.5],     \
+...                          [0.5, 0.5, 0] ] )
 >>> structure.add_atom(0, 0, 0, "C")
 >>> structure.add_atom(0.25, 0.25, 0.25, "C")
 
-The first line above imports the `Structure` class from the crystal module.
-This class is the basic type which describes crystal structures in lada.
-The second and subsequent lines creates diamond. The unit-cell is initialized
-within the first parenthesis. It is inputed as a *matrix*: the cell-vectors are
-columns (not rows as in many other physics code). The reason behind choice will
-soon be apparent when we start playing the unit-cell directly, entering it into
-mathematical equations as one would on paper. At this point, we have a
-structure empty of any atoms. They can be added as done above, first inserting
-the x, y, and z cartesian coordinates and then the atomic occupation.
+The first line above imports the :class:`Structure` class from the
+:class:`crystal` module.  This class is the basic type which describes
+crystal structures in LaDa.  The second and subsequent lines creates diamond.
+The unit-cell is initialized within the first parenthesis. It must be given as
+a *matrix*: the cell-vectors are columns (not rows as in many other physics
+code). The reason behind choice will soon be apparent when we start playing the
+unit-cell directly, entering it into mathematical equations as one would on
+paper. At this point, we have a structure empty of any atoms. They can be added
+as done above, first inserting the x, y, and z cartesian coordinates and then
+the atomic occupation.
+
+.. note:: Cartesian or fractional coordinates? Ask the question no more. LaDa
+          *always* expects cartesian coordinates in real space. Period.
+          However, keep reading to find an instance where the transformation is
+          done. Just don't forget to transform back.
+
+It is also possible to add whatever attributes directly when initializing the
+structure. If one believes in d0 magnetization in carbon substituted by
+Technetium, one could add a total moment to the structure, specify an atomic
+site for Technetium substitutions, and markup another site with a spin
+variable, all in a single one liner.
 
 >>> from lada.crystal import Structure
->>> structure = Structure( [ [0, 0.5, 0.5],\
->>>                          [0.5, 0, 0.5],\
->>>                          [0.5, 0.5, 0] ], scale=1.0, moment=5 )\
->>>                      .add_atom(0, 0, 0, "C", spin="d0")\
->>>                      .add_atom(0.25, 0.25, 0.25, "C", "Tc")
+>>> structure = Structure( [ [0, 0.5, 0.5],                         \
+...                          [0.5, 0, 0.5],                         \
+...                          [0.5, 0.5, 0] ], scale=1.0, moment=5 ) \
+...                      .add_atom(0, 0, 0, "C", spin="d0")         \
+...                      .add_atom(0.25, 0.25, 0.25, "C", "Tc")
 
+Note the backslash which tell the python interpreter to read everything as a
+single line.
 
-Example: Creating a silicon nanowire inside a germanium structure
------------------------------------------------------------------
+Manipulation
+------------
 
-The first step will be to create the Si/Ge zinc-blende lattice. The lattice
-object will allow us to create any kind of supercell with a single line of
-code. From there, we need only loop over all atoms in our super-structure
-and assign the type ("Si" or "Ge") depending on whether it is inside or
-outside the nanowire.
+So we've got a crystal structure. But how does one go around playing with it?
+The cell can be accessed as follows:
 
-Creating a Si/Ge zinc-blende lattice
-------------------------------------
+>>> structure.cell[0, 1] = 0.6
+>>> print structure.cell
+[ [-0.5, 0.6, 0.5], [0.5, -0.5, 0.5], [0.5, 0.5, -0.5] ]
+>>> structure.cell[1, :] = 0.1
+>>> print structure.cell
+[ [-0.5, 0.6, 0.5], [0.1, 0.1, 0.1], [0.5, 0.5, -0.5] ]
 
-There are two main types of objects in `lada.crystal`: `Lattice`, wich
-defines the unit-cell of a crystal structure, and `Structure` which defines
-any kind of crystal structure, including super-cells. The advantage of
-difining the lattice as a separate object is that any super-structure can
-then be created very easily.
+The first line in the code above accesses the x coordinate of the second cell
+vector and changes it to 0.6. The second line of code modifies the y
+coordinates of all three cell vectors simultaneously. Note that the cell a
+`numpy`_ array. `Numpy`_ is python's numerical computation package. It does
+everything that BLAS or Lapack does, but is much easier to use. And since, when
+compiled correctly, it actually uses BLAS or similar library, it can be quite
+fast. Most, perhaps all, arrays of numbers in LaDa are `numpy`_ arrays. 
 
-The zinc-blende lattice has already been defined by default. It can be
-accessed simply as:
+Atoms in the structure can be accessed in the structure as though it were a list:
 
->>> from lada.crystal import binary
->>> zincblende = binary.zinc_blende()
->>> zincblende
-# Lattice definition.
-from lada.crystal._crystal import Lattice
-lattice = Lattice()
-lattice.name   = 'Zinc-Blende'
-lattice.scale  = 1.0
-lattice.set_cell = (0.0, 0.5, 0.5),\\
-                   (0.5, 0.0, 0.5),\\
-                   (0.5, 0.5, 0.0)
-lattice.add_sites = [(0.00, 0.00, 0.00), 'A'],\\
-                    [(0.25, 0.25, 0.25), 'B']
-# End of lattice definition
+>>> atom0 = structure[0]
+>>> atom1 = structure[1]
+>>> atom0 is structure[-1]
+True
 
-The first line above import a module containing all sorts of binary
-lattices. The second line calls a function which returns a zinc-blende
-lattice and stores it in the variable ``zinc_blende`` for further
-processing. This last object can be printed (third line): it outputs python
-code which defines the lattice itself. This code is fairly
-self-explanatory, and can be copied/pasted and modified to suit your needs
-if a different kind of lattice is needed. 
+Just like any list, the structure can be accessed starting from the end, using
+negative integers. It is possible to loop over it as well:
 
-As everywhere in `lada`, atomic-positions are given in cartesian
-coordinates. The units are defined by both ``zincblende.scale`` and the
-cell and lattice positions. The scale is equivalent to the first line of a
-POSCAR file. Eventually, all units are in Angstrom.
+>>> for atom in structure: print atom.pos
+[0 0 0]
+[0.25 0.25 0.25]
 
-As can be seen, the atomic types are "A" and "B". We would rather have that
-each site can be occupied by either "Si" or "Ge":
+The above loops over all atoms and prints the position of each. Note that the
+position is also a `numpy`_ array. Finally, the structure can be sliced:
 
->>> for site in zincblende.sites:
->>>   site.type = ["Si", "Ge"]
->>> zincblende
-# Lattice definition.
-from lada.crystal._crystal import Lattice
-lattice = Lattice()
-lattice.name   = 'Zinc-Blende'
-lattice.scale  = 1.0
-lattice.set_cell = (0.0, 0.5, 0.5),\\
-                   (0.5, 0.0, 0.5),\\
-                   (0.5, 0.5, 0.0)
-lattice.add_sites = [(0.00, 0.00, 0.00), ('Si', 'Ge')],\\
-                    [(0.25, 0.25, 0.25), ('Si', 'Ge')]
-# End of lattice definition.
+>>> structure.add_atom(0.5, 0.5, 0.5, 'Pu')
+>>> for atom in structure[1:]: print atom.type
+['C' 'Tc']
+'Pu'
 
-The first line above loops over all sites in the lattice. The second line
-the modifies the type of occupations which can occur in the lattice.
+The above adds a third atom to the structure. It then proceeds to loop over the
+atoms, but skipping the first one. Remember we initialized the second atom with
+two species? As such, it is actually a list. The third atom is actually just a
+string:
 
-Creating a superstructure
--------------------------
+>>> isinstance(structure[1].type, list)
+True
+>>> isinstance(structure[2].type, str)
+True
 
-At this point, we have all the ingredients to create a superstructure which
-will hold a Silicon nanowire:
+You can set the type of an atom to anything you want. 
+An integer:
 
->>> structure = zincblende.to_structure([[5,0,0], [0,2,0], [0, 0,2]]) 
->>> structure
-# Structure definition.
-from lada.crystal._crystal import Structure
-structure = Structure()
-structure.name   = ''
-structure.scale  = 1.0
-structure.energy = 0.0
-structure.weight = 1.0
-structure.set_cell = (5.0, 0.0, 0.0),\\
-                     (0.0, 2.0, 0.0),\\
-                     (0.0, 0.0, 2.0)
-structure.add_atoms = [(0.00, 0.00, 0.00), 'Si', 0],\\
-                      [(0.25, 0.25, 0.25), 'Si', 1],\\
-                      ...
-                      [(4.50, 1.50, 0.00), 'Si', 0],\\
-                      [(4.75, 1.75, 0.25), 'Si', 1]
-# End of structure definition.
+>>> atom0.type = 0
+>>> print structure[0].type
+0
 
-The first line above creates a super-structure with an extension of 5
-conventional cells in the (100) direction, and extensions of 2 conventional
-cells in (010) and (001) directions.
+A boolean
 
-The atoms exist in the super-structure. However, the occupations all
-default to "Si" (since it is the first possible occupation of the lattice
-sites, as defined above).
+>>> atom0.type = False
+>>> print structure[0].type
+False
 
-Creating the nanowire within the superstructure
------------------------------------------------
+Or even itself
 
-The first step to creating a nanowire is making sure we won't have any
-problems with periodic images (They may, or may not be a this point,
-depending how the zinc-blende lattice was defined). We can move all atoms
-in the superstructure such that they are contained within its supercell. To
-do this, we go to fractional coordinates, then move the fractional
-coordinates to the interval [0, 1[, and finally move back to cartesian
-coordinates.
+>>> atom0.type = atom0
+>>> print structure[0].type
+Atom(0, 0, 0, 'C', spin='d0')
 
->>> # some numpy functions we will need.
+Though how that would be useful is not clear. The position, however, is
+*always* a `numpy`_ array. Try otherwise, and you will get an error. Note above
+that we set the type using ``atom0`` and then print it out using
+``structure[0]``. ``atom0`` is a variable created earlier. It references the
+structure's first atom. You can use one or the other. Both refer to the same
+underlying atom.
+
+The attribute ``spin`` can be accessed directly:
+
+>>> print atom0.spin
+"d0"
+>>> atom0.foo = 'bar'
+
+And new attributes can be added easily, whenever the need arises. The same goes
+for ``moment`` defined in ``structure``'s initialization. Finally, lets do
+some math:
+
+>>> from numpy import dot
 >>> from numpy.linalg import inv
->>> from numpy import dot, floor, all
->>> # compute inverse of superstructure cell.
->>> invcell = inv(structure.cell)
->>> # Loop over all atoms in superstructure.
->>> for atom in structure.atoms:
->>>   # Compute fractional coordinates.
->>>   fractional = dot(invcell, atom.pos)
->>>   # Move fractional coordinates to [0, 1[ interval, taking into account numerical noise.
->>>   fractional -= floor(fractional + 1e-12)
->>>   # Make sure that we did as advertised. Always a good idea.
->>>   assert all(fractional >= 0e0) and all(fractional < 1e0)
->>>   # Move from fractional back to cartesian coordinates.
->>>   atom.pos = dot(structure.cell, fractional)
+>>> inverse_cell = inv(structure.cell)
+>>> frac = dot(inverse_cell, structure[0].pos)
+
+The snippet above computes the fractional coordinates of the first atomic
+position. `inv`_ is a `numpy`_ method to invert 2d-arrays. `dot`_ provides
+matrix-matrix multiplication and matrix-vector multiplications, and
+vector-vector inner products.
+
+.. note:: Why use `dot`_? By default, ``vectorA * vectorB`` multiplies arrays
+          element per element in `numpy`_. There does exist a class called
+          Matrix which will change the behavior to actual matrix
+          mutliplication. But to avoid any surprises, LaDa uses the default.
+          And hence makes use of `dot`_.
 
 
-We can now change the occupation such that atoms within the nanowire a "Si", and 
-"Ge" outside. To do this, we simply compute the radial coordinates of the
-atom, where (1,0,0) is the growth direction.
+Specifiying units
+-----------------
 
->>> # First, we define the growth direction.
->>> from numpy import array
->>> from numpy.linalg import norm
->>> growth = array([1,0,0], dtype='float64') 
->>> growth = growth / norm(growth) # make sure the vector is normalized
->>> radius = 2.5 # just a random radius... in angstrom.
->>> # loop over all atoms.
->>> for atom in structure.atoms:
->>>   # compute radial vector (eg remove growth component) of the atom.
->>>   radial_vector = atom.pos - dot(growth, atom.pos)
->>>   # compute radial norm
->>>   radial_norm = norm(radial_vector)
->>>   # assign type depending on whether atom is within radius or not.
->>>   atom.type = "Si" if radial_norm < radius else "Ge"
+The units are given using the structure's scale attribute:
+
+>>> from quantities import nanometer
+>>> structure.scale = 0.5 * nanometer
+>>> print structure.scale
+5
+
+The package `quantities`_ allows us to specify units explicitly. Note however
+that the scale is converted to angstroms. Units are arbitrary and an arbitrary
+choice was made to use angstroms throughout LaDa. `quantities`_ makes it
+possible to convert back and forth between other preferred unit systems.
+In other words, the unit-cell ``structure.scale * structure.cell`` is in
+angstrom once multiplied by the scale. And so are the atomic positions
+``structure.scale * structure[0].pos``.
+
+More advanced structure manipulation methods
+********************************************
+
+Supercells and primitive unit cells
+-----------------------------------
+
+Quite often, one needs to a supercell, i.e. a multiple, of a smaller unit cell.
+Doing this takes all of a single line. 
+
+>>> from lada.crystal import Structure, supercell
+>>> # First create unit cell.
+>>> structure = Structure( [ [0, 0.5, 0.5],                  \
+...                          [0.5, 0, 0.5],                  \
+...                          [0.5, 0.5, 0] ] )               \
+...                      .add_atom(0, 0, 0, "C")             \
+...                      .add_atom(0.25, 0.25, 0.25, "C")
+>>> # Now create conventional cell.
+>>> conventional = supercell([[1, 0, 0], [0, 1, 0], [0, 0, 1]], structure)
+>>> conventional
+Structure( 1, 0, 0,\
+           0, 1, 0,\
+           0, 0, 1, scale=1.0 )\
+  .add_atom(0, 0, 0, 'C')\
+  .add_atom(0.25, 0.25, 0.25, 'C') )\
+  .add_atom(0, 0, 0, 'C', site=0)\
+  .add_atom(0.25, 0.25, 0.25, 'C', site=1)\
+  .add_atom(0.5, 0, 0.5, 'C', site=0)\
+  .add_atom(0.75, 0.25, 0.75, 'C', site=1)\
+  .add_atom(0.5, 0.5, 0, 'C', site=0)\
+  .add_atom(0.75, 0.75, 0.25, 'C', site=1)\
+  .add_atom(0, 0.5, 0.5, 'C', site=0)\
+  .add_atom(0.25, 0.75, 0.75, 'C', site=1)
+
+The above creates the conventional cell from the diamond unit cell. Note that
+the new cell is given in cartesian coordinates (and in the units of the original
+unit structure). Using `dot`_ and `inv`_, one could of course specify the
+conventional cell in fractional coordinates:
+
+>>> conventional = supercell( dot([[-1, 1, 1], [1, -1, 1], [1, 1, -1]], inv(structure.cell)), structure)
+
+It is just a bit more verbose.
+
+Once a supercell is obtained, it is possible to go back to the original primitive unit-cell. 
+
+>>> from lada.crystal import primitive
+>>> primitive(conventional, tolerance=1e-8)
+Structure( 0.5, 0.5, 0,\
+           0, 0.5, 0.5,\
+           0.5, 0, 0.5,\
+           scale=1 )\
+  .add_atom(0, 0, 0, 'C', site=0)\
+  .add_atom(0.25, 0.25, 0.25, 'C', site=1)
+
+Note however that this method is far from perfect and is likely not robust with
+respect to numerical noise. The optional ``tolerance`` keyword argument may
+help to some degree. It defaults to 1e-8. There is also a method to check
+whether a structure is indeed primitive.
 
 
-Coding Details
---------------
+>>> from lada.crystal import primitive, is_primitive
+>>> is_primitive(conventional)
+False
+>>> is_primitive(primitive(conventional))
+True
 
-C++ bindings are located in the private `_crystal` bindics. A fair number of
-enhancements are added directly within the python code in __init__.py. In
-practice all public interfaces to C++ bindings should be available directly
-in the `crystal` module.
+.. seealso:: :class:`supercell`, :class:`primitive`,
+             :class:`is_primitive`
 
 
+Space-group operations
+----------------------
+
+The space group operations of a structure can also easily be obtained. This is
+the operations, not the name of the space group. The return is a list of 4x3
+`numpy`_ arrays where the upper 3x3 block is a rotation and the lowest row is a
+translation. The translation should be applied *after* the rotation. Going back
+to the original diamond structure:
+
+>>> sg = space_group(structure)
+>>> sg == space_group(structure) 
+>>> len(sg)
+48
+>>> sg[0]
+array([[ 1.,  0.,  0.],
+       [ 0.,  1.,  0.],
+       [ 0.,  0.,  1.],
+       [ 0.,  0.,  0.]])
+>>> #
+>>> # applying the operation:
+>>> from numpy import dot, array
+>>> dot(sg[1][:3], array([1., 1., 0])) + sg[1][3]
+array([ 1., -1.,  0.])
+
+A structure can easily be transform according to any affine transformation defined the same way:
+
+>>> from lada.crystal import transform
+>>> transform(structure, sg[1])
+Structure( 0, 0.5, 0.5,\
+           -0.5, 0, -0.5,\
+           -0.5, -0.5, 0,\
+           scale=1 )\
+  .add_atom(0, 0, 0, 'C')\
+  .add_atom(0.25, -0.25, -0.25, 'C')
+
+Of course, in this case the result is nothing more than a different
+parameterization of the same lattice.
+
+.. seealso:: :class:`space_group`, :class:`transform`
+
+Neighbors and Coordination Shells
+---------------------------------
+
+A list of first neighbors can be obtained for any point in the structure.
+Still using the diamond structure.
+
+>>> from lada.crystal import neighbors
+>>> n = neighbors(structure, 5, [0.125,0.125, 0.125])
+>>> len(n)
+8
+
+The first argument of ``neighbors`` is the structure, the second is the number
+of neighbors to look for, and the third is the position for which to look for
+neighbors. Note that 5 neighbors are requested, but 8 are actually returned.
+The method always makes sure to return a complete coordination shell.
+Coordinations are judged according to the distance from the central point. An
+optional ``tolerance`` keyword argument exists defining how *equal* distances
+are judged.
+
+>>> n[0]
+(Atom(0, 0, 0, 'C'), array([-0.125, -0.125, -0.125]), 0.21650635094610965)
+
+Each item in the list returned by neighbor is a tuple consisting of reference
+to the neighboring atom, a vector going from the central point to relevant
+periodic image of that atom, and the distance from the center to the periodic
+image. Additionally, a ``coordination_shells`` method exists which returns a
+list of lists of neighbour, where each inner list is a single coordination
+shell.
+
+>>> from lada.crystal import coordination_shell
+>>> len( coordination_shell(structure, 5, [0.125, 0.125, 0.125])[0] )
+2
+>>> len( coordination_shell(structure, 5, [0.125, 0.125, 0.125])[1] )
+6
+
+.. seealso:: :class:`neighbors`, :class:`coordination_shells`
+
+Input, output, saving to a file, sending as MPI message
+-------------------------------------------------------
+
+It is of course possible to save a structure to file:
+
+>>> with open('text', 'w') as file: file.write(structure)
+
+And do to read it out.
+
+>>> with open('text', 'r') as file: structure = eval(file.read())
+
+Note that structures and atoms are printed out as strings which can be executed
+to retrieve the actual python object (i.e. it is `representation`_). The only
+caveat is that the attributes you have added to the structure must also be
+representable.
+
+Structures and atoms can be pickled. `pickle`_ is a python module for data
+retention. It transforms objects into a stream of characters which can be saved
+to disk, sent as MPI messages, or whatever suits your fancy, and then
+reinterpreted to become the same python objects all over again.
+As far as MPI is concerned, however, the best bet is to use `boost.mpi`_. This
+is a great python wrapper of the original MPI specifications. It truly makes
+MPI easy.
+
+Conclusion
+----------
+
+LaDa makes it easy to manipulate crystal structures any way you fancy. Further
+methods exist beyond those described here. There is a method to create periodic
+divide and conquer boxes, very practical when dealing with truly large
+structures. There is a method to transform structures into lattice agnostic
+representations, and others still to iterate over equivalent lattice sites,
+atoms of nanowire shells. How the latter method was implemented is given as a
+more advanced example below. Peek at it, and you will see how a fairly complex
+functionality can be designed with only a few lines of codes. For the others,
+however, please to the code itself, or to the API documentation.
+
+
+Example: Iterating over the shells of a core-shell nanowire
+***********************************************************
+
+Core shell nanowires are nano-structures where a thin nanowire of, say,
+germanium, is coated with alternating layers of silicon and germanium. I will
+now show how a few lines of code creates all the building blocks needed to look
+at any possible arrangement of core-shells. This particular piece of code was
+used to optimize `light absorption at the band edges of Si/Ge core-shell
+nanowires`_. 
+
+The point here is to create an `generator`_ which will allow us to iterate over
+shells in an outer loop and atoms (within the shell) in an inner loop. For
+instance, if we wanted to alternate Si and Ge layers.
+
+>>> from lada.crystal import shell_iterator
+>>> for i, shell in enumerate(shell_iterator(structure, center=[0,0,0], direction=[1, 0, 0])):
+>>>    for atom in shell:
+>>>      if i > 10: atom.type = 'Hg'
+>>>      elif i % 2 == 0: atom.type = 'Si'
+>>>      elif i % 2 == 1: atom.type = 'Ge'
+
+The nanowire is created within a structure. In this case, it is likely a fairly
+large supercell of zinc blende. Within it we want to place a nanowire with
+given growth direction and a given center (the center can be on an atom, on a
+bond, or somewhere else). The nanowire consists of 10 alternating layers of Si
+and Ge, capped by a fake atom (in this case Hg). It is constructed using two
+nested loops. The outer loop runs over shells, and the inner loop over atoms in
+a shell. The `enumerate`_ method is a python primitive which counts the number
+of iterations in a loop. It conveniently keeps track of which shell we are in,
+so that we can alternate Si and Ge.
+
+Now follows the code for the shell `generator`_.
+
+>>> def shell_iterator(structure, center, direction, thickness=0.05):
+>>>   """ Iterates over cylindrical shells of atoms.
+>>>   
+>>>       It allows to rapidly create core-shell nanowires.
+>>>   
+>>>       :Parameters:
+>>>         structure : :class:`lada.crystal.Structure`
+>>>           Structure or Lattice over which to iterate.
+>>>         center : 3d vector
+>>>           Growth direction of the nanowire.
+>>>         thickness : float
+>>>           Thickness in units of ``structure.scale`` of an individual shell.
+>>>       
+>>>       :returns: Yields iterators over atoms in a single shell.
+>>>   """
+>>>   from operator import itemgetter
+>>>   from numpy import array, dot
+>>>   from numpy.linalg import norm
+>>>
+>>>   direction = array(direction)/norm(array(direction))
+>>>   if len(structure) <= 1: yield structure; return
+>>>
+>>>   # orders position with respect to cylindrical coordinate.
+>>>   positions = into_voronoi(array([atom.pos - center for atom in structure]), structure.cell)
+>>>   projs = [(i, norm(pos - dot(pos, direction)*direction)) for i, pos in enumerate(positions)]
+>>>   projs = sorted(projs, key=itemgetter(1))
+>>>
+>>>   # creates classes of positions.
+>>>   result = {}
+>>>   for i, proj in projs:
+>>>     index = int(proj/thickness+1e-12)
+>>>     if index in result: result[index].append(i)
+>>>     else: result[index] = [i]
+>>>
+>>>   for key, layer in sorted(result.iteritems(), key=itemgetter(0)):
+>>>     def inner_layer_iterator():
+>>>       """ Iterates over atoms in a single layer. """
+>>>       for index in layer: yield structure[index]
+>>>     yield inner_layer_iterator()
+
+As you can see, about a third of the code is comments.
+
+>>>   direction = array(direction)/norm(array(direction))
+>>>   if len(structure) <= 1: yield structure; return
+
+The first line makes sure that the direction is normalized and is a `numpy`_
+array. The second makes sure the structure is not too absurd.
+
+>>>   # orders position with respect to cylindrical coordinate.
+>>>   positions = into_voronoi(array([atom.pos - center for atom in structure]), structure.cell)
+>>>   projs = [(i, norm(pos - dot(pos, direction)*direction)) for i, pos in enumerate(positions)]
+>>>   projs = sorted(projs, key=itemgetter(1))
+
+The crux are the three lines of code above. Basically, we want to transform the
+atoms from cartesian to cylindrical coordinates. However, there is a trick. The
+structure is periodic and we have first to make sure that we are looking at the
+periodic images which are closest to the center. That is the function of the
+``into_voronoi`` method. It takes a vector (or array of vectors) and a cell
+matrix, and folds the former into the Wigner-Seitz cell (aka first brillouin
+zone, aka first Voronoi region of ``center``). The second line creates a list
+of tuples, where the first item is an index into the structure, and the second
+item is the cylindrical coordinate ``r``. Now, all we need do is sort the list
+with respect to ``r``. This is the third line. `getitem`_ tells python to sort
+with respect to the second item in each tuple. 
+
+.. note:: Technically, we should rather find the periodic image with the
+          smallest ``r`` component. However, since the supercell is (generally)
+          much smaller in the ``z`` direction, it has yet never mattered.
+
+
+We now have a sorted list of cylindrical coordinates to which are attached the
+index of each corresponding atom in the structure. At this point, we need to
+create a mapping from the index of the shell to the relevant items in the list
+we just created. Note that the thickness of the shell is actually an external
+parameter.
+
+>>>   # creates classes of positions.
+>>>   result = {}
+>>>   for i, r in projs:
+>>>     index = int(r/thickness+1e-12)
+>>>     if index in result: result[index].append(i)
+>>>     else: result[index] = [i]
+
+Finally, the rest of the code is concerned with making the outer and inner
+loops possible. 
+
+>>> for key, layer in sorted(result.iteritems(), key=itemgetter(0)):
+>>>   def inner_layer_iterator():
+>>>     """ Iterates over atoms in a single layer. """
+>>>     for index in layer: yield structure[index]
+>>>   yield inner_layer_iterator()
+
+We loop over the (sorted) keys in the mapping just created. Each iteration
+visits a different shell, starting with the innermost. For each, we `yield`_ a
+`generator`_ which will loop over the atoms in the shell. To yield means we
+return *temporarily* from ``shell_iterator``. However, the next time the user
+asks to loop to the next shell, the python interpreter knows to reenter
+``shell_iterator`` *right after the yield statement*, as though it had never
+left.  I strongly recommend taking a closer look at this `yield`_ deal.
+Programming is often about doing loops and `yield`_, once you've warped your
+brain around the concept, makes it extremely easy.
+
+.. seealso:: :class:`shell_iterator`, :class:`layer_iterator`, :class:`equivalence_iterator`
+
+.. _ipython: http://ipython.org/
+.. _docstring: http://en.wikipedia.org/wiki/Docstring#Python
+.. _pythonic steroids: http://ipython.org/ipython-doc/rel-0.12/interactive/tutorial.html#system-shell-commands
+.. _quantities: http://packages.python.org/quantities/index.html
+.. _numpy: http://numpy.scipy.org/
+.. _Numpy: http://numpy.scipy.org/
+.. _inv: http://docs.scipy.org/doc/numpy/reference/generated/numpy.linalg.inv.html
+.. _inv: http://docs.scipy.org/doc/numpy/reference/generated/numpy.linalg.inv.html
+.. _dot: http://docs.scipy.org/doc/numpy/reference/generated/numpy.dot.html
+.. _representation: http://docs.python.org/library/functions.html#repr
+.. _pickle: http://docs.python.org/library/pickle.html 
+.. _boost.mpi: http://www.boost.org/doc/libs/1_35_0/doc/html/mpi/python.html
+.. _light absorption at the band edges of Si/Ge core-shell nanowires: http://dx.doi.org/10.1021/nl2040892
+.. _generator: http://docs.python.org/tutorial/classes.html#generators
+.. _yield: http://docs.python.org/tutorial/classes.html#generators
+.. _enumerate: http://docs.python.org/library/functions.html?highlight=enumerate#enumerate
+.. _getitem: http://docs.python.org/library/operator.html#operator.__getitem__

@@ -2,19 +2,20 @@
 
 __all__ = [ 'Structure', 'Atom', 'SmithTransform', 'zero_centered', 'into_voronoi',
             'into_cell', 'supercell', 'primitive', 'is_primitive', 'space_group',
-            'equivalent', 'transform', 'periodic_dnc', 'neighbors', 
+            'transform', 'periodic_dnc', 'neighbors', 
             'coordination_shells', 'splitconfigs', 'vasp_ordered', 'layer_iterator',
             'equivalence_iterator', 'shell_iterator' ]
 from cppwrappers import Structure, Atom, SmithTransform, zero_centered, into_voronoi, \
                         into_cell, supercell, primitive, is_primitive, space_group,   \
-                        coordination_shells, splitconfigs
+                        transform, periodic_dnc, neighbors, coordination_shells,      \
+                        splitconfigs
 
-def vasp_ordered(structure, attributes=None):
-  """ Returns  a structure with correct VASP order of ions.
+def vasp_ordered(structure):
+  """ Returns a structure with correct VASP order of ions.
   
-      :Parameters: 
-        structure 
-          Structure to reorder
+      :Parameters:
+        structure: :class:`Structure`
+          Structure for which to reorder atoms.
   """
 
   from copy import deepcopy
@@ -26,10 +27,10 @@ def vasp_ordered(structure, attributes=None):
 def layer_iterator(structure, direction, tolerance=1e-12):
   """ Iterates over layers and atoms in a layer. 
 
-      :Parameters: 
-        structure : `Structure`
+      :Parameters:
+        structure: :class:`Structure`
           The structure for which to iterator over atoms.
-        direction : 3d-vector
+        direction: 3d-vector
           Growth direction vector, e.g. vector perpendicular to the layers.
           Defaults to the first column vector of the structure.  It is
           important that two cell-vectors of the structure are (or can be
@@ -39,7 +40,7 @@ def layer_iterator(structure, direction, tolerance=1e-12):
           *not* enforced (no assertion) since it is not necessary, only
           sufficient.  Note that the third vector need not be parallel to the
           growth direction.
-        tolerance : float
+        tolerance: float
           Maximum difference between two atoms in the same layer.
 
       :returns: Yields iterators over atoms in a single epitaxial layer.
@@ -91,14 +92,14 @@ def equivalence_iterator(structure, operations = None, tolerance=1e-6):
       occupations are the same.
 
       :Parameters:
-        structure : `Structure` or `Lattice`
+        structure: :class:`Structure` 
           Structure or Lattice over which to iterate.
-        operations : Iterable over symmetry operations
+        operations: Iterable over symmetry operations
           A symmetry operation is 4x4 matrix where the upper block is a
           rotation and the lower block a translation. The translation is
           applied *after* the rotation. If None, the operations are obtained
-          using `lada.crystal.space_group`.
-        tolerance : float
+          using:class:`space_group`.
+        tolerance: float
           Two positions closer than ``tolerance`` are considered equivalent.
       
       :returns: Yields iterators over atoms linked by space-group operations.
@@ -137,11 +138,11 @@ def shell_iterator(structure, center, direction, thickness=0.05):
       It allows to rapidly create core-shell nanowires.
   
       :Parameters:
-        structure : `Structure` or `Lattice`
+        structure: :class:`Structure` 
           Structure or Lattice over which to iterate.
-        center : 3d vector
+        center: 3d vector
           Growth direction of the nanowire.
-        thickness : float
+        thickness: float
           Thickness in units of ``structure.scale`` of an individual shell.
       
       :returns: Yields iterators over atoms in a single shell.
@@ -149,19 +150,20 @@ def shell_iterator(structure, center, direction, thickness=0.05):
   from operator import itemgetter
   from numpy import array, dot
   from numpy.linalg import norm
+  from operator import into_voronoi
 
   direction = array(direction)/norm(array(direction))
   if len(structure) <= 1: yield structure; return
 
-  # orders position with respect to direction.
-  positions = to_voronoi(array([atom.pos - center for atom in structure]), structure.cell)
+  # orders position with respect to cylindrical coordinates
+  positions = into_voronoi(array([atom.pos - center for atom in structure]), structure.cell)
   projs = [(i, norm(pos - dot(pos, direction)*direction)) for i, pos in enumerate(positions)]
   projs = sorted(projs, key=itemgetter(1))
 
   # creates classes of positions.
   result = {}
-  for i, proj in projs:
-    index = int(proj/thickness+1e-12)
+  for i, r in projs:
+    index = int(r/thickness+1e-12)
     if index in result: result[index].append(i)
     else: result[index] = [i]
 
