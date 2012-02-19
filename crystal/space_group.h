@@ -3,7 +3,7 @@
 
 #include "LaDaConfig.h"
 
-#include "structure.h"
+#include "structure/structure.h"
 
 namespace LaDa
 {

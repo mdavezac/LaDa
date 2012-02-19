@@ -11,17 +11,17 @@
 #include <python/wrap_numpy.h>
 #include <python/quantity.h>
 
-#include "structure_data.h"
+#include "pybase.h"
 // structure getters/settters.
-#include "structure_getset.hpp"
+#include "getset.hpp"
 // iterator functions and type.
-#include "structure_iterator.hpp"
+#include "iterator.hpp"
 // structure member functions.
-#include "structure_members.hpp"
+#include "members.hpp"
 // creation, deallocation, initialization.
-#include "structure_cdi.hpp"
+#include "cdi.hpp"
 // sequence functions.
-#include "structure_sequence.hpp"
+#include "sequence.hpp"
 
 namespace LaDa
 {

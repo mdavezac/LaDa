@@ -7,9 +7,7 @@
 #include <python/wrap_numpy.h>
 #include <math/gruber.h>
 #include <math/misc.h>
-
-#include "structure.h"
-
+#include "periodic_dnc.h"
 
 namespace LaDa 
 {
@@ -214,50 +212,53 @@ namespace LaDa
       return container.release();
     }
 #   undef LADA_INDEX
-    //! \brief Wrapper to python for periodic boundary divide and conquer.
-    //! \see  LaDa::crystal::periodic_dnc()
-    PyObject* pyperiodic_dnc(PyObject* _module, PyObject* _args, PyObject *_kwargs)
+    namespace details
     {
-      PyObject* structure = NULL; 
-      PyObject* _n = NULL;
-      types::t_real overlap = 0e25;
-      math::iVector3d mesh;
-      long return_mesh = false;
-      unsigned int nperbox = 20;
-      static char *kwlist[] = { const_cast<char*>("structure"),
-                                const_cast<char*>("overlap"), 
-                                const_cast<char*>("mesh"), 
-                                const_cast<char*>("nperbox"),
-                                const_cast<char*>("return_mesh"), NULL};
-      if(not PyArg_ParseTupleAndKeywords( _args, _kwargs, "Od|OIl:DnCBoxes", kwlist,
-                                          &structure, &overlap, &_n, &nperbox, &return_mesh) )
-        return NULL;
-      if(_n != NULL and nperbox != -1)
+      // \brief Wrapper to python for periodic boundary divide and conquer.
+      // \see  LaDa::crystal::periodic_dnc()
+      PyObject* pyperiodic_dnc(PyObject* _module, PyObject* _args, PyObject *_kwargs)
       {
-        LADA_PYERROR(TypeError, "DnCBoxes: Cannot specify both n and nperbox.");
+        PyObject* structure = NULL; 
+        PyObject* _n = NULL;
+        types::t_real overlap = 0e25;
+        math::iVector3d mesh;
+        long return_mesh = false;
+        unsigned int nperbox = 20;
+        static char *kwlist[] = { const_cast<char*>("structure"),
+                                  const_cast<char*>("overlap"), 
+                                  const_cast<char*>("mesh"), 
+                                  const_cast<char*>("nperbox"),
+                                  const_cast<char*>("return_mesh"), NULL};
+        if(not PyArg_ParseTupleAndKeywords( _args, _kwargs, "Od|OIl:DnCBoxes", kwlist,
+                                            &structure, &overlap, &_n, &nperbox, &return_mesh) )
+          return NULL;
+        if(_n != NULL and nperbox != -1)
+        {
+          LADA_PYERROR(TypeError, "DnCBoxes: Cannot specify both n and nperbox.");
+          return NULL;
+        }
+        if(not PyStructure_Check(structure)) 
+        {
+          LADA_PYERROR(TypeError, "DnCBoxes: First argument should be a structure.");
+          return NULL;
+        }
+        Structure struc = Structure::acquire(structure);
+        if(_n != NULL and not python::convert_to_vector(_n, mesh)) return NULL;
+        else if(_n == NULL) mesh = guess_mesh_(struc, nperbox);
+  
+        try
+        { 
+          python::Object result = dnc_boxes_impl_(struc, mesh, overlap);
+          if(not result) return NULL;
+          if(not return_mesh) return result.release();
+          python::Object pymesh = python::wrap_to_numpy(mesh);
+          if(not pymesh) return NULL;
+          return PyTuple_Pack(2, pymesh.borrowed(), result.borrowed());
+        }
+        catch(...) {}
         return NULL;
       }
-      if(not PyStructure_Check(structure)) 
-      {
-        LADA_PYERROR(TypeError, "DnCBoxes: First argument should be a structure.");
-        return NULL;
-      }
-      Structure struc = Structure::acquire(structure);
-      if(_n != NULL and not python::convert_to_vector(_n, mesh)) return NULL;
-      else if(_n == NULL) mesh = guess_mesh_(struc, nperbox);
-
-      try
-      { 
-        python::Object result = dnc_boxes_impl_(struc, mesh, overlap);
-        if(not result) return NULL;
-        if(not return_mesh) return result.release();
-        python::Object pymesh = python::wrap_to_numpy(mesh);
-        if(not pymesh) return NULL;
-        return PyTuple_Pack(2, pymesh.borrowed(), result.borrowed());
-      }
-      catch(...) {}
-      return NULL;
-    }
+    } // namespace details
 
   } // namespace Crystal
 

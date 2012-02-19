@@ -8,9 +8,7 @@
 #include <numpy/arrayobject.h>
 
 
-#include "structure_data.h"
-#include "atom.h"
-
+#include "pybase.h"
 
 
 namespace LaDa 

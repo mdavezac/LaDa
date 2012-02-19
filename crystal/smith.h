@@ -9,7 +9,7 @@
 
 #include <math/smith_normal_form.h>
 #include <python/object.h>
-#include "structure.h"
+#include "structure/structure.h"
 #include "smith_data.h"
 
 namespace LaDa 

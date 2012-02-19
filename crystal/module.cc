@@ -10,15 +10,13 @@
 #include <python/wrap_numpy.h>
 
 #include "atom.h"
-#include "structure_data.h"
-#include "structure.h"
 #include "supercell.h"
 #include "primitive.h"
 #include "space_group.h"
-#include "equivalent_structures.h"
 #include "neighbors.h"
 #include "coordination_shells.h"
 #include "confsplit.h"
+#include "periodic_dnc.h"
 #include "methods.hpp"
 #ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
 # define PyMODINIT_FUNC void

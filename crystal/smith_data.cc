@@ -12,7 +12,7 @@
 #include <math/fuzzy.h>
 #include <math/smith_normal_form.h>
 
-#include "structure_data.h"
+#include "structure/pybase.h"
 
 #include "smith_data.h"
 // smithtransform getters/settters.

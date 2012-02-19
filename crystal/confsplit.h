@@ -8,7 +8,7 @@
 
 #include <opt/types.h>
 
-#include "structure.h"
+#include "structure/structure.h"
 
 namespace LaDa
 {

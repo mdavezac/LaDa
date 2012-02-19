@@ -10,7 +10,6 @@
 #include <math/fuzzy.h>
 
 #include "smith.h"
-#include "structure.h"
 #include "exceptions.h"
 #include "utilities.h"
 

@@ -10,7 +10,7 @@
 #include <math/misc.h>
 
 #include "utilities.h"
-#include "structure.h"
+#include "coordination_shells.h"
 
 namespace LaDa 
 {

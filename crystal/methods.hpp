@@ -450,10 +450,6 @@ namespace LaDa
         return structure.release();
      }
 
-    //! \brief Wrapper to python for periodic boundary divide and conquer.
-    //! \see  LaDa::crystal::periodic_dnc()
-   PyObject* pyperiodic_dnc(PyObject* _module, PyObject* _args, PyObject *_kwargs);
-    
     //! \brief Wrapper to python for neighbor list creation.
     //! \see  LaDa::crystal::neighbors()
     static PyObject* pyneighbors(PyObject* _module, PyObject* _args, PyObject *_kwargs)
@@ -699,7 +695,7 @@ namespace LaDa
           ":param operation:\n"
           "    The rotation (applied first) is contained "
               "in the first three row and the translation (applied second) in the last row." },
-        {"periodic_dnc", (PyCFunction)pyperiodic_dnc, METH_VARARGS | METH_KEYWORDS, 
+        {"periodic_dnc", (PyCFunction)details::pyperiodic_dnc, METH_VARARGS | METH_KEYWORDS, 
           "Creates periodic divide-and-conquer boxes. \n\n"
           "Creates a list of divide-and-conquer boxes for a periodic system. "
           "Takes into account periodic images. In order to make sure that a box contains all "

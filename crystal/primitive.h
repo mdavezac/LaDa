@@ -2,7 +2,7 @@
 #define LADA_CRYSTAL_PRIMITIVE_H
 #include "LaDaConfig.h"
 
-#include "structure.h"
+#include "structure/structure.h"
 
 
 namespace LaDa
