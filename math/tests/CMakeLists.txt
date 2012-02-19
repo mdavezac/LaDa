@@ -64,9 +64,9 @@ if(NOT compile_debug_tests)
   target_link_libraries(smith_form mathlib)
   ADD_TEST( smith_form ${CMAKE_CURRENT_BINARY_DIR}/smith_form)
 
-  add_executable(smith smith.cc)
-  target_link_libraries(smith mathlib)
-  ADD_TEST( smith ${CMAKE_CURRENT_BINARY_DIR}/smith)
+# add_executable(smith smith.cc)
+# target_link_libraries(smith mathlib)
+# ADD_TEST( smith ${CMAKE_CURRENT_BINARY_DIR}/smith)
 
 endif(NOT compile_debug_tests)
 

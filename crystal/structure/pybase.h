@@ -10,7 +10,7 @@
 #include <vector>
 #include <ostream>
 
-#include "../atom.h"
+#include "../atom/atom.h"
 
 //! \def PyStructure_Check(object)
 //!      Returns true if an object is a struture or subtype.

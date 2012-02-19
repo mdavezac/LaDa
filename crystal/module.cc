@@ -9,8 +9,8 @@
 #include <python/numpy_types.h>
 #include <python/wrap_numpy.h>
 
-#include "atom.h"
 #include "supercell.h"
+#include "equivalent_structures.h"
 #include "primitive.h"
 #include "space_group.h"
 #include "neighbors.h"

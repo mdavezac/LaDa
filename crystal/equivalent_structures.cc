@@ -221,6 +221,8 @@ namespace LaDa
     bool equivalent( Structure const &_a, Structure const &_b,
                      bool with_scale, bool with_cartesian, types::t_real _tol )
     {
+      if(with_cartesian)
+        LADA_PYTHROW(NotImplementedError, "Equivalence in different cartesian coordinates not implemented.");
       return with_cartesian ? equivalent_crystals(_a, _b, with_scale, _tol):
                               equivalent_lattices(_a, _b, with_scale, _tol);
     }

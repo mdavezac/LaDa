@@ -108,7 +108,7 @@ namespace LaDa
               trial.col(1) = *i_third;
     #         ifdef LADA_DEBUG
                 if(trial.determinant() < types::tolerance)
-                  LADA_PYTHROW(InternalError << error::string("Negative volume."));
+                  LADA_PYTHROW(InternalError, "Negative volume.");
     #         endif
             }
             // Checks that original cell is a supercell.

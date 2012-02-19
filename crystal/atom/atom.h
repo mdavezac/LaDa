@@ -8,7 +8,7 @@
 #include <python/exceptions.h>
 #include <python/object.h>
 
-#include "atom_base.h"
+#include "pybase.h"
 
 namespace LaDa
 {

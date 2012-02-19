@@ -6,7 +6,7 @@
 
 #include <opt/types.h>
 #include <math/misc.h>
-#include "atom.h"
+#include "atom/atom.h"
 
 namespace LaDa
 {

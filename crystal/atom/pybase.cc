@@ -14,14 +14,14 @@
 #include <python/numpy_types.h>
 #include <python/object.h>
 
-#include "atom_base.h"
+#include "pybase.h"
 
 // atom getters/settters.
-#include "atom_getset.hpp"
+#include "getset.hpp"
 // atom member functions.
-#include "atom_members.hpp"
+#include "members.hpp"
 // creation, deallocation, initialization.
-#include "atom_cdi.hpp"
+#include "cdi.hpp"
 
 namespace LaDa
 {

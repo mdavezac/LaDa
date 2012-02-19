@@ -79,7 +79,7 @@ namespace LaDa
     }
 
     // defines macros also used in smith.
-#   include "smith_macro.hpp"
+#   include "macro.hpp"
     // Computes flat smith index from non-flat smith index.
     static PyObject* smithtransform_flatten_indices( SmithTransformData* _self,
                                                      PyObject* _args, PyObject *_kwargs )
@@ -118,6 +118,6 @@ namespace LaDa
       return python::wrap_to_numpy(vector_result);
     }
     // undefs macros also used in smith.
-#   include "smith_macro.hpp"
+#   include "macro.hpp"
   }
 }

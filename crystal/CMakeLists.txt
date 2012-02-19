@@ -1,16 +1,17 @@
-set(LIBCRYSTAL_HEADERS atom.h atom_base.h
+set(LIBCRYSTAL_HEADERS atom/atom.h atom/pybase.h
                        structure/structure.h structure/pybase.h
-                       smith.h smith_data.h
+                       smith/smith.h smith/pybase.h equivalent_structures.h
                        supercell.h primitive.h space_group.h 
                        periodic_dnc.h neighbors.h coordination_shells.h confsplit.h )
-set(LIBCRYSTAL_PYHEADERS atom_cdi.hpp atom_getset.hpp 
-                         structure/cdi.hpp structure/getset.hpp structure/sequence.hpp  
-                         structure/members.hpp
-                         smith_cdi.hpp smith_get.hpp smith_members.hpp smith_macro.hpp)
-set(LIBCRYSTAL_SOURCES atom_base.cc 
-                       structure/structure.cc
-                       utilities.cc primitive.cc 
-                       space_group.cc smith_data.cc periodic_dnc.cc
+set(LIBCRYSTAL_PYHEADERS atom/cdi.hpp atom/getset.hpp atom/members.hpp
+                         structure/cdi.hpp structure/getset.hpp structure/sequence.hpp 
+                         structure/members.hpp 
+                         smith/cdi.hpp smith/get.hpp smith/members.hpp smith/macro.hpp )
+set(LIBCRYSTAL_SOURCES atom/pybase.cc 
+                       structure/pybase.cc structure/structure.cc
+                       smith/pybase.cc
+                       utilities.cc primitive.cc equivalent_structures.cc
+                       space_group.cc periodic_dnc.cc
                        neighbors.cc coordination_shells.cc confsplit.cc )
 
 include_directories(${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDES})

@@ -9,7 +9,7 @@
 #include <math/misc.h>
 #include <math/fuzzy.h>
 
-#include "smith.h"
+#include "smith/smith.h"
 #include "exceptions.h"
 #include "utilities.h"
 

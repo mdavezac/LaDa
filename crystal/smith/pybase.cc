@@ -12,15 +12,15 @@
 #include <math/fuzzy.h>
 #include <math/smith_normal_form.h>
 
-#include "structure/pybase.h"
+#include "../structure/pybase.h"
 
-#include "smith_data.h"
+#include "pybase.h"
 // smithtransform getters/settters.
-#include "smith_get.hpp"
+#include "get.hpp"
 // smithtransform member functions.
-#include "smith_members.hpp"
+#include "members.hpp"
 // creation, deallocation, initialization.
-#include "smith_cdi.hpp"
+#include "cdi.hpp"
 
 namespace LaDa
 {

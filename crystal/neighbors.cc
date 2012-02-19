@@ -12,7 +12,6 @@
 #include <math/gruber.h>
 #include <python/wrap_numpy.h>
 
-#include "atom.h"
 #include "utilities.h"
 
 #include "neighbors.h"

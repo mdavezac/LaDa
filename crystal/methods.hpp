@@ -353,81 +353,81 @@ namespace LaDa
         return space_group(structure, tolerance);
       }
 
-//     PyObject* equivalent_wrapper(PyObject *_module, PyObject *_args, PyObject *_kwargs)
-//     {
-//       PyObject *scale = Py_True; 
-//       PyObject *cartesian = Py_True;
-//       types::t_real tolerance = types::tolerance;
-//       PyObject *a = NULL;
-//       PyObject *b = NULL;
-//       static char *kwlist[] = { const_cast<char*>("a"),
-//                                 const_cast<char*>("b"), 
-//                                 const_cast<char*>("scale"), 
-//                                 const_cast<char*>("cartesian"), 
-//                                 const_cast<char*>("tolerance"), NULL};
-//       if(not PyArg_ParseTupleAndKeywords( _args, _kwargs, "OO|OOd:equivalent", kwlist,
-//                                           &a, &b, &scale, &cartesian, &tolerance) )
-//         return NULL;
-//       if(not PyStructure_Check(a))
-//       {
-//         LADA_PYERROR(TypeError, "equivalent: First argument should be a structure.");
-//         return NULL;
-//       }
-//       if(not PyStructure_Check(b))
-//       {
-//         LADA_PYERROR(TypeError, "equivalent: second argument should be a structure.");
-//         return NULL;
-//       }
-//       if(scale and not PyBool_Check(scale))
-//       {
-//         LADA_PYERROR(TypeError, "equivalent: scale should be True or False.");
-//         return NULL;
-//       }
-//       if(cartesian and not PyBool_Check(cartesian))
-//       {
-//         LADA_PYERROR(TypeError, "equivalent: cartesian should be True or False.");
-//         return NULL;
-//       }
-//       try
-//       {
-//         if( equivalent( Structure::acquire(a), Structure::acquire(b), 
-//                         scale == Py_True ? true: false,
-//                         cartesian == Py_True ? true: false,
-//                         tolerance ) ) Py_RETURN_TRUE;
-//         Py_RETURN_FALSE;
-//       }
-//       // catch exceptions.
-//       catch(error::pyerror &e)
-//       {
-//         // Returns if python error already set.
-//         if(PyErr_Occurred() != NULL) return NULL;
-//         // Otherwise, throw our own
-//         std::string const * message = boost::get_error_info<error::string>(e);
-//         PyObject ** exception = boost::get_error_info<error::pyexcept>(e);
-//         if(exception == NULL)
-//         {
-//           LADA_PYERROR(InternalError, message ? message->c_str(): 
-//                            ( "equivalent -- caught following exception: " +
-//                              std::string(e.what()) ).c_str() );
-//         }
-//         else if(message == NULL)
-//           PyErr_SetString( *exception, 
-//                            ( "equivalent -- caught following exception: " +
-//                              std::string(e.what()) ).c_str() );
-//         else PyErr_SetString(*exception, message->c_str());
-//       }
-//       catch(std::exception &e)
-//       {
-//         std::string const message =  "equivalent -- caught following exception: " 
-//                                      + std::string(e.what());
-//         LADA_PYERROR(InternalError, message.c_str()); 
-//       }
-//       catch(...)
-//       { 
-//         LADA_PYERROR(InternalError, "Caught unknown c++ exception in equivalent.");
-//       }
-//       return NULL;
-//     }
+      PyObject* equivalent_wrapper(PyObject *_module, PyObject *_args, PyObject *_kwargs)
+      {
+        PyObject *scale = Py_True; 
+        PyObject *cartesian = Py_True;
+        types::t_real tolerance = types::tolerance;
+        PyObject *a = NULL;
+        PyObject *b = NULL;
+        static char *kwlist[] = { const_cast<char*>("a"),
+                                  const_cast<char*>("b"), 
+                                  const_cast<char*>("scale"), 
+                                  const_cast<char*>("cartesian"), 
+                                  const_cast<char*>("tolerance"), NULL};
+        if(not PyArg_ParseTupleAndKeywords( _args, _kwargs, "OO|OOd:equivalent", kwlist,
+                                            &a, &b, &scale, &cartesian, &tolerance) )
+          return NULL;
+        if(not PyStructure_Check(a))
+        {
+          LADA_PYERROR(TypeError, "equivalent: First argument should be a structure.");
+          return NULL;
+        }
+        if(not PyStructure_Check(b))
+        {
+          LADA_PYERROR(TypeError, "equivalent: second argument should be a structure.");
+          return NULL;
+        }
+        if(scale and not PyBool_Check(scale))
+        {
+          LADA_PYERROR(TypeError, "equivalent: scale should be True or False.");
+          return NULL;
+        }
+        if(cartesian and not PyBool_Check(cartesian))
+        {
+          LADA_PYERROR(TypeError, "equivalent: cartesian should be True or False.");
+          return NULL;
+        }
+        try
+        {
+          if( equivalent( Structure::acquire(a), Structure::acquire(b), 
+                          scale == Py_True ? true: false,
+                          cartesian == Py_True ? true: false,
+                          tolerance ) ) Py_RETURN_TRUE;
+          Py_RETURN_FALSE;
+        }
+        // catch exceptions.
+        catch(error::pyerror &e)
+        {
+          // Returns if python error already set.
+          if(PyErr_Occurred() != NULL) return NULL;
+          // Otherwise, throw our own
+          std::string const * message = boost::get_error_info<error::string>(e);
+          PyObject ** exception = boost::get_error_info<error::pyexcept>(e);
+          if(exception == NULL)
+          {
+            LADA_PYERROR(InternalError, message ? message->c_str(): 
+                             ( "equivalent -- caught following exception: " +
+                               std::string(e.what()) ).c_str() );
+          }
+          else if(message == NULL)
+            PyErr_SetString( *exception, 
+                             ( "equivalent -- caught following exception: " +
+                               std::string(e.what()) ).c_str() );
+          else PyErr_SetString(*exception, message->c_str());
+        }
+        catch(std::exception &e)
+        {
+          std::string const message =  "equivalent -- caught following exception: " 
+                                       + std::string(e.what());
+          LADA_PYERROR(InternalError, message.c_str()); 
+        }
+        catch(...)
+        { 
+          LADA_PYERROR(InternalError, "Caught unknown c++ exception in equivalent.");
+        }
+        return NULL;
+      }
  
       PyObject* transform_wrapper(PyObject *_module, PyObject *_args, PyObject *_kwargs)
       {
@@ -665,29 +665,29 @@ namespace LaDa
            "forming the rotation, and the last row is the translation. "
            "The affine transform is applied as rotation * vector + translation. "
            "`cell_invariants` always returns rotations (translation is zero). " }, 
-//       {"equivalent", (PyCFunction)equivalent_wrapper, METH_VARARGS | METH_KEYWORDS, 
-//         "Returns true if two structures are equivalent. \n\n"
-//         "Two structures are equivalent in a crystallographic sense, "
-//         "e.g. without reference to cartesian coordinates or possible "
-//         "motif rotations which leave the lattice itself invariant. A "
-//         "supercell is *not* equivalent to its lattice, unless it is a "
-//         "trivial supercell. An option is provided to allow "
-//         "comparison within a single reference frame, i.e. per mathematical "
-//         "definition of lattice.\n\n"
-//         ":Parameters:\n"
-//         "  a:  :class:`Structure`\n    The first structure.\n"
-//         "  b:  :class:`Structure`\n    The second structure.\n"
-//         "  scale: boolean\n"
-//         "    whether to take the scale into account. Defaults to true.\n"
-//         "  cartesian: boolean\n"
-//         "    whether to take into account differences in cartesian "
-//             "coordinates. Defaults to true. If False, then comparison is "
-//             "according to mathematical definition of a lattice. If True, "
-//             "comparison is according to crystallographic comparison.\n"
-//         "  tolerance: float\n"
-//         "    Tolerance when comparing distances. Defaults to 1e-8.  It is in "
-//             "the same units as the structures scales, if that is taken into "
-//             "account, otherwise, it is in the same units as ``a.scale``." },
+        {"equivalent", (PyCFunction)equivalent_wrapper, METH_VARARGS | METH_KEYWORDS, 
+          "Returns true if two structures are equivalent. \n\n"
+          "Two structures are equivalent in a crystallographic sense, "
+          "e.g. without reference to cartesian coordinates or possible "
+          "motif rotations which leave the lattice itself invariant. A "
+          "supercell is *not* equivalent to its lattice, unless it is a "
+          "trivial supercell. An option is provided to allow "
+          "comparison within a single reference frame, i.e. per mathematical "
+          "definition of lattice.\n\n"
+          ":Parameters:\n"
+          "  a:  :class:`Structure`\n    The first structure.\n"
+          "  b:  :class:`Structure`\n    The second structure.\n"
+          "  scale: boolean\n"
+          "    whether to take the scale into account. Defaults to true.\n"
+          "  cartesian: boolean\n"
+          "    whether to take into account differences in cartesian "
+              "coordinates. Defaults to true. If False, then comparison is "
+              "according to mathematical definition of a lattice. If True, "
+              "comparison is according to crystallographic comparison.\n"
+          "  tolerance: float\n"
+          "    Tolerance when comparing distances. Defaults to 1e-8.  It is in "
+              "the same units as the structures scales, if that is taken into "
+              "account, otherwise, it is in the same units as ``a.scale``." },
         {"transform", (PyCFunction)transform_wrapper, METH_VARARGS | METH_KEYWORDS, 
           "Returns a copy of the structure transformed according to affine operation. \n\n"
           ":param structure:\n"

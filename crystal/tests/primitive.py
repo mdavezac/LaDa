@@ -39,7 +39,6 @@ def test_primitive():
   assert is_primitive(lattice)
   for cell in itercells(10): 
     structure = supercell(lattice, dot(lattice.cell, cell))
-    del structure.lattice
     assert not is_primitive(structure)
     structure = primitive(structure, 1e-8)
     assert is_primitive(structure)

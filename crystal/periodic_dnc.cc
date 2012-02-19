@@ -170,7 +170,7 @@ namespace LaDa
                 );
               types::t_int const uu = LADA_INDEX(modboxfrac, _mesh);
 #             ifdef LADA_DEBUG
-                if(uu < 0 or uu >= types::t_int(PyList_Size(container_.borrowed())))
+                if(uu < 0 or uu >= types::t_int(PyList_Size(container.borrowed())))
                 {
                   LADA_PYERROR(InternalError, "Index out of range.");
                   return NULL;

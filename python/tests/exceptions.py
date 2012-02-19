@@ -1,5 +1,5 @@
 import sys
-sys.path = ["@CMAKE_CURRENT_BINARY_DIR@/.."] + sys.path # "@PROJECT_BINARY_DIR@/testdir/", 
+sys.path = ["@CMAKE_CURRENT_BINARY_DIR@"] + sys.path # "@PROJECT_BINARY_DIR@/testdir/", 
 print sys.path
 from lada import error
 import exception_@TYPE@

@@ -2,7 +2,7 @@
 #define LADA_CRYSTAL_EQUIVALENT_STRUCTURES_H
 #include "LaDaConfig.h"
 
-#include "structure.h"
+#include "structure/structure.h"
 
 namespace LaDa
 {

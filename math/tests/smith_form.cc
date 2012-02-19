@@ -7,6 +7,7 @@
 #include <time.h>
 
 #include "../smith_normal_form.h"
+#include "../fuzzy.h"
 
 
 using namespace std;

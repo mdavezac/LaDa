@@ -9,8 +9,8 @@
 
 #include <math/smith_normal_form.h>
 #include <python/object.h>
-#include "structure/structure.h"
-#include "smith_data.h"
+#include "../structure/structure.h"
+#include "pybase.h"
 
 namespace LaDa 
 {
@@ -53,7 +53,7 @@ namespace LaDa
         math::iVector3d & quotient() 
           { return ((SmithTransformData*)object_)->quotient; }
 
-#       include "smith_macro.hpp"
+#       include "macro.hpp"
         //! Computes smith indices of position \a _pos.
         inline math::iVector3d indices(math::rVector3d const &_pos) const
         {
@@ -75,7 +75,7 @@ namespace LaDa
         }
         //! Number of unit-cells in the supercell.
         size_t size() const { return LADA_SMITHTRANSFORM_SHARED2(quotient()); }
-#       include "smith_macro.hpp"
+#       include "macro.hpp"
       private:
         //! creates a smith transform from scratch.
         template<class T0, class T1> 

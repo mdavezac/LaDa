@@ -4,7 +4,7 @@
 #include <boost/exception/get_error_info.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 
-#include "../atom.h"
+#include "../atom/atom.h"
 
 namespace bp = boost::python;
 using namespace LaDa::crystal;
