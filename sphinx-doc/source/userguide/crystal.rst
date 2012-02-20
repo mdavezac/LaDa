@@ -232,8 +232,8 @@ Structure( 0.5, 0.5, 0,\
            0, 0.5, 0.5,\
            0.5, 0, 0.5,\
            scale=1 )\
-  .add_atom(0, 0, 0, 'C', site=0)\
-  .add_atom(0.25, 0.25, 0.25, 'C', site=1)
+  .add_atom(0, 0, 0, 'C')\
+  .add_atom(0.25, 0.25, 0.25, 'C')
 
 Note however that this method is far from perfect and is likely not robust with
 respect to numerical noise. The optional ``tolerance`` keyword argument may
@@ -276,9 +276,10 @@ two sublattices. This means it has two cyclic group [HF2]_, one for each atomic 
 in the lattice. This is why the input to :py:func:`indices
 <SmithTransform.indices>` is a vector which has been
 translated back to the origin of its sublattice. We use the ``site`` attribute
-added to each atom by :py:func:`supercell` to make the translation. 
+added to each atom by :py:func:`supercell` to make the translation. This
+attribute can also be set using the :py:func:`map_sites` method. 
 
-.. seealso:: :py:func:`supercell`, :py:func:`primitive`,
+.. seealso:: :py:func:`supercell`, :py:func:`primitive`, :py:func:`map_sites`,
              :py:func:`is_primitive`, :py:class:`SmithTransform`
 
 

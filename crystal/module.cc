@@ -10,6 +10,7 @@
 #include <python/wrap_numpy.h>
 
 #include "supercell.h"
+#include "map_sites.h"
 #include "equivalent_structures.h"
 #include "primitive.h"
 #include "space_group.h"

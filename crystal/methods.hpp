@@ -514,7 +514,7 @@ namespace LaDa
       return NULL;
     }
     //! \brief Wrapper to python for split configuration creation.
-    //! \see  LaDa::crystal::splitconfigs_from_origin()
+    //! \see  LaDa::crystal::splitconfigs()
     static PyObject* pysplitconfigs(PyObject* _module, PyObject* _args, PyObject *_kwargs)
     {
       PyObject* _structure = NULL; 
@@ -560,6 +560,52 @@ namespace LaDa
       {
         if(PyErr_Occurred() == NULL)
           LADA_PYERROR(InternalError, "splitconfigs: Unknown c++ exception occurred.\n");
+      }
+      return NULL;
+    }
+
+    //! \brief Wrapper to python for mapping sites.
+    //! \see  LaDa::crystal::map_sites()
+    static PyObject* pymapsites(PyObject* _module, PyObject* _args, PyObject *_kwargs)
+    {
+      PyObject* _mapper = NULL; 
+      PyObject* _mappee = NULL; 
+      PyObject* _cmp = Py_None; 
+      double tolerance = 1e-8;
+      static char *kwlist[] = { const_cast<char*>("mapper"),
+                                const_cast<char*>("mappee"), 
+                                const_cast<char*>("cmp"), 
+                                const_cast<char*>("tolerance"), NULL };
+      if(not PyArg_ParseTupleAndKeywords( _args, _kwargs, "OO|Od:", kwlist,
+                                          &_mapper, &_mappee, &_cmp, &tolerance) )
+        return NULL;
+      if(not PyStructure_Check(_mapper)) 
+      {
+        LADA_PYERROR(TypeError, "map_sites: mapper argument should be a structure.");
+        return NULL;
+      }
+      if(not PyStructure_Check(_mappee)) 
+      {
+        LADA_PYERROR(TypeError, "map_sites: mappee argument should be a structure.");
+        return NULL;
+      }
+      if(_cmp != Py_None and PyCallable_Check(_cmp) == false)
+      {
+        LADA_PYERROR(TypeError, "map_sites: cmp is expected to be None or a callable");
+        return NULL;
+      }
+      Structure mapper = Structure::acquire(_mapper);
+      Structure mappee = Structure::acquire(_mappee);
+      python::Object cmp = python::Object::acquire(_cmp);
+      try
+      { 
+        if(map_sites(mapper, mappee, _cmp, tolerance)) Py_RETURN_TRUE;
+        Py_RETURN_FALSE;
+      }
+      catch(...)
+      {
+        if(PyErr_Occurred() == NULL)
+          LADA_PYERROR(InternalError, "map_sites: Unknown c++ exception occurred.\n");
       }
       return NULL;
     }
@@ -784,6 +830,22 @@ namespace LaDa
               "the weight for that configuration. The references to the atoms "
               "are each a 2-tuple consisting of an actual reference to an "
               "atom, as well as the coordinates of that atom in the current view." },
+        {"map_sites", (PyCFunction)pymapsites, METH_VARARGS | METH_KEYWORDS, 
+          "Map sites from a lattice onto a structure.\n\n"
+          "This function finds out which atomic sites in a supercell refer to the sites "
+          "in a parent lattice. ``site`` attribute are added to the atoms in the ``mappee`` "
+          "structure. These attributes hold an index to the relevant sites in the mapper. "
+          "If a particular atom could not be mapped, then ``site`` is None.\n\n" 
+          ":param mapper:\n"
+          "  :class:`Structure` instance acting as the parent lattice.\n"
+          ":param mappee:\n"
+          "  :class:`Structure` instance acting as the supercell.\n"
+          ":param cmp:\n"
+          "  Can be set to a callable which shall take two atoms as input and return True "
+            "if their occupation (and other attributes) are equivalent.\n"
+          ":param tolerance:\n"
+          "  Tolerance criteria when comparing distances.\n\n"
+          ":returns: True if all sites in mappee where mapped to mapper.\n" },
         {NULL, NULL, 0, NULL}        /* Sentinel */
     }; // end of static method table.
   }

@@ -77,6 +77,7 @@ Structure and Geometry Analysis
 
 .. autofunction:: is_primitive(supercell, tolerance=1e-8)->Boolean
 .. autofunction:: space_group(structure, tolerance=1e-8)->Structure
+.. autofunction:: map_sites(mapper, mappee, cmp=None, tolerance=1e-8)->Boolean
 .. autofunction:: neighbors(structure, nmax, center, tolerance=1e-8)->[(Atom, numpy.array, float), ...]
 .. autofunction:: coordination_shells(structure, nshells, center, tolerance=1e-8, natoms=0)->[ [(Atom, numpy.array, float), ...], ...]
 .. autofunction:: periodic_dnc(structure, overlap, mesh=None, nperbox=None, tolerance=1e-8)->[ [(Atom, numpy.array, bool), ...], ...]

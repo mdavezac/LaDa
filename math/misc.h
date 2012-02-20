@@ -188,6 +188,10 @@ namespace LaDa
     //! Casts to lower integer accounting for numerical noise.
     inline iVector3d floor_int(rVector3d const &_t )
       { return iVector3d(floor_int(_t(0)), floor_int(_t(1)), floor_int(_t(2))); }
+    
+    //! Absolute norm.
+    inline rVector3d::Scalar absnorm(rVector3d const &_a)
+      { return std::max(std::max(std::abs(_a[0]), std::abs(_a[1])), std::abs(_a[2])); }
 
   } // namespace math
 
