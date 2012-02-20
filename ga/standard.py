@@ -61,7 +61,6 @@ class Taboo(object):
 
   def __call__(self, darwin, indiv):
     """ Returns true if any one operator returns true. """
-    import sys
     for taboo in self.taboos:
       if taboo(darwin, indiv): return True
 
@@ -73,9 +72,9 @@ def tournament( self, size = 2 ):
   list_ = range(len(self.population))
   random.shuffle(list_)
   list_ = list_[:size]
-  result = 0
-  for b in list_:
-    if self.cmp_indiv(self.population[b], self.population[result]):
+  result = list_[0]
+  for b in list_[1:]:
+    if self.comparison(self.population[b], self.population[result]) == -1:
       result = b;
   return result
 
@@ -103,28 +102,31 @@ def best(self):
   if not self.comm.do_print: return True
   best = None
   for indiv in self.population:
-    if best == None or  self.cmp_indiv( best, indiv ) == 1: 
+    if best is None or  self.cmp_indiv( best, indiv ) == 1: 
       best = indiv
   print "  Best Individual: ", best, best.fitness
   return True
 
 def print_population(self):
+  """ Print population to output stream. """
   if not self.comm.do_print: return True
   print "  Population: "
   for indiv in self.population:
-    print "    ", indiv, indiv.fitness
+    print "    ", indiv, getattr(indiv, 'fitness', None)
   return True
 
 def print_offspring(self):
+  """ Print offspring to output stream. """
   if not self.comm.do_print: return True
-  print "  Offspring: "
+  string = ''
   for indiv in self.population:
     if indiv.birth == self.current_gen - 1: 
-      print "    ", indiv, indiv.fitness
+      string += "    {0} {0.fitness}\n".format(indiv)
+  if len(string) != 0: print "  Offspring: \n", string
   return True
 
-def save_offspring(self):
-  """ Saves offspring to file.
+def append_population(self, population, path):
+  """ Appends population  to file.
 
       First recovers offspring previously saved to file.
       Then adds current offspring.
@@ -132,11 +134,12 @@ def save_offspring(self):
   if self.comm.is_root: 
     from os.path import exists
     from pickle import load, dump
-    path, results = "OFFCAR", []
+    results = []
     if exists(path): 
       with open(path, 'r') as file: results = load(file)
-    result.append([u for u in offspring if u.birth == self.current_gen - 1])
-    with open(path, 'w') as file: dump(file)
+      results.append([u for u in population if u.birth == self.current_gen - 1])
+    else: results = [population]
+    with open(path, 'w') as file: dump(results, file)
   return True
 
 def _check_generation( self ):
@@ -175,10 +178,9 @@ def bleeder_evaluation(self, evaluator, pools, comm):
           An object capable of evaluating individuals.
         pools
           The number of pools of processes to create.
-        comm  : None or boost.mpi.communicator
+        comm  : None or lada.mpi.communicator
           Communication object. 
   """
-  from operator import itemgetter
   from ..jobs import JobDict, Bleeder
   from ..mpi import Communicator
 
@@ -192,7 +194,7 @@ def bleeder_evaluation(self, evaluator, pools, comm):
     for name, pop in [('off', self.offspring), ('pop', self.population)]:
       for index, indiv in enumerate(pop):
         job = jobdict / '{0}/{1}'.format(name, index)
-        job.functional = evaluator
+        job._functional = evaluator
         job.jobparams['indiv'] = indiv
         job.jobparams['overwrite'] = True
         # lets not recompute already known individuals. Need to keep them as record though.
@@ -220,14 +222,14 @@ def mpi_population_evaluation(self, evaluator, pools, comm = None):
       :Param pools:
         Number of pools of processors across which to split evaluations.
       :Param comm: 
-        group boost.mpi.communicator.
+        group lada.mpi.communicator.
 
       Only individuals without a ``fitness`` attribute are evaluated. 
   """
-  from boost.mpi import broadcast, scatter, all_gather, world
+  from ..mpi import world
   from itertools import chain
   # split communicator along number of pools
-  if pools == None: pools = comm.size
+  if pools is None: pools = comm.size
   if pools > comm.size: pools = comm.size
   color = comm.rank % pools
   local_comm = comm.split(color)
@@ -235,7 +237,7 @@ def mpi_population_evaluation(self, evaluator, pools, comm = None):
 
   def check_pops(this, population):
     if not __debug__: return
-    new_pop = broadcast(this.comm, population, 0)
+    new_pop = this.comm.broadcast(population, 0)
     assert len(new_pop) == len(population),\
            RuntimeError("Populations across processes have different lengths.")
     for a, b in zip(new_pop, population):
@@ -249,28 +251,36 @@ def mpi_population_evaluation(self, evaluator, pools, comm = None):
     this.comm.barrier()
 
 
-  gather_these = []
+  gather_these, indices, which_color = [], [], 0
   # Now goes throught individuals which need be evaluated
   for index, indiv in enumerate(chain(self.population, self.offspring)):
     if hasattr(indiv, "fitness"): continue
-    if index % pools == color: 
-      fitness = evaluator(indiv, comm = local_comm)
-      if local_comm.is_root: gather_these.append( (indiv, fitness) )
+    indices.append(index)
+    if which_color == color: 
+      indiv.fitness = evaluator(indiv, comm = local_comm)
+      if local_comm.is_root: gather_these.append(indiv)
+    which_color = (which_color+1) % pools
 
   # gathers all newly computed individuals. 
   if local_comm.is_root: gather_these = heads_comm.all_gather(gather_these)
   gather_these = local_comm.broadcast(gather_these)
 
   # now reinserts them into populations.
-  for index, indiv in enumerate(chain(self.population, self.offspring)):
-    if hasattr(indiv, "fitness"): continue
-    assert len(gather_these) > index % pools, \
-           RuntimeError("%s > %i %% %i" % (len(gather_these), index, pools))
-    assert len(gather_these[index % pools]) != 0
-    a, fitness = gather_these[index % pools].pop(0)
-    indiv.__dict__.update(a.__dict__)
-    indiv.fitness = fitness
+  nbpop, which_color = len(self.population), 0
+  for index in indices:
+    # sanity checks.
+    assert len(gather_these[which_color]) != 0
+
+    # assignss computed individual back into corresponding population.
+    if index >= nbpop: # object belongs to population.
+      self.offspring[index-nbpop] = gather_these[which_color].pop(0)
+    else: # object belongs to offspring
+      self.population[index] = gather_these[which_color].pop(0)
+    which_color = (which_color+1) % pools
+
   comm.barrier()
+
+  # sanity check.
   for index, indiv in enumerate(chain(self.population, self.offspring)):
     if hasattr(indiv, "fitness"): continue
     assert False, "should not be here"
@@ -280,10 +290,10 @@ def mpi_population_evaluation(self, evaluator, pools, comm = None):
   check_pops(self, self.offspring)
   world.barrier()
 
-def population_evaluation(self, evaluator, comm=None, pools=None):
+def population_evaluation(self, evaluator, pools=None, comm=None):
   """ Chooses between MPI and serial evaluation. """
   from ..mpi import Communicator
-  is_serial = pools == 1 or (comm.size == 1 if comm != None else True)
+  is_serial = pools == 1 or (comm.size == 1 if comm is not None else True)
   comm = Communicator(comm)
   if is_serial: serial_population_evaluation(self, evaluator, comm = comm)
   else:         bleeder_evaluation(self, evaluator, min(pools, comm.size), comm)
@@ -306,14 +316,6 @@ class Mating(object):
     self.operators = []
     self.sequential = sequential
     """ If true, operators are applied sequentially. """
-
-  def __repr__(self):
-    string =  "from {0} import {1}".format(self.__class__.__module__, self.__class__.__name__)
-    string +=  "mating = {0}({1})".format(self.__class__.__name__, self.sequential)
-    for function, rate, n in self.operators:
-      string += "mating.add({0}, {1})".format(repr(self.function), self.rate)
-    return string
-
 
   def add(self, function, rate=1):
     """ Adds a mating operator, with a given rate, to the current list. """
@@ -338,7 +340,7 @@ class Mating(object):
       if n == -1: return function(darwin)
 
       individuals = []
-      if indiv != None: individuals.append(indiv)
+      if indiv is not None: individuals.append(indiv)
       else: individuals.append( deepcopy(darwin.population[darwin.selection(darwin)]) )
 
       # calls unaries
@@ -346,13 +348,13 @@ class Mating(object):
 
       # calls binaries
       b = individuals[0]
-      while( b not in individuals ): b = darwin.population[darwin.selection(darwin)]
+      while( b in individuals ): b = darwin.population[darwin.selection(darwin)]
       individuals.append(b)
       if n == 2: return function( individuals[0], individuals[1] )
 
       # calls ternaries
       b = individuals[0]
-      while( b not in individuals ): b = darwin.population[darwin.selection(darwin)]
+      while( b in individuals ): b = darwin.population[darwin.selection(darwin)]
       individuals.append(b)
       if n == 3: return function( individuals[0], individuals[1], individuals[2] )
 
@@ -360,9 +362,14 @@ class Mating(object):
 
     indiv = None
     if self.sequential: # choose any operator depending on rate.
-      while indiv == None: # makes sure we don't bypass all mating operations
+      while indiv is None: # makes sure we don't bypass all mating operations
         for function, rate, n in self.operators:
-          if random.random() < rate: indiv = call_function( function, n, indiv )
+          if random.random() < rate:
+            indiv = call_function( function, n, indiv )
+            assert hasattr(indiv, 'genes'),\
+                   RuntimeError( "Object returned by {0}.{1} is not an individual."\
+                                 .format( function.__class__.__module__,\
+                                          function.__class__.__name__ ) )
     else: # choose only one operator.
       max = 0e0
       for function, rate, n in self.operators: max += rate
@@ -372,11 +379,35 @@ class Mating(object):
       for function, rate, n in self.operators:
         if r <= last + rate:
           indiv = call_function( function, n )
+          assert hasattr(indiv, 'genes'),\
+                 RuntimeError( "Object returned by {0}.{1} is not an individual."\
+                               .format( function.__class__.__module__,\
+                                        function.__class__.__name__ ) )
           break
         last += rate
 
-    assert indiv != None, "%s" % (self.sequential)
+    assert indiv is not None, "%s" % (self.sequential)
     return indiv
+
+  def __repr__(self):
+    """ String representating the mating operator. """
+    modules = {self.__class__.__module__: set([self.__class__.__name__])}
+    string = "mating = {0.__class__.__name__}(sequential={1})\n"\
+             .format(self, repr(self.sequential))
+    for operator, rate, n in self.operators:
+      module = operator.__class__.__module__ 
+      if module not in modules: modules[module] = set()
+      modules[module].add(operator.__class__.__name__)
+      string += "mating.add({0}, rate={1})\n".format(repr(operator), rate)
+    header = ""
+    for key, values in modules.iteritems():
+      values = list(values)
+      header += "from {0} import {1}".format(key, values[0])
+      for value in values[1:]: header += ", {0}".format(value)
+      header += "\n"
+    return header + string
+
+
 
 
 def add_checkpoint(self, _chk):
@@ -401,7 +432,6 @@ def fill_attributes(self):
       - "max_gen" defaults to 100, or current_gen+100 if max_gen > current_gen.
       - "cmp_indiv" defaults to standard.cmp_indiv
   """
-  import darwin 
   # must have an evaluation function.
   assert hasattr(self, "evaluation"), "No evaluation function!" 
 

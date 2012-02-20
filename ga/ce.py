@@ -22,7 +22,7 @@ class Eval:
     from os.path import exists, join
     from re import compile, match
     from random import shuffle
-    from ...ce import create_clusters as Clusters, PairRegulatedFit
+    from ...ce import _create_clusters as Clusters, PairRegulatedFit
 
     self.lattice = lattice
 
@@ -33,7 +33,7 @@ class Eval:
     key_regex = compile("B(\d+)")
     for key in keywords.keys(): 
       a_re = match(key_regex, key)
-      assert a_re != None, "Keyword %s is not of the form B(\d+)" % (key)
+      assert a_re is not None, "Keyword %s is not of the form B(\d+)" % (key)
       assert a_re.end() == len(key), "Keyword %s is not of the form B(\d+)" % (key)
       assert int(a_re.group(1)) > 1, "Cannot understand keyword %s" % (key)
       assert keywords[key] > 0, "Cannot understand input %s=%i" % (key, keywords[key])
@@ -71,7 +71,7 @@ class Eval:
       print "Found input set %s:\n" % (set_path)
       file = open(set_path, "r")
       for line in file:
-        self._sets.append( [int(i) for i in line.spli()] )
+        self._sets.append( [int(i) for i in line.split()] )
         print "  ", self._sets[-1]
         for i in self._sets[-1]:
           assert i < nstr, "Index in set is larger than the number of structures.\n"
@@ -158,7 +158,7 @@ class EvalFitPairs(Eval):
     # create pair terms.
     classes = None
     for site in _equivalent_sites(self.lattice):
-      if classes == None:
+      if classes is None:
         classes = Clusters(self.lattice, nth_shell=self.pairs[1], order=2, site=site)
         self._pairindex = [0]
         pairs = len(classes)
@@ -244,7 +244,7 @@ class EvalFitPairs(Eval):
         fopt = 1e12; x0 = array([1.1,1.0])
       except ValueError:
         fopt = 1e12; x0 = array([1.1,1.0])
-      if minvals == None or minvals[0] > fopt:  minvals = (fopt, iter)
+      if minvals is None or minvals[0] > fopt:  minvals = (fopt, iter)
 
     return minvals[0]
 
@@ -333,7 +333,7 @@ class Individual(object):
   
   def __eq__(self, a): 
     from math import fabs
-    if a == None: return False
+    if a is None: return False
     for i, b in enumerate(a.genes):
       if self.genes[i] != b: return False
     return True

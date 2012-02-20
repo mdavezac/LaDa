@@ -3,7 +3,7 @@ set(PYPHYSICS_SOURCES python.cc)
 
 include_directories(${PYTHON_INCLUDE_DIRS})
 python_add_module (pyphysics ${PYPHYSICS_HEADERS} ${PYPHYSICS_SOURCES})
-target_link_libraries(pyphysics ${Boost_PYTHON_LIBRARY})
+target_link_libraries(pyphysics ${Boost_PYTHON_LIBRARY} ${PYTHON_LIBRARY})
 mark_as_advanced(PYTHON_ENABLE_MODULE_pyphysics)
 mark_as_advanced(PYTHON_MODULE_pyphysics_BUILD_SHARED)
 set_target_properties(pyphysics PROPERTIES PREFIX "_")

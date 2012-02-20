@@ -37,7 +37,7 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
     assert len(lattice.name) != 0, ValueError("Lattice has no name.")
   
   # regex
-  specie_regex = compile("([A-Z][a-z]?)2([A-Z][a-z]?)([A-Z][a-z]?)4")
+  specie_regex = compile("([A-Z][a-z]?)([A-Z][a-z]?)([A-Z][a-z]?)")
 
   # Job dictionary.
   jobdict = JobDict()
@@ -50,7 +50,10 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
 
     # creates dictionary to replace A2BX4 with meaningfull species.
     match = specie_regex.match(material)
-    assert match != None, RuntimeError("Incorrect material " + material + ".")
+    print match.group(1)
+    print match.group(2)
+    print match.group(3)
+    assert match is not None, RuntimeError("Incorrect material " + material + ".")
     # checks species are known to vasp functional
     for i in range(1, 4):
       assert match.group(i) in input.vasp.species,\
@@ -127,7 +130,7 @@ def magnetic_wave(path=None, inputpath=None, **kwargs):
     print "No current job-dictionary." 
     return
   jobdict = ip.user_ns["current_jobdict"].root
-  if path == None:
+  if path is None:
     if "current_jobdict_path" not in ip.user_ns:
       print "No known path for current dictionary and no path specified on input."
       return
@@ -144,7 +147,7 @@ def magnetic_wave(path=None, inputpath=None, **kwargs):
       file.flush()
       dummy =read_input(file.name)
       input.update(dummy)
-  if inputpath != None:
+  if inputpath is not None:
     input.update(read_input(inputpath))
     with open(inputpath, "r") as file: jobdict.maginput = file.read()
   input.update(kwargs)
@@ -180,7 +183,7 @@ def magnetic_wave(path=None, inputpath=None, **kwargs):
       # now tries and creates high-spin ferro jobs if it does not already exist.
       jobname = normpath("{0}/{1}ferro".format(basename, prefix))
       magmom = ferro(extract.structure, extract.functional.species, func)
-      if magmom != None and jobname not in jobdict:
+      if magmom is not None and jobname not in jobdict:
         job = jobdict / jobname
         job.functional = input.relaxer 
         job.jobparams["structure"] = extract.structure.deepcopy()
@@ -197,7 +200,7 @@ def magnetic_wave(path=None, inputpath=None, **kwargs):
       # now tries and creates anti-ferro-lattices jobs if it does not already exist.
       magmom = species_antiferro(extract.structure, extract.functional.species, func) 
       jobname = normpath("{0}/{1}anti-ferro-0".format(basename, prefix))
-      if magmom != None and jobname not in jobdict:
+      if magmom is not None and jobname not in jobdict:
         job = jobdict / jobname
         job.functional = input.relaxer
         job.jobparams["structure"] = extract.structure.deepcopy()
@@ -214,11 +217,11 @@ def magnetic_wave(path=None, inputpath=None, **kwargs):
       # random anti-ferro.
       for i in range(1, 1+input.nbantiferro):
         magmom = random(extract.structure, extract.functional.species, func)
-        if magmom == None: continue
+        if magmom is None: continue
         jobname = normpath("{0}/{1}anti-ferro-{2}".format(basename, prefix, i))
         if jobname in jobdict: continue
         job = jobdict / jobname
-        job.functional = input.relaxer if inputpath != None else nonmagjob.functional
+        job.functional = input.relaxer if inputpath is not None else nonmagjob.functional
         job.jobparams["structure"] = extract.structure.deepcopy()
         job.jobparams["structure"].name = "{0} in {1}, random anti-ferro."\
                                           .format(material, lattice.name)

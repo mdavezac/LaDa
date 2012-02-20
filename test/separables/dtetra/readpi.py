@@ -20,9 +20,9 @@ def importPiStructure(file):
     result = None
     for line in file:
       result = reNdec.match( line )
-      if result == None: continue
+      if result is None: continue
       break
-    if result == None: raise IOError 
+    if result is None: raise IOError 
     splitted = line.strip().split()
     # creates atomic species entries in structure
     N = eval(splitted[3])
@@ -38,7 +38,7 @@ def importPiStructure(file):
     reNdec = re.compile('^\sBASIS')
     current_pos = file.tell()
     for line in file:
-      if reNdec.match( line ) != None: break
+      if reNdec.match( line ) is not None: break
 
     vectors = []
     oldline = line;

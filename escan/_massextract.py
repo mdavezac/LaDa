@@ -14,34 +14,34 @@ def extract_all(directory=None, **kwargs):
   from os import getcwd
   from os.path import exists, join
   from ..opt import RelativeDirectory
-  from ._extract import Extract
-  from .kescan import Extract as KExtract
   from ._bandgap import extract as extract_bg
   OUTCAR = kwargs.get('OUTCAR', Extract().OUTCAR)
-  comm = kwargs.get('comm', None)
 
   class ExtractEscanFail(object):
     @property
     def success(self): return False
-  if directory == None: directory = getcwd()
+  if directory is None: directory = getcwd()
   else: directory = RelativeDirectory(directory).path
   if not exists(directory): return ExtractEscanFail()
 
-  # found bandgap calculation.
-  if exists(join(directory, 'AE')): return extract_bg(directory, **kwargs)
-  if not exists(join(directory, OUTCAR)): return ExtractEscanFail()
-  if exists(join(directory, 'CBM')) and exists(join(directory, 'VBM')):
-    return extract_bg(directory, **kwargs)
-
-  # found escan or kescan calculation.
+  # checks for an ESCANCAR file.
   result = Extract(directory, **kwargs)
-  return result if result.functional.__class__.__name__ != 'KEscan'\
-         else KExtract(directory, **kwargs)
+  try: result = result.functional.Extract(directory, **kwargs)
+  except: pass
+  else: return result
+
+  # Find basic calculation type from directory structure.
+  if exists(join(directory, 'AE')): result = extract_bg(directory, **kwargs)
+  elif exists(join(directory, 'CBM')) and exists(join(directory, 'VBM')):
+    result = extract_bg(directory, **kwargs)
+  elif not exists(join(directory, OUTCAR)): return ExtractEscanFail()
+  else: result = Extract(directory, **kwargs)
+  
+  return result
 
 
 class MassExtract(AbstractMassExtractDirectories):
   """ Extracts all escan calculations nested within a given input directory. """
-  Extract = staticmethod(extract_all)
   def __init__(self, path = ".", details=False, **kwargs):
     """ Initializes AbstractMassExtractDirectories.
     
@@ -60,44 +60,58 @@ class MassExtract(AbstractMassExtractDirectories):
         :kwarg unix_re: converts regex patterns from unix-like expression.
     """
     # this will throw on unknown kwargs arguments.
-    if 'Extract' not in kwargs: kwargs['Extract'] = Extract
+    if 'Extract' not in kwargs: kwargs['Extract'] = extract_all
     super(MassExtract, self).__init__(path, **kwargs)
-    del self.__dict__['Extract']
     self._details = details
     """ Wether to give all calculations or decide between bandgap, kescan and others. """
 
   def __iter_alljobs__(self):
     """ Goes through all directories with a contcar. """
-    from os import walk, getcwd
-    from os.path import relpath, join, dirname
+    from os import walk
+    from glob import iglob
+    from os.path import relpath, join
     from ._extract import Extract as EscanExtract
 
     self.__dict__['__attributes'] = set()
-    if self._details:
-      from ._extract import Extract
+    # find common denominator between all rootdirectories.
+    rootintersect = [set(u.split('/')) for u in iglob(self.rootdir)]
+    if len(rootintersect) > 1:
+      rootintersect[0].intersection_update(*rootintersect[1:])
+      common = iglob(self.rootdir).next().split('/')
+      for i, u in enumerate(list(common[::-1])): 
+        if u not in rootintersect[0]: common.pop(-i-1)
+      common = '/'.join(common)
+    else: common = self.rootdir
+
+    # choose wether to look for all escan calculations indifferently, or
+    # whether to be smart about what to include
+    if self._details: # all calculations.
       OUTCAR = EscanExtract().OUTCAR
-      for dirpath, dirnames, filenames in walk(self.rootdir, topdown=True, followlinks=True):
-        if OUTCAR not in filenames: continue
-        try: result = EscanExtract(join(self.rootdir, dirpath), comm = self.comm)
-        except: continue
-        else:
-          yield '/'+relpath(result.directory, self.rootdir), result
-          self.__dict__['__attributes'] |= set([u for u in dir(result) if u[0] != '_'])
-    else:
-      for dirpath, dirnames, filenames in walk(self.rootdir, topdown=True, followlinks=True):
-        i = len(dirnames) - 1
-        for dirname in list(dirnames[::-1]):
-          if dirname in ['AE', 'CBM', 'VBM']: dirnames.pop(i)
-          elif len(dirname) > 7 and dirname[:7] == 'kpoint_': dirnames.pop(i)
-          i -= 1
-  
-        try: result = self.Extract(join(self.rootdir, dirpath), comm = self.comm)
-        except: continue
-  
-        if result.__class__.__name__ != 'ExtractEscanFail': 
-          yield join('/', relpath(dirpath, self.rootdir)), result
-          self.__dict__['__attributes'] |= set([u for u in dir(result) if u[0] != '_'])
+      for rootdir in iglob(self.rootdir):
+        for dirpath, dirnames, filenames in walk(rootdir, topdown=True, followlinks=True):
+          if OUTCAR not in filenames: continue
+          try: result = EscanExtract(join(self.rootdir, dirpath), comm = self.comm)
+          except: continue
+          else:
+            yield '/'+relpath(result.directory, common), result
+            self.__dict__['__attributes'] |= set([u for u in dir(result) if u[0] != '_'])
+    else: # smart inclusion.
+      for rootdir in iglob(self.rootdir):
+        for dirpath, dirnames, filenames in walk(rootdir, topdown=True, followlinks=True):
+          i = len(dirnames) - 1
+          for dirname in list(dirnames[::-1]):
+            if dirname in ['AE', 'CBM', 'VBM']: dirnames.pop(i)
+            elif len(dirname) > 7 and dirname[:7] == 'kpoint_': dirnames.pop(i)
+            i -= 1
+        
+          try: result = self.Extract(join(self.rootdir, dirpath), comm = self.comm)
+          except: continue
+        
+          if result.__class__.__name__ != 'ExtractEscanFail': 
+            yield join('/', relpath(dirpath, common)), result
+            self.__dict__['__attributes'] |= set([u for u in dir(result) if u[0] != '_'])
     self.__dict__['__attributes'] = list(self.__dict__['__attributes'])
+
   @property
   def _attributes(self):
     """ List of attributes inherited from escan extractors. """

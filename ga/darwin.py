@@ -23,7 +23,6 @@ def _check_population(self, population):
 def run(self):
   """ Performs a Genetic Algorithm search """
   import standard
-  import sys
  
   # runs the checkpoints
   def checkpoints():
@@ -45,22 +44,29 @@ def run(self):
   assert hasattr(self, "rate"), "No rate attribute.\n"
   assert hasattr(self, "mating"), "No mating functor.\n"
   assert hasattr(self, "offspring"), "No offspring attribute.\n"
-  assert hasattr(self, "cmp_indiv"), "No cmp_indiv operation.\n"
+  assert hasattr(self, "comparison"), "No comparison operation.\n"
 
   # creates population if it does not exist.
-  while len(self.population) < self.popsize:
-    j = 0
-    loop = True
-    while loop:
-      indiv = self.comm.broadcast(self.Individual() if self.comm.rank == 0 else None)
-      loop = self.taboo(indiv)
-      j += 1
-      assert j < max(50*self.popsize, 100), "Could not create offspring.\n"
-    indiv.birth = self.current_gen
-    self.population.append(indiv)
-
+  if self.comm.is_root: 
+    while len(self.population) < self.popsize:
+      j = 0
+      loop = True
+      while loop:
+        indiv = self.Individual()
+        loop = self.taboo(indiv)
+        j += 1
+        assert j < max(50*self.popsize, 100), "Could not create offspring.\n"
+      indiv.birth = self.current_gen
+      self.population.append(indiv)
+  self.population = self.comm.broadcast(self.population)
+  
   # evaluates population if need be.
   self.evaluation() 
+  # now makes sure evaluation did not create twins.
+  dummy, self.population = self.population, []
+  for indiv in dummy:
+    if any(indiv == u for u in self.population): continue
+    self.population.append(indiv)
 
   # Number of offspring per generation.
   nboffspring = max(int(float(self.popsize)*self.rate), 1)
@@ -68,7 +74,7 @@ def run(self):
   # generational loop
   while checkpoints(): 
     if self.comm.do_print:
-      print "Starting generation ", self.current_gen
+      print "\nStarting generation ", self.current_gen
 
     # tries and creates offspring.
     if self.comm.rank == 0:
@@ -91,14 +97,24 @@ def run(self):
 
     # finally, sort and replace.
     if self.comm.rank == 0:
-      self.population = sorted( self.population, self.cmp_indiv )[:len(self.population)-nboffspring]
-      self.population.extend( self.offspring )
+      # deal with differences in function sorted between python versions.
+      from platform import python_version_tuple
+      if python_version_tuple()[0] > 2:
+        from functools import cmp_to_key
+        self.population = sorted(self.population, key=cmp_to_key(self.comparison))
+      else: 
+        self.population = sorted(self.population, cmp=self.comparison)
+      # Inserts individual one by one ensuring they do not yet exist in the
+      # population. This ensures that duplicates are not allowed.
+      for indiv in self.offspring:
+        if any(indiv == u for u in self.population): continue
+        self.population.insert(0, indiv)
+        # In case population smaller than expected, use conditional.
+        if len(self.population) > self.popsize: self.population.pop(-1)
     self.population = self.comm.broadcast(self.population)
-
     
     self.offspring = []
     self.current_gen += 1 
-
 
   # final stuff before exiting.
   if hasattr(self, "final"): self.final()

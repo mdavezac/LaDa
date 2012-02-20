@@ -3440,6 +3440,6 @@ __all__.extend(['Element', 'iterate'])
 
 def iterate():
   """ Iterates through all elements. """
-  for name in _elements.symbols:
+  for name in symbols:
     yield globals()[name] 
 

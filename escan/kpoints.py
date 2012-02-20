@@ -20,7 +20,7 @@ class KPoints(object):
   """
   __metaclass__ = ABCMeta
 
-  def __init__(self): object.__init__(self)
+  def __init__(self): super(KPoints, self).__init__()
 
   @abstractmethod
   def _mnk(self, input, output):
@@ -58,7 +58,7 @@ class KContainer(object):
     """ Sequence of kpoints. """
     self.multiplicity = multiplicity
     """ Sequence with the multiplicity of the respective kpoints. """
-    if self.multiplicity == None:
+    if self.multiplicity is None:
       self.multiplicity = [1e0 / len(self.kpoints) for k in self.kpoints]
     else: self.multiplicity = [m for m in self.multiplicity]
     self.relax = relax
@@ -70,7 +70,7 @@ class KContainer(object):
         If ``self.relax`` is True, then kpoints are relaxed from the input cell
         to the relaxed output cell.
     """
-    from numpy import dot, abs
+    from numpy import dot
     from numpy.linalg import inv
 
     if self.relax: deformation = dot(inv(output.cell.T), input.cell.T)
@@ -96,9 +96,9 @@ class KGrid(KPoints):
     """ Initializes unreduced KGrid. """
     from numpy import array
     KPoints.__init__(self)
-    self.grid = grid if grid != None else array([1,1,1])
+    self.grid = grid if grid is not None else array([1,1,1])
     """ Grid dimensions in reciprocal space. """
-    self.offset = offset if offset != None else array([0,0,0])
+    self.offset = offset if offset is not None else array([0,0,0])
     """ Offset from Gamma of the grid. """
     self.relax = relax
     """ Whether to deform kpoints to the relaxed structure. """
@@ -106,7 +106,7 @@ class KGrid(KPoints):
 
   def _mnk(self, input, output):
     """ Yields kpoints on the grid. """
-    from numpy.linalg import inv, norm
+    from numpy.linalg import inv
     from numpy import zeros, array, dot, multiply
     from ..crystal.gruber import Reduction
     
@@ -123,7 +123,7 @@ class KGrid(KPoints):
       for y in xrange(self.grid[1]):
         for z in xrange(self.grid[2]):
           a = dot(cell, multiply(array([x,y,z]), invgrid) + offset)
-          yield 1, array(a.flat)
+          yield weight, array(a.flat)
  
   def __repr__(self):
     """ Represents this object. """
@@ -148,17 +148,14 @@ class KDensity(KGrid):
 
   def __init__(self, density, offset = None, relax=True):
     """ Initializes unreduced KGrid. """
-    from numpy import array
     KGrid.__init__(self, relax=relax, offset=offset)
     self.density = density
     """ 1-dimensional density in cartesian coordinates (1/Angstrom). """
 
   def _mnk(self, input, output):
     """ Yields kpoints on the grid. """
-    from numpy import zeros, array, dot, floor
+    from numpy import floor
     from numpy.linalg import inv, norm, det
-    from quantities import angstrom
-    from ..crystal import fill_structure
     from ..crystal.gruber import Reduction
     
     cell = inv(Reduction()(output.cell,recip=True) * output.scale).T
@@ -226,7 +223,11 @@ def _reduced_grids_factory(name, base):
         for i, others in enumerate(seen):
           index, m, vec, op = others[0]
           for op in lattice.space_group:
-            u = to_origin(dot(op.op, kpoint), kcell, vec)
+            try: 
+              u = to_origin(dot(op.op, kpoint), kcell, vec)
+            except ValueError:
+              print kpoint
+              raise
             if all(abs(u) < self.tolerance):
               found = True
               seen[i].append((j, mult, kpoint, op))

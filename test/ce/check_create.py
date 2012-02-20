@@ -10,12 +10,8 @@ def inequivalent_sites(lattice):
       if j != i and j in result: result.remove(j)
   return result
 
-from numpy import array, zeros
 from numpy.linalg import norm
-import pyublas 
-from random import choice
-from lada.crystal import A2BX4, fill_structure
-from lada.opt import read_input
+from lada.crystal import A2BX4
 from lada.ce import create_clusters
 from math import exp
 
@@ -33,8 +29,8 @@ lattice.find_space_group()
 lattice.set_as_crystal_lattice()
 
 # creates random structure.
-structure = fill_structure(A2BX4.b5I().cell, A2BX4.b5I())
-normal = fill_structure(A2BX4.b5().cell, A2BX4.b5())
+structure = A2BX4.b5I().to_structure() 
+normal = A2BX4.b5().to_structure()
 # for atom in structure.atoms:
 #   atom.type = choice(lattice.sites[atom.site].type)
 
@@ -54,7 +50,7 @@ for i in ineqs:
 # then pairs figures.
 clusters = None
 for i in ineqs:
-  if clusters == None:
+  if clusters is None:
     clusters = create_clusters(lattice, nth_shell=shell, order=2, site=i)
   else: 
     clusters.extend(create_clusters(lattice, nth_shell=shell, order=2, site=i))

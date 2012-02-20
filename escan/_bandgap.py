@@ -14,21 +14,22 @@ def extract(outdir=".", comm = None):
       successfull extraction object.
   """
   from os.path import exists, join
-  from ..vff import Extract as VffExtract
   from ..mpi import Communicator
+  from ..opt import RelativeDirectory
 
   comm = Communicator(comm)
+  outdir = RelativeDirectory(outdir).path
 
   paths = join(outdir, "AE"), join(outdir, "VBM"), join(outdir, "CBM")
   exists_paths = comm.broadcast([exists(p) for p in paths] if comm.is_root else None)
   if exists_paths[0]: 
     result = ExtractAE( _ExtractE(paths[0], comm = comm) )
-    if result.success: return result
+    return result
   elif exists_paths[1] and exists_paths[2]:
     result = ExtractRefs( _ExtractE(paths[1], comm = comm),\
                           _ExtractE(paths[2], comm = comm),
                           _ExtractE(outdir, comm = comm) )
-    if result.success: return result
+    return result
   class NoBandGap(object): 
     @property
     def success(self): return False
@@ -53,7 +54,7 @@ def bandgap(escan, structure, outdir=None, references=None, n=5, overwrite = Fal
       cannot be made sense of, an electron-calculation is performed.
   """
   from os import getcwd
-  from os.path import abspath, exists, join
+  from os.path import abspath
   from copy import deepcopy
   from ..mpi import Communicator
 
@@ -62,7 +63,7 @@ def bandgap(escan, structure, outdir=None, references=None, n=5, overwrite = Fal
 
   escan = deepcopy(escan)
          
-  if outdir == None: outdir = getcwd()
+  if outdir is None: outdir = getcwd()
   outdir    = abspath(outdir)
   overlap_factor = kwargs.pop("overlap_factor", 10e0)
 
@@ -74,18 +75,18 @@ def bandgap(escan, structure, outdir=None, references=None, n=5, overwrite = Fal
   
   kwargs["overwrite"] = overwrite
   kwargs["comm"] = comm
-  return _band_gap_ae_impl(escan, structure, outdir, **kwargs) if references == None\
+  return _band_gap_ae_impl(escan, structure, outdir, **kwargs) if references is None\
          else _band_gap_refs_impl(escan, structure, outdir, references, n, \
                                   overlap_factor=overlap_factor, **kwargs) 
 
-class ExtractAE(_ExtractE):
+class ExtractAE(object):
   """ Band-gap extraction class. """
   is_ae = True
   """ This was an all-electron bandgap calculation. """
   def __init__(self, extract):
-    super(ExtractAE, self).__init__(extract.directory, extract.comm, escan=extract.functional)
-    self.OUTCAR = extract.OUTCAR
-    self.FUNCCAR = extract.FUNCCAR
+    """ Initializes extraction object for all-electron bandgaps. """
+    self.__dict__['_extract'] = extract
+    super(ExtractAE, self).__init__()
 
   @property
   def bandgap(self):
@@ -107,10 +108,9 @@ class ExtractAE(_ExtractE):
   def _vbm_cbm(self):
     """ Gets vbm and cbm. """
     from quantities import eV
-    from ..crystal import nb_valence_states
     eigenvalues = self.eigenvalues.copy()
     eigenvalues.sort()
-    n = nb_valence_states(self.structure)
+    n = len(self.structure.atoms) * 4
     a, b = eigenvalues[n-1], eigenvalues[n] 
     if hasattr(a, "units"): a.units = eV
     else: a = a * eV
@@ -121,38 +121,34 @@ class ExtractAE(_ExtractE):
 
   def oscillator_strength(self, degeneracy=1e-3, attenuate=False):
     """ Computes oscillator strength between vbm and cbm. """
-    from numpy import dot
-    from numpy.linalg import det
-    from ..physics import a0, electronic_mass, h_bar
-    result, nstates = None, 0
+    from numpy import abs, dot
+    from ..physics import electronic_mass, h_bar
+
     units = 2e0/3e0 * h_bar**2 / electronic_mass
-    for wfnA in self.gwfns:
-      if abs(wfnA.eigenvalue - self.cbm) > degeneracy: continue
-      for wfnB in self.gwfns:
-        if abs(wfnB.eigenvalue - self.vbm) > degeneracy: continue
-        nstates += 1
-        dme = wfnA.braket(self.gvectors, wfnB, attenuate=attenuate) 
-        if result == None: 
-          result = dot(dme, dme.conjugate()).real / (wfnA.eigenvalue - wfnB.eigenvalue) \
-                   * dme.units * dme.units
-        else: 
-          result += dot(dme, dme.conjugate()).real / (wfnA.eigenvalue - wfnB.eigenvalue) \
-                    * dme.units * dme.units
-    return (result * units).simplified, nstates
+    result, nstates = None, 0
+    for eigA, eigB, dipole in self.dipole(degeneracy, attenuate):
+      if abs(eigA - self.cbm) > degeneracy: continue
+      if abs(eigB - self.vbm) > degeneracy: continue
+      nstates += 1
+      dme = dot(dipole, dipole.conjugate()).real * dipole.units * dipole.units
+      if result is None: result = dme / (eigA - eigB) 
+      else: result += dme / (eigA - eigB) 
+    return (units * result).simplified, nstates
 
 
   def dipole(self, degeneracy=-1e0, attenuate=False):
     """ Computes dipole matrix element between vbm and cbm. """
     # gets result, possibly from cache file.
     d2, a2, result = self._dipole(degeneracy, attenuate)
+
     uncache  = degeneracy < 0e0 and d2 >= 0e0
-    uncache |= degeneracy >= 0e0 and d2 < 0e0
-    uncache |= abs(d2 - degeneracy) >= min(d2, degeneracy)
+    if d2 > 0e0 and degeneracy > 0e0: 
+      uncache |= abs(d2 - degeneracy) >= min(d2, degeneracy) and d2 < degeneracy
     uncache |= a2 != attenuate
     if uncache: 
       from os.path import join
       from os import remove
-      remove(join(self.directory, "DIPOLECAR"))
+      remove(join(self._extract.directory, "DIPOLECAR"))
       return self._dipole(degeneracy, attenuate)[-1]
     return result
     
@@ -164,8 +160,6 @@ class ExtractAE(_ExtractE):
         This routine caches results in a file. The routine above should check
         that the arguments are the same.
     """
-    from numpy import array
-    from numpy.linalg import det
     from ..physics import a0
     result, gvectors = [], self.gvectors.rescale(1./a0)
     for wfnA in self.gwfns:
@@ -191,22 +185,41 @@ class ExtractAE(_ExtractE):
     """
     if kwargs.get('dipolecar', False): 
       from os.path import exists, join
-      if exists(join(self.directory, 'DIPOLECAR')): yield join(self.directory, 'DIPOLECAR')
-    for file in _ExtractE.iterfiles(self, **kwargs): yield file
+      if exists(join(self._extract.directory, 'DIPOLECAR')):
+        yield join(self._extract.directory, 'DIPOLECAR')
+    for file in self._extract.iterfiles(**kwargs): yield file
+
+  @property
+  def directory(self):
+    """ Directory containing the results. """
+    from os.path import dirname, realpath
+    return dirname(realpath(self._extract.directory))
+
+
+  def __getattr__(self, name):
+    """ Passes on result to extract object. """
+    return getattr(self._extract, name)
+
+  def __dir__(self):
+    """ All public attributes in this object. """
+    return   [u for u in dir(self.__class__) if u[0] != '_'] \
+           + [u for u in dir(self._extract) if u[0] != '_']
   
 def _band_gap_ae_impl(escan, structure, outdir, **kwargs):
   """ Computes bandgap of a structure using all-electron method. """
   from os.path import join
-  from ..crystal import nb_valence_states
   
   if "eref" in kwargs:
-    assert kwargs["eref"] == None, ValueError("Unexpected eref argument when computing bandgap.")
+    assert kwargs["eref"] is None, ValueError("Unexpected eref argument when computing bandgap.")
     del kwargs["eref"]
   outdir = join(outdir, "AE")
   nbstates = kwargs.pop("nbstates", escan.nbstates)
-  if nbstates == None: nbstates = 4
+  if nbstates is None: nbstates = 4
   if nbstates == 0: nbstates = 4
-  nbstates = nbstates  + nb_valence_states(structure)
+  if hasattr(nbstates, '__getitem__'):
+    assert len(nbstates) > 1, ValueError("Not sure what nbstates is.")
+    nbstates = max(nbstates)
+  nbstates = nbstates  + len(structure.atoms) * 4
   extract = escan( structure, outdir = outdir, eref = None,\
                    nbstates = nbstates, **kwargs)
   return ExtractAE(extract)
@@ -277,23 +290,18 @@ class ExtractRefs(object):
 
   def oscillator_strength(self, degeneracy=1e-3, attenuate=False):
     """ Computes oscillator strength between vbm and cbm. """
-    from numpy import all, abs, dot
-    from numpy.linalg import det
-    from ..physics import a0, electronic_mass, h_bar
+    from numpy import abs, dot
+    from ..physics import electronic_mass, h_bar
 
-    assert self.extract_vbm.gvectors.shape == self.extract_cbm.gvectors.shape
-    assert all( abs(self.extract_vbm.gvectors - self.extract_cbm.gvectors) < 1e-12 )
     units = 2e0/3e0 * h_bar**2 / electronic_mass
     result, nstates = None, 0
-    for wfnA in self.extract_cbm.gwfns:
-      if abs(wfnA.eigenvalue - self.cbm) > degeneracy: continue
-      for wfnB in self.extract_vbm.gwfns:
-        if abs(wfnB.eigenvalue - self.vbm) > degeneracy: continue
-        nstates += 1
-        dme = wfnA.braket(self.extract_vbm.gvectors, wfnB, attenuate=attenuate)
-        dme = dot(dme, dme.conjugate()).real * dme.units * dme.units
-        if result == None: result = dme / (wfnA.eigenvalue - wfnB.eigenvalue) 
-        else: result += dme / (wfnA.eigenvalue - wfnB.eigenvalue) 
+    for eigA, eigB, dipole in self.dipole(degeneracy, attenuate=attenuate):
+      if abs(eigA - self.cbm) > degeneracy: continue
+      if abs(eigB - self.vbm) > degeneracy: continue
+      nstates += 1
+      dme = dot(dipole, dipole.conjugate()).real * dipole.units * dipole.units
+      if result is None: result = dme / (eigA - eigB) 
+      else: result += dme / (eigA - eigB) 
     return (units * result).simplified, nstates
   
   def dipole(self, degeneracy=-1e0, attenuate=False):
@@ -305,8 +313,8 @@ class ExtractRefs(object):
       uncache = False
     else:
       uncache  = degeneracy < 0e0 and d2 >= 0e0
-      uncache |= degeneracy >= 0e0 and d2 < 0e0
-      uncache |= abs(d2 - degeneracy) >= min(d2, degeneracy)
+      if d2 > 0e0 and degeneracy > 0e0: 
+        uncache |= abs(d2 - degeneracy) >= min(d2, degeneracy) and d2 < degeneracy
       uncache |= a2 != attenuate
     if uncache: 
       from os.path import join
@@ -318,8 +326,7 @@ class ExtractRefs(object):
   @FileCache('DIPOLECAR')
   def _dipole(self, degeneracy=-1e0, attenuate=False):
     """ Computes dipole matrix element between vbm and cbm. """
-    from numpy import all, abs, dot
-    from numpy.linalg import det
+    from numpy import all, abs
     from ..physics import a0
 
     assert self.extract_vbm.gvectors.shape == self.extract_cbm.gvectors.shape
@@ -329,7 +336,6 @@ class ExtractRefs(object):
       if degeneracy >= 0e0 and abs(wfnA.eigenvalue - self.cbm) > degeneracy: continue
       for wfnB in self.extract_vbm.gwfns:
         if degeneracy >= 0e0 and abs(wfnB.eigenvalue - self.vbm) > degeneracy: continue
-        dme = wfnA.braket(gvectors, wfnB, attenuate=attenuate)
         result.append( (wfnA.eigenvalue, wfnB.eigenvalue, 
                        wfnA.braket(gvectors, wfnB, attenuate=attenuate)) )
     return degeneracy, attenuate, result
@@ -379,8 +385,7 @@ class ExtractRefs(object):
 def _band_gap_refs_impl( escan, structure, outdir, references, n=5,\
                          overlap_factor=10e0, **kwargs):
   """ Computes band-gap using two references. """
-  from os.path import join, exists
-  from shutil import copyfile
+  from os.path import join
   from numpy import array, argmax
   
   # check/correct input arguments
@@ -388,7 +393,7 @@ def _band_gap_refs_impl( escan, structure, outdir, references, n=5,\
   nbstates = kwargs.pop("nbstates", escan.nbstates)
   if nbstates < 2: nbstates = 2
   if "eref" in kwargs:
-    assert kwargs["eref"] == None, ValueError("Unexpected eref argument when computing bandgap.")
+    assert kwargs["eref"] is None, ValueError("Unexpected eref argument when computing bandgap.")
     del kwargs["eref"]
   vffrun = kwargs.pop("vffrun", escan.vffrun)
   genpotrun = kwargs.pop("genpotrun", escan.genpotrun)
@@ -398,11 +403,11 @@ def _band_gap_refs_impl( escan, structure, outdir, references, n=5,\
   if vbm_ref > cbm_ref: cbm_ref, vbm_ref = references
 
   # first computes vff and genpot unless given.
-  if genpotrun == None or vffrun == None: 
+  if genpotrun is None or vffrun is None: 
     vffout = escan( structure, outdir=outdir, do_escan=False, genpotrun=genpotrun,\
                     vffrun=vffrun, **kwargs )
-    if genpotrun == None: genpotrun = vffout
-    if vffrun == None: vffrun = vffout
+    if genpotrun is None: genpotrun = vffout
+    if vffrun is None: vffrun = vffout
   else: vffout = vffrun
 
   iter, continue_loop = 0, True
@@ -410,20 +415,24 @@ def _band_gap_refs_impl( escan, structure, outdir, references, n=5,\
   while iter < n and continue_loop:
     # computes vbm
     if recompute[0]:
+      try: n = nbstates[0]
+      except: n = nbstates
       vbm_out = escan\
                 (
                   structure, outdir=join(outdir,"VBM"), \
                   eref=vbm_ref, overwrite=True, vffrun=vffrun,\
-                  genpotrun=genpotrun, nbstates=nbstates, **kwargs 
+                  genpotrun=genpotrun, nbstates=n, **kwargs 
                 )
       vbm_eigs = vbm_out.eigenvalues.copy()
     # computes cbm
     if recompute[1]:
+      try: n = nbstates[1]
+      except: n = nbstates
       cbm_out = escan\
                 (
                   structure, outdir=join(outdir, "CBM"), \
                   eref=cbm_ref, overwrite=True, vffrun=vffrun,
-                  genpotrun=genpotrun, nbstates=nbstates, **kwargs
+                  genpotrun=genpotrun, nbstates=n, **kwargs
                 )
       cbm_eigs = cbm_out.eigenvalues.copy()
     recompute = [False, False] # by default, does not recompute
@@ -507,24 +516,26 @@ class Functional(Escan):
     super(Functional, self).__init__(**kwargs)
 
     # copies parent functional.
-    if escan_copy != None:
+    if escan_copy is not None:
       from copy import deepcopy
       self.__dict__.update(deepcopy(escan_copy.__dict__))
 
-  def __call__(self, structure, outdir=None, **kwargs):
+  def __call__(self, structure, outdir=None, comm=None, **kwargs):
     """ Computes band-gap. 
 
         Parameters are passed on to `bandgap` method.
     """
     if '_computing' in self.__dict__:
-      return super(Functional, self).__call__(structure, outdir, **kwargs)
+      return super(Functional, self).__call__(structure, outdir, comm, **kwargs)
 
     self._computing = True
     try: 
       if 'references' not in kwargs: kwargs['references'] = self.references
       if 'n' not in kwargs: kwargs['n'] = self.n
       dipole = kwargs.pop('dipole', self.dipole)
-      result = bandgap(self, structure, outdir, **kwargs)
+      escan = Escan()
+      escan.__dict__.update(self.__dict__)
+      result = bandgap(escan, structure, outdir, comm=comm, **kwargs)
       if dipole: result.dipole()
       return result
     finally: del self._computing

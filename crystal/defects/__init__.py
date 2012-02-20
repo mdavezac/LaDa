@@ -58,7 +58,6 @@ def symmetrically_inequivalent_sites(lattice, type):
 
 def first_shell(structure, pos, tolerance=0.25):
   """ Iterates though first neighbor shell. """
-  from numpy.linalg import inv, norm
   from .. import Neighbors
 
   neighs = [n for n in Neighbors(structure, 12, pos)]
@@ -91,9 +90,6 @@ def coordination_inequivalent_sites(lattice, type, tolerance=0.25):
 
       :return: indices of inequivalent sites.
   """
-  from numpy.linalg import inv, norm
-  from .. import Neighbors
-
   # all sites with occupation "type". 
   sites = [(i, site) for i, site in enumerate(lattice.sites) if type in site.type]
 
@@ -115,19 +111,19 @@ def non_interstitials(structure, indices, mods):
 
   cation_regex  = compile(r'^\s*cations?\s*$')
   vacancy_regex = compile(r'^\s*vacanc(?:y|ies)\s*$')
-  specie_regex  = compile(r'^\s*[A-Z][a-z]?(?:\d+)\s*$')
+  specie_regex  = compile(r'^\s*[A-Z][a-z]?(?:\d+)?\s*$')
 
   # modify input to something which makes sense and check it.
-  if mods == None: all_mods = [None]
+  if mods is None: all_mods = [None]
   elif isinstance(mods, str): all_mods = [mods]
   else: all_mods = mods
   mods = []
   whatthehell = []
   for type in all_mods:
-    if type == None: mods.append(None)
-    elif cation_regex.match(type.lower()) != None:  mods.extend(_cationic_species(structure)) 
-    elif vacancy_regex.match(type.lower()) != None: mods.append(None)
-    elif specie_regex.match(type) != None: mods.append(type)
+    if type is None: mods.append(None)
+    elif cation_regex.match(type.lower()) is not None:  mods.extend(_cationic_species(structure)) 
+    elif vacancy_regex.match(type.lower()) is not None: mods.append(None)
+    elif specie_regex.match(type) is not None: mods.append(type)
     else: whatthehell.append(type)
   assert len(whatthehell) == 0,\
          ValueError('Cannot understand following specie types: {0}.'.format(whatthehell))
@@ -142,7 +138,7 @@ def non_interstitials(structure, indices, mods):
     for modif in mods:
       result = deepcopy(structure)
       if modif == input_atom.type: continue # can't substitute with self.
-      if modif == None: 
+      if modif is None: 
         result.atoms.pop(j)
         name = "vacancy_{0}".format(input_atom.type)
         output_atom = deepcopy(input_atom)
@@ -183,7 +179,7 @@ def interstitials(structure, lattice, interstitials):
     result = deepcopy(structure)
     result.add_atom = dot(lattice.cell, position), type
     result.name = "{0}_interstitial_{1}".format(type, name)
-    defect = deepcopy(structure.atoms[-1])
+    defect = deepcopy(result.atoms[-1])
     defect.index = -1
     yield result, defect, 'None'
 
@@ -203,24 +199,24 @@ def iterdefects(structure, lattice, defects, tolerance=0.25):
   already_cations    = False
 
   for key, value in defects.items():
-    if key == None: keys = [None]
-    elif interstitial_regex.match(key.lower()) != None: keys = [None]
-    elif cation_regex.match(key.lower()) != None:
+    if key is None: keys = [None]
+    elif interstitial_regex.match(key.lower()) is not None: keys = [None]
+    elif cation_regex.match(key.lower()) is not None:
       assert already_cations == False, ValueError('Can only have one cation tag.')
       already_cations = True
       keys = _cationic_species(structure)
-    elif cation_id_regex.match(key.lower()) != None:
+    elif cation_id_regex.match(key.lower()) is not None:
       assert already_cations == False, ValueError('Can only have one cation tag.')
       already_cations = True
       d = int(cation_id_regex.match(key.lower()).group(1))
       keys = ['{0}{1}'.format(k, d) for k in _cationic_species(structure)]
-    elif cation_coord_regex.match(key.lower()) != None:
+    elif cation_coord_regex.match(key.lower()) is not None:
       assert already_cations == False, ValueError('Can only have one cation tag.')
       already_cations = True
       keys = ['{0} coord'.format(k) for k in _cationic_species(structure)]
     else: keys = [key]
     for type in keys:
-      assert type == None or type_regex.match(type) != None,\
+      assert type is None or type_regex.match(type) is not None,\
              ValueError("Cannot understand type {0}.".format(type))
       for result in any_defect(structure, lattice, type, value, tolerance): yield result
 
@@ -257,8 +253,6 @@ def any_defect(structure, lattice, type, subs, tolerance=0.25):
           structure.
   """
   from re import compile
-  from copy import deepcopy
-  from numpy import dot
 
   specie_regex = compile(r'^\s*[A-Z][a-z]?\s*$')
   id_regex     = compile(r'^\s*([A-Z][a-z]?)(\d+)\s*$')
@@ -267,10 +261,10 @@ def any_defect(structure, lattice, type, subs, tolerance=0.25):
   # Interstitials.
   if hasattr(type, 'rstrip'): type = type.rstrip()
   if hasattr(type, 'lstrip'): type = type.lstrip()
-  if type == None or type.lower() in ['interstitial', 'interstitials', 'none']: 
+  if type is None or type.lower() in ['interstitial', 'interstitials', 'none']: 
     for result in interstitials(structure, lattice, subs): yield result
   # Old: looking for specific atoms.
-  elif id_regex.match(type) != None:
+  elif id_regex.match(type) is not None:
     # looks for atom to modify
     found = id_regex.match(type)
     type, index = found.group(1), int(found.group(2)) 
@@ -285,9 +279,9 @@ def any_defect(structure, lattice, type, subs, tolerance=0.25):
     assert atom.site == i, ValueError('Could not find atomic-site.')
     for result in non_interstitials(structure, index, subs): yield result
   # O, Mn ... but not O1: looking for symmetrically inequivalent sites.
-  elif specie_regex.match(type) != None: 
+  elif specie_regex.match(type) is not None: 
     for result in inequiv_non_interstitials(structure, lattice, type, subs, False, tolerance): yield result
-  elif coord_regex.match(type) != None: 
+  elif coord_regex.match(type) is not None: 
     for result in inequiv_non_interstitials(structure, lattice, type, subs, True, tolerance): yield result
   else: raise ValueError("Don't understand defect type {0}".format(type))
 
@@ -325,13 +319,13 @@ def charged_states(species, A, B):
   """
   if A == 'None': A = None
   if B == 'None': B = None
-  assert A != None or B != None, ValueError("Both A and B cannot be None")
+  assert A is not None or B is not None, ValueError("Both A and B cannot be None")
 
-  if A == None:   # vacancy! Charge states are in 0 to -B.oxidation.
+  if A is None:   # vacancy! Charge states are in 0 to -B.oxidation.
     B = species[B]
     max_charge = -B.oxidation if hasattr(B, "oxidation") else 0
     min_charge = 0
-  elif B == None: # interstial! Charge states are in 0, A.oxidation.
+  elif B is None: # interstial! Charge states are in 0, A.oxidation.
     A = species[A[0]]
     max_charge = A.oxidation if hasattr(A, "oxidation") else 0
     min_charge = 0
@@ -352,7 +346,7 @@ def charged_states(species, A, B):
     yield -charge, oxdir
 
 
-def band_filling(defect, host, **kwargs):
+def band_filling(defect, host, vbm=None, cbm=None, potal=None, **kwargs):
   """ Returns band-filling corrrection. 
 
       :Parameters: 
@@ -363,6 +357,9 @@ def band_filling(defect, host, **kwargs):
         host 
           An output extraction object as returned by the vasp functional when
           computing the host matrix.
+        vbm, cbm, potal
+          float or None, in eV
+          Default None.
         kwargs 
           Parameters are passed on to potential alignment calculations.
          
@@ -375,24 +372,26 @@ def band_filling(defect, host, **kwargs):
   from numpy import sum, multiply, newaxis
   from quantities import eV
 
-  potal = potential_alignment(defect, host, **kwargs)
+  potal = potential_alignment(defect, host, **kwargs) if potal == None else potal*eV
 
-  cbm = host.cbm + potal
+  cbm = (host.cbm if cbm == None else cbm*eV) + potal
+
   if defect.eigenvalues.ndim == 3:
     dummy = multiply(defect.eigenvalues-cbm, defect.multiplicity[newaxis,:,newaxis])
     dummy = multiply(dummy, defect.occupations)
   elif defect.eigenvalues.ndim == 2:
     dummy = multiply(defect.eigenvalues-cbm, defect.multiplicity[:, newaxis])
-    dummy = 2e0 * multiply(dummy, defect.occupations)
+    dummy = multiply(dummy, defect.occupations)
   result = -sum(dummy[defect.eigenvalues > cbm])
 
-  vbm = host.vbm + potal
+  vbm = (host.vbm if vbm == None else vbm*eV) + potal
+
   if defect.eigenvalues.ndim == 3:
     dummy = multiply(vbm-defect.eigenvalues, defect.multiplicity[newaxis,:,newaxis])
     dummy = multiply(dummy, 1e0-defect.occupations)
   elif defect.eigenvalues.ndim == 2:
     dummy = multiply(vbm-defect.eigenvalues, defect.multiplicity[:, newaxis])
-    dummy = 2e0 * multiply(dummy, 1e0-defect.occupations)
+    dummy = multiply(dummy, 2e0-defect.occupations)
   result -= sum(dummy[defect.eigenvalues < vbm])
 
   return -result.rescale(eV) / sum(defect.multiplicity)
@@ -426,10 +425,13 @@ def explore_defect(defect, host, **kwargs):
   """
   from copy import deepcopy
   from lada.crystal.defects import reindex_sites
+  from lada.crystal import structure_to_lattice
   
   dstr = defect.structure.copy()
   hstr = host.structure
-  reindex_sites(dstr, hstr.to_lattice(), **kwargs)
+  # modified by Haowei: using the p1 structure for reindexing and potential_alignment 
+  hlat_p1 = structure_to_lattice(hstr, primitive=False)
+  reindex_sites(dstr, hlat_p1, **kwargs)
 
   result = {'interstitial': [], 'substitution': [], 'vacancy': []}
   # looks for intersitials and substitutionals.
@@ -438,15 +440,16 @@ def explore_defect(defect, host, **kwargs):
       result['interstitial'].append(i)
     elif atom.type != hstr.atoms[atom.site].type: 
       result['substitution'].append(i)
+
   # looks for vacancies.
-  filled = hstr.to_lattice().to_structure(dstr.cell)
-  reindex_sites(filled, dstr.to_lattice(), **kwargs)
+  filled = hlat_p1.to_structure(dstr.cell)
+  reindex_sites(filled, dstr, **kwargs)
   for atom in filled.atoms:
     if atom.site != -1: continue
     result['vacancy'].append(deepcopy(atom))
   return result
 
-def potential_alignment(defect, host, maxdiff=0.5, first_shell=True, tolerance=0.25):
+def potential_alignment(defect, host, maxdiff=None, first_shell=False, tolerance=0.25):
   """ Returns potential alignment correction. 
 
       :Parameters:
@@ -457,18 +460,20 @@ def potential_alignment(defect, host, maxdiff=0.5, first_shell=True, tolerance=0
         host 
           An output extraction object as returned by the vasp functional when
           computing the host matrix.
-        maxdiff : float or None
+        maxdiff : float or None, in eV(?)
           Maximum difference between the electrostatic potential of an atom and
           the equivalent host electrostatic potential beyond which that atom is
           considered pertubed by the defect.
           If None or negative, then differences in electrostatice potentials
           are not considered.
-        first_shell : bool
+          Default 0.5.
+        first_shell : bool 
           If true then removes from potential alignment the first neighbor of
           defect atoms.
+          Default False.
         tolerance
           Passed on to `reindex_sites`.
-
+          Default 0.25.  
       :return: The potential alignment in eV (without charge factor).
 
       Returns average difference of the electrostatic potential of the
@@ -478,18 +483,22 @@ def potential_alignment(defect, host, maxdiff=0.5, first_shell=True, tolerance=0
       the electrostatic potential differ to far from the average electrostatic
       potential for each lattice site (parameterized by maxdiff).
 
-      :note: The return *does* include the charge factor.
   """
   from itertools import chain
-  from numpy import abs, zeros, array, mean
+  from numpy import abs, array, mean, any
   from quantities import eV
   from . import reindex_sites, first_shell as ffirst_shell
-
-  if abs(defect.charge) < 1e-12: return 0 * eV
+  from lada.crystal import structure_to_lattice
 
   dstr = defect.structure
   hstr = host.structure
-  reindex_sites(dstr, hstr.to_lattice(), tolerance=tolerance)
+  # modified by Haowei: uring the p1 structure for potential alignment
+  # this is necessary for two reasons:
+  # 1, the host unit cell may be a *supercell* due to the magnetic structure  
+  # 2, in the conventional defect calculations, we run the calculation for host using the same supercell as defect calculations
+  #    but this should not be a problem if the calculations are converged very well
+  hlat_p1 = structure_to_lattice(hstr, primitive=False)
+  reindex_sites(dstr, hlat_p1, tolerance=tolerance)
   defects = explore_defect(defect, host, tolerance=tolerance)
   acceptable = [True for a in dstr.atoms]
   # make interstitials and substitutionals unaceptable.
@@ -503,25 +512,28 @@ def potential_alignment(defect, host, maxdiff=0.5, first_shell=True, tolerance=0
     for atom in defects['vacancy']:
       for n in ffirst_shell(dstr, atom.pos, tolerance=tolerance):
         acceptable[n.index] = False
-  
-  while maxdiff != None and maxdiff < 0.:
-    average = [[] for a in hstr.atoms]
-    for epot, atom, ok in zip(defect.electropot, dstr.atoms, acceptable):
-      if not ok: continue
-      average[atom.site].append(epot.rescale(eV).magnitude)
-    average = array([mean(v) for v in average]) * eV
-  
-    diff = [ (None if not ok else (e - average[a.site]).rescale(eV)) \
-  	     for e, a, ok in zip(defect.electropot, dstr.atoms, acceptable) ]
 
-    maximum = max(enumerate(diff), key=lambda x: (0 if x[1] == None else abs(x[1])))
-    if abs(maximum[1]) < maxdiff: break
-    else: acceptable[maximum[0]] = False
+  # make a deepcopy for backup 
+  raw_acceptable = list(acceptable)
+  if maxdiff != None and maxdiff > 0.0:
+    # directly compare the atomic site between the host and defect cell/supercell
+    diff_dh = [ (0.0 * eV if not ok else abs(e - host.electropot[a.site]).rescale(eV)) \
+         for e, a, ok in zip(defect.electropot, dstr.atoms, acceptable) ]
+  
+    for ixx in range(len(acceptable)):
+      if acceptable[ixx] == False: pass
+      elif float(diff_dh[ixx].magnitude) > maxdiff: acceptable[ixx] = False
+
+  if not any(acceptable):
+    # if some one try to use maxdiff = 0.0000000001, @&#(@&#(#@^@
+    print "WARNING: maxdiff is too small! Jump to maxdiff=None"
+    # return to the default one, which accept all the atomic sites except the defect sites
+    acceptable = list(raw_acceptable) 
 
   iterable = zip(defect.electropot, dstr.atoms, acceptable)
-  return mean([ (e - host.electropot[a.site]).rescale(eV).magnitude\
-                for e, a, ok in iterable if ok ]) * eV * defect.charge
 
+  return mean([ (e - host.electropot[a.site]).rescale(eV).magnitude\
+                for e, a, ok in iterable if ok ]) * eV
 
 
 def third_order_charge_correction(structure, charge = None, n = 30, epsilon = 1.0, **kwargs):
@@ -546,12 +558,11 @@ def third_order_charge_correction(structure, charge = None, n = 30, epsilon = 1.
 
       :return: third order correction  to the energy in eV. Should be *added* to total energy.
   """
-  from numpy import array
-  from quantities import elementary_charge, eV, pi, angstrom, dimensionless
+  from quantities import elementary_charge, eV, pi, angstrom
   from ...physics import a0, Ry
   from .._crystal import third_order
 
-  if charge == None: charge = 1e0
+  if charge is None: charge = 1e0
   elif charge == 0: return 0e0 * eV
   if hasattr(charge, "units"):  charge  = float(charge.rescale(elementary_charge))
   if hasattr(epsilon, "units"): epsilon = float(epsilon.simplified)
@@ -579,7 +590,6 @@ def first_order_charge_correction(structure, charge=None, epsilon=1e0, cutoff=20
 
       :return: Electrostatic energy in eV.
   """
-  from numpy.linalg import norm
   from quantities import elementary_charge, eV
   from .. import Structure
   from ...physics import Ry
@@ -591,7 +601,7 @@ def first_order_charge_correction(structure, charge=None, epsilon=1e0, cutoff=20
                        "Please compile LaDa with pcm enabled.\n"))
     return 
 
-  if charge == None: charge = 1
+  if charge is None: charge = 1
   elif charge == 0: return 0e0 * eV
   if hasattr(charge, "units"): charge = float(charge.rescale(elementary_charge))
 
@@ -623,7 +633,7 @@ def charge_corrections(structure, **kwargs):
       .. __:  http://dx.doi.org/10.1103/PhysRevB.78.235104
   """
   return   first_order_charge_correction(structure, **kwargs) \
-         + third_order_charge_correction(structure, **kwargs) \
+         - third_order_charge_correction(structure, **kwargs) \
 
 def magnetic_neighborhood(structure, defect, species):
    """ Finds magnetic neighberhood of a defect. 
@@ -645,7 +655,6 @@ def magnetic_neighborhood(structure, defect, species):
 
        :return: indices of the neighboring atoms in the point-defect `structure`.
    """
-   from numpy import array
    from numpy.linalg import norm
    from . import Neighbors
 
@@ -707,7 +716,6 @@ def electron_bins(n, atomic_types):
 
 def magmom(indices, moments, nbatoms):
   """ Yields a magmom string from knowledge of which moments are non-zero. """
-  from operator import itemgetter
   s = [0 for i in range(nbatoms)]
   for i, m in zip(indices, moments): s[i] = m
   compact = [[1, s[0]]]
@@ -804,8 +812,7 @@ def low_spin_states(structure, defect, species, extrae, do_integer=True, do_aver
       :return: yields (indices, moments) where the former index the relevant
                atoms in `structure` and latter are their respective moments.
   """
-
-  from numpy import array, abs, all, any
+  from numpy import array, abs, all
 
   history = []
   def check_history(*args):
@@ -818,13 +825,13 @@ def low_spin_states(structure, defect, species, extrae, do_integer=True, do_aver
 
   if do_integer: 
     for indices, tote in electron_counting(structure, defect, species, extrae):
-      if tote == None: continue # non-magnetic case
+      if tote is None: continue # non-magnetic case
       indices, moments = array(indices), array(tote) % 2
       if all(abs(moments) < 1e-12): continue # non - magnetic case
       if check_history(indices, moments): yield indices, moments
   if do_average: 
     for indices, tote in electron_counting(structure, defect, species, 0):
-      if tote == None: continue # non-magnetic case
+      if tote is None: continue # non-magnetic case
       if len(indices) < 2: continue
       indices, moments = array(indices), array(tote) % 2 + extrae / float(len(tote))
       if all(abs(moments) < 1e-12): continue # non - magnetic case
@@ -856,7 +863,7 @@ def high_spin_states(structure, defect, species, extrae, do_integer=True, do_ave
       :return: yields (indices, moments) where the former index the relevant
                atoms in `structure` and latter are their respective moments.
   """
-  from numpy import array, abs, all, any
+  from numpy import array, abs, all
 
   def is_d(t): 
     """ Determines whether an atomic specie is transition metal. """
@@ -879,7 +886,7 @@ def high_spin_states(structure, defect, species, extrae, do_integer=True, do_ave
   
   if do_integer: 
     for indices, tote in electron_counting(structure, defect, species, extrae):
-      if tote == None: continue # non-magnetic case
+      if tote is None: continue # non-magnetic case
       
       types = [structure.atoms[i].type for i in indices]
       indices, moments = array(indices), array(determine_moments(tote, types))
@@ -888,7 +895,7 @@ def high_spin_states(structure, defect, species, extrae, do_integer=True, do_ave
 
   if do_average: 
     for indices, tote in electron_counting(structure, defect, species, 0):
-      if tote == None: continue # non-magnetic case
+      if tote is None: continue # non-magnetic case
       if len(indices) < 2: continue
 
       types = [structure.atoms[i].type for i in indices]
@@ -903,8 +910,7 @@ def reindex_sites(structure, lattice, tolerance=0.5):
       Expects that the structure is an exact supercell of the lattice, as far
       cell vectors are concerned. The atoms, however, may have moved around a
       bit. To get an index, an atom must be clearly closer to one ideal lattice
-      site than to any other, within a given tolerance (< closest/next closest
-      distance).
+      site than to any other, within a given tolerance (in units of `structure.scale`?).
   """
   from .. import Neighbors
   if hasattr(lattice, 'to_lattice'): lattice = lattice.to_lattice()
@@ -913,14 +919,14 @@ def reindex_sites(structure, lattice, tolerance=0.5):
     neighs = [n for n in Neighbors(lattice, 2, atom.pos)]
     assert abs(neighs[1].distance) > 1e-12,\
            RuntimeError('Found two sites occupying the same position.')
-    if neighs[0].distance / neighs[1].distance > tolerance: continue
-    atom.site = lattice.atoms[neighs[0].index].site
+    if neighs[0].distance > tolerance: atom.site = -1
+    else: atom.site = lattice.atoms[neighs[0].index].site
 
 def magname(moments, prefix=None, suffix=None):
   """ Construct name for magnetic moments. """
   if len(moments) == 0: return "paramagnetic"
   string = str(moments[0])
   for m in moments[1:]: string += "_" + str(m)
-  if prefix != None: string = prefix + "_" + string
-  if suffix != None: string += "_" + suffix
+  if prefix is not None: string = prefix + "_" + string
+  if suffix is not None: string += "_" + suffix
   return string

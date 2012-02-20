@@ -1,7 +1,28 @@
 """ Congregates all read/write python routines. """
 __docformat__ = "restructuredtext en"
-__all__ = ['read_poscar', 'write_poscar', 'write_oldvff', 'read_oldvff', 'icsd_cif']
+__all__ = ['read_poscar', 'write_poscar', 'write_oldvff', 'read_oldvff', 'icsd_cif', 'castep']
 from lada.opt.decorators import broadcast_result
+
+@broadcast_result(key=True)
+def castep(structure, file=None):
+  """ Writes castep input. """
+  string = "%BLOCK LATTICE_CART\n" \
+           "  {0[0]} {0[1]} {0[2]}\n" \
+           "  {1[0]} {1[1]} {1[2]}\n" \
+           "  {2[0]} {2[1]} {2[2]}\n" \
+           "%ENDBLOCK LATTICE_CART\n\n"\
+           "%BLOCK POSITIONS_ABS\n".format(*structure.cell.T)
+  for atom in structure.atoms:
+    string += "  {0.type} {0.pos[0]} {0.pos[1]} {0.pos[2]}\n".format(atom)
+  string += "%ENDBLOCK POSITION_ABS\n"
+  if file == None: return string
+  elif isinstance(file, str): 
+    from ..opt import RelativeDirectory
+    with open(RelativeDirectory(file).path, 'w') as file: file.write(string)
+  else: file.write(string)
+  
+
+
 
 @broadcast_result(key=True)
 def read_poscar(types=None, path=None):
@@ -20,22 +41,24 @@ def read_poscar(types=None, path=None):
   from os.path import join, exists, isdir
   from copy import deepcopy
   from numpy import array, dot, transpose
-  from . import Structure, Atom, specie_list
+  from . import Structure, Atom, FreezeAtom
 
   # if types is not none, converts to a list of strings.
-  if types != None:
+  if types is not None:
     if isinstance(types, str): types = [types] # can't see another way of doing this...
     elif not hasattr(types, "__getitem__"): types = [str(types)] # single lone vasp.specie.Specie
     else: types = [str(s) for s in types]
       
-  if path == None: path = "POSCAR"
-  assert exists(path), IOError("Could not find path %s." % (path))
-  if isdir(path):
-    assert exists(join(path, "POSCAR")), IOError("Could not find POSCAR in %s." % (path))
-    path = join(path, "POSCAR")
+  if path is None: path = "POSCAR"
+  if not hasattr(path, 'read'):
+    assert exists(path), IOError("Could not find path %s." % (path))
+    if isdir(path):
+      assert exists(join(path, "POSCAR")), IOError("Could not find POSCAR in %s." % (path))
+      path = join(path, "POSCAR")
   result = Structure()
-  filecontext = path if hasattr(path, "read") else open(path, 'r')
-  with filecontext as poscar:
+  poscar = path if hasattr(path, "read") else open(path, 'r')
+  
+  try:
     # gets name of structure
     result.name = poscar.readline().strip()
     if len(result.name) > 0:
@@ -59,18 +82,24 @@ def read_poscar(types=None, path=None):
         break
     if is_vasp_5:
       text_types = deepcopy(line)
-      if types != None:
+      if types is not None:
         assert set(text_types) in set(types) or set(text_types) == set(types), \
                RuntimeError( "Unknown species in poscar: {0} not in {1}."\
                              .format(set(text_types), set(types)) )
       types = text_types
       line = poscar.readline().split()
-    assert types != None, RuntimeError("No atomic species given in POSCAR or input.")
+    assert types is not None, RuntimeError("No atomic species given in POSCAR or input.")
     #  checks/reads for number of each specie
     assert len(types) >= len(line), RuntimeError("Too many atomic species in POSCAR.")
     nb_atoms = [int(u) for u in line]
+    # Check whether selective dynamics, cartesian, or direct.
+    first_char = poscar.readline().strip().lower()[0]
+    selective_dynamics = False
+    if first_char == 's': 
+      selective_dynamics = True
+      first_char = poscar.readline().strip().lower()[0]
     # Checks whether cartesian or direct.
-    is_direct = poscar.readline().strip().lower()[0] == "d" 
+    is_direct = first_char not in ['c', 'k']
     # reads atoms.
     for n, type in zip(nb_atoms, types):
       for i in range(n):
@@ -78,6 +107,11 @@ def read_poscar(types=None, path=None):
         pos = array([float(u) for u in line[:3]], dtype="float64")
         if is_direct: pos = dot(result.cell, pos)
         result.atoms.append( Atom(pos, type) )
+        if selective_dynamics:
+          for which, freeze in zip(line[3:], [FreezeAtom.x, FreezeAtom.y, FreezeAtom.z]):
+            if which.lower()[0] == 't': result.atoms[-1].freeze |= freeze
+  finally: poscar.close()
+            
   return result
     
 def write_poscar(structure, file, vasp5=False, substitute=None):
@@ -109,25 +143,37 @@ def write_poscar(structure, file, vasp5=False, substitute=None):
 
   from numpy import matrix, dot
   from . import specie_list
+  from . import FreezeAtom
 
   file.write(structure.name + "\n")
   file.write(str(structure.scale)+ "\n")
-  for i in range(3): file.write("  %f %f %f\n" % tuple(structure.cell[:,i].flat))
+  for i in range(3): file.write("  {0[0]} {0[1]} {0[2]}\n".format(structure.cell[:,i]))
   species = specie_list(structure)
   if vasp5: 
-    if substitute != None:
+    if substitute is not None:
       for s in species: file.write(" "+ substitute.pop(s,s) +" ")
     else: 
       for s in species: file.write(" "+s+" ")
     file.write("\n")
   for s in species: 
     file.write(" %i " % (len([0 for atom in structure.atoms if atom.type == s])))
-  file.write("\nDirect\n")
   inv_cell = matrix(structure.cell).I
-  for s in species: 
-    for atom in structure.atoms:
-      if atom.type != s: continue
-      file.write( "  %f %f %f\n" % tuple(dot(inv_cell, atom.pos).flat))
+  if any([atom.freeze != FreezeAtom.none for atom in structure.atoms]):
+    file.write("\nselective dynamics\ndirect\n")
+    for s in species: 
+      for atom in structure.atoms:
+        if atom.type != s: continue
+        file.write( "  {0[0]} {0[1]} {0[2]} {1} {2} {3}\n"\
+                    .format( dot(inv_cell, atom.pos).tolist()[0],
+                             'T' if atom.freeze & FreezeAtom.x != 0 else 'F', 
+                             'T' if atom.freeze & FreezeAtom.y != 0 else 'F', 
+                             'T' if atom.freeze & FreezeAtom.z != 0 else 'F' ) )
+  else:
+    file.write("\ndirect\n")
+    for s in species: 
+      for atom in structure.atoms:
+        if atom.type != s: continue
+        file.write("  {0[0]} {0[1]} {0[2]}\n".format(dot(inv_cell, atom.pos).tolist()[0]))
   
 def write_oldvff(structure, file, disable_bonds=False):
   """ Writes a structure in the old vff format.
@@ -213,7 +259,7 @@ def read_oldvff(path):
   string = path.read()
   cell_match = re_cell.search(string)
   pos_match  = re_pos.search(string)
-  assert cell_match != None and pos_match != None,\
+  assert cell_match is not None and pos_match is not None,\
          IOError('File {0} does not seem to be a vff input file.'.format(path.name))
 
   # creates structure.
@@ -225,7 +271,7 @@ def read_oldvff(path):
     result.add_atom = data[1:4], data[0]
 
   scale_match = search(r'>\s*out\s*-?\s*put\s*\n\s*(\S+)', string, multline)
-  if scale_match != None:
+  if scale_match is not None:
     result.scale = float((array(scale_match.group(1), dtype='float64') * a0).rescale(AA))
   else: result.scale = 1 
 

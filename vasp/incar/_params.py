@@ -1,12 +1,15 @@
 """ Standard parameter types for use as attributes in Incar """
 __docformat__ = "restructuredtext en"
+__all__ = [ "SpecialVaspParam", "NElect", "Algo", "Precision", "Ediff",\
+            "Encut", "FFTGrid", "Restart", "UParams", "IniWave",\
+            "Magmom", 'Npar', 'Boolean', 'Integer', 'Choices', 'PrecFock', 'NonScf']
 from ...opt.decorators import broadcast_result
 class SpecialVaspParam(object): 
   """ Type checking class. """
   def __init__(self, value): 
     super(SpecialVaspParam, self).__init__()
     self.value = value
-  def __repr__(self): return "%s(%s)" % (self.__class__.__name__, repr(self.value))
+  def __repr__(self): return "{0.__class__.__name__}({1})".format(self, repr(self.value))
 
 class Magmom(SpecialVaspParam):
   """ Prints magmom to INCAR. 
@@ -35,15 +38,15 @@ class Magmom(SpecialVaspParam):
   @broadcast_result(key=True)
   def incar_string(self, vasp, *args, **kwargs):
     """ Prints the magmom string if requested. """
-    if self.value == None: return None
+    if self.value is None: return None
     if vasp.ispin == 1: return None
     if len(self.value.rstrip().lstrip()) == 0: return None
     if self.value.lower() == "magmom":
       magmom = self._from_attr(vasp, "magmom",  *args, **kwargs)
-      return "MAGMOM = {0}".format(magmom) if magmom != None else None
-    elif self._regex.match(self.value) != None:
+      return "MAGMOM = {0}".format(magmom) if magmom is not None else None
+    elif self._regex.match(self.value) is not None:
       magmom = self._from_attr(vasp, self._regex.match(self.value).group(1),  *args, **kwargs)
-      return "MAGMOM = {0}".format(magmom) if magmom != None else None
+      return "MAGMOM = {0}".format(magmom) if magmom is not None else None
     return "MAGMOM = {0}".format(self.value)
 
   def _from_attr(self, vasp, name, *args, **kwargs):
@@ -54,7 +57,7 @@ class Magmom(SpecialVaspParam):
            ValueError("vasp functional does not have a _system attribute.")
     if not hasattr(vasp._system, name): return None
     magmom = getattr(vasp._system, name)
-    if magmom == None: return None
+    if magmom is None: return None
     if isinstance(magmom, str): return magmom
     
     # magmom should be a list of moments.
@@ -102,11 +105,11 @@ class Npar(SpecialVaspParam):
     from re import search
     from math import log
     from ...mpi import Communicator
-    if self.value == None: return None
+    if self.value is None: return None
     comm = Communicator(kwargs.get("comm", None))
     if not comm.is_mpi: return None
     if     hasattr(self.value, "lower")\
-       and search("power\s+of\s+2", self.value.lower()) != None:
+       and search("power\s+of\s+2", self.value.lower()) is not None:
       m = int(log(comm.size)/log(2))
       for i in range(m, -1, -1):
         if comm.size % 2**i == 0: return "NPAR = {0}".format(2**i)
@@ -161,22 +164,26 @@ class Algo(SpecialVaspParam):
       Can be \"very fast\", \"fast\", or \"normal\" (default). 
   """ 
   def __init__(self, value): super(Algo, self).__init__(value)
-  def incar_string(self, *args, **kwargs):
-    from .. import is_vasp_5 as _is5
-    is_vasp_5 = _is5()
+  def incar_string(self, vasp, *args, **kwargs):
+    from .. import is_vasp_4 as _is4
+    is_vasp_4 = _is4(vasp.vasp_library)
     lower = self.value.lower().rstrip().lstrip()
     lower = lower.replace('_', '')
     lower = lower.replace('-', '')
-    if lower == "veryfast": value = "Very_Fast" if not is_vasp_5 else 'VeryFast'
+    if lower == "veryfast": value = "Very_Fast" if is_vasp_4 else 'VeryFast'
     elif lower in ["fast", 'f']: value = "Fast"
     elif lower in ["normal", 'n']: value = "Normal"
-    elif lower == "none" and is_vasp_5: value = "None"
+    elif lower in ["damped", 'd']: value = "Damped"
+    elif lower == "none" and is_vasp_4: value = "None"
     # below this VASP 5 only options.
-    elif not is_vasp_5: raise ValueError, "algo value (%s) is invalid.\n" % (self.value)
+    elif is_vasp_4\
+         and lower in ["nothing", "all", "conjugate", "subrot",
+                       "eigenval", "gw", "gw0", "chi", "scgw", 
+                       "scgw0"]: 
+      raise ValueError, "algo value ({0}) is not valid with VASP 4.\n".format(self.value)
     elif lower == "nothing": value = "Nothing"
     elif lower in ["all", 'a']: value = "All"
     elif lower in ["conjugate", 'c']: value = "Conjugate"
-    elif lower in ["damped", 'd']: value = "Damped"
     elif lower in ["subrot", 's']: value = "Subrot"
     elif lower in ["eigenval", 'e']: value = "Eigenval"
     elif lower == "chi":  value = "chi"
@@ -197,7 +204,7 @@ class Precision(SpecialVaspParam):
     value = self.value.lower()
     if value not in ["accurate", "lower", "medium", "high"]:
       raise ValueError, "PRECISION value (%s) is not allowed." % (self.key)
-    return "PRECISION = " + str(self.value)
+    return "PREC = " + str(self.value)
 
 class Ediff(SpecialVaspParam):
   """ Sets the convergence criteria (per atom) for electronic minimization.
@@ -205,10 +212,20 @@ class Ediff(SpecialVaspParam):
       This tolerance is multiplied by the number of atoms in the system. This
       makes tolerance consistent from one system to the next.
   """
-  def __init__(self, value): super(Ediff, self).__init__(value)
+  def __init__(self, value, name="ediff"):
+    """ Creates *per atom* tolerance. """
+    super(Ediff, self).__init__(value)
+    self.name = name
   def incar_string(self, vasp, *args, **kwargs):
-    return "EDIFF = %f " % (self.value * float(len(vasp._system.atoms)))
-
+    if self.value is None: return 
+    if self.value < 0: 
+      return "{0} = {1} ".format(getattr(self, "name", "ediff").upper(), self.value)
+    return "{0} = {1} ".format(getattr(self, "name", "ediff").upper(), self.value * float(len(vasp._system.atoms)))
+  def __repr__(self):
+    """ Representation of Ediff. """
+    name = getattr(self, "name", "ediff")
+    if name == "ediff": return "{0.__class__.__name__}({1})".format(self, repr(self.value))
+    return "{0.__class__.__name__}({1}, {2})".format(self, repr(self.value), repr(name))
 
 class Encut(SpecialVaspParam):
   """ Defines cutoff factor for calculation. 
@@ -284,16 +301,17 @@ class Restart(SpecialVaspParam):
   """
   def __init__(self, value): super(Restart, self).__init__(value)
 
-  def incar_string(self, *args, **kwargs):
+  def incar_string(self, vasp, *args, **kwargs):
     from os.path import join, exists
     from shutil import copy
     from ...opt import copyfile
     from ...mpi import Communicator
     from .. import files
+    nonscf = getattr(getattr(self, 'nonscf', False), 'value', False)
     comm = Communicator(kwargs.pop("comm", None))
     istart = "0   # start from scratch"
-    icharg = "2   # superpositions of atomic densities"
-    if self.value == None: istart = "0   # start from scratch"
+    icharg = "{0}   # superpositions of atomic densities".format(12 if nonscf else 2)
+    if self.value is None: istart = "0   # start from scratch"
     elif not self.value.success:
       print "Could not find successful run in directory %s." % (self.value.directory)
       print "Restarting from scratch."
@@ -305,29 +323,52 @@ class Restart(SpecialVaspParam):
       if ewave:
         path = join(self.value.directory, files.WAVECAR)
         istart = "1  # restart"
-        icharg = "0   # from wavefunctions " + path
+        icharg = "{0}   # from wavefunctions ".format(10 if nonscf else 0) + path
         if comm.is_root: copy(path, ".")
       elif echarge:
         path = join(self.value.directory, files.CHGCAR)
         istart = "1  # restart"
-        icharg = "1   # from charge " + path
+        icharg = "{0}   # from charge ".format(11 if nonscf else 1) + path
         if comm.is_root: copy(path, ".")
       else: 
         istart = "0   # start from scratch"
-        icharg = "2   # superpositions of atomic densities"
+        icharg = "{0}   # superpositions of atomic densities".format(12 if nonscf else 2)
       if comm.is_root:
         copyfile(join(self.value.directory, files.EIGENVALUES), nothrow='same exists') 
-        copyfile(join(self.value.directory, files.CONTCAR), files.POSCAR,
-                 nothrow='same exists', symlink=True) 
+        copyfile(join(self.value.directory, files.CONTCAR), files.POSCAR,\
+                 nothrow='same exists', symlink=getattr(vasp, 'symlink', False),\
+                 nocopyempty=True) 
+        copyfile(join(self.value.directory, files.WAVEDER), files.WAVEDER,
+                 nothrow='same exists', symlink=getattr(vasp, 'symlink', False)) 
       comm.barrier()
     return  "ISTART = %s\nICHARG = %s" % (istart, icharg)
+
+class NonScf(SpecialVaspParam):
+  """ Return from previous run from which to restart.
+      
+      If None, then starts from scratch.
+  """
+  def __init__(self, value):  super(NonScf, self).__init__(value)
+  @property
+  def value(self): return self._value
+  @value.setter
+  def value(self, value):
+    if isinstance(value, str):
+      assert    len(value) == 0 \
+             or value.lower() == "true"[:len(value)] \
+             or value.lower() == "false"[:len(value)], \
+             TypeError("Cannot interpret string {0} as a boolean.".format(value))
+    self._value = value == True
+
+  def incar_string(self, vasp, *args, **kwargs): return None
+  def __repr__(self): return "{0.__class__.__name__}({0.value!r})".format(self)
 
 class UParams(SpecialVaspParam): 
   """ Prints U parameters if any found in species settings """
   def __init__(self, value):
     import re
     
-    if value == None: value = None
+    if value is None: value = None
     elif hasattr(value, "lower"): 
       value = value.lower() 
       if value == "off": value = 0
@@ -390,6 +431,133 @@ class IniWave(SpecialVaspParam):
     if self.value == "1" or self.value == "random": result = 1
     elif self.value == "0" or self.value == "jellium": result = 0
     else: raise ValueError("iniwave cannot be set to " + self.value + ".")
-    return "INIWAVE = %i\n"  % (value)
+    return "INIWAVE = {0}\n".format(result)
 
 
+class Boolean(SpecialVaspParam):
+  """ Any boolean vasp parameters. 
+  
+      Python is very liberal in how it converts any object to a boolean, eg an
+      empty dictionary is false while non-empty dictionary is true.
+      In order to keep this behavior, the value given to this parameter is kept
+      as is as long as possible, and converted only when writing the incar. The
+      only difference with the python behavior is that if using strings (which generally
+      evaluate to true or depending whether or not they are empty), these must
+      be "True" or "False", or variations thereoff. The empty string will
+      evaluate to the VASP default (eg equivalent to using None).
+  """
+  def __init__(self, key, value):
+    super(Boolean, self).__init__(value)
+    self.key = key
+    """ VASP key corresponding to this input. """
+  @property
+  def value(self):
+    return self._value
+  @value.setter
+  def value(self, value):
+    if isinstance(value, str):
+      if not (   len(value) == 0 \
+               or value.lower() == "true"[:len(value)] \
+               or value.lower() == "false"[:len(value)] ):
+        raise TypeError("Cannot interpret string {0} as a boolean.".format(value))
+    self._value = value == True
+  @broadcast_result(key=True)
+  def incar_string(self, vasp, *args, **kwargs):
+    value = self._value
+    if isinstance(value, str):
+      if len(value) == 0: value is None 
+      elif value.lower() == "true"[:len(value)]: value = True
+      else: value = False
+    if self.value is None: return None
+    return "{0} = {1}".format(self.key.upper(), ".TRUE." if bool(self.value) else ".FALSE.")
+  def __repr__(self):
+    """ Representation of this object. """
+    return "{0.__class__.__name__}({1!r}, {2!r})".format(self, self.key, self.value)
+
+class Integer(SpecialVaspParam):
+  """ Any integer vasp parameters. 
+  
+      The value is always of type integer. Other types are converted to an
+      integer where possible, and will throw TypeError otherwise.
+  """
+  def __init__(self, key, value):
+    super(Integer, self).__init__(value)
+    self.key = key
+    """ VASP key corresponding to this input. """
+  @property 
+  def value(self): return self._value
+  @value.setter
+  def value(self, value):
+    if value is None: self._value = None; return
+    try: self._value = int(value)
+    except: raise TypeError("Could not evaluate {0} as an integer.".format(value))
+  @broadcast_result(key=True)
+  def incar_string(self, vasp, *args, **kwargs):
+    if self.value is None: return None
+    return "{0} = {1}".format(self.key.upper(), self.value)
+  def __repr__(self):
+    """ Representation of this object. """
+    return "{0.__class__.__name__}({1}, {2})".format(self, repr(self.key), repr(self.value))
+
+class Choices(SpecialVaspParam):
+  """ Vasp parameters with a limited set of choices. """
+  def __init__(self, key, choices, default=None):
+    """ Initializes the Choices-type vasp parameters.
+
+        :Parameters: 
+          key : str
+	    Name of the VASP parameter, e.g. "precfock". It needs not be in
+            uppercase. In fact, lower case is preferred for being more pythonic.
+          choices : dictionary of lists
+	    Each key is an allowed VASP input for this parameter. To each key
+	    is associated a list (or set), with allowable forms which will
+	    translate to the key in the incar. A modified copy of this
+	    dictionary is owned by the instance being initialized. All keys and
+            items should be meaningfully convertible to strings.
+          default 
+            allowable option from choices. Defaults to None.
+    """
+    self.key = key
+    """ VASP key corresponding to this input. """
+    self.choices = {}
+    """ Allowable set of choices. """
+    for key, items in choices.iteritems():
+      self.choices[key] = set([str(u).lower() for u in items] + [str(key).lower()])
+    super(Choices, self).__init__(default)
+
+  @property
+  def value(self): return self._value
+  @value.setter
+  def value(self, value):
+    if value is None: self._value = None
+    value == str(value).lower() # transform to lower string.
+    for key, items in self.choices.iteritems():
+      if value in items: self._value = key; break
+  @broadcast_result(key=True)
+  def incar_string(self, *args, **kwargs):
+    if self.value is None: return None
+    return "{0} = {1}".format(self.key.upper(), self.value)
+  def __repr__(self):
+    """ Representation of this object. """
+    return "{0.__class__.__name__}({1}, {2}, {3})"\
+           .format(self, repr(self.key), repr(self.choices), repr(self.value))
+
+class PrecFock(Choices):
+  """ Sets up PRECFOCK parameter. 
+      
+      Allowable options are:
+
+      - L or low:      coarse grid for HF, normal augmentation charge.
+      - M or medium:   normal grid for HF, normal augmentation charge.
+      - F or fast:     coarse grid for HF, soft augmentation charge. 
+      - N or normal:   PREC=N grid for HF, soft augmentation charge. 
+      - A or accurate: PREC=A grid for HF, soft augmentation charge.
+  """
+  def __init__(self, value=None):
+    """ Initializes PRECFOCK parameter. """
+    choices = { 'L': ['low'], 'M': ['medium'], 'F': ['fast'],
+                'N': ['normal'], 'A': ['accurate'] }
+    super(PrecFock, self).__init__("precfock", choices, value)
+  def __repr__(self):
+    """ Representation of this object. """
+    return "{0.__class__.__name__}({1})".format(self, repr(self.value))

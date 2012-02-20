@@ -17,7 +17,7 @@ namespace LaDa
           if (power == 0) return 1;
           if (power == 1) return base;
           if (power % 2 == 0) return opt::pow(base * base, power >> 1 );
-          if (power % 2 == 1) return base * opt::pow(base * base, power >> 1 );
+          return base * opt::pow(base * base, power >> 1 );
         }
   }
 }

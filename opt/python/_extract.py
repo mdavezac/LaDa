@@ -1,7 +1,7 @@
 """ Holds base classes and mixins for extraction objects. """
 __docformat__ = "restructuredtext en"
-__all__ = ['AbstractExtratBase', 'OutcarSearchMixin']
-from abc import ABCMeta, abstractmethod, abstractproperty
+__all__ = ['AbstractExtractBase', 'OutcarSearchMixin']
+from abc import ABCMeta, abstractproperty
 from .decorators import broadcast_result
 
 class AbstractExtractBase(object):
@@ -26,7 +26,7 @@ class AbstractExtractBase(object):
     from os import getcwd
     from . import RelativeDirectory
 
-    if directory == None: directory = getcwd()
+    if directory is None: directory = getcwd()
     self._directory = RelativeDirectory(directory, hook=self.__directory_hook__)
     """ Directory where output should be found. """
     self.comm = comm
@@ -77,7 +77,7 @@ class AbstractExtractBase(object):
   def __copy__(self):
     """ Returns a shallow copy of this object. """
     from . import RelativeDirectory
-    result = self.__class__()
+    result = self.__class__(directory=self.directory)
     result.__dict__ = self.__dict__.copy()
     result._directory = RelativeDirectory( self._directory.path,\
                                            self._directory._envvar, 
@@ -116,7 +116,6 @@ class AbstractExtractBase(object):
     if hasattr(self, "_directory"): self._directory.hook = self.uncache
 
   def __repr__(self):
-    from os.path import relpath
     return "{0}(\"{1}\")".format(self.__class__.__name__, self._directory.unexpanded)
 
 def _search_factory(name, filename, module):
@@ -140,11 +139,8 @@ def _search_factory(name, filename, module):
 
   def _search_OUTCAR(self, regex, flags=0):
     """ Looks for all matches. """
-    from os.path import exists, join
     from re import compile, M as moultline
-    from numpy import array
 
-    result = []
     regex  = compile(regex, flags)
     with getattr(self, __outcar__.__name__)() as file:
       if moultline & flags: 
@@ -152,7 +148,7 @@ def _search_factory(name, filename, module):
       else:
         for line in file: 
           found = regex.search(line)
-          if found != None: yield found
+          if found is not None: yield found
   _search_OUTCAR.__name__ = '_search_{0}'.format(filename.upper())
 
   def _find_first_OUTCAR(self, regex, flags=0):
@@ -163,11 +159,8 @@ def _search_factory(name, filename, module):
 
   def _rsearch_OUTCAR(self, regex, flags=0):
     """ Looks for all matches starting from the end. """
-    from os.path import exists, join
     from re import compile, M as moultline
-    from numpy import array
 
-    result = []
     regex  = compile(regex)
     with getattr(self, __outcar__.__name__)() as file:
       lines = file.read() if moultline & flags else file.readlines()
@@ -176,7 +169,7 @@ def _search_factory(name, filename, module):
     else:
       for line in lines[::-1]:
         found = regex.search(line)
-        if found != None: yield found
+        if found is not None: yield found
   _rsearch_OUTCAR.__name__ = '_rsearch_{0}'.format(filename.upper())
 
   def _find_last_OUTCAR(self, regex, flags=0):

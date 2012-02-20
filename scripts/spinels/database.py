@@ -121,7 +121,7 @@ def create_database(lattice, n0=1, n1=4):
     oldsupercell = None
     first = True
     for x, smith, supercell, flavorbase in enum(n, lattice):
-      if oldsupercell == None or oldsupercell != supercell:
+      if oldsupercell is None or oldsupercell != supercell:
         if first:
           print "  flavorbase: ", len(flavorbase), flavorbase[1]
           first = False
@@ -212,8 +212,8 @@ def read_database(filename, withperms=True):
         flavorbase = enumeration.create_flavorbase(card, nflavors)
         label_exchange=enumeration.LabelExchange(card, nflavors)
       elif len(data) > 0:
-        assert flavorbase != None
-        assert hermite != None
+        assert flavorbase is not None
+        assert hermite is not None
         for x in data:
           # adds label permutations that are not equivalent by affine transforms.
           x = int(x)

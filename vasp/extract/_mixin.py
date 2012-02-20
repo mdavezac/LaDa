@@ -28,11 +28,11 @@ class IOMixin(OutcarSearchMixin):
     
     object.__init__(self)
 
-    self.OUTCAR  = OUTCAR if OUTCAR != None else files.OUTCAR
+    self.OUTCAR  = OUTCAR if OUTCAR is not None else files.OUTCAR
     """ Filename of the OUTCAR file from VASP. """
-    self.CONTCAR  = CONTCAR if CONTCAR != None else files.CONTCAR
+    self.CONTCAR  = CONTCAR if CONTCAR is not None else files.CONTCAR
     """ Filename of the CONTCAR file from VASP. """
-    self.FUNCCAR  = FUNCCAR if FUNCCAR != None else files.FUNCCAR
+    self.FUNCCAR  = FUNCCAR if FUNCCAR is not None else files.FUNCCAR
     """ Filename of the FUNCCAR file containing the pickled functional. """
     OutcarSearchMixin.__init__(self)
 

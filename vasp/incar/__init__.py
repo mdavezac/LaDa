@@ -2,10 +2,10 @@
 __docformat__ = "restructuredtext en"
 __all__ = [ "SpecialVaspParam", "NElect", "Algo", "Precision", "Ediff",\
             "Encut", "FFTGrid", "Restart", "UParams", "IniWave",\
-            "Incar", "Magmom", 'Npar' ]
+            "Incar", "Magmom", 'Npar', 'Boolean', 'Integer', 'Choices', 'PrecFock' ]
 from _params import SpecialVaspParam, NElect, Algo, Precision, Ediff,\
                     Encut, FFTGrid, Restart, UParams, IniWave, Magmom,\
-                    Npar
+                    Npar, Boolean, Integer, PrecFock, NonScf
 from ...opt.decorators import add_setter
 
 
@@ -31,7 +31,7 @@ class Incar(object):
              - 1 would mean +1 electron
              - -1 would mean +1 hole
              - etc
-         - ``algo``: electronic minimization. Can be \"very fast\", \"fast\", or \"normal\" (default). 
+         - ``algo``: electronic minimization. Can be \"very fast\", \"fast\" (default), or \"normal\".
          - ``precision``: sets accuracy of calculation. Can be \"accurate\"
            (default), \"low\", \"medium\", \"high\".
          - ``ediff``: sets the tolerance per atom of electronic minimization.
@@ -51,8 +51,17 @@ class Incar(object):
          - ``addgrid``: Defaults to None.
          - ``nupdown``: Defaults to None.
          - ``loptics``: Defaults to None.
-         - ``lmaxmix``: Defaults to None.
+         - ``lmaxmix``: Defaults to 4.
          - ``magmom``: Defaults to None.
+         - ``weimin``: Defaults to 0.
+         - ``lwave`` : Defaults to None. 
+         - ``lmaxfockae``: Defaults to None.
+         - ``nomega``: Defaults to None.
+         - ``precfock``: Defaults to None.
+         - ``encutgw``: Defaults to None.
+         - ``lrpa``: Defaults to None.
+         - ``lpead``: Defaults to None.
+         - ``nelm``: Defaults to None.
          - ``restart``: the return from previous vasp run to use as restart. 
 
              >> save_this_object = vasp(some parameters) # makes a vasp call.
@@ -112,15 +121,19 @@ class Incar(object):
     self.add_param = "symprec",     None
     self.add_param = "lcorr",       None
     self.add_param = "nupdown",     None
-    self.add_param = "loptics",     None
-    self.add_param = "lmaxmix",     None
+    self.add_param = "lmaxmix",     4
+    self.add_param = "weimin",      0
+    self.add_param = "lmaxfockae",  None
+    self.add_param = "nomega",      None
+    self.add_param = "encutgw",     None
+    self.add_param = "encutlf",     None
     # objects derived from SpecialVaspParams will be recognized as such and can
     # be added without further fuss.
     self.nelect      = NElect(0)
-    self.algo        = Algo("normal")
+    self.algo        = Algo("fast")
     self.precision   = Precision("accurate")
     self.ediff       = Ediff(1e-4)
-    self.ediffg      = Ediff(None)
+    self.ediffg      = Ediff(None, "ediffg")
     self.encut       = Encut(None)
     self.fftgrid     = FFTGrid(None)
     self.restart     = Restart(None)
@@ -128,6 +141,13 @@ class Incar(object):
     self.iniwave     = IniWave(None)
     self.magmom      = Magmom()
     self.npar        = Npar(None)
+    self.lwave       = Boolean("lwave", False)
+    self.precfock    = PrecFock(None)
+    self.lrpa        = Boolean("lrpa", None)
+    self.loptics     = Boolean("loptics", None)
+    self.lpead       = Boolean("lpead", None)
+    self.nelm        = Integer("nelm", None)
+    self.nonscf      = NonScf(False)
 
 
   def incar_lines(self, *args, **kwargs):
@@ -142,12 +162,12 @@ class Incar(object):
     # Calls them first in case they change normal key/value pairs.
     specials = []
     for key, value in self.special.items():
-      if value.value == None: continue
+      if value.value is None: continue
       line = value.incar_string(self, *args, **kwargs)
-      if line != None: specials.append(line + "\n")
+      if line is not None: specials.append(line + "\n")
     # prints key/value pairs
     for key, value in self.params.items():
-      if value == None: continue
+      if value is None: continue
       if isinstance(value, bool):  value = ".TRUE." if value else ".FALSE."
       else: 
         try: value = str(value)
@@ -217,12 +237,15 @@ class Incar(object):
         Can be "off" or a float corresponding to the tolerance used to determine
         symmetry operation. 
     """
-    if value == None: self.isym = None
-    elif str(value).lower() == "off" or str(value) == "0": self.params["isym"] = 0
-    elif "isym" in self.params:
-      if self.isym == 0: self.isym = None
-      self.symprec = value
-    else: self.symprec = value
+    if value is None: self.isym = None
+    elif str(value).lower() == "off" or value is "0" or value is False: self.params["isym"] = 0
+    elif str(value).lower() == "on" or value is True or value is True:
+       self.symprec = None
+       self.isym = None
+    elif isinstance(value, float): 
+       self.symprec = value
+       self.isym = None
+    else: raise ValueError("Uknown value when setting symmetries ({0}).".format(value))
 
   @add_setter
   def set_smearing(self, args):
@@ -245,7 +268,7 @@ class Incar(object):
         - insulator is equivalent to "tetra bloechl".
         - if x is omitted a default value of 0.2eV is used.
     """
-    if args == None: 
+    if args is None: 
       self.ismear, self.sigma = None, None
       return
 
@@ -256,7 +279,7 @@ class Incar(object):
     has_third = len(args) > 2
     third = args[2] if len(args) > 2 else None
 
-    if first == None:
+    if first is None:
       self.ismear = None
       if has_second: self.sigma = None
     elif first == "fermi" or first == "-1":    
@@ -302,10 +325,10 @@ class Incar(object):
         - third (optional) argument is ibrion
         - fourth (optional) argument is potim.
     """
-    nsw = 0 if self.nsw == None else self.nsw
-    if self.ibrion == None: ibrion = -1 if nsw < 0 else 0
+    nsw = 0 if self.nsw is None else self.nsw
+    if self.ibrion is None: ibrion = -1 if nsw < 0 else 0
     else: ibrion = self.ibrion
-    if self.isif == None: isif = 0 if ibrion == 0 else 2
+    if self.isif is None: isif = 0 if ibrion == 0 else 2
     else: isif = self.isif
    
     if nsw < 2 or ibrion == -1: return "static"
@@ -321,9 +344,9 @@ class Incar(object):
     import re
 
     dof =  args.lower() if isinstance(args,str) else str(args[0]).lower()
-    ionic = re.search( "ion(ic|s)?", dof ) != None
-    cellshape = re.search( "cell(\s+|-|_)?(?:shape)?", dof ) != None
-    volume = re.search( "volume", dof ) != None
+    ionic = re.search( "ion(ic|s)?", dof ) is not None
+    cellshape = re.search( "cell(\s+|-|_)?(?:shape)?", dof ) is not None
+    volume = re.search( "volume", dof ) is not None
 
     nsw, ibrion, potim = None, None, None
     if not isinstance(args, str):
@@ -336,12 +359,12 @@ class Incar(object):
     if (not ionic) and (not cellshape) and (not volume):
       self.params["isif"] = 1
       self.params["ibrion"] = -1
-      assert ibrion == None or ibrion == -1, \
+      assert ibrion is None or ibrion == -1, \
              ValueError("Cannot set ibrion to anything but -1 for static calculations.")
-      assert nsw  == None or nsw == 0, \
+      assert nsw  is None or nsw == 0, \
              ValueError("static calculation with nsw > 0 is way too creative.")
       self.params["nsw"] = None
-      if potim != None: self.params["potim"] = potim
+      if potim is not None: self.params["potim"] = potim
 
     else: # Some kind of relaxations. 
       # ionic calculation.
@@ -355,18 +378,19 @@ class Incar(object):
         raise RuntimeError, "VASP does not allow relaxation of atomic position"\
                             "and volume at constant cell-shape.\n"
 
-      if ibrion == None and self.params["ibrion"] in [None, -1]: self.params["ibrion"] = 2
-      elif ibrion != None: 
+      if ibrion is None and self.params["ibrion"] in [None, -1]: self.params["ibrion"] = 2
+      elif ibrion is not None: 
         assert ibrion != -1, ValueError("Cannot set ibrion to -1 with strain relaxations.")
         assert ibrion != 0 or self.params["isif"] == 1,\
                ValueError("Cannot set ibrion to 0 with strain relaxations.")
         self.params["ibrion"] = ibrion
-      if nsw != None:
+      if nsw is not None:
         assert nsw > 0, ValueError("Cannot set nse < 1 and perform strain relaxations.")
         self.params["nsw"] = nsw
-      elif self.params["nsw"] == None or self.params["nsw"] == 0: self.params["nsw"] = 50
-      if potim != None: self.params["potim"] = potim
-      if self.ediffg != None and self.ediffg < self.ediff: self.ediffg = None
+      elif self.params["nsw"] is None or self.params["nsw"] == 0: self.params["nsw"] = 50
+      if potim is not None: self.params["potim"] = potim
+      if self.ediffg is not None:
+        if self.ediffg < self.ediff and self.ediffg > 0: self.ediffg = None
 
   @add_setter
   def set_relaxation(self, value):
@@ -391,4 +415,3 @@ class Incar(object):
     super(Incar, self).__setattr__("params", args[1])
     super(Incar, self).__setattr__("special", args[2])
     d = self.__dict__.update(args[0])
-

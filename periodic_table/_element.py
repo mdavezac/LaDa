@@ -110,14 +110,146 @@ class Element(object):
     for name in self.__dict__:
       if name[0] == '_': continue
       s = getattr(self, name)
-      if s != None: string += "  - {0}: {1}.\n".format(name, str(s))
+      if s is not None: string += "  - {0}: {1}.\n".format(name, str(s))
     
     return string
+
+  @property
+  def electronic_configuration(self):
+    """ Returns array describing electronic configuration.
+
+        The first element of the array discribe 1s electrons, the second 2s and
+        2p, and so forth.
+        Each element is a dictionary where each key is an orbital and each
+        value the corresponding number of electrons in that orbital.
+    """
+    N = self.atomic_number
+    if N < 2: return [{'s': 1}]
+    result = [{'s': 2}]
+    if N < 3: return result
+    result.append({'s': min(N-2, 2), 'p': min(N-4, 6) if N > 4 else 0})
+    if N < 11: return result
+    result.append({'s': min(N-10, 2), 'p': min(N-12, 6) if N > 12 else 0})
+    if N < 19: return result
+    if N == 21:
+      result.append({'s': 2, 'p': 0, 'd':1})
+      return result
+    if N == 24:
+      result.append({'s': 1, 'p': 0, 'd':5})
+      return result
+    if N == 29:
+      result.append({'s': 1, 'p': 0, 'd':10})
+      return result
+    result.append({'s': min(N-18, 2), 'p': min(N-30, 6) if N > 30 else 0, 'd': min(N-20, 10) if N > 20 else 0})
+    if N < 37: return result
+    if N == 39:
+      result.append({'s': 2, 'p': 0, 'd':1})
+      return result
+    if N == 41:
+      result.append({'s': 1, 'p': 0, 'd':4})
+      return result
+    if N == 42:
+      result.append({'s': 1, 'p': 0, 'd':5})
+      return result
+    if N == 44:
+      result.append({'s': 1, 'p': 0, 'd':7})
+      return result
+    if N == 45:
+      result.append({'s': 1, 'p': 0, 'd':8})
+      return result
+    if N == 47:
+      result.append({'s': 1, 'p': 0, 'd':10})
+      return result
+    result.append({'s': min(N-36, 2), 'p': min(N-48, 6) if N > 48 else 0, 'd': min(N-38, 10) if N > 38 else 0})
+    if N < 55: return result
+    if N == 57:
+      result.append({'s': 2, 'p': 0, 'd': 1, 'f': 0})
+      return result
+    if N == 58:
+      result.append({'s': 2, 'p': 0, 'd': 1, 'f': 1})
+      return result
+    if N == 64:
+      result.append({'s': 2, 'p': 0, 'd': 1, 'f': 7})
+      return result
+    if N == 71:
+      result.append({'s': 2, 'p': 0, 'd': 1, 'f': 14})
+      return result
+    if N == 78:
+      result.append({'s': 1, 'p': 0, 'd':9, 'f': 14})
+      return result
+    if N == 79:
+      result.append({'s': 1, 'p': 0, 'd':10, 'f': 14})
+      return result
+    result.append({'s': min(N-54, 2), 'p': min(N-80, 6) if N > 80 else 0,
+                   'd': min(N-70, 10) if N > 70 else 0, 
+                   'f': min(N-56, 14) if N > 56 else 0})
+    if N < 87: return result
+    if N == 89:
+      result.append({'s': 2, 'p': 0, 'd':1, 'f': 0})
+      return result
+    if N == 91:
+      result.append({'s': 2, 'p': 0, 'd':1, 'f': 2})
+      return result
+    if N == 92:
+      result.append({'s': 2, 'p': 0, 'd':1, 'f': 3})
+      return result
+    if N == 93:
+      result.append({'s': 2, 'p': 0, 'd':1, 'f': 4})
+      return result
+    if N == 96:
+      result.append({'s': 2, 'p': 0, 'd':1, 'f': 7})
+      return result
+    if N == 103:
+      result.append({'s': 2, 'p': 0, 'd':1, 'f': 14})
+      return result
+    result.append({'s': min(N-86, 2), 'p': 0, 
+                   'd': min(N-102, 10) if N > 102 else 0, 
+                   'f': min(N-88, 14) if N > 88 else 0})
+    return result
+
+  @property 
+  def group(self):
+    """ Group, eg column in periodict table. """
+    last = self.electronic_configuration[-1]
+    s = last.get('s', 0)
+    p = last.get('p', 0)
+    d = last.get('d', 0)
+    if self.atomic_number > 57 and self.atomic_number < 72: return "Lanthanide"
+    elif self.atomic_number > 89 and self.atomic_number < 104: return "Actinide"
+    elif s == 2 and p == 6: return "VIII"
+    elif s+p+d == 1: return "IA"
+    elif s+p+d == 2: return "IIA"
+    elif s+p ==  3: return "IIIB"
+    elif s+d ==  3: return "IIIA"
+    elif s+p ==  4: return "IVB"
+    elif s+d ==  4: return "IVA"
+    elif s+p ==  5: return "VB"
+    elif s+d ==  5: return "VA"
+    elif s+p ==  6: return "VIB"
+    elif s+d ==  6: return "VIA"
+    elif s+p ==  7: return "VIIB"
+    elif s+d ==  7: return "VIIA"
+    elif s+d in [8, 9, 10]: return "VIIIA"
+    elif s+d == 11: return "IA"
+    elif s+d == 12: return "IIA"
+
+  @property
+  def column(self):
+    """ Returns column in periodic table. """
+    if self.atomic_number > 57 and self.atomic_number < 72: return "Lanthanide"
+    elif self.atomic_number > 89 and self.atomic_number < 104: return "Actinide"
+    last = self.electronic_configuration[-1]
+    return last.get('s', 0) + last.get('p', 0) + last.get('d', 10)
+
+  @property
+  def row(self):
+    """ Returns row in periodic table. """
+    return len(self.electronic_configuration)
 
   def __repr__(self):
     result = {}
     for name in self.__dict__:
       if name[0] == '_': continue
       s = getattr(self, name)
-      if s != None: result[name] = s
+      if s is not None: result[name] = s
     return "{0}(**{1})".format(self.__class__.__name__, result)

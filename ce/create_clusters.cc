@@ -169,7 +169,7 @@ namespace LaDa
         Crystal::Neighbors::const_iterator const i_end = neighbors_.end();
         size_t s(0), n(0);
         types::t_real current_norm(0);
-        for(; i_first != i_end; ++i_first, ++n)
+        for(; i_first != i_end and s <= _neighbor; ++i_first)
         {
           if( _lat.sites[i_first->index].type.size() < 2 ) continue;
           if( math::is_null(current_norm - i_first->distance) ) continue;
@@ -180,7 +180,7 @@ namespace LaDa
         if( i_first == i_end ) { size_try <<= 1; continue; } // did not find all neighbors.
 
         neighbors.reserve(n);
-        for(; i_begin != i_end; ++i_begin)
+        for(; i_begin != i_first; ++i_begin)
           if(_lat.sites[i_begin->index].type.size() >= 2)
             neighbors.push_back(*i_begin);
         break;

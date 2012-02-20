@@ -1,14 +1,10 @@
 # davezac@hopper08:~/SiGe/old/jwluo/SiGe_SL_001/Si6Ge4_on_Ge/vff
-from operator import attrgetter
-from numpy import array, dot
-from numpy.linalg import det
-from quantities import angstrom, eV
+from numpy import array
+from quantities import angstrom
 from lada.escan import read_input, bandgap
-from lada.crystal import fill_structure, sort_layers, nb_valence_states, Structure
+from lada.crystal import sort_layers
 from lada.crystal.binary import zinc_blende
-from lada.physics import a0, reduced_reciprocal_au
-from lada.mpi import world
-from numpy import pi, multiply
+from lada.physics import a0
 
 input = read_input("input.py")
 cell = [[2.5,0,0],[0.5,0.5,0.5],[0,-0.5,0.5]]

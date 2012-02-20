@@ -96,7 +96,7 @@ namespace LaDa
       if( _class.size() == 0 )
         return _stream << "Cluster class J0: " << _class.eci << "\n";
       if( _class.order() == 1 )
-        return _stream << "Cluster class J1: " << _class.eci << "\n";
+        return _stream << "Cluster class J1@" << _class.back().origin.site << ": " << _class.eci << "\n";
 
       _stream << "Cluster Class: " << _class.eci << "\n";
       std::ostringstream stream;
@@ -104,9 +104,9 @@ namespace LaDa
       MLClusters::const_iterator const i_cls_end = _class.end();
       for(; i_cls != i_cls_end; ++i_cls) stream << *i_cls;
       std::string indented = stream.str();
-      boost::algorithm::replace_all(indented, "\n", "\n   ");
-      indented.erase(indented.size()-3);
-      return _stream << "   " << indented;
+      boost::algorithm::replace_all(indented, "\n", "\n  ");
+      indented.erase(indented.size()-2);
+      return _stream << "  " << indented;
     }
     
     bool bypass_comment( std::istream & _sstr, std::string &_line )

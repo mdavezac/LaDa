@@ -75,9 +75,9 @@ def explore(self, cmdl):
      and len(args.type) == 0 \
      and len(args.jobdict) == 0: 
     current, path = _get_current_job_params(self, 0)
-    if current == None:
+    if current is None:
       print "No current jobs."
-    elif path == None:
+    elif path is None:
       print "Current position in job dictionary:", current.name
     else:
       print "Current position in job dictionary:", current.name
@@ -101,14 +101,14 @@ def explore(self, cmdl):
   if args.type == "errors": 
     running_jobs = set(ip.magic("qstat").fields(-1)) if hasattr(self, "magic_qstat") else set([])
     for name, job in current.iteritems():
-      if path == None: job.untag()
+      if path is None: job.untag()
       elif job.functional.Extract(join(dirname(path),name)).success: job.tag()
       elif name.replace("/", ".") in running_jobs: job.tag()
       else: job.untag()
 
   elif args.type == "results": 
     for name, job in current.iteritems():
-      if path == None: job.tag()
+      if path is None: job.tag()
       elif not job.functional.Extract(join(dirname(path),name)).success: job.tag()
       else: job.untag()
 
@@ -183,10 +183,10 @@ def _glob_ipy_user_ns(ip, arg):
     if u not in dictionary: return results
     if hasattr(dictionary[u], "__dict__"):
       dictionary = dictionary[u].__dict__
-      if name == None: name = u
+      if name is None: name = u
       else: name += "." + u
   names = [u for u in dictionary if u[0] != '_']
-  if name == None: 
+  if name is None: 
     result = [u + "." for u in names if not isinstance(dictionary[u], JobDict)]
     result.extend([ u for u in names if isinstance(dictionary[u], JobDict)])
   else: 
@@ -209,7 +209,7 @@ def _explore(self, args):
   # case where we want to change the way the current dictionary is read.
   if len(args.jobdict) == 0:
     c = ip.user_ns.pop("current_jobdict", None)
-    if c == None:
+    if c is None:
       ip.user_ns["_lada_error"] = "No job dictionary currently loaded.\n"\
                                   "Please use \"explore {0} path/to/jobict\".".format(args.type)
       ip.user_ns.pop("current_jobdict_path", None)
@@ -231,16 +231,16 @@ def _explore(self, args):
 
   jobdict, new_path = None, None
   if args.is_file or not args.is_expression:
-    try: jobdict = load(args.jobdict)
+    try: jobdict = load(args.jobdict, timeout=60)
     except: jobdict = None
     else: new_path = abspath(args.jobdict)
-  if jobdict == None and (args.is_expression or not args.is_file):
+  if jobdict is None and (args.is_expression or not args.is_file):
     try: jobdict = deepcopy(ip.ev(args.jobdict))
     except: jobdict = None
 
   if not isinstance(jobdict, JobDict): jobdict = None
 
-  if jobdict == None: # error
+  if jobdict is None: # error
     ip.user_ns["_lada_error"] = \
        "Could not convert \"{0}\" to a job-dictionary.".format(args.jobdict) 
     print ip.user_ns["_lada_error"] 
@@ -249,14 +249,14 @@ def _explore(self, args):
   if args.concatenate: 
     current.update(jobdict)
     jobdict = current
-    if new_path == None: new_path = path
-  elif args.add != None:
+    if new_path is None: new_path = path
+  elif args.add is not None:
     current[args.add[1:-1]] = jobdict
     jobdict = current
-    if new_path == None: new_path = path
+    if new_path is None: new_path = path
 
   ip.user_ns["current_jobdict"] = jobdict
   ip.user_ns["jobparams"] = JobParams()
-  if new_path != None: ip.user_ns["current_jobdict_path"] = new_path
+  if new_path is not None: ip.user_ns["current_jobdict_path"] = new_path
   else: ip.user_ns.pop("current_jobdict_path", None)
-  if new_path != None: ip.user_ns["collect"] = Collect(dynamic=True)
+  if new_path is not None: ip.user_ns["collect"] = Collect(dynamic=True)

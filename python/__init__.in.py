@@ -35,11 +35,17 @@
 
     In the works.
     Please see `lada.vasp` for a more in-depth description.
+
+    Setting defaults:
+    -----------------
+
+    All global variables below can be changed within "$HOME/.lada". This file
+    is read only once, when first importing lada into python.  
 """
 __docformat__ = "restructuredtext en"
 __all__ = ["error", @which_packages@]
 import error
-from os import environ
+__all__ = [@which_packages@]
 
 version_info = (@LaDa_VERSION_MAJOR@, @LaDa_VERSION_MINOR@)
 """ Tuple containing version info. """
@@ -50,40 +56,47 @@ lada_with_mpi = @do_use_mpi@
 
     If False, should try and avoid loading MPI related stuff.
 """
-# right now just check for redmesa or redrock. 
-lada_with_slurm = 'SNLCLUSTER' in environ 
-""" If True use slurm as ressource manager, else use openpbs. """
-queues = []
-""" List of slurm or pbs queues allowed for use. 
 
-    This is used by ipython's %launch magic function. 
-    It is not required for slurm systems. 
-    If empty, then %launch will not have a queue option.
-"""
+# reads stuff from global configuration files.
+global_dict = {"ladamodules": __all__}
+if "jobs" in __all__:
+  from lada.jobs.templates import default_pbs, default_slurm
+  from opt import cpus_per_node
+  global_dict["default_pbs"]   = default_pbs
+  global_dict["default_slurm"] = default_slurm
+  global_dict["cpus_per_node"] = cpus_per_node
+  del default_pbs
+  del default_slurm
+  del cpus_per_node
 
-genpot_library = "libgenpot.so"
-""" Default genpot library. 
+# first configuration files installed with lada.
+from os.path import exists, expanduser, expandvars, dirname, join
+from glob import iglob
+from os import environ
+for filename in iglob(join(join(dirname(__file__), "config"), "*.py")):
+  local_dict = {}
+  execfile(filename, global_dict, local_dict)
+  locals().update((k, v) for k, v in local_dict.iteritems() if k[0] != '_')
 
-    The value for the default can be overriden by ~/.lada in the code below.
-"""
+# then configuration files installed in a global config directory.
+if "LADA_CONFIG_DIR" in environ: 
+  for filename in iglob(join(environ["LADA_CONFIG_DIR"], "*.py")):
+    local_dict = {}
+    execfile(filename, global_dict, local_dict)
+    locals().update((k, v) for k, v in local_dict.iteritems() if k[0] != '_')
 
-escan_library = "libpescan.so"
-""" Default escan library. 
+# then user configuration file.
+if exists(expandvars(expanduser('~/.lada'))):
+  local_dict = {}
+  execfile(expandvars(expanduser('~/.lada')), global_dict, local_dict)
+  locals().update((k, v) for k, v in local_dict.iteritems() if k[0] != '_')
 
-    The value for the default can be overriden by ~/.lada in the code below.
-"""
-
-vasp_library = "libvasp.so"
-""" Default vasp library. 
-
-    The value for the default can be overriden by ~/.lada in the code below.
-"""
-
-# reads stuff from input file
-# from os.path import exists, expanduser, expandvars
-# if exists(expandvars(expanduser('~/.lada'))):
-#   from opt import read_input
-#   with open(expandvars(expanduser('~/.lada')), 'r') as file: string = file.read()
-#   global_dict, local_dict = {}, {}
-#   exec(string, global_dict, local_dict)
-#   locals().update(local_dict)
+# clean up namespace
+del global_dict
+del exists
+del expanduser
+del expandvars
+del dirname
+del join
+del iglob
+del environ

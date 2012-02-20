@@ -16,227 +16,56 @@
     compiled.
 """
 __docformat__ = "restructuredtext en"
-from launch import Launch
-from extract import Extract, ExtractGW_deprecated as ExtractGW
-from incar import Incar
-from kpoints import Density, Gamma
-from specie import Specie
-from ..opt import __load_vasp_in_global_namespace__
+__all__ = [ 'GWVasp', 'Vasp', 'Extract', 'Density', 'Gamma', 'Specie',  \
+            'Launch', 'Incar' ]
+from .launch import Launch
+from .extract import Extract
+from .incar import Incar
+from .kpoints import Density, Gamma
+from .specie import Specie
+from .functional import Functional as Vasp
+from .gwfunc import GWFunctional as GWVasp
 
-def version():
+def _vasplib(vasp_library=None):
+  """ Returns vasp library string. """
+  from lada import vasp_library as global_vasp_lib
+  if vasp_library is None: vasp_library = global_vasp_lib
+  if vasp_library is None: raise RuntimeError("No vasp library specified.")
+  return vasp_library
+
+def version(vasp_library=None, minversion=0):
   """ Vasp version as tuple (major, medium, minor). """
-  from lada import vasp_library
-  from _vasp import version as call_version, vasp as call_vasp
-  if vasp_library == None: raise RuntimeError("No vasp library specified.")
-  return call_version(vasp_library)
+  from _vasp import version as call_version
+  result = call_version(_vasplib(vasp_library))
+  assert result[0] >= minversion,\
+         RuntimeError( "Requested vasp version >= {0}. This is not the case of {1}.\n"\
+                       .format(minversion, repr(_vasplib(vasp_library))) )
+  return result
 
-def is_vasp_5():
+def is_vasp_5(vasp_library=None):
   """ True if using vasp 5. """
-  try: return version()[0] == 5
+  try: return version(vasp_library)[0] == 5
   except: return True
-def is_vasp_4():
+def is_vasp_4(vasp_library=None):
   """ True if using vasp 4. """
-  try: return version()[0] == 5
+  try: return version(vasp_library)[0] == 4
   except: return False
 
-def call_vasp(comm): 
+def call_vasp(vasp_library=None, comm=None, minversion=0): 
   """ Calls vasp library.  """
-  from lada import vasp_library, lada_with_mpi
+  from lada import lada_with_mpi
+  from ..mpi import Communicator
   if not lada_with_mpi: raise RuntimeError("Cannot call vasp without mpi.")
 
   from _vasp import vasp
-  if vasp_library == None: raise RuntimeError("No vasp library specified.")
-  vasp(comm, vasp_library)
+  comm = Communicator(comm)
+  version(vasp_library, minversion)
+  vasp(comm, _vasplib(vasp_library))
 
-__all__ = [ 'Launch', 'Extract', 'Incar', 'Density', 'Gamma', 'Specie',\
-            'incar', 'extract', 'kpoints', 'methods' ]
 try: from extract import MassExtract
 except ImportError: pass
-else: __all__.append('MassExtract')
+else: __all__.append(MassExtract.__class__.__name__)
     
-class Vasp(Launch):
-  """ Interface to VASP code.
-     
-      The strength of this interface is that combines vasp calculations, result
-      caching, and data retrieval together. 
-      
-      A vasp run is parameterized using Incar class defined in incar.py.
-      It is launched using the Launch class from launch.py class. More
-      specifically, Vasp derives from Launch wich derives from Incar.  The
-      results of a successful run is cached in the self.outdir directory.
-      After being launched an object is returned which can extract output data
-      from the files in this directory.
-
-      One of the strength of this class is that since results are cached in the
-      outdir directory, successful calculations are never runned twice.
-      This allows us to use the same scripts for generating and retrieving
-      data. 
-  """
-  Extract = staticmethod(Extract)
-  """ Extraction class. """
-
-  def __init__(self, *args, **kwargs):
-    """ Initializes vasp class. """
-    super(Vasp, self).__init__(self, *args, **kwargs)
-
-    self.restart_from_contcar = True
-    """ If True and self.CONTCAR exists in directory, will restart from it. """
-
-  def __call__( self, structure, outdir = None, comm = None, repat = None,\
-                overwrite=False, **kwargs ):
-    """ Performs a vasp calculation 
-     
-        :Parameters:
-	  structure :  `lada.crystal.Structure`
-            the structure to compute, *unless* a CONTCAR already exists in
-            ``outdir``, in which case this parameter is ignored. (This feature
-            can be disabled with the keyword/attribute
-            ``restart_from_contcar=False``).
-	  outdir : str or None
-            Output directory where the results should be stored.  This
-            directory will be checked for restart status, eg whether
-            calculations already exist. If None, then results are stored in
-            current working directory.
-          comm : `mpi.Communicator`
-            Calculations are performed over this MPI communicator.  
-          repat : list 
-            list of files to save, above and beyond `files.minimal`. This is
-            only used when `Vasp.inplace` is False.
-	  overwrite : boolean 
-            Whether to overwrite pre-existing results, eg does not check for
-            restart status.
-	  kwargs 
-            Any attribute of the Vasp instance can be overidden for
-            the duration of this call by passing it as keyword argument.  
-
-        :return: An `extract.Extract` object from which results can be obtained.
-
-        If successfull results (see ``extract.Extract.success``) already exist
-        in outdir, calculations are not repeated. Instead, an extraction object
-        for the stored results are given.
-
-        :note: This functor is stateless as long as self and structure can be
-               deepcopied correctly.  
-
-        :raise RuntimeError: when computations do not complete.
-        :raise IOError: when outdir exists but is not a directory.
-    """ 
-    from copy import deepcopy
-    from os import getcwd
-    from os.path import exists, isdir, join
-    from numpy import abs
-    from numpy.linalg import det
-    from ..crystal import specie_list, read_poscar
-    from ..opt import RelativeDirectory
-    from ..mpi import Communicator
-    from .files import CONTCAR
-
-    # make this functor stateless.
-    this      = deepcopy(self)
-    outdir    = getcwd() if outdir == None else RelativeDirectory(outdir).path
-    repat     = deepcopy(repat)  if repat != None else []
-    norun     = kwargs.pop("norun", False)
-    # makes functor stateless/reads structure from CONTCAR if requested and appropriate.
-    if kwargs.pop("restart_from_contcar", self.restart_from_contcar): 
-      path = join(outdir, CONTCAR)
-      if exists(path):
-        try:
-          old_structure = structure
-          structure = read_poscar(specie_list(structure), path)
-          assert len(structure.atoms) > 0
-          assert abs(det(structure.cell)) > 1e-8
-        except: structure = deepcopy(old_structure)
-    else: structure = deepcopy(structure) 
-
-    comm = Communicator(comm)
-
-    # if other keyword arguments are present, then they are assumed to be
-    # attributes of self, with value to be changed before launch. 
-    for key, value in kwargs.items():
-      # direct attributes.
-      if hasattr(this, key): setattr(this, key, value)
-      # properties attributes.
-      elif hasattr(this.__class__, key): setattr(this, key, value)
-      else: raise ValueError("Unkwown keyword argument to vasp: %s=%s" % (key, value))
-
-    # Checks for previous run, or deletes previous run if requested.
-    if not overwrite:
-      extract = self.Extract(comm = comm, outcar = outdir)
-      if extract.success: return extract # in which case, returns extraction object.
-    comm.barrier() # sync all procs.
-    
-    # Otherwise, performs calculation by calling base class functor.
-    super(Vasp, this).__call__( structure=structure, outdir=outdir,\
-                                repat=repat, comm=comm, norun=norun )
-    
-    # checks if result was successful
-    extract = self.Extract(comm = comm, outcar = outdir)
-    if not norun:
-      assert extract.success, RuntimeError("VASP calculation did not complete in %s.\n" % (outdir))
-
-    return extract
-
-  def __repr__(self):
-    """ Returns a python script representing this object. """
-    from .incar._params import SpecialVaspParam
-    string = "functional = %s()\n" % (self.__class__.__name__)
-
-    # creates a default vasp instance to compare to.
-    compare = self.__class__()
-    params = compare.params.keys()
-
-    # will hold classes from modules.
-    modules = {}
-    modules[self.__class__.__module__] = [self.__class__.__name__]
-    # now go through vasp parameters and print them out.
-    for name, value in self.params.items():
-      if value == None: continue
-      # if a special parameter, then is non-default.
-      if name in params: string += "functional.%s = %s\n" % (name, repr(value))
-      else:
-        string += "functional.add_param = \"%s\", %s\n" % (name, repr(value))
-        module = value.__class__.__module__ 
-        classname = value.__class__.__name__ 
-        if module in modules: modules[module].append(classname)
-        else: modules[module] = [classname]
-    for name, value in self.special.items():
-      if value.value == None: continue
-      assert isinstance(value, SpecialVaspParam)
-      string += "functional.%s = %s\n" % (name, value)
-      module = value.__class__.__module__ 
-      classname = value.__class__.__name__ 
-      if module in modules: modules[module].append(classname)
-      else: modules[module] = [classname]
-    # adds kpoints
-    string += "functional.kpoints = %s\n" % (repr(self.kpoints))
-    if hasattr(self.kpoints, "__call__"):
-      # checks for user module.
-      module = self.kpoints.__class__.__module__ 
-      classname = self.kpoints.__class__.__name__ 
-      if module in modules: modules[module].append(classname)
-      else: modules[module] = [classname]
-    # adds species.
-    for name, specie in self.species.items():
-      string += "functional.species['{0}'] = {1}\n".format(name, repr(specie))
-      module = specie.__class__.__module__ 
-      classname = specie.__class__.__name__ 
-      if module in modules: modules[module].append(classname)
-      else: modules[module] = [classname]
-    if not self.inplace: 
-      string += "functional.inplace = False\n"
-      string += "functional.workdir = \"%s\"\n" % (self._workdir.repr())
-    if not self.restart_from_contcar: 
-      string += "functional.restart_from_contcar = False\n"
-    if self.print_from_all: 
-      string += "functional.print_from_all = True\n"
-
-    # adds user modules above repr string.
-    header = ""
-    for name in sorted(modules.keys()):
-      header += "from %s import %s" % (name, modules[name][0])
-      for v in modules[name][1:]: header += ", %s" % (v)
-      header += "\n"
-    return header + string
 
 def read_input(filepath="input.py", namespace=None):
   """ Specialized read_input function for vasp. 
@@ -251,12 +80,13 @@ def read_input(filepath="input.py", namespace=None):
       It add a few names to the input-file's namespace. 
   """
   from ..opt import read_input
-  from . import Vasp, specie, files
-  from methods import RelaxCellShape
-  from extract import Extract
+  from . import specie
+  from .functional import Functional
+  from .methods import RelaxCellShape
+  from .extract import Extract
 
   # names we need to create input.
-  input_dict = { "Vasp": Vasp, "U": specie.U, "nlep": specie.nlep, 
+  input_dict = { "Vasp": Functional, "GWVasp": GWVasp, "U": specie.U, "nlep": specie.nlep, 
                  "RelaxCellShape": RelaxCellShape, 'Extract': Extract }
-  if namespace != None: input_dict.update(namespace)
+  if namespace is not None: input_dict.update(namespace)
   return read_input(filepath, input_dict)

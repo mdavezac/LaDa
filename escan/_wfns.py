@@ -35,21 +35,29 @@ class rWavefunction(object):
     """
     from numpy import conjugate, dot, multiply, transpose
     a = conjugate(self.up)
-    if operator == None: b = ket.up
+    if operator is None: b = ket.up
     elif operator.shape[0] == ket.up.shape[0] and operator.shape[-1] != ket.up.shape[0]:
       b = multiply(transpose(operator), ket.up) 
     else: b = multiply(operator, ket.up) 
     result = dot(b, a)
-    if self.down != None: 
+    if self.down is not None: 
       a = conjugate(self.down)
-      if operator == None: b = ket.down
+      if operator is None: b = ket.down
       elif operator.shape[0] == ket.down.shape[0] and operator.shape[-1] != ket.down.shape[0]:
         b = multiply(transpose(operator), ket.down) 
       else: b = multiply(operator, ket.down) 
       result += dot(b, a)
-    if self.comm.is_mpi:
-      return self.comm.all_reduce(result, lambda x,y: x+y) 
-    else: return result
+    if self.comm.is_mpi: result = self.comm.all_reduce(result, lambda x,y: x+y)
+    return result * operator.units if hasattr(operator, "units") else result
+
+  @property
+  def density(self):
+    """ Returns partial density. """
+    from numpy import multiply, conjugate
+    result = multiply(self.up, conjugate(self.up))
+    if self.down is not None: result += multiply(self.down, conjugate(self.down))
+    return result.real
+
 
 class Wavefunction(rWavefunction):
   is_gspace = True
@@ -77,8 +85,8 @@ class Wavefunction(rWavefunction):
         perform scalar product.
     """
     from numpy import multiply, transpose
-    if attenuate == None:  a = operator
-    elif operator == None: a = multiply(self.attenuation, self.attenuation)
+    if attenuate is None:  a = operator
+    elif operator is None: a = multiply(self.attenuation, self.attenuation)
     elif     operator.shape[0] == self.attenuation.shape[0] \
          and operator.shape[-1] != self.attenuation.shape[0]:
       a = multiply(transpose(operator), multiply(self.attenuation, self.attenuation))

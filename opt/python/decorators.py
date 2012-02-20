@@ -1,5 +1,6 @@
 """ A subpackage with decorators """
 __docformat__ = "restructuredtext en"
+__all__ = ['FileCache', 'broadcast_result', 'count_calls', 'make_cached', 'add_cache', 'add_setter']
 from .filecache import FileCache
 
 
@@ -119,5 +120,5 @@ def uncache(ob):
 def add_setter(method, docstring = None): 
   """ Adds an input-like setter property. """
   def _not_available(self): raise RuntimeError("Error: No cheese available.")
-  if docstring == None and hasattr(method, "__doc__"): docstring = method.__doc__
+  if docstring is None and hasattr(method, "__doc__"): docstring = method.__doc__
   return property(fget=_not_available, fset=method,  doc=docstring)

@@ -22,13 +22,15 @@ class Escan(object):
     from ..vff import Vff
     from ..opt import RelativeDirectory
     from ._potential import soH
+    from .fftmesh import SmallCells
+    from .. import launch_escan_as_library, escan_program, genpot_program
 
     super(Escan, self).__init__()
     self.inplace = inplace
     """ If True calculations are performed in the output directory. """
     # checks inplace vs workdir
     if self.inplace: 
-      assert workdir == None, ValueError("Cannot use both workdir and inplace attributes.")
+      assert workdir is None, ValueError("Cannot use both workdir and inplace attributes.")
 
     self.vff = Vff() 
     """ The `lada.vff.Vff` functional with which to relax a structure. """
@@ -76,7 +78,7 @@ class Escan(object):
     """ real-space projector cutoff. """
     self.atomic_potentials = None
     """ Parameters to atomic potentials. """
-    self.fft_mesh = (18, 18, 18)
+    self.fft_mesh = SmallCells()
     """ Fourrier Transform mesh. """
     self.dnc_mesh = None
     """ Divide and conquer mesh.
@@ -124,8 +126,14 @@ class Escan(object):
     """
     self.print_from_all = False
     """ If True, each node will print. """
-    self.symlink = True
+    self.symlink = False
     """ Prefer symlink to actual copy where possible. """
+    self.escan_program = escan_program
+    """ Name/fullpath of vasp program. """
+    self.genpot_program = genpot_program
+    """ Name/fullpath of vasp program. """
+    self.launch_as_library = launch_escan_as_library
+    """ Whether to launch escan/genpot as library(True) or a program(False). """
 
   @property
   def relax(self):
@@ -201,10 +209,12 @@ class Escan(object):
     from ._potential import AtomicPotential
     assert len(args) > 2, RuntimeError("Atomic  potentials need at least two parameters.")
     assert len(args) < 9, RuntimeError("Too many parameters when setting atomic potentials.")
-    if self.atomic_potentials == None: self.atomic_potentials = []
+    if self.atomic_potentials is None: self.atomic_potentials = []
     self.atomic_potentials.append( AtomicPotential(*args) )
 
   def __repr__(self):
+    """ Prints this object as an executable python script. """
+    from operator import itemgetter
     from ._potential import localH, nonlocalH, soH
     result  = str(self.vff).replace("functional", "vff_functional")
     result += "# Escan definition.\n"
@@ -212,7 +222,7 @@ class Escan(object):
 
     # create format string for public data members.
     max_length, string, _string, values = len('add_potential'), '', '', {}
-    for key, value in self.__dict__.items():
+    for key, value in sorted(self.__dict__.items(), key=itemgetter(0)):
       if key[0] == '_': continue
       if key == 'potential': continue
       if key == 'workdir': continue
@@ -226,7 +236,7 @@ class Escan(object):
       string += 'functional.{{{0}: <{{_mxlgth_repr_}}}} = {1}\n'.format(key, r)
       values[key] = key
     # create format string for private data members.
-    for key, value in self.__dict__.items():
+    for key, value in sorted(self.__dict__.items(), key=itemgetter(0)):
       if key[0] != '_': continue
       if key == '_workdir': continue
       if key == '_maskr': continue
@@ -246,11 +256,14 @@ class Escan(object):
     elif self.potential == soH:
       result += "functional.{0: <{1}} = soH\n".format('potential', max_length)
     else: raise RuntimeError("unknown hamiltonnian {0}.".format(soH))
-    for pot in self.atomic_potentials:
-      result += "functional.{0: <{1}} = {2}\n".format('add_potential', max_length, repr(pot))
+    if self.atomic_potentials is not None:
+      for pot in self.atomic_potentials:
+        result += "functional.{0: <{1}} = {2}\n".format('add_potential', max_length, repr(pot))
+    else: result += "functional.{0: <{1}} = {2}\n".format('atomic_potential', max_length, repr(None))
     if self.inplace == False: 
       result += "functional.{0: <{1}} = {2}\n"\
                 .format('workdir', max_length, repr(self._workdir.unexpanded))
+
     result += string.format(**values)
     result += 'functional.{0: <{1}} = {2}\n'.format('maskr', max_length, self._maskr.repr())
     result += _string.format(**values)
@@ -259,7 +272,10 @@ class Escan(object):
     module = self.__class__.__module__ 
     classname = self.__class__.__name__ 
     header = "from numpy import array\n"\
-             "from lada.escan import {0}, soH, localH, nonlocalH\n".format(classname)
+             "from lada.escan import soH, localH, nonlocalH\n"\
+             "from {1} import {0}\n".format(classname, module)
+    if hasattr(self.fft_mesh, '__call__'): 
+      header += "from {0.__module__} import {0.__name__}\n".format(self.fft_mesh.__class__)
     return header + result
 
   def __call__(self, structure, outdir = None, comm = None, overwrite=False, \
@@ -276,7 +292,7 @@ class Escan(object):
 
     comm = Communicator(comm, with_world=True)
 
-    if outdir == None: outdir = getcwd()
+    if outdir is None: outdir = getcwd()
 
     # make this functor stateless.
     this      = deepcopy(self)
@@ -286,7 +302,9 @@ class Escan(object):
     # attributes of self, with value to use for calculations launch. 
     # If an attribute cannot be found to exist in escan, then vff attributes
     # are checked, and lastly vff.minimizer attributes.
+    if "external" in kwargs: this.launch_as_library = not kwargs.pop("external")
     for key in kwargs.keys():
+      if key == "external": continue
       if hasattr(this, key): setattr(this, key, kwargs[key])
       elif hasattr(this.vff, key): setattr(this.vff, key, kwargs[key])
       elif hasattr(this.vff.minimizer, key): setattr(this.vff.minimizer, key, kwargs[key])
@@ -329,13 +347,13 @@ class Escan(object):
 
   def _cout(self, comm):
     """ Creates output name. """
-    if self.OUTCAR == None: return "/dev/null"
+    if self.OUTCAR is None: return "/dev/null"
     if comm.is_root: return self.OUTCAR
     return self.OUTCAR + "." + str(comm.rank) if self.print_from_all else "/dev/null"
 
   def _cerr(self, comm):
     """ Creates error name. """
-    if self.ERRCAR == None: return "/dev/null"
+    if self.ERRCAR is None: return "/dev/null"
     if comm.is_root: return self.ERRCAR
     return self.ERRCAR + "." + str(comm.rank) if self.print_from_all else "/dev/null"
 
@@ -345,7 +363,7 @@ class Escan(object):
     import time
     from ..opt.changedir import Changedir
 
-    if self.genpotrun != None and self.vffrun != None and self.do_escan == False:
+    if self.genpotrun is not None and self.vffrun is not None and self.do_escan == False:
       print "Nothing to do? no relaxation, no genpot, no escan?" 
       return None
     timing = time.time() 
@@ -368,10 +386,12 @@ class Escan(object):
       
       # makes calls to run
       if do_vff: self._run_vff(structure, outdir, comm, cout, overwrite, norun)
-      local_comm = self._local_comm(comm)
-      if local_comm != None:
-        if do_genpot: self._run_genpot(local_comm, outdir, norun)
-        if self.do_escan: self._run_escan(local_comm, structure, norun)
+      local_comm = self._local_comm(self.vffrun.structure, comm)
+      if local_comm is not None:
+        if do_genpot:
+          self._run_genpot(self.vffrun.structure, local_comm, outdir, norun)
+        if self.do_escan:
+          self._run_escan(local_comm, structure, norun)
 
       # don't print timeing if not running.
       if norun == True: return
@@ -388,10 +408,12 @@ class Escan(object):
         extract = Extract(comm=comm, directory = outdir, escan = self)
         assert extract.success, RuntimeError("Escan calculations did not complete.")
 
-  def _local_comm(self, comm):
+  def _local_comm(self, structure, comm):
     """ Communicator over which calculations are done. """
     if not comm.is_mpi: return comm
-    fftsize = self.fft_mesh[0] * self.fft_mesh[1] * self.fft_mesh[2]
+    fftmesh = self.fft_mesh
+    if hasattr(fftmesh, '__call__'): fftmesh, dummy, dummy = fftmesh(self, structure, comm)
+    fftsize = fftmesh[0] * fftmesh[1]
     for m in range(comm.size, 0, -1):
       if fftsize % m == 0: break
     norun = comm.rank >= m
@@ -403,7 +425,7 @@ class Escan(object):
     from os.path import join, exists
     from ..opt import copyfile
 
-    if comm.is_root and self.vffrun != None:
+    if comm.is_root and self.vffrun is not None:
       vffrun = self.vffrun.solo()
       POSCAR = join(vffrun.directory, vffrun.functional._POSCAR)
       rstr = vffrun.structure
@@ -413,9 +435,12 @@ class Escan(object):
       VFFCOUT = join(vffrun.directory, VFFCOUT)
       copyfile(VFFCOUT, self.vff._cout(comm), 'same exists null', None, self.symlink)
 
-    if self.vffrun != None or norun == True: return
+    if self.vffrun is not None or norun == True: return
     
-    self.vffrun = self.vff(structure, outdir=outdir, comm=comm, overwrite=overwrite)
+    vffcomm = comm.split(comm.is_root)
+    if comm.is_root: self.vff(structure, outdir=outdir, comm=vffcomm, overwrite=overwrite)
+    comm.barrier()
+    self.vffrun = self.vff.Extract(outdir, comm=comm)
     assert self.vffrun.success, RuntimeError("VFF relaxation did not succeed.")
     if comm.is_root:
       self.vffrun.solo().write_escan_input(self._POSCAR, self.vffrun.solo().structure)
@@ -435,13 +460,13 @@ class Escan(object):
           print >>file_out, line[:-1]
 
 
-  def _run_genpot(self, comm, outdir, norun):
+  def _run_genpot(self, structure, comm, outdir, norun):
     """ Runs genpot only """
     from os.path import basename, join
-    from ..opt import redirect, copyfile
+    from ..opt import redirect, copyfile, which
 
     # using genpot from previous run
-    if comm.is_root and self.genpotrun != None:
+    if comm.is_root and self.genpotrun is not None:
       genpotrun = self.genpotrun.solo()
       POTCAR = join(genpotrun.directory, genpotrun.functional._POTCAR)
       potcar = self._POTCAR
@@ -449,16 +474,20 @@ class Escan(object):
       copyfile(self.maskr, nothrow='same', comm=None, symlink=self.symlink)
       for pot in self.atomic_potentials:
         copyfile(pot.nonlocal, nothrow='none same', comm=None, symlink=self.symlink)
-    if self.genpotrun != None: return
+    if self.genpotrun is not None: return
 
-    assert self.atomic_potentials != None, RuntimeError("Atomic potentials are not set.")
+    assert self.atomic_potentials is not None, RuntimeError("Atomic potentials are not set.")
     # Creates temporary input file and creates functional
-    dnc_mesh = self.dnc_mesh if self.dnc_mesh != None else self.fft_mesh
-    overlap_mesh = self.overlap_mesh if self.overlap_mesh != None else (0,0,0)
+    if hasattr(self.fft_mesh, '__call__'):
+      fft_mesh, dnc_mesh, overlap_mesh = self.fft_mesh(self, structure, comm)
+    else:
+      fft_mesh = self.fft_mesh
+      dnc_mesh = self.dnc_mesh if self.dnc_mesh is not None else self.fft_mesh
+      overlap_mesh = self.overlap_mesh if self.overlap_mesh is not None else (0,0,0)
     if comm.is_root: 
       with open(self._GENCAR, "w") as file:
         file.write( "%s\n%i %i %i\n%i %i %i\n%i %i %i\n%f\n%i\n"\
-                    % ( self._POSCAR, self.fft_mesh[0], self.fft_mesh[1], self.fft_mesh[2], \
+                    % ( self._POSCAR, fft_mesh[0], fft_mesh[1], fft_mesh[2], \
                         dnc_mesh[0], dnc_mesh[1], dnc_mesh[2],\
                         overlap_mesh[0], overlap_mesh[1], overlap_mesh[2], self.cutoff,\
                         len(self.atomic_potentials) ))
@@ -473,10 +502,16 @@ class Escan(object):
     copyfile(self.maskr, nothrow='same', comm=comm, symlink=self.symlink)
 
     if norun == False:
-      with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 
-        assert comm.real, RuntimeError('Cannot run escan without mpi.')
-        from ._escan import _call_genpot
-        _call_genpot(comm)
+      if self.launch_as_library:
+        with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 
+          assert comm.real, RuntimeError('Cannot run escan without mpi.')
+          from ._escan import _call_genpot
+          comm.barrier()
+          _call_genpot(comm)
+      else:
+        try: program = which(self.genpot_program)
+        except: program = self.genpot_program
+        comm.external(program, out=self._cout(comm), err=self._cerr(comm), append=True)
 
 
   def _write_incar(self, comm, structure, norun=False):
@@ -486,15 +521,15 @@ class Escan(object):
     from quantities import eV
     from ..physics import Ry
     from ._potential import soH, nonlocalH, localH
-    assert self.atomic_potentials != None, RuntimeError("Atomic potentials are not set.")
+    assert self.atomic_potentials is not None, RuntimeError("Atomic potentials are not set.")
     # Creates temporary input file and creates functional
     kpoint = (0,0,0,0,0) if norm(self.kpoint) < 1e-12\
              else self._get_kpoint(structure, comm, norun)
     if comm.is_root:
       with open(self._INCAR, "w") as file:
         file.write('1 {0}\n'.format(self._POTCAR))
-        file.write('2 {0.WAVECAR}\n3 {1}\n'.format(self, 1 if self.eref != None else 2) )
-        eref = self.eref if self.eref != None else 0
+        file.write('2 {0.WAVECAR}\n3 {1}\n'.format(self, 1 if self.eref is not None else 2) )
+        eref = self.eref if self.eref is not None else 0
         if hasattr(eref, "rescale"): eref = float(eref.rescale(eV))
         cutoff = self.cutoff
         if hasattr(cutoff, "rescale"): cutoff = float(cutoff.rescale(Ry))
@@ -503,7 +538,7 @@ class Escan(object):
         if self.potential != soH or norm(self.kpoint) < 1e-6: nbstates = max(1, self.nbstates/2)
         assert nbstates > 0, ValueError("Cannot have less than 1 state ({0}).".format(nbstates))
         file.write( '5 {0}\n6 {1.itermax} {1.nlines} {1.tolerance}\n'.format(nbstates, self))
-        nowfns = self.input_wavefunctions == None
+        nowfns = self.input_wavefunctions is None
         if not nowfns: nowfns = len(self.input_wavefunctions) == 0
         if nowfns: file.write('7 0\n8 0\n')
         else:
@@ -533,14 +568,19 @@ class Escan(object):
 
   def _run_escan(self, comm, structure, norun):
     """ Runs escan only """
-    from ..opt import redirect
+    from ..opt import redirect, which
 
     self._write_incar(comm, structure, norun)
     if norun == False:
-      with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 
-        assert comm.real, RuntimeError('Cannot run escan without mpi.')
-        from ._escan import _call_escan
-        _call_escan(comm)
+      if self.launch_as_library:
+        with redirect(fout=self._cout(comm), ferr=self._cerr(comm), append=True) as oestreams: 
+          assert comm.real, RuntimeError('Cannot run escan without mpi.')
+          from ._escan import _call_escan
+          _call_escan(comm)
+      else:
+        try: program = which(self.escan_program)
+        except: program = self.escan_program
+        comm.external(program, out=self._cout(comm), err=self._cerr(comm), append=True)
 
   def _get_kpoint(self, structure, comm, norun):
     """ Returns deformed or undeformed kpoint. """
@@ -550,7 +590,7 @@ class Escan(object):
     from ..physics import a0
     # first get relaxed cell
     if norun == True: relaxed = structure.cell.copy()
-    elif self.vffrun != None: relaxed = self.vffrun.structure.cell
+    elif self.vffrun is not None: relaxed = self.vffrun.structure.cell
     else:
       relaxed = zeros((3,3), dtype="float64")
       if comm.is_root:
@@ -572,15 +612,19 @@ class Escan(object):
   def copy(self, **kwargs):
     """ Performs deep-copy of object. 
 
-	:Param kwargs: keyword arguments will overide the corresponding
-           attribute. The value of the keyword argument is *not* deepcopied. 
-           The attribute must exist. Attributes cannot be created here. 
+				:Param kwargs: keyword arguments will overide the corresponding
+                 attribute. The value of the keyword argument is *not* deepcopied. 
+                 The attribute must exist. Attributes cannot be created here. 
     """
     from copy import deepcopy
     result = deepcopy(self)
+    noadd = kwargs.pop('noadd', None)
     for key, value in kwargs.iteritems():
-      assert hasattr(result, key),\
-             ValueError("Attribute {0} does not exist and will not be created in copy.".format(key))
+      if not hasattr(result, key):
+        if noadd is None:
+          raise ValueError( "Attribute {0} does not exist "\
+                            "and will not be created in copy.".format(key))
+        elif noadd == True: continue
       setattr(result, key, value)
     return result
 
@@ -590,8 +634,12 @@ class Escan(object):
         Earlier versions may not have all the attributes that now exist by
         defaults. This routines adds them when unpickling.
     """
+    from .. import launch_escan_as_library, escan_program, genpot_program
     self.__dict__.update(value)
-    self.symlink = True
+    self.symlink = self.__dict__.get('symlink', True)
+    self.launch_as_library = self.__dict__.pop('launch_as_library', launch_escan_as_library)
+    self.escan_program = self.__dict__.pop('escan_program', escan_program)
+    self.genpot_program = self.__dict__.pop('genpot_program', genpot_program)
     for key, value in self.__class__().__dict__.iteritems():
        if not hasattr(self, key): setattr(self, key, value)
 

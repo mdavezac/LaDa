@@ -55,7 +55,7 @@ class JobDict(object):
 
       The ``iteritems`` method does just that: it goes through the whole tree
       returning those branches where there is something to execute (eg
-      ``job.functional != None``).
+      ``job.functional is not None``).
         
       Putting it all together:
 
@@ -132,7 +132,7 @@ class JobDict(object):
   @functional.setter
   def functional(self, value):
     from pickle import dumps, loads # ascertains pickle-ability, copies functional
-    assert value == None or hasattr(value, "__call__"),\
+    assert value is None or hasattr(value, "__call__"),\
            ValueError("job.functional should be either None(no job) or a callable.")
     # ascertains pickle-ability
     try: string = dumps(value)
@@ -147,13 +147,13 @@ class JobDict(object):
   @property
   def name(self):
      """ Returns the name of this dictionary, relative to root. """
-     if self.parent == None: return "/"
+     if self.parent is None: return "/"
      string = None
      for key, item in self.parent.children.iteritems():
        if id(item) == id(self):
          string = self.parent.name + key
          break
-     assert string != None, RuntimeError("Could not determine the name of the dictionary.")
+     assert string is not None, RuntimeError("Could not determine the name of the dictionary.")
      if not self.is_job: string += "/"
      return string
 
@@ -166,14 +166,14 @@ class JobDict(object):
     from os.path import normpath
 
     index = normpath(index)
-    if index == "" or index == None or index == ".": return self
+    if index == "" or index is None or index == ".": return self
     if index[0] == "/": return self.root[index[1:]]
 
     result = self
     names = split(r"(?<!\\)/", index)
     for i, name in enumerate(names):
       if name == "..":
-        if result.parent == None: raise KeyError("Cannot go below root level.")
+        if result.parent is None: raise KeyError("Cannot go below root level.")
         result = result.parent
       elif name in result.children: result = result.children[name]
       else: raise KeyError("job " + index + " does not exist.")
@@ -194,7 +194,7 @@ class JobDict(object):
     if isinstance(deletee, JobDict): 
       assert id(self) != id(deletee), KeyError("Will not commit suicide.")
       parent = self.parent
-      while parent != None: 
+      while parent is not None: 
         assert id(parent) != id(deletee), KeyError("Will not go Oedipus on you.")
         parent = parent.parent
 
@@ -222,7 +222,7 @@ class JobDict(object):
       assert parentpath in self, KeyError('Could not find parent job {0}.'.format(parentpath))
       mother = self[parentpath]
       parent = self.parent
-      while parent != None:
+      while parent is not None:
         assert parent is not mother, KeyError('Will not set parent job of current job.')
     assert len(childpath) > 0 or childpath == '.', KeyError('Will not set current directory.')
     assert childpath != '..', KeyError('Will not set parent directory.')
@@ -240,14 +240,14 @@ class JobDict(object):
     if index in ["", ".", None]: return self
     if index[0] == "/":  # could create infinit loop.
       result = self
-      while result.parent != None: result = result.parent
+      while result.parent is not None: result = result.parent
       return result / index[1:]
 
     names = split(r"(?<!\\)/", index) 
     result = self
     for name in names:
       if name == "..":
-        if result.parent != None: result = result.parent
+        if result.parent is not None: result = result.parent
         continue
       elif name not in result.children:
         result.children[name] = JobDict()
@@ -258,7 +258,7 @@ class JobDict(object):
   @property
   def is_job(self):
     """ True if functional is not None. """
-    return self.functional != None
+    return self.functional is not None
 
   def subjobs(self):
     """ Iterator over children jobs. """
@@ -301,7 +301,7 @@ class JobDict(object):
     else:
       if not (self.is_job or other.is_job): return
       self.jobparams.update(other.jobparams)
-      if other.functional != None: self.functional = other.functional
+      if other.functional is not None: self.functional = other.functional
 
   def __str__(self):
     result = "Jobs: \n"
@@ -403,7 +403,7 @@ class JobDict(object):
   def root(self): 
     """ Returns root dictionary. """
     result = self
-    while result.parent != None: result = result.parent
+    while result.parent is not None: result = result.parent
     return result
 
   def __contains__(self, index):

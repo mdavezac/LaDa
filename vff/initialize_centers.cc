@@ -16,7 +16,7 @@ namespace LaDa
     void Vff :: first_neighbors_( std::vector< std::vector< math::rVector3d > >& _fn )
     {
       const size_t Nsites( structure.lattice->sites.size() );
-      LADA_DO_NASSERT( Nsites != 2, "Expected two sites for VFF.\n" )
+//     LADA_DO_NASSERT( Nsites != 2, "Expected two sites for VFF.\n" )
       typedef std::vector< std::vector< math::rVector3d > > t_FirstNeighbors;
       _fn.resize( structure.lattice->sites.size() );
       foreach( const Crystal::Lattice::t_Site &site, structure.lattice->sites )
@@ -37,10 +37,10 @@ namespace LaDa
         t_Atoms :: iterator i_atom_end = structure.atoms.end();
         for(types::t_unsigned index=0; i_atom != i_atom_end; ++i_atom, ++index )
         {
-          if(i_atom->site == -1)
-            try { i_atom->site = structure.lattice->get_atom_site_index(*i_atom); }
-            catch(std::exception &e)
-              { BOOST_THROW_EXCEPTION(exceptions::site_index() << exceptions::string(e.what())); }
+        // if(i_atom->site == -1)
+        //   try { i_atom->site = structure.lattice->get_atom_site_index(*i_atom); }
+        //   catch(std::exception &e)
+        //     { BOOST_THROW_EXCEPTION(exceptions::site_index() << exceptions::string(e.what())); }
           centers_.push_back( AtomicCenter( structure, *i_atom, index ) );
         }
       }

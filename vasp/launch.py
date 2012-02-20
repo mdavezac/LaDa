@@ -1,6 +1,6 @@
 """ A class for single-shot VASP calculation """
 __docformat__ = "restructuredtext en"
-import incar
+__all__ = ['Launch']
 from incar import Incar
 from kpoints import Density
 from ..opt.decorators import add_setter
@@ -9,11 +9,8 @@ from ..opt.decorators import add_setter
 class Launch(Incar):
   """ A class to launch a single vasp calculation """
 
-  # program = "vasp.mpi"
-  # """ shell command to launch vasp. """
-
-  def __init__(self, inplace = True, workdir = None, species = None,
-               kpoints = Density(), **kwargs ):
+  def __init__( self, inplace = True, workdir = None, species = None, \
+                kpoints = Density(), **kwargs ):
     """ Initializes Launch instance.
 
         :Parameters:
@@ -28,13 +25,13 @@ class Launch(Incar):
             A string describing the kpoint mesh (in VASP's KPOINT format), or a
             callable returning such a string.
     """
-    from os import getcwd
     from ..opt import RelativeDirectory
+    from .. import launch_vasp_as_library, vasp_library, vasp_program
     super(Launch, self).__init__() 
 
     self._workdir = RelativeDirectory(workdir)
     """ Filesystem location where temporary calculations are performed.  """
-    self.species = species if species != None else {}
+    self.species = species if species is not None else {}
     """ Species in the system. """
     self.kpoints = kpoints
     """ kpoints for which to perform calculations. """
@@ -42,13 +39,21 @@ class Launch(Incar):
     """ If True calculations are performed in the output directory. """
     self.print_from_all = False
     """ If True, will print from all nodes rather than just root. """
+    self.symlink = kwargs.pop('symlink', False)
+    """ If True, prefers symlinks where possible. """
+    self.vasp_library = vasp_library
+    """ Path to vasp-library. 
+    
+        If None, then use global default `lada.vasp_library`.
+    """
+    self.program = vasp_program
+    """ Name/fullpath of vasp program. """
+    self.launch_as_library = launch_vasp_as_library
+    """ Whether to launch vasp as library(True) or a program(False). """
 
     # checks inplace vs workdir
     if self.inplace: 
-      assert workdir == None, ValueError("Cannot use both workdir and inplace attributes.")
-
-    # sets all other keywords as attributes.
-    for key in kwargs.keys(): setattr(self, key, kwargs[key])
+      assert workdir is None, ValueError("Cannot use both workdir and inplace attributes.")
 
   @property
   def workdir(self):
@@ -75,8 +80,6 @@ class Launch(Incar):
     import cPickle
     from copy import deepcopy
     from os.path import join, abspath
-    from os import getcwd
-    from shutil import copy
     from . import files, is_vasp_5
     from ..crystal import write_poscar, specie_list
     from ..opt.changedir import Changedir
@@ -84,7 +87,8 @@ class Launch(Incar):
     # creates poscar file. Might be overwriten by restart.
     if comm.is_root:
       with open(join(self._tempdir, files.POSCAR), "w") as poscar: 
-        write_poscar(self._system, poscar, is_vasp_5())
+        which_type = is_vasp_5(self.vasp_library) if self.launch_as_library else False
+        write_poscar(self._system, poscar, which_type)
 
     # creates incar file. Changedir makes sure that any calculations done to
     # obtain incar will happen in the tempdir. Only head node actually writes.
@@ -104,8 +108,7 @@ class Launch(Incar):
   
     # creates kpoints file
     with open(join(self._tempdir, files.KPOINTS), "w") as kp_file: 
-      kp_file.write( self.kpoints(self) if hasattr(self.kpoints, "__call__") \
-                     else self.kpoints + "\n" )
+      self.write_kpoints(kp_file)
   
     # creates POTCAR file
     with open(join(self._tempdir, files.POTCAR), 'w') as potcar:
@@ -116,12 +119,12 @@ class Launch(Incar):
     with Changedir(outdir) as outdir: # allows relative paths.
       with open(path, 'w') as file: cPickle.dump(self, file)
 
-  def _run(self, comm):
+  def _run(self, comm, minversion):
      """ Isolates calls to vasp itself """
      from os.path import join
      from . import files
      from . import call_vasp
-     from ..opt import redirect
+     from ..opt import redirect, which
      from ..opt.changedir import Changedir
      # moves to working dir only now.
      stdout = join(self._tempdir, files.STDOUT) 
@@ -133,16 +136,15 @@ class Launch(Incar):
        stdout = "/dev/null"
        stderr = "/dev/null"
      with Changedir(self._tempdir):
-       with redirect(fout=stdout, ferr=stderr) as streams:
-         assert comm.real, ValueError("Cannot call vasp without mpi.")
-         call_vasp(comm)
+       if self.launch_as_library: 
+         with redirect(fout=stdout, ferr=stderr) as streams:
+           assert comm.real, ValueError("Cannot call vasp without mpi.")
+           call_vasp(self.vasp_library, comm, minversion)
+       else:
+         try: program = which(self.program)
+         except: program = self.program
+         comm.external(program, out=stdout, err=stderr)
              
-#    with open(join(self._tempdir, files.STDOUT), "w") as stdout:
-#      with open(join(self._tempdir, files.STDERR), "w") as stderr:
-#        vasp_proc = Popen( self.program, cwd = self._tempdir, \
-#                           stdout = stdout, stderr = stderr, shell = True )
-#        vasp_proc.wait() # Wait for completion. Could set a timer here.
-
   def _postrun(self, repat, outdir, comm, norun):
      """ Copies files back to outdir """
      from os.path import exists, join, isdir, realpath
@@ -159,6 +161,10 @@ class Launch(Incar):
          outcar.write('\n################ INCAR ################\n')
          with open(files.INCAR, 'r') as incar: outcar.write(incar.read())
          outcar.write('\n################ END INCAR ################\n')
+         outcar.write('\n################ CONTCAR ################\n')
+         with open(files.CONTCAR, 'r') as contcar: outcar.write(contcar.read())
+         outcar.write('\n################ END CONTCAR ################\n')
+
      
      comm.barrier()
 
@@ -172,18 +178,18 @@ class Launch(Incar):
 
      if not norun: assert len(notfound) == 0, IOError("Files %s were not found.\n" % (notfound))
 
-  def __call__( self, structure=None, outdir = None, comm = None, repat = [], \
-                norun = False, keep_tempdir=False):
+  def __call__( self, structure=None, outdir = None, comm = None, repat = None, \
+                norun = False, keep_tempdir=False, minversion=0):
     from os import getcwd
-    from shutil import copy2 as copy
     from ..opt import Tempdir, Changedir, RelativeDirectory
     from ..mpi import Communicator
 
     # set up
-    if structure != None: self._system = structure
+    if structure is not None: self._system = structure
     elif not hasattr(self, "_system"): raise RuntimeError, "Internal bug.\n"
-    outdir = getcwd() if outdir == None else RelativeDirectory(outdir).path
+    outdir = getcwd() if outdir is None else RelativeDirectory(outdir).path
     comm = Communicator(comm, with_world=True)
+    repat = [] if repat is None else repat
 
     # creates temporary working directory
     if self.inplace: context = Changedir(outdir, comm=comm) 
@@ -196,7 +202,7 @@ class Launch(Incar):
       self._prerun(comm, outdir)
 
       # runs vasp.
-      if not norun: self._run(comm)
+      if not norun: self._run(comm, minversion)
 
       # now copies data back
       self._postrun(repat, outdir, comm, norun)
@@ -228,6 +234,6 @@ class Launch(Incar):
         Takes care of older pickle versions.
     """
     Incar.__setstate__(self, args)
-    if "print_from_all" not in self.__dict__:
-      self.__dict__["print_from_all"] = False
+    for key, value in self.__class__().__dict__.iteritems():
+       if not hasattr(self, key): setattr(self, key, value)
 

@@ -28,16 +28,16 @@ class AbstractMassExtract(object):
         :Kwarg naked_end: True if should return value rather than dict when only one item.
         :Kwarg unix_re: converts regex patterns from unix-like expression.
     """
-    from . import default_params as default
+    from .. import naked_end, unix_re
     from ..opt import OrderedDict
 
     object.__init__(self)
 
-    self.naked_end = kwargs.pop('naked_end', default.naked_end)
+    self.naked_end = kwargs.pop('naked_end', naked_end)
     """ If True and dict to return contains only one item, returns value itself. """
     self.view = view
     """ The pattern which job-names should match. """
-    self.unix_re = kwargs.pop('unix_re', default.unix_re)
+    self.unix_re = kwargs.pop('unix_re', unix_re)
     """ If True, then all regex matching is done using unix-command-line patterns. """
     self.excludes = excludes
     assert len(kwargs) == 0, ValueError("Unkwnown keyword arguments:{0}.".format(kwargs.keys()))
@@ -85,9 +85,9 @@ class AbstractMassExtract(object):
         If the ``excludes`` argument is None or an empty list, then the
         returned object will not exlude anything.
     """ 
-    if excludes == None or len(excludes) == 0: return self.copy(excludes=None)
+    if excludes is None or len(excludes) == 0: return self.copy(excludes=None)
     result = self.copy(excludes=excludes)
-    if self.excludes != None: result.excludes.extend(self.excludes)
+    if self.excludes is not None: result.excludes.extend(self.excludes)
     return result
 
   def iteritems(self):
@@ -150,7 +150,7 @@ class AbstractMassExtract(object):
 
         If None, then no match required. Should be a string, not an re object.
     """
-    if self._view == None: return ""
+    if self._view is None: return ""
     return self._view
   @view.setter
   def view(self, value): self._view = value
@@ -159,14 +159,14 @@ class AbstractMassExtract(object):
   def _extractors(self):
     """ Goes through all jobs and collects Extract if available. """
     if self.dynamic:
-      if self._cached_extractors == None: self._cached_extractors = self.dicttype()
+      if self._cached_extractors is None: self._cached_extractors = self.dicttype()
       result = self.dicttype()
       for name, extract in self.__iter_alljobs__():
         if name not in self._cached_extractors: self._cached_extractors[name] = extract
         result[name] = self._cached_extractors[name]
       return result
     else:
-      if self._cached_extractors != None: return self._cached_extractors
+      if self._cached_extractors is not None: return self._cached_extractors
       result = self.dicttype()
       for name, extract in self.__iter_alljobs__(): result[name] = extract
       self._cached_extractors = result
@@ -179,10 +179,10 @@ class AbstractMassExtract(object):
       return
 
     regex = self._regex_pattern(self.view)
-    if self.excludes != None: excludes = [self._regex_pattern(u) for u in self.excludes]
+    if self.excludes is not None: excludes = [self._regex_pattern(u) for u in self.excludes]
     for key, value in self._extractors.iteritems():
-      if regex.match(key) == None: continue
-      if self.excludes != None and any(u.match(key) != None for u in excludes): continue
+      if regex.match(key) is None: continue
+      if self.excludes is not None and any(u.match(key) is not None for u in excludes): continue
       yield key, value
 
   @property
@@ -221,10 +221,8 @@ class AbstractMassExtract(object):
   @property
   def children(self):
     """ next set of minimal regex. """
-    from os.path import join, normpath
     regex = self._regex_pattern(self.view)
 
-    jobs = self.keys()
     if len(self.keys()) < 2: return 
     children = set()
     if len(self.view) == 0 or self.view == '/':
@@ -283,12 +281,12 @@ class AbstractMassExtract(object):
     reg = self._regex_pattern(regex, flags)
 
     found = reg.search(self.view)
-    if found != None and yield_match:       yield self; return
-    elif found != None and not yield_match: yield self, found; return
+    if found is not None and yield_match:       yield self; return
+    elif found is not None and not yield_match: yield self, found; return
     
     for child in self.children:
       found = reg.search(self.view)
-      if reg.search(child.view) == None:# goes to next level. 
+      if reg.search(child.view) is None:# goes to next level. 
         for grandchild in child.grep(regex, flags, yield_match): yield grandchild
       elif yield_match: yield child, found
       else: yield child
@@ -300,9 +298,9 @@ class AbstractMassExtract(object):
     return d
 
   def __setstate__(self, arg):
+    if "_rootdir" in arg: arg["_rootdir"].hook = self.uncache
     self.__dict__.update(arg)
     self.comm = None
-    if "_rootdir" in d: d["_rootdir"].hook = self.uncache
        
   def solo(self):
     """ Extraction on a single process.
@@ -314,7 +312,7 @@ class AbstractMassExtract(object):
         >>> # prints only on proc 0.
         >>> if boost.mpi.world.rank == 0: print extract.solo().structure
     """
-    if self.comm == None: return self
+    if self.comm is None: return self
 
     from copy import deepcopy
     copy = deepcopy(self)
@@ -408,13 +406,13 @@ class MassExtract(AbstractMassExtract):
   def comm(self, value):
     from ..mpi import Communicator
     value = Communicator(value)
-    if self._cached_extractors != None:
+    if self._cached_extractors is not None:
       for e in self._cached_extractors.values(): e.comm = value
     self._comm = value
   @comm.deleter
   def comm(self):
     from ..mpi import Communicator
-    if self._cached_extractors != None:
+    if self._cached_extractors is not None:
       for e in self._cached_extractors.values():
         if hasattr(e, "comm"): e.comm = Communicator()
     self._comm = Communicator()
@@ -425,7 +423,7 @@ class MassExtract(AbstractMassExtract):
 
         If None, then no match required. Should be a string, not an re object.
     """
-    if self._view == None:
+    if self._view is None:
       try: from IPython.ipapi import get as get_ipy
       except ImportError: raise AttributeError("path not set.")
       ip = get_ipy()
@@ -443,7 +441,7 @@ class MassExtract(AbstractMassExtract):
     """ Root directory of the jobdictionary. """
     from os.path import dirname
 
-    if self._rootdir == None: 
+    if self._rootdir is None: 
       try: from IPython.ipapi import get as get_ipy
       except ImportError: raise AttributeError("path not set.")
       ip = get_ipy()
@@ -456,17 +454,18 @@ class MassExtract(AbstractMassExtract):
   @rootdir.setter
   def rootdir(self, value):
     from ..opt import RelativeDirectory
-    if value == None:
+    if value is None:
       self._rootdir = None
       return
     self._rootdir = RelativeDirectory(value, hook=self.uncache)
-    del self._jobdict
+    if hasattr(self, '_jobdict'): del self._jobdict
   @rootdir.deleter
   def rootdir(self): self._rootdir = None
 
   @property
   def jobdict(self):
-    if self._rootdir == None: 
+    from lada.jobs import load
+    if self._rootdir is None: 
       try: from IPython.ipapi import get as get_ipy
       except ImportError: raise AttributeError("path not set.")
       ip = get_ipy()
@@ -553,13 +552,13 @@ class AbstractMassExtractDirectories(AbstractMassExtract):
   def comm(self, value):
     from ..mpi import Communicator
     value = Communicator(value)
-    if self._cached_extractors != None:
+    if self._cached_extractors is not None:
       for e in self._cached_extractors.values(): e.comm = value
     self._comm = value
   @comm.deleter
   def comm(self):
     from ..mpi import Communicator
-    if self._cached_extractors != None:
+    if self._cached_extractors is not None:
       for e in self._cached_extractors.values():
         if hasattr(e, "comm"): e.comm = Communicator()
     self._comm = Communicator()
@@ -603,5 +602,6 @@ class AbstractMassExtractDirectories(AbstractMassExtract):
     from copy import copy
     result = self.__class__(self.rootdir)
     for k, v in self.__dict__.items():
-      if k != '_rootdir': result.__dict__[k] = copy(v)
+      if k == 'dicttype': result.__dict__[k] = v
+      elif k != '_rootdir': result.__dict__[k] = copy(v)
     return result

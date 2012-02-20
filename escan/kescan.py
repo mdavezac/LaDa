@@ -1,7 +1,6 @@
 """ Escan wrapper to compute many eigen k-points. """
 __docformat__ = "restructuredtext en"
 __all__ = ['KEscan', 'Extract']
-from abc import ABCMeta, abstractmethod
 from .functional import Escan
 from .. import __all__ as all_lada_packages
 from ..opt import AbstractExtractBase
@@ -14,8 +13,18 @@ class Extract(AbstractExtractBase):
   """ Escan extraction object. """
 
   def __init__(self, directory=None, comm=None, unreduce=True, **kwargs):
-    """ Initializes the extraction object. """
-    AbstractExtractBase.__init__(self, directory, comm=comm)
+    """ Initializes the extraction object. 
+    
+        :Parameters:
+          directory : str
+            Directory where calculations are saved.
+          comm : None or `lada.mpi.Communicator`
+            MPI Communicator grouping processes participating in the calculation.
+          unreduce : bool
+            Whether to iterate over all k-points, or only over k-points in the
+            irreducible wedge. Iterates over all k-points by default.
+    """
+    super(Extract, self).__init__(directory, comm=comm, **kwargs)
     self.unreduce = unreduce
     """ Unreduced kpoints if True and if kpoints scheme sports a mapping method. """
 
@@ -34,15 +43,15 @@ class Extract(AbstractExtractBase):
     if '_cached_joblist' not in self.__dict__:
       from glob import iglob
       from re import compile
-      from os.path import isdir, join, basename, relpath
+      from os.path import isdir, join, basename
       
       regex = compile(r'kpoint_(\d+)/')
       paths = [ path for path in iglob(join(self.directory, 'kpoint_*/'))\
-                if isdir(path) and regex.search(path) != None ]
+                if isdir(path) and regex.search(path) is not None ]
       paths = sorted(paths, key=lambda x: int(regex.search(x).group(1)))
       vffout = self.EscanExtract(self.directory, comm=self.comm)._vffout
       OUTCAR = self.EscanExtract().OUTCAR
-      
+     
       result = []
       for path in paths:
         filenames = [basename(u) for u in iglob(join(path, '*')) if not isdir(u)]
@@ -167,33 +176,70 @@ class Extract(AbstractExtractBase):
 
   @property
   def vbm(self): 
-    """ Returns energy at vbm. """
-    if self.functional.eref != None:
+    """ Energy at valence band minimum. """
+    if self.functional.eref is not None:
       raise RuntimeError('Cannot extract VBM from folded spectrum calculation.')
-    from numpy import array, max
-    from ..crystal import nb_valence_states
-    nbe = nb_valence_states(self.structure)
+    from numpy import max
+    nbe = len(self.structure.atoms) * 4
     return max(self.eigenvalues[:, nbe-2:nbe])
 
   @property
   def cbm(self): 
-    """ Returns energy at vbm. """
-    if self.functional.eref != None:
+    """ Energy at conduction band minimum. """
+    if self.functional.eref is not None:
       raise RuntimeError('Cannot extract CBM from folded spectrum calculation.')
-    from numpy import array, min
-    from ..crystal import nb_valence_states
-    nbe = nb_valence_states(self.structure)
+    from numpy import min
+    nbe = len(self.structure.atoms) * 4
     return min(self.eigenvalues[:, nbe:nbe+2])
+
+  @property
+  def bandgap(self):
+    """ Gap between the VBM and CBM. """
+    return self.cbm - self.vbm
+
+  @property
+  def cbm_direct_gap(self):
+    """ Gap between the CBM and valence band at the same kpoint. """
+    if self.functional.eref is not None:
+      raise RuntimeError('Cannot extract CBM from folded spectrum calculation.')
+    from numpy import argmin
+    nbe = len(self.structure.atoms) * 4
+    i = argmin(self.eigenvalues[:, nbe:nbe+2])
+    return self.eigenvalues[:, nbe:nbe+2].flat[i] - self.eigenvalues[:,nbe-2:nbe].flat[i]
+
+  @property
+  def vbm_direct_gap(self):
+    """ Gap between the VBM and conduction band at the same kpoint. """
+    if self.functional.eref is not None:
+      raise RuntimeError('Cannot extract VBM from folded spectrum calculation.')
+    from numpy import argmax
+    nbe = len(self.structure.atoms) * 4
+    i = argmax(self.eigenvalues[:, nbe-2:nbe])
+    return self.eigenvalues[:, nbe:nbe+2].flat[i] - self.eigenvalues[:,nbe-2:nbe].flat[i]
+
+  @property
+  def gamma_gap(self):
+    """ Gap at Gamma if computed. """
+    if self.functional.eref is not None:
+      raise RuntimeError('Cannot extract VBM from folded spectrum calculation.')
+    from numpy import min, max
+
+    for kindex, kpoint in enumerate(self.kpoints):
+      if all(abs(kpoint) < 1e-12): break
+    if not all(abs(kpoint) < 1e-12):
+      raise RuntimeError('Could not find Gamma in computed kpoints.')
+
+    nbe = len(self.structure.atoms) * 4
+    return min(self.eigenvalues[kindex, nbe:nbe+2]) - max(self.eigenvalues[kindex, nbe-2:nbe])
 
   @property 
   def directness(self):
     """ Difference in energy between the CBM at Gamma and the LUMO. """
     from numpy.linalg import norm
-    from ..crystal import nb_valence_states
     lumo = self.cbm
     gamma = min((job for job in self.values()), key=lambda x: norm(x.escan.kpoint))
     if norm(gamma.escan.kpoint) > 1e-6: raise RuntimeError("Gamma point not found.")
-    nbe = nb_valence_states(self.structure)
+    nbe = len(self.structure.atoms) * 4
     cbm = min(gamma.eigenvalues[nbe], gamma.eigenvalues[nbe+1])
     return cbm - lumo
 
@@ -209,9 +255,12 @@ class Extract(AbstractExtractBase):
 
         Parameters are passed on to internal escan calculations.
     """
+    from glob import iglob 
+    from os.path import join
     for file in self._rootrun.iterfiles(**kwargs): yield file
-    for kpoint_calc in self: 
-      for file in kpoint_calc.iterfiles(**kwargs): yield file
+    for kpoint_dir in iglob(join(self.directory, "kpoint_*")): 
+      kpoint = EscanExtract(kpoint_dir)
+      for file in kpoint.iterfiles(**kwargs): yield file
 
   def uncache(self):
     """ Uncaches extracted values. """
@@ -219,6 +268,37 @@ class Extract(AbstractExtractBase):
     for name in ['_cached_knm', '_cached_uknm', '_cached_joblist', '_cached_ujoblist']:
       self.__dict__.pop(name, None)
 
+  def dos(self, energy, sigma=0.1):
+    """ Computes density of states for given energies and smearing. 
+
+        :Parameters:
+          energy : float or scalar array
+            Energy at which to compute the density of states. This can be real
+            number, in which case it should be in eV, or a numpy scalar with a
+            unit (from quantity).
+          sigma : float or scalar array
+            Width at half maximum of the gaussian smearing. This can be real
+            number, in which case it should be in eV, or a numpy scalar with a
+            unit (from quantity).
+    """
+    from numpy import exp, array, sqrt, pi, dot, sum
+    from numpy.linalg import det
+    from quantities import eV
+    if not hasattr(sigma, 'rescale'): sigma *= eV
+    else: sigma = sigma.rescale(eV)
+    if not hasattr(energy, 'rescale'): energy = array(energy, dtype="float64") * eV
+    else: energy = array(energy, dtype="float64") * energy.units.rescale(eV)
+
+    # create unreduce extractor iterating over inequivalent kpoints only.
+    extractor = self.copy(unreduce=False)
+    # get multiplicities.
+    istr, ostr = self.input_structure, self.structure
+    mult = array([m for m, k in extractor.functional.kpoints(istr, ostr)], dtype="float64")
+    # reshape eigenvalues so we can create an array of eigs - e
+    y = extractor.eigenvalues.reshape(  *(list(extractor.eigenvalues.shape)+[1]) ) - energy
+    # compute exponentials.
+    return sum(dot(exp(-y**2/sigma**2).T, mult), axis=1) \
+           / det(self.structure.cell)/sigma.magnitude/sqrt(pi)/float(extractor.eigenvalues.size)
  
 class KEscan(Escan):
   """ A wrapper around Escan for computing many kpoints. """
@@ -239,7 +319,7 @@ class KEscan(Escan):
     """
     from .kpoints import KContainer
     # case for simple containers.
-    if kpoints == None: kpoints, multiplicity = [[0,0,0]], [1]
+    if kpoints is None: kpoints, multiplicity = [[0,0,0]], [1]
     if hasattr(kpoints, '__call__'): self.kpoints = kpoints
     else: self.kpoints = KContainer(kpoints, multiplicity)
     escan_copy = kwargs.pop("escan", None) 
@@ -252,7 +332,7 @@ class KEscan(Escan):
     """
     super(KEscan, self).__init__(**kwargs)
 
-    if escan_copy != None: # copy constructor from Escan instance. 
+    if escan_copy is not None: # copy constructor from Escan instance. 
       from copy import deepcopy
       self.__dict__.update(deepcopy(escan_copy.__dict__))
 
@@ -271,10 +351,11 @@ class KEscan(Escan):
       do_relax_kpoint = kwargs.pop('do_relax_kpoint', kwargs.pop('do_relax_kpoints', None))
       arglist = getargspec(Escan.__call__)[0]
       for key, value in kwargs.iteritems():
+        if key == "external": continue
         if key in arglist: continue
         assert hasattr(this, key), TypeError("Unexpected keyword argument {0}.".format(key))
         setattr(this, key, value)
-      if do_relax_kpoint != None: this.do_relax_kpoint = do_relax_kpoint
+      if do_relax_kpoint is not None: this.do_relax_kpoint = do_relax_kpoint
       comm = Communicator(comm, with_world=True)
 
       if not kwargs.get('overwrite', False): 
@@ -284,13 +365,13 @@ class KEscan(Escan):
       # performs vff calculations
       vffrun = kwargs.pop('vffrun', None)
       genpotrun = kwargs.pop('genpotrun', None)
-      if vffrun == None or genpotrun == None: 
+      if vffrun is None or genpotrun is None: 
         kargs = kwargs.copy() # makes sure we don't include do_escan twice.
         kargs['do_escan'] = False
         out = super(KEscan, this).__call__( structure, outdir, comm, 
                                             vffrun = vffrun, genpotrun=genpotrun, **kargs )
-        if vffrun    == None: vffrun    = out
-        if genpotrun == None: genpotrun = out
+        if vffrun    is None: vffrun    = out
+        if genpotrun is None: genpotrun = out
 
   
       # create list of kpoints.
@@ -307,8 +388,8 @@ class KEscan(Escan):
         job.jobparams['vffrun']          = vffrun
         job.jobparams['genpotrun']       = genpotrun
       
-      directory = '.' if outdir == None else outdir
-      bleeder = Bleeder(jobdict, this._pools(len(kpoints), comm), comm, directory=directory)
+      directory = '.' if outdir is None else outdir
+      bleeder = Bleeder(jobdict, this._pools(len(kpoints), structure, comm), comm, directory=directory)
       for result, job in bleeder.itercompute(**kwargs): continue
       bleeder.cleanup()
 
@@ -325,7 +406,7 @@ class KEscan(Escan):
      """ Returns list of kpoints. """
      from numpy import zeros, array
      # case where kpoints is None.
-     if kpoints == None: return [zeros((3,1), dtype='float64')]
+     if kpoints is None: return [zeros((3,1), dtype='float64')]
      # case where kpoints is already a single vector.
      if hasattr(kpoints, '__len__'):
        if len(kpoints) == 0: return [zeros((3,1), dtype='float64')]
@@ -343,7 +424,7 @@ class KEscan(Escan):
        result.append(kpoint)
      return result
 
-  def _pools(self, N, comm):
+  def _pools(self, N, structure, comm):
     """ Optimizes number of pools. 
     
         Tries to find the largest number of pools which divides the number of
@@ -357,7 +438,7 @@ class KEscan(Escan):
     if N == 1: return 1
 
     # finds divisors of N
-    pools = [i for i in range(1, N+1) if N % i == 0 and comm.size / i > 0]
+    pools = [i for i in range(1, N+1) if N % i == 0 and comm.size // i > 0]
     if len(pools) == 1: return pools[-1]
     if len(pools) == 0: return 1
 
@@ -367,7 +448,9 @@ class KEscan(Escan):
     if len(pools) == 0: return 1
 
     # checks for pools which best divide mesh size
-    fftsize = self.fft_mesh[0] * self.fft_mesh[1] * self.fft_mesh[2]
+    fftmesh = self.fft_mesh
+    if hasattr(fftmesh, '__call__'): fftmesh, dummy, dummy = fftmesh(self, structure, comm)
+    fftsize = fftmesh[0] * fftmesh[1]
     pools = [i for i in pools if fftsize % (comm.size / i) == 0]
     if len(pools) >= 1: return pools[-1]
     return 1

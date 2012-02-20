@@ -1,7 +1,6 @@
 import _doc
 __doc__ = _doc.__doc__
 __docformat__ = "restructuredtext en"
-from lada import lada_with_slurm
 
 def _get_current_job_params(self, verbose=0):
   """ Returns a tuple with current job, filename, directory. """
@@ -25,7 +24,7 @@ def listjobs(self, arg):
   ip = self.api
   current, path = _get_current_job_params(self, 1)
   ip.user_ns.pop("_lada_error", None)
-  if current == None: return
+  if current is None: return
   if len(arg) != 0:
     if arg == "all": 
       for job in current.root.itervalues():
@@ -58,19 +57,18 @@ def listjobs(self, arg):
 def saveto(self, event):
   """ Saves current job to current filename and directory. """
   from os.path import exists, abspath, isfile
-  from .. import jobs
-  from ..jobs import JobParams, MassExtract as Collect
+  from ..jobs import JobParams, MassExtract as Collect, save as savejobs
   ip = self.api
   # gets dictionary, path.
   current, path = _get_current_job_params(self, 1)
   ip.user_ns.pop("_lada_error", None)
-  if current == None:
+  if current is None:
     ip.user_ns["_lada_error"] = "No job-dictionary to save."
     print ip.user_ns["_lada_error"] 
     return
   args = [u for u in event.split() ]
   if len(args) == 0: 
-    if path == None: 
+    if path is None: 
       ip.user_ns["_lada_error"] = "No current job-dictionary path.\n"\
                                   "Please specify on input, eg"\
                                   ">saveto this/path/filename"
@@ -87,7 +85,7 @@ def saveto(self, event):
       if a == 'n':
        ip.user_ns["_lada_error"] = "User said no save."
        return
-    jobs.save(current.root, path, overwrite=True) 
+    savejobs(current.root, path, overwrite=True, timeout=10) 
   elif len(args) == 1:
     if exists(args[0]): 
       if not isfile(args[0]): 
@@ -100,7 +98,7 @@ def saveto(self, event):
       if a == 'n':
        ip.user_ns["_lada_error"] = "User said no save."
        return
-    jobs.save(current.root, args[0], overwrite=True) 
+    savejobs(current.root, args[0], overwrite=True, timeout=10) 
     ip.user_ns["current_jobdict_path"] = abspath(args[0])
     if "collect" not in ip.user_ns: ip.user_ns["collect"] = Collect(dynamic=True)
     if "jobparams" not in ip.user_ns: ip.user_ns["jobparams"] = JobParams()
@@ -116,40 +114,6 @@ def current_jobname(self, arg):
   print ip.user_ns["current_jobdict"].name
   return
 
-if lada_with_slurm:
-  def qstat(self, arg):
-    """ squeue --user=`whoami` -o "%7i %.3C %3t  --   %50j" """
-    from subprocess import Popen, PIPE
-    from IPython.genutils import SList
-    from getpass import getuser
-
-    # finds user name.
-    whoami = getuser()
-    squeue = Popen(["squeue", "--user=" + whoami, "-o", "\"%7i %.3C %3t    %j\""], stdout=PIPE)
-    result = squeue.stdout.read().rstrip().split('\n')
-    result = SList([u[1:-1] for u in result[1:]])
-    return result.grep(str(arg[1:-1]))
-else:
-  def qstat(self, arg):
-    """ Prints jobs of current user. """
-    from subprocess import Popen, PIPE
-    from getpass import getuser
-    from BeautifulSoup import BeautifulSoup
-    from IPython.genutils import SList
-    xml = Popen('qstat -xf'.split(), stdout=PIPE).communicate()[0]
-    parser = BeautifulSoup(xml)
-    user = getuser()
-  
-    def func(x):
-      if x.name != 'job': return False
-      if x.job_state.contents[0] == 'C': return False
-      return x.job_owner.contents[0].find(user) != -1
-    result = SList() 
-    for job in parser.findAll(func):
-      result.append( "{0.job_id.contents[0]:>10} {0.mppwidth.contents[0]:>4} "\
-                     "{0.job_state.contents[0]:>3}  --  {0.job_name.contents[0]}".format(job) )
-    return result.grep(str(arg[1:-1]))
-
 def cancel_completer(self, info):
   return qstat(self, info.symbol).fields(-1)[1:]
 
@@ -161,6 +125,8 @@ def cancel_jobs(self, arg):
 
       >>> %cancel_jobs "anti-ferro"
   """
+  from lada import lada_with_slurm
+  from .qstat import qstat
   arg = str(arg[1:-1])
   if len(arg) != 0: 
     result = qstat(self, arg)
@@ -200,6 +166,7 @@ def ipy_init():
     from .launch import launch, completer as launch_completer
     from .export import export, completer as export_completer
     from .record import record, completer as record_completer
+    from .qstat import qstat
     
     ip = IPython.ipapi.get()
     ip.expose_magic("explore", explore)
@@ -219,19 +186,32 @@ def ipy_init():
     ip.set_hook('complete_command', cancel_completer, re_key = '\s*%?cancel_jobs')
     ip.set_hook('complete_command', export_completer, re_key = '\s*%?export')
     ip.set_hook('complete_command', record_completer, re_key = '\s*%?record')
-    
-    for key in lada.__all__:
-      if key[0] == '_': continue
-      if key == "ipython": continue
-      if key == "jobs": ip.ex("from lada import jobs as ladajobs")
-      if key == "ladabase": ip.ex("from lada import ladabase as ladabase_module")
-      else: ip.ex("from lada import " + key)
-      if 'ipy_init' in getattr(getattr(lada, key), '__dict__'): 
-        x = __import__('lada.{0}'.format(key), fromlist='ipy_init')
-        x.ipy_init()
 
-represent_structure_with_POSCAR = False
-""" If true, then structures are represented using POSCAR format. 
+    if 'ladabase' in lada.__all__:
+      if getattr(lada, 'add_push_magic_function', False): 
+        def push(self, cmdl):
+          """ Magic function to push to database. 
+  
+              This detour makes sure ladabase is only loaded on call, 
+              thus speeding up load time when starting ipython.
+          """
+          from lada.ladabase.push import push
+          return push(self, cmdl)
+        ip.expose_magic("push", push)
+      # Don't try and start the pymongo interface unless explicitly requested.
+      if lada.ladabase_doconnect: 
+        from lada.ladabase import Manager
+        try: manager = Manager()
+        except: pass
+        else: ip.user_ns['ladabase'] = manager
 
-    If False, then uses normal python representation.
-"""
+    if len(lada.auto_import_modules) > 0: 
+      mods = __import__('lada', globals(), locals(), lada.auto_import_modules)
+      for key in set(lada.auto_import_modules) & set(lada.__all__):
+        print "Importing", key, "from lada into namespace."
+        if key == "jobs": ip.user_ns['ladajobs'] = mods.jobs
+        elif key == "ladabase": ip.user_ns['ladabase_module'] = mods.ladabase
+        else: ip.user_ns[key] = getattr(mods, key)
+    else:
+      print "Lada modules were not loaded into user namespace."
+      print "Lada interface (explore...) is available."

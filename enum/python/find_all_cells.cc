@@ -26,13 +26,64 @@ namespace LaDa
   
   namespace Python
   {
+    struct IterAllCells
+    {
+      boost::shared_ptr< std::vector<math::rMatrix3d> > cells;
+      int i;
+      IterAllCells ( boost::shared_ptr< std::vector<math::rMatrix3d> > const &_cells)
+                   : cells(_cells), i(-1) {}
+      IterAllCells ( IterAllCells const &_c)
+                   : cells(_c.cells), i(_c.i) {}
+      math::rMatrix3d next()
+      {
+        if( (not cells) )
+        {
+          PyErr_SetString(PyExc_RuntimeError, "Cells not set."); 
+          bp::throw_error_already_set();
+          return math::rMatrix3d::Zero();
+        }
+        ++i;
+        if( i >= cells->size() )
+        {
+          PyErr_SetString(PyExc_StopIteration, "Out-of-range."); 
+          bp::throw_error_already_set();
+          return math::rMatrix3d::Zero();
+        }
+        return (*cells)[i];
+      }
+    };
+    IterAllCells find_all_cells(LaDa::Crystal::Lattice const &_lat, size_t _n)
+    {
+      boost::shared_ptr< std::vector<math::rMatrix3d> > 
+        cells = LaDa::enumeration::find_all_cells(_lat, _n);
+      if(not cells)
+      {
+        PyErr_SetString(PyExc_RuntimeError, "Could not create list of cells.");
+        bp::throw_error_already_set();
+      }
+      return IterAllCells(cells);
+    }
+
     boost::shared_ptr< std::vector<enumeration::SmithGroup> >
-      create_smith_groups1( Crystal::Lattice const &_lattice, size_t _nmax)
-        { return enumeration::create_smith_groups( _lattice, _nmax); }
-    boost::shared_ptr< std::vector<enumeration::SmithGroup> >
-      create_smith_groups2( Crystal::Lattice const &_lattice,
-                            boost::shared_ptr< std::vector<math::rMatrix3d> > const & _s )
-        { return enumeration::create_smith_groups( _lattice, _s); }
+      create_smith_groups( Crystal::Lattice const &_lattice,
+                           boost::python::object const &_list )
+      {
+        if(boost::python::extract<size_t>(_list).check())
+        {
+          size_t const nmax = boost::python::extract<size_t>(_list);
+          return enumeration::create_smith_groups(_lattice, nmax);
+        }
+        if(boost::python::extract<IterAllCells&>(_list).check())
+        {
+          IterAllCells const &vector = boost::python::extract<IterAllCells&>(_list);
+          return enumeration::create_smith_groups(_lattice, vector.cells);
+        }
+        
+        boost::python::stl_input_iterator<math::rMatrix3d> i_first(_list), i_end;
+        boost::shared_ptr< std::vector<math::rMatrix3d> > vector(new std::vector<math::rMatrix3d>);
+        std::copy(i_first, i_end, std::back_inserter(*vector));
+        return enumeration::create_smith_groups( _lattice, vector);
+      }
 
     enumeration::SmithGroup::Supercell* create( boost::python::tuple const &_tuple)
     {
@@ -56,39 +107,39 @@ namespace LaDa
         return new enumeration::SmithGroup::Supercell();
       }
     }
+
+    inline bp::object pass_through(bp::object const& o) { return o; }
+
     void expose_find_all_cells()
     {
       namespace bp = boost::python;
+      bp::class_<IterAllCells>("_IterAllCells", bp::no_init)
+        .def("__iter__", &pass_through)
+        .def("next", &IterAllCells::next);
+
       bp::def
       (
         "find_all_cells", 
-        &LaDa::enumeration::find_all_cells,
+        &find_all_cells,
         "Finds all cells of a certain size for a given lattice."
       );
 
-      bp::register_ptr_to_python< boost::shared_ptr< std::vector<math::rMatrix3d> > >();
-
       bp::def
       (
         "create_smith_groups",
-        &create_smith_groups1, 
-        "Finds all inequivalent matrices of size N, grouped per Smith normal transform.\n",
+        &create_smith_groups, 
+        "Finds all inequivalent matrices, grouped per Smith normal transform.\n\n"
+        ":Parameters:\n"
+        "  lattice : `lada.crystal.Structure`\n"
+        "    The lattice for which to find supercells.\n"
+        "  input : integer, list/iterator over cells.\n"
+        "     - If an integer, then determines all computes all supercells with less than N atoms.\n"
+        "     - If an iterator/list, then use only those cells given on input.\n",
         (
           bp::arg("lattice"),
-          bp::arg("N")
+          bp::arg("input")
         )
       );
-      bp::def
-      (
-        "create_smith_groups",
-        &create_smith_groups2, 
-        "Groups hermite matrices per Smith normal transform.",
-        (
-          bp::arg("lattice"),
-          bp::arg("hermites")
-        )
-      );
-
       typedef enumeration::SmithGroup t_SG;
       bp::scope scope = bp::class_<enumeration::SmithGroup>
       (

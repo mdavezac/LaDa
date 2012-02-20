@@ -37,7 +37,7 @@ class FileCache(object):
 
       # if the file does not exist, create result and cache it.
       calculation = method(this, *args, **kwargs)
-      if calculation == None: return None
+      if calculation is None: return None
       if comm.is_root:
         with open(path, 'w') as file: dump(calculation, file)
       return calculation
@@ -52,7 +52,7 @@ class FileCache(object):
   def _getpath(self, this):
     """ Returns path to cache file. """
     from os.path import join
-    if self.dirattr != None:
+    if self.dirattr is not None:
       try: directory = getattr(this, self.dirattr)
       except: path = self.filename
       else:   path = join(directory, self.filename)
@@ -62,6 +62,8 @@ class FileCache(object):
     """ Removes file if it exists. """
     from os import remove
     from os.path import exists
-    if exists(path): remove(path)
+    if exists(self.filename):
+      try: remove(self.filename)
+      except: pass
 
   

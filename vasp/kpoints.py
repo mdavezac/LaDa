@@ -78,7 +78,7 @@ class Density(object):
         n[2][1] = original[1]
       n[1][1] = original[0]
         
-    assert m != None
+    assert m is not None
 
     grid = m
     for i in range(3): result += "%18.12f %18.12f %18.12f\n" % tuple(grid[:,i])

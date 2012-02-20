@@ -96,7 +96,6 @@ class RelaxCellShape(object):
             Otherwise, the keywords are passed on to the `vasp` functional.
     """
     from copy import deepcopy
-    from math import fabs 
     from os import getcwd
     from os.path import join
     from shutil import rmtree
@@ -111,15 +110,44 @@ class RelaxCellShape(object):
     first_trial = kwargs.pop("first_trial", self.first_trial)
     maxiter = kwargs.pop("maxiter", self.maxiter)
     keep_steps = kwargs.pop("keep_steps", self.keep_steps)
-    outdir = getcwd() if outdir == None else RelativeDirectory(outdir).path
-    ediffg = self.vasp.ediffg
-    if ediffg == None: ediffg = 1e1 * self.vasp.ediff
-    elif ediffg < self.vasp.ediff: 
-      raise ValueError("Parameter ediffg({0}) is smaller than ediffg({1})."\
-                       .format(self.ediffg, self.vasp.ediff))
-    ediffg *= 1.2 * float(len(structure.atoms))
+    outdir = getcwd() if outdir is None else RelativeDirectory(outdir).path
+    nofail = kwargs.pop('nofail', False)
 
-    comm = Communicator(comm if comm != None else world)
+    # convergence criteria and behavior.
+    convergence = kwargs.get('convergence', getattr(self, 'convergence', self.vasp.ediffg))
+    if convergence is None: convergence = 1e1 * self.vasp.ediff * float(len(structure.atoms))
+    elif hasattr(convergence, "__call__"): pass
+    elif convergence > 0: convergence *= float(len(structure.atoms))
+    if convergence > 0 and convergence < self.vasp.ediff: 
+      raise ValueError("Energy convergence criteria ediffg({0}) is smaller than ediff({1})."\
+                       .format(self.vasp.ediffg, self.vasp.ediff))
+    if hasattr(convergence, "__call__"):
+      def is_converged(extractor):  
+        if extractor is None: return True
+        if not extractor.success: raise RuntimeError("VASP calculation did not succeed.")
+        i = int(extractor.directory.split('/')[-1]) + 1
+        if getattr(self, 'minrelsteps', i) > i: return False 
+        return convergence(extractor)
+    else:
+      if convergence > 0e0:
+        def is_converged(extractor):
+          if extractor is None: return True
+          if not extractor.success: raise RuntimeError("VASP calculation did not succeed.")
+          i = int(extractor.directory.split('/')[-1]) + 1
+          if getattr(self, 'minrelsteps', i) > i: return False 
+          if extractor.total_energies.shape[0] < 2: return True
+          return abs(extractor.total_energies[-2] - extractor.total_energies[-1:]) < convergence
+      else:
+        def is_converged(extractor):
+          from numpy import max, abs, all
+          if extractor is None: return True
+          if not extractor.success: raise RuntimeError("VASP calculation did not succeed.")
+          i = int(extractor.directory.split('/')[-1]) + 1
+          if getattr(self, 'minrelsteps', i) > i: return False
+          return all(max(abs(output.forces)) < abs(convergence))
+
+
+    comm = Communicator(comm if comm is not None else world)
 
     # updates vasp as much as possible.
     if "set_relaxation" in kwargs: 
@@ -132,7 +160,7 @@ class RelaxCellShape(object):
      
     # does not run code. Just creates directory.
     if kwargs.pop("norun", False): 
-      this = RelaxCellShape(vasp, relaxation, first_trial, maxiter)
+      this = RelaxCellShape(vasp, vasp.relaxation, first_trial, maxiter)
       yield this._norun(structure, outdir=outdir, comm=comm, **kwargs)
       return
 
@@ -140,11 +168,12 @@ class RelaxCellShape(object):
     nb_steps, output = 0, None
    
     # sets parameter dictionary for first trial.
-    if first_trial != None:
+    if first_trial is not None:
       params = kwargs.copy()
       params.update(first_trial)
     else: params = kwargs
     comm.barrier()
+
     
     # performs relaxation calculations.
     while maxiter <= 0 or nb_steps < maxiter and vasp.relaxation.find("cellshape") != -1:
@@ -154,7 +183,7 @@ class RelaxCellShape(object):
                  structure,
                  outdir = join(outdir, join("relax_cellshape", str(nb_steps))),
                  comm=comm,
-                 restart = output if nb_steps > 1 else None,
+                 restart = output,
                  **params
                )
       structure = output.structure
@@ -164,17 +193,12 @@ class RelaxCellShape(object):
       
       nb_steps += 1
       if nb_steps == 1 and len(first_trial) != 0: params = kwargs; continue
-      if output.total_energies.shape[0] < 2: break
-      energies = output.total_energies[-2] - output.total_energies[-1:]
-      if abs(energies) < ediffg: break
+      # check for convergence.
+      if is_converged(output): break;
 
     # Does not perform ionic calculation if convergence not reached.
-    if output != None:
-      assert output.success, RuntimeError("VASP calculations did not complete.")
-      if output.total_energies.shape[0] >= 2:
-        energies = output.total_energies[-2] - output.total_energies[-1:]
-        assert abs(energies) < ediffg, \
-               RuntimeError("Could not converge cell-shape in {0} iterations.".format(maxiter))
+    if nofail == False and is_converged(output) == False: 
+      raise RuntimeError("Could not converge cell-shape in {0} iterations.".format(maxiter))
 
     # performs ionic calculation. 
     while maxiter <= 0 or nb_steps < maxiter + 1 and vasp.relaxation.find("ionic") != -1:
@@ -184,7 +208,7 @@ class RelaxCellShape(object):
                  outdir = join(outdir, join("relax_ions", str(nb_steps))),
                  comm=comm,
                  relaxation = "ionic",
-                 restart = output if nb_steps > 1 else None,
+                 restart = output,
                  **kwargs
                )
       structure = output.structure
@@ -194,17 +218,12 @@ class RelaxCellShape(object):
 
       nb_steps += 1
       if nb_steps == 1 and len(first_trial) != 0: params = kwargs; continue
-      if output.total_energies.shape[0] < 2: break
-      energies = output.total_energies[-2] - output.total_energies[-1:]
-      if abs(energies) < ediffg: break
+      # check for convergence.
+      if is_converged(output): break;
 
     # Does not perform static calculation if convergence not reached.
-    if output != None:
-      assert output.success, RuntimeError("VASP calculations did not complete.")
-      if output.total_energies.shape[0] >= 2:
-        energies = output.total_energies[-2] - output.total_energies[-1:]
-        assert abs(energies) < ediffg, \
-               RuntimeError("Could not converge ions in {0} iterations.".format(maxiter))
+    if nofail == False and is_converged(output) == False: 
+      raise RuntimeError("Could not converge ions in {0} iterations.".format(maxiter))
 
     # performs final calculation outside relaxation directory. 
     output = vasp\
@@ -250,12 +269,11 @@ class RelaxCellShape(object):
         use `generator` instead.
     """ 
     from os import getcwd
-    from os.path import exists
     from ..opt import RelativeDirectory
     from ..mpi import Communicator, world
 
-    outdir = getcwd() if outdir == None else RelativeDirectory(outdir).path
-    comm = Communicator(comm if comm != None else world)
+    outdir = getcwd() if outdir is None else RelativeDirectory(outdir).path
+    comm = Communicator(comm if comm is not None else world)
     if not overwrite:
       extract = self.Extract(outdir, comm=comm)
       if extract.success: return extract

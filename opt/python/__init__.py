@@ -16,7 +16,8 @@ __all__ = [ '__load_vasp_in_global_namespace__', '__load_escan_in_global_namespa
             'cReals', 'ConvexHull', 'ErrorTuple', 'redirect_all', 'redirect', 'read_input',\
             'LockFile', 'acquire_lock', 'open_exclusive', 'RelativeDirectory', 'streams',
             'AbstractExtractBase', 'OutcarSearchMixin', 'convert_from_unix_re', 'OrderedDict', 
-            'exec_input', 'FileCache', 'Changedir', 'Tempdir', 'broadcast_result', 'make_cached' ]
+            'exec_input', 'FileCache', 'Changedir', 'Tempdir', 'broadcast_result', 'make_cached',
+            'load' ]
 
 streams = _RedirectFortran.fortran
 """ Name of the streams. """
@@ -53,7 +54,7 @@ class _RedirectAll:
   def __init__(self, unit, filename, append):
     self.unit = unit
     self.filename = filename
-    if self.filename == None: self.filename = ""
+    if self.filename is None: self.filename = ""
     if self.filename == "/dev/null": self.filename = ""
     self.append = append
   def __enter__(self):
@@ -78,12 +79,20 @@ class _RedirectAll:
   def __exit__(self, *wargs):
     import os
     import sys
+    # close file descriptor for on-disk file.
     try: self.file.close()
-    except: pass
-    if self.unit == streams.input:    os.dup2(self.old, sys.__stdin__.fileno()) 
-    elif self.unit == streams.output: os.dup2(self.old, sys.__stdout__.fileno())
-    elif self.unit == streams.error:  os.dup2(self.old, sys.__stderr__.fileno())
-    else: raise RuntimeError("Unknown redirection unit.")
+    except OSError: pass
+    # returns standard stream to original file/
+    try:
+      if self.unit == streams.input:    os.dup2(self.old, sys.__stdin__.fileno()) 
+      elif self.unit == streams.output: os.dup2(self.old, sys.__stdout__.fileno())
+      elif self.unit == streams.error:  os.dup2(self.old, sys.__stderr__.fileno())
+      else: raise RuntimeError("Unknown redirection unit.")
+    except OSError: pass
+    finally: 
+      # close duplicate of original standard stream.
+      try: os.close(self.old)
+      except OSError: pass
 
 def redirect_all(output=None, error=None, input=None, append = False):
   """ A context manager to redirect inputs, outputs, and errors. 
@@ -101,7 +110,7 @@ def redirect_all(output=None, error=None, input=None, append = False):
   from contextlib import nested
   result = []
   for value, unit in [ (output, streams.output), (error, streams.error), (input, streams.input) ]:
-    if value == None: continue
+    if value is None: continue
     result.append( _RedirectAll(unit=unit, filename=value, append=append) )
   return nested(*result)
 
@@ -128,10 +137,10 @@ def redirect(fout=None, ferr=None, fin=None, pyout=None, pyerr=None, pyin=None, 
   from contextlib import nested
   result = []
   for value, unit in [ (fout, streams.output), (ferr, streams.error), (fin, streams.input) ]:
-    if value == None: continue
+    if value is None: continue
     result.append( _RedirectFortran(unit=unit, filename=value, append=append) )
   for value, unit in [ (pyout, streams.output), (pyerr, streams.error), (pyin, streams.input) ]:
-    if value == None: continue
+    if value is None: continue
     result.append( _RedirectPy(unit=unit, filename=value, append=append) )
   return nested(*result)
 
@@ -178,22 +187,23 @@ def exec_input( script, global_dict=None, local_dict = None,\
   from . import Input
   
   # Add some names to execution environment.
-  if global_dict == None: global_dict = {}
+  if global_dict is None: global_dict = {}
   global_dict.update( { "environ": environ, "pi": pi, "array": array, "matrix": matrix, "dot": dot,
                         "norm": norm, "sqrt": sqrt, "ceil": ceil, "abs": abs,  "det": det,
-                        "physics": physics, "expanduser": expanduser, 'world': world})
+                        "physics": physics, "expanduser": expanduser, 'world': world,
+                        "load": load })
   for key in crystal.__all__: global_dict[key] = getattr(crystal, key)
-  if local_dict == None: local_dict = {}
+  if local_dict is None: local_dict = {}
   # Executes input script.
   exec(script, global_dict, local_dict)
 
   # Makes sure expected paths are absolute.
-  if paths != None:
+  if paths is not None:
     for path in paths:
       if path not in local_dict: continue
       local_dict[path] = abspath(expanduser(local_dict[path]))
     
-  if name == None: name = 'None'
+  if name is None: name = 'None'
   result = Input(name)
   result.update(local_dict)
   return result
@@ -208,7 +218,7 @@ class LockFile(object):
       *Beware* of mpi problems! `LockFile` is (purposefully) not mpi aware.
       If used unwisely, processes will lock each other out.
   """
-  def __init__(self, filename, timeout = None, sleep = 0.5):
+  def __init__(self, filename, timeout = None, sleep = 0.05):
     """ Creates a lock object. 
 
         :Parameters:
@@ -250,14 +260,13 @@ class LockFile(object):
       # if fails, then another process already created it. Just keep looping.
       except error: 
         self._owns_lock = False
-        if self.timeout != None:
-          assert time.time() - start_time < self.timeout, \
-                 RuntimeError("Could not acquire lock on %s." % (filename))
+        if self.timeout is not None:
+          if time.time() - start_time > self.timeout:
+            raise RuntimeError("Could not acquire lock on file {0}.".format(self.filename))
         time.sleep(self.sleep)
 
   def __enter__(self):
     """ Enters context. """
-    assert self.timeout == None, RuntimeError("Cannot use LockFile as a context with timeout.")
     self.lock()
     return self
 
@@ -304,16 +313,29 @@ class LockFile(object):
     """ Releases lock if still held. """
     if self.owns_lock and self.is_locked: self.release()
 
-def acquire_lock(filename, sleep=0.5):
+  def remove_stale(self, comm = None):
+    """ Removes a stale lock. """
+    from os import rmdir
+    from os.path import exists
+    from ..mpi import Communicator
+    comm = Communicator(comm)
+    comm.barrier()
+    if exists(self.lock_directory):
+      try: rmdir(self.lock_directory)
+      except: pass
+    comm.barrier()
+      
+
+def acquire_lock(filename, sleep=0.5, timeout=None):
   """ Alias for a `LockFile` context. 
 
       *Beware* of mpi problems! `LockFile` is (purposefully) not mpi aware.
       Only the root node should use this method.
   """
-  return LockFile(filename, sleep=sleep)
+  return LockFile(filename, sleep=sleep, timeout=timeout)
 
 @contextmanager
-def open_exclusive(filename, mode="r", sleep = 0.5):
+def open_exclusive(filename, mode="r", sleep = 0.5, timeout=None):
   """ Opens file while checking for advisory lock.
 
       This context uses `LockFile` to first obtain a lock.
@@ -321,7 +343,7 @@ def open_exclusive(filename, mode="r", sleep = 0.5):
       Only the root node should use this method.
   """
   # Enter context.
-  with LockFile(filename, sleep=sleep) as lock:
+  with LockFile(filename, sleep=sleep, timeout=timeout) as lock:
     yield open(filename, mode)
 
 class RelativeDirectory(object):
@@ -368,7 +390,7 @@ class RelativeDirectory(object):
 
       If envvar is set to None in any single instance, than this value takes
       over. Since it is a class attribute, it should be global to all instances
-      with ``self.envvar == None``. 
+      with ``self.envvar is None``. 
   """
   def __init__(self, path=None, envvar=None, hook=None):
     """ Initializes the relative directory. 
@@ -408,12 +430,12 @@ class RelativeDirectory(object):
   @property
   def relative(self):
     """ Path relative to fixed point. """
-    return self._relative if self._relative != None else ""
+    return self._relative if self._relative is not None else ""
   @relative.setter
   def relative(self, value):
     """ Path relative to fixed point. """
     from os.path import expandvars, expanduser
-    if value == None: value = ""
+    if value is None: value = ""
     value = expandvars(expanduser(value.rstrip().lstrip()))
     assert value[0] != '/', ValueError('Cannot set "relative" attribute with absolute path.')
     self._relative = value if len(value) else None
@@ -425,12 +447,12 @@ class RelativeDirectory(object):
     from os import getcwd
     from os.path import expanduser, expandvars, normpath
     from . import Changedir
-    if self._envvar == None:
+    if self._envvar is None:
        with Changedir(expanduser(self.global_envvar)) as pwd: return getcwd()
     return normpath(expandvars(expanduser(self._envvar)))
   @envvar.setter
   def envvar(self, value):
-    if value == None: self._envvar = None
+    if value is None: self._envvar = None
     elif len(value.rstrip().lstrip()) == 0: self._envvar = None
     else: self._envvar = value
     self.hook(self.path)
@@ -439,13 +461,13 @@ class RelativeDirectory(object):
   def path(self):
     """ Returns absolute path, including fixed-point. """
     from os.path import join, normpath
-    if self._relative == None: return self.envvar
+    if self._relative is None: return self.envvar
     return normpath(join(self.envvar, self._relative))
   @path.setter
   def path(self, value):
     from os.path import relpath, expandvars, expanduser
     from os import getcwd
-    if value == None: value = getcwd()
+    if value is None: value = getcwd()
     if isinstance(value, tuple) and len(value) == 2: 
       self.envvar = value[0]
       self.relative = value[1]
@@ -458,14 +480,14 @@ class RelativeDirectory(object):
   def unexpanded(self):
     """ Unexpanded path (eg with envvar as is). """
     from os.path import join
-    e = self.global_envvar if self._envvar == None else self._envvar
-    return e if self._relative == None else join(e, self._relative)
+    e = self.global_envvar if self._envvar is None else self._envvar
+    return e if self._relative is None else join(e, self._relative)
 
 
   @property
   def hook(self):
     from inspect import ismethod, getargspec
-    if self._hook == None: return lambda x: None
+    if self._hook is None: return lambda x: None
     N = len(getargspec(self._hook)[0])
     if ismethod(self._hook): N -= 1
     if N == 0: return lambda x: self._hook()
@@ -474,14 +496,14 @@ class RelativeDirectory(object):
   def hook(self, value): 
     from inspect import ismethod, getargspec, isfunction
 
-    if value == None: 
+    if value is None: 
       self._hook = None
       return
     assert ismethod(value) or isfunction(value), \
            TypeError("hook is not a function or bound method.")
     N = len(getargspec(value)[0])
     if ismethod(value):
-      assert value.im_self != None,\
+      assert value.im_self is not None,\
              TypeError("hook callable cannot be an unbound method.")
       N -= 1
     assert N < 2, TypeError("hook callable cannot have more than one argument.")
@@ -540,7 +562,8 @@ def convert_from_unix_re(pattern):
   return compile(pattern)
     
 @broadcast_result(key=True)
-def copyfile(src, dest=None, nothrow=None, comm=None, symlink=False, aslink=False):
+def copyfile( src, dest=None, nothrow=None, comm=None,\
+              symlink=False, aslink=False, nocopyempty=False ):
   """ Copy ``src`` file onto ``dest`` directory or file.
 
       :kwarg src: Source file.
@@ -561,28 +584,30 @@ def copyfile(src, dest=None, nothrow=None, comm=None, symlink=False, aslink=Fals
           created with relative paths given starting from the directory of
           ``dest``.  Defaults to False.
       :type symlink: bool
-      :kwarg aslink:  Creates link rather than actual hard-copy if ``src`` is
+      :kwarg aslink:  Creates link rather than actual hard-copy *if* ``src`` is
           itself a link. Links to the file which ``src`` points to, not to
           ``src`` itself. Defaults to False.
       :type aslink: bool
+      :kwarg nocopyempty: Does not perform copy if file is empty. Defaults to False.
+      :type nocopyempty: bool
 
       This function fails selectively, depending on what is in ``nothrow`` list.
   """
   try:
-    from os import getcwd, symlink, remove
+    from os import getcwd, symlink as ln, remove
     from os.path import isdir, isfile, samefile, exists, basename, dirname,\
-                        join, islink, realpath, relpath
+                        join, islink, realpath, relpath, getsize
     from shutil import copyfile as cpf
     # sets up nothrow options.
-    if nothrow == None: nothrow = []
+    if nothrow is None: nothrow = []
     if isinstance(nothrow, str): nothrow = nothrow.split()
     if nothrow == 'all': nothrow = 'exists', 'same', 'isfile', 'none', 'null'
     nothrow = [u.lower() for u in nothrow]
     # checks and normalizes input.
-    if src == None: 
+    if src is None: 
       if 'none' in nothrow: return False
       raise IOError("Source is None.")
-    if dest == None: dest = getcwd()
+    if dest is None: dest = getcwd()
     if dest == '/dev/null': return True
     if src  == '/dev/null':
       if 'null' in nothrow: return False
@@ -601,12 +626,75 @@ def copyfile(src, dest=None, nothrow=None, comm=None, symlink=False, aslink=Fals
     if exists(dest) and samefile(src, dest): 
       if 'same' in nothrow: return False
       raise IOError("{0} and {1} are the same file.".format(src, dest))
+    if nocopyempty and isfile(src):
+      if getsize(src) == 0: return
     if aslink and islink(src): symlink, src = True, realpath(src)
     if symlink:
       if exists(dest): remove(dest)
-      symlink(relpath(src, dirname(dest)), dest)
+      if relpath(src, dirname(dest)).count("../") == relpath(src, '/').count("../"):
+        ln(src, realpath(dest))
+      else:
+        with Changedir(dirname(dest)) as cwd:
+           ln(relpath(src, dirname(dest)), basename(dest))
     else: cpf(src, dest)
   except:
     if 'never' in nothrow: return False
     raise
   else: return True
+
+def cpus_per_node():
+  """ Greps /proc/cpuinfo to figure out the number of cpus per node. """
+  from re import compile
+  try:
+    cpu_re = compile("processor\s*:\s*(\d+)")
+    ncpus = 0
+    with open("/proc/cpuinfo", "r") as file:
+      for line in file:
+        if cpu_re.search(line) is not None: ncpus += 1
+    if ncpus == 0: raise RuntimeError("Could not determine number of cpus.")
+    return ncpus
+  except: return 1
+
+def total_memory():
+  """ Greps /proc/meminfo to figure out the memory per node. """
+  from re import compile
+  try:
+    mem_re = compile("MemTotal\s*:\s*(\d+)\s*kB")
+    with open("/proc/meminfo", "r") as file:
+      for line in file:
+        found = mem_re.search(line)
+        if found is not None: return int(found.group(1))
+    raise MemoryError("Could not determine total memory from /proc/meminfo.")
+  except: return 10e9
+
+def which(program):
+  """ Gets location of program using system command which. """
+  from subprocess import Popen, PIPE
+  output = Popen(["which", program], stdout=PIPE).communicate()[0]
+  return output if output[-1] != '\n' else output[:-1]
+
+def load(data, *args, **kwargs):
+  """ Loads data from the data files. """
+  from os import environ
+  from os.path import dirname, exists, join
+  if "directory" in kwargs: 
+    raise KeyError("directory is a reserved keyword of load")
+
+  # find all possible data directories
+  directories = []
+  if "data_directory" in globals():
+    directory = globals()["data_directory"]
+    if hasattr(directory, "__iter__"): directories.extend(directory)
+    else: directories.append(directory)
+  if "LADA_DATA_DIRECTORY" in environ:
+    directories.extend(environ["LADA_DATA_DIRECTORY"].split(":"))
+
+  # then looks for data file.
+  if data.rfind(".py") == -1: data += ".py"
+  for directory in directories:
+    if exists(join(directory, data)):
+      kwargs["directory"] = dirname(join(directory, data))
+      result = {}
+      execfile(join(directory, data), {}, result)
+      return result["init"](*args, **kwargs)
+  raise IOError("Could not find data ({0}).".format(data))

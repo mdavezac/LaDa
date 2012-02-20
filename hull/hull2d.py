@@ -28,10 +28,10 @@ class Hull2d(object):
   @vertices.setter
   def vertices(self, sample):
     """ Taken from literate programming website. """
-    from numpy import array, abs, argmin, dot, concatenate
-    from numpy.linalg import det, norm
+    from numpy import array, dot, concatenate
+    from numpy.linalg import norm
     # case where vertices are None.
-    if sample == None: self._vertices = None; return
+    if sample is None: self._vertices = None; return
     sample = array(sample) # copy to  a numpy array.
 
     # case where there are fewer vectors than dimensions: always planar.
@@ -80,7 +80,7 @@ class Hull2d(object):
   def project(self, points):
     """ Projects points on 2d-plane. """
     from numpy import dot, array
-    assert self._basis != None, RuntimeError("Convex-hull has not been constructed.")
+    assert self._basis is not None, RuntimeError("Convex-hull has not been constructed.")
     result = []
     for p in points:
       p = p - self._basis[-1]

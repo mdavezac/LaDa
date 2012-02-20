@@ -1,11 +1,11 @@
 set(PYOPT_PY changedir.py  decorators.py  __init__.py  secant.py   tempdir.py
-             _ordered_dict.py _extract.py filecache.py )
+             _ordered_dict.py _extract.py filecache.py json.py )
 set(PYOPT_HEADERS convexhull.impl.hpp  errortuple.hpp  redirect.hpp)
 set(PYOPT_SOURCES errortuple.cc  python.cc  redirect.cc)
 
 include_directories(${PYTHON_INCLUDE_DIRS})
 python_add_module (pyopt ${PYOPT_HEADERS} ${PYOPT_SOURCES})
-target_link_libraries(pyopt opt ${Boost_PYTHON_LIBRARY})
+target_link_libraries(pyopt opt ${Boost_PYTHON_LIBRARY} ${PYTHON_LIBRARY})
 mark_as_advanced(PYTHON_ENABLE_MODULE_pyopt)
 mark_as_advanced(PYTHON_MODULE_pyopt_BUILD_SHARED)
 set_target_properties(pyopt PROPERTIES PREFIX "_")

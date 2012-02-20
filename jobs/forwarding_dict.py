@@ -11,21 +11,21 @@ class ForwardingDict(MutableMapping):
   def __init__(self, dictionary = None, _attr_list=None, ordered=True, **kwargs):
     """ Initializes a ForwardingDict instance. """
     from ..opt import OrderedDict
-    from . import default_params as default
+    from .. import naked_end, only_existing_jobparams as only_existing, readonly_jobparams as readonly
     self._is_initializing_forwarding_dict = True
     """ Tells get/setattr that Forwarding dict is being initialized. """
     super(ForwardingDict, self).__init__()
 
-    self.readonly      = kwargs.pop('readonly', default.readonly)
+    self.readonly      = kwargs.pop('readonly', readonly)
     """ Whether items can be modified in parallel using attribute syntax. """
-    self.naked_end     = kwargs.pop('naked_end', default.naked_end)
+    self.naked_end     = kwargs.pop('naked_end', naked_end)
     """ Whether last item is returned as is or wrapped in ForwardingDict. """
-    self.only_existing = kwargs.pop('only_existing', default.only_existing)
+    self.only_existing = kwargs.pop('only_existing', only_existing)
     """ Whether attributes can be added or only modified. """
-    self._attr_list    = [] if _attr_list == None else _attr_list
+    self._attr_list    = [] if _attr_list is None else _attr_list
     """ List of attributes of attributes, from oldest parent to youngest grandkid. """
     dicttype = OrderedDict if ordered else dict
-    self.dictionary    = dicttype({} if dictionary == None else dictionary)
+    self.dictionary    = dicttype({} if dictionary is None else dictionary)
     """" The dictionary for which to unroll attributes. """
     del self._is_initializing_forwarding_dict
     assert len(kwargs) == 0, ValueError("Unkwnown keyword arguments:{0}.".format(kwargs.keys()))
@@ -219,14 +219,14 @@ class ForwardingDict(MutableMapping):
     """
     from copy import copy, deepcopy
     result = copy(self)
-    assert append == None or "_attr_list" not in kwargs,\
+    assert append is None or "_attr_list" not in kwargs,\
            ValueError( "Cannot copy attribute _attr_list as "\
                         "a keyword and as ``append`` simultaneously." )
     if 'dictionary' in kwargs: result.dictionary = kwargs.pop('dictionary').copy()
     for key, value in kwargs.iteritems():
       super(ForwardingDict, result).__setattr__(key, value)
 
-    if append != None:
+    if append is not None:
       result._attr_list = deepcopy(self._attr_list)
       result._attr_list.append(append)
 
