@@ -57,26 +57,31 @@ def test_enlep():
 
 def test_specie(directory):
   from collections import namedtuple
-  from os.path import join
+  from os import environ
+  from os.path import join, relpath, abspath
   from pickle import loads, dumps
   from lada.vasp.specie import Specie
 
-  rhpath = join(join(directory, "pseudos"), "Rh")
-  Rh = Specie(rhpath)
-  Rh.potcar_exists()
-  assert abs(Rh.enmax - 229) < 1e-8 and abs(Rh.valence-9.) < 1e8
-  with open(join(rhpath, "POTCAR"), "r") as file:
-    Rh.read_potcar() == file.read()
-  print repr(Rh)
+  pseudos = [('Rh', 229.0, 9.), ('O', 400., 6.), ('Si', 245.345, 4.), ('Zn', 276.727, 12.)]
+  for name, enmax, valence in pseudos:
+    path = join(join(directory, "pseudos"), name)
+    specie = Specie(path)
+    specie.potcar_exists()
+    assert abs(specie.enmax - enmax) < 1e-8 and abs(specie.valence-valence) < 1e8
+    with open(join(path, "POTCAR"), "r") as file:
+      specie.read_potcar() == file.read()
+    assert repr(specie)\
+        == "Specie({0!r})".format(join('~/', relpath(abspath(path), environ["HOME"])))
+    assert repr(specie) == repr(loads(dumps(specie)))
 
 
 if __name__ == "__main__":
   from sys import argv, path 
-  if len(argv) > 1: path.extend(argv[2:])
+  if len(argv) > 2: path.extend(argv[2:])
   from lada.vasp.specie import U, nlep
   
   test_U()
   test_nlep()
   test_enlep()
-  if len(argv) > 0: test_specie(argv[1])
+  if len(argv) > 1: test_specie(argv[1])
 

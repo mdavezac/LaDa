@@ -1,7 +1,8 @@
 """ Sub-package containing the functional. """
 __docformat__ = "restructuredtext en"
 __all__ = ['Functional']
-from ..templates import stateless, assign_attributes, check_success, add_setter
+from ..functools import stateless, assign_attributes, check_success
+from ..misc import add_setter
 from extract import Extract
 from incar import Incar
 
@@ -61,7 +62,7 @@ class Functional(Incar):
                 mpirun_exe=None, **kwargs):
     """ Calls vasp program. """
     from collections import namedtuple
-    from ..templates import execute_program
+    from ..functools import execute_program
     from .. import default_comm, mpirun_exe as default_mpirun_exe
     if comm == None: comm = default_comm
     if mpirun_exe == None: mpirun_exe = default_mpirun_exe

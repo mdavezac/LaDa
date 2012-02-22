@@ -2,9 +2,9 @@
 __docformat__  = 'restructuredtext en'
 __all__ = ['Extract']
 from quantities import g, cm, eV
-from ...templates import make_cached
-from ...templates.extract import search_factory
-from ...templates.json import array as json_array, \
+from ...functools import make_cached
+from ...functools.extract import search_factory
+from ...functools.json import array as json_array, \
                               section as json_section, unit as json_unit
 
 OutcarSearchMixin = search_factory('OutcarSearchMixin', 'OUTCAR', __name__)

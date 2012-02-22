@@ -162,7 +162,8 @@ add_subdirectory(math)
 add_subdirectory(crystal)
 add_subdirectory(physics)
 add_subdirectory(config)
-add_subdirectory(templates)
+add_subdirectory(functools)
+add_subdirectory(misc)
 
 # checks for package dependencies.
 if(ladabase_package)

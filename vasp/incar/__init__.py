@@ -6,7 +6,7 @@ __all__ = [ "SpecialVaspParam", "NElect", "Algo", "Precision", "Ediff",\
 from _params import SpecialVaspParam, NElect, Algo, Precision, Ediff,\
                     Encut, FFTGrid, Restart, UParams, IniWave, Magmom,\
                     Npar, Boolean, Integer, PrecFock, NonScf
-from ...templates import add_setter
+from ...misc import add_setter
 
 
 class Incar(object):

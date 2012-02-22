@@ -33,7 +33,7 @@ def read_input(filepath="input.py", namespace=None):
 
       It add a few names to the input-file's namespace. 
   """
-  from ..opt import read_input
+  from ..misc import read_input
   from . import specie
   from .functional import Functional
   from .extract import Extract

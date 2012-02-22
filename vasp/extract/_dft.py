@@ -1,10 +1,10 @@
 """ Subpackage containing extraction methods for VASP-DFT data from output. """
 __docformat__  = 'restructuredtext en'
 __all__ = ['Extract']
-from ...templates import make_cached
-from ...templates.json import array as json_array, unit as json_unit,\
-                        array_with_unit as json_array_with_unit,\
-                        section as json_section
+from ...functools import make_cached
+from ...functools.json import array as json_array, unit as json_unit,\
+                              array_with_unit as json_array_with_unit,\
+                              section as json_section
 from quantities import eV, kbar as kB
 
 class Extract(object):

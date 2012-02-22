@@ -6,7 +6,7 @@
 """
 __docformat__  = 'restructuredtext en'
 __all__ = ['Extract']
-from ...templates.extract import AbstractExtractBase
+from ...functools.extract import AbstractExtractBase
 from ._common import Extract as ExtractCommonBase
 from ._dft import Extract as ExtractDFTBase
 from ._gw import Extract as ExtractGWBase
