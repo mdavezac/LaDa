@@ -35,7 +35,7 @@ if "jobs" in globals()["ladamodules"]:
       The first argument is total number of processes, the second the number of
       nodes itself, the third the number of processes per node.
   """
-  mpirun_exe = "mpirun -n {nprocs} {program}"
+  mpirun_exe = "mpirun -n {n} {program}"
   """ Command-line to launch external mpi programs. """
 
   cpus_per_node = globals()["cpus_per_node"]()

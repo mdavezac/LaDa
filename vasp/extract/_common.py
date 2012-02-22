@@ -2,9 +2,12 @@
 __docformat__  = 'restructuredtext en'
 __all__ = ['Extract']
 from quantities import g, cm, eV
-from ...opt.decorators import make_cached, broadcast_result
-from ...opt.json import array as json_array, structure as json_structure, section as json_section, \
-                        unit as json_unit
+from ...templates import make_cached
+from ...templates.extract import search_factory
+from ...templates.json import array as json_array, \
+                              section as json_section, unit as json_unit
+
+OutcarSearchMixin = search_factory('OutcarSearchMixin', 'OUTCAR', __name__)
 
 class Extract(object):
   """ Implementation class for extracting data from VASP output """
@@ -15,7 +18,6 @@ class Extract(object):
 
   @property 
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def algo(self):
     """ Returns the kind of algorithms. """
     result = self._find_first_OUTCAR(r"""^\s*ALGO\s*=\s*(\S+)\s*""")
@@ -23,22 +25,17 @@ class Extract(object):
     return result.group(1).lower()
 
   @property
-  @json_section("input")
   def is_dft(self):
     """ True if this is a DFT calculation, as opposed to GW. """
     try: return self.algo not in ['gw', 'gw0', 'chi', 'scgw', 'scgw0'] 
     except: return False
   @property
-  @json_section("input")
   def is_gw(self):
     """ True if this is a GW calculation, as opposed to DFT. """
     try: return self.algo in ['gw', 'gw0', 'chi', 'scgw', 'scgw0'] 
     except: return False
     
   @property 
-  @json_section("input")
-  @json_unit(eV)
-  @broadcast_result(attr=True, which=0)
   def encut(self):
     """ Energy cutoff. """
     return float(self._find_first_OUTCAR(r"ENCUT\s*=\s*(\S+)").group(1)) * eV
@@ -46,7 +43,6 @@ class Extract(object):
 
   @property
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def functional(self):
     """ Returns vasp functional used for calculation.
 
@@ -64,7 +60,6 @@ class Extract(object):
 
   @property
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def success(self):
     """ Checks that VASP run has completed. 
 
@@ -82,7 +77,6 @@ class Extract(object):
 
   @property
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def datetime(self):
     """ Greps execution date and time. """
     from datetime import datetime
@@ -94,7 +88,6 @@ class Extract(object):
     return datetime.strptime(result, '%Y.%m.%d  %H:%M:%S')
 
 
-  @broadcast_result(attr=True, which=0)
   def _starting_structure_data(self):
     """ Structure at start of calculations. """
     from re import compile
@@ -160,7 +153,6 @@ class Extract(object):
 
   @property
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def _structure_data(self):
     """ Greps cell and positions from OUTCAR. """
     from re import compile
@@ -180,7 +172,7 @@ class Extract(object):
       from StringIO import StringIO
       from ...crystal import read_poscar
       stringio = StringIO("".join(lines[start+1:end if end != 0 else -1]))
-      structure = read_poscar(types=self.solo().species, path=stringio)
+      structure = read_poscar(types=self.species, path=stringio)
       cell = structure.cell
       atoms = structure.atoms
       
@@ -207,14 +199,12 @@ class Extract(object):
     return cell, atoms
 
   @property
-  @json_section(None)
-  @json_structure
   @make_cached
   def structure(self):
     """ Greps structure and total energy from OUTCAR. """
     from numpy import array
     from quantities import eV
-    from ...crystal import Structure
+    from ...crystal import Structure, Atom
 
     if self.isif == 0 or self.nsw == 0 or self.ibrion == -1:
       return self.starting_structure
@@ -240,14 +230,12 @@ class Extract(object):
            RuntimeError("Number of species and of ions per specie incoherent.")
     for specie, n in zip(self.species,self.stoichiometry):
       for i in range(n):
-        structure.add_atom = array(atoms.pop(0), dtype="float64"), specie
+        structure.append(Atom(array(atoms.pop(0), dtype="float64"), specie))
 
     return structure
 
   @property
-  @json_section("input")
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def LDAUType(self):
     """ Type of LDA+U performed. """
     type = self._find_first_OUTCAR(r"""LDAUTYPE\s*=\s*(\d+)""")
@@ -259,7 +247,6 @@ class Extract(object):
 
   @property
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def HubbardU_NLEP(self):
     """ Hubbard U/NLEP parameters. """
     from ..specie import U as ldaU, nlep
@@ -308,7 +295,6 @@ class Extract(object):
     return result
 
   @property
-  @json_section("input")
   @make_cached
   def pseudopotential(self):
     """ Title of the first POTCAR. """
@@ -316,7 +302,6 @@ class Extract(object):
 
 
   @property
-  @json_section("input")
   @make_cached
   def volume(self): 
     """ Unit-cell volume. """
@@ -326,7 +311,6 @@ class Extract(object):
     return abs(self.structure.scale * det(self.structure.cell)) * angstrom**3
 
   @property 
-  @json_section("input")
   @make_cached
   def reciprocal_volume(self):
     """ Reciprocal space volume (including 2pi). """
@@ -336,8 +320,6 @@ class Extract(object):
     return abs(det(inv(self.structure.scale * self.structure.cell))) * (2e0*pi/angstrom)**3
 
   @property
-  @json_section("output")
-  @json_unit(g/cm**3)
   @make_cached
   def density(self):
     """ Computes density of the material. """
@@ -358,14 +340,12 @@ class Extract(object):
 
     species_in = self.species
 
-    result = read_poscar(species_in, self.__contcar__(), comm=self.comm)
+    result = read_poscar(species_in, self.__contcar__())
     result.energy = float(self.total_energy.rescale(eV)) if self.is_dft else 0e0
     return result
 
   @property
-  @json_section("input")
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def stoichiometry(self):
     """ Stoichiometry of the compound. """
     result = self._find_first_OUTCAR(r"""\s*ions\s+per\s+type\s*=.*$""")
@@ -377,17 +357,13 @@ class Extract(object):
     return self.stoichiometry
 
   @property
-  @json_section("input")
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def species(self):
     """ Greps species from OUTCAR. """
     return tuple([ u.group(1) for u in self._search_OUTCAR(r"""VRHFIN\s*=\s*(\S+)\s*:""") ])
 
   @property
-  @json_section("input")
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def isif(self):
     """ Greps ISIF from OUTCAR. """
     result = self._find_first_OUTCAR(r"""\s*ISIF\s*=\s*(-?\d+)\s+""")
@@ -395,9 +371,7 @@ class Extract(object):
     return int(result.group(1))
   
   @property
-  @json_section("input")
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def nsw(self):
     """ Greps NSW from OUTCAR. """
     result = self._find_first_OUTCAR(r"""\s*NSW\s*=\s*(-?\d+)\s+""")
@@ -411,9 +385,7 @@ class Extract(object):
     return Incar.relaxation.__get__(self)
 
   @property
-  @json_section("input")
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def ibrion(self):
     """ Greps IBRION from OUTCAR. """
     result = self._find_first_OUTCAR(r"""\s*IBRION\s*=\s*(-?\d+)\s+""")
@@ -421,10 +393,7 @@ class Extract(object):
     return int(result.group(1))
 
   @property
-  @json_section("input")
-  @json_array("float64")
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def kpoints(self):
     """ Greps k-points from OUTCAR.
     
@@ -462,7 +431,6 @@ class Extract(object):
   @json_section("input")
   @json_array("float64")
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def multiplicity(self):
     """ Greps multiplicity of each k-point from OUTCAR. """
     from re import compile
@@ -498,7 +466,6 @@ class Extract(object):
   @property 
   @json_section("input")
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def ispin(self):
     """ Greps ISPIN from OUTCAR. """
     result = self._find_first_OUTCAR(r"""^\s*ISPIN\s*=\s*(1|2)\s+""")
@@ -508,7 +475,6 @@ class Extract(object):
   @property
   @json_section("input")
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def name(self):
     """ Greps POSCAR title from OUTCAR. """
     result = self._find_first_OUTCAR(r"""^\s*POSCAR\s*=.*$""")
@@ -519,7 +485,6 @@ class Extract(object):
 
   @property
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def system(self):
     """ Greps system title from OUTCAR. """
     result = self._find_first_OUTCAR(r"""^\s*SYSTEM\s*=.*$""")
@@ -530,7 +495,6 @@ class Extract(object):
     if result[-1] == '"': result = result[:-1]
     return result
 
-  @broadcast_result(attr=True, which=0)
   def _unpolarized_values(self, which):
     """ Returns spin-unpolarized eigenvalues and occupations. """
     from re import compile, finditer
@@ -563,7 +527,6 @@ class Extract(object):
       results.append([float(u[which]) for u in dummy if len(u) == cols])
     return results
 
-  @broadcast_result(attr=True, which=0)
   def _spin_polarized_values(self, which):
     """ Returns spin-polarized eigenvalues and occupations. """
     from re import compile, finditer
@@ -609,7 +572,6 @@ class Extract(object):
   @property
   @json_section("input")
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def ionic_charges(self):
     """ Greps ionic_charges from OUTCAR."""
     regex = """^\s*ZVAL\s*=\s*(.*)$"""
@@ -632,7 +594,6 @@ class Extract(object):
   @property
   @json_section("input")
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def nelect(self):
     """ Greps nelect from OUTCAR."""
     regex = """^\s*NELECT\s*=\s*(\S+)\s+total\s+number\s+of\s+electrons\s*$"""
@@ -700,5 +661,5 @@ class Extract(object):
                       iglob(join(self.directory, "relax_cellshape/[0-9][0-9]/")),
                       iglob(join(self.directory, "relax_ions/[0-9]/")),
                       iglob(join(self.directory, "relax_ions/[0-9][0-9]/")) ):
-      a = self.__class__(dir, comm=self.comm)
+      a = self.__class__(dir)
       for file in a.iterfiles(**kwargs): yield file

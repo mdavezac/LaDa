@@ -27,5 +27,7 @@ if(NOT compile_debug_tests)
            ${CMAKE_CURRENT_BINARY_DIR})
   add_test(splitconfigs python ${CMAKE_CURRENT_SOURCE_DIR}/splitconfigs.py
            ${CMAKE_CURRENT_BINARY_DIR})
+  add_test(map_sites python ${CMAKE_CURRENT_SOURCE_DIR}/map_sites.py
+           ${CMAKE_CURRENT_BINARY_DIR})
 
 endif(NOT compile_debug_tests)

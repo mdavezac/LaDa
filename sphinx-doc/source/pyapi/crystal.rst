@@ -82,6 +82,7 @@ Structure and Geometry Analysis
 .. autofunction:: coordination_shells(structure, nshells, center, tolerance=1e-8, natoms=0)->[ [(Atom, numpy.array, float), ...], ...]
 .. autofunction:: periodic_dnc(structure, overlap, mesh=None, nperbox=None, tolerance=1e-8)->[ [(Atom, numpy.array, bool), ...], ...]
 .. autofunction:: splitconfigs(structure, center, nmax, configurations=None, tolerance=1e-8)->[ ( (Atom, numpy.array), ...), float), ...]
+.. autofunction:: specieset
 
 
 Iterators

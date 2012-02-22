@@ -33,6 +33,4 @@ endif(NOT noinstall_headers)
 
 install(TARGETS opt DESTINATION lib64)
 
-#  if(python_bindings)
-#    add_subdirectory(python)
-#  endif(python_bindings)
+add_subdirectory(python)

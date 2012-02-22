@@ -6,7 +6,7 @@
 """
 __docformat__  = 'restructuredtext en'
 __all__ = ['Extract']
-from ...opt import AbstractExtractBase
+from ...templates.extract import AbstractExtractBase
 from ._common import Extract as ExtractCommonBase
 from ._dft import Extract as ExtractDFTBase
 from ._gw import Extract as ExtractGWBase
@@ -14,7 +14,7 @@ from ._mixin import IOMixin
 
 class ExtractCommon(AbstractExtractBase, ExtractCommonBase, IOMixin):
   """ Extracts DFT data from an OUTCAR. """
-  def __init__(self, outcar=None, comm=None, **kwargs):
+  def __init__(self, outcar=None, **kwargs):
     """ Initializes extraction object.
     
     
@@ -22,14 +22,11 @@ class ExtractCommon(AbstractExtractBase, ExtractCommonBase, IOMixin):
           outcar : str or None
             Path to OUTCAR file. Can also be the directory if the OUTCAR is
             named "OUTCAR".
-          comm : `mpi.Communicator`
-            Processes over which to synchronize output gathering. 
     """
     from os.path import exists, isdir, basename, dirname
     from ...opt import RelativeDirectory
     from ...mpi import Communicator
        
-    comm = Communicator(comm)
     if outcar is not None:
       outcar = RelativeDirectory(outcar).path
       if exists(outcar) and not isdir(outcar):
@@ -37,7 +34,7 @@ class ExtractCommon(AbstractExtractBase, ExtractCommonBase, IOMixin):
         directory = dirname(outcar)
       else: directory = outcar
     else: directory = outcar
-    AbstractExtractBase.__init__(self, directory, comm)
+    AbstractExtractBase.__init__(self, directory)
     ExtractCommonBase.__init__(self)
     IOMixin.__init__(self, directory, **kwargs)
 
@@ -48,19 +45,19 @@ class ExtractCommon(AbstractExtractBase, ExtractCommonBase, IOMixin):
 
 class ExtractDFT(ExtractCommon, ExtractDFTBase):
   """ Extracts DFT data from an OUTCAR. """
-  def __init__(self, outcar=None, comm=None, **kwargs):
+  def __init__(self, outcar=None, **kwargs):
     """ Initializes extraction object. """
-    ExtractCommon.__init__(self, outcar, comm, **kwargs)
+    ExtractCommon.__init__(self, outcar, **kwargs)
     ExtractDFTBase.__init__(self)
 
 class ExtractGW(ExtractCommon, ExtractGWBase):
   """ Extracts GW data from an OUTCAR. """
-  def __init__(self, outcar=None, comm=None, **kwargs):
+  def __init__(self, outcar=None, **kwargs):
     """ Initializes extraction object. """
-    ExtractCommon.__init__(self, outcar, comm, **kwargs)
+    ExtractCommon.__init__(self, outcar, **kwargs)
     ExtractGWBase.__init__(self)
 
-def Extract(outcar=None, comm=None, **kwargs):
+def Extract(outcar=None, **kwargs):
   """ Chooses between DFT or GW extraction object, depending on OUTCAR.
   
         :Parameters:
@@ -68,8 +65,6 @@ def Extract(outcar=None, comm=None, **kwargs):
             Path to OUTCAR file. Can also be the directory if the OUTCAR is
             named "OUTCAR". Defaults to None, in which case it uses the current
             working directory.
-          comm : `mpi.Communicator`
-            Processes over which to synchronize output gathering. 
   """
   from os import getcwd
   from os.path import exists, isdir, join
@@ -100,9 +95,9 @@ def Extract(outcar=None, comm=None, **kwargs):
                 if match(r"\d+", basename(u)) and isdir(u) ]
     if len(gwiters) > 0: outcar = join(outcar, str(max(gwiters)))
 
-  result = ExtractCommon(outcar=outcar, comm=comm, **kwargs)
-  if result.is_dft: return ExtractDFT(outcar=outcar, comm=comm, **kwargs) 
-  elif result.is_gw: return ExtractGW(outcar=outcar, comm=comm, **kwargs) 
+  result = ExtractCommon(outcar=outcar, **kwargs)
+  if result.is_dft: return ExtractDFT(outcar=outcar, **kwargs) 
+  elif result.is_gw: return ExtractGW(outcar=outcar, **kwargs) 
   return result
 
 def ExtractGW_deprecated(*args, **kwargs):

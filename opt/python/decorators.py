@@ -3,7 +3,6 @@ __docformat__ = "restructuredtext en"
 __all__ = ['FileCache', 'broadcast_result', 'count_calls', 'make_cached', 'add_cache', 'add_setter']
 from .filecache import FileCache
 
-
 def broadcast_result(key=False, attr=False, which=0): 
   """ Decorator to wrap method such that its result is broadcasted to all nodes. """
   def _key_broadcast_result(method):

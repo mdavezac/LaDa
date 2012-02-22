@@ -1,8 +1,8 @@
 """ Subpackage containing extraction methods for VASP-DFT data from output. """
 __docformat__  = 'restructuredtext en'
 __all__ = ['Extract']
-from ...opt.decorators import make_cached, broadcast_result
-from ...opt.json import array as json_array, unit as json_unit,\
+from ...templates import make_cached
+from ...templates.json import array as json_array, unit as json_unit,\
                         array_with_unit as json_array_with_unit,\
                         section as json_section
 from quantities import eV, kbar as kB
@@ -10,7 +10,7 @@ from quantities import eV, kbar as kB
 class Extract(object):
   """ Implementation class for extracting data from VASP output """
 
-  def __init__(self, directory = None, comm = None):
+  def __init__(self, directory = None):
     """ Initializes the extraction class. """
     object.__init__(self)
     
@@ -18,7 +18,6 @@ class Extract(object):
   @json_section("output")
   @json_unit(eV)
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def energy_sigma0(self):
     """ Greps total energy extrapolated to $\sigma=0$ from OUTCAR. """
     regex = """energy\s+without\s+entropy\s*=\s*(\S+)\s+energy\(sigma->0\)\s+=\s+(\S+)"""
@@ -30,7 +29,6 @@ class Extract(object):
   @json_section("output")
   @json_array_with_unit("float64", eV)
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def energies_sigma0(self):
     """ Greps total energy extrapolated to $\sigma=0$ from OUTCAR. """
     from numpy import array
@@ -44,7 +42,6 @@ class Extract(object):
   @json_section("output")
   @json_array_with_unit("float64", eV)
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def all_total_energies(self):
     """ Greps total energies for all electronic steps from OUTCAR."""
     from numpy import array
@@ -112,7 +109,6 @@ class Extract(object):
   @json_section("output")
   @json_array_with_unit("float64", eV)
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def total_energies(self):
     """ Greps total energies for all ionic steps from OUTCAR."""
     from numpy import array
@@ -126,7 +122,6 @@ class Extract(object):
   @json_section("output")
   @json_unit(eV)
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def total_energy(self):
     """ Greps total energy from OUTCAR."""
     regex = """energy\s+without\s+entropy=\s*(\S+)\s+energy\(sigma->0\)\s+=\s+(\S+)"""
@@ -141,7 +136,6 @@ class Extract(object):
   @json_section("output")
   @json_unit(eV)
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def fermi_energy(self):
     """ Greps fermi energy from OUTCAR. """
     regex = r"""E-fermi\s*:\s*(\S+)"""
@@ -152,7 +146,6 @@ class Extract(object):
   @property
   @json_section("output")
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def moment(self):
     """ Returns magnetic moment from OUTCAR. """
     regex = r"""^\s*number\s+of\s+electron\s+(\S+)\s+magnetization\s+(\S+)\s*$"""
@@ -163,7 +156,6 @@ class Extract(object):
   @property
   @json_section("input")
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def nb_electrons(self):
     """ Returns magnetic moment from OUTCAR. """
     regex = r"""^\s*number\s+of\s+electron\s+(\S+)\s+magnetization\s+(\S+)\s*$"""
@@ -175,7 +167,6 @@ class Extract(object):
   @json_section("output")
   @json_array_with_unit("float64", kB)
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def pressures(self):
     """ Greps all pressures from OUTCAR """
     regex = r"""external\s+pressure\s*=\s*(\S+)\s*kB\s+Pullay\s+stress\s*=\s*(\S+)\s*kB"""
@@ -188,7 +179,6 @@ class Extract(object):
   @json_section("output")
   @json_unit(kB)
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def pressure(self):
     """ Greps last pressure from OUTCAR """
     from quantities import kbar as kB
@@ -200,7 +190,6 @@ class Extract(object):
   @property
   @json_section("output")
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def alphabet(self):
     """ Greps alpha+bet from OUTCAR """
     regex = r"""^\s*E-fermi\s*:\s*(\S+)\s+XC\(G=0\)\s*:\s*(\S+)\s+alpha\+bet\s*:(\S+)\s*$"""
@@ -211,7 +200,6 @@ class Extract(object):
   @property
   @json_section("output")
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def xc_g0(self):
     """ Greps XC(G=0) from OUTCAR """
     regex = r"""^\s*E-fermi\s*:\s*(\S+)\s+XC\(G=0\)\s*:\s*(\S+)\s+alpha\+bet\s*:(\S+)\s*$"""
@@ -223,7 +211,6 @@ class Extract(object):
   @json_section("output")
   @json_unit(kB)
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def pulay_pressure(self):
     from quantities import kbar as kB
     """ Greps pressure from OUTCAR """
@@ -234,7 +221,6 @@ class Extract(object):
 
   @property
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def fft(self):
     """ Greps recommended or actual fft setting from OUTCAR. """
     from re import compile, search, X as re_X
@@ -286,15 +272,15 @@ class Extract(object):
           fft = [ int(p.group(1)), int(p.group(2)), int(p.group(3)) ]
           break;
 
-      assert fft[0] is not None, "File %s is incomplete or incoherent.\n" % (path)
-      assert fft[1] is not None, "File %s is incomplete or incoherent.\n" % (path)
-      assert fft[2] is not None, "File %s is incomplete or incoherent.\n" % (path)
+      if fft[0] is not None: IOError("File {0} is incomplete or incoherent.\n".format(path))
+      if fft[1] is not None: IOError("File {0} is incomplete or incoherent.\n".format(path))
+      if fft[2] is not None: IOError("File {0} is incomplete or incoherent.\n".format(path))
 
       multiple = 8
       for i in range(3):
         if fft[i] % multiple: fft[i] += multiple - fft[i] % multiple
       return tuple(fft)
-    raise RuntimeError, "File %s could not be opened.\n" % (path)
+    raise RuntimeError("File {0} could not be opened.\n".format(path))
 
   def _get_partial_charges_magnetization(self, grep):
     """ Greps partial charges from OUTCAR.
@@ -324,7 +310,6 @@ class Extract(object):
   @json_section("output")
   @json_array("float64")
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def partial_charges(self):
     """ Greps partial charges from OUTCAR.
 
@@ -338,7 +323,6 @@ class Extract(object):
   @json_section("output")
   @json_array("float64")
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def magnetization(self):
     """ Greps partial charges from OUTCAR.
 
@@ -382,7 +366,6 @@ class Extract(object):
   @json_section("output")
   @json_array_with_unit("float64", eV)
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def electropot(self):
     """ Greps average atomic electrostatic potentials from OUTCAR. """
     from re import compile, X as reX
@@ -406,7 +389,6 @@ class Extract(object):
   @json_section("output")
   @json_array("float64")
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def electronic_dielectric_constant(self):
     """ Electronic contribution to the dielectric constant. """
     from re import M as multline
@@ -425,7 +407,6 @@ class Extract(object):
   @json_section("output")
   @json_array("float64")
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def ionic_dielectric_constant(self):
     """ Ionic contribution to the dielectric constant. """
     from re import M as multline
@@ -449,7 +430,6 @@ class Extract(object):
 
   @property
   @make_cached
-  @broadcast_result(attr=True, which=0)
   def forces(self):
     """ Forces on each atom. """
     from numpy import array

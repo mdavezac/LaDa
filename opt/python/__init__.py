@@ -3,8 +3,7 @@ __docformat__  = 'restructuredtext en'
 from types import ModuleType
 from contextlib import contextmanager
 
-from _opt import __load_vasp_in_global_namespace__, __load_escan_in_global_namespace__,\
-                 cReals, _RedirectFortran, ConvexHull, ErrorTuple
+from _opt import _RedirectFortran
 from changedir import Changedir
 from tempdir import Tempdir
 from decorators import broadcast_result, make_cached
@@ -12,8 +11,7 @@ from filecache import FileCache
 from ._ordered_dict import OrderedDict
 from ._extract import AbstractExtractBase, OutcarSearchMixin
 
-__all__ = [ '__load_vasp_in_global_namespace__', '__load_escan_in_global_namespace__',\
-            'cReals', 'ConvexHull', 'ErrorTuple', 'redirect_all', 'redirect', 'read_input',\
+__all__ = [ 'redirect_all', 'redirect', 'read_input',\
             'LockFile', 'acquire_lock', 'open_exclusive', 'RelativeDirectory', 'streams',
             'AbstractExtractBase', 'OutcarSearchMixin', 'convert_from_unix_re', 'OrderedDict', 
             'exec_input', 'FileCache', 'Changedir', 'Tempdir', 'broadcast_result', 'make_cached',

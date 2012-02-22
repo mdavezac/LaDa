@@ -70,10 +70,3 @@ def pickled(function):
   function.to_json = to_json
   function.from_json = from_json
   return function
-
-def structure(function):
-  """ Adds structure to dict transformation to json. """
-  from ..crystal import structure_to_dict, dict_to_structure
-  function.to_json = structure_to_dict
-  function.from_json = dict_to_structure
-  return function

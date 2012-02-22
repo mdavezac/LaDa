@@ -1,38 +1,41 @@
 """ Defines specie specific methods and objects. """
 __docformat__ = "restructuredtext en"
 
-
-def U(type = 1, l=2, U=0e0, J=0e0 ):
+def U(type=1, l=2, U=0e0, J=0e0 ):
   """ Creates an LDA+U parameter 
 
-      :Parameters:
-        type : 1|2|"liechtenstein"|"dudarev"
-          A string or integer specifying the type of the Hubbard U. Defaults
-          to 1.
-        l : 0|1|2|3|"s"|"p"|"d"|"f"
+      LDA+U is always LSDA+U here. 
+
+      :param type:
+          Should be one of the following: 1|2|"liechtenstein"|"dudarev".
+          Specifies the type of the Hubbard U. Defaults to 1.
+      :param l:
+          Should be one of the following: 0|1|2|3|"s"|"p"|"d"|"f".
           Channel for which to apply U. Defaults to 2.
-        U : float
+      :param U: 
           Hubbard U. Defaults to 0.
-        J : float
+      :param J: float
           Hubbard J. Defaults to 0.
 
-      LDA+U is always LSDA+U here. 
+      :returns: A dictionary equivalent to the input.
   """
-
   if hasattr(type, "lower"):
     type = type.lower()
     if type == "liechtenstein": type = 1
     elif type == "dudarev": type = 2
+    else: raise ValueError("Unknown value for type: {0}.".format(type))
   if hasattr(l, "lower"):
     l = l.lower()
-    assert len(l) == 1, "Uknown input %s." % (l)
+    if len(l) != 1: raise ValueError("Uknown input {0}.".format(l))
     if   l[0] == 's': l = 0
     elif l[0] == 'p': l = 1
     elif l[0] == 'd': l = 2
     elif l[0] == 'f': l = 3
+    else: raise ValueError("Uknown input {0}.".format(l)) 
   try: l = int(l)
   except: raise ValueError, "Moment l should be 0|1|2|3|s|p|d|f." 
-  if l < 1 or l > 3: raise ValueError, "Moment l should be 0|1|2|3|s|p|d|f." 
+  if l < 0 or l > 3: raise ValueError("Moment l should be 0|1|2|3|s|p|d|f.")
+  if type != 1 and type != 2: raise ValueError("Unknown LDA+U type: {0}.".format(type))
   return { "type": int(type), "l": l, "U": U, "J": J, "func": "U" }
 
 
@@ -40,25 +43,36 @@ def nlep(type = 1, l=2, U0=0e0, U1=None, fitU0=False, fitU1=False,
          U0_range=5, U1_range=5) :
   """ Creates `nlep`_ parameters 
 
-      :Parameters:
-        type : 1|2|"liechtenstein"|"dudarev"
-          A string or integer specifying the type of the Hubbard U. Defaults
-          to 1.
-        l : 0|1|2|3|"s"|"p"|"d"|"f"
-          Channel for which to apply U. Defaults to 2.
-        U0 : float
-          First nlep parameter. Defaults to 0.
-        U1 : float
-          Second (e)nlep parameter. Defaults to 0.
-        fitU0, fitU1 : govern whether these are free params w.r.t fitting potentials
-        U0_range, U1_range : fitting bounds
+      Non Local External Potentials attempt to correct in part for the band-gap
+      problem[0]_.
 
-      `Non Local External Potentials`__ attempt to correct in part for the
-      band-gap problem. It was proposed in PRB **77**, 241201(R) (2008).
+      :param type:
+          Should be one of the following: 1|2|"liechtenstein"|"dudarev".
+          Specifies the type of the Hubbard U. Defaults to 1.
+      :param l:
+          Should be one of the following: 0|1|2|3|"s"|"p"|"d"|"f".
+          Channel for which to apply nlep. Defaults to 2.
+      :param U0:
+          First nlep parameter. Defaults to 0.
+      :param U1: and a['func'] == 
+          Second (e)nlep parameter. Defaults to 0.
+      :param fitU0:
+         If True, U1 is a free params w.r.t fitting potentials. 
+         Only of use when performing NLEP fits.
+      :param fitU1:
+         If True, U1 is a free params w.r.t fitting potentials
+         Only of use when performing NLEP fits.
+      :param U0_range:
+         Fitting bounds for U0.
+         Only of use when performing NLEP fits.
+      :param U1_range:
+         Fitting bounds for U1.
+         Only of use when performing NLEP fits.
+
       :note: LDA+U is always LSDA+U here. 
 
-      .. _nlep : http://dx.doi.org/10.1103/PhysRevB.77.241201
-      __ nlep_
+      .. _[0]: `PRB **77**, 241201(R) (2008).`__
+      .. __: http://dx.doi.org/10.1103/PhysRevB.77.241201
   """
   if hasattr(type, "lower"):
     type = type.lower()
@@ -72,34 +86,36 @@ def nlep(type = 1, l=2, U0=0e0, U1=None, fitU0=False, fitU1=False,
     elif l[0] == 'd': l = 2
     elif l[0] == 'f': l = 3
   try: l = int(l)
-  except: raise ValueError, "Moment l should be 0|1|2|3|s|p|d|f." 
-  if l < 0 or l > 3: raise ValueError, "Moment l should be 0|1|2|3|s|p|d|f." 
+  except: raise ValueError("Moment l should be 0|1|2|3|s|p|d|f.")
+  if l < 0 or l > 3: raise ValueError("Moment l should be 0|1|2|3|s|p|d|f.")
+  if type != 1 and type != 2: raise ValueError("Unknown LDA+U type: {0}.".format(type))
   elif U1 is None: 
-    return { "type": int(type), "l": l, "U": U0, "func": "nlep", "fitU0":fitU0,  "fitU":fitU0, "U_range":U0_range}
+    return { "type": int(type), "l": l, "U0": U0, "func": "nlep",\
+             "fitU0":fitU0,  "fitU":fitU0, "U_range":U0_range}
   else: 
-    return { "type": int(type), "l": l, "U0": U0, "U1": U1, "func": "enlep", "fitU0":fitU0, "fitU1":fitU1, "U0_range":U0_range, "U1_range":U1_range}
+    return { "type": int(type), "l": l, "U0": U0, "U1": U1, "func": "enlep",\
+             "fitU0":fitU0, "fitU1":fitU1, "U0_range":U0_range, "U1_range":U1_range}
 
 class Specie(object):
   """ Holds atomic specie information.
   
       Instances of this object define an atomic specie for VASP calculations.
-      In addition, it may contain information used to build a set of
-      high-throughput jobs.
+      In addition, it may contain element-related information used to build a
+      set of high-throughput jobs.
   """
   def __init__(self, directory, U=None, oxidation=None, **kwargs):
     """ Initializes a specie.
 
-        :Parameters:
-          directory : str
+        :param directory:
             Directory with the potcar for this particular atomic types.  This
             directory should contain an *unzipped* POTCAR file.
-          U 
+        :param U:
             LDA+U parameters. It should a list of dictionaries, one entry per
-            momentum channel, and each entry returned by a call to `U`
-            or `nlep`.
-          oxidation : int
+            momentum channel, and each entry returned by a call to :py:func:`U`
+            or :py:func:`nlep`.
+        :param oxidation:
             Maximum oxidation state (or minimum if negative).
-          kwargs : dict
+        :param kwargs:
             Any other keyworkd argument is added as an attribute of this object.
     """
     from ..opt import RelativeDirectory
@@ -175,6 +191,3 @@ class Specie(object):
     if "path" in self.__dict__ and "_directory" not in self.__dict__:
       from ..opt import RelativeDirectory
       self._directory = RelativeDirectory(self.__dict__.pop("path"))
-
-
-

@@ -4,11 +4,19 @@ __all__ = [ 'Structure', 'Atom', 'SmithTransform', 'zero_centered', 'into_vorono
             'into_cell', 'supercell', 'primitive', 'is_primitive', 'space_group',
             'transform', 'periodic_dnc', 'neighbors', 
             'coordination_shells', 'splitconfigs', 'vasp_ordered', 'layer_iterator',
-            'equivalence_iterator', 'shell_iterator' ]
+            'equivalence_iterator', 'shell_iterator', 'specieset' ]
 from cppwrappers import Structure, Atom, SmithTransform, zero_centered, into_voronoi, \
                         into_cell, supercell, primitive, is_primitive, space_group,   \
                         transform, periodic_dnc, neighbors, coordination_shells,      \
                         splitconfigs
+
+def specieset(structure):
+  """ Returns ordered set of species.
+  
+      Especially usefull with VASP since we are sure what the list of species
+      is always ordered the same way.
+  """
+  return set([a.type for a in structure])
 
 def vasp_ordered(structure):
   """ Returns a structure with correct VASP order of ions.

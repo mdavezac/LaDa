@@ -6,7 +6,7 @@ __all__ = [ "SpecialVaspParam", "NElect", "Algo", "Precision", "Ediff",\
 from _params import SpecialVaspParam, NElect, Algo, Precision, Ediff,\
                     Encut, FFTGrid, Restart, UParams, IniWave, Magmom,\
                     Npar, Boolean, Integer, PrecFock, NonScf
-from ...opt.decorators import add_setter
+from ...templates import add_setter
 
 
 class Incar(object):
@@ -38,9 +38,7 @@ class Incar(object):
             This tolerance is multiplied by the number of atoms in the system,
             eg consistent from one system to another.
          - ``encut``: factor by which ENMAX of species is multiplied.
-         - ``fftgrid``: Either a 3-tuple of integers setting NGX and friend, or
-           anything else (other than None). In the latter case, a fake VASP
-           calculation is performed to get VASP recommended values.
+         - ``fftgrid``: 3-tuple of integers setting NGX and friend.
          - ``symprec``: tolerance when determining symmetries.
          - ``magmom``: Sets magnetic moment. See `incar.Magmom`.
          - ``npar``: Sets npar.
@@ -73,8 +71,8 @@ class Incar(object):
          - `set_smearing`: to easily set sigma and ismear.
          - `set_symmetries`: to easily set isym and symprec.
 
-      These parameters can be modified as in C{vasp.ispin = 2} and so forth.
-      In the special case that None is given (e.g. C{vasp.ispin = None}), then
+      These parameters can be modified as in ``vasp.ispin = 2`` and so forth.
+      In the special case that None is given (e.g. ``vasp.ispin = None``), then
       that parameter will not be printed to the INCAR, which means VASP default
       will be used.
 
@@ -107,7 +105,7 @@ class Incar(object):
     super(Incar, self).__setattr__("special", {})
 
     self.add_param = "ispin",       1 
-    self.add_param = "isif",        0
+    self.add_param = "isif",        1
     self.add_param = "ismear",      None
     self.add_param = "sigma",       None
     self.add_param = "nsw",         None
@@ -157,7 +155,7 @@ class Incar(object):
     result = []
     if hasattr(self._system, "name"):
       if len(self._system.name) != 0:
-        result.append("SYSTEM = \"%s\"\n" % (self._system.name))
+        result.append("SYSTEM = \"{0}\"\n".format(self._system.name))
     # gathers special parameters.
     # Calls them first in case they change normal key/value pairs.
     specials = []
@@ -172,9 +170,8 @@ class Incar(object):
       else: 
         try: value = str(value)
         except ValueError: 
-          print "Could not convert vasp parameter %s to string: " % (key), value, "."
-          raise
-      result.append( "%18s = %s\n" % (key.upper(), value))
+          raise ValueError("Could not convert vasp parameter {0} to string: {1}.".format(key, value))
+      result.append( "{0: >18s} = {1}\n".format(key.upper(), value))
     # adds special parameter lines.
     result.extend(specials)
     return result
@@ -230,7 +227,7 @@ class Incar(object):
     return list(set(result))
 
   @add_setter
-  def set_symmetries(self, value):
+  def symmetries(self, value):
     """ Type of symmetry used in the calculation.
   
         This sets isym and symprec vasp tags.
@@ -248,7 +245,7 @@ class Incar(object):
     else: raise ValueError("Uknown value when setting symmetries ({0}).".format(value))
 
   @add_setter
-  def set_smearing(self, args):
+  def smearing(self, args):
     """ Value of the smearing used in the calculation. 
   
         It can be specified as a string:
@@ -306,8 +303,9 @@ class Incar(object):
       if has_second: self.sigma = second
     else: 
       try: self._value = int(first)
-      except: raise ValueError, "Unknown smearing value %s.\n" % (value)
-      assert self._value >= 1, "Unknown smearing value %s.\n" % (value)
+      except: raise ValueError("Unknown smearing value {0}.\n".format(value))
+      if self._value < 1:
+        raise ValueError("Unknown smearing value {0}.\n".format(value))
 
   @property
   def relaxation(self):
@@ -320,10 +318,23 @@ class Incar(object):
         Some of the parameters (purposefully left out above) are optional:
         
         - first argument can be "static", or a combination of "ionic",
-          "cellshape", and "volume".  
-        - second (optional) argument is nsw
-        - third (optional) argument is ibrion
-        - fourth (optional) argument is potim.
+          "cellshape", and "volume". The combination `must be allowed by
+          VASP`__.
+        - second (optional) argument is `nsw`_
+        - third (optional) argument is `ibrion`_
+        - fourth (optional) argument is `potim`_
+
+        .. note:: Some combinations will raise an error, eg asking for
+           ionic relaxation but setting nsw to zero. However, if you are
+           feeling creative and know what you are doing, you can always set the
+           parameters by hand:
+
+           >>> vasp.nsw, vasp.isif = 0, 1
+
+        .. __: http://cms.mpi.univie.ac.at/vasp/guide/node112.html
+        .. _nsw: http://cms.mpi.univie.ac.at/vasp/guide/node108.html
+        .. _ibrion: http://cms.mpi.univie.ac.at/vasp/guide/node110.html
+        .. _potim: http://cms.mpi.univie.ac.at/vasp/vasp/POTIM_tag.html
     """
     nsw = 0 if self.nsw is None else self.nsw
     if self.ibrion is None: ibrion = -1 if nsw < 0 else 0
@@ -336,11 +347,11 @@ class Incar(object):
     if isif < 5: result += "ionic "
     if isif > 2 and isif < 7: result += "cellshape "
     if isif in [3, 6, 7]: result += "volume"
-    return result.lstrip()
+    return result.lstrip().rstrip()
 
   @relaxation.setter
   def relaxation(self, args): 
-    """ Returns the kind of relaxation being performed. """
+    """ Sets the kind of relaxation to be performed. """
     import re
 
     dof =  args.lower() if isinstance(args,str) else str(args[0]).lower()
@@ -354,15 +365,16 @@ class Incar(object):
       if len(args) > 2: ibrion = int(args[2])
       if len(args) > 3: potim = int(args[3])
 
-
     # static calculation.
     if (not ionic) and (not cellshape) and (not volume):
+      if dof != 'static':
+        raise RuntimeError("Unkown value for relaxation: {0}.".format(arg))
       self.params["isif"] = 1
       self.params["ibrion"] = -1
-      assert ibrion is None or ibrion == -1, \
-             ValueError("Cannot set ibrion to anything but -1 for static calculations.")
-      assert nsw  is None or nsw == 0, \
-             ValueError("static calculation with nsw > 0 is way too creative.")
+      if ibrion is not None and ibrion != -1:
+        raise ValueError("Cannot set ibrion to anything but -1 for static calculations.")
+      if nsw is not None and nsw != 0:
+        raise ValueError("static calculation with nsw > 0 is way too creative.")
       self.params["nsw"] = None
       if potim is not None: self.params["potim"] = potim
 
@@ -380,31 +392,17 @@ class Incar(object):
 
       if ibrion is None and self.params["ibrion"] in [None, -1]: self.params["ibrion"] = 2
       elif ibrion is not None: 
-        assert ibrion != -1, ValueError("Cannot set ibrion to -1 with strain relaxations.")
-        assert ibrion != 0 or self.params["isif"] == 1,\
-               ValueError("Cannot set ibrion to 0 with strain relaxations.")
+        if ibrion == -1: raise ValueError("Cannot set ibrion to -1 with strain relaxations.")
+        if ibrion == 0 and self.params["isif"] == 1: 
+          raise ValueError("Cannot set ibrion to 0 with strain relaxations.")
         self.params["ibrion"] = ibrion
       if nsw is not None:
-        assert nsw > 0, ValueError("Cannot set nse < 1 and perform strain relaxations.")
+        if nsw <= 0: raise ValueError("Cannot set nsw < 1 and perform strain relaxations.")
         self.params["nsw"] = nsw
       elif self.params["nsw"] is None or self.params["nsw"] == 0: self.params["nsw"] = 50
       if potim is not None: self.params["potim"] = potim
       if self.ediffg is not None:
         if self.ediffg < self.ediff and self.ediffg > 0: self.ediffg = None
-
-  @add_setter
-  def set_relaxation(self, value):
-    """ Alias to relaxation. """
-    from warnings import warn
-    warn( DeprecationWarning("set_relaxation is obsolete. Please use relaxation instead."), 
-          stacklevel=2 )
-    self.relaxation = value
-    
-
-  def __iter__(self):
-    """ Iterates over attribute names and values. """
-    for key, value in self.params: yield key, value
-    for key, value in self.special: yield key, value.value
 
   def __getstate__(self):
     d = self.__dict__.copy()
