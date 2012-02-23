@@ -359,10 +359,10 @@ class NonScf(SpecialVaspParam):
   @value.setter
   def value(self, value):
     if isinstance(value, str):
-      assert    len(value) == 0 \
-             or value.lower() == "true"[:len(value)] \
-             or value.lower() == "false"[:len(value)], \
-             TypeError("Cannot interpret string {0} as a boolean.".format(value))
+      if len(value) == 0: value = False
+      elif value.lower() == "false"[:min(len(value), len("false"))]: value = False
+      elif value.lower() == "true"[:min(len(value), len("true"))]: value = True
+      else: raise TypeError("Cannot interpret string {0} as a boolean.".format(value))
     self._value = value == True
 
   def incar_string(self, vasp, *args, **kwargs): return None
@@ -461,10 +461,10 @@ class Boolean(SpecialVaspParam):
   @value.setter
   def value(self, value):
     if isinstance(value, str):
-      if not (   len(value) == 0 \
-               or value.lower() == "true"[:len(value)] \
-               or value.lower() == "false"[:len(value)] ):
-        raise TypeError("Cannot interpret string {0} as a boolean.".format(value))
+      if len(value) == 0: value = False
+      elif value.lower() == "false"[:min(len(value), len("false"))]: value = False
+      elif value.lower() == "true"[:min(len(value), len("true"))]: value = True
+      else: raise TypeError("Cannot interpret string {0} as a boolean.".format(value))
     self._value = value == True
   @broadcast_result(key=True)
   def incar_string(self, vasp, *args, **kwargs):
