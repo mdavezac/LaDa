@@ -124,38 +124,77 @@ class NElect(SpecialVaspParam):
 class Algo(SpecialVaspParam): 
   """ Electronic minimization. 
   
-      Can be \"very fast\", \"fast\", or \"normal\" (default). 
+      Defines the `ALGO`__ tag.
+      Takes one of the following values:
+        - very fast
+        - fast, f (default)
+        - normal, n
+        - all, a
+        - damped, d 
+        - Diag 
+        - conjugate, c (vasp 5)
+        - subrot (vasp 5)
+        - eigenval (vasp 5)
+        - Nothing (vasp 5)
+        - Exact  (vasp 5)
+        - chi
+        - gw
+        - gw0
+        - scgw
+        - scgw0
+
+      .. warning:: The string None is not  allowed, as it would lead to
+         confusion with the python object None. Please use "Nothing" instead.
+         The python object None will simply not print the ALGO keyword to the
+         INCAR file.
+
+      .. note:: By special request, "fast" is the default algorithm.
+
+      .. __: http://cms.mpi.univie.ac.at/vasp/vasp/ALGO_tag.html
   """ 
-  def __init__(self, value): super(Algo, self).__init__(value)
-  def incar_string(self, *args, **kwargs):
+  def __init__(self, value="fast"): super(Algo, self).__init__(value)
+  @property
+  def value(self): return self._value
+  @value.setter
+  def value(self, value):
+    if value is None: self._value = None; return None
     try: from lada import is_vasp_4
     except: is_vasp_4 == False
-    lower = self.value.lower().rstrip().lstrip()
+    if not hasattr(value, 'lower'):
+      raise TypeError("ALGO cannot be set with {0}.".format(value))
+    lower = value.lower().rstrip().lstrip()
     lower = lower.replace('_', '')
     lower = lower.replace('-', '')
-    if lower == "veryfast": value = "Very_Fast" if is_vasp_4 else 'VeryFast'
-    elif lower in ["fast", 'f']: value = "Fast"
-    elif lower in ["normal", 'n']: value = "Normal"
-    elif lower in ["damped", 'd']: value = "Damped"
-    elif lower == "none" and is_vasp_4: value = "None"
-    # below this VASP 5 only options.
-    elif is_vasp_4\
-         and lower in ["nothing", "all", "conjugate", "subrot",
-                       "eigenval", "gw", "gw0", "chi", "scgw", 
-                       "scgw0"]: 
-      raise ValueError, "algo value ({0}) is not valid with VASP 4.\n".format(self.value)
+    if is_vasp_4                                         \
+       and ( lower[0] in ['c', 's', 'e']                 \
+             or lower in [ "nothing", "subrot", "exact", \
+                           "gw", "gw0", "chi", "scgw",   \
+                           "scgw0"] ): 
+      raise ValueError, "algo value ({0}) is not valid with VASP 4.\n".format(value)
+
+    if lower == "diag": value = "Diag"
     elif lower == "nothing": value = "Nothing"
-    elif lower in ["all", 'a']: value = "All"
-    elif lower in ["conjugate", 'c']: value = "Conjugate"
-    elif lower in ["subrot", 's']: value = "Subrot"
-    elif lower in ["eigenval", 'e']: value = "Eigenval"
     elif lower == "chi":  value = "chi"
     elif lower == "gw":   value = "GW"
     elif lower == "gw0":  value = "GW0"
     elif lower == "scgw": value = "scGW"
     elif lower == "scgw0": value = "scGW0"
-    else: raise ValueError("algo value ({0}) is invalid.\n".format(self.value))
-    return "ALGO = {0}".format(value)
+    elif lower[0] == 'v': value = "Very_Fast" if is_vasp_4 else 'VeryFast'
+    elif lower[0] == 'f': value = "Fast"
+    elif lower[0] == 'n': value = "Normal"
+    elif lower[0] == 'd': value = "Damped"
+    elif lower[0] == 'a': value = "All"
+    elif lower[0] == 'c': value = "Conjugate"
+    elif lower[0] == 's': value = "Subrot"
+    elif lower[0] == 'e': value = "Eigenval"
+    else:
+      self._value = None
+      raise ValueError("algo value ({0!r}) is invalid.\n".format(value))
+    self._value = value
+    
+  def incar_string(self, *args, **kwargs):
+    if self.value is None: return None
+    return "ALGO = {0}".format(self.value)
 
 class Precision(SpecialVaspParam):
   """ Sets accuracy of calculation. 
@@ -233,7 +272,7 @@ class Restart(SpecialVaspParam):
   def __init__(self, value): super(Restart, self).__init__(value)
 
   def incar_string(self, *args, **kwargs):
-    from os.path import join, exists
+    from os.path import join, exists, getsize
     from shutil import copy
     from ...misc import copyfile
     from .. import files
@@ -245,26 +284,31 @@ class Restart(SpecialVaspParam):
       istart = "0   # start from scratch"
     else:
       ewave = exists( join(self.value.directory, files.WAVECAR) )
+      if ewave: ewave = getsize(join(self.value.directory, files.WAVECAR)) > 0
       echarge = exists( join(self.value.directory, files.CHGCAR) )
+      if echarge: echarge = getsize(join(self.value.directory, files.CHGCAR)) > 0
       if ewave:
         path = join(self.value.directory, files.WAVECAR)
-        istart = "1  # restart"
-        icharg = "{0}   # from wavefunctions ".format(10 if nonscf else 0) + path
+        istart = "1   # restart"
+        icharg = "{0}   # from wavefunctions {1}".format(10 if nonscf else 0, path)
         copy(path, ".")
+        if echarge: copy(join(self.value.directory, files.CHGCAR), '.')
       elif echarge:
         path = join(self.value.directory, files.CHGCAR)
-        istart = "1  # restart"
-        icharg = "{0}   # from charge ".format(11 if nonscf else 1) + path
+        istart = "1   # restart"
+        icharg = "{0}   # from charge {1}".format(11 if nonscf else 1, path)
         copy(path, ".")
       else: 
         istart = "0   # start from scratch"
         icharg = "{0}   # superpositions of atomic densities".format(12 if nonscf else 2)
-      copyfile(join(self.value.directory, files.EIGENVALUES), nothrow='same exists') 
+      copyfile(join(self.value.directory, files.EIGENVALUES), nothrow='same exists',
+               nocopyempty=True) 
       copyfile(join(self.value.directory, files.CONTCAR), files.POSCAR,\
                nothrow='same exists', symlink=getattr(kwargs["vasp"], 'symlink', False),\
                nocopyempty=True) 
       copyfile(join(self.value.directory, files.WAVEDER), files.WAVEDER,
-               nothrow='same exists', symlink=getattr(kwargs["vasp"], 'symlink', False)) 
+               nothrow='same exists', symlink=getattr(kwargs["vasp"], 'symlink', False),
+               nocopyempty=True) 
     return  "ISTART = {0}\nICHARG = {1}".format(istart, icharg)
 
 class NonScf(SpecialVaspParam):
@@ -439,23 +483,27 @@ class Choices(SpecialVaspParam):
             keys and items should be meaningfully convertible to strings.
         :param default :
             Option from ``choices`` to use as default.
+
+      .. note:: The keys are case-sensitive. The values are not.
     """
     self.key = key
     """ VASP key corresponding to this input. """
     self.choices = {}
     """ Allowable set of choices. """
     for key, items in choices.iteritems():
-      self.choices[key] = set([str(u).lower() for u in items] + [str(key).lower()])
+      self.choices[key] = set( [u.lower() if hasattr(u, 'lower') else u for u in items]\
+                               + [key, str(key).lower()])
     super(Choices, self).__init__(default)
 
   @property
   def value(self): return self._value
   @value.setter
   def value(self, value):
-    if value is None: self._value = None
-    value == str(value).lower() # transform to lower string.
+    if value is None: self._value = None; return
+    if hasattr(value, 'lower'): value == value.lower()
     for key, items in self.choices.iteritems():
-      if value in items: self._value = key; break
+      if value in items: self._value = key; return
+    raise ValueError("{0} is not an acceptable choice for {1.key}: {1.choices}.".format(value, self))
   def incar_string(self, *args, **kwargs):
     if self.value is None: return None
     return "{0} = {1}".format(self.key.upper(), self.value)
@@ -474,6 +522,8 @@ class PrecFock(Choices):
       - F or fast:     coarse grid for HF, soft augmentation charge. 
       - N or normal:   PREC=N grid for HF, soft augmentation charge. 
       - A or accurate: PREC=A grid for HF, soft augmentation charge.
+
+      .. note:: The values are not case-sensitive. 
   """
   def __init__(self, value=None):
     """ Initializes PRECFOCK parameter. """

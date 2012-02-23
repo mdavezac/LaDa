@@ -128,7 +128,7 @@ class Incar(object):
     # objects derived from SpecialVaspParams will be recognized as such and can
     # be added without further fuss.
     self.nelect      = NElect(0)
-    self.algo        = Algo("fast")
+    self.algo        = Algo()
     self.precision   = Precision("accurate")
     self.ediff       = Ediff(1e-4)
     self.ediffg      = Ediff(None, "ediffg")
