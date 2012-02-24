@@ -7,4 +7,6 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   The crystal module <pyapi/crystal>
+   crystal <pyapi/crystal>
+
+   vasp <pyapi/vasp>

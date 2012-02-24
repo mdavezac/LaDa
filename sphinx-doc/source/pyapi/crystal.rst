@@ -1,5 +1,5 @@
-The crystal module
-==================
+crystal
+=======
 
 .. automodule:: lada.crystal  
 .. moduleauthor:: Mayeul d'Avezac <mayeul.davezac@nrel.gov>

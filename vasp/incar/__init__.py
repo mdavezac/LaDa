@@ -17,6 +17,10 @@ class Incar(object):
       launch and control vasp. vasp attributes can be listed by iterating over
       this class, or calling iter.
 
+      .. :py:attr: ispin 
+          Spin-polarized or spin-degenerate calculations.
+          Must be 1 or 2.
+
       Parameters(attributes) which are present by default are the following:
          - ``ispin``: Sets number of spins. Must be either 1 or 2. 
          - ``ismear``: Smearing function. Can be set with property `set_smearing`. 
@@ -103,7 +107,6 @@ class Incar(object):
     # first, actually sets these two variables by hand, since they are used in __setattr__.
     super(Incar, self).__setattr__("params", {})
     super(Incar, self).__setattr__("special", {})
-
     self.add_param = "ispin",       1 
     self.add_param = "isif",        1
     self.add_param = "ismear",      None

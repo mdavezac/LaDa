@@ -165,7 +165,6 @@ namespace LaDa
           if(nB > nA) return false;
         }
       transB /= types::t_real(nB);
-      std::cout << ~transB << "\n";
 
       // loop over possible motif rotations.
       python::Object iter_op = PyObject_GetIter(pg.borrowed());
@@ -181,7 +180,6 @@ namespace LaDa
         for(size_t i(0); i < _a.size(); ++i) atomsA.push_back(i);
 
         math::rMatrix3d const rotation = opmap.block<3,3>(0,0) * rot;
-        std::cout << rotation << "\n";
         
         Structure::const_iterator i_b = _b.begin();
         Structure::const_iterator const i_bend = _b.end();
@@ -194,10 +192,9 @@ namespace LaDa
           for(; i_first != i_end; ++i_first)
           {
             if( not math::is_integer(invA * (pos - _a[*i_first]->pos*scaleA + transA), 4*_tol) ) continue;
-            std::cout << "FOUND POS\n"; 
             if( i_b->type() == _a[*i_first]->type ) break;
           }
-          if(i_first == i_end) { std::cout << (i_b - _b.begin()) << "\n"; break; }
+          if(i_first == i_end)  break; 
           atomsA.erase(i_first);
         }
         if(i_b == i_bend) return true;

@@ -4,11 +4,11 @@ __all__ = [ 'Structure', 'Atom', 'SmithTransform', 'zero_centered', 'into_vorono
             'into_cell', 'supercell', 'primitive', 'is_primitive', 'space_group',
             'transform', 'periodic_dnc', 'neighbors', 
             'coordination_shells', 'splitconfigs', 'vasp_ordered', 'layer_iterator',
-            'equivalence_iterator', 'shell_iterator', 'specieset' ]
+            'equivalence_iterator', 'shell_iterator', 'specieset', 'map_sites' ]
 from cppwrappers import Structure, Atom, SmithTransform, zero_centered, into_voronoi, \
                         into_cell, supercell, primitive, is_primitive, space_group,   \
                         transform, periodic_dnc, neighbors, coordination_shells,      \
-                        splitconfigs
+                        splitconfigs, map_sites
 
 def specieset(structure):
   """ Returns ordered set of species.
