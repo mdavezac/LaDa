@@ -1,7 +1,7 @@
 """ Standard parameter types for use as attributes in Incar """
 __docformat__ = "restructuredtext en"
 __all__ = [ "SpecialVaspParam", "NElect", "Algo", "Precision", "Ediff",\
-            "Encut", "FFTGrid", "Restart", "UParams", "IniWave",\
+            "Ediffg", "Encut", "FFTGrid", "Restart", "UParams", "IniWave",\
             "Magmom", 'Npar', 'Boolean', 'Integer', 'Choices', 'PrecFock', 'NonScf']
 class SpecialVaspParam(object): 
   """ Type checking class. """
@@ -23,7 +23,7 @@ class Magmom(SpecialVaspParam):
     """ Initializes magmom. """
     super(Magmom, self).__init__(value)
     
-  def incar_string(self, *args, **kwargs):
+  def incar_string(self, **kwargs):
     """ Prints the magmom string if requested. """
     from ...crystal import specieset
     if self.value is None or self.value == False: return None
@@ -63,7 +63,7 @@ class Npar(SpecialVaspParam):
 
   def __init__(self, value): super(Npar, self).__init__(value)
 
-  def incar_string(self, *args, **kwargs):
+  def incar_string(self, **kwargs):
     from re import search
     from math import log, sqrt
     if self.value is None: return None
@@ -107,7 +107,7 @@ class NElect(SpecialVaspParam):
     # sums up charge.
     return fsum( valence[atom.type] for atom in structure )
     
-  def incar_string(self, *args, **kwargs):
+  def incar_string(self, **kwargs):
     # gets number of electrons.
     charge_neutral = self.nelectrons(kwargs['vasp'], kwargs['structure'])
     # then prints incar string.
@@ -192,75 +192,100 @@ class Algo(SpecialVaspParam):
       raise ValueError("algo value ({0!r}) is invalid.\n".format(value))
     self._value = value
     
-  def incar_string(self, *args, **kwargs):
+  def incar_string(self, **kwargs):
     if self.value is None: return None
     return "ALGO = {0}".format(self.value)
-
-class Precision(SpecialVaspParam):
-  """ Sets accuracy of calculation. 
-
-      Can be \"accurate\" (default), \"low\", \"medium\", \"high\".
-  """
-  def __init__(self, value): super(Precision, self).__init__(value)
-  def incar_string(self, *args, **kwargs):
-    value = self.value.lower()
-    if value not in ["accurate", "lower", "medium", "high"]:
-      raise ValueError("PRECISION value ({0}) is not allowed.".format(self.key))
-    return "PREC = {0}".format(self.value)
 
 class Ediff(SpecialVaspParam):
   """ Sets the convergence criteria (per atom) for electronic minimization.
 
-      This tolerance is multiplied by the number of atoms in the system. This
-      makes tolerance consistent from one system to the next.
+      - value > 0e0: the tolerance is multiplied by the number of atoms in the
+        system. This makes tolerance consistent from one system to the next.
+      - value < 0e0: tolerance is given as absolute value, without multiplying
+        by size of system.
+
+      .. seealso:: `EDIFF`_
+      .. __: http://cms.mpi.univie.ac.at/vasp/guide/node105.html
   """
   def __init__(self, value, name="ediff"):
     """ Creates *per atom* tolerance. """
     super(Ediff, self).__init__(value)
     self.name = name
-  def incar_string(self, *args, **kwargs):
+  def incar_string(self, **kwargs):
     if self.value is None: return 
     if self.value < 0: 
-      return "{0} = {1} ".format(getattr(self, "name", "ediff").upper(), self.value)
+      return "{0} = {1} ".format(getattr(self, "name", "ediff").upper(), -self.value)
     return "{0} = {1} ".format( getattr(self, "name", "ediff").upper(),
                                 self.value * float(len(kwargs["structure"])) )
   def __repr__(self):
     """ Representation of Ediff. """
-    name = getattr(self, "name", "ediff")
-    if name == "ediff": return "{0.__class__.__name__}({1})".format(self, repr(self.value))
-    return "{0.__class__.__name__}({1}, {2})".format(self, repr(self.value), repr(name))
+    return "{0.__class__.__name__}({0.value!r})".format(self)
+
+class Ediffg(SpecialVaspParam):
+  """ Sets the convergence criteria (per atom) for ionic minimization.
+
+      - value > 0e0: the tolerance is multiplied by the number of atoms in the
+        system. This makes tolerance consistent from one system to the next.
+      - value < 0e0: tolerance is given as is (negative), and applies to forces.
+
+      .. seealso:: `EDIFFG`__
+      .. __: http://cms.mpi.univie.ac.at/vasp/guide/node107.html
+  """
+  def __init__(self, value):
+    """ Creates *per atom* tolerance. """
+    super(Ediffg, self).__init__(value)
+  def incar_string(self, **kwargs):
+    if self.value is None: return 
+    if self.value < 0: return "EDIFFG = {0} ".format(self.value)
+    return "EDIFFG = {0} ".format(self.value * float(len(kwargs["structure"])))
+  def __repr__(self):
+    """ Representation of Ediffg. """
+    return "{0.__class__.__name__}({0.value!r})".format(self)
 
 class Encut(SpecialVaspParam):
   """ Defines cutoff factor for calculation. 
 
       There are three ways to set this parameter:
 
-      - if 0 < value <= 3, then the cutoff is value * ENMAX, where ENMAX is
-        the maximum recommended cutoff for the species in the system.
-      - if value > 3, then prints encut is exactly value.
-      - if 0 or None, does not print anything to INCAR
-
-      If 0 or None, uses VASP default.
+      - if value is floating point and 0 < value <= 3: then the cutoff is
+        ``value * ENMAX``, where ENMAX is the maximum recommended cutoff for
+        the species in the system.
+      - if value > 3 eV, then prints encut is exactly value (in eV). Any energy
+        unit is acceptable.
+      - if value < 0 eV or None, does not print anything to INCAR. 
+      
+      .. seealso:: `ENCUT`__
+      .. __: http://cms.mpi.univie.ac.at/vasp/vasp/ENCUT_tag.html
   """
   def __init__(self, value): super(Encut, self).__init__(value)
 
-  def incar_string(self, *args, **kwargs):
+  def incar_string(self, **kwargs):
     """ Prints ENCUT parameter. """
     from math import fabs
     from ...crystal import specieset
-    assert self.value > -1e-12, ValueError("Wrong value for cutoff.")
-    if fabs(self.value) < 1e-12: return "# ENCUT = VASP default"
-    if self.value > 3e0 + 1e-12:
-      return "ENCUT = {0}".format(self.value.rescale("eV") if hasattr(self.value, "rescale") else self.value)
-    types = specieset(kwargs["structure"])
-    encut = max(kwargs["vasp"].species[type].enmax for type in types)
-    return "ENCUT = {0} ".format(float(encut) * self.value)
+    from quantities import eV
+    value = self.value
+    if value is None: return None
+    elif hasattr(self.value, 'rescale'): value = float(value.rescale(eV))
+    elif value >= 1e-12 and value <= 3.0:
+      types = specieset(kwargs["structure"])
+      encut = max(kwargs["vasp"].species[type].enmax for type in types)
+      if hasattr(encut, 'rescale'): encut = float(encut.rescale(eV))
+      return "ENCUT = {0} ".format(encut * value)
+    if value < 1e-12: return None
+    return "ENCUT = {0}".format(value)
 
 class FFTGrid(SpecialVaspParam):
   """ Computes fft grid using VASP. Or if grid is given, computes using that grid. """
   def __init__(self, value): super(FFTGrid, self).__init__(value)
-
-  def incar_string(self, *args, **kwargs):
+  @property 
+  def value(self): return self._value
+  @value.setter
+  def value(self, value): 
+    from numpy import array
+    if len(list(value)) != 3: raise TypeError("FFTGrid expects three numbers.")
+    self._value = array(value)
+  def incar_string(self, **kwargs):
     if self.value is None: return None
     return "NGX = {0[0]}\nNGY = {0[1]}\nNGZ = {0[2]}".format(self.value)
 
@@ -271,36 +296,30 @@ class Restart(SpecialVaspParam):
   """
   def __init__(self, value): super(Restart, self).__init__(value)
 
-  def incar_string(self, *args, **kwargs):
+  def incar_string(self, **kwargs):
     from os.path import join, exists, getsize
     from shutil import copy
     from ...misc import copyfile
     from .. import files
-    nonscf = getattr(kwargs["vasp"], 'nonscf', False)
-    istart = "0   # start from scratch"
-    icharg = "{0}   # superpositions of atomic densities".format(12 if nonscf else 2)
-    if self.value is None: istart = "0   # start from scratch"
-    elif not self.value.success:
-      istart = "0   # start from scratch"
+
+    if self.value is None or self.value.success == False:
+      if kwargs['vasp'].nonscf: kwargs['vasp'].icharg = 12
+      return None
     else:
       ewave = exists( join(self.value.directory, files.WAVECAR) )
       if ewave: ewave = getsize(join(self.value.directory, files.WAVECAR)) > 0
-      echarge = exists( join(self.value.directory, files.CHGCAR) )
-      if echarge: echarge = getsize(join(self.value.directory, files.CHGCAR)) > 0
       if ewave:
-        path = join(self.value.directory, files.WAVECAR)
-        istart = "1   # restart"
-        icharg = "{0}   # from wavefunctions {1}".format(10 if nonscf else 0, path)
-        copy(path, ".")
-        if echarge: copy(join(self.value.directory, files.CHGCAR), '.')
-      elif echarge:
-        path = join(self.value.directory, files.CHGCAR)
-        istart = "1   # restart"
-        icharg = "{0}   # from charge {1}".format(11 if nonscf else 1, path)
-        copy(path, ".")
-      else: 
-        istart = "0   # start from scratch"
-        icharg = "{0}   # superpositions of atomic densities".format(12 if nonscf else 2)
+        copy(join(self.value.directory, files.WAVECAR), ".")
+        kwargs['vasp'].istart = 1
+      else: kwargs['vasp'].istart = 0
+      echarg = exists( join(self.value.directory, files.CHGCAR) )
+      if echarg: echarg = getsize(join(self.value.directory, files.CHGCAR)) > 0
+      if echarg:
+        copy(join(self.value.directory, files.CHGCAR), ".")
+        kwargs['vasp'].icharg = 1
+      else: kwargs['vasp'].icharg = 0 if kwargs['vasp'].istart == 1 else 2
+      if getattr(kwargs["vasp"], 'nonscf', False): kwargs['vasp'].icharg += 10
+
       copyfile(join(self.value.directory, files.EIGENVALUES), nothrow='same exists',
                nocopyempty=True) 
       copyfile(join(self.value.directory, files.CONTCAR), files.POSCAR,\
@@ -309,13 +328,13 @@ class Restart(SpecialVaspParam):
       copyfile(join(self.value.directory, files.WAVEDER), files.WAVEDER,
                nothrow='same exists', symlink=getattr(kwargs["vasp"], 'symlink', False),
                nocopyempty=True) 
-    return  "ISTART = {0}\nICHARG = {1}".format(istart, icharg)
+      copyfile(join(self.value.directory, files.TMPCAR), files.TMPCAR,
+               nothrow='same exists', symlink=getattr(kwargs["vasp"], 'symlink', False),
+               nocopyempty=True) 
+    return None
 
 class NonScf(SpecialVaspParam):
-  """ Return from previous run from which to restart.
-      
-      If None, then starts from scratch.
-  """
+  """ Whether to perform a self-consistent or non-self-consistent run. """
   def __init__(self, value):  super(NonScf, self).__init__(value)
   @property
   def value(self): return self._value
@@ -328,7 +347,7 @@ class NonScf(SpecialVaspParam):
       else: raise RuntimeError("Uknown value for nonscf: {0}").format(value)
     self._value = value == True
 
-  def incar_string(self, *args, **kwargs): return None
+  def incar_string(self, **kwargs): return None
   def __repr__(self): return "{0.__class__.__name__}({0.value!r})".format(self)
 
 class UParams(SpecialVaspParam): 
@@ -346,7 +365,7 @@ class UParams(SpecialVaspParam):
 
     super(UParams, self).__init__(value)
 
-  def incar_string(self, *args, **kwargs):
+  def incar_string(self, **kwargs):
     """ Prints LDA+U INCAR parameters. """
     from ...crystal import specieset
     types = specieset(kwargs['structure'])
@@ -394,16 +413,6 @@ class UParams(SpecialVaspParam):
     """ Representation of UParams """
     return "{0.__class__.__name__}({1!r})".format(self, ["off", "on", "all"][self.value])
 
-class IniWave(SpecialVaspParam):
-  def __init__(self, value): super(IniWave, self).__init__(value)
-  def incar_string(self, *args, **kwargs):
-    """ Returns VASP incar string. """
-    if self.value == "1" or self.value == "random": result = 1
-    elif self.value == "0" or self.value == "jellium": result = 0
-    else: raise ValueError("iniwave cannot be set to " + self.value + ".")
-    return "INIWAVE = {0}\n".format(result)
-
-
 class Boolean(SpecialVaspParam):
   """ Any boolean vasp parameters. 
   
@@ -431,7 +440,7 @@ class Boolean(SpecialVaspParam):
       elif value.lower() == "false"[:min(len(value), len("false"))]: value = False
       else: raise TypeError("Cannot interpret string {0} as a boolean.".format(value))
     self._value = value == True
-  def incar_string(self, *args, **kwargs):
+  def incar_string(self, **kwargs):
     value = self._value
     if isinstance(value, str):
       if len(value) == 0: value is None 
@@ -460,7 +469,7 @@ class Integer(SpecialVaspParam):
     if value is None: self._value = None; return
     try: self._value = int(value)
     except: raise TypeError("Could not evaluate {0} as an integer.".format(value))
-  def incar_string(self, *args, **kwargs):
+  def incar_string(self, **kwargs):
     if self.value is None: return None
     return "{0} = {1}".format(self.key.upper(), self.value)
   def __repr__(self):
@@ -491,8 +500,8 @@ class Choices(SpecialVaspParam):
     self.choices = {}
     """ Allowable set of choices. """
     for key, items in choices.iteritems():
-      self.choices[key] = set( [u.lower() if hasattr(u, 'lower') else u for u in items]\
-                               + [key, str(key).lower()])
+      self.choices[key] = [u.lower() if hasattr(u, 'lower') else u for u in items]
+      self.choices[key].append(key.lower() if hasattr(key, 'lower') else key)
     super(Choices, self).__init__(default)
 
   @property
@@ -500,11 +509,11 @@ class Choices(SpecialVaspParam):
   @value.setter
   def value(self, value):
     if value is None: self._value = None; return
-    if hasattr(value, 'lower'): value == value.lower()
+    if hasattr(value, 'lower'): value = value.lower()
     for key, items in self.choices.iteritems():
       if value in items: self._value = key; return
     raise ValueError("{0} is not an acceptable choice for {1.key}: {1.choices}.".format(value, self))
-  def incar_string(self, *args, **kwargs):
+  def incar_string(self, **kwargs):
     if self.value is None: return None
     return "{0} = {1}".format(self.key.upper(), self.value)
   def __repr__(self):
@@ -513,23 +522,62 @@ class Choices(SpecialVaspParam):
            .format(self, repr(self.key), repr(self.choices), repr(self.value))
 
 class PrecFock(Choices):
-  """ Sets up PRECFOCK parameter. 
+  """ Sets up FFT grid in hartree-fock related routines.
       
       Allowable options are:
 
-      - L or low:      coarse grid for HF, normal augmentation charge.
-      - M or medium:   normal grid for HF, normal augmentation charge.
-      - F or fast:     coarse grid for HF, soft augmentation charge. 
-      - N or normal:   PREC=N grid for HF, soft augmentation charge. 
-      - A or accurate: PREC=A grid for HF, soft augmentation charge.
+      - low
+      - medium
+      - fast
+      - normal
+      - accurate
 
       .. note:: The values are not case-sensitive. 
+      .. seealso:: `PRECFOCK`__
+      .. __: http://cms.mpi.univie.ac.at/vasp/vasp/PRECFOCK_FFT_grid_in_HF_related_routines.html
   """
   def __init__(self, value=None):
     """ Initializes PRECFOCK parameter. """
-    choices = { 'L': ['low'], 'M': ['medium'], 'F': ['fast'],
-                'N': ['normal'], 'A': ['accurate'] }
-    super(PrecFock, self).__init__("precfock", choices, value)
+    choices = { 'Low': ['low'], 'Medium': ['medium'], 'Fast': ['fast'],
+                'Normal': ['normal'], 'Accurate': ['accurate'] }
+    super(PrecFock, self).__init__("PRECFOCK", choices, value)
   def __repr__(self):
     """ Representation of this object. """
-    return "{0.__class__.__name__}({1})".format(self, repr(self.value))
+    return "{0.__class__.__name__}({0.value!r})".format(self)
+
+class Precision(Choices):
+  """ Sets accuracy of calculation. 
+
+      - accurate (default)
+      - low
+      - medium
+      - high
+      - single
+
+      .. seealso:: `PREC`__
+      .. __: http://cms.mpi.univie.ac.at/vasp/vasp/PREC_tag.html
+  """
+  def __init__(self, value = 'accurate'):
+    choices = { 'Accurate': ['accurate'], 'Low': ['low'], 'Normal': ['normal'],
+                'Medium': ['medium'], 'High': ['high'], 'Single': ['single'] }
+    super(Precision, self).__init__('PREC', choices, value)
+  def __repr__(self):
+    """ Representation of this object. """
+    return "{0.__class__.__name__}({0.value!r})".format(self)
+
+class IniWave(Choices):
+  """ Specifies how to setup initial wavefunctions.
+  
+      - 0, jellium
+      - 1, random 
+
+      .. seealso:: `INIWAV`__
+      .. __: http://cms.mpi.univie.ac.at/vasp/guide/node103.html
+  """
+  def __init__(self, value=None):
+    choices = {0: ['jellium'], 1: ['random']}
+    super(IniWave, self).__init__('INIWAV', choices, value)
+  def __repr__(self):
+    """ Representation of this object. """
+    return "{0.__class__.__name__}({1!r})".format(self, self.choices[self.value][0])
+

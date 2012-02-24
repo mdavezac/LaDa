@@ -8,101 +8,155 @@ def test():
   from lada.vasp.files import WAVECAR, CHGCAR
   from restart_class import Extract, Vasp
 
-  texts = "ISTART = 0   # start from scratch\n"\
-          "ICHARG = 2   # superpositions of atomic densities", \
-          "ISTART = 0   # start from scratch\n"\
-          "ICHARG = 12   # superpositions of atomic densities", \
-          "ISTART = 0   # start from scratch\n"\
-          "ICHARG = 2   # superpositions of atomic densities"
+  cwd = getcwd()
   directory = mkdtemp()
   try: 
-    for e in [None, Extract(directory, False)]:
-      for v, t in zip([None, Vasp(True), Vasp(False)], texts):
-        assert Restart(e).incar_string(vasp=v) == t
-        r = loads(dumps(Restart(e)))
-        assert r.incar_string(vasp=v) == t
-        if hasattr(e, 'directory'):
-          assert r.value.directory == directory 
-          assert r.value.success == e.success
+    # no prior run.
+    for v, istart, icharg in [(Vasp(True), None, 12), (Vasp(False), None, None)]:
+      playdir = mkdtemp()
+      try: 
+        chdir(playdir)
+        v.istart, v.icharge = None, None
+        assert Restart(None).incar_string(vasp=v) is None
+        assert v.istart == istart and v.icharg == icharg
+        assert not exists(join(playdir, CHGCAR))
+        assert not exists(join(playdir, WAVECAR))
+
+        v.istart, v.icharge = None, None
+        r = loads(dumps(Restart(None)))
+        assert r.incar_string(vasp=v) is None
+        assert v.istart == istart and v.icharg == icharg
+        assert not exists(join(playdir, CHGCAR))
+        assert not exists(join(playdir, WAVECAR))
+      finally:
+        chdir(cwd)
+        rmtree(playdir)
+
+    # no prior run.
+    for v, istart, icharg in [(Vasp(True), None, 12), (Vasp(False), None, None)]:
+      playdir = mkdtemp()
+      try: 
+        chdir(playdir)
+        v.istart, v.icharge = None, None
+        assert Restart(Extract(directory, False)).incar_string(vasp=v) is None
+        assert v.istart == istart and v.icharg == icharg
+        assert not exists(join(playdir, CHGCAR))
+        assert not exists(join(playdir, WAVECAR))
+
+        v.istart, v.icharge = None, None
+        r = loads(dumps(Restart(Extract(directory, False))))
+        assert r.incar_string(vasp=v) is None
+        assert v.istart == istart and v.icharg == icharg
+        assert r.value.directory == directory 
+        assert r.value.success == False
+        assert not exists(join(playdir, CHGCAR))
+        assert not exists(join(playdir, WAVECAR))
+      finally:
+        chdir(cwd)
+        rmtree(playdir)
     
+    # empty prior run.
     with open(join(directory, CHGCAR), "w") as file: pass
     with open(join(directory, WAVECAR), "w") as file: pass
-    for e in [None, Extract(directory, True)]:
-      for v, t in zip([None, Vasp(True), Vasp(False)], texts):
-        assert Restart(e).incar_string(vasp=v) == t
-        r = loads(dumps(Restart(e)))
-        assert r.incar_string(vasp=v) == t
-        if hasattr(e, 'directory'):
-          assert r.value.directory == directory 
-          assert r.value.success == e.success
+    for v, istart, icharg in [(Vasp(True), 0, 12), (Vasp(False), 0, 2)]:
+      playdir = mkdtemp()
+      try: 
+        chdir(playdir)
+        v.istart, v.icharge = None, None
+        assert Restart(Extract(directory, True)).incar_string(vasp=v) is None
+        assert v.istart == istart and v.icharg == icharg
+        assert not exists(join(playdir, CHGCAR))
+        assert not exists(join(playdir, WAVECAR))
+
+        v.istart, v.icharge = None, None
+        r = loads(dumps(Restart(Extract(directory, True))))
+        assert r.incar_string(vasp=v) is None
+        assert v.istart == istart and v.icharg == icharg
+        assert r.value.directory == directory 
+        assert r.value.success == True
+        assert not exists(join(playdir, CHGCAR))
+        assert not exists(join(playdir, WAVECAR))
+      finally:
+        chdir(cwd)
+        rmtree(playdir)
     
-    cwd = getcwd()
-    texts = "ISTART = 1   # restart\n"\
-            "ICHARG = 1   # from charge {0}".format(join(directory, CHGCAR)),\
-            "ISTART = 1   # restart\n"\
-            "ICHARG = 11   # from charge {0}".format(join(directory, CHGCAR)),\
-            "ISTART = 1   # restart\n"\
-            "ICHARG = 1   # from charge {0}".format(join(directory, CHGCAR))
+    # prior run with charge only.
     with open(join(directory, CHGCAR), "w") as file: file.write('hello')
-    for e in [Extract(directory, True)]:
-      for v, t in zip([None, Vasp(True), Vasp(False)], texts):
-        playdir = mkdtemp()
-        try: 
-          chdir(playdir)
-          assert Restart(e).incar_string(vasp=v) == t
-          r = loads(dumps(Restart(e)))
-          assert r.incar_string(vasp=v) == t
-          if hasattr(e, 'directory'):
-            assert r.value.directory == directory 
-            assert r.value.success == e.success
-          assert exists(join(playdir, CHGCAR))
-        finally:
-          chdir(cwd)
-          rmtree(playdir)
-  
-    texts = "ISTART = 1   # restart\n"\
-            "ICHARG = 0   # from wavefunctions {0}".format(join(directory, WAVECAR)),\
-            "ISTART = 1   # restart\n"\
-            "ICHARG = 10   # from wavefunctions {0}".format(join(directory, WAVECAR)),\
-            "ISTART = 1   # restart\n"\
-            "ICHARG = 0   # from wavefunctions {0}".format(join(directory, WAVECAR))
+    for v, istart, icharg in [(Vasp(True), 0, 11), (Vasp(False), 0, 1)]:
+      playdir = mkdtemp()
+      try: 
+        chdir(playdir)
+        v.istart, v.icharge = None, None
+        assert Restart(Extract(directory, True)).incar_string(vasp=v) is None
+        assert v.istart == istart and v.icharg == icharg
+        assert exists(join(playdir, CHGCAR))
+        assert not exists(join(playdir, WAVECAR))
+        remove(join(playdir, CHGCAR))
+
+        v.istart, v.icharge = None, None
+        r = loads(dumps(Restart(Extract(directory, True))))
+        assert r.incar_string(vasp=v) is None
+        assert v.istart == istart and v.icharg == icharg
+        assert r.value.directory == directory 
+        assert r.value.success == True
+        assert exists(join(playdir, CHGCAR))
+        assert not exists(join(playdir, WAVECAR))
+      finally:
+        chdir(cwd)
+        rmtree(playdir)
+
+    # prior run with charge and wavecar.
     with open(join(directory, WAVECAR), "w") as file: file.write('hello')
-    for e in [Extract(directory, True)]:
-      for v, t in zip([None, Vasp(True), Vasp(False)], texts):
-        playdir = mkdtemp()
-        try: 
-          chdir(playdir)
-          assert Restart(e).incar_string(vasp=v) == t
-          r = loads(dumps(Restart(e)))
-          assert r.incar_string(vasp=v) == t
-          if hasattr(e, 'directory'):
-            assert r.value.directory == directory 
-            assert r.value.success == e.success
-          assert exists(join(playdir, WAVECAR))
-          assert exists(join(playdir, CHGCAR))
-        finally:
-          chdir(cwd)
-          rmtree(playdir)
-  
+    for v, istart, icharg in [(Vasp(True), 1, 11), (Vasp(False), 1, 1)]:
+      playdir = mkdtemp()
+      try: 
+        chdir(playdir)
+        v.istart, v.icharge = None, None
+        assert Restart(Extract(directory, True)).incar_string(vasp=v) is None
+        assert v.istart == istart and v.icharg == icharg
+        assert exists(join(playdir, CHGCAR))
+        assert exists(join(playdir, WAVECAR))
+        remove(join(playdir, CHGCAR))
+        remove(join(playdir, WAVECAR))
+
+        v.istart, v.icharge = None, None
+        r = loads(dumps(Restart(Extract(directory, True))))
+        assert r.incar_string(vasp=v) is None
+        assert v.istart == istart and v.icharg == icharg
+        assert r.value.directory == directory 
+        assert r.value.success == True
+        assert exists(join(playdir, CHGCAR))
+        assert exists(join(playdir, WAVECAR))
+      finally:
+        chdir(cwd)
+        rmtree(playdir)
+
+    # prior run with wavecar only.
     remove(join(directory, CHGCAR))
     with open(join(directory, CHGCAR), "w") as file: pass
-    for e in [Extract(directory, True)]:
-      for v, t in zip([None, Vasp(True), Vasp(False)], texts):
-        playdir = mkdtemp()
-        try: 
-          chdir(playdir)
-          assert Restart(e).incar_string(vasp=v) == t
-          r = loads(dumps(Restart(e)))
-          assert r.incar_string(vasp=v) == t
-          if hasattr(e, 'directory'):
-            assert r.value.directory == directory 
-            assert r.value.success == e.success
-          assert exists(join(playdir, WAVECAR))
-          assert not exists(join(playdir, CHGCAR))
-        finally:
-          chdir(cwd)
-          rmtree(playdir)
-  
+    for v, istart, icharg in [(Vasp(True), 1, 10), (Vasp(False), 1, 0)]:
+      playdir = mkdtemp()
+      try: 
+        chdir(playdir)
+        v.istart, v.icharge = None, None
+        assert Restart(Extract(directory, True)).incar_string(vasp=v) is None
+        assert v.istart == istart and v.icharg == icharg
+        assert not exists(join(playdir, CHGCAR))
+        assert exists(join(playdir, WAVECAR))
+        remove(join(playdir, WAVECAR))
+
+        v.istart, v.icharge = None, None
+        r = loads(dumps(Restart(Extract(directory, True))))
+        assert r.incar_string(vasp=v) is None
+        assert v.istart == istart and v.icharg == icharg
+        assert r.value.directory == directory 
+        assert r.value.success == True
+        assert not exists(join(playdir, CHGCAR))
+        assert exists(join(playdir, WAVECAR))
+      finally:
+        chdir(cwd)
+        rmtree(playdir)
+
   finally: rmtree(directory)
 
 if __name__ == "__main__":

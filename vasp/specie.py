@@ -145,13 +145,14 @@ class Specie(object):
   @property
   def enmax(self):
     """ Maximum recommended cutoff """
+    from quantities import eV
     import re
     self.potcar_exists()
     with self.read_potcar() as potcar:
       r = re.compile("ENMAX\s+=\s+(\S+);\s+ENMIN")
       p = r.search(potcar.read())
       if p is None: raise AssertionError, "Could not retrieve ENMAX from " + self.directory
-      return float( p.group(1) )
+      return float( p.group(1) ) * eV
   
   @property
   def valence(self):

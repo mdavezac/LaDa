@@ -28,6 +28,8 @@ FUNCCAR = "FUNCCAR"
 """ Name of the pickled functional. """
 WAVEDER = "WAVEDER"
 """ Name of GW-required file. """
+TMPCAR = 'TMPCAR'
+""" Name of temporary wavefunctions file. """
 
 minimal = [OUTCAR, CONTCAR, STDOUT, STDERR, FUNCCAR]
 """ The minimum number of files to still have the results of the run.

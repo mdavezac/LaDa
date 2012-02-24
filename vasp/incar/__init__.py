@@ -1,11 +1,11 @@
 """ Subpackage defining vasp incar parameters. """
 __docformat__ = "restructuredtext en"
 __all__ = [ "SpecialVaspParam", "NElect", "Algo", "Precision", "Ediff",\
-            "Encut", "FFTGrid", "Restart", "UParams", "IniWave",\
+            "Encut", "FFTGrid", "Restart", "UParams", "IniWave", 'Ediffg',\
             "Incar", "Magmom", 'Npar', 'Boolean', 'Integer', 'Choices', 'PrecFock' ]
 from _params import SpecialVaspParam, NElect, Algo, Precision, Ediff,\
                     Encut, FFTGrid, Restart, UParams, IniWave, Magmom,\
-                    Npar, Boolean, Integer, PrecFock, NonScf
+                    Npar, Boolean, Integer, PrecFock, NonScf, Ediffg
 from ...misc import add_setter
 
 
@@ -125,13 +125,15 @@ class Incar(object):
     self.add_param = "nomega",      None
     self.add_param = "encutgw",     None
     self.add_param = "encutlf",     None
+    self.add_param = "istart",      None
+    self.add_param = "icharge",     None
     # objects derived from SpecialVaspParams will be recognized as such and can
     # be added without further fuss.
     self.nelect      = NElect(0)
     self.algo        = Algo()
     self.precision   = Precision("accurate")
     self.ediff       = Ediff(1e-4)
-    self.ediffg      = Ediff(None, "ediffg")
+    self.ediffg      = Ediffg(None)
     self.encut       = Encut(None)
     self.fftgrid     = FFTGrid(None)
     self.restart     = Restart(None)
@@ -148,20 +150,22 @@ class Incar(object):
     self.nonscf      = NonScf(False)
 
 
-  def incar_lines(self, *args, **kwargs):
+  def incar_lines(self, **kwargs):
     """ List of incar lines. """
 
+    structure = kwargs['structure']
     # prints system name. This is not an option!
     result = []
-    if hasattr(self._system, "name"):
-      if len(self._system.name) != 0:
-        result.append("SYSTEM = \"{0}\"\n".format(self._system.name))
+    if hasattr(structure, "name"):
+      if len(structure.name) != 0:
+        result.append("SYSTEM = \"{0}\"\n".format(structure.name))
+
     # gathers special parameters.
     # Calls them first in case they change normal key/value pairs.
     specials = []
     for key, value in self.special.items():
       if value.value is None: continue
-      line = value.incar_string(self, *args, **kwargs)
+      line = value.incar_string(**kwargs)
       if line is not None: specials.append(line + "\n")
     # prints key/value pairs
     for key, value in self.params.items():
