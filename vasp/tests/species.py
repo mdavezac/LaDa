@@ -60,6 +60,7 @@ def test_specie(directory):
   from os import environ
   from os.path import join, relpath, abspath
   from pickle import loads, dumps
+  from quantities import eV
   from lada.vasp.specie import Specie
 
   pseudos = [('Rh', 229.0, 9.), ('O', 400., 6.), ('Si', 245.345, 4.), ('Zn', 276.727, 12.)]
@@ -67,7 +68,7 @@ def test_specie(directory):
     path = join(join(directory, "pseudos"), name)
     specie = Specie(path)
     specie.potcar_exists()
-    assert abs(specie.enmax - enmax) < 1e-8 and abs(specie.valence-valence) < 1e8
+    assert abs(specie.enmax - enmax*eV) < 1e-8 and abs(specie.valence-valence) < 1e8
     with open(join(path, "POTCAR"), "r") as file:
       specie.read_potcar() == file.read()
     assert repr(specie)\

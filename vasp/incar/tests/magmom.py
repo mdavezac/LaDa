@@ -30,17 +30,17 @@ def test_magmom():
 
   # ispin == 1
   magmom = Magmom(True)
-  assert magmom.incar_string(vasp, structure=structure) is None
+  assert magmom.incar_string(vasp=vasp, structure=structure) is None
   # ispins == 2, magmom == False
   magmom.value = False
   vasp = Vasp(2)
-  assert magmom.incar_string(vasp, structure=structure) is None
+  assert magmom.incar_string(vasp=vasp, structure=structure) is None
   # now for real print
   magmom.value = True
-  assert magmom.incar_string(vasp, structure=structure) == 'MAGMOM = 4*-1.00 2*0.00 8*0.00 '
+  assert magmom.incar_string(vasp=vasp, structure=structure) == 'MAGMOM = 4*-1.00 2*0.00 8*0.00 '
   # now print a string directly.
   magmom.value = 'hello'
-  assert magmom.incar_string(vasp, structure=structure) == 'MAGMOM = hello'
+  assert magmom.incar_string(vasp=vasp, structure=structure) == 'MAGMOM = hello'
 
   # check repr
   assert repr(magmom) == "Magmom('hello')"
@@ -54,7 +54,7 @@ def test_magmom():
   for atom, mag in zip(structure, [0.5, 0.5]):
     if atom.type == 'Al': atom.magmom = mag
 
-  assert magmom.incar_string(vasp, structure=structure) \
+  assert magmom.incar_string(vasp=vasp, structure=structure) \
            == 'MAGMOM = 1.00 -1.00 2*1.00 2*0.00 8*0.00 '
 
 

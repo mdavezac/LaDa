@@ -181,7 +181,7 @@ class Algo(SpecialVaspParam):
   def value(self, value):
     if value is None: self._value = None; return None
     try: from lada import is_vasp_4
-    except: is_vasp_4 == False
+    except: is_vasp_4 = False
     if not hasattr(value, 'lower'):
       raise TypeError("ALGO cannot be set with {0}.".format(value))
     lower = value.lower().rstrip().lstrip()
@@ -288,9 +288,9 @@ class Encut(SpecialVaspParam):
       types = specieset(kwargs["structure"])
       encut = max(kwargs["vasp"].species[type].enmax for type in types)
       if hasattr(encut, 'rescale'): encut = float(encut.rescale(eV))
-      return "{0} = {1} ".format(KEY, encut * value)
+      return "{0} = {1} ".format(self.KEY, encut * value)
     if value < 1e-12: return None
-    return "{0} = {1}".format(KEY, value)
+    return "{0} = {1}".format(self.KEY, value)
 
 class EncutGW(Encut):
   """ Defines cutoff factor for GW calculation. 
@@ -324,6 +324,9 @@ class FFTGrid(SpecialVaspParam):
   @value.setter
   def value(self, value): 
     from numpy import array
+    if value is None:
+      self._value = None
+      return
     if len(list(value)) != 3: raise TypeError("FFTGrid expects three numbers.")
     self._value = array(value)
   def incar_string(self, **kwargs):

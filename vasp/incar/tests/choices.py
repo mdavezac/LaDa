@@ -26,7 +26,7 @@ def test():
   else: raise RuntimeError()
   a.value = None
   assert a.incar_string() is None
-  assert repr(a) == "Choices('algo', {'A': set(['aa', 0, 'a']), 'B': set([1, 'b', 'bb'])}, None)"
+  assert repr(a) == "Choices('algo', {'A': ['aa', 0, 'a'], 'B': ['bb', 1, 'b']}, None)"
 
   a = Choices('algo', {'A': ['aa', 0], 'B': ['bb', 1]}, 'b')
   assert a.value == 'B'
