@@ -7,23 +7,7 @@ from extract import Extract
 from incar import Incar
 
 class Functional(Incar):
-  """ Interface to VASP code.
-     
-      The strength of this interface is that combines vasp calculations, result
-      caching, and data retrieval together. 
-      
-      A vasp run is parameterized using Incar class defined in incar.py.
-      It is launched using the Launch class from launch.py class. More
-      specifically, VASP derives from Launch wich derives from Incar.  The
-      results of a successful run is cached in the self.outdir directory.
-      After being launched an object is returned which can extract output data
-      from the files in this directory.
-
-      One of the strength of this class is that since results are cached in the
-      outdir directory, successful calculations are never runned twice.
-      This allows us to use the same scripts for generating and retrieving
-      data. 
-  """
+  """ Interface to VASP code. """
   Extract = staticmethod(Extract)
   """ Extraction class. """
 

@@ -1,46 +1,22 @@
-""" Lamarck-Darwin extension library.
-    =================================
+""" Root of all lada python packages and modules. 
 
+    Configuration variables exist here. However, they are added within separate
+    files. Which files will depend upon the user.
 
-    Getting the source, installing, and compiling LaDa:
-    ---------------------------------------------------
-    Getting there.
+       - Files located in the config sub-directory where lada is installed
+       - Files located in one of the directories specified by :envvar:`LADA_CONFIG_DIR`
+       - In the user configuration file ~/.lada
 
-    IPython interface for high-thoughput calculations:
-    --------------------------------------------------
+    The files are read in that order. Within a given directory, files are read
+    alphabetically. Later files can override previous files. Finally, all and
+    any variable which are declared within these files will end up at the root
+    of :py:mod:`lada`. Be nice, don't pollute yourself.
 
-    This is an interface to monitor highthoughput calculations. It allows for
-    launching job-dictionaries, rapid access to jobs which did not complete
-    successfully, as well as output collection (e.g. total-energy,
-    eigenvalues,...) across all calculation in a job-dictionary.  
+    .. envvar:: LADA_CONFIG_DIR
 
-    Please see `lada.ipython` for a more in-depth description.
-
-
-    Creating a job-dictionary:
-    --------------------------
-
-    In the works.
-    Please see `lada.jobs` for a more in-depth description.
-
-
-    Constructing and manipulating crystal-structures:
-    -------------------------------------------------
-
-    In the works.
-    Please see `lada.crystal` for a more in-depth description.
-
-    Interacting with VASP:
-    ----------------------
-
-    In the works.
-    Please see `lada.vasp` for a more in-depth description.
-
-    Setting defaults:
-    -----------------
-
-    All global variables below can be changed within "$HOME/.lada". This file
-    is read only once, when first importing lada into python.  
+       Environment variable specifying the path(s) to the configuration directories.
+    
+    For which variables can be set (and, if relevant, which file) see lada.config.
 """
 __docformat__ = "restructuredtext en"
 __all__ = ["error", @which_packages@]

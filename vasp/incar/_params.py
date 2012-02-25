@@ -1,30 +1,40 @@
 """ Standard parameter types for use as attributes in Incar """
 __docformat__ = "restructuredtext en"
 __all__ = [ "SpecialVaspParam", "NElect", "Algo", "Precision", "Ediff",\
-            "Ediffg", "Encut", "FFTGrid", "Restart", "UParams", "IniWave",\
+            "Ediffg", "Encut", "EncutGW", "EncutLF", "FFTGrid", "Restart", "UParams", "IniWave",\
             "Magmom", 'Npar', 'Boolean', 'Integer', 'Choices', 'PrecFock', 'NonScf']
 class SpecialVaspParam(object): 
-  """ Type checking class. """
+  """ Base type for special vasp parameters. 
+  
+      Special vasp parameters do something more than just print to the incar.
+      What *more* means depends upon the parameter.
+
+  """
   def __init__(self, value): 
     super(SpecialVaspParam, self).__init__()
     self.value = value
+    """ Value derived classes will do something with. """
   def __repr__(self): return "{0.__class__.__name__}({1})".format(self, repr(self.value))
 
 class Magmom(SpecialVaspParam):
-  """ Prints magmom to INCAR. 
+  """ Sets the initial magnetic moments on each atom.
 
       There are three types of usage: 
         - do nothing if the instance's value is None or False.
         - print a string preceded by "MAGMOM = " if the instance's value is a string. 
         - print the actual MAGMOM string from the magnetic moments attributes
-          ``magmom`` in the structure's atoms.
+          ``magmom`` in the structure's atoms if anything but a string, None,
+          or False.
+
+      If the calculation is **not** spin-polarized, then the magnetic moment
+      tag is not set.
+
+      .. seealso:: `MAGMOM <http://cms.mpi.univie.ac.at/vasp/guide/node100.html>`_
   """
   def __init__(self, value = "attribute: magmom"):
-    """ Initializes magmom. """
     super(Magmom, self).__init__(value)
     
   def incar_string(self, **kwargs):
-    """ Prints the magmom string if requested. """
     from ...crystal import specieset
     if self.value is None or self.value == False: return None
     if kwargs["vasp"].ispin == 1: return None
@@ -46,19 +56,26 @@ class Magmom(SpecialVaspParam):
 class Npar(SpecialVaspParam):
   """ Parallelization over bands. 
 
-      This parameter is described `here`__.
+      Npar defines how many nodes work on one band.
       It can be set to a particular number:
   
       >>> vasp.npar = 2
 
-      Or it can be deduced automatically. In the latter case, npar is set to the
-      largest power of 2 which divides the number of processors:
- 
-      >>> vasp.npar = "power of two"
+      Or it can be deduced automatically. Different schemes are available:
       
-      If the number of processors is not a power of two, prints nothing.
+        - power of two: npar is set to the largest power of 2 which divides the
+          number of processors.
+ 
+          >>> vasp.npar = "power of two"
 
-      .. __: http://cms.mpi.univie.ac.at/vasp/guide/node138.html
+          If the number of processors is not a power of two, prints nothing.
+
+        - square root: npar is set to the square root of the number of processors.
+
+          >>> vasp.npar = "sqrt"
+      
+
+      .. seealso: `NPAR <http://cms.mpi.univie.ac.at/vasp/guide/node138.html>`_
   """
 
   def __init__(self, value): super(Npar, self).__init__(value)
@@ -87,15 +104,18 @@ class NElect(SpecialVaspParam):
       
       Gets the number of electrons in the (neutral) system. Then adds value to
       it and computes with the resulting number of electrons.
+
       >>> nelect = NElect(0) # charge neutral system
       >>> nelect.value = 1   # charge -1 (1 extra electron)
       >>> nelect.value = -1  # charge +1 (1 extra hole)
 
-      :Param value: (default:0) number of electrons to add to charge neutral
-                    system.
+      :param integer value:
+        Number of electrons to add to charge neutral system. Defaults to 0.
+
+      .. seealso:: `NELECT <http://cms.mpi.univie.ac.at/vasp/vasp/NELECT.html>`_
   """
 
-  def __init__(self, value): super(NElect, self).__init__(value)
+  def __init__(self, value=0): super(NElect, self).__init__(value)
 
   def nelectrons(self, vasp, structure):
     """ Total number of electrons in the system """
@@ -124,8 +144,7 @@ class NElect(SpecialVaspParam):
 class Algo(SpecialVaspParam): 
   """ Electronic minimization. 
   
-      Defines the `ALGO`__ tag.
-      Takes one of the following values:
+      Defines the kind of algorithm vasp will run.
         - very fast
         - fast, f (default)
         - normal, n
@@ -143,6 +162,9 @@ class Algo(SpecialVaspParam):
         - scgw
         - scgw0
 
+      If :py:data:`is_vasp_4 <lada.is_vasp_4>` is an existing configuration
+      variable of :py:mod:`lada` the parameters marked as vasp 5 will fail.
+
       .. warning:: The string None is not  allowed, as it would lead to
          confusion with the python object None. Please use "Nothing" instead.
          The python object None will simply not print the ALGO keyword to the
@@ -150,7 +172,7 @@ class Algo(SpecialVaspParam):
 
       .. note:: By special request, "fast" is the default algorithm.
 
-      .. __: http://cms.mpi.univie.ac.at/vasp/vasp/ALGO_tag.html
+      .. seealso:: `ALGO <http://cms.mpi.univie.ac.at/vasp/vasp/ALGO_tag.html>`_
   """ 
   def __init__(self, value="fast"): super(Algo, self).__init__(value)
   @property
@@ -204,8 +226,7 @@ class Ediff(SpecialVaspParam):
       - value < 0e0: tolerance is given as absolute value, without multiplying
         by size of system.
 
-      .. seealso:: `EDIFF`_
-      .. __: http://cms.mpi.univie.ac.at/vasp/guide/node105.html
+      .. seealso:: `EDIFF <http://cms.mpi.univie.ac.at/vasp/guide/node105.html>`_
   """
   def __init__(self, value, name="ediff"):
     """ Creates *per atom* tolerance. """
@@ -218,7 +239,6 @@ class Ediff(SpecialVaspParam):
     return "{0} = {1} ".format( getattr(self, "name", "ediff").upper(),
                                 self.value * float(len(kwargs["structure"])) )
   def __repr__(self):
-    """ Representation of Ediff. """
     return "{0.__class__.__name__}({0.value!r})".format(self)
 
 class Ediffg(SpecialVaspParam):
@@ -228,8 +248,7 @@ class Ediffg(SpecialVaspParam):
         system. This makes tolerance consistent from one system to the next.
       - value < 0e0: tolerance is given as is (negative), and applies to forces.
 
-      .. seealso:: `EDIFFG`__
-      .. __: http://cms.mpi.univie.ac.at/vasp/guide/node107.html
+      .. seealso:: `EDIFFG <http://cms.mpi.univie.ac.at/vasp/guide/node107.html>`_
   """
   def __init__(self, value):
     """ Creates *per atom* tolerance. """
@@ -239,7 +258,6 @@ class Ediffg(SpecialVaspParam):
     if self.value < 0: return "EDIFFG = {0} ".format(self.value)
     return "EDIFFG = {0} ".format(self.value * float(len(kwargs["structure"])))
   def __repr__(self):
-    """ Representation of Ediffg. """
     return "{0.__class__.__name__}({0.value!r})".format(self)
 
 class Encut(SpecialVaspParam):
@@ -254,13 +272,12 @@ class Encut(SpecialVaspParam):
         unit is acceptable.
       - if value < 0 eV or None, does not print anything to INCAR. 
       
-      .. seealso:: `ENCUT`__
-      .. __: http://cms.mpi.univie.ac.at/vasp/vasp/ENCUT_tag.html
+      .. seealso:: `ENCUT <http://cms.mpi.univie.ac.at/vasp/vasp/ENCUT_tag.html>`_
   """
+  KEY = "ENCUT"
   def __init__(self, value): super(Encut, self).__init__(value)
 
   def incar_string(self, **kwargs):
-    """ Prints ENCUT parameter. """
     from math import fabs
     from ...crystal import specieset
     from quantities import eV
@@ -271,12 +288,36 @@ class Encut(SpecialVaspParam):
       types = specieset(kwargs["structure"])
       encut = max(kwargs["vasp"].species[type].enmax for type in types)
       if hasattr(encut, 'rescale'): encut = float(encut.rescale(eV))
-      return "ENCUT = {0} ".format(encut * value)
+      return "{0} = {1} ".format(KEY, encut * value)
     if value < 1e-12: return None
-    return "ENCUT = {0}".format(value)
+    return "{0} = {1}".format(KEY, value)
+
+class EncutGW(Encut):
+  """ Defines cutoff factor for GW calculation. 
+
+      There are three ways to set this parameter:
+
+      - if value is floating point and 0 < value <= 3: then the cutoff is
+        ``value * ENMAX``, where ENMAX is the maximum recommended cutoff for
+        the species in the system.
+      - if value > 3 eV, then prints encut is exactly value (in eV). Any energy
+        unit is acceptable.
+      - if value < 0 eV or None, does not print anything to INCAR. 
+      
+      .. seealso:: `ENCUTGW
+        <http://cms.mpi.univie.ac.at/vasp/vasp/ENCUTGW_energy_cutoff_response_function.html>`_
+  """
+  KEY = "ENCUTGW"
+  def __init__(self, value): super(EncutGW, self).__init__(value)
 
 class FFTGrid(SpecialVaspParam):
-  """ Computes fft grid using VASP. Or if grid is given, computes using that grid. """
+  """ FFT mesh of the wavefunctions.
+  
+      This must a sequence of three integers.
+
+      .. seealso:: `NGX, NGY, NGZ
+        <http://cms.mpi.univie.ac.at/vasp/guide/node93.html>`_
+  """
   def __init__(self, value): super(FFTGrid, self).__init__(value)
   @property 
   def value(self): return self._value
@@ -292,7 +333,18 @@ class FFTGrid(SpecialVaspParam):
 class Restart(SpecialVaspParam):
   """ Return from previous run from which to restart.
       
-      If None, then starts from scratch.
+      It is either an vasp extraction object of some kind, or None.
+      In the latter case, the calculation starts from scratch. 
+      However, if an extraction object exists *and* the calculation it refers
+      to was successfull, then it will check whether WAVECAR and CHGCAR exist
+      and set :py:attr:'istart <incar.Incar.istart>` and :py:attr:`icharg
+      <incar.Incar.icharg>` accordingly. It also checks whether
+      :py:attr:`nonscf <incar.Incar.nonscf>` is True or False, and sets
+      :py:attr:`icharg <incar.Incar.icharg>` accordingly. 
+
+      .. seealso:: `ICHARG
+        <http://cms.mpi.univie.ac.at/vasp/guide/node102.html>`_, `ISTART
+        <http://cms.mpi.univie.ac.at/vasp/guide/node101.html>`_
   """
   def __init__(self, value): super(Restart, self).__init__(value)
 
@@ -334,7 +386,12 @@ class Restart(SpecialVaspParam):
     return None
 
 class NonScf(SpecialVaspParam):
-  """ Whether to perform a self-consistent or non-self-consistent run. """
+  """ Whether to perform a self-consistent or non-self-consistent run. 
+  
+      Accepts only True or False(default). This parameter works with
+      :py:class:`Restart` to determine the value to give :py:attr:`icharg
+      <lada.vasp.incar.Incar.icharg>`
+  """
   def __init__(self, value):  super(NonScf, self).__init__(value)
   @property
   def value(self): return self._value
@@ -351,7 +408,20 @@ class NonScf(SpecialVaspParam):
   def __repr__(self): return "{0.__class__.__name__}({0.value!r})".format(self)
 
 class UParams(SpecialVaspParam): 
-  """ Prints U parameters if any found in species settings """
+  """ Sets U, nlep, and enlep parameters. 
+ 
+      The U, nlep, and enlep parameters of the atomic species are set at the
+      same time as the pseudo-potentials. This object merely sets up the incar
+      with right input.
+
+      However, it does accept one parameter, which can be "off", "on", "occ" or
+      "all" wich defines the level of verbosity of VASP (with respect to the
+      parameters).
+
+
+      .. seealso:: `LDAU, LDAUTYPE, LDAUL, LDAUPRINT
+        <http://cms.mpi.univie.ac.at/vasp/vasp/On_site_Coulomb_interaction_L_S_DA_U.html>`_
+  """
   def __init__(self, value):
     import re
     
@@ -366,7 +436,6 @@ class UParams(SpecialVaspParam):
     super(UParams, self).__init__(value)
 
   def incar_string(self, **kwargs):
-    """ Prints LDA+U INCAR parameters. """
     from ...crystal import specieset
     types = specieset(kwargs['structure'])
     species = kwargs['vasp'].species
@@ -410,7 +479,6 @@ class UParams(SpecialVaspParam):
       result += "\n{0}\n{1}\n{2}\n{3}\n".format(*line)
     return result
   def __repr__(self):
-    """ Representation of UParams """
     return "{0.__class__.__name__}({1!r})".format(self, ["off", "on", "all"][self.value])
 
 class Boolean(SpecialVaspParam):
@@ -477,24 +545,25 @@ class Integer(SpecialVaspParam):
     return "{0.__class__.__name__}({1}, {2})".format(self, repr(self.key), repr(self.value))
 
 class Choices(SpecialVaspParam):
-  """ Vasp parameters with a limited set of choices. """
-  def __init__(self, key, choices, default=None):
-    """ Initializes the Choices-type vasp parameters.
+  """ Vasp parameters with a limited set of choices. 
 
-        :param key:
-	    Name of the VASP parameter, e.g. "precfock". It needs not be in
-            uppercase. In fact, lower case is preferred for being more pythonic.
-        :param choices:
-            Dictionary where key is an allowed VASP input for this parameter.
-            To each key is associated a list (or set), with allowable forms
-            which will translate to the key in the incar. A modified copy of
-            this dictionary is owned by the instance being initialized. All
-            keys and items should be meaningfully convertible to strings.
-        :param default :
-            Option from ``choices`` to use as default.
+      Initializes the Choices-type vasp parameters.
+
+      :param key:
+          Name of the VASP parameter, e.g. "precfock". It needs not be in
+          uppercase. In fact, lower case is preferred for being more pythonic.
+      :param choices:
+          Dictionary where key is an allowed VASP input for this parameter.
+          To each key is associated a list (or set), with allowable forms
+          which will translate to the key in the incar. A modified copy of
+          this dictionary is owned by the instance being initialized. All
+          keys and items should be meaningfully convertible to strings.
+      :param default:
+          Option from ``choices`` to use as default.
 
       .. note:: The keys are case-sensitive. The values are not.
-    """
+  """
+  def __init__(self, key, choices, default=None):
     self.key = key
     """ VASP key corresponding to this input. """
     self.choices = {}
@@ -533,16 +602,13 @@ class PrecFock(Choices):
       - accurate
 
       .. note:: The values are not case-sensitive. 
-      .. seealso:: `PRECFOCK`__
-      .. __: http://cms.mpi.univie.ac.at/vasp/vasp/PRECFOCK_FFT_grid_in_HF_related_routines.html
+      .. seealso:: `PRECFOCK  <http://cms.mpi.univie.ac.at/vasp/vasp/PRECFOCK_FFT_grid_in_HF_related_routines.html>`_
   """
   def __init__(self, value=None):
-    """ Initializes PRECFOCK parameter. """
     choices = { 'Low': ['low'], 'Medium': ['medium'], 'Fast': ['fast'],
                 'Normal': ['normal'], 'Accurate': ['accurate'] }
     super(PrecFock, self).__init__("PRECFOCK", choices, value)
   def __repr__(self):
-    """ Representation of this object. """
     return "{0.__class__.__name__}({0.value!r})".format(self)
 
 class Precision(Choices):
@@ -554,15 +620,13 @@ class Precision(Choices):
       - high
       - single
 
-      .. seealso:: `PREC`__
-      .. __: http://cms.mpi.univie.ac.at/vasp/vasp/PREC_tag.html
+      .. seealso:: `PREC <http://cms.mpi.univie.ac.at/vasp/vasp/PREC_tag.html>`_
   """
   def __init__(self, value = 'accurate'):
     choices = { 'Accurate': ['accurate'], 'Low': ['low'], 'Normal': ['normal'],
                 'Medium': ['medium'], 'High': ['high'], 'Single': ['single'] }
     super(Precision, self).__init__('PREC', choices, value)
   def __repr__(self):
-    """ Representation of this object. """
     return "{0.__class__.__name__}({0.value!r})".format(self)
 
 class IniWave(Choices):
@@ -571,13 +635,11 @@ class IniWave(Choices):
       - 0, jellium
       - 1, random 
 
-      .. seealso:: `INIWAV`__
-      .. __: http://cms.mpi.univie.ac.at/vasp/guide/node103.html
+      .. seealso:: `INIWAV <http://cms.mpi.univie.ac.at/vasp/guide/node103.html>`_
   """
   def __init__(self, value=None):
     choices = {0: ['jellium'], 1: ['random']}
     super(IniWave, self).__init__('INIWAV', choices, value)
   def __repr__(self):
-    """ Representation of this object. """
     return "{0.__class__.__name__}({1!r})".format(self, self.choices[self.value][0])
 

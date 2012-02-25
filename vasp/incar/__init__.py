@@ -1,11 +1,12 @@
 """ Subpackage defining vasp incar parameters. """
 __docformat__ = "restructuredtext en"
 __all__ = [ "SpecialVaspParam", "NElect", "Algo", "Precision", "Ediff",\
-            "Encut", "FFTGrid", "Restart", "UParams", "IniWave", 'Ediffg',\
+            "Encut", "FFTGrid", "Restart", "UParams", "IniWave", 'Ediffg', "EncutGW", \
             "Incar", "Magmom", 'Npar', 'Boolean', 'Integer', 'Choices', 'PrecFock' ]
 from _params import SpecialVaspParam, NElect, Algo, Precision, Ediff,\
                     Encut, FFTGrid, Restart, UParams, IniWave, Magmom,\
-                    Npar, Boolean, Integer, PrecFock, NonScf, Ediffg
+                    Npar, Boolean, Integer, PrecFock, NonScf, Ediffg, Choices, \
+                    EncutGW
 from ...misc import add_setter
 
 
@@ -14,93 +15,19 @@ class Incar(object):
 
       The following assumes you know how to write an INCAR. Although you won't
       need to anymore.  This class separates vasp parameters from methods to
-      launch and control vasp. vasp attributes can be listed by iterating over
-      this class, or calling iter.
+      launch and control vasp.
 
-      .. :py:attr: ispin 
-          Spin-polarized or spin-degenerate calculations.
-          Must be 1 or 2.
+      There are two kinds of parameters: 
 
-      Parameters(attributes) which are present by default are the following:
-         - ``ispin``: Sets number of spins. Must be either 1 or 2. 
-         - ``ismear``: Smearing function. Can be set with property `set_smearing`. 
-         - ``sigma``: Smearing parameter. Can be set with property `set_smearing`.
-         - ``isif``: Degrees of freedom to relax. Can be set using `relaxation`. 
-         - ``nsw``: Number of ionic steps. Can be set using `relaxation`. 
-         - ``ibrion``: ionic-relaxation method. Can be set using `relaxation`. 
-         - ``potim``: ionic-relaxation step. Can be set using `relaxation`. 
-         - ``iniwave``: initial wavefunction to use can be either "random" or "jellium".   
-         - ``nelect``: sets number of electrons in calculation above and beyond valence.
-             - 0(default) lets VASP compute it from species in the system. 
-             - 1 would mean +1 electron
-             - -1 would mean +1 hole
-             - etc
-         - ``algo``: electronic minimization. Can be \"very fast\", \"fast\" (default), or \"normal\".
-         - ``precision``: sets accuracy of calculation. Can be \"accurate\"
-           (default), \"low\", \"medium\", \"high\".
-         - ``ediff``: sets the tolerance per atom of electronic minimization.
-            This tolerance is multiplied by the number of atoms in the system,
-            eg consistent from one system to another.
-         - ``encut``: factor by which ENMAX of species is multiplied.
-         - ``fftgrid``: 3-tuple of integers setting NGX and friend.
-         - ``symprec``: tolerance when determining symmetries.
-         - ``magmom``: Sets magnetic moment. See `incar.Magmom`.
-         - ``npar``: Sets npar.
-         - ``lcorr``: Defaults to None.
-         - ``lplane``: Defaults to None.
-         - ``nbands``: Defaults to None.
-         - ``lorbit``: Defaults to None.
-         - ``addgrid``: Defaults to None.
-         - ``nupdown``: Defaults to None.
-         - ``loptics``: Defaults to None.
-         - ``lmaxmix``: Defaults to 4.
-         - ``magmom``: Defaults to None.
-         - ``weimin``: Defaults to 0.
-         - ``lwave`` : Defaults to None. 
-         - ``lmaxfockae``: Defaults to None.
-         - ``nomega``: Defaults to None.
-         - ``precfock``: Defaults to None.
-         - ``encutgw``: Defaults to None.
-         - ``lrpa``: Defaults to None.
-         - ``lpead``: Defaults to None.
-         - ``nelm``: Defaults to None.
-         - ``restart``: the return from previous vasp run to use as restart. 
-
-             >> save_this_object = vasp(some parameters) # makes a vasp call.
-             >> # make a second vasp using WAVECAR and whatnot from above call
-             >> vasp(other parameters, ..., restart = save_this_object) 
-
-         - `relaxation`: sets degrees of freedom to relax. Easier to use
-             than isif, nsw, and friends.
-         - `set_smearing`: to easily set sigma and ismear.
-         - `set_symmetries`: to easily set isym and symprec.
-
-      These parameters can be modified as in ``vasp.ispin = 2`` and so forth.
-      In the special case that None is given (e.g. ``vasp.ispin = None``), then
-      that parameter will not be printed to the INCAR, which means VASP default
-      will be used.
-
-      New parameters can be added as follows:
-
-      >>> vasp.add_param = "ispin", 2
-
-      This will print "ISPIN = 2" to the incar. Uppercase conversion is automatic.
-
-      :note: U and NLEP parameters should be given when defining the pseudo-potentials.
-
-      For hackers, how this code works: VASP parameters are set either in
-      self.params, in which case VASP key/value pair are the key (in uppercase)
-      and value of that dictionary, or in the self.special dictionary. In the
-      latter case, the values in the dictionary of classes inheriting from
-      `_params.SpecialVaspParam`. They contain (at least) one variable,
-      "value", and one method, "incar_string".  The former is the one which is
-      modified when an attribute is gotten or set (as in
-      C{vasp.some_special_parameter = whatever}). The latter is called, with at
-      least vasp as first argument (others are optional, as well as keyword
-      args), and should return a valid INCAR string.  
-  """ 
-
-
+        - Normal parameters which will simply print "NAME = VALUE" to the incar
+        - Special parameters which enhance the default behavior of vasp
+      
+      The special parameters are always called first. They may change the
+      values of one or more "normal" vasp parameters. For instance
+      :py:attr:`restart <Incar.restart>` will set :py:attr:`istart
+      <Incar.istart>` and :py:attr:`icharg <Incar.icharg>` depending on
+      the availability of the wavefunctions and charge densitie.
+  """
   def __init__(self): 
     super(Incar, self).__init__()
 
@@ -110,24 +37,19 @@ class Incar(object):
     self.add_param = "ispin",       1 
     self.add_param = "isif",        1
     self.add_param = "ismear",      None
-    self.add_param = "sigma",       None
+    self.add_param = "isigma",      None
     self.add_param = "nsw",         None
     self.add_param = "ibrion",      None
     self.add_param = "potim",       None
     self.add_param = "nbands",      None
     self.add_param = "lorbit",      None
-    self.add_param = "lplane",      None
     self.add_param = "addgrid",     None
     self.add_param = "isym",        None
     self.add_param = "symprec",     None
-    self.add_param = "lcorr",       None
     self.add_param = "nupdown",     None
     self.add_param = "lmaxmix",     4
-    self.add_param = "weimin",      0
     self.add_param = "lmaxfockae",  None
     self.add_param = "nomega",      None
-    self.add_param = "encutgw",     None
-    self.add_param = "encutlf",     None
     self.add_param = "istart",      None
     self.add_param = "icharge",     None
     # objects derived from SpecialVaspParams will be recognized as such and can
@@ -138,20 +60,24 @@ class Incar(object):
     self.ediff       = Ediff(1e-4)
     self.ediffg      = Ediffg(None)
     self.encut       = Encut(None)
+    self.encutgw     = EncutGW(None)
     self.fftgrid     = FFTGrid(None)
     self.restart     = Restart(None)
     self.U_verbosity = UParams("occupancy")
-    self.iniwave     = IniWave(None)
     self.magmom      = Magmom()
     self.npar        = Npar(None)
-    self.lwave       = Boolean("lwave", False)
     self.precfock    = PrecFock(None)
+    self.nonscf      = NonScf(False)
+
+    self.lwave       = Boolean("lwave", False)
+    self.lcharg      = Boolean("lcharg", True)
+    self.lvtot       = Boolean("lvtot", False)
     self.lrpa        = Boolean("lrpa", None)
     self.loptics     = Boolean("loptics", None)
     self.lpead       = Boolean("lpead", None)
     self.nelm        = Integer("nelm", None)
-    self.nonscf      = NonScf(False)
-
+    self.nelmin      = Integer("nelmin", None)
+    self.nelmdl      = Integer("nelmdl", None)
 
   def incar_lines(self, **kwargs):
     """ List of incar lines. """
@@ -237,8 +163,8 @@ class Incar(object):
   def symmetries(self, value):
     """ Type of symmetry used in the calculation.
   
-        This sets isym and symprec vasp tags.
-        Can be "off" or a float corresponding to the tolerance used to determine
+        This sets :py:attr:`isym` and :py:attr:`symprec` vasp tags. Can be
+        "off" or a float corresponding to the tolerance used to determine
         symmetry operation. 
     """
     if value is None: self.isym = None
@@ -273,7 +199,7 @@ class Incar(object):
         - if x is omitted a default value of 0.2eV is used.
     """
     if args is None: 
-      self.ismear, self.sigma = None, None
+      self.ismear, self.isigma = None, None
       return
 
     if isinstance(args, str): args = args.split()
@@ -285,29 +211,29 @@ class Incar(object):
 
     if first is None:
       self.ismear = None
-      if has_second: self.sigma = None
+      if has_second: self.isigma = None
     elif first == "fermi" or first == "-1":    
       self.ismear = -1
-      if has_second: self.sigma = second
+      if has_second: self.isigma = second
     elif first == "gaussian" or first == "0":
       self.ismear = 0
-      if has_second: self.sigma = second
+      if has_second: self.isigma = second
     elif first == "metal":
       self.ismear = 1
-      if has_second: self.sigma = second
+      if has_second: self.isigma = second
     elif first == "mp" or first == "metal":
       if has_third:
         self.ismear = second
-        self.sigma = third
-      elif has_second: self.sigma = second
+        self.isigma = third
+      elif has_second: self.isigma = second
       else: self.ismear = 1
       assert self.ismear >= 1, "Mehtfessel-Paxton order must be at least 1."
     elif first == "bloechl" or first == "-5" or first == "insulator":
       self.ismear = -5
-      if has_second: self.sigma = second
+      if has_second: self.isigma = second
     elif first == "tetra" or first == "-4":
       self.ismear = -4
-      if has_second: self.sigma = second
+      if has_second: self.isigma = second
     else: 
       try: self._value = int(first)
       except: raise ValueError("Unknown smearing value {0}.\n".format(value))
@@ -318,15 +244,14 @@ class Incar(object):
   def relaxation(self):
     """ Sets type of relaxation.
     
-        It accepts a tuple, as in:
+        It can be set to a single value, or to a tuple of up to four elements:
 
-        >>> vasp.relaxation = "static", 
+        >>> vasp.relaxation = "static" 
+        >>> vasp.relaxation = "static", 20
       
-        Some of the parameters (purposefully left out above) are optional:
-        
         - first argument can be "static", or a combination of "ionic",
-          "cellshape", and "volume". The combination `must be allowed by
-          VASP`__.
+          "cellshape", and "volume". The combination must be allowed by
+          `ISIF`__.
         - second (optional) argument is `nsw`_
         - third (optional) argument is `ibrion`_
         - fourth (optional) argument is `potim`_

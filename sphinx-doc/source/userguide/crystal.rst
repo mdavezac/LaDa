@@ -2,7 +2,7 @@
 .. currentmodule:: lada.crystal
 
 Creating and Manipulating crystal structures
-============================================
+********************************************
 
 A good way to learn is to play with LaDa directly in the python interpreter.
 Best of all, use the enhanced shell `ipython`_. It comes with many goodies. For
@@ -12,7 +12,7 @@ example below, try ``structure.[TAB]`` and see what it tells you. Then try
 right, you can even use it like an ordinary bash shell on `pythonic steroids`_.
 
 Playing with the crystal structure
-**********************************
+==================================
 
 Initialization
 --------------
@@ -183,7 +183,7 @@ angstrom once multiplied by the scale. And so are the atomic positions
 ``structure.scale * structure[0].pos``.
 
 More advanced structure manipulation methods
-********************************************
+============================================
 
 Supercells and primitive unit cells
 -----------------------------------
@@ -399,7 +399,7 @@ however, please to the code itself, or to the API documentation.
 
 
 Example: Iterating over the shells of a core-shell nanowire
-***********************************************************
+===========================================================
 
 Core shell nanowires are nano-structures where a thin nanowire of, say,
 germanium, is coated with alternating layers of silicon and germanium. I will
