@@ -1,9 +1,8 @@
 from quantities import angstrom
-from lada.crystal.binary import zinc_blende
 
-lattice = zinc_blende()
-for site in lattice.sites: site.type = "Si"
-lattice.scale = 5.43
+structure = Structure([[0, 0.5, 0.5],[0.5, 0, 0.5], [0.5, 0.5, 0]], scale=5.43)\
+                     .add_atom(0,0,0, "Si")\
+                     .add_atom(0.25,0.25,0.25, "Si")
 
 
 vasp = Vasp()
@@ -23,6 +22,6 @@ vasp.relaxation = "volume", 50, 2
 
 vasp.add_specie = "Si", "pseudos/Si"
 
-first_trial = { "encut": 0.9 }
-relaxation_dof = "volume ionic cellshape"
-relaxer = RelaxCellShape( vasp, relaxation_dof, first_trial, maxiter=5)
+# first_trial = { "encut": 0.9 }
+# relaxation_dof = "volume ionic cellshape"
+# relaxer = RelaxCellShape( vasp, relaxation_dof, first_trial, maxiter=5)

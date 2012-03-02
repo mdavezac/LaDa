@@ -19,6 +19,7 @@ incar
      :py:attr:`npar` :py:attr:`nelect` :py:attr:`nsw` :py:attr:`nupdown`
      :py:attr:`potim` :py:attr:`precfock` :py:attr:`precision`
      :py:attr:`restart` :py:attr:`symprec` :py:attr:`U_verbosity`
+     :py:attr:`system`
 
    New parameters can be added simply with :py:attr:`add_param`.
 
@@ -267,6 +268,10 @@ incar
 
       See the documentation for :py:class:`NonScf`.
 
+   .. py:attribute:: Incar.system
+
+      See the documentation for :py:class:`System`.
+
 Special Parameters Class Definitions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 All these classes are actually defined in ``lada.vasp.incar._params``.
@@ -286,6 +291,7 @@ All these classes are actually defined in ``lada.vasp.incar._params``.
 .. autoclass:: FFTGrid
 .. autoclass:: Npar
 .. autoclass:: IniWave
+.. autoclass:: System
 
 
 .. autoclass:: Choices

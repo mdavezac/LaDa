@@ -157,7 +157,7 @@ include_directories("${PROJECT_SOURCE_DIR}")
 include_directories("${PROJECT_BINARY_DIR}")
 
 # the most basic stuff to compile/include
-add_subdirectory(opt)
+# add_subdirectory(opt)
 add_subdirectory(math)
 add_subdirectory(crystal)
 add_subdirectory(physics)

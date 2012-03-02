@@ -52,13 +52,6 @@ class Extract(object):
     with self.__funccar__() as file: return load(file)
 
   @property
-  def vasp(self):
-    """ Deprecated. """
-    from warnings import warn
-    warn(DeprecationWarning('vasp attribute is deprecated in favor of functional.'), stacklevel=2)
-    return self.functional
-
-  @property
   @make_cached
   def success(self):
     """ Checks that VASP run has completed. 
@@ -151,16 +144,12 @@ class Extract(object):
       structure.energy = float(self.total_energy.rescale(eV))
     return structure
 
-  @property
-  @make_cached
-  def _structure_data(self):
-    """ Greps cell and positions from OUTCAR. """
+  @property 
+  def _catted_contcar(self):
+    """ Returns contcar found at end of OUTCAR. """
     from re import compile
-    from numpy.linalg import inv
-    from numpy import array, zeros
-
-    cell = zeros((3,3), dtype="float64")
-    atoms = []
+    from StringIO import StringIO
+    from ...crystal import read
     with self.__outcar__() as file: lines = file.readlines()
     begin_contcar_re = compile(r"""#+\s+CONTCAR\s+#+""")
     end_contcar_re = compile(r"""#+\s+END\s+CONTCAR\s+#+""")
@@ -168,52 +157,60 @@ class Extract(object):
     for i, line in enumerate(lines[::-1]):
       if begin_contcar_re.match(line) is not None: start = -i; break;
       if end_contcar_re.match(line) is not None: end = -i
-    if start is not None and end is not None:
-      from StringIO import StringIO
-      from ...crystal import read_poscar
-      stringio = StringIO("".join(lines[start+1:end if end != 0 else -1]))
-      structure = read_poscar(types=self.species, path=stringio)
-      cell = structure.cell
-      atoms = structure.atoms
-      
-    else: 
-      atom_index, cell_index = None, None
-      atom_re = compile(r"""^\s*POSITION\s+""")
-      cell_re = compile(r"""^\s*direct\s+lattice\s+vectors\s+""")
-      for index, line in enumerate(lines[::-1]):
-        if atom_re.search(line) is not None: atom_index = index - 1
-        if cell_re.search(line) is not None: cell_index = index; break
-      assert atom_index is not None and cell_index is not None,\
-             RuntimeError("Could not find structure description in OUTCAR.")
-      try: 
-        for i in range(3): cell[:,i] = array(lines[-cell_index+i].split()[:3], dtype="float64")
-      except: 
-        for i in range(3): cell[i,:] = array(lines[-cell_index+i].split()[-3:], dtype="float64")
-        cell = inv(cell)
-      for i in range(3):
-        cell[:,i] = [float(u) for u in lines[-cell_index+i].split()[:3]]
-      while atom_index > 0 and len(lines[-atom_index].split()) == 6:
-        atoms.append( array([float(u) for u in lines[-atom_index].split()[:3]], dtype="float64") )
-        atom_index -= 1
+    if start is None or end is None:
+      raise IOError("Could not find catted contcar.")
+    stringio = StringIO("".join(lines[start:end if end != 0 else -1]))
+    return read.poscar(stringio, self.species)
 
-    return cell, atoms
+  @property
+  @make_cached
+  def _grep_structure(self):
+    """ Greps cell and positions from OUTCAR. """
+    from re import compile
+    from ...crystal import Structure
+    from numpy.linalg import inv
+    from numpy import array
+
+    with self.__outcar__() as file: lines = file.readlines()
+    atom_index, cell_index = None, None
+    atom_re = compile(r"""^\s*POSITION\s+""")
+    cell_re = compile(r"""^\s*direct\s+lattice\s+vectors\s+""")
+    for index, line in enumerate(lines[::-1]):
+      if atom_re.search(line) is not None: atom_index = index - 1
+      if cell_re.search(line) is not None: cell_index = index; break
+    assert atom_index is not None and cell_index is not None,\
+           RuntimeError("Could not find structure description in OUTCAR.")
+    result = Structure()
+    try: 
+      for i in range(3):
+        result.cell[:,i] = array(lines[-cell_index+i].split()[:3], dtype="float64")
+    except: 
+      for i in range(3): result.cell[i,:] = array(lines[-cell_index+i].split()[-3:], dtype="float64")
+      result.cell = inv(result.cell)
+    species = [type for type, n in zip(self.species, self.stoichiometry) for i in xrange(n)]
+    while atom_index > 0 and len(lines[-atom_index].split()) == 6:
+      result.add_atom( pos=array(lines[-atom_index].split()[:3], dtype="float64"), 
+                       type=species.pop(-1) )
+      atom_index -= 1
+
+    return result
 
   @property
   @make_cached
   def structure(self):
     """ Greps structure and total energy from OUTCAR. """
-    from numpy import array
     from quantities import eV
-    from ...crystal import Structure, Atom
 
     if self.isif == 0 or self.nsw == 0 or self.ibrion == -1:
       return self.starting_structure
 
 
-    try: cell, atoms = self._structure_data;
-    except: return self.contcar_structure
+    try: structure = self._catted_contcar;
+    except:
+      try: structure = self._contcar_structure
+      except:
+        structure = self._grep_structure
 
-    structure = Structure()
     # tries to find adequate name for structure.
     try: name = self.system
     except RuntimeError: name = ''
@@ -223,14 +220,7 @@ class Extract(object):
       except RuntimeError: title = ''
       if len(title) != 0: structure.name = title
     
-    structure.energy = float(self.total_energy.rescale(eV)) if self.is_dft else 0e0
-    structure.cell = array(cell, dtype="float64")
-    structure.scale = 1e0
-    assert len(self.species) == len(self.stoichiometry),\
-           RuntimeError("Number of species and of ions per specie incoherent.")
-    for specie, n in zip(self.species,self.stoichiometry):
-      for i in range(n):
-        structure.append(Atom(array(atoms.pop(0), dtype="float64"), specie))
+    structure.energy = self.total_energy if self.is_dft else 0e0 * eV
 
     return structure
 
@@ -239,7 +229,7 @@ class Extract(object):
   def LDAUType(self):
     """ Type of LDA+U performed. """
     type = self._find_first_OUTCAR(r"""LDAUTYPE\s*=\s*(\d+)""")
-    if type == None: return 0
+    if type == None: return None
     type = int(type.group(1))
     if type == 1: return "liechtenstein"
     elif type == 2: return "dudarev"
@@ -308,7 +298,7 @@ class Extract(object):
     from numpy import abs
     from numpy.linalg import det
     from quantities import angstrom
-    return abs(self.structure.scale * det(self.structure.cell)) * angstrom**3
+    return abs(det(self.structure.scale * self.structure.cell)) * angstrom**3
 
   @property 
   @make_cached
@@ -333,14 +323,12 @@ class Extract(object):
 
   @property
   @make_cached
-  def contcar_structure(self):
+  def _contcar_structure(self):
     """ Greps structure from CONTCAR. """
-    from ...crystal import read_poscar
+    from ...crystal import read
     from quantities import eV
 
-    species_in = self.species
-
-    result = read_poscar(species_in, self.__contcar__())
+    result = read.poscar(self.__contcar__(), self.species)
     result.energy = float(self.total_energy.rescale(eV)) if self.is_dft else 0e0
     return result
 
@@ -360,7 +348,7 @@ class Extract(object):
   @make_cached
   def species(self):
     """ Greps species from OUTCAR. """
-    return tuple([ u.group(1) for u in self._search_OUTCAR(r"""VRHFIN\s*=\s*(\S+)\s*:""") ])
+    return [ u.group(1) for u in self._search_OUTCAR(r"""VRHFIN\s*=\s*(\S+)\s*:""") ]
 
   @property
   @make_cached
@@ -377,6 +365,24 @@ class Extract(object):
     result = self._find_first_OUTCAR(r"""\s*NSW\s*=\s*(-?\d+)\s+""")
     if result is None: return None
     return int(result.group(1))
+
+  @property
+  @make_cached
+  def ismear(self):
+    """ Greps smearing function from OUTCAR. """
+    result = self._find_first_OUTCAR(r"""\s*ISMEAR\s*=\s*(\d+);""")
+    if  result is None: return None
+    return int(result.group(1))
+
+  @property
+  @make_cached
+  def sigma(self):
+    """ Greps smearing function from OUTCAR. """
+    from quantities import eV
+    result = self._find_first_OUTCAR(r"""\s*ISMEAR\s*=\s*(?:\d+)\s*;\s*SIGMA\s*=\s*(\S+)\s*""")
+    if  result is None: return None
+    return float(result.group(1)) * eV
+  
   
   @property
   def relaxation(self): 
@@ -389,6 +395,62 @@ class Extract(object):
   def ibrion(self):
     """ Greps IBRION from OUTCAR. """
     result = self._find_first_OUTCAR(r"""\s*IBRION\s*=\s*(-?\d+)\s+""")
+    if result is None: return None
+    return int(result.group(1))
+
+  @property
+  @make_cached
+  def potim(self):
+    """ Greps POTIM from OUTCAR. """
+    result = self._find_first_OUTCAR(r"""\s*POTIM\s*=\s*(-?\S+)\s+""")
+    if result is None: return None
+    return float(result.group(1))
+
+  @property
+  @make_cached
+  def lorbit(self):
+    """ Greps LORBIT from OUTCAR. """
+    result = self._find_first_OUTCAR(r"""\s*LORBIT\s*=\s*(\d+)\s+""")
+    if result is None: return None
+    return int(result.group(1))
+
+  @property
+  @make_cached
+  def isym(self):
+    """ Greps ISYM from OUTCAR. """
+    result = self._find_first_OUTCAR(r"""\s*ISYM\s*=\s*(\d+)\s+""")
+    if result is None: return None
+    return int(result.group(1))
+
+  @property
+  @make_cached
+  def nupdown(self):
+    """ Greps NUPDOWN from OUTCAR. """
+    result = self._find_first_OUTCAR(r"""\s*NUPDOWN\s*=\s*(\S+)\s+""")
+    if result is None: return None
+    return float(result.group(1))
+
+  @property
+  @make_cached
+  def lmaxmix(self):
+    """ Greps LMAXMIX from OUTCAR. """
+    result = self._find_first_OUTCAR(r"""\s*LMAXMIX\s*=\s*(\d+)\s+""")
+    if result is None: return None
+    return int(result.group(1))
+
+  @property
+  @make_cached
+  def istart(self):
+    """ Greps ISTART from OUTCAR. """
+    result = self._find_first_OUTCAR(r"""\s*ISTART\s*=\s*(\d+)\s+""")
+    if result is None: return None
+    return int(result.group(1))
+
+  @property
+  @make_cached
+  def icharg(self):
+    """ Greps ICHARG from OUTCAR. """
+    result = self._find_first_OUTCAR(r"""\s*ICHARG\s*=\s*(\d+)\s+""")
     if result is None: return None
     return int(result.group(1))
 

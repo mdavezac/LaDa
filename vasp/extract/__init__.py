@@ -14,29 +14,27 @@ from ._mixin import IOMixin
 
 class ExtractCommon(AbstractExtractBase, ExtractCommonBase, IOMixin):
   """ Extracts DFT data from an OUTCAR. """
-  def __init__(self, outcar=None, **kwargs):
+  def __init__(self, directory=None, **kwargs):
     """ Initializes extraction object.
     
     
         :Parameters:
-          outcar : str or None
+          directory : str or None
             Path to OUTCAR file. Can also be the directory if the OUTCAR is
             named "OUTCAR".
     """
     from os.path import exists, isdir, basename, dirname
-    from ...opt import RelativeDirectory
-    from ...mpi import Communicator
+    from ...misc import RelativeDirectory
        
-    if outcar is not None:
-      outcar = RelativeDirectory(outcar).path
-      if exists(outcar) and not isdir(outcar):
-        kwargs['OUTCAR'] = basename(outcar)
-        directory = dirname(outcar)
-      else: directory = outcar
-    else: directory = outcar
+    outcar = None
+    if directory is not None:
+      directory = RelativeDirectory(directory).path
+      if exists(directory) and not isdir(directory):
+        outcar = basename(directory)
+        directory = dirname(directory)
     AbstractExtractBase.__init__(self, directory)
     ExtractCommonBase.__init__(self)
-    IOMixin.__init__(self, directory, **kwargs)
+    IOMixin.__init__(self, directory, OUTCAR=outcar, **kwargs)
 
   @property
   def success(self):
@@ -45,9 +43,9 @@ class ExtractCommon(AbstractExtractBase, ExtractCommonBase, IOMixin):
 
 class ExtractDFT(ExtractCommon, ExtractDFTBase):
   """ Extracts DFT data from an OUTCAR. """
-  def __init__(self, outcar=None, **kwargs):
+  def __init__(self, directory=None, **kwargs):
     """ Initializes extraction object. """
-    ExtractCommon.__init__(self, outcar, **kwargs)
+    ExtractCommon.__init__(self, directory, **kwargs)
     ExtractDFTBase.__init__(self)
 
 class ExtractGW(ExtractCommon, ExtractGWBase):
@@ -57,7 +55,7 @@ class ExtractGW(ExtractCommon, ExtractGWBase):
     ExtractCommon.__init__(self, outcar, **kwargs)
     ExtractGWBase.__init__(self)
 
-def Extract(outcar=None, **kwargs):
+def Extract(directory=None, **kwargs):
   """ Chooses between DFT or GW extraction object, depending on OUTCAR.
   
         :Parameters:
@@ -68,36 +66,21 @@ def Extract(outcar=None, **kwargs):
   """
   from os import getcwd
   from os.path import exists, isdir, join
-  from ...opt import RelativeDirectory
-  # checks if path or directory
-  if 'directory' in kwargs: 
-    from warnings import warn
-    assert outcar is None, ValueError('Cannot use both directory and outcar keyword arguments.')
-    outcar = kwargs.pop('directory')
-    warn( DeprecationWarning( 'directory keyword is deprecated in favor of '
-                              'outcar keyword in vasp extraction objects.'),\
-          stacklevel=2)
-  if 'OUTCAR' in kwargs: 
-    from warnings import warn
-    warn( DeprecationWarning('OUTCAR keyword is deprecated in favor of outcar keyword.'),
-          stacklevel=2)
-    assert outcar is None, ValueError('Cannot use both outcar and OUTCAR keywords.')
-    outcar = kwargs.pop('OUTCAR')
-
+  from ...misc import RelativeDirectory
   # checks for GW calculations.
-  outcar = getcwd() if outcar is None else RelativeDirectory(outcar).path
-  if exists(join(outcar, 'GW')):
+  directory = getcwd() if directory is None else RelativeDirectory(directory).path
+  if exists(join(directory, 'GW')):
     from os.path import basename
     from glob import iglob
     from re import match
-    outcar = join(outcar, 'GW')
+    outcar = join(directory, 'GW')
     gwiters = [ int(basename(u)) for u in iglob(join(outcar, "[0-9]*"))\
                 if match(r"\d+", basename(u)) and isdir(u) ]
     if len(gwiters) > 0: outcar = join(outcar, str(max(gwiters)))
 
-  result = ExtractCommon(outcar=outcar, **kwargs)
-  if result.is_dft: return ExtractDFT(outcar=outcar, **kwargs) 
-  elif result.is_gw: return ExtractGW(outcar=outcar, **kwargs) 
+  result = ExtractCommon(directory=directory, **kwargs)
+  if result.is_dft: return ExtractDFT(directory=directory, **kwargs) 
+# elif result.is_gw: return ExtractGW(directory=directory, **kwargs) 
   return result
 
 def ExtractGW_deprecated(*args, **kwargs):
@@ -138,7 +121,7 @@ else:
       from os import getcwd
       from os.path import exists, isdir
       from . import Extract as VaspExtract
-      from ...opt import RelativeDirectory
+      from ...misc import RelativeDirectory
 
       # this will throw on unknown kwargs arguments.
       jobs.AbstractMassExtract.__init__(self, **kwargs)

@@ -1,7 +1,7 @@
 """ Sub-package containing the functional. """
 __docformat__ = "restructuredtext en"
 __all__ = ['Functional']
-from ..functools import stateless, assign_attributes, check_success
+from ..functools import stateless, assign_attributes
 from ..misc import add_setter
 from extract import Extract
 from incar import Incar
@@ -45,24 +45,19 @@ class Functional(Incar):
   def __call__( self, structure, outdir=None, comm=None, overwrite=False, 
                 mpirun_exe=None, **kwargs):
     """ Calls vasp program. """
-    from collections import namedtuple
-    from ..functools import execute_program
-    from .. import default_comm, mpirun_exe as default_mpirun_exe
-    if comm == None: comm = default_comm
-    if mpirun_exe == None: mpirun_exe = default_mpirun_exe
+    from ..misc import execute_program
     result = None
     for program in self.iter(structure, outdir=outdir, comm=comm, overwrite=overwrite, **kwargs):
       # iterator may yield the result from a prior successfull run. 
-      if getattr(program, 'success', True):
+      if getattr(program, 'success', False):
         result = program
         continue
       # otherwise, it should yield a Program tuple to execute.
-      execute_program(program, append=True, mpirun_exe=mpirun_exe, **comm)
+      execute_program(program, append=False, comm=comm, **kwargs)
       result = self.Extract(outdir)
       if not result.success: raise RuntimeError("Vasp failed to execute correctly.")
     return result
 
-  @check_success
   @assign_attributes(ignore=['overwrite'])
   @stateless
   def iter( self, structure, outdir=None, comm=None, overwrite=False, **kwargs ):
@@ -105,25 +100,34 @@ class Functional(Incar):
     from os.path import exists, join
     from numpy import abs
     from numpy.linalg import det
-    from ..crystal import specie_list, read_poscar
+    from ..crystal import specieset
+    from ..crystal import read
     from .files import CONTCAR
     from .. import vasp_program
+    from ..misc import Program
 
+    # check for pre-existing and successfull run.
+    if not overwrite:
+      extract = self.Extract(outcar=outdir)
+      if extract.success:
+        yield extract # in which case, returns extraction object.
+        return
+    
     # makes functor stateless/reads structure from CONTCAR if requested and appropriate.
     if kwargs.pop("restart_from_contcar", self.restart_from_contcar): 
       path = join(outdir, CONTCAR)
       if exists(path):
-        try: contstruct = read_poscar(specie_list(structure), path)
+        try: contstruct = read.poscar(path, specieset(structure))
         except: pass
         else: structure = contstruct
-    if len(structure.atoms) == 0: raise ValueError("Structure is empty.")
+    if len(structure) == 0: raise ValueError("Structure is empty.")
     if abs(det(structure.cell)) < 1e-8: raise ValueError("Structure with zero volume.")
     if abs(structure.scale) < 1e-8: raise ValueError("Structure with null scale.")
 
-    pullup(structure, outdir, comm)
+    self.pullup(structure, outdir, comm)
     program = getattr(self, 'program', vasp_program)
     yield Program(program, [], outdir, 'stdout', 'stderr')
-    pulldown(outdir, structure)
+    self.bringdown(outdir, structure)
 
   def pullup(self, structure, outdir, comm):
     """ Creates all input files necessary to run results.
@@ -137,56 +141,52 @@ class Functional(Incar):
         - Saves pickle of self.
     """
     import cPickle
-    from copy import deepcopy
-    from os.path import join, abspath
-    from . import files, is_vasp_5
-    from ..crystal import write_poscar, specie_list
-    from ..opt.changedir import Changedir
+    from . import files
+    from ..crystal import specieset, write
+    from ..misc.changedir import Changedir
 
-    # creates poscar file. Might be overwriten by restart.
-    with open(join(outdir, files.POSCAR), "w") as poscar: 
-      write_poscar(structure, poscar, False)
-
-    # creates incar file. Changedir makes sure that any calculations done to
-    # obtain incar will happen in the right directory.
     with Changedir(outdir) as tmpdir:
-      incar_lines = self.incar_lines(structure=structure, comm=comm)
+      # creates poscar file. Might be overwriten by restart.
+      write.poscar(structure)
 
-    # creates INCAR file. Note that POSCAR file might be overwritten here by Restart.
-    with open(join(outdir, files.INCAR), "w") as incar_file: 
-      incar_file.writelines(incar_lines)
+      # creates incar file. Changedir makes sure that any calculations done to
+      # obtain incar will happen in the right directory.
+      incar_lines = self.incar_lines(structure=structure, vasp=self, comm=comm)
+
+      # creates INCAR file. Note that POSCAR file might be overwritten here by Restart.
+      with open(files.INCAR, "w") as incar_file: 
+        incar_file.writelines(incar_lines)
   
-    # creates kpoints file
-    with open(join(outdir, files.KPOINTS), "w") as kp_file: 
-      self.write_kpoints(kp_file)
+      # creates kpoints file
+      with open(files.KPOINTS, "w") as kp_file: 
+        self.write_kpoints(kp_file)
   
-    # creates POTCAR file
-    with open(join(outdir, files.POTCAR), 'w') as potcar:
-      for s in specie_list(structure):
-        potcar.writelines( self.species[s].read_potcar() )
+      # creates POTCAR file
+      with open(files.POTCAR, 'w') as potcar:
+        for s in specieset(structure):
+          potcar.writelines( self.species[s].read_potcar() )
+    
+      with open(files.FUNCCAR, 'w') as file:
+        cPickle.dump(self, file)
+    
 
-    with open(join(outdir, files.FUNCCAR), 'w') as file:
-      cPickle.dump(self, file)
-
-    # Appends INCAR and CONTCAR to OUTCAR:
-    with open(join(outdir, files.OUTCAR), 'w') as outcar:
-      outcar.write('\n################ INCAR ################\n')
-      with open(files.INCAR, 'r') as incar: outcar.write(incar.read())
-      outcar.write('\n################ END INCAR ################\n')
-      outcar.write(repr(structure))
-
-  def bringdown(self, comm):
-     """ Copies contcar, incar to outcar. """
-     from os.path import exists, join, isdir, realpath
-     from os import makedirs
-     from shutil import copy
+  def bringdown(self, directory, structure):
+     """ Copies contcar to outcar. """
      from . import files
+     from ..misc.changedir import Changedir
 
      # Appends INCAR and CONTCAR to OUTCAR:
-     with open(files.OUTCAR, 'a') as outcar:
-       outcar.write('\n################ CONTCAR ################\n')
-       with open(files.CONTCAR, 'r') as contcar: outcar.write(contcar.read())
-       outcar.write('\n################ END CONTCAR ################\n')
+     with Changedir(directory) as pwd:
+       with open(files.OUTCAR, 'a') as outcar:
+         outcar.write('\n################ CONTCAR ################\n')
+         with open(files.CONTCAR, 'r') as contcar: outcar.write(contcar.read())
+         outcar.write('\n################ END CONTCAR ################\n')
+         outcar.write('\n################ INCAR ################\n')
+         with open(files.INCAR, 'r') as incar: outcar.write(incar.read())
+         outcar.write('\n################ END INCAR ################\n')
+         outcar.write('\n################ INITIAL STRUCTURE ################\n')
+         outcar.write(repr(structure))
+         outcar.write('\n################ END INITIAL STRUCTURE ################\n')
 
     
   def write_kpoints(self, file):

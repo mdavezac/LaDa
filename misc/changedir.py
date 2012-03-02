@@ -9,10 +9,8 @@ class Changedir:
       >>> with Changedir(path) as pwd:
       >>>   ...
   """
-  def __init__(self, pwd, comm = None): 
-    from ..mpi import Communicator
+  def __init__(self, pwd): 
     self.pwd = pwd
-    self.comm = Communicator(comm)
 
   def __enter__(self):
     """ Changes working directory """
@@ -21,12 +19,12 @@ class Changedir:
     
     self.oldpwd = getcwd()
 
-    if self.comm.is_root and not exists(self.pwd): makedirs(self.pwd)
-    self.comm.barrier()
-    assert exists(self.pwd), "Could not find working directory %s." % (self.pwd)
-    assert isdir(self.pwd), "%s is not a directory." % (self.pwd)
+    if not exists(self.pwd): makedirs(self.pwd)
+    if not exists(self.pwd):
+      raise IOError("Could not create working directory {0}".format(self.pwd))
+    if not isdir(self.pwd):
+      raise IOError("{0} is not a directory.".format(self.pwd))
     chdir(self.pwd)
-    self.comm.barrier()
 
     return self.pwd
 
@@ -34,7 +32,6 @@ class Changedir:
     """ Moves back to old pwd """
     from os import chdir
     from os.path import exists, isdir
-
-    assert exists(self.oldpwd) and isdir(self.oldpwd), "Old directory does not exist anymore."
+    if not (exists(self.oldpwd) or not isdir(self.oldpwd)):
+      raise IOError("Old directory does not exist anymore.")
     chdir(self.oldpwd)
-    self.comm.barrier()

@@ -2,7 +2,8 @@
 __docformat__ = "restructuredtext en"
 __all__ = [ "SpecialVaspParam", "NElect", "Algo", "Precision", "Ediff",\
             "Ediffg", "Encut", "EncutGW", "EncutLF", "FFTGrid", "Restart", "UParams", "IniWave",\
-            "Magmom", 'Npar', 'Boolean', 'Integer', 'Choices', 'PrecFock', 'NonScf']
+            "Magmom", 'Npar', 'Boolean', 'Integer', 'Choices', 'PrecFock', 'NonScf', \
+            "System" ]
 class SpecialVaspParam(object): 
   """ Base type for special vasp parameters. 
   
@@ -51,8 +52,32 @@ class Magmom(SpecialVaspParam):
       for i, m in tupled:
         if i == 1: result += "{0:.2f} ".format(m)
         else:      result += "{0}*{1:.2f} ".format(i, m)
-    return 'MAGMOM = {0}'.format(result)
+    return 'MAGMOM = {0}\n'.format(result)
   
+class System(SpecialVaspParam):
+  """ System title to use for calculation.
+
+      Adds system name to OUTCAR. If value is the python object ``True``, the
+      structure is checked for a ``name`` attribute.  If it is False or None,
+      SYSTEM is not added to the incar. In all other case, tries to convert the
+      result to a string and use that.
+
+      The call is protected by a try statement.
+  """
+
+  def __init__(self, value): super(System, self).__init__(value)
+
+  def incar_string(self, **kwargs):
+    if self.value is None or self.value is False: return None
+    try: 
+      if self.value is True: 
+        if not hasattr(kwargs["structure"], "name"): return None
+        name = kwargs["structure"].name.rstrip().lstrip()
+        if len(name) == 0: return None
+        return "SYSTEM = {0}".format(name)
+      return "SYSTEM = {0}".format(self.value)
+    except: return None
+    
 class Npar(SpecialVaspParam):
   """ Parallelization over bands. 
 
@@ -81,7 +106,6 @@ class Npar(SpecialVaspParam):
   def __init__(self, value): super(Npar, self).__init__(value)
 
   def incar_string(self, **kwargs):
-    from re import search
     from math import log, sqrt
     if self.value is None: return None
     if not isinstance(self.value, str): 
@@ -192,7 +216,7 @@ class Algo(SpecialVaspParam):
              or lower in [ "nothing", "subrot", "exact", \
                            "gw", "gw0", "chi", "scgw",   \
                            "scgw0"] ): 
-      raise ValueError, "algo value ({0}) is not valid with VASP 4.\n".format(value)
+      raise ValueError("algo value ({0}) is not valid with VASP 4.6.".format(value))
 
     if lower == "diag": value = "Diag"
     elif lower == "nothing": value = "Nothing"
@@ -211,7 +235,7 @@ class Algo(SpecialVaspParam):
     elif lower[0] == 'e': value = "Eigenval"
     else:
       self._value = None
-      raise ValueError("algo value ({0!r}) is invalid.\n".format(value))
+      raise ValueError("algo value ({0!r}) is invalid.".format(value))
     self._value = value
     
   def incar_string(self, **kwargs):

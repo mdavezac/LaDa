@@ -2,11 +2,12 @@
 __docformat__ = "restructuredtext en"
 __all__ = [ "SpecialVaspParam", "NElect", "Algo", "Precision", "Ediff",\
             "Encut", "FFTGrid", "Restart", "UParams", "IniWave", 'Ediffg', "EncutGW", \
-            "Incar", "Magmom", 'Npar', 'Boolean', 'Integer', 'Choices', 'PrecFock' ]
+            "Incar", "Magmom", 'Npar', 'Boolean', 'Integer', 'Choices', 'PrecFock',
+            "System" ]
 from _params import SpecialVaspParam, NElect, Algo, Precision, Ediff,\
                     Encut, FFTGrid, Restart, UParams, IniWave, Magmom,\
                     Npar, Boolean, Integer, PrecFock, NonScf, Ediffg, Choices, \
-                    EncutGW
+                    EncutGW, System
 from ...misc import add_setter
 
 
@@ -68,6 +69,7 @@ class Incar(object):
     self.npar        = Npar(None)
     self.precfock    = PrecFock(None)
     self.nonscf      = NonScf(False)
+    self.system      = System(True)
 
     self.lwave       = Boolean("lwave", False)
     self.lcharg      = Boolean("lcharg", True)
@@ -82,20 +84,19 @@ class Incar(object):
   def incar_lines(self, **kwargs):
     """ List of incar lines. """
 
-    structure = kwargs['structure']
-    # prints system name. This is not an option!
-    result = []
-    if hasattr(structure, "name"):
-      if len(structure.name) != 0:
-        result.append("SYSTEM = \"{0}\"\n".format(structure.name))
-
     # gathers special parameters.
     # Calls them first in case they change normal key/value pairs.
-    specials = []
+    result, specials, comments = [], [], []
     for key, value in self.special.items():
       if value.value is None: continue
       line = value.incar_string(**kwargs)
-      if line is not None: specials.append(line + "\n")
+      if line is None: continue
+      line = line.rstrip().lstrip()
+      if line[-1] != '\n': line += '\n'
+      if line[0] == '#': comments.append(line); continue
+      if '=' in line and line.find('=') < 18:
+        line = "{0: <{1}}".format(' ', 19 - line.find('=')) + line
+      specials.append(line)
     # prints key/value pairs
     for key, value in self.params.items():
       if value is None: continue
@@ -107,6 +108,8 @@ class Incar(object):
       result.append( "{0: >18s} = {1}\n".format(key.upper(), value))
     # adds special parameter lines.
     result.extend(specials)
+    result = sorted(result, key=lambda a: a.lstrip()[0])
+    result.extend(comments)
     return result
 
   @add_setter

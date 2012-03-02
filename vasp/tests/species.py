@@ -56,7 +56,6 @@ def test_enlep():
          and abs(a['U1'] + 5e0) < 1e-8 and a['func'] == 'enlep'
 
 def test_specie(directory):
-  from collections import namedtuple
   from os import environ
   from os.path import join, relpath, abspath
   from pickle import loads, dumps
@@ -79,7 +78,6 @@ def test_specie(directory):
 if __name__ == "__main__":
   from sys import argv, path 
   if len(argv) > 2: path.extend(argv[2:])
-  from lada.vasp.specie import U, nlep
   
   test_U()
   test_nlep()

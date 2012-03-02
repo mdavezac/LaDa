@@ -39,3 +39,37 @@ vasp
   .. py:data:: vasp_program
 
      Path to the vasp executable itself.
+
+mpi
+---
+
+  These variables are generally declared in config/mpi.py
+
+  .. py:data:: mpirun_exe 
+   
+     Format string to launch mpi programs. It accepts as arguments 
+     ``program``, ``commandline``, ``n``, ``ppn`` as well as anything you want
+     to throw at it:
+
+     - ``program``: program to launch
+     - ``cmdline``: command line arguments to lauch it with
+     - ``n``: number of processes to launch program
+     - ``ppn``: number of processes per nodes
+     
+     In general, it takes the following form:
+
+     >>> mpirun_exe = "mpirun -n {n} {program} {cmdline}
+
+     The actual commandline is executed by :py:func:`execute_program
+     <lada.misc.execute_program>`. The latter executes via `Popen`_ a
+     commandline obtained through the format function of a python string. The
+     arguments to format are those mentionned above as well as anything passed
+     on to :py:func:`execute_program <lada.misc.execute_program>`.
+
+     .. _Popen: http://null.com
+
+  .. py:data:: default_comm 
+
+     An dictionary with ``n`` and ``ppn``, as well as any other variable to be
+     used in conjunction with :py:data:`mpirun_exe`.
+

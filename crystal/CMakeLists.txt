@@ -13,6 +13,7 @@ set(LIBCRYSTAL_SOURCES atom/pybase.cc
                        utilities.cc primitive.cc equivalent_structures.cc
                        space_group.cc periodic_dnc.cc map_sites.cc
                        neighbors.cc coordination_shells.cc confsplit.cc )
+set(LIBCRYSTAL_PYSOURCES __init__.py read.py write.py)
 
 include_directories(${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDES})
 add_library (crystal SHARED ${LIBCRYSTAL_HEADERS} ${LIBCRYSTAL_PYHEADERS} ${LIBCRYSTAL_SOURCES})
@@ -24,7 +25,7 @@ target_link_libraries(pycrystal ${PYTHON_LIBRARY} crystal)
 set_target_properties(pycrystal PROPERTIES OUTPUT_NAME cppwrappers)
 set_target_properties(pycrystal PROPERTIES PREFIX "")
 install(TARGETS pycrystal DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/crystal)
-install(FILES __init__.py DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/crystal)
+install(FILES ${LIBCRYSTAL_PYSOURCES} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/crystal)
 
 if(compile_tests OR compile_debug_tests)
   add_subdirectory(tests)
