@@ -158,59 +158,80 @@ incar
 
    .. py:attribute:: Incar.lwave
 
-       Whether to write wavefunctions to disk. Defaults to False.
+      Whether to write wavefunctions to disk. Defaults to False.
 
-       .. seealso:: `LWAVE <http://cms.mpi.univie.ac.at/vasp/guide/node134.html>`_
+      .. seealso:: `LWAVE <http://cms.mpi.univie.ac.at/vasp/guide/node134.html>`_
 
    .. py:attribute:: Incar.lcharg
 
-       Whether to write the charge density to disk. Defaults to True.
+      Whether to write the charge density to disk. Defaults to True.
+      LaDa requires to be True, False, a string representing one the last two,
+      or None. 
 
-       .. seealso:: `LCHARG <http://cms.mpi.univie.ac.at/vasp/guide/node134.html>`_
+      .. seealso:: `LCHARG <http://cms.mpi.univie.ac.at/vasp/guide/node134.html>`_,
+                   :py:Class:`Boolean`_
 
    .. py:attribute:: Incar.lvtot
 
-       Whether to write the charge to disk. Defaults to False.
+      Whether to write the charge to disk. Defaults to False.
+      LaDa requires to be True, False, a string representing one the last two,
+      or None. 
 
-       .. seealso:: `LVTOT <http://cms.mpi.univie.ac.at/vasp/guide/node134.html>`_
+      .. seealso:: `LVTOT <http://cms.mpi.univie.ac.at/vasp/guide/node134.html>`_,
+                   :py:Class:`Boolean`_
 
    .. py:attribute:: Incar.lrpa
 
-       Whether to include RPA at the Hartree leval. Defaults to None.
+      Whether to include RPA at the Hartree leval. Defaults to None.
+      LaDa requires to be True, False, a string representing one the last two,
+      or None. 
 
-       .. seealso:: `LRPA <http://cms.mpi.univie.ac.at/vasp/vasp/LRPA_local_field_effects_on_Hartree_level_RPA.html>`_
+      .. seealso:: `LRPA <http://cms.mpi.univie.ac.at/vasp/vasp/LRPA_local_field_effects_on_Hartree_level_RPA.html>`_,
+                   :py:Class:`Boolean`_
 
    .. py:attribute:: Incar.loptics
 
-       Whether compute frequency dependent dieletric tensor. Defaults to None.
+      Whether compute frequency dependent dieletric tensor. Defaults to None.
+      LaDa requires to be True, False, a string representing one the last two,
+      or None. 
 
-       .. seealso:: `LOPTICS <http://cms.mpi.univie.ac.at/vasp/vasp/LOPTICS_frequency_dependent_dielectric_matrix.html>`_
+       .. seealso:: `LOPTICS <http://cms.mpi.univie.ac.at/vasp/vasp/LOPTICS_frequency_dependent_dielectric_matrix.html>`_,
+                   :py:Class:`Boolean`_
 
    .. py:attribute:: Incar.lpead
 
       Computes derivative of the wavefunctions with repect to crystal
       momentum using finite difference scheme. Defaults to None.
+      LaDa requires to be True, False, a string representing one the last two,
+      or None. 
 
-      .. seealso:: `LPEAD <http://cms.mpi.univie.ac.at/vasp/vasp/LPEAD_tag_IPEAD_tag_Derivative_orbitals_w_r_t_k_point.html>`_
+      .. seealso:: `LPEAD <http://cms.mpi.univie.ac.at/vasp/vasp/LPEAD_tag_IPEAD_tag_Derivative_orbitals_w_r_t_k_point.html>`_,
+                   :py:Class:`Boolean`_
 
    .. py:attribute:: Incar.nelm
 
       Maximum number of electronic minimization steps. Defaults to None.
+      LaDa requires this argument to be an integer or None.
 
-      .. seealso:: `NELM <http://cms.mpi.univie.ac.at/vasp/guide/node104.html>`_
+      .. seealso:: `NELM <http://cms.mpi.univie.ac.at/vasp/guide/node104.html>`_,
+                   :py:Class:`Integer`_
 
    .. py:attribute:: Incar.nelmin
 
       Minimum number of electronic minimization steps. Defaults to None.
+      LaDa requires this argument to be an integer or None.
 
-      .. seealso:: `NELMIN <http://cms.mpi.univie.ac.at/vasp/guide/node104.html>`_
+      .. seealso:: `NELMIN <http://cms.mpi.univie.ac.at/vasp/guide/node104.html>`_,
+                   :py:Class:`Integer`_
 
    .. py:attribute:: Incar.nelmdl
 
       Number of non-self-consistent electronic minimization steps at the
       start of the calculation. Defaults to None.
+      LaDa requires this argument to be an integer or None.
 
-      .. seealso:: `NELMDL <http://cms.mpi.univie.ac.at/vasp/guide/node104.html>`_
+      .. seealso:: `NELMDL <http://cms.mpi.univie.ac.at/vasp/guide/node104.html>`_,
+                   :py:Class:`Integer`_
 
    .. py:attribute:: Incar.nelect
 

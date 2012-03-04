@@ -4,8 +4,6 @@ __all__ = ['Extract']
 from quantities import g, cm, eV
 from ...functools import make_cached
 from ...functools.extract import search_factory
-from ...functools.json import array as json_array, \
-                              section as json_section, unit as json_unit
 
 OutcarSearchMixin = search_factory('OutcarSearchMixin', 'OUTCAR', __name__)
 
@@ -18,11 +16,17 @@ class Extract(object):
 
   @property 
   @make_cached
+  def ialgo(self):
+    """ Returns the kind of algorithms. """
+    result = self._find_first_OUTCAR(r"""^\s*IALGO\s*=\s*(\d+)\s*""")
+    return int(result.group(1))
+
+  @property 
+  @make_cached
   def algo(self):
     """ Returns the kind of algorithms. """
-    result = self._find_first_OUTCAR(r"""^\s*ALGO\s*=\s*(\S+)\s*""")
-    if result is None: return 'Normal'
-    return result.group(1).lower()
+    return { 68: 'Fast', 38: 'Normal', 48: 'Very Fast', 58: 'Conjugate',
+             53: 'Damped', 4: 'Subrot', 90: 'Exact', 2: 'Nothing'}[self.ialgo]
 
   @property
   def is_dft(self):
@@ -389,6 +393,12 @@ class Extract(object):
     """ Returns the kind of relaxation performed in this calculation. """
     from ..incar import Incar
     return Incar.relaxation.__get__(self)
+  
+  @property
+  def smearing(self): 
+    """ Returns the kind of smearing performed in this calculation. """
+    from ..incar import Incar
+    return Incar.smearing.__get__(self)
 
   @property
   @make_cached
@@ -456,6 +466,31 @@ class Extract(object):
 
   @property
   @make_cached
+  def precision(self):
+    """ Greps PREC from OUTCAR. """
+    result = self._find_first_OUTCAR(r"""\s*PREC\s*=\s*(\S*)\s+""")
+    if result is None: return None
+    if result.group(1) == "accura": return "accurate"
+    return result.group(1)
+
+  @property
+  @make_cached
+  def ediff(self):
+    """ Greps EDIFF from OUTCAR. """
+    result = self._find_first_OUTCAR(r"""\s*EDIFF\s*=\s*(\S+)\s+""")
+    if result is None: return None
+    return float(result.group(1))
+
+  @property
+  @make_cached
+  def ediffg(self):
+    """ Greps EDIFFG from OUTCAR. """
+    result = self._find_first_OUTCAR(r"""\s*EDIFFG\s*=\s*(\S+)\s+""")
+    if result is None: return None
+    return float(result.group(1))
+
+  @property
+  @make_cached
   def kpoints(self):
     """ Greps k-points from OUTCAR.
     
@@ -490,8 +525,6 @@ class Extract(object):
         return array(result, dtype="float64") 
 
   @property
-  @json_section("input")
-  @json_array("float64")
   @make_cached
   def multiplicity(self):
     """ Greps multiplicity of each k-point from OUTCAR. """
@@ -526,7 +559,6 @@ class Extract(object):
         return array([round(r*float(len(result))) for r in result], dtype="float64")
 
   @property 
-  @json_section("input")
   @make_cached
   def ispin(self):
     """ Greps ISPIN from OUTCAR. """
@@ -535,7 +567,6 @@ class Extract(object):
     return int(result.group(1))
 
   @property
-  @json_section("input")
   @make_cached
   def name(self):
     """ Greps POSCAR title from OUTCAR. """
@@ -632,7 +663,6 @@ class Extract(object):
     return results
 
   @property
-  @json_section("input")
   @make_cached
   def ionic_charges(self):
     """ Greps ionic_charges from OUTCAR."""
@@ -642,19 +672,17 @@ class Extract(object):
     return [float(u) for u in result.group(1).split()]
 
   @property
-  @json_section("input")
   @make_cached
   def valence(self):
     """ Greps number of valence bands from OUTCAR."""
     ionic = self.ionic_charges
     species = self.species
-    atoms = [u.type for u in self.structure.atoms]
+    atoms = [u.type for u in self.structure]
     result = 0
     for c, s in zip(ionic, species): result += c * atoms.count(s)
     return result
   
   @property
-  @json_section("input")
   @make_cached
   def nelect(self):
     """ Greps nelect from OUTCAR."""
@@ -664,11 +692,61 @@ class Extract(object):
     return float(result.group(1)) 
 
   @property
-  @json_section("input")
-  @make_cached
   def charge(self):
-    """ Greps total charge in the system from OUTCAR."""
-    return self.valence-self.nelect
+    """ Returns charge state of the system. """
+    return self.valence - self.charge
+
+  @property
+  def nonscf(self):
+    """ True if non-selfconsistent calculation. """
+    return self.icharg >= 10
+
+  @property
+  def lwave(self):
+    """ Greps LWAVE from OUTCAR. """
+    result = self._find_first_OUTCAR(r"""^\s*LWAVE\s*=\s*(\S)""")
+    if result == None: return None
+    return result.group(1) == 'T' 
+   
+  @property
+  def lcharg(self):
+    """ Greps LWAVE from OUTCAR. """
+    result = self._find_first_OUTCAR(r"""^\s*LCHARG\s*=\s*(\S)""")
+    if result == None: return None
+    return result.group(1) == 'T' 
+
+  @property
+  def lvtot(self):
+    """ Greps LVTOT from OUTCAR. """
+    result = self._find_first_OUTCAR(r"""^\s*LVTOT\s*=\s*(\S)""")
+    if result == None: return None
+    return result.group(1) == 'T' 
+
+  @property
+  def nelm(self):
+    """ Greps NELM from OUTCAR. """
+    result = self._find_first_OUTCAR(r"""^\s*NELM\s*=\s*(\d+)""")
+    if result == None: return None
+    return int(result.group(1))
+
+  @property
+  def nelmdl(self):
+    """ Greps NELMDL from OUTCAR. """
+    regex = r"""^\s*NELM\s*=\s*\d+\s*;"""\
+             """\s*NELMIN\s*=\s*\d+\s*;"""\
+             """\s*NELMDL\s*=\s*(\d+)"""
+    result = self._find_first_OUTCAR(regex)
+    if result == None: return None
+    return int(result.group(1))
+
+
+  @property
+  def nelmin(self):
+    """ Greps NELMIN from OUTCAR. """
+    regex = r"""^\s*NELM\s*=\s*\d+\s*;\s*NELMIN\s*=\s*(\d+)"""
+    result = self._find_first_OUTCAR(regex)
+    if result == None: return None
+    return int(result.group(1))
 
   @property
   @make_cached

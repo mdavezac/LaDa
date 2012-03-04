@@ -141,21 +141,17 @@ class Functional(Incar):
         - Saves pickle of self.
     """
     import cPickle
-    from . import files
     from ..crystal import specieset, write
     from ..misc.changedir import Changedir
+    from . import files, write_incar
 
     with Changedir(outdir) as tmpdir:
       # creates poscar file. Might be overwriten by restart.
       write.poscar(structure)
 
-      # creates incar file. Changedir makes sure that any calculations done to
-      # obtain incar will happen in the right directory.
-      incar_lines = self.incar_lines(structure=structure, vasp=self, comm=comm)
 
       # creates INCAR file. Note that POSCAR file might be overwritten here by Restart.
-      with open(files.INCAR, "w") as incar_file: 
-        incar_file.writelines(incar_lines)
+      write_incar(files.INCAR, self, structure, comm)
   
       # creates kpoints file
       with open(files.KPOINTS, "w") as kp_file: 

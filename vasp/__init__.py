@@ -42,3 +42,56 @@ def read_input(filepath="input.py", namespace=None):
   input_dict = {"Vasp": Functional, "U": specie.U, "nlep": specie.nlep, 'Extract': Extract}
   if namespace is not None: input_dict.update(namespace)
   return read_input(filepath, input_dict)
+
+def write_incar(path, functional, structure, comm=None):
+  """ Writes incar file. """
+  from lada import default_comm
+  from ..misc.relativepath import RelativePath
+
+  # check what type path is.
+  # if not a file, opens one an does recurrent call.
+  if path is None: path = "INCAR"
+  if not hasattr(path, "write"):
+    with open(RelativePath(path).path, "w") as file:
+      write_incar(file, functional, structure, comm=comm)
+    return
+
+  if comm is None: comm = default_comm
+  for line in functional.incar_lines(structure=structure, vasp=functional, comm=comm):
+    path.write(line)
+
+def read_incar(path, functional, structure):
+  """ Reads from INCAR file and modifies functional accordingly.
+  
+      Since the functional is meant to work for more than one structure, we
+      need the information from the structure this incar refers to.
+  """
+  from ..misc.relativepath import RelativePath
+
+  # check what type path is.
+  # if not a file, opens one an does recurrent call.
+  if path is None: path = "INCAR"
+  if not hasattr(path, "read"):
+    with open(RelativePath(path), "r") as file:
+      read_incar(file, functional, structure)
+
+  map = {}
+  for line in file:
+    if '#' in line: line = line[:line.find('#')]
+    if '=' not in line: continue
+    key = line[:line.find('=')].rstrip().lstrip()
+    value = line[line.find('=')+1:].rstrip().lstrip()
+    if '#' in value: value = value[:value.find('#')]
+    map[key] = value
+
+  keys = map.keys()
+  result = functional.copy()
+  for key in (set(keys) & result.params.keys()):
+    result.params[key] = map.pop(key)
+  for key in (set(keys) & result.params.keys()):
+    result.params[key] = map.pop(key)
+
+
+  
+
+

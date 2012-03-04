@@ -36,6 +36,11 @@ def test(directory=None):
   assert abs(a.sigma-0.2*eV) < 1e-6
   assert abs(a.ismear-1) < 1e-6
   assert abs(a.potim-0.5) < 1e-6
+  assert abs(a.istart-0) < 1e-6
+  assert abs(a.icharg-2) < 1e-6
+  assert a.precision == "accurate"
+  assert abs(a.ediff-2e-5) < 1e-8
+  assert abs(a.ediffg-2e-5) < 1e-8
 
 if __name__ == "__main__":
   from sys import argv, path 

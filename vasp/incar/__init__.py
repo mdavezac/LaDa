@@ -162,14 +162,20 @@ class Incar(object):
     result.extend([u for u in self.special.keys() if u[0] != '_'])
     return list(set(result))
 
-  @add_setter
-  def symmetries(self, value):
+  @property
+  def symmetries(self):
     """ Type of symmetry used in the calculation.
   
         This sets :py:attr:`isym` and :py:attr:`symprec` vasp tags. Can be
         "off" or a float corresponding to the tolerance used to determine
         symmetry operation. 
     """
+    if self.isym is None and self.symprec is None: return True
+    if self.isym is None: return self.symprec
+    if self.isym == 0: return False
+
+  @symmetries.setter
+  def symmetries(self, value):
     if value is None: self.isym = None
     elif str(value).lower() == "off" or value is "0" or value is False: self.params["isym"] = 0
     elif str(value).lower() == "on" or value is True or value is True:
@@ -180,8 +186,8 @@ class Incar(object):
        self.isym = None
     else: raise ValueError("Uknown value when setting symmetries ({0}).".format(value))
 
-  @add_setter
-  def smearing(self, args):
+  @property 
+  def smearing(self):
     """ Value of the smearing used in the calculation. 
   
         It can be specified as a string:
@@ -201,6 +207,12 @@ class Incar(object):
         - insulator is equivalent to "tetra bloechl".
         - if x is omitted a default value of 0.2eV is used.
     """
+    ismear = { -1: 'fermi', 0: 'gaussian', 1: 'metal', -5:'bloechl',
+               -4: 'tetra', 2: 'mp 2', 3: 'mp 3'}[self.ismear]
+    return ismear, self.isigma
+
+  @smearing.setter
+  def smearing(self, args):
     if args is None: 
       self.ismear, self.isigma = None, None
       return
@@ -238,10 +250,10 @@ class Incar(object):
       self.ismear = -4
       if has_second: self.isigma = second
     else: 
-      try: self._value = int(first)
-      except: raise ValueError("Unknown smearing value {0}.\n".format(value))
-      if self._value < 1:
-        raise ValueError("Unknown smearing value {0}.\n".format(value))
+      try: self.ismear = int(first)
+      except: raise ValueError("Unknown smearing value {0}.\n".format(first))
+      if self.ismear < 1:
+        raise ValueError("Unknown smearing value {0}.\n".format(first))
 
   @property
   def relaxation(self):

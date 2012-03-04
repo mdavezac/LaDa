@@ -63,6 +63,8 @@ class System(SpecialVaspParam):
       result to a string and use that.
 
       The call is protected by a try statement.
+
+      .. seealso:: `SYSTEM <http://cms.mpi.univie.ac.at/vasp/guide/node94.html>`_
   """
 
   def __init__(self, value): super(System, self).__init__(value)
@@ -252,16 +254,13 @@ class Ediff(SpecialVaspParam):
 
       .. seealso:: `EDIFF <http://cms.mpi.univie.ac.at/vasp/guide/node105.html>`_
   """
-  def __init__(self, value, name="ediff"):
+  def __init__(self, value):
     """ Creates *per atom* tolerance. """
     super(Ediff, self).__init__(value)
-    self.name = name
   def incar_string(self, **kwargs):
     if self.value is None: return 
-    if self.value < 0: 
-      return "{0} = {1} ".format(getattr(self, "name", "ediff").upper(), -self.value)
-    return "{0} = {1} ".format( getattr(self, "name", "ediff").upper(),
-                                self.value * float(len(kwargs["structure"])) )
+    if self.value < 0: return "EDIFF = {0} ".format(-self.value)
+    return "EDIFF = {0} ".format(self.value * float(len(kwargs["structure"])))
   def __repr__(self):
     return "{0.__class__.__name__}({0.value!r})".format(self)
 
