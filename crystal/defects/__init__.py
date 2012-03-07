@@ -2,10 +2,10 @@
 __docformat__ = "restructuredtext en"
 __all__ = [ 'inequivalent_sites', 'vacancy', 'substitution', 'charged_states', \
             'band_filling', 'potential_alignment', 'charge_corrections', \
-            'magmom', 'low_spin_states', 'high_spin_states', 'magname', \
-            'ExtractSingle', 'ExtractMaterial' ]
+            'magmom', 'low_spin_states', 'high_spin_states', 'magname' ]
+#           'ExtractSingle', 'ExtractMaterial' ]
 
-from extract import Single as ExtractSingle, Material as ExtractMaterial
+# from extract import Single as ExtractSingle, Material as ExtractMaterial
 
 def symmetrically_inequivalent_sites(lattice, type):
   """ Yields sites occupied by type which are inequivalent according to symmetry operations. 

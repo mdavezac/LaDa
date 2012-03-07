@@ -70,7 +70,7 @@ def saveto(self, event):
   if len(args) == 0: 
     if path is None: 
       ip.user_ns["_lada_error"] = "No current job-dictionary path.\n"\
-                                  "Please specify on input, eg"\
+                                  "Please specify on input, eg\n"\
                                   ">saveto this/path/filename"
       print ip.user_ns["_lada_error"] 
       return

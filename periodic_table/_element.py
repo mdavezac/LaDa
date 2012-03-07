@@ -239,6 +239,8 @@ class Element(object):
     if self.atomic_number > 57 and self.atomic_number < 72: return "Lanthanide"
     elif self.atomic_number > 89 and self.atomic_number < 104: return "Actinide"
     last = self.electronic_configuration[-1]
+    if self.atomic_number in [1, 3, 4, 11, 12]: 
+      return last.get('s', 0) + last.get('p', 0) + last.get('d', 0)
     return last.get('s', 0) + last.get('p', 0) + last.get('d', 10)
 
   @property

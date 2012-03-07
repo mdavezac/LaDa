@@ -1,3 +1,6 @@
+import sys
+import DLFCN
+sys.setdlopenflags(DLFCN.RTLD_NOW)
 from math import fabs as abs
 from numpy import array
 from lada.crystal import fill_structure
