@@ -2,6 +2,7 @@ from numpy import dot
 from lada.crystal import fill_structure, FreezeAtom
 from lada.vasp import read_input
 from lada.vasp.emass import reciprocal
+from lada.vasp.methods import epi_relaxation
 from lada.mpi import world
 
 input = read_input("input.py")
@@ -20,4 +21,5 @@ input.relaxer.vasp.vasp_library = "libvasp-4.6.so"
 comm = world
 
 
-result = reciprocal(input.relaxer, structure, outdir="results", stepsize=0.1, order=4, comm=comm)
+result = epi_relaxation(input.relaxer.vasp, structure, outdir="results", comm=comm, epiconv=1e-4, isif=2)
+result = reciprocal(input.relaxer.vasp, structure, outdir="results", stepsize=0.1, order=2, comm=comm)

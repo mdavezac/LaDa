@@ -2,10 +2,11 @@
 __docformat__ = "restructuredtext en"
 __all__ = [ "SpecialVaspParam", "NElect", "Algo", "Precision", "Ediff",\
             "Encut", "FFTGrid", "Restart", "UParams", "IniWave",\
-            "Incar", "Magmom", 'Npar', 'Boolean', 'Integer', 'Choices', 'PrecFock' ]
+            "Incar", "Magmom", 'Npar', 'Boolean', 'Integer', 'Choices',\
+            'PartialRestart', 'PrecFock', 'NonScf' ]
 from _params import SpecialVaspParam, NElect, Algo, Precision, Ediff,\
                     Encut, FFTGrid, Restart, UParams, IniWave, Magmom,\
-                    Npar, Boolean, Integer, PrecFock, NonScf
+                    Npar, Boolean, Integer, PrecFock, NonScf, PartialRestart
 from ...opt.decorators import add_setter
 
 
@@ -215,7 +216,8 @@ class Incar(object):
     if isinstance(value, SpecialVaspParam):
       if name in self.params: del self.params[name]
       self.special[name] = value
-    elif name in self.params: self.params[name] = value
+    elif name in self.params:
+      self.params[name] = value
     elif name in self.special: self.special[name].value = value
     else: super(Incar, self).__setattr__(name, value)
 
@@ -360,7 +362,7 @@ class Incar(object):
 
     # static calculation.
     if (not ionic) and (not cellshape) and (not volume):
-      self.params["isif"] = 1
+      self.params["isif"] = 2
       self.params["ibrion"] = -1
       assert ibrion is None or ibrion == -1, \
              ValueError("Cannot set ibrion to anything but -1 for static calculations.")
@@ -371,7 +373,7 @@ class Incar(object):
 
     else: # Some kind of relaxations. 
       # ionic calculation.
-      if ionic and (not cellshape) and (not volume):   self.params["isif"] = 1
+      if ionic and (not cellshape) and (not volume):   self.params["isif"] = 2
       elif ionic and cellshape and (not volume):       self.params["isif"] = 4
       elif ionic and cellshape and volume:             self.params["isif"] = 3
       elif (not ionic) and cellshape and volume:       self.params["isif"] = 6

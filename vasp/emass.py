@@ -127,7 +127,7 @@ class Extract(ExtractDFT):
   def tensors(self, order=2, kmag=True, lstsq=None, tolerance=None, **kwargs):
     """ Return tensors listed by order. 
     
-        Within each order, the tensors are listed as spin then
+        Within each order, the tensors are listed as order then spin then
         bands if ispin == 2. In spin-degenerate cases, they are listed per band
         only.
     """

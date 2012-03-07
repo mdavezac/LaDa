@@ -666,6 +666,56 @@ class Extract(object):
     assert result is not None, RuntimeError("Could not find NBANDS in OUTCAR.")
     return int(result.group(1))
 
+  @property
+  @make_cached
+  def stress(self):
+    """ Returns total stress.
+    
+        Compute from sum of components since it allows for more digits.
+    """
+    from numpy import zeros, abs, dot
+    from numpy.linalg import det
+    from quantities import eV, J, kbar
+    if self.isif < 2: return None
+    with self.__outcar__() as file:
+      for line in file:
+        line = line.split()
+        if len(line) != 7: continue
+        if line[0] != "Direction": continue
+        if line[1] != "X": continue
+        if line[2] != "Y": continue
+        if line[3] != "Z": continue
+        if line[4] != "XY": continue
+        if line[5] != "YZ": continue
+        if line[6] == "ZX": break;
+      file.next()
+      result = zeros((3,3), dtype="float64")
+      line = file.next(); data = line.split()
+      result[0,0] += float(data[2])
+      result[1,1] += float(data[3])
+      result[2,2] += float(data[4])
+      for i, line in zip(xrange(7), file):
+        data = line.split()
+        result[0,0] += float(data[1])
+        result[1,1] += float(data[2])
+        result[2,2] += float(data[3])
+        result[0,1] += float(data[4])
+        result[1,0] += float(data[4])
+        result[1,2] += float(data[5])
+        result[2,1] += float(data[5])
+        result[0,2] += float(data[6])
+        result[2,0] += float(data[6])
+      # symmetrize tensor according to space group operations.
+      space_group = self.structure.to_lattice().space_group
+      stress = result.copy()
+      for op in space_group: stress += dot(dot(op.op.T, result), op.op)
+      result = stress / float(len(space_group)+1)
+
+      # now have stress in eV per reduced length...
+      # use scale from vasp's main.F
+      return result * float(eV.rescale(J) * 1e22\
+             / abs(det(self.structure.cell*self.structure.scale))) * kbar
+
 
   def iterfiles(self, **kwargs):
     """ iterates over input/output files. 

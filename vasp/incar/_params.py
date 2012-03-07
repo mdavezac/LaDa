@@ -3,7 +3,7 @@ __docformat__ = "restructuredtext en"
 __all__ = [ "SpecialVaspParam", "NElect", "Algo", "Precision", "Ediff",\
             "Encut", "FFTGrid", "Restart", "UParams", "IniWave",\
             "Magmom", 'Npar', 'Boolean', 'Integer', 'Choices', 'PrecFock', \
-            'NonScf' ]
+            'NonScf', 'PartialRestart' ]
 from ...opt.decorators import broadcast_result
 class SpecialVaspParam(object): 
   """ Type checking class. """
@@ -295,12 +295,13 @@ class FFTGrid(SpecialVaspParam):
       # finally extracts from OUTCAR.
       return Extract(directory = vasp._tempdir, comm = comm).fft
 
-class Restart(SpecialVaspParam):
+class PartialRestart(SpecialVaspParam):
   """ Return from previous run from which to restart.
       
       If None, then starts from scratch.
+      Never copies POSCAR file. See Restart for that.
   """
-  def __init__(self, value): super(Restart, self).__init__(value)
+  def __init__(self, value): super(PartialRestart, self).__init__(value)
 
   def incar_string(self, vasp, *args, **kwargs):
     from os.path import join, exists, getsize
@@ -340,13 +341,30 @@ class Restart(SpecialVaspParam):
         icharg = "{0}   # superpositions of atomic densities".format(12 if nonscf else 2)
       if comm.is_root:
         copyfile(join(self.value.directory, files.EIGENVALUES), nothrow='same exists') 
-        copyfile(join(self.value.directory, files.CONTCAR), files.POSCAR,\
-                 nothrow='same exists', symlink=getattr(vasp, 'symlink', False),\
-                 nocopyempty=True) 
         copyfile(join(self.value.directory, files.WAVEDER), files.WAVEDER,
                  nothrow='same exists', symlink=getattr(vasp, 'symlink', False)) 
       comm.barrier()
     return  "ISTART = %s\nICHARG = %s" % (istart, icharg)
+
+class Restart(PartialRestart):
+  """ Return from previous run from which to restart.
+      
+      If None, then starts from scratch.
+  """
+  def __init__(self, value): super(Restart, self).__init__(value)
+
+  def incar_string(self, vasp, *args, **kwargs):
+    from os.path import join
+    from ...opt import copyfile
+    from ...mpi import Communicator
+    from .. import files
+    comm = Communicator(kwargs.get("comm", None))
+    result = super(Restart, self).incar_string(vasp, *args, **kwargs)
+    if self.value is not None and self.value.success and comm.is_root:
+      copyfile(join(self.value.directory, files.CONTCAR), files.POSCAR,\
+               nothrow='same exists', symlink=getattr(vasp, 'symlink', False),\
+               nocopyempty=True) 
+    return result
 
 class NonScf(SpecialVaspParam):
   """ Return from previous run from which to restart.
