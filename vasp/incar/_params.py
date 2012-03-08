@@ -749,13 +749,12 @@ class Relaxation(SpecialVaspParam):
     import re
 
     if 'nsw'    not in self.__dict__: self.nsw    = None
-    if 'isif'   not in self.__dict__: self.potim  = None
+    if 'isif'   not in self.__dict__: self.isif   = None
     if 'ibrion' not in self.__dict__: self.ibrion = None
     if 'potim'  not in self.__dict__: self.potim  = None
     if args == None: 
       self.isif = None
       return
-    print "HERE"
 
     isif, nsw, ibrion, potim = None, None, None, None
     if not isinstance(args, str):
