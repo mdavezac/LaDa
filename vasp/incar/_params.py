@@ -755,6 +755,7 @@ class Relaxation(SpecialVaspParam):
     if args == None: 
       self.isif = None
       return
+    print "HERE"
 
     isif, nsw, ibrion, potim = None, None, None, None
     if not isinstance(args, str):
