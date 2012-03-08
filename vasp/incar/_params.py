@@ -15,7 +15,7 @@ class SpecialVaspParam(object):
     super(SpecialVaspParam, self).__init__()
     self.value = value
     """ Value derived classes will do something with. """
-  def __repr__(self): return "{0.__class__.__name__}({1})".format(self, repr(self.value))
+  def __repr__(self): return "{0.__class__.__name__}({1!r})".format(self, self.value)
 
 class Magmom(SpecialVaspParam):
   """ Sets the initial magnetic moments on each atom.
@@ -721,8 +721,8 @@ class Relaxation(SpecialVaspParam):
       .. _ibrion: http://cms.mpi.univie.ac.at/vasp/guide/node110.html
       .. _potim: http://cms.mpi.univie.ac.at/vasp/vasp/POTIM_tag.html
   """
-  def __init__(self, value): 
-    super(Relaxation, self).__init__(value)
+  def __init__(self, isif=None, nsw=None, ibrion=None, potim=None): 
+    super(Relaxation, self).__init__((isif, nsw, ibrion, potim))
 
   @property
   def value(self):
@@ -760,10 +760,11 @@ class Relaxation(SpecialVaspParam):
     if not isinstance(args, str):
       if len(args) > 0:
         if hasattr(args[0], 'lower'): dof = args[0].lower().rstrip().lstrip()
+        elif args[0] is None: isif, dof = None, None
         else: isif, dof = int(args[0]), None
-      if len(args) > 1: nsw    = int(args[1])
-      if len(args) > 2: ibrion = int(args[2])
-      if len(args) > 3: potim  = int(args[3])
+      if len(args) > 1 and args[1] is not None: nsw    = int(args[1])
+      if len(args) > 2 and args[2] is not None: ibrion = int(args[2])
+      if len(args) > 3 and args[3] is not None: potim  = float(args[3])
     elif hasattr(args, 'lower'): dof = args.lower().rstrip().lstrip()
     else: isif, dof = int(args), None
 
@@ -807,8 +808,19 @@ class Relaxation(SpecialVaspParam):
     if self.potim != None and self.ibrion != -1 and self.nsw != 0:
       result += "POTIM = {0}\n".format(self.potim)
     if self.ibrion != None: result += "IBRION = {0}\n".format(self.ibrion)
-    if self.ibrion != -1 and kwargs['vasp'].ediffg is not None:
-      if kwargs['vasp'].ediffg < kwargs['vasp'].ediff\
-         and kwargs['vasp'].ediffg > 0 and kwargs['vasp'].ediff > 0: 
+    vasp = kwargs['vasp']
+    structure = kwargs['structure']
+    if self.ibrion != -1 and vasp.ediffg is not None:
+      if vasp.ediffg < vasp.ediff and vasp.ediffg > 0 and vasp.ediff > 0: 
         raise RuntimeError("Using ediffg (positive) smaller than ediff does not make sense.")
+      if vasp.ediffg > 0 and vasp.ediff < 0 and abs(vasp.ediff) > vasp.ediffg * float(len(structure)): 
+        raise RuntimeError("Using ediffg (positive) smaller than ediff does not make sense.")
+    if result[-1] == '\n': result = result[:-1]
     return result
+
+  def __repr__(self):
+    value = self.value
+    if value is None: return "{0.__class__.__name__}(None)".format(self)
+    if isinstance(value, str):  return "{0.__class__.__name__}({1!r})".format(self, value)
+    return "{0.__class__.__name__}({1})".format(self, repr(self.value)[1:-1])
+
