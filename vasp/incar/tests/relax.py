@@ -1,39 +1,27 @@
 """ Check relaxation property. """
 def test():
-  from lada.vasp.incar import Incar
+  from lada.vasp.incar import Relaxation
 
-  a = Incar()
-  assert a.relaxation == "static"
-  assert a.isif == 1 and (a.ibrion == -1 or a.ibrion is None) and (a.nsw is None or a.nsw == 0)
-  assert a.relaxation == "static"
-  a.relaxation = "volume"
-  assert a.relaxation == "volume"
-  assert a.isif == 7 and a.ibrion == 2 and a.nsw == 50
-  a.relaxation = "ions"
-  assert a.relaxation == "ionic"
-  assert a.isif == 1 and a.ibrion == 2 and a.nsw == 50
-  a.relaxation = "cellshape"
-  assert a.relaxation == "cellshape"
-  assert a.isif == 5 and a.ibrion == 2 and a.nsw == 50
-  a.relaxation = "volume"
-  assert a.relaxation == "volume"
-  assert a.isif == 7 and a.ibrion == 2 and a.nsw == 50
-  a.relaxation = "volume cellshape"
-  assert set(a.relaxation.split()) == set(["volume", "cellshape"])
-  assert a.isif == 6 and a.ibrion == 2 and a.nsw == 50
-  a.relaxation = "ionic cellshape"
-  assert set(a.relaxation.split()) == set(["ionic", "cellshape"])
-  assert a.isif == 4 and a.ibrion == 2 and a.nsw == 50
-  a.relaxation = "ionic cellshape volume"
-  assert set(a.relaxation.split()) == set(["ionic", "cellshape", "volume"])
-  assert a.isif == 3 and a.ibrion == 2 and a.nsw == 50
-  try: a.relaxation = "ionic volume"
+  assert Relaxation(None).value is None
+  assert Relaxation("static").value    == "static"
+  assert Relaxation("cellshape").value == "cellshape"
+  assert Relaxation("ionic").value     == "ionic"
+  assert Relaxation("volume").value    == "volume"
+  assert set(Relaxation("ionic cellshape").value.split()) == set(["cellshape", 'ionic'])
+  assert set(Relaxation("ionic cellshape volume").value.split()) == set(["cellshape", 'ionic', 'volume'])
+  try: set(Relaxation("ionic volume").value.split())
   except: pass
   else: raise RuntimeError()
-  a.relaxation = "ionic cellshape volume", 3
-  try: a.relaxation = "wtf"
-  except: pass
-  else: raise RuntimeError()
+
+  assert Relaxation(('ionic', 50)).value == 'ionic'
+  assert Relaxation(('ionic', 60)).value == ('ionic', 60)
+  assert Relaxation(('ionic cellshape', 60, -1)).value == ('static', 60)
+  assert Relaxation(('ionic cellshape', 60, 2)).value == ('ionic cellshape', 60, 2)
+  assert Relaxation(('cellshape ionic', 60, 2)).value == ('ionic cellshape', 60, 2)
+  assert Relaxation(('cellshape volume ionic', 60, 2, 50)).value == ('ionic cellshape volume', 60, 2, 50)
+  assert repr(Relaxation(('cellshape volume ionic', 60, 2, 50)))\
+            == "Relaxation(('ionic cellshape volume', 60, 2, 50))"
+
 
 if __name__ == "__main__":
   from sys import argv, path 

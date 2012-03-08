@@ -20,10 +20,10 @@ class AbstractExtractBase(object):
     object.__init__(self)
 
     from os import getcwd
-    from ..misc import RelativeDirectory
+    from ..misc import RelativePath
 
     if directory is None: directory = getcwd()
-    self._directory = RelativeDirectory(directory, hook=self.__directory_hook__)
+    self._directory = RelativePath(directory, hook=self.__directory_hook__)
     """ Directory where output should be found. """
 
   @property
@@ -53,10 +53,10 @@ class AbstractExtractBase(object):
 
   def __copy__(self):
     """ Returns a shallow copy of this object. """
-    from ..misc import RelativeDirectory
+    from ..misc import RelativePath
     result = self.__class__(directory=self.directory)
     result.__dict__ = self.__dict__.copy()
-    result._directory = RelativeDirectory( self._directory.path,\
+    result._directory = RelativePath( self._directory.path,\
                                            self._directory._envvar, 
                                            result.uncache )
     return result

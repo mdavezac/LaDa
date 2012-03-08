@@ -108,7 +108,7 @@ class Functional(Incar):
 
     # check for pre-existing and successfull run.
     if not overwrite:
-      extract = self.Extract(outcar=outdir)
+      extract = self.Extract(outdir)
       if extract.success:
         yield extract # in which case, returns extraction object.
         return
@@ -143,7 +143,7 @@ class Functional(Incar):
     import cPickle
     from ..crystal import specieset, write
     from ..misc.changedir import Changedir
-    from . import files, write_incar
+    from . import files
 
     with Changedir(outdir) as tmpdir:
       # creates poscar file. Might be overwriten by restart.
@@ -151,7 +151,7 @@ class Functional(Incar):
 
 
       # creates INCAR file. Note that POSCAR file might be overwritten here by Restart.
-      write_incar(files.INCAR, self, structure, comm)
+      self.write_incar(structure, comm=comm)
   
       # creates kpoints file
       with open(files.KPOINTS, "w") as kp_file: 
@@ -169,7 +169,7 @@ class Functional(Incar):
   def bringdown(self, directory, structure):
      """ Copies contcar to outcar. """
      from . import files
-     from ..misc.changedir import Changedir
+     from ..misc import Changedir
 
      # Appends INCAR and CONTCAR to OUTCAR:
      with Changedir(directory) as pwd:
@@ -183,6 +183,28 @@ class Functional(Incar):
          outcar.write('\n################ INITIAL STRUCTURE ################\n')
          outcar.write(repr(structure))
          outcar.write('\n################ END INITIAL STRUCTURE ################\n')
+         outcar.write('\n################ FUNCTIONAL ################\n')
+         outcar.write(repr(self))
+         outcar.write('\n################ END FUNCTIONAL ################\n')
+
+
+  def write_incar(self, structure, path=None, comm=None):
+    """ Writes incar file. """
+    from lada import default_comm
+    from ..misc import RelativePath
+    from .files import INCAR
+
+    # check what type path is.
+    # if not a file, opens one an does recurrent call.
+    if path is None: path = INCAR
+    if not hasattr(path, "write"):
+      with open(RelativePath(path).path, "w") as file:
+        self.write_incar(structure, path=file, comm=comm)
+      return
+
+    if comm is None: comm = default_comm
+    for line in self.incar_lines(structure=structure, vasp=self, comm=comm):
+      path.write(line)
 
     
   def write_kpoints(self, file):
@@ -197,7 +219,6 @@ class Functional(Incar):
   def __repr__(self):
     """ Returns a python script representing this object. """
     from .incar._params import SpecialVaspParam
-    string = "functional = %s()\n" % (self.__class__.__name__)
 
     # creates a default vasp instance to compare to.
     compare = self.__class__()
@@ -206,49 +227,107 @@ class Functional(Incar):
     # will hold classes from modules.
     modules = {}
     modules[self.__class__.__module__] = [self.__class__.__name__]
-    # now go through vasp parameters and print them out.
+    addparam = {}
+    noaddparam = {}
+    special = {}
+    # now gather vasp parameters and check their length.
     for name, value in self.params.items():
       if value is None: continue
-      # if a special parameter, then is non-default.
-      if name in params: string += "functional.%s = %s\n" % (name, repr(value))
+      if name in params:
+        if value is None: continue
+        try: # check if is default.
+          if value == compare.params[name]: continue
+        except: pass
+        noaddparam[name] = len(name), value
       else:
-        string += "functional.add_param = \"%s\", %s\n" % (name, repr(value))
+        if value is None: continue
+        addparam[name] = len(name), value
         module = value.__class__.__module__ 
         classname = value.__class__.__name__ 
         if module in modules: modules[module].append(classname)
         else: modules[module] = [classname]
+    # if a special parameter, then is non-default.
     for name, value in self.special.items():
       if value.value is None: continue
-      assert isinstance(value, SpecialVaspParam)
-      string += "functional.{0} = {1}\n".format(name, repr(value))
+      try: # check if is default.
+        if value.__class__ is compare.special[name].__class__ \
+           and getattr(self, name) == getattr(compare, name): continue
+      except: pass
+      try: 
+        if value.__class__ is compare.special[name].__class__:
+          noaddparam[name] = len(name), value.value
+          continue
+      except: pass
+      special[name] = len(name), value
       module = value.__class__.__module__ 
       classname = value.__class__.__name__ 
       if module in modules: modules[module].append(classname)
       else: modules[module] = [classname]
     # adds kpoints
-    string += "functional.kpoints = %s\n" % (repr(self.kpoints))
+    noaddparam['kpoints'] = len('kpoints'), self.kpoints
     if hasattr(self.kpoints, "__call__"):
       # checks for user module.
       module = self.kpoints.__class__.__module__ 
       classname = self.kpoints.__class__.__name__ 
       if module in modules: modules[module].append(classname)
       else: modules[module] = [classname]
-    # adds species.
-    for name, specie in self.species.items():
-      string += "functional.species['{0}'] = {1}\n".format(name, repr(specie))
-      module = specie.__class__.__module__ 
-      classname = specie.__class__.__name__ 
-      if module in modules: modules[module].append(classname)
-      else: modules[module] = [classname]
     if not self.restart_from_contcar: 
-      string += "functional.restart_from_contcar = False\n"
+      noaddparam['restart_from_contcar'] = len('restart_from_contcar'), False
+
+    # now write stuff to string.
+    string = "functional = {0.__class__.__name__}()\n".format(self)
+
+    def sortme(a): return a.lower()
+    l = [k for k in noaddparam.iterkeys() if k[0] != '_']
+    if len(l) != 0:
+      length = max([len(k) for k in l])
+      for key in sorted(l, key=sortme):
+        string += 'functional.{0:<{length}} = {1[1]!r}\n'.format(key, noaddparam[key], length=length)
+    l = [k for k in addparam.iterkeys() if k[0] != '_']
+    if len(l) != 0:
+      length = max([len(k) for k in l])
+      for key in sorted(l, key=sortme):
+        string += 'functional.add_param = {0!r: >{length}}, {1[1]!r}\n'\
+                  .format(key, addoparam[key], length=length)
+    l = [k for k in noaddparam.iterkeys() if k[0] == '_']
+    if len(l) != 0:
+      length = max([len(k) for k in l])
+      for key in sorted(l, key=sortme):
+        string += 'functional.{0:<{length}} = {1[1]!r}\n'.format(key, noaddparam[key], length=length)
+    l = [k for k in addparam.iterkeys() if k[0] == '_']
+    if len(l) != 0:
+      length = max([len(k) for k in l])
+      for key in sorted(l, key=sortme):
+        string += 'functional.add_param = {0!r: >{length}}, {1[1]!r}\n'\
+                  .format(key, addoparam[key], length=length)
+    l = [k for k in special.iterkeys() if k[0] != '_']
+    if len(l) != 0:
+      length = max([len(k) for k in l])
+      for key in sorted(l, key=sortme):
+        string += 'functional.{0:<{length}} = {1[1]!r}\n'.format(key, special[key], length=length)
+    l = [k for k in special.iterkeys() if k[0] == '_']
+    if len(l) != 0:
+      length = max([len(k) for k in l])
+      for key in sorted(l, key=sortme):
+        string += 'functional.add_param = {0!r: >{length}}, {1[1]!r}\n'\
+                  .format(key, special[key], length=length)
+
+    # adds species.
+    if len(self.species) > 0:
+      length = max([len(k) for k in self.species])
+      for name, specie in self.species.items():
+        string += "functional.species[{0!r}] {2:<{3}}= {1!r}\n".format(name, specie, '', length-len(name))
+        module = specie.__class__.__module__ 
+        classname = specie.__class__.__name__ 
+        if module in modules: modules[module].append(classname)
+        else: modules[module] = [classname]
 
     # adds user modules above repr string.
     header = ""
     for name in sorted(modules.keys()):
       mods = list(set(modules[name]))
-      header += "from %s import %s" % (name, mods[0])
-      for v in mods[1:]: header += ", %s" % (v)
+      header += "from {0} import {1}".format(name, mods[0])
+      for v in mods[1:]: header += ", {0}".format(v)
       header += "\n"
     return header + string
 

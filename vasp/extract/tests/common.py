@@ -5,11 +5,11 @@ def test(directory=None):
   from quantities import eV
 
   a = Extract(directory=join(directory, 'COMMON'))
-  assert a.algo   == "fast"
+  assert a.success == True
+  assert a.algo   == "Fast"
   assert a.is_dft == True
   assert a.is_gw  == False
   assert abs(a.encut - 245.3*eV) < 1e-8
-  assert a.success == True
   assert repr(a.datetime) == 'datetime.datetime(2012, 3, 1, 9, 11, 26)'
   assert a.LDAUType is None
   assert len(a.HubbardU_NLEP) == 0
@@ -40,7 +40,7 @@ def test(directory=None):
   assert abs(a.icharg-2) < 1e-6
   assert a.precision == "accurate"
   assert abs(a.ediff-2e-5) < 1e-8
-  assert abs(a.ediffg-2e-5) < 1e-8
+  assert abs(a.ediffg-2e-4) < 1e-8
 
 if __name__ == "__main__":
   from sys import argv, path 

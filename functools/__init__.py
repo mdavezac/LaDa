@@ -11,10 +11,10 @@ def stateless(function):
   def wrapper(self, structure, outdir=None, **kwargs ):
     from copy import deepcopy
     from os import getcwd
-    from ..misc import RelativeDirectory
+    from ..misc import RelativePath
     structure = deepcopy(structure)
     self      = deepcopy(self)
-    outdir    = getcwd() if outdir is None else RelativeDirectory(outdir).path
+    outdir    = getcwd() if outdir is None else RelativePath(outdir).path
     return function(self, structure, outdir, **kwargs)
   return wrapper
 

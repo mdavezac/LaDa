@@ -118,9 +118,9 @@ class Specie(object):
         :param kwargs:
             Any other keyworkd argument is added as an attribute of this object.
     """
-    from ..misc import RelativeDirectory
+    from ..misc import RelativePath
 
-    self._directory = RelativeDirectory(directory)
+    self._directory = RelativePath(directory)
     if oxidation is not None: self.oxidation = oxidation
     if U is None: self.U = []
     elif isinstance(U, dict): self.U = [U]
@@ -190,5 +190,5 @@ class Specie(object):
     """
     self.__dict__.update(dictionary)
     if "path" in self.__dict__ and "_directory" not in self.__dict__:
-      from ..misc import RelativeDirectory
-      self._directory = RelativeDirectory(self.__dict__.pop("path"))
+      from ..misc import RelativePath
+      self._directory = RelativePath(self.__dict__.pop("path"))

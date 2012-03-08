@@ -4,7 +4,7 @@
     environment variables defined in both.
 """
 
-class RelativeDirectory(object):
+class RelativePath(object):
   """ Directory property which is relative to the user's home.
   
       The path which is returned (eg __get__) is always absolute. However,
@@ -67,7 +67,7 @@ class RelativeDirectory(object):
             This function will be called if/when the directory is changed. Note
             that it may be lost during pickling if it is not itself pickelable.
     """
-    super(RelativeDirectory, self).__init__()
+    super(RelativePath, self).__init__()
 
     self._relative = None
     """ Private path relative to fixed point. """

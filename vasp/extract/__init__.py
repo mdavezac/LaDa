@@ -24,11 +24,11 @@ class ExtractCommon(AbstractExtractBase, ExtractCommonBase, IOMixin):
             named "OUTCAR".
     """
     from os.path import exists, isdir, basename, dirname
-    from ...misc import RelativeDirectory
+    from ...misc import RelativePath
        
     outcar = None
     if directory is not None:
-      directory = RelativeDirectory(directory).path
+      directory = RelativePath(directory).path
       if exists(directory) and not isdir(directory):
         outcar = basename(directory)
         directory = dirname(directory)
@@ -66,9 +66,9 @@ def Extract(directory=None, **kwargs):
   """
   from os import getcwd
   from os.path import exists, isdir, join
-  from ...misc import RelativeDirectory
+  from ...misc import RelativePath
   # checks for GW calculations.
-  directory = getcwd() if directory is None else RelativeDirectory(directory).path
+  directory = getcwd() if directory is None else RelativePath(directory).path
   if exists(join(directory, 'GW')):
     from os.path import basename
     from glob import iglob
@@ -121,7 +121,7 @@ else:
       from os import getcwd
       from os.path import exists, isdir
       from . import Extract as VaspExtract
-      from ...misc import RelativeDirectory
+      from ...misc import RelativePath
 
       # this will throw on unknown kwargs arguments.
       jobs.AbstractMassExtract.__init__(self, **kwargs)
@@ -130,7 +130,7 @@ else:
       """ Extraction class to use. """
 
       if path is None: path = getcwd()
-      self._rootdir = RelativeDirectory(path, hook=self.uncache)
+      self._rootdir = RelativePath(path, hook=self.uncache)
       """ Root of the directory-tree to trawl for OUTCARs. """
       
       self.OUTCAR = "OUTCAR"

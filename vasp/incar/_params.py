@@ -3,7 +3,7 @@ __docformat__ = "restructuredtext en"
 __all__ = [ "SpecialVaspParam", "NElect", "Algo", "Precision", "Ediff",\
             "Ediffg", "Encut", "EncutGW", "EncutLF", "FFTGrid", "Restart", "UParams", "IniWave",\
             "Magmom", 'Npar', 'Boolean', 'Integer', 'Choices', 'PrecFock', 'NonScf', \
-            "System" ]
+            "System", 'PartialRestart', 'Relaxation' ]
 class SpecialVaspParam(object): 
   """ Base type for special vasp parameters. 
   
@@ -32,7 +32,7 @@ class Magmom(SpecialVaspParam):
 
       .. seealso:: `MAGMOM <http://cms.mpi.univie.ac.at/vasp/guide/node100.html>`_
   """
-  def __init__(self, value = "attribute: magmom"):
+  def __init__(self, value=True):
     super(Magmom, self).__init__(value)
     
   def incar_string(self, **kwargs):
@@ -356,7 +356,7 @@ class FFTGrid(SpecialVaspParam):
     if self.value is None: return None
     return "NGX = {0[0]}\nNGY = {0[1]}\nNGZ = {0[2]}".format(self.value)
 
-class Restart(SpecialVaspParam):
+class PartialRestart(SpecialVaspParam):
   """ Return from previous run from which to restart.
       
       It is either an vasp extraction object of some kind, or None.
@@ -367,12 +367,14 @@ class Restart(SpecialVaspParam):
       <incar.Incar.icharg>` accordingly. It also checks whether
       :py:attr:`nonscf <incar.Incar.nonscf>` is True or False, and sets
       :py:attr:`icharg <incar.Incar.icharg>` accordingly. 
+      The CONTCAR file is *not* copied from the previous run. Rather, the
 
       .. seealso:: `ICHARG
         <http://cms.mpi.univie.ac.at/vasp/guide/node102.html>`_, `ISTART
-        <http://cms.mpi.univie.ac.at/vasp/guide/node101.html>`_
+        <http://cms.mpi.univie.ac.at/vasp/guide/node101.html>`_,
+        :py:class:`Restart`
   """
-  def __init__(self, value): super(Restart, self).__init__(value)
+  def __init__(self, value): super(PartialRestart, self).__init__(value)
 
   def incar_string(self, **kwargs):
     from os.path import join, exists, getsize
@@ -400,9 +402,6 @@ class Restart(SpecialVaspParam):
 
       copyfile(join(self.value.directory, files.EIGENVALUES), nothrow='same exists',
                nocopyempty=True) 
-      copyfile(join(self.value.directory, files.CONTCAR), files.POSCAR,\
-               nothrow='same exists', symlink=getattr(kwargs["vasp"], 'symlink', False),\
-               nocopyempty=True) 
       copyfile(join(self.value.directory, files.WAVEDER), files.WAVEDER,
                nothrow='same exists', symlink=getattr(kwargs["vasp"], 'symlink', False),
                nocopyempty=True) 
@@ -410,6 +409,32 @@ class Restart(SpecialVaspParam):
                nothrow='same exists', symlink=getattr(kwargs["vasp"], 'symlink', False),
                nocopyempty=True) 
     return None
+
+class Restart(PartialRestart):
+  """ Return from previous run from which to restart.
+      
+      Restart from a previous run, as described in :py:class:`PartialRestart`.
+      However, unlike :py:class:`PartialRestart`, the CONTCAR is copied from
+      the previous run, if it exists and is not empty.
+
+      .. seealso:: `ICHARG
+        <http://cms.mpi.univie.ac.at/vasp/guide/node102.html>`_, `ISTART
+        <http://cms.mpi.univie.ac.at/vasp/guide/node101.html>`_
+  """
+  def __init__(self, value): super(Restart, self).__init__(value)
+
+  def incar_string(self, **kwargs):
+    from os.path import join, exists, getsize
+    from shutil import copy
+    from ...misc import copyfile
+    from .. import files
+
+    result = super(Restart, self).incar_string(self, **kwargs)
+    if result is not None and self.value is not None and self.value.success:
+      copyfile(join(self.value.directory, files.CONTCAR), files.POSCAR,\
+               nothrow='same exists', symlink=getattr(kwargs["vasp"], 'symlink', False),\
+               nocopyempty=True) 
+    return result
 
 class NonScf(SpecialVaspParam):
   """ Whether to perform a self-consistent or non-self-consistent run. 
@@ -669,3 +694,121 @@ class IniWave(Choices):
   def __repr__(self):
     return "{0.__class__.__name__}({1!r})".format(self, self.choices[self.value][0])
 
+class Relaxation(SpecialVaspParam):
+  """ Sets type of relaxation.
+  
+      Defaults to None, eg use VASP defaults for ISIF, NSW, IBRION, POTIM.
+      It can be set to a single value, or to a tuple of up to four elements:
+
+      >>> vasp.relaxation = "static" 
+      >>> vasp.relaxation = "static", 20
+    
+      - first argument can be "static", or a combination of "ionic",
+        "cellshape", and "volume". The combination must be allowed by
+        `ISIF`__. It can also be an integer, in which case isif is set
+        directly.
+      - second (optional) argument is `nsw`_
+      - third (optional) argument is `ibrion`_
+      - fourth (optional) argument is `potim`_
+
+      .. warning: 
+        When the first parameter is neither "static" nor an integer, and yet the
+        second (nsw) is None, 0 or not present, then nsw is set to 50. The
+        assumption is when you ask to relax, then indeed you do ask to relax. 
+      
+      .. __: http://cms.mpi.univie.ac.at/vasp/guide/node112.html
+      .. _nsw: http://cms.mpi.univie.ac.at/vasp/guide/node108.html
+      .. _ibrion: http://cms.mpi.univie.ac.at/vasp/guide/node110.html
+      .. _potim: http://cms.mpi.univie.ac.at/vasp/vasp/POTIM_tag.html
+  """
+  def __init__(self, value): 
+    super(Relaxation, self).__init__(value)
+
+  @property
+  def value(self):
+    if self.isif is None and self.ibrion is None and self.potim is None and self.nsw is None: 
+      return None
+    result = [None, self.nsw, self.ibrion, self.potim]
+    if self.ibrion == -1 or self.nsw == 0:
+      result[0] = 'static'
+      result[2] = None
+    elif self.isif is not None and self.ibrion != -1:
+      if result[0] is None: result[0] = ''
+      if self.isif < 5: result[0] += ' ionic'
+      if self.isif > 2 and self.isif < 7: result[0] += ' cellshape'
+      if self.isif in [3, 6, 7]: result[0] += ' volume'
+      result[0] = result[0].lstrip()
+      if self.nsw == 50: result[1] = None
+    for i in xrange(4): 
+      if result[-1] is None: result = result[:-1]
+    if len(result) == 1: return result[0]
+    return tuple(result)
+
+  @value.setter
+  def value(self, args): 
+    import re
+
+    if 'nsw'    not in self.__dict__: self.nsw    = None
+    if 'isif'   not in self.__dict__: self.potim  = None
+    if 'ibrion' not in self.__dict__: self.ibrion = None
+    if 'potim'  not in self.__dict__: self.potim  = None
+    if args == None: 
+      self.isif = None
+      return
+
+    isif, nsw, ibrion, potim = None, None, None, None
+    if not isinstance(args, str):
+      if len(args) > 0:
+        if hasattr(args[0], 'lower'): dof = args[0].lower().rstrip().lstrip()
+        else: isif, dof = int(args[0]), None
+      if len(args) > 1: nsw    = int(args[1])
+      if len(args) > 2: ibrion = int(args[2])
+      if len(args) > 3: potim  = int(args[3])
+    elif hasattr(args, 'lower'): dof = args.lower().rstrip().lstrip()
+    else: isif, dof = int(args), None
+
+    if dof is not None:
+      ionic = re.search( "ion(ic|s)?", dof ) is not None
+      cellshape = re.search( "cell(\s+|-|_)?(?:shape)?", dof ) is not None
+      volume = re.search( "volume", dof ) is not None
+      
+      # static calculation.
+      if (not ionic) and (not cellshape) and (not volume):
+        if dof != 'static':
+          raise RuntimeError("Unkown value for relaxation: {0}.".format(arg))
+        isif = 2
+        ibrion = -1
+      else: # Some kind of relaxations. 
+        # ionic calculation.
+        if ionic and (not cellshape) and (not volume):   isif = 2
+        elif ionic and cellshape and (not volume):       isif = 4
+        elif ionic and cellshape and volume:             isif = 3
+        elif (not ionic) and cellshape and volume:       isif = 6
+        elif (not ionic) and cellshape and (not volume): isif = 5
+        elif (not ionic) and (not cellshape) and volume: isif = 7
+        elif ionic and (not cellshape) and volume: 
+          raise RuntimeError, "VASP does not allow relaxation of atomic position "\
+                              "and volume at constant cell-shape.\n"
+        if nsw == 0: 
+          raise ValueError("Cannot set nsw < 1 and perform strain relaxations.")
+        elif nsw is None: nsw = 50
+    if isif is None and dof is not None: 
+      raise ValueError("Unexpected argument to relaxation: {0}.".format(dof))
+    if nsw    is not None: self.nsw    = nsw
+    if isif   is not None: self.isif   = isif
+    if ibrion is not None: self.ibrion = ibrion
+    if potim  is not None: self.potim  = potim
+
+  def incar_string(self, **kwargs):
+    if self.value is None: return None
+    result = "ISIF = {0}\n".format(self.isif) if self.isif is not None else ''
+    if self.nsw != None and self.ibrion != -1 and self.nsw != 0:
+      result += "NSW = {0}\n".format(self.nsw)
+    if self.potim != None and self.ibrion != -1 and self.nsw != 0:
+      result += "POTIM = {0}\n".format(self.potim)
+    if self.ibrion != None: result += "IBRION = {0}\n".format(self.ibrion)
+    if self.ibrion != -1 and kwargs['vasp'].ediffg is not None:
+      if kwargs['vasp'].ediffg < kwargs['vasp'].ediff\
+         and kwargs['vasp'].ediffg > 0 and kwargs['vasp'].ediff > 0: 
+        raise RuntimeError("Using ediffg (positive) smaller than ediff does not make sense.")
+    return result

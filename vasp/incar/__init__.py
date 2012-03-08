@@ -3,11 +3,11 @@ __docformat__ = "restructuredtext en"
 __all__ = [ "SpecialVaspParam", "NElect", "Algo", "Precision", "Ediff",\
             "Encut", "FFTGrid", "Restart", "UParams", "IniWave", 'Ediffg', "EncutGW", \
             "Incar", "Magmom", 'Npar', 'Boolean', 'Integer', 'Choices', 'PrecFock',
-            "System" ]
+            "System", 'PartialRestart', 'Relaxation' ]
 from _params import SpecialVaspParam, NElect, Algo, Precision, Ediff,\
-                    Encut, FFTGrid, Restart, UParams, IniWave, Magmom,\
+                    Encut, FFTGrid, PartialRestart, Restart, UParams, IniWave, Magmom,\
                     Npar, Boolean, Integer, PrecFock, NonScf, Ediffg, Choices, \
-                    EncutGW, System
+                    EncutGW, System, Relaxation
 from ...misc import add_setter
 
 
@@ -36,11 +36,8 @@ class Incar(object):
     super(Incar, self).__setattr__("params", {})
     super(Incar, self).__setattr__("special", {})
     self.add_param = "ispin",       1 
-    self.add_param = "isif",        1
     self.add_param = "ismear",      None
     self.add_param = "isigma",      None
-    self.add_param = "nsw",         None
-    self.add_param = "ibrion",      None
     self.add_param = "potim",       None
     self.add_param = "nbands",      None
     self.add_param = "lorbit",      None
@@ -70,6 +67,7 @@ class Incar(object):
     self.precfock    = PrecFock(None)
     self.nonscf      = NonScf(False)
     self.system      = System(True)
+    self.Relaxation  = Relaxation(None)
 
     self.lwave       = Boolean("lwave", False)
     self.lcharg      = Boolean("lcharg", True)
@@ -255,101 +253,6 @@ class Incar(object):
       if self.ismear < 1:
         raise ValueError("Unknown smearing value {0}.\n".format(first))
 
-  @property
-  def relaxation(self):
-    """ Sets type of relaxation.
-    
-        It can be set to a single value, or to a tuple of up to four elements:
-
-        >>> vasp.relaxation = "static" 
-        >>> vasp.relaxation = "static", 20
-      
-        - first argument can be "static", or a combination of "ionic",
-          "cellshape", and "volume". The combination must be allowed by
-          `ISIF`__.
-        - second (optional) argument is `nsw`_
-        - third (optional) argument is `ibrion`_
-        - fourth (optional) argument is `potim`_
-
-        .. note:: Some combinations will raise an error, eg asking for
-           ionic relaxation but setting nsw to zero. However, if you are
-           feeling creative and know what you are doing, you can always set the
-           parameters by hand:
-
-           >>> vasp.nsw, vasp.isif = 0, 1
-
-        .. __: http://cms.mpi.univie.ac.at/vasp/guide/node112.html
-        .. _nsw: http://cms.mpi.univie.ac.at/vasp/guide/node108.html
-        .. _ibrion: http://cms.mpi.univie.ac.at/vasp/guide/node110.html
-        .. _potim: http://cms.mpi.univie.ac.at/vasp/vasp/POTIM_tag.html
-    """
-    nsw = 0 if self.nsw is None else self.nsw
-    if self.ibrion is None: ibrion = -1 if nsw < 0 else 0
-    else: ibrion = self.ibrion
-    if self.isif is None: isif = 0 if ibrion == 0 else 2
-    else: isif = self.isif
-   
-    if nsw < 2 or ibrion == -1: return "static"
-    result = ""
-    if isif < 5: result += "ionic "
-    if isif > 2 and isif < 7: result += "cellshape "
-    if isif in [3, 6, 7]: result += "volume"
-    return result.lstrip().rstrip()
-
-  @relaxation.setter
-  def relaxation(self, args): 
-    """ Sets the kind of relaxation to be performed. """
-    import re
-
-    dof =  args.lower() if isinstance(args,str) else str(args[0]).lower()
-    ionic = re.search( "ion(ic|s)?", dof ) is not None
-    cellshape = re.search( "cell(\s+|-|_)?(?:shape)?", dof ) is not None
-    volume = re.search( "volume", dof ) is not None
-
-    nsw, ibrion, potim = None, None, None
-    if not isinstance(args, str):
-      if len(args) > 1: nsw = int(args[1])
-      if len(args) > 2: ibrion = int(args[2])
-      if len(args) > 3: potim = int(args[3])
-
-    # static calculation.
-    if (not ionic) and (not cellshape) and (not volume):
-      if dof != 'static':
-        raise RuntimeError("Unkown value for relaxation: {0}.".format(arg))
-      self.params["isif"] = 1
-      self.params["ibrion"] = -1
-      if ibrion is not None and ibrion != -1:
-        raise ValueError("Cannot set ibrion to anything but -1 for static calculations.")
-      if nsw is not None and nsw != 0:
-        raise ValueError("static calculation with nsw > 0 is way too creative.")
-      self.params["nsw"] = None
-      if potim is not None: self.params["potim"] = potim
-
-    else: # Some kind of relaxations. 
-      # ionic calculation.
-      if ionic and (not cellshape) and (not volume):   self.params["isif"] = 1
-      elif ionic and cellshape and (not volume):       self.params["isif"] = 4
-      elif ionic and cellshape and volume:             self.params["isif"] = 3
-      elif (not ionic) and cellshape and volume:       self.params["isif"] = 6
-      elif (not ionic) and cellshape and (not volume): self.params["isif"] = 5
-      elif (not ionic) and (not cellshape) and volume: self.params["isif"] = 7
-      elif ionic and (not cellshape) and volume: 
-        raise RuntimeError, "VASP does not allow relaxation of atomic position"\
-                            "and volume at constant cell-shape.\n"
-
-      if ibrion is None and self.params["ibrion"] in [None, -1]: self.params["ibrion"] = 2
-      elif ibrion is not None: 
-        if ibrion == -1: raise ValueError("Cannot set ibrion to -1 with strain relaxations.")
-        if ibrion == 0 and self.params["isif"] == 1: 
-          raise ValueError("Cannot set ibrion to 0 with strain relaxations.")
-        self.params["ibrion"] = ibrion
-      if nsw is not None:
-        if nsw <= 0: raise ValueError("Cannot set nsw < 1 and perform strain relaxations.")
-        self.params["nsw"] = nsw
-      elif self.params["nsw"] is None or self.params["nsw"] == 0: self.params["nsw"] = 50
-      if potim is not None: self.params["potim"] = potim
-      if self.ediffg is not None:
-        if self.ediffg < self.ediff and self.ediffg > 0: self.ediffg = None
 
   def __getstate__(self):
     d = self.__dict__.copy()

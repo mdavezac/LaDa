@@ -1,11 +1,11 @@
 """ Miscellaneous ressources. """
 __all__ = ['Program', 'execute_program', 'copyfile', 'changedir', \
-           'read_input', 'exec_input', 'load', 'RelativeDirectory']
+           'read_input', 'exec_input', 'load', 'RelativePath']
 from collections import namedtuple
 from types import ModuleType
 
 from changedir import Changedir
-from relativedirectory import RelativeDirectory
+from relativepath import RelativePath
 
 Program = namedtuple('Program', ['program', 'cmdline', 'directory', 'stdout', 'stderr'])
 """ Holds data about program to launch. """
