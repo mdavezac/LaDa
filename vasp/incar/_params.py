@@ -712,9 +712,10 @@ class Relaxation(SpecialVaspParam):
       - fourth (optional) argument is `potim`_
 
       .. warning: 
-        When the first parameter is neither "static" nor an integer, and yet the
-        second (nsw) is None, 0 or not present, then nsw is set to 50. The
-        assumption is when you ask to relax, then indeed you do ask to relax. 
+        When the first parameter is one of "cellshape", "volume", "ionic".  and
+        yet the second (nsw) is None, 0 or not present, then nsw is set to 50.
+        The assumption is when you ask to relax, then indeed you do ask to
+        relax. 
       
       .. __: http://cms.mpi.univie.ac.at/vasp/guide/node112.html
       .. _nsw: http://cms.mpi.univie.ac.at/vasp/guide/node108.html
@@ -823,4 +824,62 @@ class Relaxation(SpecialVaspParam):
     if value is None: return "{0.__class__.__name__}(None)".format(self)
     if isinstance(value, str):  return "{0.__class__.__name__}({1!r})".format(self, value)
     return "{0.__class__.__name__}({1})".format(self, repr(self.value)[1:-1])
+
+class Smearing(SpecialVaspParam):
+  def __init__(self, isif=None, nsw=None, ibrion=None, potim=None): 
+    """ Value of the smearing used in the calculation. 
+  
+        It can be specified as a string:
+          
+        >>> vasp.smearing = "type", x
+       
+        Where type is any of "fermi", "gaussian", "mp N", "tetra",
+        "metal", or "insulator", and x is the energy scale.
+
+        - fermi: use a Fermi-Dirac broadening.
+        - gaussian: uses a gaussian smearing.
+        - mp N: is for Methfessel-Paxton, where N is an integer indicating the
+          order the mp method.
+        - tetra: tetrahedron method without Bloechl correction.
+        - bloechl: means tetrahedron method with Bloechl correction.
+        - metal: equivalent to "mp 1 x"
+        - insulator: is equivalent to "bloechl".
+        - dynamic: corresponds to ISMEAR=-3.
+
+        .. seealso:: `ISMEAR, ISIGMA <http://cms.mpi.univie.ac.at/vasp/guide/node124.html>`_
+    """
+    super(Relaxation, self).__init__((isif, nsw, ibrion, potim))
+
+  @property 
+  def value(self):
+    from quantities import eV
+    if self.ismear is None and self.isigma is None: return None
+    ismear = { -1: 'fermi', 0: 'gaussian', 1: 'metal', -5:'bloechl', -3: 'dynamic',
+               -4: 'tetra', 2: 'mp 2', 3: 'mp 3', None: None}[self.ismear]
+    if abs(self.isigma - 0.2*eV) < 1e-8: return ismear
+    return ismear, self.isigma
+
+  @smearing.setter
+  def value(self, args):
+    from quantities import eV
+    if args is None: 
+      self.ismear, self.isigma = None, None
+      return
+
+    if isinstance(args, str): ismear, isigma = args, None
+    elif len(args) == 1: ismear, isigma = args[0], None
+    elif len(args) == 2: ismear, isigma = args
+    else: raise ValueError("Incorrect input to smearing: {0}.".format(args))
+
+    if hasattr(ismear, 'lower'): 
+      ismear = args.rstrip().lstrip().replace(' ', '').lower()
+      self.ismear = { 'fermi': -1, 'gaussian': 0, 'metal': 1, 'bloechl': -5, 'dynamic': -3, 
+                      'tetra': -4, 'mp1': 0, 'mp2': 2, 'mp3': 3, None: None }[ismear]
+    else: ismear = int(ismear)
+    if isigma is not None:
+      self.isigma = isigma
+      if not hasattr(self.isigma, 'rescale'): self.isigma *= eV
+    elif len(args) == 2: self.isigma = None
+
+  def incar_string(self, **kwargs):
 
