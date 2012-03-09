@@ -164,7 +164,7 @@ class Functional(Launch):
     modules = {}
     modules[self.__class__.__module__] = [self.__class__.__name__]
     # now go through vasp parameters and print them out.
-    for name, value in self.params.items():
+    for name, value in self.params.iteritems():
       if value is None: continue
       # if a special parameter, then is non-default.
       if name in params: string += "functional.%s = %s\n" % (name, repr(value))
@@ -174,6 +174,7 @@ class Functional(Launch):
         classname = value.__class__.__name__ 
         if module in modules: modules[module].append(classname)
         else: modules[module] = [classname]
+    string += "functional.nonscf = {0}\n".format(getattr(self, "nonscf", False))
     for name, value in self.special.items():
       if value.value is None: continue
       assert isinstance(value, SpecialVaspParam)

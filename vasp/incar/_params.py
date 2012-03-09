@@ -2,7 +2,8 @@
 __docformat__ = "restructuredtext en"
 __all__ = [ "SpecialVaspParam", "NElect", "Algo", "Precision", "Ediff",\
             "Encut", "FFTGrid", "Restart", "UParams", "IniWave",\
-            "Magmom", 'Npar', 'Boolean', 'Integer', 'Choices', 'PrecFock', 'NonScf']
+            "Magmom", 'Npar', 'Boolean', 'Integer', 'Choices', 'PrecFock', \
+            'NonScf', 'PartialRestart' ]
 from ...opt.decorators import broadcast_result
 class SpecialVaspParam(object): 
   """ Type checking class. """
@@ -294,20 +295,21 @@ class FFTGrid(SpecialVaspParam):
       # finally extracts from OUTCAR.
       return Extract(directory = vasp._tempdir, comm = comm).fft
 
-class Restart(SpecialVaspParam):
+class PartialRestart(SpecialVaspParam):
   """ Return from previous run from which to restart.
       
       If None, then starts from scratch.
+      Never copies POSCAR file. See Restart for that.
   """
-  def __init__(self, value): super(Restart, self).__init__(value)
+  def __init__(self, value): super(PartialRestart, self).__init__(value)
 
   def incar_string(self, vasp, *args, **kwargs):
-    from os.path import join, exists
+    from os.path import join, exists, getsize
     from shutil import copy
     from ...opt import copyfile
     from ...mpi import Communicator
     from .. import files
-    nonscf = getattr(getattr(self, 'nonscf', False), 'value', False)
+    nonscf = getattr(vasp, 'nonscf', False)
     comm = Communicator(kwargs.pop("comm", None))
     istart = "0   # start from scratch"
     icharg = "{0}   # superpositions of atomic densities".format(12 if nonscf else 2)
@@ -318,8 +320,12 @@ class Restart(SpecialVaspParam):
       istart = "0   # start from scratch"
     else:
       comm.barrier()
-      ewave = exists( join(self.value.directory, files.WAVECAR) )
       echarge = exists( join(self.value.directory, files.CHGCAR) )
+      if echarge: echarge = getsize(join(self.value.directory, files.CHGCAR)) != 0
+      ewave = exists( join(self.value.directory, files.WAVECAR) )
+      if ewave and echarge and nonscf: 
+        ewave = False # I suspect VASP will screw up otherwise.
+      if ewave: ewave = getsize(join(self.value.directory, files.WAVECAR)) != 0
       if ewave:
         path = join(self.value.directory, files.WAVECAR)
         istart = "1  # restart"
@@ -335,13 +341,30 @@ class Restart(SpecialVaspParam):
         icharg = "{0}   # superpositions of atomic densities".format(12 if nonscf else 2)
       if comm.is_root:
         copyfile(join(self.value.directory, files.EIGENVALUES), nothrow='same exists') 
-        copyfile(join(self.value.directory, files.CONTCAR), files.POSCAR,\
-                 nothrow='same exists', symlink=getattr(vasp, 'symlink', False),\
-                 nocopyempty=True) 
         copyfile(join(self.value.directory, files.WAVEDER), files.WAVEDER,
                  nothrow='same exists', symlink=getattr(vasp, 'symlink', False)) 
       comm.barrier()
     return  "ISTART = %s\nICHARG = %s" % (istart, icharg)
+
+class Restart(PartialRestart):
+  """ Return from previous run from which to restart.
+      
+      If None, then starts from scratch.
+  """
+  def __init__(self, value): super(Restart, self).__init__(value)
+
+  def incar_string(self, vasp, *args, **kwargs):
+    from os.path import join
+    from ...opt import copyfile
+    from ...mpi import Communicator
+    from .. import files
+    comm = Communicator(kwargs.get("comm", None))
+    result = super(Restart, self).incar_string(vasp, *args, **kwargs)
+    if self.value is not None and self.value.success and comm.is_root:
+      copyfile(join(self.value.directory, files.CONTCAR), files.POSCAR,\
+               nothrow='same exists', symlink=getattr(vasp, 'symlink', False),\
+               nocopyempty=True) 
+    return result
 
 class NonScf(SpecialVaspParam):
   """ Return from previous run from which to restart.
@@ -354,10 +377,10 @@ class NonScf(SpecialVaspParam):
   @value.setter
   def value(self, value):
     if isinstance(value, str):
-      assert    len(value) == 0 \
-             or value.lower() == "true"[:len(value)] \
-             or value.lower() == "false"[:len(value)], \
-             TypeError("Cannot interpret string {0} as a boolean.".format(value))
+      if len(value) == 0: value = False
+      elif value.lower() == "false"[:min(len(value), len("false"))]: value = False
+      elif value.lower() == "true"[:min(len(value), len("true"))]: value = True
+      else: raise TypeError("Cannot interpret string {0} as a boolean.".format(value))
     self._value = value == True
 
   def incar_string(self, vasp, *args, **kwargs): return None
@@ -456,10 +479,10 @@ class Boolean(SpecialVaspParam):
   @value.setter
   def value(self, value):
     if isinstance(value, str):
-      if not (   len(value) == 0 \
-               or value.lower() == "true"[:len(value)] \
-               or value.lower() == "false"[:len(value)] ):
-        raise TypeError("Cannot interpret string {0} as a boolean.".format(value))
+      if len(value) == 0: value = False
+      elif value.lower() == "false"[:min(len(value), len("false"))]: value = False
+      elif value.lower() == "true"[:min(len(value), len("true"))]: value = True
+      else: raise TypeError("Cannot interpret string {0} as a boolean.".format(value))
     self._value = value == True
   @broadcast_result(key=True)
   def incar_string(self, vasp, *args, **kwargs):

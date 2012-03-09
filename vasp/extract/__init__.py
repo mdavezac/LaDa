@@ -39,7 +39,8 @@ class ExtractCommon(AbstractExtractBase, ExtractCommonBase, IOMixin):
     else: directory = outcar
     AbstractExtractBase.__init__(self, directory, comm)
     ExtractCommonBase.__init__(self)
-    IOMixin.__init__(self, directory, **kwargs)
+    kwargs["directory"] = directory
+    IOMixin.__init__(self, **kwargs)
 
   @property
   def success(self):

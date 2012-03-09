@@ -5,7 +5,7 @@ from .extract import ExtractDFT
 
 class Extract(ExtractDFT):
   """ Extractor for reciprocal taylor expansion. """
-  def __init__(self, outcar=None, comm=None, input=None, lstsq=None, order=2, rcond=-1, **kwargs):
+  def __init__(self, outcar=None, comm=None, input=None, **kwargs):
     """ Initializes the extraction object. 
     
         :Parameters:
@@ -19,37 +19,20 @@ class Extract(ExtractDFT):
             Extractor object for the calculation from which the charge density
             was obtained. Defaults to None, meaning whatever calculation is
             contained in the parent directory.
-          lstsq : method
-            Least-square-fit method from which to get taylor coefficients.
-            Defaults to None, i.e. numpy's lstsq method.
           order : unsigned int or list 
             Order up to which to compute taylor coefficients.
     """
-    from os.path import dirname
-    from numpy.linalg import lstsq as nplstsq
+    from os.path import dirname, isdir, exists, join
     from lada.vasp import Extract as VaspExtract
+    from lada.opt import RelativeDirectory
+    path = RelativeDirectory(outcar).path
+    if isdir(path) and exists(join(path, 'reciprocal')): outcar = join(outcar, 'reciprocal')
+    
     super(Extract, self).__init__(outcar, comm=comm, **kwargs)
     self.input = input if input != None else VaspExtract(dirname(self.directory), comm=comm)
     """ Extractor object for the calculation from which the charge density was obtained. """
-    self.lstsq = lstsq if lstsq != None else nplstsq
-    """ Least-square-fit method from which to get Taylor coefficients. """
-    self.order = order
-    self.rcond = rcond
 
-  @property
-  def rcond(self): return self._rcond
-  @rcond.setter
-  def rcond(self, value):
-    self._rcond = value
-    if hasattr(self, "_parameters"): delattr(self, "_parameters")
-    if hasattr(self, "_measurements"): delattr(self, "_measurements")
-    if hasattr(self, "_fitresults"): delattr(self, "_fitresults")
-  @property
-  def order(self):
-    """ Order up to which taylor coefficients should be computed. """
-    return self._order
-  @order.setter
-  def order(self, value):
+  def _order(self, value):
     """ Order up to which taylor coefficients should be computed. """
     # case where we want to fit to specific orders only.
     if hasattr(value, "__iter__"):
@@ -60,7 +43,7 @@ class Extract(ExtractDFT):
         else:
           if i >= nbpoints:
             raise ValueError("Size of kpoint mesh implies order cannot be larger than {0}.".format(nbpoints-1))
-      self._order = list(sorted(value))
+      return list(sorted(value))
     # case where we want all orders up to given input.
     else: 
       if value < 0:
@@ -70,100 +53,111 @@ class Extract(ExtractDFT):
       else:
         if value >= nbpoints:
           raise ValueError("Size of kpoint mesh implies order cannot be larger than {0}.".format(nbpoints-1))
-      self._order = list(xrange(value+1))
-    if hasattr(self, "_parameters"): delattr(self, "_parameters")
-    if hasattr(self, "_measurements"): delattr(self, "_measurements")
-    if hasattr(self, "_fitresults"): delattr(self, "_fitresults")
+      return list(xrange(value+1))
 
   @property
   def nbpoints(self):
     """ Number of points per axis involved in calculation. """
     from math import pow
-    return int(pow(len(self.kpoints), 1./3.))
+    return int(pow(len(self.kpoints), 1./3.)+1e-5)
 
   @property
   def center(self):
     """ Returns central kpoint. """
     return self.kpoints[0] if self.nbpoints % 2 == 0 else self.kpoints[len(self.kpoints)//2]
+  @property
+  def central_eigenvalues(self):
+    """ Returns eigenvalues at center. """
+    if self.ispin == 1:
+      return self.eigenvalues[0] if self.nbpoints % 2 == 0 else self.eigenvalues[len(self.eigenvalues)//2]
+    return self.eigenvalues[:,0,:] if self.nbpoints % 2 == 0 \
+          else self.eigenvalues[:,len(self.eigenvalues)//2,:]
 
-  @property
-  def stepsize(self):
-    """ Returns central kpoint. """
-    N = len(self.kpoints)//2
-    return (self.kpoints[N] - self.kpoints[N-1])[2]
-    
-  @property
-  def parameters(self):
+  def _parameters(self, order=2, kmag=True):
     """ Parameters for the least-square-fit approach. """
-    from numpy import zeros, pi
+    from numpy import zeros, pi, abs
     from math import factorial
 
-    if not hasattr(self, "_parameters"): 
-      # computes number of free parameters, accounting for analyticity.
-      u = 0
-      for order in self.order:
-        for p in xrange(order+1):
-          for j in xrange(p+1): u += 1
-      # creates parameter array
-      self._parameters = zeros((len(self.kpoints), u), dtype="float64")
-      # populates it.
-      u = 0
-      kpoints = (self.kpoints - self.center) * 2.0 * pi / self.structure.scale 
-      stepsize = zeros(len(self.kpoints), dtype="float64")
-      for order in self.order:
-        for p in xrange(order+1):
-          for q in xrange(p+1):
-            # constructs array of (x_j-x_0)^q_i, with multiplication over i
-            # representing the cartesian coordinates and j the kpoints.
-            stepsize[:] = 1. / (factorial(order-p)*factorial(p-q)*factorial(q))
-            for i, j in zip([order-p, p-q, q], xrange(3)): 
-              if i != 0: stepsize *= kpoints[:,j]**i
-            # fill in the parameters for this expansion.
-            self._parameters[:, u] = stepsize 
-            u += 1
-    return self._parameters
+    # computes number of free parameters, accounting for analyticity.
+    u = 0
+    for o in self._order(order):
+      for p in xrange(o+1):
+        for j in xrange(p+1): u += 1
+    # creates parameter array
+    parameters = zeros((len(self.kpoints), u), dtype="float64")
+    # populates it.
+    u = 0
+    kpoints = (self.kpoints - self.center) * 2.0 * pi / self.structure.scale 
+    stepsize = zeros(len(self.kpoints), dtype="float64")
+    for o in self._order(order):
+      for p in xrange(o+1):
+        for q in xrange(p+1):
+          # constructs array of (x_j-x_0)^q_i, with multiplication over i
+          # representing the cartesian coordinates and j the kpoints.
+          stepsize[:] = 1. / (factorial(o-p)*factorial(p-q)*factorial(q))
+          for i, j in zip([o-p, p-q, q], xrange(3)): 
+            if i != 0: stepsize *= kpoints[:,j]**i
+          # fill in the parameters for this expansion.
+          parameters[:, u] = stepsize 
+          u += 1
+    return abs(parameters) if kmag else parameters
 
-  @property
-  def measurements(self):
+  def _measurements(self, order=2):
     """ Measurements for the least-square fit approach. 
     
         There is currently no attempt at accounting for band-crossing.
         This is simply the eigenvalues reshaped so spin is unrolled.
     """
-    if self.ispin == 1: return self.eigenvalues.magnitude
-    shape = self.eigenvalues.shape[0]*self.eigenvalues.shape[1], self.eigenvalues.shape[2]
-    return self.eigenvalues.reshape(*shape).magnitude
+    from numpy import rollaxis
+    if 0 in self._order(order):
+      if self.ispin == 1: return self.eigenvalues.magnitude
+      shape = self.eigenvalues.shape[1], self.eigenvalues.shape[0]*self.eigenvalues.shape[2]
+      return rollaxis(self.eigenvalues, 0, -1).reshape(*shape).magnitude
+    if self.ispin == 1: return self.eigenvalues.magnitude - self.central_eigenvalues.magnitude
+    shape = self.eigenvalues.shape[1], self.eigenvalues.shape[0]*self.eigenvalues.shape[2]
+    return rollaxis(self.eigenvalues, 0, -1).reshape(*shape).magnitude\
+           - self.central_eigenvalues.reshape(1,-1).magnitude
 
-  @property 
-  def fitresults(self):
+  def _fitresults(self, order=2, kmag=True, lstsq=None, **kwargs):
     """ Returns all fitted taylor coefficients. """
-    from numpy.linalg import lstsq
-    if not hasattr(self, "_fitresults"): 
-      lstsq = getattr(self, 'lstsq', lstsq)
-      self._fitresults = lstsq(self.parameters, self.measurements, self.rcond)
-    return self._fitresults
+    from numpy.linalg import lstsq as np_lstsq
+    if lstsq == None: lstsq = np_lstsq
+    return lstsq(self._parameters(order, kmag), self._measurements(order), **kwargs)
     
-  @property
-  def residues(self):
+  def residues(self, order=2, kmag=True, lstsq=None, tolerance=None, **kwargs):
     """ Return residues for each band. """
-    return self.fitresults[1]
-  @property
-  def tensors(self):
+    return self._fitresults(order, kmag, lstsq, **kwargs)[1]
+
+  def tensors(self, order=2, kmag=True, lstsq=None, tolerance=None, **kwargs):
+    """ Return tensors listed by order. 
+    
+        Within each order, the tensors are listed as order then spin then
+        bands if ispin == 2. In spin-degenerate cases, they are listed per band
+        only.
+    """
+    from numpy import rollaxis
+    fits = self._fitresults(order, kmag, lstsq, **kwargs)[0]
+    if self.ispin == 1: return self._tensors_nospin(fits, order, tolerance)
+    up, down = rollaxis(fits.reshape(self._fitresults.shape[0], 2, -1), 1)
+    return list(zip(self._tensors_nospin(up, order, tolerance),
+                    self._tensors_nospin(down, order, tolerance)))
+
+
+  def _tensors_nospin(self, all_xs, order, tolerance):
     """ Return tensors for each band. """
     from numpy import zeros
     from itertools import chain, permutations
     from quantities import angstrom
-    all_xs = self.fitresults[0].T
-    result = [[]]*(len(self.order))
+    result = [[]]*(len(self._order(order)))
     
     current_index, current_order = 0, 0
     # add results for order 0.
-    if self.order[0] == 0:
+    if self._order(order)[0] == 0:
       result[current_order] = all_xs[current_index].copy() * self.eigenvalues.units
       current_index += 1
       current_order += 1
     # add results for order 1.
-    if 1 in self.order:
+    if 1 in self._order(order):
       result[current_order] = [ i.copy() * self.eigenvalues.units * angstrom\
                                 for i in all_xs[current_index:current_index+3].T ]
                               
@@ -172,38 +166,37 @@ class Extract(ExtractDFT):
 
     # compute index ranges for subsequent orders.
     u, indices_range = current_index, [current_index]
-    for order in self.order[current_order:]:
-      for p in xrange(order+1):
+    for o in self._order(order)[current_order:]:
+      for p in xrange(o+1):
         for q in xrange(p+1): u += 1
       indices_range.append(u)
 
     # loop over remaining orders.
-    for order, startu in zip(self.order[current_order:], indices_range):
+    for o, startu in zip(self._order(order)[current_order:], indices_range):
       # loop over results for each band.
-      for band_x in all_xs:
+      for band_x in all_xs.T:
         u = startu
         # create tensor from n vector.
-        dummy = zeros([3]*order, dtype="float64")
-        for p in xrange(order+1):
+        dummy = zeros([3]*o, dtype="float64")
+        for p in xrange(o+1):
           for q in xrange(p+1):
-            indices = [[i]*j for i, j in zip([0, 1, 2], [order-p, p-q, q]) if j != 0]
+            indices = [[i]*j for i, j in zip([0, 1, 2], [o-p, p-q, q]) if j != 0]
             indices = set(permutations(chain(*indices)))
-            for index in indices: dummy[index] = band_x[u] if abs(band_x[u]) > 1e-12 else 0
+            for index in indices: dummy[index] = band_x[u] if abs(band_x[u]) > tolerance else 0
             u += 1
         # add tensor to results for that order.
-        result[current_order].append(dummy * self.eigenvalues.units * angstrom**order)
+        result[current_order].append(dummy * self.eigenvalues.units * angstrom**o)
       current_order += 1
 
     # got it all.
     return result
 
-  @property
-  def inverse_mass_tensor(self):
+  def inverse_mass_tensor(self, order=2, kmag=True, lstsq=None, tolerance=None, **kwargs):
     """ Returns inverse mass tensor, hopefully with right units. """
     from ..physics import electronic_mass, h_bar
-    if 2 not in self.order:
+    if 2 not in self._order(order):
       raise AttributeError("Effective mass are not part of the current expansion.")
-    result = self.tensors[self.order.index(2)]
+    result = self.tensors(order, kmag, lstsq, tolerance, **kwargs)[self._order(order).index(2)]
     for i in xrange(len(result)): 
       result[i] = (result[i] / h_bar**2).rescale(1./electronic_mass)
     return result
@@ -212,7 +205,7 @@ class Extract(ExtractDFT):
     
 def reciprocal( vasp, structure, outdir = None, comm = None,
                 order = 2, nbpoints = None, stepsize = 1e-2, 
-                center = None, lstsq = None, **kwargs ):
+                center = None, eigtol = 1e-10, **kwargs ):
   """ Computes k-space taylor expansion of the eigenvalues up to given order.
 
       First runs a vasp calculation using the first input argument, regardless
@@ -248,8 +241,8 @@ def reciprocal( vasp, structure, outdir = None, comm = None,
           Central k-point of the taylor expansion. This should be given in
           **reciprocal** units (eg coefficients to the reciprocal lattice
           vectors). Default is None and means |Gamma|.
-        lstsq 
-          Linear least square method. Passed on to the extractor object.
+        eigtol : float
+          Energy convergence criteria (ediffg) for static calculation.
         kwargs 
           Extra parameters which are passed on first to escan (if escan
           object has an attribute with the same name), then to the linear least
@@ -272,19 +265,21 @@ def reciprocal( vasp, structure, outdir = None, comm = None,
   if center is None: center = kwargs.pop("kpoint", [0,0,0])
   center = array(center, dtype="float64")
   if outdir is None: outdir = getcwd()
-  if nbpoints == None: nbpoints = order + 1
-  if nbpoints < order + 1:
+  maxorder = max(order) if hasattr(order, '__iter__') else order 
+  if nbpoints == None: nbpoints = maxorder + 1
+  if nbpoints < maxorder + 1:
     raise ValueError("Cannot compute taylor expansion of order {0} "\
-                     "with only {1} points per direction.".format(order, nbpoints))
+                     "with only {1} points per direction.".format(maxorder, nbpoints))
 
 
   # first runs vasp.
-  first = vasp(structure=structure, outdir=outdir, comm=comm, **kwargs)
+  first = vasp.Extract(directory=outdir, comm=comm)
+  if not first.success:
+    first = vasp(structure=structure, outdir=outdir, comm=comm, **kwargs)
   if not first.success: return Extract(outdir=outdir, comm=comm)
 
   # prepare second run.
-  if hasattr(vasp, "vasp"): functional = deepcopy(Vasp(vasp=vasp.vasp))
-  else: functional = deepcopy(Vasp(vasp=vasp))
+  functional = first.functional
   center = dot(inv(first.structure.cell).T, center)
   kpoints = [ (x, y, z) for x in xrange(nbpoints)\
                         for y in xrange(nbpoints)\
@@ -295,10 +290,12 @@ def reciprocal( vasp, structure, outdir = None, comm = None,
 
   # and exectute it.
   kwargs = deepcopy(kwargs)
-  kwargs['restart'] = first
-  kwargs['nonscf']  = True
+  kwargs['restart']     = first
+  kwargs['nonscf']      = True
+  kwargs['relaxation']  = "static"
+  kwargs['ediff']       = eigtol / len(structure.atoms)
   second = functional(first.structure, comm=comm, outdir=join(first.directory, "reciprocal"), **kwargs)
-  return Extract(outcar=second.directory, comm=None, input=second, lstsq=lstsq, order=order)
+  return Extract(outcar=second.directory, comm=None, input=second)
 
 reciprocal.Extract = Extract
 """ Extractor class for the reciprocal method. """

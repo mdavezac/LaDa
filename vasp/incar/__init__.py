@@ -2,10 +2,11 @@
 __docformat__ = "restructuredtext en"
 __all__ = [ "SpecialVaspParam", "NElect", "Algo", "Precision", "Ediff",\
             "Encut", "FFTGrid", "Restart", "UParams", "IniWave",\
-            "Incar", "Magmom", 'Npar', 'Boolean', 'Integer', 'Choices', 'PrecFock' ]
+            "Incar", "Magmom", 'Npar', 'Boolean', 'Integer', 'Choices',\
+            'PartialRestart', 'PrecFock', 'NonScf' ]
 from _params import SpecialVaspParam, NElect, Algo, Precision, Ediff,\
                     Encut, FFTGrid, Restart, UParams, IniWave, Magmom,\
-                    Npar, Boolean, Integer, PrecFock, NonScf
+                    Npar, Boolean, Integer, PrecFock, NonScf, PartialRestart
 from ...opt.decorators import add_setter
 
 
@@ -61,12 +62,15 @@ class Incar(object):
          - ``encutgw``: Defaults to None.
          - ``lrpa``: Defaults to None.
          - ``lpead``: Defaults to None.
-         - ``nelm``: Defaults to None.
+         - ``nelm``: Defaults to None. 
          - ``restart``: the return from previous vasp run to use as restart. 
 
              >> save_this_object = vasp(some parameters) # makes a vasp call.
              >> # make a second vasp using WAVECAR and whatnot from above call
              >> vasp(other parameters, ..., restart = save_this_object) 
+
+             Checks nonscf attribute to correctly perform non-self-consistent
+             calculation when required.
 
          - `relaxation`: sets degrees of freedom to relax. Easier to use
              than isif, nsw, and friends.
@@ -212,7 +216,8 @@ class Incar(object):
     if isinstance(value, SpecialVaspParam):
       if name in self.params: del self.params[name]
       self.special[name] = value
-    elif name in self.params: self.params[name] = value
+    elif name in self.params:
+      self.params[name] = value
     elif name in self.special: self.special[name].value = value
     else: super(Incar, self).__setattr__(name, value)
 
@@ -357,7 +362,7 @@ class Incar(object):
 
     # static calculation.
     if (not ionic) and (not cellshape) and (not volume):
-      self.params["isif"] = 1
+      self.params["isif"] = 2
       self.params["ibrion"] = -1
       assert ibrion is None or ibrion == -1, \
              ValueError("Cannot set ibrion to anything but -1 for static calculations.")
@@ -368,7 +373,7 @@ class Incar(object):
 
     else: # Some kind of relaxations. 
       # ionic calculation.
-      if ionic and (not cellshape) and (not volume):   self.params["isif"] = 1
+      if ionic and (not cellshape) and (not volume):   self.params["isif"] = 2
       elif ionic and cellshape and (not volume):       self.params["isif"] = 4
       elif ionic and cellshape and volume:             self.params["isif"] = 3
       elif (not ionic) and cellshape and volume:       self.params["isif"] = 6
@@ -399,7 +404,6 @@ class Incar(object):
     warn( DeprecationWarning("set_relaxation is obsolete. Please use relaxation instead."), 
           stacklevel=2 )
     self.relaxation = value
-    
 
   def __iter__(self):
     """ Iterates over attribute names and values. """

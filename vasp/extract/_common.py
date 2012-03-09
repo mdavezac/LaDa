@@ -161,6 +161,30 @@ class Extract(object):
   @property
   @make_cached
   @broadcast_result(attr=True, which=0)
+  def _structure_catted_contcar(self):
+    """ Greps cell and positions from OUTCAR. """
+    from re import compile
+    from StringIO import StringIO
+    from ...crystal import read_poscar
+
+    with self.__outcar__() as file: lines = file.readlines()
+    begin_contcar_re = compile(r"""#+\s+CONTCAR\s+#+""")
+    end_contcar_re = compile(r"""#+\s+END\s+CONTCAR\s+#+""")
+    start, end = None, None
+    for i, line in enumerate(lines[::-1]):
+      if begin_contcar_re.match(line) is not None: start = -i; break;
+      if end_contcar_re.match(line) is not None: end = -i
+
+    if start is None and end is None:
+      raise RuntimeError("Could not read catted contcar")
+
+    stringio = StringIO("".join(lines[start:end if end != 0 else -1]))
+    structure = read_poscar(types=self.solo().species, path=stringio)
+    return structure
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
   def _structure_data(self):
     """ Greps cell and positions from OUTCAR. """
     from re import compile
@@ -170,41 +194,25 @@ class Extract(object):
     cell = zeros((3,3), dtype="float64")
     atoms = []
     with self.__outcar__() as file: lines = file.readlines()
-    begin_contcar_re = compile(r"""#+\s+CONTCAR\s+#+""")
-    end_contcar_re = compile(r"""#+\s+END\s+CONTCAR\s+#+""")
-    start, end = None, None
-    for i, line in enumerate(lines[::-1]):
-      if begin_contcar_re.match(line) is not None: start = -i; break;
-      if end_contcar_re.match(line) is not None: end = -i
-    if start is not None and end is not None:
-      from StringIO import StringIO
-      from ...crystal import read_poscar
-      stringio = StringIO("".join(lines[start+1:end if end != 0 else -1]))
-      structure = read_poscar(types=self.solo().species, path=stringio)
-      cell = structure.cell
-      atoms = structure.atoms
       
-    else: 
-      atom_index, cell_index = None, None
-      atom_re = compile(r"""^\s*POSITION\s+""")
-      cell_re = compile(r"""^\s*direct\s+lattice\s+vectors\s+""")
-      for index, line in enumerate(lines[::-1]):
-        if atom_re.search(line) is not None: atom_index = index - 1
-        if cell_re.search(line) is not None: cell_index = index; break
-      assert atom_index is not None and cell_index is not None,\
-             RuntimeError("Could not find structure description in OUTCAR.")
-      try: 
-        for i in range(3): cell[:,i] = array(lines[-cell_index+i].split()[:3], dtype="float64")
-      except: 
-        for i in range(3): cell[i,:] = array(lines[-cell_index+i].split()[-3:], dtype="float64")
-        cell = inv(cell)
-      for i in range(3):
-        cell[:,i] = [float(u) for u in lines[-cell_index+i].split()[:3]]
-      while atom_index > 0 and len(lines[-atom_index].split()) == 6:
-        atoms.append( array([float(u) for u in lines[-atom_index].split()[:3]], dtype="float64") )
-        atom_index -= 1
-
-    return cell, atoms
+    atom_index, cell_index = None, None
+    atom_re = compile(r"""^\s*POSITION\s+""")
+    cell_re = compile(r"""^\s*direct\s+lattice\s+vectors\s+""")
+    for index, line in enumerate(lines[::-1]):
+      if atom_re.search(line) is not None: atom_index = index - 1
+      if cell_re.search(line) is not None: cell_index = index; break
+    assert atom_index is not None and cell_index is not None,\
+           RuntimeError("Could not find structure description in OUTCAR.")
+    try: 
+      for i in range(3): cell[:,i] = array(lines[-cell_index+i].split()[:3], dtype="float64")
+    except: 
+      for i in range(3): cell[i,:] = array(lines[-cell_index+i].split()[-3:], dtype="float64")
+      cell = inv(cell)
+    for i in range(3):
+      cell[:,i] = [float(u) for u in lines[-cell_index+i].split()[:3]]
+    while atom_index > 0 and len(lines[-atom_index].split()) == 6:
+      atoms.append( array([float(u) for u in lines[-atom_index].split()[:3]], dtype="float64") )
+      atom_index -= 1
 
   @property
   @json_section(None)
@@ -216,12 +224,15 @@ class Extract(object):
     from quantities import eV
     from ...crystal import Structure
 
+    try: return self._structure_catted_contcar
+    except: pass
+
     if self.isif == 0 or self.nsw == 0 or self.ibrion == -1:
       return self.starting_structure
 
-
     try: cell, atoms = self._structure_data;
-    except: return self.contcar_structure
+    except:
+      return self.contcar_structure
 
     structure = Structure()
     # tries to find adequate name for structure.
@@ -654,6 +665,56 @@ class Extract(object):
     result = self._find_first_OUTCAR("""NBANDS\s*=\s*(\d+)""")
     assert result is not None, RuntimeError("Could not find NBANDS in OUTCAR.")
     return int(result.group(1))
+
+  @property
+  @make_cached
+  def stress(self):
+    """ Returns total stress.
+    
+        Compute from sum of components since it allows for more digits.
+    """
+    from numpy import zeros, abs, dot
+    from numpy.linalg import det
+    from quantities import eV, J, kbar
+    if self.isif < 2: return None
+    with self.__outcar__() as file:
+      for line in file:
+        line = line.split()
+        if len(line) != 7: continue
+        if line[0] != "Direction": continue
+        if line[1] != "X": continue
+        if line[2] != "Y": continue
+        if line[3] != "Z": continue
+        if line[4] != "XY": continue
+        if line[5] != "YZ": continue
+        if line[6] == "ZX": break;
+      file.next()
+      result = zeros((3,3), dtype="float64")
+      line = file.next(); data = line.split()
+      result[0,0] += float(data[2])
+      result[1,1] += float(data[3])
+      result[2,2] += float(data[4])
+      for i, line in zip(xrange(7), file):
+        data = line.split()
+        result[0,0] += float(data[1])
+        result[1,1] += float(data[2])
+        result[2,2] += float(data[3])
+        result[0,1] += float(data[4])
+        result[1,0] += float(data[4])
+        result[1,2] += float(data[5])
+        result[2,1] += float(data[5])
+        result[0,2] += float(data[6])
+        result[2,0] += float(data[6])
+      # symmetrize tensor according to space group operations.
+      space_group = self.structure.to_lattice().space_group
+      stress = result.copy()
+      for op in space_group: stress += dot(dot(op.op.T, result), op.op)
+      result = stress / float(len(space_group)+1)
+
+      # now have stress in eV per reduced length...
+      # use scale from vasp's main.F
+      return result * float(eV.rescale(J) * 1e22\
+             / abs(det(self.structure.cell*self.structure.scale))) * kbar
 
 
   def iterfiles(self, **kwargs):
