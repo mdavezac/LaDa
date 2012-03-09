@@ -3,16 +3,17 @@ About
 
 LaDa is a modular python framework to control physics simulations, from DFT to
 empirical pseudo-potentials to point ion electrostatics. It's goal is to
-provide the basic building blocks with which methods incorporating different
+provide the basic building blocks from which methods incorporating different
 Hamiltonians can be constructed. It is designed around three main concepts:
 
   * constructing and manipulating periodic crystal structures. For instance, it
     is possible, starting from the unit cell of spinel to automatically create
     a supercell with vacancies or substitutions.
-  * manipulating functionals, such as Quantum Espresso's PWscf, and extracting
-    their output. For instance, one could throw diamond at PWscf, expect it to
-    relax the structure, then perform a static calculation, and finally compute
-    phonons.
+  * manipulating functionals, such as VASP, and extracting their output. For
+    instance, one could throw diamond at VASP, expect it to relax the
+    structure, then perform a static calculation for maximum accuracy. Or
+    possibly perform an epitaxial relaxation, something VASP does not do
+    per say.
   * Manipulate, launch, and check the results for thousands of calculations
     simultaneously. Think of calculating different of carbone allotropes. It
     would be impractical to qsub each and every job and then check that each
@@ -73,6 +74,10 @@ Here are a few of the projects LaDa helped us with.
     start off with? At that point, research tapered off. We combined an
     empirical pseudo-potential method with a genetic algorithm to perform the
     search for us. Eventually, the search `payed off`__.
+
+  * *screwing up:* Speaking from painful and embarrassing personal experience,
+    it is extremely easy to launch tens and hundreds of meaningless jobs. The
+    physics is still for the user to figure out. 
 
 .. __: http://dx.doi.org/10.1088/0965-0393/17/8/084002
 .. __: http://dx.doi.org/10.1103/PhysRevB.77.241201

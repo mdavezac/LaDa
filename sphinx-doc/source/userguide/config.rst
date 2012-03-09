@@ -61,12 +61,13 @@ mpi
      >>> mpirun_exe = "mpirun -n {n} {program} {cmdline}
 
      The actual commandline is executed by :py:func:`execute_program
-     <lada.misc.execute_program>`. The latter executes via `Popen`_ a
-     commandline obtained through the format function of a python string. The
+     <lada.misc.execute_program>`. The latter executes via Popen_ a
+     commandline obtained through the format_ method of a python string. The
      arguments to format are those mentionned above as well as anything passed
      on to :py:func:`execute_program <lada.misc.execute_program>`.
 
-     .. _Popen: http://null.com
+     .. _Popen: http://docs.python.org/library/subprocess.html#subprocess.Popen
+     .. _format: http://docs.python.org/library/stdtypes.html#str.format
 
   .. py:data:: default_comm 
 

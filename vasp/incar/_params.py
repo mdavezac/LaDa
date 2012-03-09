@@ -52,7 +52,7 @@ class Magmom(SpecialVaspParam):
       for i, m in tupled:
         if i == 1: result += "{0:.2f} ".format(m)
         else:      result += "{0}*{1:.2f} ".format(i, m)
-    return 'MAGMOM = {0}\n'.format(result)
+    return 'MAGMOM = {0}'.format(result.rstrip())
   
 class System(SpecialVaspParam):
   """ System title to use for calculation.
@@ -357,22 +357,18 @@ class FFTGrid(SpecialVaspParam):
     return "NGX = {0[0]}\nNGY = {0[1]}\nNGZ = {0[2]}".format(self.value)
 
 class PartialRestart(SpecialVaspParam):
-  """ Return from previous run from which to restart.
+  """ Restart from previous run.
       
-      It is either an vasp extraction object of some kind, or None.
-      In the latter case, the calculation starts from scratch. 
-      However, if an extraction object exists *and* the calculation it refers
-      to was successfull, then it will check whether WAVECAR and CHGCAR exist
-      and set :py:attr:'istart <incar.Incar.istart>` and :py:attr:`icharg
-      <incar.Incar.icharg>` accordingly. It also checks whether
+      It is either an vasp extraction object of some kind, or None.  In the
+      latter case, the calculation starts from scratch.  However, if an
+      extraction object exists *and* the calculation it refers to was
+      successfull, then it will check whether WAVECAR and CHGCAR exist and set
+      ISTART_ and ICHARG_ accordingly. It also checks whether
       :py:attr:`nonscf <incar.Incar.nonscf>` is True or False, and sets
-      :py:attr:`icharg <incar.Incar.icharg>` accordingly. 
-      The CONTCAR file is *not* copied from the previous run. Rather, the
+      ICHARG_ accordingly. The CONTCAR file is *never* copied from the
+      previous run. For an alternate behavior, see :py:class:`Restart`.
 
-      .. seealso:: `ICHARG
-        <http://cms.mpi.univie.ac.at/vasp/guide/node102.html>`_, `ISTART
-        <http://cms.mpi.univie.ac.at/vasp/guide/node101.html>`_,
-        :py:class:`Restart`
+      .. seealso:: ICHARG_, ISTART_, :py:class:`Restart`
   """
   def __init__(self, value): super(PartialRestart, self).__init__(value)
 
@@ -417,9 +413,7 @@ class Restart(PartialRestart):
       However, unlike :py:class:`PartialRestart`, the CONTCAR is copied from
       the previous run, if it exists and is not empty.
 
-      .. seealso:: `ICHARG
-        <http://cms.mpi.univie.ac.at/vasp/guide/node102.html>`_, `ISTART
-        <http://cms.mpi.univie.ac.at/vasp/guide/node101.html>`_
+      .. seealso:: ICHARG_, ISTART_
   """
   def __init__(self, value): super(Restart, self).__init__(value)
 
@@ -429,12 +423,12 @@ class Restart(PartialRestart):
     from ...misc import copyfile
     from .. import files
 
-    result = super(Restart, self).incar_string(self, **kwargs)
-    if result is not None and self.value is not None and self.value.success:
+    super(Restart, self).incar_string(**kwargs)
+    if self.value is not None and self.value.success:
       copyfile(join(self.value.directory, files.CONTCAR), files.POSCAR,\
                nothrow='same exists', symlink=getattr(kwargs["vasp"], 'symlink', False),\
                nocopyempty=True) 
-    return result
+    return None
 
 class NonScf(SpecialVaspParam):
   """ Whether to perform a self-consistent or non-self-consistent run. 
@@ -856,7 +850,7 @@ class Smearing(SpecialVaspParam):
     if self.ismear is None and self.isigma is None: return None
     ismear = { -1: 'fermi', 0: 'gaussian', 1: 'metal', -5: 'insulator', -3: 'dynamic',
                -4: 'tetra', 2: 'mp 2', 3: 'mp 3', None: None}[self.ismear]
-    if self.isigma is None or abs(self.isigma - 0.2*eV) < 1e-8: return ismear
+    if self.isigma is None: return ismear
     return ismear, self.isigma
 
   @value.setter
@@ -882,9 +876,13 @@ class Smearing(SpecialVaspParam):
     if isigma is not None:
       self.isigma = isigma
       if not hasattr(self.isigma, 'rescale'): self.isigma *= eV
+      if len(self.isigma.shape) > 0 and self.ismear is not None and self.ismear != -3:
+        raise RuntimeError('Cannot use more than one smearing '\
+                           'parameter with ismear={0}.'.format(self.ismear))
     elif len(args) == 2: self.isigma = None
 
   def incar_string(self, **kwargs):
+    from quantities import eV
     result = ''
     if self.ismear is not None:
       result = 'ISMEAR = {0}\n'.format(self.ismear)
@@ -893,10 +891,11 @@ class Smearing(SpecialVaspParam):
       if len(isigma.shape) == 0:
         result += 'ISIGMA = {0}'.format(isigma)
       else: 
+        if self.ismear is None: result += 'ISMEAR = -3\n'
         result += 'ISIGMA ='
         for u in isigma: result += ' {0}'.format(u)
-    if result[-1] == '\n': result = result[:-1]
-    return result if len(result) else None
+    if len(result) == 0: return None
+    return result[:-1] if result[-1] == '\n' else result
 
   def __repr__(self):
     value = self.value

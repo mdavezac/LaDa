@@ -2,6 +2,7 @@
 def test():
   from lada.vasp.incar import Relaxation
   from collections import namedtuple
+  from pickle import loads, dumps
   Vasp = namedtuple('Vasp', ['ediff', 'ediffg'])
   vasp = Vasp(1e-5, 1e-4)
 
@@ -54,6 +55,9 @@ def test():
   else: raise RuntimeError()
   vasp = Vasp(-1e-6, 1e-4)
   assert Relaxation('cellshape ionic volume', 60, 3, 20).incar_string(vasp=vasp, structure=range(5))\
+           == 'ISIF = 3\nNSW = 60\nPOTIM = 20.0\nIBRION = 3'
+  assert loads(dumps(Relaxation('cellshape ionic volume', 60, 3, 20)))\
+             .incar_string(vasp=vasp, structure=range(5))\
            == 'ISIF = 3\nNSW = 60\nPOTIM = 20.0\nIBRION = 3'
 
 

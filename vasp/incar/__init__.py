@@ -23,11 +23,13 @@ class Incar(object):
         - Normal parameters which will simply print "NAME = VALUE" to the incar
         - Special parameters which enhance the default behavior of vasp
       
-      The special parameters are always called first. They may change the
-      values of one or more "normal" vasp parameters. For instance
-      :py:attr:`restart <Incar.restart>` will set :py:attr:`istart
-      <Incar.istart>` and :py:attr:`icharg <Incar.icharg>` depending on
-      the availability of the wavefunctions and charge densitie.
+      The special parameters achieve a variety of design-goals. For instance,
+      when passed a previous VASP run, :py:attr:`restart` will set ISTART_ and
+      ICHARG_ accordingly, as well as copy the relevant files. If it is a
+      :py:class:`Restart` object, it will also copy the CONTCAR file from the
+      previous run (default behavior). If it as :py:class:`PartialRestart`,
+      then the CONTCAR is not copied, which allows restarting from the charge
+      with a slightly different structure than it was generated for.
   """
   def __init__(self): 
     super(Incar, self).__init__()
@@ -35,21 +37,19 @@ class Incar(object):
     # first, actually sets these two variables by hand, since they are used in __setattr__.
     super(Incar, self).__setattr__("params", {})
     super(Incar, self).__setattr__("special", {})
-    self.add_param = "ispin",       1 
-    self.add_param = "ismear",      None
-    self.add_param = "isigma",      None
-    self.add_param = "potim",       None
-    self.add_param = "nbands",      None
-    self.add_param = "lorbit",      None
     self.add_param = "addgrid",     None
-    self.add_param = "isym",        None
-    self.add_param = "symprec",     None
-    self.add_param = "nupdown",     None
-    self.add_param = "lmaxmix",     4
-    self.add_param = "lmaxfockae",  None
-    self.add_param = "nomega",      None
-    self.add_param = "istart",      None
     self.add_param = "icharge",     None
+    self.add_param = "ispin",       1 
+    self.add_param = "istart",      None
+    self.add_param = "isym",        None
+    self.add_param = "lmaxfockae",  None
+    self.add_param = "lmaxmix",     4
+    self.add_param = "lorbit",      None
+    self.add_param = "nbands",      None
+    self.add_param = "nomega",      None
+    self.add_param = "nupdown",     None
+    self.add_param = "potim",       None
+    self.add_param = "symprec",     None
     # objects derived from SpecialVaspParams will be recognized as such and can
     # be added without further fuss.
     self.nelect      = NElect(0)

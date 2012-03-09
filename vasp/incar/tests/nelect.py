@@ -36,6 +36,10 @@ def test():
            == "NELECT = 57.0  # negatively charged system (-1)"
   assert NElect(-1).incar_string(vasp=vasp, structure=structure)\
            == "NELECT = 55.0  # positively charged system (+1)"
+  assert repr(NElect()) == 'NElect(0)'
+  assert repr(loads(dumps(NElect()))) == 'NElect(0)'
+  assert repr(NElect(-1)) == 'NElect(-1)'
+  assert repr(loads(dumps(NElect(-1)))) == 'NElect(-1)'
 
 
 if __name__ == "__main__":
