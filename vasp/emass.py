@@ -261,19 +261,21 @@ def reciprocal( vasp, structure, outdir = None, comm = None,
   if center is None: center = kwargs.pop("kpoint", [0,0,0])
   center = array(center, dtype="float64")
   if outdir is None: outdir = getcwd()
-  if nbpoints == None: nbpoints = order + 1
-  if nbpoints < order + 1:
+  maxorder = max(order) if hasattr(order, '__iter__') else order 
+  if nbpoints == None: nbpoints = maxorder + 1
+  if nbpoints < maxorder + 1:
     raise ValueError("Cannot compute taylor expansion of order {0} "\
-                     "with only {1} points per direction.".format(order, nbpoints))
+                     "with only {1} points per direction.".format(maxorder, nbpoints))
 
 
   # first runs vasp.
-  first = vasp(structure=structure, outdir=outdir, comm=comm, **kwargs)
+  first = vasp.Extract(directory=outdir, comm=comm)
+  if not first.success:
+    first = vasp(structure=structure, outdir=outdir, comm=comm, **kwargs)
   if not first.success: return Extract(outdir=outdir, comm=comm)
 
   # prepare second run.
-  if hasattr(vasp, "vasp"): functional = deepcopy(Vasp(vasp=vasp.vasp))
-  else: functional = deepcopy(Vasp(vasp=vasp))
+  functional = first.functional
   center = dot(inv(first.structure.cell).T, center)
   kpoints = [ (x, y, z) for x in xrange(nbpoints)\
                         for y in xrange(nbpoints)\
