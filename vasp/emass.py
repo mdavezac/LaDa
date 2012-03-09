@@ -22,8 +22,12 @@ class Extract(ExtractDFT):
           order : unsigned int or list 
             Order up to which to compute taylor coefficients.
     """
-    from os.path import dirname
+    from os.path import dirname, isdir, exists, join
     from lada.vasp import Extract as VaspExtract
+    from lada.opt import RelativeDirectory
+    path = RelativeDirectory(outcar).path
+    if isdir(path) and exists(join(path, 'reciprocal')): outcar = join(outcar, 'reciprocal')
+    
     super(Extract, self).__init__(outcar, comm=comm, **kwargs)
     self.input = input if input != None else VaspExtract(dirname(self.directory), comm=comm)
     """ Extractor object for the calculation from which the charge density was obtained. """
