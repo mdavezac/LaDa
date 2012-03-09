@@ -1,9 +1,9 @@
 """ Standard parameter types for use as attributes in Incar """
 __docformat__ = "restructuredtext en"
 __all__ = [ "SpecialVaspParam", "NElect", "Algo", "Precision", "Ediff",\
-            "Ediffg", "Encut", "EncutGW", "EncutLF", "FFTGrid", "Restart", "UParams", "IniWave",\
+            "Ediffg", "Encut", "EncutGW", "FFTGrid", "Restart", "UParams", "IniWave",\
             "Magmom", 'Npar', 'Boolean', 'Integer', 'Choices', 'PrecFock', 'NonScf', \
-            "System", 'PartialRestart', 'Relaxation' ]
+            "System", 'PartialRestart', 'Relaxation', 'Smearing' ]
 class SpecialVaspParam(object): 
   """ Base type for special vasp parameters. 
   
@@ -826,7 +826,7 @@ class Relaxation(SpecialVaspParam):
     return "{0.__class__.__name__}({1})".format(self, repr(self.value)[1:-1])
 
 class Smearing(SpecialVaspParam):
-  def __init__(self, isif=None, nsw=None, ibrion=None, potim=None): 
+  def __init__(self, type=None, sigma=None):
     """ Value of the smearing used in the calculation. 
   
         It can be specified as a string:
@@ -848,18 +848,18 @@ class Smearing(SpecialVaspParam):
 
         .. seealso:: `ISMEAR, ISIGMA <http://cms.mpi.univie.ac.at/vasp/guide/node124.html>`_
     """
-    super(Relaxation, self).__init__((isif, nsw, ibrion, potim))
+    super(Smearing, self).__init__((type, sigma))
 
   @property 
   def value(self):
     from quantities import eV
     if self.ismear is None and self.isigma is None: return None
-    ismear = { -1: 'fermi', 0: 'gaussian', 1: 'metal', -5:'bloechl', -3: 'dynamic',
+    ismear = { -1: 'fermi', 0: 'gaussian', 1: 'metal', -5: 'insulator', -3: 'dynamic',
                -4: 'tetra', 2: 'mp 2', 3: 'mp 3', None: None}[self.ismear]
-    if abs(self.isigma - 0.2*eV) < 1e-8: return ismear
+    if self.isigma is None or abs(self.isigma - 0.2*eV) < 1e-8: return ismear
     return ismear, self.isigma
 
-  @smearing.setter
+  @value.setter
   def value(self, args):
     from quantities import eV
     if args is None: 
@@ -872,14 +872,34 @@ class Smearing(SpecialVaspParam):
     else: raise ValueError("Incorrect input to smearing: {0}.".format(args))
 
     if hasattr(ismear, 'lower'): 
-      ismear = args.rstrip().lstrip().replace(' ', '').lower()
-      self.ismear = { 'fermi': -1, 'gaussian': 0, 'metal': 1, 'bloechl': -5, 'dynamic': -3, 
-                      'tetra': -4, 'mp1': 0, 'mp2': 2, 'mp3': 3, None: None }[ismear]
-    else: ismear = int(ismear)
+      ismear = ismear.rstrip().lstrip().replace(' ', '').lower()
+      ismear = { 'fermi': -1, 'gaussian': 0, 'metal': 1, 'bloechl': -5, 'dynamic': -3, \
+                 'tetra': -4, 'insulator': -5, 'mp1': 1, 'mp2': 2, 'mp3': 3, None: None }[ismear]
+    elif ismear is not None: 
+      ismear = int(ismear)
+      if ismear < -5 or ismear > 3: raise RuntimeError("Unknown value for ismear: {0}.\n".format(ismear))
+    self.ismear = ismear
     if isigma is not None:
       self.isigma = isigma
       if not hasattr(self.isigma, 'rescale'): self.isigma *= eV
     elif len(args) == 2: self.isigma = None
 
   def incar_string(self, **kwargs):
+    result = ''
+    if self.ismear is not None:
+      result = 'ISMEAR = {0}\n'.format(self.ismear)
+    if self.isigma is not None:
+      isigma = self.isigma.rescale(eV).magnitude
+      if len(isigma.shape) == 0:
+        result += 'ISIGMA = {0}'.format(isigma)
+      else: 
+        result += 'ISIGMA ='
+        for u in isigma: result += ' {0}'.format(u)
+    if result[-1] == '\n': result = result[:-1]
+    return result if len(result) else None
 
+  def __repr__(self):
+    value = self.value
+    if value is None: return "{0.__class__.__name__}(None)".format(self)
+    if isinstance(value, str):  return "{0.__class__.__name__}({1!r})".format(self, value)
+    return "{0.__class__.__name__}({1})".format(self, repr(self.value)[1:-1])

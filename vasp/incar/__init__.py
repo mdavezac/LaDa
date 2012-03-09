@@ -3,11 +3,11 @@ __docformat__ = "restructuredtext en"
 __all__ = [ "SpecialVaspParam", "NElect", "Algo", "Precision", "Ediff",\
             "Encut", "FFTGrid", "Restart", "UParams", "IniWave", 'Ediffg', "EncutGW", \
             "Incar", "Magmom", 'Npar', 'Boolean', 'Integer', 'Choices', 'PrecFock',
-            "System", 'PartialRestart', 'Relaxation' ]
+            "System", 'PartialRestart', 'Relaxation', 'Smearing' ]
 from _params import SpecialVaspParam, NElect, Algo, Precision, Ediff,\
                     Encut, FFTGrid, PartialRestart, Restart, UParams, IniWave, Magmom,\
                     Npar, Boolean, Integer, PrecFock, NonScf, Ediffg, Choices, \
-                    EncutGW, System, Relaxation
+                    EncutGW, System, Relaxation, Smearing
 from ...misc import add_setter
 
 
@@ -67,7 +67,8 @@ class Incar(object):
     self.precfock    = PrecFock(None)
     self.nonscf      = NonScf(False)
     self.system      = System(True)
-    self.Relaxation  = Relaxation(None)
+    self.smearing    = Smearing(None)
+    self.relaxation  = Relaxation(None)
 
     self.lwave       = Boolean("lwave", False)
     self.lcharg      = Boolean("lcharg", True)
