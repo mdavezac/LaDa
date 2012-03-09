@@ -1,10 +1,10 @@
 """ Subpackage defining vasp incar parameters. """
 __docformat__ = "restructuredtext en"
-__all__ = [ "SpecialVaspParam", "NElect", "Algo", "Precision", "Ediff",\
+__all__ = [ "SpecialVaspParam", "ExtraElectron", "Algo", "Precision", "Ediff",\
             "Encut", "FFTGrid", "Restart", "UParams", "IniWave", 'Ediffg', "EncutGW", \
             "Incar", "Magmom", 'Npar', 'Boolean', 'Integer', 'Choices', 'PrecFock',
             "System", 'PartialRestart', 'Relaxation', 'Smearing' ]
-from _params import SpecialVaspParam, NElect, Algo, Precision, Ediff,\
+from _params import SpecialVaspParam, ExtraElectron, Algo, Precision, Ediff,\
                     Encut, FFTGrid, PartialRestart, Restart, UParams, IniWave, Magmom,\
                     Npar, Boolean, Integer, PrecFock, NonScf, Ediffg, Choices, \
                     EncutGW, System, Relaxation, Smearing
@@ -52,23 +52,23 @@ class Incar(object):
     self.add_param = "symprec",     None
     # objects derived from SpecialVaspParams will be recognized as such and can
     # be added without further fuss.
-    self.nelect      = NElect(0)
-    self.algo        = Algo()
-    self.precision   = Precision("accurate")
-    self.ediff       = Ediff(1e-4)
-    self.ediffg      = Ediffg(None)
-    self.encut       = Encut(None)
-    self.encutgw     = EncutGW(None)
-    self.fftgrid     = FFTGrid(None)
-    self.restart     = Restart(None)
-    self.U_verbosity = UParams("occupancy")
-    self.magmom      = Magmom()
-    self.npar        = Npar(None)
-    self.precfock    = PrecFock(None)
-    self.nonscf      = NonScf(False)
-    self.system      = System(True)
-    self.smearing    = Smearing(None)
-    self.relaxation  = Relaxation(None)
+    self.extraelectron = ExtraElectron(0)
+    self.algo          = Algo()
+    self.precision     = Precision("accurate")
+    self.ediff         = Ediff(1e-4)
+    self.ediffg        = Ediffg(None)
+    self.encut         = Encut(None)
+    self.encutgw       = EncutGW(None)
+    self.fftgrid       = FFTGrid(None)
+    self.restart       = Restart(None)
+    self.U_verbosity   = UParams("occupancy")
+    self.magmom        = Magmom()
+    self.npar          = Npar(None)
+    self.precfock      = PrecFock(None)
+    self.nonscf        = NonScf(False)
+    self.system        = System(True)
+    self.smearing      = Smearing(None)
+    self.relaxation    = Relaxation(None)
 
     self.lwave       = Boolean("lwave", False)
     self.lcharg      = Boolean("lcharg", True)

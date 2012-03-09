@@ -14,16 +14,19 @@ def test(path):
   vasp.ediff      = 1e-5
   vasp.encut      = 1
   vasp.set_smearing   = "metal", 0.01
-  vasp.relaxation = "volume", 50, 2
+  vasp.relaxation = "volume"
   vasp.add_specie = "Si", "{0}/pseudos/Si".format(path)
-  print vasp
-# directory = mkdtemp()
-# print directory
-# try: 
-#   assert vasp(structure, outdir=directory, comm={'n': 2, 'ppn': 1}).success
-# finally: 
-#   rmtree(directory)
-#   pass
+  directory = mkdtemp()
+  try: 
+    result = vasp(structure, outdir=directory, comm={'n': 2, 'ppn': 1})
+    from sys import path as pypath
+    from lada.misc import RelativePath
+    pypath.insert(0, RelativePath('{0}/../extract/tests'.format(path)).path)
+    from common import test as test_common
+    test_common(directory, False)
+  finally: 
+    rmtree(directory)
+    pass
 
 if __name__ == "__main__":
   from sys import argv, path 

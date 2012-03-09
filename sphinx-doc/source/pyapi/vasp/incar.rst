@@ -9,13 +9,13 @@ incar
 
    Here are all the parameters lada currently has by default.
      :py:attr:`addgrid` :py:attr:`algo` :py:attr:`ediff` :py:attr:`ediffg`
-     :py:attr:`encut` :py:attr:`encutgw` :py:attr:`fftgrid` :py:attr:`ispin`
-     :py:attr:`icharg` :py:attr:`istart` :py:attr:`isym` :py:attr:`lcharg`
-     :py:attr:`loptics` :py:attr:`lorbit` :py:attr:`lmaxmix`
-     :py:attr:`lmaxfockae` :py:attr:`lpead` :py:attr:`lrpa` :py:attr:`lvtot`
-     :py:attr:`lwave` :py:attr:`magmom` :py:attr:`nbands` :py:attr:`nomega`
-     :py:attr:`nonscf` :py:attr:`nelm` :py:attr:`nelmin` :py:attr:`nelmdl`
-     :py:attr:`npar` :py:attr:`nelect` :py:attr:`nupdown` :py:attr:`precfock`
+     :py:attr:`encut` :py:attr:`encutgw` :py:attr:`extraelectron`
+     :py:attr:`fftgrid` :py:attr:`ispin` :py:attr:`icharg` :py:attr:`istart`
+     :py:attr:`isym` :py:attr:`lcharg` :py:attr:`loptics` :py:attr:`lorbit`
+     :py:attr:`lmaxmix` :py:attr:`lmaxfockae` :py:attr:`lpead` :py:attr:`lrpa`
+     :py:attr:`lvtot` :py:attr:`lwave` :py:attr:`magmom` :py:attr:`nbands`
+     :py:attr:`nomega` :py:attr:`nonscf` :py:attr:`nelm` :py:attr:`nelmin`
+     :py:attr:`nelmdl` :py:attr:`npar` :py:attr:`nupdown` :py:attr:`precfock`
      :py:attr:`precision` :py:attr:`relaxation` :py:attr:`restart`
      :py:attr:`symprec` :py:attr:`U_verbosity` :py:attr:`system`
 
@@ -167,9 +167,9 @@ incar
 
        .. seealso:: `NBANDS <http://cms.mpi.univie.ac.at/vasp/vasp/NBANDS_tag.html>`_
 
-   .. py:attribute:: Incar.nelect
+   .. py:attribute:: Incar.extraelectron
 
-      See the documentation for :py:class:`NElect`.
+      See the documentation for :py:class:`ExtraElection`.
    
    .. py:attribute:: Incar.nelm
 
@@ -266,7 +266,7 @@ All these classes are actually defined in ``lada.vasp.incar._params``.
 .. autoclass:: IniWave
 .. autoclass:: Magmom
 .. autoclass:: NonScf
-.. autoclass:: NElect
+.. autoclass:: ExtraElectron
 .. autoclass:: Npar
 .. autoclass:: PartialRestart
 .. autoclass:: PrecFock

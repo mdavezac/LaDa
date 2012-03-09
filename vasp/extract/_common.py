@@ -382,23 +382,33 @@ class Extract(object):
   @make_cached
   def sigma(self):
     """ Greps smearing function from OUTCAR. """
+    from numpy import array
     from quantities import eV
-    result = self._find_first_OUTCAR(r"""\s*ISMEAR\s*=\s*(?:\d+)\s*;\s*SIGMA\s*=\s*(\S+)\s*""")
+    result = self._find_first_OUTCAR(r"""\s*ISMEAR\s*=\s*(?:\d+)\s*;\s*SIGMA\s*=\s+(.*)\s+br""")
     if  result is None: return None
-    return float(result.group(1)) * eV
-  
+    result = result.group(1).rstrip().lstrip().split()
+    if len(result) == 1: return float(result[0]) * eV
+    return array(result, dtype="float64") * eV
   
   @property
   def relaxation(self): 
     """ Returns the kind of relaxation performed in this calculation. """
-    from ..incar import Incar
-    return Incar.relaxation.__get__(self)
+    from ..incar import Relaxation
+    result = Relaxation(self.isif)
+    if self.nsw != 50: result.nsw = self.nsw
+    if self.ibrion != 2 or abs(self.potim - 0.5) > 1e-8: result.ibrion = self.ibrion
+    if abs(self.potim - 0.5) > 1e-8: result.potim = self.potim
+    return result.value
   
   @property
   def smearing(self): 
     """ Returns the kind of smearing performed in this calculation. """
-    from ..incar import Incar
-    return Incar.smearing.__get__(self)
+    from quantities import eV
+    from ..incar import Smearing
+    result = Smearing()
+    result.ismear = self.ismear
+    result.sigma = self.sigma if abs(self.sigma - 0.2*eV) > 1e-8 else None
+    return result.value
 
   @property
   @make_cached
@@ -692,9 +702,9 @@ class Extract(object):
     return float(result.group(1)) 
 
   @property
-  def charge(self):
+  def extraelectron(self):
     """ Returns charge state of the system. """
-    return self.valence - self.charge
+    return self.nelect - self.valence
 
   @property
   def nonscf(self):
@@ -734,11 +744,10 @@ class Extract(object):
     """ Greps NELMDL from OUTCAR. """
     regex = r"""^\s*NELM\s*=\s*\d+\s*;"""\
              """\s*NELMIN\s*=\s*\d+\s*;"""\
-             """\s*NELMDL\s*=\s*(\d+)"""
+             """\s*NELMDL\s*=\s*(-?\d+)"""
     result = self._find_first_OUTCAR(regex)
     if result == None: return None
     return int(result.group(1))
-
 
   @property
   def nelmin(self):
@@ -780,7 +789,7 @@ class Extract(object):
     from os.path import exists, join
     from glob import iglob
     from itertools import chain
-    files = [self.OUTCAR, self.FUNCCAR]
+    files = [self.OUTCAR]
     try: files.append(self.functional.STDOUT)
     except: pass
     if kwargs.get('errors', False): 

@@ -2,7 +2,7 @@ def test():
   from collections import namedtuple
   from pickle import loads, dumps
   from lada.crystal.cppwrappers import Structure
-  from lada.vasp.incar._params import NElect
+  from lada.vasp.incar._params import ExtraElectron
 
   u = 0.25
   x, y = u, 0.25-u
@@ -29,17 +29,17 @@ def test():
   Specie = namedtuple('Specie', ['valence'])
   vasp = Vasp({'A': Specie(5), 'B': Specie(10), 'X': Specie(2)})
 
-  assert 4*5+2*10+2*8 == NElect(0).nelectrons(vasp, structure)
-  assert NElect(0).incar_string(vasp=vasp, structure=structure)\
+  assert 4*5+2*10+2*8 == ExtraElectron(0).nelectrons(vasp, structure)
+  assert ExtraElectron(0).incar_string(vasp=vasp, structure=structure)\
            == "# NELECT = 56.0 Charge neutral system"
-  assert NElect(1).incar_string(vasp=vasp, structure=structure)\
+  assert ExtraElectron(1).incar_string(vasp=vasp, structure=structure)\
            == "NELECT = 57.0  # negatively charged system (-1)"
-  assert NElect(-1).incar_string(vasp=vasp, structure=structure)\
+  assert ExtraElectron(-1).incar_string(vasp=vasp, structure=structure)\
            == "NELECT = 55.0  # positively charged system (+1)"
-  assert repr(NElect()) == 'NElect(0)'
-  assert repr(loads(dumps(NElect()))) == 'NElect(0)'
-  assert repr(NElect(-1)) == 'NElect(-1)'
-  assert repr(loads(dumps(NElect(-1)))) == 'NElect(-1)'
+  assert repr(ExtraElectron()) == 'ExtraElectron(0)'
+  assert repr(loads(dumps(ExtraElectron()))) == 'ExtraElectron(0)'
+  assert repr(ExtraElectron(-1)) == 'ExtraElectron(-1)'
+  assert repr(loads(dumps(ExtraElectron(-1)))) == 'ExtraElectron(-1)'
 
 
 if __name__ == "__main__":

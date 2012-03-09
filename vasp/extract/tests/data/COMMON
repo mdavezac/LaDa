@@ -1,5 +1,5 @@
  vasp.4.6.36 17Feb09 complex 
- executed on        LinuxGfortran date 2012.03.01  09:11:26
+ executed on        LinuxGfortran date 2012.03.08  21:18:29
  running on    2 nodes
  distr:  one band on    1 nodes,    2 groups
 
@@ -177,7 +177,7 @@ Automatic generation of k-mesh.
    ENCUT  =  245.3 eV  18.03 Ry    4.25 a.u.   4.90  4.90  4.90*2*pi/ulx,y,z
    ENINI  =  245.3     initial cutoff
    ENAUG  =  322.1 eV  augmentation charge cutoff
-   NELM   =     60;   NELMIN=  2; NELMDL=  0     # of ELM steps 
+   NELM   =     60;   NELMIN=  2; NELMDL= -5     # of ELM steps 
    EDIFF  = 0.2E-04   stopping-criterion for ELM
    LREAL  =      F    real-space projection
    LCOMPAT=      F    compatible to vasp.4.4
@@ -363,12 +363,12 @@ Broyden mixing: mesh for mixing (old mesh)
 ----------------------------------------- Iteration    1(   1)  ---------------------------------------
 
 
-    POTLOK:  VPU time    0.24: CPU time    0.25
-    SETDIJ:  VPU time    0.01: CPU time    0.01
-    EDDAV :  VPU time    0.25: CPU time    0.26
+    POTLOK:  VPU time    0.09: CPU time    0.09
+    SETDIJ:  VPU time    0.00: CPU time    0.00
+    EDDAV :  VPU time    0.07: CPU time    0.07
     DOS   :  VPU time    0.00: CPU time   -0.00
     ------------------------------------------
-      LOOP:  VPU time    0.50: CPU time    0.51
+      LOOP:  VPU time    0.16: CPU time    0.16
 
  eigenvalue-minimisations  :    32
  total energy-change (2. order) :-0.1407398E+01  (-0.2580306E+03)
@@ -399,10 +399,10 @@ Broyden mixing: mesh for mixing (old mesh)
 ----------------------------------------- Iteration    1(   2)  ---------------------------------------
 
 
-    EDDAV :  VPU time    0.40: CPU time    0.41
+    EDDAV :  VPU time    0.10: CPU time    0.10
     DOS   :  VPU time    0.00: CPU time   -0.00
     ------------------------------------------
-      LOOP:  VPU time    0.40: CPU time    0.43
+      LOOP:  VPU time    0.10: CPU time    0.10
 
  eigenvalue-minimisations  :    56
  total energy-change (2. order) :-0.9360651E+01  (-0.9363431E+01)
@@ -433,10 +433,10 @@ Broyden mixing: mesh for mixing (old mesh)
 ----------------------------------------- Iteration    1(   3)  ---------------------------------------
 
 
-    EDDAV :  VPU time    0.18: CPU time    0.19
+    EDDAV :  VPU time    0.06: CPU time    0.07
     DOS   :  VPU time    0.00: CPU time   -0.00
     ------------------------------------------
-      LOOP:  VPU time    0.18: CPU time    0.20
+      LOOP:  VPU time    0.06: CPU time    0.07
 
  eigenvalue-minimisations  :    32
  total energy-change (2. order) :-0.8231991E-01  (-0.8220544E-01)
@@ -467,10 +467,10 @@ Broyden mixing: mesh for mixing (old mesh)
 ----------------------------------------- Iteration    1(   4)  ---------------------------------------
 
 
-    EDDAV :  VPU time    0.28: CPU time    0.29
+    EDDAV :  VPU time    0.10: CPU time    0.10
     DOS   :  VPU time    0.00: CPU time   -0.00
     ------------------------------------------
-      LOOP:  VPU time    0.28: CPU time    0.30
+      LOOP:  VPU time    0.10: CPU time    0.10
 
  eigenvalue-minimisations  :    56
  total energy-change (2. order) :-0.3340745E-03  (-0.3340740E-03)
@@ -501,12 +501,12 @@ Broyden mixing: mesh for mixing (old mesh)
 ----------------------------------------- Iteration    1(   5)  ---------------------------------------
 
 
-    EDDAV :  VPU time    0.19: CPU time    0.19
+    EDDAV :  VPU time    0.07: CPU time    0.07
     DOS   :  VPU time    0.00: CPU time   -0.00
-    CHARGE:  VPU time    0.08: CPU time    0.08
+    CHARGE:  VPU time    0.02: CPU time    0.02
     MIXING:  VPU time    0.00: CPU time    0.00
     ------------------------------------------
-      LOOP:  VPU time    0.27: CPU time    0.29
+      LOOP:  VPU time    0.08: CPU time    0.09
 
  eigenvalue-minimisations  :    32
  total energy-change (2. order) :-0.7253894E-07  (-0.7251978E-07)
@@ -542,16 +542,16 @@ Broyden mixing: mesh for mixing (old mesh)
 ----------------------------------------- Iteration    1(   6)  ---------------------------------------
 
 
-    POTLOK:  VPU time    0.26: CPU time    0.26
-    SETDIJ:  VPU time    0.01: CPU time    0.01
-    EDDIAG:  VPU time    0.06: CPU time    0.06
-  RMM-DIIS:  VPU time    0.15: CPU time    0.15
+    POTLOK:  VPU time    0.08: CPU time    0.08
+    SETDIJ:  VPU time    0.00: CPU time    0.00
+    EDDIAG:  VPU time    0.02: CPU time    0.02
+  RMM-DIIS:  VPU time    0.05: CPU time    0.06
     ORTHCH:  VPU time    0.00: CPU time    0.00
     DOS   :  VPU time    0.00: CPU time   -0.00
-    CHARGE:  VPU time    0.05: CPU time    0.05
+    CHARGE:  VPU time    0.02: CPU time    0.02
     MIXING:  VPU time    0.00: CPU time    0.00
     ------------------------------------------
-      LOOP:  VPU time    0.53: CPU time    0.55
+      LOOP:  VPU time    0.18: CPU time    0.18
 
  eigenvalue-minimisations  :    32
  total energy-change (2. order) : 0.1372194E+00  (-0.5764670E-02)
@@ -591,16 +591,16 @@ Broyden mixing: mesh for mixing (old mesh)
 ----------------------------------------- Iteration    1(   7)  ---------------------------------------
 
 
-    POTLOK:  VPU time    0.23: CPU time    0.24
-    SETDIJ:  VPU time    0.01: CPU time    0.01
-    EDDIAG:  VPU time    0.06: CPU time    0.06
-  RMM-DIIS:  VPU time    0.15: CPU time    0.15
+    POTLOK:  VPU time    0.08: CPU time    0.08
+    SETDIJ:  VPU time    0.00: CPU time    0.00
+    EDDIAG:  VPU time    0.02: CPU time    0.02
+  RMM-DIIS:  VPU time    0.05: CPU time    0.06
     ORTHCH:  VPU time    0.00: CPU time    0.00
     DOS   :  VPU time    0.00: CPU time   -0.00
-    CHARGE:  VPU time    0.05: CPU time    0.05
+    CHARGE:  VPU time    0.02: CPU time    0.02
     MIXING:  VPU time    0.00: CPU time    0.00
     ------------------------------------------
-      LOOP:  VPU time    0.50: CPU time    0.53
+      LOOP:  VPU time    0.18: CPU time    0.18
 
  eigenvalue-minimisations  :    32
  total energy-change (2. order) : 0.6181170E-01  (-0.1201599E-01)
@@ -640,16 +640,16 @@ Broyden mixing: mesh for mixing (old mesh)
 ----------------------------------------- Iteration    1(   8)  ---------------------------------------
 
 
-    POTLOK:  VPU time    0.23: CPU time    0.24
-    SETDIJ:  VPU time    0.01: CPU time    0.01
-    EDDIAG:  VPU time    0.06: CPU time    0.06
-  RMM-DIIS:  VPU time    0.15: CPU time    0.15
+    POTLOK:  VPU time    0.08: CPU time    0.08
+    SETDIJ:  VPU time    0.00: CPU time    0.00
+    EDDIAG:  VPU time    0.02: CPU time    0.02
+  RMM-DIIS:  VPU time    0.05: CPU time    0.06
     ORTHCH:  VPU time    0.00: CPU time    0.00
     DOS   :  VPU time    0.00: CPU time   -0.00
-    CHARGE:  VPU time    0.05: CPU time    0.05
+    CHARGE:  VPU time    0.02: CPU time    0.02
     MIXING:  VPU time    0.00: CPU time    0.00
     ------------------------------------------
-      LOOP:  VPU time    0.50: CPU time    0.53
+      LOOP:  VPU time    0.18: CPU time    0.18
 
  eigenvalue-minimisations  :    32
  total energy-change (2. order) :-0.1721404E-02  (-0.2618259E-03)
@@ -689,16 +689,16 @@ Broyden mixing: mesh for mixing (old mesh)
 ----------------------------------------- Iteration    1(   9)  ---------------------------------------
 
 
-    POTLOK:  VPU time    0.24: CPU time    0.24
-    SETDIJ:  VPU time    0.01: CPU time    0.01
-    EDDIAG:  VPU time    0.06: CPU time    0.06
-  RMM-DIIS:  VPU time    0.15: CPU time    0.15
+    POTLOK:  VPU time    0.08: CPU time    0.08
+    SETDIJ:  VPU time    0.00: CPU time    0.00
+    EDDIAG:  VPU time    0.02: CPU time    0.02
+  RMM-DIIS:  VPU time    0.05: CPU time    0.06
     ORTHCH:  VPU time    0.00: CPU time    0.00
     DOS   :  VPU time    0.00: CPU time   -0.00
-    CHARGE:  VPU time    0.05: CPU time    0.05
+    CHARGE:  VPU time    0.02: CPU time    0.02
     MIXING:  VPU time    0.00: CPU time    0.00
     ------------------------------------------
-      LOOP:  VPU time    0.51: CPU time    0.53
+      LOOP:  VPU time    0.18: CPU time    0.18
 
  eigenvalue-minimisations  :    32
  total energy-change (2. order) :-0.1249827E-03  (-0.1869473E-04)
@@ -738,16 +738,16 @@ Broyden mixing: mesh for mixing (old mesh)
 ----------------------------------------- Iteration    1(  10)  ---------------------------------------
 
 
-    POTLOK:  VPU time    0.24: CPU time    0.24
-    SETDIJ:  VPU time    0.01: CPU time    0.01
-    EDDIAG:  VPU time    0.05: CPU time    0.06
-  RMM-DIIS:  VPU time    0.14: CPU time    0.15
+    POTLOK:  VPU time    0.08: CPU time    0.08
+    SETDIJ:  VPU time    0.00: CPU time    0.00
+    EDDIAG:  VPU time    0.02: CPU time    0.02
+  RMM-DIIS:  VPU time    0.05: CPU time    0.05
     ORTHCH:  VPU time    0.00: CPU time    0.00
     DOS   :  VPU time    0.00: CPU time   -0.00
-    CHARGE:  VPU time    0.05: CPU time    0.05
+    CHARGE:  VPU time    0.02: CPU time    0.02
     MIXING:  VPU time    0.00: CPU time    0.00
     ------------------------------------------
-      LOOP:  VPU time    0.49: CPU time    0.52
+      LOOP:  VPU time    0.18: CPU time    0.18
 
  eigenvalue-minimisations  :    29
  total energy-change (2. order) :-0.2253836E-04  (-0.5708057E-05)
@@ -787,14 +787,14 @@ Broyden mixing: mesh for mixing (old mesh)
 ----------------------------------------- Iteration    1(  11)  ---------------------------------------
 
 
-    POTLOK:  VPU time    0.23: CPU time    0.24
-    SETDIJ:  VPU time    0.01: CPU time    0.01
-    EDDIAG:  VPU time    0.05: CPU time    0.06
-  RMM-DIIS:  VPU time    0.11: CPU time    0.11
+    POTLOK:  VPU time    0.08: CPU time    0.08
+    SETDIJ:  VPU time    0.00: CPU time    0.00
+    EDDIAG:  VPU time    0.02: CPU time    0.02
+  RMM-DIIS:  VPU time    0.04: CPU time    0.04
     ORTHCH:  VPU time    0.00: CPU time    0.00
     DOS   :  VPU time    0.00: CPU time   -0.00
     ------------------------------------------
-      LOOP:  VPU time    0.41: CPU time    0.44
+      LOOP:  VPU time    0.15: CPU time    0.15
 
  eigenvalue-minimisations  :    21
  total energy-change (2. order) : 0.7434834E-06  (-0.2531315E-06)
@@ -890,12 +890,12 @@ Broyden mixing: mesh for mixing (old mesh)
 --------------------------------------------------------------------------------------------------------
 
 
-    CHARGE:  VPU time    0.05: CPU time    0.05
+    CHARGE:  VPU time    0.02: CPU time    0.02
     FORLOC:  VPU time    0.00: CPU time    0.00
-    FORNL :  VPU time    0.02: CPU time    0.02
-    STRESS:  VPU time    0.05: CPU time    0.05
-    FORCOR:  VPU time    0.23: CPU time    0.23
-    FORHAR:  VPU time    0.06: CPU time    0.06
+    FORNL :  VPU time    0.01: CPU time    0.01
+    STRESS:  VPU time    0.02: CPU time    0.02
+    FORCOR:  VPU time    0.08: CPU time    0.08
+    FORHAR:  VPU time    0.02: CPU time    0.02
     MIXING:  VPU time    0.00: CPU time    0.00
 
 
@@ -965,24 +965,24 @@ Broyden mixing: mesh for mixing (old mesh)
 --------------------------------------------------------------------------------------------------------
 
 
-    WAVPRE:  VPU time    0.03: CPU time    0.03
+    WAVPRE:  VPU time    0.01: CPU time    0.01
     FEWALD:  VPU time    0.00: CPU time    0.00
     GENKIN:  VPU time    0.00: CPU time    0.00
     ORTHCH:  VPU time    0.00: CPU time    0.00
-     LOOP+:  VPU time    5.57: CPU time    6.54
+     LOOP+:  VPU time    1.87: CPU time    1.89
 
 
 ----------------------------------------- Iteration    2(   1)  ---------------------------------------
 
 
-    POTLOK:  VPU time    0.25: CPU time    0.26
-    SETDIJ:  VPU time    0.01: CPU time    0.01
-    EDDAV :  VPU time    0.21: CPU time    0.22
+    POTLOK:  VPU time    0.08: CPU time    0.08
+    SETDIJ:  VPU time    0.00: CPU time    0.00
+    EDDAV :  VPU time    0.08: CPU time    0.08
     DOS   :  VPU time    0.00: CPU time   -0.00
-    CHARGE:  VPU time    0.05: CPU time    0.05
+    CHARGE:  VPU time    0.02: CPU time    0.02
     MIXING:  VPU time    0.00: CPU time    0.00
     ------------------------------------------
-      LOOP:  VPU time    0.53: CPU time    0.54
+      LOOP:  VPU time    0.18: CPU time    0.18
 
  eigenvalue-minimisations  :    40
  total energy-change (2. order) :-0.1066536E+02  (-0.3292586E-01)
@@ -1018,16 +1018,16 @@ Broyden mixing: mesh for mixing (old mesh)
 ----------------------------------------- Iteration    2(   2)  ---------------------------------------
 
 
-    POTLOK:  VPU time    0.23: CPU time    0.24
-    SETDIJ:  VPU time    0.01: CPU time    0.01
-    EDDIAG:  VPU time    0.06: CPU time    0.06
-  RMM-DIIS:  VPU time    0.15: CPU time    0.16
+    POTLOK:  VPU time    0.08: CPU time    0.08
+    SETDIJ:  VPU time    0.00: CPU time    0.00
+    EDDIAG:  VPU time    0.02: CPU time    0.02
+  RMM-DIIS:  VPU time    0.05: CPU time    0.06
     ORTHCH:  VPU time    0.00: CPU time    0.00
     DOS   :  VPU time    0.00: CPU time   -0.00
-    CHARGE:  VPU time    0.05: CPU time    0.05
+    CHARGE:  VPU time    0.02: CPU time    0.02
     MIXING:  VPU time    0.00: CPU time    0.00
     ------------------------------------------
-      LOOP:  VPU time    0.51: CPU time    0.54
+      LOOP:  VPU time    0.18: CPU time    0.18
 
  eigenvalue-minimisations  :    32
  total energy-change (2. order) : 0.5506540E-02  (-0.3203667E-03)
@@ -1067,16 +1067,16 @@ Broyden mixing: mesh for mixing (old mesh)
 ----------------------------------------- Iteration    2(   3)  ---------------------------------------
 
 
-    POTLOK:  VPU time    0.24: CPU time    0.24
-    SETDIJ:  VPU time    0.01: CPU time    0.01
-    EDDIAG:  VPU time    0.06: CPU time    0.06
-  RMM-DIIS:  VPU time    0.15: CPU time    0.15
+    POTLOK:  VPU time    0.08: CPU time    0.08
+    SETDIJ:  VPU time    0.00: CPU time    0.00
+    EDDIAG:  VPU time    0.02: CPU time    0.02
+  RMM-DIIS:  VPU time    0.05: CPU time    0.06
     ORTHCH:  VPU time    0.00: CPU time    0.00
     DOS   :  VPU time    0.00: CPU time   -0.00
-    CHARGE:  VPU time    0.05: CPU time    0.05
+    CHARGE:  VPU time    0.02: CPU time    0.02
     MIXING:  VPU time    0.00: CPU time    0.00
     ------------------------------------------
-      LOOP:  VPU time    0.51: CPU time    0.54
+      LOOP:  VPU time    0.18: CPU time    0.18
 
  eigenvalue-minimisations  :    32
  total energy-change (2. order) : 0.2974550E-02  (-0.4199736E-03)
@@ -1116,14 +1116,14 @@ Broyden mixing: mesh for mixing (old mesh)
 ----------------------------------------- Iteration    2(   4)  ---------------------------------------
 
 
-    POTLOK:  VPU time    0.25: CPU time    0.25
-    SETDIJ:  VPU time    0.01: CPU time    0.01
-    EDDIAG:  VPU time    0.06: CPU time    0.06
-  RMM-DIIS:  VPU time    0.16: CPU time    0.16
+    POTLOK:  VPU time    0.08: CPU time    0.08
+    SETDIJ:  VPU time    0.00: CPU time    0.00
+    EDDIAG:  VPU time    0.02: CPU time    0.02
+  RMM-DIIS:  VPU time    0.05: CPU time    0.05
     ORTHCH:  VPU time    0.00: CPU time    0.00
     DOS   :  VPU time    0.00: CPU time   -0.00
     ------------------------------------------
-      LOOP:  VPU time    0.47: CPU time    0.50
+      LOOP:  VPU time    0.16: CPU time    0.16
 
  eigenvalue-minimisations  :    29
  total energy-change (2. order) : 0.6965364E-05  (-0.8054601E-05)
@@ -1219,12 +1219,12 @@ Broyden mixing: mesh for mixing (old mesh)
 --------------------------------------------------------------------------------------------------------
 
 
-    CHARGE:  VPU time    0.08: CPU time    0.08
-    FORLOC:  VPU time    0.01: CPU time    0.01
-    FORNL :  VPU time    0.03: CPU time    0.03
-    STRESS:  VPU time    0.07: CPU time    0.08
-    FORCOR:  VPU time    0.24: CPU time    0.24
-    FORHAR:  VPU time    0.06: CPU time    0.06
+    CHARGE:  VPU time    0.02: CPU time    0.02
+    FORLOC:  VPU time    0.00: CPU time    0.00
+    FORNL :  VPU time    0.01: CPU time    0.01
+    STRESS:  VPU time    0.02: CPU time    0.02
+    FORCOR:  VPU time    0.08: CPU time    0.08
+    FORHAR:  VPU time    0.02: CPU time    0.02
     MIXING:  VPU time    0.00: CPU time    0.00
  d Force = 0.0000000E+00[ 0.000E+00, 0.000E+00]  d Energy = 0.3332205E-02-0.333E-02
  d Force = 0.0000000E+00[ 0.000E+00, 0.000E+00]  d Ewald  =-0.2984907E+01 0.298E+01
@@ -1304,24 +1304,24 @@ Broyden mixing: mesh for mixing (old mesh)
 --------------------------------------------------------------------------------------------------------
 
 
-    WAVPRE:  VPU time    0.03: CPU time    0.03
+    WAVPRE:  VPU time    0.01: CPU time    0.01
     FEWALD:  VPU time    0.00: CPU time    0.00
     GENKIN:  VPU time    0.00: CPU time    0.00
     ORTHCH:  VPU time    0.00: CPU time    0.00
-     LOOP+:  VPU time    2.56: CPU time    2.72
+     LOOP+:  VPU time    0.87: CPU time    0.87
 
 
 ----------------------------------------- Iteration    3(   1)  ---------------------------------------
 
 
-    POTLOK:  VPU time    0.24: CPU time    0.24
-    SETDIJ:  VPU time    0.01: CPU time    0.01
-    EDDAV :  VPU time    0.22: CPU time    0.22
+    POTLOK:  VPU time    0.08: CPU time    0.08
+    SETDIJ:  VPU time    0.00: CPU time    0.00
+    EDDAV :  VPU time    0.08: CPU time    0.08
     DOS   :  VPU time    0.00: CPU time   -0.00
-    CHARGE:  VPU time    0.05: CPU time    0.05
+    CHARGE:  VPU time    0.02: CPU time    0.02
     MIXING:  VPU time    0.00: CPU time    0.00
     ------------------------------------------
-      LOOP:  VPU time    0.51: CPU time    0.52
+      LOOP:  VPU time    0.18: CPU time    0.18
 
  eigenvalue-minimisations  :    40
  total energy-change (2. order) :-0.1066127E+02  (-0.5646821E-02)
@@ -1357,16 +1357,16 @@ Broyden mixing: mesh for mixing (old mesh)
 ----------------------------------------- Iteration    3(   2)  ---------------------------------------
 
 
-    POTLOK:  VPU time    0.24: CPU time    0.24
-    SETDIJ:  VPU time    0.01: CPU time    0.01
-    EDDIAG:  VPU time    0.06: CPU time    0.06
-  RMM-DIIS:  VPU time    0.17: CPU time    0.17
+    POTLOK:  VPU time    0.08: CPU time    0.08
+    SETDIJ:  VPU time    0.00: CPU time    0.00
+    EDDIAG:  VPU time    0.02: CPU time    0.02
+  RMM-DIIS:  VPU time    0.05: CPU time    0.06
     ORTHCH:  VPU time    0.00: CPU time    0.00
     DOS   :  VPU time    0.00: CPU time   -0.00
-    CHARGE:  VPU time    0.05: CPU time    0.05
+    CHARGE:  VPU time    0.02: CPU time    0.02
     MIXING:  VPU time    0.00: CPU time    0.00
     ------------------------------------------
-      LOOP:  VPU time    0.52: CPU time    0.55
+      LOOP:  VPU time    0.18: CPU time    0.18
 
  eigenvalue-minimisations  :    32
  total energy-change (2. order) : 0.9635287E-03  (-0.5236203E-04)
@@ -1406,16 +1406,16 @@ Broyden mixing: mesh for mixing (old mesh)
 ----------------------------------------- Iteration    3(   3)  ---------------------------------------
 
 
-    POTLOK:  VPU time    0.23: CPU time    0.24
-    SETDIJ:  VPU time    0.01: CPU time    0.01
-    EDDIAG:  VPU time    0.05: CPU time    0.06
-  RMM-DIIS:  VPU time    0.15: CPU time    0.15
+    POTLOK:  VPU time    0.08: CPU time    0.08
+    SETDIJ:  VPU time    0.00: CPU time    0.00
+    EDDIAG:  VPU time    0.02: CPU time    0.02
+  RMM-DIIS:  VPU time    0.05: CPU time    0.06
     ORTHCH:  VPU time    0.00: CPU time    0.00
     DOS   :  VPU time    0.00: CPU time   -0.00
-    CHARGE:  VPU time    0.05: CPU time    0.05
+    CHARGE:  VPU time    0.02: CPU time    0.02
     MIXING:  VPU time    0.00: CPU time    0.00
     ------------------------------------------
-      LOOP:  VPU time    0.50: CPU time    0.53
+      LOOP:  VPU time    0.18: CPU time    0.18
 
  eigenvalue-minimisations  :    32
  total energy-change (2. order) : 0.4639286E-03  (-0.7078246E-04)
@@ -1455,14 +1455,14 @@ Broyden mixing: mesh for mixing (old mesh)
 ----------------------------------------- Iteration    3(   4)  ---------------------------------------
 
 
-    POTLOK:  VPU time    0.23: CPU time    0.24
-    SETDIJ:  VPU time    0.01: CPU time    0.01
-    EDDIAG:  VPU time    0.06: CPU time    0.06
-  RMM-DIIS:  VPU time    0.10: CPU time    0.11
+    POTLOK:  VPU time    0.08: CPU time    0.08
+    SETDIJ:  VPU time    0.00: CPU time    0.00
+    EDDIAG:  VPU time    0.02: CPU time    0.02
+  RMM-DIIS:  VPU time    0.04: CPU time    0.04
     ORTHCH:  VPU time    0.00: CPU time    0.00
     DOS   :  VPU time    0.00: CPU time   -0.00
     ------------------------------------------
-      LOOP:  VPU time    0.41: CPU time    0.43
+      LOOP:  VPU time    0.14: CPU time    0.14
 
  eigenvalue-minimisations  :    18
  total energy-change (2. order) :-0.4297956E-05  (-0.1207624E-05)
@@ -1558,12 +1558,12 @@ Broyden mixing: mesh for mixing (old mesh)
 --------------------------------------------------------------------------------------------------------
 
 
-    CHARGE:  VPU time    0.06: CPU time    0.06
+    CHARGE:  VPU time    0.02: CPU time    0.02
     FORLOC:  VPU time    0.00: CPU time    0.00
-    FORNL :  VPU time    0.02: CPU time    0.02
-    STRESS:  VPU time    0.05: CPU time    0.05
-    FORCOR:  VPU time    0.23: CPU time    0.23
-    FORHAR:  VPU time    0.07: CPU time    0.07
+    FORNL :  VPU time    0.01: CPU time    0.01
+    STRESS:  VPU time    0.02: CPU time    0.02
+    FORCOR:  VPU time    0.08: CPU time    0.08
+    FORHAR:  VPU time    0.02: CPU time    0.02
     MIXING:  VPU time    0.00: CPU time    0.00
  d Force = 0.0000000E+00[ 0.000E+00, 0.000E+00]  d Energy = 0.2972354E-02-0.297E-02
  d Force = 0.0000000E+00[ 0.000E+00, 0.000E+00]  d Ewald  = 0.1220307E+01-0.122E+01
@@ -1637,23 +1637,23 @@ Broyden mixing: mesh for mixing (old mesh)
 
   
  reached required accuracy - stopping structural energy minimisation
-     LOOP+:  VPU time    2.39: CPU time    2.53
+     LOOP+:  VPU time    0.84: CPU time    0.84
   
   
  General timing and accounting informations for this job:
  ========================================================
   
-                  Total CPU time used (sec):       11.420
-                            User time (sec):       11.285
-                          System time (sec):        0.135
-                         Elapsed time (sec):       17.270
+                  Total CPU time used (sec):        3.843
+                            User time (sec):        3.825
+                          System time (sec):        0.018
+                         Elapsed time (sec):        3.853
   
-                   Maximum memory used (kb):       18100.
+                   Maximum memory used (kb):       17680.
                    Average memory used (kb):           0.
   
-                          Minor page faults:         4668
+                          Minor page faults:         5008
                           Major page faults:            2
-                 Voluntary context switches:           95
+                 Voluntary context switches:           10
 
 ################ CONTCAR ################
 has a name                              
@@ -1675,9 +1675,10 @@ Direct
               ALGO = Fast
              ENCUT = 245.345
              EDIFF = 2e-05
-            IBRION = 2
-              ISIF = 7
              ISPIN = 1
+              ISIF = 7
+NSW = 50
+IBRION = 2
            LMAXMIX = 4
             LCHARG = .TRUE.
               LRPA = .FALSE.
@@ -1685,7 +1686,6 @@ Direct
            LOPTICS = .FALSE.
              LVTOT = .FALSE.
              LWAVE = .FALSE.
-               NSW = 50
               PREC = Accurate
             SYSTEM = has a name
 # NELECT = 8.0 Charge neutral system
@@ -1701,3 +1701,15 @@ Structure( 0, 0.5, 0.5,\
   .add_atom(0, 0, 0, 'Si')\
   .add_atom(0.25, 0.25, 0.25, 'Si')
 ################ END INITIAL STRUCTURE ################
+
+################ FUNCTIONAL ################
+from lada.vasp.functional import Functional
+from lada.vasp.specie import Specie
+functional = Functional()
+functional.ediff      = 1e-05
+functional.encut      = 1
+functional.kpoints    = 'Automatic generation\n0\nMonkhorst\n2 2 2\n0 0 0'
+functional.relaxation = ('volume', 50, 2)
+functional.species['Si'] = Specie('~/usr/src/LaDa/revamped/vasp/tests/pseudos/Si')
+
+################ END FUNCTIONAL ################

@@ -1,6 +1,6 @@
 """ Standard parameter types for use as attributes in Incar """
 __docformat__ = "restructuredtext en"
-__all__ = [ "SpecialVaspParam", "NElect", "Algo", "Precision", "Ediff",\
+__all__ = [ "SpecialVaspParam", "ExtraElectron", "Algo", "Precision", "Ediff",\
             "Ediffg", "Encut", "EncutGW", "FFTGrid", "Restart", "UParams", "IniWave",\
             "Magmom", 'Npar', 'Boolean', 'Integer', 'Choices', 'PrecFock', 'NonScf', \
             "System", 'PartialRestart', 'Relaxation', 'Smearing' ]
@@ -125,15 +125,15 @@ class Npar(SpecialVaspParam):
     if self.value == "sqrt": return "NPAR = {0}".format(int(sqrt(n)+0.001))
     raise ValueError("Unknown request npar = {0}".format(self.value))
     
-class NElect(SpecialVaspParam):
+class ExtraElectron(SpecialVaspParam):
   """ Sets number of electrons relative to neutral system.
       
       Gets the number of electrons in the (neutral) system. Then adds value to
       it and computes with the resulting number of electrons.
 
-      >>> nelect = NElect(0) # charge neutral system
-      >>> nelect.value = 1   # charge -1 (1 extra electron)
-      >>> nelect.value = -1  # charge +1 (1 extra hole)
+      >>> vasp.extraelectron =  0  # charge neutral system
+      >>> vasp.extraelectron =  1  # charge -1 (1 extra electron)
+      >>> vasp.extraelectron = -1  # charge +1 (1 extra hole)
 
       :param integer value:
         Number of electrons to add to charge neutral system. Defaults to 0.
@@ -141,7 +141,7 @@ class NElect(SpecialVaspParam):
       .. seealso:: `NELECT <http://cms.mpi.univie.ac.at/vasp/vasp/NELECT.html>`_
   """
 
-  def __init__(self, value=0): super(NElect, self).__init__(value)
+  def __init__(self, value=0): super(ExtraElectron, self).__init__(value)
 
   def nelectrons(self, vasp, structure):
     """ Total number of electrons in the system """
@@ -691,7 +691,7 @@ class IniWave(Choices):
 class Relaxation(SpecialVaspParam):
   """ Sets type of relaxation.
   
-      Defaults to None, eg use VASP defaults for ISIF, NSW, IBRION, POTIM.
+      Defaults to None, eg use VASP defaults for ISIF_, NSW_, IBRION_, POTIM_.
       It can be set to a single value, or to a tuple of up to four elements:
 
       >>> vasp.relaxation = "static" 
@@ -699,22 +699,25 @@ class Relaxation(SpecialVaspParam):
     
       - first argument can be "static", or a combination of "ionic",
         "cellshape", and "volume". The combination must be allowed by
-        `ISIF`__. It can also be an integer, in which case isif is set
+        ISIF_. It can also be an integer, in which case ISIF_ is set
         directly.
-      - second (optional) argument is `nsw`_
-      - third (optional) argument is `ibrion`_
-      - fourth (optional) argument is `potim`_
+      - second (optional) argument is NSW_
+      - third (optional) argument is IBRION_
+      - fourth (optional) argument is POTIM_
 
-      .. warning: 
-        When the first parameter is one of "cellshape", "volume", "ionic".  and
-        yet the second (nsw) is None, 0 or not present, then nsw is set to 50.
-        The assumption is when you ask to relax, then indeed you do ask to
-        relax. 
+      .. warning: When the first parameter is one of "cellshape", "volume",
+         "ionic"  and yet the second (NSW_) is None, 0 or not present, then NSW_
+         is set to 50.  The assumption is when you ask to relax, then indeed
+         you do ask to relax. 
+      .. warning:  When the first parameter is one of "cellshape", "volume",
+         "ionic" and IBRION_ is not specified or None, then IBRION_ is to 2. 
+         In contrast, VASP defaults IBRION_ to zero. However, that's just
+         painful.
       
-      .. __: http://cms.mpi.univie.ac.at/vasp/guide/node112.html
-      .. _nsw: http://cms.mpi.univie.ac.at/vasp/guide/node108.html
-      .. _ibrion: http://cms.mpi.univie.ac.at/vasp/guide/node110.html
-      .. _potim: http://cms.mpi.univie.ac.at/vasp/vasp/POTIM_tag.html
+      .. _ISIF: http://cms.mpi.univie.ac.at/vasp/guide/node112.html
+      .. _NSW: http://cms.mpi.univie.ac.at/vasp/guide/node108.html
+      .. _IBRION: http://cms.mpi.univie.ac.at/vasp/guide/node110.html
+      .. _POTIM: http://cms.mpi.univie.ac.at/vasp/vasp/POTIM_tag.html
   """
   def __init__(self, isif=None, nsw=None, ibrion=None, potim=None): 
     super(Relaxation, self).__init__((isif, nsw, ibrion, potim))
@@ -733,7 +736,7 @@ class Relaxation(SpecialVaspParam):
       if self.isif > 2 and self.isif < 7: result[0] += ' cellshape'
       if self.isif in [3, 6, 7]: result[0] += ' volume'
       result[0] = result[0].lstrip()
-      if self.nsw == 50: result[1] = None
+      if self.nsw == 50 and self.ibrion is None and self.potim is None: result[1] = None
     for i in xrange(4): 
       if result[-1] is None: result = result[:-1]
     if len(result) == 1: return result[0]
@@ -794,6 +797,8 @@ class Relaxation(SpecialVaspParam):
     if isif   is not None: self.isif   = isif
     if ibrion is not None: self.ibrion = ibrion
     if potim  is not None: self.potim  = potim
+    if self.ibrion is None and self.nsw is not None and self.nsw > 1 and self.potim is None: 
+      self.ibrion = 2
 
   def incar_string(self, **kwargs):
     if self.value is None: return None
@@ -840,29 +845,29 @@ class Smearing(SpecialVaspParam):
         - insulator: is equivalent to "bloechl".
         - dynamic: corresponds to ISMEAR=-3.
 
-        .. seealso:: `ISMEAR, ISIGMA <http://cms.mpi.univie.ac.at/vasp/guide/node124.html>`_
+        .. seealso:: `ISMEAR, SIGMA <http://cms.mpi.univie.ac.at/vasp/guide/node124.html>`_
     """
     super(Smearing, self).__init__((type, sigma))
 
   @property 
   def value(self):
     from quantities import eV
-    if self.ismear is None and self.isigma is None: return None
+    if self.ismear is None and self.sigma is None: return None
     ismear = { -1: 'fermi', 0: 'gaussian', 1: 'metal', -5: 'insulator', -3: 'dynamic',
                -4: 'tetra', 2: 'mp 2', 3: 'mp 3', None: None}[self.ismear]
-    if self.isigma is None: return ismear
-    return ismear, self.isigma
+    if self.sigma is None: return ismear
+    return ismear, self.sigma
 
   @value.setter
   def value(self, args):
     from quantities import eV
     if args is None: 
-      self.ismear, self.isigma = None, None
+      self.ismear, self.sigma = None, None
       return
 
-    if isinstance(args, str): ismear, isigma = args, None
-    elif len(args) == 1: ismear, isigma = args[0], None
-    elif len(args) == 2: ismear, isigma = args
+    if isinstance(args, str): ismear, sigma = args, None
+    elif len(args) == 1: ismear, sigma = args[0], None
+    elif len(args) == 2: ismear, sigma = args
     else: raise ValueError("Incorrect input to smearing: {0}.".format(args))
 
     if hasattr(ismear, 'lower'): 
@@ -873,27 +878,27 @@ class Smearing(SpecialVaspParam):
       ismear = int(ismear)
       if ismear < -5 or ismear > 3: raise RuntimeError("Unknown value for ismear: {0}.\n".format(ismear))
     self.ismear = ismear
-    if isigma is not None:
-      self.isigma = isigma
-      if not hasattr(self.isigma, 'rescale'): self.isigma *= eV
-      if len(self.isigma.shape) > 0 and self.ismear is not None and self.ismear != -3:
+    if sigma is not None:
+      self.sigma = sigma
+      if not hasattr(self.sigma, 'rescale'): self.sigma *= eV
+      if len(self.sigma.shape) > 0 and self.ismear is not None and self.ismear != -3:
         raise RuntimeError('Cannot use more than one smearing '\
                            'parameter with ismear={0}.'.format(self.ismear))
-    elif len(args) == 2: self.isigma = None
+    elif len(args) == 2: self.sigma = None
 
   def incar_string(self, **kwargs):
     from quantities import eV
     result = ''
     if self.ismear is not None:
       result = 'ISMEAR = {0}\n'.format(self.ismear)
-    if self.isigma is not None:
-      isigma = self.isigma.rescale(eV).magnitude
-      if len(isigma.shape) == 0:
-        result += 'ISIGMA = {0}'.format(isigma)
+    if self.sigma is not None:
+      sigma = self.sigma.rescale(eV).magnitude
+      if len(sigma.shape) == 0:
+        result += 'SIGMA = {0}'.format(sigma)
       else: 
         if self.ismear is None: result += 'ISMEAR = -3\n'
-        result += 'ISIGMA ='
-        for u in isigma: result += ' {0}'.format(u)
+        result += 'SIGMA ='
+        for u in sigma: result += ' {0}'.format(u)
     if len(result) == 0: return None
     return result[:-1] if result[-1] == '\n' else result
 

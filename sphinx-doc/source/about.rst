@@ -19,10 +19,10 @@ Hamiltonians can be constructed. It is designed around three main concepts:
     would be impractical to qsub each and every job and then check that each
     ran correctly. Hence, LaDa provides an interface for that.
 
-With these building blocks in hand, it is possible, and fairly easy, to
-construct complex computational routines. Computing phonons or formation
-enthalpy requires some know-how, certainly. But it is also quite repetitive.
-LaDa takes the gruelling out of it.
+With these building blocks in hand, it is possible, fairly easy, and - I'm told
+- even fun,  to construct complex computational routines. Computing phonons or
+formation enthalpy requires some know-how, certainly. But it is also quite
+repetitive. LaDa takes the gruelling out of it.
 
 Here are a few of the projects LaDa helped us with.
 
@@ -61,7 +61,7 @@ Here are a few of the projects LaDa helped us with.
     optimization functions. The two together make it possible to carry out
     painless optimization of a empirical DFT functional.
 
-  * *Searching and finding a needle:* Silicon is a possibly God's greatest gift
+  * *Searching for and finding a needle:* Silicon is a possibly God's greatest gift
     for nerds everywhere. It is n-type. It is p-type. It naturally forms a
     protective insulating oxide layer. However, it is an indirect gap material
     and absorbs visible light only through the mediation of phonons. It has

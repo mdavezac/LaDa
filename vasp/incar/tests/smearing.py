@@ -31,7 +31,7 @@ def test():
   assert Smearing().incar_string() is None
   assert Smearing(None).incar_string() is None
   assert Smearing('metal', (0.3*eV).rescale(J)).incar_string()\
-           == 'ISMEAR = 1\nISIGMA = 0.3'
+           == 'ISMEAR = 1\nSIGMA = 0.3'
   assert Smearing('fermi').incar_string() == 'ISMEAR = -1'
   assert Smearing('gaussian').incar_string() == 'ISMEAR = 0'
   assert Smearing('bloechl').incar_string() == 'ISMEAR = -5'
@@ -60,14 +60,14 @@ def test():
   assert Smearing('mp 3').incar_string() == 'ISMEAR = 3'
 
   assert Smearing('dynamic', [0.3, 0.5, 0.6, 0.8]).incar_string()\
-           == 'ISMEAR = -3\nISIGMA = 0.3 0.5 0.6 0.8'
+           == 'ISMEAR = -3\nSIGMA = 0.3 0.5 0.6 0.8'
   assert Smearing(sigma=[0.3, 0.5, 0.6, 0.8]).incar_string()\
-           == 'ISMEAR = -3\nISIGMA = 0.3 0.5 0.6 0.8'
+           == 'ISMEAR = -3\nSIGMA = 0.3 0.5 0.6 0.8'
   try: Smearing(0, [0.3, 0.5, 0.6, 0.8])
   except: pass
   else: raise RuntimeError()
   assert loads(dumps(Smearing(sigma=[0.3, 0.5, 0.6, 0.8]))).incar_string()\
-           == 'ISMEAR = -3\nISIGMA = 0.3 0.5 0.6 0.8'
+           == 'ISMEAR = -3\nSIGMA = 0.3 0.5 0.6 0.8'
   
 
 if __name__ == "__main__":

@@ -17,7 +17,7 @@ def test():
   except: pass
   else: raise RuntimeError()
 
-  assert Relaxation('ionic', 50).value == 'ionic'
+  assert Relaxation('ionic').value == 'ionic'
   assert Relaxation('ionic', 60).value == ('ionic', 60)
   assert Relaxation('ionic cellshape', 60, -1).value == ('static', 60)
   assert Relaxation('ionic cellshape', 60, 2).value == ('ionic cellshape', 60, 2)
