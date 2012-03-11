@@ -447,26 +447,58 @@ class Extract(object):
     """ Dielectric constant of the material. """
     return  self.electronic_dielectric_constant + self.ionic_dielectric_constant
 
+
+  @property
+  @make_cached
+  @broadcast_result(attr=True, which=0)
+  def stresses(self):
+    """ Returns total stress at each relaxation step. """
+    from numpy import zeros, abs, dot, all, array
+    from numpy.linalg import det
+    from quantities import eV, J, kbar
+    from re import finditer, M 
+    if self.isif < 1: return None
+    pattern = """\s*Total\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s*\n"""\
+              """\s*in kB\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s*\n"""
+    result = []
+    sol = self.solo()
+    with self.__outcar__() as file:
+      for regex in finditer(pattern, file.read(), M): 
+        stress = zeros((3,3), dtype="float64"), zeros((3,3), dtype="float64") 
+        for i in xrange(2): 
+          for j in xrange(3): stress[i][j, j] += float(regex.group(i*6+1+j))
+          stress[i][0,1] += float(regex.group(i*6+4))
+          stress[i][1,0] += float(regex.group(i*6+4))
+          stress[i][1,2] += float(regex.group(i*6+4))
+          stress[i][2,1] += float(regex.group(i*6+4))
+          stress[i][0,2] += float(regex.group(i*6+4))
+          stress[i][2,0] += float(regex.group(i*6+4))
+        if sum(abs(stress[0].flatten())) > sum(abs(stress[1].flatten())):
+          result.append( stress[0] * float(eV.rescale(J) * 1e22\
+                         / abs(det(sol.structure.cell*sol.structure.scale))) * kbar)
+        else: result.append(stress[1])
+    return array(result)*kbar
+  @property
+  def stress(self):
+     """ Returns final total stress. """
+     return self.stresses[-1]
+
   @property
   @make_cached
   @broadcast_result(attr=True, which=0)
   def forces(self):
     """ Forces on each atom. """
     from numpy import array
-    from quantities import angstrom
-    from re import compile
+    from quantities import angstrom, eV
+    from re import compile, finditer, M
     result = []
-    regex = compile('POSITION\\s*TOTAL-FORCE')
+    pattern = """ *POSITION\s*TOTAL-FORCE\s*\(eV\/Angst\)\s*\n"""\
+              """\s*-+\s*\n"""\
+              """(?:\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s*\n)+"""\
+              """\s*-+\s*\n"""\
+              """\s*total drift"""
     with self.__outcar__() as file:
-      doline = -1
-      for line in file: 
-        if doline > 0: 
-          try: data = [float(u) for u in line.split()[-3:]]
-          except: doline = -1
-          else: result.append(data)
-        elif doline == 0: doline += 1
-        elif regex.search(line) != None: 
-          result = []
-          doline = 0 
-    return array(result) * eV / angstrom
+      for regex in finditer(pattern, file.read(), M): pass
+    return array([u.split()[3:] for u in regex.group(0).split('\n')[2:-2]], dtype="float64")\
+           * eV / angstrom
 
