@@ -1694,12 +1694,13 @@ IBRION = 2
 ################ END INCAR ################
 
 ################ INITIAL STRUCTURE ################
-Structure( 0, 0.5, 0.5,\
-           0.5, 0, 0.5,\
-           0.5, 0.5, 0,\
-           scale=5.43, name='has a name' )\
-  .add_atom(0, 0, 0, 'Si')\
-  .add_atom(0.25, 0.25, 0.25, 'Si')
+from lada.crystal import Structure
+structure = Structure( 0, 0.5, 0.5,\
+                       0.5, 0, 0.5,\
+                       0.5, 0.5, 0,\
+                       scale=5.43, name='has a name' )\
+              .add_atom(0, 0, 0, 'Si')\
+              .add_atom(0.25, 0.25, 0.25, 'Si')
 ################ END INITIAL STRUCTURE ################
 
 ################ FUNCTIONAL ################

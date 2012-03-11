@@ -1,14 +1,15 @@
 """ Subpackage containing extraction methods for VASP-DFT data from output. """
 __docformat__  = 'restructuredtext en'
 __all__ = ['Extract']
+from ._common import Extract as ExtractCommon
 from ...functools import make_cached
 
-class Extract(object):
+class Extract(ExtractCommon):
   """ Implementation class for extracting data from VASP output """
 
-  def __init__(self, directory = None):
+  def __init__(self):
     """ Initializes the extraction class. """
-    object.__init__(self)
+    super(Extract, self).__init__()
     
   @property
   @make_cached
@@ -350,7 +351,6 @@ class Extract(object):
     from numpy.linalg import det
     from quantities import eV, J, kbar
     from re import finditer, M 
-    from ...crystal import space_group
     if self.isif < 1: return None
     pattern = """\s*Total\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s*\n"""\
               """\s*in kB\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s*\n"""
@@ -394,3 +394,36 @@ class Extract(object):
     return array([u.split()[3:] for u in regex.group(0).split('\n')[2:-2]], dtype="float64")\
            * eV / angstrom
 
+  @property
+  @make_cached
+  def structure(self):
+    """ Greps structure from outcar. 
+
+        Adds attributes from initial structure where possible.
+        Adds magnetization and forces to atoms.
+    """
+    # adds attributes from initial structure.
+    result = super(Extract, self).structure
+    try: initial = self.initial_structure
+    except: pass
+    else:
+      for key, value in initial.__dict__.iteritems():
+        if not hasattr(result, key): setattr(result, key, value)
+      for a, b in zip(result, initial):
+        for key, value in b.__dict__.iteritems():
+          if not hasattr(a, key): setattr(a, key, value)
+    # adds magnetization.
+    try: magnetization = self.magnetization
+    except: pass
+    else:
+      if magnetization is not None:
+        for atom, mag in zip(result, magnetization): atom.magmom = sum(mag)
+    # adds stress.
+    try: result.stress = self.stress
+    except: pass
+    # adds forces.
+    try: forces = self.forces
+    except: pass
+    else:
+      for force, atom in zip(forces, result): atom.force = force
+    return result

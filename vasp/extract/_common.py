@@ -12,7 +12,7 @@ class Extract(object):
 
   def __init__(self):
     """ Initializes the extraction class. """
-    object.__init__(self)
+    super(Extract, self).__init__()
 
   @property 
   @make_cached
@@ -89,15 +89,22 @@ class Extract(object):
     return datetime.strptime(result, '%Y.%m.%d  %H:%M:%S')
 
 
-  def _starting_structure_data(self):
+  @property
+  def initial_structure(self):
     """ Structure at start of calculations. """
-    from re import compile
+    from re import compile, M
     from numpy import array, zeros, dot
     from numpy.linalg import inv
+    from ...crystal import Structure
+    from ...misc import exec_input
 
-    cell = zeros((3,3), dtype="float64")
-    atoms = []
+    try:
+      regex = compile('#+ INITIAL STRUCTURE #+\n((.|\n)*)\n#+ END INITIAL STRUCTURE #+')
+      with self.__outcar__() as file: result = regex.search(file.read(), M)
+      if result is not None: return exec_input(result.group(1)).structure
+    except: pass
 
+    result = Structure()
     with self.__outcar__() as file: 
       atom_index, cell_index = None, None
       cell_re = compile(r"""^\s*direct\s+lattice\s+vectors\s+""")
@@ -108,49 +115,17 @@ class Extract(object):
       for i in range(3):
         data.append(file.next().split())
       try: 
-        for i in range(3): cell[:,i] = array(data[i][:3], dtype='float64')
+        for i in range(3): result.cell[:,i] = array(data[i][:3], dtype='float64')
       except: 
-        for i in range(3): cell[i, :] = array(data[i][-3:], dtype='float64')
+        for i in range(3): result.cell[i, :] = array(data[i][-3:], dtype='float64')
         cell = inv(cell)
       for line in file:
         if atom_re.search(line) is not None: break
-      for line in file:
-        data = line.split()
-        if len(data) != 3: break
-        atoms.append(dot(cell, array(data, dtype='float64')))
-
-    return cell, atoms
-
-  @property
-  @make_cached
-  def starting_structure(self):
-    """ Structure at start of calculations. """
-    from ...crystal import Structure
-    from quantities import eV
-    cell, atoms = self._starting_structure_data()
-    structure = Structure()
-    # tries to find adequate name for structure.
-    try: name = self.system
-    except RuntimeError: name = ''
-    structure.name = self.name
-    if len(name) == 0 or name == 'POSCAR created by SUPERPOSCAR':
-      try: title = self.system
-      except RuntimeError: title = ''
-      if len(title) != 0: structure.name = title
-
-    structure.energy = 0e0
-    structure.cell = cell
-    structure.scale = 1e0
-    assert len(self.species) == len(self.stoichiometry),\
-           RuntimeError("Number of species and of ions per specie incoherent.")
-    assert len(atoms) == sum(self.stoichiometry),\
-           RuntimeError('Number of atoms per specie does not sum to number of atoms.')
-    for specie, n in zip(self.species,self.stoichiometry):
-      for i in range(n): structure.add_atom(pos=atoms.pop(0), type=specie)
-
-    if (self.isif == 0 or self.nsw == 0 or self.ibrion == -1) and self.is_dft:
-      structure.energy = float(self.total_energy.rescale(eV))
-    return structure
+      for specie, n in zip(self.species,self.stoichiometry):
+        for i, line in zip(range(n), file):
+          data = line.split()
+          result.add_atom(pos=dot(result.cell, array(data, dtype='float64')), type=specie)
+    return result
 
   @property 
   def _catted_contcar(self):
@@ -212,7 +187,6 @@ class Extract(object):
     if self.nsw == 0 or self.ibrion == -1:
       return self.starting_structure
 
-
     try: structure = self._catted_contcar;
     except:
       structure = self._contcar_structure
@@ -223,13 +197,13 @@ class Extract(object):
     # tries to find adequate name for structure.
     try: name = self.system
     except RuntimeError: name = ''
-    structure.name = self.name
     if len(name) == 0 or name == 'POSCAR created by SUPERPOSCAR':
       try: title = self.system
       except RuntimeError: title = ''
       if len(title) != 0: structure.name = title
+    else: structure.name = name
     
-    structure.energy = self.total_energy if self.is_dft else 0e0 * eV
+    if self.is_dft: structure.energy = self.total_energy 
 
     return structure
 

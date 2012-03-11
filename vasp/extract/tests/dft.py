@@ -68,6 +68,12 @@ def test(path=None, dodate=True):
          and all(abs(a.stress - [[  0.1 ,   0.  ,   0.  ],
                                  [  0.  ,   0.1 ,   0.  ],
                                  [  0.  ,   0.  ,   0.1 ]] * kB) < 1e-3)
+  assert hasattr(a.structure, 'stress')\
+         and a.structure.stress.units == a.stress.units \
+         and all(abs(a.structure.stress - a.stress) < 1e-8)
+  assert all([hasattr(b, 'force') for b in a.structure])\
+         and all([b.force.units == a.forces.units for b in a.structure])\
+         and all(abs(a.forces.magnitude - array([b.force for b in a.structure])) < 1e-8)
 
 if __name__ == "__main__":
   from sys import argv, path 
