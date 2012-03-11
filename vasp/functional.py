@@ -117,7 +117,7 @@ class Functional(Incar):
     if kwargs.pop("restart_from_contcar", self.restart_from_contcar): 
       path = join(outdir, CONTCAR)
       if exists(path):
-        try: contstruct = read.poscar(path, specieset(structure))
+        try: contstruct = read.poscar(path, list(specieset(structure)))
         except: pass
         else: structure = contstruct
     if len(structure) == 0: raise ValueError("Structure is empty.")

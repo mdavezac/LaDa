@@ -173,15 +173,13 @@ def exec_input( script, global_dict=None, local_dict = None,\
   from numpy import array, matrix, dot, sqrt, abs, ceil
   from numpy.linalg import norm, det
   from .. import physics, crystal
-  from ..mpi import world
   from . import Input
   
   # Add some names to execution environment.
   if global_dict is None: global_dict = {}
   global_dict.update( { "environ": environ, "pi": pi, "array": array, "matrix": matrix, "dot": dot,
                         "norm": norm, "sqrt": sqrt, "ceil": ceil, "abs": abs,  "det": det,
-                        "physics": physics, "expanduser": expanduser, 'world': world,
-                        "load": load })
+                        "physics": physics, "expanduser": expanduser, "load": load })
   for key in crystal.__all__: global_dict[key] = getattr(crystal, key)
   if local_dict is None: local_dict = {}
   # Executes input script.

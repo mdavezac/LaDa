@@ -157,7 +157,7 @@ Automatic generation of k-mesh.
 
 
  I would recommend the setting:
-   dimension x,y,z NGX =    20 NGY =   20 NGZ =   20
+   dimension x,y,z NGX =    21 NGY =   21 NGZ =   21
  SYSTEM =  has a name                              
  POSCAR =  has a name                              
 

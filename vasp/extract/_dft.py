@@ -2,10 +2,6 @@
 __docformat__  = 'restructuredtext en'
 __all__ = ['Extract']
 from ...functools import make_cached
-from ...functools.json import array as json_array, unit as json_unit,\
-                              array_with_unit as json_array_with_unit,\
-                              section as json_section
-from quantities import eV, kbar as kB
 
 class Extract(object):
   """ Implementation class for extracting data from VASP output """
@@ -15,23 +11,21 @@ class Extract(object):
     object.__init__(self)
     
   @property
-  @json_section("output")
-  @json_unit(eV)
   @make_cached
   def energy_sigma0(self):
     """ Greps total energy extrapolated to $\sigma=0$ from OUTCAR. """
+    from quantities import eV
     regex = """energy\s+without\s+entropy\s*=\s*(\S+)\s+energy\(sigma->0\)\s+=\s+(\S+)"""
     result = self._find_last_OUTCAR(regex) 
     assert result is not None, RuntimeError("Could not find sigma0 energy in OUTCAR")
     return float(result.group(2)) * eV
 
   @property
-  @json_section("output")
-  @json_array_with_unit("float64", eV)
   @make_cached
   def energies_sigma0(self):
     """ Greps total energy extrapolated to $\sigma=0$ from OUTCAR. """
     from numpy import array
+    from quantities import eV
     regex = """energy\s+without\s+entropy\s*=\s*(\S+)\s+energy\(sigma->0\)\s+=\s+(\S+)"""
     try: result = [float(u.group(2)) for u in self._search_OUTCAR(regex)]
     except TypeError: raise RuntimeError("Could not find energies in OUTCAR")
@@ -39,12 +33,11 @@ class Extract(object):
     return array(result) * eV
 
   @property
-  @json_section("output")
-  @json_array_with_unit("float64", eV)
   @make_cached
   def all_total_energies(self):
     """ Greps total energies for all electronic steps from OUTCAR."""
     from numpy import array
+    from quantities import eV
     regex = """energy\s+without\s+entropy =\s*(\S+)\s+energy\(sigma->0\)\s+=\s+(\S+)"""
     try: result = [float(u.group(1)) for u in self._search_OUTCAR(regex)]
     except TypeError: raise RuntimeError("Could not find energies in OUTCAR")
@@ -52,8 +45,6 @@ class Extract(object):
     return array(result) * eV
 
   @property
-  @json_section("output")
-  @json_array_with_unit("float64", eV)
   def fermi0K(self):
     """ Fermi energy at zero kelvin.
     
@@ -90,28 +81,24 @@ class Extract(object):
     return abs(float(vbm0-vbm1)) > 2e0 * min(float(fermi - vbm0), float(fermi - vbm1))
 
   @property
-  @json_section("output")
-  @json_array_with_unit("float64", eV)
   def cbm(self):
     """ Returns Condunction Band Minimum. """
     from numpy import min
     return min(self.eigenvalues[self.eigenvalues>self.fermi0K+1e-8*self.fermi0K.units])
 
   @property
-  @json_section("output")
-  @json_array_with_unit("float64", eV)
   def vbm(self):
     """ Returns Valence Band Maximum. """
     from numpy import max
+    from quantities import eV
     return max(self.eigenvalues[self.eigenvalues<=self.fermi0K+1e-8*self.fermi0K.units])
 
   @property
-  @json_section("output")
-  @json_array_with_unit("float64", eV)
   @make_cached
   def total_energies(self):
     """ Greps total energies for all ionic steps from OUTCAR."""
     from numpy import array
+    from quantities import eV
     regex = """energy\s+without\s+entropy=\s*(\S+)\s+energy\(sigma->0\)\s+=\s+(\S+)"""
     try: result = [float(u.group(1)) for u in self._search_OUTCAR(regex)]
     except TypeError: raise RuntimeError("Could not find energies in OUTCAR")
@@ -119,11 +106,10 @@ class Extract(object):
     return array(result) * eV
 
   @property
-  @json_section("output")
-  @json_unit(eV)
   @make_cached
   def total_energy(self):
     """ Greps total energy from OUTCAR."""
+    from quantities import eV
     regex = """energy\s+without\s+entropy=\s*(\S+)\s+energy\(sigma->0\)\s+=\s+(\S+)"""
     result = self._find_last_OUTCAR(regex) 
     assert result is not None, RuntimeError("Could not find energy in OUTCAR")
@@ -133,18 +119,16 @@ class Extract(object):
   """ Alias for total_energy. """
 
   @property
-  @json_section("output")
-  @json_unit(eV)
   @make_cached
   def fermi_energy(self):
     """ Greps fermi energy from OUTCAR. """
+    from quantities import eV
     regex = r"""E-fermi\s*:\s*(\S+)"""
     result = self._find_last_OUTCAR(regex) 
     assert result is not None, RuntimeError("Could not find fermi energy in OUTCAR")
     return float(result.group(1)) * eV
 
   @property
-  @json_section("output")
   @make_cached
   def moment(self):
     """ Returns magnetic moment from OUTCAR. """
@@ -154,21 +138,10 @@ class Extract(object):
     return float(result.group(2))
 
   @property
-  @json_section("input")
-  @make_cached
-  def nb_electrons(self):
-    """ Returns magnetic moment from OUTCAR. """
-    regex = r"""^\s*number\s+of\s+electron\s+(\S+)\s+magnetization\s+(\S+)\s*$"""
-    result = self._find_last_OUTCAR(regex) 
-    assert result is not None, RuntimeError("Could not find number of electrons in OUTCAR")
-    return float(result.group(1))
-
-  @property
-  @json_section("output")
-  @json_array_with_unit("float64", kB)
   @make_cached
   def pressures(self):
     """ Greps all pressures from OUTCAR """
+    from quantities import kbar as kB
     regex = r"""external\s+pressure\s*=\s*(\S+)\s*kB\s+Pullay\s+stress\s*=\s*(\S+)\s*kB"""
     try: result = [float(u.group(1)) for u in self._search_OUTCAR(regex)]
     except TypeError: raise RuntimeError("Could not find pressures in OUTCAR")
@@ -176,8 +149,6 @@ class Extract(object):
     return result * kB
 
   @property
-  @json_section("output")
-  @json_unit(kB)
   @make_cached
   def pressure(self):
     """ Greps last pressure from OUTCAR """
@@ -188,7 +159,6 @@ class Extract(object):
     return float(result.group(1)) * kB
 
   @property
-  @json_section("output")
   @make_cached
   def alphabet(self):
     """ Greps alpha+bet from OUTCAR """
@@ -198,7 +168,6 @@ class Extract(object):
     return float(result.group(3))
 
   @property
-  @json_section("output")
   @make_cached
   def xc_g0(self):
     """ Greps XC(G=0) from OUTCAR """
@@ -208,8 +177,6 @@ class Extract(object):
     return float(result.group(2))
 
   @property
-  @json_section("output")
-  @json_unit(kB)
   @make_cached
   def pulay_pressure(self):
     from quantities import kbar as kB
@@ -223,64 +190,25 @@ class Extract(object):
   @make_cached
   def fft(self):
     """ Greps recommended or actual fft setting from OUTCAR. """
-    from re import compile, search, X as re_X
+    from re import search, M as re_M
+    from numpy import array
+    regex = r"""(?!I would recommend the setting:\s*\n)"""\
+             """\s*dimension x,y,z NGX =\s+(\d+)\s+NGY =\s+(\d+)\s+NGZ =\s+(\d+)"""
+    with self.__outcar__() as file: result = search(regex, file.read(), re_M)
+    assert result is not None, RuntimeError("Could not FFT grid in OUTCAR.""")
+    return array([int(result.group(1)), int(result.group(2)), int(result.group(3))])
 
-    with self.__outcar__() as file:
-
-      # find start
-      for line in file:
-        if search("I would recommend the setting", line): break;
-      ng_regex = compile(r"""WARNING:\s+wrap\s+around\s+error\s+
-                                must\s+be\s+expected\s+set\s+NG(X|Y|Z)\s+to\s+(\d+)""", re_X)
-      g_regex = compile(r"""NG(X|Y|Z)\s+is\s+ok\s+and\s+might\s+be\s+reduce\s+to\s+(\d+)""", re_X)
-      found_regex = compile(r"""dimension\s+x,y,z\s+
-                                   NGX\s+=\s+(\d+)\s+
-                                   NGY\s+=\s+(\d+)\s+
-                                   NGZ\s+=\s+(\d+)""", re_X)
-
-      allset = 0
-      fft = [None, None, None]
-      for line in file:
-        p = ng_regex.search(line)
-        if p is not None:
-          if p.group(1) == 'X':
-            fft[0] = int(p.group(2)) 
-            allset += 1
-          elif p.group(1) == 'Y':
-            fft[1] = int(p.group(2))
-            allset += 1
-          elif p.group(1) == 'Z':
-            fft[2] = int(p.group(2))
-            allset += 1
-          if allset == 3: break;
-          continue;
-        p = g_regex.search(line)
-        if p is not None:
-          if p.group(1) == 'X':
-            fft[0] = int(p.group(2)) 
-            allset += 1
-          elif p.group(1) == 'Y':
-            fft[1] = int(p.group(2))
-            allset += 1
-          elif p.group(1) == 'Z':
-            fft[2] = int(p.group(2))
-            allset += 1
-          if allset == 3: break;
-          continue
-        p = found_regex.search(line)
-        if p is not None:
-          fft = [ int(p.group(1)), int(p.group(2)), int(p.group(3)) ]
-          break;
-
-      if fft[0] is not None: IOError("File {0} is incomplete or incoherent.\n".format(path))
-      if fft[1] is not None: IOError("File {0} is incomplete or incoherent.\n".format(path))
-      if fft[2] is not None: IOError("File {0} is incomplete or incoherent.\n".format(path))
-
-      multiple = 8
-      for i in range(3):
-        if fft[i] % multiple: fft[i] += multiple - fft[i] % multiple
-      return tuple(fft)
-    raise RuntimeError("File {0} could not be opened.\n".format(path))
+  @property
+  @make_cached
+  def recommended_fft(self):
+    """ Greps recommended or actual fft setting from OUTCAR. """
+    from re import search, M as re_M
+    from numpy import array
+    regex = r"""I would recommend the setting:\s*\n"""\
+             """\s*dimension x,y,z NGX =\s+(\d+)\s+NGY =\s+(\d+)\s+NGZ =\s+(\d+)"""
+    with self.__outcar__() as file: result = search(regex, file.read(), re_M)
+    assert result is not None, RuntimeError("Could not recommended FFT grid in OUTCAR.""")
+    return array([int(result.group(1)), int(result.group(2)), int(result.group(3))])
 
   def _get_partial_charges_magnetization(self, grep):
     """ Greps partial charges from OUTCAR.
@@ -307,8 +235,6 @@ class Extract(object):
     return array(result, dtype="float64")
 
   @property
-  @json_section("output")
-  @json_array("float64")
   @make_cached
   def partial_charges(self):
     """ Greps partial charges from OUTCAR.
@@ -320,8 +246,6 @@ class Extract(object):
     return self._get_partial_charges_magnetization(r"""\s*total\s+charge\s*$""")
 
   @property
-  @json_section("output")
-  @json_array("float64")
   @make_cached
   def magnetization(self):
     """ Greps partial charges from OUTCAR.
@@ -333,8 +257,6 @@ class Extract(object):
     return self._get_partial_charges_magnetization(r"""^\s*magnetization\s*\(x\)\s*$""")
 
   @property
-  @json_section("output")
-  @json_array_with_unit("float64", eV)
   @make_cached
   def eigenvalues(self):
     """ Greps eigenvalues from OUTCAR. 
@@ -344,12 +266,11 @@ class Extract(object):
         cases, the leading dimension are the kpoints, followed by the bands.
     """
     from numpy import array
+    from quantities import eV
     if self.ispin == 2: return array(self._spin_polarized_values(1), dtype="float64") * eV
     return array(self._unpolarized_values(1), dtype="float64") * eV
 
   @property
-  @json_section("output")
-  @json_array("float64")
   @make_cached
   def occupations(self):
     """ Greps occupations from OUTCAR. 
@@ -363,13 +284,12 @@ class Extract(object):
     return array(self._unpolarized_values(2), dtype="float64") 
 
   @property
-  @json_section("output")
-  @json_array_with_unit("float64", eV)
   @make_cached
   def electropot(self):
     """ Greps average atomic electrostatic potentials from OUTCAR. """
     from re import compile, X as reX
     from numpy import array
+    from quantities import eV
 
     with self.__outcar__() as file: lines = file.readlines()
     regex = compile(r"""average\s+\(electrostatic\)\s+potential\s+at\s+core""", reX)
@@ -386,8 +306,6 @@ class Extract(object):
     return array(result, dtype="float64") * eV
 
   @property 
-  @json_section("output")
-  @json_array("float64")
   @make_cached
   def electronic_dielectric_constant(self):
     """ Electronic contribution to the dielectric constant. """
@@ -404,8 +322,6 @@ class Extract(object):
     return array([result.group(i) for i in range(1,10)], dtype='float64').reshape((3,3))
 
   @property 
-  @json_section("output")
-  @json_array("float64")
   @make_cached
   def ionic_dielectric_constant(self):
     """ Ionic contribution to the dielectric constant. """
@@ -422,31 +338,59 @@ class Extract(object):
     return array([result.group(i) for i in range(1,10)], dtype='float64').reshape((3,3))
 
   @property 
-  @json_section("output")
-  @json_array("float64")
   def dielectric_constant(self):
     """ Dielectric constant of the material. """
     return  self.electronic_dielectric_constant + self.ionic_dielectric_constant
 
   @property
   @make_cached
+  def stresses(self):
+    """ Returns total stress at each relaxation step. """
+    from numpy import zeros, abs, dot, all, array
+    from numpy.linalg import det
+    from quantities import eV, J, kbar
+    from re import finditer, M 
+    from ...crystal import space_group
+    if self.isif < 1: return None
+    pattern = """\s*Total\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s*\n"""\
+              """\s*in kB\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s*\n"""
+    result = []
+    with self.__outcar__() as file:
+      for regex in finditer(pattern, file.read(), M): 
+        stress = zeros((3,3), dtype="float64"), zeros((3,3), dtype="float64") 
+        for i in xrange(2): 
+          for j in xrange(3): stress[i][j, j] += float(regex.group(i*6+1+j))
+          stress[i][0,1] += float(regex.group(i*6+4))
+          stress[i][1,0] += float(regex.group(i*6+4))
+          stress[i][1,2] += float(regex.group(i*6+4))
+          stress[i][2,1] += float(regex.group(i*6+4))
+          stress[i][0,2] += float(regex.group(i*6+4))
+          stress[i][2,0] += float(regex.group(i*6+4))
+        if sum(abs(stress[0].flatten())) > sum(abs(stress[1].flatten())):
+          result.append( stress[0] * float(eV.rescale(J) * 1e22\
+                         / abs(det(self.structure.cell*self.structure.scale))) * kbar)
+        else: result.append(stress[1])
+    return array(result)*kbar
+  @property
+  def stress(self):
+     """ Returns final total stress. """
+     return self.stresses[-1]
+
+  @property
+  @make_cached
   def forces(self):
     """ Forces on each atom. """
     from numpy import array
-    from quantities import angstrom
-    from re import compile
+    from quantities import angstrom, eV
+    from re import compile, finditer, M
     result = []
-    regex = compile('POSITION\\s*TOTAL-FORCE')
+    pattern = """ *POSITION\s*TOTAL-FORCE\s*\(eV\/Angst\)\s*\n"""\
+              """\s*-+\s*\n"""\
+              """(?:\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s*\n)+"""\
+              """\s*-+\s*\n"""\
+              """\s*total drift"""
     with self.__outcar__() as file:
-      doline = -1
-      for line in file: 
-        if doline > 0: 
-          try: data = [float(u) for u in line.split()[-3:]]
-          except: doline = -1
-          else: result.append(data)
-        elif doline == 0: doline += 1
-        elif regex.search(line) != None: 
-          result = []
-          doline = 0 
-    return array(result) * eV / angstrom
+      for regex in finditer(pattern, file.read(), M): pass
+    return array([u.split()[3:] for u in regex.group(0).split('\n')[2:-2]], dtype="float64")\
+           * eV / angstrom
 

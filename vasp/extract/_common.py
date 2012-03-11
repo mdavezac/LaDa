@@ -50,10 +50,14 @@ class Extract(object):
   def functional(self):
     """ Returns vasp functional used for calculation.
 
-        Requires file FUNCCAR to be present.
+        Requires the functional to be pasted at the end of the calculations. 
     """
-    from cPickle import load
-    with self.__funccar__() as file: return load(file)
+    from re import compile, M
+    from ...misc import exec_input
+    regex = compile('#+ FUNCTIONAL #+\n((.|\n)*)\n#+ END FUNCTIONAL #+')
+    with self.__outcar__() as file: result = regex.search(file.read())
+    if result is None: return None
+    return exec_input(result.group(1)).functional
 
   @property
   @make_cached
@@ -142,7 +146,7 @@ class Extract(object):
     assert len(atoms) == sum(self.stoichiometry),\
            RuntimeError('Number of atoms per specie does not sum to number of atoms.')
     for specie, n in zip(self.species,self.stoichiometry):
-      for i in range(n): structure.add_atom = atoms.pop(0), specie
+      for i in range(n): structure.add_atom(pos=atoms.pop(0), type=specie)
 
     if (self.isif == 0 or self.nsw == 0 or self.ibrion == -1) and self.is_dft:
       structure.energy = float(self.total_energy.rescale(eV))
@@ -205,12 +209,13 @@ class Extract(object):
     """ Greps structure and total energy from OUTCAR. """
     from quantities import eV
 
-    if self.isif == 0 or self.nsw == 0 or self.ibrion == -1:
+    if self.nsw == 0 or self.ibrion == -1:
       return self.starting_structure
 
 
     try: structure = self._catted_contcar;
     except:
+      structure = self._contcar_structure
       try: structure = self._contcar_structure
       except:
         structure = self._grep_structure

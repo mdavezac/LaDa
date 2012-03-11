@@ -17,13 +17,10 @@ def test(path):
   vasp.relaxation = "volume"
   vasp.add_specie = "Si", "{0}/pseudos/Si".format(path)
   directory = mkdtemp()
+  directory = '/tmp'
   try: 
     result = vasp(structure, outdir=directory, comm={'n': 2, 'ppn': 1})
-    from sys import path as pypath
-    from lada.misc import RelativePath
-    pypath.insert(0, RelativePath('{0}/../extract/tests'.format(path)).path)
-    from common import test as test_common
-    test_common(directory, False)
+    assert result.success
   finally: 
     rmtree(directory)
     pass
