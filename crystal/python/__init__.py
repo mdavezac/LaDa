@@ -10,7 +10,7 @@ __all__ = [ 'FreezeAtom', 'which_site', 'Sites', 'SymmetryOperator', 'Lattice', 
             'specie_list', 'read_poscar', 'write_poscar', 'icsd_cif',\
             'write_oldvff', 'read_oldvff', 'structure_to_lattice', 'fill_structure', \
             'A2BX4', 'ABX3', 'ABX', 'bravais', 'gruber', 'vasp_ordered', 'binary', 'lattice_context',
-            'layer_iterator', 'equivalence_iterator']
+            'layer_iterator', 'equivalence_iterator', 'make_surface', 'write_pdb']
 __docformat__ = "restructuredtext en"
 
 from _crystal import FreezeAtom, which_site, Site, SymmetryOperator, Lattice, to_cartesian,\
@@ -23,7 +23,8 @@ from _crystal import FreezeAtom, which_site, Site, SymmetryOperator, Lattice, to
                      rStructure, rAtom, Sites, StringVector # this line not in __all__
 
 from lada.opt.decorators import add_setter
-from read_write import read_poscar, write_poscar, write_oldvff, read_oldvff, icsd_cif
+from read_write import read_poscar, write_poscar, write_oldvff, read_oldvff, icsd_cif, write_pdb
+from make_surface import make_surface
 import A2BX4
 import ABX3
 import ABX

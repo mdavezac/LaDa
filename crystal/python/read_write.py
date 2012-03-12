@@ -444,3 +444,29 @@ def icsd_cif(filename):
 
   return lattice
 
+def write_pdb(file=None, structure=None):
+    """ Writes structures to PDB-file
+
+        :param file: filename
+        :param structure: LaDa structure
+    """
+    if isinstance(file, str): file = open(file, 'w')
+
+    try: 
+      format = 'ATOM  %5d %-4s              %8.3f%8.3f%8.3f  0.00  0.00\n'
+  
+      # RasMol complains if the atom index exceeds 100000. There might
+      # be a limit of 5 digit numbers in this field.
+      MAXNUM = 100000
+  
+      symbols = [atom.type for atom in structure.atoms]
+      natoms = len(symbols)
+  
+      file.write('MODEL         1\n')
+      p = [atom.pos for atom in structure.atoms]
+      scale = structure.scale
+      for a in range(natoms):
+          x, y, z = p[a]*scale
+          file.write(format % (a % MAXNUM, symbols[a], x, y, z))
+      file.write('ENDMDL\n')
+    finally: file.close()
