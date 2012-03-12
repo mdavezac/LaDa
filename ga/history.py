@@ -165,6 +165,7 @@ class History(object):
      from os.path import exists, getsize
      from ..opt import acquire_lock
      if not exists(self.filepath): return 0
+     size = float(self._filesize)
      with acquire_lock(self.filepath, timeout=self.timeout) as lock: return getsize(self.filepath)
      return str(size) + " " + suffix
 

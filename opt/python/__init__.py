@@ -417,10 +417,10 @@ class RelativeDirectory(object):
     """ Private envvar variable. """
     self._hook = None
     """ Private hook variable. """
-    self.path = path
-    """ Relative path. """
     self.envvar = envvar
     """ Fixed point. """
+    self.path = path
+    """ Relative path. """
     self.hook = hook
     """ An object to call when the path is changed.
     

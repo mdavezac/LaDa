@@ -29,7 +29,8 @@ class Individual(BitstringIndividual):
     if not hasattr(a, "genes"): return False
     if len(a.genes) != len(self.genes): return False
     if getattr(self, 'dosym', False): return all(a.genes - self.genes == 0) 
-    dosym = getattr(self, 'dosym', 1)
+    
+    if self.dosym is False: return all(a.genes - self.genes == 0)
     
     N = len(a.genes)
     for i in range(N):
@@ -41,7 +42,7 @@ class Individual(BitstringIndividual):
           found = False
           break
       if found: return True
-
+  
       # inversion + periodicity 
       if dosym != 1: continue
       found = True
@@ -51,5 +52,5 @@ class Individual(BitstringIndividual):
           found = False
           break
       if found: return True
-
+  
     return False

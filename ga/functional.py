@@ -295,7 +295,7 @@ class Darwin(object):
     local_time = time.localtime() 
     this.start_time = time.time() 
     if outdir is None: outdir = getcwd()
-    outdir = RelativeDirectory(outdir)
+    outdir = RelativeDirectory(outdir, envvar=getcwd())
     # mpi stuff
     this.comm = comm if comm is not None else world
     this.comm.do_print = this.do_print
@@ -312,6 +312,7 @@ class Darwin(object):
     this.age = this.Extract(outdir.path, comm).next_age
     # sets directory for calculations according to newly read age.
     if hasattr(this.evaluator, "outdir"): 
+      this.evaluator._outdir.envvar = self.rootworkdir
       this.evaluator._outdir.relative = outdir.relative
       this.evaluator.outdir = join(this.evaluator.outdir, this.age)
     # sets directory for history file. This should be conserved across runs,

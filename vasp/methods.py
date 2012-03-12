@@ -402,21 +402,21 @@ def epi_relaxation( vasp, structure, outdir=None, comm=None,\
   xstart = 0.0
   estart = function(xstart)
   # then checks stress for actual direction to look at.
-  stress_direction = 1.0 if component(allcalcs[-1].stress) else -1.0
-  xend = 0.1 if stress_direction else -0.1
+  stress_direction = 1.0 if component(allcalcs[-1].stress) > 0e0 else -1.0
+  xend = 0.1 if stress_direction > 0e0 else -0.1
   # compute xend value.
   eend = function(xend)
   # make sure xend is on other side of stress tensor sign.
   while stress_direction * component( allcalcs[-1].stress ) > 0e0:
     xstart, estart = xend, eend
-    xend += 0.1
+    xend += 0.1 if stress_direction > 0e0 else -0.1
     eend = function(xend)
   
   # now we have a bracket. We start bisecting it.
   while abs(estart.total_energy - eend.total_energy) > epiconv * float(len(structure.atoms)):
     xmid = 0.5 * (xend + xstart)
     emid = function(xmid)
-    if component(emid.stress) > 0: xstart, estart = xmid, emid
+    if stress_direction * component(emid.stress) > 0e0: xstart, estart = xmid, emid
     else: xend, eend = xmid, emid
 
   # last two calculation: relax mid-point of xstart, xend, then  perform static.
