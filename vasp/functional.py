@@ -1,22 +1,22 @@
 """ Sub-package containing the functional. """
 __docformat__ = "restructuredtext en"
-__all__ = ['Functional']
+__all__ = ['Vasp']
 from ..functools import stateless, assign_attributes
 from ..misc import add_setter
 from extract import Extract
 from incar import Incar
 
-class Functional(Incar):
+class Vasp(Incar):
   """ Interface to VASP code. """
   Extract = staticmethod(Extract)
   """ Extraction class. """
 
   def __init__(self, copyfrom=None, species=None, kpoints=None, **kwargs):
     """ Initializes vasp class. """
-    super(Functional, self).__init__(**kwargs)
+    super(Vasp, self).__init__(**kwargs)
 
     self.restart_from_contcar = kwargs.pop('restart_from_contcar', True)
-    """ If True and self.CONTCAR exists in directory, will restart from it. """
+    """ If True and self. CONTCAR exists in directory, will restart from it. """
 
     # copies values from other functional.
     if copyfrom is not None: 
@@ -181,9 +181,9 @@ class Functional(Incar):
          with open(files.INCAR, 'r') as incar: outcar.write(incar.read())
          outcar.write('\n################ END INCAR ################\n')
          outcar.write('\n################ INITIAL STRUCTURE ################\n')
-         outcar.write('from {0.__class__.__module__} import {0.__class__.__name__}\n'.format(structure))
-         outcar.write('structure = ')
-         outcar.write(repr(structure).replace('\n', '\n            '))
+         outcar.write("""from {0.__class__.__module__} import {0.__class__.__name__}\n"""\
+                      """structure = {1}\n"""\
+                      .format(structure, repr(structure).replace('\n', '\n            ')))
          outcar.write('\n################ END INITIAL STRUCTURE ################\n')
          outcar.write('\n################ FUNCTIONAL ################\n')
          outcar.write(repr(self))
@@ -354,7 +354,7 @@ class Functional(Incar):
 
         Takes care of older pickle versions.
     """
-    super(Functional, self).__setstate__(args)
+    super(Vasp, self).__setstate__(args)
     for key, value in self.__class__().__dict__.iteritems():
        if not hasattr(self, key): setattr(self, key, value)
 

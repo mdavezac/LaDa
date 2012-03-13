@@ -210,9 +210,9 @@ class Extract(ExtractDFT):
 
 
     
-def reciprocal( vasp, structure, outdir = None, comm = None,
-                order = 2, nbpoints = None, stepsize = 1e-2, 
-                center = None, lstsq = None, **kwargs ):
+def iter_mass( vasp, structure, outdir = None, comm = None,
+               order = 2, nbpoints = None, stepsize = 1e-2, 
+               center = None, lstsq = None, **kwargs ):
   """ Computes k-space taylor expansion of the eigenvalues up to given order.
 
       First runs a vasp calculation using the first input argument, regardless
@@ -277,14 +277,13 @@ def reciprocal( vasp, structure, outdir = None, comm = None,
     raise ValueError("Cannot compute taylor expansion of order {0} "\
                      "with only {1} points per direction.".format(order, nbpoints))
 
-
   # first runs vasp.
-  first = vasp(structure=structure, outdir=outdir, comm=comm, **kwargs)
-  if not first.success: return Extract(outdir=outdir, comm=comm)
+  for u in vasp.iter(structure, outdir=outdir, **kwargs): yield u
+  first = vasp(structure=structure, outdir=outdir, **kwargs)
+  if not first.success: raise RuntimeError('Input run, or relaxation, was not successfull.')
 
   # prepare second run.
-  if hasattr(vasp, "vasp"): functional = deepcopy(Vasp(vasp=vasp.vasp))
-  else: functional = deepcopy(Vasp(vasp=vasp))
+  vasp = deepcopy(vasp)
   center = dot(inv(first.structure.cell).T, center)
   kpoints = [ (x, y, z) for x in xrange(nbpoints)\
                         for y in xrange(nbpoints)\
@@ -297,10 +296,21 @@ def reciprocal( vasp, structure, outdir = None, comm = None,
   kwargs = deepcopy(kwargs)
   kwargs['restart'] = first
   kwargs['nonscf']  = True
-  second = functional(first.structure, comm=comm, outdir=join(first.directory, "reciprocal"), **kwargs)
+  for u in vasp.iter(first.structure, outdir=join(first.directory, "reciprocal"), restart=efinal, **kwargs):
+    yield u
+
+
+
+def mass( vasp, structure, outdir = None, comm = None,
+          order = 2, nbpoints = None, stepsize = 1e-2, 
+          center = None, lstsq = None, **kwargs ):
+  """ Computes k-space taylor expansion of the eigenvalues up to given order. """
+  for u in iter_mass(vasp, structure, outdir=
   return Extract(outcar=second.directory, comm=None, input=second, lstsq=lstsq, order=order)
 
-reciprocal.Extract = Extract
+iter_mass.Extract = Extract
 """ Extractor class for the reciprocal method. """
-
-  
+mass.Extract = Extract
+""" Extractor class for the reciprocal method. """
+mass.Extract = Extract
+""" Extractor class for the reciprocal method. """

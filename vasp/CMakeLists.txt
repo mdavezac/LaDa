@@ -1,4 +1,4 @@
-set(PYVASP_PY files.py __init__.py specie.py functional.py )
+set(PYVASP_PY files.py __init__.py specie.py functional.py relax.py)
 
 # include_directories(MPI_INCLUDE_PATH)
 

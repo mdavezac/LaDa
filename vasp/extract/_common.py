@@ -322,10 +322,6 @@ class Extract(object):
     result = self._find_first_OUTCAR(r"""\s*ions\s+per\s+type\s*=.*$""")
     if result is None: return None
     return [int(u) for u in result.group(0).split()[4:]]
-  @property
-  def ions_per_specie(self): 
-    """ Alias for stoichiometry. """
-    return self.stoichiometry
 
   @property
   @make_cached

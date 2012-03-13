@@ -755,7 +755,8 @@ class Relaxation(SpecialVaspParam):
       return
 
     isif, nsw, ibrion, potim = None, None, None, None
-    if not isinstance(args, str):
+    if hasattr(args, 'lower'): dof = args.lower().rstrip().lstrip()
+    elif hasattr(args, '__len__') and hasattr(args, '__getitem__'):
       if len(args) > 0:
         if hasattr(args[0], 'lower'): dof = args[0].lower().rstrip().lstrip()
         elif args[0] is None: isif, dof = None, None
@@ -763,7 +764,6 @@ class Relaxation(SpecialVaspParam):
       if len(args) > 1 and args[1] is not None: nsw    = int(args[1])
       if len(args) > 2 and args[2] is not None: ibrion = int(args[2])
       if len(args) > 3 and args[3] is not None: potim  = float(args[3])
-    elif hasattr(args, 'lower'): dof = args.lower().rstrip().lstrip()
     else: isif, dof = int(args), None
 
     if dof is not None:

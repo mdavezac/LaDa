@@ -1704,9 +1704,9 @@ structure = Structure( 0, 0.5, 0.5,\
 ################ END INITIAL STRUCTURE ################
 
 ################ FUNCTIONAL ################
-from lada.vasp.functional import Functional
+from lada.vasp.functional import Vasp
 from lada.vasp.specie import Specie
-functional = Functional()
+functional = Vasp()
 functional.ediff      = 1e-05
 functional.encut      = 1
 functional.kpoints    = 'Automatic generation\n0\nMonkhorst\n2 2 2\n0 0 0'

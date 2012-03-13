@@ -57,7 +57,7 @@ def test(path=None, dodate=True):
   assert a.nelmin == 2
   assert a.nelmdl == -5
   assert all(abs(a.kpoints-array([[ 0.25,  0.25,  0.25],[ 0.75, -0.25, -0.25]])) < 1e-8)
-  assert repr(a.functional) == "from lada.vasp.functional import Functional\nfrom lada.vasp.specie import Specie\nfunctional = Functional()\nfunctional.ediff      = 1e-05\nfunctional.encut      = 1\nfunctional.kpoints    = 'Automatic generation\\n0\\nMonkhorst\\n2 2 2\\n0 0 0'\nfunctional.relaxation = ('volume', 50, 2)\nfunctional.species['Si'] = Specie('~/usr/src/LaDa/revamped/vasp/tests/pseudos/Si')\n"
+  assert repr(a.functional) == "from lada.vasp.functional import Vasp\nfrom lada.vasp.specie import Specie\nfunctional = Vasp()\nfunctional.ediff      = 1e-05\nfunctional.encut      = 1\nfunctional.kpoints    = 'Automatic generation\\n0\\nMonkhorst\\n2 2 2\\n0 0 0'\nfunctional.relaxation = ('volume', 50, 2)\nfunctional.species['Si'] = Specie('~/usr/src/LaDa/revamped/vasp/tests/pseudos/Si')\n"
   assert all(abs(a.multiplicity - [96.0, 288.0]) < 1e-8)
 
 if __name__ == "__main__":

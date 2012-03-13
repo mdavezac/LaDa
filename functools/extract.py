@@ -91,8 +91,8 @@ def search_factory(name, _filename, module):
   doc = \
     """ A mixin to include standard methods to search {0}.
     
-        This mixin only includes the methods themselves. It expects the derived
-        class to have an {0} attribute. 
+        This mixin only includes the search methods themselves. The derived
+        class should define the appropriate {0} attribute. 
     """.format(_filename.upper())
   def __outcar__(self):
     """ Returns path to OUTCAR file.

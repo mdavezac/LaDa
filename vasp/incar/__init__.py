@@ -12,7 +12,7 @@ from ...misc import add_setter
 
 
 class Incar(object):
-  """ Contains vasp Incar parameters. 
+  """ Base class containing vasp input parameters.
 
       The following assumes you know how to write an INCAR. Although you won't
       need to anymore.  This class separates vasp parameters from methods to
