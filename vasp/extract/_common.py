@@ -666,6 +666,14 @@ class Extract(object):
     assert result is not None, RuntimeError("Could not find NBANDS in OUTCAR.")
     return int(result.group(1))
 
+  @property
+  @make_cached
+  def cputime(self):
+    """ Returns total CPU time used in calculation. """
+    result = self._find_last_OUTCAR("""\s*Total CPU time used \(sec\):\s*(\S+)""")
+    if result is None: raise RuntimeError("Could not determine cputime.")
+    return float(result.group(1))
+
   def iterfiles(self, **kwargs):
     """ iterates over input/output files. 
     

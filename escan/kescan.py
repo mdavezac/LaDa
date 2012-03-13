@@ -12,7 +12,7 @@ class Extract(AbstractExtractBase):
   EscanExtract = staticmethod(EscanExtract)
   """ Escan extraction object. """
 
-  def __init__(self, directory=None, comm=None, unreduce=True, **kwargs):
+  def __init__(self, directory=None, comm=None, unreduce=True, escan=None, **kwargs):
     """ Initializes the extraction object. 
     
         :Parameters:

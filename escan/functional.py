@@ -308,7 +308,7 @@ class Escan(object):
       if hasattr(this, key): setattr(this, key, kwargs[key])
       elif hasattr(this.vff, key): setattr(this.vff, key, kwargs[key])
       elif hasattr(this.vff.minimizer, key): setattr(this.vff.minimizer, key, kwargs[key])
-      else: raise NameError( "%s attribute unknown of escan." % (key) )
+      else: raise NameError( "Unknown escan attribute {0}.".format(key) )
 
     # checks if outdir contains a successful run.
     does_exist, overwrite = comm.broadcast((exists(outdir) if comm.is_root else None, overwrite))
