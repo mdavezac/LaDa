@@ -209,10 +209,12 @@ class Vasp(Incar):
       path.write(line)
 
     
-  def write_kpoints(self, file):
+  def write_kpoints(self, file, structure, kpoints=None):
     """ Writes kpoints to a stream. """
+    if kpoints == None: kpoints = self.kpoints
     if isinstance(self.kpoints, str): file.write(self.kpoints)
-    elif hasattr(self.kpoints, "__call__"): file.write(self.kpoints(self))
+    elif hasattr(self.kpoints, "__call__"):
+      self.write_kpoints(file, structure, self.kpoints(self, structure))
     else: # numpy array or such.
       file.write("Explicit list of kpoints.\n{0}\nCartesian\n".format(len(self.kpoints)))
       for kpoint in self.kpoints:

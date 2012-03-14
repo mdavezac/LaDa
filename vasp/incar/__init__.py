@@ -38,7 +38,6 @@ class Incar(object):
     super(Incar, self).__setattr__("params", {})
     super(Incar, self).__setattr__("special", {})
     self.add_param = "addgrid",     None
-    self.add_param = "icharge",     None
     self.add_param = "ispin",       1 
     self.add_param = "istart",      None
     self.add_param = "isym",        None
@@ -48,7 +47,6 @@ class Incar(object):
     self.add_param = "nbands",      None
     self.add_param = "nomega",      None
     self.add_param = "nupdown",     None
-    self.add_param = "potim",       None
     self.add_param = "symprec",     None
     # objects derived from SpecialVaspParams will be recognized as such and can
     # be added without further fuss.

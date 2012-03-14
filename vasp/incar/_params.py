@@ -825,28 +825,28 @@ class Relaxation(SpecialVaspParam):
     return "{0.__class__.__name__}({1})".format(self, repr(self.value)[1:-1])
 
 class Smearing(SpecialVaspParam):
-  def __init__(self, type=None, sigma=None):
-    """ Value of the smearing used in the calculation. 
+  """ Value of the smearing used in the calculation. 
   
-        It can be specified as a string:
-          
-        >>> vasp.smearing = "type", x
-       
-        Where type is any of "fermi", "gaussian", "mp N", "tetra",
-        "metal", or "insulator", and x is the energy scale.
+      It can be specified as a string:
+        
+      >>> vasp.smearing = "type", x
+     
+      Where type is any of "fermi", "gaussian", "mp N", "tetra",
+      "metal", or "insulator", and x is the energy scale.
 
-        - fermi: use a Fermi-Dirac broadening.
-        - gaussian: uses a gaussian smearing.
-        - mp N: is for Methfessel-Paxton, where N is an integer indicating the
-          order the mp method.
-        - tetra: tetrahedron method without Bloechl correction.
-        - bloechl: means tetrahedron method with Bloechl correction.
-        - metal: equivalent to "mp 1 x"
-        - insulator: is equivalent to "bloechl".
-        - dynamic: corresponds to ISMEAR=-3.
+      - fermi: use a Fermi-Dirac broadening.
+      - gaussian: uses a gaussian smearing.
+      - mp N: is for Methfessel-Paxton, where N is an integer indicating the
+        order the mp method.
+      - tetra: tetrahedron method without Bloechl correction.
+      - bloechl: means tetrahedron method with Bloechl correction.
+      - metal: equivalent to "mp 1 x"
+      - insulator: is equivalent to "bloechl".
+      - dynamic: corresponds to ISMEAR=-3.
 
-        .. seealso:: `ISMEAR, SIGMA <http://cms.mpi.univie.ac.at/vasp/guide/node124.html>`_
-    """
+      .. seealso:: `ISMEAR, SIGMA <http://cms.mpi.univie.ac.at/vasp/guide/node124.html>`_
+  """
+  def __init__(self, type=None, sigma=None):
     super(Smearing, self).__init__((type, sigma))
 
   @property 

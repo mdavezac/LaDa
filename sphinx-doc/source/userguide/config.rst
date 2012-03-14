@@ -1,3 +1,5 @@
+.. _lada-config:
+
 Configuring lada
 ****************
 
@@ -25,7 +27,9 @@ previous files.
 
 .. currentmodule:: lada
 
-vasp 
+.. _vasp-config:
+
+VASP 
 ----
 
   These variables are generally declared in config/vasp.py
@@ -40,7 +44,9 @@ vasp
 
      Path to the vasp executable itself.
 
-mpi
+.. _mpi-config:
+
+MPI
 ---
 
   These variables are generally declared in config/mpi.py
