@@ -36,8 +36,8 @@ def iter_relax( vasp, structure, outdir=None, first_trial=None,
       ionic-relaxations.
 
       :param vasp:
-        :py:class:`Vasp <lada.vasp.Vasp>` object with which to perform the
-        relaxation.
+        :py:class:`Vasp <lada.vasp.functional.Vasp>` object with which to
+        perform the relaxation.
       :param structure:
         :py:class:`Structure <lada.crystal.Structure>` object for which to
         perform the relaxation.
@@ -81,12 +81,12 @@ def iter_relax( vasp, structure, outdir=None, first_trial=None,
         * negative (default): argument is ignored.
       :param kwargs:
         Other parameters are applied to the input :py:class:`Vasp
-        <lada.vasp.Vasp>` object.
+        <lada.vasp.functional.Vasp>` object.
 
-      :return: Yields an extraction object if the relevant VASP calculation
-               already exists. Otherwise, it yields a :py:class:`Program
-               <lada.misc.Program>` object detailing the call to the external
-               VASP program.
+      :return: At each step, yields an extraction object if the relevant VASP
+               calculation already exists. Otherwise, it yields a
+               :py:class:`Program <lada.misc.Program>` object detailing the
+               call to the external VASP program.
 
       .. seealso:: :py:func:`execute_program <lada.misc.execute_program>`
   """
@@ -263,10 +263,11 @@ def iter_epitaxial(vasp, structure, outdir=None, direction=[0,0,1], epiconv = 1e
                    initstep=0.05, **kwargs):
   """ Performs epitaxial relaxation in given direction. 
   
-      Performs a relaxation for an epitaxial structure on a virtual substrate.
-      The external (cell) coordinates of the structure can only relax in the
-      growth/epitaxial direction. Internal coordinates (ions), however, are
-      allowed to relax in whatever direction. 
+      This generator iterates over successive VASP calculations until an
+      epitaxially relaxed structure is obtained.  The external (cell)
+      coordinates of the structure can only relax in the growth/epitaxial
+      direction. Internal coordinates (ions), however, are allowed to relax in
+      whatever direction. 
       
       Since VASP does not intrinsically allow for such a relaxation, it is
       performed by chaining different vasp calculations together. The
@@ -275,8 +276,8 @@ def iter_epitaxial(vasp, structure, outdir=None, direction=[0,0,1], epiconv = 1e
       maximum accuracy.
 
       :param vasp: 
-        :py:class:`Vasp <lada.vasp.Vasp>` functional with wich to perform the
-        relaxation.
+        :py:class:`Vasp <lada.vasp.functional.Vasp>` functional with wich to
+        perform the relaxation.
       :param structure:
         :py:class:`Structure <lada.crystal.Structure>` for which to perform the
         relaxation.
@@ -288,6 +289,13 @@ def iter_epitaxial(vasp, structure, outdir=None, direction=[0,0,1], epiconv = 1e
         Epitaxial direction. Defaults to [0, 0, 1].
       :param float epiconv: 
         Convergence criteria of the total energy.
+      
+      :return: At each step, yields an extraction object if the relevant VASP
+               calculation already exists. Otherwise, it yields a
+               :py:class:`Program <lada.misc.Program>` object detailing the
+               call to the external VASP program.
+
+      .. seealso:: :py:func:`execute_program <lada.misc.execute_program>`
   """
   from os import getcwd
   from os.path import join
@@ -397,7 +405,7 @@ iter_epitaxial.Extract = Extract
 
 def epitaxial(vasp, structure, outdir=None, direction=[0,0,1], epiconv = 1e-4, 
               initstep=0.05, **kwargs):
-  """ Performs epitaxial relaxation of an input structure using :py:class:`Vasp`.  """
+  """ Iterates over calls to VASP during epitaxial relaxation. """
   from os.path import join
   from ..misc import execute_program
   result = None
@@ -414,4 +422,9 @@ def epitaxial(vasp, structure, outdir=None, direction=[0,0,1], epiconv = 1e-4,
   return result
 epitaxial.Extract = iter_epitaxial.Extract
 """ Extraction method for epitaxial relaxation runs. """
-
+epitaxial.__doc__\
+    += iter_epitaxial.__doc__[iter_epitaxial.__doc__.find('\n'):\
+                              iter_epitaxial.__doc__.find(':return')]\
+                             .replace('generator', 'method').replace('\n      ', '\n')\
+                 + "\n:return: An extraction object pointing to the final static calculation.\n"\
+                 + "\n.. seealso:: `iter_epitaxial`\n\n"
