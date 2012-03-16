@@ -1,6 +1,7 @@
 def strain(x, direction, structure):
   """ Creates new structure with given input strain in c direction. """
-  from numpy.linalg import inv, outer, dot
+  from numpy.linalg import inv
+  from numpy import outer, dot
   result = structure.copy()
   # define strain matrix
   strain = outer(direction, direction) * x 
@@ -12,8 +13,8 @@ def strain(x, direction, structure):
 
 def function(vasp, structure, outdir, x, direction, **kwargs):
   from os.path import join
-  directory = join(outdir, join("relax_ions", "{0:0<12.10}".format(xmid)))
-  return vasp(strain(x, structure), directory, relaxation='ionic', **kwargs)
+  directory = join(outdir, join("relax_ions", "{0:0<12.10}".format(x)))
+  return vasp(strain(x, direction, structure), directory, relaxation='ionic', **kwargs)
 
 def component(extract, direction):
   """ Returns relevant stress component. """
@@ -85,7 +86,7 @@ def epitaxial(vasp, structure, outdir=None, direction=[0,0,1], epiconv = 1e-4,
     xmid = 0.5 * (xend + xstart)
     emid = function(vasp, structure, outdir, xmid, direction, **kwargs)
     # change interval depending on strain.
-    if stress_direction * component(emid) > 0: xstart, estart = xmid, emid
+    if stress_direction * component(emid, direction) > 0: xstart, estart = xmid, emid
     else: xend, eend = xmid, emid
 
   # Finally, perform one last static calculation.

@@ -409,25 +409,25 @@ particular kind we have in mind, and apply it to the structure. The strain
 matrix can be obtained simply as the outer product of the epitaxial direction with itself.
 
 .. literalinclude:: epirelax.py
-   :lines: 1-11
+   :lines: 1-12
 
 The next step is to create a function which will compute the total energy of a
 strained structure while relaxing internal degrees of freedom. 
 The vasp call is done in a separate sub-directory.
 
 .. literalinclude:: epirelax.py
-   :lines: 13-16
+   :lines: 14-17
 
 The third component is a function to return the stress component in the
 epitaxial direction.
 
 .. literalinclude:: epirelax.py
-   :lines: 18-21
+   :lines: 19-22
 
 Finally, we have all the pieces to put the bisecting algorithm together: 
 
 .. literalinclude:: epirelax.py
-   :lines: 23-24, 67-93
+   :lines: 24-25, 68-94
    :linenos:
 
 Lines 4 through 16 correspond to (1) above. Starting from the initial input

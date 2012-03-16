@@ -325,14 +325,11 @@ def iter_epitaxial(vasp, structure, outdir=None, direction=[0,0,1], epiconv = 1e
   def change_structure(rate):
     """ Creates new structure with input change in c. """
     from numpy.linalg import inv
-    if len(allcalcs) != 0: orig = allcalcs[-1].structure
-    else: orig = structure
-    newstruct = orig.copy()
-    for i in xrange(3):
-      newstruct.cell[:, i] = structure.cell[:, i] \
-                             + dot(structure.cell[:, i], direction) * rate * direction
-    for a in newstruct: # keep fractional coordinates constant.
-      a.pos = dot(newstruct.cell, dot(inv(orig.cell), a.pos))
+    from numpy import outer, dot
+    newstruct = structure.copy()
+    strain = outer(direction, direction) * x 
+    result.cell += dot(strain, structure.cell)
+    for atom in result: atom.pos += dot(strain, atom.pos)
     return newstruct
 
   def component(stress):

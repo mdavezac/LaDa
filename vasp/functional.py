@@ -155,7 +155,7 @@ class Vasp(Incar):
   
       # creates kpoints file
       with open(files.KPOINTS, "w") as kp_file: 
-        self.write_kpoints(kp_file)
+        self.write_kpoints(kp_file, structure)
   
       # creates POTCAR file
       with open(files.POTCAR, 'w') as potcar:
