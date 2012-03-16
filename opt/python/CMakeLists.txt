@@ -1,5 +1,5 @@
 set(PYOPT_PY changedir.py  decorators.py  __init__.py  secant.py   tempdir.py
-             _ordered_dict.py _extract.py filecache.py )
+             _extract.py filecache.py )
 set(PYOPT_HEADERS redirect.hpp)
 set(PYOPT_SOURCES python.cc  redirect.cc)
 

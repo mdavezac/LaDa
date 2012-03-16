@@ -40,10 +40,8 @@ def _config_files():
   global_dict = {"ladamodules": __all__}
   if "jobs" in __all__:
     from lada.jobs.templates import default_pbs, default_slurm
-    from opt import cpus_per_node
     global_dict["default_pbs"]   = default_pbs
     global_dict["default_slurm"] = default_slurm
-    global_dict["cpus_per_node"] = cpus_per_node
 
   local_dict = {}
   # first configuration files installed with lada.

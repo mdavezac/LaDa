@@ -7,10 +7,9 @@ __all__ = ['ForwardingDict']
 from collections import MutableMapping
 
 class ForwardingDict(MutableMapping): 
-  """ An *ordered* dictionary which forwards attributes and calls. """
-  def __init__(self, dictionary = None, _attr_list=None, ordered=True, **kwargs):
+  """ An *ordered* dictionary which forwards attributes. """
+  def __init__(self, _attr_list=None, ordered=True, **kwargs):
     """ Initializes a ForwardingDict instance. """
-    from ..opt import OrderedDict
     from .. import naked_end, only_existing_jobparams as only_existing, readonly_jobparams as readonly
     self._is_initializing_forwarding_dict = True
     """ Tells get/setattr that Forwarding dict is being initialized. """
@@ -24,29 +23,10 @@ class ForwardingDict(MutableMapping):
     """ Whether attributes can be added or only modified. """
     self._attr_list    = [] if _attr_list is None else _attr_list
     """ List of attributes of attributes, from oldest parent to youngest grandkid. """
-    dicttype = OrderedDict if ordered else dict
-    self.dictionary    = dicttype({} if dictionary is None else dictionary)
+    self.dictionary    = {} 
     """" The dictionary for which to unroll attributes. """
     del self._is_initializing_forwarding_dict
     assert len(kwargs) == 0, ValueError("Unkwnown keyword arguments:{0}.".format(kwargs.keys()))
-
-  def call(self, *args, **kwargs):
-    """ Forwards call to items in dictionary.
-    
-        In practice, only forward calls to those items which can be completely
-        unrolled and for which the unrolled object is callable.
-
-        There seems to be a bug in python 2.6 or 2.7 which make instances
-        derived from object with a __call__ bound method in __dict__ (rather
-        than in __class__.__dict__) uncallable. Linked to tp_getattr deprecation?
-    """
-    result = self.copy(attr_list=[])
-    result.clear()
-    for key, value in self.dictionary.iteritems():
-      if hasattr(value, "__call__"): result[key] = value(*args, **kwargs)
-    if self.naked_end and len(result) == 1: return result[result.keys()[0]]
-    return result
-
 
   @property
   def parent(self):
@@ -221,7 +201,7 @@ class ForwardingDict(MutableMapping):
     result = copy(self)
     assert append is None or "_attr_list" not in kwargs,\
            ValueError( "Cannot copy attribute _attr_list as "\
-                        "a keyword and as ``append`` simultaneously." )
+                       "a keyword and as ``append`` simultaneously." )
     if 'dictionary' in kwargs: result.dictionary = kwargs.pop('dictionary').copy()
     for key, value in kwargs.iteritems():
       super(ForwardingDict, result).__setattr__(key, value)
@@ -233,9 +213,8 @@ class ForwardingDict(MutableMapping):
     return result
 
 
-  def __str__(self): return self.dictionary.__str__()
-  def __repr__(self): 
-    """ Returns a represetation of this object. """
+  def __str__(self): 
+    """ Prints dictionary of unrolled values. """
     if len(self) == 0: return '{}'
     if len(self) == 1: return "{{'{0}': {1}}}".format(self.keys()[0], repr(self.values()[0]))
     string = "{\n"
@@ -243,6 +222,7 @@ class ForwardingDict(MutableMapping):
     for k, v in self.iteritems():
       string += "  '{0}': {2}{1},\n".format(k, repr(v), "".join(" " for i in range(m-len(k))))
     return string + "}"
+  def __repr__(self): return self.__str__()
 
   def __setstate__(self, state):
     """ Reloads the state from a pickle. 

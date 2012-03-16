@@ -46,5 +46,5 @@ if "jobs" in globals()["ladamodules"]:
       nodes itself, the third the number of processes per node.
   """
 
-  cpus_per_node = globals()["cpus_per_node"]()
+  cpus_per_node = 4 #globals()["cpus_per_node"]()
   """ Number of processes per node. """

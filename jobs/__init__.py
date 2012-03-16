@@ -12,13 +12,11 @@ __all__ = ['JobDict', 'walk_through', 'save', 'load', 'MassExtract',
            'AbstractMassExtract', 'AbstractMassExtractDirectories', 'Bleeder',
            'JobParams', 'SuperCall']
 
-from ..opt.decorators import broadcast_result
 from .bleeder import Bleeder
 from .jobdict import JobDict, SuperCall
 from .manipulator import JobParams
 from .extract import AbstractMassExtract, MassExtract, AbstractMassExtractDirectories
 
-@broadcast_result(key=True)
 def save(jobdict, path=None, overwrite=False, timeout=None): 
   """ Pickles a job to file. 
  
@@ -49,7 +47,6 @@ def save(jobdict, path=None, overwrite=False, timeout=None):
   with open_exclusive(path, "wb", timeout=None) as file: dump(jobdict, file)
   print "Saved job dictionary to %s." % (path)
 
-@broadcast_result(key=True)
 def load(path = None, timeout=None): 
   """ Unpickles a job from file. 
  
