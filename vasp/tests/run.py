@@ -21,7 +21,7 @@ def test(path):
     result = vasp(structure, outdir=directory, comm={'n': 2, 'ppn': 1})
     assert result.success
   finally: 
-#   rmtree(directory)
+    rmtree(directory)
     pass
 
 if __name__ == "__main__":

@@ -8,25 +8,39 @@ from collections import MutableMapping
 
 class ForwardingDict(MutableMapping): 
   """ An *ordered* dictionary which forwards attributes. """
-  def __init__(self, _attr_list=None, ordered=True, **kwargs):
-    """ Initializes a ForwardingDict instance. """
+  def __init__( self, ordered=True, readonly=True, naked_end=True,
+                only_existing=True, _attr_list=None ):
+    """ Initializes a ForwardingDict instance.
+    
+        :param bool readonly: 
+           Whether or not the items in the dictionary can be modified.
+        :param bool naked_end:
+           When only one item exists with the last forwarded attribute, whether
+           it should be returned itself, or whether a
+           :py:class:`ForwardingDict` should still be returned. Former is
+           easier when examining objects interactively, latter is better in scripts.
+        :param bool only_existing: 
+           When setting attributes, whether to allow creation of new attributes
+           for items which do not posses it.
+        :param _attr_list: 
+           A list of strings making up the attributes to unroll. Private.
+    """
     from .. import naked_end, only_existing_jobparams as only_existing, readonly_jobparams as readonly
     self._is_initializing_forwarding_dict = True
     """ Tells get/setattr that Forwarding dict is being initialized. """
     super(ForwardingDict, self).__init__()
 
-    self.readonly      = kwargs.pop('readonly', readonly)
+    self.readonly      = readonly
     """ Whether items can be modified in parallel using attribute syntax. """
-    self.naked_end     = kwargs.pop('naked_end', naked_end)
+    self.naked_end     = naked_end
     """ Whether last item is returned as is or wrapped in ForwardingDict. """
-    self.only_existing = kwargs.pop('only_existing', only_existing)
+    self.only_existing = only_existing
     """ Whether attributes can be added or only modified. """
     self._attr_list    = [] if _attr_list is None else _attr_list
     """ List of attributes of attributes, from oldest parent to youngest grandkid. """
     self.dictionary    = {} 
     """" The dictionary for which to unroll attributes. """
     del self._is_initializing_forwarding_dict
-    assert len(kwargs) == 0, ValueError("Unkwnown keyword arguments:{0}.".format(kwargs.keys()))
 
   @property
   def parent(self):
@@ -151,9 +165,9 @@ class ForwardingDict(MutableMapping):
     # root dictioanary.
     if len(self._attr_list) == 0: self.dictionary[key] = value; return
     # checks this is writable.
-    assert not self.readonly, RuntimeError("This ForwardingDict is readonly.")
-    assert key in self.dictionary,\
-           KeyError( "{0} is not in the ForwaringDict. Items "\
+    if self.readonly: raise RuntimeError("This ForwardingDict is readonly.")
+    if key not in self.dictionary:
+      raise KeyError( "{0} is not in the ForwaringDict. Items "\
                       "cannot be added to a non-root ForwardingDict.".format(key))
     # non-root dict: must set innermost attribute.
     o = self.dictionary[key]
@@ -162,8 +176,8 @@ class ForwardingDict(MutableMapping):
       except AttributeError:
         raise AttributeError( "Could not unroll list of attributes for object in {0}: {1}."\
                               .format(key, self._attr_list) )  
-    assert (not self.only_existing) or hasattr(o, self._attr_list[-1]), \
-           KeyError( "{0} cannot be set with current attribute list.\n{1}\n"\
+    if self.only_existing and not hasattr(o, self._attr_list[-1]):
+      raise KeyError( "{0} cannot be set with current attribute list.\n{1}\n"\
                       .format(key, self._attr_list) )
     setattr(o, self._attr_list[-1], value)
   def __delitem__(self, key): 
@@ -187,21 +201,18 @@ class ForwardingDict(MutableMapping):
   def copy(self, append=None, dict=None, **kwargs):
     """ Returns a shallow copy of this object.
      
-        :Parameters:
-          append : str or None
-            If not none, will append value to list attributes of the copy. In
-            that case, the list of attributes ``_attr_list`` is copied
-            *deeply*.
-          kwargs : dict
-            Any other attribute to set in the ForwardingDict instance. Note
-            that only attributes of the ForwardingDict instance are
-            set/modified. This is npt propagated to the object the dict holds.
+      :param str append : str or None
+         Append value to a deepcopy of a list of attributes. Ignored if None.
+      :param kwargs : dict
+         Any other attribute to set in the ForwardingDict instance. Note
+         that only attributes of the ForwardingDict instance are
+         set/modified. This is not propagated to the object the dict holds.
     """
     from copy import copy, deepcopy
     result = copy(self)
-    assert append is None or "_attr_list" not in kwargs,\
-           ValueError( "Cannot copy attribute _attr_list as "\
-                       "a keyword and as ``append`` simultaneously." )
+    if append is not None and "_attr_list" in kwargs:
+      raise ValueError( "Cannot copy attribute _attr_list as "\
+                        "a keyword and as ``append`` simultaneously." )
     if 'dictionary' in kwargs: result.dictionary = kwargs.pop('dictionary').copy()
     for key, value in kwargs.iteritems():
       super(ForwardingDict, result).__setattr__(key, value)

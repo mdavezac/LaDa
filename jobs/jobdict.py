@@ -9,7 +9,7 @@ class JobDict(object):
     # List of subjobs (as in subdirectories). 
     super(JobDict, self).__setattr__("children", {})
     # This particular job. 
-    super(JobDict, self).__setattr__("jobparams", {})
+    super(JobDict, self).__setattr__("params", {})
     # This particular job is not set. 
     super(JobDict, self).__setattr__("_functional", None)
     # Parent job. 
@@ -34,8 +34,8 @@ class JobDict(object):
   @functional.setter
   def functional(self, value):
     from pickle import dumps, loads # ascertains pickle-ability, copies functional
-    assert value is None or hasattr(value, "__call__"),\
-           ValueError("job.functional should be either None(no job) or a callable.")
+    if value is not None and not hasattr(value, "__call__"):
+      raise ValueError("job.functional should be either None(no job) or a callable.")
     # ascertains pickle-ability
     try: string = dumps(value)
     except Exception as e:
@@ -55,7 +55,7 @@ class JobDict(object):
        if id(item) == id(self):
          string = self.parent.name + key
          break
-     assert string is not None, RuntimeError("Could not determine the name of the dictionary.")
+     if string is None: raise RuntimeError("Could not determine the name of the dictionary.")
      if not self.is_job: string += "/"
      return string
 
@@ -94,17 +94,16 @@ class JobDict(object):
     except KeyError: raise
 
     if isinstance(deletee, JobDict): 
-      assert id(self) != id(deletee), KeyError("Will not commit suicide.")
+      if id(self) == id(deletee): raise KeyError("Will not commit suicide.")
       parent = self.parent
       while parent is not None: 
-        assert id(parent) != id(deletee), KeyError("Will not go Oedipus on you.")
+        if id(parent) == id(deletee): raise KeyError("Will not go Oedipus on you.")
         parent = parent.parent
 
     parent = self[index+"/.."]
     name = relpath(index, index+"/..")
     if name in parent.children:
-      assert id(self) != id(parent.children[name]),\
-             KeyError("Will not delete self.")
+      if id(self) == id(parent.children[name]): raise KeyError("Will not delete self.")
       return parent.children.pop(name)
     raise KeyError("job " + index + " does not exist.")
 
@@ -121,13 +120,14 @@ class JobDict(object):
     index = normpath(index)
     parentpath, childpath = dirname(index), basename(index)
     if len(parentpath) != 0: 
-      assert parentpath in self, KeyError('Could not find parent job {0}.'.format(parentpath))
+      if parentpath not in self:
+        raise KeyError('Could not find parent job {0}.'.format(parentpath))
       mother = self[parentpath]
       parent = self.parent
       while parent is not None:
-        assert parent is not mother, KeyError('Will not set parent job of current job.')
-    assert len(childpath) > 0 or childpath == '.', KeyError('Will not set current directory.')
-    assert childpath != '..', KeyError('Will not set parent directory.')
+        if parent is mother: raise KeyError('Will not set parent job of current job.')
+    if len(childpath) == 0 or childpath == '.': raise KeyError('Will not set current directory.')
+    if childpath == '..': raise KeyError('Will not set parent directory.')
 
     parent = self if len(parentpath) == 0 else self[parentpath]
     parent.children[childpath] = deepcopy(value)
@@ -170,7 +170,7 @@ class JobDict(object):
     """ Performs calculations over job list. """  
 
     if not self.is_job: return None
-    kwargs.update(self.jobparams)
+    kwargs.update(self.params)
     return self.functional.__call__(**kwargs)
 
   def update(self, other, merge=False):
@@ -181,8 +181,8 @@ class JobDict(object):
              An other job tree from which to update.
            merge : bool
              If false (default), then actual jobs in ``other`` completely
-             overwrite actual jobs in ``self``. If False, then ``jobparams`` in
-             ``self`` is updated with ``jobparams`` in ``other`` if either one is
+             overwrite actual jobs in ``self``. If False, then ``params`` in
+             ``self`` is updated with ``params`` in ``other`` if either one is
              an actual job. If ``other`` is an actual job, then ``functional`` in
              ``self`` is overwritten. If ``other`` is not an actual job, then
              ``functional`` in ``self`` is not replaced.
@@ -198,11 +198,11 @@ class JobDict(object):
 
     if not merge:
       if not other.is_job: return
-      self.jobparams = other.jobparams
+      self.params = other.params
       self.functional = other.functional
     else:
       if not (self.is_job or other.is_job): return
-      self.jobparams.update(other.jobparams)
+      self.params.update(other.params)
       if other.functional is not None: self.functional = other.functional
 
   def __str__(self):
@@ -233,37 +233,37 @@ class JobDict(object):
   def __delattr__(self, name):
     """ Deletes job attribute. """
     if name in self.__dict__: return self.__dict__.pop(name)
-    if name in self.jobparams: return self.jobparams.pop(name)
+    if name in self.params: return self.params.pop(name)
     raise AttributeError("Unknown job attribute " + name + ".")
 
   def __getattr__(self, name):
     """ Returns job attribute. """
-    if name in self.jobparams: return self.jobparams[name]
+    if name in self.params: return self.params[name]
     raise AttributeError("Unknown job attribute " + name + ".")
 
   def __setattr__(self, name, value):
     """ Sets job attribute. """
     from pickle import dumps
-    if name in self.jobparams:
+    if name in self.params:
       try: dumps(value)
       except Exception as e:
         raise ValueError("Could not pickle job-parameter. Caught error:\n{0}".format(e))
-      else: self.jobparams[name] = value
+      else: self.params[name] = value
     else: super(JobDict, self).__setattr__(name, value)
 
   def __dir__(self):
     from itertools import chain
     result = chain([u for u in self.__dict__ if u[0] != '_'], \
                    [u for u in dir(self.__class__) if u[0] != '_'], \
-                   [u for u in self.jobparams.iterkeys() if u[0] != '_'])
+                   [u for u in self.params.iterkeys() if u[0] != '_'])
     return list(set(result))
 
   def __getstate__(self):
     d = self.__dict__.copy()
-    jobparams = d.pop("jobparams")
-    return d, jobparams, "This is a JobDict pickle. Grep me!"
+    params = d.pop("params")
+    return d, params, "This is a JobDict pickle. Grep me!"
   def __setstate__(self, args):
-    super(JobDict, self).__setattr__("jobparams", args[1])
+    super(JobDict, self).__setattr__("params", args[1])
     d = self.__dict__.update(args[0])
 
   def iteritems(self, outdir=''):
@@ -294,6 +294,8 @@ class JobDict(object):
   def items(self):
     """ List of all jobs. """
     return [u for u in self.iteritems()]
+  __iter__ = iterkeys
+  """ Iterator over keys. """
 
 
   @property
@@ -327,10 +329,10 @@ class JobDict(object):
     """ Performs a shallow copy of this job-dictionary.
 
         Shallow copies are made of all internal dictionaries children and
-        jobparams. However, functional and jobparams values should the same
+        params. However, functional and params values should the same
         object as self. The sub-branches of the returned dictionary are shallow
         copies of the sub-branches of self. In other words, the functional and
-        refences in jobparams dictionary are in common between result and self,
+        refences in params dictionary are in common between result and self,
         but nothing else.
 
         The returned dictionary does not have a parent!
@@ -339,13 +341,13 @@ class JobDict(object):
     # new job-dictionary.
     result = JobDict()
     result._functional = self._functional
-    result.jobparams   = self.jobparams.copy()
+    result.params   = self.params.copy()
     result.parent     = None
     for name, value in self.children.items():
       result.children[name] = copy(value)
       result.children[name].parent = result
     attrs = self.__dict__.copy()
-    attrs.pop('jobparams')
+    attrs.pop('params')
     attrs.pop('parent')
     attrs.pop('children')
     attrs.pop('_functional')
