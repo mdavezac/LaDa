@@ -8,39 +8,42 @@ from collections import MutableMapping
 
 class ForwardingDict(MutableMapping): 
   """ An *ordered* dictionary which forwards attributes. """
-  def __init__( self, ordered=True, readonly=True, naked_end=True,
-                only_existing=True, _attr_list=None ):
+  def __init__( self, ordered=True, readonly=None, naked_end=None,
+                only_existing=None, _attr_list=None, dictionary=None):
     """ Initializes a ForwardingDict instance.
     
         :param bool readonly: 
-           Whether or not the items in the dictionary can be modified.
+           Whether or not the items in the dictionary can be modified. If None,
+           defaults to :py:data:`lada.jobparams_read_only`.
         :param bool naked_end:
            When only one item exists with the last forwarded attribute, whether
            it should be returned itself, or whether a
            :py:class:`ForwardingDict` should still be returned. Former is
-           easier when examining objects interactively, latter is better in scripts.
+           easier when examining objects interactively, latter is better in
+           scripts. If None, defaults to :py:data:`lada.jobparams_naked_end`.
         :param bool only_existing: 
            When setting attributes, whether to allow creation of new attributes
-           for items which do not posses it.
+           for items which do not posses it. If None, defaults to
+           :py:data:`lada.jobparams_only_existing`
         :param _attr_list: 
            A list of strings making up the attributes to unroll. Private.
+        :param dict dictionary:
+           Initializes items from items in dictionary.
     """
-    from .. import naked_end, only_existing_jobparams as only_existing, readonly_jobparams as readonly
-    self._is_initializing_forwarding_dict = True
+    from .. import jobparams_naked_end, jobparams_only_existing, jobparams_readonly
     """ Tells get/setattr that Forwarding dict is being initialized. """
     super(ForwardingDict, self).__init__()
 
-    self.readonly      = readonly
+    self.__dict__['readonly']      = jobparams_readonly if readonly is None else readonly
     """ Whether items can be modified in parallel using attribute syntax. """
-    self.naked_end     = naked_end
+    self.__dict__['naked_end']     = jobparams_naked_end if naked_end is None else naked_end
     """ Whether last item is returned as is or wrapped in ForwardingDict. """
-    self.only_existing = only_existing
+    self.__dict__['only_existing'] = jobparams_only_existing if only_existing is None else only_existing
     """ Whether attributes can be added or only modified. """
-    self._attr_list    = [] if _attr_list is None else _attr_list
+    self.__dict__['_attr_list']    = [] if _attr_list is None else _attr_list
     """ List of attributes of attributes, from oldest parent to youngest grandkid. """
-    self.dictionary    = {} 
+    self.__dict__['dictionary']    = {} if dictionary is None else dictionary
     """" The dictionary for which to unroll attributes. """
-    del self._is_initializing_forwarding_dict
 
   @property
   def parent(self):
@@ -89,13 +92,6 @@ class ForwardingDict(MutableMapping):
     """ Forwards attribute setting. """
     from functools import reduce
     from itertools import chain
-    # prior to initialization.
-    if name == "_is_initializing_forwarding_dict": 
-      super(ForwardingDict, self).__setattr__(name, value)
-    if "_is_initializing_forwarding_dict" in self.__dict__:
-      super(ForwardingDict, self).__setattr__(name, value)
-
-    # After initialization.
     # First checks for attribute in ForwardingDict instance.
     try: super(ForwardingDict, self).__getattribute__(name)
     except AttributeError: pass
@@ -240,5 +236,4 @@ class ForwardingDict(MutableMapping):
 
         This is defined explicitely since otherwise, the call would go through
         __getattr__ and start an infinite loop.
-    """ 
-    self.__dict__.update(state)
+    """

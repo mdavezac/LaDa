@@ -4,6 +4,7 @@ def test():
   from shutil import rmtree
   from os import makedirs
   from os.path import exists, join
+  from pickle import loads, dumps
   from lada.jobs import JobDict
   from dummy import functional
 
@@ -49,11 +50,26 @@ def test():
       assert exists(join(directory, name))
       assert exists(join(join(directory, name), 'OUTCAR'))
       if name == 'that/1': assert result.indiv == 20
+      elif name == 'that/2': assert result.indiv == 15
       elif name == 'this/1': assert result.indiv == 15
       elif name == 'this/0': assert result.indiv == 10
   finally:
     if directory != '/tmp/test': rmtree(directory)
 
+  if exists(directory) and directory == '/tmp/test': rmtree(directory)
+  if not exists(directory): makedirs(directory)
+  try: 
+    for name, job in loads(dumps(root)).iteritems():
+      result = job.compute(outdir=join(directory, name))
+      assert result.success
+      assert exists(join(directory, name))
+      assert exists(join(join(directory, name), 'OUTCAR'))
+      if name == 'that/1': assert result.indiv == 20
+      elif name == 'that/2': assert result.indiv == 15
+      elif name == 'this/1': assert result.indiv == 15
+      elif name == 'this/0': assert result.indiv == 10
+  finally:
+    if directory != '/tmp/test': rmtree(directory)
 
 
 if __name__ == "__main__":

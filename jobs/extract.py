@@ -3,49 +3,54 @@ __docformat__ = "restructuredtext en"
 __all__ = ['AbstractMassExtract', 'MassExtract', 'AbstractMassExtractDirectories']
 
 from abc import ABCMeta, abstractmethod
-from .forwarding_dict import ForwardingDict
 
 class AbstractMassExtract(object): 
   """ Propagates extraction methods from different jobs. """
   __metaclass__ = ABCMeta
 
-  def __init__(self, view=None, excludes=None, dynamic=False, ordered=True, **kwargs):
+  def __init__(self, view=None, excludes=None, dynamic=False, ordered=True, 
+               naked_end=None, unix_re=True):
     """ Initializes extraction object. 
 
-        :Parameters:
-          view : str or None
+        :param str view:
             Pattern which the job names must match to be included in the
-            extraction.
-          excludes : list of str or None
+            extraction. Ignored if None.
+        :para excludes:
             List of patterns which the job names must *not* match to be
-            included in the extraction.
-          dynamic : boolean
+            included in the extraction. Ignored if None.
+        :param bool dynamic:
             If true, chooses a slower but more dynamic caching method. Only
-            necessary for ipython shell. 
-          ordered : boolean
+            usefull for ipython shell. 
+        :param ordered : boolean
             If true, uses OrderedDict rather than conventional dict.
-
-        :Kwarg naked_end: True if should return value rather than dict when only one item.
-        :Kwarg unix_re: converts regex patterns from unix-like expression.
+        :param bool naked_end:
+            True if should return value rather than dict when only one item.
+        :param bool unix_re: 
+            Converts regex patterns from unix-like expression.
     """
-    from .. import naked_end, unix_re
-    from ..opt import OrderedDict
+    from .. import jobparams_naked_end, unix_re
+    from .ordered_dict import OrderedDict
 
-    object.__init__(self)
+    super(AbstractMassExtract, self).__init__()
 
-    self.naked_end = kwargs.pop('naked_end', naked_end)
+    # this fools the derived classes' __setattr__
+    self.__dict__.update({'dicttype': dict, '_view': None, 'naked_end': naked_end,
+                          'unix_re': unix_re, '_excludes': excludes, 
+                          '_cached_extractors': None, 'dynamic': dynamic })
+    self.naked_end = jobparams_naked_end if naked_end is None else naked_end
     """ If True and dict to return contains only one item, returns value itself. """
     self.view = view
     """ The pattern which job-names should match. """
-    self.unix_re = kwargs.pop('unix_re', unix_re)
+    self.unix_re = unix_re
     """ If True, then all regex matching is done using unix-command-line patterns. """
     self.excludes = excludes
-    assert len(kwargs) == 0, ValueError("Unkwnown keyword arguments:{0}.".format(kwargs.keys()))
+    """ Patterns to exclude. """
     self._cached_extractors = None
     """ List of extration objects. """
     self.dynamic = dynamic
     """ If True chooses a slower but more dynamic caching method. """
     self.dicttype = OrderedDict if ordered else dict
+    """ Type of dictionary to use. """
 
   def uncache(self): 
     """ Uncache values. """
@@ -55,7 +60,7 @@ class AbstractMassExtract(object):
   def excludes(self):
     """ Pattern or List of patterns to ignore. or None.
 
-        ``self.unix_re`` determines whether these are unix-command-line like
+        :py:attr:`unix_re` determines whether these are unix-command-line like
         patterns or true python regex.
     """ 
     try: return self._excludes 
@@ -68,7 +73,7 @@ class AbstractMassExtract(object):
   def avoid(self, excludes):
     """ Returns a new MassExtract object with further exclusions. 
 
-        :Param excludes: Pattern or patterns to exclude from output.
+        :param excludes: Pattern or patterns to exclude from output.
         :type excludes: str or list of str or None 
           
         The goal of this function is to work as an *anti* operator [], i.e. by
@@ -126,14 +131,54 @@ class AbstractMassExtract(object):
       if rekey.match(key): return True
     return False
 
+  @staticmethod
+  def _translate_regex(pat):
+    """ Translates a pattern from unix to re. 
+
+        Compared to fnmatch.translate, doesn't use '.', but rather '[^/]'.
+        And doesn't add the tail that fnmatch.translate does.
+        Otherwise, code is taked from fnmatch.translate.
+    """
+    from re import escape
+    i, n = 0, len(pat)
+    res = ''
+    while i < n:
+        c = pat[i]
+        i = i+1
+        if c == '*':
+            res = res + '[^/]*'
+        elif c == '?':
+            res = res + '[^/]'
+        elif c == '[':
+            j = i
+            if j < n and pat[j] == '!':
+                j = j+1
+            if j < n and pat[j] == ']':
+                j = j+1
+            while j < n and pat[j] != ']':
+                j = j+1
+            if j >= n:
+                res = res + '\\['
+            else:
+                stuff = pat[i:j].replace('\\','\\\\')
+                i = j+1
+                if stuff[0] == '!':
+                    stuff = '^' + stuff[1:]
+                elif stuff[0] == '^':
+                    stuff = '\\' + stuff
+                res = '{0}[{0}]'.format(res, stuff)
+        else:
+            res = res + escape(c)
+    return res 
+
   def _regex_pattern(self, pattern, flags=0):
     """ Returns a regular expression. """
     from re import compile
-    from ..opt import convert_from_unix_re
-    if self.unix_re: return convert_from_unix_re(pattern)
+    from fnmatch import translate
+    if self.unix_re: pattern = self._translate_regex(pattern)
     if len(pattern) == 0: return compile("", flags)
-    if pattern[-1] == '/' or pattern[-1] == '$': return compile(pattern, flags)
-    return compile(pattern + "(?=/|$)", flags)
+    if pattern[-1] in ('/', '\Z', '$'): return compile(pattern, flags)
+    return compile(pattern + r"(?=/|\Z)(?ms)", flags)
 
   @abstractmethod
   def __iter_alljobs__(self):
@@ -174,7 +219,7 @@ class AbstractMassExtract(object):
 
   def _regex_extractors(self):
     """ Loops through jobs in this view. """
-    if self._view == "": 
+    if self._view is None or self._view == "": 
       for key, value in self._extractors.iteritems(): yield key, value
       return
 
@@ -202,6 +247,7 @@ class AbstractMassExtract(object):
 
   def __getattr__(self, name): 
     """ Returns extracted values. """
+    from .forwarding_dict import ForwardingDict
     assert name in self._attributes, AttributeError("Unknown attribute {0}.".format(name))
 
     result = self.dicttype()
@@ -209,125 +255,33 @@ class AbstractMassExtract(object):
       try: result[key] = getattr(value, name)
       except: result.pop(key, None)
     if self.naked_end and len(result) == 1: return result[result.keys()[0]]
-    return ForwardingDict(result, naked_end=self.naked_end)
+    return ForwardingDict(dictionary=result, naked_end=self.naked_end)
 
   def __getitem__(self, name):
-    """ Returns a view of the current job-dictionary. """
-    from os.path import normpath, join
-    if name[0] == '/': return self.copy(view=name)
-    path = normpath(join('/', join(self.view, name)))
-    return self.copy(view=path)
-
-  @property
-  def children(self):
-    """ next set of minimal regex. """
-    regex = self._regex_pattern(self.view)
-
-    if len(self.keys()) < 2: return 
-    children = set()
-    if len(self.view) == 0 or self.view == '/':
-      children = set(['/' + name.split('/')[1] for name in self.iterkeys()])
-      for name in children:
-        yield self.copy(view=name)
-      return
+    """ Returns a view of the current job-dictionary.
     
-    newdict = self.dicttype()
-    for name, value in self.iteritems(): newdict[name] = value
-    for name in self.iterkeys():
-      where = regex.match(name)
-      if len(name) == where.end() +1: continue
-      if where.end() == 0: first_index = name.find('/')
-      elif name[where.end()-1] == '/': first_index = 0
-      else: first_index = name[where.end():].find('/')
-      if first_index == -1: continue
-      first_index += where.end() + 1
-      if first_index >= len(name): continue
-      end = name[first_index:].find('/')
-      if end == -1: children.add(name)
-      else: children.add(name[:end + first_index])
-    
-    for child in children: 
-      yield self.copy(view=child, _cached_extractors=newdict)
-
-  def grep(self, regex, flags=0, yield_match=False):
-    """ Yields views for children with fullnames matching the regex.
-    
-        :Parameters:
-          regex : str
-            The regular expression which the fullnames should match. Whether
-            this is a python regex, or something which behaves like the unix
-            command-line depends on ``self.unix_re``.
-          flags : int
-             Flags from ``re`` to use when compilling the regex pattern.
-          yield_match : bool
-             If True, will yield a two tuple, where the second item is the
-             match object.
-             If False, only the view is yielded.
-             This option is not available (or meaningfull) if ``self.unix_re``
-             is True.
-
-        The match is successful if the regex is matched using python's
-        `re.search`__ method.
-
-        .. __:  http://docs.python.org/library/re.html#re.search
-
-        Only the innermost view of each match is given. In other words, if a
-        view is yielded, its subviews will not be yielded.
-
-        If the current view matches the regex, then it alone is yielded. 
+        .. note:: os.path.normpath_ returns a valid path when descending below
+           root, e.g.``normpath('/../../other') == '/other'), so there won't be
+           any errors on that account.
     """
-    assert not (yield_match and self.unix_re),\
-           ValueError("unix_re and yield_matc cannot be both true.") 
-    reg = self._regex_pattern(regex, flags)
-
-    found = reg.search(self.view)
-    if found is not None and yield_match:       yield self; return
-    elif found is not None and not yield_match: yield self, found; return
-    
-    for child in self.children:
-      found = reg.search(self.view)
-      if reg.search(child.view) is None:# goes to next level. 
-        for grandchild in child.grep(regex, flags, yield_match): yield grandchild
-      elif yield_match: yield child, found
-      else: yield child
+    from os.path import normpath, join
+    if name[0] != '/': name = join(self.view, name)
+    if self.unix_re: name = normpath(name)
+    return self.copy(view=name)
 
   def __getstate__(self):
     d = self.__dict__.copy()
-    d.pop("comm", None)
     if "_rootdir" in d: d["_rootdir"].hook = None
     return d
 
   def __setstate__(self, arg):
     if "_rootdir" in arg: arg["_rootdir"].hook = self.uncache
     self.__dict__.update(arg)
-    self.comm = None
        
-  def solo(self):
-    """ Extraction on a single process.
-  
-        Sometimes, it is practical to perform extractions on a single process
-        only, eg without blocking mpi calls. `solo` returns an
-        extractor for a single process:
-        
-        >>> # prints only on proc 0.
-        >>> if boost.mpi.world.rank == 0: print extract.solo().structure
-    """
-    if self.comm is None: return self
-
-    from copy import deepcopy
-    copy = deepcopy(self)
-    return copy
-
-  def __copy__(self):
-    """ Returns a shallow copy. """
-    result = self.__class__()
-    result.__dict__.update(self.__dict__)
-    return result
-
   def copy(self, **kwargs):
     """ Returns a shallow copy. 
     
-        :Param kwargs:  Any keyword attribute will modify the corresponding
+        :param kwargs:  Any keyword attribute will modify the corresponding
           attribute of the copy.
     """
     from copy import copy
@@ -365,57 +319,18 @@ class MassExtract(AbstractMassExtract):
       diagnosis.
   """
 
-  def __init__(self, path=None, comm=None, **kwargs):
+  def __init__(self, path=None, **kwargs):
     """ Initializes extraction object. 
  
-        :Parameters:
-          path : str or None
-            Pickled jobdictioanary for which to extract stuff. If None, will
+        :param str path:
+            Pickled jobdictionary for which to extract stuff. If None, will
             attempt to use the current jobdictionary.
-          comm : `mpi.Communicator`
-            Optional communicator. How communicators are used will depend on
-            each calculation's extractor.
-          kwargs : dict
-            Variable length keyword argument passed on to `AbstractMassExtract`.
-
-        :kwarg view: Pattern to match to job names.
-        :kwarg excludes: List of patterns which job-names should not match.
-        :kwarg naked_end: True if should return value rather than dict when only one item.
-        :kwarg unix_re: converts regex patterns from unix-like expression.
+        :param kwargs:
+            Variable length keyword argument passed on to
+            :py:meth:`AbstractMassExtract.__init__`.
     """
-    from ..mpi import Communicator
-
-    AbstractMassExtract.__init__(self, **kwargs)
+    super(MassExtract, self).__init__(**kwargs)
     self.rootdir = path # Path to the job dictionary.
-
-    self._comm = Communicator(comm)
-    """ Private MPI communicator. """
-
-  @property
-  def comm(self):
-    """ MPI Communicator, or None for serial. 
-
-        This property is intended to synchronize communicator over all
-        extractor objects. How MPI is done will depend on individual
-        extractors. Note that extractors are initialized with communicators
-        only if they accept a ``comm`` keyword. Communicators are set only if
-        an extractor contains a ``comm`` attribute.
-    """
-    return self._comm
-  @comm.setter
-  def comm(self, value):
-    from ..mpi import Communicator
-    value = Communicator(value)
-    if self._cached_extractors is not None:
-      for e in self._cached_extractors.values(): e.comm = value
-    self._comm = value
-  @comm.deleter
-  def comm(self):
-    from ..mpi import Communicator
-    if self._cached_extractors is not None:
-      for e in self._cached_extractors.values():
-        if hasattr(e, "comm"): e.comm = Communicator()
-    self._comm = Communicator()
 
   @property
   def view(self):
@@ -423,16 +338,7 @@ class MassExtract(AbstractMassExtract):
 
         If None, then no match required. Should be a string, not an re object.
     """
-    if self._view is None:
-      try: from IPython.ipapi import get as get_ipy
-      except ImportError: raise AttributeError("path not set.")
-      ip = get_ipy()
-      if "current_jobdict" not in ip.user_ns:
-        print "No current jobdictionary."
-        return
-      return ip.user_ns["current_jobdict"].name
-      return 
-    return self._view
+    return self._view if self._view is not None else self.jobdict.name
   @view.setter
   def view(self, value): self._view = value
 
@@ -442,22 +348,21 @@ class MassExtract(AbstractMassExtract):
     from os.path import dirname
 
     if self._rootdir is None: 
-      try: from IPython.ipapi import get as get_ipy
-      except ImportError: raise AttributeError("path not set.")
-      ip = get_ipy()
-      if "current_jobdict_path" not in ip.user_ns:
-        print "No current jobdictionary path."
-        return
-      return dirname(ip.user_ns["current_jobdict_path"])
+      from lada import is_interactive
+      try: from lada import current_jobdict_path
+      except ImportError:
+        if is_interactive: print "No current job-dictionary path."
+        else: raise RuntimeError("No current job-dictionary path.")
+      return dirname(current_jobdict_path)
 
     return dirname(self._rootdir.path)
   @rootdir.setter
   def rootdir(self, value):
-    from ..opt import RelativeDirectory
+    from ..misc import RelativePath
     if value is None:
       self._rootdir = None
       return
-    self._rootdir = RelativeDirectory(value, hook=self.uncache)
+    self._rootdir = RelativePath(value, hook=self.uncache)
     if hasattr(self, '_jobdict'): del self._jobdict
   @rootdir.deleter
   def rootdir(self): self._rootdir = None
@@ -466,14 +371,13 @@ class MassExtract(AbstractMassExtract):
   def jobdict(self):
     from lada.jobs import load
     if self._rootdir is None: 
-      try: from IPython.ipapi import get as get_ipy
-      except ImportError: raise AttributeError("path not set.")
-      ip = get_ipy()
-      if "current_jobdict" not in ip.user_ns:
-        print "No current jobdictionary."
-        return
-      return ip.user_ns["current_jobdict"].root
-    if "_jobdict" not in self.__dict__: self._jobdict = load(self._rootdir.path, self.comm)
+      from lada import is_interactive
+      try: from lada import current_jobdict
+      except ImportError:
+        if is_interactive: print "No current job-dictionary."
+        else: raise RuntimeError("No current job-dictionary.")
+      return current_jobdict.root
+    if "_jobdict" not in self.__dict__: self._jobdict = load(self._rootdir.path)
     return self._jobdict.root
 
   def __iter_alljobs__(self):
@@ -486,7 +390,7 @@ class MassExtract(AbstractMassExtract):
     
     for name, job in self.jobdict.iteritems():
       if job.is_tagged: continue
-      try: extract = job.functional.Extract(join(self.rootdir, name), comm = self._comm)
+      try: extract = job.functional.Extract(join(self.rootdir, name))
       except: pass 
       else: yield job.name, extract
 
@@ -502,67 +406,28 @@ class AbstractMassExtractDirectories(AbstractMassExtract):
       - `Extract` is not none.
       - `__is_calc_dir__` is correctly defined. 
   """
-  def __init__(self, path = '.', Extract = None, comm = None, **kwargs):
+  def __init__(self, path = '.', Extract = None, **kwargs):
     """ Initializes AbstractMassExtractDirectories.
     
     
-        :Parameters:
-          path : str 
+        :param str path:
             Root directory for which to investigate all subdirectories.
             If None, uses current working directory.
-          Extract
+        :param Extract
             Extraction class to use within each calculation. 
-          comm : `mpi.Communicator`
-            Optional communicator. How communicators are used will depend on
-            each calculation's extractor.
-          kwargs : dict
-            Keyword parameters passed on to AbstractMassExtract.
-
-        :kwarg naked_end: True if should return value rather than dict when only one item.
-        :kwarg unix_re: converts regex patterns from unix-like expression.
+        :param kwargs : dict
+            Keyword parameters passed on to :py:meth:`AbstractMassExtract.__init__`.
     """
-    from ..opt import RelativeDirectory
-    from ..mpi import Communicator
-
+    from ..misc import RelativePath
     # this will throw on unknown kwargs arguments.
-    AbstractMassExtract.__init__(self,**kwargs)
+    super(AbstractMassExtractDirectories, self).__init__(**kwargs)
 
     self.Extract = Extract
     """ Extraction class to use. """
 
-    self._rootdir = RelativeDirectory(path, hook=self.uncache)
+    self._rootdir = RelativePath(path, hook=self.uncache)
     """ Root of the directory-tree to trawl for OUTCARs. """
     
-    # mpi communicator is a property.
-    self._comm = Communicator(comm)
-    """ Private reference to global communicator. """
-
-  @property
-  def comm(self):
-    """ MPI Communicator, or None for serial. 
-
-        This property is intended to synchronize communicator over all
-        extractor objects. How MPI is done will depend on individual
-        extractors. Note that extractors are initialized with communicators
-        only if they accept a ``comm`` keyword. Communicators are set only if
-        an extractor contains a ``comm`` attribute.
-    """
-    return self._comm
-  @comm.setter
-  def comm(self, value):
-    from ..mpi import Communicator
-    value = Communicator(value)
-    if self._cached_extractors is not None:
-      for e in self._cached_extractors.values(): e.comm = value
-    self._comm = value
-  @comm.deleter
-  def comm(self):
-    from ..mpi import Communicator
-    if self._cached_extractors is not None:
-      for e in self._cached_extractors.values():
-        if hasattr(e, "comm"): e.comm = Communicator()
-    self._comm = Communicator()
-
   @property
   def rootdir(self): 
     """ Root of the directory-tree to trawl for OUTCARs. """
@@ -578,11 +443,7 @@ class AbstractMassExtractDirectories(AbstractMassExtract):
     for dirpath, dirnames, filenames in walk(self.rootdir, topdown=True, followlinks=True):
       if not self.__is_calc_dir__(dirpath, dirnames, filenames): continue
 
-      try: result = self.Extract(join(self.rootdir, dirpath), comm = self._comm)
-      except TypeError: # no comm keyword.  
-        try: result = self.Extract(join(self.rootdir, dirpath))
-        except: continue
-      except: continue
+      result = self.Extract(join(self.rootdir, dirpath))
 
       result.OUTCAR = self.OUTCAR
       yield join('/', relpath(dirpath, self.rootdir)), result

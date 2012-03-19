@@ -2,7 +2,7 @@ import random
 import uuid
 
 random.seed(12212)
-def Extract(outdir=None, comm=None):
+def Extract(outdir=None):
   from os.path import exists
   from os import getcwd
   from collections import namedtuple
@@ -10,15 +10,15 @@ def Extract(outdir=None, comm=None):
   from lada.misc import Changedir
 
   if outdir == None: outdir = getcwd()
-  Extract = namedtuple('Extract', ['success', 'directory', 'indiv'])
-  if not exists(outdir): return Extract(False, outdir, None)
+  Extract = namedtuple('Extract', ['success', 'directory', 'indiv', 'functional'])
+  if not exists(outdir): return Extract(False, outdir, None, functional)
   with Changedir(outdir) as pwd:
-    if not exists('OUTCAR'): return Extract(False, outdir, None)
+    if not exists('OUTCAR'): return Extract(False, outdir, None, functional)
     with open('OUTCAR', 'r') as file: indiv, value = load(file)
-  return Extract(True, outdir, indiv)
+  return Extract(True, outdir, indiv, functional)
   
 
-def functional(indiv, outdir=None, value=False):
+def functional(indiv, outdir=None, value=False, **kwargs):
   from lada.misc import Changedir
   from pickle import dump
 

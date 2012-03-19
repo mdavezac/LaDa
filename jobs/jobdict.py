@@ -56,8 +56,7 @@ class JobDict(object):
          string = self.parent.name + key
          break
      if string is None: raise RuntimeError("Could not determine the name of the dictionary.")
-     if not self.is_job: string += "/"
-     return string
+     return string + '/'
 
   def __getitem__(self, index): 
     """ Returns job description from the dictionary.
@@ -149,7 +148,9 @@ class JobDict(object):
     result = self
     for name in names:
       if name == "..":
-        if result.parent is not None: result = result.parent
+        if result.parent is None:
+          raise RuntimeError('Cannot descend below root.')
+        result = result.parent
         continue
       elif name not in result.children:
         result.children[name] = JobDict()

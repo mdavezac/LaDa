@@ -1,9 +1,9 @@
 """ Sets general lada parameters. """
-readonly_jobparams = False
+jobparams_readonly = False
 """ Whether items can be modified in parallel using attribute syntax. """
-naked_end = True
+jobparams_naked_end = True
 """ Whether last item is returned as is or wrapped in ForwardingDict. """
-only_existing_jobparams = True
+jobparams_only_existing = True
 """ Whether attributes can be added or only modified. """
 unix_re  = True
 """ If True, then all regex matching is done using unix-command-line patterns. """
@@ -14,4 +14,9 @@ try_import_matplotlib = False
 
     It seems that matplotlib is installed hopper, with the dire consequences
     one expects from Cray.
+"""
+is_interactive = False
+""" Whether we are in an IPython shell or not.
+
+    Tries and converts exceptions to simply printing error messages.
 """

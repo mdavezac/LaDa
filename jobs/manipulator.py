@@ -3,40 +3,33 @@ __docformat__ = "restructuredtext en"
 __all__ = ['JobParams']
 
 from .extract import AbstractMassExtract
-from .forwarding_dict import ForwardingDict
 
 class JobParams(AbstractMassExtract):
   """ Get and sets job parameters for a job-dictionary. """
-  def __init__(self, jobdict = None, only_existing=True, **kwargs):
+  def __init__(self, jobdict=None, only_existing=True, **kwargs):
     """ Initializes job-parameters.
 
-        :Parameters:
-          jobdict : None or JobDict
-	    The jobdictionary for which to get/set parameters. If None, will
-            look for ipython's current_jobdict.
-          only_existing : bool
+        :param jobdict :
+            :py:class:`JobDict <lada.jobs.jobdict.JobDict>` instance for which
+            to get/set parameters. If None, will look for ipython's
+            current_jobdict.
+        :param bool only_existing:
             If true (default), then only existing parameters can be modified:
             non-existing parameters will not be added.
-          kwargs : dict
-            Variable length keyword argument passed on to `AbstractMassExtract`.
-
-        :kwarg view: Pattern to match to job names.
-        :kwarg excludes: List of patterns which job-names should not match.
-        :kwarg naked_end: True if should return value rather than dict when only one item.
-        :kwarg unix_re: converts regex patterns from unix-like expression.
-        :kwarg dynamic: Whether to choose a slower but more dynamic caching
-                        method. True by default.
+        :param kwargs:
+            Variable length keyword argument passed on to
+            :py:meth:`AbstractMassExtract.__init__`.
     """
-    from .. import only_existing_jobparams as only_existing
-    if 'dynamic' not in kwargs: kwargs['dynamic'] = True
-    AbstractMassExtract.__init__(self, **kwargs)
+    from .. import jobparams_only_existing
 
-    super(JobParams, self).__setattr__("_jobdict", None)
-    self._jobdict = jobdict
-    """ Job-dictionary for which to get/set parameters. """
-    super(JobParams, self).__setattr__("only_existing", None)
-    self.only_existing = kwargs.get('only_existing', only_existing)
+    self.__dict__["_jobdict"] = jobdict
+    self.__dict__['only_existing'] = jobparams_only_existing\
+                                       if only_existing is None\
+                                       else only_existing
     """ Only modifies parameter which already exist. """
+
+    if 'dynamic' not in kwargs: kwargs['dynamic'] = True
+    super(JobParams, self).__init__(**kwargs)
 
 
   @property
@@ -44,36 +37,22 @@ class JobParams(AbstractMassExtract):
     """ Returns manipulator with ability to *add new* attributes. """
     return self.copy(only_existing=False)
     
-
   @property
   def jobdict(self):
     """ Jobdictionary for which to get/set parameters. """
-    return self._ipy_jobdict if self._jobdict is None else self._jobdict.root
+    if self._jobdict is None: 
+      from lada import is_interactive
+      try: from lada import current_jobdict
+      except ImportError:
+        if is_interactive: print "No current job-dictionary."
+        else: raise RuntimeError("No current job-dictionary.")
+      return current_jobdict.root
+    return self._jobdict.root
   @jobdict.setter
   def jobdict(self, value): self._jobdict = value
   @jobdict.deleter
   def jobdict(self, value): self._jobdict = None
 
-  @property
-  def _is_ipy_global(self):
-    """ True if working on global dictionary. """
-    if self._jobdict is not None: return False
-    try: from IPython.ipapi import get as get_ipy
-    except ImportError: return False
-    else: return True
-
-  @property 
-  def _ipy_jobdict(self):
-    """ Returns global dictionary. """
-    try: from IPython.ipapi import get as get_ipy
-    except ImportError: raise RuntimeError("Not an ipy session.")
-    
-    ip = get_ipy()
-    if "current_jobdict" not in ip.user_ns:
-      print "No current jobdictionary."
-      return
-    return ip.user_ns["current_jobdict"].root
-    
   @property
   def onoff(self):
     """ Dictionary with calculations which will run.
@@ -107,10 +86,11 @@ class JobParams(AbstractMassExtract):
   @property
   def extractors(self):
     """ Returns dictionary of extrators. """
+    from .forwarding_dict import ForwardingDict
     result = self.dicttype()
     for k, j in self.iteritems(): result[k] = j
     if self.naked_end and len(result) == 1: return result[result.keys()[0]]
-    return ForwardingDict( result, naked_end=self.naked_end, \
+    return ForwardingDict( dictionary=result, naked_end=self.naked_end, \
                            only_existing=self.only_existing, readonly=False)
     
 
@@ -120,16 +100,7 @@ class JobParams(AbstractMassExtract):
 
         If None, then no match required. Should be a string, not an re object.
     """
-    if self._view is None:
-      try: from IPython.ipapi import get as get_ipy
-      except ImportError: raise AttributeError("path not set.")
-      ip = get_ipy()
-      if "current_jobdict" not in ip.user_ns:
-        print "No current jobdictionary."
-        return
-      return ip.user_ns["current_jobdict"].name
-      return 
-    return self._view
+    return self.jobdict.name if self._view is None else self._view
   @view.setter
   def view(self, value): self._view = value
 
@@ -139,6 +110,7 @@ class JobParams(AbstractMassExtract):
 
   def __getattr__(self, name): 
     """ Returns extracted values. """
+    from .forwarding_dict import ForwardingDict
     result = self.dicttype()
     for key, value in self.iteritems():
       if value.is_tagged: continue
@@ -148,7 +120,7 @@ class JobParams(AbstractMassExtract):
     if len(result) == 0: 
       raise AttributeError( "Attribute {0} not found in {1} instance."\
                             .format(name, self.__class__.__name__) )
-    return ForwardingDict( result, naked_end=self.naked_end, \
+    return ForwardingDict( dictionary=result, naked_end=self.naked_end, \
                            only_existing=self.only_existing, readonly=False)
 
   def __setattr__(self, name, value):
