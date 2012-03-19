@@ -32,6 +32,11 @@ class Extract(ExtractDFT):
     self.input = input if input != None else VaspExtract(dirname(self.directory), comm=comm)
     """ Extractor object for the calculation from which the charge density was obtained. """
 
+  @property
+  def vbm(self): return self.input.vbm
+  @property
+  def cbm(self): return self.input.cbm
+
   def _order(self, value):
     """ Order up to which taylor coefficients should be computed. """
     # case where we want to fit to specific orders only.
