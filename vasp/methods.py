@@ -313,7 +313,8 @@ class RelaxCellShape(object):
     return string + "\n" + result
 
 def epi_relaxation( vasp, structure, outdir=None, comm=None,\
-                    direction=[0,0,1], epiconv = 1e-4, **kwargs ):
+                    direction=[0,0,1], epiconv = 1e-4, final=None,
+                    **kwargs ):
   """ Performs epitaxial relaxation in given direction. 
   
       Performs a relaxation for an epitaxial structure on a virtual substrate.
@@ -343,6 +344,8 @@ def epi_relaxation( vasp, structure, outdir=None, comm=None,\
         Epitaxial direction. Defaults to [0, 0, 1].
       :param float epiconv: 
         Convergence criteria of the total energy.
+      :param dict final:
+        parameters to change for final static calculation.
   """
   from os import getcwd
   from os.path import join
@@ -422,9 +425,11 @@ def epi_relaxation( vasp, structure, outdir=None, comm=None,\
   # last two calculation: relax mid-point of xstart, xend, then  perform static.
   xmid = 0.5 * (xend + xstart)
   emid = function(xmid)
+  args = kwargs.copy()
+  args.update(final)
   result = vasp( change_structure(xmid),
                  relaxation = "static",
                  outdir = outdir,
                  restart = allcalcs[-1],
-                 comm = comm, **kwargs )
+                 comm = comm, **args )
   return result
