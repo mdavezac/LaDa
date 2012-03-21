@@ -1,5 +1,5 @@
 """ Contains basic data type and methods for crystal structures. """
-
+__docformat__ = "restructuredtext en"
 __all__ = [ 'Structure', 'Atom', 'SmithTransform', 'zero_centered', 'into_voronoi',
             'into_cell', 'supercell', 'primitive', 'is_primitive', 'space_group',
             'transform', 'periodic_dnc', 'neighbors', 
@@ -53,7 +53,6 @@ def layer_iterator(structure, direction, tolerance=1e-12):
   """
   from operator import itemgetter
   from numpy import array, dot
-  from . import LayerDepth, into_cell, into_voronoi
 
   direction = array(direction)
   if len(structure) <= 1: yield list(structure); return
@@ -128,14 +127,9 @@ def equivalence_iterator(structure, operations = None, tolerance=1e-6):
         for index in others:
           i, pos = atoms.pop(index)
           equivs.append(i)
-    if is_structure:
-      def inner_equivalence_iterator():
-        """ Iterates over equivalent atoms in a structure. """
-        for i in equivs: yield structure[i]
-    else:
-      def inner_equivalence_iterator():
-        """ Iterates over equivalent atoms in a structure. """
-        for i in equivs: yield structure[i]
+    def inner_equivalence_iterator():
+      """ Iterates over equivalent atoms in a structure. """
+      for i in equivs: yield structure[i]
     yield inner_equivalence_iterator()
 
 def shell_iterator(structure, center, direction, thickness=0.05):

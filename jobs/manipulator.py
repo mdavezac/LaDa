@@ -39,19 +39,17 @@ class JobParams(AbstractMassExtract):
     
   @property
   def jobdict(self):
-    """ Jobdictionary for which to get/set parameters. """
-    if self._jobdict is None: 
+    from lada.jobs import load
+    if self._rootdir is None: 
       from lada import is_interactive
-      try: from lada import current_jobdict
-      except ImportError:
-        if is_interactive: print "No current job-dictionary."
-        else: raise RuntimeError("No current job-dictionary.")
-      return current_jobdict.root
+      if is_interactive:
+        from lada.interactive import jobdict
+        if jobdict is None:
+          print "No current job-dictionary."
+          return
+      return jobdict
+    if "_jobdict" not in self.__dict__: self._jobdict = load(self._rootdir.path)
     return self._jobdict.root
-  @jobdict.setter
-  def jobdict(self, value): self._jobdict = value
-  @jobdict.deleter
-  def jobdict(self, value): self._jobdict = None
 
   @property
   def onoff(self):
