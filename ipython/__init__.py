@@ -8,7 +8,7 @@ def load_ipython_extension(ip):
   """Load the extension in IPython."""
   global __lada_is_loaded__
   if not __lada_is_loaded__:
-    from types import ModuleType
+    from types import ModuleType, MethodType
     from .explore import explore, completer as explore_completer
     import lada
     __lada_is_loaded__ = True
@@ -17,7 +17,8 @@ def load_ipython_extension(ip):
     lada.interactive.jobdict_path = None
     lada.is_interactive = True
     ip.define_magic('explore', explore)
-    ip.Completer.custom_completers.add_s('explore', explore_completer)
+    ip.set_hook('complete_command', explore_completer, str_key = '%explore')
+    ip.user_ns['_ip'] = ip
 
 def unload_ipython_extension(ip):
   """ Unloads LaDa IPython extension. """

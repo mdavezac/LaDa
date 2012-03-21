@@ -20,5 +20,5 @@ is_interactive = False
 
     Tries and converts exceptions to simply printing error messages.
 """
-jobdict_glob  = ['[a-z,A-Z,0-9]*.dict']
+jobdict_glob  = ['*.dict']
 """ Globs (unix path wildcards) to identify jobdictionaries. """

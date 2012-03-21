@@ -173,31 +173,34 @@ def _explore_impl(self, args):
 
 def completer(self, event): 
   """ Completer for explore. """ 
-  import IPython
+  from IPython import TryNext
+  from IPython.core.completer import expand_user, compress_user
+  from os.path import isdir
   from glob import iglob
+  from ..jobs import JobDict
   from .. import jobdict_glob
-
-  print "WTD"
+  
   data = event.line.split()[1:]
-  options = set(["errors", "results", "all", "--file", "--expression"])
-  if len(set(data) - options) > 1: raise IPython.ipapi.TryNext
-
   results, has_file, has_expr = [], False, False
   if "--file" in data: data.remove("--file"); has_file = True
   elif "--expression" in data: data.remove("--expression"); has_expr = True
   else: results = ["--file", "--expression"]
   if "--add" not in data: results.append('--add')
   if "--concatenate" not in data: results.append('--concatenate')
-
-  results.extend(["errors", "results", "all"])
-  if len(data) == 0: 
-    results.extend(set(u for u in jobdict_glob for v in iglob(u)))
-    return results
-
-  if len(event.symbol) == 0: data.append("")
   
+  results.extend(["errors", "results", "all"])
+  if len(data) == 0: data = [''] 
+  elif event.line[-1] == ' ': data.append('')
   if not has_file:
-    results.exend(self.shell.magic('who_ls lada.jobs.JobDict'))
+    results.extend( name for name, u in self.user_ns.iteritems()\
+                    if isinstance(u, JobDict) and name[0] != '_' and name not in data)
   if not has_expr:
-    results.extend(set(u for u in jobdict_glob for v in iglob(data[-1]+u)))
-  return set(results)
+    relpath, tilde_expand, tilde_val = expand_user(data[-1])
+    dirs = [f.replace('\\','/') + "/" for f in iglob(relpath+'*') if isdir(f)]
+    dicts = [ f.replace('\\','/') for u in jobdict_glob for f in iglob(relpath+u)]
+    if '.' in data[-1]:
+      relpath, a, b = expand_user(data[-1][:data[-1].find('.')])
+      dicts.extend([ f.replace('\\','/') for u in jobdict_glob for f in iglob(relpath+u)])
+    dummy = [compress_user(p, tilde_expand, tilde_val) for p in dirs+dicts]
+    results.extend(d for d in dummy if d not in data)
+  return list(results)
