@@ -195,9 +195,11 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
       for individual in loop(age):
         # checks for pre-existing copies.
         found_other = False
+        afit = self.functional.comparison(individual) 
         if len(result) >= 2: 
           for other in result[-2]: 
-            if self.functional.comparison(individual, other) != 0: continue
+            bfit = self.functional.comparison(individual) 
+            if fabs(a-b) > 1e-8: continue
             if individual != other: continue
             found_other = True
             break
@@ -212,20 +214,11 @@ class Extract(AbstractExtractBase, OutcarSearchMixin):
     """ List of bitstring + fitness for each population at each generation. """
     if len(self.offspring) == 0: return []
 
-    from sys import version_info
-    if version_info.major > 2:
-      from functools import cmp_to_key
-      result = [sorted(self.offspring[0], key=cmp_to_key(self.functional.comparison))]
-    else:
-      result = [sorted(self.offspring[0], cmp=self.functional.comparison)]
+    result = [sorted(self.offspring[0], key=self.functional.comparison)]
     for generation in self.offspring[1:]:
       new_pop = result[-1][:-len(generation)]
       new_pop.extend(generation)
-      if version_info.major > 2:
-        from functools import cmp_to_key
-        result.append( sorted(new_pop, key=cmp_to_key(self.functional.comparison)) )
-      else:
-        result.append( sorted(new_pop, cmp=self.functional.comparison) )
+      result.append( sorted(new_pop, key=self.functional.comparison) )
     return result 
 
   @property

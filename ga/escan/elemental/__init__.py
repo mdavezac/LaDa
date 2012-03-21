@@ -11,7 +11,7 @@ class Individual(BitstringIndividual):
       Comparison between two individuals expect that a bitstring represents an
       elemental superlattice, with translation and inversion symmetries.
   """
-  def __init__(self, nmin=0, nmax=20, step=2, dosym=False): 
+  def __init__(self, nmin=0, nmax=20, step=2, dosym=True): 
     """ Initializes a bitstring individual randomly. """
     from random import randint
     import numpy

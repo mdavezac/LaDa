@@ -55,7 +55,8 @@ def run(self):
         indiv = self.Individual()
         loop = self.taboo(indiv)
         j += 1
-        assert j < max(50*self.popsize, 100), "Could not create offspring.\n"
+        if j > max(50*self.popsize, 100):
+          raise Exception("Could not create initial population.\n")
       indiv.birth = self.current_gen
       self.population.append(indiv)
   self.population = self.comm.broadcast(self.population)
@@ -85,7 +86,7 @@ def run(self):
           indiv = self.mating()
           loop = self.taboo(indiv)
           j += 1
-          assert j < max(10*self.popsize, 100), "Could not create offspring.\n"
+          if j > max(10*self.popsize, 100): raise Exception("Could not create offspring.\n")
         indiv.birth = self.current_gen
         self.offspring.append(indiv)
       self.comm.broadcast(self.offspring)
@@ -98,12 +99,7 @@ def run(self):
     # finally, sort and replace.
     if self.comm.rank == 0:
       # deal with differences in function sorted between python versions.
-      from platform import python_version_tuple
-      if python_version_tuple()[0] > 2:
-        from functools import cmp_to_key
-        self.population = sorted(self.population, key=cmp_to_key(self.comparison))
-      else: 
-        self.population = sorted(self.population, cmp=self.comparison)
+      self.population = sorted(self.population, key=self.comparison)
       # Inserts individual one by one ensuring they do not yet exist in the
       # population. This ensures that duplicates are not allowed.
       for indiv in self.offspring:

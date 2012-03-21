@@ -3,53 +3,29 @@ __docformat__ = "restructuredtext en"
 from .extract import Extract as GAExtract
 
 __all__ = ['Darwin', 'maximize', 'minimize']
-def maximize(indivA, indivB, tolerance=1e-12):
-  """ Compares two individuals. 
+def maximize(indivA, tolerance=1e-12):
+  """ Objective function.
 
-      This method can be used to *maximize* the objective function during the GA
-      evolution.
+      Makes sure the GA *maximizes* the fitness. Strips units from fitness.
 
-      :Parameters:
-        indivA 
+      :param indivA:
           Individual with a scalar fitness attribute.
-        indivB 
-          Individual with a scalar fitness attribute.
-
-      :return:
-        - 1 if ``indivA.fitness < indivB.fitness``
-        - 0 if ``indivA.fitness == indivB.fitness``
-        - -1 if ``indivA.fitness > indivB.fitness``
   """
-  from math import fabs
-  a, b = indivA.fitness, indivB.fitness
-  if hasattr(b, 'rescale') and hasattr(a, 'magnitude'):
-    a, b = a.magnitude, b.rescale(a.units).magnitude
-  if fabs(a-b) <  tolerance: return 0
-  return 1 if float(a-b) < 0 else -1
+  a = indivA.fitness
+  if hasattr(a, 'magnitude'): a = a.magnitude
+  return -a
 
-def minimize(indivA, indivB, tolerance=1e-12):
-  """ Compares two individuals. 
+def minimize(indivA, tolerance=1e-12):
+  """ Objective function.
 
-      This method can be used to *minimize* the objective function during the GA
-      evolution.
+      Makes sure the GA *maximizes* the fitness.
 
-      :Parameters:
-        indivA 
+      :param indivA:
           Individual with a scalar fitness attribute.
-        indivB 
-          Individual with a scalar fitness attribute.
-
-      :return:
-        - 1 if ``indivA.fitness > indivB.fitness``
-        - 0 if ``indivA.fitness == indivB.fitness``
-        - -1 if ``indivA.fitness < indivB.fitness``
   """
-  from math import fabs
-  a, b = indivA.fitness, indivB.fitness
-  if hasattr(b, 'rescale') and hasattr(a, 'magnitude'):
-    a, b = a.magnitude, b.rescale(a.units).magnitude
-  if fabs(a-b) <  tolerance: return 0
-  return -1 if float(a-b) < 0 else 1
+  a = indivA.fitness
+  if hasattr(a, 'magnitude'): a = a.magnitude
+  return a
 
 class Darwin(object): 
   """ GA functional for optimizations of epitaxial structures. """
@@ -121,7 +97,12 @@ class Darwin(object):
     """ Comparison operator between individuals. """
     self.history = History() if kwargs.pop("history", False) else None 
     """ Holds list of visited candidates, if any. """
-    if "histlimit" in kwargs: self.history.limit = kwargs.pop("histlimit")
+    if "histlimit" in kwargs:
+      self.history.limit = kwargs.pop("histlimit")
+      """ Number of individuals kept in history. """
+    if 'selection' in kwargs:
+      self.selection = kwargs.pop('selection')
+      """ Function to select an individual for mating. """
 
   @property
   def rootworkdir(self):
