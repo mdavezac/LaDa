@@ -43,9 +43,6 @@ def explore(self, cmdl):
                       help='JOBDICT is a python expression.' )
   group.add_argument( '--concatenate', action="store_true", dest="concatenate",
                       help='Update/overwrites current jobdictionary with newly explored one.' )
-  group.add_argument( '--add', metavar="NAME", type=str, dest="add",
-                      help='Adds newly explored jobdictionary to current'\
-                           'dictionary in specified location..' )
   parser.add_argument( 'type', metavar='TYPE', type=str, default="", nargs='?',
                        help="Optional. Specifies what kind of jobs will be explored. "\
                             "Can be one of results, errors, all, running. "\
@@ -99,9 +96,13 @@ def explore(self, cmdl):
 #     else: job.untag()
 
   if args.type == "results": 
+    if interactive.jobdict_path is None: 
+      print "No known path/file for current jobdictionary.\n"\
+            "Please save to file first."
+      return
+    directory = dirname(interactive.jobdict_path)
     for name, job in interactive.jobdict.iteritems():
-      if interactive.jobdict_path is None: job.tag()
-      elif not job.functional.Extract(join(dirname(interactive.jobdict_path),name)).success: job.tag()
+      if not job.functional.Extract(join(directory,name)).success: job.tag()
       else: job.untag()
 
 # elif args.type == "running": 
@@ -115,22 +116,21 @@ def explore(self, cmdl):
 
 def _explore_impl(self, args):
   """ Tries to open job-dictionary. """
-  from os.path import abspath
+  from os.path import abspath, isfile
   from copy import deepcopy
   from ..jobs import load, JobDict
   from ..jobs import JobParams, MassExtract as Collect
   from lada import interactive
+  from lada.misc import LockFile, RelativePath
 
   # case where we want to change the way the current dictionary is read.
   if len(args.jobdict) == 0:
     if interactive.jobdict is None:
       print "No job dictionary currently loaded.\n"\
             "Please use \"explore {0} path/to/jobict\".".format(args.type)
-      interactive.__dict__.pop("current_jobdict_path", None)
-      interactive.__dict__.pop("interactive.jobdict", None)
+      interactive.__dict__.pop("jobdict", None)
       return
 
-    self.user_ns["interactive.jobdict"] = deepcopy(interactive.jobdict)
     if "collect" in self.user_ns: self.user_ns["collect"].uncache()
     interactive.__dict__.pop("_lada_subjob_iterator", None)
     interactive.__dict__.pop("_lada_subjob_iterated", None)
@@ -143,26 +143,32 @@ def _explore_impl(self, args):
   interactive.__dict__.pop("_lada_subjob_iterated", None)
 
   jobdict, new_path = None, None
-  if args.is_file or not args.is_expression:
+  if args.is_file or not args.is_expression and isfile(RelativePath(args.jobdict).path):
     try: jobdict = load(args.jobdict, timeout=60)
-    except: jobdict = None
+    except:
+      print "Could not access locked file {0}.".format(args.jobdict)
+      if LockFile(args.jobdict).is_locked:
+        print "You may want to check for the existence of {0}."\
+              .format(LockFile(args.jobdict).lock_directory)
+        print "If you are sure there are no jobs out there accessing {0},\n"\
+              "you may want to delete that directory.".format(args.jobdict)
+      return
     else: new_path = abspath(args.jobdict)
   if jobdict is None and (args.is_expression or not args.is_file):
-    try: jobdict = deepcopy(self.ev(args.jobdict))
-    except: jobdict = None
-
-  if not isinstance(jobdict, JobDict): jobdict = None
+    jobdict = self.user_ns.get(args.jobdict, None)
+    if not isinstance(jobdict, JobDict): 
+      print "{0} is not a jobdictionary object.".format(args.jobdict)
+      return
 
   if jobdict is None: # error
     print "Could not convert \"{0}\" to a job-dictionary.".format(args.jobdict) 
     return
     
   if args.concatenate: 
+    if interactive.jobdict is None:
+      print "No current jobdictionary with which to concatenate."
+      return 
     interactive.jobdict.update(jobdict)
-    jobdict = interactive.jobdict
-    if new_path is None: new_path = interactive.jobdict_path
-  elif args.add is not None:
-    interactive.jobdict[args.add[1:-1]] = jobdict
     jobdict = interactive.jobdict
     if new_path is None: new_path = interactive.jobdict_path
 

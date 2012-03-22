@@ -38,7 +38,8 @@ def test():
     assert i == 4
     for i, (name, value) in enumerate(collect.indiv.iteritems()):
       assert {'/this/0/': 10, '/this/1/': 15, '/that/1/': 20, \
-              '/that/2/': 20, '/this/0/another/': 25 }[name] == value
+              '/that/2/': 20, '/this/0/another/': 25 }[name] == value,\
+             Exception((name, value))
     assert i == 4
 
     try: collect.that

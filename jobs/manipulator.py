@@ -31,26 +31,28 @@ class JobParams(AbstractMassExtract):
     if 'dynamic' not in kwargs: kwargs['dynamic'] = True
     super(JobParams, self).__init__(**kwargs)
 
+  @property
+  def jobdict(self):
+    from lada.jobs import load
+    from lada import is_interactive
+    if self._jobdict is None:
+      if self._rootpath is None: 
+        if is_interactive:
+          from lada import interactive
+          if interactive.jobdict is None:
+            print "No current job-dictionary."
+            return
+          return interactive.jobdict
+        else: raise RuntimeError('No jobdictionary.')
+      else: self._jobdict = load(self.rootpath, timeout=30)
+    return self._jobdict.root
+
 
   @property
   def addattr(self):
     """ Returns manipulator with ability to *add new* attributes. """
     return self.copy(only_existing=False)
     
-  @property
-  def jobdict(self):
-    from lada.jobs import load
-    if self._rootdir is None: 
-      from lada import is_interactive
-      if is_interactive:
-        from lada.interactive import jobdict
-        if jobdict is None:
-          print "No current job-dictionary."
-          return
-      return jobdict
-    if "_jobdict" not in self.__dict__: self._jobdict = load(self._rootdir.path)
-    return self._jobdict.root
-
   @property
   def onoff(self):
     """ Dictionary with calculations which will run.
@@ -172,4 +174,3 @@ class JobParams(AbstractMassExtract):
     for name, job in self.iteritems():
       if not job.is_tagged: result |= set([u for u in dir(job) if u[0] != '_'])
     return result
- 

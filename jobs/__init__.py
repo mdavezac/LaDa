@@ -15,7 +15,8 @@ __all__ = ['JobDict', 'walk_through', 'save', 'load', 'MassExtract',
 from .bleeder import Bleeder
 from .jobdict import JobDict, SuperCall
 from .manipulator import JobParams
-from .extract import AbstractMassExtract, MassExtract, AbstractMassExtractDirectories
+from .extract import AbstractMassExtract, AbstractMassExtractDirectories
+from .massextract import MassExtract 
 
 def save(jobdict, path=None, overwrite=False, timeout=None): 
   """ Pickles a job to file. 

@@ -8,10 +8,13 @@ class AbstractMassExtract(object):
   """ Propagates extraction methods from different jobs. """
   __metaclass__ = ABCMeta
 
-  def __init__(self, view=None, excludes=None, dynamic=False, ordered=True, 
+  def __init__(self, path=None, view=None, excludes=None, dynamic=False, ordered=True, 
                naked_end=None, unix_re=True):
     """ Initializes extraction object. 
 
+        :param str path:
+            Root directory for which to investigate all subdirectories.
+            If None, uses current working directory.
         :param str view:
             Pattern which the job names must match to be included in the
             extraction. Ignored if None.
@@ -29,6 +32,7 @@ class AbstractMassExtract(object):
             Converts regex patterns from unix-like expression.
     """
     from .. import jobparams_naked_end, unix_re
+    from ..misc import RelativePath
     from .ordered_dict import OrderedDict
 
     super(AbstractMassExtract, self).__init__()
@@ -39,8 +43,6 @@ class AbstractMassExtract(object):
                           '_cached_extractors': None, 'dynamic': dynamic })
     self.naked_end = jobparams_naked_end if naked_end is None else naked_end
     """ If True and dict to return contains only one item, returns value itself. """
-    self.view = view
-    """ The pattern which job-names should match. """
     self.unix_re = unix_re
     """ If True, then all regex matching is done using unix-command-line patterns. """
     self.excludes = excludes
@@ -51,6 +53,15 @@ class AbstractMassExtract(object):
     """ If True chooses a slower but more dynamic caching method. """
     self.dicttype = OrderedDict if ordered else dict
     """ Type of dictionary to use. """
+    if path is None: self.__dict__['_rootpath'] = None
+    else: self.__dict__['_rootpath']= RelativePath(path, hook=self.uncache)
+
+  @property
+  def rootpath(self): 
+    """ Root of the directory-tree to trawl for OUTCARs. """
+    return self._rootpath.path if self._rootpath is not None else None
+  @rootpath.setter
+  def rootpath(self, value): self._rootpath.path = value
 
   def uncache(self): 
     """ Uncache values. """
@@ -269,13 +280,11 @@ class AbstractMassExtract(object):
     if self.unix_re: name = normpath(name)
     return self.copy(view=name)
 
-  def __getstate__(self):
+  def __getstate__(self): 
     d = self.__dict__.copy()
-    if "_rootdir" in d: d["_rootdir"].hook = None
     return d
 
   def __setstate__(self, arg):
-    if "_rootdir" in arg: arg["_rootdir"].hook = self.uncache
     self.__dict__.update(arg)
        
   def copy(self, **kwargs):
@@ -307,94 +316,15 @@ class AbstractMassExtract(object):
       if hasattr(job, 'iterfiles'): 
         for file in job.iterfiles(**kwargs): yield file 
 
+  def __getstate__(self):
+    d = self.__dict__.copy()
+    if d["_rootpath"] is not None: d["_rootpath"].hook = None
+    return d
 
-class MassExtract(AbstractMassExtract): 
-  """ Propagates extraction methods from different jobs. 
-  
-      Collects extractors across all jobs (for which job.functional.Extract
-      exist). The results are presented as attributes of an instance of
-      MassExtract, and arranged as directory where the key is the name of the
-      job and the value obtained from an instance of that job's Extract. This
-      class is set-up to fail silently, and hence is of limited use for
-      diagnosis.
-  """
-
-  def __init__(self, path=None, **kwargs):
-    """ Initializes extraction object. 
- 
-        :param str path:
-            Pickled jobdictionary for which to extract stuff. If None, will
-            attempt to use the current jobdictionary.
-        :param kwargs:
-            Variable length keyword argument passed on to
-            :py:meth:`AbstractMassExtract.__init__`.
-    """
-    super(MassExtract, self).__init__(**kwargs)
-    self.rootdir = path # Path to the job dictionary.
-
-  @property
-  def view(self):
-    """ A regex pattern which the name of extracted jobs should match.
-
-        If None, then no match required. Should be a string, not an re object.
-    """
-    return self._view if self._view is not None else self.jobdict.name
-  @view.setter
-  def view(self, value): self._view = value
-
-  @property
-  def rootdir(self): 
-    """ Root directory of the jobdictionary. """
-    from os.path import dirname
-
-    if self._rootdir is None: 
-      from lada import is_interactive
-      if is_interactive:
-        from lada.interactive import jobdict_path
-        if jobdict_path is None:
-          print "No current job-dictionary path."
-          return
-      return dirname(jobdict_path)
-
-    return dirname(self._rootdir.path)
-  @rootdir.setter
-  def rootdir(self, value):
-    from ..misc import RelativePath
-    if value is None:
-      self._rootdir = None
-      return
-    self._rootdir = RelativePath(value, hook=self.uncache)
-    if hasattr(self, '_jobdict'): del self._jobdict
-  @rootdir.deleter
-  def rootdir(self): self._rootdir = None
-
-  @property
-  def jobdict(self):
-    from lada.jobs import load
-    if self._rootdir is None: 
-      from lada import is_interactive
-      if is_interactive:
-        from lada.interactive import jobdict
-        if jobdict is None:
-          print "No current job-dictionary."
-          return
-      return jobdict
-    if "_jobdict" not in self.__dict__: self._jobdict = load(self._rootdir.path)
-    return self._jobdict.root
-
-  def __iter_alljobs__(self):
-    """ Generator to go through all relevant jobs.  
-    
-        :return: (name, extractor), where name is the name of the job, and
-          extractor an extraction object.
-    """
-    from os.path import join
-    
-    for name, job in self.jobdict.iteritems():
-      if job.is_tagged: continue
-      try: extract = job.functional.Extract(join(self.rootdir, name))
-      except: pass 
-      else: yield job.name, extract
+  def __setstate__(self, arg):
+    self.__dict__.update(arg)
+    if self._rootpath is not None: self._rootpath.hook = self.uncache
+       
 
 class AbstractMassExtractDirectories(AbstractMassExtract):
   """ Propagates extractors from all subdirectories.
@@ -412,9 +342,6 @@ class AbstractMassExtractDirectories(AbstractMassExtract):
     """ Initializes AbstractMassExtractDirectories.
     
     
-        :param str path:
-            Root directory for which to investigate all subdirectories.
-            If None, uses current working directory.
         :param Extract
             Extraction class to use within each calculation. 
         :param kwargs : dict
@@ -424,31 +351,21 @@ class AbstractMassExtractDirectories(AbstractMassExtract):
     # this will throw on unknown kwargs arguments.
     super(AbstractMassExtractDirectories, self).__init__(**kwargs)
 
-    self.Extract = Extract
+    self.__dict__['Extract'] = Extract
     """ Extraction class to use. """
-
-    self._rootdir = RelativePath(path, hook=self.uncache)
-    """ Root of the directory-tree to trawl for OUTCARs. """
-    
-  @property
-  def rootdir(self): 
-    """ Root of the directory-tree to trawl for OUTCARs. """
-    return self._rootdir.path
-  @rootdir.setter
-  def rootdir(self, value): self._rootdir.path = value
 
   def __iter_alljobs__(self):
     """ Goes through all directories with a contcar. """
     from os import walk
     from os.path import relpath, join
 
-    for dirpath, dirnames, filenames in walk(self.rootdir, topdown=True, followlinks=True):
+    for dirpath, dirnames, filenames in walk(self.rootpath, topdown=True, followlinks=True):
       if not self.__is_calc_dir__(dirpath, dirnames, filenames): continue
 
-      result = self.Extract(join(self.rootdir, dirpath))
+      result = self.Extract(join(self.rootpath, dirpath))
 
       result.OUTCAR = self.OUTCAR
-      yield join('/', relpath(dirpath, self.rootdir)), result
+      yield join('/', relpath(dirpath, self.rootpath)), result
 
   @property
   def _attributes(self): 
@@ -463,8 +380,8 @@ class AbstractMassExtractDirectories(AbstractMassExtract):
   def __copy__(self):
     """ Returns a shallow copy of this object. """
     from copy import copy
-    result = self.__class__(self.rootdir)
+    result = self.__class__(self.rootpath)
     for k, v in self.__dict__.items():
       if k == 'dicttype': result.__dict__[k] = v
-      elif k != '_rootdir': result.__dict__[k] = copy(v)
+      elif k != '_rootpath': result.__dict__[k] = copy(v)
     return result
