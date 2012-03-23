@@ -51,7 +51,7 @@ class JobParams(AbstractMassExtract):
   @property
   def addattr(self):
     """ Returns manipulator with ability to *add new* attributes. """
-    return self.copy(only_existing=False)
+    return self.shallow_copy(only_existing=False)
     
   @property
   def onoff(self):
@@ -174,3 +174,47 @@ class JobParams(AbstractMassExtract):
     for name, job in self.iteritems():
       if not job.is_tagged: result |= set([u for u in dir(job) if u[0] != '_'])
     return result
+
+  def __setitem__(self, name, jobdict):
+    """ Modifies/creates item in jobdictionary.
+    
+        :param str name: 
+          Name of item to modify.
+        :param jobdict:
+          :py:class:`JobDict lada.jobs.jobdict.JobDict` or
+          :py:class:`JobParams` with which to set/modify item.
+          In the latter case, it should point to a single entry in the
+          jobdictionary. Eg no wildcards.
+
+        This function provides the ability to extend a jobdictionary with other jobs.
+
+        >>> jobparams['newjob'] = jobparams['oldjob'] 
+        >>> jobparams['newjob'] = some_job_dictionary
+
+        In  both cases above, the left-hand-side cannot be a wildcard.
+        Similarly, in the first case above, the right hand side should also point to
+        a valid job, not a sequence of jobs:
+
+        >>> jobparams['newjobs'] = jobparams['*/oldjobs']
+        raises KeyError
+        >>> jobparams['*/newjobs'] = jobparams['oldjobs']
+        No Error! creates a job called '*/newjobs'
+
+        .. warning:: The right-hand-side is *always* deep-copied_.
+          .. _deep-copied:: http://docs.python.org/library/copy.html
+    """
+    from lada import is_interactive
+    from copy import deepcopy
+
+    if isinstance(jobdict, JobParams): 
+      try: jobdict = jobdict.jobdict[jobdict.view]
+      except KeyError: raise KeyError("{0} is not an actual job".format(jobdict.view))
+    if name in self.jobdict and is_interactive:
+      print "Modifying existing job {0}.".format(name)
+      a = ''
+      while a not in ['n', 'y']:
+        a = raw_input("Modifying existing job {0}.\nIs this OK? [y/n] ".format(name))
+      if a == 'n':
+        print "Aborting."
+        return
+    self.jobdict[name] = deepcopy(jobdict)

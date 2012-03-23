@@ -1,12 +1,10 @@
 def raw_input(*args): return 'y'
 
 def test():
-  from random import randint
   from tempfile import mkdtemp
   from shutil import rmtree
   from os import makedirs
   from os.path import exists, join
-  from pickle import loads, dumps
   from IPython.core.interactiveshell import InteractiveShell
   from lada.jobs import JobDict
   import lada
@@ -16,7 +14,6 @@ def test():
 
   self = InteractiveShell.instance()
 
-  sizes = [10, 15, 20, 25]
   root = JobDict()
   for type, trial, size in [('this', 0, 10), ('this', 1, 15), ('that', 2, 20), ('that', 1, 20)]:
     job = root / type / str(trial)
@@ -24,7 +21,9 @@ def test():
     job.params['indiv'] = size
     if type == 'that': job.params['value'] = True
 
-  directory = mkdtemp()
+  directory =   '/tmp/test' # mkdtemp() #
+  if exists(directory) and directory == '/tmp/test': rmtree(directory)
+  if not exists(directory): makedirs(directory)
   try: 
     self.user_ns['jobdict'] = root
     self.magic("explore jobdict")
@@ -69,8 +68,16 @@ def test():
     assert jobdict is self.user_ns['jobparams'].jobdict
     assert jobdict is self.user_ns['collect'].jobdict
 
+    for name, job in root.iteritems():
+      if name == 'this/1': continue
+      job.compute(outdir=join(directory, name))
+
+    self.magic("explore {0}/dict".format(directory))
+    print set(self.user_ns['collect'].iterkeys())
+    assert set(['this/0', 'that/1', 'that/2']) == set(self.user_ns['collect'].iterkeys())
+    
   finally: 
-    rmtree(directory)
+    if directory != '/tmp/test': rmtree(directory)
     pass
   
 

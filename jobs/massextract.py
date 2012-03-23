@@ -24,7 +24,6 @@ class MassExtract(AbstractMassExtract):
             Variable length keyword argument passed on to
             :py:meth:`AbstractMassExtract.__init__`.
     """
-    from ..misc import RelativePath
     self.__dict__["_jobdict"] = None
     super(MassExtract, self).__init__(path=path, **kwargs)
 
@@ -53,6 +52,17 @@ class MassExtract(AbstractMassExtract):
         else: raise RuntimeError('No jobdictionary.')
       else: self._jobdict = load(self.rootpath, timeout=30)
     return self._jobdict.root
+
+  @property
+  def rootpath(self):
+    from lada import is_interactive
+    if self._jobdict is None and self._rootpath is None and is_interactive:
+      from lada import interactive
+      if interactive.jobdict_path is None:
+        print "No current path to job-dictionary."
+        return
+      return interactive.jobdict_path
+    
 
   def __iter_alljobs__(self):
     """ Generator to go through all relevant jobs.  

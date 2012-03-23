@@ -101,8 +101,8 @@ class AbstractMassExtract(object):
         If the ``excludes`` argument is None or an empty list, then the
         returned object will not exlude anything.
     """ 
-    if excludes is None or len(excludes) == 0: return self.copy(excludes=None)
-    result = self.copy(excludes=excludes)
+    if excludes is None or len(excludes) == 0: return self.shallow_copy(excludes=None)
+    result = self.shallow_copy(excludes=excludes)
     if self.excludes is not None: result.excludes.extend(self.excludes)
     return result
 
@@ -278,7 +278,7 @@ class AbstractMassExtract(object):
     from os.path import normpath, join
     if name[0] != '/': name = join(self.view, name)
     if self.unix_re: name = normpath(name)
-    return self.copy(view=name)
+    return self.shallow_copy(view=name)
 
   def __getstate__(self): 
     d = self.__dict__.copy()
@@ -287,7 +287,7 @@ class AbstractMassExtract(object):
   def __setstate__(self, arg):
     self.__dict__.update(arg)
        
-  def copy(self, **kwargs):
+  def shallow_copy(self, **kwargs):
     """ Returns a shallow copy. 
     
         :param kwargs:  Any keyword attribute will modify the corresponding
@@ -347,7 +347,6 @@ class AbstractMassExtractDirectories(AbstractMassExtract):
         :param kwargs : dict
             Keyword parameters passed on to :py:meth:`AbstractMassExtract.__init__`.
     """
-    from ..misc import RelativePath
     # this will throw on unknown kwargs arguments.
     super(AbstractMassExtractDirectories, self).__init__(**kwargs)
 

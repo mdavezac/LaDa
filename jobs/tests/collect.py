@@ -1,5 +1,4 @@
 def test():
-  from random import randint
   from tempfile import mkdtemp
   from shutil import rmtree
   from os import makedirs
@@ -8,7 +7,6 @@ def test():
   from lada.jobs import JobDict, MassExtract
   from dummy import functional
 
-  sizes = [10, 15, 20, 25]
   root = JobDict()
   for type, trial, size in [('this', 0, 10), ('this', 1, 15), ('that', 2, 20), ('that', 1, 20)]:
     job = root / type / str(trial)
@@ -21,7 +19,7 @@ def test():
   job.params['value'] = 5
   job.params['another'] = 6
 
-  directory =  '/tmp/test' # mkdtemp() #
+  directory =  mkdtemp() # '/tmp/test' # 
   if exists(directory) and directory == '/tmp/test': rmtree(directory)
   if not exists(directory): makedirs(directory)
   try: 

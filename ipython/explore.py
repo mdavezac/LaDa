@@ -17,16 +17,16 @@ def explore(self, cmdl):
       the more explicit version.
 
       >>> explore --file jobdict
-      >>> explore --variable jobdict
+      >>> explore --expression jobdict
 
       You can load a dictionary and filter out successfull or unsuccessfull runs. 
       To explore errors only, use:
      
-      >>> explore errors in path/to/job_pickle
+      >>> explore errors path/to/job_pickle
 
       To explore only successful results, use:
 
-      >>> explore results in path/to/job_pickle
+      >>> explore results path/to/job_pickle
   """
 
   import argparse
@@ -87,13 +87,16 @@ def explore(self, cmdl):
   except: return
 
   # now does special stuff if requested.
-# if args.type == "errors": 
-#   running_jobs = set(ip.magic("qstat").fields(-1)) if hasattr(self, "magic_qstat") else set([])
-#   for name, job in interactive.jobdict.iteritems():
-#     if interactive.jobdict_path is None: job.untag()
-#     elif job.functional.Extract(join(dirname(interactive.jobdict_path),name)).success: job.tag()
-#     elif name.replace("/", ".") in running_jobs: job.tag()
-#     else: job.untag()
+  if args.type == "errors": 
+    if interactive.jobdict_path is None: 
+      print "No known path/file for current jobdictionary.\n"\
+            "Please save to file first."
+      return
+    running_jobs = set(self.magic("qstat").fields(-1)) if hasattr(self, "magic_qstat") else set([])
+    for name, job in interactive.jobdict.iteritems():
+      if job.functional.Extract(join(dirname(interactive.jobdict_path),name)).success: job.tag()
+      elif name.replace("/", ".") in running_jobs: job.tag()
+      else: job.untag()
 
   if args.type == "results": 
     if interactive.jobdict_path is None: 
@@ -117,7 +120,6 @@ def explore(self, cmdl):
 def _explore_impl(self, args):
   """ Tries to open job-dictionary. """
   from os.path import abspath, isfile
-  from copy import deepcopy
   from ..jobs import load, JobDict
   from ..jobs import JobParams, MassExtract as Collect
   from lada import interactive
@@ -179,7 +181,6 @@ def _explore_impl(self, args):
 
 def completer(self, event): 
   """ Completer for explore. """ 
-  from IPython import TryNext
   from IPython.core.completer import expand_user, compress_user
   from os.path import isdir
   from glob import iglob
@@ -191,7 +192,6 @@ def completer(self, event):
   if "--file" in data: data.remove("--file"); has_file = True
   elif "--expression" in data: data.remove("--expression"); has_expr = True
   else: results = ["--file", "--expression"]
-  if "--add" not in data: results.append('--add')
   if "--concatenate" not in data: results.append('--concatenate')
   
   results.extend(["errors", "results", "all"])
