@@ -177,10 +177,9 @@ class JobDict(object):
   def update(self, other, merge=False):
     """ Updates job and tree with other.
     
-        :Parameters: 
-           other : `JobDict`
-             An other job tree from which to update.
-           merge : bool
+        :param other:
+             :py:class:`JobDict` dictionary from which to update.
+        :param bool merge:
              If false (default), then actual jobs in ``other`` completely
              overwrite actual jobs in ``self``. If False, then ``params`` in
              ``self`` is updated with ``params`` in ``other`` if either one is
@@ -189,7 +188,7 @@ class JobDict(object):
              ``functional`` in ``self`` is not replaced.
 
         Updates the dictionaries of job parameters and sub-jobs. Actual jobs in
-        ``other`` (eg with ``self.is_job=True``) will completely overwrite those in
+        ``other`` (eg with ``self.is_job==True``) will completely overwrite those in
         ``self``.  if items in ``other`` are found in ``self``, unless merge is
         set to true. This function is recurrent: subjobs are also updated.
     """

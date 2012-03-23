@@ -4,10 +4,11 @@ def test():
   from shutil import rmtree
   from os import makedirs
   from os.path import exists, join
+  from copy import deepcopy
   from lada.jobs import JobDict, JobParams
   from dummy import functional
 
-  sizes = [10, 15, 20, 25]
+  # create jodictionary to explore
   root = JobDict()
   for type, trial, size in [('this', 0, 10), ('this', 1, 15), ('that', 2, 20), ('that', 1, 20)]:
     job = root / type / str(trial)
@@ -15,6 +16,7 @@ def test():
     job.params['indiv'] = size
     if type == 'that': job.params['value'] = True
 
+  # checks that attributes are forwarded correctly
   jobparams = JobParams(root)
   assert len(jobparams.functional.values()) == 4
   for i, (name, value) in enumerate(jobparams.functional.iteritems()):
@@ -28,16 +30,19 @@ def test():
     else: raise RuntimeError()
   assert i == 3
 
+  # checks that attributes only a few posses are forwarded
   for i, (name, value) in enumerate(jobparams.value.iteritems()):
     if   name == '/that/1/': assert value == True
     elif name == '/that/2/': assert value == True
     else: raise RuntimeError()
   assert i == 1
   
+  # check that an AttributeError is raised on an unknown attribute
   try: jobparams.that
-  except: pass
+  except AttributeError: pass
   else: raise RuntimeError()
 
+  # check wildcard indexing.
   jobparams.unix_re = True
   def check_items(regex, keys, d):
     i = 0
@@ -48,11 +53,16 @@ def test():
   check_items('*/1', set(['/this/1/', '/that/1/']), jobparams)
   check_items('this', set(['/this/1/', '/this/0/']), jobparams)
   check_items('that/2/', set(['/that/2/']),jobparams)
-  job = root / 'this' /  '0' / 'another'
+  
+  # check adding an item
+  job = JobDict()
   job.functional = functional
   job.params['indiv'] = 25
   job.params['value'] = 5
   job.params['another'] = 6
+  jobparams['/this/0/another'] = job
+
+  # continue wildcard indexing.
   check_items('*/*/another', ['/this/0/another/'], jobparams)
   check_items('*/*/another/', ['/this/0/another/'], jobparams)
   check_items('*/another', [], jobparams)
@@ -61,6 +71,7 @@ def test():
   check_items('../*', ['/this/0/', '/this/1/', '/this/0/another/'], jobparams['this/0'])
   check_items('../*', ['/this/0/', '/this/1/', '/this/0/another/'], jobparams['this/*'])
 
+  # check regex indexing.
   jobparams.unix_re = False
   check_items('.*/1', set(['/this/1/', '/that/1/']), jobparams)
   check_items('this', set(['/this/1/', '/this/0/', '/this/0/another/']), jobparams)
@@ -76,6 +87,7 @@ def test():
             '/that/2/': 20, '/this/0/another/': 25}[key] == value
   assert i == 1
 
+  # check setting attributes.
   jobparams.indiv = 5
   for i, (key, value) in enumerate(jobparams.indiv.iteritems()): assert value == 5
   assert i == 4
@@ -83,6 +95,45 @@ def test():
   assert len(jobparams.indiv.values()) == 5
   for i, (key, value) in enumerate(jobparams.indiv.iteritems()): 
     assert value == (6 if '0' in key else 5)
+  assert i == 4
+
+  # resets attributes for later tests. 
+  for key in jobparams.keys():
+    jobparams[key].indiv = {'/this/0/': 10, '/this/1/': 15, '/that/1/': 20,\
+                            '/that/2/': 20, '/this/0/another/': 25}[key]
+  jobdict = deepcopy(jobparams.jobdict)
+
+  # check deleting.
+  del jobparams['/*/1']
+  assert '/this/1/' not in jobparams and '/that/1/' not in jobparams\
+         and '/that/2/' in jobparams and '/this/0/' in jobparams\
+         and '/this/0/another/' in jobparams
+
+  # check concatenate with jobdictionary.
+  jobparams.indiv = 2
+  jobparams.concatenate(jobdict)
+  for i, (name, value) in enumerate(jobparams.functional.iteritems()):
+    assert repr(value) == repr(functional)
+  assert i == 4
+  i = 0
+  for i, (key, value) in enumerate(jobparams.indiv.iteritems()):
+    assert {'/this/0/': 10, '/this/1/': 15, '/that/1/': 20,
+            '/that/2/': 20, '/this/0/another/': 25}[key] == value,\
+           Exception((key, value))
+  assert i == 4
+
+  # check concatenate with Jobparams and indexing.
+  del jobparams['/*/1']
+  jobparams.indiv = 2
+  jobparams.concatenate(JobParams(jobdict)['/*/1'])
+  for i, (name, value) in enumerate(jobparams.functional.iteritems()):
+    assert repr(value) == repr(functional)
+  assert i == 4
+  i = 0
+  for i, (key, value) in enumerate(jobparams.indiv.iteritems()):
+    assert {'/this/0/': 2, '/this/1/': 15, '/that/1/': 20,
+            '/that/2/': 2, '/this/0/another/': 2}[key] == value,\
+           Exception((key, value))
   assert i == 4
 
 if __name__ == "__main__":

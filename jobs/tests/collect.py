@@ -29,7 +29,7 @@ def test():
       assert {'this/0': 10, 'this/1': 15, 'that/1': 20, \
               'that/2': 20, 'this/0/another': 25 }[name] == result.indiv
     with open(join(directory, 'dict'), 'w') as file: dump(root, file)
-    collect = MassExtract(join(directory, 'dict'))
+    collect = MassExtract(path=join(directory, 'dict'))
 
     for i, (name, value) in enumerate(collect.functional.iteritems()):
       assert repr(value) == repr(functional)

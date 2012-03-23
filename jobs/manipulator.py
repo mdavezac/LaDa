@@ -218,3 +218,65 @@ class JobParams(AbstractMassExtract):
         print "Aborting."
         return
     self.jobdict[name] = deepcopy(jobdict)
+ 
+  def __delitem__(self, name):
+    """ Deletes items from jobdictionary. """
+    from lada import is_interactive
+    if is_interactive:
+      print "Deleting the following jobs:"
+      for key in self[name].keys(): print key
+      a = ''
+      while a != 'n' and a != 'y':
+        a = raw_input('Ok? [y/n] ')
+      if a == 'n':
+        print "Aborting."
+        return
+    for key in self[name].keys(): del self.jobdict.root[key]
+
+  def concatenate(self, jobdict):
+    """ Updates content of current jobdictionary with that of another.
+
+        :param jobdict:
+          :py:class:`JobDict` instance, or :py:class:`JobParams` instance with
+          which to update the current job-dictionary.
+        
+        Update means that jobs and jobparameters will be overwritten with those
+        from the input. Jobs in the input which are not in the current
+        job-dictionary will be overwritten. If `jobdict` is a
+        :py:class:`JobDict` instance, it is possible to use wildcards in order
+        to select those jobs of interests.
+
+        .. warning: New jobs are always added at the root of the job-dictionary.
+          Make sure the jobs bear the names you want.
+    """
+    from .jobdict import JobDict
+    from lada import is_interactive
+    keys = jobdict.keys()
+    if is_interactive:
+      if len(keys) == 0: 
+        print "Empty input jobdictionary. Aborting."
+        return
+      add = [k for k in keys if k in self]
+      if len(add) > 0:
+        print "Adding the following jobdictionaries:"
+        for key in add: print key
+      update = [k for k in keys if k in self]
+      if len(update) > 0:
+        print "Updating the following jobdictionaries:"
+        for key in update: print key
+      a = ''
+      while a != 'n' and a != 'y':
+        a = raw_input("Is the above OK? [n/y] ")
+      if a == 'n':
+        print "Aborting."
+        return
+    rootadd = jobdict
+    if isinstance(rootadd, JobParams):
+      rootadd = JobDict()
+      for key in keys:
+        job = rootadd / key 
+        rootadd[key] = jobdict.jobdict[key]
+    
+    self.jobdict.root.update(rootadd)
+
+

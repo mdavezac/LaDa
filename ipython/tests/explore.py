@@ -47,6 +47,8 @@ def test():
     assert jobdict is self.user_ns['jobparams'].jobdict
 
     self.magic("savejobs {0}/dict".format(directory))
+    lada.interactive.jobdict = None
+    lada.interactive.jobdict_path = None
     self.magic("explore {0}/dict".format(directory))
     jobdict = lada.interactive.jobdict
     assert 'this/0' in jobdict and 'this/1' in jobdict and 'that/2' in jobdict and 'that/1'
@@ -72,9 +74,10 @@ def test():
       if name == 'this/1': continue
       job.compute(outdir=join(directory, name))
 
-    self.magic("explore {0}/dict".format(directory))
-    print set(self.user_ns['collect'].iterkeys())
-    assert set(['this/0', 'that/1', 'that/2']) == set(self.user_ns['collect'].iterkeys())
+    self.magic("explore results".format(directory))
+    assert set(['/this/0/', '/that/1/', '/that/2/']) == set(self.user_ns['collect'].iterkeys())
+    self.magic("explore errors".format(directory))
+    assert set(['/this/1/']) == set(self.user_ns['collect'].iterkeys())
     
   finally: 
     if directory != '/tmp/test': rmtree(directory)

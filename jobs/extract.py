@@ -61,7 +61,11 @@ class AbstractMassExtract(object):
     """ Root of the directory-tree to trawl for OUTCARs. """
     return self._rootpath.path if self._rootpath is not None else None
   @rootpath.setter
-  def rootpath(self, value): self._rootpath.path = value
+  def rootpath(self, value):
+    from ..misc import RelativePath
+    if self._rootpath is None:
+      self._rootpath = RelativePath(path=value, hook=self.uncache)
+    else: self._rootpath.path = value
 
   def uncache(self): 
     """ Uncache values. """

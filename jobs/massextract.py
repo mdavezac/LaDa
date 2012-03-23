@@ -62,6 +62,7 @@ class MassExtract(AbstractMassExtract):
         print "No current path to job-dictionary."
         return
       return interactive.jobdict_path
+    return super(MassExtract, self).rootpath
     
 
   def __iter_alljobs__(self):

@@ -61,6 +61,9 @@ class LockFile(object):
             raise RuntimeError("Could not acquire lock on file {0}.".format(self.filename))
         time.sleep(self.sleep)
 
+  def __del__(self):
+    """ Deletes hold on object. """
+    if self.owns_lock: self.release()
   def __enter__(self):
     """ Enters context. """
     self.lock()

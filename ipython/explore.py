@@ -41,15 +41,15 @@ def explore(self, cmdl):
                       help='JOBDICT is a path to a job-dictionary stored on disk.' )
   group.add_argument( '--expression', action="store_true", dest="is_expression",
                       help='JOBDICT is a python expression.' )
-  group.add_argument( '--concatenate', action="store_true", dest="concatenate",
-                      help='Update/overwrites current jobdictionary with newly explored one.' )
   parser.add_argument( 'type', metavar='TYPE', type=str, default="", nargs='?',
                        help="Optional. Specifies what kind of jobs will be explored. "\
                             "Can be one of results, errors, all, running. "\
                             "\"results\" are those jobs which have completed. "\
                             "\"errors\" are those jobs which are not \"running\" "\
                             "at the time of invokation and failed somehow. \"all\" means all jobs. "\
-                            "By default, the dictionary is read as it was saved. ")
+                            "By default, the dictionary is read as it was "\
+                            "saved. The modified jobdictionary is not saved to "\
+                            "disk.")
   parser.add_argument( 'jobdict', metavar='JOBDICT', type=str, default="", nargs='?',
                        help='Job-dictionary variable or path to job dictionary saved to disk.')
 
@@ -144,11 +144,21 @@ def _explore_impl(self, args):
   interactive.__dict__.pop("_lada_subjob_iterator", None)
   interactive.__dict__.pop("_lada_subjob_iterated", None)
 
+  if args.is_file == False and args.is_expression == False \
+     and isfile(RelativePath(args.jobdict).path) \
+     and isinstance(self.user_ns.get(args.jobdict, None), JobDict):
+    print "The file {0} and the variable {1} both exist.\n"\
+          "Please specify --file or --expression.\n"\
+          .format(RelativePath(args.jobdict).path, args.jobdict)
+    return
   jobdict, new_path = None, None
   if args.is_file or not args.is_expression and isfile(RelativePath(args.jobdict).path):
-    try: jobdict = load(args.jobdict, timeout=60)
-    except:
-      print "Could not access locked file {0}.".format(args.jobdict)
+    try: jobdict = load(args.jobdict, timeout=6)
+    except ImportError as e:
+      print "ImportError: ", e
+      return
+    except Exception as e:
+      print e
       if LockFile(args.jobdict).is_locked:
         print "You may want to check for the existence of {0}."\
               .format(LockFile(args.jobdict).lock_directory)
@@ -166,14 +176,6 @@ def _explore_impl(self, args):
     print "Could not convert \"{0}\" to a job-dictionary.".format(args.jobdict) 
     return
     
-  if args.concatenate: 
-    if interactive.jobdict is None:
-      print "No current jobdictionary with which to concatenate."
-      return 
-    interactive.jobdict.update(jobdict)
-    jobdict = interactive.jobdict
-    if new_path is None: new_path = interactive.jobdict_path
-
   interactive.jobdict = jobdict
   self.user_ns["jobparams"] = JobParams()
   interactive.jobdict_path = new_path
@@ -192,7 +194,6 @@ def completer(self, event):
   if "--file" in data: data.remove("--file"); has_file = True
   elif "--expression" in data: data.remove("--expression"); has_expr = True
   else: results = ["--file", "--expression"]
-  if "--concatenate" not in data: results.append('--concatenate')
   
   results.extend(["errors", "results", "all"])
   if len(data) == 0: data = [''] 

@@ -42,12 +42,12 @@ def save(jobdict, path=None, overwrite=False, timeout=None):
   from ..misc import open_exclusive, RelativePath
   from .. import is_interactive
   if path is None: path = "pickled_jobdict"
-  path = "pickled_jobdict" if path is None else RelativePath(path).path
+  path = "job.dict" if path is None else RelativePath(path).path
   if exists(path) and not overwrite: 
     if is_interactive:
       print path, "exists. Please delete first if you want to save the job dictionary."
       return
-    else: raise RuntimeError('{0} already exists. By default, will not overwrite.'.format(path))
+    else: raise IOError('{0} already exists. By default, will not overwrite.'.format(path))
   with open_exclusive(path, "wb", timeout=None) as file: dump(jobdict, file)
   if is_interactive: print "Saved job dictionary to {0}.".format(path)
 
@@ -67,8 +67,8 @@ def load(path = None, timeout=None):
   from pickle import load as load_pickle
   from ..misc import open_exclusive, RelativePath
   from .. import is_interactive
-  path = "pickled_jobdict" if path is None else RelativePath(path).path
-  assert exists(path), IOError("File " + path + " does not exist.")
+  path = "job.dict" if path is None else RelativePath(path).path
+  if not exists(path): raise IOError("File " + path + " does not exist.")
   with open_exclusive(path, "rb", timeout=timeout) as file: result = load_pickle(file)
   if is_interactive: print "Loaded job list from", path, "."
   return result
