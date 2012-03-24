@@ -17,4 +17,4 @@ def listjobs(self, arg):
       string += name[len(interactive.jobdict.name):] + '  '
     else: string += name + '  '
     if (i+1) % 6 == 0: string += '\n'
-  print string
+  print string if i != 0 else "No subjobs."

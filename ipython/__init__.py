@@ -13,6 +13,7 @@ def load_ipython_extension(ip):
     from .explore import explore, completer as explore_completer
     from .goto import goto, completer as goto_completer
     from .listjobs import listjobs
+    from .showme import showme, completer as showme_completer
     import lada
     __lada_is_loaded__ = True
     lada.interactive = ModuleType('interactive')
@@ -23,8 +24,10 @@ def load_ipython_extension(ip):
     ip.define_magic('explore', explore)
     ip.define_magic('goto', goto)
     ip.define_magic('listjobs', listjobs)
+    ip.define_magic('showme', showme)
     ip.set_hook('complete_command', explore_completer, str_key = '%explore')
     ip.set_hook('complete_command', goto_completer, str_key = '%goto')
+    ip.set_hook('complete_command', showme_completer, str_key = '%showme')
 
 def unload_ipython_extension(ip):
   """ Unloads LaDa IPython extension. """
