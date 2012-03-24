@@ -21,7 +21,7 @@ def test():
     job.params['indiv'] = size
     if type == 'that': job.params['value'] = True
 
-  directory =   '/tmp/test' # mkdtemp() #
+  directory =  mkdtemp() # '/tmp/test' #
   if exists(directory) and directory == '/tmp/test': rmtree(directory)
   if not exists(directory): makedirs(directory)
   try: 

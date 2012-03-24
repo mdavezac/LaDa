@@ -1,0 +1,79 @@
+def raw_input(*args): return 'y'
+
+def test():
+  from tempfile import mkdtemp
+  from shutil import rmtree
+  from os import makedirs, getcwd
+  from os.path import exists, join
+  from IPython.core.interactiveshell import InteractiveShell
+  from lada.jobs import JobDict
+  from lada import interactive
+  from dummy import functional
+  import __builtin__ 
+  __builtin__.raw_input = raw_input
+
+  self = InteractiveShell.instance()
+
+  root = JobDict()
+  for type, trial, size in [('this', 0, 10), ('this', 1, 15), ('that', 2, 20), ('that', 1, 20)]:
+    job = root / type / str(trial)
+    job.functional = functional
+    job.params['indiv'] = size
+    if type == 'that': job.params['value'] = True
+
+  directory =   '/tmp/test' # mkdtemp() #
+  if exists(directory) and directory == '/tmp/test': rmtree(directory)
+  if not exists(directory): makedirs(directory)
+  try: 
+    self.user_ns['jobdict'] = root
+    self.magic("explore jobdict")
+    self.magic("savejobs {0}/dict".format(directory))
+    for name, job in root.iteritems():
+      result = job.compute(outdir=join(directory, name))
+      assert result.success
+      assert {'this/0': 10, 'this/1': 15, 'that/1': 20, \
+              'that/2': 20, 'this/0/another': 25 }[name] == result.indiv
+
+    self.magic("explore {0}/dict".format(directory))
+    self.magic("goto this/0")
+    assert getcwd() == '{0}/this/0'.format(directory)
+    assert interactive.jobdict.name == '/this/0/'
+    self.magic("goto ../1")
+    assert getcwd() == '{0}/this/1'.format(directory)
+    assert interactive.jobdict.name == '/this/1/'
+    self.magic("goto /that")
+    assert getcwd() == '{0}/that'.format(directory)
+    assert interactive.jobdict.name == '/that/'
+    self.magic("goto 2")
+    assert getcwd() == '{0}/that/2'.format(directory)
+    assert interactive.jobdict.name == '/that/2/'
+    self.magic("goto /")
+    self.magic("goto next")
+    assert getcwd() == '{0}/that/1'.format(directory)
+    assert interactive.jobdict.name == '/that/1/'
+    self.magic("goto next")
+    assert getcwd() == '{0}/that/2'.format(directory)
+    assert interactive.jobdict.name == '/that/2/'
+    self.magic("goto previous")
+    assert getcwd() == '{0}/that/1'.format(directory)
+    assert interactive.jobdict.name == '/that/1/'
+    self.magic("goto next")
+    assert getcwd() == '{0}/this/0'.format(directory)
+    assert interactive.jobdict.name == '/this/0/'
+    self.magic("goto next")
+    assert getcwd() == '{0}/this/1'.format(directory)
+    assert interactive.jobdict.name == '/this/1/'
+    self.magic("goto next") # no further jobs
+    assert getcwd() == '{0}/this/1'.format(directory)
+    assert interactive.jobdict.name == '/this/1/'
+    
+  finally: 
+    if directory != '/tmp/test': rmtree(directory)
+    pass
+  
+
+
+if __name__ == "__main__":
+  from sys import argv, path 
+  if len(argv) > 1: path.extend(argv[1:])
+  test()
