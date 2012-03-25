@@ -27,8 +27,8 @@ def launch(self, event):
   """ 
   import argparse
   from ...jobs import load as load_jobs
-  from .. import _get_current_job_params
-  from .scattered import parser as scattered_parser
+  from ... import interactive, default_comm
+# from .scattered import parser as scattered_parser
   from .interactive import parser as interactive_parser
 
   # main parser
@@ -38,39 +38,54 @@ def launch(self, event):
   opalls.add_argument( 'pickle', metavar='FILE', type=str, nargs='*', default="", 
                        help='Optional path to a jobdictionary. If not present, the '\
                             'currently loaded job-dictionary will be launched.')
-  opalls.add_argument( '--external', action="store_true", dest="external", \
-                       help="Launches jobs as external program, not library." )
-
+  opalls.add_argument( '--nbprocs', type=int, default=default_comm.get('n', 1),
+                       nargs='?', help="Number of processes over which to launch calculations." )
+  opalls.add_argument( '--force', action="store_true", dest="force", \
+                       help="Launches all untagged jobs, even those "\
+                            "which completed successfully." )
 
   # subparsers
   subparsers = parser.add_subparsers(help='Launches one job per untagged calculations')
 
   # launch scattered.
-  scattered_parser(self, subparsers, opalls) 
+# scattered_parser(self, subparsers, opalls) 
   interactive_parser(self, subparsers, opalls) 
 
   # parse arguments
   try: args = parser.parse_args(event.split())
   except SystemExit as e: return None
+  
+  comm = default_comm.copy()
+  comm['n'] = args.nbprocs
 
   # creates list of dictionaries.
-  pickles = set(args.pickle) - set([""])
-  if len(pickles) > 0: 
-    jobdicts = []
-    for p in pickles:
-      try: d = load_jobs(path=p)
-      except Exception as e: 
-        print "JobDict could not be loaded form {0}.\n{e}\n".format(p,e=e)
+  jobdicts = []
+  if args.pickle != '':
+    for pickle in args.pickle:
+      try: d = load_jobs(path=pickle, timeout=20)
+      except ImportError as e:
+        print "ImportError: ", e
         return
-      jobdicts.append((d, p))
+      except Exception as e:
+        print e
+        if LockFile(pickle).is_locked:
+          print "You may want to check for the existence of {0}."\
+                .format(LockFile(pickle).lock_directory)
+          print "If you are sure there are no jobs out there accessing {0},\n"\
+                "you may want to delete that directory.".format(args.pickle)
+          return
+      else: jobdicts.append((d, pickle))
   else: # current job dictionary.
-    current, path = _get_current_job_params(self, 2)
-    if current is None: return
-    if path is None: return
-    jobdicts = [(current, path)]
+    if interactive.jobdict is None:
+      print "No current job-dictionary."
+      return
+    if interactive.jobdict_path is None:
+      print "No path for currrent job-dictionary."
+      return
+    jobdicts = [(interactive.jobdict, interactive.jobdict_path)]
   
   # calls specialized function.
-  args.func(self, args, jobdicts)
+  args.func(self, args, jobdicts, comm)
 
 
 
@@ -78,12 +93,11 @@ def completer(self, info):
   """ Completion for launchers. """
   from .scattered import completer as scattered_completer
   from .interactive import completer as interactive_completer
-  from IPython.ipapi import TryNext
+  from IPython import TryNext
+  from .. import jobdict_file_completer
 
-  data = info.line.split()
-  types = ["scattered", "interactive"]
-  if len(data)  <= 2 and data[-1] not in types: return types 
-  if data[1] == "scattered": return scattered_completer(self, info, data)
-  if data[1] == "interactive": return interactive_completer(self, info, data)
-  raise TryNext
+  data = info.line.split()[1:]
+  if "scattered" in data: return scattered_completer(self, info, data)
+  elif "interactive" in data: return interactive_completer(self, info, data)
+  return ["scattered", "interactive"]
          

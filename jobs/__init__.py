@@ -70,5 +70,5 @@ def load(path = None, timeout=None):
   path = "job.dict" if path is None else RelativePath(path).path
   if not exists(path): raise IOError("File " + path + " does not exist.")
   with open_exclusive(path, "rb", timeout=timeout) as file: result = load_pickle(file)
-  if is_interactive: print "Loaded job list from", path, "."
+  if is_interactive: print "Loaded job list from {0}.".format(path)
   return result

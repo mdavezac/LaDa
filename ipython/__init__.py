@@ -14,6 +14,7 @@ def load_ipython_extension(ip):
     from .goto import goto, completer as goto_completer
     from .listjobs import listjobs
     from .showme import showme, completer as showme_completer
+    from .launch import launch, completer as launch_completer
     import lada
     __lada_is_loaded__ = True
     lada.interactive = ModuleType('interactive')
@@ -25,14 +26,32 @@ def load_ipython_extension(ip):
     ip.define_magic('goto', goto)
     ip.define_magic('listjobs', listjobs)
     ip.define_magic('showme', showme)
+    ip.define_magic('launch', launch)
     ip.set_hook('complete_command', explore_completer, str_key = '%explore')
     ip.set_hook('complete_command', goto_completer, str_key = '%goto')
     ip.set_hook('complete_command', showme_completer, str_key = '%showme')
+    ip.set_hook('complete_command', launch_completer, str_key = '%launch')
 
 def unload_ipython_extension(ip):
   """ Unloads LaDa IPython extension. """
   ip.user_ns.pop('collect', None)
   ip.user_ns.pop('jobparams', None)
+
+def jobdict_file_completer(self, data):
+  """ Returns list of potential jobdictionary and directories. """
+  from os.path import isdir
+  from glob import iglob
+  from IPython.core.completer import expand_user, compress_user
+  from .. import jobdict_glob
+  if len(data) == 0: data = ['']
+  relpath, tilde_expand, tilde_val = expand_user(data[-1])
+  dirs = [f.replace('\\','/') + "/" for f in iglob(relpath+'*') if isdir(f)]
+  dicts = [ f.replace('\\','/') for u in jobdict_glob for f in iglob(relpath+u)]
+  if '.' in data[-1]:
+    relpath, a, b = expand_user(data[-1][:data[-1].find('.')])
+    dicts.extend([ f.replace('\\','/') for u in jobdict_glob for f in iglob(relpath+u)])
+  dummy = [compress_user(p, tilde_expand, tilde_val) for p in dirs+dicts]
+  return [d for d in dummy if d not in data]
 
 # def cancel_completer(self, info):
 #   return qstat(self, info.symbol).fields(-1)[1:]

@@ -6,20 +6,15 @@
 """ 
 __docformat__ = "restructuredtext en"
 
-def launch(self, event, jobdicts):
+def launch(self, event, jobdicts, comm):
   """ Launch jobs interactively.
 
       This call will block until each job is finished in turn.
   """
   from os.path import join, dirname
-  from ...mpi import world
   
-  ip = self.api
-  ip.user_ns.pop("_lada_error", None)
-
   kwargs = dict(event.kwargs) if event.kwargs is not None else dict()
-  kwargs['comm'] = world
-  kwargs["external"] = event.external
+  kwargs['comm'] = comm
 
   for current, path in jobdicts:
     # start computations.
@@ -37,14 +32,17 @@ def launch(self, event, jobdicts):
       job.compute(**kwargs)
 
 
-def completer(self, info, data):
+def completer(self, event, data):
   """ Completer for scattered launcher. """
-  from .._explore import _glob_job_pickles
-  if    (len(info.symbol) == 0 and data[-1] == "--kwargs") \
-     or (len(info.symbol) > 0  and data[-2] == "--kwargs"):
+  from .. import jobdict_file_completer
+  if    (len(event.symbol) == 0 and data[-1] == "--kwargs") \
+     or (len(event.symbol) > 0  and data[-1] == "--kwargs"):
     return [u for u in self.api.user_ns if u[0] != '_' and isinstance(self.api.user_ns[u], dict)]
-  result = ['--force', '--kwargs', '--help']
-  result.extend( _glob_job_pickles(self.api, info.symbol) )
+  if    (len(event.symbol) == 0 and data[-1] == "--nbprocs") \
+     or (len(event.symbol) > 0  and data[-1] == "--nbprocs"):
+    return ['']
+  result = ['--force', '--kwargs', '--help', '--nbprocs']
+  result.extend(jobdict_file_completer(self, [event.symbol]))
   result = list(set(result) - set(data))
   return result
 
@@ -60,8 +58,5 @@ def parser(self, subparsers, opalls):
                        help="Dictionary which contains arguments for the functionals. "\
                             "\"outdir\" and \"comm\" are added automatically. "\
                             "The functional must accept these arguments." )
-  result.add_argument( '--force', action="store_true", dest="force", \
-                       help="Launches all untagged jobs, even those "\
-                            "which completed successfully." )
   result.set_defaults(func=launch)
   return result

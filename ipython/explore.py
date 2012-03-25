@@ -183,11 +183,8 @@ def _explore_impl(self, args):
 
 def completer(self, event): 
   """ Completer for explore. """ 
-  from IPython.core.completer import expand_user, compress_user
-  from os.path import isdir
-  from glob import iglob
   from ..jobs import JobDict
-  from .. import jobdict_glob
+  from . import jobdict_file_completer
   
   data = event.line.split()[1:]
   results, has_file, has_expr = [], False, False
@@ -201,13 +198,5 @@ def completer(self, event):
   if not has_file:
     results.extend( name for name, u in self.user_ns.iteritems()\
                     if isinstance(u, JobDict) and name[0] != '_' and name not in data)
-  if not has_expr:
-    relpath, tilde_expand, tilde_val = expand_user(data[-1])
-    dirs = [f.replace('\\','/') + "/" for f in iglob(relpath+'*') if isdir(f)]
-    dicts = [ f.replace('\\','/') for u in jobdict_glob for f in iglob(relpath+u)]
-    if '.' in data[-1]:
-      relpath, a, b = expand_user(data[-1][:data[-1].find('.')])
-      dicts.extend([ f.replace('\\','/') for u in jobdict_glob for f in iglob(relpath+u)])
-    dummy = [compress_user(p, tilde_expand, tilde_val) for p in dirs+dicts]
-    results.extend(d for d in dummy if d not in data)
+  if not has_expr: results.extend( jobdict_file_completer(self, data))
   return list(results)
