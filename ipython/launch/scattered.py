@@ -10,15 +10,20 @@ __docformat__ = "restructuredtext en"
 def launch(self, event, jobdicts):
   """ Launch scattered jobs: one job = one pbs script. """
   import re
-  from os.path import split as splitpath, join, abspath, dirname
-  from ...opt.changedir import Changedir
+  from copy import deepcopy
+  from os.path import split as splitpath, join, dirname
+  from ...misc import Changedir
   from ...jobs import __file__ as jobs_filename
-  from ... import template_pbs, debug_queue, qsub_exe
-  ip = self.api
-  ip.user_ns.pop("_lada_error", None)
+  from ... import pbs_string, default_pbs, debug_queue, qsub_exe, default_comm
 
+  comm = deepcopy(default_comm)
+  comm['n'] = event.nbprocs
+  comm["ppn"] = event.ppn
+  
+  pbsargs = deepcopy(default_pbs)
+  pbsargs['comm'] = comm
   # creates mppalloc function.
-  try: mppalloc = ip.ev(event.nbprocs)
+  try: mppalloc = self.ev(event.nbprocs)
   except Exception as e: 
     print "Could not make sense of --nbprocs argument {0}.\n{1}".format(event.nbprocs, e)
     return
@@ -45,14 +50,12 @@ def launch(self, event, jobdicts):
     return
 
   # gets queue (aka partition in slurm), if any.
-  kwargs = { "ppernode": event.ppn,
-             "memlim": event.memlim,
-             "external": event.external } 
-  if event.__dict__.get("queue", None) is not None: kwargs["queue"] = getattr(event, "queue")
-  if event.__dict__.get("account", None) is not None: kwargs["account"] = getattr(event, "account")
+  pbsargs.update(comm)
+  if event.__dict__.get("queue", None) is not None: pbsargs["queue"] = event.queue
+  if event.__dict__.get("account", None) is not None: pbsargs["account"] = event.account
   if event.debug:
     assert debug_queue is not None, RuntimeError("debug_queue global variable has not been set.")
-    kwargs[debug_queue[0]] = debug_queue[1]
+    pbsargs[debug_queue[0]] = debug_queue[1]
 
   # gets python script to launch in pbs.
   pyscript = jobs_filename.replace(splitpath(jobs_filename)[1], "runone.py")
@@ -71,88 +74,83 @@ def launch(self, event, jobdicts):
         if extract.success:
           print "Job {0} completed successfully. It will not be relaunched.".format(name)
           continue
-      mppwidth = mppalloc(job) if hasattr(mppalloc, "__call__") else mppalloc
-      if len(name) == 0: name = "{0}-root".format(splitpath(path)[1])
-      name = name.replace("/", ".")
-      pbsscripts.append(join(path+".pbs", name + ".pbs"))
-      if getattr(event, "prefix", None): name = "{0}-{1}".format(event.prefix, name)
-      with open(pbsscripts[-1], "w") as file: 
-        template_pbs( file, outdir=abspath(splitpath(path)[0]), jobid=i, mppwidth=mppwidth, name=name,\
-                      pickle=splitpath(path)[1], pyscript=pyscript, ppath=".", walltime=walltime,\
-                      **kwargs )
-    print "Created scattered jobs in {0}.pbs.".format(path)
+      pbsargs['n'] = mppalloc(job) if hasattr(mppalloc, "__call__") else mppalloc
+      pbsargs['nnodes'] = (pbsargs['n'] + pbsargs['ppn'] - 1) // pbsargs['n']
+      if len(name) == 0: pbsargs['name'] = "{0}-root".format(splitpath(path)[1])
+      pbsargs['name'] = name.replace("/", ".")
+      pbsscripts.append(join(path+".pbs", pbsargs['name'] + ".pbs"))
+      if getattr(event, "prefix", None): pbsargs['name'] = "{0}-{1}".format(event.prefix, name)
+      pbsargs['err'] = join("{0}.pbs".format(path), "err.{0}.pbs".format(pbsargs['name']))
+      pbsargs['out'] = join("{0}.pbs".format(path), "out.{0}.pbs".format(pbsargs['name']))
+      pbsargs['directory'] = dirname(path)
+      pbsargs['scriptcommand'] = "{0} --nbprocs {n} --ppn {ppn} --jobid={1} {2}"\
+                                 .format(pyscript, i, path, **pbsargs)
+      with open(pbsscripts[-1], "w") as file: file.write(pbs_string.format(**pbsargs))
+    print "Created {0} scattered jobs in {1}.pbs.".format(i, path)
 
   if event.nolaunch: return
   # otherwise, launch.
   for script in pbsscripts:
-    ip.system("{0} {1}".format(qsub_exe, script))
+    self.system("{0} {1}".format(qsub_exe, script))
 
 
 def completer(self, info, data):
   """ Completer for scattered launcher. """
   from ... import queues, accounts, debug_queue
-  from .._explore import _glob_job_pickles
-  ip = self.api
-  if    (len(info.symbol) == 0 and data[-1] == "--walltime") \
-     or (len(info.symbol) > 0  and data[-2] == "--walltime"):
-    return [u for u in ip.user_ns if u[0] != '_' and isinstance(ip.user_ns[u], str)]
-  if    (len(info.symbol) == 0 and data[-1] == "--nbprocs") \
-     or (len(info.symbol) > 0  and data[-2] == "--nbprocs"):
-    result = [u for u in ip.user_ns if u[0] != '_' and isinstance(ip.user_ns[u], int)]
-    result.extend([u for u in ip.user_ns if u[0] != '_' and hasattr(u, "__call__")])
-    return result
-  if    (len(info.symbol) == 0 and data[-1] == "--prefix") \
-     or (len(info.symbol) > 0  and data[-2] == "--prefix"):
-    return []
-  if    (len(info.symbol) == 0 and data[-1] == "--queue") \
-     or (len(info.symbol) > 0  and data[-2] == "--queue"):
-    return queues
-  if    (len(info.symbol) == 0 and data[-1] == "--account") \
-     or (len(info.symbol) > 0  and data[-2] == "--account"):
-    return accounts
-  result = ['--force', '--walltime', '--nbprocs', '--help', '--external']
+  from .. import jobdict_file_completer
+  from ... import accounts, queues
+  if len(data) > 0: 
+    if data[-1] == "--walltime":
+      return [u for u in self.user_ns if u[0] != '_' and isinstance(self.user_ns[u], str)]
+    elif data[-1] == "--nbprocs": 
+      result = [u for u in self.user_ns if u[0] != '_' and isinstance(self.user_ns[u], int)]
+      result.extend([u for u in self.user_ns if u[0] != '_' and hasattr(u, "__call__")])
+      return result
+    elif data[-1] == '--ppn': return ['']
+    elif data[-1] == "--prefix": return ['']
+    elif data[-1] == "--queue": return queues
+    elif data[-1] == "--account": return accounts
+  result = ['--force', '--walltime', '--nbprocs', '--help']
   if len(queues) > 0: result.append("--queue") 
   if len(accounts) > 0: result.append("--account") 
   if debug_queue is not None: result.append("--debug")
-  result.extend( _glob_job_pickles(ip, info.symbol) )
+  result.extend(jobdict_file_completer(self, [info.symbol]))
   result = list(set(result) - set(data))
   return result
 
 def parser(self, subparsers, opalls):
   """ Adds subparser for scattered. """ 
-  from ... import queues, accounts, debug_queue, default_walltime
-  from ... import cpus_per_node
+  from ... import queues, accounts, debug_queue, default_pbs, default_comm, qsub_exe
   result = subparsers.add_parser( 'scattered', 
                                   description="A separate PBS/slurm script is created for each "\
                                               "and every calculation in the jobdictionary "\
-                                              "(or dictioanaries).",
+                                              "(or dictionaries).",
                                   parents=[opalls])
-  result.add_argument('--walltime', type=str, default=default_walltime, \
+  result.add_argument('--walltime', type=str, default=default_pbs['walltime'], \
                          help='walltime for jobs. Should be in hh:mm:ss format. '\
-                              'Defaults to ' + default_walltime + '.')
+                              'Defaults to ' + default_pbs['walltime'] + '.')
+  result.add_argument('--prefix', action="store", type=str, help="Adds prefix to job name.")
+  result.add_argument( '--nolaunch', action="store_true", dest="nolaunch",
+                       help='Does everything except calling {0}.'.format(qsub_exe) )
   result.add_argument( '--nbprocs', type=str, default="None", dest="nbprocs",
                        help="Can be an integer, in which case it specifies "\
-                            " the number of processes to exectute jobs with. "\
+                            "the number of processes to exectute jobs with. "\
                             "Can also be a callable taking a JobDict as " \
                             "argument and returning a integer. Will default "\
-                            "to as many procs as there are atoms in that particular structure.")
-  result.add_argument('--prefix', action="store", type=str, help="Adds prefix to job name.")
-  result.add_argument('--nolaunch', action="store_true", dest="nolaunch")
-  result.add_argument('--force', action="store_true", dest="force", \
-                      help="Launches all untagged jobs, even those which completed successfully.")
-  result.add_argument( '--memlim', dest="memlim", default="guess",
-                       help="Memory limit per process imposed by ulimit. "\
-                            "\"guess\" lets lada make an uneducated guess. ")
-  result.add_argument( '--ppn', dest="ppn", default= cpus_per_node, type=int,
-                       help="Number of processes per node.")
+                            "to as many procs as there are atoms in that particular structure. "\
+                            "Defaults to something close to the number of atoms in "
+                            "the structure (eg good for VASP). ")
+  result.add_argument( '--ppn', dest="ppn", default=default_comm.get('ppn', 1), type=int,
+                       help="Number of processes per node. Defaults to {0}."\
+                            .format(default_comm.get('ppn', 1)))
   if len(accounts) != 0:
     result.add_argument( '--account', dest="account", choices=accounts, default=accounts[0],
-                         help="Account on which to launch job. Defaults to system default." )
+                         help="Account on which to launch job. Defaults to {0}.".format(accounts[0]) )
   else: result.add_argument('--account', dest="account", type=str,
                             help="Launches jobs on specific account if present.")
   if len(queues) != 0: 
     result.add_argument( '--queue', dest="queue", choices=queues, default=queues[0],
-                         help="Queue on which to launch job. Defaults to system default." )
+                         help="Queue on which to launch job. Defaults to {0}.".format(queues[0]) )
   else: result.add_argument('--queue', dest="queue", type=str,
                             help="Launches jobs on specific queue if present.")
   if debug_queue is not None:
