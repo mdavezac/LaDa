@@ -379,9 +379,17 @@ class Extract(object):
   @broadcast_result(attr=True, which=0)
   def stoichiometry(self):
     """ Stoichiometry of the compound. """
+    from numpy import array
     result = self._find_first_OUTCAR(r"""\s*ions\s+per\s+type\s*=.*$""")
     if result is None: return None
-    return [int(u) for u in result.group(0).split()[4:]]
+    return array([int(u) for u in result.group(0).split()[4:]])
+
+  @property
+  def concentrations(self):
+    """ Returns concentrations. """
+    from numpy import sum
+    return self.stoichiometry.cast(dtype="float64") / float(sum(self.stoichiometry))
+
   @property
   def ions_per_specie(self): 
     """ Alias for stoichiometry. """

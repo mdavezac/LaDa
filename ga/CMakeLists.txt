@@ -1,4 +1,5 @@
-set(PYGA_PY stepped.py darwin.py random_search.py  standard.py bitstring.py functional.py extract.py history.py)
+set(PYGA_PY stepped.py darwin.py random_search.py  standard.py bitstring.py functional.py
+            extract.py history.py xgsgo.py )
 
 set(which_gapackages "'bitstring', 'standard', 'darwin', 'random_search'")
 

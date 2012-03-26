@@ -151,6 +151,14 @@ class StepGA(object):
     """
     pass
 
+  def update_fitness(self, population=None):
+    """ Updates fitness of whole population. 
+    
+        This is used to update the fitness of the whole population when it
+        changes depending on history, e.g. for X-GSGO.
+    """
+    return 
+
   def __init__(self, directory=None):
     """" Initializes StepGA. """
     from os.path import exists
@@ -337,6 +345,7 @@ class StepGA(object):
     """ Goes to next GA iteration. """
     from operator import attrgetter, itemgetter
     from shelve import open as shelve_open
+    from itertools import chain
     from IPython.ipapi import get as get_ipy
     # sanity check
     if remove > 0 and remove > len(self.population):
@@ -387,6 +396,10 @@ class StepGA(object):
       print 'No successful jobs and no new jobs found. Aborting.'
       return
 
+    # update fitness of whole population, in case it depends upon whole population.
+    self.update_fitness(chain((self.offspring[i] for i in successfuls.itervalues()), self.population))
+  
+
     # Now reduces population by requested amount if any.
     if len(successfuls) != 0:
       offspring = list(self.offspring)
@@ -416,7 +429,8 @@ class StepGA(object):
                        "Is this OK? [y/n] "\
                        .format(len(removed), len(successfuls), len(population), len(offspring)))
       if a == 'n': print "Aborted."; return
-  
+
+
       # updates population.
       self.population = population
       self.offspring  = offspring
