@@ -293,7 +293,7 @@ def cut_and_splice(s1, s2, roll=True):
       lower parts.
   """
   from random import choice, random
-  from numpy import dot
+  from numpy import dot, abs
   from numpy.linalg import det
   from lada.crystal import Structure
 
