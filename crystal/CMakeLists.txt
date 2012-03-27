@@ -13,7 +13,7 @@ set(LIBCRYSTAL_SOURCES atom/pybase.cc
                        utilities.cc primitive.cc equivalent_structures.cc
                        space_group.cc periodic_dnc.cc map_sites.cc
                        neighbors.cc coordination_shells.cc confsplit.cc )
-set(LIBCRYSTAL_PYSOURCES __init__.py read.py write.py)
+set(LIBCRYSTAL_PYSOURCES __init__.py read.py write.py ABX.py A2BX4.py bravais.py)
 
 include_directories(${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDES})
 add_library (crystal SHARED ${LIBCRYSTAL_HEADERS} ${LIBCRYSTAL_PYHEADERS} ${LIBCRYSTAL_SOURCES})
