@@ -38,7 +38,7 @@ def update_fitness(self, individuals):
       .. _Polyhedron:: http://cens.ioc.ee/projects/polyhedron
   """
   from itertools import chain
-  from numpy import array, concatenate, dot
+  from numpy import array, concatenate, dot, max
   from polyhedron import Vrep
   individuals = list(individuals)
   # coordinates of individuals
@@ -62,8 +62,7 @@ def update_fitness(self, individuals):
   # now update individuals
   for indiv in individuals:
     point = array(indiv.concentrations[:-1].tolist() + [indiv.energy])
-    print point[-1] -(dot(lowers[:,:-2], point[:-1]) - lowers[:,-1] ) / lowers[:,-2] 
-    indiv.fitness = point[-1] -(dot(lowers[:,:-2], point[:-1]) - lowers[:,-1] ) / lowers[:,-2] 
+    indiv.fitness = max(point[-1] -(dot(lowers[:,:-2], point[:-1]) - lowers[:,-1] ) / lowers[:,-2])
 
 def rand_cell_gen(angles_between=None, cubic=False):
   """ Returns random cell. 
@@ -276,7 +275,7 @@ def fractional_pos(structure, roll=True):
   from numpy.linalg import inv
   # random translation vector.
   trans = (random(), random(), random()) if roll else (0,0,0)
-  result = [dot(inv(structure.cell), atom.pos) + trans for atom in structure]
+  result = [dot(inv(structure.cell), atom.pos) + trans for atom in structure.atoms]
       
   for pos in result:
     for j in xrange(len(pos)):
@@ -295,6 +294,7 @@ def cut_and_splice(s1, s2, roll=True):
   """
   from random import choice, random
   from numpy import dot
+  from numpy.linalg import det
   from lada.crystal import Structure
 
   # swap structures randomly.
@@ -320,6 +320,9 @@ def cut_and_splice(s1, s2, roll=True):
   for type, pos in sc_pos2:
     if pos[direction] < xsep: result.add_atom = dot(result.cell, pos), type
 
+  result.scale = abs(det(s1.cell)) / abs(det(result.cell)) * s1.scale \
+                 * float(len(result.atoms)) / float(len(s1.atoms))
+
   return result
 
 
@@ -335,6 +338,7 @@ def mix_poscars(s1,s2, roll=True):
   """
   from random import choice
   from numpy import dot
+  from numpy.linalg import det
   from ..crystal import Structure
 
   # swap structures randomly.
@@ -351,6 +355,9 @@ def mix_poscars(s1,s2, roll=True):
   # atoms from s2
   for type, pos in sc_pos2:
     result.add_atom = dot(result.cell, pos), type
+
+  result.scale = abs(det(s1.cell)) / abs(det(result.cell)) * s1.scale \
+                 * float(len(result.atoms)) / float(len(s1.atoms))
   return result
 
 def mix_atoms(s1, s2, roll=True):
@@ -398,10 +405,13 @@ def jiggle_structure(structure):
   newcell = result.cell + dot(omega, result.cell)
 
   fractionals = fractional_pos(result)
-  mindists = [min([norm(a.pos - atom.pos) for a in result]) for atom in result]
-  for atom, frac, mindist  in zip(result, fractionals, mindists):
+  mindists = [min([norm(a.pos - atom.pos) for a in result.atoms]) for atom in result.atoms]
+  for atom, frac, mindist  in zip(result.atoms, fractionals, mindists):
     atom.pos = dot(newcell, frac)  + mindist * 0.25 * (rand(3) * 2e0 - 1e0)
   result.cell = newcell
+
+  result.scale = abs(det(structure.cell)) / abs(det(result.cell)) * structure.scale \
+                 * float(len(result.atoms)) / float(len(structure.atoms))
   return result
 
 

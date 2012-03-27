@@ -319,13 +319,16 @@ class Mating(object):
 
   def add(self, function, rate=1):
     """ Adds a mating operator, with a given rate, to the current list. """
+    from inspect import isfunction, getargspec
     # checks for number of arguments to function.
-    nb_args = -1
-    if hasattr(function, "__class__") and issubclass(function.__class__, Mating): pass
-    elif hasattr(function, "func_code"): nb_args = function.func_code.co_argcount
-    else: nb_args = function.__call__.im_func.func_code.co_argcount - 1
-
-    assert rate > 0e0, ValueError("rate argument cannot be negative (%s)." % (rate))
+    if rate < 0e0: raise ValueError("rate argument cannot be negative ({0}).".format(rate))
+    if hasattr(function, "__class__") and issubclass(function.__class__, Mating): 
+      nb_args = -1
+    else:
+      argspec = getargspec(function) if isfunction(function) else getargspect(function.__call__)
+      if argspec.args is None: nb_args = -1
+      elif argspec.defaults is None: nb_args = len(argspec.args)
+      else: nb_args = len(argspec.args) - len(argspec.defaults)
     self.operators.append( (function, rate, nb_args) )
   
 
@@ -379,11 +382,11 @@ class Mating(object):
       for function, rate, n in self.operators:
         if r <= last + rate:
           indiv = call_function( function, n )
-          assert hasattr(indiv, 'genes'),\
-                 RuntimeError( "Object returned by {0}.{1} is not an individual."\
-                               .format( function.__class__.__module__,\
-                                        function.__class__.__name__ ) )
-          break
+#         assert hasattr(indiv, 'genes'),\
+#                RuntimeError( "Object returned by {0}.{1} is not an individual."\
+#                              .format( function.__class__.__module__,\
+#                                       function.__class__.__name__ ) )
+#         break
         last += rate
 
     assert indiv is not None, "%s" % (self.sequential)
