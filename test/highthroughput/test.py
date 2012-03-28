@@ -66,7 +66,7 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
       # creates a structure.
       structure = deepcopy(lattice)
       # changes atomic species.
-      for atom in structure.atoms:  atom.type  = species_dict[atom.type]
+      for atom in structure:  atom.type  = species_dict[atom.type]
       structure = vasp_ordered(structure)
       # assigns it a name.
       structure.name = "{0} in {1}, spin-unpolarized.".format(material, lattice.name)
@@ -161,7 +161,7 @@ def magnetic_wave(path=None, inputpath='input.py', **kwargs):
       # now tries and creates high-spin ferro jobs if it does not already exist.
       jobname = normpath("{0}/{1}ferro".format(basename, prefix))
       structure, magmom = ferro(extract.structure, extract.functional.species, func)
-      if magmom and jobname not in jobdict:
+      if magmom and jobname not in jobdict and input.do_ferro:
         structure.name = "{0} in {1}, {2}ferro."\
                          .format(material, lattice.name, prefix)
         job = jobdict / jobname
@@ -177,7 +177,7 @@ def magnetic_wave(path=None, inputpath='input.py', **kwargs):
       # now tries and creates anti-ferro-lattices jobs if it does not already exist.
       structure, magmom = species_antiferro(extract.structure, extract.functional.species, func) 
       jobname = normpath("{0}/{1}anti-ferro-0".format(basename, prefix))
-      if magmom and jobname not in jobdict:
+      if magmom and jobname not in jobdict and do_anti_ferro:
         structure.name = "{0} in {1}, {2}specie-anti-ferro."\
                          .format(material, lattice.name, prefix)
 
@@ -231,7 +231,7 @@ def is_magnetic_system(structure, species):
 
 def has_high_and_low(structure, species):
   """ True if some species have both high and low spins. """
-  for atom in structure.atoms:
+  for atom in structure:
     if len(deduce_moment(atom, species)) > 1: return True
   return False
 
@@ -250,7 +250,9 @@ def deduce_moment(atom, species):
 
 def ferro(structure, species, func=min):
   """ Returns magmom VASP flag for low-spin ferromagnetic order. """
-  return [ func(deduce_moment(a, species)) for a in structure.atoms ]
+  result = structure.copy()
+  for atom in result: atom.magmom = func(deduce_moment(a, species))
+  return result, True
 
 def species_antiferro(structure, species, func=min):
   """ Low spin anti ferro order with each cation specie in a different direction. """
@@ -261,7 +263,7 @@ def species_antiferro(structure, species, func=min):
   for atom in result:
     m = func(deduce_moment(atom, species))
     signs[atom.type] = 1 if abs(m) < 1e-12 else -1
-  if len([u[1] for u in signs.items() if u[1] == -1]) < 2: return None
+  if len([u[1] for u in signs.items() if u[1] == -1]) < 2: return None, False
   # makes alternating sign list.
   dummy = 1
   for k in sorted(signs.keys()):
@@ -274,10 +276,12 @@ def species_antiferro(structure, species, func=min):
   for atom in result:
     atom.magmom = float(signs[atom.type]) * func(deduce_moment(atom, species))
     s += abs(atom.magmom)
-  return s > 1e-6, result
+  return result, s > 1e-6 
 
 def random(structure, species, func=min):
   """ High-spin random magnetic order. """
   from random import choice
-  return [ choice([-1e0, 1e0]) * func(deduce_moment(a, species))\
-           for a in structure.atoms ]
+  result = strcture.copy()
+  for atom in result:
+    atom.magmom = choice([-1e0, 1e0]) * func(deduce_moment(a, species))
+  return result, True

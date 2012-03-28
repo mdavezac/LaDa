@@ -386,6 +386,7 @@ class SuperCall(object):
     self.__dict__['_class'] = args[0]
     self.__dict__['_object'] = args[1]
   def __dir__(self): return dir(super(self._class, self._object))
+  def __repr__(self): return repr(super(self._class, self._object))
   
     
 

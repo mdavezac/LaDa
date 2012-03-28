@@ -29,6 +29,26 @@ previous files.
 
 .. _vasp-config:
 
+General
+-------
+
+  .. py:data:: verbose_representation
+    
+     Whether functionals should be represented/printed verbosely, e.g. each and
+     every attribute, or whether attributes which have not changed from the
+     default should be stripped. The former is safer since it should defaults
+     may change over time, and the representation can become inaccurate.
+     Defaults to False.
+  
+  .. py:data:: ipython_verbose_representation
+    
+     When in ipython and if not None, then changes
+     :py:data:`verbose_representation` to this value. Makes it a bit easier on
+     the eyes in ipython, while keeping things accurate during actual
+     calculations. Ignored if None. Defaults to False. 
+     
+     .. note:: Only taken into account at ipython start-up.
+
 VASP 
 ----
 
@@ -69,7 +89,7 @@ MPI
      The actual commandline is executed by :py:func:`execute_program
      <lada.misc.execute_program>`. The latter executes via Popen_ a
      commandline obtained through the format_ method of a python string. The
-     arguments to format are those mentionned above as well as anything passed
+     arguments to format are those mentioned above as well as anything passed
      on to :py:func:`execute_program <lada.misc.execute_program>`.
 
      .. _Popen: http://docs.python.org/library/subprocess.html#subprocess.Popen

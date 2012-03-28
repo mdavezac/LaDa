@@ -31,17 +31,15 @@ def assign_attributes(setothers=None, ignore=None):
     def wrapper(self, structure, outdir=None, comm=None, **kwargs):
       # if other keyword arguments are present, then they are assumed to be
       # attributes of self, with value to be changed before launch. 
-      for key, value in kwargs.items():
+      for key in kwargs.keys():
         if key in ignore: continue
         # direct attributes.
-        if hasattr(self, key): setattr(self, key, value)
-        # properties attributes.
-        elif hasattr(self.__class__, key): setattr(self, key, value)
+        if hasattr(self, key): setattr(self, key, kwargs.pop(value))
         else:
           found = False
           for other in setothers:
             if hasattr(self, other) and hasattr(getattr(self, other), key):
-              setattr(getattr(self, other), key, value)
+              setattr(getattr(self, other), key, kwargs.pop(value))
               found = True
               break
           if found == False:

@@ -220,9 +220,11 @@ class Vasp(Incar):
       for kpoint in self.kpoints:
         file.write("{0[0]} {0[1]} {0[2]} {1}\n".format(kpoint, 1 if len(kpoint) == 3 else kpoint[3]))
 
-  def __repr__(self):
+  def __repr__(self, skip=None):
     """ Returns a python script representing this object. """
+    from .. import verbose_representation
     from .incar._params import SpecialVaspParam
+    if skip is None: skip = not verbose_representation
 
     # creates a default vasp instance to compare to.
     compare = self.__class__()
@@ -236,11 +238,11 @@ class Vasp(Incar):
     special = {}
     # now gather vasp parameters and check their length.
     for name, value in self.params.items():
-      if value is None: continue
+      if skip and value is None: continue
       if name in params:
-        if value is None: continue
+        if skip and value is None: continue
         try: # check if is default.
-          if value == compare.params[name]: continue
+          if skip and value == compare.params[name]: continue
         except: pass
         noaddparam[name] = len(name), value
       else:
@@ -252,9 +254,9 @@ class Vasp(Incar):
         else: modules[module] = [classname]
     # if a special parameter, then is non-default.
     for name, value in self.special.items():
-      if value.value is None: continue
+      if skip and value.value is None: continue
       try: # check if is default.
-        if value.__class__ is compare.special[name].__class__ \
+        if skip and value.__class__ is compare.special[name].__class__ \
            and getattr(self, name) == getattr(compare, name): continue
       except: pass
       try: 
@@ -268,15 +270,34 @@ class Vasp(Incar):
       if module in modules: modules[module].append(classname)
       else: modules[module] = [classname]
     # adds kpoints
-    noaddparam['kpoints'] = len('kpoints'), self.kpoints
     if hasattr(self.kpoints, "__call__"):
       # checks for user module.
       module = self.kpoints.__class__.__module__ 
       classname = self.kpoints.__class__.__name__ 
       if module in modules: modules[module].append(classname)
       else: modules[module] = [classname]
+      noaddparam['kpoints'] = len('kpoints'), self.kpoints
+    else:
+      try: 
+        if skip == False or self.kpoints != compare.kpoints:
+          noaddparam['kpoints'] = len('kpoints'), self.kpoints
+      except: noaddparam['kpoints'] = len('kpoints'), self.kpoints
+
+
     if not self.restart_from_contcar: 
       noaddparam['restart_from_contcar'] = len('restart_from_contcar'), False
+    # adds objects in __dict__
+    class Dummy: pass
+    for key, value in self.__dict__.iteritems():
+      if key == 'special' or key == 'params': continue
+      try: 
+        if skip and getattr(compare, key, Dummy) == value: continue
+      except: pass
+      noaddparam[key] = len(key), value
+      module = value.__class__.__module__
+      if module == '__builtin__': continue
+      if module in modules: modules[module].append(classname)
+      else: modules[module] = [classname]
 
     # now write stuff to string.
     string = "functional = {0.__class__.__name__}()\n".format(self)

@@ -10,8 +10,10 @@
     fully relaxed structure is obtained.
 """
 __docformat__ = "restructuredtext en"
-__all__ = ['relax', 'iter_relax', 'epitaxial', 'iter_epitaxial']
+__all__ = ['relax', 'iter_relax', 'Relax', 'epitaxial', 'iter_epitaxial']
 from .extract import Extract
+from ..functools.makeclass import makeclass
+from .functional import Vasp
 
 def iter_relax( vasp, structure, outdir=None, first_trial=None,
                 maxcalls=10, keepsteps=True, nofail=False, 
@@ -223,6 +225,8 @@ relax.__doc__ += iter_relax.__doc__[iter_relax.__doc__.find('\n'):\
                  + "\n.. seealso:: `iter_relax`\n\n"
 relax.Extract = iter_relax.Extract
 """ Extraction method for relaxation runs. """
+Relax = makeclass( 'Relax', Vasp, iter_relax, relax, module='lada.vasp.relax',
+                   doc = 'Functional form of the :py:class:`lada.vasp.relax.relax` method.' )
 
 def _get_is_converged(vasp, structure, convergence=None, minrelsteps=-1, **kwargs):
   """ Returns convergence function. """

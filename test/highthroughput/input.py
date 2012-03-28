@@ -115,8 +115,5 @@ nbrandom    = 3
 do_ferro    = False
 do_antiferro = False
 
-lattices = [ ABX.s36() ]
-#lattices = [ A2BX4.b5()]
-
+lattices = [ A2BX4.b5()]
  
-#first_wave_dir = "/scratch/trpaude/lada/hte/"

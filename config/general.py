@@ -7,3 +7,7 @@ jobparams_only_existing = True
 """ Whether attributes can be added or only modified. """
 unix_re  = True
 """ If True, then all regex matching is done using unix-command-line patterns. """
+verbose_representation = True
+""" Whether functional should be printed verbosely or not. """
+ipython_verbose_representation = False
+""" When in ipython, should we set :py:data:`verbose_representation` to False. """

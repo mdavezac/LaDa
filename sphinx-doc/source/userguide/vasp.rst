@@ -77,6 +77,11 @@ with as user-defined dictionary. However, some options may well be the same for
 one run to another. As such a default dictionary can be provided
 (:py:data:`default_comm <lada.default_comm>`).
 
+The last configuration variable is :py:data:`verbose_representation
+<lada.verbose_representation`. It controls whether or not the
+representation/print-out of the functional should include parameters which have
+not changed from the default. It is safest to keep it True.
+
 .. seealso:: :ref:`lada-config`
 
 Creating and Setting up the vasp functional

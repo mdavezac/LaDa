@@ -9,6 +9,7 @@ def load_ipython_extension(ip):
   global __lada_is_loaded__
   if not __lada_is_loaded__:
     from types import ModuleType, MethodType
+    from sys import modules
     from .savejobs import savejobs
     from .explore import explore, completer as explore_completer
     from .goto import goto, completer as goto_completer
@@ -21,6 +22,7 @@ def load_ipython_extension(ip):
     lada.interactive.jobdict = None
     lada.interactive.jobdict_path = None
     lada.is_interactive = True
+    modules['lada.interactive'] = lada.interactive
     ip.define_magic('savejobs', savejobs)
     ip.define_magic('explore', explore)
     ip.define_magic('goto', goto)
@@ -31,6 +33,8 @@ def load_ipython_extension(ip):
     ip.set_hook('complete_command', goto_completer, str_key = '%goto')
     ip.set_hook('complete_command', showme_completer, str_key = '%showme')
     ip.set_hook('complete_command', launch_completer, str_key = '%launch')
+    if lada.ipython_verbose_representation is not None:
+      lada.verbose_representation = lada.ipython_verbose_representation
 
 def unload_ipython_extension(ip):
   """ Unloads LaDa IPython extension. """
