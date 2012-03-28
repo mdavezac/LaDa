@@ -528,6 +528,17 @@ class Extract(object):
   @json_section("input")
   @make_cached
   @broadcast_result(attr=True, which=0)
+  def lorbit(self):
+    """ Greps LORBIT from OUTCAR. """
+    result = self._find_first_OUTCAR(r"""^\s*LORBIT\s*=\s*(0|1|2|10|11|12)\s+""")
+    assert result is not None, RuntimeError("Could not extract LORBIT from OUTCAR.")
+    return int(result.group(1))
+
+
+  @property
+  @json_section("input")
+  @make_cached
+  @broadcast_result(attr=True, which=0)
   def name(self):
     """ Greps POSCAR title from OUTCAR. """
     result = self._find_first_OUTCAR(r"""^\s*POSCAR\s*=.*$""")
@@ -691,7 +702,7 @@ class Extract(object):
         :type incar: bool
         :kwarg wavecar: Include WAVECAR file
         :type wavecar: bool
-        :kwarg doscar: Include CHGCAR file
+        :kwarg doscar: Include DOSCAR file
         :type doscar: bool
         :kwarg chgcar: Include CHGCAR file
         :type chgcar: bool
