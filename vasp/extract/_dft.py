@@ -76,7 +76,8 @@ class Extract(object):
     factor = (2.0 if self.ispin == 1 else 1.0)/float(sum(self.multiplicity))
     for i, (e, w) in enumerate(array):
       occ += w*factor
-      if occ >= self.valence - 1e-8: return e * self.eigenvalues.units
+      #if occ >= self.valence - 1e-8: return e * self.eigenvalues.units
+      if occ >= self.nelect - 1e-8: return e * self.eigenvalues.units
     return None
 
   @property
