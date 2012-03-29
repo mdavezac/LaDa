@@ -344,7 +344,8 @@ class KEscan(Escan):
       from inspect import getargspec
       from copy import deepcopy
       from os.path import join
-      from ..jobs import JobDict, Bleeder, SuperCall
+      from ..jobs import JobDict, Bleeder
+      from ..functools import SuperCall
       from ..mpi import Communicator
 
       this = deepcopy(self)

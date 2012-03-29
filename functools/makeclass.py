@@ -1,5 +1,5 @@
 """ Creates functionals (classes) from a method. """
-def create_initstring(classname, base, method, excludes, withkwords=True):
+def create_initstring(classname, base, method, excludes):
   """ Creates a string defining the __init__ method. """
   from inspect import getargspec
 
@@ -52,7 +52,7 @@ def create_initstring(classname, base, method, excludes, withkwords=True):
     for i, (key, value) in enumerate(zip(initargs.args[nargs:], initargs.defaults)):
       if key in args.args[ninitargs:]: result += ", {0} = {0}".format(key)
   # add a keyword dict if present in initargs
-  if initargs.keywords is not None and withkwords: result += ', **kwargs'
+  if initargs.keywords is not None or initargs.defaults is not None: result += ', **kwargs'
   result += ')\n\n'
   # deals with issues on how to print first argument.
   result = result.replace('(, ', '(')
@@ -68,17 +68,17 @@ def create_initstring(classname, base, method, excludes, withkwords=True):
   # eg, using copy. Does not include previously set parameters and anything in
   # excludes.
   avoid = set(initargs.args[:ninitargs]) | set(args.args[nargs:]) | set(excludes)
-  result += "  if copy is not None:\n"                                          \
-                "    avoid = {0!r}\n"                                               \
-                "    for key, value in copy.__dict__.iteritems():\n"                \
-                "      if key not in avoid: setattr(self, key, deepcopy(value))\n"  \
+  result += "  if copy is not None:\n"                                  \
+                "    avoid = {0!r}\n"                                   \
+                "    for key, value in copy.__dict__.iteritems():\n"    \
+                "      if key not in avoid and key not in kwargs:\n"    \
+                "         setattr(self, key, deepcopy(value))\n"        \
                 .format(avoid)
   return result
 
 def create_iter(classname, iter, excludes):
   """ Creates the iterator method. """
   from inspect import getargspec
-  from re import sub
   # make stateless.
   result = "from lada.functools import stateless, assign_attributes\n"\
            "@assign_attributes(ignore=['overwrite'])\n@stateless\n"
@@ -87,34 +87,44 @@ def create_iter(classname, iter, excludes):
   # others will not be added.
   args = getargspec(iter)
   result = "def iter(self"
-  callstring = ""
   if args.args is not None and len(args.args) > 1:
     # first add arguments without default (except for first == self).
     nargs = len(args.args) - len(args.defaults)
-    for key in args.args[1:nargs]: callstring += ", {0}".format(key)
+    for key in args.args[1:nargs]: result += ", {0}".format(key)
   if args.args is not None and len(args.args) > 1:
     # then add arguments with default
     nargs = len(args.args) - len(args.defaults)
     for key, value in zip(args.args[nargs:], args.defaults):
-      if key in excludes: callstring += ", {0}={1!r}".format(key, value)
+      if key in excludes: result += ", {0}={1!r}".format(key, value)
   # then add kwargs.,
-  result += callstring + ", **kwargs):\n"
+  result += ", **kwargs):\n"
 
   # adds standard doc string.
-  doc = iter.__doc__ #sub('\n\s*', '\n', iter.__doc__)
-  if '\n' in doc: first_line = doc[:doc.find('\n')].rstrip().lstrip()
-  result +=\
-      "  \"\"\"{0}\n\n"                                                  \
-      "     This function is created automagically from "                \
-        ":py:func:`{1.func_name} <{1.__module__}.{1.func_name}>`.\n"     \
-      "     Please see that function for the description of its parameters.\n"\
-      "  \"\"\"\n"\
-      .format(first_line, iter)
+  doc = iter.__doc__ 
+  if doc is not None and '\n' in doc:
+    first_line = doc[:doc.find('\n')].rstrip().lstrip()
+    result +=\
+        "  \"\"\"{0}\n\n"                                                  \
+        "     This function is created automagically from "                \
+          ":py:func:`{1.func_name} <{1.__module__}.{1.func_name}>`.\n"     \
+        "     Please see that function for the description of its parameters.\n"\
+        "  \"\"\"\n"\
+        .format(first_line, iter)
   # import iterations method
+  result += "  from lada.functools import SuperCall\n"
   result += "  from {0.__module__} import {0.func_name}\n".format(iter)
   # add iteration line:
-  result += "  for o in {0.func_name}(super(self.__class__, self){1}"\
-            .format(iter, callstring)
+  result += "  for o in {0.func_name}(SuperCall(self.__class__, self)".format(iter)
+  if args.args is not None and len(args.args) > 1:
+    # first add arguments without default (except for first == self).
+    nargs = len(args.args) - len(args.defaults)
+    for key in args.args[1:nargs]: result += ", {0}".format(key)
+  if args.args is not None and len(args.args) > 1:
+    # then add arguments with default
+    nargs = len(args.args) - len(args.defaults)
+    for key in args.args[nargs:]:
+      if key in excludes: result += ", {0}={0}".format(key)
+      else: result += ", {0}=self.{0}".format(key)
   # adds arguments to overloaded function. 
   if args.keywords is not None: result += ", **kwargs"
   result += "): yield o\n"
@@ -124,7 +134,6 @@ def create_iter(classname, iter, excludes):
 def create_call(classname, call, excludes):
   """ Creates the call method. """
   from inspect import getargspec
-  from re import sub
   # make stateless.
   result = "from lada.functools import stateless, assign_attributes\n"\
            "@assign_attributes(ignore=['overwrite'])\n@stateless\n"
@@ -133,33 +142,44 @@ def create_call(classname, call, excludes):
   # others will not be added.
   args = getargspec(call)
   result = "def __call__(self"
-  callstring = ""
   if args.args is not None and len(args.args) > 1:
     # first add arguments without default (except for first == self).
     nargs = len(args.args) - len(args.defaults)
-    for key in args.args[1:nargs]: callstring += ", {0}".format(key)
+    for key in args.args[1:nargs]: result += ", {0}".format(key)
   if args.args is not None and len(args.args) > 1:
     # then add arguments with default
     nargs = len(args.args) - len(args.defaults)
     for key, value in zip(args.args[nargs:], args.defaults):
-      if key in excludes: callstring += ", {0}={1!r}".format(key, value)
+      if key in excludes: result += ", {0}={1!r}".format(key, value)
   # then add kwargs.,
-  result += callstring + ", **kwargs):\n"
+  result += ", **kwargs):\n"
 
   # adds standard doc string.
-  doc = call.__doc__ #sub('\n\s*', '\n', call.__doc__)
-  if '\n' in doc: first_line = doc[:doc.find('\n')].rstrip().lstrip()
-  result +=\
-      "  \"\"\"{0}\n\n"                                                  \
-      "     This function is created automagically from "                \
-        ":py:func:`{1.func_name} <{1.__module__}.{1.func_name}>`.\n"     \
-      "     Please see that function for the description of its parameters.\n"\
-      "  \"\"\"\n"\
-      .format(first_line, call)
-  # import iterations method
+  doc = call.__doc__ 
+  if doc is not None and '\n' in doc:
+    first_line = doc[:doc.find('\n')].rstrip().lstrip()
+    result +=\
+        "  \"\"\"{0}\n\n"                                                  \
+        "     This function is created automagically from "                \
+          ":py:func:`{1.func_name} <{1.__module__}.{1.func_name}>`.\n"     \
+        "     Please see that function for the description of its parameters.\n"\
+        "  \"\"\"\n"\
+        .format(first_line, call)
+    # import iterations method
+  result += "  from lada.functools import SuperCall\n".format(call)
   result += "  from {0.__module__} import {0.func_name}\n".format(call)
   # add iteration line:
-  result += "  return super(self.__class__, self)({0}".format(callstring)
+  result += "  return {0.func_name}(SuperCall(self.__class__, self)".format(call, classname)
+  if args.args is not None and len(args.args) > 1:
+    # first add arguments without default (except for first == self).
+    nargs = len(args.args) - len(args.defaults)
+    for key in args.args[1:nargs]: result += ", {0}".format(key)
+  if args.args is not None and len(args.args) > 1:
+    # then add arguments with default
+    nargs = len(args.args) - len(args.defaults)
+    for key in args.args[nargs:]:
+      if key in excludes: result += ", {0}={0}".format(key)
+      else: result += ", {0}=self.{0}".format(key)
   result = result.replace('(, ', '(')
   # adds arguments to overloaded function. 
   if args.keywords is not None: result += ", **kwargs"
@@ -168,8 +188,7 @@ def create_call(classname, call, excludes):
   return result
 
 def makeclass( classname, base, iter=None, call=None,
-               doc=None, excludes=None, withkwords=True,
-               module=None ):
+               doc=None, excludes=None, module=None ):
   """ Creates a class from a function. 
   
       Makes it easy to create a class which works just like the input method.
@@ -222,7 +241,7 @@ def makeclass( classname, base, iter=None, call=None,
   funcs = {}
 
   # creates __init__
-  exec create_initstring(classname, base, basemethod, excludes, withkwords) in funcs
+  exec create_initstring(classname, base, basemethod, excludes) in funcs
   if iter is not None: exec create_iter(classname, iter, excludes) in funcs
   if call is not None: exec create_call(classname, call, excludes) in funcs
 

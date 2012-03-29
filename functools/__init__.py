@@ -96,3 +96,38 @@ def uncache(ob):
   if hasattr(ob, '_properties_cache'): del ob._properties_cache
 
 
+class SuperCall(object):
+  """ Obviates issues when using a "super" functional.
+
+      Since functionals of a jobdictionary are deepcopied, the following line
+      will not result in calling the next class in the __mro__.
+  
+      >>> jobdict.functional = super(Functional, functional)
+
+      Indeed, this line will first call the __getitem__, __setitem__ (or
+      __deepcopy__) of the super object. In general, this means we end-up with
+      ``jobdict.function == functional``.
+
+      This class obviates this difficulty.
+
+      >>> jobdict.functional = SuperCall(Functional, functional)
+  """
+  def __init__(self, class_, object_):
+    object.__init__(self)
+    self.__dict__['_class'] = class_
+    self.__dict__['_object'] = object_
+  def __call__(self, *args, **kwargs):
+    return super(self._class, self._object).__call__(*args, **kwargs)
+  def __getattr__(self, name):
+    try: return getattr(super(self._class, self._object), name)
+    except: return getattr(self._object, name)
+  def __setattr__(self, name, value): setattr(self._object, name, value)
+  def __getstate__(self): return self._class, self._object
+  def __setstate__(self, args):
+    self.__dict__['_class'] = args[0]
+    self.__dict__['_object'] = args[1]
+  def __dir__(self): return dir(super(self._class, self._object))
+  def __repr__(self): return repr(super(self._class, self._object))
+  
+    
+

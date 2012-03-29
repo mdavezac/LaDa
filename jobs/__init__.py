@@ -10,10 +10,10 @@
 __docformat__ = "restructuredtext en"
 __all__ = ['JobDict', 'walk_through', 'save', 'load', 'MassExtract',
            'AbstractMassExtract', 'AbstractMassExtractDirectories', 'Bleeder',
-           'JobParams', 'SuperCall']
+           'JobParams' ]
 
 from .bleeder import Bleeder
-from .jobdict import JobDict, SuperCall
+from .jobdict import JobDict
 from .manipulator import JobParams
 from .extract import AbstractMassExtract, AbstractMassExtractDirectories
 from .massextract import MassExtract 
