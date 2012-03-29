@@ -74,19 +74,10 @@ def tournament( self, size = 2 ):
   list_ = list_[:size]
   result = list_[0]
   for b in list_[1:]:
-    if self.comparison(self.population[b]) <  self.comparison(self.population[result]) == -1:
+    if self.comparison(self.population[b]) \
+         < self.comparison(self.population[result]):
       result = b;
   return result
-
-def cmp_indiv( a, b, tolerance = 1e-12 ):
-  """ Compares two individuals. 
-
-      Minimizes fitness by default.
-  """
-  from math import fabs
-  if fabs(a.fitness - b.fitness) <  tolerance: return 0
-  elif a.fitness < b.fitness: return -1
-  return 1
 
 def average_fitness(self):
   """ Prints out average fitness. """
@@ -102,7 +93,7 @@ def best(self):
   if not self.comm.do_print: return True
   best = None
   for indiv in self.population:
-    if best is None or  self.cmp_indiv( best, indiv ) == 1: 
+    if best is None or  self.comparison(best) < self.comparison(indiv): 
       best = indiv
   print "  Best Individual: ", best, best.fitness
   return True
@@ -298,6 +289,13 @@ def population_evaluation(self, evaluator, pools=None, comm=None):
   if is_serial: serial_population_evaluation(self, evaluator, comm = comm)
   else:         bleeder_evaluation(self, evaluator, min(pools, comm.size), comm)
 
+def flush_out(self):
+  """ Tries to flush current output. """
+  from sys import stdout
+  from os import fsync
+  stdout.flush()
+  try: fsync(stdout)
+  except: pass
 
 class Mating(object):
   """ Aggregator of mating operators. 
@@ -433,7 +431,6 @@ def fill_attributes(self):
       - standard._check_generation is ALWAYS added to the checkpoints
       - "current_gen" defaults to 0 
       - "max_gen" defaults to 100, or current_gen+100 if max_gen > current_gen.
-      - "cmp_indiv" defaults to standard.cmp_indiv
   """
   # must have an evaluation function.
   assert hasattr(self, "evaluation"), "No evaluation function!" 
@@ -478,5 +475,4 @@ def fill_attributes(self):
 
   if not hasattr(self, "max_gen"): self.max_gen = self.current_gen + 100
 
-  if not hasattr(self, "cmp_indiv"): self.cmp_indiv = cmp_indiv
   return self

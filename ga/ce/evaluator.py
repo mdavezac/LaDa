@@ -269,7 +269,7 @@ class LocalSearchEvaluator(Evaluator):
         super(LocalSearchEvaluator, self).__call__(other, comm=comm, outdir=outdir, **kwargs)
         self.darwin.taboo(other) # update with fitness for later analysis.
         evaluation += 1
-        if self.darwin.comparison(indiv, other) == 1: 
+        if self.darwin.comparison(indiv) < self.darwin.comparison(other):
           indiv = other
           changed = True
         if self.maxeval > 0 and evaluation < self.maxeval: break
