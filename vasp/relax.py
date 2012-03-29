@@ -204,8 +204,14 @@ def relax( vasp, structure, outdir=None, first_trial=None,
            minrelsteps=-1, **kwargs ):
   """ Performs relaxation of an input structure using :py:class:`Vasp`.  """
   from os.path import join
+  from copy import deepcopy
   from ..misc import execute_program
   result = None
+  # could be that relaxation comes from vasp.relaxation which is a tuple.
+  if isinstance(relaxation, tuple):
+    vasp = deepcopy(vasp)
+    vasp.relaxation = relaxation
+    relaxation = relaxation[0]
   for program in iter_relax( vasp, structure, outdir, first_trial=first_trial,
                              maxcalls=maxcalls, keepsteps=keepsteps, nofail=nofail,
                              relaxation=relaxation, **kwargs ):

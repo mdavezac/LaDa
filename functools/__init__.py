@@ -34,17 +34,17 @@ def assign_attributes(setothers=None, ignore=None):
       for key in kwargs.keys():
         if key in ignore: continue
         # direct attributes.
-        if hasattr(self, key): setattr(self, key, kwargs.pop(value))
+        if hasattr(self, key): setattr(self, key, kwargs.pop(key))
         else:
           found = False
           for other in setothers:
             if hasattr(self, other) and hasattr(getattr(self, other), key):
-              setattr(getattr(self, other), key, kwargs.pop(value))
+              setattr(getattr(self, other), key, kwargs.pop(key))
               found = True
               break
           if found == False:
-            raise ValueError( "Unkwown keyword argument to {0.__class__.__name__}: {1}={2}"\
-                              .format(self, key, value) )
+            raise ValueError( "Unkwown keyword argument to {0.__class__.__name__}: {1}"\
+                              .format(self, key) )
       return function(self, structure, outdir=outdir, comm=comm, **kwargs)
     return wrapper
   return decorator

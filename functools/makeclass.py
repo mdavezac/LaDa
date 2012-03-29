@@ -86,7 +86,7 @@ def create_iter(classname, iter, excludes):
   # keywords are deduced from arguments with defaults.
   # others will not be added.
   args = getargspec(iter)
-  result = "def iter(self"
+  result += "def iter(self"
   if args.args is not None and len(args.args) > 1:
     # first add arguments without default (except for first == self).
     nargs = len(args.args) - len(args.defaults)
@@ -141,7 +141,7 @@ def create_call(classname, call, excludes):
   # keywords are deduced from arguments with defaults.
   # others will not be added.
   args = getargspec(call)
-  result = "def __call__(self"
+  result += "def __call__(self"
   if args.args is not None and len(args.args) > 1:
     # first add arguments without default (except for first == self).
     nargs = len(args.args) - len(args.defaults)
