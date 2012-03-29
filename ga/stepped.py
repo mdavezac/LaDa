@@ -241,7 +241,7 @@ class StepGA(object):
     print '{0}: {1}'.format(mechanics, individual)
     return True
 
-  def add_invdiv(self, individual, mechanics='manual'):
+  def add_indiv(self, individual, mechanics='manual'):
     """ Adds new individual if it not taboo. 
 
         Updates SHELVECAR file. 

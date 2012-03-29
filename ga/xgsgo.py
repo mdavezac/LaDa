@@ -156,7 +156,7 @@ def rand_struct_gen( species, stoichiometry, anions=None, angles_between=None,
   result = Structure()
   result.scale = 1.
 
-  cell = rand_cell_gen(angles_between, cubic)
+  cell = rand_cell_gen(angles_between, cubic).T
   rec_cell = 2*pi*transpose(inv(cell)) # reciprocal cell
 
   result.cell=transpose(cell)
@@ -397,7 +397,7 @@ def jiggle_structure(structure):
   """ Mutates by jiggling structure. """
   from copy import deepcopy
   from numpy import dot, min
-  from numpy.linalg import norm
+  from numpy.linalg import norm, det
   from numpy.random import rand
   result = deepcopy(structure)
   omega = rand(3,3) * 2e0 - 1e0
