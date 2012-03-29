@@ -652,12 +652,15 @@ class Extract(object):
   @make_cached
   def valence(self):
     """ Greps number of valence bands from OUTCAR."""
+    #ionic = self.ionic_charges
+    #species = self.species
+    #atoms = [u.type for u in self.structure.atoms]
+    #result = 0
+    #for c, s in zip(ionic, species): result += c * atoms.count(s)
+    #return result
     ionic = self.ionic_charges
-    species = self.species
-    atoms = [u.type for u in self.structure.atoms]
-    result = 0
-    for c, s in zip(ionic, species): result += c * atoms.count(s)
-    return result
+    nions = self.ions_per_specie
+    return sum(ionic*nions)
   
   @property
   @json_section("input")
