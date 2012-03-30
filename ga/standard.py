@@ -93,7 +93,7 @@ def best(self):
   if not self.comm.do_print: return True
   best = None
   for indiv in self.population:
-    if best is None or  self.comparison(best) < self.comparison(indiv): 
+    if best is None or  self.comparison(best) > self.comparison(indiv): 
       best = indiv
   print "  Best Individual: ", best, best.fitness
   return True
@@ -289,7 +289,7 @@ def population_evaluation(self, evaluator, pools=None, comm=None):
   if is_serial: serial_population_evaluation(self, evaluator, comm = comm)
   else:         bleeder_evaluation(self, evaluator, min(pools, comm.size), comm)
 
-def flush_out(self):
+def flush_out():
   """ Tries to flush current output. """
   from sys import stdout
   from os import fsync
@@ -323,10 +323,12 @@ class Mating(object):
     if hasattr(function, "__class__") and issubclass(function.__class__, Mating): 
       nb_args = -1
     else:
-      argspec = getargspec(function) if isfunction(function) else getargspect(function.__call__)
+      is_a_function = isfunction(function) 
+      argspec = getargspec(function) if is_a_function else getargspec(function.__call__)
       if argspec.args is None: nb_args = -1
       elif argspec.defaults is None: nb_args = len(argspec.args)
       else: nb_args = len(argspec.args) - len(argspec.defaults)
+      if not is_a_function: nb_args -= 1 # functional has self.
     self.operators.append( (function, rate, nb_args) )
   
 

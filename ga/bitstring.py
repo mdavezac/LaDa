@@ -33,11 +33,24 @@ class Individual(object):
 
   def __str__(self): return repr(self.genes)
 
+def roll(indiv, layers=1, invert=True):
+  """ Rolls superlattices around. """
+  from random import randint, choice
+  from numpy import roll
+  N = len(indiv.genes)
+  if N % layers != 0:
+    raise ValueError('Number of layers and genes are incompatible')
+  n = randint(0, N//layers) * layers
+  if n != 0: indiv.genes = roll(indiv.genes.copy(), n)
+  if invert and choice([True, False]): 
+    indiv.genes[:] = indiv.genes.copy()[::-1]
+  return indiv
+
 
 class VariableSizeCrossover(object):
   """ A crossover operation. """
 
-  def __init__(self, nmin = -1, nmax = -1, step=2):
+  def __init__(self, nmin=-1, nmax=-1, step=2, roll=None):
     """ Initializes crossover. 
 
         :Parameter:
@@ -47,11 +60,15 @@ class VariableSizeCrossover(object):
           nmin : int
             Minimum size of  a bitstring. Only used if two bitstrings differ in
             size.
+          role : tuple
+            Parameters for roll. No rick-rolling if None.
     """
     self.nmin = nmin
     """ Minimum bitstring size. """
     self.nmax = nmax
     """ Maximum bitstring size. """
+    self.roll = roll
+    """ Roll bitstring. """
 
   def __call__(self, first, second):
     """ Create new individual from ``first`` and ``second`` using bitstring crossover. 
@@ -68,6 +85,10 @@ class VariableSizeCrossover(object):
     from random import randint
     from numpy import array
 
+    if self.roll is not None: 
+      first = roll(deepcopy(first), *self.roll)
+      second = roll(deepcopy(second), *self.roll)
+       
     a = [u for u in first.genes]
     b = [u for u in second.genes]
     if len(a) <= 1 : return deepcopy(second)
@@ -88,18 +109,23 @@ class VariableSizeCrossover(object):
     return result
   
   def __repr__(self):
-    return "{0.__class__.__name__}({0.nmin}, {0.nmax})".format(self)
+    return "{0.__class__.__name__}({0.nmin!r}, {0.nmax!r}, {0.roll!r})".format(self)
 
 class Crossover(object):
   """ A crossover operation. """
 
-  def __init__(self, rate = 0.5):
+  def __init__(self, rate = 0.5, roll=None):
     self.rate = rate
+    self.roll = roll
+    """ Roll bitstring. """
 
   def __call__(self, a, b):
     from random import uniform
+    from copy import deepcopy
     
     assert len(a.genes) == len(b.genes), "Bitstring must be of equal lengths"
+    if self.roll is not None:
+      a, b = roll(deepcopy(a), *self.roll), roll(deepcopy(b), *self.roll)
 
     i = int( uniform(0, 1) * len(a.genes) )
     j = int( self.rate * len(a.genes) )
@@ -112,24 +138,30 @@ class Crossover(object):
     return a
 
   def __repr__(self):
-    return "{0.__class__.__name__}({0.rate})".format(self)
+    return "{0.__class__.__name__}({0.rate!r}, {0.roll!r})".format(self)
 
 class Mutation(object):
   """ A mutation operation. """
 
-  def __init__(self, rate = 0.10):
+  def __init__(self, rate = 0.10, roll=None):
     """ Initializes mutation operation. 
 
         :Parameters:
           rate : float
             Mutation rate for each bit in the bitstring.
+          role : tuple
+            Parameters for roll. No rick-rolling if None.
     """
     self.rate = rate
     """ Mutation rate for each bitstring. """
+    self.roll = roll
+    """ Roll bitstring. """
 
   def __call__(self, indiv):
     """ Returns invidual with mutated genes. """
     from random import uniform
+    from copy import deepcopy
+    if self.roll is not None: indiv = roll(deepcopy(indiv), *self.roll)
     
     if len(indiv.genes) == 0: return indiv
     rate = self.rate if self.rate >= 0e0 else -float(self.rate)/float(len(indiv.genes))
@@ -140,14 +172,14 @@ class Mutation(object):
     return indiv
 
   def __repr__(self):
-    return "{0.__class__.__name__}({0.rate})".format(self)
+    return "{0.__class__.__name__}({0.rate!r}, {0.roll!r})".format(self)
 SwapMutation = Mutation
 """ Fixed-size bitstring mutation operation. """
 
 
 class GrowthMutation(object):
   """ Mutation which inserts a bit in the bitstring. """
-  def __init__(self, nmin = -1, nmax = -1, step=1):
+  def __init__(self, nmin = -1, nmax = -1, step=1, roll=None):
     """ Initiatizes the bit insertion.
 
         :Parameters:
@@ -157,6 +189,8 @@ class GrowthMutation(object):
           nmin : integer
             Minimum size of a bistring. If nmin = -1, there are no limits to the
             size of a bitstring.
+          role : tuple
+            Parameters for roll. No rick-rolling if None.
     """
     self.nmax = nmax
     """ Maximum bistring size. """ 
@@ -166,12 +200,16 @@ class GrowthMutation(object):
            ValueError("nmin and nmax are incorrect.")
     self.step = step
     """ By how much to grow or shrink. """
+    self.roll = roll
+    """ Roll bitstring. """
 
   def __call__(self, indiv):
     """ Inserts extra bit in bitstring. """
+    from copy import deepcopy
     from numpy import array
     from random import randint
 
+    if self.roll is not None: indiv = roll(deepcopy(indiv), *self.roll)
     step = getattr(self, 'step', 1)
     l = [u for u in indiv.genes]
     if randint(0,1) == 0 and\
@@ -192,4 +230,4 @@ class GrowthMutation(object):
     return indiv
 
   def __repr__(self):
-    return "{0.__class__.__name__}({0.nmin}, {0.nmax})".format(self)
+    return "{0.__class__.__name__}({0.nmin!r}, {0.nmax!r}, {0.roll!r})".format(self)

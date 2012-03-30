@@ -34,6 +34,10 @@ class Darwin(DarwinBase):
         :Kwarg dosyum:
           Whether to look for inversion/translation symmetries using the simplistic
           implementation of Individual.
+        :Kwarg roll:
+          Whether to roll genes of each individual before operations.
+	  This means looking at crystallographically equivalent
+          parameterization of the same superlattice.
     """
     from .operators import Crossover, GrowthMutation, SwapMutation
     from ...standard import Mating
@@ -54,12 +58,13 @@ class Darwin(DarwinBase):
     """ Rate for growth-like mutations over other operations. """
     self.matingops = Mating(sequential=False)
     """ Container/Functor which calls the mating operations. """
+    roll = kwargs.pop('roll', None)
     if self.crossover_rate > 0e0:
-      self.matingops.add(Crossover(self.nmin, self.nmax, step=2), self.crossover_rate)
+      self.matingops.add(Crossover(self.nmin, self.nmax, step=2, roll=roll), self.crossover_rate)
     if self.swap_rate > 0e0:     
-      self.matingops.add(SwapMutation(-1), self.swap_rate)
+      self.matingops.add(SwapMutation(-1, roll=roll), self.swap_rate)
     if self.growth_rate > 0e0:   
-      self.matingops.add(GrowthMutation(self.nmin, self.nmax, step=2), self.growth_rate)
+      self.matingops.add(GrowthMutation(self.nmin, self.nmax, step=2, roll=roll), self.growth_rate)
     if 'dosym' in kwargs:
       self.dosym = kwargs.pop('dosym')
       """ Whether or not to use simplistic symmetries when comparing individuals. """
