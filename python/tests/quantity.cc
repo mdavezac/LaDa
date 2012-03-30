@@ -21,6 +21,7 @@ PyObject* check_get()
 {
   LADA_DOASSERT( std::abs(Quantity(1, "m").get("cm") -1e-2) < 1e-12, "Did not get correct scale."); 
   LADA_DOASSERT( std::abs(Quantity(1, "m").get() -1e0) < 1e-12, "Did not get correct scale."); 
+  Py_RETURN_NONE;
 }
 
 #ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */

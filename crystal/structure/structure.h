@@ -141,7 +141,7 @@ namespace LaDa
           void insert(iterator _pos, InputIterator _first, InputIterator _last)
           { ((StructureData*)object_)->atoms.insert(_pos, _first, _last); }
         //! Inserts one atom at given position.
-        iterator insert(iterator _pos, const_reference x) { ((StructureData*)object_)->atoms.insert(_pos, x); }
+        iterator insert(iterator _pos, const_reference x) { return ((StructureData*)object_)->atoms.insert(_pos, x); }
         //! Inserts n atom at given position.
         void insert(iterator _pos, size_type _n, const_reference x)
           { ((StructureData*)object_)->atoms.insert(_pos, _n, x); }

@@ -34,9 +34,11 @@ if(NOT compile_debug_tests)
     add_test(exception_${TYPE} python ${CMAKE_CURRENT_BINARY_DIR}/exception_${TYPE}.py)
   endforeach(TYPE ${TYPES})
 
-endif(NOT compile_debug_tests)
-
+  include_directories(${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDES})
   add_library (quantity SHARED "quantity.cc")
-  target_link_libraries(quantity ${PYTHON_LIBRARY} ${Boost_PYTHON_LIBRARY} pyerror)
+  target_link_libraries(quantity ${PYTHON_LIBRARY} ${Boost_PYTHON_LIBRARY}
+                                 pyerror)
   set_target_properties(quantity PROPERTIES PREFIX "_")
   add_test(quantity python ${CMAKE_CURRENT_SOURCE_DIR}/quantity.py ${CMAKE_CURRENT_BINARY_DIR})
+
+endif(NOT compile_debug_tests)

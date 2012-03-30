@@ -59,7 +59,12 @@ namespace LaDa
               name_ = _name;
               doc_ = _doc;
               exception_ = bp::object(bp::handle<>(bp::borrowed(
-                PyErr_NewExceptionWithDoc(&name_[0], &doc_[0], _bases.ptr(), d.ptr()) ) ) );
+#               if Py_MAJOR_VERSION >2 || (Py_MAJOR_VERSION == 2 and Py_MINOR_VERSION > 6)
+                  PyErr_NewExceptionWithDoc(&name_[0], &doc_[0], _bases.ptr(), d.ptr())
+#               else 
+                  PyErr_NewException(&name_[0], _bases.ptr(), d.ptr())
+#               endif
+                ) ) );
               is_first = false;
             }
             return exception_;
