@@ -3,7 +3,8 @@ def savejobs(self, event):
   """ Saves current job to current filename and directory. """
   from os.path import exists, abspath, isfile
   from ..jobs import JobParams, MassExtract as Collect, save as savejobs
-  from lada import interactive
+  from .. import interactive
+  from ..misc import RelativePath
   jobdict = interactive.jobdict.root
   jobdict_path = interactive.jobdict_path
 
@@ -15,7 +16,9 @@ def savejobs(self, event):
     print "savejobs takes one or no arguments."
     return
 
-  if len(args) == 1: jobdict_path = args[0]
+  if len(args) == 1:
+    jobdict_path = RelativePath(args[0]).path
+    interactive.jobdict_path = jobdict_path
 
   if jobdict_path is None: 
     print "No current job-dictionary path.\n"\

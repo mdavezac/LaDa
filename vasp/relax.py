@@ -435,3 +435,6 @@ epitaxial.__doc__\
                              .replace('generator', 'method').replace('\n      ', '\n')\
                  + "\n:return: An extraction object pointing to the final static calculation.\n"\
                  + "\n.. seealso:: `iter_epitaxial`\n\n"
+
+Epitaxial = makeclass( 'Epitaxial', Vasp, iter_epitaxial, epitaxial, module='lada.vasp.relax',
+                       doc = 'Functional form of the :py:class:`lada.vasp.relax.epitaxial` method.' )

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """ High-Thoughput of A2BO4 structures. """
 __docformat__ = "restructuredtext en"
 __all__ = ['nonmagnetic_wave', 'magnetic_wave']
@@ -27,7 +26,6 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
   from copy import deepcopy
   from lada.vasp import read_input
   from lada.jobs import JobDict
-  from lada.crystal import fill_structure
   from lada import interactive
 
   # reads input.
@@ -36,10 +34,11 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
 
   # sanity checks.
   for lattice in input.lattices:
-    assert len(getattr(lattice, 'name', '') != 0, ValueError("Lattice has no name.")
+    if len(getattr(lattice, 'name', '').rstrip().lstrip()) == 0:
+      raise ValueError("Lattice has no name.")
   
   # regex
-  specie_regex = compile("([A-Z][a-z]?)([A-Z][a-z]?)([A-Z][a-z]?)")
+  specie_regex = compile("([A-Z][a-z]?)2([A-Z][a-z]?)([A-Z][a-z]?)4")
 
   # Job dictionary.
   jobdict = JobDict()
@@ -49,9 +48,6 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
 
     # creates dictionary to replace A2BX4 with meaningfull species.
     match = specie_regex.match(material)
-    print match.group(1)
-    print match.group(2)
-    print match.group(3)
     assert match is not None, RuntimeError("Incorrect material " + material + ".")
     # checks species are known to vasp functional
     for i in range(1, 4):
@@ -67,7 +63,6 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
       structure = deepcopy(lattice)
       # changes atomic species.
       for atom in structure:  atom.type  = species_dict[atom.type]
-      structure = vasp_ordered(structure)
       # assigns it a name.
       structure.name = "{0} in {1}, spin-unpolarized.".format(material, lattice.name)
       # gets its scale.
@@ -77,9 +72,9 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
       lat_jobdict = jobdict / material 
   
       job = lat_jobdict / lattice.name / "non-magnetic"
-      job.functional = input.relaxer
-      job.jobparams["structure"] = structure
-      job.jobparams["ispin"] = 1
+      job.functional = input.vasp
+      job.params["structure"] = structure
+      job.params["ispin"] = 1
       # saves some stuff for future reference.
       job.material = material
       job.lattice  = lattice
@@ -166,9 +161,9 @@ def magnetic_wave(path=None, inputpath='input.py', **kwargs):
                          .format(material, lattice.name, prefix)
         job = jobdict / jobname
         job.functional = input.relaxer 
-        job.jobparams["structure"] = structure.copy()
-        job.jobparams["magmom"] = True
-        job.jobparams["ispin"] =  2
+        job.params["structure"] = structure.copy()
+        job.params["magmom"] = True
+        job.params["ispin"] =  2
         # saves some stuff for future reference.
         job.material = material
         job.lattice  = lattice
@@ -183,9 +178,9 @@ def magnetic_wave(path=None, inputpath='input.py', **kwargs):
 
         job = jobdict / jobname
         job.functional = input.relaxer
-        job.jobparams["structure"] = structure.copy()
-        job.jobparams["magmom"] = True
-        job.jobparams["ispin"] =  2
+        job.params["structure"] = structure.copy()
+        job.params["magmom"] = True
+        job.params["ispin"] =  2
         # saves some stuff for future reference.
         job.material = material
         job.lattice  = lattice
@@ -201,9 +196,9 @@ def magnetic_wave(path=None, inputpath='input.py', **kwargs):
 
         job = jobdict / jobname
         job.functional = input.relaxer if inputpath is not None else nonmagjob.functional
-        job.jobparams["structure"] = structure.copy()
-        job.jobparams["magmom"] = True
-        job.jobparams["ispin"] =  2
+        job.params["structure"] = structure.copy()
+        job.params["magmom"] = True
+        job.params["ispin"] =  2
         # saves some stuff for future reference.
         job.material = material
         job.lattice  = lattice

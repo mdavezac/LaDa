@@ -31,7 +31,7 @@ class Vasp(Incar):
     self.species = species if species is not None else {}
     """ Species in the system. """
     self.kpoints = kpoints if kpoints is not None \
-                   else "0\nM\n4 4 4\n0 0 0"
+                   else "\n0\nM\n4 4 4\n0 0 0"
     """ kpoints for which to perform calculations. """
 
     if 'program' in kwargs:
