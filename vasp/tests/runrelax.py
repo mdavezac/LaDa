@@ -24,7 +24,7 @@ def test(path):
   vasp.set_smearing   = "metal", 0.01
   vasp.relaxation = "volume"
   vasp.add_specie = "Si", "{0}/pseudos/Si".format(path)
-  directory = '/tmp/test/relax' # mkdtemp()
+  directory = mkdtemp()
   try: 
     functional = Relax(copy=vasp)
     assert abs(functional.ediff - 1e-5) < 1e-8

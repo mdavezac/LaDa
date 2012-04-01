@@ -20,8 +20,8 @@ def test():
   assert Relaxation('ionic').value == 'ionic'
   assert Relaxation('ionic', 60).value == ('ionic', 60)
   assert Relaxation('ionic cellshape', 60, -1).value == ('static', 60)
-  assert Relaxation('ionic cellshape', 60, 2).value == ('ionic cellshape', 60, 2)
-  assert Relaxation('cellshape ionic', 60, 2).value == ('ionic cellshape', 60, 2)
+  assert Relaxation('ionic cellshape', 60, 3).value == ('ionic cellshape', 60, 3)
+  assert Relaxation('cellshape ionic', 60, 3).value == ('ionic cellshape', 60, 3)
   assert Relaxation('cellshape volume ionic', 60, 2, 50).value == ('ionic cellshape volume', 60, 2, 50)
   assert repr(Relaxation('cellshape volume ionic', 60, 2, 50))\
             == "Relaxation('ionic cellshape volume', 60, 2, 50.0)"
@@ -30,11 +30,11 @@ def test():
   assert Relaxation('static').incar_string(vasp=vasp, structure=range(5))\
            == 'ISIF = 2\nIBRION = -1'
   assert Relaxation('ionic', 60).incar_string(vasp=vasp, structure=range(5))\
-           == 'ISIF = 2\nNSW = 60'
+           == 'ISIF = 2\nNSW = 60\nIBRION = 2'
   assert Relaxation('cellshape', 60).incar_string(vasp=vasp, structure=range(5))\
-           == 'ISIF = 5\nNSW = 60'
+           == 'ISIF = 5\nNSW = 60\nIBRION = 2'
   assert Relaxation('cellshape ionic', 60).incar_string(vasp=vasp, structure=range(5))\
-           == 'ISIF = 4\nNSW = 60'
+           == 'ISIF = 4\nNSW = 60\nIBRION = 2'
   assert Relaxation('cellshape ionic volume', 60, 3).incar_string(vasp=vasp, structure=range(5))\
            == 'ISIF = 3\nNSW = 60\nIBRION = 3'
   assert Relaxation('cellshape ionic volume', 60, 3, 20).incar_string(vasp=vasp, structure=range(5))\
@@ -48,7 +48,8 @@ def test():
   except: pass
   else: raise RuntimeError()
   vasp = Vasp(1e-4, -1e-5)
-  assert Relaxation('ionic', 60).incar_string(vasp=vasp, structure=range(5)) == 'ISIF = 2\nNSW = 60'
+  assert Relaxation('ionic', 60).incar_string(vasp=vasp, structure=range(5)) \
+      == 'ISIF = 2\nNSW = 60\nIBRION = 2'
   vasp = Vasp(-1e-4, 1e-5)
   try: Relaxation('ionic', 60).incar_string(vasp=vasp, structure=range(5))
   except: pass

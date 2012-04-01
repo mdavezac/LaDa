@@ -1,6 +1,6 @@
 set(PYLADA_HEADERS debug.hpp misc.hpp numpy_types.h std_map.hpp 
                    std_map.impl.hpp std_vector.hpp xml.hpp)
-set(PYLADA_PY mpi.py record.py)
+set(PYLADA_PY error.py)
 
 if(NOT noinstall_headers)
   install(FILES ${PYLADA_HEADERS} DESTINATION include/LaDa/python)
@@ -63,12 +63,12 @@ configure_file (
 install(FILES ${PROJECT_BINARY_DIR}/python/__init__.py DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada)
 install(FILES ${PYLADA_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada)
 
-include_directories(${PYTHON_INCLUDE_DIRS})
-add_library (pyerror SHARED exceptions.cc exceptions.h object.h quantity.h wrap_numpy.h wrap_numpy.h)
-target_link_libraries(pyerror ${Boost_PYTHON_LIBRARY})
-set_target_properties(pyerror PROPERTIES PREFIX "")
-set_target_properties(pyerror PROPERTIES OUTPUT_NAME error)
-install(TARGETS pyerror DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada)
+# include_directories(${PYTHON_INCLUDE_DIRS})
+# add_library (pyerror SHARED exceptions.cc exceptions.h object.h quantity.h wrap_numpy.h wrap_numpy.h)
+# target_link_libraries(pyerror ${Boost_PYTHON_LIBRARY})
+# set_target_properties(pyerror PROPERTIES PREFIX "")
+# set_target_properties(pyerror PROPERTIES OUTPUT_NAME error)
+set (EXTRA_FILES exceptions.h object.h quantity.h wrap_numpy.h wrap_numpy.h)
 
 if(compile_tests OR compile_debug_tests)
   add_subdirectory(tests)

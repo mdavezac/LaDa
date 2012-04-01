@@ -61,9 +61,9 @@ namespace LaDa
                 if(not atom) LADA_PYTHROW(ValueError, "Could not deepcopy atom.");
                 atom->pos = into_cell(vec+i_site->pos(), result->cell, inv_cell);
                 python::Object site = PyInt_FromLong(l);
-                if(not atom) LADA_PYTHROW(InternalError, "Could not create python integer.");
+                if(not atom) LADA_PYTHROW(internal, "Could not create python integer.");
                 if(not atom.pyattr("site", site) ) 
-                  LADA_PYTHROW(InternalError, "Could not set site index attribute.");
+                  LADA_PYTHROW(internal, "Could not set site index attribute.");
                 result.push_back(atom);
               }
             }

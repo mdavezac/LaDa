@@ -146,7 +146,7 @@ namespace LaDa
     {
       if(PyIndex_Check(_index))
       {
-        Py_ssize_t i = PyNumber_AsSsize_t(_index, python::PyException<error::IndexError>::exception().ptr());
+        Py_ssize_t i = PyNumber_AsSsize_t(_index, ::LaDa::error::get_error("IndexEror").ptr());
         if (i == -1 and PyErr_Occurred()) return NULL;
         return structure_getitem(_self, i);
       }
@@ -222,7 +222,7 @@ namespace LaDa
     {
       if(PyIndex_Check(_index))
       {
-        Py_ssize_t i = PyNumber_AsSsize_t(_index, python::PyException<error::IndexError>::exception().ptr());
+        Py_ssize_t i = PyNumber_AsSsize_t(_index, ::LaDa::error::get_error("IndexEror").ptr());
         if (i == -1 and PyErr_Occurred()) return -1;
         return structure_setitem(_self, i, _value);
       }

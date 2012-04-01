@@ -39,10 +39,7 @@ namespace LaDa
         void reset(PyObject *_in) 
         {
           if(_in != NULL and not PyAtom_Check(_in))
-          {
-            LADA_PYERROR(TypeError, "Cannot acquire object which is not an Atom or subclass.");
-            BOOST_THROW_EXCEPTION(error::pyerror() << error::pyobject(_in));
-          }
+            LADA_PYTHROW(TypeError, "Cannot acquire object which is not an Atom or subclass.");
           PyObject *dummy = (PyObject*)object_;
           object_ = (PyObject*)_in;
           Py_XINCREF(object_);

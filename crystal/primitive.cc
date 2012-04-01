@@ -108,7 +108,7 @@ namespace LaDa
               trial.col(1) = *i_third;
     #         ifdef LADA_DEBUG
                 if(trial.determinant() < types::tolerance)
-                  LADA_PYTHROW(InternalError, "Negative volume.");
+                  LADA_PYTHROW(internal, "Negative volume.");
     #         endif
             }
             // Checks that original cell is a supercell.
@@ -122,7 +122,7 @@ namespace LaDa
 
       // Found the new cell with smallest volume (e.g. primivite)
       if(math::eq(_structure.volume(), new_cell.determinant()))
-        LADA_PYTHROW(InternalError, "Found translation but no primitive cell.");
+        LADA_PYTHROW(internal, "Found translation but no primitive cell.");
 
       // now creates new lattice.
       result.clear();
@@ -142,9 +142,9 @@ namespace LaDa
         }
       }
       if(_structure.size() % result.size() != 0)
-        LADA_PYTHROW(InternalError,"Nb of atoms in output not multiple of input.");
+        LADA_PYTHROW(internal, "Nb of atoms in output not multiple of input.");
       if(math::neq(types::t_real(_structure.size()/result.size()), _structure.volume()/result.volume()))
-        LADA_PYTHROW(InternalError, "Size and volumes do not match.");
+        LADA_PYTHROW(internal, "Size and volumes do not match.");
 
       return result;
     }

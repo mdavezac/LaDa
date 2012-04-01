@@ -80,5 +80,5 @@ if __name__ == "__main__":
   from os.path import join
   if len(argv) > 2: path.extend(argv[2:])
   
-  if len(argv) > 1: test(join(argv[1], 'COMMON'))
+  test(join(argv[1], 'COMMON'))
 

@@ -26,6 +26,7 @@
 PyMODINIT_FUNC initcppwrappers(void) 
 {
   import_array(); // needed for NumPy 
+  LaDa::error::bp_register();
 
   if (PyType_Ready(LaDa::crystal::atom_type()) < 0) return;
   if (PyType_Ready(LaDa::crystal::structure_type()) < 0) return;

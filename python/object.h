@@ -100,7 +100,7 @@ namespace LaDa
             }
             catch(std::exception &e) 
             {
-              LADA_PYERROR(InternalError, ("Could not set atomic attribute " + _name
+              LADA_PYERROR(internal, ("Could not set atomic attribute " + _name
                                       + ": " + e.what()).c_str() );
               return false;
             }
@@ -135,7 +135,7 @@ namespace LaDa
           if(not hasattr("__eq__"))
             LADA_PYTHROW(TypeError, "No __eq__ member function found when comparing objects.");
           Object methodname = PyString_FromString("__eq__");
-          if(not methodname) LADA_PYTHROW(InternalError, "Could not create string.");
+          if(not methodname) LADA_PYTHROW(internal, "Could not create string.");
           Object result = PyObject_CallMethodObjArgs(borrowed(), 
                                                      methodname.borrowed(), _b.borrowed(), NULL);
           if(not result) LADA_PYTHROW(TypeError, "Python exception thrown when comparing objects.");

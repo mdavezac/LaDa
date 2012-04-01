@@ -740,6 +740,8 @@ class Relaxation(SpecialVaspParam):
     for i in xrange(4): 
       if result[-1] is None: result = result[:-1]
     if len(result) == 1: return result[0]
+    if len(result) == 3 and result[0] != 'static' and result[2] == 2:
+      return tuple(result[:2]) if result[1] != 50 else result[0]
     return tuple(result)
 
   @value.setter

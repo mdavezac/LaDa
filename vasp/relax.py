@@ -332,14 +332,14 @@ def iter_epitaxial(vasp, structure, outdir=None, direction=[0,0,1], epiconv = 1e
   kwargs['relaxation'] = 2
 
   allcalcs = []
-  def change_structure(rate):
+  def change_structure(x):
     """ Creates new structure with input change in c. """
     from numpy.linalg import inv
     from numpy import outer, dot
     newstruct = structure.copy()
     strain = outer(direction, direction) * x 
-    result.cell += dot(strain, structure.cell)
-    for atom in result: atom.pos += dot(strain, atom.pos)
+    newstruct.cell += dot(strain, structure.cell)
+    for atom in newstruct: atom.pos += dot(strain, atom.pos)
     return newstruct
 
   def component(stress):

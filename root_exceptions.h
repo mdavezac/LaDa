@@ -27,14 +27,10 @@ namespace LaDa
     //!        users would see.
     struct internal: virtual root {};
     //! out-of-range error.
-    struct out_of_range: virtual internal {};
+    struct out_of_range: virtual root {};
     //! \brief end-of-iteration error.
     //! \details Should be used to avoid infinit loops. 
-    struct infinite_loop: virtual internal {};
-
-    //! \brief Internal error thrown when encountering a python exception.
-    //! \details 
-    struct pyerror : virtual internal {};
+    struct infinite_loop: virtual root {};
 
     //! Convenience error info type to capture strings.
     typedef boost::error_info<struct string_info,std::string> string;
@@ -42,9 +38,6 @@ namespace LaDa
     //! \details No increffing or decreffing. A python exception should already
     //!          exist.
     typedef boost::error_info<struct string_info,PyObject*> pyobject;
-    //! \brief Convenience error infor type to capture python exception.
-    //! \details Holds python exception to throw if no PyErr yet.
-    typedef boost::error_info<struct string_info,PyObject*> pyexcept;
   }
 }
 

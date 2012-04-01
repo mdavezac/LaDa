@@ -5,6 +5,7 @@
 
 #include <iostream>
 
+#include <boost/python/errors.hpp>
 #include <opt/types.h>
 
 #include "object.h"
@@ -15,7 +16,6 @@ namespace LaDa
   namespace python
   {
     //! \brief Wraps units from python package quantities.
-    //! \throws Tries to only throw error::pyerror and derived.
     class Quantity : public Object
     {
         //! Private, can't happen cause it would have to throw. 
@@ -42,7 +42,7 @@ namespace LaDa
               run_code_("float(self.magnitude)"):
               run_code_("float(self.rescale('" + _units + "').magnitude)")
           );
-          if(not result) BOOST_THROW_EXCEPTION(error::pyerror());
+          if(not result) BOOST_THROW_EXCEPTION(error::internal());
           return PyFloat_AS_DOUBLE(result.borrowed()); 
         }
         //! \brief Resets input to input scale.
@@ -73,12 +73,12 @@ namespace LaDa
           { 
             return PyObject_IsInstance(_in, Quantity::classes_().borrowed()) == 1; 
           }
-          catch(error::pyerror &_e) { PyErr_Clear(); return false; }
+          catch(error::root &_e) { PyErr_Clear(); return false; }
         }
   
         //! \brief New reference to quantities.unitquantity.Unitquantity class.
         //! \throws error::ImportError when the class cannot be imported.
-        //!         Does not clear the pyerror exception. 
+        //!         Does not clear the exception. 
         static Object class_()
         {
           Object quant_type;
@@ -90,12 +90,11 @@ namespace LaDa
           
           error:
             PyErr_Clear();
-            LADA_PYERROR(ImportError, "Could not import class Uniquantity from quantities package.");
-            BOOST_THROW_EXCEPTION(error::ImportError());
+            LADA_PYTHROW(ImportError, "Could not import class Uniquantity from quantities package.");
         }
         //! \returns tuple containing UnitQuantity and Quantity classes.
         //! \throws error::ImportError when the class cannot be imported.
-        //!         Does not clear the pyerror exception. 
+        //!         Does not clear the exception. 
         static Object classes_()
         {
           Object quant_type, quant_type2;
@@ -111,12 +110,11 @@ namespace LaDa
 
           error:
             PyErr_Clear();
-            LADA_PYERROR(ImportError, "Could not import class Uniquantity from quantities package.");
-            BOOST_THROW_EXCEPTION(error::ImportError());
+            LADA_PYTHROW(ImportError, "Could not import class Uniquantity from quantities package.");
         }
         //! \brief New reference to quantity module.
         //! \throws error::ImportError when the package cannot be imported.
-        //!         Does not clear the pyerror exception. 
+        //!         Does not clear the  exception. 
         static Object module()
         {
           Object const quant( PyImport_ImportModule("quantities") );
@@ -151,22 +149,19 @@ namespace LaDa
         Object run_code_(std::string const &_code, Object const &_in)
         {
           if(not is_valid())
-          {
-            LADA_PYERROR(InternalError, "Internal reference is not set.");
-            BOOST_THROW_EXCEPTION(error::InternalError());
-          }
+            LADA_PYTHROW(internal, "Internal reference is not set.");
           // creates global/local dictionary in order to run code.
           Object const globals = Quantity::module(); 
           Object locals = PyDict_New();
-          if(not locals) BOOST_THROW_EXCEPTION(error::pyerror());
+          if(not locals) BOOST_THROW_EXCEPTION(error::internal());
           if(_in and PyDict_SetItemString(locals.borrowed(), "input", _in.borrowed()) < 0)
-            BOOST_THROW_EXCEPTION(error::pyerror()); 
+            BOOST_THROW_EXCEPTION(error::internal()); 
           if(PyDict_SetItemString(locals.borrowed(), "self", object_) < 0)
-            BOOST_THROW_EXCEPTION(error::pyerror());
+            BOOST_THROW_EXCEPTION(error::internal());
           Object const result(PyRun_String( _code.c_str(), Py_eval_input,
                                             PyModule_GetDict(globals.borrowed()), 
                                             locals.borrowed() ));
-          if(not result) BOOST_THROW_EXCEPTION(error::pyerror());
+          if(not result) BOOST_THROW_EXCEPTION(error::internal());
           return result;
         }
         //! \brief Runs python code on current object
@@ -174,40 +169,37 @@ namespace LaDa
         Object run_code_(std::string const &_code)
         {
           if(not is_valid())
-          {
-            LADA_PYERROR(InternalError, "Internal reference is not set.");
-            BOOST_THROW_EXCEPTION(error::InternalError());
-          }
+            LADA_PYTHROW(internal, "Internal reference is not set.");
           // creates global/local dictionary in order to run code.
           Object const globals = Quantity::module(); 
           Object locals = PyDict_New();
-          if(not locals) BOOST_THROW_EXCEPTION(error::pyerror());
+          if(not locals) BOOST_THROW_EXCEPTION(error::internal());
           if(PyDict_SetItemString(locals.borrowed(), "self", object_) < 0)
-            BOOST_THROW_EXCEPTION(error::pyerror());
+            BOOST_THROW_EXCEPTION(error::internal());
           Object const result(PyRun_String( _code.c_str(), Py_eval_input,
                                             PyModule_GetDict(globals.borrowed()), 
                                             locals.borrowed() ));
-          if(not result) BOOST_THROW_EXCEPTION(error::pyerror());
+          if(not result) BOOST_THROW_EXCEPTION(error::internal());
           return result;
         }
         //! Sets internal object to represent the input double in given units.
         void set(double _in, std::string const &_units)
         {
-          if(_units.size() == 0) BOOST_THROW_EXCEPTION(error::pyerror());
+          if(_units.size() == 0) BOOST_THROW_EXCEPTION(error::internal());
           // creates global/local dictionary in order to run code.
           Object globals = Quantity::module(); 
           Object locals = PyDict_New();
-          if(not locals) BOOST_THROW_EXCEPTION(error::pyerror());
+          if(not locals) BOOST_THROW_EXCEPTION(error::internal());
           Object infloat( PyFloat_FromDouble(_in) );
-          if(not infloat) BOOST_THROW_EXCEPTION(error::pyerror());
+          if(not infloat) BOOST_THROW_EXCEPTION(error::internal());
           Object units(Quantity::import(_units));
           if(PyDict_SetItemString(locals.borrowed(), "scale", infloat.borrowed()) < 0)
-            BOOST_THROW_EXCEPTION(error::pyerror());
+            BOOST_THROW_EXCEPTION(error::internal());
           if(PyDict_SetItemString(locals.borrowed(), "units", units.borrowed()) < 0)
-            BOOST_THROW_EXCEPTION(error::pyerror());
+            BOOST_THROW_EXCEPTION(error::internal());
           Object const result( PyRun_String( "scale * units", Py_eval_input,
                                              PyModule_GetDict(globals.borrowed()), locals.borrowed()) );
-          if(not result) BOOST_THROW_EXCEPTION(error::pyerror());
+          if(not result) BOOST_THROW_EXCEPTION(error::internal());
           this->Object::reset(result);
         }
     };

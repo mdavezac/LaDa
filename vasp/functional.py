@@ -289,7 +289,7 @@ class Vasp(Incar):
     # adds objects in __dict__
     class Dummy: pass
     for key, value in self.__dict__.iteritems():
-      if key == 'special' or key == 'params': continue
+      if key == 'special' or key == 'params' or key == 'species': continue
       try: 
         if skip and getattr(compare, key, Dummy) == value: continue
       except: pass

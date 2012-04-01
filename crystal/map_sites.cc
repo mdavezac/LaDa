@@ -79,7 +79,7 @@ namespace LaDa
             = PyObject_CallFunctionObjArgs( _withocc.borrowed(),
                                             _mapper[fneigh_index].borrowed(),
                                             i_atom->borrowed(), NULL );
-          if(not result) BOOST_THROW_EXCEPTION(error::InternalError());
+          if(not result) BOOST_THROW_EXCEPTION(error::internal());
           if(PyBool_Check(result.borrowed()))
           {
             if(result.borrowed() == Py_False) fneigh_index = -1;
@@ -87,7 +87,7 @@ namespace LaDa
           else if(PyLong_Check(result.borrowed()) or PyInt_Check(result.borrowed()))
           {
             int i = PyInt_AS_LONG(result.borrowed());
-            if(i == -1 and PyErr_Occurred() != NULL) BOOST_THROW_EXCEPTION(error::InternalError());
+            if(i == -1 and PyErr_Occurred() != NULL) BOOST_THROW_EXCEPTION(error::internal());
             if(i == 0) fneigh_index = -1;
           }
           else LADA_PYTHROW(ValueError, "Callable is expected to return True or False");
@@ -95,12 +95,12 @@ namespace LaDa
         if(fneigh_index == -1)
         {
           i_atom->pyattr("site", Py_None);
-          if(PyErr_Occurred() != NULL) BOOST_THROW_EXCEPTION(error::InternalError());
+          if(PyErr_Occurred() != NULL) BOOST_THROW_EXCEPTION(error::internal());
         }
         else
         { 
           python::Object pyint = PyLong_FromLong(fneigh_index);
-          if(not pyint) {PyErr_Clear(); LADA_PYTHROW(InternalError, "Could not create python integer."); }
+          if(not pyint) {PyErr_Clear(); LADA_PYTHROW(internal, "Could not create python integer."); }
           i_atom->pyattr("site", pyint.borrowed());
         }
       }

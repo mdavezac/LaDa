@@ -173,7 +173,7 @@ namespace LaDa
           case NPY_USHORT    : return sizeof(type<npy_ushort>::np_type) > sizeof(T);
           default: break;
         };
-        python::PyException<error::ValueError>::throw_error("Unknown numpy array type.");
+        LADA_PYERROR(ValueError, "Unknown numpy array type.");
       }
      
       //! Returns python object from array.
@@ -184,8 +184,8 @@ namespace LaDa
           PyObject *result = PyArray_SimpleNewFromData(1, dims, type<T>::value, _ptr);
           if( result == NULL or PyErr_Occurred() != NULL ) 
           {
-            if(PyErr_Occurred() == NULL)
-              python::PyException<error::internal>::throw_error("Could not create numpy array");
+            if(PyErr_Occurred() == NULL) 
+              LADA_PYERROR(internal, "Could not create numpy array");
             boost::python::throw_error_already_set();
             return boost::python::object();
           }
@@ -200,7 +200,7 @@ namespace LaDa
           if( result == NULL or PyErr_Occurred() != NULL ) 
           {
             if(PyErr_Occurred() == NULL)
-              python::PyException<error::internal>::throw_error("Could not create numpy array");
+              LADA_PYERROR(internal, "Could not create numpy array");
             boost::python::throw_error_already_set();
             return boost::python::object();
           }
@@ -221,7 +221,7 @@ namespace LaDa
           if( result == NULL or PyErr_Occurred() != NULL ) 
           {
             if(PyErr_Occurred() == NULL)
-              python::PyException<error::internal>::throw_error("Could not create numpy array");
+              LADA_PYERROR(internal, "Could not create numpy array");
             boost::python::throw_error_already_set();
             return boost::python::object();
           }
@@ -235,7 +235,7 @@ namespace LaDa
         if( result == NULL or PyErr_Occurred() != NULL ) 
         {
           if(PyErr_Occurred() == NULL)
-            python::PyException<error::internal>::throw_error("Could not create numpy array");
+            LADA_PYERROR(internal, "Could not create numpy array");
           boost::python::throw_error_already_set();
           return boost::python::object();
         }
@@ -269,7 +269,7 @@ namespace LaDa
       {
         if( PyArray_Check(_ob.ptr()) ) return true;
         
-        python::PyException<error::ValueError>::throw_error("Argument is not a numpy array.\n");
+        LADA_PYERROR(ValueError, "Argument is not a numpy array.\n");
         return false;
       }
       inline bool check_is_complex_array(boost::python::object const &_ob)
@@ -277,7 +277,7 @@ namespace LaDa
         if(not check_is_array(_ob)) return  false;
         if(math::numpy::is_complex(_ob.ptr())) return true;
         
-        python::PyException<error::ValueError>::throw_error("Argument is not a complex numpy array.\n");
+        LADA_PYERROR(ValueError, "Argument is not a complex numpy array.\n");
         return false;
       }
 
@@ -345,7 +345,7 @@ namespace LaDa
               return static_cast<T>(*((type<npy_ushort>::np_type*)     ptr_data));
             default: break;
           };
-          python::PyException<error::ValueError>::throw_error("Unknown numpy type on input.");
+          LADA_PYERROR(ValueError, "Unknown numpy type on input.");
           return T(-1);
         }
     }

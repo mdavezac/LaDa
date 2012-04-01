@@ -3,10 +3,7 @@
 #include "LaDaConfig.h"
 
 #include <boost/python/object.hpp>
-#include <boost/python/handle.hpp>
-#include <boost/python/str.hpp>
-#include <boost/python/tuple.hpp>
-#include <boost/python/dict.hpp>
+#include <boost/python/import.hpp>
 #include <boost/python/exception_translator.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 
@@ -17,80 +14,77 @@ namespace LaDa
   namespace error
   {
     //! Attribute error thrown explicitely by lada.
-    struct AttributeError: virtual input, virtual pyerror {};
+    struct AttributeError: virtual root {};
     //! Key error thrown explicitely by lada.
-    struct KeyError: virtual input, virtual out_of_range, virtual pyerror {};
+    struct KeyError: virtual out_of_range, virtual root {};
     //! Value error thrown explicitely by lada.
-    struct ValueError: virtual input, virtual pyerror {};
+    struct ValueError: virtual root {};
     //! Index error thrown explicitely by lada.
-    struct IndexError: virtual input, virtual pyerror {};
+    struct IndexError: virtual root {};
     //! Argument error thrown explicitely by lada.
-    struct TypeError: virtual input, virtual pyerror {};
+    struct TypeError: virtual root {};
     //! Not implemented error thrown explicitely by lada.
-    struct NotImplementedError: virtual internal, virtual pyerror {};
+    struct NotImplementedError: virtual root {};
     //! Subclasses python's ImportError.
-    struct ImportError: virtual internal, virtual pyerror {};
-    //! Subclasses python's ImportError.
-    struct InternalError: virtual internal, virtual pyerror {};
-  }
+    struct ImportError: virtual root {};
 
-  namespace python
-  {
-    // Class to declare and register c++ to python exceptions.
-    template<class T> 
-      class PyException
-      {
-        public:
-          PyException() {}
-          boost::python::object const &initialize( std::string const &_name, 
-                                                   std::string const &_doc, 
-                 boost::python::tuple const &_bases
-                   = boost::python::make_tuple(boost::python::object(
-                       boost::python::handle<>(
-                         PyExc_StandardError))) ) 
-          {
-            static bool is_first = true;
-            if(is_first)
-            {
-              namespace bp = boost::python;
-              bp::dict d;
-              d["__doc__"] = bp::str(_doc);
-              d["name"] = bp::str(_name);
-              name_ = _name;
-              doc_ = _doc;
-              exception_ = bp::object(bp::handle<>(bp::borrowed(
-                PyErr_NewExceptionWithDoc(&name_[0], &doc_[0], _bases.ptr(), d.ptr()) ) ) );
-              is_first = false;
-            }
-            return exception_;
-          }
+    boost::python::object inline get_error(std::string const &_name)
+    {
+      namespace bp = boost::python;
+      bp::object const module = bp::import("lada.error");
+      bool const has_attr = PyObject_HasAttrString(module.ptr(), _name.c_str());
+      return has_attr ? module.attr(_name.c_str()): module.attr("root");
+    }
+#   ifdef LADA_ERROR 
+#     error LADA_ERROR already defined.
+#   endif
+#   define LADA_ERROR(TYPE)                                                  \
+    inline void translate ## TYPE(::LaDa::error::TYPE const &_e)             \
+    {                                                                        \
+      if(PyErr_Occurred() != NULL) return;                                   \
+      boost::python::object const error = get_error(#TYPE);                  \
+      std::string message = boost::diagnostic_information(_e);               \
+      message += "lada.error.";                                              \
+      message += #TYPE;                                                      \
+      message += " encountered.";                                            \
+      PyErr_SetString(error.ptr(), message.c_str());                         \
+    }
+    LADA_ERROR(root);
+    LADA_ERROR(input);
+    LADA_ERROR(internal);
+    LADA_ERROR(out_of_range);
+    LADA_ERROR(infinite_loop);
+    LADA_ERROR(KeyError);
+    LADA_ERROR(ValueError);
+    LADA_ERROR(IndexError);
+    LADA_ERROR(TypeError);
+    LADA_ERROR(NotImplementedError);
+    LADA_ERROR(ImportError);
+    LADA_ERROR(AttributeError);
+#   undef LADA_ERROR
+    inline void bp_register()
+    {
+      namespace bp = boost::python;
+      static bool is_first = true;
+      if(not is_first) return;
+      is_first = false;
+#     define LADA_ERROR(TYPE) \
+        bp::register_exception_translator< LaDa::error::TYPE>(&translate ## TYPE);
+        LADA_ERROR(root);
+        LADA_ERROR(input);
+        LADA_ERROR(internal);
+        LADA_ERROR(out_of_range);
+        LADA_ERROR(infinite_loop);
+        LADA_ERROR(KeyError);
+        LADA_ERROR(ValueError);
+        LADA_ERROR(IndexError);
+        LADA_ERROR(TypeError);
+        LADA_ERROR(NotImplementedError);
+        LADA_ERROR(ImportError);
+        LADA_ERROR(AttributeError);
+#     undef LADA_ERROR
+    }
 
-          void operator()(T const &_e) const
-          {
-            std::string message = boost::diagnostic_information(_e);
-            if(    name_[0] == 'a' or name_[0] == 'e' or name_[0] == 'i'
-                or name_[0] == 'o' or name_[0] == 'u' or name_[0] == 'y' )
-              message += "Encountered an " + name_ + " error.";
-            else 
-              message += "Encountered a " + name_ + " error.";
-            PyErr_SetString(exception_.ptr(), message.c_str());
-          }
-
-          static void throw_error(std::string const &_message)
-          {
-            PyErr_SetString(exception_.ptr(), _message.c_str());
-            boost::python::throw_error_already_set();
-          };
-
-          static boost::python::object const & exception() { return exception_; }
-
-        private:
-          std::string name_;
-          std::string doc_;
-          //! static exception object. Act as global.
-          static boost::python::object exception_;
-      };
-    template<class T> boost::python::object PyException<T>::exception_ = boost::python::object();
 #   ifdef LADA_PYERROR
 #     error LADA_PYERROR already  defined. 
 #   endif
@@ -104,28 +98,24 @@ namespace LaDa
     //!      Raises a python exception with the interpreter, but no c++ exception.
     //!      EXCEPTION should be an unqualified declared in python/exceptions.h.
 #   define LADA_PYERROR(EXCEPTION, MESSAGE) \
-      PyErr_SetString( ::LaDa::python::PyException< ::LaDa::error::EXCEPTION >::exception().ptr(), \
-                       MESSAGE )
+      PyErr_SetString(::LaDa::error::get_error(#EXCEPTION).ptr(), MESSAGE)
     //! \def LADA_PYERROR(EXCEPTION, MESSAGE)
     //!      Raises a python exception with a formatted message, but no c++ exception.
     //!      For formatting, see PyErr_Format from the python C API.
     //!      EXCEPTION should be an unqualified declared in python/exceptions.h.
 #   define LADA_PYERROR_FORMAT(EXCEPTION, MESSAGE, OTHER) \
-      PyErr_Format( ::LaDa::python::PyException< ::LaDa::error::EXCEPTION >::exception().ptr(), \
-                    MESSAGE, OTHER )
+      PyErr_Format(::LaDa::error::get_error(#EXCEPTION).ptr(), MESSAGE, OTHER)
     //! \def LADA_PYTHROW(EXCEPTION, MESSAGE)
     //!      Raises a boost exception where EXCEPTION is stored as pyexcetp and MESSAGE as string.
     //!      EXCEPTION should be an unqualified declared in python/exceptions.h.
     //!      This macro makes it easy to catch all thrown python exceptions in a single statement.
 #   define LADA_PYTHROW(EXCEPTION, MESSAGE)                                                   \
     {                                                                                         \
-      PyObject * const exception                                                              \
-         = ::LaDa::python::PyException< ::LaDa::error::EXCEPTION >::exception().ptr();        \
+      PyObject * const exception = ::LaDa::error::get_error(#EXCEPTION).ptr();                \
       std::ostringstream sstr;                                                                \
       sstr << "In " << __FILE__ << "(" << __LINE__ << "): " << MESSAGE;                       \
       PyErr_SetString(exception, sstr.str().c_str());                                         \
       BOOST_THROW_EXCEPTION( ::LaDa::error::EXCEPTION()                                       \
-                             << ::LaDa::error::pyexcept(exception)                            \
                              << ::LaDa::error::string(sstr.str()) );                          \
     }
   }

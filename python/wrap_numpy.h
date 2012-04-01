@@ -149,8 +149,7 @@ namespace LaDa
           {
             npy_intp const n0(PyArray_DIM(_in, 0));
             npy_intp const n1(PyArray_DIM(_in, 1));
-            PyErr_Format( ::LaDa::python::PyException< ::LaDa::error::TypeError >::exception().ptr(),
-                          "Expected a %ix%i array, got %ix%i", N0, N1, n0, n1);
+            LADA_PYERROR_FORMAT(TypeError,"Expected a %ix%i array, got %ix%i", (N0, N1, n0, n1));
             return false;
           }
           python::Object iterator = PyArray_IterNew(_in);
