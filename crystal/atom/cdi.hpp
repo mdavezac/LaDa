@@ -12,7 +12,7 @@ namespace LaDa
       static int lada_atom_traverse(AtomData *_self, visitproc visit, void *arg)
         { Py_VISIT(_self->pydict); Py_VISIT(_self->type); return 0; }
       //! Clears back reference.
-      static int lada_atom_gcclear(AtomData *self) { Py_CLEAR(self->pydict); Py_CLEAR(self->type); }
+      static int lada_atom_gcclear(AtomData *self) { Py_CLEAR(self->pydict); Py_CLEAR(self->type); return 0; }
     }
  
     // Function to deallocate a string atom.

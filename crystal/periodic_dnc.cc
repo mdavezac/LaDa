@@ -223,7 +223,7 @@ namespace LaDa
         types::t_real overlap = 0e25;
         math::iVector3d mesh;
         long return_mesh = false;
-        unsigned int nperbox = 20;
+        unsigned int nperbox = 0;
         static char *kwlist[] = { const_cast<char*>("structure"),
                                   const_cast<char*>("overlap"), 
                                   const_cast<char*>("mesh"), 
@@ -232,11 +232,12 @@ namespace LaDa
         if(not PyArg_ParseTupleAndKeywords( _args, _kwargs, "Od|OIl:DnCBoxes", kwlist,
                                             &structure, &overlap, &_n, &nperbox, &return_mesh) )
           return NULL;
-        if(_n != NULL and nperbox != -1)
+        if(_n != NULL and nperbox != 0)
         {
           LADA_PYERROR(TypeError, "DnCBoxes: Cannot specify both n and nperbox.");
           return NULL;
         }
+        else if(_n == NULL) nperbox = 20;
         if(not PyStructure_Check(structure)) 
         {
           LADA_PYERROR(TypeError, "DnCBoxes: First argument should be a structure.");
