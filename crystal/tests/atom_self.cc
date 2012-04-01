@@ -36,6 +36,7 @@ static PyMethodDef methods[] = {
 
 PyMODINIT_FUNC init_atom_self(void) 
 {
+  LaDa::error::bp_register();
   import_array();
   LaDa::crystal::import();
   PyObject* module = Py_InitModule("_atom_self", methods);

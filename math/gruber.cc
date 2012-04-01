@@ -151,13 +151,13 @@ namespace LaDa
       void n4_action()
       {
         iVector3d vec(1,1,1);
-        size_t z(-1);
+        size_t z(6);
         if(gt(d, 0e0, tol)) vec(0) = -1; else if( eq(d, 0e0, tol) ) z = 0; 
         if(gt(e, 0e0, tol)) vec(1) = -1; else if( eq(e, 0e0, tol) ) z = 1; 
         if(gt(f, 0e0, tol)) vec(2) = -1; else if( eq(f, 0e0, tol) ) z = 2; 
         if(vec(0) * vec(1) * vec(2) < 0)
         {
-          if(z < 0) BOOST_THROW_EXCEPTION(error::internal());
+          if(z == 6) BOOST_THROW_EXCEPTION(error::internal());
           vec(z) = -1;
         }
         cb_update(vec(0), 0, 0, 0, vec(1), 0, 0, 0, vec(2));
