@@ -124,15 +124,18 @@ def showme_pbs(self, which):
   from operator import itemgetter
   from .. import interactive
 
-  filename = interactive.jobdict.name.replace("/", ".")
+  if not interactive.jobdict.is_job:
+    print "Current position in job-dictionary is not a job."
+    return
+  filename = interactive.jobdict.name[:-1].replace("/", ".")
   if which in ["pbserr", "pbsout"]:
     prefix = "out" if which == "pbsout" else "err"
     filename = join(interactive.jobdict_path + ".pbs", prefix + filename)
-    filenames = [u for u in glob(filename+'.*')]
-    numbers   = [(i, int(u[len(filename)+1:].split('.')[0])) for i, u in enumerate(filenames)]
+    filenames = glob(filename+'.*')
+    numbers   = [(i, int(u[len(filename)+1:].split('.')[-1])) for i, u in enumerate(filenames)]
     if len(numbers) == 0: filename = None
     else: filename = filenames[ sorted(numbers, key=itemgetter(1))[-1][0] ]
-  else: filename = join(interactive.jobdict_path + ".pbs", filename[1:] + "pbs")
+  else: filename = join(interactive.jobdict_path + ".pbs", filename[1:] + ".pbs")
   
   if filename is None or (not exists(filename)): 
     print "Could not find {0}({1}).".format(which, filename)
@@ -143,16 +146,17 @@ def showme_pbs(self, which):
 def completer(self, event):
   """ Completer for showme. """
   from os.path import exists, join, dirname
+  from glob import glob
   from lada import interactive
   if interactive.jobdict is None: return ['']
   if interactive.jobdict.functional is None: return ['']
   result = ['functional'] + interactive.jobdict.params.keys()
-  if interactive.jobdict_path is not None: 
-    jobname = interactive.jobdict.name.replace("/", ".")
+  if interactive.jobdict.is_job and interactive.jobdict_path is not None: 
+    jobname = interactive.jobdict.name[:-1].replace("/", ".")
     filename = join(interactive.jobdict_path + ".pbs", 'err' + jobname)
-    if exists(filename): result.append('pbserr')
+    if len(glob(filename + ".*")) > 0: result.append('pbserr')
     filename = join(interactive.jobdict_path + ".pbs", 'out' + jobname)
-    if exists(filename): result.append('pbsout')
-    filename = join(interactive.jobdict_path + ".pbs", jobname[1:] + "pbs")
+    if len(glob(filename + ".*")) > 0: result.append('pbsout')
+    filename = join(interactive.jobdict_path + ".pbs", jobname[1:] + ".pbs")
     if exists(filename): result.append('pbs')
   return result

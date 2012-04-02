@@ -30,7 +30,7 @@ def launch(self, event, jobdicts):
   if mppalloc is None:
     def mppalloc(job): 
       """ Returns number of processes for this job. """
-      N = len(job.structure.atoms) # number of atoms.
+      N = len(job.structure) # number of atoms.
       if N % 2 == 1: N -= 1
       return max(N, 1)  
 

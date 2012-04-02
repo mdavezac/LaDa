@@ -35,6 +35,7 @@ def load_ipython_extension(ip):
     ip.set_hook('complete_command', launch_completer, str_key = '%launch')
     if lada.ipython_verbose_representation is not None:
       lada.verbose_representation = lada.ipython_verbose_representation
+    if hasattr(lada, 'ipython_qstat'): ip.define_magic('qstat', lada.ipython_qstat)
 
 def unload_ipython_extension(ip):
   """ Unloads LaDa IPython extension. """
