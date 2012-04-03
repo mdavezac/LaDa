@@ -16,12 +16,11 @@
     compiled.
 """
 __docformat__ = "restructuredtext en"
-__all__ = [ 'GWVasp', 'Vasp', 'Extract', 'Density', 'Gamma', 'Specie',  \
+__all__ = [ 'GWVasp', 'Vasp', 'Extract', 'Specie',  \
             'Launch', 'Incar', 'RelaxCellShape' ]
 from .launch import Launch
 from .extract import Extract
 from .incar import Incar
-from .kpoints import Density, Gamma
 from .specie import Specie
 from .functional import Functional as Vasp
 from .gwfunc import GWFunctional as GWVasp

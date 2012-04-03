@@ -10,7 +10,7 @@ class Launch(Incar):
   """ A class to launch a single vasp calculation """
 
   def __init__( self, inplace = True, workdir = None, species = None, \
-                kpoints = Density(), **kwargs ):
+                kpoints = None, **kwargs ):
     """ Initializes Launch instance.
 
         :Parameters:
@@ -33,7 +33,7 @@ class Launch(Incar):
     """ Filesystem location where temporary calculations are performed.  """
     self.species = species if species is not None else {}
     """ Species in the system. """
-    self.kpoints = kpoints
+    self.kpoints = '\n0\nM\n2 2 2\n0 0 0\n' if kpoints is None else kpoints 
     """ kpoints for which to perform calculations. """
     self.inplace = inplace
     """ If True calculations are performed in the output directory. """
