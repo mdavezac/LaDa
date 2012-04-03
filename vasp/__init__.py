@@ -17,7 +17,7 @@
 """
 __docformat__ = "restructuredtext en"
 __all__ = [ 'GWVasp', 'Vasp', 'Extract', 'Density', 'Gamma', 'Specie',  \
-            'Launch', 'Incar' ]
+            'Launch', 'Incar', 'RelaxCellShape' ]
 from .launch import Launch
 from .extract import Extract
 from .incar import Incar
@@ -25,6 +25,7 @@ from .kpoints import Density, Gamma
 from .specie import Specie
 from .functional import Functional as Vasp
 from .gwfunc import GWFunctional as GWVasp
+from .methods import RelaxCellShape
 
 def _vasplib(vasp_library=None):
   """ Returns vasp library string. """
@@ -82,8 +83,6 @@ def read_input(filepath="input.py", namespace=None):
   from ..opt import read_input
   from . import specie
   from .functional import Functional
-  from .methods import RelaxCellShape
-  from .extract import Extract
 
   # names we need to create input.
   input_dict = { "Vasp": Functional, "GWVasp": GWVasp, "U": specie.U, "nlep": specie.nlep, 

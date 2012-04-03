@@ -113,7 +113,7 @@ namespace LaDa
       TStructure() : name(""), energy(0), weight(1), freeze(FREEZE_NONE) {};
       //! Constructor. Loads itself from XML node \a _element.
       TStructure   ( const TiXmlElement &_element )
-                 : name(""), energy(0), weight(1), freeze(FREEZE_NONE)
+                 : cell(math::rMatrix3d::Identity()), name(""), energy(0), weight(1), freeze(FREEZE_NONE)
         { Load( _element ); };
       //! Copy Constructor
       TStructure   ( const TStructure<T_TYPE> &_str )

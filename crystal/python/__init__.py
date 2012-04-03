@@ -439,7 +439,7 @@ def lattice_to_structure(lattice, cell=None, subs=None):
   else: cell = array(cell, dtype='float64').reshape((3,3))
   if subs is None: subs = {}
 
-  result = fill_structure(cell, lattice)
+  result = fill_structure(array(cell, dtype='float64'), lattice)
   for key, value in subs.items():
     for atom in result.atoms:
       if key in lattice.sites[atom.site].type: atom.type = value
@@ -494,6 +494,7 @@ def fill_structure(cell, lattice = None):
       
       :raises RuntimeError: If the filled structure could not be created.
   """
+  from numpy import array
   from _crystal import _fill_structure_impl
   old_lattice = None
   try:
@@ -510,7 +511,7 @@ def fill_structure(cell, lattice = None):
       lattice.set_as_crystal_lattice()
 
     # creates filled structure.
-    result = _fill_structure_impl(cell)
+    result = _fill_structure_impl(array(cell))
   except: raise
   finally: 
     # Now resets old lattice.
@@ -574,7 +575,7 @@ def lattice_context(lattice):
   if oldlattice is not None: oldlattice.set_as_crystal_lattice()
   else: _nullify_global_lattice()
 
-def layer_iterator(structure, direction, tolerance=1e-12):
+def layer_iterator(structure, direction, tolerance=1e-12, indices=False):
   """ Iterates over layers and atoms in a layer. 
 
       :Parameters: 
@@ -592,6 +593,8 @@ def layer_iterator(structure, direction, tolerance=1e-12):
           growth direction.
         tolerance : float
           Maximum difference between two atoms in the same layer.
+        indices : bool
+          Yield indices rather than atoms. 
   """
   from operator import itemgetter
   from numpy import array, dot
@@ -627,10 +630,13 @@ def layer_iterator(structure, direction, tolerance=1e-12):
   if len(result) == 1: yield structure.atoms; return
   # yield layer iterators.
   for layer in result:
-    def inner_layer_iterator():
-      """ Iterates over atoms in a single layer. """
-      for index, norm in layer: yield structure.atoms[index]
-    yield inner_layer_iterator ()
+    if indices:
+      yield [i for i, z in layer]
+    else:
+      def inner_layer_iterator():
+        """ Iterates over atoms in a single layer. """
+        for index, norm in layer: yield structure.atoms[index]
+      yield inner_layer_iterator ()
 
 
 def equivalence_iterator(structure, operations = None, tolerance=1e-6):

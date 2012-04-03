@@ -302,8 +302,9 @@ class RelaxCellShape(object):
 
   def __repr__(self):
     """ Returns a python script describing this instance. """
+    from re import sub
     string = "# VASP functional.\n"
-    string += repr(self.vasp).replace("functional", "vasp_functional") 
+    string += sub("(?<!\.)functional", "vasp_functional", repr(self.vasp))
     result = "from %s import %s\n\n" % (self.__class__.__module__, self.__class__.__name__)
     result += "# VASP Functional to relax cell-shape, volume, etc.\n"
     result += "functional = %s(vasp_functional)\n" % (self.__class__.__name__)
