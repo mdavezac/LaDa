@@ -58,7 +58,8 @@ def launch(self, event, jobdicts):
   pyscript = jobs_filename.replace(splitpath(jobs_filename)[1], "runone.py")
 
   pbsscripts = []
-  for current, path in jobdicts:
+  for n, current, path in enumerate(jobdicts):
+    if n % event.grouped != 0: continue
     # creates directory.
     with Changedir(path + ".pbs") as pwd: pass 
     # creates pbs scripts.
@@ -145,6 +146,9 @@ def parser(self, subparsers, opalls):
                             "\"guess\" lets lada make an uneducated guess. ")
   result.add_argument( '--ppn', dest="ppn", default= cpus_per_node, type=int,
                        help="Number of processes per node.")
+  result.add_argument( '--grouped', dest="grouped", default=1, type=int,
+                       help="Groups n calculations per pbs job and executes them serially. "\
+                            "\"explore running\" and \"explore errors\" will be innaccurate if n is not 1." )
   if len(accounts) != 0:
     result.add_argument( '--account', dest="account", choices=accounts, default=accounts[0],
                          help="Account on which to launch job. Defaults to system default." )

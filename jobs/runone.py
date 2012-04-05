@@ -25,6 +25,8 @@ def main():
                       help="Launches jobs as external program, not library. Only for VASP at this point.")
   parser.add_argument('--nprocs', dest="nprocs", default=1, type=int,\
                       help="Number of processors with which to launch job.")
+  parser.add_argument('--grouped', dest="grouped", default=1, type=int,\
+                      help="Groups n calculations per pbs job and executes them one after the other." )
   parser.add_argument('--timeout', dest="timeout", default=300, type=int,\
                       help="Time to wait for job-dictionary to becom available "
                            "before timing out (in seconds). A negative or null "
@@ -59,9 +61,12 @@ def main():
   timeout = None if options.timeout <= 0 else options.timeout
   
   # loop over all jobs -- Needs communicator!
-  jobdict = jobs.load(options.pickle, comm=comm)
+  jobdict = jobs.load(options.pickle, comm=comm, timeout=timeout)
+  grouped = options.grouped
   for i, (outdir, job) in enumerate(jobdict.iteritems()):
-    if i != options.n: continue
+    if i != options.n and grouped == options.grouped: continue
+    if grouped == 0: break
+    grouped -= 1
     if options.relative is None: 
       job.compute(comm=comm, outdir=outdir, inplace=True, external=options.external)
     else:
