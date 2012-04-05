@@ -904,7 +904,7 @@ def high_spin_states(structure, defect, species, extrae, do_integer=True, do_ave
       if all(abs(moments) < 1e-12): continue # non - magnetic case
       if check_history(indices, moments):  yield indices, moments
 
-def reindex_sites(structure, lattice, tolerance=0.5):
+def reindex_sites(structure, lattice, tolerance=0.25):
   """ Reindexes atoms of structure according to lattice sites.
   
       Expects that the structure is an exact supercell of the lattice, as far
@@ -916,10 +916,12 @@ def reindex_sites(structure, lattice, tolerance=0.5):
   if hasattr(lattice, 'to_lattice'): lattice = lattice.to_lattice()
   lattice = lattice.to_structure(structure.cell)
   for atom in structure.atoms:
+    neighs_in_str = [n for n in Neighbors(structure, 1, atom.pos)]
+    d = neighs_in_str[0].distance
     neighs = [n for n in Neighbors(lattice, 2, atom.pos)]
     assert abs(neighs[1].distance) > 1e-12,\
            RuntimeError('Found two sites occupying the same position.')
-    if neighs[0].distance > tolerance: atom.site = -1
+    if neighs[0].distance > tolerance*d: atom.site = -1
     else: atom.site = lattice.atoms[neighs[0].index].site
 
 def magname(moments, prefix=None, suffix=None):
