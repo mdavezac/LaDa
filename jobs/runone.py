@@ -66,6 +66,7 @@ def main():
   for i, (outdir, job) in enumerate(jobdict.iteritems()):
     if i != options.n and grouped == options.grouped: continue
     if grouped == 0: break
+    if job.is_tagged: continue
     grouped -= 1
     if options.relative is None: 
       job.compute(comm=comm, outdir=outdir, inplace=True, external=options.external)

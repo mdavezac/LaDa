@@ -58,13 +58,15 @@ def launch(self, event, jobdicts):
   pyscript = jobs_filename.replace(splitpath(jobs_filename)[1], "runone.py")
 
   pbsscripts = []
-  for n, current, path in enumerate(jobdicts):
-    if n % event.grouped != 0: continue
+  for current, path in jobdicts:
     # creates directory.
     with Changedir(path + ".pbs") as pwd: pass 
     # creates pbs scripts.
+    last = 0
     for i, (name, job) in enumerate(current.root.iteritems()):
       if job.is_tagged: continue
+      last += 1
+      if last % event.grouped != 0: continue
       # does not launch successful jobs.
       if hasattr(job.functional, 'Extract') and not event.force: 
         p = join(dirname(path), name)
@@ -102,6 +104,9 @@ def completer(self, info, data):
     result = [u for u in ip.user_ns if u[0] != '_' and isinstance(ip.user_ns[u], int)]
     result.extend([u for u in ip.user_ns if u[0] != '_' and hasattr(u, "__call__")])
     return result
+  if    (len(info.symbol) == 0 and data[-1] == "--grouped") \
+     or (len(info.symbol) > 0  and data[-2] == "--grouped"):
+    return []
   if    (len(info.symbol) == 0 and data[-1] == "--prefix") \
      or (len(info.symbol) > 0  and data[-2] == "--prefix"):
     return []
@@ -148,7 +153,8 @@ def parser(self, subparsers, opalls):
                        help="Number of processes per node.")
   result.add_argument( '--grouped', dest="grouped", default=1, type=int,
                        help="Groups n calculations per pbs job and executes them serially. "\
-                            "\"explore running\" and \"explore errors\" will be innaccurate if n is not 1." )
+                            "\"explore running\" and \"explore errors\" will be innaccurate "\
+                            "if n is not 1 (default)." )
   if len(accounts) != 0:
     result.add_argument( '--account', dest="account", choices=accounts, default=accounts[0],
                          help="Account on which to launch job. Defaults to system default." )

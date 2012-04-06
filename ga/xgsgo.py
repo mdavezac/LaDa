@@ -64,16 +64,16 @@ def update_fitness(self, individuals):
     point = array(indiv.concentrations[:-1].tolist() + [indiv.energy])
     indiv.fitness = max(point[-1] -(dot(lowers[:,:-2], point[:-1]) - lowers[:,-1] ) / lowers[:,-2])
 
-def rand_cell_gen(angles_between=None, cubic=False):
+def rand_cell_gen(angle_range=None, cubic=False):
   """ Returns random cell. 
       
       In the algorithm below, a,b,c are the lengths of the lattice vectors
       alpha, beta, gamma are the angles betweeen them - the standard convetnion
       is respected (see `here <http://en.wikipedia.org/wiki/Crystal_structure>`_)
       lengths are between 0.6 and 1.4 in units of scale angles in the
-      angles_between range
+      angle_range range
 
-      :param angles_between: 
+      :param angle_range: 
            Minimum and maximum angles between lattice vectors.
            Defaults to 60.0 and 140.0
 
@@ -83,7 +83,7 @@ def rand_cell_gen(angles_between=None, cubic=False):
   from numpy import pi, sqrt, cos, sin, array, zeros, abs
   from numpy.linalg import det
 
-  if angles_between == None: angles_between = [60.,140.]
+  if angle_range == None: angle_range = [60.,140.]
   cell = zeros([3,3])
   while abs(det(cell)) < 1e-6:
 
@@ -95,9 +95,9 @@ def rand_cell_gen(angles_between=None, cubic=False):
       b = 0.8*random()+0.6
       c = 0.8*random()+0.6
         
-      alpha = ((angles_between[1]-angles_between[0])*random() + angles_between[0])*pi/180.
-      beta  = ((angles_between[1]-angles_between[0])*random() + angles_between[0])*pi/180.
-      gamma = ((angles_between[1]-angles_between[0])*random() + angles_between[0])*pi/180.
+      alpha = ((angle_range[1]-angle_range[0])*random() + angle_range[0])*pi/180.
+      beta  = ((angle_range[1]-angle_range[0])*random() + angle_range[0])*pi/180.
+      gamma = ((angle_range[1]-angle_range[0])*random() + angle_range[0])*pi/180.
 
     a1 = a*array([1.,0.,0.])
     a2 = b*array([cos(gamma),sin(gamma),0.])
@@ -111,7 +111,7 @@ def rand_cell_gen(angles_between=None, cubic=False):
   if det(cell) < 0e0: cell = array([a2, a1, a3])
   return cell.T
 
-def rand_struct_gen( species, stoichiometry, anions=None, angles_between=None,
+def rand_struct_gen( species, stoichiometry, anions=None, angle_range=None,
                      min_distance=1.7, atomic_scale=2., cubic=False):
   """ Function that returnes random structure within 
       
@@ -128,7 +128,7 @@ def rand_struct_gen( species, stoichiometry, anions=None, angles_between=None,
       :param anions: 
            List of zeros and ones denoting cations and anions, respectively.
            Ignored if None
-      :param angles_between: 
+      :param angle_range: 
            Minimum and maximum angles between lattice vectors.
            Defaults to 60.0 and 140.0
       :param real min_distance: 
@@ -156,7 +156,7 @@ def rand_struct_gen( species, stoichiometry, anions=None, angles_between=None,
   result = Structure()
   result.scale = 1.
 
-  cell = rand_cell_gen(angles_between, cubic).T
+  cell = rand_cell_gen(angle_range, cubic).T
   rec_cell = 2*pi*transpose(inv(cell)) # reciprocal cell
 
   result.cell=transpose(cell)
@@ -414,4 +414,81 @@ def jiggle_structure(structure):
                  * float(len(result.atoms)) / float(len(structure.atoms))
   return result
 
+
+def taboo( structure, max_atoms=-1, min_distance=1.3, \
+           angle_range=None, same_first_neigh=2, verbose=True ):
+  """ Checkes geometry of the structure and returnes 
+
+      True if the structure satisfyies a set of conditions
+      otherwise returns False
+      
+      :param structure:
+          :py:class:`Structure <lada.crystal.Structure>` to check.
+      :param int max_atoms: 
+          Maximal allowed number of atoms
+      :param float min_distance: 
+          Minimal first shell distance in angstroms
+      :param angle_range: 
+          Range of allowed angles between lattice vectors
+      :type angle_range: 2x1 float list
+      :param int same_first_neigh: 
+          Maximal number of atoms that have more than two 
+          neighbors of the same type whithin 1.5*min_distance.
+          If strictly negative, then does not check.
+      :param bool verbose: 
+          Whether to print messages
+  """
+  from numpy import pi, arccos, dot, sqrt
+  from ..crystal import Neighbors
+  
+  # check number of atoms.
+  if max_atoms > 0 and len(structure.atoms) > max_atoms: 
+    if verbose: print "more than ",max_atoms," atoms"
+    return False
+
+  # chekc first neighbor distances.
+  distances = []
+  for atom in structure.atoms:
+    for n in Neighbors(structure,1,atom.pos):
+      distances.append(n.distance)
+
+  if structure.scale*min(distances) < min_distance: 
+    if verbose: print "distances shorter than",min_distance," AA"
+    return False
+
+
+
+  # check that angles are within specified range.
+  if angle_range is None: angle_range = (45.,160.)
+  cell = structure.cell
+  alpha = 180./pi*arccos( dot(cell[:,0],cell[:,2])/sqrt(dot(cell[:,0],cell[:,0])*dot(cell[:,2],cell[:,2])) )
+  beta  = 180./pi*arccos( dot(cell[:,1],cell[:,2])/sqrt(dot(cell[:,1],cell[:,1])*dot(cell[:,2],cell[:,2])) )
+  gamma = 180./pi*arccos( dot(cell[:,0],cell[:,1])/sqrt(dot(cell[:,0],cell[:,0])*dot(cell[:,1],cell[:,1])) )
+  
+  if not angle_range[0] <= alpha <= angle_range[1]:
+    if verbose: print "alpha =",alpha," degrees"
+    return False
+
+  if not angle_range[0] <= beta  <= angle_range[1]:
+    if verbose: print "beta =",beta," degrees"
+    return False
+
+  if not angle_range[0] <= gamma <= angle_range[1]:
+    if verbose: print "gamma =",gamma," degrees"
+    return False
+
+
+  # check neighbor types.
+  if same_first_neigh >= 0:
+   
+    for atom in structure.atoms:
+      l = [ n.distance for n in Neighbors(structure,20,atom.pos) \
+            if n.distance < 1.5 * min_distance and structure.atoms[n.index].type==atom.type ]
+      if len(l) > same_first_neigh: 
+        if verbose: print "Found atom with more than {0} neighbors.".format(same_first_neigh)
+        return False
+
+  
+  # all done
+  return True
 

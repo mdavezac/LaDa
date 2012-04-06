@@ -75,6 +75,12 @@ class XGSGO(StepGA):
       Does not actuall compute fitness, since we need all individuals for that.
   """
 
+  def is_taboo(self, individual):
+    """ Checks whether an individual is taboo. """
+    from lada.ga.xgsgo import taboo
+    return taboo(individual)
+
+
 
 def random_indivs(n=20, N=20):
   from random import randint, random
