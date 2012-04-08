@@ -1,5 +1,5 @@
 def test():
-  from lada.jobs.forwarding_dict import ForwardingDict
+  from lada.jobfolder.forwarding_dict import ForwardingDict
   from collections import namedtuple
 
   class A(object):

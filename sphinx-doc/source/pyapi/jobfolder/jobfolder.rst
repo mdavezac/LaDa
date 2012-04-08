@@ -1,0 +1,52 @@
+Jobdict Class
+*************
+
+.. automodule:: lada.jobfolder.jobfolder
+.. autoclass:: JobFolder
+
+   .. attribute:: children
+
+      A dictionary holding instances of subfolders further down the tree.
+
+   .. attribute:: params
+
+      A dictionary holding the parameters for the calculation in this
+      particular folder, if any. The parameters will be passed on to the
+      functional as ``**params``.
+
+   .. attribute:: parent
+
+      Reference to the :py:class:`JobFolder` instance which holds this
+      one, i.e. the parent directory. If None, then this folder-dictionary is
+      the root.
+
+      .. note:: This back-reference creates reference cycles. However, we
+         cannot use a weak-reference here, unless we are OK with risking the
+         loss of a parent folder when only a reference to the subfolder is held
+         by the user.
+
+   .. autoattribute:: functional
+   .. autoattribute:: name
+   .. autoattribute:: is_folder
+   .. autoattribute:: untagged_folders
+   .. autoattribute:: is_tagged
+   .. autoattribute:: nbfolders
+   .. autoattribute:: subfolders
+   .. autoattribute:: root
+
+   .. automethod:: iteritems
+   .. automethod:: itervalues
+   .. automethod:: iterkeys
+   .. automethod:: items
+   .. automethod:: values
+   .. automethod:: keys
+   .. automethod:: subfolders()->[str, str,...]
+
+   .. automethod:: update(JobFolder)->None
+
+   .. automethod:: compute
+
+   .. automethod:: tag()->None
+   .. automethod:: untag()->None
+
+   .. automethod:: __getattr__

@@ -6,7 +6,7 @@ def test():
   from os import makedirs
   from os.path import exists, join
   from IPython.core.interactiveshell import InteractiveShell
-  from lada.jobs import JobFolder
+  from lada.jobfolder import JobFolder
   import lada
   from dummy import functional
   import __builtin__ 
@@ -16,10 +16,10 @@ def test():
 
   root = JobFolder()
   for type, trial, size in [('this', 0, 10), ('this', 1, 15), ('that', 2, 20), ('that', 1, 20)]:
-    job = root / type / str(trial)
-    job.functional = functional
-    job.params['indiv'] = size
-    if type == 'that': job.params['value'] = True
+    jobfolder = root / type / str(trial)
+    jobfolder.functional = functional
+    jobfolder.params['indiv'] = size
+    if type == 'that': jobfolder.params['value'] = True
 
   directory =  mkdtemp() # '/tmp/test' #
   if exists(directory) and directory == '/tmp/test': rmtree(directory)
@@ -28,7 +28,7 @@ def test():
     self.user_ns['jobfolder'] = root
     self.magic("explore jobfolder")
     jobfolder = lada.interactive.jobfolder
-    assert 'this/0' in jobfolder and 'this/1' in jobfolder and 'that/2' in.jobfolder and 'that/1'
+    assert 'this/0' in jobfolder and 'this/1' in jobfolder and 'that/2' in jobfolder and 'that/1'
     assert '0' in jobfolder['this'] and '1' in jobfolder['this']
     assert '1' in jobfolder['that'] and '2' in jobfolder['that']
     assert 'other' not in jobfolder
@@ -46,7 +46,7 @@ def test():
     assert 'jobparams' in self.user_ns
     assert jobfolder is self.user_ns['jobparams'].jobfolder
 
-    self.magic("savejobs {0}/dict".format(directory))
+    self.magic("savefolders {0}/dict".format(directory))
     lada.interactive.jobfolder = None
     lada.interactive.jobfolder_path = None
     self.magic("explore {0}/dict".format(directory))

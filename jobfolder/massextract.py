@@ -39,12 +39,12 @@ class MassExtract(AbstractMassExtract):
 
   @property
   def jobfolder(self):
-    from lada.jobs import load
-    from lada import is_interactive
+    from . import load
+    from .. import is_interactive
     if self._jobfolder is None:
       if self._rootpath is None: 
         if is_interactive:
-          from lada import interactive
+          from .. import interactive
           if interactive.jobfolder is None:
             print "No current job-dictionary."
             return
@@ -55,9 +55,9 @@ class MassExtract(AbstractMassExtract):
 
   @property
   def rootpath(self):
-    from lada import is_interactive
+    from .. import is_interactive
     if self._jobfolder is None and self._rootpath is None and is_interactive:
-      from lada import interactive
+      from .. import interactive
       if interactive.jobfolder_path is None:
         print "No current path to job-dictionary."
         return

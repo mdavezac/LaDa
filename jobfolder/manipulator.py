@@ -5,7 +5,7 @@ __all__ = ['JobParams']
 from .extract import AbstractMassExtract
 
 class JobParams(AbstractMassExtract):
-  """ Get and sets job parameters for a job-dictionary. """
+  """ Get and sets job parameters for a job-folder. """
   def __init__(self, jobfolder=None, only_existing=True, **kwargs):
     """ Initializes job-parameters.
 
@@ -33,14 +33,14 @@ class JobParams(AbstractMassExtract):
 
   @property
   def jobfolder(self):
-    from lada.jobs import load
-    from lada import is_interactive
+    from . import load
+    from .. import is_interactive
     if self._jobfolder is None:
       if self._rootpath is None: 
         if is_interactive:
-          from lada import interactive
+          from .. import interactive
           if interactive.jobfolder is None:
-            print "No current job-dictionary."
+            print "No current job-folder."
             return
           return interactive.jobfolder
         else: raise RuntimeError('No job-folder.')
@@ -58,7 +58,7 @@ class JobParams(AbstractMassExtract):
     """ Dictionary with calculations which will run.
 
 	Whereas other properties only report untagged jobs, this will report
-        both. Effectively checks wether a job is tagged or not. Calculations which 
+        both. Effectively checks wether a folder is tagged or not. Calculations which 
     """
     result = {}
     for name, job in self.iteritems():
@@ -105,7 +105,7 @@ class JobParams(AbstractMassExtract):
   def view(self, value): self._view = value
 
   def __iter_alljobs__(self):
-    """ Loops through all correct jobs. """
+    """ Loops through all executable folders. """
     for name, job in self.jobfolder.iteritems(): yield job.name, job
 
   def __getattr__(self, name): 
@@ -124,7 +124,7 @@ class JobParams(AbstractMassExtract):
                            only_existing=self.only_existing, readonly=False)
 
   def __setattr__(self, name, value):
-    """ Returns dictionary with job parameters for each job. """
+    """ Sets parameter across all folders within current view. """
     from re import match
     # initialization not done yet.
     if "only_existing" not in self.__dict__: super(JobParams, self).__setattr__(name, value)
@@ -203,17 +203,16 @@ class JobParams(AbstractMassExtract):
         .. warning:: The right-hand-side is *always* deep-copied_.
           .. _deep-copied:: http://docs.python.org/library/copy.html
     """
-    from lada import is_interactive
+    from .. import is_interactive
     from copy import deepcopy
 
     if isinstance(jobfolder, JobParams): 
-      try: jobfolder = jobfolder.jobfolder[jobdict.view]
-      except KeyError: raise KeyError("{0} is not an actual job".format(jobfolder.view))
+      try: jobfolder = jobfolder.jobfolder[jobfolder.view]
+      except KeyError: raise KeyError("{0} is not an actual folder".format(jobfolder.view))
     if name in self.jobfolder and is_interactive:
-      print "Modifying existing job {0}.".format(name)
       a = ''
       while a not in ['n', 'y']:
-        a = raw_input("Modifying existing job {0}.\nIs this OK? [y/n] ".format(name))
+        a = raw_input("Modifying existing folder parameters {0}.\nIs this OK? [y/n] ".format(name))
       if a == 'n':
         print "Aborting."
         return
@@ -221,7 +220,7 @@ class JobParams(AbstractMassExtract):
  
   def __delitem__(self, name):
     """ Deletes items from job-folder. """
-    from lada import is_interactive
+    from .. import is_interactive
     if is_interactive:
       print "Deleting the following jobs:"
       for key in self[name].keys(): print key
@@ -238,19 +237,19 @@ class JobParams(AbstractMassExtract):
 
         :param jobfolder:
           :py:class:`JobFolder` instance, or :py:class:`JobParams` instance with
-          which to update the current job-dictionary.
+          which to update the current job-folder.
         
         Update means that jobs and jobparameters will be overwritten with those
         from the input. Jobs in the input which are not in the current
-        job-dictionary will be overwritten. If `jobfolder` is a
+        job-folder will be overwritten. If `jobfolder` is a
         :py:class:`JobFolder` instance, it is possible to use wildcards in order
         to select those jobs of interests.
 
-        .. warning: New jobs are always added at the root of the job-dictionary.
+        .. warning: New jobs are always added at the root of the job-folder.
           Make sure the jobs bear the names you want.
     """
     from .jobfolder import JobFolder
-    from lada import is_interactive
+    from .. import is_interactive
     keys = jobfolder.keys()
     if is_interactive:
       if len(keys) == 0: 

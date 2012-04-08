@@ -1,19 +1,18 @@
-""" Save a job to a dictionary. """
-def savejobs(self, event):
-  """ Saves current job to current filename and directory. """
+def savefolders(self, event):
+  """ Saves current job-folder to disk. """
   from os.path import exists, abspath, isfile
-  from ..jobs import JobParams, MassExtract as Collect, save as savejobs
+  from ..jobfolder import JobParams, MassExtract as Collect, save as savefolders
   from .. import interactive
   from ..misc import RelativePath
   jobfolder = interactive.jobfolder.root
   jobfolder_path = interactive.jobfolder_path
 
   if jobfolder is None:
-    print "No job-dictionary to save." 
+    print "No job-folders to save." 
     return
   args = [u for u in event.split() ]
   if len(args) > 1: 
-    print "savejobs takes one or no arguments."
+    print "savefolders takes one or no arguments."
     return
 
   if len(args) == 1:
@@ -35,7 +34,7 @@ def savejobs(self, event):
     if a == 'n':
       print "Aborting."
       return
-  savejobs(jobfolder.root, jobfolder_path, overwrite=True, timeout=10) 
+  savefolders(jobfolder.root, jobfolder_path, overwrite=True, timeout=10) 
   if len(args) == 1:
     if "collect" not in self.user_ns: self.user_ns["collect"] = Collect(dynamic=True, path=jobfolder_path)
     if "jobparams" not in self.user_ns: self.user_ns["jobparams"] = JobParams()

@@ -5,16 +5,16 @@ def test():
   from os import makedirs
   from os.path import exists, join
   from copy import deepcopy
-  from lada.jobs import JobFolder, JobParams
+  from lada.jobfolder import JobFolder, JobParams
   from dummy import functional
 
   # create jodictionary to explore
   root = JobFolder()
   for type, trial, size in [('this', 0, 10), ('this', 1, 15), ('that', 2, 20), ('that', 1, 20)]:
-    job = root / type / str(trial)
-    job.functional = functional
-    job.params['indiv'] = size
-    if type == 'that': job.params['value'] = True
+    jobfolder = root / type / str(trial)
+    jobfolder.functional = functional
+    jobfolder.params['indiv'] = size
+    if type == 'that': jobfolder.params['value'] = True
 
   # checks that attributes are forwarded correctly
   jobparams = JobParams(root)
@@ -55,12 +55,12 @@ def test():
   check_items('that/2/', set(['/that/2/']),jobparams)
   
   # check adding an item
-  job = JobFolder()
-  job.functional = functional
-  job.params['indiv'] = 25
-  job.params['value'] = 5
-  job.params['another'] = 6
-  jobparams['/this/0/another'] = job
+  jobfolder = JobFolder()
+  jobfolder.functional = functional
+  jobfolder.params['indiv'] = 25
+  jobfolder.params['value'] = 5
+  jobfolder.params['another'] = 6
+  jobparams['/this/0/another'] = jobfolder
 
   # continue wildcard indexing.
   check_items('*/*/another', ['/this/0/another/'], jobparams)

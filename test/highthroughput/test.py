@@ -7,7 +7,7 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
   
       :Parameters:
         path 
-          Path where the job-dictionary will be saved. Calculations will be
+          Path where the job-folder will be saved. Calculations will be
           performed in the parent directory of this file. Calculations will be
           performed in same directory as this file.
         inputpath
@@ -16,8 +16,8 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
           Any keyword/value pair to take precedence over anything in the input
           file.
 
-      Creates a high-throughput job-dictionary to compute the non-magnetic
-      ground-state of a host-material.  The new job-dictionary is loaded into
+      Creates a high-throughput job-folder to compute the non-magnetic
+      ground-state of a host-material.  The new job-folder is loaded into
       memory automatically. No need to call explore. It is save to the path
       provided on input.
   """
@@ -25,7 +25,7 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
   from IPython.core.interactiveshell import InteractiveShell
   from copy import deepcopy
   from lada.vasp import read_input
-  from lada.jobs import JobFolder
+  from lada.jobfolder import JobFolder
   from lada import interactive
 
   # reads input.
@@ -81,17 +81,17 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
 
 
   interactive.jobfolder = jobfolder
-  InteractiveShell.instance().magic("savejobs " + path)
+  InteractiveShell.instance().magic("savefolders " + path)
 
 
 def magnetic_wave(path=None, inputpath='input.py', **kwargs):
-  """ Creates magnetic wave for current job-dictionary.
+  """ Creates magnetic wave for current job-folder.
 
       :Parameters:
         path : str or None
-          Path where the modified job-dictionary will be saved. Calculations will be
+          Path where the modified job-folder will be saved. Calculations will be
           performed in the parent directory of this file. If None, will use the
-          current job-dictionary path.
+          current job-folder path.
         inputpath : str or None
           Path to an input file. If not present, then no input file is read and
           all parameters are taken from the non-magnetic wave.
@@ -102,9 +102,9 @@ def magnetic_wave(path=None, inputpath='input.py', **kwargs):
       file is given on input, then all parameters are obtained from the
       corresponding non-magnetic wave. 
 
-      The new job-dictionary is loaded into memory automatically. No need to
+      The new job-folder is loaded into memory automatically. No need to
       call explore. It is save to the path provided on input (or to the current
-      job-dictionary path ifnot provided).  It will contain magnetic and
+      job-folder path ifnot provided).  It will contain magnetic and
       non-magnetic calculations both. Pre-existing magnetic
       calculations will *not* be overwritten. However, additional anti-ferro
       configurations can be calculated by giving a large enough ``nbantiferro``
@@ -113,29 +113,29 @@ def magnetic_wave(path=None, inputpath='input.py', **kwargs):
   from tempfile import NamedTemporaryFile
   from os.path import dirname, normpath, relpath, join
   from IPython.core.interactiveshell import InteractiveShell
-  from lada.jobs import JobFolder
+  from lada.jobfolder import JobFolder
   from lada.vasp import read_input
   from lada.opt import Input
 
   # Loads job-folder and path as requested. 
   if interactive.jobfolder is None: 
-    print "No current job-dictionary."
+    print "No current job-folder."
     return
   if interactive.jobfolder_path is None: 
-    print "No path for current job-dictionary."
+    print "No path for current job-folder."
     return
   basedir = dirname(interactive.jobfolder_path)
       
   input = read_input(inputpath)
 
-  # will loop over all jobs, looking for *successfull* *non-magnetic* calculations. 
-  # Only magnetic jobs which do NOT exist are added at that point.
+  # will loop over all folders, looking for *successfull* *non-magnetic* calculations. 
+  # Only magnetic folders which do NOT exist are added at that point.
   nonmagname = "non-magnetic"
-  nb_new_jobs = 0
+  nb_new_folders = 0
   for name, nonmagjob in jobfolder.iteritems():
-    # avoid tagged jobs.
+    # avoid tagged folders.
     if nonmagjob.is_tagged: continue
-    # avoid other jobs (eg magnetic jobs).
+    # avoid other folders (eg magnetic folders).
     basename = normpath("/" + name + "/../")
     if relpath(name, basename[1:]) != nonmagname: continue
     # check for success and avoid failures.
@@ -153,7 +153,7 @@ def magnetic_wave(path=None, inputpath='input.py', **kwargs):
     else: hnl = [(min, "")] 
     # now loops over moments.
     for func, prefix in hnl: 
-      # now tries and creates high-spin ferro jobs if it does not already exist.
+      # now tries and creates high-spin ferro folders if it does not already exist.
       jobname = normpath("{0}/{1}ferro".format(basename, prefix))
       structure, magmom = ferro(extract.structure, extract.functional.species, func)
       if magmom and jobname not in jobfolder and input.do_ferro:
@@ -167,9 +167,9 @@ def magnetic_wave(path=None, inputpath='input.py', **kwargs):
         # saves some stuff for future reference.
         job.material = material
         job.lattice  = lattice
-        nb_new_jobs += 1
+        nb_new_folders += 1
 
-      # now tries and creates anti-ferro-lattices jobs if it does not already exist.
+      # now tries and creates anti-ferro-lattices folders if it does not already exist.
       structure, magmom = species_antiferro(extract.structure, extract.functional.species, func) 
       jobname = normpath("{0}/{1}anti-ferro-0".format(basename, prefix))
       if magmom and jobname not in jobfolder and do_anti_ferro:
@@ -184,7 +184,7 @@ def magnetic_wave(path=None, inputpath='input.py', **kwargs):
         # saves some stuff for future reference.
         job.material = material
         job.lattice  = lattice
-        nb_new_jobs += 1
+        nb_new_folders += 1
 
       # random anti-ferro.
       for i in range(1, 1+input.nbantiferro):
@@ -202,13 +202,13 @@ def magnetic_wave(path=None, inputpath='input.py', **kwargs):
         # saves some stuff for future reference.
         job.material = material
         job.lattice  = lattice
-        nb_new_jobs += 1
+        nb_new_folders += 1
 
   # now saves new job folder
-  print "Created {0} new jobs.".format(nb_new_jobs)
-  if nb_new_jobs == 0: return
+  print "Created {0} new folders.".format(nb_new_folders)
+  if nb_new_folders == 0: return
   interactive.jobfolder = jobfolder.root
-  InteractiveShell.instance().magic("savejobs " + path)
+  InteractiveShell.instance().magic("savefolders " + path)
 
 def is_magnetic_system(structure, species):
   """ True if system is magnetic. """

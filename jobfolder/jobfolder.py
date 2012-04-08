@@ -158,7 +158,7 @@ class JobFolder(object):
     from copy import deepcopy
     from os.path import normpath, relpath, dirname, basename
 
-    index = normpath(index)
+    index = normpath(name)
     parentpath, childpath = dirname(index), basename(index)
     if len(parentpath) != 0: 
       if parentpath not in self:
@@ -180,11 +180,10 @@ class JobFolder(object):
         Any *path* can be given as input. This is akin to doing `mkdir -p`.
         The newly created folder folders is returned.
     """
-    from weakref import proxy
     from re import split
     from os.path import normpath
 
-    index = normpath(index)
+    index = normpath(name)
     if index in ["", ".", None]: return self
     if index[0] == "/":  # could create infinit loop.
       result = self
@@ -201,7 +200,7 @@ class JobFolder(object):
         continue
       elif name not in result.children:
         result.children[name] = JobFolder()
-        result.children[name].parent = proxy(result)
+        result.children[name].parent = result
       result = result.children[name]
     return result
 
@@ -247,7 +246,7 @@ class JobFolder(object):
         ``self``.  if items in ``other`` are found in ``self``, unless merge is
         set to true. This function is recurrent: subfolders are also updated.
     """
-    for key, value in other.children.teritems():
+    for key, value in other.children.iteritems():
       if key in self: self[key].update(value)
       else: self[key] = value
 
@@ -313,7 +312,7 @@ class JobFolder(object):
   def __getstate__(self):
     d = self.__dict__.copy()
     params = d.pop("params")
-    return d, params, "This is a JobFolder pickle. Grep me!"
+    return d, params
   def __setstate__(self, args):
     super(JobFolder, self).__setattr__("params", args[1])
     d = self.__dict__.update(args[0])

@@ -302,15 +302,6 @@ class AbstractMassExtract(object):
     for key, value in kwargs.iteritems(): setattr(result, key, value)
     return result
 
-
-  @property
-  def jobs(self):
-    """ Deprecated. Use keys and iterkeys instead. """
-    from warnings import warn
-    warn( DeprecationWarning('jobs property is deprecated in favor of keys and iterkeys.'),
-          stacklevel=2 )
-    return self.keys()
-
   def iterfiles(self, **kwargs):
     """ Iterates over output/input files. 
 

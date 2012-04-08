@@ -27,7 +27,7 @@ def test():
   try: 
     self.user_ns['jobfolder'] = root
     self.magic("explore jobfolder")
-    self.magic("savejobs {0}/dict".format(directory))
+    self.magic("savefolders {0}/dict".format(directory))
     for name, job in root.iteritems():
       result = job.compute(outdir=join(directory, name))
       assert result.success

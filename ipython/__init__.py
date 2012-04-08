@@ -10,7 +10,7 @@ def load_ipython_extension(ip):
   if not __lada_is_loaded__:
     from types import ModuleType, MethodType
     from sys import modules
-    from .savejobs import savejobs
+    from .savefolders import savefolders
     from .explore import explore, completer as explore_completer
     from .goto import goto, completer as goto_completer
     from .listjobs import listjobs
@@ -23,7 +23,7 @@ def load_ipython_extension(ip):
     lada.interactive.jobfolder_path = None
     lada.is_interactive = True
     modules['lada.interactive'] = lada.interactive
-    ip.define_magic('savejobs', savejobs)
+    ip.define_magic('savefolders', savefolders)
     ip.define_magic('explore', explore)
     ip.define_magic('goto', goto)
     ip.define_magic('listjobs', listjobs)
