@@ -2,7 +2,7 @@
 """ Runs a job-tree, with optional parallelization. 
 
     The jobtree is read from the file given on input. It should be a pickled
-    JobDict instance. Parallelization over
+    JobFolder instance. Parallelization over
     mpi-processes is controlled by program option pools.
 """ 
 def main():

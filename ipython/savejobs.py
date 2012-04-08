@@ -5,10 +5,10 @@ def savejobs(self, event):
   from ..jobs import JobParams, MassExtract as Collect, save as savejobs
   from .. import interactive
   from ..misc import RelativePath
-  jobdict = interactive.jobdict.root
-  jobdict_path = interactive.jobdict_path
+  jobfolder = interactive.jobfolder.root
+  jobfolder_path = interactive.jobfolder_path
 
-  if jobdict is None:
+  if jobfolder is None:
     print "No job-dictionary to save." 
     return
   args = [u for u in event.split() ]
@@ -17,25 +17,25 @@ def savejobs(self, event):
     return
 
   if len(args) == 1:
-    jobdict_path = RelativePath(args[0]).path
-    interactive.jobdict_path = jobdict_path
+    jobfolder_path = RelativePath(args[0]).path
+    interactive.jobfolder_path = jobfolder_path
 
-  if jobdict_path is None: 
+  if jobfolder_path is None: 
     print "No current job-dictionary path.\n"\
           "Please specify on input, eg\n"\
           ">saveto this/path/filename"
     return
-  if exists(jobdict_path): 
-    if not isfile(jobdict_path): 
-      print "{0} is not a file.".format(jobdict_path)
+  if exists(jobfolder_path): 
+    if not isfile(jobfolder_path): 
+      print "{0} is not a file.".format(jobfolder_path)
       return
     a = ''
     while a not in ['n', 'y']:
-      a = raw_input("File {0} already exists.\nOverwrite? [y/n] ".format(jobdict_path))
+      a = raw_input("File {0} already exists.\nOverwrite? [y/n] ".format(jobfolder_path))
     if a == 'n':
       print "Aborting."
       return
-  savejobs(jobdict.root, jobdict_path, overwrite=True, timeout=10) 
+  savejobs(jobfolder.root, jobfolder_path, overwrite=True, timeout=10) 
   if len(args) == 1:
-    if "collect" not in self.user_ns: self.user_ns["collect"] = Collect(dynamic=True, path=jobdict_path)
+    if "collect" not in self.user_ns: self.user_ns["collect"] = Collect(dynamic=True, path=jobfolder_path)
     if "jobparams" not in self.user_ns: self.user_ns["jobparams"] = JobParams()

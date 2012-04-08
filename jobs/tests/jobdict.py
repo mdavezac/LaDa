@@ -5,11 +5,11 @@ def test():
   from os import makedirs
   from os.path import exists, join
   from pickle import loads, dumps
-  from lada.jobs import JobDict
+  from lada.jobs import JobFolder
   from dummy import functional
 
   sizes = [10, 15, 20, 25]
-  root = JobDict()
+  root = JobFolder()
   for type, trial, size in [('this', 0, 10), ('this', 1, 15), ('that', 2, 20), ('that', 1, 20)]:
     job = root / type / str(trial)
     job.functional = functional

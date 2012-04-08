@@ -1,4 +1,4 @@
-""" Tests job dictionary and semaphores. """ 
+""" Tests job folder and semaphores. """ 
 import random
 from os import getcwd
 from os.path import join
@@ -9,9 +9,9 @@ from functional import Functional
 
 # Reads program options.
 parser = OptionParser()
-parser.add_option( "--save", dest="saveme", help="Pickle job dictionary.",\
+parser.add_option( "--save", dest="saveme", help="Pickle job folder.",\
                    metavar="FILE", type="str")
-parser.add_option( "--load", dest="loadme", help="Loads a pickled job dictionary.", \
+parser.add_option( "--load", dest="loadme", help="Loads a pickled job folder.", \
                    metavar="FILE", type="str")
 parser.add_option( "--pools", dest="pools", help="Number of mpi pools.", \
                    metavar="N", type="int", default=1)
@@ -27,7 +27,7 @@ functional = Functional()
 
 # Creates dictionary
 if options.loadme is None or options.saveme is not None:
-  job_dictionary = jobs.JobDict()
+  job_dictionary = jobs.JobFolder()
   for caps in ["A", "B", "C", "D"]:
     capsjob = job_dictionary / caps
 
@@ -49,10 +49,10 @@ else: job_dictionary = jobs.load(options.loadme, comm=world)
 
 # saves dictionary
 if options.saveme is not None:
-  jobs.save(jobdict=job_dictionary, path=options.saveme, overwrite=True, comm=world)
+  jobs.save(jobfolder=job_dictionary, path=options.saveme, overwrite=True, comm=world)
 # writes pbs stuff.
 if options.pbs is not None and world.rank == 0:
-  jobs.pbs_script( outdir="results", jobdict=job_dictionary, pools=options.pools,\
+  jobs.pbs_script( outdir="results", jobfolder=job_dictionary, pools=options.pools,\
                    queue="regular", mppwidth=world.size, python_path=getcwd() ) 
 
 # Computes all jobs.

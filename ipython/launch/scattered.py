@@ -7,7 +7,7 @@
 """
 __docformat__ = "restructuredtext en"
 
-def launch(self, event, jobdicts):
+def launch(self, event, jobfolders):
   """ Launch scattered jobs: one job = one pbs script. """
   import re
   from copy import deepcopy
@@ -61,7 +61,7 @@ def launch(self, event, jobdicts):
   pyscript = jobs_filename.replace(splitpath(jobs_filename)[1], "runone.py")
 
   pbsscripts = []
-  for current, path in jobdicts:
+  for current, path in jobfolders:
     # creates directory.
     with Changedir(path + ".pbs") as pwd: pass 
     # creates pbs scripts.
@@ -97,7 +97,7 @@ def launch(self, event, jobdicts):
 def completer(self, info, data):
   """ Completer for scattered launcher. """
   from ... import queues, accounts, debug_queue
-  from .. import jobdict_file_completer
+  from .. import jobfolder_file_completer
   from ... import accounts, queues
   if len(data) > 0: 
     if data[-1] == "--walltime":
@@ -114,7 +114,7 @@ def completer(self, info, data):
   if len(queues) > 0: result.append("--queue") 
   if len(accounts) > 0: result.append("--account") 
   if debug_queue is not None: result.append("--debug")
-  result.extend(jobdict_file_completer(self, [info.symbol]))
+  result.extend(jobfolder_file_completer(self, [info.symbol]))
   result = list(set(result) - set(data))
   return result
 
@@ -123,7 +123,7 @@ def parser(self, subparsers, opalls):
   from ... import queues, accounts, debug_queue, default_pbs, default_comm, qsub_exe
   result = subparsers.add_parser( 'scattered', 
                                   description="A separate PBS/slurm script is created for each "\
-                                              "and every calculation in the jobdictionary "\
+                                              "and every calculation in the job-folder "\
                                               "(or dictionaries).",
                                   parents=[opalls])
   result.add_argument('--walltime', type=str, default=default_pbs['walltime'], \
@@ -135,7 +135,7 @@ def parser(self, subparsers, opalls):
   result.add_argument( '--nbprocs', type=str, default="None", dest="nbprocs",
                        help="Can be an integer, in which case it specifies "\
                             "the number of processes to exectute jobs with. "\
-                            "Can also be a callable taking a JobDict as " \
+                            "Can also be a callable taking a JobFolder as " \
                             "argument and returning a integer. Will default "\
                             "to as many procs as there are atoms in that particular structure. "\
                             "Defaults to something close to the number of atoms in "

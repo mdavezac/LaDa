@@ -25,7 +25,7 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
   from IPython.core.interactiveshell import InteractiveShell
   from copy import deepcopy
   from lada.vasp import read_input
-  from lada.jobs import JobDict
+  from lada.jobs import JobFolder
   from lada import interactive
 
   # reads input.
@@ -41,7 +41,7 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
   specie_regex = compile("([A-Z][a-z]?)2([A-Z][a-z]?)([A-Z][a-z]?)4")
 
   # Job dictionary.
-  jobdict = JobDict()
+  jobfolder = JobFolder()
 
   # loop over materials.
   for material in input.materials:
@@ -68,10 +68,10 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
       # gets its scale.
       structure.scale = input.scale(structure)
   
-      # job dictionary for this lattice.
-      lat_jobdict = jobdict / material 
+      # job folder for this lattice.
+      lat_jobfolder = jobfolder / material 
   
-      job = lat_jobdict / lattice.name / "non-magnetic"
+      job = lat_jobfolder / lattice.name / "non-magnetic"
       job.functional = input.vasp
       job.params["structure"] = structure
       job.params["ispin"] = 1
@@ -80,7 +80,7 @@ def nonmagnetic_wave(path, inputpath="input.py", **kwargs):
       job.lattice  = lattice
 
 
-  interactive.jobdict = jobdict
+  interactive.jobfolder = jobfolder
   InteractiveShell.instance().magic("savejobs " + path)
 
 
@@ -113,18 +113,18 @@ def magnetic_wave(path=None, inputpath='input.py', **kwargs):
   from tempfile import NamedTemporaryFile
   from os.path import dirname, normpath, relpath, join
   from IPython.core.interactiveshell import InteractiveShell
-  from lada.jobs import JobDict
+  from lada.jobs import JobFolder
   from lada.vasp import read_input
   from lada.opt import Input
 
-  # Loads jobdictionary and path as requested. 
-  if interactive.jobdict is None: 
+  # Loads job-folder and path as requested. 
+  if interactive.jobfolder is None: 
     print "No current job-dictionary."
     return
-  if interactive.jobdict_path is None: 
+  if interactive.jobfolder_path is None: 
     print "No path for current job-dictionary."
     return
-  basedir = dirname(interactive.jobdict_path)
+  basedir = dirname(interactive.jobfolder_path)
       
   input = read_input(inputpath)
 
@@ -132,7 +132,7 @@ def magnetic_wave(path=None, inputpath='input.py', **kwargs):
   # Only magnetic jobs which do NOT exist are added at that point.
   nonmagname = "non-magnetic"
   nb_new_jobs = 0
-  for name, nonmagjob in jobdict.iteritems():
+  for name, nonmagjob in jobfolder.iteritems():
     # avoid tagged jobs.
     if nonmagjob.is_tagged: continue
     # avoid other jobs (eg magnetic jobs).
@@ -156,10 +156,10 @@ def magnetic_wave(path=None, inputpath='input.py', **kwargs):
       # now tries and creates high-spin ferro jobs if it does not already exist.
       jobname = normpath("{0}/{1}ferro".format(basename, prefix))
       structure, magmom = ferro(extract.structure, extract.functional.species, func)
-      if magmom and jobname not in jobdict and input.do_ferro:
+      if magmom and jobname not in jobfolder and input.do_ferro:
         structure.name = "{0} in {1}, {2}ferro."\
                          .format(material, lattice.name, prefix)
-        job = jobdict / jobname
+        job = jobfolder / jobname
         job.functional = input.relaxer 
         job.params["structure"] = structure.copy()
         job.params["magmom"] = True
@@ -172,11 +172,11 @@ def magnetic_wave(path=None, inputpath='input.py', **kwargs):
       # now tries and creates anti-ferro-lattices jobs if it does not already exist.
       structure, magmom = species_antiferro(extract.structure, extract.functional.species, func) 
       jobname = normpath("{0}/{1}anti-ferro-0".format(basename, prefix))
-      if magmom and jobname not in jobdict and do_anti_ferro:
+      if magmom and jobname not in jobfolder and do_anti_ferro:
         structure.name = "{0} in {1}, {2}specie-anti-ferro."\
                          .format(material, lattice.name, prefix)
 
-        job = jobdict / jobname
+        job = jobfolder / jobname
         job.functional = input.relaxer
         job.params["structure"] = structure.copy()
         job.params["magmom"] = True
@@ -191,10 +191,10 @@ def magnetic_wave(path=None, inputpath='input.py', **kwargs):
         structure, magmom = random(extract.structure, extract.functional.species, func)
         if not magmom: continue
         jobname = normpath("{0}/{1}anti-ferro-{2}".format(basename, prefix, i))
-        if jobname in jobdict: continue
+        if jobname in jobfolder: continue
         structure.name = "{0} in {1}, random anti-ferro.".format(material, lattice.name)
 
-        job = jobdict / jobname
+        job = jobfolder / jobname
         job.functional = input.relaxer if inputpath is not None else nonmagjob.functional
         job.params["structure"] = structure.copy()
         job.params["magmom"] = True
@@ -204,10 +204,10 @@ def magnetic_wave(path=None, inputpath='input.py', **kwargs):
         job.lattice  = lattice
         nb_new_jobs += 1
 
-  # now saves new job dictionary
+  # now saves new job folder
   print "Created {0} new jobs.".format(nb_new_jobs)
   if nb_new_jobs == 0: return
-  interactive.jobdict = jobdict.root
+  interactive.jobfolder = jobfolder.root
   InteractiveShell.instance().magic("savejobs " + path)
 
 def is_magnetic_system(structure, species):

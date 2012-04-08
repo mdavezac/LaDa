@@ -19,8 +19,8 @@ def load_ipython_extension(ip):
     import lada
     __lada_is_loaded__ = True
     lada.interactive = ModuleType('interactive')
-    lada.interactive.jobdict = None
-    lada.interactive.jobdict_path = None
+    lada.interactive.jobfolder = None
+    lada.interactive.jobfolder_path = None
     lada.is_interactive = True
     modules['lada.interactive'] = lada.interactive
     ip.define_magic('savejobs', savejobs)
@@ -42,19 +42,19 @@ def unload_ipython_extension(ip):
   ip.user_ns.pop('collect', None)
   ip.user_ns.pop('jobparams', None)
 
-def jobdict_file_completer(self, data):
-  """ Returns list of potential jobdictionary and directories. """
+def jobfolder_file_completer(self, data):
+  """ Returns list of potential job-folder and directories. """
   from os.path import isdir
   from glob import iglob
   from IPython.core.completer import expand_user, compress_user
-  from .. import jobdict_glob
+  from .. import jobfolder_glob
   if len(data) == 0: data = ['']
   relpath, tilde_expand, tilde_val = expand_user(data[-1])
   dirs = [f.replace('\\','/') + "/" for f in iglob(relpath+'*') if isdir(f)]
-  dicts = [ f.replace('\\','/') for u in jobdict_glob for f in iglob(relpath+u)]
+  dicts = [ f.replace('\\','/') for u in jobfolder_glob for f in iglob(relpath+u)]
   if '.' in data[-1]:
     relpath, a, b = expand_user(data[-1][:data[-1].find('.')])
-    dicts.extend([ f.replace('\\','/') for u in jobdict_glob for f in iglob(relpath+u)])
+    dicts.extend([ f.replace('\\','/') for u in jobfolder_glob for f in iglob(relpath+u)])
   dummy = [compress_user(p, tilde_expand, tilde_val) for p in dirs+dicts]
   return [d for d in dummy if d not in data]
 

@@ -5,11 +5,11 @@ def test():
   from os import makedirs
   from os.path import exists, join
   from copy import deepcopy
-  from lada.jobs import JobDict, JobParams
+  from lada.jobs import JobFolder, JobParams
   from dummy import functional
 
   # create jodictionary to explore
-  root = JobDict()
+  root = JobFolder()
   for type, trial, size in [('this', 0, 10), ('this', 1, 15), ('that', 2, 20), ('that', 1, 20)]:
     job = root / type / str(trial)
     job.functional = functional
@@ -55,7 +55,7 @@ def test():
   check_items('that/2/', set(['/that/2/']),jobparams)
   
   # check adding an item
-  job = JobDict()
+  job = JobFolder()
   job.functional = functional
   job.params['indiv'] = 25
   job.params['value'] = 5
@@ -101,7 +101,7 @@ def test():
   for key in jobparams.keys():
     jobparams[key].indiv = {'/this/0/': 10, '/this/1/': 15, '/that/1/': 20,\
                             '/that/2/': 20, '/this/0/another/': 25}[key]
-  jobdict = deepcopy(jobparams.jobdict)
+  jobfolder = deepcopy(jobparams.jobfolder)
 
   # check deleting.
   del jobparams['/*/1']
@@ -109,9 +109,9 @@ def test():
          and '/that/2/' in jobparams and '/this/0/' in jobparams\
          and '/this/0/another/' in jobparams
 
-  # check concatenate with jobdictionary.
+  # check concatenate with job-folder.
   jobparams.indiv = 2
-  jobparams.concatenate(jobdict)
+  jobparams.concatenate(jobfolder)
   for i, (name, value) in enumerate(jobparams.functional.iteritems()):
     assert repr(value) == repr(functional)
   assert i == 4
@@ -125,7 +125,7 @@ def test():
   # check concatenate with Jobparams and indexing.
   del jobparams['/*/1']
   jobparams.indiv = 2
-  jobparams.concatenate(JobParams(jobdict)['/*/1'])
+  jobparams.concatenate(JobParams(jobfolder)['/*/1'])
   for i, (name, value) in enumerate(jobparams.functional.iteritems()):
     assert repr(value) == repr(functional)
   assert i == 4

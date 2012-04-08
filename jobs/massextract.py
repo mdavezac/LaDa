@@ -1,4 +1,4 @@
-""" Classes to manipulate output from jobdictionaries. """
+""" Classes to manipulate output from jobfolderionaries. """
 __docformat__ = "restructuredtext en"
 __all__ = ['MassExtract']
 from .extract import AbstractMassExtract
@@ -18,13 +18,13 @@ class MassExtract(AbstractMassExtract):
     """ Initializes extraction object. 
  
         :param str path:
-            Pickled jobdictionary for which to extract stuff. If None, will
-            attempt to use the current jobdictionary.
+            Pickled job-folder for which to extract stuff. If None, will
+            attempt to use the current job-folder.
         :param kwargs:
             Variable length keyword argument passed on to
             :py:meth:`AbstractMassExtract.__init__`.
     """
-    self.__dict__["_jobdict"] = None
+    self.__dict__["_jobfolder"] = None
     super(MassExtract, self).__init__(path=path, **kwargs)
 
   @property
@@ -33,35 +33,35 @@ class MassExtract(AbstractMassExtract):
 
         If None, then no match required. Should be a string, not an re object.
     """
-    return self._view if self._view is not None else self.jobdict.name
+    return self._view if self._view is not None else self.jobfolder.name
   @view.setter
   def view(self, value): self._view = value
 
   @property
-  def jobdict(self):
+  def jobfolder(self):
     from lada.jobs import load
     from lada import is_interactive
-    if self._jobdict is None:
+    if self._jobfolder is None:
       if self._rootpath is None: 
         if is_interactive:
           from lada import interactive
-          if interactive.jobdict is None:
+          if interactive.jobfolder is None:
             print "No current job-dictionary."
             return
-          return interactive.jobdict
-        else: raise RuntimeError('No jobdictionary.')
-      else: self._jobdict = load(self.rootpath, timeout=30)
-    return self._jobdict.root
+          return interactive.jobfolder
+        else: raise RuntimeError('No job-folder.')
+      else: self._jobfolder = load(self.rootpath, timeout=30)
+    return self._jobfolder.root
 
   @property
   def rootpath(self):
     from lada import is_interactive
-    if self._jobdict is None and self._rootpath is None and is_interactive:
+    if self._jobfolder is None and self._rootpath is None and is_interactive:
       from lada import interactive
-      if interactive.jobdict_path is None:
+      if interactive.jobfolder_path is None:
         print "No current path to job-dictionary."
         return
-      return interactive.jobdict_path
+      return interactive.jobfolder_path
     return super(MassExtract, self).rootpath
     
 
@@ -73,7 +73,7 @@ class MassExtract(AbstractMassExtract):
     """
     from os.path import join, dirname
     
-    for name, job in self.jobdict.iteritems():
+    for name, job in self.jobfolder.iteritems():
       if job.is_tagged: continue
       try: extract = job.functional.Extract(join(dirname(self.rootpath), name))
       except: pass 

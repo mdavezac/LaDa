@@ -1,6 +1,6 @@
-""" Functor to *bleed* a job dictionary amongst pools of processes.
+""" Functor to *bleed* a job folder amongst pools of processes.
     
-    Bleeding a job dictionary means that pools of processes are actively
+    Bleeding a job folder means that pools of processes are actively
     picking jobs from the dictionary, marking them as executed, and running
     them. Any one job should only be visited once.
 """
@@ -8,7 +8,7 @@
 __docformat__ = "restructuredtext en"
 
 class Bleeder(object): 
-  """ Bleeds a jobdictionary from file. 
+  """ Bleeds a job-folder from file. 
   
   
       The goal is to iterate through all jobs across multiple pools of
@@ -17,7 +17,7 @@ class Bleeder(object):
       modifications to the jobs are kept (when used in a for loop. Do not
       create lists).
   """
-  def __init__(self, jobdict, pools, comm, directory = '.'): 
+  def __init__(self, jobfolder, pools, comm, directory = '.'): 
     """ Creates a bleeding job-dictionary. """
     from tempfile import NamedTemporaryFile
     from pickle import dump
@@ -35,7 +35,7 @@ class Bleeder(object):
     directory = RelativeDirectory(directory).path
     if self.comm.is_root: 
       with NamedTemporaryFile(dir=directory, delete=False, prefix='ga_evaldict') as file:
-        dump(jobdict, file)
+        dump(jobfolder, file)
         self._filename = file.name
     self._filename = self.comm.broadcast(self._filename)
 
@@ -84,14 +84,14 @@ class Bleeder(object):
           # checks for file existence. Done if no file.
           if exists(self._filename): 
             # Loads pickle.
-            with open(self._filename, 'r') as file: jobdict = pickle_load(file)
+            with open(self._filename, 'r') as file: jobfolder = pickle_load(file)
             # Finds first untagged job.
-            for job in jobdict.itervalues():
+            for job in jobfolder.itervalues():
               if not job.is_tagged: break
             # Check we found an untagged job. Otherwise, we are done.
             if not job.is_tagged: 
               job.tag()
-              with open(self._filename, 'w') as file: dump(jobdict, file)
+              with open(self._filename, 'w') as file: dump(jobfolder, file)
             else: job = None # no job was found.
       # for all nodes, broadcasts job.
       job = self.local_comm.broadcast(job)
@@ -106,11 +106,11 @@ class Bleeder(object):
         # acquire a lock first.
         with LockFile(self._filename) as lock:
           # Loads pickle.
-          with open(self._filename, 'r') as file: jobdict = pickle_load(file)
+          with open(self._filename, 'r') as file: jobfolder = pickle_load(file)
           # modifies job.
-          jobdict[job.name] = job
+          jobfolder[job.name] = job
           # save jobs.
-          with open(self._filename, 'w') as file: dump(jobdict, file)
+          with open(self._filename, 'w') as file: dump(jobfolder, file)
     
   def cleanup(self): 
     """ Cleans up disk. Return job-dictionary. """
@@ -119,16 +119,16 @@ class Bleeder(object):
     from pickle import load as pickle_load
     from ..opt import LockFile
     self.comm.barrier()
-    jobdict = None
+    jobfolder = None
     if self.comm.is_root:
       # acquire a lock first.
       with LockFile(self._filename) as lock:
         # checks for file existence. Done if no file.
         if exists(self._filename): 
           # Loads pickle.
-          with open(self._filename, 'r') as file: jobdict = pickle_load(file)
+          with open(self._filename, 'r') as file: jobfolder = pickle_load(file)
           remove(self._filename)
-    return self.comm.broadcast(jobdict)
+    return self.comm.broadcast(jobfolder)
 
   def itercompute(self, *args, **kwargs):
     """ Iterates over computable jobs. 

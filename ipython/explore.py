@@ -1,23 +1,23 @@
 """ IPython explore function and completer. """
 def explore(self, cmdl): 
-  """ Starts exploration of a pickled job dictionary. 
+  """ Starts exploration of a pickled job folder. 
   
       Usage: 
-      The most standard form is to simply load a job dictionary. All other
+      The most standard form is to simply load a job folder. All other
       job-dictionary magic functions will then use it.
       
-      >>> explore path/to/jobdictionary_pickle
+      >>> explore path/to/job_folder_pickle
 
-      If you have created a jobdictionary directly (rather than save it to
+      If you have created a job-folder directly (rather than save it to
       disk), you can also load it as
 
-      >>> explore jobdict_variable 
+      >>> explore jobfolder_variable 
 
       In case of conflict between a pathname and a variable name, you can use
       the more explicit version.
 
-      >>> explore --file jobdict
-      >>> explore --expression jobdict
+      >>> explore --file jobfolder
+      >>> explore --expression jobfolder
 
       You can load a dictionary and filter out successfull or unsuccessfull runs. 
       To explore errors only, use:
@@ -38,9 +38,9 @@ def explore(self, cmdl):
                      description='Opens a job-dictionary from file.')
   group = parser.add_mutually_exclusive_group()
   group.add_argument( '--file', action="store_true", dest="is_file",
-                      help='JOBDICT is a path to a job-dictionary stored on disk.' )
+                      help='JOBFOLDER is a path to a job-dictionary stored on disk.' )
   group.add_argument( '--expression', action="store_true", dest="is_expression",
-                      help='JOBDICT is a python expression.' )
+                      help='JOBFOLDER is a python expression.' )
   parser.add_argument( 'type', metavar='TYPE', type=str, default="", nargs='?',
                        help="Optional. Specifies what kind of jobs will be explored. "\
                             "Can be one of results, errors, all, running. "\
@@ -48,32 +48,32 @@ def explore(self, cmdl):
                             "\"errors\" are those jobs which are not \"running\" "\
                             "at the time of invokation and failed somehow. \"all\" means all jobs. "\
                             "By default, the dictionary is read as it was "\
-                            "saved. The modified jobdictionary is not saved to "\
+                            "saved. The modified job-folder is not saved to "\
                             "disk.")
-  parser.add_argument( 'jobdict', metavar='JOBDICT', type=str, default="", nargs='?',
-                       help='Job-dictionary variable or path to job dictionary saved to disk.')
+  parser.add_argument( 'jobfolder', metavar='JOBFOLDER', type=str, default="", nargs='?',
+                       help='Job-dictionary variable or path to job folder saved to disk.')
 
 
   # parse arguments
   try: args = parser.parse_args(cmdl.split())
   except SystemExit: return None
   else:
-    if len(args.jobdict) == 0 and (args.type not in ["results", "errors", "all", "running"]):
-      args.jobdict = args.type
+    if len(args.jobfolder) == 0 and (args.type not in ["results", "errors", "all", "running"]):
+      args.jobfolder = args.type
       args.type = ""
 
-  if     len(args.jobdict) == 0 \
+  if     len(args.jobfolder) == 0 \
      and (not args.is_file) \
      and (not args.is_expression) \
      and len(args.type) == 0 \
-     and len(args.jobdict) == 0: 
-    if interactive.jobdict is None:
+     and len(args.jobfolder) == 0: 
+    if interactive.jobfolder is None:
       print "No current jobs."
-    elif interactive.jobdict_path is None:
-      print "Current position in job dictionary:", interactive.jobdict.name
+    elif interactive.jobfolder_path is None:
+      print "Current position in job folder:", interactive.jobfolder.name
     else:
-      print "Current position in job dictionary:", interactive.jobdict.name
-      print "Path to job dictionary: ", interactive.jobdict_path
+      print "Current position in job folder:", interactive.jobfolder.name
+      print "Path to job folder: ", interactive.jobfolder_path
     return
 
   options = ['', "errors", "results", "all"]
@@ -88,49 +88,49 @@ def explore(self, cmdl):
 
   # now does special stuff if requested.
   if args.type == "errors": 
-    if interactive.jobdict_path is None: 
-      print "No known path/file for current jobdictionary.\n"\
+    if interactive.jobfolder_path is None: 
+      print "No known path/file for current job-folder.\n"\
             "Please save to file first."
       return
     running_jobs = set(self.magic("qstat").fields(-1)) if hasattr(self, "magic_qstat") else set([])
-    for name, job in interactive.jobdict.iteritems():
-      if job.functional.Extract(join(dirname(interactive.jobdict_path),name)).success: job.tag()
+    for name, job in interactive.jobfolder.iteritems():
+      if job.functional.Extract(join(dirname(interactive.jobfolder_path),name)).success: job.tag()
       elif name.replace("/", ".") in running_jobs: job.tag()
       else: job.untag()
 
   if args.type == "results": 
-    if interactive.jobdict_path is None: 
-      print "No known path/file for current jobdictionary.\n"\
+    if interactive.jobfolder_path is None: 
+      print "No known path/file for current job-folder.\n"\
             "Please save to file first."
       return
-    directory = dirname(interactive.jobdict_path)
-    for name, job in interactive.jobdict.iteritems():
+    directory = dirname(interactive.jobfolder_path)
+    for name, job in interactive.jobfolder.iteritems():
       if not job.functional.Extract(join(directory,name)).success: job.tag()
       else: job.untag()
 
 # elif args.type == "running": 
 #   running_jobs = set(ip.magic("qstat").fields(-1)) if hasattr(self, "magic_qstat") else set([])
-#   for name, job in interactive.jobdict.iteritems():
+#   for name, job in interactive.jobfolder.iteritems():
 #     if name.replace("/", ".") not in running_jobs: job.tag()
 #     else: job.untag()
 
   elif args.type == "all": 
-    for job in interactive.jobdict.itervalues(): job.untag()
+    for job in interactive.jobfolder.itervalues(): job.untag()
 
 def _explore_impl(self, args):
   """ Tries to open job-dictionary. """
   from os.path import abspath, isfile
-  from ..jobs import load, JobDict
+  from ..jobs import load, JobFolder
   from ..jobs import JobParams, MassExtract as Collect
   from lada import interactive
   from lada.misc import LockFile, RelativePath
 
   # case where we want to change the way the current dictionary is read.
-  if len(args.jobdict) == 0:
-    if interactive.jobdict is None:
-      print "No job dictionary currently loaded.\n"\
+  if len(args.jobfolder) == 0:
+    if interactive.jobfolder is None:
+      print "No job folder currently loaded.\n"\
             "Please use \"explore {0} path/to/jobict\".".format(args.type)
-      interactive.__dict__.pop("jobdict", None)
+      interactive.__dict__.pop("jobfolder", None)
       return
 
     if "collect" in self.user_ns: self.user_ns["collect"].uncache()
@@ -145,46 +145,46 @@ def _explore_impl(self, args):
   interactive.__dict__.pop("_lada_subjob_iterated", None)
 
   if args.is_file == False and args.is_expression == False \
-     and isfile(RelativePath(args.jobdict).path) \
-     and isinstance(self.user_ns.get(args.jobdict, None), JobDict):
+     and isfile(RelativePath(args.jobfolder).path) \
+     and isinstance(self.user_ns.get(args.jobfolder, None), JobFolder):
     print "The file {0} and the variable {1} both exist.\n"\
           "Please specify --file or --expression.\n"\
-          .format(RelativePath(args.jobdict).path, args.jobdict)
+          .format(RelativePath(args.jobfolder).path, args.jobfolder)
     return
-  jobdict, new_path = None, None
-  if args.is_file or not args.is_expression and isfile(RelativePath(args.jobdict).path):
-    try: jobdict = load(args.jobdict, timeout=6)
+  jobfolder, new_path = None, None
+  if args.is_file or not args.is_expression and isfile(RelativePath(args.jobfolder).path):
+    try: jobfolder = load(args.jobfolder, timeout=6)
     except ImportError as e:
       print "ImportError: ", e
       return
     except Exception as e:
       print e
-      if LockFile(args.jobdict).is_locked:
+      if LockFile(args.jobfolder).is_locked:
         print "You may want to check for the existence of {0}."\
-              .format(LockFile(args.jobdict).lock_directory)
+              .format(LockFile(args.jobfolder).lock_directory)
         print "If you are sure there are no jobs out there accessing {0},\n"\
-              "you may want to delete that directory.".format(args.jobdict)
+              "you may want to delete that directory.".format(args.jobfolder)
       return
-    else: new_path = abspath(args.jobdict)
-  if jobdict is None and (args.is_expression or not args.is_file):
-    jobdict = self.user_ns.get(args.jobdict, None)
-    if not isinstance(jobdict, JobDict): 
-      print "{0} is not a jobdictionary object.".format(args.jobdict)
+    else: new_path = abspath(args.jobfolder)
+  if jobfolder is None and (args.is_expression or not args.is_file):
+    jobfolder = self.user_ns.get(args.jobfolder, None)
+    if not isinstance(jobfolder, JobFolder): 
+      print "{0} is not a job-folder object.".format(args.jobfolder)
       return
 
-  if jobdict is None: # error
-    print "Could not convert \"{0}\" to a job-dictionary.".format(args.jobdict) 
+  if jobfolder is None: # error
+    print "Could not convert \"{0}\" to a job-dictionary.".format(args.jobfolder) 
     return
     
-  interactive.jobdict = jobdict
+  interactive.jobfolder = jobfolder
   self.user_ns["jobparams"] = JobParams()
-  interactive.jobdict_path = new_path
+  interactive.jobfolder_path = new_path
   if new_path is not None: self.user_ns["collect"] = Collect(dynamic=True)
 
 def completer(self, event): 
   """ Completer for explore. """ 
-  from ..jobs import JobDict
-  from . import jobdict_file_completer
+  from ..jobs import JobFolder
+  from . import jobfolder_file_completer
   
   data = event.line.split()[1:]
   results, has_file, has_expr = [], False, False
@@ -197,6 +197,6 @@ def completer(self, event):
   elif event.line[-1] == ' ': data.append('')
   if not has_file:
     results.extend( name for name, u in self.user_ns.iteritems()\
-                    if isinstance(u, JobDict) and name[0] != '_' and name not in data)
-  if not has_expr: results.extend( jobdict_file_completer(self, data))
+                    if isinstance(u, JobFolder) and name[0] != '_' and name not in data)
+  if not has_expr: results.extend( jobfolder_file_completer(self, data))
   return list(results)

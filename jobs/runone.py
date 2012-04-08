@@ -25,7 +25,7 @@ def main():
                       help="Time to wait for job-dictionary to becom available "
                            "before timing out (in seconds). A negative or null "
                            "value implies forever. Defaults to 5mn.")
-  parser.add_argument('pickle', metavar='FILE', type=str, help='Path to a jobdictionary.')
+  parser.add_argument('pickle', metavar='FILE', type=str, help='Path to a job-folder.')
 
   try: options = parser.parse_args()
   except SystemExit: return
@@ -44,8 +44,8 @@ def main():
   timeout = None if options.timeout <= 0 else options.timeout
   
   # loop over all jobs -- Needs communicator!
-  jobdict = jobs.load(options.pickle, timeout=timeout)
-  for i, (outdir, job) in enumerate(jobdict.iteritems()):
+  jobfolder = jobs.load(options.pickle, timeout=timeout)
+  for i, (outdir, job) in enumerate(jobfolder.iteritems()):
     if i != options.n: continue
   job.compute(comm=comm, outdir=outdir, external=options.external)
 

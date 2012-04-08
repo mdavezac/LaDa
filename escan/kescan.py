@@ -344,7 +344,7 @@ class KEscan(Escan):
       from inspect import getargspec
       from copy import deepcopy
       from os.path import join
-      from ..jobs import JobDict, Bleeder
+      from ..jobs import JobFolder, Bleeder
       from ..functools import SuperCall
       from ..mpi import Communicator
 
@@ -378,9 +378,9 @@ class KEscan(Escan):
       # create list of kpoints.
       kpoints = this._interpret_kpoints(this.kpoints, vffrun)
 
-      jobdict = JobDict()
+      jobfolder = JobFolder()
       for i, kpoint in enumerate(kpoints):
-        job = jobdict / 'kpoint_{0}'.format(i)
+        job = jobfolder / 'kpoint_{0}'.format(i)
         job.functional = SuperCall(KEscan, this)
         job.jobparams['kpoint']          = kpoint
         job.jobparams['structure']       = structure
@@ -390,12 +390,12 @@ class KEscan(Escan):
         job.jobparams['genpotrun']       = genpotrun
       
       directory = '.' if outdir is None else outdir
-      bleeder = Bleeder(jobdict, this._pools(len(kpoints), structure, comm), comm, directory=directory)
+      bleeder = Bleeder(jobfolder, this._pools(len(kpoints), structure, comm), comm, directory=directory)
       for result, job in bleeder.itercompute(**kwargs): continue
       bleeder.cleanup()
 
       result = Extract(outdir, comm, unreduce=True)
-      result.jobdict = jobdict
+      result.jobfolder = jobfolder
       return result
 
   # otherwise, will drop out on call.

@@ -12,14 +12,14 @@ def export(self, event):
   from ..opt import RelativeDirectory
 
   parser = argparse.ArgumentParser(prog='%export',
-                     description='Exports input/output files from current jobdictionary. '\
+                     description='Exports input/output files from current job-folder. '\
                                  'Depending on the extension of FILE, this will create '\
                                  'a simple tar file, or a compressed tar file. Using the '\
                                  'option --list, one can also obtain a list of all files '\
                                  'which would go in the tar archive. '\
                                  'Finally, this function only requires the \"collect\" '\
                                  'exists in the usernamespace. It may have been declared '\
-                                 'from loading a jobdictionary using \"explore\", or directly '\
+                                 'from loading a job-folder using \"explore\", or directly '\
                                  'with \"collect = vasp.MassExtract()\".' )
   group = parser.add_mutually_exclusive_group(required=True)
   group.add_argument( '--list', action="store_true", dest="aslist",
@@ -91,10 +91,10 @@ def export(self, event):
       for dir in directories:
         for sfile in iglob(join(dir, pattern)):
           if exists(sfile) and isfile(sfile): allfiles.add(sfile)
-  # adds current job dictionary.
-  if 'current_jobdict_path' in self.api.user_ns:
-    if isfile(self.api.user_ns['current_jobdict_path']):
-      allfiles.add(self.api.user_ns['current_jobdict_path'])
+  # adds current job folder.
+  if 'current_jobfolder_path' in self.api.user_ns:
+    if isfile(self.api.user_ns['current_jobfolder_path']):
+      allfiles.add(self.api.user_ns['current_jobfolder_path'])
 
   # now tar or list files.
   if args.aslist:

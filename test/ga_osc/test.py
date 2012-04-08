@@ -6,13 +6,13 @@ def gajobs(path, inputpath = "input.py"):
   from lada.ga.escan.elemental.functional import Darwin as Functional
   from lada.ga.escan.elemental.evaluator  import Dipole as Evaluator
   from lada.ga.escan.elemental            import LayeredConverter as Converter
-  from lada.jobs import JobDict
+  from lada.jobs import JobFolder
   from lada.escan import read_input
 
   # reads input file.
   input = read_input(inputpath)
 
-  jobdict = JobDict()
+  jobfolder = JobFolder()
   for scale in input.scales:
     for p in input.periods: 
       for trial in input.trials:
@@ -35,9 +35,9 @@ def gajobs(path, inputpath = "input.py"):
         functional.stddev_conc = input.stddev_conc
         functional.pools       = input.pools
 
-        gajob = jobdict / "scale_{0:.2f}/period_{1}/trial_{2}".format(scale, p, trial)
+        gajob = jobfolder / "scale_{0:.2f}/period_{1}/trial_{2}".format(scale, p, trial)
         gajob.functional = functional 
 
   ip = IPython.ipapi.get()
-  ip.user_ns["current_jobdict"] = jobdict
+  ip.user_ns["current_jobfolder"] = jobfolder
   ip.magic("savejobs " + path)

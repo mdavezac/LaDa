@@ -1,4 +1,4 @@
-""" Classes to manipulate job-dictionaries. """
+""" Classes to manipulate job-folders. """
 __docformat__ = "restructuredtext en"
 __all__ = ['JobParams']
 
@@ -6,13 +6,13 @@ from .extract import AbstractMassExtract
 
 class JobParams(AbstractMassExtract):
   """ Get and sets job parameters for a job-dictionary. """
-  def __init__(self, jobdict=None, only_existing=True, **kwargs):
+  def __init__(self, jobfolder=None, only_existing=True, **kwargs):
     """ Initializes job-parameters.
 
-        :param jobdict :
-            :py:class:`JobDict <lada.jobs.jobdict.JobDict>` instance for which
+        :param jobfolder :
+            :py:class:`JobFolder <lada.jobs.jobfolder.JobDict>` instance for which
             to get/set parameters. If None, will look for ipython's
-            current_jobdict.
+            current_jobfolder.
         :param bool only_existing:
             If true (default), then only existing parameters can be modified:
             non-existing parameters will not be added.
@@ -22,7 +22,7 @@ class JobParams(AbstractMassExtract):
     """
     from .. import jobparams_only_existing
 
-    self.__dict__["_jobdict"] = jobdict
+    self.__dict__["_jobfolder"] = jobfolder
     self.__dict__['only_existing'] = jobparams_only_existing\
                                        if only_existing is None\
                                        else only_existing
@@ -32,20 +32,20 @@ class JobParams(AbstractMassExtract):
     super(JobParams, self).__init__(**kwargs)
 
   @property
-  def jobdict(self):
+  def jobfolder(self):
     from lada.jobs import load
     from lada import is_interactive
-    if self._jobdict is None:
+    if self._jobfolder is None:
       if self._rootpath is None: 
         if is_interactive:
           from lada import interactive
-          if interactive.jobdict is None:
+          if interactive.jobfolder is None:
             print "No current job-dictionary."
             return
-          return interactive.jobdict
-        else: raise RuntimeError('No jobdictionary.')
-      else: self._jobdict = load(self.rootpath, timeout=30)
-    return self._jobdict.root
+          return interactive.jobfolder
+        else: raise RuntimeError('No job-folder.')
+      else: self._jobfolder = load(self.rootpath, timeout=30)
+    return self._jobfolder.root
 
 
   @property
@@ -100,13 +100,13 @@ class JobParams(AbstractMassExtract):
 
         If None, then no match required. Should be a string, not an re object.
     """
-    return self.jobdict.name if self._view is None else self._view
+    return self.jobfolder.name if self._view is None else self._view
   @view.setter
   def view(self, value): self._view = value
 
   def __iter_alljobs__(self):
     """ Loops through all correct jobs. """
-    for name, job in self.jobdict.iteritems(): yield job.name, job
+    for name, job in self.jobfolder.iteritems(): yield job.name, job
 
   def __getattr__(self, name): 
     """ Returns extracted values. """
@@ -175,18 +175,18 @@ class JobParams(AbstractMassExtract):
       if not job.is_tagged: result |= set([u for u in dir(job) if u[0] != '_'])
     return result
 
-  def __setitem__(self, name, jobdict):
-    """ Modifies/creates item in jobdictionary.
+  def __setitem__(self, name, jobfolder):
+    """ Modifies/creates item in job-folder.
     
         :param str name: 
           Name of item to modify.
-        :param jobdict:
-          :py:class:`JobDict lada.jobs.jobdict.JobDict` or
+        :param jobfolder:
+          :py:class:`JobFolder lada.jobs.jobfolder.JobDict` or
           :py:class:`JobParams` with which to set/modify item.
           In the latter case, it should point to a single entry in the
-          jobdictionary. Eg no wildcards.
+          job-folder. Eg no wildcards.
 
-        This function provides the ability to extend a jobdictionary with other jobs.
+        This function provides the ability to extend a job-folder with other jobs.
 
         >>> jobparams['newjob'] = jobparams['oldjob'] 
         >>> jobparams['newjob'] = some_job_dictionary
@@ -206,10 +206,10 @@ class JobParams(AbstractMassExtract):
     from lada import is_interactive
     from copy import deepcopy
 
-    if isinstance(jobdict, JobParams): 
-      try: jobdict = jobdict.jobdict[jobdict.view]
-      except KeyError: raise KeyError("{0} is not an actual job".format(jobdict.view))
-    if name in self.jobdict and is_interactive:
+    if isinstance(jobfolder, JobParams): 
+      try: jobfolder = jobfolder.jobfolder[jobdict.view]
+      except KeyError: raise KeyError("{0} is not an actual job".format(jobfolder.view))
+    if name in self.jobfolder and is_interactive:
       print "Modifying existing job {0}.".format(name)
       a = ''
       while a not in ['n', 'y']:
@@ -217,10 +217,10 @@ class JobParams(AbstractMassExtract):
       if a == 'n':
         print "Aborting."
         return
-    self.jobdict[name] = deepcopy(jobdict)
+    self.jobfolder[name] = deepcopy(jobfolder)
  
   def __delitem__(self, name):
-    """ Deletes items from jobdictionary. """
+    """ Deletes items from job-folder. """
     from lada import is_interactive
     if is_interactive:
       print "Deleting the following jobs:"
@@ -231,38 +231,38 @@ class JobParams(AbstractMassExtract):
       if a == 'n':
         print "Aborting."
         return
-    for key in self[name].keys(): del self.jobdict.root[key]
+    for key in self[name].keys(): del self.jobfolder.root[key]
 
-  def concatenate(self, jobdict):
-    """ Updates content of current jobdictionary with that of another.
+  def concatenate(self, jobfolder):
+    """ Updates content of current job-folder with that of another.
 
-        :param jobdict:
-          :py:class:`JobDict` instance, or :py:class:`JobParams` instance with
+        :param jobfolder:
+          :py:class:`JobFolder` instance, or :py:class:`JobParams` instance with
           which to update the current job-dictionary.
         
         Update means that jobs and jobparameters will be overwritten with those
         from the input. Jobs in the input which are not in the current
-        job-dictionary will be overwritten. If `jobdict` is a
-        :py:class:`JobDict` instance, it is possible to use wildcards in order
+        job-dictionary will be overwritten. If `jobfolder` is a
+        :py:class:`JobFolder` instance, it is possible to use wildcards in order
         to select those jobs of interests.
 
         .. warning: New jobs are always added at the root of the job-dictionary.
           Make sure the jobs bear the names you want.
     """
-    from .jobdict import JobDict
+    from .jobfolder import JobFolder
     from lada import is_interactive
-    keys = jobdict.keys()
+    keys = jobfolder.keys()
     if is_interactive:
       if len(keys) == 0: 
-        print "Empty input jobdictionary. Aborting."
+        print "Empty input job-folder. Aborting."
         return
       add = [k for k in keys if k in self]
       if len(add) > 0:
-        print "Adding the following jobdictionaries:"
+        print "Adding the following jobfolderionaries:"
         for key in add: print key
       update = [k for k in keys if k in self]
       if len(update) > 0:
-        print "Updating the following jobdictionaries:"
+        print "Updating the following jobfolderionaries:"
         for key in update: print key
       a = ''
       while a != 'n' and a != 'y':
@@ -270,13 +270,13 @@ class JobParams(AbstractMassExtract):
       if a == 'n':
         print "Aborting."
         return
-    rootadd = jobdict
+    rootadd = jobfolder
     if isinstance(rootadd, JobParams):
-      rootadd = JobDict()
+      rootadd = JobFolder()
       for key in keys:
         job = rootadd / key 
-        rootadd[key] = jobdict.jobdict[key]
+        rootadd[key] = jobfolder.jobfolder[key]
     
-    self.jobdict.root.update(rootadd)
+    self.jobfolder.root.update(rootadd)
 
 

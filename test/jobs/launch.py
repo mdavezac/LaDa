@@ -29,9 +29,9 @@ functional.Extract = Extract
 def create_jobs(n=3):
   """ Returns dictionary with fake jobs. """
   from launch import functional
-  from lada.jobs import JobDict
+  from lada.jobs import JobFolder
 
-  root = JobDict()
+  root = JobFolder()
   for i in xrange(n):
     job = root / "results" / str(i)
     job.functional = functional

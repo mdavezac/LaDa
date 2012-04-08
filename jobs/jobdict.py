@@ -1,33 +1,40 @@
-""" Submodule declaring the job-dictionary class. """
+""" Submodule declaring the folder folders class. """
 __docformat__ = "restructuredtext en"
 
-class JobDict(object):
-  """ Tree/dictionary of jobs. """
+class JobFolder(object):
+  """ Tree/dictionary of folders. """
 
   def __init__(self):
-    super(JobDict, self).__init__()
-    # List of subjobs (as in subdirectories). 
-    super(JobDict, self).__setattr__("children", {})
-    # This particular job. 
-    super(JobDict, self).__setattr__("params", {})
-    # This particular job is not set. 
-    super(JobDict, self).__setattr__("_functional", None)
-    # Parent job. 
-    super(JobDict, self).__setattr__("parent", None)
+    super(JobFolder, self).__init__()
+    # List of subfolders (as in subdirectories). 
+    super(JobFolder, self).__setattr__("children", {})
+    # This particular folder. 
+    super(JobFolder, self).__setattr__("params", {})
+    # This particular folder is not set. 
+    super(JobFolder, self).__setattr__("_functional", None)
+    # Parent folder. 
+    super(JobFolder, self).__setattr__("parent", None)
 
   @property
   def functional(self):
     """ Returns current functional.
     
         The functional is implemented as a property to make sure that it is
-        either None or a pickleable callable. Furthermore, a deepcopy of the functional is
-        performed. This parameter can never be truly deleted.
+        either None or a pickleable callable. The functional is **deepcopied**
+        from the input. In other words, this functional stored in the
+        folderdictionary is no longuer the one given on input -- it is not a
+        reference to the input. This parameter can never be truly deleted.
 
-        >>> del job.functional 
+        >>> del folder.functional 
 
         is equivalent to:
         
-        >>> job.functional = None
+        >>> folder.functional = None
+
+        .. note:: To store a reference to a global functional, one could do
+                  ``folder._functional = functional`` instead. However, modifying
+                  the input functional will affect the stored functional and
+                  vice-versa.
     """
     return self._functional
 
@@ -35,7 +42,7 @@ class JobDict(object):
   def functional(self, value):
     from pickle import dumps, loads # ascertains pickle-ability, copies functional
     if value is not None and not hasattr(value, "__call__"):
-      raise ValueError("job.functional should be either None(no job) or a callable.")
+      raise ValueError("folder.functional should be either None(no job) or a callable.")
     # ascertains pickle-ability
     try: string = dumps(value)
     except Exception as e:
@@ -48,7 +55,7 @@ class JobDict(object):
 
   @property
   def name(self):
-     """ Returns the name of this dictionary, relative to root. """
+     """ Returns the name of this dictionary as an absolute path. """
      if self.parent is None: return "/"
      string = None
      for key, item in self.parent.children.iteritems():
@@ -58,10 +65,45 @@ class JobDict(object):
      if string is None: raise RuntimeError("Could not determine the name of the dictionary.")
      return string + '/'
 
-  def __getitem__(self, index): 
-    """ Returns job description from the dictionary.
+  @property
+  def is_folder(self):
+    """ True if functional is not None. """
+    return self.functional is not None
 
-        If the job does not exist, will create it.
+  @property
+  def untagged_folders(self):
+    """ Returns a string with only untagged folders. """
+    result = "Folders: \n"
+    for name, folder in self.iteritems():
+      if not folder.is_tagged: result += "  " + name + "\n"
+    return result
+
+  @property
+  def is_tagged(self):
+    """ True if current folder is tagged. 
+
+        In practice, this is used to turn a folder *on* (untagged) or
+        *off* (tagged). The meaning of *tagged* is not enforced, so it could be
+        used for other purposes.
+    """
+    return hasattr(self, "_tagged")
+
+  @property
+  def nbfolders(self):
+    """ Returns the number of folders in sub-tree. """
+    return len([0 for j, o in self.iteritems()])
+
+  @property 
+  def root(self): 
+    """ Returns root dictionary. """
+    result = self
+    while result.parent is not None: result = result.parent
+    return result
+
+  def __getitem__(self, index): 
+    """ Returns folder description from the dictionary.
+
+        If the folder does not exist, will create it.
     """
     from re import split
     from os.path import normpath
@@ -77,13 +119,13 @@ class JobDict(object):
         if result.parent is None: raise KeyError("Cannot go below root level.")
         result = result.parent
       elif name in result.children: result = result.children[name]
-      else: raise KeyError("job " + index + " does not exist.")
+      else: raise KeyError("folder " + index + " does not exist.")
     return result
  
   def __delitem__(self, index): 
-    """ Returns job description from the dictionary.
+    """ Returns folder description from the dictionary.
 
-        If the job does not exist, will create it.
+        If the folder does not exist, will create it.
     """
     from os.path import normpath, relpath
 
@@ -92,7 +134,7 @@ class JobDict(object):
     try: deletee = self.__getitem__(index) # checks if exists.
     except KeyError: raise
 
-    if isinstance(deletee, JobDict): 
+    if isinstance(deletee, JobFolder): 
       if id(self) == id(deletee): raise KeyError("Will not commit suicide.")
       parent = self.parent
       while parent is not None: 
@@ -104,12 +146,12 @@ class JobDict(object):
     if name in parent.children:
       if id(self) == id(parent.children[name]): raise KeyError("Will not delete self.")
       return parent.children.pop(name)
-    raise KeyError("job " + index + " does not exist.")
+    raise KeyError("folder " + index + " does not exist.")
 
-  def __setitem__(self, index, value): 
-    """ Sets job/subjob description in the dictionary.
+  def __setitem__(self, name, value): 
+    """ Sets folder/subfolder description in the dictionary.
     
-        If the job does not exist, will create it.  A copy (copy.deepcopy) of
+        If the folder does not exist, will create it.  A copy (copy.deepcopy) of
         value is inserted, rather than a simple shallow ref.
     """
     from re import split
@@ -120,11 +162,11 @@ class JobDict(object):
     parentpath, childpath = dirname(index), basename(index)
     if len(parentpath) != 0: 
       if parentpath not in self:
-        raise KeyError('Could not find parent job {0}.'.format(parentpath))
+        raise KeyError('Could not find parent folder {0}.'.format(parentpath))
       mother = self[parentpath]
       parent = self.parent
       while parent is not None:
-        if parent is mother: raise KeyError('Will not set parent job of current job.')
+        if parent is mother: raise KeyError('Will not set parent folder of current folder.')
     if len(childpath) == 0 or childpath == '.': raise KeyError('Will not set current directory.')
     if childpath == '..': raise KeyError('Will not set parent directory.')
 
@@ -132,8 +174,13 @@ class JobDict(object):
     parent.children[childpath] = deepcopy(value)
     parent.children[childpath].parent = parent
 
-  def __div__(self, index): 
-    """ Adds name as a subtree of self. """
+  def __div__(self, name): 
+    """ Adds a folderdictionary to the tree. 
+
+        Any *path* can be given as input. This is akin to doing `mkdir -p`.
+        The newly created folder folders is returned.
+    """
+    from weakref import proxy
     from re import split
     from os.path import normpath
 
@@ -153,103 +200,108 @@ class JobDict(object):
         result = result.parent
         continue
       elif name not in result.children:
-        result.children[name] = JobDict()
-        result.children[name].parent = result
+        result.children[name] = JobFolder()
+        result.children[name].parent = proxy(result)
       result = result.children[name]
     return result
 
-  @property
-  def is_job(self):
-    """ True if functional is not None. """
-    return self.functional is not None
-
-  def subjobs(self):
-    """ Iterator over children jobs. """
+  def subfolders(self):
+    """ Sorted keys of the folders directly under this one. """
     return sorted(self.children.iterkeys())
     
   def compute(self, **kwargs):
-    """ Performs calculations over job list. """  
+    """ Executes the functional in this particular folder.
+    
+        If this particular folder of the folder folders is not executable (e.g.
+        ``self.functional is None``), then ``None`` is returned.
 
-    if not self.is_job: return None
-    kwargs.update(self.params)
-    return self.functional.__call__(**kwargs)
+        If, on the other hand, this folder contains a real functional, then the
+        latter is called taking the parameters stored in the folder as keyword
+        arguments. Futhermore, additional keyword arguments passed to this
+        method are passed on the functional, possibly overriding those stored
+        in the folder. The return from the functional is returned by this
+        method: In practice the call is as follows:
+
+        >>> return self.functional(**self.params.copy().update(kwargs))
+    """  
+    if not self.is_folder: return None
+    params = self.params.copy()
+    params.update(kwargs)
+    return self.functional.__call__(**params)
 
   def update(self, other, merge=False):
-    """ Updates job and tree with other.
+    """ Updates folder and tree with other.
     
         :param other:
-             :py:class:`JobDict` dictionary from which to update.
+             :py:class:`JobFolder` dictionary from which to update.
         :param bool merge:
-             If false (default), then actual jobs in ``other`` completely
-             overwrite actual jobs in ``self``. If False, then ``params`` in
+             If false (default), then actual folders in ``other`` completely
+             overwrite actual folders in ``self``. If False, then ``params`` in
              ``self`` is updated with ``params`` in ``other`` if either one is
-             an actual job. If ``other`` is an actual job, then ``functional`` in
-             ``self`` is overwritten. If ``other`` is not an actual job, then
+             an executable folder. If ``other`` is an executable folder, then ``functional`` in
+             ``self`` is overwritten. If ``other`` is not an executable folder, then
              ``functional`` in ``self`` is not replaced.
 
-        Updates the dictionaries of job parameters and sub-jobs. Actual jobs in
-        ``other`` (eg with ``self.is_job==True``) will completely overwrite those in
+        Updates the dictionaries of parameters and sub-folders. Actual folders in
+        ``other`` (eg with ``self.is_folder==True``) will completely overwrite those in
         ``self``.  if items in ``other`` are found in ``self``, unless merge is
-        set to true. This function is recurrent: subjobs are also updated.
+        set to true. This function is recurrent: subfolders are also updated.
     """
-    for key, value in other.children.iteritems():
+    for key, value in other.children.teritems():
       if key in self: self[key].update(value)
       else: self[key] = value
 
     if not merge:
-      if not other.is_job: return
+      if not other.is_folder: return
       self.params = other.params
       self.functional = other.functional
     else:
-      if not (self.is_job or other.is_job): return
+      if not (self.is_folder or other.is_folder): return
       self.params.update(other.params)
       if other.functional is not None: self.functional = other.functional
 
   def __str__(self):
-    result = "Jobs: \n"
+    result = "Folders: \n"
     for name in self.iterkeys():
       result += "  " + name + "\n"
     return result
 
-  @property
-  def untagged_jobs(self):
-    """ Returns a string with only untagged jobs. """
-    result = "Jobs: \n"
-    for name, job in self.iteritems():
-      if not job.is_tagged: result += "  " + name + "\n"
-    return result
-
-  @property
-  def is_tagged(self): return hasattr(self, "_tagged")
-
   def tag(self):
-    """ Adds _tagged attribute. """
-    if self.is_job: super(JobDict, self).__setattr__("_tagged", True)
+    """ Tags this folder. """
+    if self.is_folder: super(JobFolder, self).__setattr__("_tagged", True)
     
   def untag(self):
-    """ Adds _tagged attribute. """
+    """ Untags this folder. """
     if hasattr(self, "_tagged"): self.__delattr__("_tagged")
 
   def __delattr__(self, name):
-    """ Deletes job attribute. """
+    """ Deletes folder attribute. """
     if name in self.__dict__: return self.__dict__.pop(name)
     if name in self.params: return self.params.pop(name)
-    raise AttributeError("Unknown job attribute " + name + ".")
+    raise AttributeError("Unknown folder attribute " + name + ".")
 
   def __getattr__(self, name):
-    """ Returns job attribute. """
+    """ Returns folder parameter.
+    
+        Folder parameters stored in :py:attr:`Jobdict.params` can also be accessed
+        via the ``.`` operator.
+    """
     if name in self.params: return self.params[name]
-    raise AttributeError("Unknown job attribute " + name + ".")
+    raise AttributeError("Unknown folder attribute " + name + ".")
 
   def __setattr__(self, name, value):
-    """ Sets job attribute. """
+    """ Sets folder parameter. 
+
+        Folder parameters stored in :py:attr:`Jobdict.params` can also be accessed
+        via the ``.`` operator.
+    """
     from pickle import dumps
     if name in self.params:
       try: dumps(value)
       except Exception as e:
-        raise ValueError("Could not pickle job-parameter. Caught error:\n{0}".format(e))
+        raise ValueError("Could not pickle folder-parameter. Caught error:\n{0}".format(e))
       else: self.params[name] = value
-    else: super(JobDict, self).__setattr__(name, value)
+    else: super(JobFolder, self).__setattr__(name, value)
 
   def __dir__(self):
     from itertools import chain
@@ -261,57 +313,54 @@ class JobDict(object):
   def __getstate__(self):
     d = self.__dict__.copy()
     params = d.pop("params")
-    return d, params, "This is a JobDict pickle. Grep me!"
+    return d, params, "This is a JobFolder pickle. Grep me!"
   def __setstate__(self, args):
-    super(JobDict, self).__setattr__("params", args[1])
+    super(JobFolder, self).__setattr__("params", args[1])
     d = self.__dict__.update(args[0])
 
-  def iteritems(self, outdir=''):
-    """ Iterates over jobs. 
+  def iteritems(self, prefix=''):
+    """ Iterates over executable sub-folders.
 
-        :return: yields (directory, job):
-          - directory is a suggested directory name with ``outdir`` as its root.
-          - job is a Jobdict which contains something to execute.
+        Iterates over all executable subfolders. A subfolder is executable if it
+        holds a functional to execute.
+
+        :param str prefix:
+          Prefix to add to the name of this folder. Convenient when iterating
+          over a folder folders with the intention of executing the folders it
+          contains.
+
+        :return: yields (directory, folder):
+
+          - name of this folder, prefixed with ``prefix``.
+          - folder is an executable :py:class:`Folderdict`.
     """
     from os.path import join
-    # Yield this job if it exists.
-    if self.is_job: yield outdir, self
-    # Walk throught children jobdict.
-    for name in self.subjobs():
-      for u in self[name].iteritems(join(outdir, name)): yield u
+    # Yield this folder if it exists.
+    if self.is_folder: yield prefix, self
+    # Walk throught children folderdict.
+    for name in self.subfolders():
+      for u in self[name].iteritems(join(prefix, name)): yield u
   def itervalues(self): 
-    """ Iterates over all jobs. """
-    for name, job in self.iteritems(): yield job
+    """ Iterates over all executable sub-folders. """
+    for name, folder in self.iteritems(): yield folder
   def iterkeys(self): 
-    """ Iterates over all jobs. """
-    for name, job in self.iteritems(): yield name
+    """ Iterates over names of all executable subfolders. """
+    for name, folder in self.iteritems(): yield name
   def values(self):
-    """ List of all jobs. """
+    """ List of all executable sub-folders. """
     return [u for u in self.itervalues()]
   def keys(self):
-    """ List of all jobs. """
+    """ List of names of all executable sub-folders. """
     return [u for u in self.iterkeys()]
   def items(self):
-    """ List of all jobs. """
+    """ List of all folders. """
     return [u for u in self.iteritems()]
   __iter__ = iterkeys
   """ Iterator over keys. """
 
 
-  @property
-  def nbjobs(self):
-    """ Returns the number of jobs in tree. """
-    return len([0 for j, o in self.iteritems() if not j.is_tagged])
-
-  @property 
-  def root(self): 
-    """ Returns root dictionary. """
-    result = self
-    while result.parent is not None: result = result.parent
-    return result
-
   def __contains__(self, index):
-    """ Returns true if index a branch in the job-dictionary. """
+    """ Returns true if index a branch in the folder folders. """
     from re import split
     from os.path import normpath
     index = normpath(index)
@@ -326,7 +375,7 @@ class JobDict(object):
     return new_index in self[names[0]]
 
   def __copy__(self):
-    """ Performs a shallow copy of this job-dictionary.
+    """ Performs a shallow copy of this folder folders.
 
         Shallow copies are made of all internal dictionaries children and
         params. However, functional and params values should the same
@@ -338,8 +387,7 @@ class JobDict(object):
         The returned dictionary does not have a parent!
     """
     from copy import copy
-    # new job-dictionary.
-    result = JobDict()
+    result = JobFolder()
     result._functional = self._functional
     result.params   = self.params.copy()
     result.parent     = None

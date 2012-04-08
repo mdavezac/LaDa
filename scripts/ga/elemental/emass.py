@@ -8,13 +8,13 @@ def gajobs(path, inputpath = "input.py"):
   from lada.ga.escan.elemental.evaluator  import EffectiveMass as Evaluator
   from lada.ga.escan.elemental            import Converter
   from lada.ga.functional                 import minimize
-  from lada.jobs import JobDict
+  from lada.jobs import JobFolder
   from lada.escan import read_input
 
   # reads input file.
   input = read_input(inputpath)
 
-  jobdict = JobDict()
+  jobfolder = JobFolder()
   for type in ["ee", "hh"]:
     for direction in ["epi", "perp"]:
       for scale in input.scales:
@@ -49,9 +49,9 @@ def gajobs(path, inputpath = "input.py"):
             name = "{0[0]}{0[1]}{0[2]}/{1}/{2}/"\
                    .format(input.growth_direction, direction, type)
             name += "scale_{0:.2f}/{1}_{2}/trial_{3}".format(scale, nmin, nmax, trial)
-            gajob = jobdict / name
+            gajob = jobfolder / name
             gajob.functional = functional 
 
   ip = IPython.ipapi.get()
-  ip.user_ns["current_jobdict"] = jobdict
+  ip.user_ns["current_jobfolder"] = jobfolder
   ip.magic("savejobs " + path)

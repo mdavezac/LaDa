@@ -1,4 +1,4 @@
-""" Classes to manipulate output from jobdictionaries. """
+""" Classes to manipulate output from jobfolderionaries. """
 __docformat__ = "restructuredtext en"
 __all__ = ['AbstractMassExtract', 'MassExtract', 'AbstractMassExtractDirectories']
 

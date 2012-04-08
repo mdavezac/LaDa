@@ -1,31 +1,31 @@
 """ Classes and functions pertaining to job-management. 
 
-    Jobs are described within job-dictionaries. These dictionaries resemble
+    Jobs are described within job-folders. These dictionaries resemble
     directory trees, where some directories contain input files (eg job
     parameters) and are marked for execution.
 
     In addition, this package contains classes, such as MassExtract and
-    JobParams, capable of navigating output and input from jobdictionaries.
+    JobParams, capable of navigating output and input from jobfolderionaries.
 """
 __docformat__ = "restructuredtext en"
-__all__ = ['JobDict', 'walk_through', 'save', 'load', 'MassExtract',
+__all__ = ['JobFolder', 'walk_through', 'save', 'load', 'MassExtract',
            'AbstractMassExtract', 'AbstractMassExtractDirectories', 'Bleeder',
            'JobParams' ]
 
 from .bleeder import Bleeder
-from .jobdict import JobDict
+from .jobfolder import JobFolder
 from .manipulator import JobParams
 from .extract import AbstractMassExtract, AbstractMassExtractDirectories
 from .massextract import MassExtract 
 
-def save(jobdict, path=None, overwrite=False, timeout=None): 
+def save(jobfolder, path=None, overwrite=False, timeout=None): 
   """ Pickles a job to file. 
  
-      :keyword jobdict: A job-dictionary to pickle. 
-      :type jobdict: `JobDict`
+      :keyword jobfolder: A job-dictionary to pickle. 
+      :type jobfolder: `JobFolder`
       :keyword path: 
           filename of file to which to save pickle. overwritten. If None then
-          saves to "pickled_jobdict"
+          saves to "pickled_jobfolder"
       :type path: str or None
       :keyword comm:
         Convenience parameter. Only root process actually saves.
@@ -41,23 +41,23 @@ def save(jobdict, path=None, overwrite=False, timeout=None):
   from pickle import dump
   from ..misc import open_exclusive, RelativePath
   from .. import is_interactive
-  if path is None: path = "pickled_jobdict"
+  if path is None: path = "pickled_jobfolder"
   path = "job.dict" if path is None else RelativePath(path).path
   if exists(path) and not overwrite: 
     if is_interactive:
-      print path, "exists. Please delete first if you want to save the job dictionary."
+      print path, "exists. Please delete first if you want to save the job folder."
       return
     else: raise IOError('{0} already exists. By default, will not overwrite.'.format(path))
-  with open_exclusive(path, "wb", timeout=None) as file: dump(jobdict, file)
-  if is_interactive: print "Saved job dictionary to {0}.".format(path)
+  with open_exclusive(path, "wb", timeout=None) as file: dump(jobfolder, file)
+  if is_interactive: print "Saved job folder to {0}.".format(path)
 
 def load(path = None, timeout=None): 
   """ Unpickles a job from file. 
  
-      :keyword path: Filename of a pickled jobdictionary.
+      :keyword path: Filename of a pickled job-folder.
       :keyword comm: MPI processes for which to read job-dictionary.
       :type comm: `mpi.Communicator`
-      :return: Returns a JobDict object.
+      :return: Returns a JobFolder object.
 
       This method first acquire an exclusive lock (using os dependent lockf) on
       the file before reading. This way not two processes can read/write to

@@ -4,8 +4,8 @@ def showme(self, event):
   """ Edits job parameters, view files. """
   from lada import interactive
   # gets dictionary, path.
-  if interactive.jobdict is None:
-    print "No current jobdictionary."
+  if interactive.jobfolder is None:
+    print "No current job-folder."
     return
   # splits argumetns, removes decorative keywords.
   args = [u for u in event.split() if u not in ["in"]]
@@ -22,7 +22,7 @@ def showme(self, event):
     showme_pbs(self, args[0])
   elif args[0] == 'functional': 
     showme_functional(self)
-  elif args[0] in interactive.jobdict.params:
+  elif args[0] in interactive.jobfolder.params:
     showme_param(self, args[0])
   else: print "Unknown job parameter {0}.".format(args[0])
 
@@ -33,7 +33,7 @@ def showme_functional(self):
   from os import remove, stat
   from lada import interactive
   from ..misc import read_input
-  if interactive.jobdict.functional is None:
+  if interactive.jobfolder.functional is None:
     print "No current functional."
     print "Please first set it with jobparams."
     return
@@ -42,12 +42,12 @@ def showme_functional(self):
     with NamedTemporaryFile("w", delete = False, suffix='*.py') as file:
       filename = file.name
       # editing INCAR.
-      if isinstance(interactive.jobdict.functional, FunctionType):
+      if isinstance(interactive.jobfolder.functional, FunctionType):
         file.write('from {0.__module__} import {0.__name__}\n'\
                    'functional = {0.__name__}'\
-                   .format(interactive.jobdict.functional))
+                   .format(interactive.jobfolder.functional))
       else: 
-        string = repr(interactive.jobdict.functional)
+        string = repr(interactive.jobfolder.functional)
         if len(string) > 1 and string[0] == '<' and string[-1] == '>':
           print "Functional cannot be represented."
           print "Please use jobparams to modify it."
@@ -61,7 +61,7 @@ def showme_functional(self):
 
     # change jobparameters.
     input = read_input(filename)
-    interactive.jobdict.functional = input.functional
+    interactive.jobfolder.functional = input.functional
   finally:
     try: remove(filename)
     except: pass
@@ -74,7 +74,7 @@ def showme_param(self, arg):
   from lada import interactive
   from ..misc import read_input
 
-  if arg not in interactive.jobdict.params: 
+  if arg not in interactive.jobfolder.params: 
     print "{0} is not a jobparameter.".format(arg)
     return 
 
@@ -82,16 +82,16 @@ def showme_param(self, arg):
     # want .py suffix to get syntax highlighting in editors.
     with NamedTemporaryFile("w", delete = False, suffix='*.py') as file:
       filename = file.name
-      string = repr(interactive.jobdict.params[arg])
+      string = repr(interactive.jobfolder.params[arg])
       if len(string) > 1 and string[0] == '<' and string[-1] == '>':
         print "Parameter {0} cannot be represented.".format(arg)
         print "Please use jobparams to modify it."
         return
-      if interactive.jobdict.params[arg].__class__.__module__ != '__builtin__':
+      if interactive.jobfolder.params[arg].__class__.__module__ != '__builtin__':
         file.write( 'from {0.__class__.__module__} import {0.__class__.__name__}\n'\
-                    .format(interactive.jobdict.params[arg]))
+                    .format(interactive.jobfolder.params[arg]))
         obre = search( '\s*(\S+)\s*=\s*{0.__class__.__name__}\s*\('\
-                       .format(interactive.jobdict.params[arg]),
+                       .format(interactive.jobfolder.params[arg]),
                        string, M )
       else: obre = None
       if obre is None: 
@@ -112,7 +112,7 @@ def showme_param(self, arg):
     if not hasattr(input, othername): 
       print "Cannot find {0} in file. Aborting.".format(othername)
       return
-    interactive.jobdict.params[arg] = getattr(input, othername) 
+    interactive.jobfolder.params[arg] = getattr(input, othername) 
   finally:
     try: remove(filename)
     except: pass
@@ -124,18 +124,18 @@ def showme_pbs(self, which):
   from operator import itemgetter
   from .. import interactive
 
-  if not interactive.jobdict.is_job:
+  if not interactive.jobfolder.is_job:
     print "Current position in job-dictionary is not a job."
     return
-  filename = interactive.jobdict.name[:-1].replace("/", ".")
+  filename = interactive.jobfolder.name[:-1].replace("/", ".")
   if which in ["pbserr", "pbsout"]:
     prefix = "out" if which == "pbsout" else "err"
-    filename = join(interactive.jobdict_path + ".pbs", prefix + filename)
+    filename = join(interactive.jobfolder_path + ".pbs", prefix + filename)
     filenames = glob(filename+'.*')
     numbers   = [(i, int(u[len(filename)+1:].split('.')[-1])) for i, u in enumerate(filenames)]
     if len(numbers) == 0: filename = None
     else: filename = filenames[ sorted(numbers, key=itemgetter(1))[-1][0] ]
-  else: filename = join(interactive.jobdict_path + ".pbs", filename[1:] + ".pbs")
+  else: filename = join(interactive.jobfolder_path + ".pbs", filename[1:] + ".pbs")
   
   if filename is None or (not exists(filename)): 
     print "Could not find {0}({1}).".format(which, filename)
@@ -148,15 +148,15 @@ def completer(self, event):
   from os.path import exists, join, dirname
   from glob import glob
   from lada import interactive
-  if interactive.jobdict is None: return ['']
-  if interactive.jobdict.functional is None: return ['']
-  result = ['functional'] + interactive.jobdict.params.keys()
-  if interactive.jobdict.is_job and interactive.jobdict_path is not None: 
-    jobname = interactive.jobdict.name[:-1].replace("/", ".")
-    filename = join(interactive.jobdict_path + ".pbs", 'err' + jobname)
+  if interactive.jobfolder is None: return ['']
+  if interactive.jobfolder.functional is None: return ['']
+  result = ['functional'] + interactive.jobfolder.params.keys()
+  if interactive.jobfolder.is_job and interactive.jobfolder_path is not None: 
+    jobname = interactive.jobfolder.name[:-1].replace("/", ".")
+    filename = join(interactive.jobfolder_path + ".pbs", 'err' + jobname)
     if len(glob(filename + ".*")) > 0: result.append('pbserr')
-    filename = join(interactive.jobdict_path + ".pbs", 'out' + jobname)
+    filename = join(interactive.jobfolder_path + ".pbs", 'out' + jobname)
     if len(glob(filename + ".*")) > 0: result.append('pbsout')
-    filename = join(interactive.jobdict_path + ".pbs", jobname[1:] + ".pbs")
+    filename = join(interactive.jobfolder_path + ".pbs", jobname[1:] + ".pbs")
     if exists(filename): result.append('pbs')
   return result

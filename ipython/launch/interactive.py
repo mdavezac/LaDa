@@ -6,7 +6,7 @@
 """ 
 __docformat__ = "restructuredtext en"
 
-def launch(self, event, jobdicts):
+def launch(self, event, jobfolders):
   """ Launch jobs interactively.
 
       This call will block until each job is finished in turn.
@@ -22,7 +22,7 @@ def launch(self, event, jobdicts):
   kwargs['comm'] = comm
 
 
-  for current, path in jobdicts:
+  for current, path in jobfolders:
     # start computations.
     for job in current.itervalues(): 
       name = str(job.name)
@@ -40,13 +40,13 @@ def launch(self, event, jobdicts):
 
 def completer(self, event, data):
   """ Completer for scattered launcher. """
-  from .. import jobdict_file_completer
+  from .. import jobfolder_file_completer
   if data[-1] == "--kwargs":
     return [u for u in self.api.user_ns if u[0] != '_' and isinstance(self.api.user_ns[u], dict)]
   elif data[-1] == "--nbprocs": return ['']
   elif data[-1] == "--ppn": return ['']
   result = ['--force', '--kwargs', '--help', '--nbprocs', '--ppn']
-  result.extend(jobdict_file_completer(self, [event.symbol]))
+  result.extend(jobfolder_file_completer(self, [event.symbol]))
   result = list(set(result) - set(data))
   return result
 

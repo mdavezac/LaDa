@@ -10,3 +10,5 @@ Contents:
     lada.crystal <pyapi/crystal>
     
     lada.vasp <pyapi/vasp>
+
+    lada.jobs <pyapi/jobs>

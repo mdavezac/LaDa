@@ -37,7 +37,7 @@ def launch(self, event):
   # options supported by all.
   opalls = argparse.ArgumentParser(add_help=False)
   opalls.add_argument( 'pickle', metavar='FILE', type=str, nargs='*', default="", 
-                       help='Optional path to a jobdictionary. If not present, the '\
+                       help='Optional path to a job-folder. If not present, the '\
                             'currently loaded job-dictionary will be launched.')
   opalls.add_argument( '--force', action="store_true", dest="force", \
                        help="If present, launches all untagged jobs, even those "\
@@ -54,7 +54,7 @@ def launch(self, event):
   except SystemExit as e: return None
   
   # creates list of dictionaries.
-  jobdicts = []
+  jobfolders = []
   if args.pickle != '':
     for pickle in args.pickle:
       pickle = RelativePath(pickle).path
@@ -70,18 +70,18 @@ def launch(self, event):
           print "If you are sure there are no jobs out there accessing {0},\n"\
                 "you may want to delete that directory.".format(args.pickle)
           return
-      else: jobdicts.append((d, pickle))
-  else: # current job dictionary.
-    if interactive.jobdict is None:
+      else: jobfolders.append((d, pickle))
+  else: # current job folder.
+    if interactive.jobfolder is None:
       print "No current job-dictionary."
       return
-    if interactive.jobdict_path is None:
+    if interactive.jobfolder_path is None:
       print "No path for currrent job-dictionary."
       return
-    jobdicts = [(interactive.jobdict, interactive.jobdict_path)]
+    jobfolders = [(interactive.jobfolder, interactive.jobfolder_path)]
   
   # calls specialized function.
-  args.func(self, args, jobdicts)
+  args.func(self, args, jobfolders)
 
 
 
@@ -90,7 +90,7 @@ def completer(self, info):
   from .scattered import completer as scattered_completer
   from .interactive import completer as interactive_completer
   from IPython import TryNext
-  from .. import jobdict_file_completer
+  from .. import jobfolder_file_completer
 
   data = info.line.split()[1:]
   if "scattered" in data: return scattered_completer(self, info, data)
