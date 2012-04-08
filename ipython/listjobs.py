@@ -1,7 +1,7 @@
 def listjobs(self, arg):
-  """ Lists subjobs. """
+  """ Lists sub-folders. """
   from lada import interactive
-  from ..jobs import JobParams
+  from ..jobfolder import JobParams
   if interactive.jobfolder is None: return
   current = JobParams(jobfolder=interactive.jobfolder)[interactive.jobfolder.name]
   if len(arg) != 0:
@@ -17,4 +17,4 @@ def listjobs(self, arg):
       string += name[len(interactive.jobfolder.name):] + '  '
     else: string += name + '  '
     if (i+1) % 6 == 0: string += '\n'
-  print string if i != 0 else "No subjobs."
+  print string if i != 0 else "No sub-folders."

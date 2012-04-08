@@ -21,7 +21,7 @@ def savejobs(self, event):
     interactive.jobfolder_path = jobfolder_path
 
   if jobfolder_path is None: 
-    print "No current job-dictionary path.\n"\
+    print "No current job-folder path.\n"\
           "Please specify on input, eg\n"\
           ">saveto this/path/filename"
     return

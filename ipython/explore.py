@@ -42,11 +42,11 @@ def explore(self, cmdl):
   group.add_argument( '--expression', action="store_true", dest="is_expression",
                       help='JOBFOLDER is a python expression.' )
   parser.add_argument( 'type', metavar='TYPE', type=str, default="", nargs='?',
-                       help="Optional. Specifies what kind of jobs will be explored. "\
+                       help="Optional. Specifies what kind of job folders will be explored. "\
                             "Can be one of results, errors, all, running. "\
-                            "\"results\" are those jobs which have completed. "\
-                            "\"errors\" are those jobs which are not \"running\" "\
-                            "at the time of invokation and failed somehow. \"all\" means all jobs. "\
+                            "\"results\" are those job folders which have completed. "\
+                            "\"errors\" are those job folders which are not \"running\" "\
+                            "at the time of invokation and failed somehow. \"all\" means all job folders. "\
                             "By default, the dictionary is read as it was "\
                             "saved. The modified job-folder is not saved to "\
                             "disk.")
@@ -68,7 +68,7 @@ def explore(self, cmdl):
      and len(args.type) == 0 \
      and len(args.jobfolder) == 0: 
     if interactive.jobfolder is None:
-      print "No current jobs."
+      print "No current job folders."
     elif interactive.jobfolder_path is None:
       print "Current position in job folder:", interactive.jobfolder.name
     else:
@@ -120,8 +120,8 @@ def explore(self, cmdl):
 def _explore_impl(self, args):
   """ Tries to open job-dictionary. """
   from os.path import abspath, isfile
-  from ..jobs import load, JobFolder
-  from ..jobs import JobParams, MassExtract as Collect
+  from ..jobfolder import load, JobFolder
+  from ..jobfolder import JobParams, MassExtract as Collect
   from lada import interactive
   from lada.misc import LockFile, RelativePath
 
@@ -162,7 +162,7 @@ def _explore_impl(self, args):
       if LockFile(args.jobfolder).is_locked:
         print "You may want to check for the existence of {0}."\
               .format(LockFile(args.jobfolder).lock_directory)
-        print "If you are sure there are no jobs out there accessing {0},\n"\
+        print "If you are sure there are no job-folders out there accessing {0},\n"\
               "you may want to delete that directory.".format(args.jobfolder)
       return
     else: new_path = abspath(args.jobfolder)
@@ -183,7 +183,7 @@ def _explore_impl(self, args):
 
 def completer(self, event): 
   """ Completer for explore. """ 
-  from ..jobs import JobFolder
+  from ..jobfolder import JobFolder
   from . import jobfolder_file_completer
   
   data = event.line.split()[1:]

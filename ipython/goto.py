@@ -8,7 +8,7 @@ def goto(self, cmdl):
   from lada import interactive
 
   if interactive.jobfolder is None: 
-    print "No current jobs."
+    print "No current job-folders."
     return
   if len(cmdl.split()) == 0:
     if interactive.jobfolder_path is None:
@@ -59,7 +59,7 @@ def goto(self, cmdl):
       good = not value.is_tagged
       if good: break
   if not good:
-    print '**** Current job and subjobs are all off; '\
+    print '**** Current job-folders and sub-folders are all off; '\
           'jobparams (except onoff) and collect will not work.'
     return
   if interactive.jobfolder_path is None: return
