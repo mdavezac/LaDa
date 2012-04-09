@@ -346,7 +346,7 @@ def charged_states(species, A, B):
     yield -charge, oxdir
 
 
-def band_filling(defect, host, vbm=None, cbm=None, potal=None, **kwargs):
+def band_filling(defect, host, vbm=None, cbm=None, potal=None, ntype=None, **kwargs):
   """ Returns band-filling corrrection. 
 
       :Parameters: 
@@ -360,6 +360,11 @@ def band_filling(defect, host, vbm=None, cbm=None, potal=None, **kwargs):
         vbm, cbm, potal
           float or None, in eV
           Default None.
+        ntype
+          True if is a ntype defect, False for ptype defect; only necessary
+          when the system has a very small, or even negative band gap due to
+          the gap error. 
+          Default None.   
         kwargs 
           Parameters are passed on to potential alignment calculations.
          
@@ -382,7 +387,7 @@ def band_filling(defect, host, vbm=None, cbm=None, potal=None, **kwargs):
   elif defect.eigenvalues.ndim == 2:
     dummy = multiply(defect.eigenvalues-cbm, defect.multiplicity[:, newaxis])
     dummy = multiply(dummy, defect.occupations)
-  result = -sum(dummy[defect.eigenvalues > cbm])
+  result_n = -sum(dummy[defect.eigenvalues > cbm]) / sum(defect.multiplicity)
 
   vbm = (host.vbm if vbm == None else vbm*eV) + potal
 
@@ -392,10 +397,20 @@ def band_filling(defect, host, vbm=None, cbm=None, potal=None, **kwargs):
   elif defect.eigenvalues.ndim == 2:
     dummy = multiply(vbm-defect.eigenvalues, defect.multiplicity[:, newaxis])
     dummy = multiply(dummy, 2e0-defect.occupations)
-  result -= sum(dummy[defect.eigenvalues < vbm])
+  result_p = -sum(dummy[defect.eigenvalues < vbm]) / sum(defect.multiplicity)
 
-  return result.rescale(eV) / sum(defect.multiplicity)
-  
+  result = result_n + result_p
+  if ntype == True:
+    return result_n.rescale(eV)
+  elif ntype == False:
+    return result_p.rescale(eV)
+  else:
+    if float(result_n)*float(result_p) > 1E-12 :
+      print "### WARNING: set ntype=True or False explitly for band filling correction."
+      print "    band filling for ntype: {0}".format(result_n.rescale(eV))
+      print "    band filling for ptype: {0}".format(result_p.rescale(eV))
+    return result.rescale(eV)
+    
 def explore_defect(defect, host, **kwargs):
   """ Diagnostic tool to determine defect from defect calculation and host. 
   
