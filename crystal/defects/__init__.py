@@ -394,7 +394,7 @@ def band_filling(defect, host, vbm=None, cbm=None, potal=None, **kwargs):
     dummy = multiply(dummy, 2e0-defect.occupations)
   result -= sum(dummy[defect.eigenvalues < vbm])
 
-  return -result.rescale(eV) / sum(defect.multiplicity)
+  return result.rescale(eV) / sum(defect.multiplicity)
   
 def explore_defect(defect, host, **kwargs):
   """ Diagnostic tool to determine defect from defect calculation and host. 
@@ -913,7 +913,9 @@ def reindex_sites(structure, lattice, tolerance=0.25):
       site than to any other, within a given tolerance (in units of `structure.scale`?).
   """
   from .. import Neighbors
-  if hasattr(lattice, 'to_lattice'): lattice = lattice.to_lattice()
+  from lada.crystal import structure_to_lattice
+  if hasattr(lattice, 'to_lattice'): 
+    lattice = structure_to_lattice(lattice, primitive=False)
   lattice = lattice.to_structure(structure.cell)
   for atom in structure.atoms:
     neighs_in_str = [n for n in Neighbors(structure, 1, atom.pos)]
