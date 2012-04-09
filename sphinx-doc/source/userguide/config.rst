@@ -100,3 +100,140 @@ MPI
      An dictionary with ``n`` and ``ppn``, as well as any other variable to be
      used in conjunction with :py:data:`mpirun_exe`.
 
+Job-folder
+----------
+
+  .. py:data:: jobparams_readonly
+   
+     Whether instances of
+     :py:class:`~lada.jobfolder.forwarding_dict.ForwardingDict` are read only
+     by default. In practice, objects which use forwarding dictionaries
+     generally dictate whether it should read-only or not, depending on what
+     these objects do. This parameter should presently not have any effect.
+
+
+  .. py:data:: jobparams_naked_end
+
+     Whether mass collectors and manipulators, such as
+     :py:class:`~lada.jobfolder.manipulator.JobParams` should return an object
+     as is, rather than a
+     :py:class:`~lada.jobfolder.forwarding_dict.ForwardingDict`, when it is the
+     only item left. Practical when checking results in ipython, not so much
+     when writing scripts.
+
+  .. py:data:: jobparams_only_existing
+    
+     Whether, when setting parameters with
+     :py:class:`~lada.jobfolder.manipulator.JobParams`, new attributes should
+     be created for those items which do not possess that attribute, or whether
+     :py:class:`~lada.jobfolder.manipulator.JobParams` should content itself
+     with only modifying pre-existing attributes. Beware if set to True.
+   
+  .. py:data:: unix_re
+
+      Whether mass collectors and manipulators, such as
+      :py:class:`~lada.jobfolder.manipulator.JobParams`, accept regex as
+      indices, or whether to use bash-like substitutions. The former is more
+      powerfull, and the latter much simpler.
+
+Compuational ressources and job submission
+------------------------------------------
+
+  .. py:data:: pbs_string
+
+     String from which to create pbs_/slurm_ submission scripts. For instance,
+     the following is for the slurm_ ressource manager::
+
+        "#! /bin/bash/\n"                  \
+        "#SBATCH --account={account}\n"    \
+        "#SBATCH --time={walltime}\n"      \
+        "#SBATCH -N {nnodes}\n"            \
+        "#SBATCH -e {err}.%j\n"            \
+        "#SBATCH -o {out}.%j\n"            \
+        "#SBATCH -J {name}\n"              \
+        "#SBATCH -D {directory}\n\n"       \
+        "python {scriptcommand}\n"
+
+     There are number of keywords which should appear:
+
+        - walltime: defines how long the job should run. It will generally be
+          provided when calling launch in ipython.
+        - n: The number of processes to request from the resource manager.
+        - nnodes: The number of nodes to request from the resource manager.
+          Generally, it will be generated automatically from ``n`` and
+          :py:data:`default_pbs`'s relevant information.
+        - err: A file where to log errors from this job. This filename will be
+          generated automatically.
+        - out: A file where to log output from this job. This filename will be
+          generated automatically.
+        - name: The name of the job. Also generated automatically.
+        - directory: The directory where the job will take place. Also
+          generated automatically.
+        - scriptcommand: You do want something to happen, right? Generated automatically.
+        - account: Relevant to slurm_ only. Selected by user when launching job.
+
+     Any number of parameters can be further provided, as long as they exist in
+     :py:data:`default_pbs`.
+
+  .. py:data::default_pbs
+
+     A dictionary which contains the parameters relevant to :py:data:`pbs_string`.
+     Additionally, it should contain:
+      
+        - ppn: Number of processes per node. 
+
+  .. py:data:: debug_queue
+     
+     How to select the debug queue. First part of the tuple is the keyword
+     argument to modify when calling the pbs job, and the second is its value.
+
+  .. py:function:: ipython_qstat
+
+     An ipython magic function which returns all jobs submitted by the user.
+     Once provided, it will be automatically imported into the ipython session
+     by the lada extension, where is called ``qstat``.  This will change
+     somewhat from one supercomputer to the next, depending on the type of
+     ressource manager it uses. Here is what the function looks like for
+     slurm_::
+
+        def ipython_qstat(self, arg):
+          """ squeue --user=`whoami` -o "%7i %.3C %3t  --   %50j" """
+          from subprocess import Popen, PIPE
+          from IPython.utils.text import SList
+          from getpass import getuser
+      
+          # finds user name.
+          whoami = getuser()
+          squeue = Popen(["squeue", "--user=" + whoami, "-o", "\"%7i %.3C %3t    %j\""], stdout=PIPE)
+          result = squeue.stdout.read().rstrip().split('\n')
+          result = SList([u[1:-1] for u in result[1:]])
+          return result.grep(str(arg[1:-1]))
+
+     An this one is for pbs_-type ressource managers::
+
+        def qstat(self, arg):
+          """ Prints jobs of current user. """
+          from subprocess import Popen, PIPE
+          from getpass import getuser
+          from IPython.utils.text import SList
+          from re import compile
+          # get user jobs ids
+          ids = Popen('qstat -u{0}'.format(getuser()).split(), stdout=PIPE).communicate()[0].split('\n')
+          ids = SList(ids).grep(getuser()).fields(0)
+        
+          result = SList()
+          name_re = compile("Job_Name\s*=\s*(.+)")
+          state_re = compile("job_state\s*=\s*(\S+)")
+          mppwidth_re = compile("Resource_List.mppwidth\s*=\s*(\d+)")
+          for id in ids:
+            full = Popen('qstat -f {0}'.format(id).split(), stdout=PIPE).communicate()[0]
+            name = name_re.search(full).group(1)
+            state = state_re.search(full).group(1)
+            mppwidth = mppwidth_re.search(full).group(1)
+            result.append("{0:>10} {1:>4} {2:>3} -- {3}".format(id, mppwidth, state, name))
+          return result
+
+     Other/better snippets for other ressource managers are welcome.
+
+ .. _slurm: https://computing.llnl.gov/linux/slurm/
+ .. _pbs: http://www.mcs.anl.gov/research/projects/openpbs/

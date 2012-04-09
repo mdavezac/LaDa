@@ -1,7 +1,3 @@
-import random
-import uuid
-
-random.seed(12212)
 def Extract(outdir=None):
   from os.path import exists
   from os import getcwd

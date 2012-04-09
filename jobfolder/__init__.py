@@ -1,11 +1,16 @@
 """ Classes and functions pertaining to job-management. 
 
-    Jobs are described within job-folders. These dictionaries resemble
-    directory trees, where some directories contain input files (eg job
-    parameters) and are marked for execution.
+    The  :py:mod:`lada.jobfolder` provides tools for high-throughput calculations.
+    It is centered around an object - the job-folder - which organizes calculations
+    within a tree of folders, much as one would manually organize calculations
+    within a tree of directories. Each folder can be executable, e.g.  there is
+    something to compute there, or non-executable. And each folder can further hold
+    any number of sub-folders. Furthermore, classes are provided which make it easy
+    to manipulate the parameters for the calculations in an executable folder, as
+    well as within all subfolders. Finally, a similar infrastructure is provided to
+    collect the computational results across all executable sub-folders.
 
-    In addition, this package contains classes, such as MassExtract and
-    JobParams, capable of navigating output and input from jobfolderionaries.
+    .. seealso:: :ref:`jobfolders_ug`
 """
 __docformat__ = "restructuredtext en"
 __all__ = ['JobFolder', 'walk_through', 'save', 'load', 'MassExtract',
@@ -18,31 +23,30 @@ from .manipulator import JobParams
 from .extract import AbstractMassExtract, AbstractMassExtractDirectories
 from .massextract import MassExtract 
 
-def save(jobfolder, path=None, overwrite=False, timeout=None): 
-  """ Pickles a job to file. 
+def save(jobfolder, path='jobfolder.dict', overwrite=False, timeout=None): 
+  """ Pickles a job-folder to file. 
  
-      :keyword jobfolder: A job-dictionary to pickle. 
-      :type jobfolder: `JobFolder`
-      :keyword path: 
+      :param jobfolder:
+          A job-dictionary to pickle. 
+      :type jobfolder: :py:class:`~jobfolder.JobFolder` 
+      :param str path: 
           filename of file to which to save pickle. overwritten. If None then
           saves to "pickled_jobfolder"
-      :type path: str or None
-      :keyword comm:
-        Convenience parameter. Only root process actually saves.
-        Other processes wait silently.
-      :type comm: `mpi.Communicator`
-      :keyword overwrite: if True, then overwrites file.
+      :param int timeout: 
+         How long to wait when trying to acquire lock on file.
+         Defaults to forever.
+      :param bool overwrite:
+          if True, then overwrites file.
 
       This method first acquire an exclusive lock on the file before writing
-      (see `lada.opt.open_exclusive`).  This way not two processes can
+      (see :py:meth:`lada.misc.open_exclusive`).  This way not two processes can
       read/write to this file while using this function.
   """ 
   from os.path import exists
   from pickle import dump
   from ..misc import open_exclusive, RelativePath
   from .. import is_interactive
-  if path is None: path = "pickled_jobfolder"
-  path = "job.dict" if path is None else RelativePath(path).path
+  path = RelativePath(path).path
   if exists(path) and not overwrite: 
     if is_interactive:
       print path, "exists. Please delete first if you want to save the job folder."
@@ -51,17 +55,19 @@ def save(jobfolder, path=None, overwrite=False, timeout=None):
   with open_exclusive(path, "wb", timeout=None) as file: dump(jobfolder, file)
   if is_interactive: print "Saved job folder to {0}.".format(path)
 
-def load(path = None, timeout=None): 
-  """ Unpickles a job from file. 
+def load(path='jobfolder.dict', timeout=None): 
+  """ Unpickles a job-folder from file. 
  
-      :keyword path: Filename of a pickled job-folder.
-      :keyword comm: MPI processes for which to read job-dictionary.
-      :type comm: `mpi.Communicator`
+      :param str path: 
+         Filename of a pickled job-folder. 
+      :param int timeout: 
+         How long to wait when trying to acquire lock on file.
+         Defaults to forever.
       :return: Returns a JobFolder object.
 
-      This method first acquire an exclusive lock (using os dependent lockf) on
-      the file before reading. This way not two processes can read/write to
-      this file while using this function.
+      This method first acquire an exclusive lock on the file before reading.
+      This way not two processes can read/write to this file while using this
+      function.
   """ 
   from os.path import exists
   from pickle import load as load_pickle

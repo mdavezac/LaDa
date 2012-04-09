@@ -1,13 +1,17 @@
-""" Special dictioanry class to forward attributes indefinitely. 
-
-    In practice, this class looks like a namespace which returns further namespaces. 
-"""
+""" Special dictioanry class to forward attributes indefinitely. """
 __docformat__ = "restructuredtext en"
 __all__ = ['ForwardingDict']
 from collections import MutableMapping
 
 class ForwardingDict(MutableMapping): 
-  """ An *ordered* dictionary which forwards attributes. """
+  """ An *ordered* dictionary which forwards attributes.
+  
+      Overloads the ``.`` operator to access items for which the particular
+      attribute exists. The return is another instance of
+      :py:class:`ForwaringDict`. In this manner, attributes can chained with
+      calls to the``.`` operator. The values of forwarded attributes can also
+      be changed.
+  """
   def __init__( self, ordered=True, readonly=None, naked_end=None,
                 only_existing=None, _attr_list=None, dictionary=None):
     """ Initializes a ForwardingDict instance.

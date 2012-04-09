@@ -33,6 +33,7 @@ class JobParams(AbstractMassExtract):
 
   @property
   def jobfolder(self):
+    """ Root of the job-folder this instance wraps. """
     from . import load
     from .. import is_interactive
     if self._jobfolder is None:

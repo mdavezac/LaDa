@@ -204,7 +204,7 @@ def b36():
            .add_atom(0.4481, 0.337198, 0.0535, 'X')
 
 def b5():
-  """ b5 lattice """
+  """ b5 (spinel) lattice """
   from lada.crystal import Structure
   return Structure( 0, 0.5, 0.5,\
                     0.5, 0, 0.5,\
@@ -393,7 +393,7 @@ def b12():
            .add_atom(0.06175, 0.26057, 0.47, 'X')
 
 def b5I():
-  """ b5I lattice """
+  """ b5I (inverse spinel) lattice """
   from lada.crystal import Structure
   return Structure( 0, 0.5, 0.5,\
                     0.5, 0, 0.5,\

@@ -1,17 +1,19 @@
-""" Classes to manipulate output from jobfolderionaries. """
+""" Classes to manipulate output from job-folder calculations. """
 __docformat__ = "restructuredtext en"
 __all__ = ['MassExtract']
 from .extract import AbstractMassExtract
 
 class MassExtract(AbstractMassExtract): 
-  """ Propagates extraction methods from different jobs. 
+  """ Collects extraction properties from different folders. 
   
-      Collects extractors across all jobs (for which job.functional.Extract
-      exist). The results are presented as attributes of an instance of
-      MassExtract, and arranged as directory where the key is the name of the
-      job and the value obtained from an instance of that job's Extract. This
-      class is set-up to fail silently, and hence is of limited use for
-      diagnosis.
+      Collects extractors across executable folders. The results are presented
+      as attributes of an instance of :py:class:`MassExtract`, and arranged as
+      directory where the key is the name of the job and the value obtained
+      from an instance of that job's Extract. This class is set-up to fail
+      silently, and hence is of limited use for diagnosis.
+
+      For properties to be forwarded, the functional should have an ``Extract``
+      attribute which takes a directory path as argument.
   """
 
   def __init__(self, path=None, **kwargs):
@@ -23,6 +25,8 @@ class MassExtract(AbstractMassExtract):
         :param kwargs:
             Variable length keyword argument passed on to
             :py:meth:`AbstractMassExtract.__init__`.
+
+        Other arguments are passed on to the base class.
     """
     self.__dict__["_jobfolder"] = None
     super(MassExtract, self).__init__(path=path, **kwargs)
@@ -39,6 +43,7 @@ class MassExtract(AbstractMassExtract):
 
   @property
   def jobfolder(self):
+    """ Root of the job-folder wrapped by this instance. """
     from . import load
     from .. import is_interactive
     if self._jobfolder is None:
@@ -55,6 +60,7 @@ class MassExtract(AbstractMassExtract):
 
   @property
   def rootpath(self):
+    """ Root of the directory tree where computational results can be found. """
     from .. import is_interactive
     if self._jobfolder is None and self._rootpath is None and is_interactive:
       from .. import interactive

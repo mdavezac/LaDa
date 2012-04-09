@@ -11,4 +11,4 @@ Contents:
     
     lada.vasp <pyapi/vasp>
 
-    lada.jobs <pyapi/jobs>
+    lada.jobfolder <pyapi/jobfolder>

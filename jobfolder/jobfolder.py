@@ -2,8 +2,18 @@
 __docformat__ = "restructuredtext en"
 
 class JobFolder(object):
-  """ Tree/dictionary of folders. """
-
+  """ High-throughput folder class. 
+  
+      Means to organize any calculations in folders and subfolders. A folder
+      is executable is the ``functional`` attribute is not ``None``. The
+      attribute should be set to a pickleable calleable. The parameters for the
+      calls should be inserted in the ``params`` attribute. Sub-folders can be
+      added using the :py:meth:`__div__` and :py:meth:`__setitem__`
+      methods. The latter offers the ability to access and set subfolders at
+      any point within the tree of folders from any subfolder. The executable
+      subfolders can also be iterated in a manner similar to a job-dictionary.
+      Finally, a folder can be executed `via` the :py:meth:`compute` method. 
+  """
   def __init__(self):
     super(JobFolder, self).__init__()
     # List of subfolders (as in subdirectories). 
@@ -151,8 +161,10 @@ class JobFolder(object):
   def __setitem__(self, name, value): 
     """ Sets folder/subfolder description in the dictionary.
     
-        If the folder does not exist, will create it.  A copy (copy.deepcopy) of
+        If the folder does not exist, will create it.  A deepcopy_ of
         value is inserted, rather than a simple shallow ref.
+
+        .. _deepcopy: http://docs.python.org/library/copy.html#copy.deepcopy
     """
     from re import split
     from copy import deepcopy

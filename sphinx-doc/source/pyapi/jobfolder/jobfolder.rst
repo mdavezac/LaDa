@@ -1,8 +1,12 @@
-Jobdict Class
+Jobdict class
 *************
 
 .. automodule:: lada.jobfolder.jobfolder
+.. moduleauthor:: Mayeul d'Avezac
 .. autoclass:: JobFolder
+   :show-inheritance:
+
+   .. automethod:: __init__
 
    .. attribute:: children
 
@@ -50,3 +54,8 @@ Jobdict Class
    .. automethod:: untag()->None
 
    .. automethod:: __getattr__
+   .. automethod:: __setattr__
+   .. automethod:: __div__
+   .. automethod:: __getitem__
+   .. automethod:: __setitem__
+   .. automethod:: __contains__

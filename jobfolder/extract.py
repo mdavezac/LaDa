@@ -1,11 +1,26 @@
-""" Classes to manipulate output from jobfolderionaries. """
+""" Classes to manipulate output from job folders. """
 __docformat__ = "restructuredtext en"
-__all__ = ['AbstractMassExtract', 'MassExtract', 'AbstractMassExtractDirectories']
+__all__ = ['AbstractMassExtract', 'AbstractMassExtractDirectories']
 
 from abc import ABCMeta, abstractmethod
 
 class AbstractMassExtract(object): 
-  """ Propagates extraction methods from different jobs. """
+  """ Collects extraction methods from different job-folders. 
+  
+      Wraps around a root job folder and provides means to access it (or
+      something related to it). In practice, a derived class will hold a list
+      of *somethings* which does something good for a particular folder. This
+      is a base class, concerned mostly with providing a rich mapping and
+      attribute access interface. It allows the user to focus on a small set of
+      executable folders `via` the mapping (``[]``) methods, e.g. a view of the
+      folders. The attributes of the wrapped *somethings* of the current view
+      are retrieved into a :py:class:`forwarding dict
+      <lada.jobfolder.forwardingdict.ForwardingDict`. 
+      
+      The :py:meth:`__iter_alljobs__` method should be implemented within
+      derived classes. It should yield for each executable folder a tuple
+      consisting of the name of that folder and the relevant *something*.
+  """
   __metaclass__ = ABCMeta
 
   def __init__(self, path=None, view=None, excludes=None, dynamic=False, ordered=True, 
@@ -24,7 +39,7 @@ class AbstractMassExtract(object):
         :param bool dynamic:
             If true, chooses a slower but more dynamic caching method. Only
             usefull for ipython shell. 
-        :param ordered : boolean
+        :param bool ordered: 
             If true, uses OrderedDict rather than conventional dict.
         :param bool naked_end:
             True if should return value rather than dict when only one item.
@@ -86,7 +101,7 @@ class AbstractMassExtract(object):
     else: self._excludes = value
 
   def avoid(self, excludes):
-    """ Returns a new MassExtract object with further exclusions. 
+    """ Returns a new object with further exclusions. 
 
         :param excludes: Pattern or patterns to exclude from output.
         :type excludes: str or list of str or None 
@@ -208,7 +223,8 @@ class AbstractMassExtract(object):
   def view(self):
     """ A regex pattern which the name of extracted jobs should match.
 
-        If None, then no match required. Should be a string, not an re object.
+        If None, then no match required. :py:attr:`unix_re` determines whether
+        these are unix-command-line like patterns or true python regex.
     """
     if self._view is None: return ""
     return self._view
@@ -275,9 +291,11 @@ class AbstractMassExtract(object):
   def __getitem__(self, name):
     """ Returns a view of the current job-dictionary.
     
-        .. note:: os.path.normpath_ returns a valid path when descending below
+        .. note:: normpath_ returns a valid path when descending below
            root, e.g.``normpath('/../../other') == '/other'), so there won't be
            any errors on that account.
+
+           .. _normpath: http://docs.python.org/library/os.path.html#os.path.normpath
     """
     from os.path import normpath, join
     if name[0] != '/': name = join(self.view, name)
@@ -322,13 +340,13 @@ class AbstractMassExtract(object):
        
 
 class AbstractMassExtractDirectories(AbstractMassExtract):
-  """ Propagates extractors from all subdirectories.
+  """ Collects extractors from all subdirectories.
   
       Trolls through all subdirectories for calculations with given extraction
       files, and organises results as a dictionary where keys are the name of
       the diretory.
 
-      An class derived from this one should make sure that:
+      A class derived from this one should make sure that:
       
       - `Extract` is not none.
       - `__is_calc_dir__` is correctly defined. 

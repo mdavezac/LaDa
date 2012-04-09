@@ -29,6 +29,7 @@ a file in a database.
 
 
 .. autoclass:: Extract
+   :show-inheritance:
    :members:
    :inherited-members:
   
