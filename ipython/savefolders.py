@@ -1,18 +1,49 @@
 def savefolders(self, event):
-  """ Saves current job-folder to disk. """
-  from os.path import exists, abspath, isfile
+  """ Saves job-folder to disk.
+  
+      This function can be called in one of three ways:
+
+      >>> savefolders filename.dict rootfolder 
+  
+      In this case, "filename.dict" is a file where to save the jobfolder
+      "rootfolder". The latter must be a python variable, not another filename. 
+      The current job-folder becomes "rootfolder", and the current path 
+
+
+      >>> savefolders filename.dict
+
+      Saves the current job-folder to "filename.dict". Fails if no current
+      job-folder.
+
+      >>> savefolders 
+
+      Saves the current job-folder to the current job-folder path. Fails if
+      either are unknown.
+  """
+  from os.path import exists, isfile
   from ..jobfolder import JobParams, MassExtract as Collect, save as savefolders
   from .. import interactive
   from ..misc import RelativePath
+  if interactive.jobfolder is None: 
+    print "No current job-folder."
+    print "Please load first with %explore."
+    return
   jobfolder = interactive.jobfolder.root
   jobfolder_path = interactive.jobfolder_path
 
-  if jobfolder is None:
-    print "No job-folders to save." 
+  args = [u for u in event.split()]
+  if '--help' in args or '-h' in args:
+    print savefolders.__doc__
+    return 
+
+  if len(args) > 2: 
+    print "savefolders takes zero, one, or two arguments."
     return
-  args = [u for u in event.split() ]
-  if len(args) > 1: 
-    print "savefolders takes one or no arguments."
+
+  if len(args) == 2:
+    from .explore import explore
+    explore(self, args[1])
+    savefolders(args[0])
     return
 
   if len(args) == 1:

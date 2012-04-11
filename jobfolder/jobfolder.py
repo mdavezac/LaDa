@@ -76,7 +76,7 @@ class JobFolder(object):
      return string + '/'
 
   @property
-  def is_folder(self):
+  def is_executable(self):
     """ True if functional is not None. """
     return self.functional is not None
 
@@ -235,7 +235,7 @@ class JobFolder(object):
 
         >>> return self.functional(**self.params.copy().update(kwargs))
     """  
-    if not self.is_folder: return None
+    if not self.is_executable: return None
     params = self.params.copy()
     params.update(kwargs)
     return self.functional.__call__(**params)
@@ -254,7 +254,7 @@ class JobFolder(object):
              ``functional`` in ``self`` is not replaced.
 
         Updates the dictionaries of parameters and sub-folders. Actual folders in
-        ``other`` (eg with ``self.is_folder==True``) will completely overwrite those in
+        ``other`` (eg with ``self.is_executable==True``) will completely overwrite those in
         ``self``.  if items in ``other`` are found in ``self``, unless merge is
         set to true. This function is recurrent: subfolders are also updated.
     """
@@ -263,11 +263,11 @@ class JobFolder(object):
       else: self[key] = value
 
     if not merge:
-      if not other.is_folder: return
+      if not other.is_executable: return
       self.params = other.params
       self.functional = other.functional
     else:
-      if not (self.is_folder or other.is_folder): return
+      if not (self.is_executable or other.is_executable): return
       self.params.update(other.params)
       if other.functional is not None: self.functional = other.functional
 
@@ -279,7 +279,7 @@ class JobFolder(object):
 
   def tag(self):
     """ Tags this folder. """
-    if self.is_folder: super(JobFolder, self).__setattr__("_tagged", True)
+    if self.is_executable: super(JobFolder, self).__setattr__("_tagged", True)
     
   def untag(self):
     """ Untags this folder. """
@@ -347,7 +347,7 @@ class JobFolder(object):
     """
     from os.path import join
     # Yield this folder if it exists.
-    if self.is_folder: yield prefix, self
+    if self.is_executable: yield prefix, self
     # Walk throught children folderdict.
     for name in self.subfolders():
       for u in self[name].iteritems(join(prefix, name)): yield u

@@ -1,4 +1,5 @@
 def Extract(outdir=None):
+  """ An extraction function for a dummy functional """
   from os.path import exists
   from os import getcwd
   from collections import namedtuple
@@ -7,14 +8,15 @@ def Extract(outdir=None):
 
   if outdir == None: outdir = getcwd()
   Extract = namedtuple('Extract', ['success', 'directory', 'structure', 'value', 'functional'])
-  if not exists(outdir): return Extract(False, outdir, None, None, functional)
+  if not exists(outdir): return Extract(False, outdir, None, None, None)
   with Changedir(outdir) as pwd:
-    if not exists('OUTCAR'): return Extract(False, outdir, None, None, functional)
-    with open('OUTCAR', 'r') as file: structure, value = load(file)
-  return Extract(True, outdir, structure, value, functional)
+    if not exists('OUTCAR'): return Extract(False, outdir, None, None, None)
+    with open('OUTCAR', 'r') as file:
+      structure, value, functional = load(file)
+      return Extract(True, outdir, structure, value, functional)
   
-
 def functional(structure, outdir=None, value=False, **kwargs):
+  """ A dummy functional """
   from lada.misc import Changedir
   from copy import deepcopy
   from pickle import dump
@@ -28,4 +30,20 @@ def functional(structure, outdir=None, value=False, **kwargs):
   return structure
 functional.Extract = Extract
 
+def create_jobs():
+  """ Simple job-folders. """
+  from lada.jobfolder import JobFolder
+  from lada.crystal.binary import zinc_blende
 
+  root = JobFolder()
+  
+  for name, value, species in zip( ['diamond', 'diamond/alloy', 'GaAs'], 
+                                   [0, 1, 2],
+                                   [('Si', 'Si'), ('Si', 'Ge'), ('Ga', 'As')] ):
+    job = root / name 
+    job.functional = functional
+    job.params['value'] = value
+    job.params['structure'] = zinc_blende()
+    for atom, specie in zip(job.structure, species): atom.type = specie
+
+  return root

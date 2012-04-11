@@ -1,5 +1,5 @@
-.. _jobfolders_ug: 
-.. currentmodule:: lada.jobfolders
+.. currentmodule:: lada.jobfolder
+.. _jobfolder_ug: 
 
 Organized high-thoughput calculations: job-folders
 **************************************************
@@ -11,7 +11,7 @@ functional and the parameters with which that functional should be called, i.e.
 files. And it can contain other job-folders, i.e. sub-directories. Once the
 calculations are performed, the architecture of the job-folders is reflected on
 disk: the output files from the actual calculations should be found in the
-subdirectory corresponding to the sub job-folder.
+sub-directory corresponding to the sub job-folder.
 
 The following describes how job-folders are created. The fun bits, 
 launching jobs, collecting results, manipulating all job-folders
@@ -28,7 +28,7 @@ Putting it into a file is important because we will want python to be able to
 refer to it later on.
 
 .. literalinclude:: dummy.py
-   :lines: 16-26, 28
+   :lines: 18-27, 30
 
 This functional takes a few arguments, amongst which an output directory, and
 writes a file to disk. That's pretty much it.
@@ -92,4 +92,109 @@ Making a job-folder executable
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The whole point of a job-folder is to create an architecture for calculations.
-Each job-folder can contain a single calculation.
+Each job-folder can contain at most a single calculation. A calculation is
+setup by passing to the job-folder a function and the parameters for calling it.
+
+  >>> from lada.crystal.binary import zinc_blende
+  >>> from dummy import functional
+  >>>
+  >>> jobA.functional = functional
+  >>> jobA.params['structure'] = zinc_blende()
+  >>> jobA.params['value'] = 5
+
+In the above, the function ``functional`` from the dummy module created
+previously is imported into the namespace. The special attribute
+:py:attr:`job.functional <jobfolder.Jobfolder.functional>` is
+set to ``functional``. Two arguments, ``structure`` and ``value``, are
+specified by adding the to the dictionary :py:attr:`job.params
+<jobfolder.Jobfolder.params>`. Please note that the third
+line does not contain parenthesis: this is not a function call, it merely saves
+a reference to the function with the object of calling it later. C afficionados
+should think a saving a pointer to a function.
+
+.. warning:: The reference to ``functional`` is deepcopied_: the instance that
+   is saved to jod-folder is *not* necessarily the one that was passed to i.
+   On the other hand, the parameters (``jobA.params``) are held by reference
+   rather than by value.
+
+
+.. tip:: To force a job-folder to hold a functional by reference rather than by
+   value, do:
+
+   >>> jobA._functional = functional
+
+The parameters  in ``job.params`` should be pickleable_ so that the folder can
+be saved to disk later.  :py:attr:`~jobfolder.Jobfolder.functional` must be a
+pickleable_ callable_. Setting :py:attr:`~jobfolder.Jobfolder.functional` to
+something else will immediatly fail. In practice, this means it can be a
+function or a callable class, as long as that function or class is imported
+from a module. It cannot be defined in `__main__`__, e.g. the script that you
+run to create the job-folders:
+
+>>> run -i jobscript.py # functional must defined outside jobscript.py.
+
+However, if jobscript is imported as a module, and the job-folders are
+created via a function, then ``functional`` can be defined inside
+jobscript.py:
+
+>>> import jobscript
+>>> newjobs = jobscript.create_my_jobfolders() # functional can be defined in jobscript.py
+
+
+These complications are due to the way python pickles_ data.  And pickling we
+need to save job-folders to disk.  The functional is called with the parameters
+passed to the folder as keyword arguments:
+
+>>> jobA.compute(outdir=jobA.name[1:])
+
+is exactly equivalent to:
+
+>>> functional(structure=zinc_blende(), value=5, outdir='jobA')
+
+Note that we have passed an extra argument ``outdir``, which is the output
+directory. It is customary to set it to the name of the job (minus the leading /).
+Any one of the two previous commands will create a "JobA" sub-directory in the
+current directory.
+
+.. tip::
+
+   Executable olders can be iterated the same way dictionaries can, with
+   :py:meth:`~jobfolder.JobFolder.keys`,
+   :py:meth:`~jobfolder.JobFolder.iterkeys`, 
+   :py:meth:`~jobfolder.JobFolder.values`, 
+   :py:meth:`~jobfolder.JobFolder.itervalues`, 
+   :py:meth:`~jobfolder.JobFolder.items`, 
+   :py:meth:`~jobfolder.JobFolder.iteritems`.
+
+Saving and loading folders
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The :ref:`IPython interface <ipython_ug>` provides better ways to both.
+However, it is still possible to load and save job-folders to disk from a
+script:
+
+>>> from lada.jobfolder import load, save
+>>> save(root, 'root.dict') # saves to file
+>>> root = load('root.dict') # loads from file
+
+The file format is a pickle_. It is not meant for human eyes. However, it can
+be transfered from one computer to the next. The parameters ``job.params``
+should be pickleable_, as well as the functional, for this to work.
+The advantage of using these two functions is that they take care of locking
+access to file on-disk before reading or writing to it. This way, multiple
+processes can access the file without fear of getting into one another's way.
+
+.. tip:: 
+
+   If either load or save takes for ever, check whether the lock-directory
+   ".filename-lada_lockdir" exists. If you are *sure* that no other process
+   exists which is trying to access the file on disk, then you can delete the
+   lock-directory and try saving/loading again. Alternatively, a timeout
+   argument can be provided to raise an exception if the file cannot be locked.
+
+.. __: http://docs.python.org/library/__main__.html
+.. _pickleable: http://docs.python.org/library/pickle.html#what-can-be-pickled-and-unpickled
+.. _callable: http://docs.python.org/reference/datamodel.html#emulating-callable-objects
+.. _pickles: http://docs.python.org/library/pickle.html
+.. _pickle: pickles_
+.. _deepcopied: http://docs.python.org/library/copy.html#copy.deepcopy
