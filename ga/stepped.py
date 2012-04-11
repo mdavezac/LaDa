@@ -227,7 +227,7 @@ class StepGA(object):
     return len(self.offspring)
 
   def _add_indiv(self, individual, mechanics='mating'):
-    """ Adds new individual if it not taboo. 
+    """ Adds new individual if it is not taboo. 
     
         Does not update the SHELVECAR file.
     """
@@ -242,7 +242,7 @@ class StepGA(object):
     return True
 
   def add_indiv(self, individual, mechanics='manual'):
-    """ Adds new individual if it not taboo. 
+    """ Adds new individual if it is not taboo. 
 
         Updates SHELVECAR file. 
     """ 

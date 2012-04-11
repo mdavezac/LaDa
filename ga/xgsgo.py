@@ -320,8 +320,7 @@ def cut_and_splice(s1, s2, roll=True):
   for type, pos in sc_pos2:
     if pos[direction] < xsep: result.add_atom = dot(result.cell, pos), type
 
-  result.scale = abs(det(s1.cell)) / abs(det(result.cell)) * s1.scale \
-                 * float(len(result.atoms)) / float(len(s1.atoms))
+  result.scale =  s1.scale * (float(len(result.atoms)) / float(len(s1.atoms)))**(1./3.)
 
   return result
 
@@ -356,8 +355,7 @@ def mix_poscars(s1,s2, roll=True):
   for type, pos in sc_pos2:
     result.add_atom = dot(result.cell, pos), type
 
-  result.scale = abs(det(s1.cell)) / abs(det(result.cell)) * s1.scale \
-                 * float(len(result.atoms)) / float(len(s1.atoms))
+  result.scale =  s1.scale * (float(len(result.atoms)) / float(len(s1.atoms)))**(1./3.)
   return result
 
 def mix_atoms(s1, s2, roll=True):
@@ -388,8 +386,7 @@ def mix_atoms(s1, s2, roll=True):
     if choice([True, False]):
       result.add_atom = dot(result.cell, type), pos
 
-  result.scale = abs(det(s1.cell)) / abs(det(result.cell)) * s1.scale \
-                 * float(len(result.atoms)) / float(len(s1.atoms))
+  result.scale =  s1.scale * (float(len(result.atoms)) / float(len(s1.atoms)))**(1./3.)
 
   return result
 
@@ -410,8 +407,8 @@ def jiggle_structure(structure):
     atom.pos = dot(newcell, frac)  + mindist * 0.25 * (rand(3) * 2e0 - 1e0)
   result.cell = newcell
 
-  result.scale = abs(det(structure.cell)) / abs(det(result.cell)) * structure.scale \
-                 * float(len(result.atoms)) / float(len(structure.atoms))
+  result.scale = structure.scale * (abs(det(structure.cell)) / abs(det(result.cell))\
+                  * float(len(result.atoms)) / float(len(structure.atoms)))**(1./3.)
   return result
 
 
@@ -444,7 +441,7 @@ def taboo( structure, max_atoms=-1, min_distance=1.3, \
   # check number of atoms.
   if max_atoms > 0 and len(structure.atoms) > max_atoms: 
     if verbose: print "more than ",max_atoms," atoms"
-    return False
+    return True
 
   # chekc first neighbor distances.
   distances = []
@@ -454,7 +451,7 @@ def taboo( structure, max_atoms=-1, min_distance=1.3, \
 
   if structure.scale*min(distances) < min_distance: 
     if verbose: print "distances shorter than",min_distance," AA"
-    return False
+    return True
 
 
 
@@ -467,28 +464,34 @@ def taboo( structure, max_atoms=-1, min_distance=1.3, \
   
   if not angle_range[0] <= alpha <= angle_range[1]:
     if verbose: print "alpha =",alpha," degrees"
-    return False
+    return True
 
   if not angle_range[0] <= beta  <= angle_range[1]:
     if verbose: print "beta =",beta," degrees"
-    return False
+    return True
 
   if not angle_range[0] <= gamma <= angle_range[1]:
     if verbose: print "gamma =",gamma," degrees"
-    return False
+    return True
 
 
   # check neighbor types.
   if same_first_neigh >= 0:
-   
+    check = []
     for atom in structure.atoms:
-      l = [ n.distance for n in Neighbors(structure,20,atom.pos) \
-            if n.distance < 1.5 * min_distance and structure.atoms[n.index].type==atom.type ]
-      if len(l) > same_first_neigh: 
-        if verbose: print "Found atom with more than {0} neighbors.".format(same_first_neigh)
-        return False
+      pom = 0
+      for n in Neighbors(structure,20,atom.pos):
+        if structure.scale*n.distance <= 1.5*min_distance and structure.atoms[n.index].type==atom.type:
+          pom = pom + 1
+      
+      check.append(pom)
+
+    how_many = len([x for x in check if x>2])
+
+    if how_many > same_first_neigh: 
+      if verbose: print how_many," atoms with more than 2 close neighbors of the same type"
+      return True
 
   
   # all done
-  return True
-
+  return False

@@ -71,7 +71,7 @@ class Extract(KExtract):
 
   @property
   @make_cached
-  def derivatives(self): 
+  def _lstsq_results(self): 
     """ Effective mass in given direction. 
     
         Returned in units of the electron's mass at rest. Sign difference
@@ -107,7 +107,24 @@ class Extract(KExtract):
         j, k = i * self._nbpoints, (i+1) * self._nbpoints
         result.append(lstsq(parameters[i,:,:], measurements[j:k, :])[0])
       return array(result)
-    return lstsq(kpoints.parameters, measurements)[0]
+    return lstsq(kpoints.parameters, measurements)
+
+  @property
+  def derivatives(self): 
+    """ Effective mass in given direction. 
+    
+        Returned in units of the electron's mass at rest. Sign difference
+        between electron and holes is accounted for.
+    """
+    return self._lstsq_results[0]
+  @property
+  def residues(self): 
+    """ Effective mass in given direction. 
+    
+        Returned in units of the electron's mass at rest. Sign difference
+        between electron and holes is accounted for.
+    """
+    return self._lstsq_results[1]
 
   @property
   def eigenvalues(self): 
