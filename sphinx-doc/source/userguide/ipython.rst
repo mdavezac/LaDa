@@ -70,14 +70,18 @@ Saving and Loading a job-folder
 At this point we have job-folder stored in memory in a python variable. If you
 were to exit ipython, the job-folder would be lost for ever and ever. 
 
->>> savefolder dummy.dict rootfolder
+>>> %savefolder dummy.dict rootfolder
 
-The next time ipython is entered, the job-folder can be reloaded with: 
+The next time ipython is entered, the job-folder can be loaded from disk with: 
 
->>> explore rootfolder
+>>> %explore dummy.dict
 
 Once a folder has been `explored` from disk, ``savefolder`` can be called
-without arguments.
+without arguments. 
+
+The percent(%) sign indicates that these commands are ipython
+`magic-functions`_. The percent can be obviated using `%automagic`_. To get
+more information about what LaDa magic functions do, call them with "--help". 
 
 .. tip::
    
@@ -85,3 +89,14 @@ without arguments.
    ``lada.interactive.jobfolder`` and ``lada.interactive.jobfolder_path``.
    In practice, accessing those directly is rarely needed.
 
+Listing job-folders
+~~~~~~~~~~~~~~~~~~~
+
+Once a job-folder 
+
+
+.. _IPython: http://ipython.org/
+.. _first time: http://ipython.org/ipython-doc/stable/config/extensions/autoreload.html
+.. _matplotlib: http://matplotlib.sourceforge.net/
+.. _magic-functions: http://ipython.org/ipython-doc/dev/interactive/tutorial.html#magic-functions
+.. _%automagic: http://ipython.org/ipython-doc/dev/interactive/reference.html#magic-command-system

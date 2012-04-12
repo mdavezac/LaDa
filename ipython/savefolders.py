@@ -21,15 +21,9 @@ def savefolders(self, event):
       either are unknown.
   """
   from os.path import exists, isfile
-  from ..jobfolder import JobParams, MassExtract as Collect, save as savefolders
+  from ..jobfolder import JobParams, MassExtract as Collect, save
   from .. import interactive
   from ..misc import RelativePath
-  if interactive.jobfolder is None: 
-    print "No current job-folder."
-    print "Please load first with %explore."
-    return
-  jobfolder = interactive.jobfolder.root
-  jobfolder_path = interactive.jobfolder_path
 
   args = [u for u in event.split()]
   if '--help' in args or '-h' in args:
@@ -43,8 +37,15 @@ def savefolders(self, event):
   if len(args) == 2:
     from .explore import explore
     explore(self, args[1])
-    savefolders(args[0])
+    savefolders(self, args[0])
     return
+
+  if interactive.jobfolder is None: 
+    print "No current job-folder."
+    print "Please load first with %explore."
+    return
+  jobfolder = interactive.jobfolder.root
+  jobfolder_path = interactive.jobfolder_path
 
   if len(args) == 1:
     jobfolder_path = RelativePath(args[0]).path
@@ -65,7 +66,7 @@ def savefolders(self, event):
     if a == 'n':
       print "Aborting."
       return
-  savefolders(jobfolder.root, jobfolder_path, overwrite=True, timeout=10) 
+  save(jobfolder.root, jobfolder_path, overwrite=True, timeout=10) 
   if len(args) == 1:
     if "collect" not in self.user_ns: self.user_ns["collect"] = Collect(dynamic=True, path=jobfolder_path)
     if "jobparams" not in self.user_ns: self.user_ns["jobparams"] = JobParams()

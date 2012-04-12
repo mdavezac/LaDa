@@ -31,7 +31,7 @@ Jobdict class
 
    .. autoattribute:: functional
    .. autoattribute:: name
-   .. autoattribute:: is_folder
+   .. autoattribute:: is_executable
    .. autoattribute:: untagged_folders
    .. autoattribute:: is_tagged
    .. autoattribute:: nbfolders

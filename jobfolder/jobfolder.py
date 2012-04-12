@@ -351,6 +351,16 @@ class JobFolder(object):
     # Walk throught children folderdict.
     for name in self.subfolders():
       for u in self[name].iteritems(join(prefix, name)): yield u
+
+  def iterleaves(self):
+    """ Iterates over end of sub-trees. """
+    from os.path import join
+    # Yield this folder if it exists.
+    if len(self.children) == 0: yield self.name
+    # Walk throught children folderdict.
+    for name in self.children:
+      for u in self[name].iterleaves(): yield u
+
   def itervalues(self): 
     """ Iterates over all executable sub-folders. """
     for name, folder in self.iteritems(): yield folder
