@@ -176,12 +176,16 @@ def exec_input( script, global_dict=None, local_dict = None,\
   from numpy.linalg import norm, det
   from .. import crystal
   from . import Input
+  import quantities
   
   # Add some names to execution environment.
   if global_dict is None: global_dict = {}
   global_dict.update( { "environ": environ, "pi": pi, "array": array, "matrix": matrix, "dot": dot,
                         "norm": norm, "sqrt": sqrt, "ceil": ceil, "abs": abs,  "det": det,
                         "expanduser": expanduser, "load": load })
+  for key, value in quantities.__dict__.iteritems():
+    if key[0] != '_' and key not in global_dict:
+      global_dict[key] = value
   for key in crystal.__all__: global_dict[key] = getattr(crystal, key)
   if local_dict is None: local_dict = {}
   # Executes input script.
@@ -229,3 +233,27 @@ def add_setter(method, docstring = None):
   def _not_available(self): raise RuntimeError("Error: No cheese available.")
   if docstring is None and hasattr(method, "__doc__"): docstring = method.__doc__
   return property(fget=_not_available, fset=method,  doc=docstring)
+
+def import_dictionary(self, modules=None):
+  """ Creates a dictionary of import modules. """
+  if modules is None: modules = {}
+  avoids = ['__builtin__', 'quantities.quantity']
+  if self.__class__.__module__ not in avoids:
+    if self.__class__.__module__ not in modules:
+      modules[self.__class__.__module__] = set([self.__class__.__name__])
+    else:
+      modules[self.__class__.__module__].add(self.__class__.__name__)
+  if not hasattr(self, '__dict__'): return modules
+  for value in self.__dict__.itervalues():
+    class_, module_ = value.__class__.__name__, value.__class__.__module__
+    if module_ in avoids: continue
+    if module_ in modules: modules[module_].add(class_)
+    else: modules[module_] = set([class_])
+  return modules
+
+def import_header_string(modules):
+  """ Creates string from dictionary of import modules. """
+  result = ''
+  for key, values in modules.iteritems():
+    result += "from {0} import {1}\n".format(key, ", ".join(values))
+  return result

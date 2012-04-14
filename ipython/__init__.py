@@ -8,12 +8,12 @@ def load_ipython_extension(ip):
   """Load the extension in IPython."""
   global __lada_is_loaded__
   if not __lada_is_loaded__:
-    from types import ModuleType, MethodType
+    from types import ModuleType
     from sys import modules
     from .savefolders import savefolders
     from .explore import explore, completer as explore_completer
     from .goto import goto, completer as goto_completer
-    from .listjobs import listjobs
+    from .listfolders import listfolders
     from .showme import showme, completer as showme_completer
     from .launch import launch, completer as launch_completer
     import lada
@@ -26,7 +26,7 @@ def load_ipython_extension(ip):
     ip.define_magic('savefolders', savefolders)
     ip.define_magic('explore', explore)
     ip.define_magic('goto', goto)
-    ip.define_magic('listjobs', listjobs)
+    ip.define_magic('listfolders', listfolders)
     ip.define_magic('showme', showme)
     ip.define_magic('launch', launch)
     ip.set_hook('complete_command', explore_completer, str_key = '%explore')

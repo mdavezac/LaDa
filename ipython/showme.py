@@ -18,7 +18,8 @@ def showme(self, event):
     print "Showme accepts only one argument."
     return
 
-  if args[0] in ["pbserr", "pbsout", "pbs"]:
+  if args[0] == "params": showme_params(self)
+  elif args[0] in ["pbserr", "pbsout", "pbs"]:
     showme_pbs(self, args[0])
   elif args[0] == 'functional': 
     showme_functional(self)
@@ -70,9 +71,9 @@ def showme_param(self, arg):
   """ Edits a job parameter. """
   from tempfile import NamedTemporaryFile
   from os import remove, stat
-  from re import search, M
+  from re import search, M, sub
   from lada import interactive
-  from ..misc import read_input
+  from ..misc import read_input, import_dictionary, import_header_string
 
   if arg not in interactive.jobfolder.params: 
     print "{0} is not a jobparameter.".format(arg)
@@ -88,18 +89,18 @@ def showme_param(self, arg):
         print "Please use jobparams to modify it."
         return
       if interactive.jobfolder.params[arg].__class__.__module__ != '__builtin__':
-        file.write( 'from {0.__class__.__module__} import {0.__class__.__name__}\n'\
-                    .format(interactive.jobfolder.params[arg]))
-        obre = search( '\s*(\S+)\s*=\s*{0.__class__.__name__}\s*\('\
+        obre = search( r'\s*(\S+)\s*=\s*{0.__class__.__name__}\s*\('\
                        .format(interactive.jobfolder.params[arg]),
                        string, M )
       else: obre = None
+      mods = import_dictionary(interactive.jobfolder.params[arg])
+      if len(mods) != 0: file.write(import_header_string(mods))
       if obre is None: 
         othername = arg
         string = string.replace('\n', '\n' + ''.join([' ']*(len(arg)+3)))
         file.write('{0} = {1}'.format(arg, string))
       else: 
-        othername = obre.group(1)
+        string = sub(r"\b{0}\b".format(obre.group(1)), arg, string)
         file.write(string)
       
     # lets user edit stuff.
@@ -113,6 +114,64 @@ def showme_param(self, arg):
       print "Cannot find {0} in file. Aborting.".format(othername)
       return
     interactive.jobfolder.params[arg] = getattr(input, othername) 
+  finally:
+    try: remove(filename)
+    except: pass
+
+def showme_params(self):
+  """ Edits a job parameter. """
+  from tempfile import NamedTemporaryFile
+  from os import remove, stat
+  from re import search, M
+  from lada import interactive
+  from ..misc import read_input, import_dictionary, import_header_string
+
+  try: # try/finally section will removed namedtemporaryfile.
+    # want .py suffix to get syntax highlighting in editors.
+    with NamedTemporaryFile("w", delete = False, suffix='*.py') as file:
+      filename = file.name
+      # get header info.
+      mods = {}
+      for arg, value in interactive.jobfolder.params.iteritems():
+        mods = import_dictionary(value, mods)
+        string = repr(value)
+        if len(string) > 1 and string[0] == '<' and string[-1] == '>':
+          print "Parameter {0} cannot be represented.".format(arg)
+          print "Please use jobparams to modify it."
+          return
+        import_dictionary(value, mods)
+
+      print mods
+      if len(mods) != 0: file.write(import_header_string(mods))
+      file.write('params = {}\n')
+
+      # now write each parameter in turn
+      for arg, value in interactive.jobfolder.params.iteritems():
+        string = repr(value)
+        if interactive.jobfolder.params[arg].__class__.__module__ != '__builtin__':
+          obre = search( '\s*(\S+)\s*=\s*{0.__class__.__name__}\s*\('\
+                         .format(interactive.jobfolder.params[arg]),
+                         string, M )
+        else: obre = None
+        if obre is None: 
+          othername = arg
+          string = string.replace('\n', '\n' + ''.join([' ']*(len(arg)+13)))
+          file.write("params['{0}'] = {1}\n".format(arg, string))
+        else: 
+          file.write(string)
+          file.write("params['{0}'] = {1}\n".format(arg, obre.group(1)))
+      
+    # lets user edit stuff.
+    time0 = stat(filename)[-2]
+    self.magic("edit -x {0}".format(filename))
+    if stat(filename)[-2] == time0: return
+  
+    # change jobparameters.
+    input = read_input(filename)
+    if not hasattr(input, 'params'): 
+      print "Cannot find {0} in file. Aborting.".format('params')
+      return
+    interactive.jobfolder.params = getattr(input, 'params') 
   finally:
     try: remove(filename)
     except: pass
@@ -145,13 +204,13 @@ def showme_pbs(self, which):
 
 def completer(self, event):
   """ Completer for showme. """
-  from os.path import exists, join, dirname
+  from os.path import exists, join
   from glob import glob
   from lada import interactive
   if interactive.jobfolder is None: return ['']
-  if interactive.jobfolder.functional is None: return ['']
-  result = ['functional'] + interactive.jobfolder.params.keys()
-  if interactive.jobfolder.is_job and interactive.jobfolder_path is not None: 
+  if not interactive.jobfolder.is_executable: return ['']
+  result = ['functional', 'params'] + interactive.jobfolder.params.keys()
+  if interactive.jobfolder_path is not None: 
     jobname = interactive.jobfolder.name[:-1].replace("/", ".")
     filename = join(interactive.jobfolder_path + ".pbs", 'err' + jobname)
     if len(glob(filename + ".*")) > 0: result.append('pbserr')

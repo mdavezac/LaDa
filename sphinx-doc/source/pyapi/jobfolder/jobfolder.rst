@@ -38,6 +38,7 @@ Jobdict class
    .. autoattribute:: subfolders
    .. autoattribute:: root
 
+   .. automethod:: __iter__
    .. automethod:: iteritems
    .. automethod:: itervalues
    .. automethod:: iterkeys

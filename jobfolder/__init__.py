@@ -10,7 +10,7 @@
     well as within all subfolders. Finally, a similar infrastructure is provided to
     collect the computational results across all executable sub-folders.
 
-    .. seealso:: :ref:`jobfolders_ug`
+    .. seealso:: :ref:`jobfolder_ug`
 """
 __docformat__ = "restructuredtext en"
 __all__ = ['JobFolder', 'walk_through', 'save', 'load', 'MassExtract',

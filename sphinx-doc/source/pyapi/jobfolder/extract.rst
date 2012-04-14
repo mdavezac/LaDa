@@ -16,6 +16,7 @@ Extract base classes
    .. automethod:: __getitem__
    .. automethod:: __contains__
 
+   .. automethod:: __iter__
    .. automethod:: iteritems
    .. automethod:: itervalues
    .. automethod:: iterkeys

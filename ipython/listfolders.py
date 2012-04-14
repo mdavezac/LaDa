@@ -1,4 +1,4 @@
-def listjobs(self, arg):
+def listfolders(self, arg):
   """ Lists sub-folders. """
   from fnmatch import fnmatch
   from lada import interactive
