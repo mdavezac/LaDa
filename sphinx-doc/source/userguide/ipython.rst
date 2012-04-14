@@ -14,9 +14,6 @@ manipulate job-folders, launch actual calculations, and collect the result.
 When used in conjunction with python plotting libraries, e.g. matplotlib_, it
 can provide rapid turnaround from conceptualization to result analysis.
 
-Before moving to the meat, please make sure that LaDa's ipython extension is
-running, as :ref:`explained here <install_ip_ug>`.
-
 .. _ipython_prep_ug:
 
 Prep
@@ -300,6 +297,12 @@ launch the job-folder created earlier! Once that is done, you will find new
 directories with names similar to those of the job-folders. Try navigating with
 :ref:`%goto <ipython_goto_ug>`, you will find that both directories and
 job-folders are changed simultaneously.
+
+.. note::
+
+  For ``%launch scattered`` to work, it is first necessary to setup LaDa to
+  work with the :ref:`ressource manager <install_pbs_ug>` and with
+  :ref:`MPI <install_mpi_ug>`.
 
 .. _ipython_collect_ug:
 

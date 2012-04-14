@@ -3,19 +3,19 @@
 Compiling, installing, and setup
 ********************************
 
-Compiling and installing the code
-=================================
+.. toctree::
 
-Setting up pbs/slurm ressources
-===============================
+   Setting up MPI calls <installation/mpi>
 
-Setting up data directories
-===========================
+   Setting up the PBS/Slurm ressources <installation/ressources>
 
-.. _install_ip_ug:
+   Setting up the ipython interface <installation/ipython>
 
-Setting up the IPython interface
-================================
-
-Creating the documentation
-==========================
+..  Compiling and installing the code
+..  =================================
+.. 
+..  Setting up data directories
+..  ===========================
+.. 
+..  Creating the documentation
+..  ==========================

@@ -175,7 +175,7 @@ Compuational ressources and job submission
      Any number of parameters can be further provided, as long as they exist in
      :py:data:`default_pbs`.
 
-  .. py:data::default_pbs
+  .. py:data:: default_pbs
 
      A dictionary which contains the parameters relevant to :py:data:`pbs_string`.
      Additionally, it should contain:
@@ -234,6 +234,18 @@ Compuational ressources and job submission
           return result
 
      Other/better snippets for other ressource managers are welcome.
+
+  .. py:data:: queues
+
+     List of strings defining the queues accessible to the users. They will be
+     made available in :ref:`%lauch <ipython_launch_ug>`. It can be an empty
+     tuple if "queues" are not relevant to the ressource manager.
+
+  .. py:data:: accounts
+
+     List of strings defining the accounts accessible to the users. They will
+     be made available in :ref:`%lauch <ipython_launch_ug>`. It can be an empty
+     tuple if "accounts" are not relevant to the ressource manager.
 
  .. _slurm: https://computing.llnl.gov/linux/slurm/
  .. _pbs: http://www.mcs.anl.gov/research/projects/openpbs/
