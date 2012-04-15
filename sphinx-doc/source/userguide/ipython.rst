@@ -26,7 +26,7 @@ following to a file in the directory from which IPython_ is launched. In the
 following, it will be refered to as "dummy.py".
 
 .. literalinclude:: dummy.py
-   :lines: 1-29, 31-
+   :lines: 1-30, 32-
 
 The above defines three functions: a dummy functional, an extraction function
 capable of retrieving the results of the functional from disk, and a function

@@ -7,24 +7,25 @@ def Extract(outdir=None):
   from lada.misc import Changedir
 
   if outdir == None: outdir = getcwd()
-  Extract = namedtuple('Extract', ['success', 'directory', 'structure', 'value', 'functional'])
-  if not exists(outdir): return Extract(False, outdir, None, None, None)
+  Extract = namedtuple('Extract', ['success', 'directory', 'energy', 'structure', 'value', 'functional'])
+  if not exists(outdir): return Extract(False, outdir, None, None, None, None)
   with Changedir(outdir) as pwd:
-    if not exists('OUTCAR'): return Extract(False, outdir, None, None, None)
+    if not exists('OUTCAR'): return Extract(False, outdir, None, None, None, None)
     with open('OUTCAR', 'r') as file:
-      structure, value, functional = load(file)
-      return Extract(True, outdir, structure, value, functional)
+      structure, energy, value, functional = load(file)
+      return Extract(True, outdir, energy, structure, value, functional)
   
 def functional(structure, outdir=None, value=False, **kwargs):
   """ A dummy functional """
-  from lada.misc import Changedir
   from copy import deepcopy
   from pickle import dump
+  from random import random
+  from lada.misc import Changedir
 
   structure = deepcopy(structure)
   structure.value = value
   with Changedir(outdir) as pwd:
-    with open('OUTCAR', 'w') as file: dump((structure, value, functional), file)
+    with open('OUTCAR', 'w') as file: dump((random(), structure, value, functional), file)
 
   return Extract(outdir)
   return structure

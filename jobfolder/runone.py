@@ -3,17 +3,16 @@
 def main():
   import re 
   from sys import path as python_path
-  from os import getcwd, environ
-  from os.path import abspath, join, relpath, exists
+  from copy import deepcopy
+  from os.path import exists
   from argparse import ArgumentParser
   from lada import jobs, default_comm
-  from lada.misc.changedir import Changedir
 
   # below would go additional imports.
 
   parser = ArgumentParser( prog="runone", description = re.sub("\\s+", " ", __doc__[1:]))
-  parser.add_argument( "--jobid", dest="n", default=1, \
-                       help="Job number", metavar="N", type=int )
+  parser.add_argument( "--jobid", dest="names", default='+', \
+                       help="Job name", metavar="N", type=str )
   parser.add_argument( "--ppath", dest="ppath", default=None, \
                        help="Directory to add to python path",
                        metavar="Directory" )
@@ -43,10 +42,8 @@ def main():
   comm['ppn'] = options.ppn
   timeout = None if options.timeout <= 0 else options.timeout
   
-  # loop over all jobs -- Needs communicator!
   jobfolder = jobs.load(options.pickle, timeout=timeout)
-  for i, (outdir, job) in enumerate(jobfolder.iteritems()):
-    if i != options.n: continue
-  job.compute(comm=comm, outdir=outdir, external=options.external)
+  for name in options.names:
+    jobfolder[name].compute(comm=comm, outdir=name[1:], external=options.external)
 
 if __name__ == "__main__": main()

@@ -84,7 +84,7 @@ def launch(self, event, jobfolders):
       pbsargs['out'] = join("{0}.pbs".format(path), "out.{0}.pbs".format(pbsargs['name']))
       pbsargs['directory'] = dirname(path)
       pbsargs['scriptcommand'] = "{0} --nbprocs {n} --ppn {ppn} --jobid={1} {2}"\
-                                 .format(pyscript, i, path, **pbsargs)
+                                 .format(pyscript, name, path, **pbsargs)
       with open(pbsscripts[-1], "w") as file: file.write(pbs_string.format(**pbsargs))
     print "Created {0} scattered jobs in {1}.pbs.".format(i, path)
 

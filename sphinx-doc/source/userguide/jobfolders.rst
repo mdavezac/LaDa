@@ -28,7 +28,7 @@ Putting it into a file is important because we will want python to be able to
 refer to it later on.
 
 .. literalinclude:: dummy.py
-   :lines: 18-27, 30
+   :lines: 18-28, 31
 
 This functional takes a few arguments, amongst which an output directory, and
 writes a file to disk. That's pretty much it.
