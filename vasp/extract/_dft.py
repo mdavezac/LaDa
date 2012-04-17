@@ -99,7 +99,7 @@ class Extract(object):
   def cbm(self):
     """ Returns Condunction Band Minimum. """
     from numpy import min
-    return min(self.eigenvalues[self.eigenvalues>self.fermi0K+1e-8*self.fermi0K.units])
+    return min(self.eigenvalues[self.eigenvalues>self.fermi0K+1e-8*self.fermi0K])
 
   @property
   @json_section("output")
@@ -107,7 +107,7 @@ class Extract(object):
   def vbm(self):
     """ Returns Valence Band Maximum. """
     from numpy import max
-    return max(self.eigenvalues[self.eigenvalues<=self.fermi0K+1e-8*self.fermi0K.units])
+    return max(self.eigenvalues[self.eigenvalues<=self.fermi0K+1e-8*self.fermi0K])
 
   @property
   @json_section("output")
@@ -160,17 +160,6 @@ class Extract(object):
     result = self._find_last_OUTCAR(regex) 
     assert result is not None, RuntimeError("Could not find magnetic moment in OUTCAR")
     return float(result.group(2))
-
-  @property
-  @json_section("input")
-  @make_cached
-  @broadcast_result(attr=True, which=0)
-  def nb_electrons(self):
-    """ Returns magnetic moment from OUTCAR. """
-    regex = r"""^\s*number\s+of\s+electron\s+(\S+)\s+magnetization\s+(\S+)\s*$"""
-    result = self._find_last_OUTCAR(regex) 
-    assert result is not None, RuntimeError("Could not find number of electrons in OUTCAR")
-    return float(result.group(1))
 
   @property
   @json_section("output")

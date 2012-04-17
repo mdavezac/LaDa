@@ -26,16 +26,11 @@ class Extract(ExtractDFT):
     from lada.vasp import Extract as VaspExtract
     from lada.opt import RelativeDirectory
     path = RelativeDirectory(outcar).path
-    if isdir(path) and exists(join(path, 'reciprocal')): outcar = join(outcar, 'reciprocal')
+    if isdir(path) and exists(join(path, 'reciprocal')): outcar = join(path, 'reciprocal')
     
     super(Extract, self).__init__(outcar, comm=comm, **kwargs)
     self.input = input if input != None else VaspExtract(dirname(self.directory), comm=comm)
     """ Extractor object for the calculation from which the charge density was obtained. """
-
-  @property
-  def vbm(self): return self.input.vbm
-  @property
-  def cbm(self): return self.input.cbm
 
   def _order(self, value):
     """ Order up to which taylor coefficients should be computed. """
@@ -198,14 +193,14 @@ class Extract(ExtractDFT):
 
   def inverse_mass_tensor(self, order=2, kmag=True, lstsq=None, tolerance=None, **kwargs):
     """ Returns inverse mass tensor, hopefully with right units. """
+    from numpy import array
     from ..physics import electronic_mass, h_bar
     if 2 not in self._order(order):
       raise AttributeError("Effective mass are not part of the current expansion.")
     result = self.tensors(order, kmag, lstsq, tolerance, **kwargs)[self._order(order).index(2)]
     for i in xrange(len(result)): 
       result[i] = (result[i] / h_bar**2).rescale(1./electronic_mass)
-    return result
-
+    return array(result) * result[0].units
 
     
 def reciprocal( vasp, structure, outdir = None, comm = None,
@@ -264,7 +259,6 @@ def reciprocal( vasp, structure, outdir = None, comm = None,
   from os.path import join
   from numpy import array, dot, append
   from numpy.linalg import inv
-  from . import Vasp
  
   # takes care of default parameters.
   if center is None: center = kwargs.pop("kpoint", [0,0,0])
