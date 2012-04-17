@@ -300,6 +300,8 @@ class PartialRestart(SpecialVaspParam):
       
       If None, then starts from scratch.
       Never copies POSCAR file. See Restart for that.
+      If not None, and lsorbit is true, sets the number of bands to twice
+      previous run.
   """
   def __init__(self, value): super(PartialRestart, self).__init__(value)
 
@@ -344,6 +346,7 @@ class PartialRestart(SpecialVaspParam):
         copyfile(join(self.value.directory, files.WAVEDER), files.WAVEDER,
                  nothrow='same exists', symlink=getattr(vasp, 'symlink', False)) 
       comm.barrier()
+      if getattr(vasp, 'lsorbit', False) == True: vasp.nbands = 2*first.nbands 
     return  "ISTART = %s\nICHARG = %s" % (istart, icharg)
 
 class Restart(PartialRestart):

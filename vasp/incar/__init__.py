@@ -49,6 +49,7 @@ class Incar(object):
          - ``lplane``: Defaults to None.
          - ``nbands``: Defaults to None.
          - ``lorbit``: Defaults to None.
+         - ``lsorbit``: Defaults to None.
          - ``addgrid``: Defaults to None.
          - ``nupdown``: Defaults to None.
          - ``loptics``: Defaults to None.
@@ -119,6 +120,7 @@ class Incar(object):
     self.add_param = "potim",       None
     self.add_param = "nbands",      None
     self.add_param = "lorbit",      None
+    self.add_param = "lsorbit",     None
     self.add_param = "lplane",      None
     self.add_param = "addgrid",     None
     self.add_param = "isym",        None

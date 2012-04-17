@@ -205,7 +205,7 @@ class Extract(ExtractDFT):
     
 def reciprocal( vasp, structure, outdir = None, comm = None,
                 order = 2, nbpoints = None, stepsize = 1e-2, 
-                center = None, eigtol = 1e-10, **kwargs ):
+                center = None, eigtol = 1e-10, staticparams=None, **kwargs ):
   """ Computes k-space taylor expansion of the eigenvalues up to given order.
 
       First runs a vasp calculation using the first input argument, regardless
@@ -248,6 +248,8 @@ def reciprocal( vasp, structure, outdir = None, comm = None,
           object has an attribute with the same name), then to the linear least
           square fit method. Note that this will *not* change the external escan
           object.  This function is stateless. 
+        staticparams : dict
+          Parameters to set specifically for static calculation.
 
       :return: Extraction object from which derivatives can be obtained.
 
@@ -293,6 +295,7 @@ def reciprocal( vasp, structure, outdir = None, comm = None,
   kwargs['nonscf']      = True
   kwargs['relaxation']  = "static"
   kwargs['ediff']       = eigtol / len(structure.atoms)
+  if staticparams is not None: kwargs.update(staticparams)
   second = functional(first.structure, comm=comm, outdir=join(first.directory, "reciprocal"), **kwargs)
   return Extract(outcar=second.directory, comm=None, input=second)
 
