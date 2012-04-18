@@ -47,7 +47,7 @@ def execute_program(program, append=False, mpirun_exe=None, comm=None, **kwargs)
      file_out = open(program.stdout, "a" if append else "w") \
                 if program.stdout is not None else None 
      file_err = open(program.stderr, "a" if append else "w") \
-                if program.stdout is not None else None 
+                if program.stderr is not None else None 
      try:
        vasp_proc = Popen(split_cmd(cmd), stdout=file_out, stderr=file_err)
        vasp_proc.wait()
