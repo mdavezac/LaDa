@@ -1,5 +1,5 @@
 from .process import Process
-class UnsharedJobFolderProcess(Process):
+class JobFolderProcess(Process):
   """ Executes folder in child process.
   
       Expects folder with a functional which does not have an iter method.
@@ -7,7 +7,7 @@ class UnsharedJobFolderProcess(Process):
   def __init__(self, jobfolder, outdir, maxtrials=1, comm=None, nbpools=1, **kwargs):
     """ Initializes a process. """
     from ..misc import RelativePath
-    super(UnsharedJobFolderProcess, self).__init__(maxtrials, comm, **kwargs)
+    super(JobFolderProcess, self).__init__(maxtrials, comm, **kwargs)
 
     self.jobfolder = jobfolder
     """ Job-folder to execute. """
