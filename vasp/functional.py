@@ -27,7 +27,7 @@ class Functional(Launch):
 
   def __init__(self, vasp=None, **kwargs):
     """ Initializes vasp class. """
-    super(Functional, self).__init__(self, **kwargs)
+    super(Functional, self).__init__(**kwargs)
 
     self.restart_from_contcar = kwargs.pop('restart_from_contcar', True)
     """ If True and self.CONTCAR exists in directory, will restart from it. """
@@ -122,7 +122,7 @@ class Functional(Launch):
       if hasattr(this, key): setattr(this, key, value)
       # properties attributes.
       elif hasattr(this.__class__, key): setattr(this, key, value)
-      else: raise ValueError("Unkwown keyword argument to vasp: %s=%s" % (key, value))
+#     else: raise ValueError("Unkwown keyword argument to vasp: %s=%s" % (key, value))
 
     # Checks for previous run, or deletes previous run if requested.
     if not overwrite:

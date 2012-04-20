@@ -67,7 +67,7 @@ class VariableSizeCrossover(object):
     """ Minimum bitstring size. """
     self.nmax = nmax
     """ Maximum bitstring size. """
-    self.roll = roll
+    self.roll = () if roll == True else roll
     """ Roll bitstring. """
 
   def __call__(self, first, second):
@@ -116,7 +116,7 @@ class Crossover(object):
 
   def __init__(self, rate = 0.5, roll=None):
     self.rate = rate
-    self.roll = roll
+    self.roll = () if roll == True else roll
     """ Roll bitstring. """
 
   def __call__(self, a, b):
@@ -154,7 +154,7 @@ class Mutation(object):
     """
     self.rate = rate
     """ Mutation rate for each bitstring. """
-    self.roll = roll
+    self.roll = () if roll == True else roll
     """ Roll bitstring. """
 
   def __call__(self, indiv):
@@ -200,7 +200,7 @@ class GrowthMutation(object):
            ValueError("nmin and nmax are incorrect.")
     self.step = step
     """ By how much to grow or shrink. """
-    self.roll = roll
+    self.roll = () if roll == True else roll
     """ Roll bitstring. """
 
   def __call__(self, indiv):

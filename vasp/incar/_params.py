@@ -346,7 +346,7 @@ class PartialRestart(SpecialVaspParam):
         copyfile(join(self.value.directory, files.WAVEDER), files.WAVEDER,
                  nothrow='same exists', symlink=getattr(vasp, 'symlink', False)) 
       comm.barrier()
-      if getattr(vasp, 'lsorbit', False) == True: vasp.nbands = 2*first.nbands 
+      if getattr(vasp, 'lsorbit', False) == True: vasp.nbands = 2*self.value.nbands 
     return  "ISTART = %s\nICHARG = %s" % (istart, icharg)
 
 class Restart(PartialRestart):
