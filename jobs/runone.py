@@ -6,6 +6,7 @@ def main():
   from os import getcwd, environ
   from os.path import abspath, join, relpath, exists
   from argparse import ArgumentParser
+  from copy import deepcopy
   from lada import jobs, default_comm
   from lada.misc.changedir import Changedir
 
@@ -47,6 +48,6 @@ def main():
   jobdict = jobs.load(options.pickle, timeout=timeout)
   for i, (outdir, job) in enumerate(jobdict.iteritems()):
     if i != options.n: continue
-  job.compute(comm=comm, outdir=outdir, external=options.external)
+  job.compute(comm=comm, outdir=outdir)
 
 if __name__ == "__main__": main()
