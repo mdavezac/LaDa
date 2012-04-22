@@ -20,7 +20,7 @@ def which(program):
   if fpath:
     if is_exe(exprog): return RelativePath(exprog).path
   else:
-    for dir in environ["PATH"]:
+    for dir in environ["PATH"].split(':'):
       if is_exe(join(dir, exprog)): return RelativePath(join(dir, exprog)).path
 
   raise IOError('Could not find executable {0}.'.format(program))
