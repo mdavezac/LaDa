@@ -18,15 +18,22 @@ class Process(object):
     """ MPI communicator. """
     self.process = None
     """ Currently running process. """
+    self.started = False
+    """ Whether the program was ever started. """
 
   @abstractmethod
   def poll(self): 
     """ Polls current job. """
-    pass
-  @abstractmethod 
+    if self.started and self.process is None: return True
+    self.started = True
+
+  @abstractmethod
   def start(self):
     """ Starts current job. """
-    pass
+    if self.started and self.process is None: return True
+    self.started = True
+    return False
+
   def _cleanup(self):
     """ Cleans up behind process instance.
     
@@ -51,19 +58,7 @@ class Process(object):
     except: pass
     self._cleanup()
 
-  def _poll_process(self):
-    """ Returns True if no error found.
-
-        If no process is running, there is no error.
-    """ 
-    if self.process is None: return True
-    poll = self.process.poll()
-    if poll is None: return
-    self._cleanup()
-    return poll < 0
-
+  @abstractmethod
   def wait(self):
     """ Waits for process to end, then cleanup. """
-    if self.process is None: return True
-    return self.process.wait() >= 0
-
+    pass

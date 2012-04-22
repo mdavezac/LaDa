@@ -48,6 +48,6 @@ class ImportError(root, ImportError):
   """ Root for all ImportError LaDa exceptions. """
   pass
 
-class IOError(root, ImportError):
+class IOError(root, IOError):
   """ Root for all ImportError LaDa exceptions. """
   pass

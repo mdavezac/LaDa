@@ -87,8 +87,8 @@ def iter_relax( vasp, structure, outdir=None, first_trial=None,
 
       :return: At each step, yields an extraction object if the relevant VASP
                calculation already exists. Otherwise, it yields a
-               :py:class:`Program <lada.misc.Program>` object detailing the
-               call to the external VASP program.
+               :py:class:`~lada.process.program.ProgramProcess` object
+               detailing the call to the external VASP program.
 
       .. seealso:: :py:func:`execute_program <lada.misc.execute_program>`
   """
@@ -220,7 +220,7 @@ def relax( vasp, structure, outdir=None, first_trial=None,
       result = program
       continue
     # otherwise, it should yield a Program tuple to execute.
-    execute_program(program, append=False, **kwargs)
+    program.wait()
     result = vasp.Extract(outdir)
   return result
 
@@ -302,8 +302,8 @@ def iter_epitaxial(vasp, structure, outdir=None, direction=[0,0,1], epiconv = 1e
       
       :return: At each step, yields an extraction object if the relevant VASP
                calculation already exists. Otherwise, it yields a
-               :py:class:`Program <lada.misc.Program>` object detailing the
-               call to the external VASP program.
+               :py:class:`~lada.process.program.ProgramProcess` object
+               detailing the call to the external VASP program.
 
       .. seealso:: :py:func:`execute_program <lada.misc.execute_program>`
   """
@@ -423,7 +423,7 @@ def epitaxial(vasp, structure, outdir=None, direction=[0,0,1], epiconv = 1e-4,
       result = program
       continue
     # otherwise, it should yield a Program tuple to execute.
-    execute_program(program, append=False, **kwargs)
+    program.wait()
     result = vasp.Extract(outdir)
 
   return result

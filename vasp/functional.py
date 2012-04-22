@@ -53,7 +53,7 @@ class Vasp(Incar):
         result = program
         continue
       # otherwise, it should yield a Program tuple to execute.
-      execute_program(program, append=False, comm=comm, **kwargs)
+      program.wait()
       result = self.Extract(outdir)
       if not result.success: raise RuntimeError("Vasp failed to execute correctly.")
     return result
@@ -104,7 +104,7 @@ class Vasp(Incar):
     from ..crystal import read
     from .files import CONTCAR
     from .. import vasp_program
-    from ..misc import Program
+    from ..process.program import ProgramProcess
 
     # check for pre-existing and successfull run.
     if not overwrite:
@@ -126,7 +126,7 @@ class Vasp(Incar):
 
     self.pullup(structure, outdir, comm)
     program = getattr(self, 'program', vasp_program)
-    yield Program(program, [], outdir, 'stdout', 'stderr')
+    yield ProgramProcess(program, cmdline=[], outdir=outdir, stdout='stdout', stderr='stderr')
     self.bringdown(outdir, structure)
 
   def pullup(self, structure, outdir, comm):

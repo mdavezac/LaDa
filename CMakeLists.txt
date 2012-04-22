@@ -164,6 +164,7 @@ add_subdirectory(physics)
 add_subdirectory(config)
 add_subdirectory(functools)
 add_subdirectory(misc)
+add_subdirectory(process)
 
 # checks for package dependencies.
 if(ladabase_package)

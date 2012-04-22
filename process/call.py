@@ -1,10 +1,11 @@
+from .process import Process
 class CallProcess(Process):
   """ Calls functional in child python process. """
-  def __init__( self, functional, outdir, cmdline=None, stdout=None, stdin=None\
+  def __init__( self, functional, outdir, cmdline=None, stdout=None, stderr=None,\
                 maxtrials=1, comm=None, dompi=False, **kwargs ):
     """ Initializes a process. """
     from ..misc import RelativePath
-    super(ProgramProcess, self).__init__(maxtrials=maxtrials, comm=comm, **kwargs)
+    super(CallProcess, self).__init__(maxtrials=maxtrials, comm=comm, **kwargs)
     self.functional = functional
     """ Functional to execute. """
     try: self.functional = self.functional
@@ -19,58 +20,97 @@ class CallProcess(Process):
     """ Name of standard error file, if any. """
     self.dompi = dompi
     """ Whether to run with mpi or not. """
-    sef._tempfile = None
 
-
-  def poll(self): 
+  def poll(self, wait=False): 
     """ Polls current job. """
-    from . import Program
-    from sys import executable, pypath
+    from sys import executable, path as pypath
     from pickle import dumps
-    from .process import Stop, Fail
+    from tempfile import NamedTemporaryFile
+    from ..misc import Changedir
     from .program import ProgramProcess
+    from . import Fail
+
+    # checks whether program was already started or not.
+    if super(CallProcess, self).poll(): return True
+
+    # Check directly for errors/success if possible.
+    if hasattr(self.functional, 'Extract') \
+       and self.functional.Extract(self.outdir).success \
+       and self.process is None \
+       and self.params.get('overwrite', False) == False:
+      return True
+
     # check whether functional is set. 
-    if self.functional is None: raise Stop()
+    if self.functional is None: return True
     # check if we have currently running process.
     # if current process is finished running, closes stdout and stdout.
-    found_error = not self._poll_process()
-    # Check directly for errors if possible.
-    if hasattr(jobfolder.functional, 'Extract') and exists(self.outdir):
-      try: found_error = not functional.Extract(self.outdir).success
-      except: found_error = True
+    if self.process is not None:
+      try: 
+        if wait == True: self.process.wait()
+        elif self.process.poll() == False: return False
+      except Fail:
+        self._cleanup()
+        if hasattr(self.functional, 'Extract') \
+           and self.functional.Extract(self.outdir).success: 
+          return True
+      else: 
+        self._cleanup()
+        if not hasattr(self.functional, 'Extract'): return True
+        if self.functional.Extract(self.outdir).success: return True
+      # at this point, an error must have occured.
+      self.nberrors += 1
+      if self.nberrors >= self.maxtrials: raise Fail()
 
-    # increment errors if necessary and check without gone over max trials.
-    if found_error: self.nberrors += 1
-    if self.nberrors >= self.maxtrials: raise Fail()
+    # creates temp input script.
+    with Changedir(self.outdir) as outdir: pass
+    with NamedTemporaryFile(dir=self.outdir, suffix='.py', delete=False) as stdin:
+      if self.dompi:
+        params = self.params
+        stdin.write( "from sys import path\n"\
+                     "from boost.mpi import world\n"\
+                     "path[:] = {0!r}\n\n"\
+                     "from pickle import loads\n"\
+                     "params, functional = loads({1!r})\n\n"\
+                     "params['comm'] = world\n"\
+                     "functional(**params)\n"\
+                     .format(pypath, dumps((params, self.functional))) )
+      else: 
+        params = {'comm': self.comm}
+        params.update(self.params)
+        stdin.write( "from sys import path\n"\
+                     "path[:] = {0!r}\n\n"\
+                     "from pickle import loads\n"\
+                     "params, functional = loads({1!r})\n\n"\
+                     "functional(**params)\n"\
+                     .format(pypath, dumps((params, self.functional))) )
+      self._stdin = stdin.name
 
-    if self.dompi: params = self.params
-    else: 
-      params = {'comm': self.comm}
-      params.update(self.params)
-    with NamedTemporaryFile(dir=self.outdir, prefix='.lada_script', delete=False) as tempfile:
-      tempfile.write( "from sys import path\n"\
-                      "path[:] = {0!r}\n\n"\
-                      "from pickle import loads\n"\
-                      "params, functional = loads({1!r})\n\n"\
-                      "functional(*params)\n".format(path, dumps((params, self.functional))) )
-      self._tempfile.name = tempfile.name
-
-    # now create process.
-    self.process = ProgramProcess(executable, self.outdir, cmdline=[sef._tempfile], 
-                                  stdout=self.stdout, stderr=self.stderr, maxtrials=1,
-                                  comm=self.comm if self.dompi else None, 
-                                  nompi=self.dompi)
+    # now create process. maxtrials is one if Extract exists, so that we can
+    # check success using that instead.
+    self.process = ProgramProcess( executable, cmdline=[self._stdin], 
+                                   outdir=self.outdir, stdout=self.stdout,
+                                   stderr=self.stderr, maxtrials=1,
+                                   comm=self.comm if self.dompi else None, 
+                                   nompi=self.dompi )
     self.process.start()
+    return False
 
   def start(self):
     """ Starts current job. """
     self.poll()
-
   def _cleanup(self):
-    """ Cleans up after process. """
+    """ Removes temporary script. """
     from os import remove
-    if self._tempfile is not None:
-      try: remove(self._tempfile)
-      except: pass
-      finally: self._tempfile = None
-    super(ProgramProcess, self)._cleanup()
+    super(CallProcess, self)._cleanup()
+    if not hasattr(self, '_stdin'): return
+    try: remove(self._stdin)
+    except: pass
+    finally: del self._stdin
+
+  def wait(self):
+    """ Waits for process to end, then cleanup. """
+    if self.process is None:
+      if self.started: return True
+      self.start()
+    return self.poll(wait=True)
+

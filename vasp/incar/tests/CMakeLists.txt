@@ -1,5 +1,4 @@
 if(NOT compile_debug_tests)
-endif(NOT compile_debug_tests)
   
   add_test(algo python ${CMAKE_CURRENT_SOURCE_DIR}/algo.py)
   add_test(choices python ${CMAKE_CURRENT_SOURCE_DIR}/choices.py)
@@ -12,3 +11,4 @@ endif(NOT compile_debug_tests)
   add_test(uparams python ${CMAKE_CURRENT_SOURCE_DIR}/uparams.py)
   add_test(smearing python ${CMAKE_CURRENT_SOURCE_DIR}/uparams.py)
 
+endif(NOT compile_debug_tests)

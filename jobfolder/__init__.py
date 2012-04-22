@@ -14,10 +14,9 @@
 """
 __docformat__ = "restructuredtext en"
 __all__ = ['JobFolder', 'walk_through', 'save', 'load', 'MassExtract',
-           'AbstractMassExtract', 'AbstractMassExtractDirectories', 'Bleeder',
+           'AbstractMassExtract', 'AbstractMassExtractDirectories', 
            'JobParams' ]
 
-from .bleeder import Bleeder
 from .jobfolder import JobFolder
 from .manipulator import JobParams
 from .extract import AbstractMassExtract, AbstractMassExtractDirectories
