@@ -9,7 +9,7 @@ def gajobs(path, inputpath = "input.py", collector=None):
   from lada.ga.functional import maximize, minimize
   from lada.ga.ce.functional import Darwin as Functional
   from lada.ga.ce.evaluator  import LocalSearchEvaluator as Evaluator
-  from lada.jobs import JobDict
+  from lada.jobs import JobFolder
   from lada.escan import MassExtract
   from lada.ce import read_input
 
@@ -25,7 +25,7 @@ def gajobs(path, inputpath = "input.py", collector=None):
   evaluator  = Evaluator(input.lattice, structures, energies=dos_values[0], **input.clusters)
 
 
-  jobdict = JobDict()
+  jobfolder = JobFolder()
   for energy, energies in zip(input.energies, dos_values):
     for trial in input.trials:
       kwargs = { "popsize": input.population_size, "rate": input.offspring_rate,
@@ -36,11 +36,11 @@ def gajobs(path, inputpath = "input.py", collector=None):
       functional = Functional(evaluator, **kwargs)
       evaluator.darwin = proxy(functional)
 
-      gajob = jobdict / "dos_{0}/trial_{1}".format(energy, trial)
+      gajob = jobfolder / "dos_{0}/trial_{1}".format(energy, trial)
       print "dos_{0}/trial_{1}".format(energy, trial)
       gajob.functional = functional 
       gajob.jobparams["energies"] = energies
 
   ip = IPython.ipapi.get()
-  ip.user_ns["current_jobdict"] = jobdict
+  ip.user_ns["current_jobfolder"] = jobfolder
   ip.magic("savejobs " + path)

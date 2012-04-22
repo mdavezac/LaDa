@@ -7,9 +7,14 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   Compiling, installing, and setup <userguide/installation>
+
    Creating and Manipulating crystal structures <userguide/crystal>
 
    Interface to VASP  <userguide/vasp>
 
-   Configuring lada <userguide/config.rst>
+   Organized high-thoughput calculations: job-folders <userguide/jobfolders>
 
+   IPython high-throughput interface <userguide/ipython>
+
+   Configuring lada <userguide/config.rst>

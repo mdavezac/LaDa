@@ -99,18 +99,18 @@ def uncache(ob):
 class SuperCall(object):
   """ Obviates issues when using a "super" functional.
 
-      Since functionals of a jobdictionary are deepcopied, the following line
+      Since functionals of a job-folder are deepcopied, the following line
       will not result in calling the next class in the __mro__.
   
-      >>> jobdict.functional = super(Functional, functional)
+      >>> jobfolder.functional = super(Functional, functional)
 
       Indeed, this line will first call the __getitem__, __setitem__ (or
       __deepcopy__) of the super object. In general, this means we end-up with
-      ``jobdict.function == functional``.
+      ``jobfolder.function == functional``.
 
       This class obviates this difficulty.
 
-      >>> jobdict.functional = SuperCall(Functional, functional)
+      >>> jobfolder.functional = SuperCall(Functional, functional)
   """
   def __init__(self, class_, object_):
     object.__init__(self)

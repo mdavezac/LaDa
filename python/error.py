@@ -47,3 +47,7 @@ class NotImplementedError(root, NotImplementedError):
 class ImportError(root, ImportError):
   """ Root for all ImportError LaDa exceptions. """
   pass
+
+class IOError(root, IOError):
+  """ Root for all ImportError LaDa exceptions. """
+  pass

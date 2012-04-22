@@ -38,11 +38,6 @@ def _config_files():
 
   # dictionary with stuff we want defined when reading config files.
   global_dict = {"ladamodules": __all__}
-  if "jobs" in __all__:
-    from lada.jobs.templates import default_pbs, default_slurm
-    global_dict["default_pbs"]   = default_pbs
-    global_dict["default_slurm"] = default_slurm
-
   local_dict = {}
   # first configuration files installed with lada.
   for filename in iglob(join(join(dirname(__file__), "config"), "*.py")):

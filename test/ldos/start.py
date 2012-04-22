@@ -40,7 +40,7 @@ def create_start(path, nall = 3, nrand = 5, nmax=100, density=10e0, input='input
   from numpy.linalg import norm, inv
   from lada.enumeration import Enum
   from lada.crystal.binary import zinc_blende
-  from lada.jobs import JobDict
+  from lada.jobs import JobFolder
   from lada.escan import read_input, exec_input, ReducedKDensity
   from lada.crystal.gruber import Reduction
 
@@ -59,22 +59,22 @@ def create_start(path, nall = 3, nrand = 5, nmax=100, density=10e0, input='input
   strs = [enum.as_structure(*u) for u in strs[:nmax]]
   alls = [structure for n in range(nall) for structure in enum.structures(n)]
 
-  jobs = JobDict()
+  jobs = JobFolder()
   for i, structure in enumerate(chain(alls, strs)):
     structure.name = str(i)
     nSi = len([a.type for a in structure.atoms if a.type == 'Si'])
     structure.scale = float(nSi) / float(n) * enum.scale + float(n - nSi) / float(n) * 5.69
 
-    jobdict = jobs / structure.name
-    jobdict.jobparams['structure'] = structure.copy()
-    jobdict.structure.cell = Reduction()(jobdict.structure.cell)
-    jobdict.functional = kescan.copy()
-    jobdict.functional.kpoints = ReducedKDensity(density, (0.5, 0.5, 0.5))
-    jobdict.functional.reference = None
-    jobdict.functional.fft_mesh = fftmesh(structure.cell)
-    jobdict.functional.nbstates = int(len(structure.atoms) * 4 * 1.5+0.5)
+    jobfolder = jobs / structure.name
+    jobfolder.jobparams['structure'] = structure.copy()
+    jobfolder.structure.cell = Reduction()(jobfolder.structure.cell)
+    jobfolder.functional = kescan.copy()
+    jobfolder.functional.kpoints = ReducedKDensity(density, (0.5, 0.5, 0.5))
+    jobfolder.functional.reference = None
+    jobfolder.functional.fft_mesh = fftmesh(structure.cell)
+    jobfolder.functional.nbstates = int(len(structure.atoms) * 4 * 1.5+0.5)
 
   ip = get_ipy()
-  ip.user_ns["current_jobdict"] = jobdict.root
+  ip.user_ns["current_jobfolder"] = jobfolder.root
   ip.magic("savejobs " + path)
   return

@@ -181,37 +181,37 @@ def bleeder_evaluation(self, evaluator, pools, comm):
         comm  : None or lada.mpi.communicator
           Communication object. 
   """
-  from ..jobs import JobDict, Bleeder
+  from ..jobs import JobFolder, Bleeder
   from ..mpi import Communicator
 
   comm = Communicator(comm)
   # creates job-dictionary.
-  jobdict = JobDict()
+  jobfolder = JobFolder()
     
   # goes throught individuals which need be evaluated
-  # bleeder only looks at jobdict from root processs.
+  # bleeder only looks at jobfolder from root processs.
   if comm.is_root:
     for name, pop in [('off', self.offspring), ('pop', self.population)]:
       for index, indiv in enumerate(pop):
-        job = jobdict / '{0}/{1}'.format(name, index)
+        job = jobfolder / '{0}/{1}'.format(name, index)
         job._functional = evaluator
         job.jobparams['indiv'] = indiv
         job.jobparams['overwrite'] = True
         # lets not recompute already known individuals. Need to keep them as record though.
         if hasattr(indiv, "fitness"): job.tag() 
 
-  # Creates a bleeding job-dict, eg a JobDictionary on file which can be
+  # Creates a bleeding job-dict, eg a JobFolderionary on file which can be
   # iterated over once, with each job being seen by only one pool of processes.
   # Modified jobs are saved by the bleeder!
-  bleeder = Bleeder(jobdict, pools, comm)
+  bleeder = Bleeder(jobfolder, pools, comm)
   for job in bleeder:
     fitness = evaluator(job.indiv, outdir=job.name[1:], comm=bleeder.local_comm)
     job.indiv.fitness = bleeder.local_comm.broadcast(fitness)
   
   # recovers population and offspring.
-  jobdict = bleeder.cleanup()
-  if 'off' in jobdict: self.offspring  = [u.indiv for u in jobdict['off'].values()]
-  if 'pop' in jobdict: self.population = [u.indiv for u in jobdict['pop'].values()]
+  jobfolder = bleeder.cleanup()
+  if 'off' in jobfolder: self.offspring  = [u.indiv for u in jobfolder['off'].values()]
+  if 'pop' in jobfolder: self.population = [u.indiv for u in jobfolder['pop'].values()]
     
 
 def mpi_population_evaluation(self, evaluator, pools, comm = None):

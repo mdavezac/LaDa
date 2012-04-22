@@ -58,6 +58,12 @@ variable, all in a single one liner.
 Note the backslash which tell the python interpreter to read everything as a
 single line.
 
+.. seealso::
+   A number of predefined lattices can be found in
+   :py:mod:`~lada.crystal.bravais`, :py:mod:`~lada.crystal.binary`,
+   :py:mod:`~lada.crystal.A2BX4`, :py:mod:`~lada.crystal.ABX`. Other similar
+   modules are always welcomed.
+
 Manipulation
 ------------
 

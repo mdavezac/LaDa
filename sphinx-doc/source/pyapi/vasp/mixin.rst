@@ -2,6 +2,7 @@ lada.vasp.extract.mixin
 ***********************
 .. automodule:: lada.vasp.extract.mixin
 .. autoclass:: lada.vasp.extract.mixin.IOMixin
+   :show-inheritance:
    :members:
    :inherited-members:
    
@@ -9,6 +10,7 @@ lada.vasp.extract.mixin
    .. automethod:: __contcar__()->file object
 
 .. autoclass:: lada.vasp.extract.mixin.OutcarSearchMixin
+   :show-inheritance:
    :members:
    :inherited-members:
 

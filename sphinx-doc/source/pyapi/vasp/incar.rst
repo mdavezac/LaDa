@@ -5,6 +5,7 @@ Incar
 .. moduleauthor:: Mayeul d'Avezac <mayeul.davezac@nrel.gov>
 
 .. autoclass:: Incar
+   :show-inheritance:
    :members: 
 
    Here are all the parameters lada currently has by default.
@@ -28,31 +29,53 @@ Special Parameters Class Definitions
 All these classes are actually defined in ``lada.vasp.incar._params``.
 
 .. autoclass:: Algo
+   :show-inheritance:
 .. autoclass:: Ediff
+   :show-inheritance:
 .. autoclass:: Ediffg
+   :show-inheritance:
 .. autoclass:: Encut
+   :show-inheritance:
 .. autoclass:: EncutGW
+   :show-inheritance:
 .. autoclass:: FFTGrid
+   :show-inheritance:
 .. autoclass:: IniWave
+   :show-inheritance:
 .. autoclass:: Magmom
+   :show-inheritance:
 .. autoclass:: NonScf
+   :show-inheritance:
 .. autoclass:: ExtraElectron
+   :show-inheritance:
 .. autoclass:: Npar
+   :show-inheritance:
 .. autoclass:: PartialRestart
+   :show-inheritance:
 .. autoclass:: PrecFock
+   :show-inheritance:
 .. autoclass:: Precision
+   :show-inheritance:
 .. autoclass:: Relaxation
+   :show-inheritance:
 .. autoclass:: Restart
+   :show-inheritance:
 .. autoclass:: Smearing
+   :show-inheritance:
 .. autoclass:: System
+   :show-inheritance:
 .. autoclass:: UParams
+   :show-inheritance:
 
 
 .. autoclass:: Choices
+    :show-inheritance:
     :members: 
 
 .. autoclass:: Integer
+    :show-inheritance:
     :members:
 
 .. autoclass:: Boolean
+    :show-inheritance:
     :members:

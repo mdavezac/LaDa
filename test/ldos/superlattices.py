@@ -58,7 +58,7 @@ def create_sl(path, direction, nmin, nmax, nstep, x=0.5, density=10e0, input='in
   """
   from IPython.ipapi import get as get_ipy
   from numpy.linalg import norm, inv
-  from lada.jobs import JobDict
+  from lada.jobs import JobFolder
   from lada.escan import read_input, exec_input, ReducedKDensity
   from lada.crystal.binary import zinc_blende
   from lada.crystal import layer_iterator
@@ -76,7 +76,7 @@ def create_sl(path, direction, nmin, nmax, nstep, x=0.5, density=10e0, input='in
 
   density = 10e0 * max([1e0/norm(u) for u in inv(lattice.cell)])
 
-  rootjobs = ip.user_ns.get('current_jobdict', JobDict())
+  rootjobs = ip.user_ns.get('current_jobfolder', JobFolder())
   for n0 in range(nmin, nmax, nstep):
     # create structure
     cell, dir = direction(n0)
@@ -90,15 +90,15 @@ def create_sl(path, direction, nmin, nmax, nstep, x=0.5, density=10e0, input='in
     # name and scale.
     structure.name = "{0[0]}{0[1]}{0[2]}/x_{1:0<4.3}/n_{2}".format(dir, x, n0)
     structure.scale = scale(structure)
-    # creates jobdictionary.
-    jobdict = rootjobs / structure.name
-    jobdict.jobparams['structure'] = structure.copy()
-    jobdict.functional = kescan.copy()
-    jobdict.functional.kpoints = ReducedKDensity(density, (0.5, 0.5, 0.5))
-    jobdict.functional.reference = None
-    jobdict.functional.fft_mesh = fftmesh(structure.cell)
-    jobdict.functional.nbstates = int(len(structure.atoms) * 4 * 1.5+0.5)
+    # creates job-folder.
+    jobfolder = rootjobs / structure.name
+    jobfolder.jobparams['structure'] = structure.copy()
+    jobfolder.functional = kescan.copy()
+    jobfolder.functional.kpoints = ReducedKDensity(density, (0.5, 0.5, 0.5))
+    jobfolder.functional.reference = None
+    jobfolder.functional.fft_mesh = fftmesh(structure.cell)
+    jobfolder.functional.nbstates = int(len(structure.atoms) * 4 * 1.5+0.5)
 
-  if 'current_jobdict' not in ip.user_ns: ip.user_ns["current_jobdict"] = rootjobs
+  if 'current_jobfolder' not in ip.user_ns: ip.user_ns["current_jobfolder"] = rootjobs
   ip.magic("savejobs " + path)
   return

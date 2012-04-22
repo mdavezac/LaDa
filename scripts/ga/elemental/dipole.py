@@ -6,13 +6,13 @@ def gajobs(path, inputpath = "input.py"):
   from lada.ga.escan.elemental.functional import Darwin as Functional
   from lada.ga.escan.elemental.evaluator  import Dipole as Evaluator
   from lada.ga.escan.elemental            import Converter
-  from lada.jobs import JobDict
+  from lada.jobs import JobFolder
   from lada.escan import read_input
 
   # reads input file.
   input = read_input(inputpath)
 
-  jobdict = JobDict()
+  jobfolder = JobFolder()
   for scale in input.scales:
     for range in input.ranges: 
       nmin, nmax = min(range), max(range)
@@ -33,10 +33,10 @@ def gajobs(path, inputpath = "input.py"):
                                **getattr(input, 'kwargs', {}) )
         functional = Functional(evaluator, **kwargs)
 
-        gajob = jobdict / "{4[0]}{4[1]}{4[2]}/scale_{0:.2f}/{1}_{2}/trial_{3}"\
+        gajob = jobfolder / "{4[0]}{4[1]}{4[2]}/scale_{0:.2f}/{1}_{2}/trial_{3}"\
                           .format(scale, nmin, nmax, trial, input.growth_direction)
         gajob.functional = functional 
 
   ip = IPython.ipapi.get()
-  ip.user_ns["current_jobdict"] = jobdict
+  ip.user_ns["current_jobfolder"] = jobfolder
   ip.magic("savejobs " + path)

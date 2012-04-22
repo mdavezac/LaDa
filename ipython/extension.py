@@ -11,8 +11,8 @@ def load_ipython_extension(ip):
     import lada
     __lada_is_loaded__ = True
     lada.interactive = ModuleType('interactive')
-    lada.interactive.jobdict = None
-    lada.interactive.jobdict_path = None
+    lada.interactive.jobfolder = None
+    lada.interactive.jobfolder_path = None
     lada.is_interactive = True
 
 def unload_ipython_extension(ip):

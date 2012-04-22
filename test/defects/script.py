@@ -57,7 +57,7 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
       the b5 lattice of the Fe2AlO4 material, one could tag it as follows:
 
       >>> explore all magnetic_wave 
-      >>> current_jobdict["/Fe2AlO4/b5"].tag()
+      >>> current_jobfolder["/Fe2AlO4/b5"].tag()
       >>> import test
       >>> test.magnetic_wave()
       >>> launch scattered
@@ -66,48 +66,48 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
   from os.path import dirname, normpath, relpath, join
   from IPython.ipapi import get as get_ipy
   from numpy import array, sum, abs
-  from lada.jobs import JobDict
+  from lada.jobs import JobFolder
   from lada.vasp import read_input
   from lada.opt import Input
   from lada.crystal import defects as ptd
 
-  # Loads jobdictionary and path as requested. 
+  # Loads job-folder and path as requested. 
   ip = get_ipy()
-  if "current_jobdict" not in ip.user_ns: 
+  if "current_jobfolder" not in ip.user_ns: 
     print "No current job-dictionary." 
     return
-  jobdict = ip.user_ns["current_jobdict"].root
+  jobfolder = ip.user_ns["current_jobfolder"].root
   if path is None:
-    if "current_jobdict_path" not in ip.user_ns:
+    if "current_jobfolder_path" not in ip.user_ns:
       print "No known path for current dictionary and no path specified on input."
       return
-    path = ip.user_ns["current_jobdict_path"]
+    path = ip.user_ns["current_jobfolder_path"]
   basedir = dirname(path)
 
   # create input dictionary. First reads non-magnetic input, then magnetic
   # input, then kwargs. Order of precedence is exact opposite.
   input = Input()
-  if hasattr(jobdict, "nonmaginput"):
+  if hasattr(jobfolder, "nonmaginput"):
     with NamedTemporaryFile() as file: 
-      file.write(jobdict.nonmaginput)
+      file.write(jobfolder.nonmaginput)
       file.flush()
       input.update(read_input(file.name))
-  if hasattr(jobdict, "maginput"):
+  if hasattr(jobfolder, "maginput"):
     with NamedTemporaryFile() as file: 
-      file.write(jobdict.nonmaginput)
+      file.write(jobfolder.nonmaginput)
       file.flush()
       input.update(read_input(file.name))
   if inputpath is not None:
     input.update(read_input(inputpath))
-    with open(inputpath, "r") as file: jobdict.maginput = file.read()
+    with open(inputpath, "r") as file: jobfolder.maginput = file.read()
   input.update(kwargs)
 
-  # saves inputfile to jobdictioanry if needed.
+  # saves inputfile to jobfolderioanry if needed.
   if inputpath is not None:
     input.update(read_input(inputpath))
-    with open(inputpath, "r") as file: jobdict.pointdefectinput = file.read()
+    with open(inputpath, "r") as file: jobfolder.pointdefectinput = file.read()
   # saves current script tof file.
-  with open(__file__, "r") as file: jobdict.pointdefectscript = file.read()
+  with open(__file__, "r") as file: jobfolder.pointdefectscript = file.read()
 
   if hasattr(input, 'coord_tolerance'): coord_tolerance = input.coord_tolerance
   
@@ -115,7 +115,7 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
   # loops over completed structural jobs.
   for name in magnetic_groundstates():
     # gets the ground-states job-dictionary.
-    groundstate = jobdict[name]
+    groundstate = jobfolder[name]
     # checks that the lattice and material are not tagged. 
     if groundstate[".."].is_tagged: continue
     if groundstate["../.."].is_tagged: continue
@@ -146,20 +146,20 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
           if name in groundstate[".."]: continue
 
           # creates new job.
-          jobdict = groundstate["../"] / name
-          jobdict.functional = input.relaxer
-          jobdict.jobparams  = groundstate.jobparams.copy()
-          jobdict.jobparams["structure"] = structure.deepcopy()
-          jobdict.jobparams["nelect"] = nb_extrae
-          jobdict.jobparams["relaxation"] = "ionic"
-          jobdict.jobparams["ispin"] = 2
-          jobdict.jobparams["set_symmetries"] = "off"
-          jobdict.lattice  = lattice
-          jobdict.material = material
-          jobdict.defect   = defect
+          jobfolder = groundstate["../"] / name
+          jobfolder.functional = input.relaxer
+          jobfolder.jobparams  = groundstate.jobparams.copy()
+          jobfolder.jobparams["structure"] = structure.deepcopy()
+          jobfolder.jobparams["nelect"] = nb_extrae
+          jobfolder.jobparams["relaxation"] = "ionic"
+          jobfolder.jobparams["ispin"] = 2
+          jobfolder.jobparams["set_symmetries"] = "off"
+          jobfolder.lattice  = lattice
+          jobfolder.material = material
+          jobfolder.defect   = defect
           # adds, modifies, or remove moment depending on defect type.
           if hasattr(superstructure, "magmom") or abs(moment) > 1e-12: 
-            jstruct = jobdict.jobparams["structure"]
+            jstruct = jobfolder.jobparams["structure"]
             # construct initial magmom
             if hasattr(superstructure, "magmom"):
               jstruct.magmom = [u for u in superstructure.magmom]
@@ -177,10 +177,10 @@ def pointdefect_wave(path=None, inputpath=None, **kwargs):
 
           nb_new_jobs += 1
 
-  # now saves new job dictionary
+  # now saves new job folder
   print "Created {0} new jobs.".format(nb_new_jobs)
   if nb_new_jobs == 0: return
-  ip.user_ns["current_jobdict"] = jobdict.root
+  ip.user_ns["current_jobfolder"] = jobfolder.root
   ip.magic("savejobs " + path)
             
           
@@ -200,9 +200,9 @@ def create_superstructure(groundstate, input):
          ValueError("Could not find extraction class in ground-state job-dictionary.")
   
   ip = get_ipy()
-  assert "current_jobdict_path" in ip.user_ns,\
+  assert "current_jobfolder_path" in ip.user_ns,\
          RuntimeError("Could not find path for current job-dictionary.")
-  rootdir = dirname(ip.user_ns["current_jobdict_path"])
+  rootdir = dirname(ip.user_ns["current_jobfolder_path"])
   # gets original lattice from job-dictionary.
   orig_structure = groundstate.jobparams["structure"]
   

@@ -14,7 +14,7 @@ def create_jobs(path, inputpath="input.py", **kwargs):
   """
   from IPython.ipapi import get as get_ipy
 
-  from lada.jobs import JobDict
+  from lada.jobs import JobFolder
   from lada.ga.escan.nanowires import read_input
   from lada.ga.escan.nanowires.converter import Converter
   from lada.ga.escan.nanowires.functional import Darwin
@@ -24,7 +24,7 @@ def create_jobs(path, inputpath="input.py", **kwargs):
   lattice = input.vff.lattice
   types = set([u for a in lattice.sites for u in a.type]) - set([input.passivant])
 
-  jobdict = JobDict()
+  jobfolder = JobFolder()
   for core_type in input.core_types:
     for nmin, nmax in input.ranges:
       for trial in xrange(input.nb_trials):
@@ -45,13 +45,13 @@ def create_jobs(path, inputpath="input.py", **kwargs):
         functional.pools       = input.pools
         if input.rootworkdir is not None: functional.rootworkdir = input.rootworkdir
     
-        gajob = jobdict / "{0}_core/{2}_{3}/trial_{1}".format(core_type, trial, nmin, nmax)
+        gajob = jobfolder / "{0}_core/{2}_{3}/trial_{1}".format(core_type, trial, nmin, nmax)
         gajob.functional = functional
 
 
 
   # saves jobs.
   ip = get_ipy()
-  ip.user_ns["current_jobdict"] = jobdict
+  ip.user_ns["current_jobfolder"] = jobfolder
   ip.magic("savejobs " + path)
 
