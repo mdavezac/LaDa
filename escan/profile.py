@@ -29,7 +29,7 @@ def linear_profile(extract, direction=(0,0,1), nbpoints=20, sigma=None, indices=
   direction = array(direction, dtype="float64")
   assert norm(direction) > 1e-12, ValueError("Direction cannot be null.")
   assert hasattr(extract, "gwfns"), ValueError("extract does not seem to be an escan extraction object.")
-  if indices is None: indices = range(extract.gwfns)
+  if indices is None: indices = range(len(extract.gwfns))
   assert nbpoints > 1, ValueError("The number of points should be strictly larger than 1.")
 
   # first computes intersection of direction and cell.  At the end, we should
