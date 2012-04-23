@@ -48,7 +48,7 @@ class rWavefunction(object):
       else: b = multiply(operator, ket.down) 
       result += dot(b, a)
     if self.comm.is_mpi: result = self.comm.all_reduce(result, lambda x,y: x+y)
-    return result * operator.units if hasattr(operator, "units") else result
+    return result
 
   @property
   def density(self):
