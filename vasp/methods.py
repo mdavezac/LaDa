@@ -112,6 +112,7 @@ class RelaxCellShape(object):
     keep_steps = kwargs.pop("keep_steps", self.keep_steps)
     outdir = getcwd() if outdir is None else RelativeDirectory(outdir).path
     nofail = kwargs.pop('nofail', False)
+    if first_trial is None: first_trial = {}
 
     # convergence criteria and behavior.
     convergence = kwargs.get('convergence', getattr(self, 'convergence', self.vasp.ediffg))
@@ -405,32 +406,33 @@ def epi_relaxation( vasp, structure, outdir=None, comm=None,\
   # direction for the direction in which to search, and expand/contract in that direction.
   xstart = 0.0
   estart = function(xstart)
+  sstart = component(estart.stress)
   # then checks stress for actual direction to look at.
   stress_direction = 1.0 if component(allcalcs[-1].stress) > 0e0 else -1.0
   xend = 0.1 if stress_direction > 0e0 else -0.1
   # compute xend value.
   eend = function(xend)
-  # make sure xend is on other side of stress tensor sign.
-  while stress_direction * component( allcalcs[-1].stress ) > 0e0:
-    xstart, estart = xend, eend
-    xend += 0.1 if stress_direction > 0e0 else -0.1
-    eend = function(xend)
-  
-  # now we have a bracket. We start bisecting it.
-  while abs(estart.total_energy - eend.total_energy) > epiconv * float(len(structure.atoms)):
-    xmid = 0.5 * (xend + xstart)
-    emid = function(xmid)
-    if stress_direction * component(emid.stress) > 0e0: xstart, estart = xmid, emid
-    else: xend, eend = xmid, emid
+  send = component(eend.stress)
 
-  # last two calculation: relax mid-point of xstart, xend, then  perform static.
-  xmid = 0.5 * (xend + xstart)
-  emid = function(xmid)
+  # Now minimizes using gradient
+  if abs(send) > abs(sstart):  emid, xmid, smid = estart, xstart, sstart
+  else:  emid, xmid, smid = eend, xend, send
+  while abs(smid) > epiconv * len(structure.atoms):
+    if abs(xend-xstart) < 1e-8: break
+    send, sstart = component(eend.stress), component(estart.stress)
+    xmid = xend - send / (send - sstart) * (xend - xstart)
+    emid = function(xmid)
+    smid = component(emid.stress)
+    if abs(send) > abs(sstart): eend, xend, send = emid, xmid, smid
+    else: estart, xstart, sstart = emid, xmid, smid
+  
+  # last calculation: static.
+  if abs(send) > abs(sstart): xend, send = xstart, sstart
+  if abs(smid) > abs(send): xend = xmid
   args = kwargs.copy()
-  args.update(final)
-  result = vasp( change_structure(xmid),
-                 relaxation = "static",
-                 outdir = outdir,
-                 restart = allcalcs[-1],
-                 comm = comm, **args )
-  return result
+  if final is not None: args.update(final)
+  return vasp( change_structure(xend),
+               relaxation = "static",
+               outdir = outdir,
+               restart = allcalcs[-1],
+               comm = comm, **args )
