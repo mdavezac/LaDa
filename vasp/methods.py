@@ -18,6 +18,7 @@
 
     The output extraction object will be the output the vasp callable.
 """
+from .extract import ExtractDFT, MassExtract
 __docformat__ = "restructuredtext en"
 
 class RelaxCellShape(object):
@@ -314,6 +315,43 @@ class RelaxCellShape(object):
     result += "functional.maxiter = %s\n\n" % (repr(self.maxiter))
     return string + "\n" + result
 
+class EpiExtract(ExtractDFT):
+  """ Epitaxial relaxation method. """
+  class IntermediateMassExtract(MassExtract):
+    """ Focusses on intermediate steps. """
+    def __iter_alljobs__(self):
+      """ Goes through all directories with an OUTVAR. """
+      from glob import iglob
+      from os.path import relpath, join, basename
+      from re import compile
+
+      regex = compile(r"(?:-|\+)?\d+\.\d+")
+      for dir in iglob(join(join(self.rootdir, 'relax_ions'), '*/')):
+        if regex.match(basename(dir[:-1])) is None: continue
+        try: result = ExtractDFT(dir[:-1])
+        except: continue
+        yield join('/', relpath(dir[:-1], self.rootdir)), result
+        
+  def __init__(self, *args, **kwargs):
+    """ initializes epitaxial relaxation extractor. """
+    super(EpiExtract, self).__init__(*args, **kwargs)
+
+    self.__dict__['details'] = None
+    self._details = self.IntermediateMassExtract(self.directory)
+    """ List of intermediate calculation extractors. """
+    
+  @property
+  def details(self):
+    """ Intermediate steps. """
+    return self._details
+  
+  def iterfiles(self, **kwargs):
+    """ Iterates over input/output files. """
+    from itertools import chain
+    for file in chain( super(EpiExtract, self).iterfiles(**kwargs),
+                       self.details.iterfiles(**kwargs) ): yield file
+
+
 def epi_relaxation( vasp, structure, outdir=None, comm=None,\
                     direction=[0,0,1], epiconv = 1e-4, final=None,
                     **kwargs ):
@@ -436,3 +474,4 @@ def epi_relaxation( vasp, structure, outdir=None, comm=None,\
                outdir = outdir,
                restart = allcalcs[-1],
                comm = comm, **args )
+epi_relaxation.Extract = EpiExtract
