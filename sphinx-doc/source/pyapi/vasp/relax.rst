@@ -2,10 +2,19 @@ Relaxation methods
 ------------------
 
 .. automodule:: lada.vasp.relax
+.. moduleauthor:: Mayeul d'Avezac <mayeul.davezac@nrel.gov>
 
 .. currentmodule:: lada.vasp.relax
 .. autofunction:: relax
+
+   Contains an :py:class:`Extract <RelaxExtract>` attribute which can be used
+   to instantiate the relevant extraction object.
+
 .. autofunction:: iter_relax
+
+   Contains an :py:class:`Extract <RelaxExtract>` attribute which can be used
+   to instantiate the relevant extraction object.
+
 .. autoclass:: Relax
    :show-inheritance:
 
@@ -53,8 +62,22 @@ Relaxation methods
    .. automethod:: __call__
    .. automethod:: iter
 
+   .. attribute:: Extract
+
+      Class :py:class:`RelaxExtract`. When called, it creates the appropriate
+      relaxation object.
+
 .. autofunction:: epitaxial
+   
+   Contains an :py:class:`Extract <RelaxExtract>` attribute which can be used
+   to instantiate the relevant extraction object.
+
+
 .. autofunction:: iter_epitaxial
+
+   Contains an :py:class:`Extract <RelaxExtract>` attribute which can be used
+   to instantiate the relevant extraction object.
+
 .. autoclass:: Epitaxial
    :show-inheritance:
 
@@ -69,4 +92,16 @@ Relaxation methods
 
         Convergence criteria of the total energy.
 
-.. moduleauthor:: Mayeul d'Avezac <mayeul.davezac@nrel.gov>
+   .. attribute:: Extract
+
+      Class :py:class:`RelaxExtract`. When called, it creates the appropriate
+      relaxation object.
+
+.. autoclass:: RelaxExtract
+   :show-inheritance:
+
+   .. autoattribute:: details
+
+      :py:class:`~lada.vasp.extract.MassExtract` instance which maps extraction
+      objects for intermediate steps in the 'relax_cellshape' and 'relax_ions'
+      subdirectories.

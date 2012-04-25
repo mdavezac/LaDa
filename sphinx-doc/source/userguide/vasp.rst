@@ -77,10 +77,10 @@ with as user-defined dictionary. However, some options may well be the same for
 one run to another. As such a default dictionary can be provided
 (:py:data:`default_comm <lada.default_comm>`).
 
-The last configuration variable is :py:data:`verbose_representation
-<lada.verbose_representation`. It controls whether or not the
-representation/print-out of the functional should include parameters which have
-not changed from the default. It is safest to keep it True.
+The last configuration variable is :py:data:`~lada.verbose_representation`. It
+controls whether or not the representation/print-out of the functional should
+include parameters which have not changed from the default. It is safest to
+keep it True.
 
 .. seealso:: :ref:`lada-config`
 
@@ -91,7 +91,7 @@ Specifying vasp parameters
 --------------------------
 
 As shown in the quick primer above, it is relatively easy to setup a new
-:py:class:`Vasp <lada.functional>`. The parameters to the calculation are
+:py:class:`~functional.Vasp`. The parameters to the calculation are
 generally the VASP_ defaults. They can be changed directly in the constructor:
 
 >>> from lada.vasp import Vasp
@@ -118,8 +118,8 @@ for the duration of the run and not beyond.
 At this point, it might have come as a surprise to see ``encut=1``. What units
 are we talking about here? A number of parameters have enhanced behaviors with
 respect to the original VASP_ code, in order to make it easier to specify
-paramaters valid for many calculations. :py:attr:`encut
-<functional.vasp.encut>` is one of those. It can be specified:
+parameters valid for many calculations. :py:attr:`~incar.Incar.encut`
+one of those. It can be specified:
 
   - as floating point smaller than 3, in which case it is a factor of the
     largest `ENMAX` of all the species in the calculation.
@@ -132,9 +132,9 @@ paramaters valid for many calculations. :py:attr:`encut
     In that case, the result will be converted to electron-Volts in the INCAR.
 
 To see the full list of parameters  defined by LaDa, do ``vasp.[TAB]`` on the
-ipython_ command line, or go :py:class:`here <incar.Incar>`. You may want to
-checkout `relaxation <incar.Incar.relaxation>` and `restart
-<incar.Incar.restart>`.
+ipython_ command line, or go :py:class:`here <lada.vasp.incar.Incar>`. You may
+want to checkout :py:attr:`~incar.Incar.relaxation` and
+:py:attr:`~incar.Incar.restart`.
 
 The following is a (possibly incomplete) list of VASP parameters with no special behaviors:
 
@@ -303,7 +303,7 @@ post-processing, and then automatically launch a subsequent calculation.
 
 .. warning:: Success means the calculation ran to completion, specifically that
              the lines giving the elapsed time exist in the OUTCAR. It does not
-             mean that results are meaningful.
+             mean that the results are meaningful.
              
 
 The extraction object can be obtained without rerunning VASP_. There are to
@@ -329,8 +329,8 @@ whether the vasp parameters are different. LaDa will *never* overwrite a
 successful run. Not unless specifically requested to. The returned extraction
 object corresponds to the OUTCAR. Hence, on the second pass, it is the results
 of the first call which are returned. Unless, of course, a successful
-calculation already existed there, in which case LaDa would *never ever* have
-been so crass as to overwrite it.
+calculation already existed there prior to the first run, in which case LaDa
+would *never ever* have been so crass as to overwrite it.
 
 
 The second method is to create an extraction object directly:
@@ -385,9 +385,147 @@ run.
 
 .. currentmodule:: lada.vasp
 
-If you know how to use `regular expression`_, creating a property like those above
+If you know how to use `regular expressions`_, creating a property like those above
 is generally fairly simple. Edit the file vasp/extract/base.py, reinstall, and
-you golden. Oh, and send your snippet back this way.
+you're golden. Oh, and send your snippet back this way.
+
+.. _vasp_massextract_ug:
+
+Extracting results from *many* VASP calculation, and plotting stuff
+===================================================================
+
+LaDa arranges all calculations within directories, with a single VASP
+calculation per sub-directory. It can be expedient to extract simultaneously
+all the results contained within a directory and its subdirectories. One
+approach is to use :ref:`jobfolders <jobfolder_ug>` and the :ref:`ipython
+interface <ipython_ug>`. Failing that, however, it still possible to extract
+all the results within a tree of directories simultaneously. When used in
+conjunction with plotting software such as matplotlib_, it makes it really easy
+to synthesize and understand the results from a set of calculations.
+It all comes down to a few simple lines:
+
+>>> from lada.vasp import MassExtract
+>>> a = MassExtract('some/path')
+>>> a.total_energies
+{
+   '/this/path/':  array(-666.667) * eV,
+   '/that/path/':  array(-999.998) * eV
+}
+
+The return is a :py:class:`~lada.jobfolder.forwarding_dict.ForwardingDict`
+instance. It is possible to string together attributes to get to those of
+interest:
+
+>>> a.structure.scale
+{
+   '/this/path/':  5.45, 
+   '/that/path/':  5.65
+}
+
+From there, it is one simple step to plot, say, energies with respect to the
+scale (first, run ipython with the ``-pylab`` flag to import matplotlib_
+related stuff):
+
+>>> x = array(a.structure.scale.values())
+>>> y = array(a.total_energies.values())
+>>> plot x, y
+
+
+:py:class:`~lada.vasp.extract.MassExtract` behaves exactly like the
+:ref:`collect <ipython_collect_ug>` object.
+
+
+Relaxation methods
+==================
+
+Relaxing structures generally takes a few actual VASP calculations, since the
+FFT and pseudo-potential grids are not adapted as the cell parameters and ionic
+positions change. It's brain-dead work best handled automatically. LaDa
+currently provides two relaxation methods: :py:class:`relax.Relax` and
+:py:class:`relax.Epitaxial`. The former handles general relaxation, including
+cellshape, volume, and ionic positions, while the latter performs relaxation on
+a virtual substrate (e.g. for coherent Germanium on a (001)@Si substrate, only
+the out-of-plane parameter should be relaxed, while the in-plane are fixed to
+Si).  The following only describes the first case.
+
+>>> # create the functional
+>>> from lada.vasp import Relax
+>>> functional = Relax(relaxation='cellshape volume ions', maxcalls=10, keepsteps=True)
+>>> functional(structure)
+
+The above creates the functional and launches the calculations. It will first
+proceed by relaxing everything, e.g. both cell-shape and ions, if cell-shape
+and ionic relaxation are requested. Once convergence is achived, it locks the
+cell-shape and relaxes the ions only. Finally, it performs a final static
+calculation for maximum accuracy.
+
+The functional is derived from :py:class:`~functional.Vasp`. In practice, this
+means that whatever works for :py:class:`~functional.Vasp` works for
+:py:class:`~relax.Relax`. However, it does accept a few extra attributes,
+described below:
+
+.. glossary::
+
+      first_trial
+        A dictionary with parameters which are used only for the very first
+        VASP calculation. It can be used to accelerate the first step of the
+        relaxation if starting far from the optimum. For instance, it could be
+        ``{'encut': 0.8}`` to first converge the structure with a smaller
+        cutoff. Defaults to empty dictionary.
+
+      maxcalls
+        An interger which denotes the maximum number of calls to VASP before
+        aborting. Defaults to 10.
+
+      keepsteps
+        If True, intermediate steps are kept. If False, intermediate steps are
+        erased.
+
+      relaxation
+        Degrees of freedom to relax. It should be either "cellshape" or "ionic"
+        or both. Same as for :py:class:`~functional.Vasp`.
+
+      nofail
+        If True, will not fail if convergence is not achieved. Just keeps going. 
+        Defaults to False.
+
+      convergence
+        Convergence criteria. If ``minrelsteps`` is positive, it is only
+        checked after ``minrelsteps`` have been performed. Convergence is
+        checked according to last VASP run, not from one VASP run to another.
+        Eg. If a positive real number, convergence is achieved when the
+        difference between the last two total-energies of the current run fall
+        below that real number (times structure size), not when the total
+        energies of the last two runs fall below that number. Faster, but
+        possibly less safe.
+
+        * None: defaults to ``vasp.ediff * 1e1``
+        * positive real number: energy convergence criteria in eV per atom. 
+        * negative real number: force convergence criteria in eV/angstrom. 
+        * callable: Takes an extraction object as input. Should return True if
+          convergence is achieved and False otherwise.
+
+      minrelsteps
+
+        Fine tunes how convergence criteria is applied.
+        
+        * positive: at least ``minrelsteps`` calls to VASP are performed before
+          checking for convergence. If ``relaxation`` contains "cellshape",
+          then these calls occur during cellshape relaxation. If it does not,
+          then the calls occur during the ionic relaxations. The calls do count
+          towards ``maxcalls``.
+        * negative (default): argument is ignored.
+
+
+.. note::
+
+   There is also a function :py:func:`relax.relax`, which does the exact same
+   thing as the class. Whether to use one or the other is a matter of taste.
+   And there's also a generator :py:func:`relax.iter_relax` over actual calls
+   to the vasp binary.  Internally, it allows LaDa to launch different
+   relaxations in parrallel. In practice, both :py:func:`relax.relax` and
+   :py:class:`relax.Relax` make calls to :py:func:`relax.iter_relax`.
+
 
 Example: Epitaxial relaxation method
 ====================================
@@ -456,7 +594,7 @@ namely a docstring and some sanity checks on the function's input parameter.
 .. _one: http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.brent.html
 .. _scipy: http://www.scipy.org/
 .. _secant: http://en.wikipedia.org/wiki/Secant_method
-.. _regular expression: http://docs.python.org/library/re.html
+.. _regular expressions: http://docs.python.org/library/re.html
 .. _KPOINTS: http://cms.mpi.univie.ac.at/vasp/guide/node56.html#SECTION00075100000000000000
 .. _ENMAX: http://cms.mpi.univie.ac.at/vasp/vasp/ENCUT_tag.html
 .. _array: http://docs.scipy.org/doc/numpy/reference/generated/numpy.array.html
@@ -465,3 +603,4 @@ namely a docstring and some sanity checks on the function's input parameter.
 .. _VASP: http://www.vasp.at/
 .. _POSCAR: http://cms.mpi.univie.ac.at/vasp/guide/node59.html
 .. _format string: http://docs.python.org/library/string.html#string-formatting
+.. _matplotlib: http://matplotlib.sourceforge.net/

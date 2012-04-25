@@ -95,16 +95,6 @@ class JobParams(AbstractMassExtract):
                            only_existing=self.only_existing, readonly=False)
     
 
-  @property
-  def view(self):
-    """ A regex pattern which the name of extracted jobs should match.
-
-        If None, then no match required. Should be a string, not an re object.
-    """
-    return self.jobfolder.name if self._view is None else self._view
-  @view.setter
-  def view(self, value): self._view = value
-
   def __iter_alljobs__(self):
     """ Loops through all executable folders. """
     for name, job in self.jobfolder.iteritems(): yield job.name, job

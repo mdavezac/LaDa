@@ -1,6 +1,6 @@
 """ Classes to manipulate output from job folders. """
 __docformat__ = "restructuredtext en"
-__all__ = ['AbstractMassExtract', 'AbstractMassExtractDirectories']
+__all__ = ['AbstractMassExtract']
 
 from abc import ABCMeta, abstractmethod
 
@@ -53,7 +53,7 @@ class AbstractMassExtract(object):
     super(AbstractMassExtract, self).__init__()
 
     # this fools the derived classes' __setattr__
-    self.__dict__.update({'dicttype': dict, '_view': None, 'naked_end': naked_end,
+    self.__dict__.update({'dicttype': dict, 'view': '/', 'naked_end': naked_end,
                           'unix_re': unix_re, '_excludes': excludes, 
                           '_cached_extractors': None, 'dynamic': dynamic })
     self.naked_end = jobparams_naked_end if naked_end is None else naked_end
@@ -204,7 +204,6 @@ class AbstractMassExtract(object):
   def _regex_pattern(self, pattern, flags=0):
     """ Returns a regular expression. """
     from re import compile
-    from fnmatch import translate
     if self.unix_re: pattern = self._translate_regex(pattern)
     if len(pattern) == 0: return compile("", flags)
     if pattern[-1] in ('/', '\Z', '$'): return compile(pattern, flags)
@@ -218,18 +217,6 @@ class AbstractMassExtract(object):
           extractor an extraction object.
     """
     pass
-
-  @property
-  def view(self):
-    """ A regex pattern which the name of extracted jobs should match.
-
-        If None, then no match required. :py:attr:`unix_re` determines whether
-        these are unix-command-line like patterns or true python regex.
-    """
-    if self._view is None: return ""
-    return self._view
-  @view.setter
-  def view(self, value): self._view = value
 
   @property
   def _extractors(self):
@@ -250,7 +237,7 @@ class AbstractMassExtract(object):
 
   def _regex_extractors(self):
     """ Loops through jobs in this view. """
-    if self._view is None or self._view == "": 
+    if self.view == "/": 
       for key, value in self._extractors.iteritems(): yield key, value
       return
 
@@ -337,63 +324,3 @@ class AbstractMassExtract(object):
   def __setstate__(self, arg):
     self.__dict__.update(arg)
     if self._rootpath is not None: self._rootpath.hook = self.uncache
-       
-
-class AbstractMassExtractDirectories(AbstractMassExtract):
-  """ Collects extractors from all subdirectories.
-  
-      Trolls through all subdirectories for calculations with given extraction
-      files, and organises results as a dictionary where keys are the name of
-      the diretory.
-
-      A class derived from this one should make sure that:
-      
-      - `Extract` is not none.
-      - `__is_calc_dir__` is correctly defined. 
-  """
-  def __init__(self, path = '.', Extract = None, **kwargs):
-    """ Initializes AbstractMassExtractDirectories.
-    
-    
-        :param Extract
-            Extraction class to use within each calculation. 
-        :param kwargs : dict
-            Keyword parameters passed on to :py:meth:`AbstractMassExtract.__init__`.
-    """
-    # this will throw on unknown kwargs arguments.
-    super(AbstractMassExtractDirectories, self).__init__(**kwargs)
-
-    self.__dict__['Extract'] = Extract
-    """ Extraction class to use. """
-
-  def __iter_alljobs__(self):
-    """ Goes through all directories with a contcar. """
-    from os import walk
-    from os.path import relpath, join
-
-    for dirpath, dirnames, filenames in walk(self.rootpath, topdown=True, followlinks=True):
-      if not self.__is_calc_dir__(dirpath, dirnames, filenames): continue
-
-      result = self.Extract(join(self.rootpath, dirpath))
-
-      result.OUTCAR = self.OUTCAR
-      yield join('/', relpath(dirpath, self.rootpath)), result
-
-  @property
-  def _attributes(self): 
-    """ Returns __dir__ set special to the extraction itself. """
-    return set([u for u in dir(self.Extract()) if u[0] != '_'])
-  
-  @abstractmethod
-  def __is_calc_dir__(self, dirpath, dirnames, filenames):
-    """ Returns true this directory contains a calculation. """
-    pass
-
-  def __copy__(self):
-    """ Returns a shallow copy of this object. """
-    from copy import copy
-    result = self.__class__(self.rootpath)
-    for k, v in self.__dict__.items():
-      if k == 'dicttype': result.__dict__[k] = v
-      elif k != '_rootpath': result.__dict__[k] = copy(v)
-    return result
