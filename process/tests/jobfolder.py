@@ -20,7 +20,7 @@ def test(executable):
     job.params['sleep'] = 1
 
   comm = default_comm.copy()
-  comm['n'] = 2
+  comm['n'] = 4
 
   dir = mkdtemp()
   try: 

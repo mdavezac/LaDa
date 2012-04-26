@@ -7,10 +7,10 @@ class IteratorProcess(Process):
       successful runs, or a derived :py:class:`~lada.process.process.Process`
       instance to execute.
   """
-  def __init__(self, functional, outdir, maxtrials=1, comm=None, **kwargs):
+  def __init__(self, functional, outdir, maxtrials=1, **kwargs):
     """ Initializes a process. """
     from ..misc import RelativePath
-    super(IteratorProcess, self).__init__(maxtrials, comm, **kwargs)
+    super(IteratorProcess, self).__init__(maxtrials, **kwargs)
     self.functional = functional
     """ Iterable to execute. """
     self.outdir = RelativePath(outdir).path
@@ -40,7 +40,7 @@ class IteratorProcess(Process):
       def iterator(**params):
         for dummy in self.functional.iter(**params): yield dummy
     else: iterator = self.functional
-    for i, process in enumerate(iterator(comm=self.comm, outdir=self.outdir, **self.params)):
+    for i, process in enumerate(iterator(comm=self._comm, outdir=self.outdir, **self.params)):
       if not getattr(process, 'success', False): 
         found = True
         break;
@@ -60,8 +60,9 @@ class IteratorProcess(Process):
     self.process.start() 
     return False
 
-  def start(self):
+  def start(self, comm):
     """ Starts current job. """
+    super(IteratorProcess, self).start(comm)
     self.poll()
 
   def wait(self):

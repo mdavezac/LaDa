@@ -6,17 +6,16 @@ def test(executable):
   from lada.process.program import ProgramProcess
   from lada.process import Fail
   from lada.misc import Changedir
-  from lada import default_comm
+  from lada import default_comm as comm
   from functional import ExtractSingle as Extract
   dir = mkdtemp()
-  comm = default_comm.copy()
   try: 
     with Changedir(dir) as pwd: pass
     stdout = join(dir, 'stdout')
     program = ProgramProcess( executable, outdir=dir, 
                               cmdline=['--sleep', 0, '--order', 4], 
-                              stdout=stdout, comm=comm, dompi=True )
-    program.start()
+                              stdout=stdout, dompi=True )
+    program.start(comm)
     while not program.poll():  continue
     extract = Extract(stdout)
     assert extract.success
@@ -25,7 +24,7 @@ def test(executable):
     assert extract.comm['n'] == comm['n']
     # restart
     assert program.process is None
-    program.start()
+    program.start(comm)
     assert program.process is None
   finally: rmtree(dir)
 
@@ -34,8 +33,8 @@ def test(executable):
     stdout = join(dir, 'stdout')
     program = ProgramProcess( executable, outdir=dir, 
                               cmdline=['--sleep', 0, '--order', 666], 
-                              stdout=stdout, comm=comm, dompi=True )
-    program.start()
+                              stdout=stdout, dompi=True )
+    program.start(comm)
     while not program.poll():  continue
   except Fail: pass
   else: raise Exception()
@@ -46,8 +45,8 @@ def test(executable):
     stdout = join(dir, 'stdout')
     program = ProgramProcess( executable, outdir=dir, 
                               cmdline=['--sleep', 0, '--order', 6666], 
-                              stdout=stdout, comm=comm, dompi=True )
-    program.start()
+                              stdout=stdout, dompi=True )
+    program.start(comm)
     while not program.poll():  continue
   except Fail: pass
   else: raise Exception()

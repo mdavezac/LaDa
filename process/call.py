@@ -2,10 +2,10 @@ from .process import Process
 class CallProcess(Process):
   """ Calls functional in child python process. """
   def __init__( self, functional, outdir, cmdline=None, stdout=None, stderr=None,\
-                maxtrials=1, comm=None, dompi=False, **kwargs ):
+                maxtrials=1, dompi=False, **kwargs ):
     """ Initializes a process. """
     from ..misc import RelativePath
-    super(CallProcess, self).__init__(maxtrials=maxtrials, comm=comm, **kwargs)
+    super(CallProcess, self).__init__(maxtrials=maxtrials, **kwargs)
     self.functional = functional
     """ Functional to execute. """
     try: self.functional = self.functional
@@ -75,7 +75,7 @@ class CallProcess(Process):
                      "functional(**params)\n"\
                      .format(pypath, dumps((params, self.functional))) )
       else: 
-        params = {'comm': self.comm}
+        params = {'comm': self._comm}
         params.update(self.params)
         stdin.write( "from sys import path\n"\
                      "path[:] = {0!r}\n\n"\
@@ -90,13 +90,13 @@ class CallProcess(Process):
     self.process = ProgramProcess( executable, cmdline=[self._stdin], 
                                    outdir=self.outdir, stdout=self.stdout,
                                    stderr=self.stderr, maxtrials=1,
-                                   comm=self.comm if self.dompi else None, 
                                    nompi=self.dompi )
-    self.process.start()
+    self.process.start(comm=self._comm if self.dompi else None)
     return False
 
-  def start(self):
+  def start(self, comm):
     """ Starts current job. """
+    super(CallProcess, self).start(comm)
     self.poll()
   def _cleanup(self):
     """ Removes temporary script. """

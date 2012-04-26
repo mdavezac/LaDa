@@ -1,10 +1,34 @@
-mpirun_exe = "mpirun -n {n} {program}"
+mpirun_exe = "mpirun -n {n} {placement} {program}"
 """ Command-line to launch external mpi programs. """
+def placement(communicator=None):
+  """ Placement string for MPI processes. 
+  
+      Should return an empty string if the communicator is None.
+      This version works for openmpi.
+  """
+  if communicator is None: return ""
+  if len(getattr(communicator, 'machines', {})) == 0: return ""
+  return "-machinefile {0}".format(communicator.nodefile)
+
+def modify_global_comm(communicator):
+  """ Modifies global communicator so placement can be done correctly. 
+  
+      This function is called by :py:func:`create_global_comm`. It can be used
+      to modify the global communicator to work better with a custom placement
+      function.
+  """
+  pass
+
 
 default_comm = {'n': 2, 'ppn': 4}
-""" Default communication directory. 
+""" Default communication dictionary. 
 
-    should contain all key-value pairs used in :py:data:`mpirun_exe`.
+    should contain all key-value pairs used in :py:data:`mpirun_exe`.  In a
+    script which manages mpi processes, it is also the global communicator. In
+    other words, it is the one which at the start of the application is given
+    knowledge of the machines (via :py:func:`~lada.create_global_comm`). Other
+    communicators will have to acquire machines from this one. In that case, it
+    is likely that 'n' is modified.
 """
 
 # pbs/slurm related stuff.

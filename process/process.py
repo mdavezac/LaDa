@@ -3,9 +3,11 @@ from abc import ABCMeta, abstractmethod
 class Process(object):
   """ Some methods and attributes process classes have in common. """
   __metaclass__ = ABCMeta
-  def __init__(self, maxtrials=1, comm=None, **kwargs):
+  def __init__(self, maxtrials=1, **kwargs):
     """ Initializes a process. """
     from os.path import join
+    from .. import default_comm
+    from .mpi import Communicator
     super(Process, self).__init__()
 
     self.params = kwargs
@@ -14,8 +16,6 @@ class Process(object):
     """ Number of restart on errors. """
     self.maxtrials = maxtrials
     """ Maximum number of restarts. """
-    self.comm = comm
-    """ MPI communicator. """
     self.process = None
     """ Currently running process. """
     self.started = False
@@ -28,10 +28,13 @@ class Process(object):
     self.started = True
 
   @abstractmethod
-  def start(self):
+  def start(self, comm):
     """ Starts current job. """
+    from .mpi import Communicator
     if self.started and self.process is None: return True
     self.started = True
+    if not hasattr(self._comm, 'machines'): 
+      self._comm = Communicator(comm)
     return False
 
   def _cleanup(self):
@@ -42,6 +45,9 @@ class Process(object):
     """
     try:
       if hasattr(self.process, '_cleanup'): self.process._cleanup()
+      if hasattr(self.process, '_comm'):
+        self._comm.cleanup()
+        del self._comm
     finally: self.process = None
 
   def terminate(self):
@@ -61,4 +67,7 @@ class Process(object):
   @abstractmethod
   def wait(self):
     """ Waits for process to end, then cleanup. """
-    pass
+    from lada.error import RuntimeError
+    if self.process is None:
+      if self.started: return True
+      raise RumtimeError("Process was never started.")

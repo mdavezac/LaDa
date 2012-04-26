@@ -2,10 +2,10 @@ from .process import Process
 class ProgramProcess(Process):
   """ Executes :py:class:`Program` in child process. """
   def __init__( self, program, outdir, cmdline=None, stdout=None, 
-                stderr=None, maxtrials=1, comm=None, dompi=False, **kwargs ):
+                stderr=None, maxtrials=1, dompi=False, **kwargs ):
     """ Initializes a process. """
     from ..misc import RelativePath
-    super(ProgramProcess, self).__init__(maxtrials, comm, **kwargs)
+    super(ProgramProcess, self).__init__(maxtrials, **kwargs)
     self.program = program
     """ External program to execute. """
     self.outdir = RelativePath(outdir).path
@@ -40,17 +40,20 @@ class ProgramProcess(Process):
         return True
 
     # increment errors if necessary and check without gone over max trials.
-    self.start() # restart process.
+    self._next() # restart process.
     return False
 
-  def start(self):
+  def start(self, comm):
     """ Starts current job. """
+    if super(ProgramProcess, self).start(comm): return 
+ 
+  def _next(self):
+    """ Starts an actual process. """
     from subprocess import Popen
     from shlex import split as split_cmd
     from ..misc import Changedir
-    from .. import mpirun_exe, default_comm
+    from .. import mpirun_exe, placement
     from . import which
-    if super(ProgramProcess, self).start(): return 
     # Open stdout and stderr if necessary.
     with Changedir(self.outdir) as cwd:
       file_out = None if self.stdout is None else open(self.stdout, "w") 
@@ -63,8 +66,10 @@ class ProgramProcess(Process):
       d = {}
       d['program'] = program
       d['cmdline'] = self.cmdline 
-      d.update(self.comm if self.comm is not None else default_comm)
+      d.update(self._comm)
       d.update(self.params)
+      d['placement'] = placement(self._comm)
+      print mpirun_exe.format(**d)
       cmdline = split_cmd(mpirun_exe.format(**d))
       cmdline.extend(str(u) for u in self.cmdline)
     else: cmdline = [program] + self.cmdline
@@ -82,9 +87,6 @@ class ProgramProcess(Process):
 
   def wait(self):
     """ Waits for process to end, then cleanup. """
-    if self.process is None:
-      if self.started: return True
-      self.start()
     self.process.communicate()
-    return self.poll()
+    self.poll()
 
