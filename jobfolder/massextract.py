@@ -32,16 +32,6 @@ class MassExtract(AbstractMassExtract):
     super(MassExtract, self).__init__(path=path, **kwargs)
 
   @property
-  def view(self):
-    """ A regex pattern which the name of extracted jobs should match.
-
-        If None, then no match required. Should be a string, not an re object.
-    """
-    return self._view if self._view is not None else self.jobfolder.name
-  @view.setter
-  def view(self, value): self._view = value
-
-  @property
   def jobfolder(self):
     """ Root of the job-folder wrapped by this instance. """
     from . import load

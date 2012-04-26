@@ -11,7 +11,13 @@ Extract base classes
 
    .. autoattribute:: rootpath
    .. autoattribute:: excludes
-   .. autoattribute:: view
+
+   .. attribute:: view
+
+      Current view into the map of extraction object. Filters out the names
+      which do not fit the view. It should be either a regex or a unix
+      file-completion like string. The behavior is controled by
+      :py:data:`lada.unix_re`
 
    .. automethod:: __getitem__
    .. automethod:: __contains__
@@ -30,9 +36,6 @@ Extract base classes
 
    .. automethod:: shallow_copy
 
-.. autoclass:: AbstractMassExtractDirectories
-   :show-inheritance: AbstractMassExtract
 
-   .. automethod:: __init__
-
-   .. automethod:: __is_calc_dir__
+.. seealso:: :py:class:`lada.vasp.extract.MassExtract` extracts a directory and
+             its subdirectories for vasp calculations.

@@ -19,6 +19,10 @@ Result mass extraction
       then it is returned as is, rather than wrapped within a
       :py:attr:`~lada.jobfolder.forwarding_dict.ForwardingDict`.
 
+   .. attribute:: view
+
+      Current view into the jobfolder. Basically a filter.
+
    .. autoattribute:: addattr
    .. autoattribute:: onoff
    .. autoattribute:: extractors

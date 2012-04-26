@@ -14,12 +14,11 @@
 """
 __docformat__ = "restructuredtext en"
 __all__ = ['JobFolder', 'walk_through', 'save', 'load', 'MassExtract',
-           'AbstractMassExtract', 'AbstractMassExtractDirectories', 
-           'JobParams' ]
+           'AbstractMassExtract', 'JobParams' ]
 
 from .jobfolder import JobFolder
 from .manipulator import JobParams
-from .extract import AbstractMassExtract, AbstractMassExtractDirectories
+from .extract import AbstractMassExtract
 from .massextract import MassExtract 
 
 def save(jobfolder, path='jobfolder.dict', overwrite=False, timeout=None): 

@@ -47,7 +47,10 @@ General
      the eyes in ipython, while keeping things accurate during actual
      calculations. Ignored if None. Defaults to False. 
      
-     .. note:: Only taken into account at ipython start-up.
+     .. note::
+
+        Only taken into account at ipython start-up. It is ignored if LaDa is
+        launched within python.
 
 VASP 
 ----

@@ -6,6 +6,7 @@ def main():
   from copy import deepcopy
   from os.path import exists
   from argparse import ArgumentParser
+  from copy import deepcopy
   from lada import jobs, default_comm
 
   # below would go additional imports.
@@ -44,6 +45,6 @@ def main():
   
   jobfolder = jobs.load(options.pickle, timeout=timeout)
   for name in options.names:
-    jobfolder[name].compute(comm=comm, outdir=name[1:], external=options.external)
+    jobfolder[name].compute(comm=comm, outdir=name[1:])
 
 if __name__ == "__main__": main()

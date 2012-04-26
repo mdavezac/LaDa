@@ -9,15 +9,30 @@ parameters. Indeed, these should contain an ``Extract`` attribute which refers
 to a class capable of handling the output of the method or vasp object. They
 can be instanciated as follows:
 
->>> vasp.Extract(outdir)
->>> vasp.epitaxial.Extract(outdir)
+>>> a = vasp.Extract('outdir')
+>>> a = vasp.epitaxial.Extract('outdir')
 
 Where outdir is the location of the relevant calculation.
+The results from the calculations can then be accessed as attributes:
 
-The extraction classes are separated into I/O (:py:class:`IOMixin <lada.vasp.extract.mixin.IOMixin>`) and actual
-methods to grep the OUTCAR for results (:py:class:`ExtractBase <lada.vasp.extract.base.ExtractBase>`). This setup makes it convenient to change the
-kind of object that can be grepped, from the standard file on a hard-disk, to
-a file in a database.
+>>> a.total_energy
+array(-666.667) * eV
+
+It is possible to extract calculations from a complete folder tree:
+
+>>> from lada.vasp import MassExtract
+>>> a = MassExtract('outdir')
+>>> a.total_energy
+{
+  '/some/path':       array(-666.667) * eV,
+  '/some/otherpath':  array(-999.996) * eV,
+}
+
+The extraction classes are separated into I/O (:py:class:`IOMixin
+<lada.vasp.extract.mixin.IOMixin>`) and actual methods to grep the OUTCAR for
+results (:py:class:`ExtractBase <lada.vasp.extract.base.ExtractBase>`). This
+setup makes it convenient to change the kind of object that can be grepped,
+from the standard file on a hard-disk, to a file in a database.
 
 :py:class:`Extract` derives from the following classes.
 
@@ -33,4 +48,6 @@ a file in a database.
    :members:
    :inherited-members:
   
-
+.. autoclass:: MassExtract
+   :show-inheritance:
+   :members:
