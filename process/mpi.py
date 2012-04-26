@@ -89,7 +89,7 @@ class Communicator(dict):
         As always, processes are exclusive owned exclusively. Processes
         acquired by self are no longuer in other.
     """ 
-    if self._nodefile is not None or other._nodefiles is not None:
+    if self._nodefile is not None or other._nodefile is not None:
       raise NodeFileExists("Comm already used in other process.")
     if n is not None: 
       comm = other.lend(n)
@@ -150,6 +150,21 @@ class Communicator(dict):
     if nodefile is not None and exists(nodefile):
       try: remove(nodefile)
       except: pass
+
+  def __getstate__(self):
+    """ Pickles a communicator. 
+    
+        Does not save parent.
+    """
+    return self.copy(), self.machines, self._nodefile
+  def __setstate__(self, value):
+    """ Reset state from input.
+       
+        Sets parent to None.
+    """
+    self.update(value[0])
+    self.machines, self._nodefile = value[1:]
+    self.parent = None
 
 
 def create_global_comm(nprocs):

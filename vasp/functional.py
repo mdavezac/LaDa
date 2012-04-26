@@ -53,6 +53,7 @@ class Vasp(Incar):
         result = program
         continue
       # otherwise, it should yield a Program tuple to execute.
+      program.start(comm)
       program.wait()
       result = self.Extract(outdir)
       if not result.success: raise RuntimeError("Vasp failed to execute correctly.")

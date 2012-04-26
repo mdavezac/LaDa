@@ -120,6 +120,7 @@ class Functional(object):
     outdir = RelativePath(outdir).path
     for program in self.iter(outdir, sleep, overwrite):
       if getattr(program, 'success', False) == False:
+        program.start(comm)
         program.wait()
     return self.Extract(outdir)
 

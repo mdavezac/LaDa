@@ -240,7 +240,7 @@ iter_relax.Extract = Extract
 def relax( vasp, structure, outdir=None, first_trial=None,
            maxcalls=10, keepsteps=True, nofail=False, 
            convergence=None, relaxation = "volume cellshape ionic", 
-           minrelsteps=-1, **kwargs ):
+           minrelsteps=-1, comm=None, **kwargs ):
   """ Performs relaxation of an input structure using :py:class:`Vasp`.  """
   from os.path import join
   from copy import deepcopy
@@ -259,6 +259,7 @@ def relax( vasp, structure, outdir=None, first_trial=None,
       result = program
       continue
     # otherwise, it should yield a Program tuple to execute.
+    program.start(comm)
     program.wait()
     result = vasp.Extract(outdir)
   return result
@@ -448,7 +449,7 @@ iter_epitaxial.Extract = Extract
 """ Extraction method for epitaxial relaxation runs. """
 
 def epitaxial(vasp, structure, outdir=None, direction=[0,0,1], epiconv = 1e-4, 
-              initstep=0.05, **kwargs):
+              initstep=0.05, comm=None, **kwargs):
   """ Iterates over calls to VASP during epitaxial relaxation. """
   result = None
   for program in iter_epitaxial( vasp, structure, outdir, direction=direction,
@@ -458,6 +459,7 @@ def epitaxial(vasp, structure, outdir=None, direction=[0,0,1], epiconv = 1e-4,
       result = program
       continue
     # otherwise, it should yield a Program tuple to execute.
+    program.start(comm)
     program.wait()
     result = vasp.Extract(outdir)
 

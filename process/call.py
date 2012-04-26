@@ -23,11 +23,6 @@ class CallProcess(Process):
 
   def poll(self, wait=False): 
     """ Polls current job. """
-    from sys import executable, path as pypath
-    from pickle import dumps
-    from tempfile import NamedTemporaryFile
-    from ..misc import Changedir
-    from .program import ProgramProcess
     from . import Fail
 
     # checks whether program was already started or not.
@@ -60,7 +55,15 @@ class CallProcess(Process):
       # at this point, an error must have occured.
       self.nberrors += 1
       if self.nberrors >= self.maxtrials: raise Fail()
+      self._next()
 
+  def _next(self):
+    """ Launches actual calculation. """
+    from pickle import dumps
+    from sys import executable, path as pypath
+    from tempfile import NamedTemporaryFile
+    from .program import ProgramProcess
+    from ..misc import Changedir
     # creates temp input script.
     with Changedir(self.outdir) as outdir: pass
     with NamedTemporaryFile(dir=self.outdir, suffix='.py', delete=False) as stdin:
@@ -96,8 +99,9 @@ class CallProcess(Process):
 
   def start(self, comm):
     """ Starts current job. """
-    super(CallProcess, self).start(comm)
-    self.poll()
+    if super(CallProcess, self).start(comm): return True
+    return self.poll()
+
   def _cleanup(self):
     """ Removes temporary script. """
     from os import remove
@@ -111,6 +115,7 @@ class CallProcess(Process):
     """ Waits for process to end, then cleanup. """
     if self.process is None:
       if self.started: return True
-      self.start()
+      from ..error import ValueError
+      raise ValueError("Process was never started")
     return self.poll(wait=True)
 

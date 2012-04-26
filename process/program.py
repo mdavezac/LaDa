@@ -45,13 +45,16 @@ class ProgramProcess(Process):
 
   def start(self, comm):
     """ Starts current job. """
-    if super(ProgramProcess, self).start(comm): return 
+    if super(ProgramProcess, self).start(comm): return True
+    self._next()
+    return False
  
   def _next(self):
     """ Starts an actual process. """
     from subprocess import Popen
     from shlex import split as split_cmd
     from ..misc import Changedir
+    from ..error import ValueError
     from .. import mpirun_exe, placement
     from . import which
     # Open stdout and stderr if necessary.
@@ -63,13 +66,15 @@ class ProgramProcess(Process):
     # creates commandline
     program = which(self.program)
     if self.dompi: 
+      if not hasattr(self, '_comm'):
+        raise ValueError( "Requested mpi but without passing communicator"\
+                          "(Or communicator was None)." )
       d = {}
       d['program'] = program
       d['cmdline'] = self.cmdline 
       d.update(self._comm)
       d.update(self.params)
       d['placement'] = placement(self._comm)
-      print mpirun_exe.format(**d)
       cmdline = split_cmd(mpirun_exe.format(**d))
       cmdline.extend(str(u) for u in self.cmdline)
     else: cmdline = [program] + self.cmdline
@@ -87,6 +92,7 @@ class ProgramProcess(Process):
 
   def wait(self):
     """ Waits for process to end, then cleanup. """
+    super(ProgramProcess, self).wait()
     self.process.communicate()
     self.poll()
 

@@ -6,7 +6,6 @@ class Process(object):
   def __init__(self, maxtrials=1, **kwargs):
     """ Initializes a process. """
     from os.path import join
-    from .. import default_comm
     from .mpi import Communicator
     super(Process, self).__init__()
 
@@ -30,11 +29,12 @@ class Process(object):
   @abstractmethod
   def start(self, comm):
     """ Starts current job. """
-    from .mpi import Communicator
+    from .mpi import ProcessNumberError, Communicator
     if self.started and self.process is None: return True
     self.started = True
-    if not hasattr(self._comm, 'machines'): 
-      self._comm = Communicator(comm)
+    if comm is not None:
+      if comm['n'] == 0: raise ProcessNumberError('Empty communicator passed to process.')
+      self._comm = comm if hasattr(comm, 'machines') else Communicator(**comm) 
     return False
 
   def _cleanup(self):
@@ -45,10 +45,11 @@ class Process(object):
     """
     try:
       if hasattr(self.process, '_cleanup'): self.process._cleanup()
-      if hasattr(self.process, '_comm'):
-        self._comm.cleanup()
-        del self._comm
-    finally: self.process = None
+    finally:
+      self.process = None
+      if hasattr(self, '_comm'): 
+        try: self._comm.cleanup()
+        finally: del self._comm
 
   def terminate(self):
     """ Terminates current process. """
@@ -67,7 +68,7 @@ class Process(object):
   @abstractmethod
   def wait(self):
     """ Waits for process to end, then cleanup. """
-    from lada.error import RuntimeError
+    from lada.error import internal
     if self.process is None:
       if self.started: return True
-      raise RumtimeError("Process was never started.")
+      raise internal("Process was never started.")
