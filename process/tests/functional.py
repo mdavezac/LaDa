@@ -58,16 +58,17 @@ class ExtractMany(object):
         if not extract.success: continue
         if extract.order == o: order.append(o)
 
-    self.order   = []
-    self.sleep   = []
-    self.pi      = []
-    self.error   = []
-    self.system  = []
-    self.version = []
-    self.machine = []
-    self.release = []
-    self.comm    = []
-    self.success = False
+    self.order    = []
+    self.sleep    = []
+    self.pi       = []
+    self.error    = []
+    self.system   = []
+    self.version  = []
+    self.machine  = []
+    self.nodename = []
+    self.release  = []
+    self.comm     = []
+    self.success  = False
     error = False
     try: 
       for o in order:
@@ -79,6 +80,7 @@ class ExtractMany(object):
         self.error.append(extract.error)
         self.system.append(extract.system)
         self.version.append(extract.version)
+        self.nodename.append(extract.nodename)
         self.machine.append(extract.machine)
         self.release.append(extract.release)
         self.comm.append(extract.comm)

@@ -1,5 +1,4 @@
 def test(path):
-  from subprocess import check_output, STDOUT, Popen, PIPE
   from glob import glob
   from os.path import join
   from shutil import rmtree
