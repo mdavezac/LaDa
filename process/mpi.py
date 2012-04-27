@@ -173,8 +173,11 @@ class Communicator(dict):
 def create_global_comm(nprocs):
   """ Figures out global communicator through external mpi call. """
   from sys import executable
+  from tempfile import NamedTemporaryFile
   from subprocess import Popen, PIPE
   from shlex import split
+  from os.path import exists
+  from os import remove
   from .. import placement, mpirun_exe, modify_global_comm
   import lada
   
@@ -185,17 +188,27 @@ def create_global_comm(nprocs):
           'from boost.mpi import world\n'                  \
           'for i in xrange(world.size):\n'                 \
           '  if i == world.rank: print gethostname(), i\n' \
-          '  world.barrier()\n'
-  cmdlines = mpirun_exe.format( Communicator(n=nprocs), placement=placement(),
-                                program=executable )
-  process = Popen(split(cmdline), stdout=PIPE, stdin=PIPE, stderr=PIPE)
-  stdout, stderr = process.communicate(stdin)
+          '  world.barrier()\n'                            
+  cmdline = mpirun_exe.format( placement=placement(), program=executable,
+                               **Communicator(n=nprocs) )
+  try: 
+    with NamedTemporaryFile(delete=False) as file:
+      file.write(stdin)
+      filename = file.name
 
+    with open(filename, 'r') as file: 
+      process = Popen(split(cmdline) + [filename], stdout=PIPE, stdin=file, stderr=PIPE)
+      stdout, stderr = process.communicate()
+  finally:
+    if exists(filename):
+      try: remove(filename)
+      except: pass
   # we use that to deduce the number of machines and processes per machine.
-  processes = [line.split()[0] for line in stdout.split('\n')]
+  processes = [line.split()[0] for line in stdout.split('\n')[:-1]]
   machines = set(processes)
   lada.default_comm = Communicator(lada.default_comm)
-  lada.default_comm.machines = result
-  for machine in machines: lada.global_comm[machine] = processes.count(machine)
-
+  lada.default_comm.machines = {}
+  for machine in machines:
+    lada.default_comm.machines[machine] = processes.count(machine)
+  lada.default_comm['n'] = sum(lada.default_comm.machines.itervalues())
   modify_global_comm(lada.default_comm)
