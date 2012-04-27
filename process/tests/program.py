@@ -7,6 +7,7 @@ def test(executable):
   from lada.process import Fail
   from lada.misc import Changedir
   from lada import default_comm as comm
+  from lada.error import internal
   from functional import ExtractSingle as Extract
   dir = mkdtemp()
   try: 
@@ -15,7 +16,17 @@ def test(executable):
     program = ProgramProcess( executable, outdir=dir, 
                               cmdline=['--sleep', 0, '--order', 4], 
                               stdout=stdout, dompi=True )
-    program.start(comm)
+    # program not started. should fail.
+    try: program.poll()
+    except internal: pass
+    else: raise Exception()
+    try: program.wait()
+    except internal: pass
+    else: raise Exception()
+
+    # now starting for real.
+    assert program.start(comm) == False
+    assert program.process is not None
     while not program.poll():  continue
     extract = Extract(stdout)
     assert extract.success
@@ -32,6 +43,7 @@ def test(executable):
     with Changedir(dir) as pwd: pass
     stdout = join(dir, 'stdout')
     program = ProgramProcess( executable, outdir=dir, 
+                              stderr=join(dir, 'shit'),
                               cmdline=['--sleep', 0, '--order', 666], 
                               stdout=stdout, dompi=True )
     program.start(comm)
@@ -44,6 +56,7 @@ def test(executable):
     with Changedir(dir) as pwd: pass
     stdout = join(dir, 'stdout')
     program = ProgramProcess( executable, outdir=dir, 
+                              stderr=join(dir, 'shit'),
                               cmdline=['--sleep', 0, '--order', 6666], 
                               stdout=stdout, dompi=True )
     program.start(comm)

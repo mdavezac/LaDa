@@ -10,6 +10,7 @@ def test(executable):
   from lada.process.jobfolder import JobFolderProcess
   from lada.process import Fail
   from lada.misc import Changedir
+  from lada.error import internal
   from lada import default_comm
   from functional import Functional
 
@@ -24,9 +25,18 @@ def test(executable):
 
   dir = mkdtemp()
   try: 
-    program = JobFolderProcess(root, nbpools=2, outdir=dir, comm=comm)
+    program = JobFolderProcess(root, nbpools=2, outdir=dir)
     assert program.nbjobsleft > 0
-    program.start()
+    # program not started. should fail.
+    try: program.poll()
+    except internal: pass
+    else: raise Exception()
+    try: program.wait()
+    except internal: pass
+    else: raise Exception()
+
+    # now starting for real.
+    program.start(comm)
     assert len(program.process) == 2
     while not program.poll():  continue
     assert program.nbjobsleft == 0
@@ -47,7 +57,7 @@ def test(executable):
     # restart
     assert program.poll()
     assert len(program.process) == 0
-    program.start()
+    program.start(comm)
     assert len(program.process) == 0
     assert program.poll()
   finally:
@@ -57,8 +67,9 @@ def test(executable):
   try: 
     job = root / str(666)
     job.functional = Functional(executable, [666])
-    program = JobFolderProcess(root, nbpools=2, outdir=dir, comm=comm)
+    program = JobFolderProcess(root, nbpools=2, outdir=dir)
     assert program.nbjobsleft > 0
+    program.start(comm)
     program.wait()
     assert program.nbjobsleft == 0
   except Fail: 
@@ -70,8 +81,9 @@ def test(executable):
     except: pass
   try: 
     job.functional.order = [667]
-    program = JobFolderProcess(root, nbpools=2, outdir=dir, comm=comm)
+    program = JobFolderProcess(root, nbpools=2, outdir=dir)
     assert program.nbjobsleft > 0
+    program.start(comm)
     program.wait()
     assert program.nbjobsleft == 0
   finally:

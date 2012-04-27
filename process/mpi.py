@@ -58,6 +58,9 @@ class Communicator(dict):
           result['n'] += value
           self.machines.pop(key)
           self['n'] -= value
+    else: 
+      result['n'] = nprocs
+      self['n'] -= nprocs
     return result
 
   def split(self, n=2):

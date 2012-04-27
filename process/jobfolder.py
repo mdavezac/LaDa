@@ -4,10 +4,10 @@ class JobFolderProcess(Process):
   
       Expects folder with a functional which does not have an iter method.
   """
-  def __init__(self, jobfolder, outdir, maxtrials=1, comm=None, nbpools=1, **kwargs):
+  def __init__(self, jobfolder, outdir, maxtrials=1, nbpools=1, **kwargs):
     """ Initializes a process. """
     from ..misc import RelativePath
-    super(JobFolderProcess, self).__init__(maxtrials, comm, **kwargs)
+    super(JobFolderProcess, self).__init__(maxtrials, **kwargs)
 
     self.jobfolder = jobfolder
     """ Job-folder to execute. """
@@ -38,11 +38,10 @@ class JobFolderProcess(Process):
   def poll(self): 
     """ Polls current job. """
     from os.path import join
-    from ..error import IndexError
     from . import Fail
 
-    if len(self.process) == 0  and self.started: return True
-    self.started = True
+    if super(JobFolderProcess, self).poll(): return True
+
     # weed out successfull and failed jobs.
     finished = []
     for i, (name, process) in enumerate(list(self.process)):
@@ -63,16 +62,17 @@ class JobFolderProcess(Process):
       else: raise Fail()
 
     # adds new jobs. 
-    self._add_processes()
+    self._next()
     return False
  
-  def _add_processes(self):
+  def _next(self):
     """ Adds more processes.
     
         This is the subroutine to overload in a derived class which would
         implement some sort of scheduling.
     """
     from os.path import join
+    from ..error import IndexError
     from .call import CallProcess
     from .iterator import IteratorProcess
 
@@ -85,7 +85,6 @@ class JobFolderProcess(Process):
 
     # split processes into local comms. Make sure we don't oversuscribe.
     local_comms = self._comm.split(min(self._comm['n'], self.nbpools - len(self.process)))
-    print local_comms
     try: 
       # Loop until all requisite number of processes is created, 
       # or until run out of jobs, or until run out of comms. 
@@ -103,7 +102,6 @@ class JobFolderProcess(Process):
         params = jobfolder.params.copy()
         params.update(self.params)
         params['maxtrials'] = self.maxtrials
-        params['comm'] = local_comms.pop()
         # chooses between an iterator process and a call process.
         if hasattr(jobfolder.functional, 'iter'):
           process = IteratorProcess(jobfolder.functional, join(self.outdir, name), **params)
@@ -111,7 +109,7 @@ class JobFolderProcess(Process):
           process = CallProcess(self.functional, join(self.outdir, name), **params)
         # appends process and starts it.
         self.process.append((name, process))
-        process.start()
+        process.start(local_comms.pop())
     except:
       self.terminate()
       raise
@@ -123,21 +121,46 @@ class JobFolderProcess(Process):
     for name, process in self.process: process.kill()
     self._cleanup()
     self.process = []
+    
   def terminate(self):
     """ Kills all currently running processes. """
     for name, process in self.process: process.terminate()
     self._cleanup()
     self.process = []
+
+  @property 
+  def done(self):
+    """ True if job already finished. """
+    return self.started and len(self.process) == 0
+  @property
+  def nbrunning_processes(self):
+    """ Number of running processes. 
+
+        For simple processes, this will be one or zero.
+        For multitasking processes this may be something more.
+    """
+    return 0 if (not self.started) or len(self.process) == 0 else 1
+
   def wait(self, sleep=0.5):
     """ Waits for all job-folders to execute and finish. """
     from time import sleep as time_sleep
+    if super(JobFolderProcess, self).wait(): return True
     while not self.poll(): 
       if sleep > 0: time_sleep(sleep)
+    return False
+
   def _cleanup(self):
     """ Cleans up after currently running processes. """
-    for name, process in self.process: self.process._cleanup()
+    try: 
+      for name, process in self.process: process._cleanup()
+    finally:
+      self.process = []
+      if hasattr(self, '_comm'): 
+        try: self._comm.cleanup()
+        finally: del self._comm
    
   def start(self, comm):
     """ Start executing job-folders. """
-    super(JobFolder, self).start(_comm)
-    self.poll()
+    if super(JobFolderProcess, self).start(comm): return True
+    self._next()
+    return False

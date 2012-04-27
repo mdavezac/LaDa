@@ -28,46 +28,57 @@ class IteratorProcess(Process):
     # check if we have currently running process.
     # catch StopIteration exception signaling that process finished.
     found_error = None
-    if self.process is not None:
-      try:
-        if wait == True: self.process.wait()
-        elif self.process.poll() == False: return False
-      except Fail as failure: found_error = failure
-      self._cleanup()
+    try:
+      if wait == True: self.process.wait()
+      elif self.process.poll() == False: return False
+    except Fail as failure: found_error = failure
+    try: self.process._cleanup()
+    finally: self.process = None
     # At this point, loop until find something to do.
-    found = False
-    if hasattr(self.functional, 'iter'):
-      def iterator(**params):
-        for dummy in self.functional.iter(**params): yield dummy
-    else: iterator = self.functional
-    for i, process in enumerate(iterator(comm=self._comm, outdir=self.outdir, **self.params)):
-      if not getattr(process, 'success', False): 
-        found = True
-        break;
-    # stop if no more jobs.
-    if found == False: return True
+    index, process = self._get_process()
+    if process is None: return True
     # if stopped on or before previous job, then we have a retrial.
-
-    if i <= self._iterindex and found_error is not None:
+    if index <= self._iterindex and found_error is not None:
       self.nberrors += 1
       if self.nberrors >= self.maxtrials:
         raise found_error if isinstance(found_error, Fail) \
               else Fail(str(found_error))
-    self._iterindex = i
+    self._iterindex = index
 
+    self._next(process)
+    return False
+
+  def _get_process(self):
+    """ Finds next available iteration. """
+    # first creates iterator, depending on input type.
+    if hasattr(self.functional, 'iter'):
+      def iterator(**params):
+        for dummy in self.functional.iter(**params): yield dummy
+    else: iterator = self.functional
+    # then iterates until something other than an extractor object is found.
+    for i, process in enumerate(iterator( comm=self._comm,
+                                          outdir=self.outdir, 
+                                          **self.params )):
+      if not getattr(process, 'success', False): return i, process
+    # stop, no more jobs.
+    return i, None
+
+  def _next(self, process=None):
+    """ Launches next process. """
     # start next process.
-    self.process = process
-    self.process.start() 
+    self.process = process if process is not None else self._get_process()[1]
+    if self.process is None: return True
+    self.process.start(self._comm) 
     return False
 
   def start(self, comm):
     """ Starts current job. """
-    super(IteratorProcess, self).start(comm)
-    self.poll()
+    if super(IteratorProcess, self).start(comm): return True
+    self._next()
+    return False
 
   def wait(self):
     """ Waits for process to end, then cleanup. """
-    if self.process is None:
-      if self.started: return True
-      self.start()
-    return self.poll(wait=True)
+    if super(IteratorProcess, self).wait(): return True
+    while not self.poll(): self.process.wait()
+    return False

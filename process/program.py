@@ -2,8 +2,10 @@ from .process import Process
 class ProgramProcess(Process):
   """ Executes :py:class:`Program` in child process. """
   def __init__( self, program, outdir, cmdline=None, stdout=None, 
-                stderr=None, maxtrials=1, dompi=False, **kwargs ):
+                stderr=None, maxtrials=1, dompi=False, 
+                cmdlmodifier=None, **kwargs ):
     """ Initializes a process. """
+    from ..error import ValueError
     from ..misc import RelativePath
     super(ProgramProcess, self).__init__(maxtrials, **kwargs)
     self.program = program
@@ -20,6 +22,15 @@ class ProgramProcess(Process):
     """ Whether to run with mpi or not. """
     self._stdio = None, None
     """ Standard output/error files. """
+    if cmdlmodifier is not None and not hasattr(cmdlmodifier, '__call__'):  
+      raise ValueError('cmdlmodifier should None or a callable')
+    self.cmdlmodifier = cmdlmodifier
+    """ A function to modify command-line parameters.
+    
+        This function is only invoked for mpirun programs.
+        It can be used to, say, make sure a program is launched only with an
+        even number of processes. It should add 'placement' to the dictionary.
+    """
 
   def poll(self): 
     """ Polls current job. """
@@ -27,17 +38,16 @@ class ProgramProcess(Process):
     if super(ProgramProcess, self).poll(): return True
     # check if we have currently running process.
     # if current process is finished running, closes stdout and stdout.
-    if self.process is not None:
-      poll = self.process.poll()
-      if poll is None: return False
-      elif poll != 0:
-        self.nberrors += 1
-        if self.nberrors >= self.maxtrials:
-          self._cleanup()
-          raise Fail(poll)
-      else:
+    poll = self.process.poll()
+    if poll is None: return False
+    elif poll != 0:
+      self.nberrors += 1
+      if self.nberrors >= self.maxtrials:
         self._cleanup()
-        return True
+        raise Fail(poll)
+    else:
+      self._cleanup()
+      return True
 
     # increment errors if necessary and check without gone over max trials.
     self._next() # restart process.
@@ -73,8 +83,9 @@ class ProgramProcess(Process):
       d['program'] = program
       d['cmdline'] = self.cmdline 
       d.update(self._comm)
-      d.update(self.params)
-      d['placement'] = placement(self._comm)
+      if self.cmdlmodifier is not None:
+        comm = self.cmdlmodifier(d, self._comm)
+      else: d['placement'] = placement(self._comm)
       cmdline = split_cmd(mpirun_exe.format(**d))
       cmdline.extend(str(u) for u in self.cmdline)
     else: cmdline = [program] + self.cmdline

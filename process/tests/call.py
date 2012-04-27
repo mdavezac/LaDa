@@ -7,6 +7,7 @@ def test(executable):
   from lada.process.call import CallProcess
   from lada.process import Fail
   from lada.misc import Changedir
+  from lada.error import internal
   from lada import default_comm
   from functional import Functional
   comm = default_comm.copy()
@@ -14,6 +15,15 @@ def test(executable):
   try: 
     functional = Functional(executable, range(8))
     program = CallProcess(functional, outdir=dir, dompi=False )
+    # program not started. should fail.
+    try: program.poll()
+    except internal: pass
+    else: raise Exception()
+    try: program.wait()
+    except internal: pass
+    else: raise Exception()
+
+    # now starting for real.
     assert program.start(comm) == False
     assert program.process is not None
     while not program.poll():  continue
@@ -50,7 +60,7 @@ def test(executable):
 
   try: 
     functional = Functional(executable, [666])
-    program = CallProcess(functional, outdir=dir, dompi=False )
+    program = CallProcess(functional, outdir=dir, stderr=join(dir, 'shit'), dompi=False )
     program.start(comm)
     program.wait()
   except Fail: pass

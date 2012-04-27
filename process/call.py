@@ -28,34 +28,26 @@ class CallProcess(Process):
     # checks whether program was already started or not.
     if super(CallProcess, self).poll(): return True
 
-    # Check directly for errors/success if possible.
-    if hasattr(self.functional, 'Extract') \
-       and self.functional.Extract(self.outdir).success \
-       and self.process is None \
-       and self.params.get('overwrite', False) == False:
-      return True
-
     # check whether functional is set. 
     if self.functional is None: return True
     # check if we have currently running process.
     # if current process is finished running, closes stdout and stdout.
-    if self.process is not None:
-      try: 
-        if wait == True: self.process.wait()
-        elif self.process.poll() == False: return False
-      except Fail:
-        self._cleanup()
-        if hasattr(self.functional, 'Extract') \
-           and self.functional.Extract(self.outdir).success: 
-          return True
-      else: 
-        self._cleanup()
-        if not hasattr(self.functional, 'Extract'): return True
-        if self.functional.Extract(self.outdir).success: return True
-      # at this point, an error must have occured.
-      self.nberrors += 1
-      if self.nberrors >= self.maxtrials: raise Fail()
-      self._next()
+    try: 
+      if wait == True: self.process.wait()
+      elif self.process.poll() == False: return False
+    except Fail:
+      self._cleanup()
+      if hasattr(self.functional, 'Extract') \
+         and self.functional.Extract(self.outdir).success: 
+        return True
+    else: 
+      self._cleanup()
+      if not hasattr(self.functional, 'Extract'): return True
+      if self.functional.Extract(self.outdir).success: return True
+    # at this point, an error must have occured.
+    self.nberrors += 1
+    if self.nberrors >= self.maxtrials: raise Fail()
+    self._next()
 
   def _next(self):
     """ Launches actual calculation. """
@@ -100,7 +92,14 @@ class CallProcess(Process):
   def start(self, comm):
     """ Starts current job. """
     if super(CallProcess, self).start(comm): return True
-    return self.poll()
+    # Check directly for errors/success if possible.
+    if hasattr(self.functional, 'Extract') \
+       and self.functional.Extract(self.outdir).success \
+       and self.process is None \
+       and self.params.get('overwrite', False) == False:
+      return True
+    self._next()
+    return False;
 
   def _cleanup(self):
     """ Removes temporary script. """
@@ -113,9 +112,7 @@ class CallProcess(Process):
 
   def wait(self):
     """ Waits for process to end, then cleanup. """
-    if self.process is None:
-      if self.started: return True
-      from ..error import ValueError
-      raise ValueError("Process was never started")
-    return self.poll(wait=True)
+    if super(CallProcess, self).wait(): return True
+    while not self.poll(): self.process.wait()
+    return False
 

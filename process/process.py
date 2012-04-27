@@ -23,14 +23,29 @@ class Process(object):
   @abstractmethod
   def poll(self): 
     """ Polls current job. """
-    if self.started and self.process is None: return True
-    self.started = True
+    from ..error import internal
+    if not self.started: raise internal("Process was never started.")
+    return self.nbrunning_processes == 0
+
+  @property 
+  def done(self):
+    """ True if job already finished. """
+    return self.started and self.process is None
+
+  @property
+  def nbrunning_processes(self):
+    """ Number of running processes. 
+
+        For simple processes, this will be one or zero.
+        For multitasking processes this may be something more.
+    """
+    return 0 if (not self.started) or self.process is None else 1
 
   @abstractmethod
   def start(self, comm):
     """ Starts current job. """
     from .mpi import ProcessNumberError, Communicator
-    if self.started and self.process is None: return True
+    if self.done: return True
     self.started = True
     if comm is not None:
       if comm['n'] == 0: raise ProcessNumberError('Empty communicator passed to process.')
@@ -69,6 +84,6 @@ class Process(object):
   def wait(self):
     """ Waits for process to end, then cleanup. """
     from lada.error import internal
-    if self.process is None:
-      if self.started: return True
-      raise internal("Process was never started.")
+    from ..error import internal
+    if not self.started: raise internal("Process was never started.")
+    if self.nbrunning_processes == 0: return True
