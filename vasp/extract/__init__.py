@@ -5,10 +5,11 @@
     and specific to reading *real* OUTCAR files and *database* OUTCAR files. 
 """
 __docformat__  = 'restructuredtext en'
-__all__ = ['Extract']
+__all__ = ['Extract', 'MassExtract']
 from ...functools.extract import AbstractExtractBase
 from .base import ExtractBase
 from .mixin import IOMixin
+from ...jobfolder import AbstractMassExtract
 
 class Extract(AbstractExtractBase, IOMixin, ExtractBase):
   """ Extracts DFT data from an OUTCAR. """
@@ -37,31 +38,73 @@ class Extract(AbstractExtractBase, IOMixin, ExtractBase):
     """ True if calculation was successfull. """
     return ExtractBase.success.__get__(self)
 
-# def Extract(directory=None, **kwargs):
-#   """ Chooses between DFT or GW extraction object, depending on OUTCAR.
-#   
-#         :Parameters:
-#           outcar : str or None
-#             Path to OUTCAR file. Can also be the directory if the OUTCAR is
-#             named "OUTCAR". Defaults to None, in which case it uses the current
-#             working directory.
-#   """
-#   from os import getcwd
-#   from os.path import exists, isdir, join
-#   from ...misc import RelativePath
-#   # checks for GW calculations.
-#   directory = getcwd() if directory is None else RelativePath(directory).path
-#   if exists(join(directory, 'GW')):
-#     from os.path import basename
-#     from glob import iglob
-#     from re import match
-#     outcar = join(directory, 'GW')
-#     gwiters = [ int(basename(u)) for u in iglob(join(outcar, "[0-9]*"))\
-#                 if match(r"\d+", basename(u)) and isdir(u) ]
-#     if len(gwiters) > 0: outcar = join(outcar, str(max(gwiters)))
 
-#   result = ExtractCommon(directory=directory, **kwargs)
-#   if result.is_dft: return ExtractDFT(directory=directory, **kwargs) 
-# # elif result.is_gw: return ExtractGW(directory=directory, **kwargs) 
-#   return result
+class MassExtract(AbstractMassExtract):
+  """ Extracts all Vasp calculations in directory and sub-directories. 
+    
+      Trolls through all subdirectories for vasp calculations, and organises
+      results as a dictionary where keys are the name of the diretories.
 
+      Usage is simply:
+
+      >>> from lada.vasp import MassExtract
+      >>> a = MassExtract('path') # or nothing if path is current directory.
+      >>> a.success
+      {
+        '/some/path/':      True,
+        '/some/other/path': True
+      }
+      >>> a.eigenvalues
+  """
+  def __init__(self, path = None, **kwargs):
+    """ Initializes MassExtract.
+    
+    
+        :Parameters:
+          path : str or None
+            Root directory for which to investigate all subdirectories.
+            If None, uses current working directory.
+          kwargs : dict
+            Keyword parameters passed on to AbstractMassExtract.
+
+        :kwarg naked_end: True if should return value rather than dict when only one item.
+        :kwarg unix_re: converts regex patterns from unix-like expression.
+    """
+    from os import getcwd
+    if path is None: path = getcwd()
+    # this will throw on unknown kwargs arguments.
+    super(MassExtract, self).__init__(path=path, **kwargs)
+
+  def __iter_alljobs__(self):
+    """ Goes through all directories with an OUTVAR. """
+    from os import walk
+    from os.path import relpath, join
+    from . import Extract as VaspExtract
+    from ..relax import RelaxExtract
+
+    for dirpath, dirnames, filenames in walk(self.rootpath, topdown=True, followlinks=True):
+      if 'OUTCAR' not in filenames: continue
+      if 'relax_cellshape' in dirnames or 'relax_ions' in dirnames:
+        dirnames[:] = [u for u in dirnames if u not in ['relax_cellshape', 'relax_ions']]
+        try: result = RelaxExtract(join(self.rootpath, dirpath))
+        except:
+          try: result = VaspExtract(join(self.rootpath, dirpath))
+          except: continue
+      else: 
+        try: result = VaspExtract(join(self.rootpath, dirpath))
+        except: continue
+
+      yield join('/', relpath(dirpath, self.rootpath)), result
+
+  def __copy__(self):
+    """ Returns a shallow copy. """
+    result = self.__class__(self.rootpath)
+    result.__dict__.update(self.__dict__)
+    return result
+
+  @property
+  def _attributes(self): 
+    """ Returns __dir__ set special to the extraction itself. """
+    from . import Extract as VaspExtract
+    return list(set([u for u in dir(VaspExtract) if u[0] != '_'] + ['details']))
+  

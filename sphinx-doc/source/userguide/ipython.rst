@@ -349,6 +349,11 @@ which minimize spin-polarized crystal structures. Then a second-wave of
 job-folders would be created from the resulting relaxed crystal structures to
 examine different possible magnetic orders.
 
+On other nice feature is to use ``collect``  in conjunction with matplotlib_ to
+plot results, as described :ref:`here <vasp_massextract_ug>`. In practive,
+``collect`` interfaces with a lot more properties than just the energy, as
+displayed here. 
+
 .. _IPython: http://ipython.org/
 .. _first time: http://ipython.org/ipython-doc/stable/config/extensions/autoreload.html
 .. _matplotlib: http://matplotlib.sourceforge.net/

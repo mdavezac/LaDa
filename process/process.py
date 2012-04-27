@@ -3,9 +3,10 @@ from abc import ABCMeta, abstractmethod
 class Process(object):
   """ Some methods and attributes process classes have in common. """
   __metaclass__ = ABCMeta
-  def __init__(self, maxtrials=1, comm=None, **kwargs):
+  def __init__(self, maxtrials=1, **kwargs):
     """ Initializes a process. """
     from os.path import join
+    from .mpi import Communicator
     super(Process, self).__init__()
 
     self.params = kwargs
@@ -14,8 +15,6 @@ class Process(object):
     """ Number of restart on errors. """
     self.maxtrials = maxtrials
     """ Maximum number of restarts. """
-    self.comm = comm
-    """ MPI communicator. """
     self.process = None
     """ Currently running process. """
     self.started = False
@@ -24,14 +23,33 @@ class Process(object):
   @abstractmethod
   def poll(self): 
     """ Polls current job. """
-    if self.started and self.process is None: return True
-    self.started = True
+    from ..error import internal
+    if not self.started: raise internal("Process was never started.")
+    return self.nbrunning_processes == 0
+
+  @property 
+  def done(self):
+    """ True if job already finished. """
+    return self.started and self.process is None
+
+  @property
+  def nbrunning_processes(self):
+    """ Number of running processes. 
+
+        For simple processes, this will be one or zero.
+        For multitasking processes this may be something more.
+    """
+    return 0 if (not self.started) or self.process is None else 1
 
   @abstractmethod
-  def start(self):
+  def start(self, comm):
     """ Starts current job. """
-    if self.started and self.process is None: return True
+    from .mpi import ProcessNumberError, Communicator
+    if self.done: return True
     self.started = True
+    if comm is not None:
+      if comm['n'] == 0: raise ProcessNumberError('Empty communicator passed to process.')
+      self._comm = comm if hasattr(comm, 'machines') else Communicator(**comm) 
     return False
 
   def _cleanup(self):
@@ -42,7 +60,11 @@ class Process(object):
     """
     try:
       if hasattr(self.process, '_cleanup'): self.process._cleanup()
-    finally: self.process = None
+    finally:
+      self.process = None
+      if hasattr(self, '_comm'): 
+        try: self._comm.cleanup()
+        finally: del self._comm
 
   def terminate(self):
     """ Terminates current process. """
@@ -61,4 +83,7 @@ class Process(object):
   @abstractmethod
   def wait(self):
     """ Waits for process to end, then cleanup. """
-    pass
+    from lada.error import internal
+    from ..error import internal
+    if not self.started: raise internal("Process was never started.")
+    if self.nbrunning_processes == 0: return True

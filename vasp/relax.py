@@ -10,10 +10,46 @@
     fully relaxed structure is obtained.
 """
 __docformat__ = "restructuredtext en"
-__all__ = ['relax', 'iter_relax', 'Relax', 'epitaxial', 'iter_epitaxial']
+__all__ = ['relax', 'iter_relax', 'Relax', 'epitaxial', 'iter_epitaxial', 'RelaxExtract']
 from .extract import Extract
 from ..functools.makeclass import makeclass
 from .functional import Vasp
+from .extract import Extract, MassExtract
+
+class RelaxExtract(Extract):
+  """ Extractor class for vasp relaxations. """
+  class IntermediateMassExtract(MassExtract):
+    """ Focuses on intermediate steps. """
+    def __iter_alljobs__(self):
+      """ Goes through all directories with an OUTVAR. """
+      from glob import iglob
+      from os.path import relpath, join, exists
+      from itertools import chain
+
+      for dir in chain( iglob(join(join(self.rootpath, 'relax_cellshape'), '*/')),
+                        iglob(join(join(self.rootpath, 'relax_ions'), '*/'))):
+        if not exists(join(self.rootpath, join(dir, 'OUTCAR'))): continue
+        try: result = Extract(dir[:-1])
+        except: continue
+        yield join('/', relpath(dir[:-1], self.rootpath)), result
+        
+  @property
+  def details(self):
+    """ Intermediate steps. """
+    if '_details' not in self.__dict__:
+      from os.path import exists
+      if not exists(self.directory): return None
+      self.__dict__['_details'] = None
+      self._details = self.IntermediateMassExtract(self.directory)
+      """ List of intermediate calculation extractors. """
+    return self._details
+  
+  def iterfiles(self, **kwargs):
+    """ Iterates over input/output files. """
+    from itertools import chain
+    for file in chain( super(RelaxExtract, self).iterfiles(**kwargs),
+                       self.details.iterfiles(**kwargs) ): yield file
+
 
 def iter_relax( vasp, structure, outdir=None, first_trial=None,
                 maxcalls=10, keepsteps=True, nofail=False, 
@@ -65,10 +101,16 @@ def iter_relax( vasp, structure, outdir=None, first_trial=None,
         Defaults to False.
       :param convergence:
         Convergence criteria. If ``minrelsteps`` is positive, it is only
-        checked after ``minrelsteps`` have been performed.
+        checked after ``minrelsteps`` have been performed. Convergence is
+        checked according to last VASP run, not from one VASP run to another.
+        Eg. If a positive real number, convergence is achieved when the
+        difference between the last two total-energies of the current run fall
+        below that real number (times structure size), not when the total
+        energies of the last two runs fall below that number. Faster, but
+        possibly less safe.
 
         * None: defaults to ``vasp.ediff * 1e1``
-        * positive real number: energy convergence criteria in eV. 
+        * positive real number: energy convergence criteria in eV per atom. 
         * negative real number: force convergence criteria in eV/angstrom. 
         * callable: Takes an extraction object as input. Should return True if
           convergence is achieved and False otherwise.
@@ -82,15 +124,13 @@ def iter_relax( vasp, structure, outdir=None, first_trial=None,
           towards ``maxcalls``.
         * negative (default): argument is ignored.
       :param kwargs:
-        Other parameters are applied to the input :py:class:`Vasp
-        <lada.vasp.functional.Vasp>` object.
+        Other parameters are applied to the input
+        :py:class:`~lada.vasp.functional.Vasp` object.
 
       :return: At each step, yields an extraction object if the relevant VASP
                calculation already exists. Otherwise, it yields a
                :py:class:`~lada.process.program.ProgramProcess` object
                detailing the call to the external VASP program.
-
-      .. seealso:: :py:func:`execute_program <lada.misc.execute_program>`
   """
   from re import sub
   from copy import deepcopy
@@ -98,7 +138,6 @@ def iter_relax( vasp, structure, outdir=None, first_trial=None,
   from os.path import join
   from shutil import rmtree
   from ..misc import RelativePath
-  from ..crystal import vasp_ordered
 
   # make this function stateless.
   vasp = deepcopy(vasp)
@@ -201,7 +240,7 @@ iter_relax.Extract = Extract
 def relax( vasp, structure, outdir=None, first_trial=None,
            maxcalls=10, keepsteps=True, nofail=False, 
            convergence=None, relaxation = "volume cellshape ionic", 
-           minrelsteps=-1, **kwargs ):
+           minrelsteps=-1, comm=None, **kwargs ):
   """ Performs relaxation of an input structure using :py:class:`Vasp`.  """
   from os.path import join
   from copy import deepcopy
@@ -220,6 +259,7 @@ def relax( vasp, structure, outdir=None, first_trial=None,
       result = program
       continue
     # otherwise, it should yield a Program tuple to execute.
+    program.start(comm)
     program.wait()
     result = vasp.Extract(outdir)
   return result
@@ -228,7 +268,7 @@ relax.__doc__ += iter_relax.__doc__[iter_relax.__doc__.find('\n'):\
                                     iter_relax.__doc__.find(':return')]\
                                    .replace('generator', 'method').replace('\n      ', '\n')\
                  + "\n:return: An extraction object pointing to the final static calculation.\n"\
-                 + "\n.. seealso:: `iter_relax`\n\n"
+                 + "\n.. seealso:: :py:func:`iter_relax`\n\n"
 relax.Extract = iter_relax.Extract
 """ Extraction method for relaxation runs. """
 Relax = makeclass( 'Relax', Vasp, iter_relax, relax, module='lada.vasp.relax',
@@ -304,8 +344,6 @@ def iter_epitaxial(vasp, structure, outdir=None, direction=[0,0,1], epiconv = 1e
                calculation already exists. Otherwise, it yields a
                :py:class:`~lada.process.program.ProgramProcess` object
                detailing the call to the external VASP program.
-
-      .. seealso:: :py:func:`execute_program <lada.misc.execute_program>`
   """
   from os import getcwd
   from os.path import join
@@ -411,10 +449,8 @@ iter_epitaxial.Extract = Extract
 """ Extraction method for epitaxial relaxation runs. """
 
 def epitaxial(vasp, structure, outdir=None, direction=[0,0,1], epiconv = 1e-4, 
-              initstep=0.05, **kwargs):
+              initstep=0.05, comm=None, **kwargs):
   """ Iterates over calls to VASP during epitaxial relaxation. """
-  from os.path import join
-  from ..misc import execute_program
   result = None
   for program in iter_epitaxial( vasp, structure, outdir, direction=direction,
                                  epiconv=epiconv, **kwargs ): 
@@ -423,6 +459,7 @@ def epitaxial(vasp, structure, outdir=None, direction=[0,0,1], epiconv = 1e-4,
       result = program
       continue
     # otherwise, it should yield a Program tuple to execute.
+    program.start(comm)
     program.wait()
     result = vasp.Extract(outdir)
 
@@ -434,7 +471,7 @@ epitaxial.__doc__\
                               iter_epitaxial.__doc__.find(':return')]\
                              .replace('generator', 'method').replace('\n      ', '\n')\
                  + "\n:return: An extraction object pointing to the final static calculation.\n"\
-                 + "\n.. seealso:: `iter_epitaxial`\n\n"
+                 + "\n.. seealso:: :py:func:`iter_epitaxial`\n\n"
 
 Epitaxial = makeclass( 'Epitaxial', Vasp, iter_epitaxial, epitaxial, module='lada.vasp.relax',
                        doc = 'Functional form of the :py:class:`lada.vasp.relax.epitaxial` method.' )
