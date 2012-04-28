@@ -8,7 +8,7 @@ def placement(communicator=None):
   """
   if communicator is None: return ""
   if len(getattr(communicator, 'machines', {})) == 0: return ""
-  return "-machinefile {0}".format(communicator.nodefile)
+  return "-machinefile {0}".format(communicator.nodefile())
 
 def modify_global_comm(communicator):
   """ Modifies global communicator so placement can be done correctly. 

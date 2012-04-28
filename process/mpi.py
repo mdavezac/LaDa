@@ -116,14 +116,14 @@ class Communicator(dict):
         be attached to a communicator, this makes sense.
     """
     from tempfile import NamedTemporaryFile
-    from misc import RelativePath
+    from ..misc import RelativePath
 
     if self._nodefile is not None:
       raise NodeFileExists("Please call cleanup first.")
     if self['n'] == 0: raise ProcessNumberError("No processes in this communicator.")
 
-    with open(dir=RelativePath(dir).path, delete=False, prefix='lada_comm') as file:
-      for machine, slots in comm['machines'].iteritems():
+    with NamedTemporaryFile(dir=RelativePath(dir).path, delete=False, prefix='lada_comm') as file:
+      for machine, slots in self.machines.iteritems():
         if slots == 0: continue
         file.write('{0} slots={1}\n'.format(machine, slots))
 
@@ -150,9 +150,9 @@ class Communicator(dict):
       self['n'] = 0
     # remove nodefile, if it exists.
     nodefile, self._nodefile = self._nodefile, None
-    if nodefile is not None and exists(nodefile):
-      try: remove(nodefile)
-      except: pass
+  # if nodefile is not None and exists(nodefile):
+  #   try: remove(nodefile)
+  #   except: pass
 
   def __getstate__(self):
     """ Pickles a communicator. 
@@ -169,8 +169,7 @@ class Communicator(dict):
     self.machines, self._nodefile = value[1:]
     self.parent = None
 
-
-def create_global_comm(nprocs):
+def create_global_comm(nprocs, dir):
   """ Figures out global communicator through external mpi call. """
   from sys import executable
   from tempfile import NamedTemporaryFile
@@ -179,6 +178,7 @@ def create_global_comm(nprocs):
   from os.path import exists
   from os import remove
   from .. import placement, mpirun_exe, modify_global_comm
+  from ..misc import Changedir
   import lada
   
   if nprocs <= 0: raise ProcessNumberError(nprocs)
@@ -191,14 +191,14 @@ def create_global_comm(nprocs):
           '  world.barrier()\n'                            
   cmdline = mpirun_exe.format( placement=placement(), program=executable,
                                **Communicator(n=nprocs) )
+  with Changedir(dir) as pwd: pass
   try: 
-    with NamedTemporaryFile(delete=False) as file:
+    with NamedTemporaryFile(delete=False, dir=dir) as file:
       file.write(stdin)
       filename = file.name
 
-    with open(filename, 'r') as file: 
-      process = Popen(split(cmdline) + [filename], stdout=PIPE, stdin=file, stderr=PIPE)
-      stdout, stderr = process.communicate()
+    process = Popen(split(cmdline) + [filename], stdout=PIPE, stderr=PIPE)
+    stdout, stderr = process.communicate()
   finally:
     if exists(filename):
       try: remove(filename)
