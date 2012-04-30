@@ -5,8 +5,6 @@ class Process(object):
   __metaclass__ = ABCMeta
   def __init__(self, maxtrials=1, **kwargs):
     """ Initializes a process. """
-    from os.path import join
-    from .mpi import Communicator
     super(Process, self).__init__()
 
     self.params = kwargs
@@ -44,11 +42,11 @@ class Process(object):
   @abstractmethod
   def start(self, comm):
     """ Starts current job. """
-    from .mpi import ProcessNumberError, Communicator
+    from .mpi import MPISizeError, Communicator
     if self.done: return True
     self.started = True
     if comm is not None:
-      if comm['n'] == 0: raise ProcessNumberError('Empty communicator passed to process.')
+      if comm['n'] == 0: raise MPISizeError('Empty communicator passed to process.')
       self._comm = comm if hasattr(comm, 'machines') else Communicator(**comm) 
     return False
 
@@ -83,7 +81,6 @@ class Process(object):
   @abstractmethod
   def wait(self):
     """ Waits for process to end, then cleanup. """
-    from lada.error import internal
     from ..error import internal
     if not self.started: raise internal("Process was never started.")
     if self.nbrunning_processes == 0: return True

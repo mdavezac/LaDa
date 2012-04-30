@@ -1,36 +1,18 @@
-from .process import Process
-class JobFolderProcess(Process):
+from .jobfolder import JobFolderProcess
+class PoolProcess(JobFolderProcess):
   """ Executes folder in child processes.
   
       Expects a jobfolder on input. Executable job-folders are launched in
-      parallel, with up to :py:attr:`~JobFolderProcess.nbpools` running
+      parallel, with up to :py:attr:`~PoolProcess.nbpools` running
       instances. Each instance is allocated an equal number of machines.
   """
-  def __init__(self, jobfolder, outdir, maxtrials=1, nbpools=1, **kwargs):
+  def __init__(self, jobfolder, outdir, maxtrials=1, processalloc=None, **kwargs):
     """ Initializes a process. """
-    from ..misc import RelativePath
-    super(JobFolderProcess, self).__init__(maxtrials, **kwargs)
+    super(PoolProcess, self).__init__(jobfolder, outdir, maxtrials, **kwargs)
+    del self.nbpools # not needed here.
 
-    self.jobfolder = jobfolder
-    """ Job-folder to execute. """
-    self.outdir = RelativePath(outdir).path
-    """ Execution directory of the folder. """
-    self.process = []
-    """ List of currently running processes. 
-    
-        Each item consists of an index into the job-folder,
-        an instance derived from :py:class:`~lada.process.process.Process`,
-        e.g. :py:class:`~lada.process.call.CallProcess`, and a communicator
-        used by that process.
-    """
-    self.nbpools = nbpools
+    self.processalloc = processalloc
     """ How many jobs to launch simultaneously. """
-    self._finished = set()
-    """ Set of finished runs. """
-    self._torun = set(self.jobfolder.keys())
-    """ List of jobs to run. """
-    self.errors = {}
-    """ Map between name of failed jobs and exception. """
 
   @property
   def nbjobsleft(self): 
@@ -41,7 +23,7 @@ class JobFolderProcess(Process):
     """ Polls current job. """
     from . import Fail
 
-    if super(JobFolderProcess, self).poll(): return True
+    if super(PoolProcess, self).poll(): return True
 
     # weed out successfull and failed jobs.
     finished = []
@@ -85,14 +67,13 @@ class JobFolderProcess(Process):
     if self._comm['n'] == 0: return
 
     # split processes into local comms. Make sure we don't oversuscribe.
-    local_comms = self._comm.split(min(self._comm['n'], self.nbpools - len(self.process)))
+    jobs = self._getjobs()
     try: 
       # Loop until all requisite number of processes is created, 
       # or until run out of jobs, or until run out of comms. 
-      while len(self.process) < self.nbpools \
-            and len(self._torun) > 0         \
-            and len(local_comms) > 0:
-        name = self._torun.pop()
+      for name in jobs:
+        self._torun.pop(self._torun.index(name))
+        nprocs = self._alloc.pop(name)
         # checks folder is still valid.
         if name not in self.jobfolder:
           raise IndexError("Job-folder {0} no longuer exists.".format(name))
@@ -110,12 +91,10 @@ class JobFolderProcess(Process):
           process = CallProcess(self.functional, join(self.outdir, name), **params)
         # appends process and starts it.
         self.process.append((name, process))
-        process.start(local_comms.pop())
+        process.start(self._comm.acquire(nprocs))
     except:
       self.terminate()
       raise
-    finally:
-      for comm in local_comms: comm.cleanup()
 
   def kill(self):
     """ Kills all currently running processes. """
@@ -145,7 +124,7 @@ class JobFolderProcess(Process):
   def wait(self, sleep=0.5):
     """ Waits for all job-folders to execute and finish. """
     from time import sleep as time_sleep
-    if super(JobFolderProcess, self).wait(): return True
+    if super(PoolProcess, self).wait(): return True
     while not self.poll(): 
       if sleep > 0: time_sleep(sleep)
     return False
@@ -159,9 +138,83 @@ class JobFolderProcess(Process):
       if hasattr(self, '_comm'): 
         try: self._comm.cleanup()
         finally: del self._comm
+
+  def _getjobs(self):
+    """ List of jobs to run. """
+    from operator import itemgetter
+    N = self._comm['N']
+
+    # creates list of possible jobs.
+    availables = sorted( [(key, u) for key, u in self._alloc.iteritems() if u <= N],
+                         key=itemgetter(1) )
+
+    # hecks first if any jobs fits exactly the available number of nodes.
+    if availables[-1][1] == N: return [availables[-1][1]]
+
+    # creates a map of bins: 
+    bins = {}
+    for key, u in availables: 
+      if u not in bins: bins[u] = 1
+      else: bins[u] += 1
+
+    def get(n, bins, xvec):
+      """ Loops over possible combinations. """
+      from random import choice
+      key = choice(list(bins.keys()))
+      for u in xrange(min(bins[key], n // key), -1, -1):
+        newbins = bins.copy()
+        del newbins[key]
+        newn = n - u * key
+        if newn == 0:
+          yield xvec + [(key, u)], True
+          break
+        for key in list(newbins.keys()):
+          if newbins[key] > newn: del newbins[key]
+        if len(newbins) == 0:
+          yield xvec + [(key, u)], False
+          continue
+        for othervec, perfect in get(newn, newbins, xvec + [(key, u)]):
+          yield othervec, perfect
+          if perfect: return
+
+    xvec = []
+    nprocs, njobs = 0, 0
+    for u, perfect in get(N, bins, []):
+      if perfect: xvec = u; break
+      p, j = sum(a*b for a, b in u), sum(a for a, b in u)
+      if p > nprocs or (p == nprocs and j < njobs):
+        xvec, nprocs, njobs = list(u), p, j
+
+    # now we have a vector with the right number of jobs, but not what those
+    # jobs are.
+    results = []
+    for key, value in xvec:
+      withkeyprocs = [name for name, n in availables if n == key]
+      results.extend(withkeyprocs[:value])
+    return results
+    
    
   def start(self, comm):
     """ Start executing job-folders. """
-    if super(JobFolderProcess, self).start(comm): return True
+    from .process import Process
+    from .mpi import MPISizeError
+    if isinstance(self.processalloc, int): 
+      self.nbpools = comm['n'] // self.processalloc
+      return super(PoolProcess, self).start(comm)
+
+    if Process.start(self, comm): return True
+
+    # maps jobs and requested allocation
+    self._alloc = {}
+    for key, job in self.jobfolder.iteritems(): 
+      self._alloc[key] = self.mppalloc(job)
+
+    # check max job size.
+    toolarge = [key for key, u in self._alloc.iteritems() if u > comm['u']]
+    if len(toolarge):
+      raise MPISizeError( "The following jobs require too many processors:\n"\
+                                "{0}\n".format(toolarge) )
+
     self._next()
     return False
+

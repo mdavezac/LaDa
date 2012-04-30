@@ -1,6 +1,6 @@
 def test():
   """ Test MPI Communicator. """
-  from lada.process.mpi import Communicator, ProcessNumberError
+  from lada.process.mpi import Communicator, MPISizeError
 
   root = Communicator(n=32)
   for i in xrange(4): root.machines["node0{0}".format(i)] = 8
@@ -115,10 +115,10 @@ def test():
   assert all(u == 8 for u in root.machines.itervalues())
 
   try: comm.lend(33)
-  except ProcessNumberError: pass
+  except MPISizeError: pass
   else: raise Exception()
   try: comm.split(33)
-  except ProcessNumberError: pass
+  except MPISizeError: pass
   else: raise Exception()
 
 if __name__ == "__main__":

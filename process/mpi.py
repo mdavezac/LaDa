@@ -1,8 +1,8 @@
 from lada.error import IOError, ValueError
-class NodefileExist(IOError):
+class NodeFileExists(IOError):
   """ Thrown when nodefile already exists. """
   pass
-class ProcessNumberError(ValueError):
+class MPISizeError(ValueError):
   """ Thrown when too few/many processes are requested. """
   pass
 class Communicator(dict):
@@ -40,8 +40,8 @@ class Communicator(dict):
     from weakref import ref
     if self._nodefile is not None:
       raise NodeFileExists("Comm already used in other process.")
-    if nprocs > self['n']: raise ProcessNumberError((nprocs, self['n']))
-    if nprocs <= 0: raise ProcessNumberError(nprocs)
+    if nprocs > self['n']: raise MPISizeError((nprocs, self['n']))
+    if nprocs <= 0: raise MPISizeError(nprocs)
     result = self.__class__()
     result.machines = {}
     result.parent = ref(self)
@@ -73,7 +73,7 @@ class Communicator(dict):
       raise NodeFileExists("Comm already used in other process.")
     if n < 1: raise ValueError("Cannot split communicator in less than two. ")
     if n > self['n']:
-      raise ProcessNumberError("Cannot split {0} processes "\
+      raise MPISizeError("Cannot split {0} processes "\
                                "into {0} communicators.".format(self['n'], n))
     N = self['n']  
     return [self.lend(N // n + (1 if i < N % n else 0)) for i in xrange(n)]
@@ -120,7 +120,7 @@ class Communicator(dict):
 
     if self._nodefile is not None:
       raise NodeFileExists("Please call cleanup first.")
-    if self['n'] == 0: raise ProcessNumberError("No processes in this communicator.")
+    if self['n'] == 0: raise MPISizeError("No processes in this communicator.")
 
     with NamedTemporaryFile(dir=RelativePath(dir).path, delete=False, prefix='lada_comm') as file:
       for machine, slots in self.machines.iteritems():
@@ -150,9 +150,9 @@ class Communicator(dict):
       self['n'] = 0
     # remove nodefile, if it exists.
     nodefile, self._nodefile = self._nodefile, None
-  # if nodefile is not None and exists(nodefile):
-  #   try: remove(nodefile)
-  #   except: pass
+    if nodefile is not None and exists(nodefile):
+      try: remove(nodefile)
+      except: pass
 
   def __getstate__(self):
     """ Pickles a communicator. 
@@ -181,7 +181,7 @@ def create_global_comm(nprocs, dir):
   from ..misc import Changedir
   import lada
   
-  if nprocs <= 0: raise ProcessNumberError(nprocs)
+  if nprocs <= 0: raise MPISizeError(nprocs)
   
   # each proc prints its name to the standard output.
   stdin = 'from socket import gethostname\n'               \
