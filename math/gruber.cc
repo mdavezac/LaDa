@@ -3,7 +3,6 @@
 #include "misc.h"
 
 #include "gruber.h"
-#include <root_exceptions.h>
 
 
 namespace LaDa

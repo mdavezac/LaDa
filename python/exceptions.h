@@ -8,6 +8,7 @@
 #include <boost/exception/diagnostic_information.hpp>
 
 #include <root_exceptions.h>
+#include <math/exceptions.h>
 
 namespace LaDa
 {
@@ -61,6 +62,8 @@ namespace LaDa
     LADA_ERROR(NotImplementedError);
     LADA_ERROR(ImportError);
     LADA_ERROR(AttributeError);
+    LADA_ERROR(math);
+    LADA_ERROR(singular_matrix);
 #   undef LADA_ERROR
     inline void bp_register()
     {
@@ -82,6 +85,8 @@ namespace LaDa
         LADA_ERROR(NotImplementedError);
         LADA_ERROR(ImportError);
         LADA_ERROR(AttributeError);
+        LADA_ERROR(math);
+        LADA_ERROR(singular_matrix);
 #     undef LADA_ERROR
     }
 

@@ -51,3 +51,10 @@ class ImportError(root, ImportError):
 class IOError(root, IOError):
   """ Root for all ImportError LaDa exceptions. """
   pass
+
+class Math(root):
+  """ Root of math exceptions. """
+  pass
+class singular_matrix(Math):
+  """ Singular matrix. """
+  pass

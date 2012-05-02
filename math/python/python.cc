@@ -177,11 +177,13 @@ BOOST_PYTHON_MODULE(math)
            "Determines Gruber cell of an input cell.\n\n"
            "The Gruber cell is an optimal parameterization of a lattice, eg shortest "
            "cell-vectors and angles closest to 90 degrees.\n\n"
-           ":Parameters:"
-           "  cell : numpy 3x3 array\n  The input lattice cell-vectors.\n"
-           "  itermax : integer\n  Maximum number of iterations. Defaults to 0, ie infinite.\n"
-           "  tolerance : float\n  Tolerance parameter when comparing real numbers. "
-              "Defaults to LaDa internals.\n" );
+           ":param cell:\n  The input lattice cell-vectors.\n"
+           ":type cell:  numpy 3x3 array\n"
+           ":param int itermax:\n  Maximum number of iterations. Defaults to 0, ie infinite.\n"
+           ":param float tolerance:\n  Tolerance parameter when comparing real numbers. "
+              "Defaults to LaDa internals.\n"
+           ":returns: An equivalent standardized cell.\n"
+           ":raises: :py:class:`lada.error.singular_matrix`\n" );
 
   bp::def("check_extract", &check_matrix_from_python, "Check matrix extraction.");
   bp::def("check_frompy_to_cpp_mat", &check_from_python_mat, "Check automatic matrix extraction.");
