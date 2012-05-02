@@ -21,6 +21,40 @@
 from .extract import ExtractDFT, MassExtract
 __docformat__ = "restructuredtext en"
 
+class RelaxExtract(ExtractDFT):
+  """ Extractor class for vasp relaxations. """
+  class IntermediateMassExtract(MassExtract):
+    """ Focuses on intermediate steps. """
+    def __iter_alljobs__(self):
+      """ Goes through all directories with an OUTVAR. """
+      from glob import iglob
+      from os.path import relpath, join
+      from itertools import chain
+
+      for dir in chain( iglob(join(join(self.rootdir, 'relax_cellshape'), '*/')),
+                        iglob(join(join(self.rootdir, 'relax_ions'), '*/'))):
+        try: result = ExtractDFT(dir[:-1])
+        except: continue
+        yield join('/', relpath(dir[:-1], self.rootdir)), result
+        
+  @property
+  def details(self):
+    """ Intermediate steps. """
+    if '_details' not in self.__dict__:
+      from os.path import exists
+      if not exists(self.directory): return None
+      self.__dict__['_details'] = None
+      self._details = self.IntermediateMassExtract(self.directory)
+      """ List of intermediate calculation extractors. """
+    return self._details
+  
+  def iterfiles(self, **kwargs):
+    """ Iterates over input/output files. """
+    from itertools import chain
+    for file in chain( super(EpiExtract, self).iterfiles(**kwargs),
+                       self.details.iterfiles(**kwargs) ): yield file
+
+
 class RelaxCellShape(object):
   """ Functor for cell-shape relaxation.
   
@@ -28,6 +62,8 @@ class RelaxCellShape(object):
       This functional keeps working until convergence is achieved, and then
       creates a static calculation.
   """
+  Extract = RelaxExtract
+  """ Extractor for relaxation functional. """
   def __init__( self, vasp, relaxation="volume ionic cellshape",\
                 first_trial=None, maxiter=0, keep_steps=True ):
     """ Initializes a cell-shape relaxation. 
@@ -68,10 +104,6 @@ class RelaxCellShape(object):
     self.keep_steps = keep_steps
     """ Whether or not to keep intermediate results. """
 
-  @property
-  def Extract(self):
-    """ Extraction class. """
-    return self.vasp.Extract
 
   def generator(self, structure, outdir=None, comm=None, **kwargs ):
     """ Performs a vasp relaxation, yielding each result.
@@ -314,38 +346,6 @@ class RelaxCellShape(object):
     result += "functional.first_trial = %s\n" % (repr(self.first_trial))
     result += "functional.maxiter = %s\n\n" % (repr(self.maxiter))
     return string + "\n" + result
-
-class EpiExtract(ExtractDFT):
-  """ Epitaxial relaxation method. """
-  class IntermediateMassExtract(MassExtract):
-    """ Focusses on intermediate steps. """
-    def __iter_alljobs__(self):
-      """ Goes through all directories with an OUTVAR. """
-      from glob import iglob
-      from os.path import relpath, join, basename
-      from re import compile
-
-      regex = compile(r"(?:-|\+)?\d+\.\d+")
-      for dir in iglob(join(join(self.rootdir, 'relax_ions'), '*/')):
-        if regex.match(basename(dir[:-1])) is None: continue
-        try: result = ExtractDFT(dir[:-1])
-        except: continue
-        yield join('/', relpath(dir[:-1], self.rootdir)), result
-        
-  @property
-  def details(self):
-    """ Intermediate steps. """
-    if '_details' not in self.__dict__:
-      self.__dict__['_details'] = None
-      self._details = self.IntermediateMassExtract(self.directory)
-      """ List of intermediate calculation extractors. """
-    return self._details
-  
-  def iterfiles(self, **kwargs):
-    """ Iterates over input/output files. """
-    from itertools import chain
-    for file in chain( super(EpiExtract, self).iterfiles(**kwargs),
-                       self.details.iterfiles(**kwargs) ): yield file
 
 def epi_relaxation( vasp, structure, outdir=None, comm=None,\
                     direction=[0,0,1], epiconv = 1e-4, final=None,
@@ -604,4 +604,4 @@ def epi_relaxation( vasp, structure, outdir=None, comm=None,\
 # 	       outdir = outdir,
 # 	       restart = allcalcs[-1],
 # 	       comm = comm, **args )
-epi_relaxation.Extract = EpiExtract
+epi_relaxation.Extract = RelaxExtract
