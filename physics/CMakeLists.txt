@@ -1,6 +1,7 @@
 set(LIBPHYSICS_HEADERS physics.h)
 if(NOT noinstall_headers)
-  install(FILES ${LIBPHYSICS_HEADERS} DESTINATION include/LaDa/atomic_potentials/physics)
+  install(FILES ${LIBPHYSICS_HEADERS} DESTINATION include/LaDa/atomic_potentials/physics
+                PERMISSIONS ${PERMISSIONS})
 endif(NOT noinstall_headers)
 
 if(python_bindings)

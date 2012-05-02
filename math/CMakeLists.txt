@@ -8,7 +8,8 @@ add_library (mathlib SHARED ${LIBMATH_SOURCES} ${LIBMATH_F90} ${LIBMATH_HEADERS}
 target_link_libraries(mathlib ${tinyxml_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} 
                               ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY})
 set_target_properties(mathlib PROPERTIES OUTPUT_NAME lada_math)
-install(TARGETS mathlib DESTINATION lib64)
+install(TARGETS mathlib DESTINATION lib64
+                PERMISSIONS ${PERMISSIONS})
 
 include_directories(${tinyxml_INCLUDE_DIRS})
 if(MPI_FOUND)
@@ -19,7 +20,8 @@ if(MPI_FOUND)
 endif(MPI_FOUND)
 
 if(NOT noinstall_headers)
-  install(FILES ${LIBMATH_HEADERS} DESTINATION include/LaDa/math)
+  install(FILES ${LIBMATH_HEADERS} DESTINATION include/LaDa/math
+                PERMISSIONS ${PERMISSIONS})
 endif(NOT noinstall_headers)
 
 if(python_bindings)

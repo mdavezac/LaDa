@@ -9,10 +9,12 @@ include_directories(${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDES})
 add_library (vff SHARED ${LIBVFF_SOURCES} ${LIBVFF_HEADERS})
 set_target_properties(vff PROPERTIES OUTPUT_NAME lada_vff)
 target_link_libraries(vff crystal minimizer)
-install(TARGETS vff DESTINATION lib64)
+install(TARGETS vff DESTINATION lib64
+                PERMISSIONS ${PERMISSIONS})
 
 if(NOT noinstall_headers)
-  install(FILES ${LIBVFF_HEADERS} DESTINATION include/LaDa/vff)
+  install(FILES ${LIBVFF_HEADERS} DESTINATION include/LaDa/vff
+                PERMISSIONS ${PERMISSIONS})
 endif(NOT noinstall_headers)
 
 if (MPI_FOUND)

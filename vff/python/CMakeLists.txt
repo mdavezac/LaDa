@@ -16,5 +16,7 @@ mark_as_advanced(PYTHON_MODULE_pyvff_BUILD_SHARED)
 set_target_properties(pyvff PROPERTIES PREFIX "_")
 set_target_properties(pyvff PROPERTIES OUTPUT_NAME vff)
 
-install(TARGETS pyvff DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/vff)
-install(FILES ${PYVFF_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/vff)
+install(TARGETS pyvff DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/vff
+                PERMISSIONS ${PERMISSIONS})
+install(FILES ${PYVFF_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/vff
+                PERMISSIONS ${PERMISSIONS})

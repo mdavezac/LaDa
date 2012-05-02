@@ -29,7 +29,8 @@ if(NOT noinstall_headers)
   install(FILES ${LIBOPT_HEADERS} DESTINATION include/LaDa/opt)
 endif(NOT noinstall_headers)
 
-install(TARGETS opt DESTINATION lib64)
+install(TARGETS opt DESTINATION lib64
+                PERMISSIONS ${PERMISSIONS})
 
 if(python_bindings)
   add_subdirectory(python)

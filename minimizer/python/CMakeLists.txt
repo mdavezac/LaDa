@@ -10,5 +10,7 @@ mark_as_advanced(PYTHON_MODULE_pyminimizer_BUILD_SHARED)
 set_target_properties(pyminimizer PROPERTIES PREFIX "_")
 set_target_properties(pyminimizer PROPERTIES OUTPUT_NAME minimizer)
 
-install(TARGETS pyminimizer DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/minimizer)
-install(FILES ${PYMINIMIZER_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/minimizer)
+install(TARGETS pyminimizer DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/minimizer
+                PERMISSIONS ${PERMISSIONS})
+install(FILES ${PYMINIMIZER_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/minimizer
+                PERMISSIONS ${PERMISSIONS})

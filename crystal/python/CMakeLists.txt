@@ -18,8 +18,10 @@ mark_as_advanced(PYTHON_ENABLE_MODULE_pycrystal)
 mark_as_advanced(PYTHON_MODULE_pycrystal_BUILD_SHARED)
 set_target_properties(pycrystal PROPERTIES PREFIX "_")
 set_target_properties(pycrystal PROPERTIES OUTPUT_NAME crystal)
-install(FILES ${PYCRYSTAL_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/crystal)
-install(TARGETS pycrystal DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/crystal)
+install(FILES ${PYCRYSTAL_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/crystal
+              PERMISSIONS ${PERMISSIONS})
+install(TARGETS pycrystal DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/crystal
+              PERMISSIONS ${PERMISSIONS})
 
 if(MPI_FOUND)
   include_directories(${MPI_INCLUDE_PATH})

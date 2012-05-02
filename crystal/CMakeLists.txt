@@ -13,10 +13,12 @@ set( LIBCRYSTAL_SOURCES
 add_library (crystal SHARED ${LIBCRYSTAL_SOURCES} ${LIBCRYSTAL_HEADERS})
 set_target_properties(crystal PROPERTIES OUTPUT_NAME lada_crystal)
 target_link_libraries(crystal opt mathlib)
-install(TARGETS crystal DESTINATION lib64)
+install(TARGETS crystal DESTINATION lib64
+                PERMISSIONS ${PERMISSIONS})
 
 if(NOT noinstall_headers)
-  install(FILES ${LIBCRYSTAL_HEADERS} DESTINATION include/LaDa/crystal)
+  install(FILES ${LIBCRYSTAL_HEADERS} DESTINATION include/LaDa/crystal
+                PERMISSIONS ${PERMISSIONS})
 endif(NOT noinstall_headers)
 
 if(python_bindings)

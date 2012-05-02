@@ -18,7 +18,9 @@ add_library (atompot SHARED ${LIBATOMPOT_SOURCES} ${LIBATOM_HEADERS} ${LIBCOLLAP
 target_link_libraries(atompot crystal)
 
 if(NOT noinstall_headers)
-  install(FILES ${LIBATOMPOT_HEADERS} DESTINATION include/LaDa/atomic_potentials)
-  install(FILES ${LIBCOLLAPSE_HEADERS} DESTINATION include/LaDa/atomic_potentials/collapse)
+  install(FILES ${LIBATOMPOT_HEADERS} DESTINATION include/LaDa/atomic_potentials 
+                PERMISSIONS ${PERMISSIONS})
+  install(FILES ${LIBCOLLAPSE_HEADERS} DESTINATION include/LaDa/atomic_potentials/collapse
+                PERMISSIONS ${PERMISSIONS})
 endif(NOT noinstall_headers)
 

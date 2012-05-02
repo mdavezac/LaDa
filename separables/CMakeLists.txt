@@ -10,7 +10,8 @@ set( LIBFXSEPS_SOURCES prepare.cc )
 add_library (fxseps SHARED ${LIBFXSEPS_SOURCES} ${LIBFXSEPS_HEADERS})
 target_link_libraries(fxseps ce)
 if(NOT noinstall_headers)
-  install(FILES ${LIBFXSEPS_HEADERS} DESTINATION include/LaDa/separables)
+  install(FILES ${LIBFXSEPS_HEADERS} DESTINATION include/LaDa/separables
+                PERMISSIONS ${PERMISSIONS})
 endif(NOT noinstall_headers)
 
 if(NOT disable_executables)
@@ -35,7 +36,9 @@ if(NOT disable_executables)
   set_target_properties(seps_tetra PROPERTIES COMPILE_FLAGS "${TETRA_CXXFLAGS}")
   target_link_libraries(seps_tetra fxseps minimizer ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY})
 
-  install(TARGETS seps_cubic DESTINATION bin)
-  install(TARGETS seps_tetra DESTINATION bin)
+  install(TARGETS seps_cubic DESTINATION bin
+                PERMISSIONS ${PERMISSIONS})
+  install(TARGETS seps_tetra DESTINATION bin
+                PERMISSIONS ${PERMISSIONS})
 endif(NOT disable_executables)
 

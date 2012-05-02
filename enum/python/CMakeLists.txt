@@ -11,5 +11,7 @@ mark_as_advanced(PYTHON_MODULE_pyenum_BUILD_SHARED)
 set_target_properties(pyenum PROPERTIES PREFIX "_")
 set_target_properties(pyenum PROPERTIES OUTPUT_NAME enumeration)
 
-install(TARGETS pyenum DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/enumeration)
-install(FILES ${PYENUM_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/enumeration)
+install(TARGETS pyenum DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/enumeration
+                PERMISSIONS ${PERMISSIONS})
+install(FILES ${PYENUM_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/enumeration
+                PERMISSIONS ${PERMISSIONS})

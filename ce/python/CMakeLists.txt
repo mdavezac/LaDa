@@ -15,8 +15,10 @@ mark_as_advanced(PYTHON_MODULE_pyce_BUILD_SHARED)
 set_target_properties(pyce PROPERTIES PREFIX "_")
 set_target_properties(pyce PROPERTIES OUTPUT_NAME ce)
 
-install(FILES ${PYCE_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/ce)
-install(TARGETS pyce DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/ce)
+install(FILES ${PYCE_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/ce
+              PERMISSIONS ${PERMISSIONS})
+install(TARGETS pyce DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/ce
+                PERMISSIONS ${PERMISSIONS})
 
 set(LATTICE_TYPE "cubic")
 if(${LATTICE_TYPE} STREQUAL "cubic")
@@ -29,5 +31,6 @@ configure_file (
  "${PROJECT_BINARY_DIR}/ce/python/__init__.py"
 )
 install(FILES ${PROJECT_BINARY_DIR}/ce/python/__init__.py
-        DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/ce)
+              DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/ce
+              PERMISSIONS ${PERMISSIONS})
 

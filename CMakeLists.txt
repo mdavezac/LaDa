@@ -35,6 +35,8 @@ option(ladabase_package       "Install ladabase package for pymongo."      off)
 
 # Location where cmake first looks for cmake modules.
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
+# permission on installed files
+set(PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ GROUP_WRITE)
 
 # Location where cmake looks for libraries
 # adds environment SOFTWARE_ROOT if it exists.

@@ -21,9 +21,11 @@ endif (MINUIT2_FOUND)
 add_library (minimizer SHARED ${LIBMINIMIZER_SOURCES} ${LIBMINIMIZER_HEADERS} ${LIBMINIMIZER_F90})
 set_target_properties(minimizer PROPERTIES OUTPUT_NAME lada_minimizer)
 target_link_libraries(minimizer opt ${FORTRAN_RTLIBRARIES})
-install(TARGETS minimizer DESTINATION lib64)
+install(TARGETS minimizer DESTINATION lib64
+                PERMISSIONS ${PERMISSIONS})
 if(NOT noinstall_headers)
-  install(FILES ${LIBMINIMIZER_HEADERS} DESTINATION include/LaDa/minimizer)
+  install(FILES ${LIBMINIMIZER_HEADERS} DESTINATION include/LaDa/minimizer
+                PERMISSIONS ${PERMISSIONS})
 endif(NOT noinstall_headers)
 
 if (MPI_FOUND)

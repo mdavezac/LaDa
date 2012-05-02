@@ -10,5 +10,7 @@ mark_as_advanced(PYTHON_ENABLE_MODULE_pyopt)
 mark_as_advanced(PYTHON_MODULE_pyopt_BUILD_SHARED)
 set_target_properties(pyopt PROPERTIES PREFIX "_")
 set_target_properties(pyopt PROPERTIES OUTPUT_NAME opt)
-install(FILES ${PYOPT_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/opt)
-install(TARGETS pyopt DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/opt)
+install(FILES ${PYOPT_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/opt
+                PERMISSIONS ${PERMISSIONS})
+install(TARGETS pyopt DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/opt
+                PERMISSIONS ${PERMISSIONS})

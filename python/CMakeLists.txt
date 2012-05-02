@@ -3,7 +3,8 @@ set(PYLADA_HEADERS debug.hpp misc.hpp numpy_types.h std_map.hpp
 set(PYLADA_PY mpi.py record.py)
 
 if(NOT noinstall_headers)
-  install(FILES ${PYLADA_HEADERS} DESTINATION include/LaDa/python)
+  install(FILES ${PYLADA_HEADERS} DESTINATION include/LaDa/python
+                PERMISSIONS ${PERMISSIONS})
 endif(NOT noinstall_headers)
 
 set(do_use_mpi "False")
@@ -60,6 +61,8 @@ configure_file (
  "${PROJECT_SOURCE_DIR}/python/__init__.in.py"
  "${PROJECT_BINARY_DIR}/python/__init__.py"
 )
-install(FILES ${PROJECT_BINARY_DIR}/python/__init__.py DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada)
-install(FILES ${PYLADA_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada)
+install(FILES ${PROJECT_BINARY_DIR}/python/__init__.py DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada
+                PERMISSIONS ${PERMISSIONS})
+install(FILES ${PYLADA_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada
+                PERMISSIONS ${PERMISSIONS})
 

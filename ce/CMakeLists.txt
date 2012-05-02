@@ -12,7 +12,7 @@ set( LIBCE_SOURCES
 add_library (ce SHARED ${LIBCE_SOURCES} ${LIBCE_HEADERS})
 set_target_properties(ce PROPERTIES OUTPUT_NAME lada_ce)
 target_link_libraries(ce crystal)
-install(TARGETS ce DESTINATION lib64)
+install(TARGETS ce DESTINATION lib64 PERMISSIONS ${PERMISSIONS})
 if (MPI_FOUND)
   include_directories(${MPI_INCLUDE_PATH})
   target_link_libraries(ce ${MPI_LIBRARIES} ${Boost_MPI_LIBRARY})
@@ -53,14 +53,17 @@ if(NOT disable_executables)
   set_target_properties(regularized_tetra PROPERTIES COMPILE_FLAGS "${TETRA_CXXFLAGS}")
   target_link_libraries(regularized_tetra ce minimizer ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY})
 
-  install(TARGETS cubic DESTINATION bin)
-  install(TARGETS tetra DESTINATION bin)
-  install(TARGETS regularized_cubic DESTINATION bin)
-  install(TARGETS regularized_tetra DESTINATION bin)
+  install(TARGETS cubic DESTINATION bin PERMISSIONS ${PERMISSIONS})
+  install(TARGETS tetra DESTINATION bin PERMISSIONS ${PERMISSIONS})
+  install(TARGETS regularized_cubic DESTINATION bin
+                  PERMISSIONS ${PERMISSIONS})
+  install(TARGETS regularized_tetra DESTINATION bin
+                  PERMISSIONS ${PERMISSIONS})
 endif(NOT disable_executables)
 
 if(NOT noinstall_headers)
-  install(FILES ${LIBCE_HEADERS} DESTINATION include/LaDa/ce)
+  install(FILES ${LIBCE_HEADERS} DESTINATION include/LaDa/ce
+                PERMISSIONS ${PERMISSIONS})
 endif(NOT noinstall_headers)
 
 if(python_bindings)
