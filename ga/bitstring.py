@@ -196,7 +196,7 @@ class GrowthMutation(object):
     """ Maximum bistring size. """ 
     self.nmin = nmin
     """ Minimum bistring size. """ 
-    assert self.nmin < self.nmax or self.nmin == -1 or self.nmax == -1,\
+    assert self.nmin <= self.nmax or self.nmin == -1 or self.nmax == -1,\
            ValueError("nmin and nmax are incorrect.")
     self.step = step
     """ By how much to grow or shrink. """
