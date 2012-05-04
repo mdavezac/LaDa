@@ -243,7 +243,7 @@ class RelaxCellShape(object):
                  comm=comm,
                  relaxation = "ionic",
                  restart = output,
-                 **kwargs
+                 **params
                )
       structure = output.structure
       structure.__dict__.update(str_dict)
