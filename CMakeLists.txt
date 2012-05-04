@@ -165,6 +165,7 @@ add_subdirectory(config)
 add_subdirectory(functools)
 add_subdirectory(misc)
 add_subdirectory(process)
+add_subdirectory(ga)
 
 # checks for package dependencies.
 if(ladabase_package)

@@ -1,5 +1,5 @@
 """ Methods to write structures from file. """
-def poscar(structure, file=None, vasp5=None, substitute=None):
+def poscar(structure, file='POSCAR', vasp5=None, substitute=None):
   """ Writes a poscar to file. 
 
       :param structure:
@@ -8,8 +8,8 @@ def poscar(structure, file=None, vasp5=None, substitute=None):
           :py:class:`Structure`
       :param file:
           Object with a ''write'' method. If a string, then a file object is
-          opened with that filename. The file is overwritten. If None, then the
-          filename is 'POSCAR'.
+          opened with that filename. The file is overwritten. If None, then
+          returns a string.
       :type file: str, stream, or None.
       :param bool vasp5:
           If true, include species in poscar, vasp-5 style.  Otherwise, looks
@@ -48,29 +48,54 @@ def poscar(structure, file=None, vasp5=None, substitute=None):
     import lada 
     vasp5 = not getattr(lada, 'is_vasp_4', True)
 
-  file.write(getattr(structure, 'name', '') + "\n")
-  file.write(str(structure.scale)+ "\n")
-  for i in range(3): file.write("  {0[0]} {0[1]} {0[2]}\n".format(structure.cell[:,i]))
+  string = "{0}\n{1}\n".format(getattr(structure, 'name', ''), structure.scale)
+  for i in range(3):
+    string += "  {0[0]} {0[1]} {0[2]}\n".format(structure.cell[:,i])
   species = specieset(structure)
   if vasp5: 
     if substitute is None: substitute = {}
-    for s in species: file.write(" "+ substitute.get(s,s) +" ")
-    file.write("\n")
+    for s in species: string += " {0} ".format(substitute.get(s,s))
+    string += "\n"
   for s in species: 
-    file.write("{0} ".format(len([0 for atom in structure if atom.type == s])))
+    string += "{0} ".format(len([0 for atom in structure if atom.type == s]))
   inv_cell = matrix(structure.cell).I
-
-  selective_dynamics = any([len(getattr(atom, 'freeze', '')) != 0 for atom in structure])
-  if selective_dynamics: file.write("\nselective dynamics\ndirect\n")
-  else: file.write('\ndirect\n')
+  selective_dynamics =\
+      any([len(getattr(atom, 'freeze', '')) != 0 for atom in structure])
+  if selective_dynamics: string += "\nselective dynamics\ndirect\n"
+  else: string += '\ndirect\n'
   for s in species: 
     for atom in structure:
       if atom.type != s: continue
-      file.write("  {0[0]} {0[1]} {0[2]}".format(dot(inv_cell, atom.pos).tolist()[0]))
+      string += "  {0[0]} {0[1]} {0[2]}"\
+                .format(dot(inv_cell, atom.pos).tolist()[0])
       freeze = getattr(atom, 'freeze', '')
       if selective_dynamics:
-        file.write( "  {1} {2} {3}\n"\
+        string += "  {1} {2} {3}\n"\
                     .format( 'T' if 'x' in freeze  != 0 else 'F', 
                              'T' if 'y' in freeze  != 0 else 'F', 
-                             'T' if 'z' in freeze  != 0 else 'F' ) )
-      else: file.write('\n')
+                             'T' if 'z' in freeze  != 0 else 'F' ) 
+      else: string += '\n'
+  if file == None: return string
+  elif isinstance(file, str): 
+    from ..misc import RelativePath
+    with open(RelativePath(file).path, 'w') as file: file.write(string)
+  else: file.write(string)
+
+def castep(structure, file=None):
+  """ Writes castep input. """
+  string = "%BLOCK LATTICE_CART\n" \
+           "  {0[0]} {0[1]} {0[2]}\n" \
+           "  {1[0]} {1[1]} {1[2]}\n" \
+           "  {2[0]} {2[1]} {2[2]}\n" \
+           "%ENDBLOCK LATTICE_CART\n\n"\
+           "%BLOCK POSITIONS_ABS\n".format(*(structure.cell.T*structure.scale))
+  for atom in structure:
+    string += "  {0} {1[0]} {1[1]} {1[2]}\n"\
+              .format(atom.type, atom.pos * structure.scale)
+  string += "%ENDBLOCK POSITION_ABS\n"
+  if file == None: return string
+  elif isinstance(file, str): 
+    from ..misc import RelativePath
+    with open(RelativePath(file).path, 'w') as file: file.write(string)
+  else: file.write(string)
+  

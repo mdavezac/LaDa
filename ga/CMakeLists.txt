@@ -1,17 +1,17 @@
-set(PYGA_PY darwin.py random_search.py  standard.py bitstring.py functional.py extract.py history.py)
+set(PYGA_PY xgsgo.py)
 
-set(which_gapackages "'bitstring', 'standard', 'darwin', 'random_search'")
+# set(which_gapackages "'bitstring', 'standard', 'darwin', 'random_search'")
 
-if(ce_functional)
-  add_subdirectory(ce)
-  set(which_gapackages "${which_gapackages}, 'ce'")
-endif(ce_functional)
+# if(ce_functional)
+#   add_subdirectory(ce)
+#   set(which_gapackages "${which_gapackages}, 'ce'")
+# endif(ce_functional)
 
 
-if(escan_functional)
-  add_subdirectory(escan)
-  set(which_gapackages "${which_gapackages}, 'escan'")
-endif(escan_functional)
+# if(escan_functional)
+#   add_subdirectory(escan)
+#   set(which_gapackages "${which_gapackages}, 'escan'")
+# endif(escan_functional)
 
 
 configure_file (
