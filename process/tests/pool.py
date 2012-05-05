@@ -149,11 +149,49 @@ def test(executable):
     try: rmtree(dir)
     except: pass
 
+def test_large():
+  """ Test speed of job-scheduling for largers, more numerous jobs. """
+  from random import random
+  from lada.jobfolder.jobfolder import JobFolder
+  from lada.process.pool import PoolProcess
+  from lada.process.dummy import DummyProcess, DummyFunctional
+  from lada import default_comm
+  root = JobFolder()
+  for n in xrange(100):
+    job = root / "a{0}".format(n)
+    job.functional = DummyFunctional(chance=random()*0.5+0.15)
+
+  comm = default_comm.copy()
+  comm['n'] = 256
+
+  def processalloc_test1(job): 
+    """ returns a random number between 1 and 4 included. """
+    from random import randint
+    return randint(1, 64)
+
+  program = PoolProcess(root, processalloc=processalloc_test1, outdir="whatever")
+  program.start(comm)
+  while not program.poll():
+    # print 256 - program._comm['n'], len(program.process)
+    continue
+
+  def processalloc_test1(job): 
+    """ returns a random number between 1 and 4 included. """
+    from random import choice
+    return choice([31, 37, 43])
+  program = PoolProcess(root, processalloc=processalloc_test1, outdir="whatever")
+  program.start(comm)
+  while not program.poll():
+    # print 256 - program._comm['n'], len(program.process)
+    continue
+    
 if __name__ == "__main__":
   from sys import argv, path
   from os.path import abspath
   if len(argv) < 1: raise ValueError("test need to be passed location of pifunc.")
   if len(argv) > 2: path.extend(argv[2:])
+
+  test_large()
 
   d = {'a1': 1, 'a0': 3, 'a3': 3, 'a2': 3, 'a5': 3, 'a4': 2, 'a7': 2, 'a6': 1}
   test_failures(d)
