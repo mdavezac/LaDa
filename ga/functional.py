@@ -69,19 +69,22 @@ class Functional(object):
     """ 
     from ..process import Fail
     try: self.process.wait()
-    except Fail:
-      offmap = {}
-      for i, indiv in enumerate(self.offspring): offmap[str(indiv.uuid)] = i
-      uuids = set()
-      for name in self.process.errors.iterkeys():
-        self.errors.add(name)
-        uuid = name.split('/')[-1]
-        uuids.add( self.offspring[offmap[uuid]].uuid )
-        del self._jobfolder.root[name] 
-        print "Calculation {0} failed.".format(name)
-      self.process.errors = {}
-      self.offspring = [u for u in self.offspring if u.uuid not in uuids]
+    except Fail: self._process_errors() 
     return True
+  
+  def _process_errors():
+     """ Takes care of errors. """
+     offmap = {}
+     for i, indiv in enumerate(self.offspring): offmap[str(indiv.uuid)] = i
+     uuids = set()
+     for name in self.process.errors.iterkeys():
+       self.errors.add(name)
+       uuid = name.split('/')[-1]
+       uuids.add( self.offspring[offmap[uuid]].uuid )
+       del self._jobfolder.root[name] 
+       print "Calculation {0} failed.".format(name)
+     self.process.errors = {}
+     self.offspring = [u for u in self.offspring if u.uuid not in uuids]
 
   @abstractmethod
   def __init__(self, popsize=100, rate=0.1):

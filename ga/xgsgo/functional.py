@@ -4,11 +4,15 @@ class Functional(GAFunctional):
   def __init__(self, functional, species, natoms=None, anions=None,
                cns_rate=1e0, mix_atoms_rate=1e0, mix_poscar_rate=1e0,
                mutation_rate=0.5, **kwargs): 
+    from .operators import cut_and_splice, mix_atoms, mix_poscars,\
+                           jiggle_structure
     super(XGSGO, self).__init__(directory)
-    self.matingops.add( cut_and_splice, rate=cns_rate )
-    self.matingops.add( mix_atoms, rate=mix_atoms_rate )
-    self.matingops.add( mix_poscars, rate=mix_poscar_rate )
-    self.matingops.add( jiggle_structure, rate=mutation_rate )
+    if cns_rate > 0: self.matingops.add(cut_and_splice, rate=cns_rate)
+    if mix_atom_rate > 0: self.matingops.add(mix_atoms, rate=mix_atoms_rate)
+    if mix_poscar_rate > 0:
+      self.matingops.add(mix_poscars, rate=mix_poscar_rate)
+    if mutation_rate > 0:
+      self.matingops.add(jiggle_structure, rate=mutation_rate)
 
     self.functional = functional
     """ Functional with which to get total energy. """
@@ -79,3 +83,28 @@ class Functional(GAFunctional):
       self._process = PoolProcess(self.jobfolder, self.calcdir, nbprocs)
     return self._process
 
+  def __call__(self, *args, **kwargs):
+    """ Performs GA. """
+    self.nbprocs = kwargs['comm']['n']
+    return super(Functional, self).__call__(*args, **kwargs)
+
+  def go_to_next_iteration(self):
+    """ Returns True when going to next generation.
+
+        Not all calculations need be finished.
+        It is the job of this function to catch errors in process execution and
+        correct them.
+    """ 
+    from time import sleep
+    from ..process import Fail
+    
+    fewjobsleft = max(len(self.offspring) * 0.1, 0)
+    lotsofcpusidle = min(self.process._alloc.values())
+    while self.process.nbjobsleft > fewjobsleft \
+          and self.process._comm['n'] < lotsofcpusidle:
+      try:
+        if self.process.poll(): break
+      except Fail: break
+      else: sleep(5)
+    self._process_errors()
+    return True

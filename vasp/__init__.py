@@ -38,10 +38,10 @@ def read_input(filepath="input.py", namespace=None):
   from . import specie
   from .functional import Vasp
   from .extract import Extract
-  from . import relax
+  from relax import Epitaxial, Relax
 
   # names we need to create input.
-  input_dict = {"Vasp": Vasp, "U": specie.U, "nlep": specie.nlep, 'Extract': Extract}
-  input_dict.update(relax.__dict__)
+  input_dict = {"Vasp": Vasp, "U": specie.U, "nlep": specie.nlep, 'Extract': Extract, 
+                'Relax': Relax, 'Epitaxial': Epitaxial }
   if namespace is not None: input_dict.update(namespace)
   return read_input(filepath, input_dict)
