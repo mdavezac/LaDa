@@ -145,3 +145,41 @@ class PoolProcess(JobFolderProcess):
     self._next()
     return False
 
+  def update(self, jobfolder, deleteold=False):
+    """ Updates list of jobs.
+    
+        Adds jobfolders which are not in ``self.jobfolder`` but in the input.
+        Deletes those which in ``self.jobfolder`` but not in the input.
+        Does nothing if job is currently running.
+        Finished jobs are not updated.
+        If ``deleteold`` is True, then removed finished jobs from job-folder.
+
+        Processes jobfolder from root, even if passed a child folder.
+    """
+    running = set([n for n in self.process])
+    for name, value in jobfolder.root.iteritems():
+      if name in running: continue
+      elif name not in self.jobfolder.root:
+        newjob = self.jobfolder.root / name
+        newjob.functional = value.functional
+        newjob.params.update(value.params)
+        for key, value in value.__dict__.iteritems():
+          if key in ['children', 'params', '_functional', 'parent']: continue
+          setattr(self, key, value)
+        self._torun.add(name)
+        self._alloc[name] = self.processalloc(self.jobfolder.root[name])
+      elif name not in self._finished:
+        self.jobfolder.root[name] = value
+        self._alloc[name] = self.processalloc(self.jobfolder.root[name])
+    for name in self.jobfolder.root.iterkeys():
+      if name in self._finished and deleteold:
+        del self.jobfolder.root[name]
+        self._alloc.pop(name)
+      elif name not in jobfolder.root:
+        if name in running: continue
+        del self.jobfolder.root[name]
+        if name in self._torun: self._torun.remove(name)
+        self._alloc.pop(name, None)
+
+
+

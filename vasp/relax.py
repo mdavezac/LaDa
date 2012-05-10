@@ -234,7 +234,7 @@ def iter_relax( vasp, structure, outdir=None, first_trial=None,
   if output.success and (not keepsteps):
     rmtree(join(outdir, "cellshape"))
     rmtree(join(outdir, "ions"))
-iter_relax.Extract = Extract
+iter_relax.Extract = RelaxExtract
 """ Extraction method for relaxation runs. """
 
 def relax( vasp, structure, outdir=None, first_trial=None,
@@ -445,7 +445,7 @@ def iter_epitaxial(vasp, structure, outdir=None, direction=[0,0,1], epiconv = 1e
                    .format(structure, repr(structure).replace('\n', '\n            ')),
                    file.read() )
   with open(filename, 'w') as file: file.write(string)
-iter_epitaxial.Extract = Extract
+iter_epitaxial.Extract = RelaxExtract
 """ Extraction method for epitaxial relaxation runs. """
 
 def epitaxial(vasp, structure, outdir=None, direction=[0,0,1], epiconv = 1e-4, 

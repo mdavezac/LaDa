@@ -1,387 +1,472 @@
 """ GA as a functional, for use with ladajobs. """
 __docformat__ = "restructuredtext en"
+__all__ = ['Darwin', 'maximize', 'minimize']
+from abc import ABCMeta, abstractmethod
 from .extract import Extract as GAExtract
 
-__all__ = ['Darwin', 'maximize', 'minimize']
-def maximize(indivA, indivB, tolerance=1e-12):
-  """ Compares two individuals. 
-
-      This method can be used to *maximize* the objective function during the GA
-      evolution.
-
-      :Parameters:
-        indivA 
-          Individual with a scalar fitness attribute.
-        indivB 
-          Individual with a scalar fitness attribute.
-
-      :return:
-        - 1 if ``indivA.fitness < indivB.fitness``
-        - 0 if ``indivA.fitness == indivB.fitness``
-        - -1 if ``indivA.fitness > indivB.fitness``
-  """
-  from math import fabs
-  a, b = indivA.fitness, indivB.fitness
-  if hasattr(b, 'rescale') and hasattr(a, 'magnitude'):
-    a, b = a.magnitude, b.rescale(a.units).magnitude
-  if fabs(a-b) <  tolerance: return 0
-  return 1 if float(a-b) < 0 else -1
-
-def minimize(indivA, indivB, tolerance=1e-12):
-  """ Compares two individuals. 
-
-      This method can be used to *minimize* the objective function during the GA
-      evolution.
-
-      :Parameters:
-        indivA 
-          Individual with a scalar fitness attribute.
-        indivB 
-          Individual with a scalar fitness attribute.
-
-      :return:
-        - 1 if ``indivA.fitness > indivB.fitness``
-        - 0 if ``indivA.fitness == indivB.fitness``
-        - -1 if ``indivA.fitness < indivB.fitness``
-  """
-  from math import fabs
-  a, b = indivA.fitness, indivB.fitness
-  if hasattr(b, 'rescale') and hasattr(a, 'magnitude'):
-    a, b = a.magnitude, b.rescale(a.units).magnitude
-  if fabs(a-b) <  tolerance: return 0
-  return -1 if float(a-b) < 0 else 1
-
-class Darwin(object): 
-  """ GA functional for optimizations of epitaxial structures. """
+class Functional(object):
+  """ Genetic Algorithm capable of stop-and-go. """
+  __metaclass__ = ABCMeta
+  SHELVECAR = 'SHELVECAR'
+  """ Name of the file where the history of a GA run is saved. """
+  CALCDIR  = 'calcs'
+  """ Name of subdirectory where calculations are stored. """
   Extract = GAExtract
-  """ Holds all GA parameters """
-  ordinals = GAExtract.ordinals
-  """ Names of each historical age in the GA. """
-  OUTCAR = GAExtract.OUTCAR
-  """ Output filename. """
-  ERRCAR = GAExtract.ERRCAR
-  """ Error filename. """
-  FUNCCAR = GAExtract.FUNCCAR
-  """ Functional filename. """
+  """ Extraction object for GA functional. """
 
-  def __init__(self, evaluator, **kwargs): 
-    """ Initializes a GA functional. 
-         
-        :Parameters:
-          evaluator : `lada.ga.escan.elemental.Bandgap`
-            Functional which uses vff and escan for evaluating physical properties.
-        :Kwarg rate: 
-          Offspring rate. Defaults to ``max(0.1, 1/popsize)``.
-        :Kwarg popsize: 
-          Population size. Defaults to 100.
-        :Kwarg maxgen: 
-          Maximum number of generations. Defaults to 0.
-        :Kwarg current_gen:
-          Current generation. Defaults to 0 or to whatever is in the restart.
-        :Kwarg pools:
-          Number of pools over which to perform calculations. 
-        :Kwarg rootworkdir:
-          Root of the working directory where actual calculations are carried
-          out. Defaults to $SCRACTH
-        :Kwarg comparison:
-          Function to compare the fitness of two individual. 
-        :Kwarg history:
-          If true, will use history in taboo.
-        :KWarg histlimit:
-          Number of invididuals kept in history. Limits the size of history to
-          allow for faster processing.
+  @abstractmethod
+  def random_individual(self):
+    """ Returns new random individual. """
+    pass
+  @abstractmethod
+  def jobinator(self, job, indiv):
+    """ Fills jobdictionary item for computing individual.
+    
+        :param job: 
+          :py:class:`~lada.jobfolder.jobfolder.JobFolder` instance which should be
+          filled with the right parameters for computing the intermediate
+          fitness of an individual.
+        :param indiv:
+          The individual for which to perform a calculation.
     """
-    from .history import History
-    super(Darwin, self).__init__()
-
-    self.evaluator = evaluator
-    """ Evaluator object taking an individual and computing its fitness. """
-
-    # other parameters
-    self.popsize = kwargs.pop("popsize", 100)
-    self.rate    = kwargs.pop("rate", max(1e0/(float(self.popsize)-0.5), 0.1))
-    self.max_gen = kwargs.pop("max_generations", kwargs.pop("max_gen", 0))
-
-    self.current_gen = kwargs.pop("current_gen", 0)
-    """ Current generation. """
-
-    self.population = []
-    """ Current population """
-    self.offspring = []
-    """ Current offspring """
-
-    self.age = None
-    """ Current historical age (e.g. number of restarts). """
-
-    self.pools = kwargs.pop("pools", 1)
-    """ Number of pools of processors over which to perform calculations. """
-    self.rootworkdir = kwargs.pop("rootworkdir", "$SCRACTH")
-    """ Root directory where calculations are performed. """
-    self.comparison = kwargs.pop("comparison", maximize)
-    """ Comparison operator between individuals. """
-    self.history = History() if kwargs.pop("history", False) else None 
-    """ Holds list of visited candidates, if any. """
-    if "histlimit" in kwargs: self.history.limit = kwargs.pop("histlimit")
-
-  @property
-  def rootworkdir(self):
-    """ Root of the working directory where actual calculations are carried out. """
-    return self.evaluator._outdir.envvar
-
-  @rootworkdir.setter
-  def rootworkdir(self, value):
-    self.evaluator._outdir.envvar = value
+    pass
+  @abstractmethod
+  def objective(self, extract, indiv):
+    """ Returns fitness of an individual.
     
-  @property
-  def checkpoints(self):
-    """ Checkpoints functions.
-    
-        Defined as a property to avoid hassle with __getstate__
+        :param extract: 
+          An extraction object which comes as a result of the computation
+          created by :py:meth:`~Functional.jobinator`. It should be used
+          to actually evaluate the fitness of the individual.
+        :param indiv:
+          Individual evaluate.
     """
-    from .standard import print_offspring, average_fitness, best, print_population
-    return [ print_offspring, 
-             print_population,
-             average_fitness,
-             best,
-             self.__class__.print_nb_evals,
-             self.__class__.save,
-             self.__class__.timing,
-             self.__class__.end_of_time,
-             self.__class__.flush_out ]
-
-  def end_of_time(self): 
-    """ Returns False if the maximum number of generations has been reached. """
-    return self.current_gen < self.max_gen if self.max_gen >= 0 else True
-
-  def flush_out(self):
-    """ Tries to flush current output. """
-    from sys import stdout
-    from os import fsync
-    stdout.flush()
-    try: fsync(stdout)
-    except: pass
-    return True
-
-  def evaluation(self):
-    """ Evaluates population. """
-    from .standard import population_evaluation
-    population_evaluation(self, self.evaluator, self.pools, self.comm)
-
-  def taboo(self, indiv):
-    """ No two individuals in the population and the offspring are the same. """
-    from itertools import chain
-    if any(indiv == a for a in chain(self.population, self.offspring)): return True
-    if getattr(self, "history", None) is not None: # check whether a history object exists.
-      if self.history(indiv): return True
-    return False
-
-  def restart(self, outdir, comm = None):
-    """ Saves current status. """
-    from os.path import exists, join
-
-    # sanity check.
-    if self.age == self.ordinals[0] or self.age is None: return
-
-    if comm is None and hasattr(self, "comm"): comm = self.comm
-    
-    # creates extraction object
-    extract = self.Extract(outdir, comm)
-
-    # checks for restart file.
-    path = join(join(outdir, extract.current_age), self.FUNCCAR)
-    if not exists(path): 
-      error = "Could not find restart file {0}.\n"\
-              "Yet directory {1} exits.\nAborting\n"\
-              .format(path, join(outdir, name))
-      if self.do_print: print error
-      raise RuntimeError(error)
-
-    # copies populations and friends.
-    self.population  = extract.functional.population
-    self.offspring   = extract.functional.offspring
-    self.current_gen = extract.functional.current_gen
-
-    if self.do_print:
-      print "Restarting from file {0}.\n"\
-            "Restarting at generation {1}.\n"\
-            .format(self.FUNCCAR, self.current_gen)
-      if len(self.population) == 0: print "Restarting with new population.\n"
-      else:
-        print "Restarting with population:"
-        for indiv in self.population: print indiv, indiv.fitness
-
-      if len(self.offspring) == 0: print "Restarting with empty offspring.\n"
-      else:
-        print "Restarting with offspring:"
-        for indiv in self.offspring: print indiv
-      print "\nStarting {0} GA age.\n".format(self.age)
-
-  def save(self):
-    """ Saves current status. """
-    from .standard import append_population
-    from pickle import dump
-
-    # only one proc should print.
-    is_root = self.comm.rank == 0 if hasattr(self, "comm") else True
-    if is_root:
-      with open(self.FUNCCAR, "wb") as file: dump(self, file)
-    append_population(self, self.population, self.Extract.OFFCAR)
-    return True
-
-  @property
-  def do_print(self):
-    """ Wether this process prints. """
-    if not hasattr(self, "comm"): return True
-    if self.comm is None: return True
-    return self.comm.rank == 0
-
-    
-  @property
-  def color(self):
-    """ Returns color of this process and None if not pooled or MPI. """
-    if self.pools < 2:            return None
-    if not hasattr(self, "comm"): return None
-    if self.comm is None:         return None
-    pools = self.pools if self.comm.size >= self.pools else self.comm.size
-    return self.comm.rank % pools
-
-
-  def print_nb_evals(self):
-    """ Prints current number of evaluations. """
-    if self.color is not None:
-      from ..mpi import all_reduce
-      local_comm = self.comm.split(self.color)
-      heads_comm = self.comm.split(1 if local_comm.rank == 0 else 2)
-      nbcalc = all_reduce(heads_comm, getattr(self.evaluator, "nbcalc", 0), lambda x,y: x+y)
-    else: nbcalc = getattr(self.evaluator, "nbcalc", 0)
-    
-    if self.do_print: print "  Number of functional evaluations: ", nbcalc
-
-  def timing(self):
-    """ Prints timing at each generation. """
-    import time
-    if not self.do_print: return True
-    t = time.time() - self.start_time
-    hour = int(float(t/3600e0))
-    minute = int(float((t - hour*3600)/60e0))
-    second = (t - hour*3600-minute*60)
-    print "  Elapsed time: {0}:{1}:{2:.4f}.".format(hour, minute, second)
-    return True
-
-
-  def __call__(self, comm = None, outdir = None, inplace=False, **kwargs):
-    """ Runs/Restart  GA 
-
-        :Parameters:
-          comm : mpi.Communicator
-            MPI communicator when doing mpi. None otherwise.
-          outdir : str
-            Path to the output directory. Defaults to the current working
-            directory.
-          inplace : bool
-            Ignored. Where calculations are performed depends on rootworkdir. 
-    """
-    import time
-    from os import getcwd
-    from os.path import join
-    from copy import deepcopy
-    from ..mpi import world
-    from . import darwin as search
-    from ..opt import redirect, RelativeDirectory, Changedir
-
-    # make call stateless.
-    this = deepcopy(self)
-
-    local_time = time.localtime() 
-    this.start_time = time.time() 
-    if outdir is None: outdir = getcwd()
-    outdir = RelativeDirectory(outdir)
-    # mpi stuff
-    this.comm = comm if comm is not None else world
-    this.comm.do_print = this.do_print
-
-    # takes care of keyword arguments:
-    kwargs.pop("external", None)
-    if len(kwargs.keys()) > 0: 
-      for key, value in kwargs.items():
-        if hasattr(this, key): setattr(this, key, value)
-        elif hasattr(this.evaluator, key): setattr(this.evaluator, key, value)
-        else: assert hasattr(this, key), TypeError("Unknown argument {0}.".format(key))
-
-    # gets current age
-    this.age = this.Extract(outdir.path, comm).next_age
-    # sets directory for calculations according to newly read age.
-    if hasattr(this.evaluator, "outdir"): 
-      this.evaluator._outdir.relative = outdir.relative
-      this.evaluator.outdir = join(this.evaluator.outdir, this.age)
-    # sets directory for history file. This should be conserved across runs,
-    # hence it is not on the scratch.
-    if this.history is not None:
-      this.history.directory = outdir.path 
-      this.history.remove_stale(comm)
-
-
-    # now goes to work
-    with Changedir(join(outdir.path, this.age), comm=comm) as cwd:
-      pyout = this.OUTCAR if this.do_print else '/dev/null' # this.OUTCAR + str(comm.rank) # 
-      pyerr = this.ERRCAR if this.do_print else '/dev/null' # this.OUTCAR + str(comm.rank) # 
-      with redirect(pyout=pyout, pyerr=pyerr) as streams:
-        if this.do_print:
-          print "# GA calculation on ", time.strftime("%m/%d/%y", local_time),\
-                " at ", time.strftime("%I:%M:%S %p", local_time)
-        # reloads if necessary
-        if this.age != this.ordinals[0]: this.restart(outdir.path, comm=comm)
-        # call back for further setting up in derived class.
-        this._further_setup()
-        # runs.
-        search.run(this)
-        this.timing()
-        
-  def _further_setup(self): 
-    """ Derived class can override this function for last minute setup. """
     pass
 
-  def __str__(self):
-    return "Replacement rate: %f\nPopulation size: %i\nMaximum number of generations: %i\n" \
-           % (self.rate, self.popsize, self.max_gen)
+  def update_fitness(self, population=None):
+    """ Updates fitness of whole population. 
+    
+        This is used to update the fitness of the whole population when it
+        changes depending on history, e.g. for X-GSGO.
+    """
+    return 
+
+  def checkpoints(self):
+    """ Whatever needs printing or checking.
+
+        Called at the end of a generational loop.
+
+        :returns: True if the GA should end.
+    """
+    return False
+  
+  def go_to_next_iteration(self):
+    """ Returns True when going to next generation.
+
+        Not all calculations need be finished.
+        It is the job of this function to catch errors in process execution and
+        correct them.
+    """ 
+    from ..process import Fail
+    try: self.process.wait()
+    except Fail:
+      offmap = {}
+      for i, indiv in enumerate(self.offspring): offmap[str(indiv.uuid)] = i
+      uuids = set()
+      for name in self.process.errors.iterkeys():
+        self.errors.add(name)
+        uuid = name.split('/')[-1]
+        uuids.add( self.offspring[offmap[uuid]].uuid )
+        del self._jobfolder.root[name] 
+        print "Calculation {0} failed.".format(name)
+      self.process.errors = {}
+      self.offspring = [u for u in self.offspring if u.uuid not in uuids]
+    return True
+
+  @abstractmethod
+  def __init__(self, popsize=100, rate=0.1):
+    """" Initializes Functional. """
+    from .standard import Mating
+    from ..misc import RelativePath
+    super(Functional, self).__init__()
+
+    self.population = []
+    """ List of individuals in the population. """
+    self.offspring = []
+    """ List of uncomputed individuals. """
+    self.errors = set()
+    """ List of individuals for which calculations failed. """
+    self.generation = 0
+    """ Current generation.
+
+        The counter is incremented after each successful call to :py:meth:`next`.
+    """
+    self.matingops = Mating(sequential=False)
+    """ Mating operators. """
+    self.target_popsize = popsize
+    """ Target population size.
+    
+        This is the size of the population if all goes well.
+        Since some calculations may take longuer than others, this size may not
+        be attained within the first generation. The method
+        :py:meth:`Functional.go_to_next_iteration` decides when to give up on a
+        job for now. The job can be incorporated at the next iteration, if it
+        finishes in time.
+    """
+    self.rate = rate
+    """ Target turnover rate at each generation. """
+
+
+  def _restart(self): 
+    """ Updates self from SHELVECAR.
+    
+        Reads the last functional in the shelvecar and updates offspring,
+        population, errors, and generation. Nothing else is changed.
+
+        If the shelvecar does not exist, then creates one with current values.
+    """
+    from os.path import exists
+    from shelve import open as shelve_open
+    from ..error import internal
+    from ..misc import LockFile
+    if '_directory' not in self.__dict__:
+      raise internal("Directory has not yet been set.")
+    with LockFile(self.shelvepath, timeout=10) as lock:
+      if not exists(self.shelvepath):
+        try:
+          shelvecar = shelve_open(self.shelvepath)
+          shelvecar['individuals'] = {}
+          shelvecar['functionals'] = [self]
+          shelvecar['added']       = []
+          shelvecar['removed']     = []
+          shelvecar['new']         = []
+        finally: shelvecar.close()
+      else:
+        try:
+          shelvecar = shelve_open(self.shelvepath, writeback=True)
+          previous = shelvecar['functionals']
+        finally: shelvecar.close()
+        self.offspring  = previous[-1].offspring
+        self.population = previous[-1].population
+        self.errors     = previous[-1].errors
+        self.generation = previous[-1].generation
+
+  def selection(self, dummy, size=2):
+    """ Selects individual from the population through deterministic tournament. """
+    import random
+    list_ = range(len(self.population))
+    random.shuffle(list_)
+    list_ = list_[:size]
+    result = list_[0]
+    for b in list_[1:]:
+      if self.population[b].fitness < self.population[result].fitness: result = b;
+    return result
+
+  @property
+  def shelvepath(self):
+    """ Directory where output should be found. """
+    from os.path import join
+    return join(self._directory, self.SHELVECAR)
+
+  @property
+  def popsize(self): 
+    """ Size of current population. """
+    return len(self.population)
+  @property
+  def nboffspring(self): 
+    """ Size of current population. """
+    return len(self.offspring)
+
+  def _add_indiv(self, individual, mechanics='mating'):
+    """ Adds new individual if it is not taboo. 
+    
+        Does not update the SHELVECAR file.
+    """
+    from uuid import uuid4
+    if self.is_taboo(individual): return False
+
+    individual.uuid = uuid4()
+    individual.conception = self.generation
+    individual.mechanics  = mechanics
+    self.offspring.append(individual)
+    print '{0}: {1}'.format(mechanics, individual)
+    return True
+
+  def add_indiv(self, individual, mechanics='manual'):
+    """ Adds new individual if it is not taboo. 
+
+        Updates SHELVECAR file. 
+    """ 
+    if not self._add_indiv(individual, mechanics): return False
+    self.update_func()
+    return True
+
+  def is_taboo(self, individual):
+    """ Returns True if individual is taboo. 
+
+
+        Generic function checks that the individual is not in offspring or in
+        population.
+    """
+    return individual in self.offspring or individual in self.population
+
+  def mating(self, n=1, itermax=10):
+    """ Returns new individual from population. """
+    from ..error import internal
+    # sanity check
+    if len(self.population) == 0: raise internal("No population yet..") 
+
+    dummy = list(self.offspring)
+    try:
+      # creates new individuals
+      for i in xrange(n):
+        success = False
+        for j in xrange(itermax):
+          if self._add_indiv( self.matingops(self) ): 
+            success = True
+            break
+        if not success: raise internal('Could not create new individual.')
+    except: # revert changes on failure.
+      self.offspring = dummy
+      raise
+
+  def new_random_individuals(self, n=1, itermax=10, **kwargs):
+    """ Creates a new individual and adds it to the offspring population. """
+    # creates new individuals
+    dummy = list(self.offspring)
+    try:
+      for i in xrange(n):
+        success = False
+        for j in xrange(itermax):
+          if self._add_indiv( self.random_individual(**kwargs), mechanics='random' ): 
+            success = True
+            break
+        if not success: raise RuntimeError('Could not create new individual.')
+    except: # revert changes on failure.
+      self.offspring = dummy
+      raise
+
+  @property
+  def calcdir(self):
+    """ Returns current jobdict path. """
+    from os.path import join
+    return join(self._directory, self.CALCDIR)
+
+  @property
+  def jobfolder(self):
+    """ Returns current jobfolder.
+    
+        The current job-folder holds all the currently running jobs.
+        It is a property because it is not saved to disk when pickle. 
+        It should be created anew each time GA runs.
+    """
+    from ..jobfolder import JobFolder
+    if '_jobfolder' not in self.__dict__:
+      self._jobfolder = JobFolder()
+      for indiv in self.offspring: 
+        job = self._jobfolder / str(indiv.conception) / str(indiv.uuid)
+        job.uuid = indiv.uuid
+        job._indiv = indiv
+        self.jobinator(job, indiv)
+    return self._jobfolder
+
+  @property 
+  def process(self):
+    """ Current process. 
+
+        The process is an object which manages launching actual calculation.
+        It basically takes a job-folder and launches calculations as
+        appropriate. 
+
+        By default, it creates a
+        :py:class:`~lada.process.jobfolder.JobFolderProcess`. It might be a
+        good idea to use something more specific, such as a
+        :py:class:`~lada.process.pool.PoolProcess` instantiated with the
+        correct ressource allocation function.
+
+        The process is not saved when self is pickled. It is created anew each
+        time this functional runs.
+    """ 
+    from ..process import JobFolderProcess
+    if '_process' not in self.__dict__: 
+      self._process = JobFolderProcess(self.jobfolder, self.calcdir)
+    return self._process
+
+  def __call__(self, outdir, comm): 
+    """ Performs GA run until exhaustion sets in. """
+    import sys
+    from itertools import chain
+    from os.path import join
+    from shelve import open as shelve_open
+    from ..misc import RelativePath, LockFile
+
+    # sets ouput directory for this run.
+    self._directory = RelativePath(outdir).path
+    # reloads population, offspring, errors, generation from previous run
+    # this has to come after setting the directory.
+    self._restart()
+
+    # try loops resets old stdout, stderr
+    oldouterr = sys.stdout, sys.stderr
+    try: 
+      sys.stdout = file = open(join(self._directory, "out"), 'a')
+      sys.stderr = open(join(self._directory, "err"), 'a')
+
+      # first creates a random population if necessary.
+      if len(self.population) == 0 and len(self.offspring) == 0: 
+        self.new_random_individuals(n=self.target_popsize)
+
+      # then  creates the jobfolder and start the process.
+      self.process.start(comm)
+
+      # finally, loop till eternity comes.
+      while True:
+        if not self.go_to_next_iteration(): continue
+
+        # Now we create new generation. 
+        # First we get those individuals that were successfuly computed.
+        successfuls = self.find_successfuls()
+
+        # update fitness of whole population, in case it depends upon whole population.
+        iterator = (self.offspring[i] for i in successfuls.itervalues())
+        self.update_fitness(chain(iterator, self.population))
+
+        # prints out successful individuals.
+        if len(successfuls) != 0:
+          print "Newly calculated individuals. """
+          for index in successfuls.itervalues():
+            print " {0.uuid}(conception {0.conception}): {0.fitness}"\
+                  .format(self.offspring[index])
+         
+        # removes worst individuals.
+        removed, population, offspring = self.survival(successfuls)
+        self.population = population
+        self.offspring = offspring
+
+        # increment generation count.
+        self.generation += 1
+
+        # create new offspring via mating
+        nboffspring = int(self.target_popsize*self.rate+0.1) - len(offspring) \
+                      + (self.target_popsize - self.popsize)
+        self.mating(nboffspring)
+
+        # udpate jobfolder
+        self._update_jobfolder(removed, offspring, population)
+
+        # update shelvecar
+        with LockFile(self.shelvepath, timeout=10) as lock:
+          try:
+            shelvecar = shelve_open(self.shelvepath, writeback=True)
+            individuals = shelvecar['individuals']
+            for individual in self.population: 
+              if not hasattr(individual, 'birth'):
+                individual.birth = self.generation
+              individuals[str(individual.uuid)] = individual
+            for uuid in removed: individuals[str(uuid)].removed = self.generation
+            shelvecar['individuals'] = individuals
+            shelvecar['functionals'].append(self)
+            shelvecar['removed'].append(removed)
+            shelvecar['added'].append(successfuls.keys())
+            shelvecar['new'].append( [ u.uuid for u in self.offspring\
+                                       if u.conception == self.generation-1] )
+          finally: shelvecar.close()
+        print "\n Starting generation {0}.".format(self.generation)
+
+        if  self.checkpoints(): break
+
+    finally:
+      sys.stdout.close()
+      sys.stderr.close()
+      sys.stdout, sys.stderr = oldouterr 
+      if '_process' in self.__dict__:
+        self._process.terminate()
+        del self._process
+      self.__dict__.pop('_directory', None)
+      self.__dict__.pop('_jobfolder', None)
+    # returns an extraction object. 
+    # Might never get here, but that's ok.
+    return self.Extract(outdir)
+
+  def find_successfuls(self):
+    """ Mapping of successful calculations to individuals. """
+    from os.path import join
+    from ..jobfolder import MassExtract
+    # creates mass extraction object with fake jobfolder file, but real
+    # jobfolder.
+    collect = MassExtract(join(self.calcdir, 'folder'))
+    collect._jobfolder = self.jobfolder
+    # creates map from uuid to index in list of offspring.
+    offmap = {}
+    for i, indiv in enumerate(self.offspring): offmap[indiv.uuid] = i
+    # now check successful runs, gets fitness for those, and create mapping
+    # from names to index in offspring list.
+    successfuls = {}
+    for name, extractor in collect.iteritems(): 
+      if extractor.success == False: continue
+
+      # try and compute that individual's fitness
+      uuid = self.jobfolder[name].uuid
+      indiv = self.offspring[offmap[uuid]]
+      indiv.fitness = self.objective(extractor, indiv)
+      successfuls[name] = offmap[uuid]
+    return successfuls
+
+  def survival(self, successfuls):
+    """ Removes worst individuals. """
+    from operator import attrgetter
+    from shelve import open as shelve_open
+    # reates list of offspring
+    offspring = [ indiv for indiv in self.offspring \
+                  if "/{0.conception}/{0.uuid}/".format(indiv) \
+                     not in successfuls ]
+    if len(successfuls) == 0: return [], list(self.population), offspring
+    # Removes from population the worst individuals.
+    howmany = 0 if self.popsize == 0 \
+              else len(successfuls) - (self.target_popsize - self.popsize)
+    if howmany < 0: howmany = 0
+
+    # Minimizing: remove individuals with lowest fitness.
+    population = sorted(self.population, key=attrgetter('fitness'))
+    removed = [u.uuid for u in population[len(population)-len(successfuls):]]
+    # and creates new population
+    population = population[:len(population) - howmany] \
+                 + [ self.offspring[i] for i in successfuls.itervalues() ]
+    return removed, population, offspring
+
+
+  def update_func(self):
+    """ Updates functional in SHELVECAR file. """
+    from shelve import open as shelve_open
+    from ..misc import LockFile
+    with LockFile(self.shelvepath, timout=10) as file:
+      try:
+        shelvecar = shelve_open(self.shelvepath, writeback=True)
+        shelvecar['functionals'][-1] = self
+      finally: shelvecar.close()
+
+  def _update_jobfolder(self, removed, successfuls, offspring):
+     """ Updates jobfolder and process. """
+     del self._jobfolder
+     self.process.update(self.jobfolder, deleteold=True)
 
   def __getstate__(self):
-    """ Returns current state. """
-    d = self.__dict__.copy()
-    d.pop("comm", None)
-    return d
+    """ Returns current state.
 
-  def __setstate__(self, state):
-    """ Resets current state. """
-    self.__dict__.update(state)
-    # takes care of older pickles.
-    if not hasattr(self, "comparison"): self.comparison = maximize
-    if not hasattr(self, "history"):    self.history    = None
+        Current state does not include directory, jobfolder, or process.
+    """ 
+    result = self.__dict__.copy()
+    result.pop('_process', None)
+    result.pop('_jobfolder', None)
+    result.pop('_directory', None)
+    return result
 
-  def __repr__(self):
-    """ Returns representation of this instance. """
-    return "from {0} import {1}\n{2}\n"\
-           "from {3.comparison.__module__} import {3.comparison.__name__}\n"\
-           "from {3.history.__module__} import {3.history.__name__}\n"\
-           "functional = {1}(evaluator)\n"\
-           "functional.pools       = {3.pools}\n"\
-           "functional.cm_rate     = {3.cm_rate}\n"\
-           "functional.popsize     = {3.popsize}\n"\
-           "functional.max_gen     = {3.max_gen}\n"\
-           "functional.age         = {4}\n"\
-           "functional.current_gen = {3.current_gen}\n"\
-           "functional.comparison  = {3.comparison.__name__}\n"\
-           "functional.history     = {5}\n"\
-           "# functional.rootworkdir, please set evaluator.outdir instead\n"\
-           .format( self.__class__.__module__, 
-                    self.__class__.__name__,
-                    repr(self.evaluator),
-                    self, repr(self.age), repr(self.history) )
-
-
-
-
-        
-
-
-
+  def __setstate__(self, value):
+    """ Sets state. """
+    # removes current process, directory, jobfolder.
+    if '_process' in self.__dict__:
+      self._process.terminate()
+      del self._process
+    self.__dict__.pop('_directory', None)
+    self.__dict__.pop('_jobfolder', None)
+    self.__dict__.update(value)

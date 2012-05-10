@@ -341,24 +341,14 @@ class Mating(object):
 
       individuals = []
       if indiv is not None: individuals.append(indiv)
-      else: individuals.append( deepcopy(darwin.population[darwin.selection(darwin)]) )
+      indices = []
+      while len(individuals) != n:
+        b = darwin.selection(darwin)
+        while b in indices: b = darwin.selection(darwin)
+        indices.append(b)
+        individuals.append( deepcopy(darwin.population[indices[-1]]) )
 
-      # calls unaries
-      if   n == 1: return function( individuals[0] )
-
-      # calls binaries
-      b = individuals[0]
-      while( b in individuals ): b = darwin.population[darwin.selection(darwin)]
-      individuals.append(b)
-      if n == 2: return function( individuals[0], individuals[1] )
-
-      # calls ternaries
-      b = individuals[0]
-      while( b in individuals ): b = darwin.population[darwin.selection(darwin)]
-      individuals.append(b)
-      if n == 3: return function( individuals[0], individuals[1], individuals[2] )
-
-      raise "Mating operations has to be unary, binary, or ternary.\n"
+      return function(*individuals)
 
     indiv = None
     if self.sequential: # choose any operator depending on rate.

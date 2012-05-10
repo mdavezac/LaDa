@@ -41,7 +41,8 @@ class JobFolderProcess(Process):
     """ Polls current job. """
     from . import Fail
 
-    if super(JobFolderProcess, self).poll(): return True
+    if self.nbjobsleft == 0 and super(JobFolderProcess, self).poll():
+      return True
 
     # weed out successfull and failed jobs.
     finished = []
@@ -145,7 +146,8 @@ class JobFolderProcess(Process):
   def wait(self, sleep=0.5):
     """ Waits for all job-folders to execute and finish. """
     from time import sleep as time_sleep
-    if super(JobFolderProcess, self).wait(): return True
+    if self.nbjobsleft == 0 and super(JobFolderProcess, self).wait():
+      return True
     while not self.poll(): 
       if sleep > 0: time_sleep(sleep)
     return False
@@ -165,3 +167,32 @@ class JobFolderProcess(Process):
     if super(JobFolderProcess, self).start(comm): return True
     self._next()
     return False
+
+  def update(self, jobfolder, deleteold=False):
+    """ Updates list of jobs.
+    
+        Adds jobfolders which are not in ``self.jobfolder`` but in the input.
+        Deletes those which in ``self.jobfolder`` but not in the input.
+        Does nothing if job is currently running.
+        If ``deleteold`` is True, then removed finished jobs from job-folder.
+    """
+    running = set([n for n in self.process])
+    for name, value in jobfolder.root.iteritems():
+      if name in running: continue
+      elif name not in self.jobfolder.root:
+        newjob = self.jobfolder.root / name
+        newjob.functional = value.functional
+        newjob.params.update(value.params)
+        for key, value in value.__dict__.iteritems():
+          if key in ['children', 'params', '_functional', 'parent']: continue
+          setattr(self, key, value)
+        self._torun.add(name)
+      elif name not in self._finished:
+        self.jobfolder.root[name] = value
+    for name in self.jobfolder.root.iterkeys():
+      if name in self._finished and deleteold:
+        del self.jobfolder.root[name]
+      elif name not in jobfolder.root:
+        if name in running: continue
+        del self.jobfolder.root[name]
+        if name in self._torun: self._torun.remove(name)

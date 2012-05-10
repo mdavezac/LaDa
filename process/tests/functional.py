@@ -129,3 +129,42 @@ class Functional(object):
   def Extract(self, outdir):
     order = self.order if hasattr(self.order, '__iter__') else [self.order]
     return ExtractMany(outdir, order=order) 
+
+class SerialFunctional(object):
+  def __init__(self, program, order=4, sleep=0):
+    super(SerialFunctional, self).__init__()
+    self.program = program
+    self.order = order
+    self.sleep = sleep
+
+  def iter(self, outdir=None, sleep=None, overwrite=False, comm=None):
+    from copy import deepcopy
+    from os.path import join
+    from lada.process.program import ProgramProcess
+    from lada.misc import RelativePath
+    self = deepcopy(self)
+    outdir = RelativePath(outdir).path
+    if sleep is not None: self.sleep = sleep
+    order = self.order if hasattr(self.order, '__iter__') else [self.order]
+    stdout = join(outdir, 'stdout')
+    stderr = join(outdir, 'stderr')
+    if overwrite == False: 
+      extract = ExtractSingle(stdout)
+      if extract.success:
+        yield extract
+        return
+    yield ProgramProcess( self.program, cmdline=['--order', str(self.order), '--sleep', str(self.sleep)],
+                            outdir=outdir, stdout=stdout, stderr=stderr, dompi=False, comm=comm)
+  
+  def __call__(self, outdir=None, sleep=None, overwrite=False, comm=None):
+    from lada.misc import RelativePath
+    outdir = RelativePath(outdir).path
+    for program in self.iter(outdir, sleep, overwrite):
+      if getattr(program, 'success', False) == False:
+        program.start(comm)
+        program.wait()
+    return self.Extract(outdir)
+
+  def Extract(self, outdir):
+    from os.path import join
+    return ExtractSingle(join(outdir, 'stdout'))

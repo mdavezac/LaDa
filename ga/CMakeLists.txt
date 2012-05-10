@@ -1,18 +1,4 @@
-set(PYGA_PY xgsgo.py)
-
-# set(which_gapackages "'bitstring', 'standard', 'darwin', 'random_search'")
-
-# if(ce_functional)
-#   add_subdirectory(ce)
-#   set(which_gapackages "${which_gapackages}, 'ce'")
-# endif(ce_functional)
-
-
-# if(escan_functional)
-#   add_subdirectory(escan)
-#   set(which_gapackages "${which_gapackages}, 'escan'")
-# endif(escan_functional)
-
+set(PYGA_PY functional.py extract.py standard.py)
 
 configure_file (
  "${PROJECT_SOURCE_DIR}/ga/__init__.in.py"
@@ -20,3 +6,6 @@ configure_file (
 )
 install(FILES ${PYGA_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/ga)
 install(FILES ${PROJECT_BINARY_DIR}/ga/__init__.py DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/ga)
+
+add_subdirectory(bitstring)
+add_subdirectory(xgsgo)
