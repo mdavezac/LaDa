@@ -43,7 +43,7 @@ class JobParams(AbstractMassExtract):
           if interactive.jobfolder is None:
             print "No current job-folder."
             return
-          return interactive.jobfolder
+          return interactive.jobfolder.root
         else: raise RuntimeError('No job-folder.')
       else: self._jobfolder = load(self.rootpath, timeout=30)
     return self._jobfolder.root

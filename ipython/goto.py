@@ -19,8 +19,7 @@ def goto(self, cmdl):
     return
   args = cmdl.split()
   if len(args) > 1:
-    ip.user_ns["_lada_error"] = "Invalid argument to goto %s." % (cmdl)
-    print ip.user_ns["_lada_error"]
+    print "Invalid argument to goto {0}.".format(cmdl)
     return
 
   # if no argument, then print current job data.
@@ -53,6 +52,10 @@ def goto(self, cmdl):
     return 
 
   interactive.jobfolder = result
+  if 'jobparams' in self.user_ns:
+    self.user_ns['jobparams'].view = interactive.jobfolder.name
+  if 'collect' in self.user_ns:
+    self.user_ns['collect'].view = interactive.jobfolder.name
   good = not interactive.jobfolder.is_tagged
   if good:
     for value in interactive.jobfolder.values():

@@ -134,7 +134,7 @@ def random_structure( nbatoms, min_distance=1.3, atomic_scale=None,
               for neighbor, vector, distance in neighbors(result, 1, atom) ]
   mindist = mindist[argmin([d[1] for d in mindist])]
   if mindist[1] * result.scale < min_distance:
-    result.scale *= min_distance / result.scale / mindist[1] 
+    result.scale *= 1.01*min_distance / result.scale / mindist[1] 
 
   return result
 

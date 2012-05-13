@@ -36,9 +36,10 @@ class Functional(GAFunctional):
     for i in xrange(len(self.species)):
       natoms.append(N if N < 2 else randint(1, N))
       N -= natoms[-1]
+    if N != 0: natoms[randint(0, len(natoms)-1)] += N
     shuffle(natoms)
     species = {}
-    for s, n in zip(self.species, natoms): species[s] = N
+    for s, n in zip(self.species, natoms): species[s] = n
     if self.anions is not None and len(self.anions) > 0:
       populate_anion_cation(result, species, self.anions)
     else: populate(result, species)
