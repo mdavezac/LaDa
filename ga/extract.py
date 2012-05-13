@@ -20,14 +20,10 @@ class Extract(object):
     super(Extract, self).__init__()
 
     self._directory = RelativePath(directory)
-    if not exists(self.directory):
-      raise RuntimeError('{0} could not be found.'.format(self.directory))
-    if not isdir(self.directory):
-      raise RuntimeError('{0} is not a directory.'.format(self.directory))
-    if not exists(self.shelvepath): 
-      raise RuntimeError('{0} could not be found.'.format(self.shelvepath))
-    if not isfile(self.shelvepath): 
-      raise RuntimeError('{0} is not a file.'.format(self.shelvepath))
+    if not exists(self.directory):return
+    if not isdir(self.directory): return
+    if not exists(self.shelvepath): return
+    if not isfile(self.shelvepath): return
 
     with LockFile(self.shelvepath, timeout=10) as lock:
       shelve = shelve_open(self.shelvepath)
@@ -35,6 +31,8 @@ class Extract(object):
         if set(shelve.keys()) !=  set(['individuals', 'functionals', 'removed', 'added', 'new']):
           raise RuntimeError('{0} is not a GA SHELVECAR file.'.format(self.shelvepath))
       finally: shelve.close()
+  @property
+  def success(self): return False
 
   @property
   def directory(self):

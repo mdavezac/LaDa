@@ -19,9 +19,10 @@ mix_atoms_rate = -1
 """ mix-atom crossover rate. """
 mix_poscar_rate = -1
 """ mix-poscar crossover rate. """
-trial = 4
+trials = 4
 """ Number of independent trials. """
 
 first_trial = {'kpoints': '\n0\nAuto\n1\n'}
 vasp = Relax(encut=1.0, kpoints='\n0\nAuto\n10', relaxation='volume ionic cellshape')
-vasp.species = load('vasp/fere/pseudos', *species)
+vasp.add_specie = 'C', 'pseudos/C'
+vasp.add_specie = 'N', 'pseudos/N'

@@ -13,7 +13,7 @@ class Vasp(Incar):
 
   def __init__(self, copyfrom=None, species=None, kpoints=None, **kwargs):
     """ Initializes vasp class. """
-    super(Vasp, self).__init__(**kwargs)
+    super(Vasp, self).__init__()
 
     self.restart_from_contcar = kwargs.pop('restart_from_contcar', True)
     """ If True and self. CONTCAR exists in directory, will restart from it. """

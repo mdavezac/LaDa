@@ -20,7 +20,7 @@ def random_cell(angle_range=None, cubic=False, **kwargs):
   from random import random
   from numpy import pi, sqrt, cos, sin, array, zeros, abs
   from numpy.linalg import det
-  from ..math import gruber
+  from ...math import gruber
 
   if angle_range == None: angle_range = [60.,140.]
   cell = zeros([3,3])
@@ -77,7 +77,7 @@ def random_structure( nbatoms, min_distance=1.3, atomic_scale=None,
   from numpy import dot, array, arange, ones, argwhere, exp, sum, argmin
   from itertools import product, chain
   from quantities import angstrom
-  from lada.crystal import Structure, neighbors
+  from ...crystal import Structure, neighbors
 
   # creates structure with random cell.
   result = Structure(random_cell(**kwargs))
@@ -242,7 +242,7 @@ def taboo( structure, max_atoms=-1, min_distance=1.3, \
           Whether to print messages
   """
   from numpy import pi, arccos, dot, sqrt
-  from ..crystal import Neighbors
+  from ...crystal import neighbors
   
   # check number of atoms.
   if max_atoms > 0 and len(structure) > max_atoms: 
@@ -252,8 +252,8 @@ def taboo( structure, max_atoms=-1, min_distance=1.3, \
   # chekc first neighbor distances.
   distances = []
   for atom in structure:
-    for n in Neighbors(structure,1,atom.pos):
-      distances.append(n.distance)
+    for n, v, d in neighbors(structure,1,atom.pos):
+      distances.append(d)
 
   if structure.scale*min(distances) < min_distance: 
     if verbose: print "distances shorter than",min_distance," AA"
@@ -284,8 +284,8 @@ def taboo( structure, max_atoms=-1, min_distance=1.3, \
     check = []
     for atom in structure:
       pom = 0
-      for n in Neighbors(structure,20,atom.pos):
-        if structure.scale*n.distance <= 1.5*min_distance and structure[n.index].type==atom.type:
+      for n, v, d in neighbors(structure,20,atom.pos):
+        if structure.scale*d <= 1.5*min_distance and n.type==atom.type:
           pom = pom + 1
       
       check.append(pom)

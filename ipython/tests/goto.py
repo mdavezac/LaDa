@@ -6,7 +6,7 @@ def test():
   from os import makedirs, getcwd
   from os.path import exists, join
   from IPython.core.interactiveshell import InteractiveShell
-  from lada.jobs import JobFolder
+  from lada.jobfolder import JobFolder
   from lada import interactive
   from dummy import functional
   import __builtin__ 

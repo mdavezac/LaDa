@@ -26,7 +26,7 @@ def launch(self, event):
       >>> %launch scattered --walltime "24:00:00"
   """ 
   import argparse
-  from ...jobs import load as load_jobs
+  from ...jobfolder import load as load_jobs
   from ... import interactive, default_comm
   from .scattered import parser as scattered_parser
   from .interactive import parser as interactive_parser

@@ -7,13 +7,13 @@ def main():
   from os.path import exists
   from argparse import ArgumentParser
   from copy import deepcopy
-  from lada import jobs, default_comm
+  from lada import jobfolder, default_comm
 
   # below would go additional imports.
 
   parser = ArgumentParser( prog="runone", description = re.sub("\\s+", " ", __doc__[1:]))
-  parser.add_argument( "--jobid", dest="names", default='+', \
-                       help="Job name", metavar="N", type=str )
+  parser.add_argument( "--jobid", dest="names", nargs='+', type=str, \
+                       help="Job name", metavar="N" )
   parser.add_argument( "--ppath", dest="ppath", default=None, \
                        help="Directory to add to python path",
                        metavar="Directory" )
@@ -43,8 +43,8 @@ def main():
   comm['ppn'] = options.ppn
   timeout = None if options.timeout <= 0 else options.timeout
   
-  jobfolder = jobs.load(options.pickle, timeout=timeout)
+  jobfolder = jobfolder.load(options.pickle, timeout=timeout)
   for name in options.names:
-    jobfolder[name].compute(comm=comm, outdir=name[1:])
+    jobfolder[name].compute(comm=comm, outdir=name)
 
 if __name__ == "__main__": main()

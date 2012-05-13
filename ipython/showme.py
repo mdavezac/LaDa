@@ -183,7 +183,7 @@ def showme_pbs(self, which):
   from operator import itemgetter
   from .. import interactive
 
-  if not interactive.jobfolder.is_job:
+  if not interactive.jobfolder.is_executable:
     print "Current position in job-dictionary is not a job."
     return
   filename = interactive.jobfolder.name[:-1].replace("/", ".")

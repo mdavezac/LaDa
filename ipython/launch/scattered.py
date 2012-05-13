@@ -13,7 +13,7 @@ def launch(self, event, jobfolders):
   from copy import deepcopy
   from os.path import split as splitpath, join, dirname
   from ...misc import Changedir
-  from ...jobs import __file__ as jobs_filename
+  from ...jobfolder import __file__ as jobs_filename
   from ... import pbs_string, default_pbs, debug_queue, qsub_exe, default_comm
 
   comm = deepcopy(default_comm)

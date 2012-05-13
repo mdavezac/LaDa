@@ -36,7 +36,7 @@ namespace LaDa
 #   define LADA_STARTTRY try {
 #   define LADA_ENDTRY(error) } catch(std::exception &_e) { \
        LADA_PYERROR_FORMAT( internal, \
-                            "C++ thrown exception caught in " #error, \
+                            "C++ thrown exception caught in " #error ":\n%.200s", \
                             _e.what() ); \
        return NULL; } 
 
