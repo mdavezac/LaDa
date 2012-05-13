@@ -18,7 +18,7 @@ def random_cell(angle_range=None, cubic=False, **kwargs):
       :returns: A random crystal cell.
   """
   from random import random
-  from numpy import pi, sqrt, cos, sin, array, zeros, abs
+  from numpy import pi, cos, sin, array, zeros, abs, sqrt
   from numpy.linalg import det
   from ...math import gruber
 
@@ -44,7 +44,7 @@ def random_cell(angle_range=None, cubic=False, **kwargs):
     c1 = c*cos(beta)
     c2 = c/sin(gamma)*(-cos(beta)*cos(gamma) + cos(alpha))
         
-    a3 = array([c1, c2, sqrt(c**2-(c1**2+c2**2))])
+    a3 = array([c1, c2, sqrt(abs(c**2-(c1**2+c2**2)))])
         
     cell = array([a1,a2,a3]).T
     if det(cell) < 0e0: cell = array([a2, a1, a3]).T
@@ -262,9 +262,12 @@ def taboo( structure, max_atoms=-1, min_distance=1.3, \
   # check that angles are within specified range.
   if angle_range is None: angle_range = (45.,160.)
   cell = structure.cell
-  alpha = 180./pi*arccos( dot(cell[:,0],cell[:,2])/sqrt(dot(cell[:,0],cell[:,0])*dot(cell[:,2],cell[:,2])) )
-  beta  = 180./pi*arccos( dot(cell[:,1],cell[:,2])/sqrt(dot(cell[:,1],cell[:,1])*dot(cell[:,2],cell[:,2])) )
-  gamma = 180./pi*arccos( dot(cell[:,0],cell[:,1])/sqrt(dot(cell[:,0],cell[:,0])*dot(cell[:,1],cell[:,1])) )
+  alpha = 180./pi*arccos( dot(cell[:,0],cell[:,2]) /\
+             sqrt(abs(dot(cell[:,0],cell[:,0])*dot(cell[:,2],cell[:,2])) ))
+  beta  = 180./pi*arccos( dot(cell[:,1],cell[:,2]) /\
+             sqrt(abs(dot(cell[:,1],cell[:,1])*dot(cell[:,2],cell[:,2])) ))
+  gamma = 180./pi*arccos( dot(cell[:,0],cell[:,1])/\
+             sqrt(abs(dot(cell[:,0],cell[:,0])*dot(cell[:,1],cell[:,1])) ))
   
   if not angle_range[0] <= alpha <= angle_range[1]:
     if verbose: print "alpha =",alpha," degrees"

@@ -48,7 +48,7 @@ class Functional(GAFunctional):
   def jobinator(self, job, indiv):
     """ Initializes a new job from an individual. """
     job.functional = self.functional
-    job.jobparams['structure'] = indiv
+    job.params['structure'] = indiv
       
   objective = objective_xgsgo
   """ Stores in individual information needed for convex-hull. 
