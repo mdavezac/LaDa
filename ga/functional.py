@@ -72,7 +72,7 @@ class Functional(object):
     except Fail: self._process_errors() 
     return True
   
-  def _process_errors():
+  def _process_errors(self):
      """ Takes care of errors. """
      offmap = {}
      for i, indiv in enumerate(self.offspring): offmap[str(indiv.uuid)] = i
@@ -314,10 +314,14 @@ class Functional(object):
     try: 
       sys.stdout = file = open(join(self._directory, "out"), 'a')
       sys.stderr = open(join(self._directory, "err"), 'a')
+     
+      print 'COMMUNICATOR', comm 
 
       # first creates a random population if necessary.
       if len(self.population) == 0 and len(self.offspring) == 0: 
         self.new_random_individuals(n=self.target_popsize)
+        self.update_func()
+        sys.stdout.flush()
 
       # then  creates the jobfolder and start the process.
       self.process.start(comm)
@@ -340,6 +344,7 @@ class Functional(object):
           for index in successfuls.itervalues():
             print " {0.uuid}(conception {0.conception}): {0.fitness}"\
                   .format(self.offspring[index])
+          sys.stdout.flush()
          
         # removes worst individuals.
         removed, population, offspring = self.survival(successfuls)
@@ -375,6 +380,7 @@ class Functional(object):
                                        if u.conception == self.generation-1] )
           finally: shelvecar.close()
         print "\n Starting generation {0}.".format(self.generation)
+        sys.stdout.flush()
 
         if  self.checkpoints(): break
 
@@ -442,7 +448,7 @@ class Functional(object):
     """ Updates functional in SHELVECAR file. """
     from shelve import open as shelve_open
     from ..misc import LockFile
-    with LockFile(self.shelvepath, timout=10) as file:
+    with LockFile(self.shelvepath, timeout=10) as file:
       try:
         shelvecar = shelve_open(self.shelvepath, writeback=True)
         shelvecar['functionals'][-1] = self

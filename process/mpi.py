@@ -169,19 +169,20 @@ class Communicator(dict):
     self.machines, self._nodefile = value[1:]
     self.parent = None
 
-def create_global_comm(nprocs, dir):
+def create_global_comm(nprocs, dir=None):
   """ Figures out global communicator through external mpi call. """
   from sys import executable
   from tempfile import NamedTemporaryFile
   from subprocess import Popen, PIPE
   from shlex import split
   from os.path import exists
-  from os import remove
+  from os import remove, getcwd
   from .. import placement, mpirun_exe, modify_global_comm
   from ..misc import Changedir
   import lada
   
   if nprocs <= 0: raise MPISizeError(nprocs)
+  if dir is None: dir = getcwd()
   
   # each proc prints its name to the standard output.
   stdin = 'from socket import gethostname\n'               \

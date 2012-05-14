@@ -75,7 +75,7 @@ def launch(self, event, jobfolders):
           print "Job {0} completed successfully. It will not be relaunched.".format(name)
           continue
       pbsargs['n'] = mppalloc(job) if hasattr(mppalloc, "__call__") else mppalloc
-      pbsargs['nnodes'] = (pbsargs['n'] + pbsargs['ppn'] - 1) // pbsargs['n']
+      pbsargs['nnodes'] = (pbsargs['n'] + pbsargs['ppn'] - 1) // pbsargs['ppn']
       if len(name) == 0: pbsargs['name'] = "{0}-root".format(splitpath(path)[1])
       pbsargs['name'] = name.replace("/", ".")
       pbsscripts.append(join(path+".pbs", pbsargs['name'] + ".pbs"))

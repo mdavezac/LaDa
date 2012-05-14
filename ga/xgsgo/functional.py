@@ -80,7 +80,7 @@ class Functional(GAFunctional):
     """ 
     from lada.process import PoolProcess
     def nbprocs(job):
-      return len(job.structure) - len(job.structure) % 1
+      return len(job.structure) - len(job.structure) % 2
     if '_process' not in self.__dict__: 
       self._process = PoolProcess(self.jobfolder, self.calcdir, nbprocs)
     return self._process
@@ -98,7 +98,7 @@ class Functional(GAFunctional):
         correct them.
     """ 
     from time import sleep
-    from ..process import Fail
+    from ...process import Fail
     
     fewjobsleft = max(len(self.offspring) * 0.1, 0)
     lotsofcpusidle = min(self.process._alloc.values())

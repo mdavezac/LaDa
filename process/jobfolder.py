@@ -39,8 +39,10 @@ class JobFolderProcess(Process):
 
   def poll(self): 
     """ Polls current job. """
+    from ..error import internal
     from . import Fail
 
+    if not hasattr(self, '_comm'): raise internal("Process was never started.")
     if self.nbjobsleft == 0 and super(JobFolderProcess, self).poll():
       return True
 
