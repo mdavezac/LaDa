@@ -45,7 +45,6 @@ class Vasp(Incar):
   def __call__( self, structure, outdir=None, comm=None, overwrite=False, 
                 mpirun_exe=None, **kwargs):
     """ Calls vasp program. """
-    from ..misc import execute_program
     result = None
     for program in self.iter(structure, outdir=outdir, comm=comm, overwrite=overwrite, **kwargs):
       # iterator may yield the result from a prior successfull run. 

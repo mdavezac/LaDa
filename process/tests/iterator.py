@@ -1,12 +1,10 @@
 def test(executable):
   """ Tests IteratorProcess. Includes failure modes.  """
   from tempfile import mkdtemp
-  from os.path import join, exists
   from shutil import rmtree
   from numpy import all, arange, abs, array
   from lada.process.iterator import IteratorProcess
   from lada.process import Fail
-  from lada.misc import Changedir
   from lada.error import internal
   from lada import default_comm
   from functional import Functional

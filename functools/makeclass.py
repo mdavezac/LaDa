@@ -46,7 +46,6 @@ def create_initstring(classname, base, method, excludes):
       if key not in args.args[nargs:]:
         raise Exception('Could not synthesize {0}. Missing default argument.'.format(classname))
       result += ", {0}".format(key)
-      dealtwith.add(key)
   if initargs.defaults is not None and args.defaults is not None: 
     # then add keyword arguments, ignoring thosse that are not in method
     for i, (key, value) in enumerate(zip(initargs.args[nargs:], initargs.defaults)):

@@ -42,7 +42,7 @@ class ExtractSingle(object):
 class ExtractMany(object):
   def __init__(self, outdir, order=None):
     from glob import iglob
-    from os.path import isfile, join, basename
+    from os.path import join, basename
     from lada.misc import RelativePath
 
     super(ExtractMany, self).__init__()
@@ -89,7 +89,6 @@ class ExtractMany(object):
 
 
 
-from lada.functools import stateless
 class Functional(object):
   def __init__(self, program, order=4, sleep=0):
     super(Functional, self).__init__()
