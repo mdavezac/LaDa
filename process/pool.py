@@ -64,8 +64,11 @@ class PoolProcess(JobFolderProcess):
         else:
           process = CallProcess(self.functional, join(self.outdir, name), **params)
         # appends process and starts it.
-        self.process.append((name, process))
-        process.start(self._comm.lend(nprocs))
+        try: process.start(self._comm.lend(nprocs))
+        except Exception as e:
+          self.errors[name] = e
+          name, process = self.process.pop(i)
+          process._cleanup()
     except:
       self.terminate()
       raise

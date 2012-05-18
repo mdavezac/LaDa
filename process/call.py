@@ -21,7 +21,7 @@ class CallProcess(Process):
     self.dompi = dompi
     """ Whether to run with mpi or not. """
 
-  def poll(self, wait=False): 
+  def poll(self):
     """ Polls current job. """
     from . import Fail
 
@@ -33,8 +33,7 @@ class CallProcess(Process):
     # check if we have currently running process.
     # if current process is finished running, closes stdout and stdout.
     try: 
-      if wait == True: self.process.wait()
-      elif self.process.poll() == False: return False
+      if self.process.poll() == False: return False
     except Fail:
       self._cleanup()
       if hasattr(self.functional, 'Extract') \
@@ -86,7 +85,7 @@ class CallProcess(Process):
                                    outdir=self.outdir, stdout=self.stdout,
                                    stderr=self.stderr, maxtrials=1,
                                    nompi=self.dompi )
-    self.process.start(comm=self._comm if self.dompi else None)
+    self.process.start(comm=self._comm.lend('all') if self.dompi else None)
     return False
 
   def start(self, comm):
@@ -114,5 +113,6 @@ class CallProcess(Process):
     """ Waits for process to end, then cleanup. """
     if super(CallProcess, self).wait(): return True
     while not self.poll(): self.process.wait()
+    self._cleanup()
     return False
 

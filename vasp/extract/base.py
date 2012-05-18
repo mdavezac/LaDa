@@ -766,6 +766,14 @@ class ExtractBase(object):
     assert result is not None, RuntimeError("Could not find NBANDS in OUTCAR.")
     return int(result.group(1))
 
+  @property
+  @make_cached
+  def nbprocs(self):
+    """ Number of bands in calculation. """
+    result = self._find_first_OUTCAR("""running\s+on\s+(\d+)\s+nodes""")
+    assert result is not None, RuntimeError("Could not find number of processes in OUTCAR.")
+    return int(result.group(1))
+
 
   def iterfiles(self, **kwargs):
     """ iterates over input/output files. 

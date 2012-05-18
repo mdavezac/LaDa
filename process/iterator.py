@@ -38,15 +38,19 @@ class IteratorProcess(Process):
     if found_error is not None:
       self.nberrors += 1
       if self.nberrors >= self.maxtrials:
+        self._cleanup()
         raise found_error if isinstance(found_error, Fail) \
               else Fail(str(found_error))
 
-    # At this point, loop until find something to do.
+    # At this point, go to next iteration.
     process = self._get_process()
-    if process is None: return True
+    if process is not None:
+      self._next(process)
+      return False
 
-    self._next(process)
-    return False
+    self._cleanup()
+    return True
+
 
   def _get_process(self):
     """ Finds next available iteration. """
@@ -63,13 +67,14 @@ class IteratorProcess(Process):
         result = self._iterator.next()
       return result
     except StopIteration: return None
+    except Exception as e: raise Fail(e)
 
   def _next(self, process=None):
     """ Launches next process. """
     # start next process.
     self.process = process if process is not None else self._get_process()
     if self.process is None: return True
-    self.process.start(self._comm) 
+    self.process.start(self._comm.lend('all')) 
     return False
 
   def start(self, comm):
@@ -82,4 +87,5 @@ class IteratorProcess(Process):
     """ Waits for process to end, then cleanup. """
     if super(IteratorProcess, self).wait(): return True
     while not self.poll(): self.process.wait()
+    self._cleanup()
     return False

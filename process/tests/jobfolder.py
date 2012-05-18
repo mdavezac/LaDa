@@ -72,7 +72,8 @@ def test(executable):
     program.start(comm)
     program.wait()
     assert program.nbjobsleft == 0
-  except Fail: 
+  except Fail as r: 
+    print program.errors, r
     assert len(program.errors.keys()) == 1
     assert '666' in program.errors
   else: raise Exception

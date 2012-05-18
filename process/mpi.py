@@ -38,6 +38,9 @@ class Communicator(dict):
         cleanup is called on the result.
     """
     from weakref import ref
+    try: 
+      if nprocs == 'all': nprocs = self['n']
+    except: pass
     if self._nodefile is not None:
       raise NodeFileExists("Comm already used in other process.")
     if nprocs > self['n']: raise MPISizeError((nprocs, self['n']))

@@ -126,7 +126,8 @@ class Vasp(Incar):
 
     self.pullup(structure, outdir, comm)
     program = getattr(self, 'program', vasp_program)
-    yield ProgramProcess(program, cmdline=[], outdir=outdir, stdout='stdout', stderr='stderr')
+    yield ProgramProcess( program, cmdline=[], outdir=outdir, 
+                          stdout='stdout', stderr='stderr', dompi=True )
     self.bringdown(outdir, structure)
 
   def pullup(self, structure, outdir, comm):

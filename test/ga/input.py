@@ -5,11 +5,11 @@ anions  = ['N']
 
     All anions must be included in the species.
 """
-natoms  = (2, 20)
+natoms  = (2, 8)
 """ Min, Max number of atoms. """
-rate    = 0.1
+rate    = 0.5
 """ Offspring mutation rate.  """
-popsize = 50
+popsize = 10
 """ Target population size. """
 cns_rate = 0.8
 """ Cut and splice crossover rate. """

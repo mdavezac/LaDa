@@ -42,9 +42,9 @@ class JobFolderProcess(Process):
     from ..error import internal
     from . import Fail
 
-    if not hasattr(self, '_comm'): raise internal("Process was never started.")
     if self.nbjobsleft == 0 and super(JobFolderProcess, self).poll():
       return True
+    if not hasattr(self, '_comm'): raise internal("Process was never started.")
 
     # weed out successfull and failed jobs.
     finished = []
@@ -53,8 +53,8 @@ class JobFolderProcess(Process):
         if process.poll() == True: 
           self._finished.add(name)
           finished.append(i)
-      except Fail as fail:
-        self.errors[name] = fail
+      except Exception as e:
+        self.errors[name] = e
         finished.append(i)
     for i in sorted(finished)[::-1]:
       name, process = self.process.pop(i)
@@ -62,8 +62,9 @@ class JobFolderProcess(Process):
 
     # returns True if nothing left to do.
     if len(self.process) == 0 and len(self._torun) == 0:
+      self._cleanup()
       if len(self.errors) == 0: return True
-      else: raise Fail()
+      else: raise Fail(str(self.errors))
 
     # adds new jobs. 
     self._next()
@@ -113,7 +114,12 @@ class JobFolderProcess(Process):
           process = CallProcess(self.functional, join(self.outdir, name), **params)
         # appends process and starts it.
         self.process.append((name, process))
-        process.start(local_comms.pop())
+        try: process.start(local_comms.pop())
+        except Exception as e:
+          self.errors[name] = e
+          name, process = self.process.pop(i)
+          process._cleanup()
+          raise
     except:
       self.terminate()
       raise
@@ -124,13 +130,11 @@ class JobFolderProcess(Process):
     """ Kills all currently running processes. """
     for name, process in self.process: process.kill()
     self._cleanup()
-    self.process = []
     
   def terminate(self):
     """ Kills all currently running processes. """
     for name, process in self.process: process.terminate()
     self._cleanup()
-    self.process = []
 
   @property 
   def done(self):
@@ -145,19 +149,29 @@ class JobFolderProcess(Process):
     """
     return 0 if (not self.started) or len(self.process) == 0 else 1
 
-  def wait(self, sleep=0.5):
+  def wait(self):
     """ Waits for all job-folders to execute and finish. """
-    from time import sleep as time_sleep
+    from ..error import internal
     if self.nbjobsleft == 0 and super(JobFolderProcess, self).wait():
       return True
-    while not self.poll(): 
-      if sleep > 0: time_sleep(sleep)
+    if not hasattr(self, '_comm'): raise internal("Process was never started.")
+    print self.nbjobsleft
+    print self.process[-1]
+    loop = True
+    while loop:
+      try: self.process[-1][1].wait()
+      except Exception as e:
+        self.errors[self.process[-1][0]] = e
+        self.process[-1][1]._cleanup()
+        self.process.pop(-1)
     return False
 
   def _cleanup(self):
     """ Cleans up after currently running processes. """
     try: 
-      for name, process in self.process: process._cleanup()
+      for name, process in self.process:
+        try: process._cleanup()
+        except: pass
     finally:
       self.process = []
       if hasattr(self, '_comm'): 
