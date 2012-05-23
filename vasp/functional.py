@@ -107,7 +107,9 @@ class Functional(Launch):
       if exists(path):
         try:
           old_structure = structure
+          str_dict = deepcopy(structure.__dict__)
           structure = read_poscar(specie_list(structure), path)
+          structure.__dict__.update(str_dict)
           assert len(structure.atoms) > 0
           assert abs(det(structure.cell)) > 1e-8
         except: structure = deepcopy(old_structure)
