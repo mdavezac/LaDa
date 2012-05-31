@@ -155,8 +155,6 @@ class JobFolderProcess(Process):
     if self.nbjobsleft == 0 and super(JobFolderProcess, self).wait():
       return True
     if not hasattr(self, '_comm'): raise internal("Process was never started.")
-    print self.nbjobsleft
-    print self.process[-1]
     loop = True
     while loop:
       try: self.process[-1][1].wait()
@@ -164,6 +162,7 @@ class JobFolderProcess(Process):
         self.errors[self.process[-1][0]] = e
         self.process[-1][1]._cleanup()
         self.process.pop(-1)
+      if self.poll() == True: break
     return False
 
   def _cleanup(self):

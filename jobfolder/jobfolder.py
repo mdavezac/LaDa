@@ -166,9 +166,8 @@ class JobFolder(object):
 
         .. _deepcopy: http://docs.python.org/library/copy.html#copy.deepcopy
     """
-    from re import split
     from copy import deepcopy
-    from os.path import normpath, relpath, dirname, basename
+    from os.path import normpath, dirname, basename
 
     index = normpath(name)
     parentpath, childpath = dirname(index), basename(index)

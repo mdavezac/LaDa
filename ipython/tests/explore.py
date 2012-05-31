@@ -51,7 +51,7 @@ def test():
     lada.interactive.jobfolder_path = None
     self.magic("explore {0}/dict".format(directory))
     jobfolder = lada.interactive.jobfolder
-    assert 'this/0' in jobfolder and 'this/1' in jobfolder and 'that/2' in.jobfolder and 'that/1'
+    assert 'this/0' in jobfolder and 'this/1' in jobfolder and 'that/2' in jobfolder and 'that/1'
     assert '0' in jobfolder['this'] and '1' in jobfolder['this']
     assert '1' in jobfolder['that'] and '2' in jobfolder['that']
     assert 'other' not in jobfolder
