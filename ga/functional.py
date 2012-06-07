@@ -68,6 +68,7 @@ class Functional(object):
         correct them.
     """ 
     from ..process import Fail
+    assert hasattr(self.process, '_comm')
     try: self.process.wait()
     except Fail: self._process_errors() 
     return True
@@ -291,7 +292,7 @@ class Functional(object):
     """ 
     from ..process import JobFolderProcess
     if '_process' not in self.__dict__: 
-      self._process = JobFolderProcess(self.jobfolder, self.calcdir)
+      self._process = JobFolderProcess(self.jobfolder, self.calcdir, keepalive=True)
     return self._process
 
   def __call__(self, outdir, comm): 
@@ -311,7 +312,7 @@ class Functional(object):
     # try loops resets old stdout, stderr
     oldouterr = sys.stdout, sys.stderr
     try: 
-      sys.stdout = file = open(join(self._directory, "out"), 'a')
+      sys.stdout = open(join(self._directory, "out"), 'a')
       sys.stderr = open(join(self._directory, "err"), 'a')
      
       print 'COMMUNICATOR', comm 
@@ -324,6 +325,7 @@ class Functional(object):
 
       # then  creates the jobfolder and start the process.
       self.process.start(comm)
+      assert hasattr(self.process, '_comm')
 
       # finally, loop till eternity comes.
       while True:
@@ -423,7 +425,6 @@ class Functional(object):
   def survival(self, successfuls):
     """ Removes worst individuals. """
     from operator import attrgetter
-    from shelve import open as shelve_open
     # reates list of offspring
     offspring = [ indiv for indiv in self.offspring \
                   if "/{0.conception}/{0.uuid}/".format(indiv) \

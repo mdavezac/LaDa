@@ -144,7 +144,6 @@ class SerialFunctional(object):
     self = deepcopy(self)
     outdir = RelativePath(outdir).path
     if sleep is not None: self.sleep = sleep
-    order = self.order if hasattr(self.order, '__iter__') else [self.order]
     stdout = join(outdir, 'stdout')
     stderr = join(outdir, 'stderr')
     if overwrite == False: 
@@ -152,7 +151,7 @@ class SerialFunctional(object):
       if extract.success:
         yield extract
         return
-    yield ProgramProcess( self.program, cmdline=['--order', str(order), '--sleep', str(self.sleep)],
+    yield ProgramProcess( self.program, cmdline=['--order', str(self.order), '--sleep', str(self.sleep)],
                             outdir=outdir, stdout=stdout, stderr=stderr, dompi=False, comm=comm)
   
   def __call__(self, outdir=None, sleep=None, overwrite=False, comm=None):

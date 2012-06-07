@@ -53,8 +53,7 @@ class Functional(GAFunctional):
         The process is not saved when self is pickled. It is created anew each
         time this functional runs.
     """ 
-    from lada import default_comm
     from lada.process import JobFolderProcess
     if '_process' not in self.__dict__: 
-      self._process = JobFolderProcess(self.jobfolder, self.calcdir, nbpools=4)
+      self._process = JobFolderProcess(self.jobfolder, self.calcdir, nbpools=4, keepalive=True)
     return self._process

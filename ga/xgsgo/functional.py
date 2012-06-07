@@ -28,7 +28,6 @@ class Functional(GAFunctional):
   def random_individual(self):
     """ Returns a new random individual. """
     from random import randint, shuffle
-    from numpy import dot, array
     from .initialization import random_structure, populate, populate_anion_cation
     N = randint(*self.natoms)
     result = random_structure(N)
@@ -82,7 +81,7 @@ class Functional(GAFunctional):
     def nbprocs(job):
       return len(job.structure) - len(job.structure) % 2
     if '_process' not in self.__dict__: 
-      self._process = PoolProcess(self.jobfolder, self.calcdir, nbprocs)
+      self._process = PoolProcess(self.jobfolder, self.calcdir, nbprocs, keepalive=True)
     return self._process
 
   def __call__(self, *args, **kwargs):
