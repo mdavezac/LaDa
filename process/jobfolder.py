@@ -6,7 +6,7 @@ class JobFolderProcess(Process):
       parallel, with up to :py:attr:`~JobFolderProcess.nbpools` running
       instances. Each instance is allocated an equal number of machines.
   """
-  def __init__(self, jobfolder, outdir, maxtrials=1, nbpools=1, **kwargs):
+  def __init__(self, jobfolder, outdir, maxtrials=1, nbpools=1, keepalive=False, **kwargs):
     """ Initializes a process. """
     from ..misc import RelativePath
     super(JobFolderProcess, self).__init__(maxtrials, **kwargs)
@@ -31,6 +31,19 @@ class JobFolderProcess(Process):
     """ List of jobs to run. """
     self.errors = {}
     """ Map between name of failed jobs and exception. """
+    self.keepalive = keepalive
+    """ Whether to relinquish communicator once jobs are completed. 
+    
+        If True, the communicator is not relinquished. The jobfolder can be
+        :py:meth:`updated <JobFolderProcess.update>` and new jobs started. To
+        finally relinquish the communicator,
+        :py:attr:`~JobFolderProcess.keepalive` should be set to False.  Both
+        :py:meth:`~JobFolderProcess.kill` and
+        :py:meth:`~JobFolderProcess.Terminate` ignore this attribute and
+        relinquish the communicator. However, since both side effects, this may
+        not be the best way to do so.
+    """
+
 
   @property
   def nbjobsleft(self): 
@@ -117,7 +130,7 @@ class JobFolderProcess(Process):
         try: process.start(local_comms.pop())
         except Exception as e:
           self.errors[name] = e
-          name, process = self.process.pop(i)
+          name, process = self.process.pop(-1)
           process._cleanup()
           raise
     except:
@@ -127,14 +140,30 @@ class JobFolderProcess(Process):
       for comm in local_comms: comm.cleanup()
 
   def kill(self):
-    """ Kills all currently running processes. """
+    """ Kills all currently running processes. 
+    
+        Relinquishes communicator, even if
+        :py:attr:`~JobProcessFolder.keepalive` is True.
+    """
     for name, process in self.process: process.kill()
-    self._cleanup()
+    self.keepalive, oldkeepalive = False, self.keepalive
+    try: self._cleanup()
+    except:
+      self.keepalive = oldkeepalive
+      raise
     
   def terminate(self):
-    """ Kills all currently running processes. """
+    """ Kills all currently running processes. 
+    
+        Relinquishes communicator, even if
+        :py:attr:`~JobProcessFolder.keepalive` is True.
+    """
     for name, process in self.process: process.terminate()
-    self._cleanup()
+    self.keepalive, oldkeepalive = False, self.keepalive
+    try: self._cleanup()
+    except:
+      self.keepalive = oldkeepalive
+      raise
 
   @property 
   def done(self):
@@ -155,14 +184,12 @@ class JobFolderProcess(Process):
     if self.nbjobsleft == 0 and super(JobFolderProcess, self).wait():
       return True
     if not hasattr(self, '_comm'): raise internal("Process was never started.")
-    loop = True
-    while loop:
+    while self.poll() == False:
       try: self.process[-1][1].wait()
       except Exception as e:
         self.errors[self.process[-1][0]] = e
         self.process[-1][1]._cleanup()
         self.process.pop(-1)
-      if self.poll() == True: break
     return False
 
   def _cleanup(self):
@@ -173,7 +200,7 @@ class JobFolderProcess(Process):
         except: pass
     finally:
       self.process = []
-      if hasattr(self, '_comm'): 
+      if hasattr(self, '_comm') and self.keepalive == False: 
         try: self._comm.cleanup()
         finally: del self._comm
    
@@ -187,8 +214,8 @@ class JobFolderProcess(Process):
     """ Updates list of jobs.
     
         Adds jobfolders which are not in ``self.jobfolder`` but in the input.
-        Deletes those which in ``self.jobfolder`` but not in the input.
-        Does nothing if job is currently running.
+        Updates jobs which are in ``self.jobfolder`` and input if not currently
+        running.  Does nothing if are job is currently running.
         If ``deleteold`` is True, then removed finished jobs from job-folder.
     """
     running = set([n for n in self.process])
@@ -205,9 +232,4 @@ class JobFolderProcess(Process):
       elif name not in self._finished:
         self.jobfolder.root[name] = value
     for name in self.jobfolder.root.iterkeys():
-      if name in self._finished and deleteold:
-        del self.jobfolder.root[name]
-      elif name not in jobfolder.root:
-        if name in running: continue
-        del self.jobfolder.root[name]
-        if name in self._torun: self._torun.remove(name)
+      if name in self._finished and deleteold: del self.jobfolder.root[name]

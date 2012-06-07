@@ -42,8 +42,10 @@ class Process(object):
   @abstractmethod
   def start(self, comm):
     """ Starts current job. """
+    from . import AlreadyStarted
     from .mpi import MPISizeError, Communicator
     if self.done: return True
+    if self.started: raise AlreadyStarted('start cannot be called twice.')
     self.started = True
     if comm is not None:
       if comm['n'] == 0: raise MPISizeError('Empty communicator passed to process.')

@@ -1,7 +1,7 @@
 """ Manages external programs. """
 __docformat__ = "restructuredtext en"
 __all__  = [ 'Process', 'ProgramProcess', 'CallProcess', 'IteratorProcess',
-             'JobFolderProcess', 'PoolProcess', 'Fail', 'which' ]
+             'JobFolderProcess', 'PoolProcess', 'Fail', 'which', 'DummyProcess' ]
 
 from ..error import root
 from pool import PoolProcess
@@ -12,9 +12,13 @@ from iterator import IteratorProcess
 from jobfolder import JobFolderProcess
 from dummy import DummyProcess
 
-class Fail(root):
+class ProcessError(root):
+  """ Root of special exceptions issued by process module. """
+class Fail(ProcessError):
   """ Process failed to run successfully. """
   pass
+class AlreadyStarted(ProcessError):
+  """ Process already started. """
 
 def which(program):
   """ Gets location of program by mimicking bash which command. """
@@ -38,3 +42,4 @@ def which(program):
       if is_exe(join(dir, exprog)): return RelativePath(join(dir, exprog)).path
 
   raise IOError('Could not find executable {0}.'.format(program))
+

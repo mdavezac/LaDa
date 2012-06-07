@@ -90,7 +90,6 @@ class Functional(object):
   def __init__(self, popsize=100, rate=0.1):
     """" Initializes Functional. """
     from .standard import Mating
-    from ..misc import RelativePath
     super(Functional, self).__init__()
 
     self.population = []

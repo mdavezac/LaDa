@@ -1,7 +1,7 @@
 def test(executable):
   """ Tests ProgramProcess. Includes failure modes.  """
   from tempfile import mkdtemp
-  from os.path import join, exists
+  from os.path import join 
   from shutil import rmtree
   from lada.process.program import ProgramProcess
   from lada.process import Fail
@@ -39,6 +39,7 @@ def test(executable):
     assert program.process is None
   finally: rmtree(dir)
 
+  # fail on poll
   try: 
     with Changedir(dir) as pwd: pass
     stdout = join(dir, 'stdout')
@@ -48,6 +49,20 @@ def test(executable):
                               stdout=stdout, dompi=True )
     program.start(comm)
     while not program.poll():  continue
+  except Fail: pass
+  else: raise Exception()
+  finally: rmtree(dir)
+
+  # fail on wait
+  try: 
+    with Changedir(dir) as pwd: pass
+    stdout = join(dir, 'stdout')
+    program = ProgramProcess( executable, outdir=dir, 
+                              stderr=join(dir, 'shit'),
+                              cmdline=['--sleep', 0, '--order', 666], 
+                              stdout=stdout, dompi=True )
+    program.start(comm)
+    program.wait()
   except Fail: pass
   else: raise Exception()
   finally: rmtree(dir)

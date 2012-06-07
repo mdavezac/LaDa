@@ -57,9 +57,8 @@ def test_getjobs(nprocs=8, njobs=20):
 
 def test(executable):
   """ Tests JobFolderProcess. Includes failure modes.  """
-  from time import sleep
   from tempfile import mkdtemp
-  from os.path import join, exists
+  from os.path import join
   from shutil import rmtree
   from numpy import all, arange, abs, array
   from lada.jobfolder.jobfolder import JobFolder
@@ -67,7 +66,6 @@ def test(executable):
   from lada.jobfolder import save
   from lada.process.pool import PoolProcess
   from lada.process import Fail
-  from lada.misc import Changedir
   from lada.error import internal
   from lada import default_comm
   from functional import Functional
@@ -96,9 +94,7 @@ def test(executable):
 
     # now starting for real.
     program.start(comm)
-    while not program.poll(): 
-      sleep(1)
-      continue
+    program.wait()
     assert program.nbjobsleft == 0
     extract = MassExtract(join(dir, 'dict.dict'))
     assert all(extract.success.itervalues())
@@ -122,6 +118,7 @@ def test(executable):
   finally: 
     try: rmtree(dir)
     except: pass
+  return
 
   try: 
     job = root / str(666)
@@ -154,7 +151,7 @@ def test_large():
   from random import random
   from lada.jobfolder.jobfolder import JobFolder
   from lada.process.pool import PoolProcess
-  from lada.process.dummy import DummyProcess, DummyFunctional
+  from lada.process.dummy import DummyFunctional
   from lada import default_comm
   root = JobFolder()
   for n in xrange(100):
@@ -184,6 +181,104 @@ def test_large():
   while not program.poll():
     # print 256 - program._comm['n'], len(program.process)
     continue
+
+def test_update(executable):
+  """ Tests JobFolderProcess with update. """
+  from tempfile import mkdtemp
+  from os.path import join
+  from shutil import rmtree
+  from lada.jobfolder.jobfolder import JobFolder
+  from lada.jobfolder import save
+  from lada.process.pool import PoolProcess
+  from lada import default_comm
+  from functional import Functional
+
+  root = JobFolder()
+  for n in xrange(3):
+    job = root / str(n)
+    job.functional = Functional(executable, [n])
+    job.params['sleep'] = 1
+  supp = JobFolder()
+  for n in xrange(3, 6):
+    job = supp / str(n)
+    job.functional = Functional(executable, [n])
+    job.params['sleep'] = 1
+
+  comm = default_comm.copy()
+  comm['n'] = 4
+
+  dir = mkdtemp()
+  save(root, join(dir, 'dict.dict'), overwrite=True)
+  try: 
+    program = PoolProcess(root, processalloc=processalloc, outdir=dir, keepalive=True)
+    assert program.nbjobsleft > 0
+    # compute current jobs.
+    program.start(comm)
+    program.wait()
+    assert hasattr(program, '_comm')
+
+    # compute second set of updated jobs
+    program.update(supp)
+    program.wait()
+
+  finally:
+    try: rmtree(dir)
+    except: pass
+
+def test_update_with_fail(executable):
+  """ Tests JobFolderProcess with update. """
+  from tempfile import mkdtemp
+  from os.path import join
+  from shutil import rmtree
+  from lada.jobfolder.jobfolder import JobFolder
+  from lada.jobfolder import save
+  from lada.process.pool import PoolProcess
+  from lada.process import Fail
+  from lada import default_comm
+  from functional import Functional
+
+  root = JobFolder()
+  for n in xrange(3):
+    job = root / str(n)
+    job.functional = Functional(executable, [n])
+    job.params['sleep'] = 1
+  root['1'].functional.order = 666
+  root['1'].sleep = None
+  supp = JobFolder()
+  for n in xrange(3, 6):
+    job = supp / str(n)
+    job.functional = Functional(executable, [n])
+    job.params['sleep'] = 1
+  supp['5'].sleep = 0
+  supp['5'].functional.order = 666
+
+  comm = default_comm.copy()
+  comm['n'] = 4
+
+  dir = mkdtemp()
+  save(root, join(dir, 'dict.dict'), overwrite=True)
+  try: 
+    program = PoolProcess(root, processalloc=processalloc, outdir=dir, keepalive=True)
+    assert program.nbjobsleft > 0
+    # compute current jobs.
+    program.start(comm)
+    try: program.wait()
+    except Fail: pass
+    else:
+      print program.errors
+      raise Exception()
+    assert hasattr(program, '_comm')
+
+    # compute second set of updated jobs
+    program.update(supp)
+    try: program.wait()
+    except Fail: pass
+    else: raise Exception()
+
+  finally:
+    try: rmtree(dir)
+    except: pass
+    
     
 if __name__ == "__main__":
   from sys import argv, path
@@ -198,4 +293,6 @@ if __name__ == "__main__":
   test_getjobs(8, 20)
   test_getjobs(16, 60)
   test(abspath(argv[1]))
+  test_update(abspath(argv[1]))
+  test_update_with_fail(abspath(argv[1]))
 

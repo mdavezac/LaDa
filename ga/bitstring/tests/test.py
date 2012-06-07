@@ -7,14 +7,16 @@ def test(program):
   # something screwing with the seed... 
   # possibly uuid. Can't make this a deterministic test so easily.
   functional = GAFunc(program, 10, popsize=20, rate=0.5)
-  dir = mkdtemp()
+  dir = '/tmp/test' #mkdtemp()
   try: 
     result = functional(dir, default_comm)
     indiv =  result.best(1)
     assert all(abs(indiv.genes-1) < 1e-8)
   finally:
-    try: rmtree(dir)
-    except: pass
+    pass
+
+   #try: rmtree(dir)
+   #except: pass
 
 if __name__ == "__main__":
   from sys import argv, path

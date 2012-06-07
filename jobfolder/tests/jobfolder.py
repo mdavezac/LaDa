@@ -1,5 +1,4 @@
 def test():
-  from random import randint
   from tempfile import mkdtemp
   from shutil import rmtree
   from os import makedirs
