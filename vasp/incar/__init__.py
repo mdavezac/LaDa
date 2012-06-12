@@ -3,11 +3,11 @@ __docformat__ = "restructuredtext en"
 __all__ = [ "SpecialVaspParam", "ExtraElectron", "Algo", "Precision", "Ediff",\
             "Encut", "FFTGrid", "Restart", "UParams", "IniWave", 'Ediffg', "EncutGW", \
             "Incar", "Magmom", 'Npar', 'Boolean', 'Integer', 'Choices', 'PrecFock',
-            "System", 'PartialRestart', 'Relaxation', 'Smearing' ]
+            "System", 'PartialRestart', 'Relaxation', 'Smearing', 'Lsorbit' ]
 from _params import SpecialVaspParam, ExtraElectron, Algo, Precision, Ediff,\
                     Encut, FFTGrid, PartialRestart, Restart, UParams, IniWave, Magmom,\
                     Npar, Boolean, Integer, PrecFock, NonScf, Ediffg, Choices, \
-                    EncutGW, System, Relaxation, Smearing
+                    EncutGW, System, Relaxation, Smearing, Lsorbit
 from ...misc import add_setter
 
 
@@ -67,6 +67,7 @@ class Incar(object):
     self.system        = System(True)
     self.smearing      = Smearing(None)
     self.relaxation    = Relaxation(None)
+    self.lsorbit       = Lsorbit(None)
 
     self.lwave       = Boolean("lwave", False)
     self.lcharg      = Boolean("lcharg", True)
@@ -84,6 +85,10 @@ class Incar(object):
     # gathers special parameters.
     # Calls them first in case they change normal key/value pairs.
     result, specials, comments = [], [], []
+    for key, value in self.special.items():
+      if value.value is None: continue
+      line = value.incar_string(**kwargs)
+    # Then calls a second time in case they change each other.
     for key, value in self.special.items():
       if value.value is None: continue
       line = value.incar_string(**kwargs)

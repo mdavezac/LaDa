@@ -140,22 +140,22 @@ The following is a (possibly incomplete) list of VASP parameters with no special
 
 .. currentmodule:: lada.vasp.incar
 
-======================================== ==================================  ==================================  ================================
-:py:attr:`addgrid <Incar.addgrid>`       :py:attr:`ispin <Incar.ispin>`      :py:attr:`istart <Incar.istart>`    :py:attr:`isym <Incar.isym>`                 
-:py:attr:`lmaxfockae <Incar.lmaxfockae>` :py:attr:`lmaxmix <Incar.lmaxmix>`  :py:attr:`lorbit <Incar.lorbit>`    :py:attr:`nbands <Incar.nbands>` 
-:py:attr:`nomega <Incar.nomega>`         :py:attr:`nupdown <Incar.nupdown>`  :py:attr:`symprec <Incar.symprec>`
-======================================== ==================================  ==================================  ================================
+=============================== ================================== ========================== ==========================
+:py:attr:`~Incar.addgrid`       :py:attr:`ispin <Incar.ispin>`     :py:attr:`~Incar.istart`   :py:attr:`~Incar.isym`
+:py:attr:`~Incar.lmaxfockae`    :py:attr:`lmaxmix <Incar.lmaxmix>` :py:attr:`~Incar.lorbit`   :py:attr:`~Incar.nbands`
+:py:attr:`~Incar.nomega`        :py:attr:`nupdown <Incar.nupdown>` :py:attr:`~Incar.symprec` 
+=============================== ================================== ========================== ==========================
 
 The following have something special about them:
 
-========================================== ============================================== ======================================== ================================== ===================================
-:py:attr:`U_verbosity <Incar.U_verbosity>` :py:attr:`algo <Incar.algo>`                   :py:attr:`ediff <Incar.ediff>`           :py:attr:`ediffg <Incar.ediffg>`   :py:attr:`encut <Incar.encut>`                
-:py:attr:`encutgw <Incar.encutgw>`         :py:attr:`extraelectron <Incar.extraelectron>` :py:attr:`fftgrid <Incar.fftgrid>`       :py:attr:`lcharg <Incar.lcharg>`   :py:attr:`loptics <Incar.loptics>`            
-:py:attr:`lpead <Incar.lpead>`             :py:attr:`lrpa <Incar.lrpa>`                   :py:attr:`lvtot <Incar.lvtot>`           :py:attr:`lwave <Incar.lwave>`     :py:attr:`magmom <Incar.magmom>`              
-:py:attr:`nelm <Incar.nelm>`               :py:attr:`nelmdl <Incar.nelmdl>`               :py:attr:`nelmin <Incar.nelmin>`         :py:attr:`nonscf <Incar.nonscf>`   :py:attr:`npar <Incar.npar>`                  
-:py:attr:`precfock <Incar.precfock>`       :py:attr:`precision <Incar.precision>`         :py:attr:`relaxation <Incar.relaxation>` :py:attr:`restart <Incar.restart>` :py:attr:`smearing <Incar.smearing>`          
-:py:attr:`system <Incar.system>`           :py:attr:`symmetries <Incar.symmetries>`
-========================================== ============================================== ======================================== ================================== ===================================
+=================================== ===================================== =================================== =============================== =============================
+:py:attr:`~Incar.U_verbosity`       :py:attr:`~Incar.algo`                :py:attr:`~Incar.ediff`             :py:attr:`~Incar.ediffg         :py:attr:`~Incar.encut`
+:py:attr:`~Incar.encutgw`           :py:attr:`~Incar.extraelectron`       :py:attr:`~Incar.fftgrid`           :py:attr:`~Incar.lcharg         :py:attr:`~Incar.loptics`
+:py:attr:`~Incar.lpead`             :py:attr:`~Incar.lrpa`                :py:attr:`~Incar.lsorbit`           :py:attr:`~Incar.lvtot          :py:attr:`~Incar.lwave`
+:py:attr:`~Incar.magmom`            :py:attr:`~Incar.nelm`                :py:attr:`~Incar.nelmdl`            :py:attr:`~Incar.nelmin         :py:attr:`~Incar.nonscf`
+:py:attr:`~Incar.npar`              :py:attr:`~Incar.precfock`            :py:attr:`~Incar.precision`         :py:attr:`~Incar.relaxation`    :py:attr:`~Incar.restart`
+:py:attr:`~Incar.smearing`          :py:attr:`~Incar.system`              :py:attr:`~Incar.symmetries`
+=================================== ===================================== =================================== =============================== =============================
 
 .. currentmodule:: lada.vasp
 

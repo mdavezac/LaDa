@@ -6,5 +6,6 @@ class Vasp(object):
     self.nonscf = value
     self.istart = None
     self.icharg = None
+    self.lsorbit = None
 
 

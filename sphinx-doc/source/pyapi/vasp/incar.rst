@@ -14,11 +14,12 @@ Incar
      :py:attr:`fftgrid` :py:attr:`ispin` :py:attr:`icharg` :py:attr:`istart`
      :py:attr:`isym` :py:attr:`lcharg` :py:attr:`loptics` :py:attr:`lorbit`
      :py:attr:`lmaxmix` :py:attr:`lmaxfockae` :py:attr:`lpead` :py:attr:`lrpa`
-     :py:attr:`lvtot` :py:attr:`lwave` :py:attr:`magmom` :py:attr:`nbands`
-     :py:attr:`nomega` :py:attr:`nonscf` :py:attr:`nelm` :py:attr:`nelmin`
-     :py:attr:`nelmdl` :py:attr:`npar` :py:attr:`nupdown` :py:attr:`precfock`
-     :py:attr:`precision` :py:attr:`relaxation` :py:attr:`restart`
-     :py:attr:`symprec` :py:attr:`U_verbosity` :py:attr:`system`
+     :py:attr:`lsorbit` :py:attr:`lvtot` :py:attr:`lwave` :py:attr:`magmom`
+     :py:attr:`nbands` :py:attr:`nomega` :py:attr:`nonscf` :py:attr:`nelm`
+     :py:attr:`nelmin` :py:attr:`nelmdl` :py:attr:`npar` :py:attr:`nupdown`
+     :py:attr:`precfock` :py:attr:`precision` :py:attr:`relaxation`
+     :py:attr:`restart` :py:attr:`symprec` :py:attr:`U_verbosity`
+     :py:attr:`system`
 
    New parameters can be added simply with :py:attr:`add_param`.
 
@@ -65,6 +66,8 @@ All these classes are actually defined in ``lada.vasp.incar._params``.
 .. autoclass:: System
    :show-inheritance:
 .. autoclass:: UParams
+   :show-inheritance:
+.. autoclass:: Lsorbit
    :show-inheritance:
 
 

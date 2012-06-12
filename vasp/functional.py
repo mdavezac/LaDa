@@ -34,10 +34,22 @@ class Vasp(Incar):
                    else "\n0\nM\n4 4 4\n0 0 0"
     """ kpoints for which to perform calculations. """
 
-    if 'program' in kwargs:
-      self.program = kwargs['program']
-      """ Name/fullpath of vasp program. """
+    self.program = kwargs.get('program', None)
+    """ Path to vasp program. 
+    
+        Can be one of the following:
 
+          - None: defaults to :py:attr:`~lada.vasp_program`.
+            :py:attr:`~lada.vasp_program` can take the same values as described
+            here, except for None.
+          - string: Should be the path to the vasp executable. It can be either
+            a full path, or an executable within the envirnoment's $PATH
+            variable.
+          - callable: The callable is called with a :py:class:`~lada.vasp.Vasp`
+            as sole argument. It should return a string, as described above.
+            In other words, different vasp executables can be used depending on
+            the parameters. 
+    """
     # sets all known keywords as attributes.
     for key, value in kwargs.iteritems():
       if hasattr(self, key): setattr(self, key, value)
@@ -125,7 +137,8 @@ class Vasp(Incar):
     if abs(structure.scale) < 1e-8: raise ValueError("Structure with null scale.")
 
     self.pullup(structure, outdir, comm)
-    program = getattr(self, 'program', vasp_program)
+    program = self.program if self.program is not None else vasp_program
+    if hasattr(program, '__call__'): program = program(self)
     yield ProgramProcess( program, cmdline=[], outdir=outdir, 
                           stdout='stdout', stderr='stderr', dompi=True )
     self.bringdown(outdir, structure)

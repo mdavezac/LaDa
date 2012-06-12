@@ -3,7 +3,7 @@ __docformat__ = "restructuredtext en"
 __all__ = [ "SpecialVaspParam", "ExtraElectron", "Algo", "Precision", "Ediff",\
             "Ediffg", "Encut", "EncutGW", "FFTGrid", "Restart", "UParams", "IniWave",\
             "Magmom", 'Npar', 'Boolean', 'Integer', 'Choices', 'PrecFock', 'NonScf', \
-            "System", 'PartialRestart', 'Relaxation', 'Smearing' ]
+            "System", 'PartialRestart', 'Relaxation', 'Smearing', 'Lsorbit' ]
 class SpecialVaspParam(object): 
   """ Base type for special vasp parameters. 
   
@@ -301,7 +301,6 @@ class Encut(SpecialVaspParam):
   def __init__(self, value): super(Encut, self).__init__(value)
 
   def incar_string(self, **kwargs):
-    from math import fabs
     from ...crystal import specieset
     from quantities import eV
     value = self.value
@@ -404,6 +403,7 @@ class PartialRestart(SpecialVaspParam):
       copyfile(join(self.value.directory, files.TMPCAR), files.TMPCAR,
                nothrow='same exists', symlink=getattr(kwargs["vasp"], 'symlink', False),
                nocopyempty=True) 
+      if kwargs['vasp'].lsorbit == True: kwargs['vasp'].nbands = 2*self.value.nbands 
     return None
 
 class Restart(PartialRestart):
@@ -418,17 +418,16 @@ class Restart(PartialRestart):
   def __init__(self, value): super(Restart, self).__init__(value)
 
   def incar_string(self, **kwargs):
-    from os.path import join, exists, getsize
-    from shutil import copy
+    from os.path import join
     from ...misc import copyfile
     from .. import files
 
-    super(Restart, self).incar_string(**kwargs)
+    result = super(Restart, self).incar_string(**kwargs)
     if self.value is not None and self.value.success:
       copyfile(join(self.value.directory, files.CONTCAR), files.POSCAR,\
                nothrow='same exists', symlink=getattr(kwargs["vasp"], 'symlink', False),\
                nocopyempty=True) 
-    return None
+    return result
 
 class NonScf(SpecialVaspParam):
   """ Whether to perform a self-consistent or non-self-consistent run. 
@@ -547,6 +546,7 @@ class Boolean(SpecialVaspParam):
     return self._value
   @value.setter
   def value(self, value):
+    if value is None: self._value = None; return
     if isinstance(value, str):
       if len(value) == 0: value = False
       elif   value.lower() == "true"[:min(len(value), len("true"))]: value = True
@@ -909,3 +909,16 @@ class Smearing(SpecialVaspParam):
     if value is None: return "{0.__class__.__name__}(None)".format(self)
     if isinstance(value, str):  return "{0.__class__.__name__}({1!r})".format(self, value)
     return "{0.__class__.__name__}({1})".format(self, repr(self.value)[1:-1])
+
+
+class Lsorbit(Boolean): 
+  """ Run calculation with spin-orbit coupling. 
+
+      Accepts None, True, or False.
+      If True, then sets :py:attr:`~lada.vasp.incar.Incar.nonscf` to True.
+  """ 
+  def __init__(self, value=None):
+    super(Lsorbit, self).__init__('LSORBIT', value)
+  def incar_string(self, **kwargs):
+    if self.value == True: kwargs['vasp'].nonscf = True
+    return super(Lsorbit, self).incar_string(**kwargs)

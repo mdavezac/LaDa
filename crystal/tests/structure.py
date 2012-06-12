@@ -47,8 +47,6 @@ def test_init(Class):
   # make sure that add_atom did not increase a's ref count innapropriately.
   a.cell[0,0] = 1e0
   a.cell[1,:] = 1e0
-  print a.cell
-  print a
   assert str(a) == "Structure( 1, 0, 0,\\\n"\
                    "           1, 1, 1,\\\n"\
                    "           0, 0, 2.5,\\\n"\

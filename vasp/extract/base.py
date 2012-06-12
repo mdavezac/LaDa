@@ -52,7 +52,7 @@ class ExtractBase(object):
 
         Requires the functional to be pasted at the end of the calculations. 
     """
-    from re import compile, M
+    from re import compile
     from ...misc import exec_input
     regex = compile('#+ FUNCTIONAL #+\n((.|\n)*)\n#+ END FUNCTIONAL #+')
     with self.__outcar__() as file: result = regex.search(file.read())
@@ -93,7 +93,7 @@ class ExtractBase(object):
   def initial_structure(self):
     """ Structure at start of calculations. """
     from re import compile, M
-    from numpy import array, zeros, dot
+    from numpy import array, dot
     from numpy.linalg import inv
     from ...crystal import Structure
     from ...misc import exec_input
@@ -118,7 +118,7 @@ class ExtractBase(object):
         for i in range(3): result.cell[:,i] = array(data[i][:3], dtype='float64')
       except: 
         for i in range(3): result.cell[i, :] = array(data[i][-3:], dtype='float64')
-        cell = inv(cell)
+        result.cell = inv(result.cell)
       for line in file:
         if atom_re.search(line) is not None: break
       for specie, n in zip(self.species,self.stoichiometry):
@@ -182,8 +182,6 @@ class ExtractBase(object):
   @make_cached
   def structure(self):
     """ Greps structure and total energy from OUTCAR. """
-    from quantities import eV
-
     if self.nsw == 0 or self.ibrion == -1:
       return self.starting_structure
 
@@ -909,7 +907,6 @@ class ExtractBase(object):
     """ Returns Valence Band Maximum. """
     if not self.is_dft: raise AttributeError('not a DFT calculation.')
     from numpy import max
-    from quantities import eV
     return max(self.eigenvalues[self.eigenvalues<=self.fermi0K+1e-8*self.fermi0K.units])
 
   @property
@@ -1215,7 +1212,7 @@ class ExtractBase(object):
   def stresses(self):
     """ Returns total stress at each relaxation step. """
     if not self.is_dft: raise AttributeError('not a DFT calculation.')
-    from numpy import zeros, abs, dot, all, array
+    from numpy import zeros, abs, array
     from numpy.linalg import det
     from quantities import eV, J, kbar
     from re import finditer, M 
@@ -1252,8 +1249,7 @@ class ExtractBase(object):
     if not self.is_dft: raise AttributeError('not a DFT calculation.')
     from numpy import array
     from quantities import angstrom, eV
-    from re import compile, finditer, M
-    result = []
+    from re import finditer, M
     pattern = """ *POSITION\s*TOTAL-FORCE\s*\(eV\/Angst\)\s*\n"""\
               """\s*-+\s*\n"""\
               """(?:\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s*\n)+"""\

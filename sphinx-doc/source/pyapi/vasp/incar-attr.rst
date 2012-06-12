@@ -230,3 +230,7 @@
 
       See the documentation for :py:class:`UParams`.
 
+   .. py:attribute:: Incar.lsorbit
+
+      See the documentation for :py:class:`LSorbit`.
+

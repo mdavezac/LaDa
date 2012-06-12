@@ -43,7 +43,6 @@ def test_b5(u):
 
 if __name__ == "__main__":
   from sys import argv, path 
-  from numpy import array
   if len(argv) > 0: path.extend(argv[1:])
   
   test_b5(0.25)

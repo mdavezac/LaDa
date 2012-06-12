@@ -65,7 +65,15 @@ VASP
 
   .. py:data:: vasp_program
 
-     Path to the vasp executable itself.
+     Signifies which vasp executable to use. It can take the following values:
+
+     - string: Should be the path to the vasp executable. It can be either
+       a full path, or an executable within the envirnoment's $PATH
+       variable.
+     - callable: The callable is called with a :py:class:`~lada.vasp.Vasp`
+       as sole argument. It should return a string, as described above.
+       In other words, different vasp executables can be used depending on
+       the parameters. 
 
 .. _mpi-config:
 

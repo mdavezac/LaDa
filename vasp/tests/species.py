@@ -56,8 +56,7 @@ def test_enlep():
          and abs(a['U1'] + 5e0) < 1e-8 and a['func'] == 'enlep'
 
 def test_specie(directory):
-  from os import environ
-  from os.path import join, relpath, abspath
+  from os.path import join
   from pickle import loads, dumps
   from quantities import eV
   from lada.vasp.specie import Specie
@@ -70,8 +69,6 @@ def test_specie(directory):
     assert abs(specie.enmax - enmax*eV) < 1e-8 and abs(specie.valence-valence) < 1e8
     with open(join(path, "POTCAR"), "r") as file:
       specie.read_potcar() == file.read()
-    assert repr(specie)\
-        == "Specie({0!r})".format(join('~/', relpath(abspath(path), environ["HOME"])))
     assert repr(specie) == repr(loads(dumps(specie)))
 
 

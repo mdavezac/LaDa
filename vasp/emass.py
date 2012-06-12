@@ -1,11 +1,13 @@
 """ Methods to compute effective masses and other derivatives. """
 __docformat__ = "restructuredtext en"
-__all__ = ["Extract", "reciprocal"]
-from .extract import ExtractDFT
+__all__ = ["Extract", "iter_mass", 'Mass']
+from .extract import Extract as ExtractDFT
+from ..functools.makeclass import makeclass
+from .functional import Vasp
 
 class Extract(ExtractDFT):
   """ Extractor for reciprocal taylor expansion. """
-  def __init__(self, outcar=None, comm=None, input=None, lstsq=None, order=2, rcond=-1, **kwargs):
+  def __init__(self, outcar=None, input=None, lstsq=None, order=2, rcond=-1, **kwargs):
     """ Initializes the extraction object. 
     
         :Parameters:
@@ -13,8 +15,6 @@ class Extract(ExtractDFT):
             Path to OUTCAR file. Can also be the directory if the OUTCAR is
             named "OUTCAR". Defaults to None, in which case it uses the current
             working directory.
-          comm : None or `lada.mpi.Communicator`
-            MPI Communicator grouping processes participating in the calculation.
           input : Extract-type
             Extractor object for the calculation from which the charge density
             was obtained. Defaults to None, meaning whatever calculation is
@@ -27,9 +27,8 @@ class Extract(ExtractDFT):
     """
     from os.path import dirname
     from numpy.linalg import lstsq as nplstsq
-    from lada.vasp import Extract as VaspExtract
-    super(Extract, self).__init__(outcar, comm=comm, **kwargs)
-    self.input = input if input != None else VaspExtract(dirname(self.directory), comm=comm)
+    super(Extract, self).__init__(outcar, **kwargs)
+    self.input = input if input != None else ExtractDFT(dirname(self.directory), comm=comm)
     """ Extractor object for the calculation from which the charge density was obtained. """
     self.lstsq = lstsq if lstsq != None else nplstsq
     """ Least-square-fit method from which to get Taylor coefficients. """
@@ -288,29 +287,20 @@ def iter_mass( vasp, structure, outdir = None, comm = None,
   kpoints = [ (x, y, z) for x in xrange(nbpoints)\
                         for y in xrange(nbpoints)\
                         for z in xrange(nbpoints) ]
-  functional.kpoints = (array(kpoints, dtype="float64") - (nbpoints-1)/2.) * stepsize + center
+  vasp.kpoints = (array(kpoints, dtype="float64") - (nbpoints-1)/2.) * stepsize + center
   if nbpoints % 2 == 0: # adds central point to grid.
-    functional.kpoints = append(center[None,:], functional.kpoints, axis=0)
+    vasp.kpoints = append(center[None,:], vasp.kpoints, axis=0)
 
   # and exectute it.
   kwargs = deepcopy(kwargs)
   kwargs['restart'] = first
   kwargs['nonscf']  = True
-  for u in vasp.iter(first.structure, outdir=join(first.directory, "reciprocal"), restart=efinal, **kwargs):
+  for u in Vasp.iter(first.structure, outdir=join(first.directory, "reciprocal"), **kwargs):
     yield u
 
-
-
-def mass( vasp, structure, outdir = None, comm = None,
-          order = 2, nbpoints = None, stepsize = 1e-2, 
-          center = None, lstsq = None, **kwargs ):
-  """ Computes k-space taylor expansion of the eigenvalues up to given order. """
-  for u in iter_mass(vasp, structure, outdir=
-  return Extract(outcar=second.directory, comm=None, input=second, lstsq=lstsq, order=order)
+  yield iter_mass.Extract(first.directory)
 
 iter_mass.Extract = Extract
 """ Extractor class for the reciprocal method. """
-mass.Extract = Extract
-""" Extractor class for the reciprocal method. """
-mass.Extract = Extract
-""" Extractor class for the reciprocal method. """
+Mass = makeclass( 'Epitaxial', Vasp, iter_mass, None, module='lada.vasp.emass',
+                  doc='Functional form of the :py:class:`lada.vasp.relax.iter_mass` method.' )

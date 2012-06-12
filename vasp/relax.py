@@ -11,7 +11,7 @@
 """
 __docformat__ = "restructuredtext en"
 __all__ = ['relax', 'iter_relax', 'Relax', 'epitaxial', 'iter_epitaxial', 'RelaxExtract']
-from ..functools.makeclass import makeclass
+from ..functools.makeclass import makeclass, makefunc
 from .functional import Vasp
 from .extract import Extract, MassExtract
 
@@ -52,8 +52,7 @@ class RelaxExtract(Extract):
 
 def iter_relax( vasp, structure, outdir=None, first_trial=None,
                 maxcalls=10, keepsteps=True, nofail=False, 
-                convergence=None, relaxation = "volume cellshape ionic", 
-                minrelsteps=-1, **kwargs ):
+                convergence=None, minrelsteps=-1, **kwargs ):
   """ Iterator over calls to VASP during relaxation.
   
       This generator iterates over successive VASP calculations until a fully
@@ -92,9 +91,6 @@ def iter_relax( vasp, structure, outdir=None, first_trial=None,
       :param bool keepsteps:
         If true, intermediate steps are kept. If False, intermediate steps are
         erased.
-      :param string relaxation:
-        Degrees of freedom to relax. It should be either "cellshape" or "ionic"
-        or both.
       :param bool nofail:
         If True, will not fail if convergence is not achieved. Just keeps going. 
         Defaults to False.
@@ -157,6 +153,14 @@ def iter_relax( vasp, structure, outdir=None, first_trial=None,
     params.update(first_trial)
   else: params = kwargs
   
+  # defaults to vasp.relaxation
+  relaxation = kwargs.pop('relaxation', vasp.relaxation)
+  # could be that relaxation comes from vasp.relaxation which is a tuple.
+  if isinstance(relaxation, tuple):
+    vasp = deepcopy(vasp)
+    vasp.relaxation = relaxation
+    relaxation = relaxation[0]
+
   # performs relaxation calculations.
   while (maxcalls <= 0 or nb_steps < maxcalls) and relaxation.find("cellshape") != -1:
     # performs initial calculation.   
@@ -233,45 +237,15 @@ def iter_relax( vasp, structure, outdir=None, first_trial=None,
   if output.success and (not keepsteps):
     rmtree(join(outdir, "cellshape"))
     rmtree(join(outdir, "ions"))
+  # yields final extraction object.
+  yield iter_relax.Extract(outdir)
+
 iter_relax.Extract = RelaxExtract
 """ Extraction method for relaxation runs. """
 
-def relax( vasp, structure, outdir=None, first_trial=None,
-           maxcalls=10, keepsteps=True, nofail=False, 
-           convergence=None, relaxation = "volume cellshape ionic", 
-           minrelsteps=-1, comm=None, **kwargs ):
-  """ Performs relaxation of an input structure using :py:class:`Vasp`.  """
-  from os.path import join
-  from copy import deepcopy
-  from ..misc import execute_program
-  result = None
-  # could be that relaxation comes from vasp.relaxation which is a tuple.
-  if isinstance(relaxation, tuple):
-    vasp = deepcopy(vasp)
-    vasp.relaxation = relaxation
-    relaxation = relaxation[0]
-  for program in iter_relax( vasp, structure, outdir, first_trial=first_trial,
-                             maxcalls=maxcalls, keepsteps=keepsteps, nofail=nofail,
-                             relaxation=relaxation, **kwargs ):
-    # iterator may yield the result from a prior successfull run. 
-    if getattr(program, 'success', False):
-      result = program
-      continue
-    # otherwise, it should yield a Program tuple to execute.
-    program.start(comm)
-    program.wait()
-    result = vasp.Extract(outdir)
-  return result
-
-relax.__doc__ += iter_relax.__doc__[iter_relax.__doc__.find('\n'):\
-                                    iter_relax.__doc__.find(':return')]\
-                                   .replace('generator', 'method').replace('\n      ', '\n')\
-                 + "\n:return: An extraction object pointing to the final static calculation.\n"\
-                 + "\n.. seealso:: :py:func:`iter_relax`\n\n"
-relax.Extract = iter_relax.Extract
-""" Extraction method for relaxation runs. """
-Relax = makeclass( 'Relax', Vasp, iter_relax, relax, module='lada.vasp.relax',
-                   doc = 'Functional form of the :py:class:`lada.vasp.relax.relax` method.' )
+relax = makefunc('relax', iter_relax, module='lada.vasp.relax')
+Relax = makeclass( 'Relax', Vasp, iter_relax, None, module='lada.vasp.relax',
+                   doc = 'Functional form of the :py:class:`lada.vasp.relax.iter_relax` method.' )
 
 def _get_is_converged(vasp, structure, convergence=None, minrelsteps=-1, **kwargs):
   """ Returns convergence function. """
@@ -371,8 +345,7 @@ def iter_epitaxial(vasp, structure, outdir=None, direction=[0,0,1], epiconv = 1e
   allcalcs = []
   def change_structure(x):
     """ Creates new structure with input change in c. """
-    from numpy.linalg import inv
-    from numpy import outer, dot
+    from numpy import outer
     newstruct = structure.copy()
     strain = outer(direction, direction) * x 
     newstruct.cell += dot(strain, structure.cell)
@@ -444,33 +417,11 @@ def iter_epitaxial(vasp, structure, outdir=None, direction=[0,0,1], epiconv = 1e
                    .format(structure, repr(structure).replace('\n', '\n            ')),
                    file.read() )
   with open(filename, 'w') as file: file.write(string)
+  # yields final extraction object.
+  yield iter_epitaxial.Extract(outdir)
+
 iter_epitaxial.Extract = RelaxExtract
 """ Extraction method for epitaxial relaxation runs. """
-
-def epitaxial(vasp, structure, outdir=None, direction=[0,0,1], epiconv = 1e-4, 
-              initstep=0.05, comm=None, **kwargs):
-  """ Iterates over calls to VASP during epitaxial relaxation. """
-  result = None
-  for program in iter_epitaxial( vasp, structure, outdir, direction=direction,
-                                 epiconv=epiconv, **kwargs ): 
-    # iterator may yield the result from a prior successfull run. 
-    if getattr(program, 'success', False):
-      result = program
-      continue
-    # otherwise, it should yield a Program tuple to execute.
-    program.start(comm)
-    program.wait()
-    result = vasp.Extract(outdir)
-
-  return result
-epitaxial.Extract = iter_epitaxial.Extract
-""" Extraction method for epitaxial relaxation runs. """
-epitaxial.__doc__\
-    += iter_epitaxial.__doc__[iter_epitaxial.__doc__.find('\n'):\
-                              iter_epitaxial.__doc__.find(':return')]\
-                             .replace('generator', 'method').replace('\n      ', '\n')\
-                 + "\n:return: An extraction object pointing to the final static calculation.\n"\
-                 + "\n.. seealso:: :py:func:`iter_epitaxial`\n\n"
-
-Epitaxial = makeclass( 'Epitaxial', Vasp, iter_epitaxial, epitaxial, module='lada.vasp.relax',
-                       doc = 'Functional form of the :py:class:`lada.vasp.relax.epitaxial` method.' )
+Epitaxial = makeclass( 'Epitaxial', Vasp, iter_epitaxial, None, module='lada.vasp.relax',
+                       doc='Functional form of the :py:class:`lada.vasp.relax.iter_epitaxial` method.' )
+epitaxial = makefunc('epitaxial', iter_epitaxial, module='lada.vasp.relax')

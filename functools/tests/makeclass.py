@@ -1,6 +1,5 @@
 
 def test():
-  from collections import namedtuple
   from lada.functools.makeclass import makeclass
   import dummy
 
@@ -18,6 +17,22 @@ def test():
   assert functional.a == 1
   assert getattr(functional, 'other', True) == False
   assert functional(True) == False
+  assert functional.a == 1
+  assert dummy.iterator == 4
+  assert functional.b == -5
+
+  Functional = makeclass('Functional', dummy.Base, dummy.iter_func)
+  functional = Functional(b=-5, other=False)
+  assert getattr(functional, 'other', True) == False
+  assert functional(True) is None
+  assert functional.a == 2
+  assert dummy.iterator == 4
+  assert functional.b == -5
+
+  functional = Functional(b=-5, other=False, copy=base)
+  assert functional.a == 1
+  assert getattr(functional, 'other', True) == False
+  assert functional(True) is None
   assert functional.a == 1
   assert dummy.iterator == 4
   assert functional.b == -5

@@ -8,7 +8,6 @@ class DummyProcess(Process):
   """
   def __init__(self, maxtrials=1, chance=0.5, **kwargs):
     """ Initializes a process. """
-    from ..misc import RelativePath
     super(DummyProcess, self).__init__(maxtrials, **kwargs)
     self.chance = chance
 
@@ -51,7 +50,6 @@ class DummyFunctional(object):
       yield Extract(True)
       return
     self.started = True
-    comm = kwargs.get('comm', None)
     chance = kwargs.get('chance', self.chance)
     yield DummyProcess(chance=chance)
   def __call__(self, **kwargs):
