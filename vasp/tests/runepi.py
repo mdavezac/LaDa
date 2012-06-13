@@ -1,10 +1,7 @@
 def test(path):
-  from glob import glob
-  from os.path import join
   from shutil import rmtree
   from tempfile import mkdtemp
-  from numpy import all, abs
-  from quantities import kbar, eV, angstrom
+  from numpy import abs
   from lada.crystal import Structure
   from lada.vasp import Vasp
   from lada.vasp.relax import epitaxial

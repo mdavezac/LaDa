@@ -16,12 +16,12 @@ def test(path):
   vasp.set_smearing   = "metal", 0.01
   vasp.relaxation = "volume"
   vasp.add_specie = "Si", "{0}/pseudos/Si".format(path)
-  directory = '/home/mdavezac/bull' #mkdtemp()
+  directory = mkdtemp()
   try: 
     result = vasp(structure, outdir=directory, comm={'n': 2, 'ppn': 1})
     assert result.success
   finally: 
-#   rmtree(directory)
+    rmtree(directory)
     pass
 
 if __name__ == "__main__":
