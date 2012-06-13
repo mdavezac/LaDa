@@ -16,11 +16,11 @@
     compiled.
 """
 __docformat__ = "restructuredtext en"
-__all__ = ['Vasp', 'Extract', 'Specie', 'MassExtract', 'relax']
+__all__ = ['Vasp', 'Extract', 'Specie', 'MassExtract', 'relax', 'emass']
 from .extract import Extract, MassExtract
 from .specie import Specie
 from .functional import Vasp
-from . import relax
+from . import relax, emass
 
 def read_input(filepath="input.py", namespace=None):
   """ Specialized read_input function for vasp. 
@@ -36,8 +36,6 @@ def read_input(filepath="input.py", namespace=None):
   """
   from ..misc import read_input
   from . import specie
-  from .functional import Vasp
-  from .extract import Extract
   from relax import Epitaxial, Relax
 
   # names we need to create input.

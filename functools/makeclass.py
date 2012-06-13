@@ -160,9 +160,9 @@ def create_call_from_iter(iter, excludes):
         "     This function is created automagically from "                \
           ":py:func:`{1.func_name} <{1.__module__}.{1.func_name}>`.\n"     \
         "     Please see that function for the description of its parameters.\n\n"\
-        "  :param comm:\n"\
-        "     Additional keyword argument defining how call external programs.\n"\
-        "  :type comm: Dictionary or :py:class:`~lada.process.mpi.Communicator`\n\n"\
+        "     :param comm:\n"\
+        "        Additional keyword argument defining how call external programs.\n"\
+        "     :type comm: Dictionary or :py:class:`~lada.process.mpi.Communicator`\n"\
         "  \"\"\"\n"\
         .format(first_line, iter)
   # add iteration line:
@@ -324,21 +324,19 @@ def makefunc(name, iter, module=None):
   # keywords are deduced from arguments with defaults.
   # others will not be added.
   args = getargspec(iter)
-  header = "("
+  funcstring = "def {0}(".format(name)
   if args.args is not None and len(args.args) > 0:
     # first add arguments without default (except for first == self).
     nargs = len(args.args) - len(args.defaults)
-    for key in args.args[:nargs]: header += "{0}, ".format(key)
+    for key in args.args[:nargs]: funcstring += "{0}, ".format(key)
   if args.args is not None and len(args.args) > 0:
     # then add arguments with default
     nargs = len(args.args) - len(args.defaults)
     for key, value in zip(args.args[nargs:], args.defaults):
-      header += "{0}={1!r}, ".format(key, value)
-    if len(args.args[nargs:]) > 0: header = header[:-2]
+      funcstring += "{0}={1!r}, ".format(key, value)
+    if len(args.args[nargs:]) > 0: funcstring = funcstring[:-2]
   # adds comm keyword, but only to function def.
-  funcstring = "def {0}{1}, comm=None, **kwargs):\n".format(name, header)
-  # then add kwargs.,
-  header += ", **kwargs)"
+  funcstring += ", comm=None, **kwargs):\n"
 
   # adds standard doc string.
   doc = iter.__doc__ 
@@ -349,20 +347,26 @@ def makefunc(name, iter, module=None):
         "     This function is created automagically from "                \
           ":py:func:`{1.func_name} <{1.__module__}.{1.func_name}>`.\n"     \
         "     Please see that function for the description of its parameters.\n\n"\
-        "  :param comm:\n"\
-        "     Additional keyword argument defining how call external programs.\n"\
-        "  :type comm: Dictionary or :py:class:`~lada.process.mpi.Communicator`\n\n"\
+        "     :param comm:\n"\
+        "        Additional keyword argument defining how call external programs.\n"\
+        "     :type comm: Dictionary or :py:class:`~lada.process.mpi.Communicator`\n"\
         "  \"\"\"\n"\
         .format(first_line, iter)
-  # create function body.
+  # create function body...
   funcstring += "  from {0.__module__} import {0.func_name}\n"\
-                "  for program in {0.func_name}{1}:\n"\
+                "  for program in {0.func_name}(".format(iter)
+  # ... including detailed call to iterator function.
+  if args.args is not None and len(args.args) > 0:
+    for key in args.args: funcstring += "{0}, ".format(key)
+    if len(args.args[nargs:]) > 0: funcstring = funcstring[:-2]
+  if args.keywords is not None: funcstring += ', **kwargs'
+  funcstring += "):\n"\
                 "    if getattr(program, 'success', False):\n"\
                 "      result = program\n"\
                 "      continue\n"\
                 "    program.start(comm)\n"\
                 "    program.wait()\n"\
-                "  return result".format(iter, header)
+                "  return result"
   funcs = {}
   exec funcstring in funcs
   if module is not None:  funcs[name].__module__ = module

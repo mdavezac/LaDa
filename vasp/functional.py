@@ -237,7 +237,6 @@ class Vasp(Incar):
   def __repr__(self, skip=None):
     """ Returns a python script representing this object. """
     from .. import verbose_representation
-    from .incar._params import SpecialVaspParam
     if skip is None: skip = not verbose_representation
 
     # creates a default vasp instance to compare to.
@@ -309,6 +308,7 @@ class Vasp(Incar):
       except: pass
       noaddparam[key] = len(key), value
       module = value.__class__.__module__
+      classname = value.__class__.__name__ 
       if module == '__builtin__': continue
       if module in modules: modules[module].append(classname)
       else: modules[module] = [classname]

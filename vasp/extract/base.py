@@ -183,7 +183,7 @@ class ExtractBase(object):
   def structure(self):
     """ Greps structure and total energy from OUTCAR. """
     if self.nsw == 0 or self.ibrion == -1:
-      return self.starting_structure
+      return self.initial_structure
 
     try: result = self._catted_contcar;
     except:
@@ -500,6 +500,79 @@ class ExtractBase(object):
 
   @property
   @make_cached
+  def lsorbit(self):
+    """ Greps LSORBIT from OUTCAR. """
+    result = self._find_first_OUTCAR(r"""\s*LSORBIT\s*=\s*(T|F)\s+""")
+    if result is None: return None
+    return result.group(1) == 'T' 
+
+  @property
+  @make_cached
+  def lasph(self):
+    """ Greps LASPH from OUTCAR. """
+    result = self._find_first_OUTCAR(r"""\s*LASPH\s*=\s*(T|F)\s+""")
+    if result is None: return None
+    return result.group(1) == 'T' 
+
+  @property
+  @make_cached
+  def metagga(self):
+    """ Greps METAGGA from OUTCAR. """
+    result = self._find_first_OUTCAR(r"""\s*METAGGA\s*=\s*(T|F)\s+""")
+    if result is None: return None
+    return result.group(1) == 'T' 
+
+  @property
+  @make_cached
+  def lreal(self):
+    """ Greps LREAL from OUTCAR. """
+    result = self._find_first_OUTCAR(r"""\s*LREAL\s*=\s*(T|F)\s+""")
+    if result is None: return None
+    return result.group(1) == 'T' 
+
+  @property
+  @make_cached
+  def lcompat(self):
+    """ Greps LCOMPAT from OUTCAR. """
+    result = self._find_first_OUTCAR(r"""\s*LCOMPAT\s*=\s*(T|F)\s+""")
+    if result is None: return None
+    return result.group(1) == 'T' 
+
+  @property
+  @make_cached
+  def lreal_compat(self):
+    """ Greps LREAL_COMPAT from OUTCAR. """
+    result = self._find_first_OUTCAR(r"""\s*LREAL_COMPAT\s*=\s*(T|F)\s+""")
+    if result is None: return None
+    return result.group(1) == 'T' 
+
+  @property
+  @make_cached
+  def lgga_compat(self):
+    """ Greps LGGA_COMPAT from OUTCAR. """
+    result = self._find_first_OUTCAR(r"""\s*LGGA_COMPAT\s*=\s*(T|F)\s+""")
+    if result is None: return None
+    return result.group(1) == 'T' 
+
+  @property
+  @make_cached
+  def lcorr(self):
+    """ Greps LCORR from OUTCAR. """
+    result = self._find_first_OUTCAR(r"""\s*LCORR\s*=\s*(T|F)\s+""")
+    if result is None: return None
+    return result.group(1) == 'T' 
+
+  @property
+  @make_cached
+  def ldiag(self):
+    """ Greps LDIAG from OUTCAR. """
+    result = self._find_first_OUTCAR(r"""\s*LDIAG\s*=\s*(T|F)\s+""")
+    if result is None: return None
+    return result.group(1) == 'T' 
+
+
+  @property
+  @make_cached
   def kpoints(self):
     """ Greps k-points from OUTCAR.
     
@@ -721,6 +794,34 @@ class ExtractBase(object):
   def lcharg(self):
     """ Greps LWAVE from OUTCAR. """
     result = self._find_first_OUTCAR(r"""^\s*LCHARG\s*=\s*(\S)""")
+    if result == None: return None
+    return result.group(1) == 'T' 
+   
+  @property
+  def lnoncollinear(self):
+    """ Greps LNONCOLLINEAR from OUTCAR. """
+    result = self._find_first_OUTCAR(r"""^\s*LNONCOLLINEAR\s*=\s*(\S)""")
+    if result == None: return None
+    return result.group(1) == 'T' 
+   
+  @property
+  def lsecvar(self):
+    """ Greps LSECVAR from OUTCAR. """
+    result = self._find_first_OUTCAR(r"""^\s*LSECVAR\s*=\s*(\S)""")
+    if result == None: return None
+    return result.group(1) == 'T' 
+
+  @property
+  def lelf(self):
+    """ Greps LELF from OUTCAR. """
+    result = self._find_first_OUTCAR(r"""^\s*LELF\s*=\s*(\S)""")
+    if result == None: return None
+    return result.group(1) == 'T' 
+
+  @property
+  def ldipol(self):
+    """ Greps LDIPOL from OUTCAR. """
+    result = self._find_first_OUTCAR(r"""^\s*LDIPOL\s*=\s*(\S)""")
     if result == None: return None
     return result.group(1) == 'T' 
 
@@ -1272,7 +1373,9 @@ class ExtractBase(object):
                'istart', 'icharg', 'precision', 'ediff', 'ediffg', 'kpoints',
                'multiplicity', 'ispin', 'name', 'system', 'ionic_charges',
                'valence', 'nelect', 'extraelectron', 'nonscf', 'lwave', 
-               'lvtot', 'nelmdl', 'nelmin', 'nbands' ]
+               'lvtot', 'nelmdl', 'nelmin', 'nbands', 'lasph', 'lreal',
+               'lnoncollinear', 'lreal_compat', 'lelf', 'lgga_compat', 
+               'lcharg', 'lcorr', 'ldiag', 'ldipol', 'lsorbit', 'lsecvar' ]
     if self.is_dft: 
       result += [ 'energy_sigma0', 'energies_sigma0', 'all_total_energies', 'fermi0K',
                   'halfmetallic', 'cbm', 'vbm', 'total_energies', 'total_energy', 
@@ -1284,16 +1387,3 @@ class ExtractBase(object):
     elif self.is_gw:
       result += ['eigenvalues', 'qp_eigenvalues', 'self_energies', 'occupations']
     return result
-
-
-                 
-
-
-
-
-
-
-
-
-
-

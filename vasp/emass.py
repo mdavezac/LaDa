@@ -1,13 +1,14 @@
 """ Methods to compute effective masses and other derivatives. """
 __docformat__ = "restructuredtext en"
-__all__ = ["Extract", "iter_mass", 'Mass']
+__all__ = ["Extract", "iter_mass", 'Mass', 'mass']
 from .extract import Extract as ExtractDFT
-from ..functools.makeclass import makeclass
+from ..functools.makeclass import makeclass, makefunc
+from ..functools import make_cached
 from .functional import Vasp
 
 class Extract(ExtractDFT):
   """ Extractor for reciprocal taylor expansion. """
-  def __init__(self, outcar=None, input=None, lstsq=None, order=2, rcond=-1, **kwargs):
+  def __init__(self, outcar=None, input=None, lstsq=None, order=None, rcond=-1, **kwargs):
     """ Initializes the extraction object. 
     
         :Parameters:
@@ -25,12 +26,12 @@ class Extract(ExtractDFT):
           order : unsigned int or list 
             Order up to which to compute taylor coefficients.
     """
-    from os.path import dirname
-    from numpy.linalg import lstsq as nplstsq
+    from os.path import dirname, exists, join
+    if exists(join(outcar, 'reciprocal')): outcar = join(outcar, 'reciprocal')
     super(Extract, self).__init__(outcar, **kwargs)
-    self.input = input if input != None else ExtractDFT(dirname(self.directory), comm=comm)
+    self.input = input if input != None else ExtractDFT(dirname(self.directory))
     """ Extractor object for the calculation from which the charge density was obtained. """
-    self.lstsq = lstsq if lstsq != None else nplstsq
+    self.lstsq = lstsq 
     """ Least-square-fit method from which to get Taylor coefficients. """
     self.order = order
     self.rcond = rcond
@@ -43,15 +44,38 @@ class Extract(ExtractDFT):
     if hasattr(self, "_parameters"): delattr(self, "_parameters")
     if hasattr(self, "_measurements"): delattr(self, "_measurements")
     if hasattr(self, "_fitresults"): delattr(self, "_fitresults")
+
+  @property
+  @make_cached
+  def _details(self):
+    """ Details of emass calculation. """
+    extracted = ''
+    with self.__outcar__() as file:
+      for line in file: 
+        if line == '################ EMASS DETAILS ################\n':
+          break
+      for line in file:
+        if line == '################ END EMASS DETAILS ################':
+          break
+        extracted += '\n' + line 
+    results = {}
+    exec extracted in results
+    return results
+
   @property
   def order(self):
     """ Order up to which taylor coefficients should be computed. """
-    return self._order
+    result = self._order 
+    if result is None: result = self._details['order']
+    if not hasattr(result, '__iter__'): result = [result]
+    return result
+
   @order.setter
   def order(self, value):
     """ Order up to which taylor coefficients should be computed. """
     # case where we want to fit to specific orders only.
-    if hasattr(value, "__iter__"):
+    if value is None: self._order = None
+    elif hasattr(value, "__iter__"):
       for i in sorted(value):
         if i < 0: raise ValueError("Order cannot be less than 0.")
         try: nbpoints = self.nbpoints
@@ -72,6 +96,19 @@ class Extract(ExtractDFT):
       self._order = list(xrange(value+1))
     if hasattr(self, "_parameters"): delattr(self, "_parameters")
     if hasattr(self, "_measurements"): delattr(self, "_measurements")
+    if hasattr(self, "_fitresults"): delattr(self, "_fitresults")
+
+  @property 
+  def lstsq(self): 
+    """ Least square fitting method. """
+    from numpy.linalg import lstsq as nplstsq
+    if self._lstsq is None:  
+      result = self._details['lstsq']
+      return nplstsq if result is None else result
+    return nplstsq if self._lstsq is None else self._lstsq
+  @lstsq.setter
+  def lstsq(self, value):
+    self._lstsq = value
     if hasattr(self, "_fitresults"): delattr(self, "_fitresults")
 
   @property
@@ -209,63 +246,89 @@ class Extract(ExtractDFT):
 
 
     
-def iter_mass( vasp, structure, outdir = None, comm = None,
-               order = 2, nbpoints = None, stepsize = 1e-2, 
-               center = None, lstsq = None, **kwargs ):
+def iter_mass( vasp, structure, outdir=None, order=2, nbpoints=None,
+               stepsize=1e-2, center=None, lstsq=None,
+               emassparams=None, **kwargs ):
   """ Computes k-space taylor expansion of the eigenvalues up to given order.
 
       First runs a vasp calculation using the first input argument, regardless
       of whether a restart keyword argument is also passed. In practice,
-      following the general LaDa philosophie of never overwritting previous
+      following the general LaDa philosophy of never overwritting previous
       calculations, this will not rerun a calculation if one exists in
       ``outdir``. 
       Second, a static non-self-consistent calculation is performed to compute
       the eigenvalues for all relevant kpoints.
 
-      :Parameters:
-        vasp : `vasp.Vasp` or `vasp.RelaxCellShape`
-          Vasp or derived functional.
-        structure : `crystal.Structure`
-          The structure for wich to compute effective masses.
-        outdir : str
+      :param vasp: :py:class:`~vasp.Vasp` or derived functional.
+      :type vasp: `vasp.Vasp`
+      
+      :param structure: The structure for wich to compute effective masses.
+      :type structure: `~lada.crystal._cppwrapper.Structure`
+
+      :param str outdir:
           Root directory where to save results of calculation. Calculations
           will be stored in  "reciprocal" subdirectory of this input parameter.
-        comm : `lada.mpi.Communicator` or None
-          MPI communicator containing processes with which to perform
-          calculation.
-        order : int
-          Highest order derivative to perform. Defaults to 1.
-        nbpoints : int
+
+      :param int order: Highest order derivative to perform. Defaults to 1.
+
+      :param int nbpoints:
           Number of points (in a single direction) with wich to compute
           taylor expansion.  Should be at least order + 1. Default to order +
           1. Note that in the case of even nbpoints, an extra kpoint is added
           so that the center does get computed.
-        stepsize : float
+
+      :param float stepsize:
           Distance between interpolation points. Default = 1e-2.
           Units of ``2|pi|/a``, with ``a=structure.scale``.
-        center : 3-tuple
+      :param center:
           Central k-point of the taylor expansion. This should be given in
           **reciprocal** units (eg coefficients to the reciprocal lattice
           vectors). Default is None and means |Gamma|.
-        lstsq 
-          Linear least square method. Passed on to the extractor object.
-        kwargs 
-          Extra parameters which are passed on first to escan (if escan
-          object has an attribute with the same name), then to the linear least
-          square fit method. Note that this will *not* change the external escan
-          object.  This function is stateless. 
+      :type center: 3 floats
 
-      :return: Extraction object from which derivatives can be obtained.
+      :param lstsq:
+          Linear least square method. If None, defaults to numpy.linalg.lstsq_
+      :type lstsq: callable
 
+      :param dict emassparams: 
+         Parameters for the (non-self-consistent) effective mass caclulation
+         proper. For instance, could include pertubative spin-orbit
+         (:py:attr:`~vasp.functional.Vasp.lsorbit`).
+
+      :param kwargs:
+          Extra parameters which are passed on to vasp, both for the initial
+          calculation and the effective mass calculation proper.
+
+      :return: Extraction object from which masses can be obtained.
+
+      .. _numpy.linalg.lstsq::
+        http://docs.scipy.org/doc/numpy/reference/generated/numpy.linalg.lstsq.html
       .. |pi|     unicode:: U+003C0 .. GREEK SMALL LETTER PI
       .. |Gamma|  unicode:: U+00393 .. GREEK CAPITAL LETTER GAMMA
   """
+  from inspect import isfunction
   from copy import deepcopy
   from os import getcwd
   from os.path import join
   from numpy import array, dot, append
   from numpy.linalg import inv
-  from . import Vasp
+
+  # save input details for printing later on.
+  details = "order    = {0!r}\n" \
+            "nbpoints = {1!r}\n" \
+            "stepsize = {2!r}\n" \
+            "center   = {3!r}\n" \
+            .format(order, nbpoints, stepsize, None if center is None else list(center))
+  if isfunction(lstsq):
+    details =  "from {0.__module__} import {0.__name__} as lstsq\n".format(lstsq)\
+               + details
+  elif lstsq is None: 
+    details += "lstsq    = None\n"
+  else:
+    details =  "from {0.__class__.__module__} import "       \
+                    "{0.__class__.__name__}\n".format(lstsq) \
+               + details
+    details += "lstsq    = {0!r}\n".format(lstsq)
  
   # takes care of default parameters.
   if center is None: center = kwargs.pop("kpoint", [0,0,0])
@@ -295,8 +358,17 @@ def iter_mass( vasp, structure, outdir = None, comm = None,
   kwargs = deepcopy(kwargs)
   kwargs['restart'] = first
   kwargs['nonscf']  = True
-  for u in Vasp.iter(first.structure, outdir=join(first.directory, "reciprocal"), **kwargs):
+  kwargs['relaxation']  = None
+  if emassparams is not None: kwargs.update(emassparams)
+  directory = join(first.directory, "reciprocal")
+  for u in vasp.iter(first.structure, outdir=directory, **kwargs):
     yield u
+
+  # Add computational details here.
+  with open(join(directory, 'OUTCAR'), 'a') as outcar:
+    outcar.write('\n################ EMASS DETAILS ################\n')
+    outcar.write(details)
+    outcar.write('\n################ END EMASS DETAILS ################\n')
 
   yield iter_mass.Extract(first.directory)
 
@@ -304,3 +376,7 @@ iter_mass.Extract = Extract
 """ Extractor class for the reciprocal method. """
 Mass = makeclass( 'Epitaxial', Vasp, iter_mass, None, module='lada.vasp.emass',
                   doc='Functional form of the :py:class:`lada.vasp.relax.iter_mass` method.' )
+
+# Function call to effective mass. No iterations. returns when calculations are
+# done or fail.
+mass = makefunc('mass', iter_mass, 'lada.vasp.emass')
