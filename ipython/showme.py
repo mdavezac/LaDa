@@ -178,29 +178,27 @@ def showme_params(self):
 
 def showme_pbs(self, which):
   """ Shows pbs files through less. """
-  from os.path import join, exists
+  from os.path import join, exists, getmtime, dirname
   from glob  import glob
-  from operator import itemgetter
   from .. import interactive
 
   if not interactive.jobfolder.is_executable:
     print "Current position in job-dictionary is not a job."
     return
-  filename = interactive.jobfolder.name[:-1].replace("/", ".")
-  if which in ["pbserr", "pbsout"]:
-    prefix = "out" if which == "pbsout" else "err"
-    filename = join(interactive.jobfolder_path + ".pbs", prefix + filename)
-    filenames = glob(filename+'.*')
-    numbers   = [(i, int(u[len(filename)+1:].split('.')[-1])) for i, u in enumerate(filenames)]
-    if len(numbers) == 0: filename = None
-    else: filename = filenames[ sorted(numbers, key=itemgetter(1))[-1][0] ]
-  else: filename = join(interactive.jobfolder_path + ".pbs", filename[1:] + ".pbs")
-  
-  if filename is None or (not exists(filename)): 
-    print "Could not find {0}({1}).".format(which, filename)
+  if which == 'pbs': which = 'pbsscript'
+  directory = join( dirname(interactive.jobfolder_path), 
+                    interactive.jobfolder.name[1:] )
+  print directory
+  if not exists(directory): 
+    print 'Job was likely never launched.'
     return
-
-  self.system("less {0}".format(filename))
+  files = glob(join(directory, '{0}'.format(which)))\
+          + glob(join(directory, '*-*{0}'.format(which)))
+  if len(files) == 0: 
+    print 'Could not find appropriate file for {0}'.format(interactive.jobfolder.name)
+    return
+  files = sorted(files, key=lambda x: getmtime(x))
+  self.system('less {0}'.format(files[-1]))
 
 def completer(self, event):
   """ Completer for showme. """

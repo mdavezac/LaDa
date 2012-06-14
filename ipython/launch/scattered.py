@@ -11,7 +11,8 @@ def launch(self, event, jobfolders):
   """ Launch scattered jobs: one job = one pbs script. """
   import re
   from copy import deepcopy
-  from os.path import split as splitpath, join, dirname
+  from os.path import split as splitpath, join, dirname, exists
+  from os import remove
   from ...misc import Changedir
   from ...jobfolder import __file__ as jobs_filename
   from ... import pbs_string, default_pbs, debug_queue, qsub_exe, default_comm
@@ -63,32 +64,41 @@ def launch(self, event, jobfolders):
   pbsscripts = []
   for current, path in jobfolders:
     # creates directory.
-    with Changedir(path + ".pbs") as pwd: pass 
-    # creates pbs scripts.
-    for i, (name, job) in enumerate(current.root.iteritems()):
-      if job.is_tagged: continue
-      # does not launch successful jobs.
-      if hasattr(job.functional, 'Extract') and not event.force: 
-        p = join(dirname(path), name)
-        extract = job.functional.Extract(p)
-        if extract.success:
-          print "Job {0} completed successfully. It will not be relaunched.".format(name)
-          continue
-      pbsargs['n'] = mppalloc(job) if hasattr(mppalloc, "__call__") else mppalloc
-      pbsargs['nnodes'] = (pbsargs['n'] + pbsargs['ppn'] - 1) // pbsargs['ppn']
-      if len(name) == 0: pbsargs['name'] = "{0}-root".format(splitpath(path)[1])
-      pbsargs['name'] = name.replace("/", ".")
-      pbsscripts.append(join(path+".pbs", pbsargs['name'] + ".pbs"))
-      if getattr(event, "prefix", None): pbsargs['name'] = "{0}-{1}".format(event.prefix, name)
-      pbsargs['err'] = join("{0}.pbs".format(path), "err.{0}.pbs".format(pbsargs['name']))
-      pbsargs['out'] = join("{0}.pbs".format(path), "out.{0}.pbs".format(pbsargs['name']))
-      pbsargs['directory'] = dirname(path)
-      pbsargs['scriptcommand'] = "{0} --nbprocs {n} --ppn {ppn} --jobid={1} {2}"\
-                                 .format(pyscript, name, path, **pbsargs)
-      with open(pbsscripts[-1], "w") as file:
-        string = pbs_string(**pbsargs) if hasattr(pbs_string, '__call__') \
-                 else pbs_string.format(**pbsargs) 
-        file.write(string)
+    with Changedir(dirname(path)) as pwd: 
+      # creates pbs scripts.
+      for i, (name, job) in enumerate(current.root.iteritems()):
+        if job.is_tagged: continue
+        # does not launch successful jobs.
+        if hasattr(job.functional, 'Extract') and not event.force: 
+          p = join(dirname(path), name)
+          extract = job.functional.Extract(p)
+          if extract.success:
+            print "Job {0} completed successfully. It will not be relaunched.".format(name)
+            continue
+        pbsargs['n'] = mppalloc(job) if hasattr(mppalloc, "__call__") else mppalloc
+        pbsargs['nnodes'] = (pbsargs['n'] + pbsargs['ppn'] - 1) // pbsargs['ppn']
+        if len(name) == 0: pbsargs['name'] = "{0}-root".format(splitpath(path)[1])
+        if getattr(event, "prefix", None) is not None:
+          pbsargs['name'] = "{0}-{1}".format(event.prefix, name)
+          pbsscripts.append(join(name, "{0}-pbsscript".format(event.prefix)))
+          pbsargs['err'] = join(name, "{0}-pbserr".format(event.prefix))
+          pbsargs['out'] = join(name, "{0}-pbsout".format(event.prefix))
+        else:
+          pbsargs['name'] = name
+          pbsscripts.append(join(name, "pbsscript"))
+          pbsargs['err'] = join(name, "pbserr")
+          pbsargs['out'] = join(name, "pbsout")
+        pbsargs['directory'] = dirname(path)
+        pbsargs['scriptcommand'] = "{0} --nbprocs {n} --ppn {ppn} --jobid={1} {2}"\
+                                   .format(pyscript, name, path, **pbsargs)
+        with Changedir(name) as pwd: pass
+        if exists(pbsscripts[-1]): remove(pbsscripts[-1])
+        with open(pbsscripts[-1], "w") as file:
+          string = pbs_string(**pbsargs) if hasattr(pbs_string, '__call__') \
+                   else pbs_string.format(**pbsargs) 
+          file.write(string)
+        assert exists(pbsscripts[-1])
+        print pbsscripts[-1]
     print "Created {0} scattered jobs in {1}.pbs.".format(i, path)
 
   if event.nolaunch: return
