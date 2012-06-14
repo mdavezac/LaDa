@@ -1,6 +1,6 @@
 """ Methods to compute effective masses and other derivatives. """
 __docformat__ = "restructuredtext en"
-__all__ = ["Extract", "iter_mass", 'Mass', 'mass']
+__all__ = ["Extract", "iter_emass", 'EMass', 'effective_mass']
 from .extract import Extract as ExtractDFT
 from ..functools.makeclass import makeclass, makefunc
 from ..functools import make_cached
@@ -246,7 +246,7 @@ class Extract(ExtractDFT):
 
 
     
-def iter_mass( vasp, structure, outdir=None, order=2, nbpoints=None,
+def iter_emass( vasp, structure, outdir=None, order=2, nbpoints=None,
                stepsize=1e-2, center=None, lstsq=None,
                emassparams=None, **kwargs ):
   """ Computes k-space taylor expansion of the eigenvalues up to given order.
@@ -340,8 +340,7 @@ def iter_mass( vasp, structure, outdir=None, order=2, nbpoints=None,
                      "with only {1} points per direction.".format(order, nbpoints))
 
   # first runs vasp.
-  for u in vasp.iter(structure, outdir=outdir, **kwargs): yield u
-  first = vasp(structure=structure, outdir=outdir, **kwargs)
+  for first in vasp.iter(structure, outdir=outdir, **kwargs): yield first
   if not first.success: raise RuntimeError('Input run, or relaxation, was not successfull.')
 
   # prepare second run.
@@ -370,13 +369,14 @@ def iter_mass( vasp, structure, outdir=None, order=2, nbpoints=None,
     outcar.write(details)
     outcar.write('\n################ END EMASS DETAILS ################\n')
 
-  yield iter_mass.Extract(first.directory)
+  yield iter_emass.Extract(first.directory)
 
-iter_mass.Extract = Extract
+iter_emass.Extract = Extract
 """ Extractor class for the reciprocal method. """
-Mass = makeclass( 'Mass', Vasp, iter_mass, None, module='lada.vasp.emass',
-                  doc='Functional form of the :py:class:`lada.vasp.relax.iter_mass` method.' )
+EMass = makeclass( 'EMass', Vasp, iter_emass, None, module='lada.vasp.emass',
+                    doc='Functional form of the '\
+                        ':py:class:`lada.vasp.relax.iter_emass` method.' )
 
 # Function call to effective mass. No iterations. returns when calculations are
 # done or fail.
-mass = makefunc('mass', iter_mass, 'lada.vasp.emass')
+effective_mass = makefunc('effective_mass', iter_emass, 'lada.vasp.emass')

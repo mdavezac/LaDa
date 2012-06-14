@@ -66,8 +66,8 @@ class Vasp(Incar):
       # otherwise, it should yield a Program tuple to execute.
       program.start(comm)
       program.wait()
-      result = self.Extract(outdir)
-      if not result.success: raise RuntimeError("Vasp failed to execute correctly.")
+    # Last yield should be an extraction object.
+    if not result.success: raise RuntimeError("Vasp failed to execute correctly.")
     return result
 
   @assign_attributes(ignore=['overwrite'])
@@ -142,6 +142,7 @@ class Vasp(Incar):
     yield ProgramProcess( program, cmdline=[], outdir=outdir, 
                           stdout='stdout', stderr='stderr', dompi=True )
     self.bringdown(outdir, structure)
+    yield Extract(outdir)
 
   def pullup(self, structure, outdir, comm):
     """ Creates all input files necessary to run results.

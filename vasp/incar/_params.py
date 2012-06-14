@@ -4,6 +4,7 @@ __all__ = [ "SpecialVaspParam", "ExtraElectron", "Algo", "Precision", "Ediff",\
             "Ediffg", "Encut", "EncutGW", "FFTGrid", "Restart", "UParams", "IniWave",\
             "Magmom", 'Npar', 'Boolean', 'Integer', 'Choices', 'PrecFock', 'NonScf', \
             "System", 'PartialRestart', 'Relaxation', 'Smearing', 'Lsorbit' ]
+from quantities import eV
 class SpecialVaspParam(object): 
   """ Base type for special vasp parameters. 
   
@@ -298,20 +299,32 @@ class Encut(SpecialVaspParam):
       .. seealso:: `ENCUT <http://cms.mpi.univie.ac.at/vasp/vasp/ENCUT_tag.html>`_
   """
   KEY = "ENCUT"
+  """ Corresponding VASP key. """
+  units = eV
+  """ Units with which to sign cutoff. """
   def __init__(self, value): super(Encut, self).__init__(value)
+  @property
+  def value(self):
+    """ Returns value signed by a physical unit. """
+    if self._value is None: return None
+    if self._value <= 1e-12: return None
+    return self._value if self._value <= 3.0 else self._value * self.units
+  @value.setter
+  def value(self, value):
+    """ Sets value taking unit into account. """
+    if hasattr(value, 'rescale'): value = value.rescale(self.units).magnitude
+    self._value = value
 
   def incar_string(self, **kwargs):
     from ...crystal import specieset
-    from quantities import eV
-    value = self.value
-    if value is None: return None
-    elif hasattr(self.value, 'rescale'): value = float(value.rescale(eV))
+    value = self._value
+    if value is None:   return None
+    elif value < 1e-12: return None
     elif value >= 1e-12 and value <= 3.0:
       types = specieset(kwargs["structure"])
       encut = max(kwargs["vasp"].species[type].enmax for type in types)
       if hasattr(encut, 'rescale'): encut = float(encut.rescale(eV))
       return "{0} = {1} ".format(self.KEY, encut * value)
-    if value < 1e-12: return None
     return "{0} = {1}".format(self.KEY, value)
 
 class EncutGW(Encut):
@@ -862,11 +875,12 @@ class Smearing(SpecialVaspParam):
     ismear = { -1: 'fermi', 0: 'gaussian', 1: 'metal', -5: 'insulator', -3: 'dynamic',
                -4: 'tetra', 2: 'mp 2', 3: 'mp 3', None: None}[self.ismear]
     if self.sigma is None: return ismear
-    return ismear, self.sigma
+    sigma = self.sigma
+    if not hasattr(sigma, 'rescale'): sigma *= eV
+    return ismear, sigma
 
   @value.setter
   def value(self, args):
-    from quantities import eV
     if args is None: 
       self.ismear, self.sigma = None, None
       return
@@ -887,18 +901,19 @@ class Smearing(SpecialVaspParam):
     if sigma is not None:
       self.sigma = sigma
       if not hasattr(self.sigma, 'rescale'): self.sigma *= eV
+      else: self.sigma = self.sigma.rescale(eV)
       if len(self.sigma.shape) > 0 and self.ismear is not None and self.ismear != -3:
         raise RuntimeError('Cannot use more than one smearing '\
                            'parameter with ismear={0}.'.format(self.ismear))
     elif len(args) == 2: self.sigma = None
 
   def incar_string(self, **kwargs):
-    from quantities import eV
     result = ''
     if self.ismear is not None:
       result = 'ISMEAR = {0}\n'.format(self.ismear)
     if self.sigma is not None:
-      sigma = self.sigma.rescale(eV).magnitude
+      sigma = self.sigma.rescale(eV).magnitude if hasattr(self.sigma, 'rescale')\
+              else self.sigma
       if len(sigma.shape) == 0:
         result += 'SIGMA = {0}'.format(sigma)
       else: 

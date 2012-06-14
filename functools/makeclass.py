@@ -150,7 +150,7 @@ def create_call_from_iter(iter, excludes):
   
   # then add kwargs.,
   result += ", comm=None, **kwargs):\n"
-
+ 
   # adds standard doc string.
   doc = iter.__doc__ 
   if doc is not None and '\n' in doc:
@@ -176,7 +176,6 @@ def create_call_from_iter(iter, excludes):
     nargs = len(args.args) - len(args.defaults)
     for key in args.args[nargs:]:
       if key in excludes: result += "{0}={0}, ".format(key)
-      else: result += "{0}=self.{0}, ".format(key)
     if result[-2:] == ', ': result = result[:-2]
   # adds arguments to overloaded function. 
   if args.keywords is not None: result += ", **kwargs"

@@ -1,5 +1,7 @@
 def test(path):
   from shutil import rmtree
+  from os.path import exists
+  from os import makedirs
   from tempfile import mkdtemp
   from numpy import abs
   from lada.crystal import Structure
@@ -21,12 +23,14 @@ def test(path):
   vasp.relaxation = "volume"
   vasp.add_specie = "Si", "{0}/pseudos/Si".format(path)
   directory = mkdtemp()
+  if exists(directory) and directory == '/tmp/test': rmtree(directory)
+  if not exists(directory): makedirs(directory)
   try: 
-    result = epitaxial(vasp, structure, outdir=directory, epiconv=1e-4, comm={'n': 2, 'ppn': 1})
+    result = epitaxial(vasp, structure, outdir=directory, epiconv=1e-5, comm={'n': 2, 'ppn': 1})
     assert result.success
     assert abs(result.stress[2,2]) < 1.0
   finally: 
-    rmtree(directory)
+    if directory != '/tmp/test': rmtree(directory)
     pass
 
 if __name__ == "__main__":
