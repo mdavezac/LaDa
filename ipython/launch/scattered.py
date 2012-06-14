@@ -53,7 +53,7 @@ def launch(self, event, jobfolders):
   pbsargs.update(comm)
   if event.__dict__.get("queue", None) is not None: pbsargs["queue"] = event.queue
   if event.__dict__.get("account", None) is not None: pbsargs["account"] = event.account
-  if event.debug:
+  if getattr(event, 'debug', False):
     assert debug_queue is not None, RuntimeError("debug_queue global variable has not been set.")
     pbsargs[debug_queue[0]] = debug_queue[1]
 
@@ -85,7 +85,10 @@ def launch(self, event, jobfolders):
       pbsargs['directory'] = dirname(path)
       pbsargs['scriptcommand'] = "{0} --nbprocs {n} --ppn {ppn} --jobid={1} {2}"\
                                  .format(pyscript, name, path, **pbsargs)
-      with open(pbsscripts[-1], "w") as file: file.write(pbs_string.format(**pbsargs))
+      with open(pbsscripts[-1], "w") as file:
+        string = pbs_string(**pbsargs) if hasattr(pbs_string, '__call__') \
+                 else pbs_string.format(**pbsargs) 
+        file.write(string)
     print "Created {0} scattered jobs in {1}.pbs.".format(i, path)
 
   if event.nolaunch: return

@@ -327,7 +327,7 @@ class Vasp(Incar):
       length = max([len(k) for k in l])
       for key in sorted(l, key=sortme):
         string += 'functional.add_param = {0!r: >{length}}, {1[1]!r}\n'\
-                  .format(key, addoparam[key], length=length)
+                  .format(key, addparam[key], length=length)
     l = [k for k in noaddparam.iterkeys() if k[0] == '_']
     if len(l) != 0:
       length = max([len(k) for k in l])
@@ -338,7 +338,7 @@ class Vasp(Incar):
       length = max([len(k) for k in l])
       for key in sorted(l, key=sortme):
         string += 'functional.add_param = {0!r: >{length}}, {1[1]!r}\n'\
-                  .format(key, addoparam[key], length=length)
+                  .format(key, addparam[key], length=length)
     l = [k for k in special.iterkeys() if k[0] != '_']
     if len(l) != 0:
       length = max([len(k) for k in l])

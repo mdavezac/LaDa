@@ -58,3 +58,6 @@ class Math(root):
 class singular_matrix(Math):
   """ Singular matrix. """
   pass
+class interactive(input):
+  """ Interactive usage error. """
+  pass

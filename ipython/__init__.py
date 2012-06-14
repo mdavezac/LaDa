@@ -58,6 +58,27 @@ def jobfolder_file_completer(self, data):
   dummy = [compress_user(p, tilde_expand, tilde_val) for p in dirs+dicts]
   return [d for d in dummy if d not in data]
 
+
+def save_n_explore(folder, path):
+  """ Save and explore job-folder. 
+
+      For use with ipython interactive terminal only.
+  """ 
+  from .. import is_interactive
+  from ..error import interactive as ierror
+  if not is_interactive: raise ierror('Not in interactive session.')
+
+  from IPython.core.interactiveshell import InteractiveShell
+  from ..ipython.explore import explore
+  from ..ipython.savefolders import savefolders
+  import lada
+  
+  lada.interactive.jobfolder = folder.root
+  lada.interactive.jobfolder_path = path
+  shell = InteractiveShell.instance()
+  savefolders(shell, path)
+  explore(shell, '{0}  --file'.format(path))
+
 # def cancel_completer(self, info):
 #   return qstat(self, info.symbol).fields(-1)[1:]
 

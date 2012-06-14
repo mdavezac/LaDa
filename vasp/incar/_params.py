@@ -529,13 +529,14 @@ class Boolean(SpecialVaspParam):
   """ Any boolean vasp parameters. 
   
       Python is very liberal in how it converts any object to a boolean, eg an
-      empty dictionary is false while non-empty dictionary is true.
-      In order to keep this behavior, the value given to this parameter is kept
-      as is as long as possible, and converted only when writing the incar. The
-      only difference with the python behavior is that if using strings (which generally
-      evaluate to true or depending whether or not they are empty), these must
-      be "True" or "False", or variations thereoff. The empty string will
-      evaluate to the VASP default (eg equivalent to using None).
+      empty dictionary is false while non-empty dictionary is true.  In order
+      to keep this behavior, the value given to this parameter is kept as is as
+      long as possible, and converted only when writing the incar. The only
+      difference with the python behavior is that if using strings (which
+      generally evaluate to true or depending whether or not they are empty),
+      these must be "True" or "False", or variations thereoff. 'on' and 'off'
+      evaluate to True and False, respectively. The empty string will
+      evaluate to the VASP default (eg equivalent to using None). 
   """
   def __init__(self, key, value):
     super(Boolean, self).__init__(value)
@@ -547,10 +548,13 @@ class Boolean(SpecialVaspParam):
   @value.setter
   def value(self, value):
     if value is None: self._value = None; return
-    if isinstance(value, str):
-      if len(value) == 0: value = False
-      elif   value.lower() == "true"[:min(len(value), len("true"))]: value = True
-      elif value.lower() == "false"[:min(len(value), len("false"))]: value = False
+    elif isinstance(value, str):
+      value = value.lstrip().rstrip.lower()
+      if len(value) == 0: return
+      elif value == "on": value = True
+      elif value == "off": value = False
+      elif value == "true"[:min(len(value), len("true"))]: value = True
+      elif value == "false"[:min(len(value), len("false"))]: value = False
       else: raise TypeError("Cannot interpret string {0} as a boolean.".format(value))
     self._value = value == True
   def incar_string(self, **kwargs):
@@ -769,6 +773,7 @@ class Relaxation(SpecialVaspParam):
     else: isif, dof = int(args), None
 
     if dof is not None:
+      if dof == 'all': dof = 'ionic cellshape volume'
       ionic = re.search( "ion(ic|s)?", dof ) is not None
       cellshape = re.search( "cell(\s+|-|_)?(?:shape)?", dof ) is not None
       volume = re.search( "volume", dof ) is not None
@@ -776,7 +781,7 @@ class Relaxation(SpecialVaspParam):
       # static calculation.
       if (not ionic) and (not cellshape) and (not volume):
         if dof != 'static':
-          raise RuntimeError("Unkown value for relaxation: {0}.".format(arg))
+          raise RuntimeError("Unkown value for relaxation: {0}.".format(dof))
         isif = 2
         ibrion = -1
       else: # Some kind of relaxations. 
@@ -853,7 +858,6 @@ class Smearing(SpecialVaspParam):
 
   @property 
   def value(self):
-    from quantities import eV
     if self.ismear is None and self.sigma is None: return None
     ismear = { -1: 'fermi', 0: 'gaussian', 1: 'metal', -5: 'insulator', -3: 'dynamic',
                -4: 'tetra', 2: 'mp 2', 3: 'mp 3', None: None}[self.ismear]

@@ -374,7 +374,7 @@ def iter_mass( vasp, structure, outdir=None, order=2, nbpoints=None,
 
 iter_mass.Extract = Extract
 """ Extractor class for the reciprocal method. """
-Mass = makeclass( 'Epitaxial', Vasp, iter_mass, None, module='lada.vasp.emass',
+Mass = makeclass( 'Mass', Vasp, iter_mass, None, module='lada.vasp.emass',
                   doc='Functional form of the :py:class:`lada.vasp.relax.iter_mass` method.' )
 
 # Function call to effective mass. No iterations. returns when calculations are
