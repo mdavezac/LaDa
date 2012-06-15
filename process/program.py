@@ -31,6 +31,11 @@ class ProgramProcess(Process):
         It can be used to, say, make sure a program is launched only with an
         even number of processes. It should add 'placement' to the dictionary.
     """
+    self._modcomm = None
+    """ An optional modified communicator. 
+
+        Holds communicator optionally returned by commandline communicator.
+    """
 
   def poll(self): 
     """ Polls current job. """
@@ -77,19 +82,22 @@ class ProgramProcess(Process):
     program = which(self.program)
     if self.dompi: 
       if not hasattr(self, '_comm'):
-        raise ValueError( "Requested mpi but without passing communicator"\
+        raise ValueError( "Requested mpi but without passing communicator"     \
                           "(Or communicator was None)." )
       d = {}
       d['program'] = program
       d['cmdline'] = self.cmdline 
       d.update(self._comm)
       if self.cmdlmodifier is not None:
-        comm = self.cmdlmodifier(d, self._comm)
-      else: d['placement'] = placement(self._comm)
+        self._modcomm = self.cmdlmodifier(d, self._comm)
+        if self._modcomm is self._comm: self._modcomm = None
+      d['placement'] = placement( self._comm if self._modcomm is None          \
+                                  else self._modcomm )
       cmdline = split_cmd(mpirun_exe.format(**d))
       cmdline.extend(str(u) for u in self.cmdline)
     else: cmdline = [program] + self.cmdline
-    self.process = Popen(cmdline, stdout=file_out, stderr=file_err, cwd=self.outdir)
+    self.process = Popen( cmdline, stdout=file_out,
+                          stderr=file_err, cwd=self.outdir )
 
   def _cleanup(self):
     """ Cleanup files and crap. """
@@ -99,6 +107,11 @@ class ProgramProcess(Process):
       if not getattr(self._stdio[1], 'closed', True):
         self._stdio[1].close()
     finally: self._stdio = None, None
+    # delete modified communicator, if it exists
+    if self._modcomm is not None:
+      self._modcomm.cleanup()
+      self._modcomm = None
+    # general cleanup, including  self._comm
     super(ProgramProcess, self)._cleanup()
 
   def wait(self):
