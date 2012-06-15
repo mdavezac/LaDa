@@ -61,3 +61,6 @@ class singular_matrix(Math):
 class interactive(input):
   """ Interactive usage error. """
   pass
+class GrepError(AttributeError):
+  """ Raised when property could not be grepped from some OUTCAR. """
+  pass

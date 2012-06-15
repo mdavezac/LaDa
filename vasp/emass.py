@@ -8,16 +8,17 @@ from .functional import Vasp
 
 class Extract(ExtractDFT):
   """ Extractor for reciprocal taylor expansion. """
-  def __init__(self, outcar=None, input=None, lstsq=None, order=None, rcond=-1, **kwargs):
+  def __init__( self, outcar=None, input=None, lstsq=None,                     \
+                order=None, rcond=-1, **kwargs ):
     """ Initializes the extraction object. 
     
         :Parameters:
           outcar : str or None
-            Path to OUTCAR file. Can also be the directory if the OUTCAR is
-            named "OUTCAR". Defaults to None, in which case it uses the current
-            working directory.
+	    Path to OUTCAR file. Can also be the directory if the OUTCAR is
+	    named "OUTCAR". Defaults to None, in which case it uses the
+            current working directory.
           input : Extract-type
-            Extractor object for the calculation from which the charge density
+	    Extractor object for the calculation from which the charge density
             was obtained. Defaults to None, meaning whatever calculation is
             contained in the parent directory.
           lstsq : method
@@ -27,10 +28,12 @@ class Extract(ExtractDFT):
             Order up to which to compute taylor coefficients.
     """
     from os.path import dirname, exists, join
-    if exists(join(outcar, 'reciprocal')): outcar = join(outcar, 'reciprocal')
+    if exists(join(outcar, 'reciprocal')):
+      outcar = join(outcar, 'reciprocal')
     super(Extract, self).__init__(outcar, **kwargs)
-    self.input = input if input != None else ExtractDFT(dirname(self.directory))
-    """ Extractor object for the calculation from which the charge density was obtained. """
+    self.input = input if input != None                                        \
+                 else ExtractDFT(dirname(self.directory))
+    """ Extraction object of charge density calculation. """
     self.lstsq = lstsq 
     """ Least-square-fit method from which to get Taylor coefficients. """
     self.order = order
@@ -82,7 +85,8 @@ class Extract(ExtractDFT):
         except: pass
         else:
           if i >= nbpoints:
-            raise ValueError("Size of kpoint mesh implies order cannot be larger than {0}.".format(nbpoints-1))
+            raise ValueError( "Size of kpoint mesh implies order cannot "      \
+                              "be larger than {0}.".format(nbpoints-1) )
       self._order = list(sorted(value))
     # case where we want all orders up to given input.
     else: 
@@ -92,7 +96,8 @@ class Extract(ExtractDFT):
       except: pass
       else:
         if value >= nbpoints:
-          raise ValueError("Size of kpoint mesh implies order cannot be larger than {0}.".format(nbpoints-1))
+          raise ValueError( "Size of kpoint mesh implies order "               \
+                            "cannot be larger than {0}.".format(nbpoints-1) )
       self._order = list(xrange(value+1))
     if hasattr(self, "_parameters"): delattr(self, "_parameters")
     if hasattr(self, "_measurements"): delattr(self, "_measurements")
@@ -120,7 +125,8 @@ class Extract(ExtractDFT):
   @property
   def center(self):
     """ Returns central kpoint. """
-    return self.kpoints[0] if self.nbpoints % 2 == 0 else self.kpoints[len(self.kpoints)//2]
+    return self.kpoints[0] if self.nbpoints % 2 == 0                           \
+           else self.kpoints[len(self.kpoints)//2]
 
   @property
   def stepsize(self):
@@ -144,14 +150,16 @@ class Extract(ExtractDFT):
       self._parameters = zeros((len(self.kpoints), u), dtype="float64")
       # populates it.
       u = 0
-      kpoints = (self.kpoints - self.center) * 2.0 * pi / self.structure.scale 
+      kpoints = (self.kpoints - self.center) * 2.0 * pi                        \
+                / self.structure.scale 
       stepsize = zeros(len(self.kpoints), dtype="float64")
       for order in self.order:
         for p in xrange(order+1):
           for q in xrange(p+1):
             # constructs array of (x_j-x_0)^q_i, with multiplication over i
             # representing the cartesian coordinates and j the kpoints.
-            stepsize[:] = 1. / (factorial(order-p)*factorial(p-q)*factorial(q))
+            stepsize[:]                                                        \
+              = 1. / (factorial(order-p)*factorial(p-q)*factorial(q))
             for i, j in zip([order-p, p-q, q], xrange(3)): 
               if i != 0: stepsize *= kpoints[:,j]**i
             # fill in the parameters for this expansion.
@@ -167,7 +175,8 @@ class Extract(ExtractDFT):
         This is simply the eigenvalues reshaped so spin is unrolled.
     """
     if self.ispin == 1: return self.eigenvalues.magnitude
-    shape = self.eigenvalues.shape[0]*self.eigenvalues.shape[1], self.eigenvalues.shape[2]
+    shape = self.eigenvalues.shape[0] * self.eigenvalues.shape[1],             \
+            self.eigenvalues.shape[2]
     return self.eigenvalues.reshape(*shape).magnitude
 
   @property 
@@ -195,13 +204,15 @@ class Extract(ExtractDFT):
     current_index, current_order = 0, 0
     # add results for order 0.
     if self.order[0] == 0:
-      result[current_order] = all_xs[current_index].copy() * self.eigenvalues.units
-      current_index += 1
-      current_order += 1
-    # add results for order 1.
-    if 1 in self.order:
-      result[current_order] = [ i.copy() * self.eigenvalues.units * angstrom\
-                                for i in all_xs[current_index:current_index+3].T ]
+      result[current_order] = all_xs[current_index].copy()                     \
+                              * self.eigenvalues.units                         
+      current_index += 1                                                       
+      current_order += 1                                                       
+    # add results for order 1.                                                 
+    if 1 in self.order:                                                        
+      result[current_order]                                                    \
+           = [ i.copy() * self.eigenvalues.units * angstrom                    \
+               for i in all_xs[current_index:current_index+3].T ]
                               
       current_index += 3
       current_order += 1
@@ -222,12 +233,15 @@ class Extract(ExtractDFT):
         dummy = zeros([3]*order, dtype="float64")
         for p in xrange(order+1):
           for q in xrange(p+1):
-            indices = [[i]*j for i, j in zip([0, 1, 2], [order-p, p-q, q]) if j != 0]
+            indices = [ [i]*j for i, j in
+                         zip([0, 1, 2], [order-p, p-q, q]) if j != 0 ]
             indices = set(permutations(chain(*indices)))
-            for index in indices: dummy[index] = band_x[u] if abs(band_x[u]) > 1e-12 else 0
+            for index in indices:
+              dummy[index] = band_x[u] if abs(band_x[u]) > 1e-12 else 0
             u += 1
         # add tensor to results for that order.
-        result[current_order].append(dummy * self.eigenvalues.units * angstrom**order)
+        dummy *= self.eigenvalues.units * angstrom**order
+        result[current_order].append(dummy)
       current_order += 1
 
     # got it all.
@@ -238,13 +252,19 @@ class Extract(ExtractDFT):
     """ Returns inverse mass tensor, hopefully with right units. """
     from ..physics import electronic_mass, h_bar
     if 2 not in self.order:
-      raise AttributeError("Effective mass are not part of the current expansion.")
+      raise AttributeError( "Effective mass are not part "                     \
+                            "of the current expansion." )
     result = self.tensors[self.order.index(2)]
     for i in xrange(len(result)): 
       result[i] = (result[i] / h_bar**2).rescale(1./electronic_mass)
     return result
 
-
+  def iterfiles(self, **kwargs):
+    """ Exports files from both calculations. """
+    from itertools import chain
+    for file in chain( super(Extract, self).iterfiles(**kwargs),
+                       self.input.iterfiles(**kwargs) ):
+      yield file
     
 def iter_emass( vasp, structure, outdir=None, order=2, nbpoints=None,
                stepsize=1e-2, center=None, lstsq=None,
@@ -267,7 +287,7 @@ def iter_emass( vasp, structure, outdir=None, order=2, nbpoints=None,
 
       :param str outdir:
           Root directory where to save results of calculation. Calculations
-          will be stored in  "reciprocal" subdirectory of this input parameter.
+	  will be stored in  "reciprocal" subdirectory of this input parameter.
 
       :param int order: Highest order derivative to perform. Defaults to 1.
 
@@ -314,19 +334,20 @@ def iter_emass( vasp, structure, outdir=None, order=2, nbpoints=None,
   from numpy.linalg import inv
 
   # save input details for printing later on.
-  details = "order    = {0!r}\n" \
-            "nbpoints = {1!r}\n" \
-            "stepsize = {2!r}\n" \
-            "center   = {3!r}\n" \
-            .format(order, nbpoints, stepsize, None if center is None else list(center))
-  if isfunction(lstsq):
-    details =  "from {0.__module__} import {0.__name__} as lstsq\n".format(lstsq)\
-               + details
+  details = "order    = {0!r}\n"                                               \
+            "nbpoints = {1!r}\n"                                               \
+            "stepsize = {2!r}\n"                                               \
+            "center   = {3!r}\n"                                               \
+            .format( order, nbpoints, stepsize,                                \
+                     None if center is None else list(center) )                
+  if isfunction(lstsq):                                                        
+    details =  "from {0.__module__} import {0.__name__} as lstsq\n"            \
+               .format(lstsq) + details
   elif lstsq is None: 
     details += "lstsq    = None\n"
   else:
-    details =  "from {0.__class__.__module__} import "       \
-                    "{0.__class__.__name__}\n".format(lstsq) \
+    details =  "from {0.__class__.__module__} import "                         \
+                    "{0.__class__.__name__}\n".format(lstsq)                   \
                + details
     details += "lstsq    = {0!r}\n".format(lstsq)
  
@@ -336,20 +357,23 @@ def iter_emass( vasp, structure, outdir=None, order=2, nbpoints=None,
   if outdir is None: outdir = getcwd()
   if nbpoints == None: nbpoints = order + 1
   if nbpoints < order + 1:
-    raise ValueError("Cannot compute taylor expansion of order {0} "\
-                     "with only {1} points per direction.".format(order, nbpoints))
+    raise ValueError( "Cannot compute taylor expansion of order {0} "          \
+                      "with only {1} points per direction."                    \
+                      .format(order, nbpoints) )
 
   # first runs vasp.
   for first in vasp.iter(structure, outdir=outdir, **kwargs): yield first
-  if not first.success: raise RuntimeError('Input run, or relaxation, was not successfull.')
+  if not first.success:
+    raise RuntimeError('Input run, or relaxation, was not successfull.')
 
   # prepare second run.
   vasp = deepcopy(vasp)
   center = dot(inv(first.structure.cell).T, center)
-  kpoints = [ (x, y, z) for x in xrange(nbpoints)\
-                        for y in xrange(nbpoints)\
-                        for z in xrange(nbpoints) ]
-  vasp.kpoints = (array(kpoints, dtype="float64") - (nbpoints-1)/2.) * stepsize + center
+  kpoints = [ (x, y, z) for x in xrange(nbpoints)                              \
+                        for y in xrange(nbpoints)                              \
+                        for z in xrange(nbpoints) ]                            
+  vasp.kpoints = (array(kpoints, dtype="float64")                              \
+                 - (nbpoints-1)/2.) * stepsize + center
   if nbpoints % 2 == 0: # adds central point to grid.
     vasp.kpoints = append(center[None,:], vasp.kpoints, axis=0)
 
@@ -374,7 +398,7 @@ def iter_emass( vasp, structure, outdir=None, order=2, nbpoints=None,
 iter_emass.Extract = Extract
 """ Extractor class for the reciprocal method. """
 EMass = makeclass( 'EMass', Vasp, iter_emass, None, module='lada.vasp.emass',
-                    doc='Functional form of the '\
+                    doc='Functional form of the '                              \
                         ':py:class:`lada.vasp.relax.iter_emass` method.' )
 
 # Function call to effective mass. No iterations. returns when calculations are

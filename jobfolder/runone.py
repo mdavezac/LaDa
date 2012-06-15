@@ -1,12 +1,9 @@
-#! python
-""" Runs one job from the jobtree. """
+""" Runs one job from the jobfolder. """
 def main():
   import re 
   from sys import path as python_path
-  from copy import deepcopy
   from os.path import exists
   from argparse import ArgumentParser
-  from copy import deepcopy
   from lada import jobfolder
   from lada.process.mpi import create_global_comm
   import lada
@@ -42,7 +39,10 @@ def main():
   # Set up mpi processes.
   lada.default_comm['ppn'] = options.ppn
   lada.default_comm['n'] = options.nbprocs
+  print lada.default_comm, options.nbprocs
   create_global_comm(options.nbprocs)
+  print lada.default_comm, options.nbprocs
+  print lada.default_comm.machines
 
   timeout = None if options.timeout <= 0 else options.timeout
   

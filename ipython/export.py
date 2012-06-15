@@ -9,26 +9,27 @@ def export(self, event):
   from os import getcwd
   from os.path import exists, isfile, extsep, relpath, dirname, join
   from glob import iglob
-  from ..opt import RelativeDirectory
+  from ..misc import RelativePath
+  from .. import interactive
 
   parser = argparse.ArgumentParser(prog='%export',
-                     description='Exports input/output files from current job-folder. '\
-                                 'Depending on the extension of FILE, this will create '\
-                                 'a simple tar file, or a compressed tar file. Using the '\
-                                 'option --list, one can also obtain a list of all files '\
-                                 'which would go in the tar archive. '\
-                                 'Finally, this function only requires the \"collect\" '\
-                                 'exists in the usernamespace. It may have been declared '\
-                                 'from loading a job-folder using \"explore\", or directly '\
-                                 'with \"collect = vasp.MassExtract()\".' )
+      description='Exports input/output files from current job-folder. '       \
+                  'Depending on the extension of FILE, this will create '      \
+                  'a simple tar file, or a compressed tar file. Using the '    \
+                  'option --list, one can also obtain a list of all files '    \
+                  'which would go in the tar archive. '                        \
+                  'Finally, this function only requires the \"collect\" '      \
+                  'exists in the usernamespace. It may have been declared '    \
+                  'from loading a job-folder using \"explore\", or directly '  \
+                  'with \"collect = vasp.MassExtract()\".' )
   group = parser.add_mutually_exclusive_group(required=True)
   group.add_argument( '--list', action="store_true", dest="aslist",
                        help='Do not tar, return a list of all the files.' )
-  group.add_argument( 'filename', metavar='FILE', type=str, default='export.tar.gz',
-                       nargs='?',
-                       help='Path to the tarfile. Suffixes ".gz" and ".tgz" indicate '\
-                            'gzip compression, whereas ".bz" and ".bz2" indicate bzip '\
-                            'compression. Otherwise, no compression is used.')
+  group.add_argument( 'filename', metavar='FILE', type=str,
+      default='export.tar.gz', nargs='?',
+      help='Path to the tarfile. Suffixes ".gz" and ".tgz" indicate '          \
+           'gzip compression, whereas ".bz" and ".bz2" indicate bzip '         \
+           'compression. Otherwise, no compression is used.')
   parser.add_argument( '--incar', action="store_true", dest="incar",
                        help='Include INCAR files.' )
   parser.add_argument( '--doscar', action="store_true", dest="doscar",
@@ -49,19 +50,19 @@ def export(self, event):
   group.add_argument( '--down', action="store_true", dest="down",
                        help='Tar from one directory down.' )
   group.add_argument( '--from', type=str, dest="dir", default=None,
-                       help='Root directory from which to give filenames. '\
+                       help='Root directory from which to give filenames. '    \
                             'Defaults to current working directory.' )
   group.add_argument( '--with', type=str, dest="others", nargs='*',
-                       help='Adds pattern or filename to files to export.'\
-                            'Any file in any visited directory matching the given pattern '\
-                            'will be added to the archive. This options can be given more than '\
-                            'once if different file patterns are required.' )
+      help='Adds pattern or filename to files to export.'                      \
+           'Any file in any visited directory matching the given pattern '     \
+           'will be added to the archive. This options can be given more than '\
+           'once if different file patterns are required.' )
 
   try: args = parser.parse_args(event.split())
   except SystemExit as e: return None
 
-  collect = self.api.user_ns.get('collect', None)
-  rootdir = getattr(collect, 'rootdir', None)
+  collect = self.user_ns.get('collect', None)
+  rootpath = getattr(collect, 'rootpath', None)
   if collect is None:
     print "Could not find 'collect' object in user namespace."
     print "Please load a job-dictionary."
@@ -70,13 +71,13 @@ def export(self, event):
   kwargs = args.__dict__.copy()
   kwargs.pop('filename', None)
 
-  if rootdir is None: 
-    if hasattr(self.api.user_ns.get('collect', None), 'rootdir'): 
-      rootdir = self.api.user_ns.get('collect').rootdir
-  directory = getcwd() if rootdir is None else dirname(rootdir)
+  if rootpath is None: 
+    if hasattr(self.user_ns.get('collect', None), 'rootpath'): 
+      rootpath = self.user_ns.get('collect').rootpath
+  directory = getcwd() if rootpath is None else dirname(rootpath)
 
   if args.down: directory = join(directory, '..')
-  elif args.dir is not None: directory = RelativeDirectory(args.dir).path
+  elif args.dir is not None: directory = RelativePath(args.dir).path
 
   # set of directories visited.
   directories = set()
@@ -92,9 +93,9 @@ def export(self, event):
         for sfile in iglob(join(dir, pattern)):
           if exists(sfile) and isfile(sfile): allfiles.add(sfile)
   # adds current job folder.
-  if 'current_jobfolder_path' in self.api.user_ns:
-    if isfile(self.api.user_ns['current_jobfolder_path']):
-      allfiles.add(self.api.user_ns['current_jobfolder_path'])
+  if interactive.jobfolder_path is not None:
+    if isfile(interactive.jobfolder_path):
+      allfiles.add(interactive.jobfolder_path)
 
   # now tar or list files.
   if args.aslist:
@@ -103,14 +104,15 @@ def export(self, event):
     return SList([relpath(file, directory) for file in allfiles])
   else:
     # get filename of tarfile.
-    args.filename = relpath(RelativeDirectory(args.filename).path, getcwd())
+    args.filename = relpath(RelativePath(args.filename).path, getcwd())
     if exists(args.filename): 
       if not isfile(args.filename):
         print "{0} exists but is not a file. Aborting.".format(args.filename)
         return 
       a = ''
       while a not in ['n', 'y']:
-        a = raw_input("File {0} already exists.\nOverwrite? [y/n] ".format(args.filename))
+        a = raw_input( "File {0} already exists.\nOverwrite? [y/n] "           \
+                       .format(args.filename) )
       if a == 'n': print "Aborted."; return
 
     # figure out the type of the tarfile.
@@ -129,21 +131,22 @@ def completer(self, event):
   from glob import iglob
   from itertools import chain
   from os.path import isdir
+  from IPython.core.completer import expand_user, compress_user
   data = event.line.split()
   if    (len(event.symbol) == 0 and data[-1] == "--from") \
      or (len(event.symbol) > 0  and data[-2] == "--from"):
-    current = '' if len(event.symbol) == 0 else data[-1]
-    result = set([u for u in self.api.magic("%mglob dir:{0}*".format(current))]) | set(['../'])
-    if isdir(current): result |= set([u for u in self.api.magic("%mglob dir:{0}/*".format(current))])
-    return result
+    relpath, tilde_expand, tilde_val = expand_user(data[-1])
+    dirs = [f.replace('\\','/') + "/" for f in iglob(relpath+'*') if isdir(f)]
+    return [compress_user(p, tilde_expand, tilde_val) for p in dirs]
 
-  if    (len(event.symbol) == 0 and len(data) > 0 and data[-1] == "--with") \
+  if    (len(event.symbol) == 0 and len(data) > 0 and data[-1] == "--with")    \
      or (len(event.symbol) > 0  and len(data) > 1 and data[-2] == "--with"):
      return []
 
   data = set(data) - set(["export", "%export"])
-  result = set(['--incar', '--doscar', '--poscar', '--chgcar', '--contcar', 
-                '--potcar', '--wavecar', '--procar', '--list', '--down', '--from', '--with'])
+  result = set( [ '--incar', '--doscar', '--poscar', '--chgcar', '--contcar', 
+                  '--potcar', '--wavecar', '--procar', '--list', '--down',
+                  '--from', '--with' ] )
 
 
   if '--list' not in data:
@@ -151,22 +154,26 @@ def completer(self, event):
     if '--from' in other:
       i = other.index('--from')
       if i + 1 < len(other): other.pop(i+1)
-    other =  [u for u in (set(other)-result-set(['export', '%export'])) if u[0] != '-']
+    other = [ u for u in (set(other)-result-set(['export', '%export']))        \
+              if u[0] != '-' ]
     if len(other) == 0:
       for file in chain( iglob('*.tar'), iglob('*.tar.gz'), 
                          iglob('*.tgz'), iglob('*.bz'), iglob('*.bz2') ):
         result.add(file)
-      result |= set([u for u in self.api.magic("%mglob dir:*")])
+      relpath, tilde_expand, tilde_val = expand_user(data[-1])
+      result |= set( [ f.replace('\\','/') + "/" for f in iglob(relpath+'*')   \
+                       if isdir(f) ] )
     elif len(other) == 1 and len(event.symbol) != 0: 
       result.discard('--list')
       other = event.symbol
       if '.' in other: other = other[:other.find('.')]
-      string = "{0}*.tar {0}*.tar.gz {0}*.tgz {0}*.tar.bz {0}*.tar.bz2 dir:{0}*".format(other)
-      result |= set([u for u in self.api.magic("%mglob " + string)])
+      string = "{0}*.tar {0}*.tar.gz {0}*.tgz {0}*.tar.bz"                     \
+               "{0}*.tar.bz2 {0}*/".format(other)
+      result |= set([u for u in iglob(string)])
       if isdir(other) and other[-1] != '/':
-        string = "{0}/*.tar {0}/*.tar.gz {0}/*.tgz {0}/*.tar.bz "\
-                 "{0}/*.tar.bz2 dir:{0}/*".format(other)
-        result |= set([u for u in self.api.magic("%mglob " + string)])
+        string = "{0}/*.tar {0}/*.tar.gz {0}/*.tgz {0}/*.tar.bz "              \
+                 "{0}/*.tar.bz2 {0}*/".format(other)
+        result |= set([u for u in iglob(string)])
 
   result = result - data 
   if '--down' in data: result.discard('--from')

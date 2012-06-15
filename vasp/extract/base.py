@@ -1,9 +1,10 @@
 """ Subpackage containing extraction methods for VASP. """
 __docformat__  = 'restructuredtext en'
-__all__ = ['ExtractBase']
+__all__ = ['ExtractBase', 'CouldNotFindProperty']
 from quantities import g, cm, eV
 from ...functools import make_cached
 from ...functools.extract import search_factory
+from ...error import GrepError
 
 OutcarSearchMixin = search_factory('OutcarSearchMixin', 'OUTCAR', __name__)
 
@@ -162,7 +163,7 @@ class ExtractBase(object):
       if atom_re.search(line) is not None: atom_index = index - 1
       if cell_re.search(line) is not None: cell_index = index; break
     assert atom_index is not None and cell_index is not None,\
-           RuntimeError("Could not find structure description in OUTCAR.")
+           GrepError("Could not find structure description in OUTCAR.")
     result = Structure()
     try: 
       for i in range(3):
@@ -194,10 +195,10 @@ class ExtractBase(object):
 
     # tries to find adequate name for structure.
     try: name = self.system
-    except RuntimeError: name = ''
+    except GrepError: name = ''
     if len(name) == 0 or name == 'POSCAR created by SUPERPOSCAR':
       try: title = self.system
-      except RuntimeError: title = ''
+      except GrepError: title = ''
       if len(title) != 0: result.name = title
     else: result.name = name
     
@@ -645,7 +646,7 @@ class ExtractBase(object):
   def ispin(self):
     """ Greps ISPIN from OUTCAR. """
     result = self._find_first_OUTCAR(r"""^\s*ISPIN\s*=\s*(1|2)\s+""")
-    assert result is not None, RuntimeError("Could not extract ISPIN from OUTCAR.")
+    assert result is not None, GrepError("Could not extract ISPIN from OUTCAR.")
     return int(result.group(1))
 
   @property
@@ -653,7 +654,7 @@ class ExtractBase(object):
   def name(self):
     """ Greps POSCAR title from OUTCAR. """
     result = self._find_first_OUTCAR(r"""^\s*POSCAR\s*=.*$""")
-    assert result is not None, RuntimeError("Could not extract POSCAR title from OUTCAR.")
+    assert result is not None, GrepError("Could not extract POSCAR title from OUTCAR.")
     result = result.group(0)
     result = result[result.index('=')+1:]
     return result.rstrip().lstrip()
@@ -663,7 +664,7 @@ class ExtractBase(object):
   def system(self):
     """ Greps system title from OUTCAR. """
     result = self._find_first_OUTCAR(r"""^\s*SYSTEM\s*=.*$""")
-    assert result is not None, RuntimeError("Could not extract SYSTEM title from OUTCAR.")
+    assert result is not None, GrepError("Could not extract SYSTEM title from OUTCAR.")
     result = result.group(0)
     result = result[result.index('=')+1:].rstrip().lstrip()
     if result[0] == '"': result = result[1:]
@@ -682,7 +683,7 @@ class ExtractBase(object):
     for i, line in enumerate(lines[::-1]):
       found = spin_comp1_re.match(line)
       if found is not None: break
-    assert found is not None, RuntimeError("Could not extract eigenvalues/occupation from OUTCAR.")
+    assert found is not None, GrepError("Could not extract eigenvalues/occupation from OUTCAR.")
 
     # now greps actual results.
     if self.is_dft:
@@ -716,12 +717,12 @@ class ExtractBase(object):
       if found is None: continue
       if found.group(1) == '1': 
         assert spins[1] is not None, \
-               RuntimeError("Could not find two spin components in OUTCAR.")
+               GrepError("Could not find two spin components in OUTCAR.")
         spins[0] = i
         break
       else:  spins[1] = i
     assert spins[0] is not None and spins[1] is not None,\
-           RuntimeError("Could not extract eigenvalues/occupation from OUTCAR.")
+           GrepError("Could not extract eigenvalues/occupation from OUTCAR.")
 
     # now greps actual results.
     if self.is_dft:
@@ -750,7 +751,7 @@ class ExtractBase(object):
     """ Greps ionic_charges from OUTCAR."""
     regex = """^\s*ZVAL\s*=\s*(.*)$"""
     result = self._find_last_OUTCAR(regex) 
-    assert result is not None, RuntimeError("Could not find ionic_charges in OUTCAR")
+    assert result is not None, GrepError("Could not find ionic_charges in OUTCAR")
     return [float(u) for u in result.group(1).split()]
 
   @property
@@ -770,7 +771,7 @@ class ExtractBase(object):
     """ Greps nelect from OUTCAR."""
     regex = """^\s*NELECT\s*=\s*(\S+)\s+total\s+number\s+of\s+electrons\s*$"""
     result = self._find_last_OUTCAR(regex) 
-    assert result is not None, RuntimeError("Could not find energy in OUTCAR")
+    assert result is not None, GrepError("Could not find energy in OUTCAR")
     return float(result.group(1)) 
 
   @property
@@ -862,7 +863,7 @@ class ExtractBase(object):
   def nbands(self):
     """ Number of bands in calculation. """
     result = self._find_first_OUTCAR("""NBANDS\s*=\s*(\d+)""")
-    assert result is not None, RuntimeError("Could not find NBANDS in OUTCAR.")
+    assert result is not None, GrepError("Could not find NBANDS in OUTCAR.")
     return int(result.group(1))
 
   @property
@@ -870,7 +871,7 @@ class ExtractBase(object):
   def nbprocs(self):
     """ Number of bands in calculation. """
     result = self._find_first_OUTCAR("""running\s+on\s+(\d+)\s+nodes""")
-    assert result is not None, RuntimeError("Could not find number of processes in OUTCAR.")
+    assert result is not None, GrepError("Could not find number of processes in OUTCAR.")
     return int(result.group(1))
 
 
@@ -929,7 +930,7 @@ class ExtractBase(object):
     from quantities import eV
     regex = """energy\s+without\s+entropy\s*=\s*(\S+)\s+energy\(sigma->0\)\s+=\s+(\S+)"""
     result = self._find_last_OUTCAR(regex) 
-    assert result is not None, RuntimeError("Could not find sigma0 energy in OUTCAR")
+    assert result is not None, GrepError("Could not find sigma0 energy in OUTCAR")
     return float(result.group(2)) * eV
 
   @property
@@ -941,8 +942,8 @@ class ExtractBase(object):
     from quantities import eV
     regex = """energy\s+without\s+entropy\s*=\s*(\S+)\s+energy\(sigma->0\)\s+=\s+(\S+)"""
     try: result = [float(u.group(2)) for u in self._search_OUTCAR(regex)]
-    except TypeError: raise RuntimeError("Could not find energies in OUTCAR")
-    assert len(result) != 0, RuntimeError("Could not find energy in OUTCAR")
+    except TypeError: raise GrepError("Could not find energies in OUTCAR")
+    assert len(result) != 0, GrepError("Could not find energy in OUTCAR")
     return array(result) * eV
 
   @property
@@ -954,8 +955,8 @@ class ExtractBase(object):
     from quantities import eV
     regex = """energy\s+without\s+entropy =\s*(\S+)\s+energy\(sigma->0\)\s+=\s+(\S+)"""
     try: result = [float(u.group(1)) for u in self._search_OUTCAR(regex)]
-    except TypeError: raise RuntimeError("Could not find energies in OUTCAR")
-    assert len(result) != 0, RuntimeError("Could not find energy in OUTCAR")
+    except TypeError: raise GrepError("Could not find energies in OUTCAR")
+    assert len(result) != 0, GrepError("Could not find energy in OUTCAR")
     return array(result) * eV
 
   @property
@@ -1019,8 +1020,8 @@ class ExtractBase(object):
     from quantities import eV
     regex = """energy\s+without\s+entropy=\s*(\S+)\s+energy\(sigma->0\)\s+=\s+(\S+)"""
     try: result = [float(u.group(1)) for u in self._search_OUTCAR(regex)]
-    except TypeError: raise RuntimeError("Could not find energies in OUTCAR")
-    assert len(result) != 0, RuntimeError("Could not find energy in OUTCAR")
+    except TypeError: raise GrepError("Could not find energies in OUTCAR")
+    assert len(result) != 0, GrepError("Could not find energy in OUTCAR")
     return array(result) * eV
 
   @property
@@ -1031,7 +1032,7 @@ class ExtractBase(object):
     from quantities import eV
     regex = """energy\s+without\s+entropy=\s*(\S+)\s+energy\(sigma->0\)\s+=\s+(\S+)"""
     result = self._find_last_OUTCAR(regex) 
-    assert result is not None, RuntimeError("Could not find energy in OUTCAR")
+    assert result is not None, GrepError("Could not find energy in OUTCAR")
     return float(result.group(1)) * eV
 
   energy = total_energy
@@ -1045,7 +1046,7 @@ class ExtractBase(object):
     from quantities import eV
     regex = r"""E-fermi\s*:\s*(\S+)"""
     result = self._find_last_OUTCAR(regex) 
-    assert result is not None, RuntimeError("Could not find fermi energy in OUTCAR")
+    assert result is not None, GrepError("Could not find fermi energy in OUTCAR")
     return float(result.group(1)) * eV
 
   @property
@@ -1055,7 +1056,7 @@ class ExtractBase(object):
     if not self.is_dft: raise AttributeError('not a DFT calculation.')
     regex = r"""^\s*number\s+of\s+electron\s+(\S+)\s+magnetization\s+(\S+)\s*$"""
     result = self._find_last_OUTCAR(regex) 
-    assert result is not None, RuntimeError("Could not find magnetic moment in OUTCAR")
+    assert result is not None, GrepError("Could not find magnetic moment in OUTCAR")
     return float(result.group(2))
 
   @property
@@ -1066,8 +1067,8 @@ class ExtractBase(object):
     from quantities import kbar as kB
     regex = r"""external\s+pressure\s*=\s*(\S+)\s*kB\s+Pullay\s+stress\s*=\s*(\S+)\s*kB"""
     try: result = [float(u.group(1)) for u in self._search_OUTCAR(regex)]
-    except TypeError: raise RuntimeError("Could not find pressures in OUTCAR")
-    assert len(result) != 0, RuntimeError("Could not find pressures in OUTCAR")
+    except TypeError: raise GrepError("Could not find pressures in OUTCAR")
+    assert len(result) != 0, GrepError("Could not find pressures in OUTCAR")
     return result * kB
 
   @property
@@ -1078,7 +1079,7 @@ class ExtractBase(object):
     from quantities import kbar as kB
     regex = r"""external\s+pressure\s*=\s*(\S+)\s*kB\s+Pullay\s+stress\s*=\s*(\S+)\s*kB"""
     result = self._find_last_OUTCAR(regex) 
-    assert result is not None, RuntimeError("Could not find pressure in OUTCAR")
+    assert result is not None, GrepError("Could not find pressure in OUTCAR")
     return float(result.group(1)) * kB
 
   @property
@@ -1088,7 +1089,7 @@ class ExtractBase(object):
     if not self.is_dft: raise AttributeError('not a DFT calculation.')
     regex = r"""^\s*E-fermi\s*:\s*(\S+)\s+XC\(G=0\)\s*:\s*(\S+)\s+alpha\+bet\s*:(\S+)\s*$"""
     result = self._find_last_OUTCAR(regex) 
-    assert result is not None, RuntimeError("Could not find alpha+bet in OUTCAR")
+    assert result is not None, GrepError("Could not find alpha+bet in OUTCAR")
     return float(result.group(3))
 
   @property
@@ -1098,7 +1099,7 @@ class ExtractBase(object):
     if not self.is_dft: raise AttributeError('not a DFT calculation.')
     regex = r"""^\s*E-fermi\s*:\s*(\S+)\s+XC\(G=0\)\s*:\s*(\S+)\s+alpha\+bet\s*:(\S+)\s*$"""
     result = self._find_last_OUTCAR(regex) 
-    assert result is not None, RuntimeError("Could not find xc(G=0) in OUTCAR")
+    assert result is not None, GrepError("Could not find xc(G=0) in OUTCAR")
     return float(result.group(2))
 
   @property
@@ -1107,9 +1108,11 @@ class ExtractBase(object):
     """ Greps pressure from OUTCAR """
     if not self.is_dft: raise AttributeError('not a DFT calculation.')
     from quantities import kbar as kB
-    regex = r"""external\s+pressure\s*=\s*(\S+)\s*kB\s+Pullay\s+stress\s*=\s*(\S+)\s*kB"""
+    regex = r"external\s+pressure\s*=\s*(\S+)\s*kB\s+"                        \
+            r"Pullay\s+stress\s*=\s*(\S+)\s*kB"
     result = self._find_last_OUTCAR(regex) 
-    assert result is not None, RuntimeError("Could not find pulay pressure in OUTCAR")
+    if result is None:
+     raise GrepError("Could not find pulay pressure in OUTCAR")
     return float(result.group(2)) * kB
 
   @property
@@ -1119,11 +1122,13 @@ class ExtractBase(object):
     if not self.is_dft: raise AttributeError('not a DFT calculation.')
     from re import search, M as re_M
     from numpy import array
-    regex = r"""(?!I would recommend the setting:\s*\n)"""\
-             """\s*dimension x,y,z NGX =\s+(\d+)\s+NGY =\s+(\d+)\s+NGZ =\s+(\d+)"""
+    regex = r"(?!I would recommend the setting:\s*\n)"                         \
+             "\s*dimension x,y,z NGX =\s+(\d+)\s+NGY =\s+(\d+)\s+NGZ =\s+(\d+)"
     with self.__outcar__() as file: result = search(regex, file.read(), re_M)
-    assert result is not None, RuntimeError("Could not FFT grid in OUTCAR.""")
-    return array([int(result.group(1)), int(result.group(2)), int(result.group(3))])
+    assert result is not None, GrepError("Could not FFT grid in OUTCAR.""")
+    return array([ int(result.group(1)),
+                   int(result.group(2)), 
+                   int(result.group(3)) ])
 
   @property
   @make_cached
@@ -1132,13 +1137,14 @@ class ExtractBase(object):
     if not self.is_dft: raise AttributeError('not a DFT calculation.')
     from re import search, M as re_M
     from numpy import array
-    regex = r"""I would recommend the setting:\s*\n"""\
-             """\s*dimension x,y,z NGX =\s+(\d+)\s+NGY =\s+(\d+)\s+NGZ =\s+(\d+)"""
+    regex = r"I would recommend the setting:\s*\n"                             \
+             "\s*dimension x,y,z NGX =\s+(\d+)\s+NGY =\s+(\d+)\s+NGZ =\s+(\d+)"
     with self.__outcar__() as file: result = search(regex, file.read(), re_M)
-    assert result is not None, RuntimeError("Could not recommended FFT grid in OUTCAR.""")
+    if result is None:
+      raise GrepError("Could not recommended FFT grid in OUTCAR.""")
     return array([int(result.group(1)), int(result.group(2)), int(result.group(3))])
 
-  def _get_partial_charges_magnetization(self, grep):
+  def _partial_charges_impl(self, grep):
     """ Greps partial charges from OUTCAR.
 
         This is a numpy array where the first dimension is the ion (eg one row
@@ -1172,7 +1178,7 @@ class ExtractBase(object):
         The total is not included.
     """
     if not self.is_dft: raise AttributeError('not a DFT calculation.')
-    return self._get_partial_charges_magnetization(r"""\s*total\s+charge\s*$""")
+    return self._partial_charges_impl(r"""\s*total\s+charge\s*$""")
 
   @property
   @make_cached
@@ -1184,7 +1190,7 @@ class ExtractBase(object):
         The total is not included.
     """
     if not self.is_dft: raise AttributeError('not a DFT calculation.')
-    return self._get_partial_charges_magnetization(r"""^\s*magnetization\s*\(x\)\s*$""")
+    return self._partial_charges_impl(r"""^\s*magnetization\s*\(x\)\s*$""")
 
   @property
   @make_cached
@@ -1199,7 +1205,8 @@ class ExtractBase(object):
       raise AttributeError('Neither a DFT not a GW calculation.')
     from numpy import array
     from quantities import eV
-    if self.ispin == 2: return array(self._spin_polarized_values(1), dtype="float64") * eV
+    if self.ispin == 2:
+      return array(self._spin_polarized_values(1), dtype="float64") * eV
     return array(self._unpolarized_values(1), dtype="float64") * eV
 
   @property
@@ -1214,7 +1221,8 @@ class ExtractBase(object):
     if not (self.is_dft or self.is_gw):
       raise AttributeError('Neither a DFT not a GW calculation.')
     from numpy import array
-    if self.ispin == 2: return array(self._spin_polarized_values(2), dtype="float64")
+    if self.ispin == 2:
+      return array(self._spin_polarized_values(2), dtype="float64")
     return array(self._unpolarized_values(2), dtype="float64") 
 
   @property
@@ -1228,7 +1236,8 @@ class ExtractBase(object):
     """
     if not self.is_gw: raise AttributeError('not a GW calculation.')
     from numpy import array
-    if self.ispin == 2: return array(self._spin_polarized_values(1), dtype="float64") * eV
+    if self.ispin == 2:
+      return array(self._spin_polarized_values(1), dtype="float64") * eV
     return array(self._unpolarized_values(2), dtype="float64") * eV
 
   @property
@@ -1242,7 +1251,8 @@ class ExtractBase(object):
     """
     if not self.is_gw: raise AttributeError('not a GW calculation.')
     from numpy import array
-    if self.ispin == 2: return array(self._spin_polarized_values(1), dtype="float64") * eV
+    if self.ispin == 2:
+      return array(self._spin_polarized_values(1), dtype="float64") * eV
     return array(self._unpolarized_values(3), dtype="float64") * eV
 
   @property
@@ -1255,10 +1265,12 @@ class ExtractBase(object):
     from quantities import eV
 
     with self.__outcar__() as file: lines = file.readlines()
-    regex = compile(r"""average\s+\(electrostatic\)\s+potential\s+at\s+core""", reX)
+    regex = compile( r"average\s+\(electrostatic\)\s+potential\s+at\s+core",   \
+                     reX )
     for i, line in enumerate(lines[::-1]):
       if regex.search(line) is not None: break
-    assert -i + 2 < len(lines), RuntimeError("Could not find average atomic potential in file.")
+    if -i + 2 >= len(lines):
+      raise GrepError("Could not find average atomic potential in file.")
     regex = compile(r"""(?:\s|\d){8}\s*(-?\d+\.\d+)""")
     result = []
     for line in lines[-i+2:]:
@@ -1275,15 +1287,18 @@ class ExtractBase(object):
     if not self.is_dft: raise AttributeError('not a DFT calculation.')
     from re import M as multline
     from numpy import array
-    regex = r"\s*MACROSCOPIC\s+STATIC\s+DIELECTRIC\s+TENSOR\s*\(including local field effects in DFT\)\s*\n"\
-            r"\s*-+\s*\n"\
-            r"\s*(\S+)\s+(\S+)\s+(\S+)\s*\n"\
-            r"\s*(\S+)\s+(\S+)\s+(\S+)\s*\n"\
-            r"\s*(\S+)\s+(\S+)\s+(\S+)\s*\n"\
+    regex = r"\s*MACROSCOPIC\s+STATIC\s+DIELECTRIC\s"                          \
+               r"+TENSOR\s*\(including local field effects in DFT\)\s*\n"      \
+            r"\s*-+\s*\n"                                                      \
+            r"\s*(\S+)\s+(\S+)\s+(\S+)\s*\n"                                   \
+            r"\s*(\S+)\s+(\S+)\s+(\S+)\s*\n"                                   \
+            r"\s*(\S+)\s+(\S+)\s+(\S+)\s*\n"                                   \
             r"\s*-+\s*\n"
     result = self._find_last_OUTCAR(regex, multline)
-    assert result is not None, RuntimeError('Could not find dielectric tensor in output.')
-    return array([result.group(i) for i in range(1,10)], dtype='float64').reshape((3,3))
+    if result is None:
+      raise GrepError('Could not find dielectric tensor in output.')
+    return array( [result.group(i) for i in range(1,10)],                      \
+                  dtype='float64').reshape((3,3) )
 
   @property 
   @make_cached
@@ -1292,21 +1307,25 @@ class ExtractBase(object):
     if not self.is_dft: raise AttributeError('not a DFT calculation.')
     from re import M as multline
     from numpy import array
-    regex = r"\s*MACROSCOPIC\s+STATIC\s+DIELECTRIC\s+TENSOR\s+IONIC\s+CONTRIBUTION\s*\n"\
-            r"\s*-+\s*\n"\
-            r"\s*(\S+)\s+(\S+)\s+(\S+)\s*\n"\
-            r"\s*(\S+)\s+(\S+)\s+(\S+)\s*\n"\
-            r"\s*(\S+)\s+(\S+)\s+(\S+)\s*\n"\
+    regex = r"\s*MACROSCOPIC\s+STATIC\s+DIELECTRIC"                            \
+              r"\s+TENSOR\s+IONIC\s+CONTRIBUTION\s*\n"                         \
+            r"\s*-+\s*\n"                                                      \
+            r"\s*(\S+)\s+(\S+)\s+(\S+)\s*\n"                                   \
+            r"\s*(\S+)\s+(\S+)\s+(\S+)\s*\n"                                   \
+            r"\s*(\S+)\s+(\S+)\s+(\S+)\s*\n"                                   \
             r"\s*-+\s*\n"
     result = self._find_last_OUTCAR(regex, multline)
-    assert result is not None, RuntimeError('Could not find dielectric tensor in output.')
-    return array([result.group(i) for i in range(1,10)], dtype='float64').reshape((3,3))
+    if result is None: 
+      raise GrepError('Could not find dielectric tensor in output.')
+    return array( [result.group(i) for i in range(1,10)],                      \
+                  dtype='float64').reshape((3,3) )
 
   @property 
   def dielectric_constant(self):
     """ Dielectric constant of the material. """
     if not self.is_dft: raise AttributeError('not a DFT calculation.')
-    return  self.electronic_dielectric_constant + self.ionic_dielectric_constant
+    return  self.electronic_dielectric_constant                                \
+            + self.ionic_dielectric_constant
 
   @property
   @make_cached
@@ -1318,8 +1337,9 @@ class ExtractBase(object):
     from quantities import eV, J, kbar
     from re import finditer, M 
     if self.isif < 1: return None
-    pattern = """\s*Total\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s*\n"""\
-              """\s*in kB\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s*\n"""
+    pattern                                                                    \
+      = """\s*Total\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s*\n"""    \
+        """\s*in kB\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s*\n"""
     result = []
     with self.__outcar__() as file:
       for regex in finditer(pattern, file.read(), M): 
@@ -1333,8 +1353,9 @@ class ExtractBase(object):
           stress[i][0,2] += float(regex.group(i*6+4))
           stress[i][2,0] += float(regex.group(i*6+4))
         if sum(abs(stress[0].flatten())) > sum(abs(stress[1].flatten())):
-          result.append( stress[0] * float(eV.rescale(J) * 1e22\
-                         / abs(det(self.structure.cell*self.structure.scale))) * kbar)
+          result.append( stress[0] * float(eV.rescale(J) * 1e22                \
+                         / abs(det(self.structure.cell*self.structure.scale))) \
+                         * kbar)
         else: result.append(stress[1])
     return array(result)*kbar
   @property
@@ -1351,39 +1372,34 @@ class ExtractBase(object):
     from numpy import array
     from quantities import angstrom, eV
     from re import finditer, M
-    pattern = """ *POSITION\s*TOTAL-FORCE\s*\(eV\/Angst\)\s*\n"""\
-              """\s*-+\s*\n"""\
-              """(?:\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s*\n)+"""\
-              """\s*-+\s*\n"""\
+    pattern = """ *POSITION\s*TOTAL-FORCE\s*\(eV\/Angst\)\s*\n"""              \
+              """\s*-+\s*\n"""                                                 \
+              """(?:\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s*\n)+"""             \
+              """\s*-+\s*\n"""                                                 \
               """\s*total drift"""
     with self.__outcar__() as file:
       for regex in finditer(pattern, file.read(), M): pass
-    return array([u.split()[3:] for u in regex.group(0).split('\n')[2:-2]], dtype="float64")\
-           * eV / angstrom
+    return array( [u.split()[3:] for u in regex.group(0).split('\n')[2:-2]],   \
+                   dtype="float64" ) * eV / angstrom
 
 
 
   def __dir__(self):
-    result = [ 'ialgo', 'algo', 'is_dft', 'is_gw', 'encut', 'functional',
-               'success', 'datetime', 'initial_structure', 'structure',
-               'LDAUType', 'HubbardU_NLEP', 'pseudopotential', 'volume',
-               'reciprocal_volume', 'density', 'stoichiometry', 'species',
-               'isif', 'nsw', 'ismear', 'sigma', 'relaxation', 'smearing',
-               'ibrion', 'potim', 'lorbit', 'isym', 'nupdown', 'lmaxmix',
-               'istart', 'icharg', 'precision', 'ediff', 'ediffg', 'kpoints',
-               'multiplicity', 'ispin', 'name', 'system', 'ionic_charges',
-               'valence', 'nelect', 'extraelectron', 'nonscf', 'lwave', 
-               'lvtot', 'nelmdl', 'nelmin', 'nbands', 'lasph', 'lreal',
-               'lnoncollinear', 'lreal_compat', 'lelf', 'lgga_compat', 
-               'lcharg', 'lcorr', 'ldiag', 'ldipol', 'lsorbit', 'lsecvar' ]
-    if self.is_dft: 
-      result += [ 'energy_sigma0', 'energies_sigma0', 'all_total_energies', 'fermi0K',
-                  'halfmetallic', 'cbm', 'vbm', 'total_energies', 'total_energy', 
-                  'fermi_energy', 'moment', 'pressures', 'pressure', 'forces', 'stresses',
-                  'stress', 'alphabet', 'xc_g0', 'pulay_pressure', 'fft', 'recommended_fft',
-                  'partial_charges', 'magnetization', 'eigenvalues', 'occupations', 'electropot', 
-                  'electronic_dielectric_constant', 'ionic_dielectric_constant', 
-                  'dielectric_constant' ]
-    elif self.is_gw:
-      result += ['eigenvalues', 'qp_eigenvalues', 'self_energies', 'occupations']
-    return result
+    """ Attributes and members of this class. 
+
+	Removes dft and gw attributes if this is not a dft or gw calculation.
+    """
+    result = set([u for u in dir(self.__class__) if u[0] != '_'])              \
+             | set([u for u in self.__dict__.iterkeys() if u[0] != '_' ])
+    if not self.is_gw: 
+      result -= set(['qp_eigenvalues', 'self_energies'])
+    if not self.is_dft: 
+      result -= set( [ 'energy_sigma0', 'energies_sigma0',
+		       'all_total_energies', 'fermi0K', 'halfmetallic', 'cbm',
+		       'vbm', 'total_energies', 'total_energy', 'fermi_energy',
+		       'moment', 'pressures', 'pressure', 'forces', 'stresses',
+		       'stress', 'alphabet', 'xc_g0', 'pulay_pressure', 'fft',
+		       'recommended_fft', 'partial_charges', 'magnetization',
+		       'electropot', 'electronic_dielectric_constant',
+                       'ionic_dielectric_constant', 'dielectric_constant' ] )
+    return list(result)

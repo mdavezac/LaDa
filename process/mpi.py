@@ -203,6 +203,9 @@ def create_global_comm(nprocs, dir=None):
 
     process = Popen(split(cmdline) + [filename], stdout=PIPE, stderr=PIPE)
     stdout, stderr = process.communicate()
+    print stdout
+    print '###################'
+    print stderr
   finally:
     if exists(filename):
       try: remove(filename)

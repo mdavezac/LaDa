@@ -7,17 +7,20 @@ qsub_exe = "qsub"
 default_pbs = { 'walltime': "00:55:00", 'nnodes': 1, 'ppn': 4}
 """ Defaults parameters filling the pbs script. """
 
-pbs_string =  "#! /bin/bash\n"\
-              "#PBS -e \"{err}.%j\"\n"\
-              "#PBS -o \"{out}.%j\"\n"\
-              "#PBS -m n\n"\
-              "#PBS -N {name}\n"\
-              "#PBS -l select={nnodes}:ncpus={nprocs}\n"\
-              "#PBS -l walltime={walltime}\n"\
-              "#PBS -V \n\n"\
-              "cd {directory}\n"\
-              "python {scriptcommand}\n"
-""" Default slurm script. """
+def pbs_string(**kwargs):
+  """ Returns pbs script. """
+  if 'name' in kwargs:
+    kwargs['name'] = kwargs['name'][:min(len(kwargs['name']), 15)]
+  return "#! /bin/bash\n"\
+             "#PBS -e \"{err}\"\n"\
+             "#PBS -o \"{out}\"\n"\
+             "#PBS -m n\n"\
+             "#PBS -N {name}\n"\
+             "#PBS -l select={nnodes}:ncpus={n}\n"\
+             "#PBS -l walltime={walltime}\n"\
+             "#PBS -V \n\n"\
+             "cd {directory}\n"\
+             "python {scriptcommand}\n".format(**kwargs)
 
 default_comm = { 'n': 2, 'ppn': default_pbs['ppn'] }
 """ Default mpirun parameters. """
