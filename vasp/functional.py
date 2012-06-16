@@ -131,7 +131,14 @@ class Vasp(Incar):
       if exists(path):
         try: contstruct = read.poscar(path, list(specieset(structure)))
         except: pass
-        else: structure = contstruct
+        else:
+          # copies poscar info to structure.
+          # this function should be stateless at this point, so it does not
+          # matter that we change structure.
+          for a, b in zip(structure, contstruct):
+            a.pos, a.type = b.pos, b.type
+          structure.cell = contstruct.cell
+          structure.scale = contstruct.scale
     if len(structure) == 0: raise ValueError("Structure is empty.")
     if abs(det(structure.cell)) < 1e-8: raise ValueError("Structure with zero volume.")
     if abs(structure.scale) < 1e-8: raise ValueError("Structure with null scale.")

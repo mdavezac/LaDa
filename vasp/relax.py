@@ -194,7 +194,7 @@ def iter_relax( vasp, structure, outdir=None, first_trial=None,
                outdir = join(outdir, join("relax_ions", str(nb_steps))),
                relaxation = "ionic",
                restart = output,
-               **kwargs
+               **params
              ): yield u
 
     output = vasp.Extract(join(outdir, join("relax_ions", str(nb_steps))))
