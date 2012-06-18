@@ -1,6 +1,6 @@
    .. py:attribute:: Incar.algo
 
-      See the documentation for :py:class:`Algo`.
+      See the documentation for :py:class:`~lada.vasp.incar.Algo`.
 
    .. py:attribute:: Incar.addgrid
 
@@ -10,23 +10,23 @@
 
    .. py:attribute:: Incar.ediff
 
-      See the documentation for :py:class:`Ediff`.
+      See the documentation for :py:class:`~lada.vasp.incar.Ediff`.
 
    .. py:attribute:: Incar.ediffg
 
-      See the documentation for :py:class:`Ediffg`.
+      See the documentation for :py:class:`~lada.vasp.incar.Ediffg`.
 
    .. py:attribute:: Incar.encut
 
-      See the documentation for :py:class:`Encut`.
+      See the documentation for :py:class:`~lada.vasp.incar.Encut`.
 
    .. py:attribute:: Incar.encutgw
 
-      See the documentation for :py:class:`EncutGW`.
+      See the documentation for :py:class:`~lada.vasp.incar.EncutGW`.
 
    .. py:attribute:: Incar.fftgrid
 
-      See the documentation for :py:class:`FFTGrid`.
+      See the documentation for :py:class:`~lada.vasp.incar.FFTGrid`.
 
    .. py:attribute:: Incar.ispin
 
@@ -136,7 +136,7 @@
 
    .. py:attribute:: Incar.magmom
 
-      See the documentation for :py:class:`Magmom`.
+      See the documentation for :py:class:`~lada.vasp.incar.Magmom`.
 
    .. py:attribute:: Incar.nbands
 
@@ -146,7 +146,7 @@
 
    .. py:attribute:: Incar.extraelectron
 
-      See the documentation for :py:class:`ExtraElection`.
+      See the documentation for :py:class:`~lada.vasp.incar.ExtraElectron`.
    
    .. py:attribute:: Incar.nelm
 
@@ -182,11 +182,11 @@
 
    .. py:attribute:: Incar.nonscf
 
-      See the documentation for :py:class:`NonScf`.
+      See the documentation for :py:class:`~lada.vasp.incar.NonScf`.
 
    .. py:attribute:: Incar.npar
 
-      See the documentation for :py:class:`Npar`.
+      See the documentation for :py:class:`~lada.vasp.incar.Npar`.
 
    .. py:attribute:: Incar.nupdown
 
@@ -196,24 +196,25 @@
 
    .. py:attribute:: Incar.precision
 
-      See the documentation for :py:class:`Precision`.
+      See the documentation for :py:class:`~lada.vasp.incar.Precision`.
 
    .. py:attribute:: Incar.precfock
 
-      See the documentation for :py:class:`PrecFock`.
+      See the documentation for :py:class:`~lada.vasp.incar.PrecFock`.
 
    .. py:attribute:: Incar.relaxation
 
-      See the documentation for :py:class:`Relaxation`.
+      See the documentation for :py:class:`~lada.vasp.incar.Relaxation`.
 
    .. py:attribute:: Incar.restart
 
-      See the documentation for :py:class:`Restart`.
-      .. seealso:: :py:class:`PartialRestart`
+      See the documentation for :py:class:`~lada.vasp.incar.Restart`.
+
+      .. seealso:: :py:class:`~lada.vasp.incar.PartialRestart`
 
    .. py:attribute:: Incar.smearing
 
-      See the documentation for :py:class:`Smearing`.
+      See the documentation for :py:class:`~lada.vasp.incar.Smearing`.
 
    .. py:attribute:: Incar.symprec
 
@@ -224,13 +225,13 @@
 
    .. py:attribute:: Incar.system
 
-      See the documentation for :py:class:`System`.
+      See the documentation for :py:class:`~lada.vasp.incar.System`.
 
    .. py:attribute:: Incar.U_verbosity
 
-      See the documentation for :py:class:`UParams`.
+      See the documentation for :py:class:`~lada.vasp.incar.UParams`.
 
    .. py:attribute:: Incar.lsorbit
 
-      See the documentation for :py:class:`LSorbit`.
+      See the documentation for :py:class:`~lada.vasp.incar.LSorbit`.
 

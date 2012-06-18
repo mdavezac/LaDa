@@ -1,6 +1,6 @@
 .. _lada-config:
 
-Configuring lada
+Configuring LaDa
 ****************
 
 Environment Variables
@@ -9,6 +9,10 @@ Environment Variables
 .. envvar:: LADA_CONFIG_DIR
 
    Environment variable specifying the path(s) to the configuration directories.
+
+.. envvar:: LADA_DATA_DIRECTORY
+
+   Environment variable specifying the path to the root of the data directories.
 
 Configuration variables
 =======================
@@ -70,10 +74,22 @@ VASP
      - string: Should be the path to the vasp executable. It can be either
        a full path, or an executable within the envirnoment's $PATH
        variable.
-     - callable: The callable is called with a :py:class:`~lada.vasp.Vasp`
-       as sole argument. It should return a string, as described above.
-       In other words, different vasp executables can be used depending on
-       the parameters. 
+     - callable: The callable is called with a
+       :py:class:`~lada.vasp.functional.Vasp` instance as sole argument. It
+       should return a string, as described above.  In other words, different
+       vasp executables can be used depending on the parameters. 
+
+       For instance, the following function chooses between a *normal* vasp and
+       vasp compiled for perturbative spin-orbit calculations::
+
+         def vasp_program(vasp):
+           """ Signifies the vasp executable. 
+           
+               It is expected that two vasp executable exist, a *normal* vasp, and a one
+               compiled for non-collinear calculations.
+       
+           """
+           return "vasp-4.6-nc" if getattr(vasp, 'lsorbit', False) == True else "vasp-4.6"
 
 .. _mpi-config:
 
@@ -85,17 +101,17 @@ MPI
   .. py:data:: mpirun_exe 
    
      Format string to launch mpi programs. It accepts as arguments 
-     ``program``, ``commandline``, ``n``, ``ppn`` as well as anything you want
+     ``program``, ``n``, ``ppn`` as well as anything you want
      to throw at it:
 
-     - ``program``: program to launch
-     - ``cmdline``: command line arguments to lauch it with
+     - ``program``: program (with commandline arguments) to launch
+     - ``placement``: used to place an executable on specific nodes and processors
      - ``n``: number of processes to launch program
      - ``ppn``: number of processes per nodes
      
-     In general, it takes the following form:
+     In general, it takes the following form::
 
-     >>> mpirun_exe = "mpirun -n {n} {program} {cmdline}
+       mpirun_exe = "mpirun -n {n} {placement} {program}"
 
      The actual commandline is executed by :py:func:`execute_program
      <lada.misc.execute_program>`. The latter executes via Popen_ a
@@ -110,6 +126,40 @@ MPI
 
      An dictionary with ``n`` and ``ppn``, as well as any other variable to be
      used in conjunction with :py:data:`mpirun_exe`.
+
+  .. py:data:: do_multiple_mpi_programs
+
+     A boolean defining whether to attempt to figure out which machines lada
+     can run on. This is only necessary if you will run different mpi
+     executable simultaneously in the same PBS job.
+  
+  .. py:data:: figure_out_machines
+
+     A string which defines a python program to get the hostnames of the
+     machines LaDa can run on. This program must print to the standard output
+     the names of the machines, one per line, and nothing else. Defaults to::
+
+       figure_out_machines =  'from socket import gethostname\n'                      \
+                              'from boost.mpi import world\n'                         \
+                              'for i in xrange(world.size):\n'                        \
+                              '  if i == world.rank: print gethostname(), i\n'        \
+                              '  world.barrier()\n'                            
+
+  .. py:function:: modify_global_comm(lada.process.mpi.Communicator)->None
+
+     Called after figuring the hostnames of the nodes LaDa should run on. It is
+     a callable tacking the global communicator as sole input. It should modify
+     the callable such that :py:data:`~lada.placement` can make sense of a
+     communicator and issue the correct placement configuration to the mpirun
+     program. By default, this function does nothing.
+
+  .. py:function:: placement(lada.process.mpi.Communicator)->str
+
+     Callable which takes an :py:class:`~lada.mpi.Communicator` and returns a
+     string which tells the mpirun program which nodes to run on. The string is
+     substituted for "{placement}" in :py:data:`~lada.mpirun_exe`. In most
+     cases (e.g. default), this means writing a machine file to disk and
+     telling mpirun where it is with "-machinefile". 
 
 Job-folder
 ----------
@@ -220,29 +270,25 @@ Compuational ressources and job submission
           result = SList([u[1:-1] for u in result[1:]])
           return result.grep(str(arg[1:-1]))
 
-     An this one is for pbs_-type ressource managers::
+     An this one is for the PBSpro_ ressource managers::
 
-        def qstat(self, arg):
-          """ Prints jobs of current user. """
-          from subprocess import Popen, PIPE
-          from getpass import getuser
-          from IPython.utils.text import SList
-          from re import compile
-          # get user jobs ids
-          ids = Popen('qstat -u{0}'.format(getuser()).split(), stdout=PIPE).communicate()[0].split('\n')
-          ids = SList(ids).grep(getuser()).fields(0)
-        
-          result = SList()
-          name_re = compile("Job_Name\s*=\s*(.+)")
-          state_re = compile("job_state\s*=\s*(\S+)")
-          mppwidth_re = compile("Resource_List.mppwidth\s*=\s*(\d+)")
-          for id in ids:
-            full = Popen('qstat -f {0}'.format(id).split(), stdout=PIPE).communicate()[0]
-            name = name_re.search(full).group(1)
-            state = state_re.search(full).group(1)
-            mppwidth = mppwidth_re.search(full).group(1)
-            result.append("{0:>10} {1:>4} {2:>3} -- {3}".format(id, mppwidth, state, name))
-          return result
+       def ipython_qstat(self, arg):
+         """ Prints jobs of current user. """
+         from subprocess import Popen, PIPE
+         from IPython.utils.text import SList
+         # get user jobs ids
+         jobs   = SList(Popen(['qstat', '-f'], stdout=PIPE)                           \
+                       .communicate()[0].split('\n'))
+         names  = [ u[u.find('=')+1:].lstrip().rstrip()                               \
+                    for u in jobs.grep('Job_Name') ]
+         mpps   = [int(u[u.find('=')+1:]) for u in jobs.grep('Resource_List.ncpus')]
+         states = [ u[u.find('=')+1:].lstrip().rstrip()                               \
+                    for u in jobs.grep('job_state') ]
+         ids    = [u[u.find(':')+1:].lstrip().rstrip() for u in jobs.grep('Job Id')]
+         return SList([ "{0:>10} {1:>4} {2:>3} -- {3}".format(id, mpp, state, name)   \
+                        for id, mpp, state, name in zip(ids, mpps, states, names)])
+
+     It use IPython's SList_ to easily grep through output.
 
      Other/better snippets for other ressource managers are welcome.
 
@@ -259,4 +305,6 @@ Compuational ressources and job submission
      tuple if "accounts" are not relevant to the ressource manager.
 
  .. _slurm: https://computing.llnl.gov/linux/slurm/
+ .. _PBSpro: http://www.pbsworks.com/Product.aspx?id=1
+ .. _SList: http://ipython.scipy.org/Wiki/Cookbook/StringListProcessing
  .. _pbs: http://www.mcs.anl.gov/research/projects/openpbs/

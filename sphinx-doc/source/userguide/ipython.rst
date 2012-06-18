@@ -10,9 +10,26 @@ around creating directories, and for actual python programming. In fact, the
 two can be combined to create a truly powerfull shell. 
 
 LaDa puts this tool to good use by providing a command-line approach to
-manipulate job-folders, launch actual calculations, and collect the result.
-When used in conjunction with python plotting libraries, e.g. matplotlib_, it
-can provide rapid turnaround from conceptualization to result analysis.
+manipulate :ref:`job-folders <jobfolder_ug>`, launch actual calculations, and
+collect the result.  When used in conjunction with python plotting libraries,
+e.g. matplotlib_, it can provide rapid turnaround from conceptualization to
+result analysis.
+
+.. note:: 
+
+   You may want to browse through the description of :ref:`job-folders
+   <jobfolder_ug>` before reading this section.
+
+
+.. warning:: 
+
+   If you have not set-up LaDa to run :ref:`multiple mpi programs in parallel
+   <install_mmpi_ug>` yet, please add the one liner::
+
+     do_multiple_mpi_programs = False 
+
+   in your ~/.lada file. Don't forget to remove it when time comes to run LaDa
+   for real.
 
 .. _ipython_prep_ug:
 
@@ -274,8 +291,8 @@ it again is to turn it back on. Groups of calculations can be turned on and off
 using the unix shell-like syntax previously.
 
 
-Submitting job-folder calclations
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Submitting job-folder calculations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Once job-folders are ready, it takes all of one line to launch the calculations:
 

@@ -1,3 +1,5 @@
+.. _vasp_ug:
+
 Interface to VASP
 *****************
 
@@ -149,10 +151,10 @@ The following is a (possibly incomplete) list of VASP parameters with no special
 The following have something special about them:
 
 =================================== ===================================== =================================== =============================== =============================
-:py:attr:`~Incar.U_verbosity`       :py:attr:`~Incar.algo`                :py:attr:`~Incar.ediff`             :py:attr:`~Incar.ediffg         :py:attr:`~Incar.encut`
-:py:attr:`~Incar.encutgw`           :py:attr:`~Incar.extraelectron`       :py:attr:`~Incar.fftgrid`           :py:attr:`~Incar.lcharg         :py:attr:`~Incar.loptics`
-:py:attr:`~Incar.lpead`             :py:attr:`~Incar.lrpa`                :py:attr:`~Incar.lsorbit`           :py:attr:`~Incar.lvtot          :py:attr:`~Incar.lwave`
-:py:attr:`~Incar.magmom`            :py:attr:`~Incar.nelm`                :py:attr:`~Incar.nelmdl`            :py:attr:`~Incar.nelmin         :py:attr:`~Incar.nonscf`
+:py:attr:`~Incar.U_verbosity`       :py:attr:`~Incar.algo`                :py:attr:`~Incar.ediff`             :py:attr:`~Incar.ediffg`        :py:attr:`~Incar.encut`
+:py:attr:`~Incar.encutgw`           :py:attr:`~Incar.extraelectron`       :py:attr:`~Incar.fftgrid`           :py:attr:`~Incar.lcharg`        :py:attr:`~Incar.loptics`
+:py:attr:`~Incar.lpead`             :py:attr:`~Incar.lrpa`                :py:attr:`~Incar.lsorbit`           :py:attr:`~Incar.lvtot`         :py:attr:`~Incar.lwave`
+:py:attr:`~Incar.magmom`            :py:attr:`~Incar.nelm`                :py:attr:`~Incar.nelmdl`            :py:attr:`~Incar.nelmin`        :py:attr:`~Incar.nonscf`
 :py:attr:`~Incar.npar`              :py:attr:`~Incar.precfock`            :py:attr:`~Incar.precision`         :py:attr:`~Incar.relaxation`    :py:attr:`~Incar.restart`
 :py:attr:`~Incar.smearing`          :py:attr:`~Incar.system`              :py:attr:`~Incar.symmetries`
 =================================== ===================================== =================================== =============================== =============================

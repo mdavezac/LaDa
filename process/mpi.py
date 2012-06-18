@@ -180,32 +180,26 @@ def create_global_comm(nprocs, dir=None):
   from shlex import split
   from os.path import exists
   from os import remove, getcwd
-  from .. import placement, mpirun_exe, modify_global_comm
+  from .. import placement, mpirun_exe, modify_global_comm,                    \
+                 do_multiple_mpi_program, figure_out_machines
   from ..misc import Changedir
   import lada
   
+  if not do_multiple_mpi_programs: 
   if nprocs <= 0: raise MPISizeError(nprocs)
   if dir is None: dir = getcwd()
   
   # each proc prints its name to the standard output.
-  stdin = 'from socket import gethostname\n'               \
-          'from boost.mpi import world\n'                  \
-          'for i in xrange(world.size):\n'                 \
-          '  if i == world.rank: print gethostname(), i\n' \
-          '  world.barrier()\n'                            
   cmdline = mpirun_exe.format( placement=placement(), program=executable,
                                **Communicator(n=nprocs) )
   with Changedir(dir) as pwd: pass
   try: 
     with NamedTemporaryFile(delete=False, dir=dir) as file:
-      file.write(stdin)
+      file.write(figure_out_machines)
       filename = file.name
 
     process = Popen(split(cmdline) + [filename], stdout=PIPE, stderr=PIPE)
     stdout, stderr = process.communicate()
-    print stdout
-    print '###################'
-    print stderr
   finally:
     if exists(filename):
       try: remove(filename)
@@ -217,5 +211,7 @@ def create_global_comm(nprocs, dir=None):
   lada.default_comm.machines = {}
   for machine in machines:
     lada.default_comm.machines[machine] = processes.count(machine)
-  lada.default_comm['n'] = sum(lada.default_comm.machines.itervalues())
+  if lada.default_comm['n'] != sum(lada.default_comm.machines.itervalues()):
+    raise ConfigError( 'Could not determine host machines. '                   \
+                        
   modify_global_comm(lada.default_comm)

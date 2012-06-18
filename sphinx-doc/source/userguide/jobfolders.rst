@@ -1,23 +1,35 @@
 .. currentmodule:: lada.jobfolder
 .. _jobfolder_ug: 
 
-Organized high-thoughput calculations: job-folders
-**************************************************
+Organized high-throughput calculations: job-folders
+***************************************************
 
 LaDa provides tools to organize high-throughput calculations in a systematic
-manner. These tools come down to one particular concept: job-folders. A
-job-folder is like a directory or folder on a hard-drive. It can contain a
-functional and the parameters with which that functional should be called, i.e.
-files. And it can contain other job-folders, i.e. sub-directories. Once the
-calculations are performed, the architecture of the job-folders is reflected on
-disk: the output files from the actual calculations should be found in the
-sub-directory corresponding to the sub job-folder.
+manner.  The whole high-throughput experience revolves around **job-folders**.
+These are convenient ways of organizing actual calculations. They can be though
+of as folders on a file system, or directories in unix parlance, each one
+dedicated to running a single actual calculation (eg launching :ref:`VASP
+<vasp_ug>` once). The added benefits beyond creating the same file-structure
+with bash are:
+
+ 1. the ability to create a tree of folders/calculations using the power of the
+    python programming language. No more copy-pasting files and unintelligible
+    bash scripts!
+ 2. the ability to launch all folders simultaneously
+ 3. the ability to collect the results across all folders simultaneously, all
+    within python, and with all of python's goodies. E.g. no more copy-pasting
+    into excel by hand. Just do the summing, and multiplying, and graphing
+    there and then.
+
+
+Actually, there are a lot more benefits. Having everything - from input to
+output - within the same modern and efficient programming language means there
+is no limit to what can be achieved.
 
 The following describes how job-folders are created. The fun bits, 
 launching jobs, collecting results, manipulating all job-folders
 simultaneously, can be found in the next section. Indeed, all of these are
 intrinsically linked to the LaDa's IPython interface.
-
 
 Prep
 ~~~~
@@ -109,7 +121,7 @@ set to ``functional``. Two arguments, ``structure`` and ``value``, are
 specified by adding the to the dictionary :py:attr:`job.params
 <jobfolder.Jobfolder.params>`. Please note that the third
 line does not contain parenthesis: this is not a function call, it merely saves
-a reference to the function with the object of calling it later. C afficionados
+a reference to the function with the object of calling it later. 'C' aficionados
 should think a saving a pointer to a function.
 
 .. warning:: The reference to ``functional`` is deepcopied_: the instance that
@@ -126,7 +138,7 @@ should think a saving a pointer to a function.
 The parameters  in ``job.params`` should be pickleable_ so that the folder can
 be saved to disk later.  :py:attr:`~jobfolder.Jobfolder.functional` must be a
 pickleable_ callable_. Setting :py:attr:`~jobfolder.Jobfolder.functional` to
-something else will immediatly fail. In practice, this means it can be a
+something else will immediately fail. In practice, this means it can be a
 function or a callable class, as long as that function or class is imported
 from a module. It cannot be defined in `__main__`__, e.g. the script that you
 run to create the job-folders:
@@ -178,7 +190,7 @@ script:
 >>> root = load('root.dict') # loads from file
 
 The file format is a pickle_. It is not meant for human eyes. However, it can
-be transfered from one computer to the next. The parameters ``job.params``
+be transferred from one computer to the next. The parameters ``job.params``
 should be pickleable_, as well as the functional, for this to work.
 The advantage of using these two functions is that they take care of locking
 access to file on-disk before reading or writing to it. This way, multiple

@@ -68,3 +68,13 @@ pbs_string =  "#! /bin/bash/\n"\
               "#SBATCH -D={directory}\n\n"\
               "python {scriptcommand}\n"
 """ Default pbs/slurm script. """
+
+do_multiple_mpi_programs = True
+""" Whether to get address of host machines at start of calculation. """
+
+figure_out_machines =  'from socket import gethostname\n'                      \
+                       'from boost.mpi import world\n'                         \
+                       'for i in xrange(world.size):\n'                        \
+                       '  if i == world.rank: print gethostname(), i\n'        \
+                       '  world.barrier()\n'                            
+

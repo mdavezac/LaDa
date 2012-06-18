@@ -17,4 +17,4 @@ Contents:
 
    IPython high-throughput interface <userguide/ipython>
 
-   Configuring lada <userguide/config.rst>
+   Configuring LaDa <userguide/config.rst>
