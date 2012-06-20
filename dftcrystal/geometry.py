@@ -1,63 +1,67 @@
-from .input import Block, Keyword
+from input import Block, Keyword, GeomKeyword
 
-class Structure(Block):
+class Crystal(Block):
   """ CRYSTAL-wise structure, e.g. functional approach. """
   keyword = 'crystal'
   """ CRYSTAL keyword. """
-  def __init__(self, spacegroup, *args, **kwargs):
+  def __init__(self, *args, **kwargs):
     """ Creates a crystal following the CRYSTAL philosophy. """
-    super(Structure, self).__init__()
-    self.spacegroup = spacegroup
+    super(Crystal, self).__init__()
+
+    self.spacegroup = None
     """ Space-group. """
-    self.params = args
+    self.params = None
     """ Lattice parameters. """
-    self.shift = kwargs.pop('shift', None)
-    """ Shift of the origin of the cell,
-    
-         - if None, then no shift (equivalent to IFSO == 0)
-         - if 0 or second, second setting given international tables
-           (equivalent to IFSO == 0).
-         - if 1 or first, second setting given international tables
-           (equivalent to IFSO == 1).
-    """
+    self.shift = kwargs.pop('shift', 0)
     self.operators = kwargs.pop('operators', [])
     """ Functional operations on the structure. """
     self.atoms = []
     """ List of atoms. """
-    self.shift = None
+    if len(args) > 0:
+      self.spacegroup = args[0]
+      self.params = list(args[1:])
     for key, value in kwargs.iteritems(): setattr(self, key, value)
 
   @property
   def shift(self):
-    """ Shift of the origin. """
+    """ Shift of the origin of the cell,
+    
+         - if 0 or second, second setting given international tables
+           (equivalent to IFSO == 0).
+         - if 1 or first, second setting given international tables
+           (equivalent to IFSO == 1).
+         - if a sequence of three, then an actual shift in reciprocal space * 24.
+    """
     return self._shift
   @shift.setter
   def shift(self, value):
+    from numpy import array
     from ..error import ValueError
-    if value is None: self._shift = None
-    elif hasattr(value, '__iter__'): 
+    if hasattr(value, '__iter__'): 
       self._shift = array(value, dtype='float64')
     elif value == 0 or value == 'second': self._shift = 0
     elif value == 1 or value == 'first': self._shift = 1
-    raise ValueError('Unknown input value for shift.')
+    else: raise ValueError('Unknown input value for shift.')
 
   def add_atom(self, *args, **kwargs):
     """ Adds an atom to the structure. """
     from ..crystal import Atom
     atom = Atom(*args, **kwargs)
-    self._atoms.append(atom)
+    self.atoms.append(atom)
     return self
 
   def __repr__(self, indent=''):
     """ Dumps representation to string. """
     from inspect import getargspec
     # prints construction part.
-    length = len(indent + '{0.__class__.__name__}('.format(self))
+    length = len(indent + '{0.__class__.__name__}('.format(self)) + 1
     result = indent + '{0.__class__.__name__}({0.spacegroup!r}, '.format(self)
     for o in self.params: result += '{0!r}, '.format(o)
     for key, value in self.__dict__.iteritems():
+      if key == 'operators' or key == 'atoms': continue
       if key == '_shift': key = 'shift'
-      result += '\\\n{length}{0}={1!r}, '.format(key, value, length=length)
+      result += '\\\n{2}{0}={1!r}, '                                           \
+                .format( key, value, ' '.join('' for i in xrange(length)) )
     result = result[:-2] + ')'
     # prints atoms.
     for o in self.atoms: 
@@ -83,26 +87,18 @@ class Structure(Block):
     from ..error import ValueError
     from .. import periodic_table as pt
 
-    if self.shift is None:                hasshift = 0
-    elif hasattr(self.shift, '__iter__'): hasshift = 2
-    else:                                 hasshift = 1
+    if hasattr(self.shift, '__iter__'): hasshift = 2
+    else:                               hasshift = self.shift
 
-    if isinstance(self.spacegroup): 
+    try: spacegroup = int(self.spacegroup)
+    except: 
       if self.spacegroup not in sg:
         raise ValueError('Unknown space group {0.spacegroup}'.format(self))
-      spacegroup = self.spacegroup
-    else: 
-      spacegroup = None
-      for key, value in sg.iteritems():
-        if value.index == self.spacegroup: 
-          spacegroup = value.index
-          break
-      if spacegroup is None:
-        raise ValueError('Unknown space group {0.spacegroup}'.format(self))
+      spacegroup = sg[self.spacegroup].index
     
     # control flags + spacegroup 
-    result = '1 {0} {1}\n{2}\n'.format( getattr(self, 'ifhr', 0),              \
-                                      hasshift, spacegroup )
+    result = '0 {0} {1}\n{2}\n'.format( getattr(self, 'ifhr', 0),              \
+                                        hasshift, spacegroup )
     # shift if needed, watch out for weird ass input.
     if hasshift == 2:
       shift = self.shift * 24.0 + 0.1
@@ -113,8 +109,8 @@ class Structure(Block):
     for o in self.params: result += '{0} '.format(o)
 
     # number of atoms + atoms
-    result += '\n{0}\n'.format(len(self))
-    for atom in self:
+    result += '\n{0}\n'.format(len(self.atoms))
+    for atom in self.atoms:
       n = getattr(pt, atom.type, None)
       if n is not None: n = n.atomic_number
       else:
@@ -130,61 +126,58 @@ class Structure(Block):
     """ Reads crystal input. """
     from .. import periodic_table as pt
     from numpy import array
-    value = value.split('\n')
+    if not hasattr(value, '__iter__'): value = value.split('\n')
     data = value.pop(0).split()
-    self.spacegroup, self.ifhr, self.ifso = (int(u) for u in data[:3]) 
+    self.spacegroup, self.ifhr, shift = (int(u) for u in data[:3]) 
     data = value.pop(0)
-    if self.spacegroup == 0: 
-      self.spacegroup = int(data.split())
-    else: self.spacegroup = data.rstrip().lstrip()
+    if self.spacegroup == 0: self.spacegroup = int(data.split()[0])
+    else: self.spacegroup = data
 
-    if self.ifso > 1: 
+    if shift > 1: 
       self.shift = array(value.pop(0).split(), dtype='float64') / 24.0
+    else: self.shift = shift
 
     self.params = value.pop(0).split()
-    for line in value:
+    n = int(value.pop(0).split()[0])
+    self.atoms = []
+    for line in value[:n]:
       line = line.split()
       type = int(line[0])
       if type < 100: 
-        for key, value in pt.__dict__.iteritems():
-          if getattr(pt.__dict__[key], 'atomic_number', -1) == type:
+        for key, specie in pt.__dict__.iteritems():
+          if getattr(specie, 'atomic_number', -1) == type:
             type = key
             break
-      self.add_atom(pos=line[1:4], type=type)
+      self.add_atom(pos=[float(u) for u in line[1:4]], type=type)
 
-class GeomKeyword(Keyword):
-  """ Adds breaksymm to :py:class:`~lada.dftcrystal.input.Keyword`. """
-  def __init__(self, keyword=None, raw=None, *kwargs):
-    """ Creates a geometry keyword. 
-    
-        :param str keyword: 
-          keyword identifying the block.
-        :param bool keepsym: 
-          Whether to keep symmetries or not. Defaults to True.
-        :param bool breaksym:
-          Whether to break symmetries or not. Defaults to False.
-          Only one of breaksymm needs be specified. If both are, then they
-          should be consistent.
-    """
-    super(GeomKeyword, self).__init__(keyword=keyword, raw=raw)
-    if 'keepsym' in kwargs and 'breaksym' in kwargs:
-      if kwargs['keepsym'] == kwargs['breaksym']:
-        raise ValueError('keepsym and breaksym both specified and equal.')
-    self.breaksym = kwargs.get('breaksym', not kwargs.get('keepsym', False))
-    """ Whether or not to break symmetries.
-    
-        Defaults to False. If symmetries are not broken, then all equivalent
-        atoms are removed.
-    """
-    kwargs.pop('breaksym', None)
-    kwargs.pop('keepsym', None)
-  @property
-  def keepsym(self):
-    """ Not an alias for breaksym. """
-    return not self.breaksym
-  @keepsym.setter
-  def keepsym(self, value):
-    self.breaksym = not value
+  def read_input(self, tree):
+    """ Parses an input tree. """
+    from input import InputTree
+    from . import registered
+    self.raw = tree.raw
+    do_breaksym = False
+    has_breakkeep = False
+    for key, value in tree:
+      # parses sub-block.
+      if isinstance(key, InputTree): continue
+      # check for special keywords.
+      if key.lower() == 'keepsym':
+        do_breaksym = False
+        has_breakkeep = True
+        continue
+      if key.lower() == 'breaksym':
+        do_breaksym = True
+        has_breakkeep = True
+        continue
+      # finally, creates new object.
+      if key in registered: newobject = registered[key]()
+      elif has_breakkeep: newobject = GeomKeyword(breaksym=do_breaksym)
+      else: newobject = Keyword()
+      if hasattr(newobject, 'raw'): 
+        try: newobject.raw = getattr(value, 'raw', value)
+        except: pass
+      self.append(newobject)
+
     
 class RemoveAtom(GeomKeyword):
   """ Remove atoms from structure. """
@@ -207,11 +200,23 @@ class RemoveAtom(GeomKeyword):
     from copy import copy
     super(RemoveAtom, self).__init__(**kwargs)
     self.labels = copy(args)
+    """ Indices of atoms to remove. """
 
   @property
-  def raw(self, **kwargs):
+  def raw(self):
     """ Returns input string. """
     return str(len(self.labels)) + '\n'.join(str(u) for u in self.labels) + '\n'
+  @raw.setter
+  def raw(self, value):
+    """ Read crystal input. """
+    value = value.split('\n')
+    n = int(value[0].split()[0])
+    i = 1
+    self.labels = []
+    while len(self.labels) < n:
+      self.labels.extend([u for u in value[i].split()])
+      i += 1
+    self.labels = [int(u) for u in self.labels[:n]]
 
   def __repr__(self):
     result = '{0.__class__.__name__}({1}, '.format(self, ', '.join(self.labels))
@@ -230,11 +235,12 @@ class Slabinfo(Keyword):
   """ Creates a slab from a 3d periodic system. """
   keyword = 'slabcut'
   """ CRYSTAL keyword. """
-  def __init__(self, hkl):
+  def __init__(self, hkl=None):
     from numpy import array
     super(Slabinfo, self).__init__()
-    self.hkl = array(hkl, dtype='int32')
+    self.hkl = hkl
     """ Surface normal. """
+    if hkl is not None: self.hkl = array(hkl, dtype='int32')
   @property
   def raw(self):
     """ Input to SLABINFO """
@@ -252,7 +258,7 @@ class Slabcut(Slabinfo):
   """ Creates a slab from a 3d periodic system. """
   keyword = 'slabcut'
   """ CRYSTAL keyword. """
-  def __init__(self, hkl, isup, nl):
+  def __init__(self, hkl=None, isup=None, nl=None, raw=None):
     super(Slabinfo, self).__init__(hkl)
     self.isup = isup
     """ Subsurface atomic label. """
@@ -273,6 +279,8 @@ class Slabcut(Slabinfo):
   def __repr__(self):
     return '{0.__class__.__name__}([{0.hkl[0]},  {0.hkl[1]}, {0.hkl[2]}], '    \
            '{0.isup}, {0.nl})'.format(self)
+Slab = Slabcut
+""" Alias for :py:class`~lada.dftcrystal.geometry.Slabcut`. """
 
 class DisplaceAtoms(GeomKeyword):
   """ Displaces atoms. """
@@ -621,7 +629,7 @@ class Stop(Keyword):
 
 class Marker(Keyword):
   """ Places a marker in the execution list. """
-  def __init__(self, name):
+  def __init__(self, name=None):
     """ Creates a marker. """
     self.keyword = name
     """ Name of marker. """

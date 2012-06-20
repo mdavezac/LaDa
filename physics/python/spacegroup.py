@@ -18,7 +18,7 @@ SpaceGroup = namedtuple('SpaceGroup',                                          \
 
 
 space_group = \
-  {'P 4/N B M': SpaceGroup(name='P 4/N B M', index=125, operators=array([[[ 1. ,  0. ,  0. ],
+{'P 4/N B M': SpaceGroup(name='P 4/N B M', index=125, operators=array([[[ 1. ,  0. ,  0. ],
         [ 0. ,  1. ,  0. ],
         [ 0. ,  0. ,  1. ],
         [ 0. ,  0. ,  0. ]],
@@ -446,7 +446,7 @@ space_group = \
        [[ 0. , -1. ,  0. ],
         [ 1. ,  0. ,  0. ],
         [ 0. ,  0. , -1. ],
-        [ 0. ,  0. ,  0.5]]]), centrosymmetric=True, crystal_family='tetragonal', crystal_class='ditetragonal dipyramidal'), GrepError('Could not grep space-group',): SpaceGroup(name=GrepError('Could not grep space-group',), index=0, operators=array([], dtype=float64), centrosymmetric=GrepError('Could not grep centro-symmetricity',), crystal_family=GrepError('Could not grep crystal family',), crystal_class=GrepError('Could not grep crystal class',)), 'I B A M': SpaceGroup(name='I B A M', index=72, operators=array([[[ 1. ,  0. ,  0. ],
+        [ 0. ,  0. ,  0.5]]]), centrosymmetric=True, crystal_family='tetragonal', crystal_class='ditetragonal dipyramidal'), 'I B A M': SpaceGroup(name='I B A M', index=72, operators=array([[[ 1. ,  0. ,  0. ],
         [ 0. ,  1. ,  0. ],
         [ 0. ,  0. ,  1. ],
         [ 0. ,  0. ,  0. ]],
@@ -12627,7 +12627,7 @@ space_group = \
               'TESTGEOM\n'                                                           \
               'END\n'
       result = {}
-      for i in xrange(231):
+      for i in xrange(1, 231):
         print i
         with open('input', 'w') as file: file.write(input.format(group=i))
         program = 'crystal'

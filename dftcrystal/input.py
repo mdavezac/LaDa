@@ -33,7 +33,41 @@ class Keyword(object):
     if result[-1] != '\n': result += '\n'
     return result
 
-class Block(Keyword):
+class GeomKeyword(Keyword):
+  """ Adds breaksymm to :py:class:`~lada.dftcrystal.input.Keyword`. """
+  def __init__(self, keyword=None, raw=None, *kwargs):
+    """ Creates a geometry keyword. 
+    
+        :param str keyword: 
+          keyword identifying the block.
+        :param bool keepsym: 
+          Whether to keep symmetries or not. Defaults to True.
+        :param bool breaksym:
+          Whether to break symmetries or not. Defaults to False.
+          Only one of breaksymm needs be specified. If both are, then they
+          should be consistent.
+    """
+    super(GeomKeyword, self).__init__(keyword=keyword, raw=raw)
+    if 'keepsym' in kwargs and 'breaksym' in kwargs:
+      if kwargs['keepsym'] == kwargs['breaksym']:
+        raise ValueError('keepsym and breaksym both specified and equal.')
+    self.breaksym = kwargs.get('breaksym', not kwargs.get('keepsym', False))
+    """ Whether or not to break symmetries.
+    
+        Defaults to False. If symmetries are not broken, then all equivalent
+        atoms are removed.
+    """
+    kwargs.pop('breaksym', None)
+    kwargs.pop('keepsym', None)
+  @property
+  def keepsym(self):
+    """ Not an alias for breaksym. """
+    return not self.breaksym
+  @keepsym.setter
+  def keepsym(self, value):
+    self.breaksym = not value
+
+class Block(Keyword, list):
   """ Defines block input to CRYSTAL. 
   
       A block is a any set of input which starts with a keyword and ends with
@@ -41,7 +75,13 @@ class Block(Keyword):
 
       It can contain subitems.
   """
-  def __init__(self, keyword):
+  _blocks = [ 'crystal', 'slab', 'polymer', 'helix',  'molecule', 'freqcalc',
+              'optgeom', 'anharm']
+  """ Names of possible subblocks. 
+  
+      Used to parse input.
+  """
+  def __init__(self, keyword=None):
     """ Creates a block. 
 
         :param str keyword:
@@ -132,3 +172,74 @@ class Block(Keyword):
     items = [u.keyword for u in self] 
     if key not in items: raise KeyError('Could not find {0}.'.format(key))
     self[items.find(key)] = value
+
+class Input(list):
+  __slots__ = ['raw']
+  def __init__(self):
+    super(Input, self).__init__()
+  def descend(self, *args):
+    if len(args) == 0: return self
+    name, args = args[0], args[1:]
+    for key, value in self: 
+      if name == key:
+        return value.descend(*args) if hasattr(value, 'descend') else value
+    self.append((name, Input()))
+    return self[-1][1].descend(*args)
+  def __getitem__(self, name):
+    if isinstance(name, str): 
+      for key, value in self: 
+        if name == key: return value
+    return super(Input, self).__getitem__(name)
+  def keys(self): return [u[0] for u in self]
+  def __contains__(self, value): return value in self.keys()
+    
+  
+def parse_input(path):
+  """ Reads crystal input. """
+  from re import compile
+  from copy import copy
+  if isinstance(path, str): 
+    with open(path) as file: return parse_input(file)
+
+  starters = ['CRYSTAL', 'SLAB', 'POLYMER', 'HELIX', 'MOLECULE']
+  title = ''
+  for i, line in enumerate(path):
+    if line.split()[0] in starters: break
+    title = line
+  keyword_re = compile('^[A-Z](?!\s)')
+
+  blocks = copy(starters)
+  blocks.extend(['OPTGEOM', 'FREQCALC', 'ANHARM', 'DFT'])
+  
+  # reading linearly, 
+  title = title[:-1].rstrip().lstrip()
+  nesting = [title, line.split()[0]]
+  results = Input()
+  keyword = line.split()[0]
+  raw = ''
+  # reads crystal input.
+  for line in path:
+    # found end, pop nesting.
+    if line.split()[0][:3] == 'END': 
+      current = nesting.pop(-1)
+      if current in starters: 
+        nesting.append('BASISSET')
+      if len(nesting) == 0: break
+    # special case of INPUT keyword
+    elif line.split()[0] == 'INPUT': raw += line
+    # found keyword
+    elif keyword_re.match(line) is not None:
+      newkeyword = line.split()[0]
+      current = results.descend(*nesting)
+      # first of subblock
+      if keyword == nesting[-1]: current.raw = raw
+      if newkeyword in blocks                                                  \
+         and not (newkeyword == 'SLAB' and nesting[-1] == 'CRYSTAL'): 
+        nesting.append(newkeyword)
+      # normal keyword
+      else: current.append((newkeyword, raw)) 
+      raw = ''
+      keyword = newkeyword
+    # found raw string
+    else: raw += line
+  return results

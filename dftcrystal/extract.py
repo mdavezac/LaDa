@@ -15,14 +15,14 @@ class ExtractBase(object):
   def crystal_family(self):
     """ Crystal family """
     result = self._find_first_STDOUT(r"^\s*CRYSTAL FAMILY\s*:\s*(\S+)")
-    if result is None: return GrepError('Could not grep crystal family')
+    if result is None: raise GrepError('Could not grep crystal family')
     return result.group(1).lower()
   @property 
   @make_cached
   def crystal_class(self):
     """ Crystal class """
     result = self._find_first_STDOUT(r"^\s*CRYSTAL CLASS\s*(?:.+):\s*(.+)$")
-    if result is None: return GrepError('Could not grep crystal class')
+    if result is None: raise GrepError('Could not grep crystal class')
     return result.group(1).lower().rstrip().lstrip()
 
   @property 
@@ -30,7 +30,7 @@ class ExtractBase(object):
   def centrosymmetric(self):
     """ Crystal class """
     result = self._find_first_STDOUT(r"^\s*SPACE GROUP\s*\((\S+)\)\s*:")
-    if result is None: return GrepError('Could not grep centro-symmetricity')
+    if result is None: raise GrepError('Could not grep centro-symmetricity')
     return result.group(1).lower().rstrip().lstrip() != 'noncentrosymmetric'
 
   @property 
@@ -38,7 +38,7 @@ class ExtractBase(object):
   def space_group(self):
     """ Crystal class """
     result = self._find_first_STDOUT(r"^\s*SPACE GROUP\s*(?:.+)\s*:\s*(.+)")
-    if result is None: return GrepError('Could not grep space-group')
+    if result is None: raise GrepError('Could not grep space-group')
     return result.group(1).rstrip().lstrip()
 
   @property
