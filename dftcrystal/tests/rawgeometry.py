@@ -1,5 +1,5 @@
 def test_crystal():
-  from numpy import all, abs
+  from numpy import all, abs, array
   from lada.dftcrystal.geometry import Crystal
   a = Crystal()
   a.raw = '0 0 0\n'\
@@ -63,8 +63,263 @@ def test_crystal():
   a.raw = a.raw
   assert all(abs(a.shift - 5/24.0) < 1e-8)
 
-  print a
+  b = eval(repr(a), {'Crystal': Crystal, 'array': array})
+  assert b.spacegroup == a.spacegroup
+  assert all(abs(array(b.params) - a.params) < 1e-8)
+  assert len(b) == len(a)
+  assert len(b.atoms) == len(a.atoms)
+
+def test_removeatoms():
+  from numpy import all, arange
+  from lada.dftcrystal.geometry import RemoveAtoms
+  a = RemoveAtoms()
+
+  a.raw = '5\n1 2 3 4 5\n'
+  assert all(a.labels == arange(5) + 1)
+  assert a.keepsym
+  a.raw = a.raw
+  assert all(a.labels == arange(5) + 1)
+  b = eval(repr(a), {'{0.__name__}'.format(RemoveAtoms): RemoveAtoms})
+  assert all(b.labels == arange(5) + 1)
+  assert b.keepsym
+  b.keepsym = False
+  assert b.breaksym
+  b = eval(repr(b), {'{0.__name__}'.format(RemoveAtoms): RemoveAtoms})
+  assert all(b.labels == arange(5) + 1)
+  assert b.breaksym
+
+def test_modifysymmetry():
+  from numpy import all, array
+  from lada.dftcrystal.geometry import ModifySymmetry
+  a = ModifySymmetry()
+
+  raw = '5\n1 A 2 A 3 0 4 0 5 0\n'
+  a.raw = raw
+  assert len(a.groups) == 2
+  assert all(array(a.raw.split(), dtype='int32') == [5, 1, 0, 2, 0, 3, 1, 4, 1, 5, 1])
+  a.raw = a.raw
+  assert len(a.groups) == 2
+  assert all(array(a.raw.split(), dtype='int32') == [5, 3, 0, 4, 0, 5, 0, 1, 1, 2, 1])
+  b = eval(repr(a), {'{0.__name__}'.format(ModifySymmetry): ModifySymmetry})
+  assert b.raw == a.raw
+
+
+def test_slabinfo():
+  from numpy import all, array
+  from lada.dftcrystal.geometry import Slabinfo
+
+  a = Slabinfo()
+  a.raw = '1 1 0'
+  assert all(a.hkl == [1, 1, 0])
+  assert all(array(a.raw.split(), dtype='int64') == [1, 1, 0])
+  b = eval(repr(a), {'Slabinfo': Slabinfo})
+  assert all(b.hkl == [1, 1, 0])
+
+def test_slabcut():
+  from numpy import all, array
+  from lada.dftcrystal.geometry import Slabcut
+
+  a = Slabcut()
+  a.raw = '1 1 0\n1 5\n'
+  assert all(a.hkl == [1, 1, 0])
+  assert a.isup == 1 and a.nl == 5
+  assert all(array(a.raw.split(), dtype='int64') == [1, 1, 0, 1, 5])
+  b = eval(repr(a), {'Slabcut': Slabcut})
+  assert all(array(b.raw.split(), dtype='int64') == [1, 1, 0, 1, 5])
+
+def test_displaceatoms():
+  from numpy import all, abs
+  from lada.dftcrystal.geometry import DisplaceAtoms
+
+  a = DisplaceAtoms()
+  a.raw = '2\n1 0.1 0.1 0.1\n2 0.2 0.2 0.2'
+  assert len(a.atoms) == 2
+  assert a.atoms[0].type == 1
+  assert a.atoms[1].type == 2
+  assert all(abs(a.atoms[0].pos - 0.1) < 1e-8)
+  assert all(abs(a.atoms[1].pos - 0.2) < 1e-8)
+  assert a.keepsym
+  a.raw = a.raw
+  assert len(a.atoms) == 2
+  assert a.atoms[0].type == 1
+  assert a.atoms[1].type == 2
+  assert all(abs(a.atoms[0].pos - 0.1) < 1e-8)
+  assert all(abs(a.atoms[1].pos - 0.2) < 1e-8)
+  assert a.keepsym
+  a.breaksym = True
+  b = eval(repr(a), {'DisplaceAtoms': DisplaceAtoms})
+  assert len(b.atoms) == 2
+  assert b.atoms[0].type == 1
+  assert b.atoms[1].type == 2
+  assert all(abs(b.atoms[0].pos - 0.1) < 1e-8)
+  assert all(abs(b.atoms[1].pos - 0.2) < 1e-8)
+  assert not b.keepsym
+
+def test_insertatoms():
+  from numpy import all, abs
+  from lada.dftcrystal.geometry import InsertAtoms
+
+  a = InsertAtoms()
+  a.raw = '2\n1 0.1 0.1 0.1\n2 0.2 0.2 0.2'
+  assert len(a.atoms) == 2
+  assert a.atoms[0].type == 'H'
+  assert a.atoms[1].type == 'He'
+  assert all(abs(a.atoms[0].pos - 0.1) < 1e-8)
+  assert all(abs(a.atoms[1].pos - 0.2) < 1e-8)
+  assert a.keepsym
+  a.raw = a.raw
+  assert len(a.atoms) == 2
+  assert a.atoms[0].type == 'H'
+  assert a.atoms[1].type == 'He'
+  assert all(abs(a.atoms[0].pos - 0.1) < 1e-8)
+  assert all(abs(a.atoms[1].pos - 0.2) < 1e-8)
+  assert a.keepsym
+  a.breaksym = True
+  b = eval(repr(a), {'InsertAtoms': InsertAtoms})
+  assert len(b.atoms) == 2
+  assert a.atoms[0].type == 'H'
+  assert a.atoms[1].type == 'He'
+  assert all(abs(b.atoms[0].pos - 0.1) < 1e-8)
+  assert all(abs(b.atoms[1].pos - 0.2) < 1e-8)
+  assert not b.keepsym
+
+def test_affinetransform():
+  from numpy import all, abs, array
+  from quantities import degree, angstrom
+  from lada.dftcrystal.geometry import AffineTransform
+  a = AffineTransform()
+
+  raw = '4\n'\
+        '19 20 21 22\n'\
+        '999 1\n'\
+        '23 24\n'\
+        '308\n'
+  a.raw = raw
+  assert a.vectrans is None
+  assert a.bondtrans is None
+  assert a.origin is None
+  assert a.euler is None
+  assert a.bondtoz is None
+  assert all(array(a.labels) == [19, 20, 21, 22])
+  assert a.bondrot[0] == 23 and a.bondrot[1] == 24 and abs(a.bondrot[2].magnitude - 308) < 1e-8
+  assert all(array(a.raw.split(), dtype='int32') == array(raw.split(), dtype='int32'))
+  b = eval(repr(a), { 'AffineTransform': AffineTransform, 
+                      'deg': degree, 'angstrom': angstrom, 'array': array})
+  assert a.raw == b.raw
+
+  raw = '4\n'\
+        '19 20 21 22\n'\
+        '999 1\n'\
+        '23 24\n'\
+        '0\n'
+  a.raw = raw
+  assert a.vectrans is None
+  assert a.bondtrans is None
+  assert a.origin is None
+  assert a.euler is None
+  assert a.bondrot is None
+  assert all(array(a.labels) == [19, 20, 21, 22])
+  assert a.bondtoz[0] == 23 and a.bondtoz[1] == 24 
+  assert all(array(a.raw.split(), dtype='int32') == array(raw.split(), dtype='int32'))
+  b = eval(repr(a), { 'AffineTransform': AffineTransform, 
+                      'deg': degree, 'angstrom': angstrom, 'array': array})
+  assert a.raw == b.raw
+
+  raw = '4\n'\
+        '19 20 21 22\n'\
+        '999 -1\n'\
+        '23 24 25 1\n'
+  a.raw = raw
+  assert a.vectrans is None
+  assert a.bondtrans is None
+  assert a.origin is None
+  assert a.bondtoz is None
+  assert a.bondrot is None
+  assert all(array(a.labels) == [19, 20, 21, 22])
+  assert a.euler[0] == 23 * degree and a.euler[1] == 24 * degree \
+         and a.euler[2] == 25 * degree and a.euler[3] == 1
+  assert a.raw == raw
+  b = eval(repr(a), { 'AffineTransform': AffineTransform, 
+                      'deg': degree, 'angstrom': angstrom, 'array': array})
+  assert a.raw == b.raw
+
+  raw = '4\n'\
+        '19 20 21 22\n'\
+        '1 999\n'
+  a.raw = raw
+  assert a.vectrans is None
+  assert a.bondtrans is None
+  assert a.euler is None
+  assert a.bondtoz is None
+  assert a.bondrot is None
+  assert all(array(a.labels) == [19, 20, 21, 22])
+  assert a.origin == 1
+  assert a.raw == raw
+  b = eval(repr(a), { 'AffineTransform': AffineTransform, 
+                      'deg': degree, 'angstrom': angstrom, 'array': array})
+  assert a.raw == b.raw
+
+  raw = '4\n'\
+        '19 20 21 22\n'\
+        '0 999\n'\
+        '1 5 0.15\n'
+  a.raw = raw
+  assert a.vectrans is None
+  assert a.origin is None
+  assert a.euler is None
+  assert a.bondtoz is None
+  assert a.bondrot is None
+  assert all(array(a.labels) == [19, 20, 21, 22])
+  assert a.bondtrans[0] == 1 and a.bondtrans[1] == 5 \
+         and abs(a.bondtrans[2] - 0.15*angstrom) < 1e-8
+  assert a.raw == raw
+  b = eval(repr(a), { 'AffineTransform': AffineTransform, 
+                      'deg': degree, 'angstrom': angstrom, 'array': array})
+  assert a.raw == b.raw
+
+  raw = '4\n'\
+        '19 20 21 22\n'\
+        '-1 999\n'\
+        '1.0 5.0 0.15\n'
+  a.raw = raw
+  assert a.bondtrans is None
+  assert a.origin is None
+  assert a.euler is None
+  assert a.bondtoz is None
+  assert a.bondrot is None
+  assert all(array(a.labels) == [19, 20, 21, 22])
+  assert all(abs(a.vectrans - [1, 5, 0.15] * angstrom) < 1e-8)
+  assert a.raw == raw
+  b = eval(repr(a), { 'AffineTransform': AffineTransform, 
+                      'deg': degree, 'angstrom': angstrom, 'array': array})
+  assert a.raw == b.raw
+
+  raw = '4\n'\
+        '19 20 21 22\n'\
+        '-1 -1\n'\
+        '1.0 5.0 0.15\n'\
+        '23 24 25 1\n'
+  a.raw = raw
+  assert a.bondtrans is None
+  assert a.origin is None
+  assert a.bondtoz is None
+  assert a.bondrot is None
+  assert all(array(a.labels) == [19, 20, 21, 22])
+  assert all(abs(a.vectrans - [1, 5, 0.15] * angstrom) < 1e-8)
+  assert a.euler[0] == 23 * degree and a.euler[1] == 24 * degree \
+         and a.euler[2] == 25 * degree and a.euler[3] == 1
+  assert a.raw == raw
+  b = eval(repr(a), { 'AffineTransform': AffineTransform, 
+                      'deg': degree, 'angstrom': angstrom, 'array': array})
+  assert a.raw == b.raw
 
 if __name__ == "__main__":
   test_crystal()
+  test_removeatoms()
+  test_modifysymmetry()
+  test_slabinfo()
+  test_slabcut()
+  test_displaceatoms()
+  test_insertatoms()
+  test_affinetransform()
 

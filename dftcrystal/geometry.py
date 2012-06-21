@@ -58,7 +58,7 @@ class Crystal(Block):
     result = indent + '{0.__class__.__name__}({0.spacegroup!r}, '.format(self)
     for o in self.params: result += '{0!r}, '.format(o)
     for key, value in self.__dict__.iteritems():
-      if key == 'operators' or key == 'atoms': continue
+      if key in ['operators', 'atoms', 'spacegroup', 'params'] : continue
       if key == '_shift': key = 'shift'
       result += '\\\n{2}{0}={1!r}, '                                           \
                 .format( key, value, ' '.join('' for i in xrange(length)) )
@@ -69,15 +69,13 @@ class Crystal(Block):
       dummy = dummy[dummy.find('(')+1:dummy.rfind(')')].rstrip().lstrip()
       result += '\\\n{0}.add_atom({1})'.format(indent + '    ', dummy)
     # prints inner keywords/blocks
-    if len(self) > 0:
-      indent += '    '
-      for item in self: 
-        hasindent = getargspec(item.__repr__).keywords
-        hasindent = False if hasindent is None else 'indent' in hasindent
-        result += '\n{0}{1!r}'.format(indent, item) if not hasindent           \
-                  else '\n{0}{1}'.format(indent, item.__repr__(indent)) 
-    if len(self) > 0:
-      result = result[:result.rfind(')')+1]
+    indent += '    '
+    for item in self: 
+      hasindent = getargspec(item.__repr__).args
+      hasindent = False if hasindent is None else 'indent' in hasindent
+      result += '\\\n{0}.append({1!r})'.format(indent, item) if not hasindent           \
+                else '\\\n{0}.append({1})'                                              \
+                     .format(indent, item.__repr__(indent+'        ')) 
     return result
 
   @property 
@@ -137,7 +135,7 @@ class Crystal(Block):
       self.shift = array(value.pop(0).split(), dtype='float64') / 24.0
     else: self.shift = shift
 
-    self.params = value.pop(0).split()
+    self.params = [float(u) for u in value.pop(0).split()]
     n = int(value.pop(0).split()[0])
     self.atoms = []
     for line in value[:n]:
@@ -154,14 +152,15 @@ class Crystal(Block):
     """ Parses an input tree. """
     from input import InputTree
     from . import registered
+    self[:] = []
     self.raw = tree.raw
     do_breaksym = False
     has_breakkeep = False
     for key, value in tree:
       # parses sub-block.
-      if isinstance(key, InputTree): continue
+      if isinstance(value, InputTree): continue
       # check for special keywords.
-      if key.lower() == 'keepsym':
+      if key.lower() == 'keepsymm':
         do_breaksym = False
         has_breakkeep = True
         continue
@@ -170,16 +169,20 @@ class Crystal(Block):
         has_breakkeep = True
         continue
       # finally, creates new object.
-      if key in registered: newobject = registered[key]()
-      elif has_breakkeep: newobject = GeomKeyword(breaksym=do_breaksym)
-      else: newobject = Keyword()
-      if hasattr(newobject, 'raw'): 
+      if key.lower() in registered:
+        newobject = registered[key.lower()]()
+        if hasattr(newobject, 'breaksym'): newobject.breaksym = do_breaksym
+      elif has_breakkeep: newobject = GeomKeyword(keyword=key, breaksym=do_breaksym)
+      else: newobject = Keyword(keyword=key)
+      if len(value) > 0: 
         try: newobject.raw = getattr(value, 'raw', value)
         except: pass
       self.append(newobject)
+      do_breaksym = False
+      has_breakkeep = False
 
     
-class RemoveAtom(GeomKeyword):
+class RemoveAtoms(GeomKeyword):
   """ Remove atoms from structure. """
   keyword = 'atomremo'
   """ CRYSTAL keyword. """
@@ -198,14 +201,15 @@ class RemoveAtom(GeomKeyword):
           sense...
     """ 
     from copy import copy
-    super(RemoveAtom, self).__init__(**kwargs)
+    super(RemoveAtoms, self).__init__(**kwargs)
     self.labels = copy(args)
     """ Indices of atoms to remove. """
 
   @property
   def raw(self):
     """ Returns input string. """
-    return str(len(self.labels)) + '\n'.join(str(u) for u in self.labels) + '\n'
+    return str(len(self.labels)) + '\n'                                        \
+           + ' '.join(str(u) for u in self.labels) + '\n'
   @raw.setter
   def raw(self, value):
     """ Read crystal input. """
@@ -219,16 +223,17 @@ class RemoveAtom(GeomKeyword):
     self.labels = [int(u) for u in self.labels[:n]]
 
   def __repr__(self):
-    result = '{0.__class__.__name__}({1}, '.format(self, ', '.join(self.labels))
-    if self.breaksym == True: result += 'keepsym=True, '
+    result = '{0.__class__.__name__}({1}, '                                    \
+             .format( self, ', '.join(str(u) for u in self.labels))
+    if self.breaksym == True: result += 'keepsym=False, '
     return result[:-2] + ')'
     
-class Ghosts(RemoveAtom): 
+class Ghosts(RemoveAtoms): 
   """ Sets ghosts atom in structure. """
   keyword = 'ghosts'
   """ CRYSTAL keyword. """
   def __init__(self, *args, **kwargs):
-    """ See :py:class:`RemoveAtom` """
+    """ See :py:class:`RemoveAtoms` """
     super(Ghosts, self).__init__(*args, **kwargs)
    
 class Slabinfo(Keyword):
@@ -253,13 +258,17 @@ class Slabinfo(Keyword):
   def __repr__(self):
     return '{0.__class__.__name__}([{0.hkl[0]},  {0.hkl[1]}, {0.hkl[2]}])'     \
            .format(self)
+  def print_input(self, **kwargs):
+    """ Prints input. """
+    if self.hkl is None: return None
+    return super(Slabinfo, self).print_input(**kwargs)
 
 class Slabcut(Slabinfo):
   """ Creates a slab from a 3d periodic system. """
   keyword = 'slabcut'
   """ CRYSTAL keyword. """
   def __init__(self, hkl=None, isup=None, nl=None, raw=None):
-    super(Slabinfo, self).__init__(hkl)
+    super(Slabcut, self).__init__(hkl)
     self.isup = isup
     """ Subsurface atomic label. """
     self.nl = nl
@@ -289,7 +298,7 @@ class DisplaceAtoms(GeomKeyword):
   def __init__(self, **kwargs):
     """ Creates a displacement field. """
     super(DisplaceAtoms, self).__init__(**kwargs)
-    self.displacements = []
+    self.atoms = []
     """ Atomic displacements. """
 
   def add_atom(self, *args, **kwargs):
@@ -298,7 +307,8 @@ class DisplaceAtoms(GeomKeyword):
         At present, atom.type should be an index to an atom in the structure.
     """
     from ..crystal import Atom
-    self.displacements.append(Atom(*args, **kwargs))
+    self.atoms.append(Atom(*args, **kwargs))
+    return self
 
   def __repr__(self, indent= ''):
     """ Dumps representation to string. """
@@ -313,14 +323,15 @@ class DisplaceAtoms(GeomKeyword):
   @property
   def raw(self):
     """ Raw input to CRYSTAL. """
-    result = '{0}\n'.format(len(self.displacements))
-    for atom in self.displacements:
+    result = '{0}\n'.format(len(self.atoms))
+    for atom in self.atoms:
       result += '{0.type} {0.pos[0]} {0.pos[1]} {0.pos[2]}\n'.format(atom)
     return result
   @raw.setter
   def raw(self, value):
     """ Reads input. """
     from numpy import array
+    self.atoms = []
     value = value.split('\n')
     n = int(value.pop(0).split()[0])
     for line in value[:n]: 
@@ -330,12 +341,12 @@ class DisplaceAtoms(GeomKeyword):
       self.add_atom(type=type, pos=pos)
     
    
-class InsertAtom(GeomKeyword):
+class InsertAtoms(DisplaceAtoms):
   """ insert atom into structure. """
   keyword = 'atominse'
   """ CRYSTAL keyword. """
   def __init__(self, **kwargs):
-    super(DisplaceAtoms, self).__init__(**kwargs)
+    super(InsertAtoms, self).__init__(**kwargs)
     self.atoms = []
     """ Atoms to insert. """
 
@@ -346,16 +357,7 @@ class InsertAtom(GeomKeyword):
     """
     from ..crystal import Atom
     self.atoms.append(Atom(*args, **kwargs))
-
-  def __repr__(self, indent= ''):
-    """ Dumps representation to string. """
-    result = super(DisplaceAtoms, self).__repr__()
-    # prints atoms.
-    for o in self.atoms: 
-      dummy = repr(o)
-      dummy = dummy[dummy.find('(')+1:dummy.rfind(')')].rstrip().lstrip()
-      result += '\\\n{0}.add_atom({1})'.format(indent + '    ', dummy)
-    return result
+    return self
 
   @property
   def raw(self):
@@ -363,7 +365,7 @@ class InsertAtom(GeomKeyword):
     from .. import periodic_table as pt
     # number of atoms + atoms
     result = '{0}\n'.format(len(self.atoms))
-    for atom in self:
+    for atom in self.atoms:
       n = getattr(pt, atom.type, None)
       if n is not None: n = n.atomic_number
       else:
@@ -378,6 +380,7 @@ class InsertAtom(GeomKeyword):
     """ Reads input. """
     from numpy import array
     from .. import periodic_table as pt
+    self.atoms = []
     value = value.split('\n')
     n = int(value.pop(0).split()[0])
     for line in value[:n]: 
@@ -392,44 +395,51 @@ class InsertAtom(GeomKeyword):
       self.add_atom(type=type, pos=pos)
 
 class ModifySymmetry(Keyword):
-  """ Modify symmetries. """ 
+  """ Modify symmetries. """
   keyword = 'modisymm'
   """ CRYSTAL keyword. """
   def __init__(self, *args):
-    """ Creates symmetry modifier. 
+    """ Creates symmetry modifier.
 
         Each argument is a sequence of atomic label. Each argument will be
         assigned a different flag. This input is somewhat more condensed than
         the original CRYSTAL input.
-    """ 
+    """
     super(ModifySymmetry, self).__init__()
-    self.atoms = []
+    self.groups = []
     """ Atoms for which to modify symmetries. """
-    for o in args: self.atoms.append(o if hasattr(o, '__iter__') else [o])
+    for o in args: self.groups.append(o if hasattr(o, '__iter__') else [o])
 
   @property
   def raw(self):
     """ Raw CRYSTAL input. """
-    result = '{0}\n'.format(sum(len(o) for o in self.atoms))
-    for labels in self.atoms:
-      result += ' '.join(str(u) for u in labels) + '\n'
+    result = '{0}\n'.format(sum(len(o) for o in self.groups))
+    for i, labels in enumerate(self.groups):
+      result += ' '.join('{0} {1} '.format(u, i) for u in labels) + '\n'
     return result
   @raw.setter
   def raw(self, value):
     """ Reads input. """
-    value = value.split('\n')
-    n = int(value.pop(0).split())
-    self.atoms = [u for v in value for u in v.split()]
-    self.atoms = [int(u) for u in self.atoms[:n]]
+    value = value.split()
+    n = int(value.pop(0))
+    d = {}
+    for label, flag in zip(value[:2*n:2], value[1:2*n+1:2]):
+      if flag in d: d[flag].append(int(label))
+      else: d[flag] = [int(label)]
+    self.groups = d.values()
+  def __repr__(self):
+    """ Representation of this instance. """
+    return '{0.__class__.__name__}({1})'                                       \
+           .format(self, ', '.join(repr(u) for u in self.groups))
 
 class AffineTransform(Keyword):
   """ Affine transformation applied to the crystal or crystal fragment. """
   keyword = 'atomrot'
   """ CRYSTAL keyword. """
-  def __init__( self, which=None, vectrans=None, origin=None, bondtrans=None,
-                euler=None, bondrot=None, bondtoz=None ):
+  def __init__( self, labels=None, vectrans=None, origin=None, bondtrans=None,
+                euler=None, bondrot=None, bondtoz=None):
     """ Creates rotation. """
-    self.which = which
+    self.labels = labels
     """ Selects what to apply transform to. 
 
         Should be either:
@@ -440,9 +450,11 @@ class AffineTransform(Keyword):
             molecule to which this atom belongs will be rotated.
     """
     from ..error import ValueError
-    if [vectrans is None, origin is None, bondtrans is None].count(True) > 1:
+    super(AffineTransform, self).__init__()
+
+    if [vectrans is None, origin is None, bondtrans is None].count(False) > 1:
       raise ValueError('More than one type of translation was selected.')
-    if [euler is None, bondrot is None, bondtoz is None].count(True) > 1:
+    if [euler is None, bondrot is None, bondtoz is None].count(False) > 1:
       raise ValueError('More than one type of rotation was selected.')
 
     self.vectrans  = vectrans
@@ -463,8 +475,10 @@ class AffineTransform(Keyword):
   @vectrans.setter
   def vectrans(self, value): 
     from numpy import array
+    from quantities import angstrom
     if value is None: self._vectrans = None; return
-    self._vectrans = array(value, dtype='float64')
+    if hasattr(value, 'rescale'): self._vectrans = value 
+    else: self._vectrans = array(value, dtype='float64') * angstrom
     self._origin, self._bondtrans = None, None
   @property
   def bondtrans(self):
@@ -528,7 +542,7 @@ class AffineTransform(Keyword):
         Should be two atomic indices followed by the rotation angle in degrees.
     """
     return self._bondtoz
-  @euler.setter
+  @bondtoz.setter
   def bondtoz(self, value):
     self._bondtoz = value
     if value is not None:
@@ -539,21 +553,21 @@ class AffineTransform(Keyword):
     """ Creates raw input for crystal. """
     from quantities import angstrom, degree
     # first line
-    if self.which is None: result = '0\n'
-    elif not hasattr(self.which, '__iter__'): result = str(-self.which) + '\n'
-    elif len(self.which) == 0: result = '0\n'
-    elif len(self.which) == 1: result = str(-self.which[0]) + '\n'
+    if self.labels is None: result = '0\n'
+    elif not hasattr(self.labels, '__iter__'): result = str(-self.labels) + '\n'
+    elif len(self.labels) == 0: result = '0\n'
+    elif len(self.labels) == 1: result = str(-self.labels[0]) + '\n'
     else:
-      result = '{0}\n{1}\n'.format( len(self.which),                           \
-                                    ' '.join(str(u) for u in self.which) )
+      result = '{0}\n{1}\n'.format( len(self.labels),                          \
+                                    ' '.join(str(u) for u in self.labels) )
     if self.origin is not None: result += str(self.origin) + ' '
     elif self.bondtrans is not None: result += '0 '
     elif self.vectrans is not None: result += '-1 '
     else: result += '999 '
 
     if self.bondtoz is not None: result += '1\n'
-    elif self.bondrot is not None: result += '-1\n'
-    elif self.euler is not None: result += '-2\n'
+    elif self.bondrot is not None: result += '1\n'
+    elif self.euler is not None: result += '-1\n'
     else: result += '999\n'
 
     if self.bondtrans is not None:
@@ -578,7 +592,7 @@ class AffineTransform(Keyword):
       if hasattr(a, 'rescale'): a = int(a.rescale(degree).magnitude + 0.01)
       if hasattr(b, 'rescale'): b = int(b.rescale(degree).magnitude + 0.01)
       if hasattr(c, 'rescale'): c = int(c.rescale(degree).magnitude + 0.01)
-      d = int(self.euler[4])
+      d = int(self.euler[3])
       result += '{0} {1} {2} {3}\n'.format(a, b, c, d)
     return result
 
@@ -592,35 +606,56 @@ class AffineTransform(Keyword):
     self.euler, self.bondrot, self.bondtoz = None, None, None
 
     value = value.split()
-    line = int(value.pop(0).split()[0])
-    if line == 0: self.which = None
+    line = int(value.pop(0))
+    if line == 0: self.labels = None
     elif line > 0: 
-      self.which = []
-      while len(self.which) < line:
-        self.which.extend([u for u in value.pop(0).split()])
-      self.which = [int(u) for u in self.which[:line]]
-    else: self.which = line
-    trans, rot = [int(u) for u in value.pop(0).split()[:2]]
+      self.labels = [int(u) for u in value[:line]]
+      value = value[line:]
+    else: self.labels = line
+    trans, rot = [int(u) for u in value[:2]]
+    value = value[2:]
 
     if trans > 0 and trans != 999: self.origin = trans
     elif trans == 0:
-      line = value.pop(0).split()[:3]
-      self.bondtrans = int(value[0]), int(value[1]), value[1] * angstrom
-    else: 
-      self.vectrans = array(value.pop(0).split()[:3], dtype='float64')         \
-                      * angstrom        
+      self.bondtrans = int(value[0]), int(value[1]), float(value[2]) * angstrom
+      value = value[3:]
+    elif trans != 999: 
+      self.vectrans = array(value[:3], dtype='float64') * angstrom        
+      value = value[3:]
     
     if rot < 0: 
-      line = value.pop(0).split()[:4]
-      self.euler = float(line[0]) * degree,                                    \
-                   float(line[1]) * degree,                                    \
-                   float(line[2]) * degree,                                    \
-                   int(line[3])
-    else:
-      line = value.pop(0).split()[:4]
-      a, b, alpha = int(line[0]), int(line[1]), int(line[2])
+      self.euler = float(value[0]) * degree,                                   \
+                   float(value[1]) * degree,                                   \
+                   float(value[2]) * degree,                                   \
+                   int(value[3])
+    elif rot != 999:
+      a, b, alpha = int(value[0]), int(value[1]), int(value[2])
       if alpha == 0: self.bondtoz = a, b
       else: self.bondrot = a, b, alpha * degree
+
+  def __repr__(self): 
+    """ Representation of AffineTransform. """
+    args = []
+    if self.labels is None: args.append('labels=None')
+    elif isinstance(self.labels, int):
+      args.append('labels={0.labels}'.format(self))
+    elif len(self.labels) == 0: args.append('labels=None')
+    elif len(self.labels) == 1:
+      args.append('labels={0.labels[0]}'.format(self))
+    else: args.append('labels={0.labels}'.format(self))
+    if self.vectrans is not None:
+      args.append('vectrans={0!r}'.format(self.vectrans))
+    elif self.bondtrans is not None:
+      args.append('bondtrans={0!r}'.format(self.bondtrans))
+    elif self.origin is not None:
+      args.append('origin={0!r}'.format(self.origin))
+    if self.euler is not None:
+      args.append('euler={0!r}'.format(self.euler))
+    elif self.bondrot is not None:
+      args.append('bondrot={0!r}'.format(self.bondrot))
+    elif self.bondtoz is not None:
+      args.append('bondtoz={0!r}'.format(self.bondtoz))
+    return "{0.__class__.__name__}(".format(self) + ', '.join(args) + ')'
 
 class Stop(Keyword):
   """ Stop execution. """
@@ -642,7 +677,7 @@ class Marker(Keyword):
     self.keyword = value
   def __repr__(self):
     return '{0.__class__.__name__}({0.name)'.format(self)
-  def print_input(**kwargs): return None
+  def print_input(self, **kwargs): return None
 
 class AtomicSymmetries(Keyword):
   """ Prints atomic symmetries. """
