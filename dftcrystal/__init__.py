@@ -2,7 +2,7 @@ __docformat__ = "restructuredtext en"
 
 from geometry import AffineTransform, AtomicSymmetries, DisplaceAtoms, ExtPrnt,\
                      Ghosts, InsertAtoms, MakeSAED, Marker, ModifySymmetry,    \
-                     PrnSymDir, RemoveAtoms, Slabcut, Slabinfo, Stop, Crystal, \
+                     PrnSymDir, RemoveAtoms, Slabcut, Slabinfo, Crystal,       \
                      SymmDir, Slab
 registered = { 'atomrot':    AffineTransform,
                'atomsymm':   AtomicSymmetries,
@@ -18,7 +18,6 @@ registered = { 'atomrot':    AffineTransform,
                'slabcut':    Slabcut,
                'slab':       Slab,
                'slabinfo':   Slabinfo,
-               'stop':       Stop,
                'structure':  Crystal,
                'symmdir':    SymmDir, }
 

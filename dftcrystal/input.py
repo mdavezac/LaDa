@@ -113,12 +113,17 @@ class Block(Keyword, list):
     Keyword.__init__(self, keyword)
     list.__init__(self)
 
-  def append(self, value):
+  def append(self, keyword, raw=None):
     """ Appends an item.
 
         :return: self, so calls can be chained. 
     """
-    list.append(self, value)
+    from ..error import ValueError
+    if isinstance(keyword, str):
+      keyword = Keyword(keyword=keyword, raw=raw)
+    elif not isinstance(keyword, Keyword):
+      raise ValueError('Wrong argument to append.')
+    list.append(self, keyword)
     return self
 
   def __repr__(self, indent=''): 
@@ -220,6 +225,7 @@ def parse_input(path):
   """ Reads crystal input. """
   from re import compile
   from copy import copy
+  from .. import CRYSTAL_input_blocks as starters
   if isinstance(path, str): 
     if path.find('\n') == -1:
       with open(path) as file: return parse_input(file)
@@ -227,7 +233,6 @@ def parse_input(path):
       return parse_input(path.split('\n').__iter__())
 
 
-  starters = ['CRYSTAL', 'SLAB', 'POLYMER', 'HELIX', 'MOLECULE']
   title = ''
   for i, line in enumerate(path):
     if line.split()[0] in starters: break

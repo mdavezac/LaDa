@@ -1,3 +1,8 @@
+__docformat__ = "restructuredtext en"
+__all__ = [ 'Crystal', 'RemoveAtoms', 'Ghosts', 'Slabinfo', 'Slabcut', 'Slab',
+            'DisplaceAtoms', 'InsertAtoms', 'ModifySymmetry',
+            'AffineTransform', 'Marker', 'AtomicSymmetries', 'MakeSAED',
+            'PrnSymDir', 'SymmDir', 'ExtPrnt']
 from input import Block, Keyword, GeomKeyword
 
 class Crystal(Block):
@@ -181,6 +186,21 @@ class Crystal(Block):
       do_breaksym = False
       has_breakkeep = False
 
+  def append(self, keyword=None, raw=None, breaksym=None):
+    """ Appends an item.
+
+        :return: self, so calls can be chained. 
+    """
+    from ..error import ValueError
+    if isinstance(keyword, str):
+      if breaksym is None: keyword = Keyword(keyword=keyword, raw=raw)
+      else:
+        breaksym = breaksym == True
+        keyword = Keyword(keyword=keyword, raw=raw, breaksym=breaksym)
+    elif not isinstance(keyword, Keyword):
+      raise ValueError('Wrong argument to append.')
+    list.append(self, keyword)
+    return self
     
 class RemoveAtoms(GeomKeyword):
   """ Remove atoms from structure. """
@@ -656,11 +676,6 @@ class AffineTransform(Keyword):
     elif self.bondtoz is not None:
       args.append('bondtoz={0!r}'.format(self.bondtoz))
     return "{0.__class__.__name__}(".format(self) + ', '.join(args) + ')'
-
-class Stop(Keyword):
-  """ Stop execution. """
-  keyword = 'stop'
-  """ CRYSTAL keyword. """
 
 class Marker(Keyword):
   """ Places a marker in the execution list. """
