@@ -3433,13 +3433,59 @@ Meitnerium elemental data.
 """
 
 
-symbols = ['H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne', 'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar', 'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn', 'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr', 'Rb', 'Sr', 'Y', 'Zr', 'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn', 'Sb', 'Te', 'I', 'Xe', 'Cs', 'Ba', 'La', 'Ce', 'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf', 'Ta', 'W', 'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb', 'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th', 'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg', 'Bh', 'Hs', 'Mt']
+symbols = [ 'H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne', 'Na', 'Mg',
+            'Al', 'Si', 'P', 'S', 'Cl', 'Ar', 'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr',
+            'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn', 'Ga', 'Ge', 'As', 'Se', 'Br',
+            'Kr', 'Rb', 'Sr', 'Y', 'Zr', 'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd',
+            'Ag', 'Cd', 'In', 'Sn', 'Sb', 'Te', 'I', 'Xe', 'Cs', 'Ba', 'La',
+            'Ce', 'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 'Ho', 'Er',
+            'Tm', 'Yb', 'Lu', 'Hf', 'Ta', 'W', 'Re', 'Os', 'Ir', 'Pt', 'Au',
+            'Hg', 'Tl', 'Pb', 'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th',
+            'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 'Es', 'Fm', 'Md',
+            'No', 'Lr', 'Rf', 'Db', 'Sg', 'Bh', 'Hs', 'Mt']
 
 __all__ = list(symbols)
-__all__.extend(['Element', 'iterate'])
+__all__.extend(['Element', 'iterate', 'find'])
 
 def iterate():
   """ Iterates through all elements. """
   for name in symbols:
     yield globals()[name] 
 
+def find(**kwargs):
+  """ Find element according to different criteria. 
+  
+      :param int atomic_number:
+        Find specie according to atomic number
+      :param str symbol:
+        Find specie according to symbol.
+      :param str name:
+        Find specie according to name. If the input is a string of two
+        characters or less, tries and finds according to symbol.
+  """
+  from ..error import input, ValueError
+  if len(kwargs) != 1:
+    raise input('Expected one and only one keyword argument.')
+
+  if 'atomic_number' in kwargs:
+    n = int(kwargs['atomic_number'])
+    for specie in iterate():
+      if specie.atomic_number == n: return specie
+    raise ValueError( 'Could not find specie with atomic number {0}.'          \
+                      .format(n))
+  if 'symbol' in kwargs: 
+    symbol = str(kwargs['symbol']).replace('\n', '').rstrip().lstrip()
+    if len(symbol) == 1: symbol = symbol.upper()
+    elif len(symbol) == 2: symbol = symbol[0].upper() + symbol[1].lower()
+    else: raise input('Symbol cannot be longuer than two characters.')
+    if symbol not in globals():
+      raise ValueError('Unknown specie with symbol {0}.'.format(symbol))
+    return globals()[symbol]
+  if 'name' in kwargs: 
+    name = str(kwargs['name']).replace('\n', '').rstrip().lstrip()
+    if len(name) == 0: raise input('Name string is empty.')
+    elif len(name) <= 2: return find(symbol=name)
+    name = name.lower()
+    for specie in iterate(): 
+      if name == specie.name.lower(): return specie
+    raise ValueError('Unknown specie named {0}.'.format(name))

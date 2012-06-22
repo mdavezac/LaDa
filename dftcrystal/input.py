@@ -19,7 +19,7 @@ class Keyword(object):
     args = []
     if 'keyword' in self.__dict__:
       args.append("keyword={0.keyword!r}".format(self))
-    if 'raw' in self.__dict__: args.append("{0.raw!r}".format(self))
+    if 'raw' in self.__dict__: args.append("raw={0.raw!r}".format(self))
     return "{0.__class__.__name__}(".format(self) + ', '.join(args) + ')'
   
   def print_input(self, **kwargs):
@@ -73,7 +73,7 @@ class GeomKeyword(Keyword):
     args = []
     if 'keyword' in self.__dict__:
       args.append("keyword={0.keyword!r}".format(self))
-    if 'raw' in self.__dict__: args.append("{0.raw!r}".format(self))
+    if 'raw' in self.__dict__: args.append("raw={0.raw!r}".format(self))
     if self.breaksym == True: args.append("breaksym=True")
     return "{0.__class__.__name__}(".format(self) + ', '.join(args) + ')'
   def print_input(self, **kwargs):
@@ -224,8 +224,7 @@ class InputTree(list):
 def parse_input(path):
   """ Reads crystal input. """
   from re import compile
-  from copy import copy
-  from .. import CRYSTAL_input_blocks as starters
+  from .. import CRYSTAL_input_blocks as blocks, CRYSTAL_geom_blocks as starters
   if isinstance(path, str): 
     if path.find('\n') == -1:
       with open(path) as file: return parse_input(file)
@@ -239,8 +238,6 @@ def parse_input(path):
     title = line
   keyword_re = compile('^[A-Z](?!\s)')
 
-  blocks = copy(starters)
-  blocks.extend(['OPTGEOM', 'FREQCALC', 'ANHARM', 'DFT'])
   
   # reading linearly, 
   title = title.rstrip().lstrip()
@@ -260,17 +257,19 @@ def parse_input(path):
       newkeyword = line.split()[0]
       current = results.descend(*nesting)
       # first of subblock
-      # normal keyword
       if keyword == nesting[-1]: current.raw = raw
       elif keyword[:3] != 'END' and keyword[:6] != 'STOP':
         current.append((keyword, raw)) 
+      # normal keyword
       if newkeyword in blocks                                                  \
          and not (newkeyword == 'SLAB' and nesting[-1] == 'CRYSTAL'): 
         nesting.append(newkeyword)
       # found end, pop nesting.
-      if newkeyword == 'END' or newkeyword == 'STOP': 
+      if newkeyword[:3] == 'END' or newkeyword[:6] == 'STOP': 
         current = nesting.pop(-1)
-        if current in starters: nesting.append('BASISSET')
+        if current in starters:
+          nesting.append('BASISSET')
+          newkeyword = 'BASISSET'
         if len(nesting) == 0: break
       raw = ''
       keyword = newkeyword

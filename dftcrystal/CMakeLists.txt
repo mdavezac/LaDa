@@ -1,4 +1,4 @@
-set(PYDFTCRYSTAL_PY __init__.py input.py geometry.py)
+set(PYDFTCRYSTAL_PY __init__.py input.py geometry.py basis.py)
 
 install(FILES ${PYDFTCRYSTAL_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/dftcrystal)
 

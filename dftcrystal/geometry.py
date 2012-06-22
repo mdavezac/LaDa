@@ -88,7 +88,7 @@ class Crystal(Block):
     """ Raw input for structure. """
     from ..physics.spacegroup import space_group as sg
     from ..error import ValueError
-    from .. import periodic_table as pt
+    from ..periodic_table import find as find_specie
 
     if hasattr(self.shift, '__iter__'): hasshift = 2
     else:                               hasshift = self.shift
@@ -114,9 +114,8 @@ class Crystal(Block):
     # number of atoms + atoms
     result += '\n{0}\n'.format(len(self.atoms))
     for atom in self.atoms:
-      n = getattr(pt, atom.type, None)
-      if n is not None: n = n.atomic_number
-      else:
+      try: n = find_specie(name=atom.type).atomic_number
+      except:
         try: n = int(atom.type)
         except: 
           raise ValueError( 'Could not make sense of atomic type {0.type}.'    \
@@ -127,7 +126,7 @@ class Crystal(Block):
   @raw.setter
   def raw(self, value):
     """ Reads crystal input. """
-    from .. import periodic_table as pt
+    from ..periodic_table import find as find_specie
     from numpy import array
     if not hasattr(value, '__iter__'): value = value.split('\n')
     data = value.pop(0).split()
@@ -146,11 +145,7 @@ class Crystal(Block):
     for line in value[:n]:
       line = line.split()
       type = int(line[0])
-      if type < 100: 
-        for key, specie in pt.__dict__.iteritems():
-          if getattr(specie, 'atomic_number', -1) == type:
-            type = key
-            break
+      if type < 100: type = find_specie(atomic_number=type).symbol
       self.add_atom(pos=[float(u) for u in line[1:4]], type=type)
 
   def read_input(self, tree):

@@ -955,7 +955,7 @@ string =  \
    """cx1-8-2-9\n"""\
    """cx1-8-2-9\n""" 
 
-def test_crystal():
+def test_geom():
   from numpy import all, abs
   import numpy
   import quantities
@@ -989,5 +989,40 @@ def test_crystal():
   c.read_input(b['rutile']['CRYSTAL'])
   assert repr(a) == repr(c)
 
+def test_basis():
+  from numpy import all, abs
+  import numpy
+  import quantities
+  from lada.dftcrystal.basis import BasisSet
+  from lada.dftcrystal.input import parse_input
+  from lada.dftcrystal import input, basis
+  a = BasisSet()
+
+  global string 
+  b = parse_input(string)
+  a.read_input(b['rutile']['BASISSET'])
+# assert a.spacegroup == 136
+# assert a.shift == 0
+# assert a.ifhr == 0
+# assert len(a.atoms) == 2
+# assert a.atoms[0].type == 'Ti' and all(abs(a.atoms[0].pos) < 1e-8)
+# assert a.atoms[1].type == 'O' and all(abs(a.atoms[1].pos-[0.30615265, 0.30615265, 0.0]) < 1e-8)
+# 
+# d = input.__dict__.copy()
+# d.update(basis.__dict__)
+# d.update(quantities.__dict__)
+# d.update(numpy.__dict__)
+# b = eval(repr(a), d)
+# assert repr(a) == repr(b)
+
+# string = 'rutile\n' + a.print_input() + 'END\nEND\n'
+# b = parse_input(string)
+# c = Crystal()
+# c.read_input(b['rutile']['CRYSTAL'])
+# assert repr(a) == repr(c)
+# c.read_input(b['rutile']['CRYSTAL'])
+# assert repr(a) == repr(c)
+
 if __name__ == "__main__":
-  test_crystal()
+# test_geom()
+  test_basis()
