@@ -64,3 +64,5 @@ class interactive(input):
 class GrepError(AttributeError):
   """ Raised when property could not be grepped from some OUTCAR. """
   pass
+class ConfigError(input):
+  """ Could not determine host machines. """

@@ -176,42 +176,59 @@ def create_global_comm(nprocs, dir=None):
   """ Figures out global communicator through external mpi call. """
   from sys import executable
   from tempfile import NamedTemporaryFile
-  from subprocess import Popen, PIPE
-  from shlex import split
+  from subprocess import PIPE
   from os.path import exists
+  from os import environ
   from os import remove, getcwd
-  from .. import placement, mpirun_exe, modify_global_comm,                    \
-                 do_multiple_mpi_program, figure_out_machines
+  from re import finditer
+  from .. import mpirun_exe, modify_global_comm, do_multiple_mpi_programs,     \
+                 figure_out_machines as script, launch_program as launch
   from ..misc import Changedir
+  from ..error import ConfigError
   import lada
   
-  if not do_multiple_mpi_programs: 
+  if not do_multiple_mpi_programs: return
   if nprocs <= 0: raise MPISizeError(nprocs)
   if dir is None: dir = getcwd()
   
   # each proc prints its name to the standard output.
-  cmdline = mpirun_exe.format( placement=placement(), program=executable,
-                               **Communicator(n=nprocs) )
   with Changedir(dir) as pwd: pass
   try: 
     with NamedTemporaryFile(delete=False, dir=dir) as file:
-      file.write(figure_out_machines)
+      file.write(script)
       filename = file.name
 
-    process = Popen(split(cmdline) + [filename], stdout=PIPE, stderr=PIPE)
+    formatter = Communicator(n=nprocs).copy()
+    formatter['program'] = executable + ' ' + filename
+
+    process = launch( mpirun_exe, stdout=PIPE, formatter=formatter,
+                      stderr=PIPE, env=environ )
     stdout, stderr = process.communicate()
   finally:
     if exists(filename):
       try: remove(filename)
       except: pass
   # we use that to deduce the number of machines and processes per machine.
-  processes = [line.split()[0] for line in stdout.split('\n')[:-1]]
+  processes = [ line.group(1) for line                                         \
+                in finditer('LADA MACHINE HOSTNAME:\s*(\S*)', stdout) ]
+  # sanity check.
+  if nprocs != len(processes):
+    envstring = ''
+    for key, value in environ.iteritems():
+      envstring += '  {0} = {1!r}\n'.format(key, value)
+    raise ConfigError( 'LaDa could not determine host machines.\n'             \
+                       'Standard output reads as follows:\n{0}\n'              \
+                       'Standard error reads as follows:\n{1}\n'               \
+                       'environment variables were set as follows:\n{2}\n'     \
+                       'following script was run:\n{3}\n'                      \
+                       .format(stdout, stderr, envstring, script) )
+  # now set up the default communicator.
   machines = set(processes)
   lada.default_comm = Communicator(lada.default_comm)
+  lada.default_comm['n'] = nprocs
   lada.default_comm.machines = {}
   for machine in machines:
     lada.default_comm.machines[machine] = processes.count(machine)
-  if lada.default_comm['n'] != sum(lada.default_comm.machines.itervalues()):
-    raise ConfigError( 'Could not determine host machines. '                   \
                         
+  # called when we need to change the machine names on some supercomputers.
   modify_global_comm(lada.default_comm)

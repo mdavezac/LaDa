@@ -61,21 +61,15 @@ class ExtractBase(object):
     return exec_input(result.group(1)).functional
 
   @property
-  @make_cached
   def success(self):
     """ Checks that VASP run has completed. 
 
         At this point, checks for the existence of OUTCAR.
         Then checks that timing stuff is present at end of OUTCAR.
     """
-    from os.path import exists, join
-
-    if hasattr(self, "OUTCAR"): 
-      for path in [self.OUTCAR]:
-        if not exists(join(self.directory, path)): return False
-      
     regex = r"""General\s+timing\s+and\s+accounting\s+informations\s+for\s+this\s+job"""
-    return self._find_last_OUTCAR(regex) is not None
+    try: return self._find_last_OUTCAR(regex) is not None
+    except: return False
 
   @property
   @make_cached

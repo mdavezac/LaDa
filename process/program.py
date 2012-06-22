@@ -66,17 +66,16 @@ class ProgramProcess(Process):
  
   def _next(self):
     """ Starts an actual process. """
-    from subprocess import Popen
-    from shlex import split as split_cmd
+    from os import environ
     from ..misc import Changedir
     from ..error import ValueError
-    from .. import mpirun_exe, placement
+    from .. import mpirun_exe, launch_program as launch
     from . import which
     # Open stdout and stderr if necessary.
     with Changedir(self.outdir) as cwd:
-      file_out = None if self.stdout is None else open(self.stdout, "w") 
-      file_err = None if self.stderr is None else open(self.stderr, "w") 
-      self._stdio = file_out, file_err
+      stdout = None if self.stdout is None else open(self.stdout, "w") 
+      stderr = None if self.stderr is None else open(self.stderr, "w") 
+      self._stdio = stdout, stderr
 
     # creates commandline
     program = which(self.program)
@@ -84,20 +83,23 @@ class ProgramProcess(Process):
       if not hasattr(self, '_comm'):
         raise ValueError( "Requested mpi but without passing communicator"     \
                           "(Or communicator was None)." )
-      d = {}
-      d['program'] = program
-      d['cmdline'] = self.cmdline 
-      d.update(self._comm)
+      formatter = {}
+      formatter['program'] = program + ' '.join(str(u) for u in self.cmdline)
+      # gives opportunity to modify the communicator before launching a
+      # particular program.
       if self.cmdlmodifier is not None:
-        self._modcomm = self.cmdlmodifier(d, self._comm)
+        self._modcomm = self.cmdlmodifier(formatter, self._comm)
         if self._modcomm is self._comm: self._modcomm = None
-      d['placement'] = placement( self._comm if self._modcomm is None          \
-                                  else self._modcomm )
-      cmdline = split_cmd(mpirun_exe.format(**d))
-      cmdline.extend(str(u) for u in self.cmdline)
-    else: cmdline = [program] + self.cmdline
-    self.process = Popen( cmdline, stdout=file_out,
-                          stderr=file_err, cwd=self.outdir )
+      comm    = self._comm if self._modcomm is None else self._modcomm 
+      cmdline = mpirun_exe
+    else:
+      cmdline   = program + ' '.join(str(u) for u in self.cmdline)
+      comm      = None
+      formatter = None
+
+    self.process = launch( cmdline, comm=comm, formatter=formatter,
+                           env=environ, stdout=stdout, stderr=stderr,
+                           outdir=self.outdir )
 
   def _cleanup(self):
     """ Cleanup files and crap. """
