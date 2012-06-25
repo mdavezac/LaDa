@@ -1,11 +1,10 @@
 __docformat__ = "restructuredtext en"
 __all__ = [ 'Crystal', 'RemoveAtoms', 'Ghosts', 'Slabinfo', 'Slabcut', 'Slab',
             'DisplaceAtoms', 'InsertAtoms', 'ModifySymmetry',
-            'AffineTransform', 'Marker', 'AtomicSymmetries', 'MakeSAED',
-            'PrnSymDir', 'SymmDir', 'ExtPrnt']
-from input import Block, Keyword, GeomKeyword
+            'AffineTransform', 'Marker' ]
+from input import ListBlock, Keyword, GeomKeyword
 
-class Crystal(Block):
+class Crystal(ListBlock):
   """ CRYSTAL-wise structure, e.g. functional approach. """
   keyword = 'crystal'
   """ CRYSTAL keyword. """
@@ -150,7 +149,7 @@ class Crystal(Block):
 
   def read_input(self, tree):
     """ Parses an input tree. """
-    from input import InputTree
+    from parse import InputTree
     from . import registered
     self[:] = []
     self.raw = tree.raw
@@ -688,28 +687,3 @@ class Marker(Keyword):
   def __repr__(self):
     return '{0.__class__.__name__}({0.name)'.format(self)
   def print_input(self, **kwargs): return None
-
-class AtomicSymmetries(Keyword):
-  """ Prints atomic symmetries. """
-  keyword = 'atomsymm'
-  """ CRYSTAL keyword. """
-
-class MakeSAED(Keyword):
-  """ Prints symmetry allowed distortions. """
-  keyword = 'makesaed'
-  """ CRYSTAL keyword. """
-
-class PrnSymDir(Keyword):
-  """ Prints symmetry allowed displacements. """
-  keyword = 'prnsymdir'
-  """ CRYSTAL keyword. """
-
-class SymmDir(Keyword):
-  """ Prints symmetry allowed geometry optimization directions. """
-  keyword = 'symmdir'
-  """ CRYSTAL keyword. """
-
-class ExtPrnt(Keyword):
-  """ Prints external file format. """
-  keyword = 'extprnt'
-  """ CRYSTAL keyword. """

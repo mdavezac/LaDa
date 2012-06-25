@@ -1,4 +1,5 @@
-set(PYDFTCRYSTAL_PY __init__.py input.py geometry.py basis.py)
+set(PYDFTCRYSTAL_PY __init__.py input.py geometry.py basis.py parse.py
+                    functional.py hamiltonian.py) 
 
 install(FILES ${PYDFTCRYSTAL_PY} DESTINATION ${CMAKE_PYINSTALL_PREFIX}/lada/dftcrystal)
 

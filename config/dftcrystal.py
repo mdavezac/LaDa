@@ -10,7 +10,7 @@ CRYSTAL_geom_blocks = set(['CRYSTAL', 'SLAB', 'POLYMER', 'HELIX', 'MOLECULE'])
 CRYSTAL_input_blocks = set([ 'MARGINS', 'CORRELAT', 'EXCHANGE', 'BIDIERD',
                              'CPHF', 'ELASTCON', 'EOS', 'SYMMWF', 'LOCALWF',
                              'ANISOTRO', 'ECH3', 'EDFT', 'EIGSHROT', 'OPTGEOM',
-                             'FIXINDEX', 'GRID3D', 'MAPNET', 'POT3',
+                             'FIXINDEX', 'GRID3D', 'MAPNET', 'POT3', 'DFT',
                              'PRINTOUT', 'REFLECTANCE', 'ROTCRY' ])            \
                        | CRYSTAL_geom_blocks
 """ List of blocks in CRYSTAL input.

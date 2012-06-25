@@ -1,6 +1,6 @@
 __docformat__ = "restructuredtext en"
 __all__ = ['BasisSet', 'Shell']
-from .input import Block
+from .input import AttrBlock
 from quantities import UnitQuantity, angstrom
 
 crystal_bhor = UnitQuantity('crystal_bhor', 0.5291772083*angstrom, symbol='bhor')
@@ -80,11 +80,11 @@ class Shell(object):
     if self._type == 'sp': 
       if coef2 is None:
         raise TypeError('Expected second coeff for sp contraction.')
-      self.functions.append([alpha, coef1, coef2])
+      self.functions.append([alpha, float(coef1), float(coef2)])
     else:
       if coef2 is not None:
         raise TypeError('Cannot use second coeff for in non-sp contraction.')
-      self.functions.append([alpha, coef1])
+      self.functions.append([alpha, float(coef1)])
     return self
 
   @property
@@ -129,22 +129,20 @@ class Shell(object):
 
   def __len__(self): return len(self.functions)
 
-class BasisSet(Block):
+class BasisSet(AttrBlock):
   """ Basis set block. """
-  keyword = 'BASISSET'
-  """ Fake CRYSTAL keyword. """
   def __init__(self):
     """ Creates basis set block. """
     super(BasisSet, self).__init__()
-    self.basis = {}
-    """ Mapping from species to atoms. """
+    self._functions = {}
+    """ Dictionary holding basis functions. """
 
   @property
   def raw(self):
     """ Raw basis set input. """
     from .. import periodic_table as pt
     result = ''
-    for key, value in self.basis:
+    for key, value in self:
       if isinstance(key, str):
         type = getattr(pt, key, None)
         key = int(type) if type is None else type.atomic_number
@@ -157,17 +155,15 @@ class BasisSet(Block):
   def raw(self, value):
     """ Sets basis data from raw CRYSTAL input. """
     from ..error import NotImplementedError as NA, IOError
-    from ..periodic_table import find as find_specie
-    self.basis = {}
+    # clean up all basis functions. 
+    for key in self.keys(): del self[key]
     lines = value.split('\n')
     while len(lines):
       line = lines.pop(0).split()
       type, nshells = int(line[0]), int(line[1])
       if type == 99 or nshells == 99: break
-      if type < 100: 
-        try: type = find_specie(atomic_symbol=type).symbol
-        except: pass
-      self.basis[type] = []
+      type = self._specie(type)
+      self._functions[type] = []
       for i in xrange(nshells):
         bt = int(lines[0].split()[0])
         if bt == 0:
@@ -175,39 +171,85 @@ class BasisSet(Block):
           if len(lines) < ncoefs + 1: raise IOError('Unexpected end-of-file.')
           basis = Shell()
           basis.raw = '\n'.join(lines[:ncoefs+1])
-          self.basis[type].append(basis)
+          self._functions[type].append(basis)
           lines = lines[ncoefs+1:]
         else:
           raise NA('Basis type {0} hasnot yet been implemented.'.format(bt))
-  def add_shell(self, name, shell):
-    """ Adds shell to set. """
-    from ..periodict_table import find as find_specie
 
-    # figure out what name is.
-    try: n = int(name)
+
+  def _specie(self, specie):
+    """ Translate from specie to dictionary keyword. """
+    from ..periodic_table import find as find_specie
+    try: n = int(specie)
     except: pass
-    else: name = n
-    if isinstance(name, str): 
-      name = name.rstrip().lstrip()
-      try: specie = find_specie(name=name)
+    else: specie = n
+    if isinstance(specie, str): 
+      specie = specie.rstrip().lstrip()
+      try: specie = find_specie(name=specie)
       except: pass
-      else: name = specie.symbol
-    elif name < 100:
-      try: specie = find_specie(atomic_number=name)
+      else: specie = specie.symbol
+    elif specie < 100:
+      try: specie = find_specie(atomic_number=specie)
       except: pass
-      else: name = specie.symbol
+      else: specie = specie.symbol
+    return specie
 
+  def __setitem__(self, specie, shell):
+    """ Sets basis function for a particular specie. """
+    specie = self._specie(specie)
+    self._functions[specie] = shell
+  def __getitem__(self, specie):
+    """ Gets basis-functions for a given specie. """
+    specie = self._specie(specie)
+    return self._functions[specie]
+  def __delitem__(self, specie):
+    """ Gets basis-functions for a given specie. """
+    specie = self._specie(specie)
+    del self._functions[specie]
+  def __contains__(self, specie):
+    """ Gets basis-functions for a given specie. """
+    specie = self._specie(specie)
+    return specie in self._functions
+  def __len__(self):
+    """ Number of atomic species. """
+    return len(self._functions)
+  def __iter__(self):
+    """ Iterates over species. """
+    for key in self._functions: yield key
+  def keys(self):
+    """ List of species. """
+    return self._functions.keys()
+  def items(self):
+    """ Tuples (specie, basis-functions) """
+    return self._functions.items()
+  def values(self):
+    """ List of basis functions, """
+    return self._functions.values()
+  def iterkeys(self):
+    """ Iterates over species. """
+    return self._functions.iterkeys()
+  def iteritems(self):
+    """ Iterates over tuple (key, basis-functions). """
+    return self._functions.iteritems()
+  def itervalues(self):
+    """ Iterates over basis-functions. """
+    return self._functions.itervalues()
+
+  def append(self, specie, shell):
+    """ Adds shell to set. """
+    specie = self._specie(specie)
     # now adds shell correctly.
-    if name not in self.basis: self.basis[name] = [shell]
-    else: self.basis[name].append(shell)
-    
+    if specie in self._functions: self._functions[specie].append(shell)
+    else: self._functions[specie] = [shell]
+    return self
+
   def __repr__(self, indent=''):
     """ Representation of this instance. """
-    result = indent + '{0.__class__.__name__}()'.format(self)
+    result = super(BasisSet, self).__repr__(indent)
     indent += '    '
-    for key, value in self.basis.iteritems():
+    for key, value in self._functions.iteritems():
       for func in value: 
-        result += '\\\n{0}.add_shell({1!r}, {2!r}})'.format(indent, key, func)
+        result += '\\\n{0}.append({1!r}, {2!r})'.format(indent, key, func)
     return result
 
   def print_input(self, **kwargs):
@@ -217,19 +259,6 @@ class BasisSet(Block):
 
   def read_input(self, tree):
     """ Parses an input tree. """
-    from input import InputTree, Keyword
-    from ..error import ValueError
-    from . import registered
-    self[:] = []
-    self.raw = tree.raw
-    for key, value in tree:
-      # parses sub-block.
-      if isinstance(value, InputTree):
-        raise ValueError( '{0} is not allowed in the basis set definition.'    \
-                          .format(key) )
-      # creates new object.
-      newobject = registered.get(key.lower(), Keyword(keyword=key))
-      if len(value) > 0: 
-        try: newobject.raw = getattr(value, 'raw', value)
-        except: pass
-      self.append(newobject)
+    self._functions = {}
+    self._crysinput = self.__class__()._crysinput
+    super(BasisSet, self).read_input(tree)

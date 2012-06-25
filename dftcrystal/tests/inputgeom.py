@@ -910,11 +910,15 @@ string =  \
    """0 2 1 0. 1.\n"""\
    """1.1 1.0\n"""\
    """99 0\n"""\
+   """CHARGED\n"""\
+   """PRINTOUT\n"""\
+   """KSYMMPRT\n"""\
+   """END\n"""\
    """END\n"""\
    """DFT\n"""\
    """B3LYP\n"""\
    """XXLGRID\n"""\
-   """END\n"""\
+   """END shit\n"""\
    """TOLINTEG\n"""\
    """7 7 7 7 14\n"""\
    """SHRINK\n"""\
@@ -960,12 +964,12 @@ def test_geom():
   import numpy
   import quantities
   from lada.dftcrystal.geometry import Crystal
-  from lada.dftcrystal.input import parse_input
+  from lada.dftcrystal.parse import parse
   from lada.dftcrystal import input, geometry
   a = Crystal()
 
   global string 
-  b = parse_input(string)
+  b = parse(string)
   a.read_input(b['rutile']['CRYSTAL'])
   assert a.spacegroup == 136
   assert a.shift == 0
@@ -981,8 +985,8 @@ def test_geom():
   b = eval(repr(a), d)
   assert repr(a) == repr(b)
 
-  string = 'rutile\n' + a.print_input() + 'END\nEND\n'
-  b = parse_input(string)
+  otherstring = 'rutile\n' + a.print_input() + 'END\nEND\n'
+  b = parse(otherstring)
   c = Crystal()
   c.read_input(b['rutile']['CRYSTAL'])
   assert repr(a) == repr(c)
@@ -990,39 +994,149 @@ def test_geom():
   assert repr(a) == repr(c)
 
 def test_basis():
-  from numpy import all, abs
   import numpy
   import quantities
-  from lada.dftcrystal.basis import BasisSet
-  from lada.dftcrystal.input import parse_input
+  from lada.dftcrystal.basis import BasisSet, Shell
+  from lada.dftcrystal.parse import parse
   from lada.dftcrystal import input, basis
+
+  execdict = input.__dict__.copy()
+  execdict.update(basis.__dict__)
+  execdict.update(quantities.__dict__)
+  execdict.update(numpy.__dict__)
+
   a = BasisSet()
-
   global string 
-  b = parse_input(string)
+  b = parse(string)
   a.read_input(b['rutile']['BASISSET'])
-# assert a.spacegroup == 136
-# assert a.shift == 0
-# assert a.ifhr == 0
-# assert len(a.atoms) == 2
-# assert a.atoms[0].type == 'Ti' and all(abs(a.atoms[0].pos) < 1e-8)
-# assert a.atoms[1].type == 'O' and all(abs(a.atoms[1].pos-[0.30615265, 0.30615265, 0.0]) < 1e-8)
-# 
-# d = input.__dict__.copy()
-# d.update(basis.__dict__)
-# d.update(quantities.__dict__)
-# d.update(numpy.__dict__)
-# b = eval(repr(a), d)
-# assert repr(a) == repr(b)
+  assert len(a) == 3
+  assert set(['H', 'O', 'Ti']) == set(a.keys())
+  assert 1  in a and  a[1] is a['H']
+  assert 8  in a and  a[8] is a['O']
+  assert 22 in a and a[22] is a['Ti']
+  # H shell
+  b = [Shell() for i in xrange(3)]
+  b[0].raw = """0 0 3 1. 1.\n"""\
+             """18.7311370 0.03349460\n"""\
+             """2.82539370 0.234726950\n"""\
+             """0.640121700 0.813757330\n"""
+  b[1].raw = """0 0 1 0. 1.\n"""\
+             """0.16127780 1.0\n"""
+  b[2].raw = """0 2 1 0. 1.\n"""\
+             """1.1 1.0\n"""
+  # O shell
+  b = [Shell() for i in xrange(5)]
+  b[0].raw = """0 0 8 2. 1.\n"""\
+             """8020.0 0.00108\n"""\
+             """1338.0 0.00804\n"""\
+             """255.4 0.05324\n"""\
+             """69.22 0.1681\n"""\
+             """23.90 0.3581\n"""\
+             """9.264 0.3855\n"""\
+             """3.851 0.1468\n"""\
+             """1.212 0.0728\n"""
+  b[1].raw = """0 1 4 6. 1.\n"""\
+             """49.43 -0.00883 0.00958\n"""\
+             """10.47 -0.0915 0.0696\n"""\
+             """3.235 -0.0402 0.2065\n"""\
+             """1.217 0.379 0.347\n"""
+  b[2].raw = """0 1 1 0. 1.\n"""\
+             """0.4567 1.0 1.0\n"""
+  b[3].raw = """0 1 1 0. 1.\n"""\
+             """0.1843 1.0 1.0\n"""
+  b[4].raw = """0 3 1 0. 1.\n"""\
+             """ 0.6 1.0\n"""
+  assert repr(b) == repr(a['O'])
+  # Ti shell
+  b = [Shell() for i in xrange(7)]
+  b[0].raw =  """0 0 8 2. 1.\n"""\
+              """225338.0 0.000228\n"""\
+              """32315.0 0.001929\n"""\
+              """6883.61 0.011100\n"""\
+              """1802.14 0.05\n"""\
+              """543.063 0.17010\n"""\
+              """187.549 0.369\n"""\
+              """73.2133 0.4033\n"""\
+              """30.3718 0.1445\n"""
+  b[1].raw = """0 1 6 8. 1.\n"""\
+             """554.042 -0.0059 0.0085\n"""\
+             """132.525 -0.0683 0.0603\n"""\
+             """43.6801 -0.1245 0.2124\n"""\
+             """17.2243 0.2532 0.3902\n"""\
+             """7.2248 0.6261 0.4097\n"""\
+             """2.4117 0.282 0.2181\n"""
+  b[2].raw = """0 1 4 8. 1.\n"""\
+             """24.4975 0.0175 -0.0207\n"""\
+             """11.4772 -0.2277 -0.0653\n"""\
+             """4.4653 -0.7946 0.1919\n"""\
+             """1.8904 1.0107 1.3778\n"""
+  b[3].raw = """0 1 1 2. 1.\n"""\
+             """0.8126 1.0 1.0\n"""
+  b[4].raw = """0 1 1 0. 1.\n"""\
+             """0.3297 1.0 1.0\n"""
+  b[5].raw = """0 3 4 2. 1.\n"""\
+             """16.2685 0.0675\n"""\
+             """4.3719 0.2934\n"""\
+             """1.4640 0.5658\n"""\
+             """0.5485 0.5450\n"""
+  b[6].raw = """0 3 1 0. 1.\n"""\
+             """0.26 1.0\n"""
+  assert repr(b) == repr(a['Ti'])
 
-# string = 'rutile\n' + a.print_input() + 'END\nEND\n'
-# b = parse_input(string)
-# c = Crystal()
-# c.read_input(b['rutile']['CRYSTAL'])
-# assert repr(a) == repr(c)
-# c.read_input(b['rutile']['CRYSTAL'])
-# assert repr(a) == repr(c)
+  assert a._crysinput.get('charged', False) is True
+  assert a.charged is True
+  assert a._crysinput.get('printout', None) is not None
+  assert isinstance(a.printout, input.AttrBlock) 
+  assert len(a.printout._crysinput) == 1
+  assert a.printout._crysinput.get('ksymmprt', False) is True
+  assert a.printout.ksymmprt is True
+  b = eval(repr(a), execdict)
+  assert repr(b) == repr(a)
+
+def test_functional():
+  from numpy import all, array
+  import numpy
+  import quantities
+  from lada.dftcrystal.functional import Functional
+  from lada.dftcrystal.basis import BasisSet
+  from lada.dftcrystal.parse import parse
+  from lada.dftcrystal import input, basis
+
+  execdict = input.__dict__.copy()
+  execdict.update(basis.__dict__)
+  execdict.update(quantities.__dict__)
+  execdict.update(numpy.__dict__)
+
+  a = Functional()
+  global string 
+  b = parse(string)
+  a.read_input(b)
+  assert a.title == 'rutile'
+  c = BasisSet()
+  c.read_input(b['rutile']['BASISSET'])
+  assert repr(a.basis) == repr(c)
+  assert len(a.optgeom._crysinput) == 1
+  assert getattr(a.optgeom, 'maxcycle', 0) == 10
+  assert a.dft.b3lyp
+  assert not a.dft.b3pw
+  assert not a.dft.pbe0
+  assert not a.dft.soggaxc
+  assert a.dft.xxlgrid
+  assert not a.dft.spin
+  assert a.maxcycle == 300
+  assert a.biposize == 9701800
+  assert a.exchsize == 6937578
+  assert a.toldee == 7
+  assert a.ppan
+  assert a.fmixing == 60
+  assert all(isinstance(u, int) for u in a.levshift)
+  assert all(a.levshift == array([5, 1]))
+  assert all(isinstance(u, int) for u in a.shrink)
+  assert all(a.shrink == array([8, 8]))
+  assert all(isinstance(u, int) for u in a.tolinteg)
+  assert all(a.tolinteg == array([7, 7, 7, 7, 14]))
 
 if __name__ == "__main__":
-# test_geom()
+  test_geom()
   test_basis()
+  test_functional()

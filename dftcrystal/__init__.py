@@ -1,25 +1,25 @@
 __docformat__ = "restructuredtext en"
 
-from geometry import AffineTransform, AtomicSymmetries, DisplaceAtoms, ExtPrnt,\
-                     Ghosts, InsertAtoms, MakeSAED, Marker, ModifySymmetry,    \
-                     PrnSymDir, RemoveAtoms, Slabcut, Slabinfo, Crystal,       \
-                     SymmDir, Slab
+from geometry import AffineTransform, DisplaceAtoms, Ghosts, InsertAtoms,    \
+                     Marker, ModifySymmetry, RemoveAtoms, Slabcut, Slabinfo, \
+                     Crystal, Slab
+from hamiltonian import Dft, Hybrid, Exchange, Correlation, NonLocal
 registered = { 'atomrot':    AffineTransform,
-               'atomsymm':   AtomicSymmetries,
                'atomdisp':   DisplaceAtoms,
-               'extprnt':    ExtPrnt,
                'ghosts':     Ghosts,
                'atominse':   InsertAtoms,
-               'makesaed':   MakeSAED,
                'marker':     Marker,
                'modisymm':   ModifySymmetry,
-               'prnsymdir':  PrnSymDir,
                'atomremo':   RemoveAtoms,
                'slabcut':    Slabcut,
                'slab':       Slab,
                'slabinfo':   Slabinfo,
                'structure':  Crystal,
-               'symmdir':    SymmDir, }
+               'dft':        Dft,
+               'exchange':   Exchange,
+               'correlat':   Correlation,
+               'nonlocal':   NonLocal,
+               'hybrid':     Hybrid }
 
 # class Structure(object):
 #   """ Functional structure class. 

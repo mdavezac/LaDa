@@ -1,3 +1,5 @@
+__docformat__ = "restructuredtext en"
+__all__ = ['Keyword', 'GeomKeyword', 'ListBlock']
 class Keyword(object):
   """ Defines keyword input to CRYSTAL. """
   def __init__(self, keyword=None, raw=None):
@@ -90,27 +92,24 @@ class GeomKeyword(Keyword):
     if result[-1] != '\n': result += '\n'
     return result
 
-class Block(Keyword, list):
+class ListBlock(Keyword, list):
   """ Defines block input to CRYSTAL. 
   
       A block is a any set of input which starts with a keyword and ends with
       an END. It can contain other sub-keywords.
+      This particular flavor appends inner input keywords to a list. It is used
+      within the geometry block of CRYSTAL, since that particular block is list
+      of commands which are executed one after the other. 
 
       It can contain subitems.
   """
-  _blocks = [ 'crystal', 'slab', 'polymer', 'helix',  'molecule', 'freqcalc',
-              'optgeom', 'anharm']
-  """ Names of possible subblocks. 
-  
-      Used to parse input.
-  """
-  def __init__(self, keyword=None):
+  def __init__(self, keyword=None, raw=None):
     """ Creates a block. 
 
         :param str keyword:
           Keyword indicating the name of the block.
     """
-    Keyword.__init__(self, keyword)
+    Keyword.__init__(self, keyword=keyword, raw=raw)
     list.__init__(self)
 
   def append(self, keyword, raw=None):
@@ -186,7 +185,7 @@ class Block(Keyword, list):
   def replace_last(self, key, value):
     """ Replaces last of kind. """
     from ..error import KeyError
-    if not (isinstance(value, Keyword) or isinstance(value, Block)): 
+    if not isinstance(value, Keyword):
       raise ValueError('Input is not a crystal Keyword or Block')
     items = [u.keyword for u in self] 
     if key not in items: raise KeyError('Could not find {0}.'.format(key))
@@ -194,87 +193,233 @@ class Block(Keyword, list):
   def replace_first(self, key, value):
     """ Replaces first of kind. """
     from ..error import KeyError
-    if not (isinstance(value, Keyword) or isinstance(value, Block)): 
+    if not isinstance(value, Keyword):
       raise ValueError('Input is not a crystal Keyword or Block')
     items = [u.keyword for u in self] 
     if key not in items: raise KeyError('Could not find {0}.'.format(key))
     self[items.find(key)] = value
 
-class InputTree(list):
-  __slots__ = ['raw']
-  def __init__(self):
-    super(InputTree, self).__init__()
-  def descend(self, *args):
-    if len(args) == 0: return self
-    name, args = args[0], args[1:]
-    for key, value in self: 
-      if name == key:
-        return value.descend(*args) if hasattr(value, 'descend') else value
-    self.append((name, InputTree()))
-    return self[-1][1].descend(*args)
-  def __getitem__(self, name):
-    if isinstance(name, str): 
-      for key, value in self: 
-        if name == key: return value
-    return super(InputTree, self).__getitem__(name)
-  def keys(self):
-    return [u[0] for u in self]
+class AttrBlock(Keyword):
+  """ Defines block input to CRYSTAL. 
+  
+      A block is a any set of input which starts with a keyword and ends with
+      an END. It can contain other sub-keywords.
+      This particular flavor creates attributes from the  inner input keywords.
+      This supposes that each keyword is only ever inputed once. 
+
+      It can contain subitems.
+  """
+  def __init__(self, keyword=None, raw=None):
+    """ Creates a block. 
+
+        :param str keyword:
+          Keyword indicating the name of the block.
+    """
+    # first add this to avoid infinite recursion from redifining __setattr__
+    self.__dict__['_crysinput'] = {}
+
+    # then call base constructor
+    super(AttrBlock, self).__init__(keyword=keyword, raw=raw)
+
+    # now so we get doctstrings right.
+    self._crysinput = {}
+    """ Dictionary of crystal inputs. """
     
-  
-def parse_input(path):
-  """ Reads crystal input. """
-  from re import compile
-  from .. import CRYSTAL_input_blocks as blocks, CRYSTAL_geom_blocks as starters
-  if isinstance(path, str): 
-    if path.find('\n') == -1:
-      with open(path) as file: return parse_input(file)
-    else:
-      return parse_input(path.split('\n').__iter__())
+
+  def __getattr__(self, name):
+    """ passes through the input keywords in :py:attr:`_crysinput`. """
+    from ..error import AttributeError
+    if name not in self._crysinput: 
+      raise AttributeError('Unknwon attribute {0}.'.format(name))
+    result = self._crysinput[name]
+    return result.__get__(self) if hasattr(result, '__get__') else result
+  def __setattr__(self, name, value):
+    """ passes through the input keywords in :py:attr:`_crysinput`. 
+    
+        If the input value is derived from
+        :py:class:`~lada.dftcrystal.input.Keyword`, then it is added to
+        :py:attr:`_crysinput`. Otherwise, super is called.
+    """
+    if isinstance(value, Keyword): 
+      self._crysinput[name] = value
+    elif name in self._crysinput:
+      result = self._crysinput[name]
+      if hasattr(result, '__set__'): result.__set__(self, value)
+      else: self._crysinput[name] = value
+    else: super(AttrBlock, self).__setattr__(name, value)
+  def __delattr__(self, name):
+    """ passes through the input keywords in :py:attr:`_crysinput`.  """
+    if name in self._crysinput: del self._crysinput[name]
+    else: super(AttrBlock, self).__delattr__(name)
+
+  def add_keyword(self, name, value=None):
+    """ Adds/Sets input keyword. """
+    # if known keyword, then go through setattr mechanism.
+    # this makes sure we recognize the type of value and the already registered
+    # keyword.
+    if name in self._crysinput:  setattr(self, name, value)
+    # if value is None, then transform it to True. 
+    # This is a keyword which is either there or not there, like EXTPRT.
+    elif value is None: self._crysinput[name] = True
+    # boolean case
+    elif value is True or value is False:
+      self._crysinput[name] = value
+    # if a string, tries to guess what it is.
+    elif isinstance(value, str):
+      # split along line and remove empty lines
+      lines = value.split('\n')
+      while len(lines[-1].rstrip().lstrip()) == 0: lines.pop(-1)
+      # if only one line left, than split into a list and guess type of each
+      # element.
+      if len(lines) == 1:
+        lines = lines[0]
+        n = []
+        for u in lines.split():
+          try: v = int(u)
+          except:
+            try: v = float(u)
+            except: v = u
+          n.append(v)
+        # if only one element use that rather than list
+        if len(n) == 1: n = n[0]
+      # if multiple line, keep as such
+      else: n = value
+      self._crysinput[name] = n
+    # otherwise, just set the keyword.
+    else: self._crysinput[name] = value
+    # return self to allow chaining calls.
+    return self
 
 
-  title = ''
-  for i, line in enumerate(path):
-    if line.split()[0] in starters: break
-    title = line
-  keyword_re = compile('^[A-Z](?!\s)')
+  def print_input(self, **kwargs):
+    """ CRYSTAL input.
+    
+        The input is composed as followed:
+        
+          - the keyword of this block, if it exists.
+          - the 'raw' input, if is exists.
+          - each input keyword to CRYSTAL contained by the block.
+    """
+    result = getattr(self, 'keyword', '')
+    if len(result) > 0: result += getattr(self, 'raw', '')
+    for key, value in self._crysinput():
+      if value is None: continue
+      elif isinstance(value, bool):
+        if value == True: result += key.upper()
+      elif hasattr(value, 'print_input'):
+        dummy = result.print_input(**kwargs)
+        if dummy is not None: result += dummy
+      elif getattr(value, 'raw', None) is not None:
+        result += getattr(result, 'keyword', key).upper() + '\n'               \
+                  + str(value.raw)
+      elif hasattr(value, '__iter__'):
+        result += getattr(result, 'keyword', key).upper() + '\n'               \
+                  + ' '.join(str(u) for u in value)
+      else:
+        result += getattr(result, 'keyword', key).upper() + '\n' + str(value)
+      result = result.rstrip()
+      if result[-1] != '\n': result += '\n'
 
-  
-  # reading linearly, 
-  title = title.rstrip().lstrip()
-  if title[-1] == '\n': title = title[:-1].rstrip()
-  nesting = [title, line.split()[0]]
-  results = InputTree()
-  keyword = line.split()[0]
-  raw = ''
-  # reads crystal input.
-  for line in path:
-    # special case of INPUT keyword
-    if line.split()[0] == 'INPUT':
-      raw += line.rstrip().lstrip()
-      if raw[-1] != '\n': raw += '\n'
-    # found keyword
-    elif keyword_re.match(line) is not None:
-      newkeyword = line.split()[0]
-      current = results.descend(*nesting)
-      # first of subblock
-      if keyword == nesting[-1]: current.raw = raw
-      elif keyword[:3] != 'END' and keyword[:6] != 'STOP':
-        current.append((keyword, raw)) 
-      # normal keyword
-      if newkeyword in blocks                                                  \
-         and not (newkeyword == 'SLAB' and nesting[-1] == 'CRYSTAL'): 
-        nesting.append(newkeyword)
-      # found end, pop nesting.
-      if newkeyword[:3] == 'END' or newkeyword[:6] == 'STOP': 
-        current = nesting.pop(-1)
-        if current in starters:
-          nesting.append('BASISSET')
-          newkeyword = 'BASISSET'
-        if len(nesting) == 0: break
-      raw = ''
-      keyword = newkeyword
-    # found raw string
-    else:
-      raw += line.rstrip().lstrip()
-      if raw[-1] != '\n': raw += '\n'
-  return results
+  def __repr__(self, indent=''):
+    """ Representation of this instance. """
+    from inspect import getargspec
+    result = indent + '{0.__class__.__name__}()'.format(self)
+    indent += '    '
+    for key, value in self._crysinput.iteritems():
+      if hasattr(getattr(value, '__repr__', None), '__call__'):
+        try:
+          hasindent = getargspec(value.__repr__).args
+        except: hasindent = False
+        else: hasindent = False if hasindent is None else 'indent' in hasindent
+      else: hasindent = False
+      if hasindent: 
+        result += '\\\n{0}.add_keyword({1!r}, {2})'                            \
+                  .format(indent, key, value.__repr__(indent+'        ')) 
+      else: 
+        result += '\\\n{0}.add_keyword({1!r}, {2!r})'                          \
+                  .format(indent, key, value) 
+    return result
+
+  def read_input(self, tree):
+    """ Parses an input tree. """
+    from parse import InputTree
+    from . import registered
+    if hasattr(self, 'raw') and len(tree.raw) > 0: 
+      try: self.raw = tree.raw
+      except: pass
+    for key, value in tree:
+      # parses sub-block.
+      if isinstance(value, InputTree):
+        newobject = registered.get(key.lower(), AttrBlock)()
+        newobject.read_input(value)
+      # creates new object.
+      elif key.lower() in registered:
+        newobject = registered[key.lower()]()
+        if len(value) > 0:
+          try: newobject.raw = getattr(value, 'raw', value)
+          except: pass
+      elif len(value) == 0: newobject = True
+      else: newobject = value
+      self.add_keyword(key.lower(), newobject)
+
+
+class Choice(Keyword):
+  """ Keyword value must be chosen from a given set. """
+  def __init__(self, values, value=None):
+    """ Creates keyword which must be chosen from a given set. """ 
+    super(Choice, self).__init__()
+    self.values = set(values)
+    """ Set of values from which to choose keyword. """
+    self.value = value
+    """ Current value. """
+  @property
+  def value(self):
+    """ Current value of the keyword. """
+    return self._value
+  @value.setter
+  def value(self, val):
+    from ..error import ValueError
+    if val is None: self._value = None; return
+    if val not in self.values: 
+      raise ValueError( 'Input should be one of the following: {0}.'           \
+                        .format(self._value) )
+    self._value = val
+  def __get__(self, instance, owner=None):
+    """ Function called by :py:class:`AttrBlock`. """
+    return self._value
+  def __set__(self, instance, value):
+    """ Function called by :py:class:`AttrBlock`. """
+    self.value = value
+
+  def print_input(self, **kwargs):
+    """ Prints input to string. """
+    result = getattr(self, 'keyword', '').upper()
+    if len(result) > 0 and result[-1] != '\n': result += '\n'
+    result += repr(self.value).upper()
+    return result
+
+class StrChoice(Choice):
+  """ Keyword value must be chosen from a given set. """
+  def __init__(self, values, value=None):
+    """ Creates keyword which must be chosen from a given set. """ 
+    super(StrChoice, self).__init__(set([u.lower() for u in values]), value)
+  @property
+  def value(self):
+    """ Current value of the keyword. """
+    return self._value
+  @value.setter
+  def value(self, val):
+    from ..error import ValueError
+    if val is None: self._value = None; return
+    val = val.lower()
+    if val not in self.values: 
+      raise ValueError( 'Input should be one of the following: {0}.'           \
+                        .format(self._value) )
+    self._value = val
+
+  def print_input(self, **kwargs):
+    """ Prints input to string. """
+    result = getattr(self, 'keyword', '').upper()
+    if len(result) > 0 and result[-1] != '\n': result += '\n'
+    result += self.value.upper()
+    return result
