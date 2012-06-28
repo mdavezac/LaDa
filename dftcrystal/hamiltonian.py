@@ -104,8 +104,10 @@ class NonLocal(Keyword):
 class Hybrid(TypedKeyword):
   keyword = 'hybrid'
   """ Crystal input keyword. """
+  type = float
+  """ Keyword must conform to this type, if not None. """
   def __init__(self, value=None):
-    super(Hybrid, self).__init__(value=value, type=float)
+    super(Hybrid, self).__init__(value=value)
   def print_input(self, **kwargs):
     inst = kwargs['crystal'].dft
     if inst.pbe0 or inst.b3lyp or inst.b3pw or inst.soggaxc: return None

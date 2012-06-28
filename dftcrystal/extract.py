@@ -206,11 +206,29 @@ class ExtractBase(object):
     result.name = self.title
     return result
 
+  def _find_structure(self, file):
+    """ Yields positions in file where structure starts. """
+    # first finds atoms -- the one with whether they are in the asymmetric
+    # unit. The file is scanned to the end unit so the last position of the
+    # header can be found. The, we use seek to go back to that position  and
+    # find the result. We cannot do this with file.next() because of
+    # read-ahead buffering issues. Also, we go back one line so things work better.
+    header = 'ATOMS IN THE ASYMMETRIC UNIT'.split()
+    while True:
+      line = file.readline()
+      if not line: break
+      line = line.split()
+      if len(line) < 5: continue
+      if line[:5] == header: yield file.tell()
+
   @property
   @make_cached
   def input_structure(self):
     """ Input structure, LaDa format. """
-    with self.__stdout__() as file: return self._grep_structure(file)
+    with self.__stdout__() as file:
+      pos = self._find_structure(file).next()
+      file.seek(pos, 0)
+      return self._grep_structure(file)
 
 
   @property
@@ -218,20 +236,8 @@ class ExtractBase(object):
   def structure(self):
     """ Input structure, LaDa format. """
     with self.__stdout__() as file:
-      # first finds atoms -- the one with whether they are in the asymmetric
-      # unit. The file is scanned to the end unit so the last position of the
-      # header can be found. The, we use seek to go back to that position  and
-      # find the result. We cannot do this with file.next() because of
-      # read-ahead buffering issues. Also, we go back one line so things work better.
-      header = 'ATOMS IN THE ASYMMETRIC UNIT'.split()
-      findlast = 0
-      while True:
-        line = file.readline()
-        if not line: break
-        line = line.split()
-        if len(line) < 5: continue
-        if line[:5] == header: findlast = file.tell()
-      file.seek(max(findlast-100, 0))
+      for pos in self._find_structure(file): continue
+      file.seek(pos, 0)
       return self._grep_structure(file)
 
 class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):

@@ -96,6 +96,25 @@ class ValueKeyword(Keyword):
   def __set__(self, instance, value):
     """ Assigns value as is. """
     self.value = value
+  def __repr__(self):
+    """ Dumps a representation of self. """
+    from inspect import getargspec
+    args = []
+    if 'keyword' not in self.__class__.__dict__ and 'keyword' in self.__dict__:
+      args.append('keyword={0.keyword!r}'.format(self))
+    argspec = getargspec(self.__init__)
+    index = argspec.args.index('value')                                         \
+            - len(argspec.args) + len(argspec.defaults)
+    dovalue = True
+    if index >= 0:
+      default = argspec.defaults[index]
+      if default is None and self.value is None: dovalue = False
+      else:
+        try: 
+          if default.__class__(self.value) == default: dovalue = False
+        except: pass
+    if dovalue: args.append('value={0.value!r}'.format(self))
+    return '{0.__class__.__name__}({1})'.format(self, ', '.join(args))
   
 
 class TypedKeyword(Keyword):
@@ -125,18 +144,19 @@ class TypedKeyword(Keyword):
       The value given will be cast to the given type, unless None, in which
       case the keyword will not be printed to the CRYSTAL input file.
   """
-  def __init__(self, keyword=None, type=int, value=None):
+  def __init__(self, keyword=None, type=None, value=None):
     """ Initializes a keyword with a value. """
     from ..error import ValueError
     super(TypedKeyword, self).__init__(keyword=keyword)
     if isinstance(type, list) and len(type) == 0:
       raise ValueError('type must be class or a non-empty list of classes')
 
-    self.type = type
-    """ Type to which the value should be cast if the value is not None. """
+    if type is not None:
+      self.type = type
+      """ Type to which the value should be cast if the value is not None. """
     self.value = value
     """ The value to print to input. 
-
+  
         If None, then this keyword will not appear.
     """
   @property
@@ -150,6 +170,9 @@ class TypedKeyword(Keyword):
     return self._value
   @value.setter
   def value(self, value):
+    from ..error import internal
+    if self.type is None: 
+      raise internal('TypedKeyword was not given a type.')
     if value is None: self._value = None; return
     if type(self.type) is list:
       if not hasattr(value, '__iter__'): 
@@ -185,8 +208,32 @@ class TypedKeyword(Keyword):
   def __set__(self, instance, value):
     """ Assigns value as is. """
     self.value = value
+  def __repr__(self):
+    """ Dumps a representation of self. """
+    from inspect import getargspec
+    args = []
+    if 'keyword' not in self.__class__.__dict__ and 'keyword' in self.__dict__:
+      args.append('keyword={0.keyword!r}'.format(self))
+    if 'type' not in self.__class__.__dict__:
+      if isinstance(self.type, list):
+        args.append( 'type=[{0}]'                                              \
+                     .format(', '.join(u.__name__ for u in self.type)) )
+      else: args.append( 'type={0.type.__name__}'.format(self))
+    argspec = getargspec(self.__init__)
+    index = argspec.args.index('value') - 1
+    dovalue = True
+    if len(argspec.defaults) > index:
+      default = argspec.defaults[index]
+      if default is None and self.value is None: dovalue = False
+      else:
+        try: 
+          if default.__class__(self.value) == default: dovalue = False
+        except: pass
+    if dovalue: args.append('value={0.value!r}'.format(self))
+    return '{0.__class__.__name__}({1})'.format(self, ', '.join(args))
 
-class BoolKeyword(Keyword):
+
+class BoolKeyword(ValueKeyword):
   """ Boolean keyword.
 
       If True, the keyword is present.
@@ -201,20 +248,13 @@ class BoolKeyword(Keyword):
         This class should be derived from. It is not complete since it lacks a
         keyword attribute.
   """
-  def __init__(self, value=False, keyword=None):
+  def __init__(self, value=False, keyword=False):
     """ Initializes FullOptG keyword. """
     super(BoolKeyword, self).__init__(keyword=keyword)
-    self.value = value
   @property
   def value(self): return self._value
   @value.setter
   def value(self, value): self._value = (value == True)
-  def __set__(self, instance, value):
-    """ Sets the keyword to appear or not. """
-    self.value = value
-  def __get__(self, instance, owner=None):
-    """ True if the keyword is to appear. """
-    return self.value
   def print_input(self, **kwargs):
     return self.keyword.upper() + '\n' if self.value else None
 
@@ -432,6 +472,11 @@ class AttrBlock(Keyword):
     """ passes through the input keywords in :py:attr:`_crysinput`.  """
     if name in self._crysinput: del self._crysinput[name]
     else: super(AttrBlock, self).__delattr__(name)
+  def __dir__(self):
+    """ List of attributes and members. """
+    return list( set(self._crysinput.keys())                                   \
+                 | set(self.__dict__.keys())                                   \
+                 | set(dir(self.__class__)) )
 
   def add_keyword(self, name, value=None):
     """ Adds/Sets input keyword. """

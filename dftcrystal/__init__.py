@@ -2,17 +2,15 @@
 __docformat__ = "restructuredtext en"
 __all__ = [ 'Extract', 'AffineTransform', 'DisplaceAtoms', 'Ghosts',
             'InsertAtoms', 'Marker', 'ModifySymmetry', 'RemoveAtoms',
-            'Slabcut', 'Slabinfo','Crystal', 'Slab', 'Dft', 'Hybrid',
-            'Exchange', 'Correlation', 'NonLocal', 'Crystal' ]
+            'Slabcut', 'Slabinfo','Crystal', 'Slab', 'Functional' ]
 
+from functional import Functional
 from extract import Extract
 from geometry import AffineTransform, DisplaceAtoms, Ghosts, InsertAtoms,    \
                      Marker, ModifySymmetry, RemoveAtoms, Slabcut, Slabinfo, \
-                     Crystal, Slab, Crystal
-from hamiltonian import Dft, Exchange, Correlation, NonLocal
+                     Crystal, Slab
 registered = { 'atomrot':    AffineTransform,
                'atomdisp':   DisplaceAtoms,
-               'ghosts':     Ghosts,
                'atominse':   InsertAtoms,
                'marker':     Marker,
                'modisymm':   ModifySymmetry,
@@ -20,8 +18,5 @@ registered = { 'atomrot':    AffineTransform,
                'slabcut':    Slabcut,
                'slab':       Slab,
                'slabinfo':   Slabinfo,
-               'structure':  Crystal,
-               'dft':        Dft,
-               'exchange':   Exchange,
-               'correlat':   Correlation,
-               'nonlocal':   NonLocal }
+               'crystal':    Crystal }
+""" Keywords used in creating the geometry. """
