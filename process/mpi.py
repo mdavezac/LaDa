@@ -180,12 +180,12 @@ def create_global_comm(nprocs, dir=None):
   from shlex import split
   from os.path import exists
   from os import remove, getcwd
-  from .. import placement, mpirun_exe, modify_global_comm,                    \
-                 do_multiple_mpi_program, figure_out_machines
   from ..misc import Changedir
+  from ..error import ConfigError
+  from .. import placement, mpirun_exe, modify_global_comm,                    \
+                 figure_out_machines
   import lada
   
-  if not do_multiple_mpi_programs: 
   if nprocs <= 0: raise MPISizeError(nprocs)
   if dir is None: dir = getcwd()
   
@@ -212,6 +212,6 @@ def create_global_comm(nprocs, dir=None):
   for machine in machines:
     lada.default_comm.machines[machine] = processes.count(machine)
   if lada.default_comm['n'] != sum(lada.default_comm.machines.itervalues()):
-    raise ConfigError( 'Could not determine host machines. '                   \
+    raise ConfigError( 'Could not determine host machines. ')
                         
   modify_global_comm(lada.default_comm)

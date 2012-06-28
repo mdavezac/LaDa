@@ -1,7 +1,7 @@
 from lada.functools import make_cached
 from lada.functools.extract import search_factory, AbstractExtractBase
 from lada.error import GrepError
-OutputSearchMixin = search_factory('OutputSearchMixin', 'stdout', __name__)
+OutputSearchMixin = search_factory('OutputSearchMixin', 'stdout', __name__, 'crystal.out')
 
 class ExtractBase(object):
   """ Implementation class for extracting data from CRYSTAL output """
@@ -93,8 +93,146 @@ class ExtractBase(object):
     from .functional import read_input
     with self.__stdout__() as file: return read_input(file)
 
+  @property
+  @make_cached
+  def title(self):
+    """ Title of the calculations. """
+    search = " EEEEEEEEEE STARTING  DATE"
+    with self.__stdout__() as file: 
+      for line in file: 
+        if len(line) <= len(search): continue
+        if line[:len(search)] == search: break
+      line = file.next().rstrip().lstrip()
+      if line[-1] == '\n': line = line[:-1]
+      return line
       
+  @property
+  @make_cached
+  def date(self):
+    """ Title of the calculations. """
+    from datetime import datetime
+    search = " EEEEEEEEEE STARTING  DATE"
+    with self.__stdout__() as file: 
+      for line in file: 
+        if len(line) <= len(search): continue
+        if line[:len(search)] == search: break
+      line = line.split()[3:]
+      day, month, year = [int(u) for u in line[:3]]
+      time = line[4].split(':')
+      hour, minute, second = int(time[0]), int(time[1]), time[2]
+      second = int(second[:second.find('.')])
+      return datetime( year=year, month=month, day=day,
+                       hour=hour, minute=minute, second=second )
+
+
+  @property
+  @make_cached
+  def input_title(self):
+    """ Title as given on input. """
+    from .parse import parse
+    with self.__stdout__() as file: tree = parse(file)
+    return tree.keys()[0]
+
+  def _parsed_tree(self):
+    """ Returns parsed input tree. """
+    from .parse import parse
+    with self.__stdout__() as file: tree = parse(file)
+    title = tree.keys()[0]
+    return tree[title]
+
+  @property
+  @make_cached
+  def input_crystal(self):
+    """ Input structure, CRYSTAL format. 
+    
+        CRYSTAL_ defines structure in a functional way, starting from an input
+        structure on which are applied a sequence of transformations. This
+        structure format is grepped directly from the output.
+    """
+    from .geometry import Crystal
+    from .. import CRYSTAL_geom_blocks as starters
+    from ..error import IOError, NotImplementedError
+
+    tree = self._parsed_tree()
+    found = False
+    for starter in starters:
+      if starter in tree.keys(): found = True; break
+    if found == False:
+      raise IOError('Could not find start of input in file.')
+    if starter.lower() != 'crystal': 
+      raise NotImplementedError('Can only read 3d structures.')
+
+    result = Crystal()
+    result.read_input(tree[starter])
+    return result
+
+  def _grep_structure(self, file):
+    """ Greps structure from file.
+
+        This method finds the next structure from the file. It can be used in
+        conjunction with some search method and seek to extract either the
+        first or the last structure, or anything in between.
+    """
+    from numpy import array
+    from ..crystal import Structure
+    result = Structure()
+    file.next(); file.next() # move to first line.
+    for line in file:
+      line = line.split()
+      if len(line) != 7: break
+      type = int(line[2])
+      if type < 100: type = line[3]
+      asymmetric = line[1] == 'T' 
+      result.add_atom( pos=array(line[4:7], dtype='float64'),                 \
+                       type=type, label=int(line[0]), asymmetric=asymmetric )
       
+    # then find cell.
+    header = 'DIRECT LATTICE VECTORS CARTESIAN '                             \
+             'COMPONENTS (ANGSTROM)'.split()
+    for line in file: 
+      line = line.split()
+      if len(line) != 6: continue
+      if line == header: break
+    file.next()
+    result.cell = array( [file.next().split() for i in xrange(3)],           \
+                         dtype='float64' )
+
+    # Then re-reads atoms, but in cartesian coordinates.
+    for i in xrange(6): file.next()
+    for atom in result:
+      atom.pos = array(file.next().split()[3:6], dtype='float64')
+
+    # adds more stuff
+    result.name = self.title
+    return result
+
+  @property
+  @make_cached
+  def input_structure(self):
+    """ Input structure, LaDa format. """
+    with self.__stdout__() as file: return self._grep_structure(file)
+
+
+  @property
+  @make_cached
+  def structure(self):
+    """ Input structure, LaDa format. """
+    with self.__stdout__() as file:
+      # first finds atoms -- the one with whether they are in the asymmetric
+      # unit. The file is scanned to the end unit so the last position of the
+      # header can be found. The, we use seek to go back to that position  and
+      # find the result. We cannot do this with file.next() because of
+      # read-ahead buffering issues. Also, we go back one line so things work better.
+      header = 'ATOMS IN THE ASYMMETRIC UNIT'.split()
+      findlast = 0
+      while True:
+        line = file.readline()
+        if not line: break
+        line = line.split()
+        if len(line) < 5: continue
+        if line[:5] == header: findlast = file.tell()
+      file.seek(max(findlast-100, 0))
+      return self._grep_structure(file)
 
 class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
   """ Extracts DFT data from an OUTCAR. """
@@ -114,7 +252,7 @@ class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
     if directory is not None:
       directory = RelativePath(directory).path
       if exists(directory) and not isdir(directory):
-        self.stdout = basename(directory)
+        self.STDOUT = basename(directory)
         directory = dirname(directory)
     AbstractExtractBase.__init__(self, directory)
     ExtractBase.__init__(self)

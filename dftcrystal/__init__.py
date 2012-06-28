@@ -1,9 +1,15 @@
+""" Python wrapper for the CRYSTAL dft code. """
 __docformat__ = "restructuredtext en"
+__all__ = [ 'Extract', 'AffineTransform', 'DisplaceAtoms', 'Ghosts',
+            'InsertAtoms', 'Marker', 'ModifySymmetry', 'RemoveAtoms',
+            'Slabcut', 'Slabinfo','Crystal', 'Slab', 'Dft', 'Hybrid',
+            'Exchange', 'Correlation', 'NonLocal', 'Crystal' ]
 
+from extract import Extract
 from geometry import AffineTransform, DisplaceAtoms, Ghosts, InsertAtoms,    \
                      Marker, ModifySymmetry, RemoveAtoms, Slabcut, Slabinfo, \
-                     Crystal, Slab
-from hamiltonian import Dft, Hybrid, Exchange, Correlation, NonLocal
+                     Crystal, Slab, Crystal
+from hamiltonian import Dft, Exchange, Correlation, NonLocal
 registered = { 'atomrot':    AffineTransform,
                'atomdisp':   DisplaceAtoms,
                'ghosts':     Ghosts,
@@ -18,19 +24,4 @@ registered = { 'atomrot':    AffineTransform,
                'dft':        Dft,
                'exchange':   Exchange,
                'correlat':   Correlation,
-               'nonlocal':   NonLocal,
-               'hybrid':     Hybrid }
-
-# class Structure(object):
-#   """ Functional structure class. 
-#   
-#       Forms of the basis of the functional approach CRYSTAL_ uses to define
-#       structures.
-
-#       .. _CRYSTAL: http://www.crystal.unito.it/
-#   """
-#   def __init__(self, spacegroup='
-
-def call_crystal(input, program=None):
-  """ Performs call to crystal in current directory """
-  pass
+               'nonlocal':   NonLocal }

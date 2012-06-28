@@ -23,54 +23,51 @@ class InputTree(list):
     return [u[0] for u in self]
     
   
-def parse(path):
+def parse(path, needstarters=True):
   """ Reads crystal input. """
   from re import compile
   from .. import CRYSTAL_input_blocks as blocks, CRYSTAL_geom_blocks as starters
   if isinstance(path, str): 
     if path.find('\n') == -1:
-      with open(path) as file: return parse(file)
+      with open(path) as file: return parse(file,needstarters)
     else:
-      return parse(path.split('\n').__iter__())
+      return parse(path.split('\n').__iter__(),needstarters)
 
+  exc = [ 'LYP', 'P86', 'PBE', 'PBESOL', 'PWLSD', 'PZ', 'VBH', 'WL', 'VWN',
+          'BECKE', 'LDA', 'PWGGA', 'SOGGA', 'WCGGA' ]
+  keyword_re = compile('^(?:[A-Z](?!\s))')
 
-  title = ''
-  for i, line in enumerate(path):
-    if line.split()[0] in starters: break
-    title = line
-  keyword_re = compile('^[A-Z](?!\s)')
-
-  
-  # reading linearly, 
-  title = title.rstrip().lstrip()
-  if title[-1] == '\n': title = title[:-1].rstrip()
-  nesting = [title, line.split()[0]]
-  results = InputTree()
-  keyword = line.split()[0]
-  raw = ''
+  if needstarters: 
+    for i, line in enumerate(path):
+      if line.split()[0] in starters: break
+      title = line
+    title = title.rstrip().lstrip()
+    if title[-1] == '\n': title = title[:-1].rstrip()
+    nesting = [title, line.split()[0]]
+    results = InputTree()
+    keyword = line.split()[0]
+    raw = ''
+  else: 
+    nesting = []
+    results = InputTree()
+    keyword = None
+    raw = ''
   # reads crystal input.
   for line in path:
     # special case of INPUT keyword
+    if len(line.split()) == 0: continue
     if line.split()[0] == 'INPUT':
       raw += line.rstrip().lstrip()
       if raw[-1] != '\n': raw += '\n'
     # found keyword
-    elif keyword_re.match(line) is not None:
+    elif keyword_re.match(line) is not None and line.split()[0] not in exc:
       newkeyword = line.split()[0]
       current = results.descend(*nesting)
 
-      # no previous keyword
-      if keyword == None:
-        keyword, raw = newkeyword, ''
-        continue
-
-      # special case for CORRELAT and EXCHANGE
-      if keyword == 'CORRELAT' or keyword == 'EXCHANGE':
-        current.append(keyword, newkeyword)
-
       # first of subblock
-      if keyword == nesting[-1]: current.raw = raw
-      elif keyword[:3] != 'END' and keyword[:6] != 'STOP':
+      if len(nesting) and keyword == nesting[-1]: current.raw = raw
+      elif keyword is not None and keyword[:3] != 'END'                         \
+           and keyword[:6] != 'STOP':
         current.append((keyword, raw)) 
 
       # normal keyword

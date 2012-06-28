@@ -96,10 +96,10 @@ def test_modifysymmetry():
   raw = '5\n1 A 2 A 3 0 4 0 5 0\n'
   a.raw = raw
   assert len(a.groups) == 2
-  assert all(array(a.raw.split(), dtype='int32') == [5, 1, 0, 2, 0, 3, 1, 4, 1, 5, 1])
+  assert all(array(a.raw.split(), dtype='int32') == [5, 1, 1, 2, 1, 3, 2, 4, 2, 5, 2])
   a.raw = a.raw
   assert len(a.groups) == 2
-  assert all(array(a.raw.split(), dtype='int32') == [5, 3, 0, 4, 0, 5, 0, 1, 1, 2, 1])
+  assert all(array(a.raw.split(), dtype='int32') == [5, 1, 1, 2, 1, 3, 2, 4, 2, 5, 2])
   b = eval(repr(a), {'{0.__name__}'.format(ModifySymmetry): ModifySymmetry})
   assert b.raw == a.raw
 

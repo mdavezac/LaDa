@@ -1115,7 +1115,6 @@ def test_functional():
   c = BasisSet()
   c.read_input(b['rutile']['BASISSET'])
   assert repr(a.basis) == repr(c)
-  assert len(a.optgeom._crysinput) == 1
   assert getattr(a.optgeom, 'maxcycle', 0) == 10
   assert a.dft.b3lyp
   assert not a.dft.b3pw

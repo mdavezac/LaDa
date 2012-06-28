@@ -195,6 +195,46 @@ class Crystal(ListBlock):
       raise ValueError('Wrong argument to append.')
     list.append(self, keyword)
     return self
+
+  def eval(self):
+    """ Evaluates current structure. 
+    
+        Runs crystal to evaluate current structure.
+
+        .. note:: Doesn't work yet.
+    """
+    from copy import deepcopy
+    from tempfile import mkdtemp
+    from shutil import rmtree
+    from ..misc import Changedir
+    from ..process import ProgramProcess as Process
+    from .. import crystal_program as program
+    from .extract import Extract
+    this = deepcopy(self)
+    this.append('TESTGEOM')
+    try:
+      tmpdir = '/tmp/test/lada' # mkdtemp()
+
+      with Changedir(tmpdir) as cwd:
+        # writes input file
+        with open('crystal.input', 'w') as file:
+          file.write('\n')
+          file.write(this.print_input())
+        # creates process and run it.
+        if hasattr(program, '__call__'): program = program(self)
+        process = Process( program, stdin='crystal.input',
+                           outdir=tmpdir, stdout='crystal.out',
+                           stderr='crystal.err', dompi=False )
+
+        process.start()
+        process.wait()
+
+        return Extract().input_structure
+    finally:
+      pass
+#     try: rmtree(tmpdir)
+#     except: pass
+    
     
 class RemoveAtoms(GeomKeyword):
   """ Remove atoms from structure. """
@@ -429,7 +469,7 @@ class ModifySymmetry(Keyword):
     """ Raw CRYSTAL input. """
     result = '{0}\n'.format(sum(len(o) for o in self.groups))
     for i, labels in enumerate(self.groups):
-      result += ' '.join('{0} {1} '.format(u, i) for u in labels) + '\n'
+      result += ' '.join('{0} {1} '.format(u, i+1) for u in labels) + '\n'
     return result
   @raw.setter
   def raw(self, value):
