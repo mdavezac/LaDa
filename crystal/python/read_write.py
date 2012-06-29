@@ -369,7 +369,7 @@ def icsd_cif(filename):
       if len(x)>0 and x[0] == '_atom_site_0_iso_or_equiv':
           pos_big = lines.index(l)
 
-      if pos_end == 0 and l == '\n' and lines.index(l) > pos_big:
+      if pos_end == 0 and l in ['\n', '\r\n'] and lines.index(l) > pos_big:
           pos_end = lines.index(l)
 
   symm_ops = [ '(' + x.split()[1][1:] + x.split()[2] + x.split()[3][:-1] + ')'\
