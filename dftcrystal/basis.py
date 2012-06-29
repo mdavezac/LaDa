@@ -1,7 +1,7 @@
 __docformat__ = "restructuredtext en"
 __all__ = ['BasisSet', 'Shell']
-from .input import AttrBlock
 from quantities import UnitQuantity, angstrom
+from .input import AttrBlock
 
 crystal_bhor = UnitQuantity('crystal_bhor', 0.5291772083*angstrom, symbol='bhor')
 """ Bhor radius as defined by CRYSTAL. """
@@ -21,8 +21,11 @@ class Shell(object):
     """
     super(Shell, self).__init__()
     self.type = type
+    """ Orbital type of this shell """
     self.charge = charge
+    """ Nominal charge of the shell """
     self.functions = []
+    """ Radial functions description """
 
   @property
   def type(self):
@@ -133,9 +136,22 @@ class BasisSet(AttrBlock):
   """ Basis set block. """
   def __init__(self):
     """ Creates basis set block. """
+    from .input import BoolKeyword, VariableListKeyword
     super(BasisSet, self).__init__()
     self._functions = {}
-    """ Dictionary holding basis functions. """
+    """ Dictionary holding basis functions """
+    self.atomsymm = BoolKeyword()
+    """ Prints point symmetry for each atomic position """
+    self.symmops  = BoolKeyword()
+    """ Prints point symmetry operators """
+    self.charged  = BoolKeyword()
+    """ Allow charged system """
+    self.noprint  = BoolKeyword()
+    """ Disable basis set printing """
+    self.paramprt = BoolKeyword()
+    """ Print code dimensions parameters """
+    self.ghosts   = VariableListKeyword(type=int)
+    """ Remove atoms while keeping basis functions. """
 
   @property
   def raw(self):
@@ -255,10 +271,10 @@ class BasisSet(AttrBlock):
   def print_input(self, **kwargs):
     """ Dumps CRSTAL input to string. """
     result = super(BasisSet, self).print_input(**kwargs)
-    return result[result.find('\n')+1:]
+    return result[result.find('\n')+1:].rstrip().lstrip() + 'END\n'
 
-  def read_input(self, tree):
+  def read_input(self, tree, owner=None):
     """ Parses an input tree. """
     self._functions = {}
     self._crysinput = self.__class__()._crysinput
-    super(BasisSet, self).read_input(tree)
+    super(BasisSet, self).read_input(tree, owner=owner)

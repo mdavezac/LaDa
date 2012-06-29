@@ -71,6 +71,9 @@ class GlobalExc(Keyword):
   def print_input(self, **kwargs):
     if self.__get__(kwargs['crystal'].dft): 
       return self.keyword.upper() + '\n'
+  def read_input(self, tree, owner=None):
+    """ True if ever read. """
+    self.__set__(owner, True)
 
 class NonLocal(Keyword):
   """ Non-local weight parameters. """

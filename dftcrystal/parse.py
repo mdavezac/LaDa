@@ -34,7 +34,7 @@ def parse(path, needstarters=True):
       return parse(path.split('\n').__iter__(),needstarters)
 
   exc = [ 'LYP', 'P86', 'PBE', 'PBESOL', 'PWLSD', 'PZ', 'VBH', 'WL', 'VWN',
-          'BECKE', 'LDA', 'PWGGA', 'SOGGA', 'WCGGA' ]
+          'BECKE', 'LDA', 'PWGGA', 'SOGGA', 'WCGGA', 'INPUT' ]
   keyword_re = compile('^(?:[A-Z](?!\s))')
 
   if needstarters: 
@@ -56,9 +56,6 @@ def parse(path, needstarters=True):
   for line in path:
     # special case of INPUT keyword
     if len(line.split()) == 0: continue
-    if line.split()[0] == 'INPUT':
-      raw += line.rstrip().lstrip()
-      if raw[-1] != '\n': raw += '\n'
     # found keyword
     elif keyword_re.match(line) is not None and line.split()[0] not in exc:
       newkeyword = line.split()[0]

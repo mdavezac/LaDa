@@ -1083,7 +1083,6 @@ def test_basis():
              """0.26 1.0\n"""
   assert repr(b) == repr(a['Ti'])
 
-  assert a._crysinput.get('charged', False) is True
   assert a.charged is True
   assert a._crysinput.get('printout', None) is not None
   assert isinstance(a.printout, input.AttrBlock) 

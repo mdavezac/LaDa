@@ -1,25 +1,25 @@
 __docformat__ = "restructuredtext en"
-from .input import AttrBlock
 from ..functools import stateless, assign_attributes
 from .extract import Extract
 
-class Functional(AttrBlock):
+class Functional(object):
   """ Wrapper for the CRYSTAL program. """
   Extract = Extract
   """ Extraction class. """
   def __init__(self, copy=None, program=None, **kwargs):
     """ Creates the crystal wrapper. """
-    from .hamiltonian import Dft
     from .basis import BasisSet
     from .optgeom import OptGeom
-    from .input import TypedKeyword
+    from .electronic import Electronic
+
     super(Functional, self).__init__()
+
+    self.scf = Electronic()
+    """ Holds scf/electronic keywords -- block 3. """
     self.basis   = BasisSet()
-    """ Holds definition of basis functions. """
-    self.dft     = Dft()
-    """ Holds definition of functional. """
+    """ Holds definition of basis functions -- block 2. """
     self.optgeom = OptGeom()
-    """ Holds definition of geometry optimization. """
+    """ Holds definition of geometry optimization -- part of block 1. """
     self.title   = None
     """ Title of the calculation. 
     
@@ -31,13 +31,33 @@ class Functional(AttrBlock):
         If this attribute is None, then :py:data:`~lada.crystal_program` is
         used.
     """ 
-    self.add_keyword('maxcycle', TypedKeyword('maxcycle', int))
-    self.add_keyword('tolinteg', TypedKeyword('tolinteg', [int]*6))
-    self.add_keyword('toldep', TypedKeyword('toldep', int))
-    self.add_keyword('tolpseud', TypedKeyword('tolpseud', int))
-    self.add_keyword('toldee', TypedKeyword('toldee', int))
+    self.restart = None
+    """ Place holder. """
 
-  def read_input(self, tree):
+  def __getattr__(self, name):
+    """ Pushes scf stuff into instance namespace. """
+    if name in self.scf._crysinput: return getattr(self.scf, name)
+    return super(Functional, self).__getattr__(name)
+  def __setattr__(self, name, value):
+    """ Pushes scf stuff into instance namespace. """
+    from .input import Keyword
+    if isinstance(value, Keyword): 
+      if name in ['scf', 'basis', 'optgeom']:
+        return super(Functional, self).__setattr__(name, value)
+      setattr(self.scf, name, value)
+    else: super(Functional, self).__setattr__(name, value)
+  def __delattr__(self, name):
+    """ Deletes attributes. """
+  def __dir__(self):
+    """ List of attributes and members """
+    return list( set(self.__dict__.iterkeys()) | set(dir(self.__class__))      \
+                 | set(dir(self.scf._crysinput.iterkeys())) )
+
+  def add_keyword(self, name, value=None):
+    """ Passes on to :py:attr:`~Functional.scf` """
+    return self.scf.add_keyword(name, value)
+
+  def read_input(self, tree, owner=None):
     """ Reads file or string with CRYSTAL input. """
     from ..error import IOError
     from .. import CRYSTAL_geom_blocks as starters
@@ -51,19 +71,15 @@ class Functional(AttrBlock):
     if found == False:
       raise IOError('Could not find start of input in file.')
     if 'OPTGEOM' in tree[starter].keys():
-      self.optgeom.read_input(tree[starter]['OPTGEOM'])
+      self.optgeom.read_input(tree[starter]['OPTGEOM'], owner=self)
 
     # read basis set
     if 'BASISSET' in tree.keys(): 
-      self.basis.read_input(tree['BASISSET'])
+      self.basis.read_input(tree['BASISSET'], owner=self)
 
     # read hamiltonian stuff.
-    if 'HAMSCF' in tree.keys(): 
-      others = AttrBlock()
-      others.read_input(tree['HAMSCF'])
-      dft = others._crysinput.pop('DFT', None)
-      if dft is not None: self.dft.read_input(dft)
-      self._crysinput.update(others._crysinput)
+    if 'HAMSCF' in tree.keys():  
+      self.scf.read_input(tree['HAMSCF'], owner=self)
 
   def print_input(self, **kwargs):
     """ Dumps CRYSTAL input to string. """
@@ -71,9 +87,12 @@ class Functional(AttrBlock):
     # create optgeom part first, since it needs be inserted in the structure
     # bit. Split along lines and remove empty lines at end.
     # if empty, then make it empty.
-    optgeom = self.optgeom.print_input(**kwargs).rstrip().split('\n')
-    while len(optgeom[-1].rstrip().lstrip()) == 0: optgeom.pop(-1)
-    if len(optgeom) == 2: optgeom = []
+    optgeom = self.optgeom.print_input(**kwargs)
+    if optgeom is not None:
+      optgeom = optgeom.rstrip().split('\n')
+      while len(optgeom[-1].rstrip().lstrip()) == 0: optgeom.pop(-1)
+      if len(optgeom) == 2: optgeom = []
+    else: optgeom = []
 
     result = ''
     if 'structure' in kwargs:
@@ -83,9 +102,8 @@ class Functional(AttrBlock):
         result += str(structure.name).rstrip().lstrip() + '\n'
       elif getattr(self, 'title', None) is not None:
         result += str(self.title).rstrip().lstrip()
-      else: result += '\n'
       result = result.rstrip()
-      if result[-1] != '\n': result += '\n'
+      if len(result) == 0 or result[-1] != '\n': result += '\n'
        
       # figure out input of structure. remove empty lines.
       lines = structure.print_input(**kwargs).split('\n')
@@ -102,24 +120,17 @@ class Functional(AttrBlock):
     if result[-1] != '\n': result += '\n'
     result += self.basis.print_input(**kwargs)
 
-    # now add hamiltonian
+    # add scf block
     result = result.rstrip()
     if result[-1] != '\n': result += '\n'
-    result += self.dft.print_input(**kwargs)
-
-    # add keywords contained directly in functional.
-    result = result.rstrip()
-    if result[-1] != '\n': result += '\n'
-    a = AttrBlock()
-    a._crysinput = self._crysinput
-    result += a.print_input(**kwargs)
+    result += self.scf.print_input(**kwargs)
 
     # end input and return
     result = result.rstrip()
     if result[-1] != '\n': result += '\n'
     return result + 'END\n'
 
-  def guess_workdir(outdir):
+  def guess_workdir(self, outdir):
     """ Tries and guess working directory. """
     from os import environ, getpid
     from os.path import join
@@ -131,19 +142,25 @@ class Functional(AttrBlock):
     """ Creates file environment for run. """
     from os.path import join
     from ..misc import copyfile, Changedir
+    from ..error import ValueError
     from .. import CRYSTAL_filenames
 
+    # sanity check
+    if len(self.basis) == 0:
+      raise ValueError('Basis is empty, cannot run CRYSTAL.')
+      
     with Changedir(workdir) as cwd:
-      # first copies file from restart
+      # first copies file from current working directory
       if restart is not None: 
         for key, value in CRYSTAL_filenames.iteritems():
           copyfile( value.format('crystal'), key, nocopyempty=True,
                     symlink=False, nothrow="never" )
-      # then copy files from current directory.
-      for key, value in CRYSTAL_filenames.iteritems():
-        copyfile( join(restart.directory, value.format('crystal')), 
-                  key, nocopyempty=True, symlink=False, 
-                  nothrow="never" )
+      # then copy files from restart.
+      if restart is not None:
+        for key, value in CRYSTAL_filenames.iteritems():
+          copyfile( join(restart.directory, value.format('crystal')), 
+                    key, nocopyempty=True, symlink=False, 
+                    nothrow="never" )
 
       # then creates input file.
       string = self.print_input(crystal=self, structure=structure)
@@ -253,11 +270,11 @@ class Functional(AttrBlock):
       yield ProgramProcess( program, cmdline=['<', 'crystal.input'],
                             outdir=outdir, onfinish=onfinish,
                             stdout='crystal.out', stderr='crystal.err',
-                            dompi=True )
+                            dompi=comm is not None )
     # yields final extraction object.
     yield Extract(outdir)
 
-  def __call__( self, structure, outdir=None, workdir=None, comm=None,
+  def __call__( self, structure, outdir=None, workdir=None, comm=None,         \
                 overwrite=False, **kwargs):
     """ Calls CRYSTAL program. """
     result = None

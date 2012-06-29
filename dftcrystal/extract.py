@@ -90,8 +90,13 @@ class ExtractBase(object):
   @make_cached
   def functional(self):
     """ Reads functional from output file. """
-    from .functional import read_input
-    with self.__stdout__() as file: return read_input(file)
+    from .functional import Functional
+    from .parse import parse
+    with self.__stdout__() as file: b = parse(file)
+    result = Functional()
+    result.read_input(b)
+    return result
+    retirn 
 
   @property
   @make_cached

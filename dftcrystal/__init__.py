@@ -1,14 +1,14 @@
 """ Python wrapper for the CRYSTAL dft code. """
 __docformat__ = "restructuredtext en"
-__all__ = [ 'Extract', 'AffineTransform', 'DisplaceAtoms', 'Ghosts',
-            'InsertAtoms', 'Marker', 'ModifySymmetry', 'RemoveAtoms',
-            'Slabcut', 'Slabinfo','Crystal', 'Slab', 'Functional' ]
+__all__ = [ 'Extract', 'AffineTransform', 'DisplaceAtoms', 'InsertAtoms',
+            'Marker', 'ModifySymmetry', 'RemoveAtoms', 'Slabcut',
+            'Slabinfo','Crystal', 'Slab', 'Functional' ]
 
 from functional import Functional
 from extract import Extract
-from geometry import AffineTransform, DisplaceAtoms, Ghosts, InsertAtoms,    \
-                     Marker, ModifySymmetry, RemoveAtoms, Slabcut, Slabinfo, \
-                     Crystal, Slab
+from geometry import AffineTransform, DisplaceAtoms, InsertAtoms, Marker,      \
+                     ModifySymmetry, RemoveAtoms, Slabcut, Slabinfo, Crystal,  \
+                     Slab
 registered = { 'atomrot':    AffineTransform,
                'atomdisp':   DisplaceAtoms,
                'atominse':   InsertAtoms,

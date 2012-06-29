@@ -5,13 +5,19 @@ def test_boolkeyword():
     keyword = 'whatever'
     pass
 
-  a = Dummy('whatever')
+  a = Dummy()
   a.value = None
   assert a.value is False
   assert a.print_input() is None
+  b = eval(repr(a), {'Dummy': Dummy})
+  assert type(b) is type(a)
+  assert b.value == a.value
   a.value = 1
   assert a.value is True
   assert a.print_input() == 'WHATEVER\n'
+  b = eval(repr(a), {'Dummy': Dummy})
+  assert type(b) is type(a)
+  assert b.value == a.value
 
 def test_valuekeyword():
   from lada.dftcrystal.input import ValueKeyword
@@ -70,7 +76,7 @@ def test_typedkeyword():
   assert a.print_input().split('\n')[1] == '5'
   assert a.print_input().split('\n')[2] == ''
   try: a.value = 'five'
-  except: pass
+  except ValueError: pass
   else: raise Exception()
   
   a = TypedKeyword('whatever', float)
@@ -90,7 +96,7 @@ def test_typedkeyword():
   assert a.print_input().split('\n')[0] == 'WHATEVER' 
   assert a.print_input().split('\n')[1] == str(5.1)
   try: a.value = 'five'
-  except: pass
+  except ValueError: pass
   else: raise Exception()
   
   a = TypedKeyword('whatever', str)
@@ -133,7 +139,7 @@ def test_typedkeyword():
   a.value = []
   assert a.value is None
   try: a.raw = '0 FIVE'
-  except: pass
+  except ValueError: pass
   else: raise Exception()
   
   a = TypedKeyword('whatever', [str, int])
@@ -148,13 +154,39 @@ def test_typedkeyword():
   assert a.print_input().split('\n')[1].split()[1] == '5' 
   assert a.print_input().split('\n')[2] == '' 
   try: a.value = 'five', 6, 7
-  except: pass
+  except ValueError: pass
   else: raise Exception()
   try: a.value = 'five 5'
-  except: pass
+  except ValueError: pass
   else: raise Exception()
   try: a.raw = '0 five'
-  except: pass
+  except ValueError: pass
+  else: raise Exception()
+
+def test_variablelistkeyword():
+  from numpy import all, array, arange
+  from lada.dftcrystal.input import VariableListKeyword
+
+  a = VariableListKeyword(keyword='whatever', type=int)
+  assert a.keyword == 'whatever'
+  assert a.value is None
+  assert a.print_input() is None
+  a.raw = '5 0 1 2 3 4'
+  assert type(a.value) is list and len(a.value) == 5
+  assert all(type(v) is int for v in a.value)
+  assert all(array(a.value) - arange(5) == 0)
+  assert len(a.raw.split('\n')) == 2
+  assert a.raw.split('\n')[0] == '5'
+  a.value = 5.1, 4, 3, 2, 1, 0
+  assert type(a.value) is list and len(a.value) == 6
+  assert all(type(v) is int for v in a.value)
+  assert all(array(a.value) - arange(6)[::-1] == 0)
+  assert all(array(a.raw.split(), dtype='int32') - ([6]+range(6)[::-1]) == 0)
+  assert len(a.raw.split('\n')) == 2
+  assert a.raw.split('\n')[0] == '6'
+
+  try: a.value = 5, 'a'
+  except ValueError: pass
   else: raise Exception()
 
 def test_choicekeyword():
@@ -190,10 +222,12 @@ def test_choicekeyword():
   try: a.value = 'six'
   except: pass
   else: raise Exception()
+
  
 if __name__ == "__main__":
+  test_boolkeyword()
   test_choicekeyword()
   test_valuekeyword()
   test_typedkeyword()
-  test_boolkeyword()
+  test_variablelistkeyword()
 

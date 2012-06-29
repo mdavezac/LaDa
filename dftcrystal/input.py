@@ -1,5 +1,5 @@
 __docformat__ = "restructuredtext en"
-__all__ = ['Keyword', 'GeomKeyword', 'ListBlock', 'ValueKeyword']
+__all__ = ['Keyword', 'GeomKeyword', 'ListBlock', 'ValueKeyword', 'TypedKeyword', 'VariableListKeyword']
 class Keyword(object):
   """ Defines keyword input to CRYSTAL. """
   def __init__(self, keyword=None, raw=None):
@@ -40,11 +40,37 @@ class Keyword(object):
 class ValueKeyword(Keyword):
   """ Keywords which expect a value of some kind. 
   
-  
-      LaDa will attempt to guess that value when set using
-      :py:attr:`~ValueKeyword.raw`. It will use it as is when set through
-      :py:meth:`~ValueKeyword.__set__`. Finally, it will not print if the value
-      is None.
+      Instances of this class make it easy to declare and use CRYSTAL keywords
+      which define a single value::
+
+        functional.keyword = ValueKeyword(value=5)
+
+      The above will print to the Crystal input as follows:
+
+        | KEYWORD
+        | 5
+
+      The keyword can be then be given any value::
+
+        functional.keyword = abc
+      
+      would result in:
+
+        | KEYWORD
+        | ABC
+
+      In practice, the value is printed by first transforming it to a string
+      via str_ and putting it in upper case.
+
+      If given a string, LaDa will attempt to guess the type of the value,
+      depending on whether it is an ``int``, ``float``, ``str``, or a list of
+      the same, in that order. A list is created if and only if the string is
+      does not contian multiple lines. If the string contains more than one
+      line, it will always be kept as a string, so that complex pre-formatted
+      input is not messed with. :py:meth:`~ValueKeyword.__set__`. Finally, the
+      keyword will not appear in the input if its value is None. 
+
+      .. _str: http://docs.python.org/library/functions.html#str
   """
   def __init__(self, keyword, value=None):
     """ Initializes a keyword with a value. """
@@ -61,6 +87,7 @@ class ValueKeyword(Keyword):
   @property
   def raw(self):
     """ Returns raw value for CRYSTAL input. """
+    if self.value == None: return '' # otherwise, fails to find attribute.
     return str(self.value).upper() if not hasattr(self.value, '__iter__')      \
            else ' '.join(str(u).upper() for u in self.value)
   @raw.setter
@@ -68,14 +95,16 @@ class ValueKeyword(Keyword):
     """ Guesses value from raw input. """
     from ..error import ValueError
     if not isinstance(value, str):
-      raise ValueError('Expected a string as input to raw.')
+      raise ValueError( 'Expected a string as input to {0}.raw.'               \
+                        .format(self.keyword) )
     # split along line and remove empty lines
     lines = value.split('\n')
     while len(lines[-1].rstrip().lstrip()) == 0: lines.pop(-1)
     # if only one line left, than split into a list and guess type of each
     # element.
     if len(lines) == 0:
-      raise ValueError('Expected *non-empty* string as input.\n')
+      raise ValueError( 'Expected *non-empty* string as '                      \
+                        'input to {0.keyword}.\n'.format(self) )
     elif len(lines) == 1:
       lines = lines[0]
       n = []
@@ -117,15 +146,16 @@ class ValueKeyword(Keyword):
     return '{0.__class__.__name__}({1})'.format(self, ', '.join(args))
   
 
-class TypedKeyword(Keyword):
+class TypedKeyword(ValueKeyword):
   """ Keywords which expect a value of a given type.
   
+      This specializes :py:class:`ValueKeyword` to accept only input of a given
+      type.
   
       Two types are allowed: 
       
-        - None, in which case the keyword won't appear in the input
-        - The explicitely given type, eg int.
-        - A list of classes. Yes, a list, not a tuple or any other sequence.
+        - A simple type, eg int.
+        - A list of types. Yes, a list, not a tuple or any other sequence.
 
             - only one item: the value can have any length, but the
               type of each element must conform. For example ``[int]`` will map
@@ -143,6 +173,50 @@ class TypedKeyword(Keyword):
      
       The value given will be cast to the given type, unless None, in which
       case the keyword will not be printed to the CRYSTAL input file.
+
+      In practice, we can create the following mapping from python to the
+      CRYSTAL input::
+
+         functional.keyword = TypedValue([int, float, int])
+         functional.keyword = [5, 6, 3]
+
+      will yield:
+
+         | KEYWORD
+         | 5 6.0 3
+
+      The following would throw an exception:
+
+        >>> functional.keyword = ['a', 5.3, 5]
+        ValueError: ...
+        >>> functional.keyword = [0, 2.0]
+        lada.error.ValueError: Expected a sequence of the following type: [int, float, int]
+
+      The last case failed because only two values are given. For a list of
+      variable length (but only one type of lement), use::
+
+        functional.keyword = TypedKeyword(type=[int])
+        functional.keyword = [0, 1, 2]
+        functional.keyword = [0, 1, 2, 3]
+
+      The last two lines will not raise an exception. The CRYSTAL input would
+      look like this:
+
+        | KEYWORD
+        | 0 1 2 3 
+
+      Note that the first value is *not* the length of the list! If you need
+      that behavior, see :py:class:`VariableListKeyword`. 
+
+      .. note::
+
+        Formally, the type need not be set in
+        :py:method:`~TypedKeyword.__init__`. If it is left out (in which case
+        it defaults to None), it is expected that it will be set later by the
+        user, prior to use. 
+        This is mainly to allow derived classes to define
+        :py:attr:`~TypedKeyword.type` as a class attribute, rather than an
+        instance attribute.
   """
   def __init__(self, keyword=None, type=None, value=None):
     """ Initializes a keyword with a value. """
@@ -154,11 +228,6 @@ class TypedKeyword(Keyword):
     if type is not None:
       self.type = type
       """ Type to which the value should be cast if the value is not None. """
-    self.value = value
-    """ The value to print to input. 
-  
-        If None, then this keyword will not appear.
-    """
   @property
   def value(self): 
     """ The value to print to input. 
@@ -170,30 +239,25 @@ class TypedKeyword(Keyword):
     return self._value
   @value.setter
   def value(self, value):
-    from ..error import internal
-    if self.type is None: 
-      raise internal('TypedKeyword was not given a type.')
     if value is None: self._value = None; return
     if type(self.type) is list:
       if not hasattr(value, '__iter__'): 
-        raise ValueError('Expected a sequence on input.')
+        raise ValueError( '{0} expected a sequence on input, got {1!r}.'       \
+                          .format(self.keyword, value) ) 
       if len(self.type) == 1: 
         _type = self.type[0]
         self._value = [_type(u) for u in value]
         if len(self._value) == 0: self._value = None
       else: 
         if len(value) != len(self.type):
-          raise ValueError( 'Expected a sequence of the following type: {0}'   \
-                            .format(self.type) )
+          raise ValueError( '{0.keyword} expected a sequence of the '          \
+                            'following type: {0.type}'.format(self) )
         self._value = [t(v) for t, v in zip(self.type, value)]
     else: self._value = self.type(value)
-  def print_input(self, **kwargs):
-    """ Prints keyword to string. """
-    if self._value == None: return None
-    return '{0}\n{1}\n'.format(self.keyword.upper(), self.raw)
   @property
   def raw(self):
     """ Returns raw value for CRYSTAL input. """
+    if self._value == None: return '' # otherwise, fails to find attribute.
     if type(self.type) is list:
       return ' '.join(str(v).upper() for v in self.value)
     return str(self._value).upper()
@@ -201,12 +265,6 @@ class TypedKeyword(Keyword):
   def raw(self, value):
     """ Guesses value from raw input. """
     if type(self.type) is list: value = value.split()
-    self.value = value
-  def __get__(self, instance, owner=None):
-    """ Returns value as is. """
-    return self.value
-  def __set__(self, instance, value):
-    """ Assigns value as is. """
     self.value = value
   def __repr__(self):
     """ Dumps a representation of self. """
@@ -232,6 +290,52 @@ class TypedKeyword(Keyword):
     if dovalue: args.append('value={0.value!r}'.format(self))
     return '{0.__class__.__name__}({1})'.format(self, ', '.join(args))
 
+class VariableListKeyword(TypedKeyword):
+  """ Keywords which expect a variable-length list value of a given type.
+  
+      Expects a  list of values of a given type.
+      The length can be anything. However, unlike its base class
+      :py:class:`TypedKeyword`, the fortran input
+      :py:attr:`~VariableListKeyword.raw` should consist first of an integer
+      giving the size of the list of values.
+
+      Furthermore, the type of the element of the list should be given on
+      initialization. Eg, ``type=int``, rather than, say, ``type=[int]``
+  """
+  def __init__(self, keyword=None, type=None, value=None):
+    """ Initializes a keyword with a value. """
+    super(VariableListKeyword, self).__init__( keyword=keyword, type=type,     \
+                                               value=value )
+
+  @property
+  def value(self): 
+    """ The value to print to input. 
+
+        If None, then this keyword will not appear.
+        Otherwise, it is cast to the type given when initializing this instance
+        of :py:class:`~lada.dftcrystal.input.TypedKeyword`
+    """
+    return self._value
+  @value.setter
+  def value(self, value):
+    if value is None: self._value = None; return
+    if not hasattr(value, '__iter__'): 
+      raise ValueError( '{0.keyword} expected a sequence on input.'            \
+                        .format(self) )
+    self._value = [self.type(u) for u in value]
+    if len(self._value) == 0: self._value = None
+  @property
+  def raw(self):
+    """ Returns raw value for CRYSTAL input. """
+    if self._value == None: return '' # otherwise, fails to find attribute.
+    lstr = ' '.join(str(v).upper() for v in self.value) 
+    return '{0}\n{1}'.format(len(self.value), lstr).upper()
+  @raw.setter
+  def raw(self, value):
+    """ Guesses value from raw input. """
+    value = value.split()
+    self.value = value[1:int(value[0])+1]
+
 
 class BoolKeyword(ValueKeyword):
   """ Boolean keyword.
@@ -242,21 +346,19 @@ class BoolKeyword(ValueKeyword):
       appear or not. It is meant to be used in conjunction with other linked keywords.
       Otherwise, it is simpler to use :py:meth:`self.add_keyword('something')
       <lada.dftcrystal.input.AttrBlock.add_keyword>` directly.
-
-      .. note:: 
-
-        This class should be derived from. It is not complete since it lacks a
-        keyword attribute.
   """
-  def __init__(self, value=False, keyword=False):
+  def __init__(self, keyword=None, value=False):
     """ Initializes FullOptG keyword. """
-    super(BoolKeyword, self).__init__(keyword=keyword)
+    super(BoolKeyword, self).__init__(keyword=keyword, value=value)
   @property
   def value(self): return self._value
   @value.setter
   def value(self, value): self._value = (value == True)
   def print_input(self, **kwargs):
     return self.keyword.upper() + '\n' if self.value else None
+  def read_input(self, tree, owner=None):
+    """ Is True if ever read. """
+    self.value = True
 
 class GeomKeyword(Keyword):
   """ Adds breaksymm to :py:class:`~lada.dftcrystal.input.Keyword`. """
@@ -342,7 +444,7 @@ class ListBlock(Keyword, list):
     if isinstance(keyword, str):
       keyword = Keyword(keyword=keyword, raw=raw)
     elif not isinstance(keyword, Keyword):
-      raise ValueError('Wrong argument to append.')
+      raise ValueError('Wrong argument to {0.keyword}.append().'.format(self))
     list.append(self, keyword)
     return self
 
@@ -363,7 +465,7 @@ class ListBlock(Keyword, list):
   def print_input(self, **kwargs):
     """ Print input to crystal. """
     # starts block
-    result = Keyword.print_input(self, **kwargs)
+    result = super(ListBlock, self).print_input(**kwargs)
 
     # adds subtitems if present.
     for op in self: 
@@ -381,43 +483,51 @@ class ListBlock(Keyword, list):
     """ Finds last of kind. """
     from ..error import KeyError
     items = [u.keyword for u in self] 
-    if key not in items: raise KeyError('Could not find {0}.'.format(key))
+    if key not in items:
+      raise KeyError('Could not find {0} in {1.keyword}.'.format(key, self))
     return self[items.rfind(key)]
   def find_first(self, key):
     """ Finds first of kind. """
     from ..error import KeyError
     items = [u.keyword for u in self] 
-    if key not in items: raise KeyError('Could not find {0}.'.format(key))
+    if key not in items:
+      raise KeyError('Could not find {0} in {1.keyword}.'.format(key, self))
     return self[items.find(key)]
 
   def pop_last(self, key):
     """ Pops last of kind. """
     from ..error import KeyError
     items = [u.keyword for u in self] 
-    if key not in items: raise KeyError('Could not find {0}.'.format(key))
+    if key not in items:
+      raise KeyError('Could not find {0} in {1.keyword}.'.format(key, self))
     return self.pop(items.rfind(key))
   def pop_first(self, key):
     """ Pops first of kind. """
     from ..error import KeyError
     items = [u.keyword for u in self] 
-    if key not in items: raise KeyError('Could not find {0}.'.format(key))
+    if key not in items:
+      raise KeyError('Could not find {0} in {1.keyword}.'.format(key, self))
     return self.pop(items.rfind(key))
 
   def replace_last(self, key, value):
     """ Replaces last of kind. """
     from ..error import KeyError
     if not isinstance(value, Keyword):
-      raise ValueError('Input is not a crystal Keyword or Block')
+      raise ValueError( 'Expected crystal Keyword as input to '                \
+                        '{0.keyword}.replace_last()'.format(self) )
     items = [u.keyword for u in self] 
-    if key not in items: raise KeyError('Could not find {0}.'.format(key))
+    if key not in items:
+      raise KeyError('Could not find {0} in {1.keyword}.'.format(key, self))
     self[items.rfind(key)] = value
   def replace_first(self, key, value):
     """ Replaces first of kind. """
     from ..error import KeyError
     if not isinstance(value, Keyword):
-      raise ValueError('Input is not a crystal Keyword or Block')
+      raise ValueError( 'Expected crystal Keyword as input to '                \
+                        '{0.keyword}.replace_last()'.format(self) )
     items = [u.keyword for u in self] 
-    if key not in items: raise KeyError('Could not find {0}.'.format(key))
+    if key not in items:
+      raise KeyError('Could not find {0} in {1.keyword}.'.format(key, self))
     self[items.find(key)] = value
 
 class AttrBlock(Keyword):
@@ -451,7 +561,7 @@ class AttrBlock(Keyword):
     """ passes through the input keywords in :py:attr:`_crysinput`. """
     from ..error import AttributeError
     if name not in self._crysinput: 
-      raise AttributeError('Unknwon attribute {0}.'.format(name))
+      raise AttributeError('Unknown attribute {0} in {1.keyword}.'.format(name, self))
     result = self._crysinput[name]
     return result.__get__(self) if hasattr(result, '__get__') else result
   def __setattr__(self, name, value):
@@ -463,6 +573,7 @@ class AttrBlock(Keyword):
     """
     if isinstance(value, Keyword): 
       self._crysinput[name] = value
+      if not hasattr(value, 'keyword'): self._crysinput[name].keyword = name
     elif name in self._crysinput:
       result = self._crysinput[name]
       if hasattr(result, '__set__'): result.__set__(self, value)
@@ -474,8 +585,8 @@ class AttrBlock(Keyword):
     else: super(AttrBlock, self).__delattr__(name)
   def __dir__(self):
     """ List of attributes and members. """
-    return list( set(self._crysinput.keys())                                   \
-                 | set(self.__dict__.keys())                                   \
+    return list( set(self._crysinput.iterkeys())                               \
+                 | set(self.__dict__.iterkeys())                               \
                  | set(dir(self.__class__)) )
 
   def add_keyword(self, name, value=None):
@@ -570,7 +681,7 @@ class AttrBlock(Keyword):
                   .format(indent, key, value) 
     return result
 
-  def read_input(self, tree):
+  def read_input(self, tree, owner=None):
     """ Parses an input tree. """
     from parse import InputTree
     from . import registered
@@ -582,16 +693,18 @@ class AttrBlock(Keyword):
       if key.lower() in self._crysinput: 
         newobject = self._crysinput[key.lower()] 
         if hasattr(newobject, 'read_input'):
-          newobject.read_input(value)
+          newobject.read_input(value, owner=self)
           continue
-        elif hasattr(newobject, '__set__'):
-          newobject.__set__(self, value)
         elif hasattr(newobject, 'raw'):
           newobject.raw = value
           continue
+        elif hasattr(newobject, '__set__'):
+          print hasattr(newobject, 'raw'), key, newobject
+          newobject.__set__(self, value)
+          continue
       if isinstance(value, InputTree):
         newobject = registered.get(key.lower(), AttrBlock)()
-        newobject.read_input(value)
+        newobject.read_input(value, owner=self)
       # creates new object.
       elif key.lower() in registered:
         newobject = registered[key.lower()]()
@@ -629,8 +742,8 @@ class Choice(Keyword):
       if (hasattr(o, 'lower') and o.lower() == v.lower()) or o == v: 
         self._value = o
         return
-    raise ValueError( 'Input({0!r}) should be one of the following: {1}.'      \
-                      .format(value, self.values) )
+    raise ValueError( '{0.keyword} accepts only one of the following: {1}'     \
+                      .format(self, self.values) )
   def __get__(self, instance, owner=None):
     """ Function called by :py:class:`AttrBlock`. """
     return self._value
@@ -639,7 +752,9 @@ class Choice(Keyword):
     self.value = value
 
   @property
-  def raw(self): return str(self.value)
+  def raw(self):
+    if self._value == None: return '' # otherwise, fails to find attribute.
+    return str(self.value)
   @raw.setter
   def raw(self, value): self.value = value
     

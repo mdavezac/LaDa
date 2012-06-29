@@ -1,5 +1,5 @@
 __docformat__ = "restructuredtext en"
-__all__ = [ 'Crystal', 'RemoveAtoms', 'Ghosts', 'Slabinfo', 'Slabcut', 'Slab',
+__all__ = [ 'Crystal', 'RemoveAtoms', 'Slabinfo', 'Slabcut', 'Slab',
             'DisplaceAtoms', 'InsertAtoms', 'ModifySymmetry',
             'AffineTransform', 'Marker' ]
 from input import ListBlock, Keyword, GeomKeyword
@@ -147,7 +147,7 @@ class Crystal(ListBlock):
       if type < 100: type = find_specie(atomic_number=type).symbol
       self.add_atom(pos=[float(u) for u in line[1:4]], type=type)
 
-  def read_input(self, tree):
+  def read_input(self, tree, owner=None):
     """ Parses an input tree. """
     from parse import InputTree
     from . import registered
@@ -213,7 +213,7 @@ class Crystal(ListBlock):
     this = deepcopy(self)
     this.append('TESTGEOM')
     try:
-      tmpdir = '/tmp/test/lada' # mkdtemp()
+      tmpdir = mkdtemp()
 
       with Changedir(tmpdir) as cwd:
         # writes input file
@@ -231,11 +231,9 @@ class Crystal(ListBlock):
 
         return Extract().input_structure
     finally:
-      pass
-#     try: rmtree(tmpdir)
-#     except: pass
-    
-    
+      try: rmtree(tmpdir)
+      except: pass
+
 class RemoveAtoms(GeomKeyword):
   """ Remove atoms from structure. """
   keyword = 'atomremo'
@@ -282,14 +280,6 @@ class RemoveAtoms(GeomKeyword):
     if self.breaksym == True: result += 'keepsym=False, '
     return result[:-2] + ')'
     
-class Ghosts(RemoveAtoms): 
-  """ Sets ghosts atom in structure. """
-  keyword = 'ghosts'
-  """ CRYSTAL keyword. """
-  def __init__(self, *args, **kwargs):
-    """ See :py:class:`RemoveAtoms` """
-    super(Ghosts, self).__init__(*args, **kwargs)
-   
 class Slabinfo(Keyword):
   """ Creates a slab from a 3d periodic system. """
   keyword = 'slabcut'
