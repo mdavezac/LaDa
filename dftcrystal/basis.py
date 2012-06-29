@@ -10,7 +10,7 @@ crystal_invbhor2 = UnitQuantity( 'crystal_invbhor2',
 
 class Shell(object):
   """ Defines a gaussian basis set for a specific orbital shell. """
-  def __init__(self, type='s', charge=None):
+  def __init__(self, type='s', charge=None, **kwargs):
     """ Creates a gaussian basis set. 
     
         :params str type:
@@ -19,6 +19,7 @@ class Shell(object):
           Denotes the formal electronic charge on this shell. 
           Defaults(None) to a full shell.
     """
+    from operator import itemgetter
     super(Shell, self).__init__()
     self.type = type
     """ Orbital type of this shell """
@@ -26,7 +27,26 @@ class Shell(object):
     """ Nominal charge of the shell """
     self.functions = []
     """ Radial functions description """
-
+    # collect basis function keywords.
+    keys = []
+    for key, value in kwargs.iteritems():
+      if key[0] != 'a':
+        raise ValueError( 'Unexpected keyword {0!r} in Shell.__init__(...)'    \
+                          .format(key) )
+      try: int(key[1:])
+      except:  
+        raise ValueError( 'Unexpected keyword {0!r} in Shell.__init__(...)'    \
+                          .format(key) )
+      try: value = list(value)
+      except: 
+        raise ValueError( 'Unexpected keyword value for {0!r} '                \
+                          'in Shell.__init__(...): {1!r}'.format(key, value) )
+      if len(value) != (3 if self.type == 'sp' else 2):
+        raise ValueError( 'Unexpected sequence length for {0!r} '              \
+                          'in Shell.__init__(...): {1!r}'.format(key, value) )
+      keys.append((key, int(key[1:]), value))
+    for key, i, value in sorted(keys, key=itemgetter(1)):
+      self.append(*value)
   @property
   def type(self):
     """ Orbital shell of this function. """
@@ -100,8 +120,10 @@ class Shell(object):
       if hasattr(alpha, 'rescale'):
         alpha = float(alpha.rescale(crystal_invbhor2).magnitude)
       if len(function) == 2:
-        result += '{0} {1}\n'.format(alpha, coef1)
-      else: result += '{0} {1} {2[2]}\n'.format(alpha, coef1, function)
+        result += '{0:<20.12f}    {1: 20.12f}\n'.format(alpha, coef1)
+      else:
+        result += '{0:<20.12f}    {1:> 20.12f}  {2[2]:> 20.12f}\n'               \
+                  .format(alpha, coef1, function)
     return result
 
   @raw.setter
@@ -116,19 +138,17 @@ class Shell(object):
 
   def __repr__(self, indent=''):
     """ Represention of this instance. """
-    result = indent + '{0.__class__.__name__}({0.type!r}, {0.charge!r})'       \
-                      .format(self)
-    indent += '    '
-    i = ' '.join(['']*result.find('('))
-    for function in self.functions: 
+    args = ['{0.type!r}'.format(self)]
+    if self.charge != {'s': 2, 'p': 6, 'sp': 8, 'd': 10, 'f': 18}[self.type]:
+      args.append('{0.charge!r}'.format(self))
+    for i, function in enumerate(self.functions): 
       alpha, coef1 = function[0], function[1]
       if hasattr(alpha, 'rescale'):
         alpha = float(alpha.rescale(crystal_invbhor2).magnitude)
-      if len(function) == 2:
-        args = '{0}, {1}'.format(alpha, coef1)
-      else: args = '{0}, {1}, {2[2]}'.format(alpha, coef1, function)
-      result += '\\\n{0}.append({1})'.format(i, args)
-    return result
+      vals = [alpha, coef1]
+      if len(function) == 3: vals.append(function[2])
+      args.append('a{0}={1!r}'.format(i, vals))
+    return '{0.__class__.__name__}({1})'.format(self, ', '.join(args))
 
   def __len__(self): return len(self.functions)
 
@@ -153,31 +173,47 @@ class BasisSet(AttrBlock):
     self.ghosts   = VariableListKeyword(type=int)
     """ Remove atoms while keeping basis functions. """
 
+  def _print_basis(self, structure=None):
+    """ Prints only atoms in structure. """
+    from ..error import KeyError
+    from .. import periodic_table as pt
+    # figure out set of species
+    atoms = getattr(structure, 'atoms', structure)
+    species = set([a.type for a in atoms]) if atoms is not None                \
+              else self.iterkeys()
+    # Now print them
+    result = ''
+    for key in species:
+      if key not in self:
+        raise KeyError('Could not find specie {0} in basis set.'.format(key))
+      value = self[key]
+      if len(value) == 0: continue
+      if isinstance(key, str): key = getattr(pt, key).atomic_number
+      result += '{0} {1}\n'.format(key, len(value))
+      for function in value:
+        result += function.raw.rstrip()
+        if result[-1] != '\n': result += '\n'
+      result = result.rstrip()
+      if result[-1] != '\n': result += '\n'
+    result += '99 0 end of basis functions per se\n'
+    return result
+
+
   @property
   def raw(self):
     """ Raw basis set input. """
-    from .. import periodic_table as pt
-    result = ''
-    for key, value in self:
-      if isinstance(key, str):
-        type = getattr(pt, key, None)
-        key = int(type) if type is None else type.atomic_number
-      result += '{0} {1}\n{2}'.format(key, len(value), value.function.raw)
-      result = result.rstrip()
-      if result[-1] != '\n': result += '\n'
-    result += '99 99\n'
-    return result
+    return self._print_basis()
   @raw.setter
   def raw(self, value):
     """ Sets basis data from raw CRYSTAL input. """
     from ..error import NotImplementedError as NA, IOError
     # clean up all basis functions. 
-    for key in self.keys(): del self[key]
+    for key in self.iterkeys(): del self[key]
     lines = value.split('\n')
     while len(lines):
       line = lines.pop(0).split()
       type, nshells = int(line[0]), int(line[1])
-      if type == 99 or nshells == 99: break
+      if type == 99: break
       type = self._specie(type)
       self._functions[type] = []
       for i in xrange(nshells):
@@ -270,8 +306,12 @@ class BasisSet(AttrBlock):
 
   def print_input(self, **kwargs):
     """ Dumps CRSTAL input to string. """
-    result = super(BasisSet, self).print_input(**kwargs)
-    return result[result.find('\n')+1:].rstrip().lstrip() + 'END\n'
+    post = super(BasisSet, self).print_input(**kwargs).rstrip()
+    post = post[post.find('end of basis functions per se')+1:]
+    post = post[post.find('\n')+1:] if post.find('\n') != -1 else ''
+    result = self._print_basis(kwargs.get('structure', None)) + post
+    if result[-1] != '\n': result += '\n'
+    return result + 'END\n'
 
   def read_input(self, tree, owner=None):
     """ Parses an input tree. """

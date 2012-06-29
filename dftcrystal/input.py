@@ -561,7 +561,7 @@ class AttrBlock(Keyword):
     """ passes through the input keywords in :py:attr:`_crysinput`. """
     from ..error import AttributeError
     if name not in self._crysinput: 
-      raise AttributeError('Unknown attribute {0} in {1.keyword}.'.format(name, self))
+      raise AttributeError('Unknown attribute {0}.'.format(name))
     result = self._crysinput[name]
     return result.__get__(self) if hasattr(result, '__get__') else result
   def __setattr__(self, name, value):
@@ -765,3 +765,40 @@ class Choice(Keyword):
     if len(result) > 0 and result[-1] != '\n': result += '\n'
     result += str(self.value).upper()
     return result + '\n'
+
+class Quantity(ValueKeyword):
+  """ Keyword with a value which is signed by a unit. """
+  def __init__(self, quantity=None, keyword=None):
+    """ Creates the quantity itself. """
+    super(Quantity, self).__init__(keyword=keyword)
+
+    if value is not None:
+      self.quantity = quantity
+      """ Quantity against to check/set. """
+
+  @property
+  def value(self): 
+    """ Value to which this keyword is set. """
+    return self._value
+  @value.setter
+  def value(self, value):
+    from numpy import multiply
+    if hasattr(value, 'rescale'): 
+      self._value = multiply( value.rescale(self.quantity.units), 
+                              self.quantity.magnitude )
+    else:
+      self._value = self._value * self.quantity
+  @property
+  def quantity(self):
+    """  The type of quantity used in this keyword """
+    from numpy import ones
+    import quantities
+    # Deepcopy fails on quantities. This is an ugly hack to fix it. 
+    # We use a representation, rather than the actual units.
+    units = eval(self.units, quantities.__dict__) * self.magnitude
+    return units if len(self.shape) == 0                                       \
+           else ones(self.shape, dtype='float64') * units
+  @quantity.setter(self):
+    from 
+
+

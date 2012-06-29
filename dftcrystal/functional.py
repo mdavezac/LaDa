@@ -267,10 +267,9 @@ class Functional(object):
 
       # now creates the process, with a callback when finished.
       def onfinish(process, error): self.bringdown(structure, workdir, outdir)
-      yield ProgramProcess( program, cmdline=['<', 'crystal.input'],
-                            outdir=outdir, onfinish=onfinish,
+      yield ProgramProcess( program, outdir=outdir, onfinish=onfinish,
                             stdout='crystal.out', stderr='crystal.err',
-                            dompi=comm is not None )
+                            stdin='crystal.d12', dompi=comm is not None )
     # yields final extraction object.
     yield Extract(outdir)
 

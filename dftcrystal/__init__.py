@@ -2,8 +2,9 @@
 __docformat__ = "restructuredtext en"
 __all__ = [ 'Extract', 'AffineTransform', 'DisplaceAtoms', 'InsertAtoms',
             'Marker', 'ModifySymmetry', 'RemoveAtoms', 'Slabcut',
-            'Slabinfo','Crystal', 'Slab', 'Functional' ]
+            'Slabinfo','Crystal', 'Slab', 'Functional', 'Shell'  ]
 
+from basis import Shell
 from functional import Functional
 from extract import Extract
 from geometry import AffineTransform, DisplaceAtoms, InsertAtoms, Marker,      \

@@ -1127,10 +1127,11 @@ def test_functional():
   assert a.toldee == 7
   assert a.ppan
   assert a.fmixing == 60
+  assert a.scf.fmixing == 60
   assert all(isinstance(u, int) for u in a.levshift)
   assert all(a.levshift == array([5, 1]))
-  assert all(isinstance(u, int) for u in a.shrink)
-  assert all(a.shrink == array([8, 8]))
+  assert a.shrink.mp == 8
+  assert a.shrink.gallat is None
   assert all(isinstance(u, int) for u in a.tolinteg)
   assert all(a.tolinteg == array([7, 7, 7, 7, 14]))
 
