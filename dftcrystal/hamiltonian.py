@@ -103,6 +103,19 @@ class NonLocal(Keyword):
     c = 0 if self.correlation is None else self.correlation
     if abs(x) < 1e-8 and abs(c) < 1e-8: return None
     return super(NonLocal, self).print_input(**kwargs)
+  def __getitem__(self, index):
+    """ list [self.shift, self.lock] """
+    from ..error import IndexError
+    if index == 0: return self.exchange
+    elif index == 1 or index == -1: return self.correlation
+    raise IndexError('nonlocal can be indexed with 0, 1, or -1 only.')
+  def __setitem__(self, index, value):
+    """ sets as list [self.shift, self.lock] """
+    from ..error import IndexError
+    if index == 0: self.exchange = value
+    elif index == 1 or index == -1: self.correlation = value
+    else: raise IndexError('nonlocal can be indexed with 0, 1, or -1 only.')
+  def __len__(self): return 2
 
 class Hybrid(TypedKeyword):
   keyword = 'hybrid'

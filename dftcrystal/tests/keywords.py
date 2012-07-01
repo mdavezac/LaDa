@@ -223,6 +223,89 @@ def test_choicekeyword():
   except: pass
   else: raise Exception()
 
+def test_quantitykeyword():
+  from itertools import chain
+  from numpy import all, abs, array
+  from quantities import hartree, eV, kbar
+  from lada.dftcrystal.input import QuantityKeyword
+  import quantities
+  import numpy
+  d = locals().copy()
+  d.update(quantities.__dict__)
+  d.update(numpy.__dict__)
+
+  a = QuantityKeyword(units=eV, keyword='whatever')
+  assert a.print_input() is None
+  assert a.units is eV
+  a.value = 5*hartree
+  assert a.value.units == eV
+  try: assert a.value.units == hartree
+  except: pass
+  else: raise Exception()
+  assert abs(a.value - 5*hartree) < 1e-8
+  assert abs(a.value.magnitude - (5*hartree.rescale(eV).magnitude)) < 2e-8
+  try: a.value = 5*kbar
+  except: pass
+  else: raise Exception()
+  a.value = 5
+  assert a.value.units == eV
+  assert abs(a.value.magnitude - 5) < 2e-8
+  a.raw = '5.3\n'
+  assert a.value.units == eV
+  assert abs(a.value.magnitude - 5.3) < 2e-8
+  a.raw = '5.3'
+  assert a.value.units == eV
+  assert abs(a.value.magnitude - 5.3) < 2e-8
+  assert abs(eval(repr(a), d).value - a.value) < 1e-8
+  assert eval(repr(a), d).units == a.units
+  assert not hasattr(eval(repr(a), d), 'shape')
+
+  assert len(a.print_input().split('\n')) == 3
+  assert a.print_input().split('\n')[0] == 'WHATEVER'
+  assert a.print_input().split('\n')[1] == str(float(a.value))
+  assert a.print_input().split('\n')[2] == ''
+
+
+  a = QuantityKeyword(units=eV, keyword='whatever', shape=(3,3))
+  assert a.print_input() is None
+  assert a.units is eV
+  value = [[1.0, 1.2, 5], [5.6, 0, 0], [0.1, 0.2, 5]]
+  a.value = value * hartree
+  assert all(abs(a.value - value*hartree)) < 1e-8
+  assert all(abs(a.value.magnitude - value*hartree.rescale(eV).magnitude)) < 1e-8
+  a.raw = ' '.join(str(u) for u in chain(*value))
+  assert all(abs(a.value - value*eV)) < 1e-8
+  assert all(abs(a.value.magnitude - value)) < 1e-8
+  assert all(array(a.raw.split(), dtype='float64') == [u for u in chain(*value)])
+  assert len(a.raw.split('\n')) == 3
+  assert all(abs(eval(repr(a), d).value - a.value) < 1e-8)
+  assert eval(repr(a), d).units == a.units
+  assert eval(repr(a), d).shape == a.shape
+  a.raw = a.raw
+  assert all(abs(a.value - value*eV)) < 1e-8
+  assert len(a.print_input().split('\n')) == 5 
+  assert a.print_input().split('\n')[0] == 'WHATEVER'
+  assert len(a.print_input().split('\n')[1].split()) == 3
+  assert len(a.print_input().split('\n')[2].split()) == 3
+  assert len(a.print_input().split('\n')[3].split()) == 3
+  assert all(abs(array(a.print_input().split('\n')[1].split(), dtype='float64') - value[0]) < 1e-8)
+  assert all(abs(array(a.print_input().split('\n')[2].split(), dtype='float64') - value[1]) < 1e-8)
+  assert all(abs(array(a.print_input().split('\n')[3].split(), dtype='float64') - value[2]) < 1e-8)
+  assert a.print_input().split('\n')[-1] == ''
+
+  try: a.raw = '0 1 2\n2 3 4\n\n'
+  except: pass
+  else: raise Exception()
+  try: a.raw = '0 a 2\n2 3 4\n56 6 7\n'
+  except: pass
+  else: raise Exception()
+  try: a.raw = '0 1 2 4\n2 3 4 4\n56 6 7 4\n'
+  except: pass
+  else: raise Exception()
+  try: a.value = value * kbar
+  except: pass
+  else: raise Exception()
+  
  
 if __name__ == "__main__":
   test_boolkeyword()
@@ -230,4 +313,5 @@ if __name__ == "__main__":
   test_valuekeyword()
   test_typedkeyword()
   test_variablelistkeyword()
+  test_quantitykeyword()
 

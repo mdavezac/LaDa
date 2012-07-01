@@ -70,6 +70,8 @@ class OptGeom(AttrBlock):
   keyword = 'optgeom'
   def __init__(self): 
     """ Creates an optimization block. """
+    from .input import QuantityKeyword
+    from quantities import UnitQuantity, hartree, angstrom
     super(OptGeom, self).__init__()
  
     self.maxcycle   = MaxCycle()
@@ -81,18 +83,24 @@ class OptGeom(AttrBlock):
         to fulloptg.
     """
     self.fulloptg   = GeometryOpt('fulloptg')
-    """ Full optimization. """
+    """ Full optimization """
     self.cellonly   = GeometryOpt('cellonly')
-    """ Cell-shape optimization only. """
+    """ Cell-shape optimization only """
     self.itatocell  = GeometryOpt('itatocell')
-    """ Iterative cell-shape/atom optimization. """
+    """ Iterative cell-shape/atom optimization """
     self.interdun   = GeometryOpt('interdun')
-    """ Constrained optimization. """
+    """ Constrained optimization """
     self.cvolopt    = CVolOpt()
-    """ Constant volume optimization. """
+    """ Constant volume optimization """
     self.toldee     = TypedKeyword('toldee', int)
     self.toldeg     = TypedKeyword('toldeg', float)
     self.toldex     = TypedKeyword('toldex', float)
+    bohr = UnitQuantity('crystal_bhor', 0.5291772083*angstrom, symbol='bhor')
+    """ Bhor radius as defined by CRYSTAL """
+    self.extpress   = QuantityKeyword(units=hartree/bohr**3)
+    """ Hydrostatic pressure in hartree*bohr^-3 """
+    self.extstress  = QuantityKeyword(units=hartree/bohr**3, shape=(3,3))
+    """ External stress in hartree*bhor^-3 """
 
   @property
   def static(self): 

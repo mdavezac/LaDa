@@ -1,6 +1,7 @@
 __docformat__ = "restructuredtext en"
 __all__ = ['Electronic']
 from input import AttrBlock, TypedKeyword, BoolKeyword, Keyword
+from quantities import UnitQuantity, hartree
 
 class Shrink(Keyword):
   """ k-point description -- SHRINK
@@ -116,6 +117,81 @@ class Shrink(Keyword):
       if self.gallat is not None: args.append('{0.gallat!r}'.format(self))
     return '{0.__class__.__name__}({1})'.format(self, ', '.join(args))
 
+class LevShift(Keyword):
+  """ Implements LevShift keyword. """
+  keyword = 'levshift'
+  """ CRYSTAL input keyword. """
+  lock = BoolKeyword(value=True)
+  """ If True, maintains shift after diagonalization.
+  
+      Defaults to True.
+  """
+  units = UnitQuantity('decihartree', 0.1*hartree)
+  """ LEVSHIFT takes 0.1 * hartrees. """
+  def __init__(self, shift=None, lock=None):
+    """ Creates the LEVSHIFT keyword. """
+    super(LevShift, self).__init__()
+    self.shift = shift
+    self.lock = lock
+  @property
+  def shift(self): 
+    """ Value to which this keyword is set. """
+    return self._shift
+  @shift.setter
+  def shift(self, shift):
+    """ Artificial shift between conduction and valence bands. 
+  
+        Can be a regular floating point, in which case the units are 0.1 *
+        hartree, or a scalar signed by an unit with dimensionality of an energy.
+        In the latter case, the value is rescaled to 0.1 H.
+    """
+    from ..error import ValueError
+    if shift is None: self._shift = None; return
+    if hasattr(shift, 'rescale'): shift = shift.rescale(self.units)
+    else: shift = shift * self.units
+    if len(shift.shape) != 0:
+      raise ValueError('shift should be a scalar.')
+    self._shift = shift
+  @property
+  def lock(self): 
+    """ Whether shift is kept after diagaonalization. """
+    return self._lock
+  @lock.setter
+  def lock(self, lock):
+    self._lock = None if lock is None else (lock == True)
+  def __set__(self, instance, value):
+    """ Sets the value of this instance. """
+    from ..error import ValueError
+    if not hasattr(value, '__getitem__'): 
+      raise ValueError('Incorrect input to levshift: {0}.'.format(value))
+    self.shift = value[0]
+    self.lock = value[1]
+  def __getitem__(self, index):
+    """ list [self.shift, self.lock] """
+    from ..error import IndexError
+    if index == 0: return self.shift
+    elif index == 1 or index == -1: return self.lock
+    raise IndexError('Levshift can be indexed with 0, 1, or -1 only.')
+  def __setitem__(self, index, value):
+    """ sets as list [self.shift, self.lock] """
+    from ..error import IndexError
+    if index == 0: self.shift = value
+    elif index == 1 or index == -1: self.lock = value
+    else: raise IndexError('Levshift can be indexed with 0, 1, or -1 only.')
+  def __len__(self): return 2
+  @property
+  def raw(self):
+    """ CRYSTAL input as a string """
+    if self.shift is None or self.lock is None: return ''
+    return '{0} {1}'.format(float(self.shift), 1 if self.lock else 0)
+  @raw.setter
+  def raw(self, value):
+    """ Sets instance from raw data """
+    self.shift = float(value.split()[0])
+    self.lock = int(value.split()[1]) != 0
+  def print_input(self, **kwargs):
+    if self.shift is None or self.lock is None: return None
+    return super(LevShift, self).print_input(**kwargs)
 
 class Electronic(AttrBlock):
   """ DFT attribute block. """ 
@@ -144,6 +220,8 @@ class Electronic(AttrBlock):
     self.shrink   = Shrink()
     """ k-point definition """
     self.fmixing  = TypedKeyword(type=int)
+    """ Fock mixing during electronic minimiztion """
+    self.levshift = LevShift()
     """ Fock mixing during electronic minimiztion """
     self.dft      = Dft()
     """ Holds definition of the DFT functional itself """

@@ -1,5 +1,6 @@
 __docformat__ = "restructuredtext en"
-__all__ = ['Keyword', 'GeomKeyword', 'ListBlock', 'ValueKeyword', 'TypedKeyword', 'VariableListKeyword']
+__all__ = [ 'Keyword', 'GeomKeyword', 'ListBlock', 'ValueKeyword',
+            'TypedKeyword', 'VariableListKeyword', 'QuantityKeyword' ]
 class Keyword(object):
   """ Defines keyword input to CRYSTAL. """
   def __init__(self, keyword=None, raw=None):
@@ -83,7 +84,7 @@ class ValueKeyword(Keyword):
   def print_input(self, **kwargs):
     """ Prints keyword to string. """
     if self.value == None: return None
-    return '{0}\n{1}\n'.format(self.keyword.upper(), self.raw)
+    return '{0}\n{1}\n'.format(self.keyword.upper(), self.raw.rstrip())
   @property
   def raw(self):
     """ Returns raw value for CRYSTAL input. """
@@ -766,15 +767,19 @@ class Choice(Keyword):
     result += str(self.value).upper()
     return result + '\n'
 
-class Quantity(ValueKeyword):
+class QuantityKeyword(ValueKeyword):
   """ Keyword with a value which is signed by a unit. """
-  def __init__(self, quantity=None, keyword=None):
+  def __init__(self, units=None, shape=None, keyword=None, value=None):
     """ Creates the quantity itself. """
-    super(Quantity, self).__init__(keyword=keyword)
 
-    if value is not None:
-      self.quantity = quantity
-      """ Quantity against to check/set. """
+    super(QuantityKeyword, self).__init__(keyword=keyword)
+    if units is not None:
+      self.units = units
+      """ UnitQuantity to which values should be scaled. """
+    if shape is not None:
+      self.shape = shape
+      """ Shape of input/output arrays. """
+    self.value = value
 
   @property
   def value(self): 
@@ -782,23 +787,42 @@ class Quantity(ValueKeyword):
     return self._value
   @value.setter
   def value(self, value):
-    from numpy import multiply
-    if hasattr(value, 'rescale'): 
-      self._value = multiply( value.rescale(self.quantity.units), 
-                              self.quantity.magnitude )
-    else:
-      self._value = self._value * self.quantity
+    if value is None: self._value = None; return
+    if hasattr(value, 'rescale'): value = value.rescale(self.units)
+    else: value = value * self.units
+    shape = getattr(self, 'shape', ())
+    if value.shape != shape: value = value.reshape(shape)
+    self._value = value
   @property
-  def quantity(self):
-    """  The type of quantity used in this keyword """
-    from numpy import ones
-    import quantities
-    # Deepcopy fails on quantities. This is an ugly hack to fix it. 
-    # We use a representation, rather than the actual units.
-    units = eval(self.units, quantities.__dict__) * self.magnitude
-    return units if len(self.shape) == 0                                       \
-           else ones(self.shape, dtype='float64') * units
-  @quantity.setter(self):
-    from 
+  def raw(self):
+    """ Returns string for CRYSTAL input. """
+    if self._value is None: return ''
+    shape = getattr(self, 'shape', ())
+    if len(shape) > 2: 
+      from ..error import NotImplementedError
+      raise NotImplementedError( 'LaDa does not know how to print n-d arrays ' \
+                                 '(n>2) to CRYSTAL input.')
+    if len(shape) == 0: return str(float(self.value))
+    else:
+      result = str(self.value.magnitude).replace('[', ' ').replace(']', ' ')
+      result = result.split('\n')
+      return '\n'.join(u.rstrip().lstrip() for u in result)
+  @raw.setter
+  def raw(self, value):
+    """ Creates value from CRYSTAL input. """
+    self.value = [float(u) for u in value.rstrip().split()]
 
+  def __repr__(self):
+    """ Dumps a representation of self. """
+    args = []
+    if 'keyword' not in self.__class__.__dict__ and 'keyword' in self.__dict__:
+      args.append('keyword={0.keyword!r}'.format(self))
+    if 'shape' not in self.__class__.__dict__ and 'shape' in self.__dict__: 
+      args.append('shape={0.shape!r}'.format(self))
+    if 'units' not in self.__class__.__dict__ and 'units' in self.__dict__: 
+      args.append('units={0.units!r}'.format(self))
+    if len(getattr(self, 'shape', ())) > 0: 
+      args.append('value={0!r}'.format(self.value.magnitude))
+    else: args.append('value={0}'.format(float(self.value)))
+    return '{0.__class__.__name__}({1})'.format(self, ', '.join(args))
 
