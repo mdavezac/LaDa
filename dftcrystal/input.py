@@ -716,6 +716,53 @@ class AttrBlock(Keyword):
       else: newobject = value
       self.add_keyword(key.lower(), newobject)
 
+  def _ui_repr(self, name=None, imports=None):
+    """ Creates user friendly representation. """
+    if imports is None: imports = {}
+    if name is not None: results = {}
+    else:
+      results = {None: 'functional = {0.__class__.__name__}'.format(self)}
+      name = 'functional'
+
+    results = {}
+    def add_to_imports(object):
+      from inspect import ismethod, isfunction
+      if object is None: return
+      module = getattr(object, '__module__', None)
+      if module is None:
+        module = object.__class__.__module__
+        obname = object.__class__.__name__
+      else: obname = object.__name__
+      if module == '__builtin__': return
+      if module in imports: imports[module].add(obname)
+      else: imports[module] = set([obname])
+    
+    results = {}
+    add_to_imports(self)
+    for key, value in self.__dict__.iteritems():
+      if key[-1] == '_': continue
+      if hasattr(value, '_ui_repr'): 
+        results.update(value._ui_repr(name, imports))
+      else: results['{0}.{1}'.format(name, key)] = repr(value)
+    for key, value in self._crysinput.iteritems():
+      if hasattr(value, '_ui_repr'): 
+        results.update(value._ui_repr(name, imports))
+      elif isinstance(value, Keyword):
+        results['{0}.{1}'.format(name, key)] = repr(getattr(self, key))
+      elif value is None:
+        results['{0}.add_keyword({1!r})'.format(name, key)] = None
+      else:
+        results['{0}.add_keyword({1!r}, {2!r})'.format(name, key, value)] = None
+    
+    defaults = None
+    try: defaults = self.__class__()._ui_repr(name)
+    except: pass
+    if defaults is not None:
+      for key, value in defaults.iteritems():
+        if key not in results: continue
+        if value != results[key]: continue
+        del results[key]
+    return results
 
 class Choice(Keyword):
   """ Keyword value must be chosen from a given set. """

@@ -129,5 +129,20 @@ class SuperCall(object):
   def __dir__(self): return dir(super(self._class, self._object))
   def __repr__(self): return repr(super(self._class, self._object))
   
-    
+def uirepr(object, name=None, imports=None):
+  """ Returns string of representation. """
+  if not hasattr(object, '_ui_repr'): return repr(object)
+  collected = object._ui_repr(name, imports)
+
+  result = ''
+  for key in sorted(imports.iterkeys()):
+    values = list(imports[key])
+    results += 'from {0} import {1}\n'.format(key, ', '.join(values))
+
+  result += '\n{0}'.format(collected[None])
+  del collected[None]
+  length = max(len(u) for u in collected.iterkeys())
+  for key in sorted(collected.iterkeys()):
+    result += '\n'
+
 
