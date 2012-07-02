@@ -36,8 +36,9 @@ class Functional(object):
 
   def __getattr__(self, name):
     """ Pushes scf stuff into instance namespace. """
+    from ..error import ValueError
     if name in self.scf._crysinput: return getattr(self.scf, name)
-    return super(Functional, self).__getattr__(name)
+    raise ValueError('Unknown attribute {0}.'.format(name))
   def __setattr__(self, name, value):
     """ Pushes scf stuff into instance namespace. """
     from .input import Keyword
@@ -290,3 +291,8 @@ class Functional(object):
     if not result.success:
       raise RuntimeError("CRYSTAL failed to execute correctly.")
     return result
+ 
+  def __repr__(self):
+    """ Returns representation of this instance """
+    from ..functools import uirepr
+    return uirepr(self.electronics)

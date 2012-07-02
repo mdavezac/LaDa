@@ -1135,7 +1135,19 @@ def test_functional():
   assert all(isinstance(u, int) for u in a.tolinteg)
   assert all(a.tolinteg == array([7, 7, 7, 7, 14]))
 
+def test_uirepr():
+  from lada.dftcrystal.parse import parse
+  from lada.dftcrystal.functional import Functional
+  from lada.functools import uirepr
+  a = Functional()
+  global string 
+  b = parse(string)
+  a.read_input(b)
+  print uirepr(a, rmdefaults=True), '\n\n'
+  print uirepr(a, rmdefaults=False)
+  
 if __name__ == "__main__":
-  test_geom()
-  test_basis()
-  test_functional()
+ #test_geom()
+ #test_basis()
+ #test_functional()
+  test_uirepr()

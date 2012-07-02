@@ -3,10 +3,10 @@ __all__ = ['BasisSet', 'Shell']
 from quantities import UnitQuantity, angstrom
 from .input import AttrBlock
 
-crystal_bhor = UnitQuantity('crystal_bhor', 0.5291772083*angstrom, symbol='bhor')
+crystal_bohr = UnitQuantity('crystal_bohr', 0.5291772083*angstrom, symbol='bohr')
 """ Bhor radius as defined by CRYSTAL. """
-crystal_invbhor2 = UnitQuantity( 'crystal_invbhor2',
-                                 1e0/crystal_bhor/crystal_bhor, symbol='bhor^-2' )
+crystal_invbohr2 = UnitQuantity( 'crystal_invbohr2',
+                                 1e0/crystal_bohr/crystal_bohr, symbol='bohr^-2' )
 
 class Shell(object):
   """ Defines a gaussian basis set for a specific orbital shell. """
@@ -98,8 +98,8 @@ class Shell(object):
       raise input('Cannot input further coefficients.') 
     if self._type == 'd' and len(self.functions) >= 6:
       raise input('Cannot input further coefficients.') 
-    if hasattr(alpha, 'rescale'): alpha = alpha.rescale(crystal_invbhor2)
-    else: alpha = float(alpha) * crystal_invbhor2
+    if hasattr(alpha, 'rescale'): alpha = alpha.rescale(crystal_invbohr2)
+    else: alpha = float(alpha) * crystal_invbohr2
     if self._type == 'sp': 
       if coef2 is None:
         raise TypeError('Expected second coeff for sp contraction.')
@@ -118,7 +118,7 @@ class Shell(object):
     for function in self.functions:
       alpha, coef1 = function[0], function[1]
       if hasattr(alpha, 'rescale'):
-        alpha = float(alpha.rescale(crystal_invbhor2).magnitude)
+        alpha = float(alpha.rescale(crystal_invbohr2).magnitude)
       if len(function) == 2:
         result += '{0:<20.12f}    {1: 20.12f}\n'.format(alpha, coef1)
       else:
@@ -144,7 +144,7 @@ class Shell(object):
     for i, function in enumerate(self.functions): 
       alpha, coef1 = function[0], function[1]
       if hasattr(alpha, 'rescale'):
-        alpha = float(alpha.rescale(crystal_invbhor2).magnitude)
+        alpha = float(alpha.rescale(crystal_invbohr2).magnitude)
       vals = [alpha, coef1]
       if len(function) == 3: vals.append(function[2])
       args.append('a{0}={1!r}'.format(i, vals))

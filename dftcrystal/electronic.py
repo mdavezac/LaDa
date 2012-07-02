@@ -195,6 +195,8 @@ class LevShift(Keyword):
 
 class Electronic(AttrBlock):
   """ DFT attribute block. """ 
+  __ui_name__ = 'electronics'
+  """ Name used when printing this instance with ui_repr """
   def __init__(self):
     """ Creates the scf attribute block. """
     from .hamiltonian import Dft
@@ -223,5 +225,13 @@ class Electronic(AttrBlock):
     """ Fock mixing during electronic minimiztion """
     self.levshift = LevShift()
     """ Fock mixing during electronic minimiztion """
+    self.ppan     = BoolKeyword()
+    """ Mulliken population analysis """
+    self.biposize = TypedKeyword(type=int)
+    """ Size of buffer for Coulomb integrals bipolar expansions """
+    self.exchsize = TypedKeyword(type=int)
+    """ Size of buffer for exchange integrals bipolar expansions """
+    self.scfdir   = BoolKeyword()
+    """ Whether to reevaluate integrals at each electronic step """
     self.dft      = Dft()
     """ Holds definition of the DFT functional itself """

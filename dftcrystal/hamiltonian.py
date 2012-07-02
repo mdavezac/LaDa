@@ -155,3 +155,16 @@ class Dft(AttrBlock):
     """ B3PW global keyword. """
     self.soggaxc  = GlobalExc('soggaxc', ['sogga', 'pbe', None, None, None])
     """ B3PW global keyword. """
+
+  def __ui_repr__( self, imports, name=None,
+                   rmdefaults=False, defaults=None, exclude=None):
+    """ Creates user friendly representation. """
+    exclude = [] if exclude is None else list(exclude)
+    if not self.b3lyp: exclude.append('b3lyp')
+    if not self.b3pw: exclude.append('b3pw')
+    if not self.pbe0: exclude.append('pbe0')
+    if not self.soggaxc: exclude.append('soggaxc')
+    if self.b3lyp or self.b3pw or self.pbe0 or self.soggaxc: 
+      exclude.extend(['exchange', 'correlat', 'hybrid', 'nonlocal'])
+    return super(Dft, self).__ui_repr__(imports, name, rmdefaults, defaults, exclude)
+

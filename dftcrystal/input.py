@@ -716,52 +716,68 @@ class AttrBlock(Keyword):
       else: newobject = value
       self.add_keyword(key.lower(), newobject)
 
-  def _ui_repr(self, name=None, imports=None):
+  def __ui_repr__( self, imports, name=None,
+                   rmdefaults=False, defaults=None, exclude=None):
     """ Creates user friendly representation. """
-    if imports is None: imports = {}
-    if name is not None: results = {}
-    else:
-      results = {None: 'functional = {0.__class__.__name__}'.format(self)}
-      name = 'functional'
-
-    results = {}
     def add_to_imports(object):
-      from inspect import ismethod, isfunction
+      from inspect import isclass, isfunction
       if object is None: return
-      module = getattr(object, '__module__', None)
-      if module is None:
-        module = object.__class__.__module__
-        obname = object.__class__.__name__
-      else: obname = object.__name__
-      if module == '__builtin__': return
-      if module in imports: imports[module].add(obname)
-      else: imports[module] = set([obname])
+      if isclass(object) or isfunction(object): 
+        key   = object.__module__
+        value = object.__name__
+      else:
+        key   = object.__class__.__module__
+        value = object.__class__.__name__
+      if key == '__builtin__': return
+      if key in imports: imports[key].add(value)
+      else: imports[key] = set([value])
+
+    # evaluates defaults, if necessary
+    if rmdefaults: 
+      try: defaults2 = self.__class__().__ui_repr__({}, name)
+      except: pass
+      if defaults is None: defaults = defaults2
+      else: # don't squash defaults from prior calls.
+        for key, value in defaults2.iteritems():
+          if key not in defaults: defaults[key] = value
     
-    results = {}
-    add_to_imports(self)
+    if name is None:
+      name = getattr(self, '__ui_name__', self.__class__.__name__.lower())
+      results = {None: '{1} = {0.__class__.__name__}()'.format(self, name)}
+      add_to_imports(self)
+    else:
+      name = name + '.' + getattr( self, '__ui_name__', 
+                                      self.__class__.__name__.lower() )
+      results = {}
+
     for key, value in self.__dict__.iteritems():
-      if key[-1] == '_': continue
-      if hasattr(value, '_ui_repr'): 
-        results.update(value._ui_repr(name, imports))
-      else: results['{0}.{1}'.format(name, key)] = repr(value)
+      if key[0] == '_': continue
+      if exclude is not None and key in exclude: continue
+      if hasattr(value, '__ui_repr__'): 
+        results.update(value.__ui_repr__(imports, name, rmdefaults, defaults))
+      else: 
+        string = repr(value)
+        key = '{0}.{1}'.format(name, key)
+        if defaults is None or key not in defaults or defaults[key] != string: 
+          results[key] = string
+          add_to_imports(string)
     for key, value in self._crysinput.iteritems():
-      if hasattr(value, '_ui_repr'): 
-        results.update(value._ui_repr(name, imports))
+      if exclude is not None and key in exclude: continue
+      if hasattr(value, '__ui_repr__'): 
+        results.update(value.__ui_repr__(imports, name, rmdefaults, defaults))
       elif isinstance(value, Keyword):
-        results['{0}.{1}'.format(name, key)] = repr(getattr(self, key))
+        value = getattr(self, key)
+        string = repr(value)
+        key = '{0}.{1}'.format(name, key) 
+        if defaults is None or key not in defaults or defaults[key] != string: 
+          results[key] = string
+          add_to_imports(value)
       elif value is None:
         results['{0}.add_keyword({1!r})'.format(name, key)] = None
       else:
         results['{0}.add_keyword({1!r}, {2!r})'.format(name, key, value)] = None
+        add_to_imports(value)
     
-    defaults = None
-    try: defaults = self.__class__()._ui_repr(name)
-    except: pass
-    if defaults is not None:
-      for key, value in defaults.iteritems():
-        if key not in results: continue
-        if value != results[key]: continue
-        del results[key]
     return results
 
 class Choice(Keyword):
