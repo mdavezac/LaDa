@@ -193,6 +193,7 @@ class LevShift(Keyword):
     if self.shift is None or self.lock is None: return None
     return super(LevShift, self).print_input(**kwargs)
 
+
 class Electronic(AttrBlock):
   """ DFT attribute block. """ 
   __ui_name__ = 'electronics'

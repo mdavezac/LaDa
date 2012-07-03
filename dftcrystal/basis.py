@@ -318,3 +318,15 @@ class BasisSet(AttrBlock):
     self._functions = {}
     self._crysinput = self.__class__()._crysinput
     super(BasisSet, self).read_input(tree, owner=owner)
+
+  def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
+    """ Prettier representation """
+    from ..functools.uirepr import add_to_imports
+    if name is None:
+      name = getattr(self, '__ui_name__', self.__class__.__name__.lower())
+    results = super(BasisSet, self).__ui_repr__(imports, name, defaults, ['raw'])
+    for key, value in self._functions.iteritems():
+      newname = '{0}[{1!r}]'.format(name, key)
+      results[newname] = '[{0}]'.format(', '.join(repr(u) for u in value))
+      for u in value: add_to_imports(u, imports)
+    return results

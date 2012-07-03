@@ -154,5 +154,29 @@ def test():
   assert 'WORLD' in string 
   assert string[string.index('WORLD')+1] == '2'
 
+def test_grids():
+  from numpy import array, all, abs
+  from collections import namedtuple
+  from lada.dftcrystal.hamiltonian import Dft
+  Crystal = namedtuple('Crystal', ['dft'])
+  a = Dft()
+  assert a.radial.intervals is None
+  assert a.radial.nbpoints is None
+  assert a.angular.intervals is None
+  assert a.angular.levels is None
+  assert a.print_input(crystal=Crystal(a)) is None
+  assert not a.lgrid
+  assert not a.xlgrid
+  assert not a.xxlgrid
 
-if __name__ == '__main__': test()
+  a.lgrid = True
+  assert all(abs(array(a.angular.intervals) - [0.1667, 0.5, 0.9, 3.05, 9999.0]) < 1e-8)
+  assert all(abs(array(a.angular.levels) - [2, 6, 8, 13, 8]) < 1e-8)
+  assert all(abs(array(a.radial.intervals) - [4]) < 1e-8)
+  assert all(abs(array(a.radial.nbpoints) - [75]) < 1e-8)
+  assert a.print_input(crystal=Crystal(a)) == 'DFT\nLGRID\nEND DFT\n'
+
+
+if __name__ == '__main__':
+  test()
+  test_grids()

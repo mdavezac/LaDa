@@ -716,67 +716,47 @@ class AttrBlock(Keyword):
       else: newobject = value
       self.add_keyword(key.lower(), newobject)
 
-  def __ui_repr__( self, imports, name=None,
-                   rmdefaults=False, defaults=None, exclude=None):
+  def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
     """ Creates user friendly representation. """
-    def add_to_imports(object):
-      from inspect import isclass, isfunction
-      if object is None: return
-      if isclass(object) or isfunction(object): 
-        key   = object.__module__
-        value = object.__name__
-      else:
-        key   = object.__class__.__module__
-        value = object.__class__.__name__
-      if key == '__builtin__': return
-      if key in imports: imports[key].add(value)
-      else: imports[key] = set([value])
+    from ..functools.uirepr import template_ui_repr, add_to_imports
 
-    # evaluates defaults, if necessary
-    if rmdefaults: 
-      try: defaults2 = self.__class__().__ui_repr__({}, name)
-      except: pass
-      if defaults is None: defaults = defaults2
-      else: # don't squash defaults from prior calls.
-        for key, value in defaults2.iteritems():
-          if key not in defaults: defaults[key] = value
-    
+    results = template_ui_repr(self, imports, name, defaults, exclude)
     if name is None:
       name = getattr(self, '__ui_name__', self.__class__.__name__.lower())
-      results = {None: '{1} = {0.__class__.__name__}()'.format(self, name)}
-      add_to_imports(self)
-    else:
-      name = name + '.' + getattr( self, '__ui_name__', 
-                                      self.__class__.__name__.lower() )
-      results = {}
 
-    for key, value in self.__dict__.iteritems():
-      if key[0] == '_': continue
-      if exclude is not None and key in exclude: continue
-      if hasattr(value, '__ui_repr__'): 
-        results.update(value.__ui_repr__(imports, name, rmdefaults, defaults))
-      else: 
-        string = repr(value)
-        key = '{0}.{1}'.format(name, key)
-        if defaults is None or key not in defaults or defaults[key] != string: 
-          results[key] = string
-          add_to_imports(string)
     for key, value in self._crysinput.iteritems():
       if exclude is not None and key in exclude: continue
       if hasattr(value, '__ui_repr__'): 
-        results.update(value.__ui_repr__(imports, name, rmdefaults, defaults))
+        default = None if defaults is None                                     \
+                  else defaults._crysinput.get(key, None)
+        newname = name + '.' + key
+        partial = value.__ui_repr__(imports, newname, default)
+        results.update(partial)
+        donoinit = defaults is not None and key in defaults._crysinput         \
+                   and type(value) is type(defaults._crysinput[key])
+        if not donoinit:
+          results[newname] = '{0.__class__.__name__}()'.format(value)
+          add_to_imports(value, imports)
       elif isinstance(value, Keyword):
         value = getattr(self, key)
         string = repr(value)
+        if defaults is not None and key in defaults._crysinput                 \
+           and type(value) is type(getattr(defaults, key))                     \
+           and string == repr(getattr(defaults, key)): continue
         key = '{0}.{1}'.format(name, key) 
-        if defaults is None or key not in defaults or defaults[key] != string: 
-          results[key] = string
-          add_to_imports(value)
+        results[key] = string
+        add_to_imports(value, imports)
       elif value is None:
+        if defaults is not None and key in defaults._crysinput                 \
+           and defaults._crysinput[key] is None: continue
         results['{0}.add_keyword({1!r})'.format(name, key)] = None
       else:
-        results['{0}.add_keyword({1!r}, {2!r})'.format(name, key, value)] = None
-        add_to_imports(value)
+        if defaults is not None and key in defaults._crysinput                 \
+           and type(value) is type(defaults._crysinput[key])                   \
+           and repr(value) == repr(defaults._crysinput[key]): continue
+        results['{0}.add_keyword({1!r}, {2!r})'.format(name, key, value)]      \
+            = None
+        add_to_imports(value, imports)
     
     return results
 

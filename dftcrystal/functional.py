@@ -6,6 +6,8 @@ class Functional(object):
   """ Wrapper for the CRYSTAL program. """
   Extract = Extract
   """ Extraction class. """
+  __ui_name__ = 'functional'
+  """ Name used in user-friendly representation """
   def __init__(self, copy=None, program=None, **kwargs):
     """ Creates the crystal wrapper. """
     from .basis import BasisSet
@@ -292,7 +294,18 @@ class Functional(object):
       raise RuntimeError("CRYSTAL failed to execute correctly.")
     return result
  
-  def __repr__(self):
+  def __repr__(self, defaults=True, name=None):
     """ Returns representation of this instance """
-    from ..functools import uirepr
-    return uirepr(self.electronics)
+    from ..functools.uirepr import uirepr
+    defaults = self.__class__() if defaults else None
+    return uirepr(self, name=name, defaults=defaults)
+
+  def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
+    from ..functools.uirepr import template_ui_repr
+
+    results = template_ui_repr(self, imports, name, defaults, ['scf'])
+    if name is None:
+      name = getattr(self, '__ui_name__', self.__class__.__name__.lower())
+    scf = self.scf.__ui_repr__(imports, name, defaults.scf)
+    results.update(scf)
+    return results

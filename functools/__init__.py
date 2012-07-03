@@ -128,36 +128,3 @@ class SuperCall(object):
     self.__dict__['_object'] = args[1]
   def __dir__(self): return dir(super(self._class, self._object))
   def __repr__(self): return repr(super(self._class, self._object))
-  
-def uirepr(object, name=None, rmdefaults=False):
-  """ Returns string of representation. """
-  if not hasattr(object, '__ui_repr__'): return repr(object)
-  imports = {}
-  collected = object.__ui_repr__(imports, name, rmdefaults)
-
-  result = ''
-  for key in sorted(imports.iterkeys()):
-    values = list(imports[key])
-    result += 'from {0} import {1}\n'.format(key, ', '.join(values))
-
-  # print headers
-  result += '\n{0}'.format(collected[None])
-  del collected[None]
-  maxpoints = max(u.count('.') for u in collected.iterkeys())
-  keys = set(collected.keys())
-  for i in xrange(maxpoints+1):
-    rootkeys = [key for key in keys if key.count('.') == i]
-    if len(rootkeys) == 0: continue
-    length = max(len(key) for key in rootkeys if collected[key] is not None)
-    keys -= set(rootkeys)
-    for key in sorted(rootkeys):
-      value = collected[key]
-      if value is not None:
-        result += '\n{0:<{length}} = {1}'.format(key, value, length=length)
-    for key in sorted(rootkeys):
-      value = collected[key]
-      if value is None: result += '\n{0}'.format(key)
-    
-  return result
-
-

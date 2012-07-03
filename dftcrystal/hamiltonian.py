@@ -129,7 +129,155 @@ class Hybrid(TypedKeyword):
     if inst.pbe0 or inst.b3lyp or inst.b3pw or inst.soggaxc: return None
     return super(Hybrid, self).print_input(**kwargs)
 
+class Radial(Keyword):
+  """ Defines radial CRYSTAL keyword. """
+  keyword = 'radial'
+  def __init__(self, intervals=None, nbpoints=None):
+    """ Creates RADIAL keyword """
+    super(Radial, self).__init__()
+    self.intervals = intervals
+    self.nbpoints  = nbpoints
+  @property
+  def intervals(self): 
+    """ Upper limits of the intervals in ascending order """
+    return self._intervals
+  @intervals.setter
+  def intervals(self, value): 
+    from numpy import array, all
+    from ..error import input
+    if value is None: self._intervals = None; return
+    self._intervals = [float(u) for u in value]
+    # sanity check
+    if not all(array(self.intervals[1:]) > array(self.intervals[:-1])):
+      raise input('Interval limits are not given in ascending order')
+  @property
+  def nbpoints(self): 
+    """ Number of integration points per interval """
+    return self._nbpoints
+  @nbpoints.setter
+  def nbpoints(self, value): 
+    if value is None: self._nbpoints = None; return
+    self._nbpoints = [int(u) for u in value]
 
+  @property
+  def raw(self):
+    """ Raw CRYSTAL input """
+    if self.intervals is None or self.nbpoints is None: return ''
+    n = min(len(self.intervals), len(self.nbpoints))
+    a = (str(u) for u in self.intervals[:n])
+    b = (str(u) for u in self.nbpoints[:n])
+    return '{0}\n{1}\n{2}'.format(n, ' '.join(a), ' '.join(b))
+  @raw.setter
+  def raw(self, value):
+    """ Sets value from CRYSTAL input """
+    value = value.split()
+    n = int(value[0])
+    self.intervals = value[1:n+1]
+    self.nbpoints = value[n+1:]
+  def print_input(self, **kwargs):
+    """ Prints CRYSTAL input """
+    from ..error import input
+    if self.intervals is None or self.nbpoints is None: return None
+    crystal = kwargs['crystal'].dft
+    if crystal.lgrid or crystal.xlgrid or crystal.xxlgrid: return None
+    # sanity check
+    if len(self.intervals) != len(self.nbpoints):
+      raise input('Different number of interval limits and points per interval')
+    return super(Radial, self).print_input()
+
+class Angular(Keyword):
+  """ Defines angular CRYSTAL keyword. """
+  keyword = 'angular'
+  def __init__(self, intervals=None, levels=None):
+    """ Creates RADIAL keyword """
+    super(Angular, self).__init__()
+    self.intervals = intervals
+    self.levels  = levels
+  @property
+  def intervals(self): 
+    """ Upper limits of the intervals in ascending order """
+    return self._intervals
+  @intervals.setter
+  def intervals(self, value): 
+    from numpy import array, all
+    from ..error import input
+    if value is None: self._intervals = None; return
+    self._intervals = [float(u) for u in value]
+    # sanity check
+    if not all(array(self.intervals[1:]) > array(self.intervals[:-1])):
+      raise input('Interval limits are not given in ascending order')
+  @property
+  def levels(self): 
+    """ Accuracy level of each interval """
+    return self._levels
+  @levels.setter
+  def levels(self, value): 
+    if value is None: self._levels = None; return
+    self._levels = [int(u) for u in value]
+
+  @property
+  def raw(self):
+    """ Raw CRYSTAL input """
+    if self.intervals is None or self.levels is None: return ''
+    n = min(len(self.intervals), len(self.levels))
+    a = (str(u) for u in self.intervals[:n])
+    b = (str(u) for u in self.levels[:n])
+    return '{0}\n{1}\n{2}'.format(n, ' '.join(a), ' '.join(b))
+  @raw.setter
+  def raw(self, value):
+    """ Sets value from CRYSTAL input """
+    value = value.split()
+    n = int(value[0])
+    self.intervals = value[1:n+1]
+    self.levels = value[n+1:]
+  def print_input(self, **kwargs):
+    """ Prints CRYSTAL input """
+    from ..error import input
+    if self.intervals is None or self.levels is None: return None
+    crystal = kwargs['crystal'].dft
+    if crystal.lgrid or crystal.xlgrid or crystal.xxlgrid: return None
+    # sanity check
+    if len(self.intervals) != len(self.levels):
+      raise input('Different number of interval limits and points per interval')
+    return super(Angular, self).print_input()
+
+class GlobalGridKeyword(Keyword):
+  """ Defines global grid keywords """
+  def __init__(self, values=None, keyword=None):
+    from copy import deepcopy
+    super(GlobalGridKeyword, self).__init__(keyword=keyword)
+    self.values = deepcopy(values)
+    """ Values against which to test. """
+
+  def __get__(self, instance, owner=None):
+    """ True if global keyword is set. """
+    def test(a, b):
+      from numpy import array, abs, any
+      if a is None:
+        if b is not None: return False
+      else: 
+        if b is None: return False
+        if len(a) != len(b): return False
+        if any(abs(array(a)-array(b)) > 1e-8): return False
+      return True
+    return test(self.values[0], instance.radial.intervals)                     \
+           and test(self.values[1], instance.radial.nbpoints)                  \
+           and test(self.values[2], instance.angular.intervals)                \
+           and test(self.values[3], instance.angular.levels)
+  def __set__(self, inst, value):
+    """ Sets to global if value is True. 
+    
+        If False, ignores.
+    """
+    if value == True:
+      inst.radial.intervals, inst.radial.nbpoints,                             \
+        inst.angular.intervals, inst.angular.levels =  self.values
+  def print_input(self, **kwargs):
+    if self.__get__(kwargs['crystal'].dft): 
+      return self.keyword.upper() + '\n'
+  def read_input(self, tree, owner=None):
+    """ True if ever read. """
+    self.__set__(owner, True)
 
 class Dft(AttrBlock):
   """ DFT attribute block. """ 
@@ -155,9 +303,28 @@ class Dft(AttrBlock):
     """ B3PW global keyword. """
     self.soggaxc  = GlobalExc('soggaxc', ['sogga', 'pbe', None, None, None])
     """ B3PW global keyword. """
+    self.angular  = Angular()
+    """ Angular integration grid """
+    self.radial   = Radial()
+    """ Radial integration grid """
+    self.lgrid    = GlobalGridKeyword(( [4], [75],
+                                        [0.1667, 0.5, 0.9, 3.05, 9999.0], 
+                                        [2, 6, 8, 13, 8] ))
+    """ Preset large integration grid """
+    self.xlgrid   = GlobalGridKeyword(( [4], [75],
+                                        [0.1667, 0.5, 0.9, 3.5, 9999.0], 
+                                        [2, 8, 12, 16, 12] ))
+    """ Preset extra large integration grid """
+    self.xxlgrid  = GlobalGridKeyword(( [4], [99],
+                                        [0.1667, 0.5, 0.9, 3.5, 9999.0], 
+                                        [6, 8, 14, 18, 14] ))
+    """ Preset extra extra large integration grid """
+    self.tollgrid = TypedKeyword(type=int)
+    """ DFT grid weight tolerance """
+    self.tolldens = TypedKeyword(type=int)
+    """ DFT density tolerance """
 
-  def __ui_repr__( self, imports, name=None,
-                   rmdefaults=False, defaults=None, exclude=None):
+  def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
     """ Creates user friendly representation. """
     exclude = [] if exclude is None else list(exclude)
     if not self.b3lyp: exclude.append('b3lyp')
@@ -166,5 +333,10 @@ class Dft(AttrBlock):
     if not self.soggaxc: exclude.append('soggaxc')
     if self.b3lyp or self.b3pw or self.pbe0 or self.soggaxc: 
       exclude.extend(['exchange', 'correlat', 'hybrid', 'nonlocal'])
-    return super(Dft, self).__ui_repr__(imports, name, rmdefaults, defaults, exclude)
+    if not self.lgrid: exclude.append('lgrid')
+    if not self.xlgrid: exclude.append('xlgrid')
+    if not self.xxlgrid: exclude.append('xxlgrid')
+    if self.lgrid or self.lgrid or self.xxlgrid:
+      exclude.extend(['angular', 'radial'])
+    return super(Dft, self).__ui_repr__(imports, name, defaults, exclude)
 

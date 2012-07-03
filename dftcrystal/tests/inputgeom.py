@@ -1138,13 +1138,11 @@ def test_functional():
 def test_uirepr():
   from lada.dftcrystal.parse import parse
   from lada.dftcrystal.functional import Functional
-  from lada.functools import uirepr
   a = Functional()
   global string 
   b = parse(string)
   a.read_input(b)
-  print uirepr(a, rmdefaults=True), '\n\n'
-  print uirepr(a, rmdefaults=False)
+  print repr(a)
   
 if __name__ == "__main__":
  #test_geom()
