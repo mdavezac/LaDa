@@ -48,6 +48,8 @@ class Functional(object):
       if name in ['scf', 'basis', 'optgeom']:
         return super(Functional, self).__setattr__(name, value)
       setattr(self.scf, name, value)
+    elif name in self.scf._crysinput:
+      setattr(self.scf, name, value)
     else: super(Functional, self).__setattr__(name, value)
   def __delattr__(self, name):
     """ Deletes attributes. """

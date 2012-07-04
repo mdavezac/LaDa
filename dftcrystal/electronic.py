@@ -39,6 +39,21 @@ class Shrink(Keyword):
         | SHRINK
         | 0 5
         | 5 6 1
+
+
+      Another option it to set :py:attr:`~Shrink.mp` and
+      :py:attr:`~Shrink.gallat` directly::
+
+        functional.shrink = 8, 8
+
+      would result in the following ouput
+
+        | SHRINK
+        | 8 8
+
+      :py:attr:`~Shrink.mp` will be set to the first item. and
+      :py:attr:`~Shrink.gallat` to the second. There should always be two
+      items, unless setting to None.
   """
   keyword = 'shrink'
   """ Crystal keyword. """
@@ -106,6 +121,13 @@ class Shrink(Keyword):
     else: 
       self.mp = IS
       self.gallat = None if ISP == self.mp else ISP
+
+  def __set__(self, instance, value):
+    """ Sets the keyword more easily. """
+    if value is None: self.mp = None; return
+    self.mp = value[0]
+    self.gallat = value[1]
+
   def __repr__(self):
     """ Representation of this instance. """
     args = []
@@ -116,6 +138,21 @@ class Shrink(Keyword):
       args.append(repr(self.mp))
       if self.gallat is not None: args.append('{0.gallat!r}'.format(self))
     return '{0.__class__.__name__}({1})'.format(self, ', '.join(args))
+
+  def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
+    """ Creates user friendly representation. """
+    from ..functools.uirepr import add_to_imports
+    if defaults is not None: 
+      if type(defaults) is not type(self): 
+        add_to_imports(self)
+        return {name: repr(self)}
+      if self.gallat == defaults.gallat and self.mp == defaults.mp: 
+        return {}
+    if name is None:
+      add_to_imports(self)
+      return {None: 'shrink = {0!r}'.format(self)}
+    return {name: '{0.mp!r}, {0.gallat!r}'.format(self)}
+
 
 class LevShift(Keyword):
   """ Implements LevShift keyword. """
@@ -200,6 +237,7 @@ class Electronic(AttrBlock):
   """ Name used when printing this instance with ui_repr """
   def __init__(self):
     """ Creates the scf attribute block. """
+    from .input import ChoiceKeyword
     from .hamiltonian import Dft
     super(Electronic, self).__init__()
     self.maxcycle = TypedKeyword(type=int)
@@ -234,5 +272,7 @@ class Electronic(AttrBlock):
     """ Size of buffer for exchange integrals bipolar expansions """
     self.scfdir   = BoolKeyword()
     """ Whether to reevaluate integrals at each electronic step """
+    self.poleordr = ChoiceKeyword(values=range(1, 7))
+    """ Coulomb intergrals pole truncation """
     self.dft      = Dft()
     """ Holds definition of the DFT functional itself """

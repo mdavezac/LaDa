@@ -65,9 +65,62 @@ class MaxCycle(TypedKeyword):
     if self._value is not None and self._value > 0 and instance.static:
       instance.fulloptg = True
 
-class OptGeom(AttrBlock):
+class ExclAttrBlock(AttrBlock):
+  """ An attribute block set up to exclude others. 
+  
+      Expects both "keyword" and "excludegroup" attributes (or class
+      attributes) to exist in derived instances.
+  """
+  excludegroup = 'optgeom', 'freqcalc', 'anharm', 'confcnt', 'cphf',           \
+                 'elastcon', 'eos'
+  """ Groups from which only one should be enabled. """
+  def __init__(self):
+    """ Initializes the exclusive attribute block. """
+    super(ExclAttrBlock, self).__init__()
+    self.enabled = False
+    self._parent = None
+    """ Weak-reference to parent instance. """
+
+  @property
+  def enabled(self):
+    """ True  if this block is enabled. """
+    return self._enabled
+  @enabled.setter
+  def enabled(self, value):
+    self._enabled = value == True
+    # disable other instances. 
+    if self._enabled and self._parent is not None                               \
+       and len(getattr(self, 'excludegroup', ())) > 0:
+      parent = self._parent()
+      for u in self.excludegroup:
+        if u == self.keyword: continue
+        if not hasattr(parent, u): continue
+        inst = getattr(parent, u)
+        if not hasattr(inst, 'enabled'): continue
+        inst.enabled = False
+  def __get__(self, instance, owner=None):
+    """ Sets up weak ref to parent. """
+    from weakref import ref
+    self._parent = ref(instance)
+    return self
+
+  def read_input(self, tree, owner=None):
+    """ Reads from input. """
+    if owner is not None:
+      from weakref import ref
+      self._parent = ref(owner)
+    self.enabled = True
+    return super(ExclAttrBlock, self).read_input(tree, owner)
+
+  def print_input(self, **kwargs):
+    """ Does not print if static. """
+    if not self.enabled: return None
+    return super(ExclAttrBlock, self).print_input(**kwargs)
+
+class OptGeom(ExclAttrBlock):
   """ Geometry Optimization block. """
   keyword = 'optgeom'
+  """ CRYSTAL input keyword """
   def __init__(self): 
     """ Creates an optimization block. """
     from .input import QuantityKeyword
@@ -130,7 +183,13 @@ class OptGeom(AttrBlock):
       if self.fulloptg == False and self.cellonly == False                     \
          and self.itatocell == False and self.interdun == False: 
         self.fullopg = True
-    
+
+  def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
+    """ User-friendly output. """
+    return super(OptGeom, self).__ui_repr__( imports, name, 
+                                             defaults, ['static'] )
+  
+
   def print_input(self, **kwargs):
     """ Does not print if static. """
     if self.static: return None

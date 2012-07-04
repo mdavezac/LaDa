@@ -662,25 +662,11 @@ class AttrBlock(Keyword):
       return '{0}\n{1}END {0}\n'.format(self.keyword.upper(), result)
     return result
 
-  def __repr__(self, indent=''):
+  def __repr__(self, defaults=False, name=None):
     """ Representation of this instance. """
-    from inspect import getargspec
-    result = indent + '{0.__class__.__name__}()'.format(self)
-    indent += '    '
-    for key, value in self._crysinput.iteritems():
-      if hasattr(getattr(value, '__repr__', None), '__call__'):
-        try:
-          hasindent = getargspec(value.__repr__).args
-        except: hasindent = False
-        else: hasindent = False if hasindent is None else 'indent' in hasindent
-      else: hasindent = False
-      if hasindent: 
-        result += '\\\n{0}.add_keyword({1!r}, {2})'                            \
-                  .format(indent, key, value.__repr__(indent+'        ')) 
-      else: 
-        result += '\\\n{0}.add_keyword({1!r}, {2!r})'                          \
-                  .format(indent, key, value) 
-    return result
+    from ..functools.uirepr import uirepr
+    defaults = self.__class__() if defaults else None
+    return uirepr(self, name=name, defaults=defaults)
 
   def read_input(self, tree, owner=None):
     """ Parses an input tree. """
@@ -760,11 +746,11 @@ class AttrBlock(Keyword):
     
     return results
 
-class Choice(Keyword):
+class ChoiceKeyword(Keyword):
   """ Keyword value must be chosen from a given set. """
   def __init__(self, values=None, value=None, keyword=None):
     """ Creates keyword which must be chosen from a given set. """ 
-    super(Choice, self).__init__(keyword=keyword)
+    super(ChoiceKeyword, self).__init__(keyword=keyword)
     if values is not None:
       self.values = list(values)
       """ Set of values from which to choose keyword. """

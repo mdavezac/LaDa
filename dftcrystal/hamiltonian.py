@@ -1,8 +1,9 @@
 __docformat__ = "restructuredtext en"
-__all__ = ['Exchange', 'Correlation', 'NonLocal', 'Dft', 'GlobalExc', 'Hybrid']
-from . input import Keyword, AttrBlock, Choice, TypedKeyword, BoolKeyword
+__all__ = ['Dft']
+from . input import Keyword, AttrBlock, ChoiceKeyword, TypedKeyword,           \
+                    BoolKeyword
 
-class Exchange(Choice):
+class Exchange(ChoiceKeyword):
   keyword = 'exchange'
   """ Corresponding CRYSTAL keyword. """
   values = ['becke', 'lda', 'pbe', 'pbesol', 'pwgga', 'sogga', 'vbh', 'wcgga']

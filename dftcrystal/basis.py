@@ -154,6 +154,8 @@ class Shell(object):
 
 class BasisSet(AttrBlock):
   """ Basis set block. """
+  __ui_name__ = 'basis'
+  """ Name used when printing user-friendly repr. """
   def __init__(self):
     """ Creates basis set block. """
     from .input import BoolKeyword, VariableListKeyword
@@ -295,14 +297,11 @@ class BasisSet(AttrBlock):
     else: self._functions[specie] = [shell]
     return self
 
-  def __repr__(self, indent=''):
-    """ Representation of this instance. """
-    result = super(BasisSet, self).__repr__(indent)
-    indent += '    '
-    for key, value in self._functions.iteritems():
-      for func in value: 
-        result += '\\\n{0}.append({1!r}, {2!r})'.format(indent, key, func)
-    return result
+  def __repr__(self, defaults=False, name=None):
+    """ Returns representation of this instance """
+    from ..functools.uirepr import uirepr
+    defaults = self.__class__() if defaults else None
+    return uirepr(self, name=name, defaults=defaults)
 
   def print_input(self, **kwargs):
     """ Dumps CRSTAL input to string. """
@@ -322,9 +321,9 @@ class BasisSet(AttrBlock):
   def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
     """ Prettier representation """
     from ..functools.uirepr import add_to_imports
+    results = super(BasisSet, self).__ui_repr__(imports, name, defaults, ['raw'])
     if name is None:
       name = getattr(self, '__ui_name__', self.__class__.__name__.lower())
-    results = super(BasisSet, self).__ui_repr__(imports, name, defaults, ['raw'])
     for key, value in self._functions.iteritems():
       newname = '{0}[{1!r}]'.format(name, key)
       results[newname] = '[{0}]'.format(', '.join(repr(u) for u in value))

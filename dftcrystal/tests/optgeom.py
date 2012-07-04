@@ -39,6 +39,10 @@ def test():
   assert a.interdun is False
   assert a.static is False
 
+  assert a.enabled is False
+  assert a.print_input(crystal=Crystal(a)) is None
+  a.enabled = True
+  assert a.enabled is True
   string = a.print_input(crystal=Crystal(a))
   assert len(string.split('\n')) == 6
   string = string.split('\n')

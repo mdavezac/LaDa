@@ -190,9 +190,9 @@ def test_variablelistkeyword():
   else: raise Exception()
 
 def test_choicekeyword():
-  from lada.dftcrystal.input import Choice
+  from lada.dftcrystal.input import ChoiceKeyword
 
-  a = Choice(['five', 5], keyword='whatever')
+  a = ChoiceKeyword(['five', 5], keyword='whatever')
   assert a.value is None
   assert a.print_input() is None
 

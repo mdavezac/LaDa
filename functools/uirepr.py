@@ -70,13 +70,16 @@ def template_ui_repr(self, imports, name=None, defaults=None, exclude=None):
       add_to_imports(string, imports)
 
   # then loops through class properties.
-  for key, value in self.__class__.__dict__.iteritems():
+  for key in dir(self):
     if key[0] == '_': continue
+    if key in self.__dict__: continue
     if exclude is not None and key in exclude: continue
+    if not hasattr(self.__class__, key): continue
+    value = getattr(self.__class__, key)
     if not isdatadescriptor(value): continue
     string = repr(getattr(self, key))
-    if defaults is None or key not in defaults.__class__.__dict__: pass
-    elif not isdatadescriptor(defaults.__class__.__dict__[key]):   pass
+    if defaults is None or not hasattr(defaults.__class__, key): pass
+    elif not isdatadescriptor(getattr(defaults.__class__, key)):   pass
     else: 
       default = getattr(defaults, key)
       if type(getattr(self, key)) is type(default) and repr(default) == string:
