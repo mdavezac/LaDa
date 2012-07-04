@@ -145,6 +145,7 @@ def search_factory(name, methname, module, filename=None):
     """ Returns first result from a regex. """
     for last in getattr(self, _rsearch_OUTCAR.__name__)(regex, flags): return last
     return None
+  _find_last_OUTCAR.__name__ = '_find_last_{0}'.format(methname.upper())
 
   attrs = { __outcar__.__name__: __outcar__,
             _search_OUTCAR.__name__: _search_OUTCAR,

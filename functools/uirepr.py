@@ -20,6 +20,9 @@ def uirepr(object, name=None, defaults=None, exclude=None):
     for key in sorted(collected.keys()):
       value = collected[key]
       if value is not None:
+        value = value.rstrip()
+        if value.count('\n') != 0:
+          value = value.replace('\n', '\n' + ''.join([' ']*(length+4)))
         result += '\n{0:<{length}} = {1}'.format(key, value, length=length)
   for key in sorted(collected.keys()):
     value = collected[key]

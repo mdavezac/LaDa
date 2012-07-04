@@ -148,10 +148,12 @@ class Shrink(Keyword):
         return {name: repr(self)}
       if self.gallat == defaults.gallat and self.mp == defaults.mp: 
         return {}
-    if name is None:
-      add_to_imports(self)
+      return {name: '{0.mp!r}, {0.gallat!r}'.format(self)}
+    elif name is None:
+      add_to_imports(self, imports)
       return {None: 'shrink = {0!r}'.format(self)}
-    return {name: '{0.mp!r}, {0.gallat!r}'.format(self)}
+    add_to_imports(self, imports)
+    return {name: self.__repr__()}
 
 
 class LevShift(Keyword):
@@ -272,7 +274,7 @@ class Electronic(AttrBlock):
     """ Size of buffer for exchange integrals bipolar expansions """
     self.scfdir   = BoolKeyword()
     """ Whether to reevaluate integrals at each electronic step """
-    self.poleordr = ChoiceKeyword(values=range(1, 7))
+    self.poleordr = ChoiceKeyword(values=range(0, 7))
     """ Coulomb intergrals pole truncation """
     self.dft      = Dft()
     """ Holds definition of the DFT functional itself """

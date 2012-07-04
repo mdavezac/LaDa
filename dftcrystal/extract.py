@@ -15,14 +15,18 @@ class ExtractBase(object):
   def crystal_family(self):
     """ Crystal family """
     result = self._find_first_STDOUT(r"^\s*CRYSTAL FAMILY\s*:\s*(\S+)")
-    if result is None: raise GrepError('Could not grep crystal family')
+    if result is None:
+      raise GrepError( 'Could not grep crystal family from '                   \
+                       '{0.directory}/{0.STDOUT}.'.format(self) )
     return result.group(1).lower()
   @property 
   @make_cached
   def crystal_class(self):
     """ Crystal class """
     result = self._find_first_STDOUT(r"^\s*CRYSTAL CLASS\s*(?:.+):\s*(.+)$")
-    if result is None: raise GrepError('Could not grep crystal class')
+    if result is None: 
+      raise GrepError( 'Could not grep crystal class from'                     \
+                       '{0.directory}/{0.STDOUT}.'.format(self) )
     return result.group(1).lower().rstrip().lstrip()
 
   @property 
@@ -30,7 +34,9 @@ class ExtractBase(object):
   def centrosymmetric(self):
     """ Crystal class """
     result = self._find_first_STDOUT(r"^\s*SPACE GROUP\s*\((\S+)\)\s*:")
-    if result is None: raise GrepError('Could not grep centro-symmetricity')
+    if result is None:
+      raise GrepError( 'Could not grep centro-symmetricity from '              \
+                       '{0.directory}/{0.STDOUT}.'.format(self) )
     return result.group(1).lower().rstrip().lstrip() != 'noncentrosymmetric'
 
   @property 
@@ -38,7 +44,9 @@ class ExtractBase(object):
   def space_group(self):
     """ Crystal class """
     result = self._find_first_STDOUT(r"^\s*SPACE GROUP\s*(?:.+)\s*:\s*(.+)")
-    if result is None: raise GrepError('Could not grep space-group')
+    if result is None:
+      raise GrepError( 'Could not grep space-group from '                      \
+                       '{0.directory}/{0.STDOUT}.'.format(self) )
     return result.group(1).rstrip().lstrip()
 
   @property
@@ -56,11 +64,13 @@ class ExtractBase(object):
       return array( [file.next().split() for u in xrange(3)],                  \
                     dtype='float64' ).T
     except StopIteration:
-      raise GrepError('Reached end of file whend grepping '                    \
-                      'direct lattice cell vectors.')
+      raise GrepError( 'Reached end of file whend grepping '                   \
+                       'direct lattice cell vectors in '                       \
+                       '{0.directory}/{0.STDOUT}.'.format(self) )
     except Exception as e:
-      raise GrepError('Encountered error while grepping for lattice vectors: ' \
-                      '{0.__class__.__name__} -- {0}'.format(e) )
+      raise GrepError('Encountered error while grepping for lattice vectors '  \
+                      'in file {1.directory}/{1.STDOUT}: '                     \
+                      '{0.__class__.__name__} -- {0}'.format(e, self) )
     finally: file.close()
 
   @property
@@ -82,8 +92,9 @@ class ExtractBase(object):
         symops[-1][3, :] = array(data[-3:], dtype='float64')
       return array(symops)
     except Exception as e:
-      raise GrepError('Encountered error while grepping for sym ops:'          \
-                      '{0.__class__.__name__} -- {0}'.format(e) )
+      raise GrepError('Encountered error while grepping for sym ops '          \
+                      'in file {1.directory}/{1.STDOUT}: '                     \
+                      '{0.__class__.__name__} -- {0}'.format(e, self) )
     finally: file.close()
 
   @property
@@ -96,7 +107,6 @@ class ExtractBase(object):
     result = Functional()
     result.read_input(b)
     return result
-    retirn 
 
   @property
   @make_cached
@@ -113,7 +123,7 @@ class ExtractBase(object):
       
   @property
   @make_cached
-  def date(self):
+  def start_date(self):
     """ Title of the calculations. """
     from datetime import datetime
     search = " EEEEEEEEEE STARTING  DATE"
@@ -129,6 +139,27 @@ class ExtractBase(object):
       return datetime( year=year, month=month, day=day,
                        hour=hour, minute=minute, second=second )
 
+  @property
+  @make_cached
+  def end_date(self):
+    """ Title of the calculations. """
+    from datetime import datetime
+    from ..error import GrepError
+    pattern = "E+\s+TERMINATION\s+DATE\s*(\d+)\s+(\d+)\s+(\d+)\s+TIME\s+(\S+)"
+    regex = self._find_last_STDOUT(pattern)
+    if regex is None: 
+      raise GrepError( 'Could not grep end time from '                         \
+                       '{0.directory}/{0.STDOUT}.'.format(self) )
+
+    day    = int(regex.group(1))
+    month  = int(regex.group(2))
+    year   = int(regex.group(3))
+    hour, minute, second = regex.group(4).split(':')
+    hour   = int(hour)
+    minute = int(minute)
+    second = int(second[:second.find('.')])
+    return datetime( year=year, month=month, day=day,
+                     hour=hour, minute=minute, second=second )
 
   @property
   @make_cached
@@ -244,6 +275,30 @@ class ExtractBase(object):
       for pos in self._find_structure(file): continue
       file.seek(pos, 0)
       return self._grep_structure(file)
+  
+  @property
+  @make_cached
+  def total_energy(self):
+    """ Total energy. """
+    from quantities import hartree
+    pattern = "TOTAL ENERGY\(\S+\)\(AU\)\(\s*\d+\)\s*(\S+)\s*DE"
+    regex = self._find_last_STDOUT(pattern)
+    if regex is None: 
+      raise GrepError( 'Could not grep total energy from '                     \
+                       '{0.directory}/{0.STDOUT}.'.format(self) )
+    return float(regex.group(1)) * hartree
+
+  @property
+  @make_cached
+  def delta_energy(self):
+    """ Difference in energy between last two minimization steps. """
+    from quantities import hartree
+    pattern = "TOTAL ENERGY\(\S+\)\(AU\)\(\s*\d+\)\s*\S+\s*DE(\S+)\s*tester"
+    regex = self._find_last_STDOUT(pattern)
+    if regex is None: 
+      raise GrepError( 'Could not grep delta energy from '                     \
+                       '{0.directory}/{0.STDOUT}.'.format(self) )
+    return float(regex.group(1)) * hartree
 
 class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
   """ Extracts DFT data from an OUTCAR. """
@@ -270,4 +325,7 @@ class Extract(AbstractExtractBase, OutputSearchMixin, ExtractBase):
     OutputSearchMixin.__init__(self)
 
   @property
-  def success(self): return True
+  def success(self):
+    try: self.end_date
+    except: return False
+    else: return True

@@ -720,7 +720,7 @@ class AttrBlock(Keyword):
         results.update(partial)
         donoinit = defaults is not None and key in defaults._crysinput         \
                    and type(value) is type(defaults._crysinput[key])
-        if not donoinit:
+        if newname not in results and not donoinit:
           results[newname] = '{0.__class__.__name__}()'.format(value)
           add_to_imports(value, imports)
       elif isinstance(value, Keyword):

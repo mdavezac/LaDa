@@ -26,6 +26,7 @@ class InputTree(list):
 def parse(path, needstarters=True):
   """ Reads crystal input. """
   from re import compile
+  from ..error import IOError
   from .. import CRYSTAL_input_blocks as blocks, CRYSTAL_geom_blocks as starters
   if isinstance(path, str): 
     if path.find('\n') == -1:
@@ -39,10 +40,12 @@ def parse(path, needstarters=True):
 
   if needstarters: 
     for i, line in enumerate(path):
-      if line.split()[0] in starters: break
+      if len(line.split()) > 0 and line.split()[0] in starters: break
       title = line
+    if len(line) == 0: raise IOError('Could not find CRYSTAL input.')
+    elif line.split()[0] not in starters: 
+      raise IOError('Could not find CRYSTAL input.')
     title = title.rstrip().lstrip()
-    if title[-1] == '\n': title = title[:-1].rstrip()
     nesting = [title, line.split()[0]]
     results = InputTree()
     keyword = line.split()[0]

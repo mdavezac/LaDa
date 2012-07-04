@@ -56,7 +56,7 @@ class Functional(object):
   def __dir__(self):
     """ List of attributes and members """
     return list( set(self.__dict__.iterkeys()) | set(dir(self.__class__))      \
-                 | set(dir(self.scf._crysinput.iterkeys())) )
+                 | set(self.scf._crysinput.iterkeys()) )
 
   def add_keyword(self, name, value=None):
     """ Passes on to :py:attr:`~Functional.scf` """
@@ -196,7 +196,7 @@ class Functional(object):
         file.write('{0} END {1} {0}\n'.format(header, 'INPUT FILE'))
         file.write(output)
         file.write('\n{0} {1} {0}\n'.format(header, 'FUNCTIONAL'))
-        file.write(repr(self))
+        file.write(self.__repr__(defaults=False))
         file.write('\n{0} END {1} {0}\n'.format(header, 'FUNCTIONAL'))
         file.write('\n{0} {1} {0}\n'.format(header, 'STRUCTURE'))
         file.write(repr(structure))
@@ -308,6 +308,12 @@ class Functional(object):
     results = template_ui_repr(self, imports, name, defaults, ['scf'])
     if name is None:
       name = getattr(self, '__ui_name__', self.__class__.__name__.lower())
-    scf = self.scf.__ui_repr__(imports, name, defaults.scf)
+    scf = self.scf.__ui_repr__(imports, name, getattr(defaults, 'scf', None))
     results.update(scf)
     return results
+
+  def __deepcopy__(self, memo):
+    from copy import deepcopy
+    result = self.__class__()
+    result.__dict__ = deepcopy(self.__dict__)
+    return result

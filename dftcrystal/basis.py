@@ -320,12 +320,17 @@ class BasisSet(AttrBlock):
 
   def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
     """ Prettier representation """
+    from pprint import pprint
+    from StringIO import StringIO
     from ..functools.uirepr import add_to_imports
     results = super(BasisSet, self).__ui_repr__(imports, name, defaults, ['raw'])
     if name is None:
       name = getattr(self, '__ui_name__', self.__class__.__name__.lower())
     for key, value in self._functions.iteritems():
       newname = '{0}[{1!r}]'.format(name, key)
-      results[newname] = '[{0}]'.format(', '.join(repr(u) for u in value))
+      string = StringIO()
+      pprint(value, string)
+      string.seek(0)
+      results[newname] = string.read()
       for u in value: add_to_imports(u, imports)
     return results
