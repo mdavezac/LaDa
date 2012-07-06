@@ -117,6 +117,41 @@ class NonLocal(Keyword):
     elif index == 1 or index == -1: self.correlation = value
     else: raise IndexError('nonlocal can be indexed with 0, 1, or -1 only.')
   def __len__(self): return 2
+  def __set__(self, value):
+    """ Sets from (x, c) tuple. """
+    from ..error import ValueError
+    if len(value) != 2: raise ValueError('Expected (xchange, corr) tuple')
+    self.exchange = value[0]
+    self.correlat = value[1]
+  def __repr__(self):
+    """ Dumps representation of self. """
+    args = []
+    if self.exchange is None: 
+      if self.correlation is not None:
+        args.append('corr={0.correlation!r}'.formas(self))
+    else:
+      args.append(repr(self.exchange))
+      if self.correlation is not None: args.append(repr(self.correlation))
+    return '{0.__class__.__name__}({1})'.format(self, ', '.join(args))
+  def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
+    from ..functools.uirepr import add_to_imports
+    if name is None:
+      name = getattr(self, '__ui_name__', self.__class__.__name__.lower())
+    if defaults is None or type(defaults) != type(self):
+      add_to_imports(self, imports)
+      return {name: self.__repr__()}
+    if self.correlation is None: issame = defaults.correlation is None
+    elif defaults.correlation is None: issame = False
+    else: issame = abs(defaults.correlation - self.correlation) < 1e-8 
+    if issame:
+      if self.exchange is None: issame = defaults.exchange is None
+      elif defaults.exchange is None: issame = False
+      else: issame = abs(defaults.exchange - self.exchange) < 1e-8 
+    if issame: return {}
+    return {name: '{0.exchange!r}, {0.correlation!r}'.format(self)}
+      
+            
+
 
 class Hybrid(TypedKeyword):
   keyword = 'hybrid'
@@ -185,6 +220,35 @@ class Radial(Keyword):
     if len(self.intervals) != len(self.nbpoints):
       raise input('Different number of interval limits and points per interval')
     return super(Radial, self).print_input()
+  def __repr__(self):
+    """ Dumps representation of self. """
+    args = []
+    if self.intervals is None: 
+      if self.nbpoints is not None:
+        args.append('nbpoints={0.nbpoints!r}'.formas(self))
+    else:
+      args.append(repr(self.intervals))
+      if self.nbpoints is not None: args.append(repr(self.nbpoints))
+    return '{0.__class__.__name__}({1})'.format(self, ', '.join(args))
+  def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
+    from numpy import array, all, abs
+    from ..functools.uirepr import add_to_imports
+    if name is None:
+      name = getattr(self, '__ui_name__', self.__class__.__name__.lower())
+    if defaults is None or type(defaults) != type(self):
+      add_to_imports(self, imports)
+      return {name: self.__repr__()}
+    if self.nbpoints is None: issame = defaults.nbpoints is None
+    elif defaults.nbpoints is None: issame = False
+    else: issame = all(array(defaults.nbpoints) == self.nbpoints)
+    if issame:
+      if self.intervals is None: issame = defaults.intervals is None
+      elif defaults.intervals is None: issame = False
+      else:
+        issame = all(abs(array(defaults.intervals) - self.intervals) < 1e-8)
+    if issame: return {}
+    return { '{0}.intervals'.format(name): repr(self.intervals), 
+             '{0}.nbpoints'.format(name): repr(self.nbpoints) }
 
 class Angular(Keyword):
   """ Defines angular CRYSTAL keyword. """
@@ -241,6 +305,35 @@ class Angular(Keyword):
     if len(self.intervals) != len(self.levels):
       raise input('Different number of interval limits and points per interval')
     return super(Angular, self).print_input()
+  def __repr__(self):
+    """ Dumps representation of self. """
+    args = []
+    if self.intervals is None: 
+      if self.levels is not None:
+        args.append('levels={0.levels!r}'.formas(self))
+    else:
+      args.append(repr(self.intervals))
+      if self.levels is not None: args.append(repr(self.levels))
+    return '{0.__class__.__name__}({1})'.format(self, ', '.join(args))
+  def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
+    from numpy import array, all, abs
+    from ..functools.uirepr import add_to_imports
+    if name is None:
+      name = getattr(self, '__ui_name__', self.__class__.__name__.lower())
+    if defaults is None or type(defaults) != type(self):
+      add_to_imports(self, imports)
+      return {name: self.__repr__()}
+    if self.levels is None: issame = defaults.levels is None
+    elif defaults.levels is None: issame = False
+    else: issame = all(array(defaults.levels) == self.levels)
+    if issame:
+      if self.intervals is None: issame = defaults.intervals is None
+      elif defaults.intervals is None: issame = False
+      else:
+        issame = all(abs(array(defaults.intervals) - self.intervals) < 1e-8)
+    if issame: return {}
+    return { '{0}.intervals'.format(name): repr(self.intervals), 
+             '{0}.levels'.format(name): repr(self.levels) }
 
 class GlobalGridKeyword(Keyword):
   """ Defines global grid keywords """

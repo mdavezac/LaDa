@@ -1,6 +1,6 @@
 def test_crystal():
   from numpy import all, abs, array
-  from lada.dftcrystal.geometry import Crystal
+  from lada.dftcrystal.crystal import Crystal
   a = Crystal()
   a.raw = '0 0 0\n'\
           '136\n'\
@@ -8,14 +8,14 @@ def test_crystal():
           '2\n'\
           '22 0.0 0.0 0.0\n'\
           '8  3.061526467783E-01 3.061526467783E-01 0.0\n'
-  assert a.spacegroup == 136
+  assert a.symmgroup == 136
   assert a.shift == 0
   assert a.ifhr == 0
   assert len(a.atoms) == 2
   assert a.atoms[0].type == 'Ti' and all(abs(a.atoms[0].pos) < 1e-8)
   assert a.atoms[1].type == 'O' and all(abs(a.atoms[1].pos-[0.30615265, 0.30615265, 0.0]) < 1e-8)
   a.raw = a.raw
-  assert a.spacegroup == 136
+  assert a.symmgroup == 136
   assert a.shift == 0
   assert a.ifhr == 0
   assert len(a.atoms) == 2
@@ -28,9 +28,9 @@ def test_crystal():
           '2\n'\
           '22 0.0 0.0 0.0\n'\
           '8  3.061526467783E-01 3.061526467783E-01 0.0\n'
-  assert a.spacegroup == 'P 42/M N M'
+  assert a.symmgroup == 'P 42/M N M'
   a.raw = a.raw
-  assert a.spacegroup == 136
+  assert a.symmgroup == 136
 
   a.raw = '1 1 0\n'\
           'P 42/M N M\n'\
@@ -64,7 +64,7 @@ def test_crystal():
   assert all(abs(a.shift - 5/24.0) < 1e-8)
 
   b = eval(repr(a), {'Crystal': Crystal, 'array': array})
-  assert b.spacegroup == a.spacegroup
+  assert b.symmgroup == a.symmgroup
   assert all(abs(array(b.params) - a.params) < 1e-8)
   assert len(b) == len(a)
   assert len(b.atoms) == len(a.atoms)

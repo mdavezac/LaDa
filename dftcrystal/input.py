@@ -670,25 +670,36 @@ class AttrBlock(Keyword):
 
   def read_input(self, tree, owner=None):
     """ Parses an input tree. """
-    from parse import InputTree
+    from ..error import internal
+    from .parse import InputTree
     from . import registered
     if hasattr(self, 'raw') and len(tree.raw) > 0: 
       try: self.raw = tree.raw
       except: pass
+    do_breaksym = False
+    has_breakkeep = False
     for key, value in tree:
       # parses sub-block.
+      # check for special keywords.
+      if key.lower() == 'keepsymm':
+        do_breaksym, has_breakkeep = False, True
+        continue
+      if key.lower() == 'breaksym':
+        do_breaksym, has_breakkeep = True, True
+        continue
       if key.lower() in self._crysinput: 
         newobject = self._crysinput[key.lower()] 
         if hasattr(newobject, 'read_input'):
           newobject.read_input(value, owner=self)
-          continue
-        elif hasattr(newobject, 'raw'):
-          newobject.raw = value
-          continue
-        elif hasattr(newobject, '__set__'):
-          print hasattr(newobject, 'raw'), key, newobject
-          newobject.__set__(self, value)
-          continue
+        elif hasattr(newobject, 'raw'): newobject.raw = value
+        elif hasattr(newobject, '__set__'): newobject.__set__(self, value)
+        else:
+          raise internal( "LaDa doesn't understand how to read input to {0}"   \
+                          .format(key.lower()) )
+        if has_breakkeep and hasattr(newobject, 'breaksym'):
+          newobject.breaksym = do_breaksym
+        do_breaksym, has_breakkeep = False, False
+        continue
       if isinstance(value, InputTree):
         newobject = registered.get(key.lower(), AttrBlock)()
         newobject.read_input(value, owner=self)
@@ -701,6 +712,7 @@ class AttrBlock(Keyword):
       elif len(value) == 0: newobject = True
       else: newobject = value
       self.add_keyword(key.lower(), newobject)
+      has_breakkeep = False
 
   def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
     """ Creates user friendly representation. """
@@ -718,9 +730,10 @@ class AttrBlock(Keyword):
         newname = name + '.' + key
         partial = value.__ui_repr__(imports, newname, default)
         results.update(partial)
-        donoinit = defaults is not None and key in defaults._crysinput         \
-                   and type(value) is type(defaults._crysinput[key])
-        if newname not in results and not donoinit:
+        if newname in results:              doinit = False
+        elif default is None:               doinit = True
+        else: doinit = type(value) is not type(default)
+        if doinit:
           results[newname] = '{0.__class__.__name__}()'.format(value)
           add_to_imports(value, imports)
       elif isinstance(value, Keyword):
@@ -745,6 +758,14 @@ class AttrBlock(Keyword):
         add_to_imports(value, imports)
     
     return results
+  
+  def __getstate__(self):
+    d = self.__dict__.copy()
+    crysinput = d.pop('_crysinput')
+    return d, crysinput
+  def __setstate__(self, value):
+    self.__dict__['_crysinput'] = value[1]
+    self.__dict__.update(value[0])
 
 class ChoiceKeyword(Keyword):
   """ Keyword value must be chosen from a given set. """

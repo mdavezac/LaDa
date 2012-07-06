@@ -26,10 +26,10 @@ class GeometryOpt(BoolKeyword):
     if self.value:
       if instance.maxcycle is not None and instance.maxcycle < 1:
         instance.maxcycle = 100
-      if self.keyword != 'fulloptg':  instance.fulloptg = False
-      if self.keyword != 'cellonly':  instance.cellonly = False
+      if self.keyword != 'fulloptg':  instance.fulloptg  = False
+      if self.keyword != 'cellonly':  instance.cellonly  = False
       if self.keyword != 'itatocell': instance.itatocell = False
-      if self.keyword != 'intredun':  instance.intredun = False
+      if self.keyword != 'interdun':  instance.interdun  = False
       if self.keyword != 'fulloptg' and self.keyword != 'cellonly':
         instance.cvolopt = False
 
@@ -116,6 +116,20 @@ class ExclAttrBlock(AttrBlock):
     """ Does not print if static. """
     if not self.enabled: return None
     return super(ExclAttrBlock, self).print_input(**kwargs)
+
+  def __getstate__(self):
+    d = self.__dict__.copy()
+    d['_parent'] = None
+    return d
+  def __setstate__(self, value):
+    self.__dict__.update(value)
+
+  def __ui_repr__(self, imports, name=None, defaults=None, exclude=None):
+    """ User-friendly output. """
+    # make sure enabled is printed.
+    if defaults is not None: defaults.enabled = not self.enabled
+    return super(ExclAttrBlock, self).__ui_repr__( imports, name,              \
+                                                   defaults, exclude )
 
 class OptGeom(ExclAttrBlock):
   """ Geometry Optimization block. """

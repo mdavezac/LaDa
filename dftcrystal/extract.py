@@ -118,7 +118,6 @@ class ExtractBase(object):
         if len(line) <= len(search): continue
         if line[:len(search)] == search: break
       line = file.next().rstrip().lstrip()
-      if line[-1] == '\n': line = line[:-1]
       return line
       
   @property
@@ -239,7 +238,10 @@ class ExtractBase(object):
       atom.pos = array(file.next().split()[3:6], dtype='float64')
 
     # adds more stuff
-    result.name = self.title
+    try: title = self.title
+    except: pass
+    else:
+     if len(title) > 0: result.name = title
     return result
 
   def _find_structure(self, file):

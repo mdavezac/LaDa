@@ -66,7 +66,7 @@ def parse(path, needstarters=True):
 
       # first of subblock
       if len(nesting) and keyword == nesting[-1]: current.raw = raw
-      elif keyword is not None and keyword[:3] != 'END'                         \
+      elif keyword is not None and keyword[:3] != 'END'                        \
            and keyword[:6] != 'STOP':
         current.append((keyword, raw)) 
 

@@ -1,7 +1,7 @@
 __docformat__ = "restructuredtext en"
 __all__ = ['BasisSet', 'Shell']
 from quantities import UnitQuantity, angstrom
-from .input import AttrBlock
+from .input import AttrBlock, VariableListKeyword
 
 crystal_bohr = UnitQuantity('crystal_bohr', 0.5291772083*angstrom, symbol='bohr')
 """ Bhor radius as defined by CRYSTAL. """
@@ -152,13 +152,91 @@ class Shell(object):
 
   def __len__(self): return len(self.functions)
 
+class Ghosts(VariableListKeyword):
+  """ Removes atoms but keeps basis functions. 
+
+      This keyword should be in the basis subsection of the input.
+      In practice, it can be set as follows::
+
+        functional.basis.ghosts = [1, 3, 5], False
+
+      This results in the following crystal input:
+
+        | KEEPSYM
+        | GHOSTS
+        | 3
+        | 1 3 5
+
+      The first item in the tuple is a sequence of atomic lables (e.g.
+      integers). The second is whether or not to break symmetries. It is True
+      by default. In the above, symmetries are kept. Hence atoms equivalent
+      those explicitely given are also removed.
+
+      The two attributes can also be obtained and set using
+      :py:attr:`~Ghosts.value` and :py:attr:`~Ghosts.breaksym':
+
+        >>> functional.basis.breaksym
+        True
+        >>> functional.basis.value
+        [1, 3, 5]
+
+  """
+  type = int
+  """ Type of the labels. """
+  keyword = 'ghosts'
+  """ CRYSTAL keyword """
+  def __init__(self, value=None, **kwargs):
+    """ Creates Ghost keyword. 
+    
+        :param [int] value:
+          List of atom lables referencing atoms from which to make ghosts.
+        :param bool keepsym: 
+          Whether to keep symmetries or not. Defaults to True. If symmetries
+          are kept, then all symmetrically equivalent atoms are ghosted. 
+        :param bool breaksym:
+          Whether to break symmetries or not. Defaults to False.
+          Only one of breaksymm needs be specified. If both are, then they
+          should be consistent.
+    """
+    super(Ghosts, self).__init__(value=value)
+    self.breaksym = kwargs.get('breaksym', not kwargs.get('keepsym', True))
+    """ Whether or not to break symmetries.
+    
+        Defaults to False. If symmetries are not broken, then all equivalent
+        atoms are removed.
+    """
+  @property
+  def keepsym(self):
+    """ Not an alias for breaksym. """
+    return not self.breaksym
+  @keepsym.setter
+  def keepsym(self, value):
+    self.breaksym = not value
+  def __repr__(self): 
+    """ Dumps representation to string. """
+    args = []
+    if self.value is not None: args.append(repr(self.value))
+    if self.breaksym == True: args.append("breaksym=True")
+    return "{0.__class__.__name__}(".format(self) + ', '.join(args) + ')'
+  def print_input(self, **kwargs):
+    """ Prints CRYSTAL input """
+    result = 'KEEPSYM\n' if self.keepsym else 'BREAKSYM\n'
+    result += self.keyword.upper() + '\n'
+    result += self.raw
+    return result
+  def __set__(self, instance, value): 
+    """ Setting Ghosts made easy. """
+    if not len(value) == 2:
+      raise ValueError('Expected two items when setting ghosts.')
+    self.value, self.breaksym = value
+
 class BasisSet(AttrBlock):
   """ Basis set block. """
   __ui_name__ = 'basis'
   """ Name used when printing user-friendly repr. """
   def __init__(self):
     """ Creates basis set block. """
-    from .input import BoolKeyword, VariableListKeyword
+    from .input import BoolKeyword
     super(BasisSet, self).__init__()
     self._functions = {}
     """ Dictionary holding basis functions """
@@ -172,7 +250,7 @@ class BasisSet(AttrBlock):
     """ Disable basis set printing """
     self.paramprt = BoolKeyword()
     """ Print code dimensions parameters """
-    self.ghosts   = VariableListKeyword(type=int)
+    self.ghosts   = Ghosts()
     """ Remove atoms while keeping basis functions. """
 
   def _print_basis(self, structure=None):

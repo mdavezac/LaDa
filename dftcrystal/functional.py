@@ -122,17 +122,17 @@ class Functional(object):
 
     # now add basis
     result = result.rstrip()
-    if result[-1] != '\n': result += '\n'
+    if len(result): result += '\n'
     result += self.basis.print_input(**kwargs)
 
     # add scf block
     result = result.rstrip()
-    if result[-1] != '\n': result += '\n'
+    if len(result): result += '\n'
     result += self.scf.print_input(**kwargs)
 
     # end input and return
     result = result.rstrip()
-    if result[-1] != '\n': result += '\n'
+    if len(result): result += '\n'
     return result + 'END\n'
 
   def guess_workdir(self, outdir):
@@ -317,3 +317,7 @@ class Functional(object):
     result = self.__class__()
     result.__dict__ = deepcopy(self.__dict__)
     return result
+
+  def __getstate__(self): return self.__dict__
+  def __setstate__(self, value):
+    self.__dict__.update(value.copy())

@@ -1,6 +1,6 @@
 def test_crystal():
   from numpy import array
-  from lada.dftcrystal.geometry import Crystal
+  from lada.dftcrystal.crystal import Crystal
   structure = Crystal(136, 4.63909875, 2.97938395, \
                       ifhr=0, \
                       shift=0)\
