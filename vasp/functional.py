@@ -11,7 +11,7 @@ class Vasp(Incar):
   Extract = staticmethod(Extract)
   """ Extraction class. """
 
-  def __init__(self, copyfrom=None, species=None, kpoints=None, **kwargs):
+  def __init__(self, copy=None, species=None, kpoints=None, **kwargs):
     """ Initializes vasp class. """
     super(Vasp, self).__init__()
 
@@ -19,10 +19,10 @@ class Vasp(Incar):
     """ If True and self. CONTCAR exists in directory, will restart from it. """
 
     # copies values from other functional.
-    if copyfrom is not None: 
-      self.params.update(copyfrom.params)
-      self.special.update(copyfrom.special)
-      for key, value in copyfrom.__dict__.iteritems():
+    if copy is not None: 
+      self.params.update(copy.params)
+      self.special.update(copy.special)
+      for key, value in copy.__dict__.iteritems():
         if key in kwargs: continue
         elif key == 'params': continue
         elif key == 'special': continue
@@ -55,7 +55,7 @@ class Vasp(Incar):
       if hasattr(self, key): setattr(self, key, value)
 
   def __call__( self, structure, outdir=None, comm=None, overwrite=False, 
-                mpirun_exe=None, **kwargs):
+                **kwargs):
     """ Calls vasp program. """
     result = None
     for program in self.iter(structure, outdir=outdir, comm=comm, overwrite=overwrite, **kwargs):
@@ -67,21 +67,22 @@ class Vasp(Incar):
       program.start(comm)
       program.wait()
     # Last yield should be an extraction object.
-    if not result.success: raise RuntimeError("Vasp failed to execute correctly.")
+    if not result.success:
+      raise RuntimeError("Vasp failed to execute correctly.")
     return result
 
-  @assign_attributes(ignore=['overwrite'])
+  @assign_attributes(ignore=['overwrite', 'comm'])
   @stateless
-  def iter( self, structure, outdir=None, comm=None, overwrite=False, **kwargs ):
+  def iter(self, structure, outdir=None, comm=None, overwrite=False, **kwargs):
     """ Performs a vasp calculation 
      
-        If successfull results (see ``extract.Extract.success``) already exist
-        in outdir, calculations are not repeated. Instead, an extraction object
-        for the stored results are given.
+        If successfull results (see :py:attr:`extract.Extract.success`) already
+        exist in outdir, calculations are not repeated. Instead, an extraction
+        object for the stored results are given.
 
         :param structure:  
-            :class:`Structure <lada.crystal.Structure>` structure to compute,
-            *unless* a CONTCAR already exists in ``outdir``, in which case this
+            :py:class:`~lada.crystal.Structure` structure to compute, *unless*
+            a CONTCAR already exists in ``outdir``, in which case this
             parameter is ignored. (This feature can be disabled with the
             keyword/attribute ``restart_from_contcar=False``).
         :param outdir:
@@ -93,8 +94,8 @@ class Vasp(Incar):
             Holds arguments for executing VASP externally.
         :param overwrite:
             If True, will overwrite pre-existing results. 
-            If False, will check whether a successfull calculation exists. If one does, 
-            then does not execute. 
+            If False, will check whether a successfull calculation exists. If
+            one does, then does not execute. 
         :param kwargs:
             Any attribute of the VASP instance can be overidden for
             the duration of this call by passing it as keyword argument.  
@@ -143,15 +144,21 @@ class Vasp(Incar):
     if abs(det(structure.cell)) < 1e-8: raise ValueError("Structure with zero volume.")
     if abs(structure.scale) < 1e-8: raise ValueError("Structure with null scale.")
 
-    self.pullup(structure, outdir, comm)
+    # copies/creates file environment for calculation.
+    self.bringup(structure, outdir, comm)
+    # figures out what program to call.
     program = self.program if self.program is not None else vasp_program
     if hasattr(program, '__call__'): program = program(self)
-    yield ProgramProcess( program, cmdline=[], outdir=outdir, 
-                          stdout='stdout', stderr='stderr', dompi=True )
-    self.bringdown(outdir, structure)
+    # creates a process with a callback to bring-down environment once it is
+    # done.
+    def onfinish(process, error):  self.bringdown(outdir, structure)
+    yield ProgramProcess( program, cmdline=[], outdir=outdir,
+                          onfinish=onfinish, stdout='stdout', stderr='stderr',
+                          dompi=True )
+    # yields final extraction object.
     yield Extract(outdir)
 
-  def pullup(self, structure, outdir, comm):
+  def bringup(self, structure, outdir, comm):
     """ Creates all input files necessary to run results.
 
         Performs the following actions.

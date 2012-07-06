@@ -65,12 +65,13 @@ def copyfile(src, dest=None, nothrow=None, symlink=False, aslink=False, nocopyem
           Destination file or directory.
       :param nothrow:
           Throwing is disable selectively depending on the content of nothrow:
-          - *exists*: will not throw is src does not exist.
-          - *isfile*: will not throw is src is not a file.
-          - *same*: will not throw if src and dest are the same.
-          - *none*: ``src`` can be None.
-          - *null*: ``src`` can be '/dev/null'.
-          - *never*: will never throw.
+
+            - exists: will not throw is src does not exist.
+            - isfile: will not throw is src is not a file.
+            - same: will not throw if src and dest are the same.
+            - none: ``src`` can be None.
+            - null: ``src`` can be '/dev/null'.
+            - never: will never throw.
 
       :param symlink:
           Creates link rather than actual hard-copy. Symlink are
@@ -103,7 +104,7 @@ def copyfile(src, dest=None, nothrow=None, symlink=False, aslink=False, nocopyem
     if dest == '/dev/null': return True
     if src  == '/dev/null':
       if 'null' in nothrow: return False
-      raise IOError("Source is '/dev/null' but Destination is {0}.".format(destination))
+      raise IOError("Source is '/dev/null' but Destination is {0}.".format(dest))
 
     # checks that input source file exists.
     if not exists(src): 

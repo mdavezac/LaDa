@@ -1,0 +1,102 @@
+from pickle import loads, dumps
+def test_molecule():
+  from numpy import all, abs, array
+  from lada.dftcrystal.molecule import Molecule
+
+  l = ['Ge', 'Si']
+  a = Molecule()
+  a.add_atom(0, 0, 0, 'Si')
+  a.add_atom(1, 2, 3, l)
+
+  c, d = loads(dumps((l, a)))
+  assert len(d.atoms) == 2
+  assert d.__class__ is Molecule
+  assert d.keyword == a.keyword
+  assert all(abs(d.atoms[0].pos - a.atoms[0].pos) < 1e-8)
+  assert all(abs(d.atoms[1].pos - a.atoms[1].pos) < 1e-8)
+  assert all(d.atoms[0].type == a.atoms[0].type)
+  assert all(d.atoms[1].type is c)
+  assert all(array(c) == l)
+
+def test_hamiltonian():
+  from lada.dftcrystal.hamiltonian import Dft
+
+  a = Dft()
+  b = loads(dumps(a))
+  assert repr(a) == repr(b)
+
+  a.b3lyp = True
+  a.xxlgrid = True
+  assert repr(a) == repr(loads(dumps(a)))
+
+def test_electronic():
+  from lada.dftcrystal.electronic import Electronic
+
+  a = Electronic()
+  assert repr(a) == repr(loads(dumps(a)))
+  a.shrink = [8, 8, 9], None
+  a.tolinteg = 8, 8, 8, 8, 14
+  a.dft.b3lyp = True
+  a.dft.exchange = 'lda'
+  a.dft.xxlgrid = True
+  assert repr(a) == repr(loads(dumps(a)))
+
+def test_optgeom():
+  from lada.dftcrystal.optgeom import OptGeom
+  from lada.dftcrystal.input import AttrBlock
+  a = OptGeom()
+  assert repr(a) == repr(loads(dumps(a)))
+  a.maxcycle = 50
+  a.fulloptg = True
+  assert repr(a) == repr(loads(dumps(a)))
+  assert repr(OptGeom()) != repr(loads(dumps(a)))
+
+  c = AttrBlock()
+  c.optgeom = a
+  c.optgeom.maxcycle = 10
+  assert repr(c) == repr(loads(dumps(c)))
+
+def test_basis():
+  from lada.dftcrystal.basis import BasisSet, Shell
+
+  a = BasisSet()
+  assert repr(a) == repr(loads(dumps(a)))
+  a['H'] = [ Shell( 's', 1.0, 
+                    a0=[18.731137, 0.0334946],
+                    a1=[2.8253937, 0.23472695],
+                    a2=[0.6401217, 0.81375733] ),
+             Shell('s', 0.0, a0=[0.1612778, 1.0]), 
+             Shell('p', 0.0, a0=[1.1, 1.0]) ]
+  assert repr(a) == repr(loads(dumps(a)))
+  assert repr(BasisSet()) != repr(loads(dumps(a)))
+
+def test_functional():
+  from lada.dftcrystal import Functional, Shell
+  
+  a = Functional()
+  assert repr(a) == repr(loads(dumps(a)))
+  a.basis['H'] = [ Shell( 's', 1.0, 
+                          a0=[18.731137, 0.0334946],
+                          a1=[2.8253937, 0.23472695],
+                          a2=[0.6401217, 0.81375733] ),
+                   Shell('s', 0.0, a0=[0.1612778, 1.0]), 
+                   Shell('p', 0.0, a0=[1.1, 1.0]) ]
+  a.shrink = [8, 8, 9], None
+  a.tolinteg = 8, 8, 8, 8, 14
+  a.dft.b3lyp = True
+  a.dft.exchange = 'lda'
+  a.dft.xxlgrid = True
+  a.optgeom.maxcycle = 50
+  a.optgeom.fulloptg = True
+  assert repr(Functional()) != repr(loads(dumps(a)))
+  assert repr(a) == repr(loads(dumps(a)))
+  b = loads(dumps(a))
+  assert a.print_input(crystal=a) == b.print_input(crystal=b)
+
+if __name__ == '__main__':
+  test_molecule()
+  test_hamiltonian()
+  test_electronic()
+  test_optgeom()
+  test_basis()
+  test_functional()
