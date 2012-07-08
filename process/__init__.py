@@ -1,4 +1,57 @@
-""" Manages external programs. """
+""" Manages external processes and jobfolders. 
+
+    This sub-module provides an abstraction between resources which
+    purports to launch external programs, say a
+    :py:class:`~lada.vasp.functional.Vasp` instance, and the actual
+    program. There are two main issues the module attempts to resolve: 
+
+      - an interface which hides the details of launching mpi jobs on one
+        or another super-computer
+      - an interface to launch different calculations in parallel but from
+        a single actual system process, e.g. asynchronous management of
+        different mpi-processes
+    
+    The first point above is easy to understand: some machines use openmpi_
+    as is, others provide different flavors of mpich, and Cray use their
+    own crap pseudo-proprietary software. It's best to keep all those
+    details in one place. The second point is to make it easy to launch
+    different calculations simultaneously. It provides an additional layer
+    for parallelization, in addition to the one provided below at the
+    application level by mpich and friends,  and above it by the queuing
+    system of a particular super-computer. 
+
+    The module is organized around :py:class:`~process.Process` and its
+    derived classes. Instances of these classes are meant to be used as
+    follows::
+
+      process = SomeProcess()
+      process.start(comm)
+      # do something else
+      try:
+       if process.poll():
+         # process did finish.
+      except Fail as e: 
+        # an error occured
+
+    The first two lines initialize and start a process of some kind, which
+    could be as simple as lauching an external :py:class:`program
+    <program.ProgramProcess>` or as complicated as lauching different jobs
+    from a :py:class:`~lada.jobfolder.jobfolder.JobFolder` instance in
+    :py:class:`parallel <jobfolder.JobFolderProcess>`. The rest of the
+    snippet checks whether the process is finished. If it finished
+    correctly, then :py:meth:`~process.Process.poll` (rather, the overloaded
+    functions in the derived class) returns True. Otherwise, it throws
+    :py:class:`Fail`.
+
+    It is expected that processes will be returned (or yielded) by
+    functionals, and then further managed by the script of interest. As such,
+    the initialization of a process will depend upon the actual functional,
+    and what it purports to do. However, it should be possible from then on
+    to manage the process in a standard way. This standard interface is
+    described by the abstract base class :py:class:`~process.Process`.
+
+    .. _openmpi: http://www.open-mpi.org/
+"""
 __docformat__ = "restructuredtext en"
 __all__  = [ 'Process', 'ProgramProcess', 'CallProcess', 'IteratorProcess',
              'JobFolderProcess', 'PoolProcess', 'Fail', 'which', 'DummyProcess' ]
@@ -18,7 +71,17 @@ class Fail(ProcessError):
   """ Process failed to run successfully. """
   pass
 class AlreadyStarted(ProcessError):
-  """ Process already started. """
+  """ Process already started.
+      
+      Thrown when :py:meth:`~process.Process.start` or its overloaded friend is
+      called for a second time.
+  """
+class NotStarted(ProcessError):
+  """ Process was never started.
+      
+      Thrown when :py:meth:`~process.Process.poll` or its overloaded friend is
+      called before the process is started.
+  """
 
 def which(program):
   """ Gets location of program by mimicking bash which command. """

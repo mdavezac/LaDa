@@ -12,3 +12,5 @@ Contents:
     lada.vasp <pyapi/vasp>
 
     lada.jobfolder <pyapi/jobfolder>
+
+    lada.process <pyapi/process>

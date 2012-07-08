@@ -1,28 +1,73 @@
 from abc import ABCMeta, abstractmethod
 
 class Process(object):
-  """ Some methods and attributes process classes have in common. """
+  """ Abstract base class of all processes. 
+  
+      This class defines the interface for processes. Derived classes should
+      overload :py:meth:`start`, :py:meth:`poll`, and :py:meth:`wait`. The
+      first is called to actually launch the sub-process (for instance, an
+      actual call to vasp in :py:class:`~program.ProgramProcess`). It receives
+      a dictionary or :py:class:`Communicator` instance with a description of
+      how the process should be launched, eg the number of processors, nodes,
+      and so forth. At this point, an external child program will generally be
+      running. The second function, :py:meth:`poll`, is called to check whether
+      the sub-process, say VASP, is still running. It returns True if the
+      process is finished. The last function is equivalent to calling
+      :py:meth:`poll` until it returns True.
+
+      Futhermore, a process can be :py:meth:`terminated <terminate>`,
+      :py:meth:`killed <kill>` and :py:meth:`cleaned up <_cleanup>`.
+      In general, a process is used as follows::
+ 
+        # initialized
+        process = SomeProcess()
+        # started on a number of processors
+        process.start(comm)
+        # checked 
+        try: 
+          if process.poll():
+            # finished, do something
+        except Fail as e:
+          # error, do something
+  """ 
   __metaclass__ = ABCMeta
   def __init__(self, maxtrials=1, **kwargs):
     """ Initializes a process. """
     super(Process, self).__init__()
 
-    self.params = kwargs
-    """ Extra parameters passed on to functional's iterator. """
     self.nberrors = 0
-    """ Number of restart on errors. """
+    """ Number of times process was restarted.
+        
+        Some derived instances may well restart a failed sub-process. This is
+        how often it has been restarted.
+    """
     self.maxtrials = maxtrials
     """ Maximum number of restarts. """
     self.process = None
-    """ Currently running process. """
+    """ Currently running process.
+    
+        This is the sub-process handled by this instance. At the lowest
+        level, it is likely an instance of `subprocess.Popen`__. It may,
+        however, be a further abstraction, such as a
+        :py:class:`~process.program.ProgramProcess` instance.
+
+        .. __ : http://docs.python.org/library/subprocess.html#subprocess.Popen
+    """
     self.started = False
-    """ Whether the program was ever started. """
+    """ Whether the process was ever started.
+    
+        Whether :py:meth:`start` was called. It may only be called once. 
+    """
 
   @abstractmethod
   def poll(self): 
-    """ Polls current job. """
-    from ..error import internal
-    if not self.started: raise internal("Process was never started.")
+    """ Polls current job.
+        
+        :return: True if the process is finished.
+        :raise NotStarted: If the process was never launched.
+    """
+    from . import NotStarted
+    if not self.started: raise NotStarted("Process was never started.")
     return self.nbrunning_processes == 0
 
   @property 
@@ -41,7 +86,21 @@ class Process(object):
 
   @abstractmethod
   def start(self, comm):
-    """ Starts current job. """
+    """ Starts current job. 
+    
+        :returns: True if process is alread finished.
+        
+        :raises MPISizeError:
+        
+           if no communicator is not None and `comm['n'] == 0`. Assumes that
+           running on 0 processors is an error in resource allocation.
+        
+        :raise AlreadyStarted:
+        
+           When called for a second time. Each process should be unique: we
+           do not want to run the VASP program twice in the same location,
+           especially not simultaneously.
+    """
     from . import AlreadyStarted
     from .mpi import MPISizeError, Communicator
     if self.done: return True
@@ -56,7 +115,8 @@ class Process(object):
     """ Cleans up behind process instance.
     
         This may mean closing standard input/output file, removing temporary
-        files.. By default, calls cleanup of process, and sets process to None.
+        files.. By default, calls cleanup of :py:attr:`process`, and sets
+        :py:attr:`process` to None.
     """
     try:
       if hasattr(self.process, '_cleanup'): self.process._cleanup()

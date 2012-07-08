@@ -1,6 +1,6 @@
-===========
-Jobs Module
-===========
+================
+JobFolder Module
+================
 
 .. automodule:: lada.jobfolder
    
