@@ -40,7 +40,7 @@ namespace LaDa
         }
       try
       { 
-        math::hf_normal_form( hf, left, int_cell, right );
+        math::smith_normal_form( hf, left, int_cell, right );
         _self->transform = left.cast<types::t_real>() * (!_lattice);
         _self->quotient = hf.diagonal();
         return true;

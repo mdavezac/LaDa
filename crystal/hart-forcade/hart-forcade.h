@@ -7,7 +7,7 @@
 #include <boost/static_assert.hpp>
 
 
-#include <math/hf_normal_form.h>
+#include <math/smith_normal_form.h>
 #include <python/object.h>
 #include "../structure/structure.h"
 #include "pybase.h"

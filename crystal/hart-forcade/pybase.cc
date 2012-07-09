@@ -10,7 +10,7 @@
 #include <python/exceptions.h>
 #include <python/wrap_numpy.h>
 #include <math/fuzzy.h>
-#include <math/hf_normal_form.h>
+#include <math/smith_normal_form.h>
 
 #include "../structure/pybase.h"
 

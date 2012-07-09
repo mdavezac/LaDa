@@ -56,7 +56,7 @@ class Cluster(object):
       raise IndexError('Incorrect flavor for given sublattice.')
 
     # create spin and adds it to group.
-    return spin(position, flavor, sublattice)
+    return spin(position - self.lattice[sublattice].pos, flavor, sublattice)
 
   def add_spin(self, position, flavor=0):
     """ Adds a spin to array. 
@@ -79,10 +79,13 @@ class Cluster(object):
       if all(any(cluster.spins == s) for s in spins): return True
     return False
 
-
-  def _get_symmetrized(self):
+  def _create_symmetrized(self):
     """ Computes equivalent clusters. """
-    from numpy import concatenate
+    from numpy import concatenate, all
+    from numpy.linalg import norm
+    from lada.error import ValueError
+    if all( norm(v) > 1e-8 for v in self.spins['position'] ):
+      raise ValueError('Expected at least one spin in the unit cell.')
     self._symmetrized = []
     for op in self.spacegroup:
       # transform spins
@@ -91,3 +94,70 @@ class Cluster(object):
       spins = concatenate(spins)
       # check if exists in symmetrized bits.
       if not self._contains(spins): self._symmetrized.append(spins)
+
+  def occupation_mapping(self):
+    """ Map of occupations to cluster function
+    
+        A mapping which returns the value of a particular spin according to
+        occupation and flavor::
+          
+          mapping = cluster.occupation_mapping()
+          mapping[atom.site][spin_flavor][atom.type]
+
+        where ``atom`` is an element of a structure, ``atom.site`` is likely
+        the index of the atomic site into the backbone lattice, and atom.flavor
+        is the flavor of a spin this particular cluster.
+    """
+    from numpy import cos, sin, pi
+    result = []
+    for site in self.lattice:
+      if not hasattr(site.type, '__iter__'): result.append(None)
+      if len(site.type) < 2: result.append(None)
+      result.append([])
+      for flavor in xrange(len(site.type)-1): 
+        result[-1].append({})
+        for i, type in enumerate(sorted(site.type)):
+          arg = pi*float(flavor) * float(i) / float(len(site.type))
+          if flavor % 2 == 0: result[-1][-1][type] = -cos(arg)
+          else: result[-1][-1][type] = -sin(arg)
+    return result
+
+  def __call__(self, structure, mapping=None, transform=None, fhmapping=None):
+    """ Returns PI of a particular structure. """
+    from lada.crystal import HFTransform
+    if not hasattr(self, '_symmetrized'): self._create_symmetrized()
+    if mapping is None: mapping = self.occupation_mapping
+    if transform is None: transform = HFTransform(self.lattice, structure)
+    if fhmapping is None: fhmapping = fhmap(self.lattice, structure)
+    result = 0e0
+    # loop over possible origin of cluster
+    for origin in self.structure:
+      pos = origin.pos - self.lattice[origin.site].pos
+      # loop over symmetrically equivalent clusters
+      for spins in self._symmetrized:
+        # no need to double count
+        if spins['sublattice'][0] != origin.site: continue
+        intermediate = 1e0
+        # loop over each spin in cluster
+        for spin in spins: 
+          index = transform.index(pos + spin['pos'], spin['sublattice'])
+          atom  = structure[ fhmapping[index] ]
+          intermediate *= mapping[atom.site][spin['flavor']][atom.type]
+        result += intermediate
+    return result
+
+
+def fhmap(lattice, supercell):
+  """ Creates a map from Forkade-Hart indices to atom indices """
+  from lada.error import ValueError
+  from lada.crystal import HFTransform
+  transform = HFTransform(lattice, supercell)
+  results = {}
+  for i, atom in enumerate(supercell):
+    if not hasattr(atom, 'site') and len(lattice) > 0: 
+      raise ValueError( 'Atoms in supercell were not mapped to lattice. '      \
+                        'Please use lada.crystal.map_sites.' )
+    site = getattr(atom, 'site', 0)
+    index = transform.index(atom.pos - lattice[site].pos, site)
+    results[index] = i
+  return results
