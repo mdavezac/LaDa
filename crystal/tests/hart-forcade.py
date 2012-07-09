@@ -1,13 +1,12 @@
-""" Regression tests for smith stuff. """
+""" Regression tests for hf stuff. """
 def test1():
   from random import randint
   from numpy import all, abs, dot, array
-  from numpy.linalg import det
-  from lada.crystal.cppwrappers import SmithTransform
+  from lada.crystal.cppwrappers import HFTransform
   
   unitcell = array([[0,0.5,0.5],[0.5,0,0.5],[0.5,0.5,0]])
   supercell = array([[1,0,0],[0,1,0],[0,0,1]])
-  a = SmithTransform(unitcell, supercell)
+  a = HFTransform(unitcell, supercell)
   assert all(abs(a.transform-[[1, 1, -1],[0, 2, 0],[0, 0, 2]]) < 1e-8)
   assert all(abs(a.quotient-[1,2,2]) < 1e-8)
   for i in xrange(20):
@@ -21,14 +20,13 @@ def test1():
 def test2():
   from random import randint
   from numpy import all, abs, dot, array
-  from numpy.linalg import det
-  from lada.crystal.cppwrappers import SmithTransform, Structure, supercell
+  from lada.crystal.cppwrappers import HFTransform, Structure, supercell
   
   unitcell = array([[0,0.5,0.5],[0.5,0,0.5],[0.5,0.5,0]])
   lattice = Structure(unitcell).add_atom(0,0,0, "Si")
   supercell = supercell(lattice, dot(lattice.cell, [[3,0,5],[0,0,-1],[-2,1,2]]))
 
-  a = SmithTransform(unitcell, supercell)
+  a = HFTransform(unitcell, supercell)
 
   assert all(abs(a.transform-[[0, 2, 0],[1, 5, -1],[-2, -4, 0]]) < 1e-8)
   assert all(abs(a.quotient-[1,1,3]) < 1e-8)
@@ -76,13 +74,12 @@ def b5(u=0.25):
 def test3(u):
   from random import randint
   from numpy import all, abs, dot, array, concatenate
-  from numpy.linalg import det
-  from lada.crystal.cppwrappers import SmithTransform, Structure, supercell
+  from lada.crystal.cppwrappers import HFTransform, supercell
   
   lattice = b5(u)
   supercell = supercell(lattice, dot(lattice.cell, [[2,2,0],[0,2,2],[4,0,4]]))
 
-  a = SmithTransform(lattice.cell, supercell)
+  a = HFTransform(lattice.cell, supercell)
 
   assert all(abs(a.transform-[[-1, 1, 1],[1, -1, 1],[5, -3, -1]]) < 1e-8)
   assert all(abs(a.quotient-[2,2,8]) < 1e-8)

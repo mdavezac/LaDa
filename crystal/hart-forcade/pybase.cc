@@ -10,14 +10,14 @@
 #include <python/exceptions.h>
 #include <python/wrap_numpy.h>
 #include <math/fuzzy.h>
-#include <math/smith_normal_form.h>
+#include <math/hf_normal_form.h>
 
 #include "../structure/pybase.h"
 
 #include "pybase.h"
-// smithtransform getters/settters.
+// hftransform getters/settters.
 #include "get.hpp"
-// smithtransform member functions.
+// hftransform member functions.
 #include "members.hpp"
 // creation, deallocation, initialization.
 #include "cdi.hpp"
@@ -26,42 +26,42 @@ namespace LaDa
 {
   namespace crystal
   {
-    //! Creates a new smithtransform with a given type.
-    SmithTransformData* PySmithTransform_NewWithArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs)
+    //! Creates a new hftransform with a given type.
+    HFTransformData* PyHFTransform_NewWithArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs)
     {
-      SmithTransformData* result = (SmithTransformData*)_type->tp_alloc(_type, 0);
+      HFTransformData* result = (HFTransformData*)_type->tp_alloc(_type, 0);
       return result;
     }
 
-    // Creates a new smithtransform with a given type, also calling initialization.
-    SmithTransformData* PySmithTransform_NewFromArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs)
+    // Creates a new hftransform with a given type, also calling initialization.
+    HFTransformData* PyHFTransform_NewFromArgs(PyTypeObject* _type, PyObject *_args, PyObject *_kwargs)
     {
-      SmithTransformData* result = PySmithTransform_NewWithArgs(_type, _args, _kwargs);
+      HFTransformData* result = PyHFTransform_NewWithArgs(_type, _args, _kwargs);
       if(result == NULL) return NULL;
       if(_type->tp_init((PyObject*)result, _args, _kwargs) < 0) {Py_DECREF(result); return NULL; }
       return result;
     }
 
-    // Creates a deepcopy of smithtransform.
-    SmithTransformData *PySmithTransform_Copy(SmithTransformData* _self, PyObject *_memo)
+    // Creates a deepcopy of hftransform.
+    HFTransformData *PyHFTransform_Copy(HFTransformData* _self, PyObject *_memo)
     {
-      SmithTransformData* result = (SmithTransformData*)_self->ob_type->tp_alloc(_self->ob_type, 0);
+      HFTransformData* result = (HFTransformData*)_self->ob_type->tp_alloc(_self->ob_type, 0);
       if(not result) return NULL;
       new(&result->transform) LaDa::math::rMatrix3d(_self->transform);
       new(&result->quotient) LaDa::math::iVector3d(_self->quotient);
       return result;
     }
-    // Returns pointer to smithtransform type.
-    PyTypeObject* smithtransform_type()
+    // Returns pointer to hftransform type.
+    PyTypeObject* hftransform_type()
     {
 #     ifdef LADA_DECLARE
 #       error LADA_DECLARE already defined.
 #     endif
 #     define LADA_DECLARE(name, doc) \
-        {const_cast<char*>(#name), (getter) smithtransform_get ## name, NULL, const_cast<char*>(doc)}
+        {const_cast<char*>(#name), (getter) hftransform_get ## name, NULL, const_cast<char*>(doc)}
       
       static PyGetSetDef getsetters[] = {
-          LADA_DECLARE(transform, "Transformation matrix to go from position to smith index."),
+          LADA_DECLARE(transform, "Transformation matrix to go from position to hf index."),
           LADA_DECLARE(quotient, "Periodicity quotient."),
           LADA_DECLARE(size, "Number of unitcells in the supercell."),
           {NULL}  /* Sentinel */
@@ -70,17 +70,17 @@ namespace LaDa
 #     define LADA_DECLARE(name, func, args, doc) \
         {#name, (PyCFunction)func, METH_ ## args, doc} 
       static PyMethodDef methods[] = {
-          LADA_DECLARE(copy, smithtransform_copy, NOARGS, "Returns a deepcopy of the smithtransform."),
-          LADA_DECLARE(__copy__, smithtransform_shallowcopy, NOARGS, "Shallow copy of an smithtransform."),
-          LADA_DECLARE(__deepcopy__, PySmithTransform_Copy, O, "Deep copy of an smithtransform."),
-          LADA_DECLARE(__getstate__, smithtransform_getstate, NOARGS, "Implements pickle protocol."),
-          LADA_DECLARE(__setstate__, smithtransform_setstate, O, "Implements pickle protocol."),
-          LADA_DECLARE(__reduce__,   smithtransform_reduce, NOARGS, "Implements pickle protocol."),
-          LADA_DECLARE( indices,   smithtransform_indices, O,
+          LADA_DECLARE(copy, hftransform_copy, NOARGS, "Returns a deepcopy of the hftransform."),
+          LADA_DECLARE(__copy__, hftransform_shallowcopy, NOARGS, "Shallow copy of an hftransform."),
+          LADA_DECLARE(__deepcopy__, PyHFTransform_Copy, O, "Deep copy of an hftransform."),
+          LADA_DECLARE(__getstate__, hftransform_getstate, NOARGS, "Implements pickle protocol."),
+          LADA_DECLARE(__setstate__, hftransform_setstate, O, "Implements pickle protocol."),
+          LADA_DECLARE(__reduce__,   hftransform_reduce, NOARGS, "Implements pickle protocol."),
+          LADA_DECLARE( indices,   hftransform_indices, O,
                         "indices of input atomic position in cyclic Z-group.\n\n"
                         ":param vec: A 3d-vector in the sublattice of interest.\n"
                         ":returns: The 3-d indices in the cyclic group.\n" ),
-          LADA_DECLARE( flatten_indices,   smithtransform_flatten_indices, VARARGS | METH_KEYWORDS,
+          LADA_DECLARE( flatten_indices,   hftransform_flatten_indices, VARARGS | METH_KEYWORDS,
                        "Flattens cyclic Z-group indices.\n\n"
                        ":param indices: (3-tuple of integers)\n"
                        "  Indices in the cyclic Z-group.\n"
@@ -88,7 +88,7 @@ namespace LaDa
                        "   Optional site index. If there are more than one sublattice in "
                           "the structure, then the flattened indices need to take this into "
                           "account.\n" ),
-          LADA_DECLARE( index,   smithtransform_flat_index, VARARGS | METH_KEYWORDS,
+          LADA_DECLARE( index,   hftransform_flat_index, VARARGS | METH_KEYWORDS,
                        "Flat index into cyclic Z-group.\n\n"
                        ":param pos: (3d-vector)\n"
                        "    Atomic position with respect to the sublattice of interest. "
@@ -104,8 +104,8 @@ namespace LaDa
       static PyTypeObject dummy = {
           PyObject_HEAD_INIT(NULL)
           0,                                 /*ob_size*/
-          "lada.crystal.cppwrappers.SmithTransform",   /*tp_name*/
-          sizeof(SmithTransformData),             /*tp_basicsize*/
+          "lada.crystal.cppwrappers.HFTransform",   /*tp_name*/
+          sizeof(HFTransformData),             /*tp_basicsize*/
           0,                                 /*tp_itemsize*/
           0,                                 /*tp_dealloc*/
           0,                                 /*tp_print*/
@@ -123,8 +123,8 @@ namespace LaDa
           0,                                 /*tp_setattro*/
           0,                                 /*tp_as_buffer*/
           Py_TPFLAGS_DEFAULT,                /*tp_flags*/
-          "Defines a smithtransform.\n\n"    /*tp_doc*/
-            "The smith transform computes the cyclic group of supercell "
+          "Defines a hftransform.\n\n"    /*tp_doc*/
+            "The Hart-Forcade transform computes the cyclic group of supercell "
             "with respect to its backbone lattice. It can then be used to index "
             "atoms in the supercell, irrespective of which periodic image is given [HF]_.\n\n"
             ":param lattice: (:py:func:`Structure` or matrix)\n   Defines the cyclic group.\n"
@@ -144,9 +144,9 @@ namespace LaDa
           0,                                 /* tp_descr_get */
           0,                                 /* tp_descr_set */
           0,                                 /* tp_dictoffset */
-          (initproc)smithtransform_init,     /* tp_init */
+          (initproc)hftransform_init,     /* tp_init */
           0,                                 /* tp_alloc */
-          (newfunc)PySmithTransform_NewWithArgs,  /* tp_new */
+          (newfunc)PyHFTransform_NewWithArgs,  /* tp_new */
       };
       return &dummy;
     }
