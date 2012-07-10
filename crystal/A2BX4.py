@@ -1,5 +1,10 @@
 """ Defines A2BX4 Lattices. """
 __docformat__ = "restructuredtext en"
+__all__ = [ 'b1', 'b10', 'b10I', 'b11', 'b12', 'b15', 'b16', 'b18', 'b19',
+            'b1I', 'b2', 'b20', 'b21', 'b2I', 'b33', 'b34', 'b35', 'b36',
+            'b37', 'b38', 'b4', 'b4I', 'b5', 'b5D', 'b5I', 'b6', 'b7', 'b8',
+            'b9', 'b9I', 'd1', 'd1I', 'd3', 'd3I', 'd9', 's1', 's1I', 's2',
+            's2I', 's3', 's3I' ]
 
 def d1I():
   """ d1I lattice """

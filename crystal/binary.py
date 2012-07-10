@@ -1,5 +1,6 @@
 """ Defines binary lattices. """
 __docformat__ = "restructuredtext en"
+__all__ = ['rock_salt', 'zinc_blende', 'wurtzite']
 
 def rock_salt():
   """ rock_salt lattice """
