@@ -1,12 +1,11 @@
 def test(executable):
   """ Tests CallProcess. Includes failure modes.  """
   from tempfile import mkdtemp
-  from os.path import join, exists
+  from os.path import join
   from shutil import rmtree
   from numpy import all, arange, abs, array
   from lada.process.call import CallProcess
   from lada.process import Fail, NotStarted
-  from lada.misc import Changedir
   from lada import default_comm
   from functional import Functional
   comm = default_comm.copy()
