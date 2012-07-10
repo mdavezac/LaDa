@@ -31,13 +31,12 @@ class ProgramProcess(Process):
 
       .. note ::
         
-        A :py:class:`~process.Fail` exception is thrown when the program
+        A :py:class:`~lada.process.Fail` exception is thrown when the program
         returns with a non-zero exit code. However, some propietary MPI
-        crapware, such as
-        Cray's. will return 0 whenever ``MPI::Finalize()`` is called, even when
-        the program itself returns non-zero. As a result, it is not possible to
-        rely on a :py:class:`~process.Fail` exception being thrown correctly on
-        all machines at all times.
+        crapware, such as Cray's. will return 0 whenever ``MPI::Finalize()`` is
+        called, even when the program itself returns non-zero. As a result, it
+        is not possible to rely on a :py:class:`~lada.process.Fail` exception
+        being thrown correctly on all machines at all times.
 
       .. __ : http://docs.python.org/library/subprocess.html#subprocess.Popen
       .. _VASP: http://www.vasp.at/
@@ -212,13 +211,14 @@ class ProgramProcess(Process):
       comm    = self._comm if self._modcomm is None else self._modcomm 
       cmdline = mpirun_exe
     else:
-      cmdline   = program + ' '.join(str(u) for u in self.cmdline)
+      cmdl = ' '.join(str(u) for u in self.cmdline)
+      cmdline   = '{0} {1}'.format(program, cmdl)
       comm      = None
       formatter = None
 
     self.process = launch( cmdline, comm=comm, formatter=formatter,
                            env=environ, stdout=file_out, stderr=file_err,
-			   stdin=file_in, outdir=self.outdir )
+			                     stdin=file_in, outdir=self.outdir )
 
   def _cleanup(self):
     """ Cleanup files and crap. """

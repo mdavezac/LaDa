@@ -86,7 +86,7 @@ class CallProcess(Process):
     self.process = ProgramProcess( executable, cmdline=[self._stdin], 
                                    outdir=self.outdir, stdout=self.stdout,
                                    stderr=self.stderr, maxtrials=1,
-                                   nompi=self.dompi )
+                                   dompi=self.dompi )
     self.process.start(comm=self._comm.lend('all') if self.dompi else None)
     return False
 
@@ -114,7 +114,7 @@ class CallProcess(Process):
   def wait(self):
     """ Waits for process to end, then cleanup. """
     if super(CallProcess, self).wait(): return True
-    while not self.poll(): self.process.wait()
+    while self.poll() == False: self.process.wait()
     self._cleanup()
     return False
 

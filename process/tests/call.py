@@ -56,7 +56,6 @@ def test(executable):
   finally:
     try: rmtree(dir)
     except: pass
-  return
 
   try: 
     functional = Functional(executable, [666])

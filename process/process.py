@@ -6,14 +6,14 @@ class Process(object):
       This class defines the interface for processes. Derived classes should
       overload :py:meth:`start`, :py:meth:`poll`, and :py:meth:`wait`. The
       first is called to actually launch the sub-process (for instance, an
-      actual call to vasp in :py:class:`~program.ProgramProcess`). It receives
-      a dictionary or :py:class:`Communicator` instance with a description of
-      how the process should be launched, eg the number of processors, nodes,
-      and so forth. At this point, an external child program will generally be
-      running. The second function, :py:meth:`poll`, is called to check whether
-      the sub-process, say VASP, is still running. It returns True if the
-      process is finished. The last function is equivalent to calling
-      :py:meth:`poll` until it returns True.
+      actual call to vasp in :py:class:`~lada.process.program.ProgramProcess`).
+      It receives a dictionary or :py:class:`Communicator` instance with a
+      description of how the process should be launched, eg the number of
+      processors, nodes, and so forth. At this point, an external child program
+      will generally be running. The second function, :py:meth:`poll`, is
+      called to check whether the sub-process, say VASP, is still running. It
+      returns True if the process is finished. The last function is equivalent
+      to calling :py:meth:`poll` until it returns True.
 
       Futhermore, a process can be :py:meth:`terminated <terminate>`,
       :py:meth:`killed <kill>` and :py:meth:`cleaned up <_cleanup>`.
@@ -131,6 +131,21 @@ class Process(object):
       if hasattr(self, '_comm'): 
         try: self._comm.cleanup()
         finally: del self._comm
+
+  def __del__(self):
+    """ Kills process if it exists.
+    
+        Tries and cleans up this instance cleanly. 
+        If a process exists, it is cleaned. The existence of this function
+        implies that the reference to this instance should best not be lost
+        until whatever it is supposed to oversee is finished doing its stuff.
+    """
+    if self.process is None: return
+    try: self.process.kill()
+    except: pass
+    try: self._cleanup()
+    except: pass
+
 
   def terminate(self):
     """ Terminates current process. """

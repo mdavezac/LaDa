@@ -99,7 +99,6 @@ def launch_program( cmdl, comm=None, formatter=None, env=None,
 
       .. _Popen:: http://docs.python.org/library/subprocess.html#popen-constructor
   """
-  from os.path import exists
   from shlex import split as shlex_split
   from subprocess import Popen
   from lada import machine_dependent_call_modifier
