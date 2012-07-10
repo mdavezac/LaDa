@@ -17,7 +17,9 @@ class Process(object):
 
       Futhermore, a process can be :py:meth:`terminated <terminate>`,
       :py:meth:`killed <kill>` and :py:meth:`cleaned up <_cleanup>`.
-      In general, a process is used as follows::
+      In general, a process is used as follows:
+
+      .. code-block:: python
  
         # initialized
         process = SomeProcess()
@@ -88,6 +90,10 @@ class Process(object):
   def start(self, comm):
     """ Starts current job. 
     
+        :param comm: 
+          Holds information about how to launch an mpi-aware process. 
+        :type comm: :py:class:`~process.mpi.Communicator`
+
         :returns: True if process is alread finished.
         
         :raises MPISizeError:

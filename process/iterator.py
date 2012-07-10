@@ -2,10 +2,112 @@ from .process import Process
 class IteratorProcess(Process):
   """ Executes an iteration function in child process. 
   
-      Expects folder with a functional which has an iter method.
-      This method should yield either an extractor object for previously
-      successful runs, or a derived :py:class:`~lada.process.process.Process`
-      instance to execute.
+      An iterator process is a *meta*-process which runs other processes
+      sequentially. I is one which needs iterating over, as shown more
+      explicitely below. Its interface is fairly similar to other processes.
+
+      .. code-block:: python
+
+        program = ProgramProcess(generator, outdir=dir, **kwargs)
+        program.start(comm)
+        try: program.wait()
+        except Fail:
+          # do something
+        
+      The main difference is in ``generator``: it is kind of *functional* which
+      will make more than one call to an external program. For instance, it
+      could be several calls to VASP, a first call to relax the strain,
+      followed by a static calculation. We want a process interface which hides
+      those details (i.e. the sequence of calls to one or more external
+      programs) from the owner of the process: the owner only wants to know
+      that the calculation is still on-going, not which particular step it is
+      at.
+
+      To do this, we use a generator_, i.e. an object which can be used in a
+      loop. It should yield_ one of two kinds of objects: (i) an extractor.
+      such as :py:class:`lada.vasp.extract.Extract`, or an instance derived
+      from :py:class:`~lada.vasp.process.Process`. In the former case, the
+      :py:class:`IteratorProcess` simply keeps looping. In the latter case, the
+      yielded process object is started and control is relinquished to the
+      owner of the :py:class:`IteratorProcess` instance. When the looping is
+      done, the final extraction object that was ever yielded is returned.
+
+      This approach can be put into the following (pseudo) code:
+
+      .. code-block:: python
+
+        for process in generator(**kwargs):
+          if hasattr(program, 'success'): 
+            result = process
+            # go to next iteration
+            continue
+          else:
+            # start process obtained in this iteration
+            process.start(self._comm)
+            # relinquish control to owner of self
+        # return the final extraction object
+        return result
+
+      A ``generator`` which implements two calls to an external program
+      ``EXTERNAL`` would look something like this:
+
+      .. code-block:: python
+
+        def generator(...):
+          # PERFORM FIRST CALCULATION
+          # check for success, e.g. pre-existing calculation
+          if Extract(outdir0).success: 
+            yield Extract(outdir0)
+          # otherwise yield a program process wich calls EXTERNAL
+          else:
+            yield ProgramProcess(EXTERNAL)
+            # check for success of this calculation.
+            # if an error occured, handle it or throw an error
+            if not Extract(outdir0).success: raise Exception()
+              
+
+          # PERFORM SECOND CALCULATION
+          # check for success, e.g. pre-existing calculation
+          if Extract(outdir1).success: 
+            yield Extract(outdir1)
+          # otherwise yield a program process wich calls EXTERNAL
+          else: yield ProgramProcess(EXTERNAL)
+
+          # yield the final extraction object. 
+          # this is usefull for things other than process management.
+          yield ExtractFinal(outdir)
+
+      To implement it, we need an extraction class, such as
+      :py:class:`lada.crystal.extract.Extract`, capable of checking in a
+      directory whether a successfull calculation already exists. If it does,
+      the generator should yield the extraction object. If it doesn't, it
+      should yield some :py:class:`~lada.process.process.Process` instance
+      capable of starting the external program of interest. 
+
+      The processes yielded by the input generator could be anything. It could
+      be, for instance, another instance of :py:class:`IteratorProcess`, or
+      simply a bunch of :py:class:`~lada.process.program.ProgramProcess`, or
+      something more comples, as long as it presents the interface defined by
+      :py:class:`~lada.process.process.Process`.
+
+      .. note::
+
+        It would be possible, of course, to simply create a python program which
+        does all the calls to the external programs itself. Then we wouldn't
+        have to deal with generators and loops explicitely. However, such an
+        approach would start one more child python program than strictly
+        necessarily, and hence would be a bit heavier. Nevertheless, since that
+        approach is somewhat simpler, it has been implemented in
+        :py:class:`~process.callprocess.CallProcess`.
+
+      .. seealso::
+       
+        :py:class:`~process.callprocess.CallProcess`,
+        :py:class:`~process.jobfolder.JobFolderProcess`,
+        :py:class:`~.pool.PoolProcess`.
+
+      .. _generator: http://docs.python.org/tutorial/classes.html#generators
+      .. _yield: http://docs.python.org/reference/simple_stmts.html#yield
   """
   def __init__(self, functional, outdir, maxtrials=1, **kwargs):
     """ Initializes a process. """
@@ -19,7 +121,6 @@ class IteratorProcess(Process):
     """ Current iterator. """
 
   def poll(self):
-    """ Polls current job. """
     from . import Fail
 
     # checks whether program was already started or not.
@@ -50,10 +151,12 @@ class IteratorProcess(Process):
 
     self._cleanup()
     return True
+  poll.__doc__ = Process.poll.__doc__
 
 
   def _get_process(self):
     """ Finds next available iteration. """
+    from . import Fail
     # first creates iterator, depending on input type.
     if self._iterator is None:
       iterator = self.functional.iter if hasattr(self.functional, 'iter')\
@@ -78,10 +181,10 @@ class IteratorProcess(Process):
     return False
 
   def start(self, comm):
-    """ Starts current job. """
     if super(IteratorProcess, self).start(comm): return True
     self._next()
     return False
+  start.__doc__ = Process.start.__doc__
 
   def wait(self):
     """ Waits for process to end, then cleanup. """

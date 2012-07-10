@@ -250,13 +250,13 @@ class Extract(ExtractDFT):
   @property
   def inverse_mass_tensor(self):
     """ Returns inverse mass tensor, hopefully with right units. """
-    from ..physics import electronic_mass, h_bar
+    from ..physics import emass, h_bar
     if 2 not in self.order:
       raise AttributeError( "Effective mass are not part "                     \
                             "of the current expansion." )
     result = self.tensors[self.order.index(2)]
     for i in xrange(len(result)): 
-      result[i] = (result[i] / h_bar**2).rescale(1./electronic_mass)
+      result[i] = (result[i] / h_bar**2).rescale(1./emass)
     return result
 
   def iterfiles(self, **kwargs):

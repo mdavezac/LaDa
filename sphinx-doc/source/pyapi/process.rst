@@ -9,7 +9,11 @@ Process Module
 .. toctree::
    :maxdepth: 1
 
-   Abstract Process class <process/process>
+   Abstract base-class <process/process>
+   
+   Executing an external program <process/program>
+
+   Executing a generator process <process/iterator>
 
 .. autoclass:: ProcessError
    :show-inheritance:
@@ -18,6 +22,9 @@ Process Module
    :show-inheritance:
 
 .. autoclass:: AlreadyStarted
+   :show-inheritance:
+
+.. autoclass:: NotStarted
    :show-inheritance:
 
 .. autofunction:: which

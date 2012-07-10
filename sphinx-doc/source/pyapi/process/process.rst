@@ -1,5 +1,5 @@
-Abstract Process class
-**********************
+Abstract base-class
+*******************
 
 .. automodule:: lada.process.process
 .. moduleauthor:: Mayeul d'Avezac

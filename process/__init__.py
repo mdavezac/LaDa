@@ -22,7 +22,9 @@
 
     The module is organized around :py:class:`~process.Process` and its
     derived classes. Instances of these classes are meant to be used as
-    follows::
+    follows:
+
+    .. code-block:: python
 
       process = SomeProcess()
       process.start(comm)
