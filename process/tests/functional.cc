@@ -71,7 +71,8 @@ int main(int argc, char *argv[])
               << std::endl; 
     if(n == 666) 
     {
-      MPI::Finalize(); 
+      // cray crapware does not check exit code when launched with more than
+      // one process. hence, can't MPI::Finalize(); 
       return 2;
     }
     utsname sys;
@@ -82,6 +83,7 @@ int main(int argc, char *argv[])
     std::cout << "version: " << sys.version << "\n";
     std::cout << "machine: " << sys.machine << "\n";
   }
+  if (n == 6666) return 2;
   MPI::Finalize(); 
   return n == 6666 ? 2: 0; 
 } 

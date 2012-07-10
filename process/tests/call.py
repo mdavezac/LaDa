@@ -5,9 +5,8 @@ def test(executable):
   from shutil import rmtree
   from numpy import all, arange, abs, array
   from lada.process.call import CallProcess
-  from lada.process import Fail
+  from lada.process import Fail, NotStarted
   from lada.misc import Changedir
-  from lada.error import internal
   from lada import default_comm
   from functional import Functional
   comm = default_comm.copy()
@@ -17,10 +16,10 @@ def test(executable):
     program = CallProcess(functional, outdir=dir, dompi=False )
     # program not started. should fail.
     try: program.poll()
-    except internal: pass
+    except NotStarted: pass
     else: raise Exception()
     try: program.wait()
-    except internal: pass
+    except NotStarted: pass
     else: raise Exception()
 
     # now starting for real.
@@ -57,6 +56,7 @@ def test(executable):
   finally:
     try: rmtree(dir)
     except: pass
+  return
 
   try: 
     functional = Functional(executable, [666])

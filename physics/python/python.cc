@@ -11,7 +11,6 @@
 #include <opt/debug.h>
 
 #include <python/misc.hpp>
-#include <python/xml.hpp>
 
 #include "../physics.h"
 

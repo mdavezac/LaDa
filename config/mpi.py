@@ -53,7 +53,7 @@ def modify_global_comm(communicator):
   pass
 
 def launch_program( cmdl, comm=None, formatter=None, env=None, 
-                    stdout=None, stderr=None, outdir=None ):
+                    stdout=None, stderr=None, stdin=None, outdir=None ):
   """ Command used to launch a program.
   
       This function launches external programs for LaDa. It is included as a
@@ -99,9 +99,11 @@ def launch_program( cmdl, comm=None, formatter=None, env=None,
 
       .. _Popen:: http://docs.python.org/library/subprocess.html#popen-constructor
   """
+  from os.path import exists
   from shlex import split as shlex_split
   from subprocess import Popen
   from lada import machine_dependent_call_modifier
+  from lada.misc import Changedir
 
   # make sure that the formatter contains stuff from the communicator, eg the
   # number of processes.
@@ -118,8 +120,12 @@ def launch_program( cmdl, comm=None, formatter=None, env=None,
   # Split command from string to list
   cmdl = shlex_split(cmdl)
 
+  # makes sure the directory exists:
+  if outdir is not None:
+    with Changedir(outdir) as cwd: pass
   # finally, start process.
-  return Popen(cmdl, stdout=stdout, stderr=stderr, cwd=outdir, env=env)
+  return Popen( cmdl, stdout=stdout, stderr=stderr, stdin=stdin, cwd=outdir,
+                env=env )
 
 
 
