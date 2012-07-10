@@ -4,10 +4,9 @@ def test(executable):
   from os.path import join 
   from shutil import rmtree
   from lada.process.program import ProgramProcess
-  from lada.process import Fail
+  from lada.process import Fail, NotStarted
   from lada.misc import Changedir
   from lada import default_comm as comm
-  from lada.error import internal
   from functional import ExtractSingle as Extract
   dir = mkdtemp()
   try: 
@@ -18,10 +17,10 @@ def test(executable):
                               stdout=stdout, dompi=True )
     # program not started. should fail.
     try: program.poll()
-    except internal: pass
+    except NotStarted: pass
     else: raise Exception()
     try: program.wait()
-    except internal: pass
+    except NotStarted: pass
     else: raise Exception()
 
     # now starting for real.
@@ -50,6 +49,7 @@ def test(executable):
     program.start(comm)
     while not program.poll():  continue
   except Fail: pass
+  except: raise
   else: raise Exception()
   finally: rmtree(dir)
 

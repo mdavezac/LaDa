@@ -8,8 +8,7 @@ def test(executable):
   from lada.jobfolder.massextract import MassExtract
   from lada.jobfolder import save
   from lada.process.jobfolder import JobFolderProcess
-  from lada.process import Fail, AlreadyStarted
-  from lada.error import internal
+  from lada.process import Fail, AlreadyStarted, NotStarted
   from lada import default_comm
   from functional import Functional
 
@@ -28,10 +27,10 @@ def test(executable):
     assert program.nbjobsleft > 0
     # program not started. should fail.
     try: program.poll()
-    except internal: pass
+    except NotStarted: pass
     else: raise Exception()
     try: program.wait()
-    except internal: pass
+    except NotStarted: pass
     else: raise Exception()
 
     # now starting for real.

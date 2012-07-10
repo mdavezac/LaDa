@@ -149,6 +149,6 @@ class Process(object):
   @abstractmethod
   def wait(self):
     """ Waits for process to end, then cleanup. """
-    from ..error import internal
-    if not self.started: raise internal("Process was never started.")
+    from . import NotStarted
+    if not self.started: raise NotStarted("Process was never started.")
     if self.nbrunning_processes == 0: return True

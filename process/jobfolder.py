@@ -9,7 +9,7 @@ class JobFolderProcess(Process):
   def __init__(self, jobfolder, outdir, maxtrials=1, nbpools=1, keepalive=False, **kwargs):
     """ Initializes a process. """
     from ..misc import RelativePath
-    super(JobFolderProcess, self).__init__(maxtrials, **kwargs)
+    super(JobFolderProcess, self).__init__(maxtrials)
 
     self.jobfolder = jobfolder
     """ Job-folder to execute. """
@@ -43,6 +43,8 @@ class JobFolderProcess(Process):
         relinquish the communicator. However, since both side effects, this may
         not be the best way to do so.
     """
+    self.params = kwargs.copy()
+    """ Extra parameters to pass on to iterator. """
 
 
   @property
@@ -52,12 +54,12 @@ class JobFolderProcess(Process):
 
   def poll(self): 
     """ Polls current job. """
-    from ..error import internal
+    from . import NotStarted
     from . import Fail
 
     if self.nbjobsleft == 0 and super(JobFolderProcess, self).poll():
       return True
-    if not hasattr(self, '_comm'): raise internal("Process was never started.")
+    if not hasattr(self, '_comm'): raise NotStarted("Process was never started.")
 
     # weed out successfull and failed jobs.
     finished = []
@@ -180,10 +182,10 @@ class JobFolderProcess(Process):
 
   def wait(self):
     """ Waits for all job-folders to execute and finish. """
-    from ..error import internal
+    from . import NotStarted
     if self.nbjobsleft == 0 and super(JobFolderProcess, self).wait():
       return True
-    if not hasattr(self, '_comm'): raise internal("Process was never started.")
+    if not hasattr(self, '_comm'): raise NotStarted("Process was never started.")
     while self.poll() == False:
       try: self.process[-1][1].wait()
       except Exception as e:

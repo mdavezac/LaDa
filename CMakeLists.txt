@@ -122,8 +122,6 @@ include_directories(${Boost_INCLUDE_DIRS})
 find_package( eigen REQUIRED )
 include_directories(${eigen_INCLUDE_DIR})
 set(LADA_WITH_EIGEN3 ${is_eigen3})
-#   -- tinyxml
-find_package(tinyxml REQUIRED)
 
 
 # MPI packages. Cray's fucking things up as usual

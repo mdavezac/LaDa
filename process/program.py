@@ -202,7 +202,8 @@ class ProgramProcess(Process):
         raise ValueError( "Requested mpi but without passing communicator"     \
                           "(Or communicator was None)." )
       formatter = {}
-      formatter['program'] = program + ' '.join(str(u) for u in self.cmdline)
+      cmdl = ' '.join(str(u) for u in self.cmdline)
+      formatter['program'] = '{0} {1}'.format(program, cmdl)
       # gives opportunity to modify the communicator before launching a
       # particular program.
       if self.cmdlmodifier is not None:
@@ -216,8 +217,8 @@ class ProgramProcess(Process):
       formatter = None
 
     self.process = launch( cmdline, comm=comm, formatter=formatter,
-                           env=environ, stdout=stdout, stderr=stderr,
-                           outdir=self.outdir )
+                           env=environ, stdout=file_out, stderr=file_err,
+			   stdin=file_in, outdir=self.outdir )
 
   def _cleanup(self):
     """ Cleanup files and crap. """

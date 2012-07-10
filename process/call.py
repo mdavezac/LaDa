@@ -5,7 +5,7 @@ class CallProcess(Process):
                 maxtrials=1, dompi=False, **kwargs ):
     """ Initializes a process. """
     from ..misc import RelativePath
-    super(CallProcess, self).__init__(maxtrials=maxtrials, **kwargs)
+    super(CallProcess, self).__init__(maxtrials=maxtrials)
     self.functional = functional
     """ Functional to execute. """
     try: self.functional = self.functional
@@ -20,6 +20,8 @@ class CallProcess(Process):
     """ Name of standard error file, if any. """
     self.dompi = dompi
     """ Whether to run with mpi or not. """
+    self.params = kwargs.copy()
+    """ Extra parameters to pass on to iterator. """
 
   def poll(self):
     """ Polls current job. """

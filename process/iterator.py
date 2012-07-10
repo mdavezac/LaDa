@@ -112,13 +112,15 @@ class IteratorProcess(Process):
   def __init__(self, functional, outdir, maxtrials=1, **kwargs):
     """ Initializes a process. """
     from ..misc import RelativePath
-    super(IteratorProcess, self).__init__(maxtrials, **kwargs)
+    super(IteratorProcess, self).__init__(maxtrials)
     self.functional = functional
     """ Iterable to execute. """
     self.outdir = RelativePath(outdir).path
     """ Execution directory of the folder. """
     self._iterator = None
     """ Current iterator. """
+    self.params = kwargs.copy()
+    """ Extra parameters to pass on to iterator. """
 
   def poll(self):
     from . import Fail

@@ -1,5 +1,5 @@
 """ Miscellaneous ressources. """
-__all__ = ['Program', 'execute_program', 'copyfile', 'changedir', \
+__all__ = ['Program', 'execute_program', 'copyfile', 'Changedir', \
            'read_input', 'exec_input', 'load', 'RelativePath', \
            'LockFile', 'open_exclusive']
 from collections import namedtuple

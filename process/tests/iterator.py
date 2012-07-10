@@ -4,8 +4,7 @@ def test(executable):
   from shutil import rmtree
   from numpy import all, arange, abs, array
   from lada.process.iterator import IteratorProcess
-  from lada.process import Fail
-  from lada.error import internal
+  from lada.process import Fail, NotStarted
   from lada import default_comm
   from functional import Functional
   comm = default_comm.copy()
@@ -15,10 +14,10 @@ def test(executable):
     program = IteratorProcess(functional, outdir=dir)
     # program not started. should fail.
     try: program.poll()
-    except internal: pass
+    except NotStarted: pass
     else: raise Exception()
     try: program.wait()
-    except internal: pass
+    except NotStarted: pass
     else: raise Exception()
 
     # now starting for real.
