@@ -39,10 +39,7 @@ def main():
   # Set up mpi processes.
   lada.default_comm['ppn'] = options.ppn
   lada.default_comm['n'] = options.nbprocs
-  print lada.default_comm, options.nbprocs
   create_global_comm(options.nbprocs)
-  print lada.default_comm, options.nbprocs
-  print lada.default_comm.machines
 
   timeout = None if options.timeout <= 0 else options.timeout
   
