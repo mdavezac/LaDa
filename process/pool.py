@@ -2,17 +2,101 @@ from .jobfolder import JobFolderProcess
 class PoolProcess(JobFolderProcess):
   """ Executes folder in child processes.
   
-      Expects a jobfolder on input. Executable job-folders are launched in
-      parallel, with up to :py:attr:`~PoolProcess.nbpools` running
-      instances. Each instance is allocated an equal number of machines.
+      Much as its base class,
+      :py:class:`~lada.process.jobfolder.JobFolderProcess`, this process
+      specialization is intended to run jobs in a jobfolder in parallel [*]_.
+      However, it allows to customize the number of processors dedicated to
+      each job, rather than use the same number of processors for each job. 
+
+      The customization is done *via* the function :py:attr:`processalloc`. It
+      takes one argument, the executable jobfolder, and returns an integer
+      signifying the requested number of processors.
+
+      .. code-block:: python
+
+        def processalloc(folder):
+          return (len(folder.structure) // 2) * 2
+
+        process = PoolProcess(jobfolder, outdir='here', processalloc=processalloc)
+        process.start(comm)
+
+        try: process.wait()
+        except Fail: pass
+
+      The interface is much the same as any other process. However, it takes as
+      argument this :py:attr:`processalloc` function, on top of the jobfolder
+      itself. In this case, each folder will be launched with approximately as
+      many processors as there are atoms in the structure [*]_.
+
+      Once it is launched, the :py:class:`PoolProcess` instance will attempt to
+      run as many jobs as possible in parallel, until there it runs out of
+      processors to allocate. Howe many processors, and which machines, is
+      determined by the communicator passed to :py:meth:`start`. Each time an
+      executable folder is finished [*]_, it tries again to pack jobs into the
+      available processor pool. 
+
+      .. note::
+      
+         Upon failure, :py:exc:`~lada.process.Fail` is raised only
+         once all the folders have been executed, not when the failure is
+         detected.
+      
+      .. [*] Several job-folders are executed simultaneously, not
+        withstanding the possibility that each of these is also executed in
+        parallel *via* MPI.
+      .. [*] Apparently, this is a pretty good rule-of-thumb for VASP
+        calculations.
+      .. [*] More, specifically, each time
+         :py:meth:`~lada.process.jobfolder.JobFolderProcess.poll` is called. 
   """
-  def __init__(self, jobfolder, outdir, processalloc, maxtrials=1, **kwargs):
-    """ Initializes a process. """
-    super(PoolProcess, self).__init__(jobfolder, outdir, maxtrials, **kwargs)
+  def __init__( self, jobfolder, outdir, processalloc, maxtrials=1,
+                keepalive=False, **kwargs ):
+    """ Initializes a process.
+    
+        :param jobfolder:
+          Jobfolder for which executable folders should be launched.
+          The name of the folders to launch are determined which
+          :py:meth:`__init__` is acalled. If ``jobfolder`` changes, then one
+          should call :py:meth:`update`.
+        :type jobfolder: :py:class:`~lada.jobfolder.jobfolder.JobFolder` 
+        :param str outdir: 
+          Path where the python child process should be executed.
+        :param processalloc:
+          Function which determines how many processors each job requires.
+          This is determined for each job when this instance is created. To
+          change :py:attr:`~lada.process.jobfolder.JobFolderProcess.jobfolder`,
+          one should call :py:meth:`update`.
+        :type processalloc:
+          (:py:class:`~lada.jobfolder.jobfolder.JobFolder`)->int
+        :param bool keepalive:
+           Whether to relinquish communicator once jobs are completed.  If
+           True, the communicator is not relinquished. The jobfolder can be
+           :py:meth:`updated <update>` and new jobs started. To finally
+           relinquish the communicator,
+           :py:attr:`~lada.process.jobfolder.JobFolderProcess.keepalive`
+           should be set to False.  Both
+           :py:meth:`~lada.process.jobfolder.JobFolderProcess.kill` and
+           :py:meth:`~lada.process.jobfolder.JobFolderProcess.terminate` ignore
+           this attribute and relinquish the communicator. However, since both
+           side effects, this may not be the best way to do so.
+        :param int maxtrials:
+          Maximum number of times to try re-launching each process upon
+          failure. 
+        :param kwargs:
+          Keyword arguments to the functionals in the executable folders. These
+          arguments will be applied indiscriminately to all folders.
+    """
+    super(PoolProcess, self).__init__( jobfolder, outdir, maxtrials,
+                                       keepalive=keepalive,  **kwargs )
     del self.nbpools # not needed here.
 
     self.processalloc = processalloc
-    """ How many jobs to launch simultaneously. """
+    """ Determines number of processors to allocate to each job.
+    
+        This is a function which takes a
+        :py:class:`~lada.jobfolder.jobfolder.JobFolder` instance and returns an
+        integer.
+    """
     self._alloc = {}
     """ Maps job vs rquested process allocation. """
     for name in self._torun:

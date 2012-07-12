@@ -80,8 +80,8 @@ class ProgramProcess(Process):
           The MPI infrastructure should be set up correctly, meaning
           :py:func:`lada.launch_program`,
           :py:func:`lada.machine_dependent_call_modifier`,
-          :py:func:`lada.modify_global_comm`, 
-          :py:data:`lada.mpirun_exe`, :py:data:`default_comm`.
+          :py:func:`lada.modify_global_comm`, :py:data:`lada.mpirun_exe`,
+          :py:data:`~lada.default_comm`, :py:data:`~lada.figure_out_machines`.
         :param cmdlmodifier:
           This function is called prior to launching the program. It can be
           used to modify the formatting dictionary. It should return a

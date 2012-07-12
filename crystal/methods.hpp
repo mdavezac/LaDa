@@ -640,9 +640,7 @@ namespace LaDa
         {"splitconfigs", (PyCFunction)pysplitconfigs, METH_VARARGS | METH_KEYWORDS, 
           "Creates a split-configuration for a given structure and atomic origin.\n\n"
           "Split-configurations are a symmetry-agnostic atom-centered "
-            "description of a chemical environment. For details, see `d'Avezac, "
-            "Botts, Mohlenkamp, Zunger, SIAM J. Comput. 30 (2011) "
-            "<http://dx.doi.org/10.1137/100805959>`_.\n\n" 
+            "description of a chemical environment [ABMZ]_.\n\n"
             ":param structure:\n"
             "    :class:`Structure` for which to create split-configurations.\n"
             ":param center:\n"
@@ -661,7 +659,9 @@ namespace LaDa
               "ordered list of references to atoms. The second inner item is "
               "the weight for that configuration. The references to the atoms "
               "are each a 2-tuple consisting of an actual reference to an "
-              "atom, as well as the coordinates of that atom in the current view." },
+              "atom, as well as the coordinates of that atom in the current view.\n\n"
+            ".. [ABMZ] d'Avezac, Botts, Mohlenkamp, Zunger, SIAM J. Comput. 30 (2011) "
+               "http://dx.doi.org/10.1137/100805959. " },
         {"map_sites", (PyCFunction)pymapsites, METH_VARARGS | METH_KEYWORDS, 
           "Map sites from a lattice onto a structure.\n\n"
           "This function finds out which atomic sites in a supercell refer to the sites "

@@ -8,9 +8,13 @@ Contents:
    :maxdepth: 2
 
     lada.crystal <pyapi/crystal>
-    
-    lada.vasp <pyapi/vasp>
 
+    lada.error <pyapi/error>
+    
     lada.jobfolder <pyapi/jobfolder>
 
     lada.process <pyapi/process>
+
+    lada.vasp <pyapi/vasp>
+
+    lada.dftcrystal <pyapi/dftcrystal>

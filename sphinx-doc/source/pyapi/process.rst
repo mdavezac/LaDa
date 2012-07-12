@@ -6,25 +6,43 @@ Process Module
 
   .. moduleauthor:: Mayeul d'Avezac
 
+*************
+Process Types
+*************
+
 .. toctree::
    :maxdepth: 1
 
    Abstract base-class <process/process>
    
-   Executing an external program <process/program>
+   Execution of an external program <process/program>
 
-   Executing a generator process <process/iterator>
+   Sequential execution of a generator of processes <process/iterator>
 
-.. autoclass:: ProcessError
+   Execution of a callable <process/call>
+
+   Parallel execution of a job-folder <process/jobfolder>
+
+   Parallel execution of a job-folder with per-folder numbers of processors <process/pool>
+
+**********
+Exceptions
+**********
+
+.. autoexception:: ProcessError
    :show-inheritance:
 
-.. autoclass:: Fail
+.. autoexception:: Fail
    :show-inheritance:
 
-.. autoclass:: AlreadyStarted
+.. autoexception:: AlreadyStarted
    :show-inheritance:
 
-.. autoclass:: NotStarted
+.. autoexception:: NotStarted
    :show-inheritance:
+
+*********
+Functions
+*********
 
 .. autofunction:: which

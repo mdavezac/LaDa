@@ -1,5 +1,5 @@
-Executing a generator process
-*****************************
+Sequential execution of a generator of processes
+************************************************
 
 .. currentmodule:: lada.process.iterator
 .. moduleauthor:: Mayeul d'Avezac
@@ -7,11 +7,13 @@ Executing a generator process
    :show-inheritance:
    :members:
 
+   .. automethod:: __init__
+
+   .. automethod:: _cleanup
+
    .. attribute:: process
 
       Holds currently running process. 
 
       This would be the latest process yielded by the input generator
       :py:attr:`functional`.
-
-   .. automethod:: _cleanup

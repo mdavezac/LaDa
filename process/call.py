@@ -1,9 +1,36 @@
 from .process import Process
 class CallProcess(Process):
-  """ Calls functional in child python process. """
-  def __init__( self, functional, outdir, cmdline=None, stdout=None, stderr=None,\
+  """ Calls functional in child python process.
+  
+      This process pickles_ a callable and its arguments and executes it in a
+      child python process.
+
+      .. _pickles: http://docs.python.org/library/pickle.html
+  """
+  def __init__( self, functional, outdir, stdout=None, stderr=None,\
                 maxtrials=1, dompi=False, **kwargs ):
-    """ Initializes a process. """
+    """ Initializes a process.
+    
+        :param functional:
+          A python callable. It should also be pickle-able.
+        :param str outdir: 
+          Path where the python child process should be executed.
+        :param str stdout:
+          Optional path to an output file where the callable's output shall be
+          streamed.
+        :param str stderr:
+          Optional path to an error file where the callable's errors shall be
+          streamed.
+        :param bool dompi:
+          Whether the python child process shouold be launched as an MPI
+          process.
+        :param int maxtrials:
+          Maximum number of times to try re-launching each process upon
+          failure. 
+        :param kwargs:
+          Keyword arguments to the callables should be given here, as keyword
+          arguments to :py:class:`CallProcess`.
+    """
     from ..misc import RelativePath
     super(CallProcess, self).__init__(maxtrials=maxtrials)
     self.functional = functional

@@ -1,5 +1,5 @@
-Executing an external program
-*****************************
+Execution of an external program
+********************************
 
 .. automodule:: lada.process.program
 .. moduleauthor:: Mayeul d'Avezac
@@ -7,4 +7,5 @@ Executing an external program
    :show-inheritance:
    :members:
 
+   .. automethod:: __init__
    .. automethod:: _cleanup

@@ -4,15 +4,62 @@ class JobFolderProcess(Process):
   
       Expects a jobfolder on input. Executable job-folders are launched in
       parallel, with up to :py:attr:`~JobFolderProcess.nbpools` running
-      instances. Each instance is allocated an equal number of machines.
+      instances. Each instance is allocated an equal number of processors.
+
+      If a folder does not execute correctly, then the failure code or
+      exception is stored in :py:attr:`errors` until all folders have been
+      executed. Only then is a :py:exc:`~lada.process.Fail` exception raised. 
+
+      .. note:: 
+
+        The executable folders are determined when the process is first
+        created. To modify :py:attr:`jobfolder`, one should call
+        :py:meth:`update`.
+
+      .. seealso:: :py:class:`~lada.process.pool.PoolProcess`
   """
-  def __init__(self, jobfolder, outdir, maxtrials=1, nbpools=1, keepalive=False, **kwargs):
-    """ Initializes a process. """
+  def __init__( self, jobfolder, outdir, maxtrials=1, nbpools=1,
+                keepalive=False, **kwargs ):
+    """ Initializes a process.
+    
+        :param jobfolder:
+          Jobfolder for which executable folders should be launched.
+          The name of the folders to launch are determined which
+          :py:meth:`__init__` is acalled. If ``jobfolder`` changes, then one
+          should call :py:meth:`update`.
+        :type jobfolder: :py:class:`~lada.jobfolder.jobfolder.JobFolder` 
+        :param str outdir: 
+          Path where the python child process should be executed.
+        :param int nbpools:
+          Maximum number of executable folders to run in parallel. The
+          processors will splitted into *n* of approximately equal length, where
+          *n* is ``nbpool`` or the remaining number of executable jobs, which
+          ever is smallest.
+        :param bool keepalive:
+           Whether to relinquish communicator once jobs are completed.  If
+           True, the communicator is not relinquished. The jobfolder can be
+           :py:meth:`updated <update>` and new jobs started. To finally
+           relinquish the communicator, :py:attr:`keepalive` should be set to
+           False.  Both :py:meth:`kill` and :py:meth:`terminate` ignore this
+           attribute and relinquish the communicator. However, since both side
+           effects, this may not be the best way to do so.
+        :param int maxtrials:
+          Maximum number of times to try re-launching each process upon
+          failure. 
+        :param kwargs:
+          Keyword arguments to the functionals in the executable folders. These
+          arguments will be applied indiscriminately to all folders.
+    """
     from ..misc import RelativePath
     super(JobFolderProcess, self).__init__(maxtrials)
 
     self.jobfolder = jobfolder
-    """ Job-folder to execute. """
+    """ Jobfolder for which executable folders should be launched.
+
+        The name of the folders to launch are determined which
+        :py:meth:`__init__` is acalled. If ``jobfolder`` changes, then one
+        should call :py:meth:`update`.
+    """
     self.outdir = RelativePath(outdir).path
     """ Execution directory of the folder. """
     self.process = []
@@ -24,7 +71,12 @@ class JobFolderProcess(Process):
         used by that process.
     """
     self.nbpools = nbpools
-    """ How many jobs to launch simultaneously. """
+    """ Number of executable folders to launch in parallel. 
+
+        The processors will splitted into *n* of approximately equal length,
+        where *n* is ``nbpool`` or the remaining number of executable jobs,
+        which ever is smallest.
+    """
     self._finished = set()
     """ Set of finished runs. """
     self._torun = set(self.jobfolder.keys())
@@ -35,17 +87,17 @@ class JobFolderProcess(Process):
     """ Whether to relinquish communicator once jobs are completed. 
     
         If True, the communicator is not relinquished. The jobfolder can be
-        :py:meth:`updated <JobFolderProcess.update>` and new jobs started. To
-        finally relinquish the communicator,
-        :py:attr:`~JobFolderProcess.keepalive` should be set to False.  Both
-        :py:meth:`~JobFolderProcess.kill` and
-        :py:meth:`~JobFolderProcess.Terminate` ignore this attribute and
+        :py:meth:`updated <update>` and new jobs started. To finally relinquish
+        the communicator, :py:attr:`keepalive` should be set to False.  Both
+        :py:meth:`kill` and :py:meth:`terminate` ignore this attribute and
         relinquish the communicator. However, since both side effects, this may
         not be the best way to do so.
     """
     self.params = kwargs.copy()
-    """ Extra parameters to pass on to iterator. """
-
+    """ Keyword arguments to the functionals in the executable folders. 
+    
+        These arguments will be applied indiscriminately to all folders.
+    """
 
   @property
   def nbjobsleft(self): 
@@ -104,7 +156,8 @@ class JobFolderProcess(Process):
     if self._comm['n'] == 0: return
 
     # split processes into local comms. Make sure we don't oversuscribe.
-    local_comms = self._comm.split(min(self._comm['n'], self.nbpools - len(self.process)))
+    njobs = min(self._comm['n'], self.nbpools - len(self.process))
+    local_comms = self._comm.split(njobs)
     try: 
       # Loop until all requisite number of processes is created, 
       # or until run out of jobs, or until run out of comms. 
@@ -124,7 +177,8 @@ class JobFolderProcess(Process):
         params['maxtrials'] = self.maxtrials
         # chooses between an iterator process and a call process.
         if hasattr(jobfolder.functional, 'iter'):
-          process = IteratorProcess(jobfolder.functional, join(self.outdir, name), **params)
+          process = IteratorProcess( jobfolder.functional,
+                                     join(self.outdir, name), **params )
         else:
           process = CallProcess(self.functional, join(self.outdir, name), **params)
         # appends process and starts it.

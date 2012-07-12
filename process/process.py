@@ -51,7 +51,7 @@ class Process(object):
         This is the sub-process handled by this instance. At the lowest
         level, it is likely an instance of `subprocess.Popen`__. It may,
         however, be a further abstraction, such as a
-        :py:class:`~process.program.ProgramProcess` instance.
+        :py:class:`~lada.process.program.ProgramProcess` instance.
 
         .. __ : http://docs.python.org/library/subprocess.html#subprocess.Popen
     """

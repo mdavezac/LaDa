@@ -126,14 +126,10 @@ namespace LaDa
           "Defines a smithtransform.\n\n"    /*tp_doc*/
             "The smith transform computes the cyclic group of supercell "
             "with respect to its backbone lattice. It can then be used to index "
-            "atoms in the supercell, irrespective of which periodic image is given [FH]_.\n\n"
+            "atoms in the supercell, irrespective of which periodic image is given [HF]_.\n\n"
             ":param lattice: (:py:func:`Structure` or matrix)\n   Defines the cyclic group.\n"
             ":param supercell: (:py:func:`Structure` or matrix)\n"
-            "    Supercell for which to compute cyclic group.\n\n"
-            ".. [FH] Gus L. Hart, Rodney W. Forcade, \n"
-            "        `Algorithm for generating derivative structures`,\n"
-            "        Phys. Rev. B **77**, 224115 (2008),\n"
-            "        http://dx.doi.org/10.1103/PhysRevB.77.224115>`",
+            "    Supercell for which to compute cyclic group.\n\n",
           0,                                 /* tp_traverse */
           0,                                 /* tp_clear */
           0,		                     /* tp_richcompare */

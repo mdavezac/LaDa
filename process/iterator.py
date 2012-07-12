@@ -3,7 +3,7 @@ class IteratorProcess(Process):
   """ Executes an iteration function in child process. 
   
       An iterator process is a *meta*-process which runs other processes
-      sequentially. I is one which needs iterating over, as shown more
+      sequentially. It is one which needs iterating over, as shown more
       explicitely below. Its interface is fairly similar to other processes.
 
       .. code-block:: python
@@ -110,7 +110,19 @@ class IteratorProcess(Process):
       .. _yield: http://docs.python.org/reference/simple_stmts.html#yield
   """
   def __init__(self, functional, outdir, maxtrials=1, **kwargs):
-    """ Initializes a process. """
+    """ Initializes a process.
+    
+        :param functional:
+          A generator which yields processes and/or extraction objects.
+        :param str outdir: 
+          Path where the processes should be executed.
+        :param int maxtrials:
+          Maximum number of times to try re-launching each process upon
+          failure. 
+        :param kwargs:
+          Keyword arguments to the generator should be given here, as keyword
+          arguments to :py:class:IteratorProcess`.
+    """
     from ..misc import RelativePath
     super(IteratorProcess, self).__init__(maxtrials)
     self.functional = functional

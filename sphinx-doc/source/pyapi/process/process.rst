@@ -5,6 +5,7 @@ Abstract base-class
 .. moduleauthor:: Mayeul d'Avezac
 .. autoclass:: Process
    :show-inheritance:
-   :members:
+   :members: 
 
+   .. automethod:: __init__
    .. automethod:: _cleanup
