@@ -1,0 +1,128 @@
+""" Launches each jobfolder in single pbs job """
+__docformat__ = 'restructuredtext en'
+
+def launch(self, event, jobfolders):
+  """ Launches each jobfolder in single pbs job """
+  from copy import deepcopy
+  from os.path import dirname, join, basename, exists
+  from os import remove
+  from ... import pbs_string, default_pbs, qsub_exe, default_comm
+  from .. import get_shell
+  from . import get_walltime, get_queues
+  from .. import __file__ as launch_filename
+
+  shell = get_shell()
+
+  pbsargs = deepcopy(dict(default_comm))
+  pbsargs.update(default_pbs)
+  if not get_walltime(shell, event, pbsargs): return
+  if not get_queues(shell, event, pbsargs): return
+
+  # gets python script to launch in pbs.
+  pyscript = launch_filename.replace(dirname(launch_filename)[1], "asone.script.py")
+
+  # creates file names.
+  hasprefix = getattr(event, "prefix", None)                               
+  def pbspaths(directory, jobname, suffix):
+    """ creates filename paths. """
+    return join( join(directory,jobname),
+                 '{0}-pbs{1}'.format(event.prefix, suffix) if hasprefix        \
+                 else 'pbs{0}'.format(suffix) ) 
+  # now  loop over jobfolders
+  pbsscripts = []
+  for current, path in jobfolders:
+    # Check number of jobs
+    directory, nbjobs = dirname(path), 0
+    for name, job in current.root.iteritems():
+      # avoid jobfolder which are off
+      if job.is_tagged: continue
+      # avoid successful jobs.unless specifically requested
+      if hasattr(job.functional, 'Extract') and not event.force: 
+        p = join(directory, name)
+        extract = job.functional.Extract(p)
+        if extract.success:
+          print "Job {0} completed successfully. "                             \
+                "It will not be relaunched.".format(name)                     
+          continue                                                            
+      nbjobs += 1
+    if path.rfind('.') != -1: name = path[:path.rfind('.')]
+    # now creates script
+    pbsargs['n'] = event.nbprocs                                              
+    pbsargs['nnodes'] = (pbsargs['n'] + pbsargs['ppn'] - 1)                    \
+                        // pbsargs['ppn']                                     
+    pbsargs['err'] = pbspaths('{0}.err'.format(name))                    
+    pbsargs['out'] = pbspaths('{0}.out'.format(name))
+    pbsargs['name'] = basename(path)
+    pbsargs['directory'] = directory                                     
+    pbsargs['scriptcommand']                                                   \
+         = "{0} --nbprocs {n} --ppn {ppn} --pools={1} {2}"                     \
+           .format(pyscript, event.pools, path, **pbsargs)                      
+    pbsscripts.append('{0}.script'.format(name))             
+                                                                         
+    # write pbs scripts                                                  
+    if exists(pbsscripts[-1]):
+      a = ''
+      while a not in ['n', 'y']:
+        a = raw_input( "PBS script {0} already exists.\n"                      \
+                       "Are you sure this job is not currently running?"       \
+                       .format(pbsscripts[-1]) )
+      if a == 'n':
+        print "Aborting."
+        return
+      remove(pbsscripts[-1])                    
+    with open(pbsscripts[-1], "w") as file:                              
+      string = pbs_string(**pbsargs) if hasattr(pbs_string, '__call__')        \
+               else pbs_string.format(**pbsargs)                         
+      file.write(string)                                                 
+    assert exists(pbsscripts[-1])                                        
+    print "Created pbsscript {0[-1]} for job-folder {1}."                      \
+          .format(pbsscripts, path)
+
+  if event.nolaunch: return
+  # otherwise, launch.
+  for script in pbsscripts:
+    self.system("{0} {1}".format(qsub_exe, script))
+
+def completer(self, info, data):
+  """ Completer for scattered launcher. """
+  from .. import get_shell
+  from ... import queues, accounts, debug_queue, jobfolder_file_completer
+  shell = get_shell(self)
+  if len(data) > 0: 
+    if data[-1] == "--walltime":
+      return [ u for u in shell.user_ns                                        \
+               if u[0] != '_' and isinstance(shell.user_ns[u], str) ]
+    elif data[-1] == "--pools":   return ['']
+    elif data[-1] == "--nbprocs": return ['']
+    elif data[-1] == '--ppn':     return ['']
+    elif data[-1] == "--prefix":  return ['']
+    elif data[-1] == "--queue":   return queues
+    elif data[-1] == "--account": return accounts
+  result = ['--force', '--walltime', '--nbprocs', '--help']
+  if len(queues) > 0: result.append("--queue") 
+  if len(accounts) > 0: result.append("--account") 
+  if debug_queue is not None: result.append("--debug")
+  result.extend(jobfolder_file_completer(self, [info.symbol]))
+  result = list(set(result) - set(data))
+  return result
+
+def parser(self, subparsers, opalls):
+  """ Adds subparser for scattered. """ 
+  from ... import default_comm 
+  from . import set_queue_parser, set_default_parser_options
+  result = subparsers.add_parser( 'asone', 
+              description="Each job folder is launched as a single job",
+              parents=[opalls])
+  set_default_parser_options(result)
+  result.add_argument( '--nbprocs', type=int, dest="nbprocs",
+              help="Total number of processors per pbsjob/jobfolder" )
+  result.add_argument( '--ppn', dest="ppn",
+              default=default_comm.get('ppn', 1), type=int,
+              help="Number of processes per node. Defaults to {0}."            \
+                   .format(default_comm.get('ppn', 1)))
+  result.add_argument( '--pools', dest='pools', type=int, default=1,
+                       help= 'Number of separate pools of processors.'         \
+                             'Each job will run on nbprocs//pools' )
+  set_queue_parser(result)
+  result.set_defaults(func=launch)
+  return result

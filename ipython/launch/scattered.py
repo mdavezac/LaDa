@@ -9,61 +9,25 @@ __docformat__ = "restructuredtext en"
 
 def launch(self, event, jobfolders):
   """ Launch scattered jobs: one job = one pbs script. """
-  import re
   from copy import deepcopy
   from os.path import split as splitpath, join, dirname, exists, basename
   from os import remove
+  from .. import get_shell
   from ...misc import Changedir
   from ...jobfolder import __file__ as jobs_filename
-  from ... import pbs_string, default_pbs, debug_queue, qsub_exe, default_comm
+  from ... import pbs_string, default_pbs, qsub_exe, default_comm
+  from . import get_walltime, get_mppalloc, get_queues
 
-  comm = deepcopy(default_comm)
-  comm['n'] = event.nbprocs
-  comm["ppn"] = event.ppn
-  
-  pbsargs = deepcopy(default_pbs)
-  pbsargs['comm'] = comm
-  # creates mppalloc function.
-  try: mppalloc = self.ev(event.nbprocs)
-  except Exception as e: 
-    print "Could not make sense of --nbprocs argument {0}.\n{1}"               \
-          .format(event.nbprocs, e)
-    return
-  if mppalloc is None:
-    def mppalloc(job): 
-      """ Returns number of processes for this job. """
-      N = len(job.structure) # number of atoms.
-      if N % 2 == 1: N -= 1
-      return max(N, 1)  
+  shell = get_shell()
 
-  # gets walltime.
-  if re.match("\s*(\d{1,3}):(\d{1,2}):(\d{1,2})\s*", event.walltime) is None:
-    try: walltime = ip.ev(event.walltime)
-    except Exception as e: 
-      print "Could not make sense of --walltime argument {0}.\n{1}"            \
-            .format(event.walltime, e)
-      return
-  else: walltime = event.walltime
-  walltime = re.match("\s*(\d{1,3}):(\d{1,2}):(\d{1,2})\s*", walltime)
-  if walltime is not None:
-    a, b, c = walltime.group(1), walltime.group(2), walltime.group(3)
-    walltime = "{0:0>2}:{1:0>2}:{2:0>2}".format(a, b, c)
-  else: 
-    print "Could not make sense of --walltime argument {0}."                   \
-          .format(event.walltime)
-    return
+  pbsargs = deepcopy(dict(default_comm))
+  pbsargs.update(default_pbs)
 
-  # gets queue (aka partition in slurm), if any.
-  pbsargs.update(comm)
-  if event.__dict__.get("queue", None) is not None:
-    pbsargs["queue"] = event.queue
-  if event.__dict__.get("account", None) is not None:
-    pbsargs["account"] = event.account
-  if getattr(event, 'debug', False):
-    if debug_queue is None:
-      print "No known debug queue for this machine"
-      return
-    pbsargs[debug_queue[0]] = debug_queue[1]
+  mppalloc = get_mppalloc(shell, event)
+  if mppalloc is None: return
+  if not get_walltime(shell, event, pbsargs): return
+  if not get_queues(shell, event, pbsargs): return
+ 
 
   # gets python script to launch in pbs.
   pyscript = jobs_filename.replace(splitpath(jobs_filename)[1], "runone.py")
@@ -154,22 +118,14 @@ def completer(self, info, data):
 
 def parser(self, subparsers, opalls):
   """ Adds subparser for scattered. """ 
-  from ... import queues, accounts, debug_queue, default_pbs, default_comm,    \
-                  qsub_exe
+  from ... import default_comm
+  from . import set_queue_parser, set_default_parser_options
   result = subparsers.add_parser( 'scattered', 
               description="A separate PBS/slurm script is created for each "   \
                           "and every calculation in the job-folder "           \
                           "(or dictionaries).",
               parents=[opalls])
-  result.add_argument('--walltime', type=str,
-              default=default_pbs['walltime'],
-              help='walltime for jobs. Should be in hh:mm:ss format. '         \
-                   'Defaults to ' + default_pbs['walltime'] + '.')
-  result.add_argument('--prefix', action="store",
-              type=str, help="Adds prefix to job name.")
-  result.add_argument( '--nolaunch', action="store_true",
-              dest="nolaunch",
-              help='Does everything except calling {0}.'.format(qsub_exe) )
+  set_default_parser_options(result)
   result.add_argument( '--nbprocs', type=str, default="None", dest="nbprocs",
               help="Can be an integer, in which case it specifies "            \
                    "the number of processes to exectute jobs with. "           \
@@ -183,25 +139,6 @@ def parser(self, subparsers, opalls):
               default=default_comm.get('ppn', 1), type=int,
               help="Number of processes per node. Defaults to {0}."            \
                    .format(default_comm.get('ppn', 1)))
-  if len(accounts) != 0:
-    result.add_argument( '--account',
-              dest="account", choices=accounts, default=accounts[0],
-              help="Account on which to launch job. Defaults to {0}."          \
-                   .format(accounts[0]) )
-  else:
-    result.add_argument( '--account', dest="account", type=str,
-                         help="Launches jobs on specific "                     \
-                              "account if present." )
-  if len(queues) != 0: 
-    result.add_argument( '--queue', dest="queue", choices=queues,
-              default=queues[0],
-              help="Queue on which to launch job. Defaults to {0}."            \
-                   .format(queues[0]) )
-  else:
-    result.add_argument( '--queue', dest="queue", type=str,
-                         help="Launches jobs on specific queue if present." )
-  if debug_queue is not None:
-    result.add_argument( '--debug', dest="debug", action="store_true", 
-                         help="launches in interactive queue if present." )
+  set_queue_parser(result)
   result.set_defaults(func=launch)
   return result

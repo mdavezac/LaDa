@@ -234,18 +234,14 @@ class JobFolderProcess(Process):
     """
     return 0 if (not self.started) or len(self.process) == 0 else 1
 
-  def wait(self):
+  def wait(self, sleep=1):
     """ Waits for all job-folders to execute and finish. """
+    from time import sleep as ossleep
     from . import NotStarted
     if self.nbjobsleft == 0 and super(JobFolderProcess, self).wait():
       return True
     if not hasattr(self, '_comm'): raise NotStarted("Process was never started.")
-    while self.poll() == False:
-      try: self.process[-1][1].wait()
-      except Exception as e:
-        self.errors[self.process[-1][0]] = e
-        self.process[-1][1]._cleanup()
-        self.process.pop(-1)
+    while self.poll() == False: ossleep(sleep)
     return False
 
   def _cleanup(self):

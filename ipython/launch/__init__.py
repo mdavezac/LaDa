@@ -30,7 +30,8 @@ def launch(self, event):
   from ... import interactive
   from .scattered import parser as scattered_parser
   from .interactive import parser as interactive_parser
-  from ...misc import RelativePath
+  from .asone import parser as asone_parser
+  from ...misc import RelativePath, LockFile
 
   # main parser
   parser = argparse.ArgumentParser(prog='%launch')
@@ -50,6 +51,7 @@ def launch(self, event):
   # launch scattered.
   scattered_parser(self, subparsers, opalls) 
   interactive_parser(self, subparsers, opalls) 
+  asone_parser(self, subparsers, opalls) 
 
   # parse arguments
   try: args = parser.parse_args(event.split())
@@ -97,3 +99,91 @@ def completer(self, info):
   elif "interactive" in data: return interactive_completer(self, info, data)
   return ["scattered", "interactive"]
          
+
+def get_mppalloc(shell, event):
+  """ Gets mpp allocation. """
+  try: mppalloc = shell.ev(event.nbprocs)
+  except Exception as e: 
+    print "Could not make sense of --nbprocs argument {0}.\n{1}"               \
+          .format(event.nbprocs, e)
+    return
+  if mppalloc is None:
+    def mppalloc(job): 
+      """ Returns number of processes for this job. """
+      N = len(job.structure) # number of atoms.
+      if N % 2 == 1: N -= 1
+      return max(N, 1)  
+  return mppalloc
+
+def get_walltime(shell, event, pbsargs):
+  """ Returns walltime. """
+  from re import match
+  if match("\s*(\d{1,3}):(\d{1,2}):(\d{1,2})\s*", event.walltime) is None:
+    try: walltime = shell.ev(event.walltime)
+    except Exception as e: 
+      print "Could not make sense of --walltime argument {0}.\n{1}"            \
+            .format(event.walltime, e)
+      return False
+  else: walltime = event.walltime
+  walltime = match("\s*(\d{1,3}):(\d{1,2}):(\d{1,2})\s*", walltime)
+  if walltime is not None:
+    a, b, c = walltime.group(1), walltime.group(2), walltime.group(3)
+    walltime = "{0:0>2}:{1:0>2}:{2:0>2}".format(a, b, c)
+  else: 
+    print "Could not make sense of --walltime argument {0}."                   \
+          .format(event.walltime)
+    return False
+  pbsargs['walltime'] = walltime
+  return True
+
+def get_queues(shell, event, pbsargs):
+  """ Decodes queue/account options. """
+  from ... import debug_queue
+  if event.__dict__.get("queue", None) is not None:
+    pbsargs["queue"] = event.queue
+  if event.__dict__.get("account", None) is not None:
+    pbsargs["account"] = event.account
+  if getattr(event, 'debug', False):
+    if debug_queue is None:
+      print "No known debug queue for this machine"
+      return False
+    pbsargs[debug_queue[0]] = debug_queue[1]
+  return True
+
+def set_default_parser_options(parser):
+  """ Adds some default options to parser """
+  from ... import default_pbs, qsub_exe
+  parser.add_argument('--walltime', type=str,
+              default=default_pbs['walltime'],
+              help='walltime for jobs. Should be in hh:mm:ss format. '         \
+                   'Defaults to ' + default_pbs['walltime'] + '.')
+  parser.add_argument('--prefix', action="store",
+              type=str, help="Adds prefix to job name.")
+  parser.add_argument( '--nolaunch', action="store_true",
+              dest="nolaunch",
+              help='Does everything except calling {0}.'.format(qsub_exe) )
+  return
+def set_queue_parser(parser):
+  """ Adds default queue/account options. """
+  from ... import queues, accounts, debug_queue
+
+  if len(accounts) != 0:
+    parser.add_argument( '--account',
+              dest="account", choices=accounts, default=accounts[0],
+              help="Account on which to launch job. Defaults to {0}."          \
+                   .format(accounts[0]) )
+  else:
+    parser.add_argument( '--account', dest="account", type=str,
+                         help="Launches jobs on specific "                     \
+                              "account if present." )
+  if len(queues) != 0: 
+    parser.add_argument( '--queue', dest="queue", choices=queues,
+              default=queues[0],
+              help="Queue on which to launch job. Defaults to {0}."            \
+                   .format(queues[0]) )
+  else:
+    parser.add_argument( '--queue', dest="queue", type=str,
+                         help="Launches jobs on specific queue if present." )
+  if debug_queue is not None:
+    parser.add_argument( '--debug', dest="debug", action="store_true", 
+                         help="launches in interactive queue if present." )
