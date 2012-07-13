@@ -421,3 +421,25 @@ class BasisSet(AttrBlock):
     for key, value in basis.iteritems():
       if key in self: del self[key]
       for v in value: self.append(key, v)
+
+  @property
+  def gaussian94(self):
+    """ Basis set in GAUSSIAN94 format """
+    result = '\n\n****\n'
+    for specie, basis in self._functions.iteritems():
+      result += '{0} 0\n'.format(specie)
+      for shell in basis: 
+        result += '{0} {1} 1.0\n'.format(shell.type.upper(), len(shell))
+        for function in shell.functions:
+          alpha, coef1 = function[0], function[1]
+          if hasattr(alpha, 'rescale'):
+            alpha = float(alpha.rescale(crystal_invbohr2).magnitude)
+          if len(function) == 2:
+            result += '{0:> 20.12f}    {1:> 20.12f}\n'.format(alpha, coef1)
+          else:
+            result += '{0:> 20.12f}    {1:> 20.12f}  {2[2]:> 20.12f}\n'               \
+                      .format(alpha, coef1, function)
+      result += '****\n'
+    return result
+  
+
