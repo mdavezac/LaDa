@@ -412,3 +412,12 @@ class BasisSet(AttrBlock):
       results[newname] = string.read()
       for u in value: add_to_imports(u, imports)
     return results
+  
+  def update(self, basis):
+    """ Updates dictionary of basis-sets.
+    
+        Overwrites existing species.
+    """
+    for key, value in basis.iteritems():
+      if key in self: del self[key]
+      for v in value: self.append(key, v)

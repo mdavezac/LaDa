@@ -321,3 +321,7 @@ class Functional(object):
   def __getstate__(self): return self.__dict__
   def __setstate__(self, value):
     self.__dict__.update(value.copy())
+
+  def copy(self): 
+    from copy import deepcopy
+    return deepcopy(self)

@@ -353,7 +353,6 @@ class JobFolder(object):
 
   def iterleaves(self):
     """ Iterates over end of sub-trees. """
-    from os.path import join
     # Yield this folder if it exists.
     if len(self.children) == 0: yield self.name
     # Walk throught children folderdict.

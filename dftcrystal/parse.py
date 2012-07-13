@@ -26,11 +26,12 @@ class InputTree(list):
 def parse(path, needstarters=True):
   """ Reads crystal input. """
   from re import compile
+  from ..misc import RelativePath
   from ..error import IOError
   from .. import CRYSTAL_input_blocks as blocks, CRYSTAL_geom_blocks as starters
   if isinstance(path, str): 
     if path.find('\n') == -1:
-      with open(path) as file: return parse(file,needstarters)
+      with open(RelativePath(path).path) as file: return parse(file,needstarters)
     else:
       return parse(path.split('\n').__iter__(),needstarters)
 

@@ -37,20 +37,10 @@ Others
    Map of geometry keywords to their LaDa implementation.
 
 
-.. py:function:: read(path)->(:py:class:`~crystal.Structure`, :py:class:`~functional.Functional`)
+.. autofunction:: read(path) -> structure, functional
 
-   Reads CRYSTAL_ input from file
+.. autofunction:: read_gaussian_basisset(path) -> structure, functional
 
-   :param path: 
-     It can be a file object obtained from open_. Or it could be a string
-     defining the path to the input file, or it could a string containing the
-     input file itself. The difference in the last two cases resides in whether
-     the string has multiple lines or not. Finally, the function is smart
-     enough to extract the input from any file, whatever the garbage which
-     preceed or follow it. If there are more than one input in the file, only
-     the first input is read.
-
-.. _CRYSTAL: http://www.crystal.unito.it/
 .. _open: http://docs.python.org/library/functions.html#open
 
 
