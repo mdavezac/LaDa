@@ -3,7 +3,7 @@ def raw_input(*args): return 'y'
 def test():
   from tempfile import mkdtemp
   from shutil import rmtree
-  from os import makedirs, getcwd
+  from os import makedirs, getcwd, chdir
   from os.path import exists, join
   from IPython.core.interactiveshell import InteractiveShell
   from lada.jobfolder import JobFolder
@@ -23,6 +23,7 @@ def test():
       job.params['indiv'] = size
       if type == 'that': job.params['value'] = True
  
+    origdir = getcwd()
     directory = mkdtemp()
     if exists(directory) and directory == '/tmp/test': rmtree(directory)
     if not exists(directory): makedirs(directory)
@@ -68,9 +69,13 @@ def test():
       self.magic("goto next") # no further jobs
       assert getcwd() == '{0}/this/1'.format(directory)
       assert interactive.jobfolder.name == '/this/1/'
+      self.magic("goto /") # go back to root to avoid errors
       
     finally: 
-      if directory != '/tmp/test': rmtree(directory)
+      chdir(origdir)
+      try: 
+        if directory != '/tmp/test': rmtree(directory)
+      except: pass
   finally: __builtin__.raw_input = saveri
 
 

@@ -1,11 +1,13 @@
 """ IPython goto and iterate magic functions. """
-from contextlib  import contextmanager
-
 def goto(self, cmdl):
   """ Moves current dictionary position and working directory (if appropriate). """
   from os import chdir
   from os.path import exists, join, split as splitpath, isdir
+  from .explore import explore
+  from . import get_shell
   from lada import interactive
+
+  shell = get_shell(self)
 
   if interactive.jobfolder is None: 
     print "No current job-folders."
@@ -52,10 +54,10 @@ def goto(self, cmdl):
     return 
 
   interactive.jobfolder = result
-  if 'jobparams' in self.user_ns:
-    self.user_ns['jobparams'].view = interactive.jobfolder.name
-  if 'collect' in self.user_ns:
-    self.user_ns['collect'].view = interactive.jobfolder.name
+  if 'jobparams' in shell.user_ns:
+    shell.user_ns['jobparams'].view = interactive.jobfolder.name
+  if 'collect' in shell.user_ns:
+    shell.user_ns['collect'].view = interactive.jobfolder.name
   good = not interactive.jobfolder.is_tagged
   if good:
     for value in interactive.jobfolder.values():

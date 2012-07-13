@@ -19,8 +19,8 @@ def explore(self, cmdl):
       >>> explore --file jobfolder
       >>> explore --expression jobfolder
 
-      You can load a dictionary and filter out successfull or unsuccessfull runs. 
-      To explore errors only, use:
+      You can load a dictionary and filter out successfull or unsuccessfull
+      runs.  To explore errors only, use:
      
       >>> explore errors path/to/job_pickle
 
@@ -38,27 +38,28 @@ def explore(self, cmdl):
                      description='Opens a job-dictionary from file.')
   group = parser.add_mutually_exclusive_group()
   group.add_argument( '--file', action="store_true", dest="is_file",
-                      help='JOBFOLDER is a path to a job-dictionary stored on disk.' )
-  group.add_argument( '--expression', action="store_true", dest="is_expression",
-                      help='JOBFOLDER is a python expression.' )
+        help='JOBFOLDER is a path to a job-dictionary stored on disk.' )
+  group.add_argument( '--expression', action="store_true",
+        dest="is_expression", help='JOBFOLDER is a python expression.' )
   parser.add_argument( 'type', metavar='TYPE', type=str, default="", nargs='?',
-                       help="Optional. Specifies what kind of job folders will be explored. "\
-                            "Can be one of results, errors, all, running. "\
-                            "\"results\" are those job folders which have completed. "\
-                            "\"errors\" are those job folders which are not \"running\" "\
-                            "at the time of invokation and failed somehow. \"all\" means all job folders. "\
-                            "By default, the dictionary is read as it was "\
-                            "saved. The modified job-folder is not saved to "\
-                            "disk.")
-  parser.add_argument( 'jobfolder', metavar='JOBFOLDER', type=str, default="", nargs='?',
-                       help='Job-dictionary variable or path to job folder saved to disk.')
+         help="Optional. Specifies what kind of job folders will be explored. "\
+              "Can be one of results, errors, all, running. "                  \
+              "\"results\" are those job folders which have completed. "       \
+              "\"errors\" are those job folders which are not \"running\" "    \
+              "at the time of invokation and failed somehow. \"all\" means "   \
+              "all job folders. By default, the dictionary is read as it was " \
+              "saved. The modified job-folder is not saved to disk." )
+  parser.add_argument( 'jobfolder', metavar='JOBFOLDER', type=str, default="",
+         nargs='?',
+         help='Job-dictionary variable or path to job folder saved to disk.' )
 
 
   # parse arguments
   try: args = parser.parse_args(cmdl.split())
   except SystemExit: return None
   else:
-    if len(args.jobfolder) == 0 and (args.type not in ["results", "errors", "all", "running"]):
+    if len(args.jobfolder) == 0                                                \
+       and (args.type not in ["results", "errors", "all", "running"]):
       args.jobfolder = args.type
       args.type = ""
 
@@ -79,7 +80,8 @@ def explore(self, cmdl):
   options = ['', "errors", "results", "all"]
   if hasattr(self, "magic_qstat"): options.append("running")
   if args.type not in options: 
-    print "Unknown TYPE argument {0}.\nTYPE can be one of {1}.".format(args.type, options)
+    print "Unknown TYPE argument {0}.\nTYPE can be one of {1}."                \
+          .format(args.type, options)
     return
 
   # tries to open dictionary
@@ -92,10 +94,12 @@ def explore(self, cmdl):
       print "No known path/file for current job-folder.\n"\
             "Please save to file first."
       return
-    running_jobs = set(self.magic("qstat").fields(-1)) if hasattr(self, "magic_qstat") else set([])
+#   running_jobs = set( self.magic("qstat").fields(-1)) if hasattr(self, "magic_qstat") else set([])
     for name, job in interactive.jobfolder.iteritems():
-      if job.functional.Extract(join(dirname(interactive.jobfolder_path),name)).success: job.tag()
-      elif name.replace("/", ".") in running_jobs: job.tag()
+      directory = join(dirname(interactive.jobfolder_path), name)
+      extract = job.functional.Extract(directory)
+      if extract.success: job.tag()
+#     elif name.replace("/", ".") in running_jobs: job.tag()
       else: job.untag()
 
   if args.type == "results": 
@@ -109,7 +113,8 @@ def explore(self, cmdl):
       else: job.untag()
 
 # elif args.type == "running": 
-#   running_jobs = set(ip.magic("qstat").fields(-1)) if hasattr(self, "magic_qstat") else set([])
+#   running_jobs = set( ip.magic("qstat").fields(-1))                          \
+#                       if hasattr(self, "magic_qstat") else set([] )
 #   for name, job in interactive.jobfolder.iteritems():
 #     if name.replace("/", ".") not in running_jobs: job.tag()
 #     else: job.untag()
@@ -119,11 +124,14 @@ def explore(self, cmdl):
 
 def _explore_impl(self, args):
   """ Tries to open job-dictionary. """
-  from os.path import abspath, isfile
+  from os.path import abspath, isfile, exists
   from ..jobfolder import load, JobFolder
   from ..jobfolder import JobParams, MassExtract as Collect
+  from ..misc import LockFile, RelativePath
+  from . import get_shell
   from lada import interactive
-  from lada.misc import LockFile, RelativePath
+
+  shell = get_shell(self)
 
   # case where we want to change the way the current dictionary is read.
   if len(args.jobfolder) == 0:
@@ -133,26 +141,29 @@ def _explore_impl(self, args):
       interactive.__dict__.pop("jobfolder", None)
       return
 
-    if "collect" in self.user_ns: self.user_ns["collect"].uncache()
+    if "collect" in shell.user_ns: shell.user_ns["collect"].uncache()
     interactive.__dict__.pop("_lada_subjob_iterator", None)
     interactive.__dict__.pop("_lada_subjob_iterated", None)
     return 
 
   # delete stuff from namespace.
-  self.user_ns.pop("collect", None)
-  self.user_ns.pop("jobparams", None)
+  shell.user_ns.pop("collect", None)
+  shell.user_ns.pop("jobparams", None)
   interactive.__dict__.pop("_lada_subjob_iterator", None)
   interactive.__dict__.pop("_lada_subjob_iterated", None)
 
-  if args.is_file == False and args.is_expression == False \
-     and isfile(RelativePath(args.jobfolder).path) \
-     and isinstance(self.user_ns.get(args.jobfolder, None), JobFolder):
-    print "The file {0} and the variable {1} both exist.\n"\
-          "Please specify --file or --expression.\n"\
+  if args.is_file == False and args.is_expression == False                     \
+     and isfile(RelativePath(args.jobfolder).path)                             \
+     and isinstance(shell.user_ns.get(args.jobfolder, None), JobFolder):
+    print "The file {0} and the variable {1} both exist.\n"                    \
+          "Please specify --file or --expression.\n"                           \
           .format(RelativePath(args.jobfolder).path, args.jobfolder)
     return
   jobfolder, new_path = None, None
-  if args.is_file or not args.is_expression and isfile(RelativePath(args.jobfolder).path):
+  if args.is_file                                                              \
+     or (not args.is_expression)                                               \
+     and exists(RelativePath(args.jobfolder).path)                             \
+     and isfile(RelativePath(args.jobfolder).path):
     try: jobfolder = load(args.jobfolder, timeout=6)
     except ImportError as e:
       print "ImportError: ", e
@@ -160,14 +171,15 @@ def _explore_impl(self, args):
     except Exception as e:
       print e
       if LockFile(args.jobfolder).is_locked:
-        print "You may want to check for the existence of {0}."\
+        print "You may want to check for the existence of {0}."                \
               .format(LockFile(args.jobfolder).lock_directory)
-        print "If you are sure there are no job-folders out there accessing {0},\n"\
+        print "If you are sure there are no job-folders out "                  \
+              "there accessing {0},\n"                                         \
               "you may want to delete that directory.".format(args.jobfolder)
       return
     else: new_path = abspath(args.jobfolder)
   if jobfolder is None and (args.is_expression or not args.is_file):
-    jobfolder = self.user_ns.get(args.jobfolder, None)
+    jobfolder = shell.user_ns.get(args.jobfolder, None)
     if not isinstance(jobfolder, JobFolder): 
       print "{0} is not a job-folder object.".format(args.jobfolder)
       return
@@ -177,14 +189,16 @@ def _explore_impl(self, args):
     return
     
   interactive.jobfolder = jobfolder
-  self.user_ns["jobparams"] = JobParams()
+  shell.user_ns["jobparams"] = JobParams()
+  shell.user_ns["self"] = self
   interactive.jobfolder_path = new_path
-  if new_path is not None: self.user_ns["collect"] = Collect(dynamic=True)
+  if new_path is not None: shell.user_ns["collect"] = Collect(dynamic=True)
 
 def completer(self, event): 
   """ Completer for explore. """ 
   from ..jobfolder import JobFolder
-  from . import jobfolder_file_completer
+  from . import jobfolder_file_completer, get_shell
+  shell = get_shell(self)
   
   data = event.line.split()[1:]
   results, has_file, has_expr = [], False, False
@@ -196,7 +210,9 @@ def completer(self, event):
   if len(data) == 0: data = [''] 
   elif event.line[-1] == ' ': data.append('')
   if not has_file:
-    results.extend( name for name, u in self.user_ns.iteritems()\
-                    if isinstance(u, JobFolder) and name[0] != '_' and name not in data)
+    results.extend( name for name, u in shell.user_ns.iteritems()              \
+                    if isinstance(u, JobFolder)                                \
+                       and name[0] != '_'                                      \
+                       and name not in data )
   if not has_expr: results.extend( jobfolder_file_completer(self, data))
   return list(results)

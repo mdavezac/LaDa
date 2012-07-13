@@ -6,7 +6,7 @@ def savefolders(self, event):
       >>> savefolders filename.dict rootfolder 
   
       In this case, "filename.dict" is a file where to save the jobfolder
-      "rootfolder". The latter must be a python variable, not another filename. 
+      "rootfolder". The latter must be a python variable, not another filename.
       The current job-folder becomes "rootfolder", and the current path 
 
 
@@ -24,6 +24,9 @@ def savefolders(self, event):
   from ..jobfolder import JobParams, MassExtract as Collect, save
   from .. import interactive
   from ..misc import RelativePath
+  from . import get_shell
+
+  shell = get_shell(self)
 
   args = [u for u in event.split()]
   if '--help' in args or '-h' in args:
@@ -62,11 +65,14 @@ def savefolders(self, event):
       return
     a = ''
     while a not in ['n', 'y']:
-      a = raw_input("File {0} already exists.\nOverwrite? [y/n] ".format(jobfolder_path))
+      a = raw_input( "File {0} already exists.\nOverwrite? [y/n] "             \
+                     .format(jobfolder_path) )
     if a == 'n':
       print "Aborting."
       return
   save(jobfolder.root, jobfolder_path, overwrite=True, timeout=10) 
   if len(args) == 1:
-    if "collect" not in self.user_ns: self.user_ns["collect"] = Collect(dynamic=True, path=jobfolder_path)
-    if "jobparams" not in self.user_ns: self.user_ns["jobparams"] = JobParams()
+    if "collect" not in shell.user_ns:
+      shell.user_ns["collect"] = Collect(dynamic=True, path=jobfolder_path)
+    if "jobparams" not in shell.user_ns:
+      shell.user_ns["jobparams"] = JobParams()

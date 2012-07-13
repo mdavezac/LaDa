@@ -11,7 +11,7 @@ def launch(self, event, jobfolders):
   """ Launch scattered jobs: one job = one pbs script. """
   import re
   from copy import deepcopy
-  from os.path import split as splitpath, join, dirname, exists
+  from os.path import split as splitpath, join, dirname, exists, basename
   from os import remove
   from ...misc import Changedir
   from ...jobfolder import __file__ as jobs_filename
@@ -26,7 +26,7 @@ def launch(self, event, jobfolders):
   # creates mppalloc function.
   try: mppalloc = self.ev(event.nbprocs)
   except Exception as e: 
-    print "Could not make sense of --nbprocs argument {0}.\n{1}"              \
+    print "Could not make sense of --nbprocs argument {0}.\n{1}"               \
           .format(event.nbprocs, e)
     return
   if mppalloc is None:
@@ -40,7 +40,7 @@ def launch(self, event, jobfolders):
   if re.match("\s*(\d{1,3}):(\d{1,2}):(\d{1,2})\s*", event.walltime) is None:
     try: walltime = ip.ev(event.walltime)
     except Exception as e: 
-      print "Could not make sense of --walltime argument {0}.\n{1}"           \
+      print "Could not make sense of --walltime argument {0}.\n{1}"            \
             .format(event.walltime, e)
       return
   else: walltime = event.walltime
@@ -49,7 +49,7 @@ def launch(self, event, jobfolders):
     a, b, c = walltime.group(1), walltime.group(2), walltime.group(3)
     walltime = "{0:0>2}:{1:0>2}:{2:0>2}".format(a, b, c)
   else: 
-    print "Could not make sense of --walltime argument {0}."                  \
+    print "Could not make sense of --walltime argument {0}."                   \
           .format(event.walltime)
     return
 
@@ -73,7 +73,7 @@ def launch(self, event, jobfolders):
   def pbspaths(directory, jobname, suffix):
     """ creates filename paths. """
     return join( join(directory,jobname),
-                 '{0}-pbs{1}'.format(event.prefix, suffix) if hasprefix       \
+                 '{0}-pbs{1}'.format(event.prefix, suffix) if hasprefix        \
                  else 'pbs{0}'.format(suffix) ) 
   # now  loop over jobfolders
   pbsscripts = []
@@ -90,22 +90,22 @@ def launch(self, event, jobfolders):
         p = join(directory, name)
         extract = job.functional.Extract(p)
         if extract.success:
-          print "Job {0} completed successfully. "                            \
+          print "Job {0} completed successfully. "                             \
                 "It will not be relaunched.".format(name)                     
           continue                                                            
 
       # setup parameters for launching/running jobs
-      pbsargs['n'] = mppalloc(job) if hasattr(mppalloc, "__call__")           \
+      pbsargs['n'] = mppalloc(job) if hasattr(mppalloc, "__call__")            \
                      else mppalloc                                            
-      pbsargs['nnodes'] = (pbsargs['n'] + pbsargs['ppn'] - 1)                 \
+      pbsargs['nnodes'] = (pbsargs['n'] + pbsargs['ppn'] - 1)                  \
                           // pbsargs['ppn']                                   
       pbsargs['err'] = pbspaths(directory, name, 'err')
       pbsargs['out'] = pbspaths(directory, name, 'out')
-      pbsargs['name'] = name if len(name)                                     \
+      pbsargs['name'] = name if len(name)                                      \
                         else "{0}-root".format(basename(path))
       pbsargs['directory'] = directory
-      pbsargs['scriptcommand']                                                \
-           = "{0} --nbprocs {n} --ppn {ppn} --jobid={1} {2}"                  \
+      pbsargs['scriptcommand']                                                 \
+           = "{0} --nbprocs {n} --ppn {ppn} --jobid={1} {2}"                   \
              .format(pyscript, name, path, **pbsargs)
       pbsscripts.append( pbspaths(directory, name, 'script') )
 
@@ -113,7 +113,7 @@ def launch(self, event, jobfolders):
       with Changedir(join(directory, name)) as pwd: pass
       if exists(pbsscripts[-1]): remove(pbsscripts[-1])
       with open(pbsscripts[-1], "w") as file:
-        string = pbs_string(**pbsargs) if hasattr(pbs_string, '__call__')     \
+        string = pbs_string(**pbsargs) if hasattr(pbs_string, '__call__')      \
                  else pbs_string.format(**pbsargs) 
         file.write(string)
       assert exists(pbsscripts[-1])
@@ -127,17 +127,17 @@ def launch(self, event, jobfolders):
 
 def completer(self, info, data):
   """ Completer for scattered launcher. """
-  from ... import queues, accounts, debug_queue
-  from .. import jobfolder_file_completer
-  from ... import accounts, queues
+  from .. import get_shell
+  from ... import queues, accounts, debug_queue, jobfolder_file_completer
+  shell = get_shell(self)
   if len(data) > 0: 
     if data[-1] == "--walltime":
-      return [ u for u in self.user_ns                                        \
-               if u[0] != '_' and isinstance(self.user_ns[u], str) ]
+      return [ u for u in shell.user_ns                                        \
+               if u[0] != '_' and isinstance(shell.user_ns[u], str) ]
     elif data[-1] == "--nbprocs": 
-      result = [ u for u in self.user_ns                                      \
-                 if u[0] != '_' and isinstance(self.user_ns[u], int) ]
-      result.extend( [ u for u in self.user_ns                                \
+      result = [ u for u in shell.user_ns                                      \
+                 if u[0] != '_' and isinstance(shell.user_ns[u], int) ]
+      result.extend( [ u for u in shell.user_ns                                \
                        if u[0] != '_' and hasattr(u, "__call__") ])
       return result
     elif data[-1] == '--ppn': return ['']
@@ -154,16 +154,16 @@ def completer(self, info, data):
 
 def parser(self, subparsers, opalls):
   """ Adds subparser for scattered. """ 
-  from ... import queues, accounts, debug_queue, default_pbs, default_comm,   \
+  from ... import queues, accounts, debug_queue, default_pbs, default_comm,    \
                   qsub_exe
   result = subparsers.add_parser( 'scattered', 
-              description="A separate PBS/slurm script is created for each "  \
-                          "and every calculation in the job-folder "          \
+              description="A separate PBS/slurm script is created for each "   \
+                          "and every calculation in the job-folder "           \
                           "(or dictionaries).",
               parents=[opalls])
   result.add_argument('--walltime', type=str,
               default=default_pbs['walltime'],
-              help='walltime for jobs. Should be in hh:mm:ss format. '        \
+              help='walltime for jobs. Should be in hh:mm:ss format. '         \
                    'Defaults to ' + default_pbs['walltime'] + '.')
   result.add_argument('--prefix', action="store",
               type=str, help="Adds prefix to job name.")
@@ -171,31 +171,31 @@ def parser(self, subparsers, opalls):
               dest="nolaunch",
               help='Does everything except calling {0}.'.format(qsub_exe) )
   result.add_argument( '--nbprocs', type=str, default="None", dest="nbprocs",
-              help="Can be an integer, in which case it specifies "           \
-                   "the number of processes to exectute jobs with. "          \
-                   "Can also be a callable taking a JobFolder as "            \
-                   "argument and returning a integer. Will default "          \
-                   "to as many procs as there are atoms in that "             \
-		   "particular structure. Defaults to something "             \
-		   "close to the number of atoms in the structure "           \
+              help="Can be an integer, in which case it specifies "            \
+                   "the number of processes to exectute jobs with. "           \
+                   "Can also be a callable taking a JobFolder as "             \
+                   "argument and returning a integer. Will default "           \
+                   "to as many procs as there are atoms in that "              \
+                   "particular structure. Defaults to something "              \
+                   "close to the number of atoms in the structure "            \
                    "(eg good for VASP). ")
   result.add_argument( '--ppn', dest="ppn",
               default=default_comm.get('ppn', 1), type=int,
-              help="Number of processes per node. Defaults to {0}."           \
+              help="Number of processes per node. Defaults to {0}."            \
                    .format(default_comm.get('ppn', 1)))
   if len(accounts) != 0:
     result.add_argument( '--account',
               dest="account", choices=accounts, default=accounts[0],
-              help="Account on which to launch job. Defaults to {0}."         \
+              help="Account on which to launch job. Defaults to {0}."          \
                    .format(accounts[0]) )
   else:
     result.add_argument( '--account', dest="account", type=str,
-                         help="Launches jobs on specific "                    \
+                         help="Launches jobs on specific "                     \
                               "account if present." )
   if len(queues) != 0: 
     result.add_argument( '--queue', dest="queue", choices=queues,
               default=queues[0],
-              help="Queue on which to launch job. Defaults to {0}."           \
+              help="Queue on which to launch job. Defaults to {0}."            \
                    .format(queues[0]) )
   else:
     result.add_argument( '--queue', dest="queue", type=str,

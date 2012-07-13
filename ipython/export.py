@@ -11,6 +11,8 @@ def export(self, event):
   from glob import iglob
   from ..misc import RelativePath
   from .. import interactive
+  from . import get_shell
+  shell = get_shell(self)
 
   parser = argparse.ArgumentParser(prog='%export',
       description='Exports input/output files from current job-folder. '       \
@@ -61,7 +63,7 @@ def export(self, event):
   try: args = parser.parse_args(event.split())
   except SystemExit as e: return None
 
-  collect = self.user_ns.get('collect', None)
+  collect = shell.user_ns.get('collect', None)
   rootpath = getattr(collect, 'rootpath', None)
   if collect is None:
     print "Could not find 'collect' object in user namespace."
@@ -72,8 +74,8 @@ def export(self, event):
   kwargs.pop('filename', None)
 
   if rootpath is None: 
-    if hasattr(self.user_ns.get('collect', None), 'rootpath'): 
-      rootpath = self.user_ns.get('collect').rootpath
+    if hasattr(shell.user_ns.get('collect', None), 'rootpath'): 
+      rootpath = shell.user_ns.get('collect').rootpath
   directory = getcwd() if rootpath is None else dirname(rootpath)
 
   if args.down: directory = join(directory, '..')
@@ -179,5 +181,3 @@ def completer(self, event):
   if '--down' in data: result.discard('--from')
   if '--from' in data: result.discard('--down')
   return list(result) + ['--with']
-
-

@@ -27,7 +27,7 @@ def launch(self, event):
   """ 
   import argparse
   from ...jobfolder import load as load_jobs
-  from ... import interactive, default_comm
+  from ... import interactive
   from .scattered import parser as scattered_parser
   from .interactive import parser as interactive_parser
   from ...misc import RelativePath
@@ -36,14 +36,16 @@ def launch(self, event):
   parser = argparse.ArgumentParser(prog='%launch')
   # options supported by all.
   opalls = argparse.ArgumentParser(add_help=False)
-  opalls.add_argument( 'pickle', metavar='FILE', type=str, nargs='*', default="", 
-                       help='Optional path to a job-folder. If not present, the '\
-                            'currently loaded job-dictionary will be launched.')
-  opalls.add_argument( '--force', action="store_true", dest="force", \
-                       help="If present, launches all untagged jobs, even those "\
-                            "which completed successfully." )
+  opalls.add_argument( 'pickle', metavar='FILE', type=str, nargs='*',
+         default="", 
+         help='Optional path to a job-folder. If not present, the '            \
+              'currently loaded job-dictionary will be launched.')
+  opalls.add_argument( '--force', action="store_true", dest="force",
+         help="If present, launches all untagged jobs, even those "            \
+              "which completed successfully." )
   # subparsers
-  subparsers = parser.add_subparsers(help='Launches one job per untagged calculations')
+  subparsers                                                                   \
+    = parser.add_subparsers(help='Launches one job per untagged calculations')
 
   # launch scattered.
   scattered_parser(self, subparsers, opalls) 
@@ -89,8 +91,6 @@ def completer(self, info):
   """ Completion for launchers. """
   from .scattered import completer as scattered_completer
   from .interactive import completer as interactive_completer
-  from IPython import TryNext
-  from .. import jobfolder_file_completer
 
   data = info.line.split()[1:]
   if "scattered" in data: return scattered_completer(self, info, data)
