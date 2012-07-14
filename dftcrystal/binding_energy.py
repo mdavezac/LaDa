@@ -79,16 +79,16 @@ def binding_energy(crystal, structure):
   job = rootjob / 'molecule' / 'ghosted' 
   job.functional = crystal
   job.params['structure']  = structure
-  job.functional.basis.ghost = [ u.label for u in structure.eval()             \
-                                 if u.asymmetric and u.label <= maxlabel ],    \
-                               False
+  job.functional.basis.ghosts = [ u.label for u in structure.eval()            \
+                                  if u.asymmetric and u.label <= maxlabel ],   \
+                                False
 
   job = rootjob / 'surface' / 'ghosted' 
   job.functional = crystal
   job.params['structure']  = structure
-  job.functional.basis.ghost = [ u.label for u in structure.eval()             \
-                                 if u.asymmetric and u.label > maxlabel ],     \
-                               False
+  job.functional.basis.ghosts = [ u.label for u in structure.eval()            \
+                                  if u.asymmetric and u.label > maxlabel ],    \
+                                False
   return rootjob
 if __name__ == '__main__': 
   string =  \

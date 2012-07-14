@@ -42,5 +42,5 @@ Others
 .. autofunction:: read_gaussian_basisset(path) -> structure, functional
 
 .. _open: http://docs.python.org/library/functions.html#open
-
+.. _CRYSTAL: http://www.crystal.unito.it/
 

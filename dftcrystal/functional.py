@@ -3,7 +3,51 @@ from ..functools import stateless, assign_attributes
 from .extract import Extract
 
 class Functional(object):
-  """ Wrapper for the CRYSTAL program. """
+  """ Wrapper for the CRYSTAL program. 
+  
+      This object provides a pythonic interface to the CRYSTAL_ program. It is
+      modelled loosely after CRYSTAL_'s input:
+
+        - The OPTGEOM keyword of the first code block can be accessed through
+          the :py:class:`optgeom <lada.dftcrystal.optgeom.OptGeom>`
+          :py:attr:`attribute <optgeom>`:
+          
+          .. code-block:: python
+
+            # enable geometry optimization
+            functional.optgeom.enabled = True
+            # change some of the keywords
+            functional.optgeom.maxcycle = True
+
+          Geometry optimization must be explicitly enabled, as is done in the
+          first line above. 
+        - The interface to the second block of input (basis-functions) can be
+          accessed through the :py:class:`basis
+          <lada.dftcrystal.basis.BasisSet>` :py:attr:`attribute <basis>`. It
+          allows to set the basis set itself, as well as keywords specific to
+          the basis set:
+
+          .. code-block:: python
+            
+            functional.basis['H'] = [Shell('s', a0=(15.0, 1.0), a1=(8.0, 1.0)), ...]
+            functional.basis.ghosts = [1, 4, 6], False
+
+        - The third input block (Hamiltonian and miscellaneous) can be accessed
+          directly through the functional, or, alternatively, *via* the
+          :py:class:`scf <lada.dftcrystal.electronic.Electronic>`
+          :py:attr:`attribute <scf>`.
+        
+          .. code-block:: python
+        
+            functional.scf.dft.b3lyp = True
+            functional.dft.b3lyp = True
+        
+            functional.tolinteg = [8] * 4 + [14]
+        
+          The first two lines are exactly equivalent. The third line could also
+          be written as ``functional.scf.tolinteg = ...``.
+
+  """
   Extract = Extract
   """ Extraction class. """
   __ui_name__ = 'functional'
@@ -280,7 +324,6 @@ class Functional(object):
 
   def __call__( self, structure, outdir=None, workdir=None, comm=None,         \
                 overwrite=False, **kwargs):
-    """ Calls CRYSTAL program. """
     result = None
     for program in self.iter( structure, outdir=outdir, workdir=workdir,
                               comm=comm, overwrite=overwrite, **kwargs ):
@@ -295,6 +338,7 @@ class Functional(object):
     if not result.success:
       raise RuntimeError("CRYSTAL failed to execute correctly.")
     return result
+  __call__.__doc__ = iter.__doc__
  
   def __repr__(self, defaults=True, name=None):
     """ Returns representation of this instance """
