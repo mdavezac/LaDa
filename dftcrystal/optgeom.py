@@ -9,7 +9,7 @@ class GeometryOpt(BoolKeyword):
         2. only one of FULLOPTG, ITATOCELL, ITREDUN, CELLONLY is True.
         3. CVOLOPT is False unless this is a FULLOPTG or CELLONLY calculation.
 
-      (2) and (3) are decided by the keyword argument in input.
+      \(2\) and (3) are decided by the keyword argument in input.
   """
   def __init__(self, keyword, value=False):
     """ Initializes a geometry optimization keyword. """

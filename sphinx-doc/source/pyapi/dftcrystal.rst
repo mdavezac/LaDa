@@ -25,6 +25,8 @@ Content:
 
    Functional class and attributes <dftcrystal/functional>
 
+   Geometry optimization block <dftcrystal/optgeom>
+
 .. currentmodule:: lada.dftcrystal
 
 
