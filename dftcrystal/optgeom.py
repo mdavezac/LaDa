@@ -132,9 +132,32 @@ class ExclAttrBlock(AttrBlock):
                                                    defaults, exclude )
 
 class OptGeom(ExclAttrBlock):
-  """ Geometry Optimization block. """
+  """ Geometry Optimization block. 
+  
+      Defines the input block for geometry optimization. Geometry optimization
+      must be explicitely enabled:
+
+      .. code-block:: python
+
+        functional.optgeom.enabled = True
+
+      It is disabled by default. When enabled, other sub-blocks within
+      CRYSTAL_'s first input block are automatically disabled (e.g. ``freqcalc`` [*]_). 
+
+      .. note::
+
+        Inner keywords can be modified when the block is disabled. However, the
+        block will not appear until is is explicitely enabled.
+
+      .. [*]
+      
+         Currently, :py:class:`~lada.dftcrystal.functional.Functional` only
+         contains the :py:attr:`~lada.dftcrystal.functional.Functional.optgeom`
+         attribute. If implemented, other sub-blocks should derive from
+         :py:class:`~lada.dftcrystal.optgeom.ExclAttrBlock`.
+  """
   keyword = 'optgeom'
-  """ CRYSTAL input keyword """
+  """ CRYSTAL input keyword (class-attribute) """
   def __init__(self): 
     """ Creates an optimization block. """
     from .input import QuantityKeyword
@@ -165,9 +188,9 @@ class OptGeom(ExclAttrBlock):
     bohr = UnitQuantity('crystal_bhor', 0.5291772083*angstrom, symbol='bhor')
     """ Bhor radius as defined by CRYSTAL """
     self.extpress   = QuantityKeyword(units=hartree/bohr**3)
-    """ Hydrostatic pressure in hartree*bohr^-3 """
+    """ Hydrostatic pressure in :math:`\\frac{\\text{hartree}}{\\text{bohr}^{3}}` """
     self.extstress  = QuantityKeyword(units=hartree/bohr**3, shape=(3,3))
-    """ External stress in hartree*bhor^-3 """
+    """ External stress in :math:`\\frac{\\text{hartree}}{\\text{bohr}^{3}}` """
 
   @property
   def static(self): 

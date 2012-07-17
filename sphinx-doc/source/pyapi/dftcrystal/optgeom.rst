@@ -6,7 +6,7 @@ Geometry optimization block
    :show-inheritance:
    :members:
    :inherited-members:
-   :exclude-members: fulloptg, cellonly, itatocell, interdun, cvolopt, bhor
+   :exclude-members: fulloptg, cellonly, itatocell, interdun
 
    .. attribute:: fulloptg
 
@@ -57,14 +57,14 @@ Geometry optimization block
      >>> functional.optgeom.fulloptg, functional.optgeom.cellonly, functional.optgeom.interdun
      False, False, False
 
-  .. attribute:: cvolopt
-     
-     If True *and* if one of :py:attr:`fulloptg` or :py:attr:`cellonly` is
-     True, then performs constant volume optimization.
-
-  .. attribute:: bhor
-
-     Bhor radius, defined as in CRYSTAL_, 0.5291772083 angstrom.
+   .. attribute:: cvolopt
+      
+      If True *and* if one of :py:attr:`fulloptg` or :py:attr:`cellonly` is
+      True, then performs constant volume optimization.
+  
+   .. attribute:: bhor
+  
+      Bhor radius, defined as in CRYSTAL_, 0.5291772083 angstrom.
 
 
 .. autoclass:: GeometryOpt
