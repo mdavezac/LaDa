@@ -76,5 +76,11 @@ Geometry optimization block
 
       CRYSTAL_ keyword this instance corresponds to.
 
+.. autoclass:: ExclAttrBlock
+   :show-inheritance:
+   :members:
+   :exclude-members: keyword
+   
+
 
 .. _CRYSTAL: http://www.crystal.unito.it/

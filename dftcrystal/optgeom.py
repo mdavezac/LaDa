@@ -73,7 +73,7 @@ class ExclAttrBlock(AttrBlock):
   """
   excludegroup = 'optgeom', 'freqcalc', 'anharm', 'confcnt', 'cphf',           \
                  'elastcon', 'eos'
-  """ Groups from which only one should be enabled. """
+  """ Groups of blocks of which only one should be enabled. """
   def __init__(self):
     """ Initializes the exclusive attribute block. """
     super(ExclAttrBlock, self).__init__()
@@ -113,7 +113,7 @@ class ExclAttrBlock(AttrBlock):
     return super(ExclAttrBlock, self).read_input(tree, owner)
 
   def print_input(self, **kwargs):
-    """ Does not print if static. """
+    """ Does not print if disabled. """
     if not self.enabled: return None
     return super(ExclAttrBlock, self).print_input(**kwargs)
 
