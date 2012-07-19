@@ -93,11 +93,13 @@ def completer(self, info):
   """ Completion for launchers. """
   from .scattered import completer as scattered_completer
   from .interactive import completer as interactive_completer
+  from .asone import completer as asone_completer
 
   data = info.line.split()[1:]
   if "scattered" in data: return scattered_completer(self, info, data)
   elif "interactive" in data: return interactive_completer(self, info, data)
-  return ["scattered", "interactive"]
+  elif "asone" in data: return asone_completer(self, info, data)
+  return ["scattered", "interactive", 'asone', '--help']
          
 
 def get_mppalloc(shell, event):

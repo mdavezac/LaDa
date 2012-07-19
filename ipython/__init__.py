@@ -49,7 +49,8 @@ def get_shell(self):
   """ Gets shell despite ipython version issues """
   from IPython import sys_info
 
-  a = int(eval(sys_info())['ipython_version'][2:])
+  a = eval(sys_info())['ipython_version'][2:] 
+  a = float(a) if a.find('.') != -1 else int(a)
   return self if a < 12 else self.shell
 
 def jobfolder_file_completer(self, data):

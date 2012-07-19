@@ -22,7 +22,8 @@ class Magmom(SpecialVaspParam):
   """ Sets the initial magnetic moments on each atom.
 
       There are three types of usage: 
-        - do nothing if the instance's value is None or False.
+	- do nothing if the instance's value is None or False, or if not a
+	  single atom has a 'magmom' attribute
         - print a string preceded by "MAGMOM = " if the instance's value is a string. 
         - print the actual MAGMOM string from the magnetic moments attributes
           ``magmom`` in the structure's atoms if anything but a string, None,
@@ -43,6 +44,7 @@ class Magmom(SpecialVaspParam):
     if isinstance(self.value, str): return "MAGMOM = {0}".format(self.value)
     
     structure = kwargs['structure']
+    if all(not hasattr(u, 'magmom') for u in structure): return None
     result = ""
     for specie in specieset(structure):
       moments = [getattr(u, 'magmom', 0e0) for u in structure if u.type == specie]
@@ -934,10 +936,13 @@ class Lsorbit(Boolean):
   """ Run calculation with spin-orbit coupling. 
 
       Accepts None, True, or False.
-      If True, then sets :py:attr:`~lada.vasp.incar.Incar.nonscf` to True.
+      If True, then sets :py:attr:`~lada.vasp.incar.Incar.nonscf` to True and
+      :py:attr:`~lada.vasp.incar.Incar.ispin` to 2.
   """ 
   def __init__(self, value=None):
     super(Lsorbit, self).__init__('LSORBIT', value)
   def incar_string(self, **kwargs):
-    if self.value == True: kwargs['vasp'].nonscf = True
+    if self.value == True:
+      kwargs['vasp'].nonscf = True
+      kwargs['vasp'].ispin  = 2
     return super(Lsorbit, self).incar_string(**kwargs)

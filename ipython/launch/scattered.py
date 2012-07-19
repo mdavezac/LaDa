@@ -18,7 +18,7 @@ def launch(self, event, jobfolders):
   from ... import pbs_string, default_pbs, qsub_exe, default_comm
   from . import get_walltime, get_mppalloc, get_queues
 
-  shell = get_shell()
+  shell = get_shell(self)
 
   pbsargs = deepcopy(dict(default_comm))
   pbsargs.update(default_pbs)

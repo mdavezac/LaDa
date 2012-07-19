@@ -11,7 +11,7 @@ def launch(self, event, jobfolders):
   from . import get_walltime, get_queues
   from .. import __file__ as launch_filename
 
-  shell = get_shell()
+  shell = get_shell(self)
 
   pbsargs = deepcopy(dict(default_comm))
   pbsargs.update(default_pbs)
@@ -87,24 +87,28 @@ def completer(self, info, data):
   """ Completer for scattered launcher. """
   from .. import get_shell
   from ... import queues, accounts, debug_queue, jobfolder_file_completer
-  shell = get_shell(self)
-  if len(data) > 0: 
-    if data[-1] == "--walltime":
-      return [ u for u in shell.user_ns                                        \
-               if u[0] != '_' and isinstance(shell.user_ns[u], str) ]
-    elif data[-1] == "--pools":   return ['']
-    elif data[-1] == "--nbprocs": return ['']
-    elif data[-1] == '--ppn':     return ['']
-    elif data[-1] == "--prefix":  return ['']
-    elif data[-1] == "--queue":   return queues
-    elif data[-1] == "--account": return accounts
-  result = ['--force', '--walltime', '--nbprocs', '--help']
-  if len(queues) > 0: result.append("--queue") 
-  if len(accounts) > 0: result.append("--account") 
-  if debug_queue is not None: result.append("--debug")
-  result.extend(jobfolder_file_completer(self, [info.symbol]))
-  result = list(set(result) - set(data))
-  return result
+  try: 
+    shell = get_shell(self)
+    if len(data) > 0: 
+      if data[-1] == "--walltime":
+        return [ u for u in shell.user_ns                                        \
+                 if u[0] != '_' and isinstance(shell.user_ns[u], str) ]
+      elif data[-1] == "--pools":   return ['']
+      elif data[-1] == "--nbprocs": return ['']
+      elif data[-1] == '--ppn':     return ['']
+      elif data[-1] == "--prefix":  return ['']
+      elif data[-1] == "--queue":   return queues
+      elif data[-1] == "--account": return accounts
+    result = ['--force', '--walltime', '--nbprocs', '--help']
+    if len(queues) > 0: result.append("--queue") 
+    if len(accounts) > 0: result.append("--account") 
+    if debug_queue is not None: result.append("--debug")
+    result.extend(jobfolder_file_completer(self, [info.symbol]))
+    result = list(set(result) - set(data))
+    return result
+  except Exception as e:
+    print type(e), e
+    raise
 
 def parser(self, subparsers, opalls):
   """ Adds subparser for scattered. """ 

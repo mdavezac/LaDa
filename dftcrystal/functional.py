@@ -312,7 +312,12 @@ class Functional(object):
 
       # figure out the program to launch.
       program = self.program if self.program is not None else crystal_program
-      if hasattr(program, '__call__'): program = program(self)
+      if hasattr(program, '__call__'):
+        from inspect import getargspec
+        args = getargspec(program)
+        if 'comm' not in args.args and args.kwargs is None:
+              program = program(self)
+        else: program = program(self, comm=comm)
 
       # now creates the process, with a callback when finished.
       def onfinish(process, error): self.bringdown(structure, workdir, outdir)

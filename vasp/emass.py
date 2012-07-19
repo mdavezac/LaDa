@@ -40,6 +40,14 @@ class Extract(ExtractDFT):
     self.rcond = rcond
 
   @property
+  def success(self):
+    """ Check whether calculation was successfull """
+    from os.path import basename
+    if basename(self.directory) != 'reciprocal': return False
+    return ExtractDFT.success.__get__(self)
+      
+
+  @property
   def rcond(self): return self._rcond
   @rcond.setter
   def rcond(self, value):
